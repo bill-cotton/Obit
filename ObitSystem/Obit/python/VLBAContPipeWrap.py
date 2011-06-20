@@ -80,7 +80,6 @@ unique working directory.
         indices.reverse()
         for index in indices:
             if not ( index in selection ):
-                print "index = ", index
                 fileDictList.pop( index ) # remove index item
     
     # Loop over all files in response, setup working directory and process

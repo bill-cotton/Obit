@@ -10,7 +10,7 @@ import xml.dom.minidom
 from AIPS import AIPS
 from FITS import FITS
 from AIPSDir import AIPSdisks, nAIPS
-from OTObit import Acat, AMcat, getname, zap, imhead, tabdest
+from OTObit import Acat, AMcat, getname, zap, imhead, tabdest, tput
 from Obit import Version
 from subprocess import Popen, PIPE
 from PipeUtil import *
@@ -106,8 +106,8 @@ def VLBAInitContParms():
     """
     Initialize VLBA continuum pipeline parameters
     
-    Creates and initializes the parameter dict
-    Returns python dict with parameters
+    Creates and initializes the parameter dictionary.  Returns python dict with
+    parameters.
     """
     ################################################################
  
@@ -174,7 +174,7 @@ def VLBAInitContParms():
     
     # Imaging calibrators (contCals) and targets
     parms["doImgCal"] =    True         # Image calibrators
-    parms["targets"] =     []           # targets
+    parms["targets"] =     []           # List of target sources
     parms["doImgTarget"] = True         # Image targets?
     parms["outCclass"] =   "ICalSC"     # Output calibrator image class
     parms["outTclass"] =   "IImgSC"     # Output target temporary image class
@@ -2272,7 +2272,7 @@ def VLBAImageCals(uv, err,  FreqID=1, Sources=None, seq=1, sclass="ImgSC", \
         scmap.prtLv = 5
         scmap.i
         scmap.debug = debug
-    # Loop over slist
+
     for sou in slist:
         scmap.Sources[0] = sou
         mess = "Image/selfcal "+sou
@@ -2283,8 +2283,7 @@ def VLBAImageCals(uv, err,  FreqID=1, Sources=None, seq=1, sclass="ImgSC", \
                 scmap.g
         except Exception, exception:
             print exception
-            mess = "SCMap Failed retCode= "+str(scmap.retCode)+" for "+sou
-            printMess(mess, logfile)
+            logger.warn("SCMap Failed retCode= "+str(scmap.retCode)+" for "+sou)
             OErr.PClear(err)
         else:
             pass
@@ -2298,6 +2297,10 @@ def VLBAImageCals(uv, err,  FreqID=1, Sources=None, seq=1, sclass="ImgSC", \
                     printMess(mess, logfile)
                     return 1
             del u
+        # If scmap failed and Sources contains sou: remove sou from Sources
+        if (scmap.retCode != 0) and (type(Sources) == list) and (sou in Sources):
+            logger.warn("Removing source " + sou + " from source list.")
+            Sources.remove( sou )
     # end loop over sources
 
     return 0
@@ -2410,24 +2413,23 @@ def VLBAImageTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", \
     imager.noScrat     = noScrat
     imager.nThreads    = nThreads
     imager.prtLv       = 1
-    if debug:
-        imager.prtLv = 5
-        imager.i
-        imager.debug = debug
-        imager.debug = True
-    # Loop over slist
+
     for sou in slist:
         imager.Sources[0] = sou
         mess = "Image "+sou
         printMess(mess, logfile)
+        if debug:
+            imager.prtLv = 5
+            imager.i
+            imager.debug = True 
+            tput(imager)
         # Trap failure, tolerate
         try:
             if not check:
                 imager.g
         except Exception, exception:
             print exception
-            mess = "Imager Failed retCode= "+str(imager.retCode)+" for "+sou
-            printMess(mess, logfile)
+            logger.warn("Imager Failed retCode= "+str(imager.retCode)+" for "+sou)
             OErr.PClear(err)
         else:
             pass
@@ -2441,6 +2443,10 @@ def VLBAImageTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", \
                     printMess(mess, logfile)
                     return 1
             del u
+        # If imager failed and Sources contains sou: remove sou from Sources
+        if (imager.retCode != 0) and (type(Sources) == list) and (sou in Sources):
+            logger.warn("Removing source " + sou + " from source list.")
+            Sources.remove( sou )
     # end loop over sources
 
     return 0
@@ -5765,8 +5771,7 @@ def VLBAAllSource(uv, err, logfile='', check=False, debug=False):
         if err.isErr:
             return
         allSou.append(SUrow["SOURCE"][0].strip())
-        mess = "Source("+str(i+1)+") = "+SUrow["SOURCE"][0]  
-        printMess(mess, logfile)
+        logger.debug("Source("+str(i+1)+") = "+SUrow["SOURCE"][0])
     # end loop over rows
             
     # Close table
@@ -6051,28 +6056,32 @@ def VLBAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
 def VLBAProjMetadata( uv, AIPS_VERSION, err, contCals=[None], goodCal={}, 
     project='project', session='session', band='band', dataInUVF='' ):
     """
-    Return a dictionary holding project metadata. Contents::
+    Return a dictionary holding project metadata. Contents:
 
-        { "project"      : observation project name 
-          "session"      : observation project session
-          "band"         : receiver band code
-          "obsDate"      : observation date
-          "procDate"     : pipeline processing date
-          "contCals"     : array of continuum calibrators
-          "goodCalSrc"   : best calibrator
-          "goodCalTime"  : best calibrator time range
-          "goodCalRefAnt": best calibrator reference antenna
-          "goodCalSNR"   : best calibrator signal-to-noise ratio
-          "obitVer"      : Obit version (TBD)
-          "aipsVer"      : AIPS version
-          "pyVer"        : Python version
-          "sysInfo"      : system information on processing machine (uname -a)
-          "contCals"     : continuum calibrators
-          "goodCal"      : good calibrator data 
-          "anNames"      : names of all antennas used
-          "freqCov"      : frequency coverage (low & up sideband pairs for all IFs)
-          "minFringeMas" : minimum fringe spacing (mas)
-          "dataSet"      : Data set archive file name }
+    ===============  ========================================================
+    "project"        observation project name 
+    "session"        observation project session
+    "band"           receiver band code
+    "obsDate"        observation date
+    "obsStart"       observation start time (MJD)
+    "obsStop"        observation stop time (MJD)
+    "procDate"       pipeline processing date
+    "contCals"       array of continuum calibrators
+    "goodCalSrc"     best calibrator
+    "goodCalTime"    best calibrator time range
+    "goodCalRefAnt"  best calibrator reference antenna
+    "goodCalSNR"     best calibrator signal-to-noise ratio
+    "obitVer"        Obit version (TBD)
+    "aipsVer"        AIPS version
+    "pyVer"          Python version
+    "sysInfo"        system information on processing machine (uname -a)
+    "contCals"       continuum calibrators
+    "goodCal"        good calibrator data 
+    "anNames"        names of all antennas used
+    "freqCov"        frequency coverage (low & up sideband pairs for all IFs)
+    "minFringeMas"   minimum fringe spacing (mas)
+    "dataSet"        Data set archive file name }
+    ===============  ========================================================
 
     * uv = uv data object for which the report will be generated
     * AIPS_VERSION = AIPS version information
@@ -6089,6 +6098,9 @@ def VLBAProjMetadata( uv, AIPS_VERSION, err, contCals=[None], goodCal={},
     r["session"] = session
     r["band"] = band # Receiver band code
     r["obsDate"] = uv.Desc.Dict["obsdat"] # observation date
+    times = getStartStopTime( uv, err )
+    r["obsStart"] = times[0]
+    r["obsStop"] = times[1]
     r["procDate"] = str( datetime.date.today() ) # processing date
     r["obitVer"] = Version() # Obit version
     # Does this need to be passed as a function argument?
@@ -6102,6 +6114,7 @@ def VLBAProjMetadata( uv, AIPS_VERSION, err, contCals=[None], goodCal={},
     r["goodCalBestRef"] = goodCal["bestRef"]
     r["goodCalSNR"] = goodCal["SNR"]
     r["dataSet"] = dataInUVF
+    r["archFileId"] = archFileId # archive file ID
 
     # Get antenna names and positions
     antab = uv.NewTable(Table.READONLY,"AIPS AN",1,err)
@@ -6749,6 +6762,20 @@ def VLBAWriteVOTable( projMeta, srcMeta, filename="votable.xml" ):
                               ("arraysize","10"),
                               ("ucd","time.start") ] )
             XMLAddDescription( pr, "Observing date" )
+        elif key == "obsStart":
+            setAttribs( pr, [ ("name", key ),
+                              ("value", projMeta[key] ),
+                              ("datatype","float"),
+                              ("ucd","time.start"),
+                              ("unit","MJD") ] )
+            XMLAddDescription( pr, "Observation start time (MJD)" )
+        elif key == "obsStop":
+            setAttribs( pr, [ ("name", key ),
+                              ("value", projMeta[key] ),
+                              ("datatype","float"),
+                              ("ucd","time.end"),
+                              ("unit","MJD") ] )
+            XMLAddDescription( pr, "Observation stop time (MJD)" )
         elif key == "procDate":
             setAttribs( pr, [ ("name", key ),
                               ("value", projMeta[key] ),
@@ -6856,6 +6883,13 @@ def VLBAWriteVOTable( projMeta, srcMeta, filename="votable.xml" ):
                               ("arraysize","*"),
                               ("ucd","meta.version;meta.software") ] )
             XMLAddDescription( pr, "Obit version (svn revison number)" )
+        elif key in ("archFileId"):
+            setAttribs( pr, [ ("name", key ),
+                              ("value", projMeta[key] ),
+                              ("datatype","int" ),
+                              ("ucd","meta.record;meta.dataset" ) ] )
+            XMLAddDescription( pr, 
+                "Archive file ID (integer unique to each archive file)" )
         rs2.appendChild(pr)
 
     table_ProjFiles = doc.createElement("table")

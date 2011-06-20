@@ -35,14 +35,14 @@ except NoSectionError, e:
 
 def pipeline( aipsSetup, parmFile ):
     """
-VLBA Continuum pipeline.
-
-* *aipsSetup* = AIPS setup file
-* *parmFile* = pipeline input parameters file
+    VLBA Continuum pipeline.
+    
+    * *aipsSetup* = AIPS setup file
+    * *parmFile* = pipeline input parameters file
     """
     ############################# Initialize OBIT ##########################################                                 
     noScrat     = []    
-    exec( open(aipsSetup).read() )
+    exec(open(aipsSetup).read())
     VLBAAddOutFile( aipsSetup, 'project', "Obit's AIPS setup file" )
     
     ############################# Default parameters ##########################################                                 
@@ -69,20 +69,28 @@ VLBA Continuum pipeline.
     parms = VLBAInitContParms()
     
     ############################# Set Project Processing parameters ##################
-    exec( open(parmFile).read() )
+    exec(open(parmFile).read())
     VLBAAddOutFile( parmFile, 'project', 'Pipeline input parameters' )
-    
+
     ################################## Process #####################################
     # Init cal pickle jars
-    goodCalPicklefile = "./"+project+"_"+session+"_"+band+"GoodCal.pickle"   # Where results saved
+    goodCalPicklefile = project+"_"+session+"_"+band+"_GoodCal.pickle"   # Where results saved
     # Default "best" calibration
     goodCal = {"Source":"  ", "souID":0,"timeRange":(0.0,100.0), "Fract":0.0, "SNR":0.0, "bestRef":0}
-    SaveObject(goodCal, goodCalPicklefile, False)   # Save initial default
+    # Save initial default if it doesn't already exist
+    SaveObject(goodCal, goodCalPicklefile, False)   
     VLBAAddOutFile( goodCalPicklefile, 'project', 'Best calibrator information' )
-    OKCalPicklefile = "./"+project+"_"+session+"_"+band+"OKCal.pickle"   # Where results saved
-    # Default OK calibrators
-    SaveObject(parms["contCals"], OKCalPicklefile, False)   # Save initial default
+
+    OKCalPicklefile = project+"_"+session+"_"+band+"_OKCal.pickle"   # Where results saved
+    SaveObject(parms["contCals"], OKCalPicklefile, False)
     VLBAAddOutFile( OKCalPicklefile, 'project', 'List of calibrators' )
+
+    targetsPicklefile = project+"_"+session+"_"+band+"_targets.pickle"   # Where results saved
+    if ( not parms["targets"] ) and  os.path.exists( targetsPicklefile ):
+        parms["targets"] = FetchObject( targetsPicklefile )    
+    else:
+        SaveObject(parms["targets"], targetsPicklefile, False)
+    VLBAAddOutFile( targetsPicklefile, 'project', 'List of targets' )
     
     # Load the outputs pickle jar
     VLBAFetchOutFiles()
@@ -152,7 +160,13 @@ VLBA Continuum pipeline.
     # frequency dependent default parameters
     VLBAInitContFQParms(uv, parms, err, \
                             logfile=logFile, check=check, debug=debug)
-    
+
+    # Setup target source list
+    if os.path.exists(targetsPicklefile):
+        parms["targets"] = \
+            setupSourceList( parms["targets"],  uv, err, logFile, check, debug )
+        logger.debug("parms['targets'] = " + str(parms["targets"]) )
+  
     # Clear any old calibration/editing 
     if parms["doClearTab"]:
         logger.info("--> Clear old calibration/editing (doClearTab)")
@@ -229,8 +243,9 @@ VLBA Continuum pipeline.
                                               logfile=logFile, check=check, debug=debug)
             if not parms["contCals"] and not check:
                 raise RuntimeError,"Error in finding acceptable calibrators"
+            logger.info("Calibrators = " + str(parms["contCals"]))
         else:
-            # Snatch from pickle jat
+            # Snatch from pickle jar
             parms["contCals"] = FetchObject(OKCalPicklefile)
     
     # Save contCals to a pickle jar
@@ -309,17 +324,22 @@ VLBA Continuum pipeline.
     # image cals
     if parms["doImgCal"] and not check:
         logger.info("--> Image calibrators (doImgCal)")
-        retCode = VLBAImageCals(uv, err, Sources=parms["contCals"], seq=seq, sclass=parms["outCclass"], \
-                                    doCalib=2, flagVer=2, doBand=1, \
-                                    FOV=parms["FOV"], Robust=parms["Robust"], \
-                                    maxPSCLoop=parms["maxPSCLoop"], minFluxPSC=parms["minFluxPSC"], \
-                                    solPInt=parms["solPInt"], solMode=parms["solMode"], \
-                                    maxASCLoop=parms["maxASCLoop"], minFluxASC=parms["minFluxASC"], solAInt=parms["solAInt"], \
-                                    avgPol=parms["avgPol"], avgIF=parms["avgIF"], minSNR=parms["minSNR"], refAnt=goodCal["bestRef"], \
-                                    nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
-        if retCode!=0:
-            raise RuntimeError,"Error in imaging calibrators"
-        
+        VLBAImageCals(uv, err, Sources=parms["contCals"], seq=seq, 
+            sclass=parms["outCclass"], doCalib=2, flagVer=2, doBand=1,
+            FOV=parms["FOV"], Robust=parms["Robust"],
+            maxPSCLoop=parms["maxPSCLoop"], minFluxPSC=parms["minFluxPSC"],
+            solPInt=parms["solPInt"], solMode=parms["solMode"],
+            maxASCLoop=parms["maxASCLoop"], minFluxASC=parms["minFluxASC"],
+            solAInt=parms["solAInt"], avgPol=parms["avgPol"],
+            avgIF=parms["avgIF"], minSNR=parms["minSNR"],
+            refAnt=goodCal["bestRef"], nThreads=nThreads, noScrat=noScrat,
+            logfile=logFile, check=check, debug=debug)
+        # Rewrite OKCal pickle file because calibrators may have been updated
+        SaveObject(parms["contCals"], OKCalPicklefile, True)
+        if len( parms["contCals"] ) <= 0:
+            logger.error("No calibration sources have been detected! Stopping pipeline.")
+            raise RuntimeError, "No calibration sources have been detected!"
+
     # Check if calibrator models now available
     parms["contCalModel"] = VLBAImageModel(parms["contCals"], parms["outCclass"], disk, seq, err)
     
@@ -374,18 +394,23 @@ VLBA Continuum pipeline.
             uvc = UV.newPAUV(uvname, Aname, parms["avgClass"], disk, seq, True, err)
             if err.isErr:
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
-        retCode = VLBAImageCals(uv, err, Sources=parms["targets"], seq=seq, sclass=parms["outTclass"], \
-                                    doCalib=2, flagVer=2, doBand=1, \
-                                    FOV=parms["FOV"], Robust=parms["Robust"], \
-                                    maxPSCLoop=parms["maxPSCLoop"], minFluxPSC=parms["minFluxPSC"], \
-                                    solPInt=parms["solPInt"], solMode=parms["solMode"], \
-                                    maxASCLoop=parms["maxASCLoop"], minFluxASC=parms["minFluxASC"], solAInt=parms["solAInt"], \
-                                    avgPol=parms["avgPol"], avgIF=parms["avgIF"], minSNR=parms["minSNR"],\
-                                    refAnt=goodCal["bestRef"], \
-                                    nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
-        if retCode!=0:
-            raise RuntimeError,"Error in imaging targets"
-        
+        logger.debug("parms['targets'] = " + str(parms["targets"]) )
+        VLBAImageCals(uv, err, Sources=parms["targets"], seq=seq, 
+            sclass=parms["outTclass"], doCalib=2, flagVer=2, doBand=1,
+            FOV=parms["FOV"], Robust=parms["Robust"],
+            maxPSCLoop=parms["maxPSCLoop"], minFluxPSC=parms["minFluxPSC"],
+            solPInt=parms["solPInt"], solMode=parms["solMode"],
+            maxASCLoop=parms["maxASCLoop"], minFluxASC=parms["minFluxASC"],
+            solAInt=parms["solAInt"], avgPol=parms["avgPol"],
+            avgIF=parms["avgIF"], minSNR=parms["minSNR"],
+            refAnt=goodCal["bestRef"], nThreads=nThreads, noScrat=noScrat,
+            logfile=logFile, check=check, debug=debug)
+        # Rewrite targets pickle file because targets may have been updated
+        SaveObject(parms["targets"], targetsPicklefile, True)
+        if len( parms["targets"] ) <= 0:
+            logger.error("No target sources have been detected! Stopping pipeline.")
+            raise RuntimeError, "No target sources have been detected!"
+       
     # Phase calibration using target models
     if parms["doPhaseCal"]:
         logger.info("--> Phase calibration using target models (doPhaseCal)")
@@ -396,14 +421,9 @@ VLBA Continuum pipeline.
             uvc = UV.newPAUV(uvname, Aname, parms["avgClass"], disk, seq, True, err)
             if err.isErr:
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
-        # Get list of all if no explicit list given
-        if len(parms["targets"])<=0:
-            slist = VLBAAllSource(uvc,err,logfile=logFile,check=check,debug=debug)
-        else:
-            slist = parms["targets"]
-        targetModel  = VLBAImageModel(slist,parms["outTclass"],disk, seq, err)
+        targetModel  = VLBAImageModel(parms["targets"],parms["outTclass"],disk, seq, err)
         plotFile = "./"+project+"_"+session+"_"+band+"PhaseCal.ps"
-        retCode = VLBAPhaseCal(uvc, err, calSou=slist, CalModel=parms["targetModel"], \
+        retCode = VLBAPhaseCal(uvc, err, calSou=parms["targets"], CalModel=parms["targetModel"], \
                              doCalib=-1, flagVer=0, doBand=-1, \
                              refAnt=goodCal["bestRef"], solInt=parms["manPCsolInt"], \
                              doSNPlot=parms["doSNPlot"], plotFile=plotFile, \
@@ -461,21 +481,17 @@ VLBA Continuum pipeline.
             uvc = UV.newPAUV(uvname, Aname, parms["avgClass"], disk, seq, True, err)
             if err.isErr:
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
-        # Get list of all if no explicit list given
-        if len(parms["targets"])<=0:
-            slist = VLBAAllSource(uvc,err,logfile=logFile,check=check,debug=debug)
-        else:
-            slist = parms["targets"]
-        retCode = VLBAImageTargets(uvc, err, Sources=slist, seq=seq, sclass=parms["outIclass"], \
-                                       doCalib=2, flagVer=0, doBand=-1, \
-                                       Stokes=parms["Stokes"], FOV=parms["FOV"], Robust=parms["Robust"], \
-                                       maxPSCLoop=2, minFluxPSC=parms["minFluxPSC"], solPInt=parms["solPInt"], solMode="P", \
-                                       maxASCLoop=parms["maxASCLoop"], minFluxASC=parms["minFluxASC"], solAInt=parms["solAInt"], \
-                                       avgPol=parms["avgPol"], avgIF=parms["avgIF"], minSNR=parms["minSNR"], refAnt=goodCal["bestRef"], \
-                                       nTaper=parms["nTaper"], Tapers=parms["Tapers"], do3D=parms["do3D"], \
-                                       nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
-        if retCode!=0:
-            raise RuntimeError,"Error in imaging targets"
+        VLBAImageTargets(uvc, err, Sources=parms["targets"], seq=seq, 
+            sclass=parms["outIclass"], doCalib=2, flagVer=0, doBand=-1,
+            Stokes=parms["Stokes"], FOV=parms["FOV"], Robust=parms["Robust"],
+            maxPSCLoop=2, minFluxPSC=parms["minFluxPSC"],
+            solPInt=parms["solPInt"], solMode="P",
+            maxASCLoop=parms["maxASCLoop"], minFluxASC=parms["minFluxASC"],
+            solAInt=parms["solAInt"], avgPol=parms["avgPol"],
+            avgIF=parms["avgIF"], minSNR=parms["minSNR"],
+            refAnt=goodCal["bestRef"], nTaper=parms["nTaper"],
+            Tapers=parms["Tapers"], do3D=parms["do3D"], nThreads=nThreads,
+            noScrat=noScrat, logfile=logFile, check=check, debug=debug)
     
     # Save UV data? 
     if parms["doSaveUV"] and (not check):
@@ -515,10 +531,8 @@ VLBA Continuum pipeline.
         # How many Stokes images
         nstok = len(parms["Stokes"])
         # Targets
-        if len(parms["targets"])<=0:
-            # fetch full list if needed
-            targets = VLBAAllSource(uv, err, logfile=logFile,check=check,debug=debug)
-        for target in targets:
+        logger.debug("parms['targets'] = " + str( parms['targets'] ))
+        for target in parms["targets"]:
             if not check:
                 # intermediate images
                 oclass = parms["outTclass"]

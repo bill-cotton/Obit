@@ -6,7 +6,7 @@ useful for any pipeline.
 import urllib, urllib2, os.path, pickle, time, sys, logging, socket, signal
 import subprocess, glob, xml.dom.minidom
 from pprint import pprint
-import ObitTask, Image, AIPSDir, OErr, FArray, VLBACal, FITS, UV
+import ObitTask, Image, AIPSDir, OErr, FArray, VLBACal, FITS, UV, UVDesc, Table
 
 logger = logging.getLogger("obitLog.PipeUtil")
 
@@ -90,24 +90,24 @@ out  = ObitTask object
    
 def imstat (inImage, err, blc=[1,1,1,1,1], trc=[0,0,0,0,0], logfile=None):
     """ 
-Get statistics in a specified region of an image plane
-
-Returns dictionary with statistics of selected region with entries:
-    - Mean    = Mean value
-    - RMSHist = RMS value from a histogram analysis
-    - RMS     = Simple RMS value
-    - Max     = maximum value
-    - MaxPos  = pixel of maximum value
-    - Min     = minimum value
-    - MinPos  = pixel of minimum value
-    - Flux    = Flux density if CLEAN beam given, else -1
-    - BeamArea= CLEAN Beam area in pixels
-
-* inImage  = Python Image object, created with getname, getFITS
-* err      = Obit error/message stack
-* blc      = bottom left corner pixel (1-rel)
-* trc      = top right corner pixel (1-rel)
-* logfile  = file to write results to, if None don't print
+    Get statistics in a specified region of an image plane
+    
+    Returns dictionary with statistics of selected region with entries:
+        - Mean    = Mean value
+        - RMSHist = RMS value from a histogram analysis
+        - RMS     = Simple RMS value
+        - Max     = maximum value
+        - MaxPos  = pixel of maximum value
+        - Min     = minimum value
+        - MinPos  = pixel of minimum value
+        - Flux    = Flux density if CLEAN beam given, else -1
+        - BeamArea= CLEAN Beam area in pixels
+    
+    * inImage  = Python Image object, created with getname, getFITS
+    * err      = Obit error/message stack
+    * blc      = bottom left corner pixel (1-rel)
+    * trc      = top right corner pixel (1-rel)
+    * logfile  = file to write results to, if None don't print
     """
     ################################################################
     # Read plane
@@ -158,13 +158,33 @@ Returns dictionary with statistics of selected region with entries:
             "BeamArea":beamarea}
     # end imstat
    
+def setupSourceList( slist, uv, err, logfile, check=False, debug=False ):
+    """
+    Force source list, *slist*, to be a non-empty list.
+
+    If *slist* == None or [], set it to all sources in data set. If *slist* 
+    is a string, make it a one-element list.
+
+    * slist = input source name(s)
+    * uv = Obit uv data object
+    * err = OErr object
+    * logfile = pipeline log file
+    * check = check mode
+    * debug = debug mode
+    """
+    if slist == None or slist == []:
+        slist = VLBACal.VLBAAllSource(uv,err,logfile=logfile,check=check,debug=debug)
+    elif type(slist) == str:
+        slist = [ slist ]
+    return slist
+
 def unique (inn):
     """ 
-Removes duplicate entries from an array of strings.  Returns an array of
-strings, also removes null and blank strings as well as leading or trailing
-blanks.
-
-* inn  = list of strings with possible redundancies
+    Removes duplicate entries from an array of strings.  Returns an array of
+    strings, also removes null and blank strings as well as leading or trailing
+    blanks.
+    
+    * inn  = list of strings with possible redundancies
     """
     # Make local working copy and blank redundant entries
     linn = []
@@ -192,17 +212,17 @@ blanks.
 def AllDest (err, disk=None, Atype="  ", Aname="            ", Aclass="      ",
     Aseq=0):
     """ 
-Delete AIPS files matching a pattern. Strings use AIPS wild cards:
-
-     * blank => any
-     * '?'   => one of any character
-     * "*"   => arbitrary string
-     
-* disk      = AIPS disk number, 0=>all
-* Atype     = AIPS entry type, 'MA' or 'UV'; '  => all
-* Aname     = desired AIPS name, using AIPS wildcards, None -> don't check
-* Aclass    = desired AIPS class, using AIPS wildcards, None -> don't check
-* Aseq      = desired AIPS sequence, 0=> any
+    Delete AIPS files matching a pattern. Strings use AIPS wild cards:
+    
+         * blank => any
+         * '?'   => one of any character
+         * "*"   => arbitrary string
+         
+    * disk      = AIPS disk number, 0=>all
+    * Atype     = AIPS entry type, 'MA' or 'UV'; '  => all
+    * Aname     = desired AIPS name, using AIPS wildcards, None -> don't check
+    * Aclass    = desired AIPS class, using AIPS wildcards, None -> don't check
+    * Aseq      = desired AIPS sequence, 0=> any
     """
     ################################################################
     if err.isErr:   # Ignore if error condition
@@ -631,12 +651,12 @@ Compare UV data files matching *pattern* in *dir1* and *dir2*.
 
 def TestPipe( dir1, dir2, err ):
     """
-Test pipeline by comparing pipeline output in *dir1* with output in *dir2*.
-*dir1* and *dir2* could be, for example, output directories for two different
-versions of Obit.
-
-* dir1, dir2 = directories to use for comparison
-* err = OErr object
+    Test pipeline by comparing pipeline output in *dir1* with output in *dir2*.
+    *dir1* and *dir2* could be, for example, output directories for two different
+    versions of Obit.
+    
+    * dir1, dir2 = directories to use for comparison
+    * err = OErr object
     """
     dir1 = os.path.abspath( dir1 )
     dir2 = os.path.abspath( dir2 )
@@ -644,4 +664,33 @@ versions of Obit.
     CompareUVDir( dir1, dir2, '*CalAvg.uvtab', err )
     print("Testing FITS images.")
     CompareFITSDir( dir1, dir2, '*IClean.fits', err )
+
+def getStartStopTime( uv, err ):
+    """
+    Return the start and stop times of a uv data set as a tuple.
+
+    The times are returned in units of MJD.
+
+    * uv = Obit UV data object
+    * err = OErr object
+    """
+    # Get MJD of the reference date
+    calDate = uv.Desc.Dict["obsdat"]
+    MJD = UVDesc.PDate2JD( calDate ) - 2400000.5
+
+    # Get the data set start and stop times
+    nx = uv.NewTable(Table.READONLY, 'AIPS NX', 0, err)
+    nxNrow = nx.Desc.Dict['nrow'] # last row
+    nx.Open(Table.READONLY, err)
+    row1 = nx.ReadRow( 1, err )
+    rowN = nx.ReadRow( nxNrow, err )
+    tInt = row1['TIME INTERVAL'][0] # scan duration
+    t1 = row1['TIME'][0] - tInt # 1st  scan center time
+    t2 = rowN['TIME'][0] + tInt # last scan center time
+    nx.Close(err)
+    tStart = t1 + MJD
+    tStop = t2 + MJD
+    return (tStart, tStop)
+
+
 
