@@ -3764,7 +3764,9 @@ def VLBAUVFITSTab(inUV, filename, outDisk, err, \
         raise TypeError,"inUV MUST be a Python Obit UV"
     if not OErr.OErrIsA(err):
         raise TypeError,"err MUST be an OErr"
-    #
+    # Remove pre-existing file (otherwise cfitsio may run very slowly) 
+    if os.path.exists(filename):
+        os.remove(filename)
     # Deblank filename
     fn = re.sub('\s','_',filename)
     # Set output
@@ -3783,7 +3785,8 @@ def VLBAUVFITSTab(inUV, filename, outDisk, err, \
     outHistory.TimeStamp(" Start Obit uvTabSave",err)
     outHistory.WriteRec(-1,"uvTabSave / FITS file "+fn+" disk "+str(outDisk),err)
     outHistory.Close(err)
-    History.PCopy2Header (inHistory, outHistory, err)
+    # Currently blowing up; leave commented for now
+    # History.PCopy2Header (inHistory, outHistory, err)
     OErr.printErrMsg(err, "Error with history")
     # zap table
     outHistory.Zap(err)
@@ -6519,9 +6522,8 @@ def VLBAAddOutFile( filename, target, description, logFile=""):
     * target = name of target source; or 'project' if this is a multi-source file
     * description = description of file
     """
-    mess = "Adding " + filename + \
-        " (for " + target + ") to list of output files."
-    printMess( mess, logFile )
+    logger.info( "Adding " + filename + 
+        " (for " + target + ") to list of output files." )
     d = { 'name' : filename, 'description' : description }
     projFiles = outfiles['project']
     srcFiles = outfiles['source']
