@@ -636,7 +636,7 @@ def pipeline( aipsSetup, parmFile ):
         # Get project metadata; save to pickle file
         projMetadata = VLBAProjMetadata( uvc, AIPS_VERSION, err, contCals=parms["contCals"],
             goodCal = goodCal, project = project, session = session, band = band,
-            dataInUVF = dataInUVF )
+            dataInUVF = dataInUVF, archFileID = archFileID )
         picklefile = "./"+project+"_"+session+"_"+band+"ProjReport.pickle"
         SaveObject(projMetadata, picklefile, True) 
         VLBAAddOutFile( picklefile, 'project', 'Project metadata' )

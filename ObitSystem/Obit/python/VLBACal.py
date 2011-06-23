@@ -6057,7 +6057,8 @@ def VLBAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
     # end VLBACntrPlots
 
 def VLBAProjMetadata( uv, AIPS_VERSION, err, contCals=[None], goodCal={}, 
-    project='project', session='session', band='band', dataInUVF='' ):
+    project='project', session='session', band='band', dataInUVF='', 
+    archFileID='' ):
     """
     Return a dictionary holding project metadata. Contents:
 
@@ -6083,7 +6084,8 @@ def VLBAProjMetadata( uv, AIPS_VERSION, err, contCals=[None], goodCal={},
     "anNames"        names of all antennas used
     "freqCov"        frequency coverage (low & up sideband pairs for all IFs)
     "minFringeMas"   minimum fringe spacing (mas)
-    "dataSet"        Data set archive file name }
+    "dataSet"        Data set archive file name
+    "archFileID"     Archive file ID
     ===============  ========================================================
 
     * uv = uv data object for which the report will be generated
@@ -6095,6 +6097,7 @@ def VLBAProjMetadata( uv, AIPS_VERSION, err, contCals=[None], goodCal={},
     * session = Observation project session
     * band = receiver band code
     * dataInUVF = data set archive file name
+    * archFileID = archive file ID
     """
     r = {} 
     r["project"] = project
@@ -6117,7 +6120,7 @@ def VLBAProjMetadata( uv, AIPS_VERSION, err, contCals=[None], goodCal={},
     r["goodCalBestRef"] = goodCal["bestRef"]
     r["goodCalSNR"] = goodCal["SNR"]
     r["dataSet"] = dataInUVF
-    r["archFileId"] = archFileId # archive file ID
+    r["archFileID"] = archFileID # archive file ID
 
     # Get antenna names and positions
     antab = uv.NewTable(Table.READONLY,"AIPS AN",1,err)
@@ -6636,7 +6639,8 @@ def VLBAGetParms( fileDict, DESTDIR=None ):
               ('@BAND@',    bandLetter),
               ('@UVFITS@',  fileDict['logical_file']),
               ('@CALINT@',  '10.0 / 60.0' ), # default value
-              ('@DESTDIR@', DESTDIR) ] # should be stored somewhere (env var?)
+              ('@DESTDIR@', DESTDIR), # should be stored somewhere (env var?)
+              ('@ARCHFILEID@', fileDict['arch_file_id']) ]
     return parms
 
 def VLBAGetSessionCode( fileDict ):
@@ -6885,7 +6889,7 @@ def VLBAWriteVOTable( projMeta, srcMeta, filename="votable.xml" ):
                               ("arraysize","*"),
                               ("ucd","meta.version;meta.software") ] )
             XMLAddDescription( pr, "Obit version (svn revison number)" )
-        elif key in ("archFileId"):
+        elif key in ("archFileID"):
             setAttribs( pr, [ ("name", key ),
                               ("value", projMeta[key] ),
                               ("datatype","int" ),

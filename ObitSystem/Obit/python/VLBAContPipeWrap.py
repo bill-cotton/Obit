@@ -190,17 +190,17 @@ Copy output files to destination directory. This is done using rsync.
  
 def checkDirEquality( dir1, dir2 ):
     """
-Compare directories given by paths *dir1* and *dir2*.  If the files contained
-in the directory are the same, return *True*.  If any files differ return 
-*False*.
-
-Use system utility *diff* for directory comparison. *diff* compares directory
-*and* file content in one call. This is not easy to do with Python's filecmp
-module.
-
-:param string dir1: first directory to compare
-:param string dir2: second directory to compare
-:rtype: boolean
+    Compare directories given by paths *dir1* and *dir2*.  If the files contained
+    in the directory are the same, return *True*.  If any files differ return 
+    *False*.
+    
+    Use system utility *diff* for directory comparison. *diff* compares directory
+    *and* file content in one call. This is not easy to do with Python's filecmp
+    module.
+    
+    :param string dir1: first directory to compare
+    :param string dir2: second directory to compare
+    :rtype: boolean
     """
     logger.info("Comparing contents of work and validation directories.")
     logger.debug("diff will ignore logging.conf")
@@ -221,13 +221,13 @@ module.
 
 def substitute( inFile, outFile, str1, str2 ):
     """
-Write the contents of inFile to outFile with each instance of str1
-replaced with str2.
-
-:param string inFile: input file
-:param string outFile: output file
-:param string str1: string to be replaced
-:param string str2: replacement string
+    Write the contents of inFile to outFile with each instance of str1
+    replaced with str2.
+    
+    :param string inFile: input file
+    :param string outFile: output file
+    :param string str1: string to be replaced
+    :param string str2: replacement string
     """
     logger.debug("Writing " + inFile + " to " + outFile + 
         " while replacing " + str1 + " with " + str2 )

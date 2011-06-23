@@ -1,17 +1,19 @@
 # Template project parameter file VLBAContPipe
 # Generate parameter file using VLBACal.VLBAMakeParmFile
 #
-# Substitutions
-# @PROJECT@  Project name (up to 12 char)
-# @SESSION@  Session code
-# @BAND@     Band code
-# @UVFITS@   Name of uvfits file in $FITS
-# @CALINT@   CL table interval in min
-# @DESTDIR@  Output directory 
+# Substitutions surrounded by 'at' characters
+# PROJECT     Project name (up to 12 char)
+# SESSION     Session code
+# BAND        Band code
+# UVFITS      Name of uvfits file in $FITS
+# CALINT      CL table interval in min
+# DESTDIR     Output directory 
+# ARCHFILEID  Archive file ID
 #--------------------------------------------------------------------------------------------
 project       = "@PROJECT@"                # Project name (12 char or less, used as AIPS Name)
 session       = "@SESSION@"                # Project session code
 band          = "@BAND@"                   # Observing band
+archFileID    = @ARCHFILEID@               # Archive File ID
 logFile       = project+"_"+session+"_"+band+".log"  # Processing log file
 #parms["copyDestDir"]   = '/home/ftp/NRAO-staff/bcotton/PipeOut'   # Destination directory for copying output files
 #   empty string -> do not copy
@@ -25,11 +27,12 @@ Compress      = True                # Use compressed UV data?
 # Quantization correction
 parms["QuantFlag"]   = 0.8          # If >0, flag solutions < QuantFlag (use 0.9 for 1 bit, 0.8 for 2 bit)
 
-# Specify calibration/target sources
-#parms["contCals"]     = ["1253-055","1510-089","2005+403","2200+420","2251+158"] # List of cals
-parms["contCalModel"] = None                                                      # List of models
-parms["targets"]     = []           # targets, empty = all
-parms["refAnts"]     = [2,4,5,8,9]  # List of acceptable reference antennas for fringe fitting 
+# Specify calibration/target sources. (When initialized, both parameters
+# default to all sources, so leave commented here until ready to use.)
+#parms["contCals"]    = []           # list of calibrators
+#parms["targets"]     = []           # targets, empty = all
+parms["contCalModel"] = None        # List of models
+parms["refAnts"]      = [2,4,5,8,9] # List of acceptable reference antennas for fringe fitting 
 
 # Final Image/Clean
 parms["Stokes"]          = "I"      # Stokes to image
