@@ -42,19 +42,22 @@ unique working directory.
     ##### pipeWrap PARAMETERS #####
     aipsSetup      = 'PipeAIPSSetup.py' # pipeline AIPS setup file
     # validation area
-    checkDir       = '/lustre/aoc/users/jcrossle/VLBAPipeProducts/check' 
+    pipeProducts   = '/lustre/aoc/users/jcrossle/VLBAPipeProducts'
+    checkDir       = pipeProducts + '/check' 
     fitsDir        = '/lustre/aoc/users/jcrossle/fits' # fits download directory
     outfilesPickle = 'outfiles.pickle' # output files pickle
     logConfig      = 'logging.conf' # logging module configuration
     wrapLog        = 'VLBAContPipeWrap.log' # wrapper log, from logConfig file
     pipeNowLog     = 'pipe.now.log' # link to log of currenting running pipeline
+    pipeRecord     = '/users/jcrossle/vlbaPipeline/record/pipelineRecord.pickle'
     ###############################
 
     # Send query and print summary
     logger.info("Submitting query to archive")
     responseLines = PipeUtil.QueryArchive( startDate, endDate, options.project )
     fileDictList = PipeUtil.ParseArchiveResponse( responseLines )
-    logger.info( "\n" + PipeUtil.SummarizeArchiveResponse( fileDictList ) )
+    pipeRecordList = PipeUtil.FetchObject( pipeRecord )
+    logger.info( "\n" + PipeUtil.SummarizeArchiveResponse( fileDictList, pipeRecordList ) )
     if options.verbose:
         str1 = pprint.pformat( fileDictList )
         logger.info( "\n" + str1 )
@@ -105,6 +108,7 @@ unique working directory.
                 VLBACal.VLBAGetSessionCode( fileDict ) + '_' + \
                 VLBACal.VLBAGetBandLetter( fileDict )[0] + '.log'
             substitute( logConfig, newLogConfig, wrapLog, newLogName )
+            # Create symlink to current pipeline log
             if os.path.lexists( pipeNowLog ):
                 os.remove( pipeNowLog )
             os.symlink( dirName + '/' + newLogName, pipeNowLog )
@@ -119,6 +123,9 @@ unique working directory.
                 " / " + str( len(fileDictList) ) + ")" )
             cmd = ("python", os.environ['OBIT'] + "/python/VLBAContPipe.py", 
                 aipsSetup, parmFile)
+            cmdStr = ''
+            for s in cmd: cmdStr += s + ' '
+            logger.info("Command: " + cmdStr)
             subprocess.check_call( cmd )
             # Copy files to check dir
             projCheckDir = checkDir + '/' + dirName
@@ -131,6 +138,12 @@ unique working directory.
                 shutil.rmtree( dirName ) 
             else:
                 logger.error("Not removing " + dirName)
+            # Make record of processed data set
+            logger.info("Adding archive file metadata to pipeline processing record:\n" + 
+                pipeRecord )
+            logger.debug("Setting pipe.STATUS to 'check'")
+            fileDict['pipe.STATUS']='check' # Set data set pipeline status to check
+            makeFileRecord( fileDict, pipeRecord )
         except HTTPError, e:
             logger.error("Server could not fulfill request. Error code: " + \
                 str(e.code))
@@ -236,6 +249,34 @@ def substitute( inFile, outFile, str1, str2 ):
     o.write( re.sub( str1, str2, data ) )
     o.close()
 
+def makeFileRecord( fileDict, pickle ):
+    """
+    Make a record of the archive file processed.
+
+    The record is a Python pickle file that holds a list of archive file
+    dictionaries.
+
+    * fileDict = archive file dictionary
+    * pickle = name of pickle file to use
+    """
+    recordList = PipeUtil.FetchObject( pickle )
+    recordList.append( fileDict )
+    PipeUtil.SaveObject( recordList, pickle, True )
+
+def makeFileRecord_archive( fileDictList, pickle, archFileID ):
+    """
+    Add a file to the pipeline processing record with 'pipe.STATUS':'archive'.
+    """
+    fileDict = {}
+    for fdict in fileDictList:
+        if fdict['arch_file_id'] == archFileID:
+            fileDict = fdict
+            break
+    fileDict['pipe.STATUS'] = 'archive'
+    print "Adding this dictionary to the pipeline record:"
+    pprint.pprint( fileDict )
+    makeFileRecord( fileDict, pickle )
+    
 if __name__ == "__main__":
     # Get inputs from command line
     usage = "usage: %prog [options] StartDate [StopDate]"

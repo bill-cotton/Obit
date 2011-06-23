@@ -317,7 +317,7 @@ def SaveObject (pyobj, file, update):
     
     * pyobj    = python object to save
     * file     = pickle file name
-    * update   = If True update, otherwise only if file doesn't already exist
+    * update   = If True overwrite, otherwise only if file doesn't already exist
     """
     ################################################################
     # Does file exist?, only do this if not or update
@@ -483,23 +483,43 @@ download is complete.
             logger.info("Download complete.")
             return
 
-def SummarizeArchiveResponse( fileList ):
+def SummarizeArchiveResponse( fileList, pipeRecordList=None ):
     """
-Return a table summary of the archive response as a string.
+    Return a table summary of the archive response as a string.
 
-* fileList = List of file dictionaries returned by ParseArchiveResponse
+    If *pipeRecordList* is given, an asterisk will be added to the end of a
+    summary table row if the corresponding file is present in the pipeline
+    record list and if the 'pipe.STATUS' member in the record list indicates
+    the file has been properly processed.
+    
+    * fileList = List of file dictionaries returned by ParseArchiveResponse
+    * pipeRecordList = List of file dictionaries from the pipeline processing record
     """
+    # Prepare for comparison with pipeline processing record
+    pipeRecordKeys = {}
+    goodStatus = ('archive', 'check')
+    if pipeRecordList:
+        logger.info("End-of-row astricies indicate data already processed by the pipeline.")
+        for fdict in pipeRecordList:
+            pipeRecordKeys[ fdict['arch_file_id'] ] = fdict['pipe.STATUS']
+    # Generate summary table
     formatHead = "%-2s %-6s %-3s %-3s %-3s %-18s %-18s %-7s %-6s\n"
     table = formatHead % \
         ( "#-", "PCODE-", "Sec", "Seg", "Bnd", "STARTTIME---------", "STOPTIME----------", 
         "FRQ_GHz", "SIZE--" )
     for i,file in enumerate(fileList):
-        formatStr = "%2d %6s %3s %3s %3s %18s %18s %7.4f %6s\n" 
+        formatStr = "%2d %6s %3s %3s %3s %18s %18s %7.4f %6s" 
         ( bandLetter, fGHz ) = VLBACal.VLBAGetBandLetter(file)
         table += formatStr % ( i, file['project_code'], 
             VLBACal.VLBAGetSessionCode( file ), file['segment'], 
             bandLetter, file['starttime'], 
             file['stoptime'], fGHz, file['FILESIZE_UNIT'] )
+        # Append pipeline record info to end of table row
+        if (file['arch_file_id'] in pipeRecordKeys) and \
+           ( pipeRecordKeys[ file['arch_file_id'] ] in goodStatus ):
+            table += " *\n" 
+        else:
+            table += "\n"
     return table
 
 def XMLSetAttributes( element, nameValList ):
