@@ -115,6 +115,14 @@ typedef struct {
   olong zeroLagSize;
   /** Order of zeroLag axes */
   ObitBDFAxisName *zeroLagAxes;
+  /**  Scan number */
+  olong scanNumber;
+  /**  Subscan number */
+  olong subScanNumber;
+  /**  Scan Id - number in ScanTab */
+  olong scanId;
+  /** Is the current scan/subscan a holography scan? */
+  gboolean isHolo;
 } BDFScanInfo;
 
 /** Integration info from XML           */

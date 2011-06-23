@@ -1,7 +1,7 @@
 """ Python Obit OTFArrayGeom Obit "On the Fly" array geometry class.
 This contains information about the detector array geometry and related
 """
-# $Id:  $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2009
 #  Associated Universities, Inc. Washington DC, USA.

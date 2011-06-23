@@ -278,7 +278,15 @@ enum obitASDMBand {
   ASDMBand_K,
   ASDMBand_Ka,
   ASDMBand_Q,
-  ASDMBand_W
+  ASDMBand_A3,
+  ASDMBand_A4,
+  ASDMBand_A5,
+  ASDMBand_A6,
+  ASDMBand_A7,
+  ASDMBand_A8,
+  ASDMBand_A9,
+  ASDMBand_A10,
+  ASDMBand_A11
 }; /* end enum obitASDMBand */
 /** typedef for enum for ASDMBand. */
 typedef enum obitASDMBand ObitASDMBand;
@@ -379,6 +387,9 @@ void ObitSDMSourceTabFixCode(ObitSDMData *in);
 /** Public: Select Scan by code  */
 gboolean ObitSDMDataSelCode  (ObitSDMData *in, olong iMain, gchar *selCode);
 
+/** Find a pointingTab row for an antenna/time */
+ASDMPointingRow* ObitSDMDataPointingLookup(ObitSDMData *in, odouble JD, olong ant, 
+					   ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

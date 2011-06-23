@@ -1300,7 +1300,15 @@ ObitASDMBand ObitSDMDataBand2Band (gchar *code)
   if (!strncmp (code, "Ka",  2)) return ASDMBand_Ka;
   if (!strncmp (code, "K",   1)) return ASDMBand_K;
   if (!strncmp (code, "Q",   1)) return ASDMBand_Q;
-  if (!strncmp (code, "W",   1)) return ASDMBand_W;
+  if (!strncmp (code, "A3",  1)) return ASDMBand_A3;
+  if (!strncmp (code, "A4",  1)) return ASDMBand_A4;
+  if (!strncmp (code, "A5",  1)) return ASDMBand_A5;
+  if (!strncmp (code, "A6",  1)) return ASDMBand_A6;
+  if (!strncmp (code, "A7",  1)) return ASDMBand_A7;
+  if (!strncmp (code, "A8",  1)) return ASDMBand_A8;
+  if (!strncmp (code, "A9",  1)) return ASDMBand_A9;
+  if (!strncmp (code, "A10", 1)) return ASDMBand_A10;
+  if (!strncmp (code, "A11", 1)) return ASDMBand_A11;
   return out;
 } /* end ObitSDMDataBand2Band */
 
@@ -1322,7 +1330,15 @@ ObitASDMBand ObitSDMDataFreq2Band (odouble freq)
   if (freq<26.5e9)  return ASDMBand_K;
   if (freq<40.0e9)  return ASDMBand_Ka;
   if (freq<50.0e9)  return ASDMBand_Q;
-  if (freq<100.0e9) return ASDMBand_W;
+  if (freq<117.0e9) return ASDMBand_A3;
+  if (freq<163.0e9) return ASDMBand_A4;
+  if (freq<211.0e9) return ASDMBand_A5;
+  if (freq<275.0e9) return ASDMBand_A6;
+  if (freq<375.0e9) return ASDMBand_A7;
+  if (freq<510.0e9) return ASDMBand_A8;
+  if (freq<730.0e9) return ASDMBand_A9;
+  if (freq<960.0e9) return ASDMBand_A10;
+  if (freq<2000.0e9) return ASDMBand_A11;
   return out;
 } /* end ObitSDMDataFreq2Band */
 
@@ -1486,6 +1502,40 @@ gboolean ObitSDMDataSelCode  (ObitSDMData *in, olong iMain, gchar *selCode)
 
   return want;
 } /* end ObitSDMDataSelCode */
+
+/**   
+ * Look up pointing for an antenna at a given time (JD) in PointingTab
+ * \param  in      ASDM object
+ * \param  JD      Time as JD in question
+ * \param  ant     Antenna Id
+ * \param  err     Obit error/message stack
+ * \return pointer to selected table row entry or NULL if failed.
+ */
+ASDMPointingRow* ObitSDMDataPointingLookup  (ObitSDMData *in, odouble JD, olong ant, 
+					     ObitErr *err)
+{
+  ASDMPointingRow* out=NULL;
+  olong i, itab;
+  odouble *timeI;
+  gchar *routine = "PointingLookup";
+
+  if (err->error) return out;
+
+  /* Find matching entry */
+  itab = -1;
+  for (i=0; i<in->PointingTab->nrows; i++) {
+    timeI = in->PointingTab->rows[i]->timeInterval;
+    if ((in->PointingTab->rows[i]->antennaId==ant) &&
+	(timeI[0]-0.5*timeI[1]<=JD) && (timeI[0]+0.5*timeI[1]>=JD))
+      {itab=i; break;}
+  } /* End loop looking for table */
+  /* Find it? */
+  Obit_retval_if_fail((itab>=0), err, out,
+		      "%s: Failed to find pointing for ant %d JD %lf", 
+		      routine, ant, JD);
+  out = in->PointingTab->rows[itab];
+  return out;
+} /* end ObitSDMDataPointingLookup */
 
 /**
  * Initialize global ClassInfo Structure.
@@ -5800,7 +5850,7 @@ static ASDMScanTable* ParseASDMScanTable(ObitSDMData *me,
       out->rows[irow]->numIntent = ASDMparse_int (line, maxLine, prior, &next);
       continue;
     }
-     prior = "<numSubscan>";
+     prior = "<numSubScan>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->numSubscan = ASDMparse_int (line, maxLine, prior, &next);
       continue;

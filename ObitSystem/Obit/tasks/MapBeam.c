@@ -1772,7 +1772,7 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
   olong    count, maxElem=*nelem, iElem, indx, iant, ant1, ant2, off=0, iver;
   olong    i, j, jlocs, jlocf, jlocif, incs, incf, incif, doff, ddoff;
   olong    nx, ny, iIF, ichan, *refAnts, nRefAnt, ix, iy, prtLv=0;
-  gboolean OK;
+  gboolean OK1, OK2;
   gchar    *routine = "accumData";
 
   /* error checks */
@@ -1877,6 +1877,24 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
       /* In blanked time? */
       if (time<tblank) goto next;
 
+      /* Want antennas? */
+      base = inData->buffer[indx+inData->myDesc->ilocb];
+      /* crack Baseline */
+      ant1 = (base / 256.0) + 0.001;
+      ant2 = (base - ant1 * 256) + 0.001;
+      if (ant>0) {
+	if ((ant1!=ant) && (ant2!=ant)) goto next;
+      }
+      /* One and only one must be a reference antenna */
+      OK1 = FALSE;
+      OK2 = FALSE;
+      for (j=0; j<nRefAnt; j++) {
+	OK1 = OK1 || (ant1==refAnts[j]);
+	OK2 = OK2 || (ant2==refAnts[j]);
+      }
+      if (!(OK1 || OK2)) goto next;
+      if (OK1 && OK2)    goto next;
+
       /* First time in pointing? */
       if (CntCell[iElem]<=0) {
  	ulast  = u;
@@ -1894,23 +1912,6 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
 			     "%s Too many pointings %d >= %d",  
 			     routine, iElem, maxElem);  
       }
-
-      /* In blanked time? */
-      if (time<tblank) goto next;
-
-      /* Want antennas? */
-      base = inData->buffer[indx+inData->myDesc->ilocb];
-      /* crack Baseline */
-      ant1 = (base / 256.0) + 0.001;
-      ant2 = (base - ant1 * 256) + 0.001;
-      if (ant>0) {
-	if ((ant1!=ant) && (ant2!=ant)) goto next;
-      }
-      /* One must be a reference antenna */
-      OK = FALSE;
-      for (j=0; j<nRefAnt; j++) 
-	OK = OK || (ant1==refAnts[j]) || (ant2==refAnts[j]);
-      if (!OK) goto next;
 
       /* Observing geometry (radians) */
       Az = ObitAntennaListAz (AList, ant1, time, Source);
@@ -1995,6 +1996,10 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
       SumAzCell[i] /= CntCell[i];
       SumElCell[i] /= CntCell[i];
       SumPACell[i] /= CntCell[i];
+    } else {  /* Big value so they will be ignored */
+      SumAzCell[i] = 1.0e10;
+      SumElCell[i] = 1.0e10;
+      SumPACell[i] = 1.0e10;
     }
 
     /* Loop over freq, IF */
@@ -2067,6 +2072,7 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
     if (prtLv>=2) {
       ix = (olong) (SumAzCell[i] + nx/2 + 1.5);
       iy = (olong) (SumElCell[i] + ny/2 + 1.5);
+      if ((SumAzCell[i]>1000.) || (SumElCell[i]>1000.)) continue;
       Obit_log_error(err, OBIT_InfoErr, 
 		     "Cell %3d %3d Az %8.1f asec, El %8.1f asec, I %6.3f Q %6.3f U %6.3f V %6.3f Jy",
 		     ix,iy, SumAzCell[i]*xCells*206265., 
@@ -2375,15 +2381,17 @@ void lagrange(ofloat x, ofloat y, olong n, olong hwid,
       /* Inner loop over list */
       for (i=0; i<n; i++) {
 	/* X Within hwid? and i!=j */
-	if ((fabs(x-xlist[i])<=xhwid) && 
-	    (i!=j) && (fabs(xlist[j]-xlist[i])>0.3)) {
+	if (fabs(x-xlist[i])<=xhwid) {
+	    /*if ((fabs(x-xlist[i])<=xhwid) && 
+	      (i!=j) && (fabs(xlist[j]-xlist[i])>0.3)) {*/
 	  countx++;
 	  prodx  *= (odouble)(x - xlist[i]);
 	  prodxd *= (odouble)(xlist[j] - xlist[i]);
 	}
 	/* Y Within hwid? and i!=j */
-	if ((fabs(y-ylist[i])<=xhwid) &&
-	    (i!=j) &&  (fabs(ylist[j]-ylist[i])>0.3)) {
+	if (fabs(y-ylist[i])<=xhwid) {
+	    /*if ((fabs(y-ylist[i])<=xhwid) &&
+	      (i!=j) &&  (fabs(ylist[j]-ylist[i])>0.3)) {*/
 	  county++;
 	  prody  *= (odouble)(y - ylist[i]);
 	  prodyd *= (odouble)(ylist[j] - ylist[i]);
@@ -2392,7 +2400,10 @@ void lagrange(ofloat x, ofloat y, olong n, olong hwid,
     }
     /* put it together */
     if ((countx>=1)  || (county>=1))
-      coef[j] = (ofloat)(prodx*prody / (prodxd*prodyd));
+      if ((prodxd!=0.0) && (prodyd!=0.0))
+	coef[j] = (ofloat)(prodx*prody / (prodxd*prodyd));
+      else
+	coef[j] = 1.0;
     else coef[j] = 0.0;
   } /* end loop over list */
   

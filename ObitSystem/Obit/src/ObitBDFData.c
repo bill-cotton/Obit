@@ -361,7 +361,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
 			   ObitErr *err)
 {
   gchar *startInfo, *endInfo, *startBB, *endBB, *prior, *next, *xnext, *tstr;
-  olong  configDescriptionId, fieldId, sourceId, inext;
+  olong  configDescriptionId, fieldId, sourceId, inext, ScanId, iScan, iIntent;
   olong maxStr, maxStr2, i, j, count, *antIds, iConfig, iAnt, jAnt, jField, iSW, jSW, jSource;
   olong blOrder, polnOrder, freqOrder, SPWOrder, BBOrder, APCOrder, binOrder;
   olong *SWoff=NULL;
@@ -384,7 +384,9 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   if (!in->isALMA) in->isALMA = !strncmp(in->SDMData->ExecBlockTab->rows[0]->telescopeName, "AOS", 3);
 
   /* Init */
-  in->ScanInfo->iMain      = iMain;
+  in->ScanInfo->iMain         = iMain;
+  in->ScanInfo->scanNumber    = in->SDMData->MainTab->rows[iMain]->scanNumber;
+  in->ScanInfo->subScanNumber = in->SDMData->MainTab->rows[iMain]->subscanNumber;
   in->ScanInfo->numAntenna  = -1;
   in->ScanInfo->numBaseband = 0;
   in->haveFlag = FALSE;
@@ -409,6 +411,35 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   if (in->ScanInfo->zeroLagAxes) 
     {g_free(in->ScanInfo->zeroLagAxes); in->ScanInfo->zeroLagAxes = NULL;}
 
+  /* Lookup scan ID */
+  for (iScan=0; iScan<in->SDMData->ScanTab->nrows; iScan++) {
+    ScanId = iScan;
+    if ( in->SDMData->MainTab->rows[iMain]->scanNumber == 
+ 	 in->SDMData->ScanTab->rows[ScanId]->scanNumber) break;
+  }
+  in->ScanInfo->scanId = ScanId;
+  
+  /* Is this a holography scan/subscan? */
+  in->ScanInfo->isHolo = FALSE;
+  for (iIntent=0; iIntent<in->SDMData->ScanTab->rows[ScanId]->numIntent; iIntent++) {
+    in->ScanInfo->isHolo = in->ScanInfo->isHolo ||  
+      (!strncmp(in->SDMData->ScanTab->rows[ScanId]->scanIntent[iIntent], 
+ 		"MAP_ANTENNA_SURFACE", 19));
+    if (in->ScanInfo->isHolo) break;
+  }
+  
+  /* If isHolo check subscan - may be phase reference = not holography */
+  if (in->ScanInfo->isHolo) {
+    for (iScan=0; iScan<in->SDMData->SubscanTab->nrows; iScan++) {
+      ScanId = iScan;
+      if ((in->ScanInfo->scanNumber==in->SDMData->SubscanTab->rows[ScanId]->scanNumber) &&
+ 	  (in->ScanInfo->subScanNumber==in->SDMData->SubscanTab->rows[ScanId]->subscanNumber))
+ 	break;
+    }
+    if (!strncmp(in->SDMData->SubscanTab->rows[ScanId]->subscanIntent,
+ 		 "REFERENCE", 9)) in->ScanInfo->isHolo = FALSE;
+  }
+  
   /* Parse scan header - first find limits */
   /* Find first non null */
   while (*in->current==0) (*in->current)++;  /* dangerous */
@@ -698,6 +729,9 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   in->nant   = in->ScanInfo->numAntenna;
   if (in->antNo) g_free(in->antNo);
   in->antNo  = g_malloc0(in->nant*sizeof(olong));
+  if (in->antId) g_free(in->antId);
+  in->antId  = g_malloc0(2*in->nant*sizeof(olong));
+
   /* Lookup table of antenna numbers corresponding to IDs */
 
   /* Find entry  in configDescription table */
@@ -729,6 +763,8 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
     else in->antNo[iAnt] = in->SDMData->AntennaTab->rows[jAnt]->antennaId;
     /* ALMA antennas are 0 rel */
     if (in->isALMA) in->antNo[iAnt]++;
+    /* Inverse lookup */
+    in->antId[in->antNo[iAnt]] = iAnt;
   } /* end loop over antennas */
 
   /* Atmospheric phase correction stuff */
@@ -1388,6 +1424,7 @@ void ObitBDFDataInit  (gpointer inn)
   in->weightData          = NULL;
   in->zeroLagData         = NULL;
   in->antNo               = NULL;
+  in->antId               = NULL;
   in->coffs               = NULL;
   in->coffif              = NULL;
   in->aoffs               = NULL;
@@ -1436,6 +1473,7 @@ void ObitBDFDataClear (gpointer inn)
   if (in->weightData)          g_free(in->weightData);
   if (in->zeroLagData)         g_free(in->zeroLagData);
   if (in->antNo)               g_free(in->antNo);
+  if (in->antId)               g_free(in->antId);
   if (in->coffs)               g_free(in->coffs);
   if (in->coffif)              g_free(in->coffif);
   if (in->aoffs)               g_free(in->aoffs);

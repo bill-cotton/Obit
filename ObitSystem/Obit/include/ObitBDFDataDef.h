@@ -122,6 +122,8 @@ olong topAnt;
 olong nextAVis;
 /** Antenna number per Id */
 olong *antNo;
+/** Antenna Id per number */
+olong *antId;
 /** Current scan source number */
 olong sourceNo;
 /** Current  time */

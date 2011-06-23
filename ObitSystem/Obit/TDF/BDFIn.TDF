@@ -86,6 +86,9 @@ only, "CALIBRATE-POINTING", are also flagged.
 based on standard EVLA gain curves, an opacity model based partly on
 the weather (WX) table and optionally EVLA switched power measurements
 to remove variations in electronics gain.
+   Scans with an expressed intent of "MAP_ANTENNA_SURFACE" will be 
+treated as being in holography mode.  
+See the explain section for more details
 
 Adverbs:
   DataRoot...Archive directory for project
@@ -109,10 +112,13 @@ Data selection
   selBand....Band Code to select.  Only Spectral windows with 
              this freq. band are selected, others ignored.
              "  " -> use band in first spectral window.
-             Recognized values:
-               "4","P","L","S","C","X","Ku","K","Ka","Q","W"
+             Recognized EVLA values:
+               "4","P","L","S","C","X","Ku","K","Ka","Q",
              Selection by band is risky as EVLA bands overlap which may
              result in the exclusion of some data.
+             Recognized ALMA values:
+               "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11"
+             where the numbers correspond to ALMA band codes.
   selCode....Source calibrator code to select scans:
              selCode starting with a blank matches any scan,
              "*" matches anything other than "NONE", i.e. any calibrator, 
@@ -157,3 +163,24 @@ doAtmCor                            Select data with Atm. Corr?
              This is useful in long runs or batch files.
              Path is absolute or relative to where the task executes.
 ----------------------------------------------------------------
+
+BDFIn: task to translate ALMA format data to AIPS or FITS
+DOCUMENTOR: W. D. Cotton
+RELATED PROGRAMS: ASDMList
+
+Holography mode (EVLA)
+=====================
+   If the expressed intent of a scan is 'MAP_ANTENNA_SURFACE' then the 
+scan is assumed to be in holography mode.  In this mode, a number of 
+reference antennas trach a given source and the others observe in a 
+raster pattern, mapping out the antenna pattern.  In this mode, the 
+us and vs are replaced with the direction cosines in azimuth and 
+elevation where these offsets are extracted from the Pointing.xml 
+table.  The u coordinate is the offset direction cosine of the antenna 
+from the source position in azimuth (from N thru E) and v is the 
+offset direction cosine of the source from the antenna pointing.
+The position of the source in the beam is (azimuth,elevation)=(-u,v)
+(Obit Development Memo 17 - corrected)
+   Antennas identified as reference antennas are indicated as such
+in the history.
+   Holography mode data can be imaged in Obit task MapBeam.

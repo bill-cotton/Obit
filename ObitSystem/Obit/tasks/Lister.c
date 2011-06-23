@@ -773,6 +773,9 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
       u   = blscale * inData->buffer[indx+inDesc->ilocu];
       v   = blscale * inData->buffer[indx+inDesc->ilocv];
       w   = blscale * inData->buffer[indx+inDesc->ilocw];
+      /* Trap for holography data */
+      if (w> 9999.0) w = inData->buffer[indx+inDesc->ilocw];
+      if (w<-9999.0) w = inData->buffer[indx+inDesc->ilocw];
       day2dhms (inData->buffer[indx+inDesc->iloct], timeString);
       cbase = inData->buffer[indx+inDesc->ilocb]; /* Baseline */
       ant1 = (cbase / 256.0) + 0.001;
@@ -1651,7 +1654,7 @@ void getDataScale (ObitUV* inData, ofloat *blscale, ofloat *wtscale,
       v   = inData->buffer[indx+inDesc->ilocv];
       maxBL = MAX (maxBL, fabs(v));
       w   = inData->buffer[indx+inDesc->ilocw];
-      maxBL = MAX (maxBL, fabs(w));
+      /*maxBL = MAX (maxBL, fabs(w));*/
       good = FALSE;
       for (j=0; j<inDesc->ncorr; j++) {
 	kndx = jndx + 3*j;
@@ -1676,6 +1679,14 @@ void getDataScale (ObitUV* inData, ofloat *blscale, ofloat *wtscale,
 
   /* Scalings */
   *blscale = 1;
+  if (maxBL>1.0e-5) *blscale = 1.0e7;
+  if (maxBL>1.0e-4) *blscale = 1.0e6;
+  if (maxBL>1.0e-3) *blscale = 1.0e5;
+  if (maxBL>1.0e-2) *blscale = 1.0e4;
+  if (maxBL>1.0e-1) *blscale = 1.0e3;
+  if (maxBL>1.0e0) *blscale = 1.0e2;
+  if (maxBL>1.0e1) *blscale = 1.0e1;
+  if (maxBL>1.0e2) *blscale = 1.0e0;
   if (maxBL>1.0e3) *blscale = 1.0e-1;
   if (maxBL>1.0e4) *blscale = 1.0e-2;
   if (maxBL>1.0e5) *blscale = 1.0e-3;

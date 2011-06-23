@@ -120,6 +120,8 @@ void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData, ObitUV* outData,
 void UpdateAntennaInfo (ObitUV *outData, olong arrno, ObitErr *err);
 /* Calculate UVW */
 void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer, ObitErr *err);
+/* Fake u,v,w for holography */
+void HoloUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer, ObitErr *err);
 /* Days to human string */
 void day2dhms(ofloat time, gchar *timeString);
 /* Check for zero visibilities */
@@ -163,6 +165,7 @@ odouble *arrayRefJDs=NULL; /* Array of reference JD from array geometry per inpu
 odouble *arrRefJDCor=NULL; /* Array of input array ref day corrections */
 ObitAntennaList **antennaLists=NULL;  /* Array of antenna lists for uvw calc */
 ObitSourceList *uvwSourceList=NULL;   /* Source List for uvw calc */
+ObitSource     *curSource=NULL;       /* Current source for uvw calc */
 olong uvwSourID=-1;                   /* Source ID for uvw calc */
 olong uvwcurSourID=-1;                /* Current source ID for uvw calc */
 ofloat uvrot=-0.0;                    /* Current source rotation of u-v */
@@ -174,6 +177,9 @@ olong selIF=-1;                       /* Selected number of IFs (SpWin) */
 gboolean isEVLA;                      /* Is this EVLA data? */
 gboolean isALMA;                      /* Is this ALMA data? */
 gboolean SWOrder=FALSE;               /* Leave in SW Order? */
+gboolean warnHolo=TRUE;               /* Give holography warning? */
+gboolean *isHolRef;                   /* Array of antenna flags for holography, 
+                                         isHoloRef[iant-1]=TRUE => used as reference */
 
 /* NX table structure, times only */
 olong noNXTimes=0;       /* Number of entries in NXTimes */
@@ -305,6 +311,7 @@ int main ( int argc, char **argv )
   if (dataRefJDs)  g_free(dataRefJDs);
   if (arrayRefJDs) g_free(arrayRefJDs);
   if (arrRefJDCor) g_free(arrRefJDCor);
+  if (isHolRef)    g_free(isHolRef);
   if (antennaLists) {
     for (i=0; i<numArray; i++) antennaLists[i] = ObitUnref(antennaLists[i]);
     g_free(antennaLists);
@@ -734,7 +741,8 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar selBand[12], selCode[24];
   ObitASDMBand band;
-  gchar *bandCodes[] = {"Any", "4","P","L","S","C","X","Ku","K","Ka","Q","W"};
+  gchar *bandCodes[] = {"Any", "4","P","L","S","C","X","Ku","K","Ka","Q",
+			"A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11"};
   gchar *routine = "GetHeader";
 
   /* error checks */
@@ -1051,7 +1059,8 @@ void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData,
 {
   ObitHistory *outHistory=NULL;
   ASDMScanTable* ScanTab;
-  olong          iScan, iIntent;
+  ASDMSubscanTable* SubscanTab;
+  olong          iScan, isubScan, iIntent, iAnt;
   gchar          hicard[81], begString[17], endString[17];
   gchar         *hiEntries[] = {
     "DataRoot", "selChan", "selIF", "selBand", "selConfig", "selCode", 
@@ -1080,7 +1089,8 @@ void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData,
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
 
   /* Add intent information from ASDM */
-  ScanTab = SDMData->ScanTab;
+  ScanTab    = SDMData->ScanTab;
+  SubscanTab = SDMData->SubscanTab;
   for (iScan=0; iScan<ScanTab->nrows; iScan++) {
 
     /* Timerange in human form */
@@ -1099,7 +1109,44 @@ void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData,
       ObitHistoryWriteRec (outHistory, -1, hicard, err);
       if (err->error) Obit_traceback_msg (err, routine, outData->name);
     } /* end intent loop */
-  } /* End scan look */
+    /* Subscans? */
+    if (ScanTab->rows[iScan]->numSubscan>1) {
+      for (isubScan=0; isubScan<SubscanTab->nrows; isubScan++) {
+	/* Current scan? */
+	if (SubscanTab->rows[isubScan]->scanNumber==
+	    ScanTab->rows[iScan]->scanNumber) {
+	  /* Timerange in human form */
+	  day2dhms(SubscanTab->rows[isubScan]->startTime-refJD, begString);
+	  day2dhms(SubscanTab->rows[isubScan]->endTime-refJD,   endString);
+	  
+	  g_snprintf (hicard, 80, "%s   Subscan=%d  time= %s - %s", 
+		      pgmName, SubscanTab->rows[isubScan]->subscanNumber,
+		      begString, endString);
+	  ObitHistoryWriteRec (outHistory, -1, hicard, err);
+	  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+	  
+	  g_snprintf (hicard, 80, "%s     subscan Intent='%s'", 
+		      pgmName, SubscanTab->rows[isubScan]->subscanIntent);
+	  ObitHistoryWriteRec (outHistory, -1, hicard, err);
+	  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+	}
+      } /* end subscan loop */
+    }
+  } /* End scan loop */
+
+  /* Holography reference antennas */
+  if (isHolRef) {
+    for (iAnt=0; iAnt<antennaLists[0]->number; iAnt++) {
+      if (isHolRef[iAnt]) {
+	g_snprintf (hicard, 80, "%s   / Antenna %3d used as holography reference",
+		    pgmName, iAnt+1);
+	ObitHistoryWriteRec (outHistory, -1, hicard, err);
+	if (err->error) Obit_traceback_msg (err, routine, outData->name);
+	g_snprintf (hicard, 80, "Antenna %3d used as holography reference", iAnt+1);
+	Obit_log_error(err, OBIT_InfoErr, "%s", hicard);
+      }
+    }
+  }
   
   ObitHistoryClose (outHistory, err);
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
@@ -1775,9 +1822,9 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 {
   ObitBDFData *BDFData=NULL;
   ObitIOCode retCode;
-  olong iMain, iInteg, ScanId=0, i, j, iBB, selChan, selIF, selConfig, 
+  olong iMain, iInteg, ScanId=0, SubscanId=0, i, j, jj, iBB, selChan, selIF, selConfig, 
     iSW, jSW, kBB, nIFsel, cntDrop=0, ver, iRow, sourId=0, iIntent, iScan;
-  olong lastScan=-1, ScanTabRow=-1;
+  olong lastScan=-1, lastSubscan=-1, ScanTabRow=-1;
   ofloat *Buffer=NULL, tlast=-1.0e20, startTime, endTime;
   ObitUVDesc *desc;
   ObitTableNX* NXtable;
@@ -1788,6 +1835,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   ObitASDMBand band;
   ASDMSpectralWindowArray* SpWinArray=NULL;
   gboolean dropZero=TRUE, found=FALSE, doOnline=FALSE, drop, doAtmCor=FALSE;
+  gboolean first=TRUE;
   gchar dataroot[132];
   gchar *filename;
   gchar *routine = "GetData";
@@ -1835,10 +1883,6 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   /* Want Atm phase corrections? */
   ObitInfoListGetTest(myInput, "doAtmCor", &type, dim, &doAtmCor);
   BDFData->selAtmCorr = doAtmCor;
-  if (doAtmCor && (BDFData->numAtmCorr>1))
-    Obit_log_error(err, OBIT_InfoErr, "Selecting Atmospheric phase corrected data");
-  if (!doAtmCor && (BDFData->numAtmCorr>1))
-    Obit_log_error(err, OBIT_InfoErr, "Selecting Atmospheric phase uncorrected data");
 
   /* Band selection */
   for (i=0; i<12; i++) selBand[i] = 0;
@@ -1986,24 +2030,45 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 			"%s: Input number Bands (IFs) incompatible %d != %d", 
 			routine, nIF, nIFsel);
 
+    /* Tell about atm corr if needed */
+    if (first) {
+      if (doAtmCor && (BDFData->numAtmCorr>1))
+	Obit_log_error(err, OBIT_InfoErr, "Selecting Atmospheric phase corrected data");
+      if (!doAtmCor && (BDFData->numAtmCorr>1))
+	Obit_log_error(err, OBIT_InfoErr, "Selecting Atmospheric phase uncorrected data");
+      first = FALSE;  /* Turn off messages */
+    }
+
     /* Tell about scan */
-    ScanId = SDMData->MainTab->rows[iMain]->scanNumber;
+    ScanId    = SDMData->MainTab->rows[iMain]->scanNumber;
+    SubscanId = SDMData->MainTab->rows[iMain]->subscanNumber;
     for (j=0; j<SDMData->ScanTab->nrows; j++) {
       if (SDMData->ScanTab->rows[j]->scanNumber==ScanId) break;
     }
-    if ((j<SDMData->ScanTab->nrows) && (ScanId!=lastScan)) {
+    for (jj=0; jj<SDMData->SubscanTab->nrows; jj++) {
+      if (SDMData->SubscanTab->rows[jj]->subscanNumber==SubscanId) break;
+    }
+    if ((j<SDMData->ScanTab->nrows) && ((ScanId!=lastScan) || (SubscanId!=lastSubscan))) {
       ScanTabRow = j;
       /* Timerange in human form */
-      day2dhms(SDMData->ScanTab->rows[j]->startTime-refJD, begString);
-      day2dhms(SDMData->ScanTab->rows[j]->endTime-refJD,   endString);
-      Obit_log_error(err, OBIT_InfoErr, "Scan %3.3d %s time %s  - %s", 
-		     ScanId, SDMData->ScanTab->rows[j]->sourceName, begString, endString);
+      if (ScanId!=lastScan) {
+	day2dhms(SDMData->ScanTab->rows[j]->startTime-refJD, begString);
+	day2dhms(SDMData->ScanTab->rows[j]->endTime-refJD,   endString);
+      }
+      if ((jj<SDMData->SubscanTab->nrows) && (SubscanId!=lastSubscan)) {
+	day2dhms(SDMData->SubscanTab->rows[jj]->startTime-refJD, begString);
+	day2dhms(SDMData->SubscanTab->rows[jj]->endTime-refJD,   endString);
+      }
+      Obit_log_error(err, OBIT_InfoErr, "Scan %3.3d sub %3.3d %s time %s  - %s", 
+		     ScanId,  SubscanId, SDMData->ScanTab->rows[j]->sourceName, 
+		     begString, endString);
       ObitErrLog(err);
 
       /* Initialize index */
-      lastScan = ScanId;
-      startTime = -1.0e20;
-      endTime   = startTime;
+      lastScan    = ScanId;
+      lastSubscan = SubscanId;
+      startTime   = -1.0e20;
+      endTime     = startTime;
       NXrow->StartVis = outData->myDesc->nvis+1;
       NXrow->EndVis   = NXrow->StartVis;
     }
@@ -2029,16 +2094,15 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	if (err->error) Obit_traceback_msg (err, routine, outData->name);
 
 	/* Check sort order */
-	if (Buffer[desc->iloct]<tlast) 
-	  if (Buffer[desc->iloct]<tlast) {
-	    if (desc->isort[0]=='T') {
-	      day2dhms(tlast, begString);
-	      day2dhms(Buffer[desc->iloct], endString);
-	      Obit_log_error(err, OBIT_InfoWarn, "Lost Time ordering at scan %d %s>%s", 
-			     ScanId, begString, endString);
-	    }
-	    {desc->isort[0]=' '; desc->isort[1]=' ';}
+	if (Buffer[desc->iloct]<tlast) {
+	  if (desc->isort[0]=='T') {
+	    day2dhms(tlast, begString);
+	    day2dhms(Buffer[desc->iloct], endString);
+	    Obit_log_error(err, OBIT_InfoWarn, "Lost Time ordering at scan %d %s>%s", 
+			   ScanId, begString, endString);
 	  }
+	  {desc->isort[0]=' '; desc->isort[1]=' ';}
+	}
 	tlast = Buffer[desc->iloct];
 	
 	/* set number of records */
@@ -2065,8 +2129,9 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     } /* end loop over integrations */
     
     /* Write Index table */
-    if ((startTime>-1.0e10) && 
-	(SDMData->MainTab->rows[iMain]->subscanNumber>=SDMData->ScanTab->rows[ScanTabRow]->numSubscan)) {
+    if (startTime>-1.0e10) {
+	/*if ((startTime>-1.0e10) && 
+	  (SDMData->MainTab->rows[iMain]->subscanNumber>=SDMData->ScanTab->rows[ScanTabRow]->numSubscan)) {*/
       NXrow->Time     = 0.5 * (startTime + endTime);
       NXrow->TimeI    = (endTime - startTime);
       NXrow->EndVis   = desc->nvis;
@@ -2074,6 +2139,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
       iRow++;
       if ((ObitTableNXWriteRow (NXtable, iRow, NXrow, err)
 	   != OBIT_IO_OK) || (err->error>0)) goto done; 
+      NXrow->StartVis = NXrow->EndVis+1;
     } 
   } /* End loop over scans */
 
@@ -2101,6 +2167,8 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
 /*  Calculates u,v,w (lambda) for a uv data row                           */
 /*  Does nothing for autocorrelations                                     */
 /*  Short baseline approximation                                          */
+/*  If scan intent is "MAP_ANTENNA_SURFACE" then replace uv with          */
+/*  holography direction cosines.  Subscan intent="ON_SOURCE"             */
 /*   Input:                                                               */
 /*      outData  Output UV object                                         */
 /*      BDFData  BDF data structure                                       */
@@ -2121,6 +2189,13 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
 
   /* error checks */
   if (err->error) return;
+
+  /* Is this holography data? If so special u,v,w */
+  if (BDFData->ScanInfo->isHolo) {
+    HoloUVW (outData, BDFData, Buffer, err);
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    return;
+  }
 
   /* Which antennas? */
   tmp = outData->buffer[outData->myDesc->ilocb];
@@ -2260,6 +2335,221 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
   Buffer[BDFData->desc->ilocw] = uvw[2];
 
 } /* end CalcUVW */
+
+void HoloUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer, 
+	      ObitErr *err)
+/*----------------------------------------------------------------------- */
+/*  Calculates u,v,w (direction cosines) for holographic data             */
+/*  Does nothing for autocorrelations                                     */
+/*   Input:                                                               */
+/*      outData  Output UV object                                         */
+/*      BDFData  BDF data structure                                       */
+/*      Buffer   Input uv data row, u,v,w will be modified                */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+{
+  olong souId, ant1, ant2, ant1Id, ant2Id, i, iANver, iarr, cnt;
+  ofloat elev1, elev2, elev;
+  ASDMPointingRow *pointA1=NULL, *pointA2=NULL;
+  ObitTableAN *ANTable=NULL;
+  ObitTableSU *SUTable=NULL;
+  ObitSource *source=NULL;
+  ObitAntennaList *AntList;
+  ofloat temp, time, uvw[3];
+  odouble *off1, *off2, off[2];
+  odouble JD, ArrLong, dRa;
+  odouble sum, xx, yy, zz, lambda, DecOff, RAOff;
+  gchar *routine = "HoloUVW";
+
+  /* error checks */
+  if (err->error) return;
+
+  /* Message */
+  if (warnHolo) {
+    Obit_log_error(err, OBIT_InfoWarn, 
+		   "Some data in Holography mode");
+    warnHolo = FALSE;
+  }
+
+  /* Which antennas? */
+  temp = outData->buffer[outData->myDesc->ilocb];
+  ant1 = (olong)(temp/256.0);
+  ant2 = (olong)(temp - ant1*256 +0.00005);
+  
+  /* NOP for autocorrelations  */
+  if (ant1==ant2) return;
+
+  /* Lookup antenna IDs */
+  ant1Id = BDFData->antId[ant1];
+  ant2Id = BDFData->antId[ant2];
+
+  /* JD */
+  time = outData->buffer[outData->myDesc->iloct];
+  JD   = refJD + time;
+
+  /* Lookup antenna pointings */
+  pointA1 = ObitSDMDataPointingLookup(BDFData->SDMData, JD, ant1Id, err);
+  pointA2 = ObitSDMDataPointingLookup(BDFData->SDMData, JD, ant2Id, err);
+  off1 = pointA1->offset;
+  off2 = pointA2->offset;
+
+  /* Check there there are no polynomials */
+  Obit_return_if_fail(((!pointA1->usePolynomials)&&(!pointA2->usePolynomials)), err,
+		      "%s: Cannot handle polynomial pointing", routine);
+
+  /* Get antenna lists if they don't already exist */
+  if (antennaLists==NULL) {
+
+    /* Array of subarrays for antenna longitudes/latitudes */
+    antLongs = g_malloc0(numArray*sizeof(ofloat*));
+    antLats  = g_malloc0(numArray*sizeof(ofloat*));
+
+    /* Create AntennaLists */
+    antennaLists = g_malloc0(numArray*sizeof(ObitAntennaList*));
+    for (i=0; i<numArray; i++) {
+      iANver = i+1;
+      ANTable = newObitTableANValue ("AN table", (ObitData*)outData, &iANver, 
+				     OBIT_IO_ReadOnly, 0, 0, 0, err);
+      antennaLists[i] = ObitTableANGetList (ANTable, err);
+      if (err->error) Obit_traceback_msg (err, routine, outData->name);
+      /* release table object */
+      ANTable = ObitTableANUnref(ANTable);
+
+      /* Subarray list of antenna longitudes/latitudes */
+      antLongs[i] = g_malloc0(antennaLists[i]->number*sizeof(ofloat));
+      antLats[i]  = g_malloc0(antennaLists[i]->number*sizeof(ofloat));
+
+      /* Get average longitude */
+      AntList = antennaLists[i];
+      sum = 0.0; cnt = 0;
+      for (iarr=0; iarr<AntList->number; iarr++) {
+	antLongs[i][iarr] = atan2 (AntList->ANlist[iarr]->AntXYZ[1], 
+				  AntList->ANlist[iarr]->AntXYZ[0]);
+	antLats[i][iarr]  = AntList->ANlist[iarr]->AntLat;
+	if (fabs(AntList->ANlist[iarr]->AntXYZ[1])>1.0) {
+	  sum += antLongs[i][iarr];
+	  cnt++;
+	}
+      }
+      ArrLong = sum / cnt;
+      AntList->ANlist[0]->AntLong = ArrLong;
+
+      lambda = VELIGHT/BDFData->desc->freq;  /* Reference wavelength */
+
+      ArrLong = -ArrLong;   /* Other way for rotation */
+      
+      /* Convert positions to lambda - rotate to frame of the array */
+      for (iarr=0; iarr<AntList->number; iarr++) {
+	xx = AntList->ANlist[iarr]->AntXYZ[0] / lambda;
+	yy = AntList->ANlist[iarr]->AntXYZ[1] / lambda;
+	zz = AntList->ANlist[iarr]->AntXYZ[2] / lambda;
+	AntList->ANlist[iarr]->AntXYZ[0] = xx*cos(ArrLong) - yy*sin(ArrLong);
+	AntList->ANlist[iarr]->AntXYZ[1] = xx*sin(ArrLong) + yy*cos(ArrLong);
+	AntList->ANlist[iarr]->AntXYZ[2] = zz;
+      }
+    }
+  } /* end create antenna lists */
+
+  /* Get source information if necessary */
+  if (uvwSourceList==NULL) {
+    SUTable = newObitTableSUValue ("SU table", (ObitData*)outData, &iANver, 
+				   OBIT_IO_ReadOnly, 0, err);
+    uvwSourceList = ObitTableSUGetList (SUTable, err);
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+   /* release table object */
+    SUTable = ObitTableSUUnref(SUTable);
+    /* Make sure all have precessed positions */
+    for (i=0; i<uvwSourceList->number; i++) {
+      ObitPrecessUVJPrecessApp (outData->myDesc, uvwSourceList->SUlist[i]);
+    }
+  } /* end create source list */
+
+  /* New source? */
+  souId = (olong)Buffer[BDFData->desc->ilocsu];
+  if (uvwSourID!=souId ) {
+    uvwSourID = souId;
+    /* Find in Source List */
+    for (i=0; i<uvwSourceList->number; i++) {
+      uvwcurSourID = i;
+      if (uvwSourceList->SUlist[i]->SourID==uvwSourID) break;
+    }
+    
+    /* Get rotation to get v north at standard epoch - 
+       precess posn. 10" north */
+    source = newObitSource("Temp");
+    source->RAMean  = uvwSourceList->SUlist[uvwcurSourID]->RAMean;
+    source->DecMean = uvwSourceList->SUlist[uvwcurSourID]->DecMean + 10.0/3600.0;
+    /* Compute apparent position */
+    ObitPrecessUVJPrecessApp (outData->myDesc, source);
+    curSource = ObitSourceRef(source);
+    RAOff     = source->RAApp;
+    DecOff    = source->DecApp;
+    /* uvrot global = rotation to north - if regular obs next */
+    dRa = (RAOff-uvwSourceList->SUlist[uvwcurSourID]->RAApp) * 
+      cos (DG2RAD*source->DecApp);
+    uvrot = -(ofloat)atan2(dRa, DecOff-uvwSourceList->SUlist[uvwcurSourID]->DecApp);
+    source = ObitSourceUnref(source);
+  } /* end new source */
+
+  /* Array number (0-rel)*/
+  iarr = 0;
+
+  /* Create/ init isHoloRef is necessary */
+  if (isHolRef==NULL) {
+    isHolRef = g_malloc0((antennaLists[iarr]->number+5)*sizeof(gboolean));
+    for (i=0; i<antennaLists[0]->number+5; i++) isHolRef[i] = FALSE;
+ }
+
+  /* Get elevations */
+  if (pointA1->target[1]==0.0)
+    elev1 = ObitAntennaListElev (antennaLists[iarr], ant1, time, curSource);
+  else
+    elev1 = pointA1->target[1];
+  if (pointA2->target[1]==0.0)
+    elev2 = ObitAntennaListElev (antennaLists[iarr], ant2, time, curSource);
+  else
+    elev2 = pointA2->target[1];
+  elev = 0.5*elev1+0.5*elev2;
+
+  /* Offset */
+  if ((fabs(off1[0])<1.0e-10) && (fabs(off1[1])<1.0e-10)) {
+    off[0] = off2[0];
+    off[1] = off2[1];
+  } else if ((fabs(off2[0])<1.0e-10) && (fabs(off2[1])<1.0e-10)) {
+    off[0] = off1[0];
+    off[1] = off1[1];
+  } else {
+    off[0] = 0.5*off1[0] + 0.5*off2[0];
+    off[1] = 0.5*off1[1] + 0.5*off2[1];
+  }
+
+  /* use ref-nonref baselines to determine reference antennas */
+ if ((fabs(off1[0])<1.0e-10) && (fabs(off2[0])>1.0e-10)) isHolRef[ant1-1] = TRUE;
+ if ((fabs(off1[1])<1.0e-10) && (fabs(off2[1])>1.0e-10)) isHolRef[ant1-1] = TRUE;
+ if ((fabs(off2[0])<1.0e-10) && (fabs(off1[0])>1.0e-10)) isHolRef[ant2-1] = TRUE;
+ if ((fabs(off2[1])<1.0e-10) && (fabs(off1[1])>1.0e-10)) isHolRef[ant2-1] = TRUE;
+  
+  /* direction cosines - from R. Perley 20 Jun 2011
+     l = sin(alpha) = cos(E_s)sin(Delta-A)
+     m = sin(beta) = cos(E_a).sin(E_s) - cos(E_s).sin(E_a).cos(Delta-A)
+
+     where:
+
+     Delta A = difference in azimuth between the antenna raster pointing
+               position and the zero-offset pointing position
+     E_s = antenna elevation of the (raster) pointing direction
+     E_a = antenna elevation of the zero-offset (reference) pointing
+           direction. */
+  uvw[0] = cos(off[1]+elev) * sin(off[0]);
+  uvw[1] = cos(elev)*sin(off[1]+elev) - cos(off[1]+elev)*sin(elev)*cos(off[0]);
+  uvw[2] = (ofloat)BDFData->ScanInfo->subScanNumber;
+
+  Buffer[BDFData->desc->ilocu] = -uvw[0];
+  Buffer[BDFData->desc->ilocv] = +uvw[1];
+  Buffer[BDFData->desc->ilocw] = +uvw[2];
+
+} /* end HoloUVW */
 
 void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 /*----------------------------------------------------------------------- */
