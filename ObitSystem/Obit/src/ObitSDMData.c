@@ -577,6 +577,10 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   out->isEVLA   = FALSE;
   out->isALMA   = FALSE;
 
+  /* Parsing buffer */
+  out->maxLine = 32768;
+  out->line = g_malloc(out->maxLine+1);
+
   /* ASDM table - also get schemaVersion */
   fullname = g_strconcat (DataRoot,"/ASDM.xml", NULL);
   out->ASDMTab = ParseASDMTable(fullname, err);
@@ -781,6 +785,10 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   /* Get integration time from the first scan */
   out->integTime = out->MainTab->rows[0]->interval / 
     MAX(1, out->MainTab->rows[0]->numIntegration);
+
+  /* release parsing buffer */
+  out->maxLine = 0;
+  g_free(out->line); out->line = NULL;
 
   return out;
 } /* end ObitSDMDataCreate */
@@ -1639,6 +1647,7 @@ void ObitSDMDataInit  (gpointer inn)
   in->SysCalTab            = NULL;
   in->SysPowerTab          = NULL;
   in->WeatherTab           = NULL;
+  in->line                 = NULL;
 
 } /* end ObitSDMDataInit */
 
@@ -1657,7 +1666,8 @@ void ObitSDMDataClear (gpointer inn)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* delete this class members */
-  if (in->DataRoot) g_free(in->DataRoot);
+  if (in->DataRoot) g_free(in->DataRoot); in->DataRoot = NULL;
+  if (in->line) g_free(in->line);  in->line = NULL;
   in->ASDMTab              = KillASDMTable(in->ASDMTab);
   in->MainTab              = KillASDMMainTable(in->MainTab);
   in->AntennaTab           = KillASDMAntennaTable(in->AntennaTab);
@@ -2753,8 +2763,8 @@ static ASDMMainTable* ParseASDMMainTable(ObitSDMData *me,
 {
   ASDMMainTable* out=NULL;
   ObitIOCode retCode;
-  olong i, irow, colon, maxLine = 4098;
-  gchar line[4099];
+  olong i, irow, colon, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next, *tstr;
   ObitFile *file=NULL;
@@ -2969,8 +2979,8 @@ ParseASDMAntennaTable(ObitSDMData *me,
   ASDMAntennaTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next, *tstr;
   gchar *routine = " ParseASDMAntennaTable";
@@ -3129,8 +3139,8 @@ ParseASDMcalDataTable(ObitSDMData *me,
 {
   ASDMcalDataTable* out=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine =  me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   /*gchar *prior, *next;*/
   ObitFile *file=NULL;
@@ -3239,8 +3249,8 @@ ParseASDMcalDeviceTable(ObitSDMData *me,
 {
   ASDMcalDeviceTable* out=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
   ObitFile *file=NULL;
@@ -3401,8 +3411,8 @@ ParseASDMcalPointingTable(ObitSDMData *me,
   ASDMcalPointingTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   /*gchar *prior, *next;*/
   gchar *routine = " ParseASDMcalPointingTable";
@@ -3500,8 +3510,8 @@ ParseASDMCalReductionTable(ObitSDMData *me,
   ASDMCalReductionTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   /*gchar *prior, *next;*/
   gchar *routine = " ParseASDMCalReductionTable";
@@ -3604,8 +3614,8 @@ ParseASDMConfigDescriptionTable(ObitSDMData *me,
   ASDMConfigDescriptionTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong i, j, irow, ndim, naxis, maxLine = 4098, charLeft;
-  gchar line[4099];
+  olong i, j, irow, ndim, naxis, maxLine = me->maxLine, charLeft;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next, *tstr, *b;
   gchar *routine = " ParseASDMConfigDescriptionTable";
@@ -3825,8 +3835,8 @@ ParseASDMCorrelatorModeTable(ObitSDMData *me,
   ASDMCorrelatorModeTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong i, j, irow, charLeft, ndim, naxis, maxLine = 4098;
-  gchar line[4099];
+  olong i, j, irow, charLeft, ndim, naxis, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next, *b, *tstr;
   gchar *routine = " ParseASDMCorrelatorModeTable";
@@ -4061,8 +4071,8 @@ ParseASDMDataDescriptionTable(ObitSDMData *me,
   ASDMDataDescriptionTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
   gchar *routine = " ParseASDMDataDescriptionTable";
@@ -4181,8 +4191,8 @@ ParseASDMDopplerTable(ObitSDMData *me,
   ASDMDopplerTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   /*gchar *prior, *next;*/
   gchar *routine = " ParseASDMDopplerTable";
@@ -4294,8 +4304,8 @@ ParseASDMExecBlockTable(ObitSDMData *me,
   ASDMExecBlockTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
   gchar *routine = " ParseASDMExecBlockTable";
@@ -4554,8 +4564,8 @@ static ASDMFeedTable* ParseASDMFeedTable(ObitSDMData *me,
   ASDMFeedTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong i, j, charLeft, irow, maxLine = 4098, ndim, naxis;
-  gchar line[4099];
+  olong i, j, charLeft, irow, maxLine = me->maxLine, ndim, naxis;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next, *b;
   gchar *routine = " ParseASDMFeedTable";
@@ -4735,8 +4745,8 @@ static ASDMFieldTable* ParseASDMFieldTable(ObitSDMData *me,
   ASDMFieldTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
   gchar *routine = " ParseASDMFieldTable";
@@ -4885,8 +4895,8 @@ static ASDMFlagTable* ParseASDMFlagTable(ObitSDMData *me,
   ASDMFlagTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
   gchar *routine = " ParseASDMFlagTable";
@@ -5041,8 +5051,8 @@ static ASDMPointingTable* ParseASDMPointingTable(ObitSDMData *me,
   ASDMPointingTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
   gchar *prior, *next;
@@ -5214,8 +5224,8 @@ ParseASDMPointingModelTable(ObitSDMData *me,
   ASDMPointingModelTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   /*gchar *prior, *next;*/
   gchar *routine = " ParseASDMPointingModelTable";
@@ -5329,8 +5339,8 @@ ParseASDMPolarizationTable(ObitSDMData *me,
   ASDMPolarizationTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
   gchar *routine = " ParseASDMPolarizationTable";
@@ -5456,8 +5466,8 @@ ParseASDMProcessorTable(ObitSDMData *me,
   ASDMProcessorTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
   gchar *routine = " ParseASDMProcessorTable";
@@ -5579,8 +5589,8 @@ ParseASDMReceiverTable(ObitSDMData *me,
   ASDMReceiverTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   /*gchar *prior, *next;*/
   gchar *routine = " ParseASDMReceiverTable";
@@ -5678,8 +5688,8 @@ ParseASDMSBSummaryTable(ObitSDMData *me,
   ASDMSBSummaryTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   /*gchar *prior, *next;*/
   gchar *routine = " ParseASDMSBSummaryTable";
@@ -5796,8 +5806,8 @@ static ASDMScanTable* ParseASDMScanTable(ObitSDMData *me,
   ASDMScanTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
   gchar *routine = " ParseASDMScanTable";
@@ -5959,8 +5969,8 @@ static ASDMSourceTable* ParseASDMSourceTable(ObitSDMData *me,
   ASDMSourceTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
   gchar *routine = " ParseASDMSourceTable";
@@ -6123,8 +6133,8 @@ ParseASDMSpectralWindowTable(ObitSDMData *me,
   ASDMSpectralWindowTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong i, irow, maxLine = 4098;
-  gchar line[4099], **assNat=NULL;
+  olong i, irow, maxLine = me->maxLine;
+  gchar *line=me->line, **assNat=NULL;
   gchar *endrow = "</row>";
   gchar *prior, *next, *tstr;
   gchar *routine = " ParseASDMSpectralWindowTable";
@@ -6372,8 +6382,8 @@ static ASDMStateTable* ParseASDMStateTable(ObitSDMData *me,
   ASDMStateTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
   gchar *routine = " ParseASDMStateTable";
@@ -6500,8 +6510,8 @@ static ASDMStationTable* ParseASDMStationTable(ObitSDMData *me,
   ASDMStationTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next, *tstr;
   gchar *routine = " ParseASDMStationTable";
@@ -6639,8 +6649,8 @@ ParseASDMSubscanTable(ObitSDMData *me,
   ASDMSubscanTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
   gchar *routine = " ParseASDMSubscanTable";
@@ -6795,8 +6805,8 @@ ParseASDMSwitchCycleTable(ObitSDMData *me,
   ASDMSwitchCycleTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
   gchar *routine = " ParseASDMSwitchCycleTable";
@@ -6925,8 +6935,8 @@ ParseASDMSysCalTable(ObitSDMData *me,
   ASDMSysCalTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   /*gchar *prior, *next;*/
   gchar *routine = " ParseASDMSysCalTable";
@@ -7064,9 +7074,9 @@ ParseASDMSysPowerTableXML(ObitSDMData *me,
   ASDMSysPowerTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
+  olong irow, maxLine = me->maxLine;
   odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
-  gchar line[4099];
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
   gchar *routine = "ParseASDMSysPowerTableXML";
@@ -7483,8 +7493,8 @@ static ASDMXXXXTable* ParseASDMXXXXTable(ObitSDMData *me,
   ASDMXXXXTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
   gchar *endrow = "</row>";
   /*gchar *prior, *next;*/
   gchar *routine = " ParseASDMXXXXTable";

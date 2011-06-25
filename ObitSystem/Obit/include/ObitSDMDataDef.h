@@ -110,3 +110,7 @@ odouble refFreq;
 odouble refJD;
 /** Integration time in days */
 ofloat integTime;
+/** xml parsing Buffer size */
+olong maxLine;
+/** xml parsing Buffer */
+gchar *line;

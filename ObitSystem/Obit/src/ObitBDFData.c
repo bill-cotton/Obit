@@ -436,7 +436,8 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
  	  (in->ScanInfo->subScanNumber==in->SDMData->SubscanTab->rows[ScanId]->subscanNumber))
  	break;
     }
-    if (!strncmp(in->SDMData->SubscanTab->rows[ScanId]->subscanIntent,
+    if ((in->SDMData->SubscanTab->rows[ScanId]->subscanIntent!=NULL) && 
+	!strncmp(in->SDMData->SubscanTab->rows[ScanId]->subscanIntent,
  		 "REFERENCE", 9)) in->ScanInfo->isHolo = FALSE;
   }
   

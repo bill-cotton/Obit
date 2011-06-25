@@ -1474,7 +1474,7 @@ def EVLACalAP(uv, target, ACal, err, \
     * target   = Target source name or list of names to calibrate
     * ACal     = Amp calibrator
     * err      = Obit error/message stack
-    * PCal     = if given, the phase calibrator name
+    * PCal     = if given, the phase calibrator name or list of names
     * FQid     = Frequency Id to process, 0=>any
     * calFlux  = ACal point flux density if given
     * calModel = Amp. calibration model FITS file
@@ -3731,10 +3731,12 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
             pass
         # delete Imager file if not debug
         if not debug:
+            out2Name = imager.Sources[0].strip()+"_"+band
+            out2Name = out2Name[0:12]
             if doMB:
-                u = UV.newPAUV("zap", imager.Sources[0], "MFImage", imager.out2Disk, imager.out2Seq, True, err)
+                u = UV.newPAUV("zap", out2Name, "MFImage", imager.out2Disk, imager.out2Seq, True, err)
             else:
-                u = UV.newPAUV("zap", imager.Sources[0], "Imager", imager.out2Disk, imager.out2Seq, True, err)
+                u = UV.newPAUV("zap", out2Name, "Imager", imager.out2Disk, imager.out2Seq, True, err)
             if UV.PIsA(u):
                 u.Zap(err) # cleanup
                 if err.isErr:

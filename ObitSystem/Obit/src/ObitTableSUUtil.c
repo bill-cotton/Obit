@@ -65,7 +65,7 @@ ObitIOCode ObitTableSULookup (ObitTableSU *in, gint32 *dim, gchar *inlist,
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitTableSURow *row;
-  olong i, j, l, maxNum, ncheck, *cross;
+  olong i, j, l, maxNum, ncheck, *cross, size;
   gboolean select, gotSome, want, match;
   gchar tempName[101], temp2Name[101]; /* should always be big enough */
   gchar *routine = "ObitTableSULookup";
@@ -92,8 +92,10 @@ ObitIOCode ObitTableSULookup (ObitTableSU *in, gint32 *dim, gchar *inlist,
   row = newObitTableSURow (in);
 
   /* Cross list of sources */
-  cross = g_malloc0((in->myDesc->nrow+2)*sizeof(olong));
-  for (i=0; i<MIN (maxNum,dim[1]); i++) cross[i] = -1;
+  size  = MIN (maxNum,dim[1]);
+  size  = MAX (size, in->myDesc->nrow);
+  cross = g_malloc0((size+5)*sizeof(olong));
+  for (i=0; i<size; i++) cross[i] = -1;
 
   /* loop over table */
   while (retCode==OBIT_IO_OK) {

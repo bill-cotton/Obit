@@ -676,11 +676,12 @@ for target in slist:
     if doSaveImg and (not check):
         for s in Stokes:
             oclass = s+outIclass[1:]
+            outname = target+"_"+band
             # Test if image exists
-            cno = AIPSDir.PTestCNO(disk, user, target, oclass, "MA", seq, err)
+            cno = AIPSDir.PTestCNO(disk, user, outname, oclass, "MA", seq, err)
             if cno <= 0 :
                 continue
-            x = Image.newPAImage("out", target, oclass, disk, seq, True, err)
+            x = Image.newPAImage("out", outname, oclass, disk, seq, True, err)
             outfile = project+session+band+target+"."+oclass+".fits"
             xf = EVLAImFITS (x, outfile, 0, err, logfile=logFile)
             # Statistics

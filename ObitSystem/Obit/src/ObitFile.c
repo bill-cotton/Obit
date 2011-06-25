@@ -34,7 +34,7 @@
 #include "ObitFile.h"
 /** Size of XML parsing buffer */
 #ifndef XMLBUFFERSIZE
-#define XMLBUFFERSIZE 2048
+#define XMLBUFFERSIZE 32768
 #endif
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
