@@ -362,12 +362,12 @@ def pipeline( aipsSetup, parmFile ):
     if parms["doAmpCal"] and not check:
         logger.info("--> Amplitude calibration (doAmpCal)")
         plotFile = "./"+project+"_"+session+"_"+band+"AmpCal.ps"
-        retCode = VLBAAmpCal(uv, err, calSou=parms["contCals"], CalModel=parms["contCalModel"], \
-                             doCalib=2, flagVer=2, doBand=1, \
-                             refAnt=goodCal["bestRef"], solInt=parms["solAInt"], \
-                             smoTimeA=24.0, smoTimeP = 10./60., \
-                             doSNPlot=parms["doSNPlot"], plotFile=plotFile, \
-                             nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
+        retCode = VLBAAmpCal(uv, err, calSou=parms["contCals"],
+            CalModel=parms["contCalModel"], doCalib=2, flagVer=2, doBand=1,
+            refAnt=goodCal["bestRef"], solInt=parms["solAInt"], smoTimeA=24.0,
+            smoTimeP = 10./60., doSNPlot=parms["doSNPlot"], plotFile=plotFile,
+            nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check,
+            debug=debug)
         if retCode!=0:
             raise RuntimeError,"Error in amplitude calibration"
         VLBASaveOutFiles() # Save plot file in Outfiles
@@ -555,11 +555,10 @@ def pipeline( aipsSetup, parmFile ):
                     oclass = parms["Stokes"][istok:istok+1]+parms["outIclass"][1:]
                     x = Image.newPAImage("out", target, oclass, disk, seq, True, err)
                     outfile = project+session+band+target+"."+oclass+".fits"
-                    mess ="Write " +outfile+" on disk "+str(outDisk)
-                    printMess(mess, logFile)
+                    logger.info("Write " +outfile+" on disk "+str(outDisk))
                     xf = VLBAImFITS (x, outfile, outDisk, err, fract=0.1)
                     VLBAAddOutFile( outfile, target, 'Image' )
-                    print "Writing file ", outfile                
+                    logger.info("Writing file " + outfile)
                     # Statistics
                     zz=imstat(x, err, logfile=logFile)
                     del x, xf

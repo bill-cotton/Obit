@@ -2370,6 +2370,8 @@ def VLBAImageTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", \
         slist = VLBAAllSource(uv,err,logfile=logfile,check=check,debug=debug)
     else:
         slist = sl
+    logger.debug( "Imager source list: " + str(slist) )
+
     imager = ObitTask.ObitTask("Imager")
     imager.taskLog  = logfile
     if not check:
@@ -2657,12 +2659,11 @@ def VLBADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
     return 0
     # end VLBADelayCal
 
-def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0, \
-               calSou=None,  CalModel=None, \
-               timeRange=[0.,0.], FreqID=1, doCalib=-1, gainUse=0, minSNR=5.0, \
-               refAnt=0, doBand=-1, BPVer=0, flagVer=-1,  \
-               doSNPlot=False, plotFile="./AmpCal.ps", \
-               nThreads=1, noScrat=[], logfile='', check=False, debug=False):
+def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0, 
+    calSou=None,  CalModel=None, timeRange=[0.,0.], FreqID=1, doCalib=-1,
+    gainUse=0, minSNR=5.0, refAnt=0, doBand=-1, BPVer=0, flagVer=-1, 
+    doSNPlot=False, plotFile="./AmpCal.ps", nThreads=1, noScrat=[],
+    logfile='', check=False, debug=False):
     """
     Amplitude calibration
     
@@ -2711,8 +2712,7 @@ def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0, \
     * debug      = show input
     """
     ################################################################
-    mess = "Determine amplitude calibration"
-    printMess(mess, logfile)
+    logger.info("Determine amplitude calibration")
 
     # Set output (new) SN table
     SNver = uv.GetHighVer("AIPS SN")+1
@@ -2736,19 +2736,15 @@ def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0, \
     calib.solnVer   = SNver
     calib.nThreads  = nThreads
     calib.noScrat   = noScrat
-    #  If multiple sources given with models - loop
-    if (type(calSou)==list) and (len(calSou)>1) and CalModel:
-        ncloop = len(calSou)
-        calsou = calSou[0] # setup for first
+
+    if (type(calSou)!=list):
+        calsou = [calSou]
     else:
-        ncloop = 1;
-        calsou = calSou
+        calsou = calSou[:] # copy
     # Loop
-    for ical in range(0,ncloop):
-        if type(calsou)==list:
-            calib.Sources = calsou
-        else:
-            calib.Sources = [calsou]
+    for cal in calsou:
+        logger.info("Determining calibration solutions for " + cal ) 
+        calib.Sources = [cal]
         # Get model details
         if CalModel and calib.Sources[0] in CalModel:
             Model = CalModel[calib.Sources[0]]
@@ -2794,16 +2790,14 @@ def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0, \
                 calib.g
         except Exception, exception:
             print exception
-            mess = "Calib Failed retCode= "+str(calib.retCode)
-            printMess(mess, logfile)
-            mess = "Source= "+calsou
-            printMess(mess, logfile)
-            #return None # Tolerate
+            logger.warn("Calib failed with retCode= " + str(calib.retCode) +
+                " for source " + cal)
+            # If calib failed, remove calsou from calSou
+            if (calib.retCode != 0) and (type(calSou) == list):
+                logger.warn("Removing source " + cal + " from source list.")
+                calSou.remove( cal )
         else:
             pass
-        # Setup for next if looping
-        if ical<(ncloop-1):
-            calsou = calSou[ical+1]
     # End loop over calibrators
     
     # Open/close UV to update header
@@ -3624,6 +3618,8 @@ def VLBAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
     """
     ################################################################
     #
+    from pprint import pprint
+    logger.debug("Starting VLBAImFITS")
     # Checks
     if not Image.PIsA(inImage):
         raise TypeError,"inImage MUST be a Python Obit Image"
@@ -3638,7 +3634,9 @@ def VLBAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
     if err.isErr:
         OErr.printErrMsg(err, "Error Opening image")
     # Set output
+    logger.debug("Calling Image.newPFImage")
     outImage = Image.newPFImage("FITS Image DATA", fn, outDisk, False, err)
+    logger.debug("Returning from Image.newPFImage")
     if err.isErr:
         OErr.printErrMsg(err, "Error creating FITS data")
     # Check for valid pixels
@@ -3646,12 +3644,17 @@ def VLBAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
         fract=None; quant=None
     # Copy
     if fract or quant:
+        logger.debug("Calling Image.PCopyQuantizeFITS")
         Image.PCopyQuantizeFITS (inImage, outImage, err, fract=fract, quant=quant)
     else:
+        logger.debug("Calling Image.PCopy")
+        pprint( inImage.List.Dict )
         Image.PCopy (inImage, outImage, err)
+        logger.debug("Returning from Image.PCopy")
     if err.isErr:
         OErr.printErrMsg(err, "Error copying Image data to FITS")
     # Copy History
+    logger.debug("Copying history")
     inHistory  = History.History("inhistory",  inImage.List, err)
     outHistory = History.History("outhistory", outImage.List, err)
     History.PCopy(inHistory, outHistory, err)
@@ -3666,11 +3669,14 @@ def VLBAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
     if headHi:
         # Copy back to header
         inHistory  = History.History("inhistory",  outImage.List, err)
+        logger.debug("Calling History.PCopy2Header")
         History.PCopy2Header (inHistory, outHistory, err)
         # zap table
         outHistory.Zap(err)
     OErr.printErrMsg(err, "Error with history")
     # Copy Tables
+    pprint( inImage.List.Dict )
+    logger.debug("Calling Image.PCopyTables")
     Image.PCopyTables (inImage, outImage, exclude, include, err)
     # end VLBAImFITS
 
@@ -5774,7 +5780,6 @@ def VLBAAllSource(uv, err, logfile='', check=False, debug=False):
         if err.isErr:
             return
         allSou.append(SUrow["SOURCE"][0].strip())
-        logger.debug("Source("+str(i+1)+") = "+SUrow["SOURCE"][0])
     # end loop over rows
             
     # Close table
