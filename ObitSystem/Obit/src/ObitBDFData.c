@@ -689,28 +689,30 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   in->current = next;  /* where in buffer */
 
   /* Only some orders of data axes are supported - check crossData */
-  polnOrder = GetAxisOrder (in->ScanInfo->crossDataAxes, BDFAxisName_POL);
-  if (polnOrder<0)
-    polnOrder = GetAxisOrder (in->ScanInfo->crossDataAxes, BDFAxisName_STO);
-  freqOrder =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_SPP);
-  SPWOrder  =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_SPW);
-  BBOrder   =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_BAB);
-  APCOrder  =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_APC);
-  blOrder   =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_BAL);
-  binOrder  =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_BIN);
+  if (in->ScanInfo->crossDataAxes) {
+    polnOrder = GetAxisOrder (in->ScanInfo->crossDataAxes, BDFAxisName_POL);
+    if (polnOrder<0)
+      polnOrder = GetAxisOrder (in->ScanInfo->crossDataAxes, BDFAxisName_STO);
+    freqOrder =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_SPP);
+    SPWOrder  =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_SPW);
+    BBOrder   =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_BAB);
+    APCOrder  =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_APC);
+    blOrder   =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_BAL);
+    binOrder  =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_BIN);
    
-  Obit_return_if_fail((blOrder==0), err,
-		      "%s: Only support baseline as first axis",  routine);
-  Obit_return_if_fail(((binOrder<0) || (in->ScanInfo->numBin<=1)), err,
-		      "%s: Binned data not supported", routine);
-  Obit_return_if_fail((freqOrder<polnOrder), err,
-		      "%s: Unsupported Freq/poln axis order", routine);
-  Obit_return_if_fail(((APCOrder<0) || ((APCOrder<freqOrder) && (APCOrder<polnOrder))), err,
-		      "%s: Unsupported APC axis order", routine);
-  Obit_return_if_fail(((BBOrder<0) || ((BBOrder<freqOrder) && (BBOrder<polnOrder))), err,
-		      "%s: Unsupported Baseband axis order", routine);
-  Obit_return_if_fail(((SPWOrder<0) || ((SPWOrder<freqOrder) && (SPWOrder<polnOrder))), err,
-		      "%s: Unsupported Baseband axis order", routine);
+    Obit_return_if_fail((blOrder==0), err,
+			"%s: Only support baseline as first axis",  routine);
+    Obit_return_if_fail(((binOrder<0) || (in->ScanInfo->numBin<=1)), err,
+			"%s: Binned data not supported", routine);
+    Obit_return_if_fail((freqOrder<polnOrder), err,
+			"%s: Unsupported Freq/poln axis order", routine);
+    Obit_return_if_fail(((APCOrder<0) || ((APCOrder<freqOrder) && (APCOrder<polnOrder))), err,
+			"%s: Unsupported APC axis order", routine);
+    Obit_return_if_fail(((BBOrder<0) || ((BBOrder<freqOrder) && (BBOrder<polnOrder))), err,
+			"%s: Unsupported Baseband axis order", routine);
+    Obit_return_if_fail(((SPWOrder<0) || ((SPWOrder<freqOrder) && (SPWOrder<polnOrder))), err,
+			"%s: Unsupported Baseband axis order", routine);
+  }
 
 
   /* Numbers of things THIS IS NOT REALLY RIGHT */
@@ -1058,6 +1060,10 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
 
     /* Cross correlation data */
     if (type==BDFMIMEType_crossData) {
+      /* Big enough? */
+      if (in->crossCorr && (in->ScanInfo->crossDataSize>in->nCrossCorr)) {
+	in->crossCorr = g_realloc(in->crossCorr, (in->ScanInfo->crossDataSize+10)*sizeof(ofloat));
+      }
       in->nCrossCorr = in->ScanInfo->crossDataSize;
       in->haveCrossData = TRUE;
       /* Create if needed */
@@ -1072,6 +1078,10 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
     
     /* Auto correlation data */
     if (type==BDFMIMEType_autoData) {
+      /* Big enough? */
+      if (in->autoCorr && (in->ScanInfo->autoDataSize>in->nAutoCorr)) {
+	in->autoCorr = g_realloc(in->autoCorr, (in->ScanInfo->autoDataSize+10)*sizeof(ofloat));
+      }
       in->nAutoCorr = in->ScanInfo->autoDataSize;
       in->haveAutoData = TRUE;
       /* Create if needed */
@@ -1088,6 +1098,11 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
     /* flag data */
     if (type==BDFMIMEType_flags) {
       in->haveFlag = TRUE;
+      /* Big enough? */
+      if (in->flagData && (in->ScanInfo->FlagSize>in->nFlagData)) {
+	in->flagData = g_realloc(in->flagData, (in->ScanInfo->FlagSize+10)*sizeof(olong));
+      }
+      in->nFlagData = in->ScanInfo->FlagSize;
       /* Create if needed */
       if (in->flagData==NULL)
 	/*in->flagData = g_malloc0(sizeof(olong)*(in->ScanInfo->FlagSize+10)/8);*/
@@ -2042,7 +2057,7 @@ static ObitIOCode CopyFloats (ObitBDFData *in,
     /* All in buffer? */
     if (nhere>=n) {  /* All in current */
       ncopy = n*sizeof(ofloat);
-      memmove (out, lstart, (size_t)ncopy);
+      memmove (out, lstart, (size_t)ncopy); 
       in->current = lstart + ncopy;
     } else {         /* Multiple buffers */
       while (nleft>0) {

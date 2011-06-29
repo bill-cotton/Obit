@@ -1968,10 +1968,12 @@ ofloat FDRFlux (ObitPixHisto *hist, ObitFitRegion *reg,
 		ofloat maxFDR, olong FDRsize, ObitErr *err)
 {
   ofloat out = hist->sigma*5;
-  olong cenx, ceny, off, nbin=51;
+  olong cenx, ceny, off, nbin=25;
   ofloat nsigma=7.0, test;
+  gboolean     doDiff=FALSE;
   olong        blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong        trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *routine = "FDRFlux";
 
   /* Error checks */
@@ -2008,6 +2010,9 @@ ofloat FDRFlux (ObitPixHisto *hist, ObitFitRegion *reg,
   /* Form histogram */
   ObitPixHistoHisto (hist, blc, trc, nbin, nsigma, err);
   if (err->error) Obit_traceback_val (err, routine, hist->name, out);
+
+  /* Select histogram */
+  ObitInfoListAlwaysPut (hist->info, "doDiff",  OBIT_bool, dim, &doDiff);
 
   /* Get value */
   test = ObitPixHistoFDRFlux (hist, maxFDR, err);

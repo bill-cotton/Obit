@@ -66,6 +66,8 @@ olong nAutoCorr;
 ofloat *autoCorr;
 /** Have Flag data? */
 gboolean haveFlag;
+/** Number of olongs in flagData  */
+olong nFlagData;
 /** Flag data for integration */
 olong *flagData;
 /** Have actualTimes data? */

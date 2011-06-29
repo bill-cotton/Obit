@@ -2046,7 +2046,8 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
       if (SDMData->ScanTab->rows[j]->scanNumber==ScanId) break;
     }
     for (jj=0; jj<SDMData->SubscanTab->nrows; jj++) {
-      if (SDMData->SubscanTab->rows[jj]->subscanNumber==SubscanId) break;
+      if ((SDMData->SubscanTab->rows[jj]->scanNumber==ScanId) && 
+	  (SDMData->SubscanTab->rows[jj]->subscanNumber==SubscanId)) break;
     }
     if ((j<SDMData->ScanTab->nrows) && ((ScanId!=lastScan) || (SubscanId!=lastSubscan))) {
       ScanTabRow = j;
@@ -2541,9 +2542,16 @@ void HoloUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
      E_s = antenna elevation of the (raster) pointing direction
      E_a = antenna elevation of the zero-offset (reference) pointing
            direction. */
-  uvw[0] = cos(off[1]+elev) * sin(off[0]);
+  uvw[0] = cos(off[1]+elev) * sin(off[0]) / cos(elev);  /* No cos(el) correction */
   uvw[1] = cos(elev)*sin(off[1]+elev) - cos(off[1]+elev)*sin(elev)*cos(off[0]);
   uvw[2] = (ofloat)BDFData->ScanInfo->subScanNumber;
+
+  /* Description of what's in the SDM from Bryan Butler 28 Jun 2011:
+     +el means that the antenna is pointed by +el from the source - i.e., to 
+     the north.  same for +az.  so it's pointed minus source. 
+      so need to flip to get to source offsets from the antenna center */
+  uvw[0] = -uvw[0];
+  uvw[1] = -uvw[1];
 
   Buffer[BDFData->desc->ilocu] = -uvw[0];
   Buffer[BDFData->desc->ilocv] = +uvw[1];

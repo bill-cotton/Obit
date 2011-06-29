@@ -358,6 +358,8 @@ void ObitPixHistoHisto ( ObitPixHisto *in,
  *  Calculate minimum flux density for a given FDR
  * If all else fails, the returned value is 5 * sigma.
  * \param in      PixHisto object
+ *   If info item "doDiff" is True then the differential histogram is used, 
+ *   else the integrated histogram.
  * \param maxFDR  Fractional acceptable False Detection Rate, 0=>0.5
  * \param err     Obit error/message stack.
  * \return Flux density level with expected false detection rate of maxFDR
@@ -369,6 +371,7 @@ ofloat ObitPixHistoFDRFlux (ObitPixHisto *in, ofloat maxFDR,
   olong i, j, nbin=0, cen;
   ofloat amin=0.0, amax=0.0, cell, fdr, flux, *hi, test=0.0;
   ofloat x1, y1, x2, y2;
+  gboolean doDiff=FALSE;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *routine=" ObitPixHistoFDRFlux";
@@ -383,6 +386,7 @@ ofloat ObitPixHistoFDRFlux (ObitPixHisto *in, ofloat maxFDR,
   ObitInfoListGetTest(in->histo->info, "nHisto",  &type, dim, &nbin);
   ObitInfoListGetTest(in->histo->info, "Min",     &type, dim, &amin);
   ObitInfoListGetTest(in->histo->info, "Max",     &type, dim, &amax);
+  ObitInfoListGetTest(in->info, "doDiff",  &type, dim, &doDiff);
   cell = (amax - amin)/(nbin-1.);
   cen = nbin/2+1;
 
@@ -390,7 +394,10 @@ ofloat ObitPixHistoFDRFlux (ObitPixHisto *in, ofloat maxFDR,
     Obit_log_error(err, OBIT_InfoErr, 
 		   "Histogram analysis: Cen: %d %d, hw: %d, cell: %f",
 		   in->cenx, in->ceny, in->FDRsize, cell);
-  hi = in->intHisto->array;
+  /* Which histogram */
+  if (doDiff)  hi = in->histo->array; 
+  else         hi = in->intHisto->array;
+
   j = nbin/2;
   x1 = y1 = 0.0;
   for (i=nbin/2+1; i<nbin; i++) {
@@ -420,6 +427,7 @@ ofloat ObitPixHistoFDRFlux (ObitPixHisto *in, ofloat maxFDR,
    Obit_log_error(err, 
 		  OBIT_InfoErr, "FDR lim: %8.5f, range: %8.5f, sigma: %8.5f", 
 		  out, amax, in->sigma);
+   ObitErrLog(err); /* DEBUG */
   }
 
   return out;

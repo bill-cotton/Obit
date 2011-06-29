@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to Map beam polarization                                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2010                                          */
+/*;  Copyright (C) 2009-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2366,32 +2366,43 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 void lagrange(ofloat x, ofloat y, olong n, olong hwid, 
 	      ofloat *xlist, ofloat *ylist, ofloat *coef)
 {
-  ofloat xhwid = (ofloat)hwid;
+  ofloat xhwid = (ofloat)hwid, sum;
   odouble prodx, prodxd, prody, prodyd;
   olong  i, j, countx, county;
 
+  /* DEBUG - closest cell 
+  for (j=0; j<n; j++) {
+    coef[j] = 0.0;
+    if ((fabs(x-xlist[j])<=0.5) && (fabs(y-ylist[j])<=0.5)) coef[j] = 1.0;
+  }
+  return; */
+  /* end DEBUG */
+
   /* Loop over list */
+  sum = 0.0;
   for (j=0; j<n; j++) {
     prodx = prodxd = prody = prodyd = 1.0;
     countx = county = 0;
+    coef[j] = 0.0;
 
     /* Within hwid? and i!=j */
     if ((fabs(x-xlist[j])<=xhwid) && (fabs(y-ylist[j])<=xhwid)) {
+      coef[j] = 1.0;  /* In case nothing else within hwid */
       
       /* Inner loop over list */
       for (i=0; i<n; i++) {
 	/* X Within hwid? and i!=j */
-	if (fabs(x-xlist[i])<=xhwid) {
-	    /*if ((fabs(x-xlist[i])<=xhwid) && 
-	      (i!=j) && (fabs(xlist[j]-xlist[i])>0.3)) {*/
+	/*if (fabs(x-xlist[i])<=xhwid) {*/
+	if ((fabs(x-xlist[i])<=xhwid) && 
+	    (i!=j) && (fabs(xlist[j]-xlist[i])>0.3)) {
 	  countx++;
 	  prodx  *= (odouble)(x - xlist[i]);
 	  prodxd *= (odouble)(xlist[j] - xlist[i]);
 	}
 	/* Y Within hwid? and i!=j */
-	if (fabs(y-ylist[i])<=xhwid) {
-	    /*if ((fabs(y-ylist[i])<=xhwid) &&
-	      (i!=j) &&  (fabs(ylist[j]-ylist[i])>0.3)) {*/
+	/*if (fabs(y-ylist[i])<=xhwid) {*/
+	if ((fabs(y-ylist[i])<=xhwid) &&
+	    (i!=j) &&  (fabs(ylist[j]-ylist[i])>0.3)) {
 	  county++;
 	  prody  *= (odouble)(y - ylist[i]);
 	  prodyd *= (odouble)(ylist[j] - ylist[i]);
@@ -2404,8 +2415,13 @@ void lagrange(ofloat x, ofloat y, olong n, olong hwid,
 	coef[j] = (ofloat)(prodx*prody / (prodxd*prodyd));
       else
 	coef[j] = 1.0;
-    else coef[j] = 0.0;
+    sum += coef[j];
   } /* end loop over list */
+
+  /* Normalize if anything found */
+  if (fabs(sum)<0.3) return;
+  prodx = 1.0 / sum;
+  for (j=0; j<n; j++) coef[j] *= prodx;
   
 } /* end lagrange */
 
