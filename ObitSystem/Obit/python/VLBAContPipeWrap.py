@@ -147,7 +147,7 @@ unique working directory.
         # Handle exception and continue
         except subprocess.CalledProcessError: 
             logger.error("Pipeline process failed!  Error:\n" + 
-                str(CalledProcessError))
+                str(subprocess.CalledProcessError))
         # Handle exception and re-raise
         except HTTPError, e:
             logger.error("Server could not fulfill request. Error code: " + \
@@ -155,10 +155,6 @@ unique working directory.
             raise
         except URLError, e:
             logger.error("Failed to reach the server. Reason: " + str(e.reason))
-            raise
-        except subprocess.CalledProcessError, e:
-            logger.error("A subprocess failed with return code: " + \
-                str(e.returncode) )
             raise
         except IOError, e:
             logger.error("File " + e.filename + " not found\n" + \
