@@ -6609,6 +6609,8 @@ def VLBAValidOutfiles( outfiles=outfiles ):
     """
     ofList = VLBAMakeOutfilesList( outfiles=outfiles )
     cwdList = os.listdir( './' )
+    ignore = 'logging.conf'
+    if ignore in cwdList: cwdList.remove(ignore)
 
     # List of files in outfiles but not in CWD
     notInCwd = [file for file in ofList if file not in cwdList]
