@@ -203,7 +203,7 @@ def pipeline( aipsSetup, parmFile ):
     # Quantization correction?
     if parms["doQuantCor"]:
         logger.info("--> Quantization correction (doQuantCor)")
-        plotFile = "./"+project+"_"+session+"_"+band+"Quant.ps"
+        plotFile = project+"_"+session+"_"+band+".Quant.ps"
         retCode = VLBAQuantCor(uv, parms["QuantSmo"], parms["QuantFlag"], err, \
                                    doSNPlot=parms["doSNPlot"], plotFile=plotFile, \
                                    logfile=logFile, check=check, debug=debug)
@@ -221,7 +221,7 @@ def pipeline( aipsSetup, parmFile ):
     # Opacity/Tsys/gain correction
     if parms["doOpacCor"]:
         logger.info("--> Opacity/Tsys/Gain correction (doOpacCor)")
-        plotFile = "./"+project+"_"+session+"_"+band+"Opacity.ps"
+        plotFile = project+"_"+session+"_"+band+".Opacity.ps"
         retCode = VLBAOpacCor(uv, parms["OpacSmoo"], err,  \
                                   doSNPlot=parms["doSNPlot"], plotFile=plotFile, \
                                   logfile=logFile, check=check, debug=debug)
@@ -272,7 +272,7 @@ def pipeline( aipsSetup, parmFile ):
     # Apply Phase cals from PC table?
     if parms["doPCcor"] and not check:
         logger.info("--> Apply phase cals (doPCcor)")
-        plotFile = "./"+project+"_"+session+"_"+band+"PC.ps"
+        plotFile = project+"_"+session+"_"+band+".PC.ps"
         retCode = VLBAPCcor(uv, err, calSou=goodCal["Source"], \
                             timeRange=goodCal["timeRange"], \
                             doCalib=-1, flagVer=2, solInt=parms["manPCsolInt"], \
@@ -286,7 +286,7 @@ def pipeline( aipsSetup, parmFile ):
     # manual phase cal
     if parms["doManPCal"] and not check:
         logger.info("--> Manual phase cal (doManPCal)")
-        plotFile = "./"+project+session+band+".ManPCal.ps"
+        plotFile = project+session+band+".ManPCal.ps"
         retCode = VLBAManPCal(uv, err, calSou=goodCal["Source"], \
                                   #CalModel=parms["contCalModel"], \
                                   timeRange=goodCal["timeRange"], \
@@ -316,7 +316,7 @@ def pipeline( aipsSetup, parmFile ):
     # Plot amplitude and phase vs. frequency
     if parms["doSpecPlot"]:
         logger.info("--> Spectral plotting (doSpecPlot)")
-        plotFile = "./"+project+session+band+".spec.ps"
+        plotFile = project+'_'+session+'_'+band+".spec.ps"
         VLBASpecPlot( uv, goodCal, err, doband=1, check=check, 
             plotFile=plotFile, logfile=logFile, debug=debug )
         VLBASaveOutFiles() # Save plot file in Outfiles
@@ -346,7 +346,7 @@ def pipeline( aipsSetup, parmFile ):
     # delay calibration
     if parms["doDelayCal"] and not check:
         logger.info("--> Delay calibration (doDelayCal)")
-        plotFile = "./"+project+"_"+session+"_"+band+"DelayCal.ps"
+        plotFile = project+"_"+session+"_"+band+".DelayCal.ps"
         retCode = VLBADelayCal(uv, err, calSou=parms["contCals"], CalModel=parms["contCalModel"], \
                                    doCalib=2, flagVer=2, doBand=1, \
                                    solInt=parms["manPCsolInt"], smoTime=parms["delaySmoo"],  \
@@ -361,7 +361,7 @@ def pipeline( aipsSetup, parmFile ):
     # NOTE: REALLY OUGHT TO HAVE MODEL FOR THIS
     if parms["doAmpCal"] and not check:
         logger.info("--> Amplitude calibration (doAmpCal)")
-        plotFile = "./"+project+"_"+session+"_"+band+"AmpCal.ps"
+        plotFile = project+"_"+session+"_"+band+".AmpCal.ps"
         retCode = VLBAAmpCal(uv, err, calSou=parms["contCals"],
             CalModel=parms["contCalModel"], doCalib=2, flagVer=2, doBand=1,
             refAnt=goodCal["bestRef"], solInt=parms["solAInt"], smoTimeA=24.0,
@@ -422,7 +422,7 @@ def pipeline( aipsSetup, parmFile ):
             if err.isErr:
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
         targetModel  = VLBAImageModel(parms["targets"],parms["outTclass"],disk, seq, err)
-        plotFile = "./"+project+"_"+session+"_"+band+"PhaseCal.ps"
+        plotFile = project+"_"+session+"_"+band+".PhaseCal.ps"
         retCode = VLBAPhaseCal(uvc, err, calSou=parms["targets"], CalModel=parms["targetModel"], \
                              doCalib=-1, flagVer=0, doBand=-1, \
                              refAnt=goodCal["bestRef"], solInt=parms["manPCsolInt"], \
@@ -628,7 +628,7 @@ def pipeline( aipsSetup, parmFile ):
         srcMetadata = VLBASrcMetadata( uvc, err, Sources=parms["targets"], seq=seq, 
             sclass=parms["outIclass"], Stokes=parms["Stokes"], logfile=logFile, check=check, 
             debug=debug )
-        picklefile = "./"+project+"_"+session+"_"+band+"SrcReport.pickle" 
+        picklefile = project+"_"+session+"_"+band+"SrcReport.pickle" 
         SaveObject( srcMetadata, picklefile, True ) 
         VLBAAddOutFile( picklefile, 'project', 'All source metadata' )
     
@@ -636,7 +636,7 @@ def pipeline( aipsSetup, parmFile ):
         projMetadata = VLBAProjMetadata( uvc, AIPS_VERSION, err, contCals=parms["contCals"],
             goodCal = goodCal, project = project, session = session, band = band,
             dataInUVF = dataInUVF, archFileID = archFileID )
-        picklefile = "./"+project+"_"+session+"_"+band+"ProjReport.pickle"
+        picklefile = project+"_"+session+"_"+band+"ProjReport.pickle"
         SaveObject(projMetadata, picklefile, True) 
         VLBAAddOutFile( picklefile, 'project', 'Project metadata' )
     
@@ -650,15 +650,11 @@ def pipeline( aipsSetup, parmFile ):
     # Write VOTable
     if parms["doVOTable"]:
         logger.info("--> Write VOTable (doVOTable)")
+        VLBAAddOutFile( 'VOTable.xml', 'project', 'VOTable report' ) 
         VLBAWriteVOTable( projMetadata, srcMetadata, filename='VOTable.xml' )
-        VLBAAddOutFile( 'VOTable.xml', 'project', 'VOTable report' )
     
     # Save list of output files
     VLBASaveOutFiles()
-    
-    # Copy output files to specificed destination directory
-    # if parms["copyDestDir"]:
-    #     VLBACopyOutFiles( destDir=parms["copyDestDir"], logFile=logFile )
     
     # Cleanup - delete AIPS files
     if parms["doCleanup"] and (not check):
@@ -687,12 +683,21 @@ def pipeline( aipsSetup, parmFile ):
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
         uvc.Zap(err)
         OErr.printErrMsg(err, "Writing output/cleanup")
+
+    # Validate outfiles: check that outfiles is consistent with CWD
+    if not VLBAValidOutfiles():
+        raise DataProductError('Expected data products (outfiles.pickle) and ' +
+            'current working directory are inconsistent.')
     
     # Shutdown
     mess = "Finished project "+project
     printMess(mess, logFile)
     OErr.printErr(err)
     OSystem.Shutdown(ObitSys)
+
+class DataProductError(Exception):
+    """ Exception for data product (output file) errors. """
+    pass
 
 if __name__ == '__main__':
     usage = """usage: %prog [options] AIPSSetup PipelineParms

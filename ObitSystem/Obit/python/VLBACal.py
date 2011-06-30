@@ -2,7 +2,7 @@
 """
 import UV, UVDesc, Image, ImageDesc, FArray, ObitTask, AIPSTask, AIPSDir, OErr, History
 import InfoList, Table, AIPSDir, OSystem
-import os, os.path, re, shutil, pickle, math, logging
+import os, os.path, re, shutil, pickle, math, logging, copy, pprint
 import urllib, urllib2
 import sys, commands
 import datetime
@@ -866,7 +866,7 @@ def VLBAWritePlots(uv, loPL, hiPL, plotFile, err, \
         setname(uv,lwpla)
     lwpla.plver   = max(1, loPL)
     lwpla.invers  = hiPL
-    lwpla.outfile = plotFile
+    lwpla.outfile = './' + plotFile
     lwpla.msgkill = 5
     lwpla.logFile = logfile
     if debug:
@@ -881,8 +881,7 @@ def VLBAWritePlots(uv, loPL, hiPL, plotFile, err, \
         printMess(mess, logfile)
         # return 1  # Continue in spite of lwpla failure
     else:
-        # Save in outfile list (drop ./ needed by LWPLA)
-        VLBAAddOutFile(plotFile[2:], 'project', plotDesc, logFile=logfile)
+        VLBAAddOutFile(plotFile, 'project', plotDesc, logFile=logfile)
     
     # Delete AIPS plot files
     if not check:
@@ -2151,7 +2150,7 @@ def VLBASpecPlot(uv, goodCal, err, doband=0, plotFile="./spec.ps", \
         printMess(mess, logfile)
         return 1
     lwpla.invers = uv.GetHighVer("AIPS PL")
-    lwpla.outfile = plotFile
+    lwpla.outfile = './' + plotFile
     lwpla.msgkill = 5
     lwpla.logFile = logfile
     # Trap failure
@@ -2165,7 +2164,7 @@ def VLBASpecPlot(uv, goodCal, err, doband=0, plotFile="./spec.ps", \
         # return 1  # Continue in spite of lwpla failure
     else:
         # Save in outfile list (drop ./ needed by LWPLA)
-        VLBAAddOutFile(plotFile[2:], 'project', plotDesc,  logFile=logfile)
+        VLBAAddOutFile(plotFile, 'project', plotDesc,  logFile=logfile)
 
     # Remove any tables
     tabdest(uv, "AIPS PL", -1)
@@ -2370,7 +2369,7 @@ def VLBAImageTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", \
         slist = VLBAAllSource(uv,err,logfile=logfile,check=check,debug=debug)
     else:
         slist = sl
-    logger.debug( "Imager source list: " + str(slist) )
+    logger.info( "Running imager on these sources: " + str(slist) )
 
     imager = ObitTask.ObitTask("Imager")
     imager.taskLog  = logfile
@@ -2543,7 +2542,6 @@ def VLBADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
             calib.Sources = calsou
         else:
             calib.Sources = [calsou]
-        logger.debug("calib.Sources[0] = " + calib.Sources[0] )
         # Get model details
         if CalModel and calib.Sources[0] in CalModel:
             Model = CalModel[calib.Sources[0]]
@@ -3618,8 +3616,6 @@ def VLBAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
     """
     ################################################################
     #
-    from pprint import pprint
-    logger.debug("Starting VLBAImFITS")
     # Checks
     if not Image.PIsA(inImage):
         raise TypeError,"inImage MUST be a Python Obit Image"
@@ -3634,9 +3630,7 @@ def VLBAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
     if err.isErr:
         OErr.printErrMsg(err, "Error Opening image")
     # Set output
-    logger.debug("Calling Image.newPFImage")
     outImage = Image.newPFImage("FITS Image DATA", fn, outDisk, False, err)
-    logger.debug("Returning from Image.newPFImage")
     if err.isErr:
         OErr.printErrMsg(err, "Error creating FITS data")
     # Check for valid pixels
@@ -3644,17 +3638,13 @@ def VLBAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
         fract=None; quant=None
     # Copy
     if fract or quant:
-        logger.debug("Calling Image.PCopyQuantizeFITS")
         Image.PCopyQuantizeFITS (inImage, outImage, err, fract=fract, quant=quant)
     else:
-        logger.debug("Calling Image.PCopy")
-        pprint( inImage.List.Dict )
+        pprint.pprint( inImage.List.Dict )
         Image.PCopy (inImage, outImage, err)
-        logger.debug("Returning from Image.PCopy")
     if err.isErr:
         OErr.printErrMsg(err, "Error copying Image data to FITS")
     # Copy History
-    logger.debug("Copying history")
     inHistory  = History.History("inhistory",  inImage.List, err)
     outHistory = History.History("outhistory", outImage.List, err)
     History.PCopy(inHistory, outHistory, err)
@@ -3669,14 +3659,12 @@ def VLBAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
     if headHi:
         # Copy back to header
         inHistory  = History.History("inhistory",  outImage.List, err)
-        logger.debug("Calling History.PCopy2Header")
         History.PCopy2Header (inHistory, outHistory, err)
         # zap table
         outHistory.Zap(err)
     OErr.printErrMsg(err, "Error with history")
     # Copy Tables
-    pprint( inImage.List.Dict )
-    logger.debug("Calling Image.PCopyTables")
+    pprint.pprint( inImage.List.Dict )
     Image.PCopyTables (inImage, outImage, exclude, include, err)
     # end VLBAImFITS
 
@@ -5902,8 +5890,8 @@ def VLBADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
 
     # Loop over sources
     for (i,s) in enumerate(slist):
-        print "Generating diagnostic plots for source "+s+ \
-            " ("+str(i+1)+"/"+str(len(slist))+")"
+        logger.info( "Generating diagnostic plots for source "+s+ \
+            " ("+str(i+1)+"/"+str(len(slist))+")" )
         uvplt.sources[1] = s
         # Loop over plot types
         for plot in plotTypes:
@@ -6126,6 +6114,8 @@ def VLBAProjMetadata( uv, AIPS_VERSION, err, contCals=[None], goodCal={},
     r["goodCalSNR"] = goodCal["SNR"]
     r["dataSet"] = dataInUVF
     r["archFileID"] = archFileID # archive file ID
+    r["fileSetID"] = r["project"] + "_" + r["obsDate"].replace('-','') + "_" + \
+        str(r["archFileID"])
 
     # Get antenna names and positions
     antab = uv.NewTable(Table.READONLY,"AIPS AN",1,err)
@@ -6551,7 +6541,8 @@ def VLBAAddOutFile( filename, target, description, logFile=""):
 def VLBAFetchOutFiles( pickleFile='outfiles.pickle' ):
     """
     Fetch a pickled python object that holds pipeline output files. Check that 
-    each output file still exists.  If it does not, remove it from the object.
+    each output file still exists.  If it does not, remove it from the object,
+    and print a warning.
 
     * pickleFile = pickle file to be fetched
     """
@@ -6559,20 +6550,28 @@ def VLBAFetchOutFiles( pickleFile='outfiles.pickle' ):
         return
     global outfiles 
     outfiles = FetchObject( pickleFile )
-    # Check project files
-    i = 0
-    for file in outfiles['project']:
-        if not os.path.exists( file['name'] ):
-            del outfiles['project'][i]
-        i += 1
+    exists = [ file for file in outfiles['project'] 
+        if os.path.exists( file['name'] ) ]
+    notExists = [ file for file in outfiles['project'] 
+        if not os.path.exists( file['name'] ) ]
+    for file in notExists:
+        print "Doesn't exist (project) " + file['name']
+        logger.warn("Pipeline outfiles pickle points to non-existant project file: " 
+           + file['name'] + "\n  Removing file from outfiles.")
+    outfiles['project'] = exists
+
     # Check single-source files
     srcFiles = outfiles['source']
+    srcFiles_copy = copy.deepcopy( srcFiles )
     srcKeys = srcFiles.keys()
     for srcName in srcKeys:
         # Check files for each source
-        for file in srcFiles[ srcName ][:]: # iterate over a slice/shallow copy
+        for file in srcFiles_copy[ srcName ]: 
             if not os.path.exists( file['name'] ):
-                srcFiles[ srcName ].remove( file )
+                srcFiles[ srcName ].remove( file ) # remove from original
+                print "Doesn't exist (source) " + file['name']
+                logger.warn("Pipeline outfiles pickle points to non-existant source file: " 
+                    + file['name'] + "\n  Removing file from outfiles.")
         # If this source no longer has files, remove it
         if len( srcFiles[ srcName ] ) == 0:
             del srcFiles[ srcName ]
@@ -6599,6 +6598,32 @@ def VLBAMakeOutfilesList( outfiles=outfiles ):
         for file in outfiles['source'][ srcKey ]:    
             srcFiles.append( file['name'] )
     return srcFiles
+
+def VLBAValidOutfiles( outfiles=outfiles ):
+    """
+    Compare outfiles with files in the current directory. Report differences.
+
+    Return True if outfiles and CWD are equal.  False otherwise.
+
+    * outfiles = outfiles data object
+    """
+    ofList = VLBAMakeOutfilesList( outfiles=outfiles )
+    cwdList = os.listdir( './' )
+
+    # List of files in outfiles but not in CWD
+    notInCwd = [file for file in ofList if file not in cwdList]
+    if notInCwd:
+        logger.error( 'outfiles.pickle contains files not in current directory!')
+        logger.error( 'List of missing files:\n' + pprint.pformat(notInCwd) )
+    # List of files in CWD but not in outfiles  
+    notInOf  = [file for file in cwdList if file not in ofList]
+    if notInOf:
+        logger.error( 'Current directory contains files not in outfiles.pickle!')
+        logger.error( 'List of missing files:\n' + pprint.pformat(notInOf) )
+    if notInCwd or notInOf:
+        return False # differ
+    else:
+        return True  # equal
 
 def VLBAMakeParmFile(subs, parmfile, template=None):
     """
@@ -6901,6 +6926,14 @@ def VLBAWriteVOTable( projMeta, srcMeta, filename="votable.xml" ):
                               ("ucd","meta.record;meta.dataset" ) ] )
             XMLAddDescription( pr, 
                 "Archive file ID (integer unique to each archive file)" )
+        elif key in ("fileSetID"):
+            setAttribs( pr, [ ("name", key ),
+                              ("value", projMeta[key] ),
+                              ("datatype","char" ),
+                              ("arraysize","*"),
+                              ("ucd","meta.record;meta.dataset" ) ] )
+            XMLAddDescription( pr, 
+                "Pipeline data product set identification string (project code + observing date + archive file ID)" )
         rs2.appendChild(pr)
 
     table_ProjFiles = doc.createElement("table")

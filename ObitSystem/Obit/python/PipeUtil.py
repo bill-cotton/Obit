@@ -5,10 +5,11 @@ useful for any pipeline.
 
 import urllib, urllib2, os.path, pickle, time, sys, logging, socket, signal
 import subprocess, glob, xml.dom.minidom
-from pprint import pprint
+import pprint
 import ObitTask, Image, AIPSDir, OErr, FArray, VLBACal, FITS, UV, UVDesc, Table
 
 logger = logging.getLogger("obitLog.PipeUtil")
+logging.basicConfig( level = logging.DEBUG ) # does nothing if handlers already configured
 
 def setname (inn, out):
     """ 
@@ -607,7 +608,7 @@ Compare the FITS files matching *pattern* in *dir1* and *dir2*.
     symDiff  = set( fitsList1 ) ^ set( fitsList2 )
     if len(symDiff) != 0:
         print("These files are not in both directories:")
-        pprint(symDiff)
+        pprint.pprint(symDiff)
     table = []
     for f in intersec:
         path1 = dir1 + '/' + f
@@ -712,5 +713,39 @@ def getStartStopTime( uv, err ):
     tStop = t2 + MJD
     return (tStart, tStop)
 
+def getRecordList( filename = '/users/jcrossle/vlbaPipeline/record/pipelineRecord.pickle' ):
+    """
+    Return the pipeline record list.
 
+    * filename = name of pickle file holding the record list
+    """
+    return FetchObject( filename )
 
+def putRecordList( recList, 
+    filename = '/users/jcrossle/vlbaPipeline/record/pipelineRecord.pickle' ):
+    """
+    Write the pipeline record list to a pickle file.
+
+    * recList = pipeline record list
+    * filename = name of the pickle file to hold the record list
+    """
+    logger.info( "Writing pipeline record list to " + filename )
+    logger.info( "New pipeline record list:\n" + SummarizeArchiveResponse( recList ) )
+    SaveObject( recList, filename, True )
+
+def getDictFromList( dictList, key, value ):
+    """
+    Extract dictionaries from a list of dictionaries by matching key-values.
+
+    Use this function to find dictionaries in the pipeline record list.
+
+    * dictList = list of dictionaries (e.g. the pipeline record list)
+    * key = dictionary key for which value should match
+    * value = dictionary value to match
+    """
+    dictListSubset = []
+    for d in dictList:
+        if (key in d) and (d[key] == value):
+            dictListSubset.append(d)
+    return dictListSubset
+    

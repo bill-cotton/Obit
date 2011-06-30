@@ -144,6 +144,11 @@ unique working directory.
             logger.debug("Setting pipe.STATUS to 'check'")
             fileDict['pipe.STATUS']='check' # Set data set pipeline status to check
             makeFileRecord( fileDict, pipeRecord )
+        # Handle exception and continue
+        except subprocess.CalledProcessError: 
+            logger.error("Pipeline process failed!  Error:\n" + 
+                str(CalledProcessError))
+        # Handle exception and re-raise
         except HTTPError, e:
             logger.error("Server could not fulfill request. Error code: " + \
                 str(e.code))
@@ -163,13 +168,13 @@ unique working directory.
 
 def copyFiles( outfilesPickle, destDir='./output' ):
     """
-Copy output files to destination directory. This is done using rsync.
-
-:param string outfilesPickle: name of outfiles pickle file
-:param string destDir: directory to which files should be copied
-
-:raises subprocess.CalledProcessError: if rsync returns an error value
-:raises exceptions.IOError: if outfilesPickle does not exist
+    Copy output files to destination directory. This is done using rsync.
+    
+    :param string outfilesPickle: name of outfiles pickle file
+    :param string destDir: directory to which files should be copied
+    
+    :raises subprocess.CalledProcessError: if rsync returns an error value
+    :raises exceptions.IOError: if outfilesPickle does not exist
     """
     # Get a list of all output files
     if not os.path.exists( outfilesPickle ):
