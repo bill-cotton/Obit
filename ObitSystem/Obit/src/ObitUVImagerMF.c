@@ -1,6 +1,6 @@
-/* $Id$       */
+/* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010,2011                                          */
+/*;  Copyright (C) 2010-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -341,6 +341,78 @@ ObitUVImagerMF* ObitUVImagerMFCreate2 (gchar* name, olong order, ObitUV *uvdata,
 } /* end ObitUVImagerMFCreate2 */
 
 /**
+ * Apply weighting to uvdata and write to uvwork member
+ * \param in  The input object
+ *   The following uvdata info items control behavior:
+ *   \li "HalfStoke"   OBIT_boo (1,1,1)   If true, all Stokes are passed in uvwork [def F]
+ *                                        else I
+ * \param err Obit error stack object.
+ */
+void ObitUVImagerMFWeight (ObitUVImager *in, ObitErr *err)
+{
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+  gboolean HalfStoke=FALSE, Tr=TRUE;
+  gchar *Stokes="HALF", IStokes[5];
+  /* List of control parameters on uvwork */
+  gchar *controlList[] = 
+    {"FOV", "doFull", "NField", "xCells", "yCells", "nx", "ny", 
+     "RAShift", "DecShift", "Sources", 
+     "Catalog",  "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
+     "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
+     NULL};
+  gchar *routine = "ObitUVImagerWeight";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return;
+  g_assert (ObitIsA(in, &myClassInfo));
+
+  /* Get Stokes being imaged */
+  strncpy (IStokes, "F   ", 4); 
+  ObitInfoListGetTest (in->uvdata->info, "Stokes", &type, dim, IStokes);
+
+  /* Want parallel poln? */
+  ObitInfoListGetTest (in->uvdata->info, "HalfStoke", &type, dim, &HalfStoke);
+
+  /* Want RR, LL data */
+  if (HalfStoke) {
+    dim[0] = 4;
+    ObitInfoListAlwaysPut (in->uvdata->info, "Stokes", OBIT_string, dim, Stokes);
+  }
+
+  /* Open and close uvdata to set descriptor for scratch file */
+  ObitUVOpen (in->uvdata, OBIT_IO_ReadCal, err);
+  ObitUVClose (in->uvdata, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Create scratch uvwork if it doesn't exist */
+  if (in->uvwork==NULL) in->uvwork = newObitUVScratch (in->uvdata, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+ 
+  /* Copy/calibrate/select uvdata to uvwork */
+  in->uvwork = ObitUVCopy (in->uvdata, in->uvwork, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Copy control info to uvwork */
+  ObitInfoListCopyList (in->uvdata->info, in->uvwork->info, controlList);
+
+  /* Weight uvwork */
+  ObitUVWeightData (in->uvwork, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Image I */
+  dim[0] = 4;
+  ObitInfoListAlwaysPut (in->uvwork->info, "Stokes", OBIT_string, dim, IStokes);
+
+  /* Restore original Stokes on uvdata */
+  ObitInfoListAlwaysPut (in->uvdata->info, "Stokes", OBIT_string, dim, IStokes);
+  dim[0] = 1;
+  ObitInfoListAlwaysPut (in->uvwork->info, "doCalSelect", OBIT_bool, dim, &Tr);
+
+} /* end ObitUVImagerMFWeight */
+
+/**
  * Create shifted 2D imaging facets
  * \param inn    The input UVImager object
  * \param field  Zero terminated list of field numbers to image, 0=> all
@@ -436,7 +508,7 @@ void ObitUVImagerMFGetInfo (ObitUVImager *inn, gchar *prefix, ObitInfoList *outL
   gchar *parm[] = 
     {"do3D", "FOV", "doFull", "NField", "xCells", "yCells", "nx", "ny", 
      "RAShift", "DecShift", "Sources", 
-     "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
+     "Catalog",  "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
      NULL};
   gchar *routine = "ObitUVImagerMFGetInfo";
@@ -580,6 +652,7 @@ static void ObitUVImagerMFClassInfoDefFn (gpointer inClass)
   theClass->ObitGetClass       = (ObitGetClassFP)ObitUVImagerMFGetClass;
   theClass->ObitUVImagerCreate = (ObitUVImagerCreateFP)ObitUVImagerCreate;
   theClass->ObitUVImagerCreate2= (ObitUVImagerCreate2FP)ObitUVImagerMFCreate2;
+  theClass->ObitUVImagerWeight = (ObitUVImagerWeightFP)ObitUVImagerMFWeight;
   theClass->ObitUVImagerGetInfo= (ObitUVImagerGetInfoFP)ObitUVImagerMFGetInfo;
   theClass->ObitUVImagerGetNumPar= (ObitUVImagerGetNumParFP)ObitUVImagerMFGetNumPar;
   theClass->ObitUVImagerShifty = (ObitUVImagerShiftyFP)ObitUVImagerMFShifty;

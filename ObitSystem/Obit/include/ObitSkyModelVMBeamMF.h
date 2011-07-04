@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009,2011                                          */
+/*;  Copyright (C) 2011                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -25,8 +25,8 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-#ifndef OBITSKYMODELVMBEAM_H 
-#define OBITSKYMODELVMBEAM_H 
+#ifndef OBITSKYMODELVMBEAMMF_H 
+#define OBITSKYMODELVMBEAMMF_H 
 
 #include "Obit.h"
 #include "ObitErr.h"
@@ -35,19 +35,19 @@
 #include "ObitCInterpolate.h"
 #include "ObitImageMosaic.h"
 #include "ObitUV.h"
-#include "ObitSkyModelVM.h"
+#include "ObitSkyModelVMBeam.h"
 #include "ObitImageInterp.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
- * \file ObitSkyModelVMBeam.h
+ * \file ObitSkyModelVMBeamMF.h
  * ObitSkyModelVMIon class represents VLA beam squint corrected sky models 
  * and their Fourier transforms 
  *
  * This class represents sky models incorporating full beam polarization corrections
- * for NRAO-like antennas with offset feeds.  
+ * with wideband imaging
  *
- * This class is derived from the #ObitSkyModelVM class.
+ * This class is derived from the #ObitSkyModelVMBeam class.
  *
  * The accurate model calculation uses a Direct Fourier Transform (DFT) to
  * calculate the effects of the beam gain and polarization effects based on
@@ -73,24 +73,23 @@
  * the accurate or fast model calculation is made based on whether the component has 
  * an absolute value of flux density above or below Threshold.
  *
- * \section ObitSkyModelVMBeamaccess Creators and Destructors
- * An ObitSkyModelVMBeam will usually be created using ObitSkyModelVMBeamCreate 
+ * \section ObitSkyModelVMBeamMFaccess Creators and Destructors
+ * An ObitSkyModelVMBeamMF will usually be created using ObitSkyModelVMBeamMFCreate 
  * which allows specifying a name for the object as well as the ImageMosaic 
  * containing the model.
  *
- * A copy of a pointer to an ObitSkyModelVMBeam should always be made using the
- * #ObitSkyModelVMBeamRef function which updates the reference count in the object.
- * Then whenever freeing an ObitSkyModelVMBeam or changing a pointer, the function
- * #ObitSkyModelVMBeamUnref will decrement the reference count and destroy the object
+ * A copy of a pointer to an ObitSkyModelVMBeamMF should always be made using the
+ * #ObitSkyModelVMBeamMFRef function which updates the reference count in the object.
+ * Then whenever freeing an ObitSkyModelVMBeamMF or changing a pointer, the function
+ * #ObitSkyModelVMBeamMFUnref will decrement the reference count and destroy the object
  * when the reference count hits 0.
  * There is no explicit destructor.
  *
- * \section ObitSkyModelVMBeamselect Data selection
+ * \section ObitSkyModelVMBeamMFselect Data selection
  * The selection of data to be modified is through values added to the info 
  *(#ObitInfoList) member and include the following:
  * \li  "Stokes" OBIT_string (4,1,1) Selected output Stokes parameters:
  *               "    "=> no translation, [default "    "]
- * \li  "ionVer"OBIT_int (1,1,1) NI table version number, 0-> use highest, def=1
  * \li  "BChan" OBIT_int (1,1,1) First spectral channel selected. [def all]
  * \li  "EChan" OBIT_int (1,1,1) Highest spectral channel selected. [def all]
  * \li  "BIF"   OBIT_int (1,1,1) First "IF" selected. [def all]
@@ -119,30 +118,32 @@
  *       if maxResid==0.0 then use accurate model for merged CC abs flux > Threshold and
  *       the gridded method for weaker summed components.
  *       [default or < 0 then determine from ImageMosaic]
+ * \li  "doAlphaCorr"  OBIT_bool (1,1,1) TRUE if prior spectral index corrections to be made
+ * \li  "doSmoo"       OBIT_bool (1,1,1) TRUE if tabulated spectra to be smooothed
  */
 
 /*-------------- enumerations -------------------------------------*/
 
 /*--------------Class definitions-------------------------------------*/
-/** ObitSkyModelVMBeam Class structure. */
+/** ObitSkyModelVMBeamMF Class structure. */
 typedef struct {
-#include "ObitSkyModelVMBeamDef.h"   /* this class definition */
-} ObitSkyModelVMBeam;
+#include "ObitSkyModelVMBeamMFDef.h"   /* this class definition */
+} ObitSkyModelVMBeamMF;
 
 /*----------------- Macroes ---------------------------*/
 /** 
- * Macro to unreference (and possibly destroy) an ObitSkyModelVMBeam
- * returns a ObitSkyModelVMBeam*.
+ * Macro to unreference (and possibly destroy) an ObitSkyModelVMBeamMF
+ * returns a ObitSkyModelVMBeamMF*.
  * in = object to unreference
  */
-#define ObitSkyModelVMBeamUnref(in) ObitUnref (in)
+#define ObitSkyModelVMBeamMFUnref(in) ObitUnref (in)
 
 /** 
- * Macro to reference (update reference count) an ObitSkyModelVMBeam.
- * returns a ObitSkyModelVMBeam*.
+ * Macro to reference (update reference count) an ObitSkyModelVMBeamMF.
+ * returns a ObitSkyModelVMBeamMF*.
  * in = object to reference
  */
-#define ObitSkyModelVMBeamRef(in) ObitRef (in)
+#define ObitSkyModelVMBeamMFRef(in) ObitRef (in)
 
 /** 
  * Macro to determine if an object is the member of this or a 
@@ -150,64 +151,82 @@ typedef struct {
  * Returns TRUE if a member, else FALSE
  * in = object to reference
  */
-#define ObitSkyModelVMBeamIsA(in) ObitIsA (in, ObitSkyModelVMBeamGetClass())
+#define ObitSkyModelVMBeamMFIsA(in) ObitIsA (in, ObitSkyModelVMBeamMFGetClass())
 
 /*---------------Public functions---------------------------*/
 /** Public: Class initializer. */
-void ObitSkyModelVMBeamClassInit (void);
+void ObitSkyModelVMBeamMFClassInit (void);
 
 /** Public: Default Constructor. */
-ObitSkyModelVMBeam* newObitSkyModelVMBeam (gchar* name);
+ObitSkyModelVMBeamMF* newObitSkyModelVMBeamMF (gchar* name);
 
 /** Public: Init SkyModel object from description in an ObitInfoList */
-void ObitSkyModelVMBeamFromInfo (ObitSkyModel *out, gchar *prefix, 
+void ObitSkyModelVMBeamMFFromInfo (ObitSkyModel *out, gchar *prefix, 
 				 ObitInfoList *inList, ObitErr *err);
 
-/** Public: Create/initialize ObitSkyModelVMBeam structures */
-ObitSkyModelVMBeam* ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
-					      ObitUV *uvData,
-					      ObitImage *IBeam,  ObitImage *VBeam, 
-					      ObitImage *QBeam,  ObitImage *UBeam, 
-					      ObitImage *IBeamPh,  ObitImage *VBeamPh, 
-					      ObitImage *QBeamPh,  ObitImage *UBeamPh, 
-					      ObitErr *err);
+/** Public: Create/initialize ObitSkyModelVMBeamMF structures */
+ObitSkyModelVMBeamMF* ObitSkyModelVMBeamMFCreate (gchar* name, ObitImageMosaic* mosaic,
+						  ObitUV *uvData,
+						  ObitImage *IBeam,  ObitImage *VBeam, 
+						  ObitImage *QBeam,  ObitImage *UBeam, 
+						  ObitImage *IBeamPh,  ObitImage *VBeamPh, 
+						  ObitImage *QBeamPh,  ObitImage *UBeamPh, 
+						  ObitErr *err);
 
-/** Public: Get Inputs. */
-void  ObitSkyModelVMBeamGetInput (ObitSkyModel* inn, ObitErr *err);
-
-/** Public: initialize ObitSkyModelVMBeam structures */
-void ObitSkyModelVMBeamInitMod (ObitSkyModel* in,  ObitUV *uvdata, ObitErr *err);
+/** Public: initialize ObitSkyModelVMBeamMF structures */
+void ObitSkyModelVMBeamMFInitMod (ObitSkyModel* in,  ObitUV *uvdata, ObitErr *err);
 
 /** Public: shutdown ObitSkyModel processes */
-void ObitSkyModelVMBeamShutDownMod (ObitSkyModel* in,  ObitUV *uvdata, 
-				    ObitErr *err);
+void ObitSkyModelVMBeamMFShutDownMod (ObitSkyModel* in,  ObitUV *uvdata, 
+				      ObitErr *err);
 
 /** Public: initialize model for pass through data */
-void ObitSkyModelVMBeamInitModel (ObitSkyModel* in, ObitErr *err);
+void ObitSkyModelVMInitModel (ObitSkyModel* in, ObitErr *err);
 
 /** Public: ClassInfo pointer */
-gconstpointer ObitSkyModelVMBeamGetClass (void);
+gconstpointer ObitSkyModelVMBeamMFGetClass (void);
 
 /** Public: Copy (deep) constructor. */
-ObitSkyModelVMBeam* 
-ObitSkyModelVMBeamCopy  (ObitSkyModelVMBeam *in, 
-			 ObitSkyModelVMBeam *out, ObitErr *err);
-
-/** Public: Copy structure. */
-void ObitSkyModelVMBeamClone (ObitSkyModelVMBeam *in, ObitSkyModelVMBeam *out, 
-			      ObitErr *err);
-
-/** Public: Routine to update model */
-void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *in, ofloat time, olong suba,
-				    ObitUV *uvdata, olong ithread, ObitErr *err);
+ObitSkyModelVMBeamMF* 
+ObitSkyModelVMBeamMFCopy  (ObitSkyModelVMBeamMF *in, 
+			   ObitSkyModelVMBeamMF *out, ObitErr *err);
 
 /** Private: Chose model type */
-void  ObitSkyModelVMBeamChose (ObitSkyModel* in, ObitUV* uvdata);
+void  ObitSkyModelVMBeamMFChose (ObitSkyModel* in, ObitUV* uvdata);
 
 /** Public: Extract information about underlying structures to ObitInfoList */
-void ObitSkyModelVMBeamGetInfo (ObitSkyModel *in, gchar *prefix, 
-				ObitInfoList *outList, 
-				ObitErr *err);
+void ObitSkyModelVMBeamMFGetInfo (ObitSkyModel *in, gchar *prefix, 
+				  ObitInfoList *outList, 
+				  ObitErr *err);
+
+/** Public: Load Grid components */
+void ObitSkyModelVMBeamMFLoadGridComps (ObitSkyModel* in, olong field, ObitUV* uvdata, 
+					ofloat gparm[3], olong *ncomp, ObitErr *err);
+
+/** Public: fill in->plane with image and possibly PB corrected */
+void ObitSkyModelVMBeamMFgetPBImage (ObitSkyModel* in, ObitUV* uvdata, olong field, 
+				     ObitErr *err);
+
+/** Public: Grid  Components model, may be overridden in derived class */
+gboolean ObitSkyModelVMBeamMFGridComps (ObitSkyModel *in, olong n, ObitUV *uvdata, 
+					ObitErr *err);
+
+/** Public: Grid/FT components */
+gboolean ObitSkyModelVMBeamMFGridFTComps (ObitSkyModel* in, olong field, ObitUV* uvdata, 
+					  ObitErr *err);
+
+/** Public: Load/FT image model, may be overridden in derived class */
+gboolean ObitSkyModelVMBeamMFLoadImage (ObitSkyModel *in, olong n, ObitUV *uvdata, 
+					ObitErr *err);
+
+/** Public: FT by Gridding, may be overridden in derived class */
+void ObitSkyModelVMBeamMFFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, 
+				 ObitErr *err);
+
+/** Public: FT image array in in->plane */
+void ObitSkyModelVMBeamMFFTImage (ObitSkyModel* in, ObitFArray *inArray, 
+				  ObitCArray *outArray);
+
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.
@@ -215,7 +234,7 @@ void ObitSkyModelVMBeamGetInfo (ObitSkyModel *in, gchar *prefix,
  * (NULL if none) and function pointers.
  */
 typedef struct  {
-#include "ObitSkyModelVMBeamClassDef.h"
-} ObitSkyModelVMBeamClassInfo; 
+#include "ObitSkyModelVMBeamMFClassDef.h"
+} ObitSkyModelVMBeamMFClassInfo; 
 
-#endif /* OBITSKYMODELVMBEAM_H */ 
+#endif /* OBITSKYMODELVMBEAMMF_H */ 

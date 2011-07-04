@@ -1043,7 +1043,7 @@ ObitFArray* ObitTableCCUtilMergeSel (ObitTableCC *in, olong startComp,
   if (in->myDesc->nrow<=0) {
     retCode = ObitTableCCClose (in, err);
     if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
-    return OBIT_IO_OK;
+    return NULL;
   }
 
   /* Check range of components */
@@ -1288,6 +1288,7 @@ ObitFArray* ObitTableCCUtilMergeSelSpec (ObitTableCC *in, olong startComp,
  * \param endComp   Last component to select, 0=> all
  * \param range     Max and min abs value of flux densities to accept
  * \param err       ObitErr error stack.
+ * \return Merged CC table, or NULL if empty.
  */
 ObitTableCC* 
 ObitTableCCUtilMergeSel2Tab (ObitImage *image, olong inCCver, olong *outCCver,
@@ -1326,6 +1327,10 @@ ObitTableCCUtilMergeSel2Tab (ObitImage *image, olong inCCver, olong *outCCver,
   /* Select and merge input table */
   Merged = ObitTableCCUtilMergeSel (inCCTable, startComp, endComp, parms, err);
   if (err->error) goto cleanup;
+
+  /* Anything there? */
+  if (Merged==NULL) return NULL;
+
   naxis[0] = 0; naxis[1]=0; 
   array = ObitFArrayIndex(Merged, naxis);
   warray = Merged->naxis[0];

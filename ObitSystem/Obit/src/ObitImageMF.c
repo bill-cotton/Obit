@@ -169,7 +169,7 @@ ObitImageMF* newObitImageMF (gchar* name)
  */
 ObitImage* newObitImageMFScratch (ObitImage *in, ObitErr *err)
 {
-  const ObitClassInfo *ParentClass;
+  /*const ObitClassInfo *ParentClass;*/
   ObitImage   *out=NULL;
   ObitImageMF *inMF=NULL, *outMF=NULL;
   ObitInfoType type;
@@ -859,9 +859,9 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
       nSpec += ndiv;
     } /* end loop over IF */
     /* Make sure have spectra */
-    Obit_return_if_fail((nSpec>in->curOrder), err, 
-			"%s: TOO Few channels %d, for requested order, decrease maxFBW", 
-			routine, nSpec);
+    Obit_return_if_fail((nSpec>in->curOrder), err,
+                        "%s: TOO Few channels %d, for requested order, decrease maxFBW",
+                        routine, nSpec);
     /* End if spectral */
   } else nSpec = 1;
 
@@ -894,8 +894,8 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
       for (ichan=0; ichan<ndiv; ichan++) {
 	in->BIFSpec[ip] = iif;
 	in->EIFSpec[ip] = iif;
-	in->BChanSpec[ip] = ichan*maxCh;
-	in->EChanSpec[ip] = (ichan+1)*maxCh - 1;
+	in->BChanSpec[ip] = ichan*ndiv;
+	in->EChanSpec[ip] = (ichan+1)*ndiv - 1;
 	ip++;
       } /* end loop over coarse channel */
       /* Make sure all channels done */
@@ -1043,7 +1043,9 @@ void ObitImageMFBlank (ObitImageMF *in, ObitErr *err)
 /**
  * Make image or beam from combined spectral channels
  * Average using weighting by 1/sigma of plane
- * Use average + 0.1 times most extreme channel value > 5 sigma.
+ * If the peak in the combined image is less than 10 times the 
+ * RMS in the best channel image then a correction is made:
+ * use average + 0.1 times most extreme channel value > 5 sigma.
  * Note: values of lambda>0.1 may lead to instabilities causing 
  * CLEAN not to converge.
  * The extrema array is then apodized using the FT of the CLEAN beam 
@@ -1059,8 +1061,8 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
 {
   ObitFArray *imPix=NULL, *extPix=NULL, *extConvl=NULL;
   olong i, plane[5] = {1,1,1,1,1}, pos[2];
-  ofloat norm, sigma, sigClip=5.0, lambda=0.1, beamArea, cells;
-  ofloat wt, sumWt, p1, p2, fblank = ObitMagicF();
+  ofloat norm, sigma, sigClip=5.0, lambda=0.1, testSigma=10.0, beamArea, cells;
+  ofloat wt, sumWt, p1, p2, minSigma, fblank = ObitMagicF();
   gboolean *bad=NULL;
   gchar *routine = "ObitImageMFCombine";
 
@@ -1069,7 +1071,8 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
   g_assert (ObitImageMFIsA(in));
 
   /* Loop accumulating average */
-  sumWt = 0.0;
+  sumWt    = 0.0;
+  minSigma = 1.0e20;
   bad = g_malloc0(in->nSpec*sizeof(gboolean));
   for (i=1+in->maxOrder; i<1+in->maxOrder+in->nSpec; i++) {
     plane[0] = i+1;
@@ -1087,7 +1090,10 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
     if ((wt==fblank) || (wt<=0.0)) {
       bad[i-1-in->maxOrder] = TRUE;
       continue;
-    } else bad[i-1-in->maxOrder] = FALSE;
+    } else {
+      bad[i-1-in->maxOrder] = FALSE;
+    }
+    minSigma = MIN (minSigma, wt);  /* Minimum valid sigma */
     wt = 1.0 / wt;
     sumWt += wt;
     ObitFArraySMul (in->image, wt);
@@ -1136,7 +1142,8 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
     /* add if peak in imPix exceeds that in extConvl - something occasionally goes wrong */
     p1 = ObitFArrayMaxAbs (imPix, pos);
     p2 = ObitFArrayMaxAbs (extConvl, pos);
-    if (p1>p2) ObitFArrayAdd (imPix, extConvl, imPix);
+    if ((p1>p2) && (p1<testSigma*minSigma))
+      ObitFArrayAdd (imPix, extConvl, imPix);
     /* Cleanup */
     ((ObitImage*)in->myBeam)->image  = ObitFArrayUnref(((ObitImage*)in->myBeam)->image);
     extConvl = ObitFArrayUnref(extConvl);

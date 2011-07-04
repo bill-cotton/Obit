@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2009,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
@@ -112,6 +112,16 @@ typedef struct {
   olong        ithread;
   /* Obit error stack object */
   ObitErr      *err;
+  /* UV Interpolator for FTGrid */
+  ObitCInterpolate *Interp;
+  /* VM class entries */
+  /* Start time (days) of validity of model */
+  ofloat begVMModelTime;
+  /* End time (days) of validity of model */
+  ofloat endVMModelTime;
+  /* Thread copy of Components list*/
+  ObitFArray *VMComps;
+  /* VMBeam class entries */
   /* Amp, phase interpolator for I pol Beam image */
   ObitFInterpolate *BeamIInterp, *BeamIPhInterp;
   /* Amp, phase interpolator for V pol Beam image */
@@ -120,14 +130,6 @@ typedef struct {
   ObitFInterpolate *BeamQInterp, *BeamQPhInterp;
   /* Amp, phase interpolator for U pol Beam image */
   ObitFInterpolate *BeamUInterp, *BeamUPhInterp;
-  /* UV Interpolator for FTGrid */
-  ObitCInterpolate *Interp;
-  /* Start time (days) of validity of model */
-  ofloat begVMModelTime;
-  /* End time (days) of validity of model */
-  ofloat endVMModelTime;
-  /* Thread copy of Components list - not used here */
-  ObitFArray *VMComps;
   /** Current uv channel number being processed.  */
   olong channel;
   /** Dimension of Rgain...  */
@@ -475,15 +477,6 @@ void ObitSkyModelVMBeamInitMod (ObitSkyModel* inn, ObitUV *uvdata,
   ObitUVClose (uvdata, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
-  /* Setup for threading - delete existing threadArgs */
-  if (in->threadArgs) {
-    for (i=0; i<in->nThreads; i++) {
-      g_free(in->threadArgs[i]);
-    }
-    g_free(in->threadArgs);
-    in->threadArgs = NULL;
-  } 
-
   /* How many threads? */
   in->nThreads = MAX (1, ObitThreadNumProc(in->thread));
 
@@ -492,37 +485,37 @@ void ObitSkyModelVMBeamInitMod (ObitSkyModel* inn, ObitUV *uvdata,
     in->threadArgs = g_malloc0(in->nThreads*sizeof(VMBeamFTFuncArg*));
     for (i=0; i<in->nThreads; i++) 
       in->threadArgs[i] = g_malloc0(sizeof(VMBeamFTFuncArg)); 
-  } /* end initialize */
   
-  for (i=0; i<in->nThreads; i++) {
-    args = (VMBeamFTFuncArg*)in->threadArgs[i];
-    strcpy (args->type, "vmbeam");  /* Enter type as first entry */
-    args->in     = inn;
-    args->uvdata = uvdata;
-    args->ithread = i;
-    args->err    = err;
-    if (in->IBeam) args->BeamIInterp = ObitImageInterpCloneInterp(in->IBeam,err);
-    if (in->VBeam) args->BeamVInterp = ObitImageInterpCloneInterp(in->VBeam,err);
-    if (in->QBeam) args->BeamQInterp = ObitImageInterpCloneInterp(in->QBeam,err);
-    if (in->UBeam) args->BeamUInterp = ObitImageInterpCloneInterp(in->UBeam,err);
-    if (in->IBeamPh) args->BeamIPhInterp = ObitImageInterpCloneInterp(in->IBeamPh,err);
-    if (in->VBeamPh) args->BeamVPhInterp = ObitImageInterpCloneInterp(in->VBeamPh,err);
-    if (in->QBeamPh) args->BeamQPhInterp = ObitImageInterpCloneInterp(in->QBeamPh,err);
-    if (in->UBeamPh) args->BeamUPhInterp = ObitImageInterpCloneInterp(in->UBeamPh,err);
-    if (err->error) Obit_traceback_msg (err, routine, in->name);
-    args->begVMModelTime = -1.0e20;
-    args->endVMModelTime = -1.0e20;
-    args->VMComps= NULL;
-    args->dimGain= 0;
-    args->Rgain  = NULL;
-    args->Rgaini = NULL;
-    args->Lgain  = NULL;
-    args->Lgaini = NULL;
-    args->Qgain  = NULL;
-    args->Qgaini = NULL;
-    args->Ugain  = NULL;
-    args->Ugaini = NULL;
-  }
+    for (i=0; i<in->nThreads; i++) {
+      args = (VMBeamFTFuncArg*)in->threadArgs[i];
+      strcpy (args->type, "vmbeam");  /* Enter type as first entry */
+      args->in     = inn;
+      args->uvdata = uvdata;
+      args->ithread = i;
+      args->err    = err;
+      if (in->IBeam) args->BeamIInterp = ObitImageInterpCloneInterp(in->IBeam,err);
+      if (in->VBeam) args->BeamVInterp = ObitImageInterpCloneInterp(in->VBeam,err);
+      if (in->QBeam) args->BeamQInterp = ObitImageInterpCloneInterp(in->QBeam,err);
+      if (in->UBeam) args->BeamUInterp = ObitImageInterpCloneInterp(in->UBeam,err);
+      if (in->IBeamPh) args->BeamIPhInterp = ObitImageInterpCloneInterp(in->IBeamPh,err);
+      if (in->VBeamPh) args->BeamVPhInterp = ObitImageInterpCloneInterp(in->VBeamPh,err);
+      if (in->QBeamPh) args->BeamQPhInterp = ObitImageInterpCloneInterp(in->QBeamPh,err);
+      if (in->UBeamPh) args->BeamUPhInterp = ObitImageInterpCloneInterp(in->UBeamPh,err);
+      if (err->error) Obit_traceback_msg (err, routine, in->name);
+      args->begVMModelTime = -1.0e20;
+      args->endVMModelTime = -1.0e20;
+      args->VMComps= NULL;
+      args->dimGain= 0;
+      args->Rgain  = NULL;
+      args->Rgaini = NULL;
+      args->Lgain  = NULL;
+      args->Lgaini = NULL;
+      args->Qgain  = NULL;
+      args->Qgaini = NULL;
+      args->Ugain  = NULL;
+      args->Ugaini = NULL;
+    }
+  } /* end initialize */
 
   /* Call parent initializer */
   ObitSkyModelVMInitMod(inn, uvdata, err);
@@ -599,7 +592,8 @@ void ObitSkyModelVMBeamShutDownMod (ObitSkyModel* inn, ObitUV *uvdata,
 
   if (in->threadArgs) {
     /* Check type - only handle "vmbeam" */
-    if (!strncmp((gchar*)in->threadArgs[0], "vmbeam", 6)) {
+    args = (VMBeamFTFuncArg*)in->threadArgs[0];
+    if ((strlen(args->type)>6) || (!strncmp(args->type, "vmbeam", 6))) {
       for (i=0; i<in->nThreads; i++) {
 	args = (VMBeamFTFuncArg*)in->threadArgs[i];
 	args->BeamIInterp = ObitFInterpolateUnref(args->BeamIInterp);
@@ -653,12 +647,13 @@ void ObitSkyModelVMBeamInitModel (ObitSkyModel* inn, ObitErr *err)
   in->begVMModelTime = -1.0e20;
   in->endVMModelTime = -1.0e20;
   in->curVMModelTime = -1.0e20;
-  in->modelMode = OBIT_SkyModel_DFT;  /* Only can do DFT */
+   /* in->modelMode = OBIT_SkyModel_DFT; Only can do DFT */
 
   /* Threading */
   if (in->threadArgs) {
     /* Check type - only handle "vmbeam" */
-    if (!strncmp((gchar*)in->threadArgs[0], "vmbeam", 6)) {
+    args = (VMBeamFTFuncArg*)in->threadArgs[0];
+    if ((strlen(args->type)>6) || (!strncmp(args->type, "vmbeam", 6))) {
       for (i=0; i<in->nThreads; i++) {
 	args = (VMBeamFTFuncArg*)in->threadArgs[i];
 	args->begVMModelTime = -1.0e20;
@@ -725,7 +720,7 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
   /* Thread to update */
   lithread = MAX (0, ithread);
   args = (VMBeamFTFuncArg*)in->threadArgs[lithread];
-  g_assert (!strncmp(args->type,"vmbeam",6));  /* Test arg */
+  /* g_assert (!strncmp(args->type,"vmbeam",6));  Test arg */
 
    /* Check subarray */
   Obit_return_if_fail(((suba>=0) && (suba<in->numAntList)), err,
@@ -1095,7 +1090,8 @@ void ObitSkyModelVMBeamClear (gpointer inn)
   /* Thread stuff */
   if (in->threadArgs) {
     /* Check type - only handle "vmbeam" */
-    if (!strncmp((gchar*)in->threadArgs[0], "vmbeam", 6)) {
+    args = (VMBeamFTFuncArg*)in->threadArgs[0];
+    if ((strlen(args->type)>6) || (!strncmp(args->type, "vmbeam", 6))) {
       for (i=0; i<in->nThreads; i++) {
 	args = (VMBeamFTFuncArg*)in->threadArgs[i];
 	if (args->Rgain)  g_free(args->Rgain);
@@ -1164,6 +1160,8 @@ void  ObitSkyModelVMBeamGetInput (ObitSkyModel* inn, ObitErr *err)
     /* Need to lookup from attached Mosaic */
     maxv = 0.0;
     for (i=0; i<in->mosaic->numberImages; i++) {
+      /* Ignore tapered images */
+      if (in->mosaic->BeamTaper[i]>0.0) continue;
       gotit = ObitInfoListGetTest (in->mosaic->images[i]->info, "maxAbsResid", 
 				   &type, dim, &maxAbsResid); 
       if (gotit) maxv = MAX (maxv, maxAbsResid);
@@ -1172,6 +1170,8 @@ void  ObitSkyModelVMBeamGetInput (ObitSkyModel* inn, ObitErr *err)
     /* If still nothing use max/min in image headers */
     if (maxv==0.0) {
       for (i=0; i<in->mosaic->numberImages; i++) {
+	/* Ignore tapered images */
+	if (in->mosaic->BeamTaper[i]>0.0) continue;
 	desc = in->mosaic->images[i]->myDesc;
 	maxv = MAX (maxv, fabs(desc->maxval));
 	maxv = MAX (maxv, fabs(desc->minval));
@@ -1246,7 +1246,7 @@ void ObitSkyModelVMBeamFTDFT (ObitSkyModelVM *inn, olong field, ObitUV *uvdata, 
 
   /* Check */
   args = (VMBeamFTFuncArg*)in->threadArgs[0];
-  if (strncmp (args->type, "vmbeam", 6)) {
+  if ((strlen(args->type)>6) || (strncmp(args->type, "vmbeam", 6))) {
     Obit_log_error(err, OBIT_Error,"%s: Wrong type FuncArg %s", routine,args->type);
     return;
   }
@@ -1373,14 +1373,14 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
   olong jincf, startIF, numberIF, jincif, kincf, kincif;
   olong offset, offsetChannel, offsetIF, iterm, nterm=0, nUVchan, nUVpoln;
   olong ilocu, ilocv, ilocw, iloct, ilocb, suba, itemp, ant1, ant2, mcomp;
-  ofloat *visData, *Data, *ddata, *fscale;
+  ofloat *visData, *Data, *ddata, *fscale, exparg;
   ofloat sumRealRR, sumImagRR, modRealRR=0.0, modImagRR=0.0;
   ofloat sumRealLL, sumImagLL, modRealLL=0.0, modImagLL=0.0;
   ofloat sumRealQ,  sumImagQ,  modRealQ=0.0,  modImagQ=0.0;
   ofloat sumRealU,  sumImagU,  modRealU=0.0,  modImagU=0.0;
   ofloat cbase, *rgain1, *lgain1, *rgain2, *lgain2, tx, ty, tz, ll, lll;
   ofloat *qgain1, *ugain1, *qgain2, *ugain2, re, im, specFact;
-  ofloat amp, ampr, ampl, sp=0.0, cp=1.0, arg, freq2=0.0, freqFact, wtRR=0.0, wtLL=0.0, temp;
+  ofloat amp, ampr, ampl, arg, freq2=0.0, freqFact, wtRR=0.0, wtLL=0.0, temp;
 #define FazArrSize 100  /* Size of the amp/phase/sine/cosine arrays */
   ofloat AmpArrR[FazArrSize], AmpArrL[FazArrSize], FazArr[FazArrSize];
   ofloat CosArr[FazArrSize], SinArr[FazArrSize];
@@ -1487,6 +1487,7 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 	for (iChannel=lstartChannel; iChannel<startChannel+numberChannel; iChannel++) {
 	  offsetChannel = offsetIF + iChannel*jincf; 
 	  freqFact = fscale[iIF*kincif + iChannel*kincf];  /* Frequency scaling factor */
+	  freq2    = freqFact*freqFact;    /* Frequency factor squared */
 	  
 	  /* Sum over components */
 	  /* Table values 0=Amp, 1=-2*pi*x, 2=-2*pi*y, 3=-2*pi*z */
@@ -1554,16 +1555,16 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 		  lll = ll = log(freqFact);
 		  arg = 0.0;
 		  for (iterm=0; iterm<nterm; iterm++) {
-		    arg += ddata[6+iterm] * lll;
+		    arg += ddata[7+iterm] * lll;
 		    lll *= ll;
 		  }
 		  specFact = exp(arg);
 		  FazArr[itcnt]  = freqFact * (tx + ty + tz);
 		  AmpArrR[itcnt] = specFact * ddata[3] * rgain1[iComp];
 		  AmpArrL[itcnt] = specFact * ddata[3] * lgain1[iComp];
+		  itcnt++;          /* Count in amp/phase buffers */
 		}  /* end if valid */
 		ddata += lcomp;  /* update pointer */
-		itcnt++;          /* Count in amp/phase buffers */
 		if (itcnt>=FazArrSize) break;
 	      } /* end inner loop over components */
 	      
@@ -1591,8 +1592,6 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 	    break;
 	  case OBIT_SkyModel_GaussMod:     /* Gaussian on sky */
 	    /* From the AIPSish QGASUB.FOR  */
-	    freq2 = freqArr[iIF*kincif + iChannel*kincf];    /* Frequency squared */
-	    freq2 *= freq2;
 	    for (it=0; it<mcomp; it+=FazArrSize) {
 	      itcnt = 0;
 	      for (iComp=it; iComp<mcomp; iComp++) {
@@ -1601,20 +1600,17 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 					    ddata[6]*visData[ilocw]);
 		/* Parallel  pol */
 		arg = freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
-			       ddata[8]*visData[ilocv]*visData[ilocv] +
-			       ddata[9]*visData[ilocu]*visData[ilocv]);
+				ddata[8]*visData[ilocv]*visData[ilocv] +
+				ddata[9]*visData[ilocu]*visData[ilocv]);
+		if (arg<-1.0e-5) exparg = exp (arg);
+		else exparg = 1.0;
 		ampr = ddata[3] * rgain1[iComp];
-		if (arg<-1.0e-5) ampr *= exp (arg);
-		sumRealRR += ampr*cp;
-		sumImagRR += ampr*sp;
-		arg = freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
-			       ddata[8]*visData[ilocv]*visData[ilocv] +
-			       ddata[9]*visData[ilocu]*visData[ilocv]);
+		if (arg<-1.0e-5) ampr *= exparg;
 		ampl = ddata[3] * lgain1[iComp];
-		if (arg<-1.0e-5) ampl *= exp (arg);
+		if (arg<-1.0e-5) ampl *= exparg;
 		AmpArrR[itcnt] = ampr;
 		AmpArrL[itcnt] = ampl;
-		ddata += lcomp;   /* update pointer */
+
 		itcnt++;          /* Count in amp/phase buffers */
 		if (itcnt>=FazArrSize) break;
 	      }  /* end inner loop over components */
@@ -1640,7 +1636,6 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 	    } /* end outer loop over components */
 	    break;
 	  case OBIT_SkyModel_GaussModSpec:     /* Gaussian on sky + spectrum*/
-	    freq2 = freqFact*freqFact;    /* Frequency factor squared */
 	    for (it=0; it<mcomp; it+=FazArrSize) {
 	      itcnt = 0;
 	      for (iComp=it; iComp<mcomp; iComp++) {
@@ -1649,7 +1644,7 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 		  lll = ll = log(freqFact);
 		  arg = 0.0;
 		  for (iterm=0; iterm<nterm; iterm++) {
-		    arg += ddata[9+iterm] * lll;
+		    arg += ddata[10+iterm] * lll;
 		    lll *= ll;
 		  }
 		  specFact = exp(arg);
@@ -1664,9 +1659,9 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 		  FazArr[itcnt] = freqFact * (tx + ty + tz);
 		  AmpArrR[itcnt] = amp * rgain1[iComp];
 		  AmpArrL[itcnt] = amp * lgain1[iComp];
+		  itcnt++;          /* Count in amp/phase buffers */
 		} /* end if valid */
 		ddata += lcomp;  /* update pointer */
-		itcnt++;          /* Count in amp/phase buffers */
 		if (itcnt>=FazArrSize) break;
 	      }  /* end inner loop over components */
 
@@ -1752,9 +1747,9 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 		  FazArr[itcnt] = freqFact * (tx + ty + tz);
 		  AmpArrR[itcnt] = amp * rgain1[iComp];
 		  AmpArrL[itcnt] = amp * lgain1[iComp];
+		  itcnt++;          /* Count in amp/phase buffers */
 		} /* end if valid */
 		ddata += lcomp;  /* update pointer */
-		itcnt++;          /* Count in amp/phase buffers */
 		if (itcnt>=FazArrSize) break;
 	      }  /* end inner loop over components */
 
@@ -2009,7 +2004,7 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
   odouble *freqArr;
   const ObitSkyModelVMClassInfo 
     *myClass=(const ObitSkyModelVMClassInfo*)in->ClassInfo;
-  gchar *routine = "ObitSkyModelVMBeamFTDFT";
+  gchar *routine = "ObitSkyModelVMBeamFTDFTPh";
 
   /* error checks - assume most done at higher level */
   if (err->error) goto finish;
@@ -2107,7 +2102,8 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
 	for (iChannel=lstartChannel; iChannel<startChannel+numberChannel; iChannel++) {
 	  offsetChannel = offsetIF + iChannel*jincf; 
 	  freqFact = fscale[iIF*kincif + iChannel*kincf];  /* Frequency scaling factor */
-	  
+	  freq2    = freqFact * freqFact;   	           /* Frequency factor squared */
+
 	  /* Sum over components */
 	  /* Table values 0=Amp, 1=-2*pi*x, 2=-2*pi*y, 3=-2*pi*z */
 	  sumRealRR = sumImagRR = sumRealLL = sumImagLL = 0.0;
@@ -2191,14 +2187,15 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
 		    lll *= ll;
 		  }
 		  specFact = exp(arg);
+		  amp = ddata[3] * specFact;
 		  FazArr[itcnt]  = freqFact * (tx + ty + tz);
-		  AmpArrRr[itcnt] = ddata[3] * rgain1[iComp];
-		  AmpArrLr[itcnt] = ddata[3] * lgain1[iComp];
-		  AmpArrRi[itcnt] = ddata[3] * rgain1i[iComp];
-		  AmpArrLi[itcnt] = ddata[3] * lgain1i[iComp];
+		  AmpArrRr[itcnt] = amp * rgain1[iComp];
+		  AmpArrLr[itcnt] = amp * lgain1[iComp];
+		  AmpArrRi[itcnt] = amp * rgain1i[iComp];
+		  AmpArrLi[itcnt] = amp * lgain1i[iComp];
+		  itcnt++;          /* Count in amp/phase buffers */
 		}  /* end if valid */
 		ddata += lcomp;  /* update pointer */
-		itcnt++;          /* Count in amp/phase buffers */
 		if (itcnt>=FazArrSize) break;
 	      } /* end inner loop over components */
 	      
@@ -2228,8 +2225,6 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
 	    break;
 	  case OBIT_SkyModel_GaussMod:     /* Gaussian on sky */
 	    /* From the AIPSish QGASUB.FOR  */
-	    freq2 = freqArr[iIF*kincif + iChannel*kincf];    /* Frequency squared */
-	    freq2 *= freq2;
 	    for (it=0; it<mcomp; it+=FazArrSize) {
 	      itcnt = 0;
 	      for (iComp=it; iComp<mcomp; iComp++) {
@@ -2240,15 +2235,15 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
 		arg = freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
 			       ddata[8]*visData[ilocv]*visData[ilocv] +
 			       ddata[9]*visData[ilocu]*visData[ilocv]);
-		if (arg<-1.0e-5) ampr *= exp (arg);
-		ampr = ddata[3] * rgain1[iComp];
-		ampl = ddata[3] * lgain1[iComp];
-		if (arg<-1.0e-5) {ampl *= exp (arg); ampr *= exp (arg);}
+		if (arg<-1.0e-5) amp = ddata[3] * exp (arg);
+		else             amp = ddata[3];
+		ampr = amp * rgain1[iComp];
+		ampl = amp * lgain1[iComp];
 		AmpArrRr[itcnt] = ampr;
 		AmpArrLr[itcnt] = ampl;
-		ampl = ddata[3] * lgain1i[iComp];
-		ampr = ddata[3] * rgain1i[iComp];
-		if (arg<-1.0e-5) {ampl *= exp (arg); ampr *= exp (arg);}
+
+		ampl = amp * lgain1i[iComp];
+		ampr = amp * rgain1i[iComp];
 		AmpArrRi[itcnt] = ampr;
 		AmpArrLi[itcnt] = ampl;
 		ddata += lcomp;   /* update pointer */
@@ -2279,7 +2274,6 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
 	    } /* end outer loop over components */
 	    break;
 	  case OBIT_SkyModel_GaussModSpec:     /* Gaussian on sky + spectrum*/
-	    freq2 = freqFact*freqFact;    /* Frequency factor squared */
 	    for (it=0; it<mcomp; it+=FazArrSize) {
 	      itcnt = 0;
 	      for (iComp=it; iComp<mcomp; iComp++) {
@@ -2293,8 +2287,8 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
 		  }
 		  specFact = exp(arg);
 		  arg = freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
-				 ddata[8]*visData[ilocv]*visData[ilocv] +
-				 ddata[9]*visData[ilocu]*visData[ilocv]);
+				  ddata[8]*visData[ilocv]*visData[ilocv] +
+				  ddata[9]*visData[ilocu]*visData[ilocv]);
 		  if (arg<-1.0e-5) amp = specFact * ddata[3] * exp (arg);
 		  else amp = specFact * ddata[3];
 		  tx = ddata[4]*(odouble)visData[ilocu];
@@ -2305,9 +2299,9 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
 		  AmpArrLr[itcnt] = ddata[3] * lgain1[iComp];
 		  AmpArrRi[itcnt] = ddata[3] * rgain1i[iComp];
 		  AmpArrLi[itcnt] = ddata[3] * lgain1i[iComp];
+		  itcnt++;          /* Count in amp/phase buffers */
 		} /* end if valid */
 		ddata += lcomp;  /* update pointer */
-		itcnt++;          /* Count in amp/phase buffers */
 		if (itcnt>=FazArrSize) break;
 	      }  /* end inner loop over components */
 
@@ -2345,10 +2339,11 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
 				      visData[ilocv]*visData[ilocv]) * ddata[7];
 		arg = MAX (arg, 0.1);
 		arg = ((sin(arg)/(arg*arg*arg)) - cos(arg)/(arg*arg));
-		AmpArrRr[itcnt] = ddata[3] * rgain1[iComp];
-		AmpArrLr[itcnt] = ddata[3] * lgain1[iComp];
-		AmpArrRi[itcnt] = ddata[3] * rgain1i[iComp];
-		AmpArrLi[itcnt] = ddata[3] * lgain1i[iComp];
+		amp = ddata[3] * ((sin(arg)/(arg*arg*arg)) - cos(arg)/(arg*arg));
+		AmpArrRr[itcnt] = amp * rgain1[iComp];
+		AmpArrLr[itcnt] = amp * lgain1[iComp];
+		AmpArrRi[itcnt] = amp * rgain1i[iComp];
+		AmpArrLi[itcnt] = amp * lgain1i[iComp];
 		ddata += lcomp;   /* update pointer */
 		itcnt++;          /* Count in amp/phase buffers */
 		if (itcnt>=FazArrSize) break;
@@ -2397,13 +2392,13 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
 		  ty = ddata[5]*(odouble)visData[ilocv];
 		  tz = ddata[6]*(odouble)visData[ilocw];
 		  FazArr[itcnt] = freqFact * (tx + ty + tz);
-		  AmpArrRr[itcnt] = ddata[3] * rgain1[iComp];
-		  AmpArrLr[itcnt] = ddata[3] * lgain1[iComp];
-		  AmpArrRi[itcnt] = ddata[3] * rgain1i[iComp];
-		  AmpArrLi[itcnt] = ddata[3] * lgain1i[iComp];
+		  AmpArrRr[itcnt] = amp * rgain1[iComp];
+		  AmpArrLr[itcnt] = amp * lgain1[iComp];
+		  AmpArrRi[itcnt] = amp * rgain1i[iComp];
+		  AmpArrLi[itcnt] = amp * lgain1i[iComp];
+		  itcnt++;          /* Count in amp/phase buffers */
 		} /* end if valid */
 		ddata += lcomp;  /* update pointer */
-		itcnt++;          /* Count in amp/phase buffers */
 		if (itcnt>=FazArrSize) break;
 	      }  /* end inner loop over components */
 

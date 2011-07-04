@@ -674,6 +674,8 @@ void ObitDConCleanPxListMFUpdate (ObitDConCleanPxList *inn,
   /* Cleanup */
   if (inFArrays) g_free(inFArrays);
   if (sdata)     g_free(sdata);
+  /* Free image buffer */
+  image->image = ObitFArrayUnref(((ObitImage*)image)->image);
 
   /* Give warning if blew arrays */
   if (blewIt) 

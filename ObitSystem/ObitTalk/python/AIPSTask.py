@@ -55,7 +55,7 @@ It should also work for strings:
 [None, 'foo', 'bar']
 """
 # Copyright (C) 2005 Joint Institute for VLBI in Europe
-# Copyright (C) 2007 Associated Universities, Inc. Washington DC, USA.
+# Copyright (C) 2007,2011 Associated Universities, Inc. Washington DC, USA.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -84,27 +84,28 @@ from Task import Task, List
 import glob, os, pickle, sys
 
 def count_entries(l):
-    """Count numbr of non blank/zero entries in list l"""
-    count = 0
+    """Count number of last non blank/zero entries in list l"""
+    count = len(l)
+    c     = count
     if type(l[0])==int:  # integers
-        for elem in l:
-            if (elem==None) or (elem!=0):
-                count += 1
+        for j in range(c-1,0,-1):
+            if (l[j]==0):
+                count -= 1
             else:
                 break
         count = max(4,count) # At least 4
     elif type(l[0])==float:  # float
-        for elem in l:
-            if (elem==None) or (elem!=0.0):
-                count += 1
+        for j in range(c-1,0,-1):
+            if (l[j]==0.0):
+                count -= 1
             else:
                 break
         count = max(2,count)  # At least 2
                     
     elif type(l[0])==str:  # string
-        for elem in l:
-            if (elem==None) or ((len(elem)>0) and (not elem.isspace())):
-                count += 1
+        for j in range(c-1,0,-1):
+            if (l[j]==None) or ((len(l[j])>0) and (not l[j].isspace())):
+                count -= 1
             else:
                 break
         count = max(1,count)  # At least 1
@@ -284,7 +285,7 @@ class AIPSTask(Task):
         """Set adverbs to their defaults."""
         self.__dict__.update(self._default_dict)
         
-    def __display_adverbs(self, adverbs):
+    def __display_adverbs(self, adverbs, file=None):
         """Display task ADVERBS values and descriptions"""
         inpList = self._short_help
         inpList = inpList + "Adverbs     Values                        "+\
@@ -354,17 +355,22 @@ class AIPSTask(Task):
                 hlp =  hlps[j]
                 j = j + 1
                 inpList = inpList + "%12s%50s%s\n" % (s1, s2, hlp)
-                  
-        pydoc.ttypager(inpList)
+
+        if file:
+            fd = open(file, "a")
+            fd.write(inpList)
+            fd.close()
+        else:
+            pydoc.ttypager(inpList)
         del inpList
 
-    def inputs(self):
+    def inputs(self, file=None):
         """Display all inputs for this task."""
-        self.__display_adverbs(self._input_list)
+        self.__display_adverbs(self._input_list, file=file)
 
-    def outputs(self):
+    def outputs(self, file=None):
         """Display all outputs for this task."""
-        self.__display_adverbs(self._output_list)
+        self.__display_adverbs(self._output_list, file=file)
 
     def _retype(self, value):
         """ Recursively transform a 'List' into a 'list' """

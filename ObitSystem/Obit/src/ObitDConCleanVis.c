@@ -948,6 +948,8 @@ void  ObitDConCleanVisGetParms (ObitDCon *inn, ObitErr *err)
  * On outlier fields, use rectangular box of width OutlierSize.
  * If CLEANBox defined in in->info then its contents are used for field 1.
  * Assumes all images in mosaic have descriptors defined.
+ * If there are multiple tapers, any window on facet 1 are copied to
+ * thecorresponding facets at other resolutions.
  * Uses base class function.
  * \param in   The CLEAN object
  * \param err Obit error stack object.
@@ -956,6 +958,8 @@ void ObitDConCleanVisDefWindow(ObitDConClean *inn, ObitErr *err)
 {
   ObitDConCleanVis *in;
   const ObitDConCleanVisClassInfo *inClass;
+  ObitDConCleanWindowType type;
+  olong ifield, i, *window;
   gchar *routine = "ObitDConCleanVisDefWindow";
 
   /* Cast input to this type */
@@ -971,6 +975,20 @@ void ObitDConCleanVisDefWindow(ObitDConClean *inn, ObitErr *err)
   /* Call actual function */
   inClass->ObitDConCleanDefWindow((ObitDConClean*)in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Multiple resolutions? Copy first facet window to corresponding tapered ones */
+  if (in->mosaic->numBeamTapes>1) {
+    for (ifield=1; ifield<in->mosaic->numberImages; ifield++) {
+      if ((in->mosaic->FacetNo[ifield]==0) && 
+	  (in->mosaic->BeamTapes[ifield]>0.0)) {
+	for (i=0; i<=in->window->maxId[0]; i++ ) {
+	  if (ObitDConCleanWindowInfo (in->window, 1, i, &type, &window, err))
+	    ObitDConCleanWindowUpdate (in->window, ifield+1, i, type, window, err);
+	  if (err->error) Obit_traceback_msg (err, routine, in->name);
+	}
+      }
+    }
+  }
 
 } /* end ObitDConCleanVisDefWindow */
 

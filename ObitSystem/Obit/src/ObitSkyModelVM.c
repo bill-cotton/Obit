@@ -105,6 +105,9 @@ typedef struct {
   ObitErr      *err;
   /* UV Interpolator for FTGrid */
   ObitCInterpolate *Interp;
+  /* VM class entries */
+  /* Start time (days) of validity of model */
+  ofloat begVMModelTime;
   /* End time (days) of valildity of model */
   ofloat endVMModelTime;
   /* Thread copy of Components list */
@@ -227,7 +230,7 @@ void ObitSkyModelVMInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   /* initialize Base class */
   ObitSkyModelInitMod(inn, uvdata, err);
 
-  /* Fourier transform routines - DFT only */
+  /* Fourier transform routines */
   in->DFTFunc   = (ObitThreadFunc)ThreadSkyModelVMFTDFT;
 
   /* Any initialization this class */
@@ -345,7 +348,7 @@ void ObitSkyModelVMInitModel (ObitSkyModel* inn, ObitErr *err)
   /* Reset time of current model */
   in->endVMModelTime = -1.0e20;
   in->curVMModelTime = -1.0e20;
-  in->modelMode = OBIT_SkyModel_DFT;  /* Only can do DFT */
+  /* in->modelMode = OBIT_SkyModel_DFT;  Only can do DFT - Not true */
 } /* end ObitSkyModelVMInitModel */
 
 /**
@@ -501,8 +504,8 @@ void  ObitSkyModelVMGetInput (ObitSkyModel* inn, ObitErr *err)
   ObitSkyModelGetInput (inn, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
-  /* Must be DFT */
-  in->modelMode = OBIT_SkyModel_DFT;
+  /* Must be DFT 
+  in->modelMode = OBIT_SkyModel_DFT; -  not true */
 
   /* Model update interval - default 1 min */
   if (in->updateInterval<=0.0) in->updateInterval = 1.0;
