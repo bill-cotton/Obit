@@ -733,7 +733,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   if (in->antNo) g_free(in->antNo);
   in->antNo  = g_malloc0(in->nant*sizeof(olong));
   if (in->antId) g_free(in->antId);
-  in->antId  = g_malloc0(2*in->nant*sizeof(olong));
+  in->antId  = g_malloc0(200*sizeof(olong));
 
   /* Lookup table of antenna numbers corresponding to IDs */
 
