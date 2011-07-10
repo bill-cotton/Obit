@@ -3637,11 +3637,13 @@ gboolean ObitSkyModelsetPBChans(ObitSkyModel* in, ObitUV* uvdata, ObitErr *err)
   } else {
 
     /* New starting values */
-    in->startIFPB      += in->numberIFPB;
+    if ((in->numberChannelPB>=in->numberChannel) || (in->numberIFPB>1))
+      in->startIFPB      += in->numberIFPB;
     in->startChannelPB += in->numberChannelPB;
     if (in->startChannelPB>in->numberChannel) {
       in->startChannelPB = 1;
-      in->startIFPB++;
+      /* Don't increment IF if doing whole IF at a time */
+      if (in->numberChannelPB<in->numberChannel) in->startIFPB++;
     }
     in->numberIFPB      = 0;
     in->numberChannelPB = 0;

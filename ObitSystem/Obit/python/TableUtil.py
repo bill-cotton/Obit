@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2006
+#  Copyright (C) 2006,2011
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 #-----------------------------------------------------------------------
 
 # Python package for Obit Table Utilities 
-import Obit, Table, OErr
+import Obit, Table, Image, OErr
 
 def PCCMerge(inTab, outTab, err):
     """ Merge CC in the same cell
@@ -70,4 +70,64 @@ def PConvolve(inFA1, inFA2, err):
     outFA.me = Obit.FArrayUtilConvolve (inFA1.me, inFA2.me, err.me)
     return outFA
     # end PConvolve
+
+def PTableCCT2Spec (inImage, outImage, nTerm,
+                    inCCVer, outCCVer, err, startCC=0, endCC=0):
+    """ Convert an (tabulated) TSpec CC Table to spectral parameter table
+
+    Output CC Table will have fitted spectra rather than tabulated spectra.
+    Tabulated spectrum fitted with spectrum weighting by primary beam
+    inImage   input Obit Python Image 1
+              Must have freq axis type = "SPECLNMF"
+    outImage  output Obit Python image must be type ObitImageWB
+              This can be created by ImageUtil.PImageT2Spec
+    nTerm     Number of output Spectral terms, 2=SI, 3=also curve.
+    inCCVer   Input CCTable to convert, 0=> highest
+    outCCVer  Output CCTable, 0=>1
+    err       Python Obit Error/message stack
+    startCC   First 1-rel component to convert
+    endCC     Last 1-rel component to convert, 0=> all
+    """
+    ################################################################
+    # Checks
+    if not Image.PIsA(inImage):
+        raise TypeError,"inImage MUST be a Python Obit Image"
+    if not Image.PIsA(ouyImage):
+        raise TypeError,"outImage MUST be a Python Obit Image"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    Obit.TableCCUtilT2Spec(inImage.me, outImage.me, nTerm, inCCVer, \
+                           outCCVer, startCC, endCC, err.me)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error Converting CC Table")
+# end PTableCCT2Spec
+
+def PTableCCFixTSpec (inImage, inCCVer, refFreq, nTerm, terms, \
+                      err, startCC=1, endCC=0, ):
+    """ Convert an (tabulated) TSpec CC Table to spectral parameter table
+
+    Output CC Table will have fitted spectra rather than tabulated spectra.
+    Tabulated spectrum fitted with spectrum weighting by primary beam
+    inImage   input Obit Python Image 1
+              Must have freq axis type = "SPECLNMF"
+    inCCVer   CCTable to modify, 0=> highest
+    refFreq   Reference frequency for spectrum (Hz)
+    nTerm     Number of terms in spectrum
+    err       Python Obit Error/message stack
+    startCC   First 1-rel component to consider
+    endCC     Last 1-rel component to consider, 0=> all
+    """
+    ################################################################
+    # Checks
+    if not Image.PIsA(inImage):
+        raise TypeError,"inImage MUST be a Python Obit Image"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    Obit.TableCCUtilFixTSpec(inImage.me, inCCVer, refFreq, nTerm, terms, \
+                             startCC, endCC, err.me)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error Modifying CC Table")
+# end PTableCCFixTSpec
 

@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2010                                          */
+/*;  Copyright (C) 2004-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,6 +32,8 @@
 #include "ObitErr.h"
 #include "ObitTableCC.h"
 #include "ObitImage.h"
+#include "ObitImageMF.h"
+#include "ObitImageWB.h"
 #include "ObitImageDesc.h"
 #include "ObitFArray.h"
 #include "ObitData.h"
@@ -141,4 +143,14 @@ gboolean ObitTableCCUtilFiltCC (ObitTableCC *CCTab, ofloat radius, ofloat minFlu
 
 /** Get Clean component type */
 ObitCCCompType ObitTableCCUtilGetType (ObitData *data, olong ver, ObitErr* err);
+
+/** Convert TSpec to Spec model type */
+void ObitTableCCUtilT2Spec  (ObitImage *inImage, ObitImageWB *outImage, 
+			     olong nTerm, olong *inCCVer, olong *outCCVer,
+			     olong startComp, olong endComp, ObitErr *err);
+
+/* routine to force average TSpectra to a given spectrum  */
+void ObitTableCCUtilFixTSpec (ObitImage *inImage, olong *inCCVer, 
+			      odouble refFreq, olong nterm, ofloat *terms,
+			      olong startCC, olong endCC, ObitErr *err);
 #endif /* OBITTABLECCUTIL_H */ 

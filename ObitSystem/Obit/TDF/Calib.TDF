@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry calibration software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006-2010
+;;  Copyright (C) 2006-2011
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -78,6 +78,10 @@ flagVer                             Flag table version
 doPol                               Apply polarization cal?
 **PARAM** float 1  **DEF** 0.0
 Alpha           -20.       20.      Spectral Index to correct
+**PARAM** boo 1   **DEF** F
+PBCor                               Apply Frequency PB Corr?
+**PARAM** float 1 **DEF** 24.5
+antSize                             Diameter of ant. for PBCor (m)
 **PARAM** str 4
 DataType2                           "FITS" or "AIPS" type of model
 **PARAM** str 48
@@ -102,7 +106,7 @@ BComp                               First CLEAN comp to sub.
 EComp                               Last CLEAN comp to sub.
                                     to use (0 => all)
 **PARAM** str 4
-Cmethod                            Modeling method:
+Cmethod                            Modeling method (see Help):
                                    'DFT','GRID','    '
 **PARAM** str 4
 Cmodel                             Model type: 'COMP','IMAG'
@@ -231,6 +235,8 @@ Adverbs:
   Alpha......If != 0.0 then correct data by spectral index Alpha before 
              calibration. 
              -0.7 is typical for synchrotron.
+  PBCor......Apply Frequency dependent primary beam corrections?
+  antSize....Diameter of antenna for PBCor (m), default = 24.5
 
       Model
   DataType2.'FITS' or 'AIPS'  type of input, defaults to DataType
@@ -264,9 +270,11 @@ Adverbs:
              computation.
              '    ' allows the program to use the fastest
              method.
-             NOTE: Cmethod='GRID' does not work correctly for RL
+             NB: Cmethod='GRID' does not work correctly for RL
              and LR data; DO NOT USE Cmethod='GRID' for RL, LR!
              (Not sure this is correct for Obit)
+             NB: If the input model has CLEAN components with spectral
+             parameters (not Tab Spec) then 'DFT' MUST be used.
   Cmodel.....This indicates the type of input model; 'COMP' means that
              the input model consists of Clean components, 'IMAG'
              indicates that the input model consists of images.  If

@@ -29,6 +29,8 @@
 #include "glib/gqsort.h"
 #include "ObitTableCCUtil.h"
 #include "ObitMem.h"
+#include "ObitBeamShape.h"
+#include "ObitSpectrumFit.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -1689,6 +1691,394 @@ ObitCCCompType ObitTableCCUtilGetType (ObitData *file, olong ver, ObitErr* err)
   CCTab = ObitTableCCUnref(CCTab);  
   return out;
 } /* end ObitTableCCUtilGetType */
+
+/**
+ * Convert  CC Table with tabulated spectra to spectral fits
+ * Antenna beam pattern weighed fitting; all model types supported.
+ * \param image    Input ObitImageMF with attached CC table
+ *                 Must have freq axis type = "SPECLNMF"
+ * \param outImage Output ObitImageWB with attached CC table
+ * \param nTerm    Number of output Spectral terms, 2=SI, 3=also curve.
+ * \param inCCVer  input CC table version
+ * \param outCCver output CC table version number, 
+ *                 0=> create new in which case the actual value is returned
+ * \param startCC  [in] the desired first CC number (1-rel)
+ *                 [out] the actual first CC number in returned table
+ * \param endCC    [in] the desired highest CC number, 0=> to end of table
+ *                 [out] the actual highest CC number in returned table
+ * \param err      Obit error stack object.
+ */
+void ObitTableCCUtilT2Spec  (ObitImage *image, ObitImageWB *outImage,
+			     olong nTerm, olong *inCCVer, olong *outCCVer,
+			     olong startCC, olong endCC, ObitErr *err)
+{
+  ObitTableCC *inCCTable=NULL, *outCCTable=NULL;
+  ObitTable *tempTable=NULL;
+  ObitTableCCRow *inCCRow=NULL, *outCCRow=NULL;
+  ObitImageDesc *imDesc=NULL;
+  ObitBeamShape *BeamShape=NULL;
+  ObitBeamShapeClassInfo *BSClass;
+  ObitIOCode retCode;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+  union ObitInfoListEquiv InfoReal; 
+  ofloat *flux=NULL, *sigma=NULL, *fitResult=NULL, pbmin=0.01, *PBCorr=NULL;
+  ofloat *FreqFact=NULL, *sigmaField=NULL;
+  ofloat *RMS=NULL, alpha, antSize = 25.0;
+  odouble *Freq=NULL, refFreq;
+  odouble Angle=0.0;
+  gpointer fitArg=NULL;
+  olong irow, orow, ver, i, j, offset, nSpec, sCC, eCC, noParms, nterm;
+  olong planeNo[5] = {1,1,1,1,1};
+  gchar keyword[12];
+  gchar *tabType = "AIPS CC";
+  gchar *routine = "ObitTableCCUtilT2Spec";
+
+  /* error checks */
+  if (err->error) return;
+  
+  /* Make sure this is an ObitImage */
+  Obit_return_if_fail((ObitImageIsA(image)), err, 
+		      "%s: Image %s NOT an ObitImage", 
+		      routine, image->name);
+
+  /* Make sure this is really an ObitImageMF - freq axis = "SPECLNMF" */
+  imDesc = image->myDesc;
+  Obit_return_if_fail((!strncmp (imDesc->ctype[imDesc->jlocf],"SPECLNMF", 8)), err, 
+		      "%s: Image %s NOT an ObitImageMF - no SPECLNMF axis", 
+		      routine, image->name);
+
+  /* Create spectrum info arrays */
+  nSpec = 1;
+  ObitInfoListGetTest(imDesc->info, "NSPEC", &type, dim, &nSpec);
+  nterm = 1;
+  ObitInfoListGetTest(imDesc->info, "NTERM", &type, dim, &nterm);
+  refFreq = imDesc->crval[imDesc->jlocf];
+  Freq    = g_malloc0(nSpec*sizeof(odouble));
+  FreqFact= g_malloc0(nSpec*sizeof(ofloat));
+  RMS     = g_malloc0(nSpec*sizeof(ofloat));
+  /* get number of and channel frequencies for CC spectra from 
+     CC table on image  */
+  if (nSpec>1) {
+    for (i=0; i<nSpec; i++) {
+      Freq[i] = 1.0;
+      sprintf (keyword, "FREQ%4.4d",i+1);
+      ObitInfoListGetTest(imDesc->info, keyword, &type, dim, &Freq[i]);
+    }
+  }
+    
+  /* Prior spectral index */
+  InfoReal.flt = 0.0;   type = OBIT_float;
+  ObitInfoListGetTest(imDesc->info, "ALPHA", &type, dim, &InfoReal);
+  if (type==OBIT_double) alpha = (ofloat)InfoReal.dbl;
+  if (type==OBIT_float)  alpha = (ofloat)InfoReal.flt;
+  
+  /* Log Freq ratio */
+  for (i=0; i<nSpec; i++)  FreqFact[i] = log(Freq[i]/refFreq);
+
+  /* Setup for fitting */
+  offset     = 4;
+  flux       = g_malloc0(nSpec*sizeof(ofloat));
+  sigma      = g_malloc0(nSpec*sizeof(ofloat));
+  sigmaField = g_malloc0(nSpec*sizeof(ofloat));
+  PBCorr     = g_malloc0(nSpec*sizeof(ofloat));
+  BeamShape  = ObitBeamShapeCreate ("BS", (ObitImage*)image, pbmin, antSize, TRUE);
+  BSClass    = (ObitBeamShapeClassInfo*)(BeamShape->ClassInfo);
+  fitArg     = ObitSpectrumFitMakeArg (nSpec, nTerm, refFreq, Freq, FALSE, 
+				       &fitResult, err);
+  for (i=0; i<nTerm; i++) fitResult[i]  = 0.0;
+  for (i=0; i<nSpec; i++) sigmaField[i] = -1.0;
+  if  (err->error) goto cleanup;
+  
+  /* Get image RMSes */  
+  retCode = ObitImageOpen (image, OBIT_IO_ReadOnly, err);
+  for (i=0; i<nSpec; i++) {
+    planeNo[0] = i + nterm;
+    ObitImageGetPlane (image, NULL, planeNo, err);
+    RMS[i] = ObitFArrayRMS(image->image);
+  }
+  retCode = ObitImageClose (image, err);
+  if (err->error) Obit_traceback_msg (err, routine, image->name);
+
+  /* Get input CC table */
+  ver = *inCCVer;
+  tempTable = newObitImageTable (image,OBIT_IO_ReadOnly, tabType, &ver, err);
+  if ((tempTable==NULL) || (err->error)) 
+     Obit_traceback_msg (err, routine, image->name);
+  inCCTable = ObitTableCCConvert(tempTable);
+  tempTable = ObitTableUnref(tempTable);
+  if (err->error) Obit_traceback_msg (err, routine, image->name);
+  
+  /* Open input */
+  retCode = ObitTableCCOpen (inCCTable, OBIT_IO_ReadOnly, err);
+  if ((retCode != OBIT_IO_OK) || (err->error))
+    Obit_traceback_msg (err, routine, image->name);
+  *inCCVer = ver;
+
+  /* Create table row */
+  inCCRow = newObitTableCCRow (inCCTable);
+
+  /* Create output CC table */
+  ver = *outCCVer;
+  noParms = 3 + nTerm;
+  outCCTable = newObitTableCCValue ("SpecT table", (ObitData*)outImage,
+				    &ver, OBIT_IO_WriteOnly, noParms, 
+				    err);
+  if (err->error) goto cleanup;
+  *outCCVer = ver;  /* save if defaulted (0) */
+  
+  /* Open output */
+  retCode = ObitTableCCOpen (outCCTable, OBIT_IO_ReadWrite, err);
+  if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+  
+  /* Create table row */
+  outCCRow = newObitTableCCRow (outCCTable);
+  
+  offset = 4;
+  sCC = MAX (1, startCC);
+  if (endCC>0) eCC = MIN (endCC, inCCTable->myDesc->nrow);
+  else eCC = inCCTable->myDesc->nrow;
+  /* loop over table */
+  for (j=sCC; j<=eCC; j++) {
+    irow = j;
+    retCode = ObitTableCCReadRow (inCCTable, irow, inCCRow, err);
+    if ((retCode != OBIT_IO_OK) || (err->error)) 
+      Obit_traceback_msg (err, routine, inCCTable->name);
+    
+    /* Make sure this has a tabulated spectrum */
+    Obit_return_if_fail((inCCRow->parms && (inCCRow->parms[3]>=20.)), err, 
+			"%s: CCs do not contain tab. spectra", routine);
+    
+    /* Copy row data */
+    outCCRow->DeltaX   = inCCRow->DeltaX;
+    outCCRow->DeltaY   = inCCRow->DeltaY;
+    outCCRow->parms[0] = inCCRow->parms[0]; /* Model parameters */
+    outCCRow->parms[1] = inCCRow->parms[1];
+    outCCRow->parms[2] = inCCRow->parms[2];
+    outCCRow->parms[3] = inCCRow->parms[3] - 10.0;  /* Change type */
+
+    /* Fit spectrum */
+    /* Set field sigmas to RMS */
+    if (sigmaField[0]<0.0) {
+      for (i=0; i<nSpec; i++) sigmaField[i] = RMS[i];
+    }
+
+    /* Primary beam stuff - Distance from Center  */
+    Angle = ObitImageDescAngle(image->myDesc, inCCRow->DeltaX, inCCRow->DeltaY);
+    
+    /* Loop over spectral channels get corrected flux, sigma */
+    for (i=0; i<nSpec; i++) {
+      BeamShape->refFreq = Freq[i];  /* Set frequency */
+      PBCorr[i] = BSClass->ObitBeamShapeGainSym(BeamShape, Angle);
+      flux[i]   = inCCRow->parms[offset+i] / PBCorr[i];
+      sigma[i]  = sigmaField[i] / (PBCorr[i]*PBCorr[i]);
+    }
+    
+    /* Fit spectrum */
+    ObitSpectrumFitSingleArg (fitArg, flux, sigma, fitResult);
+    
+    /* Prior spectral index correction */
+    if (nTerm>=2) fitResult[1] += alpha;
+    
+    /* Replace channel fluxes with fitted spectrum */
+    outCCRow->Flux     = fitResult[0];
+    for (i=0; i<nTerm; i++) outCCRow->parms[offset+i] = fitResult[i+1];
+    
+    /* Write output */
+    orow = -1;
+    retCode = ObitTableCCWriteRow (outCCTable, orow, outCCRow, err);
+    if  (err->error) goto cleanup;
+    
+  } /* end loop over table */
+
+  /* Close/cleanup */
+ cleanup:
+  retCode   = ObitTableCCClose (inCCTable, err);
+  retCode   = ObitTableCCClose (outCCTable, err);
+  inCCTable = ObitTableUnref(inCCTable);
+  outCCTable= ObitTableUnref(outCCTable);
+  inCCRow   = ObitTableRowUnref(inCCRow);
+  outCCRow  = ObitTableRowUnref(outCCRow);
+  BeamShape = ObitBeamShapeUnref(BeamShape);
+  ObitSpectrumFitKillArg(fitArg);
+  if (flux)       g_free(flux);
+  if (sigma)      g_free(sigma);
+  if (sigmaField) g_free(sigmaField);
+  if (PBCorr)     g_free(PBCorr);
+  if (Freq)       g_free(Freq);
+  if (FreqFact)   g_free(FreqFact);
+  if (RMS)        g_free(RMS);
+  if (fitResult)  g_free(fitResult);
+  if (err->error) Obit_traceback_msg (err, routine, image->name);
+}  /* end ObitTableCCUtilT2Spec */
+
+/**
+ * Force average TSpec spectrum to a given spectrum
+ * Antenna beam pattern included; all model types supported.
+ * \param image    Input ObitImage(MF) with attached CC table
+ *                 Must have freq axis type = "SPECLNMF"
+ * \param inCCVer  input CC table version
+ * \param refFreq  Reference frequency for spectrum (Hz)
+ * \param nterm    Number of terms in spectrum
+ * \param terms    Spectral terms, 0=flux density, 1=spectral index, 2=curvature
+ * \param startCC  [in] the desired first CC number (1-rel)
+ *                 [out] the actual first CC number in returned table
+ * \param endCC    [in] the desired highest CC number, 0=> to end of table
+ *                 [out] the actual highest CC number in returned table
+ * \param err      Obit error stack object.
+ */
+void ObitTableCCUtilFixTSpec (ObitImage *inImage, olong *inCCVer, 
+			      odouble refFreq, olong nterm, ofloat *terms,
+			      olong startCC, olong endCC, ObitErr *err)
+{
+  ObitTableCC *inCCTable=NULL;
+  ObitTable *tempTable=NULL;
+  ObitTableCCRow *inCCRow=NULL;
+  ObitImageDesc *imDesc=NULL;
+  ObitIOCode retCode;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+  ofloat *FreqFact=NULL, ll, lll, arg, alpha, specFact, *sumFlux=NULL;
+  ofloat fblank = ObitMagicF();
+  odouble *Freq=NULL, rfAlpha;
+  olong irow, orow, ver, i, j, iterm, offset, nSpec, sCC, eCC;
+  union ObitInfoListEquiv InfoReal; 
+  gchar *tabType = "AIPS CC";
+  gchar keyword[12];
+  gchar *routine = "ObitTableCCUtilFixTSpec";
+
+  /* error checks */
+  if (err->error) return;
+  
+  /* Make sure this is an ObitImage */
+  Obit_return_if_fail((ObitImageIsA(inImage)), err, 
+		      "%s: Image %s NOT an ObitImage", 
+		      routine, inImage->name);
+
+  /* Make sure this is an ObitImageMF - freq axis = "SPECLNMF" */
+  imDesc = inImage->myDesc;
+  Obit_return_if_fail((!strncmp (imDesc->ctype[imDesc->jlocf],"SPECLNMF", 8)), err, 
+		      "%s: Image %s NOT an ObitImageMF - no SPECLNMF axis", 
+		      routine, inImage->name);
+
+  /* Numbers of things */
+  nSpec = 1;
+  ObitInfoListGetTest(imDesc->info, "NSPEC", &type, dim, &nSpec);
+  nterm = 1;
+  ObitInfoListGetTest(imDesc->info, "NTERM", &type, dim, &nterm);
+  sumFlux = g_malloc0(nSpec*sizeof(ofloat));
+
+  /* Get input CC table */
+  ver = *inCCVer;
+  tempTable = newObitImageTable (inImage,OBIT_IO_ReadOnly, tabType, &ver, err);
+  if ((tempTable==NULL) || (err->error)) 
+     Obit_traceback_msg (err, routine, inImage->name);
+  inCCTable = ObitTableCCConvert(tempTable);
+  tempTable = ObitTableUnref(tempTable);
+  if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+  
+  /* Open input */
+  retCode = ObitTableCCOpen (inCCTable, OBIT_IO_ReadWrite, err);
+  if ((retCode != OBIT_IO_OK) || (err->error))
+    Obit_traceback_msg (err, routine, inImage->name);
+  *inCCVer = ver;
+  /* Create table row */
+  inCCRow = newObitTableCCRow (inCCTable);
+
+  offset = 4;
+  sCC = MAX (1, startCC);
+  if (endCC>0) eCC = MIN (endCC, inCCTable->myDesc->nrow);
+  else eCC = inCCTable->myDesc->nrow;
+  /* loop over table */
+  for (j=sCC; j<=eCC; j++) {
+    irow = j;
+    retCode = ObitTableCCReadRow (inCCTable, irow, inCCRow, err);
+    if ((retCode != OBIT_IO_OK) || (err->error)) 
+      Obit_traceback_msg (err, routine, inCCTable->name);
+    
+    /* Make sure this has a spectrum */
+    Obit_return_if_fail((inCCRow->parms && (inCCRow->parms[3]>=20.)), err, 
+			"%s: CCs do not contain tab. spectra", routine);
+
+    /* Sum */
+    for (i=0; i<nSpec; i++) {
+      if (inCCRow->parms[offset+i]!=fblank) sumFlux[i] += inCCRow->parms[offset+i];
+    }
+  
+  } /* end loop over table summing */
+
+  /* Create spectrum info arrays */
+  Freq    = g_malloc0(nSpec*sizeof(odouble));
+  FreqFact= g_malloc0(nSpec*sizeof(ofloat));
+  /* get number of and channel frequencies for CC spectra from 
+     CC table on first image in mosaic */
+  if (nSpec>1) {
+    for (i=0; i<nSpec; i++) {
+      Freq[i] = 1.0;
+      sprintf (keyword, "FREQ%4.4d",i+1);
+      ObitInfoListGetTest(imDesc->info, keyword, &type, dim, &Freq[i]);
+    }
+  }
+    
+  /* Prior spectral index */
+  InfoReal.flt = 0.0;   type = OBIT_float;
+  ObitInfoListGetTest(imDesc->info, "ALPHA", &type, dim, &InfoReal);
+  if (type==OBIT_double) alpha = (ofloat)InfoReal.dbl;
+  if (type==OBIT_float)  alpha = (ofloat)InfoReal.flt;
+  rfAlpha = refFreq;
+  ObitInfoListGetTest(imDesc->info, "RFALPHA", &type, dim, &rfAlpha);
+  
+  /* Log Freq ratio */
+  for (i=0; i<nSpec; i++)  FreqFact[i] = log(Freq[i]/refFreq);
+
+  /* Get correction factors per channel in sumFlux */
+  for (i=0; i<nSpec; i++) {
+    /* Frequency dependent term */
+    lll = ll = FreqFact[i];
+    arg = 0.0;
+    for (iterm=1; iterm<nterm; iterm++) {
+      arg += terms[iterm] * lll;
+      lll *= ll;
+    }
+    specFact = exp(arg);
+    if (sumFlux[i]!=0.0) sumFlux[i] = specFact*terms[0] / sumFlux[i];
+    else sumFlux[i] = 1.0;
+    /* Correct for prior alpha */
+    specFact = exp(alpha * log(Freq[i]/rfAlpha));
+    sumFlux[i] *= specFact;
+  }
+
+  offset = 4;
+  sCC = MAX (1, startCC);
+  if (endCC>0) eCC = MIN (endCC, inCCTable->myDesc->nrow);
+  else eCC = inCCTable->myDesc->nrow;
+  /* loop over table */
+  for (j=sCC; j<=eCC; j++) {
+    irow = j;
+    retCode = ObitTableCCReadRow (inCCTable, irow, inCCRow, err);
+    if ((retCode != OBIT_IO_OK) || (err->error)) 
+      Obit_traceback_msg (err, routine, inCCTable->name);
+    
+      /* Correct channel fluxes with fitted spectrum */
+      for (i=0; i<nSpec; i++) inCCRow->parms[offset+i] *= sumFlux[i];
+      
+      /* Write output */
+      orow = j;
+      retCode = ObitTableCCWriteRow (inCCTable, orow, inCCRow, err);
+      if  (err->error) goto cleanup;
+  
+    } /* end loop over table */
+
+  /* Close/cleanup */
+ cleanup:
+  retCode   = ObitTableCCClose (inCCTable, err);
+  inCCTable = ObitTableUnref(inCCTable);
+  inCCRow   = ObitTableRowUnref(inCCRow);
+  if (Freq)       g_free(Freq);
+  if (FreqFact)   g_free(FreqFact);
+  if (sumFlux)    g_free(sumFlux);
+  if  (err->error) Obit_traceback_msg (err, routine, inImage->name);
+} /* end ObitTableCCUtiTl2Spec */
 
 /*----------------------Private functions---------------------------*/
 /**

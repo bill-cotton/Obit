@@ -746,6 +746,7 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   ofloat phase=0.5, cp, sp;
   odouble test;
   ObitInfoType type;
+  union ObitInfoListEquiv InfoReal; 
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   FTFuncArg *args;
   gchar keyword[12];
@@ -806,9 +807,13 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   }
 
   /* Prior spectral index */
-  ObitInfoListGetTest(image0->myDesc->info, "ALPHA", &type, dim, &in->priorAlpha);
+  InfoReal.flt = 0.0;   type = OBIT_float;
+  ObitInfoListGetTest(image0->myDesc->info, "ALPHA", &type, dim, &InfoReal);
+  if (type==OBIT_double) in->priorAlpha = (ofloat)InfoReal.dbl;
+  if (type==OBIT_float)  in->priorAlpha = (ofloat)InfoReal.flt;
+
   in->priorAlphaRefF = in->refFreq;
-  ObitInfoListGetTest(image0->myDesc->info, "ALPHARF", &type, dim, &in->priorAlphaRefF);
+  ObitInfoListGetTest(image0->myDesc->info, "RFALPHA", &type, dim, &in->priorAlphaRefF);
   
   /* Make array of which coarse spectrum value is closest to each uv channel */
   nfreq = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
@@ -3488,6 +3493,7 @@ ObitTableCC* ObitSkyModelMFgetPBCCTab (ObitSkyModelMF* in, ObitUV* uvdata,
   ObitBeamShapeClassInfo *BSClass;
   ObitIOCode retCode;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  union ObitInfoListEquiv InfoReal; 
   ObitInfoType type;
   ofloat *flux=NULL, *sigma=NULL, *fitResult=NULL, pbmin=0.01, *PBCorr=NULL, alpha;
   ofloat *FreqFact=NULL, *sigmaField=NULL, ll, lll, arg, specFact;
@@ -3544,7 +3550,10 @@ ObitTableCC* ObitSkyModelMFgetPBCCTab (ObitSkyModelMF* in, ObitUV* uvdata,
 				    nterm);
     
     /* Prior spectral index */
-    ObitInfoListGetTest(image->myDesc->info, "ALPHA", &type, dim, &alpha);
+    InfoReal.flt = 0.0;   type = OBIT_float;
+    ObitInfoListGetTest(image->myDesc->info, "ALPHA", &type, dim, &InfoReal);
+    if (type==OBIT_double) alpha = (ofloat)InfoReal.dbl;
+    if (type==OBIT_float)  alpha = (ofloat)InfoReal.flt;
   
     /* Log Freq ratio */
     for (i=0; i<nSpec; i++)  FreqFact[i] = log(Freq[i]/refFreq);

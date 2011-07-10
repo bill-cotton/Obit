@@ -47,6 +47,7 @@
 #include "ObitFeatherUtil.h"
 #include "ObitUVImager.h"
 #include "ObitFFT.h"
+#include "ObitTableCCUtil.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -4309,6 +4310,173 @@ void ObitImageUtilTwoDShift (ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
   imageDesc->yPxOff = ypix - (1.0 + imageDesc->inaxes[1] / 2.0);
 
 } /* end ObitImageUtilTwoDShift */
+
+/**
+ * Convert an ObitImage(MF) (TSpec CCs) to an ObitImageWB (Spec CCs)
+ * Copies spectral planes and converts specified CC table
+ * Tabulated spectrum fitted with spectrum weighting by primary beam
+ * \param inImage  Input Image.
+ * \param outImage Image to be written.  Must be previously defined.
+ *                 Returned as ObitImageWB.
+ * \param nTerm    Number of output Spectral terms, 2=SI, 3=also curve.
+ * \param inCCVer  Input CCTable to convert, 0=> highest
+ * \param outCCVer Output CCTable, 0=>1
+ * \param startCC  First 1-rel component to convert
+ * \param endCC    Last 1-rel component to convert, 0=> all
+ * \param err      Error stack, returns if not empty.
+ */
+void ObitImageUtilT2Spec  (ObitImage *inImage, ObitImage **outImage, 
+			   olong nTerm, olong *inCCVer, olong *outCCVer,
+			   olong startCC, olong endCC, ObitErr *err)
+{
+  ObitImageWB *outImageWB=NULL;
+  ObitImageDesc *imDesc=NULL;
+  ObitIOSize IOBy;
+  ObitIOCode retCode;
+  ObitHistory *inHist=NULL, *outHist=NULL;
+  olong blc[IM_MAXDIM], trc[IM_MAXDIM];
+  olong inTerm, nSpec, norder;
+  olong i, iplane, planeNo[5] = {1,1,1,1,1};
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *today=NULL;
+  gchar *routine = "ObitImageUtilT2Spec";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitImageIsA(inImage));
+  
+  /* Do I/O by plane and all of plane */
+  IOBy = OBIT_IO_byPlane;
+  dim[0] = 1;
+  ObitInfoListAlwaysPut (inImage->info,  "IOBy", OBIT_long, dim, &IOBy);
+
+  /* Select portion of image */
+  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
+  for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
+
+  dim[0] = IM_MAXDIM;
+  ObitInfoListAlwaysPut (inImage->info,  "BLC",  OBIT_long, dim, blc); 
+  ObitInfoListAlwaysPut (inImage->info,  "TRC",  OBIT_long, dim, trc);
+
+ /* Size of spectra, number spectral terms */
+  nSpec = 1;
+  ObitInfoListGetTest(inImage->myDesc->info, "NSPEC", &type, dim, &nSpec);
+  inTerm = 1;
+  ObitInfoListGetTest(inImage->myDesc->info, "NTERM", &type, dim, &inTerm);
+  
+  /* Open input  */
+  retCode = ObitImageOpen (inImage, OBIT_IO_ReadOnly, err);
+  if ((retCode != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR opening image %s", 
+		   routine, inImage->name);
+    return;
+  }
+
+  /* Make sure this is an ObitImageMF - freq axis = "SPECLNMF" */
+  imDesc = inImage->myDesc;
+  Obit_return_if_fail((!strncmp (imDesc->ctype[imDesc->jlocf],"SPECLNMF", 8)), err, 
+		      "%s: Image %s NOT an ObitImageMF - no SPECLNMF axis", 
+		      routine, inImage->name);
+
+  /* Generate output descriptor */
+  ObitImageDescCopyDesc (imDesc, (*outImage)->myDesc, err);
+  if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+  
+  /* Creation date today */
+  today = ObitToday();
+  strncpy ((*outImage)->myDesc->date, today, IMLEN_VALUE-1);
+  if (today) g_free(today);
+  
+  /* Update descriptor */
+  (*outImage)->myDesc->bitpix = -32;
+  (*outImage)->myDesc->maxval = -1.0e20;
+  (*outImage)->myDesc->minval =  1.0e20;
+  (*outImage)->myDesc->areBlanks = FALSE;
+  (*outImage)->myDesc->naxis  = imDesc->naxis;
+  for (i=0; i<IM_MAXDIM; i++) (*outImage)->myDesc->inaxes[i] = 1;
+  (*outImage)->myDesc->inaxes[0] = imDesc->inaxes[0];
+  (*outImage)->myDesc->inaxes[1] = imDesc->inaxes[1];
+  (*outImage)->myDesc->inaxes[2] = nTerm;
+  /* Convert to ObitImageWB */
+  outImageWB = ObitImageWBFromImage (*outImage, nTerm-1, err);
+  if (err->error) Obit_traceback_msg (err, routine, (*outImage)->name);
+  /* Do I/O by plane and all of plane */
+  IOBy = OBIT_IO_byPlane;
+  dim[0] = 1;
+  ObitInfoListAlwaysPut (outImageWB->info, "IOBy", OBIT_long, dim, &IOBy);
+  dim[0] = IM_MAXDIM;
+  ObitInfoListAlwaysPut (outImageWB->info, "BLC",  OBIT_long, dim, blc); 
+  ObitInfoListAlwaysPut (outImageWB->info, "TRC",  OBIT_long, dim, trc);
+  *outImage = ObitImageUnref(*outImage);
+  *outImage = (ObitImage*)ObitImageWBRef(outImageWB);
+
+  /* Add order to descriptor infolist */
+  dim[0] = dim[1] = dim[2] = 1;
+  norder = nTerm-1;
+  ObitInfoListAlwaysPut(outImageWB->myDesc->info, "NTERM", OBIT_long, dim, &norder);
+
+  /* use same data buffer on input and output 
+     so don't assign buffer for output */
+  outImageWB->extBuffer = TRUE;
+
+  /* Open output */
+  retCode = ObitImageOpen ((ObitImage*)outImageWB, OBIT_IO_ReadWrite, err);
+  if ((retCode != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR opening image %s", 
+		   routine, outImageWB->name);
+    return;
+  }
+
+  /* Copy planes */
+  for (iplane=0; iplane<inTerm; iplane++) {
+    /* Write it */
+    planeNo[0] = iplane+1; 
+    ObitImageGetPlane (inImage, NULL, planeNo, err);
+    ObitImagePutPlane ((ObitImage*)outImageWB, inImage->image->array, 
+		       planeNo, err);
+    if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+  } /* end loop writing planes */
+
+  /* Zero any higher order planes not in input */
+  if (nTerm>inTerm) {
+    ObitFArrayFill (inImage->image, 0.0);  /* Zero */
+    for (iplane=inTerm; iplane<nTerm; iplane++) {
+      /* Write it */
+      planeNo[0] = iplane+1; 
+      ObitImagePutPlane ((ObitImage*)outImageWB, inImage->image->array, 
+			 planeNo, err);
+      if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+    } /* end loop writing planes */
+  }  /* End zero higher terms */
+
+  /* Copy/convert table */
+  ObitTableCCUtilT2Spec (inImage, outImageWB, nTerm, inCCVer, outCCVer, 
+			 startCC, endCC, err);
+  if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+
+  /* Copy any history  unless Scratch */
+  if (!inImage->isScratch && !outImageWB->isScratch) {
+    inHist  = newObitDataHistory((ObitData*)inImage, OBIT_IO_ReadOnly, err);
+    outHist = newObitDataHistory((ObitData*)outImageWB, OBIT_IO_WriteOnly, err);
+    outHist = ObitHistoryCopy (inHist, outHist, err);
+    if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+    inHist  = ObitHistoryUnref(inHist);
+    outHist = ObitHistoryUnref(outHist);
+  }
+
+  /* Close files */
+  ObitImageClose (inImage, err) ;
+  if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+  /* Free image buffer if not memory resident */
+  if (inImage->mySel->FileType!=OBIT_IO_MEM) 
+    inImage->image = ObitFArrayUnref(inImage->image);
+
+  ObitImageClose ((ObitImage*)outImageWB,err);
+  if (err->error) Obit_traceback_msg (err, routine, outImageWB->name);
+  outImageWB->extBuffer = FALSE;  /* May need buffer later */
+
+  } /* end ObitImageUtilT2Spec */
 
 /*----------------------Private functions---------------------------*/
 

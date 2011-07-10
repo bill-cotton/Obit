@@ -3754,6 +3754,18 @@ ImageUtilUVFilter (ObitImage *inImage, ObitImage *outImage, double radius,
   ObitImageUtilUVFilter (inImage, outImage, lradius, err);
 } // end ImageUtilUVFilter
 
+ObitImage*
+ImageUtilT2Spec (ObitImage *inImage, ObitImage *outImage, 
+	          int nTerm, int inCCVer, int outCCVer,
+	          int startComp, int endComp, ObitErr *err) 
+{
+  olong linCCVer=(olong)inCCVer, loutCCVer=(olong)outCCVer;
+  ObitImageUtilT2Spec (inImage, &outImage, 
+	          (olong)nTerm, &linCCVer, &loutCCVer,
+	          (olong)startComp, (olong)endComp, err);
+  return outImage;
+} // end ImageUtilT2Spec
+
 
 #include "ObitInfoList.h"
 
@@ -9413,6 +9425,30 @@ olong TableCCUtilMerge (ObitTable *in, ObitTable *out, ObitErr *err)
   if (ret==OBIT_IO_OK) return 0;
   else return 1;
 } // end TableCCUtilMerge
+
+void 
+TableCCUtilT2Spec (ObitImage *inImage, ObitImage *outImage, 
+	          int nTerm, int inCCVer, int outCCVer,
+	          int startComp, int endComp, ObitErr *err) 
+{
+  olong linCCVer=(olong)inCCVer, loutCCVer=(olong)outCCVer;
+  ObitTableCCUtilT2Spec (inImage, (ObitImageWB*)outImage, 
+	          (olong)nTerm, &linCCVer, &loutCCVer,
+	          (olong)startComp, (olong)endComp, err);
+} // end TableCCUtilT2Spec
+
+void 
+TableCCUtilFixTSpec (ObitImage *inImage,  int inCCVer, 
+                     float refFreq, int nterm, float *terms,
+	             int startComp, int endComp, ObitErr *err) 
+{
+  ofloat lterms[20];
+  olong i, linCCVer=(olong)inCCVer;
+  for (i=0; i<nterm; i++) lterms[i] = (ofloat)terms[i];
+  ObitTableCCUtilFixTSpec (inImage,  &linCCVer,
+	          (odouble)refFreq, (olong)nterm, lterms,
+	          (olong)startComp, (olong)endComp, err);
+} // end TableCCUtilFixTSpec
 
 #include "Obit.h"
 #include "ObitData.h"
@@ -25505,6 +25541,57 @@ static PyObject *_wrap_ImageUtilUVFilter(PyObject *self, PyObject *args) {
     ImageUtilUVFilter(_arg0,_arg1,_arg2,_arg3);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageUtilT2Spec(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImage * _result;
+    ObitImage * _arg0;
+    ObitImage * _arg1;
+    int  _arg2;
+    int  _arg3;
+    int  _arg4;
+    int  _arg5;
+    int  _arg6;
+    ObitErr * _arg7;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo7 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiiiiiO:ImageUtilT2Spec",&_argo0,&_argo1,&_arg2,&_arg3,&_arg4,&_arg5,&_arg6,&_argo7)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageUtilT2Spec. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ImageUtilT2Spec. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo7) {
+        if (_argo7 == Py_None) { _arg7 = NULL; }
+        else if (SWIG_GetPtrObj(_argo7,(void **) &_arg7,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 8 of ImageUtilT2Spec. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitImage *)ImageUtilT2Spec(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitImage_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
     return _resultobj;
 }
 
@@ -43194,6 +43281,110 @@ static PyObject *_wrap_TableCCUtilMerge(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_TableCCUtilT2Spec(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImage * _arg0;
+    ObitImage * _arg1;
+    int  _arg2;
+    int  _arg3;
+    int  _arg4;
+    int  _arg5;
+    int  _arg6;
+    ObitErr * _arg7;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo7 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiiiiiO:TableCCUtilT2Spec",&_argo0,&_argo1,&_arg2,&_arg3,&_arg4,&_arg5,&_arg6,&_argo7)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableCCUtilT2Spec. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of TableCCUtilT2Spec. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo7) {
+        if (_argo7 == Py_None) { _arg7 = NULL; }
+        else if (SWIG_GetPtrObj(_argo7,(void **) &_arg7,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 8 of TableCCUtilT2Spec. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    TableCCUtilT2Spec(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableCCUtilFixTSpec(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImage * _arg0;
+    int  _arg1;
+    float  _arg2;
+    int  _arg3;
+    float * _arg4;
+    int  _arg5;
+    int  _arg6;
+    ObitErr * _arg7;
+    PyObject * _argo0 = 0;
+    PyObject * _obj4 = 0;
+    PyObject * _argo7 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OifiOiiO:TableCCUtilFixTSpec",&_argo0,&_arg1,&_arg2,&_arg3,&_obj4,&_arg5,&_arg6,&_argo7)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableCCUtilFixTSpec. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj4)) {
+    int size = PyList_Size(_obj4);
+    int i = 0;
+    _arg4 = (float*) malloc((size+1)*sizeof(float));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj4,i);
+      if (PyFloat_Check(o))
+         _arg4[i] = (float)((PyFloatObject*)o)->ob_fval;
+      else {
+         PyErr_SetString(PyExc_TypeError,"list must contain floats");
+         free(_arg4);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+    if (_argo7) {
+        if (_argo7 == Py_None) { _arg7 = NULL; }
+        else if (SWIG_GetPtrObj(_argo7,(void **) &_arg7,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 8 of TableCCUtilFixTSpec. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    TableCCUtilFixTSpec(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  free((float *) _arg4);
+}
+    return _resultobj;
+}
+
 static PyObject *_wrap_TableVL(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitTable * _result;
@@ -55312,6 +55503,8 @@ static PyMethodDef ObitMethods[] = {
 	 { "TableVLSetHeadKeys", _wrap_TableVLSetHeadKeys, METH_VARARGS },
 	 { "TableVLGetHeadKeys", _wrap_TableVLGetHeadKeys, METH_VARARGS },
 	 { "TableVL", _wrap_TableVL, METH_VARARGS },
+	 { "TableCCUtilFixTSpec", _wrap_TableCCUtilFixTSpec, METH_VARARGS },
+	 { "TableCCUtilT2Spec", _wrap_TableCCUtilT2Spec, METH_VARARGS },
 	 { "TableCCUtilMerge", _wrap_TableCCUtilMerge, METH_VARARGS },
 	 { "TableTYSetHeadKeys", _wrap_TableTYSetHeadKeys, METH_VARARGS },
 	 { "TableTYGetHeadKeys", _wrap_TableTYGetHeadKeys, METH_VARARGS },
@@ -55682,6 +55875,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "InfoListCreate", _wrap_InfoListCreate, METH_VARARGS },
 	 { "freeInfoListBlob", _wrap_freeInfoListBlob, METH_VARARGS },
 	 { "makeInfoListBlob", _wrap_makeInfoListBlob, METH_VARARGS },
+	 { "ImageUtilT2Spec", _wrap_ImageUtilT2Spec, METH_VARARGS },
 	 { "ImageUtilUVFilter", _wrap_ImageUtilUVFilter, METH_VARARGS },
 	 { "ImageUtilCCScale", _wrap_ImageUtilCCScale, METH_VARARGS },
 	 { "ImageUtilQuanFITS", _wrap_ImageUtilQuanFITS, METH_VARARGS },

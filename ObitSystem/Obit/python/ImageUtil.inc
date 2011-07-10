@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for Image utilities                        */
 /*                                                                    */
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -114,5 +114,17 @@ ImageUtilUVFilter (ObitImage *inImage, ObitImage *outImage, double radius,
   lradius   = (ofloat)radius;
   ObitImageUtilUVFilter (inImage, outImage, lradius, err);
 } // end ImageUtilUVFilter
+
+ObitImage*
+ImageUtilT2Spec (ObitImage *inImage, ObitImage *outImage, 
+	          int nTerm, int inCCVer, int outCCVer,
+	          int startComp, int endComp, ObitErr *err) 
+{
+  olong linCCVer=(olong)inCCVer, loutCCVer=(olong)outCCVer;
+  ObitImageUtilT2Spec (inImage, &outImage, 
+	          (olong)nTerm, &linCCVer, &loutCCVer,
+	          (olong)startComp, (olong)endComp, err);
+  return outImage;
+} // end ImageUtilT2Spec
 
 %}

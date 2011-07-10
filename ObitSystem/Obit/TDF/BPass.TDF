@@ -110,7 +110,7 @@ BComp                               First CLEAN comp to use.
 EComp                               Last CLEAN comp to use.
                                     to use (0 => all)
 **PARAM** str 4
-Cmethod                             Modeling method:
+Cmethod                             Modeling method (see Help):
                                     'DFT','GRID','    '
 **PARAM** str 4
 Cmodel                              Model type: 'COMP','IMAG'
@@ -298,6 +298,8 @@ Adverbs:
              computation.
              '    ' allows the program to use the fastest
              method.
+             NB: If the input model has CLEAN components with spectral
+             parameters (not Tab Spec) then 'DFT' MUST be used.
   Cmodel.....This indicates the type of input model; 'COMP' means that
              the input model consists of Clean components, 'IMAG'
              indicates that the input model consists of images.  If

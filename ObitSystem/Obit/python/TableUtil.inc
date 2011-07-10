@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for Obit Table Utilities                   */
 /*                                                                    */
-/*;  Copyright (C) 2006                                               */
+/*;  Copyright (C) 2006,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -49,6 +49,30 @@ olong TableCCUtilMerge (ObitTable *in, ObitTable *out, ObitErr *err)
   if (ret==OBIT_IO_OK) return 0;
   else return 1;
 } // end TableCCUtilMerge
+
+void 
+TableCCUtilT2Spec (ObitImage *inImage, ObitImage *outImage, 
+	          int nTerm, int inCCVer, int outCCVer,
+	          int startComp, int endComp, ObitErr *err) 
+{
+  olong linCCVer=(olong)inCCVer, loutCCVer=(olong)outCCVer;
+  ObitTableCCUtilT2Spec (inImage, (ObitImageWB*)outImage, 
+	          (olong)nTerm, &linCCVer, &loutCCVer,
+	          (olong)startComp, (olong)endComp, err);
+} // end TableCCUtilT2Spec
+
+void 
+TableCCUtilFixTSpec (ObitImage *inImage,  int inCCVer, 
+                     float refFreq, int nterm, float *terms,
+	             int startComp, int endComp, ObitErr *err) 
+{
+  ofloat lterms[20];
+  olong i, linCCVer=(olong)inCCVer;
+  for (i=0; i<nterm; i++) lterms[i] = (ofloat)terms[i];
+  ObitTableCCUtilFixTSpec (inImage,  &linCCVer,
+	          (odouble)refFreq, (olong)nterm, lterms,
+	          (olong)startComp, (olong)endComp, err);
+} // end TableCCUtilFixTSpec
 %}
 
 

@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2010                                          */
+/*;  Copyright (C) 2006-2011                                         */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1153,7 +1153,7 @@ void CalibHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "doPol", "Antennas",  "refAnts", "doTwo",
     "DataType2", "in2File", "in2Disk", "in2Name", "in2Class", "in2Seq", 
     "nfield", "CCVer", "BComp", "EComp", "Cmethod", "Cmodel", "Flux",
-    "modelFlux", "modelPos", "modelParm", "Alpha",
+    "modelFlux", "modelPos", "modelParm", "Alpha", "PBCor", "antSize", "solnVer", 
     "solInt", "solType", "solMode", "avgPol", "avgIF", "noNeg", "doMGM", "minSNR",
     "minNo", "prtLv",
     "nThreads",

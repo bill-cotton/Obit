@@ -519,6 +519,7 @@ def EVLAUVLoad(filename, inDisk, Aname, Aclass, Adisk, Aseq, err, logfile=''):
     exclude=["AIPS HI", "AIPS AN", "AIPS FQ", "AIPS SL", "AIPS PL", "History"]
     include=[]
     UV.PCopyTables (inUV, outUV, exclude, include, err)
+    del inUV
     return outUV  # return new object
     # end EVLAUVLoad
 
@@ -773,6 +774,7 @@ def EVLAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
     OErr.printErrMsg(err, "Error with history")
     # Copy Tables
     Image.PCopyTables (inImage, outImage, exclude, include, err)
+    del outImage
     # end EVLAImFITS
 
 def EVLAUVFITS(inUV, filename, outDisk, err, compress=False, \
@@ -1205,6 +1207,7 @@ def EVLAPACor(uv, err, CLver=0, FreqID=1,\
     # end EVLAPACor
 
 def EVLADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None, \
+                     BChan=1, EChan=1, \
                      timeRange=[0.,0.], FreqID=1, doCalib=-1, gainUse=0, minSNR=5.0, \
                      refAnts=[0], doBand=-1, BPVer=0, flagVer=-1, doTwo=True, doZeroPhs=False, \
                      doPlot=False, plotFile="./DelayCal.ps", \
@@ -1236,6 +1239,8 @@ def EVLADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
                    (maj, min, pa, type)
       ===========  ==========================================================
 
+    * BChan      = First (1-rel channel to include
+    * EChan      = Highest channel to include
     * timeRange  = timerange of data to use
     * solInt     = Calib solution interval (min)
     * smoTime    = Smoothing time applied to SN table (hr) if >0.0
@@ -1457,7 +1462,7 @@ def EVLADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
 def EVLACalAP(uv, target, ACal, err, \
               PCal=None, FQid=0, calFlux=None, \
               doCalib=-1, gainUse=0, doBand=0, BPVer=0, flagVer=-1, \
-              calModel=None, calDisk=0, \
+              calModel=None, calDisk=0, BChan=1, EChan=1, \
               solnver=0, solInt=10.0/60.0, solSmo=0.0, nThreads=1, refAnt=0, ampScalar=False, \
               doPlot=False, plotFile="./APCal.ps", \
               check=False, debug = False, noScrat=[], logfile = ""):
@@ -1480,6 +1485,8 @@ def EVLACalAP(uv, target, ACal, err, \
     * calModel = Amp. calibration model FITS file
       Has priority over calFlux
     * calDisk  = FITS disk for calModel
+    * BChan    = First (1-rel channel to include
+    * EChan    = Highest channel to include
     * doCalib  = Apply calibration table, positive=>calibrate
     * gainUse  = CL/SN table to apply
     * doBand   = If >0.5 apply previous bandpass cal.
@@ -1773,7 +1780,7 @@ def EVLACalAP(uv, target, ACal, err, \
             return retCode
     # end SN table plot
 
-    # Set up for CLCal - only use phase calibrators
+    # Set up for CLCal - use phase & amp calibrators
     if not check:
         # Open and close image to sync with disk 
         uv.Open(UV.READONLY, err)
@@ -1783,8 +1790,9 @@ def EVLACalAP(uv, target, ACal, err, \
         clcal.solnVer = 1
     if type(PCal)==list:
         clcal.calSour=PCal
+        clcal.calSour[len(PCal)]=ACal
     else:
-        clcal.calSour=[PCal]
+        clcal.calSour=[PCal,ACal]
     if type(target)==list:
         clcal.Sources=target
     else:
@@ -2110,6 +2118,7 @@ def EVLACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
     try:
         if not check:
             splat.g
+            pass
     except Exception, exception:
         print exception
         mess = "Splat Failed retCode="+str(splat.retCode)
@@ -2134,6 +2143,7 @@ def EVLACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
             hiver = uvc.GetHighVer("AIPS CL")
             if (doCalib>0) or (hiver<=0):
                 UV.PTableCLGetDummy(uvc, uvc, 0, err, solInt=solint)
+                pass
             if err.isErr:
                 print "Error creating cal/avg AIPS data CL table"
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data CL table")
@@ -2142,6 +2152,7 @@ def EVLACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
             if err.isErr:
                 print  "Error indexing cal/avg AIPS data"
                 OErr.printErrMsg(err, "Error indexing cal/avg AIPS data")
+            del uvc
         except Exception, exception:
             print exception
             OErr.printErr(err)
@@ -2187,6 +2198,7 @@ def EVLACalAvg2(uv, avgClass, avgSeq, CalAvgTime,  err,  FQid=0, \
     ################################################################
     mess =  "Average/calibrate calibrate data"
     printMess(mess, logfile)
+    outuv = None
     # Create output
     if not check:
         # Set calibration, editing and selection
@@ -2232,6 +2244,8 @@ def EVLACalAvg2(uv, avgClass, avgSeq, CalAvgTime,  err,  FQid=0, \
                 
 
             # Do History - previous already copied
+            if outuv:
+                del outuv
             outuv = UV.newPAUV("CalAvg", uv.Aname, avgClass, uv.Disk, avgSeq, True, err)
             #print "DEBUG Copy history"
             inHistory  = History.History("inhistory",  uv.List, err)
@@ -2295,6 +2309,8 @@ def EVLACalAvg2(uv, avgClass, avgSeq, CalAvgTime,  err,  FQid=0, \
             return 1
         else:
             pass
+    if outuv:
+        del outuv
     return 0
     # end EVLACalAvg2
     
@@ -3386,6 +3402,7 @@ def EVLAReportTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", 
                 sdict[s+"Peak"] = stat["Min"]
             sdict[s+"RMS"]  = stat["RMSHist"]
             sdict[s+"Sum"]  = EVLAGetSumCC(x, err, logfile=logfile, check=check, debug=debug)
+            del x
         # End stokes image loop
         Report.append(sdict)  # Save source info
     # end loop over sources

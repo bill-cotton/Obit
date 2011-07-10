@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2003-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -33,6 +33,8 @@
 #include "ObitInfoList.h"
 #include "ObitUV.h"
 #include "ObitImage.h"
+#include "ObitImageMF.h"
+#include "ObitImageWB.h"
 #include "ObitImageDesc.h"
 #include "ObitUVDesc.h"
 #include "ObitFArray.h"
@@ -208,5 +210,10 @@ olong ObitImageUtilBufSize (ObitUV *inU);
 /** Public: Set Image header 2D shift parameters */
 void ObitImageUtilTwoDShift (ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
 			     gboolean onGrid);
+
+/** Convert image with TSpec to Spec model type */
+void ObitImageUtilT2Spec  (ObitImage *inImage, ObitImage **outImage, 
+			   olong nTerm, olong *inCCVer, olong *outCCVer,
+			   olong startComp, olong endComp, ObitErr *err);
 
 #endif /* OBITIMAGEUTIL_H */ 

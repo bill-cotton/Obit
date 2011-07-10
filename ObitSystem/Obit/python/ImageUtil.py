@@ -2,7 +2,7 @@
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2008
+#  Copyright (C) 2004-2011
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 #-----------------------------------------------------------------------
 
 # Python interface to ObitImageUtil utilities
-import Obit, Image, ImageDesc, FArray, UV, Table, History, OErr
+import Obit, Image, ImageDesc, FArray, UV, Table, TableUtil, History, OErr
 import OSystem
 
 def PICreateImage (inUV, fieldNo, doBeam, err):
@@ -632,3 +632,66 @@ def PImageFFT (inImage, outAImage, outPImage, err):
         outHistory.Close(err)
 # end PImageFFT
 
+def PImageT2Spec (inImage, outImage, nTerm, 
+                  inCCVer, outCCVer, err,
+                  refFreq=1.0e9, terms=None, startCC=1, endCC=0):
+    """ Convert an ObitImage(MF) (TSpec CCs) to an ObitImageWB (Spec CCs)
+
+    Output CC Table will have fitted spectra rather than tabulated spectra.
+    If an integrated spectrum is given, the sum of the input CC sprectra
+    are forced to this spectrum.
+    Copies spectral planes and converts specified CC table
+    Tabulated spectrum fitted with spectrum weighting by primary beam
+    inImage   input Obit Python Image 1
+              Must have freq axis type = "SPECLNMF"
+    outImage  output Obit Python image
+              must be defined but not instantiated
+              On return will be replaced bu image created
+    nTerm     Number of output Spectral terms, 2=SI, 3=also curve.
+    inCCVer   Input CCTable to convert, 0=> highest
+    outCCVer  Output CCTable, 0=>1
+    err       Python Obit Error/message stack
+    refFreq   Reference frequency (Hz) for total spectrum
+    terms     if not None, parameters of total spectrum
+              [flux density at refFreq, spectral index at refFreq, ...]
+    startCC   First 1-rel component to convert
+    endCC     Last 1-rel component to convert, 0=> all
+    """
+    ################################################################
+    # Checks
+    if not Image.PIsA(inImage):
+        raise TypeError,"inImage MUST be a Python Obit Image"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    # Merge CCs to temp cc table
+    tmpCCver = Image.PGetHighVer(inImage, "AIPS CC") + 1;
+    inTab    = inImage.NewTable(Image.READONLY, "AIPS CC", inCCVer, err)
+    noParms  = inTab.Desc.List.Dict["NO_PARMS"][2][0]
+    tmpTab   = inImage.NewTable(Image.WRITEONLY, "AIPS CC", tmpCCver, err, noParms=noParms)
+    TableUtil.PCCMerge(inTab, tmpTab, err)
+    # Fix spectrum if needed
+    if terms:
+        nterm = len(terms)
+        Obit.TableCCUtilFixTSpec(inImage.me, tmpCCver, \
+                                 refFreq, nterm, terms,
+                                 startCC, endCC, err.me)
+        if err.isErr:
+            OErr.printErrMsg(err, "Error Adjusting spectrum of CC Table")
+    # Convert
+    outImage.me = Obit.ImageUtilT2Spec(inImage.me, outImage.me, nTerm, tmpCCver, \
+                                       outCCVer, startCC, endCC, err.me)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error Converting image/CC Table")
+    # Delete temporary CC table
+    inImage.ZapTable("AIPS CC", tmpCCver, err)
+    # Do history for spectrum modification
+    pgmName = OSystem.PGetPgmName()
+    outHistory = History.History("history", outImage.List, err)
+    History.POpen(outHistory, History.READWRITE, err)
+    History.PTimeStamp(outHistory," Start Obit "+pgmName,err)
+    if terms:
+        History.PWriteRec(outHistory,-1,pgmName+"  nterm  = "+str(nterm),err)
+        History.PWriteRec(outHistory,-1,pgmName+"  refFreq = "+str(refFreq ),err)
+        History.PWriteRec(outHistory,-1,pgmName+"  terms   = "+str(terms),err)
+    History.PClose(outHistory, err)
+# end PImageT2Spec

@@ -36,7 +36,9 @@
 #include "ObitData.h"
 #include "ObitUVGSolve.h"
 #include "ObitSkyModel.h"
+#include "ObitSkyModelMF.h"
 #include "ObitTableSUUtil.h"
+#include "ObitTableCCUtil.h"
 #include "ObitUVUtil.h"
 #include "ObitTableSN.h"
 #include "ObitTableCL.h"
@@ -529,6 +531,12 @@ ObitInfoList* defaultInputs(ObitErr *err)
   ObitInfoListPut (out, "Alpha", OBIT_float, dim, &ftemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
+  /* Apply PBCor?, def= False */
+  dim[0] = 1; dim[1] = 1;
+  btemp = FALSE;
+  ObitInfoListPut (out, "PBCor", OBIT_bool, dim, &btemp, err);
+  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+  
   /* BChan, EChan */
   dim[0] = dim[1] = dim[2] = 1;
   itemp = 1;
@@ -685,15 +693,16 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
   ObitSkyModel *skyModel=NULL;
   ObitImageMosaic *mosaic=NULL;
   ObitImage    **image=NULL;
-  ObitInfoType type;
-  gboolean     do3D=TRUE;
-  olong         Aseq, disk, cno,i=0, nmaps;
+  ObitCCCompType CCType;
+  ObitInfoType  type;
+  gboolean      do3D=TRUE;
+  olong         Aseq, disk, cno,i=0, nmaps, ver;
   gchar        *Type, *Type2, *strTemp, inFile[129], inRoot[129];
-  gchar        Aname[13], Aclass[7], Aroot[7], *Atype = "MA";
+  gchar         Aname[13], Aclass[7], Aroot[7], *Atype = "MA";
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong         blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong         trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
-  ofloat       smodel[20], modptflx,  modptxof, modptyof, modptypm[4];
+  ofloat        smodel[20], modptflx,  modptxof, modptyof, modptypm[4];
   gchar        name[101];
   gchar        *dataParms[] = {  /* Control parameters */
     "CCVer",  "BComp",  "EComp",  "Flux", "PBCor", "antSize", "Factor", 
@@ -867,8 +876,17 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
       return skyModel;
     }
 
-    /* Create Sky Model */
-    skyModel = ObitSkyModelCreate ("Sky Model", mosaic);
+    /* Create Sky Model for appropriate type */
+    ver = 0;
+    ObitInfoListGetTest(myInput, "CCVer", &type, dim, &ver);
+    CCType   = ObitTableCCUtilGetType ((ObitData*)mosaic->images[0], ver, err);
+    if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
+    if ((CCType==OBIT_CC_PointModTSpec)|| (CCType==OBIT_CC_GaussModTSpec) ||
+	(CCType==OBIT_CC_CGaussModTSpec) || (CCType==OBIT_CC_USphereModTSpec)) {
+      skyModel = (ObitSkyModel*)ObitSkyModelMFCreate ("Sky Model", mosaic);
+      Obit_log_error(err, OBIT_InfoErr, "Using tabulated spectrum sky model");
+    } else
+      skyModel = ObitSkyModelCreate ("Sky Model", mosaic);
 
     /* deallocate images */
     for (i=0; i<nmaps; i++) image[i] = ObitImageUnref(image[i]);

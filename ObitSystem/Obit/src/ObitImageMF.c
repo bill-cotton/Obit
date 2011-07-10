@@ -944,14 +944,14 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
   in->alpha = alpha;
  
   /* Save Alpha reference frequency */
-  ObitInfoListAlwaysPut (in->myDesc->info, "ALPHARF", OBIT_double, dim, &alphaRefF);
+  ObitInfoListAlwaysPut (in->myDesc->info, "RFALPHA", OBIT_double, dim, &alphaRefF);
   in->alphaRefF = alphaRefF;
  
 } /* end  ObitImageMFSetSpec */
 
 /**
  * Get info from the descriptor for coarse channels:
- * ALPHA, ALPHARF, NTERM NSPEC, FREQ001...
+ * ALPHA, RFALPHA, NTERM NSPEC, FREQ001...
  * into alpha, maxOrder-1, nSpec, specFreq
  * \param in     Pointer to object, should be fully defined
  * \param alpha  Spectral index applied
@@ -961,7 +961,7 @@ void ObitImageMFGetSpec (ObitImageMF *in, ObitErr *err)
 {
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  ofloat farr[10];
+  union ObitInfoListEquiv InfoReal; 
   odouble darr[10];
   gchar keyword[12];
   olong i, nSpec, nTerm;
@@ -983,16 +983,17 @@ void ObitImageMFGetSpec (ObitImageMF *in, ObitErr *err)
   in->maxOrder = nTerm - 1;
 
   /* Alpha */
-  farr[0] = 0.0;
-  ObitInfoListGetTest (in->myDesc->info, "ALPHA", &type, dim, farr);
-  in->alpha = farr[0];
+  InfoReal.flt = 0.0;   type = OBIT_float;
+  ObitInfoListGetTest(in->myDesc->info, "ALPHA", &type, dim, &InfoReal);
+  if (type==OBIT_double) in->alpha = (ofloat)InfoReal.dbl;
+  if (type==OBIT_float)  in->alpha = (ofloat)InfoReal.flt;
 
   /* Reference frequency if not set */
   if (in->refFreq<1.0) in->refFreq = in->myDesc->crval[in->myDesc->jlocf];
 
   /* Alpha reference frequency - default to reference frequency */
   darr[0] = in->refFreq;
-  ObitInfoListGetTest (in->myDesc->info, "ALPHARF", &type, dim, darr);
+  ObitInfoListGetTest (in->myDesc->info, "RFALPHA", &type, dim, darr);
   in->alphaRefF = darr[0];
   if (in->alphaRefF<=0.0) in->alphaRefF = in->refFreq;
 
@@ -1190,7 +1191,7 @@ void ObitImageMFFitSpec (ObitImageMF *in, ofloat antSize, ObitErr *err)
   if (err->error) return;
   g_assert (ObitImageMFIsA(in));
 
-  /* Tru reading spectral info if missing */
+  /* Try reading spectral info if missing */
   if (in->nSpec<=0) ObitImageMFGetSpec (in, err);
   if (err->error) goto cleanup;
 

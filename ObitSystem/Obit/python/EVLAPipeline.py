@@ -115,10 +115,17 @@ bpUVRange     = [0.,0.]    # UV range in klambda
 bpsolMode     = 'A&P'      # Band pass type 'A&P', 'P', 'P!A'
 bpsolint1     = 10.0/60.0  # BPass phase correction solution in min
 bpsolint2     = 10.0       # BPass bandpass solution in min
+bpModelFlux = 0.0;         # Point model flux density
+bpModelPos  = [0.,0.]      # Point model offset
+bpModelParm = [0.0,0.,0.]  # Point model parameters
+# Note a model with a parameterized spectrum MUST use the DFT method
 bpModel = {                # BPass model specification
     "CalDataType":"    ", "CalFile":"    ","CalName":"    ","CalClass":"    ",\
     "CalSeq":0,"CalDisk":1,"CalNfield":1,"CalCCVer":1,"CalFlux":0.0,"CalBComp":[1],"CalEComp":[0],\
-    "CalCmethod":"    ","CalCmodel":'COMP'
+    "CalCmethod":"DFT","CalCmodel":'COMP',
+    "Flux":0.0,       # point model flux density
+    "Pos":[0.,0.],    # point model posn offset (asec) 
+    "Parm":[0.,0.,0.] # point model parameters
     }
 
 # Delay calibration from DCal
@@ -128,6 +135,8 @@ doDelayCal2 = None         # Determine/apply delays from DCal on averaged data
 doTwo       = True         # Use 1 and 2 bl combinations?
 DCal        = None         # Delay calibrator(s)
 delayZeroPhs= False        # Zero phases from delay solutions
+delayBChan  = 1            # First (1-rel channel to include
+delayEChan  = 0            # Highest channel to include
 
 # Amp/phase calibration
 doAmpPhaseCal = True                    # Amplitude/phase calibration
@@ -141,6 +150,8 @@ AcalModel     = None                    # Flux calibrator model file name, None=
 AcalFlux      = None                    # Flux for amp calibrator, None=>use model or SetJy value
 AcalDisk      = 1                       # Flux calibrator model FITS disk
 refAnt        = 0                       # Reference antenna
+ampBChan      = 1                       # First (1-rel channel to include
+ampEChan      = 0                       # Highest channel to include
 
 # Sample spectra
 doRawSpecPlot = True        # Plot Raw spectrum
@@ -386,6 +397,7 @@ if doPACor:
 if doDelayCal and DCal and not check:
     plotFile = "./"+project+"_"+session+"_"+band+"DelayCal.ps"
     retCode = EVLADelayCal(uv, err, calSou=DCal, CalModel=None, \
+                           BChan=delayBChan, EChan=delayEChan, \
                            doCalib=2, flagVer=2, doBand=-1, \
                            solInt=solint, smoTime=1.0/60.0,  \
                            refAnts=[refAnt], doTwo=doTwo, doZeroPhs=delayZeroPhs, \
@@ -411,6 +423,7 @@ if doBPCal and BPCal:
                         doCenter1=bpDoCenter1, refAnt=refAnt, specIndex=bpSpecIndex, UVRange=bpUVRange, \
                         doCalib=2, gainUse=0, flagVer=2, doPlot=False, \
                         CalDataType=bpModel["CalDataType"], \
+                        modelFlux=bpModel["Flux"], modelPos=bpModel["Pos"], modelParm=bpModel["Parm"], \
                         CalFile=bpModel["CalFile"], CalName=bpModel["CalName"], \
                         CalClass=bpModel["CalClass"], CalSeq=bpModel["CalSeq"], \
                         CalDisk=bpModel["CalDisk"], CalNfield=bpModel["CalNfield"], \
@@ -434,6 +447,7 @@ if doBPCal and BPCal:
 if doAmpPhaseCal:
     plotFile = "./"+project+"_"+session+"_"+band+"APCal.ps"
     retCode = EVLACalAP (uv, targets, ACal, err, PCal=PCal, doCalib=2, doBand=1, BPVer=1, flagVer=2, \
+                         BChan=ampBChan, EChan=ampEChan, \
                          calModel=AcalModel, calDisk=AcalDisk, calFlux=AcalFlux, nThreads=nThreads, \
                          solInt=solint, solSmo=solsmo, noScrat=noScrat, ampScalar=ampScalar, \
                          doPlot=doSNPlot, plotFile=plotFile, \
@@ -478,6 +492,7 @@ if doRecal:
     if doDelayCal2 and DCal:
         plotFile = "./"+project+"_"+session+"_"+band+"DelayCal.ps"
         retCode = EVLADelayCal(uv, err, calSou=DCal, CalModel=None, \
+                               BChan=delayBChan, EChan=delayEChan, \
                                doCalib=2, flagVer=2, doBand=-1, \
                                solInt=solint, smoTime=1.0/60.0,  \
                                refAnts=[refAnt], doTwo=doTwo, doZeroPhs=delayZeroPhs, \
@@ -503,6 +518,7 @@ if doRecal:
                             BChan1=bpBChan1, EChan1=bpEChan1, BChan2=bpBChan2, EChan2=bpEChan2, ChWid2=bpChWid2, \
                             doCenter1=bpDoCenter1, refAnt=refAnt, specIndex=bpSpecIndex, UVRange=bpUVRange, \
                             doCalib=2, gainUse=0, flagVer=2, doPlot=False, \
+                            modelFlux=bpModel["Flux"], modelPos=bpModel["Pos"], modelParm=bpModel["Parm"], \
                             CalDataType=bpModel["CalDataType"], \
                             CalFile=bpModel["CalFile"], CalName=bpModel["CalName"], \
                             CalClass=bpModel["CalClass"], CalSeq=bpModel["CalSeq"], \
@@ -527,6 +543,7 @@ if doRecal:
     if doAmpPhaseCal2:
         plotFile = "./"+project+"_"+session+"_"+band+"APCal.ps"
         retCode = EVLACalAP (uv, targets, ACal, err, PCal=PCal, doCalib=2, doBand=1, BPVer=1, flagVer=2, \
+                             BChan=ampBChan, EChan=ampEChan, \
                              calModel=AcalModel, calDisk=AcalDisk, calFlux=AcalFlux, nThreads=nThreads, \
                              solInt=solint, solSmo=solsmo, noScrat=noScrat, ampScalar=ampScalar, \
                              doPlot=doSNPlot, plotFile=plotFile, \

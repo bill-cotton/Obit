@@ -1793,10 +1793,11 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   olong        nfield, *ncomp=NULL, maxPSCLoop, maxASCLoop, SCLoop, jtemp;
   ofloat       minFluxPSC, minFluxASC, modelFlux, maxResid, reuse, ftemp, autoCen;
   ofloat       solInt, PeelFlux, FractOK, CCFilter[2]={0.0,0.0};
+  ofloat       alpha, noalpha;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean     Fl = FALSE, Tr = TRUE, init=TRUE, doRestore, doFlatten, doSC, doBeam;
   gboolean     noSCNeed, reimage, didSC=FALSE, imgOK=FALSE, converged = FALSE; 
-  gboolean     doneRecenter=FALSE;
+  gboolean     btemp, doneRecenter=FALSE;
   gchar        soltyp[5], solmod[5], stemp[5];
   gchar        *SCParms[] = {  /* Self cal parameters */
     "minFluxPSC", "minFluxASC", "refAnt",  "WtUV", 
@@ -2033,6 +2034,12 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
     otemp = -1;
     ObitInfoListAlwaysPut (inUV->info, "flagVer", OBIT_oint, dim, &otemp);
     
+    /* No alpha correction */
+    alpha = 0.0;
+    ObitInfoListGetTest(inUV->info, "Alpha", &type, dim, &alpha);
+    noalpha = 0.0; dim[0] = dim[2] = dim[3] = dim[4] = 1;
+    ObitInfoListAlwaysPut (inUV->info, "Alpha", OBIT_float, dim, &noalpha);
+   
     /* Copy to scratch with calibration */
     scrUV = newObitUVScratch (inUV, err);
     scrUV = ObitUVCopy (inUV, scrUV, err);
@@ -2042,6 +2049,10 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
     scrUV = ObitUVUnref(scrUV);
     if (err->error) Obit_traceback_msg (err, routine, inUV->name);
     
+    /* restore alpha correction */
+    dim[0] = dim[2] = dim[3] = dim[4] = 1;
+    ObitInfoListAlwaysPut (inUV->info, "Alpha", OBIT_float, dim, &alpha);
+   
     /* No more calibration for now */
     dim[0] = 1; jtemp = -1;
     ObitInfoListAlwaysPut (inUV->info, "doCalib", OBIT_long, dim, &jtemp);
@@ -2133,6 +2144,10 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 	dim[0] = dim[1] = dim[2] = 1;
 	ObitInfoListAlwaysPut(myClean->skyModel->info, "maxResid", OBIT_float, dim, &maxResid);
 	
+	/* alpha correction in model  for Amp self cal */
+	btemp = TRUE; dim[0] = dim[1] = dim[2] = 1;
+	ObitInfoListAlwaysPut (myClean->skyModel->info, "doAlphaCorr", OBIT_bool, dim, &btemp);
+
 	/* Do self cal */
 	converged = ObitUVSelfCalSelfCal (selfCal, inUV, init, &noSCNeed, 
 					  myClean->window, err);
@@ -2140,6 +2155,10 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 	if (converged || noSCNeed)  break;
 	imgOK = FALSE;  /* Need new image */
 	init = FALSE;
+
+	/* No alpha correction in model for Clean */
+	btemp = FALSE; dim[0] = dim[1] = dim[2] = 1;
+	ObitInfoListAlwaysPut (myClean->skyModel->info, "doAlphaCorr", OBIT_bool, dim, &btemp);
 
 	/* May need to remake beams - depends on success of selfcal */
 	ObitInfoListGetTest(selfCal->mySolver->info, "FractOK", &type, dim, &FractOK);

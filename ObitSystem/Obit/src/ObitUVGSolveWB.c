@@ -3230,12 +3230,12 @@ FindFFTPeak (ObitUVGSolveWB *in, ofloat *ppos, ofloat pval[2])
  */
 void ObitFArrayZeroBlank (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 {
-  olong i;
+  olong i, n;
   ofloat fblank = ObitMagicF();
 
    /* error checks */
-
-  for (i=0; i<in1->arraySize; i++) {
+  n = MIN (in1->arraySize, in2->arraySize);
+  for (i=0; i<n; i++) {
     if (in2->array[i]!=fblank)
       out->array[i] = in1->array[i];
     else out->array[i] = 0.0;
