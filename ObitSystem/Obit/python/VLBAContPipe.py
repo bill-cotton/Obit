@@ -587,8 +587,10 @@ def pipeline( aipsSetup, parmFile ):
     # Contour plots
     if parms["doKntrPlots"]:
         logger.info("--> Contour plots (doKntrPlots)")
-        VLBAKntrPlots( err, project=project, session=session, band=band,
-            disk=disk, debug=debug )
+        # Unique list of source for which contours should be plotted
+        sources = list( set( parms["targets"] + parms["contCals"] ) )
+        VLBAKntrPlots( err, imName=sources, project=project,
+            session=session, band=band, disk=disk, debug=debug )
         # Save list of output files
         VLBASaveOutFiles()
     elif debug:

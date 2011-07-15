@@ -6114,7 +6114,7 @@ def VLBAProjMetadata( uv, AIPS_VERSION, err, contCals=[None], goodCal={},
     r["goodCalSNR"] = goodCal["SNR"]
     r["dataSet"] = dataInUVF
     r["archFileID"] = archFileID # archive file ID
-    r["fileSetID"] = r["project"] + "_" + r["obsDate"].replace('-','') + "_" + \
+    r["fileSetID"] = r["project"] + "_" + r["obsDate"][2:].replace('-','') + "_" + \
         str(r["archFileID"])
 
     # Get antenna names and positions

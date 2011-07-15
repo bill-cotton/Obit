@@ -148,6 +148,8 @@ unique working directory.
         except subprocess.CalledProcessError: 
             logger.error("Pipeline process failed!  Error:\n" + 
                 str(subprocess.CalledProcessError))
+            os.chdir( cwd )
+            os.remove( pipeNowLog )
         # Handle exception and re-raise
         except HTTPError, e:
             logger.error("Server could not fulfill request. Error code: " + \
@@ -159,6 +161,8 @@ unique working directory.
         except IOError, e:
             logger.error("File " + e.filename + " not found\n" + \
                 "  Cannot copy files to validation directory" )
+            os.chdir( cwd )
+            os.remove( pipeNowLog )
             raise
     logger.info("Pipeline Wrapper Ends")
 

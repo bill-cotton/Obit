@@ -330,10 +330,10 @@ def SaveObject (pyobj, file, update):
    
 def FetchObject (file):
     """ 
-Fetch python object from a pickle file.
-
-* returns python object
-* file     = pickle file name
+    Fetch python object from a pickle file.
+    
+    * returns python object
+    * file     = pickle file name
     """
     ################################################################
     # unpickle file
@@ -345,12 +345,12 @@ Fetch python object from a pickle file.
    
 def QueryArchive(startTime, endTime, project=None):
     """
-Query the NRAO Archive for data files. Return the response as a list of 
-lines.
-
-* startTime = Start of query time range ( YYYY-mmm-DD [ HH:MM:SS ] )
-* endTime = End of query time range
-* project = Project code
+    Query the NRAO Archive for data files. Return the response as a list of 
+    lines.
+    
+    * startTime = Start of query time range ( YYYY-mmm-DD [ HH:MM:SS ] )
+    * endTime = End of query time range
+    * project = Project code
     """
     freqRange = '1000 - 16000' # frequency range (MHz) (L to U bands)
     format = 'FITS-AIPS' # Archive file format (FITS-AIPS good prior to ? 2010)
@@ -748,4 +748,89 @@ def getDictFromList( dictList, key, value ):
         if (key in d) and (d[key] == value):
             dictListSubset.append(d)
     return dictListSubset
+   
+def validate( dataDir, archDir = '../archive', archBkup = None, group = None):
+    """
+    Validate a data set and move it to the archive staging area.
+
+    This function should be run after the data set has been examined and 
+    determined to be valid.  The procedure is as follows:
     
+    1) The data set, *dataDir*, is moved to the archive staging area,
+       *archDir*. 
+    2) If *archBkup* is given, the *dataDir* is also copied to the archive
+       backup area, *archBkup*.
+    3) If *group* is given, all files moved to the archive staging area have
+       their group changed to *group*, and group read/write/access permission
+       are set. 
+    4) Finally, the pipeline processing record is modified to show that this
+       data set has been archived.
+
+    * dataDir = data set directory
+    * archDir = archive staging area (../archive, by default)
+    * archBkup = archive backup directory (optional)
+    * group = Linux group name to be set for all files and directories
+      (optional)
+    """
+
+    import grp, shutil
+
+    # Normalize paths
+    dataDir = os.path.abspath( dataDir )
+    archDir = os.path.abspath( archDir )
+
+    # Verify existence of files / dirs.
+    if not os.path.exists( dataDir ):
+        raise IOError( (1, 'File does not exist', dataDir) )
+    if not os.path.exists( archDir ):
+        raise IOError( (1, 'Directory does not exist', archDir) )
+
+    # Copy dataDir to archive backup directory
+    if archBkup:
+        archBkup = os.path.abspath( archBkup )
+        if not os.path.exists( archBkup ):
+            raise IOError( (1, 'Directory does not exist', archBkup) )
+        base = os.path.basename( dataDir )
+        newDataBkup = os.path.join( archBkup, base )
+        logger.info("Copying data to archive backup directory:\n  " + dataDir +
+            " --> " + newDataBkup )
+        shutil.copytree( dataDir, newDataBkup )
+
+    # Get archive file ID for bookkeeping.
+    projDataFile = glob.glob( dataDir + '/*ProjReport.pickle' )
+    projData = FetchObject( projDataFile[0] )
+    archFileID = projData['archFileID']
+
+    # Move data set to archive staging directory
+    logger.info("Moving data to archive staging area:\n  " +
+        dataDir + " --> " + archDir )
+    shutil.move( dataDir, archDir )
+   
+    # Set group and group read/write/access permissions in staging area
+    newDataDir = os.path.join( archDir, os.path.basename( dataDir ) )
+    if group:
+        logger.info("Setting group and group read/write/access permissions.")
+        gid = grp.getgrnam( group )[2]
+        os.chown( newDataDir, -1, gid )
+        for root, dirs, files in os.walk( newDataDir ):
+            os.chown( root, -1, gid )
+            os.chmod( root, 0775 )
+            for dir in dirs:
+                path = os.path.join( root, dir )
+                os.chown( path, -1, gid )
+                os.chmod( path, 0775 )
+            for file in files:
+                path = os.path.join( root, file )
+                os.chown( path, -1, gid )
+                os.chmod( path, 0664 )
+
+    # Mark file as archived in the pipeline processing record
+    logger.info("Updating pipeline processing record.")
+    ppr = getRecordList()
+    # Get the corresponding dictionary from the PPR
+    dict = getDictFromList( ppr, 'arch_file_id', str( archFileID ) )
+    if len(dict) != 1:
+        raise Exception( "Pipeline processing record returns " + len(dict) +
+            " dictionaries matching arch_file_id " + str(archFileID) )
+    dict[0]['pipe.STATUS'] = 'archive'
+    putRecordList( ppr )
