@@ -1928,6 +1928,12 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
       imgOK = TRUE; 
      
+      /* Make sure image Cleaned if Self cal wanted */
+      if (doSC) {
+	Obit_return_if_fail((myClean->Pixels->currentIter>0), err, 
+			    "%s: Image NOT CLEANed", routine);
+      }
+
       /* Only recenter/reimage once */
       ftemp = 1.0e20;
       dim[0] = 1;

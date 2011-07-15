@@ -2200,14 +2200,14 @@ gboolean ObitSkyModelVMBeamMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvda
   naxis[0] += nadd;
   lenEntry = naxis[0];  /* Length of table entry */
 
-  /* Spectral correction for prior alpha array */
+  /* Spectral correction for prior alpha array (with any factor) */
   specCorr = g_malloc0(in->nSpec*sizeof(ofloat));
   if (in->doAlphaCorr && (in->priorAlpha!=0.0)) {
     for (i=0; i<in->nSpec; i++) {
-      specCorr[i] = pow((in->specFreq[i]/in->priorAlphaRefF), in->priorAlpha);
+      specCorr[i] = pow((in->specFreq[i]/in->priorAlphaRefF), in->priorAlpha) * in->factor;
     }
   } else { /* No correction */
-    for (i=0; i<in->nSpec; i++) specCorr[i] = 1.0;
+    for (i=0; i<in->nSpec; i++) specCorr[i] = in->factor;
   }
 
   if (in->comps!=NULL) in->comps = ObitFArrayRealloc(in->comps, ndim, naxis);
@@ -2443,7 +2443,7 @@ gboolean ObitSkyModelVMBeamMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvda
 	    table[8+nadd] = gp2;
 	    table[9+nadd] = gp3;
 	    /*  spectrum */
-	    for (iterm=0; iterm<in->nSpec; iterm++) table[iterm+3] = array[iterm+3];
+	    for (iterm=0; iterm<in->nSpec; iterm++) table[iterm+3] = array[iterm+3]*specCorr[iterm];
 	  
 	    /* Only Point here but some with spectrum - zero spectra (Unlikely) */
 	  } else if ((modType==OBIT_SkyModel_PointMod) && (in->modType==OBIT_SkyModel_PointModTSpec)) {
@@ -2748,7 +2748,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
   olong it, jt, itcnt, iSpec, nSpec, itab;
   olong sIF, sChannel;
   gboolean doCrossPol, updatePB, reGain;
-  odouble *freqArr;
+  odouble *freqArr, SMRefFreq, specFreqFact;
   const ObitSkyModelVMClassInfo 
     *myClass=(const ObitSkyModelVMClassInfo*)in->ClassInfo;
   gchar *routine = "ObitSkyModelVMBeamMFFTDFT";
@@ -2802,6 +2802,8 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
   /* Get pointer for frequency correction tables */
   fscale  = uvdata->myDesc->fscale;
   freqArr = uvdata->myDesc->freqArr;
+  /* Inverse of Sky model reference frequency */
+  SMRefFreq = 1.0 / in->mosaic->images[0]->myDesc->crval[in->mosaic->images[0]->myDesc->jlocf];
 
   /* Current channel (0-rel) */
   channel = 0;
@@ -2870,6 +2872,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
       iSpec    = MIN (nSpec, MAX (0,in->specIndex[ifq]));
       freqFact = fscale[ifq];  /* Frequency scaling factor */
       freq2    = freqFact*freqFact;    /* Frequency factor squared */
+      specFreqFact = freqArr[iIF*kincif + iChannel*kincf] * SMRefFreq;
       
       /* New PB correction? */
       updatePB = needNewPB (in, uvdata, iIF, iChannel, oldPB, &newPB, err);
@@ -2975,7 +2978,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 		ty = ddata[5]*(odouble)visData[ilocv];
 		tz = ddata[6]*(odouble)visData[ilocw];
 		/* Frequency dependent term */
-		lll = ll = log(freqFact);
+		lll = ll = log(specFreqFact);
 		arg = 0.0;
 		for (iterm=0; iterm<nterm; iterm++) {
 		  arg += ddata[6+iterm] * lll;
@@ -3107,7 +3110,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 	      ddata = Data + iComp*lcomp;  /* Component pointer */
 	      if (ddata[3]!=0.0) {  /* valid? */
 		/* Frequency dependent term */
-		lll = ll = log(freqFact);
+		lll = ll = log(specFreqFact);
 		arg = 0.0;
 		for (iterm=0; iterm<nterm; iterm++) {
 		  arg += ddata[9+iterm] * lll;
@@ -3244,7 +3247,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 	      ddata = Data + iComp*lcomp;  /* Component pointer */
 	      if (ddata[3]!=0.0) {  /* valid? */
 		/* Frequency dependent term */
-		lll = ll = log(freqFact);
+		lll = ll = log(specFreqFact);
 		arg = 0.0;
 		for (iterm=0; iterm<nterm; iterm++) {
 		  arg += ddata[8+iterm] * lll;
@@ -3547,7 +3550,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
   ofloat CosArr[FazArrSize], SinArr[FazArrSize];
   olong it, jt, itcnt, iSpec, nSpec, itab;
   gboolean doCrossPol, updatePB, reGain;
-  odouble *freqArr;
+  odouble *freqArr, SMRefFreq, specFreqFact;
   const ObitSkyModelVMClassInfo 
     *myClass=(const ObitSkyModelVMClassInfo*)in->ClassInfo;
   gchar *routine = "ObitSkyModelVMBeamMFFTDFTPh";
@@ -3601,6 +3604,8 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
   /* Get pointer for frequency correction tables */
   fscale  = uvdata->myDesc->fscale;
   freqArr = uvdata->myDesc->freqArr;
+  /* Inverse of Sky model reference frequency */
+  SMRefFreq = 1.0 / in->mosaic->images[0]->myDesc->crval[in->mosaic->images[0]->myDesc->jlocf];
 
   /* Current channel (0-rel) */
   channel = 0;
@@ -3655,6 +3660,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
 	iSpec    = MIN (nSpec, MAX (0,in->specIndex[ifq]));
 	freqFact = fscale[ifq];  /* Frequency scaling factor */
 	freq2    = freqFact*freqFact;    /* Frequency factor squared */
+	specFreqFact = freqArr[iIF*kincif + iChannel*kincf] * SMRefFreq;
 
 	/* New PB correction? */
 	updatePB = needNewPB (in, uvdata, iIF, iChannel, oldPB, &newPB, err);
@@ -3764,7 +3770,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
 		  ty = ddata[5]*(odouble)visData[ilocv];
 		  tz = ddata[6]*(odouble)visData[ilocw];
 		  /* Frequency dependent term */
-		  lll = ll = log(freqFact);
+		  lll = ll = log(specFreqFact);
 		  arg = 0.0;
 		  for (iterm=0; iterm<nterm; iterm++) {
 		    arg += ddata[6+iterm] * lll;
@@ -3912,7 +3918,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
 		ddata = Data + iComp*lcomp;  /* Component pointer */
 		if (ddata[3]!=0.0) {  /* valid? */
 		  /* Frequency dependent term */
-		  lll = ll = log(freqFact);
+		  lll = ll = log(specFreqFact);
 		  arg = 0.0;
 		  for (iterm=0; iterm<nterm; iterm++) {
 		    arg += ddata[9+iterm] * lll;
@@ -4060,7 +4066,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
 		ddata = Data + iComp*lcomp;  /* Component pointer */
 		if (ddata[3]!=0.0) {  /* valid? */
 		  /* Frequency dependent term */
-		  lll = ll = log(freqFact);
+		  lll = ll = log(specFreqFact);
 		  arg = 0.0;
 		  for (iterm=0; iterm<nterm; iterm++) {
 		    arg += ddata[8+iterm] * lll;
@@ -4716,7 +4722,7 @@ static ObitTableCC* getPBCCTab (ObitSkyModelVMBeamMF* in, ObitUV* uvdata,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   union ObitInfoListEquiv InfoReal; 
-  ofloat *flux=NULL, *sigma=NULL, *fitResult=NULL, pbmin=0.01, *PBCorr=NULL, alpha;
+  ofloat *flux=NULL, *sigma=NULL, *fitResult=NULL, pbmin=0.01, *PBCorr=NULL, alpha=0.0;
   ofloat *FreqFact=NULL, *sigmaField=NULL, ll, lll, arg, specFact;
   odouble *Freq=NULL, refFreq;
   odouble Angle=0.0;

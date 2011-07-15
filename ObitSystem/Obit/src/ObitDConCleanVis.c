@@ -3468,7 +3468,7 @@ static gboolean SelectTaper (ObitDConCleanVis *in, gboolean *fresh, ObitErr *err
 {
   olong i, j, l, n, m, best, bestTap[30], *fldList=NULL;
   ofloat test, bestTest, bestQuality, bestSNR, maxTape;
-  ofloat fact1, fact2, fact3, minT, maxT, cells, minFlux, beamrat;
+  ofloat fact1, fact2, fact3, minT, maxT, cells, minFlux, beamrat=1.0;
   gboolean done=FALSE, doBeam=FALSE;
   const ObitDConCleanVisClassInfo *inClass;
   gchar *routine = "SelectTaper";

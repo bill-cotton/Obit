@@ -3495,7 +3495,7 @@ ObitTableCC* ObitSkyModelMFgetPBCCTab (ObitSkyModelMF* in, ObitUV* uvdata,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   union ObitInfoListEquiv InfoReal; 
   ObitInfoType type;
-  ofloat *flux=NULL, *sigma=NULL, *fitResult=NULL, pbmin=0.01, *PBCorr=NULL, alpha;
+  ofloat *flux=NULL, *sigma=NULL, *fitResult=NULL, pbmin=0.01, *PBCorr=NULL, alpha=0.0;
   ofloat *FreqFact=NULL, *sigmaField=NULL, ll, lll, arg, specFact;
   odouble *Freq=NULL, refFreq;
   odouble Angle=0.0;

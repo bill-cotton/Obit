@@ -255,7 +255,7 @@ ObitTableCL* ObitTableCLGetDummy (ObitUV *inUV, ObitUV *outUV, olong ver,
   ofloat *rec, solInt, t0, sumTime, cbase;
   ofloat lastTime=-1.0, lastSource=-1.0, lastFQID=-1.0, curSource=1.0, curFQID=0.0;
   olong iRow, i, ia, lrec, maxant;
-  olong  nTime, SubA, ant1, ant2, lastSubA=-1;
+  olong  nTime, SubA=-1, ant1, ant2, lastSubA=-1;
   oint numPol, numIF, numTerm, numAnt;
   gboolean doCalSelect, doFirst=TRUE, someData=FALSE, gotAnt[MAXANT];
   ObitIOCode retCode;

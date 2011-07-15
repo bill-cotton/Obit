@@ -779,7 +779,7 @@ void ObitSwPowerClear (gpointer inn)
 static void InitSubarray (ObitSwPower *in, olong SubA, ObitErr *err)
 {
   olong i, iRow, ant, start;
-  gboolean found;
+  gboolean found=FALSE;
   gchar *routine = "ObitSwPower:InitSubarray";
 
   /* error checks */
@@ -1033,8 +1033,8 @@ SYSmooth (ObitTableSY *SYTab, gchar* smoFunc, gchar* smoType, ofloat alpha,
   olong   loopa, numtim, ant, numrec, nleft, isnrno=0, itime, 
     n1good, n2good, i, numif, numpol, numant;
   olong loopr, fstrec, save;
-  ofloat    stdif, stsum, stgain, weight, fblank =  ObitMagicF();
-  gboolean  need2, dodif, dosum, dogain;
+  ofloat    stdif=0.0, stsum=0.0, stgain, weight, fblank =  ObitMagicF();
+  gboolean  need2, dodif, dosum=FALSE, dogain=FALSE;
   odouble   timoff=0.0;
   ObitIOCode retCode;
   ObitTableSYRow *row=NULL;

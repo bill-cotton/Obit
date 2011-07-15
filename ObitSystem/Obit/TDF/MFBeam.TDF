@@ -301,6 +301,8 @@ PeelMinFlux                        Minimum Peel Clean component (Jy)
 PeelAvgPol                         Avg. poln in peel self cal?
 **PARAM** boo 1 **DEF** F
 PeelAvgIF                          Avg. IFs in peel self cal?
+**PARAM** boo 1  **DEF** T
+doSub                              Subtract IPol model?
                                        Multiresolution info
 **PARAM** int 1 
 nTaper            0                Number of additional tapers
@@ -323,12 +325,17 @@ noScrat                            AIPS disk numbers for which
 ----------------------------------------------------------------
 MFBeam Wideband imaging with beam correction, self cal, peeling
 Type:  Task
- Use:  Imaging of radio interferometry data
+ Use:  Wideband imaging of radio interferometry data
 
    Details of the techniques used in this task are given in Obit 
 Development Memoes 1, 5, 6, 9,13, 14, 15, 17, 19, 20 and 24
 as well as EVLA memoes 114 and 116 which are available from 
 http://www.cv.nrao.edu/~bcotton/Obit.html. 
+   A discussion of the beam correction technique is in Obit 
+Development Memo 17, and EVLA beam correction images c. Dec 2009 
+are available from 
+ftp://ftp.cv.nrao.edu/NRAO-staff/bcotton/Obit/BeamImages
+as gzipped FITS files.
 
    This task loops over selected pointings doing the following:
 
@@ -807,6 +814,10 @@ Adverbs:
   PeelMinFlux.Min. Peel CLEAN flux density
   PeelAvgPol..Average Polarizations in Peel self calibration? 
   PeelAvgIF ..Average IFs in Peel self calibration? 
+
+  doSub.......If True, subtract the IPol model from the output data.
+              Note: This should be done if Stokes I, Q, and/or U images
+              are to be obtained.
 
                       Multiresolution CLEAN
                  A multiresolution CLEAN is enabled using nTaper>0.

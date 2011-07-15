@@ -1472,7 +1472,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   olong        i, chInc, BChan, EChan, BIF, nchan, istok, ipoln=1, npoln, bpoln, epoln;
   olong        niter, *IChanSel, order;
   gboolean     first, doFlat, autoWindow, Tr=TRUE, do3D, doPhase=FALSE, doVPol, btemp;
-  gboolean     HalfStoke;
+  gboolean     HalfStoke, doSub;
   olong        inver, outver, selFGver, *unpeeled=NULL, plane[5] = {0,1,1,1,1};
   oint         otemp;
   gchar        Stokes[5],  IStokes[5], *chStokes=" IQUVRL", *CCType = "AIPS CC";
@@ -1535,6 +1535,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   ObitInfoListGetTest(myInput, "autoWindow", &type, dim, &autoWindow);
   do3D = TRUE;
   ObitInfoListGetTest(myInput, "do3D", &type, dim, &do3D);
+  doSub = TRUE;
+  ObitInfoListGetTest(myInput, "doSub",&type, dim, &doSub);
   BIF = 1;
   ObitInfoListGetTest(myInput, "BIF",  &type, dim, &BIF);
   BIF = MAX (1, BIF);
@@ -1812,7 +1814,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     /* Subtract sky model from outData for I if any cleaning requested */
     niter = 0;
     ObitInfoListGetTest(myInput, "Niter",  &type, dim, &niter);
-    if ((ipoln==1) && (niter>0) && 
+    if ((ipoln==1) && (niter>0) && doSub && 
 	((Stokes[0]=='I') || (Stokes[0]=='F') || (Stokes[0]==' '))) 
       subIPolModel (outData, skyModel, &selFGver, err);
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
@@ -2065,6 +2067,12 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
       imgOK = TRUE; 
      
+      /* Make sure image Cleaned if Self cal wanted */
+      if (doSC) {
+	Obit_return_if_fail((myClean->Pixels->currentIter>0), err, 
+			    "%s: Image NOT CLEANed", routine);
+      }
+
       /* Only recenter once */
       ftemp = 1.0e20;
       dim[0] = 1;
@@ -2596,7 +2604,7 @@ void MFBeamHistory (gchar *Source, ObitInfoList* myInput,
     "avgPol", "avgIF", "noNeg", "doMGM", "minSNR", "minNo", "doSmoo",
     "PeelFlux", "PeelLoop", "PeelRefAnt", "PeelSNRMin",
     "PeelSolInt", "PeelType", "PeelMode", "PeelNiter",
-    "PeelMinFlux", "PeelAvgPol", "PeelAvgIF",
+    "PeelMinFlux", "PeelAvgPol", "PeelAvgIF", "doSub",
     "nTaper", "Tapers", "MResKnob",
     "nThreads",
     NULL};

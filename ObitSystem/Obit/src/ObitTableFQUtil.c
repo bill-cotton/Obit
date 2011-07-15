@@ -222,7 +222,7 @@ ObitIOCode ObitTableFQSelect (ObitUV *inUV, ObitUV *outUV, odouble *SouIFOff,
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong iif, oif, nif, nchAvg, chInc, IFInc;
-  olong iFQver, inFQRow, outFQRow, highFQver, maxIF;
+  olong iFQver, inFQRow, outFQRow, highFQver, maxIF=1;
   oint numIF;
   gboolean wanted;
   gchar *FQType = "AIPS FQ";

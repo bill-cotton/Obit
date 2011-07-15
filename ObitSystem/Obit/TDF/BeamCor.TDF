@@ -310,7 +310,14 @@ noScrat                            AIPS disk numbers for which
 ----------------------------------------------------------------
 BeamCor Imaging with beam correction  and Self calibration
 Type:  Task
- Use:  Imaging of UV data
+ Use:  Imaging of UV data with beam corrections
+
+   A discussion of the beam correction technique is in Obit 
+Development Memo 17 
+(Obit page: http://www.cv.nrao.edu/~bcotton/Obit.html), 
+and EVLA beam correction images c. Dec 2009 are available from 
+ftp://ftp.cv.nrao.edu/NRAO-staff/bcotton/Obit/BeamImages
+as gzipped FITS files.
 
    The products of this task are a CLEAN image and an improved 
 calibration. Unless otherwise specified, a fly's eye pattern of

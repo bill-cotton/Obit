@@ -361,7 +361,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
 			   ObitErr *err)
 {
   gchar *startInfo, *endInfo, *startBB, *endBB, *prior, *next, *xnext, *tstr;
-  olong  configDescriptionId, fieldId, sourceId, inext, ScanId, iScan, iIntent;
+  olong  configDescriptionId, fieldId, sourceId, inext, ScanId=0, iScan, iIntent;
   olong maxStr, maxStr2, i, j, count, *antIds, iConfig, iAnt, jAnt, jField, iSW, jSW, jSource;
   olong blOrder, polnOrder, freqOrder, SPWOrder, BBOrder, APCOrder, binOrder;
   olong *SWoff=NULL;

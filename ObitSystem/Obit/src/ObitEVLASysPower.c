@@ -262,7 +262,7 @@ void ObitEVLASysPowerInitFile  (ObitEVLASysPower *in, gchar *DataFile, ObitErr *
   gchar *startInfo, *endInfo, *next, *start, *prior, *tstr;
   gchar *ord[10];
   /* gchar *tableUID=NULL, *containerUID=NULL; */
-  ObitESPEndian endian;
+  ObitESPEndian endian=endian==ESPEndian_Little;
   gchar *routine = "ObitEVLASysPowerInitFile";
 
   /* error checks */

@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -563,7 +563,7 @@ void ObitTsysClear (gpointer inn)
 static void InitSubarray (ObitTsys *in, olong SubA, ObitErr *err)
 {
   olong i, iRow, ant, start;
-  gboolean found;
+  gboolean found=FALSE;
   gchar *routine = "ObitTsys:InitSubarray";
 
   /* error checks */
@@ -680,6 +680,7 @@ static void UpdateTime (ObitTsys *in, ofloat time, olong Ant,
 
   /* Update antenna if necessary */
   ant = Ant-1;
+  i   = 0;
   if ((in->followRowNo[ant]>0) &&                         /* Follow set */
       (in->followRowNo[ant]<in->TYTable->myDesc->nrow) && /* before end */
       (time>in->followRow[ant]->Time)) {
@@ -712,6 +713,7 @@ static void UpdateTime (ObitTsys *in, ofloat time, olong Ant,
       }
       /* This one OK or past end */
       OK = ((time<=in->followRow[ant]->Time) || (iRow>=in->TYTable->myDesc->nrow));
+      i++;
     } /* end !OK loop */
   } /* end needs update */
   

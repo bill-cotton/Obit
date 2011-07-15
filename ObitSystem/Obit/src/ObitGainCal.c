@@ -129,7 +129,7 @@ ObitTable* ObitGainCalCalc (ObitUV *inData, gboolean doSN, ObitErr *err)
   ofloat      *PwrDif1=NULL, *PwrSum1=NULL, *PwrGain1=NULL;
   ofloat      *PwrDif2=NULL, *PwrSum2=NULL, *PwrGain2=NULL;
   ofloat      *opac=NULL, *TCals1=NULL, *TCals2=NULL, *gain1=NULL, *gain2=NULL;
-  odouble     *freqs;
+  odouble     *freqs=NULL;
   olong       maxTerm = 4;
   ObitIOCode  retCode;
   gchar *tname;

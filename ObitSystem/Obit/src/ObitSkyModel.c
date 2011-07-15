@@ -2204,7 +2204,7 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 #define FazArrSize 100  /* Size of the amp/phase/sine/cosine arrays */
   ofloat AmpArr[FazArrSize], FazArr[FazArrSize], CosArr[FazArrSize], SinArr[FazArrSize];
   olong it, jt, itcnt;
-  odouble tx, ty, tz, sumReal, sumImag, *freqArr;
+  odouble tx, ty, tz, sumReal, sumImag, *freqArr, SMRefFreq, specFreqFact;
   gchar *routine = "ThreadSkyModelFTDFT";
 
   /* error checks - assume most done at higher level */
@@ -2270,8 +2270,10 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
   }*/
 
   /* Get pointer for frequency correction tables */
-  fscale  = uvdata->myDesc->fscale;
-  freqArr = uvdata->myDesc->freqArr;
+  fscale    = uvdata->myDesc->fscale;
+  freqArr   = uvdata->myDesc->freqArr;
+  /* Inverse of Sky model reference frequency */
+  SMRefFreq = 1.0 / in->mosaic->images[0]->myDesc->crval[in->mosaic->images[0]->myDesc->jlocf];
 
   /* Loop over vis in buffer */
   lrec    = uvdata->myDesc->lrec;         /* Length of record */
@@ -2285,7 +2287,8 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	offsetChannel = offsetIF + iChannel*jincf; 
 	freqFact = fscale[iIF*kincif + iChannel*kincf];  /* Frequency scaling factor */
 	freq2    = freqFact*freqFact;    /* Frequency factor squared */
-
+	specFreqFact = freqArr[iIF*kincif + iChannel*kincf] * SMRefFreq;
+	
 	/* Sum over components */
 	sumReal = sumImag = 0.0;
 	ccData  = data;
@@ -2328,7 +2331,7 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 		ty = ccData[2]*(odouble)visData[ilocv];
 		tz = ccData[3]*(odouble)visData[ilocw];
 		/* Frequency dependent term */
-		lll = ll = log(freqFact);
+		lll = ll = log(specFreqFact);
 		arg = 0.0;
 		for (iterm=0; iterm<nterm; iterm++) {
 		  arg += ccData[4+iterm] * lll;
@@ -2390,7 +2393,7 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	    for (iComp=it; iComp<mcomp; iComp++) {
 	      if (ccData[0]!=0.0) {  /* valid? */
 		/* Frequency dependent term */
-		lll = ll = log(freqFact);
+		lll = ll = log(specFreqFact);
 		arg = 0.0;
 		for (iterm=0; iterm<nterm; iterm++) {
 		  arg += ccData[7+iterm] * lll;
@@ -2459,7 +2462,7 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	    for (iComp=it; iComp<mcomp; iComp++) {
 	      if (ccData[0]!=0.0) {  /* valid? */
 		/* Frequency dependent term */
-		lll = ll = log(freqFact);
+		lll = ll = log(specFreqFact);
 		arg = 0.0;
 		for (iterm=0; iterm<nterm; iterm++) {
 		  arg += ccData[4+iterm] * lll;
@@ -2664,6 +2667,7 @@ void ObitSkyModelFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr 
  * Note: Unlike AIPS, FFTw produces nontransposed images with half
  * the first (U) axis.
  * Arguments are given in the structure passed as arg
+ * NOTE: This routine cannot handle components with spectra.
  * \param arg  Pointer to FTFuncArg argument with elements
  * \li type   String identifying structure
  * \li in     SkyModel with model components loaded (ObitSkyModelLoad)

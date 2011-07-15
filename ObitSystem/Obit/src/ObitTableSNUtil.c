@@ -445,7 +445,7 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
   olong i, ia, lrec, maxant, numSubA, iANver;
   olong  nTime, SubA=0, ant1, ant2, lastSubA=-1;
   oint numPol, numIF, numOrb, numPCal;
-  odouble DecR=0.0, RAR=0.0, ArrLong, cosdec=0.0;
+  odouble DecR=0.0, RAR=0.0, ArrLong=0.0, cosdec=0.0;
   gboolean doCalSelect, doFirst=TRUE, someData=FALSE, gotAnt[MAXANT], invert=FALSE;
   ObitIOCode retCode;
   gchar *tname, *ANType = "AIPS AN";;

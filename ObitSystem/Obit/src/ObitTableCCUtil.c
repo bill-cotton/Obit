@@ -447,7 +447,7 @@ ObitIOCode ObitTableCCUtilGridSpect (ObitTableCC *in, olong OverSample, olong it
       if (iterm==2) spectTerm = CCRow->parms[2+parmoff];
       if (iterm==3) spectTerm = CCRow->parms[3+parmoff];
     } else if (doTSpec) {
-      spectTerm = CCRow->parms[iterm+parmoff];
+      spectTerm = CCRow->parms[iterm+parmoff] * factor;
     } else  spectTerm = 0.0;  /* Something went wrong */
 
     /* Sum into image */
@@ -1724,7 +1724,7 @@ void ObitTableCCUtilT2Spec  (ObitImage *image, ObitImageWB *outImage,
   union ObitInfoListEquiv InfoReal; 
   ofloat *flux=NULL, *sigma=NULL, *fitResult=NULL, pbmin=0.01, *PBCorr=NULL;
   ofloat *FreqFact=NULL, *sigmaField=NULL;
-  ofloat *RMS=NULL, alpha, antSize = 25.0;
+  ofloat *RMS=NULL, alpha=0.0, antSize = 25.0;
   odouble *Freq=NULL, refFreq;
   odouble Angle=0.0;
   gpointer fitArg=NULL;
@@ -1938,7 +1938,7 @@ void ObitTableCCUtilFixTSpec (ObitImage *inImage, olong *inCCVer,
   ObitIOCode retCode;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  ofloat *FreqFact=NULL, ll, lll, arg, alpha, specFact, *sumFlux=NULL;
+  ofloat *FreqFact=NULL, ll, lll, arg, alpha=0.0, specFact, *sumFlux=NULL;
   ofloat fblank = ObitMagicF();
   odouble *Freq=NULL, rfAlpha;
   olong irow, orow, ver, i, j, iterm, offset, nSpec, sCC, eCC;
@@ -2044,7 +2044,7 @@ void ObitTableCCUtilFixTSpec (ObitImage *inImage, olong *inCCVer,
     if (sumFlux[i]!=0.0) sumFlux[i] = specFact*terms[0] / sumFlux[i];
     else sumFlux[i] = 1.0;
     /* Correct for prior alpha */
-    specFact = exp(alpha * log(Freq[i]/rfAlpha));
+    specFact = exp(-alpha * log(Freq[i]/rfAlpha));
     sumFlux[i] *= specFact;
   }
 

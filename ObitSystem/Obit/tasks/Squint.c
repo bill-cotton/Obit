@@ -2401,7 +2401,7 @@ void SquintHistory (gchar *Source, ObitInfoList* myInput,
     "avgPol", "avgIF", "noNeg", "doMGM", "minSNR", "minNo", "doSmoo",
     "PeelFlux", "PeelLoop", "PeelRefAnt", "PeelSNRMin",
     "PeelSolInt", "PeelType", "PeelMode", "PeelNiter",
-    "PeelMinFlux", "PeelAvgPol", "PeelAvgIF",
+    "PeelMinFlux", "PeelAvgPol", "PeelAvgIF", "doSub",
     "nTaper", "Tapers", "MResKnob",
     "nThreads",
     NULL};

@@ -594,7 +594,7 @@ void ObitPCalClear (gpointer inn)
 static void InitSubarray (ObitPCal *in, olong SubA, ObitErr *err)
 {
   olong i, iRow, ant, start;
-  gboolean found;
+  gboolean found=FALSE;
   gchar *routine = "ObitPCal:InitSubarray";
 
   /* error checks */
@@ -703,7 +703,7 @@ static void InitSubarray (ObitPCal *in, olong SubA, ObitErr *err)
 static void UpdateTime (ObitPCal *in, ofloat time, olong Ant, 
 			ObitErr *err)
 {
-  olong i, iRow, ant, start;
+  olong iRow, ant, start;
   gboolean found, OK, opened=FALSE;
   gchar *routine = "ObitPCal:UpdateTime";
 
