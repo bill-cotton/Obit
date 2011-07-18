@@ -452,12 +452,15 @@ If the user aborts the download, return None.
     response = urllib2.urlopen( url, data )
     return response
     
-def PollDownloadStatus( fileDict, destination ):
+def PollDownloadStatus( fileDict, destination, sleepTotal = 30 * 60 ):
     """
-Poll the status of a file download from the archive. Return only when
-download is complete.
-
-* filepath = full path to file
+    Poll the status of a file download from the archive. 
+    
+    Return only when download is complete. Re-submit download request if archive
+    does not respond after *sleepTotal* seconds.
+    
+    * filepath = full path to file
+    * destination = path to FITS directory
     """
     filename = fileDict['logical_file']
     finishName = destination + '/' + filename
@@ -467,31 +470,42 @@ download is complete.
     logger.debug("Checking download status. Looking for 1 of 2 files:\n" +
         finishName + "\n" +
         downloadName)
-    while 1:
+    sleepIncrement = 3 # seconds
+    sleepTime = 0
+    while 1: # infinite loop
         if not os.path.exists( downloadName ) and not os.path.exists( finishName ):
             if not waitFlag:
                 logger.info("Waiting for download to initiate. (" + 
                     time.strftime('%Y-%m-%d %X %Z') + ")" )
                 waitFlag = True
-            time.sleep(3)
+            time.sleep( sleepIncrement )
+            sleepTime += sleepIncrement
         elif os.path.exists( downloadName ):
             if not inProgressFlag:
                 logger.info("Download in progress... (" + 
                     time.strftime('%Y-%m-%d %X %Z') + ")" )
                 inProgressFlag = True
-            time.sleep(3)
+            time.sleep( sleepIncrement )
+            sleepTime += sleepIncrement
         elif os.path.exists( finishName ):
             logger.info("Download complete.")
             return
+        # Submit new download request after waiting *sleepTime* seconds.
+        # (because the archive sometimes never responds)
+        if sleepTime >= sleepTotal:
+            logger.warn( "Over " + str(sleepTotal) + " seconds elapsed since download request.\n"
+                "  Submitting new download request." )
+            DownloadArchiveFile( fileDict, destination ) 
+            sleepTime = 0
 
 def SummarizeArchiveResponse( fileList, pipeRecordList=None ):
     """
     Return a table summary of the archive response as a string.
 
-    If *pipeRecordList* is given, an asterisk will be added to the end of a
+    If *pipeRecordList* is given, a letter will be added to the end of a
     summary table row if the corresponding file is present in the pipeline
-    record list and if the 'pipe.STATUS' member in the record list indicates
-    the file has been properly processed.
+    record list.  If the 'pipe.STATUS' member equals 'archive' and 'A' will be
+    appended; if 'pipe.STATUS' equals 'check' a 'C' will be added.
     
     * fileList = List of file dictionaries returned by ParseArchiveResponse
     * pipeRecordList = List of file dictionaries from the pipeline processing record
@@ -500,7 +514,7 @@ def SummarizeArchiveResponse( fileList, pipeRecordList=None ):
     pipeRecordKeys = {}
     goodStatus = ('archive', 'check')
     if pipeRecordList:
-        logger.info("End-of-row astricies indicate data already processed by the pipeline.")
+        logger.info("End-of-row symbols: A = archive, C = check, ? = unknown.")
         for fdict in pipeRecordList:
             pipeRecordKeys[ fdict['arch_file_id'] ] = fdict['pipe.STATUS']
     # Generate summary table
@@ -516,9 +530,13 @@ def SummarizeArchiveResponse( fileList, pipeRecordList=None ):
             bandLetter, file['starttime'], 
             file['stoptime'], fGHz, file['FILESIZE_UNIT'] )
         # Append pipeline record info to end of table row
-        if (file['arch_file_id'] in pipeRecordKeys) and \
-           ( pipeRecordKeys[ file['arch_file_id'] ] in goodStatus ):
-            table += " *\n" 
+        if (file['arch_file_id'] in pipeRecordKeys):
+            if pipeRecordKeys[ file['arch_file_id'] ] == 'check':
+                table += " C\n" 
+            elif pipeRecordKeys[ file['arch_file_id'] ] == 'archive':
+                table += " A\n"
+            else:
+                table += " ?\n"
         else:
             table += "\n"
     return table
@@ -730,7 +748,7 @@ def putRecordList( recList,
     * filename = name of the pickle file to hold the record list
     """
     logger.info( "Writing pipeline record list to " + filename )
-    logger.info( "New pipeline record list:\n" + SummarizeArchiveResponse( recList ) )
+    logger.info( "New pipeline record list:\n" + SummarizeArchiveResponse( recList, recList ) )
     SaveObject( recList, filename, True )
 
 def getDictFromList( dictList, key, value ):
@@ -749,7 +767,9 @@ def getDictFromList( dictList, key, value ):
             dictListSubset.append(d)
     return dictListSubset
    
-def validate( dataDir, archDir = '../archive', archBkup = None, group = None):
+def validate( dataDir, archDir = '../archive', 
+    archBkup = '/export/home/cv-pipe-a/jcrossle/VLBAPipeProducts/archive_backup', 
+    group = 'vlbapipe'):
     """
     Validate a data set and move it to the archive staging area.
 
@@ -792,6 +812,9 @@ def validate( dataDir, archDir = '../archive', archBkup = None, group = None):
             raise IOError( (1, 'Directory does not exist', archBkup) )
         base = os.path.basename( dataDir )
         newDataBkup = os.path.join( archBkup, base )
+        if os.path.exists( newDataBkup ):
+            logger.info("Removing pre-existing data: " + newDataBkup)
+            shutil.rmtree( newDataBkup )
         logger.info("Copying data to archive backup directory:\n  " + dataDir +
             " --> " + newDataBkup )
         shutil.copytree( dataDir, newDataBkup )
@@ -802,12 +825,15 @@ def validate( dataDir, archDir = '../archive', archBkup = None, group = None):
     archFileID = projData['archFileID']
 
     # Move data set to archive staging directory
+    newDataDir = os.path.join( archDir, os.path.basename( dataDir ) )
+    if os.path.exists( newDataDir ):
+        logger.info("Removing pre-existing data: " + newDataDir)
+        shutil.rmtree( newDataDir )
     logger.info("Moving data to archive staging area:\n  " +
         dataDir + " --> " + archDir )
     shutil.move( dataDir, archDir )
    
     # Set group and group read/write/access permissions in staging area
-    newDataDir = os.path.join( archDir, os.path.basename( dataDir ) )
     if group:
         logger.info("Setting group and group read/write/access permissions.")
         gid = grp.getgrnam( group )[2]
