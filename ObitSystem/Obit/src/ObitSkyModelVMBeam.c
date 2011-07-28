@@ -132,6 +132,8 @@ typedef struct {
   ObitFInterpolate *BeamUInterp, *BeamUPhInterp;
   /** Current uv channel number being processed.  */
   olong channel;
+  /** Frequency of desired beam (Hz) corresponds to channel */
+  odouble  BeamFreq;
   /** Dimension of Rgain...  */
   olong dimGain;
   /** Array of time/spatially variable R component gain, real, imag */
@@ -704,7 +706,7 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
 				    ObitErr *err)
 {
   ObitSkyModelVMBeam *in = (ObitSkyModelVMBeam*)inn;
-  olong npos[2], lcomp, ncomp, i, ifield, lithread, plane, kincif, kincf, kindex;
+  olong npos[2], lcomp, ncomp, i, ifield, lithread, plane, kincif, kincf;
   ofloat *Rgain=NULL,  *Lgain=NULL,  *Qgain=NULL,  *Ugain=NULL, *ccData=NULL;
   ofloat *Rgaini=NULL, *Lgaini=NULL, *Qgaini=NULL, *Ugaini=NULL;
   ofloat curPA, tPA, tTime, bTime, fscale, PBCor, xx, yy;
@@ -804,9 +806,7 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
 
   /* Scale by ratio of frequency to beam image ref. frequency */
   plane = in->FreqPlane[MIN(args->channel, in->numUVChann-1)];
-  kindex = (in->startChannelPB+(in->numberChannelPB/2)-1)*kincf +
-    (in->startIFPB+(in->numberIFPB/2)-1)*kincif;
-  fscale = uvdata->myDesc->freqArr[kindex] / in->IBeam->freqs[plane];
+  fscale = args->BeamFreq / in->IBeam->freqs[plane];
 
   /* Compute antenna gains and put in to Rgain, Lgain, Qgain, Ugain */
   for (i=0; i<ncomp; i++) {
@@ -835,7 +835,7 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
     if ((Ipol==fblank) || (fabs(Ipol)<0.001) || (fabs(Ipol)>1.1)) Ipol = minPBCor;
     /* Get primary beam correction for component */
     PBCor = getPBBeam(in->mosaic->images[ifield]->myDesc, xx, yy, in->antSize,  
-		      uvdata->myDesc->freqArr[kindex], minPBCor) / Ipol;
+		      args->BeamFreq, minPBCor) / Ipol;
     if (in->IBeamPh)
       IpolPh = DG2RAD*ObitImageInterpValueInt (in->IBeamPh, args->BeamIPhInterp, x, y, curPA, plane, err);
     Vpol = ObitImageInterpValueInt (in->VBeam, args->BeamVInterp, x, y, curPA, plane, err);
@@ -861,7 +861,7 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
       Rgain[i] = 0.001;
     }
 
-    if (in->doCrossPol) {
+   if (in->doCrossPol) {
       Qgain[i] = ObitImageInterpValueInt (in->QBeam, args->BeamQInterp, x, y, curPA, plane, err);
       if (Qgain[i]==fblank) Qgain[i] = 0.0;
       if (in->QBeamPh)
@@ -1458,7 +1458,8 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
       /* Is current model still valid? */
       if ((visData[iloct] > largs->endVMModelTime) || (visData[iloct] < largs->begVMModelTime)) {
 	/* Current channel - which plane in correction to apply? */
-	largs->channel = channel;
+	largs->channel  = channel;
+	largs->BeamFreq = uvdata->myDesc->freqArr[channel];
 	/* Subarray 0-rel */
 	itemp = (olong)visData[ilocb];
 	suba = 100.0 * (visData[ilocb]-itemp) + 0.5; 

@@ -3108,8 +3108,8 @@ static gpointer ThreadFAAbsMax (gpointer arg)
 
   /* Loop over array */
   maxCell = -1;
-  maxVal = -1.0E25;
-  data = in->array;
+  maxVal  = 0.0;
+  data    = in->array;
   for (i=loElem; i<hiElem; i++) 
     {
        val = data[i];

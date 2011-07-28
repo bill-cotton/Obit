@@ -1549,7 +1549,8 @@ void ObitDConCleanXRestore(ObitDConClean *in, ObitErr *err)
  * inner window and > 5 sigma, a new round box  is added 
  * to the window.  Cleaning in each cycle will stop when the peak residual 
  * drops to the level of the highest value outside the CLEAN window.
- * Only the field with the highest peak inside the outer window is modified.
+ * Facets might have a window added iff 1) it is the facet with the highest 
+ * in window pixel, or 2) it has a cleanable, out of window pixel within 30% of the peak.
  * \param in       The object to restore
  * \param fields   Field numbers (1-rel) in ImageMosaic
  *                 zero terminated list, no longer than in->numCurrentField
@@ -1567,10 +1568,10 @@ gboolean ObitDConCleanAutoWindow(ObitDConClean *in, olong *fields, ObitFArray **
   ObitIOCode retCode;
   ObitIOSize IOsize = OBIT_IO_byPlane;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong  i, field, best, blc[IM_MAXDIM], trc[IM_MAXDIM];
+  olong  i, j, field, best, blc[IM_MAXDIM], trc[IM_MAXDIM];
   ofloat PeakIn, PeakOut, RMS, bestPeak, *FieldPeak=NULL;
   olong PeakInPos[2] = {0,0};
-  gboolean doAbs;
+  gboolean doAbs, tnewWin;
   gchar *routine = "ObitDConCleanAutoWindow";
 
  /* error checks */
@@ -1633,45 +1634,61 @@ gboolean ObitDConCleanAutoWindow(ObitDConClean *in, olong *fields, ObitFArray **
     }
   } /* end loop gathering statistics */
 
-  /* Use best field */
-  field = fields[best];
+  /* Loop over potential fields */
+  for (j=0; j<in->numCurrentField; j++) {
+    if (fields[j]==0) break;  /* List terminated? */
+    /* Use fields within 30% of best Peak in window - or best */
+    if ((FieldPeak[j]<0.7*bestPeak) && (j!=best)) continue;
+    field = fields[j];
 
-  /* Use passed pixel array or get image */
-  image = in->mosaic->images[field-1];
-  if (pixarray==NULL) {
+    /* Use passed pixel array or get image */
+    image = in->mosaic->images[field-1];
+    if (pixarray==NULL) {
+      
+      /* Set input to full image, plane at a time */
+      dim[0] = IM_MAXDIM;
+      ObitInfoListAlwaysPut (image->info, "BLC", OBIT_long, dim, blc); 
+      ObitInfoListAlwaysPut (image->info, "TRC", OBIT_long, dim, trc); 
+      dim[0] = 1;
+      ObitInfoListAlwaysPut (image->info, "IOBy", OBIT_long, dim, &IOsize);
+      
+      retCode = ObitImageOpen (image, OBIT_IO_ReadOnly, err);
+      retCode = ObitImageRead (image, image->image->array, err);
+      retCode = ObitImageClose (image, err);
+      if (err->error) Obit_traceback_val (err, routine, image->name, newWin);
+      usePixels = image->image;  /* Pointer to image buffer */
+      
+    } else { /* Use array passed */
+      usePixels = ObitFArrayRef(pixarray[field]);
+    }
     
-    /* Set input to full image, plane at a time */
-    dim[0] = IM_MAXDIM;
-    ObitInfoListAlwaysPut (image->info, "BLC", OBIT_long, dim, blc); 
-    ObitInfoListAlwaysPut (image->info, "TRC", OBIT_long, dim, trc); 
-    dim[0] = 1;
-    ObitInfoListAlwaysPut (image->info, "IOBy", OBIT_long, dim, &IOsize);
+    /* Allow negative for Stokes other than I */
+    doAbs = fabs (image->myDesc->crval[image->myDesc->jlocs]-1.0) > 0.1;
     
-    retCode = ObitImageOpen (image, OBIT_IO_ReadOnly, err);
-    retCode = ObitImageRead (image, image->image->array, err);
-    retCode = ObitImageClose (image, err);
+    /* Get field info - set new box if needed */
+    tnewWin = ObitDConCleanWindowAutoWindow (in->window, field, usePixels,
+					    doAbs,
+					    &PeakIn, &PeakInPos[0], &PeakOut, 
+					    &RMS, err);
     if (err->error) Obit_traceback_val (err, routine, image->name, newWin);
-    usePixels = image->image;  /* Pointer to image buffer */
-
-  } else { /* Use array passed */
-    usePixels = ObitFArrayRef(pixarray[field]);
-  }
+    newWin = newWin || tnewWin;
     
-  /* Allow negative for Stokes other than I */
-  doAbs = fabs (image->myDesc->crval[image->myDesc->jlocs]-1.0) > 0.1;
-  
-  /* Get field info - set new box if needed */
-  newWin = ObitDConCleanWindowAutoWindow (in->window, field, usePixels,
-					  doAbs,
-					  &PeakIn, &PeakInPos[0], &PeakOut, 
-					  &RMS, err);
-  if (err->error) Obit_traceback_val (err, routine, image->name, newWin);
+    /* If window added, redo statistics */
+    if (tnewWin) {
+      ObitDConCleanWindowStats (in->window, fields[field], usePixels,
+				doAbs,
+				&PeakIn, &PeakInPos[0], &PeakOut, 
+				&RMS, err);
+      if (err->error) Obit_traceback_val (err, routine, image->name, newWin);
+      FieldPeak[j] = PeakOut;
+    }
 
-  /* Free Image array? */
-  if (usePixels==image->image) 
-    image->image = ObitFArrayUnref(image->image);
-  else
-    usePixels = ObitFArrayUnref(usePixels);
+    /* Free Image array? */
+    if (usePixels==image->image) 
+      image->image = ObitFArrayUnref(image->image);
+    else
+      usePixels = ObitFArrayUnref(usePixels);
+  } /* end loop over fields */
   
   /* Determine max. cleanable pixel value not in a window */
   for (field=0; field<in->numCurrentField; field++) {

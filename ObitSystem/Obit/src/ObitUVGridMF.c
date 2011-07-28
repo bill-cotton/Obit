@@ -1489,7 +1489,7 @@ void PrepBufferMF (ObitUVGridMF* in, ObitUV *uvdata, olong BIF, olong EIF,
   ofloat phase, cp, sp, vr, vi, uu, vv, ww, uf, vf, wf;
   ofloat bl2, blmax2, blmin2, wt, guardu, guardv;
   ObitUVDesc *desc;
-  olong fincf, fincif, luvw;
+  olong fincf, fincif, luvw, chlo, chhi;
   gboolean doShift, doFlag, flip;
   ofloat tape, taperWt;
   gboolean doTaper;
@@ -1557,10 +1557,16 @@ void PrepBufferMF (ObitUVGridMF* in, ObitUV *uvdata, olong BIF, olong EIF,
     /* loop over IFs */
     ifvis = vis;
     for (iif=BIF; iif<=EIF; iif++) {
+      /* Channel ranges */
+      if (iif==BIF) chlo = BChan;
+      else          chlo = 0;
+      if (iif==EIF) chhi = EChan;
+      else          chhi = nfreq-1;
 
       /* loop over frequencies */
-      vvis = ifvis;
-      for (ifreq=BChan; ifreq<=EChan; ifreq++) {
+      vvis = uvdata->buffer + desc->nrparm + desc->incf*chlo + desc->incif*iif +
+	desc->lrec*ivis;
+      for (ifreq=chlo; ifreq<=chhi; ifreq++) {
 	ifq = iif*fincif + ifreq*fincf;  /* index in IF/freq table */
 
 	/* Scale coordinates to frequency */
@@ -1614,7 +1620,6 @@ void PrepBufferMF (ObitUVGridMF* in, ObitUV *uvdata, olong BIF, olong EIF,
 	
 	vvis += desc->incf; /* visibility pointer */
       } /* end loop over frequencies */
-      ifvis += desc->incif; /* visibility pointer */
     } /* Loop over IFs */
 
     /* Scale u,v,w to cells at reference frequency */
@@ -1665,7 +1670,7 @@ void GridBufferMF (ObitUVGridMF* inn, ObitUV *uvdata, olong BIF, olong EIF,
   ofloat *grid, *ggrid, *cconvu, *convu, *convv, *cconvv, *u, *v, *w, *vis, *vvis, *ifvis, *wt;
   ofloat *convfnp, *gridStart, *gridTop, visWtR, visWtI, visWtVR, visWtVI, rtemp, xtemp;
   ofloat uf, vf;
-  olong fincf, fincif, luvw;
+  olong fincf, fincif, luvw, chlo, chhi;
   olong pos[] = {0,0,0,0,0};
   ObitUVDesc *desc;
 
@@ -1714,10 +1719,16 @@ void GridBufferMF (ObitUVGridMF* inn, ObitUV *uvdata, olong BIF, olong EIF,
     /* loop over IFs */
     ifvis = vis;
     for (iif=BIF; iif<=EIF; iif++) {
+      /* Channel ranges */
+      if (iif==BIF) chlo = BChan;
+      else          chlo = 0;
+      if (iif==EIF) chhi = EChan;
+      else          chhi = nfreq-1;
 
       /* loop over frequencies */
-      vvis = ifvis;
-      for (ifreq=BChan; ifreq<=EChan; ifreq++) {
+      vvis = uvdata->buffer + desc->nrparm + desc->incf*chlo + desc->incif*iif + 
+	desc->lrec*ivis;
+      for (ifreq=chlo; ifreq<=chhi; ifreq++) {
 	ifq = iif*fincif + ifreq*fincf;  /* index in IF/freq table */
 
 	/* is this one wanted? */
@@ -1853,7 +1864,6 @@ void GridBufferMF (ObitUVGridMF* inn, ObitUV *uvdata, olong BIF, olong EIF,
 	vvis += desc->incf; /* visibility pointer */
 	
       } /* end loop over frequencies */
-      ifvis += desc->incif; /* visibility pointer */
     } /* Loop over IFs */
     
     /* update data pointers */

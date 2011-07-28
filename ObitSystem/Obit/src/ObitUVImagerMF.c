@@ -582,7 +582,7 @@ void ObitUVImagerMFGetInfo (ObitUVImager *inn, gchar *prefix, ObitInfoList *outL
 
 /**
  * Get number of parallel images
- * Target memory usage is 1 GByte.
+ * Target memory usage is 1 GByte if 32 bit, 5 GByte if 64.
  * \param inn     Object of interest.
  * \return the number of parallel images.
  */
@@ -590,7 +590,9 @@ olong ObitUVImagerMFGetNumPar (ObitUVImager *inn, ObitErr *err)
 {
   ObitUVImagerMF *in  = (ObitUVImagerMF*)inn;
   olong out=8, nSpec;
-  odouble lenVis, numVis, imSize, bufSize;
+  odouble lenVis, numVis, imSize, bufSize, tSize;
+  ObitImage *beam;
+  gchar *routine="ObitUVImagerMFGetNumPar";
 
   if (err->error) return out;
   g_assert(ObitUVImagerMFIsA(in));
@@ -598,16 +600,26 @@ olong ObitUVImagerMFGetNumPar (ObitUVImager *inn, ObitErr *err)
   /* How big are things? */
   numVis = (odouble)ObitImageUtilBufSize (in->uvdata);  /* Size of buffer */
   lenVis = (odouble)in->uvdata->myDesc->lrec;
-  imSize = 2.0 * in->mosaic->images[0]->myDesc->inaxes[0] * 
+  imSize = in->mosaic->images[0]->myDesc->inaxes[0] * 
     in->mosaic->images[0]->myDesc->inaxes[1];  /* Image plane size */
+  /* Beam size */
+  beam = (ObitImage*)in->mosaic->images[0]->myBeam;
+  if (beam!=NULL) imSize += beam->myDesc->inaxes[0] * beam->myDesc->inaxes[1];
+  else imSize *= 4;  /* Assume 4X as large */
 
   nSpec = ((ObitImageMF*)in->mosaic->images[0])->nSpec;
   bufSize = numVis*lenVis + imSize*nSpec;  /* Approx memory (words) per parallel image */
   bufSize *= sizeof(ofloat);               /* to bytes */
 
-  out = 1.0e9 / bufSize;  /* How many fit in a gByte? */
+  if (sizeof(olong*)==4)      tSize = 1.0e9;  /* Use sizeof a pointer type to get 32/64 bit */
+  else if (sizeof(olong*)==8) tSize = 5.0e9;
+  else                        tSize = 1.0e9;  /* Shouldn't happen */
+  out = tSize / bufSize;  /* How many fit in a tSize? */
 
-  return out;
+  /* Better be at least 1 */
+  Obit_retval_if_fail((out>=1), err, out,
+		      "%s: Insufficient memory to make images", routine);
+ return out;
 } /*  end ObitUVImagerMFGetNumPar */
 
 /**

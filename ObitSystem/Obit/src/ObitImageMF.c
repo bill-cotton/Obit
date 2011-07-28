@@ -53,6 +53,9 @@ static gchar *myClassName = "ObitImageMF";
 /** Function to obtain parent ClassInfo */
 static ObitGetClassFP ObitParentGetClass = ObitImageGetClass;
 
+/** Flag to limit frequency division messages */
+static gboolean doFreqDivMess = TRUE;
+
 /*--------------- File Global Variables  ----------------*/
 /**
  * ClassInfo structure ObitImageMFClassInfo.
@@ -813,13 +816,14 @@ void ObitImageMFSetOrder (ObitImageMF *in, olong order,
 void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
 			 ofloat alpha, odouble alphaRefF, ObitErr *err)
 {
-  olong iif, ichan, nSpec=0, nIF, nChan, incf, incif, maxCh, ndiv;
-  olong fincf, fincif, i, ip, ipo, count, count2;
-  odouble sum, sum2;
-  ofloat maxIF;
+  olong iif, ichan, iclo, ichi, nSpec=0, nIF, nChan, incf, incif;
+  olong fincf, fincif, i, count, count2=0, iCh;
+  odouble sum=0.0, sum2=0.0, mxFreq, freqLo, freqHi;
   ObitUVDesc *uvdesc;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar keyword[12];
+  gboolean done;
+  olong IFBreak[101], ChBreak[101], nBreak=100;  /* Frequency bin breaks */
   gchar *routine = "ObitImageMFSetSpec";
   
   /* error checks */
@@ -844,21 +848,40 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
     incif = uvdesc->incif;
   }
 
-  /* determine number of coarse channels */
+  /* determine coarse channels, use 0-rel values  */
   nSpec = 0;
   /* Only if in->curOrder>0 */
   if (in->curOrder>0) {
+    nSpec = 1;   /* Number of break points including ends */
+    IFBreak[0] = 0;
+    ChBreak[0] = -1;
+    freqLo = (uvdesc->freqIF[0] - (1.0-uvdesc->crpix[uvdesc->jlocf])*uvdesc->cdelt[uvdesc->jlocf]);
+    mxFreq = (1.0+maxFBW) * freqLo;  /* Highest frequency in first bin */
     /* Loop over IFs */
     for (iif=0; iif<nIF; iif++) {
-      /* How big at center? */
-      maxIF = maxFBW * uvdesc->freqIF[iif];
-      /* Maximum number of channels */
-      maxCh = (olong)(0.99999 + (ofloat)maxIF/(ofloat)uvdesc->chIncIF[iif]);
-      /* Smallest integral multiple of nChan */
-      ndiv = MAX (1, nChan/maxCh);
-      nSpec += ndiv;
+      /* Is this IF all in current bin? */
+      freqLo = (uvdesc->freqIF[iif] - (1.0-uvdesc->crpix[uvdesc->jlocf])*uvdesc->cdelt[uvdesc->jlocf]);
+      freqHi = (uvdesc->freqIF[iif] + (nChan-uvdesc->crpix[uvdesc->jlocf]+1)*uvdesc->cdelt[uvdesc->jlocf]);
+      done = freqHi<mxFreq;
+      /* A break in this IF? */
+      while (!done) {
+	iCh = (olong)(0.5 + (mxFreq-freqLo) / uvdesc->cdelt[uvdesc->jlocf]) - 1;
+	IFBreak[nSpec]   = iif;
+	ChBreak[nSpec++] = MIN (nChan, iCh);
+	mxFreq += maxFBW * freqLo;
+	done = freqHi<mxFreq;
+	/* Check blown array */
+	Obit_return_if_fail((nSpec<=nBreak), err, 
+			    "%s: Too many coarse spectral planes, >%d for %s", 
+			    routine, nBreak-1,in->name);
+      }
     } /* end loop over IF */
-    /* Make sure have spectra */
+
+    /* End */
+    IFBreak[nSpec] = nIF-1;
+    ChBreak[nSpec] = nChan-1;
+
+    /* Make sure have enough spectra */
     Obit_return_if_fail((nSpec>in->curOrder), err,
                         "%s: TOO Few channels %d, for requested order, decrease maxFBW",
                         routine, nSpec);
@@ -877,42 +900,18 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
   fincf  = MAX (1, (uvdesc->incf  / 3) / uvdesc->inaxes[uvdesc->jlocs]);
   fincif = MAX (1, (uvdesc->incif / 3) / uvdesc->inaxes[uvdesc->jlocs]);
 
-  /* Another loop filling arrays */
-  /* Loop over IFs */
-  sum2 = 0.0; count2 = 0;
-  ip = 0;
-  /* Only if in->curOrder>0 */
+  /* Loop filling arrays - Only if in->curOrder>0 */
   if (in->curOrder>0) {
-    for (iif=0; iif<nIF; iif++) {
-      /* How big at center? */
-      maxIF = maxFBW * uvdesc->freqIF[iif];
-      /* Maximum number of channels */
-      maxCh = (olong)(0.99999 + (ofloat)maxIF/(ofloat)uvdesc->chIncIF[iif]);
-      /* Smallest integral multiple of nChan */
-      ndiv = MAX(1,nChan/maxCh);
-      ipo = ip;
-      for (ichan=0; ichan<ndiv; ichan++) {
-	in->BIFSpec[ip] = iif;
-	in->EIFSpec[ip] = iif;
-	in->BChanSpec[ip] = ichan*ndiv;
-	in->EChanSpec[ip] = (ichan+1)*ndiv - 1;
-	ip++;
-      } /* end loop over coarse channel */
-      /* Make sure all channels done */
-      in->EChanSpec[ip-1] = MAX(in->EChanSpec[ip-1], (nChan-1));
-      
-      /* average frequency */
-      for (i=ipo; i<ip; i++) {
-	sum = 0.0; count = 0;
-	for (ichan=in->BChanSpec[i]; ichan<=in->EChanSpec[i]; ichan++) {
-	  count++;
-	  sum += uvdesc->freqArr[in->BIFSpec[i]*fincif + ichan*fincf];
-	  count2++;
-	  sum2 += uvdesc->freqArr[in->BIFSpec[i]*fincif + ichan*fincf];
-	}
-	in->specFreq[i] = sum/count;
-     }
-    } /* end loop over IF */
+    for (i=0; i<nSpec; i++) {
+      in->BIFSpec[i]     = IFBreak[i];
+      in->BChanSpec[i]   = ChBreak[i]+1;
+      if (in->BChanSpec[i]>nChan) {  /* Into next IF? */
+	in->BChanSpec[i]  = 1;
+	in->BIFSpec[i]   += 1         ;
+      }
+      in->EIFSpec[i]     = IFBreak[i+1];
+      in->EChanSpec[i]   = ChBreak[i+1];
+    }
     /* end multi channel out */
   } else {
     in->BIFSpec[0]   = 0;
@@ -922,13 +921,60 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
     in->refFreq = in->myDesc->crval[in->myDesc->jlocf];
   }
 
-  /* Increment number of planes by nSpec (if>1) */
+ /* average frequency */
+  for (i=0; i<nSpec; i++) {
+    sum  = 0.0; count = 0;
+    sum2 = 0.0; count2 = 0;
+    for (iif=in->BIFSpec[i]; iif<=in->EIFSpec[i]; iif++) {
+      if (in->BIFSpec[i]==in->EIFSpec[i]) { /* both ends same IF */
+	iclo = in->BChanSpec[i];
+	ichi = in->EChanSpec[i];
+      } else if (iif==in->BIFSpec[i]) {    /* First */
+ 	iclo = in->BChanSpec[i];
+	ichi = nChan-1;
+      } else if (iif==in->EIFSpec[i]) {    /* Last */
+ 	iclo = 0;
+	ichi = in->EChanSpec[i];
+      } else {                            /* Middle */
+  	iclo = 0;
+	ichi = nChan-1;
+      }
+      for (ichan=iclo; ichan<=ichi; ichan++) {
+	count++;
+	sum += uvdesc->freqArr[iif*fincif + ichan*fincf];
+	count2++;
+	sum2 += uvdesc->freqArr[iif*fincif + ichan*fincf];
+      }
+    }
+    if (count>0) in->specFreq[i] = sum/count;
+    else  in->specFreq[i] = -1.0;
+  }
+
+  /* increment number of planes by nSpec (if>1) */
   if (nSpec>1) {
     in->myDesc->inaxes[in->myDesc->jlocf] += nSpec;
     
     /* Calculate & save reference frequency */
     in->refFreq = sum2/count2;
     in->myDesc->crval[in->myDesc->jlocf] = in->refFreq;  
+    /* Approximage freq increment */
+    in->myDesc->cdelt[in->myDesc->jlocf] = 
+      (in->specFreq[nSpec-1] - in->specFreq[0]) / (nSpec-1);  
+  }
+  
+  /* Tell channel division if err->prtLv>=2 */
+  if ((err->prtLv>=2) && doFreqDivMess) {
+    doFreqDivMess = FALSE; /* only once */
+    Obit_log_error(err, OBIT_InfoErr, "Frequency division of %d IFs, %d chan",
+		   nIF, nChan);
+    for (i=0; i<nSpec; i++) {
+      Obit_log_error(err, OBIT_InfoErr, 
+		     "%3d Freq %8.4f GHz, IF/ch %3d/%4d to IF/ch %3d/%4d",
+		     i+1, in->specFreq[i]*1.0e-9, 
+		     in->BIFSpec[i]+1, in->BChanSpec[i]+1,
+		     in->EIFSpec[i]+1, in->EChanSpec[i]+1);
+    }
+    ObitErrLog(err); 
   }
 
   /* Add frequency info to descriptor */

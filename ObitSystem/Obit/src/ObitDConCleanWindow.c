@@ -1675,6 +1675,8 @@ gboolean ObitDConCleanWindowAutoWindow (ObitDConCleanWindow *in,
   if (fabs(*PeakOut)<=minFlux)  *PeakOut = 0.0;
   /* If no window set because peak too close to noise, set to zero */
   if (noWin)  *PeakOut = 0.0;
+  /* Trap problem */
+  if (fabs(*PeakOut)>1.0e20) *PeakOut = *PeakIn; 
 
   /* Cleanup */
  clean:
@@ -1897,6 +1899,7 @@ void ObitDConCleanWindowStats (ObitDConCleanWindow *in,
     *PeakIn = ObitFArrayMaxAbs (tmpImage, PeakInPos);
   else
     *PeakIn = ObitFArrayMax (tmpImage, PeakInPos);
+  *PeakOut = *PeakIn;  /* In case no inner window */
 
   /* Blank inside the inner window  - if there is one */
   if (in->Lists[field-1]) {
@@ -1912,11 +1915,14 @@ void ObitDConCleanWindowStats (ObitDConCleanWindow *in,
       }
     } /* end loop blanking array */
     if (err->error) goto clean;
+
+    /* find peak PeakOut in outer window but outside inner window */
+    if (doAbs)  *PeakOut = ObitFArrayMaxAbs (tmpImage, pos);
+    else *PeakOut = ObitFArrayMax (tmpImage, pos);
+    /* Trap problem */
+    if (fabs(*PeakOut)>1.0e20) *PeakOut = *PeakIn; 
   } /* end if inner window */
 
-  /* find peak PeakOut in outer window but outside inner window */
-  if (doAbs)  *PeakOut = ObitFArrayMaxAbs (tmpImage, pos);
-  else *PeakOut = ObitFArrayMax (tmpImage, pos);
 
   /* Cleanup */
  clean:

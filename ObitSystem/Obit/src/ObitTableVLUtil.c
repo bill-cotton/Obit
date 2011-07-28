@@ -1006,7 +1006,7 @@ void ObitTableVLRedun (ObitTableVL *in, ObitTableVL *out, ObitErr *err)
   ofloat l, m, maxDist, rad1, rad2;
   olong centerPix[7], brow, erow;
   olong mxbad, ibad, jbad, maxbad, tnobad, *badrow=NULL;
-  odouble dist2, ramax, dismax;
+  odouble dist2, ramax, dismax, tramax;
   gboolean isbad, toss1, want1;
   olong irow, jrow, orow, nrow, iold, inWant, ocount;
   gchar Field[9];
@@ -1123,7 +1123,8 @@ void ObitTableVLRedun (ObitTableVL *in, ObitTableVL *out, ObitErr *err)
       if (row2->Ra2000<0.0)   row2->Ra2000 += 360.0;
       
       /* Is this far enough? */
-      if ((row2->Ra2000-row->Ra2000) > ramax) break;
+      tramax = ramax / cos(row->Dec2000*DG2RAD);
+      if ((row2->Ra2000-row->Ra2000) > tramax) break;
 
       /* Determine separation */
       ObitSkyGeomShiftXY (row->Ra2000, row->Dec2000, 0.0, 

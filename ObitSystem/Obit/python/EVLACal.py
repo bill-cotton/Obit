@@ -1341,9 +1341,9 @@ def EVLADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
                 calib.g
         except Exception, exception:
             print exception
-            mess = "Calib Failed retCode= "+str(calib.retCode)
+            mess = "Calib Failed retCode= "+str(calib.retCode)+" Source "+calib.Sources[0]
             printMess(mess, logfile)
-            return None
+            #return None  # Allow some to fail
         else:
             pass
         # Setup for next if looping
@@ -1607,7 +1607,7 @@ def EVLACalAP(uv, target, ACal, err, \
             calib.g
     except Exception, exception:
         print exception
-        mess = "Calib Failed retCode= "+str(calib.retCode)
+        mess = "Calib Failed retCode= "+str(calib.retCode)+" Source "+calib.Sources[0]
         printMess(mess, logfile)
         return 1
     else:
@@ -1659,9 +1659,9 @@ def EVLACalAP(uv, target, ACal, err, \
                         calib.g
                 except Exception, exception:
                     print exception
-                    mess = "Calib Failed retCode= "+str(calib.retCode)
+                    mess = "Calib Failed retCode= "+str(calib.retCode)+" Source "+calib.Sources[0]
                     printMess(mess, logfile)
-                    return 1
+                    #return 1   # Allow some to fail
                 else:
                     pass
             # end source list

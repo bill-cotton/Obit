@@ -375,6 +375,7 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
   /* normalize sum if not excessive blanking */
   if (sumwt > 0.90) {
     value = sum / sumwt;
+    if (isnan(value)) g_error("INVALID VALUE, sum=%f wt=%f\n",sum, sumwt); /* DEBUG */
     return value;
   } 
 
@@ -458,6 +459,11 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
     value = fblank;
   } 
 
+  /* this seems to prevent an optimizer related bug */
+  if (isnan(value)) {
+    for (i=0; i<iwid; i++) fprintf (stderr, "row %d %f\n",i, row[i]);
+    g_error("INVALID VALUE2, sum=%f wt=%f\n",sum, sumwt); /* DEBUG */
+  }
   return value;
 } /* end ObitFInterpolatePixel */
 

@@ -163,6 +163,8 @@ typedef struct {
   ObitFInterpolate *BeamUInterp, *BeamUPhInterp;
   /** Current uv channel number being processed.  */
   olong channel;
+  /** Frequency of desired beam (Hz) corresponds to channel */
+  odouble  BeamFreq;
   /** Dimension of Rgain...  */
   olong dimGain;
   /** Array of time/spatially variable R component gain, real, imag */
@@ -173,14 +175,15 @@ typedef struct {
   ofloat *Qgain, *Qgaini;
   /** Array of time/spatially variable U component gain, real, imag */
   ofloat *Ugain, *Ugaini;
+  /** Number of spectral bins */
   olong        nSpec;
-  /* Apply prior alpha correction? */
+  /** Apply prior alpha correction? */
   gboolean doAlphaCorr;
-  /* Prior spectral index correction */
+  /** Prior spectral index correction */
   ofloat priorAlpha;
   /* Reference frequency (Hz) for Prior spectral index */
   odouble priorAlphaRefF;
-  /* UV Interpolator array for FTGrid */
+  /** UV Interpolator array for FTGrid */
   ObitCInterpolate **Interps;
 } VMBeamMFFTFuncArg;
 /*----------------------Public functions---------------------------*/
@@ -929,6 +932,15 @@ void ObitSkyModelVMBeamMFInitMod (ObitSkyModel* inn, ObitUV *uvdata,
     }
   } /* End of loop making lookup table */
 
+  /* Tell selected model info if prtLv>1 */
+  if (err->prtLv>1) {
+    if (in->currentMode==OBIT_SkyModel_DFT)
+      Obit_log_error(err, OBIT_InfoErr, "SkyModelVMBeamMF using DFT calculation type");
+    else if (in->currentMode==OBIT_SkyModel_Grid)
+      Obit_log_error(err, OBIT_InfoErr, "SkyModelVMBeamMF using Grid calculation type");
+    else if (in->currentMode==OBIT_SkyModel_Fastest)
+      Obit_log_error(err, OBIT_InfoErr, "SkyModelVMBeamMF using Fastest calculation type");
+  }
 } /* end ObitSkyModelVMBeamMFInitMod */
 
 /**
@@ -2222,7 +2234,7 @@ gboolean ObitSkyModelVMBeamMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvda
   for (i=lo; i<=hi; i++) {
 
     /* Anything to do? */
-    if ((in->endComp[i]>0) && (in->endComp[i]<in->startComp[i])) continue;
+    if ((in->endComp[i]<=0) || (in->endComp[i]<in->startComp[i])) continue;
 
     /* Get CC table */
     outCCVer = 0;
@@ -2302,6 +2314,13 @@ gboolean ObitSkyModelVMBeamMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvda
     modType = (ObitSkyModelCompType)(parms[3]+0.5);  /* model type */
     in->modType = MAX (in->modType, modType);  /* Need highest number */
  
+    /* DEBUG - replace model with fitted beam */
+    if(modType==OBIT_SkyModel_GaussModTSpec) {
+      parms[0] = imDesc->beamMaj;
+      parms[1] = imDesc->beamMin;
+      parms[2] = imDesc->beamPA;
+    }
+
     /* Gaussian parameters */
     if ((modType==OBIT_SkyModel_GaussMod) || (modType==OBIT_SkyModel_GaussModSpec) || 
 	(modType==OBIT_SkyModel_GaussModTSpec)) {
@@ -2862,17 +2881,18 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
   /************************ end DEBUG **********************************/
   
   /* Loop over IFs */
-  channel = lstartIF* nUVchan + lstartChannel; /* UV Channel */
+  channel = lstartIF * nUVchan + lstartChannel; /* UV Channel */
   for (iIF=sIF; iIF<lstartIF+numberIF; iIF++) {
     offsetIF = nrparm + iIF*jincif; 
     /* Loop over channels */
     for (iChannel=sChannel; iChannel<lstartChannel+numberChannel; iChannel++) {
       offsetChannel = offsetIF + iChannel*jincf; 
       ifq      = MIN (nUVchan*nUVIF, MAX (0, iIF*kincif + iChannel*kincf));
+      channel  = ifq;  
       iSpec    = MIN (nSpec, MAX (0,in->specIndex[ifq]));
       freqFact = fscale[ifq];  /* Frequency scaling factor */
       freq2    = freqFact*freqFact;    /* Frequency factor squared */
-      specFreqFact = freqArr[iIF*kincif + iChannel*kincf] * SMRefFreq;
+      specFreqFact = freqArr[ifq] * SMRefFreq;
       
       /* New PB correction? */
       updatePB = needNewPB (in, uvdata, iIF, iChannel, oldPB, &newPB, err);
@@ -2880,12 +2900,19 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
       if (updatePB || (plane!=in->FreqPlane[MIN(channel, (in->numUVChann-1))])) {
 	oldPB = newPB;
 	plane   = in->FreqPlane[MIN(channel, (in->numUVChann-1))];  /* Which plane in correction cube */
-	largs->channel = iChannel;
+	largs->channel  = ifq;
+	largs->BeamFreq = freqArr[ifq];
 	/* Subarray 0-rel */
 	itemp = (olong)visData[ilocb];
 	suba = 100.0 * (visData[ilocb]-itemp) + 0.5; 
-	/* Update */
+	/* Update antenna gains */
 	myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba, uvdata, ithread, err);
+	/* DEBUG
+	ObitThreadLock(in->thread);
+	fprintf (stderr,"ch %d IF %d plane %d ifq %d rgain %f lgain %f\n",
+		 iChannel, iIF, plane, ifq, Rgain[0], Lgain[0]);
+	ObitThreadUnlock(in->thread);  */
+	/* DEBUG */
       } /* end new plane */
       if (err->error) {  /* Error? */
 	ObitThreadLock(in->thread);  /* Lock against other threads */
@@ -3342,7 +3369,15 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 	  ObitThreadUnlock(in->thread); 
 	  goto finish;
 	}; /* end switch by model type */
-	
+
+	/* DEBUG 
+	if ((fabs(modRealRR)>1.0)||(fabs(modRealLL)>1.0)) {
+	  ObitThreadLock(in->thread);
+	  fprintf (stderr,"iVis %d ch %d IF %d Model %f %f %f %f\n",
+		   iVis, iChannel, iIF, sumRealRR, sumImagRR, sumRealLL, sumImagLL);
+	  ObitThreadUnlock(in->thread); 
+	}*/
+	/* DEBUG */
 	modRealRR = sumRealRR;
 	modImagRR = sumImagRR;
 	modRealLL = sumRealLL;
@@ -3668,10 +3703,12 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
 	if (updatePB || (plane!=in->FreqPlane[MIN(channel, (in->numUVChann-1))])) {
 	  oldPB = newPB;
 	  plane   = in->FreqPlane[MIN(channel, (in->numUVChann-1))];  /* Which plane in correction cube */
-	  largs->channel = iChannel;
+	  largs->channel  = ifq;
+	  largs->BeamFreq = freqArr[ifq];
 	  /* Subarray 0-rel */
 	  itemp = (olong)visData[ilocb];
 	  suba = 100.0 * (visData[ilocb]-itemp) + 0.5; 
+	  /* Update antenna gains */
 	  /* Update */
 	  myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba, uvdata, ithread, err);
 	} /* end new plane */
