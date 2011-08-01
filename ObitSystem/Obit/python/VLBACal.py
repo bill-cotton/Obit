@@ -2229,7 +2229,8 @@ def VLBAImageCals(uv, err,  FreqID=1, Sources=None, seq=1, sclass="ImgSC", \
     if len(sl)<=0:
         slist = VLBAAllSource(uv,err,logfile=logfile,check=check,debug=debug)
     else:
-        slist = sl
+        # Copy so non-detections can be removed from Sources in loop below.
+        slist = sl[:] 
     
     scmap = ObitTask.ObitTask("SCMap")
     scmap.taskLog  = logfile
@@ -2368,7 +2369,7 @@ def VLBAImageTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", \
     if len(sl)<=0:
         slist = VLBAAllSource(uv,err,logfile=logfile,check=check,debug=debug)
     else:
-        slist = sl
+        slist = sl[:]
     logger.info( "Running imager on these sources: " + str(slist) )
 
     imager = ObitTask.ObitTask("Imager")
@@ -6610,6 +6611,7 @@ def VLBAValidOutfiles( outfiles=outfiles ):
     ofList = VLBAMakeOutfilesList( outfiles=outfiles )
     cwdList = os.listdir( './' )
     ignore = 'logging.conf'
+    logger.info("Ignoring file " + ignore)
     if ignore in cwdList: cwdList.remove(ignore)
 
     # List of files in outfiles but not in CWD
@@ -6684,7 +6686,7 @@ def VLBAGetSessionCode( fileDict ):
     """
     # Get session from archive file name
     session = '??'
-    pattern = re.compile(r'VLBA_[A-Za-z]+[0-9]+([A-Za-z]{2})')   
+    pattern = re.compile(r'VLBA_[A-Za-z]+[0-9]+([A-Za-z]+)')   
     match = re.match( pattern, fileDict['logical_file'] )
     if match:
         session = match.group(1)

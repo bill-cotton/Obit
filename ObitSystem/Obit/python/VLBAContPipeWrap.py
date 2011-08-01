@@ -27,15 +27,15 @@ except NoSectionError, e:
 
 def pipeWrap( startDate, endDate, options ):
     """
-A wrapper for the VLBA continuum pipeline, :mod:`VLBAContPipe`. Query archive
-and begin processing all datafiles in response. Process each file in a 
-unique working directory.
-
-:param string startDate: start of date range for archive query
-:param string endDate: end of date range for archive query; if NONE then use 
-    startDate
-:param optparse.Option options: command line options (returned by 
-    :func:`optparse.parse_args`)
+    A wrapper for the VLBA continuum pipeline, :mod:`VLBAContPipe`. Query archive
+    and begin processing all datafiles in response. Process each file in a 
+    unique working directory.
+    
+    :param string startDate: start of date range for archive query
+    :param string endDate: end of date range for archive query; if NONE then use 
+        startDate
+    :param optparse.Option options: command line options (returned by 
+        :func:`optparse.parse_args`)
     """
     logger.info("Pipeline Wrapper Begins")
 
@@ -56,6 +56,9 @@ unique working directory.
     logger.info("Submitting query to archive")
     responseLines = PipeUtil.QueryArchive( startDate, endDate, options.project )
     fileDictList = PipeUtil.ParseArchiveResponse( responseLines )
+    filtered = PipeUtil.FilterFileList( fileDictList )
+    # logger.debug( "Removed these files from archive response:\n" + 
+    #    PipeUtil.SummarizeArchiveResponse( filtered ) )
     pipeRecordList = PipeUtil.FetchObject( pipeRecord )
     logger.info( "\n" + PipeUtil.SummarizeArchiveResponse( fileDictList, pipeRecordList ) )
     if options.verbose:

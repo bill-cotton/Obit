@@ -4,7 +4,7 @@ useful for any pipeline.
 """
 
 import urllib, urllib2, os.path, pickle, time, sys, logging, socket, signal
-import subprocess, glob, xml.dom.minidom
+import subprocess, glob, xml.dom.minidom, re
 import pprint
 import ObitTask, Image, AIPSDir, OErr, FArray, VLBACal, FITS, UV, UVDesc, Table
 
@@ -393,14 +393,14 @@ def QueryArchive(startTime, endTime, project=None):
 
 def ParseArchiveResponse( responseLines ):
     """
-Parse the archive response returned by QueryArchive and return a list
-containing one dictionary for each file. The values in each dictionary will
-correspond to items in each row of the query response.  The keys will 
-correspond to the items in the response header row, with additional column
-headers added where needed. Redundant columns are not included in the 
-dictionaries.
-
-* responseLines = Archive query response returned by QueryArchive
+    Parse the archive response returned by QueryArchive and return a list
+    containing one dictionary for each file. The values in each dictionary will
+    correspond to items in each row of the query response.  The keys will
+    correspond to the items in the response header row, with additional column
+    headers added where needed. Redundant columns are not included in the
+    dictionaries.
+    
+    * responseLines = Archive query response returned by QueryArchive
     """
     head = responseLines[0] # header line
     headers = head.split(' ')
@@ -420,14 +420,40 @@ dictionaries.
         fileList.append( dict )
     return fileList
 
+def FilterFileList( fileList ):
+    """
+    Filter the archive response file list.
+
+    Remove data sets that are not of interest from *fileList*. Return a list of
+    removed data sets.
+
+    fileList = list of dictionaries returned by ParseArchiveResponse
+    """
+    # Remove files with old filename formats. For BL0137 there are old files
+    # and new files; John says the filename format differs but the data
+    # is the same.
+    pattern = re.compile(r"/home/archive_VLBA[0-9]+/projects/VLBA")
+    filteredList = []
+    fileList_copy = fileList[:]
+    for fileDict in fileList_copy:
+        matchObj = re.match( pattern, fileDict['file_root'] )
+        if matchObj:
+            filteredList.append( fileDict )
+            fileList.remove( fileDict )
+    if len(filteredList) > 0:
+        logger.info( str(len(filteredList)) +  
+            " old-style-filename data sets filtered from list." +
+            " (" + str(len(fileList)) + " remain)")
+    return filteredList
+
 def DownloadArchiveFile( fileDict, destination ):
     """
-Download a file from the archive. Return the output of urllib2.urlopen.
-If the file already exists in the download area, ask the user what to do.
-If the user aborts the download, return None.
-
-* fileDict = archive file dictionary from ParseArchiveResponse
-* destination = path to destination directory
+    Download a file from the archive. Return the output of urllib2.urlopen.
+    If the file already exists in the download area, ask the user what to do.
+    If the user aborts the download, return None.
+    
+    * fileDict = archive file dictionary from ParseArchiveResponse
+    * destination = path to destination directory
     """
     url = "https://archive.nrao.edu/archive/ArchiveDeliver"
     filename = fileDict['logical_file']
@@ -520,7 +546,7 @@ def SummarizeArchiveResponse( fileList, pipeRecordList=None ):
     # Generate summary table
     formatHead = "%-2s %-6s %-3s %-3s %-3s %-18s %-18s %-7s %-6s\n"
     table = formatHead % \
-        ( "#-", "PCODE-", "Sec", "Seg", "Bnd", "STARTTIME---------", "STOPTIME----------", 
+        ( "#-", "PCODE-", "Ses", "Seg", "Bnd", "STARTTIME---------", "STOPTIME----------", 
         "FRQ_GHz", "SIZE--" )
     for i,file in enumerate(fileList):
         formatStr = "%2d %6s %3s %3s %3s %18s %18s %7.4f %6s" 
@@ -740,15 +766,18 @@ def getRecordList( filename = '/users/jcrossle/vlbaPipeline/record/pipelineRecor
     return FetchObject( filename )
 
 def putRecordList( recList, 
-    filename = '/users/jcrossle/vlbaPipeline/record/pipelineRecord.pickle' ):
+    filename = '/users/jcrossle/vlbaPipeline/record/pipelineRecord.pickle',
+    verbose = False ):
     """
     Write the pipeline record list to a pickle file.
 
     * recList = pipeline record list
     * filename = name of the pickle file to hold the record list
+    * verbose = print details
     """
     logger.info( "Writing pipeline record list to " + filename )
-    logger.info( "New pipeline record list:\n" + SummarizeArchiveResponse( recList, recList ) )
+    if verbose:
+        logger.info( "New pipeline record list:\n" + SummarizeArchiveResponse( recList, recList ) )
     SaveObject( recList, filename, True )
 
 def getDictFromList( dictList, key, value ):
@@ -781,7 +810,7 @@ def validate( dataDir, archDir = '../archive',
     2) If *archBkup* is given, the *dataDir* is also copied to the archive
        backup area, *archBkup*.
     3) If *group* is given, all files moved to the archive staging area have
-       their group changed to *group*, and group read/write/access permission
+       their group changed to *group*, and group read/write/access permissions
        are set. 
     4) Finally, the pipeline processing record is modified to show that this
        data set has been archived.
