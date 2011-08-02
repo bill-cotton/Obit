@@ -1507,7 +1507,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "doFull", "do3D", "FOV", "PBCor", "antSize", 
     "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
     "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "WtPower",
-    "MaxBaseline", "MinBaseline", "rotate", "Beam",
+    "MaxBaseline", "MinBaseline", "rotate", "Beam", "minFlux",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
     "nxBeam", "nyBeam", "Alpha", "doCalSelect",
     "numBeamTapes", "BeamTapes", "MResKnob",
@@ -1859,7 +1859,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   oint         otemp;
   olong        nfield, *ncomp=NULL, maxPSCLoop, maxASCLoop, SCLoop, jtemp;
   ofloat       minFluxPSC, minFluxASC, modelFlux, maxResid, reuse, ftemp, autoCen;
-  ofloat       alpha, noalpha;
+  ofloat       alpha, noalpha, minFlux=0.0;
   ofloat       antSize, solInt, PeelFlux, FractOK, CCFilter[2]={0.0,0.0};
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean     Fl = FALSE, Tr = TRUE, init=TRUE, doRestore, doFlatten, doFit, doSC, doBeam;
@@ -1902,6 +1902,8 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   ObitInfoListGetTest(myInput, "doFit",&type, dim, &doFit);
   antSize = 0.0;
   ObitInfoListGetTest(myInput, "antSize",&type, dim, &antSize);
+  minFlux = 0.0;
+  ObitInfoListGetTest(myInput, "minFlux", &type, dim, &minFlux);
 
   /* Get input parameters from myInput, copy to myClean */
   ObitInfoListCopyList (myInput, myClean->info, CLEANParms);
@@ -2059,6 +2061,10 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 	maxResid = 0.0;
 	dim[0] = dim[1] = dim[2] = 1;
 	ObitInfoListAlwaysPut(myClean->skyModel->info, "maxResid", OBIT_float, dim, &maxResid);
+	
+	/* Reset minFlux disturbed by Clean */
+	dim[0] = dim[1] = dim[2] = 1;
+	ObitInfoListAlwaysPut(selfCal->skyModel->info, "minFlux", OBIT_float, dim, &minFlux);
 	
 	/* Do self cal */
 	didSC = TRUE;
@@ -2221,6 +2227,10 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 	maxResid = 0.0;
 	dim[0] = dim[1] = dim[2] = 1;
 	ObitInfoListAlwaysPut(myClean->skyModel->info, "maxResid", OBIT_float, dim, &maxResid);
+	
+	/* Reset minFlux disturbed by Clean */
+	dim[0] = dim[1] = dim[2] = 1;
+	ObitInfoListAlwaysPut(selfCal->skyModel->info, "minFlux", OBIT_float, dim, &minFlux);
 	
 	/* alpha correction in model  for Amp self cal */
 	btemp = TRUE; dim[0] = dim[1] = dim[2] = 1;

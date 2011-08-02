@@ -1303,7 +1303,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "doFull", "do3D", "FOV", "PBCor", "antSize", 
     "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
     "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "WtPower",
-    "MaxBaseline", "MinBaseline", "rotate", "Beam",
+    "MaxBaseline", "MinBaseline", "rotate", "Beam", "minFlux",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
     "nxBeam", "nyBeam", "Alpha", "doCalSelect", 
     NULL
@@ -1382,7 +1382,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   ObitInfoListCopyList (myInput, outData->info, tmpParms);
   ObitInfoListCopyList (inData->info, outData->info, tmpName);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
-  
+ 
   /* Image/calibrate Ipol  */
   sprintf (Stokes, "I   ");
   dim[0] = 4;
@@ -1516,14 +1516,14 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   ObitInfoType type;
   olong         maxPSCLoop, maxASCLoop, SCLoop, oldSN, itemp, jtemp;
   ofloat       minFluxPSC, minFluxASC, modelFlux, reuse, ftemp, autoCen;
-  ofloat       solInt;
+  ofloat       solInt, minFlux=0.0;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean     Fl = FALSE, Tr = TRUE, init=TRUE, doRestore, doFlatten, doSC;
   gboolean     noSCNeed, reimage, didSC, imgOK=FALSE, converged = FALSE;
   gchar        Stokes[5], soltyp[5], solmod[5], stemp[5];
   gchar        *SCParms[] = {  /* Self parameters */
     "maxSCLoop", "minFluxPSC", "minFluxASC", "refAnt", 
-    "WtUV", "avgPol", "avgIF", "doMGM", "minSNR", 
+    "WtUV", "avgPol", "avgIF", "noNeg", "doMGM", "minSNR", 
     "minNo", "doSmoo", "prtLv", "modelFlux", "modelPos", "modelParm",
     "dispURL", 
     NULL
@@ -1548,6 +1548,8 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   ObitInfoListGetTest(myInput, "autoCen", &type, dim, &autoCen);
   oldSN = -1;
   ObitInfoListGetTest(myInput, "oldSN", &type, dim, &oldSN);
+  minFlux = 0.0;
+  ObitInfoListGetTest(myInput, "minFlux", &type, dim, &minFlux);
 
   /* Get Stokes being imaged */
   strncpy (Stokes, "F   ", 4); 
@@ -1682,6 +1684,10 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	dim[0] = dim[1] = dim[2] = 1;
 	ObitInfoListAlwaysPut(selfCal->info, "peakFlux", OBIT_float, dim, &myClean->peakFlux);
 	
+	/* Reset minFlux disturbed by Clean */
+	dim[0] = dim[1] = dim[2] = 1;
+	ObitInfoListAlwaysPut(selfCal->skyModel->info, "minFlux", OBIT_float, dim, &minFlux);
+	
 	/* Do self cal */
 	didSC = TRUE;
 	imgOK = FALSE;  /* Need new image */
@@ -1812,6 +1818,10 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	dim[0] = dim[1] = dim[2] = 1;
 	ObitInfoListAlwaysPut(selfCal->info, "peakFlux", OBIT_float, dim, &myClean->peakFlux);
 	
+	/* Reset minFlux disturbed by Clean */
+	dim[0] = dim[1] = dim[2] = 1;
+	ObitInfoListAlwaysPut(selfCal->skyModel->info, "minFlux", OBIT_float, dim, &minFlux);
+	
 	/* Do self cal */
 	converged = ObitUVSelfCalSelfCal (selfCal, inUV, init, &noSCNeed, 
 					  myClean->window, err);
@@ -1905,7 +1915,7 @@ void SCMapHistory (gchar *Source, ObitInfoList* myInput,
     "OutlierDist",  "OutlierFlux",  "OutlierSI",
     "OutlierSize",  "CLEANBox",  "Gain",  "minFlux",  "Niter",  "minPatch",
     "Reuse", "autoCen", "Beam",  "Cmethod",  "CCFilter",  "maxPixel", 
-    "autoWindow", "subA", "Alpha",
+    "autoWindow", "subA", "Alpha", "WtUV", "avgPol", "avgIF", "noNeg", 
     "maxPSCLoop", "minFluxPSC", "solPInt", "solPType", "solPMode", 
     "maxASCLoop", "minFluxASC", "solAInt", "solAType", "solAMode", 
     "oldSN", "modelFlux", "modelPos", "modelParm", 

@@ -2822,7 +2822,10 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
   fscale  = uvdata->myDesc->fscale;
   freqArr = uvdata->myDesc->freqArr;
   /* Inverse of Sky model reference frequency */
-  SMRefFreq = 1.0 / in->mosaic->images[0]->myDesc->crval[in->mosaic->images[0]->myDesc->jlocf];
+  if (in->mosaic!=NULL) 
+    SMRefFreq = 1.0 / in->mosaic->images[0]->myDesc->crval[in->mosaic->images[0]->myDesc->jlocf];
+  else 
+    SMRefFreq = 1.0 / uvdata->myDesc->freq;
 
   /* Current channel (0-rel) */
   channel = 0;
@@ -3640,7 +3643,10 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
   fscale  = uvdata->myDesc->fscale;
   freqArr = uvdata->myDesc->freqArr;
   /* Inverse of Sky model reference frequency */
-  SMRefFreq = 1.0 / in->mosaic->images[0]->myDesc->crval[in->mosaic->images[0]->myDesc->jlocf];
+  if (in->mosaic!=NULL) 
+    SMRefFreq = 1.0 / in->mosaic->images[0]->myDesc->crval[in->mosaic->images[0]->myDesc->jlocf];
+  else 
+    SMRefFreq = 1.0 / uvdata->myDesc->freq;
 
   /* Current channel (0-rel) */
   channel = 0;

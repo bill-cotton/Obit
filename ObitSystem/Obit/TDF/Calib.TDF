@@ -135,7 +135,7 @@ doTwo                               1 & 2 baseline combs for SolMode="DELA"
 avgPol                              Avg. poln?
 **PARAM** boo 1 **DEF** F
 avgIF                               Avg. IFs?
-**PARAM** boo 1 **DEF** F
+**PARAM** boo 1 **DEF** T
 noNeg                               Exclude negative CLEAN comps?
 **PARAM** boo 1  **DEF** F
 doMGM                               Apply mean gain modulus
