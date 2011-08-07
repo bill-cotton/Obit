@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+!/usr/bin/env python
 """
 The VLBA Continuum Pipeline.  The pipeline can be invoked from the command line 
 as, ::
@@ -40,12 +40,12 @@ def pipeline( aipsSetup, parmFile ):
     * *aipsSetup* = AIPS setup file
     * *parmFile* = pipeline input parameters file
     """
-    ############################# Initialize OBIT ##########################################                                 
+    ############################# Initialize OBIT ##########################################
     noScrat     = []    
     exec(open(aipsSetup).read())
     VLBAAddOutFile( aipsSetup, 'project', "Obit's AIPS setup file" )
     
-    ############################# Default parameters ##########################################                                 
+    ############################# Default parameters ##########################################
     # Define data
     project       = "Unspecified"               # Project name (12 char or less, used as AIPS Name)
     session       = "?"                         # Project session code
@@ -200,7 +200,18 @@ def pipeline( aipsSetup, parmFile ):
         if retCode!=0:
             raise RuntimeError,"Error Quacking data"
     
-    # Quantization correction?
+    # Median window time editing, for RFI impulsive in time or dropouts
+    if parms["doMedn"]:
+        logger.info("--> Median window time editing (doMedn)")
+        retCode = VLBAMedianFlag (uv, "    ", err, noScrat=noScrat, nThreads=nThreads, \
+                                  avgTime=parms["mednAvgTime"], avgFreq=parms["mednAvgFreq"], \
+                                  chAvg=parms["mednChAvg"], timeWind=parms["mednTimeWind"], \
+                                  flagSig=parms["mednSigma"], flagVer=2, \
+                                  logfile=logFile, check=check, debug=False)
+        if retCode!=0:
+            raise RuntimeError,"Error in MednFlag"
+
+   # Quantization correction?
     if parms["doQuantCor"]:
         logger.info("--> Quantization correction (doQuantCor)")
         plotFile = project+"_"+session+"_"+band+".Quant.ps"
@@ -356,16 +367,29 @@ def pipeline( aipsSetup, parmFile ):
         if retCode!=0:
             raise RuntimeError,"Error in delay calibration"
         VLBASaveOutFiles() # Save plot file in Outfiles
+         
+    # Phase calibration using calibrator models
+    if parms["doPhaseCal"]:
+        logger.info("--> Phase calibration using calibrator models (doPhaseCal)")
+        plotFile = project+"_"+session+"_"+band+".PhaseCal0.ps"
+        retCode = VLBAPhaseCal(uv, err, calSou=parms["contCals"], CalModel=parms["contCalModel"], \
+                             doCalib=-1, flagVer=0, doBand=-1, \
+                             refAnt=goodCal["bestRef"], solInt=parms["solPInt"], \
+                             doSNPlot=parms["doSNPlot"], plotFile=plotFile, \
+                             nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
+        if retCode!=0:
+            raise RuntimeError,"Error in phase calibration"
+        VLBASaveOutFiles() # Save plot file in Outfiles
         
     # Amplitude calibration
-    # NOTE: REALLY OUGHT TO HAVE MODEL FOR THIS
     if parms["doAmpCal"] and not check:
         logger.info("--> Amplitude calibration (doAmpCal)")
         plotFile = project+"_"+session+"_"+band+".AmpCal.ps"
         retCode = VLBAAmpCal(uv, err, calSou=parms["contCals"],
             CalModel=parms["contCalModel"], doCalib=2, flagVer=2, doBand=1,
-            refAnt=goodCal["bestRef"], solInt=parms["solAInt"], smoTimeA=24.0,
-            smoTimeP = 10./60., doSNPlot=parms["doSNPlot"], plotFile=plotFile,
+            minSumCC=parms["minFluxASC"],
+            refAnt=goodCal["bestRef"], solInt=parms["solAInt"], smoTimeA=2.0,
+            smoTimeP = 1./60., doSNPlot=parms["doSNPlot"], plotFile=plotFile,
             nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check,
             debug=debug)
         if retCode!=0:
@@ -384,7 +408,7 @@ def pipeline( aipsSetup, parmFile ):
         if retCode!=0:
            raise  RuntimeError,"Error in CalAvg"
     
-    # image targets phase only self-cal
+    # image targets phase only self-cal - NOTE: actually A&P 
     if parms["doImgTarget"] and not check:
         logger.info("--> Image targets (doImgTargets)")
         if not uvc:
@@ -421,7 +445,7 @@ def pipeline( aipsSetup, parmFile ):
             uvc = UV.newPAUV(uvname, Aname, parms["avgClass"], disk, seq, True, err)
             if err.isErr:
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
-        targetModel  = VLBAImageModel(parms["targets"],parms["outTclass"],disk, seq, err)
+        parms["targetModel"]  = VLBAImageModel(parms["targets"],parms["outTclass"],disk, seq, err)
         plotFile = project+"_"+session+"_"+band+".PhaseCal.ps"
         retCode = VLBAPhaseCal(uvc, err, calSou=parms["targets"], CalModel=parms["targetModel"], \
                              doCalib=-1, flagVer=0, doBand=-1, \

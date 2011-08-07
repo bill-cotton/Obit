@@ -132,6 +132,14 @@ def VLBAInitContParms():
         ]
     parms["editList"] = editList
 
+    # Do median flagging
+    parms["doMedn"]       = True     # Median editing?
+    parms["mednSigma"]    = 10.0     # Median sigma clipping level
+    parms["mednTimeWind"] = 1.0      # Median window width in min for median flagging
+    parms["mednAvgTime"]  = 10.0/60. # Median Averaging time in min
+    parms["mednAvgFreq"]  = 0        # Median 1=>avg chAvg chans, 2=>avg all chan, 3=> avg chan and IFs
+    parms["mednChAvg"]    = 1        # Median number of channels to average
+
     # Apply phase cal corrections?
     parms["doPCcor"] =  True            # Apply PC table?
     parms["doPCPlot"] = True            # Plot results?
@@ -188,10 +196,10 @@ def VLBAInitContParms():
     parms["avgPol"]    =     True       # Average poln in self cal?
     parms["avgIF"]     =     False      # Average IF in self cal?
     parms["maxPSCLoop"] =  6            # Max. number of phase self cal loops
-    parms["minFluxPSC"] =  0.1          # Min flux density peak for phase self cal
+    parms["minFluxPSC"] =  0.05         # Min flux density peak for phase self cal
     parms["solPInt"]    =  None         # phase self cal solution interval (min)
-    parms["maxASCLoop"] =  1            # Max. number of phase self cal loops
-    parms["minFluxASC"] =  0.5          # Min flux density peak for amp+phase self cal
+    parms["maxASCLoop"] =  2            # Max. number of Amp+phase self cal loops
+    parms["minFluxASC"] =  0.2          # Min flux density peak for amp+phase self cal
     parms["solAInt"]    =  None         # amp+phase self cal solution interval (min)
     parms["nTaper"]     =  1            # Number of additional imaging multiresolution tapers
     parms["Tapers"]     =  [20.0,0.0]   # List of tapers in pixels
@@ -685,7 +693,8 @@ def VLBAFreqInfo(uv, restFreq, srcVel, err, FreqID=1, \
     # end VLBAFreqInfo
 
 def VLBAApplyCal(uv, err, SNver=0, CLin=0, CLout=0, maxInter=240.0, \
-                     logfile=None, check=False, debug=False):
+                 Sources=["    "], calSour=["    "], \
+                 logfile=None, check=False, debug=False):
     """
     Applies an SN table to a CL table and writes another
     
@@ -696,6 +705,8 @@ def VLBAApplyCal(uv, err, SNver=0, CLin=0, CLout=0, maxInter=240.0, \
     * SNver    = SN table to apply, 0=>highest
     * CLin     = input CL table, 0=>highest
     * CLout    = output CL table, 0=>create new
+    * Sources  = list of sources to calibrate 
+    * calSour  = list of calibrators
     * maxInter = Max time (min) over which to interpolate
     * logfile  = logfile for messages
     * check    = Only check script, don't execute tasks
@@ -733,6 +744,8 @@ def VLBAApplyCal(uv, err, SNver=0, CLin=0, CLout=0, maxInter=240.0, \
     clcal.solnVer  = SNver
     clcal.calIn    = CLin
     clcal.calOut   = CLout
+    clcal.Sources  = Sources
+    clcal.calSour  = calSour
     clcal.maxInter = maxInter
     clcal.taskLog  = logfile
     clcal.debug    = debug
@@ -2608,7 +2621,7 @@ def VLBADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
     snsmo.smoType    = 'VLBI'
     snsmo.smoFunc    = 'MWF '
     snsmo.smoParm    = [smoTime,smoTime,smoTime,smoTime,smoTime]
-    snsmo.doBlank    = True
+    snsmo.doBlank    = False      # Don't keep bad data
     snsmo.refAnt     = refAnts[0]
     snsmo.taskLog    = logfile
     snsmo.debug      = debug
@@ -2660,7 +2673,7 @@ def VLBADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
 
 def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0, 
     calSou=None,  CalModel=None, timeRange=[0.,0.], FreqID=1, doCalib=-1,
-    gainUse=0, minSNR=5.0, refAnt=0, doBand=-1, BPVer=0, flagVer=-1, 
+    gainUse=0, minSNR=5.0, minSumCC=0.0, refAnt=0, doBand=-1, BPVer=0, flagVer=-1, 
     doSNPlot=False, plotFile="./AmpCal.ps", nThreads=1, noScrat=[],
     logfile='', check=False, debug=False):
     """
@@ -2692,10 +2705,12 @@ def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0,
 
     * timeRange  = timerange of data to use
     * solInt     = Calib solution interval (min)
-    * smoTimeA   = Amplitude Smoothing time applied to SN table (min)
-    * smoTimeP   = Phase Smoothing time applied to SN table (min)
+    * smoTimeA   = Amplitude Smoothing time applied to SN table (hr)
+    * smoTimeP   = Phase Smoothing time applied to SN table (hr)
     * FreqID     = Frequency group identifier
     * minSNR     = minimum acceptable SNR in Calib
+    * minSumCC   = minimum acceptable Sum of CLEAN components on an image
+    *              If less than this, Calib is not run
     * refAnt     = Reference antenna
     * doCalib    = Apply calibration table
     * gainUse    = CL/SN table to apply
@@ -2741,15 +2756,22 @@ def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0,
     else:
         calsou = calSou[:] # copy
     # Loop
+    noCalList = []
     for cal in calsou:
         logger.info("Determining calibration solutions for " + cal ) 
         calib.Sources = [cal]
+        noCal = False    # Until shown otherwise
         # Get model details
         if CalModel and calib.Sources[0] in CalModel:
             Model = CalModel[calib.Sources[0]]
             if Model["image"]:
                 if not check:
                     set2name(Model["image"], calib)
+                    # Check sum of CCs
+                    SumCC = VLBAGetSumCC (Model["image"],err)
+                    noCal = SumCC < minSumCC
+                    if noCal:
+                        noCalList.append(cal)
             if "nfield" in Model:
                 calib.nfield    = Model["nfield"]
             calib.nfield    = max (1, calib.nfield)
@@ -2779,13 +2801,15 @@ def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0,
             calib.in2Seq    = 0
             calib.nfield    = 0
             calib.modelFlux = 0.0
+        if noCal:
+            logger.warn("Source "+calib.Sources[0]+" not Amp calibrated, sumCC too low ="+str(SumCC))
         if debug:
             calib.prtLv = 2
             calib.i
             calib.debug = debug
         # Trap failure
         try:
-            if not check:
+            if (not check) and (not noCal):
                 calib.g
         except Exception, exception:
             print exception
@@ -2808,6 +2832,34 @@ def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0,
         printMess(mess, logfile)
         return 1
 
+    # Clip amp values out of range
+    logger.info("Drop high and low amplitudes: [0.35-3.0] OK")
+    SNver = uv.GetHighVer("AIPS SN")
+    sncor = ObitTask.ObitTask("SNCor")
+    if not check:
+        setname(uv, sncor)
+    sncor.solnVer    = SNver
+    sncor.corMode    = 'CLPA'
+    sncor.SNCParm    = [0.35,3.0]
+    sncor.taskLog    = logfile
+    sncor.debug      = debug
+    if debug:
+        sncor.i
+    mess = "VLBAAmpCal: SNCor SN "+str(sncor.solnVer)+" "+str(sncor.SNCParm[0:2])
+    printMess(mess, logfile)
+    # Trap failure
+    try:
+        if not check:
+            sncor.g
+    except Exception, exception:
+        print exception
+        mess = "SNCor Failed retCode="+str(sncor.retCode)
+        printMess(mess, logfile)
+        return 1
+    else:
+        pass
+    # End SNCor
+
     # Smooth
     SNver = uv.GetHighVer("AIPS SN")
     snsmo = ObitTask.ObitTask("SNSmo")
@@ -2820,7 +2872,7 @@ def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0,
     snsmo.smoParm    = [smoTimeA,smoTimeP]
     snsmo.clipSmo    = [smoTimeA,smoTimeP]
     snsmo.clipParm   = [2.0]   # May be too conservative
-    snsmo.doBlank    = True
+    snsmo.doBlank    = False   # Don't keep bad data
     snsmo.refAnt     = refAnt
     snsmo.taskLog    = logfile
     snsmo.debug      = debug
@@ -2843,6 +2895,7 @@ def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0,
 
     # Plot fits?
     if doSNPlot:
+        # DEBUG retCode = VLBAPlotTab(uv, "SN", SNver, err, nplots=6, optype="AMP", \
         retCode = VLBAPlotTab(uv, "SN", SNver+1, err, nplots=6, optype="AMP", \
                                   logfile=logfile, check=check, debug=debug)
         if retCode!=0:
@@ -2854,10 +2907,26 @@ def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0,
         if retCode!=0:
             return retCode
         
-    # Apply to CL table
-    retCode = VLBAApplyCal(uv, err, maxInter=600.0, logfile=logfile, check=check,debug=debug)
-    if retCode!=0:
-        return retCode
+    # Apply to CL table, self cal with SNver for calibrators, use SNVer+1 for others
+    CLver = uv.GetHighVer("AIPS CL")
+    slist = VLBAAllSource(uv, err,logfile=logfile,check=check,debug=debug)
+    for sour in slist:
+        if (sour in calsou) and not (sour in noCalList):
+            # Calibrator
+            snv = SNver
+            cs = sour
+        else:
+            # Non calibrator
+            snv = SNver+1
+            cs = "    "
+        retCode = VLBAApplyCal(uv, err, maxInter=600.0, logfile=logfile, \
+                               SNver=snv, CLin=CLver, CLout=CLver+1, \
+                               Sources=[sour], calSour=[cs], \
+                               check=check,debug=debug)
+        if retCode!=0:
+            return retCode
+    # End loop applying calibration
+            
     return 0
     # end VLBAAmpCal
 
@@ -3042,7 +3111,7 @@ def VLBAPhaseCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0/60.0, doSmo
         snsmo.smoFunc    = 'MWF '
         snsmo.smoParm    = [smoTimeA,smoTimeP]
         snsmo.clipSmo    = [smoTimeA,smoTimeP]
-        snsmo.doBlank    = True
+        snsmo.doBlank    = False
         snsmo.refAnt     = refAnt
         snsmo.taskLog    = logfile
         snsmo.debug      = debug
@@ -3078,7 +3147,7 @@ def VLBAPhaseCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0/60.0, doSmo
             return retCode
         
     # Apply to CL table
-    retCode = VLBAApplyCal(uv, err, maxInter=600.0, logfile=logfile, check=check,debug=debug)
+    retCode = VLBAApplyCal(uv, err, maxInter=3.0, logfile=logfile, check=check,debug=debug)
     if retCode!=0:
         return retCode
     return 0
@@ -5322,7 +5391,7 @@ def VLBAGetSumCC(image, err, CCver=1,
     image.Open(Image.READONLY, err)
     image.Close(err)
     
-    image.Header(err) # DEBUG STATEMENT
+    #image.Header(err) # DEBUG STATEMENT
     CCTab = image.NewTable(Table.READONLY, "AIPS CC", CCver, err)
     if err.isErr:
         return 0.0

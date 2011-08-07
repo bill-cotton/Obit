@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2010                                          */
+/*;  Copyright (C) 2005-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -74,7 +74,7 @@ typedef struct {
   /* Work array at least the size of ntime */
   ofloat* work;
   /* [out] number of baselines/correlations with valid data */
-  olong number; 
+  ollong number; 
 } UVMednEditFuncArg;
 
 /*---------------Private function prototypes----------------*/
@@ -104,18 +104,18 @@ static void EditFDChanMask(olong numChan, olong numIF, olong numPol, olong *chan
 			   gboolean *chanMask);
 
 /** Private: Average for FD, get RMSes  */
-static void EditFDAvg(olong numChan, olong numIF, olong numPol, olong numBL, olong *count, 
+static void EditFDAvg(olong numChan, olong numIF, olong numPol, olong numBL, ollong *count, 
 		      ofloat *sumA, ofloat *sumA2, ofloat maxAmp, 
 		      ofloat maxV, olong *corV);
 
 /** Private: Fit baselines  for FD to averages, subtract */
 static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL, 
-			   olong *count, ofloat *avg, ofloat *RMS, ofloat *sigma,
+			   ollong *count, ofloat *avg, ofloat *RMS, ofloat *sigma,
 			   olong widMW, gboolean *chanMask, ObitErr* err);
 	    
 /** Private: Do editing for FD */
 static void EditFDEdit(olong numChan, olong numIF, olong numPol, olong numBL, 
-		       olong *count, ofloat *avg, ofloat *RMS, ofloat *sigma,
+		       ollong *count, ofloat *avg, ofloat *RMS, ofloat *sigma,
 		       ofloat *maxRMS, ofloat maxRes, ofloat maxResBL, 
 		       gboolean *chanMask, gboolean doMW);
 
@@ -130,11 +130,11 @@ static void EditFDBLFit (ofloat* x, ofloat* y, gboolean *m, olong ndata,
 			 ofloat *a, ofloat *b);
 
 /** Private: Determine deviations from Median */
-static olong MedianDev (ofloat *amps, olong itime, ofloat *times,
-			olong numBL, olong ncorr, olong numTime, olong ntime,
-			ofloat alpha, ofloat *devs, 
-			ofloat *work, olong nThread, UVMednEditFuncArg** args,
-			ObitErr *err);
+static ollong MedianDev (ofloat *amps, olong itime, ofloat *times,
+			 olong numBL, olong ncorr, olong numTime, olong ntime,
+			 ofloat alpha, ofloat *devs, 
+			 ofloat *work, olong nThread, UVMednEditFuncArg** args,
+			 ObitErr *err);
 
 /** Private: Return single uv vis with buffered read */
 static ObitIOCode ReadOne (ObitUV *inUV, gboolean doCalSelect, ofloat** Buffer, 
@@ -149,13 +149,13 @@ static ofloat MedianLevel (olong n, ofloat *value, ofloat alpha);
 static ofloat MedianSigma (olong n, ofloat *value, ofloat mean, ofloat alpha);
 
 /** Private: Median flagging */
-static olong MedianFlag (ofloat *devs, ofloat flagSig, 
-			olong numBL, olong numCorr, gboolean allFlag,
-			ofloat time, ofloat timeInt,
-			olong *BLAnt1, olong *BLAnt2, 
-			olong *Chan, olong *IFs, olong *Stoke,
-			ObitTableFG *FGtab, ObitTableFGRow *FGRow, 
-			ObitErr *err);
+static ollong MedianFlag (ofloat *devs, ofloat flagSig, 
+			  olong numBL, olong numCorr, gboolean allFlag,
+			  ofloat time, ofloat timeInt,
+			  olong *BLAnt1, olong *BLAnt2, 
+			  olong *Chan, olong *IFs, olong *Stoke,
+			  ObitTableFG *FGtab, ObitTableFGRow *FGRow, 
+			  ObitErr *err);
 
 /** Private: Get array of channel ranges for median flagging */
 static olong* medianChan (ObitUVDesc *inDesc, ObitUVDesc *outDesc, olong begChan);
@@ -215,7 +215,7 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitTableFGRow *row=NULL;
   gboolean doCalSelect, doHiEdit;
   olong i, j, k, jj, kk, firstVis, startVis, suba, iFGRow, ver;
-  olong countAll, countBad;
+  ollong countAll, countBad;
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
@@ -702,8 +702,8 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   if (err->error)  Obit_traceback_msg (err, routine, inUV->name);
 
   /* Give report */
-  Obit_log_error(err, OBIT_InfoErr, "EditTD: flag %d of %d vis/interval= %5.1f percent",
-		 countBad, countAll, 100.0*(ofloat)countBad/((ofloat)countAll));
+  Obit_log_error(err, OBIT_InfoErr, "EditTD: flag %lf of %lf vis/interval= %5.1lf percent",
+		 (odouble)countBad, (odouble)countAll, 100.0*(odouble)countBad/((odouble)countAll));
 
   return;
 } /* end  ObitUVEditTD */
@@ -743,7 +743,7 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitTableFGRow *row=NULL;
   gboolean doCalSelect;
   olong i, j, k, jj, kk, firstVis, startVis, suba, iFGRow, ver;
-  olong countAll, countBad;
+  ollong countAll, countBad;
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
@@ -1194,8 +1194,9 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   if (err->error)  Obit_traceback_msg (err, routine, inUV->name);
 
   /* Give report */
-  Obit_log_error(err, OBIT_InfoErr, "%s: flag %d of %d vis/interval= %5.1f percent",
-		 routine, countBad, countAll, 100.0*(ofloat)countBad/((ofloat)countAll));
+  Obit_log_error(err, OBIT_InfoErr, "%s: flag %lf of %lf vis/interval= %5.1lf percent",
+		 routine, (odouble)countBad, (odouble)countAll, 
+		 100.0*(odouble)countBad/((odouble)countAll));
 
   return;
 } /* end  ObitUVEditTDRMSAvg */
@@ -1235,7 +1236,7 @@ void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitTableFGRow *row=NULL;
   gboolean doCalSelect;
   olong i, j, k, jj, kk, firstVis, startVis, suba, iFGRow, ver;
-  olong countAll, countBad;
+  ollong countAll, countBad;
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
@@ -1690,8 +1691,9 @@ void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   if (err->error)  Obit_traceback_msg (err, routine, inUV->name);
 
   /* Give report */
-  Obit_log_error(err, OBIT_InfoErr, "%s: flag %d of %d vis/interval= %5.1f percent",
-		 routine, countBad, countAll, 100.0*(ofloat)countBad/((ofloat)countAll));
+  Obit_log_error(err, OBIT_InfoErr, "%s: flag %lf of %lf vis/interval= %5.1lf percent",
+		 routine, (odouble)countBad, (odouble)countAll, 
+		 100.0*(odouble)countBad/((odouble)countAll));
 
   return;
 } /* end  ObitUVEditTDRMSAvgVec */
@@ -1764,14 +1766,15 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   olong js, jf, jif, jbl, jndx, indx, kndx, jj,BIF, BChan;
   olong i, j, k, kk, itemp, lastSourceID, curSourceID, lastSubA;
   olong ant1, ant2, blindx, lastFQID=-1;
-  olong  countAll, countBad, nVisPIO, ver, firstVis, startVis, suba;
+  ollong  countAll, countBad, *count=NULL;
+  olong nVisPIO, ver, firstVis, startVis, suba;
   ofloat startTime, endTime, curTime, amp2, *Buffer;
   ofloat lastTime=-1.0, cbase;
   olong *corChan=NULL, *corIF=NULL, *corStok=NULL, *corV=NULL;
   gboolean *chanMask=NULL, done, gotOne, doMW;
   /* Accumulators per spectral channel/IF/poln/baseline */
   ofloat *sumA=NULL, *sumA2=NULL, *sigma=NULL;
-  olong *count=NULL, *blLookup=NULL, *BLAnt1=NULL, *BLAnt2=NULL;
+  olong *blLookup=NULL, *BLAnt1=NULL, *BLAnt2=NULL;
   olong defSel[] = {2,-10,1,0, 0,0,0,0};
   ofloat sec;
   gchar *tname, reason[25];
@@ -1891,7 +1894,7 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   sumA     = g_malloc0 (numChan*numPol*numIF*numBL*sizeof(ofloat));
   sumA2    = g_malloc0 (numChan*numPol*numIF*numBL*sizeof(ofloat));
   sigma    = g_malloc0 (numChan*numPol*numIF*numBL*sizeof(ofloat));
-  count    = g_malloc0 (numChan*numPol*numIF*numBL*sizeof(olong));
+  count    = g_malloc0 (numChan*numPol*numIF*numBL*sizeof(ollong));
   corChan  = g_malloc0 (ncorr * sizeof(olong));     /* Correlator Channel */
   corIF    = g_malloc0 (ncorr * sizeof(olong));     /* Correlator IF */
   corStok  = g_malloc0 (ncorr * sizeof(olong));     /* Correlator Stokes */
@@ -2172,8 +2175,9 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   if (err->error) Obit_traceback_msg (err, routine, inUV->name);
 
   /* Give report */
-  Obit_log_error(err, OBIT_InfoErr, "EditFD: flag %d of %d vis/interval= %5.1f percent",
-		 countBad, countAll, 100.0*(ofloat)countBad/((ofloat)countAll));
+  Obit_log_error(err, OBIT_InfoErr, "EditFD: flag %lf of %lf vis/interval= %5.1lf percent",
+		 (odouble)countBad, (odouble)countAll, 
+		 100.0*(odouble)countBad/((odouble)countAll));
 
   return;
 } /* end  ObitUVEditTD */
@@ -2214,7 +2218,7 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitTableFG *outFlag=NULL;
   ObitTableFGRow *row=NULL;
   olong i, j, k, jj, kk, firstVis, startVis, suba, iFGRow, ver;
-  olong countAll, countBad;
+  ollong countAll, countBad;
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
@@ -2700,8 +2704,9 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   g_free(BLAnt2);
 
   /* Give report */
-  Obit_log_error(err, OBIT_InfoErr, "Edit%c: flag %d of %d vis/interval= %5.1f percent",
-		 Stokes[0], countBad, countAll, 100.0*(ofloat)countBad/((ofloat)countAll));
+  Obit_log_error(err, OBIT_InfoErr, "Edit%c: flag %lf of %lf vis/interval= %5.1lf percent",
+		 Stokes[0], (odouble)countBad, (odouble)countAll, 
+		 100.0*(odouble)countBad/((odouble)countAll));
 
   return;
 } /* end  ObitUVEditStokes */
@@ -3337,7 +3342,8 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   olong flagTab, begIF, begChan; 
   gboolean doCalSelect;
   olong i, j, k, firstVis, startVis, suba, ver;
-  olong countAll, countBad, checked, nThread;
+  ollong checked, countAll, countBad;
+  olong nThread;
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
@@ -3793,11 +3799,12 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   if (err->error)  Obit_traceback_msg (err, routine, inUV->name);
 
   /* Give report */
-  Obit_log_error(err, OBIT_InfoErr, "%s: flag %d of %d vis/interval= %6.2f percent",
-		 routine, countBad, countAll, 100.0*(ofloat)countBad/((ofloat)countAll));
-  if ((100.0*(ofloat)checked/((ofloat)countAll)) < 0.3) {
-    Obit_log_error(err, OBIT_InfoWarn, "%s: Small fraction of data checked (%5.2f), is timeWind too short?",
-		 routine, (ofloat)checked/((ofloat)countAll));
+  Obit_log_error(err, OBIT_InfoErr, "%s: flag %lf of %lf vis/interval= %6.2lf percent",
+		 routine, (odouble)countBad, (odouble)countAll, 
+		 100.0*(odouble)countBad/((odouble)countAll));
+  if ((100.0*(odouble)checked/((odouble)countAll)) < 0.3) {
+    Obit_log_error(err, OBIT_InfoWarn, "%s: Small fraction of data checked (%5.2lf), is timeWind too short?",
+		 routine, (odouble)checked/((odouble)countAll));
   }
 
   return;
@@ -4306,7 +4313,7 @@ static void EditFDChanMask(olong numChan, olong numIF, olong numPol, olong *chan
  * \param corV    Entry per element of sumA which if >0 is the 0-rel index of the 
  *                corresponding Stokes RR for a Stokes LL measurement, used with maxV
  */
-static void EditFDAvg(olong numChan, olong numIF, olong numPol, olong numBL, olong *count, 
+static void EditFDAvg(olong numChan, olong numIF, olong numPol, olong numBL, ollong *count, 
 		      ofloat *sumA, ofloat *sumA2, ofloat maxAmp, 
 		      ofloat maxV, olong *corV)
 {
@@ -4324,7 +4331,7 @@ static void EditFDAvg(olong numChan, olong numIF, olong numPol, olong numBL, olo
 	    if (sumA[indx]>maxAmp) sumA[indx] = -9999.0; /* Too large? */
 	    if (count[indx]>1) { /* Enough data for RMS? */
 	      sumA2[indx] = sqrt((sumA2[indx]/count[indx] - sumA[indx]*sumA[indx])*
-				 ((ofloat)count[indx])/(count[indx]-1.0));
+				 ((odouble)count[indx])/(count[indx]-1.0));
 	    } else sumA2[indx] = 0.0;
 	  } /* end if data */
 	  indx++;
@@ -4376,7 +4383,7 @@ static void EditFDAvg(olong numChan, olong numIF, olong numPol, olong numBL, olo
  * \param err      Error stack, returns if not empty.
  */
 static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL, 
-			   olong *count, ofloat *avg, ofloat *RMS, ofloat *sigma,
+			   ollong *count, ofloat *avg, ofloat *RMS, ofloat *sigma,
 			   olong widMW, gboolean *chanMask, ObitErr* err)
 {
   olong js, jf, jif, jbl, jj, jjj, indx, jndx, cnt, half;
@@ -4494,7 +4501,7 @@ static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL
  * \param doMW     True if using median window baselines.
  */
 static void EditFDEdit(olong numChan, olong numIF, olong numPol, olong numBL, 
-		       olong *count, ofloat *avg, ofloat *RMS, ofloat *sigma,
+		       ollong *count, ofloat *avg, ofloat *RMS, ofloat *sigma,
 		       ofloat *maxRMS, ofloat maxRes, ofloat maxResBL, 
 		       gboolean *chanMask, gboolean doMW)
 {
@@ -4739,13 +4746,13 @@ static ofloat MedianUVInt (ObitUV *inUV, ObitErr *err)
  * \param err     Error stack, returns if  error.
  * \return number of baselines/correlations with valid data
  */
-static olong MedianDev (ofloat *amps, olong itime, ofloat *times,
-			olong numBL, olong numCorr, olong numTime, olong ntime,
-			ofloat alpha, ofloat *devs, 
-			ofloat *work, olong nThread, UVMednEditFuncArg** args,
-			ObitErr *err)
+static ollong MedianDev (ofloat *amps, olong itime, ofloat *times,
+			 olong numBL, olong numCorr, olong numTime, olong ntime,
+			 ofloat alpha, ofloat *devs, 
+			 ofloat *work, olong nThread, UVMednEditFuncArg** args,
+			 ObitErr *err)
 {
-  olong out = 0;
+  ollong out = 0;
   ObitThreadFunc func=(ObitThreadFunc)ThreadMedianDev;
   olong  i, nBLPerThread, loBL, hiBL;
   gboolean OK;
@@ -4951,15 +4958,15 @@ static ofloat MedianSigma (olong n, ofloat *value, ofloat mean, ofloat alpha)
  * \param err     Error stack, returns if error.
  * \return number of baselines/correlations flagged
  */
-static olong MedianFlag (ofloat *devs, ofloat flagSig, 
-			 olong numBL, olong numCorr, gboolean allChan,
-			 ofloat time, ofloat timeInt,
-			 olong *BLAnt1, olong *BLAnt2, 
-			 olong *Chan, olong *IFs, olong *Stoke,
-			 ObitTableFG *FGtab, ObitTableFGRow *FGrow, 
-			 ObitErr *err)
+static ollong MedianFlag (ofloat *devs, ofloat flagSig, 
+			  olong numBL, olong numCorr, gboolean allChan,
+			  ofloat time, ofloat timeInt,
+			  olong *BLAnt1, olong *BLAnt2, 
+			  olong *Chan, olong *IFs, olong *Stoke,
+			  ObitTableFG *FGtab, ObitTableFGRow *FGrow, 
+			  ObitErr *err)
 {
-  olong out = 0;
+  ollong out = 0;
   olong  iBL, icorr, indx, jndx, kndx;
   olong iFGRow;
   ofloat fblank = ObitMagicF();
@@ -5231,7 +5238,7 @@ static gpointer ThreadMedianDev (gpointer arg)
   ofloat* devs    = largs->devs;   
   ofloat* work    = largs->work;
 
-  olong out = 0;
+  ollong out = 0;
   olong  iBL, icorr, it, count, jndx, indx;
   ofloat delta, sigma, level, fblank = ObitMagicF();
 

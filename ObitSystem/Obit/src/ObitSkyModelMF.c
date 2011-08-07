@@ -1077,7 +1077,8 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
   konst = DG2RAD * 2.0 * G_PI;
   /* konst2 converts FWHM(deg) to coefficients for u*u, v*v, u*v */
   /*konst2 = DG2RAD * (G_PI / 1.17741022) * sqrt (0.5);*/
-  konst2 = DG2RAD * 2.15169;
+  /*konst2 = DG2RAD * 2.15169;*/
+  konst2 = DG2RAD * (G_PI / 1.17741022) * sqrt (0.5);
 
   /* Loop over images counting CCs */
   count = 0;
@@ -1292,6 +1293,24 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
     larray = CompArr->naxis[1];
     modType = (ObitSkyModelCompType)(parms[3]+0.5);  /* model type +20 */
     in->modType = MAX (in->modType, modType);  /* Need highest number */
+
+    /* DEBUG - replace model with fitted beam */
+    if(modType==OBIT_SkyModel_GaussModTSpec) {
+      parms[0] = imDesc->beamMaj;
+      parms[1] = imDesc->beamMin;
+      parms[2] = imDesc->beamPA;
+    }
+   /* DEBUG - replace data with single 20" Gaussian model 
+       in->doReplace = TRUE;
+       modType = in->modType = OBIT_SkyModel_GaussModTSpec;
+       larray = CompArr->naxis[1] = 1; 
+       parms[0] = 20.0 / 3600.0; 
+       parms[1] = 20.0 / 3600.0; 
+       parms[2] = 0.0;
+       array[0] = 1.0;
+       array[1] = array[2] = 0.0;
+       for (j=0; j<in->nSpec; j++ ) array[3+j] = 1.0;
+       END DEBUG */
 
     /* Gaussian parameters */
     if ((modType==OBIT_SkyModel_GaussMod) || (modType==OBIT_SkyModel_GaussModTSpec)) {
@@ -1804,13 +1823,13 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	  for (it=0; it<mcomp; it+=FazArrSize) {
 	    itcnt = 0;
 	    for (iComp=it; iComp<mcomp; iComp++) {
-	      if (ccData[0]!=0.0) {  /* valid? */
-		itab = 7 + in->specIndex[ifq];
+	      itab = 7 + in->specIndex[ifq];
+	      if (ccData[itab]!=0.0) {  /* valid? */
 		arg = freq2 * (ccData[4]*visData[ilocu]*visData[ilocu] +
 			       ccData[5]*visData[ilocv]*visData[ilocv] +
 			       ccData[6]*visData[ilocu]*visData[ilocv]);
 		if (arg<-1.0e-5) amp = ccData[itab] * exp (arg);
-		else amp = ccData[0];
+		else amp = ccData[itab];
 		tx = ccData[1]*(odouble)visData[ilocu];
 		ty = ccData[2]*(odouble)visData[ilocv];
 		tz = ccData[3]*(odouble)visData[ilocw];
