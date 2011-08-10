@@ -668,7 +668,7 @@ void ObitUVImagerWBGetInfo (ObitUVImager *inn, gchar *prefix, ObitInfoList *outL
 
 /**
  * Get number of parallel images
- * Target memory usage is 1 GByte if 32 bit, 5 GByte if 64.
+ * Target memory usage is 0.75 GByte if 32 bit, 3 GByte if 64.
  * \param inn     Object of interest.
  * \return the number of parallel images.
  */
@@ -696,8 +696,8 @@ olong ObitUVImagerWBGetNumPar (ObitUVImager *inn, ObitErr *err)
   bufSize = numVis*lenVis + imSize;  /* Approx memory (words) per parallel image */
   bufSize *= sizeof(ofloat);         /* to bytes */
 
-  if (sizeof(olong*)==4)      tSize = 1.0e9;  /* Use sizeof a pointer type to get 32/64 bit */
-  else if (sizeof(olong*)==8) tSize = 5.0e9;
+  if (sizeof(olong*)==4)      tSize = 0.75e9;  /* Use sizeof a pointer type to get 32/64 bit */
+  else if (sizeof(olong*)==8) tSize = 3.0e9;
   else                        tSize = 1.0e9;  /* Shouldn't happen */
   out = tSize / bufSize;  /* How many fit in a tSize? */
 

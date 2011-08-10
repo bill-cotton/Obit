@@ -514,7 +514,7 @@ gboolean ObitThreadIterator (ObitThread* in, olong nthreads,
 
   /* Make sure pool is using the correct function */
   if ((in->pool) && (((GFunc)in->pool->func)!=((GFunc)func))) {
-     g_thread_pool_free(in->pool, FALSE, TRUE);  /* Be patient */
+     g_thread_pool_free(in->pool, TRUE, TRUE);  
      in->pool = NULL;
      if (in->queue) g_async_queue_unref (in->queue);
      in->queue = NULL;
@@ -566,7 +566,9 @@ void ObitThreadPoolDone (ObitThread* in, gpointer arg)
 void ObitThreadPoolFree (ObitThread* in)
 {
 #ifdef OBIT_THREADS_ENABLED
-  if (in->pool)  g_thread_pool_free(in->pool, TRUE, TRUE); 
+  /*if (in->pool)  g_thread_pool_free(in->pool, TRUE, TRUE); 
+   Should have to wait here and it sometimes gets hung here */
+  if (in->pool)  g_thread_pool_free(in->pool, TRUE, FALSE); 
   in->pool = NULL;
   if (in->queue) g_async_queue_unref (in->queue);
   in->queue = NULL;
