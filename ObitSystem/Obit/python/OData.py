@@ -9,8 +9,11 @@ Most access to data is through functions as the volume of the data is
 inappropriate to be processed directly in python.
 
 OData Members with python interfaces:
-exist     - True if object previously existed prior to object creation
-List      - used to pass instructions to processing
+
+=====  =======================
+exist  True if object previously existed prior to object creation
+List   used to pass instructions to processing
+=====  =======================
 """
 # $Id$
 #-----------------------------------------------------------------------
@@ -87,9 +90,11 @@ class ODataPtr :
         return "<C OData instance> " + Obit.ODataGetName(self.me)
 
 class OData(ODataPtr):
-    """ Python ObitData (OData) class
+    """
+    Python ObitData (OData) class
     
     OData Members with python interfaces:
+
     InfoList  - used to pass instructions to processing
     """
     def __init__(self, name) :
@@ -100,9 +105,9 @@ class OData(ODataPtr):
             Obit.delete_OData(self.this)
     def cast(self, toClass):
         """ Casts object pointer to specified class
-        
-        self     = object whose cast pointer is desired
-        toClass  = Class string to cast to
+
+        * self     = object whose cast pointer is desired
+        * toClass  = Class string to cast to
         """
         # Get pointer with type of this class
         out =  self.me
@@ -111,10 +116,11 @@ class OData(ODataPtr):
     # end cast
             
     def Zap (self, err):
-        """ Delete underlying files and the basic object.
-        
-        self      = Python OData object
-        err       = Python Obit Error/message stack
+        """
+        Delete underlying files and the basic object.
+
+        * self      = Python OData object
+        * err       = Python Obit Error/message stack
         """
         inOData = self
         # Checks
@@ -129,12 +135,14 @@ class OData(ODataPtr):
         # end Zap
         
     def Open (self, access, err):
-        """ Open a OData data persistent (disk) form
+        """
+        Open a OData data persistent (disk) form
         
         Returns 0 on success
-        self   = Python OData object
-        access = access READONLY (1), WRITEONLY (2), READWRITE(3)
-        err    = Python Obit Error/message stack
+
+        * self   = Python OData object
+        * access = access READONLY (1), WRITEONLY (2), READWRITE(3)
+        * err    = Python Obit Error/message stack
         """
         inOData = self
         # Checks
@@ -150,11 +158,13 @@ class OData(ODataPtr):
         # end Open
         
     def Close (self, err):
-        """ Close a OData  persistent (disk) form
+        """
+        Close a OData  persistent (disk) form
         
         Returns 0 on success
-        self      = Python OData object
-        err       = Python Obit Error/message stack
+
+        * self      = Python OData object
+        * err       = Python Obit Error/message stack
         """
         inOData = self
         # Checks
@@ -170,11 +180,12 @@ class OData(ODataPtr):
         # end Close
         
     def History (self, access, err):
-        """ Return the associated History
+        """
+        Return the associated History
 
-        self      = Python OData object
-        access    = access code 1=READONLY, 2=WRITEONLY, 3=READWRITE
-        err       = Python Obit Error/message stack
+        * self      = Python OData object
+        * access    = access code 1=READONLY, 2=WRITEONLY, 3=READWRITE
+        * err       = Python Obit Error/message stack
         """
         out    = History.History("History", self.List, err)
         #out.me = newODataHistory (self, access, err)
@@ -185,13 +196,15 @@ class OData(ODataPtr):
         # end History
         
     def Stalin (self, startr, endr, err):
-        """ Edit history
+        """
+        Edit history
         
         return 0 on success, else failure
-        self   = input Python History
-        startr = first (1-rel) history record to delete
-        endr   = highest (1-rel) history record to delete, 0->to end
-        err    = Python Obit Error/message stack
+
+        * self   = input Python History
+        * startr = first (1-rel) history record to delete
+        * endr   = highest (1-rel) history record to delete, 0->to end
+        * err    = Python Obit Error/message stack
         """
         hi = self.History (READWRITE, err)
         return History.PEdit (hi, startr, endr, err)
@@ -201,29 +214,33 @@ class OData(ODataPtr):
                   numOrb=0, numPCal=2, numIF=1, numPol=1, \
                   numTerm=0, numChan=1, numTones=1, numBand=1, \
                   numTabs=1, npoly=1, numCoef=5, noParms=0):
-        """ Return the specified associated table
+        """
+        Return the specified associated table
         
         Table will be created if necessary.
-        self      = Python OData object
-        access    = access code 1=READONLY, 2=WRITEONLY, 3=READWRITE
-        tabType   = Table type, e.g. "AIPS AN"
-        tabVer    = table version, if > 0 on input that table returned,
-        if 0 on input, the highest version is used.
-        err       = Python Obit Error/message stack
+
+        * self      = Python OData object
+        * access    = access code 1=READONLY, 2=WRITEONLY, 3=READWRITE
+        * tabType   = Table type, e.g. "AIPS AN"
+        * tabVer    = table version, if > 0 on input that table returned,
+          if 0 on input, the highest version is used.
+        * err       = Python Obit Error/message stack
+
         Optional parameters, values only used if table created
-        numOrb    = Number of orbital parameters (AN)
-        numPCal   = Number of polarization parameters per IF (AN)
-        numIF     = Number of IFs (CD, FQ, SN, CL, BP, BL, SY, TY, CQ)
-        numPol    = Number of Stokes' (AN, SN, CD, CL, BP, BL, PC, SY, TY, GC, MC, IM)
-        numTerm   = Number of terms in model polynomial (CL)
-        numChan   = Number of spectral channels (BP)
-        numTomes  = Number of Phase cal tones (PC)
-        numTabs   = Number of ??? (GC)
-        numCoef   = Number of polynomial coefficents (NI)
-        numBand   = Number of Bands(?) (IM, GC)
-        npoly     = number of polynomial terms (IM)
-        noParms   = Number of parameters in CC table model
-        maxis1-5  = Dimension of axes of IDI data matrix
+
+        * numOrb    = Number of orbital parameters (AN)
+        * numPCal   = Number of polarization parameters per IF (AN)
+        * numIF     = Number of IFs (CD, FQ, SN, CL, BP, BL, SY, TY, CQ)
+        * numPol    = Number of Stokes' (AN, SN, CD, CL, BP, BL, PC, SY, TY, GC, MC, IM)
+        * numTerm   = Number of terms in model polynomial (CL)
+        * numChan   = Number of spectral channels (BP)
+        * numTomes  = Number of Phase cal tones (PC)
+        * numTabs   = Number of ??? (GC)
+        * numCoef   = Number of polynomial coefficents (NI)
+        * numBand   = Number of Bands(?) (IM, GC)
+        * npoly     = number of polynomial terms (IM)
+        * noParms   = Number of parameters in CC table model
+        * maxis1-5  = Dimension of axes of IDI data matrix
         """
         inOData = self
         # Checks
@@ -331,35 +348,41 @@ class OData(ODataPtr):
     # end NewTable
 
     def Header (self, err):
-        """ Write image header on output
+        """
+        Write image header on output
         
         Virtual
-        self   = Python Obit OData object
-        err    = Python Obit Error/message stack
+
+        * self   = Python Obit OData object
+        * err    = Python Obit Error/message stack
         """
         # Stubbed
         raise RuntimeError,"Header: Not Defined for virtual base class OData"
     # end Header
         
     def Info (self, err):
-        """ Get underlying data file info
-
+        """
+        Get underlying data file info
+        
         Virtual
-        self   = Python Obit OData object
-        err    = Python Obit Error/message stack
+
+        * self   = Python Obit OData object
+        * err    = Python Obit Error/message stack
         """
         # Stubbed
         raise RuntimeError,"Info: Not Defined for virtual base class OData"
         # end Info
         
     def ZapTable (self, tabType, tabVer, err):
-        """ Destroy specified table
+        """
+        Destroy specified table
         
         Returns 0 on success
-        self      = Python OData object
-        tabType   = Table type, e.g. "AIPS CC"
-        tabVer    = table version, integer
-        err       = Python Obit Error/message stack
+
+        * self      = Python OData object
+        * tabType   = Table type, e.g. "AIPS CC"
+        * tabVer    = table version, integer
+        * err       = Python Obit Error/message stack
         """
         inOData = self
         # Checks
@@ -382,11 +405,13 @@ class OData(ODataPtr):
         # end ZapTable
 
     def UpdateTables (self, err):
-        """ Update any disk resident structures about the current tables
+        """
+        Update any disk resident structures about the current tables
         
         Returns 0 on success
-        self      = Python Image object
-        err       = Python Obit Error/message stack
+
+        * self      = Python Image object
+        * err       = Python Obit Error/message stack
         """
         inOData = self
         # Checks
@@ -402,24 +427,28 @@ class OData(ODataPtr):
         # end UpdateTables
         
     def UpdateDesc (self, err, Desc=None):
-        """ Update any disk resident structures about descriptor
-
+        """
+        Update any disk resident structures about descriptor
+        
         Virtual
-        self      = Python OData object
-        err       = Python Obit Error/message stack
-        Desc      = Descriptor, if None then use current descriptor
+
+        * self      = Python OData object
+        * err       = Python Obit Error/message stack
+        * Desc      = Descriptor, if None then use current descriptor
                     Contents can be accessed throuth the Dict member
         """
         raise RuntimeError,"UpdateDesc: Not Defined for virtual base class OData"
         # end UpdateDesc
         
     def Scratch (self, err):
-        """ Create a scratch file suitable for accepting the data to be read from self
+        """
+        Create a scratch file suitable for accepting the data to be read from self
         
         A scratch OData is more or less the same as a normal OData except that it is
         automatically deleted on the final unreference.
-        self      = Python OData object
-        err       = Python Obit Error/message stack
+
+        * self      = Python OData object
+        * err       = Python Obit Error/message stack
         """
         ################################################################
         # Checks
@@ -439,17 +468,21 @@ class OData(ODataPtr):
     def Rename (self, err, newFITSName=None, \
                 newAIPSName="            ", \
                 newAIPSClass="      ", newAIPSSeq=0):
-        """ Rename underlying files
-        
-        self   = Python OData object
-        err       = Python Obit Error/message stack
+        """
+        Rename underlying files
+
+        * self   = Python OData object
+        * err       = Python Obit Error/message stack
+
         For FITS files:
-        newFITSName = new name for FITS file
+
+        * newFITSName = new name for FITS file
         
         For AIPS:
-        newAIPSName  = New AIPS Name (max 12 char) Blank => don't change.
-        newAIPSClass = New AIPS Class (max 6 char) Blank => don't change.
-        newAIPSSeq   = New AIPS Sequence number, 0 => unique value
+        
+        * newAIPSName  = New AIPS Name (max 12 char) Blank => don't change.
+        * newAIPSClass = New AIPS Class (max 6 char) Blank => don't change.
+        * newAIPSSeq   = New AIPS Sequence number, 0 => unique value
         """
         ################################################################
         # Checks
@@ -480,12 +513,14 @@ class OData(ODataPtr):
     # end PRename
 
     def Copy (self, outOData, err):
-        """ Make a deep copy of input object.
+        """
+        Make a deep copy of input object.
         
         Makes structure the same as self, copies data, tables
-        self   = Python OData object to copy
-        outOData  = Output Python OData object, must be defined
-        err       = Python Obit Error/message stack
+
+        * self   = Python OData object to copy
+        * outOData  = Output Python OData object, must be defined
+        * err       = Python Obit Error/message stack
         """
         ################################################################
         # Checks
@@ -502,12 +537,14 @@ class OData(ODataPtr):
     # end PCopy
 
     def Clone (self, outOData, err):
-        """ Make a copy of a object but do not copy the actual data
+        """
+        Make a copy of a object but do not copy the actual data
         
         This is useful to create an OData similar to the input one.
-        self   = Python OData object
-        outOData  = Output Python OData object, must be defined
-        err    = Python Obit Error/message stack
+
+        * self   = Python OData object
+        * outOData  = Output Python OData object, must be defined
+        * err    = Python Obit Error/message stack
         """
         ################################################################
         # Checks
@@ -524,9 +561,10 @@ class OData(ODataPtr):
     # end PClone
 
     def Dirty (self):
-        """ Mark OData as needing a header update to disk file
-        
-        self     = Python OData object
+        """
+        Mark OData as needing a header update to disk file
+
+        * self     = Python OData object
         """
         ################################################################
         # Checks
@@ -537,14 +575,15 @@ class OData(ODataPtr):
     # end PDirty
 
     def CopyTables (self, outOData, exclude, include, err):
-        """ Copy Tables from one OData to another
-        
-        self      = Python OData object
-        outOData     = Output Python OData object, must be defined
-        exclude   = list of table types to exclude (list of strings)
-        has priority
-        include   = list of table types to include (list of strings)
-        err       = Python Obit Error/message stack
+        """
+        Copy Tables from one OData to another
+
+        * self      = Python OData object
+        * outOData     = Output Python OData object, must be defined
+        * exclude   = list of table types to exclude (list of strings)
+          has priority
+        * include   = list of table types to include (list of strings)
+        * err       = Python Obit Error/message stack
         """
         ################################################################
         # Checks
@@ -563,12 +602,14 @@ class OData(ODataPtr):
     # end PCopyTables
 
     def FullInstantiate (self, access, err):
-        """ Fully instantiate an OData by opening and closing
+        """
+        Fully instantiate an OData by opening and closing
         
         return 0 on success, else failure
-        self   = Python OData object
-        access    = access code 1=READONLY, 2=WRITEONLY, 3=READWRITE
-        err       = Python Obit Error/message stack
+
+        * self   = Python OData object
+        * access    = access code 1=READONLY, 2=WRITEONLY, 3=READWRITE
+        * err       = Python Obit Error/message stack
         """
         ################################################################
         # Checks
@@ -584,10 +625,12 @@ class OData(ODataPtr):
     # end PfullInstantiate
 
     def GetHighVer (self, tabType):
-        """ Get highest version number of a specified Table
+        """
+        Get highest version number of a specified Table
                 returns highest tabType version number, 0 if none.
-        self   = Python OData object
-        tabType   = Table type, e.g. "OTFSoln"
+
+        * self   = Python OData object
+        * tabType   = Table type, e.g. "OTFSoln"
         """
         ################################################################
         # Checks
@@ -598,10 +641,12 @@ class OData(ODataPtr):
     # end PGetHighVer
 
     def IsScratch (self):
-        """ Tells if OData is a scratch object
+        """
+        Tells if OData is a scratch object
         
         return true, false (1,0)
-        self   = Python OData object
+
+        * self   = Python OData object
         """
         ################################################################
         # Checks
@@ -612,10 +657,12 @@ class OData(ODataPtr):
     # end PIsScratch
 
     def ODataIsA (self):
-        """ Tells if input really a Python Obit OData
+        """
+        Tells if input really a Python Obit OData
         
         return true, false (1,0)
-        self   = Python OData object
+
+        * self   = Python OData object
         """
         ################################################################
         # Allow derived types
@@ -623,10 +670,12 @@ class OData(ODataPtr):
     # end ODataIsA
 
     def GetName (self):
-        """ Tells OData object name (label)
+        """
+        Tells OData object name (label)
         
         returns name as character string
-        self   = Python OData object
+
+        * self   = Python OData object
         """
         ################################################################
         # Checks

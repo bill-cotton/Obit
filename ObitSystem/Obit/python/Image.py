@@ -9,12 +9,15 @@ There may be associated tables (e.g. "AIPS CC" tables).
 Both FITS and AIPS cataloged images are supported.
 
 Image Members with python interfaces:
-exist     - True if object previously existed prior to object creation
-InfoList  - used to pass instructions to processing
-ImageDesc - Astronomical labeling of the image Member Desc 
-FArray    - Container used for pixel data Member FArray
-PixBuf    - memory pointer into I/O Buffer
-Additional Functions are available in ImageUtil.
+
+==========  ==========================================================
+exist       True if object previously existed prior to object creation
+InfoList    used to pass instructions to processing
+ImageDesc   Astronomical labeling of the image Member Desc 
+FArray      Container used for pixel data Member FArray
+PixBuf      memory pointer into I/O Buffer
+Additional  Functions are available in ImageUtil.
+==========  ==========================================================
 """
 # Python/Obit Astronomical Image class
 # $Id$
@@ -57,8 +60,9 @@ import OData
 myClass = "ObitImage"
 
 class Image(OData.OData):
-    """ Python Obit Image class
-
+    """
+    Python Obit Image class
+    
     Additional Functions are available in ImageUtil.
     """
     def __init__(self, name) :
@@ -122,10 +126,11 @@ class Image(OData.OData):
         return "<C Image instance> " + Obit.ImageGetName(self.cast(myClass))
     
     def cast(self, toClass):
-        """ Casts object pointer to specified class
-        
-        self     = object whose cast pointer is desired
-        toClass  = Class string to cast to ("ObitImage")
+        """
+        Casts object pointer to specified class
+
+        * self     = object whose cast pointer is desired
+        * toClass  = Class string to cast to ("ObitImage")
         """
         # Get pointer with type of this class
         out = self.me
@@ -134,132 +139,153 @@ class Image(OData.OData):
     # end cast
             
     def Open (self, access, err, blc=None, trc=None):
-        """ Open an image persistent (disk) form
-        
-        self   = Python Image object
-        access    = access READONLY (1), WRITEONLY (2), READWRITE(3)
-        err       = Python Obit Error/message stack
-        blc       = if given and a list of integers (min 2) giving
-                    bottom left corner (1-rel) of subimage
-        trc       = if given and a list of integers (min 2) giving
-                    top right corner (1-rel) of subimage
+        """
+        Open an image persistent (disk) form
+
+        * self   = Python Image object
+        * access    = access READONLY (1), WRITEONLY (2), READWRITE(3)
+        * err       = Python Obit Error/message stack
+        * blc       = if given and a list of integers (min 2) giving
+          bottom left corner (1-rel) of subimage
+        * trc       = if given and a list of integers (min 2) giving
+          top right corner (1-rel) of subimage
         """
         POpen(self, access, err, blc=blc, trc=trc)
         # end Open
 
     def Close (self, err):
-        """ Close an image  persistent (disk) form
-        
-        self      = Python Image object
-        err       = Python Obit Error/message stack
+        """
+        Close an image  persistent (disk) form
+
+        * self      = Python Image object
+        * err       = Python Obit Error/message stack
         """
         PClose (self, err)
         # end Close
 
     def Read (self, err):
-        """ Read an image persistent (disk) form
+        """
+        Read an image persistent (disk) form
         
         The data to be read is specified in the InfoList mamber
         Uses FArray member as buffer.
-        self      = Python Image object
-        err       = Python Obit Error/message stack
+
+        * self      = Python Image object
+        * err       = Python Obit Error/message stack
         """
         PRead (self, err)
         # end Read
 
     def Write (self, err):
-        """ Write an image  persistent (disk) form
+        """
+        Write an image  persistent (disk) form
         
         The data to be written is specified in the InfoList member
         Uses FArray member as buffer.
-        self      = Python Image object
-        err       = Python Obit Error/message stack
+
+        * self      = Python Image object
+        * err       = Python Obit Error/message stack
         """
         PWrite (self, err)
         # end Write
     
     def ReadFA (self, array, err):
-        """ Read an image  persistent (disk) form to a specified FArray
-
+        """
+        Read an image  persistent (disk) form to a specified FArray
+        
         The data to be read is specified in the InfoList member
-        self   = Python Image object
-        array  = Python FArray to accept data
-        err    = Python Obit Error/message stack
+
+        * self   = Python Image object
+        * array  = Python FArray to accept data
+        * err    = Python Obit Error/message stack
         """
         PReadFA (self, array, err)
         # end ReadFA
 
     def WriteFA (self, array, err):
-        """ Write an image  persistent (disk) form from a specified FArray
-
+        """
+        Write an image  persistent (disk) form from a specified FArray
+        
         The data to be written is specified in the InfoList member
-        self      = Python Image object
-        array     = Python FArray to write
-        err       = Python Obit Error/message stack
+
+        * self      = Python Image object
+        * array     = Python FArray to write
+        * err       = Python Obit Error/message stack
         """
         PWriteFA (self, array, err)
         # end WriteFA
 
     def ReadPlane (self, err, blc=None, trc=None):
-        """ Read an image plane into the FArray 
+        """
+        Read an image plane into the FArray 
         
         Reads the plane specified by blc, trc
         into the FArray associated with the image
-        self     = Python Image object
-        err      = Python Obit Error/message stack
-        blc      = if given and a list of integers (min 2) giving
-                   bottom left corner (1-rel) of subimage
-        trc      = if given and a list of integers (min 2) giving
-                   top right corner (1-rel) of subimage
+
+        * self     = Python Image object
+        * err      = Python Obit Error/message stack
+        * blc      = if given and a list of integers (min 2) giving
+          bottom left corner (1-rel) of subimage
+        * trc      = if given and a list of integers (min 2) giving
+          top right corner (1-rel) of subimage
+
         returns Python  FArray from Image with data read
         """
         return PReadPlane (self, err, blc, trc)
         # end PReadPlane
    
     def WritePlane (self, imageData, err):
-        """ Write an image plane.
+        """
+        Write an image plane.
         
         Writes the plane specified by blc, trc on image infoList
         Checks if the current FArray on Image is compatable with
         imageData.
-        self      = Python Image object
-        imageData = Python FArray with data to write
-        err       = Python Obit Error/message stack
+
+        * self      = Python Image object
+        * imageData = Python FArray with data to write
+        * err       = Python Obit Error/message stack
         """
         PWritePlane (self, imageData, err)
         # end PWritePlane
 
     def GetPlane (self, array, plane, err):
-        """ Read an image persistent (disk) form to an (optional) specified FArray
+        """
+        Read an image persistent (disk) form to an (optional) specified FArray
         
         The data to be read is specified in the InfoList member as modified by plane
-        self   = Python Image object
-        array  = Python FArray to accept data, if None use inImage buffer
-        plane  = array of 5 integers giving (1-rel) pixel numbers
-        err    = Python Obit Error/message stack
+
+        * self   = Python Image object
+        * array  = Python FArray to accept data, if None use inImage buffer
+        * plane  = array of 5 integers giving (1-rel) pixel numbers
+        * err    = Python Obit Error/message stack
         """
         PGetPlane (self, array, plane, err)
         # end PGetPlane
 
     def PutPlane (self, array, plane, err):
-        """ Write an image persistent (disk) form from an (optional) specified FArray
+        """
+        Write an image persistent (disk) form from an (optional) specified FArray
         
         The data to be written is specified in the InfoList member as modified by plane
-        self   = Python Image object
-        array     = Python FArray to provide data, if None use inImage buffer
-        plane     = array of 5 integers giving (1-rel) pixel numbers
-        err       = Python Obit Error/message stack
+
+        * self      = Python Image object
+        * array     = Python FArray to provide data, if None use inImage buffer
+        * plane     = array of 5 integers giving (1-rel) pixel numbers
+        * err       = Python Obit Error/message stack
         """
         PPutPlane (self, array, plane, err)
         # end PutPlane
         
     def GetPixel (self, pixel, err):
-        """ Return the specified pixel value
+        """
+        Return the specified pixel value
         
         Return pixel value
-        self     = Image
-        pixel    = pixel coordinate (1-rel int) as [1,1,1,1,1,1,1]
-        err      = Obit error stack
+
+        * self     = Image
+        * pixel    = pixel coordinate (1-rel int) as [1,1,1,1,1,1,1]
+        * err      = Obit error stack
         """
         ################################################################
         # Checks
@@ -281,34 +307,40 @@ class Image(OData.OData):
     # end GetPixel
 
     def Copy (self, outImage, err):
-        """ Make a deep copy of input object.
+        """
+        Make a deep copy of input object.
         
         Makes structure the same as self, copies data, tables
-        self   = Python Image object to copy
-        outImage  = Output Python Image object, must be defined
-        err    = Python Obit Error/message stack
+
+        * self      = Python Image object to copy
+        * outImage  = Output Python Image object, must be defined
+        * err       = Python Obit Error/message stack
         """
         PCopy (self, outImage, err)
     # end Copy
 
     def Clone (self, outImage, err):
-        """ Make a copy of a object but do not copy the actual data
+        """
+        Make a copy of a object but do not copy the actual data
         
         This is useful to create an Image similar to the input one.
-        self   = Python Image object
-        outImage  = Output Python Image object, must be defined
-        err    = Python Obit Error/message stack
+
+        * self      = Python Image object
+        * outImage  = Output Python Image object, must be defined
+        * err       = Python Obit Error/message stack
         """
         PClone (self, outImage, err)
         # end Clone
 
     def Scratch (self, err):
-        """ Create a scratch file suitable for accepting the data to be read from self
+        """
+        Create a scratch file suitable for accepting the data to be read from self
         
         A scratch Image is more or less the same as a normal Image except that it is
         automatically deleted on the final unreference.
-        self      = Python Image object
-        err       = Python Obit Error/message stack
+
+        * self      = Python Image object
+        * err       = Python Obit Error/message stack
         """
         ################################################################
         # Checks
@@ -327,52 +359,59 @@ class Image(OData.OData):
     # end Scratch
 
     def Header (self, err):
-        """ Write image header on output
-        
-        self   = Python Obit Image object
-        err    = Python Obit Error/message stack
+        """
+        Write image header on output
+
+        * self   = Python Obit Image object
+        * err    = Python Obit Error/message stack
         """
         PHeader (self, err)
         # end Header
 
     def Info (self, err):
-        """ Get underlying data file info
-        
-        self   = Python Obit Image object
-        err    = Python Obit Error/message stack
+        """
+        Get underlying data file info
+
+        * self   = Python Obit Image object
+        * err    = Python Obit Error/message stack
         """
         PImageInfo(self, err)
         # end Info
         
     def UpdateDesc (self, err, Desc=None):
-        """ Update any disk resident structures about descriptor
-        
-        self      = Python Image object
-        err       = Python Obit Error/message stack
-        Desc      = Descriptor, if None then use current descriptor
-                    Contents can be accessed throuth the Dict member
+        """
+        Update any disk resident structures about descriptor
+
+        * self      = Python Image object
+        * err       = Python Obit Error/message stack
+        * Desc      = Descriptor, if None then use current descriptor
+          Contents can be accessed throuth the Dict member
         """
         PUpdateDesc (self, err, Desc=Desc)
         # end UpdateDesc
         
     def ImageIsA (self):
-        """ Tells if input really a Python Obit Image
+        """
+        Tells if input really a Python Obit Image
         
         return true, false (1,0)
-        self   = Python UV object
+
+        * self   = Python UV object
         """
         ################################################################
         # Allow derived types
         return Obit.ImageIsA(self.cast(myClass))
 
     def TVFit (self, disp, err, file=None):
-        """ Fit Gaussian models. setting initial model from the TV display
-
+        """
+        Fit Gaussian models. setting initial model from the TV display
+        
         Returns FitModel object after fitting
-        self      = Python Image object
-        disp      = Display to use to interactively set initial model
-        err       = Python Obit Error/message stack
-        file      = If given, the file to write the results to, else terminal
+
+        * self      = Python Image object
+        * disp      = Display to use to interactively set initial model
+        * err       = Python Obit Error/message stack
+        * file      = If given, the file to write the results to, else terminal
         """
         # Interactively set initial model
         fr = FitRegion.PSetup(self,disp,err)
@@ -394,22 +433,24 @@ class Image(OData.OData):
     def GaussFit (self, err, \
                   cen=None, dim=[10,10], x=[0.0], y=[0.0], flux=[100.0], gparm=[[3.,3.,0.]],\
                   file=None):
-        """ Fit Gaussian models, setting initial model from parameters
-
+        """
+        Fit Gaussian models, setting initial model from parameters
+        
         The initial model is defined by x,y,flux, gparm, all lists of the same dimension
         giving the location, fluxes and sizes of the initial models.
         Defaults OK for single source at reference pixel in image.
         Returns FitModel object after fitting
-        self      = Python Image object
-        err       = Python Obit Error/message stack
-        cen       = If given the 1-rel center pixel of the region to be fit
-                    If not given, the reference pixel of the image is used
-        dim       = dimension in pixels of the region to be fit
-        x         = offset in x (pixels) of initial Gaussians from cen
-        y         = offset in y (pixels) of initial Gaussians from cen
-        flux      = fluxes of initial Gaussians
-        gparm     = Initial Gaussian size [major, minor, PA] (pixel,pixel,deg)
-        file      = If given, the file to write the results to, else terminal
+
+        * self      = Python Image object
+        * err       = Python Obit Error/message stack
+        * cen       = If given the 1-rel center pixel of the region to be fit
+          If not given, the reference pixel of the image is used
+        * dim       = dimension in pixels of the region to be fit
+        * x         = offset in x (pixels) of initial Gaussians from cen
+        * y         = offset in y (pixels) of initial Gaussians from cen
+        * flux      = fluxes of initial Gaussians
+        * gparm     = Initial Gaussian size [major, minor, PA] (pixel,pixel,deg)
+        * file      = If given, the file to write the results to, else terminal
         """
         # Fitting region
         d = self.Desc.Dict
@@ -455,7 +496,8 @@ WRITEONLY = OData.WRITEONLY # 2
 READWRITE = OData.READWRITE # 3
 
 def ObitName(ObitObject):
-    """Return name of an Obit object or input if not an Obit Object
+    """
+    Return name of an Obit object or input if not an Obit Object
     """
     ################################################################
     out = ObitObject    # in case
@@ -474,9 +516,10 @@ def ObitName(ObitObject):
         
 
 def input(inputDict):
-    """ Print the contents of an input Dictionary
+    """
+    Print the contents of an input Dictionary
 
-    inputDict = Python Dictionary containing the parameters for a routine
+    * inputDict = Python Dictionary containing the parameters for a routine
     """
     ################################################################
     print 'Current values of entries'
@@ -492,16 +535,18 @@ def input(inputDict):
     # end input
 
 def newObit(name, filename, disk, exists, err):
-    """ Create and initialize an Image structure
-
+    """
+    Create and initialize an Image structure
+    
     Create, set initial access information (full image, plane at a time)
     and if exists verifies the file.
     Returns the Python Image object
-    name     = name desired for object (labeling purposes)
-    filename = name of FITS file
-    disk     = FITS directory number
-    exists   = if true then the file is opened and closed to verify
-    err      = Python Obit Error/message stack
+
+    * name     = name desired for object (labeling purposes)
+    * filename = name of FITS file
+    * disk     = FITS directory number
+    * exists   = if true then the file is opened and closed to verify
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     out = Image (name)
@@ -520,18 +565,20 @@ def newObit(name, filename, disk, exists, err):
 
     
 def newPFImage(name, filename, disk, exists, err, verbose=True):
-    """ Create and initialize an FITS based Image structure
-
+    """
+    Create and initialize an FITS based Image structure
+    
     Create, set initial access information (full image, plane at a time)
     and if exists verifies the file.
     isOK member set to indicate success
     Returns the Python Image object
-    name     = name desired for object (labeling purposes)
-    filename = name of FITS file
-    disk     = FITS directory number
-    exists   = if true then the file is opened and closed to verify
-    err      = Python Obit Error/message stack
-    verbose  = If true any give error messages, else suppress
+
+    * name     = name desired for object (labeling purposes)
+    * filename = name of FITS file
+    * disk     = FITS directory number
+    * exists   = if true then the file is opened and closed to verify
+    * err      = Python Obit Error/message stack
+    * verbose  = If true any give error messages, else suppress
     """
     ################################################################
     out = Image (name)
@@ -568,20 +615,22 @@ def newPFImage(name, filename, disk, exists, err, verbose=True):
 
     
 def newPAImage(name, Aname, Aclass, disk, seq, exists, err, verbose=False):
-    """ Create and initialize an AIPS based Image structure
-
+    """
+    Create and initialize an AIPS based Image structure
+    
     Create, set initial access information (full image, plane at a time)
     and if exists verifies the file.
     Returns the Python Image object
     isOK member set to indicate success
-    name     = name desired for object (labeling purposes)
-    Aname    = AIPS name of file
-    Aclass   = AIPS class of file
-    seq      = AIPS sequence number of file
-    disk     = FITS directory number
-    exists   = if true then the file is opened and closed to verify
-    err      = Python Obit Error/message stack
-    verbose  = If true any give error messages, else suppress
+
+    * name     = name desired for object (labeling purposes)
+    * Aname    = AIPS name of file
+    * Aclass   = AIPS class of file
+    * seq      = AIPS sequence number of file
+    * disk     = FITS directory number
+    * exists   = if true then the file is opened and closed to verify
+    * err      = Python Obit Error/message stack
+    * verbose  = If true any give error messages, else suppress
     """
     ################################################################
     out = Image (name)
@@ -638,17 +687,19 @@ def newPAImage(name, Aname, Aclass, disk, seq, exists, err, verbose=False):
 
     
 def newPACNO(disk, cno, exists, err, verbose=True):
-    """ Create and initialize an AIPS based Image structure
-
+    """
+    Create and initialize an AIPS based Image structure
+    
     Create, set initial access information (full image, plane at a time)
     and if exists verifies the file.
     Returns the Python Image object
     isOK member set to indicate success
-    disk     = AIPS directory number
-    cno      = AIPS catalog number
-    exists   = if true then the file is opened and closed to verify
-    err      = Python Obit Error/message stack
-    verbose  = If true any give error messages, else suppress
+
+    * disk     = AIPS directory number
+    * cno      = AIPS catalog number
+    * exists   = if true then the file is opened and closed to verify
+    * err      = Python Obit Error/message stack
+    * verbose  = If true any give error messages, else suppress
     """
     ################################################################
     out = Image ("AIPS Image")
@@ -698,16 +749,19 @@ def newPACNO(disk, cno, exists, err, verbose=True):
     
 # Image utilities
 def PReadPlane (inImage, err, blc=None, trc=None):
-    """ Read an image plane into the FArray 
-
+    """
+    Read an image plane into the FArray 
+    
     Reads the plane specified by blc, trc
     into the FArray associated with the image
-    inImage   = Python Image object
-    err       = Python Obit Error/message stack
-    blc       = if given and a list of integers (min 2) giving
-                bottom left corner (1-rel) of subimage
-    trc       = if given and a list of integers (min 2) giving
-                top right corner (1-rel) of subimage
+
+    * inImage   = Python Image object
+    * err       = Python Obit Error/message stack
+    * blc       = if given and a list of integers (min 2) giving
+      bottom left corner (1-rel) of subimage
+    * trc       = if given and a list of integers (min 2) giving
+      top right corner (1-rel) of subimage
+
     returns Python  FArray from Image with data read
     """
     ################################################################
@@ -727,14 +781,16 @@ def PReadPlane (inImage, err, blc=None, trc=None):
     # end PReadPlane
    
 def PWritePlane (Image, imageData, err):
-    """ Write an image plane.
-
+    """
+    Write an image plane.
+    
     Writes the plane specified by blc, trc on image infoList
     Checks if the current FArray on Image is compatable with
     imageData.
-    Image     = Python Image object
-    imageData = Python FArray with data to write
-    err       = Python Obit Error/message stack
+
+    * Image     = Python Image object
+    * imageData = Python FArray with data to write
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -757,34 +813,39 @@ def PWritePlane (Image, imageData, err):
     # end PWritePlane
 
 def PZap (inImage, err):
-    """ Delete underlying files and the basic object.
+    """
+    Delete underlying files and the basic object.
 
-    inImage   = Python Image object
-    err       = Python Obit Error/message stack
+    * inImage   = Python Image object
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     inImage.Zap(err)
     # end PZap
 
 def PScratch (inImage, err):
-    """ Create a scratch file suitable for accepting the data to be read from inImage
-
+    """
+    Create a scratch file suitable for accepting the data to be read from inImage
+    
     A scratch Image is more or less the same as a normal Image except that it is
     automatically deleted on the final unreference.
-    inImage   = Python Image object
-    err       = Python Obit Error/message stack
+
+    * inImage   = Python Image object
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     return inImage.Scratch(err)
     # end PScratch
 
 def PCopy (inImage, outImage, err):
-    """ Make a deep copy of input object.
-
+    """
+    Make a deep copy of input object.
+    
     Makes structure the same as inImage, copies data, tables
-    inImage   = Python Image object to copy
-    outImage  = Output Python Image object, must be defined
-    err       = Python Obit Error/message stack
+
+    * inImage   = Python Image object to copy
+    * outImage  = Output Python Image object, must be defined
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -801,12 +862,14 @@ def PCopy (inImage, outImage, err):
     # end PCopy
 
 def PClone (inImage, outImage, err):
-    """ Make a copy of a object but do not copy the actual data
-
+    """
+    Make a copy of a object but do not copy the actual data
+    
     This is useful to create an Image similar to the input one.
-    inImage   = Python Image object
-    outImage  = Output Python Image object, must be defined
-    err       = Python Obit Error/message stack
+
+    * inImage   = Python Image object
+    * outImage  = Output Python Image object, must be defined
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -823,13 +886,14 @@ def PClone (inImage, outImage, err):
     # end PClone
 
 def PClone2 (inImage1, inImage2, outImage, err):
-    """ Make a copy of a object but do not copy the actual data
+    """
+    Make a copy of a object but do not copy the actual data
 
-    inImage1  = Python Image object to clone
-    inImage2  = Python Image object whose geometry is to be used
-    outImage  = Output Python Image object, must be defined,
-                will be defined as Memory only
-    err       = Python Obit Error/message stack
+    * inImage1  = Python Image object to clone
+    * inImage2  = Python Image object whose geometry is to be used
+    * outImage  = Output Python Image object, must be defined,
+      will be defined as Memory only
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -849,12 +913,14 @@ def PClone2 (inImage1, inImage2, outImage, err):
     # end PClone2
 
 def PCloneMem (inImage, outImage, err):
-    """ Make a Memory only clone of an Image structure
-
+    """
+    Make a Memory only clone of an Image structure
+    
     This is useful for temporary structures
-    inImage   = Python Image object
-    outImage  = Output Python Image object, must be defined
-    err       = Python Obit Error/message stack
+
+    * inImage   = Python Image object
+    * outImage  = Output Python Image object, must be defined
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -872,17 +938,18 @@ def PCloneMem (inImage, outImage, err):
 
 def PCopyQuantizeFITS (inImage, outImage, err, fract=0.25, quant=None, \
                        inHistory=None):
-    """ Make a copy of an image quantizing to a 16 or 32 bit integer
+    """
+    Make a copy of an image quantizing to a 16 or 32 bit integer
         FITS image
 
-    inImage   = Python Image object
-    outImage  = Output Python Image object, must be defined
-                but not fully created
-    err       = Python Obit Error/message stack
-    fract     = quantization level as a fraction of the plane min. RMS
-    quant     = quantization level in image units, has precedence over fract
-                None or <= 0 => use fract.
-    inHistory = if given a History object to copy to the output FITS header
+    * inImage   = Python Image object
+    * outImage  = Output Python Image object, must be defined
+      but not fully created
+    * err       = Python Obit Error/message stack
+    * fract     = quantization level as a fraction of the plane min. RMS
+    * quant     = quantization level in image units, has precedence over fract
+      None or <= 0 => use fract.
+    * inHistory = if given a History object to copy to the output FITS header
     """
     ################################################################
     # Checks
@@ -927,13 +994,15 @@ def PCopyQuantizeFITS (inImage, outImage, err, fract=0.25, quant=None, \
 # end PCopyQuantizeFITS
 
 def PCompare (in1Image, in2Image, err, plane=[1,1,1,1,1]):
-    """ Compare a plane of two images
-
+    """
+    Compare a plane of two images
+    
     returns list [max. abs in1Image, max abs difference, RMS difference]
-    in1Image  = Python Image object
-    in2Image  = Python Image object, on output, the FArray contains the difference.
-    err       = Python Obit Error/message stack
-    plane     = plane to compare
+
+    * in1Image  = Python Image object
+    * in2Image  = Python Image object, on output, the FArray contains the difference.
+    * err       = Python Obit Error/message stack
+    * plane     = plane to compare
     """
     ################################################################
     # Checks
@@ -967,26 +1036,29 @@ def PCompare (in1Image, in2Image, err, plane=[1,1,1,1,1]):
 # end PCompare
 
 def PImageGetTable (inImage, access, tabType, tabVer, err):
-    """ Obsolete use PGetTable
+    """
+    Obsolete use PGetTable
     """
     return  PGetTable (inImage, access, tabType, tabVer, err)
 # end  PImageGetTable
 
 def PGetTable (inImage, access, tabType, tabVer, err,\
                noParms=0):
-    """ Return (create) the specified associated table
-
+    """
+    Return (create) the specified associated table
+    
     Specific table types are recognized and the appropriate constructor
     called, these may have additional parameters.  This allows creating
     new tables of the appropriate type.
     returns Python Obit Table
-    inImage   = Python Image object
-    access    = access code 1=READONLY, 2=WRITEONLY, 3=READWRITE
-    tabType   = Table type, e.g. "AIPS AN", or "OTFSoln"
-    tabVer    = table version, if > 0 on input that table returned,
-                if 0 on input, the highest version is used.
-    err       = Python Obit Error/message stack
-    noParms   = Number of parameters in CC table model
+
+    * inImage   = Python Image object
+    * access    = access code 1=READONLY, 2=WRITEONLY, 3=READWRITE
+    * tabType   = Table type, e.g. "AIPS AN", or "OTFSoln"
+    * tabVer    = table version, if > 0 on input that table returned,
+      if 0 on input, the highest version is used.
+    * err       = Python Obit Error/message stack
+    * noParms   = Number of parameters in CC table model
     """
     ################################################################
     return inImage.NewTable(access, tabType, tabVer, err, noParms=noParms)
@@ -994,10 +1066,11 @@ def PGetTable (inImage, access, tabType, tabVer, err,\
     
 
 def PHeader (inImage, err):
-    """ Print image descriptor
+    """
+    Print image descriptor
 
-    inImage   = Python Image object
-    err       = Python Obit Error/message stack
+    * inImage   = Python Image object
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # ObitTalk or AIPSImage data?
@@ -1073,15 +1146,16 @@ def PHeader (inImage, err):
     
 
 def POpen (inImage, access, err, blc=None, trc=None):
-    """ Open an image persistent (disk) form
+    """
+    Open an image persistent (disk) form
 
-    inImage   = Python Image object
-    access    = access READONLY (1), WRITEONLY (2), READWRITE(3)
-    err       = Python Obit Error/message stack
-    blc       = if given and a list of integers (min 2) giving
-                bottom left corner (1-rel) of subimage
-    trc       = if given and a list of integers (min 2) giving
-                top right corner (1-rel) of subimage
+    * inImage   = Python Image object
+    * access    = access READONLY (1), WRITEONLY (2), READWRITE(3)
+    * err       = Python Obit Error/message stack
+    * blc       = if given and a list of integers (min 2) giving
+      bottom left corner (1-rel) of subimage
+    * trc       = if given and a list of integers (min 2) giving
+      top right corner (1-rel) of subimage
     """
     ################################################################
     # Checks
@@ -1105,10 +1179,11 @@ def POpen (inImage, access, err, blc=None, trc=None):
     # end POpen
 
 def PClose (inImage, err):
-    """ Close an image  persistent (disk) form
+    """
+    Close an image  persistent (disk) form
 
-    inImage   = Python Image object
-    err       = Python Obit Error/message stack
+    * inImage   = Python Image object
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -1123,21 +1198,24 @@ def PClose (inImage, err):
     # end PClose
 
 def PDirty (inImage):
-    """ Mark Image as needing a header update to disk file
+    """
+    Mark Image as needing a header update to disk file
 
-    inImage     = Python Image object
+    * inImage     = Python Image object
     """
     ################################################################
     inImage.Dirty()
     # end PDirty
 
 def PRead (inImage, err):
-    """ Read an image  persistent (disk) form
-
+    """
+    Read an image  persistent (disk) form
+    
     The data to be read is specified in the InfoList mamber
     Uses FArray member as buffer.
-    inImage   = Python Image object
-    err       = Python Obit Error/message stack
+
+    * inImage   = Python Image object
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -1152,12 +1230,14 @@ def PRead (inImage, err):
     # end PRead
 
 def PWrite (inImage, err):
-    """ Write an image  persistent (disk) form
-
+    """
+    Write an image  persistent (disk) form
+    
     The data to be written is specified in the InfoList member
     Uses FArray member as buffer.
-    inImage   = Python Image object
-    err       = Python Obit Error/message stack
+
+    * inImage   = Python Image object
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -1172,12 +1252,14 @@ def PWrite (inImage, err):
     # end PWrite
     
 def PReadFA (inImage, array, err):
-    """ Read an image  persistent (disk) form to a specified FArray
-
+    """
+    Read an image  persistent (disk) form to a specified FArray
+    
     The data to be read is specified in the InfoList member
-    inImage   = Python Image object
-    array     = Python FArray to accept data
-    err       = Python Obit Error/message stack
+
+    * inImage   = Python Image object
+    * array     = Python FArray to accept data
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -1194,12 +1276,14 @@ def PReadFA (inImage, array, err):
     # end PReadFA
 
 def PWriteFA (inImage, array, err):
-    """ Write an image  persistent (disk) form from a specified FArray
-
+    """
+    Write an image  persistent (disk) form from a specified FArray
+    
     The data to be written is specified in the InfoList member
-    inImage   = Python Image object
-    array     = Python FArray to write
-    err       = Python Obit Error/message stack
+
+    * inImage   = Python Image object
+    * array     = Python FArray to write
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -1216,13 +1300,15 @@ def PWriteFA (inImage, array, err):
     # end PWriteFA
 
 def PGetPlane (inImage, array, plane, err):
-    """ Read an image  persistent (disk) form to an (optional) specified FArray
-
+    """
+    Read an image  persistent (disk) form to an (optional) specified FArray
+    
     The data to be read is specified in the InfoList member as modified by plane
-    inImage   = Python Image object
-    array     = Python FArray to accept data, if None use inImage buffer
-    plane     = array of 5 integers giving (1-rel) pixel numbers
-    err       = Python Obit Error/message stack
+
+    * inImage   = Python Image object
+    * array     = Python FArray to accept data, if None use inImage buffer
+    * plane     = array of 5 integers giving (1-rel) pixel numbers
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -1246,13 +1332,15 @@ def PGetPlane (inImage, array, plane, err):
     # end PGetPlane
 
 def PPutPlane (inImage, array, plane, err):
-    """ Write an image persistent (disk) form from an (optional) specified FArray
-
+    """
+    Write an image persistent (disk) form from an (optional) specified FArray
+    
     The data to be written is specified in the InfoList member as modified by plane
-    inImage   = Python Image object
-    array     = Python FArray to provide data, if None use inImage buffer
-    plane     = array of 5 integers giving (1-rel) pixel numbers
-    err       = Python Obit Error/message stack
+
+    * inImage   = Python Image object
+    * array     = Python FArray to provide data, if None use inImage buffer
+    * plane     = array of 5 integers giving (1-rel) pixel numbers
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -1276,49 +1364,53 @@ def PPutPlane (inImage, array, plane, err):
     # end PPutPlane
 
 def PZapTable (inImage, tabType, tabVer, err):
-    """ Destroy specified table
+    """
+    Destroy specified table
 
-    inImage   = Python Image object
-    tabType   = Table type, e.g. "AIPS CC"
-    tabVer    = table version, integer
-    err       = Python Obit Error/message stack
+    * inImage   = Python Image object
+    * tabType   = Table type, e.g. "AIPS CC"
+    * tabVer    = table version, integer
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     inImage.ZapTable (tabType, tabVer, err)
     # end PZapTable
 
 def PCopyTables (inImage, outImage, exclude, include, err):
-    """ Copy Tabeles from one image to another
+    """
+    Copy Tabeles from one image to another
 
-    inImage   = Python Image object
-    outImage  = Output Python Image object, must be defined
-    exclude   = list of table types to exclude (list of strings)
-                has priority
-    include   = list of table types to include (list of strings)
-    err       = Python Obit Error/message stack
+    * inImage   = Python Image object
+    * outImage  = Output Python Image object, must be defined
+    * exclude   = list of table types to exclude (list of strings)
+      has priority
+    * include   = list of table types to include (list of strings)
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     inImage.CopyTables (outImage, exclude, include, err)
     # end PCopyTables
 
 def PUpdateTables (inImage, err):
-    """ Update any disk resident structures about the current tables
+    """
+    Update any disk resident structures about the current tables
 
-    inImage   = Python Image object
-    err       = Python Obit Error/message stack
+    * inImage   = Python Image object
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     inImage.UpdateTables (err)
     # end PUpdateTables
 
 def PUpdateDesc (inImage, err, Desc=None):
-    """ Update external representation of descriptor
+    """
+    Update external representation of descriptor
 
-    inImage   = Python Image object
-    err       = Python Obit Error/message stack
-    Desc      = Descriptor, if None then use current descriptor
-                Contents can be accessed throuth the Dict member
-   """
+    * inImage   = Python Image object
+    * err       = Python Obit Error/message stack
+    * Desc      = Descriptor, if None then use current descriptor
+      Contents can be accessed throuth the Dict member
+    """
     ################################################################
      # Checks
     if not inImage.ImageIsA():
@@ -1337,11 +1429,13 @@ def PUpdateDesc (inImage, err, Desc=None):
     # end PUpdateDesc
 
 def PImageInfo (inImage, err):
-    """ Get file info for extant uv data object
-
+    """
+    Get file info for extant uv data object
+    
     Fills in information on object, useful for scratch files
-    inImage = Python Image object
-    err     = Python Obit Error/message stack
+
+    * inImage = Python Image object
+    * err     = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -1375,12 +1469,14 @@ def PImageInfo (inImage, err):
     # end PImageInfo
 
 def PFullInstantiate (inImage, access, err):
-    """ Fully instantiate an Image by opening and closing
-
+    """
+    Fully instantiate an Image by opening and closing
+    
     return 0 on success, else failure
-    inImage   = Python Image object
-    access    = access code 1=READONLY, 2=WRITEONLY, 3=READWRITE
-    err       = Python Obit Error/message stack
+
+    * inImage   = Python Image object
+    * access    = access code 1=READONLY, 2=WRITEONLY, 3=READWRITE
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -1396,12 +1492,14 @@ def PFullInstantiate (inImage, access, err):
     # end PFullInstantiate
 
 def PFArray2Image (inArray, outImage, err):
-    """ Attach an FArray to an image and write it
-
+    """
+    Attach an FArray to an image and write it
+    
     Very rudimentary header attached
-    inArray   = Python Image object
-    outImage  = Python Image to write
-    err       = Python Obit Error/message stack
+
+    * inArray   = Python Image object
+    * outImage  = Python Image to write
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -1433,15 +1531,17 @@ def PFArray2Image (inArray, outImage, err):
     # end PFArray2Image
 
 def PFArray2FITS (inArray, outFile, err, outDisk=1, oDesc=None ):
-    """ Write an FArray to a FITS image
-
+    """
+    Write an FArray to a FITS image
+    
     Very rudimentary header attached
     Returns image object
-    inArray   = Python FArray object
-    outFile   = Name of FITS file
-    outDisk   = FITS disk number
-    oDesc     = None or ImageDescriptor to be written
-    err       = Python Obit Error/message stack
+
+    * inArray   = Python FArray object
+    * outFile   = Name of FITS file
+    * outDisk   = FITS disk number
+    * oDesc     = None or ImageDescriptor to be written
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -1483,14 +1583,16 @@ def PFArray2FITS (inArray, outFile, err, outDisk=1, oDesc=None ):
     # end PFArray2FITS
 
 def PSwapAxis (inImage, err, ax1=3, ax2=4):
-    """ Swap axes on an image
-
+    """
+    Swap axes on an image
+    
     The order of two adjacent axes may be swapped if the dimensionality
     of at least one of them is 1
-    inImage  = Image whose axes are to be swapped
-    err      = Python Obit Error/message stack
-    ax1      = first (1-rel) axis number
-    ax2      = second (1-rel) axis number
+
+    * inImage  = Image whose axes are to be swapped
+    * err      = Python Obit Error/message stack
+    * ax1      = first (1-rel) axis number
+    * ax2      = second (1-rel) axis number
     """
     ################################################################
     # Checks
@@ -1521,20 +1623,24 @@ def PSwapAxis (inImage, err, ax1=3, ax2=4):
     # End  PSwapAxis
     
 def PGetList (inImage):
-    """ Return the member InfoList
-
+    """
+    Return the member InfoList
+    
     returns InfoList
-    inImage   = Python Image object
+
+    * inImage   = Python Image object
     """
     ################################################################
     return inImage.List
     # end PGetList
 
 def PGetTableList (inImage):
-    """ Return the member tableList
-
+    """
+    Return the member tableList
+    
     returns tableList
-    inImage   = Python Image object
+
+    * inImage   = Python Image object
     """
     ################################################################ 
     return inImage.TableList
@@ -1542,21 +1648,24 @@ def PGetTableList (inImage):
 
 
 def PGetDesc (inImage):
-    """ Return the member ImageDesc
-
+    """
+    Return the member ImageDesc
+    
     returns ImageDesc as a Python Dictionary
-    inImage   = Python Image object
+
+    * inImage   = Python Image object
     """
     ################################################################
     return inImage.Desc
     # end PGetDesc
 
 def PUpdateDesc (inImage, err, Desc=None):
-    """ Update external representation of descriptor
+    """
+    Update external representation of descriptor
 
-    inImage = Python Image object
-    err     = Python Obit Error/message stack
-    Desc    = Image descriptor, if None then use current descriptor
+    * inImage = Python Image object
+    * err     = Python Obit Error/message stack
+    * Desc    = Image descriptor, if None then use current descriptor
     """
     ################################################################
      # Checks
@@ -1579,10 +1688,12 @@ def PUpdateDesc (inImage, err, Desc=None):
     # end PUpdateDesc
 
 def PGetFArray (inImage):
-    """ Return FArray used to buffer Image data
-
+    """
+    Return FArray used to buffer Image data
+    
     returns FArray with image pixel data
-    inImage   = Python Image object
+
+    * inImage   = Python Image object
     """
     ################################################################
      # Checks
@@ -1595,10 +1706,11 @@ def PGetFArray (inImage):
     # end PGetFArray
 
 def PSetFArray (inImage, array):
-    """ Replace the FArray on an Image
+    """
+    Replace the FArray on an Image
 
-    inImage   = Python Image object
-    array     = Python FArray to attach
+    * inImage   = Python Image object
+    * array     = Python FArray to attach
     """
     ################################################################
     # Checks
@@ -1611,19 +1723,22 @@ def PSetFArray (inImage, array):
     # end PSetFArray
 
 def PGetPixBuf (inImage):
-    """ Return python memory buffer for pixel array in memory
+    """
+    Return python memory buffer for pixel array in memory
 
-    inImage   = Python Image object
+    * inImage   = Python Image object
     """
     ################################################################
     return inImage.PixBuf
     # end PGetPixBuf
 
 def PGetBeam (inImage):
-    """ Return Beam attached to Image
-
+    """
+    Return Beam attached to Image
+    
     returns Beam with image pixel data
-    inImage   = Python Image object
+
+    * inImage   = Python Image object
     """
     ################################################################
      # Checks
@@ -1636,10 +1751,11 @@ def PGetBeam (inImage):
     # end PGetBeam
 
 def PSetBeam (inImage, beam):
-    """ Replace the Beam attached to an Image
+    """
+    Replace the Beam attached to an Image
 
-    inImage   = Python Image object
-    beam      = Python Beam Image to attach
+    * inImage   = Python Image object
+    * beam      = Python Beam Image to attach
     """
     ################################################################
     # Checks
@@ -1652,31 +1768,37 @@ def PSetBeam (inImage, beam):
     # end PSetBeam
 
 def PGetHighVer (inImage, tabType):
-    """ Get highest version number of a specified Table
-
+    """
+    Get highest version number of a specified Table
+    
     returns highest tabType version number, 0 if none.
-    inImage   = Python Image object
-    tabType   = Table type, e.g. "OTFSoln"
+
+    * inImage   = Python Image object
+    * tabType   = Table type, e.g. "OTFSoln"
     """
     ################################################################
     return inImage.GetHighVer(tabType)
     # end PGetHighVer
 
 def PIsScratch (inImage):
-    """ Tells if Image is a scratch object
-
+    """
+    Tells if Image is a scratch object
+    
     return true, false (1,0)
-    inImage   = Python Image object
+
+    * inImage   = Python Image object
     """
     ################################################################
     return inImage.IsScratch ()
     # end PIsScratch
 
 def PIsA (inImage):
-    """ Tells if input really a Python Obit Image
-
+    """
+    Tells if input really a Python Obit Image
+    
     return True, False (1,0)
-    inImage   = Python Image object
+
+    * inImage   = Python Image object
     """
     ################################################################
     try:
@@ -1686,11 +1808,13 @@ def PIsA (inImage):
     # end PIsA
 
 def PUnref (inImage):
-    """ Decrement reference count
-
+    """
+    Decrement reference count
+    
     Decrement reference count which will destroy object if it goes to zero
     Python object stays defined.
-    inImage   = Python Image object
+
+    * inImage   = Python Image object
     """
     ################################################################
      # Checks
@@ -1701,10 +1825,12 @@ def PUnref (inImage):
     # end PUnref
 
 def PGetName (inImage):
-    """ Tells Image object name (label)
-
+    """
+    Tells Image object name (label)
+    
     returns name as character string
-    inImage   = Python Image object
+
+    * inImage   = Python Image object
     """
     ################################################################
     return inImage.GetName()

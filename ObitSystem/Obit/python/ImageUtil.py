@@ -33,28 +33,38 @@ import Obit, Image, ImageDesc, FArray, UV, Table, TableUtil, History, OErr
 import OSystem
 
 def PICreateImage (inUV, fieldNo, doBeam, err):
-    """ Create an image from information on an ObitUV
-
+    """
+    Create an image from information on an ObitUV
+    
     returns  Python Image
-    inUV     = Python UV object, following read from InfoList member 
-       "nChAvg" OBIT_int (1,1,1) number of channels to average.
-           This is for spectral line observations and is ignored
-           if the IF axis on the uv data has more than one IF.
-           Default is continuum = average all freq/IFs. 0=> all.
-       "rotate" OBIT_float (?,1,1) Desired rotation on sky (from N thru E) in deg. [0]
-       "nx"     OBIT_int (?,1,1) Dimension of image in RA [no default].
-           This and the following are arrays with one entry per field.
-       "nxBeam" OBIT_int (?,1,1) Dimension of beam in RA, [def. nx]
-       "ny"     OBIT_int (?,1,1) Dimension of image in declination[no default]
-       "nyBeam" OBIT_int (?,1,1) Dimension of beam in declination, [def. ny]
+
+    * inUV     = Python UV object, following read from InfoList member 
+
+       ======== ================== =============================================
+       "nChAvg" OBIT_int (1,1,1)   number of channels to average.
+                                   This is for spectral line observations and
+                                   is ignored if the IF axis on the uv data has
+                                   more than one IF.  Default is continuum =
+                                   average all freq/IFs. 0=> all.
+       "rotate" OBIT_float (?,1,1) Desired rotation on sky (from N thru E) in
+                                   deg. [0]
+       "nx"     OBIT_int (?,1,1)   Dimension of image in RA [no default].
+                                   This and the following are arrays with one
+                                   entry per field.
+       "nxBeam" OBIT_int (?,1,1)   Dimension of beam in RA, [def. nx]
+       "ny"     OBIT_int (?,1,1)   Dimension of image in declination[no default]
+       "nyBeam" OBIT_int (?,1,1)   Dimension of beam in declination, [def. ny]
        "xCells" OBIT_float (?,1,1) X (=RA) cell spacing in degrees [no default]
        "yCells" OBIT_float (?,1,1) Y (=dec) cell spacing in degrees [no default]
        "xShift" OBIT_float (?,1,1) Desired shift in X (=RA) in degrees. [0]
        "yShift" OBIT_float (?,1,1) Desired shift in Y (=dec) in degrees. [0]
-       "nuGrid"   OBIT_int (1,1,1) Size in pixels of weighting grid for uniform weighting
-    fieldNo  = Which field (1-rel) in imaging parameter arrays.
-    doBeam   = if TRUE also create beam as the myBeam member of returned image.
-    err      = Python Obit Error/message stack
+       "nuGrid" OBIT_int (1,1,1)   Size in pixels of weighting grid for uniform
+                                   weighting
+       ======== ================== =============================================
+
+    * fieldNo  = Which field (1-rel) in imaging parameter arrays.
+    * doBeam   = if TRUE also create beam as the myBeam member of returned image.
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -71,19 +81,18 @@ def PICreateImage (inUV, fieldNo, doBeam, err):
     # end PCreateImage
 
 def PMakeImage (inUV, outImage, channel, doBeam, doWeight, err):
-    """ Grids UV, FFTs and makes corrections for the gridding convolution.
+    """
+    Grids UV, FFTs and makes corrections for the gridding convolution.
 
-    inUV     = Input Python uv data. Should be in form of Stokes to be imaged
-               will all calibration and selection applied.
-    outImage = Python Image to be written.  Must be previously instantiated.
-               Beam normalization factor is written to output Beam
-               infoList as SUMWTS
-    channel  = Which frequency channel to image, 0->all.
-    doBeam   = if TRUE also make beam.  Will make the myBeam member of outImage.
-               If FALSE, and myGrid->BeamNorm 0.0 then reads SUMWTS value 
-               from beam infolist
-    doWeigh  = if TRUE Apply uniform weighting corrections to uvdata before imaging
-    err      = Python Obit Error/message stack
+    * inUV     = Input Python uv data. Should be in form of Stokes to be imaged
+      will all calibration and selection applied.
+    * outImage = Python Image to be written.  Must be previously instantiated.
+      Beam normalization factor is written to output Beam infoList as SUMWTS
+    * channel  = Which frequency channel to image, 0->all.
+    * doBeam   = if TRUE also make beam.  Will make the myBeam member of outImage.
+      If FALSE, and myGrid->BeamNorm 0.0 then reads SUMWTS value from beam infolist
+    * doWeigh  = if TRUE Apply uniform weighting corrections to uvdata before imaging
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -102,17 +111,19 @@ def PMakeImage (inUV, outImage, channel, doBeam, doWeight, err):
 
 def PInterpolateImage (inImage, outImage, err, 
                        inPlane=[1,1,1,1,1], outPlane=[1,1,1,1,1], hwidth=2):
-    """ Interpolates one image onto another's grid.
-
+    """
+    Interpolates one image onto another's grid.
+    
     Pixels in outImage are interpolated from inImage
-    inImage  = Input Python Image.
-    outImage = Python Image to be written.  Must be previously instantiated.
-    err      = Python Obit Error/message stack
-    inPlane  = 5 element int array with 1, rel. plane number [1,1,1,1,1]
-               giving location of plane to be interpolated
-    outPlane = 5 element int array with 1, rel. plane number [1,1,1,1,1]
-               giving location of plane to be written
-    hwidth   = half width of interpolation kernal [1-4] default 2
+
+    * inImage  = Input Python Image.
+    * outImage = Python Image to be written.  Must be previously instantiated.
+    * err      = Python Obit Error/message stack
+    * inPlane  = 5 element int array with 1, rel. plane number [1,1,1,1,1]
+      giving location of plane to be interpolated
+    * outPlane = 5 element int array with 1, rel. plane number [1,1,1,1,1]
+      giving location of plane to be written
+    * hwidth   = half width of interpolation kernal [1-4] default 2
     """
     ################################################################
     # Checks
@@ -137,19 +148,21 @@ def PInterpolateImage (inImage, outImage, err,
 
 def PPBApply (inImage, pntImage, outImage, err,
               inPlane=[1,1,1,1,1], outPlane=[1,1,1,1,1], antSize=25.0):
-    """ Multiply an image by the primary beam pattern of another
-
+    """
+    Multiply an image by the primary beam pattern of another
+    
     Pixels in outImage are inImage multiplied by the antenna beam pattern
     from pntImage
-    inImage  = Input Python Image.
-    pntImage = Python Image giving pointing position (ObsRA, ObsDec)
-    outImage = Python Image to be written.  Must be previously instantiated.
-    err      = Python Obit Error/message stack
-    inPlane  = 5 element int array with 1, rel. plane number [1,1,1,1,1]
-               giving location of plane to be interpolated
-    outPlane = 5 element int array with 1, rel. plane number [1,1,1,1,1]
-               giving location of plane to be written
-    antSize  = Antenna diameter assumed, default 25m
+
+    * inImage  = Input Python Image.
+    * pntImage = Python Image giving pointing position (ObsRA, ObsDec)
+    * outImage = Python Image to be written.  Must be previously instantiated.
+    * err      = Python Obit Error/message stack
+    * inPlane  = 5 element int array with 1, rel. plane number [1,1,1,1,1]
+      giving location of plane to be interpolated
+    * outPlane = 5 element int array with 1, rel. plane number [1,1,1,1,1]
+      giving location of plane to be written
+    * antSize  = Antenna diameter assumed, default 25m
     """
     ################################################################
     # Checks
@@ -176,17 +189,19 @@ def PPBApply (inImage, pntImage, outImage, err,
 
 def PPBImage (pntImage, outImage, err,
               minGain=0.1, outPlane=[1,1,1,1,1], antSize=25.0):
-    """ Calculate an image with a primary beam pattern
-
+    """
+    Calculate an image with a primary beam pattern
+    
     Make an image of the antenna primary beam pattern based on the pointing
     position in an image.
-    pntImage = Python Image giving pointing position (ObsRA, ObsDec)
-    outImage = Python Image to be written.  Must be previously instantiated.
-    err      = Python Obit Error/message stack
-    minGain  = minimum allowed gain (lower values blanked).
-    outPlane = 5 element int array with 1, rel. plane number [1,1,1,1,1]
-               giving location of plane to be written
-    antSize  = Antenna diameter assumed, default 25m
+
+    * pntImage = Python Image giving pointing position (ObsRA, ObsDec)
+    * outImage = Python Image to be written.  Must be previously instantiated.
+    * err      = Python Obit Error/message stack
+    * minGain  = minimum allowed gain (lower values blanked).
+    * outPlane = 5 element int array with 1, rel. plane number [1,1,1,1,1]
+      giving location of plane to be written
+    * antSize  = Antenna diameter assumed, default 25m
     """
     ################################################################
     # Checks
@@ -209,19 +224,21 @@ def PPBImage (pntImage, outImage, err,
 
 def PPBCorr (inImage, pntImage, outImage, err,
              inPlane=[1,1,1,1,1], outPlane=[1,1,1,1,1], antSize=25.0):
-    """ Correct (divide) an image by the primary beam pattern of another
-
+    """
+    Correct (divide) an image by the primary beam pattern of another
+    
     Pixels in outImage are inImage multiplied by the antenna beam pattern
     from pntImage
-    inImage  = Input Python Image.
-    pntImage = Python Image giving pointing position (ObsRA, ObsDec)
-    outImage = Python Image to be written.  Must be previously instantiated.
-    err      = Python Obit Error/message stack
-    inPlane  = 5 element int array with 1, rel. plane number [1,1,1,1,1]
-               giving location of plane to be interpolated
-    outPlane = 5 element int array with 1, rel. plane number [1,1,1,1,1]
-               giving location of plane to be written
-    antSize  = Antenna diameter assumed, default 25m
+
+    * inImage  = Input Python Image.
+    * pntImage = Python Image giving pointing position (ObsRA, ObsDec)
+    * outImage = Python Image to be written.  Must be previously instantiated.
+    * err      = Python Obit Error/message stack
+    * inPlane  = 5 element int array with 1, rel. plane number [1,1,1,1,1]
+      giving location of plane to be interpolated
+    * outPlane = 5 element int array with 1, rel. plane number [1,1,1,1,1]
+      giving location of plane to be written
+    * antSize  = Antenna diameter assumed, default 25m
     """
     ################################################################
     # Checks
@@ -247,13 +264,15 @@ def PPBCorr (inImage, pntImage, outImage, err,
     # end PPBCorr
 
 def PScaleImage (inImage, scale, err):
-    """ Scale the pixel values in an image
-
+    """
+    Scale the pixel values in an image
+    
     Scale image, optionally by plane, scales any CC tables, writes history
-    inImage   Obit Python Image
-    scale     Scaling factor, if scalar, multiply all pixels,
-              otherwise one value per image plane.
-    err       Python Obit Error/message stack
+
+    * inImage = Obit Python Image
+    * scale   = Scaling factor, if scalar, multiply all pixels,
+      otherwise one value per image plane.
+    * err     = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -326,14 +345,16 @@ def PScaleImage (inImage, scale, err):
 # end PScaleImage
 
 def PCCScale (inCCTab, startComp, endComp, scale, err):
-    """ Scale flux densities in a CC table
-
+    """
+    Scale flux densities in a CC table
+    
     Flux densities of CC entries startComp through endComp are scales by scle
-    inCCTab   = Input Python TableCC
-    startComp = first (1-rel) component
-    endComp   = highest component [1-rel= 0=> all
-    scale     = flux density scaling factor
-    err       = Python Obit Error/message stack
+
+    * inCCTab   = Input Python TableCC
+    * startComp = first (1-rel) component
+    * endComp   = highest component [1-rel= 0=> all
+    * scale     = flux density scaling factor
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -348,15 +369,17 @@ def PCCScale (inCCTab, startComp, endComp, scale, err):
     # end PCCScale
 
 def PUVFilter (inImage, outImage, radius, err):
-    """ Filter an image outside of a radius from the origin in FT space.
-
+    """
+    Filter an image outside of a radius from the origin in FT space.
+    
     Intended to filter out out of band noise in single dish images.
     Filters by a function with 1.0/(nx*ny) inside radius and outside tapers
     by an exponential with scale distance 10 pixels.
-    inImage   = Input Image
-    outImage  = Output image, may be inImage
-    radius    = distance from origin in uv space (m)
-    err       = Python Obit Error/message stack
+
+    * inImage   = Input Image
+    * outImage  = Output image, may be inImage
+    * radius    = distance from origin in uv space (m)
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -374,17 +397,19 @@ def PUVFilter (inImage, outImage, radius, err):
 
 def PImageAdd (in1Image, in2Image, outImage, err, \
                chkPos=False, factor1=1.0, factor2=1.0):
-    """ Adds Pixels in in2Image from in1Image and write to outImage
-
+    """
+    Adds Pixels in in2Image from in1Image and write to outImage
+    
     Adds scaled pixel values, writes history
-    in1Image  input Obit Python Image 1
-    in2Image  input Obit Python Image 2
-    outImage  output Obit Python Image, must be defined but not instantiated
-    err       Python Obit Error/message stack
-    chkPos    If true also check the coordinates on each axis
-              Check is if pixels are within 0.01 of a pixel
-    factor1   Scaling factor for in1Image
-    factor2   Scaling factor for in2Image
+
+    * in1Image = input Obit Python Image 1
+    * in2Image = input Obit Python Image 2
+    * outImage = output Obit Python Image, must be defined but not instantiated
+    * err      = Python Obit Error/message stack
+    * chkPos   = If true also check the coordinates on each axis
+      Check is if pixels are within 0.01 of a pixel
+    * factor1  = Scaling factor for in1Image
+    * factor2  = Scaling factor for in2Image
     """
     ################################################################
     # Checks
@@ -479,12 +504,14 @@ def PImageAdd (in1Image, in2Image, outImage, err, \
 # end PImageAdd
 
 def FFTHeaderUpdate(inIm, naxis, err):
-    """ Fix Image header for an image being FFTed
-
+    """
+    Fix Image header for an image being FFTed
+    
     Update first two axes for the effect of FFT
-    inID  = image with descriptor to update
-    naxis = dimensionality of array being FFTed (not size in inID)
-    err   = Python Obit Error/message stack
+
+    * inID  = image with descriptor to update
+    * naxis = dimensionality of array being FFTed (not size in inID)
+    * err   = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -511,16 +538,18 @@ def FFTHeaderUpdate(inIm, naxis, err):
 
 import FFT, CArray, FeatherUtil
 def PImageFFT (inImage, outAImage, outPImage, err):
-    """ FFTs an Image
-
+    """
+    FFTs an Image
+    
     FFT inImage and write as real and imaginary as full plane (hermetian) 
-    inImage   input Obit Python Image 1
-              Any BLC and/or TRC set will be honored
-    outAImage output Obit Python Amplitude image of FFT
-              must be defined but not instantiated
-    outPImage output Obit Python Phase (deg) image of FFT
-              must be defined but not instantiated
-    err       Python Obit Error/message stack
+
+    * inImage   = input Obit Python Image 1
+      Any BLC and/or TRC set will be honored
+    * outAImage = output Obit Python Amplitude image of FFT
+      must be defined but not instantiated
+    * outPImage = output Obit Python Phase (deg) image of FFT
+      must be defined but not instantiated
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -635,27 +664,29 @@ def PImageFFT (inImage, outAImage, outPImage, err):
 def PImageT2Spec (inImage, outImage, nTerm, 
                   inCCVer, outCCVer, err,
                   refFreq=1.0e9, terms=None, startCC=1, endCC=0):
-    """ Convert an ObitImage(MF) (TSpec CCs) to an ObitImageWB (Spec CCs)
-
+    """
+    Convert an ObitImage(MF) (TSpec CCs) to an ObitImageWB (Spec CCs)
+    
     Output CC Table will have fitted spectra rather than tabulated spectra.
     If an integrated spectrum is given, the sum of the input CC sprectra
     are forced to this spectrum.
     Copies spectral planes and converts specified CC table
     Tabulated spectrum fitted with spectrum weighting by primary beam
-    inImage   input Obit Python Image 1
-              Must have freq axis type = "SPECLNMF"
-    outImage  output Obit Python image
-              must be defined but not instantiated
-              On return will be replaced bu image created
-    nTerm     Number of output Spectral terms, 2=SI, 3=also curve.
-    inCCVer   Input CCTable to convert, 0=> highest
-    outCCVer  Output CCTable, 0=>1
-    err       Python Obit Error/message stack
-    refFreq   Reference frequency (Hz) for total spectrum
-    terms     if not None, parameters of total spectrum
-              [flux density at refFreq, spectral index at refFreq, ...]
-    startCC   First 1-rel component to convert
-    endCC     Last 1-rel component to convert, 0=> all
+
+    * inImage  = input Obit Python Image 1
+      Must have freq axis type = "SPECLNMF"
+    * outImage = output Obit Python image
+      must be defined but not instantiated
+      On return will be replaced bu image created
+    * nTerm    = Number of output Spectral terms, 2=SI, 3=also curve.
+    * inCCVer  = Input CCTable to convert, 0=> highest
+    * outCCVer = Output CCTable, 0=>1
+    * err      = Python Obit Error/message stack
+    * refFreq  = Reference frequency (Hz) for total spectrum
+    * terms    = if not None, parameters of total spectrum
+      [flux density at refFreq, spectral index at refFreq, ...]
+    * startCC  = First 1-rel component to convert
+    * endCC    = Last 1-rel component to convert, 0=> all
     """
     ################################################################
     # Checks

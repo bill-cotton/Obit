@@ -1,7 +1,6 @@
 """ Python Obit ImageInterp class
 
 This class provides values of the beam shape derived from an image
-
 """
 # $Id$
 #-----------------------------------------------------------------------
@@ -39,7 +38,6 @@ import Obit, OErr, Image, InfoList
 # class name in C
 myClass = "ObitImageInterp"
  
-    
 class ImageInterpPtr :
     def __init__(self,this):
         self.this = this
@@ -64,7 +62,8 @@ class ImageInterpPtr :
         return "<C ImageInterp instance> " + Obit.ImageInterpGetName(self.me)
 #
 class ImageInterp(ImageInterpPtr):
-    """ Python Obit ImageInterp class
+    """
+    Python Obit ImageInterp class
     
     This class interpolates pixel values in an image, possibly selecting
     by frequency and optionally rotating by a "parallactic angle".
@@ -79,9 +78,9 @@ class ImageInterp(ImageInterpPtr):
             Obit.delete_ImageInterp(self.this)
     def cast(self, toClass):
         """ Casts object pointer to specified class
-        
-        self     = object whose cast pointer is desired
-        toClass  = Class string to cast to
+
+        * self     = object whose cast pointer is desired
+        * toClass  = Class string to cast to
         """
         ################################################################
         # Get pointer with type of this class
@@ -91,17 +90,17 @@ class ImageInterp(ImageInterpPtr):
     # end cast
     
     def Value (self, ra, dec, err, rotate=0.0, plane=0 ):
-        """ 
-        
+        """
         Returns Interpolated pixel value
-        self     = the ImageInterp object
-        ra       = RA (or "X") (deg) coordinate
-                   Use ImageDesc.PMS2RA for convert from human form
-        dec      = Dec (or "Y") (deg) coordinate
-                   Use ImageDesc.PDMS2Dec for convert from human form
-        rotate   = (Parallactic) angle to rotate image by (deg)
-        plane    = plane in ImageInterp (from FindPlane)
-        err      = Obit error/message stack
+
+        * self     = the ImageInterp object
+        * ra       = RA (or "X") (deg) coordinate
+          Use ImageDesc.PMS2RA for convert from human form
+        * dec      = Dec (or "Y") (deg) coordinate
+          Use ImageDesc.PDMS2Dec for convert from human form
+        * rotate   = (Parallactic) angle to rotate image by (deg)
+        * plane    = plane in ImageInterp (from FindPlane)
+        * err      = Obit error/message stack
         """
         ################################################################
         # Checks
@@ -111,11 +110,11 @@ class ImageInterp(ImageInterpPtr):
     # end Value
     
     def FindPlane(self, freq):
-        """ 
-        
+        """
         Returns nearest plane to a given frequency
-        self     = the ImageInterp object
-        freq     = frequency (Hz)
+
+        * self     = the ImageInterp object
+        * freq     = frequency (Hz)
         """
         ################################################################
         # Checks
@@ -125,10 +124,12 @@ class ImageInterp(ImageInterpPtr):
     # end FindPlane
     
     def ImageInterpIsA (self):
-        """ Tells if input really a Python Obit ImageInterp
+        """
+        Tells if input really a Python Obit ImageInterp
         
         return true, false (1,0)
-        self   = Python ImageInterp object
+
+        * self   = Python ImageInterp object
         """
         ################################################################
         # Allow derived types
@@ -137,10 +138,12 @@ class ImageInterp(ImageInterpPtr):
     # end class ImageInterp
     
 def PIsA (inImageInterp):
-    """ Tells if input really a Python Obit ImageInterp
-
+    """
+    Tells if input really a Python Obit ImageInterp
+    
     return True, False (1,0)
-    inImageInterp   = Python ImageInterp object
+
+    * inImageInterp   = Python ImageInterp object
     """
     ################################################################
     if inImageInterp.__class__ != ImageInterp:
@@ -151,13 +154,15 @@ def PIsA (inImageInterp):
     # end PIsA
 
 def PCreate (name, image, err, hwidth=1):
-    """ Create the underlying structures of a ImageInterp
-
+    """
+    Create the underlying structures of a ImageInterp
+    
     return object created.
-    name      = Name to be given to object
-    image     = Python Image for which beam shape is desired
-    hwidth    = half width of interpolation (usually 1 or 2)
-    err       = Obit error/message stack
+
+    * name      = Name to be given to object
+    * image     = Python Image for which beam shape is desired
+    * hwidth    = half width of interpolation (usually 1 or 2)
+    * err       = Obit error/message stack
     """
     ################################################################
     # Checks

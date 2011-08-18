@@ -55,7 +55,8 @@ class OErrPtr :
         Obit.ObitErrClear (self.me);  # Clear stack
         return messages
 class OErr(OErrPtr):
-    """ Python ObitErr message and error stack
+    """
+    Python ObitErr message and error stack
     
     This is an error stack class for obtaining tracebacks for error conditions.
     This is also the mechanism for passing informative messages.
@@ -67,7 +68,7 @@ class OErr(OErrPtr):
     def __del__(self):
         if Obit!=None:
             Obit.delete_OErr(self.this)
-
+    
     def Clear(self):
         """ Clear Obit error stack """
         PClear(self)
@@ -84,10 +85,12 @@ StrongError = 6
 Fatal     = 7
 
 def PIsErr(err):
-    """ Tells if an error condition exists
-
+    """
+    Tells if an error condition exists
+    
     Returns True if error condition exists, else False
-    err      = Python Obit Error/message stack
+
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -97,12 +100,13 @@ def PIsErr(err):
     # end PIsErr
 
 def PInit(err, prtLv=0, taskLog="    "):
-    """ Initializes logging
+    """
+    Initializes logging
 
-    err      = Python Obit Error/message stack to init
-    prtLv    = Message print level, 0=little, 5=LOTS
-    taskLog  = Name of task log file, if given messages go here
-               and NOT to the terminal (visible) output.
+    * err      = Python Obit Error/message stack to init
+    * prtLv    = Message print level, 0=little, 5=LOTS
+    * taskLog  = Name of task log file, if given messages go here
+      and NOT to the terminal (visible) output.
     """
     ################################################################
     # Checks
@@ -115,9 +119,10 @@ def PInit(err, prtLv=0, taskLog="    "):
     # end PInit
 
 def PClear(err):
-    """ Clear Obit error stack
+    """
+    Clear Obit error stack
 
-    err      = Python Obit Error/message stack
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -127,9 +132,10 @@ def PClear(err):
     #end PClear
 
 def PSet(err):
-    """ Set Obit error flag
+    """
+    Set Obit error flag
 
-    err      = Python Obit Error/message stack
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -139,12 +145,13 @@ def PSet(err):
     #end PSet
 
 def PLog(err, eCode, message):
-    """ Add message To Obit Error/message stack
+    """
+    Add message To Obit Error/message stack
 
-    err      = Python Obit Error/message stack
-    eCode    = error code defined above:
-               NoErr, Info, Warn, Traceback,
-               MildError, Error, StrongError, Fatal
+    * err      = Python Obit Error/message stack
+    * eCode    = error code defined above:
+      NoErr, Info, Warn, Traceback,
+      MildError, Error, StrongError, Fatal
     """
     ################################################################
     # Checks
@@ -154,9 +161,10 @@ def PLog(err, eCode, message):
     #end PLog
 
 def printErr(err):
-    """ Prints Obit error stack
-    
-    err      = Python Obit Error/message stack
+    """
+    Prints Obit error stack
+
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -166,10 +174,11 @@ def printErr(err):
     # end PrintErr
      
 def printErrMsg(err, message="Error"):
-    """ Prints Obit error stack and throws runtime exception on error
+    """
+    Prints Obit error stack and throws runtime exception on error
 
-    err     = Python Obit Error/message stack
-    message = message string for exception
+    * err     = Python Obit Error/message stack
+    * message = message string for exception
     """
     ################################################################
     # Checks
@@ -183,10 +192,12 @@ def printErrMsg(err, message="Error"):
     # end printErrMsg
      
 def OErrIsA (err):
-    """ Tells if object thinks it's a Python ObitErr
-
+    """
+    Tells if object thinks it's a Python ObitErr
+    
     return true, false (1,0)
-    err    = input Python ObitErr stack
+
+    * err    = input Python ObitErr stack
     """
     ################################################################
     # Checks
@@ -197,7 +208,8 @@ def OErrIsA (err):
     # end OErrIsA
 
 def Bomb ():
-    """ Throws an exception to stop the debugger
+    """
+    Throws an exception to stop the debugger
     """
     ################################################################
     #

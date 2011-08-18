@@ -3,7 +3,8 @@
 This class enables fitting models to images
 
 ImageFit Members with python interfaces:
-List      - used to pass instructions to processing 
+
+* List - used to pass instructions to processing 
 """
 # $Id$
 #-----------------------------------------------------------------------
@@ -70,13 +71,15 @@ class ImageFitPtr :
         return "<C ImageFit instance> " + Obit.ImageFitGetName(self.me)
 #
 class ImageFit(ImageFitPtr):
-    """ Python Obit ImageFit class
+    """
+    Python Obit ImageFit class
     
     This class enables fitting models to images.
     Fits models defined in a FitRegion to an image
     
     ImageFit Members with python interfaces:
-    List      - used to pass instructions to processing 
+
+    * List - used to pass instructions to processing 
     """
     def __init__(self, name) :
         self.this = Obit.new_ImageFit(name)
@@ -86,9 +89,9 @@ class ImageFit(ImageFitPtr):
             Obit.delete_ImageFit(self.this)
     def cast(self, toClass):
         """ Casts object pointer to specified class
-        
-        self     = object whose cast pointer is desired
-        toClass  = Class string to cast to
+
+        * self     = object whose cast pointer is desired
+        * toClass  = Class string to cast to
         """
         ################################################################
         # Get pointer with type of this class
@@ -122,26 +125,31 @@ class ImageFit(ImageFitPtr):
                'GMinLow':0.0}
     
     def Fit (self, err, input=cFitInput):
-        """ Fit a model to an image
+        """
+        Fit a model to an image
         
         Resultant model left in FitRegion reg
-        inImageFit = Python ImageFit object
-        image      = ObitImage to be fitted
-        reg        = Fit region defining what is to be fitted and initial guess
-        err        = Python Obit Error/message stack
-        input      = input parameter dictionary
 
+        * inImageFit = Python ImageFit object
+        * image      = ObitImage to be fitted
+        * reg        = Fit region defining what is to be fitted and initial guess
+        * err        = Python Obit Error/message stack
+        * input      = input parameter dictionary
+        
         Input dictionary entries:
-        fitImage Image to be fitted
+
+        ========= ================================================================
+        fitImage  Image to be fitted
         fitRegion FitRegion to be fitted
-        MaxIter  int Maximum number of iterations [def. 10 per fitted parameter]
-        prtLv    int Message level, 0=>none [def 0]
-        PosGuard float Distance (cells) from edge to allow center  [def no bound]
-        FluxLow  float Lower bounds on Flux density [def no bound]
-        GMajUp   float Major axis upper bound (cells) [def no bound]
-        GMajLow  float Major axis lower bound (cells) [def no bound]
-        GMinUp   float Minor axis upper bound (cells) [def no bound]
-        GMinLow  float Minor axis lower bound (cells) [def no bound]
+        MaxIter   int Maximum number of iterations [def. 10 per fitted parameter]
+        prtLv     int Message level, 0=>none [def 0]
+        PosGuard  float Distance (cells) from edge to allow center  [def no bound]
+        FluxLow   float Lower bounds on Flux density [def no bound]
+        GMajUp    float Major axis upper bound (cells) [def no bound]
+        GMajLow   float Major axis lower bound (cells) [def no bound]
+        GMinUp    float Minor axis upper bound (cells) [def no bound]
+        GMinLow   float Minor axis lower bound (cells) [def no bound]
+        ========= ================================================================
         """
 
         PFit(self, err, input=input)
@@ -153,22 +161,28 @@ class ImageFit(ImageFitPtr):
 FitInput = ImageFit.cFitInput
 
 def input(inputDict):
-    """ Print the contents of an input Dictionary
+    """
+    Print the contents of an input Dictionary
 
-    inputDict = Python Dictionary containing the parameters for a routine
+    * inputDict = Python Dictionary containing the parameters for a routine
+
     There should be a member of the dictionary ('structure') with a value
     being a list containing:
+
     1) The name for which the input is intended (string)
     2) a list of tuples consisting of (parameter name, doc string)
        with an entry for each parameter in the dictionary.
-       The display of the the inputs dictionary will be in the order of
-       the tuples and display the doc string after the value.
-       An example:
-       Soln2CalInput={'structure':['Soln2Cal',[('InData','Input OTF'),
-                                               ('soln','input soln table version'),
-                                               ('oldCal','input cal table version, -1=none'),
-                                               ('newCal','output cal table')]],
-                      'InData':None, 'soln':0, 'oldCal':-1, 'newCal':0}
+
+    The display of the the inputs dictionary will be in the order of
+    the tuples and display the doc string after the value.
+    
+    An example:
+   
+    >>> Soln2CalInput={'structure':['Soln2Cal',[('InData','Input OTF'),
+                                                ('soln','input soln table version'),
+                                                ('oldCal','input cal table version, -1=none'),
+                                                ('newCal','output cal table')]],
+                       'InData':None, 'soln':0, 'oldCal':-1, 'newCal':0}
     """
     ################################################################
     structure = inputDict['structure']  # Structure information
@@ -179,12 +193,14 @@ def input(inputDict):
     # end input
 
 def PCopy (inImageFit, outImageFit, err):
-    """ Make a shallow copy of input object.
-
+    """
+    Make a shallow copy of input object.
+    
     Makes structure the same as inImageFit, copies pointers
-    inImageFit  = Python ImageFit object to copy
-    outImageFit = Output Python ImageFit object, must be defined
-    err         = Python Obit Error/message stack
+
+    * inImageFit  = Python ImageFit object to copy
+    * outImageFit = Output Python ImageFit object, must be defined
+    * err         = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -203,10 +219,12 @@ def PCopy (inImageFit, outImageFit, err):
     # end PCopy
 
 def PGetList (inImageFit):
-    """ Return the member InfoList
-
+    """
+    Return the member InfoList
+    
     returns InfoList
-    inImageFit  = Python ImageFit object
+
+    * inImageFit  = Python ImageFit object
     """
     ################################################################
      # Checks
@@ -221,9 +239,10 @@ def PGetList (inImageFit):
     # end PGetList
 
 def PCreate (name):
-    """ Create the parameters and underlying structures of a ImageFit.
+    """
+    Create the parameters and underlying structures of a ImageFit.
 
-    name      = Name to be given to object
+    * name      = Name to be given to object
                 Most control parameters are in InfoList member
     """
     ################################################################
@@ -233,26 +252,31 @@ def PCreate (name):
     # end PCreate
 
 def PFit (inImageFit, err, input=FitInput):
-    """ Fit a model to an image
-
+    """
+    Fit a model to an image
+    
     Resultant model left in FitRegion reg
-    inImageFit = Python ImageFit object
-    image      = ObitImage to be fitted
-    reg        = Fit region defining what is to be fitted and initial guess
-    err        = Python Obit Error/message stack
-    input      = input parameter dictionary
+
+    * inImageFit = Python ImageFit object
+    * image      = ObitImage to be fitted
+    * reg        = Fit region defining what is to be fitted and initial guess
+    * err        = Python Obit Error/message stack
+    * input      = input parameter dictionary
     
     Input dictionary entries:
-    fitImage    = Image to be fitted
-    fitRegion   = FitRegion to be fitted
-    MaxIter  int Maximum number of iterations [def. 10 per fitted parameter]
-    prtLv    int Message level, 0=>none [def 0]
-    PosGuard float Distance (cells) from edge to allow center  [def no bound]
-    FluxLow  float Lower bounds on Flux density [def no bound]
-    GMajUp   float Major axis upper bound (cells) [def no bound]
-    GMajLow  float Major axis lower bound (cells) [def no bound]
-    GMinUp   float Minor axis upper bound (cells) [def no bound]
-    GMinLow  float Minor axis lower bound (cells) [def no bound]
+
+    ========= ================================================================
+    fitImage  Image to be fitted
+    fitRegion FitRegion to be fitted
+    MaxIter   int Maximum number of iterations [def. 10 per fitted parameter]
+    prtLv     int Message level, 0=>none [def 0]
+    PosGuard  float Distance (cells) from edge to allow center  [def no bound]
+    FluxLow   float Lower bounds on Flux density [def no bound]
+    GMajUp    float Major axis upper bound (cells) [def no bound]
+    GMajLow   float Major axis lower bound (cells) [def no bound]
+    GMinUp    float Minor axis upper bound (cells) [def no bound]
+    GMinLow   float Minor axis lower bound (cells) [def no bound]
+    ========= ================================================================
     """
     ################################################################
     # Get input parameters
@@ -291,10 +315,12 @@ def PFit (inImageFit, err, input=FitInput):
     # end PFit
 
 def PGetName (inImageFit):
-    """ Tells Image object name (label)
-
+    """
+    Tells Image object name (label)
+    
     returns name as character string
-    inImageFit  = Python ImageFit object
+
+    * inImageFit  = Python ImageFit object
     """
     ################################################################
      # Checks
@@ -306,10 +332,12 @@ def PGetName (inImageFit):
     # end PGetName
 
 def PIsA (inImageFit):
-    """ Tells if input really a Python Obit ImageFit
-
+    """
+    Tells if input really a Python Obit ImageFit
+    
     return true, false (1,0)
-    inImageFit   = Python ImageFit object
+
+    * inImageFit   = Python ImageFit object
     """
     ################################################################
     # Checks - allow inheritence

@@ -5,20 +5,22 @@ from AIPSTask import AIPSTask
 
 def MergeCal(inUV, err, \
              GCver=1, TYver=1, PCver=1, outVer=0, timeTol=1.0):
-    """ Fix up VLBA screwed up calibration
-
+    """
+    Fix up VLBA screwed up calibration
+    
     Merges redundant entries in VLBA GC, TY and PC tables
     Translated from the AIPSish MERGECAL (requires AIPS task TAMRG)
-    inUV     = UV data object to fix, MUST be in AIPS format
-    err      = Python Obit Error/message stack
-    GCver    = Version number of GC table to be fixed.
-    TYver    = Version number of TY table to be fixed.
-    PCver    = Version number of PC table to be fixed.
-    outVer   = Version number of output tables
-               (same for all three table types). 
-    timeTol  = Tolerance for time comparisons in seconds.
-               Records will not be merged if their times differ
-               by more than this amount.
+
+    * inUV     = UV data object to fix, MUST be in AIPS format
+    * err      = Python Obit Error/message stack
+    * GCver    = Version number of GC table to be fixed.
+    * TYver    = Version number of TY table to be fixed.
+    * PCver    = Version number of PC table to be fixed.
+    * outVer   = Version number of output tables
+      (same for all three table types). 
+    * timeTol  = Tolerance for time comparisons in seconds.
+      Records will not be merged if their times differ
+      by more than this amount.
     """
     ################################################################
     if inUV.FileType!='AIPS':

@@ -9,12 +9,15 @@ There may be associated tables (e.g. "AIPS CC" tables).
 Both FITS and AIPS cataloged images are supported.
 
 ImageMF Members with python interfaces:
-exist     - True if object previously existed prior to object creation
-InfoList  - used to pass instructions to processing
-ImageDesc - Astronomical labeling of the image Member Desc 
-FArray    - Container used for pixel data Member FArray
-PixBuf    - memory pointer into I/O Buffer
-Additional Functions are available in ImageUtil.
+
+==========  ==========================================================
+exist       True if object previously existed prior to object creation
+InfoList    used to pass instructions to processing
+ImageDesc   Astronomical labeling of the image Member Desc 
+FArray      Container used for pixel data Member FArray
+PixBuf      memory pointer into I/O Buffer
+Additional  Functions are available in ImageUtil.
+==========  ==========================================================
 """
 # Python/Obit Astronomical ImageMF class
 # $Id$
@@ -57,8 +60,9 @@ import OData
 myClass = "ObitImageMF"
 
 class ImageMF(Image.Image):
-    """ Python Obit ImageMF class
-
+    """
+    Python Obit ImageMF class
+    
     Additional Functions are available in ImageUtil.
     """
     def __init__(self, name) :
@@ -118,10 +122,11 @@ class ImageMF(Image.Image):
         return "<C ImageMF instance> " + Obit.ImageGetName(self.cast("ObitImage"))
     
     def cast(self, toClass):
-        """ Casts object pointer to specified class
-        
-        self     = object whose cast pointer is desired
-        toClass  = Class string to cast to ("ObitImageMF")
+        """
+        Casts object pointer to specified class
+
+        * self     = object whose cast pointer is desired
+        * toClass  = Class string to cast to ("ObitImageMF")
         """
         # Get pointer with type of this class
         out = self.me
@@ -130,10 +135,12 @@ class ImageMF(Image.Image):
     # end cast
             
     def ImageMFIsA (self):
-        """ Tells if input really a Python Obit ImageMF
+        """
+        Tells if input really a Python Obit ImageMF
         
         return true, false (1,0)
-        self   = Python ImageMF object
+
+        * self   = Python ImageMF object
         """
         ################################################################
         # Allow derived types
@@ -154,7 +161,8 @@ WRITEONLY = OData.WRITEONLY # 2
 READWRITE = OData.READWRITE # 3
 
 def ObitName(ObitObject):
-    """Return name of an Obit object or input if not an Obit Object
+    """
+    Return name of an Obit object or input if not an Obit Object
     """
     ################################################################
     out = ObitObject    # in case
@@ -173,9 +181,10 @@ def ObitName(ObitObject):
         
 
 def input(inputDict):
-    """ Print the contents of an input Dictionary
+    """
+    Print the contents of an input Dictionary
 
-    inputDict = Python Dictionary containing the parameters for a routine
+    * inputDict = Python Dictionary containing the parameters for a routine
     """
     ################################################################
     print 'Current values of entries'
@@ -191,18 +200,20 @@ def input(inputDict):
     # end input
 
 def newPFImageMF(name, filename, disk, exists, err, verbose=True):
-    """ Create and initialize an FITS based ImageMF structure
-
+    """
+    Create and initialize an FITS based ImageMF structure
+    
     Create, set initial access information (full image, plane at a time)
     and if exists verifies the file.
     isOK member set to indicate success
     Returns the Python ImageMF object
-    name     = name desired for object (labeling purposes)
-    filename = name of FITS file
-    disk     = FITS directory number
-    exists   = if true then the file is opened and closed to verify
-    err      = Python Obit Error/message stack
-    verbose  = If true any give error messages, else suppress
+
+    * name     = name desired for object (labeling purposes)
+    * filename = name of FITS file
+    * disk     = FITS directory number
+    * exists   = if true then the file is opened and closed to verify
+    * err      = Python Obit Error/message stack
+    * verbose  = If true any give error messages, else suppress
     """
     ################################################################
     out = ImageMF (name)
@@ -239,20 +250,22 @@ def newPFImageMF(name, filename, disk, exists, err, verbose=True):
 
     
 def newPAImage(name, Aname, Aclass, disk, seq, exists, err, verbose=False):
-    """ Create and initialize an AIPS based Image structure
-
+    """
+    Create and initialize an AIPS based Image structure
+    
     Create, set initial access information (full image, plane at a time)
     and if exists verifies the file.
     Returns the Python Image object
     isOK member set to indicate success
-    name     = name desired for object (labeling purposes)
-    Aname    = AIPS name of file
-    Aclass   = AIPS class of file
-    seq      = AIPS sequence number of file
-    disk     = FITS directory number
-    exists   = if true then the file is opened and closed to verify
-    err      = Python Obit Error/message stack
-    verbose  = If true any give error messages, else suppress
+
+    * name     = name desired for object (labeling purposes)
+    * Aname    = AIPS name of file
+    * Aclass   = AIPS class of file
+    * seq      = AIPS sequence number of file
+    * disk     = FITS directory number
+    * exists   = if true then the file is opened and closed to verify
+    * err      = Python Obit Error/message stack
+    * verbose  = If true any give error messages, else suppress
     """
     ################################################################
     out = ImageMF (name)
@@ -309,17 +322,19 @@ def newPAImage(name, Aname, Aclass, disk, seq, exists, err, verbose=False):
 
     
 def newPACNO(disk, cno, exists, err, verbose=True):
-    """ Create and initialize an AIPS based Image structure
-
+    """
+    Create and initialize an AIPS based Image structure
+    
     Create, set initial access information (full image, plane at a time)
     and if exists verifies the file.
     Returns the Python Image object
     isOK member set to indicate success
-    disk     = AIPS directory number
-    cno      = AIPS catalog number
-    exists   = if true then the file is opened and closed to verify
-    err      = Python Obit Error/message stack
-    verbose  = If true any give error messages, else suppress
+
+    * disk     = AIPS directory number
+    * cno      = AIPS catalog number
+    * exists   = if true then the file is opened and closed to verify
+    * err      = Python Obit Error/message stack
+    * verbose  = If true any give error messages, else suppress
     """
     ################################################################
     out = ImageMF ("AIPS Image")
@@ -367,10 +382,11 @@ def newPACNO(disk, cno, exists, err, verbose=True):
     # end newPACNO
 
 def PHeader (inImage, err):
-    """ Print image descriptor
+    """
+    Print image descriptor
 
-    inImage   = Python Image object
-    err       = Python Obit Error/message stack
+    * inImage   = Python Image object
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # ObitTalk or AIPSImage data?
@@ -446,14 +462,15 @@ def PHeader (inImage, err):
     
 
 def PFitSpec (inImage, err, antSize=0.0, nOrder=1):
-    """ Fit spectrum to each pixel of an ImageMF
+    """
+    Fit spectrum to each pixel of an ImageMF
 
-    inImage   = Python Image object
-    antSize   = If > 0 make primary beam corrections assuming antenna
-                diameter (m) antSize
-    nOrder    = Order of fit, 0=intensity, 1=spectral index,
-                2=also curvature
-    err       = Python Obit Error/message stack
+    * inImage   = Python Image object
+    * antSize   = If > 0 make primary beam corrections assuming antenna
+      diameter (m) antSize
+    * nOrder    = Order of fit, 0=intensity, 1=spectral index,
+      2=also curvature
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     inImage.List.set("nOrder",nOrder)
@@ -461,10 +478,12 @@ def PFitSpec (inImage, err, antSize=0.0, nOrder=1):
     # end PFitSpec
 
 def PIsA (inImage):
-    """ Tells if input really a Python Obit ImageMF
-
+    """
+    Tells if input really a Python Obit ImageMF
+    
     return True, False (1,0)
-    inImage   = Python Image object
+
+    * inImage   = Python Image object
     """
     ################################################################
     try:

@@ -55,11 +55,12 @@ else:
 
         
 def PListDir(disk, dir=None):
-    """ List files in FITS directory
+    """
+    List files in FITS directory
 
-    disk     = FITS disk number, <=0 -> current directory
-    dir       = relative or abs. path of directory, def. = cwd
-                Only used if disk == 0
+    * disk = FITS disk number, <=0 -> current directory
+    * dir  = relative or abs. path of directory, def. = cwd
+      Only used if disk == 0
     """
     ################################################################
     if disk>0:
@@ -80,12 +81,14 @@ def PListDir(disk, dir=None):
     # end PListDir
 
 def PAddDir(newDir, err, URL=None):
-    """ Add a new FITS directory
-
+    """
+    Add a new FITS directory
+    
     returns FITS disk number
-    newDir   = new directory path
-    err      = Python Obit Error/message stack
-    URL      = URL if on a remote host (Only if using OTObit/ParselTongue)
+
+    * newDir   = new directory path
+    * err      = Python Obit Error/message stack
+    * URL      = URL if on a remote host (Only if using OTObit/ParselTongue)
     """
     ################################################################
     global FITSdisks, nFITS
@@ -111,12 +114,14 @@ def PAddDir(newDir, err, URL=None):
 
 
 def PSetDir(newDir, disk, err, URL=None):
-    """ replace FITS directory
-
+    """
+    replace FITS directory
+    
     returns FITS disk number
-    newDir   = new directory path
-    err      = Python Obit Error/message stack
-    URL      = URL if on a remote host (Only if using OTObit/ParselTongue)
+
+    * newDir   = new directory path
+    * err      = Python Obit Error/message stack
+    * URL      = URL if on a remote host (Only if using OTObit/ParselTongue)
     """
     ################################################################
     global FITSdisks, nFITS
@@ -141,11 +146,12 @@ def PSetDir(newDir, disk, err, URL=None):
 
 
 def PGetDir(disk, dir=None):
-    """ Returns list of files in FITS directory
+    """
+    Returns list of files in FITS directory
 
-    disk     = FITS disk number <=0 -> current directory
-    dir       = relative or abs. path of directory, def. = cwd
-                Only used if disk == 0
+    * disk = FITS disk number <=0 -> current directory
+    * dir  = relative or abs. path of directory, def. = cwd
+      Only used if disk == 0
     """
     ################################################################
     if disk>0:
@@ -159,11 +165,13 @@ def PGetDir(disk, dir=None):
 
 
 def PExist(file, disk, err):
-    """ Tests if FITS file exists
-
+    """
+    Tests if FITS file exists
+    
     return True if exists, else False
-    file     = FITS file name
-    disk     = FITS disk number
+
+    * file     = FITS file name
+    * disk     = FITS disk number
     """
     ################################################################
     exist = Obit.FITSFileExist(disk, file, err.me)

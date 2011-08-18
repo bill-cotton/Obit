@@ -101,9 +101,10 @@ class OSystem(OSystemPtr):
 
         
 def Shutdown (inObj=None):
-    """ Shuts down Obit in all known IO related modules
+    """
+    Shuts down Obit in all known IO related modules
 
-    inObj   = Python Obit System object, defaults to OSystem.ObitSys
+    * inObj   = Python Obit System object, defaults to OSystem.ObitSys
     """
     ################################################################
     #  Use default if none given
@@ -116,8 +117,9 @@ def Shutdown (inObj=None):
     # end Shutdown
 
 def PIsInit ():
-    """ Tells if Obit initialized
-
+    """
+    Tells if Obit initialized
+    
     returns True if Obit initialized else False
     """
     ################################################################
@@ -126,8 +128,9 @@ def PIsInit ():
     # end PIsInit
 
 def PGetAIPSuser ():
-    """ Tells AIPS user number
-
+    """
+    Tells AIPS user number
+    
     returns AIPS user number
     """
     ################################################################
@@ -135,17 +138,19 @@ def PGetAIPSuser ():
     # end PGetAIPSuser
 
 def PSetAIPSuser (user):
-    """ Sets  AIPS user number
+    """
+    Sets  AIPS user number
 
-    user = AIPS user number
+    * user = AIPS user number
     """
     ################################################################
     Obit.SystemSetAIPSuser(user)
     # end PSetAIPSuser
 
 def PGetPgmName ():
-    """ Tells Program name 
-
+    """
+    Tells Program name 
+    
     returns name as character string
     """
     ################################################################
@@ -153,8 +158,9 @@ def PGetPgmName ():
     # end PGetPgmName
 
 def PToday ():
-    """ Get today's date in string suitable for descriptors
-
+    """
+    Get today's date in string suitable for descriptors
+    
     returns date as character string
     """
     ################################################################
@@ -162,17 +168,19 @@ def PToday ():
     # end PToday
 
 def PSetPgmName (pgmName):
-    """ Sets Program name
+    """
+    Sets Program name
 
-    pgmName = new program name
+    * pgmName = new program name
     """
     ################################################################
     Obit.SystemSetPgmName(pgmName)
     # end PSetPgmName
 
 def PGetPgmNumber ():
-    """ Tells Program number 
-
+    """
+    Tells Program number 
+    
     returns number
     """
     ################################################################
@@ -180,16 +188,18 @@ def PGetPgmNumber ():
     # end PGetPgmNumber
 
 def PSetPgmNumber (pgmNumber):
-    """ Sets Program number
+    """
+    Sets Program number
 
-    pgmNumber = new program number
+    * pgmNumber = new program number
     """
     ################################################################
     Obit.SystemSetPgmNumber(pgmNumber)
     # end PSetPgmNumber
 
 def PMemPrint ():
-    """ Prints contents of Obit Memory allocation on stdout
+    """
+    Prints contents of Obit Memory allocation on stdout
     """
     ################################################################
     #
@@ -197,7 +207,8 @@ def PMemPrint ():
     # end PMemPrint
 
 def PAllowThreads (nThreads):
-    """ Sets maximum number of threads in an Obit thread pool
+    """
+    Sets maximum number of threads in an Obit thread pool
     
     nThreads maximum number of threads in an Obit thread pool
     """
@@ -206,8 +217,9 @@ def PAllowThreads (nThreads):
     # end PAllowThreads
 
 def PGetNoThreads ():
-    """ Tells Number of Threads enabled in Obit
-
+    """
+    Tells Number of Threads enabled in Obit
+    
     returns number
     """
     ################################################################

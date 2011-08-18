@@ -30,17 +30,23 @@
 import Obit, UV, Table, OErr
 
 def PIoN2SolNTableConvert (inUV, outSNVer, NITable, pos, err):
-    """ Evaluate Ionospheric model table at pos and convert to SN table
-
+    """
+    Evaluate Ionospheric model table at pos and convert to SN table
+    
     Returns resultant SN table
-    inUV     = UV data for output SN table.
-    Control parameters on inUV info member
+
+    * inUV     = UV data for output SN table.
+      Control parameters on inUV info member:
+
+      ========== ================ ================================
       "doAntOff" OBIT_bool scalar True if correctionss for antenna
-                offset from array center wanted [def False]
-    outSNVer = Desired output SN table version, 0=> new
-    NITable  = Ionospheric model table to evaluate
-    pos      = [RA, Dec] shift (deg) in which NITable to be evaluated.
-    err      = Obit Error stack, returns if not empty.
+                                  offset from array center wanted [def False]
+      ========== ================ ================================
+
+    * outSNVer = Desired output SN table version, 0=> new
+    * NITable  = Ionospheric model table to evaluate
+    * pos      = [RA, Dec] shift (deg) in which NITable to be evaluated.
+    * err      = Obit Error stack, returns if not empty.
     """
     ################################################################
     # Checks

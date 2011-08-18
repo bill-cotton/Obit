@@ -6,10 +6,13 @@ Also included are the current location of the image in an ObitImage
 image buffer and the specified subimaging parameters.
 
 Image Members with python interfaces:
-InfoList  - used to pass instructions to processing
+
+* InfoList - used to pass instructions to processing
+
 Member List (readonly)
-Dict      - (virtual) Python dictionary with contents of descriptor
-Member Dict
+
+* Dict - (virtual) Python dictionary with contents of descriptor
+  Member Dict
 """
 # $Id$
 #-----------------------------------------------------------------------
@@ -64,20 +67,22 @@ class ImageDescPtr :
     def __repr__(self):
         return "<C ImageDesc instance>"
 class ImageDesc(ImageDescPtr):
-    """ Python Obit Image descriptor class
-
+    """
+    Python Obit Image descriptor class
     """
     def __init__(self, name) :
         self.this = Obit.new_ImageDesc(name)
     def __del__(self):
         if Obit!=None:
             Obit.delete_ImageDesc(self.this)
-
+    
 def PDefault (name):
-    """ Default ImageDesc
-
+    """ 
+    Default ImageDesc
+    
     returns new ImageDesc
-    name = optional name for object
+    
+    * name = optional name for object
     """
     ################################################################
     out = ImageDesc("None")
@@ -86,12 +91,14 @@ def PDefault (name):
     # end PDefault
 
 def PCopyDesc (inID, outID, err):
-    """ Copy the descriptive information from one descriptor to another
-
+    """
+    Copy the descriptive information from one descriptor to another
+    
     Structural values not copied.
-    inID    = Python Obit ImageDesc for input
-    outID   = Python Obit ImageDesc for output
-    err     = Python Obit Error/message stack
+
+    * inID    = Python Obit ImageDesc for input
+    * outID   = Python Obit ImageDesc for output
+    * err     = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -108,14 +115,16 @@ def PCopyDesc (inID, outID, err):
     # end PCopyDesc
 
 def POverlap (inID1, inID2, err):
-    """ Determine if there is any overlap between images
-
+    """
+    Determine if there is any overlap between images
+    
     Compares ImageDesc objects to see if the associated
     images overlap on the sky.
     Returns True if so sles False
-    inID1   = First Python Obit ImageDesc for test
-    inID2   = Second Python Obit ImageDesc for test
-    err     = Python Obit Error/message stack
+
+    * inID1   = First Python Obit ImageDesc for test
+    * inID2   = Second Python Obit ImageDesc for test
+    * err     = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -133,14 +142,16 @@ def POverlap (inID1, inID2, err):
     # end POverlap
 
 def PCvtPixel (inID, inPixel, outID, err):
-    """ Return pixel location in outID corresponding to pixel inPixel in inID
-
+    """
+    Return pixel location in outID corresponding to pixel inPixel in inID
+    
     returns array of 2 floats giving pixel position in outID.
-    inID    = Python Obit ImageDesc for input
-    inPixel = array of floats giving position in image described by inID
-              only first 2 used.
-    outID   = Python Obit ImageDesc for output
-    err     = Python Obit Error/message stack
+
+    * inID    = Python Obit ImageDesc for input
+    * inPixel = array of floats giving position in image described by inID
+      only first 2 used.
+    * outID   = Python Obit ImageDesc for output
+    * err     = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -164,12 +175,14 @@ def PCvtPixel (inID, inPixel, outID, err):
     # end PCvtPixel
 
 def PGetPixel (inID, inPos, err):
-    """ Return pixel location in inID corresponding position inPos
-
+    """
+    Return pixel location in inID corresponding position inPos
+    
     returns array of 2 floats giving pixel position in outID.
-    inID    = Python Obit ImageDesc for input
-    inPos   = array of floats (RA, dec) in deg
-    err     = Python Obit Error/message stack
+
+    * inID    = Python Obit ImageDesc for input
+    * inPos   = array of floats (RA, dec) in deg
+    * err     = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -191,13 +204,15 @@ def PGetPixel (inID, inPos, err):
     # end PGetPixel
 
 def PGetPos (inID, inPixel, err):
-    """ Return position of pixel inPixel in inID
-
+    """
+    Return position of pixel inPixel in inID
+    
     returns array of 2 floats giving (RA, Dec) in deg of pixel inPixel
-    inID    = Python Obit ImageDesc for input
-    inPixel = array of floats giving position in image described by inID
-              only first 2 used.
-    err     = Python Obit Error/message stack
+
+    * inID    = Python Obit ImageDesc for input
+    * inPixel = array of floats giving position in image described by inID
+      only first 2 used.
+    * err     = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -219,10 +234,12 @@ def PGetPos (inID, inPixel, err):
     # end PGetPos
 
 def PGetDict (inID):
-    """ Returns the contents of an ImageDesc as a Python Dictionary
-
+    """
+    Returns the contents of an ImageDesc as a Python Dictionary
+    
     returns dictionary
-    inID = Python ImageDesc to read
+
+    * inID = Python ImageDesc to read
     """
     ################################################################
     # Checks
@@ -234,12 +251,14 @@ def PGetDict (inID):
 
 
 def PSetDict (inID, inDict):
-    """ Copies the contents of a Python Dictionary to an ImageDesc
-
+    """
+    Copies the contents of a Python Dictionary to an ImageDesc
+    
     No type or dimension checking.  Not all values are writeable.
     It's best if this was created by PGetDict.
-    inID   = Python ImageDesc to update
-    inDict = Python dictionary with values
+
+    * inID   = Python ImageDesc to update
+    * inDict = Python dictionary with values
     """
     ################################################################
     # Checks
@@ -250,9 +269,10 @@ def PSetDict (inID, inDict):
     # end PSetDict
 
 def PHeader (inID):
-    """ Print the contents of a descriptor
+    """
+    Print the contents of a descriptor
 
-    inID   = Python ImageDesc to print
+    * inID   = Python ImageDesc to print
     """
     ################################################################
     # Checks
@@ -264,9 +284,10 @@ def PHeader (inID):
     # end PHeader
 
 def PHeaderDict (dict):
-    """ Print the contents of a descriptor as python dict
+    """
+    Print the contents of a descriptor as python dict
 
-    dict   = Python ImageDesc to print as python dict
+    * dict   = Python ImageDesc to print as python dict
     """
     ################################################################
     print "Object: %8s   Origin: %8s" % \
@@ -318,10 +339,12 @@ def PHeaderDict (dict):
     # end PHeaderDict
 
 def PGetList (inDesc):
-    """  Get InfoList from ImageDesc
-
+    """
+    Get InfoList from ImageDesc
+    
     returns InfoList
-    inDesc  = Python Obit input ImageDesc
+
+    * inDesc  = Python Obit input ImageDesc
     """
     ################################################################
     # Checks
@@ -335,13 +358,15 @@ def PGetList (inDesc):
     # end PGetList 
 
 def PCheckCompat (in1Desc, in2Desc, chkPos=False):
-    """  Checks compatibility of two image descriptors
-
+    """
+    Checks compatibility of two image descriptors
+    
     Raises error condition if  images do not have the same geometry
-    in1Desc  = Python Obit input ImageDesc 1
-    in2Desc  = Python Obit input ImageDesc 2
-    chkPos   = If true also check the coordinates on each axis
-               Check is if pixels are within 0.01 of a pixel
+
+    * in1Desc  = Python Obit input ImageDesc 1
+    * in2Desc  = Python Obit input ImageDesc 2
+    * chkPos   = If true also check the coordinates on each axis
+      Check is if pixels are within 0.01 of a pixel
     """
     ################################################################
     # Checks
@@ -369,10 +394,12 @@ def PCheckCompat (in1Desc, in2Desc, chkPos=False):
     # end PCheckCompat 
 
 def PIsA (inID):
-    """ Tells if the input really is a Python Obit ImageDesc
-
+    """
+    Tells if the input really is a Python Obit ImageDesc
+    
     returns true or false (1,0)
-    inID = Python ImageDesc to test
+
+    * inID = Python ImageDesc to test
     """
     ################################################################
      # Checks
@@ -383,11 +410,13 @@ def PIsA (inID):
     # end  PIsA
 
 def PUnref (inID):
-    """ Decrement reference count
-
+    """
+    Decrement reference count
+    
     Decrement reference count which will destroy object if it goes to zero
     Python object stays defined.
-    inID   = Python ImageDesc object
+
+    * inID   = Python ImageDesc object
     """
     ################################################################
      # Checks
@@ -398,13 +427,15 @@ def PUnref (inID):
     # end PUnref
 
 def PPoslabel (ctype, crval, cdelt):
-    """ Convert a coordinate for display
-
+    """
+    Convert a coordinate for display
+    
     returns dict with entries "ctype", "crval", "cdelt"
     giving the relevant strings to display
-    ctype   = coordinate type (e.g. "RA---SIN")
-    crval   = coordinate value
-    cdelt   = coordinate increment
+
+    * ctype   = coordinate type (e.g. "RA---SIN")
+    * crval   = coordinate value
+    * cdelt   = coordinate increment
     """
     ################################################################
     out = {"ctype":ctype}
@@ -439,9 +470,10 @@ def PPoslabel (ctype, crval, cdelt):
     # end PPoslabel
 
 def PRA2HMS (ra):
-    """ Convert a right ascension in degrees to hours, min, seconds
+    """
+    Convert a right ascension in degrees to hours, min, seconds
 
-    ra   = Right ascension in deg.
+    * ra   = Right ascension in deg.
     """
     ################################################################
     p = ra / 15.0
@@ -454,9 +486,10 @@ def PRA2HMS (ra):
     # end PRA2HMS
 
 def PDec2DMS (dec):
-    """ Convert a declination in degrees to degrees, min, seconds
+    """
+    Convert a declination in degrees to degrees, min, seconds
 
-    dec  = Declination in deg.
+    * dec  = Declination in deg.
     """
     ################################################################
     p = math.fabs(dec)
@@ -473,11 +506,13 @@ def PDec2DMS (dec):
     # end PDec2DMS
 
 def PHMS2RA (rast,  sep=":"):
-    """ Convert a right ascension string to degrees
-
+    """
+    Convert a right ascension string to degrees
+    
     return RA in degrees
-    rast      RA string as "hh:mm:ss.s"
-    sep       sympol to use to separate components instead of ":"
+
+    * rast = RA string as "hh:mm:ss.s"
+    * sep  = sympol to use to separate components instead of ":"
     """
     ################################################################
     pp = rast.split(sep)
@@ -498,11 +533,13 @@ def PHMS2RA (rast,  sep=":"):
     # end PHMS2RA
 
 def PDMS2Dec (decst, sep=":"):
-    """ Convert a declination string to degrees
-
+    """
+    Convert a declination string to degrees
+    
     Returns dec in deg
-    decst     Dec string as "dd:mm:ss.s"
-    sep       sympol to use to separate components instead of ":"
+
+    * decst = Dec string as "dd:mm:ss.s"
+    * sep   = sympol to use to separate components instead of ":"
     """
     ################################################################
     pp = decst.split(sep)

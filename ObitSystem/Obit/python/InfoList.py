@@ -60,8 +60,9 @@ class InfoListPtr :
     def __repr__(self):
         return "<C InfoList instance>"
 class InfoList(InfoListPtr):
-    """ Python Obit InfoList class
-
+    """
+    Python Obit InfoList class
+    
     ObitInfoList Linked list of labeled items class.
     This facility allows storing arrays of values of the same (native) 
     data type and retrieving them by name or order number in the list.
@@ -77,14 +78,15 @@ class InfoList(InfoListPtr):
     
     def set (self, name, value, ttype=None):
         """ Save a value in an InfoList
-
+    
         Set an entry in an InfoList, possibly redefining its type and dimension
-        self     = input Python InfoList
-        name     = name of desired entry
-        value    = value to save, either a scalar integer, float, boolean or string
-                   or a 1D array of one of these types
-                   Type and dimensionality determined from value unless ttype is set
-        ttype     = data type, "double", "long", None=>type of value
+
+        * self  = input Python InfoList
+        * name  = name of desired entry
+        * value = value to save, either a scalar integer, float, boolean or string
+          or a 1D array of one of these types
+          Type and dimensionality determined from value unless ttype is set
+        * ttype = data type, "double", "long", None=>type of value
         """
         itype = type(value)
         dim = [1,1,1,1,1,]
@@ -215,17 +217,23 @@ class InfoList(InfoListPtr):
     # end set
         
     def get (self, name):
-        """ Retrieve a value from an InfoList
-  
+        """
+        Retrieve a value from an InfoList
+        
         returns python list containing data:
-        0 - return code, 0=OK else failed
-        1 - name
-        2 - type
-            int=1, oint=3, long=4, float=9, double=10, string=13, boolean=14
-        3 - dimension array as list, e.g. [1,1,1,1,1] for scalar
-        4 - data array
-        self     = input Python InfoList
-        name     = name of desired entry
+        
+        =====  ===================
+        index  description
+        =====  ===================
+        0      return code, 0=OK else failed
+        1      name
+        2      type code: int=1, oint=3, long=4, float=9, double=10, string=13, boolean=14
+        3      dimension array as list, e.g. [1,1,1,1,1] for scalar
+        4      data array
+        =====  ===================
+
+        * self     = input Python InfoList
+        * name     = name of desired entry
         """
         # Ignore any exception when item not found
         try:
@@ -242,10 +250,12 @@ class InfoList(InfoListPtr):
 dim=[1,1,1,1,1]
 
 def PCopy (inList):
-    """ Copy list
-
+    """
+    Copy list
+    
     return copy of input InfoList
-    inList    = input Python InfoList
+
+    * inList    = input Python InfoList
     """
     ################################################################
     out = InfoList()
@@ -255,43 +265,47 @@ def PCopy (inList):
 # end PCopy 
 
 def PCopyData (inList, outList):
-    """ Copy all entries from inList to outList
+    """
+    Copy all entries from inList to outList
 
-    inList    = input Python InfoList
-    outList   = output Python InfoList, previously exists
+    * inList    = input Python InfoList
+    * outList   = output Python InfoList, previously exists
     """
     ################################################################
     Obit.InfoListCopyData(inList.me, outList.me)
     # end PCopyData
 
 def PRemove (inList, name):
-    """ Removes item name fro list
+    """
+    Removes item name fro list
 
-    inList    = input Python InfoList
-    name      = name of desired entry
+    * inList    = input Python InfoList
+    * name      = name of desired entry
     """
     ################################################################
     Obit.InfoListRemove (inList.me, name)
     # end PRemove
 
 def PItemResize (inList, name, type, dim):
-    """ 
+    """
+    * inList   = input Python InfoList
 
-    inList   = input Python InfoList
-    name     = name of desired entry
-    type     = data type of object
-               int=1, oint=3, long=4, float=9, double=10, string=13, boolean=14
-    dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
+    * name     = name of desired entry
+    * type     = data type of object
+               * int=1, oint=3, long=4, float=9, double=10, string=13, boolean=14
+    * dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
     """
     ################################################################
     Obit.InfoListItemResize(inList, name, type, dim)
     # end PItemResize
 
 def PIsA (inList):
-    """ Tells if input really is InfoList
-
+    """
+    Tells if input really is InfoList
+    
     returns true, false (1,0)
-    inList    = input Python InfoList
+
+    * inList    = input Python InfoList
     """
     ################################################################
      # Checks
@@ -301,14 +315,15 @@ def PIsA (inList):
     # end PIsA
 
 def PPutInt (inList, name, dim, data, err):
-    """ Add an integer entry, error if conflict
+    """
+    Add an integer entry, error if conflict
 
-    inList   = input Python InfoList
-    name     = name of desired entry
-    dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
+    * inList   = input Python InfoList
+    * name     = name of desired entry
+    * dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
                MUST have 5 entries
-    data     = data as a 1-D array of integers
-    err      = Python Obit Error/message stack
+    * data     = data as a 1-D array of integers
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -331,13 +346,14 @@ def PPutInt (inList, name, dim, data, err):
     # end PPutInt
 
 def PAlwaysPutInt (inList, name, dim, data):
-    """ Add an integer entry, changing type/dim of entry if needed
+    """
+    Add an integer entry, changing type/dim of entry if needed
 
-    inList   = input Python InfoList
-    name     = name of desired entry
-    dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
+    * inList   = input Python InfoList
+    * name     = name of desired entry
+    * dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
                MUST have 5 entries
-    data     = data as a 1-D array of integers
+    * data     = data as a 1-D array of integers
     """
     ################################################################
     # Checks
@@ -358,14 +374,15 @@ def PAlwaysPutInt (inList, name, dim, data):
     # end PAlwaysPutInt
 
 def PPutLong (inList, name, dim, data, err):
-    """ Add an long entry, error if conflict
+    """
+    Add an long entry, error if conflict
 
-    inList   = input Python InfoList
-    name     = name of desired entry
-    dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
+    * inList   = input Python InfoList
+    * name     = name of desired entry
+    * dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
                MUST have 5 entries
-    data     = data as a 1-D array of integers
-    err      = Python Obit Error/message stack
+    * data     = data as a 1-D array of integers
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -388,13 +405,14 @@ def PPutLong (inList, name, dim, data, err):
     # end PPutLong
 
 def PAlwaysPutLong (inList, name, dim, data):
-    """ Add an long entry, changing type/dim of entry if needed
+    """
+    Add an long entry, changing type/dim of entry if needed
 
-    inList   = input Python InfoList
-    name     = name of desired entry
-    dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
+    * inList   = input Python InfoList
+    * name     = name of desired entry
+    * dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
                MUST have 5 entries
-    data     = data as a 1-D array of integers
+    * data     = data as a 1-D array of integers
     """
     ################################################################
     # Checks
@@ -415,14 +433,15 @@ def PAlwaysPutLong (inList, name, dim, data):
     # end PAlwaysPutLong
 
 def PPutFloat (inList, name, dim, data, err):
-    """ Add an float entry, error if conflict
+    """
+    Add an float entry, error if conflict
 
-    inList   = input Python InfoList
-    name     = name of desired entry
-    dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
+    * inList   = input Python InfoList
+    * name     = name of desired entry
+    * dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
                MUST have 5 entries
-    data     = data as a 1-D array of float
-    err      = Python Obit Error/message stack
+    * data     = data as a 1-D array of float
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -445,13 +464,14 @@ def PPutFloat (inList, name, dim, data, err):
     # end PPutFloat
 
 def PAlwaysPutFloat (inList, name, dim, data):
-    """ Add an float entry, changing type/dim of entry if needed
+    """
+    Add an float entry, changing type/dim of entry if needed
 
-    inList   = input Python InfoList
-    name     = name of desired entry
-    dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
+    * inList   = input Python InfoList
+    * name     = name of desired entry
+    * dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
                MUST have 5 entries
-    data     = data as a 1-D array of float
+    * data     = data as a 1-D array of float
     """
     ################################################################
     # Checks
@@ -472,14 +492,15 @@ def PAlwaysPutFloat (inList, name, dim, data):
     # end PAlwaysPutFloat
 
 def PPutDouble (inList, name, dim, data, err):
-    """ Add an double entry, error if conflict
+    """
+    Add an double entry, error if conflict
 
-    inList   = input Python InfoList
-    name     = name of desired entry
-    dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
+    * inList   = input Python InfoList
+    * name     = name of desired entry
+    * dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
                MUST have 5 entries
-    data     = data as a 1-D array of double
-    err      = Python Obit Error/message stack
+    * data     = data as a 1-D array of double
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -502,13 +523,14 @@ def PPutDouble (inList, name, dim, data, err):
     # end  PPutDouble
 
 def PAlwaysPutDouble (inList, name, dim, data):
-    """ Add an integer entry, changing type/dim of entry if needed
+    """
+    Add an integer entry, changing type/dim of entry if needed
 
-    inList   = input Python InfoList
-    name     = name of desired entry
-    dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
+    * inList   = input Python InfoList
+    * name     = name of desired entry
+    * dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
                MUST have 5 entries
-    data     = data as a 1-D array of double
+    * data     = data as a 1-D array of double
     """
     ################################################################
     # Checks
@@ -529,14 +551,15 @@ def PAlwaysPutDouble (inList, name, dim, data):
     # end PAlwaysPutDouble
 
 def PPutBoolean (inList, name, dim, data, err):
-    """ Add an boolean entry (1,0), error if conflict
+    """
+    Add an boolean entry (1,0), error if conflict
 
-    inList   = input Python InfoList
-    name     = name of desired entry
-    dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
+    * inList   = input Python InfoList
+    * name     = name of desired entry
+    * dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
                MUST have 5 entries
-    data     = data as a 1-D array of boolean (1,0)
-    err      = Python Obit Error/message stack
+    * data     = data as a 1-D array of boolean (1,0)
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -559,13 +582,14 @@ def PPutBoolean (inList, name, dim, data, err):
     # end PPutBoolean
 
 def PAlwaysPutBoolean (inList, name, dim, data):
-    """ Add an boolean entry, changing type/dim of entry if needed
+    """
+    Add an boolean entry, changing type/dim of entry if needed
 
-    inList   = input Python InfoList
-    name     = name of desired entry
-    dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
+    * inList   = input Python InfoList
+    * name     = name of desired entry
+    * dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
                MUST have 5 entries
-    data     = data as a 1-D array of boolean (1,0)
+    * data     = data as a 1-D array of boolean (1,0)
     """
     ################################################################
     # Checks
@@ -586,14 +610,15 @@ def PAlwaysPutBoolean (inList, name, dim, data):
     # end PAlwaysPutBoolean
 
 def PPutString (inList, name, dim, data, err):
-    """ Add an string entry, error if conflict
+    """
+    Add an string entry, error if conflict
 
-    inList   = input Python InfoList
-    name     = name of desired entry
-    dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
+    * inList   = input Python InfoList
+    * name     = name of desired entry
+    * dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
                MUST have 5 entries
-    data     = data as a 1-D array of strings (rectangular char array)
-    err      = Python Obit Error/message stack
+    * data     = data as a 1-D array of strings (rectangular char array)
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -618,13 +643,14 @@ def PPutString (inList, name, dim, data, err):
     # end  PPutString
 
 def PAlwaysPutString (inList, name, dim, data):
-    """ Add an String entry, changing type/dim of entry if needed
+    """
+    Add an String entry, changing type/dim of entry if needed
 
-    inList   = input Python InfoList
-    name     = name of desired entry
-    dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
+    * inList   = input Python InfoList
+    * name     = name of desired entry
+    * dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
                MUST have 5 entries
-    data     = data as a 1-D array of (rectangular char array)
+    * data     = data as a 1-D array of (rectangular char array)
     """
     ################################################################
     # Checks
@@ -647,18 +673,19 @@ def PAlwaysPutString (inList, name, dim, data):
      # end PAlwaysPutString
 
 def PGet (inList, name):
-    """ 
+    """
     returns python list containing data:
        0 - return code, 0=OK else failed
        1 - name
        2 - type
        3 -  dimension array
        4 - data array
-    inList   = input Python InfoList
-    type     = data type of object
-               int=1, oint=3, long=4, float=9, double=10, string=13, boolean=14
-    dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
-    data     = data as a multi dimensional array of (rectangular char array)
+
+    * inList   = input Python InfoList
+    * type     = data type of object
+               * int=1, oint=3, long=4, float=9, double=10, string=13, boolean=14
+    * dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
+    * data     = data as a multi dimensional array of (rectangular char array)
     """
     ################################################################
     # Checks
@@ -673,16 +700,17 @@ def PGet (inList, name):
     # end PGet
 
 def PGetDict (inList):
-    """ 
+    """
     returns contents as python dict, each element is:
        0 - type
        1 - dimension array
        2 - data array
-    type     = data type of object
-               int=2, oint=3, long=4, float=9, double=10, string=13, boolean=14
-    dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
-    data     = data as a multi dimensional array of (rectangular char array)
-    inList    = input Python InfoList
+
+    * type     = data type of object
+               * int=2, oint=3, long=4, float=9, double=10, string=13, boolean=14
+    * dim      = dimensionality of array as list, e.g. [1,1,1,1,1] for scalar
+    * data     = data as a multi dimensional array of (rectangular char array)
+    * inList    = input Python InfoList
     """
     ################################################################
     # Checks
@@ -694,15 +722,20 @@ def PGetDict (inList):
     # end PGetDict
 
 def PSetDict (outList, inDict):
-    """ 
+    """
     Adds entries in InfoList from elements of a python dict, each element is
     a list with the following elements:
-       [0] - type code:int=2, oint=3, long=4, float=9, double=10, string=13, boolean=14
-       [1] - dim, dimension array, an list of 5 int
-       [2] - data list, a 1-D list all of the data type given by type
+    
+    =====  ===========
+    index  description
+    =====  ===========
+    0      type code: int=2, oint=3, long=4, float=9, double=10, string=13, boolean=14
+    1      dim, dimension array, an list of 5 int
+    2      data list, a 1-D list all of the data type given by type
+    =====  ===========
 
-    outList  = output Python InfoList
-    inDict   = input dict strictly in form generated by PGetDict
+    * outList  = output Python InfoList
+    * inDict   = input dict strictly in form generated by PGetDict
     """
     ################################################################
     # Checks
@@ -748,10 +781,12 @@ def PSetDict (outList, inDict):
     # end PSetDict
 
 def PIsA (inList):
-    """ Tells if input really a Python Obit InfoList
-
+    """
+    Tells if input really a Python Obit InfoList
+    
     return true, false (1,0)
-    inList   = Python InfoList object
+
+    * inList   = Python InfoList object
     """
     ################################################################
      # Checks
@@ -761,11 +796,13 @@ def PIsA (inList):
     # end PIsA
 
 def PUnref (inList):
-    """ Decrement reference count
-
+    """
+    Decrement reference count
+    
     Decrement reference count which will destroy object if it goes to zero
     Python object stays defined.
-    inList   = Python InfoList object
+
+    * inList   = Python InfoList object
     """
     ################################################################
      # Checks

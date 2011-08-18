@@ -1,7 +1,6 @@
 """ Python Obit FullBeam class
 
 This class provides values of the beam shape derived from an image
-
 """
 # $Id$
 #-----------------------------------------------------------------------
@@ -64,7 +63,8 @@ class FullBeamPtr :
         return "<C FullBeam instance> " + Obit.FullBeamGetName(self.me)
 #
 class FullBeam(FullBeamPtr):
-    """ Python Obit FullBeam class
+    """
+    Python Obit FullBeam class
     
     This class provides values of the beam shape derived from an image
     Gains at specified offsets from the beam center at giv3en parallactic
@@ -80,9 +80,9 @@ class FullBeam(FullBeamPtr):
             Obit.delete_FullBeam(self.this)
     def cast(self, toClass):
         """ Casts object pointer to specified class
-        
-        self     = object whose cast pointer is desired
-        toClass  = Class string to cast to
+
+        * self     = object whose cast pointer is desired
+        * toClass  = Class string to cast to
         """
         ################################################################
         # Get pointer with type of this class
@@ -92,15 +92,15 @@ class FullBeam(FullBeamPtr):
     # end cast
     
     def Gain (self, dra, ddec, parAng, plane, err):
-        """ 
-        
+        """
         Returns Gain
-        self     = the FullBeam object
-        ra       = RA (deg) offset of direction for gain
-        dec      = Dec (deg) offset of direction for gain
-        parAng   = Parallactic angle (deg)
-        plane    = plane in FullBeam (from FindPlane)
-        err      = Obit error/message stack
+
+        * self     = the FullBeam object
+        * ra       = RA (deg) offset of direction for gain
+        * dec      = Dec (deg) offset of direction for gain
+        * parAng   = Parallactic angle (deg)
+        * plane    = plane in FullBeam (from FindPlane)
+        * err      = Obit error/message stack
         """
         ################################################################
         # Checks
@@ -110,11 +110,11 @@ class FullBeam(FullBeamPtr):
     # end Gain
     
     def FindPlane(self, freq):
-        """ 
-        
+        """
         Returns nearest plane to a given frequency
-        self     = the FullBeam object
-        freq     = frequency (Hz)
+
+        * self     = the FullBeam object
+        * freq     = frequency (Hz)
         """
         ################################################################
         # Checks
@@ -124,10 +124,12 @@ class FullBeam(FullBeamPtr):
     # end FindPlane
     
     def FullBeamIsA (self):
-        """ Tells if input really a Python Obit FullBeam
+        """
+        Tells if input really a Python Obit FullBeam
         
         return true, false (1,0)
-        self   = Python FullBeam object
+
+        * self   = Python FullBeam object
         """
         ################################################################
         # Allow derived types
@@ -136,10 +138,12 @@ class FullBeam(FullBeamPtr):
     # end class FullBeam
     
 def PIsA (inFullBeam):
-    """ Tells if input really a Python Obit FullBeam
-
+    """
+    Tells if input really a Python Obit FullBeam
+    
     return True, False (1,0)
-    inFullBeam   = Python FullBeam object
+
+    * inFullBeam   = Python FullBeam object
     """
     ################################################################
     if inFullBeam.__class__ != FullBeam:
@@ -150,12 +154,14 @@ def PIsA (inFullBeam):
     # end PIsA
 
 def PCreate (name, image, err):
-    """ Create the underlying structures of a FullBeam
-
+    """
+    Create the underlying structures of a FullBeam
+    
     return object created.
-    name      = Name to be given to object
-    image     = Python Image for which beam shape is desired
-    err       = Obit error/message stack
+
+    * name      = Name to be given to object
+    * image     = Python Image for which beam shape is desired
+    * err       = Obit error/message stack
     """
     ################################################################
     # Checks

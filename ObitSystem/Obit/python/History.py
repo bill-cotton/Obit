@@ -7,7 +7,10 @@ To create a History, instantiate with the InfoList from the relevant object
 to which the history is attached.
 History(name, info, err)
 History Members with python interfaces:
-List  - used to pass instructions to processing (file info)
+
+======  ===================================================
+List    used to pass instructions to processing (file info)
+======  ===================================================
 """
 # Python/Obit History class
 # $Id$
@@ -65,7 +68,8 @@ class HistoryPtr :
             return
         return "<C History instance> " + Obit.HistoryGetName(self.me)
 class History(HistoryPtr):
-    """ Python Obit History class
+    """
+    Python Obit History class
     
     This class contains processing history and allows access.
     An ObitHistory is the front end to a persistent disk resident structure.
@@ -74,86 +78,101 @@ class History(HistoryPtr):
     to which the history is attached.
     History(name, info, err)
     History Members with python interfaces:
-    List  - used to pass instructions to processing (file info)
+    
+    ======  ===================================================
+    List    used to pass instructions to processing (file info)
+    ======  ===================================================
     """
     def __init__(self,name,info,err) :
         self.this = Obit.new_History(name, info.me, err.me)
     def __del__(self):
         if Obit!=None:
             Obit.delete_History(self.this)
-
+    
     def Zap (self, err):
         """ Destroy the persistent form of a History
-        
-        self = input Python Obit History
-        err  = Python Obit Error/message stack
+
+        * self = input Python Obit History
+        * err  = Python Obit Error/message stack
         """
         PZap (self, err)
         # end Zap 
 
     def Open (self, access, err):
-        """ Open History
+        """
+        Open History
         
         return 0 on success, else failure
-        self    = input Python History
-        access   = access code READONLY(1), WRITEONLY(2), READWRITE(3)
-        err      = Python Obit Error/message stack
+
+        * self    = input Python History
+        * access   = access code READONLY(1), WRITEONLY(2), READWRITE(3)
+        * err      = Python Obit Error/message stack
         """
         return POpen (self, access, err)
         # end POpen
 
     def Close (self, err):
-        """ Close History
+        """
+        Close History
         
         return 0 on success, else failure
-        self  = input Python History
-        err   = Python Obit Error/message stack
+
+        * self  = input Python History
+        * err   = Python Obit Error/message stack
         """
         return PClose (self, err)
     # end PClose
 
     def ReadRec (self, recno, err):
-        """ Read History record
+        """
+        Read History record
         
         returns string
-        self  = input Python History
-        recno = desired record
-        err   = Python Obit Error/message stack
+
+        * self  = input Python History
+        * recno = desired record
+        * err   = Python Obit Error/message stack
         """
         return PReadRec (self, recno, err)
     # end PReadRec
 
     def WriteRec (self, recno, hiCard, err):
-        """ Write History record
+        """
+        Write History record
         
         return 0 on success, else failure
-        self   = input Python History
-        recno  = desired record, -1 => end of table
-        hiCard = input history record
-        err    = Python Obit Error/message stack
+
+        * self   = input Python History
+        * recno  = desired record, -1 => end of table
+        * hiCard = input history record
+        * err    = Python Obit Error/message stack
         """
         return PWriteRec (self, recno, hiCard, err)
     # end PWriteRec
 
     def Stalin (self, startr, endr, err):
-        """ Edit history
+        """
+        Edit history
         
         return 0 on success, else failure
-        self   = input Python History
-        startr = first (1-rel) history record to delete
-        endr   = highest (1-rel) history record to delete, 0->to end
-        err    = Python Obit Error/message stack
+
+        * self   = input Python History
+        * startr = first (1-rel) history record to delete
+        * endr   = highest (1-rel) history record to delete, 0->to end
+        * err    = Python Obit Error/message stack
         """
         return PEdit (self, startr, endr, err)
     # end Stalin
 
     def TimeStamp (self, label, err):
-        """ Write timestamp and label to History
+        """
+        Write timestamp and label to History
         
         return 0 on success, else failure
-        self  = input Python History
-        label = character string for label
-        err   = Python Obit Error/message stack
+
+        * self  = input Python History
+        * label = character string for label
+        * err   = Python Obit Error/message stack
         """
         return PTimeStamp (self, label, err)
     # end TimeStamp
@@ -165,10 +184,11 @@ WRITEONLY = 2
 READWRITE = 3
 
 def PZap (inHis, err):
-    """ Destroy the persistent form of a History
+    """
+    Destroy the persistent form of a History
 
-    inHis    = input Python Obit History
-    err      = Python Obit Error/message stack
+    * inHis    = input Python Obit History
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -183,11 +203,12 @@ def PZap (inHis, err):
     # end PZap 
 
 def PCopy (inHis, outHis, err):
-    """ Copy a History including persistent forms
+    """
+    Copy a History including persistent forms
 
-    inHis    = input Python Obit History
-    outHis   = extant output Python Obit History
-    err      = Python Obit Error/message stack
+    * inHis    = input Python Obit History
+    * outHis   = extant output Python Obit History
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -204,11 +225,12 @@ def PCopy (inHis, outHis, err):
     # end PCopy
 
 def PCopyHeader (inHis, outHis, err):
-    """ Copy a History from a (FITS) header
+    """
+    Copy a History from a (FITS) header
 
-    inHis    = input Python Obit History (FITS)
-    outHis   = extant output Python Obit History
-    err      = Python Obit Error/message stack
+    * inHis    = input Python Obit History (FITS)
+    * outHis   = extant output Python Obit History
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -225,11 +247,12 @@ def PCopyHeader (inHis, outHis, err):
     # end PCopyHeader
 
 def PCopy2Header (inHis, outHis, err):
-    """ Copy a History to a (FITS) header
+    """
+    Copy a History to a (FITS) header
 
-    inHis    = input Python Obit History 
-    outHis   = extant output Python Obit (FITS) History in header
-    err      = Python Obit Error/message stack
+    * inHis    = input Python Obit History 
+    * outHis   = extant output Python Obit (FITS) History in header
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -249,11 +272,12 @@ def PCopy2Header (inHis, outHis, err):
 
 
 def PHeader2Header (inHis, outHis, err):
-    """ Copy a History from a FITS header to a (FITS) header
+    """
+    Copy a History from a FITS header to a (FITS) header
 
-    inHis    = input Python Obit History 
-    outHis   = extant output Python Obit (FITS) History in header
-    err      = Python Obit Error/message stack
+    * inHis    = input Python Obit History 
+    * outHis   = extant output Python Obit (FITS) History in header
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -271,12 +295,14 @@ def PHeader2Header (inHis, outHis, err):
 
 
 def POpen (inHis, access, err):
-    """ Open History
-
+    """
+    Open History
+    
     return 0 on success, else failure
-    inHis    = input Python History
-    access   = access code READONLY(1), WRITEONLY(2), READWRITE(3)
-    err      = Python Obit Error/message stack
+
+    * inHis    = input Python History
+    * access   = access code READONLY(1), WRITEONLY(2), READWRITE(3)
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -292,11 +318,13 @@ def POpen (inHis, access, err):
     # end POpen
 
 def PClose (inHis, err):
-    """ Close History
-
+    """
+    Close History
+    
     return 0 on success, else failure
-    inHis    = input Python History
-    err      = Python Obit Error/message stack
+
+    * inHis    = input Python History
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -312,12 +340,14 @@ def PClose (inHis, err):
     # end PClose
 
 def PReadRec (inHis, recno, err):
-    """ Read History record
-
+    """
+    Read History record
+    
     returns string
-    inHis    = input Python History
-    recno    = desired record
-    err      = Python Obit Error/message stack
+
+    * inHis    = input Python History
+    * recno    = desired record
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -333,13 +363,15 @@ def PReadRec (inHis, recno, err):
     # end PReadRec
 
 def PWriteRec (inHis, recno, hiCard, err):
-    """ Write History record
-
+    """
+    Write History record
+    
     return 0 on success, else failure
-    inHis    = input Python History
-    recno    = desired record
-    hiCard   = input history record
-    err      = Python Obit Error/message stack
+
+    * inHis    = input Python History
+    * recno    = desired record
+    * hiCard   = input history record
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -355,14 +387,16 @@ def PWriteRec (inHis, recno, hiCard, err):
     # end PWriteRec
 
 def PEdit (inHis, startr, endr, err):
-    """ Edit History
-
+    """
+    Edit History
+    
     Deletes a range of history records.
     return 0 on success, else failure
-    inHis    = input Python History
-    startr   = first (1-rel) history record to delete
-    endr     = highest (1-rel) history record to delete, 0=>to end
-    err      = Python Obit Error/message stack
+
+    * inHis    = input Python History
+    * startr   = first (1-rel) history record to delete
+    * endr     = highest (1-rel) history record to delete, 0=>to end
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -381,12 +415,14 @@ def PEdit (inHis, startr, endr, err):
     # end PEdit
 
 def PTimeStamp (inHis, label, err):
-    """ Write timestamp and label to History
-
+    """
+    Write timestamp and label to History
+    
     return 0 on success, else failure
-    inHis    = input Python History
-    label    = character string for label
-    err      = Python Obit Error/message stack
+
+    * inHis    = input Python History
+    * label    = character string for label
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -401,10 +437,12 @@ def PTimeStamp (inHis, label, err):
     # end PTimeStamp
 
 def PGetList (inHis):
-    """ Return the InfoList from a History
+    """
+    Return the InfoList from a History
     
     returns InfoList
-    inHis    = input Python History
+
+    * inHis    = input Python History
     """
     ################################################################
     # Checks
@@ -417,10 +455,12 @@ def PGetList (inHis):
     # end PGetList
 
 def PIsA (inHis):
-    """ Tells if object thinks it's a Python Obit History
-
+    """
+    Tells if object thinks it's a Python Obit History
+    
     return true, false (1,0)
-    inHis    = input Python History
+
+    * inHis    = input Python History
     """
     ################################################################
     # Checks
@@ -431,10 +471,12 @@ def PIsA (inHis):
     # end PIsA
 
 def PGetName (inHis):
-    """ Returns object name (label)
-
+    """
+    Returns object name (label)
+    
     return name string
-    inHis    = input Python History
+
+    * inHis    = input Python History
     """
     ################################################################
     # Checks

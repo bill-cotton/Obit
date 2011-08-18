@@ -50,7 +50,7 @@ for dsk in ["FITS","FITS01","FITS02","FITS03","FITS04","FITS05","FITS06"]:
     dir = os.getenv(dsk)
     if dir:
         FITSdisks.append(dir)
-        nFITS = len(FITSdisks)
+nFITS = len(FITSdisks)
         
 # Get list of AIPS disks
 AIPSdisks = []
@@ -68,30 +68,34 @@ ObitSys=OSystem.OSystem ("Interactive", popsno, userno, nAIPS, AIPSdisks, \
 OErr.printErrMsg(err, "Error with Obit startup")
 
 def ShowErr(err=err):
-    """ Print any errors and clear stack
-    
-    err  = Python Obit Error/message stack, default of PTObit version
+    """
+    Print any errors and clear stack
+
+    * err  = Python Obit Error/message stack, default of PTObit version
     """
     ################################################################
     OErr.printErrMsg(err, "Error")
     # end ShowErr
 
 def ClearErr(err=err):
-    """ Print any errors and clear stack
-    
-    err  = Python Obit Error/message stack, default of PTObit version
+    """
+    Print any errors and clear stack
+
+    * err  = Python Obit Error/message stack, default of PTObit version
     """
     ################################################################
     OErr.printErrMsg(err, "Error")
     # end ClearErr
 
 def Acat(disk=Adisk, first=1, last=1000):
-    """ Catalog listing of AIPS files on disk disk
-
+    """
+    Catalog listing of AIPS files on disk disk
+    
     The class remembers the last disk accessed
-    disk      = AIPS disk number to list
-    first     = lowest slot number to list
-    last      =highest slot number to list
+
+    * disk      = AIPS disk number to list
+    * first     = lowest slot number to list
+    * last      =highest slot number to list
     """
     ################################################################
     Adisk = disk
@@ -100,11 +104,12 @@ def Acat(disk=Adisk, first=1, last=1000):
     # end Acat
 
 def AMcat(disk=Adisk, first=1, last=1000):
-    """ Catalog listing of AIPS Image files on disk disk
+    """
+    Catalog listing of AIPS Image files on disk disk
 
-    disk      = AIPS disk number to list
-    first     = lowest slot number to list
-    last      =highest slot number to list
+    * disk      = AIPS disk number to list
+    * first     = lowest slot number to list
+    * last      =highest slot number to list
     """
     ################################################################
     Adisk = disk
@@ -113,11 +118,12 @@ def AMcat(disk=Adisk, first=1, last=1000):
     # end AMcat
 
 def AUcat(disk=Adisk, first=1, last=1000):
-    """ Catalog listing of AIPS UV data files on disk disk
+    """
+    Catalog listing of AIPS UV data files on disk disk
 
-    disk      = AIPS disk number to list
-    first     = lowest slot number to list
-    last      = highest slot number to list
+    * disk      = AIPS disk number to list
+    * first     = lowest slot number to list
+    * last      = highest slot number to list
     """
     ################################################################
     Adisk = disk
@@ -126,10 +132,11 @@ def AUcat(disk=Adisk, first=1, last=1000):
     # end AUcat
 
 def getname(cno, disk=Adisk):
-    """ Return Obit object for AIPS file in cno on disk
+    """
+    Return Obit object for AIPS file in cno on disk
 
-    cno       = AIPS catalog slot number 
-    disk      = AIPS disk number
+    * cno       = AIPS catalog slot number 
+    * disk      = AIPS disk number
     """
     ################################################################
     Adisk = disk
@@ -157,11 +164,12 @@ def getname(cno, disk=Adisk):
     # end getname
 
 def getFITS(file, disk=Adisk, Ftype='Image'):
-    """ Return Obit object for FITS file in file on disk
+    """
+    Return Obit object for FITS file in file on disk
 
-    file      = FITS file name
-    disk      = FITS disk number
-    Ftype     = FITS data type: 'Image', 'UV'
+    * file      = FITS file name
+    * disk      = FITS disk number
+    * Ftype     = FITS data type: 'Image', 'UV'
     """
     ################################################################
     if Ftype == 'Image':
@@ -175,10 +183,11 @@ def getFITS(file, disk=Adisk, Ftype='Image'):
     # end getFITS
 
 def tvlod(image, window=None):
-    """ display image
+    """
+    display image
 
-    image  = Obit Image, created with getname, getFITS
-    window = Optional window for image to edit
+    * image  = Obit Image, created with getname, getFITS
+    * window = Optional window for image to edit
     """
     ################################################################
     if Image.PIsA(image):
@@ -198,10 +207,12 @@ def tvlod(image, window=None):
     # end tvlod
 
 def window (image):
-    """ Make a window object for an image
-
+    """
+    Make a window object for an image
+    
     Returns OWindow object
-    image  = Obit image object
+
+    * image  = Obit image object
     """
     ################################################################
     if Image.IsA(image):
@@ -222,9 +233,10 @@ def window (image):
     # end window
 
 def imhead (ObitObj):
-    """ List header
+    """
+    List header
 
-    ObitObj    = Obit or ParselTongue data object
+    * ObitObj    = Obit or ParselTongue data object
     """
     ################################################################
     if ObitObj.__class__==AIPSData.AIPSImage:
@@ -255,12 +267,14 @@ def imhead (ObitObj):
     # end imhead
    
 def setname (inn, out):
-    """ Copy file definition from inn to out as in...
-
+    """
+    Copy file definition from inn to out as in...
+    
     Supports both FITS and AIPS
     Copies Data type and file name, disk, class etc
-    inn  = Obit data object, created with getname, getFITS
-    out  = ObitTask object,
+
+    * inn  = Obit data object, created with getname, getFITS
+    * out  = ObitTask object,
     """
     ################################################################
     out.DataType = inn.FileType
@@ -274,12 +288,14 @@ def setname (inn, out):
     # end setname
    
 def set2name (in2, out):
-    """ Copy file definition from in2 to out as in2...
-
+    """
+    Copy file definition from in2 to out as in2...
+    
     Supports both FITS and AIPS
     Copies Data type and file name, disk, class etc
-    in2  = Obit data object, created with getname, getFITS
-    out  = ObitTask object,
+
+    * in2  = Obit data object, created with getname, getFITS
+    * out  = ObitTask object,
     """
     ################################################################
     out.DataType  = in2.FileType
@@ -293,12 +309,14 @@ def set2name (in2, out):
     # end set2name
    
 def setoname (inn, out):
-    """ Copy file definition from inn to out as outdisk...
-
+    """
+    Copy file definition from inn to out as outdisk...
+    
     Supports both FITS and AIPS
     Copies Data type and file name, disk, class etc
-    inn  = Obit data object, created with getname, getFITS
-    out  = ObitTask object,
+
+    * inn  = Obit data object, created with getname, getFITS
+    * out  = ObitTask object,
     """
     ################################################################
     out.DataType  = inn.FileType
@@ -312,12 +330,14 @@ def setoname (inn, out):
     # end setoname
    
 def setwindow (w, out):
-    """ Set BLC and TRC members on out from OWindow w
-
+    """
+    Set BLC and TRC members on out from OWindow w
+    
     Uses first window in first field on w which must be a rectangle
     This may be set interactively using tvlod
-    w    = OWindow object
-    out  = ObitTask object, BLC and TRC members [0] and [1] are modified
+
+    * w    = OWindow object
+    * out  = ObitTask object, BLC and TRC members [0] and [1] are modified
     """
     ################################################################
     # Must be rectangle
@@ -331,10 +351,12 @@ def setwindow (w, out):
     # end setwindow 
    
 def zap (o):
-    """ Zap object o
-
+    """
+    Zap object o
+    
     Removes all external components (files)
-    o    = Obit Data object to delete
+
+    * o    = Obit Data object to delete
     """
     ################################################################
     o.Zap(err)

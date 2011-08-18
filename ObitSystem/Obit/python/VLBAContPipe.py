@@ -1,4 +1,4 @@
-!/usr/bin/env python
+#!/usr/bin/env python
 """
 The VLBA Continuum Pipeline.  The pipeline can be invoked from the command line 
 as, ::

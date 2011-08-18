@@ -3,6 +3,8 @@
 This class contains info about an image fitting region
 
 FitModel Members with python interfaces:
+
+========= ======================================================
 name      An optional name for the object.
 corner    bottom left corner in selected region of image (0-rel)
 dim       dimension of region
@@ -12,6 +14,7 @@ RMSResid  RMS residual
 fluxResid Sum of pixel values in residual
 nmodel    Number of models
 models    Array of FitModels
+========= ======================================================
 """
 # $Id$
 #-----------------------------------------------------------------------
@@ -130,7 +133,8 @@ class FitRegionPtr :
         return "<C FitRegion instance> " + Obit.FitRegionGetName(self.me)
 #
 class FitRegion(FitRegionPtr):
-    """ Python Obit FitRegion class
+    """
+    Python Obit FitRegion class
     
     This class contains info about an image fitting region
     Interactive definitions of a region using the Image viewer
@@ -151,12 +155,13 @@ class FitRegion(FitRegionPtr):
             Obit.delete_FitRegion(self.this)
 
     def Print (self, ImDesc, file=None):
-        """ Display human readable contents
-        
-        self     = object with Model to display
-        ImDesc   = Image Descriptor with Beam, etc.
-        file     = if present, the name of a file into which to write
-        the information rather than displaying it on the screen
+        """
+        Display human readable contents
+
+        * self     = object with Model to display
+        * ImDesc   = Image Descriptor with Beam, etc.
+        * file     = if present, the name of a file into which to write
+          the information rather than displaying it on the screen
         """
         ################################################################
         # Start output string
@@ -183,16 +188,18 @@ class FitRegion(FitRegionPtr):
     # end class FitRegion
     
 def PSetup (inImage, disp, err):
-    """ Interactive initial definition of fitting region
-
+    """
+    Interactive initial definition of fitting region
+    
     Interactively allows the user to set the region of the image
     to be fitted and the initial model.
     The fitting region is first specified with a rectangular window
     and then the initial models to be fitted with circular windows.
     Returns FitRegion, leaves image pixel array on inImage
-    image  = image to be fitted
-    disp   = image display to use
-    err    = Obit Error/message stack
+
+    * image  = image to be fitted
+    * disp   = image display to use
+    * err    = Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -258,10 +265,12 @@ def PSetup (inImage, disp, err):
     # end PSetup
 
 def PIsA (inFitRegion):
-    """ Tells if input really a Python Obit FitRegion
-
+    """
+    Tells if input really a Python Obit FitRegion
+    
     return True, False (1,0)
-    inFitRegion   = Python FitRegion object
+
+    * inFitRegion   = Python FitRegion object
     """
     ################################################################
     if inFitRegion.__class__ != FitRegion:

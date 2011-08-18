@@ -30,18 +30,20 @@
 import Image, ImageDesc, ImageUtil, FArray, InfoList, OErr
 
 def PMakeMaster(template, size, SumWtImage, SumWt2, err):
-    """ Create a pair of images to accumulation of partial products
-
+    """
+    Create a pair of images to accumulation of partial products
+    
     Create an image to contain the Sum of the input Images times the
     weights, and another for the sum of the weights squared.
     The descriptive material is from image template
-    template   = Image with position etc, to be copied
-    size       = output image size in pixels, e.g. [200,200]
-    SumWtImage = First output image, must be defined (i.e. files named)
-                 but not fully created.
-    SumWt2     = Second output image, like SumWtImage
-    err        = Python Obit Error/message stack
 
+    * template   = Image with position etc, to be copied
+    * size       = output image size in pixels, e.g. [200,200]
+    * SumWtImage = First output image, must be defined (i.e. files named)
+      but not fully created.
+    * SumWt2     = Second output image, like SumWtImage
+    * err        = Python Obit Error/message stack
+    
     """
     ################################################################
     # Checks
@@ -103,17 +105,19 @@ def PMakeMaster(template, size, SumWtImage, SumWt2, err):
     # end PMakeMaster
 
 def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1):
-    """ Sum an image onto Weighting accumulators using PB corrections
-
+    """
+    Sum an image onto Weighting accumulators using PB corrections
+    
     Calculate the weights for an image from the primary beam pattern
     And accumulate into the correct locations in the accumulation images.
-    inImage    = Image to be accumulated
-    factor     = Additional multiplication factor, normally 1.0
-    SumWtImage = First output image, must be defined (i.e. files named)
-                 but not fully created.
-    SumWt2     = Second output image, like SumWtImage
-    err        = Python Obit Error/message stack
-    minGain    = minimum allowed gain (lower values blanked).
+
+    * inImage    = Image to be accumulated
+    * factor     = Additional multiplication factor, normally 1.0
+    * SumWtImage = First output image, must be defined (i.e. files named)
+      but not fully created.
+    * SumWt2     = Second output image, like SumWtImage
+    * err        = Python Obit Error/message stack
+    * minGain    = minimum allowed gain (lower values blanked).
     """
     ################################################################
     # Checks
@@ -265,16 +269,18 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1):
     # end PWeightImage
     
 def PAccumIxWt(im, wt, factor, accum, accumwt, err):
-    """ Accumulate im * wt into accum
-
+    """
+    Accumulate im * wt into accum
+    
     Used to accumulate images which don't need PB corrections
     and have a weight image.
-    im      = image to accumulate
-    wt      = weight image corresponding to accum
-    factor  = Additional multiplication factor, normally 1.0
-    accum   = image into which to accumulate im*wt
-    accumwt = image into which to accumulate wt
-    err     = Python Obit Error/message stack
+
+    * im      = image to accumulate
+    * wt      = weight image corresponding to accum
+    * factor  = Additional multiplication factor, normally 1.0
+    * accum   = image into which to accumulate im*wt
+    * accumwt = image into which to accumulate wt
+    * err     = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -385,16 +391,18 @@ def PAccumIxWt(im, wt, factor, accum, accumwt, err):
 # End PAccumIxWt
 
 def PNormalizeImage(SumWtImage, SumWt2, outImage, err, minWt=0.1):
-    """ Sum an image onto Weighting accumulators
-
+    """
+    Sum an image onto Weighting accumulators
+    
     Normalize SumWtImage by SumWt2 write to outImage
     Minimum allowed value in SumWt2 is minWt
-    SumWtImage = First output image, must be defined (i.e. files named)
-                 but not fully created.
-    SumWt2     = Second output image, like SumWtImage
-    outImage   = Output image, must be defined.
-    err        = Python Obit Error/message stack
-    minWt      = minimum summed weight (lower values blanked).
+
+    * SumWtImage = First output image, must be defined (i.e. files named)
+      but not fully created.
+    * SumWt2     = Second output image, like SumWtImage
+    * outImage   = Output image, must be defined.
+    * err        = Python Obit Error/message stack
+    * minWt      = minimum summed weight (lower values blanked).
     """
     ################################################################
     # Checks

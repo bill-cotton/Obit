@@ -59,16 +59,20 @@ class ImageMosaicPtr :
         return "<C ImageMosaic instance> " + Obit.ImageMosaicGetName(self.me)
 #
 class ImageMosaic(ImageMosaicPtr):
-    """ Python Obit Image class
-
+    """
+    Python Obit Image class
+    
     This class contains an array of astronomical images and allows access.
     Both FITS and AIPS cataloged images are supported.
-
+    
     ImageMosaic Members with python interfaces:
-    InfoList  - used to pass instructions to processing
-                Member List (readonly)
-    mosaic    - use PGetMosaic (readonly)
-    uvdata    - use PGetUV (readonly)
+
+    ========  =======================================
+    InfoList  used to pass instructions to processing
+              Member List (readonly)
+    mosaic    use PGetMosaic (readonly)
+    uvdata    use PGetUV (readonly)
+    ========  =======================================
     """
     def __init__(self, name, number) :
         self.this = Obit.new_ImageMosaic(name, number)
@@ -83,13 +87,15 @@ trc=[0,0,0,0,0,0,0]
 err=OErr.OErr()
 
 def newObit(name, number, err):
-    """ Create and initialize an ImageMosaic structure
-
+    """
+    Create and initialize an ImageMosaic structure
+    
     Create array of images
     Returns the Python ImageMosaic object
-    name     = name desired for object (labeling purposes)
-    number   = Number of images in Mosaic
-    err      = Python Obit Error/message stack
+
+    * name     = name desired for object (labeling purposes)
+    * number   = Number of images in Mosaic
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     out = ImageMosaic (name, number)
@@ -98,11 +104,12 @@ def newObit(name, number, err):
 
     
 def PZapImage (inImageM, number, err):
-    """ Zap (delete with underlying structures) selected image member(s).
+    """
+    Zap (delete with underlying structures) selected image member(s).
 
-    inImageM  = Python ImageMosaic object
-    number    =  The 0-rel image number, -1=> all
-    err       = Python Obit Error/message stack
+    * inImageM  = Python ImageMosaic object
+    * number    =  The 0-rel image number, -1=> all
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -117,12 +124,14 @@ def PZapImage (inImageM, number, err):
     # end PZapImage
 
 def PCopy (inImageM, outImageM, err):
-    """ Make a shallow copy of input object.
-
+    """
+    Make a shallow copy of input object.
+    
     Makes structure the same as inImage, copies pointers
-    inImageM  = Python ImageMosaic object to copy
-    outImageM = Output Python ImageMosaic object, must be defined
-    err       = Python Obit Error/message stack
+
+    * inImageM  = Python ImageMosaic object to copy
+    * outImageM = Output Python ImageMosaic object, must be defined
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -140,10 +149,12 @@ def PCopy (inImageM, outImageM, err):
 
 
 def PGetList (inImageM):
-    """ Return the member InfoList
-
+    """
+    Return the member InfoList
+    
     returns InfoList
-    inImageM  = Python ImageMosaic object
+
+    * inImageM  = Python ImageMosaic object
     """
     ################################################################
      # Checks
@@ -158,12 +169,14 @@ def PGetList (inImageM):
 
 
 def PGetImage (inImageM, number, err):
-    """ Return the member Image
-
+    """
+    Return the member Image
+    
     returns Image
-    inImageM  = Python ImageMosaic object
-    number    = 0-rel image index
-    err       = Python Obit Error/message stack
+
+    * inImageM  = Python ImageMosaic object
+    * number    = 0-rel image index
+    * err       = Python Obit Error/message stack
     """
     ################################################################
      # Checks
@@ -178,11 +191,12 @@ def PGetImage (inImageM, number, err):
     # end PGetImage
 
 def PSetImage (inImageM, number, image):
-    """ Replace an Image in the Mosaic
+    """
+    Replace an Image in the Mosaic
 
-    inImageM  = Python ImageMosaic object
-    number    = 0-rel image index
-    image     = Python Image to attach
+    * inImageM  = Python ImageMosaic object
+    * number    = 0-rel image index
+    * image     = Python Image to attach
     """
     ################################################################
     # Checks
@@ -198,11 +212,13 @@ def PSetImage (inImageM, number, image):
     # end PSetImage
 
 def PGetFullImage (inImageM, err):
-    """ Return the full field member Image
-
+    """
+    Return the full field member Image
+    
     returns Image
-    inImageM  = Python ImageMosaic object
-    err       = Python Obit Error/message stack
+
+    * inImageM  = Python ImageMosaic object
+    * err       = Python Obit Error/message stack
     """
     ################################################################
      # Checks
@@ -217,10 +233,11 @@ def PGetFullImage (inImageM, err):
     # end PGetFullImage
 
 def PSetFullImage (inImageM, image):
-    """ Replace the full field member Image in the Mosaic
+    """
+    Replace the full field member Image in the Mosaic
 
-    inImageM  = Python ImageMosaic object
-    image     = Python Image to attach
+    * inImageM  = Python ImageMosaic object
+    * image     = Python Image to attach
     """
     ################################################################
     # Checks
@@ -233,12 +250,13 @@ def PSetFullImage (inImageM, image):
     # end PSetFullImage
 
 def PCreate (name, uvData, err):
-    """ Create the parameters and underlying structures of a set of images.
+    """
+    Create the parameters and underlying structures of a set of images.
 
-    name      = Name to be given to object
-    uvData    = Python uv data from which the image mosaic will be derived
+    * name      = Name to be given to object
+    * uvData    = Python uv data from which the image mosaic will be derived
                 Most control parameters are in InfoList member
-    err       = Python Obit err stack.
+    * err       = Python Obit err stack.
     """
     ################################################################
     # Checks
@@ -253,12 +271,13 @@ def PCreate (name, uvData, err):
     # end PCreate
 
 def PDefine (inImageM, uvData, doBeam, err):
-    """ Define the parameters and underlying structures of a set of images.
+    """
+    Define the parameters and underlying structures of a set of images.
 
-    inImageM  = Python ImageMosaic object
-    uvData    = Python uv data from which the image mosaic will be derived
-    doBeam    = if True then make dirty beams
-    err       = Python Obit err stack.
+    * inImageM  = Python ImageMosaic object
+    * uvData    = Python uv data from which the image mosaic will be derived
+    * doBeam    = if True then make dirty beams
+    * err       = Python Obit err stack.
     """
     ################################################################
     # Checks
@@ -273,10 +292,11 @@ def PDefine (inImageM, uvData, doBeam, err):
     # end PDefine
 
 def PFlatten (inImageM, err):
-    """ Project the tiles of a Mosaic to the full field flattened image.
+    """
+    Project the tiles of a Mosaic to the full field flattened image.
 
-    inImageM  = Python ImageMosaic object
-    err       = Python Obit err stack.
+    * inImageM  = Python ImageMosaic object
+    * err       = Python Obit err stack.
     """
     ################################################################
     # Checks
@@ -289,10 +309,12 @@ def PFlatten (inImageM, err):
     # end PFlatten
 
 def PGetName (inImageM):
-    """ Tells Image object name (label)
-
+    """
+    Tells Image object name (label)
+    
     returns name as character string
-    inImageM  = Python ImageMosaic object
+
+    * inImageM  = Python ImageMosaic object
     """
     ################################################################
      # Checks
@@ -303,10 +325,12 @@ def PGetName (inImageM):
     # end PGetName
 
 def PGetNumber (inImageM):
-    """ Tells number of images in Mosais
-
+    """
+    Tells number of images in Mosais
+    
     returns number of images
-    inImageM  = Python ImageMosaic object
+
+    * inImageM  = Python ImageMosaic object
     """
     ################################################################
      # Checks
@@ -317,10 +341,12 @@ def PGetNumber (inImageM):
     # end PGetName
 
 def PIsA (inImageM):
-    """ Tells if input really a Python Obit ImageMosaic
-
+    """
+    Tells if input really a Python Obit ImageMosaic
+    
     return true, false (1,0)
-    inImageM   = Python ImageMosaic object
+
+    * inImageM   = Python ImageMosaic object
     """
     ################################################################
     # Checks

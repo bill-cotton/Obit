@@ -59,7 +59,8 @@ class ODisplayPtr :
         return "<C ODisplay instance> " + Obit.ODisplayGetName(self.me)
 
 class ODisplay(ODisplayPtr):
-    """ Python Obit interface to display server
+    """
+    Python Obit interface to display server
     
     This class is for creating and using the interface to an image display server
     ONLY ONE MAY EXIST
@@ -69,9 +70,10 @@ class ODisplay(ODisplayPtr):
         self.serverURL = serverURL
     def ping (self):
         """ See if Display server present
-
+    
         Returns True if server present
-        self      = Display object
+
+        * self      = Display object
         """
         from xmlrpclib import ServerProxy
         url = self.serverURL
@@ -97,12 +99,14 @@ class ODisplay(ODisplayPtr):
             Obit.delete_ODisplay(self.this)
 
 def PImage (disp, image, err, window=None) :
-    """ Display an image on the display server
+    """
+    Display an image on the display server
 
-    disp     = display server
-    image    = Image to display
-    err      = Python Obit Error/message stack
-    window   = in not None, then edit this OWindow in the server
+    * disp     = display server
+    * image    = Image to display
+    * err      = Python Obit Error/message stack
+    * window   = in not None, then edit this OWindow in the server
+
     returns True if worked
     """
     ################################################################
@@ -119,13 +123,15 @@ def PImage (disp, image, err, window=None) :
 
 
 def PMosaic (disp, mosaic, field, err, window=None) :
-    """ Display an image mosaic on the display server
+    """
+    Display an image mosaic on the display server
 
-    disp     = display server
-    mosaic   = Image Mosaic to display
-    field    = which field in mosaic (1-rel)
-    err      = Python Obit Error/message stack
-    window   = in not None, then edit this OWindow in the server
+    * disp     = display server
+    * mosaic   = Image Mosaic to display
+    * field    = which field in mosaic (1-rel)
+    * err      = Python Obit Error/message stack
+    * window   = in not None, then edit this OWindow in the server
+
     returns True if worked
     """
     ################################################################
@@ -142,10 +148,12 @@ def PMosaic (disp, mosaic, field, err, window=None) :
 
 
 def PIsA (disp):
-    """ Tells if the input is a Python ObitDisplay
-
+    """
+    Tells if the input is a Python ObitDisplay
+    
     returns true or false (1,0)
-    disp = Python Obit Display to test
+
+    * disp = Python Obit Display to test
     """
     ################################################################
       # Checks
