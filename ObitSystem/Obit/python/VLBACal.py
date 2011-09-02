@@ -6720,14 +6720,18 @@ def VLBAMakeParmFile(subs, parmfile, template=None):
     fdout.close()
 # end VLBAMakeParmFile
 
-def VLBAGetParms( fileDict, DESTDIR=None ):
+def VLBAGetParms( fileDict, DESTDIR=None, IDIList=None ):
     """
-    Get VLBA pipeline input parameters from a file dictionary returned by
-    ParseArchiveResponse.
+    Return a list for initializing the VLBA pipeline parameters file.
+
+    The list contains 2-element sequence types (tuples).  The tuples contain
+    a substitution key and a replacement string. 
 
     * fileDict = a single file dictionary returned in the response from 
       ParseArchiveResponse
     * DESTDIR = Destination directory for copy (rsync)
+    * IDIList = list of IDI file dictionaries (returned by
+      PipeUtil.ParseArchiveResponse)
     """
     session = VLBAGetSessionCode( fileDict )
     ( bandLetter, fGHz ) = VLBAGetBandLetter( fileDict )
@@ -6744,6 +6748,14 @@ def VLBAGetParms( fileDict, DESTDIR=None ):
               ('@CALINT@',  '10.0 / 60.0' ), # default value
               ('@DESTDIR@', DESTDIR), # should be stored somewhere (env var?)
               ('@ARCHFILEID@', fileDict['arch_file_id']) ]
+    IDIFileNames = [ f['logical_file'] for f in IDIList ]
+    parms.append( ('@IDIFITS@', str(IDIFileNames) ) )
+    if IDIList:
+        parms.append( ('@DOLOADIDI@', 'T') )
+        parms.append( ('@DOLOADUVF@', 'F') )
+    else:
+        parms.append( ('@DOLOADIDI@', 'F') )
+        parms.append( ('@DOLOADUVF@', 'T') )
     return parms
 
 def VLBAGetSessionCode( fileDict ):

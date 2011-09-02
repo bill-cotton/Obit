@@ -61,13 +61,16 @@ def pipeWrap( startDate, endDate, options ):
     #    PipeUtil.SummarizeArchiveResponse( filtered ) )
     pipeRecordList = PipeUtil.FetchObject( pipeRecord )
     logger.info( "\n" + PipeUtil.SummarizeArchiveResponse( fileDictList, pipeRecordList ) )
-    if options.verbose:
+    if options.metadata:
         str1 = pprint.pformat( fileDictList )
         logger.info( "\n" + str1 )
     if options.query: 
         return
-    if options.select:
-        print "Select file number(s) for download and processing (ex: 1, 3, 4): ", 
+    if not options.all:
+        if options.fitsidi:
+            print "Select file number(s) for IDI download and processing (ex: 1, 3, 4): ",
+        else:
+            print "Select file number(s) for download and processing (ex: 1, 3, 4): ", 
         selection = input()
         # convert selection to list
         if type(selection) == types.IntType:
@@ -87,7 +90,9 @@ def pipeWrap( startDate, endDate, options ):
         for index in indices:
             if not ( index in selection ):
                 fileDictList.pop( index ) # remove index item
-    
+    else:
+        logger.info("Processing all files in archive response.")
+        
     # Loop over all files in response, setup working directory and process
     cwd = os.getcwd()
     for i, fileDict in enumerate( fileDictList ):
@@ -95,7 +100,11 @@ def pipeWrap( startDate, endDate, options ):
                 " / " + str( len(fileDictList) ) + "):\n" + 
                 pprint.pformat(fileDict))
         try:
-            PipeUtil.DownloadArchiveFile( fileDict, fitsDir ) # start download
+            IDIList = []
+            if options.fitsidi:
+                IDIList = PipeUtil.DownloadIDIFiles( fileDict, fitsDir )
+            else:
+                PipeUtil.DownloadArchiveFile( fileDict, fitsDir ) # start download
             # create working subdirectory
             dirName = fileDict['project_code'] + '_' + fileDict['DATE'] + '_' + \
                 fileDict['arch_file_id']
@@ -117,10 +126,12 @@ def pipeWrap( startDate, endDate, options ):
             os.symlink( dirName + '/' + newLogName, pipeNowLog )
             os.chdir( dirName )
             # create pipeline input parm file
-            parmList = VLBACal.VLBAGetParms( fileDict, checkDir )
+            parmList = VLBACal.VLBAGetParms( fileDict, checkDir, IDIList=IDIList )
             parmFile = "VLBAContParm_" + fileDict['project_code'] + '.py'
             VLBACal.VLBAMakeParmFile( parmList, parmFile )
-            PipeUtil.PollDownloadStatus( fileDict, fitsDir ) # check that d/l is complete
+            if not options.fitsidi:
+                # check that d/l is complete
+                PipeUtil.PollDownloadStatus( fileDict, fitsDir ) 
             # Start the pipeline separate, synchronous process
             logger.info("Starting pipeline processing (file " + str(i+1) + 
                 " / " + str( len(fileDictList) ) + ")" )
@@ -292,10 +303,12 @@ if __name__ == "__main__":
     parser.add_option( '-P', '--project', help="project code" )
     parser.add_option( '-q', '--query', action="store_true", default=False, 
         help="query and summary only" )
-    parser.add_option( '-s', '--select', action="store_true", default=False, 
-        help="Select files manually" )
-    parser.add_option( '--verbose', action="store_true", default=False, 
-        help="Display entire query response" )
+    parser.add_option( '-a', '--all', action="store_true", default=False,
+        help="Automatically process all files in archive response" )
+    parser.add_option( '-m', '--metadata', action="store_true", default=False, 
+        help="Display all metadata in archive response" )
+    parser.add_option( '-i', '--fitsidi', action="store_true", default=False,
+        help="Download and fill FITS IDI files (default is FITS AIPS)" )
     (options, args) = parser.parse_args()
     if len(args) < 1: 
         logger.critical("Too few arguments given")

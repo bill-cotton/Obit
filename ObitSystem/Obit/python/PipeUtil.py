@@ -343,7 +343,7 @@ def FetchObject (file):
     return pyobj
     # end FetchObject
    
-def QueryArchive(startTime, endTime, project=None):
+def QueryArchive(startTime, endTime, project=None, format='Calibrated Data'):
     """
     Query the NRAO Archive for data files. Return the response as a list of 
     lines.
@@ -351,15 +351,16 @@ def QueryArchive(startTime, endTime, project=None):
     * startTime = Start of query time range ( YYYY-mmm-DD [ HH:MM:SS ] )
     * endTime = End of query time range
     * project = Project code
+    * format = Archive file format. 'Calibrated Data' => FITS AIPS; 
+      'Raw Data' => FITS IDI
     """
     freqRange = '1000 - 16000' # frequency range (MHz) (L to U bands)
-    format = 'FITS-AIPS' # Archive file format (FITS-AIPS good prior to ? 2010)
     # HTTP POST parameters
     dataList = [ ('PROTOCOL','TEXT-stream'),
                  ('TELESCOPE','VLBA'),
                  ('QUERYTYPE','ARCHIVE'),
                  ('OBSFREQ1', freqRange ),
-                 ('ARCHFORMAT', format),
+                 ('DATATYPE', format),
                  ('TIMERANGE1', startTime),
                  ('TIMERANGE2', endTime) ]
     if project:
@@ -444,16 +445,26 @@ def FilterFileList( fileList ):
         logger.info( str(len(filteredList)) +  
             " old-style-filename data sets filtered from list." +
             " (" + str(len(fileList)) + " remain)")
+    fileList_copy = fileList[:]
+    for fileDict in fileList_copy:
+        if fileDict['format'] == 'VLBAset':
+            filteredList.append( fileDict )
+            fileList.remove( fileDict )
+    if len(filteredList) > 0:
+        logger.info( str(len(filteredList)) +  
+            " files with format='VLBAset' filtered from list." +
+            " (" + str(len(fileList)) + " remain)")
     return filteredList
 
-def DownloadArchiveFile( fileDict, destination ):
+def DownloadArchiveFile( fileDict, destination, safe=True ):
     """
-    Download a file from the archive. Return the output of urllib2.urlopen.
-    If the file already exists in the download area, ask the user what to do.
-    If the user aborts the download, return None.
+    Download a file from the archive. Return the output of urllib2.urlopen.  If
+    *safe* = True and the file already exists in the download area, ask the
+    user what to do.  If the user aborts the download, return None.
     
     * fileDict = archive file dictionary from ParseArchiveResponse
     * destination = path to destination directory
+    * safe = if True, ask user before overwriting local files
     """
     url = "https://archive.nrao.edu/archive/ArchiveDeliver"
     filename = fileDict['logical_file']
@@ -464,12 +475,15 @@ def DownloadArchiveFile( fileDict, destination ):
                  ('deliver_dir', destination) ]
     fullDLPath = destination + '/' + filename
     if os.path.exists( fullDLPath ):
-        print( "File " + fullDLPath + " already exists in download area." )
-        overwrite = nonBlockingRawInput( 
-            '  Overwrite? {60 sec to respond} (y/n) [y]: ', timeout=60 )
-        if ( overwrite and overwrite[0].lower() == 'n' ):
-            print "Using file already in download area."
-            return None
+        if safe:
+            print( "File " + fullDLPath + " already exists in download area." )
+            overwrite = nonBlockingRawInput( 
+                '  Overwrite? {60 sec to respond} (y/n) [y]: ', timeout=60 )
+            if ( overwrite and overwrite[0].lower() == 'n' ):
+                print "Using file already in download area."
+                return None
+            else:
+                os.remove( fullDLPath )
         else:
             os.remove( fullDLPath )
     data = urllib.urlencode( dataList )
@@ -477,7 +491,55 @@ def DownloadArchiveFile( fileDict, destination ):
         "  url = " + url + "\n" + "  data = " + data)
     response = urllib2.urlopen( url, data )
     return response
+
+def DownloadIDIFiles( fileDict, destination ):
+    """
+    Download a set of FITS IDI files corresponding to a UVFITS file.  If all
+    the files already exist in the download area, ask the user what to do.  To
+    avoid overwhelming the archive, poll the download status after requesting
+    each IDI file. Return a list of IDI file dictionaries.
     
+    * fileDict = archive file dictionary from ParseArchiveResponse
+    * destination = path to destination directory
+    """
+    # Get start/stop times with 4-digit year format
+    starttime = fileDict['starttime']
+    stoptime = fileDict['stoptime']
+    yr = []
+    yr.append( int( starttime[0:2] ) )
+    yr.append( int(  stoptime[0:2] ) )
+    for i,y in enumerate(yr):
+        if   y <  80: y += 2000
+        elif y >= 80: y += 1900
+        yr[i] = str(y)
+    starttime = yr[0] + starttime[2:]
+    stoptime = yr[1] + stoptime[2:]
+    # Query for IDI files
+    logger.debug("Sending query...")
+    response = QueryArchive( starttime, stoptime, format='Raw Data' )
+    IDIList = ParseArchiveResponse( response )
+    print "IDI Files: \n" + SummarizeArchiveResponse( IDIList )
+    fileExists = []
+    overwrite = False
+    for file in IDIList:
+        fullDLPath = destination + '/' + file['logical_file']
+        if os.path.exists( fullDLPath ):
+            fileExists.append( fullDLPath )
+    if fileExists and len(fileExists) == len(IDIList):
+        logger.info( "All IDI files already exist in download area:\n" + 
+            pprint.pformat(fullDLPath) )
+        overwrite = nonBlockingRawInput( 
+            '  Overwrite? {60 sec to respond} (y/n) [y]: ', timeout=60 )
+        if ( overwrite and overwrite[0].lower() == 'n' ):
+            overwrite = True
+            print "Using files already in download area."
+    if not overwrite:
+        for file in IDIList:
+            fullDLPath = destination + '/' + file['logical_file']
+            DownloadArchiveFile( file, destination, safe=False )
+            PollDownloadStatus( file, destination )
+    return IDIList
+   
 def PollDownloadStatus( fileDict, destination, sleepTotal = 30 * 60 ):
     """
     Poll the status of a file download from the archive. 

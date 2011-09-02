@@ -6,21 +6,25 @@
 # SESSION     Session code
 # BAND        Band code
 # UVFITS      Name of uvfits file in $FITS
+# IDIFITS     List of IDIFITS files in $FITS 
 # CALINT      CL table interval in min
 # DESTDIR     Output directory 
 # ARCHFILEID  Archive file ID
+# DOLOADIDI   Load IDI FITS  files
+# DOLOADFITS  Load UV FITS files
 #--------------------------------------------------------------------------------------------
 project       = "@PROJECT@"                # Project name (12 char or less, used as AIPS Name)
 session       = "@SESSION@"                # Project session code
 band          = "@BAND@"                   # Observing band
 archFileID    = @ARCHFILEID@               # Archive File ID
 logFile       = project+"_"+session+"_"+band+".log"  # Processing log file
-#parms["copyDestDir"]   = '/home/ftp/NRAO-staff/bcotton/PipeOut'   # Destination directory for copying output files
-#   empty string -> do not copy
-parms["copyDestDir"]   = "@DESTDIR@/" + project + session + band
+# Destination directory for copying output files.  empty string -> do not copy
+parms["copyDestDir"]   = "@DESTDIR@/" + project + session + band 
 
-dataInUVF     = "@UVFITS@"    # Input uvfits data file name
-# NOTE: this REALLY HAS TO BE IN $FITS!!!!!!
+# NOTE: these files must be in $FITS directory!
+dataInUVF     = "@UVFITS@"    # UVFITS data file name
+dataInIDI     = @IDIFITS@     # List of IDIFITS data files
+
 calInt        = @CALINT@            # Calibration table interval in min.
 Compress      = True                # Use compressed UV data?
 
@@ -42,8 +46,8 @@ T   = True
 F   = False
 check                    = F       # Only check script, don't execute tasks
 debug                    = F       # run tasks debug
-doLoadIDI                = F       # Load data from IDI FITS?, else already in AIPS?
-doLoadUVF                = T       # Load the "AIPS Friendly" UV FITS  version?
+doLoadIDI                = @DOLOADIDI@       # Load data from IDI FITS?, else already in AIPS?
+doLoadUVF                = @DOLOADUVF@       # Load the "AIPS Friendly" UV FITS  version?
 parms["doClearTab"]      = T       # Clear cal/edit tables
 parms["doCopyFG"]        = T       # Copy FG 1 to FG 2
 parms["doEditList"]      = T       # Edit using editList?
