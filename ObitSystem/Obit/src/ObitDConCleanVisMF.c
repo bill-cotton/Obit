@@ -564,10 +564,12 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
 {
   ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
   ObitImage *image1=NULL, *image2=NULL;
-  olong ifield, jfield, iplane, num, nOrd, plane[5]={1,1,1,1,1};
+  olong ifield, jfield, iplane, num, nOrd, ncomps, ver, noParms, plane[5]={1,1,1,1,1};
   ofloat BeamTaper1=0.0;
+  ObitFArray *convl=NULL, *accum=NULL;
   gint32 dim[MAXINFOELEMDIM];
   ObitInfoType itype;
+  ObitTableCC *inCC=NULL, *outCC=NULL;
   gchar *routine = "ObitDConCleanVisMFXRestore";
 
    /* error checks */
@@ -590,6 +592,9 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
     num  = ((ObitImageMF*)image1)->nSpec;
     nOrd = ((ObitImageMF*)image1)->maxOrder;
 
+    /* Get accumulation array for image */
+    accum = ObitFArrayCreate ("Accum", 2, image1->myDesc->inaxes);
+
     /* Get additional beam taper */
     ObitInfoListGetTest(image1->myDesc->info, "BeamTapr", &itype, dim, &BeamTaper1);
     /* Ignore this one if not zero */
@@ -600,7 +605,7 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
       /* Read image */
       if (iplane==0) plane[0] = 1;
       else plane[0] = 1+iplane+nOrd;
-      ObitImageGetPlane (image1, NULL, plane, err);
+      ObitImageGetPlane (image1, accum->array, plane, err);
 
       /* Loop over others */
       for (ifield = 0; ifield<in->nfield; ifield++) {
@@ -620,17 +625,42 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
 
 	/* which Image? */
 	image2 = in->mosaic->images[ifield];
-      
+
 	/* Cross convolve Gaussians */
-	XConvlCC (image2, in->CCver, iplane, image1, image1->image, err);
-	if (err->error) Obit_traceback_msg (err, routine, in->name);
+	/* FFT (2D, same grid) or direct convolution */
+	if ((!image1->myDesc->do3D && !image2->myDesc->do3D) &&
+	    (fabs(image1->myDesc->crval[0]-image2->myDesc->crval[0])<0.01*fabs(image1->myDesc->cdelt[0])) &&
+	    (fabs(image1->myDesc->crval[1]-image2->myDesc->crval[1])<0.01*fabs(image1->myDesc->cdelt[1]))) {
+	  /* Can use FFT */
+	  ver     = in->CCver;
+	  noParms = 0;
+	  inCC    = newObitTableCCValue ("SelectedCC", (ObitData*)image2,
+					 &ver, OBIT_IO_ReadOnly, noParms, 
+					 err);
+	  outCC = ObitTableCCUtilCrossTable (inCC, image2->myDesc, image1, &ncomps, err);
+	  if ((ncomps>0) && (outCC!=NULL)) {
+	    convl = ConvlCC (image1, outCC->tabVer, iplane, err);
+	    if (err->error) Obit_traceback_msg (err, routine, in->name);
+	    /* Sum */
+	    ObitFArrayAdd (accum, convl, accum);
+	    convl = ObitFArrayUnref(convl);
+	  }
+	  inCC = ObitTableCCUnref(inCC);
+	  if (outCC!=NULL) {
+	    ObitImageZapTable (image1, "AIPS CC", outCC->tabVer, err);
+	    if (err->error) Obit_traceback_msg (err, routine, in->name);
+	  }
+	} else { /* direct convolution */
+	  XConvlCC (image2, in->CCver, iplane, image1, accum, err);
+	  if (err->error) Obit_traceback_msg (err, routine, in->name);
+	}
       } /* end inner loop over fields */
       /* Rewrite */
-      ObitImagePutPlane (image1, NULL, plane, err);
+      ObitImagePutPlane (image1, accum->array, plane, err);
       if (err->error) Obit_traceback_msg (err, routine, in->name);
     } /* end loop over planes */
     
-    image1->image = ObitFArrayUnref(image1->image);
+    accum = ObitFArrayUnref(accum);
   } /* end outer loop over fields */
 } /* end ObitDConCleanVisMFXRestore */
 
@@ -1280,6 +1310,7 @@ static ObitFArray* ConvlCC(ObitImage *image, olong CCVer, olong iterm, ObitErr *
   if (err->error) return grid;
 
   /* Open Image */
+  image->extBuffer = TRUE;   /* No need for buffer */
   retCode = ObitImageOpen (image, OBIT_IO_ReadOnly, err);
   if ((retCode != OBIT_IO_OK) || (err->error))
     Obit_traceback_val (err, routine, image->name, grid);
@@ -1294,6 +1325,7 @@ static ObitFArray* ConvlCC(ObitImage *image, olong CCVer, olong iterm, ObitErr *
   retCode = ObitImageClose (image, err);
   if ((retCode != OBIT_IO_OK) || (err->error))
     Obit_traceback_val (err, routine, image->name, grid);
+  image->extBuffer = FALSE;   /* May need buffer later */
 
   /* Get CC table */
   ver = CCVer;

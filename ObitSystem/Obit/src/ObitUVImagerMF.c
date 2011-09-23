@@ -586,7 +586,7 @@ void ObitUVImagerMFGetInfo (ObitUVImager *inn, gchar *prefix, ObitInfoList *outL
  * \param inn     Object of interest.
  * \return the number of parallel images.
  */
-olong ObitUVImagerMFGetNumPar (ObitUVImager *inn, ObitErr *err)
+olong ObitUVImagerMFGetNumPar (ObitUVImager *inn, gboolean doBeam, ObitErr *err)
 {
   ObitUVImagerMF *in  = (ObitUVImagerMF*)inn;
   olong out=8, nSpec;
@@ -602,10 +602,12 @@ olong ObitUVImagerMFGetNumPar (ObitUVImager *inn, ObitErr *err)
   lenVis = (odouble)in->uvdata->myDesc->lrec;
   imSize = in->mosaic->images[0]->myDesc->inaxes[0] * 
     in->mosaic->images[0]->myDesc->inaxes[1];  /* Image plane size */
-  /* Beam size */
-  beam = (ObitImage*)in->mosaic->images[0]->myBeam;
-  if (beam!=NULL) imSize += beam->myDesc->inaxes[0] * beam->myDesc->inaxes[1];
-  else imSize *= 4;  /* Assume 4X as large */
+  if (doBeam) {
+    /* Beam size */
+    beam = (ObitImage*)in->mosaic->images[0]->myBeam;
+    if (beam!=NULL) imSize += beam->myDesc->inaxes[0] * beam->myDesc->inaxes[1];
+    else imSize *= 5;  /* Assume 4X as large (plus map) */
+  }
 
   nSpec = ((ObitImageMF*)in->mosaic->images[0])->nSpec;
   bufSize = numVis*lenVis + imSize*nSpec;  /* Approx memory (words) per parallel image */

@@ -866,6 +866,10 @@ Adverbs:
               where myhost is the network name and port is the port
               number (usually 8765), Example:
               dispURL="http://canis.cv.nrao.edu:8765/RPC2"
+                 If the TV display is turned off, it can be 
+              restarted by creating a file from the command line:
+              % touch /tmp/MFBeam.doTV
+              This will be deleted whenthe display restarts.
 
   nThreads....If The Obit libraries are compiled with multiple
               thread operation enabled, this parameter sets the 

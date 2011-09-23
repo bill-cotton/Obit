@@ -101,6 +101,10 @@ ObitTableCC* ObitSkyModelMFgetPBCCTab (ObitSkyModelMF* in, ObitUV* uvdata,
 				       olong field, olong *inCCVer, olong *outCCver,
 				       olong *startCC, olong *endCC, ofloat range[2],
 				       ObitErr *err);
+
+/** Function to obtin oversampling factor */
+static olong GetOverSample (ObitSkyModelMF* in, olong field, ObitErr *err);
+
 /*---------------Private structures----------------*/
 /* FT threaded function argument */
 typedef struct {
@@ -832,6 +836,9 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
       }
     }
   } /* End of loop making lookup table */
+
+  /* Choose mode if requested */
+  ObitSkyModelMFChose (inn, uvdata);
 
   /* Tell selected model info if prtLv>1 */
   if (in->prtLv>1) {
@@ -2513,11 +2520,12 @@ void  ObitSkyModelMFChose (ObitSkyModel *inn, ObitUV* uvdata)
   ObitSkyModelMF *in = (ObitSkyModelMF*)inn;
   olong nfield, ncc, nx, ny, nvis, nchan, sumcc, i, timff1, timff2, timff3, x;
   olong startComp, endComp;
-  ofloat timdft, timfft;
+  ofloat timdft, timfft, gfact=1.0;
 
   /* Constants to pick relative times Last determined for FPS 120Bs (Oh yeah!) */
   ofloat tpvgrd = 1.0e-5; /* Time/vis to interpolate (ALGSUB) */
-  ofloat tfft=0.8e-6;     /* Time/NX/NY for GRID (CCSGRD) Dependency on grid size.*/
+  /*ofloat tfft=0.8e-6;      Time/NX/NY for GRID (CCSGRD) Dependency on grid size.*/
+  ofloat tfft=0.6e-6;     /* DEBUG Time/NX/NY for GRID (CCSGRD) Dependency on grid size.*/
   ofloat tpcgrd=1.0e-4;   /* Time/comp to grid (CCSGRD) dependency on no. comp. */
   ofloat tpvpc=6.6e-7;    /* Time/vis/comp DFT (VISDFT) */
 
@@ -2538,9 +2546,11 @@ void  ObitSkyModelMFChose (ObitSkyModel *inn, ObitUV* uvdata)
     nchan *= uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
 
   /* Loop over fields */
-  sumcc = 0;
+  sumcc  = 0;
   timff1 = timff2 = timff3 = 0;
+  gfact  = 1.0;
   for (i=0; i<nfield; i++) {
+    if (in->mosaic->BeamTaper[i]>0.0) gfact = 3.0;  /* Gaussians take longer */
     startComp = MAX (1, in->startComp[i]);
     endComp = MAX (1, in->endComp[i]);
     ncc = MAX (0, (endComp - startComp + 1));
@@ -2558,11 +2568,11 @@ void  ObitSkyModelMFChose (ObitSkyModel *inn, ObitUV* uvdata)
 
   /* How long for gridded method? */
   timfft = (timff1 * tpvgrd + timff2 * tfft*in->nSpec + timff3 * tpcgrd) * nchan;
-  /* Ad Hoc hack*/
-  timfft *= 2.0;
+  /* Ad Hoc hack - er, no
+  timfft *= 2.0;*/
 
   /* How long for a DFT? */
-  timdft = tpvpc * nvis * sumcc * nchan;
+  timdft = tpvpc * nvis * sumcc * nchan * gfact;
 
   if (timdft<=timfft) in->currentMode = OBIT_SkyModel_DFT;
   else in->currentMode = OBIT_SkyModel_Grid;
@@ -2613,7 +2623,7 @@ gboolean ObitSkyModelMFGridFTComps (ObitSkyModel* inn, olong field, ObitUV* uvda
   ObitSkyModelMF *in  = (ObitSkyModelMF*)inn;
   gboolean gotSome = FALSE;
   ObitImageDesc *imDesc = NULL;
-  olong i, j, k, nx, ny;
+  olong i, j, k, nx, ny, overSample;
   olong ncomp, ndim, naxis[2];
   ofloat gparm[3], dU, dV, UU, VV, texp;
   ofloat konst, xmaj, xmin, cpa, spa, b1, b2, b3, bb2, bb3;
@@ -2627,6 +2637,10 @@ gboolean ObitSkyModelMFGridFTComps (ObitSkyModel* inn, olong field, ObitUV* uvda
 
   /* error check */
   if (err->error) return gotSome ;
+
+  /* Get oversampling factor */
+  overSample = GetOverSample(in, field, err );
+  if (err->error) Obit_traceback_val (err, routine, in->name, gotSome);
 
   /* Create grid, sum components into in->planes */
   ObitSkyModelMFLoadGridComps (inn, field, uvdata, gparm, &ncomp, err);
@@ -2683,8 +2697,8 @@ gboolean ObitSkyModelMFGridFTComps (ObitSkyModel* inn, olong field, ObitUV* uvda
     /* If tapering, create array, set constants */
     if (doGaus) {
       /* Image info - descriptor should still be valid */
-      nx = OverSampleMF*imDesc->inaxes[imDesc->jlocr];
-      ny = OverSampleMF*imDesc->inaxes[imDesc->jlocd];
+      nx = overSample*imDesc->inaxes[imDesc->jlocr];
+      ny = overSample*imDesc->inaxes[imDesc->jlocd];
       
       /* UV cell spacing */
       dU = RAD2DG /  (nx * fabs(imDesc->cdelt[imDesc->jlocr]));
@@ -2737,7 +2751,7 @@ gboolean ObitSkyModelMFGridFTComps (ObitSkyModel* inn, olong field, ObitUV* uvda
     /* END DEBUG */
     
     /* (re)Create interpolator */
-    factor[0] = OverSampleMF; factor[1] = OverSampleMF;
+    factor[0] = overSample; factor[1] = overSample;
     in->myInterps[k] = ObitCInterpolateUnref(in->myInterps[k]);
     in->myInterps[k] = 
       newObitCInterpolateCreate("UV data interpolator", in->FTplanes[k], imDesc,
@@ -2754,7 +2768,7 @@ gboolean ObitSkyModelMFGridFTComps (ObitSkyModel* inn, olong field, ObitUV* uvda
 } /* end ObitSkyModelMFGridFTComps */
 
 /**
- * Create arrays OverSampleMF times the size of the input image (in->planes) 
+ * Create arrays overSample times the size of the input image (in->planes) 
  * and sum components onto them.
  * Grid is oversize for increased accuracy.
  * Due to the difference with the FFT ordering for half plane complex 
@@ -2776,7 +2790,7 @@ void  ObitSkyModelMFLoadGridComps (ObitSkyModel* inn, olong field, ObitUV* uvdat
   ObitTableCC *CCTable = NULL;
   ObitImageDesc *imDesc = NULL;
   ofloat range[2], specCorr;
-  olong k;
+  olong k, overSample;
   gchar *tabType = "AIPS CC";
   olong outCCVer, ver, first, last, startComp, endComp;
   gchar *routine = "ObitSkyModelMFLoadGridComps";
@@ -2789,7 +2803,11 @@ void  ObitSkyModelMFLoadGridComps (ObitSkyModel* inn, olong field, ObitUV* uvdat
     *ncomp = 0;
     return;
   }
-
+  
+  /* Get oversampling factor */
+  overSample = GetOverSample(in, field, err );
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  
   /* Open Image */
   /* Use external buffer (Not actually reading image here) */
   in->mosaic->images[field]->extBuffer = TRUE;
@@ -2825,7 +2843,7 @@ void  ObitSkyModelMFLoadGridComps (ObitSkyModel* inn, olong field, ObitUV* uvdat
       specCorr = 1.0;
     }
     
-    retCode = ObitTableCCUtilGridSpect (CCTable, OverSampleMF, k+1,
+    retCode = ObitTableCCUtilGridSpect (CCTable, overSample, k+1,
 					&first, &last, in->noNeg,
 					in->factor*specCorr, 
 					in->minFlux, in->maxGrid,
@@ -3675,5 +3693,50 @@ ObitTableCC* ObitSkyModelMFgetPBCCTab (ObitSkyModelMF* in, ObitUV* uvdata,
  } /* End smoothing table */
   
   return CCTable;
+} /* end ObitSkyModelMFgetPBCCTab */
+
+/**
+ * Returns the OverSampling factor to use
+ * Default is OverSampleMF but factors of 2 less may be used 
+ * not to exceed 0.75 GByte usage for 32 bit and 5 GByte for 64 bit pointers
+ * \param in       SkyModelMF
+ * \param field    Field number in in->mosaic
+ * \param err      Obit error stack object.
+ * \return oversampling factor
+ */
+static olong GetOverSample (ObitSkyModelMF* in, olong field, ObitErr *err)
+{
+  olong out = OverSampleMF;
+  odouble size;
+  ObitImageDesc *imDesc = NULL;
+  gchar *routine="ObitSkyModelMF:GetOverSample";
+
+  /* Error condition? */
+  if (err->error) return out;
+
+  /* Size of gridding arrays with no oversampling */
+  imDesc = in->mosaic->images[field]->myDesc; 
+  size = sizeof(ofloat)*in->nSpec;
+  size *= imDesc->inaxes[imDesc->jlocr];
+  size *= imDesc->inaxes[imDesc->jlocd];
+
+  /* By pointer size */
+  if (sizeof(olong*)==4) {
+    while (out*out*size>0.75e9) out /=2;
+  } else if (sizeof(olong*)==8) {
+    while (out*out*size>5.0e9) out /=2;
+  } else  {  /* Shouldn't happen */
+     out = OverSampleMF;
+  }
+
+  /* Check that out at least 1 */
+  Obit_retval_if_fail((out>=1), err, out,
+		      "%s: Insufficient memory to make grids", routine);
+  
+  /* Tell if reduced size */
+  if (out<OverSampleMF) 
+    Obit_log_error(err, OBIT_InfoWarn, "%s: Reduced oversampling from %d to %d to fit",
+		   routine, OverSampleMF, out);
+  return out;
 } /* end ObitSkyModelMFgetPBCCTab */
 

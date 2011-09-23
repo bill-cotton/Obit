@@ -3291,6 +3291,7 @@ static gpointer ThreadFAConvGaus (gpointer arg)
   /* local */
   olong icomp, lrec, ix, iy, indx;
   ofloat *table, *image, dx, dy, farg, aa, bb, cc;
+  ofloat minGaus=12.0;
 
   if (hiElem<loElem) goto finish;
 
@@ -3312,15 +3313,17 @@ static gpointer ThreadFAConvGaus (gpointer arg)
   /* Loop over elements in list */
   for (icomp=0; icomp<ncomp; icomp++) {
     if (table[2]==0.0) continue;  /* ignore zero flux */
-    indx = loElem*in->naxis[0];  /* image array index */
+    indx = loElem*in->naxis[0];   /* image array index */
 
     /* Loop over array convolving */
     for (iy = loElem; iy<=hiElem; iy++) {
       dy = iy - table[1];   /* y offset */
+      if (bb*dy*dy>minGaus) continue;
       for (ix = 0; ix<in->naxis[0]; ix++) {
 	dx = ix - table[0];   /* x offset */
+	if (aa*dx*dx>minGaus) continue;
 	farg = aa*dx*dx + bb*dy*dy + cc*dx*dy;
-	if (farg<12.0) {
+	if (farg<minGaus) {
 	  image[indx] += table[2] * exp(-farg);
 	}
 	indx++;

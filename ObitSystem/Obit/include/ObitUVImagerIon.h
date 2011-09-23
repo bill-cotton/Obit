@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2009                                          */
+/*;  Copyright (C) 2006-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -267,7 +267,7 @@ void ObitUVImagerIonGetInfo (ObitUVImager *in, gchar *prefix,
 			     ObitErr *err);
 
 /** Public: Get number of parallel images */
-olong ObitUVImagerIonGetNumPar (ObitUVImager *in, ObitErr *err);
+olong ObitUVImagerIonGetNumPar (ObitUVImager *in, gboolean doBeam, ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

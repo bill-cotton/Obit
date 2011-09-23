@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2009                                          */
+/*;  Copyright (C) 2006-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -404,7 +404,7 @@ void ObitUVImagerIonImage (ObitUVImager *inn,  olong *field, gboolean doWeight,
   /* All wanted? */
   doall =  (nImage <= 0);
 
-  NumPar = ObitUVImagerIonGetNumPar(inn, err); /* How many to do? */
+  NumPar = ObitUVImagerIonGetNumPar(inn, doBeam, err); /* How many to do? */
 
   /* List of need to force making beam, keep track of field numbers */
   forceBeam = g_malloc0(in->mosaic->numberImages*sizeof(gboolean));
@@ -675,9 +675,11 @@ void ObitUVImagerIonGetInfo (ObitUVImager *inn, gchar *prefix, ObitInfoList *out
  * Get number of parallel images
  * Can only do 1
  * \param in      Object of interest.
+ * \param doBeam    If True calculate dirty beams first
+ * \param err       Obit error stack object.
  * \return the number of parallel images.
  */
-olong ObitUVImagerIonGetNumPar (ObitUVImager *inn, ObitErr *err)
+olong ObitUVImagerIonGetNumPar (ObitUVImager *inn, gboolean doBeam, ObitErr *err)
 {
   /*ObitUVImagerIon *in = (ObitUVImagerIon*)inn;*/
   olong out=1;

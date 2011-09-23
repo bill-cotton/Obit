@@ -109,6 +109,12 @@ ObitTableCCUtilCrossListSpec (ObitTableCC *inCC, ObitImageDesc *inDesc,
 			      ObitImageDesc *outDesc, ofloat gparm[3], 
 			      olong *ncomps, olong iterm, ObitErr *err);
 
+/** Public: return Table of CC from one image overlapping another */
+ObitTableCC* 
+ObitTableCCUtilCrossTable (ObitTableCC *inCC, ObitImageDesc *inDesc,  
+			   ObitImage *outIm, olong *ncomps, 
+			   ObitErr *err);
+
 /** Merge elements of an ObitTableCC */
 ObitIOCode ObitTableCCUtilMerge (ObitTableCC *in, ObitTableCC *out, 
 				 ObitErr *err);

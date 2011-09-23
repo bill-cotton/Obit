@@ -921,10 +921,10 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
     in->refFreq = in->myDesc->crval[in->myDesc->jlocf];
   }
 
- /* average frequency */
+  /* average frequency */
+  sum2 = 0.0; count2 = 0;
   for (i=0; i<nSpec; i++) {
     sum  = 0.0; count = 0;
-    sum2 = 0.0; count2 = 0;
     for (iif=in->BIFSpec[i]; iif<=in->EIFSpec[i]; iif++) {
       if (in->BIFSpec[i]==in->EIFSpec[i]) { /* both ends same IF */
 	iclo = in->BChanSpec[i];

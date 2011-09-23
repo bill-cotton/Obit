@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2010                                          */
+/*;  Copyright (C) 2002-2011`                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -530,8 +530,10 @@ gboolean ObitThreadIterator (ObitThread* in, olong nthreads,
 
   /* Wait for them to finish, expects each to send a message to the asynchronous 
    queue iff they finish */
-  /* 10 min. timeout */
-  add_time = 600 * 1000000;
+  /* 60 min. timeout */
+  add_time = 3600 * 1000000;
+  /* Compiler overflow problem? */
+  add_time = 2000 * 1000000;
   g_get_current_time (&end_time);
   g_time_val_add (&end_time, add_time); /* add timeout in microseconds */
   for (i=0; i<nthreads; i++) {

@@ -486,7 +486,6 @@ ObitIOCode ObitTableCCUtilGridSpect (ObitTableCC *in, olong OverSample, olong it
  * \param in         Table of CCs
  * \param inDesc     Descriptor for image from which components derived
  * \param outDesc    Descriptor for output image 
- * \param grid       [out] filled in array, created, resized if necessary
  * \param gparm      [out] Gaussian parameters (major, minor, PA (all deg)) 
  *                   if the components in in are Gaussians, else, -1.
  *                   These are the values from the first CC.
@@ -703,7 +702,6 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
  * \param in         Table of CCs
  * \param inDesc     Descriptor for image from which components derived
  * \param outDesc    Descriptor for output image 
- * \param grid       [out] filled in array, created, resized if necessary
  * \param gparm      [out] Gaussian parameters (major, minor, PA (all deg)) 
  *                   if the components in in are Gaussians, else, -1.
  *                   These are the values from the first CC.
@@ -919,6 +917,123 @@ ObitTableCCUtilCrossListSpec (ObitTableCC *inCC, ObitImageDesc *inDesc,
 
   return outArray;
 } /*  end ObitTableCCUtilCrossListSpec */
+
+/**
+ * Return an ObitTableCC with the components in the CC table
+ * from one image which appear in another (outIm).
+ * Returned Table is a new table attached to outIm.
+ * CCs on cells within 0.5 pixels of outDesc are included.
+ * \param in         Table of CCs
+ * \param inDesc     Descriptor for image from which components derived
+ * \param outImage   Output image 
+ * \param ncomp      [out] number of components in output list (generally less 
+ *                   than size of FArray).
+ * \param err        ObitErr error stack.
+ * \return pointer to new table, may be NULL on failure or no components in common, 
+ *  MUST be Unreffed.
+ */
+ObitTableCC* 
+ObitTableCCUtilCrossTable (ObitTableCC *inCC, ObitImageDesc *inDesc,  
+			   ObitImage *outIm, olong *ncomps, 
+			   ObitErr *err)
+{
+  ObitIOCode retCode;
+  ObitTableCC *outCC=NULL;
+  ObitTableCCRow *CCRow=NULL;
+  olong i, count, irow, orow, nrow, ver;
+  ofloat inPixel[2], outPixel[2], *parms=NULL;
+  gboolean dummyParms=FALSE, wanted;
+  gchar *routine = "ObitTableCCUtilCrossTable";
+  
+  /* error checks */
+  *ncomps = 0;   /* In case */
+  if (err->error) return outCC;
+
+  /* Open */
+  retCode = ObitTableCCOpen (inCC, OBIT_IO_ReadOnly, err);
+  /* If this fails try ReadWrite */
+  if (err->error) { 
+    ObitErrClearErr(err);  /* delete failure messages */
+    retCode = ObitTableCCOpen (inCC, OBIT_IO_ReadWrite, err);
+  }
+  if ((retCode != OBIT_IO_OK) || (err->error))
+      Obit_traceback_val (err, routine, inCC->name, outCC);
+
+  /* Anything? */
+  nrow = inCC->myDesc->nrow;
+  if (nrow<=0) {
+   retCode = ObitTableCCClose (inCC, err);
+  if ((retCode != OBIT_IO_OK) || (err->error)) 
+    Obit_traceback_val (err, routine, inCC->name, outCC);
+  return outCC;
+  }
+  
+  /* Create new output CC table */
+  ver = 0 ;
+  outCC = newObitTableCCValue ("SelectedCC", (ObitData*)outIm,
+			       &ver, OBIT_IO_WriteOnly, inCC->noParms, 
+			       err);
+  if (err->error) goto cleanup;
+  /* Open */
+  retCode = ObitTableCCOpen (outCC, OBIT_IO_WriteOnly, err);
+  /* If this fails try ReadWrite */
+  if (err->error) { 
+    ObitErrClearErr(err);  /* delete failure messages */
+    retCode = ObitTableCCOpen (outCC, OBIT_IO_ReadWrite, err);
+  }
+  if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+
+  /* Create table row */
+  CCRow = newObitTableCCRow (outCC);
+  ObitTableCCSetRow (outCC, CCRow, err);
+  if (err->error) goto cleanup;
+
+  /* Dummy output parms if needed */
+  dummyParms = ((inCC->parmsCol<0) && (outCC->parmsCol>0));
+  if (dummyParms) parms = g_malloc0(outCC->myDesc->repeat[outCC->parmsCol]*sizeof(ofloat));
+  
+  /* Initialize */
+  count = 0;         /* How many CCs accepted */
+  /* Loop over table reading CCs */
+  for (i=1; i<=nrow; i++) {
+
+    irow = i;
+    retCode = ObitTableCCReadRow (inCC, irow, CCRow, err);
+    if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+    if (CCRow->status<0) continue;  /* Skip deselected record */
+
+    /* Is this one within outIm? */
+    inPixel[0] = CCRow->DeltaX / inDesc->cdelt[0] + inDesc->crpix[0];
+    inPixel[1] = CCRow->DeltaY / inDesc->cdelt[1] + inDesc->crpix[1];
+    wanted = ObitImageDescCvtPixel (inDesc, outIm->myDesc, inPixel, outPixel, err);
+    if (err->error) goto cleanup;
+
+    if (wanted) { /* yes - write */
+      if (err->error) goto cleanup;
+      /* Dummy parms? */
+      if (dummyParms) CCRow->parms = parms;
+      orow = -1;
+      retCode = ObitTableCCWriteRow (outCC, orow, CCRow, err);
+      if (err->error) goto cleanup;
+      count++; /* How many? */
+    }
+  } /* end loop over TableCC */
+
+  /* Release table row */
+  CCRow = ObitTableCCRowUnref (CCRow);
+  
+  /* How many? */
+  *ncomps = count;
+
+  /* Cleanup */
+ cleanup:
+  retCode = ObitTableCCClose (inCC, err); /* Close */
+  retCode = ObitTableCCClose (outCC, err); /* Close */
+  if (parms) g_free(parms);
+  if (err->error) Obit_traceback_val (err, routine, inCC->name, outCC);
+
+  return outCC;
+} /*  end ObitTableCCUtilCrossTable */
 
 /**
  * Merge elements of an ObitTableCC on the same position.
@@ -1504,7 +1619,7 @@ void ObitTableCCUtilAppend  (ObitTableCC *inCC, ObitTableCC *outCC,
   dummyParms = ((inCC->parmsCol<0) && (outCC->parmsCol>0));
   if (dummyParms) parms = g_malloc0(outCC->myDesc->repeat[outCC->parmsCol]*sizeof(ofloat));
 
- /* Check range of components */
+  /* Check range of components */
   startComp = MAX (1, startComp);
   endComp   = MIN (inCC->myDesc->nrow, endComp);
   if (endComp<=0) endComp = inCC->myDesc->nrow;
@@ -1724,7 +1839,7 @@ void ObitTableCCUtilT2Spec  (ObitImage *image, ObitImageWB *outImage,
   union ObitInfoListEquiv InfoReal; 
   ofloat *flux=NULL, *sigma=NULL, *fitResult=NULL, pbmin=0.01, *PBCorr=NULL;
   ofloat *FreqFact=NULL, *sigmaField=NULL;
-  ofloat *RMS=NULL, alpha=0.0, antSize = 25.0;
+  ofloat *RMS=NULL, alpha=0.0, antSize = 25.0, fblank =  ObitMagicF();
   odouble *Freq=NULL, refFreq;
   odouble Angle=0.0;
   gpointer fitArg=NULL;
@@ -1793,7 +1908,7 @@ void ObitTableCCUtilT2Spec  (ObitImage *image, ObitImageWB *outImage,
   /* Get image RMSes */  
   retCode = ObitImageOpen (image, OBIT_IO_ReadOnly, err);
   for (i=0; i<nSpec; i++) {
-    planeNo[0] = i + nterm;
+    planeNo[0] = i + nterm + 1; /* Note: 1 rel */
     ObitImageGetPlane (image, NULL, planeNo, err);
     RMS[i] = ObitFArrayRMS(image->image);
   }
@@ -1871,7 +1986,10 @@ void ObitTableCCUtilT2Spec  (ObitImage *image, ObitImageWB *outImage,
       BeamShape->refFreq = Freq[i];  /* Set frequency */
       PBCorr[i] = BSClass->ObitBeamShapeGainSym(BeamShape, Angle);
       flux[i]   = inCCRow->parms[offset+i] / PBCorr[i];
-      sigma[i]  = sigmaField[i] / (PBCorr[i]*PBCorr[i]);
+      if ((RMS[i]>0.0) && (RMS[i]!=fblank))
+	sigma[i]  = sigmaField[i] / (PBCorr[i]*PBCorr[i]);
+      else
+	sigma[i] = -1;   /* Bad plane */
     }
     
     /* Fit spectrum */

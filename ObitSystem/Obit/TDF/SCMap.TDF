@@ -537,6 +537,10 @@ Adverbs:
               "ObitView" =  "http://localhost:8765/RPC2" 
               This will display fields being CLEANed and allow
               interactive editing of the CLEAN window.
+                 If the TV display is turned off, it can be 
+              restarted by creating a file from the command line:
+              % touch /tmp/SCMap.doTV
+              This will be deleted when the display restarts.
   nThreads....If The Obit libraries are compiled with multiple
               thread operation enabled, this parameter sets the 
               number of threads that can be used for parallel 

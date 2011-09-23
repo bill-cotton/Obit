@@ -1676,7 +1676,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     if (first ) {
       first = FALSE;
       
-      /* Create wideband Imager - first time to determinealphaRefF */
+      /* Create wideband Imager - first time to determine alphaRefF */
+      alphaRefF = outData->myDesc->freq;  /* Ball park */
       imager = (ObitUVImager*)ObitUVImagerMFCreate("imager", order, maxFBW, 
 						   alpha, alphaRefF, outData, err);
      if (err->error) Obit_traceback_msg (err, routine, inData->name);

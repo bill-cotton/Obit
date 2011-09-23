@@ -434,7 +434,7 @@ void ObitUVImagerWeight (ObitUVImager *in, ObitErr *err)
  * \param field     zero terminated list of field numbers to image, 0=> all
  * \param doWeight  If TRUE do Weighting ov uv data first
  *                  If TRUE then input data is modified.
- * \param doBeam    If True calculate dirst beams first
+ * \param doBeam    If True calculate dirty beams first
  * \param doFlatten If TRUE, flatten images when done
  * \param err       Obit error stack object.
  */
@@ -542,7 +542,7 @@ void ObitUVImagerImage (ObitUVImager *in, olong *field, gboolean doWeight,
 
   /* Multiple (including beams) - do in parallel */
 
-  NumPar = imgClass->ObitUVImagerGetNumPar(in, err); /* How many to do? */
+  NumPar = imgClass->ObitUVImagerGetNumPar(in, doBeam, err); /* How many to do? */
 
   /* Get list of images */
   imageList = g_malloc0(in->mosaic->numberImages*sizeof(ObitImage*));
@@ -823,9 +823,11 @@ void ObitUVImagerGetInfo (ObitUVImager *in, gchar *prefix, ObitInfoList *outList
  * Get number of parallel images
  * Target memory usage is 0.75 GByte if 32 bit, 3 GByte if 64.
  * \param in      Object of interest.
+ * \param doBeam    If True calculate dirty beams first
+ * \param err       Obit error stack object.
  * \return the number of parallel images.
  */
-olong ObitUVImagerGetNumPar (ObitUVImager *in, ObitErr *err)
+olong ObitUVImagerGetNumPar (ObitUVImager *in, gboolean doBeam, ObitErr *err)
 {
   olong out=8;
   odouble lenVis, numVis, imSize, bufSize, tSize;
@@ -841,9 +843,11 @@ olong ObitUVImagerGetNumPar (ObitUVImager *in, ObitErr *err)
   imSize = in->mosaic->images[0]->myDesc->inaxes[0] * 
     in->mosaic->images[0]->myDesc->inaxes[1];  /* Image plane size */
   /* Beam size */
-  beam = (ObitImage*)in->mosaic->images[0]->myBeam;
-  if (beam!=NULL) imSize += beam->myDesc->inaxes[0] * beam->myDesc->inaxes[1];
-  else imSize *= 4;  /* Assume 4X as large */
+  if (doBeam) {
+    beam = (ObitImage*)in->mosaic->images[0]->myBeam;
+    if (beam!=NULL) imSize += beam->myDesc->inaxes[0] * beam->myDesc->inaxes[1];
+    else imSize *= 5;  /* Assume 4X as large (plus map) */
+  }
 
   bufSize = numVis*lenVis + imSize;  /* Approx memory (words) per parallel image */
   bufSize *= sizeof(ofloat);         /* to bytes */

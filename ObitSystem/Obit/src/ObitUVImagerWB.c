@@ -439,7 +439,7 @@ void ObitUVImagerWBImage (ObitUVImager *inn,  olong *field, gboolean doWeight,
 
   /* Multiple (including beams) - do in parallel */
 
-  NumPar = ObitUVImagerWBGetNumPar(inn, err); /* How many to do? */
+  NumPar = ObitUVImagerWBGetNumPar(inn, doBeam, err); /* How many to do? */
 
   /* Get list of images */
   imageList = g_malloc0(in->mosaic->numberImages*sizeof(ObitImage*));
@@ -670,9 +670,11 @@ void ObitUVImagerWBGetInfo (ObitUVImager *inn, gchar *prefix, ObitInfoList *outL
  * Get number of parallel images
  * Target memory usage is 0.75 GByte if 32 bit, 3 GByte if 64.
  * \param inn     Object of interest.
- * \return the number of parallel images.
+  * \param doBeam    If True calculate dirty beams first
+ * \param err       Obit error stack object.
+* \return the number of parallel images.
  */
-olong ObitUVImagerWBGetNumPar (ObitUVImager *inn, ObitErr *err)
+olong ObitUVImagerWBGetNumPar (ObitUVImager *inn, gboolean doBeam, ObitErr *err)
 {
   ObitUVImagerWB *in  = (ObitUVImagerWB*)inn;
   olong out=8;
@@ -688,10 +690,12 @@ olong ObitUVImagerWBGetNumPar (ObitUVImager *inn, ObitErr *err)
   lenVis = (odouble)in->uvdata->myDesc->lrec;
   imSize =  in->mosaic->images[0]->myDesc->inaxes[0] * 
     in->mosaic->images[0]->myDesc->inaxes[1];  /* Image plane size */
-  /* Beam size */
-  beam = (ObitImage*)in->mosaic->images[0]->myBeam;
-  if (beam!=NULL) imSize += beam->myDesc->inaxes[0] * beam->myDesc->inaxes[1];
-  else imSize *= 4;  /* Assume 4X as large */
+  if (doBeam) {
+    /* Beam size */
+    beam = (ObitImage*)in->mosaic->images[0]->myBeam;
+    if (beam!=NULL) imSize += beam->myDesc->inaxes[0] * beam->myDesc->inaxes[1];
+    else imSize *= 4;  /* Assume 4X as large */
+  }
 
   bufSize = numVis*lenVis + imSize;  /* Approx memory (words) per parallel image */
   bufSize *= sizeof(ofloat);         /* to bytes */

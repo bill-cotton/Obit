@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2010                                          */
+/*;  Copyright (C) 2005-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -290,9 +290,9 @@ typedef void
 			  ObitErr *err);
 
 /** Public: Get number of parallel images */
-olong ObitUVImagerGetNumPar (ObitUVImager *in, ObitErr *err);
+olong ObitUVImagerGetNumPar (ObitUVImager *in, gboolean doBeam, ObitErr *err);
 typedef olong
-(*ObitUVImagerGetNumParFP) (ObitUVImager *in, ObitErr *err);
+(*ObitUVImagerGetNumParFP) (ObitUVImager *in, gboolean doBeam, ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

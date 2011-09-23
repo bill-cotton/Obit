@@ -1173,11 +1173,6 @@ static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
   fresh   = ObitMemAlloc0(in->nfield*sizeof(gboolean));
   fldList = ObitMemAlloc0((in->nfield+3)*sizeof(olong));
   
-  /* How many images in parallel? */
-  imagerClass = (ObitUVImagerClassInfo*)in->imager->ClassInfo;
-  NumPar = imagerClass->ObitUVImagerGetNumPar (in->imager, err);
-  NumPar = MIN (NumPar, in->nfield);  /* No more than what's there */
-  
   /* First time? */
   if (in->Pixels->currentIter > 0) {
     
@@ -1205,6 +1200,7 @@ static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
 	fresh[i] = TRUE;
       }
     } /* end loop initializing fields */
+    
     /* Make residual images */
     if (fldList[0]>0) inClass->MakeResiduals(in, fldList, doBeam, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, done);
@@ -1244,6 +1240,11 @@ static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
   
   /* Shouldn't need to make beams again */
   in->doBeam = FALSE;
+  
+  /* How many images in parallel? */
+  imagerClass = (ObitUVImagerClassInfo*)in->imager->ClassInfo;
+  NumPar = imagerClass->ObitUVImagerGetNumPar (in->imager, in->doBeam, err);
+  NumPar = MIN (NumPar, in->nfield);  /* No more than what's there */
   
   /* Loop remaking blocks of images until something suitable to CLEAN */
   done = FALSE;
@@ -1429,7 +1430,7 @@ static gboolean ObitDConCleanVisPickNext3D(ObitDConCleanVis *in, ObitErr *err)
 
   /* How many images in parallel? */
   imagerClass = (ObitUVImagerClassInfo*)in->imager->ClassInfo;
-  NumPar = imagerClass->ObitUVImagerGetNumPar (in->imager, err);
+  NumPar = imagerClass->ObitUVImagerGetNumPar (in->imager, in->doBeam, err);
   NumPar = MIN (NumPar, in->nfield);  /* No more than what's there */
   /* No point in doing too many */
   NumPar = MIN (NumPar, 2); 

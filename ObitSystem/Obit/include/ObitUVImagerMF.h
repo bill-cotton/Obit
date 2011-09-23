@@ -261,7 +261,7 @@ void ObitUVImagerMFGetInfo (ObitUVImager *inn, gchar *prefix, ObitInfoList *outL
 			    ObitErr *err);
 
 /** Public: Get number of parallel images */
-olong ObitUVImagerMFGetNumPar (ObitUVImager *inn, ObitErr *err);
+olong ObitUVImagerMFGetNumPar (ObitUVImager *inn, gboolean doBeam, ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

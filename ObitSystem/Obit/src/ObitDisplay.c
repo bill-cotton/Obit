@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,6 +32,8 @@
 #include "ObitImageMosaic.h"
 #include "ObitImageUtil.h"
 #include "ObitRPCUtil.h"
+#include "ObitSystem.h"
+#include "ObitFile.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -90,6 +92,8 @@ static ObitXML* getImageInfo (ObitImage *image, gchar *fitsFile,
 /** Private: Set Class function pointers. */
 static void ObitDisplayClassInfoDefFn (gpointer inClass);
 
+/** Private: Check if display to be turned back on */
+static gboolean CheckDoTV (ObitDisplay* display, ObitErr *err);
 /*----------------------Public functions---------------------------*/
 /**
  * Constructor.
@@ -168,6 +172,8 @@ ObitDisplay* ObitDisplayCreate (gchar* name, gchar *ServerURL, ObitErr *err)
  * Either a single image or an image mosaic can be passed.
  * For a mosaic, the user can request other images from the mosaic.
  * If the display is remote, the image is copied as a gzipped FITS file.
+ * If the display has been turned off, a check is made to see if the 
+ * user has requested it to be turned back on.
  * \param display    ObitDisplay object
  * \param image      ObitImage or Image Mosaic
  * \param window     if nonNULL window corresponding to image
@@ -186,7 +192,7 @@ gboolean ObitDisplayShow (ObitDisplay* display, Obit *image,
   ObitImage *curImage=NULL, *tmpImage=NULL;
   ObitImageDesc *desc=NULL;
   ObitImageMosaic *mosaic=NULL;
-  gboolean isMosaic, doEdit=FALSE;
+  gboolean isMosaic, doEdit=FALSE, doTV;
   gint32 dim[MAXINFOELEMDIM];
   ObitInfoType infoType;
   ObitInfoList *request=NULL;
@@ -199,6 +205,11 @@ gboolean ObitDisplayShow (ObitDisplay* display, Obit *image,
   g_assert (ObitErrIsA(err));
   if (err->error) return out;
   g_assert (ObitDisplayIsA(display));
+
+  /* check if display should be turned back on */
+  doTV =  CheckDoTV (display, err);
+  if (err->error) Obit_traceback_val (err, routine, display->name, out);
+
   if (display->turnedOff) return out;  /* display turned off? */
   if (window) g_assert (ObitDConCleanWindowIsA(window));
   g_assert (ObitImageIsA(image) || ObitImageMosaicIsA(image));
@@ -906,3 +917,44 @@ static ObitXML* getImageInfo (ObitImage *image, gchar *fitsFile,
 
   return out;
 } /* end getImageInfo */
+
+/**
+ * Check if the display is turned off and the user has requested it
+ * turned back on.
+ * This request is signaled by the presence of file /tmp/<task>.doTV
+ * where <task> is the task name.  The file is deleted after the test.
+ * \param display   ObitDisplay object
+ * \param err       Obit Error message
+ * \return TRUE if display enabled
+ */
+static gboolean  CheckDoTV (ObitDisplay* display, ObitErr *err)
+{
+  gboolean out = FALSE;
+  gchar fullname[1024], *PgmName=NULL;
+  gchar *routine = "ObitDisplay:CheckDoTV";
+
+  /* existing error? */
+  if (err->error) return out;
+
+  /* Already on? */
+  if (!display->turnedOff) return TRUE;
+
+  /* Form file name */
+  PgmName = ObitSystemGetPgmName();
+  sprintf (fullname,"/tmp/%s.doTV", PgmName);
+  
+  /* If it doesn't exist return */
+  if (!ObitFileExist(fullname, err)) return out;
+  if (err->error) Obit_traceback_val (err, routine, display->name, out);
+  
+  /* Must be OK */
+  out = TRUE;
+  ObitDisplayTurnOn (display);
+  
+  /* Remove file */
+  ObitFileZapFile (fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, display->name, out);
+  
+  return out;
+} /* end CheckDoTV  */
+
