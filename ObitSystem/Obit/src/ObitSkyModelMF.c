@@ -2524,8 +2524,7 @@ void  ObitSkyModelMFChose (ObitSkyModel *inn, ObitUV* uvdata)
 
   /* Constants to pick relative times Last determined for FPS 120Bs (Oh yeah!) */
   ofloat tpvgrd = 1.0e-5; /* Time/vis to interpolate (ALGSUB) */
-  /*ofloat tfft=0.8e-6;      Time/NX/NY for GRID (CCSGRD) Dependency on grid size.*/
-  ofloat tfft=0.6e-6;     /* DEBUG Time/NX/NY for GRID (CCSGRD) Dependency on grid size.*/
+  ofloat tfft=0.8e-6;     /* Time/NX/NY for GRID (CCSGRD) Dependency on grid size.*/
   ofloat tpcgrd=1.0e-4;   /* Time/comp to grid (CCSGRD) dependency on no. comp. */
   ofloat tpvpc=6.6e-7;    /* Time/vis/comp DFT (VISDFT) */
 
@@ -2550,7 +2549,7 @@ void  ObitSkyModelMFChose (ObitSkyModel *inn, ObitUV* uvdata)
   timff1 = timff2 = timff3 = 0;
   gfact  = 1.0;
   for (i=0; i<nfield; i++) {
-    if (in->mosaic->BeamTaper[i]>0.0) gfact = 3.0;  /* Gaussians take longer */
+    if (in->mosaic->BeamTaper[i]>0.0) gfact = 6.0;  /* Gaussians take longer */
     startComp = MAX (1, in->startComp[i]);
     endComp = MAX (1, in->endComp[i]);
     ncc = MAX (0, (endComp - startComp + 1));
@@ -2568,8 +2567,8 @@ void  ObitSkyModelMFChose (ObitSkyModel *inn, ObitUV* uvdata)
 
   /* How long for gridded method? */
   timfft = (timff1 * tpvgrd + timff2 * tfft*in->nSpec + timff3 * tpcgrd) * nchan;
-  /* Ad Hoc hack - er, no
-  timfft *= 2.0;*/
+  /* Ad Hoc hack */
+  timfft *= 0.50;
 
   /* How long for a DFT? */
   timdft = tpvpc * nvis * sumcc * nchan * gfact;

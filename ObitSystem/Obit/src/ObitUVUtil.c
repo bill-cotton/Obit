@@ -335,12 +335,12 @@ void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
 		    "AIPS PL", "AIPS NI",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
-  olong i, j, indx;
+  olong i, j, indx, firstVis;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong NPIO;
   ofloat work[3];
-  gboolean incompatible, same;
+  gboolean incompatible, same, btemp;
   ObitUVDesc *in1Desc, *in2Desc, *outDesc;
   gchar *today=NULL;
   gchar *routine = "ObitUVUtilVisDivide";
@@ -407,7 +407,13 @@ void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
       return ;
  }
 
-  /* test open output */
+  /* Look at all data */
+  btemp = TRUE;
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut(inUV1->info, "passAll", OBIT_bool, dim, &btemp);
+  ObitInfoListAlwaysPut(inUV2->info, "passAll", OBIT_bool, dim, &btemp);
+
+ /* test open output */
   oretCode = ObitUVOpen (outUV, OBIT_IO_WriteOnly, err);
   /* If this didn't work try OBIT_IO_ReadWrite */
   if ((oretCode!=OBIT_IO_OK) || (err->error)) {
@@ -462,8 +468,9 @@ void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
     /* Read second input */
     iretCode = ObitUVRead (inUV2, inUV2->buffer, err);
     if (iretCode!=OBIT_IO_OK) break;
-   /* How many */
+    /* How many */
     outDesc->numVisBuff = in1Desc->numVisBuff;
+    firstVis = in1Desc->firstVis;
 
     /* compatability check */
     incompatible = in1Desc->numVisBuff!=in2Desc->numVisBuff;
@@ -474,8 +481,8 @@ void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
       /* compatability check - check time and baseline code */
       indx = i*in1Desc->lrec ;
       incompatible = 
-	inUV1->buffer[indx+in1Desc->iloct]!=inUV1->buffer[indx+in2Desc->iloct] ||
-	inUV1->buffer[indx+in1Desc->ilocb]!=inUV1->buffer[indx+in2Desc->ilocb];
+	inUV1->buffer[indx+in1Desc->iloct]!=inUV2->buffer[indx+in2Desc->iloct] ||
+	inUV1->buffer[indx+in1Desc->ilocb]!=inUV2->buffer[indx+in2Desc->ilocb];
       if (incompatible) break;
 
       indx += in1Desc->nrparm;
@@ -491,6 +498,10 @@ void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
     
     /* Write */
     oretCode = ObitUVWrite (outUV, inUV1->buffer, err);
+    if (same) {
+      outUV->myDesc->firstVis = firstVis;
+      ((ObitUVDesc*)(outUV->myIO->myDesc))->firstVis = firstVis;
+    }
   } /* end loop processing data */
   
   /* Check for incompatibility */
@@ -518,7 +529,16 @@ void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
   
   oretCode = ObitUVClose (outUV, err);
   if (err->error) Obit_traceback_msg (err, routine, outUV->name);
-  
+  /* In case */
+  outUV->buffer     = NULL;
+  outUV->bufferSize = 0;
+ 
+  /* Reset passAll */
+  btemp = FALSE;
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut(inUV1->info, "passAll", OBIT_bool, dim, &btemp);
+  ObitInfoListAlwaysPut(inUV2->info, "passAll", OBIT_bool, dim, &btemp);
+
 } /* end ObitUVUtilVisDivide */
 
 /**
@@ -545,7 +565,7 @@ void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong NPIO;
-  gboolean incompatible, same, doCalSelect;
+  gboolean incompatible, same, doCalSelect, btemp;
   ObitUVDesc *in1Desc, *in2Desc, *outDesc;
   ObitIOAccess access;
   gchar *today=NULL;
@@ -617,8 +637,14 @@ void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
      Obit_log_error(err, OBIT_Error,"%s inUV1 and inUV2 have incompatible structures",
 		   routine);
       return ;
- }
+  }
 
+  /* Look at all data */
+  btemp = TRUE;
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut(inUV1->info, "passAll", OBIT_bool, dim, &btemp);
+  ObitInfoListAlwaysPut(inUV2->info, "passAll", OBIT_bool, dim, &btemp);
+  
   /* test open output */
   oretCode = ObitUVOpen (outUV, OBIT_IO_WriteOnly, err);
   /* If this didn't work try OBIT_IO_ReadWrite */
@@ -732,6 +758,12 @@ void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
   /* unset output buffer (may be multiply deallocated ;'{ ) */
   outUV->buffer = NULL;
   outUV->bufferSize = 0;
+  
+  /* Reset passAll */
+  btemp = FALSE;
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut(inUV1->info, "passAll", OBIT_bool, dim, &btemp);
+  ObitInfoListAlwaysPut(inUV2->info, "passAll", OBIT_bool, dim, &btemp);
   
   /* close files */
   iretCode = ObitUVClose (inUV1, err);

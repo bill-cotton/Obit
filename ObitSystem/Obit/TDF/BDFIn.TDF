@@ -82,13 +82,20 @@ directory structure.
    Flag entries in the ASDM are converted to entries in the AIPS FG
 table.  Scans with ascribed intents clearly for online calibration
 only, "CALIBRATE-POINTING", are also flagged.
+
+EVLA:
    The output file will contain a CL table with amplitude corrections 
 based on standard EVLA gain curves, an opacity model based partly on
 the weather (WX) table and optionally EVLA switched power measurements
 to remove variations in electronics gain.
-   Scans with an expressed intent of "MAP_ANTENNA_SURFACE" will be 
+Scans with an expressed intent of "MAP_ANTENNA_SURFACE" will be 
 treated as being in holography mode.  
 See the explain section for more details
+
+ALMA:
+   The output file will contain a dummy CL table.  If there is a CalWVR
+table on the input, it will be converted to an AIPS SN table which can
+be applied to the AIPS CL table.
 
 Adverbs:
   DataRoot...Archive directory for project

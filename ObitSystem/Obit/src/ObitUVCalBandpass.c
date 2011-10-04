@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2003-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -164,7 +164,7 @@ void ObitUVCalBandpassInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
   me->lenBPArrayEntry = 2; /* length of cal array entry */
 
   /* How big is the calibration table */
-  size = me->numAnt * (me->eIF- me->bIF + 1) * (me->eChan- me->bChan + 1) *
+  size = me->numAnt * (me->numIF) * (me->numChan) *
     me->numPol * me->lenBPArrayEntry;
   me->BPApply      = g_malloc0(size*sizeof(float));
   me->BPPrior      = g_malloc0(size*sizeof(float));

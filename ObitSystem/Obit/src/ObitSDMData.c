@@ -8,6 +8,7 @@ X    Antenna.xml
 X    CalDevice.xml
      CalPointing.xml
      CalReduction.xml
+X    CalWVR.xml
 X    ConfigDescription.xml
 X    CorrelatorMode.xml
 X    DataDescription.xml
@@ -226,6 +227,15 @@ static ASDMCalReductionTable* ParseASDMCalReductionTable(ObitSDMData *me,
 					 ObitErr *err);
 /** Private: Destructor for CalReduction table. */
 static ASDMCalReductionTable* KillASDMCalReductionTable(ASDMCalReductionTable* table);
+
+/** Private: Destructor for CalWVR table row. */
+static ASDMCalWVRRow* KillASDMCalWVRRow(ASDMCalWVRRow* row);
+/** Private: Parser constructor for CalWVR table from file */
+static ASDMCalWVRTable* ParseASDMCalWVRTable(ObitSDMData *me,
+					 gchar *CalWVRFile, 
+					 ObitErr *err);
+/** Private: Destructor for CalWVR table. */
+static ASDMCalWVRTable* KillASDMCalWVRTable(ASDMCalWVRTable* table);
 
 /** Private: Destructor for ConfigDescription table row. */
 static ASDMConfigDescriptionRow* KillASDMConfigDescriptionRow(ASDMConfigDescriptionRow* row);
@@ -627,6 +637,12 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   /* CalReduction table */
   fullname = g_strconcat (DataRoot,"/CalReduction.xml", NULL);
   out->CalReductionTab = ParseASDMCalReductionTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* CalWVR table */
+  fullname = g_strconcat (DataRoot,"/CalWVR.xml", NULL);
+  out->CalWVRTab = ParseASDMCalWVRTable(out, fullname, err);
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
@@ -1546,6 +1562,164 @@ ASDMPointingRow* ObitSDMDataPointingLookup  (ObitSDMData *in, odouble JD, olong 
 } /* end ObitSDMDataPointingLookup */
 
 /**
+ * Generate an SN table from data in an CalWVR SDM table
+ * Delay calculated using:
+ * T=270 K and eq. from Carilli, Carlstrom & Holdaway, Synthesis Imaging II
+ * Output SN table will be associated with inUV.
+ * \param inUV     Input uv data. 
+ * \param SDM      ASDM srtucture
+ * \param err      Error stack, returns if not empty.
+ * \return Pointer to the newly created ObitTableSN
+ */
+ObitTableSN* ObitSDMDataWVR2SN (ObitUV *inUV, ObitSDMData *SDM,
+				ObitErr *err)
+{
+  /* Speed of light */
+#ifndef VELIGHT
+#define VELIGHT 2.997924562e8
+#endif
+  /* CI = 1/speed of light */
+#ifndef CI
+#define CI 1.0 / VELIGHT
+#endif
+  ObitIOCode retCode;
+  ObitTableSN    *outSN   = NULL;
+  ObitTableSNRow *SNRow   = NULL;
+  ASDMCalWVRRow  *WVRRow  = NULL;
+  ASDMAntennaArray *antArray= NULL;
+  olong iant, numPol, numIF, iif, mainRow=0;
+  olong ver, iSNRow=0, iWVRRow;
+  odouble delay, phase;
+  gchar *tname;
+  gchar *routine = "ObitSDMCalWVR2SN";
+  
+  /* error checks */
+  if (err->error) return outSN;
+  g_assert (ObitUVIsA(inUV));
+
+  /* Must have a CalWVRTable */
+  if ((SDM->CalWVRTab==NULL) || (SDM->CalWVRTab->nrows<1)) return outSN;
+  
+  /* create output table  */
+  if (inUV->myDesc->jlocs>=0) numPol = MIN (2, inUV->myDesc->inaxes[inUV->myDesc->jlocs]);
+  else numPol = 1;
+  if (inUV->myDesc->jlocif>=0) numIF  = inUV->myDesc->inaxes[inUV->myDesc->jlocif];
+  else numIF = 1;
+  if (outSN==NULL) {
+    tname = g_strconcat ("Calibration for: ",inUV->name, NULL);
+    ver = 0;
+    outSN = newObitTableSNValue (tname, (ObitData*)inUV, &ver, OBIT_IO_WriteOnly,  
+				 numPol, numIF, err);
+    g_free (tname);
+    if (err->error) Obit_traceback_val (err, routine, inUV->name, outSN);
+  }
+
+  /* Tell about it */
+  Obit_log_error(err, OBIT_InfoErr, "Converting CalWVR data to SN table %d", ver);
+  
+  /* Open SN table for write */
+  retCode = ObitTableSNOpen (outSN, OBIT_IO_WriteOnly, err);
+  if ((retCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
+    Obit_traceback_val (err, routine, outSN->name, outSN);
+
+  /* create row structure */
+  SNRow = newObitTableSNRow(outSN);
+
+   /* Attach row to output buffer */
+  ObitTableSNSetRow (outSN, SNRow, err);
+  if (err->error) Obit_traceback_val (err, routine, outSN->name, outSN);
+
+  outSN->numAnt = 1;
+
+ /* Initialize SN Row structure */
+  SNRow->Time   = 0.0;
+  SNRow->TimeI  = 0.0;
+  SNRow->SourID = 0;
+  SNRow->antNo  = 0;
+  SNRow->SubA   = 0;
+  SNRow->FreqID = 0;
+  SNRow->IFR    = 0.0;
+  SNRow->NodeNo = 1;
+  SNRow->MBDelay1 = 0.0;
+  SNRow->MBDelay2 = 0.0;
+  SNRow->status = 1;
+  for (iif = 0; iif < numIF; iif++) {
+    SNRow->Real1[iif]   = 0.0;
+    SNRow->Imag1[iif]   = 0.0;
+    SNRow->Delay1[iif]  = 0.0;
+    SNRow->Rate1[iif]   = 0.0;
+    SNRow->Weight1[iif] = 0.0;
+    SNRow->RefAnt1[iif] = 1;
+    if (numPol>1) { /* Second polarization */
+      SNRow->Real2[iif]   = 0.0;
+      SNRow->Imag2[iif]   = 0.0;
+      SNRow->Delay2[iif]  = 0.0;
+      SNRow->Rate2[iif]   = 0.0;
+      SNRow->Weight2[iif] = 0.0;
+      SNRow->RefAnt2[iif] = 1;
+    }
+  }
+  
+  /* Get antenna information */
+  antArray = ObitSDMDataGetAntArray (SDM, mainRow);
+
+  /* Frequency info */
+  if (inUV->myDesc->freqIF==NULL) {
+    ObitUVGetFreq (inUV, err);
+    if (err->error) goto cleanup;
+  }
+
+  /* Loop over WVR table converting */
+  for (iWVRRow=0; iWVRRow<SDM->CalWVRTab->nrows; iWVRRow++) {
+    WVRRow = SDM->CalWVRTab->rows[iWVRRow];
+    /* Set antenna invariant values */
+    SNRow->Time   = 0.5*(WVRRow->endValidTime + WVRRow->startValidTime) - antArray->refJD;
+    SNRow->TimeI  = WVRRow->endValidTime - WVRRow->startValidTime;
+    
+    /* Lookup antenna number */
+    for (iant=0; iant<antArray->nants; iant++) {
+      if (!strcmp(WVRRow->antennaName, antArray->ants[iant]->antName)) {
+	SNRow->antNo  = antArray->ants[iant]->antennaNo+1;
+	break;
+      }
+    } /* end looking up antenna number */
+    
+    /* convert WVR model to SN */
+    for (iif = 0; iif < numIF; iif++) {
+      delay = -6.3 * WVRRow->water * CI;
+      phase = 2*G_PI*inUV->myDesc->freqIF[iif]*delay;
+      SNRow->Real1[iif]   = (ofloat)cos(phase);
+      SNRow->Imag1[iif]   = (ofloat)sin(phase);
+      SNRow->Delay1[iif]  = (ofloat)delay;
+      SNRow->Weight1[iif] = 1.0;
+      if (numPol>1) { /* Second polarization */
+	SNRow->Real2[iif]   = (ofloat)cos(phase);
+	SNRow->Imag2[iif]   = (ofloat)sin(phase);
+	SNRow->Delay2[iif]  = (ofloat)delay;
+	SNRow->Weight2[iif] = 1.0;
+     }
+    } /* end IF loop */
+
+    /* write it */
+    retCode = ObitTableSNWriteRow (outSN, iSNRow, SNRow, err);
+    if (err->error) goto cleanup;
+    
+  } /* end loop over WVR Table */
+
+  /* Close table */
+  retCode = ObitTableSNClose (outSN, err);
+  if ((retCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
+
+  /* deallocate structures */
+ cleanup:
+  SNRow = ObitTableSNRowUnref(SNRow);
+  antArray = ObitSDMDataKillAntArray (antArray);
+  if (err->error) Obit_traceback_val (err, routine, outSN->name, outSN);
+
+  return outSN;
+} /* end ObitSDMDataWVR2SN  */
+
+/**
  * Initialize global ClassInfo Structure.
  */
 void ObitSDMDataClassInit (void)
@@ -1623,6 +1797,7 @@ void ObitSDMDataInit  (gpointer inn)
   in->calDeviceTab         = NULL;
   in->calPointingTab       = NULL;
   in->CalReductionTab      = NULL;
+  in->CalWVRTab            = NULL;
   in->ConfigDescriptionTab = NULL;
   in->CorrelatorModeTab    = NULL;
   in->DataDescriptionTab   = NULL;
@@ -1675,6 +1850,7 @@ void ObitSDMDataClear (gpointer inn)
   in->calDeviceTab         = KillASDMcalDeviceTable(in->calDeviceTab);
   in->calPointingTab       = KillASDMcalPointingTable(in->calPointingTab);
   in->CalReductionTab      = KillASDMCalReductionTable(in->CalReductionTab);
+  in->CalWVRTab            = KillASDMCalWVRTable(in->CalWVRTab);
   in->ConfigDescriptionTab = KillASDMConfigDescriptionTable(in->ConfigDescriptionTab);
   in->CorrelatorModeTab    = KillASDMCorrelatorModeTable(in->CorrelatorModeTab);
   in->DataDescriptionTab   = KillASDMDataDescriptionTable(in->DataDescriptionTab);
@@ -1884,7 +2060,7 @@ static odouble* ASDMparse_dblarray(gchar *string, olong maxChar,
 {
   odouble *out = NULL;
   gchar *b;
-  olong charLeft, ndim, naxis1=1, naxis2=1, num;
+  olong charLeft, ndim, naxis1=1, naxis2=1, naxis3=1, num;
   olong i;
 
   *next = string;  /* if not found */
@@ -1903,7 +2079,14 @@ static odouble* ASDMparse_dblarray(gchar *string, olong maxChar,
     naxis2 = (olong)strtol(b, next, 10);
     b = *next;
   }
-  num = naxis1*naxis2;
+  /* get number of values axis 3 */
+  if (ndim==3) {
+    naxis2 = (olong)strtol(b, next, 10);
+    b = *next;
+    naxis3 = (olong)strtol(b, next, 10);
+    b = *next;
+  }
+  num = naxis1*naxis2*naxis3;
   out = g_malloc0(MAX(1,num)*sizeof(odouble));
 
   /* Loop parsing */
@@ -2404,6 +2587,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
   out->calDeviceRows        = -1;
   out->calPointingRows      = -1;
   out->CalReductionRows     = -1;
+  out->CalWVRRows           = -1;
   out->ConfigDescriptionRows= -1;
   out->CorrelatorModeRows   = -1;
   out->DataDescriptionRows  = -1;
@@ -2517,6 +2701,14 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
       out->CalReductionRows = ASDMparse_int(line, maxLine, "<NumberRows>", &next);
+      continue;
+    }
+    /* Number of CalWVR rows */
+    if (!strcmp(tstr,"CalWVR")) {
+      retCode = ObitFileReadXML (file, line, maxLine, err);
+      if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+      if (retCode==OBIT_IO_EOF) break;
+      out->CalWVRRows = ASDMparse_int(line, maxLine, "<NumberRows>", &next);
       continue;
     }
     /* Number of ConfigDescription rows */
@@ -3581,6 +3773,197 @@ static ASDMCalReductionTable* KillASDMCalReductionTable(ASDMCalReductionTable* t
   g_free(table);
   return NULL;
 } /* end KillASDMCalReductionTable */
+
+/* ----------------------  CalWVR ----------------------------------- */
+/** 
+ * Destructor for CalWVR table row.
+ * \param  structure to destroy
+ * \return NULL row pointer
+ */
+static ASDMCalWVRRow* KillASDMCalWVRRow(ASDMCalWVRRow* row)
+{
+  if (row == NULL) return NULL;
+  if (row->wvrMethod)      g_free(row->wvrMethod);
+  if (row->antennaName)    g_free(row->antennaName);
+  if (row->chanFreq)       g_free(row->chanFreq);
+  if (row->chanWidth)      g_free(row->chanWidth);
+  if (row->refTemp)        g_free(row->refTemp);
+  if (row->pathCoeff)      g_free(row->pathCoeff);
+  if (row->polyFreqLimits) g_free(row->polyFreqLimits);
+  g_free(row);
+  return NULL;
+} /* end   KillASDMCalWVRRow */
+
+/** 
+ * Constructor for CalWVR table parsing from file
+ * \param  CalWVRFile Name of file containing table
+ * \param  err     ObitErr for reporting errors.
+ * \return table structure,  use KillASDMCalWVRTable to free
+ */
+static ASDMCalWVRTable* 
+ParseASDMCalWVRTable(ObitSDMData *me, 
+			   gchar *CalWVRFile, 
+			   ObitErr *err)
+{
+  ASDMCalWVRTable* out=NULL;
+  ObitFile *file=NULL;
+  ObitIOCode retCode;
+  olong irow, maxLine = me->maxLine;
+  odouble *darry=NULL;
+  gchar *line=me->line;
+  gchar *endrow = "</row>";
+  gchar *prior, *next;
+  gchar *routine = " ParseASDMCalWVRTable";
+
+  /* error checks */
+  if (err->error) return out;
+
+  out = g_malloc0(sizeof(ASDMCalWVRTable));
+  out->rows = NULL;
+
+  /* How many rows? */
+  out->nrows = MAX(0, me->ASDMTab->CalWVRRows);
+  if (out->nrows<1) return out;
+
+  /* Finish building it */
+  out->rows = g_malloc0((out->nrows+1)*sizeof(ASDMCalWVRRow*));
+  for (irow=0; irow<out->nrows; irow++) out->rows[irow] = g_malloc0(sizeof(ASDMCalWVRRow));
+
+  file = newObitFile("CalWVR");
+  retCode = ObitFileOpen(file, CalWVRFile, OBIT_IO_ReadOnly, OBIT_IO_Text, 0, err);
+  if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+
+  /* Loop over file */
+  irow = 0;
+  while (retCode!=OBIT_IO_EOF) {
+
+    retCode = ObitFileReadXML (file, line, maxLine, err);
+    if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+    if (retCode==OBIT_IO_EOF) break;
+
+    /* Parse entries */
+    prior = "<startValidTime>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->startValidTime = ASDMparse_time (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<endValidTime>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->endValidTime = ASDMparse_time (line, maxLine, prior, &next);
+      continue;
+    }
+    /* method */
+    prior = "<wvrMethod>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->wvrMethod = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->wvrMethod);   /* Deblank */
+      continue;
+    }
+    /* antenna Name */
+    prior = "<antennaName>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->antennaName = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->antennaName);   /* Deblank */
+      continue;
+    }
+     prior = "<numChan>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->numChan = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+     prior = "<chanFreq>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->chanFreq = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<chanWidth>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->chanWidth = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<refTemp>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->refTemp = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+     prior = "<numPoly>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->numPoly = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<pathCoeff>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->pathCoeff = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<polyFreqLimits>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->polyFreqLimits = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<wetPath>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      darry = ASDMparse_dblarray (line, maxLine, prior, &next);
+      if (darry) {
+	out->rows[irow]->wetPath = darry[0];
+	g_free(darry);
+      }
+      continue;
+    }
+    prior = "<dryPath>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      darry = ASDMparse_dblarray (line, maxLine, prior, &next);
+      if (darry) {
+	out->rows[irow]->dryPath = darry[0];
+	g_free(darry);
+      }
+      continue;
+    }
+    prior = "<water>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->water = ASDMparse_dbl (line, maxLine, prior, &next);
+      /*fprintf (stdout, "wvr %s %lf %lf %lf \n",
+	out->rows[irow]->antennaName, out->rows[irow]->wetPath, out->rows[irow]->dryPath, 
+	out->rows[irow]->water);*/
+      continue;
+   }
+    /* Is this the end of a row? */
+    if (g_strstr_len (line, maxLine, endrow)!=NULL) irow++;
+
+    /* Check overflow */
+    Obit_retval_if_fail((irow<=out->nrows), err, out,
+			"%s: Found more rows than allocated (%d)", 
+			routine, out->nrows);
+  } /* end loop over table */
+
+  /* Close up */
+  retCode = ObitFileClose (file, err);
+  if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+  file = ObitFileUnref(file);
+
+  return out;
+} /* end ParseASDMCalWVRTable */
+
+/** 
+ * Destructor for CalWVR table
+ * \param  structure to destroy
+ * \return NULL pointer
+ */
+static ASDMCalWVRTable* KillASDMCalWVRTable(ASDMCalWVRTable* table)
+{
+  olong i;
+
+  if (table==NULL) return NULL;  /* Anybody home? */
+
+  /* Delete row structures */
+  if (table->rows) {
+    for (i=0; i<table->nrows; i++) 
+      table->rows[i] = KillASDMCalWVRRow(table->rows[i]);
+    g_free(table->rows);
+  }
+  g_free(table);
+  return NULL;
+} /* end KillASDMCalWVRTable */
 
 /* ---------------------- ConfigDescription ----------------------------------- */
 /** 

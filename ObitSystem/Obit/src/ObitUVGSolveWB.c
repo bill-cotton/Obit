@@ -564,7 +564,7 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
     if (done) break; still have OK data */
     
     /* Write time if requested */
-    if (prtlv >= 3) {
+    if (prtlv >= 4) {
       kday = in->scanData->timec;
       timex = (in->scanData->timec - kday) * 24.;
       khr = timex;
@@ -2172,7 +2172,7 @@ initAntSolve (ObitUVGSolveWB *in, olong iAnt, olong refAnt, ObitErr *err)
 
 	} /* end sensible fit */
 	/* Tell result if requested */
-	if (in->prtLv>=3) {
+	if (in->prtLv>=4) {
 	  Obit_log_error(err, OBIT_InfoErr, 
 			 "ant %2d poln %d IF %2d  delay %9.3f nsec SNR %8.1f", 
 			 iAnt, iPoln, iIF, in->antDelay[offset+ip]*1.0e9, 

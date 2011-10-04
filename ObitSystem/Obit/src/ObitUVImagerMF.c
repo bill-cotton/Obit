@@ -357,7 +357,7 @@ void ObitUVImagerMFWeight (ObitUVImager *in, ObitErr *err)
   /* List of control parameters on uvwork */
   gchar *controlList[] = 
     {"FOV", "doFull", "NField", "xCells", "yCells", "nx", "ny", 
-     "RAShift", "DecShift", "Sources", 
+     "RAShift", "DecShift", "Sources", "Beam",
      "Catalog",  "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
      NULL};

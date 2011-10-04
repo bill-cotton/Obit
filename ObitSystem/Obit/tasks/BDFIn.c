@@ -201,6 +201,7 @@ int main ( int argc, char **argv )
   ObitSDMData *SDMData=NULL;
   ObitBDFData *BDFData=NULL;
   ObitTable   *CalTab=NULL;
+  ObitTableSN *SNTab=NULL;
 
   err = newObitErr();  /* Obit error/message stack */
 
@@ -288,6 +289,15 @@ int main ( int argc, char **argv )
     if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
   }
 
+  /* Convert ALMA WVR table to SN Table */
+  if (isALMA) {
+    Obit_log_error(err, OBIT_InfoErr, "Converting ALMA CalWVR to SN Table");
+    ObitErrLog(err);
+    ObitTableCLGetDummy (outData, outData, 1, err); 
+    SNTab = ObitSDMDataWVR2SN (outData, SDMData, err);
+    if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  }
+
   /* History */
   BDFInHistory (myInput, SDMData, outData, err);
   
@@ -306,6 +316,7 @@ int main ( int argc, char **argv )
   BDFData  = ObitBDFDataUnref (BDFData);
   outData  = ObitUnref(outData);
   CalTab   = ObitTableUnref(CalTab);
+  SNTab    = ObitTableUnref(SNTab);
   uvwSourceList = ObitUnref(uvwSourceList);
   if (NXTimes)     g_free(NXTimes);
   if (dataRefJDs)  g_free(dataRefJDs);

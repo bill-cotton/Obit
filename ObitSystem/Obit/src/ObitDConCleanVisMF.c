@@ -123,6 +123,7 @@ static void NewPxList (ObitDConCleanVis *in, ObitErr *err);
 
 /** Private: Convolve spectral CCs with a Gaussian. */
 static ObitFArray* ConvlCC(ObitImage *image, olong CCVer, olong iterm, 
+			   ofloat factor, ofloat tmaj, ofloat tmin, ofloat tpa, 
 			   ObitErr *err);
 
 /** Private: Cross convolve spectral CCs with a Gaussian. */
@@ -486,6 +487,7 @@ void ObitDConCleanVisMFRestore(ObitDConClean *inn, ObitErr *err)
   ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
   ObitFArray *convl=NULL;
   ObitImage *image=NULL;
+  ofloat factor = 1.0;
   olong iplane, field, num, nOrd, plane[5]={1,1,1,1,1};
   gchar *routine = "ObitDConCleanVisMFRestore";
 
@@ -517,11 +519,12 @@ void ObitDConCleanVisMFRestore(ObitDConClean *inn, ObitErr *err)
     /* Restore Flux then individual channels */
     /* Convolve Gaussians */
     iplane = 0;
-    convl = ConvlCC (image, in->CCver, iplane, err);
+    convl = ConvlCC (image, in->CCver, iplane, factor, -1.0,-1.0, -1.0, err);
     /* Read image */
     plane[0] = 1;
     ObitImageGetPlane (image, NULL, plane, err);
-    /* Sum */
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+   /* Sum */
     ObitFArrayAdd (image->image, convl, image->image);
     /* Rewrite */
     ObitImagePutPlane (image, NULL, plane, err);
@@ -533,10 +536,11 @@ void ObitDConCleanVisMFRestore(ObitDConClean *inn, ObitErr *err)
     nOrd = ((ObitImageMF*)image)->maxOrder;
     for (iplane=1; iplane<=num; iplane++) {
       /* Convolve Gaussians */
-      convl = ConvlCC (image, in->CCver, iplane, err);
+      convl = ConvlCC (image, in->CCver, iplane, factor, -1.0,-1.0, -1.0, err);
       /* Read image */
       plane[0] = iplane+1 + nOrd;
       ObitImageGetPlane (image, NULL, plane, err);
+      if (err->error) Obit_traceback_msg (err, routine, in->name);
       /* Sum */
       ObitFArrayAdd (image->image, convl, image->image);
       /* Rewrite */
@@ -565,7 +569,8 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
   ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
   ObitImage *image1=NULL, *image2=NULL;
   olong ifield, jfield, iplane, num, nOrd, ncomps, ver, noParms, plane[5]={1,1,1,1,1};
-  ofloat BeamTaper1=0.0;
+  ofloat BeamTaper1=0.0, BeamTaper2=0.0, factor;
+  ofloat gparm[3]={0.0,0.0,0.0}, bmaj, bmin, bpa;
   ObitFArray *convl=NULL, *accum=NULL;
   gint32 dim[MAXINFOELEMDIM];
   ObitInfoType itype;
@@ -577,7 +582,7 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
   g_assert (ObitDConCleanVisMFIsA(in));
 
   /* Anything to restore? */
-  if (in->Pixels->currentIter<=0) return;
+  if (in->Pixels->currentIter<=0) return; 
 
   /* Tell user */
   if (in->prtLv>1) {
@@ -592,14 +597,14 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
     num  = ((ObitImageMF*)image1)->nSpec;
     nOrd = ((ObitImageMF*)image1)->maxOrder;
 
-    /* Get accumulation array for image */
-    accum = ObitFArrayCreate ("Accum", 2, image1->myDesc->inaxes);
-
     /* Get additional beam taper */
     ObitInfoListGetTest(image1->myDesc->info, "BeamTapr", &itype, dim, &BeamTaper1);
     /* Ignore this one if not zero */
     if (BeamTaper1>0.0) continue;
 
+    /* Get accumulation array for image */
+    accum = ObitFArrayCreate ("Accum", 2, image1->myDesc->inaxes);
+    
     /* Restore Flux then individual channels */
     for (iplane=0; iplane<(num+1); iplane++) {
       /* Read image */
@@ -613,7 +618,7 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
 	if (ifield==jfield) continue;
 
 	/* Anything to restore? */
-	if (in->Pixels->iterField[ifield]<=0) continue;
+	if (in->Pixels->iterField[ifield]<=0) continue; 
 
 	/* Diagnostics */
 	if (in->prtLv>2) {
@@ -639,10 +644,23 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
 					 err);
 	  outCC = ObitTableCCUtilCrossTable (inCC, image2->myDesc, image1, &ncomps, err);
 	  if ((ncomps>0) && (outCC!=NULL)) {
-	    convl = ConvlCC (image1, outCC->tabVer, iplane, err);
+	    /* Scaling factor  */
+	    factor = ObitDConCleanGetXRestoreBeam(image2->myDesc, image1->myDesc, 
+						  gparm, &bmaj, &bmin, &bpa);
+	    /* Get additional beam taper - use for convolution */
+	    ObitInfoListGetTest(image2->myDesc->info, "BeamTapr", &itype, dim, &BeamTaper2);
+	    bmaj = bmin = BeamTaper2;
+	    bpa   = 0.0;
+	    convl = ConvlCC (image1, outCC->tabVer, iplane, factor, bmaj, bmin, bpa, err);
 	    if (err->error) Obit_traceback_msg (err, routine, in->name);
 	    /* Sum */
 	    ObitFArrayAdd (accum, convl, accum);
+	    /* DEBUG save convl for 1=>5, 3=>5
+	    if ((jfield==4) && (ifield==0) && (iplane==0))
+	      ObitImageUtilArray2Image ("Dbug1to5.fits", 0, convl, err); 
+	    if ((jfield==4) && (ifield==2) && (iplane==0))
+	      ObitImageUtilArray2Image ("Dbug3to5.fits", 0, convl, err);  */
+
 	    convl = ObitFArrayUnref(convl);
 	  }
 	  inCC = ObitTableCCUnref(inCC);
@@ -1284,15 +1302,22 @@ static void KillImSubFuncArgs (olong nargs, ImSubFuncArg **ThreadArgs)
 
 /** 
  * Convolve a set of Clean components with a beam returning an image array
+ * Gaussian will be obtained from the CC Table unless overridden by tmaj etc.
  * 
  * \param image  Image with CC table and defines size of image grid and
  *               with beam to convolve with.
  * \param CCVer  CC table number
  * \param iterm  Select spectral term, 0=flux, higher is a spectral channel..
+ * \param factor Scaling factor
+ * \param tmaj   if > 0 then the major axis size (deg) of convolving Gaussian
+ * \param tmin   if > 0 then the minor axis size (deg) of convolving Gaussian
+ * \param tpa    Position angle (deg) of convolving Gaussian if tmaj>=0
  * \param err    Obit error stack object.
  * \return An array with the Clean components convolved
  */
-static ObitFArray* ConvlCC(ObitImage *image, olong CCVer, olong iterm, ObitErr *err)
+static ObitFArray* ConvlCC(ObitImage *image, olong CCVer, olong iterm, 
+			   ofloat factor, ofloat tmaj, ofloat tmin, ofloat tpa, 
+			   ObitErr *err)
 {
   ObitIOCode retCode;
   ObitTable *tempTable=NULL;
@@ -1302,6 +1327,7 @@ static ObitFArray* ConvlCC(ObitImage *image, olong CCVer, olong iterm, ObitErr *
   gchar *tabType = "AIPS CC";
   ofloat gparm[3], bmaj, bmin, bpa;
   ObitFArray *grid = NULL;
+  /* ObitFArray *tempFArray=NULL; DEBUG */
   ObitCArray *uvGrid = NULL;
   ObitFFT *forFFT = NULL, *revFFT = NULL;
   gchar *routine = "ConvlCC";
@@ -1348,11 +1374,11 @@ static ObitFArray* ConvlCC(ObitImage *image, olong CCVer, olong iterm, ObitErr *
   /* Spectral or normal */
   if ((CCTable->noParms>4) && (iterm>0)) { /* Spectral */
     retCode = ObitTableCCUtilGridSpect (CCTable, 1, iterm, &first, &last, FALSE, 
-					1.0, 0.0, 1.0e20, imDesc, &grid, gparm, &ncomp, 
+					factor, 0.0, 1.0e20, imDesc, &grid, gparm, &ncomp, 
 					err);
   } else { /* normal */
     retCode = ObitTableCCUtilGrid (CCTable, 1, &first, &last, FALSE, 
-				   1.0, 0.0, 1.0e20, imDesc, &grid, gparm, &ncomp, 
+				   factor, 0.0, 1.0e20, imDesc, &grid, gparm, &ncomp, 
 				   err);
   }
   if ((retCode != OBIT_IO_OK) || (err->error))
@@ -1361,9 +1387,9 @@ static ObitFArray* ConvlCC(ObitImage *image, olong CCVer, olong iterm, ObitErr *
   /* Free CC table */
   CCTable = ObitTableCCUnref(CCTable);
   
-  /* DEBUG */
-  /* ObitImageUtilArray2Image ("DbugGridCC.fits", 1, grid, err);  */
-  /* if (err->error) Obit_traceback_val (err, routine, image->name, grid);*/
+  /* DEBUG 
+  ObitImageUtilArray2Image ("DbugGridCC.fits", 1, grid, err);  */
+   if (err->error) Obit_traceback_val (err, routine, image->name, grid);
   /* END DEBUG */
   
   /* FFT to image plane */
@@ -1402,13 +1428,19 @@ static ObitFArray* ConvlCC(ObitImage *image, olong CCVer, olong iterm, ObitErr *
     gparm[1] = gparm[1];
     gparm[2] = gparm[2] + image->myDesc->crota[image->myDesc->jlocd];
   }
+  /* Check for override in call */
+  if (tmaj>0.0) {
+    gparm[0] = tmaj;
+    gparm[1] = tmin;
+    gparm[2] = tpa + image->myDesc->crota[image->myDesc->jlocd];
+  }
   GaussTaper (uvGrid, imDesc, gparm);
   
   /* DEBUG */
-  /*tempFArray = ObitCArrayMakeF(uvGrid); */  /* Temp FArray */
-  /*ObitCArrayReal (uvGrid, tempFArray); */   /* Get real part */
-  /*ObitImageUtilArray2Image ("DbuguvGridAfter.fits", 1, tempFArray, err); */
-  /*tempFArray = ObitFArrayUnref(tempFArray); */   /* delete temporary */
+  /*tempFArray = ObitCArrayMakeF(uvGrid);*/   /* Temp FArray */
+  /*ObitCArrayReal (uvGrid, tempFArray);*/    /* Get real part */
+  /*ObitImageUtilArray2Image ("DbuguvGridAfter.fits", 1, tempFArray, err);*/ 
+  /*tempFArray = ObitFArrayUnref(tempFArray);*/    /* delete temporary */
   /* END DEBUG */
   
   /* FFT back to image */
@@ -1425,10 +1457,10 @@ static ObitFArray* ConvlCC(ObitImage *image, olong CCVer, olong iterm, ObitErr *
   /* Put the center at the center */
   ObitFArray2DCenter (grid);
   
-  /* DEBUG  
-  if (iterm==1)
-    ObitImageUtilArray2Image ("DbugRestCC.fits", 0, grid, err);
-  if (err->error) Obit_traceback_val (err, routine, image->name, grid); */
+  /* DEBUG   
+  if (iterm==0)
+    ObitImageUtilArray2Image ("DbugRestCC.fits", 0, grid, err);*/
+  if (err->error) Obit_traceback_val (err, routine, image->name, grid);
   /* END DEBUG */
   
   /* Cleanup */

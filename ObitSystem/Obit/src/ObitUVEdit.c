@@ -3763,13 +3763,13 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   if ((iretCode > OBIT_IO_EOF) || (oretCode > OBIT_IO_EOF) ||
       (err->error)) goto cleanup;
   
+  /* Cleanup */
+ cleanup:  
   /* Reset passAll */
   btemp = FALSE;
   dim[0] = dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut(inUV->info, "passAll", OBIT_bool, dim, &btemp);
   
-  /* Cleanup */
- cleanup:  
   /* close uv file */
   iretCode = ObitUVClose (inUV, err);
   

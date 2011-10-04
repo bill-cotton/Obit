@@ -1286,6 +1286,8 @@ ObitIOCode ObitSkyModelDivUV (ObitSkyModel *in, ObitUV *indata, ObitUV *outdata,
 
   /* Cleanup */
  cleanup:
+  outdata->buffer     = NULL;
+  outdata->bufferSize = 0;
   scratchUV    = ObitUVUnref(scratchUV);
   myClass->ObitSkyModelShutDownMod(in, indata, err);
   if (err->error) Obit_traceback_val (err, routine,in->name, retCode);

@@ -980,7 +980,7 @@ void ObitDConCleanVisDefWindow(ObitDConClean *inn, ObitErr *err)
   if (in->mosaic->numBeamTapes>1) {
     for (ifield=1; ifield<in->mosaic->numberImages; ifield++) {
       if ((in->mosaic->FacetNo[ifield]==0) && 
-	  (in->mosaic->BeamTapes[ifield]>0.0)) {
+	  (in->mosaic->BeamTaper[ifield]>0.0)) {
 	for (i=0; i<=in->window->maxId[0]; i++ ) {
 	  if (ObitDConCleanWindowInfo (in->window, 1, i, &type, &window, err))
 	    ObitDConCleanWindowUpdate (in->window, ifield+1, i, type, window, err);
@@ -2817,6 +2817,8 @@ static void ObitDConCleanVisDecide (ObitDConCleanVis* in, ObitErr *err)
   minFlux = in->PixelHist->histMax - (in->PixelHist->histMax-in->PixelHist->histMin) / 
     in->PixelHist->ncell;
   in->minFluxLoad = minFlux;
+  if (in->minFluxLoad<=0.0)
+    in->minFluxLoad = MAX (in->autoWinFlux, in->minFluxLoad);
   in->numberSkip = 1 + ObitDConCleanPxHistNumber(in->PixelHist, minFlux, err) / 
     MAX (1, in->maxPixel);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
@@ -2848,6 +2850,10 @@ static void ObitDConCleanVisDecide (ObitDConCleanVis* in, ObitErr *err)
   } else {
     in->doSDI = FALSE;
   }
+
+  /* Make sure at least autoWinFlux */
+  if (in->minFluxLoad<=0.0)
+    in->minFluxLoad = MAX (in->autoWinFlux, in->minFluxLoad);
 
   /* Give warning if skipping */
   if ((in->numberSkip>=1) && (err->prtLv>0)) 

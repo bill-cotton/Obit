@@ -651,7 +651,7 @@ void ObitDConCleanDefWindow(ObitDConClean *in, ObitErr *err)
   ObitDConCleanWindowType type;
   gint32 dim[MAXINFOELEMDIM];
   ObitInfoType itype;
-  olong  *winArray;
+  olong  *winArray, delta;
   gchar *routine = "ObitDConCleanDefWindow";
 
   /* error checks */
@@ -705,7 +705,29 @@ void ObitDConCleanDefWindow(ObitDConClean *in, ObitErr *err)
 	  if (err->error) Obit_traceback_msg (err, routine, in->name);
 	} /* end if window fully specified */
 	j += 4;   /* loop through window array */
-      }
+      } /* end loop over CLEANBox */
+
+      /* Add outer window if CLEAN box gotten from CLEANBox */
+      if (sfield>=2) {
+	field = 1;
+	if (in->mosaic->Radius>0.0) {  /* Use round box of radius Radius */
+	  type = OBIT_DConCleanWindow_round;
+	  window[0] = (olong)(in->mosaic->Radius);
+	  window[1] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[0]-
+			      in->mosaic->images[field-1]->myDesc->xPxOff);
+	  window[2] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[1]-
+			      in->mosaic->images[field-1]->myDesc->yPxOff);
+	} else { /* Use rectangle */
+	  type = OBIT_DConCleanWindow_rectangle;
+	  window[0] = 5;
+	  window[1] = 5;
+	  window[2] = in->mosaic->images[field-1]->myDesc->inaxes[0]-5;
+	  window[3] = in->mosaic->images[field-1]->myDesc->inaxes[1]-5;
+	}
+	
+	ObitDConCleanWindowOuter (in->window, 1, type, window, err);
+	if (err->error) Obit_traceback_msg (err, routine, in->name);
+      } /* End add outer box */
     }
   } /* End of use CLEANBox for field 1 */
 
@@ -747,20 +769,21 @@ void ObitDConCleanDefWindow(ObitDConClean *in, ObitErr *err)
     /* Do outliers */
     type = OBIT_DConCleanWindow_rectangle;
     if (in->mosaic->OutlierSize) {
+      delta = (in->mosaic->OutlierSize/2) - 5;
       for (field=sfield; field<=in->mosaic->numberImages; field++) {
 	if (!in->mosaic->inFlysEye[field-1]) {
 	  window[0] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[0]-
-			      in->mosaic->images[field-1]->myDesc->xPxOff) - 
-	    in->mosaic->OutlierSize/2;
+			      in->mosaic->images[field-1]->myDesc->xPxOff) - delta;
 	  window[1] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[1]-
-			      in->mosaic->images[field-1]->myDesc->yPxOff) - 
-	    in->mosaic->OutlierSize/2;
+			      in->mosaic->images[field-1]->myDesc->yPxOff) -  delta;
 	  window[2] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[0]-
-			      in->mosaic->images[field-1]->myDesc->xPxOff) +
-	    in->mosaic->OutlierSize/2;
+			      in->mosaic->images[field-1]->myDesc->xPxOff) + delta;
 	  window[3] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[1]-
-			      in->mosaic->images[field-1]->myDesc->yPxOff) + 
-	    in->mosaic->OutlierSize/2;
+			      in->mosaic->images[field-1]->myDesc->yPxOff) +  delta;
+	  window[0] = MAX (5, window[0]);
+	  window[1] = MAX (5, window[1]);
+	  window[2] = MIN ((in->mosaic->images[field-1]->myDesc->inaxes[0]-5), window[2]);
+	  window[3] = MIN ((in->mosaic->images[field-1]->myDesc->inaxes[1]-5), window[3]);
 	  /* Only use if not autoWindow */
 	  if (!in->autoWindow) ObitDConCleanWindowAdd (in->window, field, type, window, err);
 	  /* Add outer window */

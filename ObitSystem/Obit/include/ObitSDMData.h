@@ -30,6 +30,8 @@
 
 #include "Obit.h"
 #include "ObitErr.h"
+#include "ObitUV.h"
+#include "ObitTableSN.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -390,6 +392,11 @@ gboolean ObitSDMDataSelCode  (ObitSDMData *in, olong iMain, gchar *selCode);
 /** Find a pointingTab row for an antenna/time */
 ASDMPointingRow* ObitSDMDataPointingLookup(ObitSDMData *in, odouble JD, olong ant, 
 					   ObitErr *err);
+
+/** Public: Convert ALMA WVR data to SN table  */
+ObitTableSN* ObitSDMDataWVR2SN (ObitUV *inUV, ObitSDMData *SDM,
+				ObitErr *err);
+
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

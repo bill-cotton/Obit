@@ -106,6 +106,7 @@ ObitIOCode ObitTableCCUtilGrid (ObitTableCC *in, olong OverSample,
   olong j, irow, xPix, yPix, iAddr;
   ofloat iCellX, iCellY, fNx, fNy;
   olong ndim, naxis[2], nx, ny, count = 0, badCnt = 0;
+  ObitCCCompType mtype = OBIT_CC_Unknown;
   gchar *routine = "ObitTableCCUtilGrid";
 
   /* error checks */
@@ -178,11 +179,18 @@ ObitIOCode ObitTableCCUtilGrid (ObitTableCC *in, olong OverSample,
     if (j==*first) {
       /* Is this a Gaussian component? */
       if ((in->parmsCol>=0) &&
-	  (in->myDesc->dim[in->parmsCol][0]>=4) && 
-	  (CCRow->parms[3]==1.0)) {
-	gparm[0] = CCRow->parms[0];
-	gparm[1] = CCRow->parms[1];
-	gparm[2] = CCRow->parms[2];
+	  (in->myDesc->dim[in->parmsCol][0]>=4)) {
+	mtype = (ObitCCCompType)CCRow->parms[3]+0.5;
+	if ((mtype==OBIT_CC_GaussMod) ||
+	    (mtype==OBIT_CC_CGaussMod) ||
+	    (mtype==OBIT_CC_GaussModSpec) ||
+	    (mtype==OBIT_CC_CGaussModSpec) ||
+	    (mtype==OBIT_CC_GaussModTSpec) ||
+	    (mtype==OBIT_CC_CGaussModTSpec)) {
+	  gparm[0] = CCRow->parms[0];
+	  gparm[1] = CCRow->parms[1];
+	  gparm[2] = CCRow->parms[2];
+	}
       }
     } else if (gparm[0]>0.0) {
       /* All Gaussians MUST be the same */
@@ -298,6 +306,7 @@ ObitIOCode ObitTableCCUtilGridSpect (ObitTableCC *in, olong OverSample, olong it
   ofloat iCellX, iCellY, fNx, fNy, spectTerm;
   olong ndim, naxis[2], nx, ny, parmoff, count = 0, badCnt = 0;
   gboolean doSpec=TRUE, doTSpec=FALSE;
+  ObitCCCompType mtype = OBIT_CC_Unknown;
   gchar *routine = "ObitTableCCUtilGridSpect";
 
   /* error checks */
@@ -378,11 +387,18 @@ ObitIOCode ObitTableCCUtilGridSpect (ObitTableCC *in, olong OverSample, olong it
     if (j==*first) {
       /* Is this a Gaussian component? */
       if ((in->parmsCol>=0) &&
-	  (in->myDesc->dim[in->parmsCol][0]>4) && 
-	  ((CCRow->parms[3]==1.0) || (CCRow->parms[3]==11.0) || (CCRow->parms[3]==21.0))) {
-	gparm[0] = CCRow->parms[0];
-	gparm[1] = CCRow->parms[1];
-	gparm[2] = CCRow->parms[2];
+	  (in->myDesc->dim[in->parmsCol][0]>=4)) {
+	mtype = (ObitCCCompType)CCRow->parms[3]+0.5;
+	if ((mtype==OBIT_CC_GaussMod) ||
+	    (mtype==OBIT_CC_CGaussMod) ||
+	    (mtype==OBIT_CC_GaussModSpec) ||
+	    (mtype==OBIT_CC_CGaussModSpec) ||
+	    (mtype==OBIT_CC_GaussModTSpec) ||
+	    (mtype==OBIT_CC_CGaussModTSpec)) {
+	  gparm[0] = CCRow->parms[0];
+	  gparm[1] = CCRow->parms[1];
+	  gparm[2] = CCRow->parms[2];
+	}
       }
     } else if (gparm[0]>0.0) {
       /* All Gaussians MUST be the same */

@@ -54,6 +54,8 @@ ASDMcalDeviceTable* calDeviceTab;
 ASDMcalPointingTable* calPointingTab;
 /** CalReduction table */
 ASDMCalReductionTable* CalReductionTab;
+/** Cal WVR table */
+ASDMCalWVRTable* CalWVRTab;
 /** ConfigDescription table */
 ASDMConfigDescriptionTable* ConfigDescriptionTab;
 /** CorrelatorMode table */

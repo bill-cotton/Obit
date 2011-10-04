@@ -181,6 +181,8 @@ typedef struct {
   olong calPointingRows;
   /** Number of CalReduction rows */
   olong CalReductionRows;
+  /** Number of CalWVR rows */
+  olong CalWVRRows;
   /** Number of ConfigDescription rows */
   olong ConfigDescriptionRows;
   /** Number of CorrelatorMode rows */
@@ -366,6 +368,45 @@ typedef struct {
   /** Array of ASDMCalReduction rows */
   ASDMCalReductionRow **rows;
 } ASDMCalReductionTable;
+
+ /* CalWVR Table */
+typedef struct {
+  /** start Time JD*/
+  odouble startValidTime;
+  /** end Time JD */
+  odouble endValidTime;
+  /**  wvr method */
+  gchar *wvrMethod;
+  /**  antenna Name */
+  gchar *antennaName;
+  /** numChan */
+  olong numChan;
+  /** Arrays of info - dim numChan
+      channel frequency array */
+  odouble *chanFreq;
+  /* channel width array */
+  odouble *chanWidth;
+  /* channel temperatures */
+  odouble *refTemp;
+  /** number of Polynomials */
+  olong numPoly;
+  /* path coefficients */
+  odouble *pathCoeff;
+  /* polyFreqLimits */
+  odouble *polyFreqLimits;
+  /* wet Path */
+  odouble wetPath;
+  /* dry Path */
+  odouble dryPath;
+  /* water */
+  odouble water;
+} ASDMCalWVRRow;
+typedef struct {
+  /** Number of rows */
+  olong nrows;
+  /** Array of ASDMCalWVR rows */
+  ASDMCalWVRRow **rows;
+} ASDMCalWVRTable;
 
  /* ConfigDescription Table */
 typedef struct {
