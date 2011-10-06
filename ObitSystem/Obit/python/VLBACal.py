@@ -1134,7 +1134,7 @@ def VLBAOpacCor(uv, OpacSmoo, err, FreqID=1, WXver=0, TYver=0, GCver=0, \
     apcal = AIPSTask.AIPSTask("apcal")
     if not check:
         setname(uv,apcal)
-    apcal.opcode      = "GRID"
+    apcal.opcode      = "OPAC" #"GRID"
     apcal.inver       = WXver
     apcal.tyver       = TYver
     apcal.gcver       = GCver

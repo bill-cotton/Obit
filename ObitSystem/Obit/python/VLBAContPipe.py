@@ -309,34 +309,11 @@ def pipeline( aipsSetup, parmFile ):
         if retCode!=0:
             raise RuntimeError,"Error in manual phase calibration"
     
-    # Bandpass calibration if needed
-    if parms["doBPCal"] and not check:
-        logger.info("--> Bandpass calibration (doBPCal)")
-        retCode = VLBABPass(uv, goodCal["Source"], err, CalModel=None, \
-                                timeRange=goodCal["timeRange"], doCalib=2, flagVer=2, \
-                                noScrat=noScrat, solInt1=parms["bpsolint1"], \
-                                solInt2=parms["bpsolint2"], solMode=parms["bpsolMode"], \
-                                BChan1=parms["bpBChan1"], EChan1=parms["bpEChan1"], BChan2=parms["bpBChan2"], \
-                                EChan2=parms["bpEChan2"], ChWid2=parms["bpChWid2"], \
-                                doCenter1=parms["bpDoCenter1"], refAnt=goodCal["bestRef"], specIndex=parms["specIndex"], \
-                                doAuto = parms["bpdoAuto"], \
-                                nThreads=nThreads, logfile=logFile, check=check, debug=debug)
-        if retCode!=0:
-            raise RuntimeError,"Error in Bandpass calibration"
-    
-    # Plot amplitude and phase vs. frequency
-    if parms["doSpecPlot"]:
-        logger.info("--> Spectral plotting (doSpecPlot)")
-        plotFile = project+'_'+session+'_'+band+".spec.ps"
-        VLBASpecPlot( uv, goodCal, err, doband=1, check=check, 
-            plotFile=plotFile, logfile=logFile, debug=debug )
-        VLBASaveOutFiles() # Save plot file in Outfiles
-    
     # image cals
     if parms["doImgCal"] and not check:
         logger.info("--> Image calibrators (doImgCal)")
         VLBAImageCals(uv, err, Sources=parms["contCals"], seq=seq, 
-            sclass=parms["outCclass"], doCalib=2, flagVer=2, doBand=1,
+            sclass=parms["outCclass"], doCalib=2, flagVer=2, doBand=0,
             FOV=parms["FOV"], Robust=parms["Robust"],
             maxPSCLoop=parms["maxPSCLoop"], minFluxPSC=parms["minFluxPSC"],
             solPInt=parms["solPInt"], solMode=parms["solMode"],
@@ -359,7 +336,7 @@ def pipeline( aipsSetup, parmFile ):
         logger.info("--> Delay calibration (doDelayCal)")
         plotFile = project+"_"+session+"_"+band+".DelayCal.ps"
         retCode = VLBADelayCal(uv, err, calSou=parms["contCals"], CalModel=parms["contCalModel"], \
-                                   doCalib=2, flagVer=2, doBand=1, \
+                                   doCalib=2, flagVer=2, doBand=0, \
                                    solInt=parms["manPCsolInt"], smoTime=parms["delaySmoo"],  \
                                    refAnts=[goodCal["bestRef"]], \
                                    doSNPlot=parms["doSNPlot"], plotFile=plotFile, \
@@ -368,6 +345,29 @@ def pipeline( aipsSetup, parmFile ):
             raise RuntimeError,"Error in delay calibration"
         VLBASaveOutFiles() # Save plot file in Outfiles
          
+    # Bandpass calibration if needed
+    if parms["doBPCal"] and not check:
+        logger.info("--> Bandpass calibration (doBPCal)")
+        retCode = VLBABPass(uv, goodCal["Source"], err, CalModel=parms["contCalModel"], \
+                                timeRange=goodCal["timeRange"], doCalib=2, flagVer=2, \
+                                noScrat=noScrat, solInt1=parms["bpsolint1"], \
+                                solInt2=parms["bpsolint2"], solMode=parms["bpsolMode"], \
+                                BChan1=parms["bpBChan1"], EChan1=parms["bpEChan1"], BChan2=parms["bpBChan2"], \
+                                EChan2=parms["bpEChan2"], ChWid2=parms["bpChWid2"], \
+                                doCenter1=parms["bpDoCenter1"], refAnt=goodCal["bestRef"], specIndex=parms["specIndex"], \
+                                doAuto = parms["bpdoAuto"], \
+                                nThreads=nThreads, logfile=logFile, check=check, debug=debug)
+        if retCode!=0:
+            raise RuntimeError,"Error in Bandpass calibration"
+    
+    # Plot amplitude and phase vs. frequency
+    if parms["doSpecPlot"]:
+        logger.info("--> Spectral plotting (doSpecPlot)")
+        plotFile = project+'_'+session+'_'+band+".spec.ps"
+        VLBASpecPlot( uv, goodCal, err, doband=1, check=check, 
+            plotFile=plotFile, logfile=logFile, debug=debug )
+        VLBASaveOutFiles() # Save plot file in Outfiles
+    
     # Phase calibration using calibrator models
     if parms["doPhaseCal"]:
         logger.info("--> Phase calibration using calibrator models (doPhaseCal)")
