@@ -467,7 +467,7 @@ Adverbs:
   maxFBW.....Maximum allowed IF center fractional bandwidth.
              This parameter is used to divide the visibility 
              spectrum into image channels.  
-             Each IF will have an integral number of channels.
+             A value <0 =>use the IFs as the channelization.
   FOV........Radius of the desired field of view (deg).
   NField.....Optional parameter to specify fields and overrides
              the FOV parameter.  Up to 64 may be specified as 
@@ -834,117 +834,9 @@ is less than (1 + SDIGain).  If the ratio becomes greater than this
 limit at a later step, the BGC Clean will be used until the ratio 
 again falls below the limit.  
 
-NYI:
+Multi resolution CLEAN:
 The MR Clean attempts to avoid the corrugation and S/N issues by using
-more than one component diameter in the modeling.  In the early 1970's
-I (EWG) experimented with using a Gaussian as a component model.  This
-worked well so long as the image contained no sources smaller than the
-Gaussian.  Unfortunately, the sky always contains point sources and
-the method found these and "painted bulls eyes around them".  (The
-bulls eyes are effectively a sin(x)/x function trying to represent a
-small thing as a sum of large things.)  The Wakker and Schmidt MR
-Clean used a smoothed image and beam and a difference image and
-difference beam, doing a fairly normal point-model Clean on each but
-appropriately subtracting the components found in one image from the
-other at every iteration.  In IMAGR, the MR Clean is truly
-multi-resolution, seeking components of intrinsically different
-diameters.  For component i of diameter Di, a dirty image is formed
-by convolving a full-resolution dirty image with a Gaussian Gi of
-diameter Di.  This is actually implemented just by making a normal
-image with an added taper.  This dirty image has a point-spread
-function (dirty point beam) which is the full resolution dirty beam
-convolved with Gi.  However, the response in the dirty image i to a
-Gaussian component Gi is this dirty point spread function convolved a
-second time by Gi.  Thus
-       DirtyImage_i = DirtyImage_0 * Gi
-       BeamImage_i  = BeamImage_0  * Gi * Gi
-where Gi is a Gaussian of diameter Di, subscript 0 refers to the full
-resolution image, and * is a convolution.
-
-IMAGR uses its large number of fields to implement the MR Clean.  If
-you ask for NFIELD fields and NGAUSS Gaussian components, IMAGR will
-make and Clean NFIELD*NGAUSS fields, the first NFIELD with width
-WGAUSS(1), the next NFIELD with width WGAUSS(2), etc.  The ordinary
-parameters such as FLDSIZE, RASHIFT, DECSHIFT are entered only for
-fields 1-NFIELD and are then replicated for the corresponding fields
-at the other resolutions.  The Clean boxes may be entered for fields
-1-NFIELD and replicated.  If BOXFILE is used to enter Clean boxes for
-a filed number > NFIELD then the boxes from the corresponding field <=
-NFIELD are not replicated to that field.  If you specify BMAJ and
-BMIN, IMAGR computes the correct values to use for the various
-component diameters.  If you give BMAJ=0, IMAGR fits the beam
-parameters after one convolution with Gi before recomputing the beam
-with two convolutions.  The MR Clean might attempt to work in other
-modes, but OVERLAP=2 and DO3DIMAG=TRUE are strongly recommended.  If
-you set DOWAIT=TRUE before starting IMAGR, you will have the desirable
-option of forcing the Clean to use a field of your choosing rather
-than the one with the peak flux.
-
-The MR Clean is an experimental algorithm and has been provided with a
-number of "knobs" to adjust its behavior.  All the knobs use the ratio
-of the current beam area (BMAJ(field)*BMIN(field)) to the minimum beam
-area (R).  These knobs are:
-
-    1. Show some preference to select higher resolution images (lower
-       R) for the next image to Clean.  Otherwise a strong point with
-       some extended emission will be over Cleaned at low resolution,
-       forcing higher resolutions to correct many pixels:
-          IMAGRPRM(11) select which field to Clean using peak fluxes
-          (in Jy/beam) weighted by 1 / R**IMAGRPRM(11).
-
-    2. Reduce this preference to zero as one Cleans more and more of
-       the R > 1 fields:
-          IMAGRPRM(12) decrement the initial value of IMAGRPRM(11)
-          used above by IMAGRPRM(12) each time an R > 1 resolution
-          field is Cleaned until it is 0.
-
-    3. The lower resolution fields may easily over Clean creating zero
-       net flux from a mix of negative and positive areas.  These then
-       have to be corrected with numerous high resolution Clean
-       steps.  To use a lower loop gain for lower resolution:
-          IMAGRPRM(13) use gain = GAIN / R ** IMAGRPRM(13)
-
-    4. To avoid over Cleaning with lower resolution, one may also
-       Clean each major cycle less deeply with the FACTOR parameter.
-       To control FACTOR:
-          IMAGRPRM(14,15) use
-             factor = FACTOR + IMAGRPRM(14) * (1 - R ** IMAGRPRM(15))
-
-Multi-resolution experimental control limits:
-    0 <= IMAGRPRM(11) <= 1.0      Try 0.5 (or larger)
-    0 <= IMAGRPRM(12) <= 0.1      Try 0.03 (or .003)
-    0 <= IMAGRPRM(13) <= 1.0      Try 0.5
-    0 <= IMAGRPRM(14) <= 1.0      Try 0.1
-    0 <= IMAGRPRM(15) <= 1.0      Try 0.5
-Note that IMAGRPRM(11-15) = 0 causes each Clean to be done on the
-field with the highest Jy/point-source-beam with the same GAIN and
-FACTOR.  This will likely lead to undesirable results.
-
-The author (Eric Greisen) of this option conceived this current
-algorithm while listening, at the AIPS++ Imaging Workshop in July
-1999, to Mark Holdaway describe his work done with Tim Cornwell.
-Their "multi-scale" Cleans, according to Mark's vu-graphs, use images
-at various smoothings to determine which scale currently has the most
-flux.  The "cross-beams" used for subtraction indicate that extended
-components are used in the modeling, so long as the (i,i) cross beam
-is used for image i on itself (a point on which I was confused).
-Their algorithms, as described, are done all in the image plane which
-avoids some of the over-Cleaning problems, while IMAGR's is done by
-the Cotton-Schwab scheme of subtracting the model visibilities in the
-visibility plane and re-imaging.
-
-Limitations using Multiresolution CLEAN
----------------------------------------
-Most of the AIPS model processing functions can only deal with a 
-single size model component at a time.  Since the multiresolution
-CLEAN results in model components at a variety of sizes these 
-features do not work and have (mostly?) been disabled in MFImage when 
-the multiresolution option (NGAUSS>1) has been selected.  
-The disables features include:
-1) Self calibration
-2) Second stage RFI filtering (RFIFILT(3+4)).
-If these options are needed try using an SDI CLEAN first and then 
-feed the resultant uvdata back into MFImage.
+more than one component diameter in the modeling.  
 
 PS Table
 --------

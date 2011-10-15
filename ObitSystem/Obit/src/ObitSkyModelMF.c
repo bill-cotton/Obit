@@ -798,11 +798,17 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   /* get number of and channel frequencies for CC spectra from 
      CC table on first image in mosaic */
   if (nSpec>1) {
-    in->specFreq = g_malloc0(nSpec*sizeof(odouble));
+    in->specFreq   = g_malloc0(nSpec*sizeof(odouble));
+    in->specFreqLo = g_malloc0(nSpec*sizeof(odouble));
+    in->specFreqHi = g_malloc0(nSpec*sizeof(odouble));
     for (i=0; i<nSpec; i++) {
       in->specFreq[i] = 1.0;
       sprintf (keyword, "FREQ%4.4d",i+1);
       ObitInfoListGetTest(image0->myDesc->info, keyword, &type, dim, &in->specFreq[i]);
+      sprintf (keyword, "FREL%4.4d",i+1);
+      ObitInfoListGetTest(image0->myDesc->info, keyword, &type, dim, &in->specFreqLo[i]);
+      sprintf (keyword, "FREH%4.4d",i+1);
+      ObitInfoListGetTest(image0->myDesc->info, keyword, &type, dim, &in->specFreqHi[i]);
     }
   } else { /* Bummer */
     Obit_log_error(err, OBIT_Error,"%s No Frequency info in Image header for %s", 
@@ -819,7 +825,7 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   in->priorAlphaRefF = in->refFreq;
   ObitInfoListGetTest(image0->myDesc->info, "RFALPHA", &type, dim, &in->priorAlphaRefF);
   
-  /* Make array of which coarse spectrum value is closest to each uv channel */
+  /* Make array of which coarse spectrum value corresponds to each uv channel */
   nfreq = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
   if (uvdata->myDesc->jlocif>=0) 
     nif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
@@ -830,10 +836,9 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
     test = 1.0e20;
     in->specIndex[i] = -1;
     for (j=0; j<nSpec; j++) {
-      if (fabs(uvdata->myDesc->freqArr[i]- in->specFreq[j])<test) {
-	test = fabs(uvdata->myDesc->freqArr[i]- in->specFreq[j]);
+      if ((uvdata->myDesc->freqArr[i] >= in->specFreqLo[j]) &&
+	  (uvdata->myDesc->freqArr[i] <= in->specFreqHi[j]))
 	in->specIndex[i] = j;
-      }
     }
   } /* End of loop making lookup table */
 
@@ -887,8 +892,10 @@ void ObitSkyModelMFShutDownMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   }
 
   /* Cleanup arrays */
-  if (in->specFreq)  g_free(in->specFreq);  in->specFreq = NULL;
-  if (in->specIndex) g_free(in->specIndex); in->specIndex = NULL;
+  if (in->specFreq)    g_free(in->specFreq);    in->specFreq   = NULL;
+  if (in->specFreqLo)  g_free(in->specFreqLo);  in->specFreqLo = NULL;
+  if (in->specFreqHi)  g_free(in->specFreqHi);  in->specFreqHi = NULL;
+  if (in->specIndex)   g_free(in->specIndex);   in->specIndex  = NULL;
 } /* end ObitSkyModelMFShutDownMod */
 
 /**
@@ -3420,6 +3427,8 @@ void ObitSkyModelMFInit  (gpointer inn)
   in->FTplanes    =  NULL;
   in->myInterps   =  NULL;
   in->specFreq    =  NULL;
+  in->specFreqLo  =  NULL;
+  in->specFreqHi  =  NULL;
   in->specIndex   =  NULL;
   in->refFreq     =  1.0;
   in->nSpec       =  0;
@@ -3477,8 +3486,10 @@ void ObitSkyModelMFClear (gpointer inn)
       in->myInterps[k] = ObitCInterpolateUnref(in->myInterps[k]);
     g_free(in->myInterps);
   }
-  if (in->specFreq)  g_free(in->specFreq);  in->specFreq = NULL;
-  if (in->specIndex) g_free(in->specIndex); in->specIndex = NULL;
+  if (in->specFreq)    g_free(in->specFreq);    in->specFreq   = NULL;
+  if (in->specFreqLo)  g_free(in->specFreqLo);  in->specFreqLo = NULL;
+  if (in->specFreqHi)  g_free(in->specFreqHi);  in->specFreqHi = NULL;
+  if (in->specIndex)   g_free(in->specIndex);   in->specIndex  = NULL;
   
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

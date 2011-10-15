@@ -1865,7 +1865,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean     Fl = FALSE, Tr = TRUE, init=TRUE, doRestore, doFlatten, doFit, doSC, doBeam;
   gboolean     noSCNeed, reimage, didSC=FALSE, imgOK=FALSE, converged = FALSE; 
-  gboolean     btemp, doneRecenter=FALSE;
+  gboolean     btemp, noNeg, doneRecenter=FALSE;
   const        ObitDConCleanVisClassInfo *clnClass=NULL;
   gchar        soltyp[5], solmod[5], stemp[5];
   gchar        *SCParms[] = {  /* Self cal parameters */
@@ -1905,6 +1905,8 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   ObitInfoListGetTest(myInput, "antSize",&type, dim, &antSize);
   minFlux = 0.0;
   ObitInfoListGetTest(myInput, "minFlux", &type, dim, &minFlux);
+  noNeg = TRUE;
+  ObitInfoListGetTest(myInput, "noNeg", &type, dim, &noNeg);
 
   /* Get input parameters from myInput, copy to myClean */
   ObitInfoListCopyList (myInput, myClean->info, CLEANParms);
@@ -2065,8 +2067,10 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 	
 	/* Reset minFlux disturbed by Clean */
 	dim[0] = dim[1] = dim[2] = 1;
-	ObitInfoListAlwaysPut(selfCal->skyModel->info, "minFlux", OBIT_float, dim, &minFlux);
-	
+	ftemp = 0.0;
+	ObitInfoListAlwaysPut(selfCal->skyModel->info, "minFlux", OBIT_float, dim, &ftemp);
+	ObitInfoListAlwaysPut(selfCal->skyModel->info, "noNeg", OBIT_bool, dim, &noNeg);
+		
 	/* Do self cal */
 	didSC = TRUE;
 	converged = ObitUVSelfCalSelfCal (selfCal, inUV, init, &noSCNeed, 
@@ -2086,6 +2090,8 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 	/* reset flux limit for next Clean to 1 sigma */
 	dim[0] = 1;dim[1] = 1;
 	ObitInfoListAlwaysPut (myClean->info, "minFlux", OBIT_float, dim, &selfCal->RMSFld1);
+	btemp = FALSE;
+	ObitInfoListAlwaysPut(selfCal->skyModel->info, "noNeg", OBIT_bool, dim, &btemp);
 	
 	/* Possibly reuse some of CLEAN model to start next time */
 	if (reuse>0.0) {
@@ -2231,7 +2237,9 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 	
 	/* Reset minFlux disturbed by Clean */
 	dim[0] = dim[1] = dim[2] = 1;
-	ObitInfoListAlwaysPut(selfCal->skyModel->info, "minFlux", OBIT_float, dim, &minFlux);
+	ftemp = 0.0;
+	ObitInfoListAlwaysPut(selfCal->skyModel->info, "minFlux", OBIT_float, dim, &ftemp);
+	ObitInfoListAlwaysPut(selfCal->skyModel->info, "noNeg", OBIT_bool, dim, &noNeg);
 	
 	/* alpha correction in model  for Amp self cal */
 	btemp = TRUE; dim[0] = dim[1] = dim[2] = 1;
@@ -2258,6 +2266,8 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 	/* reset flux limit for next Clean to 1 sigma */
 	dim[0] = 1;dim[1] = 1;
 	ObitInfoListAlwaysPut (myClean->info, "minFlux", OBIT_float, dim, &selfCal->RMSFld1);
+	btemp = FALSE;
+	ObitInfoListAlwaysPut(selfCal->skyModel->info, "noNeg", OBIT_bool, dim, &btemp);
 	
 	/* Possibly reuse some of CLEAN model to start next time */
 	if (reuse>0.0) {

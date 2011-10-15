@@ -480,6 +480,12 @@ ObitIOCode ObitTableCCUtilGridSpect (ObitTableCC *in, olong OverSample, olong it
   /* How many? */
   *ncomp = count;
   
+  /* Tell? */
+  if ((iterm==1) && (err->prtLv>=2)) {
+    Obit_log_error(err, OBIT_InfoErr, "Gridded %d components from %s", 
+		   count, in->name);
+  }
+
   /* Close Table */
   retCode = ObitTableCCClose (in, err);
   if ((retCode != OBIT_IO_OK) || (err->error))

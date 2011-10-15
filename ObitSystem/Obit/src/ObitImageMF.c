@@ -245,17 +245,23 @@ ObitImage* newObitImageMFScratch (ObitImage *in, ObitErr *err)
   if (outMF->BChanSpec) g_free(outMF->BChanSpec);
   if (outMF->EChanSpec) g_free(outMF->EChanSpec);
   if (outMF->specFreq)  g_free(outMF->specFreq);
+  if (outMF->specFreqLo)  g_free(outMF->specFreqLo);
+  if (outMF->specFreqHi)  g_free(outMF->specFreqHi);
   outMF->BIFSpec   = g_malloc0(inMF->nSpec*sizeof(olong));
   outMF->EIFSpec   = g_malloc0(inMF->nSpec*sizeof(olong));
   outMF->BChanSpec = g_malloc0(inMF->nSpec*sizeof(olong));
   outMF->EChanSpec = g_malloc0(inMF->nSpec*sizeof(olong));
   outMF->specFreq  = g_malloc0(inMF->nSpec*sizeof(odouble));
+  outMF->specFreqLo= g_malloc0(inMF->nSpec*sizeof(odouble));
+  outMF->specFreqHi= g_malloc0(inMF->nSpec*sizeof(odouble));
   for (i=0; i<inMF->nSpec; i++) {
     outMF->BIFSpec[i]   = inMF->BIFSpec[i];
     outMF->EIFSpec[i]   = inMF->EIFSpec[i];
     outMF->BChanSpec[i] = inMF->BChanSpec[i];
     outMF->EChanSpec[i] = inMF->EChanSpec[i];
     outMF->specFreq[i]  = inMF->specFreq[i];
+    outMF->specFreqLo[i]= inMF->specFreqLo[i];
+    outMF->specFreqHi[i]= inMF->specFreqHi[i];
   }
 
   /* Fully instantiate output */
@@ -516,17 +522,23 @@ ObitImageMF* ObitImageMFCopy (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   if (out->BChanSpec) g_free(out->BChanSpec);
   if (out->EChanSpec) g_free(out->EChanSpec);
   if (out->specFreq)  g_free(out->specFreq);
+  if (out->specFreqLo)  g_free(out->specFreqLo);
+  if (out->specFreqHi)  g_free(out->specFreqHi);
   out->BIFSpec   = g_malloc0(in->nSpec*sizeof(olong));
   out->EIFSpec   = g_malloc0(in->nSpec*sizeof(olong));
   out->BChanSpec = g_malloc0(in->nSpec*sizeof(olong));
   out->EChanSpec = g_malloc0(in->nSpec*sizeof(olong));
   out->specFreq   = g_malloc0(in->nSpec*sizeof(odouble));
+  out->specFreqLo = g_malloc0(in->nSpec*sizeof(odouble));
+  out->specFreqHi = g_malloc0(in->nSpec*sizeof(odouble));
   for (i=0; i<in->nSpec; i++) {
     out->BIFSpec[i]   = in->BIFSpec[i];
     out->EIFSpec[i]   = in->EIFSpec[i];
     out->BChanSpec[i] = in->BChanSpec[i];
     out->EChanSpec[i] = in->EChanSpec[i];
     out->specFreq[i]  = in->specFreq[i];
+    out->specFreqLo[i]= in->specFreqLo[i];
+    out->specFreqHi[i]= in->specFreqHi[i];
   }
 
   /* Creation date today */
@@ -675,17 +687,23 @@ void ObitImageMFClone  (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   if (out->BChanSpec) g_free(out->BChanSpec);
   if (out->EChanSpec) g_free(out->EChanSpec);
   if (out->specFreq)  g_free(out->specFreq);
+  if (out->specFreqLo)  g_free(out->specFreqLo);
+  if (out->specFreqHi)  g_free(out->specFreqHi);
   out->BIFSpec   = g_malloc0(in->nSpec*sizeof(olong));
   out->EIFSpec   = g_malloc0(in->nSpec*sizeof(olong));
   out->BChanSpec = g_malloc0(in->nSpec*sizeof(olong));
   out->EChanSpec = g_malloc0(in->nSpec*sizeof(olong));
   out->specFreq   = g_malloc0(in->nSpec*sizeof(odouble));
+  out->specFreqLo = g_malloc0(in->nSpec*sizeof(odouble));
+  out->specFreqHi = g_malloc0(in->nSpec*sizeof(odouble));
   for (i=0; i<in->nSpec; i++) {
     out->BIFSpec[i]   = in->BIFSpec[i];
     out->EIFSpec[i]   = in->EIFSpec[i];
     out->BChanSpec[i] = in->BChanSpec[i];
     out->EChanSpec[i] = in->EChanSpec[i];
     out->specFreq[i]  = in->specFreq[i];
+    out->specFreqLo[i]= in->specFreqLo[i];
+    out->specFreqHi[i]= in->specFreqHi[i];
   }
 
   /* Creation date today */
@@ -805,10 +823,12 @@ void ObitImageMFSetOrder (ObitImageMF *in, olong order,
  * Increments the descriptor number of planes by nSpec
  * Frequency information added to image descriptor with keywords
  * NSPEC, FREQ001...
+ * The low and high frequencies of each bin are FREL0001...,FREH0001...,
  * The value of the alpha, alphaRefF are similarly saved in the HEADER
  * \param in        Pointer to object, should be fully defined
  * \param uvdata    UV data to be imaged
  * \param maxFBW    Maximum fractional bandwidth at center of each IF
+                    If < 0 then divide data by IF.
  * \param alpha     Prior spectral index
  * \param alphaRefF Reference frequency for alpha
  * \param err       ObitErr for reporting errors.
@@ -863,21 +883,28 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
       freqLo = (uvdesc->freqIF[iif] - (1.0-uvdesc->crpix[uvdesc->jlocf])*uvdesc->cdelt[uvdesc->jlocf]);
       freqHi = (uvdesc->freqIF[iif] + (nChan-uvdesc->crpix[uvdesc->jlocf]+1)*uvdesc->cdelt[uvdesc->jlocf]);
       done = freqHi<mxFreq;
-      /* A break in this IF? */
-      while (!done) {
-	iCh = (olong)(0.5 + (mxFreq-freqLo) / uvdesc->cdelt[uvdesc->jlocf]) - 1;
+      /* By IF? */
+      if (maxFBW<0.0) {
 	IFBreak[nSpec]   = iif;
-	ChBreak[nSpec++] = MIN (nChan, iCh);
-	mxFreq += maxFBW * freqLo;
-	done = freqHi<mxFreq;
-	/* Check blown array */
-	Obit_return_if_fail((nSpec<=nBreak), err, 
-			    "%s: Too many coarse spectral planes, >%d for %s", 
-			    routine, nBreak-1,in->name);
+	ChBreak[nSpec++] = nChan;
+      } else {  /* may split IFs */
+	/* A break in this IF? */
+	while (!done) {
+	  iCh = (olong)(0.5 + (mxFreq-freqLo) / uvdesc->cdelt[uvdesc->jlocf]) - 1;
+	  IFBreak[nSpec]   = iif;
+	  ChBreak[nSpec++] = MIN (nChan, iCh);
+	  mxFreq += maxFBW * freqLo;
+	  done = freqHi<mxFreq;
+	  /* Check blown array */
+	  Obit_return_if_fail((nSpec<=nBreak), err, 
+			      "%s: Too many coarse spectral planes, >%d for %s", 
+			      routine, nBreak-1,in->name);
+	}
       }
     } /* end loop over IF */
-
+    
     /* End */
+    if (maxFBW<0.0) nSpec--;  /* One bin per IF */
     IFBreak[nSpec] = nIF-1;
     ChBreak[nSpec] = nChan-1;
 
@@ -895,6 +922,8 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
   in->BChanSpec = g_malloc0(nSpec*sizeof(olong));
   in->EChanSpec = g_malloc0(nSpec*sizeof(olong));
   in->specFreq  = g_malloc0(nSpec*sizeof(odouble));
+  in->specFreqLo= g_malloc0(nSpec*sizeof(odouble));
+  in->specFreqHi= g_malloc0(nSpec*sizeof(odouble));
 
   /* Channel and IF increments in frequency scaling array */
   fincf  = MAX (1, (uvdesc->incf  / 3) / uvdesc->inaxes[uvdesc->jlocs]);
@@ -903,16 +932,24 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
   /* Loop filling arrays - Only if in->curOrder>0 */
   if (in->curOrder>0) {
     for (i=0; i<nSpec; i++) {
-      in->BIFSpec[i]     = IFBreak[i];
-      in->BChanSpec[i]   = ChBreak[i]+1;
-      if (in->BChanSpec[i]>nChan) {  /* Into next IF? */
-	in->BChanSpec[i]  = 1;
-	in->BIFSpec[i]   += 1         ;
+      /* By IF? */
+      if (maxFBW<0.0) {
+	in->BIFSpec[i]   = i;
+	in->EIFSpec[i]   = i;
+	in->BChanSpec[i] = 0;
+	in->EChanSpec[i] = nChan-1;
+      } else {  /* Split across IFs */
+	  in->BIFSpec[i]     = IFBreak[i];
+	in->BChanSpec[i]   = ChBreak[i]+1;
+	if (in->BChanSpec[i]>nChan) {  /* Into next IF? */
+	  in->BChanSpec[i]  = 1;
+	  in->BIFSpec[i]   += 1         ;
+	}
+	in->EIFSpec[i]     = IFBreak[i+1];
+	in->EChanSpec[i]   = ChBreak[i+1];
       }
-      in->EIFSpec[i]     = IFBreak[i+1];
-      in->EChanSpec[i]   = ChBreak[i+1];
-    }
-    /* end multi channel out */
+    } /* end loop */
+      /* end multi channel out */
   } else {
     in->BIFSpec[0]   = 0;
     in->EIFSpec[0]   = nIF-1;
@@ -945,9 +982,17 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
 	count2++;
 	sum2 += uvdesc->freqArr[iif*fincif + ichan*fincf];
       }
-    }
+    } /* end IF loop */
     if (count>0) in->specFreq[i] = sum/count;
     else  in->specFreq[i] = -1.0;
+    /* Low end of bin */
+    ichan = in->BChanSpec[i];
+    iif   = in->BIFSpec[i];
+    in->specFreqLo[i] =  uvdesc->freqArr[iif*fincif + ichan*fincf];
+    /* High end of bin */
+    ichan = in->EChanSpec[i];
+    iif   = in->EIFSpec[i];
+    in->specFreqHi[i] =  uvdesc->freqArr[iif*fincif + ichan*fincf];
   }
 
   /* increment number of planes by nSpec (if>1) */
@@ -983,6 +1028,12 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
     sprintf (keyword, "FREQ%4.4d",i+1);
     ObitInfoListAlwaysPut (in->myDesc->info, keyword, OBIT_double, 
 			   dim, &in->specFreq[i]);
+    sprintf (keyword, "FREL%4.4d",i+1);
+    ObitInfoListAlwaysPut (in->myDesc->info, keyword, OBIT_double, 
+			   dim, &in->specFreqLo[i]);
+    sprintf (keyword, "FREH%4.4d",i+1);
+    ObitInfoListAlwaysPut (in->myDesc->info, keyword, OBIT_double, 
+			   dim, &in->specFreqHi[i]);
  }
 
   /* Save Alpha */
@@ -1046,6 +1097,8 @@ void ObitImageMFGetSpec (ObitImageMF *in, ObitErr *err)
   /* Create array */
   if (in->specFreq) g_free(in->specFreq);
   in->specFreq  = g_malloc0(nSpec*sizeof(odouble));
+  in->specFreqLo= g_malloc0(nSpec*sizeof(odouble));
+  in->specFreqHi= g_malloc0(nSpec*sizeof(odouble));
 
   /* Fetch frequencies */
   for (i=0; i<nSpec; i++) {
@@ -1053,6 +1106,14 @@ void ObitImageMFGetSpec (ObitImageMF *in, ObitErr *err)
     sprintf (keyword, "FREQ%4.4d",i+1);
     ObitInfoListGetTest (in->myDesc->info, keyword, &type, 
 			 dim, &in->specFreq[i]);
+    in->specFreqLo[i] = 1.0;
+    sprintf (keyword, "FREL%4.4d",i+1);
+    ObitInfoListGetTest (in->myDesc->info, keyword, &type, 
+			 dim, &in->specFreqLo[i]);
+    in->specFreqHi[i] = 1.0;
+    sprintf (keyword, "FREH%4.4d",i+1);
+    ObitInfoListGetTest (in->myDesc->info, keyword, &type, 
+			 dim, &in->specFreqHi[i]);
   }
  
 } /* end  ObitImageMFGetSpec */
@@ -1514,6 +1575,8 @@ void ObitImageMFInit  (gpointer inn)
   in->BChanSpec = NULL;
   in->EChanSpec = NULL;
   in->specFreq  = NULL;
+  in->specFreqLo= NULL;
+  in->specFreqHi= NULL;
 
 } /* end ObitImageMFInit */
 
@@ -1538,6 +1601,8 @@ void ObitImageMFClear (gpointer inn)
   if (in->BChanSpec) g_free(in->BChanSpec);
   if (in->EChanSpec) g_free(in->EChanSpec);
   if (in->specFreq)  g_free(in->specFreq);
+  if (in->specFreqLo)  g_free(in->specFreqLo);
+  if (in->specFreqHi)  g_free(in->specFreqHi);
 
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

@@ -1,7 +1,8 @@
-/* $Id$  */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2011                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
+/*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
 /*;  published by the Free Software Foundation; either version 2 of   */
@@ -17,44 +18,27 @@
 /*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
 /*;  MA 02139, USA.                                                   */
 /*;                                                                   */
-/*;  Correspondence concerning Obit should be addressed as follows:   */
+/*;Correspondence about this software should be addressed as follows: */
 /*;         Internet email: bcotton@nrao.edu.                         */
 /*;         Postal address: William Cotton                            */
 /*;                         National Radio Astronomy Observatory      */
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/*  Define the basic components of the ObitImageMF structure      */
-/*  This is intended to be included in a class structure definition   */
-/**
- * \file ObitImageMFDef.h
- * ObitImageMF structure members for derived classes.
+/** 
+ * Utility routine for fast exp(-x) calculation 
+ * This routine uses a table lookup followed by a 1 term Taylor's 
+ * series expansion.
+ * This produces moderate accuracy but fast calculation of exp(-x), x>=0
+ * This utility is useful for calculating instrumental responses to models 
+ * or other applications in which errors do not seriously accumulate.
  */
-#include "ObitImageDef.h"  /* Parent class definitions */
-/** Maximum order of the imaging 
-    Spectral index only = 1, plus curvature = 2 */
-olong maxOrder;
-/** Current order of the imaging 
-    Spectral index only = 1, plus curvature = 2 */
-olong curOrder;
-/** Reference frequency */
-odouble refFreq;
-/** If TRUE, image has been formed but work 
-    files/Decomposition not done */
-gboolean fresh;
-/** Number of coarse frequency planes */
-olong nSpec;
-/** Arrays of start and finish IFs (0-rel), per coarse channel */
-olong *BIFSpec, *EIFSpec;
-/** Arrays of start and finish Channels (0-rel), per coarse channel */
-olong *BChanSpec, *EChanSpec;
-/** Arrays of Center Frequency, per coarse channel */
-odouble *specFreq;
-/** Arrays of low frequency, per coarse channel */
-odouble *specFreqLo;
-/** Arrays of high frequency, per coarse channel */
-odouble *specFreqHi;
-/** Spectral index correction applied to data making image (wrt alphaRefF) */
-ofloat alpha;
-/** Reference frequency (Hz) for spectral index */
-odouble alphaRefF;
+#include "Obit.h"
+
+#ifndef OBITEXP_H 
+#define OBITEXP_H 
+/** Calculate exponential of -arg */
+ofloat ObitExpCalc(ofloat arg);
+/** Calculate exp of negatives of a vector */
+void ObitExpVec(olong n, ofloat *argarr, ofloat *exparr);
+#endif /* OBITEXP_H */ 

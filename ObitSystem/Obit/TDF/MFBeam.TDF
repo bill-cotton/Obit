@@ -599,7 +599,7 @@ Adverbs:
   maxFBW.....Maximum allowed IF center fractional bandwidth.
              This parameter is used to divide the visibility 
              spectrum into image channels.  
-             Each IF will have an integral number of channels.
+             A value <0 =>use the IFs as the channelization.
   Threshold..This value is used to control when the high accuracy 
              beam squint model is used.  In CLEANing, whenever the 
              peak residual is above this value the beam squint model 

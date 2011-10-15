@@ -40,6 +40,10 @@ ObitFArray *specComps;
 odouble refFreq;
 /** Array of nSpec central frequencies in Hz */
 odouble *specFreq;
+/** Arrays of low frequency, per coarse channel */
+odouble *specFreqLo;
+/** Arrays of high frequency, per coarse channel */
+odouble *specFreqHi;
 /** Array of CC spectrum index (0-rel) per input vis channel */
 olong *specIndex;
 /** Array of image planes of single image */

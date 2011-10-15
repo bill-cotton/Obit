@@ -44,6 +44,7 @@
 #include "ObitTableANUtil.h"
 #include "ObitSkyGeom.h"
 #include "ObitSinCos.h"
+#include "ObitExp.h"
 #ifndef VELIGHT
 #define VELIGHT 2.997924562e8
 #endif /* VELIGHT */
@@ -826,6 +827,7 @@ void ObitSkyModelVMBeamMFInitMod (ObitSkyModel* inn, ObitUV *uvdata,
   ObitImageMF *image0;
   olong i, j, nSpec, nif, nfreq, n;
   odouble test;
+  ofloat phase=0.5, cp, sp;
   ObitInfoType type;
   union ObitInfoListEquiv InfoReal; 
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -884,6 +886,10 @@ void ObitSkyModelVMBeamMFInitMod (ObitSkyModel* inn, ObitUV *uvdata,
   in->DFTFunc  = (ObitThreadFunc)ThreadSkyModelVMBeamMFFTDFT;
   in->GridFunc = (ObitThreadFunc)ThreadSkyModelVMBeamMFFTGrid;
   
+   /* Init Sine/Cosine, exp calculator - just to be sure about threading */
+  ObitSinCosCalc(phase, &sp, &cp);
+  ObitExpCalc(phase);
+
   /* Create spectrum info arrays */
   nSpec = 1;
   image0 = (ObitImageMF*)in->mosaic->images[0];	  
@@ -2753,7 +2759,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
   olong jincf, startIF, numberIF, jincif, kincf, kincif;
   olong offset, offsetChannel, offsetIF, iterm, nterm=0, nUVchan, nUVIF, nUVpoln;
   olong ilocu, ilocv, ilocw, iloct, ilocb, suba, itemp, ant1, ant2, mcomp;
-  ofloat *visData, *Data, *ddata, *fscale, exparg, oldPB, newPB;
+  ofloat *visData, *Data, *ddata, *fscale, oldPB, newPB;
   ofloat sumRealRR, sumImagRR, modRealRR=0.0, modImagRR=0.0;
   ofloat sumRealLL, sumImagLL, modRealLL=0.0, modImagLL=0.0;
   ofloat sumRealQ,  sumImagQ,  modRealQ=0.0,  modImagQ=0.0;
@@ -2764,6 +2770,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 #define FazArrSize 100  /* Size of the amp/phase/sine/cosine arrays */
   ofloat AmpArrR[FazArrSize+5], AmpArrL[FazArrSize+5], FazArr[FazArrSize+5];
   ofloat CosArr[FazArrSize+5], SinArr[FazArrSize+5];
+  ofloat ExpArg[FazArrSize],  ExpVal[FazArrSize];
   olong it, jt, itcnt, iSpec, nSpec, itab;
   olong sIF, sChannel;
   gboolean doCrossPol, updatePB, reGain;
@@ -3100,12 +3107,9 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 	      arg = freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
 			     ddata[8]*visData[ilocv]*visData[ilocv] +
 			     ddata[9]*visData[ilocu]*visData[ilocv]);
-	      if (arg<-1.0e-5) exparg = exp (arg);
-	      else exparg = 1.0;
 	      ampr = ddata[3] * rgain1[iComp];
-	      if (arg<-1.0e-5) ampr *= exparg;
 	      ampl = ddata[3] * lgain1[iComp];
-	      if (arg<-1.0e-5) ampl *= exparg;
+	      ExpArg[itcnt]  = -arg;
 	      AmpArrR[itcnt] = ampr;
 	      AmpArrL[itcnt] = ampl;
 	      itcnt++;          /* Count in amp/phase buffers */
@@ -3114,17 +3118,21 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 	    
 	    /* Convert phases to sin/cos */
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	    /* Convert Gaussian exp arguments */
+	    ObitExpVec(itcnt, ExpArg, ExpVal);
 	    
 	    /* Accumulate real and imaginary parts */
 	    for (jt=0; jt<itcnt; jt++) {
-	      sumRealRR += AmpArrR[jt]*CosArr[jt];
-	      sumImagRR += AmpArrR[jt]*SinArr[jt];
-	      sumRealLL += AmpArrL[jt]*CosArr[jt];
-	      sumImagLL += AmpArrL[jt]*SinArr[jt];
+	      amp = AmpArrR[jt]*ExpVal[jt];
+	      sumRealRR += amp*CosArr[jt];
+	      sumImagRR += amp*SinArr[jt];
+	      amp = AmpArrL[jt]*ExpVal[jt];
+	      sumRealLL += amp*CosArr[jt];
+	      sumImagLL += amp*SinArr[jt];
 	      if (doCrossPol) {
 		/* Cross pol */
-		re = 0.5*(AmpArrR[it]+AmpArrL[jt])*CosArr[jt];
-		im = 0.5*(AmpArrR[it]+AmpArrL[jt])*SinArr[jt];
+		re = 0.5*(AmpArrR[it]+AmpArrL[jt])*CosArr[jt]*ExpVal[jt];
+		im = 0.5*(AmpArrR[it]+AmpArrL[jt])*SinArr[jt]*ExpVal[jt];
 		sumRealQ += re * qgain1[jt];
 		sumImagQ += im * qgain1[jt];
 		sumRealU += re * ugain1[jt];
@@ -3150,11 +3158,11 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 		arg = freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
 			       ddata[8]*visData[ilocv]*visData[ilocv] +
 			       ddata[9]*visData[ilocu]*visData[ilocv]);
-		if (arg<-1.0e-5) amp = specFact * ddata[3] * exp (arg);
-		  else amp = specFact * ddata[3];
+		amp = specFact * ddata[3];
 		tx = ddata[4]*(odouble)visData[ilocu];
 		ty = ddata[5]*(odouble)visData[ilocv];
 		tz = ddata[6]*(odouble)visData[ilocw];
+		ExpArg[itcnt] = -arg;
 		FazArr[itcnt] = freqFact * (tx + ty + tz);
 		AmpArrR[itcnt] = amp * rgain1[iComp];
 		AmpArrL[itcnt] = amp * lgain1[iComp];
@@ -3165,16 +3173,21 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 	    
 	    /* Convert phases to sin/cos */
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	    /* Convert Gaussian exp arguments */
+	    ObitExpVec(itcnt, ExpArg, ExpVal);
+	    
 	    /* Accumulate real and imaginary parts */
 	    for (jt=0; jt<itcnt; jt++) {
-	      sumRealRR += AmpArrR[jt]*CosArr[jt];
-	      sumImagRR += AmpArrR[jt]*SinArr[jt];
-	      sumRealLL += AmpArrL[jt]*CosArr[jt];
-	      sumImagLL += AmpArrL[jt]*SinArr[jt];
+	      amp = AmpArrR[jt]*ExpVal[jt];
+	      sumRealRR += amp*CosArr[jt];
+	      sumImagRR += amp*SinArr[jt];
+	      amp = AmpArrL[jt]*ExpVal[jt];
+	      sumRealLL += amp*CosArr[jt];
+	      sumImagLL += amp*SinArr[jt];
 	      if (doCrossPol) {
 		/* Cross pol */
-		re = 0.5*(AmpArrR[jt]+AmpArrL[jt])*CosArr[jt];
-		im = 0.5*(AmpArrR[jt]+AmpArrL[jt])*SinArr[jt];
+		re = 0.5*(AmpArrR[jt]+AmpArrL[jt])*CosArr[jt]*ExpVal[jt];
+		im = 0.5*(AmpArrR[jt]+AmpArrL[jt])*SinArr[jt]*ExpVal[jt];
 		sumRealQ += re * qgain1[jt];
 		sumImagQ += im * qgain1[jt];
 		sumRealU += re * ugain1[jt];
@@ -3193,11 +3206,11 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 		arg = freq2 * (ddata[7+nSpec]*visData[ilocu]*visData[ilocu] +
 			       ddata[8+nSpec]*visData[ilocv]*visData[ilocv] +
 			       ddata[9+nSpec]*visData[ilocu]*visData[ilocv]);
-		if (arg<-1.0e-5) amp = ddata[itab] * exp (arg);
-		else amp = ddata[itab];
+		amp = ddata[itab];
 		tx = ddata[4+nSpec]*(odouble)visData[ilocu];
 		ty = ddata[5+nSpec]*(odouble)visData[ilocv];
 		tz = ddata[6+nSpec]*(odouble)visData[ilocw];
+		ExpArg[itcnt] = -arg;
 		FazArr[itcnt] = freqFact * (tx + ty + tz);
 		/* Parallel  pol */
 		/* Amplitude from component flux and two gains */
@@ -3210,18 +3223,22 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 	    
 	    /* Convert phases to sin/cos */
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
-	    
+	    /* Convert Gaussian exp arguments */
+	    ObitExpVec(itcnt, ExpArg, ExpVal);
+	    	    
 	    /* Accumulate real and imaginary parts */
 	    for (jt=0; jt<itcnt; jt++) {
 	      /* Parallel  pol */
-	      sumRealRR += AmpArrR[jt]*CosArr[jt];
-	      sumImagRR += AmpArrR[jt]*SinArr[jt];
-	      sumRealLL += AmpArrL[jt]*CosArr[jt];
-	      sumImagLL += AmpArrL[jt]*SinArr[jt];
+	      amp = AmpArrR[jt]*ExpVal[jt];
+	      sumRealRR += amp*CosArr[jt];
+	      sumImagRR += amp*SinArr[jt];
+	      amp = AmpArrL[jt]*ExpVal[jt];
+	      sumRealLL += amp*CosArr[jt];
+	      sumImagLL += amp*SinArr[jt];
 	      if (doCrossPol) {
 		/* Cross pol */
-		re = 0.5*(AmpArrR[jt]+AmpArrL[jt])*CosArr[jt];
-		im = 0.5*(AmpArrR[jt]+AmpArrL[jt])*SinArr[jt];
+		re = 0.5*(AmpArrR[jt]+AmpArrL[jt])*CosArr[jt]*ExpVal[jt];
+		im = 0.5*(AmpArrR[jt]+AmpArrL[jt])*SinArr[jt]*ExpVal[jt];
 		sumRealQ += re * qgain1[jt];
 		sumImagQ += im * qgain1[jt];
 		sumRealU += re * ugain1[jt];
@@ -3570,7 +3587,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
   olong jincf, startIF, numberIF, jincif, kincf, kincif;
   olong offset, offsetChannel, offsetIF, iterm, nterm=0, nUVchan, nUVIF, nUVpoln;
   olong ilocu, ilocv, ilocw, iloct, ilocb, suba, itemp, ant1, ant2, mcomp;
-  ofloat *visData, *Data, *ddata, *fscale, exparg, oldPB, newPB;
+  ofloat *visData, *Data, *ddata, *fscale, oldPB, newPB;
   ofloat sumRealRR, sumImagRR, modRealRR=0.0, modImagRR=0.0;
   ofloat sumRealLL, sumImagLL, modRealLL=0.0, modImagLL=0.0;
   ofloat sumRealQ,  sumImagQ,  modRealQ=0.0,  modImagQ=0.0;
@@ -3586,6 +3603,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
   ofloat AmpArrRr[FazArrSize], AmpArrLr[FazArrSize], AmpArrRi[FazArrSize], AmpArrLi[FazArrSize];
   ofloat FazArr[FazArrSize];
   ofloat CosArr[FazArrSize], SinArr[FazArrSize];
+  ofloat ExpArg[FazArrSize],  ExpVal[FazArrSize];
   olong it, jt, itcnt, iSpec, nSpec, itab;
   gboolean doCrossPol, updatePB, reGain;
   odouble *freqArr, SMRefFreq, specFreqFact;
@@ -3915,9 +3933,8 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
 		arg = freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
 				ddata[8]*visData[ilocv]*visData[ilocv] +
 				ddata[9]*visData[ilocu]*visData[ilocv]);
-		if (arg<-1.0e-5) exparg = exp (arg);
-		else exparg = 1.0;
-		amp  = ddata[3] * exparg;
+		ExpArg[itcnt]  = -arg;
+		amp  = ddata[3];
 		ampr = amp * rgain1[iComp];
 		ampl = amp * lgain1[iComp];
 		AmpArrRr[itcnt] = ampr;
@@ -3933,19 +3950,23 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
 	      
 	      /* Convert phases to sin/cos */
 	      ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	      /* Convert Gaussian exp arguments */
+	      ObitExpVec(itcnt, ExpArg, ExpVal);
 
 	      /* Accumulate real and imaginary parts */
 	      for (jt=0; jt<itcnt; jt++) {
-		sumRealRR += AmpArrRr[jt]*CosArr[jt] - AmpArrRi[jt]*SinArr[jt];
-		sumImagRR += AmpArrRr[jt]*SinArr[jt] + AmpArrRi[jt]*CosArr[jt];
-		sumRealLL += AmpArrLr[jt]*CosArr[jt] - AmpArrLi[jt]*SinArr[jt];
-		sumImagLL += AmpArrLr[jt]*SinArr[jt] + AmpArrLi[jt]*CosArr[jt];
+		sumRealRR += AmpArrRr[jt]*CosArr[jt]*ExpVal[jt] - AmpArrRi[jt]*SinArr[jt]*ExpVal[jt];
+		sumImagRR += AmpArrRr[jt]*SinArr[jt]*ExpVal[jt] + AmpArrRi[jt]*CosArr[jt]*ExpVal[jt];
+		sumRealLL += AmpArrLr[jt]*CosArr[jt]*ExpVal[jt] - AmpArrLi[jt]*SinArr[jt]*ExpVal[jt];
+		sumImagLL += AmpArrLr[jt]*SinArr[jt]*ExpVal[jt] + AmpArrLi[jt]*CosArr[jt]*ExpVal[jt];
 		if (doCrossPol) {
 		  /* Cross pol */
 		  re = 0.5*(AmpArrRr[jt]+AmpArrLr[jt])*CosArr[jt] - 
 		    0.5*(AmpArrRi[jt]+AmpArrLi[jt])*SinArr[jt];  
 		  im = 0.5*(AmpArrRr[jt]+AmpArrLr[jt])*SinArr[jt] + 
 		    0.5*(AmpArrRi[jt]+AmpArrLi[jt])*CosArr[jt];
+		  re *= ExpVal[jt];
+		  im *= ExpVal[jt];
 		  sumRealQ += re * qgain1[jt]  - im * qgain1i[jt];
 		  sumImagQ += re * qgain1i[jt] + im * qgain1[jt];
 		  sumRealU += re * ugain1[jt]  - im * ugain1i[jt];
@@ -3971,11 +3992,11 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
 		  arg = freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
 				 ddata[8]*visData[ilocv]*visData[ilocv] +
 				 ddata[9]*visData[ilocu]*visData[ilocv]);
-		  if (arg<-1.0e-5) amp = specFact * ddata[3] * exp (arg);
-		  else amp = specFact * ddata[3];
+		  amp = specFact * ddata[3];
 		  tx = ddata[4]*(odouble)visData[ilocu];
 		  ty = ddata[5]*(odouble)visData[ilocv];
 		  tz = ddata[6]*(odouble)visData[ilocw];
+		  ExpArg[itcnt]  = -arg;
 		  FazArr[itcnt] = freqFact * (tx + ty + tz);
 		  AmpArrRr[itcnt] = amp * rgain1[iComp];
 		  AmpArrLr[itcnt] = amp * lgain1[iComp];
@@ -3988,18 +4009,23 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
 
 	      /* Convert phases to sin/cos */
 	      ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	      /* Convert Gaussian exp arguments */
+	      ObitExpVec(itcnt, ExpArg, ExpVal);
+
 	      /* Accumulate real and imaginary parts */
 	      for (jt=0; jt<itcnt; jt++) {
-		sumRealRR += AmpArrRr[jt]*CosArr[jt] - AmpArrRi[jt]*SinArr[jt];
-		sumImagRR += AmpArrRr[jt]*SinArr[jt] + AmpArrRi[jt]*CosArr[jt];
-		sumRealLL += AmpArrLr[jt]*CosArr[jt] - AmpArrLi[jt]*SinArr[jt];
-		sumImagLL += AmpArrLr[jt]*SinArr[jt] + AmpArrLi[jt]*CosArr[jt];
+		sumRealRR += AmpArrRr[jt]*CosArr[jt]*ExpVal[jt] - AmpArrRi[jt]*SinArr[jt]*ExpVal[jt];
+		sumImagRR += AmpArrRr[jt]*SinArr[jt]*ExpVal[jt] + AmpArrRi[jt]*CosArr[jt]*ExpVal[jt];
+		sumRealLL += AmpArrLr[jt]*CosArr[jt]*ExpVal[jt] - AmpArrLi[jt]*SinArr[jt]*ExpVal[jt];
+		sumImagLL += AmpArrLr[jt]*SinArr[jt]*ExpVal[jt] + AmpArrLi[jt]*CosArr[jt]*ExpVal[jt];
 		if (doCrossPol) {
 		  /* Cross pol */
 		  re = 0.5*(AmpArrRr[jt]+AmpArrLr[jt])*CosArr[jt] - 
 		    0.5*(AmpArrRi[jt]+AmpArrLi[jt])*SinArr[jt];  
 		  im = 0.5*(AmpArrRr[jt]+AmpArrLr[jt])*SinArr[jt] + 
 		    0.5*(AmpArrRi[jt]+AmpArrLi[jt])*CosArr[jt];
+		  re *= ExpVal[jt];
+		  im *= ExpVal[jt];
 		  sumRealQ += re * qgain1[jt]  - im * qgain1i[jt];
 		  sumImagQ += re * qgain1i[jt] + im * qgain1[jt];
 		  sumRealU += re * ugain1[jt]  - im * ugain1i[jt];
@@ -4018,11 +4044,11 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
 		  arg = freq2 * (ddata[7+nSpec]*visData[ilocu]*visData[ilocu] +
 				 ddata[8+nSpec]*visData[ilocv]*visData[ilocv] +
 				 ddata[9+nSpec]*visData[ilocu]*visData[ilocv]);
-		  if (arg<-1.0e-5) amp = ddata[itab] * exp (arg);
-		  else amp = ddata[itab];
+		  amp = ddata[itab];
 		  tx = ddata[4+nSpec]*(odouble)visData[ilocu];
 		  ty = ddata[5+nSpec]*(odouble)visData[ilocv];
 		  tz = ddata[6+nSpec]*(odouble)visData[ilocw];
+		  ExpArg[itcnt]  = -arg;
 		  FazArr[itcnt] = freqFact * (tx + ty + tz);
 		  /* Parallel  pol */
 		  /* Amplitude from component flux and two gains */
@@ -4037,19 +4063,23 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
 	      
 	      /* Convert phases to sin/cos */
 	      ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	      /* Convert Gaussian exp arguments */
+	      ObitExpVec(itcnt, ExpArg, ExpVal);
 
 	      /* Accumulate real and imaginary parts */
 	      for (jt=0; jt<itcnt; jt++) {
-		sumRealRR += AmpArrRr[jt]*CosArr[jt] - AmpArrRi[jt]*SinArr[jt];
-		sumImagRR += AmpArrRr[jt]*SinArr[jt] + AmpArrRi[jt]*CosArr[jt];
-		sumRealLL += AmpArrLr[jt]*CosArr[jt] - AmpArrLi[jt]*SinArr[jt];
-		sumImagLL += AmpArrLr[jt]*SinArr[jt] + AmpArrLi[jt]*CosArr[jt];
+		sumRealRR += AmpArrRr[jt]*CosArr[jt]*ExpVal[jt] - AmpArrRi[jt]*SinArr[jt]*ExpVal[jt];
+		sumImagRR += AmpArrRr[jt]*SinArr[jt]*ExpVal[jt] + AmpArrRi[jt]*CosArr[jt]*ExpVal[jt];
+		sumRealLL += AmpArrLr[jt]*CosArr[jt]*ExpVal[jt] - AmpArrLi[jt]*SinArr[jt]*ExpVal[jt];
+		sumImagLL += AmpArrLr[jt]*SinArr[jt]*ExpVal[jt] + AmpArrLi[jt]*CosArr[jt]*ExpVal[jt];
 		if (doCrossPol) {
 		  /* Cross pol */
 		  re = 0.5*(AmpArrRr[jt]+AmpArrLr[jt])*CosArr[jt] - 
 		    0.5*(AmpArrRi[jt]+AmpArrLi[jt])*SinArr[jt];  
 		  im = 0.5*(AmpArrRr[jt]+AmpArrLr[jt])*SinArr[jt] + 
 		    0.5*(AmpArrRi[jt]+AmpArrLi[jt])*CosArr[jt];
+		  re *= ExpVal[jt];
+		  im *= ExpVal[jt];
 		  sumRealQ += re * qgain1[jt]  - im * qgain1i[jt];
 		  sumImagQ += re * qgain1i[jt] + im * qgain1[jt];
 		  sumRealU += re * ugain1[jt]  - im * ugain1i[jt];

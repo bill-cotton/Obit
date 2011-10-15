@@ -1,0 +1,85 @@
+Log of changes made to the Obit tree.
+-------------------------------------
+
+Obit/tasks/MFImage.c:
+  Default initial alphaRefF
+Obit/src/ObitImageMF.c:
+  SetSpec: move frequency summer initilization out of loop 
+Obit/src/ObitTableCCUtil.c:
+  T2Spec: Fix logic with plane RMSes
+Obit/src/ObitThread.c:
+  Iterator: up timeout to 60 min
+Obit/include/ObitUVImager.h Obit/src/ObitUVImager.c
+Obit/include/ObitUVImagerIon.h Obit/src/ObitUVImagerIon.c
+Obit/include/ObitUVImagerMF.h Obit/src/ObitUVImagerMF.c
+Obit/include/ObitUVImagerWB.h Obit/src/ObitUVImagerWB.c:
+  GetNumPar: add doBeam parameter
+Obit/src/ObitDConCleanVis.c:
+  PickNext2D, PickNext3D: add doBeam parameter to ObitUVImagerGetNumPar
+Obit/src/ObitDisplay.c:
+  Allow the display to be turned back on using file /tmp/<task>.doTV
+Obit/src/ObitSkyModelMF.c:
+  GridFTComps: allow reducing oversampling if needed to fit in memory
+Obit/FArray.c:
+  ThreadFAConvGaus: smarter calculation of Gaussian
+Obit/include/ObitTableCCUtil.h Obit/src/ObitTableCCUtil.c: 
+  CrossTable: new routine to select CC in one image appearing in another. 
+Obit/TDF/MFImage.TDF Obit/TDF/MFBeam.TDF Obit/TDF/Imager.TDF
+Obit/TDF/IonImage.TDF Obit/TDF/Squint.TDF Obit/TDF/SCMap.TDF:
+  Document restarting use of the display
+Obit/src/ObitDConCleanVisMF.c:
+  better 2D XRestore
+svn version 381 23 Sep 2011.  W. Cotton
+
+Obit/src/ObitDConCleanVis.c:
+  Decide: Don't set minFluxLoad less than autoWinFlux, bug in DefWindow
+Obit/src/ObitUVImagerMF.c:
+  Weight: Copy Beam to uvwork
+Obit/src/ObitDConClean.c:
+  DefWindow: Add outer box in field 1 if window given in CLEANBox, fix outlier box 
+Obit/src/ObitSkyModelMF.c:
+  Chose: raise Gaussian factor to 6, FFT fudge to 0.50
+Obit/src/ObitDConCleanWindow.c:
+  GetWindowSize: increase maximum size to 50 
+Obit/src/ObitUVUtil.c Obit/src/ObitUVEdit.c:
+  VisDiv, VisSub: use passAll option to read/write all data. Other bugs
+Obit/src/ObitTableCCUtil.c:
+  Grid, GridSpect: better test for Gaussians
+Obit/src/ObitUVGSolveWB.c:
+  verbose messages only at prtLv=4 or more
+Obit/src/ObitUVCalBandpass.c:
+  Create proper size cal tables
+Obit/src/ObitSDMData.c:
+  Add CalWVR table
+Obit/include/ObitSDMData.h Obit/src/ObitSDMData.c:
+  WVR2SN: New routine to convert WVR data to SN table
+Obit/tasks/BDFIn.c Obit/TDF/BDFIn.TDF:
+  For ALMA data convert CalWVR to SN table
+Obit/src/ObitSkyModel.c"
+  DivUV: make sure outData buffer set correctly on exit
+Obit/src/ObitDConCleanVisMF.c:
+  XRestore: initialize gparm.  
+  Fix problems in 2D XRestore.
+version 382  4 Oct 2011  W. Cotton
+
+
+svn add 
+  Obit/include/ObitExp.h Obit/src/ObitExp.c Obit/changes.log 
+
+Obit/changes.log 
+Obit/include/ObitExp.h Obit/src/ObitExp.c 
+  New, fast exp vector routine 
+Obit/src/ObitSkyModel.c Obit/src/ObitSkyModelMF.c Obit/src/ObitSkyModelVMBeamMF.c 
+  Implement fast exp routine for Gaussians 
+Obit/tasks/MFImage.c Obit/tasks/MFBeam.c Obit/tasks/Imager.c 
+Obit/tasks/Squint.c Obit/tasks/BeamCor.c  Obit/tasks/SCMap.c 
+  Set/reset minFlux,noNeg for selfcal 
+Obit/src/ObitTableCCUtil.c 
+  GridSpect: Tell about number of components gridded 
+Obit/include/ObitImageMFDef.h Obit/src/ObitImageMF.c 
+  Allow selecting by IF, track low and high freq. 
+Obit/include/ObitSkyModelMFDef.h Obit/src/ObitSkyModelMF.c 
+  Implement high and low frequency per bin 
+Obit/TDF/MFImage.TDF Obit/TDF/MFBeam.TDF 
+  Document changed usage of maxFBW 
+15 Oct 2011, svn version 384  W. Cotton
