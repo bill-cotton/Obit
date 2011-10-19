@@ -29,6 +29,7 @@
 #include "ObitThread.h"
 #include "ObitFArray.h"
 #include "ObitMem.h"
+#include "ObitExp.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -2319,7 +2320,7 @@ void ObitFArray2DCGauss (ObitFArray *array, olong Cen[2], ofloat FWHM)
       x = (ofloat)(ix - Cen[0]);
       y = (ofloat)(iy - Cen[1]);
       arg = (x*x + y*y) * factor;
-      if (arg<15.0) arg = exp (-arg);
+      if (arg<15.0) arg = ObitExpCalc (arg);
       else arg = 0.0;
       data[indx] = arg;
     }
@@ -2369,7 +2370,7 @@ void ObitFArray2DEGauss (ObitFArray *array, ofloat amp, ofloat Cen[2], ofloat Ga
       y = CosPA*yp - xp*SinPA;
       arg = x*x*factorX + y*y*factorY;
       if (arg<15.0) {
-	arg = amp * exp (-arg);
+	arg = amp * ObitExpCalc (arg);
 	data[indx] += arg;
       }
     }
@@ -2537,6 +2538,8 @@ void  ObitFArrayConvGaus (ObitFArray* in, ObitFArray* list, olong ncomp,
 
   /* anything to do? */
   if (ncomp<=0) return;
+  ObitExpCalc(0.0);  /* Make sure initialized */
+
 
   /* Initialize Threading */
   nThreads = MakeFAFuncArgs (in->thread, in, 
@@ -3318,13 +3321,13 @@ static gpointer ThreadFAConvGaus (gpointer arg)
     /* Loop over array convolving */
     for (iy = loElem; iy<=hiElem; iy++) {
       dy = iy - table[1];   /* y offset */
-      if (bb*dy*dy>minGaus) continue;
+      if (bb*dy*dy>minGaus) {indx+=in->naxis[0]; continue;}
       for (ix = 0; ix<in->naxis[0]; ix++) {
 	dx = ix - table[0];   /* x offset */
-	if (aa*dx*dx>minGaus) continue;
+	if (aa*dx*dx>minGaus) {indx++; continue;}
 	farg = aa*dx*dx + bb*dy*dy + cc*dx*dy;
 	if (farg<minGaus) {
-	  image[indx] += table[2] * exp(-farg);
+	  image[indx] += table[2] * ObitExpCalc(farg);
 	}
 	indx++;
       }

@@ -67,19 +67,30 @@ svn add
   Obit/include/ObitExp.h Obit/src/ObitExp.c Obit/changes.log 
 
 Obit/changes.log 
-Obit/include/ObitExp.h Obit/src/ObitExp.c 
+Obit/include/ObitExp.h Obit/src/ObitExp.c:
   New, fast exp vector routine 
-Obit/src/ObitSkyModel.c Obit/src/ObitSkyModelMF.c Obit/src/ObitSkyModelVMBeamMF.c 
+Obit/src/ObitSkyModel.c Obit/src/ObitSkyModelMF.c Obit/src/ObitSkyModelVMBeamMF.c: 
   Implement fast exp routine for Gaussians 
 Obit/tasks/MFImage.c Obit/tasks/MFBeam.c Obit/tasks/Imager.c 
-Obit/tasks/Squint.c Obit/tasks/BeamCor.c  Obit/tasks/SCMap.c 
+Obit/tasks/Squint.c Obit/tasks/BeamCor.c  Obit/tasks/SCMap.c: 
   Set/reset minFlux,noNeg for selfcal 
-Obit/src/ObitTableCCUtil.c 
+Obit/src/ObitTableCCUtil.c:
   GridSpect: Tell about number of components gridded 
-Obit/include/ObitImageMFDef.h Obit/src/ObitImageMF.c 
+Obit/include/ObitImageMFDef.h Obit/src/ObitImageMF.c"
   Allow selecting by IF, track low and high freq. 
-Obit/include/ObitSkyModelMFDef.h Obit/src/ObitSkyModelMF.c 
+Obit/include/ObitSkyModelMFDef.h Obit/src/ObitSkyModelMF.c:
   Implement high and low frequency per bin 
-Obit/TDF/MFImage.TDF Obit/TDF/MFBeam.TDF 
+Obit/TDF/MFImage.TDF Obit/TDF/MFBeam.TDF:
   Document changed usage of maxFBW 
-15 Oct 2011, svn version 384  W. Cotton
+15 Oct 2011, svn version 383  W. Cotton
+
+Obit/src/ObitSkyModelVMIon.c:
+  Replace begVMModelTime member of VMIonFTFuncArg
+Obit/src/ObitFArray.c:
+  ThreadFAConvGaus: fix indexing bug causing stripes,
+   Various, use ObitExpCalc for speed.
+Obit/src/ObitDConClean.c:
+  Debug stuff
+19 Oct 2011, svn version 385, W. Cotton
+
+

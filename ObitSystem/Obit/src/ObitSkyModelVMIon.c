@@ -97,6 +97,8 @@ typedef struct {
   ObitErr      *err;
   /* UV Interpolator for FTGrid */
   ObitCInterpolate *Interp;
+  /* Start time (days) of validity of model */
+  ofloat begVMModelTime;
   /* End time (days) of valildity of model */
   ofloat endVMModelTime;
   /* Thread copy of Components list */

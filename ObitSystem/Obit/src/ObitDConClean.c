@@ -1386,7 +1386,7 @@ void ObitDConCleanXRestore(ObitDConClean *in, ObitErr *err)
   gchar *tabType = "AIPS CC";
   gboolean gotSome;
   gchar *routine = "ObitDConCleanXRestore";
-  /* DEBUG gchar DBGname[100]; */
+  /* gchar DBGname[100]; DEBUG */
 
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -1491,10 +1491,10 @@ void ObitDConCleanXRestore(ObitDConClean *in, ObitErr *err)
 	     ObitFArrayFill(tmpArray,0.0);*/
 	  ObitFArrayConvGaus (tmpArray, list, ncomp, gauss);
 
-	  /* DEBUG  
+	  /* DEBUG 
 	     sprintf (DBGname, "DbugXRestCC%3.3d_%3.3d.fits", 
-	     ifield, jfield, 0, tmpArray, err);
-	     ObitImageUtilArray2Image (DBGname, 0, tmpArray, err);*/
+	     ifield, jfield);
+	     ObitImageUtilArray2Image (DBGname, 0, tmpArray, err); */
 	  
 	  
 	} /* end of Anything to do? */
