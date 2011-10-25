@@ -7003,7 +7003,7 @@ def VLBAWriteVOTable( projMeta, srcMeta, filename="votable.xml" ):
                               ("datatype","char"),
                               ("arraysize","*"),
                               ("ucd","meta.version;meta.software") ] )
-            XMLAddDescription( pr, "Obit version (svn revison number)" )
+            XMLAddDescription( pr, "Version string" )
         elif key in ("archFileID"):
             setAttribs( pr, [ ("name", key ),
                               ("value", projMeta[key] ),
