@@ -2330,28 +2330,6 @@ ObitImageMosaic* ObitImageMosaicMaxField (ObitImageMosaic *mosaic,
     saveCCTable = ObitTableCCUnref(saveCCTable);
   }
 
-  /* If 2D and autoCen copy other field CCs */
-  if ((maxField>=0) &&
-      (!mosaic->images[maxField]->myDesc->do3D) && 
-      ((mosaic->isAuto[maxField]>0) || (mosaic->isShift[maxField]>0))) {
-    other = MAX (mosaic->isAuto[maxField], mosaic->isShift[maxField]);
-    if (other>0) {
-      CCVer = 1;
-      noParms = 0;
-      inCCTable = newObitTableCCValue ("Peeled CC", (ObitData*)mosaic->images[other-1],
-				       &CCVer, OBIT_IO_ReadOnly, noParms, 
-				       err);
-      CCVer = 1;
-      outCCTable = newObitTableCCValue ("outCC", (ObitData*)out->images[0],
-					&CCVer, OBIT_IO_ReadWrite, inCCTable->noParms, 
-					err);
-     ObitTableCCUtilAppend (inCCTable, outCCTable, 0, 0, err);
-      if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, out);
-      inCCTable   = ObitTableCCUnref(inCCTable);
-      outCCTable  = ObitTableCCUnref(outCCTable);
-    }
-  }
-
   *field = maxField+1;  /* Which field is this? */
   return out;
 } /* end of routine ObitImageMosaicMaxField */ 

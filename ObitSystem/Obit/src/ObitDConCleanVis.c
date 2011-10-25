@@ -2018,6 +2018,11 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
 
 	/* Just copy window */
 	ObitDConCleanWindowReplaceField (in->window, ifield+1, in->window, newField, err);
+	/* Make sure at least 5 pixel radius first box */
+	if (ObitDConCleanWindowInfo (in->window, newField, 1, &otype, &owin, err)) {
+	  owin[0] = MAX (5, owin[0]);
+	  ObitDConCleanWindowUpdate(in->window, newField, 1, otype, owin, err);
+	}
 	if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
 
 	/* Add field to Clean */

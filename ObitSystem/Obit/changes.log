@@ -94,3 +94,17 @@ Obit/src/ObitDConClean.c:
 19 Oct 2011, svn version 385, W. Cotton
 
 
+Obit/tasks/MCube.c:
+  UpdateFreq: dimension combSpecFreq large enough
+Obit/src/ObitImageMosaic.c:
+  MaxField: drop double copy of shifted CC Table
+Obit/src/ObitImageMosaicMF.c:
+  MaxField: add copy of shifted CC Table
+Obit/src/ObitUVPeelUtil.c:
+  Convert2Dto3D: close image if not 2D.
+  Peel: Force DFT for peel model.
+  Peel: use 2D model rather than force to 3D (broken).
+Obit/src/ObitDConCleanVis.c:
+  Reimage: Make sure 2D shifted images has a first CLEAN box radius of at least 5.
+25 Oct 2011, svn version 387, W. Cotton
+

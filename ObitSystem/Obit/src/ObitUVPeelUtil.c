@@ -295,8 +295,9 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
   oint         noParms, numPol, numIF;
   olong        ver;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  ofloat       PeelFlux, ftemp, xCells, yCells, ccShift[2];
-  gboolean     converged, didSC=FALSE, Fl=FALSE, Tr=TRUE, init, noSCNeed, btemp; 
+  ofloat       PeelFlux, ftemp, xCells, yCells, ccShift[2]={0.,0.};
+  gboolean     converged, didSC=FALSE, Fl=FALSE, Tr=TRUE, init, noSCNeed=FALSE, btemp; 
+  gboolean     doIn3D=FALSE;
   gchar        stemp[5], *pmode = "P   ";
   gchar        *imgParms[] = {  /* Imaging, weighting parameters */
     "PBCor", "antSize", 
@@ -356,7 +357,7 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     if (tmpMosaic==NULL) goto DonePeel;
 
     /* Convert 2D model to 3D if necessary */
-    Convert2Dto3D (tmpMosaic->images[0], ccShift, err);
+    if (doIn3D) Convert2Dto3D (tmpMosaic->images[0], ccShift, err);
     if (err->error) goto cleanup;
 
     Obit_log_error(err, OBIT_InfoErr, 
@@ -545,6 +546,10 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     ObitInfoListAlwaysPut(selfCal->info, "doSmoo", OBIT_bool, dim, &Tr);
     /* Copy control info */
     ObitInfoListCopyList (myInput, selfCal->info, SCParms);
+    /* Use DFT model */
+    dim[0] = dim[1] = 1;
+    dft = (olong)OBIT_SkyModel_DFT;
+    ObitInfoListAlwaysPut (selfCal->info, "Mode", OBIT_long, dim, &dft);
 
     /* Add outer window */
     nx = tmpMosaic->images[0]->myDesc->inaxes[0]; 
@@ -771,9 +776,9 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     ObitTableClearRows((ObitTable*)outCCTable, err);
     if (err->error) goto cleanup;
 
-    /*ObitTableCCUtilAppend (peelCCTable, outCCTable, 1, 0, err);*/
     /* Copy Peel CC to CC2 reverting any 2D to 3D shift */
-    MoveBack (peelCCTable, outCCTable, ccShift, err);
+    if (doIn3D) MoveBack (peelCCTable, outCCTable, ccShift, err);
+    else ObitTableCCUtilAppend (peelCCTable, outCCTable, 1, 0, err);
     peelCCTable = ObitTableCCUnref(peelCCTable);
     outCCTable  = ObitTableCCUnref(outCCTable);
 
@@ -832,7 +837,11 @@ void Convert2Dto3D (ObitImage *image,ofloat ccShift[2],  ObitErr* err)
   /* If already 3D just return */
   xPxOff = image->myDesc->xPxOff;
   yPxOff = image->myDesc->yPxOff;
-  if ((image->myDesc->do3D) && (xPxOff==0.0) && (yPxOff==0.0)) return;
+  if ((image->myDesc->do3D) && (xPxOff==0.0) && (yPxOff==0.0)) {
+    ObitImageClose (image, err);
+    if (err->error) Obit_traceback_msg (err, routine, image->name);
+    return;
+  }
 
   /* Old image stuff */
   nx   = image->myDesc->inaxes[0];

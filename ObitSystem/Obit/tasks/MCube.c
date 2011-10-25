@@ -1106,7 +1106,7 @@ void UpdateFreq(ObitInfoList *myInput,
 
   /* Make combined output */
   cnSpec = out->myDesc->inaxes[out->myDesc->jlocf] - nTerm;
-  combSpecFreq  = g_malloc0(cnSpec*sizeof(odouble));
+  combSpecFreq  = g_malloc0((cnSpec+10)*sizeof(odouble));
   if ((onSpec>0) && outSpecFreq) {
     j = 0;
     for (i=0; i<onSpec; i++) combSpecFreq[j++] = outSpecFreq[i];
