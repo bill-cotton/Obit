@@ -2,7 +2,7 @@
 """
 import UV, UVDesc, Image, ImageDesc, FArray, ObitTask, AIPSTask, AIPSDir, OErr, History
 import InfoList, Table, AIPSDir, OSystem
-import os, os.path, re, shutil, pickle, math, logging, copy, pprint
+import os, os.path, re, shutil, pickle, math, logging, copy, pprint, string
 import urllib, urllib2
 import sys, commands
 import datetime
@@ -5967,8 +5967,6 @@ def VLBADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
         for plot in plotTypes:
             uvplt.bparm   = AIPSTask.AIPSList( plot['bparm'] )
             uvplt.msgkill = 5   # Omit babble
-            if not check:
-                uvplt.go()
 
             # Create output file name
             outfile = project+session+band+s+'.'+plot['file']+'.ps'
@@ -5978,14 +5976,12 @@ def VLBADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
             if os.path.exists(outfile): os.remove(outfile) 
     
             if not check:
-                # Trap failure
                 try:
-                    if not check:
-                        lwpla.g
+                    uvplt.go()
+                    lwpla.go()
                 except Exception, exception:
-                    print exception
-                    mess = "Lwpla Failed - continuing anyway"
-                    printMess(mess, logfile)
+                    logger.error( "Plotting failed - continuing anyway" )
+                    logger.error( exception )
                 else:
                     if JPEG:
                         # Convert PS -> PDF; Convert PDF -> JPG
@@ -6067,6 +6063,8 @@ def VLBAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
             catNos += AMcat(disk=disk, Aname=n, Aclass=imClass, giveList=True )
     for cno in catNos: # loop over images
         image = getname(cno)
+        logger.info('Creating contour plot for image ' + 
+            string.strip(image.Aname) + ' . ' + string.strip(image.Aclass))
 
         # Run KNTR to make plot
         setname(image, kntr)

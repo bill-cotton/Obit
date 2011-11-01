@@ -13,7 +13,7 @@ where the required arguments are
     (a template is in ``Obit/share/scripts``)
 """
 
-import sys, pydoc, logging, logging.config
+import sys, pydoc, logging, logging.config 
 from optparse import OptionParser
 from ConfigParser import NoSectionError
 import OErr, OSystem, UV, AIPS, FITS, IDIFix
@@ -611,9 +611,7 @@ def pipeline( aipsSetup, parmFile ):
     # Contour plots
     if parms["doKntrPlots"]:
         logger.info("--> Contour plots (doKntrPlots)")
-        # Unique list of source for which contours should be plotted
-        sources = list( set( parms["targets"] + parms["contCals"] ) )
-        VLBAKntrPlots( err, imName=sources, project=project,
+        VLBAKntrPlots( err, imName=parms["targets"], project=project,
             session=session, band=band, disk=disk, debug=debug )
         # Save list of output files
         VLBASaveOutFiles()
