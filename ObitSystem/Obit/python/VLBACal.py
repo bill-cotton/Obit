@@ -1329,6 +1329,7 @@ def VLBAGoodCal(uv, err, solInt=0.5, timeInt=100., FreqID=1, \
                     set2name(Model["image"], calib)
             if "nfield" in Model:
                 calib.nfield    = Model["nfield"]
+            calib.nfield = max (1,calib.nfield )
             if "CCVer" in Model:
                 calib.CCVer     = Model["CCVer"]
             if "BComp" in Model:
@@ -1505,6 +1506,7 @@ def VLBAOKCal(uv, minOKFract, err, \
                     set2name(Model["image"], calib)
             if "nfield" in Model:
                 calib.nfield    = Model["nfield"]
+            calib.nfield = max (1,calib.nfield )
             if "CCVer" in Model:
                 calib.CCVer     = Model["CCVer"]
             if "BComp" in Model:
@@ -1794,6 +1796,7 @@ def VLBAManPCal(uv, err, solInt=0.5, smoTime=1.0, calSou=None, CalModel=None,
                     set2name(Model["image"], calib)
             if "nfield" in Model:
                 calib.nfield    = Model["nfield"]
+            calib.nfield = max (1,calib.nfield )
             if "CCVer" in Model:
                 calib.CCVer     = Model["CCVer"]
             if "BComp" in Model:
@@ -2059,13 +2062,15 @@ def VLBABPass(uv, BPCal, err, CalModel=None, newBPVer=1, timeRange=[0.,0.], \
         else:
             bpass.Sources = [calsou]
         # Get model details
-        if CalModel and bpass.Sources[0] in CalModel:
-            Model = CalModel[bpass.Sources[0]]
+        if CalModel and bpass.Sources[0].strip() in CalModel:
+            Model = CalModel[bpass.Sources[0].strip()]
+            print "Model",Model
             if Model["image"]:
                 if not check:
                     set2name(Model["image"], bpass)
             if "nfield" in Model:
                 bpass.nfield    = Model["nfield"]
+            bpass.nfield = max (1,bpass.nfield )
             if "CCVer" in Model:
                 bpass.CCVer     = Model["CCVer"]
             if "BComp" in Model:
@@ -2564,6 +2569,7 @@ def VLBADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
                     set2name(Model["image"], calib)
             if "nfield" in Model:
                 calib.nfield    = Model["nfield"]
+            calib.nfield = max (1,calib.nfield )
             if "CCVer" in Model:
                 calib.CCVer     = Model["CCVer"]
             if "BComp" in Model:
@@ -2759,6 +2765,8 @@ def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0,
     noCalList = []
     for cal in calsou:
         logger.info("Determining calibration solutions for " + cal ) 
+        mess = "Calibrate "+ str(cal)
+        printMess(mess, logfile)
         calib.Sources = [cal]
         noCal = False    # Until shown otherwise
         # Get model details
