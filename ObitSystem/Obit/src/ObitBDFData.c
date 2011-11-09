@@ -460,6 +460,11 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   /* Number of times */
   prior = "<dimensionality axes=\"TIM\">";
   in->ScanInfo->numTime  = BDFparse_int(startInfo, maxStr, prior, &next);
+  /* ALMA variant */
+  prior = "<numTime>";
+  in->ScanInfo->numTime  = BDFparse_int(startInfo, maxStr, prior, &next);
+  in->numTime = in->ScanInfo->numTime;
+  in->currTimeIndx = 0;
   
   /* correlation Mode */
   prior = "<correlationMode>";
@@ -699,6 +704,9 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
     APCOrder  =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_APC);
     blOrder   =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_BAL);
     binOrder  =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_BIN);
+
+    /* Trap ALMA (WVR?) pathology */
+    if ((polnOrder<0) && (freqOrder>=0) && (SPWOrder<0)) polnOrder = freqOrder+1;
    
     Obit_return_if_fail((blOrder==0), err,
 			"%s: Only support baseline as first axis",  routine);
@@ -957,7 +965,7 @@ ObitIOCode ObitBDFDataInitInteg  (ObitBDFData *in, ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_OK;
   gchar *startInfo, *endInfo, *prior, *next, *tstr;
-  olong maxStr;
+  olong i, maxStr;
   gchar *routine = "ObitBDFDataInitInteg";
 
   /* error checks */
@@ -989,7 +997,7 @@ ObitIOCode ObitBDFDataInitInteg  (ObitBDFData *in, ObitErr *err)
   in->IntegInfo->time = BDFparse_time(startInfo, maxStr, prior, &next);
   in->currTime = in->IntegInfo->time - in->SDMData->refJD;
   
-  /* Integration Time */
+  /* Integration Time (sec) */
   prior = "<interval>";
   in->IntegInfo->interval = BDFparse_timeint(startInfo, maxStr, prior, &next);
   in->currIntTime = in->IntegInfo->interval;
@@ -1002,6 +1010,23 @@ ObitIOCode ObitBDFDataInitInteg  (ObitBDFData *in, ObitErr *err)
   in->IntegInfo->type = LookupDataType(tstr);
   g_free(tstr);
   in->current = next;  /* where in buffer */
+
+  /* if multiple times, setup */
+  if (in->numTime>1) {
+      if (in->actualTimesData==NULL)
+	in->actualTimesData = g_malloc0(sizeof(ofloat)*(in->numTime+10));
+      else if (in->ScanInfo->actualTimesSize!=in->numTime)
+	in->actualTimesData = g_realloc(in->actualTimesData, sizeof(ofloat)*(in->numTime+10));
+      in->ScanInfo->actualTimesSize = in->numTime;
+      for (i=0; i<in->numTime; i++) {
+	in->actualTimesData[i] = (ofloat)(in->IntegInfo->time - in->SDMData->refJD);
+	in->actualTimesData[i] +=
+	  (ofloat)((i-in->numTime/2.)/(in->numTime))*((ofloat)(in->IntegInfo->interval/86400.0));
+      }
+      in->currTime     = in->actualTimesData[0];  /* First time */
+      in->currIntTime /= in->numTime;             /* Actual integration time */
+      in->currTimeIndx = 0;
+  } /* End time array */
 
   /* Init antennas */
   in->ant1     = 0;
@@ -1122,8 +1147,8 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
       in->haveActualTimes = TRUE;
       /* Create if needed */
       if (in->actualTimesData==NULL)
-	/*in->actualTimesData = g_malloc0(sizeof(olong)*(in->ScanInfo->actualTimesSize+10)/8);*/
-	in->actualTimesData = g_malloc0(sizeof(olong)*(in->ScanInfo->actualTimesSize+10));
+	/*in->actualTimesData = g_malloc0(sizeof(ofloat)*(in->ScanInfo->actualTimesSize+10)/8);*/
+	in->actualTimesData = g_malloc0(sizeof(ofloat)*(in->ScanInfo->actualTimesSize+10));
       Dtype = in->IntegInfo->type;
       /*retCode = CopyFloats (in, start, (ofloat*)in->actualTimesData, in->ScanInfo->actualTimesSize/8, */
       retCode = CopyFloats (in, start, (ofloat*)in->actualTimesData, in->ScanInfo->actualTimesSize, 
@@ -1349,7 +1374,15 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
     in->nextAVis++;
     in->ant1++;
     /* Finished? */
-    if (in->ant1>=in->nant) in->haveAutoData = FALSE;
+    if (in->ant1>=in->nant) {
+      in->currTimeIndx++;
+      in->ant1 = 0;
+      if (in->currTimeIndx>=in->numTime) in->haveAutoData = FALSE;
+      else {
+	/* Next time */
+	in->currTime = in->actualTimesData[in->currTimeIndx];
+      }
+    }
     return retCode;
   } /* end have auto data */
     

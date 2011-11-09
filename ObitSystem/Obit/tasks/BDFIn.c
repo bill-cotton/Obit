@@ -198,6 +198,7 @@ int main ( int argc, char **argv )
   gchar dataroot[132];
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ASDMSpectralWindowArray* SpWinArray=NULL;
   ObitSDMData *SDMData=NULL;
   ObitBDFData *BDFData=NULL;
   ObitTable   *CalTab=NULL;
@@ -289,13 +290,21 @@ int main ( int argc, char **argv )
     if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
   }
 
-  /* Convert ALMA WVR table to SN Table */
   if (isALMA) {
-    Obit_log_error(err, OBIT_InfoErr, "Converting ALMA CalWVR to SN Table");
-    ObitErrLog(err);
     ObitTableCLGetDummy (outData, outData, 1, err); 
-    SNTab = ObitSDMDataWVR2SN (outData, SDMData, err);
-    if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+    /* Convert ALMA WVR table to SN Table
+    if (SDMData->CalWVRTab && (SDMData->CalWVRTab->nrows>0)) {
+      SNTab = ObitSDMDataWVR2SN (outData, SDMData, err);
+      if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+    } */
+    /* Convert ALMA CalAtmosphere table to SN Table */
+    if (SDMData->calAtmosphereTab && (SDMData->calAtmosphereTab->nrows>0)) {
+      /* Extract ASDM Spectral windows data  */
+      SpWinArray  = ObitSDMDataGetSWArray (SDMData, selMain, SWOrder);
+      SNTab = ObitSDMDataAtm2SN (outData, SDMData, SpWinArray, err);
+      SpWinArray = ObitSDMDataKillSWArray (SpWinArray);
+      if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+    }
   }
 
   /* History */
@@ -1835,7 +1844,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   ObitIOCode retCode;
   olong iMain, iInteg, ScanId=0, SubscanId=0, i, j, jj, iBB, selChan, selIF, selConfig, 
     iSW, jSW, kBB, nIFsel, cntDrop=0, ver, iRow, sourId=0, iIntent, iScan;
-  olong lastScan=-1, lastSubscan=-1, ScanTabRow=-1;
+  olong lastScan=-1, lastSubscan=-1, ScanTabRow=-1, numIntegration;
   ofloat *Buffer=NULL, tlast=-1.0e20, startTime, endTime;
   ObitUVDesc *desc;
   ObitTableNX* NXtable;
@@ -2085,8 +2094,14 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
       NXrow->EndVis   = NXrow->StartVis;
     }
 
+    numIntegration = SDMData->MainTab->rows[iMain]->numIntegration;
+
+    /* Trap defective ALMA files - this only works for autocorrelation only (WVR) data */
+    if (numIntegration<=0) 
+      numIntegration = BDFData->ScanInfo->numTime * BDFData->ScanInfo->numAntenna;
+
     /* Loop over integrations */
-    for (iInteg=0; iInteg<SDMData->MainTab->rows[iMain]->numIntegration; iInteg++) {
+    for (iInteg=0; iInteg<numIntegration; iInteg++) {
 
       /* Read integration */
       retCode =  ObitBDFDataReadInteg(BDFData, err);
@@ -2296,6 +2311,7 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
     
     /* Get rotation to get v north at standard epoch - 
        precess posn. 10" north */
+    if (uvwcurSourID<0) uvwcurSourID = uvwSourID;
     source = newObitSource("Temp");
     source->RAMean  = uvwSourceList->SUlist[uvwcurSourID]->RAMean;
     source->DecMean = uvwSourceList->SUlist[uvwcurSourID]->DecMean + 10.0/3600.0;

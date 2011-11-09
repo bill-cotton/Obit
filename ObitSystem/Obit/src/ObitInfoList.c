@@ -303,14 +303,20 @@ void ObitInfoListCopyListRename(ObitInfoList* in, ObitInfoList* out,
       xelem = ObitInfoListFind(out, outList[i]);
       if (xelem==NULL) { /* not there */
 	/* make copy with rename to attach to list */
-	telem = newObitInfoElem(outList[i], elem->itype, elem->idim, elem->data);
+	telem = ObitInfoElemCopy(elem);
+	/* Change name 
+	g_free(telem->iname);*/
+	telem->iname = g_strdup(outList[i]);
 	out->list = g_slist_prepend(out->list, telem); /* add to output list */
       } else { /* already there - replace*/
 	/* Delete Old */
 	ObitInfoListRemove (out, xelem->iname);
 	
 	/* make copy with rename to attach to list */
-	telem = newObitInfoElem(outList[i], elem->itype, elem->idim, elem->data);
+	telem = ObitInfoElemCopy(elem);
+	/* Change name
+	g_free(telem->iname); */
+	telem->iname = g_strdup(outList[i]);
 	out->list = g_slist_prepend(out->list, telem); /* add to output list */
       }
     }

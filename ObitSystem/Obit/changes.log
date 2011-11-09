@@ -93,7 +93,6 @@ Obit/src/ObitDConClean.c:
   Debug stuff
 19 Oct 2011, svn version 385, W. Cotton
 
-
 Obit/tasks/MCube.c:
   UpdateFreq: dimension combSpecFreq large enough
 Obit/src/ObitImageMosaic.c:
@@ -107,4 +106,38 @@ Obit/src/ObitUVPeelUtil.c:
 Obit/src/ObitDConCleanVis.c:
   Reimage: Make sure 2D shifted images has a first CLEAN box radius of at least 5.
 25 Oct 2011, svn version 387, W. Cotton
+
+
+svn add \
+  Obit/TDF/WVRCal.TDF  Obit/tasks/WVRCal.c \
+  Obit/include/ObitWVRCoef.h Obit/src/ObitWVRCoef.c
+
+  Obit/src/ObitInfoList.c:
+    Rename: fix bug copying elements
+  Obit/include/ObitBDFDataDef.h:
+    Fixes to trap ALMA bugs
+  Obit/src/ObitSDMData.c:
+    CountTableRows: If the table doesn't exist, then no. rows=0
+    Trap ALMA bugs
+    Implement calAtmosphere table
+    New routine Atm2SN to convert calAtmosphere table to SN.
+  Obit/include/ObitSDMDataTypeDef.h Obit/include/ObitSDMDataDef.h:
+    Implement calAtmosphere table
+  Obit/include/ObitSDMData.h:
+    Add ObitSDMDataAtm2SN
+  Obit/src/ObitBDFData.c:
+    InitScan: Trap ALMA pathology, no poln axis
+    Trap ALMA bugs
+  Obit/tasks/BDFIn.c:
+    Do not give message about converting ALMA WVR table unless it exists
+    Trap ALMA bugs
+    Convert ALMA CalAtmosphere table to SN table.
+  Obit/src/ObitSkyModel.c:
+    SetSelect: Handle single XX dataset
+  Obit/tasks/ASDMList.c:
+    Properly handle "Quit" for interactive use.
+  Obit/TDF/WVRCal.TDF  Obit/tasks/WVRCal.c:
+  Obit/include/ObitWVRCoef.h Obit/src/ObitWVRCoef.c:
+    New task/utility for ALMA WVR phase calibration
+9 Nov 2011, svn version 391, W. Cotton
 

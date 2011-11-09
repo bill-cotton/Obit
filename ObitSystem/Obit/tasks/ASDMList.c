@@ -498,9 +498,11 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
 	if (ConfigTab->rows[iConfig]->atmPhaseCorrection[0]==ASDMAtmPhCorr_AP_UNCORRECTED)
 	  sprintf(line,"       ALMA Data without atmospheric correction");
 	ObitPrinterWrite (myPrint, line, &quit, err);
+	if (quit) goto Quit;
       } else if (ConfigTab->rows[iConfig]->numAtmPhaseCorrection==2) {
 	sprintf(line,"       ALMA Data with and without atmospheric correction");
 	ObitPrinterWrite (myPrint, line, &quit, err);
+	if (quit) goto Quit;
       }
       if (ConfigTab->rows[iConfig]->spectralType==ASDMSpecRes_CHANNEL_AVERAGE) {
 	sprintf(line,"       Spec Res = CHANNEL_AVERAGE");
@@ -510,12 +512,14 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
 	sprintf(line,"       Spec Res = FULL_RESOLUTION");
       }
     ObitPrinterWrite (myPrint, line, &quit, err);
+    if (quit) goto Quit;
     } /* End ALMA */
      
   } /* end loop over configs */
   
   sprintf(line,"    ");
   ObitPrinterWrite (myPrint, line, &quit, err);
+  if (quit) goto Quit;
   if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
 
   /* Source info - new page */
@@ -528,7 +532,9 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
   sprintf (Title1, "Summary of ASDM in %s",DataRoot);
   sprintf (Title2, "  Scan Summary");
   ObitPrinterWrite (myPrint, Title1, &quit, err);
+  if (quit) goto Quit;
   ObitPrinterWrite (myPrint, Title2, &quit, err);
+  if (quit) goto Quit;
   ObitPrinterSetTitle (myPrint, Title1, Title2, err);  /* No page titles at top */
   if (quit) goto Quit;
   if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
@@ -585,6 +591,7 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
 	strncat(line, " ", 1000);
       }
       ObitPrinterWrite (myPrint, line, &quit, err);
+      if (quit) goto Quit;
     }
   } /* End scan look */
   

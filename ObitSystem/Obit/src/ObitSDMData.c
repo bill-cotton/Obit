@@ -4,6 +4,7 @@ Which ASDM tables have been coded (X)
 X    ASDM.xml
 X    Main.xml
 X    Antenna.xml
+X    CalAtmosphere.xml
      CalData.xml
 X    CalDevice.xml
      CalPointing.xml
@@ -133,7 +134,7 @@ static odouble ASDMparse_timeint(gchar *string, olong maxChar,
 /** Private: Parse array of doubles from XML string  */
 static odouble* ASDMparse_dblarray(gchar *string, olong maxChar, 
 				   gchar *prior, gchar **next);
-/** Private: Parse array of floatss from XML string  */
+/** Private: Parse array of floats from XML string  */
 static ofloat* ASDMparse_fltarray(gchar *string, olong maxChar, 
 				   gchar *prior, gchar **next);
 /** Private: Parse array of ints from XML string  */
@@ -191,6 +192,15 @@ static ASDMAntennaTable* ParseASDMAntennaTable(ObitSDMData *me,
 					 ObitErr *err);
 /** Private: Destructor for Antenna table. */
 static ASDMAntennaTable* KillASDMAntennaTable(ASDMAntennaTable* table);
+
+/** Private: Destructor for calAtmosphere table row. */
+static ASDMcalAtmosphereRow* KillASDMcalAtmosphereRow(ASDMcalAtmosphereRow* row);
+/** Private: Parser constructor for calAtmosphere table from file */
+static ASDMcalAtmosphereTable* ParseASDMcalAtmosphereTable(ObitSDMData *me,
+					 gchar *calAtmosphereFile, 
+					 ObitErr *err);
+/** Private: Destructor for calAtmosphere table. */
+static ASDMcalAtmosphereTable* KillASDMcalAtmosphereTable(ASDMcalAtmosphereTable* table);
 
 /** Private: Destructor for calData table row. */
 static ASDMcalDataRow* KillASDMcalDataRow(ASDMcalDataRow* row);
@@ -613,6 +623,12 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   /* Antenna table */
   fullname = g_strconcat (DataRoot,"/Antenna.xml", NULL);
   out->AntennaTab = ParseASDMAntennaTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* calAtmosphere table */
+  fullname = g_strconcat (DataRoot,"/CalAtmosphere.xml", NULL);
+  out->calAtmosphereTab = ParseASDMcalAtmosphereTable(out, fullname, err);
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
@@ -1720,6 +1736,247 @@ ObitTableSN* ObitSDMDataWVR2SN (ObitUV *inUV, ObitSDMData *SDM,
 } /* end ObitSDMDataWVR2SN  */
 
 /**
+ * Lookup further gain entries for a given antenna/time
+ * \param calAtmosphereTab Atmospheric data table
+ * \param UVDesc           UV descriptor
+ * \param iAtmRow          Master table row
+ * \param jAtmRow          [in/out] Next table row
+ * \param BBIndex          Lookup table for IF corresponding to baseband number
+ * \param gain1            [out] gains for first receptor (poln), 1/IF
+ * \param gain2            [out] gains for second receptor (poln)
+ * \return TRUE if there may be more entries
+ */
+static gboolean FindMoreAtmData(ASDMcalAtmosphereTable *calAtmosphereTab, ObitUVDesc *UVDesc, 
+				olong iAtmRow, olong *jAtmRow, olong *BBIndex,
+				ofloat *gain1, ofloat *gain2)
+{
+  gboolean more=FALSE;
+  olong i, iif, numIF, numPol, iRow, oldRow=*jAtmRow;
+  ofloat fblank = ObitMagicF();
+
+  /* Finished */
+  if (*jAtmRow>=calAtmosphereTab->nrows) return more;
+
+  /* Numbers of things */
+  if (UVDesc->jlocs>=0) numPol = MIN (2, UVDesc->inaxes[UVDesc->jlocs]);
+  else numPol = 1;
+  if (UVDesc->jlocif>=0) numIF  = UVDesc->inaxes[UVDesc->jlocif];
+  else numIF = 1;
+
+  /* Init on first */
+  if (iAtmRow==oldRow) {
+    for (i=0; i<numIF; i++) {
+      gain1[i] = gain2[i] = fblank;
+    }
+    iRow = iAtmRow;
+  } else {  /* Subsequent call - check if same antenna */
+    if (!strcmp(calAtmosphereTab->rows[iAtmRow]->antennaName, 
+		 calAtmosphereTab->rows[*jAtmRow]->antennaName)) {
+      iRow = *jAtmRow;
+    } else { /* Next antenna - stop looking */
+      return FALSE;
+    }
+  }
+  
+  /* Find IF - set gains */
+  iif = BBIndex[calAtmosphereTab->rows[iRow]->basebandId];
+  if (iif>=0) {
+    gain1[iif] = sqrt(calAtmosphereTab->rows[iRow]->tSys[0]);
+    if (numPol>1) gain2[iif] = sqrt(calAtmosphereTab->rows[iRow]->tSys[1]);
+  }
+    
+  /* More to find? */
+  more = FALSE;
+  for (i=0; i<numIF; i++) {
+    if (gain1[i]==fblank) more = TRUE;
+    if ((numPol>1) && (gain2[i]==fblank)) more = TRUE;
+    if (more) break;
+  }
+  *jAtmRow = oldRow+1; /* next */
+
+  return more;
+} /* end FindMoreAtmData */
+
+/**
+ * Generate an SN table from data in an CalAtmosphere SDM table
+ * Output SN table will be associated with inUV.
+ * \param inUV       Input uv data. 
+ * \param SDM        ASDM srtucture
+ * \param SpWinArray Spectral window array used for UV data.
+ * \param err        Error stack, returns if not empty.
+ * \return Pointer to the newly created ObitTableSN
+ */
+ObitTableSN* ObitSDMDataAtm2SN (ObitUV *inUV, ObitSDMData *SDM,
+				ASDMSpectralWindowArray* SpWinArray, 
+				ObitErr *err)
+{
+  ObitIOCode retCode;
+  ObitTableSN    *outSN   = NULL;
+  ObitTableSNRow *SNRow   = NULL;
+  ASDMcalAtmosphereRow  *AtmRow  = NULL;
+  ASDMAntennaArray *antArray= NULL;
+  olong i, iant, numPol, numIF, iif, mainRow=0;
+  olong ver, iSNRow=0, iAtmRow, jAtmRow;
+  olong BBIndex[33];
+  ofloat *gain1=NULL, *gain2=NULL;
+  ofloat fblank = ObitMagicF();
+  gchar *tname;
+  gchar *routine = "ObitSDMCalAtm2SN";
+  
+  /* error checks */
+  if (err->error) return outSN;
+  g_assert (ObitUVIsA(inUV));
+
+  /* Must have a CalAtmTable */
+  if ((SDM->calAtmosphereTab==NULL) || (SDM->calAtmosphereTab->nrows<1)) return outSN;
+
+  /* Baseband lookup table 0-rel IF number */
+  for (i=0; i<33; i++) BBIndex[i] = -1;
+  for (i=0; i<SpWinArray->nwinds; i++) BBIndex[SpWinArray->winds[i]->basebandNum] = i;
+  
+  /* create output table  */
+  if (inUV->myDesc->jlocs>=0) numPol = MIN (2, inUV->myDesc->inaxes[inUV->myDesc->jlocs]);
+  else numPol = 1;
+  if (inUV->myDesc->jlocif>=0) numIF  = inUV->myDesc->inaxes[inUV->myDesc->jlocif];
+  else numIF = 1;
+  if (outSN==NULL) {
+    tname = g_strconcat ("Calibration for: ",inUV->name, NULL);
+    ver = 0;
+    outSN = newObitTableSNValue (tname, (ObitData*)inUV, &ver, OBIT_IO_WriteOnly,  
+				 numPol, numIF, err);
+    g_free (tname);
+    if (err->error) Obit_traceback_val (err, routine, inUV->name, outSN);
+  }
+
+  /* Tell about it */
+  Obit_log_error(err, OBIT_InfoErr, "Converting CalAtmosphere data to SN table %d", ver);
+  
+  /* Open SN table for write */
+  retCode = ObitTableSNOpen (outSN, OBIT_IO_WriteOnly, err);
+  if ((retCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
+    Obit_traceback_val (err, routine, outSN->name, outSN);
+
+  /* create row structure */
+  SNRow = newObitTableSNRow(outSN);
+
+   /* Attach row to output buffer */
+  ObitTableSNSetRow (outSN, SNRow, err);
+  if (err->error) Obit_traceback_val (err, routine, outSN->name, outSN);
+
+  outSN->numAnt = 1;
+
+ /* Initialize SN Row structure */
+  SNRow->Time   = 0.0;
+  SNRow->TimeI  = 0.0;
+  SNRow->SourID = 0;
+  SNRow->antNo  = 0;
+  SNRow->SubA   = 0;
+  SNRow->FreqID = 0;
+  SNRow->IFR    = 0.0;
+  SNRow->NodeNo = 1;
+  SNRow->MBDelay1 = 0.0;
+  SNRow->MBDelay2 = 0.0;
+  SNRow->status = 1;
+  for (iif = 0; iif < numIF; iif++) {
+    SNRow->Real1[iif]   = 0.0;
+    SNRow->Imag1[iif]   = 0.0;
+    SNRow->Delay1[iif]  = 0.0;
+    SNRow->Rate1[iif]   = 0.0;
+    SNRow->Weight1[iif] = 0.0;
+    SNRow->RefAnt1[iif] = 1;
+    if (numPol>1) { /* Second polarization */
+      SNRow->Real2[iif]   = 0.0;
+      SNRow->Imag2[iif]   = 0.0;
+      SNRow->Delay2[iif]  = 0.0;
+      SNRow->Rate2[iif]   = 0.0;
+      SNRow->Weight2[iif] = 0.0;
+      SNRow->RefAnt2[iif] = 1;
+    }
+  }
+  
+  /* Get antenna information */
+  antArray = ObitSDMDataGetAntArray (SDM, mainRow);
+
+  /* Frequency info */
+  if (inUV->myDesc->freqIF==NULL) {
+    ObitUVGetFreq (inUV, err);
+    if (err->error) goto cleanup;
+  }
+
+  /* Work arrays */
+  gain1 = g_malloc0(numIF*sizeof(ofloat));
+  gain2 = g_malloc0(numIF*sizeof(ofloat));
+
+  /* Loop over Atmosphere table converting */
+  for (iAtmRow=0; iAtmRow<SDM->calAtmosphereTab->nrows; ) {
+    AtmRow = SDM->calAtmosphereTab->rows[iAtmRow];
+    
+    /* Routine to find further entries for this antenna and return array of gains */
+    jAtmRow = iAtmRow;
+    while (FindMoreAtmData(SDM->calAtmosphereTab, inUV->myDesc, iAtmRow, &jAtmRow, 
+			   BBIndex, gain1, gain2));
+    
+    /* Set antenna invariant values */
+    SNRow->Time   = AtmRow->startValidTime - antArray->refJD;
+    SNRow->TimeI  = 0.5 * (AtmRow->endValidTime - AtmRow->startValidTime);
+    
+    /* Lookup antenna number */
+    for (iant=0; iant<antArray->nants; iant++) {
+      if (!strcmp(AtmRow->antennaName, antArray->ants[iant]->antName)) {
+	SNRow->antNo  = antArray->ants[iant]->antennaNo+1;
+	break;
+      }
+    } /* end looking up antenna number */
+    
+    /* convert Atm model to SN */
+    for (iif = 0; iif < numIF; iif++) {
+      if (gain1[iif]!=fblank) {
+	SNRow->Real1[iif]   = gain1[iif];
+	SNRow->Imag1[iif]   = 0.0;
+	SNRow->Weight1[iif] = 1.0;
+      } else {
+	SNRow->Real1[iif]   = fblank;
+	SNRow->Imag1[iif]   = fblank;
+	SNRow->Weight1[iif] = 0.0;
+      }
+      if (numPol>1) { /* Second polarization */
+	if (gain2[iif]!=fblank) {
+	  SNRow->Real2[iif]   = gain2[iif];
+	  SNRow->Imag2[iif]   = 0.0;
+	  SNRow->Weight2[iif] = 1.0;
+	} else {
+	  SNRow->Real2[iif]   = fblank;
+	  SNRow->Imag2[iif]   = fblank;
+	  SNRow->Weight2[iif] = 0.0;
+	}
+      }
+    } /* end IF loop */
+    
+    /* write it - first start time */
+    retCode = ObitTableSNWriteRow (outSN, iSNRow, SNRow, err);
+    /* then end time - no they're bogus
+       SNRow->Time = AtmRow->endValidTime - antArray->refJD;
+       retCode = ObitTableSNWriteRow (outSN, iSNRow, SNRow, err); */
+    if (err->error) goto cleanup;
+    iAtmRow = jAtmRow;  /* skip ones done */
+  } /* end loop over Atm Table */
+
+  /* Close table */
+  retCode = ObitTableSNClose (outSN, err);
+  if ((retCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
+
+  /* deallocate structures */
+ cleanup:
+  if (gain1) g_free(gain1);
+  if (gain2) g_free(gain2);
+  SNRow = ObitTableSNRowUnref(SNRow);
+  antArray = ObitSDMDataKillAntArray (antArray);
+  if (err->error) Obit_traceback_val (err, routine, outSN->name, outSN);
+
+  return outSN;
+} /* end ObitSDMDataAtm2SN  */
+
+/**
  * Initialize global ClassInfo Structure.
  */
 void ObitSDMDataClassInit (void)
@@ -1793,6 +2050,7 @@ void ObitSDMDataInit  (gpointer inn)
   in->ASDMTab              = NULL;
   in->MainTab              = NULL;
   in->AntennaTab           = NULL;
+  in->calAtmosphereTab     = NULL;
   in->calDataTab           = NULL;
   in->calDeviceTab         = NULL;
   in->calPointingTab       = NULL;
@@ -1846,6 +2104,7 @@ void ObitSDMDataClear (gpointer inn)
   in->ASDMTab              = KillASDMTable(in->ASDMTab);
   in->MainTab              = KillASDMMainTable(in->MainTab);
   in->AntennaTab           = KillASDMAntennaTable(in->AntennaTab);
+  in->calAtmosphereTab     = KillASDMcalAtmosphereTable(in->calAtmosphereTab);
   in->calDataTab           = KillASDMcalDataTable(in->calDataTab);
   in->calDeviceTab         = KillASDMcalDeviceTable(in->calDeviceTab);
   in->calPointingTab       = KillASDMcalPointingTable(in->calPointingTab);
@@ -2583,6 +2842,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
   /* Init rows count to -1 */
   out->MainRows             = -1;
   out->AntennaRows          = -1;
+  out->calAtmosphereRows    = -1;
   out->calDataRows          = -1;
   out->calDeviceRows        = -1;
   out->calPointingRows      = -1;
@@ -2669,6 +2929,14 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
       out->AntennaRows = ASDMparse_int(line, maxLine, "<NumberRows>", &next);
+      continue;
+    }
+    /* Number of calAtmosphere rows */
+    if (!strcmp(tstr,"CalAtmosphere")) {
+      retCode = ObitFileReadXML (file, line, maxLine, err);
+      if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+      if (retCode==OBIT_IO_EOF) break;
+      out->calAtmosphereRows = ASDMparse_int(line, maxLine, "<NumberRows>", &next);
       continue;
     }
     /* Number of calData rows */
@@ -2903,6 +3171,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       out->WeatherRows = ASDMparse_int(line, maxLine, "<NumberRows>", &next);
       continue;
     }
+    if (tstr); g_free(tstr); tstr = NULL;
   } /* end loop over table */
 
   /* Close up */
@@ -3304,6 +3573,265 @@ static ASDMAntennaTable* KillASDMAntennaTable(ASDMAntennaTable* table)
   g_free(table);
   return NULL;
 } /* end KillASDMAntennaTable */
+
+/* ----------------------  calAtmosphere ----------------------------------- */
+/** 
+ * Destructor for calAtmosphere table row.
+ * \param  structure to destroy
+ * \return NULL row pointer
+ */
+static ASDMcalAtmosphereRow* KillASDMcalAtmosphereRow(ASDMcalAtmosphereRow* row)
+{
+  if (row == NULL) return NULL;
+  if (row->antennaName)        g_free(row->antennaName);
+  if (row->syscalType)         g_free(row->syscalType);
+  if (row->polarizationTypes)  g_free(row->polarizationTypes);
+  if (row->tAtm)               g_free(row->tAtm);
+  if (row->tRec)               g_free(row->tRec);
+  if (row->tSys)               g_free(row->tSys);
+  if (row->tau)                g_free(row->tau);
+  if (row->water)              g_free(row->water);
+  if (row->waterError)         g_free(row->waterError);
+  if (row->forwardEfficiency)  g_free(row->forwardEfficiency);
+  if (row->sbGain)             g_free(row->sbGain);
+  g_free(row);
+  return NULL;
+} /* end   KillASDMcalAtmosphereRow */
+
+/** 
+ * Constructor for calAtmosphere table parsing from file
+ * \param  calAtmosphereFile Name of file containing table
+ * \param  err     ObitErr for reporting errors.
+ * \return table structure,  use KillASDMcalAtmosphereTable to free
+ */
+static ASDMcalAtmosphereTable* 
+ParseASDMcalAtmosphereTable(ObitSDMData *me, 
+		      gchar *calAtmosphereFile, 
+		      ObitErr *err)
+{
+  ASDMcalAtmosphereTable* out=NULL;
+  ObitIOCode retCode;
+  olong i, j, charLeft, irow, maxLine = me->maxLine, ndim, naxis;
+  gchar *line=me->line;
+  gchar *endrow = "</row>";
+  gchar *prior, *next, *b;
+  ObitFile *file=NULL;
+  gchar *routine = " ParseASDMcalAtmosphereTable";
+
+  /* error checks */
+  if (err->error) return out;
+
+  out = g_malloc0(sizeof(ASDMcalAtmosphereTable));
+  out->rows = NULL;
+
+  /* How many rows? */
+  out->nrows = MAX(0, me->ASDMTab->calAtmosphereRows);
+  if (out->nrows<1) return out;
+
+  /* Finish building it */
+  out->rows = g_malloc0((out->nrows+1)*sizeof(ASDMcalAtmosphereRow*));
+  for (irow=0; irow<out->nrows; irow++) out->rows[irow] = g_malloc0(sizeof(ASDMcalAtmosphereRow));
+
+  file = newObitFile("ASDM");
+  retCode = ObitFileOpen(file, calAtmosphereFile, OBIT_IO_ReadOnly, OBIT_IO_Text, 0, err);
+  if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+
+  /* Loop over file */
+  irow = 0;
+  while (retCode!=OBIT_IO_EOF) {
+
+    retCode = ObitFileReadXML (file, line, maxLine, err);
+    if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+    if (retCode==OBIT_IO_EOF) break;
+
+    /* Parse entries */
+    /* receiverBand */
+    prior = "<receiverBand>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      prior = "ALMA_RB_";
+      out->rows[irow]->receiverBand = ASDMparse_int (line, maxLine, prior, &next);
+    }
+    /* antenna Name */
+    prior = "<antennaName>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->antennaName = ASDMparse_str (line, maxLine, prior, &next);
+    }
+    /* syscalType */
+    prior = "<syscalType>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->syscalType = ASDMparse_str (line, maxLine, prior, &next);
+    }
+    /* baseband Id */
+    prior = "<basebandName>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      prior = "BB_";
+      out->rows[irow]->basebandId = ASDMparse_int (line, maxLine, prior, &next);
+    }
+    /* number of frequencies */
+    prior = "<numFreq>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->numFreq = ASDMparse_int (line, maxLine, prior, &next);
+    }
+    /* number of Loads */
+    prior = "<numLoad>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->numLoad = ASDMparse_int (line, maxLine, prior, &next);
+    }
+    /* number of Receptors */
+    prior = "<numReceptor>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->numReceptor = ASDMparse_int (line, maxLine, prior, &next);
+    }
+    /* cal Id */
+    prior = "<calDataId>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      prior = "<calDataId>CalData_";
+      out->rows[irow]->calDataId = ASDMparse_int (line, maxLine, prior, &next);
+    }
+    /*  cal reduction Id */
+    prior = "<calReductionId>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      prior = "<calReductionId>CalReduction_";
+      out->rows[irow]->calReductionId = ASDMparse_int (line, maxLine, prior, &next);
+    }
+    /* polarization types, e.g. 'X', 'Y', convert to enums */
+    prior = "<polarizationTypes>";
+    b = g_strstr_len (line, maxLine, prior);
+    if (b!=NULL) {
+      b += strlen(prior);
+      /* Parse array of strings */
+      /* Get dimensionality - only can handle 1 */
+      ndim = (olong)strtol(b, &next, 10);
+      g_assert(ndim==1);  /* bother */
+      b = next;
+      /* get number of values */
+      naxis = (olong)strtol(b, &next, 10);
+      out->rows[irow]->polarizationTypes = g_malloc0(naxis*sizeof(ObitASDMPolnType));
+      b = next;
+      /* Find next non blank */
+      while (*b==' ') b++;
+      /* Cycle through values */
+      for (i=0; i<naxis; i++) {
+	/* Find next blank or '<' */
+	charLeft =  maxLine - (b-line);
+	for (j=0; j<charLeft; j++) {
+	  if ((b[j]==' ') || (b[j]=='<')) {
+	    b[j] = 0; break;
+	  }
+	}
+	out->rows[irow]->polarizationTypes[i] =  LookupPolnType(b);
+	b += j+1; /* Next value */
+      }
+      continue;
+    }
+    /* start time (days) */
+    prior = "<startValidTime>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->startValidTime = ASDMparse_time (line, maxLine, prior, &next);
+    }
+    /* end time (days) */
+    prior = "<endValidTime>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->endValidTime = ASDMparse_time (line, maxLine, prior, &next);
+    }
+    /* Ground pressure */
+    prior = "<groundPressure>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->groundPressure = ASDMparse_dbl (line, maxLine, prior, &next);
+    }
+    /* Ground relative humidity */
+    prior = "<groundRelHumidity>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->groundRelHumidity = ASDMparse_dbl (line, maxLine, prior, &next);
+    }
+    /* Ground temperature (K) */
+    prior = "<groundTemperature>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->groundTemperature = ASDMparse_int (line, maxLine, prior, &next);
+    }
+    /* Frequency range (Hz) */
+    prior = "<frequencyRange>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->frequencyRange = ASDMparse_dblarray (line, maxLine, prior, &next);
+    }
+    /* Atm. temp per receptor */
+    prior = "<tAtm>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->tAtm = ASDMparse_dblarray (line, maxLine, prior, &next);
+    }
+    /* Receiver temp. per receptor */
+    prior = "<tRec>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->tRec = ASDMparse_dblarray (line, maxLine, prior, &next);
+    }
+    /* System  temp. per receptor */
+    prior = "<tSys>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->tSys = ASDMparse_dblarray (line, maxLine, prior, &next);
+    }
+    /* Opacity per receptor */
+    prior = "<tau>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->tau = ASDMparse_dblarray (line, maxLine, prior, &next);
+    }
+    /* Water per receptor */
+    prior = "<water>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->water = ASDMparse_dblarray (line, maxLine, prior, &next);
+    }
+    /* Error in water, per receptor */
+    prior = "<waterError>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->waterError = ASDMparse_dblarray (line, maxLine, prior, &next);
+    }
+    /* forward efficiency, per receptor */
+    prior = "<forwardEfficiency>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->forwardEfficiency = ASDMparse_dblarray (line, maxLine, prior, &next);
+    }
+    /* sb(?) gain, per receptor  */
+    prior = "<sbGain>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->sbGain = ASDMparse_dblarray (line, maxLine, prior, &next);
+    }
+
+    /* Is this the end of a row? */
+    if (g_strstr_len (line, maxLine, endrow)!=NULL) irow++;
+
+    /* Check overflow */
+    Obit_retval_if_fail((irow<=out->nrows), err, out,
+			"%s: Found more rows than allocated (%d)", 
+			routine, out->nrows);
+  } /* end loop over table */
+
+  /* Close up */
+  retCode = ObitFileClose (file, err);
+  if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+  file = ObitFileUnref(file);
+
+  return out;
+} /* end ParseASDMcalAtmosphereTable */
+
+/** 
+ * Destructor for calAtmosphere table
+ * \param  structure to destroy
+ * \return NULL pointer
+ */
+static ASDMcalAtmosphereTable* KillASDMcalAtmosphereTable(ASDMcalAtmosphereTable* table)
+{
+  olong i;
+
+  if (table==NULL) return NULL;  /* Anybody home? */
+
+  /* Delete row structures */
+  if (table->rows) {
+    for (i=0; i<table->nrows; i++) 
+      table->rows[i] = KillASDMcalAtmosphereRow(table->rows[i]);
+    g_free(table->rows);
+  }
+  g_free(table);
+  return NULL;
+} /* end KillASDMcalAtmosphereTable */
 
 /* ----------------------  calData ----------------------------------- */
 /** 
@@ -5017,6 +5545,9 @@ static ASDMFeedTable* ParseASDMFeedTable(ObitSDMData *me,
       /* get number of values */
       naxis = (olong)strtol(b, &next, 10);
       out->rows[irow]->polarizationTypes = g_malloc0(naxis*sizeof(ObitASDMPolnType));
+      b = next;
+      /* Find next non blank */
+      while (*b==' ') b++;
      /* Cycle through values */
       for (i=0; i<naxis; i++) {
 	/* Find next blank or '<' */
@@ -7966,6 +8497,9 @@ static olong CountTableRows(gchar *CntFile, ObitErr *err)
 
   /* error checks */
   if (err->error) return out;
+
+  /* Check if it exists */
+  if (!ObitFileExist(CntFile, err)) return out;
 
   /* Create file structure */
   file = newObitFile("ASDM");

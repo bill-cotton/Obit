@@ -173,6 +173,8 @@ typedef struct {
   olong MainRows;
   /** Number of Antenna rows */
   olong AntennaRows;
+  /** Number of calAtmosphere rows */
+  olong calAtmosphereRows;
   /** Number of calData rows */
   olong calDataRows;
   /** Number of calDevice rows */
@@ -300,6 +302,64 @@ typedef struct {
   /** Array of ASDMAntenna rows */
   ASDMAntennaRow **rows;
 } ASDMAntennaTable;
+
+ /* ALMA CalAtmosphere Table, ignore spectra for now */
+typedef struct {
+  /** receiverBand */
+  olong receiverBand;
+  /** antenna name */
+  gchar *antennaName;
+  /** syscalType */
+  gchar *syscalType;
+  /** baseband Id */
+  olong basebandId;
+  /** number of frequencies */
+  olong numFreq;
+  /** number of Loads */
+  olong numLoad;
+  /** number of Receptors */
+  olong numReceptor;
+  /** calData Id */
+  olong calDataId ;
+  /**  cal reduction Id */
+  olong calReductionId ;
+  /** polarization types (1D array of poln enums) */
+  olong *polarizationTypes;
+  /** start time (days) */
+  odouble startValidTime;
+  /** end time (days) */
+  odouble endValidTime;
+  /** Ground pressure */
+  odouble groundPressure;
+  /** Ground relative humidity */
+  odouble groundRelHumidity;
+  /** Ground temperature (K) */
+  odouble groundTemperature;
+  /** Frequency range (Hz) */
+  odouble *frequencyRange;
+  /** Atm. temp per receptor */
+  odouble *tAtm;
+  /** Receiver temp. per receptor */
+  odouble *tRec ;
+  /** System  temp. at top of atmosphere per receptor */
+  odouble *tSys;
+  /** Opacity per receptor */
+  odouble *tau;
+  /** Water per receptor */
+  odouble *water;
+  /** Error in water, per receptor */
+  odouble *waterError;
+  /** forward efficiency, per receptor */
+  odouble *forwardEfficiency;
+  /** sb(?) gain, per receptor  */
+  odouble *sbGain;
+} ASDMcalAtmosphereRow;
+typedef struct {
+  /** Number of rows */
+  olong nrows;
+  /** Array of ASDMCalAtmosphere rows */
+  ASDMcalAtmosphereRow **rows;
+} ASDMcalAtmosphereTable;
 
  /* calData Table */
 typedef struct {

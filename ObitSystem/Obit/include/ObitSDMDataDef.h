@@ -46,6 +46,8 @@ ASDMTable* ASDMTab;
 ASDMMainTable* MainTab;
 /** Antenna table */
 ASDMAntennaTable* AntennaTab;
+/** calAtmosphere table */
+ASDMcalAtmosphereTable* calAtmosphereTab;
 /** calData table */
 ASDMcalDataTable* calDataTab;
 /** calDevice table */

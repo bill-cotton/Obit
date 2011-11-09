@@ -3502,7 +3502,7 @@ void ObitSkyModelSetSelect (ObitSkyModel* in, ObitUV* uvdata, ObitErr *err)
     /* Treat  single LL as RR */
     if ((iPoln==-2) && (nPoln==1)) iPoln = -1;
     /* Treat XX&YY as RR&LL */
-    if ((iPoln==-5) && (nPoln>=2)) iPoln = -1;
+    if (iPoln==-5) iPoln = -1;
     /* Treat  single YY as RR */
     if ((iPoln==-6) && (nPoln==1)) iPoln = -1;
   }

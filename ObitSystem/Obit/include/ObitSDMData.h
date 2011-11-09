@@ -397,6 +397,11 @@ ASDMPointingRow* ObitSDMDataPointingLookup(ObitSDMData *in, odouble JD, olong an
 ObitTableSN* ObitSDMDataWVR2SN (ObitUV *inUV, ObitSDMData *SDM,
 				ObitErr *err);
 
+/** Public: Convert ALMA Atmosphere data to SN table  */
+ObitTableSN* ObitSDMDataAtm2SN (ObitUV *inUV, ObitSDMData *SDM,
+				ASDMSpectralWindowArray* SpWinArray, 
+				ObitErr *err);
+
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

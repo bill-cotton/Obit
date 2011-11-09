@@ -73,11 +73,11 @@ olong *flagData;
 /** Have actualTimes data? */
 gboolean haveActualTimes;
 /** actualTimes data for integration */
-olong *actualTimesData;
+ofloat *actualTimesData;
 /** Have actualDurations data? */
 gboolean haveActualDurations;
 /** actualDurations data for integration */
-olong *actualDurationsData;
+ofloat *actualDurationsData;
 /** Have weight data? */
 gboolean haveWeight;
 /** Weight data for integration */
@@ -90,6 +90,10 @@ ofloat *zeroLagData;
 ObitUVDesc *desc;
 /** Number of integrations in scan - not in BDF */
 olong numInteg;
+/** Number of Times */
+olong numTime;
+/** current Time index  */
+olong currTimeIndx;
 /** Number of Baselines */
 olong numBaseline;
 /** current  Baseline  */
