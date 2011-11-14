@@ -28,7 +28,7 @@ try:
     logging.config.fileConfig("logging.conf")
     logger = logging.getLogger("obitLog.VLBAContPipe")
 except NoSectionError, e:
-    logging.basicConfig(filename="VLBAContPipeWrap.log", level=logging.DEBUG)
+    logging.basicConfig(filename="VLBAContPipe.log", level=logging.DEBUG)
     logger = logging
     logger.error("CANNOT FIND logging.conf. USING BASIC LOGGING CONFIG INSTEAD.")
     print "CANNOT FIND logging.conf. USING BASIC LOGGING CONFIG INSTEAD."
@@ -732,4 +732,13 @@ if __name__ == '__main__':
     if len(args) != 2:
         parser.print_help()
         sys.exit()
-    pipeline( args[0] , args[1] )
+    try:
+        pipeline( args[0] , args[1] )
+    finally:
+        # If using python version < 2.5, prevent logging module error at exit
+        if sys.version_info < (2,5):
+            try:
+                logging.shutdown()
+            except KeyError, e:
+                print("Catching known logging module error for " +
+                    "python version < 2.5. ")
