@@ -921,8 +921,8 @@ def validate( dataDir, archDir = '../archive',
         logger.info("Removing pre-existing data: " + newDataDir)
         shutil.rmtree( newDataDir )
     logger.info("Moving data to archive staging area:\n  " +
-        dataDir + " --> " + archDir )
-    shutil.move( dataDir, archDir )
+        dataDir + " --> " + newDataDir )
+    shutil.move( dataDir, newDataDir )
    
     # Set group and group read/write/access permissions in staging area
     if group:
