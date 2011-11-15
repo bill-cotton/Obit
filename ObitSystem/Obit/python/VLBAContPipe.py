@@ -380,6 +380,12 @@ def pipeline( aipsSetup, parmFile ):
         if retCode!=0:
             raise RuntimeError,"Error in phase calibration"
         VLBASaveOutFiles() # Save plot file in Outfiles
+        # Rewrite contCals pickle file because contCals may have been updated
+        SaveObject(parms["contCals"], OKCalPicklefile, True)
+        if len( parms["contCals"] ) <= 0:
+            logger.error("No calibrator sources have been detected! Stopping pipeline.")
+            raise RuntimeError, "No calibrator sources have been detected!"
+       
         
     # Amplitude calibration
     if parms["doAmpCal"] and not check:
@@ -395,6 +401,12 @@ def pipeline( aipsSetup, parmFile ):
         if retCode!=0:
             raise RuntimeError,"Error in amplitude calibration"
         VLBASaveOutFiles() # Save plot file in Outfiles
+        # Rewrite contCals pickle file because contCals may have been updated
+        SaveObject(parms["contCals"], OKCalPicklefile, True)
+        if len( parms["contCals"] ) <= 0:
+            logger.error("No calibrator sources have been detected! Stopping pipeline.")
+            raise RuntimeError, "No calibrator sources have been detected!"
+       
         
     # Calibrate and average  data
     if parms["doCalAvg"]:
@@ -455,6 +467,12 @@ def pipeline( aipsSetup, parmFile ):
         if retCode!=0:
             raise RuntimeError,"Error in phase calibration"
         VLBASaveOutFiles() # Save plot file in Outfiles
+        # Rewrite targets pickle file because targets may have been updated
+        SaveObject(parms["targets"], targetsPicklefile, True)
+        if len( parms["targets"] ) <= 0:
+            logger.error("No target sources have been detected! Stopping pipeline.")
+            raise RuntimeError, "No target sources have been detected!"
+       
         
     # Instrumental polarization calibration
     if parms["doInstPol"]:
@@ -708,11 +726,6 @@ def pipeline( aipsSetup, parmFile ):
         uvc.Zap(err)
         OErr.printErrMsg(err, "Writing output/cleanup")
 
-    # Validate outfiles: check that outfiles is consistent with CWD
-    if not VLBAValidOutfiles():
-        raise DataProductError('Expected data products (outfiles.pickle) and ' +
-            'current working directory are inconsistent.')
-    
     # Shutdown
     mess = "Finished project "+project
     printMess(mess, logFile)

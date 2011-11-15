@@ -2343,6 +2343,7 @@ def VLBAImageTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", \
     * err        = Python Obit Error/message stack
     * Sources    = Source name or list of names to use
       If an empty list all sources in uv are included
+      May be modified on failure of a source
     * seq        = sequence number of output
     * sclass     = Image output class
     * FreqID     = Frequency group identifier
@@ -2823,8 +2824,9 @@ def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0,
             print exception
             logger.warn("Calib failed with retCode= " + str(calib.retCode) +
                 " for source " + cal)
-            # If calib failed, remove calsou from calSou
-            if (calib.retCode != 0) and (type(calSou) == list):
+            # If calib failed, remove cal from calSou
+            if (calib.retCode != 0) and (type(calSou) == list) \
+                   and (type(cal) == str) and (cal in calSou):
                 logger.warn("Removing source " + cal + " from source list.")
                 calSou.remove( cal )
         else:
@@ -2954,6 +2956,7 @@ def VLBAPhaseCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0/60.0, doSmo
 
     * err        = Python Obit Error/message stack
     * calSou     = Source name or list of names to use
+      May be modified on failure of a source
     * CalModel = python dict with image model dicts keyed on calibrator name
       image object = "Image". also optional:
 
@@ -3088,9 +3091,14 @@ def VLBAPhaseCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0/60.0, doSmo
                 calib.g
         except Exception, exception:
             print exception
-            mess = "Calib Failed retCode= "+str(calib.retCode)
-            printMess(mess, logfile)
-            return None
+            mess = "Calib Failed retCode= "+str(calib.retCode)+" for "+calsou
+            logger.warn("Calib failed with retCode= " + str(calib.retCode) +
+                " for source " + cal)
+            # If calib failed, remove calsou from calSou
+            if (calib.retCode != 0) and (type(calSou) == list) \
+                   and (type(calsou) == str) and (calsou in calSou):
+                logger.warn("Removing source " + cal + " from source list.")
+                calSou.remove( calsou )
         else:
             pass
         # Setup for next if looping
@@ -3633,7 +3641,7 @@ def VLBASNOKSou(uv, SNver, minOKFract, err, logfile='', check=False, debug=False
 
     # List of names
     outList = []
-    for s in souList:
+    for s in souOK:
         outList.append("            ") # default
     # Lookup source name if SU table present
     hiSU = uv.GetHighVer("AIPS SU")
@@ -3658,9 +3666,9 @@ def VLBASNOKSou(uv, SNver, minOKFract, err, logfile='', check=False, debug=False
                 printMess(mess, logfile)
            # Lookup
             ii = -1
-            for isou in range(0, len(souList)):
+            for isou in range(0, len(souOK)):
                 ii += 1
-                if int(souList[ii]) == curSouID:
+                if int(souOK[ii]) == curSouID:
                     outList[ii] = SUrow["SOURCE"][0].strip()
                     break
         # end loop over table

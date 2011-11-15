@@ -141,6 +141,10 @@ def pipeWrap( startDate, endDate, options ):
             for s in cmd: cmdStr += s + ' '
             logger.info("Command: " + cmdStr)
             subprocess.check_call( cmd )
+            # Validate outfiles: check that outfiles is consistent with CWD
+            if not VLBAValidOutfiles():
+                logging.warn('Expected data products (outfiles.pickle) and current ' + 
+                    'working directory are inconsistent.')
             # Copy files to check dir
             projCheckDir = checkDir + '/' + dirName
             copyFiles( outfilesPickle, projCheckDir )
