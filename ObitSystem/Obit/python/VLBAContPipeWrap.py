@@ -310,11 +310,20 @@ if __name__ == "__main__":
     parser.add_option( '-i', '--fitsidi', action="store_true", default=False,
         help="Download and fill FITS IDI files (default is FITS AIPS)" )
     (options, args) = parser.parse_args()
-    if len(args) < 1: 
-        logger.critical("Too few arguments given")
-        parser.print_help()
-        sys.exit()
-    elif len(args) == 1:
-        pipeWrap( args[0], args[0], options)
-    else:
-        pipeWrap( args[0], args[1], options)
+    try:
+        if len(args) < 1: 
+            logger.critical("Too few arguments given")
+            parser.print_help()
+            sys.exit()
+        elif len(args) == 1:
+            pipeWrap( args[0], args[0], options)
+        else:
+            pipeWrap( args[0], args[1], options)
+    finally:
+        # If using python version < 2.5, prevent logging module error at exit
+        if sys.version_info < (2,5):
+            try:
+                logging.shutdown()
+            except KeyError, e:
+                print("Catching known logging module error for " +
+                    "python version < 2.5. ")
