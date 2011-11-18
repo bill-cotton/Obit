@@ -83,7 +83,6 @@ int main ( int argc, char **argv )
   oint         ierr = 0;
   ObitSystem   *mySystem= NULL;
   ObitErr      *err= NULL;
-  olong        numImage;
   olong         i;
 
    /* Startup - parse command line */
@@ -112,7 +111,7 @@ int main ( int argc, char **argv )
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* cleanup */
-  for (i=0; i<<numImage; i++) {
+  for (i=0; i<nImage; i++) {
     inImage[i] = ObitImageUnref(inImage[i]);
   }
   outImage    = ObitImageUnref(outImage);
@@ -848,7 +847,7 @@ void doComBeam (ObitInfoList *myInput, ObitErr *err)
 /*----------------------------------------------------------------------- */
 /*  Write history                                                         */
 /*  Values:                                                               */
-/*      numImage  Number of images in inImage                             */
+/*      nImage    Number of images in inImage                             */
 /*      inImage   Array of ObitImage pointers                             */
 /*      outImage  Output ObitImage pointer                                */
 /*      err       Obit error/message stack                                */

@@ -39,6 +39,7 @@
 #include "ObitPBUtil.h"
 #include "ObitMem.h"
 #include "ObitSinCos.h"
+#include "ObitExp.h"
 #include "ObitImageMF.h"
 #include "ObitBeamShape.h"
 #include "ObitSpectrumFit.h"
@@ -786,8 +787,9 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
     }
   } /* end initialize */
 
-  /* Init Sine/Cosine calculator - just to be sure about threading */
+  /* Init Sine/Cosine calculator, exp calculator - just to be sure about threading */
   ObitSinCosCalc(phase, &sp, &cp);
+  ObitExpCalc(phase);
 
   /* Create spectrum info arrays */
   nSpec = 1;
@@ -1658,6 +1660,7 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
   ofloat amp, arg, freq2, freqFact, wt=0.0, temp;
 #define FazArrSize 100  /* Size of the amp/phase/sine/cosine arrays */
   ofloat AmpArr[FazArrSize], FazArr[FazArrSize], CosArr[FazArrSize], SinArr[FazArrSize];
+  ofloat ExpArg[FazArrSize],  ExpVal[FazArrSize];
   olong it, jt, itcnt, ifq, itab;
   odouble tx, ty, tz, sumReal, sumImag, *freqArr;
   gchar *routine = "ThreadSkyModelMFFTDFT";
@@ -1810,11 +1813,11 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 		arg = freq2 * (ccData[4]*visData[ilocu]*visData[ilocu] +
 			       ccData[5]*visData[ilocv]*visData[ilocv] +
 			       ccData[6]*visData[ilocu]*visData[ilocv]);
-		if (arg<-1.0e-5) amp = ccData[0] * exp (arg);
-		else amp = ccData[0];
+		amp = ccData[0];
 		tx = ccData[1]*(odouble)visData[ilocu];
 		ty = ccData[2]*(odouble)visData[ilocv];
 		tz = ccData[3]*(odouble)visData[ilocw];
+		ExpArg[itcnt] = -arg;
 		FazArr[itcnt] = freqFact * (tx + ty + tz);
 		AmpArr[itcnt] = amp;
 	      } /* end if valid */
@@ -1825,10 +1828,12 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	    
 	    /* Convert phases to sin/cos */
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	    /* Convert Gaussian exp arguments */
+	    ObitExpVec(itcnt, ExpArg, ExpVal);
 	    /* Accumulate real and imaginary parts */
 	    for (jt=0; jt<itcnt; jt++) {
-	      sumReal += AmpArr[jt]*CosArr[jt];
-	      sumImag += AmpArr[jt]*SinArr[jt];
+	      sumReal += ExpVal[jt]*AmpArr[jt]*CosArr[jt];
+	      sumImag += ExpVal[jt]*AmpArr[jt]*SinArr[jt];
 	    }
 	  } /*end outer loop over components */
 	  break;
@@ -1842,11 +1847,11 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 		arg = freq2 * (ccData[4]*visData[ilocu]*visData[ilocu] +
 			       ccData[5]*visData[ilocv]*visData[ilocv] +
 			       ccData[6]*visData[ilocu]*visData[ilocv]);
-		if (arg<-1.0e-5) amp = ccData[itab] * exp (arg);
-		else amp = ccData[itab];
+		amp = ccData[itab];
 		tx = ccData[1]*(odouble)visData[ilocu];
 		ty = ccData[2]*(odouble)visData[ilocv];
 		tz = ccData[3]*(odouble)visData[ilocw];
+		ExpArg[itcnt]  = -arg;
 		FazArr[itcnt] = freqFact * (tx + ty + tz);
 		AmpArr[itcnt] = amp;
 	      } /* end if valid */
@@ -1857,10 +1862,12 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	    
 	    /* Convert phases to sin/cos */
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	    /* Convert Gaussian exp arguments */
+	    ObitExpVec(itcnt, ExpArg, ExpVal);
 	    /* Accumulate real and imaginary parts */
 	    for (jt=0; jt<itcnt; jt++) {
-	      sumReal += AmpArr[jt]*CosArr[jt];
-	      sumImag += AmpArr[jt]*SinArr[jt];
+	      sumReal += ExpVal[jt]*AmpArr[jt]*CosArr[jt];
+	      sumImag += ExpVal[jt]*AmpArr[jt]*SinArr[jt];
 	    }
 	  } /* end outer loop over components */
 	  break;

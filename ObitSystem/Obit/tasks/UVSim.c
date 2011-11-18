@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Simulate UV data                                                   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2010                                          */
+/*;  Copyright (C) 2009-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -891,7 +891,7 @@ void GetHeader (ObitUV *outData, ObitInfoList *myInput, ObitErr *err)
   ObitTableAN *ANTable=NULL;
   olong ncol;
   gchar *today=NULL;
-  olong numIF, numOrb,  numPCal;
+  olong numIF=1, numOrb,  numPCal;
   ObitIOAccess access;
   olong ver;
   ObitInfoType type;

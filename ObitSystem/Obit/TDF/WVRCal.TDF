@@ -77,6 +77,8 @@ solInt2           0.0               Solution interval (min)
 solnVer                             SN table to write
 **PARAM** int 1
 refAnt                              Reference antenna 0=>pick.
+**PARAM** boo 1 **DEF** F
+doFlip                              Flip sign of corrections
 **PARAM** int 1
 prtLv             0.0               Print level in selfcal
 **PARAM** int 1 **DEF** 1
@@ -161,6 +163,10 @@ Adverbs:
   refAnt.....Reference antenna to use.  All phase-like values in the
              combined SN table will be referenced to this antenna. 
              0 => lowest antenna number with valid data.
+  doFlip.....ALMA occasionally changes their phase sign conventions.
+             Depending on which way was used in your data, 
+             you may need this True or False.  Use whichever one
+             best flattens the phase on a calibrator.
   prtLv......Diagnostic level in solution, 0=>none [def. 0]
   nThreads...If the Obit libraries are compiled with multiple
              thread operation enabled, this parameter sets the 

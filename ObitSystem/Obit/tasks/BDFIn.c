@@ -1845,7 +1845,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   olong iMain, iInteg, ScanId=0, SubscanId=0, i, j, jj, iBB, selChan, selIF, selConfig, 
     iSW, jSW, kBB, nIFsel, cntDrop=0, ver, iRow, sourId=0, iIntent, iScan;
   olong lastScan=-1, lastSubscan=-1, ScanTabRow=-1, numIntegration;
-  ofloat *Buffer=NULL, tlast=-1.0e20, startTime, endTime;
+  ofloat *Buffer=NULL, tlast=-1.0e20, startTime=0.0, endTime=0.0;
   ObitUVDesc *desc;
   ObitTableNX* NXtable;
   ObitTableNXRow* NXrow=NULL;

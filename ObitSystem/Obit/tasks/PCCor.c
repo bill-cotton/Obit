@@ -1055,11 +1055,11 @@ void PC2SN (ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
   ObitTablePC *PCin=NULL;
   ObitTablePCRow *PCrow=NULL;
   olong SNver, iSNRow, iPCRow, itemp, n2pi;
-  oint numPol, numIF, numBand=0, numTones=0;
+  oint numPol=1, numIF, numBand=0, numTones=0;
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitIOCode retCode;
-  odouble dPhase, delay, addDelay1, addDelay2, DFreq, *IFFreq;
+  odouble dPhase, delay=0.0, addDelay1=0.0, addDelay2=0.0, DFreq, *IFFreq;
   ofloat temp, phz, phase, fblank = ObitMagicF();
   odouble refFreq, CabCor;
   gboolean doCabCor=FALSE, doZeroMB=FALSE;

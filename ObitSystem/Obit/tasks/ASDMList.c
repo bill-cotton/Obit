@@ -373,7 +373,7 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
   ASDMAntennaArray*  AntArray;
   ASDMSourceArray*   SourceArray;
   olong        iScan, iIntent, iConfig, configID, dataDescriptionId;
-  olong        i, ii, doCrt, LinesPerPage, iDD, jDD, jSW;
+  olong        i, ii, doCrt, LinesPerPage=0, iDD, jDD, jSW;
   olong        spectralWindowId, ScanID, iMain, iSource;
   gchar        *routine = "Summary";
 

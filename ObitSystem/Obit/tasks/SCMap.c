@@ -1519,7 +1519,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   ofloat       solInt, minFlux=0.0;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean     Fl = FALSE, Tr = TRUE, init=TRUE, doRestore, doFlatten, doSC;
-  gboolean     btemp, noNeg, noSCNeed, reimage, didSC, imgOK=FALSE, converged = FALSE;
+  gboolean     btemp, noNeg, noSCNeed, reimage, didSC=FALSE, imgOK=FALSE, converged = FALSE;
   gchar        Stokes[5], soltyp[5], solmod[5], stemp[5];
   gchar        *SCParms[] = {  /* Self parameters */
     "maxSCLoop", "minFluxPSC", "minFluxASC", "refAnt", 

@@ -657,7 +657,7 @@ def _allocate_popsno():
         # POPSNO.
         try:
             path = '/tmp/Obit' + ehex(popsno, 1, 0) + '.' + str(os.getpid())
-            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0666)
+            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0644)
             os.close(fd)
         except:
             continue
@@ -667,6 +667,11 @@ def _allocate_popsno():
         files = glob.glob('/tmp/Obit' + ehex(popsno, 1, 0) + '.[0-9]*')
         files.remove(path)
         for file in files:
+            #print "DEBUG try lock file ",file
+            # If I can't write it it probably not mine
+            if not os.access(file, os.W_OK):
+                #print "DEBUG write access failed for ",file
+                break
             # If the part after the dot isn't an integer, it's not a
             # proper lock file.
             try:
@@ -681,6 +686,7 @@ def _allocate_popsno():
                 # The POPS number is no longer in use.  Try to clean
                 # up the lock file.  This might fail though if we
                 # don't own it.
+                #print "DEBUG kill 0 failed for ",pid
                 try:
                     os.unlink(file)
                 except:
@@ -688,8 +694,10 @@ def _allocate_popsno():
             else:
                 # The POPS number is in use.
                 break
+            
         else:
             # The POPS number is still free.
+            #print "DEBUG assign popsno ",popsno
             return popsno
 
         # Clean up our own mess.

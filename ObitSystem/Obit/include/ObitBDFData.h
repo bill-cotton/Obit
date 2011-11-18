@@ -183,7 +183,7 @@ typedef enum obitBDFEndian ObitBDFEndian;
 
 /*----------------- Macroes ---------------------------*/
 /** Granularity of buffer operations (frame size) */
-#define BDFBUFFERSIZE 2048
+#define BDFBUFFERSIZE 16384
 /** Number of frames in buffer */
 #define BDFBUFFERFRAMES 32
 /** Maximum number of BasebandInfo structs */

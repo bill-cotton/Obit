@@ -2166,7 +2166,7 @@ static ObitBDFMIMEType GetNextMIME(ObitBDFData *in,
   ObitIOCode retCode;
   gchar *prior, *tstr;
   olong maxStr;
-  gboolean isData, isHeader;
+  gboolean isData, isHeader, warn;
   gchar *dataType  = "\nContent-Type: application/octet-stream\n";
   gchar *headerType = "\nContent-Type: text/xml; charset=utf-8\n";
   gchar *routine = "GetNextMIME";
@@ -2178,8 +2178,29 @@ static ObitBDFMIMEType GetNextMIME(ObitBDFData *in,
   maxStr    = in->nBytesInBuffer - (olong)(last-in->buffer);
   prior = "--MIME_boundary-2";
   tstr = g_strstr_len (last, maxStr, prior);
-  Obit_retval_if_fail((tstr!=NULL), err, out,
-		      "%s: Could not find next binary block ", routine);
+  /* Possibly junk in file */
+  warn = TRUE;
+  while (tstr==NULL) {
+    /* Tell about it */
+    if (warn) {
+     Obit_log_error(err, OBIT_InfoWarn, 
+		   "Confused or trashed file");
+     warn = FALSE;
+    }
+    in->current = in->buffer+(BDFBUFFERSIZE-1)*BDFBUFFERFRAMES; /* to end */
+    retCode = ObitBDFDataFillBuffer (in, err);
+    if (err->error) Obit_traceback_val (err, routine, in->name, out);
+    /* Skip this buffer load */
+    last = in->current;
+    maxStr = in->nBytesInBuffer - (olong)(last-in->buffer);
+    /* Has the entire file been read and no start info - then something is wrong */
+    if (retCode==OBIT_IO_EOF) {
+      Obit_log_error(err, OBIT_InfoWarn, 
+		     "Hit EOF before next MIME block");
+      return out;
+    }
+    tstr = g_strstr_len (last, maxStr, prior);
+  }
   *start = tstr + strlen(prior);
 
   /* if found - see what type */

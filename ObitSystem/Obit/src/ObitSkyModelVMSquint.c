@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2009                                          */
+/*;  Copyright (C) 2006-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -38,6 +38,7 @@
 #include "ObitTableANUtil.h"
 #include "ObitSkyGeom.h"
 #include "ObitSinCos.h"
+#include "ObitExp.h"
 #ifndef VELIGHT
 #define VELIGHT 2.997924562e8
 #endif /* VELIGHT */
@@ -421,8 +422,9 @@ void ObitSkyModelVMSquintInitMod (ObitSkyModel* inn, ObitUV *uvdata,
   /* Precess to get Apparent position */
   ObitPrecessUVJPrecessApp (uvdata->myDesc, in->curSource);
 
-  /* Init Sine/Cosine calculator - just to be sure about threading */
+  /* Init Sine/Cosine, exp calculator - just to be sure about threading */
   ObitSinCosCalc(phase, &sp, &cp);
+  ObitExpCalc(phase);
 
 } /* end ObitSkyModelVMSquintInitMod */
 
@@ -1136,6 +1138,7 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
 #define FazArrSize 100  /* Size of the amp/phase/sine/cosine arrays */
   ofloat AmpArrR[FazArrSize], AmpArrL[FazArrSize], FazArr[FazArrSize];
   ofloat CosArr[FazArrSize], SinArr[FazArrSize];
+  ofloat ExpArgR[FazArrSize],  ExpValR[FazArrSize], ExpArgL[FazArrSize],  ExpValL[FazArrSize];
   olong it, jt, itcnt;
   ofloat ampr, ampl, arg, freq2, freqFact, wtRR=0.0, wtLL=0.0, temp;
   odouble *freqArr;
@@ -1273,22 +1276,21 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
 	  break;
 	case OBIT_SkyModel_GaussMod:     /* Gaussian on sky */
 	  /* From the AIPSish QGASUB.FOR  */
-	  freq2 = freqArr[iIF*kincif + iChannel*kincf];    /* Frequency squared */
-	  freq2 *= freq2;
+	  /* freq2 = freqArr[iIF*kincif + iChannel*kincf];    Frequency squared */
+	  freq2 = freqFact * freqFact;    /* Frequency factor squared */
 	  for (it=0; it<mcomp; it+=FazArrSize) {
 	    itcnt = 0;
 	    for (iComp=it; iComp<mcomp; iComp++) {
 	      FazArr[itcnt] = freqFact * (ddata[4]*visData[ilocu] + 
 					  ddata[5]*visData[ilocv] + 
 					  ddata[6]*visData[ilocw]);
-	      arg = freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
-			     ddata[8]*visData[ilocv]*visData[ilocv] +
-			     ddata[9]*visData[ilocu]*visData[ilocv]);
+	      ExpArgR[itcnt] = -freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
+					ddata[8]*visData[ilocv]*visData[ilocv] +
+					ddata[9]*visData[ilocu]*visData[ilocv]);
 	      ampr = ddata[3] * rgain1[iComp] * rgain2[iComp];
-	      if (arg>1.0e-5) ampr *= exp (arg);
-	      arg = freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
-			     ddata[8]*visData[ilocv]*visData[ilocv] +
-			     ddata[9]*visData[ilocu]*visData[ilocv]);
+	      ExpArgL[itcnt] = -freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
+					 ddata[8]*visData[ilocv]*visData[ilocv] +
+					 ddata[9]*visData[ilocu]*visData[ilocv]);
 	      ampl = ddata[3] * lgain1[iComp] * lgain2[iComp];
 	      if (arg>1.0e-5) ampl *= exp (arg);
 	      AmpArrR[itcnt] = ampr;
@@ -1300,12 +1302,15 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
 	    
 	    /* Convert phases to sin/cos */
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	    /* Convert Gaussian exp arguments */
+	    ObitExpVec(itcnt, ExpArgR, ExpValR);
+	    ObitExpVec(itcnt, ExpArgL, ExpValL);
 	    /* Accumulate real and imaginary parts */
 	    for (jt=0; jt<itcnt; jt++) {
-	      sumRealRR += AmpArrR[jt]*CosArr[jt];
-	      sumImagRR += AmpArrR[jt]*SinArr[jt];
-	      sumRealLL += AmpArrL[jt]*CosArr[jt];
-	      sumImagLL += AmpArrL[jt]*SinArr[jt];
+	      sumRealRR += AmpArrR[jt]*CosArr[jt]*ExpValR[jt];
+	      sumImagRR += AmpArrR[jt]*SinArr[jt]*ExpValR[jt];
+	      sumRealLL += AmpArrL[jt]*CosArr[jt]*ExpValL[jt];
+	      sumImagLL += AmpArrL[jt]*SinArr[jt]*ExpValL[jt];
 	    } /* End loop over amp/phase buffer */
 	  } /* end outer loop over components */
 	  break;

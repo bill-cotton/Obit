@@ -35,6 +35,7 @@
 #include "ObitPBUtil.h"
 #include "ObitMem.h"
 #include "ObitSinCos.h"
+#include "ObitExp.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -300,8 +301,9 @@ void ObitSkyModelVMInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
       args->VMComps = NULL;
     }/* end initialize */
   }
-  /* Init Sine/Cosine calculator - just to be sure about threading */
+  /* Init Sine/Cosine, exp calculator - just to be sure about threading */
   ObitSinCosCalc(phase, &sp, &cp);
+  ObitExpCalc(phase);
 
 } /* end ObitSkyModelVMInitMod */
 
@@ -1175,6 +1177,7 @@ static gpointer ThreadSkyModelVMFTDFT (gpointer args)
 #define FazArrSize 100  /* Size of the amp/phase/sine/cosine arrays */
   ofloat AmpArr[FazArrSize], FazArr[FazArrSize];
   ofloat CosArr[FazArrSize], SinArr[FazArrSize];
+  ofloat ExpArg[FazArrSize],  ExpVal[FazArrSize];
   olong it, jt, itcnt;
   const ObitSkyModelVMClassInfo 
     *myClass=(const ObitSkyModelVMClassInfo*)in->ClassInfo;
@@ -1299,7 +1302,7 @@ static gpointer ThreadSkyModelVMFTDFT (gpointer args)
 			     ccData[5]*visData[ilocv]*visData[ilocv] +
 			     ccData[6]*visData[ilocu]*visData[ilocv]);
 	      amp = ccData[0];
-	      if (arg<-1.0e-5) amp *= exp (arg);
+	      ExpArg[itcnt]  = -arg;
 	      tx = ccData[1]*(odouble)visData[ilocu];
 	      ty = ccData[2]*(odouble)visData[ilocv];
 	      tz = ccData[3]*(odouble)visData[ilocw];
@@ -1312,10 +1315,12 @@ static gpointer ThreadSkyModelVMFTDFT (gpointer args)
 	    
 	    /* Convert phases to sin/cos */
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	    /* Convert Gaussian exp arguments */
+	    ObitExpVec(itcnt, ExpArg, ExpVal);
 	    /* Accumulate real and imaginary parts */
 	    for (jt=0; jt<itcnt; jt++) {
-	      sumReal += AmpArr[jt]*CosArr[jt];
-	      sumImag += AmpArr[jt]*SinArr[jt];
+	      sumReal += ExpVal[jt]*AmpArr[jt]*CosArr[jt];
+	      sumImag += ExpVal[jt]*AmpArr[jt]*SinArr[jt];
 	    }
 	  } /* end outer loop over components */
 	  break;

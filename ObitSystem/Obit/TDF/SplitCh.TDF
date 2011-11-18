@@ -4,7 +4,7 @@
 ;! Split UV data channels to multiple output files
 ;# Task UV  Obit 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2008,2010
+;;  Copyright (C) 2008-2011
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -56,9 +56,9 @@ Stokes                              Stokes to process
 **PARAM** int 1
 FreqID                              Freq. ID to select.
 **PARAM** int 1
-BChan            0.0     8192.0     Low freq. channel 
+BChan            0.0    65536.0     Low freq. channel 
 **PARAM** int 1
-EChan            0.0     8192.0     Highest freq channel
+EChan            0.0    65536.0     Highest freq channel
 **PARAM** int 1
 BIF               0.0     9999.0    First IF (0=>1)
 **PARAM** int 1

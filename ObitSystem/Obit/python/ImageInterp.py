@@ -171,7 +171,7 @@ def PCreate (name, image, err, hwidth=1):
     if not OErr.OErrIsA(err):
         raise TypeError,"err MUST be an OErr"
     #
-    out = ImageInterp("None",image=image.me,hwidth=hwidth,err=err.me);
+    out = ImageInterp("None",image=image,hwidth=hwidth,err=err);
     out.me = Obit.ImageInterpCreate(name, image.me, hwidth, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error creating beam object")

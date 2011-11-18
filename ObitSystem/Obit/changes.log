@@ -112,32 +112,62 @@ svn add \
   Obit/TDF/WVRCal.TDF  Obit/tasks/WVRCal.c \
   Obit/include/ObitWVRCoef.h Obit/src/ObitWVRCoef.c
 
-  Obit/src/ObitInfoList.c:
-    Rename: fix bug copying elements
-  Obit/include/ObitBDFDataDef.h:
-    Fixes to trap ALMA bugs
-  Obit/src/ObitSDMData.c:
-    CountTableRows: If the table doesn't exist, then no. rows=0
-    Trap ALMA bugs
-    Implement calAtmosphere table
-    New routine Atm2SN to convert calAtmosphere table to SN.
-  Obit/include/ObitSDMDataTypeDef.h Obit/include/ObitSDMDataDef.h:
-    Implement calAtmosphere table
-  Obit/include/ObitSDMData.h:
-    Add ObitSDMDataAtm2SN
-  Obit/src/ObitBDFData.c:
-    InitScan: Trap ALMA pathology, no poln axis
-    Trap ALMA bugs
-  Obit/tasks/BDFIn.c:
-    Do not give message about converting ALMA WVR table unless it exists
-    Trap ALMA bugs
-    Convert ALMA CalAtmosphere table to SN table.
-  Obit/src/ObitSkyModel.c:
-    SetSelect: Handle single XX dataset
-  Obit/tasks/ASDMList.c:
-    Properly handle "Quit" for interactive use.
-  Obit/TDF/WVRCal.TDF  Obit/tasks/WVRCal.c:
-  Obit/include/ObitWVRCoef.h Obit/src/ObitWVRCoef.c:
-    New task/utility for ALMA WVR phase calibration
+Obit/src/ObitInfoList.c:
+  Rename: fix bug copying elements
+Obit/include/ObitBDFDataDef.h:
+  Fixes to trap ALMA bugs
+Obit/src/ObitSDMData.c:
+  CountTableRows: If the table doesn't exist, then no. rows=0
+  Trap ALMA bugs
+  Implement calAtmosphere table
+  New routine Atm2SN to convert calAtmosphere table to SN.
+Obit/include/ObitSDMDataTypeDef.h Obit/include/ObitSDMDataDef.h:
+  Implement calAtmosphere table
+Obit/include/ObitSDMData.h:
+  Add ObitSDMDataAtm2SN
+Obit/src/ObitBDFData.c:
+  InitScan: Trap ALMA pathology, no poln axis
+  Trap ALMA bugs
+Obit/tasks/BDFIn.c:
+  Do not give message about converting ALMA WVR table unless it exists
+  Trap ALMA bugs
+  Convert ALMA CalAtmosphere table to SN table.
+Obit/src/ObitSkyModel.c:
+  SetSelect: Handle single XX dataset
+Obit/tasks/ASDMList.c:
+  Properly handle "Quit" for interactive use.
+Obit/TDF/WVRCal.TDF  Obit/tasks/WVRCal.c:
+Obit/include/ObitWVRCoef.h Obit/src/ObitWVRCoef.c:
+  New task/utility for ALMA WVR phase calibration
 9 Nov 2011, svn version 391, W. Cotton
 
+ObitVersion:
+Obit/changes.log:
+Obit/tasks/WVRCal.c Obit/TDF/WVRCal.TDF:
+  Change includes for libair routine.
+  Add doFlip option to match whatever phase sign convention is
+  used in the data.
+ObitTalk/python/Proxy/ObitTask.py ObitTalk/python/Proxy/AIPSTask.py:
+  _allocate_popsno: fix bug in determining is a POPS number were in use
+Obit/python/ImageInterp.py:
+  PCreate: fix bugs in call to creator.
+Obit/src/ObitThread.c:
+  Iterator: fix constant overflow
+Obit/tasks/MapBeam.c:
+  lagrange: fix logic.
+Obit/tasks/ASDMList.c Obit/tasks/BDFIn.c Obit/tasks/ComBeam.c 
+Obit/tasks/GetJy.c Obit/tasks/PCCor.c Obit/tasks/SCMap.c Obit/tasks/UVSim.c:
+  initialize variables
+Obit/src/ObitIOImageFITS.c:
+  KeysOtherRead: Don't delete old descriptor infoList
+Obit/src/ObitSkyModelVMSquint.c Obit/src/ObitSkyModelVM.c Obit/src/ObitSkyModelMF.c:
+  ThreadFTDFT: Gaussian: correct calculation of Gaussian
+  Update DFT Gaussian calculation to fast exp
+Obit/src/ObitBDFData.c Obit/include/ObitBDFData.h:
+  Bigger buffer, trap trashy ALMA files.
+Obit/TDF/Split.TDF Obit/TDF/SplitCh.TDF Obit/TDF/Splat.TDF:
+Obit/TDF/Hann.TDF Obit/TDF/Lister.TDF Obit/TDF/BPass.TDF:
+Obit/TDF/Imager.TDF  Obit/TDF/Calib.TDF  Obit/TDF/RLPass.TDF :
+Obit/TDF/UVBlAvg.TDF  :
+  Larger range of selected channels.
+18 Nov 2001, version 397

@@ -2164,9 +2164,9 @@ void  ObitIOImageKeysOtherRead(ObitIOImageFITS *in, olong *lstatus,
   if (*lstatus) return;  /* existing error? */
   status = (int)(*lstatus);
 
-  /* delete old InfoList and restart */
+  /* delete old InfoList and restart - BAD IDEA 
   ((ObitImageDesc*)in->myDesc)->info = ObitInfoListUnref (((ObitImageDesc*)in->myDesc)->info);
-  ((ObitImageDesc*)in->myDesc)->info = (gpointer)newObitInfoList ();
+  ((ObitImageDesc*)in->myDesc)->info = (gpointer)newObitInfoList (); */
   desc = in->myDesc; /* set descriptor */
 
   /* get number and length of exclusion strings */

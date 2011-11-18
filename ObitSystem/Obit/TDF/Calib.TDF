@@ -57,9 +57,9 @@ UVRange         0.                  Min & max baseline (klambda)
 **PARAM** float 1  **DEF** 0.01
 WtUV              0.0               Weight outside full wt uvrange
 **PARAM** int 1
-BChan            0.0     8192.0     Low freq. channel 0 for cont.
+BChan            0.0    65536.0     Low freq. channel 0 for cont.
 **PARAM** int 1
-EChan            0.0     8192.0     Highest freq channel
+EChan            0.0    65536.0     Highest freq channel
 **PARAM** int 1
 subA                                Subarray
 **PARAM** int 50

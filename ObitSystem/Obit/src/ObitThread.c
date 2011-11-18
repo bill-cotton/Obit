@@ -530,8 +530,8 @@ gboolean ObitThreadIterator (ObitThread* in, olong nthreads,
 
   /* Wait for them to finish, expects each to send a message to the asynchronous 
    queue iff they finish */
-  /* 60 min. timeout */
-  add_time = 3600 * 1000000;
+  /* 60 min. timeout
+  add_time = 3600 * 1000000; */
   /* Compiler overflow problem? */
   add_time = 2000 * 1000000;
   g_get_current_time (&end_time);

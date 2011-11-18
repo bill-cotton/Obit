@@ -647,7 +647,7 @@ ObitTableSN* GetJyUpdate (ObitUV* inData, ObitErr* err)
   gchar *Sources=NULL, *souCode=NULL, *calSour=NULL, *calCode=NULL;
   olong *Antennas=NULL;
   ofloat timeRange[2];
-  olong Qual, maxAnt, maxSou, maxIF, nant, FreqID=0, BIF=1, EIF=0, subA=0, solnVer=0;
+  olong Qual, maxAnt, maxSou=0, maxIF, nant, FreqID=0, BIF=1, EIF=0, subA=0, solnVer=0;
   gchar tempName[101]; /* should always be big enough */
   gchar *blank = "        ", **source=NULL;
   gchar *routine = "GetJyUpdate";

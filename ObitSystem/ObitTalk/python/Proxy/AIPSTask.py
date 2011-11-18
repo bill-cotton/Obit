@@ -608,7 +608,7 @@ def _allocate_popsno():
         # POPSNO.
         try:
             path = '/tmp/AIPS' + ehex(popsno, 1, 0) + '.' + str(os.getpid())
-            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0666)
+            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0644)
             os.close(fd)
         except:
             continue
@@ -618,6 +618,10 @@ def _allocate_popsno():
         files = glob.glob('/tmp/AIPS' + ehex(popsno, 1, 0) + '.[0-9]*')
         files.remove(path)
         for file in files:
+            # If I can't write it is probably not mine
+            if not os.access(file, os.W_OK):
+                #print "DEBUG write access failed for ",file
+                break
             # If the part after the dot isn't an integer, it's not a
             # proper lock file.
             try:

@@ -2410,12 +2410,13 @@ void lagrange(ofloat x, ofloat y, olong n, olong hwid,
       }
     }
     /* put it together */
-    if ((countx>=1)  || (county>=1))
+    if ((countx>=1)  || (county>=1)) {
       if ((prodxd!=0.0) && (prodyd!=0.0))
 	coef[j] = (ofloat)(prodx*prody / (prodxd*prodyd));
       else
 	coef[j] = 1.0;
-    sum += coef[j];
+      sum += coef[j];
+    }
   } /* end loop over list */
 
   /* Normalize if anything found */

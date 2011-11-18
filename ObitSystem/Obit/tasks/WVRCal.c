@@ -48,7 +48,7 @@
 #include "ObitThread.h"
 /* libAir stuff */
 #ifdef HAVE_WVR  /* Only if libAir available */
-#include "almaabs_c.h"
+#include "almawvr/almaabs_c.h"
 #endif /* HAVE_WVR */
   /* Speed of light */
 #ifndef VELIGHT
@@ -154,16 +154,16 @@ int main ( int argc, char **argv )
   ObitErr      *err= NULL;
   /* Selection controls for uv data */
   gchar *UVParms1[] = {"timeRange", "flagVer", "Antennas", "calSour", "Qual",
-		       "calCode", "solInt1", "solnVer", "refAnt",
+		       "calCode", "solInt1", "solnVer", "refAnt", "doFlip",
 		      NULL };
   gchar *UVParms1Rename[] = {"timeRange", "flagVer", "Antennas", "Sources", "Qual",
-			     "souCode", "solInt", "solnVer", "refAnt",
+			     "souCode", "solInt", "solnVer", "refAnt", "doFlip",
 		      NULL };
   gchar *UVParms2[] = {"timeRange", "flagVer", "Antennas", "Sources", "Qual",
-		      "souCode", "solInt2", "solnVer",  "refAnt",
+		       "souCode", "solInt2", "solnVer",  "refAnt", "doFlip",
 		      NULL };
   gchar *UVParms2Rename[] = {"timeRange", "flagVer", "Antennas", "Sources", "Qual",
-			     "souCode", "solInt", "solnVer",  "refAnt",
+			     "souCode", "solInt", "solnVer",  "refAnt", "doFlip",
 			     NULL };
    /* Startup - parse command line */
   err = newObitErr();
@@ -791,7 +791,7 @@ void WVRCalHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     "inFile",  "inDisk", "inName", "inClass", "inSeq",
     "timeRange" "Sources",  "Qual", "souCode", "flagVer", 
     "outFile",  "outDisk",  "outName", "outClass", "outSeq",
-    "refAnt", "solInt1", "solInt2", "solnVer", "nThread",
+    "refAnt", "solInt1", "solInt2", "solnVer", "nThread", "doFlip",
     NULL};
   gchar *routine = "WVRCalHistory";
 
@@ -990,6 +990,7 @@ void WVRCalScanCal (ObitUV* inUV, ObitUV* outUV, ObitWVRCoef *wvrcoef,
  * \li "solnVer"  OBIT_int   (1,1,1) Solution (SN) table to write; 0=> create new.
  * \li "solInt"   OBIT_float (1,1,1) Solution interval (min). (default scan)
  * \li "refAnt"   OBIT_int (1,1,1) reference antenna, 0=>pick
+ * \li "doFlip"   OBIT_boo (1,1,1) Flip sign of correction?
  * \param   outUV   ObitUV with output SN table
  * \param   wvrcoef Structure with fitted sensitivities
  * \param   err     Obit Error stack
@@ -1012,7 +1013,7 @@ void WVRCalConvert (ObitUV* inUV, ObitUV* outUV, ObitWVRCoef *wvrcoef,
   ofloat timei=0.0, phase, fblank = ObitMagicF();
   odouble *sumWt=NULL, *sumWtT=NULL, *sumEl=NULL;
   odouble timec=0.0;
-  gboolean done, good, oldSN, *gotAnt, doCalSelect, empty;
+  gboolean done, good, oldSN, *gotAnt, doCalSelect, empty, doFlip=FALSE;
   ObitIOCode retCode;
   gchar *tname;
   /*ofloat T[4];  DEBUG */
@@ -1030,6 +1031,9 @@ void WVRCalConvert (ObitUV* inUV, ObitUV* outUV, ObitWVRCoef *wvrcoef,
 
   /* reference antenna */
   ObitInfoListGetTest(inUV->info, "refAnt", &type, dim, &refAnt);
+
+  /* Flip sign? */
+  ObitInfoListGetTest(inUV->info, "doFlip", &type, dim, &doFlip);
 
   /* One visibility per access */
   nVisPIO = 1;
@@ -1219,28 +1223,31 @@ void WVRCalConvert (ObitUV* inUV, ObitUV* outUV, ObitWVRCoef *wvrcoef,
       if (gotAnt[iAnt]) {
 	good = FALSE; /* Until proven */
 	row->antNo  = iAnt+1; 
-	row->MBDelay1 = delay[iAnt];
+	if (doFlip)
+	  row->MBDelay1 = -delay[iAnt];
+	else
+	  row->MBDelay1 = +delay[iAnt];
 	for (i=0; i<numIF; i++) {
 	  if (delay[iAnt]!=fblank) {
-	    phase = 2*G_PI*outUV->myDesc->freqIF[i]*delay[iAnt];
+	    phase = 2*G_PI*outUV->myDesc->freqIF[i]*row->MBDelay1;
 	    row->Real1[i]   = cos(phase); 
 	    row->Imag1[i]   = sin(phase); 
 	  } else {
 	    row->Real1[i]   = fblank; 
 	    row->Imag1[i]   = fblank; 
 	  }
-	  row->Delay1[i]  = delay[iAnt];
+	  row->Delay1[i]  = row->MBDelay1;
 	  row->Weight1[i] = wt[iAnt]; 
 	  row->RefAnt1[i] = refant; 
 	  if (wt[iAnt]>0.0) {good = TRUE; cntGood++;}
 	  if (wt[iAnt]<=0.0) cntBad++;    /* DEBUG */
 	}
 	if (numPol>1) {
-	  row->MBDelay2 = delay[iAnt];
+	  row->MBDelay2 = row->MBDelay1;
 	  for (i=0; i<numIF; i++) {
 	    row->Real2[i]   = row->Real1[i]; 
 	    row->Imag2[i]   = row->Imag1[i]; 
-	    row->Delay2[i]  = delay[iAnt];
+	    row->Delay2[i]  = row->MBDelay2;
 	    row->Weight2[i] = wt[iAnt]; 
 	    row->RefAnt2[i] = refant;
 	    if (wt[iAnt]>0.0) {good = TRUE; cntGood++;}
