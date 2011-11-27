@@ -895,7 +895,7 @@ gboolean ObitSkyModelVMLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 
       /* Do we want this one? */
       want = (fabs(array[0])>0.0);
-      want = want && (array[0]>in->minFlux);
+      want = want && (fabs(array[0])>in->minFlux);
       want = want && (ncomp<count);  /* don't overflow */
       if (want) {
 
@@ -1010,9 +1010,9 @@ gboolean ObitSkyModelVMLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 	    
 	/* Update */
 	table += lrec;
-	array += warray;
 	ncomp++;
       } /* End only desired */
+      array += warray;
     } /* end loop over components */
 
     /* Delete merged CC array */

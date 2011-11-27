@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Convert Pulse Cal (PC) table into an SN table                      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1062,7 +1062,7 @@ void PC2SN (ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
   odouble dPhase, delay=0.0, addDelay1=0.0, addDelay2=0.0, DFreq, *IFFreq;
   ofloat temp, phz, phase, fblank = ObitMagicF();
   odouble refFreq, CabCor;
-  gboolean doCabCor=FALSE, doZeroMB=FALSE;
+  gboolean doCabCor=FALSE, doZeroMB=FALSE, bad=FALSE;
   gchar *tname;
   gchar *routine = "PC2SN";
  
@@ -1196,7 +1196,8 @@ void PC2SN (ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
     for (i=0; i<numIF; i++) {
       indx = i*numTones;
       /* Good? */
-      if ((PCrow->PCReal1[indx]!=fblank) && (PCrow->PCImag1[indx]!=fblank)) {
+      bad = (numTones>1) && ((SBDelay[iAnt][i]==fblank) || (SBDelay[refAnt-1][i]==fblank));
+      if ((PCrow->PCReal1[indx]!=fblank) && (PCrow->PCImag1[indx]!=fblank) && (!bad)) {
 	/* Single band delay? */
 	if (numTones>1) {
 	  dPhase = SBFact[i]*(atan2(PCrow->PCImag1[indx],PCrow->PCReal1[indx]) -
@@ -1242,6 +1243,8 @@ void PC2SN (ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
       } else { /* bad */
 	SNrow->Real1[i]   = fblank;
 	SNrow->Imag1[i]   = fblank;
+	SNrow->Rate1[i]   = 0.0;
+	SNrow->Delay1[i]  = 0.0;
 	SNrow->Weight1[i] = 0.0; 
       }
     }
@@ -1249,8 +1252,9 @@ void PC2SN (ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
     if (numPol>1) {
       for (i=0; i<numIF; i++) {
 	/* Good? */
+	bad = (numTones>1) && ((SBDelay[iAnt][i+numIF]==fblank) || (SBDelay[refAnt-1][i+numIF]==fblank));
 	indx = i*numTones;
-	if ((PCrow->PCReal2[indx]!=fblank) && (PCrow->PCImag2[indx]!=fblank)) {
+	if ((PCrow->PCReal2[indx]!=fblank) && (PCrow->PCImag2[indx]!=fblank) && (!bad)) {
 	  if (numTones>1) {
 	    SNrow->Delay2[i]  = 0.0; 
 	    dPhase = SBFact[i]*(atan2(PCrow->PCImag2[indx],PCrow->PCReal2[indx]) -
@@ -1296,6 +1300,8 @@ void PC2SN (ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
 	} else { /* bad */
 	  SNrow->Real2[i]   = fblank;
 	  SNrow->Imag2[i]   = fblank;
+	  SNrow->Delay2[i]  = 0.0;
+	  SNrow->Rate2[i]   = 0.0;
 	  SNrow->Weight2[i] = 0.0; 
 	}
       } /* end IF loop */

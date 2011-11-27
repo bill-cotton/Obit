@@ -1801,7 +1801,7 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
       if (in->noNeg && (array[0]<=0.0)) break;
 
       want =  (fabs(array[0])>in->minDFT);
-      want = want && (array[0]>in->minFlux);
+      want = want && (fabs(array[0])>in->minFlux);
       want = want && (ncomp<count);  /* don't overflow */
       if (want) {
 
@@ -1911,10 +1911,10 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
 	    
 	/* Update */
 	table += lrec;
-	array += warray;
 	ncomp++;
       } /* End only desired */
-    } /* end loop over components */
+      array += warray;
+  } /* end loop over components */
 
     /* Delete merged CC array */
     CompArr = ObitFArrayUnref(CompArr);

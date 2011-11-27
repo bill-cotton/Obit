@@ -670,11 +670,22 @@ static gpointer ThreadCalFlag (gpointer arg)
 
   /* local */
   olong iflag, jpoln, jif, jchan, index, limf1, limf2, limc1, limc2;
-  olong flga, ipolpt, stadd;
+  olong flga, ipolpt, stadd, incs, incf, incif;
 
   /* Anything to do? */
   if (last<0) goto finish;
   if (last<first) goto finish;
+
+  /* Increments of things */
+  if (desc->inaxes[desc->jlocc]==3) { /* desc correct, complex dim 3 */
+    incs  = desc->incs;
+    incf  = desc->incf;
+    incif = desc->incif;
+  } else {  /* multiply by 3 */
+    incs  = desc->incs*3;
+    incf  = desc->incf*3;
+    incif = desc->incif*3;
+  }
 
   /* loop thru flagging criteria */
   ipolpt = abs(me->stoke0)-1;
@@ -709,11 +720,11 @@ static gpointer ThreadCalFlag (gpointer arg)
     for (jpoln= 0; jpoln<me->numStok; jpoln++) { /* loop 400 */
 
       if (me->flagPol[iflag*4+jpoln+ipolpt]) { /* Flagged polarization? */
-	stadd = jpoln * desc->incs;
+	stadd = jpoln * incs;
 
 	/* loop over IF */
 	for (jif= limf1; jif<=limf2; jif++) { /* loop 300 */
-	  index = stadd + (jif-1) * desc->incif + (limc1-1) * desc->incf;
+	  index = stadd + (jif-1) * incif + (limc1-1) * incf;
 
 	  if (limc1 == limc2) {/* single channel */	    
 	    visIn[index+2] = - fabs (visIn[index+2]);
@@ -721,7 +732,7 @@ static gpointer ThreadCalFlag (gpointer arg)
 	  } else { /* loop over channel */
 	    for (jchan= limc1; jchan<=limc2; jchan++) { /* loop 200 */
 	      visIn[index+2] = - fabs (visIn[index+2]);
-	      index += desc->incf;
+	      index += incf;
 	    } /* end loop over channels L200: */;
 	  } 
 	} /* end loop  over IF L300: */;

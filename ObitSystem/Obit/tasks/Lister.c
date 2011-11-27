@@ -1221,7 +1221,7 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   ObitIOCode   iretCode;
   ObitUVDesc   *inDesc, *inIODesc;
   FILE         *outStream = NULL;
-  gboolean     isInteractive = FALSE, quit = FALSE;
+  gboolean     isInteractive = FALSE, quit = FALSE, nary;
   gboolean     doSN, done=FALSE, souChange=FALSE, firstPol, *doAnt=NULL;
   gchar        line[1024], Title1[1024], Title2[1024];
   oint         numPol, numIF, numTerm, numPCal, numOrb;
@@ -1534,14 +1534,17 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 
 	  /* If time greater than last write current line */
 	  if ((time>lasttime) || done) {
+	    memset (line, 0, 1023);  /* blank */
 	    day2dhms(lasttime, timeString);
 	    /* Format line  */
 	    sprintf(line,"%13s %16s ", timeString, source);
 	    /* Add values */
+	    nary = TRUE;
 	    for (ia=loAnt; ia<=hiAnt; ia++) {
 	      if (!doAnt[ia]) continue;
 	      start = strlen(line);
 	      if (valueArr[ia]!=fblank) {
+		nary = FALSE;
 		/* Encode as scaled value with ndig digits */
 		sprintf (&line[start], " %*.0f", ndig, scale*valueArr[ia]);
 		valueArr[ia] = fblank;
@@ -1562,7 +1565,8 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 	    }
 	    
 	    /* Print line */
-	    ObitPrinterWrite (myPrint, line, &quit, err);
+	    if (!nary)
+	      ObitPrinterWrite (myPrint, line, &quit, err);
 	    if (quit) goto Quit;
 	    if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
 	    lasttime = time;  /* Reset last time */
