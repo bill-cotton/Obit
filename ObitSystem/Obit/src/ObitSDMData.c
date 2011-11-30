@@ -5845,8 +5845,8 @@ static ASDMFlagTable* ParseASDMFlagTable(ObitSDMData *me,
     if (retCode==OBIT_IO_EOF) break;
 
     /* Parse entries */
-    /* EVLA version */
-    prior = "<antennaId>";
+    /* old EVLA version */
+    prior = "<antennaId>Antenna_";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       prior = "Antenna_";
       out->rows[irow]->antennaId    = g_malloc0(sizeof(olong*));
@@ -5854,8 +5854,8 @@ static ASDMFlagTable* ParseASDMFlagTable(ObitSDMData *me,
       out->rows[irow]->numAntenna   = 1;
       continue;
     }
-
-    /* ALMA version */
+      
+    /* ALMA and new EVLA version */
     prior = "<antennaId>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->antennaId = ASDMparse_enumarray (line, maxLine, prior, &next);

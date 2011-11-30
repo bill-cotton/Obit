@@ -184,4 +184,14 @@ Obit/src/ObitSkyModelMF.c Obit/src/ObitSkyModelVM.c \
   LoadComps: Fix bug in handling noNeg=False
 Obit/tasks/Lister.c \
   doGAIN: null fill line
-26 Nov 2001, version 398
+26 Nov 2011, version 398
+
+ObitVersion:
+Obit/changes.log:
+Obit/tasks/PCCor.c:
+  PC2SN: give message and die if no valid solutions written
+Obit/src/ObitSDMData.c:
+  FlagTable: be sure to parse multiple antennas for flag entry.
+Obit/tasks/BDFIn.c:
+  GetFlagInfo: Get ALMA antenna numbers right (1-rel) in FG table
+30 Nov 2011, version 399

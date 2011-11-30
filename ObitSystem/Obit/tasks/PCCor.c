@@ -1062,7 +1062,7 @@ void PC2SN (ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
   odouble dPhase, delay=0.0, addDelay1=0.0, addDelay2=0.0, DFreq, *IFFreq;
   ofloat temp, phz, phase, fblank = ObitMagicF();
   odouble refFreq, CabCor;
-  gboolean doCabCor=FALSE, doZeroMB=FALSE, bad=FALSE;
+  gboolean doCabCor=FALSE, doZeroMB=FALSE, bad=FALSE, noValid;
   gchar *tname;
   gchar *routine = "PC2SN";
  
@@ -1198,6 +1198,8 @@ void PC2SN (ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
       /* Good? */
       bad = (numTones>1) && ((SBDelay[iAnt][i]==fblank) || (SBDelay[refAnt-1][i]==fblank));
       if ((PCrow->PCReal1[indx]!=fblank) && (PCrow->PCImag1[indx]!=fblank) && (!bad)) {
+	/* If good mark antenna */
+	gotAnt[PCrow->antennaNo-1] = TRUE;
 	/* Single band delay? */
 	if (numTones>1) {
 	  dPhase = SBFact[i]*(atan2(PCrow->PCImag1[indx],PCrow->PCReal1[indx]) -
@@ -1255,6 +1257,8 @@ void PC2SN (ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
 	bad = (numTones>1) && ((SBDelay[iAnt][i+numIF]==fblank) || (SBDelay[refAnt-1][i+numIF]==fblank));
 	indx = i*numTones;
 	if ((PCrow->PCReal2[indx]!=fblank) && (PCrow->PCImag2[indx]!=fblank) && (!bad)) {
+	  /* If good mark antenna */
+	  gotAnt[PCrow->antennaNo-1] = TRUE;
 	  if (numTones>1) {
 	    SNrow->Delay2[i]  = 0.0; 
 	    dPhase = SBFact[i]*(atan2(PCrow->PCImag2[indx],PCrow->PCReal2[indx]) -
@@ -1306,8 +1310,6 @@ void PC2SN (ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
 	}
       } /* end IF loop */
     }
-    /* If good mark antenna */
-    gotAnt[PCrow->antennaNo-1] = TRUE;
     
     /* Write SN table */
     iSNRow = -1;
@@ -1325,6 +1327,12 @@ void PC2SN (ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
   SNrow   = ObitTableSNRowUnref(SNrow);
   PCin    = ObitTablePCUnref(PCin);
   PCrow   = ObitTablePCRowUnref(PCrow);
+
+  /* Did it write any valid soln? */
+  noValid = TRUE;
+  for (i=0; i<numAnt; i++) if (gotAnt[i]) noValid = FALSE;
+  Obit_return_if_fail ((!noValid), err, 
+		       "%s NO valid solutions written", routine);
 
 } /* end PC2SN */
 

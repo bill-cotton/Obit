@@ -2690,7 +2690,8 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 	if (AntArray->ants[iAnt]->antennaId==antId) 
 	  {antNo = AntArray->ants[iAnt]->antennaNo; break;}
       }
-      
+      /* ALMA antennas are zero rel */
+      if (isALMA) antNo++;
       outRow->ants[0]      = antNo;
       /* Write */
       oRow = -1;
