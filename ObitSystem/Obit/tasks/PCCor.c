@@ -1166,6 +1166,11 @@ void PC2SN (ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
     ObitTablePCReadRow (PCin, iPCRow, PCrow, err);
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
     if (PCrow->status==-1) continue;
+
+    /* Tests for bad entries */
+    if (PCrow->SourID<=0) continue;
+    if (PCrow->PCFreq1[0]<=0.0) continue;
+    if (PCrow->PCFreq2[0]<=0.0) continue;
     
     /* Set Solution */
     iAnt          = PCrow->antennaNo-1;
@@ -1269,7 +1274,11 @@ void PC2SN (ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
 	    if (dPhase> 0.5) dPhase -= 1.0;
 	    if (dPhase<-0.5) dPhase += 1.0;
 	    DFreq = (PCrow->PCFreq2[indx] - PCrow->PCFreq2[indx+numTones-1]);
-	    delay = dPhase / DFreq;
+	    if (fabs(DFreq)>0.0) {
+	      delay = dPhase / DFreq;
+	    } else { /* Bad frequencies */
+	      delay = 0.0;
+	    }
 
 	    /* Resolve ambiguity */
 	    temp = (delay - SBDelay[iAnt][i+numIF]) * DFreq;
