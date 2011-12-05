@@ -195,3 +195,37 @@ Obit/src/ObitSDMData.c:
 Obit/tasks/BDFIn.c:
   GetFlagInfo: Get ALMA antenna numbers right (1-rel) in FG table
 30 Nov 2011, version 399
+
+ObitVersion:
+Obit/tasks/PCCor.c:
+  Trap bad PC table entries.
+2 Dec 2011, version 400
+
+Changes to incorporate Bojan's libair - wrt top directory:
+svn add:
+  other/tarballs/boostheader_1_41_0.tar.gz other/tarballs/bnmin1-1.11.tar.bz2:
+  other/tarballs/libair-1.0.1.tar.bz2:
+    Bojan's libraries and (gag) boost headers
+  other/tarballs/gsl-1.13.tar.gz:
+    update GSL
+  ObitSystem/Obit/m4/wvr.m4 ObitSystem/Obit/configure:
+    autoconfig/configure stuff for libair
+  ObitSystem/Obit/tasks/Makefile.in:
+    Makefile.in with WVR stuff
+svn delete:
+    other/tarballs/gsl-1.6.tar.gz:
+InstallObit.sh other/Install3rdParty.sh other/CLEAN3rdParty.sh:
+  add necessary libraries to 3rd party build
+ObitSystem/Obit/configure.ac ObitSystem/Obit/configure:
+  add libair as (wvr)
+ObitSystem/Obit/src/Makefile.in ObitSystem/Obit/tasks/Makefile.in:
+  add wvr stuff for compile/link
+README:
+  update install documentation
+ObitSystem/Obit/TDF/SubImage.TDF:
+  Increase pixel selection range 4096->32768
+ObitSystem/Obit/tasks/BDFIn.c ObitSystem/Obit/TDF/BDFIn.TDF:
+ObitSystem/Obit/src/ObitSDMData.c ObitSystem/Obit/include/ObitSDMDataDef.h:
+  Allow selecting the number of channels amoung several in a configuration
+05 Dec 2011, version 401
+

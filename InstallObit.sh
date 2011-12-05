@@ -14,6 +14,8 @@ doPYTHON=yes
 doWWW=no
 doCURL=yes
 doXMLRPC=yes
+doBOOST=yes
+doWVR=yes
 doTHIRD=yes
 doObit=yes
 doObitView=yes
@@ -35,6 +37,8 @@ if test $arg = "-without"; then
 	if test $x = WWW;     then doWWW=no; fi
 	if test $x = CURL;    then doCURL=no; fi
 	if test $x = XMLRPC;  then doXMLRPC=no; fi
+	if test $x = BOOST;   then doBOOST=no; fi
+	if test $x = WVR;     then doWVR=no; fi
 	if test $x = THIRD;   then doTHIRD=no; fi
 	if test $x = Obit;    then doObit=no; fi
 	if test $x = ObitView;  then doObitView=no; fi
@@ -58,6 +62,8 @@ if test $arg = "-help"; then
     echo "WWW - Internet protocol library - Best to avoid - DISABLED"
     echo "CURL - Internet URL library"
     echo "XMLRPC - XMLRPC network protocol library"
+    echo "BOOST  - library to make c++ into a usable language (for WVR)"
+    echo "WVR  - Bojan Nikolic ALMA WVR library"
     echo ""
     echo "Select Obit options"
     echo "THIRD - don't (re) install third party software"
@@ -78,6 +84,8 @@ echo "doPYTHON $doPYTHON"
 echo "doWWW $doWWW"
 echo "doCURL $doCURL"
 echo "doXMLRPC $doXMLRPC"
+echo "doBoost $doBoost"
+echo "doWVR $doWVR"
 echo "doTHIRD $doTHIRD"
 echo "doObit $doObit"
 echo "doObitView $doObitView"
@@ -126,7 +134,9 @@ WWW="--with-www=$THIRD"
 CURL="--with-curl=$THIRD"
 XMLRPC="--with-xmlrpc=$THIRD"
 ZLIB="--with-zlib=$THIRD"
-PYTHON="--with-python=$THIRD -with-python-includes=$THIRD/include/python2.7"
+PYTHON="--with-python=$THIRD"
+BOOST="--with-boost=$THIRD"
+WVR="--with-wvr=$THIRD"
 
 # Which ones wanted?
 if test $doPLPLOT  = no; then PLPLOT= ; fi
@@ -140,6 +150,8 @@ if test $doXMLRPC  = no; then XMLRPC= ; fi
 if test $doZLIB    = no; then ZLIB= ; fi
 if test $doMOTIF   = no; then MOTIF= ; fi
 if test $doPYTHON  = no; then PYTHON= ; fi
+if test $doBOOST   = no; then BOOST= ; fi
+if test $doWVR     = no; then WVR= ; fi
 
 # Set LD_LIBRARY_PATH for configure
 if test \"x$LD_LIBRARY_PATH\"=\"x\"; then
@@ -155,11 +167,11 @@ if test $doObit = yes; then
 # Note: this attempts to use system version of python
     cd ObitSystem/Obit
     echo ./configure --exec_prefix=$BASE --with-obit=$OBIT PATH=$BASE/other/bin:$PATH \
-	$PLPLOT $GSL $GLIB $FFTW $CFITSIO $WWW $CURL $XMLRPC $ZLIB $PYTHON \
+	$PLPLOT $GSL $GLIB $FFTW $CFITSIO $WWW $CURL $XMLRPC $ZLIB $PYTHON $BOOST $WVR \
 	OBIT=$OBIT  OBITINSTALL=$BASE LD_LIBRARY_PATH=$LD_LIBRARY_PATH \
 	PKG_CONFIG_PATH=$BASE/other/lib/pkgconfig/ LDFLAGS=-Wl,-rpath,$LD_LIBRARY_PATH
     ./configure --exec_prefix=$BASE --with-obit=$OBIT PATH=$BASE/other/bin:$PATH \
-	$PLPLOT $GSL $GLIB $FFTW $CFITSIO $WWW $CURL $XMLRPC $ZLIB $PYTHON \
+	$PLPLOT $GSL $GLIB $FFTW $CFITSIO $WWW $CURL $XMLRPC $ZLIB $PYTHON $BOOST $WVR \
 	OBIT=$OBIT  OBITINSTALL=$BASE LD_LIBRARY_PATH=$LD_LIBRARY_PATH \
 	PKG_CONFIG_PATH=$BASE/other/lib/pkgconfig/ LDFLAGS=-Wl,-rpath,$LD_LIBRARY_PATH
     make clean all 
@@ -221,6 +233,7 @@ echo "# c shell version" > setup.csh
 echo "# Setup environment to run Obit software" >> setup.csh
 echo "setenv OBIT $OBIT" >> setup.csh
 echo "setenv OBITSD $OBITSD" >> setup.csh
+tstring="\"$OBITSD/python:$OBIT/python:$BASE/opt/share/obittalk/python/\""
 echo "setenv PYTHONPATH $tstring" >> setup.csh
 tstring="\"$BASE/bin:\$PATH\""
 echo "setenv PATH $tstring" >> setup.csh

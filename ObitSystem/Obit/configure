@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE RANLIB ac_ct_RANLIB SWIG CPP EGREP PKG_CONFIG GLIB_CFLAGS GLIB_LIBS GLIB_GENMARSHAL GOBJECT_QUERY GLIB_MKENUMS CFITSIO_CPPFLAGS CFITSIO_LDFLAGS CFITSIO_LIBS FFTW3_CPPFLAGS FFTW3_LDFLAGS FFTW3_LIBS FFTW_CPPFLAGS FFTW_LDFLAGS FFTW_LIBS GSL_CFLAGS GSL_LDFLAGS GSL_LIBS XMLRPC_SERVER_CPPFLAGS XMLRPC_SERVER_LDFLAGS XMLRPC_SERVER_LIBS XMLRPC_CLIENT_CPPFLAGS XMLRPC_CLIENT_LDFLAGS XMLRPC_CLIENT_LIBS XMLRPC_CPPFLAGS XMLRPC_LDFLAGS XMLRPC_LIBS WWWLIB_WL_RPATH WWW_LIBS ZLIB_CFLAGS ZLIB_LDFLAGS ZLIB_LIBS PLPLOT_CPPFLAGS PLPLOT_CFLAGS PLPLOT_LDFLAGS PLPLOT_LIBS F77 FFLAGS ac_ct_F77 FLIBS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS PGPLOT_CPPFLAGS PGPLOT_CFLAGS PGPLOT_LDFLAGS PGPLOT_LIBS PYTHON_CPPFLAGS PYTHON_LDFLAGS PYTHON_LIBS GTHREAD_LIBS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE RANLIB ac_ct_RANLIB SWIG CPP EGREP PKG_CONFIG GLIB_CFLAGS GLIB_LIBS GLIB_GENMARSHAL GOBJECT_QUERY GLIB_MKENUMS CFITSIO_CPPFLAGS CFITSIO_LDFLAGS CFITSIO_LIBS FFTW3_CPPFLAGS FFTW3_LDFLAGS FFTW3_LIBS FFTW_CPPFLAGS FFTW_LDFLAGS FFTW_LIBS GSL_CFLAGS GSL_LDFLAGS GSL_LIBS XMLRPC_SERVER_CPPFLAGS XMLRPC_SERVER_LDFLAGS XMLRPC_SERVER_LIBS XMLRPC_CLIENT_CPPFLAGS XMLRPC_CLIENT_LDFLAGS XMLRPC_CLIENT_LIBS XMLRPC_CPPFLAGS XMLRPC_LDFLAGS XMLRPC_LIBS WWWLIB_WL_RPATH WWW_LIBS ZLIB_CFLAGS ZLIB_LDFLAGS ZLIB_LIBS PLPLOT_CPPFLAGS PLPLOT_CFLAGS PLPLOT_LDFLAGS PLPLOT_LIBS F77 FFLAGS ac_ct_F77 FLIBS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS PGPLOT_CPPFLAGS PGPLOT_CFLAGS PGPLOT_LDFLAGS PGPLOT_LIBS PYTHON_CPPFLAGS PYTHON_LDFLAGS PYTHON_LIBS WVR_CFLAGS WVR_LDFLAGS WVR_LIBS GTHREAD_LIBS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -894,6 +894,8 @@ Optional Packages:
   --with-python=DIR       search for PYTHON in DIR/include and DIR/lib
   --with-python-includes=DIR
                           search for PYTHON includes in DIR
+  --with-wvr=DIR          search for WVR in DIR/include and DIR/lib
+  --with-wvr-includes=DIR search for WVR includes in DIR
 
 Some influential environment variables:
   CC          C compiler command
@@ -7872,7 +7874,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:7875:" \
+echo "$as_me:7877:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -8068,7 +8070,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FFLAGS
 FFLAGS="$FFLAGS $ac_verb"
-(eval echo $as_me:8071: \"$ac_link\") >&5
+(eval echo $as_me:8073: \"$ac_link\") >&5
 ac_f77_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_f77_v_output" >&5
 FFLAGS=$ac_save_FFLAGS
@@ -8146,7 +8148,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FFLAGS
 FFLAGS="$FFLAGS $ac_cv_prog_f77_v"
-(eval echo $as_me:8149: \"$ac_link\") >&5
+(eval echo $as_me:8151: \"$ac_link\") >&5
 ac_f77_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_f77_v_output" >&5
 FFLAGS=$ac_save_FFLAGS
@@ -10276,6 +10278,769 @@ LIBS="$ac_python_saved_LIBS"
 
 
 
+	WVR_CFLAGS=""
+	WVR_LDFLAGS=""
+
+# Check whether --with-wvr or --without-wvr was given.
+if test "${with_wvr+set}" = set; then
+  withval="$with_wvr"
+  for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir/include; then
+      WVR_CFLAGS="$WVR_CFLAGS -I$dir/include/"
+    fi
+    if test -d $dir/lib; then
+      WVR_LDFLAGS="$WVR_LDFLAGS -L$dir/lib"
+    fi
+  done
+fi;
+
+
+# Check whether --with-wvr-includes or --without-wvr-includes was given.
+if test "${with_wvr_includes+set}" = set; then
+  withval="$with_wvr_includes"
+  for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir; then
+      WVR_CFLAGS="$WVR_CFLAGS -I$dir"
+    fi
+  done
+fi;
+
+echo "WVR CFLAGs $WVR_CFLAGS LDFLAGs $WVR_LDFLAGS"
+ac_wvr_saved_CFLAGS="$CFLAGS"
+ac_wvr_saved_LDFLAGS="$LDFLAGS"
+ac_wvr_saved_LIBS="$LIBS"
+CFLAGS="$CFLAGS $WVR_CFLAGS"
+LDFLAGS="$LDFLAGS $WVR_LDFLAGS"
+if ! test WVR_CFLAGS; then
+    WVR_CFLAGS="`--cflags`"
+fi
+# not there WVR_LIBS="`wvr-config --libs`"
+ac_have_wvr=no
+ac_have_wvrh=no
+  	touch /tmp/dummy1_wvr.h
+
+for ac_header in /tmp/dummy1_wvr.h
+do
+as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <almawvr/almaabs_c.h>
+
+#include <$ac_header>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  eval "$as_ac_Header=yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+eval "$as_ac_Header=no"
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+if test `eval echo '${'$as_ac_Header'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+ ac_have_wvrh=yes
+else
+  ac_have_wvrh=no
+fi
+
+done
+
+	rm /tmp/dummy1_wvr.h
+ 	if test $ac_have_wvrh = yes; then
+	        echo "$as_me:$LINENO: checking for library containing almaabs_ret" >&5
+echo $ECHO_N "checking for library containing almaabs_ret... $ECHO_C" >&6
+if test "${ac_cv_search_almaabs_ret+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+ac_cv_search_almaabs_ret=no
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char almaabs_ret ();
+int
+main ()
+{
+almaabs_ret ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_search_almaabs_ret="none required"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+if test "$ac_cv_search_almaabs_ret" = no; then
+  for ac_lib in almawvr; do
+    LIBS="-l$ac_lib -lm $ac_func_search_save_LIBS"
+    cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char almaabs_ret ();
+int
+main ()
+{
+almaabs_ret ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_search_almaabs_ret="-l$ac_lib"
+break
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+  done
+fi
+LIBS=$ac_func_search_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_search_almaabs_ret" >&5
+echo "${ECHO_T}$ac_cv_search_almaabs_ret" >&6
+if test "$ac_cv_search_almaabs_ret" != no; then
+  test "$ac_cv_search_almaabs_ret" = "none required" || LIBS="$ac_cv_search_almaabs_ret $LIBS"
+  ac_have_wvr=yes
+else
+  ac_have_wvr=no
+fi
+
+		if test $ac_have_wvr = yes; then
+			echo "WVR found1 $LIBS"
+			OTHERLIB="-lalmawvr "
+		fi
+		if test $ac_have_wvr = no; then
+			# try other possibility
+			ac_cv_search_wvr_almaabs_ret="  "
+        		echo "$as_me:$LINENO: checking for library containing wvr_almaabs_ret" >&5
+echo $ECHO_N "checking for library containing wvr_almaabs_ret... $ECHO_C" >&6
+if test "${ac_cv_search_wvr_almaabs_ret+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+ac_cv_search_wvr_almaabs_ret=no
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char wvr_almaabs_ret ();
+int
+main ()
+{
+wvr_almaabs_ret ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_search_wvr_almaabs_ret="none required"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+if test "$ac_cv_search_wvr_almaabs_ret" = no; then
+  for ac_lib in air_cbind; do
+    LIBS="-l$ac_lib -lm -lair -lairapps $ac_func_search_save_LIBS"
+    cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char wvr_almaabs_ret ();
+int
+main ()
+{
+wvr_almaabs_ret ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_search_wvr_almaabs_ret="-l$ac_lib"
+break
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+  done
+fi
+LIBS=$ac_func_search_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_search_wvr_almaabs_ret" >&5
+echo "${ECHO_T}$ac_cv_search_wvr_almaabs_ret" >&6
+if test "$ac_cv_search_wvr_almaabs_ret" != no; then
+  test "$ac_cv_search_wvr_almaabs_ret" = "none required" || LIBS="$ac_cv_search_wvr_almaabs_ret $LIBS"
+  ac_have_wvr=yes
+else
+  ac_have_wvr=no
+fi
+
+			if test $ac_have_wvr = yes; then
+				OTHERLIB="-lair_cbind -lair -lairapps "
+				echo "WVR found2 $LIBS"
+			fi
+		fi
+	fi
+echo "WVR Test1 $ac_have_wvrh $ac_have_wvr"
+# List of places to try
+testdirs="$OBITINSTALL/other $HOME/opt/almawvr"
+for dir in $testdirs; do
+	if test $ac_have_wvr = yes ; then
+		if test $ac_have_wvrh = yes ; then
+			break;
+		fi
+	fi
+	if test $ac_have_wvr = no; then
+		if  test -f $dir/include/almawvr/almaabs_c.h; then
+			WVR_CFLAGS="-I$dir/include"
+			CPPFLAGS="$ac_wvr_saved_CPPFLAGS $WVR_CFLAGS"
+			WVR_LDFLAGS="-L$dir/lib"
+			LDFLAGS="$ac_wvr_saved_LDFLAGS $WVR_LDFLAGS"
+  			touch /tmp/dummy3_wvr.h
+
+for ac_header in /tmp/dummy3_wvr.h
+do
+as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include "almawvr/almaabs_c.h"
+
+#include <$ac_header>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  eval "$as_ac_Header=yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+eval "$as_ac_Header=no"
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+if test `eval echo '${'$as_ac_Header'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+ ac_have_wvrh=yes
+else
+  ac_have_wvrh=no
+fi
+
+done
+
+			rm /tmp/dummy3_wvr.h
+			if test $ac_have_wvrh = yes; then
+				# Force check
+				ac_cv_search_wvr_almaabs_ret="  "
+        			echo "$as_me:$LINENO: checking for library containing wvr_almaabs_ret" >&5
+echo $ECHO_N "checking for library containing wvr_almaabs_ret... $ECHO_C" >&6
+if test "${ac_cv_search_wvr_almaabs_ret+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+ac_cv_search_wvr_almaabs_ret=no
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char wvr_almaabs_ret ();
+int
+main ()
+{
+wvr_almaabs_ret ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_search_wvr_almaabs_ret="none required"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+if test "$ac_cv_search_wvr_almaabs_ret" = no; then
+  for ac_lib in almawvr; do
+    LIBS="-l$ac_lib -lm  $ac_func_search_save_LIBS"
+    cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char wvr_almaabs_ret ();
+int
+main ()
+{
+wvr_almaabs_ret ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_search_wvr_almaabs_ret="-l$ac_lib"
+break
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+  done
+fi
+LIBS=$ac_func_search_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_search_wvr_almaabs_ret" >&5
+echo "${ECHO_T}$ac_cv_search_wvr_almaabs_ret" >&6
+if test "$ac_cv_search_wvr_almaabs_ret" != no; then
+  test "$ac_cv_search_wvr_almaabs_ret" = "none required" || LIBS="$ac_cv_search_wvr_almaabs_ret $LIBS"
+  ac_have_wvr=yes
+else
+  ac_have_wvr=no
+fi
+
+				if test $ac_have_wvr = yes; then
+ 	                                echo "WVR found3 $LIBS in $dir"
+ 					OTHERLIB="-lalmawvr"
+				fi
+				if test $ac_have_wvr = no; then
+					# try other possibility
+					ac_cv_search_wvr_almaabs_ret="  "
+        				echo "$as_me:$LINENO: checking for library containing wvr_almaabs_ret" >&5
+echo $ECHO_N "checking for library containing wvr_almaabs_ret... $ECHO_C" >&6
+if test "${ac_cv_search_wvr_almaabs_ret+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+ac_cv_search_wvr_almaabs_ret=no
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char wvr_almaabs_ret ();
+int
+main ()
+{
+wvr_almaabs_ret ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_search_wvr_almaabs_ret="none required"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+if test "$ac_cv_search_wvr_almaabs_ret" = no; then
+  for ac_lib in air_cbind; do
+    LIBS="-l$ac_lib -lm -lair -lairapps $ac_func_search_save_LIBS"
+    cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char wvr_almaabs_ret ();
+int
+main ()
+{
+wvr_almaabs_ret ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_search_wvr_almaabs_ret="-l$ac_lib"
+break
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+  done
+fi
+LIBS=$ac_func_search_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_search_wvr_almaabs_ret" >&5
+echo "${ECHO_T}$ac_cv_search_wvr_almaabs_ret" >&6
+if test "$ac_cv_search_wvr_almaabs_ret" != no; then
+  test "$ac_cv_search_wvr_almaabs_ret" = "none required" || LIBS="$ac_cv_search_wvr_almaabs_ret $LIBS"
+  ac_have_wvr=yes
+else
+  ac_have_wvr=no
+fi
+
+					if test $ac_have_wvr = yes; then
+	 	                                echo "WVR found4 $LIBS in $dir"
+						OTHERLIB=" -lair_cbind -lair -lairapps "
+					fi
+				fi
+			fi
+			if test $ac_have_wvr = yes ; then
+				if test $ac_have_wvrh = yes ; then
+					break;
+				fi
+			fi
+		fi
+	fi
+	echo "WVR Testn $ac_have_wvrh $ac_have_wvr"
+done
+if test $ac_have_wvrh = no; then
+	{ echo "$as_me:$LINENO: WARNING: cannot find WVR headers" >&5
+echo "$as_me: WARNING: cannot find WVR headers" >&2;}
+	ac_have_wvr=no
+fi
+if test $ac_have_wvr = no; then
+	{ echo "$as_me:$LINENO: WARNING: cannot find WVR library" >&5
+echo "$as_me: WARNING: cannot find WVR library" >&2;}
+	WVR_CFLAGS=""
+	WVR_LDFLAGS=""
+	WVR_LIBS=""
+fi
+if test $ac_have_wvr = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_WVR 1
+_ACEOF
+
+fi
+WVR_LIBS="$LIBS $OTHERLIB"
+CFLAGS="$ac_wvr_saved_CFLAGS"
+LDFLAGS="$ac_wvr_saved_LDFLAGS"
+LIBS="$ac_wvr_saved_LIBS"
+
+
+
+
+
 # Checks for library functions
 echo "$as_me:$LINENO: checking for _LARGEFILE_SOURCE value needed for large files" >&5
 echo $ECHO_N "checking for _LARGEFILE_SOURCE value needed for large files... $ECHO_C" >&6
@@ -11690,6 +12455,9 @@ s,@PGPLOT_LIBS@,$PGPLOT_LIBS,;t t
 s,@PYTHON_CPPFLAGS@,$PYTHON_CPPFLAGS,;t t
 s,@PYTHON_LDFLAGS@,$PYTHON_LDFLAGS,;t t
 s,@PYTHON_LIBS@,$PYTHON_LIBS,;t t
+s,@WVR_CFLAGS@,$WVR_CFLAGS,;t t
+s,@WVR_LDFLAGS@,$WVR_LDFLAGS,;t t
+s,@WVR_LIBS@,$WVR_LIBS,;t t
 s,@GTHREAD_LIBS@,$GTHREAD_LIBS,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t

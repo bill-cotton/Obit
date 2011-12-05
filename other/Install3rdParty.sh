@@ -11,9 +11,11 @@ doGSL=yes
 doZLIB=yes
 doMOTIF=yes
 doPYTHON=yes
-doWWW=yes
+doWWW=no
 doCURL=yes
 doXMLRPC=yes
+doBoost=yes
+doWVR=yes
 
 # Check command line arguments
 arg=$1
@@ -30,6 +32,8 @@ if test $arg = -without; then
 	if test $x = WWW;     then doWWW=no; fi
 	if test $x = CURL;    then doCURL=no; fi
 	if test $x = XMLRPC;  then doXMLRPC=no; fi
+	if test $x = BOOST;   then doBOOST=no; fi
+	if test $x = WVR;     then doWVR=no; fi
     done
 fi
 if test $arg = -help; then
@@ -47,6 +51,8 @@ if test $arg = -help; then
     echo "WWW - Internet protocol library"
     echo "CURL - Internet URL library"
     echo "XMLRPC - XMLRPC network protocol library"
+    echo "BOOST  - library to make c++ into a usable language (for WVR)"
+    echo "WVR  - Bojan Nikolic ALMA WVR library"
 fi
 echo "doPLPLOT $doPLPLOT"
 echo "doCFITSIO $doCFITSIO"
@@ -59,12 +65,15 @@ echo "doPYTHON $doPYTHON"
 echo "doWWW $doWWW"
 echo "doCURL $doCURL"
 echo "doXMLRPC $doXMLRPC"
+echo "doBoost $doBoost"
+echo "doWVR $doWVR"
 
 # Base address
 BASE3=`pwd`; export BASE3
 
 # Set compiler
 CC=/usr/bin/gcc; export CC
+CXX=/usr/bin/g++; export CXX
 
 # Obit base directory
 OBIT=$BASE3/../Obit;export OBIT
@@ -75,7 +84,20 @@ LD_LIBRARY_PATH=$BASE3/lib; export LD_LIBRARY_PATH
 PATH=$PATH:$BASE3/bin;export PATH
 
 # Third party software:
-#plplot
+
+# gsl
+if test $doGSL = yes; then
+    cd $BASE3
+# cleanup
+    rm -f -r gsl-1.13
+    tar xzvf tarballs/gsl-1.13.tar.gz
+    cd gsl-1.13
+    ./configure --prefix=$BASE3 
+    make clean all install
+    make clean
+fi
+
+# plplot
 if test $doPLPLOT = yes; then
     cd $BASE3
 # cleanup
@@ -134,18 +156,6 @@ if test $doFFTW = yes; then
 # Use --enable-threads for multithreaded
     ./configure --prefix=$BASE3/ --with-gcc --enable-shared --enable-float
     make clean all install
-fi
-
-# gsl
-if test $doGSL = yes; then
-    cd $BASE3
-# cleanup
-    rm -f -r gsl-1.6
-    tar xzvf tarballs/gsl-1.6.tar.gz
-    cd gsl-1.6
-    ./configure --prefix=$BASE3 
-    make clean all install
-    make clean
 fi
 
 # zlib
@@ -258,6 +268,41 @@ if test $doXMLRPC = yes; then
     make clean
 fi
 
+# Bojan Nikolic's WVR stuff, needs c++
 
+# Boost includes for WVR/c++
+if test $doBoost = yes; then
+    cd $BASE3
+# Only need header files for WVR
+    rm -f -r include/boost
+    tar xzvf tarballs/boostheader_1_41_0.tar.gz
+fi
 
+# Bojan's WVR libraries
+if test $doWVR = yes; then
+    export BNMINVER=bnmin1-1.11
+    export LIBAIRVER=libair-1.0.1
+    export INSTALLDIR=$BASE3
+    export BOOSTDIR=$BASE3
+    cd $BASE3
+# bnmin
+    rm -f -r ${BNMINVER}
+    tar xjvf tarballs/${BNMINVER}.tar.bz2
+    (cd ${BNMINVER} &&
+	LD_LIBRARY_PATH=$INSTALLDIR/lib:$PREREQPATH/lib \
+	    PATH=$INSTALLDIR/bin:$PREREQPATH/bin:$PATH \
+	    ./configure --disable-pybind --disable-buildtests --prefix=$INSTALLDIR  \
+	    --includedir=$BASE3/include/almawvr --with-boost=$BOOSTDIR &&
+	make && make install && cd ..)
+# libAir
+    rm -f -r ${LIBAIRVER}
+    tar xjvf tarballs/${LIBAIRVER}.tar.bz2
+    (cd ${LIBAIRVER} &&
+	LD_LIBRARY_PATH=$INSTALLDIR/lib:$PREREQPATH/lib \
+	    PATH=$INSTALLDIR/bin:$PREREQPATH/bin:$PATH \
+	    ./configure --disable-pybind --disable-buildtests --prefix=$INSTALLDIR  \
+	    --with-boost-program-options=no  --with-boost-unit-test-framework=no \
+	    --includedir=$BASE3/include/almawvr --with-boost=$BOOSTDIR &&
+	make && make install && cd ..)
+fi
 

@@ -5,16 +5,22 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
+   Note: binary distributions are available for Linux from the Obit
+web page (http://www.cv.nrao.edu/~bcotton/Obit.html); for most users
+this is preferable to a build from source.  The build from source is
+necessary if you need to add, modify or debug Obit c software or want
+Obit on a Mac. 
+
    This distribution allows the installation of Obit software for
 processing astronomical (primarily radio) data.  The Obit package
 relies on third party software and consists of a number of components.
 The bulk of the third party software is included here and is built and
 installed by included scripts. 
    The components of the Obit system are 1) the Obit libraries and
-tasks (in c), 2) ObitView image display, 3) ObitTalk and
-interactive python interface, and 4) ObitSD for single dish (GBT)
-processing.  Obit and friends use AIPS and FITS files as native data 
-types and is highly interoperable with AIPS. 
+tasks (in c), 2) ObitView image display and ObitMess message server, 
+3) ObitTalk an interactive python interface, and 4) ObitSD for single
+dish (GBT) processing.  Obit and friends use AIPS and FITS files as
+native data  types and is highly interoperable with AIPS. 
    Necessary software not included are X-windows and gmake.  Optional
 software not included are pgplot (licensing restrictions) and
 wxPython.  Software distributed here will be installed privately and
@@ -45,10 +51,11 @@ using command line -without options to InstallObit.sh;  -help gives:
 	    ZLIB    - Compression library
 	    MOTIF   - Motif graphics library
 	    PYTHON  - Python
-	    WWW     - Internet protocol library - best to avoid this one
-	    CURL    - Internet URL library (only one of WWW or CURL needed)
+	    CURL    - Internet URL library
 	    XMLRPC  - XMLRPC network protocol library
-    
+            BOOST   - headers to make c++ into a usable language (for WVR)
+            WVR     - Bojan Nikolic's ALMA WVR library"
+  
 	    Select Obit options
 	    THIRD - don't (re) install third party software
 	    Obit  - don't (re) install Obit
@@ -73,9 +80,7 @@ these subdirectories.
    Interprocess communications in Obit uses the xmlrpc protocol.  In
 the c implementation, this uses the xmlrpc-c library which in turn,
 depends on other packages for the actual communications. Xmlrpc-c can
-use either libwww or the curl package and both are distributed here.
-Libwww is not thread-safe so curl is greatly preferred.  The WWW option
-has been disabled in InstallObit.sh.
+use the curl package which is distributed here.
 
    To use the installed software, you have to tell your system where
 to look for it.  If you've installed it under a directory whose path is
@@ -131,7 +136,8 @@ the installation) and :
 library or generate code that can be linked with.  If your systen has
 a libz - then use it and specify -without ZLIB to InstallObit.sh
    The distributed Motif doesn't appear to build correctly on a 64 bit 
-system.  The distributed glib works but all messages are repeated.
+system.  The distributed glib works but all messages are repeated and 
+possibly has some modes of failure as well.
 
 UBUNTU Notes:
 ------------
