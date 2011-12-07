@@ -40,6 +40,14 @@ olong schemaVersion;
 gboolean isEVLA;
 /* Is this ALMA data? */
 gboolean isALMA;
+/** Selected configuration, <0 => any */
+olong selConfig;
+/** Selected band */
+ObitASDMBand selBand;
+/** Selected number of channels, <=0 => any */
+olong selChan;
+/** Selected Bandwidth (Hz), <=0.0 => any */
+olong selBW;
 /** ASDM table */
 ASDMTable* ASDMTab;
 /** Main table */

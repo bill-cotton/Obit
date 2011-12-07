@@ -224,8 +224,13 @@ README:
   update install documentation
 ObitSystem/Obit/TDF/SubImage.TDF:
   Increase pixel selection range 4096->32768
-ObitSystem/Obit/tasks/BDFIn.c ObitSystem/Obit/TDF/BDFIn.TDF:
-ObitSystem/Obit/src/ObitSDMData.c ObitSystem/Obit/include/ObitSDMDataDef.h:
-  Allow selecting the number of channels amoung several in a configuration
 05 Dec 2011, version 401
 
+ObitVersion:
+Obit/changes.log:
+Obit/tasks/BPass.c:
+  Add BPSoln to history
+Obit/tasks/BDFIn.c Obit/TDF/BDFIn.TDF
+Obit/src/ObitSDMData.c Obit/include/ObitSDMDataDef.h:
+  Allow selecting the number of channels amoung several in a configuration
+06 Dec 2011, version 402

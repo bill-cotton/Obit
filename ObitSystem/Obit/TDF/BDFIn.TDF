@@ -93,9 +93,15 @@ treated as being in holography mode.
 See the explain section for more details
 
 ALMA:
-   The output file will contain a dummy CL table.  If there is a CalWVR
-table on the input, it will be converted to an AIPS SN table which can
-be applied to the AIPS CL table.
+   The output file will contain a dummy CL table.  Tsys data is
+converted to an AIPS SN table which can be applied to the CL 
+table using CLCal.
+
+Mixed numbers of channels:
+   AIPS data formats only allow a single number of spectral channels for 
+all IFs.  If a given configuration has spectral windows with differing
+numbers of channels, selChan can be used to select which spectral 
+windows are selected.
 
 Adverbs:
   DataRoot...Archive directory for project

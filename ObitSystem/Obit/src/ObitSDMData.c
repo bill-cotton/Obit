@@ -593,9 +593,11 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   out = newObitSDMData (name);
 
   /* set Values */
-  out->DataRoot = strdup(DataRoot);
-  out->isEVLA   = FALSE;
-  out->isALMA   = FALSE;
+  out->DataRoot  = strdup(DataRoot);
+  out->isEVLA    = FALSE;
+  out->isALMA    = FALSE;
+  out->selConfig = -1;
+  out->selBand   = ASDMBand_Any;
 
   /* Parsing buffer */
   out->maxLine = 32768;
@@ -939,7 +941,7 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
       out->winds[iSW]->chanWidth        = in->SpectralWindowTab->rows[jSW]->chanWidthArray[0];
       out->winds[iSW]->effectiveBw      = in->SpectralWindowTab->rows[jSW]->effectiveBwArray[0];
       out->winds[iSW]->resolution       = in->SpectralWindowTab->rows[jSW]->resolutionArray[0];
-      /* Can I cope with this one??? */
+      /* Can I cope with/want this one??? */
       for (k=1; k<in->SpectralWindowTab->rows[jSW]->numChan; k++) {
 	if (in->SpectralWindowTab->rows[jSW]->chanWidthArray[0] != 
 	    in->SpectralWindowTab->rows[jSW]->chanWidthArray[k])  out->winds[iSW]->selected = FALSE;
@@ -979,6 +981,12 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
       out->winds[iSW]->subbandNum  = 
 	(olong)strtol(&in->SpectralWindowTab->rows[jSW]->name[8], NULL, 10);
     } else out->winds[iSW]->subbandNum = out->winds[iSW]->basebandNum;
+
+    /* Is this one selected? */
+    if ((in->selChan>0) && (in->selChan!=out->winds[iSW]->numChan)) 
+      out->winds[iSW]->selected = FALSE;
+    if ((in->selBW>0.0) && (fabs(in->selBW-out->winds[iSW]->chanWidth)>100.0))
+      out->winds[iSW]->selected = FALSE;
 
     iSW++;
   } /* end loop over DataDescriptions */

@@ -1082,7 +1082,7 @@ void BPassHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "selBand", "selFreq", "FreqID", 
     "BChan1", "EChan1", "BChan2", "EChan2", "ChWid2", 
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "doPol", "Antennas",  "refAnt",  "doAuto",
+    "BPSoln", "doPol", "Antennas",  "refAnt",  "doAuto",
     "DataType2", "in2File", "in2Disk", "in2Name", "in2Class", "in2Seq", 
     "nfield", "CCVer", "BComp", "EComp", "Cmethod", "Cmodel", "Flux",
     "modelFlux", "modelPos", "modelParm", "Alpha",

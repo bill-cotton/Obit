@@ -246,13 +246,14 @@ int main ( int argc, char **argv )
   
   /* convert data  */
   GetData (SDMData, myInput, outData, err); 
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  /*if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit; tolerate failure */
+  ObitErrLog(err);  ObitErrClear(err);  
 
   /* Close output uv data */
   if ((ObitUVClose (outData, err) != OBIT_IO_OK) || (err->error>0))
     Obit_log_error(err, OBIT_Error, "ERROR closing output file");
 
-  /* Read NX table to internam array */
+  /* Read NX table to internal array */
   ReadNXTable(outData, err);  
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
   
@@ -750,7 +751,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   ObitUVDesc *desc;
   olong ncol;
   gchar *today=NULL;
-  olong i, lim, selConfig, iMain;
+  olong i, iWind, lim, selConfig, iMain;
   ofloat epoch=2000.0, equinox=2000.0;
   olong nchan=1, npoln=1, nIF=1;
   odouble refFreq, startFreq=1.0;
@@ -818,6 +819,11 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
 		      "%s: No scans found matching selection criteria", 
 		      routine);
 
+  /* Set selection on SDMData */
+  SDMData->selConfig = selConfig;
+  SDMData->selBand   = band;
+  SDMData->selChan   = selChan;
+
   /* Create ObitUV for data */
   *outData = setOutputData (myInput, err);
   if (err->error) Obit_traceback_msg (err, routine, routine);
@@ -845,6 +851,25 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
     /* Set default configID */
     if (selConfig<0) selConfig = SDMData->MainTab->rows[iMain]->configDescriptionId;
   }
+
+  /* Update selection on SDMData */
+  SDMData->selConfig = selConfig;
+  SDMData->selBand   = band;
+  SDMData->selChan   = selChan;
+  /* Find first selected */
+  for (iWind=0; iWind<SpWinArray->nwinds; iWind++) {
+    if (SpWinArray->winds[iWind]->numChan==selChan){
+      SDMData->selBW     = SpWinArray->winds[iWind]->chanWidth;
+      break;
+    }
+  }
+
+  /* Rebuild ASDM Spectral windows data including all selections */
+  SpWinArray = ObitSDMDataKillSWArray (SpWinArray);
+  SpWinArray  = ObitSDMDataGetSWArray (SDMData, selMain, SWOrder);
+  Obit_return_if_fail((SpWinArray), err,
+		      "%s: Could not extract Spectral Windows from ASDM", 
+		      routine);
 
   /* Save selection for history */
   dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
@@ -1843,7 +1868,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   ObitBDFData *BDFData=NULL;
   ObitIOCode retCode;
   olong iMain, iInteg, ScanId=0, SubscanId=0, i, j, jj, iBB, selChan, selIF, selConfig, 
-    iSW, jSW, kBB, nIFsel, cntDrop=0, ver, iRow, sourId=0, iIntent, iScan;
+    iSW, jSW, kSW, kBB, nIFsel, cntDrop=0, ver, iRow, sourId=0, iIntent, iScan;
   olong lastScan=-1, lastSubscan=-1, ScanTabRow=-1, numIntegration;
   ofloat *Buffer=NULL, tlast=-1.0e20, startTime=0.0, endTime=0.0;
   ObitUVDesc *desc;
@@ -2017,6 +2042,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     iSW    = 0;   /* input Spectral window index */
     kBB    = 0;   /* Baseband index */
     iBB    = 0;   /* SW Index in baseband */
+    kSW    = 0;   /* SW index in data */
     while (iSW<BDFData->SWArray->nwinds) {
       /* Get from ordered list */
       jSW = BDFData->SWArray->order[iSW];
@@ -2034,11 +2060,12 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	   routine, BBNum, BDFData->SWArray->winds[jSW]->basebandNum, nIFsel);*/
 	/* Test frequency */
 	Obit_return_if_fail((fabs(BDFData->SWArray->winds[iSW]->chanFreqStart-
-				  outData->myDesc->freqIF[iSW]) < 1.0e3), err,
+				  outData->myDesc->freqIF[kSW]) < 1.0e3), err,
 			    "%s: Frequencies inconsistent %lf != %lf, IF %d", 
 			    routine, BDFData->SWArray->winds[iSW]->chanFreqStart, 
 			    outData->myDesc->freqIF[iSW], nIFsel);
   	nIFsel++;
+	kSW++;
       } 
       iSW++;
       /* All of this baseband? */
