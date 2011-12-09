@@ -234,3 +234,9 @@ Obit/tasks/BDFIn.c Obit/TDF/BDFIn.TDF
 Obit/src/ObitSDMData.c Obit/include/ObitSDMDataDef.h:
   Allow selecting the number of channels amoung several in a configuration
 06 Dec 2011, version 402
+
+ObitVersion:
+Obit/changes.log:
+Obit/tasks/BDFIn.c:
+  GetFlagInfo: minimum of 1 antenna per FlagTab entry.
+09 Dec 2011, version 403

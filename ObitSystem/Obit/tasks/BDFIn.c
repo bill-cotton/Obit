@@ -2628,6 +2628,7 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ObitTableFG*       outTable=NULL;
   ObitTableFGRow*    outRow=NULL;
   olong              iRow, oRow, ver, iarr, antId, antNo, iAnt, i, ia;
+  olong              numAnt;
   ObitIOAccess       access;
   ASDMAntennaArray*  AntArray;
   gchar              *routine = "GetFlagInfo";
@@ -2709,7 +2710,8 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     outRow->TimeRange[1] += SDMData->integTime;
 
     /* Loop over antennas in antennaId */
-    for (ia=0; ia< SDMData->FlagTab->rows[iRow]->numAntenna; ia++) {
+    numAnt = MAX (1, SDMData->FlagTab->rows[iRow]->numAntenna);
+    for (ia=0; ia<numAnt; ia++) {
       /* Look up antenna number from Id */
       antId = SDMData->FlagTab->rows[iRow]->antennaId[ia];
       antNo = antId;
