@@ -1,7 +1,7 @@
 /* $Id$  */
 /* image blink control box  for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,2002-2008
+*  Copyright (C) 1996,2002-2011
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -27,6 +27,7 @@
 #include <math.h>
 #include "imagedisp.h"
 #include "color.h"
+#include <unistd.h>
 
 /**
  *  \file blinkbox.c
@@ -73,6 +74,7 @@ int BlinkAreAligned (void);
 /**
  * Searches event queue for click of Quit button 
  * \return true if event found
+ * THIS IS PROBABLY A BAD THING TO DO - Seems to cause crashes
  */
 Boolean BlinkCheckQuit()
 {
@@ -86,7 +88,8 @@ Boolean BlinkCheckQuit()
       	BlinkDia.Stop = 1; ret=1;
 	if (BlinkDia.timerId!=0) XtRemoveTimeOut(BlinkDia.timerId);
 	BlinkDia.timerId = 0;
-      }  else {/* it's not yours - put it back */
+	usleep(250000);  /* Give things a chance to settle - 250 msec */
+     }  else {/* it's not yours - put it back */
       	XPutBackEvent (XtDisplay(BlinkDia.dialog), 
 		       (XEvent*)&QuitEvent); return 0;
       }
@@ -126,7 +129,8 @@ void BlinkShutDown (void)
   
   /* I could just die */
   BlinkBoxActive = 0; /* mark as inactive */
-  XtDestroyWidget (BlinkDia.dialog); /* your wish is granted */
+  XtDestroyWidget (BlinkDia.dialog);  /* your wish is granted */
+
 } /* end BlinkShutDown */
 
 
@@ -140,7 +144,7 @@ void BlinkScrollDwellCB (Widget w, XtPointer clientData, XtPointer callData)
 {
   /*ImageDisplay *IDdata = (ImageDisplay *)clientData;*/
   XmScaleCallbackStruct *call_data = (XmScaleCallbackStruct *) callData;
-  
+  usleep(250000);  /* Give things a chance to settle - 250 msec */
   /* read value of scrollbar */
   BlinkDia.Dwell = call_data->value * 0.1; /* 10th of sec */
   /* update label */
@@ -158,8 +162,11 @@ void BlinkPlay (Widget w, XtPointer clientData, XtPointer callData)
   unsigned long interval;
   
   /* Done? */
-  if (BlinkDia.Stop || BlinkCheckQuit()) /* quit button? */
-    {BlinkShutDown();
+  /*if (BlinkDia.Stop || BlinkCheckQuit()) quit button? */
+  if (BlinkDia.Stop) /* quit button? */
+    { usleep(250000);  /* Give things a chance to settle - 250 msec */
+      /*fprintf (stderr, "Stop blink\n");*/
+      BlinkShutDown();
     return;}
   
   /* toggle image */

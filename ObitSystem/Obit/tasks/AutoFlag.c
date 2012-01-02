@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to automatically edit visibility data                    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2010                                          */
+/*;  Copyright (C) 2005-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -79,10 +79,13 @@ int main ( int argc, char **argv )
   ObitSystem   *mySystem= NULL;
   ObitTableFG  *FlagTab=NULL;
   ObitUV       *inData = NULL,*outData = NULL;
-  ofloat       VClip[2], IClip[2], RMSClip[2], RMSAvg, minAmp=0.0, timeAvg=0.0;
+  ofloat       IClip[2], XClip[2], VClip[2], RMSClip[2];
+  ofloat       RMSAvg, minAmp=0.0, timeAvg=0.0;
   olong        flagTab=0, hiTab;
-  gchar        *VStokes = "V", *IStokes = "I";
-  gboolean doneIt = FALSE, doFD;
+  gchar        *IStokes = "I", *VStokes = "V", *XStokes;
+  gchar        *RLStokes = "RL", *LRStokes = "LR";
+  gchar        *XYStokes = "XY", *YXStokes = "YX";
+  gboolean doneIt = FALSE, doFD, circFeed;
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *FDParms[] = {
@@ -143,26 +146,6 @@ int main ( int argc, char **argv )
   ObitInfoListAlwaysPut (outData->info, "flagTab", OBIT_long,  dim, &hiTab);
   ObitInfoListAlwaysPut (inData->info , "flagTab", OBIT_long,  dim, &hiTab);
 
-  /* VPol clipping if requested */
-  VClip[0] = -1.0; VClip[1] = 0.0;
-  ObitInfoListGetTest(myInput, "VClip",  &type, dim, VClip);
-  if (VClip[0]>0.0) {
-    doneIt = TRUE;  /* Done anything? */
-    /* Set remaining control parameters */
-    dim[0] = strlen (VStokes);
-    ObitInfoListAlwaysPut (inData->info, "flagStok", OBIT_string, dim, VStokes);
-    dim[0] = 2;
-    ObitInfoListAlwaysPut (inData->info, "maxAmp", OBIT_float, dim, &VClip[0]);
-    
-    /* Edit, Write flags to temp highest */
-    ObitUVEditStokes (inData, outData, err);
-    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
-
-    /* Copy flags to flagTab, delete temp highest */
-    ObitUVEditAppendFG (outData, flagTab, err);
-    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
- } /* end Vpol flagging */
-
   /* IPol clipping if requested */
   IClip[0] = -1.0; IClip[1] = 0.0;
   ObitInfoListGetTest(myInput, "IClip",   &type, dim, IClip);
@@ -184,7 +167,71 @@ int main ( int argc, char **argv )
     /* Copy flags to flagTab, delete temp highest */
     ObitUVEditAppendFG (outData, flagTab, err);
     if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
- } /* end Ipol cliping */
+  } /* end Ipol cliping */
+
+  /* xross Pol clipping if requested */
+  XClip[0] = -1.0; XClip[1] = 0.0;
+  ObitInfoListGetTest(myInput, "XClip",  &type, dim, XClip);
+  if (XClip[0]>0.0) {
+    doneIt = TRUE;  /* Done anything? */
+    circFeed = (inData->myDesc->crval[inData->myDesc->jlocs]>-3.0);  /* Circular feeds? */
+
+    /* First RL or XY */
+    if (circFeed) XStokes = RLStokes;
+    else          XStokes = XYStokes;
+    
+    /* Set remaining control parameters */
+    dim[0] = strlen (XStokes);
+    ObitInfoListAlwaysPut (inData->info, "flagStok", OBIT_string, dim, XStokes);
+    dim[0] = 2;
+    ObitInfoListAlwaysPut (inData->info, "maxAmp", OBIT_float, dim, &XClip[0]);
+    
+    /* Edit, Write flags to temp highest */
+    ObitUVEditStokes (inData, outData, err);
+    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+
+    /* Copy flags to flagTab, delete temp highest */
+    ObitUVEditAppendFG (outData, flagTab, err);
+    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+
+    /* Second  LR or YX */
+    if (circFeed) XStokes = LRStokes;
+    else          XStokes = YXStokes;
+    
+    /* Set remaining control parameters */
+    dim[0] = strlen (XStokes);
+    ObitInfoListAlwaysPut (inData->info, "flagStok", OBIT_string, dim, XStokes);
+    dim[0] = 2;
+    ObitInfoListAlwaysPut (inData->info, "maxAmp", OBIT_float, dim, &XClip[0]);
+    
+    /* Edit, Write flags to temp highest */
+    ObitUVEditStokes (inData, outData, err);
+    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+
+    /* Copy flags to flagTab, delete temp highest */
+    ObitUVEditAppendFG (outData, flagTab, err);
+    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  } /* end Xpol flagging */
+
+  /* VPol clipping if requested */
+  VClip[0] = -1.0; VClip[1] = 0.0;
+  ObitInfoListGetTest(myInput, "VClip",  &type, dim, VClip);
+  if (VClip[0]>0.0) {
+    doneIt = TRUE;  /* Done anything? */
+    /* Set remaining control parameters */
+    dim[0] = strlen (VStokes);
+    ObitInfoListAlwaysPut (inData->info, "flagStok", OBIT_string, dim, VStokes);
+    dim[0] = 2;
+    ObitInfoListAlwaysPut (inData->info, "maxAmp", OBIT_float, dim, &VClip[0]);
+    
+    /* Edit, Write flags to temp highest */
+    ObitUVEditStokes (inData, outData, err);
+    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+    
+    /* Copy flags to flagTab, delete temp highest */
+    ObitUVEditAppendFG (outData, flagTab, err);
+    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  } /* end Vpol flagging */
 
   /* Time domain flagging if requested */
   RMSClip[0] = RMSClip[1] = 0.0;
@@ -1019,8 +1066,8 @@ void AutoFlagHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "Sources", "Stokes", "timeRange",  "subA", "FreqID", "souCode", "Qual", 
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
     "doPol",  
-    "flagTab", "VClip", "IClip", "RMSClip", "doHiEdit", "RMSAvg", "maxBad", "timeAvg", 
-    "minAmp", 
+    "flagTab", "IClip", "XClip", "VClip", "RMSClip", 
+    "doHiEdit", "RMSAvg", "maxBad", "timeAvg", "minAmp", 
     "doFD", "FDmaxAmp", "FDmaxV", "FDwidMW", "FDmaxRMS", 
     "FDmaxRes", "FDmaxResBL", "FDbaseSel", "nThreads", 
     NULL};

@@ -240,3 +240,20 @@ Obit/changes.log:
 Obit/tasks/BDFIn.c:
   GetFlagInfo: minimum of 1 antenna per FlagTab entry.
 09 Dec 2011, version 403
+
+ObitVersion:
+Obit/changes.log:
+ObitView/src/blinkbox.c ObitView/src/aboutbox.c ObitView/changes:
+  Remove call to BlinkCheckQuit, was crashing
+Obit/src/ObitFInterpolate.c:
+  ObitFInterpolatePixel: fix indexing bug
+Obit/TDF/AutoFlag.TDF Obit/tasks/AutoFlag.c:
+  Add XClip
+Obit/tasks/SubImage.c:
+  Clip TRC to range if inc>1
+Obit/src/ObitIOImageFITS.c Obit/src/ObitIOUVFITS.c:
+  KeysOtherRead: Use AlwaysPut for long, double.
+Obit/include/ObitUVRLDelay.h Obit/src/ObitUVRLDelay.c:
+Obit/tasks/RLDly.c Obit/TDF/RLDly.TDF:
+  New task/utility to fit cross polarized delays
+02 Jan 2012, version 404

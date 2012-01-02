@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2003-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -3074,8 +3074,8 @@ void  ObitIOUVKeysOtherRead(ObitIOUVFITS *in, olong *lstatus,
 	  ivalue = strtol(value, NULL, 10);
 	  /* add to InfoList */
 	  dim[0] = 1;
-	  ObitInfoListPut(desc->info, keywrd, OBIT_long, dim, 
-			  (gconstpointer)&ivalue, err);
+	  ObitInfoListAlwaysPut(desc->info, keywrd, OBIT_long, dim, 
+			  (gconstpointer)&ivalue);
 	  break;
 	case 'F':  /* Float - use double */
 	  /* AIPS uses 'D' for double exponent */
@@ -3083,8 +3083,8 @@ void  ObitIOUVKeysOtherRead(ObitIOUVFITS *in, olong *lstatus,
 	  dvalue = strtod(value, &last);
 	  /* add to InfoList */
 	  dim[0] = 1;
-	  ObitInfoListPut(desc->info, keywrd, OBIT_double, dim, 
-			  (gconstpointer)&dvalue, err);
+	  ObitInfoListAlwaysPut(desc->info, keywrd, OBIT_double, dim, 
+			  (gconstpointer)&dvalue);
 	  break;
 	case 'X':  /* Complex - can't handle */
 	default:

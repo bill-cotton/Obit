@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task - SubImage copy a subregion of an image                  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2010                                          */
+/*;  Copyright (C) 2005-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -611,6 +611,8 @@ ObitImage* getInputImage (ObitInfoList *myInput, ObitErr *err)
     blc[i] = MAX (1,  blc[i]);
     if (trc[i]<=0) trc[i] = ((ObitImageDesc*)inImage->myIO->myDesc)->inaxes[i];
     trc[i] = MIN (trc[i], ((ObitImageDesc*)inImage->myIO->myDesc)->inaxes[i]);
+    /* if inc!=1 then force to range */
+    if (inc[i]>1) trc[i] = blc[i] + 2*((trc[i]-blc[i]+1)/2) - 1;
   }
 
   /* Save blc, trc */

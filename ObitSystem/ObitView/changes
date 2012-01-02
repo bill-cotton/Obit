@@ -21,3 +21,8 @@ X src/helpbox.c  update editing function descriptions
    Allows infinite timeout.
    Fix problems in blinking.
 
+7 Dec 2011, blinkbox.c Version 1.1 
+   Remove call to BlinkCheckQuit, this seems to be what was causing
+   the blink crashes.
+
+

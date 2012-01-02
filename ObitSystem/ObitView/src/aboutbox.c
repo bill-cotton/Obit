@@ -53,8 +53,8 @@ void HelpAbout (ScrollTextPtr STextPtr)
 {
   int loop, next, length;
   char *line[] = {
-    "ObitView 1.0 Viewer for images in FITS format ",
-    "Copyright NRAO/AUI 2005-2009 ",
+    "ObitView 1.1 Viewer for images in FITS or AIPS format ",
+    "Copyright NRAO/AUI 2005-2011 ",
     " ",
     "   This software is distributed free of charge by NRAO. ",
     "The (USA) National Radio Astronomy Observatory (http://www.nrao.edu/) ",

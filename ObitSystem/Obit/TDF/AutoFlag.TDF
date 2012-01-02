@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry data editing software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005-2010
+;;  Copyright (C) 2005-2011
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -90,9 +90,11 @@ outDisk                             Disk for output FG table
 **PARAM** int 1 **DEF** 1 
 flagTab                             Output Flagging table version 
 **PARAM** float 2
-VClip                               If > 0.0 VPol clipping level
-**PARAM** float 2
 IClip                               If > 0.0 IPol clipping level
+**PARAM** float 2
+XClip                               If > 0.0 Cross Pol clipping level
+**PARAM** float 2
+VClip                               If > 0.0 VPol clipping level
 **PARAM** float 1
 minAmp                              Min. amp. in IPol clipping
 **PARAM**  float 2
@@ -144,8 +146,8 @@ Any or all may be specified.  The result of this operation will be
 a FG (flag) table attached to the "output" data.
 
    Flagging is based on a combination of user supplied parameters
-(VClip, IClip, minAmp, RMSClip, RMSAvg) and a statistical analysis of the 
-data in each averaging interval (timeAvg).  
+(VClip, XClip, IClip, minAmp, RMSClip, RMSAvg) and a statistical 
+analysis of the data in each averaging interval (timeAvg).  
 See EXPLAIN for more details.
 
 Adverbs:
@@ -219,16 +221,18 @@ Adverbs:
       Flagging control
   flagTab....Output Flagging table version.  This is the FG table 
              out outName... to be written.  Default 1.
-  VClip......If [0]> 0.0 then flagging of data when averaged VPol 
-             amplitudes exceed VClip.  Default 0.0 = no flagging.
-             VClip[1]==0 => use statistical clipping
-             Data are vector averaged for timeAvg before clipping.
-             See EXPLAIN section for details.    
   IClip......If [0]> 0.0 then flagging of data when averaged IPol 
              amplitudes exceed IClip.  Default 0.0 = no flagging.
              IClip[1]==0 => use statistical clipping
              Data are vector averaged for timeAvg before clipping.
              See HELP and EXPLAIN sections for details.    
+  XClip......If [0]> 0.0 then flagging of data when averaged cross
+             polarized amplitudes (RL, LR, XY, YX) exceed XClip.  
+             Default 0.0 = no flagging.
+             Data are vector averaged for timeAvg before clipping.
+  VClip......If [0]> 0.0 then flagging of data when averaged VPol 
+             amplitudes exceed VClip.  Default 0.0 = no flagging.
+             Data are vector averaged for timeAvg before clipping.
   minAmp.....If IClip flapping is selected, any amplitudes less than
              minAmp will be flagged.
   RMSClip....Clip level for time domain (RMS editing) as
@@ -329,12 +333,13 @@ if a flagged correlator is a parallel-hand correlator then any
 corresponding cross-hand correlations are also flagged.
 Can be used for uncalibrated data.
 
-VPol editing:
+Q,U,VPol editing:
    All data on a given baseline/correlator are flagged if the 
-amplitude of the Stokes 'V' exceeds VClip[0].  If VClip[1]==0.0
-then the actual clipping level is the lesser of VClip[0] and a 
-value determined from a statistical analysis of each interval 
-intended to flag the most discrepant 3 percent of the data.
+amplitude of the Stokes 'V' (or 'Q',or 'U') exceeds V(Q,U)Clip[0].  
+If V(Q,U)Clip[1]==0.0 then the actual clipping level is the 
+lesser of V(Q,U)Clip[0] and a  value determined from a statistical 
+analysis of each interval intended to flag the most discrepant 
+3 percent of the data.
 If a fraction of bad baselines on any antenna/channel/IF exceeds 
 maxBad, then all data to that correlator is flagged.  
 Results are unpredictable for uncalibrated data.

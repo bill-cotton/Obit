@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -354,9 +354,9 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
   planeOff = (iplane-1) * in->nx * in->ny;
     
   /* Zero sums */
-  sum = 0.0;
+  sum   = 0.0;
   sumwt = 0.0;
-  good = 0;
+  good  = 0;
  
   /* Loop over data summing values times convolving weights */
   for (j=0; j<iwid; j++) {
@@ -365,9 +365,9 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
       indx = planeOff + xStart + i + ((yStart + j) * in->nx);
       wt = xKernal[i] * wty;
       if (data[indx] != fblank) {
-	sumwt = sumwt + wt;
-	sum = sum + data[indx] * wt;
-	good = good + 1;
+	sumwt += wt;
+	sum   += data[indx] * wt;
+	good  += 1;
       } 
     }
   }
@@ -388,17 +388,17 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
   yp = pixel[1] - yStart;
   for (j= 1; j<=iwid; j++) { /* loop 200 */
     /* interpolate in rows */
-    sum = 0.0;
+    sum   = 0.0;
     sumwt = 0.0;
     for (i=0; i<iwid; i++) { /* loop 120 */
-      den = 1.0;
+      den  = 1.0;
       prod = 1.0;
       for (k=0; k<iwid; k++) { /* loop 110 */
 	indx = planeOff + xStart + k + ((yStart + j) * in->nx);
 	if (data[indx] != fblank) {
 	  if (i != k) {
-	    den = den * (i - k);
-	    prod = prod * (xp - k);
+	    den  *= (ofloat)(i - k);
+	    prod *= (ofloat)(xp - k);
 	  } 
 	} 
       } /* end loop  L110: */;
@@ -412,8 +412,8 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
 	} else {
 	  wt = 0.0;
 	} 
-	sumwt = sumwt + wt;
-	sum = sum + wt * data[indx];
+	sumwt += wt;
+	sum   += wt * data[indx];
       } 
     } /* end loop  L120: */
 
@@ -426,30 +426,29 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
   } /* end loop  L200: */
 
   /* interpolate in column */
-  sum = 0.0;
-  sumwt = 0.0;
+  sum = sumwt = 0.0;
   for (i=0; i<iwid; i++) { /* loop 220 */
-    den = 1.0;
+    den  = 1.0;
     prod = 1.0;
     for (k=0; k<iwid; k++) { /* loop 210 */
       if (row[k] != fblank) {
 	if (i != k) {
-	  den = den * (i - k);
-	  prod = prod * (yp - k);
+	  den  *= (ofloat)(i - k);
+	  prod *= (ofloat)(yp - k);
 	} 
       } 
     } /* end loop  L210: */
     
     /* accumulate */
-    if (row[i-1] != fblank) {
+    if (row[i] != fblank) {
       if (abs (den) > 1.0e-10) {
 	wt = prod / den;
       } else {
 	wt = 0.0;
       } 
-      sumwt = sumwt + wt;
-      sum = sum + wt * row[i-1];
-    } 
+      sumwt += wt;
+      sum   += wt * row[i];
+    }
   } /* end loop  L220: */
 
   /* interpolate value */
