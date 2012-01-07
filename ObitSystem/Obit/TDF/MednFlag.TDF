@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry data editing software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005-2010
+;;  Copyright (C) 2005-2012
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -77,6 +77,9 @@ BPVer                               Bandpass table version
 flagVer                             Flag table version
 **PARAM** boo 1 **DEF** F
 doPol                               Apply polarization cal?
+**PARAM** int 1 **DEF** -1
+PDVer                              PD table to apply
+                                   If >=0, per channel corrections
 **PARAM** str 48
 outFile                             FITS uvdata for output FG table
 **PARAM** str 12
@@ -200,6 +203,9 @@ Adverbs:
                <0 => no bandpass correction to be applied.
   flagVer....FG table to apply prior to  editing. 0 => highest.
   doPol......True -> apply polarization calibration
+  PDVer......AIPS PD table to use for per channel instrumental
+             polarization corrections if doPol=True. 0=> highest
+             -1 => use IF corrections from AIPS AN table.
 
       Output FG files, may be the same at the input
   outFile....Output FITS uvdata for FG table file name

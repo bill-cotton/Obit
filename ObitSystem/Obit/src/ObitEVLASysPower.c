@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011                                               */
+/*;  Copyright (C) 2012                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -262,7 +262,7 @@ void ObitEVLASysPowerInitFile  (ObitEVLASysPower *in, gchar *DataFile, ObitErr *
   gchar *startInfo, *endInfo, *next, *start, *prior, *tstr;
   gchar *ord[10];
   /* gchar *tableUID=NULL, *containerUID=NULL; */
-  ObitESPEndian endian=endian==ESPEndian_Little;
+  ObitESPEndian endian=ESPEndian_Little;
   gchar *routine = "ObitEVLASysPowerInitFile";
 
   /* error checks */

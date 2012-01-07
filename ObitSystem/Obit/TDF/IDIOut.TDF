@@ -4,7 +4,7 @@
 ;! Obit Convert UV data file to IDI  .
 ;# Task Obit IDI
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2009,2010
+;;  Copyright (C) 2009-2011
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -74,6 +74,9 @@ doCalib          -1.0        2.0    If >0 calibrate data
 gainUse                             CL (or SN) table to apply
 **PARAM** boo 1 **DEF** F
 doPol            -1.0       10.0    If >0 correct polarization.
+**PARAM** int 1 **DEF** -1
+PDVer                              PD table to apply
+                                   If >=0, per channel corrections
 **PARAM** int 1
 flagVer                             Flag table version
 **PARAM** int 1
@@ -142,10 +145,10 @@ Adverbs:
   gainUse....Version number of the CL table to apply to multi-source
              files or the SN table for single-source files.
              0 => highest.
-  doPol......If True then correct data for instrumental polarization as
-             represented in the AN table.  This correction is only
-             useful if PCAL has been run or feed polarization parameters
-             have been otherwise obtained. 
+  doPol......If True, apply polarization calibration
+  PDVer......AIPS PD table to use for per channel instrumental
+             polarization corrections if doPol=True. 0=> highest
+             -1 => use IF corrections from AIPS AN table.
   flagVer....Specifies the version of the flagging table to be applied.
              0 => highest numbered table. <0 => no flagging to be
              applied.

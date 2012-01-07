@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task apply calibration snd write single source files */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007,2010                                          */
+/*;  Copyright (C) 2007-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -159,6 +159,11 @@ ObitInfoList* SplitIn (int argc, char **argv, ObitErr *err)
   /* Make default inputs InfoList */
   list = defaultInputs(err);
 
+  /* Initialize output */
+  myOutput = defaultOutputs(err);
+  ObitReturnDumpRetCode (-999, outfile, myOutput, err);
+  if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
+
   /* command line arguments */
   /* fprintf (stderr,"DEBUG arg %d %s\n",argc,argv[0]); DEBUG */
   if (argc<=1) Usage(); /* must have arguments */
@@ -285,11 +290,6 @@ ObitInfoList* SplitIn (int argc, char **argv, ObitErr *err)
       strTemp += dim[0];
     }
   }
-
-  /* Initialize output */
-  myOutput = defaultOutputs(err);
-  ObitReturnDumpRetCode (-999, outfile, myOutput, err);
-  if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
   return list;
 } /* end SplitIn */
@@ -892,7 +892,7 @@ void doSplit (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "Stokes", "UVRange", "timeRange", "FreqID", "souCode", "Qual", 
     "BIF", "EIF", "BChan", "EChan", "subA", "doCalWt", "dropSubA",
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "Smooth", "flagVer", 
-    "doPol", "Mode", "corrType", "BLVer", "InputAvgTime", "timeAvg",
+    "doPol", "PDVer", "Mode", "corrType", "BLVer", "InputAvgTime", "timeAvg",
     "NumChAvg", "ChanSel",
     NULL  };
   gchar        *outParms[] = {  /* Parameters for output data */
@@ -1006,7 +1006,7 @@ void SplitHistory (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "BIF", "EIF", "BChan", "EChan",  "chInc", "chAvg",
     "UVRange",  "timeRange",  "Compress", "doCalWt", "dropSubA",
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "doPol", "BLVer", "timeAvg", "avgFreq", "chAvg",  "ChanSel",
+    "doPol", "PDVer", "BLVer", "timeAvg", "avgFreq", "chAvg",  "ChanSel",
     "InputAvgTime",  "dropSubA",  "doWtCal",  "corrType", "nThreads", 
     NULL};
   gchar *routine = "SplitHistory";

@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2011                                          */
+/*;  Copyright (C) 2004-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1285,7 +1285,7 @@ ObitUV* ObitUVUtilHann (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS AT", "AIPS CT", "AIPS OB", "AIPS IM", "AIPS MC",
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
-		    "AIPS FQ", "AIPS SU", "AIPS AN",
+		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx, jndx;
@@ -1490,7 +1490,7 @@ ObitUV* ObitUVUtilAvgF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS AT", "AIPS CT", "AIPS OB", "AIPS IM", "AIPS MC",
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
-		    "AIPS FQ", "AIPS SU", "AIPS AN",
+		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx, jndx;
@@ -1701,7 +1701,7 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS AT", "AIPS CT", "AIPS OB", "AIPS IM", "AIPS MC",
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
-		    "AIPS FQ", "AIPS SU", "AIPS AN",
+		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   ObitInfoType type;
@@ -2091,7 +2091,7 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS AT", "AIPS CT", "AIPS OB", "AIPS IM", "AIPS MC",
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
-		    "AIPS FQ", "AIPS SU", "AIPS AN",
+		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   ObitInfoType type;
@@ -2759,7 +2759,7 @@ void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV,
 		    "AIPS AT", "AIPS CT", "AIPS OB", "AIPS IM", "AIPS MC",
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
-		    "AIPS FQ", "AIPS SU", "AIPS AN",
+		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong *BChan=NULL, *numChan=NULL, *BIF=NULL, *numIF=NULL;

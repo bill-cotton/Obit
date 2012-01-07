@@ -257,3 +257,77 @@ Obit/include/ObitUVRLDelay.h Obit/src/ObitUVRLDelay.c:
 Obit/tasks/RLDly.c Obit/TDF/RLDly.TDF:
   New task/utility to fit cross polarized delays
 02 Jan 2012, version 404
+
+Changes mostly to implement Eric's channel based Poln cal.
+svn add \
+  Obit/src/ObitPolCalList.c Obit/include/ObitPolCalList.h \
+  Obit/include/ObitPolCalListDef.h Obit/include/ObitPolCalListClassDef.h \
+  Obit/src/ObitTablePD.c Obit/include/ObitTablePD.h Obit/python/TablePD.inc \
+  Obit/include/ObitTablePDDef.h Obit/include/ObitTablePDClassDef.h \
+  Obit/include/ObitTablePDRowDef.h Obit/include/ObitTablePDRowClassDef.h \
+  Obit/src/ObitTableCP.c Obit/include/ObitTableCP.h Obit/python/TableCP.inc \
+  Obit/include/ObitTableCPDef.h Obit/include/ObitTableCPClassDef.h \
+  Obit/include/ObitTableCPRowDef.h Obit/include/ObitTableCPRowClassDef.h:
+svn commit -F changes:
+ObitVersion:
+Obit/changes.log:
+Obit/src/ObitEVLASysPower.c:
+  InitFile: Fix initialization of endian
+ObitSD/tasks/QuadDet.c:
+  CnvrtData: initialize refDay (but not properly).
+ObitSD/src/ObitOTFGetSoln.c:
+  PlotMBBL: set value of atm
+Obit/tasks/Splat.c:
+  Index output file.
+Obit/src/ObitUVRLDelay.c:
+  FitDelay: another order of magnitude precision in delay fit.
+Obit/bin/ObitTables.pl:
+  Update copyright date.
+Obit/doc/Obitdoc.tex:
+  Definition of AIPS PD & AIPS CP tables.
+Obit/src/ObitUV.c Obit/include/ObitUVSel.h:
+  Implement passing PDVer to poln calibration
+Obit/src/ObitUVUtil.c:
+  Add AIPS PD to lists of tables to exclude
+Obit/src/ObitUVCal.c Obit/include/ObitUVCalDef.h:
+  Update for PD polarization calibration info.
+Obit/src/ObitUVCalPolarization.c Obit/include/ObitUVCalPolarization.h:
+Obit/include/ObitUVCalPolarizationDef.h:
+  Implement poln calibration by channel from PD table.
+Obit/src/ObitPolCalList.c Obit/include/ObitPolCalList.h:
+Obit/include/ObitPolCalListDef.h Obit/include/ObitPolCalListClassDef.h:
+ New class to store contents of AIPS PD poln cal table.
+Obit/src/ObitTablePD.c Obit/include/ObitTablePD.h Obit/python/TablePD.inc:
+Obit/include/ObitTablePDDef.h Obit/include/ObitTablePDClassDef.h:
+Obit/include/ObitTablePDRowDef.h Obit/include/ObitTablePDRowClassDef.h:
+  Implement AIPS PD table
+Obit/src/ObitTableCP.c Obit/include/ObitTableCP.h Obit/python/TableCP.inc:
+Obit/include/ObitTableCPDef.h Obit/include/ObitTableCPClassDef.h:
+Obit/include/ObitTableCPRowDef.h Obit/include/ObitTableCPRowClassDef.h:
+  Implement AIPS CP table
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+Obit/python/Table.inc  Obit/python/Table.py Obit/python/OData.py :
+  Update python interface
+Obit/tasks/Lister.c Obit/TDF/Lister.TDF:
+Obit/tasks/Split.c Obit/TDF/Split.TDF:
+Obit/tasks/SplitCh.c Obit/TDF/SplitCh.TDF:
+Obit/tasks/UVCopy.c Obit/TDF/UVCopy.TDF:
+Obit/tasks/RLPass.c Obit/TDF/RLPass.TDF:
+Obit/tasks/RLDly.c Obit/TDF/RLDly.TDF:
+Obit/tasks/BPass.c Obit/TDF/BPass.TDF:
+Obit/tasks/Calib.c Obit/TDF/Calib.TDF:
+Obit/tasks/MednFlag.c Obit/TDF/MednFlag.TDF:
+Obit/tasks/MazrCal.c Obit/TDF/MazrCal.TDF:
+Obit/tasks/IDIOut.c Obit/TDF/IDIOut.TDF:
+Obit/tasks/Imager.c Obit/TDF/Imager.TDF:
+Obit/tasks/BeamCor.c Obit/TDF/BeamCor.TDF:
+Obit/tasks/MapBeam.c Obit/TDF/MapBeam.TDF:
+Obit/tasks/MFBeam.c Obit/TDF/MFBeam.TDF:
+Obit/tasks/MFImage.c Obit/TDF/MFImage.TDF:
+Obit/tasks/Squint.c Obit/TDF/Squint.TDF:
+Obit/tasks/SCMap.c Obit/TDF/SCMap.TDF:
+Obit/tasks/IonImage.c Obit/TDF/IonImage.TDF:
+  Implement PDVer for per channel poln cal.
+06 Jan 2012, version 405
+
+

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2011                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -66,6 +66,7 @@
  * \li  "EIF"   OBIT_int (1,1,1) Highest "IF" selected. [def all]
  * \li  "IFInc" OBIT_int (1,1,1) "IF" increment. [def 1]
  * \li  "doPol"   OBIT_int (1,1,1) >0 -> calibrate polarization.
+ * \li  "PDVer"   OBIT_int (1,1,1) >0 -> AIPS PD table for poln cal..
  * \li  "doCalib" OBIT_int (1,1,1) >0 -> calibrate, 2=> also calibrate Weights
  * \li  "gainUse" OBIT_int (1,1,1) SN/CL table version number, 0-> use highest
  * \li  "flagVer" OBIT_int (1,1,1) Flag table version, 0-> use highest, <0-> none

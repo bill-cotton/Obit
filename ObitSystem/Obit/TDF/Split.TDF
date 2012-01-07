@@ -3,7 +3,7 @@
 ;!  Obit Radio interferometry software
 ;# Task Obit UV Calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007-2011
+;;  Copyright (C) 2007-2012
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -72,6 +72,9 @@ doCalib          -1.0        2.0   If >0 calibrate data
 gainUse                            CL (or SN) table to apply
 **PARAM** boo 1 **DEF** F
 doPol            -1.0       10.0   If >0 correct polarization.
+**PARAM** int 1 **DEF** -1
+PDVer                              PD table to apply
+                                   If >=0, per channel corrections
 **PARAM** int 1
 flagVer                            Flag table version
 **PARAM** int 1
@@ -119,7 +122,7 @@ ChanSel                            Array of channel start, stop,
 dropSubA                           Drop Subarray info?
 **PARAM** boo 1 
 doCalWt                            Calibrate weights?
-**PARAM** int 1
+**PARAM** int 1  **DEF** 1
 corrType                           Cross or auto correlations
                                      0 pass only xc data
                                      1 pass xc and ac data
@@ -194,9 +197,11 @@ Adverbs:
              files or the SN table for single-source files.
              0 => highest.
   doPol......If > 0 then correct data for instrumental polarization as
-             represented in the AN table.  This correction is only
-             useful if PCAL has been run or feed polarization parameters
-             have been otherwise obtained. 
+             This correction is only useful if PCAL has been run or 
+             feed polarization parameters have been otherwise obtained. 
+  PDVer......AIPS PD table to use for per channel instrumental
+             polarization corrections if doPol=True. 0=> highest
+             -1 => use IF corrections from AIPS AN table.
   flagVer....specifies the version of the flagging table to be applied.
              0 => highest numbered table. <0 => no flagging to be
              applied.

@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -206,7 +206,7 @@ ObitUVCal* ObitUVCalClone  (ObitUVCal *in, ObitUVCal *out)
  * Creates necessary structures reading what ever calibration
  * files are needed.
  * Output descriptor modified to reflect data selection.
- * \param in      Object CFto initialize.
+ * \param in      Object to initialize.
  * \param sel     Data selector.
  * \param inDesc  Input  data descriptor.
  * \param outDesc Output data descriptor (after transformations/selection).
@@ -338,11 +338,15 @@ void ObitUVCalStart (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
       
       /* Make sure polarization cal present */
       if (sel->doPolCal) {
-	if (in->antennaLists[i]->polType == OBIT_UVPoln_NoCal)
-	  Obit_log_error(err, OBIT_Error, "No polarization Cal info for %s", in->name);
-	if (in->antennaLists[i]->polType == OBIT_UVPoln_Unknown)
-	  Obit_log_error(err, OBIT_Error, "Unknown polarization Cal info for %s", in->name);
-      }
+	/* if PDVer>=0 check for PD table, else check AN table */
+	if ((in->PDVer>=0) && (in->PDTable==NULL)) 
+	    Obit_log_error(err, OBIT_Error, "No polarization Cal (PD Table) for %s", in->name);
+	} else { /* IF calibration from AN table */
+	  if (in->antennaLists[i]->polType == OBIT_UVPoln_NoCal)
+	    Obit_log_error(err, OBIT_Error, "No polarization Cal info for %s", in->name);
+	  if (in->antennaLists[i]->polType == OBIT_UVPoln_Unknown)
+	    Obit_log_error(err, OBIT_Error, "Unknown polarization Cal info for %s", in->name);
+	}
     } /* End loop over subarrays */
   }
   if (err->error) return; /* Bail out if trouble */
@@ -474,6 +478,7 @@ void ObitUVCalShutdown (ObitUVCal *in, ObitErr *err)
   in->CLTable = ObitTableUnref((ObitTable*)in->CLTable);
   in->SNTable = ObitTableUnref((ObitTable*)in->SNTable);
   in->CQTable = ObitTableUnref((ObitTable*)in->CQTable);
+  in->PDTable = ObitTableUnref((ObitTable*)in->PDTable);
   if (in->ANTables) {
     for (i=0; i<in->numANTable; i++) {
       in->ANTables[i] = ObitTableUnref((ObitTable*)in->ANTables[i]);
@@ -736,6 +741,9 @@ void ObitUVCalInit  (gpointer inn)
   in->CLTable     = NULL;
   in->FGTable     = NULL;
   in->SNTable     = NULL;
+  in->SUTable     = NULL;
+  in->PDTable     = NULL;
+  in->PDVer       = -1;
   in->SmoothConvFn= NULL;
   in->SmoothWork  = NULL;
   in->SpecIndxWork= NULL;
@@ -776,6 +784,8 @@ void ObitUVCalClear (gpointer inn)
   in->FGTable     = ObitUnref(in->FGTable);
   in->SNTable     = ObitUnref(in->SNTable);
   in->CQTable     = ObitUnref(in->CQTable);
+  in->SUTable     = ObitUnref(in->SUTable);
+  in->PDTable     = ObitUnref(in->PDTable);
   if (in->ANTables) {
     for (i=0; i<in->numANTable; i++) in->ANTables[i] = ObitUnref(in->ANTables[i]);
     if (in->ANTables) g_free(in->ANTables);

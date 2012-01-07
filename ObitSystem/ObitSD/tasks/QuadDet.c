@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Read GBT Quadrant detector data                                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009                                               */
+/*;  Copyright (C) 2009,2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1157,7 +1157,7 @@ void CnvrtData (ObitOTF *outData, gchar *inscan, ObitInfoList *myInput,
 {
   olong irow, iRow;
   olong i, j, ndetect, npoly, ntime, ver, solnVer;
-  ofloat refDay, corDay;
+  ofloat refDay=0.0, corDay;
   odouble JD;
   ObitOTFDesc *desc;
   ObitTableOTFSoln *outSoln=NULL;

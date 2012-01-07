@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2011                                         */
+/*;  Copyright (C) 2006-2012                                         */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -233,6 +233,7 @@ ObitInfoList* CalibIn (int argc, char **argv, ObitErr *err)
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
+  myOutput = defaultOutputs(err);
 
   /* command line arguments */
   /* fprintf (stderr,"DEBUG arg %d %s\n",argc,argv[0]); DEBUG */
@@ -337,7 +338,6 @@ ObitInfoList* CalibIn (int argc, char **argv, ObitErr *err)
   }
 
   /* Initialize output */
-  myOutput = defaultOutputs(err);
   ObitReturnDumpRetCode (-999, outfile, myOutput, err);
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
@@ -647,8 +647,8 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "BChan", "EChan",   "BIF", "EIF", "subA",
-    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", "doPol",
-    "Antennas", "Mode", "ModelType", "Alpha",
+    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
+    "doPol", "PDVer", "Antennas", "Mode", "ModelType", "Alpha",
      NULL};
   gchar *routine = "getInputData";
 
@@ -1150,7 +1150,7 @@ void CalibHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "Sources", "Qual", "souCode", "timeRange",  "subA", "solnVer",
     "selBand", "selFreq", "FreqID", "BChan", "EChan", 
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "doPol", "Antennas",  "refAnts", "doTwo",
+    "doPol", "PDVer", "Antennas",  "refAnts", "doTwo",
     "DataType2", "in2File", "in2Disk", "in2Name", "in2Class", "in2Seq", 
     "nfield", "CCVer", "BComp", "EComp", "Cmethod", "Cmodel", "Flux",
     "modelFlux", "modelPos", "modelParm", "Alpha", "PBCor", "antSize", "solnVer", 

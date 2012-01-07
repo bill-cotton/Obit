@@ -17,7 +17,7 @@ List   used to pass instructions to processing
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2007
+#  Copyright (C) 2007-2012
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -230,10 +230,10 @@ class OData(ODataPtr):
 
         * numOrb    = Number of orbital parameters (AN)
         * numPCal   = Number of polarization parameters per IF (AN)
-        * numIF     = Number of IFs (CD, FQ, SN, CL, BP, BL, SY, TY, CQ)
-        * numPol    = Number of Stokes' (AN, SN, CD, CL, BP, BL, PC, SY, TY, GC, MC, IM)
+        * numIF     = Number of IFs (CD, FQ, SN, CL, BP, BL, SY, TY, CQ, CP, PD)
+        * numPol    = Number of Stokes' (AN, SN, CD, CL, BP, BL, PC, SY, TY, GC, MC, IM, PD)
         * numTerm   = Number of terms in model polynomial (CL)
-        * numChan   = Number of spectral channels (BP)
+        * numChan   = Number of spectral channels (BP, CP, PD)
         * numTomes  = Number of Phase cal tones (PC)
         * numTabs   = Number of ??? (GC)
         * numCoef   = Number of polynomial coefficents (NI)
@@ -270,6 +270,9 @@ class OData(ODataPtr):
         elif tabType=="AIPS BP":
             outTab = Obit.TableBP(id, [tabVer], access, \
                                   tabType, numPol, numIF, numChan, err.me)
+        elif tabType=="AIPS PD":
+            outTab = Obit.TablePD(id, [tabVer], access, \
+                                  tabType, numPol, numIF, numChan, err.me)
         elif tabType=="AIPS BL":
             outTab = Obit.TableBL(id, [tabVer], access, tabType, numPol, numIF, err.me)
         elif tabType=="AIPS PC":
@@ -287,6 +290,8 @@ class OData(ODataPtr):
             outTab = Obit.TableNI(id, [tabVer], access, tabType, numCoef, err.me)
         elif tabType=="AIPS PS":
             outTab = Obit.TablePS(id, [tabVer], access, tabType, err.me)
+        elif tabType=="AIPS CP":
+            outTab = Obit.TableCP(id, [tabVer], access, tabType, numIF, numChan,  err.me)
         elif tabType=="AIPS CQ":
             outTab = Obit.TableCQ(id, [tabVer], access, tabType, numIF, err.me)
         elif tabType=="AIPS IM":

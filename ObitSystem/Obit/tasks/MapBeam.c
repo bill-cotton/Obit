@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to Map beam polarization                                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2011                                          */
+/*;  Copyright (C) 2009-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -203,6 +203,7 @@ ObitInfoList* MapBeamIn (int argc, char **argv, ObitErr *err)
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
+  myOutput = defaultOutputs(err);
 
   /* command line arguments */
   /* fprintf (stderr,"DEBUG arg %d %s\n",argc,argv[0]); DEBUG */
@@ -370,7 +371,6 @@ ObitInfoList* MapBeamIn (int argc, char **argv, ObitErr *err)
   }
 
   /* Initialize output */
-  myOutput = defaultOutputs(err);
   ObitReturnDumpRetCode (-999, outfile, myOutput, err);
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
@@ -1494,7 +1494,7 @@ void MapBeamHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq",
     "Sources", "Qual", "souCode", "timeRange",  
     "FreqID", "BIF", "EIF", "BChan", "EChan",  
-    "doCalib", "gainUse", "doPol",  "flagVer", "doBand ",  "BPVer", "Smooth",
+    "doCalib", "gainUse", "doPol",  "PDVer", "flagVer", "doBand ",  "BPVer", "Smooth",
     "outDType", "outFile",  "outDisk", "outName", "outSeq",
     "nx", "ny", "xCells", "yCells",  "avgTime", "avgFreq", "chAvg", "ChanSel",
     "blnkTime", "avgAnt", "doRMS", "doPhase", "doPolNorm", "Antennas", "RefAnts",
@@ -1577,8 +1577,8 @@ ObitUV* doAvgData (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "UVRange", "timeRange", "doCalSelect", 
     "BIF", "EIF", "BChan", "EChan","subA", "Antennas",
-    "doCalib", "gainUse", "doBand", "BPVer", "Smooth", "flagVer", "doPol",
-    "avgTime", "avgFreq", "ChanSel", 
+    "doCalib", "gainUse", "doBand", "BPVer", "Smooth", "flagVer", 
+    "doPol", "PDVer",  "avgTime", "avgFreq", "ChanSel", 
     NULL
   };
   gchar        *routine= "doAvgData";

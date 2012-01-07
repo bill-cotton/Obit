@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry calibration software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006-2011
+;;  Copyright (C) 2006-2012
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -76,6 +76,9 @@ BPVer                               Bandpass table version
 flagVer                             Flag table version
 **PARAM** boo 1 **DEF** F
 doPol                               Apply polarization cal?
+**PARAM** int 1 **DEF** -1
+PDVer                              PD table to apply
+                                   If >=0, per channel corrections
 **PARAM** float 1  **DEF** 0.0
 Alpha           -20.       20.      Spectral Index to correct
 **PARAM** boo 1   **DEF** F
@@ -213,25 +216,28 @@ Adverbs:
   doBand.....If true (>0) then correct the data for the shape of the
              antenna bandpasses using the BP table specified by BPVer.
              The correction has five modes:
-             (a) if DOBAND=1 all entries for an antenna in the table
+             (a) if doBand=1 all entries for an antenna in the table
              are averaged together before correcting the data.
-             (b) if DOBAND=2 the entry nearest in time (including
+             (b) if doBand=2 the entry nearest in time (including
              solution weights) is used to correct the data.
-             (c) if DOBAND=3 the table entries are interpolated in
+             (c) if doBand=3 the table entries are interpolated in
              time (using solution weights) and the data are then
              corrected.
-             (d) if DOBAND=4 the entry nearest in time (ignoring
+             (d) if doBand=4 the entry nearest in time (ignoring
              solution weights) is used to correct the data.
-             (e) if DOBAND=5 the table entries are interpolated in
+             (e) if doBand=5 the table entries are interpolated in
              time (ignoring solution weights) and the data are then
              corrected.
-             IMAGR uses DOBAND as the nearest integer; 0.1 is therefore
+             Calib uses doBand as the nearest integer; 0.1 is therefore
              "false".
   BPVer......Specifies the version of the BP table to be applied
                 0 => highest numbered table.
                <0 => no bandpass correction to be applied.
   flagVer....FG table to use for editing. 0 => highest.
   doPol......True => apply polarization calibration
+  PDVer......AIPS PD table to use for per channel instrumental
+             polarization corrections if doPol=True. 0=> highest
+             -1 => use IF corrections from AIPS AN table.
   Alpha......If != 0.0 then correct data by spectral index Alpha before 
              calibration. 
              -0.7 is typical for synchrotron.

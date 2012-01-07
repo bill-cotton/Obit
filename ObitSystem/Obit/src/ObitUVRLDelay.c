@@ -435,7 +435,7 @@ static void FitDelay (olong numFreq, olong BChan, ofloat dFreq,
 		      ofloat *delay, ofloat *phase, ofloat *snr, ObitErr *err)
 {
   olong i, j, cnt;
-  ofloat td1, td2, td3, d1, d2, d3, test, best;
+  ofloat td1, td2, td3, td4, d1, d2, d3, d4, test, best;
   ofloat corr, cori, tr, ti, w, p, tp, dp;
   odouble sumr, sumi, sumw;
 
@@ -480,18 +480,30 @@ static void FitDelay (olong numFreq, olong BChan, ofloat dFreq,
       d3   = td3;
     }
   }
+
+  d4   = d3;
+  best = -1.0e20;
+  for (i=0; i<101; i++) {
+    td4 = d3 + (i-50) * 0.00001;  /* delay in turns per channel */
+    test = testDelay (numFreq, xpol1, xpol2, td4);
+    if (test>best) {
+      best = test;
+      d4   = td4;
+    }
+  }
+
   /* Fitted delay - unalias */
-  if (d3>0.5)  d3 -= 1.0;
-  if (d3<-0.5) d3 += 1.0;
-  *delay = d3 / dFreq;
+  if (d4>0.5)  d4 -= 1.0;
+  if (d4<-0.5) d4 += 1.0;
+  *delay = d4 / dFreq;
 
   /* Average phase */
   j = 0;
   sumr = sumi = sumw = 0.0;
   for (i=0; i<numFreq; i++) {
     /* Delay correction */
-    corr = cos(2.0*G_PI*d3*(i+BChan));
-    cori = sin(2.0*G_PI*d3*(i+BChan));
+    corr = cos(2.0*G_PI*d4*(i+BChan));
+    cori = sin(2.0*G_PI*d4*(i+BChan));
     /* First poln */
     tr = xpol1[j+0]*corr - xpol1[j+1]*cori;
     ti = xpol1[j+0]*cori + xpol1[j+1]*corr;
@@ -521,8 +533,8 @@ static void FitDelay (olong numFreq, olong BChan, ofloat dFreq,
   j    = 0;
   for (i=0; i<numFreq; i++) {
     /* Delay correction */
-    corr = cos(2.0*G_PI*d3*(i+BChan));
-    cori = sin(2.0*G_PI*d3*(i+BChan));
+    corr = cos(2.0*G_PI*d4*(i+BChan));
+    cori = sin(2.0*G_PI*d4*(i+BChan));
     /* First poln */
     tr = xpol1[j+0]*corr - xpol1[j+1]*cori;
     ti = xpol1[j+0]*cori + xpol1[j+1]*corr;

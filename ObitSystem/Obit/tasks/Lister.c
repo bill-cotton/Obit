@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Task to print the contents of various data files                   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2011                                          */
+/*;  Copyright (C) 2009-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -216,7 +216,7 @@ ObitInfoList* ListerIn (int argc, char **argv, ObitErr *err)
   gchar *routine = "ListerIn";
 
   /* Make default inputs, outputs InfoList */
-  list = defaultInputs(err);
+  list     = defaultInputs(err);
   myOutput = defaultOutputs(err);
 
   /* command line arguments */
@@ -511,7 +511,8 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Qual", "souCode", "Stokes", "timeRange",  "FreqID", 
     "BIF", "EIF", "BChan", "EChan", "Antennas", "subA", "corrType",
-    "doCalib", "gainUse", "doPol", "flagVer", "doBand", "BPVer", "Smooth", 
+    "doCalib", "gainUse", "doPol", "PDVer", "flagVer", 
+    "doBand", "BPVer", "Smooth", 
     "doCalSelect",
      NULL};
   gchar *routine = "getInputData";
@@ -580,7 +581,7 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   gboolean     isInteractive = FALSE, quit = FALSE, first=TRUE, doReal=FALSE;
   gboolean     doBand=FALSE, doPol=FALSE;
   gchar        line[1024], Title1[1024], Title2[1024];
-  olong        LinesPerPage = 0, BPVer=1;
+  olong        LinesPerPage = 0, BPVer=1, PDVer;
   olong        i, ii, indx, jndx, count, bPrint, nPrint, doCrt=1, lenLine=0;
   ofloat       u, v, w, cbase, re, im, amp, phas, wt;
   ofloat       blscale=1., wtscale=1., ampscale=1.;
@@ -605,6 +606,7 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   ObitInfoListGet(myInput, "gainUse",   &type, dim, &gainUse, err);
   ObitInfoListGetTest(myInput, "flagVer",&type, dim, &flagVer);
   ObitInfoListGetTest(myInput, "doPol", &type, dim, &doPol);
+  ObitInfoListGetTest(myInput, "PDVer", &type, dim, &PDVer);
   ObitInfoListGetTest(myInput, "doBand",&type, dim, &doBand);
   ObitInfoListGetTest(myInput, "BPVer", &type, dim, &BPVer);
   ObitInfoListGetTest(myInput, "inc",   &type, dim, &inc);
@@ -725,7 +727,9 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
   }
   if (doPol) {
-    sprintf(line,"   Applying polarization corrections");
+    if (PDVer<0) sprintf(line,"   Applying IF polarization corrections");
+    else  sprintf(line,"   Applying Channel polarization corrections, PD ver %d",
+		  PDVer);
     ObitPrinterWrite (myPrint, line, &quit, err);
     if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
   }

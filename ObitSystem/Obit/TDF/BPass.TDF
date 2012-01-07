@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry bandpass calibration software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2009-2011
+;;  Copyright (C) 2009-2012
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -84,6 +84,9 @@ BPVer                               Bandpass table version
 flagVer                             Flag table version
 **PARAM** boo 1 **DEF** F
 doPol                               Apply polarization cal?
+**PARAM** int 1 **DEF** -1
+PDVer                              PD table to apply
+                                   If >=0, per channel corrections
 **PARAM** float 1  **DEF** 0.0
 Alpha           -20.       20.      Spectral Index to correct
 **PARAM** str 4
@@ -261,6 +264,9 @@ Adverbs:
              correction and there is no way to apply it to a BP table.
   flagVer....FG table to use for editing. 0 => highest.
   doPol......If True, apply polarization calibration
+  PDVer......AIPS PD table to use for per channel instrumental
+             polarization corrections if doPol=True. 0=> highest
+             -1 => use IF corrections from AIPS AN table.
   Alpha......If != 0.0 then correct data by spectral index Alpha before 
              calibration. 
              -0.7 is typical for optically thin synchrotron.

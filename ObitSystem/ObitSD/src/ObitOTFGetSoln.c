@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -4069,8 +4069,8 @@ static void PlotMBBL (olong npoly, ofloat *tpoly, ofloat *poly, ofloat *offset,
 		      ofloat *x, ofloat *y, ofloat *wt, olong n,
 		      olong plotDetect, ofloat t0, ObitErr *err)
 {
-  olong i, j, nplot, off;
-  ofloat *ptime, *pdata, ymax, ymin, yy, atm, fblank = ObitMagicF();
+  olong i, j, nplot, off=0;
+  ofloat *ptime, *pdata, ymax, ymin, yy, atm=0.0, fblank = ObitMagicF();
   ObitPlot *plot = NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar strTemp[121];
@@ -4108,6 +4108,8 @@ static void PlotMBBL (olong npoly, ofloat *tpoly, ofloat *poly, ofloat *offset,
   ymax = -1.0e20;
   ymin =  1.0e20;
   j = plotDetect-1;
+  off = 0;
+  atm = poly[2*off] + poly[2*off+1]*(x[i]);
   for (i=0; i<n; i++) {
     /*if ((y[i+j*maxdata]!=fblank) && (wt[i+j*maxdata]>0.0)) {*/
     if (y[i+j*maxdata]!=fblank) {

@@ -13,7 +13,7 @@ to disk when the table is closed.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004,2005,2007
+#  Copyright (C) 2004-2012
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -271,6 +271,8 @@ def POpen (inTab, access, err):
         inTab.keys = Obit.TableCCGetHeadKeys(inTab.me)
     elif tabtype=="AIPS CL":
         inTab.keys = Obit.TableCLGetHeadKeys(inTab.me)
+    elif tabtype=="AIPS CP":
+        inTab.keys = Obit.TableCPGetHeadKeys(inTab.me)
     elif tabtype=="AIPS CQ":
         inTab.keys = Obit.TableCQGetHeadKeys(inTab.me)
     elif tabtype=="AIPS CT":
@@ -297,6 +299,8 @@ def POpen (inTab, access, err):
         inTab.keys = Obit.TableOFGetHeadKeys(inTab.me)
     elif tabtype=="AIPS PC":
         inTab.keys = Obit.TablePCGetHeadKeys(inTab.me)
+    elif tabtype=="AIPS PD":
+        inTab.keys = Obit.TablePDGetHeadKeys(inTab.me)
     elif tabtype=="AIPS PS":
         inTab.keys = Obit.TablePSGetHeadKeys(inTab.me)
     elif tabtype=="AIPS SN":
@@ -357,6 +361,8 @@ def PClose (inTab, err):
         Obit.TableCCSetHeadKeys(inTab.me, inTab.keys)
     elif tabtype=="AIPS CL" and inTab.keys:
         Obit.TableCLSetHeadKeys(inTab.me, inTab.keys)
+    elif tabtype=="AIPS CP" and inTab.keys:
+        Obit.TableCPSetHeadKeys(inTab.me, inTab.keys)
     elif tabtype=="AIPS CQ" and inTab.keys:
         Obit.TableCQSetHeadKeys(inTab.me, inTab.keys)
     elif tabtype=="AIPS CT" and inTab.keys:
@@ -383,6 +389,8 @@ def PClose (inTab, err):
         Obit.TableOFSetHeadKeys(inTab.me, inTab.keys)
     elif tabtype=="AIPS PC" and inTab.keys:
         Obit.TablePCSetHeadKeys(inTab.me, inTab.keys)
+    elif tabtype=="AIPS PD" and inTab.keys:
+        Obit.TablePDSetHeadKeys(inTab.me, inTab.keys)
     elif tabtype=="AIPS PS" and inTab.keys:
         Obit.TablePSSetHeadKeys(inTab.me, inTab.keys)
     elif tabtype=="AIPS SN" and inTab.keys:

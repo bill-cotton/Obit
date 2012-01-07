@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003                                               */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -27,19 +27,10 @@
 /*--------------------------------------------------------------------*/
 #ifndef OBITUVCALPOLARIZATIONDEF_H 
 #define OBITUVCALPOLARIZATIONDEF_H 
-
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <glib.h>
-#include "Obit.h"
-#include "ObitErr.h"
-#include "ObitUVDesc.h"
-#include "ObitUVSel.h"
-#include "ObitUVCal.h"
-#include "ObitSourceList.h"
 #include "ObitAntennaList.h"
+#include "ObitSourceList.h"
+#include "ObitPolCalList.h"
+
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -50,6 +41,10 @@
 /*--------------Structure definitions-------------------------------------*/
 /** Polarization calibration structure */
 typedef struct {
+#include "ObitDef.h"  /* Parent class definitions */
+/** Polarization calibration type  OBIT_UVPoln_Approx, OBIT_UVPoln_VLBI
+    OBIT_UVPoln_ELORI OBIT_UVPoln_XYLin */
+  ObitUVPolCalType polType;
   /** Number of antennas in calibration table (actually max antenna no). */
   olong numAnt;
   /** Number of subarrays in the data */
@@ -72,6 +67,8 @@ typedef struct {
   olong eChan;
   /** Number of polarizations in the calibration table (1 or 2) */
   olong numPoln;
+  /** Are corrections per channel? i.e. use AIPS PD table */
+  gboolean perChan;
   /** Are all stokes correlations required */
   gboolean allStokes;
   /** Current source ID, -1 => single source */
@@ -83,9 +80,11 @@ typedef struct {
   /** Array  current parallactic angles, one per antenna 
    as cosine and sine */
   ofloat *curPA, *curCosPA, *curSinPA;
-  /** Subarray inverse Jones matrices (2x2 complex per IF) (I really hate c) */
+  /** Subarray inverse Jones matrices (2x2 complex per IF or 
+      channel/IF) per antenna */
   ofloat **Jones;
-  /** Polarization Mueller matrix for one baseline, all IFs */
+  /** Polarization Mueller matrix for one baseline, all IFs or 
+      channel/IFs */
   ofloat *PolCal;
   /** Current source RA (rad) */
   odouble curRA;
@@ -93,6 +92,8 @@ typedef struct {
   odouble curCosDec;
   /** Sine current source Declination */
   odouble curSinDec;
+  /** Polarication calibration from AIPS PD table */
+  ObitPolCalList *PCal;
 } ObitUVCalPolarizationS;
 #endif /* OBITUVCALPOLARIZATIONDEF_H */ 
 

@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to automatically edit visibility data                    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2010                                          */
+/*;  Copyright (C) 2007-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -238,6 +238,7 @@ ObitInfoList* MednFlagIn (int argc, char **argv, ObitErr *err)
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
+  myOutput = defaultOutputs(err);
 
   /* command line arguments */
   if (argc<=1) Usage(); /* must have arguments */
@@ -365,7 +366,6 @@ ObitInfoList* MednFlagIn (int argc, char **argv, ObitErr *err)
   }
 
   /* Initialize output */
-  myOutput = defaultOutputs(err);
   ObitReturnDumpRetCode (-999, outfile, myOutput, err);
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
@@ -686,8 +686,8 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "BChan", "EChan",   "BIF", "EIF", "subA",
     "FreqID", "souCode", "Qual", 
-    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", "doPol",
-    "avgTime",  "avgFreq",  "chAvg", "ChanSel", 
+    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
+    "doPol", "PDVer", "avgTime",  "avgFreq",  "chAvg", "ChanSel", 
     NULL};
   gchar *routine = "getInputData";
 
@@ -909,7 +909,7 @@ void MednFlagHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "outFile",  "outDisk", "outName", "outClass", "outSeq", 
     "Sources", "Stokes", "timeRange",  "subA",
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "doPol",  
+    "doPol",  "PDVer",
     "flagTab", "flagSig", "alpha", "avgTime", "timeWind", 
     "avgFreq", "chAvg", "ChanSel", "nThreads",
     NULL};

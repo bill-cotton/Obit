@@ -21,7 +21,7 @@
 \vskip 1cm
 \centerline{\ttlfont Merx mollis mortibus nuper}
 \vskip 3cm
-\centerline{\secfont Version: 1.3 \today}
+\centerline{\secfont Version: 1.2 \today}
 \vskip 1cm
 \centerline{\secfont W. D. Cotton}
 \clearpage
@@ -2076,70 +2076,6 @@ No Keywords in table.
 \modhistory[{W. D. Cotton}{15/11/2004}{Revision 1: Copied from AIPS}]
 \end{history}
 
-%
-\clearpage
-%%%%%%%%%%%%%%% ObitTableCD Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 
-%
-\ClassName[{ObitTableCD}]
-ObitTableCD Class
-\tabletitle{ ASDM CalDevice table for uv data}
-% table name
-\tablename{CD}
-\tableintro[
-{This class contains tabular data and allows access.
-"AIPS CD" contains EVLA switched power measurements.TCal measurements
-An ObitTableTY is the front end to a persistent disk resident structure.
-Both FITS and AIPS cataloged data are supported.
-This class is derived from the ObitTable class. }
-]
-\tableover{
-In memory tables are stored in a fashion similar to how they are 
-stored on disk - in large blocks in memory rather than structures.
-Due to the word alignment requirements of some machines, they are 
-stored by order of the decreasing element size: 
-double, float long, int, short, char rather than the logical order.
-The details of the storage in the buffer are kept in the 
-ObitTableDesc.
-}
-% Table keyword description
-\begin{keywords}
-\tablekey[{"NO\_IF"}{J}{nIF}{}{()}
-{The number of IFs}
-]
-% Must be position 2 to index
-\tablekey[{"NO\_POL "}{J}{nPol}{}{(1,2)}
-{The number of polarizations.}
-]
-\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
-{Reference date as "YYYYMMDD"}
-]
-\tablekey[{"REVISION"}{J}{revision}{1}{}
-{Revision number of the table definition.}
-]
-\end{keywords}
-%
-% Table column description
-\begin{columns}
-\tablecol[{"ANTENNA NO."}{"        " }{J}{(1)}{antennaNo}
-{Antenna number}
-]
-\tablecol[{"SUBARRAY   "}{"        " }{J}{(1)}{SubA}
-{Subarray number}
-] 
-\tablecol[{"FREQ ID  "}{"        " }{J}{(1)}{FreqID}
-{Frequency id of scan}
-] 
-\tablecol[{"TCAL\#NPOL"}{"KELVIN  " }{E}{(nIF)}{TCal}
-{ Cal. equivalent temp  Poln \# NPOL ), invalid data fblanked}
-] 
-\end{columns}
-%
-% Table modification history
-\begin{history}
-\modhistory[{W. D. Cotton}{09/07/2010}{Revision 1: From EVLA memo}]
-\end{history}
-%
 \clearpage
 %%%%%%%%%%%%%%% ObitTableCL Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -2349,6 +2285,72 @@ ObitTableDesc.
 % Table modification history
 \begin{history}
 \modhistory[{W. D. Cotton}{04/03/2003}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableCP Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableCP}]
+ObitTableCP Class
+\tabletitle{AIPS Source polarization spectrum table}
+% table name
+\tablename{CP}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS CP" table contains source polarization information
+An ObitTableCP is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TABREV"}{J}{revision}{1}{}
+{Revision number of the table definition}
+]
+\tablekey[{"NO\_IF"}{J}{numIF}{}{()}
+{The number of IFs}
+]
+\tablekey[{"NO\_CHAN"}{J}{numChan}{}{()}
+{Number of frequency channels}
+]
+\tablekey[{"FREQID  "}{J}{FreqID}{0}{}
+{The Frequency ID for which the source parameters are relevant.}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"SOURCE ID"}{"        "}{J}{(1)}{SourID}
+{Source Identifier number }
+] 
+\tablecol[{"I       "}{"Jy      " }{E}{(numChan,numIF)}{IPol}
+{Stokes I flux density  per channel/IF, channel varing fastest.}
+] 
+\tablecol[{"Q       "}{"Jy      " }{E}{(numChan,numIF)}{QPol}
+{Stokes Q flux density  per channel/IF, channel varing fastest.}
+] 
+\tablecol[{"U       "}{"Jy      " }{E}{(numChan,numIF)}{UPol}
+{Stokes U flux density  per channel/IF, channel varing fastest.}
+] 
+\tablecol[{"V       "}{"Jy      " }{E}{(numChan,numIF)}{VPol}
+{Stokes V flux density  per channel/IF, channel varing fastest.}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{08/16/2010}{Revision 1: Copied from AIPS}]
 \end{history}
 %
 %
@@ -2665,10 +2667,7 @@ ObitTableGC Class
 "AIPS GC" contains Antenna gain curve information
 An ObitTableGC is the front end to a persistent disk resident structure.
 Both FITS and AIPS cataloged data are supported.
-This class is derived from the ObitTable class. 
-For polynomials in zenith angle (TYPE\_n=2), only NTERM\_n, GAIN\_n and SENS\_n
-are used.
-Other types are defined but seem to have no implementations.}
+This class is derived from the ObitTable class. }
 ]
 \tableover{
 In memory tables are stored in a fashion similar to how they are 
@@ -2682,14 +2681,14 @@ ObitTableDesc.
 % Table keyword description
 \begin{keywords}
 \tablekey[{"NO\_BAND "}{J}{numBand}{}{()}
-{The number of Bands(IFs).}
+{The number of Bands(?).}
 ]
 % Must be position 2 to index
 \tablekey[{"NO\_POL"}{J}{numPol}{}{(1,2)}
 {The number of polarizations.}
 ]
 \tablekey[{"NO\_TABS"}{J}{numTabs}{}{()}
-{The number of tabulated values per row.}
+{The number of ??.}
 ]
 \tablekey[{"TABREV"}{J}{revision}{3}{}
 {Revision number of the table definition.}
@@ -2708,31 +2707,28 @@ ObitTableDesc.
 {Frequency id of scan}
 ] 
 \tablecol[{"TYPE\_\#NO\_POL"}{"        " }{J}{(numBand)}{Type}
-{TYPE\_\#NO\_POL 1=tabulated, 2=polynomial in ZA, 3=spherical harmonics}
+{TYPE\_\#NO\_POL}
 ] 
 \tablecol[{"NTERM\_\#NO\_POL"}{"        " }{J}{(numBand)}{NTerm}
-{NTERM\_\#NO\_POL number of terms or entries actually given}
+{NTERM\_\#NO\_POL}
 ] 
 \tablecol[{"X\_TYP\_\#NO\_POL"}{"        " }{J}{(numBand)}{XTyp}
-{X\_TYP\_\#NO\_POL  Gain curve X-absicssa code type:
-0 =$>$ none, 1 =$>$ elevation (degrees), 2 =$>$ zenith angle (degrees), 
-3 =$>$ hour angle (degrees), 4=$>$ declination (degrees),  5 =$>$ 90-declination (degrees)}
+{X\_TYP\_\#NO\_POL}
 ] 
 \tablecol[{"Y\_TYP\_\#NO\_POL"}{"        " }{J}{(numBand)}{YTyp}
-{Y\_TYP\_\#NO\_POL Gain curve Y-absicssa code type}
+{Y\_TYP\_\#NO\_POL}
 ] 
 \tablecol[{"X\_VAL\_\#NO\_POL"}{"        " }{E}{(numBand)}{XVal}
-{X\_TYP\_\#NO\_POL Value of X abscissa}
+{X\_TYP\_\#NO\_POL}
 ] 
 \tablecol[{"Y\_VAL\_\#NO\_POL"}{"        " }{E}{(numTabs,numBand)}{YVal}
-{Y\_TYP\_\#NO\_POL Values of Y abscissa}
+{Y\_TYP\_\#NO\_POL}
 ] 
 \tablecol[{"GAIN\_\#NO\_POL"}{"        " }{E}{(numTabs,numBand)}{gain}
-{GAIN\_\#NO\_POL Corresponding values of relative gain (if tabulated);
-or coefficients of approximating function. }
+{GAIN\_\#NO\_POL}
 ] 
 \tablecol[{"SENS\_\#NO\_POL"}{"K/JY    " }{E}{(numBand)}{sens}
-{X\_TYP\_\#NO\_POL Point source sensitivity}
+{X\_TYP\_\#NO\_POL}
 ] 
 \end{columns}
 %
@@ -3182,7 +3178,7 @@ ObitTableDesc.
 \tablecol[{"D0 MINOR"}{"DEGREE  "}{E}{(1)}{D0Minor}
 {Deconvolved best minor axis}
 ] 
-\tablecol[{"D0 POSAN"}{"DEGREE  "}{E}{(1)}{D0PosAngle}
+\tablecol[{"D0 POSANG"}{"DEGREE  "}{E}{(1)}{D0PosAngle}
 {Deconvolved best PA}
 ] 
 \tablecol[{"D- MAJOR"}{"DEGREE  "}{E}{(1)}{DmMajor}
@@ -3433,64 +3429,6 @@ ObitTableDesc.
 \end{history}
 %
 \clearpage
-%%%%%%%%%%%%%%% ObitTableOT Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 
-%
-\ClassName[{ObitTableOT}]
-ObitTableOT Class
-\tabletitle{Over the Top antenna pointing table for uv data}
-% table name
-\tablename{OT}
-\tableintro[
-{This class contains tabular data and allows access.
-"AIPS OT" contains a flag indicating if the antenna elevation was over
-$90^\circ$ deg, i.e. ``over the top''.
-An ObitTableOT is the front end to a persistent disk resident structure.
-Both FITS and AIPS cataloged data are supported.
-This class is derived from the ObitTable class. }
-]
-\tableover{
-In memory tables are stored in a fashion similar to how they are 
-stored on disk - in large blocks in memory rather than structures.
-Due to the word alignment requirements of some machines, they are 
-stored by order of the decreasing element size: 
-double, float long, int, short, char rather than the logical order.
-The details of the storage in the buffer are kept in the 
-ObitTableDesc.
-}
-% Table keyword description
-\begin{keywords}
-\tablekey[{"REVISION"}{J}{revision}{1}{}
-{Revision number of the table definition.}
-]
-\end{keywords}
-%
-% Table column description
-\begin{columns}
-\tablecol[{"TIME    "}{"DAYS   " }{E}{(1)}{Time}
-{The center time.}
-] 
-\tablecol[{"TIME INTERVAL "}{"DAYS   " }{E}{(1)}{TimeI}
-{Time interval of record }
-] 
-\tablecol[{"SOURCE ID  "}{"        " }{J}{(1)}{SourID}
-{Source ID number}
-] 
-\tablecol[{"ANTENNA    "}{"        " }{J}{(1)}{Antenna}
-{Antenna number}
-]
-\tablecol[{"OVER TOP"}{"        " }{L}{(1)}{OverTop}
-{True if antenna is observing at elevations over $90^\circ$ = ``Over
-the top''}
-] 
-\end{columns}
-%
-% Table modification history
-\begin{history}
-\modhistory[{W. D. Cotton}{09/14/2006}{Revision 1: Copied from AIPS}]
-\end{history}
-%
-\clearpage
 %%%%%%%%%%%%%%% ObitTablePC Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 %
@@ -3537,9 +3475,6 @@ ObitTableDesc.
 \tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
 {The center time.}
 ] 
-\tablecol[{"TIME\_INTERVAL "}{"DAYS   " }{E}{(1)}{TimeI}
-{Time interval of record }
-] 
 \tablecol[{"SOURCE\_ID  "}{"        " }{J}{(1)}{SourID}
 {Source ID number}
 ] 
@@ -3555,19 +3490,19 @@ ObitTableDesc.
 \tablecol[{"CABLE\_CAL"}{"SECONDS "}{D}{(1)}{CableCal}
 {CABLE\_CAL }
 ] 
-\tablecol[{"STATE \#NO\_POL "}{"PERCENT "}{E}{(4,numBand)}{State}
+\tablecol[{"STATE\_\#NO\_POL "}{"PERCENT "}{E}{(4,numBand)}{State}
 {State counts(?)}
 ] 
-\tablecol[{"PC\_FREQ \#NO\_POL "}{"HZ      "}{D}{(numTones,numBand)}{PCFreq}
+\tablecol[{"PC\_FREQ\_\#NO\_POL "}{"HZ      "}{D}{(numTones,numBand)}{PCFreq}
 {Frequencies of the phase tones}
 ] 
-\tablecol[{"PC\_REAL \#NO\_POL "}{"        "}{E}{(numTones,numBand)}{PCReal}
+\tablecol[{"PC\_REAL\_\#NO\_POL "}{"        "}{E}{(numTones,numBand)}{PCReal}
 {Real part of tone phase}
 ] 
-\tablecol[{"PC\_IMAG \#NO\_POL "}{"        "}{E}{(numTones,numBand)}{PCImag}
+\tablecol[{"PC\_IMAG\_\#NO\_POL "}{"        "}{E}{(numTones,numBand)}{PCImag}
 {Imaginary part of tone phase}
 ] 
-\tablecol[{"PC\_RATE \#NO\_POL "}{"SEC/SEC "}{E}{(numTones,numBand)}{PCRate}
+\tablecol[{"PC\_RATE\_\#NO\_POL "}{"SEC/SEC "}{E}{(numTones,numBand)}{PCRate}
 {Tone rate phase}
 ] 
 \end{columns}
@@ -3579,6 +3514,94 @@ ObitTableDesc.
 
 \clearpage
 %
+%%%%%%%%%%%%%%% ObitTablePD Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTablePD}]
+{AIPS Antenna polarization spectrum table for UV data.}
+%\ClassEnum[{obitObjType}
+%{Type of underlying data structures}]
+%\begin{ObitEnum}
+%\ObitEnumItem[{OBITTYPE\_FITS}{FITS file}]
+%\ObitEnumItem[{OBITTYPE\_AIPS}{AIPS catalog data}]
+%\end{ObitEnum}
+
+\tabletitle{AIPS Antenna polarization spectrum table for UV data}
+% table name
+\tablename{PD}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS PD" tables contain instrumental polarization parameters for each channel
+An ObitTablePD is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"REVISION"}{J}{revision}{1}{}
+{Revision number of the table definition.}
+]
+% Must be position 2 to index
+\tablekey[{"NO\_POL  "}{J}{numPol}{2}{(1,2)}
+{The number of orthogonal polarizations.}
+]
+\tablekey[{"NO\_IF  "}{J}{numIF}{}{()}
+{The number of IFs}
+]
+\tablekey[{"NO\_CHAN"}{J}{numChan}{}{()}
+{Number of frequency channels}
+]
+\tablekey[{"NO\_ANT  "}{J}{numAnt}{}{}
+{The number of antennas in table.}
+]
+\tablekey[{"POLTYPE "}{A}{polType}{"        "}{}
+{Polarization parameterazation type, 'ORI-ELP', 'APPROX', 'VLBI',
+'X-Y LIN }
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"ANTENNA"}{"       " }{J}{(1)}{antNo}
+{Antenna number }
+] 
+\tablecol[{"SUBARRAY"}{"        "}{J}{(1)}{SubA}
+{Subarray number.}
+] 
+\tablecol[{"FREQ ID"}{"        "}{J}{(1)}{FreqID}
+{Frequency ID}
+] 
+\tablecol[{"REFANT"}{"        "}{J}{(1)}{RefAnt}
+{Reference antenna Poln \# NO\_POL }
+] 
+\tablecol[{"P\_DIFF"}{"DEGREE  "}{E}{(numChan,numIF)}{RLPhase}
+{ Right-left phase difference per channel/IF, channel varing fastest.}
+] 
+\tablecol[{"REAL \#NO\_POL"}{"       " }{E}{(numChan,numIF)}{Real}
+{First parameter, real or ellipticity per channel/IF for poln  \# NO\_POL, 
+channel varing fastest.}
+] 
+\tablecol[{"IMAG \#NO\_POL"}{"        "}{E}{(numChan,numIF)}{Imag}
+{Second parameter, imaginary or orientation per channel/IF for poln  \# NO\_POL, 
+channel varing fastest.}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{08/16/2010}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+\clearpage
 %%%%%%%%%%%%%%% ObitTablePS Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 %
@@ -3662,7 +3685,7 @@ ObitTableDesc.
 \clearpage
 
 %%%%%%%%%%%%%%% ObitTableSN Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Obit base class
+% 
 %
 \ClassName[{ObitTableSN}]
 {SolutioN table for UV data.}
@@ -3887,85 +3910,6 @@ ObitTableDesc.
 \modhistory[{W. D. Cotton}{09/03/2003}{Revision 1: Copied from AIPS}]
 \end{history}
 %
-%
-\clearpage
-%%%%%%%%%%%%%%% ObitTableSY Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 
-%
-\ClassName[{ObitTableSY}]
-ObitTableSY Class
-\tabletitle{ SysPower table for uv data}
-% table name
-\tablename{SY}
-\tableintro[
-{This class contains tabular data and allows access.
-"AIPS SY" contains EVLA switched power measurements.
-An ObitTableSY is the front end to a persistent disk resident structure.
-Both FITS and AIPS cataloged data are supported.
-This class is derived from the ObitTable class. }
-]
-\tableover{
-In memory tables are stored in a fashion similar to how they are 
-stored on disk - in large blocks in memory rather than structures.
-Due to the word alignment requirements of some machines, they are 
-stored by order of the decreasing element size: 
-double, float long, int, short, char rather than the logical order.
-The details of the storage in the buffer are kept in the 
-ObitTableDesc.
-}
-% Table keyword description
-\begin{keywords}
-\tablekey[{"NO\_IF"}{J}{nIF}{}{()}
-{The number of IFs}
-]
-% Must be position 2 to index
-\tablekey[{"NO\_POL "}{J}{nPol}{}{(1,2)}
-{The number of polarizations.}
-]
-\tablekey[{"NO\_ANT  "}{J}{nAnt}{}{}
-{The number of antennas in table (max. ant. number in file).
-}
-]
-\tablekey[{"REVISION"}{J}{revision}{1}{}
-{Revision number of the table definition.}
-]
-\end{keywords}
-%
-% Table column description
-\begin{columns}
-\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
-{The center time.}
-] 
-\tablecol[{"TIME INTERVAL "}{"DAYS   " }{E}{(1)}{TimeI}
-{Time interval of record }
-] 
-\tablecol[{"SOURCE ID  "}{"        " }{J}{(1)}{SourID}
-{Source ID number}
-] 
-\tablecol[{"ANTENNA NO."}{"        " }{J}{(1)}{antennaNo}
-{Antenna number}
-]
-\tablecol[{"SUBARRAY   "}{"        " }{J}{(1)}{SubA}
-{Subarray number}
-] 
-\tablecol[{"FREQ ID  "}{"        " }{J}{(1)}{FreqID}
-{Frequency id of scan}
-] 
-\tablecol[{"POWER DIF\#NPOL"}{"    " }{E}{(nIF)}{PwrDif}
-{ (P\_on-P\_off)*G  Poln \# NPOL ), invalid data fblanked}
-] 
-\tablecol[{"POWER SUM\#NPOL"}{"    " }{E}{(nIF)}{PwrSum}
-{(P\_on+P\_off)*G  Poln \# NPOL ), invalid data fblanked}
-] 
-\tablecol[{"POST GAIN\#NPOL"}{"     "}{E}{(nIF)}{Gain}
-{Post switched power gain Poln \# NPOL), invalid data fblanked}
-] 
-\end{columns}
-%
-% Table modification history
-\begin{history}
-\modhistory[{W. D. Cotton}{09/07/2010}{Revision 1: From EVLA memo}]
-\end{history}
 %
 \clearpage
 %%%%%%%%%%%%%%% ObitTableTY Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

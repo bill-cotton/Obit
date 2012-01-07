@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2011                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -142,4 +142,8 @@ Obit *FGTable;
 Obit *SNTable;
 /* Source  table, NULL -> none */
 Obit *SUTable;
+/* Channel Poln cal table, NULL -> none */
+Obit *PDTable;
+/** Requested PD table for channel/IF poln cal. */
+olong PDVer;
 

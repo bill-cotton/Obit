@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task apply calibration snd write multi source files */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -936,6 +936,10 @@ void doSplat (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     ObitUVCopyTables (inData, outData, NULL, ANInclude, err);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);  
 
+  /* Index output */
+  ObitUVUtilIndex (outData, err);
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);  
+  Obit_log_error(err, OBIT_InfoErr, "iNdeXing output UV data");
 
   /* Do history */
   SplatHistory (myInput, inData, outData, err);

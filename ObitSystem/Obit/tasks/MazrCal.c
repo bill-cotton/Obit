@@ -1,7 +1,7 @@
 /* $Id$  */
 /* VLBI Maser calibration                                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -212,6 +212,7 @@ ObitInfoList* MazrCalIn (int argc, char **argv, ObitErr *err)
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
+  myOutput = defaultOutputs(err);
 
   /* command line arguments */
   /* fprintf (stderr,"DEBUG arg %d %s\n",argc,argv[0]); DEBUG */
@@ -316,7 +317,6 @@ ObitInfoList* MazrCalIn (int argc, char **argv, ObitErr *err)
   }
 
   /* Initialize output */
-  myOutput = defaultOutputs(err);
   ObitReturnDumpRetCode (-999, outfile, myOutput, err);
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
@@ -624,8 +624,8 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "souCode", "Qual", "subA", "selBand", "selFreq", "FreqID",
     "Stokes", "timeRange", "BChan", "EChan",   "BIF", "EIF", "subA",
-    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", "doPol",
-    "Antennas", "Mode", "ModelType", "Alpha",
+    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
+    "doPol", "PDVer", "Antennas", "Mode", "ModelType", "Alpha",
      NULL};
   gchar *routine = "getInputData";
 
@@ -1004,7 +1004,7 @@ void MazrCalHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "Sources", "Qual", "souCode", "timeRange",  "subA",
     "selBand", "selFreq", "FreqID", "BChan", "EChan", 
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ", "BPVer", "flagVer", 
-    "doPol", "Antennas",  "refAnt", 
+    "doPol", "PDVer", "Antennas",  "refAnt", 
     "DataType2", "in2File", "in2Disk", "in2Name", "in2Class", "in2Seq", 
     "nfield", "CCVer1", "BComp", "EComp", "Cmethod", "Cmodel", "Flux", "Alpha",
     "solInt", "solType", "solMode", "avgPol", "avgIF", "noNeg", "doMGM", "minSNR",

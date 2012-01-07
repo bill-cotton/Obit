@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003                                               */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -49,6 +49,7 @@
  * The ObitUVCal must be visible here but the structure needed for this calibration 
  * is a member of the ObitUVCal.  If it were implemented as an Obit class this would
  * lead to a circular definition which c cannot deal with.
+ *
  */
 
 /*---------------Public functions---------------------------*/
@@ -56,7 +57,7 @@
 /** Public: Init baseline dependent calibration */
 void 
 ObitUVCalPolarizationInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc, 
-		     ObitErr *err);
+			   ObitErr *err);
 
 /** Public: Apply polarization calibration */
 void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, 

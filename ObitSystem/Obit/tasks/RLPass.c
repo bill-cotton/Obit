@@ -1,7 +1,7 @@
 /* $Id$  */
 /* R-L phase bandpass calibration                                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -226,6 +226,7 @@ ObitInfoList* RLPassIn (int argc, char **argv, ObitErr *err)
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
+  myOutput = defaultOutputs(err);
 
   /* command line arguments */
   /* fprintf (stderr,"DEBUG arg %d %s\n",argc,argv[0]); DEBUG */
@@ -330,7 +331,6 @@ ObitInfoList* RLPassIn (int argc, char **argv, ObitErr *err)
   }
 
   /* Initialize output */
-  myOutput = defaultOutputs(err);
   ObitReturnDumpRetCode (-999, outfile, myOutput, err);
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
@@ -629,7 +629,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "FreqID", "BChan", "EChan",   "BIF", "EIF", 
     "subA", "Antennas", "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", 
-    "flagVer", "doPol", "Mode", "ModelType", "Alpha", "refAnt",
+    "flagVer", "doPol", "PDVer", "Mode", "ModelType", "Alpha", "refAnt",
      NULL};
   gchar *routine = "getInputData";
 
@@ -1060,7 +1060,7 @@ void RLPassHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "selBand", "selFreq", "FreqID", 
     "BChan1", "EChan1", "BChan2", "EChan2", "ChWid2", 
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "doPol", "Antennas",  "refAnt",  
+    "doPol", "PDVer", "Antennas",  "refAnt",  
     "DataType2", "in2File", "in2Disk", "in2Name", "in2Class", "in2Seq", 
     "nfield", "CCVer", "BComp", "EComp", "Cmethod", "Cmodel", "Flux",
     "modelFlux", "modelPos", "modelParm", "RLPhase", "RM",

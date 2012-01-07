@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2011                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,6 +26,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVCal.h"
 #include "ObitUV.h"
 #include "ObitIOUVFITS.h"
 #include "ObitIOUVAIPS.h"
@@ -42,6 +43,7 @@
 #include "ObitTableSN.h"
 #include "ObitTableFG.h"
 #include "ObitTableNX.h"
+#include "ObitTablePD.h"
 #include "ObitTableSNUtil.h"
 #include "ObitTableCLUtil.h"
 #include "ObitTableFQUtil.h"
@@ -242,7 +244,7 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
   gchar        *keyword=NULL, *DataTypeKey = "DataType", *DataType=NULL;
   gchar        *parm[] = {"DoCalSelect", "Stokes", 
 			  "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc",
-			  "doPol", "doCalib", "gainUse", "flagVer", "BLVer", "BPVer",
+			  "doPol", "PDVer", "doCalib", "gainUse", "flagVer", "BLVer", "BPVer",
 			  "Subarray", "dropSubA", "FreqID", "timeRange", "UVRange",
 			  "InputAvgTime", "Sources", "souCode", "Qual", "Antennas",
 			  "corrType", "passAll", "doBand", "Smooth", 
@@ -3221,6 +3223,9 @@ static void ObitUVSetupCal (ObitUV *in, ObitErr *err)
   ObitUVSel *sel = NULL;
   ObitUVCal *cal = NULL;
   olong highVer, iVer, useVer;
+  oint numPol=0, numIF=0, numChan=0;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *routine = "ObitUVSetupCal";
 
   /* error checks */
@@ -3394,6 +3399,21 @@ static void ObitUVSetupCal (ObitUV *in, ObitErr *err)
   /* Need frequency information */
   ObitUVGetFreq (in, err);
 
+  /* PD table needed for poln cal? */
+  if (sel->doPolCal) {
+    cal->PDVer = -1;
+    ObitInfoListGetTest(in->info, "PDVer", &type, dim, &cal->PDVer);
+    if (cal->PDVer>=0) {  /* Channel poln cal - check PD tables */
+      highVer = ObitTableListGetHigh (in->tableList,  "AIPS PD");
+      if (highVer>=1)
+	cal->PDTable =
+	  (Obit*) newObitTablePDValue (in->name, (ObitData*)in, &cal->PDVer, OBIT_IO_ReadOnly, 
+				       numPol, numIF, numChan, err);
+      else cal->PDTable = ObitTablePDUnref(cal->PDTable);
+      if (err->error) Obit_traceback_msg (err, routine, in->name);
+    }
+  }
+
   /* Start up calibration - finish output Descriptor, and Selector */
   ObitUVCalStart ((ObitUVCal*)in->myIO->myCal, (ObitUVSel*)in->myIO->mySel, 
 		  (ObitUVDesc*)in->myIO->myDesc, in->myDesc, err);
@@ -3488,15 +3508,17 @@ static ObitIOCode CopyTablesSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 		    "AIPS AN","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS CQ",
 		    "AIPS WX","AIPS AT","AIPS NI","AIPS BP","AIPS OF",
-		    "AIPS PS",
+		    "AIPS PS","AIPS PD",
 		    "AIPS HI","AIPS PL","AIPS SL", 
 		    NULL};
-  gboolean copySU, copyCalTab=FALSE;
-  olong doCalib;
+  gchar *PDTable[] = {"AIPS PD", NULL};
+  gboolean doPol, copySU, copyCalTab=FALSE;
+  olong doCalib, itemp, PDVer=-1;
   odouble *SouIFOff=NULL, SouBW=0.0;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   /*gchar *sourceInclude[] = {"AIPS SU", NULL};*/
+  union ObitInfoListEquiv InfoReal; 
   gchar *routine = "ObitUV:CopyTablesSelect";
 
   /* error checks */
@@ -3513,6 +3535,22 @@ static ObitIOCode CopyTablesSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   
   /* Copy standard tables */
   retCode = ObitUVCopyTables (inUV, outUV, exclude, NULL, err);
+  if ((retCode != OBIT_IO_OK) || (err->error))
+    Obit_traceback_val (err, routine, inUV->name, retCode);
+
+  /* Copy any AIPS PD tables if NONE applied */
+  InfoReal.itg = 0; type = OBIT_oint;
+  ObitInfoListGetTest(inUV->info, "doPol", &type, dim, &InfoReal);
+  if (type==OBIT_float) itemp = InfoReal.flt + 0.5;
+  else itemp = InfoReal.itg;
+  doPol = itemp > 0;
+  InfoReal.itg = -1; type = OBIT_oint;
+  if (doPol && ObitInfoListGetTest(inUV->info, "PDVer", &type, dim, &InfoReal)) {
+    if (type==OBIT_float) PDVer = InfoReal.flt + 0.5;
+    else PDVer = InfoReal.itg;
+  }
+  if ((!doPol) || PDVer<=0) 
+    retCode = ObitUVCopyTables (inUV, outUV, NULL, PDTable, err);
   if ((retCode != OBIT_IO_OK) || (err->error))
     Obit_traceback_val (err, routine, inUV->name, retCode);
 

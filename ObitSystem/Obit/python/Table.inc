@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for Table type                             */
 /*                                                                    */
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -37,6 +37,7 @@
 #include "ObitTableCC.h"
 #include "ObitTableCL.h"
 #include "ObitTableCQ.h"
+#include "ObitTableCP.h"
 #include "ObitTableCT.h"
 #include "ObitTableFG.h"
 #include "ObitTableFQ.h"
@@ -49,6 +50,7 @@
 #include "ObitTableOB.h"
 #include "ObitTableOF.h"
 #include "ObitTablePC.h"
+#include "ObitTablePD.h"
 #include "ObitTablePS.h"
 #include "ObitTableSN.h"
 #include "ObitTableSU.h"
@@ -134,6 +136,9 @@ extern int TableOpen (ObitTable *in, int access, ObitErr *err) {
   else if (!strncmp (in->tabType,"AIPS CL", 7)) {
     ret =  ObitTableCLOpen ((ObitTableCL*)in, laccess, err);
   }
+  else if (!strncmp (in->tabType,"AIPS CP", 7)) {
+    ret =  ObitTableCPOpen ((ObitTableCP*)in, laccess, err);
+  }
   else if (!strncmp (in->tabType,"AIPS CQ", 7)) {
     ret =  ObitTableCQOpen ((ObitTableCQ*)in, laccess, err);
   }
@@ -172,6 +177,9 @@ extern int TableOpen (ObitTable *in, int access, ObitErr *err) {
   }
   else if (!strncmp (in->tabType,"AIPS PC", 7)) {
     ret =  ObitTablePCOpen ((ObitTablePC*)in, laccess, err);
+  }
+  else if (!strncmp (in->tabType,"AIPS PD", 7)) {
+    ret =  ObitTablePDOpen ((ObitTablePD*)in, laccess, err);
   }
   else if (!strncmp (in->tabType,"AIPS PS", 7)) {
     ret =  ObitTablePSOpen ((ObitTablePS*)in, laccess, err);
@@ -226,6 +234,9 @@ extern int TableClose (ObitTable *in, ObitErr *err) {
   else if (!strncmp (in->tabType,"AIPS CL", 7)) {
     ret =  ObitTableCLClose ((ObitTableCL*)in, err);
   }
+  else if (!strncmp (in->tabType,"AIPS CP", 7)) {
+    ret =  ObitTableCPClose ((ObitTableCP*)in, err);
+  }
   else if (!strncmp (in->tabType,"AIPS CQ", 7)) {
     ret =  ObitTableCQClose ((ObitTableCQ*)in, err);
   }
@@ -264,6 +275,9 @@ extern int TableClose (ObitTable *in, ObitErr *err) {
   }
   else if (!strncmp (in->tabType,"AIPS PC", 7)) {
     ret =  ObitTablePCClose ((ObitTablePC*)in, err);
+  }
+  else if (!strncmp (in->tabType,"AIPS PD", 7)) {
+    ret =  ObitTablePDClose ((ObitTablePD*)in, err);
   }
   else if (!strncmp (in->tabType,"AIPS PS", 7)) {
     ret =  ObitTablePSClose ((ObitTablePS*)in, err);

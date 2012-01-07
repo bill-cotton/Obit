@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Convert Obit UV to FITS IDI format                                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009,2010                                          */
+/*;  Copyright (C) 2009-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -251,6 +251,7 @@ ObitInfoList* IDIOutin (int argc, char **argv, ObitErr *err)
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
+  myOutput = defaultOutputs(err);
 
   /* command line arguments */
   if (argc<=1) Usage(); /* must have arguments */
@@ -357,7 +358,6 @@ ObitInfoList* IDIOutin (int argc, char **argv, ObitErr *err)
   }
 
   /* Initialize output */
-  myOutput = defaultOutputs(err);
   ObitReturnDumpRetCode (-999, outfile, myOutput, err);
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
@@ -494,8 +494,8 @@ ObitUV* setInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "souCode", "Qual", "Stokes", "timeRange", 
     "BChan", "EChan", "BIF", "EIF", "FreqID",
-    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", "doPol",
-    "Smooth", "Antennas",  "subA", "Sources", "souCode", "Qual",
+    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
+    "doPol", "PDVer", "Smooth", "Antennas",  "subA", "Sources", "souCode", "Qual",
      NULL};
   gchar     *routine = "setInputData";
 
@@ -2302,7 +2302,7 @@ void IDIOutHistory (ObitUV* inData, ObitInfoList* myInput, ObitData* outData,
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq",
     "FreqID", "BChan", "EChan", "BIF", "EIF",  "Stokes", 
     "Sources",  "Qual", "souCode", "subA", "Antennas", 
-    "doCalSelect", "doCalib", "gainUse", "doPol", "flagVer", 
+    "doCalSelect", "doCalib", "gainUse", "doPol", "PDVer", "flagVer", 
     "doBand", "BPVer", "Smooth",  
     NULL};
   gchar *routine = "IDIOutHistory";

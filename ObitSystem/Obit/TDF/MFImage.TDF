@@ -4,7 +4,7 @@
 ;! Obit wideband imaging
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2010-2011
+;;  Copyright (C) 2010-2012
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -79,6 +79,9 @@ BPVer                               Bandpass table version
 flagVer                             Flag table version
 **PARAM** boo 1 **DEF** F
 doPol                               Apply polarization cal?
+**PARAM** int 1 **DEF** -1
+PDVer                              PD table to apply
+                                   If >=0, per channel corrections
 **PARAM** int 1 **DEF** 1
 norder                              Maximum order of spectral terms 
 **PARAM** float 1  **DEF** 0.0
@@ -390,6 +393,9 @@ Adverbs:
                <0 => no bandpass correction to be applied.
   flagVer....AIPS FG table to use for editing. 0 => highest.
   doPol......If True => apply polarization calibration
+  PDVer......AIPS PD table to use for per channel instrumental
+             polarization corrections if doPol=True. 0=> highest
+             -1 => use IF corrections from AIPS AN table.
   norder.....Maximum spectral order to include, 
                 1 = spectral index
                 2 = spectral index + curvature

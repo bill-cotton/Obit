@@ -1,7 +1,7 @@
 /* $Id$ */
 /* Obit VLA Squint correcting Radio interferometry imaging software  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2011                                          */
+/*;  Copyright (C) 2006-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -194,6 +194,7 @@ ObitInfoList* SquintIn (int argc, char **argv, ObitErr *err)
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
+  myOutput = defaultOutputs(err);
 
   /* command line arguments */
   /* fprintf (stderr,"DEBUG arg %d %s\n",argc,argv[0]); DEBUG */
@@ -353,7 +354,6 @@ ObitInfoList* SquintIn (int argc, char **argv, ObitErr *err)
   }
 
   /* Initialize output */
-  myOutput = defaultOutputs(err);
   ObitReturnDumpRetCode (-999, outfile, myOutput, err);
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
@@ -1435,8 +1435,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "UVRange", "timeRange", "UVTape",
     "BIF", "EIF", "subA",
-    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", "doPol",
-    "Mode",
+    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
+    "doPol", "PDVer", "Mode",
     NULL
   };
   gchar        *tmpParms[] = {  /* Imaging, weighting parameters */
@@ -2409,7 +2409,7 @@ void SquintHistory (gchar *Source, ObitInfoList* myInput,
     "BChan", "EChan", "BIF", "EIF", "IChanSel", "Threshold", "CCVer",
     "FOV",  "UVRange",  "timeRange",  "Robust",  "UVTaper",  
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "doPol",  "Catalog", "CatDisk", "OutlierDist",  "OutlierFlux",  "OutlierSI",
+    "doPol",  "PDVer", "Catalog", "CatDisk", "OutlierDist",  "OutlierFlux",  "OutlierSI",
     "OutlierSize",  "CLEANBox",  "Gain",  "minFlux",  "Niter",  "minPatch",
     "ccfLim", "SDIGain", "BLFact", "BLFOV", "BLchAvg",
     "Reuse", "autoCen", "Beam",  "Cmethod",  "CCFilter",  "maxPixel", 

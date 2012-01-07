@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task to copy uv data                        .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2011                                          */
+/*;  Copyright (C) 2005-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -161,6 +161,7 @@ ObitInfoList* UVCopyIn (int argc, char **argv, ObitErr *err)
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
+  myOutput = defaultOutputs(err);
 
   /* command line arguments */
   /* fprintf (stderr,"DEBUG arg %d %s\n",argc,argv[0]); DEBUG */
@@ -310,7 +311,6 @@ ObitInfoList* UVCopyIn (int argc, char **argv, ObitErr *err)
   }
 
   /* Initialize output */
-  myOutput = defaultOutputs(err);
   ObitReturnDumpRetCode (-999, outfile, myOutput, err);
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
@@ -576,8 +576,8 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "souCode", "Qual", "Stokes", "timeRange", 
     "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "FreqID", "corrType", 
-    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", "doPol",
-    "Smooth", "Antennas",  "subA", "Sources", "souCode", "Qual",
+    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
+    "doPol", "PDVer", "Smooth", "Antennas",  "subA", "Sources", "souCode", "Qual",
      NULL};
   gchar *routine = "getInputData";
 
@@ -822,7 +822,7 @@ void UVCopyHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     "inFile",  "inDisk", "inName", "inClass", "inSeq",
     "FreqID", "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "Stokes", 
     "Sources",  "Qual", "souCode", "subA", "Antennas", 
-    "doCalSelect", "doCalib", "gainUse", "doPol", "flagVer", 
+    "doCalSelect", "doCalib", "gainUse", "doPol", "PDVer", "flagVer", 
     "doBand", "BPVer", "Smooth",  "corrType", 
     "outFile",  "outDisk",  "outName", "outClass", "outSeq", "Compress",
     NULL};
