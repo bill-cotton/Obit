@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2010                                          */
+/*;  Copyright (C) 2006-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1459,16 +1459,17 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
       /* Finished antenna? */
       if (row->antNo < ant) continue; /* Shouldn't happen */
       if (row->antNo > ant) break;
-
+      
       /* Want this record */
       if ((row->SubA == sub)  &&  (row->antNo == ant)) {
-
+	
 	/* take first reference antenna and check that it never changes */
 	if (refa1 <= 0) {
 	  refa1 = row->RefAnt1[iif];
 	} else {
 	  if (row->RefAnt1[iif] == 0) row->RefAnt1[iif] = refa1;
 	} 
+	if (row->Weight1[iif]<=0.0) row->RefAnt1[iif] = refa1;
 	if (refa1 != row->RefAnt1[iif]) { /* goto L980;*/
 	  Obit_log_error(err, OBIT_Error, 
 			 "%s: Reference antenna varies, cannot smooth %s", 
@@ -1484,6 +1485,7 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
 	  } else {
 	    if (row->RefAnt2[iif] == 0) row->RefAnt2[iif] = refa2;
 	  } 
+	  if (row->Weight2[iif]<=0.0) row->RefAnt2[iif] = refa2;
 	  if (refa2 != row->RefAnt2[iif]) { /* goto L980;*/
 	    Obit_log_error(err, OBIT_Error, 
 			   "%s: Reference antenna varies, cannot smooth %s", 
@@ -1574,7 +1576,7 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
       } /* end if want record */ 
       numtim++;   /* count times */
     } /* end loop  L100: */
-
+    
     save = isnrno - 1; /* How far did we get? */
     if (numtim <= 0) goto endAnt;  /* Catch anything? */
     
@@ -1614,7 +1616,7 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
 	       &work2[0*nxt], &work2[1*nxt], &work2[2*nxt], &work2[3*nxt], doBlank);
 	for (i=0; i<numtim; i++) work1[12*nxt+i] = work2[i];
       }
-
+      
       /* Save deblanked weights if doBlank */
       if (doBlank) for (i=0; i<numtim; i++) work1[3*nxt+i] = work2[1*nxt+i];
     } /* end first polarization */
@@ -1659,7 +1661,7 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
       if (doBlank) for (i=0; i<numtim; i++) work1[7*nxt+i] = work2[1*nxt+i];
     } /* end second polarization */
     
-    /* Replace with smoothed values */
+      /* Replace with smoothed values */
     for (itime=0; itime<numtim; itime++) { /* loop 200 */
       isnrno = (olong)(work1[9*nxt+itime]+0.5);
       retCode = ObitTableSNReadRow (SNTab, isnrno, row, err);
@@ -1671,7 +1673,7 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
 	row->MBDelay1 = work1[10*nxt+itime];
 	if (need2) row->MBDelay2 = work1[13*nxt+itime];
       }
-
+      
       /* weights zero rather than fblank */
       if (work1[3*nxt+itime]==fblank) work1[3*nxt+itime] = 0.0;
       if (work1[3*nxt+itime] > 0.0) {
@@ -2806,10 +2808,10 @@ refPhase (ObitTableSN *SNTab, olong isub, olong iif, olong refa, olong ant,
       
       /* Bad solution? */
       if (((row->Weight1[iif] <= 0.0)  ||  ( row->Real1[iif] == fblank)  ||  
-	   (row->RefAnt1[iif] <= 0))) continue;  /* goto L100;*/
-      if (need2  &&  ((numpol > 1)  &&  
+	   (row->RefAnt1[iif] <= 0)) &&
+	  (need2  &&  ((numpol > 1)  &&  
 		      ((row->Weight2[iif] <= 0.0) || (row->Real2[iif] == fblank)  || 
-		       (row->RefAnt2[iif] <= 0)))) continue;  /* goto L100; */
+		       (row->RefAnt2[iif] <= 0))))) continue;  /* goto L100; */
       
       /* Desired antenna combination? */
       if (need2  &&  (refa1 > 0)  &&  (refa2 > 0)  &&  (refa1 != refa2)) continue; 

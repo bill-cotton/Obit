@@ -330,4 +330,23 @@ Obit/tasks/IonImage.c Obit/TDF/IonImage.TDF:
   Implement PDVer for per channel poln cal.
 06 Jan 2012, version 405
 
-
+Various fixes
+ObitVersion:
+Obit/changes.log:
+Obit/src/ObitUVCal.c:
+  Fix bug introduces in last fix
+Obit/src/ObitUVEdit.c:
+  More specific flags for editing by correlation (was all)
+Obit/src/ObitUVRLDelay.c:
+  Don't flag data as bad if R-L delay solution fails
+Obit/TDF/RLDly.TDF:
+  Explain what happens when solutions fail.
+Obit/tasks/BDFIn.c:
+  multiply staXof by VELIGHT for EVLA
+Obit/python/EVLACal.py Obit/python/EVLAPipeline.py:
+  Add flagging by gain amplitude deviation, other improvements.
+Obit/TDF/Lister.TDF:
+  fix spelling
+Obit/src/ObitUVSoln.c:
+  SNSmooth: Ignore reference antenna for flagged solutions, other fixes.
+13 Jan 2012, version 406

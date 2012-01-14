@@ -1482,7 +1482,9 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       outRow->AntName[i] = AntArray->ants[iRow-1]->staName[i];
     outRow->status    = 0;
     outRow->mntSta    = 0;   /* ASDM lacks information */
-    outRow->staXof    = AntArray->ants[iRow-1]->offset[0];  /* Not sure */
+    /* This isn't what's documented: */
+    if (isEVLA) outRow->staXof    = AntArray->ants[iRow-1]->offset[0]*VELIGHT;  /* Not sure */
+    else  outRow->staXof = AntArray->ants[iRow-1]->offset[1];  /* ALMA ain't right */
     outRow->StaXYZ[0] = AntArray->ants[iRow-1]->staPosition[0];
     outRow->StaXYZ[1] = AntArray->ants[iRow-1]->staPosition[1];
     outRow->StaXYZ[2] = AntArray->ants[iRow-1]->staPosition[2];

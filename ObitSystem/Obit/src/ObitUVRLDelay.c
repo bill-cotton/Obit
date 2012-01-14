@@ -92,7 +92,7 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ofloat p1, p2, cp1, cp2, corr, cori, tr, ti, lambda0, lambda;
   ofloat *vis, *u, *v, *base, *delay=NULL, *phase=NULL, *snr=NULL;
   ofloat RLPhase, RM, rlp;
-  ofloat *antwt=NULL, fblank = ObitMagicF();
+  ofloat *antwt=NULL;
   ofloat *xpol1=NULL, *xpol2=NULL;
   gboolean empty;
   gchar *tname;
@@ -353,39 +353,33 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   row->NodeNo = 0; 
   row->MBDelay1 = 0.0; 
   for (i=0; i<numIF; i++) {
+    row->Real1[i]   = 1.0; 
+    row->Imag1[i]   = 0.0; 
+    row->Delay1[i]  = 0.0; 
+    row->Rate1[i]   = 0.0; 
+    row->RefAnt1[i] = refAnt;
     if (snr[i]>0.0) {
-      row->Real1[i]   = 1.0; 
-      row->Imag1[i]   = 0.0; 
-      row->Delay1[i]  = 0.0; 
-      row->Rate1[i]   = 0.0; 
       row->Weight1[i] = snr[i]; 
-      row->RefAnt1[i] = refAnt;
     } else {
-      row->Real1[i]   = fblank; 
-      row->Imag1[i]   = fblank; 
-      row->Delay1[i]  = fblank; 
-      row->Rate1[i]   = fblank; 
-      row->Weight1[i] = 0.0; 
-      row->RefAnt1[i] = refAnt;
+      /* No way to flag Xpol only here */
+      row->Weight1[i] = 1.0; 
     } 
   }
   if (numPol>1) {
     row->MBDelay2 = 0.0; 
     for (i=0; i<numIF; i++) {
+      row->Rate2[i]   = 0.0; 
+      row->RefAnt2[i] = refAnt; 
       if (snr[i]>0.0) {
 	row->Real2[i]   =  cos(phase[i]); 
 	row->Imag2[i]   = -sin(phase[i]); 
 	row->Delay2[i]  =  delay[i]; 
-	row->Rate2[i]   = 0.0; 
 	row->Weight2[i] = snr[i]; 
-	row->RefAnt2[i] = refAnt; 
       } else {
-	row->Real2[i]   = fblank; 
-	row->Imag2[i]   = fblank; 
-	row->Delay2[i]  = fblank; 
-	row->Rate2[i]   = fblank; 
-	row->Weight2[i] = 0.0; 
-	row->RefAnt2[i] = refAnt;
+	row->Real2[i]   = 1.0;
+	row->Imag2[i]   = 0.0;
+	row->Delay2[i]  = 0.0;
+	row->Weight2[i] = 1.0; 
       } 
     }
   }

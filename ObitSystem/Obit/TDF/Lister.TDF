@@ -160,8 +160,8 @@ Adverbs:
              'I','V','Q','U','IQU','IQUV','IV','RR','LL','RL',
              'LR','HALF' (=RR,LL), 'FULL' (=RR,LL,RL,LR)
   FreqID.....Frequency identifier to select (you may determine which is
-             applicable from the OPTYPE='SCAN' listing produced by
-             AIPS task LISTR). <=0=>any
+             applicable from the opType='SCAN' listing produced by
+             task Lister). <=0=>any
   BIF........First IF to copy. 0=>all.
   EIF........Highest IF to copy. 0=>all higher than BIF
   BChan......First channel to copy. 0=>all.
@@ -257,7 +257,7 @@ Adverbs:
                     Dataset must have iNdeX table, 
                     use UV.PUtilIndex to create if needed
              "GAIN" Contents of a gain table
-  doReal.....(opType="DATA") If True, shoe real and imaginary, else
+  doReal.....(opType="DATA") If True, show real and imaginary, else
              Amplitude/phase.
   bPrint.....First selected entry to print
   nPrint.....Number of lines to print

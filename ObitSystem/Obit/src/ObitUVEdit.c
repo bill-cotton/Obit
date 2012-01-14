@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2011                                          */
+/*;  Copyright (C) 2005-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2195,7 +2195,7 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
  * Results are unpredictable for uncalibrated data.
  * Control parameters on info member of inUV:
  * \li "flagStok" OBIT_string (1,1,1) Stokes value to clip (I, Q, U, V, R, L)
- *                default = "V"
+ *                default = "V" or correlator based, i.e. RR, LR, XY, YY...
  * \li "flagTab" OBIT_int    (1,1,1) FG table version number [ def. 1]
  *               NB: this should not also being used to flag the input data!
  * \li "timeAvg" OBIT_float  (1,1,1) Time interval over which to determine
@@ -2290,7 +2290,7 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   dim[0] = dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut(inUV->info, "nVisPIO", OBIT_long, dim, &itemp);
 
-  /* Set Stokes to 'V' */
+  /* Set Stokes to ' ' */
   oStokes[0] = oStokes[1] = oStokes[2] = oStokes[3] = ' '; oStokes[4] = 0;
   ObitInfoListGetTest(inUV->info, "Stokes", &type, dim, oStokes);
   dim[0] = strlen(Stokes); dim[1] = dim[2] = 1;
@@ -2396,6 +2396,21 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   row->pFlags[1] = 0; 
   row->pFlags[2] = 0; 
   row->pFlags[3] = 0; 
+  /* Single correlation flags? */
+  if (!strncmp(Stokes, "RR", 2)) row->pFlags[0] = 1<<0;
+  if (!strncmp(Stokes, "LL", 2)) row->pFlags[0] = 1<<1;
+  if (!strncmp(Stokes, "RL", 2)) row->pFlags[0] = 1<<2;
+  if (!strncmp(Stokes, "LR", 2)) row->pFlags[0] = 1<<3;
+  if (!strncmp(Stokes, "XX", 2)) row->pFlags[0] = 1<<0;
+  if (!strncmp(Stokes, "YY", 2)) row->pFlags[0] = 1<<1;
+  if (!strncmp(Stokes, "XY", 2)) row->pFlags[0] = 1<<2;
+  if (!strncmp(Stokes, "YX", 2)) row->pFlags[0] = 1<<3;
+  /* Cross pol */
+  if ((Stokes[0]=='Q') && (inDesc->crval[inDesc->jlocs]< 0.0)) 
+    row->pFlags[0] = 1<<2 | 1<<3;
+  if ((Stokes[0]=='U') && (inDesc->crval[inDesc->jlocs]< 0.0))
+    row->pFlags[0] = 1<<2 | 1<<3;
+
   /* Reason includes time/date */
   /* Get time since 00:00:00 GMT, Jan. 1, 1970 in seconds. */
   time (&clock);

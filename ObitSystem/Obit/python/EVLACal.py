@@ -332,7 +332,8 @@ def FetchObject (file):
     return pyobj
     # end FetchObject
    
-def EVLAClearCal(uv, err, doGain=True, doBP=False, doFlag=False, check=False):
+def EVLAClearCal(uv, err, doGain=True, doBP=False, doFlag=False,
+                 check=False, logfile=""):
     """
     Clear previous calibration
     
@@ -354,18 +355,26 @@ def EVLAClearCal(uv, err, doGain=True, doBP=False, doFlag=False, check=False):
     uv.Close(err)
     # Gain tables
     if doGain:
+        mess =  "Delete Delete all SN tables"
+        printMess(mess, logfile)
         uv.ZapTable("AIPS SN",-1,err)
         ver = uv.GetHighVer("AIPS CL")
         while (ver>1):
+            mess =  "Delete CL table %d" % (ver)
+            printMess(mess, logfile)
             uv.ZapTable ('AIPS CL', ver, err)
             ver = ver-1
     # Bandpass
     if doBP:
+        mess =  "Delete Delete all BP tables"
+        printMess(mess, logfile)
         uv.ZapTable("AIPS BP",-1,err)
     # Flag tables
     if doFlag:
         ver = uv.GetHighVer("AIPS FG")
         while (ver>1):
+            mess =  "Delete FG table %d" % (ver)
+            printMess(mess, logfile)
             uv.ZapTable ('AIPS FG', ver, err)
             ver = ver-1
     OErr.printErrMsg(err, "EVLAClearCal: Error reseting calibration")
@@ -1046,7 +1055,7 @@ def EVLAQuack(uv, err, \
     
 def EVLAAutoFlag(uv, target, err, \
                      doCalib=0, gainUse=0, doBand=0, BPVer=0, flagVer=-1, \
-                     flagTab=2, VClip=[0.0,0.0], IClip=[0.0,0.0], minAmp=0.0, \
+                     flagTab=2, VClip=[0.0,0.0], IClip=[0.0,0.0], XClip=[0.0,0.0], minAmp=0.0, \
                      RMSClip=[0.0,0.0], RMSAvg=0.0, maxBad=0.25 ,timeAvg=1.0, \
                      doFD=False, FDmaxAmp=0.0, FDmaxV=0.0, FDwidMW=5, FDmaxRMS=[0.0,0.0], \
                      FDmaxRes=6.0, FDmaxResBL=6.0,  FDbaseSel=[0, 0, 0, 0], \
@@ -1069,6 +1078,7 @@ def EVLAAutoFlag(uv, target, err, \
     * flagTab    = Output Flagging table version
     * VClip      = If > 0.0 VPol clipping level
     * IClip      = If > 0.0 IPol clipping level
+    * XClip      = If > 0.0 Cross-pol clipping level
     * minAmp     = Min flux for IClip flagging
     * RMSClip    = Abs and fractional clip levels for
       Time domain RMS filtering
@@ -1108,6 +1118,8 @@ def EVLAAutoFlag(uv, target, err, \
     af.BPVer      = BPVer
     af.VClip      = VClip
     af.IClip      = IClip
+    if  "XClip" in af.__dict__:
+        af.XClip      = XClip
     af.minAmp     = minAmp
     af.RMSClip    = RMSClip
     af.RMSAvg     = RMSAvg
@@ -1464,6 +1476,7 @@ def EVLACalAP(uv, target, ACal, err, \
               doCalib=-1, gainUse=0, doBand=0, BPVer=0, flagVer=-1, \
               calModel=None, calDisk=0, BChan=1, EChan=1, \
               solnver=0, solInt=10.0/60.0, solSmo=0.0, nThreads=1, refAnt=0, ampScalar=False, \
+              doAmpEdit=False, ampSigma=20, ampEditFG=-1, \
               doPlot=False, plotFile="./APCal.ps", \
               check=False, debug = False, noScrat=[], logfile = ""):
     """
@@ -1473,6 +1486,7 @@ def EVLACalAP(uv, target, ACal, err, \
     density or a calibrator model.
     If neither calFlux nor calModel is given, an attempt is made
     to use the setjy.OPType="CALC" option.
+    Optional editing/flagging on the basis of deviant amplitudes.
     Returns task error code, 0=OK, else failed
 
     * uv       = UV data object to calibrate
@@ -1497,7 +1511,11 @@ def EVLACalAP(uv, target, ACal, err, \
     * solSmo   = if solSmo<solInt smooth solutions to solSmo
     * nThreads = Number of threads to use
     * refAnt   = Reference antenna
-    * ampScalar= If true, scalar average data in calibration
+    * ampScalar= If true, scalar average data in calibration?
+    * doAmpEdit= Edit/flag on the basis of amplitude solutions
+    * ampSigma = Multiple of median RMS about median gain to clip/flag
+                 Should be fairly large
+    * ampEditFG= FG table to add flags to, <=0 -> not FG entries
     * doPlot   = If True make plots of solutions
     * plotFile = Name of postscript file for plots
     * check    = Only check script, don't execute tasks
@@ -1779,6 +1797,13 @@ def EVLACalAP(uv, target, ACal, err, \
         if retCode!=0:
             return retCode
     # end SN table plot
+
+    # Clip/flag by deviant amplitudes?
+    if doAmpEdit:
+        EVLAEditSNAmp(uv, 0, err, sigma=ampSigma, FGver=ampEditFG,  \
+                      logfile=logfile, check=check, debug=debug)
+        OErr.printErrMsg(err, "Error clip/flag bad amplitudes")
+    # end Amp edit
 
     # Set up for CLCal - use phase & amp calibrators
     if not check:
@@ -2147,8 +2172,8 @@ def EVLACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
             if err.isErr:
                 print "Error creating cal/avg AIPS data CL table"
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data CL table")
-            # Index
-            UV.PUtilIndex (uvc, err)
+            # Index - now in Splat
+            #UV.PUtilIndex (uvc, err)
             if err.isErr:
                 print  "Error indexing cal/avg AIPS data"
                 OErr.printErrMsg(err, "Error indexing cal/avg AIPS data")
@@ -2365,6 +2390,115 @@ def EVLASetImager (uv, target, outIclass="", nThreads=1, noScrat=[], logfile = "
     return img
 # end EVLASetImager
 
+def EVLARLDelay(uv, err, \
+                RLDCal=None, BChan=1, EChan = 0, UVRange=[0.0,0.0], \
+                timerange = [0.,0.,0.,0.,0.,0.,0.,0.], \
+                soucode="    ", doCalib=-1, gainUse=0, \
+                doBand=0, BPVer=0, flagVer=-1,  \
+                refAnt=0, Antennas=[0], doPol=-1,  \
+                nThreads=1, noScrat=[], logfile = "",check=False, debug = False):
+    """
+    Determine R-L delay 
+    
+    Returns task error code, 0=OK, else failed
+    R-L Delay calibration creating and applying new AIPS SN table
+    to (new) highest numbered CL table on uv
+
+    * uv       = UV data object to clear
+    * err      = Obit error/message stack
+    * RLDCal   = An array of triplets with R-L calibrators:
+      (name, R-L phase (deg at 1 GHz), RM (rad/m**2))
+      NB: more than 1 may be a bad idea
+    * BChan    = First (1-rel) channel number
+    * EChan    = Highest channel number. 0=> high in data.
+    * UVRange  = Range of baseline used in kilowavelengths
+    * soucode  = Calibrator code
+    * doCalib  = Apply calibration table, positive=>calibrate
+    * gainUse  = CL/SN table to apply
+    * timerange= time range of data (aips format)
+    * doBand   = If >0.5 apply previous bandpass cal.
+    * BPVer    = previous Bandpass table (BP) version
+    * flagVer  = Flagging table to apply
+    * refAnt   = Reference antenna REQUIRED
+    * Antennas = List of antennas to include
+    * doPol    = Apply polarization cal?
+    * noScrat  = list of AIPS disks to avoid for scratch files
+    * nThreads = Number of threads to use in imaging
+    * logfile  = Log file for task
+    * check    = Only check script, don't execute tasks
+    * debug    = Run tasks debug, show input
+    """
+    ################################################################
+    mess =  "R-L delay calibration "
+    printMess(mess, logfile)
+    
+    ncal = len(RLDCal)  # How many calibrators?
+    rldly=ObitTask.ObitTask("RLDly")
+    rldly.taskLog = logfile
+    if not check:
+        setname(uv,rldly)
+        rldly.Antennas = Antennas
+    rldly.timeRange[0] = timerange[0]+(timerange[1]+(timerange[2]+timerange[3]/60)/60)/24
+    rldly.timeRange[1] = timerange[4]+(timerange[5]+(timerange[6]+timerange[7]/60)/60)/24
+    rldly.BChan   = BChan
+    rldly.EChan   = EChan
+    rldly.UVR_Full[0] = UVRange[0];
+    rldly.UVR_Full[1] = UVRange[1];
+    rldly.doCalib = doCalib
+    rldly.gainUse = gainUse
+    rldly.flagVer = flagVer
+    rldly.doPol   = doPol
+    rldly.doBand  = doBand
+    rldly.BPVer   = BPVer
+    rldly.refAnt  = refAnt
+    rldly.minSNR  = 1  # Minimum SNR - this should be passed
+    rldly.prtLv   = 1
+    rldly.nThreads = nThreads
+    # Loop over calibrators
+    for ical in range (0,ncal):
+        rldly.Sources[0]= RLDCal[ical][0]
+        rldly.RLPhase   = RLDCal[ical][1]
+        rldly.RM        = RLDCal[ical][2]
+        mess =  "R-L delay calibration using "+rldly.Sources[0]
+        printMess(mess, logfile)
+        if debug:
+            print "timerange", rldly.timerang
+            rldly.i
+            rldly.debug = True
+        # Trap failure
+        try:
+            if not check:
+                rldly.g
+        except Exception, exception:
+            print exception
+            mess = "rldly Failed retCode="+str(rldly.retCode)
+            printMess(mess, logfile)
+            return 1
+        else:
+            pass
+        # end loop over calibrators
+
+    # Get output SN table
+    # Open and close image to sync with disk 
+    uv.Open(UV.READONLY, err)
+    uv.Close(err)
+    lsnver = uv.GetHighVer("AIPS SN")
+
+    # Apply to CL table
+    retCode = EVLAApplyCal(uv, err, SNver=lsnver, CLin = gainUse, \
+                           maxInter=600.0, \
+                           logfile=logfile, check=check,debug=debug)
+    if retCode!=0:
+        return retCode
+    
+    # Open and close image to sync with disk 
+    uv.Open(UV.READONLY, err)
+    uv.Close(err)
+    # end R-L delay cal
+    
+    return 0
+    # end EVLARLDelay
+
 def EVLAPolCal(uv, InsCals, err, RM=0.0, \
                doCalib=2, gainUse=0, doBand=1, BPVer=0, flagVer=-1, \
                soltype="ORI-", fixPoln=False, avgIF=False, \
@@ -2467,7 +2601,7 @@ def EVLARLCal(uv, err, \
               timerange = [0.,0.,0.,0.,0.,0.,0.,0.], \
               FQid=0, calcode="    ", doCalib=-1, gainUse=0, \
               doBand=0, BPVer=0, flagVer=-1,  \
-              refAnt=0, doPol=-1, FOV=0.05, niter = 100, CleanRad=None, \
+              refAnt=0, doPol=-1, PDVer=-1, FOV=0.05, niter = 100, CleanRad=None, \
               doPlot=False, plotFile="./BPCal.ps", \
               nThreads=1, noScrat=[], logfile = "",check=False, debug = False):
     """
@@ -2504,6 +2638,7 @@ def EVLARLCal(uv, err, \
     * flagVer  = Flagging table to apply
     * refAnt   = Reference antenna REQUIRED
     * doPol    = Apply polarization cal?
+    * PDVer    = PD version for pol cal, -1=>use IF
     * FOV      = field of view radius (deg) needed to image RLPCal
     * niter    = Number  of iterations of CLEAN in R-L cal
     * CleanRad = CLEAN radius about center or None=autoWin
@@ -2545,6 +2680,8 @@ def EVLARLCal(uv, err, \
             rlpass.flagVer = flagVer
             rlpass.FreqID  = FQid
             rlpass.doPol   = doPol
+            if "PDVer" in rlpass.__dict__:
+                rlpass.PDVer = PDVer
             rlpass.doBand  = doBand
             rlpass.BPVer   = BPVer
             rlpass.refAnt  = refAnt
@@ -2558,7 +2695,7 @@ def EVLARLCal(uv, err, \
                 rlpass.Sources[0]= RLDCal[ical][0]
                 rlpass.RLPhase   = RLDCal[ical][1]
                 rlpass.RM        = RLDCal[ical][2]
-                mess =  "R-L delay calibration using "+rlpass.Sources[0]
+                mess =  "R-L channel phase calibration using "+rlpass.Sources[0]
                 printMess(mess, logfile)
                 if debug:
                     print "timerange", rlpass.timerang
@@ -2585,7 +2722,7 @@ def EVLARLCal(uv, err, \
     
     # R-L phase cal
     if RLPCal!=None:
-        mess =  "R-L phase calibration using "+RLPCal
+        mess =  "R-L IF phase calibration using "+RLPCal
         printMess(mess, logfile)
         img = ObitTask.ObitTask("Imager")
         img.taskLog    = logfile
@@ -3589,7 +3726,8 @@ def EVLAGetTimes(uv, Source, err,
     # end EVLAGetTimes
 
 def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band="", \
-                     doCalib=-1, gainUse=0, doBand=-1, BPVer=0,  flagVer=-1,  doPol=False, \
+                     doCalib=-1, gainUse=0, doBand=-1, BPVer=0,  flagVer=-1,  \
+                     doPol=False, PDVer=-1,  \
                      Stokes="I", FOV=0.1/3600.0, Robust=0, Niter=300, CleanRad=None, \
                      maxPSCLoop=0, minFluxPSC=0.1, solPInt=20.0/60., \
                      solPMode="P", solPType= "  ", \
@@ -3620,6 +3758,7 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
     * BPVer      = Bandpass table version
     * flagVer    = Input Flagging table version
     * doPol      = Apply polarization cal?
+    * PDVer      = PD version for pol cal, -1=>use IF
     * Stokes     = Stokes parameters to image
     * FOV        = Field of view to image in deg
     * Robust     = Weighting robustness parameter
@@ -3699,6 +3838,8 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
     imager.doBand      = doBand
     imager.BPVer       = BPVer
     imager.doPol       = doPol
+    if "PDVer" in imager.__dict__:
+        imager.PDVer = PDVer
     imager.Stokes      = Stokes
     imager.FOV         = FOV
     imager.Robust      = Robust
@@ -4141,3 +4282,279 @@ def EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
     scr.Zap(err)
     return 0
     # end EVLASpectrum
+
+def EVLAEditSNAmp(uv, SNver, err, \
+                  sigma=20.0, FGver=-1, logfile='', check=False, debug=False):
+    """
+    Flag SN table entries with amplitudes discrepant from IF median
+
+    For each IF in an SN table, the median amplitude and the RMS of
+    the 80% amplitudes least different from the median are determined.
+    Then SN table entries with amplitudes further from the median than
+    sigma*RMS are flagged.
+    Optionally adds entries to flag (FG) table
+    Returns with err set on error
+
+    * uv         = UV data object
+    * SNver      = SN table to flag, 0=> highest
+    * err        = Python Obit Error/message stack
+    * sigma      = multiple of inner RMS different from median to flag
+                   Should be pretty big
+    * FGver      = FG table to add flags to, <=0 ->none
+    * logfile    = logfile for messages
+    * check      = Only check script
+    * debug      = Only debug - no effect
+    """
+    ################################################################
+    if SNver<=0:
+        snver =  uv.GetHighVer("AIPS SN")
+    else:
+        snver = SNver;
+    mess = "Edit SN table %d amplitudes by sigma %f" % (snver,sigma)
+    printMess(mess, logfile)
+    if FGver>0:
+       mess = "Also write flagging entries in FG table %d" % (FGver)
+       printMess(mess, logfile)
+    # Get statistics
+    stats = EVLASNAmpStats(uv, snver, err, \
+                           logfile=logfile, check=check, debug=debug)
+    if stats==None or err.isErr:
+        mess = "Problem with SN table statistics"
+        printMess(mess, logfile)
+        return
+    # Get Median RMS
+    t = []
+    for s in stats:
+        if s!=None:
+            t.append(s[1])
+    RMS = t[len(t)/2]
+    mess = "Median RMS %f" % (RMS)
+    printMess(mess, logfile)
+    # Set clipping levels
+    cl = []
+    iif = 1
+    for s in stats:
+        if s!=None:
+            rang = [max(0.0,s[0]-sigma*RMS),s[0]+sigma*RMS]
+            cl.append(rang)
+            mess = "IF %d valid range = %s" % (iif,str(rang))
+            printMess(mess, logfile)
+        else:
+            cl.append(None)
+            mess = "IF %d: Too few data to edit" % (iif)
+            printMess(mess, logfile)
+        iif += 1;
+    # Clip/flag
+    EVLAClipSNAmp(uv, snver, cl, err,FGver=FGver,  \
+                  logfile=logfile, check=check, debug=debug)
+    if err.isErr:
+        mess = "Problem with clipping SN table or flagging"
+        printMess(mess, logfile)
+        return
+   # end EVLAEditSNAmp
+
+def EVLASNAmpStats(uv, SNver, err, logfile='', check=False, debug=False):
+    """
+    Determine median and RMS of inner 80% of amplitude distribution per IF
+
+    Returns with err set on error
+    Return list:
+        [(medn1, RMS1),...,(mednnumIF,RMDnumIF)]
+
+    * uv         = UV data object
+    * SNver      = SN table to flag
+    * err        = Python Obit Error/message stack
+    * logfile    = logfile for messages
+    * check      = Only check script
+    * debug      = Only debug - no effect
+    """
+    ################################################################
+    fblank = FArray.PGetBlank() # Magic blanking value
+    # Number of IFs
+    nif   = uv.Desc.Dict["inaxes"][uv.Desc.Dict["jlocif"]]
+    # Number of Stokes
+    npoln = uv.Desc.Dict["inaxes"][uv.Desc.Dict["jlocs"]]
+    npoln = min(2, npoln)   # No more than 2
+    SNtab = uv.NewTable(Table.READONLY, "AIPS SN", SNver, err, \
+                        numIF=nif, numPol=npoln)
+    if err.isErr:
+        return None
+    # Open
+    SNtab.Open(Table.READWRITE, err)
+    if err.isErr:
+        return None
+    # Number of SN rows
+    nrow =  SNtab.Desc.Dict["nrow"]
+    # Initialize accumulators, 1 per IF
+    # Each a list of amplitudes
+    amps = []
+    for i in range(0,nif):
+        amps.append([])
+    for i in range (0,nrow):    # Loop over rows
+        SNrow = SNtab.ReadRow(i+1, err)
+        if err.isErr:
+            return None
+        for iif in range(0,nif):
+            if (SNrow["WEIGHT 1"][iif]>0.0) and (SNrow["REAL1"][iif]!=fblank):
+                amp = (SNrow["REAL1"][iif]**2+SNrow["IMAG1"][iif]**2)**0.5
+                amps[iif].append(amp)
+            if (npoln>1) and (SNrow["WEIGHT 2"][iif]>0.0) and (SNrow["REAL2"][iif]!=fblank):
+                amp = (SNrow["REAL2"][iif]**2+SNrow["IMAG2"][iif]**2)**0.5
+                amps[iif].append(amp)
+        # end IF loop
+    # End loop over table
+ 
+    # Close table
+    SNtab.Close(err)
+    if err.isErr:
+        return None
+
+   # Sort lists, get median, inner RMS
+    out = []   # Initialize output
+    for iif in range(0,nif):
+        if len(amps[iif])>3:   # Need a min. amount of data
+            amps[iif].sort()
+            num  = len(amps[iif])
+            medn = amps[iif][num/2]
+            # inner half RMS about median
+            b = num/10; e = 9*num/10;
+            sum2 = 0.0; count = 0
+            for i in range(b,e+1):
+                val    = amps[iif][i]-medn
+                sum2  += val*val
+                count += 1
+            RMS = (sum2/count)**0.5
+            out.append((medn,RMS))
+        else:
+            out.append(None)   # Too little
+    # end IF loop
+    return out
+    # end EVLASNAmpStats
+
+def EVLAClipSNAmp(uv, SNver, arange, err, \
+                  FGver=-1, logfile='', check=False, debug=False):
+    """
+    Flag SN table entries with amplitudes outside of [range[0]-range[1]]
+
+    Optionally adds entry to flag (FG) table
+    Returns with err set on error
+
+    * uv         = UV data object
+    * SNver      = SN table to flag
+    * arange     = [min amp, max amp] allowed. list per IF
+                   IF with None entry are ignored
+    * err        = Python Obit Error/message stack
+    * FGver      = FG table to add flags to, <=0 ->none
+    * logfile    = logfile for messages
+    * check      = Only check script
+    * debug      = Only debug - no effect
+    """
+    ################################################################
+    fblank = FArray.PGetBlank() # Magic blanking value
+    # Number of IFs
+    nif   = uv.Desc.Dict["inaxes"][uv.Desc.Dict["jlocif"]]
+    # Number of Stokes
+    npoln = uv.Desc.Dict["inaxes"][uv.Desc.Dict["jlocs"]]
+    SNTab = uv.NewTable(Table.READONLY, "AIPS SN", SNver, err, \
+                        numIF=nif, numPol=npoln)
+    if err.isErr:
+        return
+    # Open
+    SNTab.Open(Table.READWRITE, err)
+    if err.isErr:
+        return
+    # Number of rows
+    nrow =  SNTab.Desc.Dict["nrow"]
+    count = 0; total = 0
+    for i in range (0,nrow):    # Loop over rows
+        SNrow = SNTab.ReadRow(i+1, err)
+        if err.isErr:
+            return
+        dirty = False
+        # Loop over IF
+        for iif in range (0, nif):
+            if arange[iif]!=None:
+                amin = arange[iif][0]
+                amax = arange[iif][1]
+                if (SNrow["WEIGHT 1"][iif]>0.0) and (SNrow["REAL1"][iif]!=fblank):
+                    total += 1
+                    amp = (SNrow["REAL1"][iif]**2+SNrow["IMAG1"][iif]**2)**0.5
+                    if (amp<amin) or (amp>amax):
+                        # Flag table?
+                        EVLAFlagSNClip(uv, SNrow, iif+1, 1, err, FGver=FGver, \
+                                       logfile=logfile, check=check, debug=debug)
+                        SNrow["REAL1"][iif]    = fblank
+                        SNrow["IMAG1"][iif]    = fblank
+                        SNrow["WEIGHT 1"][iif] = 0.0
+                        count += 1
+                        dirty = True
+                # Second Poln
+                if (npoln>1) and (SNrow["WEIGHT 2"][iif]>0.0) and (SNrow["REAL2"][iif]!=fblank):
+                    total += 1
+                    amp = (SNrow["REAL2"][iif]**2+SNrow["IMAG2"][iif]**2)**0.5
+                    if (amp<amin) or (amp>amax):
+                        # Flag table?
+                        EVLAFlagSNClip(uv, SNrow, iif+1, 2, err, FGver=FGver, \
+                                       logfile=logfile, check=check, debug=debug)
+                        SNrow["REAL2"][iif]    = fblank
+                        SNrow["IMAG2"][iif]    = fblank
+                        SNrow["WEIGHT 2"][iif] = 0.0
+                        count += 1
+                        dirty = True
+       # Rewrite if modified
+        if dirty and not check:
+            SNTab.WriteRow(i+1, SNrow, err)
+            if err.isErr:
+                return
+  # end loop over rows
+
+    # Close table
+    SNTab.Close(err)
+    if err.isErr:
+        return
+
+    mess = "Flagged %d of total %d Gain entries" % (count, total)
+    printMess(mess, logfile)
+    # end EVLAClipSNAmp
+
+def EVLAFlagSNClip(uv, SNrow, IFno, poln, err, \
+               FGver=-1, logfile='', check=False, debug=False):
+    """
+    Write flag table entry for SN table row
+
+    Returns with err set on error
+
+    * uv         = UV data object
+    * SNrow      = SN table row
+    * IFno       = IF number to flag
+    * poln       = polarization (1 or 2)
+    * err        = Python Obit Error/message stack
+    * FGver      = FG table to add flags to, <=0 ->none
+    * logfile    = logfile for messages
+    * check      = Only check script
+    * debug      = Only debug
+    """
+    ################################################################
+    if FGver<=0:   # Anthing wanted?
+        return
+    tr   = [SNrow["TIME"][0]-SNrow["TIME INTERVAL"][0],SNrow["TIME"][0]+SNrow["TIME INTERVAL"][0]]
+    Ants = [SNrow["ANTENNA NO."][0],0]
+    IFs  = [IFno, IFno]
+    sid = SNrow["SOURCE ID"][0]
+    if poln==1:
+        Stokes="1011"
+        amp = (SNrow["REAL1"][IFno-1]**2+SNrow["IMAG1"][IFno-1]**2)**0.5
+    else:
+        Stokes="0111"
+        amp = (SNrow["REAL2"][IFno-1]**2+SNrow["IMAG2"][IFno-1]**2)**0.5
+    if not check:
+        UV.PFlag(uv, err, flagVer=FGver,
+                 timeRange=tr, Ants=Ants, IFs=IFs, Stokes=Stokes, 
+                 Reason="Bad Amp")
+    if err.isErr:
+        return
+    if debug:
+        mess = "Flag SID %d Ant %d IF %d Poln %d Timerange %s - %s amp %f" % \
+               (sid, Ants[0],IFno,poln,day2dhms(tr[0]),day2dhms(tr[1]), amp)
+        printMess(mess, logfile)
+    # end EVLAFlagSNClip

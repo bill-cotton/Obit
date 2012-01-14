@@ -154,6 +154,9 @@ for a time range for which the parallactic angle does not change
 much. For the EVLA, 3C286 is good for this as the parallactic 
 angle does change much except at transit.
 
+NB: If the R-L delay solution fails for an IF, data for 
+that IF will be unaffected by the SN table written.
+
 Adverbs:
   DataType..'FITS' or 'AIPS'  type of input
   inFile.....FITS input uvdata if Type=='FITS'
@@ -274,6 +277,8 @@ Adverbs:
 
       Calibration control
   minSNR.....Min. allowed SNR in calibration solution 
+             SN table entries for IF for which the solution fails
+             will leave the data unchanged, i.e. no delay, no flagging.
   prtLv......Print level in solution, 0=>none 
   nThreads...If the Obit libraries are compiled with multiple
              thread operation enabled, this parameter sets the 

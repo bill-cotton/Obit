@@ -74,12 +74,14 @@ doRMSAvg    = True         # Edit calibrators by RMSAvg?
 RMSAvg      = 5.0          # AutoFlag Max RMS/Avg for time domain RMS filtering
 RMSTimeAvg  = 1.0          # AutoFlag time averaging in min.
 
-doAutoFlag    = True       # Autoflag editing?
+doAutoFlag  = True         # Autoflag editing after first pass calibration?
+doAutoFlag2 = None         # Autoflag editing after final (2nd) calibration?
 RMSAvg      = 20.0         # AutoFlag Max RMS/Avg for time domain RMS filtering
 IClip       = [1000.0,0.1] # AutoFlag Stokes I clipping
 minAmp      = 0.001        # Min. allowable calibrated amplitude
 VClip       = [10.0,0.05]  # AutoFlag Stokes V clipping
-timeAvg     = 2.0          # AutoFlag time averaging in min.
+XClip       = [10.0,0.05]  # AutoFlag cross-pol clipping
+timeAvg     = 1.0          # AutoFlag time averaging in min.
 doAFFD      = False        # do AutoFlag frequency domain flag
 FDmaxAmp    = IClip[0]     # Maximum average amplitude (Jy)
 FDmaxV      = VClip[0]     # Maximum average VPol amp (Jy)
@@ -100,7 +102,6 @@ editList = [
 doPACor     = True         # Make parallactic angle correction
 
 # Bandpass Calibration
-doBP        = True         # Clear BP tables
 doBPCal     = True         # Determine Bandpass calibration
 doBPCal2    = None         # Second BP cal, defaults to doBPCal
 BPCal       = None         # Bandpass calibrator
@@ -153,6 +154,11 @@ refAnt        = 0                       # Reference antenna
 ampBChan      = 1                       # First (1-rel channel to include
 ampEChan      = 0                       # Highest channel to include
 
+# Editing of Amp solutions
+doAmpEdit    = True         # Edit/flag on the basis of amplitude solutions
+ampSigma     = 20.0         # Multiple of median RMS about median gain to clip/flag
+ampEditFG    = 2            # FG table to add flags to, <=0 -> not FG entries
+
 # Sample spectra
 doRawSpecPlot = True        # Plot Raw spectrum
 doSpecPlot    = True        # Plot spectrum at various stages of processing
@@ -180,8 +186,8 @@ PCSolType     ="ORI-"     # Solution type "ORI-", "RAPR"
 doRecal       = True      # Redo calibration after editing
 
 # R-L phase/delay calibration
-doRLCal       = False    # Determine R-L bandpass prior to pcal?
-doRLCal2      = False    # Determine R-L bandpass after pcal?
+doRLDelay     = False    # Determine R-L Delay prior to pcal?
+doRLCal       = False    # Determine R-L bandpass after pcal?
 RLPCal        = None     # Polarization angle (R-L phase) calibrator
 PCRLPhase     = 0.0      # R-L phase difference for RLPCal
 RM            = 0.0      # rotation measure (rad/m^2) for RLPCal
@@ -220,6 +226,7 @@ minFlux     = 0.0          # Minimum CLEAN flux density
 xCells      = 0.0          # x cell spacing in asec
 yCells      = 0.0          # y cell spacing in asec
 doPol       = False        # Poln cal in imaging
+PDVer       = 1            # PD version for pol cal, -1=>use IF
 solPType    = "L1"         # L1 solution for phase self cal
 solPMode    = "P"          # Delay solution for phase self cal
 solAType    = "  "         # L1 solution for amp&phase self cal
@@ -318,6 +325,8 @@ if doClearTab:
 
 # Copy FG 1 to FG 2
 if doCopyFG:
+    mess =  "Copy FG 1 to FG 2"
+    printMess(mess, logFile)
     retCode = EVLACopyFG (uv, err, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error Copying FG table"
@@ -450,6 +459,7 @@ if doAmpPhaseCal:
                          BChan=ampBChan, EChan=ampEChan, \
                          calModel=AcalModel, calDisk=AcalDisk, calFlux=AcalFlux, nThreads=nThreads, \
                          solInt=solint, solSmo=solsmo, noScrat=noScrat, ampScalar=ampScalar, \
+                         doAmpEdit=doAmpEdit, ampSigma=ampSigma, ampEditFG=ampEditFG, \
                          doPlot=doSNPlot, plotFile=plotFile, \
                          refAnt=refAnt, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
@@ -476,10 +486,12 @@ if doDelayCal2==None:
     doDelayCal2 = doDelayCal2
 if doAmpPhaseCal2==None:
     doAmpPhaseCal2 = doAmpPhaseCal
+if doAutoFlag2==None:
+    doAutoFlagCal2 = doAutoFlag
 if doRecal:
     mess =  "Redo calibration:"
     printMess(mess, logFile)
-    EVLAClearCal(uv, err, doGain=True, doFlag=False, doBP=True, check=check)
+    EVLAClearCal(uv, err, doGain=True, doFlag=False, doBP=True, check=check, logfile=logFile)
     OErr.printErrMsg(err, "Error resetting calibration")
     # Parallactic angle correction?
     if doPACor:
@@ -488,7 +500,7 @@ if doRecal:
         if retCode!=0:
             raise RuntimeError,"Error in Parallactic angle correction"
 
-    # Delay calibration
+    # Delay recalibration
     if doDelayCal2 and DCal:
         plotFile = "./"+project+"_"+session+"_"+band+"DelayCal.ps"
         retCode = EVLADelayCal(uv, err, calSou=DCal, CalModel=None, \
@@ -511,7 +523,7 @@ if doRecal:
             if retCode!=0:
                 raise  RuntimeError,"Error in Plotting spectrum"
 
-    # Bandpass calibration
+    # Bandpass recalibration
     if doBPCal2 and BPCal and not check:
         retCode = EVLABPCal(uv, BPCal, err, noScrat=noScrat, \
                             solInt1=bpsolint1, solInt2=bpsolint2, solMode=bpsolMode, \
@@ -539,18 +551,33 @@ if doRecal:
             if retCode!=0:
                 raise  RuntimeError,"Error in Plotting spectrum"
 
-    # Amp & phase Calibrate
+    # Amp & phase Recalibrate
     if doAmpPhaseCal2:
         plotFile = "./"+project+"_"+session+"_"+band+"APCal.ps"
         retCode = EVLACalAP (uv, targets, ACal, err, PCal=PCal, doCalib=2, doBand=1, BPVer=1, flagVer=2, \
                              BChan=ampBChan, EChan=ampEChan, \
                              calModel=AcalModel, calDisk=AcalDisk, calFlux=AcalFlux, nThreads=nThreads, \
                              solInt=solint, solSmo=solsmo, noScrat=noScrat, ampScalar=ampScalar, \
+                             doAmpEdit=doAmpEdit, ampSigma=ampSigma, ampEditFG=ampEditFG, \
                              doPlot=doSNPlot, plotFile=plotFile, \
                              refAnt=refAnt, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
             raise RuntimeError,"Error calibrating"
 
+    # More editing
+    if doAutoFlag2:
+        mess =  "Post recalibration editing:"
+        printMess(mess, logFile)
+        retCode = EVLAAutoFlag (uv, targets, err, flagVer=2, \
+                                doCalib=2, gainUse=0, doBand=1, BPVer=1,  \
+                                IClip=IClip, minAmp=minAmp, timeAvg=timeAvg, \
+                                doFD=doAFFD, FDmaxAmp=FDmaxAmp, FDmaxV=FDmaxV, \
+                                FDwidMW=FDwidMW, FDmaxRMS=FDmaxRMS, \
+                                FDmaxRes=FDmaxRes,  FDmaxResBL= FDmaxResBL, FDbaseSel=FDbaseSel, \
+                                nThreads=nThreads, logfile=logFile, check=check, debug=debug)
+        if retCode!=0:
+            raise  RuntimeError,"Error in AutoFlag"
+        
 # end recal
 
 
@@ -572,27 +599,34 @@ if not check:
     if err.isErr:
         OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
 
-# R-L  delay calibration cal if needed, creates new BP table
-if doRLCal:
-    plotFile = "./"+project+"_"+session+"_"+band+"RLSpec.ps"
-    retCode = EVLARLCal(uv, err,\
+# XClip
+if XClip:
+    mess =  "Cross Pol clipping:"
+    printMess(mess, logFile)
+    retCode = EVLAAutoFlag (uv, targets, err, flagVer=-1, flagTab=1, \
+                            doCalib=2, gainUse=0, doBand=-1, maxBad=1.0,  \
+                            XClip=XClip, timeAvg=1./60., \
+                            nThreads=nThreads, logfile=logFile, check=check, debug=debug)
+    if retCode!=0:
+        raise  RuntimeError,"Error in AutoFlag"
+
+# R-L  delay calibration cal if needed,
+if doRLDelay:
+    retCode = EVLARLDelay(uv, err,\
                         RLDCal=RLDCal, BChan=rlBChan, EChan=rlEChan, UVRange=rlUVRange, \
-                        ChWid2=rlChWid, solInt1=rlsolint1, solInt2=rlsolint2, \
-                        RLPCal=None, RLPhase=PCRLPhase, RM=RM, CleanRad=CleanRad, \
-                        calcode=rlCalCode, doCalib=rlDoCal, gainUse=rlgainUse, \
-                        timerange=rltimerange, FOV=rlFOV, \
+                        soucode=rlCalCode, doCalib=rlDoCal, gainUse=rlgainUse, \
+                        timerange=rltimerange, \
                         doBand=rlDoBand, BPVer=rlBPVer, flagVer=rlflagVer, \
                         refAnt=rlrefAnt, doPol=False,  \
-                        doPlot=doSNPlot, plotFile=plotFile, \
                         nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
                         check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error in RL phase spectrum calibration"
+        raise RuntimeError,"Error in R-L delay calibration"
 
 # Polarization calibration 
 if doPolCal:
     retCode = EVLAPolCal(uv, PCInsCals, err, \
-                         doCalib=2, gainUse=0, doBand=1, BPVer=0, flagVer=0, \
+                         doCalib=2, gainUse=0, doBand=-1, flagVer=0, \
                          fixPoln=PCFixPoln, pmodel=PCpmodel, avgIF=PCAvgIF, \
                          solInt=PCSolInt, refAnt=PCRefAnt, soltype=PCSolType, \
                          check=check, debug=debug, \
@@ -602,8 +636,8 @@ if doPolCal:
     # end poln cal.
 
 
-# R-L  delay calibration cal if needed, creates new BP table (again)
-if doRLCal2:
+# R-L  delay calibration cal if needed, creates new BP table
+if doRLCal:
     plotFile = "./"+project+"_"+session+"_"+band+"RLSpec2.ps"
     retCode = EVLARLCal(uv, err,\
                         RLDCal=RLDCal, BChan=rlBChan, EChan=rlEChan, UVRange=rlUVRange, \
@@ -612,7 +646,7 @@ if doRLCal2:
                         calcode=rlCalCode, doCalib=rlDoCal, gainUse=rlgainUse, \
                         timerange=rltimerange, FOV=rlFOV, \
                         doBand=-1, BPVer=1, flagVer=rlflagVer, \
-                        refAnt=rlrefAnt, doPol=True,  \
+                        refAnt=rlrefAnt, doPol=doPol, PDVer=PDVer,  \
                         doPlot=doSNPlot, plotFile=plotFile, \
                         nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
                         check=check, debug=debug)
@@ -647,18 +681,18 @@ if doImage:
     else:
         slist = targets
     EVLAImageTargets (uv, err, Sources=slist, seq=seq, sclass=outIclass, \
-                      doCalib=2, doBand=1,  flagVer=2, doPol=doPol,  \
-                       Stokes=Stokes, FOV=FOV, Robust=Robust, Niter=Niter, \
-                       CleanRad=CleanRad, \
-                       maxPSCLoop=maxPSCLoop, minFluxPSC=minFluxPSC, \
-                       solPInt=solPInt, solPMode=solPMode, solPType=solPType, \
-                       maxASCLoop=maxASCLoop, minFluxASC=minFluxASC, \
-                       solAInt=solAInt, solAMode=solAMode, solAType=solAType, \
-                       avgPol=avgPol, avgIF=avgIF, minSNR = 3.0, refAnt=refAnt, \
-                       do3D=do3D, BLFact=BLFact, BLchAvg=BLchAvg, \
-                       doMB = doMB, norder=MBnorder, maxFBW=MBmaxFBW, \
-                       nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
-                       check=check, debug=debug)                       
+                      doCalib=2, doBand=1,  flagVer=2, doPol=doPol, PDVer=PDVer,  \
+                      Stokes=Stokes, FOV=FOV, Robust=Robust, Niter=Niter, \
+                      CleanRad=CleanRad, \
+                      maxPSCLoop=maxPSCLoop, minFluxPSC=minFluxPSC, \
+                      solPInt=solPInt, solPMode=solPMode, solPType=solPType, \
+                      maxASCLoop=maxASCLoop, minFluxASC=minFluxASC, \
+                      solAInt=solAInt, solAMode=solAMode, solAType=solAType, \
+                      avgPol=avgPol, avgIF=avgIF, minSNR = 3.0, refAnt=refAnt, \
+                      do3D=do3D, BLFact=BLFact, BLchAvg=BLchAvg, \
+                      doMB = doMB, norder=MBnorder, maxFBW=MBmaxFBW, \
+                      nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
+                      check=check, debug=debug)                       
     # End image
 
 # Get report on sources
