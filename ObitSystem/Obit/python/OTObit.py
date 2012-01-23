@@ -699,11 +699,12 @@ def go (TaskObj, MsgBuf=False, URL="http://localhost:8777/RPC2"):
             return tw
     # end go
    
-def inputs (TaskObj):
+def inputs (TaskObj, file=None):
     """
     List task inputs
 
     * TaskObj    = Task object whose inputs to list
+    file       = file name to write to
     """
     ################################################################
     TaskObj.inputs()

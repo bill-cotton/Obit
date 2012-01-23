@@ -178,10 +178,11 @@ ObitSystemStartup (gchar *pgmName, olong pgmNumber,
   version = ObitVersion();
 
   /* Startup message if program name given */
-  if ((strlen(out->pgmName)>0) && strncmp (out->pgmName, "NameLess", 8))
+  if ((strlen(out->pgmName)>0) && strncmp (out->pgmName, "NameLess", 8)) {
     Obit_log_error(out->err, OBIT_InfoErr, "%s Begins, svn ver. %s", 
 		   out->pgmName, version);
-  ObitErrTimeStamp(out->err);  /* Add Timestamp */
+    ObitErrTimeStamp(out->err);  /* Add Timestamp */
+  }
  
   ObitErrLog(out->err);
 

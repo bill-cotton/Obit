@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009                                               */
+/*;  Copyright (C) 2009,2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -188,9 +188,10 @@ void ObitPrinterClone  (ObitPrinter *in, ObitPrinter *out, ObitErr *err)
  * \param isInteractive If true, output is interactive and written
  *                      to outStream, answers to questions read from
                         stdin.
- * \param outStream     Output interactive device, e.g. stdout  
- * \param fileName      Name of output ascii file if noninteractive
+ * \param outStream     Output non file device, e.g. stdout  
+ * \param fileName      Name of output ascii file 
  *                      ignored for interactive
+ *                      If NULL, all output will be to outStream
  * \return the new object.
  */
 ObitPrinter* ObitPrinterCreate (gchar* name, gboolean isInteractive,
@@ -205,7 +206,7 @@ ObitPrinter* ObitPrinterCreate (gchar* name, gboolean isInteractive,
   out->isInteractive = isInteractive;
   out->outStream     = outStream;
   if (fileName) out->outFileName = g_strdup(fileName);
-  out->outFile = newObitFile(name);
+  out->outFile   = newObitFile(name);
   out->myStatus  = OBIT_Inactive;
 
   return out;
@@ -214,6 +215,8 @@ ObitPrinter* ObitPrinterCreate (gchar* name, gboolean isInteractive,
 /**
  * Open an ObitPrinter 
  * \param in            The ObitPrinter object to Open
+ *                      info list contains:
+ *   "pageLimit"  OBIT_long  Maximum number of pages of output def [50]
  * \param LinesPerPage  Number of lines per page, if <=0:
  *                      24 if interactive, 80 otherwise
  * \param Title1        First title string for each page
@@ -223,10 +226,20 @@ ObitPrinter* ObitPrinterCreate (gchar* name, gboolean isInteractive,
 void ObitPrinterOpen (ObitPrinter *in, olong LinesPerPage, gchar *Title1, 
 		      gchar *Title2, ObitErr *err)
 {
+  ObitInfoType type;
+  union ObitInfoListEquiv InfoReal; 
+  gint32       dim[MAXINFOELEMDIM];
 
   /* error checks */
   if (err->error) return;
   g_assert (ObitIsA(in, &myClassInfo));
+
+  /* Page Limit from info */
+  if (ObitInfoListGetTest(in->info, "pageLimit", &type, dim, &InfoReal)) {
+    if (type==OBIT_oint) in->pageLimit = InfoReal.itg;
+    else                 in->pageLimit = InfoReal.otg;
+    in->pageLimit = MAX (1, in->pageLimit);
+  }
 
   /* Save values - lines per page */
   if (LinesPerPage<=0) {
@@ -239,7 +252,7 @@ void ObitPrinterOpen (ObitPrinter *in, olong LinesPerPage, gchar *Title1,
   ObitTrimTrail(in->Title2);
 
   /* Open file if noninteractive */
-  if (!in->isInteractive) {
+  if (!in->isInteractive && in->outFileName) {
     ObitFileOpen(in->outFile, in->outFileName, OBIT_IO_ReadWrite, 
 		 OBIT_IO_Text, 0, err);
     if (err->error) 
@@ -277,9 +290,9 @@ void ObitPrinterWrite (ObitPrinter *in, gchar *line, gboolean *quit,
 
   *quit = FALSE;  /* Until determined otherwise */
 
+  ObitTrimTrail (line);  /* no trailing blanks */
   /* Write file if noninteractive */
-  if (!in->isInteractive) {
-    ObitTrimTrail (line);
+  if (!in->isInteractive && in->outFileName) {
     sprintf (lline, "%s\n", line);
     ObitFileWriteLine(in->outFile, lline, err);
     if (err->error) {
@@ -291,7 +304,6 @@ void ObitPrinterWrite (ObitPrinter *in, gchar *line, gboolean *quit,
     /* Time for a new page? */
     if (in->nLines>=in->LinesPerPage) ObitPrinterNewPage (in, quit, err);
   } else { /* interactive */
-    ObitTrimTrail (line);
     fprintf (in->outStream, "%s\n", line);
     /* Line statistics */
     in->nLines++;
@@ -319,7 +331,7 @@ void ObitPrinterClose (ObitPrinter *in, ObitErr *err)
   if (in->myStatus!=OBIT_Active) return;
 
   /* Close file if noninteractive */
-  if (!in->isInteractive) {
+  if (!in->isInteractive && in->outFile) {
     ObitFileFlush (in->outFile, err);
     ObitFileClose (in->outFile, err);
     if (err->error) {
@@ -380,7 +392,7 @@ void ObitPrinterNewPage (ObitPrinter *in, gboolean *quit, ObitErr *err)
   /* New page */
   in->nLines = 0;
   in->nPages++;
-  if (!in->isInteractive) {  /* Non interactive */
+  if (!in->isInteractive && in->outFileName) {  /* Non interactive */
     sprintf (lline,"                                Page %d\n",in->nPages);
     in->nLines++;
     ObitFileWriteLine(in->outFile, lline, err);
@@ -398,7 +410,7 @@ void ObitPrinterNewPage (ObitPrinter *in, gboolean *quit, ObitErr *err)
       in->myStatus = OBIT_ErrorExist;
       Obit_traceback_msg (err, "Error in ObitFileWriteLine", in->name);
     }
-  } else { /* interactive */
+  } else if (in->isInteractive) { /* interactive */
     /* Does the user want to quit */
     fprintf (in->outStream, "Type Q to stop, just hit RETURN to continue\n");
     /* Read response from stdin */
@@ -417,7 +429,32 @@ void ObitPrinterNewPage (ObitPrinter *in, gboolean *quit, ObitErr *err)
       fprintf (in->outStream, "%s\n", in->Title2);
       in->nLines++;
     }
-  } /* end of interactive */
+    /* end of interactive */
+  } else {  /* non interactive stream */
+    fprintf (in->outStream,"                                                Page %d\n",in->nPages);
+    if (in->Title1) {
+      fprintf (in->outStream, "%s\n", in->Title1);
+      in->nLines++;
+    }
+    if (in->Title2) {
+      fprintf (in->outStream, "%s\n", in->Title2);
+      in->nLines++;
+    }
+  }
+
+  /* Check Page Limit */
+  if (in->nPages>=in->pageLimit) {
+    if (!in->isInteractive && in->outFileName) {  /* Non interactive */
+      sprintf (lline,"Hit page limit %d\n",in->pageLimit);
+      in->nLines++;
+      ObitFileWriteLine(in->outFile, lline, err);
+    } else {  /* interactive or non interactive stream */
+      fprintf (in->outStream,"Hit page limit %d\n",in->pageLimit);
+    }
+    /* Force Quit */
+    *quit = TRUE;
+    in->myStatus  = OBIT_Inactive;
+  }
   
 } /* end ObitPrinterNewPage */
 
@@ -505,6 +542,7 @@ void ObitPrinterInit  (gpointer inn)
   in->outFileName = NULL;
   in->Title1      = NULL;
   in->Title2      = NULL;
+  in->pageLimit   = 50;
 
 } /* end ObitPrinterInit */
 

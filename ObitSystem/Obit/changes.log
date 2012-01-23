@@ -350,3 +350,24 @@ Obit/TDF/Lister.TDF:
 Obit/src/ObitUVSoln.c:
   SNSmooth: Ignore reference antenna for flagged solutions, other fixes.
 13 Jan 2012, version 406
+
+Most Web related
+ObitVersion:
+Obit/changes.log:
+Obit/bin/f2c.pl:
+  updates and fixes.
+Obit/python/OTObit.py:
+  documentation
+Obit/src/ObitPrinter.c Obit/include/ObitPrinterDef.h:
+  Allow non interactive writing to an I/O stream, page limit.
+Obit/src/ObitSystem.c:
+  No initial timestamp if pgm name NameLess
+Obit/include/ObitSurveyUtil.h Obit/src/ObitSurveyUtil.c:
+  New utility module to print survey catalogs
+Obit/python/OSurvey.py Obit/python/OSurvey.inc:
+  Interface to ObitSurveyUtil
+Obit/python/OPrinter.py Obit/python/OPrinter.inc:
+  Interface to ObitPrinter
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  update python interface
+23 Jan 2012, version 407

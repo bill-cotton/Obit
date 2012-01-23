@@ -217,11 +217,11 @@ sub Subscripts {
 	if (substr ($FileLines[$i],0,2) ne "/*") { # not in comment
 
 	    # Is this a declaration?
-	    $decl = ($FileLines[$i] =~ / *gint /) ||
-		($FileLines[$i] =~ / *gfloat /) ||
+	    $decl = ($FileLines[$i] =~ / *olong /) ||
+		($FileLines[$i] =~ / *ofloat /) ||
 		($FileLines[$i] =~ / *gboolean /) ||
 		($FileLines[$i] =~ / *gchar /) ||
-		($FileLines[$i] =~ / *gdouble /);
+		($FileLines[$i] =~ / *odouble /);
 
 	    # special handling for character strings 
 	    if ($FileLines[$i] =~ / *gchar/) {
@@ -431,10 +431,10 @@ sub Substitute {
 	    $FileLines[$i] =~s/([ \+\-\*\/])MIN\(/$1MIN \(/g;
 
 	    # declarations
-	    $FileLines[$i] =~s/ *integer/  gint/;
+	    $FileLines[$i] =~s/ *integer/  olong/;
 	    $FileLines[$i] =~s/ *logical/  gboolean/;
-	    $FileLines[$i] =~s/ *real/  gfloat/;
-	    $FileLines[$i] =~s/ *double precision/  gdouble/;
+	    $FileLines[$i] =~s/ *real/  ofloat/;
+	    $FileLines[$i] =~s/ *double precision/  odouble/;
 	    $FileLines[$i] =~s/ *character/  gchar/;
 	    
 	    # if/then/else/end if
@@ -653,7 +653,7 @@ sub  doDoc($) {
 # Determine routine argument type
 # Uses externals $NumRLines, @rootLines
 # Also modify routine for output scalars (add '*')
-# Returns type as e.g. "gfloat*" or "gint" or "gchar[21]"
+# Returns type as e.g. "ofloat*" or "olong" or "gchar[21]"
 sub GetArgType($) {
     my $out, $i, $arg, isOut;
 
@@ -670,11 +670,11 @@ sub GetArgType($) {
 		$out = $rootLines[$i];
 		chomp ($out);
 		#$out =~ /(\s*)(Obit)(\w*)(.*)/Obit$3\*/;
-	    } elsif ($rootLines[$i] =~ /\s*gint /) { # integer
+	    } elsif ($rootLines[$i] =~ /\s*olong /) { # integer
 		if ($rootLines[$i] =~ /[ ,]$arg[\[\(]/) {
-		    $out = "gint*";
+		    $out = "olong*";
 		} else {
-		    $out = "gint";
+		    $out = "olong";
 		}
 		break;
 	    } elsif ($rootLines[$i] =~ /\s*gchar /) { # string
@@ -684,11 +684,11 @@ sub GetArgType($) {
 		    $out = "gchar";
 		}
 		break;
-	    } elsif ($rootLines[$i] =~ /\s*gfloat /) { # float
+	    } elsif ($rootLines[$i] =~ /\s*ofloat /) { # float
 		if ($rootLines[$i] =~ /[ ,]$arg[\[\(]/) {
-		    $out = "gfloat*";
+		    $out = "ofloat*";
 		} else {
-		    $out = "gfloat";
+		    $out = "ofloat";
 		}
 		break;
 	    } elsif ($rootLines[$i] =~ /\s*gboolean /) { # boolean
@@ -698,11 +698,11 @@ sub GetArgType($) {
 		    $out = "gboolean";
 		}
 		break;
-	    } elsif ($rootLines[$i] =~ /\s*gdouble /) { # double
+	    } elsif ($rootLines[$i] =~ /\s*odouble /) { # double
 		if ($rootLines[$i] =~ /[ ,]$arg[\[\(]/) {
-		    $out = "gdouble*";
+		    $out = "odouble*";
 		} else {
-		    $out = "gdouble";
+		    $out = "odouble";
 		}
 		break;
 	    }
@@ -738,7 +738,7 @@ sub GetArgType($) {
 # Determine routine argument documentation string
 # Uses externals $NumRLines, @rootLines
 # Also modify routine for output scalars (add '*')
-# Returns type as e.g. "gfloat*" or "gint" or "gchar[21]"
+# Returns type as e.g. "ofloat*" or "olong" or "gchar[21]"
 sub GetArgDoc($) {
     my $out, $i, $arg, $ip, $temp;
 
@@ -784,9 +784,9 @@ sub Obitize($) {
     $nRoot = $#newRoot + 1;   # no. entries in @newRoot
 
     # Replace ierr with ObitErr?
-    $doErr = (@ProtoLines[$NumProto-1] =~ /gint[\* ]*ierr/);
+    $doErr = (@ProtoLines[$NumProto-1] =~ /olong[\* ]*ierr/);
     if ($doErr) {
-	@ProtoLines[$NumProto-1] =~ s/gint[\* ]*ierr/ObitErr\* err/;
+	@ProtoLines[$NumProto-1] =~ s/olong[\* ]*ierr/ObitErr\* err/;
     } else {     # nothing else for now
 	return;
     }
@@ -796,7 +796,7 @@ sub Obitize($) {
     for ($i=0; $i<$nRoot; $i++) {
 
 	# modify call, ierr => err
-	$newRoot[$i] =~ s/gint[\* ]*ierr/ObitErr\* err/;
+	$newRoot[$i] =~ s/olong[\* ]*ierr/ObitErr\* err/;
 	$newRoot[$i] =~ s/(\W)(ierr)(\W)/$1err$3/;
 
 	# Startup at boundry between declarations and executable

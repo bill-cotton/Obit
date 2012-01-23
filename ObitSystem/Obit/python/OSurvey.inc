@@ -1,7 +1,10 @@
-/* $Id$ */
+/* $Id:  $    */  
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009,2012                                          */
+/* Swig module description for parameter file parser utilities        */
+/*                                                                    */
+/*;  Copyright (C) 2012                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
+/*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
 /*;  published by the Free Software Foundation; either version 2 of   */
@@ -24,38 +27,40 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/*  Define the basic components of the ObitPrinter structure          */
-/*  This is intended to be included in a class structure definition   */
-/* and to be used as the template for generating new classes derived  */
-/* from Obit.                                                         */
-/**
- * \file ObitPrinterDef.h
- * ObitPrinter structure members for this and any derived classes.
- */
-#include "ObitDef.h"  /* Parent class instance definitions */
-/** Threading info member object  */
-ObitThread *thread;
-/** Linked list of arrays of data.  */
-ObitInfoList *info;
-/** I/O status */
-ObitIOStatus myStatus;
-/** Is interactive? */
-gboolean isInteractive;
-/** Output file name */
-gchar *outFileName;
-/** Output file */
-ObitFile *outFile;
-/** Output stream */
-FILE *outStream;
-/** Number of lines per page */
-olong LinesPerPage;
-/** Number of pages */
-olong nPages;
-/** Maximum number of pages */
-olong pageLimit;
-/** Number of lines on current page */
-olong nLines;
-/* First title line */
-gchar *Title1;
-/* Second title line */
-gchar *Title2;
+
+%{
+
+#include "ObitSurveyUtil.h"
+%}
+
+
+%inline %{
+// Print contents of a VL table
+extern void OSurveyVLPrint (ObitTable *VLTable, ObitImage *image, 
+  char *streamname, ObitErr *err) {
+   FILE *outStream=NULL;
+  if (!strncmp(streamname, "stdout", 6)) outStream = stdout;
+  if (!strncmp(streamname, "stderr", 6)) outStream = stderr;
+  ObitSurveyUtilVLPrint ((ObitTableVL*)VLTable, image, outStream, err);
+} // end OSurveyVLPrint
+
+// Print Selected contents of an NVSS VL table
+extern int OSurveyNVSSPrint (ObitPrinter *printer, ObitData *data, 
+  int VLVer, int first, int last, ObitErr *err) {
+  gboolean lfirst = first!=0;
+  gboolean llast  = last!=0;
+  return ObitSurveyNVSSPrint (printer, data, (olong)VLVer, lfirst, llast, err);
+} // end OSurveyNVSSPrint
+
+// Print Selected contents of an VLSS VL table
+extern int OSurveyVLSSPrint (ObitPrinter *printer, ObitData *data, 
+  int VLVer, int first, int last, ObitErr *err) {
+  gboolean lfirst = first!=0;
+  gboolean llast  = last!=0;
+  return ObitSurveyVLSSPrint (printer, data, (olong)VLVer, lfirst, llast, err);
+} // end OSurveyVLSSPrint
+
+
+%}
+
+

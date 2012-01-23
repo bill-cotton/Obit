@@ -1,7 +1,8 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009,2012                                          */
+/*;  Copyright (C) 2012                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
+/*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
 /*;  published by the Free Software Foundation; either version 2 of   */
@@ -17,45 +18,37 @@
 /*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
 /*;  MA 02139, USA.                                                   */
 /*;                                                                   */
-/*;Correspondence about this software should be addressed as follows: */
+/*; Correspondence about this software should be addressed as follows:*/
 /*;         Internet email: bcotton@nrao.edu.                         */
 /*;         Postal address: William Cotton                            */
 /*;                         National Radio Astronomy Observatory      */
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/*  Define the basic components of the ObitPrinter structure          */
-/*  This is intended to be included in a class structure definition   */
-/* and to be used as the template for generating new classes derived  */
-/* from Obit.                                                         */
+#ifndef OBITSURVEYUTIL_H 
+#define OBITSURVEYUTIL_H 
+
+#include "Obit.h"
+#include "ObitErr.h"
+#include "ObitTableVL.h"
+#include "ObitTableVZ.h"
+#include "ObitFitRegionList.h"
+#include "ObitPrinter.h"
+/*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
- * \file ObitPrinterDef.h
- * ObitPrinter structure members for this and any derived classes.
+ * \file ObitSurveyUtil.h
+ * ObitSurvey class utility routine definition.
  */
-#include "ObitDef.h"  /* Parent class instance definitions */
-/** Threading info member object  */
-ObitThread *thread;
-/** Linked list of arrays of data.  */
-ObitInfoList *info;
-/** I/O status */
-ObitIOStatus myStatus;
-/** Is interactive? */
-gboolean isInteractive;
-/** Output file name */
-gchar *outFileName;
-/** Output file */
-ObitFile *outFile;
-/** Output stream */
-FILE *outStream;
-/** Number of lines per page */
-olong LinesPerPage;
-/** Number of pages */
-olong nPages;
-/** Maximum number of pages */
-olong pageLimit;
-/** Number of lines on current page */
-olong nLines;
-/* First title line */
-gchar *Title1;
-/* Second title line */
-gchar *Title2;
+
+/*---------------Public functions---------------------------*/
+/** Public: Print all contents of a VL table */
+void ObitSurveyUtilVLPrint (ObitTableVL *in, ObitImage *image, FILE  *prtFile, 
+			    ObitErr *err);
+/** Public: Printed selected NVSS survey catalog entries */
+gboolean ObitSurveyNVSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer, 
+			      gboolean first, gboolean last, ObitErr* err);
+
+/** Public: Printed selected VLSS survey catalog entries */
+gboolean ObitSurveyVLSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer, 
+			      gboolean first, gboolean last, ObitErr* err);
+#endif /* OBITSURVEYUTIL_H */ 

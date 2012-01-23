@@ -5116,6 +5116,114 @@ typedef struct {
   ObitPlot *me;
 } OPlot;
 
+#include "ObitPrinter.h"
+#include "ObitImage.h"
+#include "ObitImageMosaic.h"
+#include "ObitDConCleanWindow.h"
+
+extern ObitPrinter* OPrinterCreate(char* name, int isInteractive, 
+                                   char *streamname, char* fileName) {
+  gboolean lisInteractive = isInteractive!=0;
+gchar *fn=NULL;
+  FILE *outStream=NULL;
+  if (!strncmp(streamname, "stdout", 6)) outStream = stdout;
+  if (!strncmp(streamname, "stderr", 6)) outStream = stderr;
+  if (strncmp(fileName, "None", 4))     fn = (gchar*)fileName;
+  return  ObitPrinterCreate ((gchar*)name, lisInteractive, outStream, fn);
+} // end OPrinterCreate
+
+extern int OPrinterOpen  (ObitPrinter *printer, int LinesPerPage, 
+                          char *Title1, char *Title2, ObitErr *err) {
+  ObitPrinterOpen (printer, (olong)LinesPerPage,
+                   (gchar*)Title1, (gchar*)Title2, err);
+} // end OPrinterOpen
+
+// Returns quit as int
+extern int OPrinterWrite  (ObitPrinter *printer, char *line, ObitErr *err) {
+  gboolean quit;
+   ObitPrinterWrite (printer, (gchar*)line, &quit, err);
+  return (int) quit;
+} // end OPrinterWrite
+
+extern void OPrinterClose  (ObitPrinter *printer, ObitErr *err) {
+  ObitPrinterClose(printer, err);
+} // end OPrinterClose
+
+extern int OPrinterNewPage  (ObitPrinter *printer, ObitErr *err) {
+  gboolean quit;
+  ObitPrinterNewPage (printer, &quit, err);
+  return (int) quit;
+} // end OPrinterSetNewPage
+
+extern ObitInfoList* OPrinterGetList (ObitPrinter* in) {
+  return ObitInfoListRef(in->info);
+}
+ 
+extern int OPrinterIsA (ObitPrinter* in) {
+  return ObitPrinterIsA(in);
+} // end  OPrinterIsA 
+
+ObitPrinter* OPrinterRef (ObitPrinter* in) {
+  return ObitPrinterRef (in);
+} // end OPrinterRef
+
+ObitPrinter* OPrinterUnref (ObitPrinter* in) {
+  if (!ObitPrinterIsA(in)) return NULL;
+  return ObitPrinterUnref (in);
+} // end OPrinterUnref
+
+extern char* OPrinterGetName (ObitPrinter* in) {
+  return in->name;
+} // end  OPrinterGetName
+
+
+
+extern ObitPrinter *OPrinterCreate(char *,int ,char *,char *);
+extern int OPrinterOpen(ObitPrinter *,int ,char *,char *,ObitErr *);
+extern int OPrinterWrite(ObitPrinter *,char *,ObitErr *);
+extern void OPrinterClose(ObitPrinter *,ObitErr *);
+extern int OPrinterNewPage(ObitPrinter *,ObitErr *);
+extern ObitInfoList *OPrinterGetList(ObitPrinter *);
+extern int OPrinterIsA(ObitPrinter *);
+extern char *OPrinterGetName(ObitPrinter *);
+
+typedef struct {
+  ObitPrinter *me;
+} OPrinter;
+
+
+#include "ObitSurveyUtil.h"
+
+// Print contents of a VL table
+extern void OSurveyVLPrint (ObitTable *VLTable, ObitImage *image, 
+  char *streamname, ObitErr *err) {
+   FILE *outStream=NULL;
+  if (!strncmp(streamname, "stdout", 6)) outStream = stdout;
+  if (!strncmp(streamname, "stderr", 6)) outStream = stderr;
+  ObitSurveyUtilVLPrint ((ObitTableVL*)VLTable, image, outStream, err);
+} // end OSurveyVLPrint
+
+// Print Selected contents of an NVSS VL table
+extern int OSurveyNVSSPrint (ObitPrinter *printer, ObitData *data, 
+  int VLVer, int first, int last, ObitErr *err) {
+  gboolean lfirst = first!=0;
+  gboolean llast  = last!=0;
+  return ObitSurveyNVSSPrint (printer, data, (olong)VLVer, lfirst, llast, err);
+} // end OSurveyNVSSPrint
+
+// Print Selected contents of an VLSS VL table
+extern int OSurveyVLSSPrint (ObitPrinter *printer, ObitData *data, 
+  int VLVer, int first, int last, ObitErr *err) {
+  gboolean lfirst = first!=0;
+  gboolean llast  = last!=0;
+  return ObitSurveyVLSSPrint (printer, data, (olong)VLVer, lfirst, llast, err);
+} // end OSurveyVLSSPrint
+
+
+extern void OSurveyVLPrint(ObitTable *,ObitImage *,char *,ObitErr *);
+extern int OSurveyNVSSPrint(ObitPrinter *,ObitData *,int ,int ,int ,ObitErr *);
+extern int OSurveyVLSSPrint(ObitPrinter *,ObitData *,int ,int ,int ,ObitErr *);
+
 #include "ObitErr.h"
 #include "ObitDConClean.h"
 #include "ObitDConCleanWindow.h"
@@ -33843,6 +33951,543 @@ static PyObject *_wrap_PlotGetList(PyObject *self, PyObject *args) {
         Py_INCREF(Py_None);
         _resultobj = Py_None;
     }
+    return _resultobj;
+}
+
+static PyObject *_wrap_OPrinterCreate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitPrinter * _result;
+    char * _arg0;
+    int  _arg1;
+    char * _arg2;
+    char * _arg3;
+    PyObject * _obj0 = 0;
+    PyObject * _obj2 = 0;
+    PyObject * _obj3 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OiOO:OPrinterCreate",&_obj0,&_arg1,&_obj2,&_obj3)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj2)) {
+    int size = PyString_Size(_obj2);
+    char *str;
+    int i = 0;
+    _arg2 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj2);
+    for (i = 0; i < size; i++) {
+      _arg2[i] = str[i];
+    }
+    _arg2[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (ObitPrinter *)OPrinterCreate(_arg0,_arg1,_arg2,_arg3);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitPrinter_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+{
+  free((char *) _arg2);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OPrinterOpen(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitPrinter * _arg0;
+    int  _arg1;
+    char * _arg2;
+    char * _arg3;
+    ObitErr * _arg4;
+    PyObject * _argo0 = 0;
+    PyObject * _obj2 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo4 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OiOOO:OPrinterOpen",&_argo0,&_arg1,&_obj2,&_obj3,&_argo4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPrinter_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OPrinterOpen. Expected _ObitPrinter_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyString_Check(_obj2)) {
+    int size = PyString_Size(_obj2);
+    char *str;
+    int i = 0;
+    _arg2 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj2);
+    for (i = 0; i < size; i++) {
+      _arg2[i] = str[i];
+    }
+    _arg2[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of OPrinterOpen. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (int )OPrinterOpen(_arg0,_arg1,_arg2,_arg3,_arg4);
+    _resultobj = Py_BuildValue("i",_result);
+{
+  free((char *) _arg2);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OPrinterWrite(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitPrinter * _arg0;
+    char * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:OPrinterWrite",&_argo0,&_obj1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPrinter_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OPrinterWrite. Expected _ObitPrinter_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyString_Check(_obj1)) {
+    int size = PyString_Size(_obj1);
+    char *str;
+    int i = 0;
+    _arg1 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj1);
+    for (i = 0; i < size; i++) {
+      _arg1[i] = str[i];
+    }
+    _arg1[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of OPrinterWrite. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (int )OPrinterWrite(_arg0,_arg1,_arg2);
+    _resultobj = Py_BuildValue("i",_result);
+{
+  free((char *) _arg1);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OPrinterClose(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitPrinter * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:OPrinterClose",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPrinter_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OPrinterClose. Expected _ObitPrinter_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OPrinterClose. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    OPrinterClose(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_OPrinterNewPage(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitPrinter * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:OPrinterNewPage",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPrinter_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OPrinterNewPage. Expected _ObitPrinter_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OPrinterNewPage. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (int )OPrinterNewPage(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OPrinterGetList(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitInfoList * _result;
+    ObitPrinter * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OPrinterGetList",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPrinter_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OPrinterGetList. Expected _ObitPrinter_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitInfoList *)OPrinterGetList(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitInfoList_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_OPrinterIsA(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitPrinter * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OPrinterIsA",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPrinter_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OPrinterIsA. Expected _ObitPrinter_p.");
+        return NULL;
+        }
+    }
+    _result = (int )OPrinterIsA(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OPrinterRef(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitPrinter * _result;
+    ObitPrinter * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OPrinterRef",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPrinter_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OPrinterRef. Expected _ObitPrinter_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitPrinter *)OPrinterRef(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitPrinter_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_OPrinterUnref(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitPrinter * _result;
+    ObitPrinter * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OPrinterUnref",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPrinter_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OPrinterUnref. Expected _ObitPrinter_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitPrinter *)OPrinterUnref(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitPrinter_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_OPrinterGetName(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+    ObitPrinter * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OPrinterGetName",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPrinter_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OPrinterGetName. Expected _ObitPrinter_p.");
+        return NULL;
+        }
+    }
+    _result = (char *)OPrinterGetName(_arg0);
+    _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSurveyVLPrint(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    ObitImage * _arg1;
+    char * _arg2;
+    ObitErr * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _obj2 = 0;
+    PyObject * _argo3 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOOO:OSurveyVLPrint",&_argo0,&_argo1,&_obj2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSurveyVLPrint. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OSurveyVLPrint. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyString_Check(_obj2)) {
+    int size = PyString_Size(_obj2);
+    char *str;
+    int i = 0;
+    _arg2 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj2);
+    for (i = 0; i < size; i++) {
+      _arg2[i] = str[i];
+    }
+    _arg2[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of OSurveyVLPrint. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    OSurveyVLPrint(_arg0,_arg1,_arg2,_arg3);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  free((char *) _arg2);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSurveyNVSSPrint(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitPrinter * _arg0;
+    ObitData * _arg1;
+    int  _arg2;
+    int  _arg3;
+    int  _arg4;
+    ObitErr * _arg5;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo5 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiiiO:OSurveyNVSSPrint",&_argo0,&_argo1,&_arg2,&_arg3,&_arg4,&_argo5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPrinter_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSurveyNVSSPrint. Expected _ObitPrinter_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OSurveyNVSSPrint. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+    if (_argo5) {
+        if (_argo5 == Py_None) { _arg5 = NULL; }
+        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of OSurveyNVSSPrint. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (int )OSurveyNVSSPrint(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSurveyVLSSPrint(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitPrinter * _arg0;
+    ObitData * _arg1;
+    int  _arg2;
+    int  _arg3;
+    int  _arg4;
+    ObitErr * _arg5;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo5 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiiiO:OSurveyVLSSPrint",&_argo0,&_argo1,&_arg2,&_arg3,&_arg4,&_argo5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPrinter_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSurveyVLSSPrint. Expected _ObitPrinter_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OSurveyVLSSPrint. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+    if (_argo5) {
+        if (_argo5 == Py_None) { _arg5 = NULL; }
+        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of OSurveyVLSSPrint. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (int )OSurveyVLSSPrint(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
@@ -64655,6 +65300,191 @@ static PyObject *_wrap_delete_OPlot(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+#define OPrinter_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
+static PyObject *_wrap_OPrinter_me_set(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitPrinter * _result;
+    OPrinter * _arg0;
+    ObitPrinter * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:OPrinter_me_set",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_OPrinter_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OPrinter_me_set. Expected _OPrinter_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitPrinter_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OPrinter_me_set. Expected _ObitPrinter_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitPrinter *)OPrinter_me_set(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitPrinter_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+#define OPrinter_me_get(_swigobj) ((ObitPrinter *) _swigobj->me)
+static PyObject *_wrap_OPrinter_me_get(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitPrinter * _result;
+    OPrinter * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OPrinter_me_get",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_OPrinter_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OPrinter_me_get. Expected _OPrinter_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitPrinter *)OPrinter_me_get(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitPrinter_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static OPrinter *new_OPrinter(char *name,int isInteractive,char *streamname,char *fileName) {
+     OPrinter *out;
+     gboolean lisInteractive = isInteractive!=0;
+     out = (OPrinter *) malloc(sizeof(OPrinter));
+     if (strcmp(name, "None")) out->me = OPrinterCreate(name, 
+                lisInteractive, streamname, (gchar*)fileName);
+     else out->me = NULL;
+     return out;
+   }
+
+static PyObject *_wrap_new_OPrinter(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OPrinter * _result;
+    char * _arg0;
+    int  _arg1;
+    char * _arg2;
+    char * _arg3;
+    PyObject * _obj0 = 0;
+    PyObject * _obj2 = 0;
+    PyObject * _obj3 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OiOO:new_OPrinter",&_obj0,&_arg1,&_obj2,&_obj3)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj2)) {
+    int size = PyString_Size(_obj2);
+    char *str;
+    int i = 0;
+    _arg2 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj2);
+    for (i = 0; i < size; i++) {
+      _arg2[i] = str[i];
+    }
+    _arg2[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (OPrinter *)new_OPrinter(_arg0,_arg1,_arg2,_arg3);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_OPrinter_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+{
+  free((char *) _arg2);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static void delete_OPrinter(OPrinter *self) {
+    self->me = OPrinterUnref(self->me);
+    free(self);
+  }
+static PyObject *_wrap_delete_OPrinter(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OPrinter * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:delete_OPrinter",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_OPrinter_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of delete_OPrinter. Expected _OPrinter_p.");
+        return NULL;
+        }
+    }
+    delete_OPrinter(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 #define OWindow_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
 static PyObject *_wrap_OWindow_me_set(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -67899,6 +68729,10 @@ static PyMethodDef ObitMethods[] = {
 	 { "new_OWindow", _wrap_new_OWindow, METH_VARARGS },
 	 { "OWindow_me_get", _wrap_OWindow_me_get, METH_VARARGS },
 	 { "OWindow_me_set", _wrap_OWindow_me_set, METH_VARARGS },
+	 { "delete_OPrinter", _wrap_delete_OPrinter, METH_VARARGS },
+	 { "new_OPrinter", _wrap_new_OPrinter, METH_VARARGS },
+	 { "OPrinter_me_get", _wrap_OPrinter_me_get, METH_VARARGS },
+	 { "OPrinter_me_set", _wrap_OPrinter_me_set, METH_VARARGS },
 	 { "delete_OPlot", _wrap_delete_OPlot, METH_VARARGS },
 	 { "new_OPlot", _wrap_new_OPlot, METH_VARARGS },
 	 { "OPlot_me_get", _wrap_OPlot_me_get, METH_VARARGS },
@@ -68621,6 +69455,19 @@ static PyMethodDef ObitMethods[] = {
 	 { "OWindowCopy", _wrap_OWindowCopy, METH_VARARGS },
 	 { "OWindowCreate1", _wrap_OWindowCreate1, METH_VARARGS },
 	 { "OWindowCreate", _wrap_OWindowCreate, METH_VARARGS },
+	 { "OSurveyVLSSPrint", _wrap_OSurveyVLSSPrint, METH_VARARGS },
+	 { "OSurveyNVSSPrint", _wrap_OSurveyNVSSPrint, METH_VARARGS },
+	 { "OSurveyVLPrint", _wrap_OSurveyVLPrint, METH_VARARGS },
+	 { "OPrinterGetName", _wrap_OPrinterGetName, METH_VARARGS },
+	 { "OPrinterUnref", _wrap_OPrinterUnref, METH_VARARGS },
+	 { "OPrinterRef", _wrap_OPrinterRef, METH_VARARGS },
+	 { "OPrinterIsA", _wrap_OPrinterIsA, METH_VARARGS },
+	 { "OPrinterGetList", _wrap_OPrinterGetList, METH_VARARGS },
+	 { "OPrinterNewPage", _wrap_OPrinterNewPage, METH_VARARGS },
+	 { "OPrinterClose", _wrap_OPrinterClose, METH_VARARGS },
+	 { "OPrinterWrite", _wrap_OPrinterWrite, METH_VARARGS },
+	 { "OPrinterOpen", _wrap_OPrinterOpen, METH_VARARGS },
+	 { "OPrinterCreate", _wrap_OPrinterCreate, METH_VARARGS },
 	 { "PlotGetList", _wrap_PlotGetList, METH_VARARGS },
 	 { "OPlotGetName", _wrap_OPlotGetName, METH_VARARGS },
 	 { "OPlotUnref", _wrap_OPlotUnref, METH_VARARGS },
