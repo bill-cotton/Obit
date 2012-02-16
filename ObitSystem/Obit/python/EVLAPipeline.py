@@ -455,7 +455,7 @@ if doBPCal and BPCal:
 # Amp & phase Calibrate
 if doAmpPhaseCal:
     plotFile = "./"+project+"_"+session+"_"+band+"APCal.ps"
-    retCode = EVLACalAP (uv, targets, ACal, err, PCal=PCal, doCalib=2, doBand=1, BPVer=1, flagVer=2, \
+    retCode = EVLACalAP (uv, [], ACal, err, PCal=PCal, doCalib=2, doBand=1, BPVer=1, flagVer=2, \
                          BChan=ampBChan, EChan=ampEChan, \
                          calModel=AcalModel, calDisk=AcalDisk, calFlux=AcalFlux, nThreads=nThreads, \
                          solInt=solint, solSmo=solsmo, noScrat=noScrat, ampScalar=ampScalar, \
@@ -469,7 +469,7 @@ if doAmpPhaseCal:
 if doAutoFlag:
     mess =  "Post calibration editing:"
     printMess(mess, logFile)
-    retCode = EVLAAutoFlag (uv, targets, err, flagVer=2, \
+    retCode = EVLAAutoFlag (uv, [], err, flagVer=2, \
                                 doCalib=2, gainUse=0, doBand=1, BPVer=1,  \
                                 IClip=IClip, minAmp=minAmp, timeAvg=timeAvg, \
                                 doFD=doAFFD, FDmaxAmp=FDmaxAmp, FDmaxV=FDmaxV, \
@@ -554,7 +554,7 @@ if doRecal:
     # Amp & phase Recalibrate
     if doAmpPhaseCal2:
         plotFile = "./"+project+"_"+session+"_"+band+"APCal.ps"
-        retCode = EVLACalAP (uv, targets, ACal, err, PCal=PCal, doCalib=2, doBand=1, BPVer=1, flagVer=2, \
+        retCode = EVLACalAP (uv, [], ACal, err, PCal=PCal, doCalib=2, doBand=1, BPVer=1, flagVer=2, \
                              BChan=ampBChan, EChan=ampEChan, \
                              calModel=AcalModel, calDisk=AcalDisk, calFlux=AcalFlux, nThreads=nThreads, \
                              solInt=solint, solSmo=solsmo, noScrat=noScrat, ampScalar=ampScalar, \
@@ -568,7 +568,7 @@ if doRecal:
     if doAutoFlag2:
         mess =  "Post recalibration editing:"
         printMess(mess, logFile)
-        retCode = EVLAAutoFlag (uv, targets, err, flagVer=2, \
+        retCode = EVLAAutoFlag (uv, [], err, flagVer=2, \
                                 doCalib=2, gainUse=0, doBand=1, BPVer=1,  \
                                 IClip=IClip, minAmp=minAmp, timeAvg=timeAvg, \
                                 doFD=doAFFD, FDmaxAmp=FDmaxAmp, FDmaxV=FDmaxV, \
@@ -603,7 +603,7 @@ if not check:
 if XClip:
     mess =  "Cross Pol clipping:"
     printMess(mess, logFile)
-    retCode = EVLAAutoFlag (uv, targets, err, flagVer=-1, flagTab=1, \
+    retCode = EVLAAutoFlag (uv, [], err, flagVer=-1, flagTab=1, \
                             doCalib=2, gainUse=0, doBand=-1, maxBad=1.0,  \
                             XClip=XClip, timeAvg=1./60., \
                             nThreads=nThreads, logfile=logFile, check=check, debug=debug)
@@ -657,7 +657,7 @@ if doRLCal:
 if VClip:
     mess =  "VPol clipping:"
     printMess(mess, logFile)
-    retCode = EVLAAutoFlag (uv, targets, err, flagVer=-1, flagTab=1, \
+    retCode = EVLAAutoFlag (uv, [], err, flagVer=-1, flagTab=1, \
                             doCalib=2, gainUse=0, doBand=-1,  \
                             VClip=VClip, timeAvg=timeAvg, \
                             nThreads=nThreads, logfile=logFile, check=check, debug=debug)
@@ -683,7 +683,7 @@ if doImage:
     EVLAImageTargets (uv, err, Sources=slist, seq=seq, sclass=outIclass, \
                       doCalib=2, doBand=1,  flagVer=2, doPol=doPol, PDVer=PDVer,  \
                       Stokes=Stokes, FOV=FOV, Robust=Robust, Niter=Niter, \
-                      CleanRad=CleanRad, \
+                      CleanRad=CleanRad, minFlux=MinFlux, \
                       maxPSCLoop=maxPSCLoop, minFluxPSC=minFluxPSC, \
                       solPInt=solPInt, solPMode=solPMode, solPType=solPType, \
                       maxASCLoop=maxASCLoop, minFluxASC=minFluxASC, \
@@ -697,7 +697,7 @@ if doImage:
 
 # Get report on sources
 if doReport:
-    # If targets not specified, image all
+    # If targets not specified, do all
     if len(targets)<=0:
         slist = EVLAAllSource(uv,err,logfile=logFile,check=check,debug=debug)
     else:

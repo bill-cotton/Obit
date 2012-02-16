@@ -2869,7 +2869,7 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ASDMAntennaArray*    AntArray;
   ASDMSpectralWindowArray* SpWinArray;
   olong i, j, iRow, oRow, ver, maxAnt, iAnt, jAnt, IFno;
-  olong *antLookup, *SpWinLookup;
+  olong *antLookup, *SpWinLookup=NULL, *SpWinLookup2=NULL;
   oint numIF, numPol;
   ofloat fblank = ObitMagicF();
   gboolean want;
@@ -2915,8 +2915,12 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 
   /* Spectral window/IF lookup table */ 
   SpWinLookup  = g_malloc0(SDMData->SpectralWindowTab->nrows*sizeof(olong));
+  /* Lookup2[SWId] = SpWinArray element for that SW, -1=not */
+  SpWinLookup2 = g_malloc0(SDMData->SpectralWindowTab->nrows*sizeof(olong));
   for (i=0; i<SDMData->SpectralWindowTab->nrows; i++) SpWinLookup[i] = -1;  /* For deselected */
+  for (i=0; i<SDMData->SpectralWindowTab->nrows; i++) SpWinLookup2[i] = -1;
   for (i=0; i<SpWinArray->nwinds; i++) {
+    SpWinLookup2[SpWinArray->winds[i]->spectralWindowId] = i;
     if ((SpWinArray->winds[i]->spectralWindowId>=0) && 
 	(SpWinArray->winds[i]->spectralWindowId<SDMData->SpectralWindowTab->nrows) &&
 	SpWinArray->winds[i]->selected)
@@ -2984,7 +2988,7 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       }
 
       if (want) {
-	IFno = SpWinLookup[inTab->rows[iRow]->spectralWindowId];
+	IFno = SpWinLookup2[inTab->rows[iRow]->spectralWindowId];
 	IFno = MAX (0, MIN(IFno, (numIF-1)));
       } else continue;
       
@@ -3032,8 +3036,9 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   AntArray   = ObitSDMDataKillAntArray(AntArray);
   outRow     = ObitTableCDRowUnref(outRow);
   outTable   = ObitTableCDUnref(outTable);
-  if (antLookup)   g_free(antLookup);
-  if (SpWinLookup) g_free(SpWinLookup);
+  if (antLookup)    g_free(antLookup);
+  if (SpWinLookup)  g_free(SpWinLookup);
+  if (SpWinLookup2) g_free(SpWinLookup2);
 
 } /* end  GetCalDeviceInfo */
 
@@ -3223,7 +3228,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     }
     
     if (want) {
-      IFno = SpWinLookup[inTab->rows[iRow]->spectralWindowId];
+      IFno = SpWinLookup2[inTab->rows[iRow]->spectralWindowId];
       IFno = MAX (0, MIN(IFno, (numIF-1)));
     } else continue;
     
@@ -3252,9 +3257,9 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       if (inTab->rows[jRow]->antennaId!=inTab->rows[iRow]->antennaId) continue;
 
       /* Must want this one - work out IF number - must be valid and selected */
-      SWId = SpWinLookup2[inTab->rows[jRow]->spectralWindowId];
+      SWId = SpWinLookup[inTab->rows[jRow]->spectralWindowId];
       if ((SWId>=0) && (SWId<SpWinArray->nwinds) &&  SpWinArray->winds[SWId]->selected) {
-	IFno = SpWinLookup[inTab->rows[jRow]->spectralWindowId];
+	IFno = SpWinLookup2[inTab->rows[jRow]->spectralWindowId];
 	IFno = MAX (0, MIN(IFno, (numIF-1)));
       } else continue;
       

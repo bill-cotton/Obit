@@ -31,6 +31,7 @@
 #include "ObitSkyGeom.h"
 #include "ObitPosLabelUtil.h"
 #include "ObitPrinter.h"
+#include "ObitImageFitData.h"
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
  * \file ObitSurveyUtil.c
@@ -135,11 +136,11 @@ void ObitSurveyUtilVLPrint (ObitTableVL *in, ObitImage *image, FILE  *prtFile,
     pa  = row->PosAngle;
     for (i=0; i<8; i++) field[i] = row->Field[i]; field[i] = 0;
 
-    /* Errors 
+    /* Errors */
     ObitImageFitDataGaussErr (row->PeakInt, 
 			      row->MajorAxis/xcell, row->MinorAxis/xcell, row->PosAngle*DG2RAD,
 			      row->IRMS, (ofloat*)&beam[0],
-			      &epeak, &errra, &errdec, &errmaj, &errmin, &errpa);*/
+			      &epeak, &errra, &errdec, &errmaj, &errmin, &errpa);
 
     /* Flux */
     flux = row->PeakInt*((maj/beamas[0]) * (min/beamas[1]));
@@ -183,8 +184,8 @@ void ObitSurveyUtilVLPrint (ObitTableVL *in, ObitImage *image, FILE  *prtFile,
  * \li Box       OBIT_double[2] RA and Dec halfwidth of search 
  *                              rectangle in hr,deg [0,0]
  * \li Silent    OBIT_double  Half width asec of silent search box. [def 720]
- * \li minFlux   OBIT_float   Minimum peak flux density. [def 0]
- * \li maxFlux   OBIT_float   Maximum peak flux density. [def LARGE]
+ * \li minFlux   OBIT_float   Minimum peak flux density. Jy [def 0]
+ * \li maxFlux   OBIT_float   Maximum peak flux density. Jy [def LARGE]
  * \li minPol    OBIT_float   Minimum percent integrated polarization [def 0]
  * \li minGlat   OBIT_float   Minimum abs galactic latitude [def any]
  * \li maxGlat   OBIT_float   Minimum abs galactic latitude [def any]
@@ -197,13 +198,13 @@ void ObitSurveyUtilVLPrint (ObitTableVL *in, ObitImage *image, FILE  *prtFile,
 gboolean ObitSurveyNVSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer, 
 			      gboolean first, gboolean last, ObitErr* err)
 {
-  olong   nrow, irow, bc, ec, inc, rahm[2], decdm[2], sort=1, 
+  olong   irow, bc, ec, inc, rahm[2], decdm[2], sort=1, 
     numind, VLindex[25], bcindx, ecindx, irab, irae, ipass, npass, 
     beg[2], end[2], bci, eci, imark,  numcol, itemp, ibadvl, VLnrow, 
-     width;
+     width=132;
   ofloat      ras, decs, beam[3], tcut, flux, pa, eflux, epflux, 
     errra, errdec, pctpol;
-  gboolean   wanted, indxed, doall, select, norad, nobox,
+  gboolean   wanted, indxed=FALSE, doall, select, norad, nobox,
     found, dosil, dogal, quit=FALSE;
   gchar  line[133], eline[133],  dsig[2];
   gchar cmajor[7], cminor[7], cpa[7], emajor[7], eminor[7], epa[7], 
@@ -348,7 +349,7 @@ gboolean ObitSurveyNVSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
   beam[1] = VLTable->BeamMinor;
   beam[2] = VLTable->BeamPA;
   numind  = VLTable->numIndexed;
-  strncpy (datevl, ((ObitImage*)data)->myDesc->date, 10);
+  strncpy (datevl, ((ObitImage*)data)->myDesc->date, 10); datevl[10] = 0;
   GetVLIndex (VLTable, &numind, VLindex);
   
   if (beam[0] <= 0.0) beam[0] = 45.0 / 3600.0;
@@ -406,7 +407,7 @@ gboolean ObitSurveyNVSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
     decbeg = -100;
     decend = 100;
     bcindx = 1;
-    ecindx = nrow;
+    ecindx = VLnrow;
     npass = 1;
     beg[0] = bcindx;
     end[0] = ecindx;
@@ -425,7 +426,7 @@ gboolean ObitSurveyNVSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
     irae = rae / 15.0;
     irab = MIN (23, MAX (0, irab));
     irae = MIN (24, MAX (0, irae));
-    VLindex[24] = nrow;
+    VLindex[24] = VLnrow;
     /* Table indexed? */
     indxed = VLindex[0] > 0;
     if (indxed) {
@@ -433,7 +434,7 @@ gboolean ObitSurveyNVSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
       ecindx = VLindex[MIN(23, irae)+2];
     } else {
       bcindx = 1;
-      ecindx = nrow;
+      ecindx = VLnrow;
     } 
 
     /* It takes two passes for wrap in  RA range. */
@@ -600,43 +601,41 @@ gboolean ObitSurveyNVSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
     /*if (numcol < 93) numcol = 70;*/
     /* Default with pos select */
     if (fitted) {
-      snprintf (Title1, 132, "   RA[2000]  Dec[2000] Dist(\") Peak  Major Minor    PA   Res P_Flux P_ang   Field    X_pix  Y_pix");
-      snprintf (Title2, 132, " h  m    s    d  m   s   ori     mjy   \"     \"      deg       mJy    deg");
+      snprintf (Title1, 132, "   RA[2000]  Dec[2000] Dist(\")  Peak  Major Minor    PA   Res P_Flux P_ang   Field    X_pix  Y_pix");
+      snprintf (Title2, 132, " h  m    s    d  m   s   ori      mJy   \"     \"      deg       mJy    deg");
     } else{
-      snprintf (Title1, 132, "   RA[2000]  Dec[2000] Dist(\") Flux  Major Minor    PA   Res P_Flux P_ang   Field    X_pix  Y_pix");
-      snprintf (Title2, 132, " h  m    s    d  m   s   ori     mjy   \"     \"     deg        mJy   deg");
+      snprintf (Title1, 132, "   RA[2000]  Dec[2000] Dist(\")  Flux  Major Minor    PA   Res P_Flux P_ang   Field    X_pix  Y_pix");
+      snprintf (Title2, 132, " h  m    s    d  m   s   ori      mJy   \"     \"     deg        mJy   deg");
     }
   } else {
     /*if (numcol < 87) numcol = 64;*/
     /* Default doall listing */
     if (fitted) {
-      snprintf (Title1, 132, "   RA[2000]   Dec[2000]  Peak  Major Minor    PA    Res P_Flux  P_ang  Field    X_pix    Y_pix");
-      snprintf (Title2, 132, " h  m    s    d  m   s    mjy    \"     \"      deg         mJy    deg");
+      snprintf (Title1, 132, "   RA[2000]   Dec[2000]   Peak  Major Minor    PA    Res P_Flux  P_ang  Field    X_pix    Y_pix");
+      snprintf (Title2, 132, " h  m    s    d  m   s     mJy    \"     \"      deg         mJy    deg");
     } else {
-      snprintf (Title1, 132, "   RA[2000]   Dec[2000]  Flux  Major Minor    PA   Res P_Flux P_ang   Field    X_pix    Y_pix");
-      snprintf (Title2, 132, " h  m    s    d  m   s    mjy    \"     \"     deg        mJy     deg");
+      snprintf (Title1, 132, "   RA[2000]   Dec[2000]   Flux  Major Minor    PA   Res P_Flux P_ang   Field    X_pix    Y_pix");
+      snprintf (Title2, 132, " h  m    s    d  m   s     mJy    \"     \"     deg        mJy     deg");
     }
   } /* end doall */
   /* Set epoch */
   if (equinCode == 1) {
     if (fitted) 
-      snprintf (Title1, 132, "   RA[1950]   Dec[1950]  Peak  Major Minor   PA Res P_Flux P_ang  Field    X_pix    Y_pix");
+      snprintf (Title1, 132, "   RA[1950]   Dec[1950]   Peak  Major Minor   PA Res P_Flux P_ang  Field    X_pix    Y_pix");
     else
-      snprintf (Title1, 132, "   RA[1950]   Dec[1950]  Flux  Major Minor   PA Res P_Flux P_ang  Field    X_pix    Y_pix");
+      snprintf (Title1, 132, "   RA[1950]   Dec[1950]   Flux  Major Minor   PA Res P_Flux P_ang  Field    X_pix    Y_pix");
   }  else if (equinCode == 3) {
     if (fitted) 
-      snprintf (Title1, 132, "   Gal Long   Gal Lat    Peak  Major Minor   PA Res P_Flux P_ang  Field    X_pix    Y_pix");
+      snprintf (Title1, 132, "   Gal Long   Gal Lat     Peak  Major Minor   PA Res P_Flux P_ang  Field    X_pix    Y_pix");
     else
-      snprintf (Title1, 132, "   Gal Long   Gal Lat    Flux  Major Minor   PA Res P_Flux P_ang  Field    X_pix    Y_pix");
+      snprintf (Title1, 132, "   Gal Long   Gal Lat     Flux  Major Minor   PA Res P_Flux P_ang  Field    X_pix    Y_pix");
   } 
   
-  /* Only give headers once */
-  if (first) {
-    ObitPrinterSetTitle (printer, Title1, Title2, err);  /* Page titles at top */
-    ObitPrinterWrite (printer, Title1, &quit, err);
-    ObitPrinterWrite (printer, Title2, &quit, err);
-    if (err->error) goto cleanup;
-  } /* end give titles */
+  /* Give headers */
+  ObitPrinterSetTitle (printer, Title1, Title2, err);  /* Page titles at top */
+  ObitPrinterWrite (printer, Title1, &quit, err);
+  ObitPrinterWrite (printer, Title2, &quit, err);
+  if (err->error) goto cleanup;
   
   odiscl = discl;
   /* Passes */
@@ -853,21 +852,21 @@ gboolean ObitSurveyNVSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
 	  /* Create appropriate line */
 	  if (!doall) {
 	    /* Default with pos select */
-	    snprintf (line, 132, "%2.2d %2.2d%6.2f %s%2.2d %2.2d%5.1f%s%s %s %s %s%s %s%s   %s%8.2f%8.2f", 
-		     rahm[0], rahm[0], ras, dsig, decdm[0], decdm[1], decs, cdist, 
+	    snprintf (line, 132, "%2.2d %2.2d%6.2f %s%2.2d %2.2d%5.1f%s %s %s %s %s%s %s%s   %s%8.2f%8.2f", 
+		     rahm[0], rahm[1], ras, dsig, decdm[0], decdm[1], decs, cdist, 
 		     cflux, cmajor, cminor, cpa, mark[imark-1], 
 		     chpflx, chpang, field, cenx, ceny);
 	    /* Errors */
-	    snprintf (eline, 132, "     %6.2f       %5.1f%s%s %s %s %s%s%s%s", 
+	    snprintf (eline, 132, "     %6.2f       %5.1f%s %s %s %s %s%s%s%s", 
 		     errra, errdec, cposa, ceflux, emajor, eminor, epa, chbdvl, chepfx, chepan);
 	  } else {
 	    /* Default doall */
-	    snprintf (line, 132, "%2.2d %2.2d%6.2f %s%2.2d %2.2d%5.1f%s %s %s %s %s %s%s   %s%8.2f%8.2f", 
-		     rahm[0], rahm[0], ras, dsig, decdm[0], decdm[1], decs, 
+	    snprintf (line, 132, "%2.2d %2.2d%6.2f %s%2.2d %2.2d%5.1f %s %s %s %s %s %s%s   %s%8.2f%8.2f", 
+		     rahm[0], rahm[1], ras, dsig, decdm[0], decdm[1], decs, 
 		     cflux, cmajor, cminor, cpa, mark[imark-1], 
 		     chpflx, chpang, field, cenx, ceny);
 	    /* Errors */
-	    snprintf (eline, 132, "     %6.2f       %5.1f%s %s %s %s %s%s%s", 
+	    snprintf (eline, 132, "     %6.2f       %5.1f %s %s %s %s %s%s%s", 
 		     errra, errdec, ceflux, emajor, eminor, epa, chbdvl, chepfx, chepan);
 	  } 
 	  
@@ -984,12 +983,12 @@ gboolean ObitSurveyNVSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
 gboolean ObitSurveyVLSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer, 
 			      gboolean first, gboolean last, ObitErr* err)
 {
-  olong   nrow, irow, bc, ec, inc, rahm[2], decdm[2], sort=1, 
+  olong   irow, bc, ec, inc, rahm[2], decdm[2], sort=1, 
     numind, VLindex[25], bcindx, ecindx, irab, irae, ipass, npass, 
     beg[2], end[2], bci, eci, imark,  numcol, itemp, ibadvl, VLnrow, 
-     width;
+     width=132;
   ofloat      ras, decs, beam[3], tcut, flux, pa, eflux, errra, errdec;
-  gboolean   wanted, indxed, doall, select, norad, nobox,
+  gboolean   wanted, indxed=FALSE, doall, select, norad, nobox,
     found, dosil, dogal, quit=FALSE;
   gchar  line[133], eline[133],  dsig[2];
   gchar cmajor[7], cminor[7], cpa[7], emajor[7], eminor[7], epa[7], 
@@ -1129,7 +1128,7 @@ gboolean ObitSurveyVLSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
   beam[1] = VLTable->BeamMinor;
   beam[2] = VLTable->BeamPA;
   numind  = VLTable->numIndexed;
-  strncpy (datevl, ((ObitImage*)data)->myDesc->date, 10);
+  strncpy (datevl, ((ObitImage*)data)->myDesc->date, 10); datevl[10] = 0;
   GetVLIndex (VLTable, &numind, VLindex);
   
   if (beam[0] <= 0.0) beam[0] = 45.0 / 3600.0;
@@ -1187,7 +1186,7 @@ gboolean ObitSurveyVLSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
     decbeg = -100;
     decend = 100;
     bcindx = 1;
-    ecindx = nrow;
+    ecindx = VLnrow;
     npass = 1;
     beg[0] = bcindx;
     end[0] = ecindx;
@@ -1206,7 +1205,7 @@ gboolean ObitSurveyVLSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
     irae = rae / 15.0;
     irab = MIN (23, MAX (0, irab));
     irae = MIN (24, MAX (0, irae));
-    VLindex[24] = nrow;
+    VLindex[24] = VLnrow;
     /* Table indexed? */
     indxed = VLindex[0] > 0;
     if (indxed) {
@@ -1214,7 +1213,7 @@ gboolean ObitSurveyVLSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
       ecindx = VLindex[MIN(23, irae)+2];
     } else {
       bcindx = 1;
-      ecindx = nrow;
+      ecindx = VLnrow;
     } 
 
     /* It takes two passes for wrap in  RA range. */
@@ -1372,43 +1371,41 @@ gboolean ObitSurveyVLSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
     /*if (numcol < 93) numcol = 70;*/
     /* Default with pos select */
     if (fitted) {
-      snprintf (Title1, 132, "   RA[2000]  Dec[2000] Dist(\") Peak  Major Minor    PA   Res  Field    X_pix  Y_pix");
-      snprintf (Title2, 132, " h  m    s    d  m   s   ori     mjy   \"     \"      deg     ");
+      snprintf (Title1, 132, "   RA[2000]  Dec[2000] Dist(\")  Peak  Major Minor    PA   Res  Field    X_pix  Y_pix");
+      snprintf (Title2, 132, " h  m    s    d  m   s   ori      Jy    \"     \"      deg     ");
     } else{
-      snprintf (Title1, 132, "   RA[2000]  Dec[2000] Dist(\") Flux  Major Minor    PA   Res   Field    X_pix  Y_pix");
-      snprintf (Title2, 132, " h  m    s    d  m   s   ori     mjy   \"     \"      deg       ");
+      snprintf (Title1, 132, "   RA[2000]  Dec[2000] Dist(\")  Flux  Major Minor    PA   Res   Field    X_pix  Y_pix");
+      snprintf (Title2, 132, " h  m    s    d  m   s   ori      Jy    \"     \"      deg       ");
     }
   } else {
     /*if (numcol < 87) numcol = 64;*/
     /* Default doall listing */
     if (fitted) {
-      snprintf (Title1, 132, "   RA[2000]   Dec[2000]  Peak  Major Minor    PA    Res   Field    X_pix    Y_pix");
-      snprintf (Title2, 132, " h  m    s    d  m   s    mjy    \"     \"       deg");
+      snprintf (Title1, 132, "   RA[2000]   Dec[2000]   Peak  Major Minor    PA    Res   Field    X_pix    Y_pix");
+      snprintf (Title2, 132, " h  m    s    d  m   s     Jy     \"     \"       deg");
     } else {
-      snprintf (Title1, 132, "   RA[2000]   Dec[2000]  Flux  Major Minor    PA   Res    Field    X_pix    Y_pix");
-      snprintf (Title2, 132, " h  m    s    d  m   s    mjy    \"     \"      deg ");
+      snprintf (Title1, 132, "   RA[2000]   Dec[2000]   Flux  Major Minor    PA   Res    Field    X_pix    Y_pix");
+      snprintf (Title2, 132, " h  m    s    d  m   s     Jy     \"     \"      deg ");
     }
   } /* end doall */
   /* Set epoch */
   if (equinCode == 1) {
     if (fitted) 
-      snprintf (Title1, 132, "   RA[1950]   Dec[1950]  Peak  Major Minor     PA   Res   Field    X_pix    Y_pix");
+      snprintf (Title1, 132, "   RA[1950]   Dec[1950]   Peak  Major Minor     PA   Res   Field    X_pix    Y_pix");
     else
-      snprintf (Title1, 132, "   RA[1950]   Dec[1950]  Flux  Major Minor     PA   Res   Field    X_pix    Y_pix");
+      snprintf (Title1, 132, "   RA[1950]   Dec[1950]   Flux  Major Minor     PA   Res   Field    X_pix    Y_pix");
   }  else if (equinCode == 3) {
     if (fitted) 
-      snprintf (Title1, 132, "   Gal Long   Gal Lat    Peak  Major Minor     PA   Res   Field    X_pix    Y_pix");
+      snprintf (Title1, 132, "   Gal Long   Gal Lat     Peak  Major Minor     PA   Res   Field    X_pix    Y_pix");
     else
-      snprintf (Title1, 132, "   Gal Long   Gal Lat    Flux  Major Minor     PA   Res   Field    X_pix    Y_pix");
+      snprintf (Title1, 132, "   Gal Long   Gal Lat     Flux  Major Minor     PA   Res   Field    X_pix    Y_pix");
   } 
   
-  /* Only give headers once */
-  if (first) {
-    ObitPrinterSetTitle (printer, Title1, Title2, err);  /* Page titles at top */
-    ObitPrinterWrite (printer, Title1, &quit, err);
-    ObitPrinterWrite (printer, Title2, &quit, err);
-    if (err->error) goto cleanup;
-  } /* end give titles */
+  /* give headers */
+  ObitPrinterSetTitle (printer, Title1, Title2, err);  /* Page titles at top */
+  ObitPrinterWrite (printer, Title1, &quit, err);
+  ObitPrinterWrite (printer, Title2, &quit, err);
+  if (err->error) goto cleanup;
   
   odiscl = discl;
   /* Passes */
@@ -1533,26 +1530,22 @@ gboolean ObitSurveyVLSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
 	/* As character string */
 	snprintf (cposa, 7, "%6d", itemp);
 	
-	/* Convert flux density to string */
+	/* Convert flux density in Jy to string */
 	if (flux < 99.99) {
-	  snprintf (cflux, 8, "%7.1f", flux * 1000.0);
+	  snprintf (cflux, 8, "%7.3f", flux);
 	}  else if (flux < 999.99) {
-	  snprintf (cflux, 8, "%7.0f", flux * 1000.0);
+	  snprintf (cflux, 8, "%7.2f", flux);
 	} else {
-	  itemp = flux*1000.0 + 0.5;
-	  if (itemp > 9999) itemp = 9999;
-	  snprintf (cflux, 8, "%7d", itemp);
+	  snprintf (cflux, 8, "%7.1f", flux);
 	} 
 	
-	/* Convert flux density error to string */
-	if (eflux < 99999.9) {
-	  snprintf (ceflux, 8, "%7.1f", eflux);
-	} else if (flux < 999999.) {
-	  snprintf (ceflux, 8, "%7.0f", eflux);
+	/* Convert flux density error Jy to string */
+	if (eflux < 99.9) {
+	  snprintf (ceflux, 8, "%7.3f", eflux);
+	} else if (flux < 999.) {
+	  snprintf (ceflux, 8, "%7.2f", eflux);
 	} else {
-	  itemp = eflux + 0.5;
-	  if (itemp > 9999999) itemp = 9999;
-	  snprintf (ceflux, 8, "%7d", itemp);
+	  snprintf (ceflux, 8, "%7.1f", eflux);
 	} 
 	
 	/* Goodness of fit code */
@@ -1597,21 +1590,21 @@ gboolean ObitSurveyVLSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
 	  /* Create appropriate line */
 	  if (!doall) {
 	    /* Default with pos select */
-	    snprintf (line, 132, "%2.2d %2.2d%6.2f %s%2.2d %2.2d%5.1f%s%s %s %s %s%s   %s%8.2f%8.2f", 
-		     rahm[0], rahm[0], ras, dsig, decdm[0], decdm[1], decs, cdist, 
+	    snprintf (line, 132, "%2.2d %2.2d%6.2f %s%2.2d %2.2d%5.1f%s %s %s %s %s%s   %s%8.2f%8.2f", 
+		     rahm[0], rahm[1], ras, dsig, decdm[0], decdm[1], decs, cdist, 
 		     cflux, cmajor, cminor, cpa, mark[imark-1], 
 		     field, cenx, ceny);
 	    /* Errors */
-	    snprintf (eline, 132, "     %6.2f       %5.1f%s%s %s %s %s%s", 
+	    snprintf (eline, 132, "     %6.2f       %5.1f%s %s %s %s %s%s", 
 		     errra, errdec, cposa, ceflux, emajor, eminor, epa, chbdvl);
 	  } else {
 	    /* Default doall */
-	    snprintf (line, 132, "%2.2d %2.2d%6.2f %s%2.2d %2.2d%5.1f%s %s %s %s %s   %s%8.2f%8.2f", 
-		     rahm[0], rahm[0], ras, dsig, decdm[0], decdm[1], decs, 
+	    snprintf (line, 132, "%2.2d %2.2d%6.2f %s%2.2d %2.2d%5.1f %s %s %s %s %s   %s%8.2f%8.2f", 
+		     rahm[0], rahm[1], ras, dsig, decdm[0], decdm[1], decs, 
 		     cflux, cmajor, cminor, cpa, mark[imark-1], 
 		     field, cenx, ceny);
 	    /* Errors */
-	    snprintf (eline, 132, "     %6.2f       %5.1f%s %s %s %s %s", 
+	    snprintf (eline, 132, "     %6.2f       %5.1f %s %s %s %s %s", 
 		     errra, errdec, ceflux, emajor, eminor, epa, chbdvl);
 	  } 
 	  
@@ -2005,7 +1998,7 @@ static void NVSSCorErr (odouble *ra, odouble *dec,
  * \param posang  Fitted PA 
  * \param irms    RMS (sigma) in Ipol. 
  * \param beam    Restoring beam major, minor axes and position angle 
- *               (all deg) (Now ignored) 
+ *               (all deg) 
  * \param fitted  If true return fitted values else deconvolved 
  * \param doraw   If true return raw values else bias corrected. 
  *                Generally, fitted should be true if doraw is. 
@@ -2055,6 +2048,7 @@ static void VLSSCorErr (odouble *ra, odouble *dec, ofloat *peak,
   /* sizes are in deg degrees */
   psf[0] = beam[0];
   psf[1] = beam[1];
+  psf[2] = beam[2];
   
    /* Force fitted value to be at least as large as the PSF */
   *major = MAX (*major, psf[0]);

@@ -4403,7 +4403,7 @@ static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL
 {
   olong js, jf, jif, jbl, jj, jjj, indx, jndx, cnt, half;
   gboolean haveBL, doMW = widMW>0;  /* Median window filter or linear baseline */
-  ofloat a, b, aaa, *temp=NULL;
+  ofloat a, b, aaa, *temp=NULL, *temp2=NULL;
   /*gchar *routine = "EditFDBaseline";*/
 
   /* error checks */
@@ -4411,34 +4411,36 @@ static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL
 
   /* Which method? */
   if (doMW) { /* Median window filter */
-    temp = g_malloc0(2*widMW*sizeof(ofloat)); /* Work array for sorting */
-    half = widMW/2;  /* Half width of window */
+    temp  = g_malloc0(2*widMW*sizeof(ofloat)); /* Work array for sorting */
+    temp2 = g_malloc0(numChan*sizeof(ofloat)); /* Work array for sorting */
+    half  = widMW/2;  /* Half width of window */
     /* Loop over array */
     indx = 0;
     for (jbl=0; jbl<numBL; jbl++) {
       for (js=0; js<numPol; js++) {
 	for (jif=0; jif<numIF; jif++) {
+	  for (jf=0; jf<numChan; jf++) temp2[jf] =  avg[indx+jf];
 	  for (jf=0; jf<numChan; jf++) {
 	    /* Median window are we at the beginning, end or middle? */
 	    cnt = 0;
 	    if (jf<half) { /* Beginning */
 	      for (jj=0; jj<widMW; jj++) {
 		jjj = jj - jf;  /* If we're no longer at the beginning */
-		if ((count[indx+jjj]>0) && (avg[indx+jjj]>-9900.0)) {  /* Any data? */
-		  temp[cnt++] = avg[indx+jjj];
+		if ((count[indx+jjj]>0) && (temp2[jj]>-9900.0)) {  /* Any data? */
+		  temp[cnt++] = temp2[jj];
 		}
 	      }
 	    } else if (jf>=(numChan-half-1)) { /* End */
 	      for (jj=numChan-widMW; jj<numChan; jj++) {
 		jjj = jj - jf;  /* If we're no longer at the beginning */
-		if ((count[indx+jjj]>0) && (avg[indx+jjj]>-9900.0)) {  /* Any data? */
-		  temp[cnt++] = avg[indx+jjj];
+		if ((count[indx+jjj]>0) && (temp2[jj]>-9900.0)) {  /* Any data? */
+		  temp[cnt++] =  temp2[jj];
 		}
 	      }
 	    } else { /* Middle */
 	      for (jj=-half; jj<=half; jj++) {
-		if ((count[indx+jj]>0) && (avg[indx+jj]>-9900.0)) {  /* Any data? */
-		  temp[cnt++] = avg[indx+jj];
+		if ((count[indx+jj]>0) && (temp2[jj]>-9900.0)) {  /* Any data? */
+		  temp[cnt++] = temp2[jj];
 		}
 	      }
 	    }
@@ -4448,7 +4450,7 @@ static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL
 	      avg[indx] -= aaa;
 	      sigma[indx] = MedianSigma (cnt, temp, aaa, 0.2);
 	    } else {  /* Datum bad */
-	      avg[indx]   = 0.0;
+	      if (avg[indx]>-9900.0) avg[indx]   = 0.0;
 	      sigma[indx] = 100.0;
 	    }
 	    indx++;
@@ -4457,6 +4459,7 @@ static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL
       } /* end loop over polarization */
     } /* end loop over baseline */
     g_free(temp);
+    g_free(temp2);
 
   } else { /* Linear baseline fit */
     /* Loop over spectra */

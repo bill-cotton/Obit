@@ -3,6 +3,7 @@ Python utility package for survey catalog browsers
 """
 
 import Obit, InfoList, OErr, OPrinter, Image, UV
+import os
 # $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2012
@@ -146,6 +147,7 @@ def PWebFetch (url, args, outfile, err):
                 e.g."http://www.cv.nrao.edu/cgi-bin/postage.pl"
     * args    = dict or arguments, e.g. {"arg1":"arg1"}
     * outfile = Name of the output file, absolute path or relative to CWD
+                None => use name from server
     * err     = Python Obit Error/message stack
     """
     ################################################################
@@ -161,9 +163,14 @@ def PWebFetch (url, args, outfile, err):
         print exception
         OErr.PLog(err, OErr.Error, "Request from server failed")
         OErr.printErrMsg(err)
+    if outfile == None:     # Name from server?
+        outfile = os.path.basename(response.headers['URI'])
     fd = open(outfile,"wb")
     fd.write(data)
     fd.close()
+    # Info
+    print "Response code =",response.code, response.msg
+    print "Response type =",response.headers["Content-Type"]
 # end PWebFetch
 
 def PNVSSFetch (RA, Dec, outfile, err, \
@@ -183,6 +190,7 @@ def PNVSSFetch (RA, Dec, outfile, err, \
     * RA      = Right Ascension as 'hh mm ss.sss'
     * Dec     = Declination as 'sdd mm ss.ss'
     * outfile = Name of the output file, absolute path or relative to CWD
+                None => use name from server
     * err     = Python Obit Error/message stack
     * Type    = Type = "type" of result;
                 'image/jpeg' = jpeg image,
@@ -214,9 +222,8 @@ def PNVSSFetch (RA, Dec, outfile, err, \
     # fetch
     PWebFetch (NVSSURL, query_args, outfile, err)
     # Get fits image if requested
-    print "Type",Type
     if (Type == 'image/x-fits') or (Type == 'application/octet-stream'):
-        print "Get FITS"
+        #print "Get FITS"
         outfits = Image.newPFImage(ObjName, outfile, 0, True, err)
         OErr.printErrMsg(err, "Problem with FITS image, see contents of outfile")
     else:
@@ -240,6 +247,7 @@ def PVLSSFetch (RA, Dec, outfile, err, \
     * RA      = Right Ascension as 'hh mm ss.sss'
     * Dec     = Declination as 'sdd mm ss.ss'
     * outfile = Name of the output file, absolute path or relative to CWD
+                None => use name from server
     * err     = Python Obit Error/message stack
     * Type    = Type = "type" of result;
                 'image/jpeg' = jpeg image,

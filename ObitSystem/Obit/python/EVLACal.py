@@ -3727,7 +3727,7 @@ def EVLAGetTimes(uv, Source, err,
 
 def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band="", \
                      doCalib=-1, gainUse=0, doBand=-1, BPVer=0,  flagVer=-1,  \
-                     doPol=False, PDVer=-1,  \
+                     doPol=False, PDVer=-1,  minFlux=0.0, \
                      Stokes="I", FOV=0.1/3600.0, Robust=0, Niter=300, CleanRad=None, \
                      maxPSCLoop=0, minFluxPSC=0.1, solPInt=20.0/60., \
                      solPMode="P", solPType= "  ", \
@@ -3759,6 +3759,7 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
     * flagVer    = Input Flagging table version
     * doPol      = Apply polarization cal?
     * PDVer      = PD version for pol cal, -1=>use IF
+    * minFlux    = minimum flux density for initial CLEAN
     * Stokes     = Stokes parameters to image
     * FOV        = Field of view to image in deg
     * Robust     = Weighting robustness parameter
@@ -3844,6 +3845,7 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
     imager.FOV         = FOV
     imager.Robust      = Robust
     imager.Niter       = Niter
+    imager.minFlux     = minFlux
     imager.maxPSCLoop  = maxPSCLoop
     imager.minFluxPSC  = minFluxPSC
     imager.solPInt     = solPInt

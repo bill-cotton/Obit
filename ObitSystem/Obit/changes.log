@@ -371,3 +371,20 @@ Obit/python/OPrinter.py Obit/python/OPrinter.inc:
 Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
   update python interface
 23 Jan 2012, version 407
+
+Web and EVLA editing related
+ObitVersion:
+Obit/changes.log:
+Obit/src/ObitSurveyUtil.c:
+  Bugs in listing of survey catalogs
+Obit/python/OSurvey.py:
+  PWebFetch: better handling of errors
+Obit/python/ NVSSWebUtil.py:
+  New module for Web stuff.
+Obit/tasks/BDFIn.c:
+ Fix frequency ordering in SY, CD tables.
+Obit/src/ObitUVEdit.c:
+  EditFDBaseline: Fix several logic bugs
+Obit/python/EVLACal.py Obit/python/EVLAPipeline.py:
+  Implement minFlux in imageTarget
+16 Feb 2012 version 408
