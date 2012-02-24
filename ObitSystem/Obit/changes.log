@@ -388,3 +388,15 @@ Obit/src/ObitUVEdit.c:
 Obit/python/EVLACal.py Obit/python/EVLAPipeline.py:
   Implement minFlux in imageTarget
 16 Feb 2012 version 408
+
+New EVLA flag format, page limits
+ObitVersion
+Obit/changes.log
+Obit/python/EVLAPipeline.py:
+  Get it right
+Obit/include/ObitSDMDataTypeDef.h Obit/src/ObitSDMData.c:
+Obit/tasks/BDFIn.c:
+  New flagging table features
+Obit/tasks/Lister.c  Obit/tasks/ASDMList.c:
+  Big page limit
+24 Feb 2012 version 409

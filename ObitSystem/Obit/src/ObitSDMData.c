@@ -36,7 +36,7 @@ X    SysPower.xml
 X    Weather.xml
  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010,2011                                          */
+/*;  Copyright (C) 2010-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -149,6 +149,9 @@ static gchar** ASDMparse_strarray(gchar *string, olong maxChar,
 				  gchar *prior, gchar **next);
 /** Private: Parse boolean array from XML string  */
 static gboolean* ASDMparse_booarray(gchar *string, olong maxChar, 
+				    gchar *prior, gchar **next);
+/** Private: Parse character array from XML string  */
+static gchar* ASDMparse_chararray(gchar *string, olong maxChar, 
 				    gchar *prior, gchar **next);
 
 /** Private: Look up antennaMake enum */
@@ -2608,6 +2611,59 @@ static gboolean* ASDMparse_booarray(gchar *string, olong maxChar,
 
   return out;
 } /* end ASDMparse_booarray */
+
+/**  Parse array of characters from XLM string 
+ * list of blank separated characters terminated by '<'
+ * \param  string  String to parse
+ * \param  maxChar Maximum size of string
+ * \param  prior string prior to value
+ * \param  next  pointer in string after parsed value
+ * \return value, NULL if problem, should be g_freeed when done
+ */
+static gchar* ASDMparse_chararray(gchar *string, olong maxChar, 
+				  gchar *prior, gchar **next)
+{
+  gchar *out = NULL;
+  gchar *b;
+  olong charLeft, ndim, naxis1=1, naxis2=1, num;
+  olong i, j, n;
+
+  *next = string;  /* if not found */
+  b = g_strstr_len (string, maxChar, prior);
+  if (b==NULL) return out;  /* Found? */
+  b += strlen(prior);
+
+   /* Get dimensionality - only can handle 2 */
+  ndim = (olong)strtol(b, next, 10);
+  b = *next;
+  /* get number of values */
+  naxis1 = (olong)strtol(b, next, 10);
+  b = *next+1;
+  /* get number of values axis 2 */
+  if (ndim==2) {
+    naxis2 = (olong)strtol(b, next, 10);
+    b = *next+1;
+  }
+  num = naxis1*naxis2;
+  out = g_malloc0((MAX(1,num)+1)*sizeof(gchar));
+
+  /* Loop over characters */
+  for (j=0; j<num; j++) {
+    /* count */
+    charLeft = maxChar - (b-string);
+    n = 0;
+    for (i=0; i<charLeft; i++) {
+      if ((b[i]=='<') || (b[i]==' '))break;
+      n++;
+    }
+    /* get next character */
+    out[j] = b[0];
+    b += n+1;
+    *next = b;
+  } /* end loop over strings */
+
+  return out;
+} /* end ASDMparse_chararray */
 
 /**  Parse time from XLM string  
  * Read time as a MJD nanoseconds, return as JD
@@ -5796,10 +5852,10 @@ static ASDMFieldTable* KillASDMFieldTable(ASDMFieldTable* table)
 static ASDMFlagRow* KillASDMFlagRow(ASDMFlagRow* row)
 {
   if (row == NULL) return NULL;
-  if (row->reason) g_free(row->reason);
-  if (row->antennaId) {
-    g_free(row->antennaId);
-  }
+  if (row->reason)           g_free(row->reason);
+  if (row->antennaId)        g_free(row->antennaId);
+  if (row->polarizationType) g_free(row->polarizationType);
+  if (row->spectralWindowId) g_free(row->spectralWindowId);
   g_free(row);
   return NULL;
 } /* end   KillASDMFlagRow */
@@ -5817,10 +5873,10 @@ static ASDMFlagTable* ParseASDMFlagTable(ObitSDMData *me,
   ASDMFlagTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = me->maxLine;
+  olong irow, nchar, i, maxLine = me->maxLine;
   gchar *line=me->line;
   gchar *endrow = "</row>";
-  gchar *prior, *next;
+  gchar *prior, *next, *carr=NULL;
   gchar *routine = " ParseASDMFlagTable";
 
   /* error checks */
@@ -5898,9 +5954,34 @@ static ASDMFlagTable* ParseASDMFlagTable(ObitSDMData *me,
       continue;
     }
 
+    prior = "<polarizationType>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      /* read as list of characters, convert */
+      carr  = ASDMparse_chararray(line, maxLine, prior, &next);
+      if (carr) {
+	nchar = MAX (1, strlen(carr));
+	out->rows[irow]->polarizationType = g_malloc0((nchar+1)*sizeof(olong));
+	for (i=0; i<nchar; i++) {
+	  if (carr[i]=='R') out->rows[irow]->polarizationType[i] = 1;
+	  else if (carr[i]=='L') out->rows[irow]->polarizationType[i] = 2;
+	  else if (carr[i]=='X') out->rows[irow]->polarizationType[i] = 3;
+	  else if (carr[i]=='Y') out->rows[irow]->polarizationType[i] = 4;
+	  else              out->rows[irow]->polarizationType[i] = 0;
+	}
+	if (carr) g_free(carr);
+      }
+      continue;
+    }
+
     prior = "<numSpectralWindow>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->numSpectralWindow= ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+
+    prior = "<spectralWindowId>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->spectralWindowId = ASDMparse_enumarray (line, maxLine, prior, &next);
       continue;
     }
 

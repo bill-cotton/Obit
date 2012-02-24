@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Read BDF format data, convert to Obit UV                           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010,2011                                          */
+/*;  Copyright (C) 2010,2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2629,8 +2629,10 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 {
   ObitTableFG*       outTable=NULL;
   ObitTableFGRow*    outRow=NULL;
+  ASDMSpectralWindowArray* SpWinArray;
   olong              iRow, oRow, ver, iarr, antId, antNo, iAnt, i, ia;
-  olong              numAnt;
+  olong              numAnt, numSW, numPoln, IFno, *SpWinLookup2=NULL;
+  olong              np, nsw, ip, isw, numIF;
   ObitIOAccess       access;
   ASDMAntennaArray*  AntArray;
   gchar              *routine = "GetFlagInfo";
@@ -2665,11 +2667,23 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     return;
   }
   
-  /* Antenna array to lookup antenna numbers */
+   /* Extract ASDM SpWin data  - selMain global */
+  SpWinArray  = ObitSDMDataGetSWArray (SDMData, selMain, SWOrder);
+  Obit_return_if_fail((SpWinArray), err,
+		      "%s: Could not extract Spectral Windows from ASDM", 
+		      routine);
+ /* Antenna array to lookup antenna numbers */
   AntArray    = ObitSDMDataGetAntArray(SDMData, selMain);
   Obit_return_if_fail((AntArray), err,
 		      "%s: Could not extract Antenna info from ASDM", 
 		      routine);
+
+  /* Lookup2[SWId] = SpWinArray element for that SW, -1=not */
+  SpWinLookup2 = g_malloc0(SDMData->SpectralWindowTab->nrows*sizeof(olong));
+  for (i=0; i<SDMData->SpectralWindowTab->nrows; i++) SpWinLookup2[i] = -1;
+  for (i=0; i<SpWinArray->nwinds; i++)
+    SpWinLookup2[SpWinArray->winds[i]->spectralWindowId] = i;
+  numIF    = outData->myDesc->inaxes[outData->myDesc->jlocif];
 
   /* Create output Row */
   outRow = newObitTableFGRow (outTable);
@@ -2681,14 +2695,8 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   outRow->SourID    = 0;
   outRow->SubA      = 0;
   outRow->freqID    = 0;
-  outRow->ifs[0]    = 1;
-  outRow->ifs[1]    = 0;
   outRow->chans[0]  = 1;
   outRow->chans[1]  = 0;
-  outRow->pFlags[0] = -1;
-  outRow->pFlags[1] = -1;
-  outRow->pFlags[2] = -1;
-  outRow->pFlags[3] = -1;
   outRow->status    = 0;
   
   /* Array number 0-rel */
@@ -2699,6 +2707,21 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 
      /* Make sure valid */
     if (SDMData->FlagTab->rows[iRow]->reason==NULL) continue;
+
+    /* Get numbers of IFs(SWs) and poln */
+    if ((SDMData->FlagTab->rows[iRow]->numSpectralWindow>0) &&
+	(SDMData->FlagTab->rows[iRow]->spectralWindowId!=NULL)) 
+      numSW = SDMData->FlagTab->rows[iRow]->numSpectralWindow;
+    else
+      numSW = 0;
+    nsw = MAX (1, numSW);   /* SW loop - at least one */
+
+    if ((SDMData->FlagTab->rows[iRow]->numPolarizationType>0) &&
+	(SDMData->FlagTab->rows[iRow]->polarizationType!=NULL)) 
+      numPoln = SDMData->FlagTab->rows[iRow]->numPolarizationType;
+    else
+      numPoln = 0;
+    np = MAX (1, numPoln);   /* poln loop - at least one */
 
     outRow->ants[1]      = 0;
     outRow->TimeRange[0] = SDMData->FlagTab->rows[iRow]->startTime - SDMData->refJD;
@@ -2724,14 +2747,48 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       /* ALMA antennas are zero rel */
       if (isALMA) antNo++;
       outRow->ants[0]      = antNo;
-      /* Write */
       oRow = -1;
-      if ((ObitTableFGWriteRow (outTable, oRow, outRow, err)
-	   != OBIT_IO_OK) || (err->error>0)) { 
-	Obit_log_error(err, OBIT_Error, "ERROR updating FG Table");
-	return;
-      }
-    }
+
+      /* Initially flag all poln */
+      outRow->pFlags[0] = outRow->pFlags[1] = outRow->pFlags[2] = outRow->pFlags[3] = -1;
+      /* Polarization loop */
+      for (ip=0; ip<np; ip++) {
+
+	/* Specified poln? Set first */
+	if (numPoln>=1) {
+	  /* flag  */
+	  if ((SDMData->FlagTab->rows[iRow]->polarizationType[ip]==1) ||
+	      (SDMData->FlagTab->rows[iRow]->polarizationType[ip]==3)) {
+	    /* bit flag implementation kinda screwy - flag RR, RL, LR*/
+	    outRow->pFlags[0] = (((0 | 1<<0) | 1<<2)| 1<<3);
+	  }
+	  else if ((SDMData->FlagTab->rows[iRow]->polarizationType[ip]==2) ||
+		   (SDMData->FlagTab->rows[iRow]->polarizationType[ip]==4)) {
+	    /* bit flag implementation kinda screwy - flag LL, RL, LR*/
+	    outRow->pFlags[0] = (((0 | 1<<1) | 1<<2)| 1<<3);
+	  }
+	}
+	
+	/* Initially flag all IFs */  
+	outRow->ifs[0] = 1;  outRow->ifs[1] = 0;
+	/* IF/SW loop */
+	for (isw=0; isw<nsw; isw++) {
+	  
+	  if (numSW>=1) {
+	    IFno = SpWinLookup2[SDMData->FlagTab->rows[iRow]->spectralWindowId[isw]];
+	    IFno = MAX (0, MIN(IFno, (numIF-1)));
+	    outRow->ifs[0]  = outRow->ifs[1] = IFno+1;
+	  }
+	  
+	  /* Write */
+	  if ((ObitTableFGWriteRow (outTable, oRow, outRow, err)
+	       != OBIT_IO_OK) || (err->error>0)) { 
+	    Obit_log_error(err, OBIT_Error, "ERROR updating FG Table");
+	    return;
+	  }
+	} /* end SW/IF loop */
+      } /* end poln loop */
+    } /* end antenna loop */
   } /* end loop over input table */
   
   /* Close  table */
@@ -2747,7 +2804,9 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   /* Cleanup */
   outRow   = ObitTableFGRowUnref(outRow);
   outTable = ObitTableFGUnref(outTable);
+  SpWinArray = ObitSDMDataKillSWArray (SpWinArray);
   AntArray = ObitSDMDataKillAntArray(AntArray);
+  if (SpWinLookup2) g_free(SpWinLookup2);
 
 } /* end  GetFlagInfo */
 

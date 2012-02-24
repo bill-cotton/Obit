@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2011                                          */
+/*;  Copyright (C) 2010-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -688,14 +688,18 @@ typedef struct {
 typedef struct {
   /** flag Id */
   olong flagId;
-  /** antenna Id array */
-  olong *antennaId;
   /** number of antennas */
   olong numAntenna;
   /** number of polarization types, 0=> all */
   olong numPolarizationType;
   /** number of spectral windows, 0=> all */
   olong numSpectralWindow;
+  /** antenna Id array */
+  olong *antennaId;
+  /** Polarization array 1=R, 2=L, 3=X, 4=Y , 0=unknown*/
+  olong *polarizationType;
+  /** spectral window Id array */
+  olong *spectralWindowId;
   /** reason */
   gchar *reason;
   /** start Time (JD) */

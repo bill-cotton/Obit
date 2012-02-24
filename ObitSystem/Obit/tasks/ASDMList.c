@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Summarize contents of ASDM                                        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010,2011                                          */
+/*;  Copyright (C) 2010-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -372,6 +372,7 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
   ASDMSpectralWindowTable *SpectralWindowTab;
   ASDMAntennaArray*  AntArray;
   ASDMSourceArray*   SourceArray;
+  olong        pLimit=1000000;  /* Page limit */
   olong        iScan, iIntent, iConfig, configID, dataDescriptionId;
   olong        i, ii, doCrt, LinesPerPage=0, iDD, jDD, jSW;
   olong        spectralWindowId, ScanID, iMain, iSource;
@@ -429,6 +430,9 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
   
   /* Create/Open Printer */
   myPrint = ObitPrinterCreate (pgmName, isInteractive, outStream, prtFile);
+  /* page limit */
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (myPrint->info, "pageLimit", OBIT_long, dim, &pLimit);
   ObitPrinterOpen (myPrint, LinesPerPage, Title1, Title2, err);
   if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
   

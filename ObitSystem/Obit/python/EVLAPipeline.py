@@ -683,7 +683,7 @@ if doImage:
     EVLAImageTargets (uv, err, Sources=slist, seq=seq, sclass=outIclass, \
                       doCalib=2, doBand=1,  flagVer=2, doPol=doPol, PDVer=PDVer,  \
                       Stokes=Stokes, FOV=FOV, Robust=Robust, Niter=Niter, \
-                      CleanRad=CleanRad, minFlux=MinFlux, \
+                      CleanRad=CleanRad, minFlux=minFlux, \
                       maxPSCLoop=maxPSCLoop, minFluxPSC=minFluxPSC, \
                       solPInt=solPInt, solPMode=solPMode, solPType=solPType, \
                       maxASCLoop=maxASCLoop, minFluxASC=minFluxASC, \

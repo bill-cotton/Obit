@@ -581,6 +581,8 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   gboolean     isInteractive = FALSE, quit = FALSE, first=TRUE, doReal=FALSE;
   gboolean     doBand=FALSE, doPol=FALSE;
   gchar        line[1024], Title1[1024], Title2[1024];
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  olong        pLimit=1000000;  /* Page limit */
   olong        LinesPerPage = 0, BPVer=1, PDVer;
   olong        i, ii, indx, jndx, count, bPrint, nPrint, doCrt=1, lenLine=0;
   ofloat       u, v, w, cbase, re, im, amp, phas, wt;
@@ -589,7 +591,6 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   olong        bif=1, eif, bchan=1, ichan, doCalib, gainUse, flagVer=-1;
   gchar        *prtFile=NULL, timeString[25];
   ObitInfoType type;
-  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *cstokes[8] = {"RR", "LL", "RL", "LR", "XX", "YY", "XY", "YX"};
   gchar        *stokes[4]  = {"I ", "Q ", "U ", "V "};
   gchar        *routine = "doDATA";
@@ -694,6 +695,9 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 
  /* Create/Open Printer */
   myPrint = ObitPrinterCreate (pgmName, isInteractive, outStream, prtFile);
+  /* page limit */
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (myPrint->info, "pageLimit", OBIT_long, dim, &pLimit);
   ObitPrinterOpen (myPrint, LinesPerPage, Title1, Title2, err);
   if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
 
@@ -854,6 +858,7 @@ void doSCAN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   oint         numIF;
   gboolean     isInteractive = FALSE, quit = FALSE;
   gchar        line[1024], Title1[1024], Title2[1024];
+  olong        pLimit=1000000;  /* Page limit */
   olong        i, iif, ivr, ivd, lenLine, LinesPerPage = 0, maxSUID, *noVis=NULL;
   olong        ver, iRow, count, start, souID, lastSouID, doCrt=1, qual = 0;
   gchar        *prtFile=NULL, btimeString[25], etimeString[25];
@@ -936,6 +941,9 @@ void doSCAN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 
   /* Create/Open Printer */
   myPrint = ObitPrinterCreate (pgmName, isInteractive, outStream, prtFile);
+  /* page limit */
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (myPrint->info, "pageLimit", OBIT_long, dim, &pLimit);
   ObitPrinterOpen (myPrint, LinesPerPage, Title1, Title2, err);
   if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
 
@@ -1229,6 +1237,7 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   gboolean     doSN, done=FALSE, souChange=FALSE, firstPol, *doAnt=NULL;
   gchar        line[1024], Title1[1024], Title2[1024];
   oint         numPol, numIF, numTerm, numPCal, numOrb;
+  olong        pLimit=1000000;  /* Page limit */
   olong        BIF, i, ia, dt, ipass, npass, ndig, nfit, lenLine, LinesPerPage = 0;
   olong        ver, iRow, maxAnt, nAnt, mAnt, iif, ipol, start, gainVer, doCrt=1;
   olong        loAnt, hiAnt, nrow, souID=0, SubA, antNo=0, freqID, lastSouID, lastSou;
@@ -1396,6 +1405,9 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   
   /* Create/Open Printer */
   myPrint = ObitPrinterCreate (pgmName, isInteractive, outStream, prtFile);
+  /* page limit */
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (myPrint->info, "pageLimit", OBIT_long, dim, &pLimit);
   ObitPrinterOpen (myPrint, LinesPerPage, Title1, Title2, err);
   if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
 	
