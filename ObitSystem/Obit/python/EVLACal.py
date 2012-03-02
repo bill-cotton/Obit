@@ -1526,6 +1526,7 @@ def EVLACalAP(uv, target, ACal, err, \
     ################################################################
     mess =  "Amplitude and phase calibration"
     printMess(mess, logfile)
+    solnVer2 = None
 
     # Run SetJy
     setjy = ObitTask.ObitTask("SetJy")
@@ -1778,6 +1779,8 @@ def EVLACalAP(uv, target, ACal, err, \
                 pass
        
     # Plot gain corrections?
+    if solnVer2==None:
+        solnVer2 = solnVer
     if doPlot:
         # Amplitude corrections
         retCode = EVLAPlotTab(uv, "SN", solnVer2, err, nplots=6, optype="AMP ", \

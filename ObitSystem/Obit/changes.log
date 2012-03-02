@@ -400,3 +400,28 @@ Obit/tasks/BDFIn.c:
 Obit/tasks/Lister.c  Obit/tasks/ASDMList.c:
   Big page limit
 24 Feb 2012 version 409
+
+Various EVLA pipeline related
+Obit/changes.log:
+Obit/src/ObitTableUtil.c:
+  Sorting: convert counters to ollong.
+Obit/python/EVLAPipeline.py Obit/python/EVLACal.py:
+  Better flagging, bug fix
+Obit/src/ObitDConCleanVisMF.c:
+  XRestore: Better test for non aligned image.
+Obit/src/ObitImageMF.c:
+  SetSpec: Fix bugs in logic dividing channels.
+Obit/tasks/Imager.c:
+  Deal with channels with no data.
+Obit/python/Image.py:
+  Add PRelabelGal to relabel image into galactic coordinates
+Obit/TDF/CubeClip.TDF Obit/tasks/CubeClip.c:
+  Major rewrite.
+Obit/python/MosaicUtil.py:
+  MakeMaster: Work for cubes
+Obit/tasks/Imager.c Obit/tasks/MFImage.c Obit/tasks/IonImage.c:
+Obit/tasks/BeamCor.c Obit/tasks/Squint.c Obit/tasks/MFBeam.c:
+  doSources: reinit uvdata after each source
+Obit/TDF/MFImage.TDF:
+  Change defaults for PBCor, antSize
+2 Mar. 2012, ver 410

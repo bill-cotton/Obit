@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task - Clip insignificant pixels                              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2010                                          */
+/*;  Copyright (C) 2006-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -36,6 +36,27 @@
 #include "ObitFArrayUtil.h"
 #include "ObitFeatherUtil.h"
 
+/*---------------Private structures----------------*/
+/* Threaded function argument */
+typedef struct {
+  /* ObitThread to use */
+  ObitThread *thread;
+  /* thread number  */
+  olong        ithread;
+  /* ObitFArray to work on */
+  ObitFArray *in;
+  /* First element (1-rel) number */
+  olong        first;
+  /* Highest element (1-rel) number */
+  olong        last;
+  /* Minimum pixel value to accept */
+  ofloat minAllow;
+  /* Max radius (pixels) to accept */
+  ofloat radius;
+  /* magic blanking value */
+  ofloat fblank;
+} ClipFuncArg;
+
 /* internal prototypes */
 /* Get inputs */
 ObitInfoList* CubeClipIn (int argc, char **argv, ObitErr *err);
@@ -57,6 +78,14 @@ void CubeClipClip (ObitInfoList* myInput, ObitImage* inImage,
 /* Write history */
 void CubeClipHistory (ObitInfoList* myInput, ObitImage* inImage, 
 		      ObitImage* outImage, ObitErr* err);
+
+/* Make threading arguments */
+static olong MakeClipFuncArgs (ObitThread *thread, 
+			      ClipFuncArg ***ThreadArgs);
+/* Kill threading arguments */
+static void KillClipFuncArgs (olong nargs, ClipFuncArg **ThreadArgs);
+/* Thread function */
+static gpointer ThreadClip (gpointer arg);
 
 /* Program globals */
 gchar *pgmName = "CubeClip";       /* Program name */
@@ -155,6 +184,7 @@ ObitInfoList* CubeClipIn (int argc, char **argv, ObitErr *err)
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
+  myOutput = defaultOutputs(err);
 
   /* command line arguments */
   /* fprintf (stderr,"DEBUG arg %d %s\n",argc,argv[0]); DEBUG */
@@ -304,9 +334,11 @@ ObitInfoList* CubeClipIn (int argc, char **argv, ObitErr *err)
   }
 
   /* Initialize output */
-  myOutput = defaultOutputs(err);
   ObitReturnDumpRetCode (-999, outfile, myOutput, err);
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
+
+  /* Initialize Threading */
+  ObitThreadInit (list);
 
   return list;
 } /* end CubeClipIn */
@@ -778,21 +810,22 @@ void CubeClipClip (ObitInfoList* myInput, ObitImage* inImage,
   oint         noParms;
   ObitIOCode   iretCode, oretCode;
   ofloat       RMS, maxF, newVal, *Parms=NULL, fblank =  ObitMagicF();
-  ofloat       minAllow, FWHM, rescale;
-  ObitFFT      *FFTfor=NULL, *FFTrev=NULL;
-  ObitFArray   *ConvFn=NULL, *convlArray=NULL, *padConvFn=NULL, *padImage=NULL;
-  ObitCArray   *wtArray=NULL, *FTArray=NULL;
+  ofloat       minAllow, radius, rad2;
   ObitInfoType type;
   ObitTableCC *inCC=NULL, *outCC=NULL;
+  ObitThread   *thread;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong         blc[IM_MAXDIM], blc0[IM_MAXDIM] = {1,1,1,1,1,1,1};
-  olong         trc[IM_MAXDIM], trc0[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  olong        blc[IM_MAXDIM], blc0[IM_MAXDIM] = {1,1,1,1,1,1,1};
+  olong        trc[IM_MAXDIM], trc0[IM_MAXDIM] = {0,0,0,0,0,0,0};
   gchar        *tabType = "AIPS CC", *today=NULL;
-  olong        i, inVer, outVer, highVer, lo, hi, pos[IM_MAXDIM], Cen[2], temp;
-  olong        ndim=2, naxis[2], tblc[2], ttrc[2], cen[2];
+  gboolean     OK;
+  olong        i, inVer, outVer, highVer, lo, hi, pos[IM_MAXDIM], temp;
+  olong        nx, ny;
+  gboolean     odd;
+  olong        nTh, nRow, loRow, hiRow, nRowPerThread, nThreads;
+  ClipFuncArg **threadArgs;
   gchar        *exclude[]={"AIPS CC", "AIPS HI", "AIPS PL", "AIPS SL", 
 			   NULL}; 
-  gboolean     odd;
   gchar        *routine = "CubeClipClip";
 
   /* error checks */
@@ -848,38 +881,6 @@ void CubeClipClip (ObitInfoList* myInput, ObitImage* inImage,
   outImage->myDesc = ObitImageDescCopy(inImage->myDesc, outImage->myDesc, err);
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
 
-  /* Create FFTs */
-  FFTfor = ObitFeatherUtilCreateFFT(inImage, OBIT_FFT_Forward);
-  FFTrev = ObitFeatherUtilCreateFFT(inImage, OBIT_FFT_Reverse);
-
-  /* Normalize rescale for FFT */
-  rescale = 1.0 / (ofloat)(FFTfor->dim[0] * FFTfor->dim[1]);
-
-  /* Setup for convolutions - make convolving function */
-  ConvFn = ObitFArrayCreate("ConvFn", 2, inImage->myDesc->inaxes);
-  if (Parms[3]<=0.0) FWHM = 5.0;
-  else FWHM   = Parms[3];
-  Cen[0] = inImage->myDesc->inaxes[0]/2; 
-  Cen[1] = inImage->myDesc->inaxes[1]/2; 
-  ObitFArray2DCGauss (ConvFn, Cen, FWHM);
-
-   /* Padded convolving function */
-  naxis[0] = FFTfor->dim[0];  naxis[1] = FFTfor->dim[1]; 
-  padConvFn = ObitFArrayCreate("Pad Conv Fn", ndim, naxis);
-  ObitFeatherUtilPadArray (FFTfor, ConvFn, padConvFn);
-
-  /* Arrays for padded image/ FFT */
-  naxis[0] = FFTfor->dim[0];  naxis[1] = FFTfor->dim[1]; 
-  padImage = ObitFArrayCreate("Pad Image", ndim, naxis);
-  FTArray  = ObitFeatherUtilCreateFFTArray (FFTfor);
-
-  /* FFT Convolving function to wtArray */
-  wtArray = ObitFeatherUtilCreateFFTArray (FFTfor);
-  ObitFArray2DCenter (padConvFn); /* Swaparoonie to FFT order */
-  ObitFFTR2C (FFTfor, padConvFn, wtArray);
-  if (ConvFn)    ConvFn    = ObitFArrayUnref(ConvFn);
-  if (padConvFn) padConvFn = ObitFArrayUnref(padConvFn);
-
   /* Creation date today */
   today = ObitToday();
   strncpy (outImage->myDesc->date, today, IMLEN_VALUE-1);
@@ -887,6 +888,37 @@ void CubeClipClip (ObitInfoList* myInput, ObitImage* inImage,
  
   /* Force to float pixels */
   outImage->myDesc->bitpix=-32;
+
+  /* Image size */
+  nx = inImage->myDesc->inaxes[0];
+  ny = inImage->myDesc->inaxes[0];
+
+  /* Initialize Threading */
+  thread   = newObitThread();
+  nThreads = MakeClipFuncArgs (thread, &threadArgs);
+
+  /* Divide up work */
+  nRow = ny;
+  nRowPerThread = nRow/nThreads;
+  nTh = nThreads;
+  if (nRow<100) {nRowPerThread = nRow; nTh = 1;}
+  loRow = 1;
+  hiRow = nRowPerThread;
+  hiRow = MIN (hiRow, nRow);
+
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hiRow = nRow;  /* Make sure do all */
+    threadArgs[i]->in      = ObitFArrayRef(inImage->image);
+    threadArgs[i]->first   = loRow;
+    threadArgs[i]->last    = hiRow;
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which Row */
+    loRow += nRowPerThread;
+    hiRow += nRowPerThread;
+    hiRow = MIN (hiRow, nRow);
+  }
 
   /* Open output image */
   /* Use external buffer for writing output */
@@ -902,49 +934,34 @@ void CubeClipClip (ObitInfoList* myInput, ObitImage* inImage,
 
     /* Get plane statistics */
     maxF = fabs (ObitFArrayMaxAbs(inImage->image, pos));
-
-    /* Convolve plane to get mask 
-       First, pad image */
-    ObitFeatherUtilPadArray (FFTfor, inImage->image, padImage);
-    
-    /* FFT padded image to FTArray */
-    ObitFArray2DCenter (padImage); /* Swaparoonie to FFT order */
-    ObitFFTR2C (FFTfor, padImage, FTArray);
-
-    /* Multiply by transfer function */
-    ObitCArrayMul (FTArray, wtArray, FTArray);
-
-    /* Back FFT */
-    ObitFFTC2R(FFTrev, FTArray, padImage);
-    ObitFArray2DCenter (padImage);/* Swaparoonie */
-
-    /* Get window to extract */
-    cen[0] = FFTfor->dim[0]/2;  cen[1] = FFTfor->dim[1]/2; 
-    tblc[0] = cen[0] - inImage->image->naxis[0] / 2; 
-    ttrc[0] = cen[0] + inImage->image->naxis[0] / 2;
-    ttrc[0] -= (ttrc[0]-tblc[0]+1) - inImage->image->naxis[0];
-    tblc[1] = cen[1] - inImage->image->naxis[1] / 2; 
-    ttrc[1] = cen[1] + inImage->image->naxis[1] / 2;
-    ttrc[1] -= (ttrc[1]-tblc[1]+1) - inImage->image->naxis[1];
-    
-    /* Extract convolved image */
-    convlArray = ObitFArraySubArr(padImage, tblc, ttrc, err);
-    if (err->error) goto cleanup;
-
-    /* rescale units */
-    ObitFArraySMul (convlArray, rescale);
-
-    /* Blank convolved image the same as Image */
-    ObitFArrayBlank (convlArray, inImage->image, convlArray);
-    
-    /* Blank out of range pixels in convolved image */
-    RMS  = ObitFArrayRMS(convlArray);
+    RMS  = ObitFArrayRMS(inImage->image);
     minAllow = MAX (Parms[0]*RMS, Parms[1]*maxF);
-    ObitFArrayInClip (convlArray, -minAllow, minAllow, fblank);
+    radius   = Parms[3];
+    if (radius<=0.0) radius = 5.0;
+    rad2 = radius * radius;
 
-    /* Blank Image plane */
-    ObitFArrayBlank (inImage->image, convlArray, inImage->image);
 
+    /* If all below limit just blank all */
+    if (maxF<minAllow) {
+      ObitFArrayFill  (inImage->image, fblank);
+      goto done;
+    }
+
+    /* Plane specific parameters */
+    for (i=0; i<nTh; i++) {
+      threadArgs[i]->minAllow = minAllow;
+      threadArgs[i]->radius   = radius;
+    }
+  /* Do operation */
+  OK = ObitThreadIterator (thread, nTh, 
+			   (ObitThreadFunc)ThreadClip,
+			   (gpointer**)threadArgs);
+
+  /* Check for problems */
+  if (!OK) return;
+
+
+  done:
     /* newVal Replace blanks if needed */
     if (newVal != fblank) ObitFArrayDeblank (inImage->image, newVal);
 
@@ -953,7 +970,6 @@ void CubeClipClip (ObitInfoList* myInput, ObitImage* inImage,
     if (err->error) Obit_traceback_msg (err, routine, outImage->name);
 
     /* Loop cleanup */
-    if (convlArray) convlArray = ObitFArrayUnref(convlArray);
   } /* End loop over input image */
 
   /* Close input */
@@ -971,18 +987,14 @@ void CubeClipClip (ObitInfoList* myInput, ObitImage* inImage,
   outImage->extBuffer = FALSE;
 
   /* Cleanup */
- cleanup:
-  if (padImage) padImage = ObitFArrayUnref(padImage);
-  if (convlArray) convlArray = ObitFArrayUnref(convlArray);
-  if (wtArray) wtArray = ObitCArrayUnref(wtArray);
-  if (FTArray) FTArray = ObitCArrayUnref(FTArray);
-  if (FFTfor) FFTfor = ObitFFTUnref(FFTfor);
-  if (FFTrev) FFTrev = ObitFFTUnref(FFTrev);
- 
   /* Copy nonCC tables */
   iretCode = ObitImageCopyTables (inImage, outImage, exclude, NULL, err);
   if (err->error) Obit_traceback_msg (err, routine, inImage->name);
 
+  /* Free thread argument objects */
+  KillClipFuncArgs(nThreads, threadArgs);
+  thread   = ObitThreadUnref(thread);
+  
   /* Copy any relevant CCTables  */
   /* Number of Tables */
   highVer = ObitTableListGetHigh (inImage->tableList, tabType);
@@ -1005,5 +1017,139 @@ void CubeClipClip (ObitInfoList* myInput, ObitImage* inImage,
   } /* end loop over tables */
   
 } /* end CubeClipClip  */
+
+/**
+ * Make arguments for a Threaded ClipFunc
+ * \param thread     ObitThread object to be used
+ * \param ThreadArgs[out] Created array of ClipFuncArg, 
+ *                   delete with KillClipFuncArgs
+ * \return number of elements in args (number of allowed threads).
+ */
+static olong MakeClipFuncArgs (ObitThread *thread, 
+			      ClipFuncArg ***ThreadArgs)
+
+{
+  olong nThreads=1;
+  olong i;
+  ofloat fblank =  ObitMagicF();
+
+  /* Setup for threading */
+  /* How many threads? */
+  nThreads = MAX (1, ObitThreadNumProc(thread));
+
+  /* Initialize threadArg array */
+  *ThreadArgs = g_malloc0(nThreads*sizeof(ClipFuncArg*));
+  for (i=0; i<nThreads; i++)
+    (*ThreadArgs)[i] = g_malloc0(sizeof(ClipFuncArg)); 
+  for (i=0; i<nThreads; i++) {
+    (*ThreadArgs)[i]->thread= ObitThreadRef(thread);
+    (*ThreadArgs)[i]->ithread  = i;
+    (*ThreadArgs)[i]->in       = NULL;
+    (*ThreadArgs)[i]->first    = 0;
+    (*ThreadArgs)[i]->last     = 0;
+    (*ThreadArgs)[i]->radius   = 1.0;
+    (*ThreadArgs)[i]->minAllow = 0.0;
+    (*ThreadArgs)[i]->fblank   = fblank;
+  }
+  return nThreads;
+} /*  end MakeClipFuncArgs */
+
+/**
+ * Delete arguments for ThreadClipFunc
+ * \param nargs      number of elements in ThreadArgs.
+ * \param ThreadArgs Array of ClipFuncArg
+ */
+static void KillClipFuncArgs (olong nargs, ClipFuncArg **ThreadArgs)
+{
+  olong i;
+
+  if (ThreadArgs==NULL) return;
+  ObitThreadPoolFree (ThreadArgs[0]->thread);  /* Free thread pool */
+  for (i=0; i<nargs; i++) {
+    if (ThreadArgs[i]) {
+      if (ThreadArgs[i]->thread) ObitThreadUnref(ThreadArgs[i]->thread);
+      if (ThreadArgs[i]->in)     ObitFArrayUnref(ThreadArgs[i]->in);
+      g_free(ThreadArgs[i]);
+    }
+  }
+  g_free(ThreadArgs);
+} /*  end KillClipFuncArgs */
+
+/**
+ * Thread blank insignificant pixels keeping all within a given distance 
+ * from an acceptable pixel.
+ * Callable as thread
+ * \param arg Pointer to ClipFuncArg argument with elements:
+ * \li ithread  thread number, <0 -> no threading
+ * \li in       ObitFArray to work on
+ * \li first    First row (1-rel) row in in
+ * \li last     Highest row (1-rel) in in
+ * \li minAllow Min acceptable abs value
+ * \li rad2     radius (pixel) squared of minimum distance from an 
+ *              acceptable pixel to pass other pixels
+ * \return NULL
+ */
+static gpointer ThreadClip (gpointer arg)
+{
+  /* Get arguments from structure */
+  ClipFuncArg *largs    = (ClipFuncArg*)arg;
+  ObitFArray *in        = largs->in;
+  olong      loRow      = largs->first-1;
+  olong      hiRow      = largs->last;
+  ofloat     minAllow   = largs->minAllow;
+  ofloat     radius     = largs->radius;
+  ofloat     fblank     = largs->fblank;
+
+  /* local */
+  olong ipos[2]={0,0},ix, iy, jx, jy, nx, ny, lx, ly, ux, uy, indx;
+  ofloat *pixels, dx, dy, rad2;
+  gboolean OK;
+
+  if (hiRow<loRow) goto finish;
+  
+  /* Loop over image blanking where necessary */
+  pixels = ObitFArrayIndex (in,  ipos);
+  nx     = in->naxis[0];
+  ny     = in->naxis[1];
+  rad2   = radius*radius;
+  for (jy=loRow; jy<hiRow; jy++) {
+    for (jx=0; jx<nx; jx++) {
+      indx = jy*nx+jx;
+      if (pixels[indx]==fblank) continue;
+      OK = fabs(pixels[indx])>minAllow;
+      if (OK) continue;
+      /* Loop within radius */
+      ly = MAX (0, jy-radius);
+      uy = MIN (ny-1, jy+radius);
+      lx = MAX (0, jx-radius);
+      ux = MIN (nx-1, jx+radius);
+      for (iy=ly; iy<uy; iy++) {
+	dy = (ofloat) (iy-jy);
+	for (ix=lx; ix<ux; ix++) {
+	  dx = (ofloat) (ix-jx);
+	  /* too far? */
+	  if ((dx*dx+dy*dy)>rad2) continue;
+	  indx = iy*nx+ix;
+	  if (pixels[indx]==fblank) continue;
+	  OK = fabs(pixels[indx])>minAllow;
+	  if (OK) break;
+	}
+	if (OK) break;
+      }
+      if (OK) continue;
+      /* Must be bad */
+      indx = jy*nx+jx;
+      pixels[indx] = fblank;
+    } /* end jx loop */
+  } /* end jy loop */
+  
+  /* Indicate completion */
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (largs->thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+  
+} /*  end ThreadClip */
 
 

@@ -1434,6 +1434,22 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
       ObitInfoListAlwaysPut (myInput, "Status", OBIT_string, dim, Done);
     ObitTablePSSummary (inData, myInput, err);
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
+
+    /* ReGet input uvdata */
+    if (isource<(doList->number-1)) {
+      inData = ObitUnref(inData);
+      inData = getInputData (myInput, err);
+      if (err->error) Obit_traceback_msg (err, routine, inData->name);
+      
+      /* Get input parameters from myInput, copy to inData */
+      ObitInfoListCopyList (myInput, inData->info, dataParms);
+      if (err->error) Obit_traceback_msg (err, routine, inData->name);
+      
+      /* Make sure selector set on inData */
+      ObitUVOpen (inData, OBIT_IO_ReadCal, err);
+      ObitUVClose (inData, err);
+      
+    } /* end reinit uvdata */
   } /* end source loop */
 
   doList = ObitSourceListUnref(doList);
@@ -1507,7 +1523,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
 
   /* Total number of channels */
   nchan = inData->myDesc->inaxes[inData->myDesc->jlocf];
-
+  
   /* Parameters used here */
   BChan = 1;
   ObitInfoListGetTest(myInput, "BChan",  &type, dim, &BChan);
@@ -1598,6 +1614,12 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     /* Copy or average input data to output */
     BLAvg (myInput, inData, outData, err);
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
+    /* See if any data */
+    if (outData->myDesc->nvis<=0) {
+      Obit_log_error(err, OBIT_InfoWarn,"NO data channel %d", ichan);
+      if (first) {BChan = ichan+1; RChan = ichan+1; }
+      continue;  /* Go on to next */
+    }
     ObitInfoListCopyList (myInput, outData->info, tmpParms);
     ObitInfoListCopyList (inData->info, outData->info, tmpName);
     if (err->error) Obit_traceback_msg (err, routine, inData->name);

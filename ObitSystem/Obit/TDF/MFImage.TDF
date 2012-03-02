@@ -203,9 +203,9 @@ autoCen  *                         Auto center min flux density
 **PARAM** str 4   **DEF** DFT
 Cmethod                            Modeling method:
                                    'DFT','GRID','    '
-**PARAM** boo 1   **DEF** F
+**PARAM** boo 1   **DEF** T
 PBCor                              Apply Frequency PB Corr?
-**PARAM** float 1  **DEF** 25.0
+**PARAM** float 1  **DEF** 24.5
 antSize                            Diameter of ant. for PBCor (m)
 **PARAM** float 2
 CCFilter                           Clean component filter

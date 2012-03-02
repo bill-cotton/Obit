@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2011
+#  Copyright (C) 2004-2012
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -86,11 +86,14 @@ def PMakeMaster(template, size, SumWtImage, SumWt2, err):
     descDict["bitpix"] = -32  # output floating
     #
     # Do SumWtImage
-    desc = Image.PGetDesc(SumWtImage) 
+    desc   = Image.PGetDesc(SumWtImage)
     ImageDesc.PSetDict(desc, descDict) # set output descriptor
     # Write output image
     Image.POpen(SumWtImage, 2, err)
-    Image.PWriteFA(SumWtImage, outArray, err)
+    nplane = template.Desc.Dict["inaxes"][2]
+    for iplane in range(1,(nplane+1)):
+        plane = [iplane,1,1,1,1]
+        SumWtImage.PutPlane(outArray, plane, err)
     Image.PClose(SumWtImage, err)
     #OErr.printErrMsg(err, "Error writing image for "+Image.PGetName(SumWtImage))
     #
@@ -99,7 +102,9 @@ def PMakeMaster(template, size, SumWtImage, SumWt2, err):
     ImageDesc.PSetDict(desc, descDict) # set output descriptor
     # Write output image
     Image.POpen(SumWt2, 2, err)
-    Image.PWriteFA(SumWt2, outArray, err)
+    for iplane in range(1,(nplane+1)):
+        plane = [iplane,1,1,1,1]
+        SumWt2.PutPlane(outArray, plane, err)
     Image.PClose(SumWt2, err)
     #OErr.printErrMsg(err, "Error writing image for "+Image.PGetName(SumWt2))
     # end PMakeMaster

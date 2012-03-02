@@ -52,6 +52,7 @@ Additional  Functions are available in ImageUtil.
 import Obit, Table, FArray, OErr, ImageDesc, InfoList, History, AIPSDir, OSystem
 import TableList, AIPSDir, FITSDir, ImageFit, FitRegion, FitModel
 import OData
+import SkyGeom, math
 #import AIPSData
 
 # Python shadow class to ObitImage class
@@ -1621,6 +1622,45 @@ def PSwapAxis (inImage, err, ax1=3, ax2=4):
     PUpdateDesc(inImage, err)
     inImage.Close(err)
     # End  PSwapAxis
+    
+def PRelabelGal (inImage, err):
+    """
+    Relabel an image in galactic coordinates
+
+    Change descriptor from Equatorial (J2000) to Galactic coordinates
+    Returns modified image
+    * inImage  = Image to be relabeled
+    * err      = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not inImage.ImageIsA():
+        raise TypeError,'inImage MUST be a Python Obit Image'
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    d = inImage.Desc.Dict
+    ra2000  = d["crval"][0]
+    dec2000 = d["crval"][1]
+    # to B1950
+    (ra1950,dec1950) = SkyGeom.PJtoB (ra2000, dec2000)
+    # to galactic
+    (glon,glat) = SkyGeom.PEq2Gal (ra1950, dec1950)
+    # Need rotation
+    (glonr,glatr) = SkyGeom.PEq2Gal (ra1950, dec1950+10.0/3600)
+    rot = -57.296*math.atan2((glonr-glon), (glatr-glat))
+    # rot=-58.3 # V. close
+    #print "rot",rot
+    d["ctype"][0] = "GLON-SIN"
+    d["ctype"][1] = "GLAT-SIN"
+    d["crval"][0] = glon
+    d["crval"][1] = glat
+    d["crota"][1] = rot
+    d["obsra"]    = glon
+    d["obsdec"]   = glat
+    inImage.Desc.Dict = d
+    inImage.UpdateDesc(err)
+    return inImage
+    # End  PRelabelGal
     
 def PGetList (inImage):
     """

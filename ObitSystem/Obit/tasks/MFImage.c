@@ -1460,6 +1460,21 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
       ObitInfoListAlwaysPut (myInput, "Status", OBIT_string, dim, Done);
     ObitTablePSSummary (inData, myInput, err);
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
+    /* ReGet input uvdata */
+    if (isource<(doList->number-1)) {
+      inData = ObitUnref(inData);
+      inData = getInputData (myInput, err);
+      if (err->error) Obit_traceback_msg (err, routine, inData->name);
+      
+      /* Get input parameters from myInput, copy to inData */
+      ObitInfoListCopyList (myInput, inData->info, dataParms);
+      if (err->error) Obit_traceback_msg (err, routine, inData->name);
+      
+      /* Make sure selector set on inData */
+      ObitUVOpen (inData, OBIT_IO_ReadCal, err);
+      ObitUVClose (inData, err);
+      
+    } /* end reinit uvdata */
   } /* end source loop */
 
   doList = ObitSourceListUnref(doList);

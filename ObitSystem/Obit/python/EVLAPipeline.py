@@ -469,7 +469,15 @@ if doAmpPhaseCal:
 if doAutoFlag:
     mess =  "Post calibration editing:"
     printMess(mess, logFile)
-    retCode = EVLAAutoFlag (uv, [], err, flagVer=2, \
+    # if going to redo then only calibrators
+    if doRecal:
+        clist = [ACal]   # Calibrator list
+        for s in PCal:
+            clist.append(s)
+    else:
+        clist = []
+
+    retCode = EVLAAutoFlag (uv, clist, err, flagVer=2, \
                                 doCalib=2, gainUse=0, doBand=1, BPVer=1,  \
                                 IClip=IClip, minAmp=minAmp, timeAvg=timeAvg, \
                                 doFD=doAFFD, FDmaxAmp=FDmaxAmp, FDmaxV=FDmaxV, \

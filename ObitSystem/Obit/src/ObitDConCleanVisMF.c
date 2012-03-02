@@ -571,6 +571,7 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
   olong ifield, jfield, iplane, num, nOrd, ncomps, ver, noParms, plane[5]={1,1,1,1,1};
   ofloat BeamTaper1=0.0, BeamTaper2=0.0, factor;
   ofloat gparm[3]={0.0,0.0,0.0}, bmaj, bmin, bpa;
+  gboolean isAuto;
   ObitFArray *convl=NULL, *accum=NULL;
   gint32 dim[MAXINFOELEMDIM];
   ObitInfoType itype;
@@ -633,7 +634,8 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
 
 	/* Cross convolve Gaussians */
 	/* FFT (2D, same grid) or direct convolution */
-	if ((!image1->myDesc->do3D && !image2->myDesc->do3D) &&
+	isAuto = in->mosaic->isAuto[ifield]>0;
+ 	if (!isAuto && (!image1->myDesc->do3D && !image2->myDesc->do3D) &&
 	    (fabs(image1->myDesc->crval[0]-image2->myDesc->crval[0])<0.01*fabs(image1->myDesc->cdelt[0])) &&
 	    (fabs(image1->myDesc->crval[1]-image2->myDesc->crval[1])<0.01*fabs(image1->myDesc->cdelt[1]))) {
 	  /* Can use FFT */

@@ -3,7 +3,7 @@
 ;! Clip insignificant pixels
 ;# Task Obit
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006-2010
+;;  Copyright (C) 2006-2012
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 ;;                         National Radio Astronomy Observatory
 ;;                         520 Edgemont Road
 ;;                         Charlottesville, VA 22903-2475 USA
-;-----------------------------------------------------------------------
 ;---------------------------------------------------------------
 CubeClip  LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 CubeClip:  Clip insignificant pixels
@@ -66,7 +65,9 @@ outDisk                            Output disk drive #
 Parms           0.0      9999.0    [0] min. RMS 
                                    [1] min. peak
                                    [2] >0.5 => blank fill
-                                   [3] Convolution size (0->3)
+                                   [3] Acceptance size (0->5)
+**PARAM** int 1 **DEF** 1
+nThreads            0              Number of threads to use
 **PARAM** str 128
 taskLog                            Logfile to write task messages to
 ----------------------------------------------------------------
@@ -76,9 +77,8 @@ Use:  CubeClip Copies a sub region of a cube and replaces values
 below a cutoff value.  This cutoff value is determined for each 
 plane and is the greater of Parms[0] times the RMS of that plane
 (convolved) or Parms[1] times the peak abs. value in that plane. 
-Each plane is convolved with a Gaussian Parms[0] pixels FWHM and 
-a selection mask is derived from the pixels in the result whose 
-values exceed the cutoff value.
+If any pixel within Parms[3] of a given pixel passes the test, 
+the given pixel is passed.
    All CC tables with version numbers corresponding to planes 
 selected will be copied to the output.  Output version numbers 
 will start at 1.
@@ -116,14 +116,18 @@ Adverbs:
                   a fraction of the peak in the plane.
               [2] If > 0.5 then blank fill output otherwise 
                   zero fill. 
-              [3] The size of the Gaussian (FWHM in pixels)
-                  with which to convolve each plane to derive
-                  mask of pixels to be accepted, >=0 => 5
+              [3] The acceptance size  in pixels
+                  If any pixel within Parms[3] pixels of a given
+                  pixel passes the test, the given pixel is 
+                  accepted. <=0 => 5
                   This allows inclusion of low level emission
                   and regions adjacent to bright emission.
+  nThreads....If The Obit libraries are compiled with multiple
+              thread operation enabled, this parameter sets the 
+              number of threads that can be used for parallel 
+              operations. 
+              NB: This only improves performance if there are 
+              multiple processors and/or cores in the host.
   taskLog.....Log file to write messages to INSTEAD of the terminal
-              This is useful in long runs or batch files where
-              a bug in the ObitTalk message handling may cause
-              tasks to hang.  Path is absolute or relative to where
-              the task executes.
+              Path is absolute or relative to where the task executes.
 ----------------------------------------------------------------

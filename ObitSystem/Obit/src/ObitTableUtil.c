@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2010                                          */
+/*;  Copyright (C) 2004-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -518,7 +518,8 @@ MakeSortStruct (ObitTable *in, olong which[2], gboolean desc,
   gpointer out = NULL;
   ObitTableRow *row;
   ObitSortStruct *entry;
-  olong irow, nrow, tsize, ttsize, count, col, cell, byteOffset, i;
+  olong irow, nrow, ttsize, col, cell, byteOffset, i;
+  ollong tsize, count;
   ObitInfoType itype;
   gint32 dim[MAXINFOELEMDIM];
   /* Pointers for row data */
@@ -574,7 +575,12 @@ MakeSortStruct (ObitTable *in, olong which[2], gboolean desc,
 
 
   /* Total size of structure in case all rows valid */
-  tsize = (*size) * (nrow+10);
+  tsize = (*size);
+  tsize *= (nrow+10);
+
+  /* If 32 bit check range */
+  Obit_retval_if_fail(((sizeof(olong*)>4) || (tsize<1000000000)), err, out, 
+		      "%s: Too many records to sort on 32 bit system", routine);
   out = g_malloc(tsize);   /* create output structure */
   
   /* Compare 1 except for strings */
@@ -740,7 +746,7 @@ MakeSortStruct2f (ObitTable *in, olong which[4], gboolean desc1,
   /* error checks */
   g_assert (ObitErrIsA(err));
   if (err->error) return out;
-  g_assert (ObitTableIsA(in));
+  g_assert (ObitTableIsA(in)); 
 
   /* Get table info */
   nrow = in->myDesc->nrow;
@@ -1333,7 +1339,8 @@ ReorderTable(ObitTable *in, gpointer base, olong size, olong number,
   ObitTableRow *row = NULL;
   ObitSortStruct *entry;
   ObitIOStatus saveStatus;
-  olong count, irow, orow, tabVer;
+  olong irow, orow, tabVer;
+  ollong count;
   gchar *routine = "ReorderTable";
 
   /* error checks */

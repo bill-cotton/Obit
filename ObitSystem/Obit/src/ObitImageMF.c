@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2011                                          */
+/*;  Copyright (C) 2010-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -890,10 +890,17 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
       } else {  /* may split IFs */
 	/* A break in this IF? */
 	while (!done) {
-	  iCh = (olong)(0.5 + (mxFreq-freqLo) / uvdesc->cdelt[uvdesc->jlocf]) - 1;
-	  IFBreak[nSpec]   = iif;
-	  ChBreak[nSpec++] = MIN (nChan, iCh);
-	  mxFreq += maxFBW * freqLo;
+	  /* Gap in frequency? */
+	  if (freqLo>mxFreq) {
+	    IFBreak[nSpec]   = iif-1;
+	    ChBreak[nSpec++] = nChan-1;
+	    mxFreq = (1.0+maxFBW) * freqLo;  /* Highest frequency in next bin */
+	  } else {  /* no gap */
+	    iCh = (olong)(0.5 + (mxFreq-freqLo) / uvdesc->cdelt[uvdesc->jlocf]) - 1;
+	    IFBreak[nSpec]   = iif;
+	    ChBreak[nSpec++] = MIN (nChan, iCh);
+	    mxFreq += maxFBW * freqLo;
+	  }
 	  done = freqHi<mxFreq;
 	  /* Check blown array */
 	  Obit_return_if_fail((nSpec<=nBreak), err, 
@@ -939,14 +946,14 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
 	in->BChanSpec[i] = 0;
 	in->EChanSpec[i] = nChan-1;
       } else {  /* Split across IFs */
-	  in->BIFSpec[i]     = IFBreak[i];
-	in->BChanSpec[i]   = ChBreak[i]+1;
-	if (in->BChanSpec[i]>nChan) {  /* Into next IF? */
-	  in->BChanSpec[i]  = 1;
-	  in->BIFSpec[i]   += 1         ;
-	}
-	in->EIFSpec[i]     = IFBreak[i+1];
-	in->EChanSpec[i]   = ChBreak[i+1];
+	  in->BIFSpec[i]   = IFBreak[i];
+	  in->BChanSpec[i] = ChBreak[i]+1;
+	  if (in->BChanSpec[i]>=nChan) {  /* Into next IF? */
+	    in->BChanSpec[i]  = 0;
+	    in->BIFSpec[i]   += 1         ;
+	  }
+	  in->EIFSpec[i]     = IFBreak[i+1];
+	  in->EChanSpec[i]   = ChBreak[i+1];
       }
     } /* end loop */
       /* end multi channel out */
