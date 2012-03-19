@@ -1053,6 +1053,51 @@ def EVLAQuack(uv, err, \
     return 0
     # end EVLAQuack
     
+def EVLAShadow(uv, err, shadBl=25.0, flagVer=2, \
+                  check=False, debug=False, logfile = ""):
+    """
+    Flags antennas shadowed by others
+    
+    See documentation for task AIPSD/UVFLG for details
+    Returns task error code, 0=OK, else failed
+
+    * uv       = UV data object to flag
+    * err      = Obit error/message stack
+    * shadBL   = Minimum shadowing baseline (m)
+    * flagVer  = Flag table version, 0 => highest
+    * check    = Only check script, don't execute tasks
+    * debug    = Run tasks debug, show input
+    * logfile  = Log file for task
+    """
+    ################################################################
+    mess =  "Shadow flag data"
+    printMess(mess, logfile)
+    uvflg=AIPSTask.AIPSTask("uvflg")
+    
+    if not check:
+        setname(uv, uvflg)
+    uvflg.opcode    = "FLAG"
+    uvflg.aparm[5]  = shadBl
+    uvflg.outfgver  = flagVer
+    uvflg.reason    = "Shadowed"
+    uvflg.logFile   = logfile
+    uvflg.msgkill   = 5        # Suppress blather
+    if debug:
+        uvflg.i
+    # Trap failure
+    try:
+        if not check:
+            uvflg.g
+    except Exception, exception:
+        print exception
+        mess = "UVFLG Failed retCode= "+str(uvflg.retCode)
+        printMess(mess, logfile)
+        return 1
+    else:
+        pass
+    return 0
+    # end EVLAShadow
+    
 def EVLAAutoFlag(uv, target, err, \
                      doCalib=0, gainUse=0, doBand=0, BPVer=0, flagVer=-1, \
                      flagTab=2, VClip=[0.0,0.0], IClip=[0.0,0.0], XClip=[0.0,0.0], minAmp=0.0, \
@@ -2569,6 +2614,13 @@ def EVLAPolCal(uv, InsCals, err, RM=0.0, \
         pcal.soltype = soltype
         pcal.solint  = solInt
         pcal.refant  = refAnt
+        pcal.spectral= 1.0;   # Channel by channel
+        # DEBUG - doesn't help
+        pcal.soltype   = 'RAPR'
+        pcal.intparm[1] = 3.0; pcal.intparm[2] = 11;
+        #pcal.spectral  = -1.0;    # NO Channel by channel
+        #pcal.h
+        pcal.msgkill   = 5        # Suppress blather
         pcal.prtlev  = 1
         i = 1;
         for d in noScrat:

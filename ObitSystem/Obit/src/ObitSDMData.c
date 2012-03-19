@@ -844,11 +844,11 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
   ASDMSpectralWindowArray* out=NULL;
   olong configDescriptionId, dataDescriptionId, spectralWindowId, *dataDescriptions;
   olong jPoln, polarizationId;
-  olong i, j, k, iMain, iConfig, jSW, iSW, jDD, numDD, iJD, ncomp;
-  odouble JD;
+  olong i, ii, j, jj, k, iMain, iConfig, jSW, iSW, jDD, numDD, iJD, ncomp;
+  odouble JD, deltaFreq;
   gboolean first = TRUE, isALMA;
   ASDMSpectralWindowArrayEntry **twinds=NULL;
-  ofloat *sortStruct=NULL;
+  ofloat refChan, *sortStruct=NULL;
   gint number;
   size_t size;
 
@@ -930,6 +930,7 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
     out->winds[iSW]->netSideband      = g_strdup(in->SpectralWindowTab->rows[jSW]->netSideband);
     out->winds[iSW]->refFreq          = in->SpectralWindowTab->rows[jSW]->refFreq;
     out->winds[iSW]->totBandwidth     = in->SpectralWindowTab->rows[jSW]->totBandwidth;
+    out->winds[iSW]->refChan          = 1.0;
     /* Which world view - single channel info or array of everything */
     if (in->SpectralWindowTab->rows[jSW]->chanFreqArray==NULL) { /* Single */
       out->winds[iSW]->chanFreqStart    = in->SpectralWindowTab->rows[jSW]->chanFreqStart;
@@ -1024,6 +1025,27 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
       out->order[i] = j;
     }
   } /* end sorting frequencies */
+
+  /* Trap zero reference frequency - use middle channel */
+  for (ii=0; ii<out->nwinds; ii++) {
+    if (out->winds[ii]->selected) {
+      /* Trap zero reference frequency - use middle channel */
+      if (out->winds[ii]->chanFreqStart <= 0.0) {
+	refChan = (out->winds[ii]->numChan/2.0) + 1.0;
+	deltaFreq = (out->winds[ii]->numChan/2.0) * 
+	  fabs((ofloat)out->winds[ii]->chanFreqStep);
+	/* Shift all SW frequencies */
+	for (jj=ii; jj<out->nwinds; jj++) {
+	  if (out->winds[jj]->selected) {
+	    out->winds[jj]->chanFreqStart += deltaFreq;
+	    out->winds[jj]->refFreq       += deltaFreq;
+	    out->winds[jj]->refChan        = refChan;
+	  }
+	}
+      }
+      break;
+    }
+  } /* end loop over spectral windows */
 
   /* Set reference frequency to first ordered Spectral window */
   out->refFreq = out->winds[0]->chanFreqStart;
@@ -1290,6 +1312,14 @@ ASDMSourceArray* ObitSDMDataGetSourceArray (ObitSDMData *in)
     for (iField=0; iField<in->FieldTab->nrows; iField++) {
      if (in->FieldTab->rows[iField]->sourceId==sourceId) break;
        } /* end loop over fields */
+    /* Try again with source names if not found */
+    if (iField>=in->FieldTab->nrows) {
+      for (iField=0; iField<in->FieldTab->nrows; iField++) {
+	if (!strcmp(in->FieldTab->rows[iField]->fieldName, 
+		    in->SourceTab->rows[iSource]->sourceName)) break;
+      } /* end loop over fields */
+      /* Try again with source names if not found */
+    }
     if (iField>=in->FieldTab->nrows) return NULL;
     
     /* Save code - ignore terminally stupid "NONE" */

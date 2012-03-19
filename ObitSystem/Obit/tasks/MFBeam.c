@@ -2087,10 +2087,10 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
       imgOK = TRUE; 
      
-      /* Make sure image Cleaned if Self cal wanted */
-      if (doSC) {
-	Obit_return_if_fail((myClean->Pixels->currentIter>0), err, 
-			    "%s: Image NOT CLEANed", routine);
+      /* Make sure image Cleaned if Self cal wanted, if no CLEAN skip loop */
+      if (myClean->Pixels->currentIter<=0) {
+	doSC = FALSE;
+	break;
       }
 
       /* Only recenter once */

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2011                                          */
+/*;  Copyright (C) 2005-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -601,7 +601,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   in->doBeam = FALSE;                               /* Shouldn't need again */
 
   /* Restart CLEAN here if more CLEANable found at end */
-  damnCnt = lastIter = lastFld = 0;
+  damnCnt   = lastIter = lastFld = 0;
  doRedo:
   in->Pixels->complCode = OBIT_CompReasonUnknown;   /* Clean not yet started */
   /* Create local arrays */
@@ -654,16 +654,17 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
     /* Get image/beam statistics needed for this cycle */
     notDone = inClass->ObitDConCleanPixelStats((ObitDConClean*)in, pixarray, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
-    if (!notDone) {
-      /* Nothing to do in current list */
-      for (ifld=0; ifld<in->nfield; ifld++) {
-	if (in->currentFields[ifld] <= 0) break;  /* List terminates? */
-	in->quality[in->currentFields[ifld]-1]   = 0.0;
-	in->cleanable[in->currentFields[ifld]-1] = 
-	  -in->cleanable[in->currentFields[ifld]-1];
-	
-      }
-    }
+
+    /* Was a new window added?  Not sure what this was for 
+       if (!notDone) {*/
+       /* Nothing to do in current list */
+       /* for (ifld=0; ifld<in->nfield; ifld++) {
+       if (in->currentFields[ifld] <= 0) break;
+       in->quality[in->currentFields[ifld]-1]   = 0.0;
+       in->cleanable[in->currentFields[ifld]-1] = 
+       -in->cleanable[in->currentFields[ifld]-1];
+       }
+       } */
     
     /*fprintf (stderr,"DEBUG doMore %d done %d\n", doMore, done);*/
 
@@ -1116,7 +1117,7 @@ void ObitDConCleanVisSub(ObitDConCleanVis *in, ObitErr *err)
  */
 static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
 {
-  olong i, best, lastBest=-1, loopCheck, indx, NumPar;
+  olong i, best, lastBest=-1, loopCheck, indx, NumPar, isAuto;
   olong *fldList=NULL;
   gboolean *fresh, doBeam=FALSE, done=TRUE, found, OK;
   ofloat sumwts, autoCenFlux=0.0;
@@ -1199,8 +1200,12 @@ static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
 	fldList[indx++] = i+1;
 	fresh[i] = TRUE;
       }
+      /* Mark shifted fields corresponding to autoCen fields fresh if they are */
+      isAuto = in->mosaic->isAuto[i];
+      if (isAuto>0) fresh[isAuto-1] = fresh[i];
     } /* end loop initializing fields */
     
+
     /* Make residual images */
     if (fldList[0]>0) inClass->MakeResiduals(in, fldList, doBeam, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, done);
@@ -1281,6 +1286,9 @@ static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
 	in->cleanable[fldList[i]-1] = -in->cleanable[fldList[i]-1];
       }
       fresh[fldList[i]-1] = TRUE;
+      /* Mark shifted fields corresponding to autoCen fields fresh if they are */
+      isAuto = in->mosaic->isAuto[fldList[i]-1];
+      if (isAuto>0) fresh[isAuto-1] = fresh[fldList[i]-1];
     }
     
     /* See if all done */
@@ -3414,7 +3422,7 @@ static void OrderClean (ObitDConCleanVis *in, gboolean *fresh,
                         ofloat autoCenFlux, olong *fldList)
 {
   ofloat *tmpQual=NULL, maxQual, bestQual, testBest, bestClean;
-  olong i, n, indx, best;
+  olong i, n, indx, best, isShift;
   gboolean OK, done, isAuto=FALSE;
   
   /* Find absolute best */
@@ -3433,6 +3441,15 @@ static void OrderClean (ObitDConCleanVis *in, gboolean *fresh,
     OK = OK && ((in->mosaic->BeamTaper[i]>=in->minBeamTaper) && 
 		(in->mosaic->BeamTaper[i]<=in->maxBeamTaper));
 
+    /* Ignore shifted fields with cleanable > autoCenFlux */
+    isShift = in->mosaic->isShift[i];
+    if ((isShift>0) && (in->cleanable[isShift-1]>autoCenFlux)) 
+      OK = FALSE;
+ 
+    /* Ignore autoCenter fields with cleanable < autoCenFlux */
+    if ((in->mosaic->isAuto[i]>=0) && (in->cleanable[i]<autoCenFlux)) 
+      OK = FALSE;
+    
     if (!OK) continue;  /* Ignore not OK */
 
     if (in->quality[i]>testBest) {
@@ -3456,12 +3473,20 @@ static void OrderClean (ObitDConCleanVis *in, gboolean *fresh,
     else
       OK = in->imgPeakRMS[i]>1.0;
 
-    /* Test BeamTaper */
-    OK = ((in->mosaic->BeamTaper[i]>=in->minBeamTaper) && 
-	  (in->mosaic->BeamTaper[i]<=in->maxBeamTaper));
+    /* Ignore shifted fields with cleanable > autoCenFlux */
+    isShift = in->mosaic->isShift[i];
+    if ((isShift>0) && (in->cleanable[isShift-1]>autoCenFlux)) 
+      OK = FALSE;
 
-    if (fresh[i] && OK && (in->mosaic->isShift[i]<0))
-      tmpQual[i] = in->quality[i];
+    /* Ignore autoCenter fields with cleanable < autoCenFlux */
+    if ((in->mosaic->isAuto[i]>=0) && (in->cleanable[i]<autoCenFlux)) 
+      OK = FALSE;
+    
+    /* Test BeamTaper */
+    OK = OK && ((in->mosaic->BeamTaper[i]>=in->minBeamTaper) && 
+		(in->mosaic->BeamTaper[i]<=in->maxBeamTaper));
+
+    if (fresh[i] && OK) tmpQual[i] = in->quality[i];
     else tmpQual[i] = -1.0e20;
     if (tmpQual[i]>bestQual) {
       bestQual = tmpQual[i];                 /* Best quality */
@@ -3471,7 +3496,7 @@ static void OrderClean (ObitDConCleanVis *in, gboolean *fresh,
     }
   } 
 
-  /* Loop finding an dropping best until all gone */
+  /* Loop finding and dropping best until all gone */
   indx = 0;
   while (1) {    /* Sort loop */
     maxQual = -1.0e18;
@@ -3482,7 +3507,16 @@ static void OrderClean (ObitDConCleanVis *in, gboolean *fresh,
       if ((in->mosaic->BeamTaper[i]<in->minBeamTaper) || 
 	  (in->mosaic->BeamTaper[i]>in->maxBeamTaper)) continue;
 
-      if ((tmpQual[i]>maxQual) &&                    /* Best so far */
+      /* Ignore shifted fields with cleanable > autoCenFlux */
+      isShift = in->mosaic->isShift[i];
+      if ((isShift>0) && (in->cleanable[isShift-1]>autoCenFlux)) 
+	continue;
+
+      /* Ignore autoCenter fields with cleanable < autoCenFlux */
+      if ((in->mosaic->isAuto[i]>=0) && (in->cleanable[i]<autoCenFlux)) 
+	continue;
+    
+     if ((tmpQual[i]>maxQual) &&                    /* Best so far */
 	  (!isAuto || (in->mosaic->isAuto[i]>=0))) { /* Only autoCenter if isAuto */
 	maxQual = tmpQual[i];
 	best = i;
@@ -3532,7 +3566,7 @@ static void OrderClean (ObitDConCleanVis *in, gboolean *fresh,
  */
 static gboolean SelectTaper (ObitDConCleanVis *in, gboolean *fresh, ObitErr *err)
 {
-  olong i, j, l, n, m, best, bestTap[30], *fldList=NULL;
+  olong i, j, l, n, m, best, bestTap[30], *fldList=NULL, isAuto;
   ofloat test, bestTest, bestQuality, bestSNR, maxTape;
   ofloat fact1, fact2, fact3, minT, maxT, cells, minFlux, beamrat=1.0;
   gboolean done=FALSE, doBeam=FALSE;
@@ -3567,6 +3601,9 @@ static gboolean SelectTaper (ObitDConCleanVis *in, gboolean *fresh, ObitErr *err
       }
       fresh[l] = TRUE;  /* Mark as fresh */
     }
+    /* Mark shifted fields corresponding to autoCen fields fresh if they are */
+    isAuto = in->mosaic->isAuto[l];
+    if (isAuto>0) fresh[isAuto-1] = fresh[l];
     i++;
   } /* end finding facets to be remade */
   

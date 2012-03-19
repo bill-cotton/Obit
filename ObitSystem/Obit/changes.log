@@ -425,3 +425,29 @@ Obit/tasks/BeamCor.c Obit/tasks/Squint.c Obit/tasks/MFBeam.c:
 Obit/TDF/MFImage.TDF:
   Change defaults for PBCor, antSize
 2 Mar. 2012, ver 410
+
+BDFIN changed for Bryan B., Fixes for ARCADE.
+ svn add \
+  Obit/include/ObitSourceEphemerusClassDef.h Obit/include/ObitSourceEphemerusDef.h \
+  Obit/include/ObitSourceEphemerus.h Obit/src/ObitSourceEphemerus.c \
+ObitVersion:
+Obit/changes.log:
+Obit/include/ObitSDMDataTypeDef.h Obit/src/ObitSDMData.c:
+Obit/tasks/BDFIn.c:
+  Trap, fix zero reference frequency. Moving sources.
+Obit/tasks/MFImage.c Obit/tasks/Imager.c Obit/tasks/MFBeam.c:
+  Allow no CLEANing and potential self cal.,
+Obit/tasks/CubeClip.c:
+  Fix bug in BLC/TRC
+Obit/include/ObitSourceEphemerusClassDef.h Obit/include/ObitSourceEphemerusDef.h:
+Obit/include/ObitSourceEphemerus.h Obit/src/ObitSourceEphemerus.c:
+  New class for moving source ephemerus
+Obit/python/EVLACal.py Obit/python/EVLAPipeline.py:
+  Shadow flagging, poln cal
+Obit/src/ObitDConCleanVisMF.c:
+  Restore: Check in->Pixels before accessing. XRestore: better isAuto test, etc.
+Obit/src/ObitDConCleanVis.c:
+  OrderClean: Ignore autoCen shifted facets if the autoCen facet > threshold
+Obit/tasks/UVAppend.c Obit/TDF/UVAppend.TDF:
+  New task to append single source UV datasets.
+19 Mar 2012 ver. 411

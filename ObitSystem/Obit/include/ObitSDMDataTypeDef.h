@@ -52,6 +52,8 @@ typedef struct {
   olong nAPoln;
   /** net Sideband */
   gchar *netSideband;
+  /** reference channel */
+  ofloat refChan;
   /** refFreq */
   odouble refFreq;
   /** total Bandwidth (Hz) */

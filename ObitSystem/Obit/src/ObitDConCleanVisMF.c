@@ -496,6 +496,7 @@ void ObitDConCleanVisMFRestore(ObitDConClean *inn, ObitErr *err)
   g_assert (ObitDConCleanVisMFIsA(in));
 
   /* Anything to restore? */
+  if (in->Pixels==NULL) return;
   if (in->Pixels->currentIter<=0) return;
 
   /* Tell user */
@@ -625,7 +626,7 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
 	if (in->prtLv>2) {
 	  Obit_log_error(err, OBIT_InfoErr,
 			 "Cross Restoring %d components facet %d to %d, plane %d",
-			 in->Pixels->iterField[ifield], ifield, jfield, plane[0]);
+			 in->Pixels->iterField[ifield], ifield+1, jfield+1, plane[0]);
 	  ObitErrLog(err);
 	}
 
@@ -634,7 +635,7 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
 
 	/* Cross convolve Gaussians */
 	/* FFT (2D, same grid) or direct convolution */
-	isAuto = in->mosaic->isAuto[ifield]>0;
+	isAuto = (in->mosaic->isAuto[ifield]>0) || (in->mosaic->isAuto[jfield]>0);
  	if (!isAuto && (!image1->myDesc->do3D && !image2->myDesc->do3D) &&
 	    (fabs(image1->myDesc->crval[0]-image2->myDesc->crval[0])<0.01*fabs(image1->myDesc->cdelt[0])) &&
 	    (fabs(image1->myDesc->crval[1]-image2->myDesc->crval[1])<0.01*fabs(image1->myDesc->cdelt[1]))) {
@@ -671,6 +672,8 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
 	    if (err->error) Obit_traceback_msg (err, routine, in->name);
 	  }
 	} else { /* direct convolution */
+	  /* DEBUG 
+	  fprintf (stderr, "XConvlCC: %d %d\n",ifield,jfield);*/
 	  XConvlCC (image2, in->CCver, iplane, image1, accum, err);
 	  if (err->error) Obit_traceback_msg (err, routine, in->name);
 	}
@@ -1557,10 +1560,16 @@ static void XConvlCC(ObitImage *in, olong CCVer, olong iterm,
     }
   }
 
-  /* Actually convolve with imaging taper */
-  bmaj = BeamTaper1;
-  bmin = BeamTaper1;
-  bpa  = 0.0;
+  /* Actually convolve with imaging taper if given */
+  if (BeamTaper1>0.0) {
+    bmaj = BeamTaper1;
+    bmin = BeamTaper1;
+    bpa  = 0.0;
+  } else {
+    bmaj = imDesc1->beamMaj;
+    bmin = imDesc1->beamMin;
+    bpa  = imDesc1->beamPA;
+  }
   
   cellx = imDesc1->cdelt[0];
   celly = imDesc1->cdelt[1];

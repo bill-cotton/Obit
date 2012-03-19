@@ -513,8 +513,8 @@ ObitImage* getInputImage (ObitInfoList *myInput, ObitErr *err)
   gchar        *Type, *strTemp, inFile[129];
   gchar        Aname[13], Aclass[7], *Atype = "MA";
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong         blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
-  olong         trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  olong        blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
+  olong        trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   gchar *routine = "getInputImage";
 
   /* error checks */
@@ -525,10 +525,6 @@ ObitImage* getInputImage (ObitInfoList *myInput, ObitErr *err)
   /* Create basic input UV data Object */
   inImage = newObitImage("input Image");
   
-  /* Get region from myInput */
-  ObitInfoListGetTest(myInput, "BLC", &type, dim, blc); /* BLC */
-  ObitInfoListGetTest(myInput, "TRC", &type, dim, trc); /* TRC */
-
   /* File type - could be either AIPS or FITS */
   ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
   if (!strncmp (Type, "AIPS", 4)) { /* AIPS input */
@@ -592,6 +588,10 @@ ObitImage* getInputImage (ObitInfoList *myInput, ObitErr *err)
   /* Ensure inImage fully instantiated and OK */
   ObitImageFullInstantiate (inImage, TRUE, err);
   if (err->error) Obit_traceback_val (err, routine, "myInput", inImage);
+
+  /* Get region from myInput */
+  ObitInfoListGetTest(myInput, "BLC", &type, dim, blc); /* BLC */
+  ObitInfoListGetTest(myInput, "TRC", &type, dim, trc); /* TRC */
 
    /* Set defaults BLC, TRC */
   for (i=0; i<IM_MAXDIM; i++) {

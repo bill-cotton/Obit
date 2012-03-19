@@ -59,6 +59,7 @@
 #include "ObitPrecess.h"
 #include "ObitVLAGain.h"
 #include "ObitGainCal.h"
+#include "ObitSourceEphemerus.h"
 #ifndef VELIGHT
 #define VELIGHT 2.997924562e8
 #endif
@@ -166,6 +167,7 @@ odouble *arrRefJDCor=NULL; /* Array of input array ref day corrections */
 ObitAntennaList **antennaLists=NULL;  /* Array of antenna lists for uvw calc */
 ObitSourceList *uvwSourceList=NULL;   /* Source List for uvw calc */
 ObitSource     *curSource=NULL;       /* Current source for uvw calc */
+ObitSourceEphemerus *srcEphem=NULL;   /* Source Ephemerus */
 olong uvwSourID=-1;                   /* Source ID for uvw calc */
 olong uvwcurSourID=-1;                /* Current source ID for uvw calc */
 ofloat uvrot=-0.0;                    /* Current source rotation of u-v */
@@ -328,6 +330,7 @@ int main ( int argc, char **argv )
   CalTab   = ObitTableUnref(CalTab);
   SNTab    = ObitTableUnref(SNTab);
   uvwSourceList = ObitUnref(uvwSourceList);
+  srcEphem      = ObitSourceEphemerusUnref(srcEphem);
   if (NXTimes)     g_free(NXTimes);
   if (dataRefJDs)  g_free(dataRefJDs);
   if (arrayRefJDs) g_free(arrayRefJDs);
@@ -755,7 +758,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   ofloat epoch=2000.0, equinox=2000.0;
   olong nchan=1, npoln=1, nIF=1;
   odouble refFreq, startFreq=1.0;
-  ofloat freqStep=1.0;
+  ofloat refChan, freqStep=1.0;
   ASDMSpectralWindowArray* SpWinArray=NULL;
   ASDMAntennaArray*  AntArray;
   ObitInfoType type;
@@ -907,13 +910,14 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   for (i=0; i<SpWinArray->nwinds; i++) {
     if (SpWinArray->winds[i]->selected) {
       nchan     = SpWinArray->winds[i]->numChan;
+      refChan   = SpWinArray->winds[i]->refChan;
       npoln     = SpWinArray->winds[i]->nCPoln;
       refFreq   = SpWinArray->winds[i]->refFreq;
       startFreq = SpWinArray->winds[i]->chanFreqStart;
       freqStep  = fabs((ofloat)SpWinArray->winds[i]->chanFreqStep);
       break;
     }
-  }
+  } /* end loop over spectral windows */
 
   /* EVLA always effectively USB */
   if (!strncmp(AntArray->arrayName, "EVLA", 4)) freqStep = fabs(freqStep );
@@ -1025,7 +1029,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   strncpy (desc->ctype[ncol], "FREQ    ", lim);
   desc->inaxes[ncol] = nchan;
   desc->cdelt[ncol]  = freqStep;
-  desc->crpix[ncol]  = 1.0;
+  desc->crpix[ncol]  = refChan;
   desc->crval[ncol]  = startFreq;
   desc->crota[ncol]  = 0.0;
   ncol++;
@@ -1515,7 +1519,7 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData, 
 		       ASDMSpectralWindowArray* SpWinArray, ObitErr *err)
 /*----------------------------------------------------------------------- */
-/*  Get Source info from ASDM                                             */
+/*  Get Frequency info from ASDM                                          */
 /*  Write FQ table                                                        */
 /*   Input:                                                               */
 /*      SDMData    ASDM structure                                         */
@@ -2238,9 +2242,9 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
   ObitTableSU *SUTable=NULL;
   ObitSource *source=NULL;
   ObitAntennaList *AntList;
-  ofloat time, uvw[3], bl[3], tmp, u, v;
+  ofloat time, uvw[3], bl[3], tmp, u, v, tuvrot;
   odouble arrJD, DecR, RAR, AntLst, HrAng=0.0, ArrLong, ArrLat, dRa;
-  odouble sum, xx, yy, zz, lambda, DecOff, RAOff;
+  odouble sum, xx, yy, zz, lambda, DecOff, RAOff, dist;
   gchar *routine = "CalcUVW";
 
   /* error checks */
@@ -2251,6 +2255,14 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
     HoloUVW (outData, BDFData, Buffer, err);
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
     return;
+  }
+
+  /* Need source ephemerus for moving targets? */
+  if (srcEphem==NULL) {
+    srcEphem = ObitSourceEphemerusCreate("Ephemerus");
+    ObitSourceEphemerusSetup (srcEphem, BDFData->SDMData, 10.0/86400.0,
+			      outData->myDesc, err);
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
   }
 
   /* Which antennas? */
@@ -2328,7 +2340,7 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
     }
   } /* end create source list */
 
-  /* New source? */
+  /* New source?  */
   souId = (olong)Buffer[BDFData->desc->ilocsu];
   if (uvwSourID!=souId ) {
     uvwSourID = souId;
@@ -2369,16 +2381,21 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
   bl[1] =  AntList->ANlist[ant1-1]->AntXYZ[1] - AntList->ANlist[ant2-1]->AntXYZ[1];
   bl[2] =  AntList->ANlist[ant1-1]->AntXYZ[2] - AntList->ANlist[ant2-1]->AntXYZ[2];
 
-  /* Position in radians */
-  RAR  = uvwSourceList->SUlist[uvwcurSourID]->RAApp*DG2RAD;
-  DecR = uvwSourceList->SUlist[uvwcurSourID]->DecApp*DG2RAD;
-
-  /* LST and hour angle (radians) */
+   /* LST and hour angle (radians) */
   time   = Buffer[BDFData->desc->iloct];
   AntLst = AntList->GSTIAT0 + ArrLong + time*AntList->RotRate;
-  HrAng  = AntLst - RAR;
+
+ /* Moving target? */
+  if (ObitSourceEphemerusCheckSource(srcEphem, souId, time, &RAR, &DecR, &dist, &tuvrot)) {
+    uvrot = tuvrot;
+  } else {    
+    /* non moving position in radians */
+    RAR  = uvwSourceList->SUlist[uvwcurSourID]->RAApp*DG2RAD;
+    DecR = uvwSourceList->SUlist[uvwcurSourID]->DecApp*DG2RAD;
+  }
 
   /* Compute uvw - short baseline approximation */
+  HrAng  = AntLst - RAR;
   ObitUVUtilUVW (bl, DecR, (ofloat)HrAng, uvw);
 
   /* Rotate in u-v plane to north of standard epoch */

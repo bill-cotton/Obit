@@ -58,6 +58,9 @@ quackBegDrop= 0.1          # Time to drop from start of each scan in min
 quackEndDrop= 0.1          # Time to drop from end of each scan in min
 quackReason   = "Quack"    # Reason string
 
+doShadow      = True       # Shadow flagging
+shadBl        = 25.0       # Minimum shadowing baseline (m)
+
 doMedn      = True         # Median editing?
 mednSigma   = 10.0         # Median sigma clipping level
 timeWind    = 2.0          # Median window width in min for median flagging
@@ -347,6 +350,13 @@ if doQuack:
                              logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error Quacking data"
+
+# Flag antennas shadowed by others?
+if doShadow:
+    retCode = EVLAShadow (uv, err, shadBl=shadBl, \
+                          logfile=logFile, check=check, debug=debug)
+    if retCode!=0:
+        raise RuntimeError,"Error Shadow flagging data"
 
 # Median window time editing, for RFI impulsive in time
 if doMedn:

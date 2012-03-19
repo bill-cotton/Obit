@@ -1818,7 +1818,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   ofloat       alpha, noalpha, minFlux=0.0;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean     Fl = FALSE, Tr = TRUE, init=TRUE, doRestore, doFlatten, doSC, doBeam;
-  gboolean     noSCNeed, reimage, didSC=FALSE, imgOK=FALSE, converged = FALSE; 
+  gboolean     noSCNeed, reimage, didSC=FALSE, imgOK=FALSE, converged = FALSE;
   gboolean     btemp, noNeg, doneRecenter=FALSE;
   gchar        soltyp[5], solmod[5], stemp[5];
   gchar        *SCParms[] = {  /* Self cal parameters */
@@ -1889,6 +1889,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   ObitInfoListAlwaysPut (myClean->info, "autoCen", OBIT_float, dim, &ftemp);
 
   /* Create selfCal if needed */
+  if (maxPSCLoop<=0) maxASCLoop = 0;  /* Need phase self cal first */
   doSC = ((maxPSCLoop>0) || (maxASCLoop>0));
   if (doSC>0) {
     selfCal = ObitUVSelfCalCreate ("SelfCal", myClean->skyModel);
@@ -1954,10 +1955,10 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
       imgOK = TRUE; 
      
-      /* Make sure image Cleaned if Self cal wanted */
-      if (doSC) {
-	Obit_return_if_fail((myClean->Pixels->currentIter>0), err, 
-			    "%s: Image NOT CLEANed", routine);
+      /* Make sure image Cleaned if Self cal wanted, if no CLEAN skip loop */
+      if (myClean->Pixels->currentIter<=0) {
+	doSC = FALSE;
+	break;
       }
 
       /* Only recenter/reimage once */
