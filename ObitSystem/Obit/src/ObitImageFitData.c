@@ -125,7 +125,7 @@ ObitImageFitDataCreate (gchar* name, ObitFitRegion *reg,
 			ObitInfoList *bounds, ObitImage *image, ObitErr *err)
 {
   ObitImageFitData* out=NULL;
-  gint32       dim[MAXINFOELEMDIM];
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   olong blc[2], trc[2],pos[2] ;
   ofloat cells, rmax, rmin, rms, fblank=ObitMagicF();

@@ -171,6 +171,8 @@ DecShift                           Declination shift (AIPS convention)
 
 **PARAM** float 3
 UVTaper         0.                 (U,V) Gaussian taper klambda
+**PARAM** float 1  **DEF** 0.8
+MFTaper                            Multi frequency Taper Factor
 **PARAM** float 2
 UVRange         0.                 Min & max baseline (klambda)
 **PARAM** float 1
@@ -415,6 +417,11 @@ beam models.  Then any Stokes V, Q, or U imaging is done.
 In this case, the error messages will be displayed and the Status in
 the PS table set to "Failed  " rather than "Done    ".
 
+  The technique used in this program depends on at least approximately
+constant resolution with frequency.  There are a couple means of
+achieving this.  See the explain section "Frequency Dependent
+Resolution" for details
+
 Adverbs:
   DataType..'FITS' or 'AIPS'  type of input/output
   inFile.....FITS input uvdata if DataType=='FITS'
@@ -652,6 +659,11 @@ Adverbs:
                the FOV or the program may die.
   UVTaper....(U,V) Gaussian taper (kilo-lambda) at 30% level
              as (major, minor axis, position angle)
+  MFTaper....Multi frequency taper factor to control the frequency 
+             dependent taper to get constant resolution with frequency.
+             Values between 0.5 and 1.0 are plausible but depend on 
+             the actual uv coverage.
+             If <0 then do not apply frequency dependent taper.
   UVRange....(Minimum,Maximum) baseline (kilo-lambda) to
              process. 
   Robust.....Briggs' "robustness" parameter.  "Uniform" weights are
@@ -894,6 +906,48 @@ Adverbs:
               wish scratch files
 ----------------------------------------------------------------
 
+
+Multi resolution CLEAN:
+The MR Clean attempts to avoid the corrugation and S/N issues by using
+more than one component diameter in the modeling.  
+
+Frequency Dependent Resolution
+------------------------------
+   The natural resolution of an interferometer is inversely
+proportional to the frequency but for the algorithm used in this
+program to work properly, the resolution must be at least
+approximately constant.
+   There are two means provided to attempt this, the patameter,
+MFTaper which is used to adjust an algorithm attemption to give
+constant resolution.  The default value, 0.8, is approximately correct
+for VLA uv coverage but depends in detail on the actual coverage.  The
+achieved beams can be determined using saveBeam=True and then Image
+class function GaussFit.
+
+   If no value of MFTaper is adequate, it is possible to specify the
+Robustness factor and a convolving Taper for each IF selected in the
+data.   The paraleters RobustIF and TaperIF need to be defined and
+added to the task interface object (mf in the following examples):
+RobustIF=[0.0,0.1,0.2,0.3]  # One element per IF
+addParam(mf,"RobustIF", paramVal=RobustIF, shortHelp="Robust per IF", \
+	longHelp="  RobustIF....Robust per IF\n"+ \
+	"              Give only for selected IFs\n")
+ # One element per IF:
+TaperIF=[1000.,20.,0., 1000.,20.,0., 1000.,21.,0., 1000.,22.,0.] 
+addParam(mf,"TaperIF", paramVal=TaperIF, shortHelp="Taper per IF", \
+	longHelp="  TaperIF....Taper per IF\n"+ \
+	"              Give only for selected IFs\n")
+
+RobustIF and TaperIF have the same meaning as Robust and UVTaper.
+
+   When the CLEAN is finished and before restoration of CLEAN
+components, the beam psf in each plane of each facet is fitted by an
+elliptical Gaussian and the residual image convolved with a Gaussian
+which when convolved with the fitted psf will give the restoring beam.
+(Note, any dimensions for which the fitted beam is larger that the
+restoring beam are replaces by zero size).  The intent of this is that
+the residuals have the same resolution as the CLEANed portion of the
+image. 
 
 PS Table
 --------

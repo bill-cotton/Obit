@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2011                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -215,5 +215,7 @@ void ObitImageUtilTwoDShift (ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
 void ObitImageUtilT2Spec  (ObitImage *inImage, ObitImage **outImage, 
 			   olong nTerm, olong *inCCVer, olong *outCCVer,
 			   olong startComp, olong endComp, ObitErr *err);
+/** Fit beam size to dirty beam */
+void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err);
 
 #endif /* OBITIMAGEUTIL_H */ 

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2011                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -48,6 +48,7 @@
 #include "ObitUVImager.h"
 #include "ObitFFT.h"
 #include "ObitTableCCUtil.h"
+#include "ObitImageFit.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -94,9 +95,6 @@ typedef struct {
 /** Private: Get Date string for current date */
 static void ObitImageUtilCurDate (gchar *date, olong len);
 
-/** Private: Fit Beam size to dirty beam */
-static void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err);
-
 /** Private: Threaded Image interpolator */
 static gpointer ThreadImageInterp (gpointer arg);
 
@@ -109,6 +107,7 @@ static olong MakeInterpFuncArgs (ObitThread *thread, olong radius,
 
 /** Private: Delete Threaded Image interpolator args */
 static void KillInterpFuncArgs (olong nargs, InterpFuncArg **ThreadArgs);
+
 
 /*----------------------Public functions---------------------------*/
 
@@ -483,7 +482,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
   ObitImageDesc *imDesc, *bmDesc;
   ObitIOSize IOBy;
   ObitInfoType type;
-  ofloat sumwts, imMax, imMin, BeamTaper=0., BeamNorm=0.0, Beam[3]={0.0,0.0,0.0};
+  ofloat sumwts, imMax, imMin, BeamTaper=0., BeamNorm=0.0, Beam[3];
   gchar *outName=NULL;
   olong plane[5], pln, NPIO, oldNPIO;
   olong i, ichannel, icLo, icHi, norder=0, iorder=0;
@@ -509,6 +508,9 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
   /* Apply uniform weighting? */
   if (doWeight) ObitUVWeightData (inUV, err);
   if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+
+  /* Get restoring beam */
+  ObitInfoListGetTest(inUV->info, "Beam", &type, dim, Beam);
 
   /* Need new gridding member? */
   outName = g_strconcat ("UVGrid for: ",inUV->name,NULL);
@@ -684,11 +686,11 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
 	  ObitInfoListGetTest(outImage->myDesc->info, "BeamTapr", &type, dim, &BeamTaper);
 	  if ((Beam[0]>0.0) && (BeamTaper<=0.0)) {
 	    Obit_log_error(err, OBIT_InfoErr, 
-			 "Using Beam %f %f %f", Beam[0], Beam[1], Beam[2]);
-	    theBeam->myDesc->beamMaj = Beam[0]/3600.0;
-	    theBeam->myDesc->beamMin = Beam[1]/3600.0;
-	    theBeam->myDesc->beamPA  = Beam[2];
-	  }	  
+	     "Using Beam %f %f %f", Beam[0], Beam[1], Beam[2]);
+	     theBeam->myDesc->beamMaj = Beam[0]/3600.0;
+	     theBeam->myDesc->beamMin = Beam[1]/3600.0;
+	     theBeam->myDesc->beamPA  = Beam[2];
+	     }
 	}  /* End dirty beam stuff */
 	
 	/* Close Image */
@@ -1170,13 +1172,13 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
 	  /* Beam specified? */
 	  ObitInfoListGetTest(outImage[j]->myDesc->info, "BeamTapr", &type, dim, &BeamTaper);
 	  if ((Beam[0]>0.0) && (BeamTaper<=0.0)) {
-	    if (j==0)
-	      Obit_log_error(err, OBIT_InfoErr, 
-			     "Using Beam %f %f %f", Beam[0], Beam[1], Beam[2]);
-	    theBeam->myDesc->beamMaj = Beam[0]/3600.0;
-	    theBeam->myDesc->beamMin = Beam[1]/3600.0;
-	    theBeam->myDesc->beamPA  = Beam[2];
-	  }
+	     if (j==0)
+	     Obit_log_error(err, OBIT_InfoErr, 
+	     "Using Beam %f %f %f", Beam[0], Beam[1], Beam[2]);
+	     theBeam->myDesc->beamMaj = Beam[0]/3600.0;
+	     theBeam->myDesc->beamMin = Beam[1]/3600.0;
+	     theBeam->myDesc->beamPA  = Beam[2];
+	     } 
 	  
 	  /* Save last beam normalization in Beam infoList as "SUMWTS" */
 	  sumwts = outImage[j]->myGrid->BeamNorm;
@@ -4478,6 +4480,147 @@ void ObitImageUtilT2Spec  (ObitImage *inImage, ObitImage **outImage,
 
   } /* end ObitImageUtilT2Spec */
 
+/**
+ * Fit Gaussian to a Beam.
+ * Adapted from AIPS BMSHP.FOR, FITBM.FOR
+ * \param beam  Beam image to fit.  
+ *        Plane specified in info list member "PLANE" [def 1]
+ * \param err   Error stack, returns if not empty.
+ */
+void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err)
+{
+  olong blc[2], trc[2], center[2], prtLv, iplane, plane[] = {1,1,1,1,1};
+  ofloat peak, cellx, celly;
+  ofloat bmaj, bmin, bpa, dx, dy;
+  olong nmodel, nparm, corner[2], fdim[2];
+  ofloat Peak, RMSResid, peakResid, fluxResid, DeltaX,  DeltaY, parms[3];
+  ObitFArray *beamData = NULL, *beamCenter = NULL, *matx = NULL;
+  ObitImageFit *imFit=NULL;
+  ObitFitRegion *reg=NULL;
+  ObitFitModel **models = {NULL};
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *routine = "ObitImageUtilFitBeam";
+
+   /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return;
+  g_assert (ObitImageIsA(beam));
+
+  /* plane number */
+  iplane = 1;
+  ObitInfoListGetTest(beam->info, "PLANE", &type, dim, &iplane);
+  plane[0] = iplane;
+
+  /* Read beam if necessary */
+  if (beam->image==NULL) ObitImageGetPlane (beam, NULL, plane, err);
+  if (err->error) goto cleanup;
+
+  /* Trim edges of beam */
+  blc[0] = 5;
+  blc[1] = 5;
+  trc[0] = beam->image->naxis[0]-5;
+  trc[1] = beam->image->naxis[1]-5;
+  beamCenter = ObitFArraySubArr (beam->image, blc, trc, err);
+  if (err->error) goto cleanup;
+
+  /* Find center */
+  peak = ObitFArrayMax (beamCenter, center);
+  if (peak<0.1) goto cleanup;
+
+  /* Close Beam */
+  if ((ObitImageClose (beam, err)  
+       != OBIT_IO_OK) || (err->error>0)) {  /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR closing image %s",  
+		   routine, beam->name); 
+    goto cleanup; 
+  }
+
+  /* Center better be 1.0 */
+  if (fabs (peak-1.0) > 0.001) { 
+    Obit_log_error(err, OBIT_Error,  
+      		   "Beam peak (%f) not 1.0 for %s",  
+      		   peak, beam->name); 
+    goto cleanup; 
+  } 
+
+  /* Image info */
+  cellx = beam->myDesc->cdelt[0];
+  celly = beam->myDesc->cdelt[1];
+
+  /* Fit Gaussian */
+  /* Initial model */
+  Peak   = 1.0;
+  DeltaX = 11.0;
+  DeltaY = 11.0;
+  nparm  = 3;
+  parms[0]  = parms[1] = 3.0; parms[2] = 0.0;
+  nmodel = 1;
+  models = g_malloc0(sizeof(ObitFitModel*));
+  models[0] = ObitFitModelCreate ("model", OBIT_FitModel_GaussMod, 
+				  Peak, DeltaX, DeltaY, nparm, parms);
+  /* Fitting region */
+  corner[0] = center[0]+5-10; corner[1] = center[1]+5-10;
+  fdim[0]   = fdim[1] = 21;
+  peakResid = fluxResid = RMSResid = 0.0;
+  reg    = ObitFitRegionCreate ("reg", corner, fdim, Peak, 
+				RMSResid, peakResid, fluxResid, 
+				nmodel, models);
+
+  /* Fit in pixels/deg */
+  imFit  = ObitImageFitCreate ("Fitter");
+  /* Turn off messages */
+  prtLv = err->prtLv;
+  err->prtLv = 0;
+  ObitImageFitFit (imFit, beam, reg, err);
+  err->prtLv = prtLv;
+  if (err->error) goto cleanup;
+
+  /* If different cells spacings */
+  if (fabs(fabs(cellx)-fabs(celly)) > (0.01*fabs(celly))) {
+    dx = models[0]->parms[0]*fabs(cellx)*sin(models[0]->parms[2]);
+    dy = models[0]->parms[0]*fabs(celly)*cos(models[0]->parms[2]);
+    models[0]->parms[0] = sqrt (dx*dx + dy*dy);
+    models[0]->parms[2] = atan2 (dx, dy);
+    dx = models[0]->parms[1]*fabs(cellx)*sin(models[0]->parms[2]+G_PI/2);
+    dy = models[0]->parms[1]*fabs(celly)*cos(models[0]->parms[2]+G_PI/2);
+    models[0]->parms[1] = sqrt (dx*dx + dy*dy);
+  }
+
+  bmaj = models[0]->parms[0]*fabs(cellx); /* from pixels to deg */
+  bmin = models[0]->parms[1]*fabs(celly);
+  bpa  = models[0]->parms[2]*RAD2DG;
+
+  /* add map rotation, force to +/- 90 deg. */
+  bpa = bpa - beam->myDesc->crota[1];
+  if (bpa > 90.0) bpa = bpa - 180.0;
+  if (bpa < -90.0) bpa = bpa + 180.0;
+  
+  /* Give informative message about fitted size */
+  Obit_log_error(err, OBIT_InfoErr, 
+		 "Fitted beam %f x %f asec, PA = %f for %s plane %d", 
+		 bmaj*3600.0, bmin*3600.0, bpa, beam->name, iplane);
+
+  /* Save fitted values */
+  beam->myDesc->beamMaj = bmaj;
+  beam->myDesc->beamMin = bmin;
+  beam->myDesc->beamPA  = bpa;
+
+  /* Cleanup */
+ cleanup: matx = ObitFArrayUnref (matx);
+  beamData   = ObitFArrayUnref(beamData);
+  beamCenter = ObitFArrayUnref(beamCenter);
+  reg        = ObitFitRegionUnref(reg);
+  imFit      = ObitImageFitUnref(imFit);
+  if (models[0]) models[0]  = ObitFitModelUnref(models[0]);
+  if (models) g_free(models);
+
+  /* Free image buffer */
+  beam->image = ObitFArrayUnref(beam->image);
+  if (err->error) Obit_traceback_msg (err, routine, beam->name);
+
+} /* end ObitImageUtilFitBeam */
+
 /*----------------------Private functions---------------------------*/
 
 /**
@@ -4505,216 +4648,6 @@ static void ObitImageUtilCurDate (gchar *date, olong len)
   g_snprintf (date, len, "%4.4d-%2.2d-%2.2d",
 	      lp->tm_year, lp->tm_mon, lp->tm_mday);
 } /* end ObitImageUtilCurDate */
-
-/**
- * Fit Gaussian to a Beam.
- * Adapted from AIPS BMSHP.FOR, FITBM.FOR
- * \param beam  Beam image to fit.
- * \param err   Error stack, returns if not empty.
- */
-static void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err)
-{
-  olong blc[2], trc[2], center[2], i, j, k, l, ijk, iflip, irow, ilast, naxis[2];
-  olong ierr, plane[] = {1,1,1,1,1};
-  ofloat peak, *array, dx, dy, *x;
-  ofloat  p[3], y[3];
-  ofloat cellx, celly, xfact, c1, c2, c3, temp, s, c, ss, cc;
-  ofloat bmaj, bmin, bpa;
-  ObitFArray *beamData = NULL, *beamCenter = NULL, *matx = NULL;
-  gchar *routine = "ObitImageUtilFitBeam";
-
-   /* error checks */
-  g_assert (ObitErrIsA(err));
-  if (err->error) return;
-  g_assert (ObitImageIsA(beam));
-
-  /* Read beam if necessary */
-  if (beam->image==NULL) ObitImageGetPlane (beam, NULL, plane, err);
-  if (err->error) goto cleanup;
-
-  /* Trim edges of beam */
-  blc[0] = 5;
-  blc[1] = 5;
-  trc[0] = beam->image->naxis[0]-5;
-  trc[1] = beam->image->naxis[1]-5;
-  beamCenter = ObitFArraySubArr (beam->image, blc, trc, err);
-  if (err->error) goto cleanup;
-
-  /* Find center */
-  peak = ObitFArrayMax (beamCenter, center);
-
-  /* Center better be 1.0 */
-  if (fabs (peak-1.0) > 0.001) { 
-    /* Close so the image can be looked at */
-    if ((ObitImageClose (beam, err)  
-	 != OBIT_IO_OK) || (err->error>0)) {  /* error test */
-      Obit_log_error(err, OBIT_Error, "%s: ERROR closing image %s",  
-      		     routine, beam->name); 
-      goto cleanup; 
-    }
-    Obit_log_error(err, OBIT_Error,  
-      		   "Beam peak (%f) not 1.0 for %s",  
-      		   peak, beam->name); 
-    goto cleanup; 
-  } 
-
-  /* extract half center into an ObitFArray */
-  blc[0] = center[0] - 5;
-  blc[1] = center[1];
-  trc[0] = center[0] + 5;
-  trc[1] = center[1] + 5;
-  beamData = ObitFArraySubArr (beamCenter, blc, trc, err);
-  if (err->error) goto cleanup;
-
-  /* Image info */
-  cellx = beam->myDesc->cdelt[0];
-  celly = beam->myDesc->cdelt[1];
-  xfact = fabs (cellx);
-
-  /* Make an array for the solution matrix */
-  naxis[0] = 3; naxis[1] = 3;
-  matx = ObitFArrayCreate ("Soln Matrix", 2, naxis);
-  x = matx->array;
-  for (i=0; i<9; i++) x[i] = 0.0;
-
-  /* Init */
-  y[0] = y[1] = y[2] = 0.0;
-
-  /* Loop down rows  doing alternate halves. go only to first
-     decending 0.35 from center. */
-  iflip = 1;
-  array = beamData->array;
-  for (i=0; i<6; i++) {  /* loop over rows */
-    for (ijk= 0; ijk<2; ijk++) { /* loop 65 */
-      iflip = -iflip;
-      ilast =  5 - iflip;
-      
-      /* Loop over row flipping halves */
-      for (j= ijk; j<6; j++) { /* loop 60 */
-	irow = 5 + j * iflip; /* which cell? */
-
-	/* Have we gone far enough? */
-	if ((array[irow] < 0.35)  &&  
-	    (array[irow] <  array[ilast])) break;
-	if (array[irow] < 0.35) continue;
-	ilast = irow;
-
-	/* compute displacements from center */
-	dx = iflip * j * cellx / xfact;
-	dy = -i * celly / xfact;
-
-	/* compute partials wrt c1,c2,c3 */
-	p[0] = dx * dx;
-	p[1] = dy * dy;
-	p[2] = dx * dy;
-
-	/* sum partials into x matrix and y vector */
-	for (k= 0; k<3; k++) { 
-	  y[k] = y[k] - log (array[irow]) * p[k];
-	  for (l= 0; l<3; l++) { 
-	    x[l*3 + k] += p[k] * p[l];
-	  } 
-	}
-      } /* end loop  L60:  */;
-    } /* end loop  L65:  */;
-    
-    array += beamData->naxis[0]; /* next row in array */
-  }/* end loop over rows */
-
-  /* Do beam fitting use ObitFArray to invert matrix */
-  ObitFArray2DSymInv(matx, &ierr);
-  if (ierr!=0) { /* fit failed issue warning and use 1 cell beam */
-   Obit_log_error(err, OBIT_InfoWarn, 
-		  "Solution for Restoring beam failed for %s", 
-		  beam->name);
-   /* default solution */
-   c1 = 0.5;
-   c2 = 0.5;
-   c3 = 0.0;
-  } else { 
-    /* actual solution */
-    c1 = y[0] * x[0*3+0] + y[1] * x[0*3+1] + y[2] * x[0*3+2];
-    c2 = y[0] * x[1*3+0] + y[1] * x[1*3+1] + y[2] * x[1*3+2];
-    c3 = y[0] * x[2*3+0] + y[1] * x[2*3+1] + y[2] * x[2*3+2];
-  }
-
-  /* convert to sigmas and pa. */
-  /* make sure arg of atan is determinate. */
-  if (fabs (c1-c2) < 1.0e-10) {
-    bpa = 45.0;
-    if (c3<0) bpa = -bpa;
-  } else {
-    bpa = 28.6478 * atan (c3 / (c1-c2));
-  } 
-  
-  /* compute sigma**2 */
-  s = sin (bpa/57.29578);
-  c = cos (bpa/57.29578);
-  ss = s * s;
-  cc = c * c;
-  if (fabs (ss-cc)  >  1.0e-4) {
-    bmaj = 0.5 * (cc*cc - ss*ss) / (cc*c1 - ss*c2);
-    bmin = 0.5 * (ss*ss - cc*cc) / (ss*c1 - cc*c2);
-    /* special case near 45 deg. */
-  } else {
-    bmaj = c3 / (4.0 * s * c) + c1;
-    bmin = 0.5 / (c1/cc - bmaj);
-    bmaj = 0.5 / bmaj;
-  } 
-
-  /* check if soln. is real */
-  /* use default */
-  if ((bmaj <= 0.0)  ||  (bmin <= 0.0)) {
-    bmaj = 1.0;
-    bmin = 1.0;
-    bpa = 0.0;
-    Obit_log_error(err, OBIT_InfoWarn, 
-		   "Solution for Restoring beam failed for %s", 
-		   beam->name);
-  } 
-
-  /* convert to sigmas. */
-  bmaj = sqrt (bmaj) * xfact;
-  bmin = sqrt (bmin) * xfact;
-  /* up to here bmaj is minor axis: rest of pgm wants it as  major 
-     - fix this here */
-  if (bmaj > bmin) {
-    bpa = bpa - 90.0;
-  } else {
-    temp = bmaj;
-    bmaj = bmin;
-    bmin = temp;
-  } 
-
-  /* convert to fwhm */
-  bmaj = bmaj * 2.3548;
-  bmin = bmin * 2.3548;
-
-  /* add map rotation, force to +/- 90 deg. */
-  bpa = bpa - beam->myDesc->crota[1];
-  if (bpa > 90.0) bpa = bpa - 180.0;
-  if (bpa < -90.0) bpa = bpa + 180.0;
-  
-  /* Give informative message about fitted size */
-  Obit_log_error(err, OBIT_InfoErr, 
-		 "Fitted beam %f x %f asec, PA = %f for %s", 
-		 bmaj*3600.0, bmin*3600.0, bpa, beam->name);
-
-  /* Save fitted values */
-  beam->myDesc->beamMaj = bmaj;
-  beam->myDesc->beamMin = bmin;
-  beam->myDesc->beamPA  = bpa;
-
-  /* Cleanup */
- cleanup: matx = ObitFArrayUnref (matx);
-  beamData   = ObitFArrayUnref(beamData);
-  beamCenter = ObitFArrayUnref(beamCenter);
- 
-  /* Free image buffer */
-  beam->image = ObitFArrayUnref(beam->image);
-  if (err->error) Obit_traceback_msg (err, routine, beam->name);
-
-} /* end ObitImageUtilFitBeam */
 
 /**
  * Interpolate selected rows from one image onto another, 

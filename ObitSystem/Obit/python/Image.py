@@ -432,18 +432,20 @@ class Image(OData.OData):
         # end TVFit
 
     def GaussFit (self, err, \
-                  cen=None, dim=[10,10], x=[0.0], y=[0.0], flux=[100.0], gparm=[[3.,3.,0.]],\
-                  file=None):
+                  plane=1, cen=None, dim=[20,20], x=[0.0], y=[0.0], flux=[100.0], \
+                  gparm=[[3.,3.,0.]], file=None):
         """
         Fit Gaussian models, setting initial model from parameters
         
         The initial model is defined by x,y,flux, gparm, all lists of the same dimension
         giving the location, fluxes and sizes of the initial models.
         Defaults OK for single source at reference pixel in image.
+        Only uses first plane
         Returns FitModel object after fitting
 
         * self      = Python Image object
         * err       = Python Obit Error/message stack
+        * plane     = 1-rel plane
         * cen       = If given the 1-rel center pixel of the region to be fit
           If not given, the reference pixel of the image is used
         * dim       = dimension in pixels of the region to be fit
@@ -453,6 +455,11 @@ class Image(OData.OData):
         * gparm     = Initial Gaussian size [major, minor, PA] (pixel,pixel,deg)
         * file      = If given, the file to write the results to, else terminal
         """
+        self.List.set("BLC",[1,1,plane])
+        self.List.set("TRC",[0,0,plane])
+        self.Open(1,err)
+        self.Read(err)
+        self.Close(err)
         # Fitting region
         d = self.Desc.Dict
         if cen==None:

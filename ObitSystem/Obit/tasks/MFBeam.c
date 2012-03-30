@@ -1503,6 +1503,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "doFull", "do3D", "FOV", "PBCor", "antSize", "PBmin",
     "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
     "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "WtPower",
+    "MFTaper", "RobustIF", "TaperIF",
     "MaxBaseline", "MinBaseline", "rotate", "Beam", "minFlux",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
     "nxBeam", "nyBeam", "Alpha", "doCalSelect", 
@@ -2087,10 +2088,10 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
       imgOK = TRUE; 
      
-      /* Make sure image Cleaned if Self cal wanted, if no CLEAN skip loop */
-      if (myClean->Pixels->currentIter<=0) {
-	doSC = FALSE;
-	break;
+      /* Make sure image Cleaned if Self cal wanted */
+      if (doSC) {
+	Obit_return_if_fail((myClean->Pixels->currentIter>0), err, 
+			    "%s: Image NOT CLEANed", routine);
       }
 
       /* Only recenter once */
@@ -2626,8 +2627,9 @@ void MFBeamHistory (gchar *Source, ObitInfoList* myInput,
     "in3DType", "in3File",  "in3Disk", "in3Name", "in3Class", "in3Seq",
     "doPhase", "in4File",  "in4Disk", "in4Name", "in4Class", "in4Seq",
     "outFile",  "outDisk", "outName", "outClass", "outSeq",
-    "BChan", "EChan", "BIF", "EIF", "IChanSel", "Threshold", "CCVer",
+    "BChan", "EChan", "BIF", "EIF", "maxFBW", "IChanSel", "Threshold", "CCVer",
     "FOV",  "UVRange",  "timeRange",  "Robust",  "UVTaper",  
+    "MFTaper", "RobustIF", "TaperIF",
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
     "doPol", "PDVer", "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI",
     "OutlierSize",  "CLEANBox",  "Gain",  "minFlux",  "Niter",  "minPatch",
@@ -3157,6 +3159,7 @@ void BeamOne (ObitInfoList* myInput, ObitUV* inData,
 
   /* Copy data to scratch selecting 1 IF - weighting will modify */
   ObitInfoListGetTest(myInput, "BIF", &type, dim, &BIF);
+  BIF = MAX (1, BIF);
   ObitInfoListGetTest(myInput, "EIF", &type, dim, &EIF);
   saveEIF = EIF;
   EIF = BIF;

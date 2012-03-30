@@ -1,0 +1,247 @@
+; $Id$
+; CVel  
+;---------------------------------------------------------------
+;! Doppler tracking corrections for UV data
+;# Task UV  Obit 
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2012
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+CVel       LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+CVel       Doppler tracking corrections for UV data
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                             FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                             Input UV file name (name)
+**PARAM** str 6
+inClass                            Input UV file name (class)
+**PARAM** int 1
+inSeq             0.0     9999.0   Input UV file name (seq. #)
+**PARAM** int 1
+inDisk                             Input UV file disk unit #
+**PARAM** str 16 30
+Sources                            Sources to copy
+**PARAM** int 1 **DEF** -1
+Qual            -10.0              Source qualifier -1=>any
+**PARAM** str 4
+souCode                             Calibrator code '    '=>any
+**PARAM** float 2
+timeRange                           Time range to process.
+**PARAM** str 4
+Stokes                              Stokes to process
+**PARAM** int 1
+FreqID                              Freq. ID to select.
+**PARAM** int 1 **DEF** 1
+BChan            0.0     8192.0     Low freq. channel 
+**PARAM** int 1
+EChan            0.0     8192.0     Highest freq channel
+**PARAM** int 1 **DEF** 1
+BIF               0.0     9999.0    First IF (0=>1)
+**PARAM** int 1
+EIF               0.0     9999.0    Highest IF (0=>BIF to last)
+**PARAM** int 1
+subA                                Subarray
+**PARAM** int 50
+Antennas         0.0     1000.0     List of antennas to calibrate
+**PARAM** int 1
+doCalib          -1.0        2.0   If >0 calibrate data
+                                   = 2 calibrate weights
+**PARAM** int 1
+gainUse                            CL (or SN) table to apply
+**PARAM** boo 1 **DEF** F
+doPol            -1.0       10.0   If >0 correct polarization.
+**PARAM** int 1 **DEF** -1
+PDVer                              PD table to apply
+                                   If >=0, per channel corrections
+**PARAM** int 1
+flagVer                            Flag table version
+**PARAM** int 1
+doBand           -1.0       10.0   If >0 apply bandpass cal.
+                                   Method used depends on value
+                                   of doBand (see Help).
+**PARAM** int 1
+BPVer                              Bandpass table version
+**PARAM** float 3
+Smooth                             Smoothing function. 
+**PARAM** str 10 **DEF** 0000-00-00
+refDate                            Reference Date
+**PARAM** dbl 1
+RestFreq                           Line rest frequency (Hz)
+                                   MUST BE GIVEN
+**PARAM** float 1
+VelLSR                             Desired LSR velocity (m/s)
+**PARAM** float 1 **DEF** -9999
+refChan                            reference channel
+**PARAM** str 4
+outDType                           "FITS" or "AIPS" type of output
+**PARAM** str 48
+outFile                            FITS output uvdata if Type=='FITS'
+**PARAM** str 12
+outName                            Output UV AIPS file name
+**PARAM** str 6
+outClass                           Output UV AIPS file class
+**PARAM** int 1
+outSeq           -1.0     9999.0   Output UV AIPS fileseq. #
+**PARAM** int 1
+outDisk                            Output UV file disk unit #.
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
+----------------------------------------------------------------
+CVel  
+Task:  Apply Doppler corrections to UV data
+Data are aligned such that a given channel becomes a given LSR
+velocity and the output data are properly labeled.
+
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input UV AIPS file name     Standard defaults.
+  inClass....Input UV AIPS file class.   Standard defaults.
+  inSeq......Input UV AIPS fileseq. #.  0 => highest.
+  inDisk.....Disk drive # of input UV (FITS or AIPS). NO default
+  Sources... Sources  to be processed if multisource file.
+  souCode....Calibrators may be selected on the basis of the
+             calibrator code given in the SU table.
+                  '    ' => any calibrator code selected
+                  '*   ' => any non blank code (cal. only)
+                  '-CAL' => blank codes only (no calibrators)
+                  anything else = calibrator code to select.
+             NB: The souCode test is applied in addition to the
+             other tests, i.e. Sources and Qual, in the
+             selection of sources to process.
+  Qual.......Only sources with a source qualifier number in the
+             SU table matching Qual will be used if Qual is not
+             -1.  Qual affects the selection of both the list of
+             sources and the list of calibrators.
+  timeRange..Time range of the data to be processed. In order:
+             Start and end times in days relative to ref. date.  
+             Use  dhms2day to convert from human readable form
+  Stokes.....Stokes parameters to copy, "    "=> Don't convert
+             Otherwise will select and/or convert..
+  FreqID.....Frequency identifier to select , <=0=>any
+  BChan......First channel number to image, 0=>1.  Channel numbers are 1
+             relative as defined in the input data file.
+  EChan......Highest channel number to to include in image,
+             0 => max 
+  chanInc....Increment in channel selected, 0=>1
+  BIF........First IF to process. 0=>1
+  EIF........Highest IF to process 0=> do BIF to highest.
+             Note: not all data sets will have IFs.
+  IFInc......Increment in IF selected, 0=>1
+  subA.......Sub-array number to use. 0=>all.
+  Antennas...A list of the antennas to  have solutions
+             determined. If any number is negative then all
+             antennas listed  are NOT to be used to determine
+             solutions and all others are. All 0 => use all.
+  corrType...If corrType = 0 then CVel   will pass only cross-power data, 
+             this is the default mode. 
+             If corr=1 then both cross-power and total-power data 
+             will be passed; 
+             if corr=2 then only total-power data will be passed.
+  doCalib....If >0, calibrate the data using information in the
+             specified Cal (CL) table for multi-source or SN table for
+             single-source data.  If > 1.5, also calibrate the weights
+             (new for VLA, normal for VLBI).  
+  gainUse....Version number of the CL table to apply to multi-source
+             files or the SN table for single-source files.
+             0 => highest.
+  doPol......If > 0 then correct data for instrumental polarization as
+             represented in the AN table.  This correction is only
+             useful if PCAL has been run or feed polarization parameters
+             have been otherwise obtained. 
+  PDVer......AIPS PD table to use for per channel instrumental
+             polarization corrections if doPol=True. 0=> highest
+             -1 => use IF corrections from AIPS AN table.
+  flagVer....Specifies the version of the flagging table to be applied.
+             0 => highest numbered table. <0 => no flagging to be
+             applied.
+  doBand.....If > 0 then correct the data for the shape of the
+             antenna bandpasses using the BP table specified by BPVer.
+             The correction has five modes:
+             (a) if doBand=1 all entries for an antenna in the table
+             are averaged together before correcting the data.
+             (b) if doBand=2 the entry nearest in time (including
+             solution weights) is used to correct the data.
+             (c) if doBand=3 the table entries are interpolated in
+             time (using solution weights) and the data are then
+             corrected.
+             (d) if doBand=4 the entry nearest in time (ignoring
+             solution weights) is used to correct the data.
+             (e) if doBand=5 the table entries are interpolated in
+             time (ignoring solution weights) and the data are then
+             corrected.
+  BPVer......Specifies the version of the BP table to be applied if
+             doBand > 0.  0 => highest numbered table.
+             <0 => no bandpass correction to be applied.
+  Smooth.....Specifies the type of spectral smoothing to be applied to
+             a uv database . The default is not to apply any smoothing.
+             The elements of Smooth are as follows:
+             Smooth(1) = type of smoothing to apply: 0 => no smoothing
+               To smooth before applying bandpass calibration
+                 1 => Hanning, 2 => Gaussian, 3 => Boxcar, 4 => Sinc
+               To smooth after applying bandpass calibration
+                 5 => Hanning, 6 => Gaussian, 7 => Boxcar, 8 => Sinc
+             Smooth(2) = the "diameter" of the function, i.e. width
+               between first nulls of Hanning triangle and sinc
+               function, FWHM of Gaussian, width of Boxcar. Defaults
+               (if < 0.1) are 4, 2, 2 and 3 channels for Smooth(1) =
+               1 - 4 and 5 - 8, resp.
+             Smooth(3) = the diameter over which the convolving
+               function has value - in channels.  Defaults: 1,3,1,4
+               times Smooth(2) used when input Smooth(3) < net
+               Smooth(2).
+  refDate....Reference date for Doppler corrections as yyyy-mm-dd
+             Defaults to day of observation.
+  RestFreq...Line rest frequency (Hz) - required
+  VelLSR.....LSR velocity for line at rest frequency RestFreq at
+             channel refChan in m/s.
+             Will be used for all sources.
+  refChan....Desired reference channel, default minimal channel 
+             shift and refChan near the center of the bandpass if
+             refChan=-9999 
+             Using the default refChan and specifying the same 
+             refDate should align data from multiple datasets.
+  outDType..'FITS' or 'AIPS'  type of output
+  outFile....Output UV FITS file name.
+  outName....Output UV AIPS file name    Standard defaults.
+  outClass...Output UV AIPS file class.  Standard defaults.
+  outSeq.....Output UV AIPS file seq. #. 0 => highest unique.
+  outDisk....Disk drive # of output UV (FITS or AIPS) NO default
+             0 FITS => current directory
+  Compress...If True  the output data is written in
+             compressed format which can result in a substantial
+             reduction in disk space needed.  DO NOT USE THIS OPTION if
+             there is channel-dependent flagging and and you are doing
+             spectral averaging (avgFreq > 0).  If there is
+             IF-dependent flagging and you are using IF averaging
+             (avgFreq > 2.5) this option is also not recommended.
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files where
+             a bug in the ObitTalk message handling may cause
+             tasks to hang.  Path is absolute or relative to where
+             the task executes.
+----------------------------------------------------------------

@@ -451,3 +451,41 @@ Obit/src/ObitDConCleanVis.c:
 Obit/tasks/UVAppend.c Obit/TDF/UVAppend.TDF:
   New task to append single source UV datasets.
 19 Mar 2012 ver. 411
+
+Upgrades to MFImage/MFBeam for forcing psf for ARCADE/EVLA data
+New CVel for Doppler corrections
+ObitVersion:
+Obit/changes.log:
+Obit/src/ObitImageMF.c:
+  SetSpec: Fix bugs in logic  
+Obit/tasks/MFImage.c Obit/TDF/MFImage.TDF:
+Obit/tasks/MFBeam.c Obit/TDF/MFBeam.TDF:
+   BeamOne: min BIF = 1, Add per IF Robust and Taper, MFTaper, Force psf for residuals
+Obit/src/ObitUVGridMF.c:
+  Implement MFTaper
+Obit/include/ObitImageUtil.h Obit/src/ObitImageUtil.c:
+  Make FitBeam public, better fit, allow specyfing plane
+Obit/include/ObitUVWeightDef.h Obit/src/ObitUVWeight.c:
+  Implement per IF Robust, Taper
+Obit/src/ObitDConCleanVisMF.c:
+  Restore: Convolve residuals up to restoring beam size
+Obit/src/ObitImageFitData.c:
+  Create: Properly init dim.
+Obit/src/ObitUVImagerMF.c:
+  Copy new parameters to work array.
+Obit/python/OTObit.py:
+  Add addParam function
+Obit/python/Image.py:
+  GaussFit: allow selection by plane
+Obit/src/ObitUV.c:
+  GetSouInfo: set altCrpix iff = 0.0
+Obit/tasks/CVel.c Obit/TDF/CVel.TDF:
+  New task to Doppler correct data
+Obit/include/ObitDopplerClassDef.h Obit/include/ObitDopplerDef.h:
+Obit/include/ObitDoppler.h Obit/src/ObitDoppler.c:
+  New class for Doppler calculations/corrections
+Obit/python/Doppler.py  Obit/python/Doppler.inc:
+  python interface to Doppler
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  Update python interface
+30 Mar 2012, version 412

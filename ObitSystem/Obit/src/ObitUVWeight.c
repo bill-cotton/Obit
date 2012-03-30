@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -167,7 +167,7 @@ void ObitUVWeightData (ObitUV *uvdata, ObitErr *err)
 {
   ObitUVWeight *myWeight = NULL;
   gchar *outName = NULL;
-  olong naxis[2];
+  olong iif, nif, naxis[2];
   gboolean doUnifWt;
   gchar *routine = "ObitUVWeightData";
 
@@ -192,7 +192,13 @@ void ObitUVWeightData (ObitUV *uvdata, ObitErr *err)
   } /* end setup frequency table */
 
   /* Are we uniform Weighting? */
-  doUnifWt = myWeight->Robust < 7;
+  doUnifWt = myWeight->Robust[0] < 7;
+
+  /* Numnber of IFs */
+  nif = 1;
+  if (uvdata->myDesc->jlocif>=0) 
+    nif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
+  myWeight->numIF      = nif;
 
   /* Gridding for uniform weighting */
   if (doUnifWt) {
@@ -202,8 +208,12 @@ void ObitUVWeightData (ObitUV *uvdata, ObitErr *err)
     /* Create weighting grids */
     naxis[0] = 1 + myWeight->nuGrid/2;
     naxis[1] = myWeight->nvGrid;
-    myWeight->cntGrid = ObitFArrayCreate ("Count Grid", 2, naxis);
-    myWeight->wtGrid  = ObitFArrayCreate ("Weight Grid", 2, naxis);
+    myWeight->cntGrid = g_malloc0(nif*sizeof(ObitFArray*));
+    myWeight->wtGrid  = g_malloc0(nif*sizeof(ObitFArray*));
+    for (iif=0; iif<nif; iif++) {
+      myWeight->cntGrid[iif] = ObitFArrayCreate ("Count Grid", 2, naxis);
+      myWeight->wtGrid[iif]  = ObitFArrayCreate ("Weight Grid", 2, naxis);
+    }
     
     /* Get/grid weights if uniform weighting */
     ObitUVWeightReadUV (myWeight, uvdata, err);
@@ -216,13 +226,17 @@ void ObitUVWeightData (ObitUV *uvdata, ObitErr *err)
     /* Informative messages */
      Obit_log_error(err, OBIT_InfoErr, 
 		    "Using Robust uniform weighting for %s", uvdata->name);
+     if (myWeight->RobustperIF)
+       Obit_log_error(err, OBIT_InfoErr, "Per IF Robust weighting ");
 
      /* debug
      fprintf (stderr,"Grid size %d  %d \n",naxis[0],naxis[1]); */
   } else {
     /* Only natural weighting (and taper and power)*/
-    myWeight->wtScale = 1.0;
-    myWeight->temperance  = 0.0;
+    for (iif=0; iif<nif; iif++) {
+      myWeight->wtScale[iif]     = 1.0;
+      myWeight->temperance[iif]  = 0.0;
+    }
 
     /* Informative messages */
      Obit_log_error(err, OBIT_InfoErr, 
@@ -234,10 +248,10 @@ void ObitUVWeightData (ObitUV *uvdata, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, uvdata->name);
 
   /* final diagnostics */
-     Obit_log_error(err, OBIT_InfoErr, 
-		    "Weighting increased noise by %f for %s", 
-		    myWeight->noiseFactor, uvdata->name);
-
+  Obit_log_error(err, OBIT_InfoErr, 
+		 "Weighting increased noise by %f for %s", 
+		 myWeight->noiseFactor, uvdata->name);
+  
   /* cleanup */
   myWeight = ObitUVWeightUnref(myWeight);
 } /* end ObitUVWeightData */
@@ -315,6 +329,12 @@ void ObitUVWeightInit  (gpointer inn)
   in->cntGrid    = NULL;
   in->wtGrid     = NULL;
   in->convfn     = NULL;
+  in->Robust     = NULL;
+  in->sigma1     = NULL;
+  in->sigma2     = NULL;
+  in->sigma3     = NULL;
+  in->temperance = NULL;
+  in->wtScale    = NULL;
 
 } /* end ObitUVWeightInit */
 
@@ -329,14 +349,27 @@ void ObitUVWeightClear (gpointer inn)
 {
   ObitClassInfo *ParentClass;
   ObitUVWeight *in = inn;
+  olong iif;
 
   /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* delete this class members */
-  in->cntGrid   = ObitFArrayUnref(in->cntGrid);  
-  in->wtGrid    = ObitFArrayUnref(in->wtGrid);  
+  if (in->cntGrid) {
+    for (iif=0; iif<in->numIF; iif++) in->cntGrid[iif] = ObitFArrayUnref(in->cntGrid[iif]);
+    g_free(in->cntGrid);
+  }
+  if (in->wtGrid) {
+    for (iif=0; iif<in->numIF; iif++) in->wtGrid[iif] = ObitFArrayUnref(in->wtGrid[iif]);
+    g_free(in->wtGrid);
+  }
   in->convfn    = ObitFArrayUnref(in->convfn);
+  if (in->Robust)      g_free(in->Robust);
+  if (in->sigma1)      g_free(in->sigma1);
+  if (in->sigma2)      g_free(in->sigma2);
+  if (in->sigma3)      g_free(in->sigma3);
+  if (in->temperance)  g_free(in->temperance);
+  if (in->wtScale)     g_free(in->wtScale);
   
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
@@ -358,7 +391,8 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   ofloat temp, xCells, yCells, farr[10], *fptr, sigma2u, sigma2v, cpa, spa;
-  olong   itemp, *iptr, nfield;
+  ofloat ftemp1, ftemp2;
+  olong   i, j, itemp, *iptr, nfield, nif;
   gboolean gotIt;
   gchar *routine = "ObitUVWeightInput";
 
@@ -367,6 +401,23 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
   if (err->error) return;
   g_assert (ObitUVIsA(uvdata));
   g_assert (ObitInfoListIsA(uvdata->info));
+
+  /* Create arrays */
+  if (in->Robust)      g_free(in->Robust);
+  if (in->sigma1)      g_free(in->sigma1);
+  if (in->sigma2)      g_free(in->sigma2);
+  if (in->sigma3)      g_free(in->sigma3);
+  if (in->temperance)  g_free(in->temperance);
+  if (in->wtScale)     g_free(in->wtScale);
+  nif = 1;
+  if (uvdata->myDesc->jlocif>=0) nif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
+  in->numIF      = nif;
+  in->Robust     = g_malloc0(nif*sizeof(ofloat));
+  in->sigma1     = g_malloc0(nif*sizeof(ofloat));
+  in->sigma2     = g_malloc0(nif*sizeof(ofloat));
+  in->sigma3     = g_malloc0(nif*sizeof(ofloat));
+  in->temperance = g_malloc0(nif*sizeof(ofloat));
+  in->wtScale    = g_malloc0(nif*sizeof(ofloat));
 
   /* Weighting grid size */
   itemp = 0;  
@@ -423,10 +474,15 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
   if (itemp<1) itemp = 1;
   in->WtFunc = itemp;
  
-  /* Robust */
+  /* Robust scalar or array "RobustIF" */
   temp = 0.0;
   ObitInfoListGetTest(uvdata->info, "Robust", &type, dim, &temp);
-  in->Robust = temp;
+  for (i=0; i<nif; i++) in->Robust[i] = temp;
+  in->RobustperIF = FALSE;
+  if (ObitInfoListGetP(uvdata->info, "RobustIF", &type, dim, (gpointer*)&fptr)) {
+    in->RobustperIF = TRUE;
+    for (i=0; i<MIN(nif,dim[0]); i++) in->Robust[i] = fptr[i];
+  } 
  
   /* Weight power */
   temp = 1.0;
@@ -455,13 +511,35 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
     sigma2v = log(0.3)/(farr[1]*farr[1]);
     cpa = cos(farr[2]*DG2RAD);
     spa = sin(farr[2]*DG2RAD);
-    in->sigma1 = (cpa*cpa*sigma2v + spa*spa*sigma2u);
-    in->sigma2 = (spa*spa*sigma2v + cpa*cpa*sigma2u);
-    in->sigma3 = 2.0*cpa*spa*(sigma2v - sigma2u);
+    for (i=0; i<dim[0]; i++) in->sigma1[i] = (cpa*cpa*sigma2v + spa*spa*sigma2u);
+    for (i=0; i<dim[0]; i++) in->sigma2[i] = (spa*spa*sigma2v + cpa*cpa*sigma2u);
+    for (i=0; i<dim[0]; i++) in->sigma3[i] = 2.0*cpa*spa*(sigma2v - sigma2u);
   } else {
-    in->sigma1 = 0.0;
-    in->sigma2 = 0.0;
-    in->sigma3 = 0.0;
+    for (i=0; i<dim[0]; i++) in->sigma1[i] = 0.0;
+    for (i=0; i<dim[0]; i++) in->sigma2[i] = 0.0;
+    for (i=0; i<dim[0]; i++) in->sigma3[i] = 0.0;
+  }
+
+  /* Is array of taper given? */
+  if (ObitInfoListGetP(uvdata->info, "TaperIF", &type, dim, (gpointer*)&fptr)) {
+    for (i=0; i<MIN(nif,dim[1]); i++) {
+      j = i*dim[0];
+	if ((fptr[j]>0.0) || (fptr[j+1]>0.0)) {
+	  ftemp1 = fptr[j]   * 1.0e3;  /* To lambdas */
+	  ftemp2 = fptr[j+1] * 1.0e3;  /* To lambdas */
+	  sigma2u = log(0.3)/(ftemp1*ftemp1);
+	  sigma2v = log(0.3)/(ftemp2*ftemp2);
+	  cpa = cos(farr[2]*DG2RAD);
+	  spa = sin(farr[2]*DG2RAD);
+	  in->sigma1[i] = (cpa*cpa*sigma2v + spa*spa*sigma2u);
+	  in->sigma2[i] = (spa*spa*sigma2v + cpa*cpa*sigma2u);
+	  in->sigma3[i] = 2.0*cpa*spa*(sigma2v - sigma2u);
+	} else {
+	  in->sigma1[i] = 0.0;
+	  in->sigma2[i] = 0.0;
+	  in->sigma3[i] = 0.0;
+	}
+    }
   }
 
 } /* end ObitUVWeightInput */
@@ -627,8 +705,8 @@ static void PrepBuffer (ObitUVWeight* in, ObitUV *uvdata)
   /* error checks */
   g_assert (ObitUVWeightIsA(in));
   g_assert (ObitUVIsA(uvdata));
-  g_assert (uvdata->myDesc != NULL);
-  g_assert (uvdata->buffer != NULL);
+  /*g_assert (uvdata->myDesc != NULL);
+    g_assert (uvdata->buffer != NULL);*/
 
   /* how much data? */
   desc  = uvdata->myDesc;
@@ -659,8 +737,8 @@ static void PrepBuffer (ObitUVWeight* in, ObitUV *uvdata)
   blmin2 = in->blmin * in->blmin;
 
   /* guardband (90%)in wavelengths */
-  guardu = (0.9 * (ofloat)in->wtGrid->naxis[0]) / fabs(in->UScale);
-  guardv = (0.9 * ((ofloat)in->wtGrid->naxis[1])/2) / fabs(in->VScale);
+  guardu = (0.9 * (ofloat)in->wtGrid[0]->naxis[0])     / fabs(in->UScale);
+  guardv = (0.9 * ((ofloat)in->wtGrid[0]->naxis[1])/2) / fabs(in->VScale);
 
   /* Loop over visibilities */
   for (ivis=0; ivis<nvis; ivis++) {
@@ -741,10 +819,10 @@ static void GridBuffer (ObitUVWeight* in, ObitUV *uvdata)
   /* error checks */
   g_assert (ObitUVWeightIsA(in));
   g_assert (ObitUVIsA(uvdata));
-  g_assert (in->cntGrid != NULL);
-  g_assert (in->wtGrid != NULL);
-  g_assert (uvdata->myDesc != NULL);
-  g_assert (uvdata->buffer != NULL);
+  /*g_assert (in->cntGrid != NULL);
+    g_assert (in->wtGrid != NULL);
+    g_assert (uvdata->myDesc != NULL);
+    g_assert (uvdata->buffer != NULL);*/
 
   /* how much data? */
   desc  = uvdata->myDesc;
@@ -771,8 +849,8 @@ static void GridBuffer (ObitUVWeight* in, ObitUV *uvdata)
   w   = uvdata->buffer+desc->ilocw;
   vis = uvdata->buffer+desc->nrparm;
 
-  lGridRow = in->cntGrid->naxis[0]; /* length of row */
-  lGridCol = in->cntGrid->naxis[1]; /* length of column */
+  lGridRow = in->cntGrid[0]->naxis[0]; /* length of row */
+  lGridCol = in->cntGrid[0]->naxis[1]; /* length of column */
 
   /* convolution fn pointer */
   pos[0] = 0;
@@ -802,7 +880,7 @@ static void GridBuffer (ObitUVWeight* in, ObitUV *uvdata)
 	/* Add this visibility to the count grid */
 	pos[0] = iu;
 	pos[1] = iv + lGridCol/2;
-	cntGrid = ObitFArrayIndex (in->cntGrid, pos); /* pointer in grid */
+	cntGrid = ObitFArrayIndex (in->cntGrid[iif], pos); /* pointer in grid */
 
 	/* Check if datum in grid - cntGrid != NULL */
 	if  (cntGrid != NULL) {
@@ -856,7 +934,7 @@ static void GridBuffer (ObitUVWeight* in, ObitUV *uvdata)
 	      /* have to split - grid part in conjugate half */
 	      pos[0] = -iu;
 	      pos[1] = -iv + lGridCol/2;
-	      grid = ObitFArrayIndex (in->wtGrid, pos); /* pointer in grid */
+	      grid = ObitFArrayIndex (in->wtGrid[iif], pos); /* pointer in grid */
 	      ncol = -iu;
 	      vvoff = voff;
 	      for (icv=0; icv<in->convWidth; icv++) {
@@ -880,7 +958,7 @@ static void GridBuffer (ObitUVWeight* in, ObitUV *uvdata)
 	    } /* End of dealing with conjugate portion */
 	    
 	    /* main loop gridding */
-	    grid = ObitFArrayIndex (in->wtGrid, pos); /* pointer in grid */
+	    grid = ObitFArrayIndex (in->wtGrid[iif], pos); /* pointer in grid */
 	    vvoff = voff;
 	    for (icv=0; icv<in->convWidth; icv++) {
 	      uuoff = uoff;
@@ -913,35 +991,72 @@ static void GridBuffer (ObitUVWeight* in, ObitUV *uvdata)
 /**
  * Processes grid for Robust weighting.
  * Calculates:
- * \li temperance = factor for Briggs Robust weighting
- * \li wtScale = weighting normalization factor.
+ * \li temperance = factor for Briggs Robust weighting per IF
+ * \li wtScale = weighting normalization factor. per IF
  * \param in   Object with grid.
  * \param err  Object for informative messages and errors.
  */
 static void ProcessGrid (ObitUVWeight* in, ObitErr *err)
 {
   ofloat sumWtCnt, sumCnt;
+  olong iif;
+
   /* error checks */
   g_assert (ObitUVWeightIsA(in));
-  g_assert (in->cntGrid != NULL);
-  g_assert (in->wtGrid != NULL);
+  /*g_assert (in->cntGrid != NULL);
+    g_assert (in->wtGrid != NULL);*/
 
-  /* Get Sum of Weights*counts */
-  sumWtCnt = ObitFArrayDot(in->cntGrid, in->wtGrid);
+  /* One Robust or one per IF? */
+  if (in->RobustperIF) {
 
-  /* Get sum of counts */
-  sumCnt = ObitFArraySum(in->cntGrid);
-
-  /* Robust temperance value */
-  in->wtScale    = sumWtCnt / MAX (1.0, sumCnt);
-  in->temperance = in->wtScale * pow (10.0, in->Robust) / 5.0;
-
-  /* If Robust out of range turn it off */
-  if ((in->Robust<-7.0) || (in->Robust>7.0)) in->temperance = 0.0;
-
-  /* Weight scaling factor */
-  in->wtScale += in->temperance;
-
+    /* Loop over IFs*/
+    for (iif=0; iif<in->numIF; iif++) {
+      
+      /* Get Sum of Weights*counts */
+      sumWtCnt = ObitFArrayDot(in->cntGrid[iif], in->wtGrid[iif]);
+      
+      /* Get sum of counts */
+      sumCnt = ObitFArraySum(in->cntGrid[iif]);
+      
+      /* Robust temperance value */
+      in->wtScale[iif]    = sumWtCnt / MAX (1.0, sumCnt);
+      in->temperance[iif] = in->wtScale[iif] * pow (10.0, in->Robust[iif]) / 5.0;
+      
+      /* If Robust out of range turn it off */
+      if ((in->Robust[iif]<-7.0) || (in->Robust[iif]>7.0)) in->temperance[iif] = 0.0;
+      
+      /* Weight scaling factor */
+      in->wtScale[iif] += in->temperance[iif];
+    }
+    
+    /* Accumulate wtGrids into first */
+    for (iif=1; iif<in->numIF; iif++)
+      ObitFArrayAdd(in->wtGrid[0], in->wtGrid[iif], in->wtGrid[0]);
+  } else {  /* One Robust for all */
+    /* Accumulate wtGrids, cntGrids into first */
+    for (iif=1; iif<in->numIF; iif++) {
+      ObitFArrayAdd(in->wtGrid[0],  in->wtGrid[iif],  in->wtGrid[0]);
+      ObitFArrayAdd(in->cntGrid[0], in->cntGrid[iif], in->cntGrid[0]);
+    }
+    /* Get Sum of Weights*counts */
+    sumWtCnt = ObitFArrayDot(in->cntGrid[0], in->wtGrid[0]);
+    
+    /* Get sum of counts */
+    sumCnt = ObitFArraySum(in->cntGrid[0]);
+    
+    /* Set per IF values */
+    for (iif=0; iif<in->numIF; iif++) {
+      /* Robust temperance value */
+      in->wtScale[iif]    = sumWtCnt / MAX (1.0, sumCnt);
+      in->temperance[iif] = in->wtScale[iif] * pow (10.0, in->Robust[iif]) / 5.0;
+      
+      /* If Robust out of range turn it off */
+      if ((in->Robust[iif]<-7.0) || (in->Robust[iif]>7.0)) in->temperance[iif] = 0.0;
+      
+      /* Weight scaling factor */
+      in->wtScale[iif] += in->temperance[iif];
+    }
+  } /* end single Robust */
 } /* end ProcessGrid */
 
 /**
@@ -957,7 +1072,7 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
   olong ifq, iif, nif, loFreq, hiFreq;
   ofloat *grid=NULL, *u, *v, *w, *vis, *vvis, *fvis, *ifvis, *wt;
   ofloat tape, tfact, inWt, outWt, guardu, guardv, uf, vf, minWt;
-  ofloat ucell, vcell, uucell, vvcell;
+  ofloat ucell, vcell, uucell, vvcell, temperance=0.0;
   olong pos[] = {0,0,0,0,0};
   olong fincf, fincif;
   ObitUVDesc *desc;
@@ -987,9 +1102,13 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
   if (desc->jlocs>=0) nstok = desc->inaxes[desc->jlocs];
   nstok = MIN (2, nstok);
 
+
+  /* Maximum temperance */
+  for (iif=0; iif<in->numIF; iif++) 
+    temperance = MAX (temperance,in->temperance[iif]);
   /* Minimum allowed weight */
   minWt = 1.0e-15;
-  if (in->temperance>0.0) minWt = 1.0e-7 * in->temperance;
+  if (temperance>0.0) minWt = 1.0e-7 * temperance;
   if (minWt==0.0)  minWt = 1.0e-25;
  
   /* Channel and IF increments in frequency scaling array */
@@ -1008,22 +1127,22 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
 
   /* what needed */
   /* Need taper? */
-  doTaper = (in->sigma1!=0.0) || (in->sigma2!=0.0);
+  doTaper = (in->sigma1[0]!=0.0) || (in->sigma2[0]!=0.0);
   /* Raising weight to a power? */
   doPower = (fabs (in->WtPower-1.0) > 0.01) && (in->WtPower > 0.01);
   /* Replacing weights with 1.0? */
   doOne = (in->WtPower < 0.01);
   /* Uniform Weighting */
-  doUnifWt = in->Robust < 7;
+  doUnifWt = in->Robust[0] < 7;
 
   if (doUnifWt) {
     g_assert (in->wtGrid != NULL);
 
-    lGridRow = in->wtGrid->naxis[0]; /* length of row */
-    lGridCol = in->wtGrid->naxis[1]; /* length of column */
+    lGridRow = in->wtGrid[0]->naxis[0]; /* length of row */
+    lGridCol = in->wtGrid[0]->naxis[1]; /* length of column */
     /* guardband (90%)in wavelengths */
-    guardu = (0.9 * (ofloat)in->wtGrid->naxis[0]) / fabs(in->UScale);
-    guardv = (0.9 * ((ofloat)in->wtGrid->naxis[1])/2) / fabs(in->VScale);
+    guardu = (0.9 * (ofloat)in->wtGrid[0]->naxis[0]) / fabs(in->UScale);
+    guardv = (0.9 * ((ofloat)in->wtGrid[0]->naxis[1])/2) / fabs(in->VScale);
   } else { /* Not uniform weighting */
     guardu = 1.0e30;
     guardv = 1.0e30;
@@ -1089,16 +1208,16 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
 	      /* location in grid */
 	      pos[0] = iu; 
 	      pos[1] = iv + lGridCol/2;
-	      grid = ObitFArrayIndex (in->wtGrid, pos); /* pointer in weight grid */
+	      grid = ObitFArrayIndex (in->wtGrid[0], pos); /* pointer in accum. weight grid */
 	      
 	      /* zero weight if not in grid */
 	      if ((grid==NULL) || (fabs(*grid)==0.0)) {
 		*wt = 0.0;
 	      } else {
 		/* Make weighting correction */
-		if (*grid >minWt) *wt *= in->wtScale / (*grid + in->temperance);
-		/* OLD else    	  *wt *= in->wtScale / (minWt + in->temperance);*/
-		else    	  *wt *= in->wtScale;
+		if (*grid >minWt) *wt *= in->wtScale[iif] / (*grid + in->temperance[iif]);
+		/* OLD else    	  *wt *= in->wtScale[iif] / (minWt + in->temperance[iif]);*/
+		else    	  *wt *= in->wtScale[iif];
 	      }
 	    } /* end of uniform weighting correction */
 	    
@@ -1108,7 +1227,7 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
 	      uf = *u * desc->fscale[ifq];
 	      vf = *v * desc->fscale[ifq];
 	      
-	      tape = ((uf)*(uf)*in->sigma2 + (vf)*(vf)*in->sigma1 + (uf)*(vf)*in->sigma3);
+	      tape = ((uf)*(uf)*in->sigma2[iif] + (vf)*(vf)*in->sigma1[iif] + (uf)*(vf)*in->sigma3[iif]);
 	      if (tape<-14.0) tfact = 0.0; /* underflow */
 	      else tfact = exp(tape);
 	      *wt *= tfact;

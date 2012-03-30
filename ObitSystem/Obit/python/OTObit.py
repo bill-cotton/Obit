@@ -761,6 +761,29 @@ def copyInputs (inTask, outTask):
     
     # end copyInputs
 
+def addParam (inTask, param,
+              paramVal=[0.0], shortHelp="New Param",
+              longHelp="  New parameter\n    Description",
+              explain = ""):
+    """
+    Add a parameter to a task input
+    
+    * inTask    = Task object to modify
+    * param     = name of new parameter
+    * paramVal  = Parameter default value(s) as list
+    * shortHelp = Description in inputs
+    * longHelp  = Description in help
+    * explain   = test to be added to explanation
+    """
+    ################################################################
+    inTask.__dict__[param]      = paramVal
+    inTask._default_dict[param] = paramVal
+    inTask._input_list.append(param)
+    inTask._hlp_dict[param] = [shortHelp]
+    inTask._help_string     = inTask._help_string + longHelp
+    inTask._explain_string  = inTask._explain_string + explain
+    # end addParam
+
 def imhead (ObitObj):
     """
     List header
@@ -1317,10 +1340,13 @@ def tvstat (inImage):
         beamarea = 1.1331*(head["beamMaj"]/abs(head["cdelt"][0])) * \
                    (head["beamMin"]/abs(head["cdelt"][1]))
         Flux = p.Sum/beamarea
+    else:
+        beamarea = None
     print "Region Mean %g, RMSHist %g RMS %g" % (Mean, RMS, RawRMS)
     print "  Max %g @ pixel " % Max, MaxPos
     print "  Min %g @ pixel " % Min, MinPos
-    print "  Integrated Flux density %g, beam area = %7.1f pixels" % (Flux, beamarea)
+    if (beamarea):
+        print "  Integrated Flux density %g, beam area = %7.1f pixels" % (Flux, beamarea)
     
     # Reset BLC, TRC
     blc = [1,1,1,1,1]

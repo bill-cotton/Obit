@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2011                                          */
+/*;  Copyright (C) 2010-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -185,6 +185,7 @@ gconstpointer ObitUVGridMFGetClass (void)
  * same ObitUVGridMF.
  * \param in       Object to initialize
  * \param UVin     Uv data object to be gridded.
+ *                 info entry "MFTaper" gives frequency dependent taper fudge factor
  * \param imagee   Image (beam) to be gridded. (as Obit*)
  *                 Descriptor infoList entry "BeamTapr" gives any additional
  *                 tapering in degrees.
@@ -201,13 +202,13 @@ void ObitUVGridMFSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
   ObitImageMF *image = (ObitImageMF*)imagee;
   ObitImage *myBeam;
   olong nx, ny, naxis[2], iSpec, size, nif, nfreq, nn;
-  ofloat cellx, celly, dxyzc[3], xt, yt, zt, BeamTaper=0.0;
+  ofloat cellx, celly, dxyzc[3], xt, yt, zt, MFTape=0.8, BeamTaper=0.0;
   ofloat *ramp=NULL, *data=NULL;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   gboolean doCalSelect = FALSE;
   ObitIOAccess access;
-  ofloat Beam[3] = {0.0,0.0,0.0}, tarBeam[3], corrBeam[3];
+  ofloat Beam[3] = {0.0,0.0,0.0}, tarBeam[3]={0.,0.,0.}, corrBeam[3]={0.,0.,0.};
   ofloat sigma2v, sigma2u, cpa, spa, taper;
   odouble tarFreq;
   gchar *routine="ObitUVGridMFSetup";
@@ -262,6 +263,9 @@ void ObitUVGridMFSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
   in->icenxImage = in->nxImage/2 + 1;
   in->icenyImage = in->nyImage/2 + 1;
    
+  /* Frequency dependent fudge factor */
+  ObitInfoListGetTest(UVin->info, "MFTaper", &type, dim, &MFTape);
+
   /* Any additional tapering (deg) */
   ObitInfoListGetTest(image->myDesc->info, "BeamTapr", &type, dim, &BeamTaper);
   if (BeamTaper>0.0) {
@@ -397,24 +401,44 @@ void ObitUVGridMFSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
   tarFreq = UVin->myDesc->freqIF[0];  /* Frequency of lowest IF */
 
   for (iSpec=0; iSpec<nn; iSpec++) {
-    /* Target beam size scaled to this frequency */
-    tarBeam[0] = Beam[0] * tarFreq/uvDesc->freqArr[iSpec];
-    tarBeam[1] = Beam[1] * tarFreq/uvDesc->freqArr[iSpec];
-    tarBeam[2] = Beam[2];
-    /* Correction beam including any additional */
-    corrBeam[0] = sqrt (MAX(1.0e-10,Beam[0]*Beam[0]-tarBeam[0]*tarBeam[0]) + BeamTaper);
-    corrBeam[1] = sqrt (MAX(1.0e-10,Beam[1]*Beam[1]-tarBeam[1]*tarBeam[1]) + BeamTaper);
-    corrBeam[2] = Beam[2];
-    /* 0.8 fudge factor 0.9 may be better */
-    taper   = (0.8/ (((corrBeam[0]/2.35)/206265.))/(G_PI));
-    sigma2u = log(0.3)/(taper*taper);
-    taper   = (0.8/ (((corrBeam[1]/2.35)/206265.))/(G_PI));
-    sigma2v = log(0.3)/(taper*taper);
-    cpa     = cos(corrBeam[2]*DG2RAD);
-    spa     = sin(corrBeam[2]*DG2RAD);
-    in->sigma1[iSpec]  = (cpa*cpa*sigma2v + spa*spa*sigma2u);
-    in->sigma2[iSpec]  = (spa*spa*sigma2v + cpa*cpa*sigma2u);
-    in->sigma3[iSpec]  = 2.0*cpa*spa*(sigma2v - sigma2u);
+    if (MFTape>=0) {
+      /* Target beam size scaled to this frequency */
+      tarBeam[0] = Beam[0] * tarFreq/uvDesc->freqArr[iSpec];
+      tarBeam[1] = Beam[1] * tarFreq/uvDesc->freqArr[iSpec];
+      tarBeam[2] = Beam[2];
+      /* Correction beam including any additional */
+      corrBeam[0] = sqrt (MAX(1.0e-10,Beam[0]*Beam[0]-tarBeam[0]*tarBeam[0]) + BeamTaper);
+      corrBeam[1] = sqrt (MAX(1.0e-10,Beam[1]*Beam[1]-tarBeam[1]*tarBeam[1]) + BeamTaper);
+      corrBeam[2] = Beam[2];
+      /* MFTape = beam fudge factor */
+      taper   = (MFTape/ (((corrBeam[0]/2.35)/206265.))/(G_PI));
+      sigma2u = log(0.3)/(taper*taper);
+      taper   = (MFTape/ (((corrBeam[1]/2.35)/206265.))/(G_PI));
+      sigma2v = log(0.3)/(taper*taper);
+      cpa     = cos(corrBeam[2]*DG2RAD);
+      spa     = sin(corrBeam[2]*DG2RAD);
+      in->sigma1[iSpec]  = (cpa*cpa*sigma2v + spa*spa*sigma2u);
+      in->sigma2[iSpec]  = (spa*spa*sigma2v + cpa*cpa*sigma2u);
+      in->sigma3[iSpec]  = 2.0*cpa*spa*(sigma2v - sigma2u);
+    } else {
+      /* No frequency dependent taper */
+      corrBeam[0] = sqrt (MAX(1.0e-10,Beam[0]*Beam[0]-tarBeam[0]*tarBeam[0]) + BeamTaper);
+      corrBeam[1] = sqrt (MAX(1.0e-10,Beam[1]*Beam[1]-tarBeam[1]*tarBeam[1]) + BeamTaper);
+      corrBeam[2] = Beam[2];
+      /* MFTape = beam fudge factor */
+      taper   = (MFTape/ (((corrBeam[0]/2.35)/206265.))/(G_PI));
+      sigma2u = log(0.3)/(taper*taper);
+      taper   = (MFTape/ (((corrBeam[1]/2.35)/206265.))/(G_PI));
+      sigma2v = log(0.3)/(taper*taper);
+      cpa     = cos(corrBeam[2]*DG2RAD);
+      spa     = sin(corrBeam[2]*DG2RAD);
+      in->sigma1[iSpec]  = (cpa*cpa*sigma2v + spa*spa*sigma2u);
+      in->sigma2[iSpec]  = (spa*spa*sigma2v + cpa*cpa*sigma2u);
+      in->sigma3[iSpec]  = 2.0*cpa*spa*(sigma2v - sigma2u);
+      /*in->sigma1[iSpec]  = 0.0;
+	in->sigma2[iSpec]  = 0.0;
+	in->sigma3[iSpec]  = 0.0; */
+	}
   } /* End setting tapers */
  
   if (ramp) g_free (ramp); ramp = NULL;

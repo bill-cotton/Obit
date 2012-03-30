@@ -1321,6 +1321,69 @@ extern void ConvUtilConvGauss(ObitImage *,float ,float ,float ,float ,ObitImage 
 extern ObitFArray *ConvUtilGaus(ObitImage *,float ,float ,float );
 extern PyObject *ConvUtilDeconv(float ,float ,float ,float ,float ,float );
 
+#include "ObitDoppler.h"
+#include "ObitUVDesc.h"
+
+extern ObitDoppler* newDoppler (char* name) {
+  return newObitDoppler (name);
+} // end  newDoppler
+
+extern ObitDoppler* DopplerCopy  (ObitDoppler *in, ObitDoppler *out, 
+				    ObitErr *err) {
+  return ObitDopplerCopy (in, out, err);
+} // end  DopplerCopy
+
+extern ObitDoppler* DopplerUnref (ObitDoppler* in) {
+  if (!ObitDopplerIsA(in)) return NULL;
+  return ObitDopplerUnref(in);
+}
+
+extern ObitDoppler*  DopplerRef (ObitDoppler* in) {
+  return ObitDopplerRef(in);
+}
+
+extern ObitInfoList* DopplerGetList (ObitDoppler* in) {
+  return ObitInfoListRef(in->info);
+}
+
+extern int DopplerIsA (ObitDoppler* in) {
+  return ObitDopplerIsA(in);
+}
+
+extern float DopplerFreqLSR (double rest, float vlsr, 
+			    double ra, double dec, 
+			    char *date, double ut, 
+			    double x, double y, double z) {
+  odouble out, JD;
+  olong year, doy;
+  ofloat temp;
+  // munge date
+  ObitUVDescDate2JD ((gchar*)date, &JD);
+  ObitDopplerJD2Date (JD, &year, &doy, &temp);
+  out = ObitDopplerFreqLSR (rest, vlsr, ra, dec, year, doy, ut,
+                            x, y, z);
+  return (float)out;
+}
+
+extern ObitUV* DopplerCVel (ObitUV *inUV, int scratch, ObitUV *outUV, 
+		   	    ObitErr *err) {
+ gboolean lscratch = scratch!=0;
+  return ObitDopplerCVel (inUV, lscratch, outUV, err);
+}
+
+extern ObitDoppler *newDoppler(char *);
+extern ObitDoppler *DopplerCopy(ObitDoppler *,ObitDoppler *,ObitErr *);
+extern ObitDoppler *DopplerUnref(ObitDoppler *);
+extern ObitDoppler *DopplerRef(ObitDoppler *);
+extern ObitInfoList *DopplerGetList(ObitDoppler *);
+extern int DopplerIsA(ObitDoppler *);
+extern float DopplerFreqLSR(double ,float ,double ,double ,char *,double ,double ,double ,double );
+extern ObitUV *DopplerCVel(ObitUV *,int ,ObitUV *,ObitErr *);
+
+typedef struct {
+  ObitDoppler *me;
+} Doppler;
+
 
 #include "ObitFArray.h"
 
@@ -15188,6 +15251,285 @@ static PyObject *_wrap_ConvUtilDeconv(PyObject *self, PyObject *args) {
     return NULL;
   }
 }
+    return _resultobj;
+}
+
+static PyObject *_wrap_newDoppler(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitDoppler * _result;
+    char * _arg0;
+    PyObject * _obj0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:newDoppler",&_obj0)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (ObitDoppler *)newDoppler(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitDoppler_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_DopplerCopy(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitDoppler * _result;
+    ObitDoppler * _arg0;
+    ObitDoppler * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:DopplerCopy",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitDoppler_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of DopplerCopy. Expected _ObitDoppler_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitDoppler_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of DopplerCopy. Expected _ObitDoppler_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of DopplerCopy. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitDoppler *)DopplerCopy(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitDoppler_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_DopplerUnref(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitDoppler * _result;
+    ObitDoppler * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:DopplerUnref",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitDoppler_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of DopplerUnref. Expected _ObitDoppler_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitDoppler *)DopplerUnref(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitDoppler_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_DopplerRef(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitDoppler * _result;
+    ObitDoppler * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:DopplerRef",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitDoppler_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of DopplerRef. Expected _ObitDoppler_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitDoppler *)DopplerRef(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitDoppler_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_DopplerGetList(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitInfoList * _result;
+    ObitDoppler * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:DopplerGetList",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitDoppler_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of DopplerGetList. Expected _ObitDoppler_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitInfoList *)DopplerGetList(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitInfoList_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_DopplerIsA(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitDoppler * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:DopplerIsA",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitDoppler_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of DopplerIsA. Expected _ObitDoppler_p.");
+        return NULL;
+        }
+    }
+    _result = (int )DopplerIsA(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_DopplerFreqLSR(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    float  _result;
+    double  _arg0;
+    float  _arg1;
+    double  _arg2;
+    double  _arg3;
+    char * _arg4;
+    double  _arg5;
+    double  _arg6;
+    double  _arg7;
+    double  _arg8;
+    PyObject * _obj4 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"dfddOdddd:DopplerFreqLSR",&_arg0,&_arg1,&_arg2,&_arg3,&_obj4,&_arg5,&_arg6,&_arg7,&_arg8)) 
+        return NULL;
+{
+  if (PyString_Check(_obj4)) {
+    int size = PyString_Size(_obj4);
+    char *str;
+    int i = 0;
+    _arg4 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj4);
+    for (i = 0; i < size; i++) {
+      _arg4[i] = str[i];
+    }
+    _arg4[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (float )DopplerFreqLSR(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7,_arg8);
+    _resultobj = Py_BuildValue("f",_result);
+{
+  free((char *) _arg4);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_DopplerCVel(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUV * _result;
+    ObitUV * _arg0;
+    int  _arg1;
+    ObitUV * _arg2;
+    ObitErr * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo3 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OiOO:DopplerCVel",&_argo0,&_arg1,&_argo2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of DopplerCVel. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of DopplerCVel. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of DopplerCVel. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitUV *)DopplerCVel(_arg0,_arg1,_arg2,_arg3);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitUV_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
     return _resultobj;
 }
 
@@ -50755,6 +51097,147 @@ static PyObject *_wrap_delete_CleanVis(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+#define Doppler_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
+static PyObject *_wrap_Doppler_me_set(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitDoppler * _result;
+    Doppler * _arg0;
+    ObitDoppler * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:Doppler_me_set",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_Doppler_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of Doppler_me_set. Expected _Doppler_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitDoppler_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of Doppler_me_set. Expected _ObitDoppler_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitDoppler *)Doppler_me_set(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitDoppler_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+#define Doppler_me_get(_swigobj) ((ObitDoppler *) _swigobj->me)
+static PyObject *_wrap_Doppler_me_get(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitDoppler * _result;
+    Doppler * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:Doppler_me_get",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_Doppler_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of Doppler_me_get. Expected _Doppler_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitDoppler *)Doppler_me_get(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitDoppler_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static Doppler *new_Doppler(char *name) {
+     Doppler *out;
+     out = (Doppler *) malloc(sizeof(Doppler));
+     if (strcmp(name, "None")) out->me = newDoppler(name);
+     else out->me = NULL;
+     return out;
+   }
+
+static PyObject *_wrap_new_Doppler(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    Doppler * _result;
+    char * _arg0;
+    PyObject * _obj0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:new_Doppler",&_obj0)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (Doppler *)new_Doppler(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_Doppler_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static void delete_Doppler(Doppler *self) {
+   if (self->me->ReferenceCount>0) 
+      self->me = DopplerUnref(self->me);
+   free(self);
+  }
+static PyObject *_wrap_delete_Doppler(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    Doppler * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:delete_Doppler",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_Doppler_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of delete_Doppler. Expected _Doppler_p.");
+        return NULL;
+        }
+    }
+    delete_Doppler(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 #define FArray_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
 static PyObject *_wrap_FArray_me_set(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -56601,6 +57084,10 @@ static PyMethodDef ObitMethods[] = {
 	 { "new_FArray", _wrap_new_FArray, METH_VARARGS },
 	 { "FArray_me_get", _wrap_FArray_me_get, METH_VARARGS },
 	 { "FArray_me_set", _wrap_FArray_me_set, METH_VARARGS },
+	 { "delete_Doppler", _wrap_delete_Doppler, METH_VARARGS },
+	 { "new_Doppler", _wrap_new_Doppler, METH_VARARGS },
+	 { "Doppler_me_get", _wrap_Doppler_me_get, METH_VARARGS },
+	 { "Doppler_me_set", _wrap_Doppler_me_set, METH_VARARGS },
 	 { "delete_CleanVis", _wrap_delete_CleanVis, METH_VARARGS },
 	 { "new_CleanVis", _wrap_new_CleanVis, METH_VARARGS },
 	 { "CleanVis_me_get", _wrap_CleanVis_me_get, METH_VARARGS },
@@ -57451,6 +57938,14 @@ static PyMethodDef ObitMethods[] = {
 	 { "FArrayGetBlank", _wrap_FArrayGetBlank, METH_VARARGS },
 	 { "FArrayGetVal", _wrap_FArrayGetVal, METH_VARARGS },
 	 { "FArrayCreate", _wrap_FArrayCreate, METH_VARARGS },
+	 { "DopplerCVel", _wrap_DopplerCVel, METH_VARARGS },
+	 { "DopplerFreqLSR", _wrap_DopplerFreqLSR, METH_VARARGS },
+	 { "DopplerIsA", _wrap_DopplerIsA, METH_VARARGS },
+	 { "DopplerGetList", _wrap_DopplerGetList, METH_VARARGS },
+	 { "DopplerRef", _wrap_DopplerRef, METH_VARARGS },
+	 { "DopplerUnref", _wrap_DopplerUnref, METH_VARARGS },
+	 { "DopplerCopy", _wrap_DopplerCopy, METH_VARARGS },
+	 { "newDoppler", _wrap_newDoppler, METH_VARARGS },
 	 { "ConvUtilDeconv", _wrap_ConvUtilDeconv, METH_VARARGS },
 	 { "ConvUtilGaus", _wrap_ConvUtilGaus, METH_VARARGS },
 	 { "ConvUtilConvGauss", _wrap_ConvUtilConvGauss, METH_VARARGS },

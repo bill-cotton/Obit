@@ -898,7 +898,7 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
 	  } else {  /* no gap */
 	    iCh = (olong)(0.5 + (mxFreq-freqLo) / uvdesc->cdelt[uvdesc->jlocf]) - 1;
 	    IFBreak[nSpec]   = iif;
-	    ChBreak[nSpec++] = MIN (nChan, iCh);
+	    ChBreak[nSpec++] = MIN (nChan-1, iCh);
 	    mxFreq += maxFBW * freqLo;
 	  }
 	  done = freqHi<mxFreq;
@@ -910,11 +910,15 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
       }
     } /* end loop over IF */
     
-    /* End */
-    if (maxFBW<0.0) nSpec--;  /* One bin per IF */
-    IFBreak[nSpec] = nIF-1;
-    ChBreak[nSpec] = nChan-1;
-
+   /* End */
+    if (maxFBW<0.0) nSpec--;  /* One bin per IF? */
+    /* all done? */
+    if ((IFBreak[nSpec-1]<(nIF-1)) || (ChBreak[nSpec-1]<(nChan-1))) {
+      /* No - add final */
+      IFBreak[nSpec] = nIF-1;
+      ChBreak[nSpec] = nChan-1;
+    } else nSpec--;  /* No more needed */
+    
     /* Make sure have enough spectra */
     Obit_return_if_fail((nSpec>in->curOrder), err,
                         "%s: TOO Few channels %d, for requested order, decrease maxFBW",

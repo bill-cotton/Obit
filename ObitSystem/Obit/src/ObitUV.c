@@ -2379,7 +2379,8 @@ void  ObitUVGetSouInfo (ObitUV *uvdata, ObitErr *err)
 	LSRVel    = source->LSRVel[iif-1];
 	uvdata->myDesc->restFreq = RestFreq;
 	uvdata->myDesc->altRef   = LSRVel;
-	uvdata->myDesc->altCrpix = uvdata->myDesc->crpix[uvdata->myDesc->jlocf];
+	if (uvdata->myDesc->altCrpix==0.0)
+	  uvdata->myDesc->altCrpix = uvdata->myDesc->crpix[uvdata->myDesc->jlocf];
 	if (!strncmp(velDef,"OPTICAL", 7))  uvdata->myDesc->VelDef = 0;
 	if (!strncmp(velDef,"RADIO", 5))    uvdata->myDesc->VelDef = 1;	
 	if (!strncmp(velRef,"LSR", 3))      uvdata->myDesc->VelReference = 1;
