@@ -1477,7 +1477,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   ObitInfoList* saveParmList=NULL;
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong        ochan, ichan, nchan, chInc, chAvg, BChan, EChan, RChan, 
+  olong        ochan, ichan, nchan, chInc, chAvg, BChan, EChan, RChan, SChan,
     bchan, echan, istok, kstok, nstok, bstok, estok;
   gboolean     first, doFlat, btemp, autoWindow, Tr=TRUE, doVPol, do3D, formalI;
   olong        inver, outver, plane[5] = {0,1,1,1,1};
@@ -1591,6 +1591,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   /* Loop over channels */
   first = TRUE;
   ochan = (RChan - BChan) / chInc;
+  SChan = BChan;   /* First channel with actual data */
   for (ichan = RChan; ichan<=EChan; ichan+=chInc) {
     ochan++; /* output channel number */
     
@@ -1617,7 +1618,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     /* See if any data */
     if (outData->myDesc->nvis<=0) {
       Obit_log_error(err, OBIT_InfoWarn,"NO data channel %d", ichan);
-      if (first) {BChan = ichan+1; RChan = ichan+1; }
+      if (first) {SChan = ichan+1; RChan = ichan+1; }
+      /*if (first) {RChan = ichan+1;}*/
       continue;  /* Go on to next */
     }
     ObitInfoListCopyList (myInput, outData->info, tmpParms);
@@ -1677,7 +1679,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       ObitInfoListCopyList (saveParmList, outData->info, saveParms);
 
       /* More Output image stuff */ 
-      if (ichan==BChan) {
+      if (ichan==SChan) {
 	/* Create output image(s) */
 	if (doFlat && (myClean->mosaic->numberImages>1) && myClean->mosaic->FullField) 
 	  outField = ObitImageMosaicGetFullImage (myClean->mosaic, err);
@@ -1691,6 +1693,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
 	if (err->error) Obit_traceback_msg (err, routine, myClean->name);
 	ObitImageFullInstantiate (outImage[istok-bstok], FALSE, err);
 	outField = ObitImageUnref(outField);
+	/* Blank fill outImage in case some planes have no data */
+	ObitImageUtilBlankFill (outImage[istok-bstok], err);
 	if (err->error) Obit_traceback_msg (err, routine, outImage[istok-bstok]->name);
 	/* end of create output */
       } else if ((RChan>BChan) && (ichan==RChan)) { /* Restarting - should already exist */

@@ -4497,6 +4497,926 @@ ObitTable* IoN2SolNTableConvert (ObitUV *inUV, long outSNVer, ObitTable *NITable
 
 
 
+#include "ObitSDMData.h"
+#include "ObitImage.h"
+#include "ObitImageMosaic.h"
+#include "ObitDConCleanWindow.h"
+
+
+extern ObitSDMData* OASDMCreate(char* name, char* DataRoot, ObitErr *err) {
+  return  ObitSDMIntentCreate ((gchar*)name, (gchar*) DataRoot, err);
+} // end OASDMCreate
+
+// get reference JD
+extern float OASDMGetRefJD(ObitSDMData *asdm)
+{
+  return (float)asdm->refJD;
+}
+
+// get array
+extern char* OASDMGetArray(ObitSDMData *asdm)
+{
+  char *EVLA="EVLA", *ALMA="ALMA", *unk="Unknown";
+  if (asdm->isEVLA) return EVLA;
+  else if (asdm->isALMA) return ALMA;
+  else return unk;
+}
+
+// Convert Main data to a python list of dicts
+static PyObject* OASDMGetMain(ObitSDMData *asdm)
+{
+  ASDMMainTable* Tab =  ((ObitSDMData*)asdm)->MainTab;
+  PyObject *outList, *dict;
+  olong irow;
+
+   outList = PyList_New(Tab->nrows);
+
+  for (irow=0; irow<Tab->nrows; irow++) {
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "time",                PyFloat_FromDouble((double)Tab->rows[irow]->time));
+    PyDict_SetItemString(dict, "interval",            PyFloat_FromDouble((double)Tab->rows[irow]->interval));
+    PyDict_SetItemString(dict, "timeSampling",        PyInt_FromLong((long)Tab->rows[irow]->timeSampling));
+    PyDict_SetItemString(dict, "scanNumber",          PyInt_FromLong((long)Tab->rows[irow]->scanNumber));
+    PyDict_SetItemString(dict, "subscanNumber",       PyInt_FromLong((long)Tab->rows[irow]->subscanNumber));
+    PyDict_SetItemString(dict, "numIntegration",      PyInt_FromLong((long)Tab->rows[irow]->numIntegration));
+    PyDict_SetItemString(dict, "numAntenna",          PyInt_FromLong((long)Tab->rows[irow]->numAntenna));
+    PyDict_SetItemString(dict, "execBlockId",         PyInt_FromLong((long)Tab->rows[irow]->execBlockId));
+    PyDict_SetItemString(dict, "configDescriptionId", PyInt_FromLong((long)Tab->rows[irow]->configDescriptionId));
+    PyDict_SetItemString(dict, "fieldId",             PyInt_FromLong((long)Tab->rows[irow]->fieldId));
+    PyDict_SetItemString(dict, "stateId",             PyInt_FromLong((long)Tab->rows[irow]->stateId));
+    PyDict_SetItemString(dict, "flagRow",             PyBool_FromLong((long)Tab->rows[irow]->flagRow));	
+    PyList_SetItem(outList, irow, dict);
+  }
+
+  return outList;
+} // end  GetMain
+
+// Convert Scan data to a python list of dicts
+static PyObject* OASDMGetScan(ObitSDMData *asdm)
+{
+  ASDMScanTable* Tab =  ((ObitSDMData*)asdm)->ScanTab;
+  PyObject *outList, *dict, *tlist;
+  char *Unspecified="Unspecified";
+  olong irow, i, cnt;
+
+   outList = PyList_New(Tab->nrows);
+
+  for (irow=0; irow<Tab->nrows; irow++) {
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "scanNumber",   PyInt_FromLong((long)Tab->rows[irow]->scanNumber));
+    PyDict_SetItemString(dict, "numIntent",    PyInt_FromLong((long)Tab->rows[irow]->numIntent));
+    PyDict_SetItemString(dict, "numSubscan",   PyInt_FromLong((long)Tab->rows[irow]->numSubscan));
+    PyDict_SetItemString(dict, "execBlockId",  PyInt_FromLong((long)Tab->rows[irow]->execBlockId));
+    PyDict_SetItemString(dict, "startTime",    PyFloat_FromDouble((double)Tab->rows[irow]->startTime));
+    PyDict_SetItemString(dict, "endTime",      PyFloat_FromDouble((double)Tab->rows[irow]->endTime));
+    PyDict_SetItemString(dict, "sourceName",   PyString_InternFromString(Tab->rows[irow]->sourceName));
+    PyDict_SetItemString(dict, "flagRow",      PyBool_FromLong((long)Tab->rows[irow]->flagRow));	
+
+    tlist = PyList_New(Tab->rows[irow]->numIntent);
+    for (i=0; i<Tab->rows[irow]->numIntent; i++) {
+      if (Tab->rows[irow]->scanIntent[i]!=NULL)
+        PyList_SetItem(tlist, i, PyString_InternFromString(Tab->rows[irow]->scanIntent[i]));
+      else
+        PyList_SetItem(tlist, i, PyString_FromString(Unspecified));
+    }
+    PyDict_SetItemString(dict, "scanIntent",  tlist);
+
+    cnt = 0;   /* Don't know how many, look for NULL */
+    for (i=0; i<100; i++) { 
+      if (Tab->rows[irow]->calDataType[i]!=NULL) cnt++;
+      else break;
+    }
+    tlist = PyList_New(cnt);
+    for (i=0; i<cnt; i++) {
+      if (Tab->rows[irow]->calDataType[i]!=NULL)
+        PyList_SetItem(tlist, i, PyString_InternFromString(Tab->rows[irow]->calDataType[i]));
+      else
+        PyList_SetItem(tlist, i, PyString_FromString(Unspecified));
+    }
+    PyDict_SetItemString(dict, "calDataType",  tlist);
+
+    PyList_SetItem(outList, irow, dict);
+  }
+
+  return outList;
+} // end  GetScan
+
+// Convert Subscan data to a python list of dicts
+static PyObject* OASDMGetSubscan(ObitSDMData *asdm)
+{
+  ASDMSubscanTable* Tab =  ((ObitSDMData*)asdm)->SubscanTab;
+  PyObject *outList, *dict, *tlist;
+  olong irow, i, cnt;
+
+   outList = PyList_New(Tab->nrows);
+
+  for (irow=0; irow<Tab->nrows; irow++) {
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "scanNumber",           PyInt_FromLong((long)Tab->rows[irow]->scanNumber));
+    PyDict_SetItemString(dict, "subscanNumber",        PyInt_FromLong((long)Tab->rows[irow]->subscanNumber));
+    PyDict_SetItemString(dict, "numberSubintegration", PyInt_FromLong((long)Tab->rows[irow]->numberSubintegration));
+    PyDict_SetItemString(dict, "startTime",            PyFloat_FromDouble((double)Tab->rows[irow]->startTime));
+    PyDict_SetItemString(dict, "endTime",              PyFloat_FromDouble((double)Tab->rows[irow]->endTime));
+    PyDict_SetItemString(dict, "fieldName",            PyString_InternFromString(Tab->rows[irow]->fieldName));
+    PyDict_SetItemString(dict, "subscanIntent",        PyString_InternFromString(Tab->rows[irow]->subscanIntent));
+    PyDict_SetItemString(dict, "flagRow",              PyBool_FromLong((long)Tab->rows[irow]->flagRow));	
+
+    tlist = PyList_New(Tab->rows[irow]->numberIntegration);
+    for (i=0; i<Tab->rows[irow]->numberIntegration; i++) 
+       PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->numberSubintegration[i]));
+    PyDict_SetItemString(dict, "numberSubintegration",  tlist);
+
+    PyList_SetItem(outList, irow, dict);
+  }
+
+  return outList;
+} // end  GetSubscan
+
+// Convert Config data to a python list of dicts
+static PyObject* OASDMGetConfig(ObitSDMData *asdm)
+{
+  ASDMConfigDescriptionTable* Tab =  ((ObitSDMData*)asdm)->ConfigDescriptionTab;
+  PyObject *outList, *dict, *tlist;
+  olong irow, i, cnt;
+
+   outList = PyList_New(Tab->nrows);
+
+  for (irow=0; irow<Tab->nrows; irow++) {
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "configDescriptionId",   PyInt_FromLong((long)Tab->rows[irow]->configDescriptionId));
+    PyDict_SetItemString(dict, "numAntenna",            PyInt_FromLong((long)Tab->rows[irow]->numAntenna));
+    PyDict_SetItemString(dict, "numDataDescription",    PyInt_FromLong((long)Tab->rows[irow]->numDataDescription));
+    PyDict_SetItemString(dict, "numFeed",               PyInt_FromLong((long)Tab->rows[irow]->numFeed));
+    PyDict_SetItemString(dict, "numAtmPhaseCorrection", PyInt_FromLong((long)Tab->rows[irow]->numAtmPhaseCorrection));
+    PyDict_SetItemString(dict, "processorId",           PyInt_FromLong((long)Tab->rows[irow]->processorId));
+    PyDict_SetItemString(dict, "correlationMode",       PyInt_FromLong((long)Tab->rows[irow]->correlationMode));
+    PyDict_SetItemString(dict, "processorType",         PyInt_FromLong((long)Tab->rows[irow]->processorType));
+    PyDict_SetItemString(dict, "spectralType",          PyInt_FromLong((long)Tab->rows[irow]->spectralType));
+
+    tlist = PyList_New(Tab->rows[irow]->numAntenna);
+    for (i=0; i<Tab->rows[irow]->numAntenna; i++) 
+       PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->antennaId[i]));
+    PyDict_SetItemString(dict, "antennaId",  tlist);
+
+    tlist = PyList_New(Tab->rows[irow]->numDataDescription);
+    for (i=0; i<Tab->rows[irow]->numDataDescription; i++) 
+       PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->dataDescriptionId[i]));
+    PyDict_SetItemString(dict, "dataDescriptionId",  tlist);
+
+    tlist = PyList_New(Tab->rows[irow]->numFeed);
+    for (i=0; i<Tab->rows[irow]->numFeed; i++) 
+       PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->feedId[i]));
+    PyDict_SetItemString(dict, "feedId",  tlist);
+
+    tlist = PyList_New(Tab->rows[irow]->numAtmPhaseCorrection);
+    for (i=0; i<Tab->rows[irow]->numAtmPhaseCorrection; i++) 
+      PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->atmPhaseCorrection[i]));
+    PyDict_SetItemString(dict, "atmPhaseCorrection",  tlist);
+
+    /* Don't know how many
+       tlist = PyList_New(cnt);
+       for (i=0; i<cnt; i++) 
+       PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->switchCycleId[i]));
+       PyDict_SetItemString(dict, "switchCycleId",  tlist); */
+
+    PyList_SetItem(outList, irow, dict);
+  }
+
+  return outList;
+} // end  GetConfig
+
+// Convert CorrelatorMode data to a python list of dicts
+static PyObject* OASDMGetCorrelatorMode(ObitSDMData *asdm)
+{
+  ASDMCorrelatorModeTable* Tab =  ((ObitSDMData*)asdm)->CorrelatorModeTab;
+  PyObject *outList, *dict, *tlist;
+  olong irow, i;
+
+   outList = PyList_New(Tab->nrows);
+
+  for (irow=0; irow<Tab->nrows; irow++) {
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "correlatorModeId", PyInt_FromLong((long)Tab->rows[irow]->correlatorModeId));
+    PyDict_SetItemString(dict, "correlatorName",   PyString_InternFromString(Tab->rows[irow]->correlatorName));
+    PyDict_SetItemString(dict, "numBaseband",      PyInt_FromLong((long)Tab->rows[irow]->numBaseband));
+    PyDict_SetItemString(dict, "numAxes",          PyInt_FromLong((long)Tab->rows[irow]->numAxes));
+    PyDict_SetItemString(dict, "accumMode",        PyInt_FromLong((long)Tab->rows[irow]->accumMode));
+    PyDict_SetItemString(dict, "binMode",          PyInt_FromLong((long)Tab->rows[irow]->binMode));
+
+    tlist = PyList_New(Tab->rows[irow]->numBaseband);
+    for (i=0; i<Tab->rows[irow]->numBaseband; i++) 
+      PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->basebandNames[i]));
+    PyDict_SetItemString(dict, "basebandNames",  tlist);
+
+    tlist = PyList_New(Tab->rows[irow]->numBaseband);
+    for (i=0; i<Tab->rows[irow]->numBaseband; i++) 
+      PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->basebandConfig[i]));
+    PyDict_SetItemString(dict, "basebandConfig",  tlist);
+
+    tlist = PyList_New(Tab->rows[irow]->numBaseband);
+    for (i=0; i<Tab->rows[irow]->numBaseband; i++) 
+      PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->filterMode[i]));
+    PyDict_SetItemString(dict, "filterMode",  tlist);
+
+    tlist = PyList_New(Tab->rows[irow]->numAxes);
+    for (i=0; i<Tab->rows[irow]->numAxes; i++) 
+      PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->axesOrderArray[i]));
+    PyDict_SetItemString(dict, "axesOrderArray",  tlist);
+
+    PyList_SetItem(outList, irow, dict);
+  }
+
+  return outList;
+} // end  GetCorrelatorMode
+
+// Convert DataDescription  data to a python list of dicts
+static PyObject* OASDMGetDataDescription(ObitSDMData *asdm)
+{
+  ASDMDataDescriptionTable* Tab =  ((ObitSDMData*)asdm)->DataDescriptionTab;
+  PyObject *outList, *dict;
+  olong irow;
+
+   outList = PyList_New(Tab->nrows);
+
+  for (irow=0; irow<Tab->nrows; irow++) {
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "dataDescriptionId", PyInt_FromLong((long)Tab->rows[irow]->dataDescriptionId));
+    PyDict_SetItemString(dict, "polOrHoloId",       PyInt_FromLong((long)Tab->rows[irow]->polOrHoloId));
+    PyDict_SetItemString(dict, "spectralWindowId",  PyInt_FromLong((long)Tab->rows[irow]->spectralWindowId));
+    PyList_SetItem(outList, irow, dict);
+  }
+
+  return outList;
+} // end  GetDataDescription
+
+// Convert SpectralWindow data to a python list of dicts
+static PyObject* OASDMGetSpectralWindow(ObitSDMData *asdm)
+{
+  ASDMSpectralWindowTable* Tab =  ((ObitSDMData*)asdm)->SpectralWindowTab;
+  PyObject *outList, *dict, *tlist;
+  olong irow, i, cnt;
+
+   outList = PyList_New(Tab->nrows);
+
+  for (irow=0; irow<Tab->nrows; irow++) {
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "spectralWindowId",       PyInt_FromLong((long)Tab->rows[irow]->spectralWindowId));
+    PyDict_SetItemString(dict, "basebandName",           PyString_InternFromString(Tab->rows[irow]->basebandName));
+    PyDict_SetItemString(dict, "netSideband",            PyString_InternFromString(Tab->rows[irow]->netSideband));
+    PyDict_SetItemString(dict, "numChan",                PyInt_FromLong((long)Tab->rows[irow]->numChan));
+    PyDict_SetItemString(dict, "numAssocValues",         PyInt_FromLong((long)Tab->rows[irow]->numAssocValues));
+    PyDict_SetItemString(dict, "sidebandProcessingMode", PyInt_FromLong((long)Tab->rows[irow]->sidebandProcessingMode));
+    PyDict_SetItemString(dict, "refFreq",                PyFloat_FromDouble((double)Tab->rows[irow]->refFreq));
+    PyDict_SetItemString(dict, "totBandwidth",           PyFloat_FromDouble((double)Tab->rows[irow]->totBandwidth));
+    PyDict_SetItemString(dict, "chanFreqStart",          PyFloat_FromDouble((double)Tab->rows[irow]->chanFreqStart));
+    PyDict_SetItemString(dict, "chanFreqStep",           PyFloat_FromDouble((double)Tab->rows[irow]->chanFreqStep));
+    PyDict_SetItemString(dict, "chanWidth",              PyFloat_FromDouble((double)Tab->rows[irow]->chanWidth));
+    PyDict_SetItemString(dict, "effectiveBw",            PyFloat_FromDouble((double)Tab->rows[irow]->effectiveBw));
+    PyDict_SetItemString(dict, "resolution",             PyFloat_FromDouble((double)Tab->rows[irow]->resolution));
+    PyDict_SetItemString(dict, "windowFunction",         PyInt_FromLong((long)Tab->rows[irow]->windowFunction));
+    PyDict_SetItemString(dict, "correlationBit",         PyString_InternFromString(Tab->rows[irow]->correlationBit));
+    PyDict_SetItemString(dict, "name",                   PyString_InternFromString(Tab->rows[irow]->name));
+    PyDict_SetItemString(dict, "oversampling",           PyBool_FromLong((long)Tab->rows[irow]->oversampling));	
+    PyDict_SetItemString(dict, "quantization",           PyBool_FromLong((long)Tab->rows[irow]->quantization));	
+
+    if (Tab->rows[irow]->chanFreqArray!=NULL) {
+      tlist = PyList_New(Tab->rows[irow]->numChan);
+      for (i=0; i<Tab->rows[irow]->numChan; i++) 
+         PyList_SetItem(tlist, i, PyFloat_FromDouble((double)Tab->rows[irow]->chanFreqArray[i]));
+      PyDict_SetItemString(dict, "chanFreqArray",  tlist);
+    }
+
+    if (Tab->rows[irow]->chanWidthArray!=NULL) {
+      tlist = PyList_New(Tab->rows[irow]->numChan);
+      for (i=0; i<Tab->rows[irow]->numChan; i++) 
+         PyList_SetItem(tlist, i, PyFloat_FromDouble((double)Tab->rows[irow]->chanWidthArray[i]));
+      PyDict_SetItemString(dict, "chanWidthArray",  tlist);
+    }
+
+    if (Tab->rows[irow]->effectiveBwArray!=NULL) {
+      tlist = PyList_New(Tab->rows[irow]->numChan);
+      for (i=0; i<Tab->rows[irow]->numChan; i++) 
+         PyList_SetItem(tlist, i, PyFloat_FromDouble((double)Tab->rows[irow]->effectiveBwArray[i]));
+      PyDict_SetItemString(dict, "effectiveBwArray",  tlist);
+    }
+
+    if (Tab->rows[irow]->resolutionArray!=NULL) {
+      tlist = PyList_New(Tab->rows[irow]->numChan);
+      for (i=0; i<Tab->rows[irow]->numChan; i++) 
+         PyList_SetItem(tlist, i, PyFloat_FromDouble((double)Tab->rows[irow]->resolutionArray[i]));
+      PyDict_SetItemString(dict, "resolutionArray",  tlist);
+    }
+
+    if (Tab->rows[irow]->SpecRes!=NULL) {
+      tlist = PyList_New(Tab->rows[irow]->numAssocValues);
+      for (i=0; i<Tab->rows[irow]->numAssocValues; i++) 
+         PyList_SetItem(tlist, i, PyFloat_FromDouble((double)Tab->rows[irow]->SpecRes[i]));
+      PyDict_SetItemString(dict, "SpecRes",  tlist);
+    }
+
+    if (Tab->rows[irow]->assocSpectralWindowId!=NULL) {
+      tlist = PyList_New(Tab->rows[irow]->numAssocValues);
+      for (i=0; i<Tab->rows[irow]->numAssocValues; i++) 
+         PyList_SetItem(tlist, i, PyFloat_FromDouble((double)Tab->rows[irow]->assocSpectralWindowId[i]));
+      PyDict_SetItemString(dict, "assocSpectralWindowId",  tlist);
+    }
+    PyList_SetItem(outList, irow, dict);
+  }
+
+  return outList;
+} // end  GetSpectralWindow
+
+// Convert Antenna data to a python list of dicts
+static PyObject* OASDMGetAntenna(ObitSDMData *asdm)
+{
+  ASDMAntennaTable* Tab =  ((ObitSDMData*)asdm)->AntennaTab;
+  PyObject *outList, *dict, *tlist;
+  olong irow, i;
+
+   outList = PyList_New(Tab->nrows);
+
+  for (irow=0; irow<Tab->nrows; irow++) {
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "antennaId",    PyInt_FromLong((long)Tab->rows[irow]->antennaId));
+    PyDict_SetItemString(dict, "stationId",    PyInt_FromLong((long)Tab->rows[irow]->stationId));
+    PyDict_SetItemString(dict, "name",         PyString_InternFromString(Tab->rows[irow]->name));
+    PyDict_SetItemString(dict, "antennaMake",  PyInt_FromLong((long)Tab->rows[irow]->antennaMake));
+    PyDict_SetItemString(dict, "antennaType",  PyInt_FromLong((long)Tab->rows[irow]->antennaType));
+    PyDict_SetItemString(dict, "dishDiameter", PyFloat_FromDouble((double)Tab->rows[irow]->dishDiameter));
+    PyDict_SetItemString(dict, "time",         PyFloat_FromDouble((double)Tab->rows[irow]->time));
+
+    tlist = PyList_New(3);
+    for (i=0; i<3; i++) 
+       PyList_SetItem(tlist, i, PyFloat_FromDouble((double)Tab->rows[irow]->position[i]));
+    PyDict_SetItemString(dict, "position",  tlist);
+
+    tlist = PyList_New(3);
+    for (i=0; i<3; i++) 
+       PyList_SetItem(tlist, i, PyFloat_FromDouble((double)Tab->rows[irow]->offset[i]));
+    PyDict_SetItemString(dict, "offset",  tlist);
+
+    PyList_SetItem(outList, irow, dict);
+  }
+
+  return outList;
+} // end  GetAntenna
+
+// Convert Station data to a python list of dicts
+static PyObject* OASDMGetStation(ObitSDMData *asdm)
+{
+  ASDMStationTable* Tab =  ((ObitSDMData*)asdm)->StationTab;
+  PyObject *outList, *dict, *tlist;
+  olong irow, i, cnt;
+
+   outList = PyList_New(Tab->nrows);
+
+  for (irow=0; irow<Tab->nrows; irow++) {
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "stationId", PyInt_FromLong((long)Tab->rows[irow]->stationId));
+    PyDict_SetItemString(dict, "type",      PyInt_FromLong((long)Tab->rows[irow]->type));
+    PyDict_SetItemString(dict, "name",      PyString_InternFromString(Tab->rows[irow]->name));
+
+    tlist = PyList_New(3);
+    for (i=0; i<3; i++) 
+       PyList_SetItem(tlist, i, PyFloat_FromDouble((double)Tab->rows[irow]->position[i]));
+    PyDict_SetItemString(dict, "position",  tlist);
+
+    PyList_SetItem(outList, irow, dict);
+  }
+
+  return outList;
+} // end  GetStation
+
+// Convert State data to a python list of dicts
+static PyObject* OASDMGetState(ObitSDMData *asdm)
+{
+  ASDMStateTable* Tab =  ((ObitSDMData*)asdm)->StateTab;
+  PyObject *outList, *dict, *tlist;
+  olong irow, i, cnt;
+
+   outList = PyList_New(Tab->nrows);
+
+  for (irow=0; irow<Tab->nrows; irow++) {
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "stateId",       PyInt_FromLong((long)Tab->rows[irow]->stateId));
+    PyDict_SetItemString(dict, "calDeviceName", PyString_InternFromString(Tab->rows[irow]->calDeviceName));
+    PyDict_SetItemString(dict, "sig",           PyBool_FromLong((long)Tab->rows[irow]->sig));	
+    PyDict_SetItemString(dict, "ref",           PyBool_FromLong((long)Tab->rows[irow]->ref));	
+    PyDict_SetItemString(dict, "onSky",         PyBool_FromLong((long)Tab->rows[irow]->onSky));	
+
+    PyList_SetItem(outList, irow, dict);
+  }
+
+  return outList;
+} // end  GetState
+
+// Convert ExecBlock data to a python list of dicts
+static PyObject* OASDMGetExecBlock(ObitSDMData *asdm)
+{
+  ASDMExecBlockTable* Tab =  ((ObitSDMData*)asdm)->ExecBlockTab;
+  PyObject *outList, *dict, *tlist;
+  olong irow, i, cnt;
+
+   outList = PyList_New(Tab->nrows);
+
+  for (irow=0; irow<Tab->nrows; irow++) {
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "execBlockId",      PyInt_FromLong((long)Tab->rows[irow]->execBlockId));
+    PyDict_SetItemString(dict, "execBlockNum",     PyInt_FromLong((long)Tab->rows[irow]->execBlockNum));
+    PyDict_SetItemString(dict, "numObservingLog",  PyInt_FromLong((long)Tab->rows[irow]-> numObservingLog));
+    PyDict_SetItemString(dict, "numAntenna",       PyInt_FromLong((long)Tab->rows[irow]->numAntenna));
+    PyDict_SetItemString(dict, "sbSummaryId;",     PyInt_FromLong((long)Tab->rows[irow]->sbSummaryId));
+    PyDict_SetItemString(dict, "ScaleId",          PyInt_FromLong((long)Tab->rows[irow]->ScaleId));
+    PyDict_SetItemString(dict, "flagRow",          PyBool_FromLong((long)Tab->rows[irow]->flagRow));	
+    PyDict_SetItemString(dict, "configName",       PyString_InternFromString(Tab->rows[irow]->configName));
+    PyDict_SetItemString(dict, "telescopeName",    PyString_InternFromString(Tab->rows[irow]->telescopeName));
+    PyDict_SetItemString(dict, "observerName",     PyString_InternFromString(Tab->rows[irow]->observerName));
+    PyDict_SetItemString(dict, "sessionReference", PyString_InternFromString(Tab->rows[irow]->sessionReference));
+    PyDict_SetItemString(dict, "schedulerMode",    PyString_InternFromString(Tab->rows[irow]->schedulerMode));
+    PyDict_SetItemString(dict, "baseRangeMin",     PyFloat_FromDouble((double)Tab->rows[irow]->baseRangeMin));
+    PyDict_SetItemString(dict, "baseRangeMax",     PyFloat_FromDouble((double)Tab->rows[irow]->baseRangeMax));
+    PyDict_SetItemString(dict, "baseRmsMinor",     PyFloat_FromDouble((double)Tab->rows[irow]->baseRmsMinor));
+    PyDict_SetItemString(dict, "baseRmsMajor",     PyFloat_FromDouble((double)Tab->rows[irow]->baseRmsMajor));
+    PyDict_SetItemString(dict, "basePa",           PyFloat_FromDouble((double)Tab->rows[irow]->basePa));
+    PyDict_SetItemString(dict, "siteAltitude",     PyFloat_FromDouble((double)Tab->rows[irow]->siteAltitude));
+    PyDict_SetItemString(dict, "siteLongitude",    PyFloat_FromDouble((double)Tab->rows[irow]->siteLongitude));
+    PyDict_SetItemString(dict, "siteLatitude",     PyFloat_FromDouble((double)Tab->rows[irow]->siteLatitude));
+    PyDict_SetItemString(dict, "aborted",          PyBool_FromLong((long)Tab->rows[irow]->aborted));	
+
+    tlist = PyList_New(Tab->rows[irow]->numAntenna);
+    for (i=0; i<Tab->rows[irow]->numAntenna; i++) 
+       PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->antennaId[i]));
+    PyDict_SetItemString(dict, "antennaId",  tlist);
+
+    PyList_SetItem(outList, irow, dict);
+  }
+
+  return outList;
+} // end  GetExecBlock
+
+// Convert Source data to a python list of dicts
+static PyObject* OASDMGetSource(ObitSDMData *asdm)
+{
+  ASDMSourceTable* Tab =  ((ObitSDMData*)asdm)->SourceTab;
+  PyObject *outList, *dict, *tlist;
+  olong irow, i, cnt;
+
+   outList = PyList_New(Tab->nrows);
+
+  for (irow=0; irow<Tab->nrows; irow++) {
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "sourceId",         PyInt_FromLong((long)Tab->rows[irow]->sourceId));
+    PyDict_SetItemString(dict, "sourceNo",         PyInt_FromLong((long)Tab->rows[irow]->sourceNo));
+    PyDict_SetItemString(dict, "sourceName",       PyString_InternFromString(Tab->rows[irow]->sourceName));
+    PyDict_SetItemString(dict, "numLines",         PyInt_FromLong((long)Tab->rows[irow]->numLines));
+    PyDict_SetItemString(dict, "spectralWindowId", PyInt_FromLong((long)Tab->rows[irow]->spectralWindowId));
+    PyDict_SetItemString(dict, "code",             PyString_InternFromString(Tab->rows[irow]->code));
+
+    tlist = PyList_New(Tab->rows[irow]->numLines);
+    for (i=0; i<Tab->rows[irow]->numLines; i++) 
+       PyList_SetItem(tlist, i, PyFloat_FromDouble((double)Tab->rows[irow]->restFrequency[i]));
+    PyDict_SetItemString(dict, "restFrequency",  tlist);
+
+    tlist = PyList_New(Tab->rows[irow]->numLines);
+    for (i=0; i<Tab->rows[irow]->numLines; i++) 
+       PyList_SetItem(tlist, i, PyFloat_FromDouble((double)Tab->rows[irow]->sysVel[i]));
+    PyDict_SetItemString(dict, "sysVel",  tlist);
+
+    tlist = PyList_New(2);
+    for (i=0; i<2; i++) 
+       PyList_SetItem(tlist, i, PyFloat_FromDouble((double)Tab->rows[irow]->direction[i]));
+    PyDict_SetItemString(dict, "direction",  tlist);
+
+    tlist = PyList_New(2);
+    for (i=0; i<2; i++) 
+       PyList_SetItem(tlist, i, PyFloat_FromDouble((double)Tab->rows[irow]->properMotion[i]));
+    PyDict_SetItemString(dict, "properMotion",  tlist);
+
+    tlist = PyList_New(2);
+    PyList_SetItem(tlist, 0, PyFloat_FromDouble((double)Tab->rows[irow]->timeInterval[0]));
+    PyList_SetItem(tlist, 1, PyFloat_FromDouble((double)Tab->rows[irow]->timeInterval[1]));
+    PyDict_SetItemString(dict, "timeInterval",  tlist);
+
+    PyList_SetItem(outList, irow, dict);
+  }
+
+  return outList;
+} // end  GetSource
+
+// Convert Field data to a python list of dicts
+static PyObject* OASDMGetField(ObitSDMData *asdm)
+{
+  ASDMFieldTable* Tab =  ((ObitSDMData*)asdm)->FieldTab;
+  PyObject *outList, *dict, *tlist;
+  olong irow, i, cnt;
+
+   outList = PyList_New(Tab->nrows);
+
+  for (irow=0; irow<Tab->nrows; irow++) {
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "fieldId",   PyInt_FromLong((long)Tab->rows[irow]->fieldId));
+    PyDict_SetItemString(dict, "sourceId",  PyInt_FromLong((long)Tab->rows[irow]->sourceId));
+    PyDict_SetItemString(dict, "fieldName", PyString_InternFromString(Tab->rows[irow]->fieldName));
+    PyDict_SetItemString(dict, "code",      PyString_InternFromString(Tab->rows[irow]->code));
+    PyDict_SetItemString(dict, "time",      PyFloat_FromDouble((double)Tab->rows[irow]->time));
+    PyDict_SetItemString(dict, "numPoly",   PyInt_FromLong((long)Tab->rows[irow]->numPoly));
+
+    tlist = PyList_New(2*Tab->rows[irow]->numPoly);
+    for (i=0; i<Tab->rows[irow]->numPoly; i+=2) {
+       PyList_SetItem(tlist, 2*i,   PyFloat_FromDouble((double)Tab->rows[irow]->delayDir[2*i]));
+       PyList_SetItem(tlist, 2*i+1, PyFloat_FromDouble((double)Tab->rows[irow]->delayDir[2*i+1]));
+    }
+    PyDict_SetItemString(dict, "delayDir",  tlist);
+
+    tlist = PyList_New(2*Tab->rows[irow]->numPoly);
+    for (i=0; i<Tab->rows[irow]->numPoly; i+=2) {
+       PyList_SetItem(tlist, 2*i,   PyFloat_FromDouble((double)Tab->rows[irow]->phaseDir[2*i]));
+       PyList_SetItem(tlist, 2*i+1, PyFloat_FromDouble((double)Tab->rows[irow]->phaseDir[2*i+1]));
+    }
+    PyDict_SetItemString(dict, "phaseDir",  tlist);
+
+    tlist = PyList_New(2*Tab->rows[irow]->numPoly);
+    for (i=0; i<Tab->rows[irow]->numPoly; i+=2) {
+       PyList_SetItem(tlist, 2*i,   PyFloat_FromDouble((double)Tab->rows[irow]->referenceDir[2*i]));
+       PyList_SetItem(tlist, 2*i+1, PyFloat_FromDouble((double)Tab->rows[irow]->referenceDir[2*i+1]));
+    }
+    PyDict_SetItemString(dict, "referenceDir",  tlist);
+
+    PyList_SetItem(outList, irow, dict);
+  }
+
+  return outList;
+} // end  GetField
+
+// Convert Feed data to a python list of dicts
+static PyObject* OASDMGetFeed(ObitSDMData *asdm)
+{
+  ASDMFeedTable* Tab =  ((ObitSDMData*)asdm)->FeedTab;
+  PyObject *outList, *dict, *tlist;
+  olong irow, i, cnt;
+
+   outList = PyList_New(Tab->nrows);
+
+  for (irow=0; irow<Tab->nrows; irow++) {
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "feedId",           PyInt_FromLong((long)Tab->rows[irow]->feedId));
+    PyDict_SetItemString(dict, "antennaId",        PyInt_FromLong((long)Tab->rows[irow]->antennaId));
+    PyDict_SetItemString(dict, "spectralWindowId", PyInt_FromLong((long)Tab->rows[irow]->spectralWindowId));
+    PyDict_SetItemString(dict, "numReceptor",      PyInt_FromLong((long)Tab->rows[irow]->numReceptor));
+
+    tlist = PyList_New(2);
+    PyList_SetItem(tlist, 0, PyFloat_FromDouble((double)Tab->rows[irow]->timeInterval[0]));
+    PyList_SetItem(tlist, 1, PyFloat_FromDouble((double)Tab->rows[irow]->timeInterval[1]));
+    PyDict_SetItemString(dict, "timeInterval",  tlist);
+
+    tlist = PyList_New(2);
+    PyList_SetItem(tlist, 0, PyFloat_FromDouble((double)Tab->rows[irow]->beamOffset[0]));
+    PyList_SetItem(tlist, 1, PyFloat_FromDouble((double)Tab->rows[irow]->beamOffset[1]));
+    PyDict_SetItemString(dict, "beamOffset",  tlist);
+
+    tlist = PyList_New(2);
+    PyList_SetItem(tlist, 0, PyFloat_FromDouble((double)Tab->rows[irow]->focusReference[0]));
+    PyList_SetItem(tlist, 1, PyFloat_FromDouble((double)Tab->rows[irow]->focusReference[1]));
+    PyDict_SetItemString(dict, "focusReference",  tlist);
+
+    tlist = PyList_New(2);
+    PyList_SetItem(tlist, 0, PyInt_FromLong((long)Tab->rows[irow]->polResponse[0]));
+    PyList_SetItem(tlist, 1, PyInt_FromLong((long)Tab->rows[irow]->polResponse[1]));
+    PyDict_SetItemString(dict, "polResponse",  tlist);
+
+    tlist = PyList_New(Tab->rows[irow]->numReceptor);
+    for (i=0; i<Tab->rows[irow]->numReceptor; i++) 
+       PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->polarizationTypes[i]));
+    PyDict_SetItemString(dict, "polarizationTypes",  tlist);
+
+    tlist = PyList_New(Tab->rows[irow]->numReceptor);
+    for (i=0; i<Tab->rows[irow]->numReceptor; i++) 
+       PyList_SetItem(tlist, i, PyFloat_FromDouble((double)Tab->rows[irow]->receptorAngle[i]));
+    PyDict_SetItemString(dict, "receptorAngle",  tlist);
+
+    tlist = PyList_New(Tab->rows[irow]->numReceptor);
+    for (i=0; i<Tab->rows[irow]->numReceptor; i++) 
+       PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->receiverId[i]));
+    PyDict_SetItemString(dict, "receiverId",  tlist);
+
+    PyList_SetItem(outList, irow, dict);
+  }
+
+  return outList;
+} // end  GetFeed
+
+// Convert Polarization data to a python list of dicts
+static PyObject* OASDMGetPolarization(ObitSDMData *asdm)
+{
+  ASDMPolarizationTable* Tab =  ((ObitSDMData*)asdm)->PolarizationTab;
+  PyObject *outList, *dict, *tlist;
+  olong irow, i, cnt;
+
+   outList = PyList_New(Tab->nrows);
+
+  for (irow=0; irow<Tab->nrows; irow++) {
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "polarizationId", PyInt_FromLong((long)Tab->rows[irow]->polarizationId));
+    PyDict_SetItemString(dict, "numCorr",        PyInt_FromLong((long)Tab->rows[irow]->numCorr));
+    PyDict_SetItemString(dict, "flagRow",        PyBool_FromLong((long)Tab->rows[irow]->flagRow));	
+
+    tlist = PyList_New(Tab->rows[irow]->numCorr);
+    for (i=0; i<Tab->rows[irow]->numCorr; i++) 
+       PyList_SetItem(tlist, i, PyString_InternFromString(Tab->rows[irow]->corrType[i]));
+    PyDict_SetItemString(dict, "corrType",  tlist);
+
+    tlist = PyList_New(2*Tab->rows[irow]->numCorr);
+    for (i=0; i<Tab->rows[irow]->numCorr; i++) {
+       PyList_SetItem(tlist, 2*i,   PyString_InternFromString(Tab->rows[irow]->corrProduct[2*i]));
+       PyList_SetItem(tlist, 2*i+1, PyString_InternFromString(Tab->rows[irow]->corrProduct[2*i+1]));
+    }
+    PyDict_SetItemString(dict, "corrProduct",  tlist);
+
+    PyList_SetItem(outList, irow, dict);
+  }
+
+  return outList;
+} // end  GetPolarization
+
+// Convert Processor data to a python list of dicts
+static PyObject* OASDMGetProcessor(ObitSDMData *asdm)
+{
+  ASDMProcessorTable* Tab =  ((ObitSDMData*)asdm)->ProcessorTab;
+  PyObject *outList, *dict, *tlist;
+  olong irow, i, cnt;
+
+   outList = PyList_New(Tab->nrows);
+
+  for (irow=0; irow<Tab->nrows; irow++) {
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "processorId",      PyInt_FromLong((long)Tab->rows[irow]->processorId));
+    PyDict_SetItemString(dict, "modeId",           PyInt_FromLong((long)Tab->rows[irow]->modeId));
+    PyDict_SetItemString(dict, "processorType",    PyString_InternFromString(Tab->rows[irow]->processorType));
+    PyDict_SetItemString(dict, "processorSubType", PyString_InternFromString(Tab->rows[irow]->processorSubType));
+
+    PyList_SetItem(outList, irow, dict);
+  }
+
+  return outList;
+} // end  GetProcessor
+
+// Convert SwitchCycle data to a python list of dicts
+static PyObject* OASDMGetSwitchCycle(ObitSDMData *asdm)
+{
+  ASDMSwitchCycleTable* Tab =  ((ObitSDMData*)asdm)->SwitchCycleTab;
+  PyObject *outList, *dict, *tlist;
+  olong irow, i, cnt;
+
+   outList = PyList_New(Tab->nrows);
+
+  for (irow=0; irow<Tab->nrows; irow++) {
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "switchCycleId", PyInt_FromLong((long)Tab->rows[irow]->switchCycleId));
+    PyDict_SetItemString(dict, "numStep",       PyInt_FromLong((long)Tab->rows[irow]->numStep));
+
+    tlist = PyList_New(Tab->rows[irow]->numStep);
+    for (i=0; i<Tab->rows[irow]->numStep; i++) 
+       PyList_SetItem(tlist, i, PyFloat_FromDouble((double)Tab->rows[irow]->weightArray[i]));
+    PyDict_SetItemString(dict, "weightArray",  tlist);
+
+    tlist = PyList_New(Tab->rows[irow]->numStep);
+    for (i=0; i<Tab->rows[irow]->numStep; i++) 
+       PyList_SetItem(tlist, i, PyFloat_FromDouble((double)Tab->rows[irow]->dirOffsetArray[i]));
+    PyDict_SetItemString(dict, "dirOffsetArray",  tlist);
+
+    tlist = PyList_New(Tab->rows[irow]->numStep);
+    for (i=0; i<Tab->rows[irow]->numStep; i++) 
+       PyList_SetItem(tlist, i, PyFloat_FromDouble((double)Tab->rows[irow]->freqOffsetArray[i]));
+    PyDict_SetItemString(dict, "freqOffsetArray",  tlist);
+
+    tlist = PyList_New(Tab->rows[irow]->numStep);
+    for (i=0; i<Tab->rows[irow]->numStep; i++) 
+       PyList_SetItem(tlist, i, PyFloat_FromDouble((double)Tab->rows[irow]->stepDurationArray[i]));
+    PyDict_SetItemString(dict, "stepDurationArray",  tlist);
+
+    PyList_SetItem(outList, irow, dict);
+  }
+
+  return outList;
+} // end  GetSwitchCycle
+
+// Get SpectralWindowArray from an ASDM and convert to a python dict
+static PyObject* OASDMGetSpectralWindowArray(ObitSDMData *asdm, int mainRow, int SWOrder)
+{
+  gboolean lSWOrder;
+  ASDMSpectralWindowArray* swa=NULL;
+  PyObject *outDict, *dict, *tlist, *wlist;
+  olong irow, i;
+
+   if (SWOrder) lSWOrder = TRUE;
+   else         lSWOrder = FALSE;
+
+  swa = ObitSDMDataGetSWArray(asdm, (olong)mainRow, lSWOrder);
+
+  outDict = PyDict_New();
+  PyDict_SetItemString(outDict, "nwinds",  PyInt_FromLong((long)swa->nwinds));
+  PyDict_SetItemString(outDict, "refFreq", PyFloat_FromDouble((double)swa->refFreq));
+  PyDict_SetItemString(outDict, "refJD",   PyFloat_FromDouble((double)swa->refJD));
+
+  tlist = PyList_New(swa->nwinds);
+  for (i=0; i<swa->nwinds; i++) 
+    PyList_SetItem(tlist, i, PyInt_FromLong((long)swa->order));
+  PyDict_SetItemString(outDict, "order",  tlist);
+
+  wlist = PyList_New(swa->nwinds);
+  for (irow=0; irow<swa->nwinds; irow++) {
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "spectralWindowId", PyInt_FromLong((long)swa->winds[irow]->spectralWindowId));
+    PyDict_SetItemString(dict, "selected",         PyBool_FromLong((long)swa->winds[irow]->selected));	
+    PyDict_SetItemString(dict, "basebandNum",      PyInt_FromLong((long)swa->winds[irow]->basebandNum));
+    PyDict_SetItemString(dict, "subbandNum",       PyInt_FromLong((long)swa->winds[irow]->subbandNum));
+    PyDict_SetItemString(dict, "numChan",          PyInt_FromLong((long)swa->winds[irow]->numChan));
+    PyDict_SetItemString(dict, "nCPoln",           PyInt_FromLong((long)swa->winds[irow]->nCPoln));
+    PyDict_SetItemString(dict, "nAPoln" ,          PyInt_FromLong((long)swa->winds[irow]->nAPoln));
+    PyDict_SetItemString(dict, "netSideband",      PyString_InternFromString(swa->winds[irow]->netSideband));
+    PyDict_SetItemString(dict, "refChan",          PyFloat_FromDouble((double)swa->winds[irow]->refChan));
+    PyDict_SetItemString(dict, "refFreq",          PyFloat_FromDouble((double)swa->winds[irow]->refFreq));
+    PyDict_SetItemString(dict, "totBandwidth",     PyFloat_FromDouble((double)swa->winds[irow]->totBandwidth));
+    PyDict_SetItemString(dict, "chanFreqStart",    PyFloat_FromDouble((double)swa->winds[irow]->chanFreqStart));
+    PyDict_SetItemString(dict, "chanFreqStep",     PyFloat_FromDouble((double)swa->winds[irow]->chanFreqStep));
+    PyDict_SetItemString(dict, "chanWidth",        PyFloat_FromDouble((double)swa->winds[irow]->chanWidth));
+    PyDict_SetItemString(dict, "effectiveBw",      PyFloat_FromDouble((double)swa->winds[irow]->effectiveBw));
+    PyDict_SetItemString(dict, "resolution",       PyFloat_FromDouble((double)swa->winds[irow]->resolution));
+    PyList_SetItem(wlist, irow, dict);
+  }
+
+  PyDict_SetItemString(outDict, "winds",  wlist);
+
+  // cleanup
+  swa = ObitSDMDataKillSWArray(swa);
+
+  return outDict;
+} // end  GetSpectralWindowArray
+
+// Get Antenna Array from an ASDM and convert to a python dict
+static PyObject* OASDMGetAntArray(ObitSDMData *asdm, int mainRow)
+{
+  ASDMAntennaArray* aa=NULL;
+  PyObject *outDict, *dict, *tlist, *alist;
+  olong irow, i;
+  gchar ctemp[3];
+
+  aa = ObitSDMDataGetAntArray(asdm, (olong)mainRow);
+
+  outDict = PyDict_New();
+  PyDict_SetItemString(outDict, "nants",  PyInt_FromLong((long)aa->nants));
+  PyDict_SetItemString(outDict, "maxAnt",  PyInt_FromLong((long)aa->maxAnt));
+  PyDict_SetItemString(outDict, "arrayName", PyString_InternFromString(aa->arrayName));
+  PyDict_SetItemString(outDict, "obsName", PyString_InternFromString(aa->obsName));
+  PyDict_SetItemString(outDict, "refFreq", PyFloat_FromDouble((double)aa->refFreq));
+  PyDict_SetItemString(outDict, "refJD",   PyFloat_FromDouble((double)aa->refJD));
+
+  alist = PyList_New(aa->nants);
+  for (irow=0; irow<aa->nants; irow++) {
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "antennaId",    PyInt_FromLong((long)aa->ants[irow]->antennaId));
+    PyDict_SetItemString(dict, "antennaNo",    PyInt_FromLong((long)aa->ants[irow]->antennaNo));	
+    PyDict_SetItemString(dict, "stationId",    PyInt_FromLong((long)aa->ants[irow]->stationId));
+    PyDict_SetItemString(dict, "antName",      PyString_InternFromString(aa->ants[irow]->antName));
+    PyDict_SetItemString(dict, "staName",      PyString_InternFromString(aa->ants[irow]->staName));
+    PyDict_SetItemString(dict, "numPoln",      PyInt_FromLong((long)aa->ants[irow]->numPoln));
+    PyDict_SetItemString(dict, "numPolnCorr",  PyInt_FromLong((long)aa->ants[irow]->numPolnCorr));
+    PyDict_SetItemString(dict, "antennaMake",  PyInt_FromLong((long)aa->ants[irow]->antennaMake));
+    PyDict_SetItemString(dict, "antennaType",  PyInt_FromLong((long)aa->ants[irow]->antennaType));
+    PyDict_SetItemString(dict, "type",         PyInt_FromLong((long)aa->ants[irow]->type));
+    PyDict_SetItemString(dict, "dishDiameter", PyFloat_FromDouble((double)aa->ants[irow]->dishDiameter));
+    PyDict_SetItemString(dict, "time",         PyFloat_FromDouble((double)aa->ants[irow]->time));
+    ctemp[0] = aa->ants[irow]->polnType[0]; ctemp[1] = aa->ants[irow]->polnType[1]; ctemp[2] = 0;
+    PyDict_SetItemString(dict, "polnType",     PyString_InternFromString(ctemp));
+
+    tlist = PyList_New(3);
+    for (i=0; i<3; i++) 
+      PyList_SetItem(tlist, i, PyFloat_FromDouble((double)aa->ants[irow]->antPosition[i]));
+    PyDict_SetItemString(dict, "antPosition",  tlist);
+
+    tlist = PyList_New(3);
+    for (i=0; i<3; i++) 
+      PyList_SetItem(tlist, i, PyFloat_FromDouble((double)aa->ants[irow]->offset[i]));
+    PyDict_SetItemString(dict, "offset",  tlist);
+
+     tlist = PyList_New(3);
+    for (i=0; i<3; i++) 
+      PyList_SetItem(tlist, i, PyFloat_FromDouble((double)aa->ants[irow]->staPosition[i]));
+    PyDict_SetItemString(dict, "staPosition",  tlist);
+
+   PyList_SetItem(alist, irow, dict);
+  }
+
+  PyDict_SetItemString(outDict, "ants",  alist);
+
+  // cleanup
+  aa = ObitSDMDataKillAntArray(aa);
+
+  return outDict;
+} // end  GetAntArray
+
+// Get Source Array from an ASDM and convert to a python dict
+static PyObject* OASDMGetSourceArray(ObitSDMData *asdm)
+{
+  ASDMSourceArray* sa=NULL;
+  PyObject *outDict, *dict, *tlist, *slist;
+  olong irow, i, lastSID=-1, cnt, ocnt;
+  gchar ctemp[3];
+
+  sa = ObitSDMDataGetSourceArray(asdm);
+
+  outDict = PyDict_New();
+  PyDict_SetItemString(outDict, "nsou",  PyInt_FromLong((long)sa->nsou));
+
+  // count unique SID
+  cnt = 0; lastSID=-1;
+  for (irow=0; irow<sa->nsou; irow++) {
+    if (sa->sou[irow]->sourceId!=lastSID) cnt++;
+    lastSID = sa->sou[irow]->sourceId;
+  }
+
+  slist = PyList_New(cnt);
+  lastSID=-1; ocnt = 0;
+  for (irow=0; irow<sa->nsou; irow++) {
+	// Already done this sourceID?
+    if (sa->sou[irow]->sourceId==lastSID) continue;
+    lastSID = sa->sou[irow]->sourceId; ocnt++;
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "sourceId",         PyInt_FromLong((long)sa->sou[irow]->sourceId));
+    PyDict_SetItemString(dict, "sourceNo",         PyInt_FromLong((long)sa->sou[irow]->sourceNo));	
+    PyDict_SetItemString(dict, "sourceName",       PyString_InternFromString(sa->sou[irow]->sourceName));
+    PyDict_SetItemString(dict, "spectralWindowId", PyInt_FromLong((long)sa->sou[irow]->spectralWindowId));
+    PyDict_SetItemString(dict, "code",             PyString_InternFromString(sa->sou[irow]->code));
+    PyDict_SetItemString(dict, "numLines",         PyInt_FromLong((long)sa->sou[irow]->numLines));
+
+    tlist = PyList_New(2);
+    PyList_SetItem(tlist, 0, PyFloat_FromDouble((double)sa->sou[irow]->timeInterval[0]));
+    PyList_SetItem(tlist, 1, PyFloat_FromDouble((double)sa->sou[irow]->timeInterval[1]));
+    PyDict_SetItemString(dict, "timeInterval",  tlist);
+
+    tlist = PyList_New(2);
+    PyList_SetItem(tlist, 0, PyFloat_FromDouble((double)sa->sou[irow]->direction[0]));
+    PyList_SetItem(tlist, 1, PyFloat_FromDouble((double)sa->sou[irow]->direction[1]));
+    PyDict_SetItemString(dict, "direction",  tlist);
+
+    tlist = PyList_New(2);
+    PyList_SetItem(tlist, 0, PyFloat_FromDouble((double)sa->sou[irow]->properMotion[0]));
+    PyList_SetItem(tlist, 1, PyFloat_FromDouble((double)sa->sou[irow]->properMotion[1]));
+    PyDict_SetItemString(dict, "properMotion",  tlist);
+
+    tlist = PyList_New(sa->sou[irow]->numLines);
+    for (i=0; i<sa->sou[irow]->numLines; i++) 
+      PyList_SetItem(tlist, i, PyFloat_FromDouble((double)sa->sou[irow]->restFrequency[i]));
+    PyDict_SetItemString(dict, "restFrequency",  tlist);
+
+    tlist = PyList_New(sa->sou[irow]->numLines);
+    for (i=0; i<sa->sou[irow]->numLines; i++) 
+      PyList_SetItem(tlist, i, PyFloat_FromDouble((double)sa->sou[irow]->sysVel[i]));
+    PyDict_SetItemString(dict, "sysVel",  tlist);
+
+    PyList_SetItem(slist, ocnt-1, dict);
+  }
+
+  //  correct number
+  PyDict_SetItemString(outDict, "nsou",  PyInt_FromLong((long)cnt));
+
+  PyDict_SetItemString(outDict, "sou",  slist);
+
+  // cleanup
+  sa = ObitSDMDataKillSourceArray(sa);
+
+  return outDict;
+} // end  GetSourceArray
+
+extern int OASDMIsA (ObitSDMData* in) {
+  return ObitSDMDataIsA(in);
+} // end  OASDMIsA 
+
+ObitSDMData* OASDMRef (ObitSDMData* in) {
+  return ObitSDMDataRef (in);
+} // end OASDMRef
+
+ObitSDMData* OASDMUnref (ObitSDMData* in) {
+  if (!ObitSDMDataIsA(in)) return NULL;
+  return ObitSDMDataUnref (in);
+} // end OASDMUnref
+
+extern char* OASDMGetName (ObitSDMData* in) {
+  return in->name;
+} // end  OASDMGetName
+
+
+
+extern ObitSDMData *OASDMCreate(char *,char *,ObitErr *);
+extern float OASDMGetRefJD(ObitSDMData *);
+extern char *OASDMGetArray(ObitSDMData *);
+extern int OASDMIsA(ObitSDMData *);
+extern char *OASDMGetName(ObitSDMData *);
+
+typedef struct {
+  ObitSDMData *me;
+} OASDM;
+
 #include "ObitErr.h"
 extern ObitErr *ObitErrUnref(ObitErr *);
 extern ObitErr *ObitErrRef(ObitErr *);
@@ -30989,6 +31909,799 @@ static PyObject *_wrap_IoN2SolNTableConvert(PyObject *self, PyObject *args) {
 {
   free((double *) _arg3);
 }
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMCreate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSDMData * _result;
+    char * _arg0;
+    char * _arg1;
+    ObitErr * _arg2;
+    PyObject * _obj0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _argo2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:OASDMCreate",&_obj0,&_obj1,&_argo2)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj1)) {
+    int size = PyString_Size(_obj1);
+    char *str;
+    int i = 0;
+    _arg1 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj1);
+    for (i = 0; i < size; i++) {
+      _arg1[i] = str[i];
+    }
+    _arg1[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of OASDMCreate. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSDMData *)OASDMCreate(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSDMData_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+{
+  free((char *) _arg1);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetRefJD(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    float  _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetRefJD",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetRefJD. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (float )OASDMGetRefJD(_arg0);
+    _resultobj = Py_BuildValue("f",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetArray(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetArray",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetArray. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (char *)OASDMGetArray(_arg0);
+    _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetMain(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetMain",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetMain. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OASDMGetMain(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetScan(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetScan",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetScan. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OASDMGetScan(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetSubscan(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetSubscan",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetSubscan. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OASDMGetSubscan(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetConfig(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetConfig",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetConfig. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OASDMGetConfig(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetCorrelatorMode(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetCorrelatorMode",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetCorrelatorMode. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OASDMGetCorrelatorMode(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetDataDescription(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetDataDescription",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetDataDescription. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OASDMGetDataDescription(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetSpectralWindow(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetSpectralWindow",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetSpectralWindow. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OASDMGetSpectralWindow(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetAntenna(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetAntenna",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetAntenna. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OASDMGetAntenna(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetStation(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetStation",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetStation. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OASDMGetStation(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetState(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetState",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetState. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OASDMGetState(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetExecBlock(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetExecBlock",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetExecBlock. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OASDMGetExecBlock(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetSource(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetSource",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetSource. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OASDMGetSource(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetField(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetField",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetField. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OASDMGetField(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetFeed(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetFeed",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetFeed. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OASDMGetFeed(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetPolarization(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetPolarization",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetPolarization. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OASDMGetPolarization(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetProcessor(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetProcessor",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetProcessor. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OASDMGetProcessor(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetSwitchCycle(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetSwitchCycle",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetSwitchCycle. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OASDMGetSwitchCycle(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetSpectralWindowArray(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitSDMData * _arg0;
+    int  _arg1;
+    int  _arg2;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oii:OASDMGetSpectralWindowArray",&_argo0,&_arg1,&_arg2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetSpectralWindowArray. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OASDMGetSpectralWindowArray(_arg0,_arg1,_arg2);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetAntArray(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitSDMData * _arg0;
+    int  _arg1;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oi:OASDMGetAntArray",&_argo0,&_arg1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetAntArray. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OASDMGetAntArray(_arg0,_arg1);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetSourceArray(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetSourceArray",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetSourceArray. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OASDMGetSourceArray(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMIsA(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMIsA",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMIsA. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (int )OASDMIsA(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMRef(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSDMData * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMRef",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMRef. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSDMData *)OASDMRef(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSDMData_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMUnref(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSDMData * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMUnref",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMUnref. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSDMData *)OASDMUnref(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSDMData_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_OASDMGetName(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+    ObitSDMData * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDMGetName",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDMGetName. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (char *)OASDMGetName(_arg0);
+    _resultobj = Py_BuildValue("s", _result);
     return _resultobj;
 }
 
@@ -64975,6 +66688,176 @@ static PyObject *_wrap_delete_InfoList(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+#define OASDM_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
+static PyObject *_wrap_OASDM_me_set(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSDMData * _result;
+    OASDM * _arg0;
+    ObitSDMData * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:OASDM_me_set",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_OASDM_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDM_me_set. Expected _OASDM_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitSDMData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OASDM_me_set. Expected _ObitSDMData_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSDMData *)OASDM_me_set(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSDMData_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+#define OASDM_me_get(_swigobj) ((ObitSDMData *) _swigobj->me)
+static PyObject *_wrap_OASDM_me_get(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSDMData * _result;
+    OASDM * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OASDM_me_get",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_OASDM_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OASDM_me_get. Expected _OASDM_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSDMData *)OASDM_me_get(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSDMData_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static OASDM *new_OASDM(char *name,char *DataRoot,ObitErr *err) {
+     OASDM *out;
+     out = (OASDM *) malloc(sizeof(OASDM));
+     if (strcmp(name, "None")) out->me = OASDMCreate(name, DataRoot, err);
+     else out->me = NULL;
+     return out;
+   }
+
+static PyObject *_wrap_new_OASDM(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OASDM * _result;
+    char * _arg0;
+    char * _arg1;
+    ObitErr * _arg2;
+    PyObject * _obj0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _argo2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:new_OASDM",&_obj0,&_obj1,&_argo2)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj1)) {
+    int size = PyString_Size(_obj1);
+    char *str;
+    int i = 0;
+    _arg1 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj1);
+    for (i = 0; i < size; i++) {
+      _arg1[i] = str[i];
+    }
+    _arg1[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of new_OASDM. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (OASDM *)new_OASDM(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_OASDM_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+{
+  free((char *) _arg1);
+}
+    return _resultobj;
+}
+
+static void delete_OASDM(OASDM *self) {
+    self->me = OASDMUnref(self->me);
+    free(self);
+  }
+static PyObject *_wrap_delete_OASDM(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OASDM * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:delete_OASDM",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_OASDM_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of delete_OASDM. Expected _OASDM_p.");
+        return NULL;
+        }
+    }
+    delete_OASDM(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 #define OErr_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
 static PyObject *_wrap_OErr_me_set(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -69236,6 +71119,10 @@ static PyMethodDef ObitMethods[] = {
 	 { "new_OErr", _wrap_new_OErr, METH_VARARGS },
 	 { "OErr_me_get", _wrap_OErr_me_get, METH_VARARGS },
 	 { "OErr_me_set", _wrap_OErr_me_set, METH_VARARGS },
+	 { "delete_OASDM", _wrap_delete_OASDM, METH_VARARGS },
+	 { "new_OASDM", _wrap_new_OASDM, METH_VARARGS },
+	 { "OASDM_me_get", _wrap_OASDM_me_get, METH_VARARGS },
+	 { "OASDM_me_set", _wrap_OASDM_me_set, METH_VARARGS },
 	 { "delete_InfoList", _wrap_delete_InfoList, METH_VARARGS },
 	 { "new_InfoList", _wrap_new_InfoList, METH_VARARGS },
 	 { "InfoList_me_get", _wrap_InfoList_me_get, METH_VARARGS },
@@ -70041,6 +71928,33 @@ static PyMethodDef ObitMethods[] = {
 	 { "ObitErrLog", _wrap_ObitErrLog, METH_VARARGS },
 	 { "ObitErrRef", _wrap_ObitErrRef, METH_VARARGS },
 	 { "ObitErrUnref", _wrap_ObitErrUnref, METH_VARARGS },
+	 { "OASDMGetName", _wrap_OASDMGetName, METH_VARARGS },
+	 { "OASDMUnref", _wrap_OASDMUnref, METH_VARARGS },
+	 { "OASDMRef", _wrap_OASDMRef, METH_VARARGS },
+	 { "OASDMIsA", _wrap_OASDMIsA, METH_VARARGS },
+	 { "OASDMGetSourceArray", _wrap_OASDMGetSourceArray, METH_VARARGS },
+	 { "OASDMGetAntArray", _wrap_OASDMGetAntArray, METH_VARARGS },
+	 { "OASDMGetSpectralWindowArray", _wrap_OASDMGetSpectralWindowArray, METH_VARARGS },
+	 { "OASDMGetSwitchCycle", _wrap_OASDMGetSwitchCycle, METH_VARARGS },
+	 { "OASDMGetProcessor", _wrap_OASDMGetProcessor, METH_VARARGS },
+	 { "OASDMGetPolarization", _wrap_OASDMGetPolarization, METH_VARARGS },
+	 { "OASDMGetFeed", _wrap_OASDMGetFeed, METH_VARARGS },
+	 { "OASDMGetField", _wrap_OASDMGetField, METH_VARARGS },
+	 { "OASDMGetSource", _wrap_OASDMGetSource, METH_VARARGS },
+	 { "OASDMGetExecBlock", _wrap_OASDMGetExecBlock, METH_VARARGS },
+	 { "OASDMGetState", _wrap_OASDMGetState, METH_VARARGS },
+	 { "OASDMGetStation", _wrap_OASDMGetStation, METH_VARARGS },
+	 { "OASDMGetAntenna", _wrap_OASDMGetAntenna, METH_VARARGS },
+	 { "OASDMGetSpectralWindow", _wrap_OASDMGetSpectralWindow, METH_VARARGS },
+	 { "OASDMGetDataDescription", _wrap_OASDMGetDataDescription, METH_VARARGS },
+	 { "OASDMGetCorrelatorMode", _wrap_OASDMGetCorrelatorMode, METH_VARARGS },
+	 { "OASDMGetConfig", _wrap_OASDMGetConfig, METH_VARARGS },
+	 { "OASDMGetSubscan", _wrap_OASDMGetSubscan, METH_VARARGS },
+	 { "OASDMGetScan", _wrap_OASDMGetScan, METH_VARARGS },
+	 { "OASDMGetMain", _wrap_OASDMGetMain, METH_VARARGS },
+	 { "OASDMGetArray", _wrap_OASDMGetArray, METH_VARARGS },
+	 { "OASDMGetRefJD", _wrap_OASDMGetRefJD, METH_VARARGS },
+	 { "OASDMCreate", _wrap_OASDMCreate, METH_VARARGS },
 	 { "IoN2SolNTableConvert", _wrap_IoN2SolNTableConvert, METH_VARARGS },
 	 { "InfoListGetDict", _wrap_InfoListGetDict, METH_VARARGS },
 	 { "InfoListGetNumber", _wrap_InfoListGetNumber, METH_VARARGS },

@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010,2011                                          */
+/*;  Copyright (C) 2010,2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -337,6 +337,12 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err);
 /** Typedef for definition of class pointer structure */
 typedef ObitSDMData* (*ObitSDMDataCreateFP) (gchar* name, gchar *DataRoot, 
 					     ObitErr *err);
+
+/** Public: Create/initialize ObitSDMData with only Intent structures */
+ObitSDMData* ObitSDMIntentCreate (gchar* name, gchar *DataRoot, ObitErr *err);
+/** Typedef for definition of class pointer structure */
+typedef ObitSDMData* (*ObitSDMIntentCreateFP) (gchar* name, gchar *DataRoot, 
+					       ObitErr *err);
 
 /** Public: ClassInfo pointer */
 gconstpointer ObitSDMDataGetClass (void);

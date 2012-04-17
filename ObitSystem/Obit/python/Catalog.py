@@ -198,7 +198,7 @@ def PVLSelect (inVL, outVL, err, BLC=[10,10], TRC=[100000,100000], \
     for s in Steps:
         sss.append(s[0])
         sss.append(s[1])
-    dim = [2, len[Steps],1,1,1]
+    dim = [2, len(Steps),1,1,1]
     InfoList.PPutFloat   (inInfo, "Steps", dim, sss, err)
     #
     Obit.TableVLSelect (inVL.me, outVL.me, err.me);

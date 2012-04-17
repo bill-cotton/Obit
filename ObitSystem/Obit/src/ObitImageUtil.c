@@ -4621,6 +4621,58 @@ void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err)
 
 } /* end ObitImageUtilFitBeam */
 
+/**
+ * Fill an image with blank pixels (3rd dim only)
+ * \param in        Input image to blank
+ * \param err       Error stack, returns if not empty.
+ */
+void ObitImageUtilBlankFill (ObitImage* in, ObitErr* err)
+{
+  olong i, iplane, nplane;
+  olong blc[IM_MAXDIM], trc[IM_MAXDIM];
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ofloat fblank = ObitMagicF();
+  ObitIOSize IOBy = OBIT_IO_byPlane;
+  gchar *routine="ObitImageUtilBlankFill";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitImageIsA(in));
+
+  /* Access images a plane at a time */
+  dim[0] = 1;
+  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
+  for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
+  ObitInfoListPut (in->info, "IOBy", OBIT_long, dim, &IOBy, err);
+  dim[0] = IM_MAXDIM;
+  ObitInfoListPut (in->info, "BLC", OBIT_long, dim, blc, err);
+  ObitInfoListPut (in->info, "TRC", OBIT_long, dim, trc, err);
+
+  /* Open input */
+  ObitImageOpen (in, OBIT_IO_ReadWrite, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Blank fill buffer */
+  ObitFArrayFill (in->image, fblank);
+
+  /* How many input planes? */
+  nplane = in->myDesc->inaxes[2];
+
+  /* Loop over output planes */
+  for (iplane=0; iplane<nplane; iplane++) {
+    /* Write plane */
+    ObitImageWrite (in, NULL, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+  }
+
+  /* Close input */
+  ObitImageClose (in, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* release buffer */
+  in->image = ObitFArrayUnref(in->image);
+
+} /* end ObitImageUtilBlankFill */
 /*----------------------Private functions---------------------------*/
 
 /**

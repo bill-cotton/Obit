@@ -406,6 +406,7 @@ void ObitImageDescIndex (ObitImageDesc* in)
     if (!strncmp (in->ctype[i], "STOKES", 6)) in->jlocs = i;
     if (!strncmp (in->ctype[i], "FREQ",     4)) in->jlocf = i;
     else if (!strncmp (in->ctype[i], "VELO",     4)) in->jlocf = i;
+    else if (!strncmp (in->ctype[i], "FELO",     4)) in->jlocf = i;
     else if (!strncmp (in->ctype[i], "FREQ",     4)) in->jlocf = i;
     else if (!strncmp (in->ctype[i], "SPECLOGF", 8)) in->jlocf = i;
     else if (!strncmp (in->ctype[i], "SPECLNMF", 8)) in->jlocf = i;

@@ -489,3 +489,29 @@ Obit/python/Doppler.py  Obit/python/Doppler.inc:
 Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
   Update python interface
 30 Mar 2012, version 412
+
+Mostly ASDM interface and BDFIn fixes
+ObitVersion:
+Obit/changes.log:
+Obit/include/ObitImageUtil.h Obit/src/ObitImageUtil.c:
+  New routine BlankFill
+Obit/tasks/Imager.c:
+  Deal with channels with no data.
+Obit/src/ObitImageDesc.c:
+  Index: recognize FELO? axis
+Obit/src/ObitAIPSDir.c:
+  More robust way to manage size of a directory
+Obit/python/Catalog.py:
+  PVLSelect: fix len[Steps]=>len(Steps)
+Obit/src/ObitAIPSCat.c:
+  GetTable: Trap crazy values for no. tables.
+Obit/src/ObitSDMData.c  Obit/include/ObitSDMData.h:
+  Add IntentCreate for only descriptive tables,
+  Fix bug is selection with multiple channel widths
+Obit/python/OASDM.inc Obit/python/OASDM.py:
+  python interface to ASDM tables
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  python interface
+Obit/src/ObitDoppler.c:
+  Fix shift logic
+16 Apr 2012, version 413

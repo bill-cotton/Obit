@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2011                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -1013,6 +1013,8 @@ void ObitAIPSCatGetTable (ObitTableList *tableList, gchar *buffer,
     g_memmove (&name[5], (gchar*)&header[myDHDR.KHEXT+j], 2);
 
     if (header[myDHDR.KIVER+j] > 0) { /* occupied? */
+      /* Crazy value? */
+      if (header[myDHDR.KIVER+j]>4096) header[myDHDR.KIVER+j] = 1;
       /* Loop over possibilities */
       for (k = 1; k<=header[myDHDR.KIVER+j]; k++) {
 	/* not all things in AIPS header are tables 

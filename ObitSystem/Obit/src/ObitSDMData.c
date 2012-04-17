@@ -831,6 +831,225 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
 } /* end ObitSDMDataCreate */
 
 /**
+ * Creates an ObitSDMData with only Intent related information
+ * Parses the ASMD XML tables and stores
+ * \param name     An optional name for the object.
+ * \param DataRoot Directory root of data
+ * \return the new object.
+ */
+ObitSDMData* ObitSDMIntentCreate (gchar* name, gchar *DataRoot, ObitErr *err)
+{
+  gchar *fullname;
+  ObitSDMData* out;
+  ASDMSpectralWindowArray *damn=NULL;
+  gchar *routine="ObitSDMIntentCreate";
+
+  /* Create basic structure */
+  out = newObitSDMData (name);
+
+  /* set Values */
+  out->DataRoot  = strdup(DataRoot);
+  out->isEVLA    = FALSE;
+  out->isALMA    = FALSE;
+  out->selConfig = -1;
+  out->selBand   = ASDMBand_Any;
+
+  /* Parsing buffer */
+  out->maxLine = 32768;
+  out->line = g_malloc(out->maxLine+1);
+
+  /* ASDM table - also get schemaVersion */
+  fullname = g_strconcat (DataRoot,"/ASDM.xml", NULL);
+  out->ASDMTab = ParseASDMTable(fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+  out->schemaVersion = out->ASDMTab->schemaVersion;
+
+  /* ExecBlock table - also determines which array */
+  fullname = g_strconcat (DataRoot,"/ExecBlock.xml", NULL);
+  out->ExecBlockTab = ParseASDMExecBlockTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* Main table */
+  fullname = g_strconcat (DataRoot,"/Main.xml", NULL);
+  out->MainTab = ParseASDMMainTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* Antenna table */
+  fullname = g_strconcat (DataRoot,"/Antenna.xml", NULL);
+  out->AntennaTab = ParseASDMAntennaTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* calAtmosphere table */
+  out->calAtmosphereTab = NULL;
+
+  /* calData table */
+  out->calDataTab = NULL;
+
+  /* calDevice table */
+  out->calDeviceTab = NULL;
+
+  /* calPointing table */
+  out->calPointingTab = NULL;
+
+  /* CalReduction table */
+  out->CalReductionTab = NULL;
+
+  /* CalWVR table */
+    out->CalWVRTab = NULL;
+
+  /* ConfigDescription table */
+  fullname = g_strconcat (DataRoot,"/ConfigDescription.xml", NULL);
+  out->ConfigDescriptionTab = ParseASDMConfigDescriptionTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* CorrelatorMode table */
+  fullname = g_strconcat (DataRoot,"/CorrelatorMode.xml", NULL);
+  out->CorrelatorModeTab = ParseASDMCorrelatorModeTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* DataDescription table */
+  fullname = g_strconcat (DataRoot,"/DataDescription.xml", NULL);
+  out->DataDescriptionTab = ParseASDMDataDescriptionTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* Doppler table */
+  fullname = g_strconcat (DataRoot,"/Doppler.xml", NULL);
+  out->DopplerTab = ParseASDMDopplerTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* Feed table */
+  fullname = g_strconcat (DataRoot,"/Feed.xml", NULL);
+  out->FeedTab = ParseASDMFeedTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* Field table */
+  fullname = g_strconcat (DataRoot,"/Field.xml", NULL);
+  out->FieldTab = ParseASDMFieldTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* Flag table */
+  fullname = g_strconcat (DataRoot,"/Flag.xml", NULL);
+  out->FlagTab = ParseASDMFlagTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* Pointing table */
+  out->PointingTab = NULL;
+
+  /* PointingModel table */
+  out->PointingModelTab = NULL;
+
+  /* Polarization table */
+  fullname = g_strconcat (DataRoot,"/Polarization.xml", NULL);
+  out->PolarizationTab = ParseASDMPolarizationTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* Processor table */
+  fullname = g_strconcat (DataRoot,"/Processor.xml", NULL);
+  out->ProcessorTab = ParseASDMProcessorTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* Receiver table */
+  fullname = g_strconcat (DataRoot,"/Receiver.xml", NULL);
+  out->ReceiverTab = ParseASDMReceiverTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* SBSummary table */
+  fullname = g_strconcat (DataRoot,"/SBSummary.xml", NULL);
+  out->SBSummaryTab = ParseASDMSBSummaryTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* Scan table */
+  fullname = g_strconcat (DataRoot,"/Scan.xml", NULL);
+  out->ScanTab = ParseASDMScanTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* Source table */
+  fullname = g_strconcat (DataRoot,"/Source.xml", NULL);
+  out->SourceTab = ParseASDMSourceTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* SpectralWindow table */
+  fullname = g_strconcat (DataRoot,"/SpectralWindow.xml", NULL);
+  out->SpectralWindowTab = ParseASDMSpectralWindowTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* State table */
+  fullname = g_strconcat (DataRoot,"/State.xml", NULL);
+  out->StateTab = ParseASDMStateTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* Station table */
+  fullname = g_strconcat (DataRoot,"/Station.xml", NULL);
+  out->StationTab = ParseASDMStationTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* Subscan table */
+  fullname = g_strconcat (DataRoot,"/Subscan.xml", NULL);
+  out->SubscanTab = ParseASDMSubscanTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* SwitchCycle table */
+  fullname = g_strconcat (DataRoot,"/SwitchCycle.xml", NULL);
+  out->SwitchCycleTab = ParseASDMSwitchCycleTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* SysCal table */
+  out->SysCalTab = NULL;
+
+  /* SysPower table from either xml or binary */
+  out->SysPowerTab = NULL;
+
+  /* Weather table */
+  out->WeatherTab = NULL;
+
+  /* Other info - what a piece of shit */
+  damn = ObitSDMDataGetSWArray (out, 0, FALSE);
+  Obit_retval_if_fail((damn!=NULL), err, out,
+		      "%s: Failed to generate Spectral Window Array", 
+		      routine);
+
+  /* Reference JD from SW Array */
+  out->refJD = damn->refJD;
+
+  /* Reference Frequency */
+  out->refFreq = damn->refFreq;
+
+  damn = ObitSDMDataKillSWArray(damn);
+
+  /* Get integration time from the first scan */
+  out->integTime = out->MainTab->rows[0]->interval / 
+    MAX(1, out->MainTab->rows[0]->numIntegration);
+
+  /* release parsing buffer */
+  out->maxLine = 0;
+  g_free(out->line); out->line = NULL;
+
+  return out;
+} /* end ObitSDMIntentCreate */
+
+/**
  * Creates and fills n spectral window array
  * Parses the ASMD XML tables and stores
  * \param in       ASDM object to use
@@ -989,8 +1208,8 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
     /* Is this one selected? */
     if ((in->selChan>0) && (in->selChan!=out->winds[iSW]->numChan)) 
       out->winds[iSW]->selected = FALSE;
-    if ((in->selBW>0.0) && (fabs(in->selBW-out->winds[iSW]->chanWidth)>100.0))
-      out->winds[iSW]->selected = FALSE;
+    /* NO if ((in->selBW>0.0) && (fabs(in->selBW-out->winds[iSW]->chanWidth)>100.0))
+       out->winds[iSW]->selected = FALSE;*/
 
     iSW++;
   } /* end loop over DataDescriptions */
@@ -8330,6 +8549,9 @@ static ASDMWeatherTable* ParseASDMWeatherTable(ObitSDMData *me,
 
   out = g_malloc0(sizeof(ASDMWeatherTable));
   out->rows = NULL;
+
+  /* Does it exist? */
+  if (!ObitFileExist(WeatherFile, err)) return out;
 
   /* How many rows? */
   out->nrows = MAX(0, me->ASDMTab->WeatherRows); 

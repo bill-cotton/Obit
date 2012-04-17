@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -153,6 +153,9 @@ static void ObitAIPSDirPackDate (AIPSint *pack, olong unpack[3]);
 /** Private: Class initializer. */
 void ObitAIPSDirClassInit (olong number, gchar* dir[]);
 
+/** Private: Sync head with actual contents of directory */
+static void SyncDir(ObitAIPSDir *out, ObitAIPSDirCatHead  *head, 
+		    ObitErr *err);
 /*---------------Public functions---------------------------*/
 /**
  * Look through AIPS catalog on a given disk to find a given
@@ -935,9 +938,16 @@ ObitAIPSDirOpen (olong disk, olong user, ObitErr *err)
     }
   } /* end init/read header */
 
+  /* to prevent directory from getting out of sync */
+  head = (ObitAIPSDirCatHead*)buffer;
+  SyncDir(out, head, err);
+  if (err->error) {
+    ObitThreadUnlock(myLock);
+    Obit_traceback_val (err, routine, "Catalog search", NULL);
+  }
+
   /* update last access */
   /* Update header */
-  head = (ObitAIPSDirCatHead*)buffer;
   ObitAIPSDirUpdateHead(head);
 
   /* How many entries */
@@ -1026,7 +1036,6 @@ ObitAIPSDirFindEntry (ObitAIPSDir* in, gchar Aname[13],
   gchar *routine = "ObitAIPSDirFindEntry";
 
   /* error checks */
-  g_assert(ObitErrIsA(err));
   if (err->error) return -1;  /* previous error? */
   g_assert (ObitAIPSDirIsA(in));
 
@@ -1534,5 +1543,45 @@ void ObitAIPSDirPackDate (AIPSint *pack, olong unpack[3])
   *pack = 256 * (256 * i1 + i2) + i3;
 } /* end ObitAIPSDirPackDate */
 
+/**
+ * Find out how large directory really is by counting records
+ * \param  in    Pointer to catalog directory structure info.
+ *               File should be open
+ * \param head   Header structure, possibly modified on output
+ * \param err    Obit error stack
+ */
+static void SyncDir(ObitAIPSDir *in, ObitAIPSDirCatHead  *head, 
+		    ObitErr *err)
+{ 
+  olong      wantPos, nwpl, nlpr, count, maxcno;
+  AIPSint    buffer[256];
+  ObitIOCode status=OBIT_IO_OK;
+  ObitFilePos size;
+  ObitAIPSDirCatEntry *entry=NULL;
+  gchar *routine = "ObitAIPSDir:SyncDir";
 
+  if (err->error) return;  /* previous error? */
 
+  /* position file to second block - first is header */
+  wantPos = 256 * sizeof(AIPSint);
+  size    = 256 * sizeof(AIPSint);
+
+  nwpl = 10;          /* number of AIPSint words per entry */
+  nlpr = 256 / nwpl;  /* number of entries per "record" (256 words) */
+
+  /* Count blocks before EOF */
+  count = 0;
+  while (status!=OBIT_IO_EOF) {
+    status = ObitFileRead (in->myFile, wantPos, size, (gchar*)buffer, err);
+    if (status==OBIT_IO_EOF) break;
+    if (err->error) Obit_traceback_msg (err, routine, "Catalog search");
+    entry = (ObitAIPSDirCatEntry*)buffer;  /* entry pointer into buffer */
+    wantPos = -1L; /* now sequential access */
+    count++;
+  }
+
+  /* How many possible? */
+  maxcno = count * nlpr;
+  if (maxcno>head->ncat) head->ncat = maxcno;
+
+}   /* end SyncDir */

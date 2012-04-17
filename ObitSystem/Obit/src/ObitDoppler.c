@@ -1601,7 +1601,8 @@ static ofloat CalcShift (ObitDoppler *doppler, olong ant1, olong ant2,
 
   /* How many channels? CHECK - not sure about this */
   shift = -(appFreq - (uvDesc->crval[uvDesc->jlocf] + 
-		       (uvDesc->altCrpix-1) * uvDesc->cdelt[uvDesc->jlocf])) /
+		       (uvDesc->altCrpix-uvDesc->crpix[uvDesc->jlocf]) * 
+		       uvDesc->cdelt[uvDesc->jlocf])) /
     uvDesc->cdelt[uvDesc->jlocf];
 
   /* Tell shift */
@@ -1705,7 +1706,7 @@ static ofloat defaultRefChan(ObitDoppler *doppler, ObitErr *err)
 {
   ofloat refChan = 0.0;
   ofloat ut;
-  odouble appFreq, shift;
+  odouble appFreq, shift, cenFreq;
   olong year, doy, ishift, i, iant;
   ObitUVDesc *uvDesc = doppler->uvdata->myDesc;
   gchar *routine = "defaultRefChan";
@@ -1743,13 +1744,16 @@ static ofloat defaultRefChan(ObitDoppler *doppler, ObitErr *err)
 				doppler->antList->ANlist[iant]->AntXYZ[0],
 				doppler->antList->ANlist[iant]->AntXYZ[1],
 				doppler->antList->ANlist[iant]->AntXYZ[2]);
-  /* How many channel shifted from rest? */
-  shift = (appFreq-doppler->RestFreq) / uvDesc->cdelt[uvDesc->jlocf];
+  /* How many channel shifted from center frequency? */
+  cenFreq = uvDesc->crval[uvDesc->jlocf] + 
+    ((uvDesc->inaxes[uvDesc->jlocf]/2) - uvDesc->crpix[uvDesc->jlocf]) *
+    uvDesc->cdelt[uvDesc->jlocf];
+  shift = (appFreq-cenFreq) / uvDesc->cdelt[uvDesc->jlocf];
 
   /* Minimal shift from center */
   if (shift>0.0) ishift = (olong)(shift+0.5);
   else           ishift = (olong)(shift-0.5);
-  refChan = (1 + uvDesc->inaxes[uvDesc->jlocf]/2) + ishift;
+  refChan = uvDesc->crpix[uvDesc->jlocf] + (uvDesc->inaxes[uvDesc->jlocf]/2) - 1 + ishift;
 
   return refChan;
 } /* end defaultRefChan */

@@ -215,7 +215,10 @@ void ObitImageUtilTwoDShift (ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
 void ObitImageUtilT2Spec  (ObitImage *inImage, ObitImage **outImage, 
 			   olong nTerm, olong *inCCVer, olong *outCCVer,
 			   olong startComp, olong endComp, ObitErr *err);
+
 /** Fit beam size to dirty beam */
 void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err);
-
+ 
+/* Blank fill image */
+void ObitImageUtilBlankFill (ObitImage* in, ObitErr* err);
 #endif /* OBITIMAGEUTIL_H */ 
