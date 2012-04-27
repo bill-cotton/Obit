@@ -1,7 +1,7 @@
 /* $Id$  */
 /* FndSou Obit task - generate source list from image                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2011                                          */
+/*;  Copyright (C) 2006-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -264,8 +264,9 @@ ObitInfoList* FndSouIn (int argc, char **argv, ObitErr *err)
   ObitInfoList* list;
   gchar *routine = "FndSouIn";
 
-  /* Make default inputs InfoList */
+  /* Make default inputs/outputs InfoList */
   list = defaultInputs(err);
+  myOutput = defaultOutputs(err);
 
   /* command line arguments */
   /* fprintf (stderr,"DEBUG arg %d %s\n",argc,argv[0]); DEBUG */
@@ -343,7 +344,6 @@ ObitInfoList* FndSouIn (int argc, char **argv, ObitErr *err)
   }
 
   /* Initialize output */
-  myOutput = defaultOutputs(err);
   ObitReturnDumpRetCode (-999, outfile, myOutput, err);
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 

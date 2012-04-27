@@ -4517,10 +4517,10 @@ void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err)
   if (err->error) goto cleanup;
 
   /* Trim edges of beam */
-  blc[0] = 5;
-  blc[1] = 5;
-  trc[0] = beam->image->naxis[0]-5;
-  trc[1] = beam->image->naxis[1]-5;
+  blc[0] = beam->image->naxis[0]/4;
+  blc[1] = beam->image->naxis[1]/4;
+  trc[0] = 3*beam->image->naxis[0]/4;
+  trc[1] = 3*beam->image->naxis[1]/4;
   beamCenter = ObitFArraySubArr (beam->image, blc, trc, err);
   if (err->error) goto cleanup;
 
@@ -4560,7 +4560,7 @@ void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err)
   models[0] = ObitFitModelCreate ("model", OBIT_FitModel_GaussMod, 
 				  Peak, DeltaX, DeltaY, nparm, parms);
   /* Fitting region */
-  corner[0] = center[0]+5-10; corner[1] = center[1]+5-10;
+  corner[0] = center[0]+blc[0]-10; corner[1] = center[1]+blc[1]-10;
   fdim[0]   = fdim[1] = 21;
   peakResid = fluxResid = RMSResid = 0.0;
   reg    = ObitFitRegionCreate ("reg", corner, fdim, Peak, 
@@ -4612,8 +4612,10 @@ void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err)
   beamCenter = ObitFArrayUnref(beamCenter);
   reg        = ObitFitRegionUnref(reg);
   imFit      = ObitImageFitUnref(imFit);
-  if (models[0]) models[0]  = ObitFitModelUnref(models[0]);
-  if (models) g_free(models);
+  if (models) {
+    if (models[0]) models[0]  = ObitFitModelUnref(models[0]);
+    g_free(models);
+  }
 
   /* Free image buffer */
   beam->image = ObitFArrayUnref(beam->image);

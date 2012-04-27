@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -703,9 +703,7 @@ void ObitImageDescGetPixel(ObitImageDesc* in, odouble *pos,
 /**
  * Determine if there is an overlap is the selected regions described by.
  * a pair of image descriptors
- * Test if the difference in ra and dec is less than the sum of 
- * the halfwidths.  Nonlinearities of coordinates ignored but test is 
- * somewhat generous.
+ * Test is if the center or any corner of either image is in the other.
  * \param in1      first input image descriptor
  * \param in2      second input image descriptor
  * \param err      ObitErr error stack
@@ -715,13 +713,54 @@ gboolean ObitImageDescOverlap(ObitImageDesc *in1, ObitImageDesc *in2,
 			      ObitErr *err)
 {
   gboolean out = FALSE;
-  odouble ra1, dec1, ra2, dec2, deltaRa, deltaDec;
+  gboolean test;
+  ofloat inPixel[2], outPixel[2];
+  odouble ra1, dec1, ra2, dec2, deltaRa, deltaDec, tr, ti, dp;
   ofloat halfx1, halfx2, halfy1, halfy2;
 
   /* error checks */
-  g_assert (ObitErrIsA(err));
   if (err->error) return out;
 
+  /* Center */
+  inPixel[0] = in1->inaxes[0]/2; inPixel[1] = in1->inaxes[1]/2; 
+  test = ObitImageDescCvtPixel (in1, in2, inPixel, outPixel, err);
+  if (test) return TRUE;
+  inPixel[0] = in2->inaxes[0]/2; inPixel[1] = in2->inaxes[1]/2; 
+  test = ObitImageDescCvtPixel (in2, in1, inPixel, outPixel, err);
+  if (test) return TRUE;
+
+  /* First corner */
+  inPixel[0] = inPixel[1] = 1.0; 
+  test = ObitImageDescCvtPixel (in1, in2, inPixel, outPixel, err);
+  if (test) return TRUE;
+  test = ObitImageDescCvtPixel (in2, in1, inPixel, outPixel, err);
+  if (test) return TRUE;
+
+  /* Second corner */
+  inPixel[1] = in1->inaxes[1]; inPixel[0] = 1.0; 
+  test = ObitImageDescCvtPixel (in1, in2, inPixel, outPixel, err);
+  if (test) return TRUE;
+  inPixel[1] = in2->inaxes[1]; inPixel[0] = 1.0; 
+  test = ObitImageDescCvtPixel (in2, in1, inPixel, outPixel, err);
+  if (test) return TRUE;
+
+  /* Third corner */
+  inPixel[0] = in1->inaxes[0]; inPixel[1] = 1.0; 
+  test = ObitImageDescCvtPixel (in1, in2, inPixel, outPixel, err);
+  if (test) return TRUE;
+  inPixel[0] = in2->inaxes[0]; inPixel[1] = 1.0; 
+  test = ObitImageDescCvtPixel (in2, in1, inPixel, outPixel, err);
+  if (test) return TRUE;
+
+  /* Fourth corner */
+  inPixel[0] = in1->inaxes[0]; inPixel[1] = in1->inaxes[1]; 
+  test = ObitImageDescCvtPixel (in1, in2, inPixel, outPixel, err);
+  if (test) return TRUE;
+  inPixel[0] = in2->inaxes[0]; inPixel[1] = in2->inaxes[1]; 
+  test = ObitImageDescCvtPixel (in2, in1, inPixel, outPixel, err);
+  if (test) return TRUE;
+
+  /* Halfwidth tests */
   /* Positions of centers */
   ra1 = in1->crval[in1->jlocr] + 
     (0.5*in1->inaxes[in1->jlocr] + 1.0 - in1->crpix[in1->jlocr]) * 
@@ -735,24 +774,33 @@ gboolean ObitImageDescOverlap(ObitImageDesc *in1, ObitImageDesc *in2,
   dec2 = in2->crval[in2->jlocd] + 
     (0.5*in2->inaxes[in2->jlocd] + 1.0 - in2->crpix[in2->jlocd]) * 
     in2->cdelt[in2->jlocd];
-
+  
   /* Offsets - allow wrap in RA */
   deltaRa  = fabs (ra1-ra2);
   if (deltaRa>180.0) deltaRa  = fabs (deltaRa-360.0);
   deltaRa  = deltaRa * cos(dec1*DG2RAD);
   deltaDec = fabs (dec1-dec2);
 
+  /* any rotation? */
+  if (fabs(in1->crota[1]-in2->crota[1])>0.1) {
+    dp = in1->crota[1]-in2->crota[1]*DG2RAD;
+    tr = deltaRa;
+    ti = deltaDec;
+    deltaRa  = tr*cos(dp) - ti*sin(dp);
+    deltaDec = ti*cos(dp) + tr*sin(dp);
+  }
+  
   /* Half widths - add a little slop */
-  halfx1 = fabs (0.6*in1->inaxes[in1->jlocr]*in1->cdelt[in1->jlocr]);
-  halfx2 = fabs (0.6*in2->inaxes[in2->jlocr]*in2->cdelt[in2->jlocr]);
-  halfy1 = fabs (0.6*in1->inaxes[in1->jlocd]*in1->cdelt[in1->jlocd]);
-  halfy2 = fabs (0.6*in2->inaxes[in2->jlocd]*in2->cdelt[in2->jlocd]);
+  halfx1 = fabs (0.55*in1->inaxes[in1->jlocr]*in1->cdelt[in1->jlocr]);
+  halfx2 = fabs (0.55*in2->inaxes[in2->jlocr]*in2->cdelt[in2->jlocr]);
+  halfy1 = fabs (0.55*in1->inaxes[in1->jlocd]*in1->cdelt[in1->jlocd]);
+  halfy2 = fabs (0.55*in2->inaxes[in2->jlocd]*in2->cdelt[in2->jlocd]);
 
   /* Are the offsets smaller than the sum of the halfwidths?
      not terrible accurate but it doesn't need to be */
   out = (deltaRa <= (halfx1+halfx2)) && (deltaDec <= (halfy1+halfy2));
 
-  return out;
+  return out;  /* Guess not */
 } /* end ObitImageDescOverlap */
 
 /**

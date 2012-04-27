@@ -728,6 +728,10 @@ void ObitUVSelfCalFluxHist (ObitUVSelfCal *in, ObitUV *inUV, ObitErr *err)
   if (err->error) return;
   g_assert (ObitUVSelfCalIsA(in));
   g_assert (ObitUVIsA(inUV));
+  /* Better be some data*/
+  Obit_return_if_fail((inUV->myDesc->nvis>=100), err,
+ 		      "%s: TOO few data %d", 
+		      routine, inUV->myDesc->nvis);
 
   /* Get baseline range */
   ObitUVUtilUVWExtrema (inUV, &MaxBL, &MaxW, err);

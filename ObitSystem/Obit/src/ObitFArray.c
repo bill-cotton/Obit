@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2011                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1285,6 +1285,7 @@ ofloat ObitFArrayRMSQuant (ObitFArray* in)
   /* Make histogram to cover +/- 2*rawRMS */
   rangeFact = 2.0;
   numCell = 2 * rangeFact * (rawRMS/MAX(1.0e-20,quant));
+  if (numCell<10) return rawRMS;   /* Something to work with? */
   histo = ObitMemAllocName(numCell*sizeof(ofloat), "FArray histo");
   
   /* value range */

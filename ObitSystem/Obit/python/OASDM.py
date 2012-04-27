@@ -226,7 +226,8 @@ class OASDM(OASDMPtr):
                 for s in scan:
                     # Check intents
                     for int in s['scanIntent']:
-                        if int=='CALIBRATE_AMPLI' and s['sourceName'] not in out:
+                        if ((int=='CALIBRATE_AMPLI') or (int=='CALIBRATE_FLUX')) \
+                               and (not s['sourceName'] in out):
                             out.append(s['sourceName'])
         del scan, main
         return out
@@ -291,15 +292,14 @@ class OASDM(OASDMPtr):
         Return list of configurarion info dicts
 
         `Each entry contains configDescriptionId, numAntenna, correlationMode,
-        spectralType, avgRefFreq, nspWinds a list of the number of different numbers of channels
-        and a list (spWinds)of spectral windows with: 
+        spectralType, avgRefFreq, SpannedBandwidth, nspWinds a list of the number of
+        different numbers of channels and a list (spWinds)of spectral windows with: 
             spectralWindowId, refFreq, chanFreqStep, numChan
         correlationMode values 0 = cross only, 1 = auto only, 2=cross & auto
         spectralType values 0 = channel average, 1= baseband wide, 2=full resolution
         * self   = ASDM object
         """
         out = []
-        sumFreq = 0.0; cntFreq = 0
         config = self.Config
         sw     = self.SpectralWindow
         dd     = self.DataDescription
@@ -311,6 +311,8 @@ class OASDM(OASDMPtr):
             # lookup spectral Windows, screwy design
             swlist = []
             chlist = []
+            sumFreq = 0.0; cntFreq = 0
+            maxFreq = -1.0e20; minFreq = 1.0e20
             for dId in c["dataDescriptionId"]:
                 for ddata in dd:
                     if ddata["dataDescriptionId"]==dId:
@@ -324,12 +326,16 @@ class OASDM(OASDMPtr):
                                 if swin["numChan"] not in chlist:
                                     chlist.append(swin["numChan"])
                                 sumFreq += swin["refFreq"]; cntFreq += 1
+                                maxFreq = max(maxFreq, swin["refFreq"]+swin["numChan"]*swin["chanFreqStep"])
+                                minFreq = min(minFreq, swin["refFreq"])
                 swlist.append(swdict)
             dict["spWinds"]  = swlist
             dict["nspWinds"] = len(swlist)
             dict["nchands"]  = chlist
             # Average reference frequency
             dict["avgRefFreq"] = sumFreq/cntFreq
+            # Spanned bandwidth
+            dict["SpanBandwidth"] = maxFreq - minFreq
             out.append(dict)
         del sw, config, dd
         return out
@@ -381,7 +387,7 @@ class OASDM(OASDMPtr):
         """
         scan = self.Scan
         main = self.Main
-        refJD = int(scan[0]['startTime'])
+        refJD = int(scan[0]['startTime'])-0.5
         source = None; timeRange = [0.0, 1000.]
         for m in main:
             if m["configDescriptionId"]==config:

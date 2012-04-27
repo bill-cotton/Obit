@@ -500,6 +500,9 @@ void ObitDConCleanVisMFRestore(ObitDConClean *inn, ObitErr *err)
   ObitFArray *convl=NULL;
   ObitImage *image=NULL;
   ofloat factor = 1.0;
+  gboolean doComRes = FALSE;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong iplane, field, num, nOrd, plane[5]={1,1,1,1,1};
   gchar *routine = "ObitDConCleanVisMFRestore";
 
@@ -517,11 +520,14 @@ void ObitDConCleanVisMFRestore(ObitDConClean *inn, ObitErr *err)
     ObitErrLog(err);  /* Progress Report */
   }
 
+  /* Force common resolution? */
+  ObitInfoListGetTest(in->info, "doComRes", &type, dim, &doComRes);
+
   /* Loop over fields */
   for (field = 0; field<in->nfield; field++) {
 
     /* Convolve to common resolution  */
-    CommonRes(in, field, err);
+    if (doComRes) CommonRes(in, field, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
     /* Anything to restore? */

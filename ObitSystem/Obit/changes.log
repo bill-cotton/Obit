@@ -515,3 +515,35 @@ Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
 Obit/src/ObitDoppler.c:
   Fix shift logic
 16 Apr 2012, version 413
+
+
+Mostly EVLA scripting changes
+svn add:
+  Obit/python/mjd.py Obit/python/EVLAContPipe.py Obit/share/scripts/EVLATemplateParm.py
+svn commit -F changes:
+ObitVersion:
+Obit/changes.log:
+Obit/python/OASDM.py:
+  refJD bug in Get1stBandpassScan
+  avg Freq bug in GetConfigs
+  Spanned BW from GetConfigs
+Obit/src/ObitUVSelfCal.c:
+  FluxHist: Check if enough data
+Obit/tasks/FndSou.c:
+  Proper initialization of output InfoList
+Obit/src/ObitFArray.c:
+  RMSQuant: Trap too little data for histogram.
+Obit/src/ObitImageDesc.c:
+  Overlap: Better algorithm.
+Obit/src/ObitDConCleanVisMF.c:
+  Restore: Check doComRes
+Obit/TDF/MFImage.TDF Obit/tasks/MFImage.c:
+  Add doComRes parameter for forcing common residual resolution.
+Obit/TDF/MFBeam.TDF Obit/tasks/MFBeam.c:
+  Add doComRes parameter for forcing common residual resolution.
+Obit/src/ObitImageUtil.c:
+  FitBeam: Only look at center quarter of image for peak; better error recovery.
+Obit/python/PipeUtil.py Obit/python/EVLAContPipe.py:
+Obit/python/mjd.py Obit/share/scripts/EVLATemplateParm.py:
+  Major deveopment of EVLA scripting
+27 Apr 2012, version 414

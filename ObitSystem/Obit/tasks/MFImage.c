@@ -1549,7 +1549,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   gchar        *CLEANParms[] = {  /* Clean parameters */
     "CLEANBox", "autoWindow", "Gain", "minFlux", "Niter", "minPatch", "Beam", 
     "Mode", "CCFilter", "maxPixel", "dispURL", "ccfLim", "SDIGain", 
-    "Alpha", "AlphaRefF", "norder",
+    "Alpha", "AlphaRefF", "norder", "doComRes", 
     NULL
   };
   olong MemCount, MemTotal; /* DEBUG */
@@ -2413,7 +2413,7 @@ void MFImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "BIF", "EIF", "BChan", "EChan",  "maxFBW", 
     "UVRange",  "timeRange",  "Robust", "UVTaper", "MFTaper", "RobustIF", "TaperIF",
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "doPol",  "PDVer", "doFull", "do3D", "Catalog", "CatDisk",
+    "doPol",  "PDVer", "doFull", "doComRes", "do3D", "Catalog", "CatDisk",
     "OutlierDist",  "OutlierFlux", "OutlierSI",
     "FOV", "xCells", "yCells", "nx", "ny", "RAShift", "DecShift", "doRestore", "doFit",
     "OutlierSize",  "CLEANBox", "Gain", "minFlux",  "Niter", "minPatch",

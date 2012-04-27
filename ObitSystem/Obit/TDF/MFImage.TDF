@@ -160,6 +160,8 @@ WtBox           0.        128.     Additional rows and columns
 **PARAM** int 1 **DEF** 1
 WtFunc                             Box function type when WtBox
                                    > 0.  0 -> 1 round pill box.
+**PARAM** boo 1 **DEF** F
+doComRes                           Force common resolution in frequency
 **PARAM** boo 1 **DEF** T
 doFull                             Make full field (flattened) image?
 **PARAM** boo 1  **DEF** T
@@ -438,6 +440,8 @@ Adverbs:
   BLchAvg....If doing baseline dependent averaging then also average 
              selected channels by no more than will give bandwidth 
              smearing of BLFact.
+  doComRes...If True attempt to force common resolution in frequency by
+             convolving the residuals down to the the target CLEAN resolution.
   doFull.....If True make full field (flattened) image
 
       Output files

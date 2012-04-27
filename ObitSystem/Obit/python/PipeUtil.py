@@ -3,13 +3,10 @@ Obit pipeline utilities. These functions are generic utlities that may be
 useful for any pipeline.
 """
 
-import urllib, urllib2, os.path, pickle, time, sys, logging, socket, signal
-import subprocess, glob, xml.dom.minidom, re
-import pprint
+import urllib, urllib2, os.path, pickle, time, sys, socket, signal
+import glob, xml.dom.minidom, re, pprint
 import ObitTask, Image, AIPSDir, OErr, FArray, VLBACal, FITS, UV, UVDesc, Table
-
-logger = logging.getLogger("obitLog.PipeUtil")
-logging.basicConfig( level = logging.DEBUG ) # does nothing if handlers already configured
+import mjd
 
 def setname (inn, out):
     """ 
@@ -336,6 +333,10 @@ def FetchObject (file):
     * file     = pickle file name
     """
     ################################################################
+    # does it exist?
+    if not os.path.lexists(file):
+        print "Pickle jar",file,"does not exist"
+        return None
     # unpickle file
     fd = open(file, "r")
     pyobj = pickle.load(fd)
@@ -343,7 +344,7 @@ def FetchObject (file):
     return pyobj
     # end FetchObject
    
-def QueryArchive(startTime, endTime, project=None, format='Calibrated Data'):
+def QueryArchive(startTime, endTime, project=None, format='ALL'):
     """
     Query the NRAO Archive for data files. Return the response as a list of 
     lines.
@@ -418,45 +419,86 @@ def ParseArchiveResponse( responseLines ):
         dict = {}
         for i,d in enumerate(metadata): # iterate over every column
             dict[ headers[i] ] = d.strip()
-        fileList.append( dict )
+        # remove duplicateslogical_file
+        if (len(fileList)==0) or \
+               (dict["logical_file"]!=fileList[len(fileList)-1]["logical_file"]):
+            # print "DEBUG dict",dict
+            fileList.append( dict )
     return fileList
 
-def FilterFileList( fileList ):
+def FilterFileList( fileList, logFile=None, ignoreIDI = False, showAllIDI = False ):
     """
     Filter the archive response file list.
 
     Remove data sets that are not of interest from *fileList*. Return a list of
-    removed data sets.
+    removed data sets. By default, FITS-IDI files for observations that end on
+    or before 2009-Dec-10 are removed.  However, parameters *ignoreIDI* and
+    *showAllIDI* can be used to ignore or show all IDI files for all dates.
+    *showAllIDI* takes precendence over *ignoreIDI*.  (2009-Dec-10 is the last
+    day of observations processed with the old-correlator.) 
 
-    fileList = list of dictionaries returned by ParseArchiveResponse
+    * fileList = list of dictionaries returned by ParseArchiveResponse
+    * logFile  = where to write messages
+    * ignoreIDI = remove files with format FITS-IDI
+    * showAllIDI = don't remove any IDI files regardless of observing date
     """
     # Remove files with old filename formats. For BL0137 there are old files
     # and new files; John says the filename format differs but the data
     # is the same.
     pattern = re.compile(r"/home/archive_VLBA[0-9]+/projects/VLBA")
     filteredList = []
+    filteredTemp = []
     fileList_copy = fileList[:]
     for fileDict in fileList_copy:
         matchObj = re.match( pattern, fileDict['file_root'] )
         if matchObj:
-            filteredList.append( fileDict )
+            filteredTemp.append( fileDict )
             fileList.remove( fileDict )
-    if len(filteredList) > 0:
-        logger.info( str(len(filteredList)) +  
-            " old-style-filename data sets filtered from list." +
-            " (" + str(len(fileList)) + " remain)")
+    if len(filteredTemp) > 0:
+        mess = "INFO "+str(len(filteredTemp)) +  \
+        " old-style-filename data sets filtered from list." + \
+        " (" + str(len(fileList)) + " remain)"
+        printMess(mess, logFile)
+        filteredList += filteredTemp
+
+    # Remove files with format 'VLBAset' (they appear to be duplicates)
+    filteredTemp = []
     fileList_copy = fileList[:]
     for fileDict in fileList_copy:
         if fileDict['format'] == 'VLBAset':
-            filteredList.append( fileDict )
+            filteredTemp.append( fileDict )
             fileList.remove( fileDict )
-    if len(filteredList) > 0:
-        logger.info( str(len(filteredList)) +  
-            " files with format='VLBAset' filtered from list." +
-            " (" + str(len(fileList)) + " remain)")
+    if len(filteredTemp) > 0:
+        mess = "INFO "+str(len(filteredTemp)) +  \
+            " files with format='VLBAset' filtered from list." + \
+            " (" + str(len(fileList)) + " remain)"
+        printMess(mess, logFile)
+        filteredList += filteredTemp
+
+    # Remove files with format 'FITS-IDI' *if* showAllIDI==False and either
+    # ignoreIDI==True or file was observed before 2009 Dec 11.
+    filteredTemp = []
+    fileList_copy = fileList[:]
+    if not showAllIDI:
+        fileList_copy = fileList[:]
+        for fileDict in fileList_copy:
+            if fileDict['format'] == 'FITS-IDI' and \
+               ( ignoreIDI or
+                 ( dateStringToMJD(fileDict['stoptime']) <
+                   dateStringToMJD('09-Dec-11 00:00:00') 
+                 )
+               ):
+                filteredTemp.append( fileDict )
+                fileList.remove( fileDict )
+        if len(filteredTemp):
+            mess = "INFO "+str(len(filteredTemp)) +  \
+                " files with format='FITS-IDI' filtered from list." + \
+                " (" + str(len(fileList)) + " remain)"
+            printMess(mess, logFile)
+            filteredList += filteredTemp
     return filteredList
 
-def DownloadArchiveFile( fileDict, destination, safe=True ):
+def DownloadArchiveFile( fileDict, destination, safe=True, logFile=None ):
     """
     Download a file from the archive. Return the output of urllib2.urlopen.  If
     *safe* = True and the file already exists in the download area, ask the
@@ -478,7 +520,7 @@ def DownloadArchiveFile( fileDict, destination, safe=True ):
         if safe:
             print( "File " + fullDLPath + " already exists in download area." )
             overwrite = nonBlockingRawInput( 
-                '  Overwrite? {60 sec to respond} (y/n) [y]: ', timeout=60 )
+                '  Overwrite? {60 sec to respond} (y/n) [y]: ', timeout=60, logFile=logFile)
             if ( overwrite and overwrite[0].lower() == 'n' ):
                 print "Using file already in download area."
                 return None
@@ -487,12 +529,13 @@ def DownloadArchiveFile( fileDict, destination, safe=True ):
         else:
             os.remove( fullDLPath )
     data = urllib.urlencode( dataList )
-    logger.debug("Submitting download request with parameters:\n" + \
-        "  url = " + url + "\n" + "  data = " + data)
+    mess = "DEBUG Submitting download request with parameters:\n" + \
+                 "  url = " + url + "\n" + "  data = " + data
+    printMess(mess, logFile)
     response = urllib2.urlopen( url, data )
     return response
 
-def DownloadIDIFiles( fileDict, destination ):
+def DownloadIDIFiles( fileDict, destination, logFile=None ):
     """
     Download a set of FITS IDI files corresponding to a UVFITS file.  If all
     the files already exist in the download area, ask the user what to do.  To
@@ -515,7 +558,8 @@ def DownloadIDIFiles( fileDict, destination ):
     starttime = yr[0] + starttime[2:]
     stoptime = yr[1] + stoptime[2:]
     # Query for IDI files
-    logger.debug("Sending query...")
+    mess = "DEBUG Sending query..."
+    printMess(mess, logFile)
     response = QueryArchive( starttime, stoptime, format='Raw Data' )
     IDIList = ParseArchiveResponse( response )
     print "IDI Files: \n" + SummarizeArchiveResponse( IDIList )
@@ -526,8 +570,9 @@ def DownloadIDIFiles( fileDict, destination ):
         if os.path.exists( fullDLPath ):
             fileExists.append( fullDLPath )
     if fileExists and len(fileExists) == len(IDIList):
-        logger.info( "All IDI files already exist in download area:\n" + 
-            pprint.pformat(fullDLPath) )
+        mess = "INFO All IDI files already exist in download area:\n" + \
+            pprint.pformat(fullDLPath) 
+        printMess(mess, logFile)
         overwrite = nonBlockingRawInput( 
             '  Overwrite? {60 sec to respond} (y/n) [y]: ', timeout=60 )
         if ( overwrite and overwrite[0].lower() == 'n' ):
@@ -540,7 +585,7 @@ def DownloadIDIFiles( fileDict, destination ):
             PollDownloadStatus( file, destination )
     return IDIList
    
-def PollDownloadStatus( fileDict, destination, sleepTotal = 30 * 60 ):
+def PollDownloadStatus( fileDict, destination, sleepTotal = 30 * 60, logFile=None ):
     """
     Poll the status of a file download from the archive. 
     
@@ -555,78 +600,59 @@ def PollDownloadStatus( fileDict, destination, sleepTotal = 30 * 60 ):
     downloadName = finishName + '.loading'
     waitFlag = False
     inProgressFlag = False
-    logger.debug("Checking download status. Looking for 1 of 2 files:\n" +
-        finishName + "\n" +
-        downloadName)
+    mess = "DEBUG Checking download status. Looking for 1 of 2 files:\n" + \
+        finishName + "\n" + downloadName
+    printMess(mess, logFile)
     sleepIncrement = 3 # seconds
     sleepTime = 0
     while 1: # infinite loop
         if not os.path.exists( downloadName ) and not os.path.exists( finishName ):
             if not waitFlag:
-                logger.info("Waiting for download to initiate. (" + 
-                    time.strftime('%Y-%m-%d %X %Z') + ")" )
+                mess = "INFO Waiting for download to initiate. (" + \
+                    time.strftime('%Y-%m-%d %X %Z') + ")" 
+                printMess(mess, logFile)
                 waitFlag = True
             time.sleep( sleepIncrement )
             sleepTime += sleepIncrement
         elif os.path.exists( downloadName ):
             if not inProgressFlag:
-                logger.info("Download in progress... (" + 
-                    time.strftime('%Y-%m-%d %X %Z') + ")" )
+                mess = "INFO Download in progress... (" + \
+                    time.strftime('%Y-%m-%d %X %Z') + ")" 
+                printMess(mess, logFile)
                 inProgressFlag = True
             time.sleep( sleepIncrement )
             sleepTime += sleepIncrement
         elif os.path.exists( finishName ):
-            logger.info("Download complete.")
+            mess = "INFO Download complete."
+            printMess(mess, logFile)
             return
         # Submit new download request after waiting *sleepTime* seconds.
         # (because the archive sometimes never responds)
         if sleepTime >= sleepTotal:
-            logger.warn( "Over " + str(sleepTotal) + " seconds elapsed since download request.\n"
-                "  Submitting new download request." )
+            mess = "WARN Over " + str(sleepTotal) + " seconds elapsed since download request.\n" + \
+                "  Submitting new download request."
+            printMess(mess, logFile)
             DownloadArchiveFile( fileDict, destination ) 
             sleepTime = 0
 
-def SummarizeArchiveResponse( fileList, pipeRecordList=None ):
+def SummarizeArchiveResponse( fileList, logFile=None ):
     """
     Return a table summary of the archive response as a string.
 
-    If *pipeRecordList* is given, a letter will be added to the end of a
-    summary table row if the corresponding file is present in the pipeline
-    record list.  If the 'pipe.STATUS' member equals 'archive' and 'A' will be
-    appended; if 'pipe.STATUS' equals 'check' a 'C' will be added.
-    
     * fileList = List of file dictionaries returned by ParseArchiveResponse
-    * pipeRecordList = List of file dictionaries from the pipeline processing record
+    * logFile = ObitTalk log file
     """
-    # Prepare for comparison with pipeline processing record
-    pipeRecordKeys = {}
-    goodStatus = ('archive', 'check')
-    if pipeRecordList:
-        logger.info("End-of-row symbols: A = archive, C = check, ? = unknown.")
-        for fdict in pipeRecordList:
-            pipeRecordKeys[ fdict['arch_file_id'] ] = fdict['pipe.STATUS']
     # Generate summary table
-    formatHead = "%-2s %-6s %-3s %-3s %-3s %-18s %-18s %-7s %-6s\n"
+    formatHead = "%-2s %-6s %-3s %-3s %-7s %-18s %-18s %-8s %-9s\n"
     table = formatHead % \
-        ( "#-", "PCODE-", "Ses", "Seg", "Bnd", "STARTTIME---------", "STOPTIME----------", 
-        "FRQ_GHz", "SIZE--" )
+        ( "#-", "PCODE-", "SES", "SEG", "RCVR---", "STARTTIME---------", "STOPTIME----------", "SIZE----", "A-FILE-ID" )
     for i,file in enumerate(fileList):
-        formatStr = "%2d %6s %3s %3s %3s %18s %18s %7.4f %6s" 
-        ( bandLetter, fGHz ) = VLBACal.VLBAGetBandLetter(file)
+        formatStr = "%2d %6s %3s %3s %7s %18s %18s %8s %9s\n" 
+        wavelength = VLBACal.VLBAGetBandWavelength(file)
         table += formatStr % ( i, file['project_code'], 
             VLBACal.VLBAGetSessionCode( file ), file['segment'], 
-            bandLetter, file['starttime'], 
-            file['stoptime'], fGHz, file['FILESIZE_UNIT'] )
-        # Append pipeline record info to end of table row
-        if (file['arch_file_id'] in pipeRecordKeys):
-            if pipeRecordKeys[ file['arch_file_id'] ] == 'check':
-                table += " C\n" 
-            elif pipeRecordKeys[ file['arch_file_id'] ] == 'archive':
-                table += " A\n"
-            else:
-                table += " ?\n"
-        else:
-            table += "\n"
+            wavelength, file['starttime'], 
+            file['stoptime'], file['FILESIZE_UNIT'], file['arch_file_id'] )
     return table
 
 def XMLSetAttributes( element, nameValList ):
@@ -663,7 +689,7 @@ class AlarmException(Exception):
 def alarmHandler(signum, frame):
     raise AlarmException
 
-def nonBlockingRawInput(prompt='', timeout=60):
+def nonBlockingRawInput(prompt='', timeout=60, logFile=None):
     """
 Write *prompt* and wait a maximum of *timeout* seconds for user input.
 
@@ -678,7 +704,8 @@ Write *prompt* and wait a maximum of *timeout* seconds for user input.
         return text
     except AlarmException:
         print "\n"
-        logging.info('Prompt timeout. Continuing...')
+        mess = "INFO Prompt timeout. Continuing..."
+        printMess(mess, logFile)
     signal.signal(signal.SIGALRM, signal.SIG_IGN)
     return ''
 
@@ -819,45 +846,6 @@ def getStartStopTime( uv, err ):
     tStop = t2 + MJD
     return (tStart, tStop)
 
-def getRecordList( filename = '/users/jcrossle/vlbaPipeline/record/pipelineRecord.pickle' ):
-    """
-    Return the pipeline record list.
-
-    * filename = name of pickle file holding the record list
-    """
-    return FetchObject( filename )
-
-def putRecordList( recList, 
-    filename = '/users/jcrossle/vlbaPipeline/record/pipelineRecord.pickle',
-    verbose = False ):
-    """
-    Write the pipeline record list to a pickle file.
-
-    * recList = pipeline record list
-    * filename = name of the pickle file to hold the record list
-    * verbose = print details
-    """
-    logger.info( "Writing pipeline record list to " + filename )
-    if verbose:
-        logger.info( "New pipeline record list:\n" + SummarizeArchiveResponse( recList, recList ) )
-    SaveObject( recList, filename, True )
-
-def getDictFromList( dictList, key, value ):
-    """
-    Extract dictionaries from a list of dictionaries by matching key-values.
-
-    Use this function to find dictionaries in the pipeline record list.
-
-    * dictList = list of dictionaries (e.g. the pipeline record list)
-    * key = dictionary key for which value should match
-    * value = dictionary value to match
-    """
-    dictListSubset = []
-    for d in dictList:
-        if (key in d) and (d[key] == value):
-            dictListSubset.append(d)
-    return dictListSubset
-   
 def validate( dataDir, archDir = '../archive', 
     archBkup = '/export/home/cv-pipe-a/jcrossle/VLBAPipeProducts/archive_backup', 
     group = 'vlbapipe'):
@@ -874,8 +862,6 @@ def validate( dataDir, archDir = '../archive',
     3) If *group* is given, all files moved to the archive staging area have
        their group changed to *group*, and group read/write/access permissions
        are set. 
-    4) Finally, the pipeline processing record is modified to show that this
-       data set has been archived.
 
     * dataDir = data set directory
     * archDir = archive staging area (../archive, by default)
@@ -904,10 +890,12 @@ def validate( dataDir, archDir = '../archive',
         base = os.path.basename( dataDir )
         newDataBkup = os.path.join( archBkup, base )
         if os.path.exists( newDataBkup ):
-            logger.info("Removing pre-existing data: " + newDataBkup)
+            mess = "INFO Removing pre-existing data: " + newDataBkup
+            printMess(mess, logFile)
             shutil.rmtree( newDataBkup )
-        logger.info("Copying data to archive backup directory:\n  " + dataDir +
-            " --> " + newDataBkup )
+        mess = "INFO Copying data to archive backup directory:\n  " + dataDir + \
+            " --> " + newDataBkup
+        printMess(mess, logFile)
         shutil.copytree( dataDir, newDataBkup )
 
     # Get archive file ID for bookkeeping.
@@ -918,15 +906,18 @@ def validate( dataDir, archDir = '../archive',
     # Move data set to archive staging directory
     newDataDir = os.path.join( archDir, os.path.basename( dataDir ) )
     if os.path.exists( newDataDir ):
-        logger.info("Removing pre-existing data: " + newDataDir)
+        mess = "INFO Removing pre-existing data: " + newDataDir
+        printMess(mess, logFile)
         shutil.rmtree( newDataDir )
-    logger.info("Moving data to archive staging area:\n  " +
-        dataDir + " --> " + newDataDir )
+    mess = "INFO Moving data to archive staging area:\n  " + \
+        dataDir + " --> " + newDataDir 
+    printMess(mess, logFile)
     shutil.move( dataDir, newDataDir )
    
     # Set group and group read/write/access permissions in staging area
     if group:
-        logger.info("Setting group and group read/write/access permissions.")
+        mess = "INFO Setting group and group read/write/access permissions."
+        printMess(mess, logFile)
         gid = grp.getgrnam( group )[2]
         os.chown( newDataDir, -1, gid )
         for root, dirs, files in os.walk( newDataDir ):
@@ -941,13 +932,41 @@ def validate( dataDir, archDir = '../archive',
                 os.chown( path, -1, gid )
                 os.chmod( path, 0664 )
 
-    # Mark file as archived in the pipeline processing record
-    logger.info("Updating pipeline processing record.")
-    ppr = getRecordList()
-    # Get the corresponding dictionary from the PPR
-    dict = getDictFromList( ppr, 'arch_file_id', str( archFileID ) )
-    if len(dict) != 1:
-        raise Exception( "Pipeline processing record returns " + len(dict) +
-            " dictionaries matching arch_file_id " + str(archFileID) )
-    dict[0]['pipe.STATUS'] = 'archive'
-    putRecordList( ppr )
+def getSVNVersion(path):
+    """
+    get subversion revision number for a given path
+
+    * path = path to directory or file in question
+    """
+    # Get revision number
+    cmd = 'svnversion -n ' + path
+    f = os.popen(cmd)
+    ver = f.read()
+    print('SVN version of '+path+' is ' + ver)
+    return ver
+# end getSVNVersion
+
+def dateStringToMJD( date ):
+    """
+    Convert date-time string returned by archive to MJD float.
+
+    * date = archive date-time string
+    """
+    pattern = re.compile(r'([0-9]{2})-([A-Z][a-z]{2})-([0-9]{2}) ([0-9]{2}):([0-9]{2}):([0-9]{2})')
+    match = re.match( pattern, date )
+    if match:
+        year = int(match.group(1))
+        if year < 90: year += 2000
+        else: year += 1900
+        monthStr = match.group(2)
+        months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct',
+                  'Nov','Dec']
+        month = months.index( monthStr )
+        day  = int(match.group(3))
+        hour = int(match.group(4))
+        min  = int(match.group(5))
+        sec  = int(match.group(6))
+    else:
+        return none
+    m = mjd.mjd()
+    return m.mjd_now( month, day, year, hour, min, sec )

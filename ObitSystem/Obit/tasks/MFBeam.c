@@ -1526,6 +1526,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   gchar        *CLEANParms[] = {  /* Clean parameters */
     "CLEANBox", "autoWindow", "Gain", "minFlux", "Niter", "minPatch", "Beam", 
     "Mode", "CCFilter", "maxPixel", "dispURL", "Threshold", "ccfLim", "SDIGain",
+    "doCalSelect",
     NULL
   };
   gchar        *SkyParms[] = {  /* SkyModel parameters */
@@ -2635,7 +2636,7 @@ void MFBeamHistory (gchar *Source, ObitInfoList* myInput,
     "OutlierSize",  "CLEANBox",  "Gain",  "minFlux",  "Niter",  "minPatch",
     "ccfLim", "SDIGain", "BLFact", "BLFOV", "BLchAvg",
     "Reuse", "autoCen", "Beam",  "Cmethod",  "CCFilter",  "maxPixel", 
-    "PBCor", "antSize", "doRestore", "doFit", "doFull", "do3D", 
+    "PBCor", "antSize", "doRestore", "doFit", "doFull", "doComRes", "do3D", 
     "autoWindow", "subA",  "Alpha",
     "modelFlux", "modelPos", "modelParm",
     "maxPSCLoop", "minFluxPSC", "solPInt", "solPType", "solPMode", 
