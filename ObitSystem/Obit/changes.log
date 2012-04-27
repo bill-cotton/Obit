@@ -545,5 +545,5 @@ Obit/src/ObitImageUtil.c:
   FitBeam: Only look at center quarter of image for peak; better error recovery.
 Obit/python/PipeUtil.py Obit/python/EVLAContPipe.py:
 Obit/python/mjd.py Obit/share/scripts/EVLATemplateParm.py:
-  Major deveopment of EVLA scripting
+  Major development of EVLA scripting
 27 Apr 2012, version 414
