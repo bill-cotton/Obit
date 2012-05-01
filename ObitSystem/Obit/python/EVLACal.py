@@ -35,6 +35,7 @@ def EVLAInitContParms():
     parms["doSwPwr"]       = False      # Make EVLA Switched power corr?
     parms["calInt"]        = None       # Calibration table interval (min)
     parms["seq"]           = 1          # Sequence number for AIPS files
+    parms["doLoadArchive"] = True       # Sequence number for AIPS filesLoad AIPS data from archive?
 
     # Hanning
     parms["doHann"]       = None        # Hanning needed for RFI?
@@ -149,33 +150,59 @@ def EVLAInitContParms():
     parms["chAvg"] =         1          # No channel average
     parms["avgFreq"] =       1          # No channel average
     
+    # Right-Left delay calibration
+    parms["doRLDelay"] =  False             # Determine/apply R-L delays
+    parms["RLDCal"]    = [(None,None,None)] # Array of triplets of (name, R-L phase (deg at 1 GHz),
+                                            # RM (rad/m**2)) for calibrators
+    parms["rlBChan"]   = 1                  # First (1-rel) channel number
+    parms["rlEChan"]   = 0                  # Highest channel number. 0=> high in data.
+    parms["rlUVRange"] = [0.0,0.0]          # Range of baseline used in kilowavelengths, zeros=all
+    parms["rlCalCode"] = '  '               # Calibrator code
+    parms["rlDoCal"]   = 2                  # Apply calibration table? positive=>calibrate
+    parms["rlgainUse"] = 0                  # CL/SN table to apply, 0=>highest
+    parms["rltimerange"]= [0.0,1000.0]      # time range of data (days)
+    parms["rlDoBand"]  = 1                  # If > 0 apply bandpass calibration
+    parms["rlBPVer"]   = 0                  # BP table to apply, 0=>highest
+    parms["rlflagVer"] = 2                  # FG table version to apply
+    parms["rlrefAnt"]  = 0                  # Reference antenna, defaults to refAnt
+    
     # Instrumental polarization cal?
-    parms["doInstPol"]  =     False     # determination instrumental polarization from instPolCal
-    parms["instPolCal"] =     None      # Defaults to contCals
-    parms["doPol"]      =     False     # Apply polarization cal?
-    parms["PDVer"]      =     1         # Apply PD table polarization cal?
+    parms["doPolCal"]  =  False      # Determine instrumental polarization from PCInsCals?
+    parms["PCInsCals"] = []          # instrumental poln calibrators, name or list of names
+    parms["PCFixPoln"] = False       # if True, don't solve for source polarization in ins. cal
+    parms["PCpmodel"]  = [0.0,0.0,0.0,0.0,0.0,0.0,0.0]  # Instrumental poln cal source poln model.
+    parms["PCAvgIF"]   = False       # if True, average IFs in ins. cal.
+    parms["PCSolInt"]  = 0.          # instrumental solution interval (min), 0=> scan average
+    parms["PCRefAnt"]  = 0           # Reference antenna, defaults to refAnt
+    parms["PCSolType"] = "ORI-"      # solution type, "ORI-", "RAPR"
+    parms["doPol"]     = False       # Apply polarization cal in subsequent calibration?
+    parms["PDVer"]     = -1          # Apply PD table in subsequent polarization cal?
     
-    # Right-Left phase (EVPA) calibration 
-    parms["doRLCal"] =      False       # Set RL phases from RLCal - also needs RLCal
-    parms["RLCal"] =        None        # RL Calibrator source name, if given, a list of triplets, 
-                                        # (name, R-L phase(deg@1GHz), RM (rad/m^2))
+    # Right-Left phase (EVPA) calibration, uses same  values as Right-Left delay calibration
+    parms["doRLCal"]    = False    # Set RL phases from RLCal - also needs RLCal
+    parms["RLPCal"]     = None     # RL Calibrator source name, in None no IF based cal.
+    parms["RLPhase"]    = 0.0      # R-L phase of RLPCal (deg) at 1 GHz
+    parms["RLRM"]       = 0.0      # R-L calibrator RM (NYI)
+    parms["rlChWid"]    = 1        # Number of channels in running mean RL BP soln
+    parms["rlsolint1"]  = 10./60   # First solution interval (min), 0=> scan average
+    parms["rlsolint2"]  = 10.0     # Second solution interval (min)
+    parms["rlCleanRad"] = None     # CLEAN radius about center or None=autoWin
+    parms["rlFOV"]      = 0.05     # Field of view radius (deg) needed to image RLPCal
     
-    # Imaging calibrators (contCals) and targets
-    parms["doImgCal"]    = True         # Image calibrators
-    parms["Stokes"]      = "I"          # Stokes to image
+    # Imaging  targets
+    parms["doImage"]     = True         # Image targets
     parms["targets"]     = []           # List of target sources
-    parms["failTarg"]    = []           # List of failed target (source,process)
-    parms["doImgTarget"] = True         # Image targets?
-    parms["outIclass"]   = "IClean"     # Output target final image class
+    parms["outIClass"]   = "IClean"     # Output target final image class
+    parms["Stokes"]      = "I"          # Stokes to image
     parms["Robust"]      = 0.0          # Weighting robust parameter
     parms["FOV"]         = None         # Field of view radius in deg.
     parms["Niter"]       = 500          # Max number of clean iterations
     parms["minFlux"]     = 0.0          # Minimum CLEAN flux density
     parms["minSNR"]      = 4.0          # Minimum Allowed SNR
     parms["solPMode"]    = "DELA"       # Delay solution for phase self cal
-    parms["solPType"]    = "    "       # Solution type for phase
-    parms["solAMode"]    = "A&P"        # Delay solution for phase self cal
-    parms["solAType"]    = "    "       # Solution type for phase
+    parms["solPType"]    = "    "       # Solution type for phase self cal
+    parms["solAMode"]    = "A&P"        # Delay solution for A&P self cal
+    parms["solAType"]    = "    "       # Solution type for A&P self cal
     parms["avgPol"]      = True         # Average poln in self cal?
     parms["avgIF"]       = False        # Average IF in self cal?
     parms["maxPSCLoop"]  = 1            # Max. number of phase self cal loops
@@ -196,6 +223,7 @@ def EVLAInitContParms():
     parms["CleanRad"]    = None         # CLEAN radius (pix?) about center or None=autoWin
     
     # Final
+    parms["doReport"]  =     True       # Generate source report?
     parms["outDisk"]   =     0          # FITS disk number for output (0=cwd)
     parms["doSaveUV"]  =     True       # Save uv data
     parms["doSaveImg"] =     True       # Save images
@@ -237,6 +265,7 @@ def EVLAInitContFQParms(parms):
     parms["delayEChan"] =  min(nchan-2, nchan-0.05*nchan)  # highest channel to use in delay solutions
 
     # Amp cal channels
+    parms["doAmpPhaseCal"] = True                          # Amplitude/phase calibration
     parms["ampBChan"]  =  max(2, 0.05*nchan)                # first channel to use in A&P solutions
     parms["ampEChan"]  =  min(nchan-2, nchan-0.05*nchan)    # highest channel to use in A&P solutions
     parms["doAmpEdit"] =  True                              # Edit/flag on the basis of amplitude solutions
@@ -2579,8 +2608,8 @@ def EVLASetImager (uv, target, outIclass="", nThreads=1, noScrat=[], logfile = "
 # end EVLASetImager
 
 def EVLARLDelay(uv, err, \
-                RLDCal=None, BChan=1, EChan = 0, UVRange=[0.0,0.0], \
-                timerange = [0.,0.,0.,0.,0.,0.,0.,0.], \
+                RLDCal=None, BChan=1, EChan = 0,\
+                 UVRange=[0.0,0.0], timerange = [0.0,1000.0], \
                 soucode="    ", doCalib=-1, gainUse=0, \
                 doBand=0, BPVer=0, flagVer=-1,  \
                 refAnt=0, Antennas=[0], doPol=-1,  \
@@ -2603,7 +2632,7 @@ def EVLARLDelay(uv, err, \
     * soucode  = Calibrator code
     * doCalib  = Apply calibration table, positive=>calibrate
     * gainUse  = CL/SN table to apply
-    * timerange= time range of data (aips format)
+    * timerange= time range of data (days)
     * doBand   = If >0.5 apply previous bandpass cal.
     * BPVer    = previous Bandpass table (BP) version
     * flagVer  = Flagging table to apply
@@ -2626,8 +2655,8 @@ def EVLARLDelay(uv, err, \
     if not check:
         setname(uv,rldly)
         rldly.Antennas = Antennas
-    rldly.timeRange[0] = timerange[0]+(timerange[1]+(timerange[2]+timerange[3]/60)/60)/24
-    rldly.timeRange[1] = timerange[4]+(timerange[5]+(timerange[6]+timerange[7]/60)/60)/24
+    rldly.timeRange[0] = timerange[0]
+    rldly.timeRange[1] = timerange[1]
     rldly.BChan   = BChan
     rldly.EChan   = EChan
     rldly.UVR_Full[0] = UVRange[0];
@@ -2792,8 +2821,7 @@ def EVLAPolCal(uv, InsCals, err, RM=0.0, \
 
 def EVLARLCal(uv, err, \
               RLDCal=None, BChan=1, EChan = 0, ChWid2=1, solInt1=1./6, solInt2=10., \
-              RLPCal=None, RLPhase=0.0, RM=0.0, UVRange=[0.0,0.0], \
-              timerange = [0.,0.,0.,0.,0.,0.,0.,0.], \
+              RLPCal=None, RLPhase=0.0, RM=0.0, UVRange=[0.0,0.0], timerange = [0.0,1000.0], \
               FQid=0, calcode="    ", doCalib=-1, gainUse=0, \
               doBand=0, BPVer=0, flagVer=-1,  \
               refAnt=0, doPol=-1, PDVer=-1, FOV=0.05, niter = 100, CleanRad=None, \
@@ -2827,7 +2855,7 @@ def EVLARLCal(uv, err, \
     * calcode  = Calibrator code
     * doCalib  = Apply calibration table, positive=>calibrate
     * gainUse  = CL/SN table to apply
-    * timerange= time range of data (aips format)
+    * timerange= time range of data (days)
     * doBand   = If >0.5 apply previous bandpass cal.
     * BPVer    = previous Bandpass table (BP) version
     * flagVer  = Flagging table to apply
@@ -2850,7 +2878,7 @@ def EVLARLCal(uv, err, \
     printMess(mess, logfile)
 
     lbpver = BPVer  # default bandpass in imaging
-    # Want R-L delay cal?
+    # Want R-L phase cal using delay calibrators?
     if RLDCal!=None:
         ncal = len(RLDCal)  # How many calibrators?
         rlpass=ObitTask.ObitTask("RLPass")
@@ -2861,8 +2889,8 @@ def EVLARLCal(uv, err, \
             #    i = 0
             #    for a in Antennas:
             #        rlpass.Antennas[i] = a; i  += 1
-            rlpass.timeRange[0] = timerange[0]+(timerange[1]+(timerange[2]+timerange[3]/60)/60)/24
-            rlpass.timeRange[1] = timerange[4]+(timerange[5]+(timerange[6]+timerange[7]/60)/60)/24
+            rlpass.timeRange[0] = timerange[0]
+            rlpass.timeRange[1] = timerange[1]
             rlpass.BChan1  = BChan
             rlpass.EChan1  = EChan
             rlpass.BChan2  = BChan
@@ -3188,7 +3216,11 @@ def EVLARLCal(uv, err, \
             pSou = RLPCal
         else:
             pSou = RLDCal[0][0]
-        scr = EVLASpecPlot( uv, pSou, timerange, refAnt, err,    \
+        atimerange = []
+        for i in range(0,8):
+            atimerange.append(0.0)
+        atimerange[0] = timerange[0]; atimerange[4] = timerange[1];
+        scr = EVLASpecPlot( uv, pSou, atimerange, refAnt, err,    \
                                 Stokes=["RL","LR"], doband=1,   \
                                 plotFile=plotFile, \
                                 check=check, debug=debug, logfile=logfile )

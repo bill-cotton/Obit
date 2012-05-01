@@ -141,7 +141,7 @@ static PyObject* OASDMGetSubscan(ObitSDMData *asdm)
 {
   ASDMSubscanTable* Tab =  ((ObitSDMData*)asdm)->SubscanTab;
   PyObject *outList, *dict, *tlist;
-  olong irow, i, cnt;
+  olong irow, i;
 
    outList = PyList_New(Tab->nrows);
 
@@ -172,7 +172,7 @@ static PyObject* OASDMGetConfig(ObitSDMData *asdm)
 {
   ASDMConfigDescriptionTable* Tab =  ((ObitSDMData*)asdm)->ConfigDescriptionTab;
   PyObject *outList, *dict, *tlist;
-  olong irow, i, cnt;
+  olong irow, i;
 
    outList = PyList_New(Tab->nrows);
 
@@ -289,7 +289,7 @@ static PyObject* OASDMGetSpectralWindow(ObitSDMData *asdm)
 {
   ASDMSpectralWindowTable* Tab =  ((ObitSDMData*)asdm)->SpectralWindowTab;
   PyObject *outList, *dict, *tlist;
-  olong irow, i, cnt;
+  olong irow, i;
 
    outList = PyList_New(Tab->nrows);
 
@@ -401,7 +401,7 @@ static PyObject* OASDMGetStation(ObitSDMData *asdm)
 {
   ASDMStationTable* Tab =  ((ObitSDMData*)asdm)->StationTab;
   PyObject *outList, *dict, *tlist;
-  olong irow, i, cnt;
+  olong irow, i;
 
    outList = PyList_New(Tab->nrows);
 
@@ -426,8 +426,8 @@ static PyObject* OASDMGetStation(ObitSDMData *asdm)
 static PyObject* OASDMGetState(ObitSDMData *asdm)
 {
   ASDMStateTable* Tab =  ((ObitSDMData*)asdm)->StateTab;
-  PyObject *outList, *dict, *tlist;
-  olong irow, i, cnt;
+  PyObject *outList, *dict;
+  olong irow;
 
    outList = PyList_New(Tab->nrows);
 
@@ -450,7 +450,7 @@ static PyObject* OASDMGetExecBlock(ObitSDMData *asdm)
 {
   ASDMExecBlockTable* Tab =  ((ObitSDMData*)asdm)->ExecBlockTab;
   PyObject *outList, *dict, *tlist;
-  olong irow, i, cnt;
+  olong irow, i;
 
    outList = PyList_New(Tab->nrows);
 
@@ -494,7 +494,7 @@ static PyObject* OASDMGetSource(ObitSDMData *asdm)
 {
   ASDMSourceTable* Tab =  ((ObitSDMData*)asdm)->SourceTab;
   PyObject *outList, *dict, *tlist;
-  olong irow, i, cnt;
+  olong irow, i;
 
    outList = PyList_New(Tab->nrows);
 
@@ -543,7 +543,7 @@ static PyObject* OASDMGetField(ObitSDMData *asdm)
 {
   ASDMFieldTable* Tab =  ((ObitSDMData*)asdm)->FieldTab;
   PyObject *outList, *dict, *tlist;
-  olong irow, i, cnt;
+  olong irow, i;
 
    outList = PyList_New(Tab->nrows);
 
@@ -588,7 +588,7 @@ static PyObject* OASDMGetFeed(ObitSDMData *asdm)
 {
   ASDMFeedTable* Tab =  ((ObitSDMData*)asdm)->FeedTab;
   PyObject *outList, *dict, *tlist;
-  olong irow, i, cnt;
+  olong irow, i;
 
    outList = PyList_New(Tab->nrows);
 
@@ -645,7 +645,7 @@ static PyObject* OASDMGetPolarization(ObitSDMData *asdm)
 {
   ASDMPolarizationTable* Tab =  ((ObitSDMData*)asdm)->PolarizationTab;
   PyObject *outList, *dict, *tlist;
-  olong irow, i, cnt;
+  olong irow, i;
 
    outList = PyList_New(Tab->nrows);
 
@@ -677,8 +677,8 @@ static PyObject* OASDMGetPolarization(ObitSDMData *asdm)
 static PyObject* OASDMGetProcessor(ObitSDMData *asdm)
 {
   ASDMProcessorTable* Tab =  ((ObitSDMData*)asdm)->ProcessorTab;
-  PyObject *outList, *dict, *tlist;
-  olong irow, i, cnt;
+  PyObject *outList, *dict;
+  olong irow, cnt;
 
    outList = PyList_New(Tab->nrows);
 
@@ -700,7 +700,7 @@ static PyObject* OASDMGetSwitchCycle(ObitSDMData *asdm)
 {
   ASDMSwitchCycleTable* Tab =  ((ObitSDMData*)asdm)->SwitchCycleTab;
   PyObject *outList, *dict, *tlist;
-  olong irow, i, cnt;
+  olong irow, i;
 
    outList = PyList_New(Tab->nrows);
 
@@ -856,7 +856,6 @@ static PyObject* OASDMGetSourceArray(ObitSDMData *asdm)
   ASDMSourceArray* sa=NULL;
   PyObject *outDict, *dict, *tlist, *slist;
   olong irow, i, lastSID=-1, cnt, ocnt;
-  gchar ctemp[3];
 
   sa = ObitSDMDataGetSourceArray(asdm);
 

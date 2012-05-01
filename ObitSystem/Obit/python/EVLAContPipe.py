@@ -105,7 +105,7 @@ def pipeline( aipsSetup, parmFile):
         loadClass = dataClass
     
     # Load Data from Archive directory
-    if doLoadArchive:
+    if parms["doLoadArchive"]:
         uv = EVLAUVLoadArch(parms["archRoot"], EVLAAIPSName(project, session), loadClass, disk, parms["seq"], err, \
                             selConfig=parms["selConfig"], doSwPwr=parms["doSwPwr"], \
                             selBand=parms["selBand"], selChan=parms["selChan"], \
@@ -203,7 +203,7 @@ def pipeline( aipsSetup, parmFile):
     if parms["doFD1"]:
         mess =  "Median window frequency editing, for RFI impulsive in frequency:"
         printMess(mess, logFile)
-        retCode = EVLAAutoFlag (uv, parms["targets"], err,  flagVer=2, doCalib=-1, doBand=-1,   \
+        retCode = EVLAAutoFlag (uv, "    ", err,  flagVer=2, doCalib=-1, doBand=-1,   \
                                 timeAvg=parms["FD1TimeAvg"], \
                                 doFD=True, FDmaxAmp=1.0e20, FDmaxV=1.0e20, FDwidMW=parms["FD1widMW"],  \
                                 FDmaxRMS=[1.0e20,0.1], FDmaxRes=parms["FD1maxRes"],  \
@@ -234,18 +234,6 @@ def pipeline( aipsSetup, parmFile):
            raise  RuntimeError,"Error in AutoFlag"
     
     
-    # Plot Raw, edited data?
-    if parms["doRawSpecPlot"] and parms["plotSource"]:
-        mess =  "Raw Spectral plot for: "+parms["plotSource"]
-        printMess(mess, logFile)
-        plotFile = "./"+fileRoot+"RawSpec.ps"
-        retCode = EVLASpectrum(uv, parms["plotSource"], parms["plotTime"], plotFile, parms["refAnt"], err, \
-                               Stokes=["RR","LL"], doband=-1,          \
-                               check=check, debug=debug, logfile=logFile )
-        if retCode!=0:
-            raise  RuntimeError,"Error in Plotting spectrum"
-        EVLAAddOutFile( plotFile, 'project', 'Pipeline log file' )
-
     # Parallactic angle correction?
     if parms["doPACor"]:
         retCode = EVLAPACor(uv, err, noScrat=noScrat, \
@@ -271,6 +259,18 @@ def pipeline( aipsSetup, parmFile):
         ParmsPicklefile = project+"_"+session+"_"+band+".Parms.pickle"   # Where results saved
         SaveObject(parms, ParmsPicklefile, True)
 
+
+    # Plot Raw, edited data?
+    if parms["doRawSpecPlot"] and parms["plotSource"]:
+        mess =  "Raw Spectral plot for: "+parms["plotSource"]
+        printMess(mess, logFile)
+        plotFile = "./"+fileRoot+"RawSpec.ps"
+        retCode = EVLASpectrum(uv, parms["plotSource"], parms["plotTime"], plotFile, parms["refAnt"], err, \
+                               Stokes=["RR","LL"], doband=-1,          \
+                               check=check, debug=debug, logfile=logFile )
+        if retCode!=0:
+            raise  RuntimeError,"Error in Plotting spectrum"
+        EVLAAddOutFile( plotFile, 'project', 'Pipeline log file' )
 
     # delay calibration
     if parms["doDelayCal"] and parms["DCals"] and not check:
@@ -468,6 +468,7 @@ def pipeline( aipsSetup, parmFile):
         retCode = EVLACalAvg (uv, avgClass, parms["seq"], parms["CalAvgTime"], err, \
                               flagVer=2, doCalib=2, gainUse=0, doBand=1, BPVer=1, doPol=False, \
                               avgFreq=parms["avgFreq"], chAvg=parms["chAvg"], \
+                              BChan=parms["CABChan"], EChan=parms["CAEChan"], \
                               BIF=parms["CABIF"], EIF=parms["CAEIF"], Compress=parms["Compress"], \
                               nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
@@ -493,6 +494,8 @@ def pipeline( aipsSetup, parmFile):
     
     # R-L  delay calibration cal if needed,
     if parms["doRLDelay"]:
+        if parms["rlrefAnt"]<=0:
+            parms["rlrefAnt"] =  parms["refAnt"]
         retCode = EVLARLDelay(uv, err,\
                               RLDCal=parms["RLDCal"], BChan=parms["rlBChan"], \
                               EChan=parms["rlEChan"], UVRange=parms["rlUVRange"], \
@@ -507,6 +510,8 @@ def pipeline( aipsSetup, parmFile):
     
     # Polarization calibration 
     if parms["doPolCal"]:
+        if parms["PCRefAnt"]<=0:
+            parms["PCRefAnt"] =  parms["refAnt"]
         retCode = EVLAPolCal(uv, parms["PCInsCals"], err, \
                              doCalib=2, gainUse=0, doBand=-1, flagVer=0, \
                              fixPoln=parms["PCFixPoln"], pmodel=parms["PCpmodel"], avgIF=parms["PCAvgIF"], \
@@ -517,20 +522,22 @@ def pipeline( aipsSetup, parmFile):
         # end poln cal.
     
     
-    # R-L  delay calibration cal if needed, creates new BP table
+    # R-L phase calibration cal., creates new BP table
     if parms["doRLCal"]:
         plotFile = "./"+fileRoot+"RLSpec2.ps"
+        if parms["rlrefAnt"]<=0:
+            parms["rlrefAnt"] =  parms["refAnt"]
         retCode = EVLARLCal(uv, err,\
                             RLDCal=parms["RLDCal"], BChan=parms["rlBChan"],
                             EChan=parms["rlEChan"], UVRange=parms["rlUVRange"], \
                             ChWid2=parms["rlChWid"], solInt1=parms["rlsolint1"], solInt2=parms["rlsolint2"], \
-                            RLPCal=parms["RLPCal"], RLPhase=parms["PCRLPhase"], \
-                            RM=parms["RM"], CleanRad=parms["CleanRad"], \
+                            RLPCal=parms["RLPCal"], RLPhase=parms["RLPhase"], \
+                            RM=parms["RLRM"], CleanRad=parms["rlCleanRad"], \
                             calcode=parms["rlCalCode"], doCalib=parms["rlDoCal"], gainUse=parms["rlgainUse"], \
                             timerange=parms["rltimerange"], FOV=parms["rlFOV"], \
                             doBand=-1, BPVer=1, flagVer=parms["rlflagVer"], \
                             refAnt=parms["rlrefAnt"], doPol=parms["doPol"], PDVer=parms["PDVer"],  \
-                            doPlot=parms["doSNPlot"], plotFile=plotFile, \
+                            doPlot=parms["doSpecPlot"], plotFile=plotFile, \
                             nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
                             check=check, debug=debug)
         if retCode!=0:

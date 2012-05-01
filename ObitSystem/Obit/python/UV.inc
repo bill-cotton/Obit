@@ -39,6 +39,7 @@
 #include "ObitTableSNUtil.h"
 #include "ObitTableNXUtil.h"
 #include "ObitTableFG.h"
+#include "ObitTableCLUtil.h"
 %}
 
 

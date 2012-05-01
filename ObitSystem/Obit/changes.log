@@ -547,3 +547,29 @@ Obit/python/PipeUtil.py Obit/python/EVLAContPipe.py:
 Obit/python/mjd.py Obit/share/scripts/EVLATemplateParm.py:
   Major development of EVLA scripting
 27 Apr 2012, version 414
+
+Obit/python/EVLACal.py:
+  Major development of EVLA scripting
+27 Apr 2012, version 415
+
+Mostly EVLA scripting changes
+svn add:
+  Obit/share/data/3C286ChiModel.fits:
+  Obit/share/scripts/EVLAContTemplateParm.py:
+svn commit -F changes:
+  ObitVersion:
+  Obit/changes.log:
+  Obit/python/EVLAContPipe.py Obit/python/EVLACal.py:
+    doFD1 flag all sources
+    cleanup problems found during documentation
+  Obit/share/data/3C286ChiModel.fits:
+    3C286 C band hi wideband calibrator model.
+  Obit/share/scripts/EVLAContTemplateParm.py:
+    EVLA continuum parameter script template
+  Obit/python/UV.inc:
+    include header for ObitTableCLGetDummy
+  Obit/python/OASDM.inc:
+    remove unused variables
+  Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+    Update python interface
+1 May 2012, version 416
