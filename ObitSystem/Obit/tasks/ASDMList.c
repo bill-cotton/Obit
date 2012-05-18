@@ -376,6 +376,7 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
   olong        iScan, iIntent, iConfig, configID, dataDescriptionId;
   olong        i, ii, doCrt, LinesPerPage=0, iDD, jDD, jSW;
   olong        spectralWindowId, ScanID, iMain, iSource;
+  gchar        bcode[10];
   gchar        *routine = "Summary";
 
   /* error checks */
@@ -482,14 +483,19 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
       }
       if (jSW>=SpectralWindowTab->nrows) return;  /* Shouldn't need this */
       
-      /* Finally giver spectral window info */
-      sprintf(line,"     SpWin= %2d Freq= %7.3lf GHz, %d chan of BW=%9.3lf kHz, tot BW=%8.3lf MHz, %s", 
+      /* Finally give spectral window info */
+      if (SpectralWindowTab->rows[jSW]->bandcode) 
+	strncpy (bcode, SpectralWindowTab->rows[jSW]->bandcode,9);
+      else
+	strcpy (bcode, "Unknown");
+      sprintf(line,"     SpWin= %2d Freq= %7.3lf GHz, %d chan of BW=%9.3lf kHz, tot BW=%8.3lf MHz, %s Band=%s", 
 	      SpectralWindowTab->rows[jSW]->spectralWindowId, 
 	      SpectralWindowTab->rows[jSW]->refFreq*1.0e-9,
 	      SpectralWindowTab->rows[jSW]->numChan,
 	      SpectralWindowTab->rows[jSW]->chanWidth*1.0e-3,
 	      SpectralWindowTab->rows[jSW]->totBandwidth*1.0e-6,
-	      SpectralWindowTab->rows[jSW]->netSideband);
+	      SpectralWindowTab->rows[jSW]->netSideband,
+	      bcode);
       ObitPrinterWrite (myPrint, line, &quit, err);
       if (quit) goto Quit;
       if (err->error) Obit_traceback_msg (err, routine, myPrint->name);

@@ -64,7 +64,7 @@ def pipeline( aipsSetup, parmFile):
     logFile       = fileRoot +".log"   # Processing log file
     uv            = None
     avgClass      = ("UVAv"+band)[0:6]  # Averaged data AIPS class
-    outIClass     =  parms["outIclass"] # image AIPS class
+    outIClass     =  parms["outIClass"] # image AIPS class
 
     # Load the outputs pickle jar
     EVLAFetchOutFiles()

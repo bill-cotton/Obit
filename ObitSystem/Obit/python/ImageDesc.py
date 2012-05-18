@@ -111,7 +111,7 @@ def PCopyDesc (inID, outID, err):
     #
     Obit.ImageDescCopyDesc (inID.me, outID.me, err.me)
     if err.isErr:
-        printErrMsg(err, "Error copying Image descriptor")
+        OErr.printErrMsg(err, "Error copying Image descriptor")
     # end PCopyDesc
 
 def POverlap (inID1, inID2, err):
@@ -137,7 +137,7 @@ def POverlap (inID1, inID2, err):
     #
     res = Obit.ImageDescOverlap (inID1.me, inID2.me, err.me)
     if err.isErr:
-        printErrMsg(err, "Error determining overlap")
+        OErr.printErrMsg(err, "Error determining overlap")
     return res!=0
     # end POverlap
 
@@ -169,7 +169,7 @@ def PCvtPixel (inID, inPixel, outID, err):
     #
     outTmp = Obit.ImageDescCvtPixel (inID.me, outID.me, inPixel, err.me)
     if err.isErr:
-        printErrMsg(err, "Error converting pixel location")
+        OErr.printErrMsg(err, "Error converting pixel location")
     out = outTmp[0:2]
     return out
     # end PCvtPixel
@@ -198,7 +198,7 @@ def PGetPixel (inID, inPos, err):
     #
     outTmp = Obit.ImageDescGetPixel (inID.me, inPos, err.me)
     if err.isErr:
-        printErrMsg(err, "Error determining pixel")
+        OErr.printErrMsg(err, "Error determining pixel")
     out = outTmp[0:2]
     return out
     # end PGetPixel
@@ -228,7 +228,7 @@ def PGetPos (inID, inPixel, err):
     #
     outTmp = Obit.ImageDescGetPos (inID.me, inPixel, err.me)
     if err.isErr:
-        printErrMsg(err, "Error converting pixel location to position")
+        OErr.printErrMsg(err, "Error converting pixel location to position")
     out = outTmp[0:2]
     return out
     # end PGetPos

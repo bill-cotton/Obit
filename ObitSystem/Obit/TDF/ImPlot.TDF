@@ -3,7 +3,7 @@
 ;! Image plots
 ;# Task 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007,2010
+;;  Copyright (C) 2007-2012
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -43,10 +43,10 @@ inSeq            0.0       9999.0  Image name (seq. #)
 **PARAM** int 1
 inDisk           0.0         99.0  Disk drive #
 **PARAM** int 7
-BLC               0.0       8192.0 Bottom left corner of image
+BLC               0.0     128000.0 Bottom left corner of image
                                      0=>entire image
 **PARAM** int 7
-TRC               0.0       8192.0  Top right corner of image
+TRC               0.0     128000.0  Top right corner of image
                                      0=>entire image
 **PARAM** float 2
 PixRange                           Range of pixel values in image

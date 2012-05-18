@@ -5360,6 +5360,8 @@ def EVLAMakeParmFile(subs, parmfile, template=None):
         template = os.getenv('EVLAPIPE','..')+'/EVLAContTemplateParm.py'
         if not os.path.exists(template):
             template = os.environ['OBIT'] + '/share/scripts/EVLAContTemplateParm.py'
+            if not os.path.exists(template):
+                template = 'EVLAContTemplateParm.py'
     fdin  = open(template, "r")
     fdout = open(parmfile,"w")
     line = fdin.readline()
@@ -5579,7 +5581,7 @@ def EVLAParseASDM(ASDMRoot, err):
 #VLBA def EVLAPrepare( starttime, stoptime, fitsDest, outputDest, project=None,
 #VLBA    template="EVLAContTemplateParm.py", parmFile=None ):
 def EVLAPrepare( ASDMRoot, err, \
-                 project=None, template="EVLAContTemplateParm.py", parmFile=None,
+                 project=None, template=None, parmFile=None,
                  outputDest=''): 
     """
     Prepare pipeline for processing. 
@@ -5587,7 +5589,7 @@ def EVLAPrepare( ASDMRoot, err, \
 
     * ASDMRoot = root directory of ASDM/BDF
     * err      = Obit message/error stack
-    * template = name of template parameter file
+    * template = name of template parameter file, def "EVLAContTemplateParm.py"
     * parmFile = name of output parameter file; None => used default name
     """
     # Check that DataRoot exists

@@ -39,7 +39,14 @@
 
 %inline %{
 extern ObitSDMData* OASDMCreate(char* name, char* DataRoot, ObitErr *err) {
-  return  ObitSDMIntentCreate ((gchar*)name, (gchar*) DataRoot, err);
+  ObitSDMData* asdm=NULL;
+  asdm = ObitSDMIntentCreate ((gchar*)name, (gchar*) DataRoot, err);
+  // basic check
+  if ((asdm==NULL) || (asdm->MainTab==NULL) || (asdm->ConfigDescriptionTab==NULL) ) {
+    Obit_log_error(err, OBIT_Error, "ASDM not fully populated", name);
+  }
+
+return asdm;
 } // end OASDMCreate
 
 // get reference JD
@@ -64,6 +71,8 @@ static PyObject* OASDMGetMain(ObitSDMData *asdm)
   PyObject *outList, *dict;
   olong irow;
 
+  if (!Tab) return PyList_New(0);  // bad pointer?
+
    outList = PyList_New(Tab->nrows);
 
   for (irow=0; irow<Tab->nrows; irow++) {
@@ -79,6 +88,10 @@ static PyObject* OASDMGetMain(ObitSDMData *asdm)
     PyDict_SetItemString(dict, "configDescriptionId", PyInt_FromLong((long)Tab->rows[irow]->configDescriptionId));
     PyDict_SetItemString(dict, "fieldId",             PyInt_FromLong((long)Tab->rows[irow]->fieldId));
     PyDict_SetItemString(dict, "stateId",             PyInt_FromLong((long)Tab->rows[irow]->stateId));
+    if (Tab->rows[irow]->entityId)
+      PyDict_SetItemString(dict, "entityId",           PyString_FromString(Tab->rows[irow]->entityId));
+    else
+      PyDict_SetItemString(dict, "entityId",           PyString_FromString("Unknown"));
     PyDict_SetItemString(dict, "flagRow",             PyBool_FromLong((long)Tab->rows[irow]->flagRow));	
     PyList_SetItem(outList, irow, dict);
   }
@@ -93,6 +106,8 @@ static PyObject* OASDMGetScan(ObitSDMData *asdm)
   PyObject *outList, *dict, *tlist;
   char *Unspecified="Unspecified";
   olong irow, i, cnt;
+
+  if (!Tab) return PyList_New(0);  // bad pointer?
 
    outList = PyList_New(Tab->nrows);
 
@@ -143,6 +158,8 @@ static PyObject* OASDMGetSubscan(ObitSDMData *asdm)
   PyObject *outList, *dict, *tlist;
   olong irow, i;
 
+  if (!Tab) return PyList_New(0);  // bad pointer?
+
    outList = PyList_New(Tab->nrows);
 
   for (irow=0; irow<Tab->nrows; irow++) {
@@ -173,6 +190,8 @@ static PyObject* OASDMGetConfig(ObitSDMData *asdm)
   ASDMConfigDescriptionTable* Tab =  ((ObitSDMData*)asdm)->ConfigDescriptionTab;
   PyObject *outList, *dict, *tlist;
   olong irow, i;
+
+   if (!Tab) return PyList_New(0);  // bad pointer?
 
    outList = PyList_New(Tab->nrows);
 
@@ -227,6 +246,8 @@ static PyObject* OASDMGetCorrelatorMode(ObitSDMData *asdm)
   PyObject *outList, *dict, *tlist;
   olong irow, i;
 
+   if (!Tab) return PyList_New(0);  // bad pointer?
+
    outList = PyList_New(Tab->nrows);
 
   for (irow=0; irow<Tab->nrows; irow++) {
@@ -271,7 +292,9 @@ static PyObject* OASDMGetDataDescription(ObitSDMData *asdm)
   PyObject *outList, *dict;
   olong irow;
 
-   outList = PyList_New(Tab->nrows);
+  if (!Tab) return PyList_New(0);  // bad pointer?
+
+  outList = PyList_New(Tab->nrows);
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
@@ -291,7 +314,9 @@ static PyObject* OASDMGetSpectralWindow(ObitSDMData *asdm)
   PyObject *outList, *dict, *tlist;
   olong irow, i;
 
-   outList = PyList_New(Tab->nrows);
+  if (!Tab) return PyList_New(0);  // bad pointer?
+
+  outList = PyList_New(Tab->nrows);
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
@@ -368,6 +393,8 @@ static PyObject* OASDMGetAntenna(ObitSDMData *asdm)
   PyObject *outList, *dict, *tlist;
   olong irow, i;
 
+  if (!Tab) return PyList_New(0);  // bad pointer?
+
    outList = PyList_New(Tab->nrows);
 
   for (irow=0; irow<Tab->nrows; irow++) {
@@ -403,7 +430,9 @@ static PyObject* OASDMGetStation(ObitSDMData *asdm)
   PyObject *outList, *dict, *tlist;
   olong irow, i;
 
-   outList = PyList_New(Tab->nrows);
+  if (!Tab) return PyList_New(0);  // bad pointer?
+
+  outList = PyList_New(Tab->nrows);
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
@@ -429,7 +458,9 @@ static PyObject* OASDMGetState(ObitSDMData *asdm)
   PyObject *outList, *dict;
   olong irow;
 
-   outList = PyList_New(Tab->nrows);
+  if (!Tab) return PyList_New(0);  // bad pointer?
+
+  outList = PyList_New(Tab->nrows);
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
@@ -452,7 +483,9 @@ static PyObject* OASDMGetExecBlock(ObitSDMData *asdm)
   PyObject *outList, *dict, *tlist;
   olong irow, i;
 
-   outList = PyList_New(Tab->nrows);
+  if (!Tab) return PyList_New(0);  // bad pointer?
+
+  outList = PyList_New(Tab->nrows);
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
@@ -496,7 +529,9 @@ static PyObject* OASDMGetSource(ObitSDMData *asdm)
   PyObject *outList, *dict, *tlist;
   olong irow, i;
 
-   outList = PyList_New(Tab->nrows);
+  if (!Tab) return PyList_New(0);  // bad pointer?
+
+  outList = PyList_New(Tab->nrows);
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
@@ -545,7 +580,9 @@ static PyObject* OASDMGetField(ObitSDMData *asdm)
   PyObject *outList, *dict, *tlist;
   olong irow, i;
 
-   outList = PyList_New(Tab->nrows);
+  if (!Tab) return PyList_New(0);  // bad pointer?
+
+  outList = PyList_New(Tab->nrows);
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
@@ -590,11 +627,13 @@ static PyObject* OASDMGetFeed(ObitSDMData *asdm)
   PyObject *outList, *dict, *tlist;
   olong irow, i;
 
-   outList = PyList_New(Tab->nrows);
+  if (!Tab) return PyList_New(0);  // bad pointer?
+
+  outList = PyList_New(Tab->nrows);
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "feedId",           PyInt_FromLong((long)Tab->rows[irow]->feedId));
+    PyDict_SetItemString(dict, "receiverId",       PyInt_FromLong((long)Tab->rows[irow]->receiverId));
     PyDict_SetItemString(dict, "antennaId",        PyInt_FromLong((long)Tab->rows[irow]->antennaId));
     PyDict_SetItemString(dict, "spectralWindowId", PyInt_FromLong((long)Tab->rows[irow]->spectralWindowId));
     PyDict_SetItemString(dict, "numReceptor",      PyInt_FromLong((long)Tab->rows[irow]->numReceptor));
@@ -640,6 +679,50 @@ static PyObject* OASDMGetFeed(ObitSDMData *asdm)
   return outList;
 } // end  GetFeed
 
+// Convert Receiver data to a python list of dicts
+static PyObject* OASDMGetReceiver(ObitSDMData *asdm)
+{
+  ASDMReceiverTable* Tab =  ((ObitSDMData*)asdm)->ReceiverTab;
+  PyObject *outList, *dict, *tlist;
+  olong irow, i, n;
+
+  if (!Tab) return PyList_New(0);  // bad pointer?
+
+  outList = PyList_New(Tab->nrows);
+
+  for (irow=0; irow<Tab->nrows; irow++) {
+    dict = PyDict_New();
+    PyDict_SetItemString(dict, "receiverId",       PyInt_FromLong((long)Tab->rows[irow]->receiverId));
+    PyDict_SetItemString(dict, "spectralWindowId", PyInt_FromLong((long)Tab->rows[irow]->spectralWindowId));
+    PyDict_SetItemString(dict, "name",             PyString_InternFromString(Tab->rows[irow]->name));
+    PyDict_SetItemString(dict, "receiverSideband", PyString_InternFromString(Tab->rows[irow]->receiverSideband));
+    PyDict_SetItemString(dict, "frequencyBand",    PyString_InternFromString(Tab->rows[irow]->frequencyBand));
+    PyDict_SetItemString(dict, "numLO",            PyInt_FromLong((long)Tab->rows[irow]->numLO));
+
+    tlist = PyList_New(2);
+    PyList_SetItem(tlist, 0, PyFloat_FromDouble((double)Tab->rows[irow]->timeInterval[0]));
+    PyList_SetItem(tlist, 1, PyFloat_FromDouble((double)Tab->rows[irow]->timeInterval[1]));
+    PyDict_SetItemString(dict, "timeInterval",  tlist);
+
+    n = Tab->rows[irow]->numLO;
+    tlist = PyList_New(n);
+    for (i=0; i<n; i++) {
+      PyList_SetItem(tlist, i, PyFloat_FromDouble((double)Tab->rows[irow]->freqLO[i]));
+    }
+    PyDict_SetItemString(dict, "freqLO",  tlist);
+
+    tlist = PyList_New(n);
+    for (i=0; i<n; i++) {
+      PyList_SetItem(tlist, i, PyString_InternFromString(Tab->rows[irow]->sidebandLO[i]));
+    }
+    PyDict_SetItemString(dict, "sidebandLO",  tlist);
+
+    PyList_SetItem(outList, irow, dict);
+  }
+
+  return outList;
+} // end  GetReceiver
+
 // Convert Polarization data to a python list of dicts
 static PyObject* OASDMGetPolarization(ObitSDMData *asdm)
 {
@@ -647,7 +730,9 @@ static PyObject* OASDMGetPolarization(ObitSDMData *asdm)
   PyObject *outList, *dict, *tlist;
   olong irow, i;
 
-   outList = PyList_New(Tab->nrows);
+  if (!Tab) return PyList_New(0);  // bad pointer?
+
+  outList = PyList_New(Tab->nrows);
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
@@ -680,7 +765,9 @@ static PyObject* OASDMGetProcessor(ObitSDMData *asdm)
   PyObject *outList, *dict;
   olong irow, cnt;
 
-   outList = PyList_New(Tab->nrows);
+  if (!Tab) return PyList_New(0);  // bad pointer?
+
+  outList = PyList_New(Tab->nrows);
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
@@ -702,7 +789,9 @@ static PyObject* OASDMGetSwitchCycle(ObitSDMData *asdm)
   PyObject *outList, *dict, *tlist;
   olong irow, i;
 
-   outList = PyList_New(Tab->nrows);
+  if (!Tab) return PyList_New(0);  // bad pointer?
+
+  outList = PyList_New(Tab->nrows);
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();

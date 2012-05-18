@@ -22,7 +22,7 @@ X    Flag.xml
 X    Pointing.xml
 X    Polarization.xml
 X    Processor.xml
-     Receiver.xml
+X    Receiver.xml
      SBSummary.xml
 X    Scan.xml
 X    Source.xml
@@ -171,6 +171,9 @@ static ObitASDMWindowFn LookupWindowFn(gchar *name);
 
 /** Private: Look up atmospheric correction enum */
 static ObitASDMAtmPhCorr LookupAtmPhCorr(gchar *name);
+
+/** Private: Get spectral window bandcode */
+static gchar* GetSWBandcode(ObitSDMData *in, olong spectralWindowId);
 
 /** Private: Parser for ASDM table from file */
 static ASDMTable* ParseASDMTable(gchar *ASDMFile, 
@@ -733,7 +736,7 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
-  /* Receiver table */
+  /* Receiver table MUST be before SpectralWindow table  */
   fullname = g_strconcat (DataRoot,"/Receiver.xml", NULL);
   out->ReceiverTab = ParseASDMReceiverTable(out, fullname, err);
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
@@ -1147,6 +1150,7 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
     out->winds[iSW]->selected         = TRUE;
     out->winds[iSW]->numChan          = in->SpectralWindowTab->rows[jSW]->numChan;
     out->winds[iSW]->netSideband      = g_strdup(in->SpectralWindowTab->rows[jSW]->netSideband);
+    out->winds[iSW]->bandcode         = g_strdup(in->SpectralWindowTab->rows[jSW]->bandcode);
     out->winds[iSW]->refFreq          = in->SpectralWindowTab->rows[jSW]->refFreq;
     out->winds[iSW]->totBandwidth     = in->SpectralWindowTab->rows[jSW]->totBandwidth;
     out->winds[iSW]->refChan          = 1.0;
@@ -1295,6 +1299,7 @@ ASDMSpectralWindowArray* ObitSDMDataKillSWArray (ASDMSpectralWindowArray *in)
     for (i=0; i<in->nwinds; i++) {
       if (in->winds[i]) {
 	if (in->winds[i]->netSideband) g_free(in->winds[i]->netSideband);
+	if (in->winds[i]->bandcode)    g_free(in->winds[i]->bandcode);
 	g_free(in->winds[i]);
       }
     }
@@ -3127,6 +3132,34 @@ static ObitASDMAtmPhCorr LookupAtmPhCorr(gchar *name)
   if (!strncmp (name, "AP_CORRECTED", 12))     return ASDMAtmPhCorr_AP_CORRECTED;
   return out;
 } /* end LookupAtmPhCorr */
+
+/** Find bandcode for a Spectral window ID
+ * Look through ReceiverTab for corresponding SWId
+ * \param in                 ASDM object to use
+ * \param spectralWindowId   Spectral window Id to find
+ * \return pointer to bandcode string or NULL if not found, should be g_freeed
+ */
+static gchar* GetSWBandcode (ObitSDMData *in, olong spectralWindowId)
+{
+  ASDMReceiverTable *table=NULL;
+  olong i;
+  gchar *out = NULL;
+
+  if (in->ASDMTab->ReceiverRows<=0) return out;
+  if (in->ReceiverTab==NULL)        return out;
+  if (in->ReceiverTab->nrows<=0)    return out;
+  if (in->ReceiverTab->rows==NULL)  return out;
+
+  table = in->ReceiverTab;
+  for (i=0; i<table->nrows; i++) {
+    if (table->rows[i]->spectralWindowId == spectralWindowId) {
+      /* Found it */
+      return g_strdup(table->rows[i]->frequencyBand);
+    }
+  }
+
+  return out;  /* Didn't find */
+} /* end GetSWBandcode*/
 
 /** Constructor for ASDM table parsing from file
  * Reads schema version number
@@ -6822,7 +6855,18 @@ static ASDMProcessorTable* KillASDMProcessorTable(ASDMProcessorTable* table)
  */
 static ASDMReceiverRow* KillASDMReceiverRow(ASDMReceiverRow* row)
 {
-  if (row == NULL) return NULL;
+   olong i, n;
+   if (row == NULL) return NULL;
+   if (row->timeInterval)     g_free(row->timeInterval);
+   if (row->freqLO)           g_free(row->freqLO);
+   if (row->name)             g_free(row->name);
+   if (row->receiverSideband) g_free(row->receiverSideband);
+   if (row->frequencyBand)    g_free(row->frequencyBand);
+   if (row->sidebandLO) {
+     n = row->numLO;
+     for (i=0; i<n; i++) if (row->sidebandLO[i]) g_free(row->sidebandLO[i]);
+     g_free(row->sidebandLO);
+   }
   g_free(row);
   return NULL;
 } /* end   KillASDMReceiverRow */
@@ -6844,7 +6888,8 @@ ParseASDMReceiverTable(ObitSDMData *me,
   olong irow, maxLine = me->maxLine;
   gchar *line=me->line;
   gchar *endrow = "</row>";
-  /*gchar *prior, *next;*/
+  gchar *prior, *next;
+  odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
   gchar *routine = " ParseASDMReceiverTable";
 
   /* error checks */
@@ -6874,6 +6919,63 @@ ParseASDMReceiverTable(ObitSDMData *me,
     if (retCode==OBIT_IO_EOF) break;
 
     /* Parse entries */
+    prior = "<receiverId>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->receiverId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+
+    prior = "<spectralWindowId>SpectralWindow_";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->spectralWindowId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+
+    prior = "<numLO>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->numLO = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+
+    prior = "<timeInterval>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->timeInterval = ASDMparse_timeRange(line, maxLine, prior, &next);
+      /* Remove offset from second */
+      if ((out->rows[irow]->timeInterval[1]<out->rows[irow]->timeInterval[0]) &&
+	  (out->rows[irow]->timeInterval[1]>mjdJD0))
+	out->rows[irow]->timeInterval[1] -= mjdJD0;
+      continue;
+    }
+
+    prior = "<freqLO>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->freqLO = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+
+    prior = "<sidebandLO>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->sidebandLO = ASDMparse_strarray (line, maxLine, prior, &next);
+      continue;
+    }
+
+    prior = "<name>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->name = ASDMparse_str(line, maxLine, prior, &next);
+      continue;
+    }
+
+    prior = "<receiverSideband>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->receiverSideband = ASDMparse_str (line, maxLine, prior, &next);
+      continue;
+    }
+
+    prior = "<frequencyBand>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->frequencyBand = ASDMparse_str (line, maxLine, prior, &next);
+      continue;
+    }
 
     /* Is this the end of a row? */
     if (g_strstr_len (line, maxLine, endrow)!=NULL) irow++;
@@ -7112,7 +7214,12 @@ static ASDMScanTable* ParseASDMScanTable(ObitSDMData *me,
       out->rows[irow]->numIntent = ASDMparse_int (line, maxLine, prior, &next);
       continue;
     }
-     prior = "<numSubScan>";
+    prior = "<numSubScan>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->numSubscan = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<numSubscan>";  /* new EVLA spelling */
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->numSubscan = ASDMparse_int (line, maxLine, prior, &next);
       continue;
@@ -7423,6 +7530,8 @@ ParseASDMSpectralWindowTable(ObitSDMData *me,
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       prior = "SpectralWindow_";
       out->rows[irow]->spectralWindowId = ASDMparse_int (line, maxLine, prior, &next);
+      /* Get bandcode if known */
+      out->rows[irow]->bandcode = GetSWBandcode(me, out->rows[irow]->spectralWindowId);
       continue;
     }
     prior = "<basebandName>";

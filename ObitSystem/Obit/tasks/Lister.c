@@ -859,13 +859,13 @@ void doSCAN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   gboolean     isInteractive = FALSE, quit = FALSE;
   gchar        line[1024], Title1[1024], Title2[1024];
   olong        pLimit=1000000;  /* Page limit */
-  olong        i, iif, ivr, ivd, lenLine, LinesPerPage = 0, maxSUID, *noVis=NULL;
+  olong        i, j, iif, ivr, ivd, lenLine, LinesPerPage = 0, maxSUID, *noVis=NULL;
   olong        ver, iRow, count, start, souID, lastSouID, doCrt=1, qual = 0;
   gchar        *prtFile=NULL, btimeString[25], etimeString[25];
   gchar        source[17]="source          ", calcode[5]="    ";
   gchar        *VelReference[3] = {"LSR", "Helio", "Observer"};
   gchar        *VelDef[2] = {"optical","radio"};
-  gchar        RAString[16], DecString[16];
+  gchar        RAString[16], DecString[16], bandcode[10];
   odouble      freq;
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -1141,7 +1141,7 @@ void doSCAN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   ObitPrinterSetTitle (myPrint, NULL, NULL, err);  /* No page titles at top */
   /* Titles */
   sprintf (Title1, "                                                   ");
-  sprintf (Title2, "FQID IF#      Freq(GHz)      BW(kHz)   Ch.Sep(kHz)  Sideband");
+  sprintf (Title2, "FQID IF#      Freq(GHz)      BW(kHz)   Ch.Sep(kHz)  Sideband  Bandcode");
   ObitPrinterWrite (myPrint, Title1, &quit, err);
   ObitPrinterWrite (myPrint, Title2, &quit, err);
   ObitPrinterSetTitle (myPrint, Title1, Title2, err);  /* Page titles at top */
@@ -1162,6 +1162,7 @@ void doSCAN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   FQRow = newObitTableFQRow(FQTable);
 
   /* Loop over table */
+  strcpy(bandcode,"Unknown");
   for (iRow=1; iRow<=FQTable->myDesc->nrow; iRow++) {
      iretCode = ObitTableFQReadRow (FQTable, iRow, FQRow, err);
     if (err->error) Obit_traceback_msg (err, routine, FQTable->name);
@@ -1172,17 +1173,20 @@ void doSCAN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 	freq = inDesc->freqIF[iif]; /* + FQRow->freqOff[iif];*/
       else
 	freq = inDesc->freq + FQRow->freqOff[iif];
+      /* Bandcode */
+      if (FQRow->RxCode && (FQTable->RxCodeOff>=0))
+	for (j=0; j<8; j++) bandcode[j] = FQRow->RxCode[iif*8+j];
       /* Format line  */
       if (iif==0) { /* Only 1st IF */
-	sprintf(line,"%4d %3d %14.8lf %14.4f %10.4f %6d",
+	sprintf(line,"%4d %3d %14.8lf %14.4f %10.4f %6d      %s",
 		FQRow->fqid, iif+1, freq*1.0e-9, 
 		FQRow->totBW[iif]*1.0e-3,  FQRow->chWidth[iif]*1.0e-3, 
-		(olong)FQRow->sideBand[iif]);
+		(olong)FQRow->sideBand[iif], bandcode);
       } else { /* Subsequent IFs */
-	sprintf(line,"     %3d %14.8lf %14.4f %10.4f %6d",
+	sprintf(line,"     %3d %14.8lf %14.4f %10.4f %6d      %s",
 		iif+1, freq*1.0e-9, 
 		FQRow->totBW[iif]*1.0e-3,  FQRow->chWidth[iif]*1.0e-3, 
-		(olong)FQRow->sideBand[iif]);
+		(olong)FQRow->sideBand[iif], bandcode);
       }
       /* Print line */
       ObitPrinterWrite (myPrint, line, &quit, err);

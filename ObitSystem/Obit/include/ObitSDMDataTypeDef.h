@@ -24,9 +24,9 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/*  Define the basic components of the ObitSDMData structure         */
-/*  This is intended to be included in a class structure definition  */
-/* This class accesses data in the EVLA SDM format                   */
+/*  Define the basic components of the ObitSDMData structure          */
+/*  This is intended to be included in a class structure definition   */
+/* This class accesses data in the EVLA SDM format                    */
 /* This file defines ASDM and BDF structures                          */
 /**
  * \file ObitSDMDataTypeDef.h
@@ -52,6 +52,8 @@ typedef struct {
   olong nAPoln;
   /** net Sideband */
   gchar *netSideband;
+  /** bandcode NULL = unknown */
+  gchar *bandcode;
   /** reference channel */
   ofloat refChan;
   /** refFreq */
@@ -804,8 +806,24 @@ typedef struct {
 
  /* Receiver Table */
 typedef struct {
-  /** place holder */
-  olong holder;
+  /** receiver Id */
+  olong receiverId;
+  /** spectralWindowId */
+  olong spectralWindowId;
+  /** number of LOs */
+  olong numLO;
+  /** time Interval (days) */
+  odouble *timeInterval;
+  /** LO frequencies */
+  odouble *freqLO;
+  /** LO sidebands */
+  gchar **sidebandLO;
+  /** receiver name */
+  gchar *name;
+  /** receiver sideband */
+  gchar *receiverSideband;
+  /** receiver band code name */
+  gchar *frequencyBand;
 } ASDMReceiverRow;
 typedef struct {
   /** Number of rows */
@@ -896,6 +914,8 @@ typedef struct {
   olong spectralWindowId;
   /**  basebandName */
   gchar *basebandName;
+  /** bandcode NULL = unknown */
+  gchar *bandcode;
   /** net Sideband */
   gchar *netSideband;
   /** numChan */

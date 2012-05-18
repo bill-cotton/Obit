@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -1160,14 +1160,30 @@ void ObitPlotContour (ObitPlot* in, gchar *label, ObitImage *image,
   /*  Plot labels */
   if (image->myDesc->equinox<1975.0) pre = 'B';
   else pre = 'J';
-  if (fabs(image->myDesc->crota[1])==0.0)
-    g_snprintf (xlabel,120,"Right Ascension (%s)", units);
-  else /* Don't call it RA */
-    g_snprintf (xlabel,120,"Rotated Right Ascension (%s)", units);
-  if (fabs(image->myDesc->crota[1])==0.0)
-    g_snprintf (ylabel,120,"Declination (%s)", units);
-  else  /* Don't call it Dec */
-    g_snprintf (ylabel,120,"Rotated Declination (%s)", units);
+  /* RA Equatorial or Galactic? */
+  if (!strncmp(image->myDesc->ctype[0],"RA--", 4)) {
+    if (fabs(image->myDesc->crota[1])==0.0)
+      g_snprintf (xlabel,120,"Right Ascension (%s)", units);
+    else /* Don't call it RA */
+      g_snprintf (xlabel,120,"Rotated Right Ascension (%s)", units);
+  } else if (!strncmp(image->myDesc->ctype[0],"GLON", 4)) {
+      g_snprintf (xlabel,120,"Gal. Long. (%s)", units);
+  } else { /* Don't recognize */
+      g_snprintf (xlabel,120,"X (%s)", units);
+  }
+  /* Dec Equatorial or Galactic? */
+  if (!strncmp(image->myDesc->ctype[0],"DEC-", 4)) {
+    if (fabs(image->myDesc->crota[1])==0.0)
+      g_snprintf (ylabel,120,"Declination (%s)", units);
+    else  /* Don't call it Dec */
+      g_snprintf (ylabel,120,"Rotated Declination (%s)", units);
+  } else if (!strncmp(image->myDesc->ctype[0],"GLON", 4)) {
+      g_snprintf (ylabel,120,"Gal. Lat. (%s)", units);
+  } else { /* Don't recognize */
+      g_snprintf (ylabel,120,"Y (%s)", units);
+  }
+
+
   ObitPlotLabel (in, xlabel, ylabel, label, err);
 
   /* Get center position string */
@@ -1339,18 +1355,29 @@ void ObitPlotContour (ObitPlot* in, gchar *label, ObitImage *image,
   /*  Plot labels */
   if (image->myDesc->equinox<1975.0) pre = 'B';
   else pre = 'J';
-  if (fabs(image->myDesc->crota[1])==0.0)
-    g_snprintf (xlabel,120,"Right Ascension (%c%6.1f)", 
-		pre, image->myDesc->equinox); 
-  else /* Don't call it RA */
-    g_snprintf (xlabel,120,"Rotated Right Ascension (%c%6.1f)", 
-		pre, image->myDesc->equinox); 
-  if (fabs(image->myDesc->crota[1])==0.0)
-    g_snprintf (ylabel,120,"Declination (%c%6.1f)", 
-		pre, image->myDesc->equinox); 
-  else  /* Don't call it Dec */
-    g_snprintf (ylabel,120,"Rotated Declination (%c%6.1f)", 
-		pre, image->myDesc->equinox); 
+  /* RA Equatorial or Galactic? */
+  if (!strncmp(image->myDesc->ctype[0],"RA--", 4)) {
+    if (fabs(image->myDesc->crota[1])==0.0)
+      g_snprintf (xlabel,120,"Right Ascension (%s)", units);
+    else /* Don't call it RA */
+      g_snprintf (xlabel,120,"Rotated Right Ascension (%s)", units);
+  } else if (!strncmp(image->myDesc->ctype[0],"GLON", 4)) {
+      g_snprintf (xlabel,120,"Gal. Long. (%s)", units);
+  } else { /* Don't recognize */
+      g_snprintf (xlabel,120,"X (%s)", units);
+  }
+  /* Dec Equatorial or Galactic? */
+  if (!strncmp(image->myDesc->ctype[0],"DEC-", 4)) {
+    if (fabs(image->myDesc->crota[1])==0.0)
+      g_snprintf (ylabel,120,"Declination (%s)", units);
+    else  /* Don't call it Dec */
+      g_snprintf (ylabel,120,"Rotated Declination (%s)", units);
+  } else if (!strncmp(image->myDesc->ctype[0],"GLON", 4)) {
+      g_snprintf (ylabel,120,"Gal. Lat. (%s)", units);
+  } else { /* Don't recognize */
+      g_snprintf (ylabel,120,"Y (%s)", units);
+  }
+
   ObitPlotLabel (in, xlabel, ylabel, label, err);
 
   /* set ticks, labels */
@@ -1650,14 +1677,29 @@ void ObitPlotGrayScale (ObitPlot* in, gchar *label, ObitImage *image,
   /*  Plot labels */
   if (image->myDesc->equinox<1975.0) pre = 'B';
   else pre = 'J';
-  if (fabs(image->myDesc->crota[1])==0.0)
-    g_snprintf (xlabel,120,"Right Ascension (%s)", units);
-  else /* Don't call it RA */
-    g_snprintf (xlabel,120,"Rotated Right Ascension (%s)", units);
-  if (fabs(image->myDesc->crota[1])==0.0)
-    g_snprintf (ylabel,120,"Declination (%s)", units);
-  else  /* Don't call it Dec */
-    g_snprintf (ylabel,120,"Rotated Declination (%s)", units);
+  /* RA Equatorial or Galactic? */
+  if (!strncmp(image->myDesc->ctype[0],"RA--", 4)) {
+    if (fabs(image->myDesc->crota[1])==0.0)
+      g_snprintf (xlabel,120,"Right Ascension (%s)", units);
+    else /* Don't call it RA */
+      g_snprintf (xlabel,120,"Rotated Right Ascension (%s)", units);
+  } else if (!strncmp(image->myDesc->ctype[0],"GLON", 4)) {
+      g_snprintf (xlabel,120,"Gal. Long. (%s)", units);
+  } else { /* Don't recognize */
+      g_snprintf (xlabel,120,"X (%s)", units);
+  }
+  /* Dec Equatorial or Galactic? */
+  if (!strncmp(image->myDesc->ctype[0],"DEC-", 4)) {
+    if (fabs(image->myDesc->crota[1])==0.0)
+      g_snprintf (ylabel,120,"Declination (%s)", units);
+    else  /* Don't call it Dec */
+      g_snprintf (ylabel,120,"Rotated Declination (%s)", units);
+  } else if (!strncmp(image->myDesc->ctype[0],"GLON", 4)) {
+      g_snprintf (ylabel,120,"Gal. Lat. (%s)", units);
+  } else { /* Don't recognize */
+      g_snprintf (ylabel,120,"Y (%s)", units);
+  }
+
   ObitPlotLabel (in, xlabel, ylabel, label, err);
 
   /* Get center position string */
@@ -1871,18 +1913,29 @@ void ObitPlotGrayScale (ObitPlot* in, gchar *label, ObitImage *image,
   /*  Plot labels */
   if (image->myDesc->equinox<1975.0) pre = 'B';
   else pre = 'J';
-  if (fabs(image->myDesc->crota[1])==0.0)
-    g_snprintf (xlabel,120,"Right Ascension (%c%6.1f)", 
-		pre, image->myDesc->equinox); 
-  else /* Don't call it RA */
-    g_snprintf (xlabel,120,"Rotated Right Ascension (%c%6.1f)", 
-		pre, image->myDesc->equinox); 
-  if (fabs(image->myDesc->crota[1])==0.0)
-    g_snprintf (ylabel,120,"Declination (%c%6.1f)", 
-		pre, image->myDesc->equinox); 
-  else  /* Don't call it Dec */
-    g_snprintf (ylabel,120,"Rotated Declination (%c%6.1f)", 
-		pre, image->myDesc->equinox); 
+  /* RA Equatorial or Galactic? */
+  if (!strncmp(image->myDesc->ctype[0],"RA--", 4)) {
+    if (fabs(image->myDesc->crota[1])==0.0)
+      g_snprintf (xlabel,120,"Right Ascension (%s)", units);
+    else /* Don't call it RA */
+      g_snprintf (xlabel,120,"Rotated Right Ascension (%s)", units);
+  } else if (!strncmp(image->myDesc->ctype[0],"GLON", 4)) {
+      g_snprintf (xlabel,120,"Gal. Long. (%s)", units);
+  } else { /* Don't recognize */
+      g_snprintf (xlabel,120,"X (%s)", units);
+  }
+  /* Dec Equatorial or Galactic? */
+  if (!strncmp(image->myDesc->ctype[0],"DEC-", 4)) {
+    if (fabs(image->myDesc->crota[1])==0.0)
+      g_snprintf (ylabel,120,"Declination (%s)", units);
+    else  /* Don't call it Dec */
+      g_snprintf (ylabel,120,"Rotated Declination (%s)", units);
+  } else if (!strncmp(image->myDesc->ctype[0],"GLON", 4)) {
+      g_snprintf (ylabel,120,"Gal. Lat. (%s)", units);
+  } else { /* Don't recognize */
+      g_snprintf (ylabel,120,"Y (%s)", units);
+  }
+
   ObitPlotLabel (in, xlabel, ylabel, label, err);
 
   /* set ticks, labels */

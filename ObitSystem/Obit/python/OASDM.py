@@ -33,6 +33,7 @@ The information meant to derive contents and intent of a BDF data set.
 
 # Python shadow class to partial ObitSDMData class
 import Obit
+import os
 
 class OASDMPtr :
     def __init__(self,this):
@@ -64,6 +65,7 @@ class OASDM(OASDMPtr):
 
     OASDM Members with python interfaces:
 
+    * root  - path to root of ASDM/BDF
     * refJD - reference JD (propably not good)
     * Array - name of array ('EVLA' 'ALMA', recognized)
       ASDM XML tables, see ASDM documentation:
@@ -80,6 +82,7 @@ class OASDM(OASDMPtr):
     * Source          - Source table as list of dict
     * Field           - Field table as list of dict
     * Feed            - Feed table as list of dict
+    * Receiver        - Receiver table as list of dict
     * Polarization    - Polarization table as list of dict
     * Processor       - Processor table as list of dict
     * SwitchCycle     - SwitchCycle  table as list of dict
@@ -93,6 +96,7 @@ class OASDM(OASDMPtr):
         err           = Obit error/message object
         """
         self.this = Obit.new_OASDM(name, DataRoot, err.me)
+        self.root = DataRoot
     def __del__(self):
         if Obit!=None:
             Obit.delete_OASDM(self.this)
@@ -138,6 +142,9 @@ class OASDM(OASDMPtr):
             return out
         if name=="Feed":
             out = Obit.OASDMGetFeed(self.me)
+            return out
+        if name=="Receiver":
+            out = Obit.OASDMGetReceiver(self.me)
             return out
         if name=="Polarization":
             out = Obit.OASDMGetPolarization(self.me)
@@ -214,10 +221,18 @@ class OASDM(OASDMPtr):
     def GetAmpCal (self, config):
         """
         Return list of amplitude calibrator names
-    
+        
         * self   = ASDM object
-         * config = configuration ID
-       """
+        *
+        """
+        # Amplitude calibrators known to SeyJy:
+        known = ["3C286","1328+307","1331+305", "J1331+3030",     \
+                 "3C48",    "0134+329", "0137+331", "J0137+3309", \
+                 "3C147",   "0538+498", "0542+498", "J0542+4951", \
+                 "3C138",   "0518+165", "0521+166", "J0521+1638", \
+                 "1934-638","1934-638", "1934-638", "J1939-6342", \
+                 "3C295",   "1409+524", "1411+522", "J1411+5212"  \
+                 ] 
         out = []
         scan = self.Scan
         main = self.Main
@@ -228,10 +243,13 @@ class OASDM(OASDMPtr):
                     for int in s['scanIntent']:
                         if ((int=='CALIBRATE_AMPLI') or (int=='CALIBRATE_FLUX')) \
                                and (not s['sourceName'] in out):
-                            out.append(s['sourceName'])
+                            if s['sourceName'] in known:
+                                out.append(s['sourceName'])
+                            else:
+                                print "Drop unknown amp calibrator",s['sourceName']
         del scan, main
         return out
-    # end GetPhaseCal 
+    # end GetAmpCal 
                     
     def GetBandpassCal (self, config):
         """
@@ -385,9 +403,9 @@ class OASDM(OASDMPtr):
         * self   = ASDM object
         * config = configuration ID
         """
-        scan = self.Scan
-        main = self.Main
-        refJD = int(scan[0]['startTime'])-0.5
+        scan   = self.Scan
+        main   = self.Main
+        refJD  = self.refJD
         source = None; timeRange = [0.0, 1000.]
         for m in main:
             if m["configDescriptionId"]==config:
@@ -395,9 +413,12 @@ class OASDM(OASDMPtr):
                 # Check intents
                 for intn in s['scanIntent']:
                     if intn=='CALIBRATE_BANDPASS':
-                        source = s['sourceName']
-                        timeRange = [s['startTime']-refJD, s['endTime']-refJD]
-                        break;
+                        # did the bdf data make it to the archive?
+                        bdf = self.root+"/ASDMBinary/uid_"+m['entityId']
+                        if os.path.exists(bdf):
+                            source = s['sourceName']
+                            timeRange = [s['startTime']-refJD, s['endTime']-refJD]
+                            break;
                 if source!=None:
                     break;
         del scan,main

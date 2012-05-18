@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -703,7 +703,7 @@ void ObitImageDescGetPixel(ObitImageDesc* in, odouble *pos,
 /**
  * Determine if there is an overlap is the selected regions described by.
  * a pair of image descriptors
- * Test is if the center or any corner of either image is in the other.
+ * Test is if any corner of either image is in the other.
  * \param in1      first input image descriptor
  * \param in2      second input image descriptor
  * \param err      ObitErr error stack
@@ -717,48 +717,52 @@ gboolean ObitImageDescOverlap(ObitImageDesc *in1, ObitImageDesc *in2,
   ofloat inPixel[2], outPixel[2];
   odouble ra1, dec1, ra2, dec2, deltaRa, deltaDec, tr, ti, dp;
   ofloat halfx1, halfx2, halfy1, halfy2;
+  ObitErr *damnErr=NULL;
 
   /* error checks */
   if (err->error) return out;
 
+  /* Ignore error messages */
+  damnErr = newObitErr( );
+
   /* Center */
   inPixel[0] = in1->inaxes[0]/2; inPixel[1] = in1->inaxes[1]/2; 
-  test = ObitImageDescCvtPixel (in1, in2, inPixel, outPixel, err);
-  if (test) return TRUE;
+  test = ObitImageDescCvtPixel (in1, in2, inPixel, outPixel, damnErr);
+  if (test) goto OK;
   inPixel[0] = in2->inaxes[0]/2; inPixel[1] = in2->inaxes[1]/2; 
-  test = ObitImageDescCvtPixel (in2, in1, inPixel, outPixel, err);
-  if (test) return TRUE;
+  test = ObitImageDescCvtPixel (in2, in1, inPixel, outPixel, damnErr);
+  if (test) goto OK;
 
   /* First corner */
   inPixel[0] = inPixel[1] = 1.0; 
-  test = ObitImageDescCvtPixel (in1, in2, inPixel, outPixel, err);
-  if (test) return TRUE;
-  test = ObitImageDescCvtPixel (in2, in1, inPixel, outPixel, err);
-  if (test) return TRUE;
+  test = ObitImageDescCvtPixel (in1, in2, inPixel, outPixel, damnErr);
+  if (test) goto OK;
+  test = ObitImageDescCvtPixel (in2, in1, inPixel, outPixel, damnErr);
+  if (test) goto OK;
 
   /* Second corner */
   inPixel[1] = in1->inaxes[1]; inPixel[0] = 1.0; 
-  test = ObitImageDescCvtPixel (in1, in2, inPixel, outPixel, err);
-  if (test) return TRUE;
+  test = ObitImageDescCvtPixel (in1, in2, inPixel, outPixel, damnErr);
+  if (test) goto OK;
   inPixel[1] = in2->inaxes[1]; inPixel[0] = 1.0; 
-  test = ObitImageDescCvtPixel (in2, in1, inPixel, outPixel, err);
-  if (test) return TRUE;
+  test = ObitImageDescCvtPixel (in2, in1, inPixel, outPixel, damnErr);
+  if (test) goto OK;
 
   /* Third corner */
   inPixel[0] = in1->inaxes[0]; inPixel[1] = 1.0; 
-  test = ObitImageDescCvtPixel (in1, in2, inPixel, outPixel, err);
-  if (test) return TRUE;
+  test = ObitImageDescCvtPixel (in1, in2, inPixel, outPixel, damnErr);
+  if (test) goto OK;
   inPixel[0] = in2->inaxes[0]; inPixel[1] = 1.0; 
-  test = ObitImageDescCvtPixel (in2, in1, inPixel, outPixel, err);
-  if (test) return TRUE;
+  test = ObitImageDescCvtPixel (in2, in1, inPixel, outPixel, damnErr);
+  if (test) goto OK;
 
   /* Fourth corner */
   inPixel[0] = in1->inaxes[0]; inPixel[1] = in1->inaxes[1]; 
-  test = ObitImageDescCvtPixel (in1, in2, inPixel, outPixel, err);
-  if (test) return TRUE;
+  test = ObitImageDescCvtPixel (in1, in2, inPixel, outPixel, damnErr);
+  if (test) goto OK;
   inPixel[0] = in2->inaxes[0]; inPixel[1] = in2->inaxes[1]; 
-  test = ObitImageDescCvtPixel (in2, in1, inPixel, outPixel, err);
-  if (test) return TRUE;
+  test = ObitImageDescCvtPixel (in2, in1, inPixel, outPixel, damnErr);
+  if (test) goto OK;
 
   /* Halfwidth tests */
   /* Positions of centers */
@@ -799,8 +803,15 @@ gboolean ObitImageDescOverlap(ObitImageDesc *in1, ObitImageDesc *in2,
   /* Are the offsets smaller than the sum of the halfwidths?
      not terrible accurate but it doesn't need to be */
   out = (deltaRa <= (halfx1+halfx2)) && (deltaDec <= (halfy1+halfy2));
+  goto done;
 
-  return out;  /* Guess not */
+  /* Overlap found */
+ OK:
+  out = TRUE;
+  ObitErrUnref(damnErr);
+  
+ done:
+  return out;
 } /* end ObitImageDescOverlap */
 
 /**

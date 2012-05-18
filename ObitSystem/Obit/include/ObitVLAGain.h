@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -40,6 +40,7 @@
 
 /*---------------Public functions---------------------------*/
 /** Public: Lookup gain curve for an antenna */
-void ObitVLAGainParseGain (olong Ant, odouble JD, odouble Freq, ofloat *gain);
+void ObitVLAGainParseGain (olong Ant, odouble JD, odouble Freq, 
+			   olong nfreq, odouble *gainFreq, ofloat **gain);
 
 #endif /* OBITVLAGAIN_H */ 

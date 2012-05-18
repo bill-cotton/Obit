@@ -573,3 +573,45 @@ svn commit -F changes:
   Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
     Update python interface
 1 May 2012, version 416
+
+Mostly BDFIn and EVLA scripting changes
+ObitVersion:
+Obit/changes.log:
+Obit/python/OASDM.inc Obit/python/EVLACal.py:
+  trap incomplete ASDM
+  Add entityId to Main table python interface
+  Receiver table
+Obit/python/EVLAContPipe.py:
+  fix misspelling of outIClass
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  Rebuild python interface
+Obit/TDF/ImPlot.TDF:
+  Increase limits on BLC, TRC
+Obit/src/ObitPlot.c:
+  Trap galactic coordinates for axis labels
+Obit/python/OASDM.py:
+  Get1stBandpassScan: Fix bug in handling ref day.
+      Check that bdf data exists
+  GetAmpCal: Check names against list
+  Receiver table
+Obit/python/ImageDesc.py:
+  Add OErr. to calls to printErrMsg
+Obit/src/ObitPBUtil.c:
+  Fix 74 MHz beam to new VLSS fit.
+Obit/src/ObitImageDesc.c:
+  better test for overlap
+Obit/doc/OBITdoc.tex:
+Obit/src/ObitTableFQ.c Obit/include/ObitTableFQ.h:
+Obit/include/ObitTableFQDef.h  Obit/include/ObitTableFQClassDef.h:
+Obit/include/ObitTableFQRowDef.h  Obit/include/ObitTableFQRowClassDef.h:
+  Add RXCODE column.
+Obit/src/ObitSDMData.c Obit/include/ObitSDMDataTypeDef.h:
+  Implement Receiver table and band codes
+Obit/tasks/ASDMList.c Obit/tasks/Lister.c:
+  Display SW bandcodes
+Obit/src/ObitVLAGain.c Obit/include/ObitVLAGain.h:
+  Update gain table, allow for multiple frequency gain curves
+Obit/tasks/BDFIn.c:
+  Implement new EVLA gain tables
+  Write band coded into FQ table.
+18 May 2012 version 417

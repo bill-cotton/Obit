@@ -1487,8 +1487,12 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     outRow->status    = 0;
     outRow->mntSta    = 0;   /* ASDM lacks information */
     /* This isn't what's documented: */
-    if (isEVLA) outRow->staXof    = AntArray->ants[iRow-1]->offset[0]*VELIGHT;  /* Not sure */
-    else  outRow->staXof = AntArray->ants[iRow-1]->offset[1];  /* ALMA ain't right */
+    if (isEVLA) {  /* EVLA can't make up it's mind */
+      if (AntArray->ants[iRow-1]->offset[0]!=0.0)
+	outRow->staXof    = AntArray->ants[iRow-1]->offset[0]*VELIGHT;
+      if (AntArray->ants[iRow-1]->offset[1]!=0.0)
+	outRow->staXof    = AntArray->ants[iRow-1]->offset[1];
+    } else  outRow->staXof = AntArray->ants[iRow-1]->offset[1];  /* ALMA ain't right */
     outRow->StaXYZ[0] = AntArray->ants[iRow-1]->staPosition[0];
     outRow->StaXYZ[1] = AntArray->ants[iRow-1]->staPosition[1];
     outRow->StaXYZ[2] = AntArray->ants[iRow-1]->staPosition[2];
@@ -1531,7 +1535,7 @@ void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData,
 {
   ObitTableFQ*            outTable=NULL;
   ObitTableFQRow*         outRow=NULL;
-  olong i, oRow, ver, numIF, iIF;
+  olong i, j, iif, oRow, ver, numIF, iIF;
   odouble refFreq=0.0;
   ObitIOAccess access;
   gchar *routine = "GetFrequencyInfo";
@@ -1601,6 +1605,25 @@ void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData,
     else outRow->sideBand[iIF] = -1;
     /* FOR EVLA everything is upper even if it's not */
     if (isEVLA) outRow->sideBand[iIF] = 1;
+    /* bandcodes */
+    if (isEVLA) {
+      for (iif=0; iif<numIF; iif++) {
+	for (j=0; j<8; j++) outRow->RxCode[iif*8+j] = ' ';
+	if (SpWinArray->winds[i]->bandcode)
+	  for (j=0; j<MIN(8,strlen(SpWinArray->winds[i]->bandcode)); j++) 
+	    outRow->RxCode[iif*8+j] = SpWinArray->winds[i]->bandcode[j];
+      } /* End IF loop */
+    }
+    if (isALMA) {  /* Drop underscores */
+      for (iif=0; iif<numIF; iif++) {
+	outRow->RxCode[iif*8+j] = ' ';
+	if (SpWinArray->winds[i]->bandcode) {
+	  for (j=0; j<4; j++) outRow->RxCode[iif*8+j] = SpWinArray->winds[i]->bandcode[j];
+	  for (j=5; j<7; j++) outRow->RxCode[iif*8+j] = SpWinArray->winds[i]->bandcode[j];
+	  for (j=8; j<9; j++) outRow->RxCode[iif*8+j] = SpWinArray->winds[i]->bandcode[j];
+	} 
+      } /* end IF loop */
+    }
     iIF++;
   }
   outRow->status    = 0;
@@ -3567,9 +3590,9 @@ void GetGainCurveInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ObitTableGCRow*    outRow=NULL;
   ASDMAntennaArray*  AntArray;
   olong i, j, iAnt, Ant, oRow, ver;
-  ofloat gains[10], sens, fblank = ObitMagicF();
+  ofloat **gains, sens, fblank = ObitMagicF();
 ;
-  odouble refJD, Freq;
+  odouble refJD, aFreq;
   oint numIF, numPol, numTabs;
   ObitIOAccess access;
   gchar *routine = "GetGainCurveInfo";
@@ -3581,7 +3604,6 @@ void GetGainCurveInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
    /* Extract antenna info */
   AntArray    = ObitSDMDataGetAntArray(SDMData, selMain);
   refJD       = SDMData->refJD;
-  Freq        = outData->myDesc->crval[outData->myDesc->jlocf];
   sens        = nomSen(AntArray); /* get nominal sensitivity */
 
  /* Create output GC table object */
@@ -3595,6 +3617,15 @@ void GetGainCurveInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with GC table");
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
   
+  /* Average frequency */
+  aFreq = 0.0; 
+  for (i=0; i<numIF; i++) aFreq += outData->myDesc->freqIF[i];
+  aFreq /= numIF;
+
+  /* Gain array */
+  gains = g_malloc0(numIF*sizeof(ofloat*));
+  for (i=0; i<numIF; i++) gains[i] = g_malloc0(4*sizeof(ofloat));
+
   /* Open table */
   if ((ObitTableGCOpen (outTable, access, err) 
        != OBIT_IO_OK) || (err->error))  { /* error test */
@@ -3616,8 +3647,8 @@ void GetGainCurveInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 
     Ant = AntArray->ants[iAnt-1]->antennaNo;  /* Actual antenna number */
 
-    /* get curve */
-    ObitVLAGainParseGain (Ant, refJD, Freq, gains);
+    /* get curve as a function of frequency */
+    ObitVLAGainParseGain (Ant, refJD, aFreq, numIF, outData->myDesc->freqIF, gains);
     
     /* Save to GC table */
     outRow->antennaNo  = Ant;
@@ -3632,7 +3663,7 @@ void GetGainCurveInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       outRow->sens1[i] = sens;
       for (j=0; j<numTabs; j++) {
 	outRow->YVal1[i*numTabs+j] = fblank;
-	outRow->gain1[i*numTabs+j] = gains[j];
+	outRow->gain1[i*numTabs+j] = gains[i][j];
       }
     }
     if (numPol>1) {   /* 2 poln */
@@ -3645,7 +3676,7 @@ void GetGainCurveInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 	outRow->sens2[i] = sens;
 	for (j=0; j<numTabs; j++) {
 	  outRow->YVal2[i*numTabs+j] = fblank;
-	  outRow->gain2[i*numTabs+j] = gains[j];
+	  outRow->gain2[i*numTabs+j] = gains[i][j];
 	}
       }
     }
@@ -3674,6 +3705,11 @@ void GetGainCurveInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     outRow   = ObitTableGCRowUnref(outRow);
     outTable = ObitTableGCUnref(outTable);
     ObitSDMDataKillAntArray (AntArray);
+    if (gains) {
+      for (i=0; i<numIF; i++) if (gains[i]) g_free(gains[i]);
+      g_free(gains);
+    }
+
 } /* end  GetGainCurveInfo */
 
 /** 

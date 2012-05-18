@@ -2646,11 +2646,14 @@ ObitTableDesc.
 \tablecol[{"SIDEBAND "}{"       " }{J}{(numIF)}{sideBand}
 {Sideband of the IF (-1 =$>$ lower, +1 =$>$ upper), now always written and read as +1}
 ] 
+\tablecol[{"RXCODE  "}{"       " }{A}{(numIF,8)}{RxCode}
+{[OPTIONAL] Band code}
 \end{columns}
 %
 % Table modification history
 \begin{history}
 \modhistory[{W. D. Cotton}{02/03/2002}{Revision 1: Copied from AIPS}]
+\modhistory[{W. D. Cotton}{05/16/2012}{Added RXCODE}]
 \end{history}
 %
 \clearpage
