@@ -43,7 +43,7 @@ extern ObitSDMData* OASDMCreate(char* name, char* DataRoot, ObitErr *err) {
   asdm = ObitSDMIntentCreate ((gchar*)name, (gchar*) DataRoot, err);
   // basic check
   if ((asdm==NULL) || (asdm->MainTab==NULL) || (asdm->ConfigDescriptionTab==NULL) ) {
-    Obit_log_error(err, OBIT_Error, "ASDM not fully populated", name);
+    Obit_log_error(err, OBIT_Error, "ASDM not fully populated");
   }
 
 return asdm;

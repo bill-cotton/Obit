@@ -615,3 +615,21 @@ Obit/tasks/BDFIn.c:
   Implement new EVLA gain tables
   Write band coded into FQ table.
 18 May 2012 version 417
+
+Mostly BDFIn and EVLA scripting fixes
+ObitVersion:
+Obit/changes.log:
+Obit/src/ObitTableCLUtil.c:
+  GetDummy: Delete row when done.
+Obit/python/OASDM.inc Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  OASDMCreate: Fix format
+Obit/python/OPrinter.inc:
+  OPrinterOpen fix signature
+Obit/python/BeamShape.py:
+  fix call to Gain
+Obit/tasks/BDFIn.c:
+  Fix bugs in ALMA bandcode
+  Fix indexing of ALMA scan/subscans
+Obit/TDF/WVRCal.TDF:
+  Improve documentation.
+1 Jun 2012, ver 418

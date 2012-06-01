@@ -758,7 +758,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   ofloat epoch=2000.0, equinox=2000.0;
   olong nchan=1, npoln=1, nIF=1;
   odouble refFreq, startFreq=1.0;
-  ofloat refChan, freqStep=1.0;
+  ofloat refChan=1.0, freqStep=1.0;
   ASDMSpectralWindowArray* SpWinArray=NULL;
   ASDMAntennaArray*  AntArray;
   ObitInfoType type;
@@ -1616,11 +1616,11 @@ void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData,
     }
     if (isALMA) {  /* Drop underscores */
       for (iif=0; iif<numIF; iif++) {
-	outRow->RxCode[iif*8+j] = ' ';
+	for (j=0; j<8; j++) outRow->RxCode[iif*8+j] = ' ';
 	if (SpWinArray->winds[i]->bandcode) {
-	  for (j=0; j<4; j++) outRow->RxCode[iif*8+j] = SpWinArray->winds[i]->bandcode[j];
-	  for (j=5; j<7; j++) outRow->RxCode[iif*8+j] = SpWinArray->winds[i]->bandcode[j];
-	  for (j=8; j<9; j++) outRow->RxCode[iif*8+j] = SpWinArray->winds[i]->bandcode[j];
+	  for (j=0; j<4; j++)  outRow->RxCode[iif*8+j  ] = SpWinArray->winds[i]->bandcode[j];
+	  for (j=5; j<7; j++)  outRow->RxCode[iif*8+j-1] = SpWinArray->winds[i]->bandcode[j];
+	  for (j=8; j<10; j++) outRow->RxCode[iif*8+j-2] = SpWinArray->winds[i]->bandcode[j];
 	} 
       } /* end IF loop */
     }
@@ -2142,12 +2142,17 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
       ObitErrLog(err);
 
       /* Initialize index */
-      lastScan    = ScanId;
-      lastSubscan = SubscanId;
-      startTime   = -1.0e20;
-      endTime     = startTime;
-      NXrow->StartVis = outData->myDesc->nvis+1;
-      NXrow->EndVis   = NXrow->StartVis;
+      /* ALMA has subscans */
+      if (((SDMData->isALMA) && 
+	   (SDMData->MainTab->rows[iMain]->subscanNumber==1))
+	  || (SDMData->isEVLA)) {
+	lastScan    = ScanId;
+	lastSubscan = SubscanId;
+	startTime   = -1.0e20;
+	endTime     = startTime;
+	NXrow->StartVis = outData->myDesc->nvis+1;
+	NXrow->EndVis   = NXrow->StartVis;
+      }
     }
 
     numIntegration = SDMData->MainTab->rows[iMain]->numIntegration;
@@ -2213,17 +2218,21 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     
     /* Write Index table */
     if (startTime>-1.0e10) {
-	/*if ((startTime>-1.0e10) && 
-	  (SDMData->MainTab->rows[iMain]->subscanNumber>=SDMData->ScanTab->rows[ScanTabRow]->numSubscan)) {*/
-      NXrow->Time     = 0.5 * (startTime + endTime);
-      NXrow->TimeI    = (endTime - startTime);
-      NXrow->EndVis   = desc->nvis;
-      NXrow->SourID   = sourId;
-      iRow++;
-      if ((ObitTableNXWriteRow (NXtable, iRow, NXrow, err)
-	   != OBIT_IO_OK) || (err->error>0)) goto done; 
-      NXrow->StartVis = NXrow->EndVis+1;
-    } 
+      /* ALMA has subscans */
+      if (((SDMData->isALMA) && 
+	  (SDMData->MainTab->rows[iMain]->subscanNumber>=
+	   SDMData->ScanTab->rows[ScanTabRow]->numSubscan))
+	  || (SDMData->isEVLA)) {
+	NXrow->Time     = 0.5 * (startTime + endTime);
+	NXrow->TimeI    = (endTime - startTime);
+	NXrow->EndVis   = desc->nvis;
+	NXrow->SourID   = sourId;
+	iRow++;
+	if ((ObitTableNXWriteRow (NXtable, iRow, NXrow, err)
+	     != OBIT_IO_OK) || (err->error>0)) goto done; 
+	NXrow->StartVis = NXrow->EndVis+1;
+      } 
+    }
   } /* End loop over scans */
 
   /* Tell results */

@@ -4490,7 +4490,7 @@ extern ObitSDMData* OASDMCreate(char* name, char* DataRoot, ObitErr *err) {
   asdm = ObitSDMIntentCreate ((gchar*)name, (gchar*) DataRoot, err);
   // basic check
   if ((asdm==NULL) || (asdm->MainTab==NULL) || (asdm->ConfigDescriptionTab==NULL) ) {
-    Obit_log_error(err, OBIT_Error, "ASDM not fully populated", name);
+    Obit_log_error(err, OBIT_Error, "ASDM not fully populated");
   }
 
 return asdm;
@@ -6185,7 +6185,7 @@ gchar *fn=NULL;
   return  ObitPrinterCreate ((gchar*)name, lisInteractive, outStream, fn);
 } // end OPrinterCreate
 
-extern int OPrinterOpen  (ObitPrinter *printer, int LinesPerPage, 
+extern void OPrinterOpen  (ObitPrinter *printer, int LinesPerPage, 
                           char *Title1, char *Title2, ObitErr *err) {
   ObitPrinterOpen (printer, (olong)LinesPerPage,
                    (gchar*)Title1, (gchar*)Title2, err);
@@ -6232,7 +6232,7 @@ extern char* OPrinterGetName (ObitPrinter* in) {
 
 
 extern ObitPrinter *OPrinterCreate(char *,int ,char *,char *);
-extern int OPrinterOpen(ObitPrinter *,int ,char *,char *,ObitErr *);
+extern void OPrinterOpen(ObitPrinter *,int ,char *,char *,ObitErr *);
 extern int OPrinterWrite(ObitPrinter *,char *,ObitErr *);
 extern void OPrinterClose(ObitPrinter *,ObitErr *);
 extern int OPrinterNewPage(ObitPrinter *,ObitErr *);
@@ -33535,7 +33535,6 @@ static PyObject *_wrap_OPrinterCreate(PyObject *self, PyObject *args) {
 
 static PyObject *_wrap_OPrinterOpen(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
-    int  _result;
     ObitPrinter * _arg0;
     int  _arg1;
     char * _arg2;
@@ -33595,8 +33594,9 @@ static PyObject *_wrap_OPrinterOpen(PyObject *self, PyObject *args) {
         return NULL;
         }
     }
-    _result = (int )OPrinterOpen(_arg0,_arg1,_arg2,_arg3,_arg4);
-    _resultobj = Py_BuildValue("i",_result);
+    OPrinterOpen(_arg0,_arg1,_arg2,_arg3,_arg4);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
 {
   free((char *) _arg2);
 }

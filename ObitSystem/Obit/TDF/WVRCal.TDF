@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry software
 ;# Task ALMA WVR calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2011
+;;  Copyright (C) 2011-2012
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -54,13 +54,13 @@ Sources                             Source to process
 **PARAM** int 1 **DEF** -1
 Qual            -10.0               Source qualifier -1=>any
 **PARAM** str 4
-souCode                             Calibrator code '    '=>all
+souCode                             Source code '    '=>all
 **PARAM** str 4
-calCode                            Calibrator code '    '=>all
+calCode                             Calibrator code '    '=>all
 **PARAM** int 1
 flagVer                             Flag table version
 **PARAM** str 48
-outFile                             FITS output (SN)if Type=='FITS'
+outFile                             FITS output (SN) if Type=='FITS'
 **PARAM** str 12
 outName                             Output UV AIPS SN name
 **PARAM** str 6
@@ -70,9 +70,9 @@ outSeq           -1.0     9999.0    Output UV AIPS SN seq. #
 **PARAM** int 1
 outDisk                             Output UV SN disk unit #.
 **PARAM** float 1   **DEF** 10.0
-solInt1           0.0               Solution interval (min)
+solInt1           0.0               1st Solution interval (min)
 **PARAM** float 1   **DEF** 1.0
-solInt2           0.0               Solution interval (min)
+solInt2           0.0               2nd Solution interval (min)
 **PARAM** int 1
 solnVer                             SN table to write
 **PARAM** int 1
@@ -123,15 +123,11 @@ Adverbs:
              determined. If any number is negative then all
              antennas listed  are NOT to be used to determine
              solutions and all others are. All 0 => use all.
-  Sources....List of sources (pointings) to be processed.
+  Sources....List of sources to calibrate.
              '*' or blank = all; a "-" before a source name
              means all except ANY source named. 
-  calSour....List of calibrators to use to determine source
-             flux densities.  The flux densities of these
-             sources should have been entered into the SU table
-             using SetJy before running Calib.  All blank = all;
-             a "-" before a calibrator name means all except
-             ANY calibrator named.
+  calSour....List of calibrators during whose observations
+             to calibrate the WVR data.
   Qual.......Only sources with a source qualifier number in the
              SU table matching Qual will be used if Qual is not
              -1.  Qual affects the selection of both the list of
@@ -176,8 +172,6 @@ Adverbs:
              multiple processors and/or cores in the host.
 
   taskLog.....Log file to write messages to INSTEAD of the terminal
-              This is useful in long runs or batch files where
-              a bug in the ObitTalk message handling may cause
-              tasks to hang.  Path is absolute or relative to where
-              the task executes.
+              Path is absolute or relative to where the task 
+              executes.
 ----------------------------------------------------------------

@@ -90,7 +90,7 @@ class BeamShape(BeamShapePtr):
         return out
     # end cast
     
-    def Gain (self, ra, dec, ):
+    def Gain (self, ra, dec, parAng=0.0):
         """
         Returns Gain
 

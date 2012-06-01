@@ -48,7 +48,7 @@ gchar *fn=NULL;
   return  ObitPrinterCreate ((gchar*)name, lisInteractive, outStream, fn);
 } // end OPrinterCreate
 
-extern int OPrinterOpen  (ObitPrinter *printer, int LinesPerPage, 
+extern void OPrinterOpen  (ObitPrinter *printer, int LinesPerPage, 
                           char *Title1, char *Title2, ObitErr *err) {
   ObitPrinterOpen (printer, (olong)LinesPerPage,
                    (gchar*)Title1, (gchar*)Title2, err);
