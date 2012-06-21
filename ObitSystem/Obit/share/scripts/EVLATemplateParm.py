@@ -39,13 +39,13 @@ VLAFreq       = @VLAFREQ@             # Representive frequency
 VLACfg        = @VLACFG@              # VLA configuraton ("A", "B", "CnD"...)
 
 # Archive parameters
-doLoadArchive = True       # Load from archive?
-archRoot      = @DATAROOT@ # Root of ASDM/BDF data
-selBand       = @BAND@     # Selected band, def = first  
-selConfig     = @CONFIG@   # Selected frequency config, def = first  
-selNIF        = 0          # Selected number of IFs, def = first  
-selChan       = @SELCHAN@  # Selected number of channels, def = first  
-calInt        = @CALINT@   # Calibration table interval in min.
+parms["doLoadArchive"] = True       # Load from archive?
+parms["archRoot"]      = @DATAROOT@ # Root of ASDM/BDF data
+parms["selBand"]       = @BAND@     # Selected band, def = first  
+parms["selConfig"]     = @CONFIG@   # Selected frequency config, def = first  
+parms["selNIF"]        = 0          # Selected number of IFs, def = first  
+parms["selChan"]       = @SELCHAN@  # Selected number of channels, def = first  
+parms["calInt"]        = @CALINT@   # Calibration table interval in min.
 
 # Calibration sources/models
 parms["BPCal"]       = @BPCAL@      # Bandpass calibrator
@@ -139,7 +139,7 @@ T   = True
 F   = False
 check                  = F        # Only check script, don't execute tasks
 debug                  = F        # run tasks debug
-doLoadArchive          = T        # Load from archive?
+parms["doLoadArchive"] = T        # Load from archive?
 parms["doHann"]        = @DOHANN@ # Hanning smooth?
 parms["doClearTab"]    = T        # Clear cal/edit tables
 parms["doCopyFG"]      = T        # Copy FG 1 to FG 2

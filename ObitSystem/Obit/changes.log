@@ -633,3 +633,15 @@ Obit/tasks/BDFIn.c:
 Obit/TDF/WVRCal.TDF:
   Improve documentation.
 1 Jun 2012, ver 418
+
+
+Mostly BDFIn (VLA gain table) and EVLA scripting fixes
+ObitVersion:
+Obit/changes.log:
+Obit/src/ObitVLAGain.c:
+  Update broken gain table.
+Obit/share/scripts/EVLATemplateParm.py:
+  Fixes in parameters
+Obit/TDF/FndSou.TDF:
+ documentation
+20 Jun 2012, ver 419

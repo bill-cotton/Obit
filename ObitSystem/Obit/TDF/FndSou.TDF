@@ -214,7 +214,7 @@ Adverbs:
   RMSsize.....If > 1, then the half width of a square box centered
               on each source within which to determine the local 
               noise.  This is used when an MF table is converted
-              to a VL table. 0=> use whole image.
+              to a VL table. <=0 => use whole image plane.
               The RMS is determined using a histogram analysis
               which should be relatively insensitive to sources.
               Values less than 10 are probably a bad idea.
