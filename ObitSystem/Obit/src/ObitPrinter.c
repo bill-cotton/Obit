@@ -376,7 +376,7 @@ void ObitPrinterSetTitle (ObitPrinter *in, gchar *Title1,
  */
 void ObitPrinterNewPage (ObitPrinter *in, gboolean *quit, ObitErr *err)
 {
-  gchar lline[138];
+  gchar lline[2048];
   gchar *routine = "ObitPrinterNewPage";
 
   /* error checks */

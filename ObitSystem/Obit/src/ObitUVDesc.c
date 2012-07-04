@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -503,7 +503,7 @@ void ObitUVDescGetFreq (ObitUVDesc* in, Obit *fqtab, odouble *SouIFOff,
   olong size, i, j, fqid, nfreq;
   oint  *sideBand=NULL, nif, tnif;
   odouble *freqOff=NULL, *freq=NULL;
-  ofloat *chBandw=NULL;
+  ofloat *chBandw=NULL, deltaf;
   ObitIOCode retCode;
   ObitTableFQ *FQtable = (ObitTableFQ*)fqtab;
   gchar *routine = "ObitUVDescGetFreq";
@@ -578,9 +578,10 @@ void ObitUVDescGetFreq (ObitUVDesc* in, Obit *fqtab, odouble *SouIFOff,
   if ((in->jlocf < in->jlocif) || (in->jlocif<=0)) {
     /* Frequency first */
     for (j=0; j<nif; j++) {
+      deltaf = chBandw[j];
+      if (sideBand[j]<0) deltaf = -fabs(deltaf);  /* Trap lower sideband */
       for (i=0; i<nfreq; i++) {
-	*freq = freqOff[j] + in->freq + 
-	  (i+1.0 - in->crpix[in->jlocf]) * in->cdelt[in->jlocf];
+	*freq = freqOff[j] + in->freq + (i+1.0 - in->crpix[in->jlocf]) * deltaf;
 	freq++;
       }
     }
@@ -588,8 +589,8 @@ void ObitUVDescGetFreq (ObitUVDesc* in, Obit *fqtab, odouble *SouIFOff,
     /* IF first */
     for (i=0; i<nfreq; i++) {
       for (j=0; j<nif; j++) {
-	*freq = freqOff[j] + in->freq + 
-	  (i+1.0 - in->crpix[in->jlocf]) * in->cdelt[in->jlocf];
+	if (sideBand[j]<0) deltaf = -fabs(deltaf);  /* Trap lower sideband */
+	*freq = freqOff[j] + in->freq + (i+1.0 - in->crpix[in->jlocf]) * deltaf;
 	freq++;
       }
     }

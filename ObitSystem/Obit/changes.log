@@ -645,3 +645,16 @@ Obit/share/scripts/EVLATemplateParm.py:
 Obit/TDF/FndSou.TDF:
  documentation
 20 Jun 2012, ver 419
+
+Mostly BDFIn (ALMA)
+ObitVersion:
+Obit/changes.log:
+Obit/src/ObitUVDesc.c:
+  Fix sideband bugs in logic calculating channel frequencies
+Obit/src/ObitPrinter.c:
+  Allow larger lines in output
+Obit/src/ObitFile.c:
+  Bigger XMLBUFFERSIZE (262144), Fixes BDFIn problem
+Obit/tasks/Lister.c:
+  doGAIN: do not calculate geometry for antennas not in the array.
+4 Jul 2012, ver 420

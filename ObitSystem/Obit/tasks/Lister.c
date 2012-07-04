@@ -1812,8 +1812,13 @@ ofloat getSNValue (ObitTableSNRow *SNRow, gboolean firstPol,
 		   ObitSource *curSource)
 {
   ofloat       value, fblank = ObitMagicF();
+  olong        iant=SNRow->antNo-1;
 
   value = fblank;  /* Initial value */
+
+  /* is Antenna in array? (X==0) */
+  if (AntList && fabs(AntList->ANlist[iant]->AntXYZ[0])<0.1) return value;
+
   /* Data by type */
   switch (dtype) {
   case 0:  /* "AMP"   */
@@ -1905,8 +1910,13 @@ ofloat getCLValue (ObitTableCLRow *CLRow, gboolean firstPol,
 		   ObitSource *curSource)
 {
   ofloat       value, fblank = ObitMagicF();
+  olong        iant=CLRow->antNo-1;
 
   value = fblank;  /* Initial value */
+
+  /* is Antenna in array? (X==0) */
+  if (AntList && fabs(AntList->ANlist[iant]->AntXYZ[0])<0.1) return value;
+
   /* Data by type */
   switch (dtype) {
   case 0:  /* "AMP"   */
