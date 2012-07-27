@@ -2667,6 +2667,9 @@ void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
       NumChAvg = ObitUVUtilNchAvg(inData, BLFact, FOV, err);
       if (err->error) Obit_traceback_msg (err, routine, inData->name);
       NumChAvg = MAX (1, NumChAvg);
+      /* Leave at least 4 */
+      NumChAvg = MIN (NumChAvg, inData->myDesc->inaxes[inData->myDesc->jlocf]/4);
+      NumChAvg = MIN (NumChAvg, 1);
       Obit_log_error(err, OBIT_InfoErr, 
 		     "Averaging %d channels", NumChAvg);
     }

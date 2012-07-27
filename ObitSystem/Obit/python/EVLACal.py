@@ -4891,7 +4891,7 @@ def EVLAStdModel(Cals, freq):
     # Standard models in FITS files
     stdModel = []
     # 3C286Chi
-    model = {"Source":["3C286","J1331+3030"],
+    model = {"Source":["3C286","J1331+3030","1331+305=3C286"],
              "freqRange":[2.0e9,8.0e9],
              "file":"3C286ChiModel.fits","disk":1}
     stdModel.append(model)
@@ -5542,7 +5542,7 @@ def EVLAParseASDM(ASDMRoot, err):
         BPCal   = asdm.GetBandpassCal(cid)
         AmpCal  = asdm.GetAmpCal(cid)
         PhsCal  = asdm.GetPhaseCal(cid)
-        DlyCal  = asdm.GetPhaseCal(cid)+asdm.GetAmpCal(cid)
+        DlyCal  = asdm.GetPhaseCal(cid)+asdm.GetAmpCal(cid)+asdm.GetBandpassCal(cid)
         Targets = asdm.GetTargets(cid)
         band    = EVLAGetBandLetter(c["avgRefFreq"])
         # Loop over no channels

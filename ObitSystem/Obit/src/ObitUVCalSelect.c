@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2011                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -975,7 +975,7 @@ ObitUVCalSelectRLInit (ObitUVCal *in, olong kstoke0, olong nstok,
     /* Add Stokes LL -  check if in data */
     missing = ((kstoke0>0) && ((nstok<4) || (kstoke0>1) || (kstoke0+nstok-1<4)));
     missing = missing ||
-      ((kstoke0<0) && ((kstoke0<-3) || (kstoke0-nstok+1>-3)));
+      ((kstoke0<0) && ((kstoke0<-3) || (kstoke0-nstok+1>-2)));
     if (missing) {
       Obit_log_error(err, OBIT_Error, 
 		     "Stokes LL not available for %s", in->name);

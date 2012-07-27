@@ -341,7 +341,7 @@ void ObitUVCalStart (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
 	/* if PDVer>=0 check for PD table, else check AN table */
 	if ((in->PDVer>=0) && (in->PDTable==NULL)) {
 	  Obit_log_error(err, OBIT_Error, "No polarization Cal (PD Table) for %s", in->name);
-	} else { /* IF calibration from AN table */
+	} else if (in->PDVer<0) { /* IF calibration from AN table */
 	  if (in->antennaLists[i]->polType == OBIT_UVPoln_NoCal)
 	    Obit_log_error(err, OBIT_Error, "No polarization Cal info for %s", in->name);
 	  if (in->antennaLists[i]->polType == OBIT_UVPoln_Unknown)

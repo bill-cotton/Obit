@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -197,7 +197,7 @@ void ObitCArrayFDiv (ObitCArray* Cin, ObitFArray* Fin, ObitCArray* out);
 typedef void (*ObitCArrayFDivFP) (ObitCArray* Cin, ObitFArray* Fin, 
 				  ObitCArray* out);
 
-/** Public: Rotate phases of a CArray ob phases in an FArray */
+/** Public: Rotate phases of a CArray by phases in an FArray */
 void ObitCArrayFRot (ObitCArray* Cin, ObitFArray* Fin, ObitCArray* out);
 typedef void (*ObitCArrayFRotFP) (ObitCArray* Cin, ObitFArray* Fin, 
 				  ObitCArray* out);
@@ -242,6 +242,11 @@ ObitCArray* ObitCArrayAddConjg (ObitCArray* in, olong numConjCol);
 typedef ObitCArray* (*ObitCArrayAddConjgFP) (ObitCArray* in, 
 					     olong numConjCol);
 
+/*---------------Vector/matrix functions---------------------------*/
+/** Public: Matrix inner multiply */
+void ObitCArrayMatrixMult (ObitCArray* in1, ObitCArray* in2, ObitCArray* out);
+typedef void (*ObitCArrayMatrixMultFP) (ObitCArray* in1, ObitCArray* in2, 
+					ObitCArray* out);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

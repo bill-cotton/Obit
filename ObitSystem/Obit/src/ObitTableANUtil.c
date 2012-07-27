@@ -117,7 +117,7 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
   ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitTableANRow *row;
   olong irow;
-  olong maxANid, i, iant;
+  olong maxANid, i, iant, numPCal;
   ObitInfoType type;
   gboolean doVLA, doVLBI, doATCA, doEVLA, doALMA;
   odouble x, y, z, ArrLong, rho, dtemp;
@@ -165,9 +165,12 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
   /* Look out for AIPS bug
   in->numPCal = MAX(in->numPCal, in->myDesc->repeat[in->PolCalACol]); */
 
+   /* Look out for AIPS change */
+  numPCal = MAX(in->numPCal*in->numIF, in->myDesc->repeat[in->PolCalACol]);
+
   /* Create output */
   g_snprintf (tempName, 100, "Antenna List for %s",in->name);
-  out = ObitAntennaListCreate (tempName, maxANid, in->myDesc->repeat[in->PolCalACol]);
+  out = ObitAntennaListCreate (tempName, maxANid, numPCal);
   
   /* Get table header information */
   /* Have to see of polarization type is in the header ('POLTYPE') */
@@ -253,8 +256,10 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
     out->ANlist[iant]->FeedBType  = row->polTypeB[0];
     for (i=0; i<8; i++) out->ANlist[iant]->AntName[i]  = row->AntName[i];
     for (i=0; i<3; i++) out->ANlist[iant]->AntXYZ[i]  = row->StaXYZ[i];
-    for (i=0; i<out->numPCal; i++) out->ANlist[iant]->FeedAPCal[i]  = row->PolCalA[i];
-    for (i=0; i<out->numPCal; i++) out->ANlist[iant]->FeedBPCal[i]  = row->PolCalB[i];
+    if (out->numPCal>0) {
+      for (i=0; i<out->numPCal; i++) out->ANlist[iant]->FeedAPCal[i]  = row->PolCalA[i];
+      for (i=0; i<out->numPCal; i++) out->ANlist[iant]->FeedBPCal[i]  = row->PolCalB[i];
+    }
 
     /* Lat, (E) long in radians
        X => (lat 0, long 0)

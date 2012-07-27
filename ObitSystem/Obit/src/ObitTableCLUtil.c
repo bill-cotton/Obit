@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005,2009                                          */
+/*;  Copyright (C) 2005-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -254,7 +254,7 @@ ObitTableCL* ObitTableCLGetDummy (ObitUV *inUV, ObitUV *outUV, olong ver,
   ObitInfoType type;
   ofloat *rec, solInt, t0, sumTime, cbase;
   ofloat lastTime=-1.0, lastSource=-1.0, lastFQID=-1.0, curSource=1.0, curFQID=0.0;
-  olong iRow, i, ia, lrec, maxant;
+  olong iRow, i, ia, lrec, maxant, highVer;
   olong  nTime, SubA=-1, ant1, ant2, lastSubA=-1;
   oint numPol, numIF, numTerm, numAnt;
   gboolean doCalSelect, doFirst=TRUE, someData=FALSE, gotAnt[MAXANT];
@@ -280,6 +280,13 @@ ObitTableCL* ObitTableCLGetDummy (ObitUV *inUV, ObitUV *outUV, olong ver,
   }
   lrec = inUV->myDesc->lrec;
   t0 = -1.0e20;
+
+  /* Delete output table if extant */
+  highVer = ObitTableListGetHigh (inUV->tableList, "AIPS CL");
+  if (highVer>=ver) {
+    ObitDataZapTable ((ObitData*)outUV, "AIPS CL", ver, err);
+    if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
+  }
 
   /* Create output */
   if (desc->jlocs>=0)  numPol = MIN (2, desc->inaxes[desc->jlocs]);
@@ -537,6 +544,9 @@ ObitTableCL* ObitTableCLGetDummy (ObitUV *inUV, ObitUV *outUV, olong ver,
   /* Give warning if no data selected */
   if (!someData) Obit_log_error(err, OBIT_InfoWarn, 
 				"%s: Warning: NO data selected", routine);
+
+  /* Cleanup */
+  row = ObitTableCLRowUnref(row);
 
   return outCal;
 } /* end ObitTableCLGetDummy */

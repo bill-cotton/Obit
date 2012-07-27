@@ -654,7 +654,39 @@ Obit/src/ObitUVDesc.c:
 Obit/src/ObitPrinter.c:
   Allow larger lines in output
 Obit/src/ObitFile.c:
-  Bigger XMLBUFFERSIZE (262144), Fixes BDFIn problem
+  Bigger XMLBUFFERSIZE (262144), Fixes BDFIn problem.
 Obit/tasks/Lister.c:
   doGAIN: do not calculate geometry for antennas not in the array.
 4 Jul 2012, ver 420
+
+Mostly Polarization and scripting related
+Obit/changes.log:
+Obit/share/scripts/EVLAContTemplateParm.py:
+  doLoadArchive set in parms at end
+Obit/python/OASDM.py:
+  GetAmpCal: add funky EVLA calibrator names, e.g. "0542+498=3C147"
+Obit/python/EVLACal.py:
+  EVLAParseASDM: add BP cal to DlyCal
+  EVLAStdModel: add funky name for 3C286
+Obit/src/ObitUVCalSelect.c:
+  ObitUVCalSelectRLInit: Fix check for LL (failed if only RR & LL)
+Obit/tasks/MFImage.c Obit/tasks/MFBeam.c:
+  BLAvg: Don't average all channels
+Obit/src/ObitTableANUtil.c:
+  ObitTableANGetList: Trap AIPS poln problems.
+Obit/src/ObitUVCalPolarization.c:
+  Fixes to Elp/Ori polarization, major upgrade for EVLA
+Obit/src/ObitUVCal.c:
+  Check if PD table exists if to be used in poln cal.
+Obit/include/ObitPolnCalFitClassDef.h Obit/include/ObitPolnCalFitDef.h:
+Obit/include/ObitPolnCalFit.h Obit/src/ObitPolnCalFit.c:
+Obit/tasks/PCal.c Obit/TDF/PCal.TDF:
+  New class and task for polarization calibration, does circ. feeds.
+Obit/include/ObitCArray.h Obit/include/ObitCArrayClassDef.h Obit/src/ObitCArray.c:
+   Add function for matrix multiplies
+Obit/include/ObitComplex.h:
+   New package of definitions and macroes for complex arithmetic in c
+Obit/src//ObitTableCLUtil.c:
+  GetDummy: Delete old CL table if extant, cleanup.
+26 Jul 2012 ver 421
+

@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1180,6 +1180,133 @@ ObitCArray* ObitCArrayAddConjg (ObitCArray* in, olong numConjCol)
 } /* end ObitCArrayAddConjg */
 
 /**
+ *  Matrix inner multiply
+ *  out = in1 * in2
+ * in1, in2 and out can be square matrices of the same dimension or 
+ * in1 or in2 and be a row or column vector
+ * \param in1  Input object with data
+ * \param in2  Input object with data
+ * \param out  Output object
+ */
+void ObitCArrayMatrixMult (ObitCArray* in1, ObitCArray* in2, ObitCArray* out)
+{
+  olong ir, ic, ii, n, nrow1, nrow2, ncol1, ncol2, nrowo, ncolo;
+  olong indx1, indx2, indxo;
+  ofloat sumr, sumi;
+  
+  /* error checks */
+  g_assert (ObitIsA(in1, &myClassInfo));
+  g_assert (ObitIsA(in2, &myClassInfo));
+  g_assert (ObitIsA(out, &myClassInfo));
+  ncol1 = in1->naxis[0];
+  if (in1->ndim>1) nrow1 = in1->naxis[1];
+  else nrow1 = 1;
+  ncol2 = in2->naxis[0];
+  if (in2->ndim>1) nrow2 = in2->naxis[1];
+  else nrow2 = 1;
+  ncolo = out->naxis[0];
+  if (out->ndim>1) nrowo = out->naxis[1];
+  else nrowo = 1;
+  g_assert (nrow1==ncol2);
+  g_assert (ncolo==MIN(nrow1, nrow2));
+  g_assert (nrowo==MIN(ncol1, ncol2));
+
+  n = MAX (ncol1, nrow2);
+  n = MAX (n, ncol2);
+  n = MAX (n, nrow1);
+  /* Both matrices */
+  if ((ncol1>1) && (nrow1>1) && (ncol2>1) && (nrow2>1)) {
+    for (ir=0; ir<nrowo; ir++) {
+      for (ic=0; ic<ncolo; ic++) {
+	sumr = sumi = 0.0;
+	indxo = 2*(ic + ir*ncolo);
+	for (ii=0; ii<n; ii++) {
+	  indx1 = 2*(ii*ncol1 + ic);
+	  indx2 = 2*(ii + ir*ncol2);
+	  sumr += in1->array[indx1]*in2->array[indx2] - 
+	    in1->array[indx1+1]*in2->array[indx2+1];
+	  sumi += in1->array[indx1]*in2->array[indx2+1] + 
+	    in1->array[indx1+1]*in2->array[indx2];
+	}
+	out->array[indxo]   = sumr;
+	out->array[indxo+1] = sumi;
+      }
+    } /* end row loop */
+    /* First a column vector */
+  } else if (nrow1==1) {
+    for (ir=0; ir<nrowo; ir++) {
+      for (ic=0; ic<ncolo; ic++) {
+	sumr = sumi = 0.0;
+	indxo = 2*(ic + ir*ncolo);
+	for (ii=0; ii<n; ii++) {
+	  indx1 = 2*ii;
+	  indx2 = 2*(ii + ir*ncol2);
+	  sumr += in1->array[indx1]*in2->array[indx2] - 
+	    in1->array[indx1+1]*in2->array[indx2+1];
+	  sumi += in1->array[indx1]*in2->array[indx2+1] + 
+	    in1->array[indx1+1]*in2->array[indx2];
+	}
+	out->array[indxo]   = sumr;
+	out->array[indxo+1] = sumi;
+      }
+    } /* end row loop */
+  } else if (nrow2==1) {  /* Second a column vector */
+    for (ir=0; ir<nrowo; ir++) {
+      for (ic=0; ic<ncolo; ic++) {
+	sumr = sumi = 0.0;
+	indxo = 2*(ic + ir*ncolo);
+	for (ii=0; ii<n; ii++) {
+	  indx1 = 2*(ii*ncol1 + ir);
+	  indx2 = 2*ii;
+	  sumr += in1->array[indx1]*in2->array[indx2] - 
+	    in1->array[indx1+1]*in2->array[indx2+1];
+	  sumi += in1->array[indx1]*in2->array[indx2+1] + 
+	    in1->array[indx1+1]*in2->array[indx2];
+	}
+	out->array[indxo]   = sumr;
+	out->array[indxo+1] = sumi;
+      }
+    } /* end row loop */
+     /* First a row vector */
+  } else if (ncol1==1) {
+    for (ir=0; ir<nrowo; ir++) {
+      for (ic=0; ic<ncolo; ic++) {
+	sumr = sumi = 0.0;
+	indxo = 2*(ic + ir*ncolo);
+	for (ii=0; ii<n; ii++) {
+	  indx1 = 2*ii;
+	  indx2 = 2*(ii + ic*ncol2);
+	  sumr += in1->array[indx1]*in2->array[indx2] - 
+	    in1->array[indx1+1]*in2->array[indx2+1];
+	  sumi += in1->array[indx1]*in2->array[indx2+1] + 
+	    in1->array[indx1+1]*in2->array[indx2];
+	}
+	out->array[indxo]   = sumr;
+	out->array[indxo+1] = sumi;
+      }
+    } /* end row loop */
+  } else if (ncol2==1) {  /* Second a row vector */
+    for (ir=0; ir<nrowo; ir++) {
+      for (ic=0; ic<ncolo; ic++) {
+	sumr = sumi = 0.0;
+	indxo = 2*(ic + ir*ncolo);
+	for (ii=0; ii<n; ii++) {
+	  indx1 = 2*(ii*ncol1 + ic);
+	  indx2 = 2*ii;
+	  sumr += in1->array[indx1]*in2->array[indx2] - 
+	    in1->array[indx1+1]*in2->array[indx2+1];
+	  sumi += in1->array[indx1]*in2->array[indx2+1] + 
+	    in1->array[indx1+1]*in2->array[indx2];
+	}
+	out->array[indxo]   = sumr;
+	out->array[indxo+1] = sumi;
+      }
+    } /* end row loop */
+ } /* End by type */
+  
+} /* end ObitCArrayMatrixMult */
+
+/**
  * Initialize global ClassInfo Structure.
  */
 void ObitCArrayClassInit (void)
@@ -1256,6 +1383,7 @@ static void ObitCArrayClassInfoDefFn (gpointer inClass)
   theClass->ObitCArrayPhase  = (ObitCArrayPhaseFP)ObitCArrayPhase;
   theClass->ObitCArray2DCenter = (ObitCArray2DCenterFP)ObitCArray2DCenter;
   theClass->ObitCArrayAddConjg = (ObitCArrayAddConjgFP)ObitCArrayAddConjg;
+  theClass->ObitCArrayMatrixMult  = (ObitCArrayMatrixMultFP)ObitCArrayMatrixMult ;
 } /* end ObitCArrayClassDefFn */
 
 /*---------------Private functions--------------------------*/

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2009                                          */
+/*;  Copyright (C) 2002-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -93,3 +93,5 @@ ObitCArray2DCenterFP ObitCArray2DCenter;
 ObitCArray2DCenterFullFP ObitCArray2DCenterFull;
 /** Function pointer to Add conjugate rows to half plane complex image  */
 ObitCArrayAddConjgFP ObitCArrayAddConjg;
+/** Function pointer to Matrix inner multiply */
+ObitCArrayMatrixMultFP ObitCArrayMatrixMult;
