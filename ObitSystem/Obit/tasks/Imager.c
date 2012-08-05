@@ -183,7 +183,7 @@ ObitInfoList* ImagerIn (int argc, char **argv, ObitErr *err)
   /* error checks */
   if (err->error) return list;
 
-  /* Make default inputs InfoList */
+  /* Make default inputs/outputs InfoList */
   list = defaultInputs(err);
   myOutput = defaultOutputs(err);
 
@@ -2348,8 +2348,9 @@ void ImagerHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "OutlierSize",  "CLEANBox", "Gain", "minFlux",  "Niter", "minPatch",
     "ccfLim", "SDIGain", "BLFact", "BLFOV", "BLchAvg",
     "Reuse", "autoCen", "Beam", "Cmethod", "CCFilter", "maxPixel", 
-    "autoWindow", "subA", "maxPSCLoop", "minFluxPSC", "maxASCLoop", "minFluxASC",
-    "refAnt", "solInt", "solType", "solMode", "WtUV", "avgPol", "avgIF", "noNeg", 
+    "maxPSCLoop", "minFluxPSC", "solPInt", "solPType", "solPMode", 
+    "maxASCLoop", "minFluxASC", "solAInt", "solAType", "solAMode", 
+    "autoWindow", "subA", "refAnt", "WtUV", "avgPol", "avgIF", "noNeg",
     "doMGM", "minSNR", "minNo", "PBCor", "antSize", "Alpha",
     "PeelFlux", "PeelLoop", "PeelRefAnt", "PeelSNRMin",
     "PeelSolInt", "PeelType", "PeelMode", "PeelNiter",

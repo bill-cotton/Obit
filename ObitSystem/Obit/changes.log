@@ -690,3 +690,22 @@ Obit/src//ObitTableCLUtil.c:
   GetDummy: Delete old CL table if extant, cleanup.
 26 Jul 2012 ver 421
 
+Mostly Polarization and scripting related
+ObitVersion:
+Obit/changes.log:
+Obit/src/ObitUVCalPolarization.c:
+  Improved matrix inversion for ORI- mode.
+Obit/tasks/CLCor.c Obit/TDF/CLCor.TDF:
+  New task for modifying CL tables.
+Obit/share/scripts/SpectrumUtils.py:
+  OImageSpectrum: fix bug with number of channels
+Obit/share/scripts/EVLAContTemplateParm.py:
+Obit/python/EVLAContPipe.py Obit/python/EVLACal.py:
+  upgrade
+Obit/src/ObitPolnCalFit.c:
+  Reset defaults at start of each IF.
+Obit/tasks/MFImage.c Obit/tasks/Imager.c:
+  Fix missing History items
+Obit/TDF/UVAppend.TDF:
+  Improve documentation
+4 Aug 2012 version 422

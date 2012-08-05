@@ -1,0 +1,164 @@
+; $Id$
+; CLCor
+;---------------------------------------------------------------
+;! applies user-selected corrections to the calibration CL table
+;# Task Calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2012
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning AIPS should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+CLCor     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+CLCor     Task which applies various corrections to CL tables.
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                              FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                             Input UV file name (name)
+**PARAM** str 6
+inClass                            Input UV file name (class)
+**PARAM** int 1
+inSeq             0.0     9999.0   Input UV file name (seq. #)
+**PARAM** int 1
+inDisk            0.0        9.0   Input UV file disk unit #
+**PARAM** str 16 30
+Sources                            Source list ' '=>all.
+**PARAM** int 1 **DEF** -1
+Qual             -1.0              Source qualifier -1=>all
+**PARAM** str 4
+souCode                            Calibrator code '    '=>all
+**PARAM** str 4
+EditStokes                         Stokes type to process
+**PARAM** int 1
+FreqID                             Freq. ID to select, 0=>all
+**PARAM** int 1
+BIF               0.0      100.0   Lowest IF number 0=>all
+**PARAM** int 1
+EIF               0.0      100.0   Highest IF number 0=>all
+**PARAM** float 2
+timeRange                          Time range to process.
+**PARAM** int 50
+Antennas         0.0     1000.0    List of antennas to calibrate
+**PARAM** int 1
+subA                               Subarray
+**PARAM** int 1  **DEF** 1
+calIn                              Input CL table
+**PARAM** int 1  **DEF** 2
+calOut                             Output CL table
+**PARAM** str 4
+corMode                            Operation code.See HELP
+**PARAM** float 30 
+CLCParm                            Parameters (see HELP CLCor).
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
+----------------------------------------------------------------
+CLCor
+Task:  This task makes a number of corrections to a CL table.
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input UV file name (name).      Standard defaults.
+  inClass....Input UV file name (class).     Standard defaults.
+  inSeq......Input UV file name (seq. #).    0 => highest.
+  inDisk.....Disk drive # of input UV file.  
+  Sources....list of sources to process.
+             '*' = all; a "-" before a source name
+             means all except ANY source named.
+  Qual.......Only sources with a source qualifier number in the SU table
+             matching Qual will be used if Qual is >= 0.  If Qual < 0,
+             all qualifiers will be written.  These qualifiers will be
+             written to separate output files.  Note that outSeq must be
+             zero in this case.
+  souCode....Sources may be selected on the basis of the calibrator code
+             given in the SU table.
+                  '    ' => any calibrator code selected
+                  '*   ' => any non blank code (cal. only)
+                  '-CAL' => blank codes only (no calibrators)
+                  anything else = calibrator code to select.
+             NB: The souCode test is applied in addition to the other
+             tests, i.e. Sources and Qual, in the selection of sources to
+             process.
+  EditStokes..The desired Stokes type to modify:
+             'R ', 'L ', 'RL', '  '=> 'RL'.
+  FreqID.....Frequency identifier to select (you may determine
+             which is applicable from the OPTYPE='SCAN' listing
+             produced by LISTR).
+  BIF........First IF to process. 0=>all.
+  EIF........Highest IF to process. 0=>all higher than BIF
+  timeRange..Start and end times (day) relative to ref. date.
+             Use  dhms2day to convert from human readable form
+  Antennas...A list of the antennas to be modified.  If any
+             number is negative then all antennas listed  are
+             NOT to be modified.  All 0 => use all.
+  subA.......The subarray to modify. Do only one at a time.
+  calIn......Input CL table, NO default value
+  calOut.....Output CL table,default = max (2, calIn)
+  corMode.....Operation code (see also EXPLAIN CLCor):
+             'PANG' => Add or remove parallactic angle
+                       corrections from CL table entries.
+                       CLCParm[0] > 0 => Add corrections
+                       CLCParm[0] =< 0 => Remove corrections
+             'MULA' => Multiply gain amplitudes by CLCParm[0]
+             'PNEG' => Flip the sign of the gain phase for
+                       all selected solutions.
+  CLCParm...Parameters: see above and below.
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files.
+             Path is absolute or relative to where the task 
+             executes.
+----------------------------------------------------------------
+CLCor:  Task to apply corrections to an CL table in a variety of
+        ways.
+Documentor: W. D. Cotton
+Related Programs: CLCal
+
+This task will compute various corrections and apply them
+directly to a solution (CL) table.  The operation to be done
+is determined by corMode.  Details and/or additional information
+for the various models is given below.
+
+corMode='PANG'
+
+    This option add or removes the phase of the parallactic
+angle to/from the residual phases of the specified CL table
+entries.  The AIPS polarization calibration routines expect
+that this correction has NOT been made to the raw data; if the
+parallactic angle corrections has been applied, then this
+option with CLCParm[0] .le. 0 will remove it.  The parallactic
+angle correction may be added using CLCParm[0] .gt. 0.
+    Note: the above definitions of applying or removing the
+parallactic angle correction assumes that the phase of the
+first polarization (RCP for VLA, VLBA) decreases with
+increasing parallactic angle.  This involves the definition of
+RCP.  If the opposite definition of RCP and LCP is used, then
+the sense of applying or removing the parallactic angle
+correction given above is removed.
+
+corMode='MULA'
+    This option will cause the amplitudes of the selected
+complex gains to be multiplied by CLCParm[0].
+
+
+

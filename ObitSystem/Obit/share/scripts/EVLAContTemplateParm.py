@@ -16,16 +16,13 @@
 # AMPCAL      Amplitude calibrator list
 # DLYCAL      Delay calibrator list
 # PINCAL      Instrumental polarization calibrator list
-# PRLCAL      R-L phase and delay calibrator
-# PRLPHS      R-L phase for PRLCAL @ 1 GHz
-# PRLRM       Rotation measure for PRLCAL
+# PINCAL      Instrumental polarization calibrator list
+# PRLDCAL     R-L phase and delay calibrator list, for each
+#             (name, R-L phase (deg at 1 GHz), RM (rad/m**2)
 # REFANT      Reference antenna
 # PLOTSRC     Diagnostic plot source name or None
 # PLOTTIIME   Diagnostic plot timerange
 # TARGET      List of target sources
-
-# DESTDIR     Output directory 
-# ARCHFILEID  Archive file ID
 #--------------------------------------------------------------------------------------------
 # Project specific parameter values for EVLAPipeline
 parms["seq"]           = 1                     # Sequence number for AIPS files
@@ -43,9 +40,6 @@ parms["selBand"]       = "@BAND@"     # Selected band, def = first
 parms["selConfig"]     = @CONFIG@     # Selected frequency config, def = first  
 parms["selNIF"]        = 0            # Selected number of IFs, def = first  
 parms["selChan"]       = @SELCHAN@    # Selected number of channels, def = first  
-
-# Calibration sources/models
-parms["BPCal"]       = @BPCAL@      # Bandpass calibrator
 
 parms["doFD1"]       = True         # Do initial frequency domain flagging
 parms["FD1widMW"]    = 31           # Width of the initial FD median window
@@ -85,25 +79,33 @@ parms["BPCals"]       = BPCals      # Bandpass calibrator(s)
 # Amp/phase calibration
 calist = @PHSCAL@
 PCals = []
+tcals = []
 for cal in calist:
-    PCals.append(EVLACalModel(cal))
+    if not cal in tcals:
+        PCals.append(EVLACalModel(cal))
+        tcals.append(cal)
 # Check for standard model
 EVLAStdModel(PCals, freq)
 parms["PCals"]          = PCals   # Phase calibrator(s)
 
 calist = @AMPCAL@
 ACals = []
+tcals = []
 for cal in calist:
-    ACals.append(EVLACalModel(cal))
+    if not cal in tcals:
+        ACals.append(EVLACalModel(cal))
+        tcals.append(cal)
 # Check for standard model
 EVLAStdModel(ACals, freq)
 parms["ACals"]          = ACals  # Amplitude calibrators
 
 calist = @DLYCAL@
 DCals = []
+tcals = []
 for cal in calist:
-    if not cal in DCals:
+    if not cal in tcals:
         DCals.append(EVLACalModel(cal))
+        tcals.append(cal)
 # Check for standard model
 EVLAStdModel(DCals, freq)
 parms["DCals"]          = DCals      # delay calibrators
@@ -114,15 +116,26 @@ parms["refAnt"]        = @REFANT@   # Reference antenna
 parms["plotSource"]    = @PLOTSRC@          # Source name or None
 parms["plotTime"]      = @PLOTTIME@         # timerange
 
-# Poln  Cal
-parms["PCInsCals"]     = @PINCAL@  # List of instrumental poln calibrators
+# Instrumental Poln  Cal
+PClist                 = @PINCAL@  # List of instrumental poln calibrators
+parms["PCInsCals"]     = []
+# Remove redundancies 
+tcals = []
+for cal in PClist:
+    if not cal in tcals:
+        parms["PCInsCals"].append(cal)
+        tcals.append(cal)
+parms["doPolCal"]      = len(parms["PCInsCals"])>0  # Do polarization calibration?
+parms["doPol"]         = parms["doPolCal"]
 
 # R-L phase/delay calibration
-parms["RLPCal"]    = @PRLCAL@     # Polarization angle (R-L phase) calibrator
-parms["PCRLPhase"] = @PRLPHS@     # R-L phase difference for RLPCal
-parms["RM"]        = @PRLRM@      # rotation measure (rad/m^2) for RLPCal
-parms["RLDCal"]    = [(@PRLCAL@, @PRLPHS@, @PRLRM@)]     #  R-L delay calibrator, R-L phase, RM
-parms["rlrefAnt"]  = @REFANT@     # Reference antenna REQUIRED
+parms["RLPCal"]    = None         # Polarization angle (R-L phase) calibrator, IF based
+parms["PCRLPhase"] = None         # R-L phase difference for RLPCal, IF based
+parms["RM"]        = None         # rotation measure (rad/m^2) for RLPCal, IF based
+parms["RLDCal"]    = @PRLDCAL@    #  R-L delay calibrator list, R-L phase, RM
+parms["rlrefAnt"]  = @REFANT@     # Reference antenna for R-L cal, defaults to refAnt
+parms["doRLDelay"] = parms["RLDCal"][0][0]!=None  # Determine R-L delay? If calibrator given
+parms["doRLCal"]   = parms["RLDCal"][0][0]!=None  # Determine  R-L bandpass? If calibrator given
 
 # Imaging
 parms["targets"] = @TARGET@     # targets, empty = all
@@ -132,7 +145,7 @@ SpanBW = @SPANBW@
 if SpanBW<=@VLAFREQ@*parms["MBmaxFBW"]*1.5:
     parms["doMB"] = False
 
-# Control
+# Control, mark items as F to disable
 T   = True
 F   = False
 check                  = parms["check"]     # Only check script, don't execute tasks
@@ -141,6 +154,7 @@ parms["doLoadArchive"] = T        # Load from archive?
 parms["doHann"]        = parms["doHann"]     # Apply Hanning?
 parms["doClearTab"]    = T        # Clear cal/edit tables
 parms["doCopyFG"]      = T        # Copy FG 1 to FG 2
+parms["doEditList"]    = parms["doEditList"]  # Edit using editList?
 parms["doQuack"]       = T        # Quack data?
 parms["doShad"]        = parms["doShad"] # Flag shadowed data?
 parms["doMedn"]        = T        # Median editing?
@@ -157,9 +171,9 @@ parms["doBPCal2"]      = T        # Determine Bandpass calibration, 2nd pass
 parms["doAmpPhaseCal2"]= T        # Amplitude/phase calibration, 2nd pass
 parms["doAutoFlag2"]   = T        # Autoflag editing after final calibration?
 parms["doCalAvg"]      = T        # calibrate and average data
-parms["doRLDelay"]     = F        # Determine R-L delay?
-parms["doPolCal"]      = F        # Do polarization calibration?
-parms["doRLCal"]       = F        # Determine  R-L bandpass?
+parms["doRLDelay"]     = parms["doRLDelay"] # Determine R-L delay?
+parms["doPolCal"]      = parms["doPolCal"]  # Do polarization calibration?
+parms["doRLCal"]       = parms["doRLCal"]   # Determine  R-L bandpass?
 parms["doImage"]       = T        # Image targets
 parms["doSaveImg"]     = T        # Save results to FITS
 parms["doSaveUV"]      = T        # Save calibrated UV data to FITS

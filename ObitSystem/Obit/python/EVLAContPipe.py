@@ -63,6 +63,7 @@ def pipeline( aipsSetup, parmFile):
     fileRoot      = parms["project"]+"_"+parms["session"]+"_"+parms["band"] # root of file name
     logFile       = fileRoot +".log"   # Processing log file
     uv            = None
+    uvc           = None
     avgClass      = ("UVAv"+band)[0:6]  # Averaged data AIPS class
     outIClass     =  parms["outIClass"] # image AIPS class
 
@@ -122,8 +123,8 @@ def pipeline( aipsSetup, parmFile):
             if err.isErr:
                 OErr.printErrMsg(err, "Error creating AIPS data")
     
-            uv = EVLAHann(uv, EVLAAIPSName(project, session), dataClass, disk, parms["seq"], err, \
-                          logfile=logFile, check=check, debug=debug)
+        uv = EVLAHann(uv, EVLAAIPSName(project, session), dataClass, disk, parms["seq"], err, \
+                      logfile=logFile, check=check, debug=debug)
         if uv==None and not check:
             raise RuntimeError,"Cannot Hann data "
     
@@ -149,8 +150,8 @@ def pipeline( aipsSetup, parmFile):
         if retCode!=0:
             raise RuntimeError,"Error Copying FG table"
 
-    # Drop end channels of spectra?
-    if (parms["BChDrop"]>0) or (parms["EChDrop"]>0):
+    # Drop end channels of spectra?  Only if new FG 2
+    if parms["doCopyFG"] and (parms["BChDrop"]>0) or (parms["EChDrop"]>0):
         # Channels based on original number, reduced if Hanning
         nchan = uv.Desc.Dict["inaxes"][uv.Desc.Dict["jlocf"]]
         fact = parms["selChan"]/nchan   # Hanning reduction factor
@@ -236,12 +237,16 @@ def pipeline( aipsSetup, parmFile):
     
     # Parallactic angle correction?
     if parms["doPACor"]:
-        retCode = EVLAPACor(uv, err, noScrat=noScrat, \
+        retCode = EVLAPACor(uv, err, \
                                 logfile=logFile, check=check, debug=debug)
         if retCode!=0:
             raise RuntimeError,"Error in Parallactic angle correction"
     
-    # Need to find a reference antenna?  
+    # Need to find a reference antenna?  See if we have saved it?
+    if (parms["refAnt"]<=0):
+        refAnt = FetchObject(project+"_"+session+"_"+band+".refAnt.pickle")
+        if refAnt:
+            parms["refAnt"] = refAnt
     # Use bandpass calibrator and center half of each spectrum
     if parms["refAnt"]<=0:
         mess = "Find best reference antenna: run Calib on BP Cal(s) "
@@ -258,6 +263,8 @@ def pipeline( aipsSetup, parmFile):
         # Save it
         ParmsPicklefile = project+"_"+session+"_"+band+".Parms.pickle"   # Where results saved
         SaveObject(parms, ParmsPicklefile, True)
+        refAntPicklefile = project+"_"+session+"_"+band+".refAnt.pickle"   # Where results saved
+        SaveObject(parms["refAnt"], refAntPicklefile, True)
 
 
     # Plot Raw, edited data?
@@ -379,7 +386,7 @@ def pipeline( aipsSetup, parmFile):
         OErr.printErrMsg(err, "Error resetting calibration")
         # Parallactic angle correction?
         if parms["doPACor"]:
-            retCode = EVLAPACor(uv, err, noScrat=noScrat, \
+            retCode = EVLAPACor(uv, err, \
                                 logfile=logFile, check=check, debug=debug)
             if retCode!=0:
                 raise RuntimeError,"Error in Parallactic angle correction"
@@ -463,7 +470,6 @@ def pipeline( aipsSetup, parmFile):
     
     
     # Calibrate and average data
-    # Note, PCAL doesn't handle flagging so this has to be here
     if parms["doCalAvg"]:
         retCode = EVLACalAvg (uv, avgClass, parms["seq"], parms["CalAvgTime"], err, \
                               flagVer=2, doCalib=2, gainUse=0, doBand=1, BPVer=1, doPol=False, \
@@ -493,29 +499,32 @@ def pipeline( aipsSetup, parmFile):
             raise  RuntimeError,"Error in AutoFlag"
     
     # R-L  delay calibration cal if needed,
-    if parms["doRLDelay"]:
+    if parms["doRLDelay"] and parms["RLDCal"][0][0]!=None:
         if parms["rlrefAnt"]<=0:
             parms["rlrefAnt"] =  parms["refAnt"]
+        # parms["rlDoBand"] if before average, BPVer=parms["rlBPVer"], 
         retCode = EVLARLDelay(uv, err,\
                               RLDCal=parms["RLDCal"], BChan=parms["rlBChan"], \
                               EChan=parms["rlEChan"], UVRange=parms["rlUVRange"], \
                               soucode=parms["rlCalCode"], doCalib=parms["rlDoCal"], gainUse=parms["rlgainUse"], \
                               timerange=parms["rltimerange"], \
-                              doBand=parms["rlDoBand"], BPVer=parms["rlBPVer"], flagVer=parms["rlflagVer"], \
+                              # NOT HERE doBand=parms["rlDoBand"], BPVer=parms["rlBPVer"],  \
+                              flagVer=parms["rlflagVer"], \
                               refAnt=parms["rlrefAnt"], doPol=False,  \
                               nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
                               check=check, debug=debug)
         if retCode!=0:
             raise RuntimeError,"Error in R-L delay calibration"
     
-    # Polarization calibration 
+    # Polarization calibration
     if parms["doPolCal"]:
         if parms["PCRefAnt"]<=0:
             parms["PCRefAnt"] =  parms["refAnt"]
         retCode = EVLAPolCal(uv, parms["PCInsCals"], err, \
                              doCalib=2, gainUse=0, doBand=-1, flagVer=0, \
                              fixPoln=parms["PCFixPoln"], pmodel=parms["PCpmodel"], avgIF=parms["PCAvgIF"], \
-                             solInt=parms["PCSolInt"], refAnt=parms["PCRefAnt"], soltype=parms["PCSolType"], \
+                             solInt=parms["PCSolInt"], refAnt=parms["PCRefAnt"], solType=parms["PCSolType"], \
+                             ChInc=parms["PCChInc"], ChWid=parms["PCChWid"], \
                              check=check, debug=debug, noScrat=noScrat, logfile=logFile)
         if retCode!=0 and (not check):
            raise  RuntimeError,"Error in polarization calibration: "+str(retCode)
@@ -523,7 +532,7 @@ def pipeline( aipsSetup, parmFile):
     
     
     # R-L phase calibration cal., creates new BP table
-    if parms["doRLCal"]:
+    if parms["doRLCal"] and parms["RLDCal"][0][0]!=None:
         plotFile = "./"+fileRoot+"RLSpec2.ps"
         if parms["rlrefAnt"]<=0:
             parms["rlrefAnt"] =  parms["refAnt"]
@@ -600,24 +609,34 @@ def pipeline( aipsSetup, parmFile):
         SaveObject(Report, ReportPicklefile, True) 
        
     # Write results, cleanup    
-    # Save UV data? 
+    # Save cal/average UV data? 
     if parms["doSaveUV"] and (not check):
-        filename = parms["project"]+parms["session"]+parms["band"]+"Cal.uvtab"
-        fuv = EVLAUVFITS (uv, filename, 0, err, compress=parms["Compress"])
-        EVLAAddOutFile( filename, 'project', "Calibrated Averaged UV data" )
-        # Save list of output files
-        EVLASaveOutFiles()
-    # Save UV data tables?
+        Aname = EVLAAIPSName(project, session)
+        cno = AIPSDir.PTestCNO(disk, user, Aname, avgClass[0:6], "UV", parms["seq"], err)
+        if cno>0:
+            uvt = UV.newPAUV("AIPS CAL UV DATA", Aname, avgClass, disk, parms["seq"], True, err)
+            filename = parms["project"]+parms["session"]+parms["band"]+"Cal.uvtab"
+            fuv = EVLAUVFITS (uvt, filename, 0, err, compress=parms["Compress"])
+            EVLAAddOutFile( filename, 'project', "Calibrated Averaged UV data" )
+            # Save list of output files
+            EVLASaveOutFiles()
+            del uvt
+    # Save raw UV data tables?
     if parms["doSaveTab"] and (not check):
-        filename = parms["project"]+parms["session"]+parms["band"]+"CalTab.uvtab"
-        fuv = EVLAUVFITSTab (uv, filename, 0, err, logfile=logFile)
-        EVLAAddOutFile( filename, 'project', "Calibrated AIPS tables" )
-        # Write History
-        filename = project+'_'+session+'_'+band+".History.text"
-        OTObit.PrintHistory(uv, file=filename)
-        EVLAAddOutFile( filename, 'project', "Processing history of calibrated data" )
-        # Save list of output files
-        EVLASaveOutFiles()
+        Aname = EVLAAIPSName(project, session)
+        cno = AIPSDir.PTestCNO(disk, user, Aname, dataClass[0:6], "UV", parms["seq"], err)
+        if cno>0:
+            uvt = UV.newPAUV("AIPS RAW UV DATA", Aname, dataClass[0:6], disk, parms["seq"], True, err)
+            filename = parms["project"]+parms["session"]+parms["band"]+"CalTab.uvtab"
+            fuv = EVLAUVFITSTab (uvt, filename, 0, err, logfile=logFile)
+            EVLAAddOutFile( filename, 'project', "Calibrated AIPS tables" )
+            del uvt
+            # Write History
+            filename = project+'_'+session+'_'+band+".History.text"
+            OTObit.PrintHistory(uv, file=filename)
+            EVLAAddOutFile( filename, 'project', "Processing history of calibrated data" )
+            # Save list of output files
+            EVLASaveOutFiles()
     # Imaging results
     # If targets not specified, save all
     if len(parms["targets"])<=0:
@@ -744,15 +763,35 @@ def pipeline( aipsSetup, parmFile):
             oclass = parms["Stokes"][istok:istok+1]+outIClass[1:]
             AllDest(err, disk=disk,Aseq=parms["seq"],Aclass=oclass)
         
-        # Delete UV data
-        uv.Zap(err)
-        # Zap calibrated/averaged data
-        if not uvc:
-            Aname = EVLAAIPSName(project, session)
-            uvc = UV.newPAUV("AIPS UV DATA", Aname, avgClass, disk, parms["seq"], True, err)
+        # Delete initial UV data
+        Aname = EVLAAIPSName(project, session)
+        # Test if data exists
+        cno = AIPSDir.PTestCNO(disk, user, Aname, dataClass[0:6], "UV", parms["seq"], err)
+        if cno>0:
+            uvt = UV.newPAUV("AIPS RAW UV DATA", Aname, dataClass[0:6], disk, parms["seq"], True, err)
+            uvt.Zap(err)
+            del uvt
             if err.isErr:
-                OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
-        uvc.Zap(err)
+                OErr.printErrMsg(err, "Error deleting raw AIPS data")
+        # Zap calibrated/averaged data
+        # Test if data exists
+        cno = AIPSDir.PTestCNO(disk, user, Aname, avgClass[0:6], "UV", parms["seq"], err)
+        if cno>0:
+            uvt = UV.newPAUV("AIPS CAL UV DATA", Aname, avgClass[0:6], disk, parms["seq"], True, err)
+            uvt.Zap(err)
+            del uvt
+            if err.isErr:
+                OErr.printErrMsg(err, "Error deleting cal/avg AIPS data")
+        # Zap UnHanned data if present
+        loadClass = parms["band"]+"Raw"
+        # Test if image exists
+        cno = AIPSDir.PTestCNO(disk, user, Aname, loadClass[0:6], "UV", parms["seq"], err)
+        if cno>0:
+            uvt = UV.newPAUV("AIPS CAL UV DATA", Aname, loadClass[0:6], disk, parms["seq"], True, err)
+            uvt.Zap(err)
+            del uvt
+            if err.isErr:
+                OErr.printErrMsg(err, "Error deleting cal/avg AIPS data")
         OErr.printErrMsg(err, "Writing output/cleanup")
 
     # Shutdown

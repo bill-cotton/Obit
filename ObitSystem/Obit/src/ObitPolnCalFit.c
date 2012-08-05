@@ -705,7 +705,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
   while (!done) {
 
     /* Read data, init solutions */
-    first = (iIF==BIF) && (iChan==BChan);   /* First of an IF */
+    first = (iIF!=in->IFno) || (iChan==BChan);   /* First of an IF */
     ReadData (in, inUV, &iChan, EChan, &iIF, EIF, first, err);
     if (err->error) Obit_traceback_msg (err, routine, inUV->name);
 

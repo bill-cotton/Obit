@@ -271,9 +271,9 @@ def OImageSpectrum(inImage, pixel, err, chOff=-9999,bchan=1, echan=0):
     blc = [pixel[0],pixel[1],1];
     trc=[pixel[0], imDict["inaxes"][1], 1]
     trc=[pixel[0], pixel[1], 1]
-    nchan = echan
     if echan<=0:
         echan = imDict["inaxes"][2]
+    nchan = echan
     inImage.Open(1,err)
     OErr.printErrMsg(err, "Error making image")
     if chOff<-9000:

@@ -43,7 +43,7 @@ inClass                            Input UV file name (class)
 inSeq             0.0     9999.0   Input UV file name (seq. #)
 **PARAM** int 1
 inDisk                             Input UV file disk unit #
-**PARAM** str 16 30
+**PARAM** str 16 1
 Sources                            Sources to copy
 **PARAM** int 1 **DEF** -1
 Qual            -10.0              Source qualifier -1=>any
@@ -115,12 +115,14 @@ taskLog                            Logfile to write task messages to
 ----------------------------------------------------------------
 UVAppend
 Task:  Append with selection data from one data set to another.
-   Append data for a single to the end of a single source file
-with identical structure.  If no output file exists, it will be 
-created.
+   Append data for a single source to the end of a single source 
+file with identical structure.  If no output file exists, 
+it will be created.
    The intent of this program is to concatenate observations 
 of a given pointing which are distributed amoung several, 
-compatable, datasets.
+compatable, datasets.  Data will be written as a new subarray:
+the input AN table is added to the output and times are modified 
+by 5 times the number of subarrays-1.
 
 Adverbs:
   DataType..'FITS' or 'AIPS'  type of input
@@ -130,7 +132,7 @@ Adverbs:
   inSeq......Input UV AIPS fileseq. #.  0 => highest.
   inDisk.....Disk drive # of input UV (FITS or AIPS). NO default
   Sources... Sources  to be processed if multisource file.
-             Really should all be the same source.
+             Really should all be only one source.
   souCode....Calibrators may be selected on the basis of the
              calibrator code given in the SU table.
                   '    ' => any calibrator code selected
@@ -160,10 +162,10 @@ Adverbs:
              Note: not all data sets will have IFs.
   IFInc......Increment in IF selected, 0=>1
   subA.......Sub-array number to use. 0=>all.
-  Antennas...A list of the antennas to  have solutions
-             determined. If any number is negative then all
-             antennas listed  are NOT to be used to determine
-             solutions and all others are. All 0 => use all.
+  Antennas...A list of the antennas to  have data copied.
+             If any number is negative then all antennas listed are 
+             NOT to be used to be copied and all others are. 
+             All 0 => use all.
   corrType...If corrType = 0 then UVAppend will pass only cross-power data, 
              this is the default mode. 
              If corr=1 then both cross-power and total-power data 
@@ -178,7 +180,7 @@ Adverbs:
              0 => highest.
   doPol......If > 0 then correct data for instrumental polarization as
              represented in the AN table.  This correction is only
-             useful if PCAL has been run or feed polarization parameters
+             useful if PCal has been run or feed polarization parameters
              have been otherwise obtained. 
   PDVer......AIPS PD table to use for per channel instrumental
              polarization corrections if doPol=True. 0=> highest
@@ -231,7 +233,7 @@ Adverbs:
   Compress...If True  the output data is written in
              compressed format which can result in a substantial
              reduction in disk space needed.  DO NOT USE THIS OPTION if
-             there is channel-dependent flagging and and you are doing
+             there is channel-dependent flagging and you are doing
              spectral averaging (avgFreq > 0).  If there is
              IF-dependent flagging and you are using IF averaging
              (avgFreq > 2.5) this option is also not recommended.
