@@ -887,7 +887,7 @@ void PCalHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "nfield", "CCVer", "BComp", "EComp", "Cmethod", "Cmodel", "Flux",
     "modelFlux", "modelPos", "modelParm", 
     "solnType", "Sources", "Qual", "souCode", "doFitI", "doFitPol", "doFitV", 
-    "doFitGn", "doFitRL", "RLPhase", "RM", "ChWid", "ChInc", 
+    "doFitGn", "doFitRL", "RLPhase", "RM", "PPol", "ChWid", "ChInc", 
     "CPSoln", "PDSoln", "BPSoln", 
     "nThreads",
    NULL};
@@ -947,7 +947,7 @@ ObitUV* InitialCal (ObitInfoList* myInput, ObitUV* scrData,
     NULL};
   gchar *PolCalParms[] = {     /* Polarization calibration parameters */
     "solnType", "Sources", "Qual", "souCode", "doFitI", "doFitPol", "doFitV", 
-    "doFitGn", "doFitRL", "RLPhase", "RM", "ChWid", "ChInc", 
+    "doFitGn", "doFitRL", "RLPhase", "RM", "PPol", "ChWid", "ChInc", 
     "CPSoln", "PDSoln", "BPSoln", 
     "doBand", "BPVer", "refAnt", "prtLv", "BIF", "BChan",
     NULL};

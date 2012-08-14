@@ -113,6 +113,9 @@ static odouble GetChi2 (olong nThreads, ObitPolnCalFit *in,
 			odouble *dChi2, odouble *d2Chi2,
 			ObitErr *err);
 
+/** Private: Fit R/L Phase difference */
+static ofloat FitRLPhase (ObitPolnCalFit *in, ObitErr *err);
+
 /** Private: Make Threaded args */
 static void MakePolnFitFuncArgs (ObitPolnCalFit *in, ObitErr *err);
 
@@ -121,6 +124,10 @@ static void KillPolnFitFuncArgs (ObitPolnCalFit *in);
 
 /** Private: Threaded Chi**2 evaluator */
 static gpointer ThreadPolnFitRLChi2 (gpointer arg);
+
+/** Private: Check for crazy antenna solutions */
+static gboolean CheckCrazy(ObitPolnCalFit *in, ObitErr *err);
+
 #ifdef HAVE_GSL
 /** Private: Circular feed Solver function evaluation */
 static int PolnFitFuncOERL (const gsl_vector *x, void *params, 
@@ -438,11 +445,11 @@ static void calcmodel (ObitPolnCalFit *args, ofloat Rarray[8], olong idata)
  * \li doFitI     OBIT_boolean [*] If True fit Stokes I poln, per cal [F]
  * \li doFitPol   OBIT_boolean [*] If True fit source linear poln, per cal  [T]
  * \li doFitV     OBIT_boolean [*] If True fit Stokes V poln, per cal  [F]
- * \li doFitGn    OBIT_boolean  If True fit gain for each antenna  [F]
- * \li doFitRL    OBIT_boolean  If True fit only total R-L phase of gain  [F]
+ * \li doFitRL    OBIT_boolean  If True fit R-L phase difference  [F]
  * \li RLPhase    OBIT_float scalar R-L phase difference @ ref Freq per calibrator
  *                <= -999 => fit value [-1000.] in deg.
  * \li RM         OBIT_float scalar Rotation measure (rad/m^2) to be used with RLPhase
+ * \li PPol       OBIT_float scalar Fractional linear polarization per calibrator
  * \li ChWid      OBIT_long scalar Number of channels in poln soln  [1]
  * \li ChInc      OBIT_long scalar  Spacing of poln soln  [1]
  * \li CPSoln     OBIT_long scalar Source (CP) table to write, 0=> create new  [0]
@@ -497,6 +504,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
   in->RLPhaseIn= g_malloc0(nCal*sizeof(ofloat));
   in->RLPhase  = g_malloc0(nCal*sizeof(ofloat));
   in->RM       = g_malloc0(nCal*sizeof(ofloat));
+  in->PPol     = g_malloc0(nCal*sizeof(ofloat));
   in->doFitI   = g_malloc0(nCal*sizeof(olong));
   in->doFitV   = g_malloc0(nCal*sizeof(olong));
   in->doFitPol = g_malloc0(nCal*sizeof(olong));
@@ -506,13 +514,17 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
 
   /* Control parameters - arrays may be defined larger than nCal */
   if (ObitInfoListGetP(in->info, "RLPhase", &type, dim, (gpointer)&farr))
-    for (i=0; i<nCal; i++) in->RLPhaseIn[i] = farr[i];
+    for (i=0; i<nCal; i++) in->RLPhaseIn[i] = farr[i] * DG2RAD;
   else
     for (i=0; i<nCal; i++) in->RLPhaseIn[i] =- 1000.0;
   if (ObitInfoListGetP(in->info, "RM", &type, dim, (gpointer)&farr))
     for (i=0; i<nCal; i++) in->RM[i] = farr[i];
   else
     for (i=0; i<nCal; i++)  in->RM[i] = 0.0;
+  if (ObitInfoListGetP(in->info, "PPol", &type, dim, (gpointer)&farr))
+    for (i=0; i<nCal; i++) in->PPol[i] = farr[i];
+  else
+    for (i=0; i<nCal; i++)  in->PPol[i] = 0.0;
   if (ObitInfoListGetP(in->info, "doFitI", &type, dim, (gpointer)&barr))
     for (i=0; i<nCal; i++) in->doFitI[i] = barr[i];
   else
@@ -525,7 +537,6 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     for (i=0; i<nCal; i++) in->doFitPol[i] = barr[i];
   else
     for (i=0; i<nCal; i++) in->doFitPol[i] = TRUE;
-  ObitInfoListGetTest(in->info, "doFitGn",  &type, dim, &in->doFitGn);
   ObitInfoListGetTest(in->info, "doFitRL",  &type, dim, &in->doFitRL);
   ObitInfoListGetTest(in->info, "ChWid",    &type, dim, &in->ChWid);
   ObitInfoListGetTest(in->info, "ChInc",    &type, dim, &in->ChInc);
@@ -740,6 +751,9 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
 	} else in->souPNumb[isou][k] = -999;
       } /* end loop over parameters */
     } /* end loop over sources */
+
+    /* Phase difference parameter number if being fitted */
+    if (in->doFitRL) in->PDPNumb = in->nparam++;
     
     /* Init solver stuff first pass */
     in->nvis   = inUV->myDesc->nvis;
@@ -792,13 +806,13 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     if (isOK && (err->prtLv>=3)) {
       /* BL 2-21 sou 1 */
       refAnt = in->refAnt-1;
-      fprintf (stderr, "Baseline 23-26, source 0 IF %d Chan %d\n", in->IFno, in->Chan);
+      fprintf (stderr, "Baseline 1-27, source 0 IF %d Chan %d\n", in->IFno, in->Chan);
       fprintf (stderr, "  PA          RRr (o,c)         RRi                LLr                LLi                RLr                RLi                LRr                LRi \n");
       for (i=0; i<in->inDesc->nvis; i++) {
 	isou   = in->souNo[i];    /* Source number */
 	ia1    = in->antNo[i*2+0];
 	ia2    = in->antNo[i*2+1]; 
-	if ((isou==0) && (ia1==22) && (ia2==25)) {  /* 23-26 */
+	if ((isou==0) && (ia1==1) && (ia2==27)) {  /* 1-27 */
 	  calcmodel (in, RArray, i);
 	  RRr = RArray[0]; RRi = RArray[1]; 
 	  LLr = RArray[6]; LLi = RArray[7]; 
@@ -910,6 +924,7 @@ ObitPolnCalFit *in = inn;
   in->RLPhaseIn  = NULL;
   in->RLPhase    = NULL;
   in->RM         = NULL;
+  in->PPol       = NULL;
   in->doFitI     = NULL;
   in->doFitV     = NULL;
   in->doFitPol   = NULL;
@@ -920,7 +935,6 @@ ObitPolnCalFit *in = inn;
   in->PDTable    = NULL;
   in->BPTable    = NULL;
   in->doFitRL    = FALSE;
-  in->doFitGn    = FALSE;
   in->BIF        = 1;
   in->BChan      = 1;
   in->ChWid      = 1;
@@ -984,6 +998,7 @@ void ObitPolnCalFitClear (gpointer inn)
   if (in->RLPhaseIn)g_free(in->RLPhaseIn);
   if (in->RLPhase)  g_free(in->RLPhase);
   if (in->RM)       g_free(in->RM);
+  if (in->PPol)     g_free(in->PPol);
   if (in->doFitI)   g_free(in->doFitI);
   if (in->doFitV)   g_free(in->doFitV);
   if (in->doFitPol) g_free(in->doFitPol);
@@ -1030,7 +1045,7 @@ static void WriteOutput (ObitPolnCalFit* in, ObitUV *outUV,
   oint numPol, numIF, numChan;
   ObitIOCode retCode;
   ObitTableBP *oldBPTab=NULL;
-  gboolean sameBP=FALSE;
+  gboolean sameBP=FALSE, crazy;
   ObitIOAccess access;
   gchar *routine = "ObitPolnCalFit:WriteOutput";
 
@@ -1122,6 +1137,9 @@ static void WriteOutput (ObitPolnCalFit* in, ObitUV *outUV,
 					 err);
   }
 
+   /* Check for crazy antenna solutions and reset defaults */
+  crazy = CheckCrazy(in, err);
+
   /* Good data? */
   if (isOK) {
     /* Update Tables */
@@ -1193,8 +1211,7 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
   for (i=0; i<in->nsou; i++) {
     /* Set R-L phase if given */
     if (in->RLPhaseIn[i]>-900.0) {
-      in->RLPhase[i] = 
-	in->RLPhase[0]*DG2RAD + 
+      in->RLPhase[i] = 	in->RLPhaseIn[0] + 
 	2.0 * (lambda*lambda - lambdaRef*lambdaRef) * in->RM[i];
     } else in->RLPhase[i] = 0.0;
   }
@@ -1324,7 +1341,7 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
 	  (inUV->myDesc->crval[inUV->myDesc->jlocs]>-5.5)) {
  	/* Linear feeds  ori_x, elip_x, ori_y, elip_y,  */
 	in->antParm[i*4+0] = +G_PI/4.0;
-	in->antParm[i*4+1] = +G_PI/4.0;
+	in->antParm[i*4+1] = +G_PI/2.0;
 	in->antParm[i*4+2] = 0.0;
 	in->antParm[i*4+3] = -G_PI/2.0;
       }
@@ -1332,22 +1349,25 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
   } /* end init */
 
   /* Some parameters always need updating */
+  in->PD = 0.0;  /* R-L (X/Y) phase difference */
   for (i=0; i<in->nsou; i++) {
     
     /* Stokes I - evaluate spectrum in ln(nu/nu_ref) */
     ll = log(in->freq/in->inDesc->freq);
     sum = in->IFlux1[i]*ll + in->IFlux2[i]*ll*ll;
     in->souParm[i*4] = exp(sum) * in->IFlux0[i];
+    /* Fixed linear poln? */
+    if (in->PPol[i]>0.0) {
+      in->souParm[i*4+1] = in->PPol[i] * in->souParm[i*4] * cos(in->RLPhase[i]);
+      in->souParm[i*4+2] = in->PPol[i] * in->souParm[i*4] * sin(in->RLPhase[i]);
+    }
     /* Add 1% linear poln if fitting on init 
        if (init && in->souFit[i][1]) {
        in->souParm[i*4+1] = 0.01*in->souParm[i*4];
        }*/
    
-    /* Fixed R-L phase 
-    in->souParm[i*4+2] = in->RLPhase[i];*/
   } /* end loop over source */
   
-
   /* Cleanup */
  cleanup:
   /* Close data */
@@ -1359,7 +1379,6 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
     (*iChan) = 1;
     (*iIF)++;
   }
-
 
   return; 
 } /* end ReadData */
@@ -1581,7 +1600,7 @@ static void InitBandpassTab(ObitPolnCalFit* in, ObitErr *err)
  */
 static void UpdateSourceTab(ObitPolnCalFit* in, ObitErr *err) 
 {
-  olong irow, nif, nchan, ith, indx, ich, iif, isou, jsou;
+  olong irow, nif, nchan, indx, ich, iif, isou, jsou;
   olong chanOff=in->BChan-1, ifOff=in->BIF-1, chans[2];
   ObitTableCPRow *row=NULL;
   gchar *routine = "ObitPolnCalFit:UpdateSourceTab";
@@ -1598,6 +1617,12 @@ static void UpdateSourceTab(ObitPolnCalFit* in, ObitErr *err)
   nif   = in->outDesc->inaxes[in->outDesc->jlocif];
   nchan = in->outDesc->inaxes[in->outDesc->jlocf];
 
+  /* 0-rel Channels covered in ChInc */
+  chans[0] = in->Chan-1+chanOff - in->ChInc/2;
+  chans[0] = MAX (0, chans[0]);
+  chans[1] = in->Chan-1+chanOff + in->ChInc/2;
+  chans[1] = MIN (nchan-1, chans[1]);
+  
   /* Loop over row updating */
   for (irow=1; irow<=in->CPTable->myDesc->nrow; irow++) {
     /* Read previous */
@@ -1607,24 +1632,15 @@ static void UpdateSourceTab(ObitPolnCalFit* in, ObitErr *err)
     isou = row->SourID - 1;
     jsou = in->isouIDs[isou];  /* Calibrator number */
 
-    /* Update - loop over threads */
-    for (ith=0; ith<in->nTh; ith++) {
-      /* 0-rel Channels covered in ChInc */
-      chans[0] = in->Chan-1+chanOff - in->ChInc/2;
-      chans[0] = MAX (0, chans[0]);
-      chans[1] = in->Chan-1+chanOff + in->ChInc/2;
-      chans[1] = MIN (nchan-1, chans[1]);
-
-      /* Loop over chans */
-      for (ich=chans[0]; ich<=chans[1]; ich++) {
-	iif = in->IFno-1+ifOff;    /* 0 rel IF */
-	indx = iif*nchan + ich;
-	row->IPol[indx] = in->souParm[jsou*4+0];
-	row->QPol[indx] = in->souParm[jsou*4+1];
-	row->UPol[indx] = in->souParm[jsou*4+2];
-	row->VPol[indx] = in->souParm[jsou*4+3];
-      } /* end loop over channels */
-    }   /* end loop over threads */
+    /* Loop over chans */
+    for (ich=chans[0]; ich<=chans[1]; ich++) {
+      iif = in->IFno-1+ifOff;    /* 0 rel IF */
+      indx = iif*nchan + ich;
+      row->IPol[indx] = in->souParm[jsou*4+0];
+      row->QPol[indx] = in->souParm[jsou*4+1];
+      row->UPol[indx] = in->souParm[jsou*4+2];
+      row->VPol[indx] = in->souParm[jsou*4+3];
+    } /* end loop over channels */
 
     /* Rewrite */
     ObitTableCPWriteRow (in->CPTable, irow, row, err);
@@ -1715,8 +1731,9 @@ static void UpdateInstrumentalTab(ObitPolnCalFit* in, ObitErr *err)
  */
 static void UpdateBandpassTab(ObitPolnCalFit* in, ObitErr *err) 
 {
-  olong irow, npol, nif, nchan, iant;
+  olong irow, npol, nif, nchan, indx, ich, iif, iant;
   ObitTableBPRow *row=NULL;
+  olong chanOff=in->BChan-1, ifOff=in->BIF-1, chans[2];
   gchar *routine = "ObitPolnCalFit:UpdateBandpassTab";
   
   /* Open */
@@ -1732,6 +1749,12 @@ static void UpdateBandpassTab(ObitPolnCalFit* in, ObitErr *err)
   nchan = in->outDesc->inaxes[in->outDesc->jlocf];
   npol  = MIN (2,in->outDesc->inaxes[in->outDesc->jlocs]);
 
+  /* 0-rel Channels covered in ChInc */
+  chans[0] = in->Chan-1+chanOff - in->ChInc/2;
+  chans[0] = MAX (0, chans[0]);
+  chans[1] = in->Chan-1+chanOff + in->ChInc/2;
+  chans[1] = MIN (nchan-1, chans[1]);
+  
   /* Loop over row updating */
   for (irow=1; irow<=in->BPTable->myDesc->nrow; irow++) {
     /* Read previous */
@@ -1740,6 +1763,19 @@ static void UpdateBandpassTab(ObitPolnCalFit* in, ObitErr *err)
 
     iant = row->antNo - 1;
 
+    /* Update */
+    /* Loop over chans */
+    for (ich=chans[0]; ich<=chans[1]; ich++) {
+      iif = in->IFno-1+ifOff;  /* 0 rel IF */
+      indx = iif*nchan + ich;
+      
+      row->Real1[indx] = 1.0;
+      row->Imag1[indx] = 0.0;
+      if (npol>1) {
+	row->Real2[indx] = cos(in->PD);
+	row->Imag2[indx] = sin(in->PD);
+      }
+    } /* end loop over channels */
     /* Rewrite */
     ObitTableBPWriteRow (in->BPTable, irow, row, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
@@ -1847,6 +1883,12 @@ static void doFitGSL (ObitPolnCalFit *in, ObitErr *err)
     } /* end loop over parameters */
   } /* end loop over sources */
 
+  /* Phase difference  if being fitted */
+  if (in->doFitRL) {
+    j = in->PDPNumb;
+    gsl_vector_set(work, j, in->PD);
+  }
+
   /* init solver */
   gsl_multifit_fdfsolver_set (solver, in->funcStruc, work);
 
@@ -1908,6 +1950,10 @@ static void doFitGSL (ObitPolnCalFit *in, ObitErr *err)
     } /* end loop over parameters */
   } /* end loop over sources */
 
+  if (in->doFitRL) {
+    j = in->PDPNumb;
+    in->PD = gsl_vector_get(solver->x, j);
+  }
   /* Errors */
   if (in->doError) {
     /* Get covariance matrix - extract diagonal terms */
@@ -1934,6 +1980,12 @@ static void doFitGSL (ObitPolnCalFit *in, ObitErr *err)
 	} else in->souErr[isou*4+k] = -1.0;
       } /* end loop over parameters */
     } /* end loop over sources */
+
+    /* Now phase difference */
+    if (in->doFitRL) {
+      j = in->PDPNumb;
+      in->PDerr = sqrt(gsl_matrix_get(covar, j, j));
+    }
 
     /* Count valid data */
     nvalid = 0;
@@ -2022,10 +2074,39 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
 		     begChi2, ParRMS, XRMS);
    }
 
-    /* Fit phase difference? NYI */
+    /* Fit phase difference? */
     if (in->doFitRL) {
-      in->PD = 0.0;   /* Set parameter to new or old value */
+      iChi2 = GetChi2 (in->nThread, in, polnParmPD, k,
+		       &ParRMS, &XRMS, &dChi2, &d2Chi2, err);     /* Initial value */
+      sParam = in->PD;
+      deriv  = dChi2;
+      deriv2 = d2Chi2;
+      if (fabs(deriv2)>(fabs(deriv)*1.0e-4)) {      /* Bother with this one?*/
+	delta = -atan2(deriv, deriv2);
+	/* Don't go wild */
+	if (delta>0.) delta = MIN (delta,  20*sdelta);
+	if (delta<0.) delta = MAX (delta, -20*sdelta);
+	/* Loop decreasing delta until fit improves */
+	for (i=0; i<10; i++) {
+	  in->PD = sParam + delta;
+	  tChi2 = GetChi2 (in->nThread, in, polnParmUnspec, k, 
+			   &ParRMS, &XRMS, NULL, NULL, err);
+	  if (tChi2<iChi2) {
+	    /* Got new value? */
+	    sParam += delta;
+	    if (fabs(difParam)<fabs(delta)) {
+	      ptype = 0; pnumb = 0; pas = 0;
+	      difParam = delta;
+	    }
+	    break;
+	  }
+	  delta *= 0.7;
+	  if (fabs(delta)<1.0e-6) break;
+	} /* end loop decreasing */
+      } 
+      in->PD = sParam;   /* Set parameter to new or old value */
     } /* end  Fit phase difference */
+    else in->PD = 0.0;
 
     /* Loop over sources */
     for (isou=0; isou<in->nsou; isou++) {
@@ -2063,6 +2144,16 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
 	  } /* end loop decreasing */
 	  in->souParm[isou*4+k] = sParam;   /* Set parameter to new or old value */
 	} /* end if fitting parameter */ 
+	else if (k==1) { /* Fixed Q poln? */
+	  if (in->PPol[isou]>0.0)
+	    in->souParm[isou*4+k] = 
+	      in->PPol[isou] * in->souParm[isou*4] * cos(in->RLPhase[isou]);
+	} /* end Fixed Q poln */
+	else if (k==2) { /* Fixed U poln? */
+	  if (in->PPol[isou]>0.0)
+	    in->souParm[isou*4+k] = 
+	      in->PPol[isou] * in->souParm[isou*4] * sin(in->RLPhase[isou]);
+	} /* end Fixed U poln */
 	if (err->error) Obit_traceback_val (err, routine, in->name, FALSE);
       } /* end loop over parameters */
     } /* end loop over sources */
@@ -2109,7 +2200,7 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
 	      }
 	      break;
 	    }
-	    delta *= 0.5;
+	    delta *= 0.7;
 	    if (fabs(delta)<1.0e-6) break;
 	  } /* end loop decreasing */
 	  in->antParm[iant*4+k] = sParam;   /* Set parameter to new or old value */
@@ -2250,6 +2341,103 @@ static odouble GetChi2 (olong nThreads, ObitPolnCalFit *in,
 
   return Chi2;
  } /* end GetChi2 */
+
+/**
+ * Determine average R-L phase difference
+ * \param in           Fitting object
+ * \param err          Obit error stack object.
+ * \return             Chi^2
+ */
+static ofloat FitRLPhase (ObitPolnCalFit *in, ObitErr *err)
+{
+  ofloat PD = 0.0;
+  ofloat *RLr=NULL, *RLi=NULL, *LRr=NULL, *LRi=NULL, *RLwt=NULL, *LRwt=NULL;
+  ofloat *data, *wt, iipol, Re1, Re2, Im1, Im2, PPol1, PPol2, Pang1, Pang2;
+  odouble sumr, sumi, sumw;
+  olong i, isou, idata;
+  gboolean OK;
+  /*gchar *routine="ObitPolnCalFit:FitRLPhase";*/
+
+  if (err->error) return PD;  /* Error exists? */
+
+  /* Alias work arrays */
+  RLr = (ofloat*)in->SR;
+  RLi = (ofloat*)in->DR;
+  LRr = (ofloat*)in->SL;
+  LRi = (ofloat*)in->DL;
+  RLwt = (ofloat*)in->RS;
+  LRwt = (ofloat*)in->RS;
+
+  /* Init sums */
+  OK = FALSE;
+  for (i=0; i<in->nsou; i++) {
+    RLr[i] = RLi[i] = LRr[i] = LRi[i] = RLwt[i] = LRwt[i] = 0.0;
+    /* Check for suitable calibrators */
+    OK = OK || (!in->souFit[i][1] && !in->souFit[i][2] && 
+		(in->PPol[i]>0.0001));
+  }
+
+  /* Any suitable calibrators? */
+  if (!OK) return PD;
+  wt   = in->inWt;
+  data = in->inData;
+
+  /* Loop over data */
+  for (idata=0; idata<in->nvis; idata++) {
+    isou  = in->souNo[idata];    /* Source number */
+    /* This one usable? */
+    if (in->souFit[isou][1] || in->souFit[isou][2] || 
+	(in->PPol[isou]<=0.0001)) continue;
+    /* Normalize data py 1/ipol */
+    iipol = 1.0 / in->souParm[isou*4];
+    if (wt[idata*4+2]>0.0) {
+      RLr[isou]  += data[idata*10+6] * iipol * wt[idata*4+2];
+      RLi[isou]  += data[idata*10+7] * iipol * wt[idata*4+2];
+      RLwt[isou] += wt[idata*4+2];
+    }
+    if (wt[idata*4+3]>0.0) {
+      LRr[isou] += data[idata*10+8] * iipol * wt[idata*4+3];
+      LRi[isou] += data[idata*10+9] * iipol * wt[idata*4+3];
+      LRwt[isou] += wt[idata*4+3];
+    }
+  } /* end loop over data */
+
+  /* Loop over sources differences phase with model - 
+     weight average by polarized flux,
+     average as real and imaginary parts */
+  sumr = sumi = sumw = 0.0;
+  /* Signs here need to be checked */
+  for (isou=0; isou<in->nsou; isou++) {
+    if (in->souFit[isou][1] || in->souFit[isou][2] || 
+	(in->PPol[isou]<=0.0001)) continue;
+    /* Get weighted average RL and LR per source */
+    if (RLwt[isou]>0.0) {
+      Re1   = RLr[isou] / RLwt[isou];
+      Im1   = RLi[isou] / RLwt[isou];
+      PPol1 = in->souParm[isou*4] * sqrt (Re1*Re1 + Im1*Im1);
+    } else {Re1 = 1.0; Im1=0.0; PPol1 = 0.0;}
+    Pang1 = atan2 (Im1, Re1);
+    sumr += PPol1 * cos (Pang1 - in->RLPhase[isou]);
+    sumi += PPol1 * sin (Pang1 - in->RLPhase[isou]);
+    sumw += PPol1;
+    if (LRwt[isou]>0.0) {
+      Re2   = LRr[isou] / LRwt[isou];
+      Im2   = LRi[isou] / LRwt[isou];
+      PPol2 = in->souParm[isou*4] * sqrt (Re2*Re2 + Im2*Im2);
+    } else {Re2 = 1.0; Im2=0.0; PPol2 = 0.0;}
+    Pang2 = atan2 (Im2, Re2);
+    sumr += PPol2 * cos (Pang2 + in->RLPhase[isou]);
+    sumi -= PPol2 * sin (Pang2 + in->RLPhase[isou]);
+    sumw += PPol2;
+    }
+
+  if ((sumr!=0.0) || (sumi!=0.0))
+    PD = atan2 (sumi, sumr); /* Weighted phase difference */
+
+  PD = 0.0;  /* DEBUG */
+
+  return PD;
+} /* end FitRLPhase */
 
 /**
  * Circular polarization version.
@@ -2403,8 +2591,15 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
       isouLast = isou;
       /* Source parameters */
       ipol = souParm[isou*4+0];
-      qpol = souParm[isou*4+1];
-      upol = souParm[isou*4+2];
+      /* Fitting or fixed? */
+      if (args->souFit[isou][1]) 
+	qpol = souParm[isou*4+1];
+      else
+	qpol = args->PPol[isou]*ipol*cos(args->RLPhase[isou]);
+      if (args->souFit[isou][2]) 
+	upol = souParm[isou*4+2];
+      else
+	upol = args->PPol[isou]*ipol*sin(args->RLPhase[isou]);
       vpol = souParm[isou*4+3];
       /* Complex Stokes array */
       COMPLEX_SET (S[0], ipol+vpol, 0.0);
@@ -2575,13 +2770,18 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
       default:
 	break;
       }; /* end source parameter switch */
-    }  /* end source param */
+      /* end source param */
+    } else if (paramType==polnParmPD) {   /* R-L Phase difference */
+      /* No dependence on RR */
+      COMPLEX_SET (DFDP,  0.0, 0.0);
+      COMPLEX_SET (DFDP2, 0.0, 0.0);      
+    } /* end R-L phase difference */
     /* Accumulate partials */
     if (paramType!=polnParmUnspec) {
       sumd  += 2.0 * isigma * (residR*DFDP.real + residI*DFDP.imag);
       sumd2 += 2.0 * isigma * (DFDP.real*DFDP.real + DFDP.imag*DFDP.imag +
 			       residR*DFDP2.real + residI*DFDP2.imag);
-} /* end set partials */
+    } /* end set partials */
   } /* end valid data */
   
     /*      LL */
@@ -2732,7 +2932,12 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
       default:
 	break;
       }; /* end source parameter switch */
-    }  /* end source param */
+      /* end source param */
+    } else if (paramType==polnParmPD) {   /* R-L Phase difference */
+      /* No dependence on LL */
+      COMPLEX_SET (DFDP,  0.0, 0.0);
+      COMPLEX_SET (DFDP2, 0.0, 0.0);      
+    } /* end R-L phase difference */
     /* Accumulate partials */
     if (paramType!=polnParmUnspec) {
       sumd  += 2.0 * isigma * (residR*DFDP.real + residI*DFDP.imag);
@@ -2785,7 +2990,7 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
 	} 
 	/* If ia1==refant) */
 	if (ia1==args->refAnt) {
-	  COMPLEX_SET (ct1, 0.0,  2.0);
+	  COMPLEX_SET (ct1, 0.0,  1.0);
 	  COMPLEX_MUL2(ct2, ct1, VRL);
 	  COMPLEX_ADD2(DFDP, DFDP, ct2);
 	  COMPLEX_MUL2(ct2, ct1, DFDP);
@@ -2834,7 +3039,7 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
 	} 
 	/* If ia2==refant) */
 	if (ia2==args->refAnt) {
-	  COMPLEX_SET (ct1, 0.0, 2.0);
+	  COMPLEX_SET (ct1, 0.0, 1.0);
 	  COMPLEX_MUL2(ct2, ct1, VRL);
 	  COMPLEX_ADD2(DFDP, DFDP, ct2);
 	  COMPLEX_MUL2(ct2, ct1, DFDP);
@@ -2907,7 +3112,12 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
       default:
 	break;
       }; /* end source parameter switch */
-    }  /* end source param */
+      /* end source param */
+    } else if (paramType==polnParmPD) {   /* R-L Phase difference */
+      COMPLEX_SET (ct1, 0.0,  -1.0);
+      COMPLEX_MUL2(DFDP, ct1, VRL);
+      COMPLEX_MUL2(DFDP2, ct1, DFDP);
+    } /* end R-L phase difference */
     /* Accumulate partials */
     if (paramType!=polnParmUnspec) {
       sumd  += 2.0 * isigma * (residR*DFDP.real + residI*DFDP.imag);
@@ -2960,7 +3170,7 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
 	} 
 	/* If ia2==refant */
 	if (ia2==args->refAnt) {
-	  COMPLEX_SET (ct1, 0.0, -2.0);
+	  COMPLEX_SET (ct1, 0.0, -1.0);
 	  COMPLEX_MUL2(ct2, ct1, VLR);
 	  COMPLEX_ADD2(DFDP, DFDP, ct2);
 	  COMPLEX_MUL2(ct2, ct1, DFDP);
@@ -3008,7 +3218,7 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
 	  }
 	  /* If ia1==refant) */
 	} else  if (ia1==args->refAnt) {
-	  COMPLEX_SET (ct1, 0.0, -2.0);
+	  COMPLEX_SET (ct1, 0.0, -1.0);
 	  COMPLEX_MUL2(ct2, ct1, VLR);
 	  COMPLEX_ADD2(DFDP, DFDP, ct2);
 	  COMPLEX_MUL2(ct2, ct1, DFDP);
@@ -3081,7 +3291,13 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
       default:
 	break;
       }; /* end source parameter switch */
-    }  /* end source param */
+      /* end source param */
+    } else if (paramType==polnParmPD) {   /* R-L Phase difference */
+      /* No dependence on MORE HERE */
+      COMPLEX_SET (ct1, 0.0, 1.0);
+      COMPLEX_MUL2(DFDP, ct1, VRL);
+      COMPLEX_MUL2(DFDP2, ct1, DFDP);
+    } /* end R-L phase difference */
     /* Accumulate partials */
     if (paramType!=polnParmUnspec) {
       sumd  += 2.0*isigma * (residR*DFDP.real + residI*DFDP.imag);
@@ -3161,6 +3377,7 @@ static void MakePolnFitFuncArgs (ObitPolnCalFit *in, ObitErr *err)
     in->thArgs[i]->nparam   = in->nparam;
     in->thArgs[i]->freq     = in->inDesc->freq;
     in->thArgs[i]->RLPhase  = in->RLPhase;
+    in->thArgs[i]->PPol     = in->PPol;
     in->thArgs[i]->Chan     = 0;
     in->thArgs[i]->IFno     = 0;
     in->thArgs[i]->ChiSq    = 0.0;
@@ -3192,6 +3409,68 @@ static void KillPolnFitFuncArgs (ObitPolnCalFit *in)
   } /* end loop over thread args */
   g_free(in->thArgs );  in->thArgs = NULL;
 } /* end  KillPolnFitFuncArgs*/
+
+/**
+ * Check for crazy antenna solutions, reset defaults if so.
+ * If the RMS deviation from the default elipticity exceeds 10 deg
+ * the fit is deemed crazy.
+ * \param in           Fitting object
+ * \param err          Obit error stack object.
+ * \return             TRUE if reset defaults, else FALSE
+ */
+static gboolean CheckCrazy(ObitPolnCalFit *in, ObitErr *err)
+{
+  gboolean crazy = FALSE;
+  odouble sum;
+  olong i, j;
+
+  if (err->error) return crazy;  /* Error detected? */
+
+  /* Get mean square difference from default elipticity */
+  sum = 0.0;
+  for (i=0; i<in->nant; i++) {
+    if ((in->inDesc->crval[in->inDesc->jlocs]<0.0) && 
+	(in->inDesc->crval[in->inDesc->jlocs]>-1.5)) {
+      /* Circular feeds ori_r, elip_r, ori_l, elip_l */
+     sum += (in->antParm[i*4+1] - G_PI/4.0)*(in->antParm[i*4+1] - G_PI/4.0) + 
+            (in->antParm[i*4+3] + G_PI/4.0)*(in->antParm[i*4+1] + G_PI/4.0);
+    } else if ((in->inDesc->crval[in->inDesc->jlocs]<-4.0) && 
+	       (in->inDesc->crval[in->inDesc->jlocs]>-5.5)) {
+      /* Linear feeds  ori_x, elip_x, ori_y, elip_y,  */
+      sum += (in->antParm[i*4+1] - G_PI/2.0)*(in->antParm[i*4+1] - G_PI/2.0) + 
+             (in->antParm[i*4+3] + G_PI/2.0)*(in->antParm[i*4+1] + G_PI/2.0);
+     in->antParm[i*4+0] = +G_PI/4.0;
+    }
+  } /* end loop over antennas */
+
+  /* mean */
+  sum /= in->nant*2.0;
+  crazy = sqrt(sum)*RAD2DG > 10.0;
+
+  /* Crazy? -> reset */
+  if (crazy) {
+    Obit_log_error(err, OBIT_InfoWarn, "Antenna solution crazy, reseting defaults");
+    for (i=0; i<in->nant; i++) {
+      for (j=0; j<4; j++) in->antParm[i*4+j] = 0.0;
+      if ((in->inDesc->crval[in->inDesc->jlocs]<0.0) && 
+	  (in->inDesc->crval[in->inDesc->jlocs]>-1.5)) {
+	/* Circular feeds ori_r, elip_r, ori_l, elip_l */
+	in->antParm[i*4+0] = 0.0;
+	in->antParm[i*4+1] = G_PI/4.0-0.001;
+	in->antParm[i*4+2] =  0.0;
+	in->antParm[i*4+3] =  -G_PI/4.0+0.001;
+      } else if ((in->inDesc->crval[in->inDesc->jlocs]<-4.0) && 
+		 (in->inDesc->crval[in->inDesc->jlocs]>-5.5)) {
+	/* Linear feeds  ori_x, elip_x, ori_y, elip_y,  */
+	in->antParm[i*4+0] = +G_PI/4.0;
+	in->antParm[i*4+1] = +G_PI/4.0;
+	in->antParm[i*4+2] = 0.0;
+	in->antParm[i*4+3] = -G_PI/2.0;
+      }
+    } /* end loop over antennas */
+  } /* end reset */
+  return crazy;
+} /* end CheckCrazy */
 
 #ifdef HAVE_GSL
 /**
@@ -3246,8 +3525,9 @@ static int PolnFitFuncOERL (const gsl_vector *x, void *params,
   
   /* R-L phase difference  at reference antenna */
   if (args->doFitRL) {
-    PD = args->PD;
-  } else PD = 0.0;
+    j = args->PDPNumb;
+    PD = gsl_vector_get(x, j);
+  } else PD = args->PD;
 
   /* get model parameters - first antenna */
   for (iant=0; iant<args->nant; iant++) {
@@ -3324,8 +3604,15 @@ static int PolnFitFuncOERL (const gsl_vector *x, void *params,
       isouLast = isou;
       /* Source parameters */
       ipol = souParm[isou*4+0];
-      qpol = souParm[isou*4+1];
-      upol = souParm[isou*4+2];
+      /* Fitting or fixed? */
+      if (args->souFit[isou][1]) 
+	qpol = souParm[isou*4+1];
+      else
+	qpol = args->PPol[isou]*ipol*cos(args->RLPhase[isou]);
+      if (args->souFit[isou][2]) 
+	upol = souParm[isou*4+2];
+      else
+	upol = args->PPol[isou]*ipol*sin(args->RLPhase[isou]);
       vpol = souParm[isou*4+3];
       /* Complex Stokes array */
       COMPLEX_SET (S[0], ipol+vpol, 0.0);
@@ -3495,8 +3782,9 @@ static int PolnFitJacOERL (const gsl_vector *x, void *params,
   
   /* R-L phase difference  at reference antenna */
   if (args->doFitRL) {
-    PD = args->PD;
-  } else PD = 0.0;
+    j = args->PDPNumb;
+    PD = gsl_vector_get(x, j);
+  } else PD = args->PD;
   
   /* get model parameters - first antenna */
   for (iant=0; iant<args->nant; iant++) {
@@ -3581,8 +3869,15 @@ static int PolnFitJacOERL (const gsl_vector *x, void *params,
       isouLast = isou;
       /* Source parameters */
       ipol = souParm[isou*4+0];
-      qpol = souParm[isou*4+1];
-      upol = souParm[isou*4+2];
+      /* Fitting or fixed? */
+      if (args->souFit[isou][1]) 
+	qpol = souParm[isou*4+1];
+      else
+	qpol = args->PPol[isou]*ipol*cos(args->RLPhase[isou]);
+      if (args->souFit[isou][2]) 
+	upol = souParm[isou*4+2];
+      else
+	upol = args->PPol[isou]*ipol*sin(args->RLPhase[isou]);
       vpol = souParm[isou*4+3];
       /* Complex Stokes array */
       COMPLEX_SET (S[0], ipol+vpol, 0.0);
@@ -3838,6 +4133,14 @@ static int PolnFitJacOERL (const gsl_vector *x, void *params,
 	  }; /* end source parameter switch */
 	} /* end loop over source parameters */
       
+	/* gradient wrt PD = 0 */
+	if (args->doFitRL) {
+	  gradR = gradI = 0.0;
+	  j = args->PDPNumb;
+	  gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
+	  gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
+	}
+	
 	break;  /* End RR */
 	    
       case 1:     /* LL */
@@ -4079,6 +4382,16 @@ static int PolnFitJacOERL (const gsl_vector *x, void *params,
 	    break;
 	  }; /* end source parameter switch */
 	} /* end loop over source parameters */
+
+	/* gradient wrt PD - no effect */
+	if (args->doFitRL) {
+	  gradR = gradI = 0.0;
+	  j = args->PDPNumb;
+	  gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
+	  gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
+	}
+	
+	break;  /* End LL */
 	break;  /* End LL */
 
         case 2:     /* RL */
@@ -4328,6 +4641,19 @@ static int PolnFitJacOERL (const gsl_vector *x, void *params,
 	  }; /* end source parameter switch */
 	} /* end loop over source parameters */
       
+	/* gradient wrt PD */
+	if (args->doFitRL) {
+	  if (wt[idata*4+kk]>0.0) {
+	    COMPLEX_SET(ct1, 0.0, 1.0);
+	    COMPLEX_MUL2(DFDP, ct1, VRL);
+	    gradR = DFDP.real;
+	    gradI = DFDP.imag;
+	  } else gradR = gradI = 0.0;    /* invalid data */
+	  j = args->PDPNumb;
+	  gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
+	  gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
+	}
+	
 	break;  /* End RL */
       case 3:     /* LR */
 	if (wt[idata*4+kk]>0.0) {
@@ -4570,11 +4896,25 @@ static int PolnFitJacOERL (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
 	    }
-	break;  /* End LR */
+	break;
       default:
 	break;
 	  }; /* end source parameter switch */
 	} /* end loop over source parameters */
+
+	/* gradient wrt PD */
+	if (args->doFitRL) {
+	  if (wt[idata*4+kk]>0.0) {
+	    COMPLEX_SET(ct1, 0.0, -1.0);
+	    COMPLEX_MUL2(DFDP, ct1, VLR);
+	    gradR = DFDP.real;
+	    gradI = DFDP.imag;
+	  } else gradR = gradI = 0.0;    /* invalid data */
+	  j = args->PDPNumb;
+	  gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
+	  gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
+	}
+	/* End LR */
       }; /* end switch over data correlation */
       i++;  /* Update complex datum number */
     } /* end loop over correlations */
@@ -4655,8 +4995,9 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
   
   /* R-L phase difference  at reference antenna */
   if (args->doFitRL) {
-    PD = args->PD;
-  } else PD = 0.0;
+    j = args->PDPNumb;
+    PD = gsl_vector_get(x, j);
+  } else PD = args->PD;
   
   /* get model parameters - first antenna */
   for (iant=0; iant<args->nant; iant++) {
@@ -4741,8 +5082,15 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
       isouLast = isou;
       /* Source parameters */
       ipol = souParm[isou*4+0];
-      qpol = souParm[isou*4+1];
-      upol = souParm[isou*4+2];
+      /* Fitting or fixed? */
+      if (args->souFit[isou][1]) 
+	qpol = souParm[isou*4+1];
+      else
+	qpol = args->PPol[isou]*ipol*cos(args->RLPhase[isou]);
+      if (args->souFit[isou][2]) 
+	upol = souParm[isou*4+2];
+      else
+	upol = args->PPol[isou]*ipol*sin(args->RLPhase[isou]);
       vpol = souParm[isou*4+3];
       /* Complex Stokes array */
       COMPLEX_SET (S[0], ipol+vpol, 0.0);
@@ -5001,6 +5349,14 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
 	    break;
 	  }; /* end source parameter switch */
 	} /* end loop over source parameters */
+
+	/* gradient wrt PD = 0 */
+	if (args->doFitRL) {
+	  gradR = gradI = 0.0;
+	  j = args->PDPNumb;
+	  gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
+	  gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
+	}
 	
 	break;  /* End RR */
 	
@@ -5246,6 +5602,14 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
 	  }; /* end source parameter switch */
 	} /* end loop over source parameters */
 
+	/* gradient wrt PD - no effect */
+	if (args->doFitRL) {
+	  gradR = gradI = 0.0;
+	  j = args->PDPNumb;
+	  gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
+	  gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
+	}
+	
 	break;  /* End LL */
 	
       case 2:     /* RL */
@@ -5492,14 +5856,27 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
-	    }
+	   } 
 	    break;
 	  default:
 	    break;
 	  }; /* end source parameter switch */
 	} /* end loop over source parameters */
 	
-	  break;  /* End RL */
+	/* gradient wrt PD */
+	if (args->doFitRL) {
+	  if (wt[idata*4+kk]>0.0) {
+	    COMPLEX_SET(ct1, 0.0, 1.0);
+	    COMPLEX_MUL2(DFDP, ct1, VRL);
+	    gradR = DFDP.real;
+	    gradI = DFDP.imag;
+	  } else gradR = gradI = 0.0;    /* invalid data */
+	  j = args->PDPNumb;
+	  gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
+	  gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
+	}
+	
+	break;  /* End RL */
 	
       case 3:     /* LR */
 	if (wt[idata*4+kk]>0.0) {
@@ -5745,11 +6122,25 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
 	    }
-	break;  /* End LR */
+	break;
       default:
 	break;
 	  }; /* end source parameter switch */
 	} /* end loop over source parameters */
+	
+	/* gradient wrt PD */
+	if (args->doFitRL) {
+	  if (wt[idata*4+kk]>0.0) {
+	    COMPLEX_SET(ct1, 0.0, -1.0);
+	    COMPLEX_MUL2(DFDP, ct1, VLR);
+	    gradR = DFDP.real;
+	    gradI = DFDP.imag;
+	  } else gradR = gradI = 0.0;    /* invalid data */
+	  j = args->PDPNumb;
+	  gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
+	  gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
+	}
+	/* End LR */	
       }; /* end switch over data correlation */
       
       i++;  /* Update complex datum number */

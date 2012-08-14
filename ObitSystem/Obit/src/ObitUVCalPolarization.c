@@ -823,7 +823,9 @@ static void LXYPol(ObitUVCalPolarizationS *in, olong iant1, olong iant2, olong i
 static void SetInvJonesIF(ObitUVCalPolarizationS *in, ObitAntennaList *Ant, 
 			  ObitUVCalCalibrateS *cal, olong iChan, olong iant)
 {
-  ofloat Jones[8], Dr[2]={0.0,0.0}, Dl[2]={0.0,0.0}, Det[2], d;
+  ofloat Dr[2]={0.0,0.0}, Dl[2]={0.0,0.0}, d;
+  ofloat Det[2] = {1.0, 0.0};
+  ofloat Jones[8] = {1.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0};
   ofloat elp_r, elp_l, ori_r, ori_l, angle[4], sina[4], cosa[4];
   ofloat root2, fblank = ObitMagicF();
   ofloat rotate=0.0, crot, srot, PD, temp[8];
@@ -1025,7 +1027,7 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
 			  olong iChan, olong iant, ObitErr *err)
 {
   ofloat Jones[8], Dr[2]={0.0,0.0}, Dl[2]={0.0,0.0}, Det[2], d;
-  ofloat elp_r, elp_l, ori_r, ori_l, PD, angle[6], sina[6], cosa[6];
+  ofloat elp_r, elp_l, ori_r, ori_l, PD=0.0, angle[6], sina[6], cosa[6];
   ofloat root2, fblank = ObitMagicF();
   ofloat rotate=0.0, crot, srot, temp[8];
   olong iif, jndx, loff, refAnt, i, SubA, ich, nch, kndx, ia;

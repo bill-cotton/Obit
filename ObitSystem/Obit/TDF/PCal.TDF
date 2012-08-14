@@ -117,6 +117,8 @@ modelParm                           Model parameters (maj, min, pa, type)
 RLPhase       -4000.      400.      R-L phase difference per calibrator
 **PARAM** float 10  **DEF** 0.0
 RM                                  Rotation measure, per calibrator
+**PARAM** float 10  **DEF** 0.0
+PPol          0.0          1.0      Fract lin poln per calibrator
                                        
                                        Calibration info
 **PARAM** str 4  **DEF** LM
@@ -304,6 +306,7 @@ Adverbs:
              reference frequency. (deg)  One value per calibrator.
   RM.........NYI The rotation measure (rad/m^2) used to convert RLPhase
              to other frequencies. One value per calibrator.
+  PPol.......Fractional linear polarization of calibrators
 
       Calibration control
   solnType...Solution type:'LM  ' 
@@ -316,8 +319,8 @@ Adverbs:
              If False polarization fixed at (0,i0)
   doFitI.....If True fit for Stokes I, one per source
   doFitV.....If True fit for Stokes V, one per source
-  doFitRL....NYI If True and doFitGn False, fit for global R-L phase 
-             difference per channel, based on RLPhase and RM.  
+  doFitRL....If True, fit for global R-L phase  difference per 
+             channel, based on RLPhase, RM and PPol
   ChWid......If >0, The calibration will use ChWid channels 
              centered on each channel, should be odd.
   ChInc......Increment between center channel in solution,

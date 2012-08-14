@@ -185,6 +185,8 @@ typedef struct {
   odouble freq;
   /** R-L Phase of calibrators (rad) at Freq */
   ofloat *RLPhase;
+  /** Fractional polarization of calibrators */
+  ofloat *PPol;
   /** Central channel (1-rel) of fit */
   olong Chan;
   /** IF number (1-rel) */

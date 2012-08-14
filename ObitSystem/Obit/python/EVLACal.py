@@ -2657,7 +2657,7 @@ def EVLARLDelay(uv, err, \
                 UVRange=[0.0,0.0], timerange = [0.0,1000.0], \
                 soucode="    ", doCalib=-1, gainUse=0, \
                 doBand=0, BPVer=0, flagVer=-1,  \
-                refAnt=0, Antennas=[0], doPol=-1,  \
+                refAnt=0, Antennas=[0], doPol=False,  \
                 nThreads=1, noScrat=[], logfile = "",check=False, debug = False):
     """
     Determine R-L delay 
@@ -2886,7 +2886,7 @@ def EVLARLCal(uv, err, \
               RLPCal=None, RLPhase=0.0, RM=0.0, UVRange=[0.0,0.0], timerange = [0.0,1000.0], \
               FQid=0, calcode="    ", doCalib=-1, gainUse=0, \
               doBand=0, BPVer=0, flagVer=-1,  \
-              refAnt=0, doPol=-1, PDVer=1, FOV=0.05, niter = 100, CleanRad=None, \
+              refAnt=0, doPol=False, PDVer=1, FOV=0.05, niter = 100, CleanRad=None, \
               doPlot=False, plotFile="./BPCal.ps", \
               nThreads=1, noScrat=[], logfile = "",check=False, debug = False):
     """
@@ -3310,7 +3310,7 @@ def EVLARLCal2(uv, err, uv2 = None, \
                FQid=0, calcode="    ", doCalib=-1, gainUse=0, \
                timerange = [0.,0.,0.,0.,0.,0.,0.,0.], \
                doBand=0, BPVer=0, flagVer=-1, \
-               refAnt=0, doPol=-1, smooth=[0.,0.,0.], dataInt=0., \
+               refAnt=0, doPol=False, smooth=[0.,0.,0.], dataInt=0., \
                RLPCal=None,  FOV=0.05, niter = 100, \
                nThreads=1, noScrat=[], logfile = "",check=False, debug = False):
     """

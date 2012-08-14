@@ -86,6 +86,11 @@ $(CTARGETS):  $(LIBDIR)%.o: %.c $(wildcard ../include/%*.h)
 	$(CC) -c $(SERVER_CPPFLAGS) $(SERVER_CFLAGS) requestbox.c
 	mv requestbox.o $(LIBDIR)
 
+# need task message server interface
+XMLRPCTaskMessServer.o: $(LIBDIR)%.o: %.c $(wildcard ../include/%*.h)
+	$(CC) -c $(SERVER_CPPFLAGS) $(SERVER_CFLAGS) XMLRPCTaskMessServer.c
+	mv XMLRPCTaskMessServer.o $(LIBDIR)
+
 clean:
 	rm -f $(CTARGETS)
 	rm -f *.o

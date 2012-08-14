@@ -709,3 +709,29 @@ Obit/tasks/MFImage.c Obit/tasks/Imager.c:
 Obit/TDF/UVAppend.TDF:
   Improve documentation
 4 Aug 2012 version 422
+
+Mostly Polarization and scripting related
+ObitVersion:
+Obit/changes.log:
+Obit/python/Image.py:
+  Add Rename/PRename functions
+ObitView/src/Makefile.in:
+ Add special case for XMLRPCTaskMessServer.o
+Obit/src/ObitTableSU.c Obit/include/ObitTableSU.h:
+Obit/include/ObitTableSUDef.h Obit/include/ObitTableSUClassDef.h:
+Obit/include/ObitTableSURowDef.h Obit/include/ObitTableSURowClassDef.h:
+  Add RAOBS and DECOBS colummns
+Obit/src/ObitUVCalPolarization.c:
+  Undefined variables
+Obit/src/ObitUVReweight.c Obit/include/ObitUVReweight.h:
+  New utility to reweight data by 1/variance of amp.
+Obit/tasks/UVAppend.c  Obit/TDF/UVAppend.TDF:
+  Add reweighting data as an option.
+Obit/python/EVLACal.py:
+  get type correct for doPol.
+Obit/src/ObitPolnCalFit.c Obit/include/ObitPolnCalFit.h:
+Obit/include/ObitPolnCalFitDef.h:
+Obit/tasks/PCal.c Obit/TDF/PCal.TDF:
+  Implement fitting phase difference, fix fract. pol.
+14 Aug 2012 version 423
+

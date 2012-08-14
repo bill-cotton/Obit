@@ -37,6 +37,7 @@
 #include "ObitAIPSDir.h"
 #include "ObitFITS.h"
 #include "ObitTableAN.h"
+#include "ObitUVReweight.h"
 
 /* internal prototypes */
 /* Get inputs */
@@ -62,6 +63,8 @@ void UVAppendHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
 olong CopyAN (ObitUV* inData, ObitUV* outData, ObitErr* err);
 /* Append data */
 void ObitUVAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err);
+/* Append data */
+void UVReweight(ObitUV *inUV, ObitUV *outUV, ObitErr *err);
 /* Copy AN Tables */
 ObitIOCode ObitTableANSelect2 (ObitUV *inUV, olong ncopy, ObitUV *outUV, 
 			       ObitErr *err);
@@ -89,7 +92,9 @@ int main ( int argc, char **argv )
   olong        newSubA;
   ObitSystem   *mySystem=NULL;
   ObitUV       *inData=NULL, *outData=NULL;
+  gboolean     reweight;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
   ObitErr      *err= NULL;
 
    /* Startup - parse command line, read inputs */
@@ -129,9 +134,18 @@ int main ( int argc, char **argv )
   dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
   ObitInfoListAlwaysPut(inData->info, "newSubA", OBIT_long, dim, &newSubA);
 
-  /* Append */
-  ObitUVAppend(inData, outData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  /* Reweighting? */
+  reweight = FALSE;
+  ObitInfoListGetTest(myInput, "reweight",  &type, dim, &reweight);
+
+  /* Reweight or append? */
+  if (reweight) {
+    UVReweight (inData, outData, err);
+  } else {
+    /* Append */
+    ObitUVAppend(inData, outData, err);
+  }
+    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
   /* History */
   UVAppendHistory (myInput, inData, outData, err);
@@ -596,7 +610,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "souCode", "Qual", "Stokes", "timeRange", 
     "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "FreqID", "corrType", 
-    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
+    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", "timeAvg",
     "doPol", "PDVer", "Smooth", "Antennas",  "subA", "Sources", "souCode", "Qual",
      NULL};
   gchar *routine = "getInputData";
@@ -679,16 +693,15 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   /* Always */
   doCalSelect = TRUE;
   ObitInfoListAlwaysPut (myInput, "doCalSelect", OBIT_bool, dim, &doCalSelect);
- 
 
-  /* Ensure inData fully instantiated and OK */
-  ObitUVFullInstantiate (inData, TRUE, err);
-  if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
 
   /* Get input parameters from myInput, copy to inData */
   ObitInfoListCopyList (myInput, inData->info, dataParms);
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
 
+  /* Ensure inData fully instantiated and OK */
+  ObitUVFullInstantiate (inData, TRUE, err);
+  if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
   return inData;
 } /* end getInputData */
 
@@ -755,8 +768,8 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     } else { /* Didn't find */
       strncpy (Aclass, "NoClas", 7);
     }
-    /* Default out class is "UVCop" */
-    if (!strncmp(Aclass, "      ", 6)) strncpy (Aclass, "UVCop", 7);
+    /* Default out class is "UVApp" */
+    if (!strncmp(Aclass, "      ", 6)) strncpy (Aclass, "UVApp", 7);
 
     /* input AIPS disk - default is outDisk */
     ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
@@ -831,7 +844,10 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 
   /* Clone from input if new */
   if (newOutput) {
+    /* Open to force Clone to use correct descriptor */
+    ObitUVOpen (inData, OBIT_IO_ReadCal, err);
     ObitUVClone (inData, outUV, err);
+    ObitUVClose (inData, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
     
     /* Ensure outUV fully instantiated and OK */
@@ -867,7 +883,7 @@ void UVAppendHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     "FreqID", "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "Stokes", 
     "Sources",  "Qual", "souCode", "subA", "Antennas", 
     "doCalSelect", "doCalib", "gainUse", "doPol", "PDVer", "flagVer", 
-    "doBand", "BPVer", "Smooth",  "corrType", 
+    "doBand", "BPVer", "Smooth",  "corrType", "reweight", "timeAvg",
     "outFile",  "outDisk",  "outName", "outClass", "outSeq", "Compress",
     NULL};
   gchar *routine = "UVAppendHistory";
@@ -963,7 +979,7 @@ void ObitUVAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   gboolean incompatible;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitUVDesc *inDesc, *outDesc;
-  olong inNPIO, outNPIO, NPIO, indx, i, newSubA=0;
+  olong inNPIO, outNPIO, NPIO, indx, i, count, newSubA=0;
   ofloat timeAdd, blAdd;
   gchar *routine = "ObitUVAppend";
 
@@ -1016,7 +1032,7 @@ void ObitUVAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
  }
 
   /* Calibration wanted? */ 
-  doCalSelect = FALSE;
+  doCalSelect = TRUE;
   ObitInfoListGetTest(inUV->info, "doCalSelect", &type, dim, &doCalSelect);
   if (doCalSelect) access = OBIT_IO_ReadCal;
   else access = OBIT_IO_ReadWrite;
@@ -1052,10 +1068,12 @@ void ObitUVAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 
   /* Loop over data */
   done = (retCode != OBIT_IO_OK);
+  count = 0;
   while (!done) {
     
     /* read buffer */
-    retCode = ObitUVRead (inUV, NULL, err);
+    if (doCalSelect) retCode = ObitUVReadSelect (inUV, NULL, err);
+    else retCode = ObitUVRead (inUV, NULL, err);
     if (err->error) {
       outUV->buffer = NULL; outUV->bufferSize = 0;
       Obit_traceback_msg (err, routine, inUV->name);
@@ -1065,6 +1083,7 @@ void ObitUVAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 
     /* How many? */
     outDesc->numVisBuff = inDesc->numVisBuff;
+    if (inDesc->numVisBuff<=0) continue;  /* any valid data? */
 
     /* Modify input time and baseline */
     for (i=0; i<inDesc->numVisBuff; i++) { /* loop over visibilities */
@@ -1075,6 +1094,7 @@ void ObitUVAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 
     /* Write buffer */
     retCode = ObitUVWrite (outUV, NULL, err);
+    count += inDesc->numVisBuff;
     if (err->error) {
       outUV->buffer = NULL; outUV->bufferSize = 0;
       Obit_traceback_msg (err, routine, outUV->name);
@@ -1093,11 +1113,54 @@ void ObitUVAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   retCode = ObitUVClose (outUV, err);
   if (err->error) Obit_traceback_msg (err, routine, outUV->name);
 
+  /* Inform user */
+  Obit_log_error(err, OBIT_InfoErr, "Appended %d entries", count);
+
   /* Reset number of vis per I/O */
   ObitInfoListAlwaysPut (inUV->info,  "nVisPIO", OBIT_long, dim,  &inNPIO);
   ObitInfoListAlwaysPut (outUV->info, "nVisPIO", OBIT_long, dim,  &outNPIO);
 
 } /* end ObitUVAppend */
+
+/**
+ * Append the contents of one UV onto the end of another replacing weights with 
+ * 1/variance of the amplitudes
+ * \param inUV   Input UV 
+ *      Control info on info member in addition to data selection/calibration
+ * \li newSubA OBIT_long scalar subarray number of new data [def 0]
+ *     This affects the baseline and time random parameters of the output.
+ * \param outUV  Output UV, must already be defined
+ * \param err    Error stack
+ */
+void UVReweight(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
+{
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  olong  newSubA=0;
+  ofloat timeAdd, blAdd;
+  gchar *routine = "ObitUVAppend";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitUVIsA(inUV));
+  g_assert (ObitUVIsA(outUV));
+
+  /* New subarray number */
+  ObitInfoListGetTest(inUV->info, "newSubA", &type, dim, &newSubA);
+  newSubA = MAX (1, newSubA);
+  /* 5 day offset for each subarray */
+  timeAdd = 5.0 * (newSubA-1);
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (inUV->info,  "timeOff", OBIT_float, dim,  &timeAdd);
+  /* 0.01 offset per subarray to baseline */
+  blAdd = 0.01 * (newSubA-1);
+  ObitInfoListAlwaysPut (inUV->info,  "subAOff", OBIT_float, dim,  &blAdd);
+
+  /* Reweight */
+  ObitUVReweightDo (inUV, outUV, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+
+} /* end UVReweight */
 
 /**
  * Copies AN tables from inUV to outUV with selection in inUV

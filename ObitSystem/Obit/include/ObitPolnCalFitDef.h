@@ -42,8 +42,8 @@ gboolean doFitRL;
 odouble PD;
 /** Error estimate R-L (or X-Y) phase difference */
 odouble PDerr;
-/** Fit antenna gains: */
-gboolean doFitGn;
+/** PD parameter number */
+olong PDPNumb;
 /** Fit source IPol per source */
 gboolean *doFitI;
 /** Fit source VPol per source: */
@@ -120,6 +120,8 @@ ofloat *RLPhaseIn;
 ofloat *RLPhase;
 /** Rotation measures of calibrators (rad/m^2) */
 ofloat *RM;
+/** Fractional linear polarization per calibrator */
+ofloat *PPol;
 /** Flux density of calibrators at reference freq */
 ofloat *IFlux0;
 /** Spectral index of calibrators at reference freq */

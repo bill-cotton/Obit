@@ -22,7 +22,7 @@ Additional  Functions are available in ImageUtil.
 # Python/Obit Astronomical Image class
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2009
+#  Copyright (C) 2004-2012
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -306,6 +306,53 @@ class Image(OData.OData):
             OErr.printErrMsg(err, "Error closing image")
         return out
     # end GetPixel
+
+    def Rename (self, err, newFITSName=None, \
+                newAIPSName="            ", \
+                newAIPSClass="      ", newAIPSSeq=0):
+        """
+        Rename underlying files
+
+        * self   = Python Image object
+        * err    = Python Obit Error/message stack
+
+        For FITS files:
+
+        * newFITSName = new name for FITS file
+        
+        For AIPS:
+        
+        * newAIPSName  = New AIPS Name (max 12 char) Blank => don't change.
+        * newAIPSClass = New AIPS Class (max 6 char) Blank => don't change.
+        * newAIPSSeq   = New AIPS Sequence number, 0 => unique value
+        """
+        ################################################################
+        # Checks
+        if not self.ODataIsA():
+            raise TypeError,"self MUST be a Python Obit OData"
+        if not OErr.OErrIsA(err):
+            raise TypeError,"err MUST be an OErr"
+        if len(newAIPSName)>12:
+            raise RuntimeError,"New AIPS Name too long"
+        if len(newAIPSClass)>6:
+            raise RuntimeError,"New AIPS Class too long"
+        #
+        # Set controls
+        inInfo = self.List    # 
+        dim = [1,1,1,1,1]
+        InfoList.PAlwaysPutInt     (inInfo, "newSeq",       dim, [newAIPSSeq])
+        dim[0] = 12
+        InfoList.PAlwaysPutString  (inInfo, "newName",    dim, [newAIPSName])
+        dim[0] = 6
+        InfoList.PAlwaysPutString  (inInfo, "newClass",   dim, [newAIPSClass])
+        if newFITSName:
+            dim[0] = len(newFITSName)
+            InfoList.PAlwaysPutString  (inInfo, "newFileName",dim, [newFITSName])
+        # Rename
+        Obit.ImageRename (self.cast(myClass), err.me)
+        if err.isErr:
+            OErr.printErrMsg(err, "Error Renaming OData data")
+    # end PRename
 
     def Copy (self, outImage, err):
         """
@@ -830,6 +877,27 @@ def PZap (inImage, err):
     ################################################################
     inImage.Zap(err)
     # end PZap
+
+def PRename (inImage, err, newFITSName=None, \
+             newAIPSName="            ", \
+             newAIPSClass="      ", newAIPSSeq=0):
+    """ Rename underlying files
+
+    inImage   = Python Image object
+    err       = Python Obit Error/message stack
+    For FITS files:
+    newFITSName = new name for FITS file
+
+    For AIPS:
+    newAIPSName  = New AIPS Name (max 12 char) Blank => don't change.
+    newAIPSClass = New AIPS Class (max 6 char) Blank => don't change.
+    newAIPSSeq   = New AIPS Sequence number, 0 => unique value
+    """
+    ################################################################
+    inImage.Rename(err,newFITSName=newFITSName, \
+                   newAIPSName=newAIPSName, newAIPSClass=newAIPSClass,
+                   newAIPSSeq=newAIPSSeq)
+    # end PRename
 
 def PScratch (inImage, err):
     """
