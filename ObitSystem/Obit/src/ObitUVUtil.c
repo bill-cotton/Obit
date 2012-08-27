@@ -59,7 +59,7 @@ static void AvgFAver (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
 		      ObitErr *err);
 
 /** Hann visibility in frequency */
-static void Hann (ObitUVDesc *inDesc, ObitUVDesc *outDesc, 
+static void Hann (ObitUVDesc *inDesc, ObitUVDesc *outDesc, gboolean doDescm,
 		  olong *corChan, olong *corIF, olong *corStok, gboolean *corMask,
 		  ofloat *inBuffer, ofloat *outBuffer, ofloat *work, 
 		  ObitErr *err);
@@ -1268,6 +1268,8 @@ ObitSourceList* ObitUVUtilWhichSources (ObitUV *inUV, ObitErr *err)
  * Hanning smooth the data inObitUV.
  * \param inUV     Input uv data to average, 
  *                 Any request for calibration, editing and selection honored
+ * Control parameters are on the info member.
+ * \li "doDescm"  OBIT_bool (1,1,1) Descimate data after Hanning [def TRUE]
  *              
  * \param scratch  True if scratch file desired, will be same type as inUV.
  * \param outUV    If not scratch, then the previously defined output file
@@ -1280,7 +1282,7 @@ ObitUV* ObitUVUtilHann (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 			ObitErr *err)
 {
   ObitIOCode iretCode, oretCode;
-  gboolean doCalSelect;
+  gboolean doCalSelect, doDescm;
   gchar *exclude[]={"AIPS CL", "AIPS SN", "AIPS FG", "AIPS CQ", "AIPS WX",
 		    "AIPS AT", "AIPS CT", "AIPS OB", "AIPS IM", "AIPS MC",
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
@@ -1334,8 +1336,13 @@ ObitUV* ObitUVUtilHann (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   /* copy Descriptor */
   outUV->myDesc = ObitUVDescCopy(inUV->myDesc, outUV->myDesc, err);
  
-  /* Effectively averaging 2 channels */
-  NumChAvg = 2;
+  /* Descimate output? */
+  doDescm = TRUE;
+  ObitInfoListGetTest(inUV->info, "doDescm", &type, dim, &doDescm);
+
+  /* Effectively averaging 2 channels if doDescm */
+  if (doDescm)  NumChAvg = 2;
+  else          NumChAvg = 1;
   dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
   ObitInfoListAlwaysPut(inUV->info, "NumChAvg", OBIT_long, dim, &NumChAvg);
  
@@ -1362,8 +1369,8 @@ ObitUV* ObitUVUtilHann (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		       corChan, corIF, corStok, corMask, err);
   if (err->error) goto cleanup;
 
-  /* Last channel incomplete - drop */
-  outDesc->inaxes[outDesc->jlocf]--;
+  /* If descimating, last channel incomplete - drop */
+  if (doDescm) outDesc->inaxes[outDesc->jlocf]--;
 
   /* test open output */
   oretCode = ObitUVOpen (outUV, OBIT_IO_WriteOnly, err);
@@ -1425,7 +1432,8 @@ ObitUV* ObitUVUtilHann (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
       indx += inDesc->nrparm;
       jndx += outDesc->nrparm;
       /* Average data */
-      Hann (inUV->myDesc, outUV->myDesc, corChan, corIF, corStok, corMask,
+      Hann (inUV->myDesc, outUV->myDesc, doDescm, 
+	    corChan, corIF, corStok, corMask,
 	    &inUV->buffer[indx], &outUV->buffer[jndx], work, err);
       if (err->error) goto cleanup;
     } /* end loop over visibilities */
@@ -1441,9 +1449,9 @@ ObitUV* ObitUVUtilHann (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 
   /* Cleanup */
  cleanup:
-  if (work) g_free(work);       work    = NULL;
+  if (work)    g_free(work);    work    = NULL;
   if (corChan) g_free(corChan); corChan = NULL;
-  if (corIF) g_free(corIF);     corIF   = NULL;
+  if (corIF)   g_free(corIF);   corIF   = NULL;
   if (corStok) g_free(corStok); corStok = NULL;
   if (corMask) g_free(corMask); corMask = NULL;
   
@@ -3880,6 +3888,7 @@ static void AvgFAver (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
  * Hanning smooth a visibility
  * \param inDesc   Input UV descriptor
  * \param outDesc  Output UV descriptor to be modified
+ * \param doDescm  If TRUE drop every other channel
  * \param corChan  0-rel output channel numbers
  * \param corIF    0-rel output IF numbers
  * \param corStok  0-rel output Stokes parameter code.
@@ -3890,12 +3899,12 @@ static void AvgFAver (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
  * \param work      Work array twice the size of the output visibility
  * \param err       Error stack, returns if not empty.
  */
-static void Hann (ObitUVDesc *inDesc, ObitUVDesc *outDesc, 
+static void Hann (ObitUVDesc *inDesc, ObitUVDesc *outDesc, gboolean doDescm,
 		  olong *corChan, olong *corIF, olong *corStok, gboolean *corMask,
 		  ofloat *inBuffer, ofloat *outBuffer, ofloat *work, 
 		  ObitErr *err)
 {
-  olong i, n, indx, jndx, jf, jif, js, nochan, noif, off;
+  olong i, n, indx, jndx, jf, jif, js, nochan, noif, off, wincf;
   olong nchan, nif, nstok, iincs, iincf, iincif, incs, incf, incif;
 
   /* error checks */
@@ -3952,13 +3961,17 @@ static void Hann (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
       } /* end freq loop */
     } /* end IF loop */
   } /* end stokes loop */
+
+  /* Descimating output? */
+  if (doDescm) wincf = 2;
+  else         wincf = 1;
   
   /* Normalize to output */
   /* Loop over Stokes */
   for (js=0; js<nstok; js++) {  /* Stokes loop */
     for (jif=0; jif<noif; jif++) {  /* IF loop */
       for (jf=0; jf<nochan; jf++) {  /* Frequency loop */
-	jndx = 4*(jf*2 + jif*nchan + js*nchan*nif);
+	jndx = 4*(jf*wincf + jif*nchan + js*nchan*nif);
 	indx = js*incs + jif*incif + jf*incf;
 	/* Check for zero data */
 	if ((work[jndx+3]>0.0) && !(( work[jndx]==0.0) && (work[jndx+1]==0.0))) {

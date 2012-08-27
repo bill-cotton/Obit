@@ -188,7 +188,7 @@ def printErrMsg(err, message="Error"):
     Obit.ObitErrLog(err.me)
     if ierr:
         print message
-        raise OErr
+        raise Exception
     # end printErrMsg
      
 def OErrIsA (err):

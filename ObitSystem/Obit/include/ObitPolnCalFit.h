@@ -163,8 +163,10 @@ typedef struct {
   olong *isouIDs;
   /** Number of parameters being fitted */
   olong nparam;
-  /** Number of valid observations */
-  olong nobs;
+  /** Number of valid parallel observations */
+  olong nPobs;
+  /** Number of valid cross pol observations */
+  olong nXobs;
   /** Chi squared of fit */
   ofloat ChiSq;
   /** Sum of parallel residuals */

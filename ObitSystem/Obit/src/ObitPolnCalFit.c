@@ -310,8 +310,8 @@ static void calcmodel (ObitPolnCalFit *args, ofloat Rarray[8], olong idata)
   COMPLEX_SET (MC4, 0.0, 0.0);
   chi1  = data[idata*10+0];   /* parallactic angle ant 1 */
   chi2  = data[idata*10+1];   /* parallactic angle ant 2 */
-  COMPLEX_EXP (PA1, -2*chi1);
-  COMPLEX_EXP (PA2, -2*chi2);
+  COMPLEX_EXP (PA1, 2*chi1);
+  COMPLEX_EXP (PA2, 2*chi2);
   COMPLEX_CONJUGATE (PA1c, PA1);
   COMPLEX_CONJUGATE (PA2c, PA2);
   
@@ -654,10 +654,11 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
   oldNparam = 0;
 
   /* Parameter/error arrays */
-  in->antParm = g_malloc0(in->nant*4*sizeof(odouble));
-  in->antErr  = g_malloc0(in->nant*4*sizeof(odouble));
-  in->souParm = g_malloc0(in->nsou*4*sizeof(odouble));
-  in->souErr  = g_malloc0(in->nsou*4*sizeof(odouble));
+  in->antParm     = g_malloc0(in->nant*4*sizeof(odouble));
+  in->antErr      = g_malloc0(in->nant*4*sizeof(odouble));
+  in->souParm     = g_malloc0(in->nsou*4*sizeof(odouble));
+  in->souErr      = g_malloc0(in->nsou*4*sizeof(odouble));
+  in->lastSouParm = g_malloc0(in->nsou*4*sizeof(odouble));
 
   /* Fill Fitting flag arrays */
   /* Order of antenna parameters:
@@ -690,6 +691,10 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     else                 {in->souFit[i][1] = FALSE; in->souFit[i][2] = FALSE;}
     if (in->doFitV[i])    in->souFit[i][3] = TRUE;
     else                  in->souFit[i][3] = FALSE;
+    in->souParm[i*4+0] = in->souParm[i*4+1] = in->souParm[i*4+2] = in->souParm[i*4+3] = 0.0;
+    /* Last valid source parameters, I<-1000 =>none */
+    in->lastSouParm[i*4+0] = -1000.0;
+    in->lastSouParm[i*4+1] = in->lastSouParm[i*4+2] = in->lastSouParm[i*4+3] = 0.0;
   } /* end filling source fitting flags */
 
   /* Get numbers of channels/IFs */
@@ -796,7 +801,8 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
       
     } /* End fit OK */
     
-    /* Write output to Tables */
+    /* Write output to Tables  if some valid XPol data */
+    isOK = isOK && (XRMS>0.0);
     WriteOutput(in, outUV, isOK, err);
     if (err->error) Obit_traceback_msg (err, routine, inUV->name);
 
@@ -806,13 +812,13 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     if (isOK && (err->prtLv>=3)) {
       /* BL 2-21 sou 1 */
       refAnt = in->refAnt-1;
-      fprintf (stderr, "Baseline 1-27, source 0 IF %d Chan %d\n", in->IFno, in->Chan);
+      fprintf (stderr, "Baseline 2-28, source 0 IF %d Chan %d\n", in->IFno, in->Chan);
       fprintf (stderr, "  PA          RRr (o,c)         RRi                LLr                LLi                RLr                RLi                LRr                LRi \n");
       for (i=0; i<in->inDesc->nvis; i++) {
 	isou   = in->souNo[i];    /* Source number */
 	ia1    = in->antNo[i*2+0];
 	ia2    = in->antNo[i*2+1]; 
-	if ((isou==0) && (ia1==1) && (ia2==27)) {  /* 1-27 */
+	if ((isou==0) && (ia1==1) && (ia2==27)) {  /* 2-28 */
 	  calcmodel (in, RArray, i);
 	  RRr = RArray[0]; RRi = RArray[1]; 
 	  LLr = RArray[6]; LLi = RArray[7]; 
@@ -914,6 +920,7 @@ ObitPolnCalFit *in = inn;
   in->souNo      = NULL;
   in->souParm    = NULL;
   in->souErr     = NULL;
+  in->lastSouParm= NULL;
   in->souFit     = NULL;
   in->antPNumb   = NULL;
   in->souPNumb   = NULL;
@@ -993,6 +1000,7 @@ void ObitPolnCalFitClear (gpointer inn)
   if (in->souNo)    g_free(in->souNo);
   if (in->souParm)  g_free(in->souParm);
   if (in->souErr)   g_free(in->souErr);
+  if (in->lastSouParm) g_free(in->lastSouParm);
   if (in->souIDs)   g_free(in->souIDs);
   if (in->isouIDs)  g_free(in->isouIDs);
   if (in->RLPhaseIn)g_free(in->RLPhaseIn);
@@ -1154,6 +1162,7 @@ static void WriteOutput (ObitPolnCalFit* in, ObitUV *outUV,
 /**
  * Read data and load arrays.
  * Averages ChWid channels centered on each channel.
+ * Require all 4 correlations to be valid in each channel
  * \param in    Fitting object
  * \param inUV  Averaged/calibrated/divided UV data to be fitted
  * \param iChan Current first channel (1-rel) in thread group, 
@@ -1172,11 +1181,12 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
   ObitIOCode retCode = OBIT_IO_OK;
   ObitSource *curSource=NULL;
   olong ivis, ant1, ant2, isou, jsou, lastSou=-999, jvis, istok, suba;
-  olong nChan, bch, ech, cnt, i, j, indx;
+  olong nChan, bch, ech, cnt, i, j, indx, indx1, indx2, indx3, indx4;
   olong ChInc=in->ChInc, jChan, jIF;
   ofloat *buffer, cbase, curPA1=0.0, curPA2=0.0, curTime=0.0, lastTime=-1.0e20;
   ofloat sumRe, sumIm, sumWt; 
   odouble lambdaRef, lambda, ll, sum;
+  gboolean OK;
   gchar *routine = "ObitPolnCalFit:ReadData";
 
   /* Previous error? */
@@ -1248,6 +1258,22 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
 	Obit_log_error(err, OBIT_Error, "%s: Exceeded vis buffer size", routine);
 	goto cleanup;
       }
+
+      /* Check that all Stokes correlations in each channel are present,
+	 if only partial, flag the rest */
+      for (i=bch; i<=ech; i++) {
+	indx = inUV->myDesc->nrparm + i*inUV->myDesc->incf
+	  + (jIF-1)*inUV->myDesc->incif + 2;
+	indx1 = indx + 0*inUV->myDesc->incs;
+	indx2 = indx + 1*inUV->myDesc->incs;
+	indx3 = indx + 2*inUV->myDesc->incs;
+	indx4 = indx + 3*inUV->myDesc->incs;
+	OK = (buffer[indx1]>0.0) && (buffer[indx2]>0.0) && 
+	  (buffer[indx3]>0.0) && (buffer[indx4]>0.0);
+	if (!OK) {  /* Kill 'em all */
+	  buffer[indx1] = buffer[indx2] = buffer[indx3] = buffer[indx4] = 0.0;
+	}
+      } /* end checking data loop */
       
       /* Get info - source ID */
       if (inUV->myDesc->ilocsu>=0) isou = buffer[inUV->myDesc->ilocsu]+0.5;
@@ -1324,19 +1350,19 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
 
   /* Initialize solutions if init */
   if (init) {
-    /* first zero everything */
-    for (i=0; i<in->nsou; i++) {
-      for (j=0; j<4; j++) in->souParm[i*4+j] = 0.0;
-    }
+    /* first zero everything 
+       for (i=0; i<in->nsou; i++) {
+       for (j=0; j<4; j++) in->souParm[i*4+j] = 0.0;
+       }*/
     for (i=0; i<in->nant; i++) {
       for (j=0; j<4; j++) in->antParm[i*4+j] = 0.0;
       if ((inUV->myDesc->crval[inUV->myDesc->jlocs]<0.0) && 
 	  (inUV->myDesc->crval[inUV->myDesc->jlocs]>-1.5)) {
 	/* Circular feeds ori_r, elip_r, ori_l, elip_l */
 	in->antParm[i*4+0] = 0.0;
-	in->antParm[i*4+1] = G_PI/4.0-0.001;
+	in->antParm[i*4+1] = G_PI/4.0;
 	in->antParm[i*4+2] =  0.0;
-	in->antParm[i*4+3] =  -G_PI/4.0+0.001;
+	in->antParm[i*4+3] =  -G_PI/4.0;
       } else if ((inUV->myDesc->crval[inUV->myDesc->jlocs]<-4.0) && 
 	  (inUV->myDesc->crval[inUV->myDesc->jlocs]>-5.5)) {
  	/* Linear feeds  ori_x, elip_x, ori_y, elip_y,  */
@@ -1489,10 +1515,10 @@ static void InitInstrumentalTab(ObitPolnCalFit* in, ObitErr *err)
 	     (in->outDesc->crval[in->outDesc->jlocs]>-5.5)) {
     /* Linear feeds  ori_x, elip_x, ori_y, elip_y,  */
     for (i=0; i<nif*nchan; i++) row->Real1[i] = G_PI/4.0;
-    for (i=0; i<nif*nchan; i++) row->Imag1[i] = G_PI/4.0;
+    for (i=0; i<nif*nchan; i++) row->Imag1[i] = G_PI/2.0;
     if (npol>1) {
-      for (i=0; i<nif*nchan; i++) row->Real2[i] = -G_PI/2.0;
-      for (i=0; i<nif*nchan; i++) row->Imag2[i] = 0.0;
+      for (i=0; i<nif*nchan; i++) row->Real2[i] = 0.0;
+      for (i=0; i<nif*nchan; i++) row->Imag2[i] = -G_PI/2.0;
     }
   } else {  /* Who knows??? */
     for (i=0; i<nif*nchan; i++) row->Real1[i] = 0.0;
@@ -1834,6 +1860,7 @@ static void FitSpectra (ObitPolnCalFit *in, ObitErr *err)
 static void doFitGSL (ObitPolnCalFit *in, ObitErr *err)
 {
   /*odouble difParam, difChi2=0.0, endChi2=0.0;*/
+  ofloat fpol, fpa;
   olong isou=0, iant, i, k=0, iter;
   olong nparam, ndata, nvalid, nvis, j;
   odouble sumwt, chi2Test=0.0; 
@@ -2005,12 +2032,17 @@ static void doFitGSL (ObitPolnCalFit *in, ObitErr *err)
   if (err->prtLv>=2) {
     Obit_log_error(err, OBIT_InfoErr, "%d iter LM fit", iter);
     for (isou=0; isou<in->nsou; isou++) {
-       Obit_log_error(err, OBIT_InfoErr, 
-		      "sou %3d %8.4f (%8.4f) %8.4f (%8.4f) %8.4f (%8.4f) %8.4f (%8.4f)", 
-		      isou+1, in->souParm[isou*4+0], in->souErr[isou*4+0], 
-		      in->souParm[isou*4+1], in->souErr[isou*4+1],
-		      in->souParm[isou*4+2], in->souErr[isou*4+2], 
-		      in->souParm[isou*4+3], in->souErr[isou*4+3]);
+      fpol = sqrt (in->souParm[isou*4+1]*in->souParm[isou*4+1] + in->souParm[isou*4+2]*in->souParm[isou*4+2]) /
+	in->souParm[isou*4+0];
+      fpa = 57.296*atan2(in->souParm[isou*4+2], in->souParm[isou*4+1]);
+      Obit_log_error(err, OBIT_InfoErr, 
+		     "sou %3d %8.4f (%8.4f) %8.4f (%8.4f) %8.4f (%8.4f) %8.4f (%8.4f)", 
+		     isou+1, in->souParm[isou*4+0], in->souErr[isou*4+0], 
+		     in->souParm[isou*4+1], in->souErr[isou*4+1],
+		     in->souParm[isou*4+2], in->souErr[isou*4+2], 
+		     in->souParm[isou*4+3], in->souErr[isou*4+3]);
+      Obit_log_error(err, OBIT_InfoErr, 
+		     "        (fpol %6.4f %s %6.2f", fpol, "@", fpa);
     }
     
     for (iant=0; iant<in->nant; iant++) {
@@ -2023,6 +2055,11 @@ static void doFitGSL (ObitPolnCalFit *in, ObitErr *err)
 		       in->antParm[iant*4+3]*57.296, MAX(-1.0, in->antErr[iant*4+3]*57.296));
       }
     }
+    /* Phase differrence */
+    if (in->doFitRL) {
+      Obit_log_error(err, OBIT_InfoErr, 
+		     "Phase difference %8.2f (%8.2f)",in->PD*57.296,in->PDerr*57.296);
+   }
   }
   ObitErrLog(err); 
 
@@ -2047,7 +2084,7 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
   odouble begChi2, endChi2=0.0, iChi2, tChi2, deriv=0.0, deriv2=1.0;
   odouble difParam, difChi2=0.0, hiChi2=0.0, dChi2, d2Chi2;
   ofloat tParam, sParam, delta, sdelta = 0.01;
-  ofloat ParRMS, XRMS;
+  ofloat ParRMS, XRMS, fpol, fpa;
   olong isou=0, iant, i, k=0, iter;
   olong pas=0, ptype=0, pnumb=-1;
   gchar *routine="ObitPolnCalFit:doFitFast";
@@ -2239,11 +2276,15 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
     
     if (strncmp(in->solnType, "LM  ", 4)) {
       Obit_log_error(err, OBIT_InfoErr, "Phase difference %8.2f",  in->PD*57.296);
-      for (isou=0; isou<in->nsou; isou++)
+      for (isou=0; isou<in->nsou; isou++) {
+	fpol = sqrt (in->souParm[isou*4+1]*in->souParm[isou*4+1] + in->souParm[isou*4+2]*in->souParm[isou*4+2]) /
+	  in->souParm[isou*4+0];
+	fpa = 57.296*atan2(in->souParm[isou*4+2], in->souParm[isou*4+1]);
 	Obit_log_error(err, OBIT_InfoErr, 
-		       "sou %3d %8.4f %8.4f %8.4f %8.4f", 
+		       "sou %3d %8.4f %8.4f %8.4f %8.4f (fpol %6.4f %s %6.2f)", 
 		       isou+1, in->souParm[isou*4+0], in->souParm[isou*4+1], 
-					  in->souParm[isou*4+2], in->souParm[isou*4+3]);
+		       in->souParm[isou*4+2], in->souParm[isou*4+3], fpol, "@", fpa);
+      }
 		       
       for (iant=0; iant<in->nant; iant++)
 	Obit_log_error(err, OBIT_InfoErr, 
@@ -2288,7 +2329,7 @@ static odouble GetChi2 (olong nThreads, ObitPolnCalFit *in,
   odouble Chi2 = -1.0;
   ObitThreadFunc func=(ObitThreadFunc)ThreadPolnFitRLChi2;
   odouble sumParResid, sumXResid, sumWt, ldChi2, ld2Chi2;
-  olong iTh, nobs;
+  olong iTh, nPobs, nXobs;
   gboolean OK;
   gchar *routine="ObitPolnCalFit:GetChi2";
 
@@ -2317,13 +2358,14 @@ static odouble GetChi2 (olong nThreads, ObitPolnCalFit *in,
 
   /* Sum over threads */
   Chi2 = sumParResid = sumXResid = sumWt = ldChi2 = ld2Chi2 = 0.0;
-  nobs = 0;
+  nPobs = nXobs = 0;
   for (iTh=0; iTh<nThreads; iTh++) {
     Chi2        += in->thArgs[iTh]->ChiSq;
     sumParResid += in->thArgs[iTh]->sumParResid;
     sumXResid   += in->thArgs[iTh]->sumXResid;
     sumWt       += in->thArgs[iTh]->sumWt;
-    nobs        += in->thArgs[iTh]->nobs;
+    nPobs       += in->thArgs[iTh]->nPobs;
+    nXobs       += in->thArgs[iTh]->nXobs;
     if (paramType!=polnParmUnspec) {
       ldChi2  += in->thArgs[iTh]->sumDeriv;
       ld2Chi2 += in->thArgs[iTh]->sumDeriv2;
@@ -2332,8 +2374,8 @@ static odouble GetChi2 (olong nThreads, ObitPolnCalFit *in,
   if (sumWt>0.0) Chi2 /= sumWt;
 
   /* output RMSes */
-  *ParRMS = sqrt (sumParResid / nobs);
-  *XRMS   = sqrt (sumXResid / nobs);
+  *ParRMS = sqrt (sumParResid / nPobs);
+  *XRMS   = sqrt (sumXResid / nXobs);
   if ((paramType!=polnParmUnspec) && (dChi2!=NULL) && (sumWt>0.0))  
     *dChi2  = ldChi2 / sumWt;
   if ((paramType!=polnParmUnspec) && (d2Chi2!=NULL) && (sumWt>0.0))  
@@ -2434,8 +2476,6 @@ static ofloat FitRLPhase (ObitPolnCalFit *in, ObitErr *err)
   if ((sumr!=0.0) || (sumi!=0.0))
     PD = atan2 (sumi, sumr); /* Weighted phase difference */
 
-  PD = 0.0;  /* DEBUG */
-
   return PD;
 } /* end FitRLPhase */
 
@@ -2460,7 +2500,8 @@ static ofloat FitRLPhase (ObitPolnCalFit *in, ObitErr *err)
  *                     Sou: 0=Ipol, 1=Qpol, 2=Upol, 3=VPol
                        Ant: 0= Ori R/X, 1=Elp R/X, 2= Ori L/Y, 1=Elp L/Y,       
  * \li ChiSq        [out] computed Chi2
- * \li nobs         [out] Number of valid measurements
+ * \li nPobs        [out] Number of valid parallel measurements
+ * \li nXobs        [out] Number of valid cross pol measurements
  * \li ParRMS       [out] Parallel hand RMS
  * \li sumParResid  [out] Cross hand RMS
  * \li sumXResid    [out] First derivative of Chi2 wrt parameter
@@ -2502,7 +2543,7 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
   odouble residR=0.0, residI=0.0, isigma=0.0;
   odouble sumParResid, sumXResid;
   ofloat PD, chi1, chi2;
-  olong nobs, ia1, ia2, isou, idata, isouLast=-999;
+  olong nPobs, nXobs, ia1, ia2, isou, idata, isouLast=-999;
   gboolean isAnt1, isAnt2;
   size_t i;
   odouble sum=0.0, sumwt=0.0, sumd, sumd2;
@@ -2532,7 +2573,7 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
   /* RMS sums and counts */
   sumParResid = sumXResid = 0.0;
   sumd = sumd2 = 0.0;
-  nobs = 0;
+  nPobs = nXobs = 0;
   /* R-L phase difference  at reference antenna */
   if (args->doFitRL) {
     PD = args->PD;
@@ -2577,8 +2618,8 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
     /* Parallactic angle terms */
     chi1  = data[idata*10+0];   /* parallactic angle ant 1 */
     chi2  = data[idata*10+1];   /* parallactic angle ant 2 */
-    COMPLEX_EXP (PA1, -2*chi1);
-    COMPLEX_EXP (PA2, -2*chi2);
+    COMPLEX_EXP (PA1, 2*chi1);
+    COMPLEX_EXP (PA2, 2*chi2);
     COMPLEX_CONJUGATE (PA1c, PA1);
     COMPLEX_CONJUGATE (PA2c, PA2);
 
@@ -2644,8 +2685,12 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
     sum += isigma * residR * residR; sumwt += isigma;
     residI = VRR.imag - data[idata*10+3];
     sum += isigma * residI * residI; sumwt += isigma;
-    nobs += 2;
+    nPobs++;
     sumParResid += residR * residR + residI * residI;
+    /* DEBUG 
+       if ((paramType==polnParmUnspec) && ((fabs(residR)>10.0) || ((fabs(residI)>10.0))))
+       fprintf (stderr, "vis %d RR %d-%d %f %f\n", idata, ia1, ia2, residR, residI);
+       end DEBUG */
     /* Derivatives */
     if (paramType==polnParmAnt) {         /* Antenna parameters */
       /* Default partials */
@@ -2806,8 +2851,12 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
     sum += isigma * residR * residR; sumwt += isigma; 
     residI = VLL.imag - data[idata*10+5];
     sum += isigma * residI * residI; sumwt += isigma; 
-    nobs += 2;
+    nPobs++;
     sumParResid += residR * residR + residI * residI;
+    /* DEBUG 
+       if ((paramType==polnParmUnspec) && ((fabs(residR)>5.0) || ((fabs(residI)>5.0))))
+       fprintf (stderr, "vis %d LL %d-%d %f %f\n", idata, ia1, ia2, residR, residI);
+       end DEBUG */
     /* Derivatives */
     if (paramType==polnParmAnt) {         /* Antenna parameters */
       /* Default partials */
@@ -2968,7 +3017,7 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
     sum += isigma * residR * residR; sumwt += isigma;
     residI = VRL.imag - data[idata*10+7];
     sum += isigma * residI * residI; sumwt += isigma;
-    nobs += 2;
+    nXobs++;
     sumXResid += residR * residR + residI * residI;
     /* Derivatives */
     if (paramType==polnParmAnt) {         /* Antenna parameters */
@@ -3148,7 +3197,7 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
     sum += isigma * residR * residR; sumwt += isigma;
     residI = VLR.imag - data[idata*10+9];
     sum += isigma * residI * residI; sumwt += isigma;
-    nobs += 2;
+    nXobs++;
     sumXResid += residR * residR + residI * residI;
     /* Derivatives */
     if (paramType==polnParmAnt) {         /* Antenna parameters */
@@ -3312,7 +3361,8 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
   args->sumParResid = sumParResid;
   args->sumXResid   = sumXResid;
   args->sumWt       = sumwt;
-  args->nobs        = nobs;
+  args->nPobs       = nPobs;
+  args->nXobs       = nXobs;
   if (paramType!=polnParmUnspec) args->sumDeriv  = sumd;
   if (paramType!=polnParmUnspec) args->sumDeriv2 = sumd2;
 
@@ -3414,6 +3464,7 @@ static void KillPolnFitFuncArgs (ObitPolnCalFit *in)
  * Check for crazy antenna solutions, reset defaults if so.
  * If the RMS deviation from the default elipticity exceeds 10 deg
  * the fit is deemed crazy.
+ * Uses last valid set of source parameters in reset
  * \param in           Fitting object
  * \param err          Obit error stack object.
  * \return             TRUE if reset defaults, else FALSE
@@ -3421,7 +3472,7 @@ static void KillPolnFitFuncArgs (ObitPolnCalFit *in)
 static gboolean CheckCrazy(ObitPolnCalFit *in, ObitErr *err)
 {
   gboolean crazy = FALSE;
-  odouble sum;
+  odouble sum, RMS;
   olong i, j;
 
   if (err->error) return crazy;  /* Error detected? */
@@ -3433,42 +3484,58 @@ static gboolean CheckCrazy(ObitPolnCalFit *in, ObitErr *err)
 	(in->inDesc->crval[in->inDesc->jlocs]>-1.5)) {
       /* Circular feeds ori_r, elip_r, ori_l, elip_l */
      sum += (in->antParm[i*4+1] - G_PI/4.0)*(in->antParm[i*4+1] - G_PI/4.0) + 
-            (in->antParm[i*4+3] + G_PI/4.0)*(in->antParm[i*4+1] + G_PI/4.0);
+            (in->antParm[i*4+3] + G_PI/4.0)*(in->antParm[i*4+3] + G_PI/4.0);
     } else if ((in->inDesc->crval[in->inDesc->jlocs]<-4.0) && 
 	       (in->inDesc->crval[in->inDesc->jlocs]>-5.5)) {
       /* Linear feeds  ori_x, elip_x, ori_y, elip_y,  */
       sum += (in->antParm[i*4+1] - G_PI/2.0)*(in->antParm[i*4+1] - G_PI/2.0) + 
-             (in->antParm[i*4+3] + G_PI/2.0)*(in->antParm[i*4+1] + G_PI/2.0);
+             (in->antParm[i*4+3] + G_PI/2.0)*(in->antParm[i*4+3] + G_PI/2.0);
      in->antParm[i*4+0] = +G_PI/4.0;
     }
   } /* end loop over antennas */
 
   /* mean */
   sum /= in->nant*2.0;
-  crazy = sqrt(sum)*RAD2DG > 10.0;
+  RMS =  sqrt(sum)*RAD2DG;
+  crazy = RMS > 10.0;
 
   /* Crazy? -> reset */
   if (crazy) {
-    Obit_log_error(err, OBIT_InfoWarn, "Antenna solution crazy, reseting defaults");
+    Obit_log_error(err, OBIT_InfoWarn, "Antenna solution crazy, RMS %lf, reseting defaults", RMS);
     for (i=0; i<in->nant; i++) {
       for (j=0; j<4; j++) in->antParm[i*4+j] = 0.0;
       if ((in->inDesc->crval[in->inDesc->jlocs]<0.0) && 
 	  (in->inDesc->crval[in->inDesc->jlocs]>-1.5)) {
 	/* Circular feeds ori_r, elip_r, ori_l, elip_l */
 	in->antParm[i*4+0] = 0.0;
-	in->antParm[i*4+1] = G_PI/4.0-0.001;
+	in->antParm[i*4+1] = G_PI/4.0;
 	in->antParm[i*4+2] =  0.0;
-	in->antParm[i*4+3] =  -G_PI/4.0+0.001;
-      } else if ((in->inDesc->crval[in->inDesc->jlocs]<-4.0) && 
+	in->antParm[i*4+3] =  -G_PI/4.0;
+       } else if ((in->inDesc->crval[in->inDesc->jlocs]<-4.0) && 
 		 (in->inDesc->crval[in->inDesc->jlocs]>-5.5)) {
 	/* Linear feeds  ori_x, elip_x, ori_y, elip_y,  */
 	in->antParm[i*4+0] = +G_PI/4.0;
-	in->antParm[i*4+1] = +G_PI/4.0;
+	in->antParm[i*4+1] = +G_PI/2.0;
 	in->antParm[i*4+2] = 0.0;
 	in->antParm[i*4+3] = -G_PI/2.0;
       }
     } /* end loop over antennas */
+
+    /* Reset source parameters */
+    for (i=0; i<in->nsou; i++) {
+      for (j=0; j<4; j++) {
+	if (in->lastSouParm[i*4+j]>0.0) 
+	  in->souParm[i*4+j] = in->lastSouParm[i*4+j];
+	else 	in->souParm[i*4+j] = 0.0;
+      } 
+    }
   } /* end reset */
+  else {  /* OK - save source parameters */
+    for (i=0; i<in->nsou; i++) {
+      for (j=0; j<4; j++) in->lastSouParm[i*4+j] = in->souParm[i*4+j];
+    }
+  } /* end save parameters */
+  
   return crazy;
 } /* end CheckCrazy */
 
@@ -3593,8 +3660,8 @@ static int PolnFitFuncOERL (const gsl_vector *x, void *params,
     /* Parallactic angle terms */
     chi1  = data[idata*10+0];   /* parallactic angle ant 1 */
     chi2  = data[idata*10+1];   /* parallactic angle ant 2 */
-    COMPLEX_EXP (PA1, -2*chi1);
-    COMPLEX_EXP (PA2, -2*chi2);
+    COMPLEX_EXP (PA1, 2*chi1);
+    COMPLEX_EXP (PA2, 2*chi2);
     COMPLEX_CONJUGATE (PA1c, PA1);
     COMPLEX_CONJUGATE (PA2c, PA2);
 
@@ -3858,8 +3925,8 @@ static int PolnFitJacOERL (const gsl_vector *x, void *params,
     /* Parallactic angle terms */
     chi1  = data[idata*10+0];   /* parallactic angle ant 1 */
     chi2  = data[idata*10+1];   /* parallactic angle ant 2 */
-    COMPLEX_EXP (PA1, -2*chi1);
-    COMPLEX_EXP (PA2, -2*chi2);
+    COMPLEX_EXP (PA1, 2*chi1);
+    COMPLEX_EXP (PA2, 2*chi2);
     COMPLEX_CONJUGATE (PA1c, PA1);
     COMPLEX_CONJUGATE (PA2c, PA2);
 
@@ -5071,8 +5138,8 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
     /* Parallactic angle terms */
     chi1  = data[idata*10+0];   /* parallactic angle ant 1 */
     chi2  = data[idata*10+1];   /* parallactic angle ant 2 */
-    COMPLEX_EXP (PA1, -2*chi1);
-    COMPLEX_EXP (PA2, -2*chi2);
+    COMPLEX_EXP (PA1, 2*chi1);
+    COMPLEX_EXP (PA2, 2*chi2);
     COMPLEX_CONJUGATE (PA1c, PA1);
     COMPLEX_CONJUGATE (PA2c, PA2);
 

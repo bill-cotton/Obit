@@ -566,7 +566,7 @@ static void ObitUVCalPolarizationUpdate (ObitUVCalPolarizationS *in, ObitUVCal *
 	HrAng   = AntLst - in->curRA;
 	PA = atan2 (cos (ArrLat) * sin (HrAng), 
 		    (sin (ArrLat) * in->curCosDec - cos (ArrLat) * in->curSinDec * cos(HrAng)));
-	in->curPA[i]    = PA;
+	in->curPA[i]    = PA; 
 	in->curCosPA[i] = cos(PA);
 	in->curSinPA[i] = sin(PA);
       } else { /* Not alt-az or no data */
@@ -842,7 +842,7 @@ static void SetInvJonesIF(ObitUVCalPolarizationS *in, ObitAntennaList *Ant,
   PD = 0.0;
 
   /* parallactic angle */
-  COMPLEX_EXP (PA, -2*in->curPA[iant-1]);
+  COMPLEX_EXP (PA,  2*in->curPA[iant-1]);
   COMPLEX_CONJUGATE (PAc, PA);
 
   /* Loop over IFs (index 0 rel) */
@@ -1056,7 +1056,7 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
   root2  = 1.0 / sqrt(2.0);
 
   /* parallactic angle */
-  COMPLEX_EXP (PA, -2*in->curPA[iant-1]);
+  COMPLEX_EXP (PA, 2*in->curPA[iant-1]);
   COMPLEX_CONJUGATE (PAc, PA);
 
   /* Loop over IFs (index 0 rel) */

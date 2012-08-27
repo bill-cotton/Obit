@@ -735,3 +735,33 @@ Obit/tasks/PCal.c Obit/TDF/PCal.TDF:
   Implement fitting phase difference, fix fract. pol.
 14 Aug 2012 version 423
 
+ObitVersion:
+Obit/changes.log:
+Obit/src/ObitUVCalPolarization.c Obit/src/ObitPolnCalFit.c:
+  Fix parallactic angle sign bug
+Obit/tasks/RLPass.c:
+  Add missing history items.
+Obit/src/ObitUVUtil.c:
+  Hann: Add doDescm option
+Obit/tasks/Hann.c Obit/TDF/Hann.TDF:
+  Add doDescm parameter
+Obit/python/OErr.py:
+  printErrMsg:fix bug in raise statement
+Obit/python/EVLACal.py:
+  New parameter doDescm for Hanning
+  Tolerate failure of plotting of spectra
+Obit/python/EVLAContPipe.py:
+  New parameter doDescm for Hanning
+Obit/python/EVLACal.py:
+  Implement copying failed A&P calibration solutiong to FG table
+  EVLASpecPlot: Update header to get best calibration and editing
+Obit/tasks/PCal.c:
+  Average IF and poln in self cal.
+Obit/src/ObitPolnCalFit.c Obit/include/ObitPolnCalFit.h:
+Obit/include/ObitPolnCalFitDef.h:
+  Restore last valid source soln for crazy reset
+  Require all Stokes in each vis/channel
+  Better normalization of RMSes
+  Improve diagnostics
+27 Aug 2012, svn version 424
+

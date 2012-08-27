@@ -490,6 +490,18 @@ ObitInfoList* defaultInputs(ObitErr *err)
   ObitInfoListPut (out, "doPol", OBIT_bool, dim, &btemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
   
+  /* Average IFs in initial calibration */
+  dim[0] = 1; dim[1] = 1;
+  btemp = TRUE;
+  ObitInfoListPut (out, "avgIF", OBIT_bool, dim, &btemp, err);
+  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+  
+  /* Average Poln in  initial calibration*/
+  dim[0] = 1; dim[1] = 1;
+  btemp = TRUE;
+  ObitInfoListPut (out, "avgPol", OBIT_bool, dim, &btemp, err);
+  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+  
   /* Subarray */
   dim[0] = 1;dim[1] = 1;
   itemp = 1; 

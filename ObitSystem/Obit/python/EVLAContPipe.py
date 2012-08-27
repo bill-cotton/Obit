@@ -47,6 +47,7 @@ def pipeline( aipsSetup, parmFile):
     parms = EVLAInitContParms()
     
     ############################# Set Project Processing parameters ##################
+    print "parmFile",parmFile
     exec(open(parmFile).read())
     EVLAAddOutFile( parmFile, 'project', 'Pipeline input parameters' )
 
@@ -124,7 +125,7 @@ def pipeline( aipsSetup, parmFile):
                 OErr.printErrMsg(err, "Error creating AIPS data")
     
         uv = EVLAHann(uv, EVLAAIPSName(project, session), dataClass, disk, parms["seq"], err, \
-                      logfile=logFile, check=check, debug=debug)
+                      doDescm=parms["doDescm"], logfile=logFile, check=check, debug=debug)
         if uv==None and not check:
             raise RuntimeError,"Cannot Hann data "
     

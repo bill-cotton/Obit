@@ -1064,7 +1064,7 @@ void RLPassHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "DataType2", "in2File", "in2Disk", "in2Name", "in2Class", "in2Seq", 
     "nfield", "CCVer", "BComp", "EComp", "Cmethod", "Cmodel", "Flux",
     "modelFlux", "modelPos", "modelParm", "RLPhase", "RM",
-    "solInt1",  "minSNR",  "minNo", "prtLv", "nThreads",
+    "solInt1", "solInt2",  "minSNR",  "minNo", "BPSoln", "prtLv", "nThreads",
    NULL};
   gchar *routine = "RLPassHistory";
 

@@ -99,6 +99,8 @@ olong nsou;
 odouble *souParm;
 /** Source error estimates 4 x nsou, */
 odouble *souErr;
+/** Previous valid source parameters  */
+odouble *lastSouParm;
 /* Source parameters fit flags, 4 x nsou */
 gboolean **souFit;
 /** Source parameters number, 8 x nant */

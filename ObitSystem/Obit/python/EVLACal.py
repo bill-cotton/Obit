@@ -39,6 +39,7 @@ def EVLAInitContParms():
 
     # Hanning
     parms["doHann"]       = None        # Hanning needed for RFI?
+    parms["doDescm"]      = True        # Descimate Hanning?
 
     # Parallactic angle correction
     parms["doPACor"] =     True         # Make parallactic angle correction
@@ -815,7 +816,7 @@ def EVLAUVLoadArch(dataroot, Aname, Aclass, Adisk, Aseq, err, \
     return outuv
     # end EVLAUVLoadArch
 
-def EVLAHann(inUV, Aname, Aclass, Adisk, Aseq, err, \
+def EVLAHann(inUV, Aname, Aclass, Adisk, Aseq, err, doDescm=True, \
              logfile='', check=False, debug=False):
     """ Hanning smooth a file to AIPS
 
@@ -825,6 +826,7 @@ def EVLAHann(inUV, Aname, Aclass, Adisk, Aseq, err, \
     Aclass     = AIPS class of file
     Aseq       = AIPS sequence number of file, 0=> create new
     Adisk      = FITS directory number
+    doDescm    = If True descimate (drop alternate) channels
     err        = Python Obit Error/message stack
     check      = Only check script, don't execute tasks
     debug      = Run tasks debug, show input
@@ -844,6 +846,7 @@ def EVLAHann(inUV, Aname, Aclass, Adisk, Aseq, err, \
     hann.outSeq   = Aseq
     hann.outDisk  = Adisk
     hann.flagVer  = -1
+    hann.doDescm  = doDescm
     hann.taskLog  = logfile
     hann.debug    = debug
     if debug:
@@ -1681,7 +1684,7 @@ def EVLACalAP(uv, target, ACals, err, \
               doCalib=-1, gainUse=0, doBand=0, BPVer=0, flagVer=-1, \
               BChan=1, EChan=1, \
               solnver=0, solInt=10.0/60.0, solSmo=0.0, nThreads=1, refAnt=0, ampScalar=False, \
-              doAmpEdit=False, ampSigma=20, ampEditFG=-1, \
+              doAmpEdit=False, ampSigma=20, flagFail=True, ampEditFG=-1, \
               doPlot=False, plotFile="./APCal.ps", \
               check=False, debug = False, noScrat=[], logfile = ""):
     """
@@ -1716,6 +1719,7 @@ def EVLACalAP(uv, target, ACals, err, \
     * ampSigma = Multiple of median RMS about median gain to clip/flag
                  Should be fairly large
     * ampEditFG= FG table to add flags to, <=0 -> no FG entries
+    * flagFail = If True enter times for failed solutions if FG  mpEditFG
     * doPlot   = If True make plots of solutions
     * plotFile = Name of postscript file for plots
     * check    = Only check script, don't execute tasks
@@ -2074,13 +2078,20 @@ def EVLACalAP(uv, target, ACals, err, \
             return retCode
     # end SN table plot
 
+    # enter flagged solutions in FG table?
+    if flagFail:
+        EVLAFlagFailSN(uv, 0, err, FGver=ampEditFG,  \
+                      logfile=logfile, check=check, debug=debug)
+        OErr.printErrMsg(err, "Error flagging data with failed solutions")
+    # end flagFail
+
     # Clip/flag by deviant amplitudes?
     if doAmpEdit:
         EVLAEditSNAmp(uv, 0, err, sigma=ampSigma, FGver=ampEditFG,  \
                       logfile=logfile, check=check, debug=debug)
         OErr.printErrMsg(err, "Error clip/flag bad amplitudes")
     # end Amp edit
-
+    
     # Set up for CLCal - use phase & amp calibrators
     if not check:
         # Open and close image to sync with disk 
@@ -2278,7 +2289,7 @@ def EVLABPCal(uv, BPCals, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
                             Stokes=["RR","LL"], doband=1,          \
                             plotFile=plotFile, check=check, logfile=logfile )
         if not UV.PIsA(scr):
-            return 1
+            return 0   # tolerate failure
         retCode = EVLAWritePlots (scr, 1, 0, plotFile, err, \
                                   plotDesc="Bandpass calibration plots", \
                                   logfile=logfile, check=check, debug=debug)
@@ -2657,7 +2668,7 @@ def EVLARLDelay(uv, err, \
                 UVRange=[0.0,0.0], timerange = [0.0,1000.0], \
                 soucode="    ", doCalib=-1, gainUse=0, \
                 doBand=0, BPVer=0, flagVer=-1,  \
-                refAnt=0, Antennas=[0], doPol=False,  \
+                refAnt=0, Antennas=[0], doPol=-1,  \
                 nThreads=1, noScrat=[], logfile = "",check=False, debug = False):
     """
     Determine R-L delay 
@@ -2886,7 +2897,7 @@ def EVLARLCal(uv, err, \
               RLPCal=None, RLPhase=0.0, RM=0.0, UVRange=[0.0,0.0], timerange = [0.0,1000.0], \
               FQid=0, calcode="    ", doCalib=-1, gainUse=0, \
               doBand=0, BPVer=0, flagVer=-1,  \
-              refAnt=0, doPol=False, PDVer=1, FOV=0.05, niter = 100, CleanRad=None, \
+              refAnt=0, doPol=-1, PDVer=1, FOV=0.05, niter = 100, CleanRad=None, \
               doPlot=False, plotFile="./BPCal.ps", \
               nThreads=1, noScrat=[], logfile = "",check=False, debug = False):
     """
@@ -3294,7 +3305,7 @@ def EVLARLCal(uv, err, \
                                 plotFile=plotFile, \
                                 check=check, debug=debug, logfile=logfile )
         if not scr.UVIsA():
-            return 1
+            return 0   # tolerate failure
         retCode = EVLAWritePlots (scr, 1, 0, plotFile, err, \
                                   plotDesc="R-L phase/delay plots", \
                                   logfile=logfile, check=check, debug=debug)
@@ -3310,7 +3321,7 @@ def EVLARLCal2(uv, err, uv2 = None, \
                FQid=0, calcode="    ", doCalib=-1, gainUse=0, \
                timerange = [0.,0.,0.,0.,0.,0.,0.,0.], \
                doBand=0, BPVer=0, flagVer=-1, \
-               refAnt=0, doPol=False, smooth=[0.,0.,0.], dataInt=0., \
+               refAnt=0, doPol=-1, smooth=[0.,0.,0.], dataInt=0., \
                RLPCal=None,  FOV=0.05, niter = 100, \
                nThreads=1, noScrat=[], logfile = "",check=False, debug = False):
     """
@@ -4453,6 +4464,15 @@ def EVLASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["RR","LL"], \
     * debug     = Run tasks debug, show input
     * logfile   = Log file for task
     """
+    # Open/close UV to update header
+    if not check:
+        uv.Open(UV.READONLY,err)
+        uv.Close(err)
+    if err.isErr:
+        OErr.printErr(err)
+        mess = "Update UV header failed"
+        printMess(mess, logfile)
+        return None
     # Calibrate and edit data
     scr  = uv.Scratch(err)
     info = uv.List
@@ -4471,7 +4491,16 @@ def EVLASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["RR","LL"], \
         info.set("doPol", 0)
     info.set("PDVer", PDVer)
     #uv.Header(err) # DEBUG 
-    uv.Copy(scr, err)
+    # Trap failure
+    try:
+        uv.Copy(scr, err)
+    except Exception, exception:
+        print exception
+        mess = "Copy plot data failed - continuing"
+        printMess(mess, logfile)
+        return None
+    else:
+        pass
     scr.Info(err)     # Get file information
     info = uv.List
     
@@ -4628,13 +4657,15 @@ def EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
     scr = EVLASpecPlot( uv, plotSource,  plotTime, refAnt, err, \
                         Stokes=Stokes, doband=doband,          \
                         plotFile=plotFile, check=check, logfile=logfile )
-    if scr.UVIsA():
+    retCode = 0
+    if scr and scr.UVIsA():
         retCode = EVLAWritePlots (scr, 1, 0, plotFile, err, \
                                   plotDesc="Spectrum plots", \
                                   logfile=logfile, check=check, debug=debug)
     if retCode!=0:
-        return 1
-    scr.Zap(err)
+        return 0   # tolerate failure
+    if scr!=None:
+        scr.Zap(err)
     return 0
     # end EVLASpectrum
 
@@ -4707,6 +4738,83 @@ def EVLAEditSNAmp(uv, SNver, err, \
         printMess(mess, logfile)
         return
    # end EVLAEditSNAmp
+
+def EVLAFlagFailSN(uv, SNver, err, \
+                   FGver=-1, logfile='', check=False, debug=False):
+    """
+    Make entries in FG table for times of failed SN solutions
+
+    Returns with err set on error
+
+    * uv         = UV data object
+    * SNver      = SN table to flag, 0=> highest
+    * err        = Python Obit Error/message stack
+    * FGver      = FG table to add flags to, <=0 ->none
+    * logfile    = logfile for messages
+    * check      = Only check script
+    * debug      = Only debug - no effect
+    """
+    ################################################################
+    if SNver<=0:
+        snver =  uv.GetHighVer("AIPS SN")
+    else:
+        snver = SNver;
+    mess = "Failed solutions in SN %d flagged in FG %d" % (snver,FGver)
+    printMess(mess, logfile)
+    fblank = FArray.PGetBlank() # Magic blanking value
+    # Number of IFs
+    nif   = uv.Desc.Dict["inaxes"][uv.Desc.Dict["jlocif"]]
+    # Number of Stokes
+    npoln = uv.Desc.Dict["inaxes"][uv.Desc.Dict["jlocs"]]
+    SNTab = uv.NewTable(Table.READONLY, "AIPS SN", SNver, err, \
+                        numIF=nif, numPol=npoln)
+    if err.isErr:
+        return
+    # Open
+    SNTab.Open(Table.READWRITE, err)
+    if err.isErr:
+        return
+    # Number of rows
+    nrow =  SNTab.Desc.Dict["nrow"]
+    count = 0; total = 0
+    for i in range (0,nrow):    # Loop over rows
+        SNrow = SNTab.ReadRow(i+1, err)
+        if err.isErr:
+            return
+        dirty = False
+        # Loop over IF
+        for iif in range (0, nif):
+            total += 1
+            if (SNrow["WEIGHT 1"][iif]<=0.0) or (SNrow["REAL1"][iif]==fblank):
+                # Flag table?
+                EVLAFlagSNClip(uv, SNrow, iif+1, 1, err, FGver=FGver, reason="Failed soln", \
+                               logfile=logfile, check=check, debug=debug)
+                count += 1
+                dirty = True
+            # Second Poln
+            if npoln>1:
+                total += 1
+            if (npoln>1) and (SNrow["WEIGHT 2"][iif]<=0.0) or (SNrow["REAL2"][iif]==fblank):
+                # Flag table?
+                EVLAFlagSNClip(uv, SNrow, iif+1, 2, err, FGver=FGver, reason="Failed soln", \
+                               logfile=logfile, check=check, debug=debug)
+                count += 1
+                dirty = True
+       # Rewrite if modified
+        if dirty and not check:
+            SNTab.WriteRow(i+1, SNrow, err)
+            if err.isErr:
+                return
+    # end loop over rows
+
+    # Close table
+    SNTab.Close(err)
+    if err.isErr:
+        return
+
+    mess = "Flagged %d of total %d Gain entries" % (count, total)
+    printMess(mess, logfile)
+   # end EVLAFlagFailSN
 
 def EVLASNAmpStats(uv, SNver, err, logfile='', check=False, debug=False):
     """
@@ -4873,7 +4981,7 @@ def EVLAClipSNAmp(uv, SNver, arange, err, \
     # end EVLAClipSNAmp
 
 def EVLAFlagSNClip(uv, SNrow, IFno, poln, err, \
-               FGver=-1, logfile='', check=False, debug=False):
+               FGver=-1, reason="BadAmp", logfile='', check=False, debug=False):
     """
     Write flag table entry for SN table row
 
@@ -4885,6 +4993,7 @@ def EVLAFlagSNClip(uv, SNrow, IFno, poln, err, \
     * poln       = polarization (1 or 2)
     * err        = Python Obit Error/message stack
     * FGver      = FG table to add flags to, <=0 ->none
+    * reason     = reason string
     * logfile    = logfile for messages
     * check      = Only check script
     * debug      = Only debug
@@ -4905,7 +5014,7 @@ def EVLAFlagSNClip(uv, SNrow, IFno, poln, err, \
     if not check:
         UV.PFlag(uv, err, flagVer=FGver,
                  timeRange=tr, Ants=Ants, IFs=IFs, Stokes=Stokes, 
-                 Reason="Bad Amp")
+                 Reason=reason)
     if err.isErr:
         return
     if debug:

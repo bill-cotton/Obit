@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task to Hanning smooth uv data                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -838,7 +838,7 @@ void doHann (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "Stokes", "UVRange", "timeRange", "FreqID", "Sources", "souCode", "Qual", 
     "BIF", "EIF", "BChan", "EChan", "subA", "doCalWt", "dropSubA",
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
-    "doPol", "Mode", "corrType", "BLVer", 
+    "doPol", "Mode", "corrType", "BLVer", "doDescm",
     NULL  };
   gchar *FGInclude[] = {"AIPS FG", NULL};
   gchar *BPInclude[] = {"AIPS BP", NULL};
@@ -923,7 +923,7 @@ void HannHistory (ObitInfoList* myInput, ObitUV* inData,
     "UVRange",  "timeRange",  "Compress", "doCalWt", "dropSubA",
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
     "doPol", "BLVer", 
-    "dropSubA",  "doWtCal",  "corrType",  
+    "dropSubA",  "doWtCal",  "corrType", "doDescm",
     NULL};
   gchar *routine = "HannHistory";
 
