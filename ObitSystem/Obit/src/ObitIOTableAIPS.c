@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -705,8 +705,7 @@ ObitIOCode ObitIOTableAIPSWriteRow (ObitIOTableAIPS *in, olong rowno,
   ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitTableDesc* desc;
   ObitTableSel* sel;
-  gsize size;
-  olong len, ilen, offset, ioff, iRow, nRows, row;
+  olong size, len, ilen, offset, ioff, iRow, nRows, row;
   ObitFilePos wantPos;
   olong  *idata = (olong*)data;
   gchar *cdata = (gchar*)data;

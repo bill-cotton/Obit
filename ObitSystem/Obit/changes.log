@@ -765,3 +765,13 @@ Obit/include/ObitPolnCalFitDef.h:
   Improve diagnostics
 27 Aug 2012, svn version 424
 
+Fixes for AIPS compatibility
+ObitVersion:
+Obit/changes.log:
+Obit/src/ObitFile.c Obit/include/ObitFile.h:
+  Pad: change padTo to ObitFilePos (64 bit) from olong (32 bit).
+Obit/src/ObitIOUVAIPS.c:
+  Pad UV files to multiples of 1024.
+Obit/src/ObitIOTableAIPS.c:
+  WriteRow: proper type (olong) for size.
+27 Aug 2012, svn version 425

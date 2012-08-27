@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2011                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -362,6 +362,7 @@ ObitFileOpen (ObitFile *in, gchar *fileName, ObitIOAccess access,
   ObitIOCode status, retCode = OBIT_IO_SpecErr;
   gchar ft[5] = {"a"};
   struct stat stbuf;
+  mode_t mode;
   olong next, temp;
   
   /* error checks */
@@ -416,6 +417,10 @@ ObitFileOpen (ObitFile *in, gchar *fileName, ObitIOAccess access,
       ObitFileErrMsg(err);     /* system error message*/
       return OBIT_IO_OpenErr;
     }
+ 
+    /* Set wide open permissions */
+    mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
+    chmod (in->fileName, mode);
 
     /*------------------------ Write Only ---------------------------------*/
   } else if (access == OBIT_IO_WriteOnly) {
@@ -435,6 +440,10 @@ ObitFileOpen (ObitFile *in, gchar *fileName, ObitIOAccess access,
       ObitFileErrMsg(err);     /* system error message*/
       return OBIT_IO_OpenErr;
     }
+
+    /* Set wide open permissions */
+    mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
+    chmod (in->fileName, mode);
     /* unknown */      
   } else {
     /* should never get here */
@@ -967,7 +976,7 @@ ObitFileWriteLine (ObitFile *in, gchar *line, ObitErr *err)
  * \return return code, 0=> OK
  */
 ObitIOCode
-ObitFilePad (ObitFile *in, olong padTo, gchar *buffer, olong bsize, 
+ObitFilePad (ObitFile *in, ObitFilePos padTo, gchar *buffer, olong bsize, 
 	     ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
