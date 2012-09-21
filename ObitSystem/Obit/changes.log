@@ -775,3 +775,66 @@ Obit/src/ObitIOUVAIPS.c:
 Obit/src/ObitIOTableAIPS.c:
   WriteRow: proper type (olong) for size.
 27 Aug 2012, svn version 425
+
+Numerous fixes for scripts, bug fixes
+ObitVersion:
+Obit/changes.log:
+Obit/src/ObitIOUVAIPS.c:
+  Close: use ObitFilePadFile rather than ObitFilePad
+  Flush: Wonky pad after flush.
+Obit/src/ObitUVEdit.c:
+  various: Error check after read
+  various: not so many zero digits in diagnostics
+Obit/doc/OBITdoc.tex:
+  Add RAOBS and DECOBS to description of AIPS SU table
+  Fix numAnt in PD table so that it's recognized as a nonstructural keyword
+Obit/python/TablePD.inc Obit/python/TableSU.inc:
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+Obit/src/ObitTablePD.c Obit/src/ObitTableSU.c:
+Obit/include/ObitTablePD*.h Obit/include/ObitTableSU*.h:
+  new table definition
+Obit/TDF/AutoFlag.TDF:
+  Add warning about minAmp
+Obit/tasks/PCal.c Obit/TDF/PCal.TDF:
+  Remove initial self cal
+Obit/TDF/MFImage.TDF:
+  Typo
+Obit/python/EVLAContPipe.py:
+  Give plot files in recalibration distinct names
+  Add threading to PCal
+  Allow turning off VClip and XClip flagging
+Obit/share/scripts/EVLATemplateParm.py:
+  Various improvements
+Obit/python/EVLACal.py:
+  Increase default solution intervals for calibration.
+  Change default FDmaxRMS for A config from 4 to 5.
+  Use phase calibrators for inst. poln cal.
+  Fix bug in looping in A&P calibration and better diagnostics
+  Add threading to PCal
+  DelayCal: clip bad solutions, don't plot phases (all 0)
+Obit/src/ObitPolnCalFit.c:
+  Do not create BP table if not fitting RL phase
+  Add phase difference to PD table.
+  Fix bug with RLPhase
+  Fix bug labeling IF being processed
+  Tighten convergence criteria in doFitFast
+  Allow 2 iterations (not min 4) in doFitGSL
+Obit/src/ObitUVCalPolarization.c:
+  SetInvJonesCh: Fix number of channels used
+  Update choff if < 4 stokes in channel loop
+Obit/python/OTObit.py:
+  imtab: Open/Close inImage to fully instantiate.
+Obit/src/ObitUVUtil.c:
+  BlAvgTF: make buffer size OS dependent to keep from blowing memory
+Obit/tasks/UVSub.c Obit/TDF/UVSub.TDF:
+  add PDVer, Alpha, DataType2 parameters
+  set doCalSelect=T
+  change nmaps to nfield
+Obit/python/ EVLAPolnScripts.py:
+  New package for EVLA poln calibration.
+Obit/src/ObitIOUVFITS.c:
+  Fix problem(?) with buffer size
+Obit/src/ObitSkyModelMF.c:
+  For tabulated spectra modeled vis a DFT, fix and include the spectral index.
+21 Sep 2012, svn version 426
+

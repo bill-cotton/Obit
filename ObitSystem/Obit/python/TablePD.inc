@@ -65,6 +65,7 @@ extern PyObject* TablePDGetHeadKeys (ObitTable *inTab) {
   PyDict_SetItemString(outDict, "numIF",  PyInt_FromLong((long)lTab->numIF));
   PyDict_SetItemString(outDict, "numChan",  PyInt_FromLong((long)lTab->numChan));
   PyDict_SetItemString(outDict, "revision",  PyInt_FromLong((long)lTab->revision));
+  PyDict_SetItemString(outDict, "numAnt",  PyInt_FromLong((long)lTab->numAnt));
   PyDict_SetItemString(outDict, "polType", PyString_InternFromString(lTab->polType));
 
   return outDict;
@@ -76,6 +77,7 @@ extern void TablePDSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
   int lstr=MAXKEYCHARTABLEPD;
 
   lTab->revision = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "revision"));
+  lTab->numAnt = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "numAnt"));
   tstr = PyString_AsString(PyDict_GetItemString(inDict, "polType"));
   strncpy (lTab->polType, tstr, lstr); lTab->polType[lstr-1]=0;
 

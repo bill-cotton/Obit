@@ -876,7 +876,7 @@ class function GaussFit.
 
    If no value of MFTaper is adequate, it is possible to specify the
 Robustness factor and a convolving Taper for each IF selected in the
-data.   The paraleters RobustIF and TaperIF need to be defined and
+data.   The parameters RobustIF and TaperIF need to be defined and
 added to the task interface object (mf in the following examples):
 RobustIF=[0.0,0.1,0.2,0.3]  # One element per IF
 addParam(mf,"RobustIF", paramVal=RobustIF, shortHelp="Robust per IF", \

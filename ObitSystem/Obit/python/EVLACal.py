@@ -310,7 +310,7 @@ def EVLAInitContFQParms(parms):
     # FD flagging
     if parms["FDmaxRMS"]==None:
         if cfg[0:1]=='A' or cfg[0:1]=='B' or freq>8.0e9:
-            parms["FDmaxRMS"]    = [4.0,.1]     # Channel RMS limits (Jy)
+            parms["FDmaxRMS"]    = [5.0,.1]     # Channel RMS limits (Jy)
         else:
             parms["FDmaxRMS"]    = [6.0,.1]     # Channel RMS limits (Jy)
     if parms["FDmaxRes"]==None:
@@ -335,7 +335,7 @@ def EVLAInitContFQParms(parms):
         if parms["doHann"]==None:
             parms["doHann"]      = False        # Hanning needed for RFI?
         if parms["solInt"]==None:
-            parms["solInt"]  =    2.0/60.       # solution interval (min)
+            parms["solInt"]  =   10.0/60.       # solution interval (min)
     elif cfg[0:1]=='B':
         if parms["calInt"]==None:
              parms["calInt"]  =  0.45           # Calibration table interval (min)
@@ -346,7 +346,7 @@ def EVLAInitContFQParms(parms):
         if parms["doHann"]==None:
             parms["doHann"]      = freq<8.0e9   # Hanning needed for RFI?
         if parms["solInt"]==None:
-            parms["solInt"]  =    5.0/60.       # solution interval (min)
+            parms["solInt"]  =   10.0/60.       # solution interval (min)
     elif cfg[0:1]=='C':
         if parms["calInt"]==None:
              parms["calInt"]  =  1.0           # Calibration table interval (min)
@@ -357,7 +357,7 @@ def EVLAInitContFQParms(parms):
         if parms["doHann"]==None:
             parms["doHann"]      = freq<8.0e9  # Hanning needed for RFI?
         if parms["solInt"]==None:
-            parms["solInt"]  =   10.0/60.       # solution interval (min)
+            parms["solInt"]  =   20.0/60.       # solution interval (min)
     elif cfg[0:1]=='D':
         if parms["calInt"]==None:
              parms["calInt"]  =  2.0           # Calibration table interval (min)
@@ -368,7 +368,7 @@ def EVLAInitContFQParms(parms):
         if parms["doHann"]==None:
             parms["doHann"]      = freq<8.0e9  # Hanning needed for RFI?
         if parms["solInt"]==None:
-            parms["solInt"]  =   15.0/60.      # solution interval (min)
+            parms["solInt"]  =   30.0/60.      # solution interval (min)
        
     # Frequency dependent values
     FWHM = (45.0 /(freq*1.0e-9) ) / 60.   # FWHM in deg
@@ -380,7 +380,7 @@ def EVLAInitContFQParms(parms):
         if parms["bpsolint1"]==None:
             parms["bpsolint1"]   =  10.0/60.0   # BPass phase correction solution in min
         if parms["FOV"]==None:
-            parms["FOV"]         =  FWHM        # Field of view radius in deg.
+            parms["FOV"]         =  0.5*FWHM    # Field of view radius in deg.
         if parms["solPInt"]==None:
             parms["solPInt"]     =  0.10        # phase self cal solution interval (min)
         if parms["solAInt"]==None:
@@ -1556,6 +1556,8 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
             calib.debug = debug
         # Trap failure
         try:
+            mess = "Run Calib on "+calib.Sources[0]
+            printMess(mess, logfile)
             if not check:
                 calib.g
         except Exception, exception:
@@ -1617,6 +1619,9 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
         snsmo.smoType    = 'VLBI'
         snsmo.smoFunc    = 'MWF '
         snsmo.smoParm    = [smoTime,smoTime,smoTime,smoTime,smoTime]
+        # Clip ay 0.5 nsec from median
+        snsmo.clipSmo    = [5*smoTime,5*smoTime,5*smoTime,5*smoTime,5*smoTime]
+        snsmo.clipParm   = [0.0, 0.0, 0.0, 0.5, 0.5]
         snsmo.doBlank    = True
         snsmo.refAnt     = refAnts[0]
         snsmo.taskLog    = logfile
@@ -1657,10 +1662,6 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
         if retCode!=0:
             return retCode
   
-        retCode = EVLAPlotTab(uv, "SN", SNver, err, nplots=6, optype="PHAS", \
-                                  logfile=logfile, check=check, debug=debug)
-        if retCode!=0:
-            return retCode
         retCode = EVLAWritePlots (uv, 1, 0, plotFile, err, \
                                   plotDesc="Group delay plots", \
                                   logfile=logfile, check=check, debug=debug)
@@ -1857,6 +1858,8 @@ def EVLACalAP(uv, target, ACals, err, \
         #calib.prtLv = 5
         # Trap failure
         try:
+            mess = "Run Calib on "+calib.Sources[0]
+            printMess(mess, logfile)
             if not check:
                 calib.g
         except Exception, exception:
@@ -1900,6 +1903,8 @@ def EVLACalAP(uv, target, ACals, err, \
         OK = False   # Must have some work
         # Loop over calibrators
         for PCal in PCals:
+            mess = "Consider Calib for "+PCal["Source"]
+            printMess(mess, logfile)
             # Ignore if already done in ACals
             doIgnore = False
             for ACal in ACals:
@@ -1907,7 +1912,9 @@ def EVLACalAP(uv, target, ACals, err, \
                     doIgnore = True
                     break
             if doIgnore:
-                break
+                mess = PCal["Source"]+" in ACal list"
+                printMess(mess, logfile)
+                continue
             calib.Sources[0]= PCal["Source"]
             calib.DataType2 = PCal["CalDataType"]
             calib.in2File   = PCal["CalFile"]
@@ -1930,8 +1937,10 @@ def EVLACalAP(uv, target, ACals, err, \
             if debug:
                 calib.i
                 calib.debug = debug
-            # Trap failure
+           # Trap failure
             try:
+                mess = "Run Calib on "+calib.Sources[0]
+                printMess(mess, logfile)
                 if not check:
                     calib.g
             except Exception, exception:
@@ -2013,6 +2022,14 @@ def EVLACalAP(uv, target, ACals, err, \
         else:   # No smoothing
             solnVer2 = solnVer
 
+    # Tell OKCals2 etc if debug
+    if debug:
+        mess = "OKCals2="+str(OKCals2)
+        printMess(mess, logfile)
+        mess = "OKAmpCals="+str(OKAmpCals)
+        printMess(mess, logfile)
+        mess = "BadAmpCals="+str(BadAmpCals)
+    
     # GetJy to set flux density scale
     getjy = ObitTask.ObitTask("GetJy")
     getjy.taskLog  = logfile
@@ -2054,6 +2071,20 @@ def EVLACalAP(uv, target, ACals, err, \
     else:
         pass
        
+    # enter flagged solutions in FG table?
+    if flagFail:
+        EVLAFlagFailSN(uv, 0, err, FGver=ampEditFG,  \
+                      logfile=logfile, check=check, debug=debug)
+        OErr.printErrMsg(err, "Error flagging data with failed solutions")
+    # end flagFail
+
+    # Clip/flag by deviant amplitudes?
+    if doAmpEdit:
+        EVLAEditSNAmp(uv, 0, err, sigma=ampSigma, FGver=ampEditFG,  \
+                      logfile=logfile, check=check, debug=debug)
+        OErr.printErrMsg(err, "Error clip/flag bad amplitudes")
+    # end Amp edit
+    
     # Plot gain corrections?
     if solnVer2==None:
         solnVer2 = solnVer
@@ -2078,20 +2109,6 @@ def EVLACalAP(uv, target, ACals, err, \
             return retCode
     # end SN table plot
 
-    # enter flagged solutions in FG table?
-    if flagFail:
-        EVLAFlagFailSN(uv, 0, err, FGver=ampEditFG,  \
-                      logfile=logfile, check=check, debug=debug)
-        OErr.printErrMsg(err, "Error flagging data with failed solutions")
-    # end flagFail
-
-    # Clip/flag by deviant amplitudes?
-    if doAmpEdit:
-        EVLAEditSNAmp(uv, 0, err, sigma=ampSigma, FGver=ampEditFG,  \
-                      logfile=logfile, check=check, debug=debug)
-        OErr.printErrMsg(err, "Error clip/flag bad amplitudes")
-    # end Amp edit
-    
     # Set up for CLCal - use phase & amp calibrators
     if not check:
         # Open and close image to sync with disk 
@@ -2791,7 +2808,7 @@ def EVLAPolCal(uv, InsCals, err, RM=0.0, \
                solInt=0.0, refAnt=0, ChInc=1, ChWid=1, \
                pmodel=[0.0,0.0,0.0,0.0,0.0,0.0,0.0], \
                check=False, debug = False, \
-               noScrat=[], logfile = ""):
+               nThreads=1, noScrat=[], logfile = ""):
     """
     Instrumental Polarization 
     
@@ -2812,7 +2829,7 @@ def EVLAPolCal(uv, InsCals, err, RM=0.0, \
     * solType  = solution type, "    ", "LM  "
     * fixPoln  = NYI if True, don't solve for source polarization in ins. cal
     * avgIF    = NYI if True, average IFs in ins. cal.
-    * solInt   = instrumental solution interval (min), 0=> scan average
+    * solInt   = instrumental solution interval (min)
     * refAnt   = Reference antenna
     * ChInc    = channel increment for solutions
     * ChWid    = number of channels to average for solution.
@@ -2827,6 +2844,7 @@ def EVLAPolCal(uv, InsCals, err, RM=0.0, \
       pmodel[5]  Y offset in sky (arcsec)
       =========  ========================
 
+    * nThreads = Number of threads to use in imaging
     * check    = Only check script, don't execute tasks
     * debug    = Run tasks debug, show input
     * noScrat  = list of disks to avoid for scratch files
@@ -2859,13 +2877,13 @@ def EVLAPolCal(uv, InsCals, err, RM=0.0, \
         pcal.flagVer  = flagVer
         pcal.solnType = solType
         pcal.solInt   = solInt
-        pcal.solInt2  = solInt
         pcal.ChInc    = ChInc
         pcal.ChWid    = ChWid
         pcal.refAnt   = refAnt
         pcal.prtLv    = 2
         pcal.PDSoln   = 1
         pcal.CPSoln   = 1
+        pcal.nThreads = nThreads
         for i in range(0,len(pcal.doFitI)):
             pcal.doFitI[i]   = True
         pcal.taskLog  = logfile
@@ -4095,7 +4113,7 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
     * doComRes   = Force common resolution in frequency? (MF)
     * BLFact     = Baseline dependent averaging factor
     * BLchAvg    = If True and BLFact>=1.0 also average channels
-    * doOutlier  = Outliers from NVSS?  Yes=> 4*FOV, 1 mJy
+    * doOutlier  = Outliers from NVSS?  Yes=> 4*FOV, 10 mJy >1 GHz else 50 mJy
                    None = Default, Yes if freq<6 GHz
     * doMB       = If True is wideband imaging
     * norder     = order on wideband imaging
@@ -4185,7 +4203,10 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
     if doOutlier or ((doOutlier==None) and refFreq<6.0e9):
         FWHM = (45.0 /(refFreq*1.0e-9) ) / 60.   # FWHM in deg
         imager.OutlierDist = FWHM*4.0   # Outliers from NVSS for lower frequencies
-        imager.OutlierFlux = 0.001
+        if refFreq>1.0e9:
+            imager.OutlierFlux = 0.01
+        else:
+            imager.OutlierFlux = 0.05
     # Auto window or centered box
     if CleanRad:
         imager.CLEANBox=[-1,CleanRad,0,0]

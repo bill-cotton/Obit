@@ -144,9 +144,7 @@ PDSoln                              PD (antenna) table to write
 **PARAM** int 1
 refAnt            0                 Reference antenna
 **PARAM** float 1
-solInt            0.0               selfcal Soln interval (min)
-**PARAM** float 1
-solInt2            0.0              Poln cal Soln interval (min)
+solInt            0.0               Poln cal Soln interval (min)
                                     
 **PARAM** int 1
 prtLv             0.0               Print level in cal

@@ -1750,6 +1750,9 @@ def imtab(inImage, filename, outDisk, err, fract=None, quant=None, \
     if not OErr.OErrIsA(err):
         raise TypeError,"err MUST be an OErr"
     #
+    # Open/close fo fully instantiate
+    inImage.Open(Image.READONLY,err)
+    inImage.Close(err)
     # Set output
     outImage = Image.newPFImage("FITS Image DATA", filename, outDisk, False, err)
     if err.isErr:

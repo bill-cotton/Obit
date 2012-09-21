@@ -702,7 +702,7 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   if (err->error)  Obit_traceback_msg (err, routine, inUV->name);
 
   /* Give report */
-  Obit_log_error(err, OBIT_InfoErr, "EditTD: flag %lf of %lf vis/interval= %5.1lf percent",
+  Obit_log_error(err, OBIT_InfoErr, "EditTD: flag %8.1lf of %8.1lf vis/interval= %5.1lf percent",
 		 (odouble)countBad, (odouble)countAll, 100.0*(odouble)countBad/((odouble)countAll));
 
   return;
@@ -1194,7 +1194,7 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   if (err->error)  Obit_traceback_msg (err, routine, inUV->name);
 
   /* Give report */
-  Obit_log_error(err, OBIT_InfoErr, "%s: flag %lf of %lf vis/interval= %5.1lf percent",
+  Obit_log_error(err, OBIT_InfoErr, "%s: flag %8.1lf of %8.1lf vis/interval= %5.1lf percent",
 		 routine, (odouble)countBad, (odouble)countAll, 
 		 100.0*(odouble)countBad/((odouble)countAll));
 
@@ -1691,7 +1691,7 @@ void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   if (err->error)  Obit_traceback_msg (err, routine, inUV->name);
 
   /* Give report */
-  Obit_log_error(err, OBIT_InfoErr, "%s: flag %lf of %lf vis/interval= %5.1lf percent",
+  Obit_log_error(err, OBIT_InfoErr, "%s: flag %8.1lf of %8.1lf vis/interval= %5.1lf percent",
 		 routine, (odouble)countBad, (odouble)countAll, 
 		 100.0*(odouble)countBad/((odouble)countAll));
 
@@ -2175,7 +2175,7 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   if (err->error) Obit_traceback_msg (err, routine, inUV->name);
 
   /* Give report */
-  Obit_log_error(err, OBIT_InfoErr, "EditFD: flag %lf of %lf vis/interval= %5.1lf percent",
+  Obit_log_error(err, OBIT_InfoErr, "EditFD: flag %8.1lf of %8.1lf vis/interval= %5.1lf percent",
 		 (odouble)countBad, (odouble)countAll, 
 		 100.0*(odouble)countBad/((odouble)countAll));
 
@@ -2433,6 +2433,7 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
     while ((iretCode==OBIT_IO_OK) && (oretCode==OBIT_IO_OK)) {
       if ((!gotOne) || (inUV->myDesc->numVisBuff<=0)) { /* need to read new record? */
 	iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
+	if (err->error) goto cleanup;
 	/*if (iretCode!=OBIT_IO_OK) break;*/
 	firstVis = inDesc->firstVis;
       }
@@ -2702,6 +2703,7 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitInfoListAlwaysPut(inUV->info, "Stokes", OBIT_string, dim, oStokes);
 
   /* Cleanup */
+ cleanup:
   /* Deallocate arrays */
   row     = ObitTableFGRowUnref(row);
   outFlag = ObitTableFGUnref(outFlag);
@@ -2719,7 +2721,7 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   g_free(BLAnt2);
 
   /* Give report */
-  Obit_log_error(err, OBIT_InfoErr, "Edit%c: flag %lf of %lf vis/interval= %5.1lf percent",
+  Obit_log_error(err, OBIT_InfoErr, "Edit%c: flag %8.1lf of %8.1lf vis/interval= %5.1lf percent",
 		 Stokes[0], (odouble)countBad, (odouble)countAll, 
 		 100.0*(odouble)countBad/((odouble)countAll));
 
@@ -2876,6 +2878,7 @@ ObitUV* ObitUVEditClip (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
     if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
     else iretCode = ObitUVRead (inUV, inUV->buffer, err);
     if (iretCode!=OBIT_IO_OK) break;
+    if (err->error) Obit_traceback_val (err, routine,inUV->name, outUV);
     firstVis = inUV->myDesc->firstVis;
 
    /* How many */
@@ -3223,6 +3226,7 @@ ObitUV* ObitUVEditClipStokes (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
     if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
     else iretCode = ObitUVRead (inUV, inUV->buffer, err);
     if (iretCode!=OBIT_IO_OK) break;
+    if (err->error) Obit_traceback_val (err, routine,inUV->name, outUV);
     firstVis = inUV->myDesc->firstVis;
 
     /* How many in buffer? */
@@ -3814,7 +3818,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   if (err->error)  Obit_traceback_msg (err, routine, inUV->name);
 
   /* Give report */
-  Obit_log_error(err, OBIT_InfoErr, "%s: flag %lf of %lf vis/interval= %6.2lf percent",
+  Obit_log_error(err, OBIT_InfoErr, "%s: flag %8.1lf of %8.1lf vis/interval= %6.2lf percent",
 		 routine, (odouble)countBad, (odouble)countAll, 
 		 100.0*(odouble)countBad/((odouble)countAll));
   if ((100.0*(odouble)checked/((odouble)countAll)) < 0.3) {

@@ -2172,7 +2172,9 @@ ObitIOUVFITSCreateBuffer (ofloat **data, olong *size,
 		      "Cannot define buffer, I/O not currently active");
 
   /* get size */
-  *size = ObitUVSelBufferSize(in->myDesc, in->mySel);
+  /* *size = ObitUVSelBufferSize(in->myDesc, in->mySel);*/
+  /* Need buffer for all */
+  *size = ((ObitUVDesc*)in->myDesc)->lrec * ((ObitUVSel*)in->mySel)->nVisPIO;
 
   /* (re)allocate */
   if (*data) *data = ObitMemRealloc (*data, (*size)*sizeof(ofloat));

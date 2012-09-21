@@ -65,9 +65,9 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err);
 ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err);
 /* Write history */
 void PCalHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err);
-/* Initial calibration */
-ObitUV* InitialCal (ObitInfoList* myInput, ObitUV* scrData, 
-		    ObitPolnCalFit *PolnFitter, ObitErr* err);
+/* Average data */
+ObitUV* AverData (ObitInfoList* myInput, ObitUV* scrData, 
+		  ObitPolnCalFit *PolnFitter, ObitErr* err);
 
 
 /* Program globals */
@@ -96,9 +96,6 @@ int main ( int argc, char **argv )
   ObitSkyModel *skyModel=NULL;
   ObitPolnCalFit *PolnFitter=NULL;
   ObitErr      *err= NULL;
-  gchar        *SCParms[] = {  /* Selfcal Parameters  */
-    "refAnt",
-     NULL};
 
   /* Startup - parse command line */
   err = newObitErr();
@@ -145,11 +142,8 @@ int main ( int argc, char **argv )
   /* Create Fitter */
   PolnFitter = ObitPolnCalFitCreate ("PolnFitter");
 
-  /* Initial calibration */
-  avgData = InitialCal (myInput, scrData, PolnFitter, err);
-
-  /* Self cal parameters to scrData */
-  ObitInfoListCopyList (myInput, scrData->info, SCParms);
+  /* Average data */
+  avgData = AverData (myInput, scrData, PolnFitter, err);
 
   /* Do channel solutions */
   ObitPolnCalFitFit (PolnFitter, avgData, inData, err);
@@ -371,6 +365,7 @@ ObitInfoList* defaultInputs(ObitErr *err)
   oint   itemp;
   ofloat ftemp, farray[3];
   gboolean btemp;
+  gchar ctemp[5];
   ObitInfoList *out = newObitInfoList();
   gchar *routine = "defaultInputs";
 
@@ -490,16 +485,22 @@ ObitInfoList* defaultInputs(ObitErr *err)
   ObitInfoListPut (out, "doPol", OBIT_bool, dim, &btemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
   
-  /* Average IFs in initial calibration */
+  /* No average IFs in initial calibration */
   dim[0] = 1; dim[1] = 1;
-  btemp = TRUE;
+  btemp = FALSE;
   ObitInfoListPut (out, "avgIF", OBIT_bool, dim, &btemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
   
-  /* Average Poln in  initial calibration*/
+  /* No average Poln in  initial calibration*/
   dim[0] = 1; dim[1] = 1;
-  btemp = TRUE;
+  btemp = FALSE;
   ObitInfoListPut (out, "avgPol", OBIT_bool, dim, &btemp, err);
+  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+  
+  /* A&P solution in  initial calibration*/
+  dim[0] = 4; dim[1] = 1;
+  ctemp[0]='A'; ctemp[1]='&'; ctemp[2]='P'; ctemp[3]=' '; ctemp[4]=0; 
+  ObitInfoListPut (out, "solType", OBIT_bool, dim, ctemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
   
   /* Subarray */
@@ -894,10 +895,10 @@ void PCalHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "Sources", "Qual", "souCode", "timeRange",  "subA",
     "selBand", "selFreq", "FreqID",  "BChan", "EChan", "BIF", "EIF",  
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "doPol", "Antennas",   
+    "doPol", "Antennas", 
     "DataType2", "in2File", "in2Disk", "in2Name", "in2Class", "in2Seq", 
     "nfield", "CCVer", "BComp", "EComp", "Cmethod", "Cmodel", "Flux",
-    "modelFlux", "modelPos", "modelParm", 
+    "modelFlux", "modelPos", "modelParm", "solInt", 
     "solnType", "Sources", "Qual", "souCode", "doFitI", "doFitPol", "doFitV", 
     "doFitGn", "doFitRL", "RLPhase", "RM", "PPol", "ChWid", "ChInc", 
     "CPSoln", "PDSoln", "BPSoln", 
@@ -930,99 +931,36 @@ void PCalHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
 } /* end PCalHistory  */
 
 /**
- * Initial atmospheric calibration, calibrates data and averages to
- * solint2 and returns averaged data.
+ * Averages data to solint and returns averaged data.
  * \param myInput      Input parameters on InfoList    
  * \param scrUV        Data to be used to determine calibration
  * \param PolnFitter   Fitter to be used, control parameters copied to info
  * \param err          ObitErr stack for reporting problems.
  * \return time averaged visibility data
  */
-ObitUV* InitialCal (ObitInfoList* myInput, ObitUV* scrData, 
-		    ObitPolnCalFit *PolnFitter, ObitErr* err)
+ObitUV* AverData (ObitInfoList* myInput, ObitUV* scrData, 
+		  ObitPolnCalFit *PolnFitter, ObitErr* err)
 {
-  ObitTableSN  *SNTable = NULL;
-  ObitTableCL  *CLTable1 = NULL, *CLTable2 = NULL;
-  ObitUVGSolve *solver=NULL;
   ObitUV       *avgData=NULL;
-  gboolean     btemp;
-  ofloat       ftemp, solInt;
-  olong        itemp, ver=1;
+  ofloat       solInt;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gchar        *calParms[] = {  /* Parameters to update CL with SN tables */
-    "subA", "Antennas",
-     NULL};
-  gchar        *solverParms[] = {  /* self Calibration parameters */
-    "solnVer", "solType", "solMode", "avgPol", "avgIF", "doMGM", "elevMGM",
-    "refAnt", "ampScalar", "minSNR",  "minNo", "prtLv",
-    NULL};
   gchar *PolCalParms[] = {     /* Polarization calibration parameters */
     "solnType", "Sources", "Qual", "souCode", "doFitI", "doFitPol", "doFitV", 
     "doFitGn", "doFitRL", "RLPhase", "RM", "PPol", "ChWid", "ChInc", 
     "CPSoln", "PDSoln", "BPSoln", 
     "doBand", "BPVer", "refAnt", "prtLv", "BIF", "BChan",
     NULL};
-  gchar *blank = "    ";
   gchar *FQInclude[] = {"AIPS FQ", "AIPS AN", NULL};
-  gchar *routine = "InitialCal";
+  gchar *routine = "AverData";
 
   /* error checks */
   if (err->error) return avgData;
   g_assert (ObitUVIsA(scrData));
   
-  /* Initial CL table on scratch file */
-  ObitInfoListGet(myInput, "solInt", &type, dim, &ftemp, err);
-  ObitInfoListAlwaysPut(scrData->info, "solInt", OBIT_float, dim, &ftemp);
-  CLTable1 =  ObitTableCLGetDummy (scrData, scrData, ver, err);
-  if (err->error) Obit_traceback_val (err, routine, scrData->name, avgData);
-
-  /* Create solver */
-  solver = ObitUVGSolveCreate("Gain solver");
-
-  /* Copy selfcalibration control to solver */
-  ObitInfoListCopyList (myInput, solver->info, solverParms);
-  ObitInfoListGet(myInput, "solInt", &type, dim, &ftemp, err);
-  ObitInfoListAlwaysPut(solver->info, "solInt", OBIT_float, dim, &ftemp);
-  itemp = 1;
-  ObitInfoListAlwaysPut(solver->info, "solnVer", OBIT_long, dim, &itemp);
-  ObitInfoListGet(myInput, "BChan", &type, dim, &itemp, err);
-  ObitInfoListAlwaysPut(scrData->info, "BChan", OBIT_long, dim, &itemp);
-  ObitInfoListGet(myInput, "EChan", &type, dim, &itemp, err);
-  ObitInfoListAlwaysPut(scrData->info, "EChan", OBIT_long, dim, &itemp);
-  dim[0] = strlen(blank);  /* Phase only */
-  ObitInfoListAlwaysPut(scrData->info, "solMode", OBIT_string, dim, blank);
-
-  /* Do atmospheric solution */
-  SNTable = ObitUVGSolveCal (solver, scrData, scrData, scrData->mySel, err);
-  if (err->error) Obit_traceback_val (err, routine, scrData->name, avgData);
-
-  /* Apply calibration to CL table */
-  dim[0] = dim[1], dim[2] = dim[3] = dim[4] = 1;
-  ObitInfoListAlwaysPut(scrData->info, "solnVer", OBIT_long, dim, &SNTable->tabVer);
-  ObitInfoListAlwaysPut(scrData->info, "calIn",   OBIT_long, dim, &CLTable1->tabVer);
-  itemp = CLTable1->tabVer+1;
-  ObitInfoListAlwaysPut(scrData->info, "calOut",  OBIT_long, dim, &itemp);
-  ObitInfoListCopyList (myInput, scrData->info, calParms);
-  CLTable2 = ObitUVSoln2Cal (scrData, scrData, err);
-  if (err->error) Obit_traceback_val (err, routine, scrData->name, avgData);
-
-  /* Apply calibration */
-  btemp = TRUE;
-  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
-  ObitInfoListAlwaysPut(scrData->info, "doCalSelect", OBIT_bool, dim, &btemp);
-  itemp = 2;
-  ObitInfoListAlwaysPut(scrData->info, "doCalib", OBIT_long, dim, &itemp);
-  itemp = CLTable1->tabVer+1;
-  ObitInfoListAlwaysPut(scrData->info, "gainUse", OBIT_long, dim, &itemp);
-  itemp = 1;   /* Copy all channels */
-  ObitInfoListAlwaysPut(scrData->info, "BChan", OBIT_long, dim, &itemp);
-  itemp = 0;
-  ObitInfoListAlwaysPut(scrData->info, "EChan", OBIT_long, dim, &itemp);
-
   /* Average data to solInt; 0=> all */
   solInt = 0.0;
-  ObitInfoListGetTest (myInput, "solInt2", &type, dim, &solInt); 
+  ObitInfoListGetTest (myInput, "solInt", &type, dim, &solInt); 
   if (solInt<=1.0e-5) solInt = 1000.0; 
   dim[0] = dim[1], dim[2] = dim[3] = dim[4] = 1;
   ObitInfoListAlwaysPut(scrData->info, "timeAvg", OBIT_float, dim, &solInt);
@@ -1040,11 +978,5 @@ ObitUV* InitialCal (ObitInfoList* myInput, ObitUV* scrData,
   /* nCal from global */
   ObitInfoListAlwaysPut(PolnFitter->info, "nCal", OBIT_long, dim, &nCal);
 
- /* cleanup */
-  solver    = ObitUVGSolveUnref(solver);
-  SNTable   = ObitTableSNUnref(SNTable);
-  CLTable1  = ObitTableSNUnref(CLTable1);
-  CLTable2  = ObitTableSNUnref(CLTable2);
-
   return avgData;
-} /* end InitialCal */
+} /* end AverData */

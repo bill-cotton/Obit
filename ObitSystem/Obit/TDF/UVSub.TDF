@@ -4,7 +4,7 @@
 ;! Subtracts/divides a model from/into a uv data base
 ;# Task UV  Obit 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005-2011
+;;  Copyright (C) 2005-2012
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -67,6 +67,11 @@ doCalib          -1.0        2.0   If >0 calibrate data
 gainUse                            CL (or SN) table to apply
 **PARAM** boo 1 **DEF** F
 doPol            -1.0       10.0   If >0 correct polarization.
+**PARAM** int 1 **DEF** -1
+PDVer                              PD table to apply
+                                   If >=0, per channel corrections
+**PARAM** float 1  **DEF** 0.0
+Alpha           -20.       20.      Spectral Index to correct
 **PARAM** int 1
 flagVer                            Flag table version
 **PARAM** int 1
@@ -77,6 +82,8 @@ doBand           -1.0       10.0   If >0 apply bandpass cal.
 BPVer                              Bandpass table version
 **PARAM** float 3
 Smooth                             Smoothing function. 
+**PARAM** str 4
+DataType2                          "FITS" or "AIPS" type of model
 **PARAM** str 48
 in2File                            FITS input image if Type=='FITS'
 **PARAM** str 12
@@ -88,7 +95,7 @@ in2Seq            0.0     9999.0   Cleaned AIPS seq. #
 **PARAM** int 1
 in2Disk                            Cleaned map disk unit #
 **PARAM** int 1   **DEF** 1
-nmaps             0.0     4192.0   No. fields to use for model.
+nfield            0.0     4192.0   No. fields to use for model.
 **PARAM** int 1
 CCVer            -1.0    46655.0   CC file version #.
 **PARAM** int 64
@@ -196,6 +203,12 @@ Adverbs:
              represented in the AN table.  This correction is only
              useful if PCAL has been run or feed polarization parameters
              have been otherwise obtained. 
+  PDVer......AIPS PD table to use for per channel instrumental
+             polarization corrections if doPol=True. 0=> highest
+             -1 => use IF corrections from AIPS AN table.
+  Alpha......If != 0.0 then correct data by spectral index Alpha before 
+             calibration. 
+             -0.7 is typical for synchrotron.
   flagVer....Specifies the version of the flagging table to be applied.
              0 => highest numbered table. <0 => no flagging to be
              applied.
@@ -234,6 +247,8 @@ Adverbs:
                function has value - in channels.  Defaults: 1,3,1,4
                times Smooth(2) used when input Smooth(3) < net
                Smooth(2).
+      Model
+  DataType2.'FITS' or 'AIPS'  type of input, defaults to DataType
   in2Name....Model AIPS name .      Standard defaults.
   in2Class...Model AIPS class .     Standard defaults.
   in2Seq.....Model AIPS seq. # .    0 => highest.
@@ -241,7 +256,7 @@ Adverbs:
   in2File....FITS input root if Type=='FITS'
              Any digits should be left off the end of the name as 
              the 0-rel field number is added (padded to 4 digits).
-  nmaps......Number of image files to use for model.  If more than one
+  nfield.....Number of image files to use for model.  If more than one
              file is to be used, the Name, Class, Disk and Seq of the
              subsequent image files will be the same as the first file
              except that the LAST two characters of the Class will be
@@ -411,10 +426,10 @@ the Factor's used is 1.0 with each Factor akin to a weight of
 that particular continuum map (i.e. the number of channels).
    Note, for VLA data, Obit task Squint does this operation.
 
-nmaps:
+nfield:
 
      Multiple input files may be specified although all must be
-of the same type (i.e. CLean components files or images).
+of the same type (i.e. CLEAN components files or images).
 Subsequent model files must have the same Name, Class, Disk and
 Seq as the first file (in2Name, in2Class, in2Disk, in2Seq)
 except that the LAST two characters of the CLASS should be ' 1'

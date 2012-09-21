@@ -1,10 +1,5 @@
 #! /usr/bin/env ObitTalk
 """
-# TO do
-# deal with refant
-# DONE: Generate Calibrator models, see EVLACal.EVLACalModel
-# Poln cal timerange
-# occasionally checkpoint state to pickle jar???
 
 The EVLA Continuum Pipeline.  The pipeline can be invoked from the command line 
 as, ::
@@ -394,7 +389,7 @@ def pipeline( aipsSetup, parmFile):
     
         # Delay recalibration
         if parms["doDelayCal2"] and parms["DCals"] and not check:
-            plotFile = "./"+fileRoot+"DelayCal.ps"
+            plotFile = "./"+fileRoot+"DelayCal2.ps"
             retCode = EVLADelayCal(uv, parms["DCals"], err, \
                                    BChan=parms["delayBChan"], EChan=parms["delayEChan"], \
                                    doCalib=2, flagVer=2, doBand=-1, \
@@ -409,7 +404,7 @@ def pipeline( aipsSetup, parmFile):
                 
             # Plot corrected data?
             if parms["doSpecPlot"] and parms["plotSource"]:
-                plotFile = "./"+fileRoot+"DelaySpec.ps"
+                plotFile = "./"+fileRoot+"DelaySpec2.ps"
                 retCode = EVLASpectrum(uv, parms["plotSource"], parms["plotTime"], plotFile, parms["refAnt"], err, \
                                        Stokes=["RR","LL"], doband=-1,          \
                                        check=check, debug=debug, logfile=logFile )
@@ -430,7 +425,7 @@ def pipeline( aipsSetup, parmFile):
         
         # Plot corrected data?
         if parms["doSpecPlot"] and parms["plotSource"]:
-            plotFile = "./"+fileRoot+"BPSpec.ps"
+            plotFile = "./"+fileRoot+"BPSpec2.ps"
             retCode = EVLASpectrum(uv, parms["plotSource"], parms["plotTime"], plotFile, parms["refAnt"], err, \
                                    Stokes=["RR","LL"], doband=1,          \
                                    check=check, debug=debug, logfile=logFile )
@@ -439,7 +434,7 @@ def pipeline( aipsSetup, parmFile):
     
         # Amp & phase Recalibrate
         if parms["doAmpPhaseCal2"]:
-            plotFile = "./"+fileRoot+"APCal.ps"
+            plotFile = "./"+fileRoot+"APCal2.ps"
             retCode = EVLACalAP (uv, [], parms["ACals"], err, PCals=parms["PCals"], \
                                  doCalib=2, doBand=1, BPVer=1, flagVer=2, \
                                  BChan=parms["ampBChan"], EChan=parms["ampEChan"], \
@@ -489,7 +484,7 @@ def pipeline( aipsSetup, parmFile):
             OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
     
     # XClip
-    if parms["XClip"]:
+    if parms["XClip"] and parms["XClip"]>0.0:
         mess =  "Cross Pol clipping:"
         printMess(mess, logFile)
         retCode = EVLAAutoFlag (uv, [], err, flagVer=-1, flagTab=1, \
@@ -526,7 +521,7 @@ def pipeline( aipsSetup, parmFile):
                              fixPoln=parms["PCFixPoln"], pmodel=parms["PCpmodel"], avgIF=parms["PCAvgIF"], \
                              solInt=parms["PCSolInt"], refAnt=parms["PCRefAnt"], solType=parms["PCSolType"], \
                              ChInc=parms["PCChInc"], ChWid=parms["PCChWid"], \
-                             check=check, debug=debug, noScrat=noScrat, logfile=logFile)
+                             nThreads=nThreads, check=check, debug=debug, noScrat=noScrat, logfile=logFile)
         if retCode!=0 and (not check):
            raise  RuntimeError,"Error in polarization calibration: "+str(retCode)
         # end poln cal.
@@ -554,7 +549,7 @@ def pipeline( aipsSetup, parmFile):
             raise RuntimeError,"Error in RL phase spectrum calibration"
     
     # VClip
-    if parms["VClip"]:
+    if parms["VClip"] and parms["XClip"]>0.0:
         mess =  "VPol clipping:"
         printMess(mess, logFile)
         retCode = EVLAAutoFlag (uv, [], err, flagVer=-1, flagTab=1, \
@@ -617,7 +612,7 @@ def pipeline( aipsSetup, parmFile):
         if cno>0:
             uvt = UV.newPAUV("AIPS CAL UV DATA", Aname, avgClass, disk, parms["seq"], True, err)
             filename = parms["project"]+parms["session"]+parms["band"]+"Cal.uvtab"
-            fuv = EVLAUVFITS (uvt, filename, 0, err, compress=parms["Compress"])
+            fuv = EVLAUVFITS (uvt, filename, 0, err, compress=parms["Compress"], logfile=logFile)
             EVLAAddOutFile( filename, 'project', "Calibrated Averaged UV data" )
             # Save list of output files
             EVLASaveOutFiles()

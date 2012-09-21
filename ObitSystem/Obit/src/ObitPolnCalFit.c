@@ -1139,7 +1139,7 @@ static void WriteOutput (ObitPolnCalFit* in, ObitUV *outUV,
       in->PDTable = newObitTablePDValue ("Instrum", (ObitData*)outUV, &in->PDSoln, 
 					 OBIT_IO_ReadWrite, numPol, numIF, numChan, 
 					 err);
-    if (!in->BPTable) 
+    if ((!in->BPTable) && (in->doFitRL))
       in->BPTable = newObitTableBPValue ("Bandpass", (ObitData*)outUV, &in->BPSoln, 
 					 OBIT_IO_ReadWrite, numPol, numIF, numChan, 
 					 err);
@@ -1221,7 +1221,7 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
   for (i=0; i<in->nsou; i++) {
     /* Set R-L phase if given */
     if (in->RLPhaseIn[i]>-900.0) {
-      in->RLPhase[i] = 	in->RLPhaseIn[0] + 
+      in->RLPhase[i] = 	in->RLPhaseIn[i] + 
 	2.0 * (lambda*lambda - lambdaRef*lambdaRef) * in->RM[i];
     } else in->RLPhase[i] = 0.0;
   }
@@ -1502,6 +1502,7 @@ static void InitInstrumentalTab(ObitPolnCalFit* in, ObitErr *err)
   row->SubA    = 0;
   row->FreqID  = 0;
   row->RefAnt  = in->refAnt;
+  for (i=0; i<nif*nchan; i++) row->RLPhase[i] = 0.0;
   /* Circular feed default */
   if ((in->outDesc->crval[in->outDesc->jlocs]<0.0) && 
       (in->outDesc->crval[in->outDesc->jlocs]>-1.5)) {
@@ -1727,8 +1728,9 @@ static void UpdateInstrumentalTab(ObitPolnCalFit* in, ObitErr *err)
       iif = in->IFno-1+ifOff;  /* 0 rel IF */
       indx = iif*nchan + ich;
       
-      row->Real1[indx] = in->antParm[iant*4+1];
-      row->Imag1[indx] = in->antParm[iant*4+0];
+      row->RLPhase[indx] = in->PD*RAD2DG;  /* R-L phase difference */
+      row->Real1[indx]   = in->antParm[iant*4+1];
+      row->Imag1[indx]   = in->antParm[iant*4+0];
       if (npol>1) {
 	row->Real2[indx] = in->antParm[iant*4+3];
 	row->Imag2[indx] = in->antParm[iant*4+2];
@@ -1934,11 +1936,11 @@ static void doFitGSL (ObitPolnCalFit *in, ObitErr *err)
       ObitErrLog(err); 
     }     /* end  Diagnostics */
 
-    /* Minimum of four iterations */
-    if (iter<4) status = GSL_CONTINUE;
+    /* Minimum of two iterations */
+    if (iter<2) status = GSL_CONTINUE;
 
     /* Convergence test */    
-    if (iter>3)
+    if (iter>1)
       status = gsl_multifit_test_delta (solver->dx, solver->x, 
 					epsabs, epsrel);
   } while ((status==GSL_CONTINUE) && (iter<maxIter));
@@ -2092,7 +2094,7 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
   if (err->error) return TRUE;  /* Error exists? */
   
   iter = 0;
-  while (iter<100) {
+  while (iter<500) {
     in->selSou = -1;
     in->selAnt = -1;
     begChi2 = GetChi2 (in->nThread, in,  polnParmUnspec, 0,
@@ -2255,7 +2257,7 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
     /* Convergence test */
     difChi2 = fabs(begChi2 - endChi2);
 
-    if ((fabs(difParam)<1.0e-4) && (difChi2<1.0e-4*hiChi2)) break;
+    if ((fabs(difParam)<1.0e-6) && (difChi2<1.0e-5*hiChi2)) break;
 
     /* Diagnostics */
     if (err->prtLv>=3) {

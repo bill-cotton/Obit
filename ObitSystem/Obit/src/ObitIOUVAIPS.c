@@ -473,9 +473,7 @@ ObitIOCode ObitIOUVAIPSOpen (ObitIOUVAIPS *in, ObitIOAccess access,
 ObitIOCode ObitIOUVAIPSClose (ObitIOUVAIPS *in, ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
-  ObitFilePos size, padTo;
   olong bsize=1024;
-  gchar *buffer;
   gchar *routine = "ObitIOUVAIPSClose";
 
   /* error checks */
@@ -493,10 +491,7 @@ ObitIOCode ObitIOUVAIPSClose (ObitIOUVAIPS *in, ObitErr *err)
 
   /* Pad to multiple of 1024 if modified */
   if (in->myStatus==OBIT_Modified) {
-    size = ObitFileSize (in->myFile->fileName, err);
-    padTo = (ObitFilePos)(((size/1024.0)+0.0001)*1024);
-    buffer = g_malloc0(bsize);
-    retCode = ObitFilePad (in->myFile, padTo, buffer, bsize, err);
+    retCode = ObitFilePadFile (in->myFile, bsize, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
   }
 
@@ -1682,6 +1677,10 @@ ObitIOCode ObitIOUVAIPSFlush (ObitIOUVAIPS *in, ObitErr *err)
   check (in, err);
   if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
 
+  retCode = ObitFileFlush(in->myFile, err);
+  if ((retCode!=OBIT_IO_OK) || (err->error)) 
+    Obit_traceback_val (err, routine, in->name, retCode);
+  
   /* Wonky padding at end of file if needed */
   wantPos = ObitAIPSUVWonkyPad (in->myFile->filePos);
   if (wantPos > in->myFile->filePos) {
@@ -1693,8 +1692,6 @@ ObitIOCode ObitIOUVAIPSFlush (ObitIOUVAIPS *in, ObitErr *err)
       Obit_traceback_val (err, routine, in->name, retCode);
     in->filePos = in->myFile->filePos; /* remember current file position */
   }
-
-  retCode = ObitFileFlush(in->myFile, err);
 
   return retCode;
 } /* end ObitIOUVAIPSFlush */

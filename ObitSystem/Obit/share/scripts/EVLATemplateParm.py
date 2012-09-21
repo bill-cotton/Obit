@@ -11,16 +11,13 @@
 # CONFIG      Configuration
 # SELCHAN     Number of channels for selected configuration
 # CALINT      CL table interval in min
-# DOHANN      True or False if Hanning wanted
-# DOSHAD      True or False if Shadow flagging wanted
 # BPCAL       Bandpass calibrator list
 # PHSCAL      Phase calibrator list
 # AMPCAL      Amplitude calibrator list
 # DLYCAL      Delay calibrator list
 # PINCAL      Instrumental polarization calibrator list
-# PRLCAL      R-L phase and delay calibrator
-# PRLPHS      R-L phase for PRLCAL @ 1 GHz
-# PRLRM       Rotation measure for PRLCAL
+# PRLDCAL     R-L phase and delay calibrator list, for each
+#             (name, R-L phase (deg at 1 GHz), RM (rad/m**2)
 # REFANT      Reference antenna
 # PLOTSRC     Diagnostic plot source name or None
 # PLOTTIIME   Diagnostic plot timerange
@@ -49,9 +46,6 @@ parms["calInt"]        = @CALINT@   # Calibration table interval in min.
 
 # Calibration sources/models
 parms["BPCal"]       = @BPCAL@      # Bandpass calibrator
-
-# Hanning
-doHann       = @DOHANN@
 
 parms["doFD1"]       = True         # Do initial frequency domain flagging
 parms["FD1widMW"]    = 31           # Width of the initial FD median window
@@ -121,30 +115,38 @@ parms["doRawSpecPlot"] = @PLOTSRC@!=None  # Plot Raw spectrum
 parms["doSpecPlot"]    = @PLOTSRC@!=None  # Plot spectrum at various stages of processing
 
 # Poln  Cal
-parms["PCInsCals"]     = @PINCAL@  # List of instrumental poln calibrators
+parms["PCInsCals"]     = @PINCAL@                   # List of instrumental poln calibrators
+parms["doPolCal"]      = len(parms["PCInsCals"])>0  # Do polarization calibration?
+parms["doPol"]         = parms["doPolCal"]
 
 # R-L phase/delay calibration
-parms["RLPCal"]    = @PRLCAL@     # Polarization angle (R-L phase) calibrator
-parms["PCRLPhase"] = @PRLPHS@     # R-L phase difference for RLPCal
-parms["RM"]        = @PRLRM@      # rotation measure (rad/m^2) for RLPCal
-parms["RLDCal"]    = [(@PRLCAL@, @PRLPHS@, @PRLRM@)]     #  R-L delay calibrator, R-L phase, RM
-parms["rlrefAnt"]  = @REFANT@     # Reference antenna REQUIRED
+parms["RLPCal"]    = None         # Polarization angle (R-L phase) calibrator, IF based
+parms["PCRLPhase"] = None         # R-L phase difference for RLPCal, IF based
+parms["RM"]        = None         # rotation measure (rad/m^2) for RLPCal, IF based
+parms["RLDCal"]    = @PRLDCAL@    #  R-L delay calibrator list, R-L phase, RM
+parms["rlrefAnt"]  = @REFANT@     # Reference antenna for R-L cal, defaults to refAnt
+parms["doRLDelay"] = parms["RLDCal"][0][0]!=None  # Determine R-L delay? If calibrator given
+parms["doRLCal"]   = parms["RLDCal"][0][0]!=None  # Determine  R-L bandpass? If calibrator given
 
 # Imaging
 parms["targets"] = @TARGET@     # targets, empty = all
 parms["Stokes"]  = "I"          # Stokes to image
+# Multi frequency or narrow band?
+SpanBW = @SPANBW@
+if SpanBW<=@VLAFREQ@*parms["MBmaxFBW"]*1.5:
+    parms["doMB"] = False
 
-# Control
+# Control, mark items as F to disable
 T   = True
 F   = False
 check                  = F        # Only check script, don't execute tasks
 debug                  = F        # run tasks debug
 parms["doLoadArchive"] = T        # Load from archive?
-parms["doHann"]        = @DOHANN@ # Hanning smooth?
+parms["doHann"]        = parms["doHann"] # Hanning smooth?
 parms["doClearTab"]    = T        # Clear cal/edit tables
 parms["doCopyFG"]      = T        # Copy FG 1 to FG 2
 parms["doQuack"]       = T        # Quack data?
-parms["doShadow"]      = @DOSHAD@ # Flag shadowed data?
+parms["doShadow"]      = parms["doShadow"] # Flag shadowed data?
 parms["doMedn"]        = T        # Median editing?
 parms["doFD1"]         = T        # Do initial frequency domain flagging
 parms["doRMSAvg"]      = T        # Do RMS/Mean editing for calibrators
@@ -159,9 +161,9 @@ parms["doBPCal2"]      = T        # Determine Bandpass calibration, 2nd pass
 parms["doAmpPhaseCal2"]= T        # Amplitude/phase calibration, 2nd pass
 parms["doAutoFlag2"]   = T        # Autoflag editing after final calibration?
 parms["doCalAvg"]      = T        # calibrate and average data
-parms["doRLDelay"]     = F        # Determine R-L delay?
-parms["doPolCal"]      = F        # Do polarization calibration?
-parms["doRLCal"]       = F        # Determine  R-L bandpass?
+parms["doRLDelay"]     = parms["doRLDelay"] # Determine R-L delay?
+parms["doPolCal"]      = parms["doPolCal"]  # Do polarization calibration?
+parms["doRLCal"]       = parms["doRLCal"]   # Determine  R-L bandpass?
 parms["doImage"]       = T        # Image targets
 parms["doSaveImg"]     = T        # Save results to FITS
 parms["doSaveUV"]      = T        # Save calibrated UV data to FITS
@@ -175,6 +177,6 @@ parms["doCleanup"]     = T        # Destroy AIPS files
 
 # diagnostics
 parms["doSNPlot"]      = T        # Plot SN tables etc
-parms["doRawSpecPlot"] = T        # Plot sample raw spectra?
-parms["doSpecPlot"]    = T        # Plot sample calibrated/edited spectra?
+parms["doRawSpecPlot"] = parms["doRawSpecPlot"]  # Plot sample raw spectra?
+parms["doSpecPlot"]    = parms["doSpecPlot"]     # Plot sample calibrated/edited spectra?
 parms["doReport"]      = T        # Individual source report

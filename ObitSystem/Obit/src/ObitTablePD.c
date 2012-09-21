@@ -312,6 +312,7 @@ ObitTablePD* newObitTablePDValue (gchar* name, ObitData *file, olong *ver,
   out->numIF = MAX (0, numIF);
   out->numChan = MAX (0, numChan);
   out->revision = 1;
+  out->numAnt = 1;
   strncpy (out->polType, "        ", MAXKEYCHARTABLEPD );
 
   /* initialize descriptor */
@@ -1060,8 +1061,9 @@ static void ObitTablePDUpdate (ObitTablePD *in, ObitErr *err)
   if (!ObitInfoListGet(in->myDesc->info, "NO_CHAN", &type, dim, 
 		       (gpointer)&in->numChan, err)) return;
    /* numAnt */
-  if (!ObitInfoListGet(in->myDesc->info, "NO_ANT", &type, dim, 
-		       (gpointer)&in->numAnt, err)) return;
+  in->numAnt = 1; 
+  ObitInfoListGetTest(in->myDesc->info, "NO_ANT", &type, dim, 
+		       (gpointer)&in->numAnt);
    /* polType */
   strncpy (in->polType, "        ", MAXKEYCHARTABLEPD); 
   ObitInfoListGetTest(in->myDesc->info, "POLTYPE", &type, dim, 

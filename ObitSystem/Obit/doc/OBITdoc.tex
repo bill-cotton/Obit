@@ -3563,7 +3563,7 @@ ObitTableDesc.
 \tablekey[{"NO\_CHAN"}{J}{numChan}{}{()}
 {Number of frequency channels}
 ]
-\tablekey[{"NO\_ANT  "}{J}{numAnt}{}{}
+\tablekey[{"NO\_ANT  "}{J}{numAnt}{1}{}
 {The number of antennas in table.}
 ]
 \tablekey[{"POLTYPE "}{A}{polType}{"        "}{}
@@ -3894,6 +3894,12 @@ ObitTableDesc.
 \tablecol[{"DECAPP  "}{"DEGREES " }{D}{(1)}{DecApp}
 {Apparent Declination}
 ] 
+\tablecol[{"RAOBS   "}{"DEGREES " }{D}{(1)}{RAObs}
+{[OPTIONAL] Observed Right ascension }
+] 
+\tablecol[{"DECOBS  "}{"DEGREES " }{D}{(1)}{DecObs}
+{[OPTIONAL] Observed Declination}
+] 
 \tablecol[{"LSRVEL "}{"M/SEC    " }{D}{(numIF)}{LSRVel}
 {LSR velocity per IF }
 ] 
@@ -3911,6 +3917,7 @@ ObitTableDesc.
 % Table modification history
 \begin{history}
 \modhistory[{W. D. Cotton}{09/03/2003}{Revision 1: Copied from AIPS}]
+\modhistory[{W. D. Cotton}{08/29/2012}{Revision 2: Add RAOBS, DECOBS}]
 \end{history}
 %
 %

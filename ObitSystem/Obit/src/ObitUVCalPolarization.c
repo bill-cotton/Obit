@@ -367,12 +367,10 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
       j = 0;
       if (me->perChan) jndex = (ifoff + choff);
       else             jndex = ifoff;
-      limit = 8 * in->numStok;
       MatxVec4Mult(&me->PolCal[jndex], dtemp, ytemp);
       
       index = 0;
       j = 0;
-      limit = in->numStok;
       /* Reorder */
       visIn[joff+0] = ytemp[0];  visIn[joff+1]  = ytemp[1]; 
       visIn[joff+3] = ytemp[6];  visIn[joff+4]  = ytemp[7]; 
@@ -380,7 +378,7 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
       visIn[joff+9] = ytemp[4];  visIn[joff+10] = ytemp[5]; 
       
       /* Done if in->numStok < 4) */
-      if (in->numStok < 4) continue;
+      if (in->numStok < 4) {choff += 32; continue;}
       
       /* parallactic angle  - not for 'ori-eli' and 'vlbi' */
       if ((me->polType==OBIT_UVPoln_ELORI) || (me->polType==OBIT_UVPoln_VLBI)) {
@@ -1030,7 +1028,7 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
   ofloat elp_r, elp_l, ori_r, ori_l, PD=0.0, angle[6], sina[6], cosa[6];
   ofloat root2, fblank = ObitMagicF();
   ofloat rotate=0.0, crot, srot, temp[8];
-  olong iif, jndx, loff, refAnt, i, SubA, ich, nch, kndx, ia;
+  olong iif, jndx, loff, refAnt, i, SubA, ich, nch, nchAll, kndx, ia;
   gboolean doJones=TRUE;
   ObitPolCalList *PCal = in->PCal;
   ocomplex RS, RD, LS, LD, PA, PAc, PRref, PLref, ct;
@@ -1051,7 +1049,8 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
 
   SubA   = MAX (1, in->curSubA);
   refAnt = PCal->polRefAnt;
-  nch    = in->numChan;
+  nchAll = in->numChan;                   /* Number of channels in input */
+  nch    = in->eChan - in->bChan + 1;     /* Number of channels selected */
   ia     = iant - 1;
   root2  = 1.0 / sqrt(2.0);
 
@@ -1065,7 +1064,7 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
 
     /* Loop over channel */
     for (ich=0; ich<nch; ich++) {
-      kndx = 4*(iif*nch + ich + (in->bChan-1));
+      kndx = 4*(iif*nchAll + ich + (in->bChan-1));
       
       /* Set Jones matrix by type. */
       doJones = TRUE; 

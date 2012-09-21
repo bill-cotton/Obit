@@ -96,7 +96,7 @@ XClip                               If > 0.0 Cross Pol clipping level
 **PARAM** float 2
 VClip                               If > 0.0 VPol clipping level
 **PARAM** float 1
-minAmp                              Min. amp. in IPol clipping
+minAmp                              Min. amp. in I,X,VPol clipping
 **PARAM**  float 2
 RMSClip                             Abs and fractional clip levels for 
                                     Time domain RMS filtering
@@ -233,8 +233,9 @@ Adverbs:
   VClip......If [0]> 0.0 then flagging of data when averaged VPol 
              amplitudes exceed VClip.  Default 0.0 = no flagging.
              Data are vector averaged for timeAvg before clipping.
-  minAmp.....If IClip flapping is selected, any amplitudes less than
-             minAmp will be flagged.
+  minAmp.....If I,X,VClip flagging is selected, any amplitudes less 
+             than minAmp will be flagged.
+             NB: THIS MAY NOT BE WHAT YOU WANT FOR VClip, XClip
   RMSClip....Clip level for time domain (RMS editing) as
              constant + proportional part, 
              clip = RMSClip[0] + amp*RMSClip[1]
