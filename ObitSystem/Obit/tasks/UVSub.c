@@ -1039,7 +1039,7 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
       }
       
       /* input FITS disk */
-      ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
+      ObitInfoListGet(myInput, "in2Disk", &type, dim, &disk, err);
       
       /* Loop over fields */
       for (i=0; i<nfield; i++) {

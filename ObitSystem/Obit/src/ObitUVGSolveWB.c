@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010,2011                                          */
+/*;  Copyright (C) 2010-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -454,7 +454,7 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
   antwt  = g_malloc0(numAnt*sizeof(ofloat));
   gotAnt = g_malloc0(numAnt*sizeof(gboolean));
   numBL  = (numAnt * (numAnt-1)) / 2;
-  
+
   /* Get parameters from inUV */
   avgpol = FALSE;
   ObitInfoListGetTest(in->info, "avgPol", &type, dim, &avgpol);
@@ -915,34 +915,37 @@ SetupFitter (ObitUVGSolveWB *in, ObitUV *inUV, ObitErr* err)
   }
 
   /* Setup for coarse IF result fitting */
+  in->ndataCoarse      = in->numIF;
+  in->ncoefCoarse      = 2;
+  if (in->ndataCoarse>1) {
 #if HAVE_GSL==1  /* GSL stuff */
-  ndata = in->numIF;  /* Number of data points */
-  ncoef = 2;          /* Fitting phase and delay */
-  T = gsl_multifit_fdfsolver_lmsder;
-  /* T = gsl_multifit_fdfsolver_lmder; Faster */
-  in->myCoarseSolver   = gsl_multifit_fdfsolver_alloc(T, ndata, ncoef);
-  in->coarse_coef_init =  g_malloc(ncoef*sizeof(double));
-  in->ncoefCoarse      = ncoef;
-  in->ndataCoarse      = ndata;
-  /* Create /fill function structure */
-  in->myCoarseFunc      = g_malloc0(sizeof(gsl_multifit_function_fdf));
-  in->myCoarseFunc->f   = &coarseFitFunc;      /* Compute function */
-  in->myCoarseFunc->df  = &coarseFitJacob;     /* Compute Jacobian (derivative matrix) */
-  in->myCoarseFunc->fdf = &coarseFitFuncJacob; /* Compute both function and derivatives */
-  in->myCoarseFunc->n   = ndata;               /* Number of data points */
-  in->myCoarseFunc->p   = ncoef;               /* number of parameters */
-  in->myCoarseFunc->params = in;               /* Object */
-  in->coarseData       = g_malloc0(ndata*sizeof(ofloat));  /* Data array */
-  in->coarseWt         = g_malloc0(ndata*sizeof(ofloat));  /* Weight array */
-  in->coarseFreq       = g_malloc0(ndata*sizeof(ofloat));  /* Frequency offset array */
-  refChan = (olong)(in->scanData->refChan+0.5) - 1; /* Ref. channel */
-  refChan = MAX (0, refChan);
-  refChan = MIN (refChan, in->scanData->BLData[0]->numFreq-1);
-  for (i=0; i<ndata; i++) {
-    in->coarseData[i] = 0.0;
-    in->coarseWt[i]   = 1.0;
-    in->coarseFreq[i] = in->scanData->BLData[0]->dFreq[i][refChan]; 
-  }
+    ndata = in->numIF;  /* Number of data points */
+    ncoef = 2;          /* Fitting phase and delay */
+    T = gsl_multifit_fdfsolver_lmsder;
+    /* T = gsl_multifit_fdfsolver_lmder; Faster */
+    in->myCoarseSolver   = gsl_multifit_fdfsolver_alloc(T, ndata, ncoef);
+    in->coarse_coef_init =  g_malloc(ncoef*sizeof(double));
+    in->ncoefCoarse      = ncoef;
+    /* Create /fill function structure */
+    in->myCoarseFunc      = g_malloc0(sizeof(gsl_multifit_function_fdf));
+    in->myCoarseFunc->f   = &coarseFitFunc;      /* Compute function */
+    in->myCoarseFunc->df  = &coarseFitJacob;     /* Compute Jacobian (derivative matrix) */
+    in->myCoarseFunc->fdf = &coarseFitFuncJacob; /* Compute both function and derivatives */
+    in->myCoarseFunc->n   = ndata;               /* Number of data points */
+    in->myCoarseFunc->p   = ncoef;               /* number of parameters */
+    in->myCoarseFunc->params = in;               /* Object */
+    in->coarseData       = g_malloc0(ndata*sizeof(ofloat));  /* Data array */
+    in->coarseWt         = g_malloc0(ndata*sizeof(ofloat));  /* Weight array */
+    in->coarseFreq       = g_malloc0(ndata*sizeof(ofloat));  /* Frequency offset array */
+    refChan = (olong)(in->scanData->refChan+0.5) - 1; /* Ref. channel */
+    refChan = MAX (0, refChan);
+    refChan = MIN (refChan, in->scanData->BLData[0]->numFreq-1);
+    for (i=0; i<ndata; i++) {
+      in->coarseData[i] = 0.0;
+      in->coarseWt[i]   = 1.0;
+      in->coarseFreq[i] = in->scanData->BLData[0]->dFreq[i][refChan]; 
+    }
+  } /* end if multiple IF */
 #endif /* GSL stuff */
 
 } /*  End SetupFitter */
@@ -1414,7 +1417,7 @@ initSolve (ObitUVGSolveWB *in, ObitErr *err)
   iref = 0;
   good = FALSE;
   while (!good && (in->refAnts[iref]>0)) {
-    refAnt = in->refAnts[iref];
+    refAnt = MIN (in->maxAnt, in->refAnts[iref]);
 
     /* Zero test reference antenna values */
     /* Use 0 phase, derivatives for reference antenna */
@@ -1937,10 +1940,6 @@ initAntSolve (ObitUVGSolveWB *in, olong iAnt, olong refAnt, ObitErr *err)
   if (in->fWork3==NULL) in->fWork3 = ObitFArrayCreate ("FWork3", 1, maxis);
   else in->fWork3 = ObitFArrayRealloc (in->fWork3, 1, maxis);
 
-  /* Stuff for finding solution */
-  icend = naxis[0]/2;  /* Center delay pixel */
-  delTau  = 1.0/(naxis[0]*in->scanData->freqAvg);   /* Delay increment */
-
   /* Need to create FFT? */
   if (in->myFFT==NULL) 
     in->myFFT = 
@@ -1958,7 +1957,11 @@ initAntSolve (ObitUVGSolveWB *in, olong iAnt, olong refAnt, ObitErr *err)
   for (iPoln=0; iPoln<nPoln; iPoln++) {
     /* Loop over IF */
     for (iIF=0; iIF<in->scanData->BLData[0]->numIF; iIF++) {
-
+      
+      /* Stuff for finding solution */
+      icend = naxis[0]/2;  /* Center delay pixel */
+      delTau  = 1.0/(naxis[0]*in->scanData->freqAvg[iIF]);   /* Delay increment */
+      
       /* Zero accumulators (cWorkn, fWorkn) */
       ObitCArrayFill(in->cWork1,   cmplx);
       ObitFArrayFill(in->fWork1,   0.0);
@@ -2606,12 +2609,15 @@ static ScanData* MakeScanData (ObitUV *inUV, gboolean avgPoln)
   out->sid      = -1;
   out->fqid     = -1;
   out->timeAvg  = 0.0;
-  out->freqAvg  = fabs(inUV->myDesc->cdelt[inUV->myDesc->jlocf]);
   out->refChan  = refChan;
   out->timec    = 0.0;
   out->timei    = 0.0;
 
   out->BLData   = g_malloc0(out->numBase*sizeof(BaselineData*));
+
+  /* Channel increments */
+  out->freqAvg  = g_malloc0(numIF*sizeof(ofloat));
+  for (i=0; i<numIF; i++) out->freqAvg[i] = inUV->myDesc->chIncIF[i];
 
   ip = 0;
   for (ant1=1; ant1<maxAnt; ant1++) {
@@ -2698,9 +2704,9 @@ static ScanData* KillScanData (ScanData *in)
     in->antStackPh[i] = ObitFArrayUnref(in->antStackPh[i]);
     in->antStackWt[i] = ObitFArrayUnref(in->antStackWt[i]);
   }
-  g_free(in->antStackPh);
-  g_free(in->antStackWt);
-
+  if (in->antStackPh) g_free(in->antStackPh);
+  if (in->antStackWt) g_free(in->antStackWt);
+  if (in->freqAvg)    g_free(in->freqAvg);
   if (in->BLData) {
     for (i=0; i<in->numBase; i++) {
       in->BLData[i] = KillBLData (in->BLData[i], in->avgPoln);
@@ -2733,7 +2739,7 @@ static int fringeFitFunc (const gsl_vector *coef, void *params, gsl_vector *f)
     lcoef[i] = (ofloat)gsl_vector_get(coef, i);
 
   /* DEBUG
-  if(data->curAnt==22) {
+  if(data->curAnt==4) {
     fprintf (stdout, "Model IF %d %f %f \n", data->curIF, lcoef[0], lcoef[1]);
   } */
 
@@ -2744,7 +2750,7 @@ static int fringeFitFunc (const gsl_vector *coef, void *params, gsl_vector *f)
   vfreq = data->antFreqOff->array;
   ndata = data->antStackPh[kndx]->naxis[0];
   sum   = 0.0;   /* RMS residual accumulator */
-  cnt    = 0;
+  cnt   = 0;
   /* Set range of data values */
   if (data->avgIF) {  /* all at once */
     lo = 0;
@@ -2763,28 +2769,31 @@ static int fringeFitFunc (const gsl_vector *coef, void *params, gsl_vector *f)
     if (resid>G_PI) resid -= twopi;
     else if (resid<-G_PI) resid += twopi;
 
-    /* DEBUG 
-    if(data->curAnt==22) {
-      fprintf (stdout, " %d, %f %f %f  %f %f \n", 
+    /* DEBUG
+    if(data->curAnt==4) {
+      fprintf (stdout, " %d, %6.1f %6.1f %6.1f  %f %f \n", 
 	       i, phase*57.296,  vdata[i]*57.296, resid*57.296, vwt[i], vfreq[i]-freq0);
-    }*/
+    } */
 
-    /* RMS resid */
-    sum += resid*resid;
-
-    /* Weight */
-    resid *= vwt[i];
-    if (vwt[i]>0.0) cnt++;
+    if (vwt[i]>0.0) {
+      cnt++;
+      /* RMS resid */
+      sum += resid*resid;
+    }
     
+    /* Apply Weight */
+    resid *= vwt[i];
+
     /* Save residual */
     gsl_vector_set(f, i-lo, resid);	
   } /* end loop over data */
 
   /* Save RMS residual */
-  data->RMSRes = (ofloat)sqrt(sum)/(hi-lo);
+  if (cnt>0) data->RMSRes = (ofloat)sqrt(sum)/(cnt);
+  else data->RMSRes = -1.0;
   /* DEBUG
-  if(data->curAnt==22) {
-    fprintf (stdout, " RMS resid  %f \n", data->RMSRes*57.296);
+  if(data->curAnt==4) {
+    fprintf (stdout, " RMS resid  %6.1f %6.1f %g\n", data->RMSRes*57.296, lcoef[0]*57.296, lcoef[1]);
   } */
 
   return GSL_SUCCESS;

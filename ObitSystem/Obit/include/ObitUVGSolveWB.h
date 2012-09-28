@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -123,8 +123,8 @@ typedef struct {
   ofloat refChan;
   /* Time averaging (days) - bin size */
   ofloat timeAvg;
-  /* Frequency averaging (Hz) - bin size */
-  ofloat freqAvg;
+  /* Frequency averaging (Hz) - signed bin size, per IF */
+  ofloat *freqAvg;
   /* Average polarization?  If TRUE, only one poln. in data */
   gboolean avgPoln;
   /* Average IF?  otherwise single IF fits */

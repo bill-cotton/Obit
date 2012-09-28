@@ -1333,6 +1333,12 @@ def EVLAAutoFlag(uv, target, err, \
     * logfile    = Log file for task
     """
     ################################################################
+    # Anything requested?
+    if (IClip==None or IClip[0]==0.) and (VClip==None or VClip[0]==0.) and \
+       (XClip==None or XClip[0]==0.) and (RMSClip==None or RMSClip[0]==0.) and \
+       (doFD==False) and (minAmp==0.0): \
+       return 0
+    
     mess =  "AutoFlag data"
     printMess(mess, logfile)
     af=ObitTask.ObitTask("AutoFlag")
@@ -5047,7 +5053,7 @@ def EVLAFlagSNClip(uv, SNrow, IFno, poln, err, \
 def EVLACalModel(Source,
                  CalDataType="  ", CalFile=" ", CalName=" ", CalClass=" ", CalSeq=0, CalDisk=0, \
                  CalNfield=0, CalCCVer=1, CalBComp=[1], CalEComp=[0], CalCmethod=" ", CalCmode=" ", CalFlux=0.0, \
-                 CalModelFlux=0.0, CalModelSI=-0.7,CalModelPos=[0.,0.], CalModelParm=[0.,0.,0.]):
+                 CalModelFlux=0.0, CalModelSI=0.0,CalModelPos=[0.,0.], CalModelParm=[0.,0.,0.]):
     """
     Create a calibrator model
 

@@ -4443,8 +4443,8 @@ static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL
 	      }
 	    } else { /* Middle */
 	      for (jj=-half; jj<=half; jj++) {
-		if ((count[indx+jj]>0) && (temp2[jj]>-9900.0)) {  /* Any data? */
-		  temp[cnt++] = temp2[jj];
+		if ((count[indx+jj]>0) && (temp2[jf+jj]>-9900.0)) {  /* Any data? */
+		  temp[cnt++] = temp2[jf+jj];
 		}
 	      }
 	    }
@@ -4510,7 +4510,7 @@ static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL
  * \param avg      Sum of amplitudes in time interval for freq, IF, poln, baseline
  *                 <=0.0 => no data or flagged, -9999 => flagged
  * \param RMS      Sum of amplitude**2 in time interval for freq, IF, poln, baseline
- * \param sigma    [out] median alpha sigma for values in avg (MW only)
+ * \param sigma    [out] median alpha sigma for values in avg (not MW only)
  * \param maxRMS   Flag all channels having RMS values > maxRMS[0] of the 
  *                 channel median sigma.[default 6.0] plus maxRMS[1] (default 0.1) 
  *                 of the channel average in quadrature
@@ -4566,9 +4566,11 @@ static void EditFDEdit(olong numChan, olong numIF, olong numPol, olong numBL,
 	sum1 = sum2 = 0.0; cnt = 0.0;
 	for (jf=0; jf<numChan; jf++) {
 	  if (avg[indx+jf]>-9900.0) {
-	    cnt++; 
-	    sum1 += avg[indx+jf];
-	    sum2 += avg[indx+jf]*avg[indx+jf];
+	    if (avg[indx+jf]>0.0) {
+	      cnt++; 
+	      sum1 += avg[indx+jf];
+	      sum2 += avg[indx+jf]*avg[indx+jf];
+	    }
 	  }
 	}
 	/* Residual RMS */

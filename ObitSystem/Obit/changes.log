@@ -838,3 +838,18 @@ Obit/src/ObitSkyModelMF.c:
   For tabulated spectra modeled vis a DFT, fix and include the spectral index.
 21 Sep 2012, svn version 426
 
+Bug fixes
+Obit/changes.log:
+Obit/python/EVLACal.py:
+  EVLACalModel: changed default CalModelSI from -0.7 to 0.0
+  EVLAAutoFlag: Check is anything requested, else just return
+Obit/tasks/UVSub.c:
+  Get in2Disk for input FITS model
+Obit/tasks/TabCopy.c Obit/TDF/TabCopy.TDF:
+  Add outDType parameter to allow different input and output types.
+Obit/src/ObitUVGSolveWB.c Obit/include/ObitUVGSolveWB.h:
+  Fixed bug with frequency increment per IF in coarse search
+  Fixed bug for 1 IF and bad reference antenna
+Obit/src/ObitUVEdit.c:
+  Fix bug in FD editing, could toss all data.
+28 Sep 2012, svn version 427
