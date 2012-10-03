@@ -1213,7 +1213,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
   lenEntry = naxis[0];  /* Length of table entry */
 
   /* Fitting component spectra? */
-  if (in->nSpec>0) {
+  if (in->nSpec>1) {
     fitSigma = g_malloc0(in->nSpec*sizeof(ofloat));
     for (i=0; i<in->nSpec; i++) fitSigma[i] = 0.0001;  /* Comp spectrum fitting sigmas (Jy/bm) */
     fitArg = ObitSpectrumFitMakeArg (in->nSpec, 2, in->specFreq[0], in->specFreq, 
@@ -1367,7 +1367,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
       if (want) {
 
 	/* Fitting component spectra? */
-	if (in->nSpec>0) {
+	if (in->nSpec>1) {
 	  for (iterm=0; iterm<in->nSpec; iterm++) table[iterm] = array[iterm+3]*specCorr[iterm];
 	  ObitSpectrumFitSingleArg (fitArg, table, fitSigma, fitParms);
 	  /* Sanity check */

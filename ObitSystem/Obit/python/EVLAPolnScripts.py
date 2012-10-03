@@ -2,8 +2,9 @@
 Scripts for polarization calibration for EVLA-like arrays with circular feeds
 """
 
-import ObitTask, AIPSDir, OSystem
+import ObitTask, AIPSDir, AIPS
 import EVLACal
+import OSystem
 from PipeUtil import *
 
 def EVLAPolnFlag (uv, souModels, err, \
@@ -47,13 +48,14 @@ def EVLAPolnFlag (uv, souModels, err, \
     """
     if len(souModels)<=0:    # Anything to work on?
         return 0
-    mess =  "Flag residuals for "
+    mess =  "Flag residuals from models "
     printMess(mess, logfile)
 
     # Setup UVSub
     uvsub = ObitTask.ObitTask("UVSub")
     if not check:
         setname(uv,uvsub)
+    uvsub.user     = AIPS.userno   # This gets lost somehow
     uvsub.taskLog  = logfile
     uvsub.nThreads = nThreads
     uvsub.noScrat  = noScrat
@@ -64,11 +66,12 @@ def EVLAPolnFlag (uv, souModels, err, \
     uvsub.doBand   = doBand
     uvsub.BPVer    = BPVer
     if "PDVer" in uvsub.__dict__:
-        uvsub.doPoln   = doPol
+        uvsub.doPol    = doPol
         uvsub.PDVer    = PDVer
     # setup for flagging
     #flag = ObitTask.ObitTask("MednFlag")
     flag = ObitTask.ObitTask("AutoFlag")
+    flag.user = AIPS.userno   # This gets lost somehow
     if not check:
         setoname(uv,flag)
     flag.taskLog  = logfile
@@ -120,7 +123,7 @@ def EVLAPolnFlag (uv, souModels, err, \
             uvsub.debug = debug
         # Trap failure
         try:
-            mess = "Run UVSub on "+uvsub.Sources[0]
+            mess = "Run UVSub on "+uvsub.Sources[0]+", then edit residuals above "+str(maxAmp[i])
             printMess(mess, logfile)
             if not check:
                 uvsub.g
@@ -132,7 +135,7 @@ def EVLAPolnFlag (uv, souModels, err, \
         else:
             OK = True
         # Now flag
-        cno = AIPSDir.PTestCNO(uvsub.outDisk, OSystem.PGetAIPSuser(), \
+        cno = AIPSDir.PTestCNO(uvsub.outDisk, AIPS.userno, \
                                uvsub.outName, uvsub.outClass, "UV", uvsub.outSeq, err)
         if cno>0:
             uvscr = UV.newPAUV("zap", uvsub.outName, uvsub.outClass, uvsub.outDisk, uvsub.outSeq, False, err)
@@ -178,7 +181,10 @@ def EVLAPolnSelfCal(uv, Cals, err, \
     Returns task error code, 0=OK, else failed
 
     * uv       = UV data object to calibrate
-    * Cals     = List of calibrators possibly with model
+    * Cals     = List of calibrators as created by EVLACal.EVLACalMode
+                 If the Cals entry contains the following, it overrides the defaults
+                 solInt = solution interval (min)
+                 solMode = solution mode "P", "DELA", "A&P"
     * err      = Obit error/message stack
     * FQid     = Frequency Id to process, 0=>any
     * BChan    = First (1-rel channel to include
@@ -220,6 +226,7 @@ def EVLAPolnSelfCal(uv, Cals, err, \
 
     # Setup Calib 
     calib = ObitTask.ObitTask("Calib")
+    calib.user     = AIPS.userno   # This gets lost somehow
     calib.taskLog  = logfile
     if not check:
         setname(uv,calib)
@@ -231,10 +238,8 @@ def EVLAPolnSelfCal(uv, Cals, err, \
     calib.doPol    = doPol
     calib.PDVer    = PDVer
     calib.ampScalar= ampScalar
-    calib.solMode  = solMode
     calib.solType  = solType
     calib.nThreads = nThreads
-    calib.solInt   = solInt
     calib.refAnts  = [refAnt]
     calib.noScrat  = noScrat
     calib.solnVer  = solnVer
@@ -251,6 +256,7 @@ def EVLAPolnSelfCal(uv, Cals, err, \
         if calOut<=0:
             calOut = hiCL+1
     clcal = ObitTask.ObitTask("CLCal")
+    clcal.user     = AIPS.userno   # This gets lost somehow
     clcal.taskLog  = logfile
     ical = 0
     if not check:
@@ -282,6 +288,15 @@ def EVLAPolnSelfCal(uv, Cals, err, \
         calib.modelFlux = Cal["CalModelFlux"]
         calib.modelPos  = Cal["CalModelPos"]
         calib.modelParm = Cal["CalModelParm"]
+        # Source dependent overrides?
+        if "solMode" in Cal:
+            calib.solMode  = Cal["solMode"]
+        else:
+            calib.solMode  = solMode
+        if "solInt" in Cal:
+            calib.solInt   = Cal["solInt"]
+        else: 
+            calib.solInt   = solInt
         
         if debug:
             calib.i
@@ -323,7 +338,7 @@ def EVLAPolnSelfCal(uv, Cals, err, \
 # end EVLAPolnSelfCal
 
 def EVLAPolnPCal(uv, InsCals, err, \
-                 doCalib=2, gainUse=0, doBand=1, BPVer=0, flagVer=-1, \
+                 doCalib=2, gainUse=0, doBand=-1, BPVer=0, flagVer=1, \
                  solType="    ", solInt=0.0, refAnt=0, polVer = 1, ChInc=1, ChWid=1, \
                  RLPhase=[-999.,], RM=[0.0], PPol=[0.], \
                  check=False, debug = False, \
@@ -371,7 +386,8 @@ def EVLAPolnPCal(uv, InsCals, err, \
     printMess(mess, logfile)
     # Instrumental calibration
     if InsCals!=None:
-        pcal = ObitTask.ObitTask("PCal")
+        pcal         = ObitTask.ObitTask("PCal")
+        pcal.user    = AIPS.userno   # This gets lost somehow
         pcal.logFile = logfile
         if not check:
             setname(uv,pcal)
@@ -432,9 +448,9 @@ def EVLAPolnPCal(uv, InsCals, err, \
 
 def EVLAPolnRL(uv, err, \
               RLCal=None, BChan=1, EChan = 0, ChWid2=1, solInt1=1./6, solInt2=10., \
-              RLPhase=0.0, RM=0.0, UVRange=[0.0,0.0], timerange = [0.0,1000.0],  \
+              UVRange=[0.0,0.0], timerange = [0.0,1000.0],  \
               FQid=0,  doCalib=-1, gainUse=0, \
-              doBand=0, BPVer=0, flagVer=-1, refAnt=0, doPol=-1, PDVer=1, 
+              doBand=0, BPVer=0, flagVer=-1, refAnt=0, doPol=False, PDVer=1, 
               nThreads=1, noScrat=[], logfile = "",check=False, debug = False):
     """
     Determine R-L  phase calibration as BP table
@@ -482,8 +498,9 @@ def EVLAPolnRL(uv, err, \
     lbpver = BPVer  # default bandpass in imaging
     # Want R-L phase cal ?
     if RLCal!=None:
-        ncal = len(RLDCal)  # How many calibrators?
+        ncal = len(RLCal)  # How many calibrators?
         rlpass=ObitTask.ObitTask("RLPass")
+        rlpass.user    = AIPS.userno   # This gets lost somehow
         rlpass.taskLog = logfile
         if not check:
             setname(uv,rlpass)
@@ -547,18 +564,18 @@ def EVLAPolnRL(uv, err, \
 # end EVLAPolnRL
 
 def EVLAPolnImage(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band="", \
-                     doCalib=-1, gainUse=0, doBand=-1, BPVer=0,  flagVer=-1,  \
-                     doPol=False, PDVer=-1,  minFlux=0.0, \
-                     Stokes="I", FOV=20.0/3600.0, Robust=0, Niter=300, CleanRad=None, \
-                     maxPSCLoop=0, minFluxPSC=0.1, solPInt=20.0/60., \
-                     solPMode="P", solPType= "L1", \
-                     maxASCLoop=0, minFluxASC=0.5, solAInt=2.0, \
-                     solAMode="A&P", solAType= "L1", \
-                     avgPol=False, avgIF=False, minSNR = 5.0, refAnt=0, \
-                     do3D=False, BLFact=0.999, BLchAvg=False, doOutlier=None, \
-                     doMB=False, norder=2, maxFBW=0.05, doComRes=False, \
-                     nTaper=0, Tapers=[20.0], \
-                     nThreads=1, noScrat=[], logfile='', check=False, debug=False):
+                  doCalib=-1, gainUse=0, doBand=-1, BPVer=0,  flagVer=-1,  \
+                  doPol=False, PDVer=-1,  minFlux=0.0, \
+                  Stokes="I", FOV=20.0/3600.0, Robust=0, Niter=300, CleanRad=None, \
+                  maxPSCLoop=0, minFluxPSC=0.1, solPInt=20.0/60., \
+                  solPMode="P", solPType= "L1", \
+                  maxASCLoop=0, minFluxASC=0.5, solAInt=2.0, \
+                  solAMode="A&P", solAType= "L1", \
+                  avgPol=False, avgIF=False, minSNR = 5.0, refAnt=0, \
+                  do3D=False, BLFact=0.999, BLchAvg=False, doOutlier=None, \
+                  doMB=False, norder=1, maxFBW=0.05, doComRes=False, \
+                  nTaper=0, Tapers=[20.0], dispURL="None", \
+                  nThreads=1, noScrat=[], logfile='', check=False, debug=False):
     """
     Image a list of sources with optional selfcal
     
@@ -612,6 +629,7 @@ def EVLAPolnImage(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band
     * maxFBW     = max. fractional wideband imaging
     * nTaper     = number of (additional) multi resolution tapers
     * Tapers     = Sizes of additional tapers in pixels
+    * dispURL    = Name of image display
     * nThreads   = Max. number of threads to use
     * noScrat    = list of disks to avoid for scratch files
     * logfile    = logfile for messages
@@ -649,6 +667,7 @@ def EVLAPolnImage(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band
     else:
         imager = ObitTask.ObitTask("Imager")
         imager.prtLv = 2
+    imager.user = AIPS.userno   # This gets lost somehow
     imager.taskLog  = logfile
     if not check:
         setname(uv,imager)
@@ -689,7 +708,7 @@ def EVLAPolnImage(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band
     imager.refAnt      = refAnt
     imager.minSNR      = minSNR
     imager.do3D        = do3D
-    imager.dispURL     = "None"
+    imager.dispURL     = dispURL
     imager.nTaper      = nTaper
     imager.Tapers      = Tapers
     if doOutlier or ((doOutlier==None) and refFreq<6.0e9):
@@ -740,7 +759,7 @@ def EVLAPolnImage(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band
             # Tolerate failures
             try:
                 # Test if file exists
-                cno = AIPSDir.PTestCNO(imager.out2Disk, OSystem.PGetAIPSuser(), \
+                cno = AIPSDir.PTestCNO(imager.out2Disk, AIPS.userno, \
                                        out2Name, out2Class, "UV", imager.out2Seq, err)
                 if cno>0:
                     u = UV.newPAUV("zap", out2Name, out2Class, imager.out2Disk, imager.out2Seq, False, err)
@@ -752,9 +771,10 @@ def EVLAPolnImage(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band
                         #return 1
                     del u
                 # Create model, add to modelList
-                modelList.append(EVLACal.EVLACalModel(cal, CalName=+imager.Sources[0], \
+                modelList.append(EVLACal.EVLACalModel(sou, CalName=imager.Sources[0], \
                                                       CalClass=imager.outClass,        \
-                                                      CalSeq=imager.outSeq,            \
+                                                      CalSeq=imager.outSeq,             \
+                                                      CalCmethod="DFT", CalDataType="AIPS",   \
                                                       CalDisk=imager.outDisk, CalNfield=1))
             except Exception, exception:
                 print exception
@@ -771,5 +791,249 @@ def EVLAPolnImage(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band
         return None
 
     return modelList
-    # end EVLAPolnImage
+# end EVLAPolnImage
+
+def EVLAPolnGetFluxes(Sources, err, \
+                      logfile = "",check=False, debug = False):
+    """
+    Determine I,Q,U flux densities for a set of calibrator models
+    
+    Sums CLEAN components
+    Each entry in Sources contains"
+    "IFlux", "QFlux", "UFlux"
+    Returns 0 on success otherwise failure
+    
+    * Sources  = List of Source Models as created by EVLACal.EVLACalModel
+    * err      = Obit error/message stack
+    * logfile  = Log file for task
+    * check    = Only check script
+    * debug    = Run tasks debug, show input
+    """
+    ################################################################
+    mess = "Get Source summed CLEAN components"
+    printMess(mess, logfile)
+    
+    for sou in Sources:
+        if sou["CalDataType"]=="AIPS":
+            klass = "I"+sou["CalClass"][1:]
+            img = Image.newPAImage("img", sou["CalName"], klass, \
+                                   sou["CalDisk"], sou["CalSeq"], True, err)
+        else:
+            file = "I"+sou["CalFile"][1:]
+            img = Image.newPFImage("img", file, sou["CalDisk"], True, err)
+        if err.isErr:
+            mess = "Error finding I image for "+sou["Source"]
+            printMess(mess, logfile)
+            return 1
+        #img.Header(err) # DEBUG 
+        IFlux = EVLACal.EVLAGetSumCC(img, err, logfile=logfile)
+        del img
+
+        if sou["CalDataType"]=="AIPS":
+            klass = "Q"+sou["CalClass"][1:]
+            img = Image.newPAImage("img", sou["CalName"], klass, \
+                                   sou["CalDisk"], sou["CalSeq"], True, err)
+        else:
+            file = "Q"+sou["CalFile"][1:]
+            img = Image.newPFImage("img", file, sou["CalDisk"], True, err)
+        if err.isErr:
+            mess = "Error finding Q image for"+sou["Source"]
+            printMess(mess, logfile)
+            return 1
+        QFlux = EVLACal.EVLAGetSumCC(img, err, logfile=logfile)
+        del img
+        
+        if sou["CalDataType"]=="AIPS":
+            klass = "U"+sou["CalClass"][1:]
+            img = Image.newPAImage("img", sou["CalName"], klass, \
+                                   sou["CalDisk"], sou["CalSeq"], True, err)
+        else:
+            file = "U"+sou["CalFile"][1:]
+            img = Image.newPFImage("img", file, sou["CalDisk"], True, err)
+        if err.isErr:
+            mess = "Error finding U image for"+sou["Source"]
+            printMess(mess, logfile)
+            return 1
+        UFlux = EVLACal.EVLAGetSumCC(img, err, logfile=logfile)
+        del img
+        sou["IFlux"] = IFlux
+        sou["QFlux"] = QFlux
+        sou["UFlux"] = UFlux
+        mess = "Source "+sou["Source"]+" I,Q,U ="+str(IFlux)+","+str(QFlux)+","+str(UFlux)
+        printMess(mess, logfile)
+    # end loop over sources
+    return 0
+# end EVLAPolnGetFluxes
+
+def EVLAPolnToFITS(uv, outFile, outDisk, Sources, session, err, \
+                      logfile = "",check=False, debug = False):
+    """
+    Copy new calibration and editing tables from uv to the input FITS file
+
+    Any SN, CL, BP, PD, CP tables not on outFile are copied from uv
+    uv FG table 1 is copied to outFile table 2
+    Also writes AIPS calibrator images (I, Q, U)
+    Returns 0 on success otherwise failure
+
+    * uv       = UV data with calibration and editing
+    * outFile  = Name of FITS file to write tables to
+    * outDisk  = FITS disk for inFile, 0=>cwd
+    * Sources  = List of Source Models as created by EVLACal.EVLACalModel
+    * session = Name of session, used for FITS images
+    * err      = Obit error/message stack
+    * logfile  = Log file for task
+    * check    = Only check script
+    * debug    = Run tasks debug, show input
+    """
+    ################################################################
+    mess = "Save resultant tables, calibration images"
+    printMess(mess, logfile)
+
+    # Copy tables not on inFile
+    # UV Data for infile
+    outUV = UV.newPFUV("FITS UV DATA", outFile, outDisk, True, err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error with FITS data")
+        
+    # Use TabCopy
+    taco = ObitTask.ObitTask("TabCopy")
+    taco.user = AIPS.userno   # This gets lost somehow
+    setname(uv, taco)
+    taco.taskLog  = logfile
+    taco.DataType = "AIPS"
+    taco.outDType = "FITS"
+    taco.outFile  = outFile
+    taco.outDisk  = outDisk
+
+    # FG
+    inHi  = UV.PGetHighVer(uv, "AIPS FG")
+    outHi = UV.PGetHighVer(outUV, "AIPS FG")
+    if outHi<2:
+        # copy uv FG table 1 to outUV FG 2 (new table)
+        mess = "Copy FG 1 to FG 2"
+        printMess(mess, logfile)
+        taco.inTab= "AIPS FG"; taco.inVer = 1; taco.outVer = 2
+        # Trap failure
+        try:
+            if not check:
+                taco.g
+        except Exception, exception:
+            print exception
+            mess = "TabCopy Failed retCode= "+str(taco.retCode)
+            printMess(mess, logfile)
+            return 1
+    
+    # Other tables
+    tabs = ["BP", "CL", "SN", "PD", "CP"]
+    for tt in tabs:
+        ttype = "AIPS "+tt
+        inHi  = UV.PGetHighVer(uv, ttype)
+        outHi = UV.PGetHighVer(outUV, ttype)
+        mess = "Copy "+tt+" tables "+str(outHi+1)+" to "+str(inHi)
+        printMess(mess, logfile)
+        for ver in range (outHi+1, inHi+1):
+            taco.inTab=ttype; taco.inVer = ver; taco.outVer = ver
+            # Trap failure
+            try:
+                if not check:
+                    taco.g
+            except Exception, exception:
+                print exception
+                mess = "TabCopy Failed retCode= "+str(taco.retCode)
+                printMess(mess, logfile)
+                return 1
+    # end loop over tables
+
+    # Write calibration images
+    stokes = ["I","Q","U"]
+    for sou in Sources:
+        # Ignore FITS images
+        if sou["CalDataType"]=="FITS":
+            continue
+        for s in stokes:
+            klass = s+sou["CalClass"][1:]
+            # Test if file exists
+            cno = AIPSDir.PTestCNO(sou["CalDisk"], AIPS.userno, \
+                                   sou["CalName"], klass, "MA", sou["CalSeq"], err)
+            if cno>0:
+                img = Image.newPAImage("img", sou["CalName"], klass, \
+                                       sou["CalDisk"], sou["CalSeq"], True, err)
+                if err.isErr:
+                    mess = "Error finding "+s+" image for "+sou["Source"]
+                    printMess(mess, logfile)
+                    return 1
+                imgfile = sou["Source"].strip()+session+s+"Pol.fits"
+                EVLACal. EVLAImFITS (img, imgfile, outDisk, err, logfile=logfile)
+                if err.isErr:
+                    OErr.printErrMsg(err, "Error Writing image")
+                    return 1
+            else:
+                mess = "Skip writing "+s+" image for "+sou["Source"]
+                printMess(mess, logfile)
+           # end if exist
+    # end loops over Stokes and source
+    return 0
+# end EVLAPolnToFITS
+
+def EVLAPolnCleanup(uv, Sources, err, \
+                    logfile = "",check=False, debug = False):
+    """
+    Zap uv data and any calibration images in AIPS
+
+    Returns 0 on success otherwise failure
+
+    * uv       = UV data with calibration and editing
+    * Sources  = List of Source Models as created by EVLACal.EVLACalModel
+    * err      = Obit error/message stack
+    * logfile  = Log file for task
+    * check    = Only check script
+    * debug    = Run tasks debug, show input
+    """
+    ################################################################
+    mess = "Cleanup, Zap AIPS files, check = "+str(check)
+    printMess(mess, logfile)
+
+    # Zap data
+    if UV.PIsA(uv):
+        mess = "Zap uv data"
+        printMess(mess, logfile)
+        if not check:
+            uv.Zap(err) # cleanup
+            if err.isErr:
+                mess = "Error Zapping uv file"
+                printMess(mess, logfile)
+                return 1
+    
+    # Zap calibration images
+    stokes = ["I","Q","U"]
+    for sou in Sources:
+        # Ignore FITS images
+        if sou["CalDataType"]=="FITS":
+            continue
+        for s in stokes:
+            klass = s+sou["CalClass"][1:]
+            # Test if file exists
+            cno = AIPSDir.PTestCNO(sou["CalDisk"], AIPS.userno, \
+                                   sou["CalName"], klass, "MA", sou["CalSeq"], err)
+            if cno>0:
+                img = Image.newPAImage("img", sou["CalName"], klass, \
+                                       sou["CalDisk"], sou["CalSeq"], True, err)
+                if err.isErr:
+                    mess = "Error finding "+s+" image for "+sou["Source"]
+                    printMess(mess, logfile)
+                    return 1
+                if Image.PIsA(img):
+                    mess = "Zap "+sou["Source"].strip()+" "+s+"Pol"
+                    printMess(mess, logfile)
+                    if not check:
+                        img.Zap(err) # cleanup
+                        del img
+                    if err.isErr:
+                        mess = "Error Zapping image"
+                        printMess(mess, logfile)
+                        return 1
+            # end if exist
+    # end source/stokes loop
+    return 0
+# end EVLAPolnCleanup
 

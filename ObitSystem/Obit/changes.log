@@ -853,3 +853,13 @@ Obit/src/ObitUVGSolveWB.c Obit/include/ObitUVGSolveWB.h:
 Obit/src/ObitUVEdit.c:
   Fix bug in FD editing, could toss all data.
 28 Sep 2012, svn version 427
+
+Bug fixes
+Obit/changes.log:
+Obit/src/ObitSkyModelMF.c:
+  Don't fit spectrum if insufficient frequencies.
+Obit/src/ObitIOUVFITS.c:
+  Fix recent buffer bug
+Obit/python/EVLAPolnScripts.py :
+  Upgrade
+03 Oct 2012, svn version 428

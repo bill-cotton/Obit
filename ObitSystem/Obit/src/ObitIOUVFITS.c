@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2011                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2161,6 +2161,7 @@ ObitIOUVFITSCreateBuffer (ofloat **data, olong *size,
 			     ObitIOUVFITS *in, ObitInfoList *info, 
 			     ObitErr *err)
 {
+  olong tsize1, tsize2;
   /* error checks */
   if (err->error) return;
   g_assert (ObitIsA(in, &myClassInfo));
@@ -2172,9 +2173,9 @@ ObitIOUVFITSCreateBuffer (ofloat **data, olong *size,
 		      "Cannot define buffer, I/O not currently active");
 
   /* get size */
-  /* *size = ObitUVSelBufferSize(in->myDesc, in->mySel);*/
-  /* Need buffer for all */
-  *size = ((ObitUVDesc*)in->myDesc)->lrec * ((ObitUVSel*)in->mySel)->nVisPIO;
+  tsize1 = ObitUVSelBufferSize(in->myDesc, in->mySel);
+  tsize2 = ((ObitUVDesc*)in->myDesc)->lrec * ((ObitUVSel*)in->mySel)->nVisPIO;
+  *size = MAX (tsize1, tsize2);
 
   /* (re)allocate */
   if (*data) *data = ObitMemRealloc (*data, (*size)*sizeof(ofloat));
