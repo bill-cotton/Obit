@@ -1635,7 +1635,7 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 
 /** 
  * Get scaling for Data
- * Reads first 100 selected visilitities and finds the extrema of the
+ * Reads first 50 selected visilitities and finds the extrema of the
  * [u,v,w], weights and amplitudes over all correlations.
  * \param inData    Input data to read, will be opened, read and closed
  * \param blscale   [out] scaling for u,v,w
@@ -1664,7 +1664,7 @@ void getDataScale (ObitUV* inData, ofloat *blscale, ofloat *wtscale,
   inDesc = inData->myDesc;  
   
   /* Loop through data */
-  while ((iretCode==OBIT_IO_OK) && (count<100)) {
+  while ((iretCode==OBIT_IO_OK) && (count<50)) {
     /* read buffer full */
     iretCode = ObitUVReadSelect (inData, NULL, err);
     if (iretCode==OBIT_IO_EOF) break;  /* Read all? */
@@ -1694,7 +1694,7 @@ void getDataScale (ObitUV* inData, ofloat *blscale, ofloat *wtscale,
       }  /* end loop over correlations */
       if (good) count++;  /* Count values */
     } /* end buffer loop */
-    if (count>=100) break;
+    if (count>=50) break;
   }
 
   /* Close UV data */

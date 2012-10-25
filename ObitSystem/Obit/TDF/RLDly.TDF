@@ -121,6 +121,9 @@ modelPos        0.0                 Model position offset (asec)
 modelParm                           Model parameters (maj, min, pa, type)
 **PARAM** float 1  **DEF** 5.0
 minSNR                              Min. allowed SNR in cal
+**PARAM** int 1 **DEF** 0
+fitType                             Fitting type,  0=joint, 1=R/X only, 
+                                    2=L/Y only, 3=average 
 **PARAM** int 1
 prtLv             0.0               Print level in cal
 **PARAM** int 1 **DEF** 1
@@ -279,6 +282,15 @@ Adverbs:
   minSNR.....Min. allowed SNR in calibration solution 
              SN table entries for IF for which the solution fails
              will leave the data unchanged, i.e. no delay, no flagging.
+  fitType....Which data to be fitted and how combined
+             0 = Joint fitting of RL/LR or XY/YX
+                 This is most useful with RRL/LR cross polarized 
+                 data dominated by source polarization
+             1 = Use only RL or XY data
+             2 = Use only LR or YX data, 1&2 are probably most useful
+                 for XY/YX data dominated by instrumental poln.
+             3 = Separate solutions in RL/XY and LR/YX then averaged.
+                 Questionable utility.
   prtLv......Print level in solution, 0=>none 
   nThreads...If the Obit libraries are compiled with multiple
              thread operation enabled, this parameter sets the 

@@ -863,3 +863,46 @@ Obit/src/ObitIOUVFITS.c:
 Obit/python/EVLAPolnScripts.py :
   Upgrade
 03 Oct 2012, svn version 428
+
+Bug fixes
+Obit/include/ObitUVDesc.h Obit/src/ObitUVDesc.c:
+  New function ObitUVDescSetNVis to calculate the number of vis per I/O 
+  with memory constraints.
+Obit/tasks/UVSub.c Obit/tasks/Calib.c Obit/tasks/MFImage.c:
+Obit/tasks/Imager.c Obit/tasks/MFBeam.c Obit/tasks/BeamCor.c:
+Obit/tasks/IonImage.c Obit/tasks/IonCal.c Obit/tasks/BPass.c:
+Obit/tasks/MapBeam.c Obit/tasks/MazrCal.c Obit/tasks/PCCor.c:
+Obit/tasks/RLDly.c Obit/tasks/RLPass.c Obit/tasks/SCMap.c:
+Obit/tasks/Squint.c Obit/tasks/SWImag.c Obit/tasks/UVPolCor.c:
+Obit/tasks/UVSim.c Obit/tasks/WVRCal.c:
+  Implement number of vis per I/O with memory constraints
+  Imaging tasks trap no self cal actually done.
+Obit/python/EVLACal.py Obit/python/EVLAContPipe.py:
+  parameter delaySolInt for delay solution interval, lomger solInt default
+  change default delayZeroPhs to False
+  FG 1 in imaging
+  'P' rather than 'DELA' default solPMode
+  EVLAAutoFlag: allow RMSAvg flagging
+Obit/tasks/Lister.c:
+  getDataScale: Only read 50 data for scaling
+Obit/src/ObitUVCalBandpass.c:
+  ObitUVCalBandpassNewTime: fix bug in indexing Prior BP table
+  Fix bugs in doBand==2 logic
+Obit/python/EVLAPolnScripts.py:
+  SelfCal: Add source specific minSNR and avgPol
+Obit/src/ObitIOTableFITS.c:
+  WriteDescriptor: Correctly determine number of dimensions in each column.
+Obit/python/UVDesc.py:
+  PPoslabel: labels for XX and YY pol.
+Obit/doc/OBITdoc.tex:
+  improve documentation of AIPS CC table.
+Obit/src/ObitUVRLDelay.c Obit/tasks/RLDly.c Obit/TDF/RLDly.TDF:
+  add fitType parameter to control which data used.
+Obit/src/ObitUVCalBandpass.c:
+  Fix potential problem in indexing in NewTime.
+Obit/include/ObitAntennaDef.h:
+  Correct stated units of FeedAPA & FeedBPA (really deg)
+Obit/python/Table.py:
+  PGetIOList: fix bug in creating output
+25 Oct 2012, svn version 429
+

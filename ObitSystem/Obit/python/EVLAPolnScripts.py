@@ -170,7 +170,7 @@ def EVLAPolnFlag (uv, souModels, err, \
 
 def EVLAPolnSelfCal(uv, Cals, err, \
                     doCalib=-1, gainUse=0, doBand=0, BPVer=0, flagVer=-1,
-                    doPol=False, PDVer=0, \
+                    doPol=False, PDVer=0, avgPol=False, avgIF=False, \
                     FQid=0, BChan=1, EChan=0, solMode="A&P", solType="L1", minSNR=5., \
                     solnver=0, solInt=10.0/60.0, refAnt=0, ampScalar=False, \
                     calIn=0, calOut=0, \
@@ -183,8 +183,10 @@ def EVLAPolnSelfCal(uv, Cals, err, \
     * uv       = UV data object to calibrate
     * Cals     = List of calibrators as created by EVLACal.EVLACalMode
                  If the Cals entry contains the following, it overrides the defaults
-                 solInt = solution interval (min)
+                 solInt  = solution interval (min)
                  solMode = solution mode "P", "DELA", "A&P"
+                 minSNR  = minimum SNR
+                 avgPol  = Average polns?
     * err      = Obit error/message stack
     * FQid     = Frequency Id to process, 0=>any
     * BChan    = First (1-rel channel to include
@@ -201,6 +203,8 @@ def EVLAPolnSelfCal(uv, Cals, err, \
     * solMode  = solution mode
     * solType  = solution type
     * refAnt   = Reference antenna
+    * avgPol   = Average poln in SC?
+    * avgIF    = Average IFs in SC?
     * ampScalar= If true, scalar average data in calibration?
     * calIn    = Input CL table for CLCal, 0=> gainUse or highest if 0
     * calOut   = Output CL table for CLCal, 0 => new
@@ -236,6 +240,9 @@ def EVLAPolnSelfCal(uv, Cals, err, \
     calib.doBand   = doBand
     calib.BPVer    = BPVer
     calib.doPol    = doPol
+    calib.avgIF    = avgIF
+    calib.avgPol   = avgPol
+    calib.minSNR   = minSNR
     calib.PDVer    = PDVer
     calib.ampScalar= ampScalar
     calib.solType  = solType
@@ -297,6 +304,14 @@ def EVLAPolnSelfCal(uv, Cals, err, \
             calib.solInt   = Cal["solInt"]
         else: 
             calib.solInt   = solInt
+        if "minSNR" in Cal:
+            calib.minSNR   = Cal["minSNR"]
+        else: 
+            calib.minSNR   = minSNR
+        if "avgPol" in Cal:
+            calib.avgPol   = Cal["avgPol"]
+        else: 
+            calib.avgPol   = avgPol
         
         if debug:
             calib.i
@@ -564,11 +579,11 @@ def EVLAPolnRL(uv, err, \
 # end EVLAPolnRL
 
 def EVLAPolnImage(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band="", \
-                  doCalib=-1, gainUse=0, doBand=-1, BPVer=0,  flagVer=-1,  \
-                  doPol=False, PDVer=-1,  minFlux=0.0, \
+                  doCalib=-1, gainUse=0, doBand=-1, BPVer=0,  flagVer=-1, maxPixel=50000, \
+                  doPol=False, PDVer=-1,  minFlux=0.0, BIF=1, EIF=0, \
                   Stokes="I", FOV=20.0/3600.0, Robust=0, Niter=300, CleanRad=None, \
                   maxPSCLoop=0, minFluxPSC=0.1, solPInt=20.0/60., \
-                  solPMode="P", solPType= "L1", \
+                  solPMode="P", solPType= "L1", Gain=0.1, \
                   maxASCLoop=0, minFluxASC=0.5, solAInt=2.0, \
                   solAMode="A&P", solAType= "L1", \
                   avgPol=False, avgIF=False, minSNR = 5.0, refAnt=0, \
@@ -590,6 +605,8 @@ def EVLAPolnImage(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band
     * seq        = sequence number of output
     * sclass     = Image output class
     * band       = project band - appended to name
+    * BIF        = First IF
+    * CIF        = Highest IF
     * FreqID     = Frequency group identifier
     * doCalib    = Apply calibration table
     * gainUse    = CL/SN table to apply
@@ -603,6 +620,8 @@ def EVLAPolnImage(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band
     * FOV        = Field of view to image in deg
     * Robust     = Weighting robustness parameter
     * Niter      = max no. iterations
+    * Gain       = CLEAN loop gain
+    * maxPixel   = Maximum number of residuals in inner CLEAN
     * CleanRad   = CLEAN radius about center or None=autoWin
     * maxPSCLoop = max. number of phase sc loops
     * minFluxPSC = Trip level for phase self cal (Jy)
@@ -678,6 +697,8 @@ def EVLAPolnImage(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band
     imager.outSeq      = seq
     imager.out2Seq     = seq
     imager.outClass    = sclass
+    imager.BIF         = BIF
+    imager.EIF         = EIF
     imager.BLFact      = BLFact
     imager.BLchAvg     = BLchAvg
     imager.flagVer     = flagVer
@@ -692,7 +713,10 @@ def EVLAPolnImage(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band
     imager.FOV         = FOV
     imager.Robust      = Robust
     imager.Niter       = Niter
+    imager.Gain        = Gain
+    imager.maxPixel    = maxPixel
     imager.minFlux     = minFlux
+    imager.maxPixel    = maxPixel
     imager.maxPSCLoop  = maxPSCLoop
     imager.minFluxPSC  = minFluxPSC
     imager.solPInt     = solPInt
@@ -825,7 +849,7 @@ def EVLAPolnGetFluxes(Sources, err, \
             mess = "Error finding I image for "+sou["Source"]
             printMess(mess, logfile)
             return 1
-        #img.Header(err) # DEBUG 
+        #img.Header(err) # DEBUG
         IFlux = EVLACal.EVLAGetSumCC(img, err, logfile=logfile)
         del img
 

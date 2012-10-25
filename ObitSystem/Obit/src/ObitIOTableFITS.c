@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1446,7 +1446,7 @@ ObitIOTableFITSWriteDescriptor (ObitIOTableFITS *in, ObitErr *err)
 	/* count dimensions */
 	ndata = 0;
 	for (j=0; j<MAXINFOELEMDIM; j++) {
-	  if (desc->dim[i][j]>1) ndata++;
+	  if (desc->dim[i][j]>1) ndata = j+1;
 	  naxes[j] = (long)desc->dim[i][j];
 	}
 	fits_write_tdim (in->myFptr, i+1, ndata, naxes, &status);

@@ -111,9 +111,10 @@ def EVLAInitContParms():
 
     # Delay calibration
     parms["doDelayCal"]   =  True       # Determine/apply delays from contCals
+    parms["delaySolInt"]  =  None       # delay solution interval (min)
     parms["delaySmoo"]    =  None       # Delay smoothing time (hr)
     parms["doTwo"]        =  True       # Use two baseline combinations in delay cal
-    parms["delayZeroPhs"] =  True       # Zero phase in Delay solutions?
+    parms["delayZeroPhs"] =  False      # Zero phase in Delay solutions?
     parms["delayBChan"]   =  None       # first channel to use in delay solutions
     parms["delayEChan"]   =  None       # highest channel to use in delay solutions
     
@@ -202,7 +203,7 @@ def EVLAInitContParms():
     parms["Niter"]       = 500          # Max number of clean iterations
     parms["minFlux"]     = 0.0          # Minimum CLEAN flux density
     parms["minSNR"]      = 4.0          # Minimum Allowed SNR
-    parms["solPMode"]    = "DELA"       # Delay solution for phase self cal
+    parms["solPMode"]    = "P"          # Phase solution for phase self cal
     parms["solPType"]    = "    "       # Solution type for phase self cal
     parms["solAMode"]    = "A&P"        # Delay solution for A&P self cal
     parms["solAType"]    = "    "       # Solution type for A&P self cal
@@ -334,8 +335,10 @@ def EVLAInitContFQParms(parms):
             parms["doShad"]      = False        # Shadow flagging (config dependent)
         if parms["doHann"]==None:
             parms["doHann"]      = False        # Hanning needed for RFI?
+        if parms["delaySolInt"]==None:
+            parms["delaySolInt"]  =   10.0/60.  # delay solution interval (min)
         if parms["solInt"]==None:
-            parms["solInt"]  =   10.0/60.       # solution interval (min)
+            parms["solInt"]  =   30.0/60.       # solution interval (min)
     elif cfg[0:1]=='B':
         if parms["calInt"]==None:
              parms["calInt"]  =  0.45           # Calibration table interval (min)
@@ -345,8 +348,10 @@ def EVLAInitContFQParms(parms):
             parms["doShad"]      = False        # Shadow flagging (config dependent)
         if parms["doHann"]==None:
             parms["doHann"]      = freq<8.0e9   # Hanning needed for RFI?
+        if parms["delaySolInt"]==None:
+            parms["delaySolInt"]  =   10.0/60   # delay solution interval (min)
         if parms["solInt"]==None:
-            parms["solInt"]  =   10.0/60.       # solution interval (min)
+            parms["solInt"]  =   30.0/60.       # solution interval (min)
     elif cfg[0:1]=='C':
         if parms["calInt"]==None:
              parms["calInt"]  =  1.0           # Calibration table interval (min)
@@ -356,8 +361,10 @@ def EVLAInitContFQParms(parms):
             parms["doShad"]      = True        # Shadow flagging (config dependent)
         if parms["doHann"]==None:
             parms["doHann"]      = freq<8.0e9  # Hanning needed for RFI?
+        if parms["delaySolInt"]==None:
+            parms["delaySolInt"]  =   20.0/60. # delay solution interval (min)
         if parms["solInt"]==None:
-            parms["solInt"]  =   20.0/60.       # solution interval (min)
+            parms["solInt"]  =   30.0/60.       # solution interval (min)
     elif cfg[0:1]=='D':
         if parms["calInt"]==None:
              parms["calInt"]  =  2.0           # Calibration table interval (min)
@@ -367,6 +374,8 @@ def EVLAInitContFQParms(parms):
             parms["doShad"]      = True        # Shadow flagging (config dependent)
         if parms["doHann"]==None:
             parms["doHann"]      = freq<8.0e9  # Hanning needed for RFI?
+        if parms["delaySolInt"]==None:
+            parms["delaySolInt"]  =   30.0/60. # delay solution interval (min)
         if parms["solInt"]==None:
             parms["solInt"]  =   30.0/60.      # solution interval (min)
        
@@ -1336,7 +1345,7 @@ def EVLAAutoFlag(uv, target, err, \
     # Anything requested?
     if (IClip==None or IClip[0]==0.) and (VClip==None or VClip[0]==0.) and \
        (XClip==None or XClip[0]==0.) and (RMSClip==None or RMSClip[0]==0.) and \
-       (doFD==False) and (minAmp==0.0): \
+       (doFD==False) and (minAmp==0.0) and (RMSAvg==0.0): \
        return 0
     
     mess =  "AutoFlag data"

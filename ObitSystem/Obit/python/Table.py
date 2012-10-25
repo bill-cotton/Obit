@@ -500,7 +500,7 @@ def PGetIOList (inTab):
     if not PIsA(inTab):
         raise TypeError,"inTab MUST be a Table"
     #
-    out    = InfoList()
+    out    = InfoList.InfoList()
     out.me = Obit.InfoListUnref(out.me)
     out.me = Obit.TableGetIOList(inTab.me)
     return out

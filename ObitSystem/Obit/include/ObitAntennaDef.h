@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -41,9 +41,9 @@ odouble AntLong;
 odouble AntLat;
 /** Antenna distance from earth center (m) */
 odouble AntRad;
-/** Feed A feed position angle (rad) */
+/** Feed A feed position angle (deg) */
 ofloat FeedAPA;
-/** Feed B feed position angle (rad) */
+/** Feed B feed position angle (deg) */
 ofloat FeedBPA;
 /** Feed A Polarization calibration parameters */
 ofloat *FeedAPCal;

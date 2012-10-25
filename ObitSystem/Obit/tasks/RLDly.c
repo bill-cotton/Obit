@@ -96,7 +96,7 @@ int main ( int argc, char **argv )
   ofloat       ftemp;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *SCParms[] = {  /* Selfcal Parameters  */
-    "refAnt",
+    "refAnt", "fitType",
      NULL};
 
   /* Startup - parse command line */
@@ -600,13 +600,13 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
 {
   ObitUV       *inData = NULL;
   ObitInfoType type;
-  olong        nvis, nThreads, doCalib;
+  olong        nvis, doCalib;
   gboolean     doCalSelect;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "FreqID", "BChan", "EChan",   "BIF", "EIF", 
     "subA", "Antennas", "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", 
-    "flagVer", "doPol", "PDVer", "Mode", "ModelType", "Alpha", "refAnt",
+    "flagVer", "doPol", "PDVer", "Mode", "ModelType", "Alpha", "fitType",
     "UVR_Full", "WtUV", "RLPhase", "RM", "refAnt", 
      NULL};
   gchar *routine = "getInputData";
@@ -620,10 +620,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
   
   /* Set buffer size */
-  nvis = 1000;
-  nThreads = 1;
-  ObitInfoListGetTest(myInput, "nThreads", &type, dim, &nThreads);
-  nvis *= nThreads;
+  nvis = 1;
   ObitInfoListAlwaysPut (inData->info, "nVisPIO",  type, dim,  &nvis);
     
   /* Make sure doCalSelect set properly */
@@ -638,7 +635,13 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   ObitUVFullInstantiate (inData, TRUE, err);
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
 
-  /* Get input parameters from myInput, copy to inData */
+   /* Set number of vis per IO */
+  nvis = 1000;  /* How many vis per I/O? */
+  nvis =  ObitUVDescSetNVis (inData->myDesc, myInput, nvis);
+  dim[0] = dim[1] = dim[2] = dim[3] = 1;
+  ObitInfoListAlwaysPut (inData->info, "nVisPIO", OBIT_long, dim,  &nvis);
+
+ /* Get input parameters from myInput, copy to inData */
   ObitInfoListCopyList (myInput, inData->info, dataParms);
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
 
@@ -1041,7 +1044,7 @@ void RLDlyHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "DataType2", "in2File", "in2Disk", "in2Name", "in2Class", "in2Seq", 
     "nfield", "CCVer", "BComp", "EComp", "Cmethod", "Cmodel", "Flux",
     "modelFlux", "modelPos", "modelParm", "RLPhase", "RM",  "refAnt", 
-    "UVR_Full", "WtUV",
+    "UVR_Full", "WtUV", "fitType",
     "minSNR",  "prtLv", "nThreads",
     NULL};
   gchar *routine = "RLDlyHistory";

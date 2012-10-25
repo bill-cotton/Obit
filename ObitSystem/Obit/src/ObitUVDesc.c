@@ -503,7 +503,7 @@ void ObitUVDescGetFreq (ObitUVDesc* in, Obit *fqtab, odouble *SouIFOff,
   olong size, i, j, fqid, nfreq;
   oint  *sideBand=NULL, nif, tnif;
   odouble *freqOff=NULL, *freq=NULL;
-  ofloat *chBandw=NULL, deltaf;
+  ofloat *chBandw=NULL, deltaf=0.0;
   ObitIOCode retCode;
   ObitTableFQ *FQtable = (ObitTableFQ*)fqtab;
   gchar *routine = "ObitUVDescGetFreq";
@@ -1370,6 +1370,41 @@ gboolean ObitUVDescShift3DPos (ObitUVDesc *uvDesc, ofloat shift[2], ofloat mrota
 
   return do3Dmul; /* need to apply? */
 } /* end ObitUVDescShift3DMatrix */
+
+/**
+ * Set number of vis per IO for a UV data set
+ * Limit not to exceed 0.5 GByte
+ * \param uvDesc   UV data descriptor , data should have been fully 
+ *                 instantiated to get this filled in.
+ * \param info     InfoList potentially with nThreads
+ * \param nvis     Desired (max) number of visibilities per thread
+ * \return number of visibilities per I/O
+ */
+olong ObitUVDescSetNVis (ObitUVDesc *uvDesc, ObitInfoList* info, olong nvis)
+{
+  olong nvispio;
+  ollong tsize, maxsize;
+  olong nThreads, lrec;
+  ObitInfoType type;
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+
+  nThreads = 1;
+  ObitInfoListGetTest(info, "nThreads", &type, dim, &nThreads);
+  lrec = uvDesc->lrec;
+  /* Sanity check */
+  lrec = MAX (10, lrec);
+    
+  tsize = nvis * MAX (1, nThreads);                       /* How big is what is desired? */
+  maxsize = 500000000 / (lrec*sizeof (ofloat));   /* How big is allowed */
+  if (tsize>maxsize) {
+    nvispio = (olong)(maxsize);
+  } else nvispio = (olong)(tsize);
+  
+  nvispio = MAX (1, nvispio);   /* At least 1 */
+
+  return nvispio;
+} /* end ObitUVDescSetNVis  */
+
 
 /**
  * Initialize global ClassInfo Structure.

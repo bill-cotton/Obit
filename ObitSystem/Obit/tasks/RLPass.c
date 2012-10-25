@@ -623,7 +623,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
 {
   ObitUV       *inData = NULL;
   ObitInfoType type;
-  olong        nvis, nThreads, doCalib;
+  olong        nvis, doCalib;
   gboolean     doCalSelect;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
@@ -642,10 +642,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
   
   /* Set buffer size */
-  nvis = 1000;
-  nThreads = 1;
-  ObitInfoListGetTest(myInput, "nThreads", &type, dim, &nThreads);
-  nvis *= nThreads;
+  nvis = 1;
   ObitInfoListAlwaysPut (inData->info, "nVisPIO",  type, dim,  &nvis);
     
   /* Make sure doCalSelect set properly */
@@ -659,6 +656,11 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   /* Ensure inData fully instantiated and OK */
   ObitUVFullInstantiate (inData, TRUE, err);
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
+  /* Set number of vis per IO */
+  nvis = 1000;  /* How many vis per I/O? */
+  nvis =  ObitUVDescSetNVis (inData->myDesc, myInput, nvis);
+  dim[0] = dim[1] = dim[2] = dim[3] = 1;
+  ObitInfoListAlwaysPut (inData->info, "nVisPIO", OBIT_long, dim,  &nvis);
 
   /* Get input parameters from myInput, copy to inData */
   ObitInfoListCopyList (myInput, inData->info, dataParms);

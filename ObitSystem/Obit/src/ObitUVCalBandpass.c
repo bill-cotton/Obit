@@ -566,7 +566,7 @@ static void ObitUVCalBandpassUpdate (ObitUVCalBandpassS *in, ObitUVCal *UVCal,
       if (in->FollowAntTime[iant] > in->PriorAntTime[iant]) 
 	wtt1 = (in->FollowAntTime[iant] - time) / (in->FollowAntTime[iant] - in->PriorAntTime[iant]);
     } 
-    wtt1 = 1.0 - wtt1;
+    wtt2 = 1.0 - wtt1;
 
     /* Set index into solution weight arrays for this antenna. */
     wndx = iant * in->numPol * (in->eIF - in->bIF + 1);
@@ -757,7 +757,7 @@ static void ObitUVCalBandpassNewTime (ObitUVCalBandpassS *in, ofloat time,
 {
   ofloat wt1, wt2, fblank = ObitMagicF();
   olong nblank, i, j, iant, iif, ichan, indx, lenEntryPoln, lenEntry, lenEntryAnt;
-  olong  irow, limit, IFoff, nchan, antno;
+  olong  irow, limit, IFoff, nchan, antno, wndx;
   gboolean want, done;
   ObitTableBP *BPTable = NULL;
   ObitTableBPRow *BPTableRow = NULL;
@@ -848,8 +848,8 @@ static void ObitUVCalBandpassNewTime (ObitUVCalBandpassS *in, ofloat time,
        keep track of number of entries */
     if (in->doBand==1) {
       /* fill in new following values */
-      in->PriorAntTime[iant] *= BPTableRow->Time;
-      in->FollowAntTime[iant]++;
+      in->PriorAntTime[iant]  = BPTableRow->Time;
+      in->FollowAntTime[iant] = BPTableRow->Time+1000.0;
       
       /* loop over IF */
       for (iif= in->bIF; iif<=in->eIF; iif++) { /* loop 60 */
@@ -882,7 +882,7 @@ static void ObitUVCalBandpassNewTime (ObitUVCalBandpassS *in, ofloat time,
 	} /* end second poln */
       } /* end IF loop  L60:  */
       
-    } else {
+    } else {  /* not doBand==1 */
       /* write new values to Following accumulators */
     
       /* time -> include this one? */
@@ -891,9 +891,13 @@ static void ObitUVCalBandpassNewTime (ObitUVCalBandpassS *in, ofloat time,
 	if (in->PriorAntTime[iant] > -100.) {
 	  /* new following entry - copy to prior */
 	  in->PriorAntTime[iant] = in->FollowAntTime[iant];
+	  wndx = iant * in->numPol * (in->eIF - in->bIF + 1);
 	  for (iif= in->bIF; iif<=in->eIF; iif++) { /* loop 50 */
+	    in->PriorSolnWt[wndx] = in->FollowSolnWt[wndx]; wndx++;
+	    if (in->numPol >= 2) 
+	      in->PriorSolnWt[wndx] = in->FollowSolnWt[wndx]; wndx++;
 	    indx = lenEntryAnt * (iant) +  lenEntry * (iif-in->bIF);
-	    for (j=0; i<lenEntryPoln; j++) in->BPPrior[indx+j]  = in->BPFollow[indx+j];
+	    for (j=0; j<lenEntryPoln; j++) in->BPPrior[indx+j]  = in->BPFollow[indx+j];
 	  } /* end IF loop  L50:  */;
 	}
 	
@@ -901,10 +905,12 @@ static void ObitUVCalBandpassNewTime (ObitUVCalBandpassS *in, ofloat time,
 	in->FollowAntTime[iant] = BPTableRow->Time;
       
 	/* loop over if */
+	wndx = iant * in->numPol * (in->eIF - in->bIF + 1);
 	for (iif= in->bIF; iif<=in->eIF; iif++) { /* loop 60 */
 	  IFoff =  nchan*(iif - 1);
 	  indx = lenEntryAnt * (iant) +  lenEntry * (iif-in->bIF);
 	  wt1 = BPTableRow->Weight1[IFoff];
+	  in->FollowSolnWt[wndx++] = wt1;
 	  /* loop over channels */
 	  for (ichan=in->bChan; ichan<=in->eChan; ichan++) {
 	    if ((wt1>0.0) &&  (BPTableRow->Real1[IFoff+ichan-1]!=fblank)) {
@@ -921,6 +927,7 @@ static void ObitUVCalBandpassNewTime (ObitUVCalBandpassS *in, ofloat time,
 	  /* second polarization if present */
 	  if (in->numPol >= 2) {
 	    wt2 = BPTableRow->Weight2[IFoff];
+	    in->FollowSolnWt[wndx++] = wt2;
 	    /* loop over channels */
 	    for (ichan=in->bChan; ichan<=in->eChan; ichan++) {
 	      if ((wt2>0.0) &&  (BPTableRow->Real2[IFoff+ichan-1]!=fblank)) {
@@ -939,13 +946,17 @@ static void ObitUVCalBandpassNewTime (ObitUVCalBandpassS *in, ofloat time,
 	/* if Prior entry not valid copy following */
 	if (in->PriorAntTime[iant] <= -100.) {
 	  in->PriorAntTime[iant] = in->FollowAntTime[iant];
+	  wndx = iant * in->numPol * (in->eIF - in->bIF + 1);
 	  for (iif= in->bIF; iif<=in->eIF; iif++) { /* loop 70 */
+	    in->PriorSolnWt[wndx] = in->FollowSolnWt[wndx]; wndx++;
+	    if (in->numPol >= 2) 
+	      in->PriorSolnWt[wndx] = in->FollowSolnWt[wndx]; wndx++;
 	    indx = lenEntryAnt * (iant) +  lenEntry * (iif-in->bIF);
 	    for (j=0; j<lenEntryPoln; j++) in->BPPrior[indx+j]  = in->BPFollow[indx+j];
 	  } /* end IF loop  L70:  */
 	} /* end copy to Prior */
 
-      } else {
+      } else {  /* time < in->FollowAntTime[iant] */
 	
 	/* This one not needed - are we there yet? */
 	/* May need to restart earlier in table for some antennas.
@@ -1000,12 +1011,12 @@ static void ObitUVCalBandpassNewTime (ObitUVCalBandpassS *in, ofloat time,
       in->BPFollow[i] = fblank;
     }
     /* Set times - ignore Following and use Prior */
-    in->PriorBPTime = time;
+    in->PriorBPTime  = time;
     in->FollowBPTime = 1.0e20;
 
     /* Make sure this isn't run again */
     in->LastRowRead = in->numRow + 10;
-  }
+  } /* end doBand==1 normalization */
 
   /* just to be sure something rational in times */
   if (in->PriorBPTime < -1000.0)  in->PriorBPTime  = time - 2.0/86400.0;

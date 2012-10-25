@@ -281,7 +281,7 @@ def pipeline( aipsSetup, parmFile):
         retCode = EVLADelayCal(uv, parms["DCals"], err,  \
                                BChan=parms["delayBChan"], EChan=parms["delayEChan"], \
                                doCalib=2, flagVer=2, doBand=-1, \
-                               solInt=parms["solInt"], smoTime=1.0/60.0,  \
+                               solInt=parms["delaySolInt"], smoTime=1.0/60.0,  \
                                refAnts=[parms["refAnt"]], doTwo=parms["doTwo"], 
                                doZeroPhs=parms["delayZeroPhs"], \
                                doPlot=parms["doSNPlot"], plotFile=plotFile, \
@@ -393,7 +393,7 @@ def pipeline( aipsSetup, parmFile):
             retCode = EVLADelayCal(uv, parms["DCals"], err, \
                                    BChan=parms["delayBChan"], EChan=parms["delayEChan"], \
                                    doCalib=2, flagVer=2, doBand=-1, \
-                                   solInt=parms["solInt"], smoTime=1.0/60.0,  \
+                                   solInt=parms["delaySolInt"], smoTime=1.0/60.0,  \
                                    refAnts=[parms["refAnt"]], doTwo=parms["doTwo"], \
                                    doZeroPhs=parms["delayZeroPhs"], \
                                    doPlot=parms["doSNPlot"], plotFile=plotFile, \
@@ -549,7 +549,7 @@ def pipeline( aipsSetup, parmFile):
             raise RuntimeError,"Error in RL phase spectrum calibration"
     
     # VClip
-    if parms["VClip"] and parms["XClip"]>0.0:
+    if parms["VClip"] and parms["VClip"]>0.0:
         mess =  "VPol clipping:"
         printMess(mess, logFile)
         retCode = EVLAAutoFlag (uv, [], err, flagVer=-1, flagTab=1, \
@@ -577,7 +577,7 @@ def pipeline( aipsSetup, parmFile):
         else:
             slist = parms["targets"]
         EVLAImageTargets (uv, err, Sources=slist, seq=parms["seq"], sclass=outIClass, \
-                          doCalib=2, doBand=1,  flagVer=2, doPol=parms["doPol"], PDVer=parms["PDVer"],  \
+                          doCalib=2, doBand=1,  flagVer=1, doPol=parms["doPol"], PDVer=parms["PDVer"],  \
                           Stokes=parms["Stokes"], FOV=parms["FOV"], Robust=parms["Robust"], Niter=parms["Niter"], \
                           CleanRad=parms["CleanRad"], minFlux=parms["minFlux"], \
                           maxPSCLoop=parms["maxPSCLoop"], minFluxPSC=parms["minFluxPSC"], \

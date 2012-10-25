@@ -258,6 +258,10 @@ def PPoslabel (ctype, crval, cdelt):
             out["crval"] = "      RPol      "
         elif crval == -2.0:
             out["crval"] = "      LPol      "
+        elif crval == -5.0:
+            out["crval"] = "      YPol      "
+        elif crval == -6.0:
+            out["crval"] = "      YPol      "
         else:
             out["crval"] = "%16.5g" % crval
         out["cdelt"] = "%15.6g" % cdelt
