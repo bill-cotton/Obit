@@ -546,6 +546,7 @@ def EVLAPolnRL(uv, err, \
         rlpass.solInt2 = solInt2
         rlpass.BPSoln  = 0
         rlpass.prtLv   = 1
+        rlpass.noScrat = noScrat
         rlpass.nThreads = nThreads
         # Loop over calibrators
         for ical in range (0,ncal):
@@ -795,7 +796,7 @@ def EVLAPolnImage(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band
                         #return 1
                     del u
                 # Create model, add to modelList
-                modelList.append(EVLACal.EVLACalModel(sou, CalName=imager.Sources[0], \
+                modelList.append(EVLACal.EVLACalModel(sou, CalName=imager.Sources[0]+imager.outName, \
                                                       CalClass=imager.outClass,        \
                                                       CalSeq=imager.outSeq,             \
                                                       CalCmethod="DFT", CalDataType="AIPS",   \

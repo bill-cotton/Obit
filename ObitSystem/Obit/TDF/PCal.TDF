@@ -141,6 +141,8 @@ CPSoln                              CP (source) table to write
 BPSoln                              BP (bandpass) table to write
 **PARAM** int 1 **DEF** 1
 PDSoln                              PD (antenna) table to write
+**PARAM** boo 1 **DEF** T
+doBlank                             Blank failed solutions
 **PARAM** int 1
 refAnt            0                 Reference antenna
 **PARAM** float 1
@@ -328,6 +330,8 @@ Adverbs:
   BPSoln.....Bandpass (BP) table to write, 0=> create new
              If doBand is true then BP table BPVer will be updated
              with the RL Phase solutions and written to BPSoln.
+  doBlank....Blank failed solutions? else write default parameters 
+             in the output PD and BP tables
   refAnt.....Reference antenna number, MUST be given.
   solInt.....Solution interval (min).  data is averaged for 
              this long

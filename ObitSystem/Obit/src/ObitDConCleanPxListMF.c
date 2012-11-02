@@ -1556,6 +1556,7 @@ static void GetSpecBeamPatch (ObitDConCleanPxListMF *in, olong ifld,
   ofloat fmax, zero=0.0;
   ObitImageClassInfo *imgClass;
   ObitFArray *FAtemp=NULL;
+  gboolean bad;
   gchar *routine = "GetSpecBeamPatch";
 
   /* error checks */
@@ -1598,8 +1599,10 @@ static void GetSpecBeamPatch (ObitDConCleanPxListMF *in, olong ifld,
     fmax = ObitFArrayMax (FAtemp, pos);
     FAtemp = ObitFArrayUnref(FAtemp);
 
-    /* Set if Beam OK - peak>0.5 */
-    if ((fmax>0.5) && (fmax<1.5)) {
+    /* Set if Beam OK - peak>0.5 and near center */
+    bad = (fmax<0.5) || (fmax>1.0) || 
+      (abs(pos[0]+ablc[0]-icenx)>3) || (abs(pos[1]+ablc[1]-iceny)>3);
+    if (!bad) {
       icenx = pos[0]+ablc[0];
       iceny = pos[1]+ablc[1];
     }
@@ -1615,7 +1618,7 @@ static void GetSpecBeamPatch (ObitDConCleanPxListMF *in, olong ifld,
     if (err->error) Obit_traceback_msg (err, routine, theBeam->name);
 
     /* If beam bad, zero */
-    if ((fmax<0.5) || (fmax>1.5)) ObitFArrayFill (in->SBeamPatch[ip], zero);
+    if (bad) ObitFArrayFill (in->SBeamPatch[ip], zero);
     
     ip++;  /* next */
   } /* end loop over planes */

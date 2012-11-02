@@ -356,26 +356,32 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
 	} /* end loop L120:  */;
       } 
       
-      /* Save in reordered array */
-      dtemp[0] = visIn[joff+0]; dtemp[1] = visIn[joff+1]; 
-      dtemp[2] = visIn[joff+6]; dtemp[3] = visIn[joff+7]; 
-      dtemp[4] = visIn[joff+9]; dtemp[5] = visIn[joff+10]; 
-      dtemp[6] = visIn[joff+3]; dtemp[7] = visIn[joff+4]; 
-      
-      /* Now apply calibration by multiplying the inverse Mueller matrix by 
-	 the data vector. */
-      j = 0;
+      /* Is poln cal flagged? */
       if (me->perChan) jndex = (ifoff + choff);
       else             jndex = ifoff;
-      MatxVec4Mult(&me->PolCal[jndex], dtemp, ytemp);
-      
-      index = 0;
-      j = 0;
-      /* Reorder */
-      visIn[joff+0] = ytemp[0];  visIn[joff+1]  = ytemp[1]; 
-      visIn[joff+3] = ytemp[6];  visIn[joff+4]  = ytemp[7]; 
-      visIn[joff+6] = ytemp[2];  visIn[joff+7]  = ytemp[3]; 
-      visIn[joff+9] = ytemp[4];  visIn[joff+10] = ytemp[5]; 
+      if (me->PolCal[jndex]!=fblank) {
+	/* Save in reordered array */
+	dtemp[0] = visIn[joff+0]; dtemp[1] = visIn[joff+1]; 
+	dtemp[2] = visIn[joff+6]; dtemp[3] = visIn[joff+7]; 
+	dtemp[4] = visIn[joff+9]; dtemp[5] = visIn[joff+10]; 
+	dtemp[6] = visIn[joff+3]; dtemp[7] = visIn[joff+4]; 
+	
+	/* Now apply calibration by multiplying the inverse Mueller matrix by 
+	   the data vector. */
+	j = 0;
+	MatxVec4Mult(&me->PolCal[jndex], dtemp, ytemp);
+	
+	index = 0;
+	j = 0;
+	/* Reorder */
+	visIn[joff+0] = ytemp[0];  visIn[joff+1]  = ytemp[1]; 
+	visIn[joff+3] = ytemp[6];  visIn[joff+4]  = ytemp[7]; 
+	visIn[joff+6] = ytemp[2];  visIn[joff+7]  = ytemp[3]; 
+	visIn[joff+9] = ytemp[4];  visIn[joff+10] = ytemp[5]; 
+      } else { /* Bad - flag crosspol */
+ 	visIn[joff+6] = visIn[joff+7]  = visIn[joff+8]  = 0.0;
+ 	visIn[joff+9] = visIn[joff+10] = visIn[joff+11] = 0.0;
+     }
       
       /* Done if in->numStok < 4) */
       if (in->numStok < 4) {choff += 32; continue;}
@@ -813,6 +819,7 @@ static void LXYPol(ObitUVCalPolarizationS *in, olong iant1, olong iant2, olong i
  * For the OBIT_UVPoln_Approx model, the calibration does not need to include
  * parallactic angle (and IFR)
  * Use fact that inverse of outer product is outer product of inverse matrices.
+ * If polarization entry is flagged, blank Jones element [0]
  * \param in      Polarization Object.
  * \param Ant     Antenna list object
  * \param cal     Amp/phase calibration object for IFR calibration.
@@ -859,46 +866,52 @@ static void SetInvJonesIF(ObitUVCalPolarizationS *in, ObitAntennaList *Ant,
       elp_l = Ant->ANlist[iant-1]->FeedBPCal[2*iif+0];
       ori_l = Ant->ANlist[refAnt-1]->FeedBPCal[2*iif+1];
       
-      /* Sines/cosines */
-      angle[0] = elp_r; angle[1] = 2*ori_r; angle[2] = elp_l; angle[3] = -2*ori_l;
-      angle[4] = Ant->ANlist[PCal->polRefAnt-1]->FeedAPCal[2*iif+1];
-      angle[5] = -Ant->ANlist[PCal->polRefAnt-1]->FeedBPCal[2*iif+1] + Ant->RLPhaseDiff[iif];
-      ObitSinCosVec(6, angle, sina, cosa);
-      
-      /* Complex terms */
-      COMPLEX_SET (RS, root2*(cosa[0] + sina[0]), 0.0);
-      COMPLEX_SET (RD, root2*(cosa[0] - sina[0]) * cosa[1], root2*(cosa[0] - sina[0]) * sina[1]);
-      COMPLEX_SET (LS, root2*(cosa[2] + sina[2]) * cosa[3], root2*(cosa[2] + sina[2]) * sina[3]);
-      COMPLEX_SET (LD, root2*(cosa[2] - sina[2]), 0.0);
-      COMPLEX_SET (PRref, cosa[4], sina[4]);
-      COMPLEX_SET (PLref, cosa[5], sina[5]);
-
-      /* Jones matrix: 
-       RS * PRref         RD * PA * PRref
-       LS * PAc * PLref   LD * PLref   
-      */
-      COMPLEX_MUL2 (ct, RS, PRref);
-      Jones[0] = ct.real;
-      Jones[1] = ct.imag;
-      COMPLEX_MUL3 (ct, RD, PA, PRref);
-      Jones[2] = ct.real;
-      Jones[3] = ct.imag;
-      COMPLEX_MUL3 (ct, LS, PAc, PLref);
-      Jones[4] = ct.real;
-      Jones[5] = ct.imag;
-      COMPLEX_MUL2 (ct, LD, PLref);
-      Jones[6] = ct.real;
-      Jones[7] = ct.imag;
-
-      /* Also need (inverse of) determinant */
-      Det[0] = (Jones[0]*Jones[6] - Jones[1]*Jones[7]) - (Jones[2]*Jones[4] - Jones[3]*Jones[5]);
-      Det[1] = (Jones[0]*Jones[7] + Jones[1]*Jones[6]) - (Jones[2]*Jones[5] + Jones[3]*Jones[4]);
-      /* Inverse of determinant */
-      d = Det[0]*Det[0] + Det[1]*Det[1];
-      if (d!=0.0) d = 1.0 / d;
-      else d = 1.0;
-      Det[0] *=  d;
-      Det[1] *= -d;
+      if ((elp_r!=fblank) && (elp_l!=fblank)) {
+	/* OK */
+	/* Sines/cosines */
+	angle[0] = elp_r; angle[1] = 2*ori_r; angle[2] = elp_l; angle[3] = -2*ori_l;
+	angle[4] = Ant->ANlist[PCal->polRefAnt-1]->FeedAPCal[2*iif+1];
+	angle[5] = -Ant->ANlist[PCal->polRefAnt-1]->FeedBPCal[2*iif+1] + Ant->RLPhaseDiff[iif];
+	ObitSinCosVec(6, angle, sina, cosa);
+	
+	/* Complex terms */
+	COMPLEX_SET (RS, root2*(cosa[0] + sina[0]), 0.0);
+	COMPLEX_SET (RD, root2*(cosa[0] - sina[0]) * cosa[1], root2*(cosa[0] - sina[0]) * sina[1]);
+	COMPLEX_SET (LS, root2*(cosa[2] + sina[2]) * cosa[3], root2*(cosa[2] + sina[2]) * sina[3]);
+	COMPLEX_SET (LD, root2*(cosa[2] - sina[2]), 0.0);
+	COMPLEX_SET (PRref, cosa[4], sina[4]);
+	COMPLEX_SET (PLref, cosa[5], sina[5]);
+	
+	/* Jones matrix: 
+	   RS * PRref         RD * PA * PRref
+	   LS * PAc * PLref   LD * PLref   
+	*/
+	COMPLEX_MUL2 (ct, RS, PRref);
+	Jones[0] = ct.real;
+	Jones[1] = ct.imag;
+	COMPLEX_MUL3 (ct, RD, PA, PRref);
+	Jones[2] = ct.real;
+	Jones[3] = ct.imag;
+	COMPLEX_MUL3 (ct, LS, PAc, PLref);
+	Jones[4] = ct.real;
+	Jones[5] = ct.imag;
+	COMPLEX_MUL2 (ct, LD, PLref);
+	Jones[6] = ct.real;
+	Jones[7] = ct.imag;
+	
+	/* Also need (inverse of) determinant */
+	Det[0] = (Jones[0]*Jones[6] - Jones[1]*Jones[7]) - (Jones[2]*Jones[4] - Jones[3]*Jones[5]);
+	Det[1] = (Jones[0]*Jones[7] + Jones[1]*Jones[6]) - (Jones[2]*Jones[5] + Jones[3]*Jones[4]);
+	/* Inverse of determinant */
+	d = Det[0]*Det[0] + Det[1]*Det[1];
+	if (d!=0.0) d = 1.0 / d;
+	else d = 1.0;
+	Det[0] *=  d;
+	Det[1] *= -d;
+      } else { /* bad */
+	for (i=0; i<8; i++) Jones[i] = fblank;
+	Det[0] = 1.0; Det[1] = 0.0;
+      }
 
       break;
 
@@ -998,14 +1011,18 @@ static void SetInvJonesIF(ObitUVCalPolarizationS *in, ObitAntennaList *Ant,
     } /* end doJones */
     
       /* invert matrix */
-    in->Jones[iant-1][jndx+6] =   Jones[0] * Det[0] - Jones[1] * Det[1];
-    in->Jones[iant-1][jndx+7] =   Jones[0] * Det[1] + Jones[1] * Det[0];
-    in->Jones[iant-1][jndx+2] = -(Jones[2] * Det[0] - Jones[3] * Det[1]);
-    in->Jones[iant-1][jndx+3] = -(Jones[2] * Det[1] + Jones[3] * Det[0]);
-    in->Jones[iant-1][jndx+4] = -(Jones[4] * Det[0] - Jones[5] * Det[1]);
-    in->Jones[iant-1][jndx+5] = -(Jones[4] * Det[1] + Jones[5] * Det[0]);
-    in->Jones[iant-1][jndx+0] =   Jones[6] * Det[0] - Jones[7] * Det[1];
-    in->Jones[iant-1][jndx+1] =   Jones[6] * Det[1] + Jones[7] * Det[0];
+    if (Jones[0]!=fblank) {
+      in->Jones[iant-1][jndx+6] =   Jones[0] * Det[0] - Jones[1] * Det[1];
+      in->Jones[iant-1][jndx+7] =   Jones[0] * Det[1] + Jones[1] * Det[0];
+      in->Jones[iant-1][jndx+2] = -(Jones[2] * Det[0] - Jones[3] * Det[1]);
+      in->Jones[iant-1][jndx+3] = -(Jones[2] * Det[1] + Jones[3] * Det[0]);
+      in->Jones[iant-1][jndx+4] = -(Jones[4] * Det[0] - Jones[5] * Det[1]);
+      in->Jones[iant-1][jndx+5] = -(Jones[4] * Det[1] + Jones[5] * Det[0]);
+      in->Jones[iant-1][jndx+0] =   Jones[6] * Det[0] - Jones[7] * Det[1];
+      in->Jones[iant-1][jndx+1] =   Jones[6] * Det[1] + Jones[7] * Det[0];
+    } else { /* bad */
+      for (i=0; i<8; i++) in->Jones[iant-1][jndx+i] = fblank;
+    }
     
     jndx += 8; /* Increment index for next IF */
   } /* end loop over IFs */
@@ -1079,46 +1096,52 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
 	elp_l = PCal->ANlist[ia][kndx+2];
 	ori_l = PCal->ANlist[ia][kndx+3];
 
-	/* Sines/cosines */
-	angle[0] = elp_r; angle[1] = 2*ori_r; angle[2] = elp_l; angle[3] = -2*ori_l;
-	angle[4] = PCal->ANlist[PCal->polRefAnt-1][kndx+1];
-	angle[5] = -PCal->ANlist[PCal->polRefAnt-1][kndx+3] + PD;
-	ObitSinCosVec(6, angle, sina, cosa);
-
-	/* Complex terms */
-	COMPLEX_SET (RS, root2*(cosa[0] + sina[0]), 0.0);
-	COMPLEX_SET (RD, root2*(cosa[0] - sina[0]) * cosa[1], root2*(cosa[0] - sina[0]) * sina[1]);
-	COMPLEX_SET (LS, root2*(cosa[2] + sina[2]) * cosa[3], root2*(cosa[2] + sina[2]) * sina[3]);
-	COMPLEX_SET (LD, root2*(cosa[2] - sina[2]), 0.0);
-	COMPLEX_SET (PRref, cosa[4], sina[4]);
-	COMPLEX_SET (PLref, cosa[5], sina[5]);
-	
-	/* Jones matrix: 
-	   RS * PRref         RD * PA * PRref
-	   LS * PAc * PLref   LD * PLref   
-	*/
-	COMPLEX_MUL2 (ct, RS, PRref);
-	Jones[0] = ct.real;
-	Jones[1] = ct.imag;
-	COMPLEX_MUL3 (ct, RD, PA, PRref);
-	Jones[2] = ct.real;
-	Jones[3] = ct.imag;
-	COMPLEX_MUL3 (ct, LS, PAc, PLref);
-	Jones[4] = ct.real;
-	Jones[5] = ct.imag;
-	COMPLEX_MUL2 (ct, LD, PLref);
-	Jones[6] = ct.real;
-	Jones[7] = ct.imag;
-
-	/* Also need (inverse of) determinant */
-	Det[0] = (Jones[0]*Jones[6] - Jones[1]*Jones[7]) - (Jones[2]*Jones[4] - Jones[3]*Jones[5]);
-	Det[1] = (Jones[0]*Jones[7] + Jones[1]*Jones[6]) - (Jones[2]*Jones[5] + Jones[3]*Jones[4]);
-	/* Inverse of determinant */
-	d = Det[0]*Det[0] + Det[1]*Det[1];
-	if (d!=0.0) d = 1.0 / d;
-	else d = 1.0;
-	Det[0] *=  d;
-	Det[1] *= -d;
+	if ((elp_r!=fblank) && (elp_l!=fblank)) {
+	  /* OK */
+	  /* Sines/cosines */
+	  angle[0] = elp_r; angle[1] = 2*ori_r; angle[2] = elp_l; angle[3] = -2*ori_l;
+	  angle[4] = PCal->ANlist[PCal->polRefAnt-1][kndx+1];
+	  angle[5] = -PCal->ANlist[PCal->polRefAnt-1][kndx+3] + PD;
+	  ObitSinCosVec(6, angle, sina, cosa);
+	  
+	  /* Complex terms */
+	  COMPLEX_SET (RS, root2*(cosa[0] + sina[0]), 0.0);
+	  COMPLEX_SET (RD, root2*(cosa[0] - sina[0]) * cosa[1], root2*(cosa[0] - sina[0]) * sina[1]);
+	  COMPLEX_SET (LS, root2*(cosa[2] + sina[2]) * cosa[3], root2*(cosa[2] + sina[2]) * sina[3]);
+	  COMPLEX_SET (LD, root2*(cosa[2] - sina[2]), 0.0);
+	  COMPLEX_SET (PRref, cosa[4], sina[4]);
+	  COMPLEX_SET (PLref, cosa[5], sina[5]);
+	  
+	  /* Jones matrix: 
+	     RS * PRref         RD * PA * PRref
+	     LS * PAc * PLref   LD * PLref   
+	  */
+	  COMPLEX_MUL2 (ct, RS, PRref);
+	  Jones[0] = ct.real;
+	  Jones[1] = ct.imag;
+	  COMPLEX_MUL3 (ct, RD, PA, PRref);
+	  Jones[2] = ct.real;
+	  Jones[3] = ct.imag;
+	  COMPLEX_MUL3 (ct, LS, PAc, PLref);
+	  Jones[4] = ct.real;
+	  Jones[5] = ct.imag;
+	  COMPLEX_MUL2 (ct, LD, PLref);
+	  Jones[6] = ct.real;
+	  Jones[7] = ct.imag;
+	  
+	  /* Also need (inverse of) determinant */
+	  Det[0] = (Jones[0]*Jones[6] - Jones[1]*Jones[7]) - (Jones[2]*Jones[4] - Jones[3]*Jones[5]);
+	  Det[1] = (Jones[0]*Jones[7] + Jones[1]*Jones[6]) - (Jones[2]*Jones[5] + Jones[3]*Jones[4]);
+	  /* Inverse of determinant */
+	  d = Det[0]*Det[0] + Det[1]*Det[1];
+	  if (d!=0.0) d = 1.0 / d;
+	  else d = 1.0;
+	  Det[0] *=  d;
+	  Det[1] *= -d;
+	} else { /* bad */
+	  for (i=0; i<8; i++) Jones[i] = fblank;
+	  Det[0] = 1.0; Det[1] = 0.0;
+	}
 	break;
 	
       case OBIT_UVPoln_Approx:  /* R/L Linear D-term approximation */
@@ -1218,14 +1241,18 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
 	
      } /* end doJones */
       /* invert matrix */
-      in->Jones[ia][jndx+6] =   Jones[0] * Det[0] - Jones[1] * Det[1];
-      in->Jones[ia][jndx+7] =   Jones[0] * Det[1] + Jones[1] * Det[0];
-      in->Jones[ia][jndx+2] = -(Jones[2] * Det[0] - Jones[3] * Det[1]);
-      in->Jones[ia][jndx+3] = -(Jones[2] * Det[1] + Jones[3] * Det[0]);
-      in->Jones[ia][jndx+4] = -(Jones[4] * Det[0] - Jones[5] * Det[1]);
-      in->Jones[ia][jndx+5] = -(Jones[4] * Det[1] + Jones[5] * Det[0]);
-      in->Jones[ia][jndx+0] =   Jones[6] * Det[0] - Jones[7] * Det[1];
-      in->Jones[ia][jndx+1] =   Jones[6] * Det[1] + Jones[7] * Det[0];
+      if (Jones[0]!=fblank) {
+	in->Jones[ia][jndx+6] =   Jones[0] * Det[0] - Jones[1] * Det[1];
+	in->Jones[ia][jndx+7] =   Jones[0] * Det[1] + Jones[1] * Det[0];
+	in->Jones[ia][jndx+2] = -(Jones[2] * Det[0] - Jones[3] * Det[1]);
+	in->Jones[ia][jndx+3] = -(Jones[2] * Det[1] + Jones[3] * Det[0]);
+	in->Jones[ia][jndx+4] = -(Jones[4] * Det[0] - Jones[5] * Det[1]);
+	in->Jones[ia][jndx+5] = -(Jones[4] * Det[1] + Jones[5] * Det[0]);
+	in->Jones[ia][jndx+0] =   Jones[6] * Det[0] - Jones[7] * Det[1];
+	in->Jones[ia][jndx+1] =   Jones[6] * Det[1] + Jones[7] * Det[0];
+      } else { /* bad */
+	for (i=0; i<8; i++) in->Jones[iant-1][jndx+i] = fblank;
+      }
       
       jndx += 8; /* Increment index for next channel/IF */
    } /* end channel loop */
@@ -1248,29 +1275,35 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
   }
 } /* end MatxVec4Mult */
 
-/** Private: Muller matrix from outer product of Jones matrices */
+/** Private: Muller matrix from outer product of Jones matrices 
+   Supports blanking */
 static void MatxOuter(ofloat* in1, ofloat* in2, ofloat* out)
 {
+  olong i;
+  ofloat fblank = ObitMagicF();
   /* out = in1 (outer product) conjg(in2) */
-  out[0]  =  in1[0] * in2[0] + in1[1] * in2[1];  out[1]  =  in1[1] * in2[0] - in1[0] * in2[1];
-  out[2]  =  in1[0] * in2[2] + in1[1] * in2[3];  out[3]  =  in1[1] * in2[2] - in1[0] * in2[3];
-  out[4]  =  in1[2] * in2[0] + in1[3] * in2[1];  out[5]  =  in1[3] * in2[0] - in1[2] * in2[1];
-  out[6]  =  in1[2] * in2[2] + in1[3] * in2[3];  out[7]  =  in1[3] * in2[2] - in1[2] * in2[3];
-  
-  out[8]  =  in1[0] * in2[4] + in1[1] * in2[5];  out[9]  =  in1[1] * in2[4] - in1[0] * in2[5];
-  out[10] =  in1[0] * in2[6] + in1[1] * in2[7];  out[11] =  in1[1] * in2[6] - in1[0] * in2[7];
-  out[12] =  in1[2] * in2[4] + in1[3] * in2[5];  out[13] =  in1[3] * in2[4] - in1[2] * in2[5];
-  out[14] =  in1[2] * in2[6] + in1[3] * in2[7];  out[15] =  in1[3] * in2[6] - in1[2] * in2[7];
-  
-  out[16] =  in1[4] * in2[0] + in1[5] * in2[1];  out[17] =  in1[5] * in2[0] - in1[4] * in2[1];
-  out[18] =  in1[4] * in2[2] + in1[5] * in2[3];  out[19] =  in1[5] * in2[2] - in1[4] * in2[3];
-  out[20] =  in1[6] * in2[0] + in1[7] * in2[1];  out[21] =  in1[7] * in2[1] - in1[6] * in2[1];
-  out[22] =  in1[6] * in2[2] + in1[7] * in2[3];  out[23] =  in1[7] * in2[2] - in1[6] * in2[3];
-  
-  out[24] =  in1[4] * in2[4] + in1[5] * in2[5];  out[25] =  in1[5] * in2[4] - in1[4] * in2[5];
-  out[26] =  in1[4] * in2[6] + in1[5] * in2[7];  out[27] =  in1[5] * in2[6] - in1[4] * in2[7];
-  out[28] =  in1[6] * in2[4] + in1[7] * in2[5];  out[29] =  in1[7] * in2[4] - in1[6] * in2[5];
-  out[30] =  in1[6] * in2[6] + in1[7] * in2[7];  out[31] =  in1[7] * in2[6] - in1[6] * in2[7];
-  
+  if ((in1[0]!=fblank) && (in2[0]!=fblank)) {
+    out[0]  =  in1[0] * in2[0] + in1[1] * in2[1];  out[1]  =  in1[1] * in2[0] - in1[0] * in2[1];
+    out[2]  =  in1[0] * in2[2] + in1[1] * in2[3];  out[3]  =  in1[1] * in2[2] - in1[0] * in2[3];
+    out[4]  =  in1[2] * in2[0] + in1[3] * in2[1];  out[5]  =  in1[3] * in2[0] - in1[2] * in2[1];
+    out[6]  =  in1[2] * in2[2] + in1[3] * in2[3];  out[7]  =  in1[3] * in2[2] - in1[2] * in2[3];
+    
+    out[8]  =  in1[0] * in2[4] + in1[1] * in2[5];  out[9]  =  in1[1] * in2[4] - in1[0] * in2[5];
+    out[10] =  in1[0] * in2[6] + in1[1] * in2[7];  out[11] =  in1[1] * in2[6] - in1[0] * in2[7];
+    out[12] =  in1[2] * in2[4] + in1[3] * in2[5];  out[13] =  in1[3] * in2[4] - in1[2] * in2[5];
+    out[14] =  in1[2] * in2[6] + in1[3] * in2[7];  out[15] =  in1[3] * in2[6] - in1[2] * in2[7];
+    
+    out[16] =  in1[4] * in2[0] + in1[5] * in2[1];  out[17] =  in1[5] * in2[0] - in1[4] * in2[1];
+    out[18] =  in1[4] * in2[2] + in1[5] * in2[3];  out[19] =  in1[5] * in2[2] - in1[4] * in2[3];
+    out[20] =  in1[6] * in2[0] + in1[7] * in2[1];  out[21] =  in1[7] * in2[1] - in1[6] * in2[1];
+    out[22] =  in1[6] * in2[2] + in1[7] * in2[3];  out[23] =  in1[7] * in2[2] - in1[6] * in2[3];
+    
+    out[24] =  in1[4] * in2[4] + in1[5] * in2[5];  out[25] =  in1[5] * in2[4] - in1[4] * in2[5];
+    out[26] =  in1[4] * in2[6] + in1[5] * in2[7];  out[27] =  in1[5] * in2[6] - in1[4] * in2[7];
+    out[28] =  in1[6] * in2[4] + in1[7] * in2[5];  out[29] =  in1[7] * in2[4] - in1[6] * in2[5];
+    out[30] =  in1[6] * in2[6] + in1[7] * in2[7];  out[31] =  in1[7] * in2[6] - in1[6] * in2[7];
+  } else {  /* One bad blank */
+    for (i=0; i<32; i++) out[i] = fblank;
+  }
 } /* end  MatxOuter */
 

@@ -3169,7 +3169,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ASDMSpectralWindowArray* SpWinArray;
   olong i, j, iRow, jRow, oRow, ver, maxAnt, IFno, SourNo, SWId;
   olong *antLookup=NULL, *SpWinLookup=NULL, *SpWinLookup2=NULL;
-  olong curScan, curScanI, nextScanNo, bad=0, iMain;
+  olong curScan, curScanI, nextScanNo, bad=0, iMain, cnt;
   oint numIF, numPol;
   ofloat fblank = ObitMagicF();
   gboolean want, ChkVis;
@@ -3227,12 +3227,14 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   SpWinLookup2 = g_malloc0(SDMData->SpectralWindowTab->nrows*sizeof(olong));
   for (i=0; i<SDMData->SpectralWindowTab->nrows; i++) SpWinLookup[i]  = -1;  /* For deselected */
   for (i=0; i<SDMData->SpectralWindowTab->nrows; i++) SpWinLookup2[i] = -1;
+  cnt = 0;  /* Number of selected IFs/SWs */
   for (i=0; i<SpWinArray->nwinds; i++) {
-    SpWinLookup2[SpWinArray->winds[i]->spectralWindowId] = i;
     if ((SpWinArray->winds[i]->spectralWindowId>=0) && 
 	(SpWinArray->winds[i]->spectralWindowId<SDMData->SpectralWindowTab->nrows) &&
-	SpWinArray->winds[i]->selected)
-      SpWinLookup[SpWinArray->winds[i]->spectralWindowId] = SpWinArray->order[i];
+	SpWinArray->winds[i]->selected) {
+      SpWinLookup[SpWinArray->winds[i]->spectralWindowId]  = SpWinArray->order[i];
+      SpWinLookup2[SpWinArray->winds[i]->spectralWindowId] = cnt; cnt++;
+    }
   }
 
   /* Create output SY table object */

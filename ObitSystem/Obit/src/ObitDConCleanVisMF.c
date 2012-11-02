@@ -1703,6 +1703,7 @@ static ObitFArray* GetSpecBeamPatch (ObitDConCleanVisMF *in, ObitFArray *BP,
   ofloat fmax, zero=0.0;
   ObitImageClassInfo *imgClass;
   ObitFArray *out=NULL, *FAtemp=NULL;
+  gboolean bad;
   gchar *routine = "GetSpecBeamPatch";
 
   /* error checks */
@@ -1737,8 +1738,11 @@ static ObitFArray* GetSpecBeamPatch (ObitDConCleanVisMF *in, ObitFArray *BP,
   if (err->error) Obit_traceback_val (err, routine, theBeam->name, out);
   fmax = ObitFArrayMax (FAtemp, pos);
   FAtemp = ObitFArrayUnref(FAtemp);
-  /* Set if Beam OK - peak>0.5 */
-  if ((fmax>0.5) && (fmax<1.5)) {
+
+  /* Set if Beam OK - peak>0.5 and near center */
+  bad = (fmax<0.5) || (fmax>1.0) || 
+    (abs(pos[0]+ablc[0]-icenx)>3) || (abs(pos[1]+ablc[1]-iceny)>3);
+  if (!bad) {
     icenx = pos[0]+ablc[0];
     iceny = pos[1]+ablc[1];
   }
@@ -1754,7 +1758,7 @@ static ObitFArray* GetSpecBeamPatch (ObitDConCleanVisMF *in, ObitFArray *BP,
   if (err->error) Obit_traceback_val (err, routine, theBeam->name, out);
     
   /* If beam bad, zero */
-  if ((fmax<0.5) || (fmax>1.5)) ObitFArrayFill (theBeam->image, zero);
+  if (bad) ObitFArrayFill (theBeam->image, zero);
     
   /* Free Image array? */
   theBeam->image = ObitFArrayUnref(theBeam->image);

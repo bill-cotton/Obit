@@ -636,7 +636,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   nThreads = 1;
   ObitInfoListGetTest(myInput, "nThreads", &type, dim, &nThreads);
   nvis *= nThreads;
-  ObitInfoListAlwaysPut (inData->info, "nVisPIO",  type, dim,  &nvis);
+  ObitInfoListAlwaysPut (inData->info, "nVisPIO",  OBIT_long, dim,  &nvis);
     
   /* Make sure doCalSelect set properly */
   doCalSelect = FALSE;
@@ -901,7 +901,7 @@ void PCalHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "modelFlux", "modelPos", "modelParm", "solInt", 
     "solnType", "Sources", "Qual", "souCode", "doFitI", "doFitPol", "doFitV", 
     "doFitGn", "doFitRL", "RLPhase", "RM", "PPol", "ChWid", "ChInc", 
-    "CPSoln", "PDSoln", "BPSoln", 
+    "CPSoln", "PDSoln", "BPSoln", "doBlank", 
     "nThreads",
    NULL};
   gchar *routine = "PCalHistory";
@@ -948,7 +948,7 @@ ObitUV* AverData (ObitInfoList* myInput, ObitUV* scrData,
   gchar *PolCalParms[] = {     /* Polarization calibration parameters */
     "solnType", "Sources", "Qual", "souCode", "doFitI", "doFitPol", "doFitV", 
     "doFitGn", "doFitRL", "RLPhase", "RM", "PPol", "ChWid", "ChInc", 
-    "CPSoln", "PDSoln", "BPSoln", 
+    "CPSoln", "PDSoln", "BPSoln", "doBlank",
     "doBand", "BPVer", "refAnt", "prtLv", "BIF", "BChan",
     NULL};
   gchar *FQInclude[] = {"AIPS FQ", "AIPS AN", NULL};

@@ -30,6 +30,7 @@
 
 %{
 #include "ObitUVDesc.h"
+#include "ObitPrecess.h"
 %}
 
 %inline %{
@@ -59,6 +60,18 @@ extern double UVDescDate2JD (char *date) {
   double JD;
   ObitUVDescDate2JD ((const gchar*)date, &JD);
   return JD;
+}
+ 
+extern double UVDescGST0 (double JD) {
+  double GSTUTC0, Rate;
+  ObitPrecessGST0 (JD, &GSTUTC0, &Rate);
+  return GSTUTC0;
+}
+ 
+extern double UVDescERate (double JD) {
+  double GSTUTC0, Rate;
+  ObitPrecessGST0 (JD, &GSTUTC0, &Rate);
+  return Rate;
 }
  
 extern PyObject *UVDescGetDict(ObitUVDesc* in) {

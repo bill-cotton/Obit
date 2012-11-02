@@ -10,7 +10,7 @@
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2005,2007,2008
+#  Copyright (C) 2005-2012
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -351,4 +351,26 @@ def PPos (uv):
     epoch = dict["equinox"]
     return [ra,dec,epoch]
    # end PPos
+
+def GST0 (JD):
+    """ Predict the Greenwich Sidereal Time at UT=0 on a given Julian date.
+
+
+     JD   Julian date
+     returns Apparent GST (hours) at UTC=0 on JD
+    """
+    ################################################################
+    return Obit.UVDescGST0(JD)
+    # end GST0
+
+def ERate (JD):
+    """ Predict the Earth rotation rate at UT=0 on a given Julian date.
+
+
+     JD   Julian date
+     returns  Earth rotation rate turns per day on JD
+    """
+    ################################################################
+    return Obit.UVDescERate(JD)
+    # end ERate
 

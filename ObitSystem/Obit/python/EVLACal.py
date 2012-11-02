@@ -1727,7 +1727,7 @@ def EVLACalAP(uv, target, ACals, err, \
     * flagVer  = Flagging table to apply
     * solnver  = output SN table version (+1 if smooth), 0=>new
     * solInt   = solution interval (min)
-    * solSmo   = if solSmo<solInt smooth solutions to solSmo
+    * solSmo   = if solSmo<solInt smooth amp solutions to solSmo
     * nThreads = Number of threads to use
     * refAnt   = Reference antenna
     * ampScalar= If true, scalar average data in calibration?
@@ -1991,8 +1991,8 @@ def EVLACalAP(uv, target, ACals, err, \
                 setname(uv,snsmo)
             snsmo.solnIn  = solnVer
             snsmo.solnOut = solnVer2
-            snsmo.smoType = "BOTH"
-            snsmo.smoType = "MWF"
+            snsmo.smoType = "AMPL"
+            snsmo.smoFunc = "MWF"
             snsmo.refAnt  = refAnt
             snsmo.clipSmo = [24.]  # Clip wild amplitudes
             snsmo.clipParm= [100.0]

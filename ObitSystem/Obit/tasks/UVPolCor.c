@@ -911,7 +911,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   
   /* Set buffer size */
   nvis = 1;
-  ObitInfoListAlwaysPut (inData->info, "nVisPIO",  type, dim,  &nvis);
+  ObitInfoListAlwaysPut (inData->info, "nVisPIO",  OBIT_long, dim,  &nvis);
     
   /* Make sure doCalSelect set properly */
   doCalSelect = FALSE;
@@ -1218,7 +1218,7 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
 
   /* Set buffer size */
-  nvis = 1000;
+  nvis = 1000; type = OBIT_long;
   ObitInfoListGetTest(inData->info, "nVisPIO", &type, dim, &nvis);
   ObitInfoListAlwaysPut (outUV->info, "nVisPIO",  type, dim,  &nvis);
     

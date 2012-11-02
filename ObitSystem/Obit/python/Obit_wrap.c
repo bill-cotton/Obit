@@ -11202,6 +11202,7 @@ typedef struct {
 } TimeFilter;
 
 #include "ObitUVDesc.h"
+#include "ObitPrecess.h"
 
 extern ObitUVDesc* UVDescCreate (char *name) {
   return newObitUVDesc (name);
@@ -11229,6 +11230,18 @@ extern double UVDescDate2JD (char *date) {
   double JD;
   ObitUVDescDate2JD ((const gchar*)date, &JD);
   return JD;
+}
+ 
+extern double UVDescGST0 (double JD) {
+  double GSTUTC0, Rate;
+  ObitPrecessGST0 (JD, &GSTUTC0, &Rate);
+  return GSTUTC0;
+}
+ 
+extern double UVDescERate (double JD) {
+  double GSTUTC0, Rate;
+  ObitPrecessGST0 (JD, &GSTUTC0, &Rate);
+  return Rate;
 }
  
 extern PyObject *UVDescGetDict(ObitUVDesc* in) {
@@ -11413,6 +11426,8 @@ extern void UVDescCopyDesc(ObitUVDesc *,ObitUVDesc *,ObitErr *);
 extern void UVDescIndex(ObitUVDesc *);
 extern ObitInfoList *UVDescGetList(ObitUVDesc *);
 extern double UVDescDate2JD(char *);
+extern double UVDescGST0(double );
+extern double UVDescERate(double );
 extern PyObject *UVDescGetDict(ObitUVDesc *);
 extern void UVDescSetDict(ObitUVDesc *,PyObject *);
 extern int UVDescIsA(ObitUVDesc *);
@@ -48005,6 +48020,32 @@ static PyObject *_wrap_UVDescDate2JD(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_UVDescGST0(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    double  _result;
+    double  _arg0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"d:UVDescGST0",&_arg0)) 
+        return NULL;
+    _result = (double )UVDescGST0(_arg0);
+    _resultobj = Py_BuildValue("d",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVDescERate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    double  _result;
+    double  _arg0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"d:UVDescERate",&_arg0)) 
+        return NULL;
+    _result = (double )UVDescERate(_arg0);
+    _resultobj = Py_BuildValue("d",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_UVDescGetDict(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     PyObject * _result;
@@ -59227,6 +59268,8 @@ static PyMethodDef ObitMethods[] = {
 	 { "UVDescRef", _wrap_UVDescRef, METH_VARARGS },
 	 { "UVDescSetDict", _wrap_UVDescSetDict, METH_VARARGS },
 	 { "UVDescGetDict", _wrap_UVDescGetDict, METH_VARARGS },
+	 { "UVDescERate", _wrap_UVDescERate, METH_VARARGS },
+	 { "UVDescGST0", _wrap_UVDescGST0, METH_VARARGS },
 	 { "UVDescDate2JD", _wrap_UVDescDate2JD, METH_VARARGS },
 	 { "UVDescGetList", _wrap_UVDescGetList, METH_VARARGS },
 	 { "UVDescIndex", _wrap_UVDescIndex, METH_VARARGS },

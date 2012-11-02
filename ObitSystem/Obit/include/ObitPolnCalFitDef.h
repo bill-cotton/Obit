@@ -38,6 +38,8 @@ ObitInfoList *info;
 gboolean doError;
 /** Fit global R-L phase: */
 gboolean doFitRL;
+/** blank failed solns? else default parameters: */
+gboolean doBlank;
 /** R-L (or X-Y) phase difference */
 odouble PD;
 /** Error estimate R-L (or X-Y) phase difference */

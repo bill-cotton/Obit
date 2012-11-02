@@ -655,7 +655,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   
   /* Set buffer size */
   nvis = 1;
-  ObitInfoListAlwaysPut (inData->info, "nVisPIO",  type, dim,  &nvis);
+  ObitInfoListAlwaysPut (inData->info, "nVisPIO",  OBIT_long, dim,  &nvis);
     
   /* Make sure doCalSelect set properly */
   doCalSelect = FALSE;

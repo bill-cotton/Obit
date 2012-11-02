@@ -94,10 +94,10 @@ static void InitBandpassTab(ObitPolnCalFit *in, ObitErr *err);
 static void UpdateSourceTab(ObitPolnCalFit *in, ObitErr *err);
 
 /* Private:  Update Instrumental poln.(PD) table */
-static void UpdateInstrumentalTab(ObitPolnCalFit *in, ObitErr *err);
+static void UpdateInstrumentalTab(ObitPolnCalFit *in, gboolean isOK, ObitErr *err);
 
 /* Private: Update Bandpass.(BP) table */
-static void UpdateBandpassTab(ObitPolnCalFit *in, ObitErr *err);
+static void UpdateBandpassTab(ObitPolnCalFit *in, gboolean isOK, ObitErr *err);
 
 /** Private: Fit spectra in SU list */
 static void FitSpectra (ObitPolnCalFit *in, ObitErr *err);
@@ -455,6 +455,7 @@ static void calcmodel (ObitPolnCalFit *args, ofloat Rarray[8], olong idata)
  * \li CPSoln     OBIT_long scalar Source (CP) table to write, 0=> create new  [0]
  * \li PDSoln     OBIT_long scalar Instrumental (PD) table to write, 0=> create new  [0]
  * \li BPSoln     OBIT_long scalar Bandpass (BP) table to write, 0=> create new  [0]
+ * \li doBlank    OBIT_boolean scalar If True blanked failed solns, else default values [T]
  * \li doBand     OBIT_long scalar If >0 then BP table BPVer was applied to input  [0]
  * \li BPVer      OBIT_long scalar Input BP table  [0]
  * \li refAnt     OBIT_long scalar Reference antenna  [1]
@@ -538,6 +539,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
   else
     for (i=0; i<nCal; i++) in->doFitPol[i] = TRUE;
   ObitInfoListGetTest(in->info, "doFitRL",  &type, dim, &in->doFitRL);
+  ObitInfoListGetTest(in->info, "doBlank",  &type, dim, &in->doBlank);
   ObitInfoListGetTest(in->info, "ChWid",    &type, dim, &in->ChWid);
   ObitInfoListGetTest(in->info, "ChInc",    &type, dim, &in->ChInc);
   ObitInfoListGetTest(in->info, "CPSoln",   &type, dim, &in->CPSoln);
@@ -942,6 +944,7 @@ ObitPolnCalFit *in = inn;
   in->PDTable    = NULL;
   in->BPTable    = NULL;
   in->doFitRL    = FALSE;
+  in->doBlank    = TRUE;
   in->BIF        = 1;
   in->BChan      = 1;
   in->ChWid      = 1;
@@ -1148,14 +1151,11 @@ static void WriteOutput (ObitPolnCalFit* in, ObitUV *outUV,
    /* Check for crazy antenna solutions and reset defaults */
   crazy = CheckCrazy(in, err);
 
-  /* Good data? */
-  if (isOK) {
-    /* Update Tables */
-    UpdateSourceTab(in, err);
-    UpdateInstrumentalTab(in, err);
-    if (in->doFitRL) UpdateBandpassTab(in, err);
-    if (err->error)  Obit_traceback_msg (err, routine, outUV->name);
-  }
+  /* Update Tables */
+  if (isOK) UpdateSourceTab(in, err);
+  UpdateInstrumentalTab(in, isOK, err);
+  if (in->doFitRL) UpdateBandpassTab(in, isOK, err);
+  if (err->error)  Obit_traceback_msg (err, routine, outUV->name);
 
 } /* end WriteOutput */
 
@@ -1685,15 +1685,22 @@ static void UpdateSourceTab(ObitPolnCalFit* in, ObitErr *err)
 /**
  * Update Instrumental poln.(PD) table
  * Results obtained from thread args on in
+ * if in->doBlank, blank failed solutions, else noop
  * \param in    Fitting object
+ * \param isOK  was fitting successful?
  * \param err   Obit error stack object.
  */
-static void UpdateInstrumentalTab(ObitPolnCalFit* in, ObitErr *err) 
+static void UpdateInstrumentalTab(ObitPolnCalFit* in, gboolean isOK, 
+				  ObitErr *err) 
 {
   olong irow, npol, nif, nchan, indx, ich, iif, iant;
+  ofloat fblank = ObitMagicF();
   olong chanOff=in->BChan-1, ifOff=in->BIF-1, chans[2];
   ObitTablePDRow *row=NULL;
   gchar *routine = "ObitPolnCalFit:UpdateInstrumentalTab";
+
+  /* If doBlank FALSE and this one failed, simple return */
+  if (!isOK && (in->doBlank==FALSE)) return;
   
   /* Open */
   ObitTablePDOpen (in->PDTable, OBIT_IO_ReadWrite, err);
@@ -1728,12 +1735,23 @@ static void UpdateInstrumentalTab(ObitPolnCalFit* in, ObitErr *err)
       iif = in->IFno-1+ifOff;  /* 0 rel IF */
       indx = iif*nchan + ich;
       
-      row->RLPhase[indx] = in->PD*RAD2DG;  /* R-L phase difference */
-      row->Real1[indx]   = in->antParm[iant*4+1];
-      row->Imag1[indx]   = in->antParm[iant*4+0];
-      if (npol>1) {
-	row->Real2[indx] = in->antParm[iant*4+3];
-	row->Imag2[indx] = in->antParm[iant*4+2];
+      /* OK solution? */
+      if (isOK) {
+	row->RLPhase[indx] = in->PD*RAD2DG;  /* R-L phase difference */
+	row->Real1[indx]   = in->antParm[iant*4+1];
+	row->Imag1[indx]   = in->antParm[iant*4+0];
+	if (npol>1) {
+	  row->Real2[indx] = in->antParm[iant*4+3];
+	  row->Imag2[indx] = in->antParm[iant*4+2];
+	}
+      } else { /* failed solution */
+	row->RLPhase[indx] = fblank;
+	row->Real1[indx]   = fblank;
+	row->Imag1[indx]   = fblank;
+	if (npol>1) {
+	  row->Real2[indx] = fblank;
+	  row->Imag2[indx] = fblank;
+	}
       }
     } /* end loop over channels */
     /* Rewrite */
@@ -1751,18 +1769,22 @@ static void UpdateInstrumentalTab(ObitPolnCalFit* in, ObitErr *err)
 
 /**
  * Update Bandpass (BP) table
- * Not clear this is needed
- * Results obtained from thread args on in
- * Multiplies gains from in solution by existing values
+ * if in->doBlank, blank failed solutions, else noop
  * \param in    Fitting object
+ * \param isOK  was fitting successful?
  * \param err   Obit error stack object.
  */
-static void UpdateBandpassTab(ObitPolnCalFit* in, ObitErr *err) 
+static void UpdateBandpassTab(ObitPolnCalFit* in, gboolean isOK, 
+			      ObitErr *err) 
 {
   olong irow, npol, nif, nchan, indx, ich, iif, iant;
+  ofloat fblank = ObitMagicF();
   ObitTableBPRow *row=NULL;
   olong chanOff=in->BChan-1, ifOff=in->BIF-1, chans[2];
   gchar *routine = "ObitPolnCalFit:UpdateBandpassTab";
+  
+  /* If doBlank FALSE and this one failed, simple return */
+  if (!isOK && (in->doBlank==FALSE)) return;
   
   /* Open */
   ObitTableBPOpen (in->BPTable, OBIT_IO_ReadWrite, err);
@@ -1797,11 +1819,20 @@ static void UpdateBandpassTab(ObitPolnCalFit* in, ObitErr *err)
       iif = in->IFno-1+ifOff;  /* 0 rel IF */
       indx = iif*nchan + ich;
       
-      row->Real1[indx] = 1.0;
-      row->Imag1[indx] = 0.0;
-      if (npol>1) {
-	row->Real2[indx] = cos(in->PD);
-	row->Imag2[indx] = sin(in->PD);
+      if (isOK) {
+	row->Real1[indx] = 1.0;
+	row->Imag1[indx] = 0.0;
+	if (npol>1) {
+	  row->Real2[indx] = cos(in->PD);
+	  row->Imag2[indx] = sin(in->PD);
+	} else { /* failed solution */
+	  row->Real1[indx] = fblank;
+	  row->Imag1[indx] = fblank;
+	  if (npol>1) {
+	    row->Real2[indx] = fblank;
+	    row->Imag2[indx] = fblank;
+	  }
+	}
       }
     } /* end loop over channels */
     /* Rewrite */

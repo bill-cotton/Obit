@@ -906,3 +906,32 @@ Obit/python/Table.py:
   PGetIOList: fix bug in creating output
 25 Oct 2012, svn version 429
 
+Bug fixes, KAT7 stuff
+Obit/tasks/BPass.c Obit/tasks/PCal.c Obit/tasks/RLDly.c:
+Obit/tasks/RLPass.c Obit/tasks/UVPolCor.c/\
+  Fix call to ObitInfoListAlwaysPut, undefined type
+Obit/python/UVDesc.py Obit/python/UVDesc.inc:
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  Add interface to GST@UTC=0 and earth rotation rate routines
+Obit/python/KATH5toAIPS.py:
+  Convert KAT7 HDF5 data to Obit
+Obit/share/data/ KAT7Template.uvtab.gz:
+  Template KAT data (full stokes, 1024 channels)
+Obit/python/EVLAPolnScripts.py:
+  Fix bug in Image setting name in output structure
+Obit/src/ObitDConCleanVisMF.c Obit/src/ObitDConCleanPxListMF.c:
+  GetSpecBeamPatch: better trap for bad beam.
+Obit/tasks/Lister.c:
+  doSCAN: make more robust against problems in SU table.
+Obit/src/ObitUVCalPolarization.c:
+  flag xpol data if either of the PD  solutions failed.
+Obit/src/ObitPolnCalFit.c Obit/include/ObitPolnCalFitDef.h:
+Obit/tasks/PCal.c Obit/TDF/PCal.TDF: 
+  Add parameter to control if failed solutions are blanked.
+Obit/python/EVLACal.py:
+  EVLACalAP: Fix bugs in amplitude smoothing
+Obit/src/ObitVLAGain.c:
+  New VLA gain table from Bryan Butler.
+Obit/tasks/BDFIn.c:
+  GetSysPowerInfo: Fix bug in lookup table when only some SWs in a config are selected.
+1 Nov 2012, svn version 430

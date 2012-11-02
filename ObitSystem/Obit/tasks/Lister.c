@@ -915,7 +915,10 @@ void doSCAN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 
   /* Init vis counting */
   maxSUID = 1;
-  for (i=0; i<SouList->number; i++) maxSUID = MAX (maxSUID, SouList->SUlist[i]->SourID);
+  for (i=0; i<SouList->number; i++) {
+    if (SouList->SUlist[i]!=NULL)
+    maxSUID = MAX (maxSUID, SouList->SUlist[i]->SourID);
+  }
   noVis = g_malloc0(maxSUID*sizeof(olong));
 
   /* Open NX Table */
@@ -987,7 +990,7 @@ void doSCAN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     day2dhms (NXRow->Time+0.5*NXRow->TimeI, etimeString);
 
     /* Source */
-    souID = (olong)NXRow->SourID;
+    souID = MIN ((olong)NXRow->SourID, maxSUID);
     /* Look up source */
     if (souID!=lastSouID) {
       lastSouID = souID;
@@ -1056,7 +1059,6 @@ void doSCAN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
 
   /* Loop over sources */
-  numIF = SouList->SUlist[0]->numIF;
   for (i=0; i<SouList->number; i++) {
     ObitPosLabelUtilRA2HMS  (SouList->SUlist[i]->RAMean,  inDesc->ctype[inDesc->jlocr], RAString);
     ObitPosLabelUtilDec2DMS (SouList->SUlist[i]->DecMean, inDesc->ctype[inDesc->jlocd], DecString);
