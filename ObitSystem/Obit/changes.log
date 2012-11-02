@@ -935,3 +935,8 @@ Obit/src/ObitVLAGain.c:
 Obit/tasks/BDFIn.c:
   GetSysPowerInfo: Fix bug in lookup table when only some SWs in a config are selected.
 1 Nov 2012, svn version 430
+
+Bug fix
+Obit/tasks/RLPass.c:
+  Remove random bad character
+2 Nov 2012, svn version 431

@@ -663,7 +663,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   ObitInfoListAlwaysPut (inData->info, "nVisPIO", OBIT_long, dim,  &nvis);
 
   /* Get input parameters from myInput, copy to inData */
-  ObitInfoListCopyList (`myInput, inData->info, dataParms);
+  ObitInfoListCopyList (myInput, inData->info, dataParms);
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
 
   return inData;
