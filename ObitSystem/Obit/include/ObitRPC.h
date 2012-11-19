@@ -30,7 +30,7 @@
 
 #include <xmlrpc_client.h>
 #include <xmlrpc_server.h>
-#include <xmlrpc_server_abyss.h>
+/*#include <xmlrpc_server_abyss.h>*/
 #include <xmlrpc-c/base.h>
 #include <xmlrpc-c/client.h>
 #include <xmlrpc-c/server.h>

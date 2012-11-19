@@ -1767,7 +1767,7 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   olong i, j, k, kk, itemp, lastSourceID, curSourceID, lastSubA;
   olong ant1, ant2, blindx, lastFQID=-1;
   ollong  countAll, countBad, *count=NULL;
-  olong nVisPIO, ver, firstVis, startVis, suba;
+  olong nVisPIO, ver, firstVis, startVis, suba, kstoke0;
   ofloat startTime, endTime, curTime, amp2, *Buffer;
   ofloat lastTime=-1.0, cbase;
   olong *corChan=NULL, *corIF=NULL, *corStok=NULL, *corV=NULL;
@@ -1882,6 +1882,14 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   else numIF = 1;
   if (inUV->myDesc->jlocf>=0) numChan = inUV->myDesc->inaxes[inUV->myDesc->jlocf];
   else numChan = 1;
+  /* Get first stokes index */
+  if (inUV->myDesc->crval[inUV->myDesc->jlocs]> 0.0) {
+    kstoke0 = inUV->myDesc->crval[inUV->myDesc->jlocs] + 
+      (1.0-inUV->myDesc->crpix[inUV->myDesc->jlocs]) * inUV->myDesc->cdelt[inUV->myDesc->jlocs] + 0.5;
+  } else {
+    kstoke0 = inUV->myDesc->crval[inUV->myDesc->jlocs] + 
+      (1.0-inDesc->crpix[inUV->myDesc->jlocs]) * inUV->myDesc->cdelt[inUV->myDesc->jlocs] - 0.5;
+  } 
 
   /* Make sure it all adds up */
   Obit_return_if_fail ((ncorr==numPol*numIF*numChan), err, 
@@ -2034,7 +2042,7 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
 	  for (i=0; i<ncorr; i++) { /* loop 120 */
 	    if (Buffer[indx+2] > 0.0) {
 	      /* What kind of data is this? */
-	      js  = abs(corStok[i])-1;
+	      js  = abs(corStok[i])-abs(kstoke0);
 	      jf  = corChan[i]-1;
 	      jif = corIF[i]-1;
 	      /* Reorder to freq, IF, poln, baseline */

@@ -124,8 +124,9 @@ typedef struct {
  * \li [in] in2  = input complex 
  */
 #define COMPLEX_MUL2(out, in1, in2)  G_STMT_START{      \
-  out.real = in1.real * in2.real - in1.imag * in2.imag; \
-  out.imag = in1.real * in2.imag + in1.imag * in2.real; \
+  ofloat re = in1.real * in2.real - in1.imag * in2.imag; \
+  ofloat im = in1.real * in2.imag + in1.imag * in2.real; \
+  out.real = re; out.imag = im; \
 }G_STMT_END
 
 /**

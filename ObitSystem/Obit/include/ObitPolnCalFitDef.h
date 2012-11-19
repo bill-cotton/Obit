@@ -40,6 +40,10 @@ gboolean doError;
 gboolean doFitRL;
 /** blank failed solns? else default parameters: */
 gboolean doBlank;
+/** Fit global X & Y feed gains?: */
+gboolean doFitGain;
+/** Are the feeds circularly polarized? */
+gboolean isCircFeed;
 /** R-L (or X-Y) phase difference */
 odouble PD;
 /** Error estimate R-L (or X-Y) phase difference */
@@ -94,6 +98,14 @@ gboolean **antFit;
 gboolean *gotAnt;
 /** Antenna parameters number, 4 x nant */
 olong **antPNumb;
+/** Antenna gains 2 x nant, each row: Gain_X, gain_Y */
+odouble *antGain;
+/** Antenna gains error estimates 2 x nant */ 
+odouble *antGainErr;
+/* Antenna parameters fit flags, 2 x nant */
+gboolean **antGainFit;
+/** Antenna gain parameters number, 2 x nant */
+olong **antGainPNumb;
 /* Number of calibrator sources */
 olong nsou;
 /** Source parameters 4 x nsou, 

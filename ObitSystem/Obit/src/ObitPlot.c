@@ -1043,7 +1043,7 @@ void ObitPlotContour (ObitPlot* in, gchar *label, ObitImage *image,
 		      ofloat lev, ofloat cntfac, ObitErr *err)
 {
   gboolean OK=FALSE;  /* Have an implementation? */
-  gchar xlabel[121], ylabel[121];
+  gchar units[20], xlabel[121], ylabel[121];
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ofloat xtick, ytick;
   olong nxsub, nysub;
@@ -1060,7 +1060,7 @@ void ObitPlotContour (ObitPlot* in, gchar *label, ObitImage *image,
   olong pos[2];
   olong csize, lwidth, nx, ny;
   gchar rast[16], decst[16];
-  gchar units[20], *xopt_def="bcnts", *yopt_def="bcnts", pre;
+  gchar *xopt_def="bcnts", *yopt_def="bcnts", pre;
 
 
  /* error checks */
@@ -1496,7 +1496,7 @@ void ObitPlotGrayScale (ObitPlot* in, gchar *label, ObitImage *image,
 			ObitErr *err)
 {
   gboolean OK=FALSE;  /* Have an implementation? */
-  gchar xlabel[121], ylabel[121];
+  gchar units[20], xlabel[121], ylabel[121];
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ofloat xtick, ytick, pixmax=-1.0e20, pixmin=-1.0e20;
   gboolean doSQRT = FALSE, doINVERT = FALSE;
@@ -1576,7 +1576,7 @@ void ObitPlotGrayScale (ObitPlot* in, gchar *label, ObitImage *image,
   olong pos[2];
   olong csize, nx, ny;
   gchar rast[16], decst[16];
-  gchar units[20], *xopt_def="bcnts", *yopt_def="bcnts", pre;
+  gchar *xopt_def="bcnts", *yopt_def="bcnts", pre;
   PLINT nlevel, red[255], green[255], blue[255], it;
 
 

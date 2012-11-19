@@ -606,7 +606,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   oint         doCalib;
   gchar        Aname[13], Aclass[7], *Atype = "UV";
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gboolean     doCalSelect;
+  gboolean     doCalSelect, OK;
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "souCode", "Qual", "Stokes", "timeRange", 
     "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "FreqID", "corrType", 
@@ -702,6 +702,15 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   /* Ensure inData fully instantiated and OK */
   ObitUVFullInstantiate (inData, TRUE, err);
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
+
+  /* If multisource - be sure a source was specified */
+  if (inData->myDesc->ilocsu>=0) {
+    OK = ObitInfoListGetP (myInput, "Sources", &type, dim, (gpointer)&strTemp);
+    OK = OK && (strTemp!=NULL) && strncmp (strTemp, "    ", 4);
+    Obit_retval_if_fail(OK, err, inData,
+			"%s: You MUST specify a source from a multisource dataset", 
+			routine);
+  }
   return inData;
 } /* end getInputData */
 

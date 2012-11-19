@@ -940,3 +940,37 @@ Bug fix
 Obit/tasks/RLPass.c:
   Remove random bad character
 2 Nov 2012, svn version 431
+
+
+Linear feed polarization, bug fixes
+ Obit/src/ObitPlot.c:
+  Fixed declaration error in pgplot segments
+Obit/python/EVLACal.py:
+  Set userno on each task object
+Obit/include/ObitRPC.h :
+ObitView/src/XMLRPCserver.c ObitView/src/XMLRPCTaskMessServer.c:
+  Comment out unneeded include (fails in RH 6)
+Obit/tasks/SetJy.c:
+  Trap 1 IF bug.
+Obit/src/ObitUVEdit.c:
+  EditFD: fix bug in indexing linear poln.
+Obit/src/ObitSkyModelMF.c:
+  InitMod: deal with lower sidebands
+../README:
+  Document modifications needed for RHEL6
+Obit/tasks/UVAppend.c :
+  Make sure a source is specified for a multisource input.
+Obit/share/data/KAT7Template.uvtab.gz:
+  Add projection codes (-SIN), dummy FG table.
+Obit/python/UVDesc.py:
+  Correct label for Stokes==-5
+Obit/include/ObitComplex.h:
+  Fix bug if one output was an input
+Obit/src/ObitUVCalPolarization.c  Obit/include/ObitUVCalPolarizationDef.h:
+  Implement linear feed ELORI calibration
+Obit/src/ObitPolnCalFit.c Obit/include/ObitPolnCalFit.h  Obit/include/ObitPolnCalFitDef.h:
+Obit/tasks/PCal.c Obit/TDF/PCal.TDF:
+  Implement linear feed ELORI calibration
+Obit/src/ObitUVRLDelay.c Obit/tasks/RLDly.c Obit/TDF/RLDly.TDF:
+  Add solution interval, specifying output SN table.
+19 Nov 12, snv ver 432

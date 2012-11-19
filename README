@@ -183,5 +183,13 @@ ObitTalk Documentation
 documentation,  Install latex and then in $OBITINSTALL/ObitSystem/ObitTalk/doc
 issue "make all install"
 
+Red Hat 6 notes:
+----------------
+Many of the distributed third party packages don't build, especially xmlrpc.
+Get as many of them installed from RPMs as possible.  The configure scripts 
+in Obit, ObitTalk, ObitView and ObitSD  need substutions for libraries:
+-lxmlrpc_xmlparse =>  -lxmlrpc_server
+-lxmlrpc_xmltok   =>  -lxmlrpc_server_abyss
+
 
 Bill Cotton (bcotton@nrao.edu)

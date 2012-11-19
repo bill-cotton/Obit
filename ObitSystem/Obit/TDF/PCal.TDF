@@ -131,6 +131,8 @@ doFitI                              If True fit Stokes I poln, per cal
 doFitV                              If True fit Stokes V poln, per cal
 **PARAM** boo 1 **DEF** F
 doFitRL                             If True fit R-L phase of gain per ant.
+**PARAM** boo 1 **DEF** T
+doFitGain                           If True fit X,Y gains per ant.
 **PARAM** int 1 **DEF** 1
 ChWid            0.0                Number of channels in poln soln
 **PARAM** int 1 **DEF** 1
@@ -321,6 +323,8 @@ Adverbs:
   doFitV.....If True fit for Stokes V, one per source
   doFitRL....If True, fit for global R-L phase  difference per 
              channel, based on RLPhase, RM and PPol
+  doFitGain..If True, fit for X & Y gains per per antenna and
+             channel.  Generally needed for linear feeds.
   ChWid......If >0, The calibration will use ChWid channels 
              centered on each channel, should be odd.
   ChInc......Increment between center channel in solution,

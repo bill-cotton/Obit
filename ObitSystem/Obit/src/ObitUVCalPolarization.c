@@ -158,6 +158,9 @@ void ObitUVCalPolarizationInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
   /* Init Sine/cosine function */
   ObitSinCosCalc(t1, &t2, &t3);
 
+  /* Are the data from circular or linear feeds */
+  me->circFeed = desc->crval[desc->jlocs] > -4.0;
+
 } /*  end ObitUVCalPolarizationInit */
 
 /**
@@ -356,19 +359,22 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
 	} /* end loop L120:  */;
       } 
       
-      /* Is poln cal flagged? */
+      /* Save in reordered array */
+      dtemp[0] = visIn[joff+0]; dtemp[1] = visIn[joff+1]; 
+      dtemp[2] = visIn[joff+6]; dtemp[3] = visIn[joff+7]; 
+      dtemp[4] = visIn[joff+9]; dtemp[5] = visIn[joff+10]; 
+      dtemp[6] = visIn[joff+3]; dtemp[7] = visIn[joff+4]; 
+      
+      /* Now apply calibration by multiplying the inverse Mueller matrix by 
+	 the data vector. */
+      j = 0;
       if (me->perChan) jndex = (ifoff + choff);
       else             jndex = ifoff;
-      if (me->PolCal[jndex]!=fblank) {
-	/* Save in reordered array */
-	dtemp[0] = visIn[joff+0]; dtemp[1] = visIn[joff+1]; 
-	dtemp[2] = visIn[joff+6]; dtemp[3] = visIn[joff+7]; 
-	dtemp[4] = visIn[joff+9]; dtemp[5] = visIn[joff+10]; 
-	dtemp[6] = visIn[joff+3]; dtemp[7] = visIn[joff+4]; 
-	
+      /* Is poln cal flagged? */
+      if (me->PolCal[jndex]!=fblank) { /* OK */
+
 	/* Now apply calibration by multiplying the inverse Mueller matrix by 
 	   the data vector. */
-	j = 0;
 	MatxVec4Mult(&me->PolCal[jndex], dtemp, ytemp);
 	
 	index = 0;
@@ -381,15 +387,19 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
       } else { /* Bad - flag crosspol */
  	visIn[joff+6] = visIn[joff+7]  = visIn[joff+8]  = 0.0;
  	visIn[joff+9] = visIn[joff+10] = visIn[joff+11] = 0.0;
-     }
-      
+      }
+	
       /* Done if in->numStok < 4) */
       if (in->numStok < 4) {choff += 32; continue;}
       
-      /* parallactic angle  - not for 'ori-eli' and 'vlbi' */
-      if ((me->polType==OBIT_UVPoln_ELORI) || (me->polType==OBIT_UVPoln_VLBI)) {
+      /* parallactic angle  - not for circular 'ori-eli' and 'vlbi' */
+      if ((me->polType==OBIT_UVPoln_ELORI && me->circFeed) || 
+	  (me->polType==OBIT_UVPoln_VLBI)) {
 	gr = 1.0;
 	gi = 0.0;
+      } else if (me->polType==OBIT_UVPoln_ELORI && !me->circFeed) { /* Linear feeds */
+	gr =  me->curCosPA[ia1];
+	gi = -me->curSinPA[ia1];
       } else { /* others - need parallactic angle correction */
 	gr = me->curCosPA[ia1] * me->curCosPA[ia2] - me->curSinPA[ia1] * me->curSinPA[ia2];
 	gi = me->curCosPA[ia1] * me->curSinPA[ia2] + me->curSinPA[ia1] * me->curCosPA[ia2];
@@ -819,7 +829,6 @@ static void LXYPol(ObitUVCalPolarizationS *in, olong iant1, olong iant2, olong i
  * For the OBIT_UVPoln_Approx model, the calibration does not need to include
  * parallactic angle (and IFR)
  * Use fact that inverse of outer product is outer product of inverse matrices.
- * If polarization entry is flagged, blank Jones element [0]
  * \param in      Polarization Object.
  * \param Ant     Antenna list object
  * \param cal     Amp/phase calibration object for IFR calibration.
@@ -833,7 +842,7 @@ static void SetInvJonesIF(ObitUVCalPolarizationS *in, ObitAntennaList *Ant,
   ofloat Jones[8] = {1.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0};
   ofloat elp_r, elp_l, ori_r, ori_l, angle[4], sina[4], cosa[4];
   ofloat root2, fblank = ObitMagicF();
-  ofloat rotate=0.0, crot, srot, PD, temp[8];
+  ofloat rotate=0.0, chi=0.0, crot, srot, PD, temp[8];
   olong iif, jndx, loff, refAnt, i, SubA;
   gboolean doJones=TRUE;
   ocomplex RS, RD, LS, LD, PA, PAc, PRref, PLref, ct;
@@ -868,37 +877,59 @@ static void SetInvJonesIF(ObitUVCalPolarizationS *in, ObitAntennaList *Ant,
       
       if ((elp_r!=fblank) && (elp_l!=fblank)) {
 	/* OK */
-	/* Sines/cosines */
-	angle[0] = elp_r; angle[1] = 2*ori_r; angle[2] = elp_l; angle[3] = -2*ori_l;
-	angle[4] = Ant->ANlist[PCal->polRefAnt-1]->FeedAPCal[2*iif+1];
-	angle[5] = -Ant->ANlist[PCal->polRefAnt-1]->FeedBPCal[2*iif+1] + Ant->RLPhaseDiff[iif];
-	ObitSinCosVec(6, angle, sina, cosa);
-	
-	/* Complex terms */
-	COMPLEX_SET (RS, root2*(cosa[0] + sina[0]), 0.0);
-	COMPLEX_SET (RD, root2*(cosa[0] - sina[0]) * cosa[1], root2*(cosa[0] - sina[0]) * sina[1]);
-	COMPLEX_SET (LS, root2*(cosa[2] + sina[2]) * cosa[3], root2*(cosa[2] + sina[2]) * sina[3]);
-	COMPLEX_SET (LD, root2*(cosa[2] - sina[2]), 0.0);
-	COMPLEX_SET (PRref, cosa[4], sina[4]);
-	COMPLEX_SET (PLref, cosa[5], sina[5]);
-	
-	/* Jones matrix: 
-	   RS * PRref         RD * PA * PRref
-	   LS * PAc * PLref   LD * PLref   
-	*/
-	COMPLEX_MUL2 (ct, RS, PRref);
-	Jones[0] = ct.real;
-	Jones[1] = ct.imag;
-	COMPLEX_MUL3 (ct, RD, PA, PRref);
-	Jones[2] = ct.real;
-	Jones[3] = ct.imag;
-	COMPLEX_MUL3 (ct, LS, PAc, PLref);
-	Jones[4] = ct.real;
-	Jones[5] = ct.imag;
-	COMPLEX_MUL2 (ct, LD, PLref);
-	Jones[6] = ct.real;
-	Jones[7] = ct.imag;
-	
+	/* for circular feeds */
+	if (in->circFeed) {
+	  
+	  /* Sines/cosines */
+	  angle[0] = elp_r; angle[1] = 2*ori_r; angle[2] = elp_l; angle[3] = -2*ori_l;
+	  angle[4] = Ant->ANlist[PCal->polRefAnt-1]->FeedAPCal[2*iif+1];
+	  angle[5] = -Ant->ANlist[PCal->polRefAnt-1]->FeedBPCal[2*iif+1] + Ant->RLPhaseDiff[iif];
+	  ObitSinCosVec(6, angle, sina, cosa);
+	  
+	  /* Complex terms */
+	  COMPLEX_SET (RS, root2*(cosa[0] + sina[0]), 0.0);
+	  COMPLEX_SET (RD, root2*(cosa[0] - sina[0]) * cosa[1], root2*(cosa[0] - sina[0]) * sina[1]);
+	  COMPLEX_SET (LS, root2*(cosa[2] + sina[2]) * cosa[3], root2*(cosa[2] + sina[2]) * sina[3]);
+	  COMPLEX_SET (LD, root2*(cosa[2] - sina[2]), 0.0);
+	  COMPLEX_SET (PRref, cosa[4], sina[4]);
+	  COMPLEX_SET (PLref, cosa[5], sina[5]);
+	  
+	  /* Jones matrix: 
+	     RS * PRref         RD * PA * PRref
+	     LS * PAc * PLref   LD * PLref   
+	  */
+	  COMPLEX_MUL2 (ct, RS, PRref);
+	  Jones[0] = ct.real;
+	  Jones[1] = ct.imag;
+	  COMPLEX_MUL3 (ct, RD, PA, PRref);
+	  Jones[2] = ct.real;
+	  Jones[3] = ct.imag;
+	  COMPLEX_MUL3 (ct, LS, PAc, PLref);
+	  Jones[4] = ct.real;
+	  Jones[5] = ct.imag;
+	  COMPLEX_MUL2 (ct, LD, PLref);
+	  Jones[6] = ct.real;
+	  Jones[7] = ct.imag;
+	  
+	} else {  /* Linear */
+	  /* Jones matrix: 
+	     i cos(pi/4+elp_r)exp(-i ori_r)exp(i -chi)  sin(pi/4+elp_r)exp(+i ori_r)exp(i chi)
+	     i sin(pi/4-elp_l)exp(-i ori_l)exp(i -chi)  cos(pi/4-elp_l)exp(+i ori_l)exp(i chi)
+	  */
+	  /* Sines/cosines */
+	  chi = in->curPA[iant-1];  /* Parallactic angle */
+	  angle[0] = G_PI*0.25+elp_r; angle[1] = G_PI*0.25-elp_l;
+	  angle[2] = ori_r+chi;       angle[3] = ori_l+chi;
+	  ObitSinCosVec(4, angle, sina, cosa);
+	  Jones[0] =  cosa[0]*sina[2];
+	  Jones[1] =  cosa[0]*cosa[2];
+	  Jones[2] =  sina[0]*cosa[2];
+	  Jones[3] =  sina[0]*sina[2];
+	  Jones[4] =  sina[1]*sina[3];
+	  Jones[5] =  sina[1]*cosa[3];
+	  Jones[6] =  cosa[1]*cosa[3];
+	  Jones[7] =  cosa[1]*sina[3];
+	} /* end linear feeds */
 	/* Also need (inverse of) determinant */
 	Det[0] = (Jones[0]*Jones[6] - Jones[1]*Jones[7]) - (Jones[2]*Jones[4] - Jones[3]*Jones[5]);
 	Det[1] = (Jones[0]*Jones[7] + Jones[1]*Jones[6]) - (Jones[2]*Jones[5] + Jones[3]*Jones[4]);
@@ -911,7 +942,8 @@ static void SetInvJonesIF(ObitUVCalPolarizationS *in, ObitAntennaList *Ant,
       } else { /* bad */
 	for (i=0; i<8; i++) Jones[i] = fblank;
 	Det[0] = 1.0; Det[1] = 0.0;
-      }
+	rotate = 0.0;
+     }
 
       break;
 
@@ -1010,7 +1042,7 @@ static void SetInvJonesIF(ObitUVCalPolarizationS *in, ObitAntennaList *Ant,
       }
     } /* end doJones */
     
-      /* invert matrix */
+    /* invert matrix if valid */
     if (Jones[0]!=fblank) {
       in->Jones[iant-1][jndx+6] =   Jones[0] * Det[0] - Jones[1] * Det[1];
       in->Jones[iant-1][jndx+7] =   Jones[0] * Det[1] + Jones[1] * Det[0];
@@ -1044,11 +1076,12 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
   ofloat Jones[8], Dr[2]={0.0,0.0}, Dl[2]={0.0,0.0}, Det[2], d;
   ofloat elp_r, elp_l, ori_r, ori_l, PD=0.0, angle[6], sina[6], cosa[6];
   ofloat root2, fblank = ObitMagicF();
-  ofloat rotate=0.0, crot, srot, temp[8];
+  ofloat rotate=0.0, chi=0.0, crot, srot, temp[8];
   olong iif, jndx, loff, refAnt, i, SubA, ich, nch, nchAll, kndx, ia;
   gboolean doJones=TRUE;
   ObitPolCalList *PCal = in->PCal;
   ocomplex RS, RD, LS, LD, PA, PAc, PRref, PLref, ct;
+  /*ocomplex CX, SX, CY, SY;*/
   gchar *routine="SetInvJonesCh";
 
   if (err->error) return;  /* prior error? */
@@ -1098,36 +1131,58 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
 
 	if ((elp_r!=fblank) && (elp_l!=fblank)) {
 	  /* OK */
-	  /* Sines/cosines */
-	  angle[0] = elp_r; angle[1] = 2*ori_r; angle[2] = elp_l; angle[3] = -2*ori_l;
-	  angle[4] = PCal->ANlist[PCal->polRefAnt-1][kndx+1];
-	  angle[5] = -PCal->ANlist[PCal->polRefAnt-1][kndx+3] + PD;
-	  ObitSinCosVec(6, angle, sina, cosa);
-	  
-	  /* Complex terms */
-	  COMPLEX_SET (RS, root2*(cosa[0] + sina[0]), 0.0);
-	  COMPLEX_SET (RD, root2*(cosa[0] - sina[0]) * cosa[1], root2*(cosa[0] - sina[0]) * sina[1]);
-	  COMPLEX_SET (LS, root2*(cosa[2] + sina[2]) * cosa[3], root2*(cosa[2] + sina[2]) * sina[3]);
-	  COMPLEX_SET (LD, root2*(cosa[2] - sina[2]), 0.0);
-	  COMPLEX_SET (PRref, cosa[4], sina[4]);
-	  COMPLEX_SET (PLref, cosa[5], sina[5]);
-	  
-	  /* Jones matrix: 
-	     RS * PRref         RD * PA * PRref
-	     LS * PAc * PLref   LD * PLref   
-	  */
-	  COMPLEX_MUL2 (ct, RS, PRref);
-	  Jones[0] = ct.real;
-	  Jones[1] = ct.imag;
-	  COMPLEX_MUL3 (ct, RD, PA, PRref);
-	  Jones[2] = ct.real;
-	  Jones[3] = ct.imag;
-	  COMPLEX_MUL3 (ct, LS, PAc, PLref);
-	  Jones[4] = ct.real;
-	  Jones[5] = ct.imag;
-	  COMPLEX_MUL2 (ct, LD, PLref);
-	  Jones[6] = ct.real;
-	  Jones[7] = ct.imag;
+	  /* for circular feeds */
+	  if (in->circFeed) {
+	    
+	    /* Sines/cosines */
+	    angle[0] = elp_r; angle[1] = 2*ori_r; angle[2] = elp_l; angle[3] = -2*ori_l;
+	    angle[4] =  PCal->ANlist[PCal->polRefAnt-1][kndx+1];
+	    angle[5] = -PCal->ANlist[PCal->polRefAnt-1][kndx+3] + PD;
+	    ObitSinCosVec(6, angle, sina, cosa);
+	    
+	    /* Complex terms */
+	    COMPLEX_SET (RS, root2*(cosa[0] + sina[0]), 0.0);
+	    COMPLEX_SET (RD, root2*(cosa[0] - sina[0]) * cosa[1], root2*(cosa[0] - sina[0]) * sina[1]);
+	    COMPLEX_SET (LS, root2*(cosa[2] + sina[2]) * cosa[3], root2*(cosa[2] + sina[2]) * sina[3]);
+	    COMPLEX_SET (LD, root2*(cosa[2] - sina[2]), 0.0);
+	    COMPLEX_SET (PRref, cosa[4], sina[4]);
+	    COMPLEX_SET (PLref, cosa[5], sina[5]);
+	    
+	    /* Jones matrix: 
+	       RS * PRref         RD * PA * PRref
+	       LS * PAc * PLref   LD * PLref   
+	    */
+	    COMPLEX_MUL2 (ct, RS, PRref);
+	    Jones[0] = ct.real;
+	    Jones[1] = ct.imag;
+	    COMPLEX_MUL3 (ct, RD, PA, PRref);
+	    Jones[2] = ct.real;
+	    Jones[3] = ct.imag;
+	    COMPLEX_MUL3 (ct, LS, PAc, PLref);
+	    Jones[4] = ct.real;
+	    Jones[5] = ct.imag;
+	    COMPLEX_MUL2 (ct, LD, PLref);
+	    Jones[6] = ct.real;
+	    Jones[7] = ct.imag;
+	  } else {  /* Linear */
+	    /* Jones matrix: 
+	       i cos(pi/4+elp_r)exp(-i ori_r)exp(i -chi)  sin(pi/4+elp_r)exp(+i ori_r)exp(i chi)
+	       i sin(pi/4-elp_l)exp(-i ori_l)exp(i -chi)  cos(pi/4-elp_l)exp(+i ori_l)exp(i chi)
+	    */
+	    /* Sines/cosines */
+	    chi = in->curPA[ia];  /* Parallactic angle */
+	    angle[0] = G_PI*0.25+elp_r; angle[1] = G_PI*0.25-elp_l;
+	    angle[2] = ori_r+chi;       angle[3] = ori_l+chi;
+	    ObitSinCosVec(4, angle, sina, cosa);
+	    Jones[0] =  cosa[0]*sina[2];
+	    Jones[1] =  cosa[0]*cosa[2];
+	    Jones[2] =  sina[0]*cosa[2];
+	    Jones[3] =  sina[0]*sina[2];
+	    Jones[4] =  sina[1]*sina[3];
+	    Jones[5] =  sina[1]*cosa[3];
+	    Jones[6] =  cosa[1]*cosa[3];
+	    Jones[7] =  cosa[1]*sina[3];
+	  } /* end linear feeds */
 	  
 	  /* Also need (inverse of) determinant */
 	  Det[0] = (Jones[0]*Jones[6] - Jones[1]*Jones[7]) - (Jones[2]*Jones[4] - Jones[3]*Jones[5]);
@@ -1141,6 +1196,7 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
 	} else { /* bad */
 	  for (i=0; i<8; i++) Jones[i] = fblank;
 	  Det[0] = 1.0; Det[1] = 0.0;
+	  rotate = 0.0;
 	}
 	break;
 	
@@ -1240,7 +1296,7 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
 	}
 	
      } /* end doJones */
-      /* invert matrix */
+      /* invert matrix if valid */
       if (Jones[0]!=fblank) {
 	in->Jones[ia][jndx+6] =   Jones[0] * Det[0] - Jones[1] * Det[1];
 	in->Jones[ia][jndx+7] =   Jones[0] * Det[1] + Jones[1] * Det[0];
@@ -1251,9 +1307,8 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
 	in->Jones[ia][jndx+0] =   Jones[6] * Det[0] - Jones[7] * Det[1];
 	in->Jones[ia][jndx+1] =   Jones[6] * Det[1] + Jones[7] * Det[0];
       } else { /* bad */
-	for (i=0; i<8; i++) in->Jones[iant-1][jndx+i] = fblank;
+        for (i=0; i<8; i++) in->Jones[ia][jndx+i] = fblank;
       }
-      
       jndx += 8; /* Increment index for next channel/IF */
    } /* end channel loop */
   } /* end loop over IFs */
@@ -1295,15 +1350,15 @@ static void MatxOuter(ofloat* in1, ofloat* in2, ofloat* out)
     
     out[16] =  in1[4] * in2[0] + in1[5] * in2[1];  out[17] =  in1[5] * in2[0] - in1[4] * in2[1];
     out[18] =  in1[4] * in2[2] + in1[5] * in2[3];  out[19] =  in1[5] * in2[2] - in1[4] * in2[3];
-    out[20] =  in1[6] * in2[0] + in1[7] * in2[1];  out[21] =  in1[7] * in2[1] - in1[6] * in2[1];
+    out[20] =  in1[6] * in2[0] + in1[7] * in2[1];  out[21] =  in1[7] * in2[0] - in1[6] * in2[1];
     out[22] =  in1[6] * in2[2] + in1[7] * in2[3];  out[23] =  in1[7] * in2[2] - in1[6] * in2[3];
     
     out[24] =  in1[4] * in2[4] + in1[5] * in2[5];  out[25] =  in1[5] * in2[4] - in1[4] * in2[5];
     out[26] =  in1[4] * in2[6] + in1[5] * in2[7];  out[27] =  in1[5] * in2[6] - in1[4] * in2[7];
     out[28] =  in1[6] * in2[4] + in1[7] * in2[5];  out[29] =  in1[7] * in2[4] - in1[6] * in2[5];
     out[30] =  in1[6] * in2[6] + in1[7] * in2[7];  out[31] =  in1[7] * in2[6] - in1[6] * in2[7];
-  } else {  /* One bad blank */
+  } else {  /* One bad - blank */
     for (i=0; i<32; i++) out[i] = fblank;
   }
-} /* end  MatxOuter */
+  } /* end  MatxOuter */
 

@@ -71,6 +71,8 @@ typedef struct {
   gboolean perChan;
   /** Are all stokes correlations required */
   gboolean allStokes;
+  /** Are array feeds circularly polarized (else linear) */
+  gboolean circFeed;
   /** Current source ID, -1 => single source */
   olong curSourID;
   /** Current Subarray */

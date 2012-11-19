@@ -750,6 +750,7 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   olong i, j, k, nSpec, nif, nfreq, n;
   ofloat phase=0.5, cp, sp;
   odouble test;
+  gboolean lsb;
   ObitInfoType type;
   union ObitInfoListEquiv InfoReal; 
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -832,15 +833,22 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   if (uvdata->myDesc->jlocif>=0) 
     nif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
   else nif = 1;
+  lsb = uvdata->myDesc->cdelt[uvdata->myDesc->jlocf]<0.0; /* Lower sideband? */
   n = nfreq*nif;
   in->specIndex = g_malloc0(n*sizeof(olong)); 
   for (i=0; i<n; i++) {
     test = 1.0e20;
     in->specIndex[i] = -1;
     for (j=0; j<nSpec; j++) {
-      if ((uvdata->myDesc->freqArr[i] >= in->specFreqLo[j]) &&
-	  (uvdata->myDesc->freqArr[i] <= in->specFreqHi[j]))
-	in->specIndex[i] = j;
+      if (lsb) { /* Lower sideband */
+	if ((uvdata->myDesc->freqArr[i] <= in->specFreqLo[j]) &&
+	    (uvdata->myDesc->freqArr[i] >= in->specFreqHi[j]))
+	  in->specIndex[i] = j;
+      } else {  /* Upper sideband */
+	if ((uvdata->myDesc->freqArr[i] >= in->specFreqLo[j]) &&
+	    (uvdata->myDesc->freqArr[i] <= in->specFreqHi[j]))
+	  in->specIndex[i] = j;
+      }
     }
   } /* End of loop making lookup table */
 

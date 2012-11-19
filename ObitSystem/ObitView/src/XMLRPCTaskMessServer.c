@@ -3,7 +3,7 @@
 /* XMLRPC server for ObitMess */
 /* Much of this material directly adapted from xmlrpc-c-1.2/examples */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2009,2010
+*  Copyright (C) 2009-2012
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -34,7 +34,7 @@
 #include <signal.h>
 #include <xmlrpc_client.h>
 #include <xmlrpc_server.h>
-#include <xmlrpc_server_abyss.h>
+/*#include <xmlrpc_server_abyss.h>*/
 /*#include <xmlrpc-c/base.h>
   #include <xmlrpc-c/server.h>
   #include <xmlrpc-c/server_abyss.h>*/

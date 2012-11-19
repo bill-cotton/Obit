@@ -71,6 +71,8 @@ static ofloat testDelay (olong numFreq, ofloat *xpol1, ofloat *xpol2, ofloat del
  * \li "RM"      OBIT_float (1,1,1) Rotation measure (rad/m^2) (default 0.0)
  * \li "refAnt"  OBIT_long  (1,1,1) reference antenna for SN table (default 1)
  * \li "fitType" OBIT_long  (1,1,1)  Fitting type, 0=joint, 1=R/X only, 2=L/Y only, 3=average 
+ * \li "SNSoln"  OBIT_long  (1,1,1)  Output SN table, 0=>new
+ * \li "solInt"  OBIT_float  (1,1,1) Solution interval (min), def [long]
  * \li "minSNR"  OBIT_float  (1,1,1) Minimum SNR allowed
  * \param outUV  UV with which the output  SN is to be associated
  * Control parameters are on the info member.
@@ -87,16 +89,17 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   gboolean doCalSelect;
   ObitIOCode retCode;
   ObitInfoType type;
-  olong i, iAnt, SNver, iAnt1, iAnt2, suba, refAnt, BChan;
+  olong i, j, iAnt, SNver, iAnt1, iAnt2, suba, refAnt, BChan, SNSoln;
   olong iSNRow, numFreq, jndx, indx, numPol, numIF, numAnt;
-  olong incs, incf, incif, js, jf, jif;
-  ofloat uvrang[2], wtuv, weight, wt, dFreq, snrmin, bl;
+  olong incs, incf, incif, js, jf, jif, numVis;
+  ofloat uvrang[2], wtuv, weight, wt, dFreq, snrmin, bl, solInt;
   ofloat p1, p2, cp1, cp2, corr, cori, tr, ti, lambda0, lambda;
-  ofloat *vis, *u, *v, *base, *delay=NULL, *phase=NULL, *snr=NULL;
+  ofloat *vis, *u, *v, *base, *time, *delay=NULL, *phase=NULL, *snr=NULL;
+  ofloat startTime, endTime, lastTime;
   ofloat RLPhase, RM, rlp;
   ofloat *antwt=NULL;
   ofloat *xpol1=NULL, *xpol2=NULL;
-  gboolean empty;
+  gboolean empty, done, dump;
   gchar *tname;
   gchar *routine = "ObitUVRLDelayCal";
   olong ftype=0; 
@@ -140,8 +143,40 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   retCode = ObitUVOpen (outUV, OBIT_IO_ReadWrite, err);
   if (err->error) Obit_traceback_val (err, routine, outUV->name, outSoln);
   
-  /* Create new output SN table  */
-  SNver = 1 + ObitTableListGetHigh (outUV->tableList, "AIPS SN");
+  /* Get parameters from inUV */
+  ftype = 0;
+  ObitInfoListGetTest(inUV->info, "fitType", &type, dim, &ftype);
+  snrmin = 5.0;
+  ObitInfoListGetTest(inUV->info, "minSNR", &type, dim, &snrmin);
+  uvrang[0] = 0.0; uvrang[1] = 1.0e15;
+  if (!ObitInfoListGetTest(inUV->info, "UVR_Full", &type, dim, &uvrang[0])
+      || (uvrang[1]<=uvrang[0])) {
+    /* If no explicit uv range given, use everything */
+    uvrang[0] = 0.0;
+    uvrang[1] = 1.0e15;
+  }  /* end derive uv range */
+  wtuv = 1.0;
+  ObitInfoListGetTest(inUV->info, "WtUV", &type, dim, &wtuv);
+  RLPhase = 0.0;
+  ObitInfoListGetTest(inUV->info, "RLPhase", &type, dim, &RLPhase);
+  rlp = RLPhase/57.296;  /* R-L phase in radians */
+  RM = 0.0;
+  ObitInfoListGetTest(inUV->info, "RM", &type, dim, &RM);
+  refAnt = 1;
+  ObitInfoListGetTest(inUV->info, "refAnt", &type, dim, &refAnt);
+  BChan = 1;
+  ObitInfoListGetTest(outUV->info, "BChan", &type, dim, &BChan);
+  BChan -= 1; /* Zero rel */
+  SNSoln = 0;
+  ObitInfoListGetTest(outUV->info, "SNSoln", &type, dim, &SNSoln);
+  solInt = 1440.0*1.0e5;   /* Very long default solution interval */
+  ObitInfoListGetTest(outUV->info, "solInt", &type, dim, &solInt);
+  solInt /= 1440.0; /* to days */
+  if (solInt<=0.0) solInt = 1.0e5;   /* Very long default solution interval */
+ 
+  /* Output SN table  */
+  if (SNSoln>0) SNver = SNSoln;
+  else SNver = 1 + ObitTableListGetHigh (outUV->tableList, "AIPS SN");
   tname = g_strconcat ("SN Calibration for: ", outUV->name, NULL);
   if (inUV->myDesc->jlocs>=0)
     numPol = MIN (2, outUV->myDesc->inaxes[outUV->myDesc->jlocs]);
@@ -171,7 +206,7 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   incf  = inUV->myDesc->incf;
   incif = inUV->myDesc->incif;
 
- /* Which subarray? */
+  /* Which subarray? */
   suba = 1;
   ObitInfoListGetTest(inUV->info, "subA", &type, dim, &suba);
   /* Can only do one */
@@ -188,150 +223,8 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 
   numAnt = outUV->myDesc->numAnt[suba-1];
   
-  /* Get parameters from inUV */
-  ftype = 0;
-  ObitInfoListGetTest(inUV->info, "fitType", &type, dim, &ftype);
-  snrmin = 5.0;
-  ObitInfoListGetTest(inUV->info, "minSNR", &type, dim, &snrmin);
-  uvrang[0] = 0.0; uvrang[1] = 1.0e15;
-  if (!ObitInfoListGetTest(inUV->info, "UVR_Full", &type, dim, &uvrang[0])
-      || (uvrang[1]<=uvrang[0])) {
-    /* If no explicit uv range given, use everything */
-    uvrang[0] = 0.0;
-    uvrang[1] = 1.0e15;
-  }  /* end derive uv range */
-  wtuv = 1.0;
-  ObitInfoListGetTest(inUV->info, "WtUV", &type, dim, &wtuv);
-  RLPhase = 0.0;
-  ObitInfoListGetTest(inUV->info, "RLPhase", &type, dim, &RLPhase);
-  rlp = RLPhase/57.296;  /* R-L phase in radians */
-  RM = 0.0;
-  ObitInfoListGetTest(inUV->info, "RM", &type, dim, &RM);
-  refAnt = 1;
-  ObitInfoListGetTest(inUV->info, "refAnt", &type, dim, &refAnt);
-  BChan = 1;
-  ObitInfoListGetTest(outUV->info, "BChan", &type, dim, &BChan);
-  BChan -= 1; /* Zero rel */
-  
-  /* Loop through data */
-  while (retCode==OBIT_IO_OK) {
-    /* read buffer full */
-    if (doCalSelect) retCode = ObitUVReadSelect (inUV, inUV->buffer, err);
-    else retCode = ObitUVRead (inUV, inUV->buffer, err);
-    if (retCode!=OBIT_IO_OK) break;
-    if (err->error) goto cleanup;
-    
-    /* initialize data pointers */
-    vis  = inUV->buffer+inUV->myDesc->nrparm;
-    u    = inUV->buffer+inUV->myDesc->ilocu;
-    v    = inUV->buffer+inUV->myDesc->ilocv;
-    base =  inUV->buffer+inUV->myDesc->ilocb;
-    for (i=0; i<inUV->myDesc->numVisBuff; i++) { /* loop over buffer */
-      
-      /* Get baseline length */
-      bl = sqrt ((*u)*(*u) + (*v)*(*v));
-
-      /* Antennas */
-      iAnt1 = (*base / 256.0) + 0.001;
-      iAnt2 = (*base - iAnt1 * 256) + 0.001;
-
-      /* Weighting */
-      wt = 1.0;
-      if ((bl<uvrang[0]) || (bl>uvrang[1])) wt = wtuv;
-      
-     /* first x pol - by channel then IF */
-      js = 2;
-      for (jif=0; jif<numIF; jif++) {   /* IF loop */
-	for (jf=0; jf<numFreq; jf++) {  /* Frequency loop */
-	  jndx = 3*(jf + jif*numFreq);
-	  indx = js*incs + jif*incif + jf*incf;
-	  weight = vis[indx+2] * wt;
-	  if (weight>0.0) {
-	    xpol1[jndx]   += vis[indx]  *weight;
-	    xpol1[jndx+1] += vis[indx+1]*weight;
-	    xpol1[jndx+2] += weight;
-	  }
-	} /* end Frequency loop */
-      } /* end IF loop */
-
-      /* Second x pol */
-      js = 3;
-      for (jif=0; jif<numIF; jif++) {   /* IF loop */
-	for (jf=0; jf<numFreq; jf++) {  /* Frequency loop */
-	  jndx = 3*(jf + jif*numFreq);
-	  indx = js*incs + jif*incif + jf*incf;
-	  weight = vis[indx+2] * wt;
-	  if (weight>0.0) {
-	    xpol2[jndx]   += vis[indx]  *weight;
-	    /* NB:, Flip sign */
-	    xpol2[jndx+1] -= vis[indx+1]*weight;
-	    xpol2[jndx+2] += weight;
-	  }
-	} /* end Frequency loop */
-      } /* end IF loop */
-
-      /* update data pointers */
-      vis += inUV->myDesc->lrec;
-      u   += inUV->myDesc->lrec;
-      v   += inUV->myDesc->lrec;
-      base += inUV->myDesc->lrec;
-    } /* end loop over buffer */
-  } /* end loop over file */
-  
-  /* Close */
-  retCode = ObitUVClose (inUV, err);
-  if (err->error) goto cleanup;
-
   /* wavelength at reference frequency */
   lambda0 = VELIGHT/inUV->myDesc->freq;
-
-  /* Fit delays */
-  for (jif=0; jif<numIF; jif++) {   /* IF loop */
-    FitDelay (numFreq, BChan, dFreq, &xpol1[jif*numFreq*3], &xpol2[jif*numFreq*3], 
-	      ftype, &delay[jif], &phase[jif], &snr[jif], err);
-    /* R-L phase correction - apply RM */
-   lambda = VELIGHT/inUV->myDesc->freqIF[jif];
-   phase[jif] -= rlp + RM * (lambda*lambda - lambda0*lambda0);
-
-    /* Diagnostics */
-    if (err->prtLv>=2) {
-      for (i=0; i<numFreq; i++) {
-	corr = cos(2.0*G_PI*(delay[jif]*dFreq)*(i+BChan));
-	cori = sin(2.0*G_PI*(delay[jif]*dFreq)*(i+BChan));
-	tr   = xpol1[(jif*numFreq+i)*3];
-	ti   = xpol1[(jif*numFreq+i)*3+1];
-	p1   = 57.295*atan2(ti, tr);
-	cp1  = p1 + fmod(360.0*(delay[jif]*dFreq)*(i+BChan),360.0) - phase[jif]*57.296;
-	if (cp1> 180.0) cp1 -= 360.0;
-	if (cp1> 180.0) cp1 -= 360.0;
-	if (cp1<-180.0) cp1 += 360.0;
-	if (cp1<-180.0) cp1 += 360.0;
-	tr   = xpol2[(jif*numFreq+i)*3];
-	ti   = xpol2[(jif*numFreq+i)*3+1];
-	p2   = 57.295*atan2(ti, tr);
-	cp2  = p2 + fmod(360.0*(delay[jif]*dFreq)*(i+BChan),360.0) - phase[jif]*57.296; 
-	if (cp2> 180.0) cp2 -= 360.0;
-	if (cp2> 180.0) cp2 -= 360.0;
-	if (cp2<-180.0) cp2 += 360.0;
-	if (cp2<-180.0) cp2 += 360.0;
-	Obit_log_error(err, OBIT_InfoErr, 
-		       "ch %4d xc1 %8.2f xc2 %8.2f corr %8.2f xc1 %8.2f xc2 %8.2f",
-		       i+BChan+1, p1, p2, 360.0*(delay[jif]*dFreq)*(i+BChan), cp1, cp2);
-      }
-    }
-    if (err->prtLv>=1) {
-      Obit_log_error(err, OBIT_InfoErr, "IF %2d delay %8.2f nsec phase %8.2f SNR %5.1f",
-		     jif+1, delay[jif]*1.0e9, phase[jif]*57.296, snr[jif]);
-      /*     		     jif+1, delay[jif]*dFreq, phase[jif]*57.296, snr[jif]);*/
-      }
-    /* Minimum SNR */
-    if (snr[jif]<snrmin) snr[jif] = 0.0;
-
-    /* Phase to reference frequency 
-       phase[jif] -= 2.0*G_PI*(inUV->myDesc->freqIF[jif]-inUV->myDesc->freq) * delay[jif];*/
-    /* Take into account BChan
-    phase[jif] -= 2.0*G_PI * dFreq*BChan*delay[jif]; */
- } /* end IF loop */
 
   /* Open output table */
   retCode = ObitTableSNOpen (outSoln, OBIT_IO_ReadWrite, err);
@@ -378,27 +271,183 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
     for (i=0; i<numIF; i++) {
       row->Rate2[i]   = 0.0; 
       row->RefAnt2[i] = refAnt; 
-      if (snr[i]>0.0) {
-	row->Real2[i]   =  cos(phase[i]); 
-	row->Imag2[i]   = -sin(phase[i]); 
-	row->Delay2[i]  =  delay[i]; 
-	row->Weight2[i] = snr[i]; 
-      } else {
-	row->Real2[i]   = 1.0;
-	row->Imag2[i]   = 0.0;
-	row->Delay2[i]  = 0.0;
-	row->Weight2[i] = 1.0; 
-      } 
+      row->Real2[i]   = 1.0;
+      row->Imag2[i]   = 0.0;
+      row->Delay2[i]  = 0.0;
+      row->Weight2[i] = 1.0;
     }
   }
-
-  /* Loop over antennas - write as corrections rather than solutions */
-  iSNRow = -1;
-  for (iAnt= 0; iAnt<numAnt; iAnt++) {
-    row->antNo  = iAnt+1; 
-    retCode = ObitTableSNWriteRow (outSoln, iSNRow, row, err);
+  startTime = -1.0e10;
+  /* Loop through data */
+  while (retCode==OBIT_IO_OK) {
+    /* read buffer full */
+    if (doCalSelect) retCode = ObitUVReadSelect (inUV, inUV->buffer, err);
+    else retCode = ObitUVRead (inUV, inUV->buffer, err);
+    done =  (retCode!=OBIT_IO_OK);
     if (err->error) goto cleanup;
-  } /* end antenna loop */
+    
+    /* initialize data pointers */
+    vis  = inUV->buffer+inUV->myDesc->nrparm;
+    u    = inUV->buffer+inUV->myDesc->ilocu;
+    v    = inUV->buffer+inUV->myDesc->ilocv;
+    time = inUV->buffer+inUV->myDesc->iloct;
+    base =  inUV->buffer+inUV->myDesc->ilocb;
+
+    /* Time range for first integration */
+    if (startTime<-10.) {
+      startTime = *time;
+      endTime   = *time + solInt;
+      lastTime  = *time;
+    }
+    numVis = inUV->myDesc->numVisBuff;
+    if (done) numVis = MAX(1,numVis);
+    for (i=0; i<numVis; i++) { /* loop over buffer */
+      
+      /* Time to write solutions? */
+      dump = *time>endTime;
+      dump =  dump || done;
+      if (dump) {
+	/* Process  Fit delays */
+	for (jif=0; jif<numIF; jif++) {   /* IF loop */
+	  FitDelay (numFreq, BChan, dFreq, &xpol1[jif*numFreq*3], &xpol2[jif*numFreq*3], 
+		    ftype, &delay[jif], &phase[jif], &snr[jif], err);
+	  /* R-L phase correction - apply RM */
+	  lambda = VELIGHT/inUV->myDesc->freqIF[jif];
+	  phase[jif] -= rlp + RM * (lambda*lambda - lambda0*lambda0);
+	  
+	  /* Diagnostics */
+	  if (err->prtLv>=2) {
+	    for (i=0; i<numFreq; i++) {
+	      corr = cos(2.0*G_PI*(delay[jif]*dFreq)*(i+BChan));
+	      cori = sin(2.0*G_PI*(delay[jif]*dFreq)*(i+BChan));
+	      tr   = xpol1[(jif*numFreq+i)*3];
+	      ti   = xpol1[(jif*numFreq+i)*3+1];
+	      p1   = 57.295*atan2(ti, tr);
+	      cp1  = p1 + fmod(360.0*(delay[jif]*dFreq)*(i+BChan),360.0) - phase[jif]*57.296;
+	      if (cp1> 180.0) cp1 -= 360.0;
+	      if (cp1> 180.0) cp1 -= 360.0;
+	      if (cp1<-180.0) cp1 += 360.0;
+	      if (cp1<-180.0) cp1 += 360.0;
+	      tr   = xpol2[(jif*numFreq+i)*3];
+	      ti   = xpol2[(jif*numFreq+i)*3+1];
+	      p2   = 57.295*atan2(ti, tr);
+	      cp2  = p2 + fmod(360.0*(delay[jif]*dFreq)*(i+BChan),360.0) - phase[jif]*57.296; 
+	      if (cp2> 180.0) cp2 -= 360.0;
+	      if (cp2> 180.0) cp2 -= 360.0;
+	      if (cp2<-180.0) cp2 += 360.0;
+	      if (cp2<-180.0) cp2 += 360.0;
+	      Obit_log_error(err, OBIT_InfoErr, 
+			     "ch %4d xc1 %8.2f xc2 %8.2f corr %8.2f xc1 %8.2f xc2 %8.2f",
+			     i+BChan+1, p1, p2, 360.0*(delay[jif]*dFreq)*(i+BChan), cp1, cp2);
+	    }
+	  }
+	  if (err->prtLv>=1) {
+	    Obit_log_error(err, OBIT_InfoErr, "IF %2d delay %8.2f nsec phase %8.2f SNR %5.1f",
+			   jif+1, delay[jif]*1.0e9, phase[jif]*57.296, snr[jif]);
+	    /*     		     jif+1, delay[jif]*dFreq, phase[jif]*57.296, snr[jif]);*/
+	  }
+	  /* Minimum SNR */
+	  if (snr[jif]<snrmin) snr[jif] = 0.0;
+
+	  /* Phase to reference frequency 
+	     phase[jif] -= 2.0*G_PI*(inUV->myDesc->freqIF[jif]-inUV->myDesc->freq) * delay[jif];*/
+	  /* Take into account BChan
+	     phase[jif] -= 2.0*G_PI * dFreq*BChan*delay[jif]; */
+	  /* Set solutions into table */
+	  row->Time   = 0.5 * (lastTime+startTime); 
+	  row->TimeI  = (lastTime-startTime); 
+	  if (numPol>1) {
+	    for (i=0; i<numIF; i++) {
+	      if (snr[jif]>0.0) {
+		row->Real2[jif]   =  cos(phase[jif]); 
+		row->Imag2[jif]   = -sin(phase[jif]); 
+		row->Delay2[jif]  =  delay[jif]; 
+		row->Weight2[jif] = snr[jif]; 
+	      } else {
+		row->Real2[jif]   = 1.0;
+		row->Imag2[jif]   = 0.0;
+		row->Delay2[jif]  = 0.0;
+		row->Weight2[jif] = 1.0; 
+	      } 
+	    }
+	  }
+	} /* end IF loop */
+	
+	/* Write - Loop over antennas - write as corrections rather than solutions */
+	iSNRow = -1;
+	for (iAnt= 0; iAnt<numAnt; iAnt++) {
+	  row->antNo  = iAnt+1; 
+	  retCode = ObitTableSNWriteRow (outSoln, iSNRow, row, err);
+	  if (err->error) goto cleanup;
+	} /* end antenna loop */
+
+	if (done) goto closeup;  /* All data read/processed? */
+
+	/* zero accumulators */
+	for (j=0; j<numFreq*numIF*3; j++) xpol1[j] = xpol2[j] = 0.0;
+ 	for (j=0; j<numIF; j++) delay[j] = phase[j] = snr[j] = 0.0;
+	/* Next timerange */
+	startTime = *time;
+	endTime   = *time + solInt;
+     }  /* End write solutions */
+
+      /* accumulate this visibility - Get baseline length */
+      bl = sqrt ((*u)*(*u) + (*v)*(*v));
+
+      lastTime  = *time;  /* last time in accumulation */
+      
+      /* Antennas */
+      iAnt1 = (*base / 256.0) + 0.001;
+      iAnt2 = (*base - iAnt1 * 256) + 0.001;
+      
+      /* Weighting */
+      wt = 1.0;
+      if ((bl<uvrang[0]) || (bl>uvrang[1])) wt = wtuv;
+      
+      /* first x pol - by channel then IF */
+      js = 2;
+      for (jif=0; jif<numIF; jif++) {   /* IF loop */
+	for (jf=0; jf<numFreq; jf++) {  /* Frequency loop */
+	  jndx = 3*(jf + jif*numFreq);
+	  indx = js*incs + jif*incif + jf*incf;
+	  weight = vis[indx+2] * wt;
+	  if (weight>0.0) {
+	    xpol1[jndx]   += vis[indx]  *weight;
+	    xpol1[jndx+1] += vis[indx+1]*weight;
+	    xpol1[jndx+2] += weight;
+	  }
+	} /* end Frequency loop */
+      } /* end IF loop */
+      
+      /* Second x pol */
+      js = 3;
+      for (jif=0; jif<numIF; jif++) {   /* IF loop */
+	for (jf=0; jf<numFreq; jf++) {  /* Frequency loop */
+	  jndx = 3*(jf + jif*numFreq);
+	  indx = js*incs + jif*incif + jf*incf;
+	  weight = vis[indx+2] * wt;
+	  if (weight>0.0) {
+	    xpol2[jndx]   += vis[indx]  *weight;
+	    /* NB:, Flip sign */
+	    xpol2[jndx+1] -= vis[indx+1]*weight;
+	    xpol2[jndx+2] += weight;
+	  }
+	} /* end Frequency loop */
+      } /* end IF loop */
+      
+      /* update data pointers */
+      vis  += inUV->myDesc->lrec;
+      u    += inUV->myDesc->lrec;
+      v    += inUV->myDesc->lrec;
+      base += inUV->myDesc->lrec;
+      time += inUV->myDesc->lrec;
+    } /* end loop over buffer */
+  } /* end loop over file */
+  
+  /* Close */
+ closeup:
+  retCode = ObitUVClose (inUV, err);
+  if (err->error) goto cleanup;
 
   /* Close output table */
   retCode = ObitTableSNClose (outSoln, err);

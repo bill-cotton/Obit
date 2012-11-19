@@ -95,8 +95,8 @@ int main ( int argc, char **argv )
   ObitErr      *err= NULL;
   ofloat       ftemp;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gchar        *SCParms[] = {  /* Selfcal Parameters  */
-    "refAnt", "fitType",
+  gchar        *SCParms[] = {  /* Calibration Parameters  */
+    "refAnt", "fitType", "SNSoln", "solInt",
      NULL};
 
   /* Startup - parse command line */
@@ -606,8 +606,8 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "FreqID", "BChan", "EChan",   "BIF", "EIF", 
     "subA", "Antennas", "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", 
-    "flagVer", "doPol", "PDVer", "Mode", "ModelType", "Alpha", "fitType",
-    "UVR_Full", "WtUV", "RLPhase", "RM", "refAnt", 
+    "flagVer", "doPol", "PDVer", "Mode", "ModelType", "Alpha", 
+    "UVR_Full", "WtUV", "RLPhase", "RM", "refAnt", "fitType", "SNSoln", "solInt",
      NULL};
   gchar *routine = "getInputData";
 

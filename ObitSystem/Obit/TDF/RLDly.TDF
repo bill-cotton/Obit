@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry R-L delay/phase calibration 
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2011
+;;  Copyright (C) 2011-2012
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -124,6 +124,10 @@ minSNR                              Min. allowed SNR in cal
 **PARAM** int 1 **DEF** 0
 fitType                             Fitting type,  0=joint, 1=R/X only, 
                                     2=L/Y only, 3=average 
+**PARAM** int 1
+SNSoln                              SN table to write
+**PARAM** float 1  **DEF** 1.0e10
+solInt           0.0                Soln interval (min)
 **PARAM** int 1
 prtLv             0.0               Print level in cal
 **PARAM** int 1 **DEF** 1
@@ -291,6 +295,8 @@ Adverbs:
                  for XY/YX data dominated by instrumental poln.
              3 = Separate solutions in RL/XY and LR/YX then averaged.
                  Questionable utility.
+  SNSoln.....Solution (SN) table to write, 0=> create new
+  solInt.....Solution interval (min).
   prtLv......Print level in solution, 0=>none 
   nThreads...If the Obit libraries are compiled with multiple
              thread operation enabled, this parameter sets the 
