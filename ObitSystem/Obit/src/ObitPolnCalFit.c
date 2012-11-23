@@ -767,6 +767,9 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     (in->outDesc->crval[in->outDesc->jlocs]<0.0) && 
     (in->outDesc->crval[in->outDesc->jlocs]>-1.5);
 
+  /* Gain fitting only for linear feeeds */
+  if (in->isCircFeed) in->doFitGain = FALSE;
+
   /* Number of antennas */
   numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
   in->nant = numAnt;
@@ -2494,7 +2497,7 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
   if (err->error) return TRUE;  /* Error exists? */
   
   iter = 0;
-  while (iter<500) {
+  while (iter<300) { 
     in->selSou = -1;
     in->selAnt = -1;
     begChi2 = GetChi2 (in->nThread, in,  polnParmUnspec, 0,
@@ -2521,7 +2524,7 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
       deriv  = dChi2;
       deriv2 = d2Chi2;
       if (fabs(deriv2)>(fabs(deriv)*1.0e-4)) {      /* Bother with this one?*/
-	delta = -atan2(deriv, deriv2);
+	delta = -0.5*atan2(deriv, deriv2);
 	/* Don't go wild */
 	if (delta>0.) delta = MIN (delta,  20*sdelta);
 	if (delta<0.) delta = MAX (delta, -20*sdelta);
@@ -2550,7 +2553,6 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
     /* Loop over sources */
     for (isou=0; isou<in->nsou; isou++) {
       in->selSou = isou;
-      sdelta = 0.01;  /* DEBUG delta for numeric derivatives */
       /* Loop over parameters ipol, qpol, upol, vpol*/
       for (k=0; k<4; k++) {
 	/* Fitting? */
@@ -2601,7 +2603,6 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
     
     /* Antenna gain if fitted */
     if (!in->isCircFeed && in->doFitGain) {
-      sdelta = 0.01;  /* DEBUG delta for numeric derivatives */
       for (iant=0; iant<in->nant; iant++) {
 	if (!in->gotAnt[iant]) continue;  /* Have data? */
 	in->selAnt = iant;
@@ -2647,7 +2648,6 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
     if (iter<3) {iter++; continue;}
 
     /* Loop over antennas */
-    sdelta = 0.01;  /* DEBUG delta for numeric derivatives */
     for (iant=0; iant<in->nant; iant++) {
       if (!in->gotAnt[iant]) continue;  /* Have data? */
       in->selAnt = iant;
@@ -2703,7 +2703,8 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
     /* Convergence test */
     difChi2 = fabs(begChi2 - endChi2);
 
-    if ((fabs(difParam)<1.0e-6) && (difChi2<=1.0e-5*hiChi2)) break;
+    if ((fabs(difParam)<1.0e-6) || 
+      ((fabs(difParam)<5.0e-3)&&(difChi2<=1.0e-5*hiChi2))) break; 
 
     /* Diagnostics */
     if (err->prtLv>=4) {
@@ -3095,8 +3096,8 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
     /* Parallactic angle terms */
     chi1  = data[idata*10+0];   /* parallactic angle ant 1 */
     chi2  = data[idata*10+1];   /* parallactic angle ant 2 */
-    COMPLEX_EXP (PA1,-2*chi1);
-    COMPLEX_EXP (PA2,-2*chi2);
+    COMPLEX_EXP (PA1,2*chi1);
+    COMPLEX_EXP (PA2,2*chi2);
     COMPLEX_CONJUGATE (PA1c, PA1);
     COMPLEX_CONJUGATE (PA2c, PA2);
 
@@ -3108,8 +3109,7 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
     if (isou!=isouLast) {
       isouLast = isou;
       /* Source parameters */
-      ipol = souParm[isou*4+0];
-      /* Fitting or fixed? */
+      ipol = souParm[isou*4+0];      /* Fitting or fixed? */
       if (args->souFit[isou][1]) 
 	qpol = souParm[isou*4+1];
       else
@@ -3911,7 +3911,7 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
   odouble sumParResid, sumXResid;
   ofloat PD, chi1, chi2;
   olong nPobs, nXobs, ia1, ia2, isou, idata, isouLast=-999;
-  gboolean isAnt1, isAnt2;
+  gboolean isAnt1=FALSE, isAnt2=FALSE;
   size_t i;
   odouble sum=0.0, sumwt=0.0, sumd, sumd2;
 
@@ -8001,7 +8001,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
   ofloat PD, chi1, chi2;
   double val;
   odouble ipol=0.0, qpol=0.0, upol=0.0, vpol=0.0;
-  odouble residR, residI, gradR, gradI, modelR, modelI, isigma;
+  odouble residR=0.0, residI=0.0, gradR=0.0, gradI=0.0, modelR=0.0, modelI=0.0, isigma=0.0;
   olong k, kk, iant, ia1, ia2, isou, idata, refAnt;
   olong isouLast=-999;
   dcomplex  SPA, DPA, SPAc, DPAc, ggPD;
@@ -8030,6 +8030,11 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
   COMPLEX_SET (VXY, 0.0, 0.0);
   COMPLEX_SET (Jm,  0.0,-1.0);
   COMPLEX_SET (Jp,  0.0, 1.0);
+  COMPLEX_SET (SM1, 0.0, 0.0);
+  COMPLEX_SET (SM2, 0.0, 0.0);
+  COMPLEX_SET (SM3, 0.0, 0.0);
+  COMPLEX_SET (SM4, 0.0, 0.0);
+  COMPLEX_SET (ggPD, 0.0, 0.0);
   
   /* R-L phase difference  at reference antenna */
   if (args->doFitRL) {
@@ -9359,7 +9364,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
   ofloat PD, chi1, chi2;
   double val;
   odouble ipol=0.0, qpol=0.0, upol=0.0, vpol=0.0;
-  odouble residR, residI, gradR, gradI, modelR, modelI, isigma;
+  odouble residR=0.0, residI=0.0, gradR=0.0, gradI=0.0, modelR=0.0, modelI=0.0, isigma=0.0;
   olong k, kk, iant, ia1, ia2, isou, idata, refAnt;
   olong isouLast=-999;
   dcomplex  SPA, DPA, SPAc, DPAc, ggPD;
@@ -9390,6 +9395,11 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
   COMPLEX_SET (VXY, 0.0, 0.0);
   COMPLEX_SET (Jm,  0.0,-1.0);
   COMPLEX_SET (Jp,  0.0, 1.0);
+  COMPLEX_SET (SM1, 0.0, 0.0);
+  COMPLEX_SET (SM2, 0.0, 0.0);
+  COMPLEX_SET (SM3, 0.0, 0.0);
+  COMPLEX_SET (SM4, 0.0, 0.0);
+  COMPLEX_SET (ggPD, 0.0, 0.0);
   
   /* R-L phase difference */
   if (args->doFitRL) {

@@ -1859,6 +1859,26 @@ extern PyObject* FArrayUtilFitCGauss (ObitFArray *in, float FWHM, float center[2
   return o;
 } // end  FArrayUtilFitCGauss
 
+/* Return list with [0]=FWHM, [1] = peak, [2] = cenX, [3]=a, [4]=b, [5]=RMS residual */
+extern PyObject* FArrayUtilFit1DGauss (ObitFArray *in, float FWHM, float center, 
+			      float peak, ObitErr *err)
+{
+  ofloat lFWHM=(ofloat)FWHM, lcenter=(ofloat)center, lpeak=(ofloat)peak;
+  ofloat la, lb, RMS;
+  PyObject *o;
+
+  RMS = ObitFArrayUtilFit1DGauss (in, &lFWHM, &lcenter, &lpeak, &la, &lb, err);
+  // return list
+  o = PyList_New(6);
+  PyList_SetItem(o, 0, PyFloat_FromDouble((double)lFWHM));
+  PyList_SetItem(o, 1, PyFloat_FromDouble((double)lpeak));
+  PyList_SetItem(o, 2, PyFloat_FromDouble((double)lcenter));
+  PyList_SetItem(o, 3, PyFloat_FromDouble((double)la));
+  PyList_SetItem(o, 4, PyFloat_FromDouble((double)lb));
+  PyList_SetItem(o, 5, PyFloat_FromDouble((double)RMS));
+  return o;
+} // end  FArrayUtilFit1DGauss
+
 // Convolution 
 ObitFArray* FArrayUtilConvolve (ObitFArray *in1, ObitFArray *in2, 
 	 		        ObitErr *err)
@@ -1879,6 +1899,7 @@ ObitFArray* FArrayUtilUVGaus (int *naxis, float *cells, float maprot,
                                (ofloat)Gaumaj, (ofloat)Gaumin, (ofloat)GauPA);
 }  // end FArrayUtilConvolve
 extern PyObject *FArrayUtilFitCGauss(ObitFArray *,float ,float [2],float ,ObitErr *);
+extern PyObject *FArrayUtilFit1DGauss(ObitFArray *,float ,float ,float ,ObitErr *);
 
 #include "ObitFFT.h"
 
@@ -21519,6 +21540,47 @@ static PyObject *_wrap_FArrayUtilFitCGauss(PyObject *self, PyObject *args) {
 }
 {
   free((float *) _arg2);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_FArrayUtilFit1DGauss(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitFArray * _arg0;
+    float  _arg1;
+    float  _arg2;
+    float  _arg3;
+    ObitErr * _arg4;
+    PyObject * _argo0 = 0;
+    PyObject * _argo4 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OfffO:FArrayUtilFit1DGauss",&_argo0,&_arg1,&_arg2,&_arg3,&_argo4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of FArrayUtilFit1DGauss. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of FArrayUtilFit1DGauss. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)FArrayUtilFit1DGauss(_arg0,_arg1,_arg2,_arg3,_arg4);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
 }
     return _resultobj;
 }
@@ -72382,6 +72444,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "FFTCreate", _wrap_FFTCreate, METH_VARARGS },
 	 { "FArrayUtilUVGaus", _wrap_FArrayUtilUVGaus, METH_VARARGS },
 	 { "FArrayUtilConvolve", _wrap_FArrayUtilConvolve, METH_VARARGS },
+	 { "FArrayUtilFit1DGauss", _wrap_FArrayUtilFit1DGauss, METH_VARARGS },
 	 { "FArrayUtilFitCGauss", _wrap_FArrayUtilFitCGauss, METH_VARARGS },
 	 { "FArrayUnref", _wrap_FArrayUnref, METH_VARARGS },
 	 { "FArrayRef", _wrap_FArrayRef, METH_VARARGS },

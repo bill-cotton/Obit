@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2010                                          */
+/*;  Copyright (C) 2005-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -47,6 +47,9 @@
 ofloat ObitFArrayUtilFitCGauss (ObitFArray *in, ofloat *FWHM, ofloat *center, 
 				ofloat *peak, ObitErr *err);
 
+/** Public: Fit 1-D Gaussian plus baseline. */
+ofloat ObitFArrayUtilFit1DGauss (ObitFArray *in, ofloat *FWHM, ofloat *center, 
+				 ofloat *peak, ofloat *a, ofloat *b, ObitErr *err);
 /** Public: Convolve two arrays */
 ObitFArray* ObitFArrayUtilConvolve (ObitFArray *in1, ObitFArray *in2, 
 				    ObitErr *err);

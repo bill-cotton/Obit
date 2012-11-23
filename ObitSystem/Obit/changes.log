@@ -974,3 +974,19 @@ Obit/tasks/PCal.c Obit/TDF/PCal.TDF:
 Obit/src/ObitUVRLDelay.c Obit/tasks/RLDly.c Obit/TDF/RLDly.TDF:
   Add solution interval, specifying output SN table.
 19 Nov 12, snv ver 432
+
+Mostly bug fixes, 1D Gaussian fitting
+Obit/python/EVLACal.py:
+   Change scratch file header for POSSM plots to RR,LL...
+   More fiddling with damn task user number.
+Obit/include/ObitFArrayUtil.h Obit/src/ObitFArrayUtil.c:
+  New routine ObitFArrayUtilFit1DGauss to fit 1D gaussian+baseline
+Obit/python/FArrayUtil.py Obit/python/FArrayUtil.inc:
+  python interface to new Gaussian fitting routine
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  update python interface
+Obit/src/ObitPolnCalFit.c:  
+  Set in->doFitGain = FALSE for circular feeds.
+  Fix bug with RL parallactic angle sign, convergence
+23 Nov 12, snv ver 433
+

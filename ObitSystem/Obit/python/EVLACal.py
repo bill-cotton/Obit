@@ -1763,7 +1763,7 @@ def EVLACalAP(uv, target, ACals, err, \
 
     # Run SetJy
     setjy = ObitTask.ObitTask("SetJy")
-    setJy.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    setjy.__class__.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
     setjy.taskLog  = logfile
     if not check:
         setname(uv,setjy)
@@ -4585,6 +4585,14 @@ def EVLASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["RR","LL"], \
     info.set("timeRange",[0.0, 0.0])
     info.set("doPol", 0)
     info.set("PDVer", -1)
+
+    # If data labeled XY pol, relabel RR,LL... - POSSM cannot cope
+    d = scr.Desc.Dict
+    if d["crval"][d["jlocs"]]<-4:
+        d["crval"][d["jlocs"]] = -1.0
+        scr.Desc.Dict = d
+        scr.UpdateDesc(err)
+        
     
     # Setup and run POSSM
     possm = AIPSTask.AIPSTask("possm")

@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitFarray type                        */
 /*                                                                    */
-/*;  Copyright (C) 2005,2009                                          */
+/*;  Copyright (C) 2005-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -53,6 +53,26 @@ extern PyObject* FArrayUtilFitCGauss (ObitFArray *in, float FWHM, float center[2
   PyList_SetItem(o, 4, PyFloat_FromDouble((double)RMS));
   return o;
 } // end  FArrayUtilFitCGauss
+
+/* Return list with [0]=FWHM, [1] = peak, [2] = cenX, [3]=a, [4]=b, [5]=RMS residual */
+extern PyObject* FArrayUtilFit1DGauss (ObitFArray *in, float FWHM, float center, 
+			      float peak, ObitErr *err)
+{
+  ofloat lFWHM=(ofloat)FWHM, lcenter=(ofloat)center, lpeak=(ofloat)peak;
+  ofloat la, lb, RMS;
+  PyObject *o;
+
+  RMS = ObitFArrayUtilFit1DGauss (in, &lFWHM, &lcenter, &lpeak, &la, &lb, err);
+  // return list
+  o = PyList_New(6);
+  PyList_SetItem(o, 0, PyFloat_FromDouble((double)lFWHM));
+  PyList_SetItem(o, 1, PyFloat_FromDouble((double)lpeak));
+  PyList_SetItem(o, 2, PyFloat_FromDouble((double)lcenter));
+  PyList_SetItem(o, 3, PyFloat_FromDouble((double)la));
+  PyList_SetItem(o, 4, PyFloat_FromDouble((double)lb));
+  PyList_SetItem(o, 5, PyFloat_FromDouble((double)RMS));
+  return o;
+} // end  FArrayUtilFit1DGauss
 
 // Convolution 
 ObitFArray* FArrayUtilConvolve (ObitFArray *in1, ObitFArray *in2, 
