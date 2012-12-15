@@ -1171,9 +1171,6 @@ void FitSpec (ObitUV* inData, gchar **source,
   sigma = g_malloc0(maxIF*sizeof(ofloat));
   freq  = g_malloc0(maxIF*sizeof(odouble));
 
-  
-  Obit_log_error(err, OBIT_InfoErr, "Smoothing by fitting %d term spectrum", nterm);
-
   /* Loop over sources */
   for (isou=0; isou<maxSou; isou++) {
     /* Collect data to fit */
@@ -1190,6 +1187,9 @@ void FitSpec (ObitUV* inData, gchar **source,
 
     /* Anything? */
     if (count<1) continue;
+
+    nterm = MIN (nterm, count);
+    Obit_log_error(err, OBIT_InfoErr, "Smoothing by fitting %d term spectrum", nterm);
 
     /* Fit */
     fitVal = ObitSpectrumFitSingle(count, nterm, freq[0], freq, flux, sigma, FALSE, err);
