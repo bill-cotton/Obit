@@ -587,6 +587,7 @@ def pipeline( aipsSetup, parmFile):
                           avgPol=parms["avgPol"], avgIF=parms["avgIF"], minSNR = 4.0, refAnt=parms["refAnt"], \
                           do3D=parms["do3D"], BLFact=parms["BLFact"], BLchAvg=parms["BLchAvg"], \
                           doMB=parms["doMB"], norder=parms["MBnorder"], maxFBW=parms["MBmaxFBW"], \
+                          PBCor=parms["PBCor"],antSize=parms["antSize"], \
                           nTaper=parms["nTaper"], Tapers=parms["Tapers"], \
                           nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
         # End image

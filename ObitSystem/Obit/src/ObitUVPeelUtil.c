@@ -206,9 +206,12 @@ void ObitUVPeelUtilLoop (ObitInfoList* myInput, ObitUV* inUV,
     /* Append CCs */
     ObitTableCCUtilAppend (peelCCTable, outCCTable, 1, 0, err);
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+
+    /* register in CLEAN */
+    myClean->Pixels->iterField[i] = outCCTable->myDesc->nrow;
+    
     peelCCTable = ObitTableCCUnref(peelCCTable);
     outCCTable  = ObitTableCCUnref(outCCTable);
-    
   } /* end loop copying peeled CCs */
   if (peeled) g_free(peeled); peeled = NULL;  /* Done with array */
 

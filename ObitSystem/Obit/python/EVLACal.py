@@ -224,6 +224,8 @@ def EVLAInitContParms():
     parms["doMB"]        = True         # Use wideband imaging?
     parms["MBnorder"]    = 1            # order on wideband imaging
     parms["MBmaxFBW"]    = 0.05         # max. MB fractional bandwidth
+    parms["PBCor"]       = True         # Pri. beam corr on final image
+    parms["antSize"]     = 24.5         # ant. diameter (m) for PBCor
     parms["CleanRad"]    = None         # CLEAN radius (pix?) about center or None=autoWin
     
     # Final
@@ -557,7 +559,10 @@ def EVLACopyFG(uv, err, logfile='', check=False, debug = False):
     """
     ################################################################
     taco = ObitTask.ObitTask("TabCopy")
-    taco.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        taco.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     if not check:
         setname(uv, taco)
     taco.outName  = taco.inName
@@ -606,7 +611,10 @@ def EVLACopyTable(inObj, outObj, inTab, err, inVer=1, outVer=0,
     mess =  "Copy "+inTab+" Table "+str(inVer)+" to "+str(outVer)
     printMess(mess, logfile)
     taco = ObitTask.ObitTask("TabCopy")
-    taco.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        taco.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     if not check:
         setname(inObj, taco)
         setoname(outObj, taco)
@@ -721,7 +729,10 @@ def EVLAUVLoadT(filename, disk, Aname, Aclass, Adisk, Aseq, err, logfile="  ", \
     printMess(mess, logfile)
     #
     uvc = ObitTask.ObitTask("UVCopy")
-    uvc.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        uvc.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     uvc.DataType = "FITS"
     uvc.inFile   = filename
     uvc.inDisk   = disk
@@ -786,7 +797,10 @@ def EVLAUVLoadArch(dataroot, Aname, Aclass, Adisk, Aseq, err, \
     #
     outuv        = None
     bdf = ObitTask.ObitTask("BDFIn")
-    bdf.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        bdf.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     bdf.DataRoot = dataroot
     bdf.DataType = "AIPS"
     bdf.outName  = Aname[0:12]
@@ -851,7 +865,10 @@ def EVLAHann(inUV, Aname, Aclass, Adisk, Aseq, err, doDescm=True, \
     printMess(mess, logfile)
     #
     hann=ObitTask.ObitTask("Hann")
-    hann.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        hann.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     setname(inUV,hann)
     if check:
         return inUV
@@ -1146,7 +1163,10 @@ def EVLAMedianFlag(uv, target, err, \
     mess =  "Median Window flagging"
     printMess(mess, logfile)
     medn=ObitTask.ObitTask("MednFlag")
-    medn.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        medn.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     setname(uv,medn)
     if type(target)==list:
         medn.Sources=target
@@ -1222,7 +1242,10 @@ def EVLAQuack(uv, err, \
     mess =  "Quack data"
     printMess(mess, logfile)
     quack=ObitTask.ObitTask("Quack")
-    quack.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        quack.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     
     if not check:
         setname(uv, quack)
@@ -1276,7 +1299,10 @@ def EVLAShadow(uv, err, shadBl=25.0, flagVer=2, \
     mess =  "Shadow flag data"
     printMess(mess, logfile)
     uvflg=AIPSTask.AIPSTask("uvflg")
-    uvflg.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        uvflg.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     
     if not check:
         setname(uv, uvflg)
@@ -1359,7 +1385,10 @@ def EVLAAutoFlag(uv, target, err, \
     mess =  "AutoFlag data"
     printMess(mess, logfile)
     af=ObitTask.ObitTask("AutoFlag")
-    af.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        af.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     if not check:
         setname(uv,af)
     if type(target)==list:
@@ -1456,7 +1485,10 @@ def EVLAPACor(uv, err, CLver=0, FreqID=0,\
     printMess(mess, logfile)
 
     clcor = ObitTask.ObitTask("CLCor")
-    clcor.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        clcor.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     if not check:
         setname(uv,clcor)
     clcor.corMode     = "PANG"
@@ -1534,7 +1566,10 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
     SNver = uv.GetHighVer("AIPS SN")+1
 
     calib = ObitTask.ObitTask("Calib")
-    calib.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        calib.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     OK = False   # Must have some work
     calib.taskLog  = logfile
     if not check:
@@ -1611,7 +1646,10 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
     # Zero phases?
     if doZeroPhs:
         sncor = ObitTask.ObitTask("SNCor")
-        sncor.userno     = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        try:
+            sncor.userno     = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        except Exception, exception:
+            pass
         if not check:
             setname(uv, sncor)
         sncor.solnVer    = SNver
@@ -1639,7 +1677,10 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
     # Smooth if requested
     if smoTime>0.0:
         snsmo = ObitTask.ObitTask("SNSmo")
-        snsmo.userno     = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        try:
+            snsmo.userno     = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        except Exception, exception:
+            pass
         if not check:
             setname(uv, snsmo)
         snsmo.solnIn     = SNver
@@ -1763,7 +1804,10 @@ def EVLACalAP(uv, target, ACals, err, \
 
     # Run SetJy
     setjy = ObitTask.ObitTask("SetJy")
-    setjy.__class__.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        setjy.__class__.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     setjy.taskLog  = logfile
     if not check:
         setname(uv,setjy)
@@ -1842,7 +1886,10 @@ def EVLACalAP(uv, target, ACals, err, \
 
     # Calib on Amp cals 
     calib = ObitTask.ObitTask("Calib")
-    calib.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        calib.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     calib.taskLog  = logfile
     if not check:
         setname(uv,calib)
@@ -1909,7 +1956,10 @@ def EVLACalAP(uv, target, ACals, err, \
     
    # Setup CLCal
     clcal = ObitTask.ObitTask("CLCal")
-    clcal.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        clcal.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     clcal.taskLog  = logfile
     ical = 0
     if not check:
@@ -2002,7 +2052,10 @@ def EVLACalAP(uv, target, ACals, err, \
                         smoList.append(PCal["Source"])
             solnVer2 = solnVer+1
             snsmo=ObitTask.ObitTask("SNSmo")
-            snsmo.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+            try:
+                snsmo.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+            except Exception, exception:
+                pass
             snsmo.taskLog  = logfile
             if not check:
                 setname(uv,snsmo)
@@ -2064,7 +2117,10 @@ def EVLACalAP(uv, target, ACals, err, \
     
     # GetJy to set flux density scale
     getjy = ObitTask.ObitTask("GetJy")
-    getjy.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        getjy.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     getjy.taskLog  = logfile
     ical = 0; isou = 0
     if not check:
@@ -2248,7 +2304,10 @@ def EVLABPCal(uv, BPCals, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
     mess =  "Bandpass calibrate data"
     printMess(mess, logfile)
     bpass = ObitTask.ObitTask("BPass")
-    bpass.userno  = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        bpass.userno  = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     OK = False   # Must have some work
     bpass.taskLog = logfile
     if not check:
@@ -2368,7 +2427,10 @@ def EVLASplit(uv, target, err, FQid=1, outClass="      ", logfile = "", \
     """
     ################################################################
     split=ObitTask.ObitTask("Split")
-    split.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        split.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     split.taskLog = logfile
     if not check:
         setname(uv,split)
@@ -2439,7 +2501,10 @@ def EVLACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
     mess =  "Average/calibrate data"
     printMess(mess, logfile)
     splat=ObitTask.ObitTask("Splat")
-    splat.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        splat.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     splat.taskLog = logfile
     if not check:
         setname(uv,splat)
@@ -2681,7 +2746,10 @@ def EVLASetImager (uv, target, outIclass="", nThreads=1, noScrat=[], logfile = "
     """
     ################################################################
     img = ObitTask.ObitTask("MFImage")
-    img.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        img.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     img.taskLog = logfile
     if not check:
         setname(uv,img)
@@ -2769,7 +2837,10 @@ def EVLARLDelay(uv, err, \
     ncal = len(RLDCal)  # How many calibrators?
     OK = False   # Must have some work
     rldly=ObitTask.ObitTask("RLDly")
-    rldly.userno  = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        rldly.userno  = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     rldly.taskLog = logfile
     if not check:
         setname(uv,rldly)
@@ -2901,7 +2972,10 @@ def EVLAPolCal(uv, InsCals, err, RM=0.0, \
     # Instrumental calibration
     if InsCals!=None:
         pcal = ObitTask.ObitTask("PCal")
-        pcal.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        try:
+            pcal.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        except Exception, exception:
+            pass
         pcal.logFile = logfile
         if not check:
             setname(uv,pcal)
@@ -3019,7 +3093,10 @@ def EVLARLCal(uv, err, \
     if RLDCal!=None:
         ncal = len(RLDCal)  # How many calibrators?
         rlpass=ObitTask.ObitTask("RLPass")
-        rlpass.userno  = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        try:
+            rlpass.userno  = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        except Exception, exception:
+            pass
         rlpass.taskLog = logfile
         if not check:
             setname(uv,rlpass)
@@ -3086,7 +3163,10 @@ def EVLARLCal(uv, err, \
         mess =  "R-L IF phase calibration using "+RLPCal
         printMess(mess, logfile)
         img = ObitTask.ObitTask("Imager")
-        img.userno     = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        try:
+            img.userno     = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        except Exception, exception:
+            pass
         img.taskLog    = logfile
         if not check:
             setname(uv,img)
@@ -3327,7 +3407,10 @@ def EVLARLCal(uv, err, \
         
         # Apply R-L phase corrections
         clcor = AIPSTask.AIPSTask("clcor")
-        clcor.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        try:
+            clcor.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        except Exception, exception:
+            pass
         clcor.logFile  = logfile
         if not check:
             setname(uv,clcor)
@@ -3427,7 +3510,10 @@ def EVLARLCal2(uv, err, uv2 = None, \
     # Want R-L delay cal?
     if RLDCal!=None:
         rldly=ObitTask.ObitTask("rldly")
-        rldly.userno  = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        try:
+            rldly.userno  = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        except Exception, exception:
+            pass
         rldly.logFile = logfile
         if not check:
             setname(uv,rldly)
@@ -3483,7 +3569,10 @@ def EVLARLCal2(uv, err, uv2 = None, \
     if RLPCal!=None:
         ncal = len(RLPCal)  # How many calibrators? 
         img = ObitTask.ObitTask("Imager")
-        img.userno     = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        try:
+            img.userno     = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        except Exception, exception:
+            pass
         img.taskLog    = logfile
         if not check:
             setname(uv,img)
@@ -3732,7 +3821,10 @@ def EVLARLCal2(uv, err, uv2 = None, \
         
         # Apply R-L phase corrections
         clcor = AIPSTask.AIPSTask("clcor")
-        clcor.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        try:
+            clcor.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        except Exception, exception:
+            pass
         clcor.logFile  = logfile
         if not check:
             setname(uv,clcor)
@@ -4110,7 +4202,7 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
                      avgPol=False, avgIF=False, minSNR = 5.0, refAnt=0, \
                      do3D=True, BLFact=0.999, BLchAvg=False, doOutlier=None, \
                      doMB=False, norder=2, maxFBW=0.05, doComRes=True, \
-                     nTaper=0, Tapers=[20.0], \
+                     PBCor=True, antSize=24.5, nTaper=0, Tapers=[20.0], \
                      nThreads=1, noScrat=[], logfile='', check=False, debug=False):
     """
     Image a list of sources with optional selfcal
@@ -4163,6 +4255,8 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
     * doMB       = If True is wideband imaging
     * norder     = order on wideband imaging
     * maxFBW     = max. fractional wideband imaging
+    * PBCor      = Do PB correction on final image?
+    * antSize    = antenna size (m) for PBCor
     * nTaper     = number of (additional) multi resolution tapers
     * Tapers     = Sizes of additional tapers in pixels
     * nThreads   = Max. number of threads to use
@@ -4196,13 +4290,19 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
         slist = sl
     if doMB:
         imager = ObitTask.ObitTask("MFImage")
-        imager.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        try:
+            imager.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        except Exception, exception:
+            pass
         imager.norder = norder
         imager.maxFBW = maxFBW
         imager.prtLv = 2
     else:
         imager = ObitTask.ObitTask("Imager")
-        imager.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        try:
+            imager.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        except Exception, exception:
+            pass
         imager.prtLv = 2
     imager.taskLog  = logfile
     if not check:
@@ -4245,11 +4345,13 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
     imager.minSNR      = minSNR
     imager.do3D        = do3D
     imager.dispURL     = "None"
+    imager.PBCor       = PBCor
+    imager.antSize     = antSize
     imager.nTaper      = nTaper
     imager.Tapers      = Tapers
     if doOutlier or ((doOutlier==None) and refFreq<6.0e9):
-        FWHM = (45.0 /(refFreq*1.0e-9) ) / 60.   # FWHM in deg
-        imager.OutlierDist = FWHM*4.0   # Outliers from NVSS for lower frequencies
+        FWHM = (45.0 /(refFreq*1.0e-9) ) / 60.   # 25 m ant FWHM in deg
+        imager.OutlierDist = FWHM*4.0   # Outliers from NVSS/SUMMS for lower frequencies
         if refFreq>1.0e9:
             imager.OutlierFlux = 0.01
         else:
@@ -4270,6 +4372,12 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
     OK = False   # Some must work
     # Loop over slist
     for sou in slist:
+        if doOutlier or ((doOutlier==None) and refFreq<6.0e9):
+            # Use NVSS north of dec 30 S and SUMMS southward
+            suinfo = EVLAGetTimes(uv, sou, err, logfile=logfile, check=check,debug=debug)
+            if suinfo["Dec"]<-30.0:
+                imager.Catalog = 'SUMMSVZ.FIT'
+                del suinfo
         imager.Sources[0] = sou
         mess = "Image "+sou
         printMess(mess, logfile)
@@ -4405,7 +4513,10 @@ def EVLAPlotTab(uv, inext, invers, err, \
     """
     ################################################################
     snplt = AIPSTask.AIPSTask("snplt")
-    snplt.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        snplt.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     if not check:
         setname(uv,snplt)
     snplt.inext   = inext
@@ -4480,7 +4591,10 @@ def EVLAWritePlots(uv, loPL, hiPL, plotFile, err, \
         hiPL = uv.GetHighVer("AIPS PL")
 
     lwpla = AIPSTask.AIPSTask("lwpla")
-    lwpla.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        lwpla.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     if not check:
         setname(uv,lwpla)
     lwpla.plver   = max(1, loPL)
@@ -4596,7 +4710,10 @@ def EVLASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["RR","LL"], \
     
     # Setup and run POSSM
     possm = AIPSTask.AIPSTask("possm")
-    possm.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        possm.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     setname(scr, possm)
     source = [ Source ]           # get BP calibration source, in list format
     possm.sources= AIPSTask.AIPSList( source )
@@ -4675,7 +4792,10 @@ def EVLAApplyCal(uv, err, SNver=0, CLin=0, CLout=0, maxInter=240.0, \
     printMess(mess, logfile)
 
     clcal = ObitTask.ObitTask("CLCal")
-    clcal.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        clcal.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     if not check:
         setname(uv,clcal)
     clcal.solnVer  = SNver
@@ -5198,7 +5318,10 @@ def EVLAGetRefAnt(uv, Cals, err, solInt=10.0/60.0, flagVer=2,  nThreads=1, \
     """
     # Calib on Amp cals 
     calib = ObitTask.ObitTask("Calib")
-    calib.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        calib.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     calib.taskLog  = logfile
     if not check:
         setname(uv,calib)
@@ -6469,7 +6592,10 @@ def EVLAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
     """
     # Setup AIPS task KNTR
     kntr = AIPSTask.AIPSTask("kntr")
-    kntr.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        kntr.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     kntr.msgkill = 5
     kntr.dogrey  = 0
     kntr.dovect  = 0
@@ -6485,7 +6611,10 @@ def EVLAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
 
     # Instantiate AIPS task LWPLA
     lwpla = AIPSTask.AIPSTask("lwpla")    
-    lwpla.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        lwpla.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     lwpla.msgkill = 5
    
     # If catalog numbers not given, get all images matching class imClass
@@ -6629,7 +6758,10 @@ def EVLADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
 
     # Setup UVPLT
     uvplt = AIPSTask.AIPSTask("uvplt")
-    uvplt.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        uvplt.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     if not check:
         setname(uvAvg, uvplt)
     uvplt.stokes  = 'I' # unpolarized
@@ -6639,7 +6771,10 @@ def EVLADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
 
     # Setup LWPLA
     lwpla = AIPSTask.AIPSTask("lwpla")
-    lwpla.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    try:
+        lwpla.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
     lwpla.msgkill = 5 
     if not check:
         setname(uvAvg, lwpla)

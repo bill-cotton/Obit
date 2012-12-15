@@ -94,9 +94,9 @@ def EVLAPolnFlag (uv, souModels, err, \
         uvsub.Sources[0]= model["Source"]
         if "DataType2" in uvsub.__dict__:
             uvsub.DataType2 = model["CalDataType"]
-        uvsub.in2File   = model["CalFile"]
-        uvsub.in2Name   = model["CalName"]
-        uvsub.in2Class  = model["CalClass"]
+        uvsub.in2File   = model["CalFile"].strip()
+        uvsub.in2Name   = model["CalName"].strip()
+        uvsub.in2Class  = model["CalClass"].strip()
         uvsub.in2Seq    = model["CalSeq"] 
         uvsub.in2Disk   = model["CalDisk"]
         if "nmaps" in uvsub.__dict__:
@@ -279,9 +279,9 @@ def EVLAPolnSelfCal(uv, Cals, err, \
     for Cal in Cals:
         calib.Sources[0]= Cal["Source"]
         calib.DataType2 = Cal["CalDataType"]
-        calib.in2File   = Cal["CalFile"]
-        calib.in2Name   = Cal["CalName"]
-        calib.in2Class  = Cal["CalClass"]
+        calib.in2File   = Cal["CalFile"].strip()
+        calib.in2Name   = Cal["CalName"].strip()
+        calib.in2Class  = Cal["CalClass"].strip()
         calib.in2Seq    = Cal["CalSeq"] 
         calib.in2Disk   = Cal["CalDisk"]
         calib.nfield    = Cal["CalNfield"]

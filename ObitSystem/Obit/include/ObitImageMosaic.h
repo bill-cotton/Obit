@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2011                                          */
+/*;  Copyright (C) 2004-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -271,15 +271,16 @@ typedef olong (*AddFieldFP) (ofloat shift[2], ofloat dec, olong imsize, ofloat c
 
 /** Private: Lookup outliers in catalog */
 void AddOutlier (gchar *Catalog, olong catDisk, ofloat minRad, ofloat cells[2], 
-	    ofloat OutlierDist, ofloat OutlierFlux, ofloat OutlierSI, olong OutlierSize,
-	    odouble ra0, odouble dec0, gboolean doJ2B, odouble Freq, ofloat minImpact, 
-	    olong *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, olong *flqual, 
-	    ObitErr *err);
+		 ofloat OutlierDist, ofloat OutlierFlux, ofloat OutlierSI, olong OutlierSize,
+		 odouble ra0, odouble dec0, gboolean doJ2B, odouble Freq, ofloat minImpact, 
+		 ofloat diam, olong *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, 
+		 olong *flqual, ObitErr *err);
 typedef void (*AddOutlierFP) (gchar *Catalog, olong catDisk, ofloat minRad, ofloat cells[2], 
 			      ofloat OutlierDist, ofloat OutlierFlux, ofloat OutlierSI, 
 			      olong OutlierSize, odouble ra0, odouble dec0, gboolean doJ2B, 
-			      odouble Freq, ofloat minImpact, olong *nfield, olong *fldsiz, 
-			      ofloat *rash, ofloat *decsh, olong *flqual, ObitErr *err);
+			      odouble Freq, ofloat minImpact, ofloat diam, 
+			      olong *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, 
+			      olong *flqual, ObitErr *err);
 /** Private: Add additional beam tapers */
 void 
 AddTapers (ObitUV *uvData, 

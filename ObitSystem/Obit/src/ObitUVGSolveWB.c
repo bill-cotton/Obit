@@ -3194,7 +3194,7 @@ void ObitCArrayFMulEnd (ObitCArray* Cin, ObitFArray* Fin, ObitCArray* out)
 static void  
 FindFFTPeak (ObitUVGSolveWB *in, ofloat *ppos, ofloat pval[2])
 {
-  olong i, n, pos[0], i1, i2;
+  olong i, n, pos[1], i1, i2;
   ofloat *inData, *outData, pmax, sum, wt, pixel=0.0;
 
   /* Shuffle data to interpolator array */

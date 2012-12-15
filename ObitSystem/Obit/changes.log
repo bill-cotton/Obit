@@ -990,3 +990,24 @@ Obit/src/ObitPolnCalFit.c:
   Fix bug with RL parallactic angle sign, convergence
 23 Nov 12, snv ver 433
 
+Mostly Bug fixes for KAT
+Obit/changes.log:
+Obit/python/EVLAPolnScripts.py:
+  Add .strip() to CalName references.
+Obit/include/ObitImageMosaic.h Obit/src/ObitImageMosaic.c:
+Obit/src/ObitImageMosaicMF.c Obit/src/ObitImageMosaicWB.c:
+  Add diam argument to AddOutlier
+  Trap KAT-7 and set diameter to 12 m.
+Obit/share/data/SUMMSVZ.FIT.gz:
+  SUMMS outlier catalog
+Obit/src/ObitPBUtil.c:
+  Jinc: upper bounds on x
+Obit/python/EVLACal.py Obit/python/EVLAContPipe.py:
+  Better control over primary beam correction in imaging.
+Obit/src/ObitUVCalSelect.c:
+  Select: Min no IF=1
+Obit/src/ObitUVPeelUtil.c:
+  Loop: Register number of peeled components in CLEAN so they get restored
+Obit/src/ObitUVGSolveWB.c \
+  FindFFTPeak: dimension pos 1 NOT 0
+15 Dec 12, snv ver 434

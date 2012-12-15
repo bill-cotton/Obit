@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2011                                          */
+/*;  Copyright (C) 2010-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -728,7 +728,7 @@ ObitImageMosaicMF* ObitImageMosaicMFCreate (gchar *name, olong order, ofloat max
   olong Seq, *Disk=NULL, NField, nx[MAXFLD], ny[MAXFLD], catDisk, nDisk;
   olong overlap, imsize, numBeamTapes, fldsiz[MAXFLD], flqual[MAXFLD];
   ofloat FOV=0.0, xCells, yCells, RAShift[MAXFLD], DecShift[MAXFLD], Tapers[MAXFLD], 
-    MaxBL, MaxW, Cells, BeamTapes[100];
+    MaxBL, MaxW, Cells, BeamTapes[100], diam=24.5;
   ofloat *farr, Radius = 0.0, maxScale;
   ofloat shift[2] = {0.0,0.0}, cells[2], bmaj, bmin, bpa, beam[3];
   odouble ra0, dec0, refFreq1, refFreq2;
@@ -797,6 +797,9 @@ ObitImageMosaicMF* ObitImageMosaicMFCreate (gchar *name, olong order, ofloat max
   bmaj = beam[0]; bmin = beam[1]; bpa = beam[2];
   /* Beam given in asec - convert to degrees */
   bmaj /= 3600.0; bmin /=3600.0;
+
+  /* Get antenna diameter for non-VLA antennas. */
+  if (!strncmp(uvData->myDesc->teles, "KAT-7",5)) diam = 12.0;  /* KAT */
 
   /* Get extrema - note: this has no selection */
   ObitUVUtilUVWExtrema (uvData, &MaxBL, &MaxW, err);
@@ -917,7 +920,7 @@ ObitImageMosaicMF* ObitImageMosaicMFCreate (gchar *name, olong order, ofloat max
 			     OutlierFlux, OutlierSI, OutlierSize,
 			     ra0, dec0, doJ2B, 
 			     uvData->myDesc->crval[uvData->myDesc->jlocf], 
-			     Radius, &NField, fldsiz, RAShift, DecShift, flqual, 
+			     Radius, diam, &NField, fldsiz, RAShift, DecShift, flqual, 
 			     err);
     if (err->error) Obit_traceback_val (err, routine, uvData->name, out);
     /* Assign facet numbers */

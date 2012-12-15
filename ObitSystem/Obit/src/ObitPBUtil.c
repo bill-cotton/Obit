@@ -2,7 +2,7 @@
 /* this version        2008-10-01 20:20:00  juan.uson      */
 /* J1 extended with large angle approximation              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2012                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -177,11 +177,12 @@ ofloat ObitPBUtilJinc (odouble Angle, odouble Freq, ofloat antSize,
   /* beam scale size at 1.47 GHz */
   scale = vscale * 25.0 / asize;
 
-  x = scale * Angle * Freq;
+  x = scale * Angle * Freq * DG2RAD;
   if (x  <  xmax) {
     u = x * x / 9.0;
     pb = 0.5 + u*(c1 + u*(c2 + u*(c3 + u*(c4 + u*(c5 + u*c6)))));
   } else {
+    x = MIN (x, 5*xmax);
     xx = x / 3.0;
     u = 3.0 / x;
     f = d1 + xx*(d2 + xx*(d3 + xx*(d4 + xx*(d5 + xx*(d6 + xx*d7)))));
