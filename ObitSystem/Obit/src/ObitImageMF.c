@@ -842,7 +842,7 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
   ObitUVDesc *uvdesc;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar keyword[12];
-  gboolean done;
+  gboolean done, lsb;
   olong IFBreak[101], ChBreak[101], nBreak=100;  /* Frequency bin breaks */
   gchar *routine = "ObitImageMFSetSpec";
   
@@ -867,6 +867,7 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
     nIF = uvdesc->inaxes[uvdesc->jlocif];
     incif = uvdesc->incif;
   }
+  lsb = uvdesc->cdelt[uvdesc->jlocf]<0.0;  /* Lower sideband? */
 
   /* determine coarse channels, use 0-rel values  */
   nSpec = 0;
@@ -876,13 +877,15 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
     IFBreak[0] = 0;
     ChBreak[0] = -1;
     freqLo = (uvdesc->freqIF[0] - (1.0-uvdesc->crpix[uvdesc->jlocf])*uvdesc->cdelt[uvdesc->jlocf]);
-    mxFreq = (1.0+maxFBW) * freqLo;  /* Highest frequency in first bin */
+    if (lsb) mxFreq = (1.0-maxFBW) * freqLo;  /* Lowest frequency in first bin */
+    else     mxFreq = (1.0+maxFBW) * freqLo;  /* Highest frequency in first bin */
     /* Loop over IFs */
     for (iif=0; iif<nIF; iif++) {
       /* Is this IF all in current bin? */
       freqLo = (uvdesc->freqIF[iif] - (1.0-uvdesc->crpix[uvdesc->jlocf])*uvdesc->cdelt[uvdesc->jlocf]);
       freqHi = (uvdesc->freqIF[iif] + (nChan-uvdesc->crpix[uvdesc->jlocf]+1)*uvdesc->cdelt[uvdesc->jlocf]);
-      done = freqHi<mxFreq;
+      if (lsb) done = freqHi>mxFreq;   /* LSB */
+      else     done = freqHi<mxFreq;   /* USB */
       /* By IF? */
       if (maxFBW<0.0) {
 	IFBreak[nSpec]   = iif;
@@ -891,17 +894,21 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
 	/* A break in this IF? */
 	while (!done) {
 	  /* Gap in frequency? */
-	  if (freqLo>mxFreq) {
+	  if (((freqLo>mxFreq)&&(!lsb)) || ((freqLo<mxFreq)&&(lsb))) {
 	    IFBreak[nSpec]   = iif-1;
 	    ChBreak[nSpec++] = nChan-1;
-	    mxFreq = (1.0+maxFBW) * freqLo;  /* Highest frequency in next bin */
+	    if (lsb) mxFreq = (1.0-maxFBW) * freqLo;  /* Lowest frequency in next bin */
+	    else     mxFreq = (1.0+maxFBW) * freqLo;  /* Highest frequency in next bin */
 	  } else {  /* no gap */
-	    iCh = (olong)(0.5 + (mxFreq-freqLo) / uvdesc->cdelt[uvdesc->jlocf]) - 1;
+	    iCh = (olong)(0.5 + (mxFreq-freqLo) / (uvdesc->cdelt[uvdesc->jlocf])) - 1;
 	    IFBreak[nSpec]   = iif;
 	    ChBreak[nSpec++] = MIN (nChan-1, iCh);
-	    mxFreq += maxFBW * freqLo;
+	    if (lsb) mxFreq -= maxFBW * freqLo;
+	    else     mxFreq += maxFBW * freqLo;
 	  }
-	  done = freqHi<mxFreq;
+	  /* This bin finished? */
+	  if (lsb) done = freqHi>mxFreq;   /* LSB */
+	  else     done = freqHi<mxFreq;   /* USB */
 	  /* Check blown array */
 	  Obit_return_if_fail((nSpec<=nBreak), err, 
 			      "%s: Too many coarse spectral planes, >%d for %s", 
