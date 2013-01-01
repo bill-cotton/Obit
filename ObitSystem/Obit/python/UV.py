@@ -1936,7 +1936,83 @@ def PTableCLGetDummy (inUV, outUV, ver, err, solInt=10.):
     outTable    = Table.Table("None")
     outTable.me = Obit.TableCLGetDummy(inUV.me, outUV.me, ver, err.me)
     return outTable
-    # end PDummyCL
+    # end PTableCLGetDummy
+
+def PTableCLfromNX(outUV, nant, err, outVer=1, calInt=1.0):
+    """
+    Create a CL table from an iNdeX table
+
+     * outUV    = Obit UV object
+     * nant     = Maximum antenna number
+     * err      = Python Obit Error/message stack to init
+     * outVer   = output CL table version
+     * calInt   = calibration table interval in min
+    """
+    ################################################################
+    # If an old table exists, delete it
+    if outUV.GetHighVer("AIPS CL")>=outVer:
+        zz = outUV.ZapTable("AIPS CL", outVer, err)
+        if err.isErr:
+            OErr.printErrMsg(err, "Error zapping old FQ table")
+    noif   = outUV.Desc.Dict["inaxes"][outUV.Desc.Dict["jlocif"]]
+    npol   = outUV.Desc.Dict["inaxes"][outUV.Desc.Dict["jlocs"]]
+    calI = (calInt-(1.0/60))/1440  # Imcrement in days
+    cltab = outUV.NewTable(Table.READWRITE, "AIPS CL",outVer,err,numIF=noif,numPol=npol,numTerm=1)
+    nxtab = outUV.NewTable(Table.READONLY, "AIPS NX", 1,err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error with table")
+    cltab.Open(Table.READWRITE, err)
+    nxtab.Open(Table.READONLY, err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error opening table")
+    # Update header
+    # Create row
+    ia = [];     fa1 = []; fa0 = []
+    for iif in range(0,noif):
+        ia. append(0)
+        fa1.append(1.0)
+        fa0.append(0.0)
+    row = {'Table name':'AIPS CL', '_status':[1], 'NumFields':34,
+           'TIME':[0.0],  'TIME INTERVAL': [0.0], 'ANTENNA NO.':[1], 'SOURCE ID':[1], 'SUBARRAY':[0], 'FREQ ID':[0],
+           'ATMOS':[0.0], 'DATMOS':[0.0], 'DOPPOFF':fa0,  'I.FAR.ROT':[0.0],'GEODELAY':[0.0],  
+           'MBDELAY1':[0.0], 'DISP 1':[0.0], 'DDISP 1':[0.0], 'CLOCK 1':[0.0],  'DCLOCK 1':[0.0],
+           'MBDELAY2':[0.0], 'DISP 2':[0.0], 'DDISP 2':[0.0], 'CLOCK 2':[0.0],  'DCLOCK 2':[0.0],
+           'REAL1':fa1, 'IMAG1':fa0,  'DELAY 1':fa0, 'RATE 1':fa0, 'WEIGHT 1':fa1, 'REFANT 1':ia,
+           'REAL2':fa1, 'IMAG2':fa0,  'DELAY 2':fa0, 'RATE 2':fa0,'WEIGHT 2':fa1, 'REFANT 2':ia,
+            }
+    # Loop over NX rows
+    nrows = nxtab.Desc.Dict["nrow"]
+    irow = -1
+    for inxrow in range (1,nrows+1):
+        nxrow = nxtab.ReadRow(inxrow,err)
+        if err.isErr:
+            OErr.printErrMsg(err, "Error reading NX table")
+        OErr.printErr(err)
+        # Divvy up scans
+        ntime = max (1, int(0.5+nxrow['TIME INTERVAL'][0]/calI))
+        delta = nxrow['TIME INTERVAL'][0]/ntime
+        time = []
+        for itime in range (0,ntime):
+            time.append(nxrow['TIME'][0]-0.5*nxrow['TIME INTERVAL'][0]+itime*delta)
+        # end of scan
+        ntime += 1
+        time.append(nxrow['TIME'][0]+0.5*nxrow['TIME INTERVAL'][0])
+        row['SOURCE ID'][0] = nxrow['SOURCE ID'][0]   # source number
+        # Loop over times in scan
+        for itime in range (0,ntime):
+            row['TIME']          = [time[itime]]
+            row['TIME INTERVAL'] = [delta]
+            # Loop over antennas
+            for iant in range(1,nant+1):
+                row['ANTENNA NO.'] = [iant]
+                cltab.WriteRow(irow, row,err)
+                if err.isErr:
+                    OErr.printErrMsg(err, "Error writing CL table")
+    cltab.Close(err)
+    nxtab.Close(err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error closing table")
+    # end PTableCLfromNX
 
 def PTableSNGetZeroFR (inUV, outUV, ver, err, solInt=10., timeInt = 1.0):
     """ Create SN tablethat will counter-rotate the data to a zero fringe rate 

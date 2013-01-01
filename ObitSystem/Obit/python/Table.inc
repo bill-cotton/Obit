@@ -498,41 +498,54 @@ extern int TableWriteRow (ObitTable *in, int rowno, PyObject *inDict,
     case OBIT_short:
       bad = desc->repeat[i] != PyList_Size(list);
       idata = ((gshort*)row->myRowData)+desc->offset[i];
-      for (j=0; j<desc->repeat[i]; j++) 
-        idata[j] = (gshort)PyInt_AsLong(PyList_GetItem(list, j));
+      if (!bad) {
+        for (j=0; j<desc->repeat[i]; j++) 
+          idata[j] = (gshort)PyInt_AsLong(PyList_GetItem(list, j));
+      }
       break;
     case OBIT_int:
       bad = desc->repeat[i] != PyList_Size(list);
       jdata = ((olong*)row->myRowData)+desc->offset[i];
-      for (j=0; j<desc->repeat[i]; j++) 
-        jdata[j] = (olong)PyInt_AsLong(PyList_GetItem(list, j));
+      if (!bad) {
+        for (j=0; j<desc->repeat[i]; j++) 
+          jdata[j] = (olong)PyInt_AsLong(PyList_GetItem(list, j));
+      }
       break;
     case OBIT_oint:
       bad = desc->repeat[i] != PyList_Size(list);
       kdata = ((oint*)row->myRowData)+desc->offset[i];
-      for (j=0; j<desc->repeat[i]; j++) 
-        kdata[j] = (oint)PyInt_AsLong(PyList_GetItem(list, j));
+      if (!bad) {
+        for (j=0; j<desc->repeat[i]; j++) 
+          kdata[j] = (oint)PyInt_AsLong(PyList_GetItem(list, j));
+      }
       break;
     case OBIT_long:
       bad = desc->repeat[i] != PyList_Size(list);
       ldata = ((olong*)row->myRowData)+desc->offset[i];
-      for (j=0; j<desc->repeat[i]; j++) 
-        ldata[j] = (olong)PyInt_AsLong(PyList_GetItem(list, j));
+      if (!bad) {
+        for (j=0; j<desc->repeat[i]; j++) 
+          ldata[j] = (olong)PyInt_AsLong(PyList_GetItem(list, j));
+      }
       break;
     case OBIT_float:
       bad = desc->repeat[i] != PyList_Size(list);
       fdata = ((ofloat*)row->myRowData)+desc->offset[i];
-      for (j=0; j<desc->repeat[i]; j++) 
-        fdata[j] =  (ofloat)PyFloat_AsDouble(PyList_GetItem(list, j));
+      if (!bad) {
+        for (j=0; j<desc->repeat[i]; j++) 
+          fdata[j] =  (ofloat)PyFloat_AsDouble(PyList_GetItem(list, j));
+      }
       break;
     case OBIT_double:
       bad = desc->repeat[i] != PyList_Size(list);
       ddata = ((odouble*)row->myRowData)+desc->offset[i];
-      for (j=0; j<desc->repeat[i]; j++) 
-        ddata[j] =  (odouble)PyFloat_AsDouble(PyList_GetItem(list, j));
+      if (!bad) {
+        for (j=0; j<desc->repeat[i]; j++) 
+          ddata[j] =  (odouble)PyFloat_AsDouble(PyList_GetItem(list, j));
+      }
       break;
     case OBIT_string:
       bad = (desc->repeat[i]/MAX (1,desc->dim[i][0])) != PyList_Size(list);
+      if (bad) break;
       cdata = ((gchar*)row->myRowData)+desc->offset[i];
       /* null terminate string */
       for (j=0; j<desc->repeat[i]/MAX (1,desc->dim[i][0]); j++) {
@@ -543,12 +556,14 @@ extern int TableWriteRow (ObitTable *in, int rowno, PyObject *inDict,
       break;
     case OBIT_bool:
       bad = desc->repeat[i] != PyList_Size(list);
+      if (bad) break;
       bdata = ((gboolean*)row->myRowData)+desc->offset[i];
       for (j=0; j<desc->repeat[i]; j++) 
         bdata[j] = (gboolean)PyInt_AsLong(PyList_GetItem(list, j));
       break;
     case OBIT_bits:
       bad = desc->repeat[i] != PyList_Size(list);
+      if (bad) break;
       kdata = ((oint*)row->myRowData)+desc->offset[i];
       kdata[0] = 0;
       j1 = 0; j2 = 0;
@@ -572,8 +587,8 @@ extern int TableWriteRow (ObitTable *in, int rowno, PyObject *inDict,
   /* Check if sizes compatible */
   if (bad) {
       Obit_log_error(err, OBIT_Error, 
-		   "%s: wrong size %d %d", 
-		   routine, desc->repeat[i], PyList_Size(list));
+		   "%s: wrong size %d %d for %s", 
+		   routine, desc->repeat[i], PyList_Size(list), desc->FieldName[i]);
       return 1;
   }
 

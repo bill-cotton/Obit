@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2012                                          */
+/*;  Copyright (C) 2005-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -30,7 +30,14 @@
 #include <time.h>
 #include "ObitUVUtil.h"
 #include "ObitTableFG.h"
-
+#include "ObitTableNX.h"
+#include "ObitTableANUtil.h"
+#include "ObitTableSUUtil.h"
+#include "ObitPrecess.h"
+#include "ObitUVWCalc.h"
+#ifndef VELIGHT
+#define VELIGHT 2.997924562e8
+#endif
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
  * \file ObitUVEdit.c
@@ -3925,6 +3932,502 @@ void ObitUVEditAppendFG (ObitUV *inUV, olong flagTab, ObitErr *err)
   outFlag  = ObitTableFGUnref(outFlag);
   if (err->error)  Obit_traceback_msg (err, routine, inUV->name);
 } /* end ObitUVEditAppendFG */
+
+/**
+ * Edit a UV data above a given elevation
+ * Uses NX table
+ * Control parameters are on the inUV info member:
+ * \li "minElev" OBIT_float  (1,1,1) Minimum allowed elevation in deg., [5]
+ * \li "flagTab" OBIT_long  (1,1,1)  output Flag table version [1]
+ * \li "PFlag"   OBIT_string  (4,1,1) Stokes/PFlag string, def '1111'
+ * \li "Reason"  OBIT_string  (24,1,1) Reason for flagging
+ * \param inUV     Input uv data to edit 
+ * \param outUV    UV on which the FG table to be written, may be the same as inUV.
+ * \param err      Error stack, returns if not empty.
+ */
+void ObitUVEditElev (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
+{
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM];
+  olong i, flagTab, ver, irow, orow, maxAnt, iant, numIF=0, numPCal, numOrb;
+  olong cntFlag;
+  gboolean want, *AntOK=NULL;
+  ofloat minElev, minElevRad, elevBeg, elevEnd, sumFlag;
+  ofloat t, tBeg, tEnd, oneMin = 1.0/1440.0;
+  ObitTableFG  *FlagTab=NULL;
+  ObitTableFGRow *row=NULL;
+  ObitTableNX  *NXTab=NULL;
+  ObitTableNXRow *nxrow=NULL;
+  ObitUVSel *sel = inUV->mySel;
+  ObitUVDesc   *inDesc=inUV->myDesc, *inIODesc=(ObitUVDesc*)inUV->myIO->myDesc;
+  ObitSourceList  *SouList  = NULL;
+  ObitSource      *mySource = NULL, *curSource;
+  ObitTableSU     *SUTable  = NULL;
+  ObitAntennaList *AntList  = NULL;
+  ObitTableAN     *ANTable  = NULL;
+  gchar Stokes[5], Reason[25], tString1[25], tString2[25];
+  gchar *routine = "ObitUVEditElev";
+ 
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return;
+  g_assert (ObitUVIsA(inUV));
+
+  /* Control parameters */
+  minElev = 5.0;
+  ObitInfoListGetTest(inUV->info, "minElev",   &type, dim, &minElev);  
+  minElevRad = minElev * DG2RAD;   /* to radians */
+  flagTab = 1;
+  ObitInfoListGetTest(inUV->info, "flagTab",   &type, dim, &flagTab);  
+  strncpy (Stokes, "    ", 4);
+  ObitInfoListGetTest(inUV->info, "PFlag",  &type, dim, Stokes); Stokes[4] = 0;
+  strncpy (Reason, "                        ", 24);
+  ObitInfoListGetTest(inUV->info, "Reason",  &type, dim, Reason); Reason[24] = 0;
+  /* Default reason */
+  if (!strncmp(Reason, "          ", 10))
+      strncpy (Reason, "Elevation Limit         ", 24);
+
+  /* Tell */
+  Obit_log_error(err, OBIT_InfoErr, "Flagging data above elevation %5.1f deg",
+		 minElev);
+
+  /* Get FlaG table */
+  FlagTab = newObitTableFGValue("outFG", (ObitData*)inUV, &flagTab, OBIT_IO_ReadWrite, 
+				err);
+  ObitTableFGOpen (FlagTab, OBIT_IO_ReadWrite, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+  
+  /* Create Row */
+  row = newObitTableFGRow (FlagTab);
+  
+  /* Attach row to output buffer */
+  ObitTableFGSetRow (FlagTab, row, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+  
+  /* Stokes flags */
+  if      (!strncmp(Stokes, "    ", 4)) row->pFlags[0] = 1+2+4+8;     /* All */
+  else if (!strncmp(Stokes, "I   ", 4)) row->pFlags[0] = 1+2;         /* I */
+  else if (!strncmp(Stokes, "Q   ", 4)) row->pFlags[0] = 1+2+4+8;     /* Q */
+  else if (!strncmp(Stokes, "U   ", 4)) row->pFlags[0] = 1+2+4+8;     /* U */
+  else if (!strncmp(Stokes, "V   ", 4)) row->pFlags[0] = 1+2+4+8;     /* V */
+  else if (!strncmp(Stokes, "RR  ", 4) || !strncmp(Stokes, "XX  ", 4)) row->pFlags[0] = 1;
+  else if (!strncmp(Stokes, "LL  ", 4) || !strncmp(Stokes, "YY  ", 4)) row->pFlags[0] = 2;
+  else if (!strncmp(Stokes, "RL  ", 4) || !strncmp(Stokes, "XY  ", 4)) row->pFlags[0] = 4;
+  else if (!strncmp(Stokes, "LR  ", 4) || !strncmp(Stokes, "YY  ", 4)) row->pFlags[0] = 8;
+  else if ((Stokes[0]=='1') || (Stokes[0]=='0')) {
+    /* flag bits passed */
+    row->pFlags[0] = 0;
+    if (Stokes[0]=='1')  row->pFlags[0] |= 1;
+    if (Stokes[1]=='1')  row->pFlags[0] |= 2;
+    if (Stokes[2]=='1')  row->pFlags[0] |= 4;
+    if (Stokes[3]=='1')  row->pFlags[0] |= 8;
+  } else row->pFlags[0] = 1+2+4+8;   /* what the hell */
+  /* Channels/IFs selected */
+  row->chans[0] = inUV->mySel->startChann; row->chans[1] = row->chans[0]+inUV->mySel->numberChann-1;
+  row->ifs[0]   = inUV->mySel->startIF;    row->ifs[1]   = row->ifs[0]+inUV->mySel->numberIF-1;
+
+  strncpy (row->reason, Reason, 24);  /* Set reason */
+
+  /* Get iNdeX table */
+  ver = 1;
+  NXTab = newObitTableNXValue("index", (ObitData*)inUV, &ver, OBIT_IO_ReadOnly, 
+			      err);
+  Obit_return_if_fail ((NXTab!=NULL), err, 
+		       "%s: UV data %s MUST have an index (NX) table", 
+		       routine, inUV->name);  
+  ObitTableNXOpen (NXTab, OBIT_IO_ReadOnly, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+  
+  /* Create Row */
+  nxrow = newObitTableNXRow (NXTab);
+
+  /* Convert SU table into Source List if there is an SourceID parameter */
+  if (inIODesc->ilocsu>=0) {
+    ver = 1;
+    SUTable = newObitTableSUValue (inUV->name, (ObitData*)inUV, &ver, numIF, 
+				   OBIT_IO_ReadOnly, err);
+    if (SUTable) SouList = ObitTableSUGetList (SUTable, err);
+    if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+    SUTable = ObitTableSUUnref(SUTable);
+  } else {  /* Create a source object */
+    mySource = newObitSource("Single");
+    strncpy (mySource->SourceName, inDesc->object, MIN(20,UVLEN_VALUE));
+    mySource->equinox = inDesc->equinox;
+    mySource->RAMean  = inDesc->crval[inDesc->jlocr];
+    mySource->DecMean = inDesc->crval[inDesc->jlocd];
+    /* Compute apparent position */
+    ObitPrecessUVJPrecessApp (inDesc, mySource);
+  }
+
+  /* Convert AN table into AntennaList */
+  ver = 1;
+  numPCal  = 0;
+  numOrb   = 0;
+  ANTable = newObitTableANValue (inUV->name, (ObitData*)inUV, &ver, 
+				 numIF, numOrb, numPCal, OBIT_IO_ReadOnly, err);
+  if (ANTable) AntList = ObitTableANGetList (ANTable, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+  ANTable = ObitTableANUnref(ANTable);
+
+  /* List of antennas to display */
+  maxAnt = 0;
+  for (i=0; i<AntList->number; i++) maxAnt = MAX (maxAnt, AntList->ANlist[i]->AntID);
+
+  /* Which antennas wanted */
+  AntOK  = g_malloc0(maxAnt*sizeof(gboolean));
+  for (iant = 0; iant<maxAnt; iant++)
+    AntOK[iant] = ObitUVSelWantAnt (sel, iant+1);
+
+  /* How much flagged */
+  cntFlag = 0;
+  sumFlag = 0.0;
+ 
+  /* Loop over NX table  */
+  for (irow=1; irow<=NXTab->myDesc->nrow; irow++) {
+    ObitTableNXReadRow (NXTab, irow, nxrow, err);
+    if (err->error) goto cleanup;
+    if (nxrow->status==-1) continue;  /* Deselected? */
+    
+    /* Want this one? */
+    want = ObitUVSelWantSour (sel, nxrow->SourID);
+    want = want && ((sel->SubA <= 0) || (sel->SubA ==  nxrow->SubA));
+    want = want && ((sel->FreqID <= 0) || (sel->FreqID ==  nxrow->FreqID));
+    want = want && (nxrow->Time-0.5*nxrow->TimeI >= sel->timeRange[0]);
+    want = want && (nxrow->Time+0.5*nxrow->TimeI <= sel->timeRange[1]);
+
+    /* If so write selected flagging */
+    if (want) {
+
+      row->SourID       = nxrow->SourID;
+      row->SubA         = nxrow->SubA;
+      row->freqID       = nxrow->FreqID;
+      tBeg              = nxrow->Time-0.5*nxrow->TimeI;
+      tEnd              = nxrow->Time+0.5*nxrow->TimeI;
+
+      /* Source info */
+      if (SouList) curSource = SouList->SUlist[nxrow->SourID-1];
+      else curSource = mySource;
+      
+      /* Loop over antennas */
+      for (iant=0; iant<maxAnt; iant++) {
+	if (!AntOK[iant]) continue;  /* selected? */
+	/* Check Elevation at beginning and end */
+	elevBeg = ObitAntennaListElev(AntList, iant+1, tBeg, curSource);	
+	elevEnd = ObitAntennaListElev(AntList, iant+1, tEnd, curSource);
+	if ((elevBeg>minElevRad) && (elevEnd>minElevRad)) continue;  /* Both OK */
+	/* If OK at start but not end, test by one min increments */
+	if (elevBeg>minElevRad) {
+	  t = tBeg + oneMin;
+	  while (t<tEnd) {
+	    elevBeg = ObitAntennaListElev(AntList, iant+1, t, curSource);	
+	    if (elevBeg<minElevRad) break;
+	    tBeg = t;
+	    t += oneMin;
+	  }
+	}
+	/* If OK at end but not start, test by one min increments */
+	if (elevEnd>minElevRad) {
+	  t = tEnd - oneMin;
+	  while (t<tEnd) {
+	    elevEnd = ObitAntennaListElev(AntList, iant+1, t, curSource);	
+	    if (elevEnd<minElevRad) break;
+	    tEnd = t;
+	    t -= oneMin;
+	  }
+	}
+	if ((elevBeg<minElevRad) || (elevEnd<minElevRad)) {
+	  /* if either end too low, write row */
+	  row->ants[0]      = iant+1;
+	  row->TimeRange[0] = tBeg;
+	  row->TimeRange[1] = tEnd;
+	  orow = FlagTab->myDesc->nrow+1;
+	  ObitTableFGWriteRow (FlagTab, orow, row, err);
+	  if (err->error) goto cleanup;
+	  cntFlag++;
+	  sumFlag += nxrow->TimeI;
+	  /* Diagnostics */
+	  if (err->prtLv>3) {
+	    T2String (tBeg, tString1);
+	    T2String (tEnd, tString2);
+	    Obit_log_error(err, OBIT_InfoErr, "Ant %d Sou %d flagged %s - %s ",
+			   row->ants[0], row->SourID, tString1, tString2);
+	  }
+	} /* End if write */
+      } /* end antenna loop */
+      ObitErrLog(err);    /* Any messages */
+    } /* end if want */
+  } /* end loop over rows */
+
+  /* Give report */
+  Obit_log_error(err, OBIT_InfoErr, "Wrote %d elevation flags for %14.3g min.",
+		 cntFlag, sumFlag*1440.0);
+
+   /* Cleanup */
+ cleanup:
+  /* Close  tables */
+  ObitTableFGClose (FlagTab, err);
+  ObitTableNXClose (NXTab, err);
+  FlagTab = ObitTableFGUnref(FlagTab);
+  row     = ObitTableFGRowUnref(row);
+  NXTab   = ObitTableNXUnref(NXTab);
+  nxrow   = ObitTableNXRowUnref(nxrow);
+  SouList = ObitSourceListUnref(SouList);
+  mySource= ObitSourceUnref(mySource);
+  SUTable = ObitTableSUUnref(SUTable);
+  AntList = ObitAntennaListUnref(AntList);
+  ANTable = ObitTableANUnref(ANTable);
+  if (AntOK) g_free(AntOK);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+} /* end ObitUVEditElev */
+
+/**
+ * Shadowing/cross talk flagging 
+ * Loops through the NX table in 1 min increments, ant antenna that 
+ * is in a baseline < minShad in length and behind the other antenna
+ * is flagged for that interval.
+ * Baselines shorter than minCross but longer than minShad are flagged.
+ * Control parameters are on the inUV info member:
+ * \li "minShad"  OBIT_float  (1,1,1)  Minimum shadowing (m) [0]
+ *                All baselines to affected antenna flagged
+ * \li "minCross" OBIT_float  (1,1,1)  Minimum bl for crosstalk (m) [0]
+ *                Only affected baselines flagged.
+ * \li "flagTab"  OBIT_long   (1,1,1)  output Flag table version [1]
+ * \li "PFlag"    OBIT_string  (4,1,1) Stokes/PFlag string, def '1111'
+ * \li "Reason"   OBIT_string  (24,1,1) Reason for flagging
+ * \param inUV     Input uv data to edit 
+ * \param outUV    UV on which the FG table to be written, may be the same as inUV.
+ * \param err      Error stack, returns if not empty.
+ *                 if prtLv >3 then give diagnostics
+ */
+void ObitUVEditShadCross (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
+{
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM];
+  olong flagTab, ver, irow, orow, maxAnt, iant, ibase, oant;
+  olong cntFlagS, cntFlagC;
+  gboolean *AntOK=NULL, doFlag, want;
+  ofloat minShad, minShadLam2, minCross, minCrossLam2;
+  ofloat sumFlagS, sumFlagC;
+  ofloat tBeg, tEnd, bl2, bl2B, bl2E;
+  ofloat time, oneMin=1.0/1440.0, uvw[3];
+  ObitTableFG  *FlagTab=NULL;
+  ObitTableFGRow *row=NULL;
+  ObitTableNX  *NXTab=NULL;
+  ObitTableNXRow *nxrow=NULL;
+  ObitUVSel *sel = inUV->mySel;
+  ObitUVWCalc  *UVWCalc=NULL;
+  gchar Stokes[5], Reason[25], tString[25];
+  gchar *routine = "ObitUVEditShadCross";
+ 
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return;
+  g_assert (ObitUVIsA(inUV));
+
+  /* Open UV data  */
+  ObitUVOpen (inUV, OBIT_IO_ReadCal, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+
+ /* Control parameters */
+  minShad = 25.0;
+  ObitInfoListGetTest(inUV->info, "minShad",   &type, dim, &minShad);  
+  minShadLam2 = minShad / (VELIGHT/inUV->myDesc->freq);   /* In wavelengths at reference freq */
+  minShadLam2 *= minShadLam2;                              /* Squared */
+  minCross = 25.0;
+  ObitInfoListGetTest(inUV->info, "minCross",  &type, dim, &minCross);  
+  minCrossLam2 = minCross / (VELIGHT/inUV->myDesc->freq);    /* In wavelengths at reference freq */
+  minCrossLam2 *= minCrossLam2;                              /* Squared */
+  flagTab = 1;
+  ObitInfoListGetTest(inUV->info, "flagTab",   &type, dim, &flagTab);  
+  strncpy (Stokes, "    ", 4);
+  ObitInfoListGetTest(inUV->info, "PFlag",  &type, dim, Stokes); Stokes[4] = 0;
+  strncpy (Reason, "                        ", 24);
+  ObitInfoListGetTest(inUV->info, "Reason",  &type, dim, Reason); Reason[24] = 0;
+  /* Default reason */
+  if (!strncmp(Reason, "          ", 10))
+      strncpy (Reason, "Shadowing/crosstalk     ", 24);
+
+  /* Tell */
+  Obit_log_error(err, OBIT_InfoErr, "Flagging Shadow limit %5.1f m Crosstalk limit %5.1f m  ",
+		 minShad, minCross);
+
+  /* Get FlaG table */
+  FlagTab = newObitTableFGValue("outFG", (ObitData*)inUV, &flagTab, OBIT_IO_ReadWrite, 
+				err);
+  ObitTableFGOpen (FlagTab, OBIT_IO_ReadWrite, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+  
+  /* Create Row */
+  row = newObitTableFGRow (FlagTab);
+  
+  /* Attach row to output buffer */
+  ObitTableFGSetRow (FlagTab, row, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+  
+  /* Stokes flags */
+  if      (!strncmp(Stokes, "    ", 4)) row->pFlags[0] = 1+2+4+8;     /* All */
+  else if (!strncmp(Stokes, "I   ", 4)) row->pFlags[0] = 1+2;         /* I */
+  else if (!strncmp(Stokes, "Q   ", 4)) row->pFlags[0] = 1+2+4+8;     /* Q */
+  else if (!strncmp(Stokes, "U   ", 4)) row->pFlags[0] = 1+2+4+8;     /* U */
+  else if (!strncmp(Stokes, "V   ", 4)) row->pFlags[0] = 1+2+4+8;     /* V */
+  else if (!strncmp(Stokes, "RR  ", 4) || !strncmp(Stokes, "XX  ", 4)) row->pFlags[0] = 1;
+  else if (!strncmp(Stokes, "LL  ", 4) || !strncmp(Stokes, "YY  ", 4)) row->pFlags[0] = 2;
+  else if (!strncmp(Stokes, "RL  ", 4) || !strncmp(Stokes, "XY  ", 4)) row->pFlags[0] = 4;
+  else if (!strncmp(Stokes, "LR  ", 4) || !strncmp(Stokes, "YY  ", 4)) row->pFlags[0] = 8;
+  else if ((Stokes[0]=='1') || (Stokes[0]=='0')) {
+    /* flag bits passed */
+    row->pFlags[0] = 0;
+    if (Stokes[0]=='1')  row->pFlags[0] |= 1;
+    if (Stokes[1]=='1')  row->pFlags[0] |= 2;
+    if (Stokes[2]=='1')  row->pFlags[0] |= 4;
+    if (Stokes[3]=='1')  row->pFlags[0] |= 8;
+  } else row->pFlags[0] = 1+2+4+8;   /* what the hell */
+  /* Channels/IFs selected */
+  row->chans[0] = inUV->mySel->startChann; row->chans[1] = row->chans[0]+inUV->mySel->numberChann-1;
+  row->ifs[0]   = inUV->mySel->startIF;    row->ifs[1]   = row->ifs[0]+inUV->mySel->numberIF-1;
+
+  strncpy (row->reason, Reason, 24);  /* Set reason */
+
+  /* Get iNdeX table */
+  ver = 1;
+  NXTab = newObitTableNXValue("index", (ObitData*)inUV, &ver, OBIT_IO_ReadOnly, 
+			      err);
+  Obit_return_if_fail ((NXTab!=NULL), err, 
+		       "%s: UV data %s MUST have an index (NX) table", 
+		       routine, inUV->name);  
+  ObitTableNXOpen (NXTab, OBIT_IO_ReadOnly, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+  
+  /* Create Row */
+  nxrow = newObitTableNXRow (NXTab);
+
+  /* UVW calculator */
+  UVWCalc = ObitUVWCalcCreate("UVWCalc", inUV, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+  maxAnt = UVWCalc->maxAnt;  /* Maximum antenna number */
+
+  /* Which antennas wanted */
+  AntOK  = g_malloc0((maxAnt+2)*sizeof(gboolean));
+  for (iant = 0; iant<maxAnt; iant++)
+    AntOK[iant] = ObitUVSelWantAnt (sel, iant+1);
+
+  /* How much flagged */
+  cntFlagS = cntFlagC = 0;
+  sumFlagS = sumFlagC = 0.0;
+ 
+
+  /* Loop over NX table  */
+  for (irow=1; irow<=NXTab->myDesc->nrow; irow++) {
+    ObitTableNXReadRow (NXTab, irow, nxrow, err);
+    if (err->error) goto cleanup;
+    if (nxrow->status==-1) continue;  /* Deselected? */
+    
+    /* Want this one? */
+    want = ObitUVSelWantSour (sel, nxrow->SourID);
+    want = want && ((sel->SubA <= 0) || (sel->SubA ==  nxrow->SubA));
+    want = want && ((sel->FreqID <= 0) || (sel->FreqID ==  nxrow->FreqID));
+    want = want && (nxrow->Time-0.5*nxrow->TimeI >= sel->timeRange[0]);
+    want = want && (nxrow->Time+0.5*nxrow->TimeI <= sel->timeRange[1]);
+
+    /* If so write selected flagging */
+    if (want) {
+
+      row->SourID       = nxrow->SourID;
+      row->SubA         = nxrow->SubA;
+      row->freqID       = nxrow->FreqID;
+      tBeg              = nxrow->Time-0.5*nxrow->TimeI;
+      tEnd              = nxrow->Time+0.5*nxrow->TimeI;
+
+      /* Loop over 1 min increments */
+      time = tBeg + oneMin/2;
+      while (time<tEnd) {
+	row->TimeRange[0] = time-oneMin/2;
+	row->TimeRange[1] = time+oneMin/2;
+
+	/* Loop over antennas */
+	for (iant=0; iant<maxAnt-1; iant++) {
+	  if (!AntOK[iant]) continue;  /* selected? */
+	  /* Loop over baseline */
+	  for (ibase=iant+1; ibase<maxAnt; ibase++) {
+	    if (!AntOK[ibase]) continue;  /* selected? */
+	    
+	    /* Get baseline at start and end */
+	    ObitUVWCalcUVW (UVWCalc, time-oneMin/2, row->SourID, row->SubA, 
+			    iant+1, ibase+1, uvw, err);
+	    bl2B = uvw[0]*uvw[0] + uvw[1]*uvw[1];
+	    ObitUVWCalcUVW (UVWCalc, time+oneMin/2, row->SourID, row->SubA, 
+			    iant+1, ibase+1, uvw, err);
+	    if (err->error) goto cleanup;
+	    bl2E = uvw[0]*uvw[0] + uvw[1]*uvw[1];
+	    bl2 = MIN (bl2B, bl2E); /* Use shorter of the two ends */
+	    /* Shadowing? */
+	    doFlag = FALSE;
+	    if (bl2<=minShadLam2) {
+	      /* Shadowing, flag the one furthest from the source (neg w) */
+	      if (uvw[2]<0.0) {row->ants[0] = iant+1; oant = ibase+1;}
+	      else            {row->ants[0] = ibase+1;oant = iant+1;}
+	      row->ants[1] = 0;
+	      doFlag = TRUE;
+	      cntFlagS++;
+	      sumFlagS += oneMin;
+	      /* Diagnostics */
+	      if (err->prtLv>3) {
+		T2String (time, tString);
+		Obit_log_error(err, OBIT_InfoErr, "Ant %d shadowded by ant %d sou %d at %s  ",
+			       row->ants[0], oant, row->SourID, tString);
+	      }
+	    } else if (bl2<=minCrossLam2) {
+	      /* In cross talk zone, flag baseline */
+	      row->ants[0] = iant+1;
+	      row->ants[1] = ibase+1;
+	      doFlag = TRUE;
+	      cntFlagC++;
+	      sumFlagC += oneMin;
+	      /* Diagnostics */
+	      if (err->prtLv>3) {
+		T2String (time, tString);
+		Obit_log_error(err, OBIT_InfoErr, "Ant %d cross talk with ant %d sou %d at %s  ",
+			       row->ants[0], row->ants[1], row->SourID, tString);
+	      }
+	    } /* end in cross talk */
+	    /* Write flag? */
+	    if (doFlag) {
+	      orow = FlagTab->myDesc->nrow+1;
+	      ObitTableFGWriteRow (FlagTab, orow, row, err);
+	      if (err->error) goto cleanup;
+	    }
+
+	  } /* end baseline loop */
+	} /* end antenna loop */
+	time += oneMin;
+      } /* end loop in time */
+      ObitErrLog(err);    /* Any messages */
+    } /* end if scan selected */
+  } /* end loop over scans */
+  
+  /* Give report */
+  if (minShad>0.001) {
+    Obit_log_error(err, OBIT_InfoErr, "Wrote %d Shadow flags for %14.3g min.",
+		   cntFlagS, sumFlagS*1440.0);
+  }
+  if (minCross>0.001) {
+    Obit_log_error(err, OBIT_InfoErr, "Wrote %d Cross talk flags for %14.3g min.",
+		   cntFlagC, sumFlagC*1440.0);
+  }
+
+   /* Cleanup */
+ cleanup:
+  /* Close  */
+  ObitTableFGClose (FlagTab, err);
+  ObitUVClose (inUV, err);
+  FlagTab = ObitTableFGUnref(FlagTab);
+  row     = ObitTableFGRowUnref(row);
+  NXTab   = ObitTableNXUnref(NXTab);
+  nxrow   = ObitTableNXRowUnref(nxrow);
+  UVWCalc = ObitUVWCalcUnref(UVWCalc);
+  if (AntOK) g_free(AntOK);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+} /* end ObitUVEditShadCross */
 
 /**
  * Routine translated from the AIPSish TDEDIT.FOR/TDCLHI  

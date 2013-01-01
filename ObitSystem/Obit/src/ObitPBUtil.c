@@ -175,9 +175,9 @@ ofloat ObitPBUtilJinc (odouble Angle, odouble Freq, ofloat antSize,
   if (asize <= 0.0) asize = 25.0;
 
   /* beam scale size at 1.47 GHz */
-  scale = vscale * 25.0 / asize;
+  scale = vscale * asize / 25.0;
 
-  x = scale * Angle * Freq * DG2RAD;
+  x = scale * Angle * Freq;
   if (x  <  xmax) {
     u = x * x / 9.0;
     pb = 0.5 + u*(c1 + u*(c2 + u*(c3 + u*(c4 + u*(c5 + u*c6)))));

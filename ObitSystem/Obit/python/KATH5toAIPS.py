@@ -4,7 +4,7 @@ This module requires katfile and katpoint and their dependencies
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004,2005,2008
+#  Copyright (C) 2012
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -38,7 +38,10 @@ except Exception, exception:
 else:
     pass
 import time
-import UV, UVVis, OErr, UVDesc, Table
+import UV, UVVis, OErr, UVDesc, Table, History
+from OTObit import day2dhms
+import numpy      
+from numpy import numarray
 
 def KAT2AIPS (h5datafile, outUV, err, \
               calInt=1.0):
@@ -48,21 +51,26 @@ def KAT2AIPS (h5datafile, outUV, err, \
     This module requires katfile and katpoint and their dependencies
      contact Ludwig Schwardt <schwardt@ska.ac.za> for details
     * h5datafile  = input KAT data file
-    * outUV       = Obit UV object, shoud be a KAT template for the
+    * outUV       = Obit UV object, should be a KAT template for the
                     appropriate number of IFs and poln.
     * err         = Obit error/message stack
     * calInt      = Calibration interval in min.
     """
     ################################################################
     # get interface
+    OK = False
     try:
         katdata = katfile.open(h5datafile)
+        OK = True
     except Exception, exception:
         print exception
-        OErr.PSet(err)
-        OErr.PLog(err, OErr.Fatal, "Unable to read KAT HDF5 data in "+h5datafile)
     else:
         pass
+    if not OK:
+        OErr.PSet(err)
+        OErr.PLog(err, OErr.Fatal, "Unable to read KAT HDF5 data in "+h5datafile)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error with h5 file")
     # Extract metadata
     meta = GetKATMeta(katdata, err)
     # Update descriptor
@@ -78,9 +86,27 @@ def KAT2AIPS (h5datafile, outUV, err, \
     ConvertKATData(outUV, katdata, meta, err)
 
     # Index data
+    OErr.PLog(err, OErr.Info, "Indexing data")
+    OErr.printErr(err)
     UV.PUtilIndex (outUV, err)
+
+    # Open/close UV to update header
+    outUV.Open(UV.READONLY,err)
+    outUV.Close(err)
+    if err.isErr:
+        OErr.printErrMsg(err, message="Update UV header failed")
+
     # initial CL table
-    UV.PTableCLGetDummy(outUV, outUV, 1, err, solInt=calInt)
+    OErr.PLog(err, OErr.Info, "Create Initial CL table")
+    OErr.printErr(err)
+    nant = len(meta["ants"])  # Number of antennas
+    CLfromNX(outUV, nant, err, calInt=calInt)
+    #UV.PTableCLGetDummy(outUV, outUV, 1, err, solInt=calInt)
+    outUV.Open(UV.READONLY,err)
+    outUV.Close(err)
+    if err.isErr:
+        OErr.printErrMsg(err, message="Update UV header failed")
+
     # History
     outHistory = History.History("outhistory", outUV.List, err)
     outHistory.Open(History.READWRITE, err)
@@ -88,7 +114,15 @@ def KAT2AIPS (h5datafile, outUV, err, \
     outHistory.WriteRec(-1,"datafile = "+h5datafile, err)
     outHistory.WriteRec(-1,"calInt   = "+str(calInt), err)
     outHistory.Close(err)
-   # end KAT2AIPS
+    outUV.Open(UV.READONLY,err)
+    outUV.Close(err)
+    if err.isErr:
+        OErr.printErrMsg(err, message="Update UV header failed")
+    
+    del katdata  # Free katdata
+    del meta
+
+    # end KAT2AIPS
 
 def GetKATMeta(katdata, err):
     """
@@ -124,7 +158,7 @@ def GetKATMeta(katdata, err):
     td = {}
     i = 0
     for t in  katdata.catalogue.targets:
-        name = t.name
+        name = (t.name+"                ")[0:16]
         ras, decs = t.radec()
         dec = UVDesc.PDMS2Dec(str(decs).replace(':',' '))
         ra  = UVDesc.PHMS2RA(str(ras).replace(':',' '))
@@ -134,7 +168,7 @@ def GetKATMeta(katdata, err):
         raa  = UVDesc.PHMS2RA(str(ras).replace(':',' '))
         i += 1
         tl.append((i, name, ra, dec, raa, deca))
-        td[name] = i
+        td[t.name] = i
     out["targets"] = tl
     out["targLookup"] = td
     # Antennas
@@ -266,7 +300,8 @@ def WriteFQTable(outUV, meta, err):
             OErr.printErrMsg(err, "Error zapping old FQ table")
     reffreq =  meta["spw"][0][1]   # reference frequency
     noif    = len(meta["spw"])     # Number of IFs
-    fqtab = outUV.NewTable(Table.READWRITE, "AIPS FQ",1,err,numIF=noif)
+    onoif   = outUV.Desc.Dict["inaxes"][outUV.Desc.Dict["jlocif"]]
+    fqtab = outUV.NewTable(Table.READWRITE, "AIPS FQ",1,err,numIF=onoif)
     if err.isErr:
         OErr.printErrMsg(err, "Error with FQ table")
     fqtab.Open(Table.READWRITE, err)
@@ -285,15 +320,29 @@ def WriteFQTable(outUV, meta, err):
     irow = 0
     for sw in meta["spw"]:
         irow += 1
-        row['FRQSEL']    = [irow]
-        row['IF FREQ']   = [sw[1] - reffreq]
-        row['CH WIDTH']  = [sw[2]]
-        row['TOTAL BANDWIDTH']  = [abs(sw[2])*sw[0]]
-        row['RXCODE']  = ['L']
+        iffa = []
+        chwa = []
+        tbwa = []
+        sba  = []
+        rxca = ""
         if sw[2]>0.0:
-            row['SIDEBAND']  = [1]
+            sb = 1
         else:
-            row['SIDEBAND']  = [-1]
+            sb = -1
+        freq0 = sw[1] - reffreq
+        delta = sw[2]*sw[0]/onoif
+        for iif in range(0,onoif):
+            iffa.append(freq0 + iif*delta)
+            chwa.append(sw[2])
+            tbwa.append(abs(delta))
+            sba.append(sb)
+            rxca = rxca+"L       "
+        row['FRQSEL']          = [irow]
+        row['IF FREQ']         = iffa
+        row['CH WIDTH']        = chwa
+        row['TOTAL BANDWIDTH'] = tbwa 
+        row['RXCODE']          = [rxca]
+        row['SIDEBAND']        = sba
         fqtab.WriteRow(irow, row,err)
         if err.isErr:
             OErr.printErrMsg(err, "Error writing FQ table")
@@ -372,13 +421,38 @@ def ConvertKATData(outUV, katdata, meta, err):
     outUV.List.set("nVisPIO", 1)
     
     # Open data
-    outUV.Open(UV.READWRITE, err)
+    zz = outUV.Open(UV.READWRITE, err)
     if err.isErr:
         OErr.printErrMsg(err, "Error opening output UV")
+    # visibility record offsets
+    d = outUV.Desc.Dict
+    ilocu   = d['ilocu']
+    ilocv   = d['ilocv']
+    ilocw   = d['ilocw']
+    iloct   = d['iloct']
+    ilocb   = d['ilocb']
+    ilocsu  = d['ilocsu']
+    nrparm  = d['nrparm']
+    jlocc   = d['jlocc']
+    jlocs   = d['jlocs']
+    jlocf   = d['jlocf']
+    jlocif  = d['jlocif']
+    naxes   = d['inaxes']
+    count = 0.0
+    visno = 0
+  
+    # Get IO buffers as numpy arrays
+    shape = len(outUV.VisBuf) / 4
+    buffer =  numarray.array(sequence=outUV.VisBuf,
+                             type=numarray.Float32, shape=shape)
+    # Set number of vis in buffer
+    od = outUV.Desc.Dict
+    od['numVisBuff'] = 1;
+    outUV.Desc.Dict = od
 
     # Template vis
     vis = outUV.ReadVis(err, firstVis=1)
-    vis.ant1 = -10
+    first = True
     firstVis = 1
     for scan, state, target in katdata.scans():
         if state!="track":
@@ -393,34 +467,37 @@ def ConvertKATData(outUV, katdata, meta, err):
         suid = meta["targLookup"][target.name]
         # Number of integrations
         nint = len(uu)
+        msg = "Scan %4d Int %16s Start %s"%(nint,target.name,day2dhms((tm[0]-time0)/86400.0)[0:12])
+        OErr.PLog(err, OErr.Info, msg);
+        OErr.printErr(err)
+        
         # Loop over integrations
         for iint in range(0,nint):
             # loop over data products/baselines
             for iprod in range(0,nprod):
-                # Set visibility parameters the first time per baseline
-                if vis.ant1<0:
-                    pass
-                    vis.time = (tm[iint]-time0)/86400.0 # Time in days
-                    vis.u = uu[iint][iprod]/lamb
-                    vis.v = vv[iint][iprod]/lamb
-                    vis.w = ww[iint][iprod]/lamb
-                    vis.ant1 = p[iprod][0]
-                    vis.ant2 = p[iprod][1]
-                    vis.ant2 = p[iprod][1]
-                    vis.suid = suid
-                    #print type(vs[iint][0][iprod]),vs[iint][0][iprod]
-                # Loop over channels copying data
-                for ifreq in range(0,nchan):
-                    indx = ifreq*nstok + p[iprod][2]
-                    c = vs[iint][ifreq][iprod]
-                    vis.vis[indx] = (complex(c.real, c.imag), wt[iint][ifreq][iprod][0])
-                    #DEBUG vis.vis[indx] = (vs[iint][ifreq][iprod], wt[iint][ifreq][iprod][0])
+                # Copy slices
+                indx = nrparm+(p[iprod][2])*3
+                buffer[indx:indx+(nchan+1)*nstok*3:nstok*3] = vs[iint:iint+1,:,iprod:iprod+1].real.flatten()
+                indx += 1
+                buffer[indx:indx+(nchan+1)*nstok*3:nstok*3] = vs[iint:iint+1,:,iprod:iprod+1].imag.flatten()
+                indx += 1
+                buffer[indx:indx+(nchan+1)*nstok*3:nstok*3] = wt[iint:iint+1,:,iprod:iprod+1].flatten()
                 # Write if Stokes index >= next or the last
                 if (iprod==nprod-1) or (p[iprod][2]>=p[iprod+1][2]):
-                    outUV.WriteVis(vis, err, firstVis=firstVis)
+                    # Random parameters
+                    buffer[ilocu]  = uu[iint][iprod]/lamb
+                    buffer[ilocv]  = vv[iint][iprod]/lamb
+                    buffer[ilocw]  = ww[iint][iprod]/lamb
+                    buffer[iloct]  = (tm[iint]-time0)/86400.0 # Time in days
+                    buffer[ilocb]  = p[iprod][0]*256.0 + p[iprod][1]
+                    buffer[ilocsu] = suid
+                    outUV.Write(err, firstVis=visno)
+                    visno += 1
+                    buffer[3]= -3.14159
+                    #print visno,buffer[0:5]
                     firstVis = None  # Only once
                     # initialize visibility
-                    vis.ant1 = -10
+                    first = True
             # end loop over integrations
             if err.isErr:
                 OErr.printErrMsg(err, "Error writing data")
@@ -429,4 +506,80 @@ def ConvertKATData(outUV, katdata, meta, err):
     if err.isErr:
         OErr.printErrMsg(err, "Error closing data")
     # end ConvertKATData
+
+def CLfromNX(outUV, nant, err, outVer=1, calInt=1.0):
+    """
+    Create a CL table from an iNdeX table
+
+     * outUV    = Obit UV object
+     * nant     = Maximum antenna number
+     * err      = Python Obit Error/message stack to init
+     * outVer   = output CL table version
+     * calInt   = calibration table interval in min
+    """
+    ################################################################
+    # If an old table exists, delete it
+    if outUV.GetHighVer("AIPS CL")>=outVer:
+        zz = outUV.ZapTable("AIPS CL", outVer, err)
+        if err.isErr:
+            OErr.printErrMsg(err, "Error zapping old FQ table")
+    noif   = outUV.Desc.Dict["inaxes"][outUV.Desc.Dict["jlocif"]]
+    npol   = outUV.Desc.Dict["inaxes"][outUV.Desc.Dict["jlocs"]]
+    calI = (calInt-(1.0/60))/1440  # Imcrement in days
+    cltab = outUV.NewTable(Table.READWRITE, "AIPS CL",outVer,err,numIF=noif,numPol=npol,numTerm=1)
+    nxtab = outUV.NewTable(Table.READONLY, "AIPS NX", 1,err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error with table")
+    cltab.Open(Table.READWRITE, err)
+    nxtab.Open(Table.READONLY, err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error opening table")
+    # Update header
+    # Create row
+    ia = [];     fa1 = []; fa0 = []
+    for iif in range(0,noif):
+        ia. append(0)
+        fa1.append(1.0)
+        fa0.append(0.0)
+    row = {'Table name':'AIPS CL', '_status':[1], 'NumFields':34,
+           'TIME':[0.0],  'TIME INTERVAL': [0.0], 'ANTENNA NO.':[1], 'SOURCE ID':[1], 'SUBARRAY':[0], 'FREQ ID':[0],
+           'ATMOS':[0.0], 'DATMOS':[0.0], 'DOPPOFF':fa0,  'I.FAR.ROT':[0.0],'GEODELAY':[0.0],  
+           'MBDELAY1':[0.0], 'DISP 1':[0.0], 'DDISP 1':[0.0], 'CLOCK 1':[0.0],  'DCLOCK 1':[0.0],
+           'MBDELAY2':[0.0], 'DISP 2':[0.0], 'DDISP 2':[0.0], 'CLOCK 2':[0.0],  'DCLOCK 2':[0.0],
+           'REAL1':fa1, 'IMAG1':fa0,  'DELAY 1':fa0, 'RATE 1':fa0, 'WEIGHT 1':fa1, 'REFANT 1':ia,
+           'REAL2':fa1, 'IMAG2':fa0,  'DELAY 2':fa0, 'RATE 2':fa0,'WEIGHT 2':fa1, 'REFANT 2':ia,
+            }
+    # Loop over NX rows
+    nrows = nxtab.Desc.Dict["nrow"]
+    irow = -1
+    for inxrow in range (1,nrows+1):
+        nxrow = nxtab.ReadRow(inxrow,err)
+        if err.isErr:
+            OErr.printErrMsg(err, "Error reading NX table")
+        OErr.printErr(err)
+        # Divvy up scans
+        ntime = max (1, int(0.5+nxrow['TIME INTERVAL'][0]/calI))
+        delta = nxrow['TIME INTERVAL'][0]/ntime
+        time = []
+        for itime in range (0,ntime):
+            time.append(nxrow['TIME'][0]-0.5*nxrow['TIME INTERVAL'][0]+itime*delta)
+        # end of scan
+        ntime += 1
+        time.append(nxrow['TIME'][0]+0.5*nxrow['TIME INTERVAL'][0])
+        row['SOURCE ID'][0] = nxrow['SOURCE ID'][0]   # source number
+        # Loop over times in scan
+        for itime in range (0,ntime):
+            row['TIME']          = [time[itime]]
+            row['TIME INTERVAL'] = [delta]
+            # Loop over antennas
+            for iant in range(1,nant+1):
+                row['ANTENNA NO.'] = [iant]
+                cltab.WriteRow(irow, row,err)
+                if err.isErr:
+                    OErr.printErrMsg(err, "Error writing CL table")
+    cltab.Close(err)
+    nxtab.Close(err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error closing table")
+    # end CLfromNX
 

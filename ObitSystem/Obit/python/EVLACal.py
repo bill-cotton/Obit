@@ -1284,7 +1284,7 @@ def EVLAShadow(uv, err, shadBl=25.0, flagVer=2, \
     """
     Flags antennas shadowed by others
     
-    See documentation for task AIPSD/UVFLG for details
+    See documentation for task Obit/UVFlag for details
     Returns task error code, 0=OK, else failed
 
     * uv       = UV data object to flag
@@ -1298,7 +1298,7 @@ def EVLAShadow(uv, err, shadBl=25.0, flagVer=2, \
     ################################################################
     mess =  "Shadow flag data"
     printMess(mess, logfile)
-    uvflg=AIPSTask.AIPSTask("uvflg")
+    uvflg=ObitTask.ObitTask("UVFlag")
     try:
         uvflg.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
     except Exception, exception:
@@ -1306,13 +1306,14 @@ def EVLAShadow(uv, err, shadBl=25.0, flagVer=2, \
     
     if not check:
         setname(uv, uvflg)
-    uvflg.opcode    = "FLAG"
-    uvflg.aparm[5]  = shadBl
-    uvflg.outfgver  = flagVer
-    uvflg.reason    = "Shadowed"
-    uvflg.logFile   = logfile
-    uvflg.msgkill   = 5        # Suppress blather
+    uvflg.opCode    = "SHAD"
+    uvflg.minShad   = shadBl
+    uvflg.flagTab   = flagVer
+    uvflg.Reason    = "Shadowed"
+    uvflg.taskLog   = logfile
     if debug:
+        uvflg.prtLv = 4
+        uvflg.debug = debug
         uvflg.i
     # Trap failure
     try:
@@ -1320,7 +1321,7 @@ def EVLAShadow(uv, err, shadBl=25.0, flagVer=2, \
             uvflg.g
     except Exception, exception:
         print exception
-        mess = "UVFLG Failed retCode= "+str(uvflg.retCode)
+        mess = "UVFlag Failed retCode= "+str(uvflg.retCode)
         printMess(mess, logfile)
         return 1
     else:
@@ -1750,11 +1751,11 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
     # end EVLADelayCal
 
 def EVLACalAP(uv, target, ACals, err, \
-              PCals=None, FQid=0, calFlux=None, \
+              PCals=None, FQid=0, calFlux=None, timeRange = [0.0,1.0e20], \
               doCalib=-1, gainUse=0, doBand=0, BPVer=0, flagVer=-1, \
-              BChan=1, EChan=1, \
+              BChan=1, EChan=1,  avgPol=False, \
               solnver=0, solInt=10.0/60.0, solSmo=0.0, nThreads=1, refAnt=0, ampScalar=False, \
-              doAmpEdit=False, ampSigma=20, flagFail=True, ampEditFG=-1, \
+              doAmpEdit=False, ampSigma=20, flagFail=True, ampEditFG=-1,\
               doPlot=False, plotFile="./APCal.ps", \
               check=False, debug = False, noScrat=[], logfile = ""):
     """
@@ -1774,6 +1775,8 @@ def EVLACalAP(uv, target, ACals, err, \
     * FQid     = Frequency Id to process, 0=>any
     * BChan    = First (1-rel channel to include
     * EChan    = Highest channel to include
+    * timeRange= timeRange for solutions
+    * avgPol   = Average polarizations before solving?
     * doCalib  = Apply calibration table, positive=>calibrate
     * gainUse  = CL/SN table to apply
     * doBand   = If >0.5 apply previous bandpass cal.
@@ -1856,34 +1859,35 @@ def EVLACalAP(uv, target, ACals, err, \
         solnVer  = solnver
 
     # Phase cals and failed amp cals to 1.0
-    callist = []
-    for PCal in PCals:
-        if PCal["Source"] not in OKAmpCals:
-            callist.append(PCal["Source"])
-    for cal in BadAmpCals:
-        if cal not in OKAmpCals:
-            callist.append(cal)
-    if len(callist)>0:
-        setjy.ZeroFlux=[1.0,0.0,0.0,0.0]
-        setjy.OPType="REJY"
-        #setjy.debug = True # DEBUG
-        for cal in callist:
-            setjy.Sources[0] = cal
-            if debug:
-                setjy.i
-                setjy.debug = debug
-            # Trap failure
-            try:
-                if not check:
-                    setjy.g
-            except Exception, exception:
-                print exception
-                mess = "SetJy Failed retCode="+str(setjy.retCode)
-                printMess(mess, logfile)
-                return 1
-            else:
-                pass
-
+    if PCals:   # Any given?
+        callist = []
+        for PCal in PCals:
+            if PCal["Source"] not in OKAmpCals:
+                callist.append(PCal["Source"])
+        for cal in BadAmpCals:
+            if cal not in OKAmpCals:
+                callist.append(cal)
+        if len(callist)>0:
+            setjy.ZeroFlux=[1.0,0.0,0.0,0.0]
+            setjy.OPType="REJY"
+            #setjy.debug = True # DEBUG
+            for cal in callist:
+                setjy.Sources[0] = cal
+                if debug:
+                    setjy.i
+                    setjy.debug = debug
+                # Trap failure
+                try:
+                    if not check:
+                        setjy.g
+                except Exception, exception:
+                    print exception
+                    mess = "SetJy Failed retCode="+str(setjy.retCode)
+                    printMess(mess, logfile)
+                    return 1
+                else:
+                    pass
+            # end if PCals
     # Calib on Amp cals 
     calib = ObitTask.ObitTask("Calib")
     try:
@@ -1906,6 +1910,8 @@ def EVLACalAP(uv, target, ACals, err, \
     calib.refAnts  = [refAnt]
     calib.noScrat  = noScrat
     calib.solnVer  = solnVer
+    calib.avgPol   = avgPol
+    calib.timeRange= timeRange
     OK      = False   # Must have some work
     OKCals2 = []      # List of ones that worked
     # Loop over calibrators
@@ -4193,7 +4199,7 @@ def EVLAGetTimes(uv, Source, err,
 
 def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band="", \
                      doCalib=-1, gainUse=0, doBand=-1, BPVer=0,  flagVer=-1,  \
-                     doPol=False, PDVer=-1,  minFlux=0.0, \
+                     doPol=False, PDVer=-1,  minFlux=0.0, Beam=[0.,0.,0.], \
                      Stokes="I", FOV=0.1/3600.0, Robust=0, Niter=300, CleanRad=None, \
                      maxPSCLoop=0, minFluxPSC=0.1, solPInt=20.0/60., \
                      solPMode="P", solPType= "  ", \
@@ -4231,6 +4237,7 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
     * FOV        = Field of view to image in deg
     * Robust     = Weighting robustness parameter
     * Niter      = max no. iterations
+    * Beam       = Clean restoring beam
     * CleanRad   = CLEAN radius about center or None=autoWin
     * maxPSCLoop = max. number of phase sc loops
     * minFluxPSC = Trip level for phase self cal (Jy)
@@ -4328,6 +4335,7 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
     imager.FOV         = FOV
     imager.Robust      = Robust
     imager.Niter       = Niter
+    imager.Beam        = Beam
     imager.minFlux     = minFlux
     imager.maxPSCLoop  = maxPSCLoop
     imager.minFluxPSC  = minFluxPSC

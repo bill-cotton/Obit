@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageDesc type                         */
 /*                                                                    */
-/*;  Copyright (C)2005-2011                                           */
+/*;  Copyright (C)2005-2012                                           */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -204,6 +204,7 @@ extern void UVDescSetDict(ObitUVDesc* in, PyObject *inDict) {
   in->naxis   = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "naxis"));
   in->nrparm  = PyInt_AsLong(PyDict_GetItemString(inDict, "nrparm"));
   in->nvis    = PyInt_AsLong(PyDict_GetItemString(inDict, "nvis"));
+  in->numVisBuff = PyInt_AsLong(PyDict_GetItemString(inDict, "numVisBuff"));
   in->VelReference  = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "VelReference"));
   in->VelDef  = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "VelDef"));
   list1 = PyDict_GetItemString(inDict, "ctype");

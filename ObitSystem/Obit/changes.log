@@ -1011,3 +1011,33 @@ Obit/src/ObitUVPeelUtil.c:
 Obit/src/ObitUVGSolveWB.c \
   FindFFTPeak: dimension pos 1 NOT 0
 15 Dec 12, snv ver 434
+
+Mostly new UV editing, KAT scripting, bug fixes
+ObitVersion:
+Obit/changes.log:
+Obit/include/ObitUVEdit.h Obit/src/ObitUVEdit.c:
+  Add functions EditElev, EditShadCross
+Obit/include/ObitUVWCalcClassDef.h  Obit/include/ObitUVWCalcDef.h Obit/include/ObitUVWCalc.h:
+Obit/src/ObitUVWCalc.c:
+  New class to calculate u,v,w for UV data
+Obit/tasks/UVFlag.c Obit/TDF/UVFlag.TDF:
+  New task for flagging UV data
+Obit/python/MakeIFs.py:
+  convert a dataset to multiple IFs
+Obit/python/KATH5toAIPS.py:
+  Faster version
+Obit/python/UVDesc.inc:
+  Allow setting numVisBuff in descriptor
+Obit/python/Table.inc Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  WriteRow: Better error trap/message for bad input dict
+Obit/python/UV.py:
+  Add PTableCLfromNX for faster generation of an initial CL table
+Obit/src/ObitPBUtil.c:
+  Jinc: Fix bug introduced in last change, fix scaling with antenna size
+Obit/python/EVLACal.py:
+  Shadow flagging now uses Obit UVFlag
+  Fixes for linear feeds
+  Add 'Beam' parameter to specify CLEAN beam
+Obit/python/LinPContPipe.py:
+  Script for arrays with linearly polarized feeds
+1 Jan 2013, svn ver 437
