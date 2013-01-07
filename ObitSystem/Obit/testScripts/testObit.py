@@ -1,8 +1,13 @@
-import OErr, OSystem, Image, InfoList, FArray
+# The argument, if given, is the data directory, defaults to "../testIt"
+import OErr, OSystem, Image, InfoList, FArray, sys
 from OErr import Bomb
 
+if len(sys.argv)>=2:
+    dataDir = sys.argv[1]
+else:
+    dataDir = "../testIt/"
 err=OErr.OErr()
-ObitSys=OSystem.OSystem ("Python", 1, 103, 1, ["None"], 1, ["../testIt/"], 1, 0, err)
+ObitSys=OSystem.OSystem ("Python", 1, 103, 1, ["None"], 1, [dataDir], 1, 0, err)
 OErr.printErrMsg(err, "Error with Obit startup")
 
 # for debugging

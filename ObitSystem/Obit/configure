@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE RANLIB ac_ct_RANLIB SWIG CPP EGREP PKG_CONFIG GLIB_CFLAGS GLIB_LIBS GLIB_GENMARSHAL GOBJECT_QUERY GLIB_MKENUMS CFITSIO_CPPFLAGS CFITSIO_LDFLAGS CFITSIO_LIBS FFTW3_CPPFLAGS FFTW3_LDFLAGS FFTW3_LIBS FFTW_CPPFLAGS FFTW_LDFLAGS FFTW_LIBS GSL_CFLAGS GSL_LDFLAGS GSL_LIBS XMLRPC_SERVER_CPPFLAGS XMLRPC_SERVER_LDFLAGS XMLRPC_SERVER_LIBS XMLRPC_CLIENT_CPPFLAGS XMLRPC_CLIENT_LDFLAGS XMLRPC_CLIENT_LIBS XMLRPC_CPPFLAGS XMLRPC_LDFLAGS XMLRPC_LIBS WWWLIB_WL_RPATH WWW_LIBS ZLIB_CFLAGS ZLIB_LDFLAGS ZLIB_LIBS PLPLOT_CPPFLAGS PLPLOT_CFLAGS PLPLOT_LDFLAGS PLPLOT_LIBS F77 FFLAGS ac_ct_F77 FLIBS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS PGPLOT_CPPFLAGS PGPLOT_CFLAGS PGPLOT_LDFLAGS PGPLOT_LIBS PYTHON_CPPFLAGS PYTHON_LDFLAGS PYTHON_LIBS WVR_CFLAGS WVR_LDFLAGS WVR_LIBS GTHREAD_LIBS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE RANLIB ac_ct_RANLIB SWIG CPP EGREP PKG_CONFIG GLIB_CFLAGS GLIB_LIBS GLIB_GENMARSHAL GOBJECT_QUERY GLIB_MKENUMS CFITSIO_CPPFLAGS CFITSIO_LDFLAGS CFITSIO_LIBS FFTW3_CPPFLAGS FFTW3_LDFLAGS FFTW3_LIBS FFTW_CPPFLAGS FFTW_LDFLAGS FFTW_LIBS GSL_CFLAGS GSL_LDFLAGS GSL_LIBS XMLRPC_SERVER_CPPFLAGS XMLRPC_SERVER_LDFLAGS XMLRPC_SERVER_LIBS XMLRPC_CLIENT_CPPFLAGS XMLRPC_CLIENT_LDFLAGS XMLRPC_CLIENT_LIBS XMLRPC_CPPFLAGS XMLRPC_LDFLAGS XMLRPC_LIBS WWWLIB_WL_RPATH WWW_LIBS ZLIB_CFLAGS ZLIB_LDFLAGS ZLIB_LIBS PLPLOT_CPPFLAGS PLPLOT_CFLAGS PLPLOT_LDFLAGS PLPLOT_LIBS F77 FFLAGS ac_ct_F77 FLIBS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS PGPLOT_CPPFLAGS PGPLOT_CFLAGS PGPLOT_LDFLAGS PGPLOT_LIBS PYTHON PYTHON_CPPFLAGS PYTHON_LDFLAGS PYTHON_LIBS WVR_CFLAGS WVR_LDFLAGS WVR_LIBS GTHREAD_LIBS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -7405,10 +7405,13 @@ ac_plplot_saved_CPPFLAGS="$CPPFLAGS"
 ac_plplot_saved_CFLAGS="$CFLAGS"
 ac_plplot_saved_LDFLAGS="$LDFLAGS"
 ac_plplot_saved_LIBS="$LIBS"
-if ! test PLPLOT_CFLAGS; then
-    PLPLOT_CFLAGS="`plplot-config --cflags`"
+if test "x$PLPLOT_CFLAGS" = x; then
+    PLPLOT_CFLAGS="`pkg-config plplot --cflags`"
 fi
-PLPLOT_LIBS="`plplot-config --libs`"
+if test "x$PLPLOT_CPPFLAGS" = x; then
+    PLPLOT_CPPFLAGS="`pkg-config plplot-c++ --cflags`"
+fi
+PLPLOT_LIBS="`pkg-config plplot --libs`"
 CPPFLAGS="$CPPFLAGS $PLPLOT_CPPFLAGS"
 CFLAGS="$CFLAGS $PLPLOT_CFLAGS"
 LDFLAGS="$LDFLAGS $PLPLOT_LDFLAGS"
@@ -7775,7 +7778,7 @@ _ACEOF
 fi
 CPPFLAGS="$ac_plplot_saved_CPPFLAGS"
 CFLAGS="$ac_plplot_saved_CFLAGS"
-LDFLAGS="$LDFLAGS $PLPLOT_LDFLAGS"
+LDFLAGS="$ac_plplot_saved_LDFLAGS"
 LIBS="$ac_plplot_saved_LIBS"
 
 
@@ -7874,7 +7877,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:7877:" \
+echo "$as_me:7880:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -8070,7 +8073,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FFLAGS
 FFLAGS="$FFLAGS $ac_verb"
-(eval echo $as_me:8073: \"$ac_link\") >&5
+(eval echo $as_me:8076: \"$ac_link\") >&5
 ac_f77_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_f77_v_output" >&5
 FFLAGS=$ac_save_FFLAGS
@@ -8148,7 +8151,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FFLAGS
 FFLAGS="$FFLAGS $ac_cv_prog_f77_v"
-(eval echo $as_me:8151: \"$ac_link\") >&5
+(eval echo $as_me:8154: \"$ac_link\") >&5
 ac_f77_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_f77_v_output" >&5
 FFLAGS=$ac_save_FFLAGS
@@ -8415,7 +8418,7 @@ ac_x_header_dirs='
 /usr/openwin/share/include'
 
 if test "$ac_x_includes" = no; then
-  # Guess where to find include files, by looking for Xlib.h.
+  # Guess where to find include files, by looking for Intrinsic.h.
   # First, try using that file with no special directory specified.
   cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -8423,7 +8426,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <X11/Xlib.h>
+#include <X11/Intrinsic.h>
 _ACEOF
 if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
   (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
@@ -8450,7 +8453,7 @@ else
 sed 's/^/| /' conftest.$ac_ext >&5
 
   for ac_dir in $ac_x_header_dirs; do
-  if test -r "$ac_dir/X11/Xlib.h"; then
+  if test -r "$ac_dir/X11/Intrinsic.h"; then
     ac_x_includes=$ac_dir
     break
   fi
@@ -8464,18 +8467,18 @@ if test "$ac_x_libraries" = no; then
   # See if we find them without any special options.
   # Don't add to $LIBS permanently.
   ac_save_LIBS=$LIBS
-  LIBS="-lX11 $LIBS"
+  LIBS="-lXt $LIBS"
   cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <X11/Xlib.h>
+#include <X11/Intrinsic.h>
 int
 main ()
 {
-XrmInitialize ()
+XtMalloc (0)
   ;
   return 0;
 }
@@ -10209,7 +10212,46 @@ fi;
 # Includes
 if test "x$PYTHON_CPPFLAGS" = x; then
     if test "x$PYTHON" = x; then
-        PYTHON=`pwd`/../../bin/python
+        # Extract the first word of "python", so it can be a program name with args.
+set dummy python; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_PYTHON+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PYTHON in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PYTHON="$PYTHON" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in `pwd`/../../bin$PATH_SEPARATOR$PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PYTHON="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+PYTHON=$ac_cv_path_PYTHON
+
+if test -n "$PYTHON"; then
+  echo "$as_me:$LINENO: result: $PYTHON" >&5
+echo "${ECHO_T}$PYTHON" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+        # old PYTHON=`pwd`/../../bin/python
     fi
 cat <<_ACEOF >conftest.py
 import distutils.sysconfig
@@ -10223,7 +10265,46 @@ fi
 # Python libs
 if test "x$PYTHON_LD_FLAGS" = x; then
     if test "x$PYTHON" = x; then
-        PYTHON=`pwd`/../../bin/python
+        # Extract the first word of "python", so it can be a program name with args.
+set dummy python; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_PYTHON+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PYTHON in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PYTHON="$PYTHON" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in `pwd`/../../bin$PATH_SEPARATOR$PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PYTHON="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+PYTHON=$ac_cv_path_PYTHON
+
+if test -n "$PYTHON"; then
+  echo "$as_me:$LINENO: result: $PYTHON" >&5
+echo "${ECHO_T}$PYTHON" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+        # old PYTHON=`pwd`/../../bin/python
     fi
 cat <<_ACEOF >conftest.py
 import distutils.sysconfig
@@ -10286,7 +10367,7 @@ if test "${with_wvr+set}" = set; then
   withval="$with_wvr"
   for dir in `echo "$withval" | tr : ' '`; do
     if test -d $dir/include; then
-      WVR_CFLAGS="$WVR_CFLAGS -I$dir/include/"
+      WVR_CFLAGS="$WVR_CFLAGS -I$dir/include/almawvr"
     fi
     if test -d $dir/lib; then
       WVR_LDFLAGS="$WVR_LDFLAGS -L$dir/lib"
@@ -10305,16 +10386,21 @@ if test "${with_wvr_includes+set}" = set; then
   done
 fi;
 
-echo "WVR CFLAGs $WVR_CFLAGS LDFLAGs $WVR_LDFLAGS"
+# echo "WVR CFLAGs $WVR_CFLAGS LDFLAGs $WVR_LDFLAGS"
 ac_wvr_saved_CFLAGS="$CFLAGS"
 ac_wvr_saved_LDFLAGS="$LDFLAGS"
 ac_wvr_saved_LIBS="$LIBS"
 CFLAGS="$CFLAGS $WVR_CFLAGS"
 LDFLAGS="$LDFLAGS $WVR_LDFLAGS"
-if ! test WVR_CFLAGS; then
-    WVR_CFLAGS="`--cflags`"
+# old if ! test WVR_CFLAGS; then
+# old     WVR_CFLAGS="`--cflags`"
+if test "x$WVR_CFLAGS" = x; then
+    WVR_CFLAGS="`pkg-config libair --cflags`"
 fi
 # not there WVR_LIBS="`wvr-config --libs`"
+WVR_LIBS="`pkg-config libair --libs`"
+echo "WVR CFLAGs: $WVR_CFLAGS LDFLAGs: $WVR_LDFLAGS"
+
 ac_have_wvr=no
 ac_have_wvrh=no
   	touch /tmp/dummy1_wvr.h
@@ -10333,7 +10419,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <almawvr/almaabs_c.h>
+#include <almaabs_c.h>
 
 #include <$ac_header>
 _ACEOF
@@ -10662,7 +10748,7 @@ for dir in $testdirs; do
 		fi
 	fi
 	if test $ac_have_wvr = no; then
-		if  test -f $dir/include/almawvr/almaabs_c.h; then
+               if  test -f $dir/include/almaabs_c.h; then
 			WVR_CFLAGS="-I$dir/include"
 			CPPFLAGS="$ac_wvr_saved_CPPFLAGS $WVR_CFLAGS"
 			WVR_LDFLAGS="-L$dir/lib"
@@ -10683,7 +10769,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include "almawvr/almaabs_c.h"
+#include "almaabs_c.h"
 
 #include <$ac_header>
 _ACEOF
@@ -12452,6 +12538,7 @@ s,@PGPLOT_CPPFLAGS@,$PGPLOT_CPPFLAGS,;t t
 s,@PGPLOT_CFLAGS@,$PGPLOT_CFLAGS,;t t
 s,@PGPLOT_LDFLAGS@,$PGPLOT_LDFLAGS,;t t
 s,@PGPLOT_LIBS@,$PGPLOT_LIBS,;t t
+s,@PYTHON@,$PYTHON,;t t
 s,@PYTHON_CPPFLAGS@,$PYTHON_CPPFLAGS,;t t
 s,@PYTHON_LDFLAGS@,$PYTHON_LDFLAGS,;t t
 s,@PYTHON_LIBS@,$PYTHON_LIBS,;t t

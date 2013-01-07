@@ -452,14 +452,14 @@ ObitTableCL* ObitTableCLGetDummy (ObitUV *inUV, ObitUV *outUV, olong ver,
 	      /* Values for start of next scan */
 	      row->Time   = rec[inUV->myDesc->iloct]; 
 	      row->TimeI  = 0.0;
-	      row->SourID = (oint)(rec[inUV->myDesc->ilocsu]+0.5);
+	      if (inUV->myDesc->ilocsu>=0) row->SourID = (oint)(rec[inUV->myDesc->ilocsu]+0.5);
 	      row->SubA   = SubA;
 	    } /* end write beginning of scan value */
 	  } else {  /* in middle of scan - use average time */
 	    /* Set descriptive info on Row */
 	    row->Time  = sumTime/nTime;  /* time */
 	    row->TimeI = MAX (0.0, (2.0 * (row->Time - t0)));
-	    row->SourID = (oint)(rec[inUV->myDesc->ilocsu]+0.5);
+	    if (inUV->myDesc->ilocsu>=0) row->SourID = (oint)(rec[inUV->myDesc->ilocsu]+0.5);
 	    row->SubA   = SubA;
 	  }
       

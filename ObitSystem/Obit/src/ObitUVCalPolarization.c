@@ -840,7 +840,7 @@ static void SetInvJonesIF(ObitUVCalPolarizationS *in, ObitAntennaList *Ant,
   ofloat Dr[2]={0.0,0.0}, Dl[2]={0.0,0.0}, d;
   ofloat Det[2] = {1.0, 0.0};
   ofloat Jones[8] = {1.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0};
-  ofloat elp_r, elp_l, ori_r, ori_l, angle[4], sina[4], cosa[4];
+  ofloat elp_r, elp_l, ori_r, ori_l, angle[6], sina[6], cosa[6];
   ofloat root2, fblank = ObitMagicF();
   ofloat rotate=0.0, chi=0.0, crot, srot, PD, temp[8];
   olong iif, jndx, loff, refAnt, i, SubA;

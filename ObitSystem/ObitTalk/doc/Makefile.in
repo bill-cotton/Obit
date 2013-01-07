@@ -44,7 +44,7 @@ install: $(DOCDIR)
 	cp *.pdf $(DOCDIR)
 
 $(DOCDIR):
-	mkdir $(DOCDIR)
+	mkdir -p $(DOCDIR)
 
 
 # clean up derived files

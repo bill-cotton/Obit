@@ -95,7 +95,7 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ofloat uvrang[2], wtuv, weight, wt, dFreq, snrmin, bl, solInt;
   ofloat p1, p2, cp1, cp2, corr, cori, tr, ti, lambda0, lambda;
   ofloat *vis, *u, *v, *base, *time, *delay=NULL, *phase=NULL, *snr=NULL;
-  ofloat startTime, endTime, lastTime;
+  ofloat startTime, endTime=0.0, lastTime=0.0;
   ofloat RLPhase, RM, rlp;
   ofloat *antwt=NULL;
   ofloat *xpol1=NULL, *xpol2=NULL;

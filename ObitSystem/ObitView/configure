@@ -6040,10 +6040,13 @@ ac_plplot_saved_CPPFLAGS="$CPPFLAGS"
 ac_plplot_saved_CFLAGS="$CFLAGS"
 ac_plplot_saved_LDFLAGS="$LDFLAGS"
 ac_plplot_saved_LIBS="$LIBS"
-if ! test PLPLOT_CFLAGS; then
-    PLPLOT_CFLAGS="`plplot-config --cflags`"
+if test "x$PLPLOT_CFLAGS" = x; then
+    PLPLOT_CFLAGS="`pkg-config plplot --cflags`"
 fi
-PLPLOT_LIBS="`plplot-config --libs`"
+if test "x$PLPLOT_CPPFLAGS" = x; then
+    PLPLOT_CPPFLAGS="`pkg-config plplot-c++ --cflags`"
+fi
+PLPLOT_LIBS="`pkg-config plplot --libs`"
 CPPFLAGS="$CPPFLAGS $PLPLOT_CPPFLAGS"
 CFLAGS="$CFLAGS $PLPLOT_CFLAGS"
 LDFLAGS="$LDFLAGS $PLPLOT_LDFLAGS"
@@ -6410,7 +6413,7 @@ _ACEOF
 fi
 CPPFLAGS="$ac_plplot_saved_CPPFLAGS"
 CFLAGS="$ac_plplot_saved_CFLAGS"
-LDFLAGS="$LDFLAGS $PLPLOT_LDFLAGS"
+LDFLAGS="$ac_plplot_saved_LDFLAGS"
 LIBS="$ac_plplot_saved_LIBS"
 
 
@@ -9922,8 +9925,10 @@ fi
 
 # Check for Obit
 
-XMLRPC_LIBS="$XMLRPC_LIBS $GSL_LIBS $FFTW3_LIBS -lxmlrpc_abyss -lxmlrpc_client -lxmlrpc_server_abyss -lxmlrpc_server_cgi -lxmlrpc_server -lxmlrpc -lxmlrpc_util -lxmlrpc_xmlparse -lxmlrpc_xmltok"
-LIBS="$LIBS $XMLRPC_LIBS -lm -lcfitsio"
+# old XMLRPC_LIBS="$XMLRPC_LIBS $GSL_LIBS $FFTW3_LIBS -lxmlrpc_abyss -lxmlrpc_client -lxmlrpc_server_abyss -lxmlrpc_server_cgi -lxmlrpc_server -lxmlrpc -lxmlrpc_util -lxmlrpc_xmlparse -lxmlrpc_xmltok"
+# old LIBS="$LIBS $XMLRPC_LIBS -lm -lcfitsio"
+XMLRPC_LIBS="$XMLRPC_LIBS `xmlrpc-c-config client --libs` `xmlrpc-c-config abyss-server --libs`  "
+LIBS="$LIBS $XMLRPC_LIBS $GSL_LIBS $FFTW3_LIBS -lm -lcfitsio"
 
 # Default root of Obit directory is $OBIT
 	OBIT_DIR="$OBIT"

@@ -1914,7 +1914,7 @@ def PTableCLGetDummy (inUV, outUV, ver, err, solInt=10.):
     outUV   = output Python Obit UV, must be previously defined
     ver     = version number of new table, 0=> create new
     err     = Python Obit Error/message stack
-    solint  = time interval (min) of table
+    solint  = time interval (sec) of table
     """
     ################################################################
     # Checks

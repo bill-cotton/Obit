@@ -36,7 +36,7 @@ X    SysPower.xml
 X    Weather.xml
  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2012                                          */
+/*;  Copyright (C) 2010-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -65,7 +65,7 @@ X    Weather.xml
 #include "ObitSDMData.h"
 #include "ObitEVLASysPower.h"
 #include "ObitFile.h"
-#include "glib/gqsort.h"
+/*#include "glib/gqsort.h"*/
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**

@@ -459,7 +459,7 @@ def ConvertKATData(outUV, katdata, meta, err):
             continue                    # Only on source data
         # Fetch data
         vs = katdata.vis[:]
-        wt = katdata.weights[:]
+        wt = katdata.weights()
         tm = katdata.timestamps[:]
         uu = katdata.u
         vv = katdata.v

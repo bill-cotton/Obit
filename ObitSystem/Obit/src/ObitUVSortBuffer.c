@@ -1,6 +1,6 @@
-/* $Id$        */
+/* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009                                               */
+/*;  Copyright (C) 2009-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -29,7 +29,7 @@
 #include "ObitUVSortBuffer.h"
 #include <math.h>
 #include <string.h>
-#include "glib/gqsort.h"
+/*#include "glib/gqsort.h"*/
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**

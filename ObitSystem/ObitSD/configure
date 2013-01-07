@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE RANLIB ac_ct_RANLIB SWIG CPP EGREP PKG_CONFIG GLIB_CFLAGS GLIB_LIBS GLIB_GENMARSHAL GOBJECT_QUERY GLIB_MKENUMS CFITSIO_CPPFLAGS CFITSIO_LDFLAGS CFITSIO_LIBS FFTW3_CPPFLAGS FFTW3_LDFLAGS FFTW3_LIBS FFTW_CPPFLAGS FFTW_LDFLAGS FFTW_LIBS GSL_CFLAGS GSL_LDFLAGS GSL_LIBS XMLRPC_SERVER_CPPFLAGS XMLRPC_SERVER_LDFLAGS XMLRPC_SERVER_LIBS XMLRPC_CLIENT_CPPFLAGS XMLRPC_CLIENT_LDFLAGS XMLRPC_CLIENT_LIBS XMLRPC_CPPFLAGS XMLRPC_LDFLAGS XMLRPC_LIBS WWWLIB_WL_RPATH WWW_LIBS ZLIB_CFLAGS ZLIB_LDFLAGS ZLIB_LIBS PLPLOT_CPPFLAGS PLPLOT_CFLAGS PLPLOT_LDFLAGS PLPLOT_LIBS F77 FFLAGS ac_ct_F77 FLIBS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS PGPLOT_CPPFLAGS PGPLOT_CFLAGS PGPLOT_LDFLAGS PGPLOT_LIBS PYTHON_CPPFLAGS PYTHON_LDFLAGS PYTHON_LIBS GTHREAD_LIBS OBIT_CPPFLAGS OBIT_LDFLAGS OBIT_LIBS OBIT_DIR OBIT LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE RANLIB ac_ct_RANLIB SWIG CPP EGREP PKG_CONFIG GLIB_CFLAGS GLIB_LIBS GLIB_GENMARSHAL GOBJECT_QUERY GLIB_MKENUMS CFITSIO_CPPFLAGS CFITSIO_LDFLAGS CFITSIO_LIBS FFTW3_CPPFLAGS FFTW3_LDFLAGS FFTW3_LIBS FFTW_CPPFLAGS FFTW_LDFLAGS FFTW_LIBS GSL_CFLAGS GSL_LDFLAGS GSL_LIBS XMLRPC_SERVER_CPPFLAGS XMLRPC_SERVER_LDFLAGS XMLRPC_SERVER_LIBS XMLRPC_CLIENT_CPPFLAGS XMLRPC_CLIENT_LDFLAGS XMLRPC_CLIENT_LIBS XMLRPC_CPPFLAGS XMLRPC_LDFLAGS XMLRPC_LIBS WWWLIB_WL_RPATH WWW_LIBS ZLIB_CFLAGS ZLIB_LDFLAGS ZLIB_LIBS PLPLOT_CPPFLAGS PLPLOT_CFLAGS PLPLOT_LDFLAGS PLPLOT_LIBS F77 FFLAGS ac_ct_F77 FLIBS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS PGPLOT_CPPFLAGS PGPLOT_CFLAGS PGPLOT_LDFLAGS PGPLOT_LIBS PYTHON PYTHON_CPPFLAGS PYTHON_LDFLAGS PYTHON_LIBS GTHREAD_LIBS OBIT_CPPFLAGS OBIT_LDFLAGS OBIT_LIBS OBIT_DIR OBIT LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -10146,7 +10146,46 @@ fi;
 # Includes
 if test "x$PYTHON_CPPFLAGS" = x; then
     if test "x$PYTHON" = x; then
-        PYTHON=`pwd`/../../bin/python
+        # Extract the first word of "python", so it can be a program name with args.
+set dummy python; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_PYTHON+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PYTHON in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PYTHON="$PYTHON" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in `pwd`/../../bin$PATH_SEPARATOR$PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PYTHON="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+PYTHON=$ac_cv_path_PYTHON
+
+if test -n "$PYTHON"; then
+  echo "$as_me:$LINENO: result: $PYTHON" >&5
+echo "${ECHO_T}$PYTHON" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+        # old PYTHON=`pwd`/../../bin/python
     fi
 cat <<_ACEOF >conftest.py
 import distutils.sysconfig
@@ -10160,7 +10199,46 @@ fi
 # Python libs
 if test "x$PYTHON_LD_FLAGS" = x; then
     if test "x$PYTHON" = x; then
-        PYTHON=`pwd`/../../bin/python
+        # Extract the first word of "python", so it can be a program name with args.
+set dummy python; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_PYTHON+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PYTHON in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PYTHON="$PYTHON" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in `pwd`/../../bin$PATH_SEPARATOR$PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PYTHON="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+PYTHON=$ac_cv_path_PYTHON
+
+if test -n "$PYTHON"; then
+  echo "$as_me:$LINENO: result: $PYTHON" >&5
+echo "${ECHO_T}$PYTHON" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+        # old PYTHON=`pwd`/../../bin/python
     fi
 cat <<_ACEOF >conftest.py
 import distutils.sysconfig
@@ -10879,8 +10957,10 @@ fi
 
 # Check for Obit
 
-XMLRPC_LIBS="$XMLRPC_LIBS $GSL_LIBS $FFTW3_LIBS -lxmlrpc_abyss -lxmlrpc_client -lxmlrpc_server_abyss -lxmlrpc_server_cgi -lxmlrpc_server -lxmlrpc -lxmlrpc_util -lxmlrpc_xmlparse -lxmlrpc_xmltok"
-LIBS="$LIBS $XMLRPC_LIBS -lm -lcfitsio"
+# old XMLRPC_LIBS="$XMLRPC_LIBS $GSL_LIBS $FFTW3_LIBS -lxmlrpc_abyss -lxmlrpc_client -lxmlrpc_server_abyss -lxmlrpc_server_cgi -lxmlrpc_server -lxmlrpc -lxmlrpc_util -lxmlrpc_xmlparse -lxmlrpc_xmltok"
+# old LIBS="$LIBS $XMLRPC_LIBS -lm -lcfitsio"
+XMLRPC_LIBS="$XMLRPC_LIBS `xmlrpc-c-config client --libs` `xmlrpc-c-config abyss-server --libs`  "
+LIBS="$LIBS $XMLRPC_LIBS $GSL_LIBS $FFTW3_LIBS -lm -lcfitsio"
 
 # Default root of Obit directory is $OBIT
 	OBIT_DIR="$OBIT"
@@ -11927,6 +12007,7 @@ s,@PGPLOT_CPPFLAGS@,$PGPLOT_CPPFLAGS,;t t
 s,@PGPLOT_CFLAGS@,$PGPLOT_CFLAGS,;t t
 s,@PGPLOT_LDFLAGS@,$PGPLOT_LDFLAGS,;t t
 s,@PGPLOT_LIBS@,$PGPLOT_LIBS,;t t
+s,@PYTHON@,$PYTHON,;t t
 s,@PYTHON_CPPFLAGS@,$PYTHON_CPPFLAGS,;t t
 s,@PYTHON_LDFLAGS@,$PYTHON_LDFLAGS,;t t
 s,@PYTHON_LIBS@,$PYTHON_LIBS,;t t

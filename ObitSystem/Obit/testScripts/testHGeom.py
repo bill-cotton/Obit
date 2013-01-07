@@ -1,11 +1,19 @@
 # Test for python/Obit equivalent of AIPSish HGEOM
+# The argument, if given, is the data directory, defaults to "../testIt"
 
-import Obit, Image, ImageUtil, OSystem, History, OErr
+import Obit, Image, ImageUtil, OSystem, History, OErr, sys
 
 # Init Obit
+if len(sys.argv)>=2:
+    dataDir = sys.argv[1]
+else:
+    dataDir = "../testIt/"
 err=OErr.OErr()
-ObitSys=OSystem.OSystem ("HGeom", 1, 100, 1, ["../AIPSdata/"], 1, ["../testIt/"], 1, 0, err)
+ObitSys=OSystem.OSystem ("HGeom", 1, 100, 1, ["../AIPSdata/"], 1, [dataDir], 1, 0, err)
 OErr.printErrMsg(err, "Error with Obit startup")
+
+# Allow multiple threads
+OSystem.PAllowThreads(2)  # 2 threads
 
 # Files (FITS)
 inDisk = 1

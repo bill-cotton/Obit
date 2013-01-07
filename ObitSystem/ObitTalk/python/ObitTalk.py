@@ -3,7 +3,7 @@ This module provides support for starting an interactive ObitTalk
 session.
 
 """
-# Copyright (C) 2006-2010 Associated Universities, Inc.
+# Copyright (C) 2006-2012 Associated Universities, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -94,9 +94,10 @@ if os.path.exists(path):
         pass
 
 
-# suppress spurious messages about LD_PRELOAD
-if os.environ.has_key('LD_PRELOAD'):
-    del os.environ['LD_PRELOAD']
+# uncomment to suppress spurious messages about LD_PRELOAD
+# (but may cause binary installation to fail)
+#if os.environ.has_key('LD_PRELOAD'):
+#    del os.environ['LD_PRELOAD']
     
 # Set umask to allow others to access AIPS data
 import os

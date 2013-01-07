@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Convert an ALMA WVR dataset to an SN table              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2012                                          */
+/*;  Copyright (C) 2011-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -45,7 +45,7 @@
 #include "ObitThread.h"
 /* libAir stuff */
 #ifdef HAVE_WVR  /* Only if libAir available */
-#include "almawvr/almaabs_c.h"
+#include "almaabs_c.h"
 #endif /* HAVE_WVR */
   /* Speed of light */
 #ifndef VELIGHT
@@ -842,7 +842,7 @@ void WVRCalScanCal (ObitUV* inUV, ObitUV* outUV, ObitWVRCoef *wvrcoef,
 {
   ObitAntennaList *AList=NULL;
   ObitSourceList  *SList=NULL;
-  WVRFuncArg **ThreadArgs;
+  WVRFuncArg **ThreadArgs=NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   olong ifreq, sid, nTh, nextVisBuf, nVisPIO, *count=NULL;

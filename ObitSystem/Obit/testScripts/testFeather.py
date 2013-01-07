@@ -1,12 +1,18 @@
 # python/Obit script to feather together a series of images
+# The argument, if given, is the data directory, defaults to "../testIt"
 
-import Image, FArray, CArray, FFT, ImageUtil, FeatherUtil, OSystem, OErr, InfoList, History
+import Image, FArray, CArray, FFT, ImageUtil, FeatherUtil, OSystem, OErr, InfoList, History, sys
 from OErr import Bomb
 
 
+if len(sys.argv)>=2:
+    dataDir = sys.argv[1]
+else:
+    dataDir = "../testIt/"
+
 # Init Obit
 err=OErr.OErr()
-ObitSys=OSystem.OSystem ("Feather", 1, 100, 1, ["../AIPSdata/"], 1, ["../testIt/"], 1, 0, err)
+ObitSys=OSystem.OSystem ("Feather", 1, 100, 1, ["../AIPSdata/"], 1, [dataDir], 1, 0, err)
 OErr.printErrMsg(err, "Error with Obit startup")
 
 # For debugging

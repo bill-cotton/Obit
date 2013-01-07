@@ -1,10 +1,18 @@
 #testbed for CleanVis
-import Obit, OErr, OSystem, CleanVis, UV, Image, ImageMosaic, History
+# The argument, if given, is the data directory, defaults to "../testIt"
+import Obit, OErr, OSystem, CleanVis, UV, Image, ImageMosaic, History, sys
 
+if len(sys.argv)>=2:
+    dataDir = sys.argv[1]
+else:
+    dataDir = "../testIt/"
 # Init Obit
 err=OErr.OErr()
-ObitSys=OSystem.OSystem ("CleanVis", 1, 100, 1, ["../AIPSdata/"], 1, ["../testIt/"], 1, 0, err)
+ObitSys=OSystem.OSystem ("CleanVis", 1, 100, 1, ["../AIPSdata/"], 1, [dataDir], 1, 0, err)
 OErr.printErrMsg(err, "Error with Obit startup")
+
+# Allow multiple threads
+OSystem.PAllowThreads(2)  # 2 threads
 
 # For debugging
 #print sys.argv
@@ -92,6 +100,7 @@ Input['OutlierSize'] = OutlierSize
 Input['Robust']      =  Robust
 Input['UVTaper']     =  UVTaper
 Input['PBCor']       =  True
+Input['do3D']        =  False
 
 # debug
 #Input['Niter'] = 200

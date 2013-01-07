@@ -2603,7 +2603,7 @@ ObitUVCalCalibrateRateDecorr (olong filter, ofloat rate, ofloat TimeI, ObitErr *
     /* 32-tap; decimation factor 4 */
     if (arg  <=  0.5  &&  arg  >  0.01) {
       dp = c32d4[N32D4-1];
-      for (j= N32D4; j>= 0; j--) { /* loop 50 */
+      for (j= N32D4-2; j>= 0; j--) { /* loop 50 */
 	dp *=  arg + c32d4[j];
       } /* end loop L50:   */;
       rfact = 1.0 / dp;

@@ -1084,7 +1084,7 @@ ObitIOCode ObitIOImageFITSReadDescriptor (ObitIOImageFITS *in, ObitErr *err)
   fits_read_keys_str (in->myFptr, "CTYPE", 1, IM_MAXDIM, cdum, &nfound, 
 		      &status);
     if (status==0) {
-      for (i=0; i<nfound; i++) strncpy (desc->ctype[i], cdata[i], IMLEN_KEYWORD-1); desc->ctype[i][IMLEN_VALUE-1] = 0;
+      for (i=0; i<nfound; i++) strncpy (desc->ctype[i], cdata[i], IMLEN_KEYWORD-1); desc->ctype[i][IMLEN_KEYWORD-1] = 0;
     }
   if (status==KEY_NO_EXIST) status = 0;
 
@@ -1927,7 +1927,7 @@ void ObitIOImageFITSClear (gpointer inn)
  */
 void  ObitIOImageAIPSCLEANRead(ObitIOImageFITS *in, olong *lstatus)
 {
-  gchar commnt[FLEN_COMMENT], card[FLEN_COMMENT], temp[FLEN_COMMENT];
+  gchar commnt[FLEN_COMMENT], card[FLEN_COMMENT], temp[128];
   int i, j, k, keys, morekeys, status=0;
   long ltemp;
   float ftemp;

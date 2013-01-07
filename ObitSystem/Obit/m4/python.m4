@@ -26,7 +26,8 @@ AC_DEFUN([AC_PATH_PYTHON2_5], [
 # Includes
 if test "x$PYTHON_CPPFLAGS" = x; then
     if test "x$PYTHON" = x; then
-        PYTHON=`pwd`/../../bin/python
+        AC_PATH_PROG(PYTHON, python,, `pwd`/../../bin$PATH_SEPARATOR$PATH)
+        # old PYTHON=`pwd`/../../bin/python
     fi
 cat <<_ACEOF >conftest.py
 import distutils.sysconfig
@@ -40,7 +41,8 @@ fi
 # Python libs
 if test "x$PYTHON_LD_FLAGS" = x; then
     if test "x$PYTHON" = x; then
-        PYTHON=`pwd`/../../bin/python
+        AC_PATH_PROG(PYTHON, python,, `pwd`/../../bin$PATH_SEPARATOR$PATH)
+        # old PYTHON=`pwd`/../../bin/python
     fi
 cat <<_ACEOF >conftest.py
 import distutils.sysconfig

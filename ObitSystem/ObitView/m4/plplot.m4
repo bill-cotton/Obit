@@ -15,10 +15,13 @@ ac_plplot_saved_CPPFLAGS="$CPPFLAGS"
 ac_plplot_saved_CFLAGS="$CFLAGS"
 ac_plplot_saved_LDFLAGS="$LDFLAGS"
 ac_plplot_saved_LIBS="$LIBS"
-if ! test PLPLOT_CFLAGS; then
-    PLPLOT_CFLAGS="`plplot-config --cflags`"
+if test "x$PLPLOT_CFLAGS" = x; then
+    PLPLOT_CFLAGS="`pkg-config plplot --cflags`"
 fi
-PLPLOT_LIBS="`plplot-config --libs`"
+if test "x$PLPLOT_CPPFLAGS" = x; then
+    PLPLOT_CPPFLAGS="`pkg-config plplot-c++ --cflags`"
+fi
+PLPLOT_LIBS="`pkg-config plplot --libs`"
 CPPFLAGS="$CPPFLAGS $PLPLOT_CPPFLAGS"
 CFLAGS="$CFLAGS $PLPLOT_CFLAGS"
 LDFLAGS="$LDFLAGS $PLPLOT_LDFLAGS"
@@ -78,7 +81,7 @@ if test $ac_have_plplot = yes; then
 fi
 CPPFLAGS="$ac_plplot_saved_CPPFLAGS"
 CFLAGS="$ac_plplot_saved_CFLAGS"
-LDFLAGS="$LDFLAGS $PLPLOT_LDFLAGS"
+LDFLAGS="$ac_plplot_saved_LDFLAGS"
 LIBS="$ac_plplot_saved_LIBS"
 	 AC_SUBST(PLPLOT_CPPFLAGS)
 	 AC_SUBST(PLPLOT_CFLAGS)

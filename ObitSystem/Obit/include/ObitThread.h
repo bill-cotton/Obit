@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2008                                          */
+/*;  Copyright (C) 2002-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -29,7 +29,7 @@
 #include "ObitErr.h"
 #include "ObitInfoList.h"
 #include <glib.h>
-#include <glib/gthread.h>
+/*nclude <glib/gthread.h>*/
 
 /**
  * \file ObitThread.h

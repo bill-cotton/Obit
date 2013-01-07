@@ -111,6 +111,7 @@ OBITSD=$BASE/ObitSystem/ObitSD;export OBITSD
 PYTHONPATH=$OBIT/python;export PYTHONPATH
 LD_LIBRARY_PATH=$BASE/other/lib; export LD_LIBRARY_PATH
 PATH=$BASE/bin:$PATH;export PATH
+PKG_CONFIG_PATH=$BASE/other/lib/pkgconfig/
 
 # install Third party software
 if test $doTHIRD = yes; then

@@ -3564,7 +3564,7 @@ ObitImageUtilSelCopy (ObitImage *inImage, ObitImage *outImage, ObitErr *err)
     /* Which plane */
     plane[0]++;
     for (i=0; i<IM_MAXDIM-3; i++) {
-      if (plane[i] > inImage->myDesc->inaxes[i-2]) {
+      if (plane[i] > inImage->myDesc->inaxes[i+2]) {
 	plane[i+1]++;
 	plane[i] = 1;
       } else break;

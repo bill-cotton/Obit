@@ -1,6 +1,6 @@
-# $Id$
+# $Id: Makefile,v 1.6 2007/07/10 18:32:20 bcotton Exp $
 #-----------------------------------------------------------------------
-#;  Copyright (C) 2002-2012
+#;  Copyright (C) 2004-2013
 #;  Associated Universities, Inc. Washington DC, USA.
 #;
 #;  This program is free software; you can redistribute it and/or
@@ -26,46 +26,49 @@
 #;                         520 Edgemont Road
 #;                         Charlottesville, VA 22903-2475 USA
 #-----------------------------------------------------------------------
-#    Makefile to build library routines
-#    Obit software
+#    Makefile to run tests of Obit/python software 
 #
 #------------------------------------------------------------------------
-top_srcdir = @top_srcdir@
-# library directory for object files
-LIBDIR = $(top_srcdir)/lib/
+TARGETS := testObit testHGeom testFeather testUVImage testUVSub testCleanVis testPlot
 
-CC = @CC@
-CPPFLAGS = @CPPFLAGS@ 
-# Turn off memory usage checking
-CFLAGS = -Wall -fno-strict-aliasing @CFLAGS@ -DFASTOBITMEM 
-LDFLAGS = @LDFLAGS@
-LIBS = @LIBS@
-DEFS = @DEFS@
+all: $(TARGETS)
 
-ALL_CPPFLAGS = $(CPPFLAGS) -I$(top_srcdir)/include $(DEFS) \
-	@CFITSIO_CPPFLAGS@ @FFTW_CPPFLAGS@ @FFTW3_CPPFLAGS@ @XMLRPC_SERVER_CPPFLAGS@ 
-ALL_CFLAGS = $(CFLAGS) @GSL_CFLAGS@ @GLIB_CFLAGS@ @PLPLOT_CFLAGS@ \
-	@PGPLOT_CFLAGS@ @ZLIB_CFLAGS@ @WVR_CFLAGS@
+testObit:
+	echo " "; echo " "; echo " "; echo " ********   Run test of basic routines"
+	time python testObit.py
 
-# teach how to compile
-.c.o:	
-	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $<
-	mv $@.o $(LIBDIR)
+testHGeom:
+	echo " "; echo " "; echo " "; echo " ********   Run test of HGeom"
+	time python testHGeom.py
 
-# get list of all c source files (*.c) files
-AllC := $(filter-out ObitAIPSFortran.c, $(filter-out ObitAIPSObject.c, $(wildcard *.c)))
-OBJECTS := $(patsubst %.c,%.o, $(AllC))
+testFeather:
+	echo " "; echo " "; echo " "; echo " ********   Run test of Feather"
+	time python testFeather.py
 
-CTARGETS := $(addprefix $(LIBDIR),$(OBJECTS))
+testUVImage:
+	echo " "; echo " "; echo " "; echo " ********   Run test of UVImage"
+	time python testUVImage.py
+
+testUVSub:
+	echo " "; echo " "; echo " "; echo " ********   Run test of UVSub"
+	time python testUVSub.py
 
 
-all:  $(CTARGETS) 
+testCleanVis:
+	echo " "; echo " "; echo " "; echo " ********   Run test of CleanVis"
+	time python testCleanVis.py
 
-# generic C compile
-$(CTARGETS): $(LIBDIR)%.o: %.c $(wildcard ../include/%*.h)
-	$(CC) -c $(ALL_CPPFLAGS) $(ALL_CFLAGS) $*.c
-	mv ./$*.o $@
+testPlot:
+	echo " "; echo " "; echo " "; echo " ********   Run test of Plotting"
+	time python testContourPlot.py
+
+
+# Requires special dataset
+testSquint:
+	echo " "; echo " "; echo " "; echo " ********   Run test of Squint"
+	testSquint.csh
+
 
 clean:
-	rm -f $(CTARGETS)
-	rm -f *.o
+	cd ../testIt; rm -f core.* *Out.fits	 MAImage.* Imager*Scr* HGeom*Scr* Feather*Scr* UVSub*Scr*
+	cd ../testIt; rm -f CleanVis*Scr* *Out.uvtab Squint*.Scr

@@ -7827,7 +7827,7 @@ extern ObitTableDesc* TableDescDef(PyObject *inDict) {
   repeat = PyDict_GetItemString(inDict, "repeat");
   if (!repeat) {
     PyErr_SetString(PyExc_TypeError,"repeat Array not found");
-    return;
+    return out;
   }
   if (PyList_Size(repeat)!=nfield) {
     PyErr_SetString(PyExc_TypeError,"repeat Array wrong dimension");
@@ -38623,7 +38623,7 @@ static PyObject *_wrap_SpectrumFitImArr(PyObject *self, PyObject *args) {
          }
          if (!ObitImageIsA((ObitImage*)_arg2[i])) {  // check */
            PyErr_SetString(PyExc_TypeError,"Type error. Expected ObitImage Object.");
-           return;
+           return NULL;
          }
       } else {
          PyErr_SetString(PyExc_TypeError,"list must contain Strings (ObitImage pointers)");

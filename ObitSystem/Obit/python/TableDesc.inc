@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageDesc type                         */
 /*                                                                    */
-/*;  Copyright (C) 2005,2008                                          */
+/*;  Copyright (C) 2005-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -203,7 +203,7 @@ extern ObitTableDesc* TableDescDef(PyObject *inDict) {
   repeat = PyDict_GetItemString(inDict, "repeat");
   if (!repeat) {
     PyErr_SetString(PyExc_TypeError,"repeat Array not found");
-    return;
+    return out;
   }
   if (PyList_Size(repeat)!=nfield) {
     PyErr_SetString(PyExc_TypeError,"repeat Array wrong dimension");

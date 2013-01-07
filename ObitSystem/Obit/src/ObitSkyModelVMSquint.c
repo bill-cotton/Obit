@@ -1140,7 +1140,7 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
   ofloat CosArr[FazArrSize], SinArr[FazArrSize];
   ofloat ExpArgR[FazArrSize],  ExpValR[FazArrSize], ExpArgL[FazArrSize],  ExpValL[FazArrSize];
   olong it, jt, itcnt;
-  ofloat ampr, ampl, arg, freq2, freqFact, wtRR=0.0, wtLL=0.0, temp;
+  ofloat ampr, ampl, arg=0.0, freq2, freqFact, wtRR=0.0, wtLL=0.0, temp;
   odouble *freqArr;
   const ObitSkyModelVMClassInfo 
     *myClass=(const ObitSkyModelVMClassInfo*)in->ClassInfo;
@@ -1292,7 +1292,7 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
 					 ddata[8]*visData[ilocv]*visData[ilocv] +
 					 ddata[9]*visData[ilocu]*visData[ilocv]);
 	      ampl = ddata[3] * lgain1[iComp] * lgain2[iComp];
-	      if (arg>1.0e-5) ampl *= exp (arg);
+	      /*if (arg>1.0e-5) ampl *= exp (arg);*/
 	      AmpArrR[itcnt] = ampr;
 	      AmpArrL[itcnt] = ampl;
 	      ddata += lcomp;   /* update pointer */

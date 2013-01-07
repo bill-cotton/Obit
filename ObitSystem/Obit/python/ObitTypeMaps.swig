@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig typemaps for Obit types                                       */
 /*                                                                    */
-/*   Copyright (C) 2004,2008                                          */
+/*   Copyright (C) 2004-2013                                          */
 /*   Associated Universities, Inc. Washington DC, USA.                */
 /*                                                                    */
 /*   This program is free software; you can redistribute it and/or    */
@@ -204,7 +204,7 @@
          }
          if (!ObitImageIsA((ObitImage*)$target[i])) {  // check */
            PyErr_SetString(PyExc_TypeError,"Type error. Expected ObitImage Object.");
-           return;
+           return NULL;
          }
       } else {
          PyErr_SetString(PyExc_TypeError,"list must contain Strings (ObitImage pointers)");

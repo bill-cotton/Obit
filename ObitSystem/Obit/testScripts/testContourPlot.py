@@ -1,8 +1,13 @@
 # test Contour plot
-import Obit, OTObit, Image, ImageUtil, OSystem, OErr, OPlot, math
+# The argument, if given, is the data directory, defaults to "../testIt"
+import Obit, OTObit, Image, ImageUtil, OSystem, OErr, OPlot, math, sys
 # Init Obit
+if len(sys.argv)>=2:
+    dataDir = sys.argv[1]
+else:
+    dataDir = "../testIt/"
 err=OErr.OErr()
-ObitSys=OSystem.OSystem ("Plot", 1, 100, 0, ["None"], 1, ["../testIt/"], 1, 0, err)
+ObitSys=OSystem.OSystem ("Plot", 1, 100, 0, ["None"], 1, [dataDir], 1, 0, err)
 OErr.printErrMsg(err, "Error with Obit startup")
 
 # Contour plot
@@ -32,7 +37,7 @@ for ss in txt:
     OPlot.PText(cont, x, y, 180.0, 0.5, ss[2],err)
 
 OPlot.PShow(cont,err)
-print "Coutour plot of",file,"written to",plotfile
+print "Contour plot of",file,"written to",plotfile
 
 # Shutdown Obit
 OErr.printErr(err)

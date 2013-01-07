@@ -1401,7 +1401,7 @@ calcSNR (ofloat* vobs, olong *ant1, olong *ant2, olong numBL,
 		   "%4.2d-%2.2d %7.1f %5d %4.2d-%2.2d %7.1f %5d %4.2d-%2.2d %7.1f %5d ", 
 			     blprt[0][0], blprt[0][1],  blrprt[0], blprt[0][2],
 			     blprt[1][0], blprt[1][1],  blrprt[1], blprt[1][2],
-			     blprt[2][0], blprt[2][1],  blrprt[1], blprt[3][2]);
+			     blprt[2][0], blprt[2][1],  blrprt[1], blprt[2][2]);
 	      nprt = 0;
 	    } 
 	    /* New entry */
@@ -1422,7 +1422,7 @@ calcSNR (ofloat* vobs, olong *ant1, olong *ant2, olong numBL,
 		   "%4.2d-%2.2d %7.1f %5d %4.2d-%2.2d %7.1f %5d %4.2d-%2.2d %7.1f %5d ", 
 		   blprt[0][0], blprt[0][1],  blrprt[0], blprt[0][2],
 		   blprt[1][0], blprt[1][1],  blrprt[1], blprt[1][2],
-		   blprt[2][0], blprt[2][1],  blrprt[1], blprt[3][2]);
+		   blprt[2][0], blprt[2][1],  blrprt[1], blprt[2][2]);
     nprt = 0;
   } 
   

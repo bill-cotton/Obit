@@ -1,13 +1,21 @@
 # Test interferometric model subtraction /division script
+# The argument, if given, is the data directory, defaults to "../testIt"
 # Output UVdata should have ~zero phase and ~unit amplitude.
 # Need some automated uv data comparison
 
-import Obit, OSystem, OErr
+import Obit, OSystem, OErr, sys
 
+if len(sys.argv)>=2:
+    dataDir = sys.argv[1]
+else:
+    dataDir = "../testIt/"
 # Init Obit
 err=OErr.OErr()
-ObitSys=OSystem.OSystem ("UVSub", 1, 100, 1, ["../AIPSdata/"], 1, ["../testIt/"], 1, 0, err)
+ObitSys=OSystem.OSystem ("UVSub", 1, 100, 1, ["../AIPSdata/"], 1, [dataDir], 1, 0, err)
 OErr.printErrMsg(err, "Error with Obit startup")
+
+# Allow multiple threads
+OSystem.PAllowThreads(2)  # 2 threads
 
 import UV, UVImager, Image, ImageMosaic, SkyModel
 from Obit import Bomb

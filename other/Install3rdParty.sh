@@ -82,6 +82,7 @@ OBIT=$BASE3/../Obit;export OBIT
 PYTHONPATH=$OBIT/python;export PYTHONPATH
 LD_LIBRARY_PATH=$BASE3/lib; export LD_LIBRARY_PATH
 PATH=$PATH:$BASE3/bin;export PATH
+PKG_CONFIG_PATH=$BASE3/lib/pkgconfig/
 
 # Third party software:
 

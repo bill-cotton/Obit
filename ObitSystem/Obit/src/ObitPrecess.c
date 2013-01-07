@@ -1132,7 +1132,8 @@ static void EarthEphem(odouble JD, ofloat equin, odouble dvb[3], odouble dpb[3],
     for (j= 0; j<3; j++) { /* loop 170 */
       w = 0;
       for (i= 0; i<3; i++) { /* loop 160 */
-	w = w + dprema[i][j-1]*dph[i];
+	/*	w = w + dprema[i][j-1]*dph[i]; ??? original */
+	w = w + dprema[i][j]*dph[i];
       } /* end loop  L160: */
       vw[j] = w;
     } /* end loop  L170: */

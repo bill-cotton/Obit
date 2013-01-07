@@ -394,7 +394,7 @@ gboolean ObitUVSelfCalSelfCal (ObitUVSelfCal *in, ObitUV *inUV, gboolean init,
   else in->totalQual = 1.0e20;
 
   /* Divergence test - call it diverged if solution worse that 1.3*last */
-  diverged  = (in->numLast>21) && (in->totalQual > 1.3*in->lastQual[in->numLast-1]);
+  diverged  = (in->numLast>2) && (in->totalQual > 1.3*in->lastQual[in->numLast-1]);
   converged = diverged;
 
   /* Convergence test - not improved in 2 cycles */

@@ -312,8 +312,8 @@ ObitIOCode ObitOTFArrayGeomRead (ObitOTFArrayGeom **in, ObitTableOTFArrayGeom *t
   out->elOffset = g_realloc(out->elOffset, numberDetect*sizeof(ofloat));
 
   /* Copy header information */
-  for (i=0; i<12; i++) out->RefDate[i] = table->RefDate[i]; out->RefDate[i]=0;
-  for (i=0; i<4; i++)  out->TimeSys[i] = table->TimeSys[i]; out->TimeSys[i]=0;
+  for (i=0; i<11; i++) out->RefDate[i] = table->RefDate[i]; out->RefDate[i]=0;
+  for (i=0; i<3; i++)  out->TimeSys[i] = table->TimeSys[i]; out->TimeSys[i]=0;
   out->TeleX   = table->TeleX;
   out->TeleY   = table->TeleY;
   out->TeleZ   = table->TeleZ;

@@ -7,7 +7,7 @@ AC_DEFUN([AC_PATH_WVR], [
                                  [search for WVR in DIR/include and DIR/lib]),
                     [for dir in `echo "$withval" | tr : ' '`; do
     if test -d $dir/include; then
-      WVR_CFLAGS="$WVR_CFLAGS -I$dir/include/"
+      WVR_CFLAGS="$WVR_CFLAGS -I$dir/include/almawvr"
     fi
     if test -d $dir/lib; then
       WVR_LDFLAGS="$WVR_LDFLAGS -L$dir/lib"
@@ -23,21 +23,26 @@ AC_DEFUN([AC_PATH_WVR], [
     fi
   done[]])
 
-echo "WVR CFLAGs $WVR_CFLAGS LDFLAGs $WVR_LDFLAGS"
+# echo "WVR CFLAGs $WVR_CFLAGS LDFLAGs $WVR_LDFLAGS"
 ac_wvr_saved_CFLAGS="$CFLAGS"
 ac_wvr_saved_LDFLAGS="$LDFLAGS"
 ac_wvr_saved_LIBS="$LIBS"
 CFLAGS="$CFLAGS $WVR_CFLAGS"
 LDFLAGS="$LDFLAGS $WVR_LDFLAGS"
-if ! test WVR_CFLAGS; then
-    WVR_CFLAGS="`--cflags`"
+# old if ! test WVR_CFLAGS; then
+# old     WVR_CFLAGS="`--cflags`"
+if test "x$WVR_CFLAGS" = x; then
+    WVR_CFLAGS="`pkg-config libair --cflags`"
 fi
 # not there WVR_LIBS="`wvr-config --libs`"
+WVR_LIBS="`pkg-config libair --libs`"
+echo "WVR CFLAGs: $WVR_CFLAGS LDFLAGs: $WVR_LDFLAGS"
+
 ac_have_wvr=no
 ac_have_wvrh=no
   	touch /tmp/dummy1_wvr.h
         AC_CHECK_HEADERS([/tmp/dummy1_wvr.h], [ac_have_wvrh=yes], [ac_have_wvrh=no],
-			[#include <almawvr/almaabs_c.h>])
+                       [#include <almaabs_c.h>])
 	rm /tmp/dummy1_wvr.h
  	if test $ac_have_wvrh = yes; then
 	        AC_SEARCH_LIBS(almaabs_ret, [almawvr], [ac_have_wvr=yes], [ac_have_wvr=no], 
@@ -67,14 +72,14 @@ for dir in $testdirs; do
 		fi
 	fi
 	if test $ac_have_wvr = no; then
-		if  test -f $dir/include/almawvr/almaabs_c.h; then
+               if  test -f $dir/include/almaabs_c.h; then
 			WVR_CFLAGS="-I$dir/include"
 			CPPFLAGS="$ac_wvr_saved_CPPFLAGS $WVR_CFLAGS"
 			WVR_LDFLAGS="-L$dir/lib"
 			LDFLAGS="$ac_wvr_saved_LDFLAGS $WVR_LDFLAGS"
   			touch /tmp/dummy3_wvr.h
 	        	AC_CHECK_HEADERS(/tmp/dummy3_wvr.h, [ac_have_wvrh=yes], [ac_have_wvrh=no],
-				[#include "almawvr/almaabs_c.h"])
+                                [#include "almaabs_c.h"])
 			rm /tmp/dummy3_wvr.h
 			if test $ac_have_wvrh = yes; then
 				# Force check

@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2011                                          */
+/*;  Copyright (C) 2004-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,7 +26,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
-#include "glib/gqsort.h"
+/*#include "glib/gqsort.h"*/
 #include "ObitTableCCUtil.h"
 #include "ObitMem.h"
 #include "ObitBeamShape.h"

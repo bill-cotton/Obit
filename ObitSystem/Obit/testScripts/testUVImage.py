@@ -1,12 +1,21 @@
 # Test interferometric imaging script
+# The argument, if given, is the data directory, defaults to "../testIt"
 
-import Obit, UV, UVImager, Image, ImageMosaic, OSystem, History, OErr
+import Obit, UV, UVImager, Image, ImageMosaic, OSystem, History, OErr, sys
 from OErr import Bomb
+
+if len(sys.argv)>=2:
+    dataDir = sys.argv[1]
+else:
+    dataDir = "../testIt/"
 
 # Init Obit
 err=OErr.OErr()
-ObitSys=OSystem.OSystem ("Imager", 1, 100, 1, ["../AIPSdata/"], 1, ["../testIt/"], 1, 0, err)
+ObitSys=OSystem.OSystem ("Imager", 1, 100, 1, ["../AIPSdata/"], 1, [dataDir], 1, 0, err)
 OErr.printErrMsg(err, "Error with Obit startup")
+
+# Allow multiple threads
+OSystem.PAllowThreads(2)  # 2 threads
 
 # Files (AIPS)  C346R422    .SPLIT .   1
 inDisk = 1

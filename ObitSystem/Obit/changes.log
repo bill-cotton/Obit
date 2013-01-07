@@ -1041,3 +1041,55 @@ Obit/python/EVLACal.py:
 Obit/python/LinPContPipe.py:
   Script for arrays with linearly polarized feeds
 1 Jan 2013, svn ver 437
+
+Mostly Cleanup, bug fixes, installation fixes, some from Ludwig Schwardt
+ObitVersion:
+Obit/changes.log:
+Obit/python/TableDesc.inc Obitpython/ObitTypeMaps.swig:
+  TableDescDef, typemap (python,in) ObitImage: fix returns
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  returns fixed
+Obit/src/ObitImageUtil.c Obit/src/ObitIOImageFITS.c Obit/src/ObitPrecess.c
+Obit/src/ObitSkyModelVMSquint.c Obit/src/ObitUVCalCalibrate.c
+Obit/src/ObitUVCalPolarization.c Obit/src/ObitUVGSolve.c Obit/src/ObitUVRLDelay.c
+Obit/src/ObitUVSelfCal.c Obit/tasks/WVRCal.c:
+ObitSD/src/ObitOTFArrayGeom.c:
+  Cleanup compiler complaints 
+Obit/src/ObitTableCLUtil.c:
+  GetDummy: always test ilocsu.
+Obit/python/UV.py:
+  PTableCLGetDummy: Fix documentation for solInt
+ObitTalk/python/ObitTalk.py:
+  Comment out suppression of LD_PRELOAD
+../InstallObit.sh ../other/Install3rdParty.sh:
+  set PKG_CONFIG_PATH before building 3rd party software
+  add "with-wvr"
+Obit/src/Makefile.in:
+  filter out ObitAIPSFortran.c ObitAIPSObject.c from build (from LS)
+ObitTalk/doc/Makefile.in:
+  Make DOCdir with -p option (from LS)
+ObitView/Makefile.in:
+  Add plplot libraries (from LS)
+ObitView/m4/obit.m4 ObitView/configure:
+ObitSD/m4/obit.m4 ObitSD/configure:
+  Better test for xmlrpc routines. (from LS)
+Obit/include/ObitThread.h Obit/src/ObitSDMData.c Obit/src/ObitTableUtil.c:
+Obit/src/ObitTableCCUtil.c ObitUVSortBuffer.c:
+  Comment out including lower level glib includes  (from LS)
+Obit/m4/python.m4 Obit/configure:
+  better search for python executable  (from LS)
+Obit/m4/wvr.m4 Obit/tasks/WVRCal.c:
+  Fixes for wvr library (from LS)
+Obit/m4/plplot.m4 ObitView/m4/plplot.m4:
+  Fixes for plplot library (from LS)
+Obit/python/KATH5toAIPS.py:
+  Update to new katfile
+Obit/testScripts/Makefile:
+  Restore Makefile for running tests
+Obit/testScripts/testObit.py Obit/testScripts/testHGeom.py
+Obit/testScripts/testFeather.py Obit/testScripts/testUVImage.py
+Obit/testScripts/testUVSub.py Obit/testScripts/testtestCleanVis.py
+Obit/testScripts/testPlot.py:
+  Add optional data directory argument
+7 Jan 2013, svn 348
+
