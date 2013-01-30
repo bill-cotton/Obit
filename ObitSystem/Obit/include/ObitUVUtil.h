@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2010                                          */
+/*;  Copyright (C) 2004-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -97,6 +97,9 @@ void ObitUVUtilNoise(ObitUV *inUV, ObitUV *outUV, ofloat scale, ofloat sigma,
 
 /** Public: Add a flag entry */
 ObitIOCode ObitUVUtilFlag(ObitUV *inUV, ObitErr *err);
+
+/** Public: Copy a UV data recalculating the u,v,w terms */
+void ObitUVUtilCalcUVW (ObitUV *inUV, ObitUV *outUV, ObitErr *err);
 
 /** Public: Calculate visibility uvw */
 void ObitUVUtilUVW(const ofloat b[3], odouble dec, ofloat ha, ofloat uvw[3]);

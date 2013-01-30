@@ -210,7 +210,7 @@ ObitUVWCalc* ObitUVWCalcCreate (gchar* name, ObitUV *inUV, ObitErr *err)
   ObitTableSU  *SUTable=NULL;
   ObitTableAN  *ANTable=NULL;
   olong        i, ver, numPCal, numOrb, numIF, cnt;
-  odouble      lambda, xx, yy, zz, Long;
+  odouble     arrX, arrY, arrZ;
   gchar *routine = "ObitUVWCalcCreate";
   
   /* error checks */
@@ -257,7 +257,8 @@ ObitUVWCalc* ObitUVWCalcCreate (gchar* name, ObitUV *inUV, ObitErr *err)
 
   /* maximum antenna number */
   out->maxAnt = 0;
-  for (i=0; i<out->AntList->number; i++) out->maxAnt = MAX (out->maxAnt, out->AntList->ANlist[i]->AntID);
+  for (i=0; i<out->AntList->number; i++) 
+    out->maxAnt = MAX (out->maxAnt, out->AntList->ANlist[i]->AntID);
 
   /* (1-rel) Index into list */
   out->antIndex = g_malloc0((out->maxAnt+2)*sizeof(olong));
@@ -265,39 +266,47 @@ ObitUVWCalc* ObitUVWCalcCreate (gchar* name, ObitUV *inUV, ObitErr *err)
   for (i=0; i<out->AntList->number; i++) out->antIndex[out->AntList->ANlist[i]->AntID] = i;
 
 
-  /* Average Longitude */
+  /* Average  antenna location */
   cnt  = 0;
-  Long = 0.0;
+  arrX = arrY = arrZ = 0.0;
   for (i=0; i<out->maxAnt; i++) {
     out->AntList->ANlist[i]->AntLong = atan2 (out->AntList->ANlist[i]->AntXYZ[1], 
 					      out->AntList->ANlist[i]->AntXYZ[0]);
     if (fabs(out->AntList->ANlist[i]->AntXYZ[1])>1.0) {
       cnt++;
-      Long += out->AntList->ANlist[i]->AntLong;
+      arrX += out->AntList->ANlist[i]->AntXYZ[0];
+      arrY += out->AntList->ANlist[i]->AntXYZ[1];
+      arrZ += out->AntList->ANlist[i]->AntXYZ[2];
     }
   }
-  Long /= cnt;
-  Long = -Long; /* Other way for rotation */
+  arrX /= cnt;
+  arrY /= cnt;
+  arrZ /= cnt;
 
-  /* Modify AntennaList for UVW calculations 
-     Convert positions to lambda - rotate to frame of the array */
-  lambda = VELIGHT/inUV->myDesc->freq;  /* Reference wavelength */
-  for (i=0; i<out->AntList->number; i++) {
-    xx = out->AntList->ANlist[i]->AntXYZ[0] / lambda;
-    yy = out->AntList->ANlist[i]->AntXYZ[1] / lambda;
-    zz = out->AntList->ANlist[i]->AntXYZ[2] / lambda;
-    out->AntList->ANlist[i]->AntXYZ[0] = xx*cos(Long) - yy*sin(Long);
-    out->AntList->ANlist[i]->AntXYZ[1] = xx*sin(Long) + yy*cos(Long);
-    out->AntList->ANlist[i]->AntXYZ[2] = zz;
-  }
+  /* Antenna cordinate in celestial frame arrays */
+  out->nant = out->AntList->number;
+  out->xm   = g_malloc0(out->nant*sizeof(odouble));
+  out->ym   = g_malloc0(out->nant*sizeof(odouble));
+  out->zm   = g_malloc0(out->nant*sizeof(odouble));
+
+  out->curTime = -1.0e20;  /* Current time */
+  ObitPrecessGST0 (out->myData->myDesc->JDObs, &out->GSTUTC0, &out->Rate);
+
+  /* position for diurnal abberation correction */
+  out->obsPos[0] = atan2(arrZ, sqrt(arrX*arrX + arrY*arrY));
+  out->obsPos[1] = -atan2(-arrY, arrX);
+  out->obsPos[2] = sqrt(arrX*arrX + arrY*arrY + arrZ*arrZ);
+ 
+  /* Flip direction? GMRT, LOFAR */
+  if (!strncmp("GMRT",   out->AntList->ArrName, 4)) out->doFlip = TRUE;
+  if (!strncmp("LOFAR",  out->AntList->ArrName, 5)) out->doFlip = TRUE;
 
   return out;
 } /* end ObitUVWCalcCreate */
 
 /**
  * Calculate the u,v,w for a given source, time, baseline
- * This is useful to create an UVWCalc similar to the input one.
- * \param in  The object with antenna/source information
+ * \param in   The object with antenna/source information
  * \param time Time (days) wrt reference day for subA
  * \param SId  Source identifier
  * \param subA Subarray number, only one supported for now
@@ -310,10 +319,11 @@ void ObitUVWCalcUVW (ObitUVWCalc *in, ofloat time, olong SId,
 		     olong subA, olong ant1, olong ant2, ofloat *uvw, 
 		     ObitErr *err)
 {
-  ofloat bl[3], u, v, sinha, cosha, vw;
-  olong i, ia1, ia2;
-  ObitSource *source=NULL;
-  odouble RAR, AntLst, HrAng=0.0, BLLong, dRa, RAOff, DecOff;
+  ofloat t, u, v, w, equin, vw, basex, basey, basez, polar[2];
+  olong i, ia1, ia2, iant;
+  odouble xm, ym, zm, length;
+  odouble dRa, dDec, delta, RAOff, DecOff;
+  odouble RAAnt, DecAnt, RAAnt0, DecAnt0, GSTRA, deldat = 0.1;
   gchar *routine = "ObitUVWCalcUVW";
 
   /* error checks */
@@ -335,6 +345,40 @@ void ObitUVWCalcUVW (ObitUVWCalc *in, ofloat time, olong SId,
   ia1 = in->antIndex[ant1];
   ia2 = in->antIndex[ant2];
 
+ /* New time? Compute antenna coordinates in celestial frame */
+  if (time>in->curTime) {
+    in->curTime = time;
+    /* Current UTC Julian Date corrected to UT1*/
+    t      =  time + in->AntList->ut1Utc + in->AntList->dataUtc;
+    in->JD = in->myData->myDesc->JDObs + t; 
+    /* Rotation angle for antennas to celestial */
+    GSTRA  = (in->GSTUTC0 + 24*in->Rate*t) * 15 * DG2RAD;
+    /* Equinox */
+    if (in->myData->myDesc->equinox>0.0) equin = in->myData->myDesc->equinox;
+    else                                 equin = 2000.0;
+    /* Offset of pole */
+    polar[0] = in->AntList->PolarXY[0]; polar[1] = in->AntList->PolarXY[1];
+    for (iant=0; iant<in->nant; iant++) {
+      /* Rotate antenna coordinates by time, 
+	 need left handed - flip sign of Y */
+      xm = in->AntList->ANlist[iant]->AntXYZ[0] * cos(GSTRA) - 
+  	   in->AntList->ANlist[iant]->AntXYZ[1] * sin(GSTRA);
+      ym = in->AntList->ANlist[iant]->AntXYZ[0] * sin(GSTRA) + 
+  	   in->AntList->ANlist[iant]->AntXYZ[1] * cos(GSTRA);
+      zm = in->AntList->ANlist[iant]->AntXYZ[2];
+      length = sqrt (xm*xm + ym*ym + zm*zm);
+      RAAnt = atan2(ym, xm);
+      if (length==0.0) DecAnt = asin(0.0);
+      else             DecAnt = asin(zm/length);
+     /* Precess from apparent to mean position */
+      ObitPrecessPrecess (in->JD, equin, deldat, -1, FALSE, in->obsPos, polar,
+			  &RAAnt0, &DecAnt0, &RAAnt, &DecAnt);
+      in->xm[iant] = length * cos(DecAnt0) * cos(RAAnt0);
+      in->ym[iant] = length * cos(DecAnt0) * sin(RAAnt0);
+      in->zm[iant] = length * sin(DecAnt0);
+    } /* end loop over antennas */
+  } /* end new time */
+    
   /* New source?  */
   if (in->curSID!=SId) {
     in->curSID = SId;
@@ -353,51 +397,60 @@ void ObitUVWCalcUVW (ObitUVWCalc *in, ofloat time, olong SId,
     /* Check */
     Obit_return_if_fail((in->curSource!=NULL), err,
 			"%s: Source ID %d not found", routine, SId);
-    
-    /* Get rotation to get v north at standard epoch - 
+
+    /* Reference wavelength plus source specific offset */
+    in->ilambda = 1.0 / (VELIGHT/(in->myData->myDesc->freq + in->curSource->FreqOff[0]));  
+ 
+    /* Precess this source for now 
+       Current UTC Julian Date corrected to UT1 */
+    t      =  time + in->AntList->ut1Utc + in->AntList->dataUtc;
+    in->JD = in->myData->myDesc->JDObs + t; 
+    /* Equinox */
+    if (in->myData->myDesc->equinox>0.0) equin = in->myData->myDesc->equinox;
+    else                                 equin = 2000.0;
+    /* Offset of pole */
+    polar[0] = in->AntList->PolarXY[0]; polar[1] = in->AntList->PolarXY[1];
+    ObitPrecessPrecess (in->JD, equin, deldat, 1, FALSE, in->obsPos, polar,
+			&in->curSource->RAMean, &in->curSource->DecMean,
+			&in->curSource->RAApp, &in->curSource->DecApp);
+
+    /* Lorentz contraction from differential abberation - 
        precess posn. 10" north */
-    source = newObitSource("Temp");
-    source->RAMean  = in->curSource->RAMean;
-    source->DecMean = in->curSource->DecMean + 10.0/3600.0;
-    /* Compute apparent position */
-    ObitPrecessUVJPrecessApp (in->myData->myDesc, source);
-    RAOff  = source->RAApp;
-    DecOff = source->DecApp;
-    /* uvrot = rotation to north */
-    dRa = (RAOff-in->curSource->RAApp) * cos(DG2RAD*source->DecApp);
-    source = ObitSourceUnref(source);
-    in->uvrot = -(ofloat)atan2(dRa, DecOff-in->curSource->DecApp);
-    in->cuvrot = cos(in->uvrot);
-    in->suvrot = sin(in->uvrot);
-    in->cDec   = cos(in->curSource->DecApp*DG2RAD);
-    in->sDec   = sin(in->curSource->DecApp*DG2RAD);
+    delta = 10.0/3600.0;
+    dDec = in->curSource->DecMean+delta;
+    ObitPrecessPrecess (in->JD, equin, deldat, 1, FALSE, in->obsPos, polar,
+			&in->curSource->RAMean, &dDec, &RAOff, &DecOff);
+    dRa  = (RAOff-in->curSource->RAApp) * cos(DG2RAD*in->curSource->DecApp);
+    dDec = (DecOff-in->curSource->DecApp);
+    in->LorentzFact = sqrt(dRa*dRa + dDec*dDec) / delta;
+    in->cRA    = cos(in->curSource->RAMean*DG2RAD);
+    in->sRA    = sin(in->curSource->RAMean*DG2RAD);
+    in->cDec   = cos(in->curSource->DecMean*DG2RAD);
+    in->sDec   = sin(in->curSource->DecMean*DG2RAD);
   } /* end new source */
-    
-  /* Average baseline longitude  */
-  BLLong = 0.5*(in->AntList->ANlist[ia1]->AntLong + in->AntList->ANlist[ia2]->AntLong);
+
+  /* Baseline vector in celestial coordinates */
+  basex = in->xm[ia1] - in->xm[ia2];
+  basey = in->ym[ia1] - in->ym[ia2];
+  basez = in->zm[ia1] - in->zm[ia2];
+
+  /* uvw from baseline, source posn */
+  vw = basex*in->cRA + basey*in->sRA;
+  u = -basex*in->sRA + basey*in->cRA;
+  v = -vw*in->sDec + basez*in->cDec;
+  w =  vw*in->cDec + basez*in->sDec;
+
+  /* Flip signs? */
+  if (in->doFlip) {
+    u = -u;
+    v = -v;
+    w = -w;
+  }
   
-  bl[0] = in->AntList->ANlist[ia1]->AntXYZ[0] - in->AntList->ANlist[ia2]->AntXYZ[0];
-  bl[1] = in->AntList->ANlist[ia1]->AntXYZ[1] - in->AntList->ANlist[ia2]->AntXYZ[1];
-  bl[2] = in->AntList->ANlist[ia1]->AntXYZ[2] - in->AntList->ANlist[ia2]->AntXYZ[2];
-  
-  /* LST and hour angle (radians) */
-  AntLst = in->AntList->GSTIAT0 + BLLong + time*in->AntList->RotRate;
-  RAR    = in->curSource->RAApp*DG2RAD; /* RA in radians */
-  HrAng  = AntLst - RAR;                /* Hour angle */
-  
-  /* Compute uvw - short baseline approximation */
-  cosha  = cos (HrAng);
-  sinha  = sin (HrAng);
-  vw     =  bl[0]*cosha - bl[1]*sinha;
-  uvw[0] =  bl[0]*sinha + bl[1]*cosha;
-  uvw[1] = -vw*in->sDec + bl[2]*in->cDec;
-  uvw[2] =  vw*in->cDec + bl[2]*in->sDec;
-  
-  /* Rotate in u-v plane to north of standard epoch */
-  u = uvw[0];
-  v = uvw[1];
-  uvw[0] = u*in->cuvrot - v*in->suvrot;
-  uvw[1] = v*in->cuvrot + u*in->suvrot;
+  /* Apply Lorentz contraction, convert to wavelengths */
+  uvw[0] = u*in->LorentzFact*in->ilambda;
+  uvw[1] = v*in->LorentzFact*in->ilambda;
+  uvw[2] = w*in->ilambda;
   
 } /* end ObitUVWCalcUVW */
 
@@ -477,9 +530,18 @@ void ObitUVWCalcInit  (gpointer inn)
   in->mySource = NULL;
   in->curSource= NULL;
   in->antIndex = NULL;
+  in->xm       = NULL;
+  in->ym       = NULL;
+  in->xm       = NULL;
+  in->nant     = 0;
+  in->doFlip   = FALSE;
   in->maxAnt   = -1;
   in->curSID   = -1;
-  in->uvrot    = 0.0;
+  in->curTime  = -1.0e20;
+  in->Rate     = 0.0;
+  in->GSTUTC0  = 0.0;
+  in->obsPos[0]= in->obsPos[1] = in->obsPos[2] = 0.0;
+  in->ilambda  = 1.0;
 
 } /* end ObitUVWCalcInit */
 
@@ -503,6 +565,9 @@ void ObitUVWCalcClear (gpointer inn)
   in->SouList  = ObitSourceListUnref (in->SouList);
   in->mySource = ObitSourceUnref (in->mySource);
   if (in->antIndex) g_free(in->antIndex);
+  if (in->xm) g_free(in->xm); in->xm = NULL;
+  if (in->ym) g_free(in->ym); in->xm = NULL;
+  if (in->zm) g_free(in->zm); in->xm = NULL;
   
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

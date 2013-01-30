@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2012                                          */
+/*;  Copyright (C) 2004-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1083,7 +1083,7 @@ ObitImageMosaic* ObitImageMosaicCreate (gchar *name, ObitUV *uvData, ObitErr *er
   }
      
   /* Set fly's eye if needed */
-  imsize = (olong)(2.0*Radius + 10.99);
+  imsize = (olong)(2.0*Radius + 30.99);
   imsize = MAX (64, imsize);  /* Not too small */
   
   /* Not bigger than FOV */

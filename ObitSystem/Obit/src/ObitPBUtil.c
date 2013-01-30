@@ -2,7 +2,7 @@
 /* this version        2008-10-01 20:20:00  juan.uson      */
 /* J1 extended with large angle approximation              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2012                                          */
+/*;  Copyright (C) 2004-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -60,7 +60,7 @@ ofloat ObitPBUtilPoly (odouble Angle, odouble Freq, ofloat pbmin)
   odouble x, bm[7], bmult;
   static ofloat  table[8][3] = {
     /* {-0.897e-3,  2.71e-7 , -0.242e-10}, Rick's value */
-    {-1.051e-2,  4.276e-7, -5.380e-11}, /* Fitted to VLSS fields */
+    {-1.051e-3,  4.276e-7, -5.380e-11}, /* Fitted to VLSS fields */
     {-0.935e-3,  3.23e-7 , -0.378e-10},
     {-1.343e-3,  6.579e-7, -1.186e-10},
     {-1.372e-3,  6.940e-7, -1.309e-10},
@@ -76,7 +76,7 @@ ofloat ObitPBUtilPoly (odouble Angle, odouble Freq, ofloat pbmin)
   bmfact = 0.0;
   /* which VLA band */
   bmult = Freq * 60.0e-9;
-  if (Freq < 0.15) {
+  if (Freq < 0.15e9) {
     i = 0;
   } else if (Freq < 1.1e9) {
     i = 1;

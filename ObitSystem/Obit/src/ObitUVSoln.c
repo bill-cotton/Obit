@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2012                                          */
+/*;  Copyright (C) 2006-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2197,6 +2197,9 @@ ObitUVSolnSmooMWF (ofloat width, ofloat alpha, ofloat* x, ofloat* y, ofloat* w, 
 	i2 = MAX (i, i2);
       } 
     } /* end loop  L110: */
+
+    /* Anything? */
+    if (i2<1) return;
 
     if (i1 > 1) {  /* Fill to beginning */
       j = i1 - 1;

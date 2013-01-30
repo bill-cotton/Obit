@@ -1082,7 +1082,7 @@ void ReadSNTab (ObitTableSN *SNTab, ObitErr* err)
 void FitSNData (gboolean init, ofloat maxRMS, ObitErr* err)   {
   olong i, gcnt, indx, jndx;
   olong   ipol, itime, iif, iant, count, iter, rmscnt, itmp;
-  gboolean   convgd;
+  gboolean   convgd, allBad=FALSE;
   ofloat      sumr, sumi, w, arg, delta, tol, test, rms, normg, 
     normi, delx, dely;
   ofloat  stnx, stny;
@@ -1154,6 +1154,7 @@ void FitSNData (gboolean init, ofloat maxRMS, ObitErr* err)   {
     } /* end loop  L60:  */
     
     /* Fit Gradients */
+    allBad = TRUE;
     for (itime=0; itime<numtim; itime++) { /* loop 95 */
       /* Initial value with FT */
       GradFT (itime, phz, &gradX[itime], &gradY[itime], resid) ;
@@ -1163,7 +1164,8 @@ void FitSNData (gboolean init, ofloat maxRMS, ObitErr* err)   {
       
       /* Weed out bad times */
       if (rms > maxRMS) badtim[itime] = TRUE;
-      
+      else allBad = FALSE;
+
       /*   Diagnostics */
       if (prtLv>=2)
 	Obit_log_error(err, OBIT_InfoErr, 
@@ -1174,6 +1176,12 @@ void FitSNData (gboolean init, ofloat maxRMS, ObitErr* err)   {
     
   } /* End of initialization */
   ObitErrLog(err); /* show any error messages on err */
+
+  /* Check if all bad */
+  if (allBad) {
+    Obit_log_error(err, OBIT_Error, "ALL solutions rejected");
+    return;
+  }
 
   normg = 0.0;
   normi = 0.0;

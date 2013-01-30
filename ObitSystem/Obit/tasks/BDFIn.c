@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Read BDF format data, convert to Obit UV                           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010,2012                                          */
+/*;  Copyright (C) 2010-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -59,6 +59,7 @@
 #include "ObitPrecess.h"
 #include "ObitVLAGain.h"
 #include "ObitGainCal.h"
+#include "ObitUVWCalc.h"
 #include "ObitSourceEphemerus.h"
 #ifndef VELIGHT
 #define VELIGHT 2.997924562e8
@@ -167,6 +168,7 @@ odouble *arrRefJDCor=NULL; /* Array of input array ref day corrections */
 ObitAntennaList **antennaLists=NULL;  /* Array of antenna lists for uvw calc */
 ObitSourceList *uvwSourceList=NULL;   /* Source List for uvw calc */
 ObitSource     *curSource=NULL;       /* Current source for uvw calc */
+ObitUVWCalc    *uvwCalc=NULL;         /* u,v,w calculator */
 ObitSourceEphemerus *srcEphem=NULL;   /* Source Ephemerus */
 olong uvwSourID=-1;                   /* Source ID for uvw calc */
 olong uvwcurSourID=-1;                /* Current source ID for uvw calc */
@@ -244,6 +246,10 @@ int main ( int argc, char **argv )
   if ((ObitUVOpen (outData, OBIT_IO_ReadWrite, err) 
        != OBIT_IO_OK) || (err->error>0))  /* error test */
     Obit_log_error(err, OBIT_Error, "ERROR opening output UV file %s", outData->name);
+  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+
+  /* Init uvw calculator */
+  uvwCalc = ObitUVWCalcCreate("UVWCalc", outData, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
   
   /* convert data  */
@@ -329,6 +335,7 @@ int main ( int argc, char **argv )
   outData  = ObitUnref(outData);
   CalTab   = ObitTableUnref(CalTab);
   SNTab    = ObitTableUnref(SNTab);
+  uvwCalc  = ObitUVWCalcUnref(uvwCalc); 
   uvwSourceList = ObitUnref(uvwSourceList);
   srcEphem      = ObitSourceEphemerusUnref(srcEphem);
   if (NXTimes)     g_free(NXTimes);
@@ -1807,6 +1814,8 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
     ObitPrecessUVJPrecessApp (outData->myDesc, source);
     outRow->RAApp  = source->RAApp;
     outRow->DecApp = source->DecApp;
+    outRow->RAObs  = source->RAApp;
+    outRow->DecObs = source->DecApp;
     source = ObitSourceUnref(source);
 
     /* blank fill source name */
@@ -2258,7 +2267,6 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
 /*----------------------------------------------------------------------- */
 /*  Calculates u,v,w (lambda) for a uv data row                           */
 /*  Does nothing for autocorrelations                                     */
-/*  Short baseline approximation                                          */
 /*  If scan intent is "MAP_ANTENNA_SURFACE" then replace uv with          */
 /*  holography direction cosines.  Subscan intent="ON_SOURCE"             */
 /*   Input:                                                               */
@@ -2386,6 +2394,7 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
        precess posn. 10" north */
     if (uvwcurSourID<0) uvwcurSourID = uvwSourID;
     source = newObitSource("Temp");
+    source->equinox = uvwSourceList->SUlist[uvwcurSourID]->equinox;
     source->RAMean  = uvwSourceList->SUlist[uvwcurSourID]->RAMean;
     source->DecMean = uvwSourceList->SUlist[uvwcurSourID]->DecMean + 10.0/3600.0;
     /* Compute apparent position */
@@ -2399,42 +2408,39 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
     source = ObitSourceUnref(source);
   } /* end new source */
   
-    /* Array number (0-rel)*/
-  iarr = 0;
-  /* Array reference JD */
-  arrJD = arrayRefJDs[iarr];
-
-  /* Array geometry  */
-  AntList = antennaLists[iarr];
-  ArrLong = 0.5*(antLongs[iarr][ant1-1] + antLongs[iarr][ant2-1]);
-  ArrLat  = 0.5*(antLats[iarr][ant1-1]  + antLats[iarr][ant2-1]);
-  
-  bl[0] =  AntList->ANlist[ant1-1]->AntXYZ[0] - AntList->ANlist[ant2-1]->AntXYZ[0];
-  bl[1] =  AntList->ANlist[ant1-1]->AntXYZ[1] - AntList->ANlist[ant2-1]->AntXYZ[1];
-  bl[2] =  AntList->ANlist[ant1-1]->AntXYZ[2] - AntList->ANlist[ant2-1]->AntXYZ[2];
-
-   /* LST and hour angle (radians) */
+  /* Moving target? */
   time   = Buffer[BDFData->desc->iloct];
-  AntLst = AntList->GSTIAT0 + ArrLong + time*AntList->RotRate;
-
- /* Moving target? */
   if (ObitSourceEphemerusCheckSource(srcEphem, souId, time, &RAR, &DecR, &dist, &tuvrot)) {
+    /* Array number (0-rel)*/
+    iarr = 0;
+    /* Array reference JD */
+    arrJD = arrayRefJDs[iarr];
+    
+    /* Array geometry  */
+    AntList = antennaLists[iarr];
+    ArrLong = 0.5*(antLongs[iarr][ant1-1] + antLongs[iarr][ant2-1]);
+    ArrLat  = 0.5*(antLats[iarr][ant1-1]  + antLats[iarr][ant2-1]);
+    
+    bl[0] =  AntList->ANlist[ant1-1]->AntXYZ[0] - AntList->ANlist[ant2-1]->AntXYZ[0];
+    bl[1] =  AntList->ANlist[ant1-1]->AntXYZ[1] - AntList->ANlist[ant2-1]->AntXYZ[1];
+    bl[2] =  AntList->ANlist[ant1-1]->AntXYZ[2] - AntList->ANlist[ant2-1]->AntXYZ[2];
+    
+    /* LST and hour angle (radians) */
+    AntLst = AntList->GSTIAT0 + ArrLong + time*AntList->RotRate;
+    
     uvrot = tuvrot;
-  } else {    
-    /* non moving position in radians */
-    RAR  = uvwSourceList->SUlist[uvwcurSourID]->RAApp*DG2RAD;
-    DecR = uvwSourceList->SUlist[uvwcurSourID]->DecApp*DG2RAD;
-  }
-
-  /* Compute uvw - short baseline approximation */
-  HrAng  = AntLst - RAR;
-  ObitUVUtilUVW (bl, DecR, (ofloat)HrAng, uvw);
-
-  /* Rotate in u-v plane to north of standard epoch */
-  u = uvw[0];
-  v = uvw[1];
-  uvw[0] = u*cos(uvrot) - v*sin(uvrot);
-  uvw[1] = v*cos(uvrot) + u*sin(uvrot);
+    /* Compute uvw - short baseline approximation */
+    HrAng  = AntLst - RAR;
+    ObitUVUtilUVW (bl, DecR, (ofloat)HrAng, uvw);
+    
+    /* Rotate in u-v plane to north of standard epoch */
+    u = uvw[0];
+    v = uvw[1];
+    uvw[0] = u*cos(uvrot) - v*sin(uvrot);
+    uvw[1] = v*cos(uvrot) + u*sin(uvrot);
+  } else {    /* Stationary source - use standard calculation */
+    ObitUVWCalcUVW(uvwCalc, time, souId, 1, ant1, ant2, uvw, err);
+ }
 
   Buffer[BDFData->desc->ilocu] = uvw[0];
   Buffer[BDFData->desc->ilocv] = uvw[1];

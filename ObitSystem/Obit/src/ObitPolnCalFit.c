@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012                                               */
+/*;  Copyright (C) 2012-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1000,7 +1000,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     in->ndata  = nvis*4*2;   /* 4 complex visibililties */
 #ifdef HAVE_GSL
     /* Need to rebuild? */
-    if ((in->solver!=NULL) && (oldNparam!=in->nparam) && (oldNdata!=in->ndata))  {
+    if ((in->solver!=NULL) || (oldNparam!=in->nparam) || (oldNdata!=in->ndata))  {
       if( in->solver)    gsl_multifit_fdfsolver_free (in->solver); in->solver = NULL;
       if (in->funcStruc) g_free(in->funcStruc);                    in->funcStruc = NULL;
       if (in->work)      gsl_vector_free(in->work);                in->work = NULL;
@@ -1367,8 +1367,8 @@ static void WriteOutput (ObitPolnCalFit* in, ObitUV *outUV,
 				       err);
     InitInstrumentalTab(in, err);
 
-    /* BP table used if fitting R/L X/Y phase difference */
-    if (in->doFitRL) {
+    /* BP table used if fitting R/L X/Y phase difference or X/Y gain*/
+    if (in->doFitRL || in->doFitGain) {
       /* Bandpass table - copy and update if doBand>0 */
       if (in->doBand>0) {
 	oldBPTab = newObitTableBPValue ("Temp BP", (ObitData*)outUV, &in->BPVer, 
@@ -2020,7 +2020,7 @@ static void UpdateInstrumentalTab(ObitPolnCalFit* in, gboolean isOK,
       indx = iif*nchan + ich;
       
          /* OK solution? */
-      if (isOK) {
+      if (isOK && in->gotAnt[iant]) {
 	row->RLPhase[indx] = in->PD*RAD2DG;  /* R-L phase difference */
 	row->Real1[indx]   = in->antParm[iant*4+1];
 	row->Imag1[indx]   = in->antParm[iant*4+0];
@@ -2110,7 +2110,7 @@ static void UpdateBandpassTab(ObitPolnCalFit* in, gboolean isOK, ObitErr *err)
       iif = in->IFno-1+ifOff;  /* 0 rel IF */
       indx = iif*nchan + ich;
       
-      if (isOK) {
+      if (isOK && in->gotAnt[iant]) {
 	row->Real1[indx] = amp1;
 	row->Imag1[indx] = 0.0;
 	if (npol>1) {

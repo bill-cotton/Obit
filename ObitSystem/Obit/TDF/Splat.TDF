@@ -3,7 +3,7 @@
 ;! Task to calibrate and average multi-source uv data
 ;# Task Obit UV Calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2010-2011
+;;  Copyright (C) 2010-2013
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -122,7 +122,7 @@ ChanSel                            Array of channel start, stop,
 dropSubA                           Drop Subarray info?
 **PARAM** boo 1 
 doCalWt                            Calibrate weights?
-**PARAM** int 1
+**PARAM** int 1 **DEF** 1
 corrType                           Cross or auto correlations
                                      0 pass only xc data
                                      1 pass xc and ac data

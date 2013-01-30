@@ -1,6 +1,6 @@
 /* $Id$            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003,2009                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -49,6 +49,12 @@ void ObitPrecessUVJPrecessApp (ObitUVDesc *desc, ObitSource *source);
 
 /** Public: Precess source position from standard Epoch to apparent. */
 void ObitPrecessUVRaDecApp (ObitUVDesc *desc, odouble *RAApp, odouble *DecApp);
+
+/** Public: Low level Precess between apparent and J2000 epoch positions */
+void ObitPrecessPrecess(odouble JD, ofloat equin, odouble deldat, olong dir,
+			gboolean gr, odouble obspos[3], ofloat polar[2],
+			odouble *RAMean, odouble *DecMean, 
+			odouble *RAApp, odouble *DecApp);
 
 /** Public: Predict GST at UTC=0 and Earth rotation rate. */
 void ObitPrecessGST0 (odouble JD, odouble *GSTUTC0, odouble *Rate);

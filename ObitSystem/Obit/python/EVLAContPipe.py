@@ -381,7 +381,7 @@ def pipeline( aipsSetup, parmFile):
         EVLAClearCal(uv, err, doGain=True, doFlag=False, doBP=True, check=check, logfile=logFile)
         OErr.printErrMsg(err, "Error resetting calibration")
         # Parallactic angle correction?
-        if parms["doPACor"]:
+        if parms["doPACor"] or parms["doPolCal"]:
             retCode = EVLAPACor(uv, err, \
                                 logfile=logFile, check=check, debug=debug)
             if retCode!=0:

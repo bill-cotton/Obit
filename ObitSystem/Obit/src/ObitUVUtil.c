@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2012                                          */
+/*;  Copyright (C) 2004-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -34,6 +34,7 @@
 #include "ObitTableANUtil.h"
 #include "ObitTableFG.h"
 #include "ObitPrecess.h"
+#include "ObitUVWCalc.h"
 #include "ObitUVSortBuffer.h"
 #if HAVE_GSL==1  /* GSL stuff */
 #include <gsl/gsl_randist.h>
@@ -3358,6 +3359,176 @@ ObitIOCode ObitUVUtilFlag (ObitUV *inUV, ObitErr *err)
 
   return retCode;
 } /* end ObitUVUtilFlag */
+
+/**
+ * Make copy of ObitUV with the u,v,w terms calculated
+ * \param inUV     Input uv data to copy. 
+ * \param outUV    If not scratch, then the previously defined output file
+ *                 May be NULL for scratch only
+ *                 If it exists and scratch, it will be Unrefed
+ * \param err      Error stack, returns if not empty.
+ */
+void ObitUVUtilCalcUVW (ObitUV *inUV, ObitUV *outUV,  ObitErr *err)
+{
+  ObitIOCode iretCode, oretCode;
+  gboolean doCalSelect;
+  gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
+		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
+		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
+		    "AIPS PL", "AIPS NI",
+		    NULL};
+  gchar *sourceInclude[] = {"AIPS SU", NULL};
+  ObitUVWCalc *uvwCalc=NULL;
+  olong i, indx, SId, subA, ant1, ant2;
+  ofloat uvw[3], cbase;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM];
+  ObitIOAccess access;
+  ObitUVDesc *inDesc, *outDesc;
+  gchar *today=NULL;
+  gchar *routine = "ObitUVUtilCopyZero";
+ 
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return;
+  g_assert (ObitUVIsA(inUV));
+  if (outUV==NULL) {
+    Obit_log_error(err, OBIT_Error,"%s Output MUST be defined",
+		   routine);
+      return;
+  }
+
+  /* Selection of input? */
+  doCalSelect = FALSE;
+  ObitInfoListGetTest(inUV->info, "doCalSelect", &type, (gint32*)dim, &doCalSelect);
+  if (doCalSelect) access = OBIT_IO_ReadCal;
+  else access = OBIT_IO_ReadOnly;
+
+  /* test open to fully instantiate input and see if it's OK */
+  iretCode = ObitUVOpen (inUV, access, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
+    Obit_traceback_msg (err, routine, inUV->name);
+
+  /* copy Descriptor */
+  outUV->myDesc = ObitUVDescCopy(inUV->myDesc, outUV->myDesc, err);
+
+  /* Creation date today */
+  today = ObitToday();
+  strncpy (outUV->myDesc->date, today, UVLEN_VALUE-1);
+  if (today) g_free(today);
+  
+  /* use same data buffer on input and output 
+     so don't assign buffer for output */
+  if (outUV->buffer) ObitIOFreeBuffer(outUV->buffer); /* free existing */
+  outUV->buffer = NULL;
+  outUV->bufferSize = -1;
+
+  /* test open output */
+  oretCode = ObitUVOpen (outUV, OBIT_IO_WriteOnly, err);
+  /* If this didn't work try OBIT_IO_ReadWrite */
+  if ((oretCode!=OBIT_IO_OK) || (err->error)) {
+    ObitErrClear(err);
+    oretCode = ObitUVOpen (outUV, OBIT_IO_ReadWrite, err);
+  }
+  /* if it didn't work bail out */
+  if ((oretCode!=OBIT_IO_OK) || (err->error)) {
+    /* unset output buffer (may be multiply deallocated) */
+    outUV->buffer = NULL;
+    outUV->bufferSize = 0;
+    Obit_traceback_msg (err, routine, outUV->name);
+  }
+
+  /* iretCode = ObitUVClose (inUV, err); DEBUG */
+  /* Copy tables before data */
+  iretCode = ObitUVCopyTables (inUV, outUV, exclude, NULL, err);
+  /* If multisource out then copy SU table, multiple sources selected or
+   sources deselected suggest MS out */
+  if ((inUV->mySel->numberSourcesList>1) || (!inUV->mySel->selectSources))
+  iretCode = ObitUVCopyTables (inUV, outUV, NULL, sourceInclude, err);
+  if (err->error) {
+    outUV->buffer = NULL;
+    outUV->bufferSize = 0;
+    Obit_traceback_msg (err, routine, inUV->name);
+  }
+
+  /* reset to beginning of uv data */
+  iretCode = ObitIOSet (inUV->myIO,  inUV->info, err);
+  oretCode = ObitIOSet (outUV->myIO, outUV->info, err);
+  if (err->error) Obit_traceback_msg (err, routine,inUV->name);
+
+  /* Close and reopen input to init calibration which will have been disturbed 
+     by the table copy */
+  iretCode = ObitUVClose (inUV, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error))
+    Obit_traceback_msg (err, routine,inUV->name);
+
+  iretCode = ObitUVOpen (inUV, access, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) 
+    Obit_traceback_msg (err, routine,inUV->name);
+  outUV->buffer = inUV->buffer;
+
+  /* Get descriptors */
+  inDesc  = inUV->myDesc;
+  outDesc = outUV->myDesc;
+  SId = 0;   /* In case single source */
+
+  uvwCalc = ObitUVWCalcCreate("UVWCalc", outUV, err);
+  if (err->error) Obit_traceback_msg (err, routine, outUV->name);
+
+  /* we're in business, copy, recompute u,v,w */
+  while ((iretCode==OBIT_IO_OK) && (oretCode==OBIT_IO_OK)) {
+    if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
+    else iretCode = ObitUVRead (inUV, inUV->buffer, err);
+    if (iretCode!=OBIT_IO_OK) break;
+   /* How many */
+    outDesc->numVisBuff = inDesc->numVisBuff;
+
+    /* Modify data */
+    for (i=0; i<inDesc->numVisBuff; i++) { /* loop over visibilities */
+      indx = i*inDesc->lrec;
+      if (inUV->myDesc->ilocsu>=0) 
+	SId = (olong)(inUV->buffer[indx+inUV->myDesc->ilocsu] + 0.5);
+      cbase = inUV->buffer[indx+inUV->myDesc->ilocb]; /* Baseline */
+      ant1 = (cbase / 256.0) + 0.001;
+      ant2 = (cbase - ant1 * 256) + 0.001;
+      subA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 0.5);
+      ObitUVWCalcUVW(uvwCalc, inUV->buffer[indx+inDesc->iloct], SId, 
+		     subA, ant1, ant2, uvw, err);
+      inUV->buffer[indx+inDesc->ilocu] = uvw[0];
+      inUV->buffer[indx+inDesc->ilocv] = uvw[1];
+      inUV->buffer[indx+inDesc->ilocw] = uvw[2];
+    } /* end loop over visibilities */
+
+    /* Write */
+    oretCode = ObitUVWrite (outUV, inUV->buffer, err);
+    if (err->error) {
+      uvwCalc = ObitUVWCalcUnref(uvwCalc);
+      Obit_traceback_msg (err, routine,inUV->name);
+    }
+  } /* end loop processing data */
+  
+  /* check for errors */
+  if ((iretCode > OBIT_IO_EOF) || (oretCode > OBIT_IO_EOF) ||
+      (err->error)) /* add traceback,return */
+    Obit_traceback_msg (err, routine,inUV->name);
+  
+  /* unset input buffer (may be multiply deallocated ;'{ ) */
+  outUV->buffer = NULL;
+  outUV->bufferSize = 0;
+  
+  uvwCalc = ObitUVWCalcUnref(uvwCalc);  /* Cleanup */
+
+  /* close files */
+  iretCode = ObitUVClose (inUV, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) 
+    Obit_traceback_msg (err, routine, inUV->name);
+  
+  oretCode = ObitUVClose (outUV, err);
+  if ((oretCode!=OBIT_IO_OK) || (err->error))
+    Obit_traceback_msg (err, routine, outUV->name);
+  
+  return;
+} /* end ObitUVUtilCalcUVW */
 
 /**
  * Compute low precision  visibility uvw

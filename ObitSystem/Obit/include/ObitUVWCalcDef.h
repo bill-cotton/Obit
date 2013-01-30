@@ -49,7 +49,27 @@ olong *antIndex;
 olong maxAnt;
 /** Current source ID */
 olong curSID;
-/** rotation for Current source, cos and sine */
-ofloat uvrot, cuvrot, suvrot;
-/** Cos and Sin of apparent declination of current source */
+/** Number of antennas in arrays */
+olong nant;
+/** Flip sign of u,v,w? (GMRT, LOFAR) */
+gboolean doFlip;
+/* Time of current antenna celestial coordinates */
+ofloat curTime;
+/** Lorentz contraction factor */
+ofloat LorentzFact;
+/** inverse of wavelength for curent source */
+ofloat ilambda;
+/** Earth's rotation rate, turns per day */
+odouble Rate;
+/** Greenwich Sidereal Time at UT=0, hours*/
+odouble GSTUTC0;
+/** Current JD */
+odouble JD;
+/** Cos and Sin of Declination of current source */
 odouble cDec, sDec;
+/** Cos and Sin of RA of current source */
+odouble cRA, sRA;
+/** Position for diurnal abberation */
+odouble obsPos[3];
+/** Antenna coordinates in celestial frame */
+odouble *xm, *ym, *zm;

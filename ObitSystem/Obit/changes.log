@@ -1093,3 +1093,38 @@ Obit/testScripts/testPlot.py:
   Add optional data directory argument
 7 Jan 2013, svn 348
 
+Major changes to u,v,w calculation and some bug fixes
+Obit/changes.log:
+Obit/tasks/UVFix.c Obit/TDF/UVFix.TDF:
+  New task to recompute u,v,w
+Obit/include/ObitUVWCalcDef.h Obit/src/ObitUVWCalc.c:
+  Change to AIPS/UVFIX method for calculating u,v,w
+Obit/include/ObitUVUtil.h Obit/src/ObitUVUtil.c:
+ Add new routine CalcUVW to copy data with recomputing u,v,w 
+Obit/tasks/BDFIn.c:
+  Implement better u,v,w calculation for stationary sources
+Obit/include/ObitPrecess.h Obit/src/ObitPrecess.c:
+  Expose low level precession routine Precess
+Obit/tasks/UVAppend.c:
+  Copy History from input, not just from header
+Obit/src/ObitPolnCalFit.c:
+  Fit: Fix logic in reallocating work arrays.
+  Update*: blank any missing antennas
+Obit/TDF/Splat.TDF:
+  Change default corrType to 1 (XC+AC)
+Obit/src/ObitImageMosaic.c Obit/src/ObitImageMosaicMF.c
+Obit/src/ObitImageMosaicWB.c:
+  Increase image guardband for mosaics
+Obit/src/ObitUVSoln.c:
+  ObitUVSolnSmooMWF: test for all blanked data.
+Obit/tasks/SNFilt.c:
+  Better diagnostics when all solutions fail
+Obit/python/EVLAContPipe.py:
+  on doRecal for parallactic angle correction if either doPACor or doPolCal
+  This only works for circ poln.
+Obit/src/ObitPolnCalFit.c:
+  WriteOutput: Init BP table if fitting Gains
+Obit/src/ObitPBUtil.c: 
+  Poly: Correct coefficients for VLA 74 MHz also bug which caused 74 MHz data 
+  to use P band curve
+svn version 439, 30 Jan 2013

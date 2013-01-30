@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -40,11 +40,6 @@
  */
 
 /*---------------Private function prototypes----------------*/
-/** Private: Precess between apparent and J2000 epoch positions */
-static void jpreces(double JD, ofloat equin, double deldat, olong dir,
-		    gboolean gr, odouble obspos[3], ofloat polar[2],
-		    odouble *RAMean, odouble *DecMean, odouble *RAApp, odouble *DecApp);
-
 /** Private: Compute the rotation matrix for precession */
 static void jprenu(olong dir, double JD, ofloat equinox, gboolean doNut, 
 		   odouble rotMat[3][3]);
@@ -87,7 +82,7 @@ void ObitPrecessUVJPrecessApp (ObitUVDesc *desc, ObitSource *source)
   /* Precess */
   RAMean  = DG2RAD*source->RAMean;
   DecMean = DG2RAD*source->DecMean;
-  jpreces (JD, desc->equinox, 0.01, 1, FALSE, obsPos, polar,
+  ObitPrecessPrecess (JD, desc->equinox, 0.01, 1, FALSE, obsPos, polar,
 	   &RAMean, &DecMean, &source->RAApp, &source->DecApp);
 
   /* Convert to degrees */
@@ -119,7 +114,7 @@ void ObitPrecessUVRaDecApp (ObitUVDesc *desc, odouble *RAApp, odouble *DecApp)
   if (desc->crval[desc->jlocr]<0.0) desc->crval[desc->jlocr] += 360.0; /* Patch AIPS++ corruption */
   RAMean  = desc->crval[desc->jlocr]*DG2RAD;
   DecMean = desc->crval[desc->jlocd]*DG2RAD;
-  jpreces (JD, desc->equinox, 0.01, 1, FALSE, obsPos, polar,
+  ObitPrecessPrecess (JD, desc->equinox, 0.01, 1, FALSE, obsPos, polar,
 	   &RAMean, &DecMean, RAApp, DecApp);
 
   /* Convert to degrees */
@@ -129,40 +124,7 @@ void ObitPrecessUVRaDecApp (ObitUVDesc *desc, odouble *RAApp, odouble *DecApp)
 } /* end ObitPrecessUVRaDecApp */
 
 /**
- * Predict the Greenwich Sidereal Time at UT=0 and the Earth's
- * rotation rate on a given Julian date.
- * \param JD
- * \param GSTUTC0  [out] Apparent GST (hours) at UTC=0 on JD
- * \param Rate     [out] Earth rotation rate turns per day on JD
- */
-void ObitPrecessGST0 (odouble JD, odouble *GSTUTC0, odouble *Rate)
-{
-  odouble UTC, TC, Eps, EqEq , DelPsi, DelEps, JD0, TU, GMSTM;
-
-  UTC = JD - 2400000.5;
-  /* Get equation of equinoxes. */
-  TC = (JD - 2433282.423) / 36524.21988;
-  Eps = -46.850 * TC - 0.0034 * TC * TC + 0.0018 * TC * TC * TC;
-  Eps = (84404.84 + Eps) / 3600.0 / 180.0*3.141592658979;
-  /* Nutation terms */
-  jnut (JD,  &DelPsi, &DelEps);
-  EqEq = DelPsi * cos (Eps);
-
-  /* mean GST at midnight */
-  JD0 = 2415020.0;
-  TU = (JD - JD0) / 36525.0;
-  GMSTM = (8640184.542/3600.0) * TU;
-  GMSTM = fmod (GMSTM, 24.0);
-  GMSTM = (6.0 + 38.0/60.0 + 45.836/3600.0) + GMSTM + (0.0929/3600.0) * TU * TU;
-
-  *GSTUTC0 = GMSTM + (EqEq / (DG2RAD*15.0));
-  *Rate = 1.00273790265 + 0.589e-10 * TU;
-}  /* end ObitPrecessGST0 */
-
-/*----------------------Private functions---------------------------*/
-
-/**
- * Routine to precess positions using the Julian IAU 1984 conventions,
+ * Low level routine to precess positions using the Julian IAU 1984 conventions,
  * (i.e. J2000 positions).  Optional corrections can be made for
  * relativistic bending of the light by the sun, diurnal aberation and
  * polar motion.  Proper motion and parallax are assumed negligible.
@@ -193,9 +155,10 @@ void ObitPrecessGST0 (odouble JD, odouble *GSTUTC0, odouble *Rate)
  * \param RAApp   Apparent Right ascension at JD and OBSPOS
  * \param DecApp  Apparent declination.
  */
-static void jpreces(double JD, ofloat equin, double deldat, olong dir,
-		    gboolean gr, odouble obspos[3], ofloat polar[2],
-		    odouble *RAMean, odouble *DecMean, odouble *RAApp, odouble *DecApp)
+void ObitPrecessPrecess(odouble JD, ofloat equin, odouble deldat, olong dir,
+			gboolean gr, odouble obspos[3], ofloat polar[2],
+			odouble *RAMean, odouble *DecMean, 
+			odouble *RAApp, odouble *DecApp)
 {
   olong itemp;
   gboolean diurn;
@@ -328,7 +291,40 @@ static void jpreces(double JD, ofloat equin, double deldat, olong dir,
     if (*RAMean < 0.0) *RAMean =* RAMean + twopi;
     *DecMean = asin (out[2]);
   } 
-} /* end jpreces */
+} /* end ObitPrecessPrecess */
+
+/**
+ * Predict the Greenwich Sidereal Time at UT=0 and the Earth's
+ * rotation rate on a given Julian date.
+ * \param JD
+ * \param GSTUTC0  [out] Apparent GST (hours) at UTC=0 on JD
+ * \param Rate     [out] Earth rotation rate turns per day on JD
+ */
+void ObitPrecessGST0 (odouble JD, odouble *GSTUTC0, odouble *Rate)
+{
+  odouble UTC, TC, Eps, EqEq , DelPsi, DelEps, JD0, TU, GMSTM;
+
+  UTC = JD - 2400000.5;
+  /* Get equation of equinoxes. */
+  TC = (JD - 2433282.423) / 36524.21988;
+  Eps = -46.850 * TC - 0.0034 * TC * TC + 0.0018 * TC * TC * TC;
+  Eps = (84404.84 + Eps) / 3600.0 / 180.0*3.141592658979;
+  /* Nutation terms */
+  jnut (JD,  &DelPsi, &DelEps);
+  EqEq = DelPsi * cos (Eps);
+
+  /* mean GST at midnight */
+  JD0 = 2415020.0;
+  TU = (JD - JD0) / 36525.0;
+  GMSTM = (8640184.542/3600.0) * TU;
+  GMSTM = fmod (GMSTM, 24.0);
+  GMSTM = (6.0 + 38.0/60.0 + 45.836/3600.0) + GMSTM + (0.0929/3600.0) * TU * TU;
+
+  *GSTUTC0 = GMSTM + (EqEq / (DG2RAD*15.0));
+  *Rate = 1.00273790265 + 0.589e-10 * TU;
+}  /* end ObitPrecessGST0 */
+
+/*----------------------Private functions---------------------------*/
 
 /**
  * Routine to compute the rotation matrix for rectangular source
