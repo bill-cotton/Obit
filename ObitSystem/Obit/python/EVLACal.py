@@ -227,6 +227,7 @@ def EVLAInitContParms():
     parms["PBCor"]       = True         # Pri. beam corr on final image
     parms["antSize"]     = 24.5         # ant. diameter (m) for PBCor
     parms["CleanRad"]    = None         # CLEAN radius (pix?) about center or None=autoWin
+    parms["Beam"]        = [0.,0.,0.]   # Clean restoring beam (asec, asec, deg)
     
     # Final
     parms["doReport"]  =     True       # Generate source report?
@@ -7337,3 +7338,21 @@ def writeTableRow( dict, keys=None ):
 # end writeTableRow
 
 
+def EVLAScriptHistory (uv, scriptName, aipsSetup, parmFile, err):
+    """
+    Write script names to uv history
+
+    * uv         = UV data to smooth
+    * scriptName = name of processing script
+    * aipsSetup  = name of AIPS setup file
+    * parmFile   = name of parameter file
+    * err        = Python Obit Error/message stack
+    """
+    outHistory  = History.History("inhistory",  uv.List, err)
+    outHistory.Open(History.READWRITE, err)
+    outHistory.TimeStamp(" Start Script "+scriptName,err)
+    outHistory.WriteRec(-1,"script  aipsSetup="+aipsSetup+" / AIPS setup file",err)
+    outHistory.WriteRec(-1,"script  parmFile="+parmFile+"   / parameter file",err)
+    outHistory.Close(err)
+    # end EVLAScriptHistory
+    

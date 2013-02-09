@@ -588,7 +588,7 @@ extern int TableWriteRow (ObitTable *in, int rowno, PyObject *inDict,
   if (bad) {
       Obit_log_error(err, OBIT_Error, 
 		   "%s: wrong size %d %d for %s", 
-		   routine, desc->repeat[i], PyList_Size(list), desc->FieldName[i]);
+		   routine, desc->repeat[i], (olong)PyList_Size(list), desc->FieldName[i]);
       return 1;
   }
 

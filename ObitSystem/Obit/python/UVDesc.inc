@@ -78,6 +78,7 @@ extern PyObject *UVDescGetDict(ObitUVDesc* in) {
   PyObject *outDict = PyDict_New();
   PyObject *list1, *list2, *list3, *list4, *list5, *list6, *list7;
   PyObject *value;
+  Py_ssize_t doh;
   int i, pos = 0;
 
   PyDict_SetItemString(outDict, "name",    PyString_InternFromString(in->name));
@@ -154,7 +155,8 @@ extern PyObject *UVDescGetDict(ObitUVDesc* in) {
   PyDict_SetItemString(outDict, "incif",    PyInt_FromLong((long)in->incif));
  
   /* Discard references to newly created objects. */
-  while (PyDict_Next(outDict, &pos, NULL, &value))
+  doh = (Py_ssize_t)pos;
+  while (PyDict_Next(outDict, &doh, NULL, &value))
     Py_DECREF(value);
 
   return outDict;

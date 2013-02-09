@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2011                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -391,6 +391,10 @@ void ObitUVSelSetDesc (ObitUVDesc* in, ObitUVSel* sel,
   if (in->jlocif>=0) 
     sel->numberIF = MIN (sel->numberIF, in->inaxes[in->jlocif]);
 
+  /* If poln calibrating data from linear feeds then the output will be
+     as though the feeds were circular */
+  if (sel->doPolCal && (out->crval[out->jlocs]==-5.0)) 
+    out->crval[in->jlocs] = -1.0;
 } /* end ObitUVSelSetDesc */
 
 /**

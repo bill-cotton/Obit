@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageMF type                           */
 /*                                                                    */
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -74,7 +74,7 @@ extern PyObject* ImageMFInfo (ObitImageMF *in, ObitErr *err) {
   if (err->error) return outDict;
 
   // Ensure in fully instantiated -assume OK if myIO exists 
-  if (!in->myIO) ObitImageMFFullInstantiate (in, TRUE, err);
+  if (!in->myIO) ObitImageFullInstantiate ((ObitImage*)in, TRUE, err);
   if (err->error) return outDict;
 
   // Get details and save in dict

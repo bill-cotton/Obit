@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -210,6 +210,9 @@ ObitUVCal* ObitUVCalClone  (ObitUVCal *in, ObitUVCal *out)
  * \param sel     Data selector.
  * \param inDesc  Input  data descriptor.
  * \param outDesc Output data descriptor (after transformations/selection).
+ *                on input, info member "KeepSou":
+ * \li "KeepSou"  OBIT_bool (1,1,1) If present and True keep multisource input
+ *                as multisource output even if only one source selected
  * \param err     ObitError stack.
  */
 void ObitUVCalStart (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc, 
@@ -217,6 +220,9 @@ void ObitUVCalStart (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
 {
   olong i, ichan, ifreq, iif, istok, nfreq, nif, nstok, sid;
   olong incs, incf, incif;
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+  gboolean KeepSou=FALSE;
   gchar *routine = "ObitUVCalStart";
 
   /* error checks */
@@ -295,8 +301,11 @@ void ObitUVCalStart (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
   }
 
   /* If only one source selected make sure no "SOURCE" 
-     random parameter is written */
-  if (((sel->numberSourcesList==1) || (in->SUTable==NULL)) && (outDesc->ilocsu>=0))
+     random parameter is written.  
+     This can be overriden by outDesc->info member KeepSou */
+  ObitInfoListGetTest(outDesc->info, "KeepSou", &type, dim, &KeepSou);
+  if (((sel->numberSourcesList==1) || (in->SUTable==NULL)) && 
+      (outDesc->ilocsu>=0)  && !KeepSou)
     strncpy (outDesc->ptype[outDesc->ilocsu], "REMOVED ", UVLEN_KEYWORD); 
 
   /* Create AntennaLists */

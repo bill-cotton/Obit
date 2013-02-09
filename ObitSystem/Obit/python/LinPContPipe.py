@@ -24,12 +24,13 @@ from FITS import FITSDisk
 from PipeUtil import *
 from EVLACal import *
 
-def pipeline( aipsSetup, parmFile):
+def pipeline(scriptName, aipsSetup, parmFile):
     """
     Linear (feed) Polarization Continuum pipeline.
     
-    * *aipsSetup* = AIPS setup file
-    * *parmFile* = pipeline input parameters file
+    * *scriptName* = this script file name
+    * *aipsSetup*  = AIPS setup file
+    * *parmFile*   = pipeline input parameters file
     """
     ############################# Initialize OBIT ##########################################
     noScrat     = []    
@@ -134,12 +135,17 @@ def pipeline( aipsSetup, parmFile):
         if uv==None and not check:
             raise RuntimeError,"Cannot Hann data "
     
-    # Set uv is not done
+    # Set uv if not done
     if uv==None and not check:
         uv = UV.newPAUV("AIPS UV DATA", EVLAAIPSName(project, session), dataClass[0:6], \
                         disk, parms["seq"], True, err)
         if err.isErr:
             OErr.printErrMsg(err, "Error creating AIPS data")
+
+    # Save file names in history
+    EVLAScriptHistory (uv, scriptName, aipsSetup, parmFile, err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error writing file names to history")
     
     # Clear any old calibration/editing 
     if parms["doClearTab"]:
@@ -241,13 +247,6 @@ def pipeline( aipsSetup, parmFile):
            raise  RuntimeError,"Error in AutoFlag"
     
     
-    # Parallactic angle correction?
-    if parms["doPACor"]:
-        retCode = EVLAPACor(uv, err, \
-                                logfile=logFile, check=check, debug=debug)
-        if retCode!=0:
-            raise RuntimeError,"Error in Parallactic angle correction"
-    
     # Need to find a reference antenna?  See if we have saved it?
     if (parms["refAnt"]<=0):
         refAnt = FetchObject(project+"_"+session+"_"+band+".refAnt.pickle")
@@ -336,7 +335,7 @@ def pipeline( aipsSetup, parmFile):
         mess =  "Calibrate X/Y relative gain:"
         printMess(mess, logFile)
         plotFile = "./"+fileRoot+"XYGainCal.ps"
-        retCode = EVLACalAP (uv, [], parms["ACals"], err,  
+        retCode = EVLACalAP (uv, [], parms["XYRelGainCal"], err,  
                              doCalib=2, doBand=1, BPVer=1, flagVer=2, flagFail=False,  \
                              BChan=parms["ampBChan"], EChan=parms["ampEChan"], \
                              solInt=parms["solInt"], solSmo=1440., ampScalar=parms["ampScalar"], \
@@ -407,13 +406,6 @@ def pipeline( aipsSetup, parmFile):
         printMess(mess, logFile)
         EVLAClearCal(uv, err, doGain=True, doFlag=False, doBP=True, check=check, logfile=logFile)
         OErr.printErrMsg(err, "Error resetting calibration")
-        # Parallactic angle correction?
-        if parms["doPACor"]:
-            retCode = EVLAPACor(uv, err, \
-                                logfile=logFile, check=check, debug=debug)
-            if retCode!=0:
-                raise RuntimeError,"Error in Parallactic angle correction"
-    
         # Delay recalibration
         if parms["doDelayCal2"] and parms["DCals"] and not check:
             plotFile = "./"+fileRoot+"DelayCal2.ps"
@@ -850,6 +842,7 @@ if __name__ == '__main__':
     usage = """usage: %prog [options] AIPSSetup PipelineParms
     AIPSSetup = pipeline AIPS setup file
     PipelineParms = pipeline input parameters file"""
+    scriptName = sys.argv[0]   # script name
     parser = OptionParser( usage=usage )
     (options, args) = parser.parse_args()
     # Unset LD_PRELOAD to avoid ld.so warnings from binary installation
@@ -858,6 +851,6 @@ if __name__ == '__main__':
         parser.print_help()
         sys.exit()
     try:
-        pipeline( args[0] , args[1])
+        pipeline(scriptName,  args[0] , args[1])
     finally:
         pass

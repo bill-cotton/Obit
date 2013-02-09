@@ -614,7 +614,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   ObitUV       *inData = NULL;
   ObitInfoType type;
   olong        nvis, doCalib;
-  gboolean     doCalSelect;
+  gboolean     doCalSelect, KeepSou;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "FreqID", "BChan", "EChan",   "BIF", "EIF", 
@@ -657,6 +657,11 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   /* Get input parameters from myInput, copy to inData */
   ObitInfoListCopyList (myInput, inData->info, dataParms);
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
+
+  /* Make sure multisource nature kept even if only selecting one source */
+  KeepSou = TRUE;
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  ObitInfoListAlwaysPut (inData->myDesc->info, "KeepSou", OBIT_bool, dim, &KeepSou);
 
   return inData;
 } /* end getInputData */

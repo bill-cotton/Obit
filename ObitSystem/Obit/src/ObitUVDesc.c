@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -208,12 +208,9 @@ ObitUVDesc* ObitUVDescCopy (ObitUVDesc* in, ObitUVDesc* out, ObitErr *err)
    for (i=0; i<UVLEN_KEYWORD; i++) out->ptype[j][i] = in->ptype[j][i];
   }
 
-  /* Free any existing info members */
-  if (in->info!=NULL) {
-    if (out->info) out->info = ObitInfoListUnref (out->info); 
-    out->info = ObitInfoListCopy (in->info);
-  }
-
+  /* Copy info members */
+  out->info = ObitInfoListCopyData (in->info,out->info );
+  
   /* Release frequency related arrays - use ObitUVDescGetFreq to rebuild */
   if (out->freqArr)  g_free(out->freqArr);  out->freqArr = NULL;
   if (out->fscale)   g_free(out->fscale);   out->fscale = NULL;

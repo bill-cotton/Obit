@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task apply calibration snd write single source files */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2012                                          */
+/*;  Copyright (C) 2007-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -599,12 +599,12 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
 {
   ObitUV       *inData = NULL;
   ObitInfoType type;
-  olong         Aseq, disk, cno, nvis=1000;
+  olong         Aseq, disk, cno, nvis=1000, PDVer;
   gchar        *Type, *strTemp, inFile[129];
   oint         doCalib;
   gchar        Aname[16], Aclass[8], *Atype = "UV";
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gboolean     doCalSelect;
+  gboolean     doCalSelect, doPol;
   gchar *routine = "getInputData";
 
   /* error checks */
@@ -675,13 +675,20 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     return inData;
   }
 
-  /* Make sure doCalSelect set properly */
+  /* Make sure doCalSelect, etc set properly */
   doCalSelect = FALSE;
   ObitInfoListGetTest(myInput, "doCalSelect",  &type, dim, &doCalSelect);
   doCalib = -1;
   ObitInfoListGetTest(myInput, "doCalib",  &type, dim, &doCalib);
   doCalSelect = doCalSelect || (doCalib>0);
-  ObitInfoListAlwaysPut (myInput, "doCalSelect", OBIT_bool, dim, &doCalSelect);
+  ObitInfoListAlwaysPut (inData->info, "doCalSelect", OBIT_long, dim, &doCalSelect);
+  /* May need to convert poln */
+  doPol = FALSE;
+  ObitInfoListGetTest(myInput, "doPol",  &type, dim, &doPol);
+  ObitInfoListAlwaysPut (inData->info, "doPol", OBIT_bool, dim, &doPol);
+  PDVer = -1;
+  ObitInfoListGetTest(myInput, "PDVer",  &type, dim, &PDVer);
+  ObitInfoListAlwaysPut (inData->info, "PDVer", OBIT_long, dim, &PDVer);
  
 
   /* Ensure inData fully instantiated and OK */

@@ -585,6 +585,80 @@ extern char *AIPSDirInfo(int ,int ,int ,ObitErr *);
 extern int AIPSDirStatus(int ,int ,int ,int ,ObitErr *);
 extern int AIPSSetDirname(int ,char *,ObitErr *);
 
+#include "ObitAntennaList.h"
+#include "ObitTableANUtil.h"
+#include "ObitUV.h"
+
+extern ObitAntennaList* AntennaListCreate (char *name, ObitUV *inUV, long subA, 
+    ObitErr *err) {
+  ObitAntennaList *out=NULL;
+  ObitTableAN *ANTable=NULL;
+  olong iver;
+  gchar *routine = "AntennaListCreate";
+
+  // get Antenna List
+  iver = subA;
+  ANTable = newObitTableANValue (inUV->name, (ObitData*)inUV, &iver, 
+				 OBIT_IO_ReadOnly, 0, 0, 0, err);
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, out);
+  if (ANTable) out = ObitTableANGetList (ANTable, err);
+  ANTable = ObitTableANUnref(ANTable);   // Done with table 
+  if (out==NULL) {
+     Obit_log_error(err, OBIT_Error,"%s Problem generating AntennaList",
+        routine);
+     Obit_traceback_val (err, routine, inUV->name, out);
+    }
+  return out;
+} // end AntennaListCreate
+
+extern ObitAntennaList* AntennaListCopy (ObitAntennaList* in, 
+		              ObitAntennaList* out, ObitErr *err) {
+  return ObitAntennaListCopy (in, out, err);
+} // end AntennaListCopy
+
+
+ObitAntennaList* AntennaListRef (ObitAntennaList* in) {
+  return ObitAntennaListRef (in);
+} // end AntennaListRef
+
+ObitAntennaList* AntennaListUnref (ObitAntennaList* in) {
+  return ObitAntennaListUnref (in);
+} // end AntennaListUnref
+
+extern float AntennaListGetElev (ObitAntennaList* in, long ant, float time, 
+    ObitSource *Source) {
+  return (float)ObitAntennaListElev (in, (olong)ant, (ofloat)time, Source);
+}
+
+extern float AntennaListGetAz (ObitAntennaList* in, long ant, float time, 
+    ObitSource *Source) {
+  return (float)ObitAntennaListAz (in, (olong)ant, (ofloat)time, Source);
+}
+
+extern float AntennaListGetParAng (ObitAntennaList* in, long ant, float time, 
+    ObitSource *Source) {
+  return (float)ObitAntennaListParAng (in, (olong)ant, (ofloat)time, Source);
+}
+
+extern double AntennaListGetRefJD (ObitAntennaList* in) {
+  return (double)in->JD;
+}
+
+extern gchar* AntennaListGetArrName (ObitAntennaList* in) {
+  return (gchar*)in->ArrName;
+}
+extern ObitAntennaList *AntennaListCreate(char *,ObitUV *,long ,ObitErr *);
+extern ObitAntennaList *AntennaListCopy(ObitAntennaList *,ObitAntennaList *,ObitErr *);
+extern float AntennaListGetElev(ObitAntennaList *,long ,float ,ObitSource *);
+extern float AntennaListGetAz(ObitAntennaList *,long ,float ,ObitSource *);
+extern float AntennaListGetParAng(ObitAntennaList *,long ,float ,ObitSource *);
+extern double AntennaListGetRefJD(ObitAntennaList *);
+extern gchar *AntennaListGetArrName(ObitAntennaList *);
+
+typedef struct {
+  ObitAntennaList *me;
+} AntennaList;
+
 #include "ObitBeamShape.h"
 #include "ObitImage.h"
 
@@ -2806,6 +2880,7 @@ extern PyObject *ImageDescGetDict(ObitImageDesc* in) {
   PyObject *outDict = PyDict_New();
   PyObject *list1, *list2, *list3, *list4, *list5, *list6;
   PyObject *value;
+  Py_ssize_t doh;
   int i, pos = 0;
 
   PyDict_SetItemString(outDict, "name",    PyString_InternFromString(in->name));
@@ -2866,7 +2941,8 @@ extern PyObject *ImageDescGetDict(ObitImageDesc* in) {
   PyDict_SetItemString(outDict, "jlocf",    PyInt_FromLong((long)in->jlocf));
 
   /* Discard references to newly created objects. */
-  while (PyDict_Next(outDict, &pos, NULL, &value))
+  doh = (Py_ssize_t)pos;
+  while (PyDict_Next(outDict, &doh, NULL, &value))
     Py_DECREF(value);
 
   return outDict;
@@ -3526,7 +3602,7 @@ extern PyObject* ImageMFInfo (ObitImageMF *in, ObitErr *err) {
   if (err->error) return outDict;
 
   // Ensure in fully instantiated -assume OK if myIO exists 
-  if (!in->myIO) ObitImageMFFullInstantiate (in, TRUE, err);
+  if (!in->myIO) ObitImageFullInstantiate ((ObitImage*)in, TRUE, err);
   if (err->error) return outDict;
 
   // Get details and save in dict
@@ -6973,6 +7049,194 @@ typedef struct {
   ObitSkyModelVMIon *me;
 } SkyModelVMIon;
 
+#include "ObitSource.h"
+#include "ObitTableSUUtil.h"
+#include "ObitSourceList.h"
+#include "ObitUV.h"
+#include "ObitPrecess.h"
+
+extern ObitSource* SourceCreate (char *name) {
+  return newObitSource (name);
+} // end SourceCreate
+
+extern ObitSource* SourceCreateByNumber (char *name, ObitUV *inUV, long Number, ObitErr *err) {
+  ObitSource *out=NULL;
+  ObitSourceList *tsList=NULL;
+  olong iver, i;
+  ObitTableSU *SUTable=NULL;
+  gchar *routine = "SourceCreateByNumber";
+
+  // Full Source list if available
+  iver = 1;
+  SUTable = newObitTableSUValue (inUV->name, (ObitData*)inUV, &iver, 
+				 OBIT_IO_ReadOnly, 0, err);
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, out);
+  if (SUTable) {
+    tsList = ObitTableSUGetList (SUTable, err);
+    if (err->error) Obit_traceback_val (err, routine, inUV->name, out);
+    // Find source and copy reference to output
+    for (i=0; i<tsList->number; i++) {
+      if (tsList->SUlist[i]->SourID==Number) {
+        out = ObitSourceRef(tsList->SUlist[i]);
+        break;
+      }
+    }
+    tsList = ObitSourceListUnref(tsList);
+    if (out==NULL) {
+       Obit_log_error(err, OBIT_Error,"%s Source number %ld not found",
+		   routine, Number);
+       Obit_traceback_val (err, routine, inUV->name, out);
+    }
+  } else {  /* Use position /name from header */
+    out = newObitSource (name);
+    strncpy (out->SourceName, inUV->myDesc->object, MIN(20,UVLEN_VALUE));
+    out->equinox = inUV->myDesc->equinox;
+    out->RAMean  = inUV->myDesc->crval[inUV->myDesc->jlocr];
+    out->DecMean = inUV->myDesc->crval[inUV->myDesc->jlocd];
+    /* Compute apparent position */
+    ObitPrecessUVJPrecessApp (inUV->myDesc, out);
+    return out;
+  }
+
+  SUTable = ObitTableSUUnref(SUTable);   /* Done with table */
+
+  return out;
+} // end SourceCreateByNumber
+
+extern ObitSource* SourceCreateByName (char *name, ObitUV *inUV, char *Name, long Qual, 
+                                       ObitErr *err) {
+  ObitSource *out=NULL;
+  ObitSourceList *tsList=NULL;
+  olong iver, i;
+  ObitTableSU *SUTable=NULL;
+  gchar *routine = "SourceCreateByName";
+
+  // Full Source list if available
+  iver = 1;
+  SUTable = newObitTableSUValue (inUV->name, (ObitData*)inUV, &iver, 
+				 OBIT_IO_ReadOnly, 0, err);
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, out);
+  if (SUTable) {
+    tsList = ObitTableSUGetList (SUTable, err);
+    if (err->error) Obit_traceback_val (err, routine, inUV->name, out);
+    // Find source and copy reference to output
+    for (i=0; i<tsList->number; i++) {
+      if ((!strncmp(Name, tsList->SUlist[i]->SourceName, MIN(20,strlen(name))))
+        && (tsList->SUlist[i]->Qual==Qual)) {
+        out = ObitSourceRef(tsList->SUlist[i]);
+        break;
+      }
+    }
+    tsList = ObitSourceListUnref(tsList);
+    if (out==NULL) {
+       Obit_log_error(err, OBIT_Error,"%s Source %s Qual %ld not found",
+		   routine, Name, Qual);
+       Obit_traceback_val (err, routine, inUV->name, out);
+    }
+  } else {  /* Use position /name from header */
+    out = newObitSource (name);
+    strncpy (out->SourceName, inUV->myDesc->object, MIN(20,UVLEN_VALUE));
+    out->equinox = inUV->myDesc->equinox;
+    out->RAMean  = inUV->myDesc->crval[inUV->myDesc->jlocr];
+    out->DecMean = inUV->myDesc->crval[inUV->myDesc->jlocd];
+    /* Compute apparent position */
+    ObitPrecessUVJPrecessApp (inUV->myDesc, out);
+    return out;
+  }
+
+  SUTable = ObitTableSUUnref(SUTable);   /* Done with table */
+
+  return out;
+} // end SourceCreateByName
+
+extern ObitSource* SourceCopy (ObitSource* in, 
+		              ObitSource* out, ObitErr *err) {
+  return ObitSourceCopy (in, out, err);
+} // end SourceCopy
+
+
+ObitSource* SourceRef (ObitSource* in) {
+  return ObitSourceRef (in);
+} // end SourceRef
+
+extern char* SourceGetName (ObitSource* in) {
+  return (char*)in->SourceName;
+}
+
+extern int SourceGetSID (ObitSource* in) {
+  return (int)in->SourID;
+}
+
+extern int SourceGetQual (ObitSource* in) {
+  return (int)in->Qual;
+}
+
+extern int SourceGetEquinox (ObitSource* in) {
+  return (float)in->equinox;
+}
+
+extern double SourceGetRAMean (ObitSource* in) {
+  return (double)in->RAMean;
+}
+
+extern double SourceGetDecMean (ObitSource* in) {
+  return (double)in->DecMean;
+}
+
+extern double SourceGetRAApp (ObitSource* in) {
+  return (double)in->RAApp;
+}
+
+extern double SourceGetDecApp (ObitSource* in) {
+  return (double)in->DecApp;
+}
+
+extern void SourceSetRAMean (ObitSource* in, double value) {
+  in->RAMean = (odouble)value;
+}
+
+extern void SourceSetDecMean (ObitSource* in, double value) {
+  in->DecMean = (odouble)value;
+}
+
+extern void SourceSetRAApp (ObitSource* in, double value) {
+  in->RAApp = (odouble)value;
+}
+
+extern void SourceSetDecApp (ObitSource* in, double value) {
+  in->DecApp = (odouble)value;
+}
+
+ObitSource* SourceUnref (ObitSource* in) {
+  if (!ObitSourceIsA(in)) return NULL;
+  return ObitSourceUnref (in);
+} // end SourceUnref
+
+extern int SourceIsA (ObitSource* in) {
+  return ObitSourceIsA(in);
+}
+extern ObitSource *SourceCreate(char *);
+extern ObitSource *SourceCreateByNumber(char *,ObitUV *,long ,ObitErr *);
+extern ObitSource *SourceCreateByName(char *,ObitUV *,char *,long ,ObitErr *);
+extern ObitSource *SourceCopy(ObitSource *,ObitSource *,ObitErr *);
+extern char *SourceGetName(ObitSource *);
+extern int SourceGetSID(ObitSource *);
+extern int SourceGetQual(ObitSource *);
+extern int SourceGetEquinox(ObitSource *);
+extern double SourceGetRAMean(ObitSource *);
+extern double SourceGetDecMean(ObitSource *);
+extern double SourceGetRAApp(ObitSource *);
+extern double SourceGetDecApp(ObitSource *);
+extern void SourceSetRAMean(ObitSource *,double );
+extern void SourceSetDecMean(ObitSource *,double );
+extern void SourceSetRAApp(ObitSource *,double );
+extern void SourceSetDecApp(ObitSource *,double );
+extern int SourceIsA(ObitSource *);
+
+typedef struct {
+  ObitSource *me;
+} Source;
+
 #include "ObitSpectrumFit.h"
 #include "ObitImage.h"
 
@@ -7713,6 +7977,7 @@ extern PyObject *TableDescGetDict(ObitTableDesc* in) {
   PyObject *outDict = PyDict_New();
   PyObject *list, *value;
   gchar *ctemp;
+  Py_ssize_t doh;
   int i, pos = 0;
 
   /* test validity */
@@ -7768,7 +8033,8 @@ extern PyObject *TableDescGetDict(ObitTableDesc* in) {
   PyDict_SetItemString(outDict, "FieldUnit", list);
 
   /* Discard references to newly created objects. */
-  while (PyDict_Next(outDict, &pos, NULL, &value))
+  doh = (Py_ssize_t)pos;
+  while (PyDict_Next(outDict, &doh, NULL, &value))
     Py_DECREF(value);
 
   return outDict;
@@ -9850,7 +10116,7 @@ extern int TableWriteRow (ObitTable *in, int rowno, PyObject *inDict,
   if (bad) {
       Obit_log_error(err, OBIT_Error, 
 		   "%s: wrong size %d %d for %s", 
-		   routine, desc->repeat[i], PyList_Size(list), desc->FieldName[i]);
+		   routine, desc->repeat[i], (olong)PyList_Size(list), desc->FieldName[i]);
       return 1;
   }
 
@@ -11302,6 +11568,7 @@ extern PyObject *UVDescGetDict(ObitUVDesc* in) {
   PyObject *outDict = PyDict_New();
   PyObject *list1, *list2, *list3, *list4, *list5, *list6, *list7;
   PyObject *value;
+  Py_ssize_t doh;
   int i, pos = 0;
 
   PyDict_SetItemString(outDict, "name",    PyString_InternFromString(in->name));
@@ -11378,7 +11645,8 @@ extern PyObject *UVDescGetDict(ObitUVDesc* in) {
   PyDict_SetItemString(outDict, "incif",    PyInt_FromLong((long)in->incif));
  
   /* Discard references to newly created objects. */
-  while (PyDict_Next(outDict, &pos, NULL, &value))
+  doh = (Py_ssize_t)pos;
+  while (PyDict_Next(outDict, &doh, NULL, &value))
     Py_DECREF(value);
 
   return outDict;
@@ -15522,6 +15790,312 @@ static PyObject *_wrap_AIPSSetDirname(PyObject *self, PyObject *args) {
 {
   free((char *) _arg1);
 }
+    return _resultobj;
+}
+
+static PyObject *_wrap_AntennaListCreate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitAntennaList * _result;
+    char * _arg0;
+    ObitUV * _arg1;
+    long  _arg2;
+    ObitErr * _arg3;
+    PyObject * _obj0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo3 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOlO:AntennaListCreate",&_obj0,&_argo1,&_arg2,&_argo3)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of AntennaListCreate. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of AntennaListCreate. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitAntennaList *)AntennaListCreate(_arg0,_arg1,_arg2,_arg3);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitAntennaList_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_AntennaListCopy(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitAntennaList * _result;
+    ObitAntennaList * _arg0;
+    ObitAntennaList * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:AntennaListCopy",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitAntennaList_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of AntennaListCopy. Expected _ObitAntennaList_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitAntennaList_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of AntennaListCopy. Expected _ObitAntennaList_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of AntennaListCopy. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitAntennaList *)AntennaListCopy(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitAntennaList_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_AntennaListRef(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitAntennaList * _result;
+    ObitAntennaList * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:AntennaListRef",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitAntennaList_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of AntennaListRef. Expected _ObitAntennaList_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitAntennaList *)AntennaListRef(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitAntennaList_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_AntennaListUnref(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitAntennaList * _result;
+    ObitAntennaList * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:AntennaListUnref",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitAntennaList_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of AntennaListUnref. Expected _ObitAntennaList_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitAntennaList *)AntennaListUnref(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitAntennaList_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_AntennaListGetElev(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    float  _result;
+    ObitAntennaList * _arg0;
+    long  _arg1;
+    float  _arg2;
+    ObitSource * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo3 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OlfO:AntennaListGetElev",&_argo0,&_arg1,&_arg2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitAntennaList_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of AntennaListGetElev. Expected _ObitAntennaList_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of AntennaListGetElev. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    _result = (float )AntennaListGetElev(_arg0,_arg1,_arg2,_arg3);
+    _resultobj = Py_BuildValue("f",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_AntennaListGetAz(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    float  _result;
+    ObitAntennaList * _arg0;
+    long  _arg1;
+    float  _arg2;
+    ObitSource * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo3 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OlfO:AntennaListGetAz",&_argo0,&_arg1,&_arg2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitAntennaList_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of AntennaListGetAz. Expected _ObitAntennaList_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of AntennaListGetAz. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    _result = (float )AntennaListGetAz(_arg0,_arg1,_arg2,_arg3);
+    _resultobj = Py_BuildValue("f",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_AntennaListGetParAng(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    float  _result;
+    ObitAntennaList * _arg0;
+    long  _arg1;
+    float  _arg2;
+    ObitSource * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo3 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OlfO:AntennaListGetParAng",&_argo0,&_arg1,&_arg2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitAntennaList_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of AntennaListGetParAng. Expected _ObitAntennaList_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of AntennaListGetParAng. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    _result = (float )AntennaListGetParAng(_arg0,_arg1,_arg2,_arg3);
+    _resultobj = Py_BuildValue("f",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_AntennaListGetRefJD(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    double  _result;
+    ObitAntennaList * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:AntennaListGetRefJD",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitAntennaList_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of AntennaListGetRefJD. Expected _ObitAntennaList_p.");
+        return NULL;
+        }
+    }
+    _result = (double )AntennaListGetRefJD(_arg0);
+    _resultobj = Py_BuildValue("d",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_AntennaListGetArrName(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    gchar * _result;
+    ObitAntennaList * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:AntennaListGetArrName",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitAntennaList_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of AntennaListGetArrName. Expected _ObitAntennaList_p.");
+        return NULL;
+        }
+    }
+    _result = (gchar *)AntennaListGetArrName(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_gchar_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
     return _resultobj;
 }
 
@@ -41030,6 +41604,564 @@ static PyObject *_wrap_SkyModelVMIonIsA(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_SourceCreate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSource * _result;
+    char * _arg0;
+    PyObject * _obj0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:SourceCreate",&_obj0)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (ObitSource *)SourceCreate(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSource_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_SourceCreateByNumber(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSource * _result;
+    char * _arg0;
+    ObitUV * _arg1;
+    long  _arg2;
+    ObitErr * _arg3;
+    PyObject * _obj0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo3 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOlO:SourceCreateByNumber",&_obj0,&_argo1,&_arg2,&_argo3)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of SourceCreateByNumber. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of SourceCreateByNumber. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSource *)SourceCreateByNumber(_arg0,_arg1,_arg2,_arg3);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSource_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_SourceCreateByName(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSource * _result;
+    char * _arg0;
+    ObitUV * _arg1;
+    char * _arg2;
+    long  _arg3;
+    ObitErr * _arg4;
+    PyObject * _obj0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _obj2 = 0;
+    PyObject * _argo4 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOOlO:SourceCreateByName",&_obj0,&_argo1,&_obj2,&_arg3,&_argo4)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of SourceCreateByName. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyString_Check(_obj2)) {
+    int size = PyString_Size(_obj2);
+    char *str;
+    int i = 0;
+    _arg2 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj2);
+    for (i = 0; i < size; i++) {
+      _arg2[i] = str[i];
+    }
+    _arg2[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of SourceCreateByName. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSource *)SourceCreateByName(_arg0,_arg1,_arg2,_arg3,_arg4);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSource_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+{
+  free((char *) _arg2);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_SourceCopy(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSource * _result;
+    ObitSource * _arg0;
+    ObitSource * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:SourceCopy",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SourceCopy. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of SourceCopy. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of SourceCopy. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSource *)SourceCopy(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSource_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_SourceRef(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSource * _result;
+    ObitSource * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:SourceRef",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SourceRef. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSource *)SourceRef(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSource_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_SourceGetName(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+    ObitSource * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:SourceGetName",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SourceGetName. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    _result = (char *)SourceGetName(_arg0);
+    _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_SourceGetSID(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitSource * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:SourceGetSID",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SourceGetSID. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    _result = (int )SourceGetSID(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_SourceGetQual(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitSource * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:SourceGetQual",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SourceGetQual. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    _result = (int )SourceGetQual(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_SourceGetEquinox(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitSource * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:SourceGetEquinox",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SourceGetEquinox. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    _result = (int )SourceGetEquinox(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_SourceGetRAMean(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    double  _result;
+    ObitSource * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:SourceGetRAMean",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SourceGetRAMean. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    _result = (double )SourceGetRAMean(_arg0);
+    _resultobj = Py_BuildValue("d",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_SourceGetDecMean(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    double  _result;
+    ObitSource * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:SourceGetDecMean",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SourceGetDecMean. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    _result = (double )SourceGetDecMean(_arg0);
+    _resultobj = Py_BuildValue("d",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_SourceGetRAApp(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    double  _result;
+    ObitSource * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:SourceGetRAApp",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SourceGetRAApp. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    _result = (double )SourceGetRAApp(_arg0);
+    _resultobj = Py_BuildValue("d",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_SourceGetDecApp(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    double  _result;
+    ObitSource * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:SourceGetDecApp",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SourceGetDecApp. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    _result = (double )SourceGetDecApp(_arg0);
+    _resultobj = Py_BuildValue("d",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_SourceSetRAMean(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSource * _arg0;
+    double  _arg1;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Od:SourceSetRAMean",&_argo0,&_arg1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SourceSetRAMean. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    SourceSetRAMean(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_SourceSetDecMean(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSource * _arg0;
+    double  _arg1;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Od:SourceSetDecMean",&_argo0,&_arg1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SourceSetDecMean. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    SourceSetDecMean(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_SourceSetRAApp(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSource * _arg0;
+    double  _arg1;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Od:SourceSetRAApp",&_argo0,&_arg1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SourceSetRAApp. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    SourceSetRAApp(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_SourceSetDecApp(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSource * _arg0;
+    double  _arg1;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Od:SourceSetDecApp",&_argo0,&_arg1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SourceSetDecApp. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    SourceSetDecApp(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_SourceUnref(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSource * _result;
+    ObitSource * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:SourceUnref",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SourceUnref. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSource *)SourceUnref(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSource_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_SourceIsA(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitSource * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:SourceIsA",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SourceIsA. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    _result = (int )SourceIsA(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_newSpectrumFit(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitSpectrumFit * _result;
@@ -63736,6 +64868,165 @@ static PyObject *_wrap_TableSkyModelSetHeadKeys(PyObject *self, PyObject *args) 
     return _resultobj;
 }
 
+#define AntennaList_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
+static PyObject *_wrap_AntennaList_me_set(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitAntennaList * _result;
+    AntennaList * _arg0;
+    ObitAntennaList * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:AntennaList_me_set",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_AntennaList_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of AntennaList_me_set. Expected _AntennaList_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitAntennaList_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of AntennaList_me_set. Expected _ObitAntennaList_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitAntennaList *)AntennaList_me_set(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitAntennaList_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+#define AntennaList_me_get(_swigobj) ((ObitAntennaList *) _swigobj->me)
+static PyObject *_wrap_AntennaList_me_get(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitAntennaList * _result;
+    AntennaList * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:AntennaList_me_get",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_AntennaList_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of AntennaList_me_get. Expected _AntennaList_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitAntennaList *)AntennaList_me_get(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitAntennaList_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static AntennaList *new_AntennaList(char *name,ObitUV *inUV,long subA,ObitErr *err) {
+     AntennaList *out;
+     out = (AntennaList *) malloc(sizeof(AntennaList));
+     if (strcmp(name, "None")) out->me = AntennaListCreate (name, inUV, subA, err);
+     else out->me = NULL;
+     return out;
+   }
+
+static PyObject *_wrap_new_AntennaList(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    AntennaList * _result;
+    char * _arg0;
+    ObitUV * _arg1;
+    long  _arg2;
+    ObitErr * _arg3;
+    PyObject * _obj0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo3 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOlO:new_AntennaList",&_obj0,&_argo1,&_arg2,&_argo3)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of new_AntennaList. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of new_AntennaList. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (AntennaList *)new_AntennaList(_arg0,_arg1,_arg2,_arg3);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_AntennaList_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static void delete_AntennaList(AntennaList *self) {
+    self->me = AntennaListUnref(self->me);
+    free(self);
+  }
+static PyObject *_wrap_delete_AntennaList(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    AntennaList * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:delete_AntennaList",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_AntennaList_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of delete_AntennaList. Expected _AntennaList_p.");
+        return NULL;
+        }
+    }
+    delete_AntennaList(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 #define BeamShape_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
 static PyObject *_wrap_BeamShape_me_set(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -68775,6 +70066,146 @@ static PyObject *_wrap_delete_SkyModelVMIon(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+#define Source_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
+static PyObject *_wrap_Source_me_set(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSource * _result;
+    Source * _arg0;
+    ObitSource * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:Source_me_set",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_Source_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of Source_me_set. Expected _Source_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitSource_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of Source_me_set. Expected _ObitSource_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSource *)Source_me_set(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSource_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+#define Source_me_get(_swigobj) ((ObitSource *) _swigobj->me)
+static PyObject *_wrap_Source_me_get(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSource * _result;
+    Source * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:Source_me_get",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_Source_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of Source_me_get. Expected _Source_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSource *)Source_me_get(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSource_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static Source *new_Source(char *name) {
+     Source *out;
+     out = (Source *) malloc(sizeof(Source));
+     if (strcmp(name, "None")) out->me = SourceCreate (name);
+     else out->me = NULL;
+     return out;
+   }
+
+static PyObject *_wrap_new_Source(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    Source * _result;
+    char * _arg0;
+    PyObject * _obj0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:new_Source",&_obj0)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (Source *)new_Source(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_Source_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static void delete_Source(Source *self) {
+    self->me = SourceUnref(self->me);
+    free(self);
+  }
+static PyObject *_wrap_delete_Source(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    Source * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:delete_Source",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_Source_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of delete_Source. Expected _Source_p.");
+        return NULL;
+        }
+    }
+    delete_Source(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 #define SpectrumFit_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
 static PyObject *_wrap_SpectrumFit_me_set(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -71314,6 +72745,10 @@ static PyMethodDef ObitMethods[] = {
 	 { "new_SpectrumFit", _wrap_new_SpectrumFit, METH_VARARGS },
 	 { "SpectrumFit_me_get", _wrap_SpectrumFit_me_get, METH_VARARGS },
 	 { "SpectrumFit_me_set", _wrap_SpectrumFit_me_set, METH_VARARGS },
+	 { "delete_Source", _wrap_delete_Source, METH_VARARGS },
+	 { "new_Source", _wrap_new_Source, METH_VARARGS },
+	 { "Source_me_get", _wrap_Source_me_get, METH_VARARGS },
+	 { "Source_me_set", _wrap_Source_me_set, METH_VARARGS },
 	 { "delete_SkyModelVMIon", _wrap_delete_SkyModelVMIon, METH_VARARGS },
 	 { "new_SkyModelVMIon", _wrap_new_SkyModelVMIon, METH_VARARGS },
 	 { "SkyModelVMIon_me_get", _wrap_SkyModelVMIon_me_get, METH_VARARGS },
@@ -71445,6 +72880,10 @@ static PyMethodDef ObitMethods[] = {
 	 { "new_BeamShape", _wrap_new_BeamShape, METH_VARARGS },
 	 { "BeamShape_me_get", _wrap_BeamShape_me_get, METH_VARARGS },
 	 { "BeamShape_me_set", _wrap_BeamShape_me_set, METH_VARARGS },
+	 { "delete_AntennaList", _wrap_delete_AntennaList, METH_VARARGS },
+	 { "new_AntennaList", _wrap_new_AntennaList, METH_VARARGS },
+	 { "AntennaList_me_get", _wrap_AntennaList_me_get, METH_VARARGS },
+	 { "AntennaList_me_set", _wrap_AntennaList_me_set, METH_VARARGS },
 	 { "TableSkyModelSetHeadKeys", _wrap_TableSkyModelSetHeadKeys, METH_VARARGS },
 	 { "TableSkyModelGetHeadKeys", _wrap_TableSkyModelGetHeadKeys, METH_VARARGS },
 	 { "TableSkyModel", _wrap_TableSkyModel, METH_VARARGS },
@@ -71993,6 +73432,25 @@ static PyMethodDef ObitMethods[] = {
 	 { "SpectrumFitUnref", _wrap_SpectrumFitUnref, METH_VARARGS },
 	 { "SpectrumFitCopy", _wrap_SpectrumFitCopy, METH_VARARGS },
 	 { "newSpectrumFit", _wrap_newSpectrumFit, METH_VARARGS },
+	 { "SourceIsA", _wrap_SourceIsA, METH_VARARGS },
+	 { "SourceUnref", _wrap_SourceUnref, METH_VARARGS },
+	 { "SourceSetDecApp", _wrap_SourceSetDecApp, METH_VARARGS },
+	 { "SourceSetRAApp", _wrap_SourceSetRAApp, METH_VARARGS },
+	 { "SourceSetDecMean", _wrap_SourceSetDecMean, METH_VARARGS },
+	 { "SourceSetRAMean", _wrap_SourceSetRAMean, METH_VARARGS },
+	 { "SourceGetDecApp", _wrap_SourceGetDecApp, METH_VARARGS },
+	 { "SourceGetRAApp", _wrap_SourceGetRAApp, METH_VARARGS },
+	 { "SourceGetDecMean", _wrap_SourceGetDecMean, METH_VARARGS },
+	 { "SourceGetRAMean", _wrap_SourceGetRAMean, METH_VARARGS },
+	 { "SourceGetEquinox", _wrap_SourceGetEquinox, METH_VARARGS },
+	 { "SourceGetQual", _wrap_SourceGetQual, METH_VARARGS },
+	 { "SourceGetSID", _wrap_SourceGetSID, METH_VARARGS },
+	 { "SourceGetName", _wrap_SourceGetName, METH_VARARGS },
+	 { "SourceRef", _wrap_SourceRef, METH_VARARGS },
+	 { "SourceCopy", _wrap_SourceCopy, METH_VARARGS },
+	 { "SourceCreateByName", _wrap_SourceCreateByName, METH_VARARGS },
+	 { "SourceCreateByNumber", _wrap_SourceCreateByNumber, METH_VARARGS },
+	 { "SourceCreate", _wrap_SourceCreate, METH_VARARGS },
 	 { "SkyModelVMIonIsA", _wrap_SkyModelVMIonIsA, METH_VARARGS },
 	 { "SkyModelVMIonGetName", _wrap_SkyModelVMIonGetName, METH_VARARGS },
 	 { "SkyModelVMIonCreate", _wrap_SkyModelVMIonCreate, METH_VARARGS },
@@ -72627,6 +74085,15 @@ static PyMethodDef ObitMethods[] = {
 	 { "BeamShapeUnref", _wrap_BeamShapeUnref, METH_VARARGS },
 	 { "BeamShapeCopy", _wrap_BeamShapeCopy, METH_VARARGS },
 	 { "newBeamShape", _wrap_newBeamShape, METH_VARARGS },
+	 { "AntennaListGetArrName", _wrap_AntennaListGetArrName, METH_VARARGS },
+	 { "AntennaListGetRefJD", _wrap_AntennaListGetRefJD, METH_VARARGS },
+	 { "AntennaListGetParAng", _wrap_AntennaListGetParAng, METH_VARARGS },
+	 { "AntennaListGetAz", _wrap_AntennaListGetAz, METH_VARARGS },
+	 { "AntennaListGetElev", _wrap_AntennaListGetElev, METH_VARARGS },
+	 { "AntennaListUnref", _wrap_AntennaListUnref, METH_VARARGS },
+	 { "AntennaListRef", _wrap_AntennaListRef, METH_VARARGS },
+	 { "AntennaListCopy", _wrap_AntennaListCopy, METH_VARARGS },
+	 { "AntennaListCreate", _wrap_AntennaListCreate, METH_VARARGS },
 	 { "AIPSSetDirname", _wrap_AIPSSetDirname, METH_VARARGS },
 	 { "AIPSDirStatus", _wrap_AIPSDirStatus, METH_VARARGS },
 	 { "AIPSDirInfo", _wrap_AIPSDirInfo, METH_VARARGS },

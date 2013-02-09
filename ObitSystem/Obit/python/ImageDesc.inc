@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageDesc type                         */
 /*                                                                    */
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -112,6 +112,7 @@ extern PyObject *ImageDescGetDict(ObitImageDesc* in) {
   PyObject *outDict = PyDict_New();
   PyObject *list1, *list2, *list3, *list4, *list5, *list6;
   PyObject *value;
+  Py_ssize_t doh;
   int i, pos = 0;
 
   PyDict_SetItemString(outDict, "name",    PyString_InternFromString(in->name));
@@ -172,7 +173,8 @@ extern PyObject *ImageDescGetDict(ObitImageDesc* in) {
   PyDict_SetItemString(outDict, "jlocf",    PyInt_FromLong((long)in->jlocf));
 
   /* Discard references to newly created objects. */
-  while (PyDict_Next(outDict, &pos, NULL, &value))
+  doh = (Py_ssize_t)pos;
+  while (PyDict_Next(outDict, &doh, NULL, &value))
     Py_DECREF(value);
 
   return outDict;
