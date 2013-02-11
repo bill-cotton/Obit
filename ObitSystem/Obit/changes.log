@@ -1128,3 +1128,45 @@ Obit/src/ObitPBUtil.c:
   Poly: Correct coefficients for VLA 74 MHz also bug which caused 74 MHz data 
   to use P band curve
 svn version 439, 30 Jan 2013
+
+Mostly bug fixes, esp. for poln.
+ObitVersion:
+Obit/src/ObitUVSel.c:
+   SetDesc: If calibrating linear feed poln, convert descriptor to 
+   circular basis
+Obit/tasks/Split.c:
+   Better setup for polarization calibration.
+Obit/python/Table.inc Obit/python/UVDesc.inc Obit/python/ImageDesc.inc:
+  WriteRow: Fix type in Obit_log_error call
+Obit/python/ImageMF.inc:
+  Correct call to  ObitImageFullInstantiate
+Obit/python/Source.py Obit/python/Source.inc:
+  New interface to Obit Source objects.
+Obit/python/AntennaList.py Obit/python/AntennaList.inc:
+  New interface to Obit AntennaList objects.
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+Obit  Rebuild python interface
+Obit/python/LinPContPipe.py:
+  Add script names to history, bug fixes
+Obit/python/EVLACal.py:
+  Routine to write script names to history, default param["Beam"]
+Obit/src/ObitPolnCalFit.c:
+  Check that input UV is multisource.
+  dump of data/model now err->prtLv>=4
+  Bug fixes.
+Obit/src/ObitUVCal.c:
+  Start: info member "KeepSou" to override removing "Source" RP.
+Obit/src/ObitUVCal.c:
+  Open: document descriptor info member "KeepSou" to override removing "Source" RP.
+Obit/src/ObitUVDesc.c:
+  Copy: Keep any extant output info members.
+Obit/tasks/PCal.c:
+   Override removing "Source" random parameter if one source selected.
+svn version 440 9 Feb 2013
+
+Fix screwup
+Obit/python/Table.inc Obit/python/UVDesc.inc Obit/python/ImageDesc.inc:
+  Fix (?) incompatability with old python
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  Update python interface
+svn version 441 11 Feb 2013
