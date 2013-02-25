@@ -1,6 +1,6 @@
-/* $Id$ */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2013                                          */
+/*;  Copyright (C) 2013                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -24,50 +24,13 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/*  Define the basic components of the ObitDConCleanVis structure     */
-/*  This is intended to be included in a class structure definition   */
-/**
- * \file ObitDConCleanVisDef.h
- * ObitDConCleanVis structure members for this and any derived classes.
- */
-#include "ObitDConCleanDef.h"  /* Parent class definitions */
-/** UVImager to create images from UV data */
-ObitUVImager *imager;
-/** Sky Model for subtracting Clean model from data */
-ObitSkyModel *skyModel;
-/** Model calculation mode for components */
-ObitSkyModelMode modelMode;
-/** Restore image when done? */
-gboolean doRestore;
-/** Cross Restore images when done? */
-gboolean doXRestore;
-/** Flatten image when done? */
-gboolean doFlatten;
-/** Weight data before Cleaning? */
-gboolean doWeight;
-/** Do beams need to be remade before cleaning? */
-gboolean doBeam;
-/** Consider recentering components? */
-gboolean doRecenter;
-/** Peak in an image window encountered */
-ofloat peakFlux;
-/** Quality (desirability for next CLEAN) measure per field */
-ofloat *quality;
-/** Max abs "cleanable" flux density  per field */
-ofloat *cleanable;
-/** Is image fresh? per field */
-gboolean *fresh;
-/** CLEAN component level to reuse, <0 none  */
-ofloat reuseFlux;
-/** autoCenter min flux density   */
-ofloat autoCen;
-/** Display server */
-ObitDisplay *display;
-/** Copy of calibrated/weighted data if doing SDI clean */
-ObitUV *SDIdata;
-/** Max BeamTaper to consider */
-ofloat maxBeamTaper;
-/** Min BeamTaper to consider */
-ofloat minBeamTaper;
-/** Resolution selection controls */
-ofloat MResKnob[10];
+/*  Define the basic components of the ObitRMFit ClassInfo structure */
+#include "ObitClassDef.h"  /* Parent class ClassInfo definition file */
+/** Function pointer to Constructor. */
+ObitRMFitCreateFP ObitRMFitCreate;
+/** Function pointer to FitCube. */
+ObitRMFitCubeFP ObitRMFitCube;
+/** Function pointer to FitImArr. */
+ObitRMFitImArrFP ObitRMFitImArr;
+/** Function pointer to Single. */
+ObitRMFitSingleFP ObitRMFitSingle;

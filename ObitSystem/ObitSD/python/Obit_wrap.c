@@ -457,6 +457,11 @@ extern char* ObitGetName (Obit* in) {
 extern int IsAnObitObject(Obit *);
 extern char *ObitGetName(Obit *);
 
+// typedef for  Py_ssize_t if python < 2.5
+#if PY_MAJOR_VERSION==2 && PY_MINOR_VERSION<5
+typedef int Py_ssize_t
+#endif
+
 #include "ObitAIPS.h"
 #include "ObitAIPSDir.h"
 
@@ -2880,7 +2885,7 @@ extern PyObject *ImageDescGetDict(ObitImageDesc* in) {
   PyObject *outDict = PyDict_New();
   PyObject *list1, *list2, *list3, *list4, *list5, *list6;
   PyObject *value;
-  int doh;
+  Py_ssize_t doh;
   int i, pos = 0;
 
   PyDict_SetItemString(outDict, "name",    PyString_InternFromString(in->name));
@@ -6686,6 +6691,99 @@ typedef struct {
   ObitPixHisto *me;
 } PixHistFDR;
 
+#include "ObitRMFit.h"
+#include "ObitImage.h"
+
+extern ObitRMFit* RMFitCopy  (ObitRMFit *in, ObitRMFit *out, 
+				    ObitErr *err) {
+  return ObitRMFitCopy (in, out, err);
+} // end  RMFitCopy
+
+extern ObitRMFit* RMFitUnref (ObitRMFit* in) {
+  if (!ObitRMFitIsA(in)) return NULL;
+  return ObitRMFitUnref(in);
+}
+
+extern ObitRMFit*  RMFitRef (ObitRMFit* in) {
+  return ObitRMFitRef(in);
+}
+
+extern ObitRMFit* RMFitCreate (char *name, int nterm) {
+  return ObitRMFitCreate((gchar*)name, (olong)nterm);
+}
+
+extern void RMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage, 
+		       ObitImage *outImage, ObitErr *err) {    
+  ObitRMFitCube(in, inQImage, inUImage, outImage, err);
+}
+
+extern void RMFitImArr (ObitRMFit* in, int nimage, 
+                        ObitImage **imQArr, ObitImage **imUArr, 
+			ObitImage *outImage, ObitErr *err) {
+  ObitRMFitImArr(in, (olong)nimage, imQArr, imUArr, outImage, err);
+} // end RMFitImArr 
+
+
+extern ObitRMFit* newRMFit (char* name) {
+  return newObitRMFit (name);
+} // end  newRMFit
+
+extern ObitInfoList* RMFitGetList (ObitRMFit* in) {
+  return ObitInfoListRef(in->info);
+}
+
+extern char* RMFitGetName (ObitRMFit* in) {
+  if (ObitRMFitIsA(in)) {
+    return in->name;
+  } else {
+    return NULL;
+  }
+}
+
+extern int RMFitIsA (ObitRMFit* in) {
+  return ObitRMFitIsA(in);
+}
+
+extern PyObject* RMFitSingle (int nfreq, int nterm, double refLamb2, double *lamb2, 
+                              float *qflux, float *qsigma, float *uflux, float *usigma, 
+                              ObitErr *err) {
+  ofloat *out=NULL;
+  olong i, n;
+  PyObject *outList=NULL, *o=NULL;
+  out = ObitRMFitSingle((olong)nfreq, (olong)nterm, (odouble)refLamb2, (odouble*)lamb2, 
+                              (ofloat*)qflux, (ofloat*)qsigma, (ofloat*)uflux, (ofloat*)usigma, err);
+  if (err->error) {
+        ObitErrLog(err);
+        PyErr_SetString(PyExc_TypeError,"RM Fit failed");
+	o = PyString_FromString("FAILED");
+        return o;
+  }
+  n = 1 + nterm*2;
+  outList = PyList_New(n); 
+  for (i=0; i<n; i++) {
+    o = PyFloat_FromDouble((double)out[i]);
+    PyList_SetItem(outList, i, o);
+  }
+  if (out) g_free(out);
+  return outList;
+}  // end RMFitSingle
+
+extern ObitRMFit *RMFitCopy(ObitRMFit *,ObitRMFit *,ObitErr *);
+extern ObitRMFit *RMFitUnref(ObitRMFit *);
+extern ObitRMFit *RMFitRef(ObitRMFit *);
+extern ObitRMFit *RMFitCreate(char *,int );
+extern void RMFitCube(ObitRMFit *,ObitImage *,ObitImage *,ObitImage *,ObitErr *);
+extern void RMFitImArr(ObitRMFit *,int ,ObitImage **,ObitImage **,ObitImage *,ObitErr *);
+extern ObitRMFit *newRMFit(char *);
+extern ObitInfoList *RMFitGetList(ObitRMFit *);
+extern char *RMFitGetName(ObitRMFit *);
+extern int RMFitIsA(ObitRMFit *);
+extern PyObject *RMFitSingle(int ,int ,double ,double *,float *,float *,float *,float *,ObitErr *);
+
+typedef struct {
+  ObitRMFit *me;
+} RMFit;
+
 #include "ObitSkyGeom.h"
 #include "ObitPBUtil.h"
 
@@ -7977,7 +8075,7 @@ extern PyObject *TableDescGetDict(ObitTableDesc* in) {
   PyObject *outDict = PyDict_New();
   PyObject *list, *value;
   gchar *ctemp;
-  int doh;
+  Py_ssize_t doh;
   int i, pos = 0;
 
   /* test validity */
@@ -11568,7 +11666,7 @@ extern PyObject *UVDescGetDict(ObitUVDesc* in) {
   PyObject *outDict = PyDict_New();
   PyObject *list1, *list2, *list3, *list4, *list5, *list6, *list7;
   PyObject *value;
-  int doh;
+  Py_ssize_t doh;
   int i, pos = 0;
 
   PyDict_SetItemString(outDict, "name",    PyString_InternFromString(in->name));
@@ -38457,6 +38555,583 @@ static PyObject *_wrap_PixHistFDRIsA(PyObject *self, PyObject *args) {
     }
     _result = (int )PixHistFDRIsA(_arg0);
     _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_RMFitCopy(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitRMFit * _result;
+    ObitRMFit * _arg0;
+    ObitRMFit * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:RMFitCopy",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitRMFit_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of RMFitCopy. Expected _ObitRMFit_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitRMFit_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of RMFitCopy. Expected _ObitRMFit_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of RMFitCopy. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitRMFit *)RMFitCopy(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitRMFit_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_RMFitUnref(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitRMFit * _result;
+    ObitRMFit * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:RMFitUnref",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitRMFit_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of RMFitUnref. Expected _ObitRMFit_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitRMFit *)RMFitUnref(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitRMFit_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_RMFitRef(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitRMFit * _result;
+    ObitRMFit * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:RMFitRef",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitRMFit_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of RMFitRef. Expected _ObitRMFit_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitRMFit *)RMFitRef(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitRMFit_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_RMFitCreate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitRMFit * _result;
+    char * _arg0;
+    int  _arg1;
+    PyObject * _obj0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oi:RMFitCreate",&_obj0,&_arg1)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (ObitRMFit *)RMFitCreate(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitRMFit_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_RMFitCube(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitRMFit * _arg0;
+    ObitImage * _arg1;
+    ObitImage * _arg2;
+    ObitImage * _arg3;
+    ObitErr * _arg4;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo3 = 0;
+    PyObject * _argo4 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOOOO:RMFitCube",&_argo0,&_argo1,&_argo2,&_argo3,&_argo4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitRMFit_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of RMFitCube. Expected _ObitRMFit_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of RMFitCube. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of RMFitCube. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of RMFitCube. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of RMFitCube. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    RMFitCube(_arg0,_arg1,_arg2,_arg3,_arg4);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_RMFitImArr(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitRMFit * _arg0;
+    int  _arg1;
+    ObitImage ** _arg2;
+    ObitImage ** _arg3;
+    ObitImage * _arg4;
+    ObitErr * _arg5;
+    PyObject * _argo0 = 0;
+    PyObject * _obj2 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo4 = 0;
+    PyObject * _argo5 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OiOOOO:RMFitImArr",&_argo0,&_arg1,&_obj2,&_obj3,&_argo4,&_argo5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitRMFit_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of RMFitImArr. Expected _ObitRMFit_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj2)) {
+    int size2, size = PyList_Size(_obj2);
+    int j, i = 0;
+    char *tstr;
+
+    _arg2 = (ObitImage**) malloc((size+1)*sizeof(ObitImage*));
+    _arg2[size] = NULL;  // last pointer NULL
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj2,i);
+      if (PyString_Check(o)) {
+        if (SWIG_GetPtrObj(o,(void **) &_arg2[i],"_ObitImage_p")) {
+           PyErr_SetString(PyExc_TypeError,"Type error in argument. Expected _ObitImage_p.");
+           return NULL;
+         }
+         if (!ObitImageIsA((ObitImage*)_arg2[i])) {  // check */
+           PyErr_SetString(PyExc_TypeError,"Type error. Expected ObitImage Object.");
+           return NULL;
+         }
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain Strings (ObitImage pointers)");
+         free(_arg2);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyList_Check(_obj3)) {
+    int size2, size = PyList_Size(_obj3);
+    int j, i = 0;
+    char *tstr;
+
+    _arg3 = (ObitImage**) malloc((size+1)*sizeof(ObitImage*));
+    _arg3[size] = NULL;  // last pointer NULL
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj3,i);
+      if (PyString_Check(o)) {
+        if (SWIG_GetPtrObj(o,(void **) &_arg3[i],"_ObitImage_p")) {
+           PyErr_SetString(PyExc_TypeError,"Type error in argument. Expected _ObitImage_p.");
+           return NULL;
+         }
+         if (!ObitImageIsA((ObitImage*)_arg3[i])) {  // check */
+           PyErr_SetString(PyExc_TypeError,"Type error. Expected ObitImage Object.");
+           return NULL;
+         }
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain Strings (ObitImage pointers)");
+         free(_arg3);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of RMFitImArr. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo5) {
+        if (_argo5 == Py_None) { _arg5 = NULL; }
+        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of RMFitImArr. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    RMFitImArr(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  free((char **) _arg2);
+}
+{
+  free((char **) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_newRMFit(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitRMFit * _result;
+    char * _arg0;
+    PyObject * _obj0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:newRMFit",&_obj0)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (ObitRMFit *)newRMFit(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitRMFit_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_RMFitGetList(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitInfoList * _result;
+    ObitRMFit * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:RMFitGetList",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitRMFit_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of RMFitGetList. Expected _ObitRMFit_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitInfoList *)RMFitGetList(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitInfoList_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_RMFitGetName(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+    ObitRMFit * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:RMFitGetName",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitRMFit_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of RMFitGetName. Expected _ObitRMFit_p.");
+        return NULL;
+        }
+    }
+    _result = (char *)RMFitGetName(_arg0);
+    _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_RMFitIsA(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitRMFit * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:RMFitIsA",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitRMFit_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of RMFitIsA. Expected _ObitRMFit_p.");
+        return NULL;
+        }
+    }
+    _result = (int )RMFitIsA(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_RMFitSingle(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    int  _arg0;
+    int  _arg1;
+    double  _arg2;
+    double * _arg3;
+    float * _arg4;
+    float * _arg5;
+    float * _arg6;
+    float * _arg7;
+    ObitErr * _arg8;
+    PyObject * _obj3 = 0;
+    PyObject * _obj4 = 0;
+    PyObject * _obj5 = 0;
+    PyObject * _obj6 = 0;
+    PyObject * _obj7 = 0;
+    PyObject * _argo8 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"iidOOOOOO:RMFitSingle",&_arg0,&_arg1,&_arg2,&_obj3,&_obj4,&_obj5,&_obj6,&_obj7,&_argo8)) 
+        return NULL;
+{
+  if (PyList_Check(_obj3)) {
+    int size = PyList_Size(_obj3);
+    int i = 0;
+    _arg3 = (double*) malloc((size+1)*sizeof(double));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj3,i);
+      if (PyFloat_Check(o))
+         _arg3[i] = (double)((PyFloatObject*)o)->ob_fval;
+      else {
+         PyErr_SetString(PyExc_TypeError,"list must contain doubles");
+         free(_arg3);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyList_Check(_obj4)) {
+    int size = PyList_Size(_obj4);
+    int i = 0;
+    _arg4 = (float*) malloc((size+1)*sizeof(float));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj4,i);
+      if (PyFloat_Check(o))
+         _arg4[i] = (float)((PyFloatObject*)o)->ob_fval;
+      else {
+         PyErr_SetString(PyExc_TypeError,"list must contain floats");
+         free(_arg4);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyList_Check(_obj5)) {
+    int size = PyList_Size(_obj5);
+    int i = 0;
+    _arg5 = (float*) malloc((size+1)*sizeof(float));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj5,i);
+      if (PyFloat_Check(o))
+         _arg5[i] = (float)((PyFloatObject*)o)->ob_fval;
+      else {
+         PyErr_SetString(PyExc_TypeError,"list must contain floats");
+         free(_arg5);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyList_Check(_obj6)) {
+    int size = PyList_Size(_obj6);
+    int i = 0;
+    _arg6 = (float*) malloc((size+1)*sizeof(float));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj6,i);
+      if (PyFloat_Check(o))
+         _arg6[i] = (float)((PyFloatObject*)o)->ob_fval;
+      else {
+         PyErr_SetString(PyExc_TypeError,"list must contain floats");
+         free(_arg6);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyList_Check(_obj7)) {
+    int size = PyList_Size(_obj7);
+    int i = 0;
+    _arg7 = (float*) malloc((size+1)*sizeof(float));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj7,i);
+      if (PyFloat_Check(o))
+         _arg7[i] = (float)((PyFloatObject*)o)->ob_fval;
+      else {
+         PyErr_SetString(PyExc_TypeError,"list must contain floats");
+         free(_arg7);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+    if (_argo8) {
+        if (_argo8 == Py_None) { _arg8 = NULL; }
+        else if (SWIG_GetPtrObj(_argo8,(void **) &_arg8,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 9 of RMFitSingle. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)RMFitSingle(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7,_arg8);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+{
+  free((double *) _arg3);
+}
+{
+  free((float *) _arg4);
+}
+{
+  free((float *) _arg5);
+}
+{
+  free((float *) _arg6);
+}
+{
+  free((float *) _arg7);
+}
     return _resultobj;
 }
 
@@ -69643,6 +70318,150 @@ static PyObject *_wrap_delete_PixHistFDR(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+#define RMFit_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
+static PyObject *_wrap_RMFit_me_set(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitRMFit * _result;
+    RMFit * _arg0;
+    ObitRMFit * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:RMFit_me_set",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_RMFit_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of RMFit_me_set. Expected _RMFit_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitRMFit_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of RMFit_me_set. Expected _ObitRMFit_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitRMFit *)RMFit_me_set(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitRMFit_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+#define RMFit_me_get(_swigobj) ((ObitRMFit *) _swigobj->me)
+static PyObject *_wrap_RMFit_me_get(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitRMFit * _result;
+    RMFit * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:RMFit_me_get",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_RMFit_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of RMFit_me_get. Expected _RMFit_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitRMFit *)RMFit_me_get(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitRMFit_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static RMFit *new_RMFit(char *name,int nterm) {
+     RMFit *out;
+     out = (RMFit *) malloc(sizeof(RMFit));
+     if (strcmp(name, "None")) out->me = RMFitCreate(name, nterm);
+     else out->me = NULL;
+     return out;
+   }
+
+static PyObject *_wrap_new_RMFit(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    RMFit * _result;
+    char * _arg0;
+    int  _arg1;
+    PyObject * _obj0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oi:new_RMFit",&_obj0,&_arg1)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (RMFit *)new_RMFit(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_RMFit_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static void delete_RMFit(RMFit *self) {
+   if (!self) return;  // Not defined
+   if (self && self->me && self->me->ReferenceCount>0) {
+      self->me = RMFitUnref(self->me);
+      free(self);
+   }
+  }
+static PyObject *_wrap_delete_RMFit(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    RMFit * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:delete_RMFit",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_RMFit_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of delete_RMFit. Expected _RMFit_p.");
+        return NULL;
+        }
+    }
+    delete_RMFit(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 #define SkyModel_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
 static PyObject *_wrap_SkyModel_me_set(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -72761,6 +73580,10 @@ static PyMethodDef ObitMethods[] = {
 	 { "new_SkyModel", _wrap_new_SkyModel, METH_VARARGS },
 	 { "SkyModel_me_get", _wrap_SkyModel_me_get, METH_VARARGS },
 	 { "SkyModel_me_set", _wrap_SkyModel_me_set, METH_VARARGS },
+	 { "delete_RMFit", _wrap_delete_RMFit, METH_VARARGS },
+	 { "new_RMFit", _wrap_new_RMFit, METH_VARARGS },
+	 { "RMFit_me_get", _wrap_RMFit_me_get, METH_VARARGS },
+	 { "RMFit_me_set", _wrap_RMFit_me_set, METH_VARARGS },
 	 { "delete_PixHistFDR", _wrap_delete_PixHistFDR, METH_VARARGS },
 	 { "new_PixHistFDR", _wrap_new_PixHistFDR, METH_VARARGS },
 	 { "PixHistFDR_me_get", _wrap_PixHistFDR_me_get, METH_VARARGS },
@@ -73499,6 +74322,17 @@ static PyMethodDef ObitMethods[] = {
 	 { "SkyGeomNewPos", _wrap_SkyGeomNewPos, METH_VARARGS },
 	 { "SkyGeomXYShift", _wrap_SkyGeomXYShift, METH_VARARGS },
 	 { "SkyGeomShiftXY", _wrap_SkyGeomShiftXY, METH_VARARGS },
+	 { "RMFitSingle", _wrap_RMFitSingle, METH_VARARGS },
+	 { "RMFitIsA", _wrap_RMFitIsA, METH_VARARGS },
+	 { "RMFitGetName", _wrap_RMFitGetName, METH_VARARGS },
+	 { "RMFitGetList", _wrap_RMFitGetList, METH_VARARGS },
+	 { "newRMFit", _wrap_newRMFit, METH_VARARGS },
+	 { "RMFitImArr", _wrap_RMFitImArr, METH_VARARGS },
+	 { "RMFitCube", _wrap_RMFitCube, METH_VARARGS },
+	 { "RMFitCreate", _wrap_RMFitCreate, METH_VARARGS },
+	 { "RMFitRef", _wrap_RMFitRef, METH_VARARGS },
+	 { "RMFitUnref", _wrap_RMFitUnref, METH_VARARGS },
+	 { "RMFitCopy", _wrap_RMFitCopy, METH_VARARGS },
 	 { "PixHistFDRIsA", _wrap_PixHistFDRIsA, METH_VARARGS },
 	 { "PixHistFDRGetName", _wrap_PixHistFDRGetName, METH_VARARGS },
 	 { "PixHistFDRFlux", _wrap_PixHistFDRFlux, METH_VARARGS },

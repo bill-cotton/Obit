@@ -1890,7 +1890,8 @@ void ObitTableCCUtilT2Spec  (ObitImage *image, ObitImageWB *outImage,
   ObitInfoListGetTest(imDesc->info, "NSPEC", &type, dim, &nSpec);
   nterm = 1;
   ObitInfoListGetTest(imDesc->info, "NTERM", &type, dim, &nterm);
-  refFreq = imDesc->crval[imDesc->jlocf];
+  /* Reference frequency from output */
+  refFreq = outImage->myDesc->crval[outImage->myDesc->jlocf];
   Freq    = g_malloc0(nSpec*sizeof(odouble));
   FreqFact= g_malloc0(nSpec*sizeof(ofloat));
   RMS     = g_malloc0(nSpec*sizeof(ofloat));
@@ -1936,6 +1937,14 @@ void ObitTableCCUtilT2Spec  (ObitImage *image, ObitImageWB *outImage,
   }
   retCode = ObitImageClose (image, err);
   if (err->error) Obit_traceback_msg (err, routine, image->name);
+
+  /* Make sure output image descriptor correct */
+  retCode = ObitImageOpen ((ObitImage*)outImage, OBIT_IO_ReadWrite, err);
+  if (err->error) Obit_traceback_msg (err, routine, outImage->name);
+  outImage->myDesc->crval[outImage->myDesc->jlocf] = refFreq;
+  retCode = ObitImageClose ((ObitImage*)outImage, err);
+  if (err->error) Obit_traceback_msg (err, routine, outImage->name);
+
 
   /* Get input CC table */
   ver = *inCCVer;
@@ -2104,8 +2113,8 @@ void ObitTableCCUtilFixTSpec (ObitImage *inImage, olong *inCCVer,
   /* Numbers of things */
   nSpec = 1;
   ObitInfoListGetTest(imDesc->info, "NSPEC", &type, dim, &nSpec);
-  nterm = 1;
-  ObitInfoListGetTest(imDesc->info, "NTERM", &type, dim, &nterm);
+  /*nterm = 1;
+    ObitInfoListGetTest(imDesc->info, "NTERM", &type, dim, &nterm);*/
   sumFlux = g_malloc0(nSpec*sizeof(ofloat));
 
   /* Get input CC table */
@@ -2180,6 +2189,7 @@ void ObitTableCCUtilFixTSpec (ObitImage *inImage, olong *inCCVer,
       arg += terms[iterm] * lll;
       lll *= ll;
     }
+    /* Convert sum of flux to correction factor */
     specFact = exp(arg);
     if (sumFlux[i]!=0.0) sumFlux[i] = specFact*terms[0] / sumFlux[i];
     else sumFlux[i] = 1.0;

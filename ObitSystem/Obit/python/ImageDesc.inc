@@ -112,7 +112,7 @@ extern PyObject *ImageDescGetDict(ObitImageDesc* in) {
   PyObject *outDict = PyDict_New();
   PyObject *list1, *list2, *list3, *list4, *list5, *list6;
   PyObject *value;
-  int doh;
+  Py_ssize_t doh;
   int i, pos = 0;
 
   PyDict_SetItemString(outDict, "name",    PyString_InternFromString(in->name));

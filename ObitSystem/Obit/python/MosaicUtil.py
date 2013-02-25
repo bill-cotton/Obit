@@ -109,7 +109,8 @@ def PMakeMaster(template, size, SumWtImage, SumWt2, err):
     #OErr.printErrMsg(err, "Error writing image for "+Image.PGetName(SumWt2))
     # end PMakeMaster
 
-def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1):
+def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
+                 iblc=[1,1], itrc=[0,0]):
     """
     Sum an image onto Weighting accumulators using PB corrections
     
@@ -123,6 +124,8 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1):
     * SumWt2     = Second output image, like SumWtImage
     * err        = Python Obit Error/message stack
     * minGain    = minimum allowed gain (lower values blanked).
+    * iblc       = BLC in plane to start selection
+    * itrc       = TRC in plane to end selection
     """
     ################################################################
     # Checks
@@ -162,6 +165,9 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1):
     else:
         planes = [0]
     #
+    # Set BLC,TRC 
+    inImage.List.set("BLC",[iblc[0], iblc[1],1,1,1,1,1])
+    inImage.List.set("TRC",[itrc[0], itrc[1],0,0,0,0,0])
     # Loop over planes
     WtArray = None
     for iPlane in planes:
@@ -184,28 +190,24 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1):
             #tempDesc  = Image.PGetDesc(WtImage)
             #tempArray = Image.PGetFArray(WtImage);
             #Image.PFArray2FITS(tempArray, "PBImage.fits", err, 0, tempDesc)
-        #
-        # Make image*Wt and Wt^2 memory resident images
-        ImageWt = Image.Image("ImageXwt")
-        Image.PCloneMem(inImage, ImageWt, err)
-        ImageWtArray = Image.PGetFArray(ImageWt)
-        FArray.PMul(inImageArray, WtArray, ImageWtArray);
-        #
-        WtWt = Image.Image("wtXwt")
-        Image.PCloneMem(inImage, WtWt, err)
-        WtWtArray = Image.PGetFArray(WtWt)
-        FArray.PMul(WtArray, WtArray, WtWtArray);
-        #
-        # Now the interpolated versions to be summed to the accumulation arrays
+        # The interpolated versions
         InterpWtImage = Image.Image("InterpWtImage")
         Image.PClone2(inImage, SumWtImage, InterpWtImage, err)
-        ImageUtil.PInterpolateImage(ImageWt, InterpWtImage, err)
+        #inImage.Open(Image.READONLY, err)
+        #inImage.Read(err)
+        ImageUtil.PInterpolateImage(inImage, InterpWtImage, err)
+        #inImage.Close(err)
         #OErr.printErrMsg(err, "Error interpolating image "+Image.PGetName(inImage))
+
         InterpWtWt = Image.Image("InterpWtWt")
         Image.PClone2(inImage, SumWtImage, InterpWtWt, err)
-        ImageUtil.PInterpolateImage(WtWt, InterpWtWt, err)
+        ImageUtil.PInterpolateImage(WtImage, InterpWtWt, err)
         #OErr.printErrMsg(err, "Error interpolating wt*wt "+Image.PGetName(inImage))
 
+        # Interpolated image times beam
+        FArray.PMul(InterpWtImage.FArray, InterpWtWt.FArray, InterpWtImage.FArray)
+        # Square weight image
+        FArray.PMul(InterpWtWt.FArray, InterpWtWt.FArray, InterpWtWt.FArray)
         # Debug
         #if iPlane == 0:
         #    tempDesc    = Image.PGetDesc(InterpWtImage)
@@ -236,6 +238,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1):
         InterpWtArray = Image.PGetFArray(InterpWtImage)
         #print "DEBUG Mean before ",FArray.PMean(SumWtImageArray)
         FArray.PShiftAdd (SumWtImageArray, pos2, InterpWtArray,  pos1, factor, SumWtImageArray)
+        print "SumImageWt 2451,784",SumWtImageArray.get(2450,783), pos2, pos1, factor  # DEBUG
         #print "DEBUG Mean after ",FArray.PMean(SumWtImageArray)
         SumWt2Array = Image.PGetFArray(SumWt2)
         InterpWtWtArray = Image.PGetFArray(InterpWtWt)

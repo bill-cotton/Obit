@@ -1,7 +1,7 @@
 /* $Id$  */
 /* FndSou Obit task - generate source list from image                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2012                                          */
+/*;  Copyright (C) 2006-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -97,10 +97,10 @@ ObitFitRegionList* Island2Region
 void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
 		ObitImage *image, olong indx, ObitErr *err);
 /* Get initial model for an Island/Region */
- void  GetInitialModel (IslandElem* isElem,  ObitImage *image, gboolean doMulti,
-			ofloat cutt, gboolean doPoint, gboolean doPA, 
-			olong *nmodel, ObitFitModel *models[], 
-			ObitErr *err);
+ ofloat GetInitialModel (IslandElem* isElem,  ObitImage *image, gboolean doMulti,
+			 ofloat cutt, gboolean doPoint, gboolean doPA, 
+			 olong *nmodel, ObitFitModel *models[], 
+			 ObitErr *err);
 /* Initial single model using moments */
 void snglDef (ObitFArray *pixels, gboolean doPoint, gboolean doPA,
 	      ofloat dmax, olong ixmax, olong iymax, 
@@ -182,6 +182,7 @@ olong breakIsland=0;   /* Number of islands broken into multiple */
 olong failBreak=0;     /* number of islands failing to break into multiple */
 olong rejectLoFlux=0;  /* number of components rejected due to low flux */
 olong rejectSmall=0;   /* number of components rejected due to undersize island */
+olong rejectBlank=0;   /* number of components rejected due to blanking */
 olong rejectFDR=0;     /* number of components rejected due to false detection limit */
 olong iterLimit=0;     /* number of fits hitting iteration limit */
 ObitPixHisto *histo    = NULL; /* Histogram for FDR calculation */
@@ -854,7 +855,7 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
   ObitTableMF *TableMF=NULL;
   ObitTableVL *TableVL=NULL;
   olong iver, oldnGood=0, oldbreakIsland=0, oldfailBreak=0, oldrejectLoFlux=0, 
-    olditerLimit=0, oldrejectSmall=0, oldrejectFDR=0,  nIslands=0;
+    olditerLimit=0, oldrejectSmall=0, oldrejectBlank=0, oldrejectFDR=0,  nIslands=0;
   gchar Sort[3];
   gchar *colName[3]  = {"DELTAX", "DELTAY", "FLUX"};
   gchar *ImgParms[] = {  
@@ -948,6 +949,8 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
 		     rejectLoFlux);
       Obit_log_error(err, OBIT_InfoErr, " %d components rejected for undersize island", 
 		     rejectSmall);
+      Obit_log_error(err, OBIT_InfoErr, " %d components rejected for blanking", 
+		     rejectBlank);
       Obit_log_error(err, OBIT_InfoErr, " %d components rejected by FDR limit", 
 		     rejectFDR);
       Obit_log_error(err, OBIT_InfoErr, " %d fits hit iteration limit", iterLimit);
@@ -962,6 +965,8 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
 		     rejectLoFlux-oldrejectLoFlux);
       Obit_log_error(err, OBIT_InfoErr, "   %d components rejected for undersize island", 
 		     rejectSmall-oldrejectSmall);
+      Obit_log_error(err, OBIT_InfoErr, "   %d components rejected for blanking", 
+		     rejectBlank-oldrejectBlank);
       Obit_log_error(err, OBIT_InfoErr, "   %d components rejected by FDR limit", 
 		     rejectFDR-oldrejectFDR);
       Obit_log_error(err, OBIT_InfoErr, "   %d fits hit iteration limit", 
@@ -971,6 +976,7 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
       oldfailBreak    = failBreak;
       oldrejectLoFlux = rejectLoFlux;
       oldrejectSmall  = rejectSmall;
+      oldrejectBlank  = rejectBlank;
       oldrejectFDR    = rejectFDR;
       olditerLimit    = iterLimit;
     }
@@ -1001,6 +1007,8 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
 		   rejectLoFlux);
     Obit_log_error(err, OBIT_InfoErr, "Total: %d undersize islands rejected", 
 		   rejectSmall);
+    Obit_log_error(err, OBIT_InfoErr, "Total: %d islands with blankingrejected", 
+		   rejectBlank);
     Obit_log_error(err, OBIT_InfoErr, "Total: %d components rejected by FDR limit", 
 		   rejectFDR);
    Obit_log_error(err, OBIT_InfoErr, "Total: %d fits hit iteration limit", iterLimit);
@@ -1036,6 +1044,7 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
       fprintf (prtFile, " %d Attempts to break islands failed\n", failBreak);
       fprintf (prtFile, " %d components rejected for low peak\n", rejectLoFlux);
       fprintf (prtFile, " %d undersize islands rejected\n", rejectSmall);
+      fprintf (prtFile, " %d islands rejected for blanking \n", rejectBlank);
       fprintf (prtFile, " %d islands rejected for FDR\n", rejectFDR);
       fprintf (prtFile, " %d fits hit iteration limit\n\n", iterLimit);
       ObitTableVLPrint (TableVL, inImage, prtFile, err);
@@ -1051,6 +1060,7 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
       fprintf (prtFile, " %d Attempts to break islands failed\n", failBreak);
       fprintf (prtFile, " %d components rejected for low peak\n", rejectLoFlux);
       fprintf (prtFile, " %d undersize islands rejected\n", rejectSmall);
+      fprintf (prtFile, " %d islands rejected for blanking\n", rejectBlank);
       fprintf (prtFile, " %d islands rejected for FDR\n", rejectFDR);
       fprintf (prtFile, " %d fits hit iteration limit\n\n", iterLimit);
       ObitTableMFPrint (TableMF, inImage, prtFile, err);
@@ -1181,8 +1191,8 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
   ObitFitRegion* reg=NULL;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  ofloat cutt, peakResid=0.0, RMSResid=0.0, fluxResid=0.0, Parms[10];
-  gboolean doPoint, doPA, doMult;
+  ofloat cutt, peakResid=0.0, RMSResid=0.0, fluxResid=0.0, Parms[10], fracBlank;
+  gboolean doPoint, doPA, doMult, isBlanked;
   olong nisland, corner[2], adim[2], k, nx, ny, i, bsize, d[2], nmodel=1;
   olong minIsland;
   gchar *regname=NULL;
@@ -1254,10 +1264,14 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
 
     /* Get initial model */
     nmodel = 10;
-    GetInitialModel (isElem, image, doMult, cutt, doPoint, doPA, 
-		     &nmodel, models, err);
+    fracBlank = GetInitialModel (isElem, image, doMult, cutt, doPoint, doPA, 
+				 &nmodel, models, err);
     if (err->error) Obit_traceback_val (err, routine, image->name, out);
 
+    /* No blanks allowed */
+    isBlanked = fracBlank>0.001;
+    if (isBlanked) {rejectBlank++; goto doneIsland;}
+    
     /* Find anything? */
     if (models[0]->Peak!=0.0) {
     
@@ -1304,13 +1318,15 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
  * \param models  Array of ObitFitModels
  *                If peak flux density==0 then nothing found.
  * \param err    Obit error/message stack object.
+ * \return fraction of pixels with blanks
  */
- void  GetInitialModel (IslandElem* isElem,  ObitImage *image, gboolean doMult,
+ ofloat GetInitialModel (IslandElem* isElem,  ObitImage *image, gboolean doMult,
 			ofloat cutt, gboolean doPoint, gboolean doPA, 
 			olong *nmodel, ObitFitModel *models[], 
 			ObitErr *err)
 {
-  olong blc[2], trc[2], pos[2];
+  ofloat fracBlank=0.0;
+  olong blc[2], trc[2], pos[2], cntBlank;
   ObitFArray *pixels=NULL;
   ofloat *pixData;
   ofloat fblank = ObitMagicF();
@@ -1325,7 +1341,7 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
   blc[0] = isElem->blc[0]; blc[1] = isElem->blc[1]; 
   trc[0] = isElem->trc[0]; trc[1] = isElem->trc[1]; 
   pixels = ObitFArraySubArr (image->image, blc, trc, err);
-  if (err->error) Obit_traceback_msg (err, routine, image->name);
+  if (err->error) Obit_traceback_val (err, routine, image->name, fracBlank);
 
  /* Pointer to data */
   pos[0] = pos[1] = 0;
@@ -1333,6 +1349,12 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
   nx = pixels->naxis[0]; 
   ny = pixels->naxis[1]; 
 
+  /* Count blanked pixels */
+  cntBlank = 0;
+  for (i=0; i<pixels->arraySize; i++) 
+    if (pixData[i] == fblank) cntBlank++;
+  fracBlank = (ofloat)cntBlank / MAX(1, pixels->arraySize);
+    
   /* Allocate work arrays */
   mmaxPk = 10 * maxPk;  /* Should always be big enough */
   xPk  = g_malloc0(mmaxPk*sizeof(olong));
@@ -1451,6 +1473,8 @@ foundEnough:  /* L90 */
   if (xxPk) g_free(xxPk);
   if (yyPk) g_free(yyPk);
   if (ssPk) g_free(ssPk);
+
+  return fracBlank;
 
 } /* end GetInitialModel */
 

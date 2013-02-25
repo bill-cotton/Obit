@@ -692,8 +692,18 @@ def PImageT2Spec (inImage, outImage, nTerm,
     # Checks
     if not Image.PIsA(inImage):
         raise TypeError,"inImage MUST be a Python Obit Image"
+    if not Image.PIsA(outImage):
+        raise TypeError,"outImage MUST be a Python Obit Image"
     if not OErr.OErrIsA(err):
         raise TypeError,"err MUST be an OErr"
+
+    # Update output header
+    d = outImage.Desc.Dict
+    d['ctype'][2] = 'SPECLOGF'
+    d['crval'][2] = refFreq
+    outImage.Desc.Dict = d;
+    outImage.UpdateDesc(err)
+
     # Merge CCs to temp cc table
     tmpCCver = Image.PGetHighVer(inImage, "AIPS CC") + 1;
     inTab    = inImage.NewTable(Image.READONLY, "AIPS CC", inCCVer, err)

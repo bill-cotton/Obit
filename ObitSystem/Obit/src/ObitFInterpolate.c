@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2011                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -361,14 +361,15 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
   /* Loop over data summing values times convolving weights */
   for (j=0; j<iwid; j++) {
     wty = yKernal[j];
+    indx = planeOff + xStart + ((yStart + j) * in->nx);
     for (i=0; i<iwid; i++) {
-      indx = planeOff + xStart + i + ((yStart + j) * in->nx);
-      wt = xKernal[i] * wty;
       if (data[indx] != fblank) {
+	wt = xKernal[i] * wty;
 	sumwt += wt;
 	sum   += data[indx] * wt;
-	good  += 1;
+	good++;
       } 
+      indx++;
     }
   }
 
@@ -382,6 +383,9 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
   /* too much blanked data; try again  using knowledge of blanks if 
      sufficient data need at least a third of points. */
   if (good < (iwid * iwid)/3) return value;
+
+  /* Require sum of weights to be >0.25, i.e. some data close */
+  if (sumwt<0.25) return value;
 
   /* set "x" at first pixel to 1.0 */
   xp = pixel[0] - xStart;
@@ -402,57 +406,56 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
 	  } 
 	} 
       } /* end loop  L110: */;
- 
-     indx = planeOff + xStart + i + ((yStart + j) * in->nx);
-
+      
+      indx = planeOff + xStart + i + ((yStart + j) * in->nx);
       /* accumulate */
       if (data[indx] != fblank) {
-	if (abs (den) > 1.0e-10) {
+	if (abs (den) > 1.0e-5) {
 	  wt = prod / den;
 	} else {
 	  wt = 0.0;
 	} 
 	sumwt += wt;
 	sum   += wt * data[indx];
-      } 
+      }
     } /* end loop  L120: */
 
     /* interpolate column value */
-    if (sumwt > 0.5) {
+    if (sumwt > 0.75) {
       row[j-1] = sum / sumwt;
     } else {
       row[j-1] = fblank;
-    } 
+    }
   } /* end loop  L200: */
 
   /* interpolate in column */
   sum = sumwt = 0.0;
   for (i=0; i<iwid; i++) { /* loop 220 */
-    den  = 1.0;
-    prod = 1.0;
-    for (k=0; k<iwid; k++) { /* loop 210 */
-      if (row[k] != fblank) {
-	if (i != k) {
-	  den  *= (ofloat)(i - k);
-	  prod *= (ofloat)(yp - k);
-	} 
-      } 
-    } /* end loop  L210: */
-    
-    /* accumulate */
     if (row[i] != fblank) {
-      if (abs (den) > 1.0e-10) {
+      den  = 1.0;
+      prod = 1.0;
+      for (k=0; k<iwid; k++) { /* loop 210 */
+	if (row[k] != fblank) {
+	  if (i != k) {
+	    den  *= (ofloat)(i - k);
+	    prod *= (ofloat)(yp - k);
+	  } 
+	} 
+      } /* end loop  L210: */
+      
+      /* accumulate */
+      if (abs (den) > 1.0e-5) {
 	wt = prod / den;
       } else {
 	wt = 0.0;
       } 
       sumwt += wt;
       sum   += wt * row[i];
-    }
+    } /* end not blanked */
   } /* end loop  L220: */
 
   /* interpolate value */
-  if (sumwt > 0.5) {
+  if (sumwt > 0.75) {
     value = sum / sumwt;
   } else {
     value = fblank;
@@ -509,11 +512,11 @@ ofloat ObitFInterpolate1D (ObitFInterpolate *in, ofloat pixel)
   /* Loop over data summing values times convolving weights */
   for (i=0; i<iwid; i++) {
     indx = xStart + i;
-    wt = xKernal[i];
     if (data[indx] != fblank) {
+      wt = xKernal[i];
       sumwt = sumwt + wt;
       sum = sum + data[indx] * wt;
-      good = good + 1;
+      good++;
     } 
   }
 

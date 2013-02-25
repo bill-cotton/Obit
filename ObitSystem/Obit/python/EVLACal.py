@@ -1809,7 +1809,7 @@ def EVLACalAP(uv, target, ACals, err, \
     # Run SetJy
     setjy = ObitTask.ObitTask("SetJy")
     try:
-        setjy.__class__.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        setjy.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
     except Exception, exception:
         pass
     setjy.taskLog  = logfile
@@ -3034,7 +3034,7 @@ def EVLARLCal(uv, err, \
               RLDCal=None, BChan=1, EChan = 0, ChWid2=1, solInt1=1./6, solInt2=10., \
               RLPCal=None, RLPhase=0.0, RM=0.0, UVRange=[0.0,0.0], timerange = [0.0,1000.0], \
               FQid=0, calcode="    ", doCalib=-1, gainUse=0, \
-              doBand=0, BPVer=0, flagVer=-1,  \
+              doBand=0, BPVer=0, BPSoln=0, flagVer=-1,  \
               refAnt=0, doPol=-1, PDVer=1, FOV=0.05, niter = 100, CleanRad=None, \
               doPlot=False, plotFile="./BPCal.ps", \
               nThreads=1, noScrat=[], logfile = "",check=False, debug = False):
@@ -3069,6 +3069,7 @@ def EVLARLCal(uv, err, \
     * timerange= time range of data (days)
     * doBand   = If >0.5 apply previous bandpass cal.
     * BPVer    = previous Bandpass table (BP) version
+    * BPSoln   = Output (BP) version 0=> High
     * flagVer  = Flagging table to apply
     * refAnt   = Reference antenna REQUIRED
     * doPol    = Apply polarization cal?
@@ -3132,7 +3133,7 @@ def EVLARLCal(uv, err, \
             rlpass.refAnt  = refAnt
             rlpass.solInt1 = solInt1
             rlpass.solInt2 = solInt2
-            rlpass.BPSoln  = 0
+            rlpass.BPSoln  = BPSoln
             rlpass.prtLv   = 1
             rlpass.nThreads = nThreads
             # Loop over calibrators

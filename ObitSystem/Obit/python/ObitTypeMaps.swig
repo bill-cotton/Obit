@@ -27,6 +27,12 @@
 /*                          520 Edgemont Road                         */
 /*                          Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
+%{
+// typedef for  Py_ssize_t if python < 2.5
+#if PY_MAJOR_VERSION==2 && PY_MINOR_VERSION<5
+typedef int Py_ssize_t
+#endif
+%}
 
 // Convert list into a long array
 %typemap (python,in) long * {

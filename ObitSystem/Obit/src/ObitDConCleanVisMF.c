@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2012                                          */
+/*;  Copyright (C) 2010-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -320,6 +320,7 @@ ObitDConCleanVisMF* ObitDConCleanVisMFCreate (gchar* name, ObitUV *uvdata,
   out->factor      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean factor");
   out->quality     = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean quality");
   out->cleanable   = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean cleanable");
+  out->fresh       = ObitMemAlloc0Name(nfield*sizeof(gboolean),"Clean fresh");
   out->maxAbsRes   = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean max res");
   out->avgRes      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean avg res");
   out->imgRMS      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Image RMS");
@@ -331,6 +332,7 @@ ObitDConCleanVisMF* ObitDConCleanVisMFCreate (gchar* name, ObitUV *uvdata,
     out->avgRes[i]      = -1.0;
     out->quality[i]     = -1.0;
     out->cleanable[i]   = -1.0;
+    out->fresh[i]       = FALSE;
     out->imgRMS[i]      = -1.0;
     out->imgPeakRMS[i]  = -1.0;
     out->beamPeakRMS[i] = -1.0;
@@ -412,6 +414,7 @@ ObitDConCleanVisMFCreate2 (gchar* name, ObitUV *uvdata,
   out->factor      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean factor");
   out->quality     = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean quality");
   out->cleanable   = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean cleanable");
+  out->fresh       = ObitMemAlloc0Name(nfield*sizeof(gboolean),"Clean fresh");
   out->maxAbsRes   = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean max res");
   out->avgRes      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean avg res");
   out->imgRMS      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Image RMS");
@@ -423,6 +426,7 @@ ObitDConCleanVisMFCreate2 (gchar* name, ObitUV *uvdata,
     out->avgRes[i]      = -1.0;
     out->quality[i]     = -1.0;
     out->cleanable[i]   = -1.0;
+    out->fresh[i]       = FALSE;
     out->imgRMS[i]      = -1.0;
     out->imgPeakRMS[i]  = -1.0;
     out->beamPeakRMS[i] = -1.0;
@@ -857,6 +861,7 @@ void ObitDConCleanVisMFInit  (gpointer inn)
   in->doBeam    = TRUE;
   in->quality   = NULL;
   in->cleanable = NULL;
+  in->fresh     = NULL;
   in->display   = NULL;
   in->SDIdata   = NULL;
   in->peakFlux  = -1000.0;

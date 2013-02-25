@@ -762,6 +762,9 @@ void GetSBAmbig(ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
   suba = MAX (1, suba);
   PCin = newObitTablePCValue (inData->name, (ObitData*)inData, &PCVer, 
 			      OBIT_IO_ReadOnly, numPol, numBand, numTones, err);
+  Obit_return_if_fail ((PCin!=NULL), err, 
+		       "%s PC Table not found", routine);
+
   /* Open input table */
   ObitTablePCOpen (PCin, OBIT_IO_ReadOnly, err);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);

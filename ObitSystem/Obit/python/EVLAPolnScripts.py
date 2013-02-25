@@ -94,9 +94,9 @@ def EVLAPolnFlag (uv, souModels, err, \
         uvsub.Sources[0]= model["Source"]
         if "DataType2" in uvsub.__dict__:
             uvsub.DataType2 = model["CalDataType"]
-        uvsub.in2File   = model["CalFile"].strip()
-        uvsub.in2Name   = model["CalName"].strip()
-        uvsub.in2Class  = model["CalClass"].strip()
+        uvsub.in2File   = model["CalFile"]
+        uvsub.in2Name   = model["CalName"][0:12]
+        uvsub.in2Class  = model["CalClass"]
         uvsub.in2Seq    = model["CalSeq"] 
         uvsub.in2Disk   = model["CalDisk"]
         if "nmaps" in uvsub.__dict__:
@@ -279,9 +279,9 @@ def EVLAPolnSelfCal(uv, Cals, err, \
     for Cal in Cals:
         calib.Sources[0]= Cal["Source"]
         calib.DataType2 = Cal["CalDataType"]
-        calib.in2File   = Cal["CalFile"].strip()
-        calib.in2Name   = Cal["CalName"].strip()
-        calib.in2Class  = Cal["CalClass"].strip()
+        calib.in2File   = Cal["CalFile"]
+        calib.in2Name   = Cal["CalName"][0:12]
+        calib.in2Class  = Cal["CalClass"]
         calib.in2Seq    = Cal["CalSeq"] 
         calib.in2Disk   = Cal["CalDisk"]
         calib.nfield    = Cal["CalNfield"]
@@ -353,7 +353,7 @@ def EVLAPolnSelfCal(uv, Cals, err, \
 # end EVLAPolnSelfCal
 
 def EVLAPolnPCal(uv, InsCals, err, \
-                 doCalib=2, gainUse=0, doBand=-1, BPVer=0, flagVer=1, \
+                 doCalib=2, gainUse=0, doBand=-1, BPVer=0, BPSoln=0, flagVer=1, \
                  solType="    ", solInt=0.0, refAnt=0, polVer = 1, ChInc=1, ChWid=1, \
                  RLPhase=[-999.,], RM=[0.0], PPol=[0.], \
                  check=False, debug = False, \
@@ -373,6 +373,7 @@ def EVLAPolnPCal(uv, InsCals, err, \
     * gainUse  = CL/SN table to apply
     * doBand   = >0 => apply bandpass calibration
     * BPVer    = AIPS BP table to apply
+    * BPSoln   = Output AIPS BP table, 0=>new
     * flagVer  = Input Flagging table version
     * solType  = solution type, "    ", "LM  "
     * PPol     = list of R-L fractional polarizations for fixed source linear poln.
@@ -431,7 +432,7 @@ def EVLAPolnPCal(uv, InsCals, err, \
         pcal.ChWid    = ChWid
         pcal.CPSoln   = polVer
         pcal.PDSoln   = polVer
-        pcal.BPSoln   = polVer
+        pcal.BPSoln   = BPSoln
         pcal.refAnt   = refAnt
         pcal.prtLv    = 2
         pcal.nThreads = nThreads
@@ -465,7 +466,7 @@ def EVLAPolnRL(uv, err, \
               RLCal=None, BChan=1, EChan = 0, ChWid2=1, solInt1=1./6, solInt2=10., \
               UVRange=[0.0,0.0], timerange = [0.0,1000.0],  \
               FQid=0,  doCalib=-1, gainUse=0, \
-              doBand=0, BPVer=0, flagVer=-1, refAnt=0, doPol=False, PDVer=1, 
+              doBand=0, BPVer=0, BPSoln=0, flagVer=-1, refAnt=0, doPol=False, PDVer=1, 
               nThreads=1, noScrat=[], logfile = "",check=False, debug = False):
     """
     Determine R-L  phase calibration as BP table
@@ -489,6 +490,7 @@ def EVLAPolnRL(uv, err, \
     * timerange= time range of data (days)
     * doBand   = If >0.5 apply previous bandpass cal.
     * BPVer    = previous Bandpass table (BP) version
+    * BPSoln   = Output Bandpass table (BP) version
     * flagVer  = Flagging table to apply
     * refAnt   = Reference antenna REQUIRED
     * doPol    = Apply polarization cal?
@@ -546,7 +548,6 @@ def EVLAPolnRL(uv, err, \
         rlpass.solInt2 = solInt2
         rlpass.BPSoln  = 0
         rlpass.prtLv   = 1
-        rlpass.noScrat = noScrat
         rlpass.nThreads = nThreads
         # Loop over calibrators
         for ical in range (0,ncal):
@@ -692,7 +693,7 @@ def EVLAPolnImage(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band
     if not check:
         setname(uv,imager)
     imager.outDisk     = imager.inDisk
-    #imager.outName     = "_"+band
+    imager.outName     = "_"+band
     imager.out2Name    = "_"+band
     imager.out2Disk    = imager.inDisk
     imager.outSeq      = seq
@@ -738,8 +739,8 @@ def EVLAPolnImage(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band
     imager.Tapers      = Tapers
     if doOutlier or ((doOutlier==None) and refFreq<6.0e9):
         FWHM = (45.0 /(refFreq*1.0e-9) ) / 60.   # FWHM in deg
-        imager.OutlierDist = FWHM*4.0   # Outliers from NVSS for lower frequencies
-        imager.OutlierFlux = 0.001
+        imager.OutlierDist = FWHM*2.0   # Outliers from NVSS for lower frequencies
+        imager.OutlierFlux = 0.01
     # Auto window or centered box
     if CleanRad:
         imager.CLEANBox=[-1,CleanRad,0,0]
@@ -837,11 +838,10 @@ def EVLAPolnGetFluxes(Sources, err, \
     ################################################################
     mess = "Get Source summed CLEAN components"
     printMess(mess, logfile)
-    
     for sou in Sources:
         if sou["CalDataType"]=="AIPS":
             klass = "I"+sou["CalClass"][1:]
-            img = Image.newPAImage("img", sou["CalName"], klass, \
+            img = Image.newPAImage("img", sou["CalName"][0:12], klass, \
                                    sou["CalDisk"], sou["CalSeq"], True, err)
         else:
             file = "I"+sou["CalFile"][1:]
@@ -856,7 +856,7 @@ def EVLAPolnGetFluxes(Sources, err, \
 
         if sou["CalDataType"]=="AIPS":
             klass = "Q"+sou["CalClass"][1:]
-            img = Image.newPAImage("img", sou["CalName"], klass, \
+            img = Image.newPAImage("img", sou["CalName"][0:12], klass, \
                                    sou["CalDisk"], sou["CalSeq"], True, err)
         else:
             file = "Q"+sou["CalFile"][1:]
@@ -870,7 +870,7 @@ def EVLAPolnGetFluxes(Sources, err, \
         
         if sou["CalDataType"]=="AIPS":
             klass = "U"+sou["CalClass"][1:]
-            img = Image.newPAImage("img", sou["CalName"], klass, \
+            img = Image.newPAImage("img", sou["CalName"][0:12], klass, \
                                    sou["CalDisk"], sou["CalSeq"], True, err)
         else:
             file = "U"+sou["CalFile"][1:]
@@ -979,9 +979,9 @@ def EVLAPolnToFITS(uv, outFile, outDisk, Sources, session, err, \
             klass = s+sou["CalClass"][1:]
             # Test if file exists
             cno = AIPSDir.PTestCNO(sou["CalDisk"], AIPS.userno, \
-                                   sou["CalName"], klass, "MA", sou["CalSeq"], err)
+                                   sou["CalName"][0:12], klass, "MA", sou["CalSeq"], err)
             if cno>0:
-                img = Image.newPAImage("img", sou["CalName"], klass, \
+                img = Image.newPAImage("img", sou["CalName"][0:12], klass, \
                                        sou["CalDisk"], sou["CalSeq"], True, err)
                 if err.isErr:
                     mess = "Error finding "+s+" image for "+sou["Source"]
@@ -1039,9 +1039,9 @@ def EVLAPolnCleanup(uv, Sources, err, \
             klass = s+sou["CalClass"][1:]
             # Test if file exists
             cno = AIPSDir.PTestCNO(sou["CalDisk"], AIPS.userno, \
-                                   sou["CalName"], klass, "MA", sou["CalSeq"], err)
+                                   sou["CalName"][0:12], klass, "MA", sou["CalSeq"], err)
             if cno>0:
-                img = Image.newPAImage("img", sou["CalName"], klass, \
+                img = Image.newPAImage("img", sou["CalName"][0:12], klass, \
                                        sou["CalDisk"], sou["CalSeq"], True, err)
                 if err.isErr:
                     mess = "Error finding "+s+" image for "+sou["Source"]

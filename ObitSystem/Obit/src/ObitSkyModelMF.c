@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2012                                          */
+/*;  Copyright (C) 2010-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -750,7 +750,7 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   olong i, j, k, nSpec, nif, nfreq, n;
   ofloat phase=0.5, cp, sp;
   odouble test;
-  gboolean lsb;
+  gboolean lsb, forceDFT;
   ObitInfoType type;
   union ObitInfoListEquiv InfoReal; 
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -836,6 +836,7 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   lsb = uvdata->myDesc->cdelt[uvdata->myDesc->jlocf]<0.0; /* Lower sideband? */
   n = nfreq*nif;
   in->specIndex = g_malloc0(n*sizeof(olong)); 
+  forceDFT = FALSE;   /* Need to force DFT? */
   for (i=0; i<n; i++) {
     test = 1.0e20;
     in->specIndex[i] = -1;
@@ -850,7 +851,24 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
 	  in->specIndex[i] = j;
       }
     }
+    /* If frequency out of range, force DFT */
+    if (in->specIndex[i]<0) {
+      forceDFT = TRUE;
+      /* Set to closest */
+      if ( lsb && (uvdata->myDesc->freqArr[i]<in->specFreqLo[nSpec-1]))      in->specIndex[i] = nSpec-1;
+      else if ( lsb && (uvdata->myDesc->freqArr[i]>in->specFreqHi[0]))       in->specIndex[i] = 0;
+      else if (!lsb && (uvdata->myDesc->freqArr[i]<in->specFreqLo[0]))       in->specIndex[i] = 0;
+      else if (!lsb && (uvdata->myDesc->freqArr[i]>in->specFreqHi[nSpec-1])) in->specIndex[i] = nSpec-1;
+      else in->specIndex[i] = 0;  /* Shouldn't happen */
+    }
   } /* End of loop making lookup table */
+
+  /* Force DFT? */
+  if (forceDFT) {
+    Obit_log_error(err, OBIT_InfoWarn, "%s: Input freq out of table range, force DFT method",
+		   routine);
+    in->modelMode = OBIT_SkyModel_DFT;
+  }
 
   /* Choose mode if requested */
   ObitSkyModelMFChose (inn, uvdata);

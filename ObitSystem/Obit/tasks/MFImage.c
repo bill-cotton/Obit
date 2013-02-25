@@ -1515,7 +1515,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "UVRange", "timeRange", "UVTape",
     "BIF", "EIF", "subA",
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
-    "doPol", "PDVer", "Mode",
+    "doPol", "PDVer", "Mode", "BLVer",
     NULL
   };
   gchar        *tmpParms[] = {  /* Imaging, weighting parameters */
@@ -2414,7 +2414,7 @@ void MFImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "outFile",  "outDisk", "outName", "outClass", "outSeq",
     "BIF", "EIF", "BChan", "EChan",  "maxFBW", 
     "UVRange",  "timeRange",  "Robust", "UVTaper", "MFTaper", "RobustIF", "TaperIF",
-    "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
+    "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", "BLVer",
     "doPol",  "PDVer", "doFull", "doComRes", "do3D", "Catalog", "CatDisk",
     "OutlierDist",  "OutlierFlux", "OutlierSI",
     "FOV", "xCells", "yCells", "nx", "ny", "RAShift", "DecShift", "doRestore", "doFit",

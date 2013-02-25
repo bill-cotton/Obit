@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2013                                          */
+/*;  Copyright (C) 2013                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -24,50 +24,35 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/*  Define the basic components of the ObitDConCleanVis structure     */
-/*  This is intended to be included in a class structure definition   */
+/*  Define the basic components of the ObitRMFit structure      */
 /**
- * \file ObitDConCleanVisDef.h
- * ObitDConCleanVis structure members for this and any derived classes.
+ * \file ObitRMFitDef.h
+ * ObitRMFit structure members for this and any derived classes.
  */
-#include "ObitDConCleanDef.h"  /* Parent class definitions */
-/** UVImager to create images from UV data */
-ObitUVImager *imager;
-/** Sky Model for subtracting Clean model from data */
-ObitSkyModel *skyModel;
-/** Model calculation mode for components */
-ObitSkyModelMode modelMode;
-/** Restore image when done? */
-gboolean doRestore;
-/** Cross Restore images when done? */
-gboolean doXRestore;
-/** Flatten image when done? */
-gboolean doFlatten;
-/** Weight data before Cleaning? */
-gboolean doWeight;
-/** Do beams need to be remade before cleaning? */
-gboolean doBeam;
-/** Consider recentering components? */
-gboolean doRecenter;
-/** Peak in an image window encountered */
-ofloat peakFlux;
-/** Quality (desirability for next CLEAN) measure per field */
-ofloat *quality;
-/** Max abs "cleanable" flux density  per field */
-ofloat *cleanable;
-/** Is image fresh? per field */
-gboolean *fresh;
-/** CLEAN component level to reuse, <0 none  */
-ofloat reuseFlux;
-/** autoCenter min flux density   */
-ofloat autoCen;
-/** Display server */
-ObitDisplay *display;
-/** Copy of calibrated/weighted data if doing SDI clean */
-ObitUV *SDIdata;
-/** Max BeamTaper to consider */
-ofloat maxBeamTaper;
-/** Min BeamTaper to consider */
-ofloat minBeamTaper;
-/** Resolution selection controls */
-ofloat MResKnob[10];
+#include "ObitDef.h"  /* Parent class instance definitions */
+/** Threading info member object  */
+ObitThread *thread;
+/** Linked list of arrays of data.  */
+ObitInfoList *info;
+/** Number of lambda squared data points to be fitted */
+olong nlamb2;
+/** Number of terms to be fitted */
+olong nterm;
+/** Do Error analysis: */
+gboolean doError;
+/** Size of planes in pixels */
+olong nx, ny;
+/** min Q/U SNR */
+ofloat minQUSNR;
+/** Output Image descriptor */
+ObitImageDesc *outDesc;
+/** Array of Q, U pixel arrays for input data (nlamb2) */
+ObitFArray **inQFArrays, **inUFArrays;
+/** Array of Q, U RMSes per inFArrays (nlamb2) */
+ofloat *QRMS, *URMS;
+/** reference lambda squared */
+odouble refLamb2;
+/** Array of lambda squares (nlamb2) */
+odouble *lamb2;
+/** Array of pixel arrays for output data (2*nterm) */
+ObitFArray **outFArrays;

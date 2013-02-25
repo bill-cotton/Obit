@@ -1170,3 +1170,42 @@ Obit/python/Table.inc Obit/python/UVDesc.inc Obit/python/ImageDesc.inc:
 Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
   Update python interface
 svn version 441 11 Feb 2013
+
+Mostly polarization calibration/analysis,  speed up CLEAN
+ObitVersion:
+Obit/changes.log:
+Obit/python/EVLACal.py Obit/python/EVLAContPipe.py:
+Obit/python/EVLAPolnScripts.py:
+  Fix problems in BP table handling for RL spectrum, other bugs
+Obit/python/MosaicUtil.py:
+  PWeightImage: Better handling of edge of selected image
+Obit/src/ObitFInterpolate.c:
+  Less aggressive extrapolation over blanking, efficiency improvements,
+Obit/tasks/FndSou.c:
+  Ignore islands with more than 0.1% blanked pixels.
+Obit/src/ObitSkyModelMF.c:
+  InitMod: if input frequency out of tabulated model range, force DFT
+Obit/tasks/PCCor.c:
+  GetSBAmbig: Trap no PC table.
+Obit/include/ObitRMFitClassDef.h Obit/include/ObitRMFitDef.h Obit/include/ObitRMFit.h:
+Obit/src/ObitRMFit.c:
+Obit/python/RMFit.py  Obit/python/RMFit.inc:
+  New class and python binding to fit rotation measures.
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  Rebuild python interface
+Obit/python/ImageUtil.py:
+  PImageT2Spec: Update output header
+Obit/src/ObitTableCCUtil.c:
+  FixTSpec: Don't override passes nterm
+  T2Spec: Get reference frequency from output
+Obit/include/ObitDConCleanVisDef.h:
+Obit/src/ObitDConCleanVis.c  Obit/src/ObitDConCleanVisMF.c:
+Obit/src/ObitDConCleanVisWB.c:
+  Change logic to reduce unnecessary re imaging.
+Obit/tasks/MFImage.c:
+  Add BLVer parameter (not in TDF).
+Obit/python/Table.inc Obit/python/UVDesc.inc Obit/python/ImageDesc.inc:
+  Variable with data type Py_ssize_t if python < 2.5
+Obit/python/ObitTypeMaps.swig:
+  Add typedef for  Py_ssize_t if python < 2.5
+svn version 442 25 Feb 2013
