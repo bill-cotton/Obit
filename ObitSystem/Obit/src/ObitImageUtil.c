@@ -4578,18 +4578,18 @@ void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err)
 
   /* If different cells spacings */
   if (fabs(fabs(cellx)-fabs(celly)) > (0.01*fabs(celly))) {
-    dx = models[0]->parms[0]*fabs(cellx)*sin(models[0]->parms[2]);
-    dy = models[0]->parms[0]*fabs(celly)*cos(models[0]->parms[2]);
-    models[0]->parms[0] = sqrt (dx*dx + dy*dy);
-    models[0]->parms[2] = atan2 (dx, dy);
-    dx = models[0]->parms[1]*fabs(cellx)*sin(models[0]->parms[2]+G_PI/2);
-    dy = models[0]->parms[1]*fabs(celly)*cos(models[0]->parms[2]+G_PI/2);
-    models[0]->parms[1] = sqrt (dx*dx + dy*dy);
+    dx = reg->models[0]->parms[0]*fabs(cellx)*sin(reg->models[0]->parms[2]);
+    dy =reg-> models[0]->parms[0]*fabs(celly)*cos(reg->models[0]->parms[2]);
+    reg->models[0]->parms[0] = sqrt (dx*dx + dy*dy);
+    reg->models[0]->parms[2] = atan2 (dx, dy);
+    dx = reg->models[0]->parms[1]*fabs(cellx)*sin(reg->models[0]->parms[2]+G_PI/2);
+    dy = reg->models[0]->parms[1]*fabs(celly)*cos(reg->models[0]->parms[2]+G_PI/2);
+    reg->models[0]->parms[1] = sqrt (dx*dx + dy*dy);
   }
 
-  bmaj = models[0]->parms[0]*fabs(cellx); /* from pixels to deg */
-  bmin = models[0]->parms[1]*fabs(celly);
-  bpa  = models[0]->parms[2]*RAD2DG;
+  bmaj = reg->models[0]->parms[0]*fabs(cellx); /* from pixels to deg */
+  bmin = reg->models[0]->parms[1]*fabs(celly);
+  bpa  = reg->models[0]->parms[2]*RAD2DG;
 
   /* add map rotation, force to +/- 90 deg. */
   bpa = bpa - beam->myDesc->crota[1];

@@ -28,8 +28,9 @@
 
 #include "ObitRMFit.h"
 #include "ObitThread.h"
+#include "ObitSinCos.h"
 #ifdef HAVE_GSL
-#include <gsl/gsl_fit.h>
+#include <gsl/gsl_blas.h>
 #endif /* HAVE_GSL */ 
 #ifndef VELIGHT
 #define VELIGHT 2.997924562e8
@@ -74,6 +75,21 @@ static void WriteOutput (ObitRMFit* in, ObitImage *outImage,
 			 ObitErr *err);
 
 
+#ifdef HAVE_GSL
+/** Private: Solver function evaluation */
+static int RMFitFunc (const gsl_vector *x, void *params, 
+		      gsl_vector *f);
+
+/** Private: Solver Jacobian evaluation */
+static int RMFitJac (const gsl_vector *x, void *params, 
+		     gsl_matrix *J);
+
+/** Private: Solver function + Jacobian evaluation */
+static int RMFitFuncJac (const gsl_vector *x, void *params, 
+			 gsl_vector *f, gsl_matrix *J);
+
+#endif /* HAVE_GSL */ 
+
 /** Private: Threaded fitting */
 static gpointer ThreadNLRMFit (gpointer arg);
 
@@ -94,16 +110,26 @@ typedef struct {
   olong        nterm;
   /** number of frequencies  */
   olong        nlamb2;
+  /** number of valid data points in x, q, u, w  */
+  olong        nvalid;
+  /** maximum iteration  */
+  olong        maxIter;
+  /** acceptable iteration delta, rel and abs. */
+  odouble minDelta;
   /** Array of Lambda^2 (nlamb2) */
   ofloat *lamb2;
-  /** Array of Q, U weights (1/RMS**2) per inFArrays (nlamb2) */
+  /** Array of Q, U weights (1/RMS) per inFArrays (nlamb2) */
   ofloat *Qweight, *Uweight;
   /** Array of Q, U variance per inFArrays (nlamb2) */
   ofloat *Qvar, *Uvar;
   /** Array of Q, U pixel values being fitted (nlamb2) */
   ofloat *Qobs, *Uobs;
+  /** Array of polarized intensity pixel values being fitted (nlamb2) */
+  ofloat *Pobs;
   /** min Q/U SNR */
   ofloat minQUSNR;
+  /** min fraction of valid samples */
+  ofloat minFrac;
   /** Reference lambda^2 */
   ofloat refLamb2;
   /** Vector of guess/fitted coefficients, optional errors */
@@ -113,11 +139,25 @@ typedef struct {
   /** Do error analysis? */
   gboolean doError;
   /** work arrays */
-  double *x, *y, *w;
+  double *x, *q, *u, *w;
+  ofloat *wrk1, *wrk2, *wrk3;
+#ifdef HAVE_GSL
+  /** Fitting solver  */
+  gsl_multifit_fdfsolver *solver;
+  /** Fitting solver function structure */
+  gsl_multifit_function_fdf *funcStruc;
+  /** Fitting work vector */
+  gsl_vector *work;
+  /** Covariance matrix */
+  gsl_matrix *covar;
+#endif /* HAVE_GSL */ 
 } NLRMFitArg;
 
 /** Private: Actual fitting */
 static void NLRMFit (NLRMFitArg *arg);
+
+/** Private: coarse search */
+static olong RMcoarse (NLRMFitArg *arg);
 
 /*----------------------Public functions---------------------------*/
 /**
@@ -129,6 +169,7 @@ static void NLRMFit (NLRMFitArg *arg);
 ObitRMFit* newObitRMFit (gchar* name)
 {
   ObitRMFit* out;
+  ofloat s, c;
 
   /* Class initialization if needed */
   if (!myClassInfo.initialized) ObitRMFitClassInit();
@@ -145,8 +186,9 @@ ObitRMFit* newObitRMFit (gchar* name)
 
   /* initialize other stuff */
   ObitRMFitInit((gpointer)out);
+  ObitSinCosCalc(0.0, &s, &c);    /* Sine/cosine functions */
 
- return out;
+  return out;
 } /* end newObitRMFit */
 
 /**
@@ -330,7 +372,8 @@ ObitRMFit* ObitRMFitCreate (gchar* name, olong nterm)
  *                 Potential parameters on in->info:
  * \li "refLamb2" OBIT_double scalar Reference frequency for fit [def ref for inQImage]
  * \li "minQUSNR" OBIT_float  scalar min. SNR for Q and U pixels [def 3.0]
- * \li "doError" OBIT_boolean scalar If true do error analysis [def False]
+ * \li "minFrac"  OBIT_float  scalar min. fraction of planes included [def 0.5]
+ * \li "doError"  OBIT_boolean scalar If true do error analysis [def False]
  *
  * \param inQImage Q Image cube to be fitted
  * \param inUImage U Image cube to be fitted
@@ -365,7 +408,7 @@ void ObitRMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage,
 
   /* Warn if no GSL implementation */
 #ifndef HAVE_GSL
-  Obit_log_error(err, OBIT_InfoWarn, "NO GSL available - results will be zeroes");
+  Obit_log_error(err, OBIT_InfoWarn, "NO GSL available - results will be approximate");
 #endif
 
   /* Control parameters */
@@ -375,6 +418,13 @@ void ObitRMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage,
   ObitInfoListGetTest(in->info, "minQUSNR", &type, dim, &InfoReal);
   if (type==OBIT_float) in->minQUSNR = InfoReal.flt;
   else if (type==OBIT_double) in->minQUSNR = (ofloat)InfoReal.dbl;
+
+  /* Min fraction of planes in the fit */
+  InfoReal.flt = 0.5; type = OBIT_float;
+  in->minFrac  = 0.5;
+  ObitInfoListGetTest(in->info, "minFrac", &type, dim, &InfoReal);
+  if (type==OBIT_float) in->minFrac = InfoReal.flt;
+  else if (type==OBIT_double) in->minFrac = (ofloat)InfoReal.dbl;
 
   /* Want Error analysis? */
   InfoReal.itg = (olong)FALSE; type = OBIT_bool;
@@ -468,6 +518,9 @@ void ObitRMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage,
     /* Lambda^2 Check for MFImage outputs */
     if (!strncmp(inQImage->myDesc->ctype[inQImage->myDesc->jlocf], "SPECLNMF", 8)) {
 	sprintf (keyword, "FREQ%4.4d",iplane+1);
+	freq = inQImage->myDesc->crval[inQImage->myDesc->jlocf] + 
+	  inQImage->myDesc->cdelt[inQImage->myDesc->jlocf] * 
+	  (inQImage->myDesc->plane - inQImage->myDesc->crpix[inQImage->myDesc->jlocf]);
 	ObitInfoListGetTest (inQImage->myDesc->info, keyword, &type, dim, &freq);
        } else {   /* Normal spectral cube */
 	freq = inQImage->myDesc->crval[inQImage->myDesc->jlocf] + 
@@ -476,7 +529,7 @@ void ObitRMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage,
       }
     in->lamb2[iplane] = (VELIGHT/freq)*(VELIGHT/freq);
 
-    plane[0] = iplane+noffset;  /* Select correct plane */
+    plane[0] = iplane+noffset+1;  /* Select correct plane */
     retCode = ObitImageGetPlane (inQImage, in->inQFArrays[iplane]->array, plane, err);
     retCode = ObitImageGetPlane (inUImage, in->inUFArrays[iplane]->array, plane, err);
     /* if it didn't work bail out */
@@ -558,7 +611,7 @@ void ObitRMFitImArr (ObitRMFit* in, olong nimage,
 
   /* Warn if no GSL implementation */
 #ifndef HAVE_GSL
-  Obit_log_error(err, OBIT_InfoWarn, "NO GSL available - results will be zeroes");
+  Obit_log_error(err, OBIT_InfoWarn, "NO GSL available - results will be approximate");
 #endif
 
   /* Control parameters */
@@ -568,6 +621,13 @@ void ObitRMFitImArr (ObitRMFit* in, olong nimage,
   ObitInfoListGetTest(in->info, "minQUSNR", &type, dim, &InfoReal);
   if (type==OBIT_float) in->minQUSNR = InfoReal.flt;
   else if (type==OBIT_double) in->minQUSNR = (ofloat)InfoReal.dbl;
+
+  /* Min fraction of planes in the fit */
+  InfoReal.flt = 0.5; type = OBIT_float;
+  in->minFrac  = 0.5;
+  ObitInfoListGetTest(in->info, "minFrac", &type, dim, &InfoReal);
+  if (type==OBIT_float) in->minFrac = InfoReal.flt;
+  else if (type==OBIT_double) in->minFrac = (ofloat)InfoReal.dbl;
 
   /* Want Error analysis? */
   InfoReal.itg = (olong)FALSE; type = OBIT_bool;
@@ -611,8 +671,8 @@ void ObitRMFitImArr (ObitRMFit* in, olong nimage,
       in->nx = imQArr[iplane]->myDesc->inaxes[0];
       in->ny = imQArr[iplane]->myDesc->inaxes[1];
       naxis[0] = (olong)in->nx;  naxis[1] = (olong)in->ny; 
-      for (i=0; i<in->nlamb2; i++) in->inQFArrays[i]  = ObitFArrayCreate (NULL, 2, naxis);
-      for (i=0; i<in->nlamb2; i++) in->inUFArrays[i]  = ObitFArrayCreate (NULL, 2, naxis);
+      for (i=0; i<in->nlamb2; i++) in->inQFArrays[i] = ObitFArrayCreate (NULL, 2, naxis);
+      for (i=0; i<in->nlamb2; i++) in->inUFArrays[i] = ObitFArrayCreate (NULL, 2, naxis);
       for (i=0; i<nOut; i++)       in->outFArrays[i] = ObitFArrayCreate (NULL, 2, naxis);
       
       /* Output Image descriptor */
@@ -731,12 +791,17 @@ ofloat* ObitRMFitSingle (olong nlamb2, olong nterm, odouble refLamb2, odouble *l
 			 ObitErr *err)
 {
   ofloat *out = NULL;
+  ofloat fblank = ObitMagicF();
   olong i, j;
   NLRMFitArg *arg=NULL;
   gchar *routine = "ObitRMFitSingle";
+  /* GSL implementation */
+#ifdef HAVE_GSL
+  const gsl_multifit_fdfsolver_type *T=NULL;
+#endif /* HAVE_GSL */ 
   /* Warn if no GSL implementation */
 #ifndef HAVE_GSL
-  Obit_log_error(err, OBIT_InfoWarn, "NO GSL available - results will be zeroes");
+  Obit_log_error(err, OBIT_InfoWarn, "NO GSL available - results will be approximate");
 #endif
   if (err->error) return out;
 
@@ -752,9 +817,12 @@ ofloat* ObitRMFitSingle (olong nlamb2, olong nterm, odouble refLamb2, odouble *l
   arg = g_malloc(sizeof(NLRMFitArg));
   arg->in             = NULL;     /* Not needed here */
   arg->nlamb2         = nlamb2;
+  arg->maxIter        = 100;     /* max. number of iterations */
+  arg->minDelta       = 1.0e-5;  /* Min step size */
   arg->nterm          = nterm;
   arg->doError        = TRUE;
   arg->minQUSNR       = 3.0;      /* min pixel SNR */
+  arg->minFrac        = 0.5;      /* min fraction of samples */
   arg->refLamb2       = refLamb2; /* Reference Frequency */
   arg->Qweight        = g_malloc0(arg->nlamb2*sizeof(ofloat));
   arg->Uweight        = g_malloc0(arg->nlamb2*sizeof(ofloat));
@@ -762,20 +830,54 @@ ofloat* ObitRMFitSingle (olong nlamb2, olong nterm, odouble refLamb2, odouble *l
   arg->Uvar           = g_malloc0(arg->nlamb2*sizeof(ofloat));
   arg->Qobs           = g_malloc0(arg->nlamb2*sizeof(ofloat));
   arg->Uobs           = g_malloc0(arg->nlamb2*sizeof(ofloat));
+  arg->Pobs           = g_malloc0(arg->nlamb2*sizeof(ofloat));
   arg->lamb2          = g_malloc0(arg->nlamb2*sizeof(ofloat));
   arg->x              = g_malloc0(arg->nlamb2*sizeof(double));
-  arg->y              = g_malloc0(arg->nlamb2*sizeof(double));
   arg->w              = g_malloc0(arg->nlamb2*sizeof(double));
-  arg->coef           = g_malloc0(2*arg->nterm*sizeof(ofloat));
+  arg->q              = g_malloc0(arg->nlamb2*sizeof(double));
+  arg->u              = g_malloc0(arg->nlamb2*sizeof(double));
+  arg->wrk1           = g_malloc0(arg->nlamb2*sizeof(ofloat));
+  arg->wrk2           = g_malloc0(arg->nlamb2*sizeof(ofloat));
+  arg->wrk3           = g_malloc0(arg->nlamb2*sizeof(ofloat));
+  arg->coef           = g_malloc0(3*arg->nterm*sizeof(ofloat));
   for (i=0; i<nlamb2; i++) {
+    arg->lamb2[i]   = lamb2[i];
     arg->Qvar[i]    = qsigma[i]*qsigma[i];
     arg->Uvar[i]    = usigma[i]*usigma[i];
-    arg->Qweight[i] = 1.0 / arg->Qvar[i];
-    arg->Uweight[i] = 1.0 / arg->Uvar[i];
     arg->Qobs[i]    = qflux[i];
     arg->Uobs[i]    = uflux[i];
-    arg->lamb2[i]   = lamb2[i];
+    if ((arg->Qobs[i]!=fblank) && (arg->Uobs[i]!=fblank)) {
+      arg->Pobs[i]    = sqrt (qflux[i]*qflux[i] + uflux[i]*uflux[i]);
+      arg->Qweight[i] = 1.0 / qsigma[i];
+      arg->Uweight[i] = 1.0 / usigma[i];
+   } else{ 
+      arg->Pobs[i]    = 0.0;
+      arg->Qweight[i] = 0.0;
+      arg->Uweight[i] = 0.0;
+    }
   }
+  /* GSL implementation */
+#ifdef HAVE_GSL
+  arg->solver = NULL;
+  arg->covar  = NULL;
+  arg->work = NULL;
+  /* Setup solver */
+  T = gsl_multifit_fdfsolver_lmder;
+  arg->solver = gsl_multifit_fdfsolver_alloc(T, 2*arg->nlamb2, 2);
+
+  /* Fitting function info */
+  arg->funcStruc = g_malloc0(sizeof(gsl_multifit_function_fdf));
+  arg->funcStruc->f      = &RMFitFunc;
+  arg->funcStruc->df     = &RMFitJac;
+  arg->funcStruc->fdf    = &RMFitFuncJac;
+  arg->funcStruc->n      = 2*arg->nlamb2;
+  arg->funcStruc->p      = 2;
+  arg->funcStruc->params = arg;
+
+  /* Set up work arrays */
+  arg->covar = gsl_matrix_alloc(2, 2);
+  arg->work  = gsl_vector_alloc(2);
+#endif /* HAVE_GSL */ 
 
   /* Do fit */  
   NLRMFit(arg);
@@ -791,11 +893,22 @@ ofloat* ObitRMFitSingle (olong nlamb2, olong nterm, odouble refLamb2, odouble *l
   if (arg->Uvar)      g_free(arg->Uvar);
   if (arg->Qobs)      g_free(arg->Qobs);
   if (arg->Uobs)      g_free(arg->Uobs);
+  if (arg->Pobs)      g_free(arg->Pobs);
   if (arg->lamb2)     g_free(arg->lamb2);
   if (arg->x)         g_free(arg->x);
-  if (arg->y)         g_free(arg->y);
   if (arg->w)         g_free(arg->w);
+  if (arg->q)         g_free(arg->q);
+  if (arg->u)         g_free(arg->u);
+  if (arg->wrk1)      g_free(arg->wrk1);
+  if (arg->wrk2)      g_free(arg->wrk2);
+  if (arg->wrk3)      g_free(arg->wrk3);
   if (arg->coef)      g_free(arg->coef);
+#ifdef HAVE_GSL
+  if (arg->solver)   gsl_multifit_fdfsolver_free (arg->solver);
+  if (arg->work)     gsl_vector_free(arg->work);
+  if (arg->covar)    gsl_matrix_free(arg->covar);
+  if (arg->funcStruc) g_free(arg->funcStruc);
+#endif /* HAVE_GSL */
   g_free(arg);
 
   return out;
@@ -817,6 +930,10 @@ gpointer ObitRMFitMakeArg (olong nlamb2, olong nterm, odouble refLamb2,
   olong i;
   NLRMFitArg *arg=NULL;
   gchar *routine = "ObitRMFitMakeArg";
+#ifdef HAVE_GSL
+  const gsl_multifit_fdfsolver_type *T=NULL;
+#endif /* HAVE_GSL */ 
+
   if (err->error) return out;
 
   /* Warn if too many terms asked for */
@@ -836,9 +953,12 @@ gpointer ObitRMFitMakeArg (olong nlamb2, olong nterm, odouble refLamb2,
   arg = g_malloc(sizeof(NLRMFitArg));
   arg->in             = NULL;     /* Not needed here */
   arg->nlamb2         = nlamb2;
+  arg->maxIter        = 100;     /* max. number of iterations */
+  arg->minDelta       = 1.0e-5;  /* Min step size */
   arg->nterm          = nterm;
   arg->doError        = TRUE;
   arg->minQUSNR       = 3.0;      /* min pixel SNR */
+  arg->minFrac        = 0.5;      /* min fraction of samples */
   arg->refLamb2       = refLamb2; /* Reference Frequency */
   arg->Qweight        = g_malloc0(arg->nlamb2*sizeof(ofloat));
   arg->Uweight        = g_malloc0(arg->nlamb2*sizeof(ofloat));
@@ -846,14 +966,39 @@ gpointer ObitRMFitMakeArg (olong nlamb2, olong nterm, odouble refLamb2,
   arg->Uvar           = g_malloc0(arg->nlamb2*sizeof(ofloat));
   arg->Qobs           = g_malloc0(arg->nlamb2*sizeof(ofloat));
   arg->Uobs           = g_malloc0(arg->nlamb2*sizeof(ofloat));
+  arg->Pobs           = g_malloc0(arg->nlamb2*sizeof(ofloat));
   arg->lamb2          = g_malloc0(arg->nlamb2*sizeof(ofloat));
   arg->x              = g_malloc0(arg->nlamb2*sizeof(double));
-  arg->y              = g_malloc0(arg->nlamb2*sizeof(double));
   arg->w              = g_malloc0(arg->nlamb2*sizeof(double));
-  arg->coef           = g_malloc0(2*arg->nterm*sizeof(ofloat));
+  arg->q              = g_malloc0(arg->nlamb2*sizeof(double));
+  arg->u              = g_malloc0(arg->nlamb2*sizeof(double));
+  arg->wrk1           = g_malloc0(arg->nlamb2*sizeof(ofloat));
+  arg->wrk2           = g_malloc0(arg->nlamb2*sizeof(ofloat));
+  arg->wrk3           = g_malloc0(arg->nlamb2*sizeof(ofloat));
+  arg->coef           = g_malloc0(3*arg->nterm*sizeof(ofloat));
   for (i=0; i<nlamb2; i++) {
     arg->lamb2[i]        = lamb2[i];
   }
+  /* GSL implementation */
+#ifdef HAVE_GSL
+  arg->solver = NULL; arg->covar = NULL; arg->work = NULL;
+  /* Setup solver */
+  T = gsl_multifit_fdfsolver_lmder;
+  arg->solver = gsl_multifit_fdfsolver_alloc(T, 2*arg->nlamb2, 2);
+
+  /* Fitting function info */
+  arg->funcStruc = g_malloc0(sizeof(gsl_multifit_function_fdf));
+  arg->funcStruc->f      = &RMFitFunc;
+  arg->funcStruc->df     = &RMFitJac;
+  arg->funcStruc->fdf    = &RMFitFuncJac;
+  arg->funcStruc->n      = 2*arg->nlamb2;
+  arg->funcStruc->p      = 2;
+  arg->funcStruc->params = arg;
+
+  /* Set up work arrays */
+  arg->covar = gsl_matrix_alloc(2, 2);
+  arg->work  = gsl_vector_alloc(2);
+#endif /* HAVE_GSL */ 
 
   /* output array */
   *out = (ofloat*)g_malloc0((2*arg->nterm+1)*sizeof(ofloat));
@@ -862,7 +1007,7 @@ gpointer ObitRMFitMakeArg (olong nlamb2, olong nterm, odouble refLamb2,
 } /* end ObitRMFitMakeArg */
 
 /**
- * Fit single spectrum to flux measurements using precomputed argument
+ * Fit single RM to measurements using precomputed argument
  * \param aarg      pointer to argument for fitting
  * \param Qflux     Array of Q values to be fitted
  * \param Qsigma    Array of uncertainties of Qflux
@@ -892,8 +1037,17 @@ void ObitRMFitSingleArg (gpointer aarg,
     arg->Uobs[i]    = uflux[i];
     arg->Qvar[i]    = qsigma[i];
     arg->Uvar[i]    = usigma[i];
-    arg->Qweight[i] = 1.0 / arg->Qvar[i];
-    arg->Uweight[i] = 1.0 / arg->Uvar[i];
+    if ((arg->Qobs[i]!=fblank) && (arg->Uobs[i]!=fblank)) {
+      arg->Pobs[i]    = sqrt (qflux[i]*qflux[i] + uflux[i]*uflux[i]);
+      /* arg->Qweight[i] = arg->Pobs[i] / arg->Qvar[i];
+	 arg->Uweight[i] = arg->Pobs[i] / arg->Uvar[i]; */
+      arg->Qweight[i] = 1.0 / qsigma[i];
+      arg->Uweight[i] = 1.0 / usigma[i];
+   } else {
+      arg->Pobs[i]    = 0.0;
+      arg->Qweight[i] = 0.0;
+      arg->Uweight[i] = 0.0;
+    }
   }
   
    /* Return fblanks/zeroes for no data */
@@ -929,11 +1083,22 @@ void ObitRMFitKillArg (gpointer aarg)
   if (arg->Uvar)      g_free(arg->Uvar);
   if (arg->Qobs)      g_free(arg->Qobs);
   if (arg->Uobs)      g_free(arg->Uobs);
+  if (arg->Pobs)      g_free(arg->Pobs);
   if (arg->lamb2)     g_free(arg->lamb2);
   if (arg->x)         g_free(arg->x);
-  if (arg->y)         g_free(arg->y);
   if (arg->w)         g_free(arg->w);
+  if (arg->q)         g_free(arg->q);
+  if (arg->u)         g_free(arg->u);
+  if (arg->wrk1)      g_free(arg->wrk1);
+  if (arg->wrk2)      g_free(arg->wrk2);
+  if (arg->wrk3)      g_free(arg->wrk3);
   if (arg->coef)      g_free(arg->coef);
+#ifdef HAVE_GSL
+  if (arg->solver)   gsl_multifit_fdfsolver_free (arg->solver);
+  if (arg->work)     gsl_vector_free(arg->work);
+  if (arg->covar)    gsl_matrix_free(arg->covar);
+  if (arg->funcStruc) g_free(arg->funcStruc);
+#endif /* HAVE_GSL */
   g_free(arg);
 
 } /* end ObitRMFitKillArg */
@@ -1015,6 +1180,7 @@ void ObitRMFitInit  (gpointer inn)
   in->nterm      = 2;
   in->nlamb2     = 0;
   in->minQUSNR   = 3.0;
+  in->minFrac    = 0.5;
   in->QRMS       = NULL;
   in->URMS       = NULL;
   in->outDesc    = NULL;
@@ -1074,7 +1240,7 @@ void ObitRMFitClear (gpointer inn)
 } /* end ObitRMFitClear */
 
 /**
- * Does RMl fitting, input and output on input object
+ * Does RM fitting, input and output on input object
  * Work divided up amoung 1 or more threads
  * In each pixel an RM is fitted if the number of valid data points 
  * exceeds in->nterm, otherwise the pixel is blanked.
@@ -1095,6 +1261,10 @@ static void Fitter (ObitRMFit* in, ObitErr *err)
   NLRMFitArg *args=NULL;
   ObitThreadFunc func=(ObitThreadFunc)ThreadNLRMFit;
   gchar *routine = "Fitter";
+  /* GSL implementation */
+#ifdef HAVE_GSL
+  const gsl_multifit_fdfsolver_type *T=NULL;
+#endif /* HAVE_GSL */ 
 
   /* error checks */
   if (err->error) return;
@@ -1119,23 +1289,51 @@ static void Fitter (ObitRMFit* in, ObitErr *err)
     args->in          = in;
     args->err         = err;
     args->nlamb2      = in->nlamb2;
+    args->maxIter     = 100;     /* max. number of iterations */
+    args->minDelta    = 1.0e-5;  /* Min step size */
     args->nterm       = in->nterm;
     args->doError     = in->doError;
-    args->minQUSNR    = in->minQUSNR;     /*min pixel SNR */
+    args->minQUSNR    = in->minQUSNR;     /* min pixel SNR */
+    args->minFrac     = in->minFrac;      /* min fraction of samples  */
     args->Qweight     = g_malloc0(args->nlamb2*sizeof(ofloat));
     args->Uweight     = g_malloc0(args->nlamb2*sizeof(ofloat));
     args->Qvar        = g_malloc0(args->nlamb2*sizeof(ofloat));
     args->Uvar        = g_malloc0(args->nlamb2*sizeof(ofloat));
     args->Qobs        = g_malloc0(args->nlamb2*sizeof(ofloat));
     args->Uobs        = g_malloc0(args->nlamb2*sizeof(ofloat));
+    args->Pobs        = g_malloc0(args->nlamb2*sizeof(ofloat));
     args->lamb2       = g_malloc0(args->nlamb2*sizeof(ofloat));
     args->x           = g_malloc0(args->nlamb2*sizeof(double));
-    args->y           = g_malloc0(args->nlamb2*sizeof(double));
     args->w           = g_malloc0(args->nlamb2*sizeof(double));
+    args->q           = g_malloc0(args->nlamb2*sizeof(double));
+    args->u           = g_malloc0(args->nlamb2*sizeof(double));
+    args->wrk1        = g_malloc0(args->nlamb2*sizeof(ofloat));
+    args->wrk2        = g_malloc0(args->nlamb2*sizeof(ofloat));
+    args->wrk3        = g_malloc0(args->nlamb2*sizeof(ofloat));
     if (args->doError)
-      args->coef      = g_malloc0(2*args->nterm*sizeof(ofloat));
+      args->coef      = g_malloc0(3*args->nterm*sizeof(ofloat));
     else
       args->coef      = g_malloc0(args->nterm*sizeof(ofloat));
+   /* GSL implementation */
+#ifdef HAVE_GSL
+    args->solver = NULL; args->covar = NULL; args->work = NULL;
+  /* Setup solver */
+    T = gsl_multifit_fdfsolver_lmder;
+    args->solver = gsl_multifit_fdfsolver_alloc(T, 2*args->nlamb2, 2);
+    
+    /* Fitting function info */
+    args->funcStruc = g_malloc0(sizeof(gsl_multifit_function_fdf));
+    args->funcStruc->f      = &RMFitFunc;
+    args->funcStruc->df     = &RMFitJac;
+    args->funcStruc->fdf    = &RMFitFuncJac;
+    args->funcStruc->n      = 2*args->nlamb2;
+    args->funcStruc->p      = 2;
+    args->funcStruc->params = args;
+    
+    /* Set up work arrays */
+    args->covar = gsl_matrix_alloc(2, 2);
+    args->work  = gsl_vector_alloc(2);
+#endif /* HAVE_GSL */ 
   }
   /* end initialize */
   
@@ -1178,12 +1376,23 @@ static void Fitter (ObitRMFit* in, ObitErr *err)
       if (args->Uvar)      g_free(args->Uvar);
       if (args->Qobs)      g_free(args->Qobs);
       if (args->Uobs)      g_free(args->Uobs);
+      if (args->Pobs)      g_free(args->Pobs);
       if (args->lamb2)     g_free(args->lamb2);
       if (args->x)         g_free(args->x);
-      if (args->y)         g_free(args->y);
       if (args->w)         g_free(args->w);
+      if (args->q)         g_free(args->q);
+      if (args->u)         g_free(args->u);
+      if (args->wrk1)      g_free(args->wrk1);
+      if (args->wrk2)      g_free(args->wrk2);
+      if (args->wrk3)      g_free(args->wrk3);
       if (args->coef)      g_free(args->coef);
-     g_free(threadArgs[i]);
+#ifdef HAVE_GSL
+      if (args->solver)    gsl_multifit_fdfsolver_free (args->solver);
+      if (args->work)      gsl_vector_free(args->work);
+      if (args->covar)     gsl_matrix_free(args->covar);
+      if (args->funcStruc) g_free(args->funcStruc);
+#endif /* HAVE_GSL */
+      g_free(threadArgs[i]);
     }
     g_free(threadArgs);
   }
@@ -1310,19 +1519,34 @@ static gpointer ThreadNLRMFit (gpointer arg)
 	  /* Statistical weight */
 	  larg->Qvar[i] = (in->QRMS[i]*in->QRMS[i]);
 	  larg->Uvar[i] = (in->URMS[i]*in->URMS[i]);
-	  larg->Qweight[i] = 1.0 / larg->Qvar[i];
-	  larg->Uweight[i] = 1.0 / larg->Uvar[i];
+	  larg->Pobs[i]    = sqrt (larg->Qobs[i]*larg->Qobs[i] + larg->Uobs[i]*larg->Uobs[i]);
+	  /* larg->Qweight[i] = larg->Pobs[i] / larg->Qvar[i];
+	     larg->Uweight[i] = larg->Pobs[i] / larg->Uvar[i];*/
+	  larg->Qweight[i] = 1.0 / in->QRMS[i];
+	  larg->Uweight[i] = 1.0 / in->URMS[i];
 	  /* End if datum valid */
 	} else { /* invalid pixel */
 	  larg->Qweight[i] = 0.0;
-	  larg->Qvar[i] = 0.0;
+	  larg->Qvar[i]    = 0.0;
 	  larg->Uweight[i] = 0.0;
-	  larg->Uvar[i] = 0.0;
+	  larg->Uvar[i]    = 0.0;
+	  larg->Pobs[i]    = 0.0;
 	}
+	/* DEBUG
+	if ((ix==669) && (iy==449)) { 
+	  fprintf (stderr,"%3d q=%g u=%g qs=%g us=%g wt=%f\n",
+		   i, larg->Qobs[i], larg->Uobs[i], in->QRMS[i], in->URMS[i], larg->Qweight[i]);
+	} */
       } /* end loop over frequencies */
       
       /* Fit */
       NLRMFit(larg);
+      /* DEBUG
+      if ((ix==669) && (iy==449)) { 
+	 fprintf (stderr,"ix=%4d iy=%4d\n",ix+1,iy+1);
+	 fprintf (stderr,"RM=%f EVPA=%f chi2=%f\n",
+		  larg->coef[0], larg->coef[1],larg->coef[4]);
+      } */
       
       /* Save to output */
       if (doError) {
@@ -1348,13 +1572,13 @@ static gpointer ThreadNLRMFit (gpointer arg)
  * Only fits for up to 5 terms
  * \param arg      NLRMFitArg structure
  *                 fitted parameters returned in arg->in->coef
+ *                 RM, EVPA, sig RM, sig EVPA, chi2
  */
 static void NLRMFit (NLRMFitArg *arg)
 {
-  olong i, nterm=arg->nterm, nvalid;
-  ofloat fblank = ObitMagicF();
-  odouble aarg, varaarg;
-  double EVPA0, RM, varEVPA0, coVar, varRM, chi2;
+  olong iter=0, i, nterm=2, nvalid;
+  ofloat sumwt, fblank = ObitMagicF();
+  double chi2;
   int status, numb;
  
   /* Initialize output */
@@ -1365,48 +1589,440 @@ static void NLRMFit (NLRMFitArg *arg)
   /* Blank */
   arg->coef[0] =  arg->coef[1] = fblank;
   
-  /* get EVLA values count valid data */
+  /* try to unwrap EVPA, get data to be fitted, returns number of valid data 
+     and crude fits */
+  nvalid = RMcoarse (arg);
+  numb   = nvalid;
+
+  if (nvalid<=MAX(2,nterm)) return;  /* enough good data for fit? */
+  /* High enough fraction of valid pixels? */
+  if ((((ofloat)nvalid)/((ofloat)arg->nlamb2)) < arg->minFrac) return;
+
+  /* Do fit */
+#ifdef HAVE_GSL
+    /* order EVPA, RM */
+    gsl_vector_set(arg->work, 0, (double)arg->coef[1]);
+    gsl_vector_set(arg->work, 1, (double)arg->coef[0]);
+    arg->funcStruc->n      = arg->nlamb2*2;
+    arg->funcStruc->p      = nterm;
+    arg->funcStruc->params = arg;
+    gsl_multifit_fdfsolver_set (arg->solver, arg->funcStruc, arg->work);
+    iter = 0;
+    /* iteration loop */
+    do {
+      iter++;
+      status = gsl_multifit_fdfsolver_iterate(arg->solver);
+      /*if (status) break;???*/
+
+      status = gsl_multifit_test_delta (arg->solver->dx, arg->solver->x, 
+					(double)arg->minDelta, 
+					(double)arg->minDelta);
+      /* DEBUG
+      if (nvalid>nterm) {
+	sumwt = (ofloat)gsl_blas_dnrm2(arg->solver->f);
+	chi2 = (sumwt*sumwt)/(nvalid-nterm);
+      } else chi2 = -1.0;
+      for (i=0; i<nterm; i++) arg->coef[i] = (ofloat)gsl_vector_get(arg->solver->x, i);
+      fprintf (stderr,"   iter=%d RM %f EVPA %f chi2 %g status %d\n",
+	       iter, arg->coef[1], arg->coef[0], chi2, status); */
+      /* end DEBUG */
+    } while ((status==GSL_CONTINUE) && (iter<arg->maxIter));
+
+    /* If it didn't work - bail */
+    if ((status!=GSL_SUCCESS) && (status!=GSL_CONTINUE)) {
+      fprintf (stderr, "Failed, status = %s\n", gsl_strerror(status));
+      return;
+    }
+    
+    /* normalized Chi squares */
+    if (nvalid>nterm) {
+      sumwt = (ofloat)gsl_blas_dnrm2(arg->solver->f);
+      chi2 = (sumwt*sumwt)/(nvalid-nterm);
+    } else chi2 = -1.0;
+
+    /* Get fitted values - switch order to RM, EVPA*/
+    arg->coef[0] = (ofloat)gsl_vector_get(arg->solver->x, 1);
+    arg->coef[1] = (ofloat)gsl_vector_get(arg->solver->x, 0);
+      
+    /* Errors wanted? */
+    if (arg->doError) {
+      /* second argument removes degenerate col/row from Jacobean */
+      gsl_multifit_covar (arg->solver->J, 1.0e-8, arg->covar);
+      arg->coef[nterm+0] = sqrt(gsl_matrix_get(arg->covar, 1, 1));
+      arg->coef[nterm+1] = sqrt(gsl_matrix_get(arg->covar, 0, 0));
+      arg->coef[4] = chi2;
+    } /* end of get errors */
+      
+#endif /* HAVE_GSL */ 
+} /* end NLRMFit */
+
+/**
+ * Make crude estimate of RM, EVPA and populate argument arrays
+ * \param arg      NLRMFitArg structure
+ *                 Data to be fitted in x,q,u,w
+ *                 RM, EVPA in coef
+ * \return number of valid data
+ */
+static olong RMcoarse (NLRMFitArg *arg)
+{
+  olong i, j, ntest, nvalid, numb;
+  ofloat minDL, maxDL, dRM, tRM, bestRM=0.0, fblank = ObitMagicF();
+  ofloat bestQ, bestU, sumrQ, sumrU, penFact;
+  double aarg, varaarg;
+  odouble amb, res, best, test;
+ 
+
+  /* get EVLA values count valid data*/
   nvalid = 0;
-  numb = 0;
+  numb   = 0;
   for (i=0; i<arg->nlamb2; i++) {
     if ((arg->Qobs[i]!=fblank) && (arg->Qweight[i]>0.0) &&
 	(arg->Uobs[i]!=fblank) && (arg->Uweight[i]>0.0)) {
       arg->x[numb] = arg->lamb2[i] - arg->refLamb2;
-      arg->y[numb] = 0.5*atan2(arg->Uobs[i],arg->Qobs[i]);
       /* Weight */
-      aarg = fabs(arg->Uobs[i]/arg->Qobs[i]);
+      aarg    = fabs(arg->Uobs[i]/arg->Qobs[i]);
       varaarg = aarg*aarg*(arg->Qvar[i]/(arg->Qobs[i]*arg->Qobs[i]) + 
 			   arg->Uvar[i]/(arg->Uobs[i]*arg->Uobs[i]));
-      arg->w[numb++] = (1.0+aarg*aarg)/varaarg;
+      arg->w[numb] = (1.0+aarg*aarg)/varaarg;
+      /* arg->q[numb] = arg->Qobs[i] * arg->w[numb];
+	 arg->u[numb] = arg->Uobs[i] * arg->w[numb];*/
+      arg->q[numb] = arg->Qobs[i];
+      arg->u[numb] = arg->Uobs[i];
+      /* DEBUG
+      fprintf (stderr, "%3d x=%8.5f q=%8.5f u=%8.5f w=%8.5g \n ",
+	       numb,arg->x[numb], arg->q[numb],arg->u[numb],arg->w[numb]);
+      arg->Qweight[i] = arg->Uweight[i] = 1.0/20.0e-6;
+      fprintf (stderr,"%3d l2=%g q=%g u=%g p=%f qwt=%g uwt=%g\n",
+	       i,arg->lamb2[i]-arg->refLamb2, arg->Qobs[i], arg->Uobs[i],arg->Pobs[i], 
+	       arg->Qweight[i], arg->Uweight[i]);*/
+     numb++;
     }
   }
   nvalid = numb;
-  if (nvalid<=MAX(2,arg->nterm)) return;  /* enough good data? */
+  if (nvalid<=MAX(2,arg->nterm)) return nvalid;  /* enough good data for fit? */
+  /* High enough fraction of valid pixels? */
+  if ((((ofloat)nvalid)/((ofloat)arg->nlamb2)) < arg->minFrac) return nvalid;
+  arg->nvalid = nvalid;
 
-  /* try to unwrap EVPA */
-  for (i=1; i<numb; i++) {
-    if ((arg->y[i]-arg->y[i-1]) >  0.75*G_PI) arg->y[i] -= G_PI;
-    if ((arg->y[i]-arg->y[i-1]) < -0.75*G_PI) arg->y[i] += G_PI;
-  }
+  /* max and min delta lamb2 - assume lamb2 ordered */
+  maxDL = fabs(arg->x[0]-arg->x[numb-1]);   /* range of actual delta lamb2 */
+  minDL  = 1.0e20; 
+  for (i=1; i<numb; i++) minDL = MIN (minDL, fabs(arg->x[i]-arg->x[i-1]));
+  /* 
+     ambiguity  = pi/min_dlamb2
+     resolution = pi/max_dlamb2 = RM which gives 1 turn over  lamb2 range
+   */
+  amb = G_PI / fabs(minDL);
+  res = G_PI / maxDL;
+  dRM = 0.05 * res;   /* test RM interval */
 
-  /* Do fit */
-#ifdef HAVE_GSL
-  status = gsl_fit_wlinear (arg->x, 1, arg->w, 1, arg->y, 1, numb, 
-			    &EVPA0, &RM, &varEVPA0, &coVar, &varRM, &chi2);
-#else
-  /* dummy values */
-  EVPA0 = RM = varEVPA0 = coVar = varRM = chi2 = 0.0;
-#endif /* HAVE_GSL */ 
-  /* save values */
-  if (nterm==1) arg->coef[0] = (ofloat)RM;
-  else if (nterm==2) {
-    arg->coef[0] = (ofloat)RM;
-    arg->coef[1] = (ofloat)EVPA0;
-    if (arg->doError) {
-      arg->coef[2] = (ofloat)sqrt(varRM);
-      arg->coef[3] = (ofloat)sqrt(varEVPA0);
-      arg->coef[4] = (ofloat)chi2;
+  /* DEBUG
+  fprintf (stderr,"amb = %f res= %f dRM=%f\n", amb, res, dRM); */
+  /* end DEBUG */
+  /* Test +/- half ambiguity every dRM */
+  ntest = 1 + 0.5*amb/dRM;
+  ntest =  MIN (ntest, 1001);   /* Some bounds */
+  /* Penalty to downweight solutions away from zero, 
+     weight 0.25 at edge of search */
+  penFact = 0.25 / (0.5*ntest);
+  best = -1.0e20;
+  for (i=0; i<ntest; i++) {
+    tRM = (i-ntest/2) * dRM;
+    /* Loop over data samples - first phases to convert to ref Lamb2 */
+    for (j=0; j<numb; j++) arg->wrk1[j]= -2*tRM * arg->x[j];
+    /* sines/cosine */
+    ObitSinCosVec (numb, arg->wrk1, arg->wrk3, arg->wrk2);
+    /* DEBUG
+    if ((fabs(tRM-133.0)<0.95*dRM) || (fabs(tRM-133.)<0.95*dRM)) {
+      for (j=0; j<numb; j++) {
+	test = (arg->q[j]*arg->wrk2[j])*(arg->q[j]*arg->wrk2[j]) + 
+	  (arg->u[j]*arg->wrk3[j])*(arg->u[j]*arg->wrk3[j]);
+	fprintf (stderr,"   i=%d j=%d t phase=%f obs phase %lf q=%f u=%lf test=%f\n",
+		 i, j, arg->wrk1[j], 0.5*atan2(arg->u[j],arg->q[j]),
+		 (arg->q[j]*arg->wrk2[j] - arg->u[j]*arg->wrk3[j])*1000, 
+		 (arg->q[j]*arg->wrk3[j] + arg->u[j]*arg->wrk2[j])*1000, 
+		 test);
+      }
+    } */
+    /* end  DEBUG*/
+    /* Find best sum of weighted amplitudes^2 converted to ref lambda^2 */
+    test = 0.0; sumrQ = sumrU = 0.0;
+    for (j=0; j<numb; j++) {
+      sumrQ += arg->w[j]*(arg->q[j]*arg->wrk2[j] - arg->u[j]*arg->wrk3[j]); 
+      sumrU += arg->w[j]*(arg->q[j]*arg->wrk3[j] + arg->u[j]*arg->wrk2[j]);
+    } 
+    test = sumrQ*sumrQ + sumrU*sumrU;
+    /* Add penalty */
+    test *= (1.0 - penFact*abs(i-ntest/2));
+    /* DEBUG 
+    fprintf (stderr," i=%d test=%g  tRM %f sum Q=%f sum U=%f pen %f\n",
+	     i, test, tRM, sumrQ, sumrU,  penFact*abs(i-ntest/2));*/
+  /* end DEBUG */
+    if (test>best) {
+      best = test;
+      bestRM = tRM;
+      bestQ = sumrQ;
+      bestU = sumrU;
     }
   }
-} /* end NLRMFit */
 
+  /* Save */
+  arg->coef[0] = bestRM;
+  arg->coef[1] = 0.5 * atan2(bestU, bestQ);
+  
+  /* DEBUG 
+  fprintf (stderr,"RM = %f EVPA= %f best=%f dRM=%f\n",
+	   arg->coef[1],arg->coef[0], best, dRM); */
+  /* end DEBUG */
+
+  return nvalid;
+} /* end RMcoarse */
+
+#ifdef HAVE_GSL
+/**
+ * Function evaluator for spectral fitting solver
+ * Evaluates (model-observed) / sigma
+ * \param x       Vector of parameters to be fitted
+ *                Flux,array_of spectral_terms
+ * \param param   Function parameter structure (NLRMFitArg)
+ * \param f       Vector of (model-obs)/sigma for data points
+ *                in order q, u each datum
+ * \return completion code GSL_SUCCESS=OK
+ */
+static int RMFitFunc (const gsl_vector *x, void *params, 
+		      gsl_vector *f)
+{
+  NLRMFitArg *args = (NLRMFitArg*)params;
+  ofloat fblank = ObitMagicF();
+  olong nlamb2  = args->nlamb2;
+  double func;
+  odouble RM, EVPA;
+  size_t i, j;
+  /* DEBUG
+  odouble sum=0.0; */
+
+  /* get model parameters */
+  EVPA = gsl_vector_get(x, 0);
+  RM   = gsl_vector_get(x, 1);
+  /* DEBUG
+  fprintf (stderr,"FitFunc RM=%f EVPA=%f\n", RM,EVPA); */
+
+  /* First compute model phases */
+  for (j=0; j<nlamb2; j++) 
+    args->wrk1[j] = 2*(EVPA + RM * (args->lamb2[j]-args->refLamb2));
+  /* then sine/cosine */
+  ObitSinCosVec (nlamb2, args->wrk1, args->wrk3, args->wrk2);
+  /* Loop over data - Residuals */
+  for (i=0; i<nlamb2; i++) {
+    /* Q model = args->Pobs[i] * args->wrk2[i]  */
+    if ((args->Qobs[i]!=fblank) && (args->Qweight[i]>0.0)) {
+      func = (args->Pobs[i] * args->wrk2[i] - args->Qobs[i]) * args->Qweight[i];
+      /*  sum += func*func;   DEBUG
+      fprintf (stderr,"FitFunc q i=%3ld func=%lg obs=%g mod=%g wt=%g p=%f\n", 
+	       2*i, func, args->Uobs[i], args->Pobs[i]*args->wrk3[i],
+	       args->Uweight[i],  args->Pobs[i]); */
+      gsl_vector_set(f, 2*i, func);  /* Save function residual */
+    } else {  /* Invalid data */
+      func = 0.0;
+      gsl_vector_set(f, 2*i, func);     /* Save function residual */
+    }
+    /* U model = args->Pobs[i] * args->wrk3[i]  */
+    if ((args->Uobs[i]!=fblank) && (args->Uweight[i]>0.0)) {
+      func = (args->Pobs[i] * args->wrk3[i] - args->Uobs[i]) * args->Uweight[i];
+      /* sum += func*func;   DEBUG
+      fprintf (stderr,"FitFunc u i=%3ld func=%lg obs=%g mod=%g wt=%g phs=%f\n", 
+	       2*i+1, func, args->Uobs[i], args->Pobs[i]*args->wrk3[i],
+	       args->Uweight[i], args->wrk1[i]*28.648); */
+      gsl_vector_set(f, 2*i+1, func);  /* Save function residual */
+    } else {  /* Invalid data */
+      func = 0.0;
+      gsl_vector_set(f, 2*i+1, func);     /* Save function residual */
+    }
+  } /* End loop over data */
+  /* DEBUG
+  fprintf (stderr,"FitFunc RMS=%g\n", sqrt(sum)); */
+  
+  return GSL_SUCCESS;
+} /*  end RMFitFunc */
+
+/**
+ * Jacobian evaluator for spectral fitting solver
+ * Evaluates partial derivatives of model wrt each parameter
+ * \param x       Vector of parameters to be fitted
+ *                Flux,array_of spectral_terms
+ * \param param   Function parameter structure (NLRMFitArg)
+ * \param J       Jacobian matrix J[data_point, parameter]
+ *                in order q, u each datum
+ * \return completion code GSL_SUCCESS=OK
+ */
+static int RMFitJac (const gsl_vector *x, void *params, 
+		     gsl_matrix *J)
+{
+  NLRMFitArg *args = (NLRMFitArg*)params;
+  ofloat fblank = ObitMagicF();
+  olong nlamb2  = args->nlamb2;
+  odouble RM, EVPA;
+  double jac;
+  size_t i, j;
+
+  /* get model parameters */
+  EVPA = gsl_vector_get(x, 0);
+  RM   = gsl_vector_get(x, 1);
+  /* DEBUG 
+  fprintf (stderr,"FitJac RM=%f EVPA=%f\n", RM,EVPA);*/
+
+  /* First compute model phases */
+  for (j=0; j<nlamb2; j++) 
+    args->wrk1[j] = 2*(EVPA + RM * (args->lamb2[j]-args->refLamb2));
+  /* then sine/cosine */
+  ObitSinCosVec (nlamb2, args->wrk1, args->wrk3, args->wrk2);
+  /* Loop over data - gradients */
+  for (i=0; i<nlamb2; i++) {
+    j = 0;    /* EVPA */
+    /* d Q model/d EVPA = -2 args->Pobs[i] * args->wrk3[i]  */
+    if ((args->Qobs[i]!=fblank) && (args->Qweight[i]>0.0)) {
+      jac = -2*(args->Pobs[i] * args->wrk3[i]) * args->Qweight[i];
+      gsl_matrix_set(J, 2*i, j, jac);  /* Save function gradient */
+    } else {  /* Invalid data */
+      jac = 0.0;
+      gsl_matrix_set(J, 2*i, j, jac);     /* Save function gradient */
+    }
+    /* d U model/d EVPA = 2 args->Pobs[i] * args->wrk2[i]  */
+    if ((args->Uobs[i]!=fblank) && (args->Uweight[i]>0.0)) {
+      jac = 2*(args->Pobs[i] * args->wrk2[i]) * args->Uweight[i];
+      gsl_matrix_set(J, 2*i+1, j, jac);  /* Save function gradient */
+    } else {  /* Invalid data */
+      jac = 0.0;
+      gsl_matrix_set(J, 2*i+1, j, jac);     /* Save function gradient */
+    }
+    j = 1;   /* RM  */
+    /* d Q model/d RM = -2 args->Pobs[i] * args->wrk3[i] * (args->lamb2[i]-args->refLamb2)  */
+    if ((args->Qobs[i]!=fblank) && (args->Qweight[i]>0.0)) {
+      jac = -2*(args->Pobs[i] * args->wrk3[i]) * 
+	(args->lamb2[i]-args->refLamb2) * args->Qweight[i];
+      gsl_matrix_set(J, 2*i, j, jac);  /* Save function gradient */
+    } else {  /* Invalid data */
+      jac = 0.0;
+      gsl_matrix_set(J, 2*i, j, jac);     /* Save function gradient */
+    }
+    /* d U model/d RM = 2 args->Pobs[i] * args->wrk2[i] * (args->lamb2[i]-args->refLamb2) */
+    if ((args->Uobs[i]!=fblank) && (args->Uweight[i]>0.0)) {
+      jac = 2*(args->Pobs[i] * args->wrk2[i]) * 
+	(args->lamb2[i]-args->refLamb2) * args->Uweight[i];
+      gsl_matrix_set(J, 2*i+1, j, jac);  /* Save function gradient */
+    } else {  /* Invalid data */
+      jac = 0.0;
+      gsl_matrix_set(J, 2*i+1, j, jac);     /* Save function gradient */
+    }
+  } /* End loop over data */
+  
+  return GSL_SUCCESS;
+} /*  end RMFitJac */
+
+/**
+ * Function and Jacobian evaluator for spectral fitting solver
+ * Function = (model-observed) / sigma
+ * Jacobian =  partial derivatives of model wrt each parameter
+ * \param x       Vector of parameters to be fitted
+ *                Flux,array_of spectral_terms
+ * \param param   Function parameter structure (NLRMFitArg)
+ * \param f       Vector of (model-obs)/sigma for data points
+ *                in order q, u each datum
+ * \param J       Jacobian matrix J[data_point, parameter]
+ *                in order q, u each datum
+ * \return completion code GSL_SUCCESS=OK
+ */
+static int RMFitFuncJac (const gsl_vector *x, void *params, 
+			 gsl_vector *f, gsl_matrix *J)
+{
+  NLRMFitArg *args = (NLRMFitArg*)params;
+  ofloat fblank = ObitMagicF();
+  double func, jac;
+  olong nlamb2  = args->nlamb2;
+  odouble RM, EVPA;
+  size_t i, j;
+  /* DEBUG
+  odouble sum=0.0; */
+
+  /* get model parameters */
+  EVPA = gsl_vector_get(x, 0);
+  RM   = gsl_vector_get(x, 1);
+  /* DEBUG
+  fprintf (stderr,"FuncJac RM=%f EVPA=%f\n", RM,EVPA); */
+
+  /* First compute model phases */
+  for (j=0; j<nlamb2; j++) 
+    args->wrk1[j] = 2*(EVPA + RM * (args->lamb2[j]-args->refLamb2));
+  /* then sine/cosine */
+  ObitSinCosVec (nlamb2, args->wrk1, args->wrk3, args->wrk2);
+  /* Loop over data - gradients */
+  for (i=0; i<nlamb2; i++) {
+    if ((args->Qobs[i]!=fblank) && (args->Qweight[i]>0.0)) {
+      /* Q model   = args->Pobs[i] * args->wrk2[i]  */
+      func = (args->Pobs[i] * args->wrk2[i] - args->Qobs[i]) * args->Qweight[i];
+      /* sum += func*func;   DEBUG */
+      /* DEBUG
+      fprintf (stderr,"FuncJac q i=%3ld func=%lg obs=%g mod=%g wt=%g p=%f\n", 
+	       2*i, func, args->Qobs[i], args->Pobs[i] * args->wrk2[i],
+	       args->Qweight[i], args->Pobs[i]); */
+      gsl_vector_set(f, 2*i, func);  /* Save function residual */
+      j = 0;    /* EVPA */
+      /* d Q model/d EVPA = -2 args->Pobs[i] * args->wrk3[i]  */
+      jac = -2*(args->Pobs[i] * args->wrk3[i]) * args->Qweight[i];
+      /* DEBUG
+      fprintf (stderr,"FuncJac q i=%3ld j=%3ld jac=%lf\n", 2*i, j, jac); */
+      gsl_matrix_set(J, 2*i, j, jac);  /* Save function residual */
+      j = 1;   /* RM  */
+      /* d Q model/d RM = -2 args->Pobs[i] * args->wrk3[i] * (args->lamb2[i]-args->refLamb2)  */
+      jac = -2*(args->Pobs[i] * args->wrk3[i]) * 
+	(args->lamb2[i]-args->refLamb2) * args->Qweight[i];
+      /* DEBUG 
+      fprintf (stderr,"FuncJac q i=%3ld j=%3ld jac=%lf\n", 2*i+1, j, jac);*/
+      gsl_matrix_set(J, 2*i, j, jac);  /* Save function gradient */
+    } else {  /* Invalid data */
+      func = 0.0;
+      gsl_vector_set(f, 2*i, func);
+      j = 0;    /* EVPA */
+      jac = 0.0;
+      gsl_matrix_set(J, 2*i, j, jac);
+      j = 1;   /* RM  */
+      gsl_matrix_set(J, 2*i, j, jac);
+    }
+    if ((args->Uobs[i]!=fblank) && (args->Uweight[i]>0.0)) {
+      /* U model   = 2 args->Pobs[i] * args->wrk3[i]  */
+      func = (args->Pobs[i] * args->wrk3[i] - args->Uobs[i]) * args->Uweight[i];
+      /* sum += func*func;   DEBUG */
+      /* DEBUG
+      fprintf (stderr,"FuncJac u i=%3ld func=%lg obs=%g mod=%g wt=%g phs=%f\n", 
+	       2*i+1, func, args->Uobs[i], args->Pobs[i]*args->wrk3[i],
+	       args->Uweight[i], args->wrk1[i]*28.648); */
+      gsl_vector_set(f, 2*i+1, func);  /* Save function residual */
+      j = 0;    /* EVPA */
+      /* d U model/d EVPA = 2 args->Pobs[i] * args->wrk2[i]  */
+      jac = 2*(args->Pobs[i] * args->wrk2[i]) * args->Uweight[i];
+      /* DEBUG
+      fprintf (stderr,"FuncJac u i=%3ld j=%3ld jac=%lf\n", 2*i, j, jac); */
+      gsl_matrix_set(J, 2*i+1, j, jac);  /* Save function gradient */
+      j = 1;   /* RM  */
+      /* d U model/d RM = args->Pobs[i] * args->wrk2[i] * (args->lamb2[i]-args->refLamb2) */
+      jac = 2*(args->Pobs[i] * args->wrk2[i]) * 
+	(args->lamb2[i]-args->refLamb2) * args->Uweight[i];
+      /* DEBUG
+      fprintf (stderr,"FuncJac u i=%3ld j=%3ld jac=%lf\n", 2*i+1, j, jac); */
+      gsl_matrix_set(J, 2*i+1, j, jac);  /* Save function gradient */      
+    } else {  /* Invalid data */
+      func = 0.0;
+      gsl_vector_set(f, 2*i+1, func);
+      j = 0;    /* EVPA */
+      jac = 0.0;
+      gsl_matrix_set(J, 2*i+1, j, jac);
+      j = 1;   /* RM  */
+      gsl_matrix_set(J, 2*i+1, j, jac);
+    }
+  } /* End loop over data */
+   /* DEBUG
+  fprintf (stderr,"FuncJac RMS=%g\n", sqrt(sum)); */
+ 
+  return GSL_SUCCESS;
+} /*  end RMFitFuncJac */
+#endif /* HAVE_GSL */ 

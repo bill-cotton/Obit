@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2011                                          */
+/*;  Copyright (C) 2010-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -279,6 +279,7 @@ ObitDConCleanPxListMFCreate (gchar* name, ObitImageMosaic *mosaic,
   out->minFlux    = ObitMemAlloc0Name (nfield*sizeof(ofloat), "PxListMF Clean Mix flux");
   out->factor     = ObitMemAlloc0Name (nfield*sizeof(ofloat), "PxListMF Clean factor");
   out->CCTable    = ObitMemAlloc0Name (nfield*sizeof(ObitTableCC*), "PxListMF CC tables");
+  out->CCRow      = ObitMemAlloc0Name (nfield*sizeof(ObitTableCCRow*), "PxListMF CC rows");
   out->BeamPatch   = ObitMemAlloc0Name (nfield*sizeof(ObitFArray*), "PxList BeamPatch");
   for (i=0; i<nfield; i++) {
     out->iterField[i] = 0;
@@ -289,6 +290,7 @@ ObitDConCleanPxListMFCreate (gchar* name, ObitImageMosaic *mosaic,
     out->minFlux[i]   = 0.0;
     out->factor[i]    = 0.0;
     out->CCTable[i]   = NULL;
+    out->CCRow[i]     = NULL;
   }
   
   /* Frequency info */
@@ -382,6 +384,8 @@ void ObitDConCleanPxListMFReset (ObitDConCleanPxList *inn, ObitErr *err)
 			     &ver, OBIT_IO_WriteOnly, noParms, err);
       if (err->error) Obit_traceback_msg (err, routine, in->name);
       in->CCver[i] = ver;  /* save if defaulted (0) */
+      /* Delete old row */
+      if (in->CCRow[i]) in->CCRow[i] = ObitTableCCUnref(in->CCRow[i]);
       
     }  /* End create table object */
 
@@ -693,11 +697,11 @@ void ObitDConCleanPxListMFUpdate (ObitDConCleanPxList *inn,
 gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
 {
   gboolean done = FALSE;
-  olong iter, field=0, iXres, iYres, beamPatch, tipeak=0;
+  olong iter, field=0,  beamPatch;
   olong i, j, lpatch, irow, xoff, yoff, lastField=-1;
   ofloat minFlux=0.0, lastFlux=0.0, CCmin, atlim, xfac=1.0, xflux;
-  ofloat peak, tpeak, minFluxLoad, tcombPeak;
-  ofloat subval, ccfLim=0.5, *tspec=NULL;
+  ofloat minFluxLoad;
+  ofloat subval, peak, ccfLim=0.5;
   odouble totalFlux, *fieldFlux=NULL;
   gchar reason[51];
   ObitTableCCRow *CCRow = NULL;
@@ -709,6 +713,12 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
   olong npix, lopix, hipix, npixPerThread, parmoff;
   gboolean OK = TRUE, *doField=NULL;
   ObitDConCleanPxListMF *in = (ObitDConCleanPxListMF*)inn;
+  /* Clean loop before writing */
+#ifndef MAXBGCLOOP
+#define MAXBGCLOOP 20
+#endif
+  olong ibgc, nbgc, mbgc, iXres, iYres, tipeak[MAXBGCLOOP];
+  ofloat *tspec[MAXBGCLOOP], tcombPeak[MAXBGCLOOP];
   gchar *routine = "ObitDConCleanPxListMFCLEAN";
   /* DEBUG */
   olong pos[2]={0,0}, ix, ipeak=0;
@@ -729,7 +739,11 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
   /* Local arrays */
   doField = g_malloc0(in->nfield*sizeof(gboolean));
   for (i=0; i<in->nfield; i++) doField[i] = FALSE;
-  tspec = g_malloc0(in->nSpec*sizeof(ofloat));
+  for (ibgc=0; ibgc<MAXBGCLOOP; ibgc++) {
+    tipeak[ibgc] = 0;
+    tcombPeak[ibgc] = 0.0;
+    tspec[ibgc] = g_malloc0(in->nSpec*sizeof(ofloat));
+  }
 
    /* How many components already done? */
   iter = MAX (0, in->currentIter);
@@ -806,202 +820,210 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
 
   /* CLEAN loop */
   while (!done) {
-    
-    /* Do subtraction/ find next peak  */
-    OK = ObitThreadIterator (in->thread, nThreads, 
-			     (ObitThreadFunc)myThreadFunc, 
-			     (gpointer**)targs);
 
-    /* Check for problems */
-    if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+    /* Set up for inner loop to enhance performance */
+    nbgc = MIN (MAXBGCLOOP, in->niter-iter);
+    for (ibgc=0; ibgc<nbgc; ibgc++) {   /* loop finding components */
     
-    /* Get  next peak info */
-    peak      = fabs(targs[0]->combPeak);
-    tcombPeak = targs[0]->combPeak;
-    for (j=0; j<in->nSpec; j++)
-      tspec[j] = targs[0]->Spec[j] ;
-    tipeak    = targs[0]->ipeak;
-    for (ithread=1; ithread<nThreads; ithread++) {
-      if (fabs(targs[ithread]->combPeak)>peak) {
-	peak      = fabs(targs[ithread]->combPeak);
-	tcombPeak = targs[ithread]->combPeak;
-	tpeak     = targs[ithread]->combPeak;
-	for (j=0; j<in->nSpec; j++)
-	  tspec[j] = targs[ithread]->Spec[j] ;
-	tipeak    = targs[ithread]->ipeak;
+      /* Do subtraction/ find next peak  */
+      OK = ObitThreadIterator (in->thread, nThreads, 
+			       (ObitThreadFunc)myThreadFunc, 
+			       (gpointer**)targs);
+      
+      /* Check for problems */
+      if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+      
+      /* Get peak info */
+      mbgc = 0;
+      peak = fabs(targs[0]->combPeak);
+      for (ithread=1; ithread<nThreads; ithread++) {
+	if (fabs(targs[ithread]->combPeak)>peak) {
+	  mbgc = ithread;
+	  peak = fabs(targs[ithread]->combPeak);
+	}
       }
-    }
-
-    /* If first pass set up stopping criteria */
-    xflux = tcombPeak;
-    field   = in->pixelFld[tipeak];
-    if (in->resMax < 0.0) {
-      in->resMax = MAX (fabs(xflux), 1.0e-10);
-      /* lower algorithm limit if fitted values are less that minFluxLoad */
-      if (minFluxLoad>in->resMax) minFluxLoad *= 0.90;
-    }      
-    
-    /* Save info */
-    xfac     = pow ((minFluxLoad / in->resMax), in->factor[field-1]);
-    ccfLim   = in->resMax*in->ccfLim;  /* Fraction of peak limit */
-    lastFlux = in->resMax;
-    doField[field-1] = TRUE;
-    minFlux  = in->minFlux[field-1];
-    subval   = tcombPeak * in->gain[field-1];
-    lastFlux = tcombPeak;
-    iXres    = in->pixelX[tipeak];
-    iYres    = in->pixelY[tipeak];
-    CCmin    = MIN (CCmin, fabs(tcombPeak));
-
-    /* Set up thread arguments for next subtraction */
-    for (ithread=0; ithread<nThreads; ithread++) {
-      targs[ithread]->ipeak    = tipeak;
-      targs[ithread]->combPeak = tcombPeak;
+      tcombPeak[ibgc] = targs[mbgc]->combPeak;
+      tipeak[ibgc]    = targs[mbgc]->ipeak;
       for (j=0; j<in->nSpec; j++)
-	targs[ithread]->Spec[j]= tspec[j];
-    }
-    
-    /* Keep statistics */
-    in->iterField[field-1]++;
-    iter++;  /* iteration count */
-    fieldFlux[field-1] += subval;
-    totalFlux += subval;
-    atlim += xfac / (ofloat)iter;   /* update BGC stopping criterion */
+	tspec[ibgc][j] = targs[mbgc]->Spec[j] ;
 
-    /* Write component to Table */    
-    /* Open table if not already open */
-    if (in->CCTable[field-1]->myStatus == OBIT_Inactive) {
-      retCode = ObitTableCCOpen (in->CCTable[field-1], OBIT_IO_ReadWrite, err);
-      if ((retCode != OBIT_IO_OK) || (err->error))
-	Obit_traceback_val (err, routine, in->name, done);
-    }
-    
-    /* Need Table Row - if different field then it may be different */
-    if (field!=lastField) CCRow = ObitTableCCRowUnref(CCRow);
-    lastField = field;
-    if (!CCRow) CCRow = newObitTableCCRow (in->CCTable[field-1]);
-    
-    /* Set value */
-    desc = in->mosaic->images[field-1]->myDesc;
-    /* correct by offset in ObitDConCleanPxListUpdate */
-    if (desc->crpix[0]>0.0)  
-      xoff = (olong)(desc->crpix[0]+0.5);
-    else xoff = (olong)(desc->crpix[0]-0.5);
-    if (desc->crpix[1]>0.0)  
-      yoff = (olong)(desc->crpix[1]+0.5);
-    else yoff = (olong)(desc->crpix[1]-0.5);
-    xoff--; yoff--; /* To 0 rel */
-    /* What's in AIPS is a bit more complex and adds field offset from tangent */
-    CCRow->DeltaX = (iXres - desc->crpix[0]+1+xoff)*desc->cdelt[0];
-    CCRow->DeltaY = (iYres - desc->crpix[1]+1+yoff)*desc->cdelt[1];
-    CCRow->Flux   =  subval;
-    /* May need Gaussian components */
-    parmoff = 0;
-    if (in->CCTable[field-1]->parmsCol>=0)
-      nCCparms = in->CCTable[field-1]->myDesc->dim[in->CCTable[field-1]->parmsCol][0];
-    else nCCparms = 0;
-    if (nCCparms>=4) {
-      if (in->circGaus[field-1]>0.0) {
-	CCRow->parms[0] = in->circGaus[field-1];
-	CCRow->parms[1] = in->circGaus[field-1];
-	CCRow->parms[2] = 0.0;
-	CCRow->parms[3] = 1;  /* type 1 = Gaussian */
-	parmoff = 4;
-      } else if (nCCparms>=(in->nSpecTerm+4)) { /* point */
-	CCRow->parms[0] = 0.0;
-	CCRow->parms[1] = 0.0;
-	CCRow->parms[2] = 0.0;
-	CCRow->parms[3] = 0;  /* type 0 = Point */
-	parmoff = 4;
+      /* Set up thread arguments for next subtraction */
+      for (ithread=0; ithread<nThreads; ithread++) {
+	targs[ithread]->ipeak    = tipeak[ibgc];
+	targs[ithread]->combPeak = tcombPeak[ibgc];
+	for (j=0; j<in->nSpec; j++)
+	  targs[ithread]->Spec[j]= tspec[ibgc][j];
       }
-    } /* end add Gaussian components */
+      
+     } /* end bgc loop finding components */
 
-    /* May need Spectral components */
-    if (nCCparms>=(parmoff+in->nSpec)) {
-
-      if (in->nSpec>0) {
-	CCRow->parms[3] += 20.0;  /* mark as also having tabulated spectrum */
-	for (i=0; i<in->nSpec; i++) {
-	  CCRow->parms[parmoff+i] = tspec[i] * in->gain[field-1];
+    for (ibgc=0; ibgc<nbgc; ibgc++) {   /* loop saving/testing components */
+      /* If first pass set up stopping criteria */
+      xflux = tcombPeak[ibgc];
+      field = in->pixelFld[tipeak[ibgc]] - 1;
+      if (in->resMax < 0.0) {
+	in->resMax = MAX (fabs(xflux), 1.0e-10);
+	/* lower algorithm limit if fitted values are less that minFluxLoad */
+	if (minFluxLoad>in->resMax) minFluxLoad *= 0.90;
+      }      
+      
+      /* Save info */
+      xfac     = pow ((minFluxLoad / in->resMax), in->factor[field]);
+      ccfLim   = in->resMax*in->ccfLim;  /* Fraction of peak limit */
+      lastFlux = in->resMax;
+      doField[field] = TRUE;
+      minFlux  = in->minFlux[field];
+      subval   = tcombPeak[ibgc] * in->gain[field];
+      lastFlux = tcombPeak[ibgc];
+      iXres    = in->pixelX[tipeak[ibgc]];
+      iYres    = in->pixelY[tipeak[ibgc]];
+      CCmin    = MIN (CCmin, fabs(tcombPeak[ibgc]));
+      
+     /* Keep statistics */
+      in->iterField[field]++;
+      iter++;  /* iteration count */
+      fieldFlux[field] += subval;
+      totalFlux += subval;
+      atlim += xfac / (ofloat)iter;   /* update BGC stopping criterion */
+      
+      /* Write component to Table */    
+      /* Open table if not already open */
+      if (in->CCTable[field]->myStatus == OBIT_Inactive) {
+	retCode = ObitTableCCOpen (in->CCTable[field], OBIT_IO_ReadWrite, err);
+	if ((retCode != OBIT_IO_OK) || (err->error))
+	  Obit_traceback_val (err, routine, in->name, done);
+      }
+      /* Create row if needed */
+      if (!in->CCRow[field]) in->CCRow[field] = newObitTableCCRow (in->CCTable[field]);
+      CCRow = in->CCRow[field];   /* Get local pointer to  Table Row  */
+      lastField = field;
+      
+      /* Set value */
+      desc = in->mosaic->images[field]->myDesc;
+      /* correct by offset in ObitDConCleanPxListUpdate */
+      if (desc->crpix[0]>0.0)  
+	xoff = (olong)(desc->crpix[0]+0.5);
+      else xoff = (olong)(desc->crpix[0]-0.5);
+      if (desc->crpix[1]>0.0)  
+	yoff = (olong)(desc->crpix[1]+0.5);
+      else yoff = (olong)(desc->crpix[1]-0.5);
+      xoff--; yoff--; /* To 0 rel */
+      /* What's in AIPS is a bit more complex and adds field offset from tangent */
+      CCRow->DeltaX = (iXres - desc->crpix[0]+1+xoff)*desc->cdelt[0];
+      CCRow->DeltaY = (iYres - desc->crpix[1]+1+yoff)*desc->cdelt[1];
+      CCRow->Flux   =  subval;
+      /* May need Gaussian components */
+      parmoff = 0;
+      if (in->CCTable[field]->parmsCol>=0)
+	nCCparms = in->CCTable[field]->myDesc->dim[in->CCTable[field]->parmsCol][0];
+      else nCCparms = 0;
+      if (nCCparms>=4) {
+	if (in->circGaus[field]>0.0) {
+	  CCRow->parms[0] = in->circGaus[field];
+	  CCRow->parms[1] = in->circGaus[field];
+	  CCRow->parms[2] = 0.0;
+	  CCRow->parms[3] = 1;  /* type 1 = Gaussian */
+	  parmoff = 4;
+	} else if (nCCparms>=(in->nSpecTerm+4)) { /* point */
+	  CCRow->parms[0] = 0.0;
+	  CCRow->parms[1] = 0.0;
+	  CCRow->parms[2] = 0.0;
+	  CCRow->parms[3] = 0;  /* type 0 = Point */
+	  parmoff = 4;
 	}
-      } /* end add Spectral components */
-    } /* end if need spectral component */
-    /* DEBUG  */
-    if (in->prtLv>5) 
-      fprintf (stderr,"Component: fld %2d %5d comb %9.6f flux %9.6f tot %9.6f pos %6d  %6d \n",
-	       field, tipeak, xflux, subval, in->totalFlux+totalFlux, iXres, iYres);
-    
-
-    irow = in->iterField[field-1];
-    retCode = ObitTableCCWriteRow (in->CCTable[field-1], irow, CCRow, err);
-    if ((retCode != OBIT_IO_OK) || (err->error)) 
-      Obit_traceback_val (err, routine, in->name, done);
-    
-    /* Test various stopping conditions */ 
-    /* Are we finished after this? */
-    done = done || (iter>=in->niter) || (fabs(xflux)<minFlux);
-    if (done) {  /* set completion reason string */
-      if (iter>=in->niter)     g_snprintf (reason, 50, "Reached Iter. limit");
-      if (iter>=in->niter)     in->complCode = OBIT_CompReasonNiter; 
-      if (fabs(xflux)<minFlux) g_snprintf (reason, 50, "Reached min Clean flux");
-      if (fabs(xflux)<minFlux) in->complCode = OBIT_CompReasonMinFlux;
-      break;
-    } 
-
-    /* Diverging? */
-    if (fabs (xflux) > 2.0*CCmin) {
-      /* Give warning */
-      Obit_log_error(err, OBIT_InfoWarn,"%s: Clean has begun to diverge, Stopping",
-		     routine);
-      g_snprintf (reason, 50, "Solution diverging");
-      in->complCode = OBIT_CompReasonDiverge;
-      break;
-    }
-  
-    /* BGC tests to tell if we should quit now */
-    if (fabs (xflux) < minFluxLoad * (1.0 + atlim)) {
-      g_snprintf (reason, 50, "Reached minimum algorithm flux");
-      in->complCode = OBIT_CompReasonBGCLimit;
+      } /* end add Gaussian components */
+      
+      /* May need Spectral components */
+      if (nCCparms>=(parmoff+in->nSpec)) {
+	
+	if (in->nSpec>0) {
+	  CCRow->parms[3] += 20.0;  /* mark as also having tabulated spectrum */
+	  for (i=0; i<in->nSpec; i++) {
+	    CCRow->parms[parmoff+i] = tspec[ibgc][i] * in->gain[field];
+	  }
+	} /* end add Spectral components */
+      } /* end if need spectral component */
       /* DEBUG  */
-      tmax = -1.0e20;
-      for (ix=0; ix<in->nPixel; ix++) {
-	if (fabs(in->pixelFlux[ix]) > tmax) {
-	  tmax = fabs(in->pixelFlux[ix]);
-	  peak = in->pixelFlux[ix];
-	  ipeak = ix;
-	  pos[0] = in->pixelX[ix];
-	  pos[1] = in->pixelY[ix];
-	}
-      }
       if (in->prtLv>5) 
-	fprintf (stderr, "Quit: %f < %f, minFluxLoad %f real peak %f @ %d %d %d\n",  
-		 xflux, minFluxLoad * (1.0 + atlim), minFluxLoad, peak, pos[0], pos[1], ipeak);
-      /* End DEBUG */
-      break;  /* jump out of CLEAN loop */
-    }
-   
-    /* autoWindow tests to tell if we should quit now */
-    if (fabs (xflux) < in->autoWinFlux) {
-      g_snprintf (reason, 50, "Reached minimum autoWindow flux");
-      in->complCode = OBIT_CompReasonAutoWin;
-      /* DEBUG - this to keep SubNewCCs from running until it's fixed 
-      in->complCode = OBIT_CompReasonMinFract;*/
-      break;  /* jump out of CLEAN loop */
-    }
-
-    /* Deep enough fraction of peak residual */
-    if (fabs(xflux)<ccfLim) {
-      g_snprintf (reason, 50, "Reached min fract of peak resid");
-      in->complCode = OBIT_CompReasonMinFract;
-      break;
-    }
-   
+	fprintf (stderr,"Component: fld %2d %5d comb %9.6f flux %9.6f tot %9.6f pos %6d  %6d \n",
+		 field+1, tipeak[ibgc], xflux, subval, in->totalFlux+totalFlux, iXres, iYres);
+      
+      
+      irow = in->iterField[field];
+      retCode = ObitTableCCWriteRow (in->CCTable[field], irow, CCRow, err);
+      if ((retCode != OBIT_IO_OK) || (err->error)) 
+	Obit_traceback_val (err, routine, in->name, done);
+      
+      /* Test various stopping conditions */ 
+      /* Are we finished after this? */
+      done = done || (iter>=in->niter) || (fabs(xflux)<minFlux);
+      if (done) {  /* set completion reason string */
+	if (iter>=in->niter)     g_snprintf (reason, 50, "Reached Iter. limit");
+	if (iter>=in->niter)     in->complCode = OBIT_CompReasonNiter; 
+	if (fabs(xflux)<minFlux) g_snprintf (reason, 50, "Reached min Clean flux");
+	if (fabs(xflux)<minFlux) in->complCode = OBIT_CompReasonMinFlux;
+	break;
+      } 
+      
+      /* Diverging? */
+      if (fabs (xflux) > 2.0*CCmin) {
+	/* Give warning */
+	Obit_log_error(err, OBIT_InfoWarn,"%s: Clean has begun to diverge, Stopping",
+		       routine);
+	g_snprintf (reason, 50, "Solution diverging");
+	in->complCode = OBIT_CompReasonDiverge;
+	done = TRUE;
+	break;
+      }
+      
+      /* BGC tests to tell if we should quit now */
+      if (fabs (xflux) < minFluxLoad * (1.0 + atlim)) {
+	g_snprintf (reason, 50, "Reached minimum algorithm flux");
+	in->complCode = OBIT_CompReasonBGCLimit;
+	/* DEBUG  */
+	if (in->prtLv>5)  {
+	  tmax = -1.0e20;
+	  for (ix=0; ix<in->nPixel; ix++) {
+	    if (fabs(in->pixelFlux[ix]) > tmax) {
+	      tmax = fabs(in->pixelFlux[ix]);
+	      peak = in->pixelFlux[ix];
+	      ipeak = ix;
+	      pos[0] = in->pixelX[ix];
+	      pos[1] = in->pixelY[ix];
+	    }
+	  }
+	  fprintf (stderr, "Quit: %f < %f, minFluxLoad %f real peak %f @ %d %d %d\n",  
+		   xflux, minFluxLoad * (1.0 + atlim), minFluxLoad, peak, pos[0], pos[1], ipeak);
+	}  /* End DEBUG */
+	done = TRUE;
+	break;  /* jump out of CLEAN loop */
+      }
+      
+      /* autoWindow tests to tell if we should quit now */
+      if (fabs (xflux) < in->autoWinFlux) {
+	g_snprintf (reason, 50, "Reached minimum autoWindow flux");
+	in->complCode = OBIT_CompReasonAutoWin;
+	/* DEBUG - this to keep SubNewCCs from running until it's fixed 
+	   in->complCode = OBIT_CompReasonMinFract;*/
+	done = TRUE;
+	break;  /* jump out of CLEAN loop */
+      }
+      
+      /* Deep enough fraction of peak residual */
+      if (fabs(xflux)<ccfLim) {
+	g_snprintf (reason, 50, "Reached min fract of peak resid");
+	in->complCode = OBIT_CompReasonMinFract;
+	done = TRUE;
+	break;
+      }
+    } /* End loop saving, testing components */
+    if (done) break;
   } /* end CLEANing loop */
   
-
-   /* Keep statistics */
+  
+  /* Keep statistics */
   in->currentIter = iter;
- /* Save accumulators for flux */
+  /* Save accumulators for flux */
   in->totalFlux += totalFlux;
   for (i=0; i<in->nfield; i++) in->fluxField[i] += fieldFlux[i];
   if (fieldFlux) g_free(fieldFlux);
@@ -1012,11 +1034,11 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
       retCode = ObitTableCCClose (in->CCTable[i], err);
       if ((retCode != OBIT_IO_OK) || (err->error))
 	Obit_traceback_val (err, routine, in->name, done);
+      in->CCRow[i] = ObitTableCCRowUnref(in->CCRow[i]);
     }
   } /* end loop closing tables */
   
     /* Cleanup */
-  CCRow = ObitTableCCRowUnref(CCRow);  
   KillCLEANArgs (nThreads, targs);
   ObitThreadPoolFree (in->thread);
 
@@ -1048,7 +1070,9 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
 
   /* Cleanup */
   if (doField) g_free(doField);
-  if (tspec)   g_free(tspec);
+  for (ibgc=0; ibgc<MAXBGCLOOP; ibgc++) {
+    if (tspec[ibgc]) g_free(tspec[ibgc]);
+  }
 
   return done;
 } /* end ObitDConCleanPxListMFCLEAN */
@@ -1239,11 +1263,10 @@ gboolean ObitDConCleanPxListMFSDI (ObitDConCleanPxList *inn, ObitErr *err)
       if ((retCode != OBIT_IO_OK) || (err->error))
 	Obit_traceback_val (err, routine, in->name, done);
     }
-    
-    /* Need Table Row - if different field then it may be different */
-    if (field!=lastField) CCRow = ObitTableCCRowUnref(CCRow);
+    /* Create row if needed */
+    if (!in->CCRow[field]) in->CCRow[field] = newObitTableCCRow (in->CCTable[field]);
+    CCRow = in->CCRow[field-1];  /* Get local pointer to Table Row  */
     lastField = field;
-    if (!CCRow) CCRow = newObitTableCCRow (in->CCTable[field-1]);
     
     /* Set value */
     desc = in->mosaic->images[field-1]->myDesc;
@@ -1340,11 +1363,11 @@ gboolean ObitDConCleanPxListMFSDI (ObitDConCleanPxList *inn, ObitErr *err)
       retCode = ObitTableCCClose (in->CCTable[i], err);
       if ((retCode != OBIT_IO_OK) || (err->error))
 	Obit_traceback_val (err, routine, in->name, done);
+      in->CCRow[i] = ObitTableCCRowUnref(in->CCRow[i]);
     }
   } /* end loop closing tables */
   
   /* Cleanup */
-  CCRow = ObitTableCCRowUnref(CCRow);  
   KillCLEANArgs (nThreads, targs);
   ObitThreadPoolFree (in->thread);  
  

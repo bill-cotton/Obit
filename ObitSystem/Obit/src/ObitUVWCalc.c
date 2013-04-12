@@ -211,6 +211,7 @@ ObitUVWCalc* ObitUVWCalcCreate (gchar* name, ObitUV *inUV, ObitErr *err)
   ObitTableAN  *ANTable=NULL;
   olong        i, ver, numPCal, numOrb, numIF, cnt;
   odouble     arrX, arrY, arrZ;
+  gchar *ArrName = NULL;
   gchar *routine = "ObitUVWCalcCreate";
   
   /* error checks */
@@ -297,9 +298,14 @@ ObitUVWCalc* ObitUVWCalcCreate (gchar* name, ObitUV *inUV, ObitErr *err)
   out->obsPos[1] = -atan2(-arrY, arrX);
   out->obsPos[2] = sqrt(arrX*arrX + arrY*arrY + arrZ*arrZ);
  
-  /* Flip direction? GMRT, LOFAR */
-  if (!strncmp("GMRT",   out->AntList->ArrName, 4)) out->doFlip = TRUE;
-  if (!strncmp("LOFAR",  out->AntList->ArrName, 5)) out->doFlip = TRUE;
+  /* Flip direction? GMRT, LOFAR, KAT-7
+   Use name in AN table if given, else teles in descriptor */
+  ArrName = out->AntList->ArrName;
+  if (!strncmp("    ",   out->AntList->ArrName, 4)) 
+    ArrName = out->myData->myDesc->teles;
+  if (!strncmp("GMRT",   ArrName, 4)) out->doFlip = TRUE;
+  if (!strncmp("LOFAR",  ArrName, 5)) out->doFlip = TRUE;
+  if (!strncmp("KAT-7",  ArrName, 5)) out->doFlip = TRUE;
 
   return out;
 } /* end ObitUVWCalcCreate */

@@ -1433,7 +1433,11 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
     doph    = TRUE;
     dodela  = TRUE;
     dorate  = TRUE;
- }
+  } else {  /* Unknown type */
+    Obit_log_error(err, OBIT_Error,"%s: Unsupported smoothing type %s",
+		   routine, smoType);
+    return;
+  }
 
   /* Create Row */
   row = newObitTableSNRow (SNTab);

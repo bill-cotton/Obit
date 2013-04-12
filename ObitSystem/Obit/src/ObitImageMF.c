@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2012                                          */
+/*;  Copyright (C) 2010-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,10 +26,11 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitFArray.h"
+#include "ObitFArrayUtil.h"
 #include "ObitImageDesc.h"
 #include "ObitImageSel.h"
 #include "ObitImageMF.h"
-#include "ObitFArrayUtil.h"
 #include "ObitFFT.h"
 #include "ObitMem.h"
 #include "ObitSystem.h"
@@ -1189,12 +1190,20 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
   olong i, plane[5] = {1,1,1,1,1}, pos[2];
   ofloat norm, sigma, sigClip=5.0, lambda=0.1, testSigma=10.0, beamArea, cells;
   ofloat wt, sumWt, p1, p2, minSigma, fblank = ObitMagicF();
-  gboolean *bad=NULL;
+  gboolean *bad=NULL, linPol=FALSE, doExt=FALSE;
   gchar *routine = "ObitImageMFCombine";
 
   /* error checks */
   if (err->error) return;
   g_assert (ObitImageMFIsA(in));
+
+  /* Linear poln? - More aggressive extrema suppression */
+  linPol = (in->myDesc->crval[ in->myDesc->jlocs]>=1.9) && 
+           (in->myDesc->crval[ in->myDesc->jlocs]<=3.1);
+  if (linPol) {
+    testSigma = 5.0;  /* How many sigma residual is important */
+    lambda    = 0.25; /* Reduction factor of extrama correction */
+  }
 
   /* Loop accumulating average */
   sumWt    = 0.0;
@@ -1233,7 +1242,9 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
   norm = 1.0 / sumWt;
   ObitFArraySMul (imPix, norm);
 
-  /* Add scaled extrema convolved with dirty beam */
+  /* Add scaled extrema convolved with dirty beam 
+   scaling by sigma keeps poor planes from overly affecting 
+   the results */
   if (addExt && in->myBeam) {
     /* Loop accumulating extrema */
     for (i=1+in->maxOrder; i<1+in->maxOrder+in->nSpec; i++) {
@@ -1248,11 +1259,18 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
 	/* Accumulate extrema - first clip below sigClip */
 	sigma = ObitFArrayRMS0(in->image);
 	ObitFArrayInClip (in->image, -sigClip*sigma, sigClip*sigma, 0.0);
+	/* Weight by 1/sigma */
+	wt = 1.0 / sigma;
+	ObitFArraySMul (in->image, wt);   /* Scale by weight */
+	/* ObitFArrayAbs (in->image);        Absolute value */
 	ObitFArrayExtArr (extPix, in->image, extPix);
       } /* end if valid */
     } /* end loop accumulating */
 
-    /* Read dirty beam */
+    /* Normalize extrema image by minimum sigma */
+    ObitFArraySMul (extPix, minSigma);
+
+   /* Read dirty beam */
     plane[0] = 1;
     ObitImageGetPlane ((ObitImage*)in->myBeam, NULL, plane, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
@@ -1261,15 +1279,26 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
     beamArea = 1.1331*(in->myDesc->beamMaj/cells)*(in->myDesc->beamMin/cells);
     /* If beam not available use 35 pixels */
     if (beamArea<0.1)  beamArea = 35.0;
-    ObitFArraySMul (extPix, lambda/beamArea);
-    /* Convolve extrema with dirty beam */
-    extConvl = ObitFArrayUtilConvolve (extPix, ((ObitImage*)in->myBeam)->image, err);
-    if (err->error) Obit_traceback_msg (err, routine, in->name);
-    /* add if peak in imPix exceeds that in extConvl - something occasionally goes wrong */
+    /* add if peak in imPix exceeds that in extPix - something occasionally goes wrong */
     p1 = ObitFArrayMaxAbs (imPix, pos);
-    p2 = ObitFArrayMaxAbs (extConvl, pos);
-    if ((p1>p2) && (p1<testSigma*minSigma))
-      ObitFArrayAdd (imPix, extConvl, imPix);
+    p2 = ObitFArrayMaxAbs (extPix, pos);
+    doExt = (p1<p2/sqrt(in->nSpec)) && (p2>testSigma*minSigma);  /* Add extrema? */
+    if (doExt) {
+      ObitFArraySMul (extPix, lambda/beamArea); /* Scale residuals by beam area */
+      /* Adjust signs to match imPix */
+      ObitFArraySign (imPix, extPix);
+      /* Convolve extrema with dirty beam */
+      extConvl = ObitFArrayUtilConvolve (extPix, ((ObitImage*)in->myBeam)->image, err);
+      if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+      /* Add extrema in a way to make CLEANing more likely */
+       ObitFArrayAdd (imPix, extConvl, imPix);
+    }
+    if (err->prtLv>=4) {  /* Diagnostics */
+      Obit_log_error(err, OBIT_InfoErr, "%s: Add extrema=%d pI=%f pRE=%f minSigma=%f",
+		     routine, doExt, p1, p2, minSigma);
+      ObitErrLog(err); 
+    }
     /* Cleanup */
     ((ObitImage*)in->myBeam)->image  = ObitFArrayUnref(((ObitImage*)in->myBeam)->image);
     extConvl = ObitFArrayUnref(extConvl);

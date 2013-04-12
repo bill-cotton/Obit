@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2011                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -167,6 +167,10 @@ typedef ofloat (*ObitFArrayRawRMSFP) (ObitFArray* in);
 ofloat ObitFArrayRMS0 (ObitFArray* in);
 typedef ofloat (*ObitFArrayRMS0FP) (ObitFArray* in);
 
+/** Public: Function for combining planes of multi frequency images */
+ofloat ObitFArrayRMS0ST (ObitFArray* in);
+typedef ofloat (*ObitFArrayRMS0STFP) (ObitFArray* in);
+
 /** Public: RMS of pixel in potentially quantized image. */
 ofloat ObitFArrayRMSQuant (ObitFArray* in);
 typedef ofloat (*ObitFArrayRMSQuantFP) (ObitFArray* in);
@@ -190,6 +194,10 @@ typedef void (*ObitFArrayFillFP) (ObitFArray* in, ofloat scalar);
 /** Public: negate elements of an FArray */
 void ObitFArrayNeg (ObitFArray* in);
 typedef void (*ObitFArrayNegFP) (ObitFArray* in);
+
+/** Public: taks absolute value of  elements of an FArray */
+void ObitFArrayAbs (ObitFArray* in);
+typedef void (*ObitFArrayAbsFP) (ObitFArray* in);
 
 /** Public: sine of  elements of an FArray */
 void ObitFArraySin (ObitFArray* in);
@@ -268,10 +276,19 @@ void ObitFArrayAdd (ObitFArray* in1, ObitFArray* in2, ObitFArray* out);
 typedef void (*ObitFArrayAddFP) (ObitFArray* in1, ObitFArray* in2, 
 				  ObitFArray* out);
 
+/** Public: Abs Add elements of two FArrays */
+void ObitFArrayAddAbs (ObitFArray* in1, ObitFArray* in2, ObitFArray* out);
+typedef void (*ObitFArrayAddAbsFP) (ObitFArray* in1, ObitFArray* in2, 
+			  	  ObitFArray* out);
+
 /** Public: Subtract elements of two FArrays */
 void ObitFArraySub (ObitFArray* in1, ObitFArray* in2, ObitFArray* out);
 typedef void (*ObitFArraySubFP) (ObitFArray* in1, ObitFArray* in2, 
 				  ObitFArray* out);
+
+/** Public: Give the elements of one array the sign of the other */
+void ObitFArraySign (ObitFArray* in1, ObitFArray* in2);
+typedef void (*ObitFArraySignFP) (ObitFArray* in1, ObitFArray* in2);
 
 /** Public: Multiply elements of two FArrays */
 void ObitFArrayMul (ObitFArray* in1, ObitFArray* in2, ObitFArray* out);

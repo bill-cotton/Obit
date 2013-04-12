@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006,2008                                          */
+/*;  Copyright (C) 2006,2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -248,8 +248,12 @@ ObitFitRegionCreate (gchar* name, olong corner[2], olong dim[2],
   out->nmodel    = nmodel;
   out->models    = g_malloc0(out->nmodel*sizeof(ObitFitModel*));
 
-  for (i=0; i<out->nmodel; i++) out->models[i] = models[i];
-    return out;
+  for (i=0; i<out->nmodel; i++) {
+    out->models[i] = ObitFitModelCreate("model", models[i]->type,  models[i]->Peak, 
+					models[i]->DeltaX, models[i]->DeltaY, 
+					models[i]->nparm, models[i]->parms);
+  }
+  return out;
 } /* end ObitFitRegionCreate */
 
 /**

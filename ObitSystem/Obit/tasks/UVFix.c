@@ -37,6 +37,8 @@
 #include "ObitUVUtil.h"
 #include "ObitTableAN.h"
 #include "ObitAIPSDir.h"
+#include "ObitTableCLUtil.h"
+#include "ObitTableSNUtil.h"
 
 /* internal prototypes */
 /* Get inputs */
@@ -80,9 +82,16 @@ int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
 {
   oint         ierr = 0;
+  ObitInfoType type;
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  olong        doCalib, doBand, flagVer;
+  gboolean     doPol;
   ObitSystem   *mySystem=NULL;
   ObitUV       *inData=NULL, *outData=NULL;
   ObitErr      *err= NULL;
+  gchar *ANInclude[] = {"AIPS AN", NULL};
+  gchar *FGInclude[] = {"AIPS FG", NULL};
+  gchar *BPInclude[] = {"AIPS BP", NULL};
 
    /* Startup - parse command line, read inputs */
   err = newObitErr();
@@ -120,6 +129,29 @@ int main ( int argc, char **argv )
   /* Copy recomputing u,v,w */
   ObitUVUtilCalcUVW(inData, outData, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+
+  /* Copy calibration tables not applied */
+  ObitInfoListGetTest (myInput, "doCalib", &type, dim, &doCalib); 
+  if (doCalib<=0) {
+    ObitTableCLSelect (inData, outData, err);
+    ObitTableSNSelect (inData, outData, err);
+  }
+  ObitInfoListGetTest (myInput, "doBand", &type, dim, &doBand); 
+  if (doBand<=0) 
+    ObitUVCopyTables (inData, outData, NULL, BPInclude, err);
+  ObitInfoListGetTest (myInput, "flagVer", &type, dim, &flagVer); 
+  if (flagVer<0) 
+    ObitUVCopyTables (inData, outData, NULL, FGInclude, err);
+  ObitInfoListGetTest (myInput, "doPol", &type, dim, &doPol); 
+  if (!doPol) 
+    ObitUVCopyTables (inData, outData, NULL, ANInclude, err);
+  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+
+  /* Index if multisource */
+  if (outData->myDesc->ilocsu>=0) {
+    ObitUVUtilIndex (outData, err);
+    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  }
 
   /* History */
   UVFixHistory (myInput, inData, outData, err);

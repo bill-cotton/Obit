@@ -158,7 +158,7 @@ def EVLAPolnFlag (uv, souModels, err, \
                 flag.g
         except Exception, exception:
             print exception
-            mess = "MednFlag Failed retCode= "+str(flag.retCode)+" Source "+flag.Sources[0]
+            mess = "AutoFlag Failed retCode= "+str(flag.retCode)+" Source "+flag.Sources[0]
             printMess(mess, logfile)
             return flag.retCode
         # Zap scratch
@@ -173,7 +173,7 @@ def EVLAPolnSelfCal(uv, Cals, err, \
                     doPol=False, PDVer=0, avgPol=False, avgIF=False, \
                     FQid=0, BChan=1, EChan=0, solMode="A&P", solType="L1", minSNR=5., \
                     solnver=0, solInt=10.0/60.0, refAnt=0, ampScalar=False, \
-                    calIn=0, calOut=0, \
+                    calIn=0, calOut=0, FOV=0.0, \
                     nThreads=1, check=False, debug = False, noScrat=[], logfile = ""):
     """
     Self Calibration using a set of models
@@ -208,6 +208,8 @@ def EVLAPolnSelfCal(uv, Cals, err, \
     * ampScalar= If true, scalar average data in calibration?
     * calIn    = Input CL table for CLCal, 0=> gainUse or highest if 0
     * calOut   = Output CL table for CLCal, 0 => new
+    * FOV      = If >0.0 then do baseline dependent averaging before running Calib
+                 where FOV is the desired undistorted FOV (deg)
     * check    = Only check script, don't execute tasks
     * nThreads = Number of threads to use
     * debug    = Run tasks debug, show input
@@ -218,6 +220,7 @@ def EVLAPolnSelfCal(uv, Cals, err, \
     mess =  "Self Calibration with model"
     printMess(mess, logfile)
     solnVer2 = None
+    tmpfile  = None  # Averaged data file, if used
 
     # output SN version
     if solnver<=0:
@@ -274,6 +277,64 @@ def EVLAPolnSelfCal(uv, Cals, err, \
     clcal.interMode = "SELF" 
     clcal.FreqID    = FQid
     clcal.refAnt    = refAnt
+
+    # Doing baseline average?
+    if FOV>0.0:
+        avg = ObitTask.ObitTask("UVBlAvg")
+        avg.user       = AIPS.userno   # This gets lost somehow
+        avg.taskLog    = logfile
+        if not check:
+            setname(uv,avg)
+        avg.flagVer    = flagVer
+        avg.gainUse    = gainUse
+        avg.doBand     = doBand
+        avg.BPVer      = BPVer
+        if "PDVer" in avg.__dict__:
+            avg.doPol  = doPol
+            avg.PDVer  = PDVer
+        avg.FOV        = FOV
+        avg.maxInt     = calib.solInt
+        avg.maxFact    = 1.01
+        avg.outFile    = ("TMP"+calib.inFile).strip()
+        avg.outName    = avg.inName
+        avg.outClass   = "Temp"
+        avg.outSeq     = 9999
+        avg.outDisk    = calib.inDisk
+        # Add sources
+        avg.Sources = []
+        for Cal in Cals:
+            avg.Sources.append(Cal["Source"])
+        # Trap failure
+        try:
+            mess = "Run UVBlAvg on "+avg.Sources[0]
+            printMess(mess, logfile)
+            if not check:
+                avg.g
+        except Exception, exception:
+            print exception
+            mess = "UVBlAvg Failed retCode= "+str(avg.retCode)+" Source "+avg.Sources[0]
+            printMess(mess, logfile)
+            tmpfile = None
+            # Keep on Truckin'
+        else:
+            # Worked - use it
+            if calib.DataType=="AIPS":
+                tmpfile = UV.newPAUV("Avg", avg.outName, avg.outClass, avg.outDisk, avg.outSeq, True, err)
+            else:
+                tmpfile = UV.newPFUV("Avg", avg.outFile, avg.outDisk, True, err)
+                
+            if err.isErr:
+                OErr.printErrMsg(err, "Error with UVBlAvg output")
+            # No edit/cal in Calib
+            if not check:
+                setname(tmpfile, calib)
+            calib.flagVer  = -1
+            calib.doCalib  = -1
+            calib.doBand   = -1
+            calib.doPol    = False
+            calib.solnVer  = 1
+    # End if baseline dependent averaging
+    
         
     # Loop over calibrators
     for Cal in Cals:
@@ -295,6 +356,7 @@ def EVLAPolnSelfCal(uv, Cals, err, \
         calib.modelFlux = Cal["CalModelFlux"]
         calib.modelPos  = Cal["CalModelPos"]
         calib.modelParm = Cal["CalModelParm"]
+        calib.solnVer   = solnVer
         # Source dependent overrides?
         if "solMode" in Cal:
             calib.solMode  = Cal["solMode"]
@@ -312,7 +374,6 @@ def EVLAPolnSelfCal(uv, Cals, err, \
             calib.avgPol   = Cal["avgPol"]
         else: 
             calib.avgPol   = avgPol
-        
         if debug:
             calib.i
             calib.debug = debug
@@ -331,6 +392,14 @@ def EVLAPolnSelfCal(uv, Cals, err, \
         else:
             OK = True
             OKCals2.append(calib.Sources[0])
+            # Were averaged data used?  If so,copy SN table contents
+            if FOV>0.0 and tmpfile:
+                tmpfile.Open(UV.READONLY,err)  # Update header
+                tmpfile.Close(err)
+                EVLAPolnSNAppend (tmpfile, solnVer, uv, solnVer, err)
+                # Delete SN table on averaged data
+                tmpfile.ZapTable("AIPS SN", solnVer, err)
+            
             # Run ClCal for this source
             clcal.Sources[0] = calib.Sources[0]
             clcal.calSour[0] = calib.Sources[0]
@@ -349,6 +418,9 @@ def EVLAPolnSelfCal(uv, Cals, err, \
                 return 1;
             
     # end calibration loop
+    # Were averaged data used?  Zap temp file
+    if FOV>0.0 and tmpfile:
+        tmpfile.Zap(err); del tmpfile; tmpfile = None  # Delete scratch
     return 0  # Must be OK
 # end EVLAPolnSelfCal
 
@@ -549,6 +621,7 @@ def EVLAPolnRL(uv, err, \
         rlpass.BPSoln  = 0
         rlpass.prtLv   = 1
         rlpass.nThreads = nThreads
+        rlpass.noScrat  = noScrat
         # Loop over calibrators
         for ical in range (0,ncal):
             rlpass.Sources[0]= RLCal[ical][0]
@@ -584,10 +657,10 @@ def EVLAPolnImage(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band
                   doCalib=-1, gainUse=0, doBand=-1, BPVer=0,  flagVer=-1, maxPixel=50000, \
                   doPol=False, PDVer=-1,  minFlux=0.0, BIF=1, EIF=0, \
                   Stokes="I", FOV=20.0/3600.0, Robust=0, Niter=300, CleanRad=None, \
-                  maxPSCLoop=0, minFluxPSC=0.1, solPInt=20.0/60., \
+                  maxPSCLoop=0, minFluxPSC=0.1, solPInt=20.0/60.,\
                   solPMode="P", solPType= "L1", Gain=0.1, \
                   maxASCLoop=0, minFluxASC=0.5, solAInt=2.0, \
-                  solAMode="A&P", solAType= "L1", \
+                  solAMode="A&P", solAType= "L1",  Beam=[0.0,0.0,0.0], \
                   avgPol=False, avgIF=False, minSNR = 5.0, refAnt=0, \
                   do3D=False, BLFact=0.999, BLchAvg=False, doOutlier=None, \
                   doMB=False, norder=1, maxFBW=0.05, doComRes=False, \
@@ -635,6 +708,7 @@ def EVLAPolnImage(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band
     * solAInt    = Amp&phase solution interval (min)
     * solAMode   = Amp&Phase soln mode "A&P", "P", "DELA"
     * solAType   = Amp&PPhase soln type
+    * Beam       = CLEAN restoring beam
     * avgPol     = Average poln in SC?
     * avgIF      = Average IFs in SC?
     * minSNR     = minimum acceptable SNR in SC
@@ -716,6 +790,7 @@ def EVLAPolnImage(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band
     imager.Robust      = Robust
     imager.Niter       = Niter
     imager.Gain        = Gain
+    imager.Beam        = Beam
     imager.maxPixel    = maxPixel
     imager.minFlux     = minFlux
     imager.maxPixel    = maxPixel
@@ -1061,4 +1136,34 @@ def EVLAPolnCleanup(uv, Sources, err, \
     # end source/stokes loop
     return 0
 # end EVLAPolnCleanup
+
+def EVLAPolnSNAppend (inUV, inSNVer, outUV, outSNVer, err):
+    """
+    Append contents of one SN table to another
+
+    * inUV      = Input UV data
+    * inSNVer   = Input SN version number
+    * outUV     = Output UV data
+    * outSNVer  = Output SN version number
+    * err       = Python Obit Error/message stack
+    """
+    ################################################################
+    # Get tables
+    inUV.Open(UV.READONLY,err)
+    inUV.Close(err)
+    #print "inSNVer",inSNVer
+    inSN  = inUV.NewTable(Table.READONLY, "AIPS SN", inSNVer, err)
+    numIF  = inSN.Desc.List.Dict["NO_IF"][2][0]
+    numPol = inSN.Desc.List.Dict["NO_POL"][2][0]
+    outSN = outUV.NewTable(Table.READWRITE, "AIPS SN", outSNVer, err, \
+                           numIF=numIF, numPol=numPol)
+    # Copy if new
+    if outSN.Desc.Dict["nrow"]<=0:
+        Table.PCopy(inSN, outSN,err)
+    else:
+        # Concatenate
+        Table.PConcat(inSN, outSN,err)
+    if err.isErr:
+        return
+    # end EVLAPolnSNAppend 
 

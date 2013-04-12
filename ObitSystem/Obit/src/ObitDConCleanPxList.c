@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2011                                          */
+/*;  Copyright (C) 2004-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -195,6 +195,12 @@ ObitDConCleanPxListCopy  (ObitDConCleanPxList *in, ObitDConCleanPxList *out,
     }
     out->CCTable   =  ObitMemFree (out->CCTable);
   }
+  if (out->CCRow) {
+    for (i=0; i<nfield; i++) {
+      out->CCRow[i]   = ObitTableCCRowUnref(out->CCRow[i]);
+    }
+    out->CCRow   =  ObitMemFree (out->CCRow);
+  }
   if (out->BeamPatch) {
     nfield = in->mosaic->numberImages;
     for (i=0; i<nfield; i++) {
@@ -244,6 +250,7 @@ ObitDConCleanPxListCopy  (ObitDConCleanPxList *in, ObitDConCleanPxList *out,
   out->minFlux   = ObitMemAlloc0Name (nfield*sizeof(ofloat), "PxList Clean Min flux");
   out->factor    = ObitMemAlloc0Name (nfield*sizeof(ofloat), "PxList Clean factor");
   out->CCTable   = ObitMemAlloc0Name (nfield*sizeof(ObitTableCC*), "PxList CC tables");
+  out->CCRow     = ObitMemAlloc0Name (nfield*sizeof(ObitTableCCRow*), "PxList CC rows");
   out->BeamPatch = ObitMemAlloc0Name (nfield*sizeof(ObitFArray*), "PxList Beam");
   for (i=0; i<nfield; i++) {
     out->fluxField[i] = in->fluxField[i];
@@ -254,6 +261,7 @@ ObitDConCleanPxListCopy  (ObitDConCleanPxList *in, ObitDConCleanPxList *out,
     out->minFlux[i]   = in->minFlux[i];
     out->factor[i]    = in->factor[i];
     if (in->CCTable[i])   out->CCTable[i]   = ObitTableCCRef(in->CCTable[i]);
+    if (in->CCRow[i])     out->CCRow[i]     = ObitTableCCRowRef(in->CCRow[i]);
     if (in->BeamPatch[i]) out->BeamPatch[i] = ObitFArrayRef(in->BeamPatch[i]);
  }
 
@@ -270,7 +278,7 @@ ObitDConCleanPxListCopy  (ObitDConCleanPxList *in, ObitDConCleanPxList *out,
 void ObitDConCleanPxListClone  (ObitDConCleanPxList *in, ObitDConCleanPxList *out, ObitErr *err)
 {
   const ObitClassInfo *ParentClass;
-  olong i, j, nfield;
+  olong i, j, nfield=1;
   gchar *routine = "ObitDConCleanPxListClone";
 
   /* error checks */
@@ -301,12 +309,18 @@ void ObitDConCleanPxListClone  (ObitDConCleanPxList *in, ObitDConCleanPxList *ou
   if (out->gain)      out->gain     =  ObitMemFree (out->gain);
   if (out->minFlux)   out->minFlux  =  ObitMemFree (out->minFlux);
   if (out->factor)    out->factor   =  ObitMemFree (out->factor);
+  nfield = in->mosaic->numberImages;
   if (out->CCTable) {
-    nfield = in->mosaic->numberImages;
     for (i=0; i<nfield; i++) {
       out->CCTable[i] = ObitTableCCUnref(out->CCTable[i]);
     }
     out->CCTable   =  ObitMemFree (out->CCTable);
+  }
+  if (out->CCRow) {
+    for (i=0; i<nfield; i++) {
+      out->CCRow[i]   = ObitTableCCRowUnref(out->CCRow[i]);
+    }
+    out->CCRow   =  ObitMemFree (out->CCRow);
   }
   if (out->BeamPatch) {
     nfield = in->mosaic->numberImages;
@@ -357,6 +371,7 @@ void ObitDConCleanPxListClone  (ObitDConCleanPxList *in, ObitDConCleanPxList *ou
   out->minFlux   = ObitMemAlloc0Name (nfield*sizeof(ofloat), "PxList Clean Min flux");
   out->factor    = ObitMemAlloc0Name (nfield*sizeof(ofloat), "PxList Clean factor");
   out->CCTable   = ObitMemAlloc0Name (nfield*sizeof(ObitTableCC*), "PxList CC tables");
+  out->CCRow     = ObitMemAlloc0Name (nfield*sizeof(ObitTableCCRow*), "PxList CC rows");
   out->BeamPatch = ObitMemAlloc0Name (nfield*sizeof(ObitFArray*),  "PxList Beam");
   for (i=0; i<nfield; i++) {
     out->fluxField[i] = in->fluxField[i];
@@ -367,6 +382,7 @@ void ObitDConCleanPxListClone  (ObitDConCleanPxList *in, ObitDConCleanPxList *ou
     out->minFlux[i]   = in->minFlux[i];
     out->factor[i]    = in->factor[i];
     if (in->CCTable[i])   out->CCTable[i]   = ObitTableCCRef(in->CCTable[i]);
+    if (in->CCRow[i])     out->CCRow[i]     = ObitTableCCRowRef(in->CCRow[i]);
     if (in->BeamPatch[i]) out->BeamPatch[i] = ObitFArrayRef(in->BeamPatch[i]);
  }
 
@@ -416,6 +432,7 @@ ObitDConCleanPxListCreate (gchar* name, ObitImageMosaic *mosaic,
   out->minFlux   = ObitMemAlloc0Name (nfield*sizeof(ofloat), "PxList Clean Mix flux");
   out->factor    = ObitMemAlloc0Name (nfield*sizeof(ofloat), "PxList Clean factor");
   out->CCTable   = ObitMemAlloc0Name (nfield*sizeof(ObitTableCC*), "PxList CC tables");
+  out->CCRow     = ObitMemAlloc0Name (nfield*sizeof(ObitTableCCRow*), "PxList CC rows");
   out->BeamPatch = ObitMemAlloc0Name (nfield*sizeof(ObitFArray*), "PxList Beampatch");
   for (i=0; i<nfield; i++) {
     out->iterField[i] = 0;
@@ -426,6 +443,7 @@ ObitDConCleanPxListCreate (gchar* name, ObitImageMosaic *mosaic,
     out->minFlux[i]   = 0.0;
     out->factor[i]    = 0.0;
     out->CCTable[i]   = NULL;
+    out->CCRow[i]     = NULL;
   }
   
   return out;
@@ -563,8 +581,9 @@ void ObitDConCleanPxListReset (ObitDConCleanPxList *in, ObitErr *err)
 			     &ver, OBIT_IO_WriteOnly, noParms, err);
       if (err->error) Obit_traceback_msg (err, routine, in->name);
       in->CCver[i] = ver;  /* save if defaulted (0) */
-      
-    }  /* End create table object */
+      /* Delete old row */
+      if (in->CCRow[i]) in->CCRow[i] = ObitTableCCUnref(in->CCRow[i]);
+     }  /* End create table object */
 
     /* Reset and instantiate if needed */
     ObitTableClearRows ((ObitTable*)in->CCTable[i], err);
@@ -605,7 +624,6 @@ void ObitDConCleanPxListResize (ObitDConCleanPxList *in, olong maxPixel,
   in->pixelFlux = ObitMemRealloc (in->pixelFlux, maxPixel*sizeof(ofloat));
   for (i=0; i<in->nSpecTerm; i++)
       in->pixelSpectra[i] = ObitMemRealloc (in->pixelSpectra[i], maxPixel*sizeof(ofloat));
-
 
 } /* end ObitDConCleanPxListResize */
 
@@ -1023,10 +1041,10 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
 	Obit_traceback_val (err, routine, in->name, done);
     }
     
-    /* Need Table Row - if different field then it may be different */
-    if (field!=lastField) CCRow = ObitTableCCRowUnref(CCRow);
+    /* Create row if needed */
+    if (!in->CCRow[field]) in->CCRow[field] = newObitTableCCRow (in->CCTable[field]);
+    CCRow = in->CCRow[field-1];   /* Get local pointer to  Table Row  */
     lastField = field;
-    if (!CCRow) CCRow = newObitTableCCRow (in->CCTable[field-1]);
     
     /* Set value */
     desc = in->mosaic->images[field-1]->myDesc;
@@ -1133,11 +1151,11 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
       retCode = ObitTableCCClose (in->CCTable[i], err);
       if ((retCode != OBIT_IO_OK) || (err->error))
 	Obit_traceback_val (err, routine, in->name, done);
+      in->CCRow[i] = ObitTableCCRowUnref(in->CCRow[i]);
     }
   } /* end loop closing tables */
   
     /* Cleanup */
-  CCRow = ObitTableCCRowUnref(CCRow);  
   KillCLEANArgs (nThreads, targs);
   ObitThreadPoolFree (in->thread);
    
@@ -1328,10 +1346,11 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
 	Obit_traceback_val (err, routine, in->name, done);
     }
     
-    /* Need Table Row - if different field then it may be different */
-    if (field!=lastField) CCRow = ObitTableCCRowUnref(CCRow);
+    /* Create row if needed */
+    if (!in->CCRow[field]) in->CCRow[field] = newObitTableCCRow (in->CCTable[field]);
+    /* Need Table Row  */
+    CCRow = in->CCRow[field-1];  /* Get local pointer to Table Row  */
     lastField = field;
-    if (!CCRow) CCRow = newObitTableCCRow (in->CCTable[field-1]);
     
     /* Set value */
     desc = in->mosaic->images[field-1]->myDesc;
@@ -1414,11 +1433,11 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
       retCode = ObitTableCCClose (in->CCTable[i], err);
       if ((retCode != OBIT_IO_OK) || (err->error))
 	Obit_traceback_val (err, routine, in->name, done);
+      in->CCRow[i] = ObitTableCCRowUnref(in->CCRow[i]);
     }
   } /* end loop closing tables */
   
   /* Cleanup */
-  CCRow = ObitTableCCRowUnref(CCRow);  
   KillCLEANArgs (nThreads, targs);
   ObitThreadPoolFree (in->thread);
   
@@ -1574,6 +1593,7 @@ void ObitDConCleanPxListInit  (gpointer inn)
   in->minFlux   = NULL;
   in->factor    = NULL;
   in->CCTable   = NULL;
+  in->CCRow     = NULL;
   in->pixelSpectra = NULL;
   in->resMax    = -1.0e20;
   in->nSpecTerm = 0;
@@ -1609,11 +1629,17 @@ void ObitDConCleanPxListClear (gpointer inn)
       in->CCTable[i]   = ObitTableCCUnref(in->CCTable[i]);
     }
   }
+  if (in->CCRow) {
+    for (i=0; i<in->nfield; i++) {
+      in->CCRow[i]   = ObitTableCCRowUnref(in->CCRow[i]);
+    }
+  }
   in->thread    = ObitThreadUnref(in->thread);
   in->info      = ObitInfoListUnref(in->info);
   in->mosaic    = ObitImageMosaicUnref(in->mosaic);
   in->window    = ObitDConCleanWindowUnref(in->window);
   if (in->CCTable)   in->CCTable  =  ObitMemFree (in->CCTable);
+  if (in->CCRow)     in->CCRow    =  ObitMemFree (in->CCRow);
   if (in->BeamPatch) in->BeamPatch=  ObitMemFree (in->BeamPatch);
   if (in->pixelX)    in->pixelX   =  ObitMemFree (in->pixelX);
   if (in->pixelY)    in->pixelY   =  ObitMemFree (in->pixelY);

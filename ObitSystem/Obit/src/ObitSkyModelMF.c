@@ -27,13 +27,13 @@
 /*--------------------------------------------------------------------*/
 
 #include <math.h>
+#include "ObitFFT.h"
 #include "ObitThread.h"
 #include "ObitSkyModelMF.h"
 #include "ObitSkyModelVMSquint.h"
 #include "ObitSkyModelVMIon.h"
 #include "ObitImageMosaic.h"
 #include "ObitTableCCUtil.h"
-#include "ObitFFT.h"
 #include "ObitUVUtil.h"
 #include "ObitImageUtil.h"
 #include "ObitPBUtil.h"
@@ -2726,7 +2726,7 @@ gboolean ObitSkyModelMFGridFTComps (ObitSkyModel* inn, olong field, ObitUV* uvda
   ObitSkyModelMF *in  = (ObitSkyModelMF*)inn;
   gboolean gotSome = FALSE;
   ObitImageDesc *imDesc = NULL;
-  olong i, j, k, nx, ny, overSample;
+  olong i, j, k, nx, ny, overSample, nThread;
   olong ncomp, ndim, naxis[2];
   ofloat gparm[3], dU, dV, UU, VV, texp;
   ofloat konst, xmaj, xmin, cpa, spa, b1, b2, b3, bb2, bb3;
@@ -2770,6 +2770,12 @@ gboolean ObitSkyModelMFGridFTComps (ObitSkyModel* inn, olong field, ObitUV* uvda
   naxis[0] = 1+in->planes[0]->naxis[0]/2; naxis[1] = in->planes[0]->naxis[1]; 
   FFTImage = ObitCArrayCreate ("FFT output", ndim, naxis);
   
+  imDesc = in->mosaic->images[field]->myDesc; 
+  /* How many threads for FFT? 2 per 1K pixels in x */
+  nThread = MAX (1, ObitThreadNumProc(in->thread));
+  nThread = MIN (MAX (1, 2*overSample*imDesc->inaxes[imDesc->jlocr]), nThread);
+  ObitFFTNThreads (nThread);   /* Enable FFT with threading */
+
   /* Loop over spectral planes */
   for (k=0; k<in->nSpec; k++) {
     
@@ -2791,8 +2797,6 @@ gboolean ObitSkyModelMFGridFTComps (ObitSkyModel* inn, olong field, ObitUV* uvda
        tempFArray = ObitFArrayUnref(tempFArray);
        if (err->error) Obit_traceback_val (err, routine, in->name, gotSome); */
     /* END DEBUG */
-    
-    imDesc = in->mosaic->images[field]->myDesc; 
     
     /* Add taper if necessary */
     /* Are these Gaussians? */
@@ -2865,7 +2869,8 @@ gboolean ObitSkyModelMFGridFTComps (ObitSkyModel* inn, olong field, ObitUV* uvda
 
   /* Cleanup */
   FFTImage  = ObitCArrayUnref(FFTImage);
-
+  ObitFFTNThreads (1);   /* Reset FFT threading */
+  ObitFFTClearThreads();
 
   return gotSome;
 } /* end ObitSkyModelMFGridFTComps */

@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -28,8 +28,6 @@
 
 #include <math.h>
 #include "ObitFFT.h"
-#include "ObitIOUVFITS.h"
-#include "ObitIOUVAIPS.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -163,6 +161,28 @@ olong ObitFFTSuggestSize (olong length)
   /* No luck - return input value */
   return out;
 } /* end ObitFFTSuggestSize */
+
+/**
+ * Enable threaded FFTs.
+ * \param  nThreads  Maximum number of threads to use
+ */
+void ObitFFTNThreads (olong nThreads)
+{
+#if HAVE_FFTW3THREADS==1
+  fftwf_plan_with_nthreads((int)MAX (1,nThreads));
+#endif /* HAVE_FFTW3THREADS */
+} /* end ObitFFTNThreads */
+
+/**
+ * Cleanup threading.
+ * MUST be called after all ObitFFT objects are destroyed.
+ */
+void ObitFFTClearThreads (void)
+{
+#if HAVE_FFTW3THREADS==1
+  fftwf_cleanup_threads();
+#endif /* HAVE_FFTW3THREADS */
+} /* end ObitFFTNThreads */
 
 /**
  * Do full real to half complex transform.
@@ -625,7 +645,12 @@ void ObitFFTClassInit (void)
 
   /* Set function pointers */
   ObitFFTClassInfoDefFn ((gpointer)&myClassInfo);
- 
+
+  /* Enable threading */ 
+#if HAVE_FFTW3THREADS==1
+  fftwf_init_threads();
+#endif /* HAVE_FFTW3THREADS */
+
   myClassInfo.initialized = TRUE; /* Now initialized */
  
 } /* end ObitFFTClassInit */

@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2012                                          */
+/*;  Copyright (C) 2010-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -28,6 +28,7 @@
 
 #include <math.h>
 #include <unistd.h>
+#include "ObitFFT.h"
 #include "ObitUVGridMF.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
@@ -1046,7 +1047,7 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
 {
   ObitImage **out = (ObitImage**)oout;
   olong i, ii, j, ip, nTh, nnTh, off, nLeft, pos[5], xdim[7], pln;
-  olong narr, plane[5]={1,1,1,1,1};
+  olong narr, nThread, plane[5]={1,1,1,1,1};
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   FFT2ImFuncArg *args=NULL;
@@ -1073,6 +1074,16 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
   /* Create FArray array */
   narr = nPar*in[0]->nSpec;
   array = g_malloc0(narr*sizeof(ObitFArray*));
+
+  if (err->prtLv>=5) {  /* Diagnostics */
+    Obit_log_error(err, OBIT_InfoErr, "%s: start FFTs",routine);
+    ObitErrLog(err); 
+  }
+
+  /* How many threads for FFT? 2 per 1K pixels in x */
+  nThread = MAX (1, ObitThreadNumProc(in[0]->thread));
+  nThread = MIN (MAX (1, 2*in[0]->nxImage/1024), nThread);
+  ObitFFTNThreads (nThread);   /* Enable FFT with threading */
 
   /* FFTs, image arrays  */
   ip = 0;
@@ -1139,7 +1150,12 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
   ObitImageUtilArray2Image ("DbugRawBeam0.fits",  0, array[0], err);  */
   /* END DEBUG */
 
-  /*  Do gridding corrections threaded */
+  if (err->prtLv>=5) {  /* Diagnostics */
+    Obit_log_error(err, OBIT_InfoErr, "%s: finished FFTs",routine);
+    ObitErrLog(err); 
+  }
+
+   /*  Do gridding corrections threaded */
   /* How many threads? */
   in[0]->nThreads = MAX (1, ObitThreadNumProc(in[0]->thread));
   in[0]->nThreads = MIN (nPar*in[0]->nSpec, in[0]->nThreads);
@@ -1154,9 +1170,8 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
   /* How many threads? */
   nTh = in[0]->nThreads;
 
-  /* Gridding corrections/normalization - do jobs, doing nTh in parallel */
-
-  /* Loop over images - do nSpec planes in parallel using threading */
+  /* Gridding correction 
+     Loop over images - do nSpec planes in parallel using threading */
   for (i=0; i<nPar; i++) {
     nLeft = in[0]->nSpec;
     off   = i*nLeft;
@@ -1191,6 +1206,10 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
   ObitImageUtilArray2Image ("DbugRawBeam1.fits",  0, array[0], err);   */
   /* END DEBUG */
 
+   if (err->prtLv>=5) {  /* Diagnostics */
+    Obit_log_error(err, OBIT_InfoErr, "%s: finished Gridding corr",routine);
+    ObitErrLog(err); 
+  }
   /* Normalize - loop looking for an in entry with doBeam member set an,
    the center peak is measured and used to normalize,  this peak is assumed
    to be the normalization for the subsequent image.
@@ -1239,9 +1258,16 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
 	out[i]->image = ObitFArrayUnref(out[i]->image);  /* Free buffer */
       } /* end loop over planes */
 
+      if (err->prtLv>=5) {  /* Diagnostics */
+	Obit_log_error(err, OBIT_InfoErr, "Start Combine Beam field %d",i+1);
+      }
       /* Determine combined beam */
       if (in[i]->nSpec>1) ObitImageMFCombine ((ObitImageMF*)out[i], FALSE, err);
       if (err->error) goto cleanup;
+      if (err->prtLv>=5) {  /* Diagnostics */
+	Obit_log_error(err, OBIT_InfoErr, "End Combine Beam");
+	ObitErrLog(err); 
+      }
 
       i++;       /* Advance to image or next beam */
     } /* end if beam */
@@ -1279,9 +1305,16 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
       if (err->error) goto cleanup;
     } /* end loop over planes */
 
-    /* Determine combined image */
+    if (err->prtLv>=6) {  /* Diagnostics */
+      Obit_log_error(err, OBIT_InfoErr, "Start Combine Image field %d",i+1);
+    }
+     /* Determine combined image */
     if (in[i]->nSpec>1) ObitImageMFCombine ((ObitImageMF*)out[i], TRUE, err);
     if (err->error) goto cleanup;
+    if (err->prtLv>=6) {  /* Diagnostics */
+      Obit_log_error(err, OBIT_InfoErr, "End Combine Image");
+      ObitErrLog(err); 
+    }
     
   } /* end normalization loop */
   
@@ -1289,7 +1322,11 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
     ObitImageUtilArray2Image ("DbugRawBeam1.fits",  0, array[0], err);   */
     /* END DEBUG */
 
-  /*  cleanup */
+   if (err->prtLv>=5) {  /* Diagnostics */
+    Obit_log_error(err, OBIT_InfoErr, "%s: finished imaging",routine);
+    ObitErrLog(err); 
+  }
+ /*  cleanup */
  cleanup:
   if (array) {
     for (i=0; i<narr; i++) {
@@ -1297,7 +1334,23 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
     }
     g_free(array);
   }
-    if (err->error) Obit_traceback_msg (err, routine, out[0]->name);
+
+  /* Delete FFT objects */
+  for (i=0; i<nPar; i++) {
+   if (in[i]->doBeam) { /* Beam? */
+     in[i]->FFTBeam = ObitFFTUnref(in[i]->FFTBeam);
+   } else { /* Image */
+     in[i]->FFTImage =  ObitFFTUnref(in[i]->FFTImage);
+   }
+  }
+
+  /* Reset FFT threading */
+  ObitFFTNThreads (1);
+
+  /* Clear FFT Threads */
+  ObitFFTClearThreads();
+
+  if (err->error) Obit_traceback_msg (err, routine, out[0]->name);
 } /* end ObitUVGridMFFFT2ImPar */
 
 /**

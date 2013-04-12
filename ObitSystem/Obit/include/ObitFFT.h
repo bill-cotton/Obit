@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -77,6 +77,16 @@
  * when the reference count hits 0.
  * There is no explicit destructor.
  *
+ * \section Multi-threaded operation
+ * If this module is compiled with the -DHAVE_FFTW3THREADS==1 option
+ * and linked with the -lfftw3f_threads option, multithreaded operation 
+ * is enabled.
+ * NOTE: this should NOT be used inside ObitThreads as the threading will 
+ * collide.
+ * The maximum number of threads to be used in subsequent ObitFFT objects is 
+ * set using #ObitFFTNThreads; setting nThreads to 1 turns off threading.
+ * After all ObitFFT objects are destroyed, calling #ObitFFTClearThreads
+ * will clean up after the threading.
  */
 
 /*-------------- enumerations -------------------------------------*/
@@ -154,6 +164,12 @@ gconstpointer ObitFFTGetClass (void);
 
 /** Public: Suggest efficient size for a transform */
 olong ObitFFTSuggestSize (olong length);
+
+/** Public: Enable threading */
+void ObitFFTNThreads (olong nThreads);
+
+/** Public: Cleanup threading */
+void ObitFFTClearThreads (void);
 
 /** Public: Real to half Complex. */
 void ObitFFTR2C (ObitFFT *in, ObitFArray *inArray, ObitCArray *outArray);

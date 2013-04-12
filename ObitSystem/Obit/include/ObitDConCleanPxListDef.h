@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -75,6 +75,8 @@ ofloat *minFlux;
 ofloat *factor;
 /** Array of CCTables for writing */
 ObitTableCC **CCTable;
+/** Array of CCTable rows for writing */
+ObitTableCCRow **CCRow;
 /** maximum number of pixels */
 olong maxPixel;
 /** number of pixels */

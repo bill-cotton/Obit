@@ -110,6 +110,7 @@ class RMFit(RMFitPtr):
         self     = RMFit object, parameters on List:
             refLamb2  double scalar Reference lambda^2 for fit [def ref for inQImage]
             minQUSNR  float min. SNR for Q and U pixels [def 3.0]
+            minFrac   float min fraction of samples included  [def 0.5]
             doError   boolean scalar If true do error analysis [def False]
         inQImage = Q Image cube to be fitted
         inUImage = U Image cube to be fitted, must have same geometry as inQImage
@@ -143,6 +144,7 @@ class RMFit(RMFitPtr):
         self     = RMFit object, parameters on List:
             refLamb2  double scalar Reference lambda^2 for fit [def ref for inQImage]
             minQUSNR  float min. SNR for Q and U pixels [def 3.0]
+            minFrac   float min fraction of samples included [def 0.5]
             doError   boolean scalar If true do error analysis [def False]
         imQArr   = Array of 2D images to be fitted
         imUArr   = Array of 2D images to be fitted, same geometries as imQArr

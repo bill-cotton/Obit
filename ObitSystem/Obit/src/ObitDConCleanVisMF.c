@@ -764,6 +764,7 @@ void ObitDConCleanVisMFSub(ObitDConClean *inn, ObitErr *err)
   /* Mark All as not fresh */
   for (ifld=0; ifld<in->nfield; ifld++) {
     ((ObitImageMF*)in->mosaic->images[ifld])->fresh = FALSE;
+    in->fresh[ifld] = FALSE;
   }
   
   /* Most work in parent class */

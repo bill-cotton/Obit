@@ -665,16 +665,16 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
     notDone = inClass->ObitDConCleanPixelStats((ObitDConClean*)in, pixarray, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
-    /* Was a new window added?  Not sure what this was for 
-       if (!notDone) {*/
-       /* Nothing to do in current list */
-       /* for (ifld=0; ifld<in->nfield; ifld++) {
-       if (in->currentFields[ifld] <= 0) break;
-       in->quality[in->currentFields[ifld]-1]   = 0.0;
-       in->cleanable[in->currentFields[ifld]-1] = 
-       -in->cleanable[in->currentFields[ifld]-1];
-       }
-       } */
+    /* Should this CLEAN continue? */ 
+    if (!notDone) {
+      /* Nothing to do in current list */
+      for (ifld=0; ifld<in->nfield; ifld++) {
+	if (in->currentFields[ifld] <= 0) break;
+	in->quality[in->currentFields[ifld]-1]   = 0.0;
+	in->cleanable[in->currentFields[ifld]-1] = 
+	  -in->cleanable[in->currentFields[ifld]-1];
+      }
+    }
     
     /*fprintf (stderr,"DEBUG doMore %d done %d\n", doMore, done);*/
 
@@ -725,7 +725,9 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
     /* Update quality list for new max value on fields just CLEANed */
     for (ifld=0; ifld<in->nfield; ifld++) {
       if (in->currentFields[ifld] <= 0) break;  /* List terminates? */
-      if (fin) in->maxAbsRes[in->currentFields[ifld]-1] = 0.0;
+      /* This clean finished? */ 
+      if (in->Pixels->complCode==OBIT_CompReasonMinFlux) 
+	  in->maxAbsRes[in->currentFields[ifld]-1] = 0.0;
       else in->maxAbsRes[in->currentFields[ifld]-1] = in->Pixels->maxResid;
       in->quality[in->currentFields[ifld]-1] = 
 	inClass->ObitDConCleanVisQuality((ObitDConCleanVis*)in, in->currentFields[ifld], err);
@@ -777,7 +779,10 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
 
   /* Make final residuals */
   if ((!bail) && (in->niter>0)) {
-    inClass->MakeAllResiduals (in, err);
+    /* Make all stale fields */
+    for (ifld=0; ifld<in->nfield; ifld++) in->currentFields[ifld] = ifld+1;
+    in->currentFields[ifld] = 0;
+    inClass->MakeResiduals (in, in->currentFields, FALSE, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
     if (err->prtLv>1) ObitErrLog(err);  /* Progress Report */
     /* Check if any fields now CLEANable and autoWin and more clean allowed */
@@ -3037,7 +3042,7 @@ static void  MakeResiduals (ObitDConCleanVis *in, olong *fields,
   doFlatten = FALSE;
 
   /* Make copy of only list of stale images */
-  stale = g_malloc0(in->nfield*sizeof(olong));
+  stale = g_malloc0((in->nfield+1)*sizeof(olong));
   ifld = jfld = 0;
   while(fields[ifld]>0) {
     if (!in->fresh[fields[ifld]-1]) stale[jfld++] = fields[ifld];
@@ -3045,8 +3050,16 @@ static void  MakeResiduals (ObitDConCleanVis *in, olong *fields,
   }
   stale[jfld] = 0;
 
-  /* Make residual images */
-  imgClass->ObitUVImagerImage (in->imager, fields, doWeight, doBeam, doFlatten, err);
+  /* If all stale then add all to list */
+  if (stale[0]<=0) {
+   for (ifld=0; ifld<in->nfield; ifld++) {
+     stale[ifld] = ifld+1;
+   }
+   stale[ifld] = 0;
+  }
+
+  /* Make residual images for stale fields */
+  imgClass->ObitUVImagerImage (in->imager, stale, doWeight, doBeam, doFlatten, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Statistics */
@@ -3579,7 +3592,7 @@ static void OrderClean (ObitDConCleanVis *in, gboolean *fresh,
  */
 static gboolean SelectTaper (ObitDConCleanVis *in, gboolean *fresh, ObitErr *err)
 {
-  olong i, j, l, n, m, best, bestTap[30], *fldList=NULL, isAuto;
+  olong i, j, l, n, m, best, bestTap[30], *fldList=NULL;
   ofloat test, bestTest, bestQuality, bestSNR, maxTape;
   ofloat fact1, fact2, fact3, minT, maxT, cells, minFlux, beamrat=1.0;
   gboolean done=FALSE, doBeam=FALSE;
@@ -3599,24 +3612,25 @@ static gboolean SelectTaper (ObitDConCleanVis *in, gboolean *fresh, ObitErr *err
   fldList = ObitMemAlloc0((in->nfield+3)*sizeof(olong));
   n = in->mosaic->numberImages;
   i = m = 0;
+  /* Add unfinished sources in current List to fldList to reimage */
+  while (in->currentFields[i]>0) {
+    j = in->currentFields[i]-1;
+    if (in->cleanable[j]>in->minFlux[j]) fldList[m++] = in->currentFields[i];
+    i++;
+  }
+  i = 0;
   while (in->currentFields[i]>0) {
     l = in->currentFields[i]-1;
-    if (!fresh[l]) {   /* Need to reimage?  Mark as fresh */
-      if (in->cleanable[l]>in->minFlux[l]) {fldList[m++] = l+1; fresh[l] = TRUE;} 
+    if (!fresh[l]) {   /* Need to reimage?  */
       /* Find all matching resolutions */
       for (j=0; j<n; j++) {
 	if ((j!=l) &&  /* Not the same */
 	    (in->mosaic->FacetNo[j]==in->mosaic->FacetNo[l]) &&
 	    (!fresh[j]) && (in->cleanable[j]>in->minFlux[j])) {
 	  fldList[m++] = j+1;
-	  fresh[j] = TRUE;  /* Mark as fresh */
 	}
       }
-      fresh[l] = TRUE;  /* Mark as fresh */
     }
-    /* Mark shifted fields corresponding to autoCen fields fresh if they are */
-    isAuto = in->mosaic->isAuto[l];
-    if (isAuto>0) fresh[isAuto-1] = fresh[l];
     i++;
   } /* end finding facets to be remade */
   
@@ -3731,8 +3745,8 @@ static gboolean SelectTaper (ObitDConCleanVis *in, gboolean *fresh, ObitErr *err
   in->minBeamTaper = 0.95 * in->mosaic->BeamTaper[bestTap[best]];
   in->maxBeamTaper = 1.05 * in->mosaic->BeamTaper[bestTap[best]];
   if (err->prtLv>=2) 
-    Obit_log_error(err, OBIT_InfoErr,"Select taper %f", 
-		   in->mosaic->BeamTaper[bestTap[best]]);
+    Obit_log_error(err, OBIT_InfoErr,"Select taper %d %f", 
+		   best, in->mosaic->BeamTaper[bestTap[best]]);
 
   /* Set minFlux for all facets with this taper by ratio of beam areas */
   if (best>0) {

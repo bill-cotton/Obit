@@ -44,6 +44,8 @@ gboolean doError;
 olong nx, ny;
 /** min Q/U SNR */
 ofloat minQUSNR;
+/** min fraction of planes included */
+ofloat minFrac;
 /** Output Image descriptor */
 ObitImageDesc *outDesc;
 /** Array of Q, U pixel arrays for input data (nlamb2) */

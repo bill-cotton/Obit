@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1527,6 +1527,24 @@ void ObitFArrayNeg (ObitFArray* in)
 } /* end  ObitFArrayNeg */
 
 /**
+ *  Taks abs value of each element of the array.
+ * in = |in|.
+ * \param in Input object with data
+ */
+void ObitFArrayAbs (ObitFArray* in)
+{
+  olong i;
+  ofloat fblank = ObitMagicF();
+
+   /* error checks */
+  g_assert (ObitIsA(in, &myClassInfo));
+  g_assert (in->array != NULL);
+
+  for (i=0; i<in->arraySize; i++) 
+    if (in->array[i]!=fblank) in->array[i] = fabs(in->array[i]);
+} /* end  ObitFArrayAbs */
+
+/**
  *  Take sine of each element of the array.
  * in = sin(in).
  * \param in Input object with data
@@ -1834,9 +1852,9 @@ void ObitFArrayExtArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 	out->array[i] = in1->array[i];
       else
 	out->array[i] = in2->array[i];
-    } else if (in1->array[i]==fblank)  /* 1 blanked */
+    } else if (in2->array[i]!=fblank)  /* 1 blanked */
       out->array[i] = in2->array[i];
-    else if (in2->array[i]==fblank)
+    else if (in1->array[i]!=fblank)
       out->array[i] = in1->array[i];  /* 2 blanked */
     else out->array[i] = fblank;      /* both blanked */
   }
@@ -1926,6 +1944,34 @@ void ObitFArrayAdd (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 } /* end ObitFArrayAdd */
 
 /**
+ *  Abs add corresponding elements of two arrays.
+ *  out = in1 + sign(1)*|in2|,  if either is blanked the result is blanked
+ * \param in1  1st Input object with data
+ * \param in2  2nd Input object with data
+ * \param out  Output array (may be an input array).
+ */
+void ObitFArrayAddAbs (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
+{
+  olong i;
+  ofloat fblank = ObitMagicF();
+
+   /* error checks */
+  g_assert (ObitIsA(in1, &myClassInfo));
+  g_assert (ObitIsA(in2, &myClassInfo));
+  g_assert (ObitFArrayIsCompatable(in1, in2));
+  g_assert (ObitFArrayIsCompatable(in1, out));
+
+  for (i=0; i<in1->arraySize; i++) {
+    if ((in1->array[i]!=fblank) && (in2->array[i]!=fblank)) 
+      if (out->array[i]>=0) 
+	out->array[i] = in1->array[i] + fabs(in2->array[i]);
+      else
+	out->array[i] = in1->array[i] - fabs(in2->array[i]);
+    else out->array[i] = fblank;
+  }
+} /* end ObitFArrayAddAbs */
+
+/**
  *  Subtract corresponding elements of the arrays.
  *  out = in1 - in2, if either is blanked the result is blanked
  * \param in1  Input object with data
@@ -1949,6 +1995,32 @@ void ObitFArraySub (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
     else out->array[i] = fblank;
   }
  } /* end ObitFArraySub */
+
+/**
+ *  Give the elements of one array the sign of another
+ *  in2 = sign(in1)*|in2|, if either is blanked the result is blanked
+ * \param in1  Input object with data
+ * \param in2  Input object with data
+ */
+void ObitFArraySign (ObitFArray* in1, ObitFArray* in2)
+{
+  olong i;
+  ofloat fblank = ObitMagicF();
+
+   /* error checks */
+  g_assert (ObitIsA(in1, &myClassInfo));
+  g_assert (ObitIsA(in2, &myClassInfo));
+  g_assert (ObitFArrayIsCompatable(in1, in2));
+
+  for (i=0; i<in1->arraySize; i++) {
+    if ((in1->array[i]!=fblank) && (in2->array[i]!=fblank)) {
+      if ((in1->array[i]>=0.0) && (in1->array[i]!=fblank))
+	in2->array[i] =  fabs(in2->array[i]);
+	else if (in2->array[i]!=fblank)
+	  in2->array[i] = -fabs(in2->array[i]);
+    } else in2->array[i] = fblank;
+  }
+ } /* end ObitFArraySign */
 
 /**
  *  Multiply corresponding elements of the arrays.
@@ -2852,6 +2924,7 @@ static void ObitFArrayClassInfoDefFn (gpointer inClass)
   theClass->ObitFArrayIndex  = (ObitFArrayIndexFP)ObitFArrayIndex;
   theClass->ObitFArrayFill   = (ObitFArrayFillFP)ObitFArrayFill;
   theClass->ObitFArrayNeg    = (ObitFArrayNegFP)ObitFArrayNeg;
+  theClass->ObitFArrayAbs    = (ObitFArrayAbsFP)ObitFArrayAbs;
   theClass->ObitFArraySin    = (ObitFArraySinFP)ObitFArraySin;
   theClass->ObitFArrayCos    = (ObitFArrayCosFP)ObitFArrayCos;
   theClass->ObitFArraySqrt   = (ObitFArraySqrtFP)ObitFArraySqrt;
@@ -2873,7 +2946,9 @@ static void ObitFArrayClassInfoDefFn (gpointer inClass)
   theClass->ObitFArraySumArr = (ObitFArraySumArrFP)ObitFArraySumArr;
   theClass->ObitFArrayAvgArr = (ObitFArrayAvgArrFP)ObitFArrayAvgArr;
   theClass->ObitFArrayAdd    = (ObitFArrayAddFP)ObitFArrayAdd;
+  theClass->ObitFArrayAddAbs = (ObitFArrayAddAbsFP)ObitFArrayAddAbs;
   theClass->ObitFArraySub    = (ObitFArraySubFP)ObitFArraySub;
+  theClass->ObitFArraySign   = (ObitFArraySignFP)ObitFArraySign;
   theClass->ObitFArrayMul    = (ObitFArrayMulFP)ObitFArrayMul;
   theClass->ObitFArrayDiv    = (ObitFArrayDivFP)ObitFArrayDiv;
   theClass->ObitFArrayDivClip= (ObitFArrayDivClipFP)ObitFArrayDivClip;
