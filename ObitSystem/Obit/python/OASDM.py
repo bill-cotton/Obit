@@ -5,7 +5,7 @@ The information meant to derive contents and intent of a BDF data set.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2012
+#  Copyright (C) 2012,2013
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -409,7 +409,13 @@ class OASDM(OASDMPtr):
         source = None; timeRange = [0.0, 1000.]
         for m in main:
             if m["configDescriptionId"]==config:
-                s = scan[m["scanNumber"]-1]
+                scnum = m["scanNumber"]
+                s = None
+                for test in scan:
+                    if test["scanNumber"]==scnum:
+                        s = test; break
+                if s==None:    # Find it?
+                    continue
                 # Check intents
                 for intn in s['scanIntent']:
                     if intn=='CALIBRATE_BANDPASS':

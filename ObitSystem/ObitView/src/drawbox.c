@@ -1,7 +1,7 @@
 /* $Id$ */
 /*   Interactively draw boxes */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2005-2008
+*  Copyright (C) 2005-2013
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -133,6 +133,10 @@ olong DrawBox (ImageDisplay *IDdata, ObitDConCleanWindow* window,
   DrawData.editActive = FALSE;
   DrawData.field      = 1;
   DrawData.Id         = -1;
+
+  /* Update image pointer to window */
+  image[CurImag].edtWindow = ObitDConCleanWindowUnref(image[CurImag].edtWindow);
+  image[CurImag].edtWindow = ObitDConCleanWindowRef(window);
 
   /* Draw initial */
   DrawAll(&image[CurImag]);

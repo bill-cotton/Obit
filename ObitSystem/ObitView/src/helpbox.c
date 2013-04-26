@@ -3,7 +3,7 @@
 /* adopted from "Power programming Motif" by E. F. Johnson and
    K. Reichard, 1993, MIS Press, New York */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1998-2009
+*  Copyright (C) 1998-2013
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -381,7 +381,7 @@ void InitHelpText(void) {
     "*** FINISHED ***"}; /* end of text */
   
   static  char *intro_text[] = {
-    "                         ObitView 1.0\n",
+    "                         ObitView 1.2\n",
     "  \n",
     "Please relay comments and/or suggestions to Bill Cotton at NRAO \n ",
     "(bcotton@nrao.edu) \n",
@@ -564,6 +564,7 @@ void InitHelpText(void) {
   static char*filesaveas_text[] = {
     "  Save as \n",
     " \n",
+    " NYI \n",
     "     This item will copy the currently displayed FITS image into a \n",
     "FITS file to be specified in a file specification dialog box.  The file \n",
     "is written in uncompressed form irregardless of the compression state of \n",
@@ -602,6 +603,15 @@ void InitHelpText(void) {
     "  Quit \n",
     "   \n",
     "     This will terminate the program. \n",
+    " \n",
+    "*** FINISHED ***"} ; /* end of text */   
+  
+  static char*filesaveimwindow_text[] = {
+    "  Save Image Window as \n",
+    "   \n",
+    "     If an image window has been attached to the currently displayed  \n",
+    " image, it is written as python to a text file.   \n",
+    " The name of the file is provided via a file browser. \n",
     " \n",
     "*** FINISHED ***"} ; /* end of text */   
   
@@ -1329,6 +1339,8 @@ void InitHelpText(void) {
   topic_text[number_topics++] = filelog_text;
   topic_title[number_topics] = "File/Quit";
   topic_text[number_topics++] = filequit_text;
+  topic_title[number_topics] = "File/Save Window as";
+  topic_text[number_topics++] = filesaveimwindow_text;
   topic_title[number_topics] = "File/Help";
   topic_text[number_topics++] = filehelp_text;
   

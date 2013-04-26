@@ -1264,7 +1264,7 @@ gboolean ObitDConCleanPxListMFSDI (ObitDConCleanPxList *inn, ObitErr *err)
 	Obit_traceback_val (err, routine, in->name, done);
     }
     /* Create row if needed */
-    if (!in->CCRow[field]) in->CCRow[field] = newObitTableCCRow (in->CCTable[field]);
+    if (!in->CCRow[field-1]) in->CCRow[field-1] = newObitTableCCRow (in->CCTable[field-1]);
     CCRow = in->CCRow[field-1];  /* Get local pointer to Table Row  */
     lastField = field;
     

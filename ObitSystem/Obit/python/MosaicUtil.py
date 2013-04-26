@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2012
+#  Copyright (C) 2004-2013
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -238,7 +238,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         InterpWtArray = Image.PGetFArray(InterpWtImage)
         #print "DEBUG Mean before ",FArray.PMean(SumWtImageArray)
         FArray.PShiftAdd (SumWtImageArray, pos2, InterpWtArray,  pos1, factor, SumWtImageArray)
-        print "SumImageWt 2451,784",SumWtImageArray.get(2450,783), pos2, pos1, factor  # DEBUG
+        #print "SumImageWt 2451,784",SumWtImageArray.get(2450,783), pos2, pos1, factor  # DEBUG
         #print "DEBUG Mean after ",FArray.PMean(SumWtImageArray)
         SumWt2Array = Image.PGetFArray(SumWt2)
         InterpWtWtArray = Image.PGetFArray(InterpWtWt)

@@ -1,8 +1,8 @@
 # $Id$
-                         ObitView 0.0.0
+                         ObitView 1.2
 
 -----------------------------------------------------------------------
-  Copyright (C) 2005
+  Copyright (C) 2005,2013
   Associated Universities, Inc. Washington DC, USA.
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License as
@@ -446,6 +446,12 @@ the Display control box will show the fitted position to subcell accuracy
 as well as the brightness interpolated to that position.  If the fitting is
 successful 'fitted' will appear in the Display control else 'fit failed'
 is shown.  If logging is enabled then the fitted position is logged.
+
+Save Image Window as
+
+   If an image window has been attached to the currently displayed image
+it is written to a text file.  The name of the file is provided via a 
+file browser.
 
   Help
     Displays information about the position menu.

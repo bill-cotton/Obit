@@ -1,7 +1,7 @@
 /* $Id$ */
 /* menu routines for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1997,2002-2008
+*  Copyight (C) 1996,1997,2002-2013
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -14,6 +14,7 @@
 *  GNU General Public License for more details.
 *-----------------------------------------------------------------------*/
 /* Uncomment the following for a version which keeps the file open dialog */
+/* Not really needed anymore */
 /*#define KEEP_FILE_DIALOG */
 #include <Xm/Xm.h> 
 #include <Xm/DrawingA.h> 
@@ -44,6 +45,7 @@
 #include "helpbox.h"
 #include "aboutbox.h"
 #include "logger.h"
+#include "saveimwindow.h"
 #include "messagebox.h"
 #include "Image2Pix.h"
 #include "menu.h"
@@ -56,7 +58,8 @@
 /*--------------- file global data ----------------*/
 /* global widget arrays for menu items */
 Widget Zoom_w[7] = {0, 0, 0, 0, 0, 0, 0};
-Widget File_w[5] = {0, 0, 0, 0,0};
+Widget File_w[6] = {0, 0, 0, 0, 0, 0};
+Widget FITS_Box=0;     /* FITS file dialog widget */
 
 /**
  * Routine to create main menu bar
@@ -88,7 +91,6 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
 				       pulldown,
 				       XmNmnemonic, 'O',
 				       NULL);
-  /*    XtSetArg (File_w[0], XmNmnemonic, 'O');*/
   XtAddCallback (File_w[0], XmNactivateCallback, OpenCB, IDdata);
   
   /* "Preview" */
@@ -118,6 +120,13 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
 				       XmNmnemonic, 'L',
 				       NULL);
   XtAddCallback (File_w[4], XmNactivateCallback, LoggerCB, IDdata);
+  /* "Save window as" */
+  File_w[5] = XtVaCreateManagedWidget ("Save Image window as", 
+				       xmPushButtonWidgetClass,
+				       pulldown,
+				       XmNmnemonic, 'L',
+				       NULL);
+  XtAddCallback (File_w[5], XmNactivateCallback, SaveImWindowCB, IDdata);
   /* help */
   w = XtVaCreateManagedWidget ("Help", xmPushButtonWidgetClass,
 			       pulldown,
@@ -432,7 +441,7 @@ void FileOKCB (Widget filebox, XtPointer clientData, XtPointer callData)
 #ifndef KEEP_FILE_DIALOG  /* option to let it hang around */
   XtUnmanageChild (filebox);
   XtPopdown (XtParent (filebox));
-  XtDestroyWidget(filebox); 
+  /*XtDestroyWidget(filebox); keep it */
 #endif
   
   /* reset display */
@@ -447,6 +456,7 @@ void FileCancelCB (Widget filebox, XtPointer clientData, XtPointer callData)
   XtUnmanageChild (filebox); 
   XtPopdown (XtParent (filebox)); 
   XtDestroyWidget(filebox); 
+  FITS_Box = 0;     /* it's gone */
 } /* end FileCancelCB */
 
 /**
@@ -463,8 +473,14 @@ void OpenCB (Widget w, XtPointer clientData, XtPointer callData)
   Arg          wargs[5]; 
   
   IDdata = (ImageDisplay *)clientData;
+
+  if (FITS_Box) {
+    filebox = FITS_Box;  /* Reuse old */
+   } else {   /* create */
   /* sometimes c is too stupid to live */
-  filebox = (Widget) XmCreateFileSelectionDialog (w, "file_open", NULL, 0);
+    filebox  = (Widget) XmCreateFileSelectionDialog (w, "file_open", NULL, 0);
+    FITS_Box = filebox;
+  }
   XtAddCallback (filebox, XmNokCallback, FileOKCB, clientData);
   XtAddCallback (filebox, XmNcancelCallback, FileCancelCB, clientData);
   XtAddCallback (filebox, XmNhelpCallback, HelpBoxTopicCB, 
@@ -499,7 +515,7 @@ void PreviewCB (Widget w, XtPointer clientData, XtPointer callData)
   /* make dummy text file */
   TFilePtr = TextFileMake (IDdata->shell, NULL, NULL);
   
-  /* set directory if known*/
+  /* set directory if known */
   if (FITS_dir)
     {if(TFilePtr->directory) g_free(TFilePtr->directory); TFilePtr->directory=NULL;
     TFilePtr->directory = (char*)g_malloc(FITS_dir->length+1);
@@ -567,6 +583,7 @@ void MenuMarkLogger (int onoff)
 
 /**
  * Callback for Copy current displayed FITS file to specified name 
+ * Not really implemented
  * \param filebox     widget activated
  * \param clientData  client data
  * \param callData    call data
@@ -621,6 +638,10 @@ void SaveAsCB (Widget w, XtPointer clientData, XtPointer callData)
   ImageDisplay *IDdata;
   XmString     wierdstring;
   Arg          wargs[5]; 
+
+  /* Not really implemented */
+  MessageShow ("Save As not yet implemented");
+  return;
   
   IDdata = (ImageDisplay *)clientData;
   

@@ -1042,7 +1042,7 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
     }
     
     /* Create row if needed */
-    if (!in->CCRow[field]) in->CCRow[field] = newObitTableCCRow (in->CCTable[field]);
+    if (!in->CCRow[field-1]) in->CCRow[field-1] = newObitTableCCRow (in->CCTable[field-1]);
     CCRow = in->CCRow[field-1];   /* Get local pointer to  Table Row  */
     lastField = field;
     
@@ -1347,7 +1347,7 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
     }
     
     /* Create row if needed */
-    if (!in->CCRow[field]) in->CCRow[field] = newObitTableCCRow (in->CCTable[field]);
+    if (!in->CCRow[field-1]) in->CCRow[field-1] = newObitTableCCRow (in->CCTable[field-1]);
     /* Need Table Row  */
     CCRow = in->CCRow[field-1];  /* Get local pointer to Table Row  */
     lastField = field;

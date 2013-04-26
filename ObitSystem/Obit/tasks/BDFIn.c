@@ -3459,7 +3459,7 @@ void GetOTTInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   olong i, iRow, oRow, ver, maxAnt, SourNo, iMain;
   olong *antLookup, curScan, curScanI, nextScanNo;
   ObitIOAccess access;
-  gchar *routine = "GetSysPowerInfo";
+  gchar *routine = "GetOTTInfo";
 
   /* error checks */
   if (err->error) return;
@@ -3536,6 +3536,9 @@ void GetOTTInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       for (iMain=0; iMain<SDMData->MainTab->nrows; iMain++) {
 	if (SDMData->MainTab->rows[iMain]->scanNumber==nextScanNo) break;
       }
+
+      /* Find it? */
+      if (iMain>=SDMData->MainTab->nrows) continue;
 
       /* Extract antenna info */
       AntArray = ObitSDMDataKillAntArray (AntArray);  /* Delete old */
@@ -3829,16 +3832,25 @@ gboolean nextScan(ObitSDMData *SDMData, olong curScan, odouble time,
     if (SDMData->MainTab->rows[iMain]->scanNumber==(*nextScanNo)) break;
   }
 
+  /* Find it? */
+  if (iMain>=SDMData->MainTab->nrows) return out;
+
   /* Source Id - have to look down goddamn tree */
   fieldId = SDMData->MainTab->rows[iMain]->fieldId;
   for (jField=0; jField<SDMData->FieldTab->nrows; jField++) {
     if (SDMData->FieldTab->rows[jField]->fieldId==fieldId) break;
   }
+  /* Find it? */
+  if (jField>=SDMData->FieldTab->nrows) return out;
+
   sourceId = SDMData->FieldTab->rows[jField]->sourceId;
   for (jSource=0; jSource<SDMData->SourceTab->nrows; jSource++) {
     if (SDMData->SourceTab->rows[jSource]->sourceId==sourceId) break;
   }
-  *SourNo = SDMData->SourceTab->rows[jSource]->sourceNo;
+   /* Find it? */
+  if (jSource>=SDMData->SourceTab->nrows) return out;
+
+ *SourNo = SDMData->SourceTab->rows[jSource]->sourceNo;
 
   return out;
 } /* end nextScan */

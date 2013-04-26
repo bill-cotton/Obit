@@ -1,7 +1,7 @@
 /* $Id$ */
 /* Toolbox panel functions for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1998,2002-2008
+*  Copyright (C) 1998,2002-3013
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -73,7 +73,7 @@ void TBOpenCB (Widget w, XtPointer clientData, XtPointer callData)
  */
 Widget MakeToolbox(Widget mainWindow, Widget topWidget, XtPointer data)
 {
-  Widget       toolbox, tools[5];
+  Widget       toolbox, tools[8];
   int          iTool = 0;
   XmString     label = XmStringCreateSimple ("Open");
   ImageDisplay *IDdata = (ImageDisplay *)data;

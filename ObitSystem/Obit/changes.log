@@ -1209,3 +1209,75 @@ Obit/python/Table.inc Obit/python/UVDesc.inc Obit/python/ImageDesc.inc:
 Obit/python/ObitTypeMaps.swig:
   Add typedef for  Py_ssize_t if python < 2.5
 svn version 442 25 Feb 2013
+
+
+Various, esp. calibration and polarization related,
+also performance enhancements.
+Obit/tasks/SNSmo.c:
+   SNSmoIn: Initialize output before parsing input.
+Obit/src/ObitUVSoln.c:
+  SNSmooth: Trap unknown smoothing type.
+Obit/src/ObitThread.c:
+  Triple timeout to 1.5 hr.
+Obit/python/EVLAPolnScripts.py:
+  Image: Add Beam to arguments,
+  SelfCal: allow baseline dependent time averaging.
+Obit/share/data/3C286*Band.CalModel.fits.gz:
+  Improved calibrator models for 3C 286 at L, C and X band
+Obit/src/ObitRMFit.c Obit/include/ObitRMFitDef.h Obit/python/RMFit.py:
+  Switch to nonlinear soln
+  Add minFrac option
+  Better handling of missing frequencies
+Obit/src/ObitUVWCalc.c:
+  Add KAT-7 to list of antennas to reverse baseline sign
+Obit/tasks/UVFix.c:
+  Index output multisource datasets. Copy tables not applied
+Obit/src/ObitFitRegion:
+  Create: create new list of models
+Obit/src/ObitImageUtil.c:
+  FitBeam: Get correct fitted parameters.
+Obit/src/ObitSkyModelMF.c:
+  Implement threaded FFTs
+Obit/src/ObitFFT.c Obit/include/ObitFFT.h:
+  Allow threaded FFTW3 usage
+Obit/src/ObitUVGridMF.c:
+  Allow threaded FFTs
+Obit/include/ObitDConCleanPxListDef.h Obit/src/ObitDConCleanPxList.c:
+Obit/src/ObitDConCleanPxListMF.c:
+  Add CC table row structure for each table, rather than frequent recreate,
+  MFCLEAN: Add speed enhancements.
+Obit/include/ObitFArrayClassDef.h Obit/include/ObitFArray.h:
+Obit/src/ObitFArray.c:
+  Add function Abs
+  Add function AddAbs
+  ExtArr: Fix logic for blanked pixels
+Obit/src/ObitImageMF.c:
+  Revise handling of plane extrema, esp. for poln.
+Obit/src/ObitDConCleanVis.c:
+  MakeResiduals: Fix bug with definition of Stale images.
+  Deconvolve: Fix bug with termination.
+Obit/src/ObitDConCleanVisMF.c:
+  MFSub: Mark in->fresh as FALSE
+12 Apr 2013, svn version 445
+
+ObitView improvements, various bug fixes.
+ObitView/ObitView.c ObitView/ObitView.hlp
+ObitView/include/obitview.h
+ObitView/include/saveimwindow.h ObitView/src/saveimwindow.c
+ObitView/src/aboutbox.c ObitView/src/drawbox.c 
+ObitView/src/helpbox.c ObitView/src/menu.c   ObitView/src/toolbox.c :
+  Add option to write image window to a text file
+  Remember where file browser was
+Obit/python/OASDM.py:
+  Get1stBandpassScan: Find scan in scan by "scanNumber" rather than index
+Obit/tasks/BDFIn.c:
+  several: Better protection against poorly defined datasets
+Obit/python/EVLACal.py:
+  EVLAPolCal: implement fixPoln
+Obit/python/EVLAContPipe.py:
+  no prior BPCal in call to EVLARLCal
+Obit/python/MosaicUtil.py:
+  PWeightImage: remove debug statement
+Obit/src/ObitDConCleanPxList.c Obit/src/ObitDConCleanPxListMF.c:
+  several: fix indexing bug
+26 Apr 2013, svn version 446

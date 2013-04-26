@@ -2943,7 +2943,8 @@ def EVLAPolCal(uv, InsCals, err, RM=0.0, \
     * BPVer    = AIPS BP table to apply
     * flagVer  = Input Flagging table version
     * solType  = solution type, "    ", "LM  "
-    * fixPoln  = NYI if True, don't solve for source polarization in ins. cal
+    * fixPoln  = if True, don't solve for source polarization in ins. cal
+                 assumed 0
     * avgIF    = NYI if True, average IFs in ins. cal.
     * solInt   = instrumental solution interval (min)
     * refAnt   = Reference antenna
@@ -2988,8 +2989,22 @@ def EVLAPolCal(uv, InsCals, err, RM=0.0, \
             setname(uv,pcal)
         if type(InsCals)==list:
             pcal.Sources = InsCals
+            pcal.doFitI[0] = True
         else:
             pcal.Sources = [InsCals]
+            i = 0
+            for s in InsCals:
+                pcal.doFitI[i] = True
+                i += 1
+       # Polarization fixed to 0?
+        if fixPoln:
+            if type(InsCals)==list:
+                i = 0
+                for s in InsCals:
+                    pcal.doFitPol[i] = False
+                    i += 1
+            else:
+                pcal.doFitPol[0] = False
         pcal.doCalib  = doCalib
         pcal.gainUse  = gainUse
         pcal.doBand   = doBand

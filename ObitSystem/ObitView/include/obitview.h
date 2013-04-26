@@ -1,7 +1,7 @@
 /* $Id$ */
 /* ObitView header file */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2005-2009
+*  Copyright (C) 2005-2013
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -23,6 +23,7 @@
 #include "ObitErr.h"
 #include "ObitTypes.h"
 #include "ObitImageDesc.h"
+#include "ObitDConCleanWindow.h"
 #include "ObitFArray.h"
 #include "ObitInfoList.h"
 #ifndef OBITVIEW
@@ -38,6 +39,7 @@ typedef struct {
   gboolean reLoad;   /* If true then a (re) load is needed */
   ObitImageDesc *myDesc;   /* Image descriptor */
   ObitFArray    *myPixels; /* Image pixels */
+  ObitDConCleanWindow *edtWindow;  /* Clean window being edited */
   gchar   *pixarray; /* image pixel array, 1 byte per pixel */
                      /* ordered by rows then column */
   gchar   *gpharray; /* image graphs array, 1 byte per pixel */

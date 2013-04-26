@@ -540,7 +540,7 @@ def pipeline( aipsSetup, parmFile):
                             RM=parms["RLRM"], CleanRad=parms["rlCleanRad"], \
                             calcode=parms["rlCalCode"], doCalib=parms["rlDoCal"], gainUse=parms["rlgainUse"], \
                             timerange=parms["rltimerange"], FOV=parms["rlFOV"], \
-                            doBand=1, BPVer=1, flagVer=parms["rlflagVer"], \
+                            doBand=-1, BPVer=1, flagVer=parms["rlflagVer"], \
                             refAnt=parms["rlrefAnt"], doPol=parms["doPol"], PDVer=parms["PDVer"],  \
                             doPlot=parms["doSpecPlot"], plotFile=plotFile, \
                             nThreads=nThreads, noScrat=noScrat, logfile=logFile, \

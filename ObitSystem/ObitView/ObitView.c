@@ -3,7 +3,7 @@
 /* This program requires the Motif library */
 /* Cloned from ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2005-2009
+*  Copyright (C) 2005-2013
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -270,7 +270,7 @@ void InitImage (ImageDisplay *IDdata, olong narg, gchar *filename)
   mark_dir    = NULL;
   log_dir     = NULL;
   requestList = NULL;
-  doLog = 0;   /* position logging initially turned off */
+  doLog = 0;           /* position logging initially turned off */
   usr_equinox = -1.0;  /* use equinox of image */
   ERtime_out  = -1.0;  /* Edit request Timeout, init forever */
 
@@ -280,6 +280,7 @@ void InitImage (ImageDisplay *IDdata, olong narg, gchar *filename)
     image[j].valid     = FALSE;
     image[j].reLoad    = TRUE;
     image[j].pixarray  = NULL;
+    image[j].edtWindow = NULL;
     image[j].gpharray  = NULL;
     image[j].nxArray   = 0;
     image[j].nyArray   = 0;
