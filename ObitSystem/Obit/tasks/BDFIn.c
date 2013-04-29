@@ -1906,7 +1906,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   ObitBDFData *BDFData=NULL;
   ObitIOCode retCode;
   olong iMain, iInteg, ScanId=0, SubscanId=0, i, j, jj, iBB, selChan, selIF, selConfig, 
-    iSW, jSW, kSW, kBB, nIFsel, cntDrop=0, ver, iRow, sourId=0, iIntent, iScan;
+    iSW, jSW, kSW, kBB, nIFsel, cntDrop=0, ver, iRow, sourId=0, iIntent, iScan, ig;
   olong lastScan=-1, lastSubscan=-1, ScanTabRow=-1, numIntegration;
   ofloat *Buffer=NULL, tlast=-1.0e20, startTime=0.0, endTime=0.0;
   ObitUVDesc *desc;
@@ -1921,6 +1921,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   gboolean first=TRUE;
   gchar dataroot[132];
   gchar *filename;
+  gchar *ignoreIntent[]={"CALIBRATE_POINTING","UNSPECIFIED","INTERNAL_CALIBRATION", NULL};
   gchar *routine = "GetData";
 
   /* error checks */
@@ -2039,8 +2040,12 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	     SDMData->ScanTab->rows[ScanId]->scanNumber) break;
       }
       for (iIntent=0; iIntent<SDMData->ScanTab->rows[ScanId]->numIntent; iIntent++) {
-	drop = drop ||  (!strncmp(SDMData->ScanTab->rows[ScanId]->scanIntent[iIntent], 
-				  "CALIBRATE_POINTING", 18));
+	ig = 0;   /* Check list of intenta to ignore */
+	while (ignoreIntent[ig]) {
+	  drop = drop ||  (!strncmp(SDMData->ScanTab->rows[ScanId]->scanIntent[iIntent], 
+				    ignoreIntent[ig], strlen(ignoreIntent[ig])));
+	  ig++;
+	}
       }
       if (drop) {
 	Obit_log_error(err, OBIT_InfoErr, "Drop online cal scan %3.3d subscan %3.3d", 
@@ -2227,11 +2232,9 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     
     /* Write Index table */
     if (startTime>-1.0e10) {
-      /* ALMA has subscans */
-      if (((SDMData->isALMA) && 
-	  (SDMData->MainTab->rows[iMain]->subscanNumber>=
-	   SDMData->ScanTab->rows[ScanTabRow]->numSubscan))
-	  || (SDMData->isEVLA)) {
+      /* ALMA & EVLA haave subscans */
+      if ((SDMData->MainTab->rows[iMain]->subscanNumber>=
+	   SDMData->ScanTab->rows[ScanTabRow]->numSubscan)) {
 	NXrow->Time     = 0.5 * (startTime + endTime);
 	NXrow->TimeI    = (endTime - startTime);
 	NXrow->EndVis   = desc->nvis;

@@ -1281,3 +1281,9 @@ Obit/python/MosaicUtil.py:
 Obit/src/ObitDConCleanPxList.c Obit/src/ObitDConCleanPxListMF.c:
   several: fix indexing bug
 26 Apr 2013, svn version 446
+
+Trap online scans in BDFIn
+Obit/tasks/BDFIn.c:
+  Ignore scans with intents "UNSPECIFIED", "INTERNAL_CALIBRATION"
+29 Apr 2013, svn version 447
+
