@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2011                                          */
+/*;  Copyright (C) 2004-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -913,7 +913,8 @@ void ObitDConCleanImageStats(ObitDConClean *in, olong field, gboolean doBeam,
   ObitDConCleanWindow *theWindow=NULL;
   ObitIOSize IOsize = OBIT_IO_byPlane;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong  blc[IM_MAXDIM], trc[IM_MAXDIM];
+  ObitInfoType type;
+  olong  blc[IM_MAXDIM], trc[IM_MAXDIM], oblc[IM_MAXDIM], otrc[IM_MAXDIM];
   olong nThreads, i, it, nTh, nrow, nrowPerThread, hirow, lorow, count;
   olong  lo, hi;
   ofloat tmax, tmax2, sum, sum2;
@@ -959,6 +960,10 @@ void ObitDConCleanImageStats(ObitDConClean *in, olong field, gboolean doBeam,
       image = (ObitImage*)in->mosaic->images[i]->myBeam;
     else
       image = in->mosaic->images[i];
+
+    /* Get existing BLC, TRC */
+    ObitInfoListGet (image->info, "BLC", &type, dim, oblc, err); 
+    ObitInfoListGet (image->info, "TRC", &type, dim, otrc, err); 
 
     /* Set output to full image, plane at a time */
     dim[0] = IM_MAXDIM;
@@ -1046,7 +1051,16 @@ void ObitDConCleanImageStats(ObitDConClean *in, olong field, gboolean doBeam,
 
     retCode = ObitImageClose (image, err);
     if (err->error) Obit_traceback_msg (err, routine, image->name);
-    
+
+    /* Restore BLC, TRC */    
+    dim[0] = IM_MAXDIM;    
+    ObitInfoListPut (image->info, "BLC", OBIT_long, dim, oblc, err); 
+    ObitInfoListPut (image->info, "TRC", OBIT_long, dim, otrc, err); 
+    retCode = ObitImageOpen (image, OBIT_IO_ReadOnly, err);
+    retCode = ObitImageClose (image, err);
+    if (err->error) Obit_traceback_msg (err, routine, image->name);
+
+
     /* Free Image array? */
     image->image = ObitFArrayUnref(image->image);
     

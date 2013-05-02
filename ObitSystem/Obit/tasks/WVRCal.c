@@ -43,9 +43,9 @@
 #include "ObitSourceList.h"
 #include "ObitPrecess.h"
 #include "ObitThread.h"
-/* libAir stuff */
-#ifdef HAVE_WVR  /* Only if libAir available */
-#include "almaabs_c.h"
+/* libALMAWVR stuff */
+#ifdef HAVE_WVR  /* Only if libALMAWVR available */
+#include "almawvr/almaabs_c.h"
 #endif /* HAVE_WVR */
   /* Speed of light */
 #ifndef VELIGHT
@@ -63,8 +63,8 @@ typedef struct {
   ObitThread *thread;
   /* thread number  */
   olong        ithread;
-/* libAir stuff */
-#ifdef HAVE_WVR  /* Only if libAir available */
+/* libALMAWVR stuff */
+#ifdef HAVE_WVR  /* Only if libALMAWVR available */
   /* Input data */
   ALMAAbsInput wvrIn, *wvrInArr[1];
   /* Return results */
@@ -1395,7 +1395,7 @@ gboolean AvgWVR1 (ObitUV* inUV, ofloat solInt, olong numAnt,
 		  olong nTh, WVRFuncArg **ThreadArgs, ObitErr* err)
 {
   gboolean done=TRUE;
-#ifdef HAVE_WVR  /* Only if libAir available */
+#ifdef HAVE_WVR  /* Only if libALMAWVR available */
   olong iAnt, jAnt, iTh, jTh, tsid;
   odouble endTime, begTime;
   ofloat elev, time, weight, base, tr[2], dTdL[4], TObs[4], wt;
@@ -1492,7 +1492,7 @@ gboolean AvgWVR1 (ObitUV* inUV, ofloat solInt, olong numAnt,
       if (iAnt>=numAnt) break;
       /* Any data? */
       if ((count[iAnt]>0) && (sumWt[iAnt]>0.0)) {
-	/* Data to libAir struct */
+	/* Data to libALMAWVR struct */
 	ThreadArgs[iTh]->wvrIn.el      = (double)(sumEl[iAnt] / sumWt[iAnt]);
 	ThreadArgs[iTh]->wvrIn.TObs[0] = (double)(sumWtT[iAnt*4+0] / sumWt[iAnt]);
 	ThreadArgs[iTh]->wvrIn.TObs[1] = (double)(sumWtT[iAnt*4+1] / sumWt[iAnt]);
@@ -1561,10 +1561,10 @@ gboolean AvgWVR1 (ObitUV* inUV, ofloat solInt, olong numAnt,
     } /* end loop retrieving values */
   } /* end loop over antenna */ 
 
-#else  /* No libAir - stubb */
+#else  /* No libALMAWVR - stubb */
   gchar *routine = "AvgWVR1";
   Obit_log_error(err, OBIT_Error, 
-		 "%s: libAir not available - cannot do fit", 
+		 "%s: libALMAWVR not available - cannot do fit", 
 		     routine);
 #endif /* HAVE_WVR */
 
@@ -1748,7 +1748,7 @@ static olong MakeWVRFuncArgs (ObitThread *thread,
 {
   olong nThreads=1;
 
-#ifdef HAVE_WVR  /* Only if libAir available */
+#ifdef HAVE_WVR  /* Only if libALMAWVR available */
   olong i;
 
   /* Setup for threading */
@@ -1777,7 +1777,7 @@ static olong MakeWVRFuncArgs (ObitThread *thread,
  */
 static void KillWVRFuncArgs (olong nargs, WVRFuncArg **ThreadArgs)
 {
-#ifdef HAVE_WVR  /* Only if libAir available */
+#ifdef HAVE_WVR  /* Only if libALMAWVR available */
    olong i;
 
  if (ThreadArgs==NULL) return;
@@ -1803,7 +1803,7 @@ static void KillWVRFuncArgs (olong nargs, WVRFuncArg **ThreadArgs)
  */
 static gpointer ThreadWVR (gpointer arg)
 {
-#ifdef HAVE_WVR  /* Only if libAir available */
+#ifdef HAVE_WVR  /* Only if libALMAWVR available */
   /* Get arguments from structure */
   WVRFuncArg *largs           = (WVRFuncArg*)arg;
 

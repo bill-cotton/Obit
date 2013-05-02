@@ -7,7 +7,7 @@ AC_DEFUN([AC_PATH_WVR], [
                                  [search for WVR in DIR/include and DIR/lib]),
                     [for dir in `echo "$withval" | tr : ' '`; do
     if test -d $dir/include; then
-      WVR_CFLAGS="$WVR_CFLAGS -I$dir/include/almawvr"
+      WVR_CFLAGS="$WVR_CFLAGS -I$dir/include"
     fi
     if test -d $dir/lib; then
       WVR_LDFLAGS="$WVR_LDFLAGS -L$dir/lib"
@@ -42,7 +42,7 @@ ac_have_wvr=no
 ac_have_wvrh=no
   	touch /tmp/dummy1_wvr.h
         AC_CHECK_HEADERS([/tmp/dummy1_wvr.h], [ac_have_wvrh=yes], [ac_have_wvrh=no],
-                       [#include <almaabs_c.h>])
+                       [#include <almawvr/almaabs_c.h>])
 	rm /tmp/dummy1_wvr.h
  	if test $ac_have_wvrh = yes; then
 	        AC_SEARCH_LIBS(almaabs_ret, [almawvr], [ac_have_wvr=yes], [ac_have_wvr=no], 

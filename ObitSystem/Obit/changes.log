@@ -1287,3 +1287,11 @@ Obit/tasks/BDFIn.c:
   Ignore scans with intents "UNSPECIFIED", "INTERNAL_CALIBRATION"
 29 Apr 2013, svn version 447
 
+Mostly almawvr library fixes
+Obit/src/ObitDConClean.c:
+  ImageStats: restore original BLC, TRC
+Obit/tasks/WVRCal.c:
+  various: update name of WVR library, subdirectory for headers
+Obit/m4/wvr.m4 Obit/configure:
+  change subdirectory for headers
+2 May 2013, svn version 448
