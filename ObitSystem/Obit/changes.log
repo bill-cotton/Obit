@@ -1295,3 +1295,28 @@ Obit/tasks/WVRCal.c:
 Obit/m4/wvr.m4 Obit/configure:
   change subdirectory for headers
 2 May 2013, svn version 448
+
+Various bug fixes
+Obit/tasks/Lister.c:
+  doGAIN: min souID=1, Table may have 0
+Obit/tasks/WVRCal.c:
+  various: cleanup.
+Obit/include/ObitDConCleanPxList.h Obit/src/ObitDConCleanPxList.c:
+Obit/src/ObitDConCleanPxListMF.c:
+  New completion code,  OBIT_CompReasonNoPixel if no pixels to CLEAN
+Obit/src/ObitDConCleanVis.c:
+  Deconvolve: do not loop forever with no pixels CLEAned.
+Obit/src/ObitPolnCalFit.c:
+  Test if a single antenna is bad, toss and refit
+Obit/src/ObitUVImager.c:
+  Various: add "RobustIF", "TaperIF", "MFTaper" to info items copied
+Obit/src/ObitDConCleanWindow.c:
+  Copy: Fix bug in allocating out->naxis
+Obit/src/ObitDCon.c:
+  Copy: Copy rather than Ref mosaic member.
+Obit/src/ObitGainCal.c:
+  Calc: Make sure only one CL/SN table entry written for zero length scan.
+Obit/src/ObitBDFData.c:
+  InitScan: Always set isLSB=False, i.e. don't flip lsb data, it should be 
+  correctly labeled.  ALMA LSB data was having the spectra reversed.
+10 May 2013, svn version 449

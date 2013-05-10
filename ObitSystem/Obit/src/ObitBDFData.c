@@ -874,7 +874,8 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   for (iSW=0; iSW<in->SWArray->nwinds; iSW++) {
     if (in->SWArray->winds[iSW]->selected) {
       /*in->isLSB[iSW] = in->SWArray->winds[iSW]->netSideband[0]=='$';  DEBUG STUB */
-      in->isLSB[iSW] = in->SWArray->winds[iSW]->chanFreqStep<0.0;
+      /*in->isLSB[iSW] = in->SWArray->winds[iSW]->chanFreqStep<0.0;  Do not know why */
+      in->isLSB[iSW] = FALSE;  /* Do not flip spectra - thery will be labeled as lsb */
       inext++;
     }
   }

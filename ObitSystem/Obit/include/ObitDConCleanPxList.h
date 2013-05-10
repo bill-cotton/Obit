@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2010                                          */
+/*;  Copyright (C) 2004-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -74,7 +74,9 @@ enum obitCLEANCompletionReason {
   /** min fraction of peak */
   OBIT_CompReasonMinFract,
   /** Complete SDI Layer */
-  OBIT_CompReasonSDILayer
+  OBIT_CompReasonSDILayer,
+  /** No Pixels selected */
+  OBIT_CompReasonNoPixel
 }; /* end enum obitIOStatus */
 /** typedef for enum for CLEAN completion codes */
 typedef enum obitCLEANCompletionReason ObitCLEANCompletionReason;

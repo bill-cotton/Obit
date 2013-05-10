@@ -131,6 +131,12 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg);
 /** Private: Check for crazy antenna solutions */
 static gboolean CheckCrazy(ObitPolnCalFit *in, ObitErr *err);
 
+/** Private: Check for one crazy antenna, flag */
+static gboolean CheckCrazyOne(ObitPolnCalFit *in, ObitErr *err);
+
+/** Private: Reset blanked solutions */
+static void resetSoln(ObitPolnCalFit *in);
+
 #ifdef HAVE_GSL
 /** Private: Circular feed Solver function evaluation */
 static int PolnFitFuncOERL (const gsl_vector *x, void *params, 
@@ -1042,8 +1048,14 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
 #endif /* HAVE_GSL */ 
 
     /* Do actual fitting  */
+
+    /* Make sure solutions are not blanked from last fit */
+    resetSoln(in);
+
     /* Do fit - fast method to get better soln, then possibly GSL */
     isOK = doFitFast (in, err);
+    /* If only one screwy antenna chunk it and try again */
+    if (CheckCrazyOne(in, err)) isOK = doFitFast (in, err);
     if (isOK) {
       if (!strncmp(in->solnType, "LM  ", 4)) doFitGSL (in, err);
       
@@ -4881,6 +4893,93 @@ static void KillPolnFitFuncArgs (ObitPolnCalFit *in)
 
 /**
  * Check for crazy antenna solutions, reset defaults if so.
+ * If One antenna is the cause of large errors, disable it
+ * \param in           Fitting object
+ * \param err          Obit error stack object.
+ * \return             TRUE if refitting needed
+ */
+static gboolean CheckCrazyOne(ObitPolnCalFit *in, ObitErr *err)
+{
+  gboolean crazyOne = FALSE;
+  odouble sum, RMS, test, maxDif;
+  ofloat fblank = ObitMagicF();
+  olong i, k, imax, idata;
+
+  if (err->error) return crazyOne;  /* Error detected? */
+
+  /* DEBUG test - toss ant 18
+  in->antParm[17*4+1] = in->antParm[17*4+3] = 50.0; */
+
+  /* Get mean square difference from default elipticity */
+  sum = 0.0; maxDif=0.0; imax = -1;
+  for (i=0; i<in->nant; i++) {
+    if (in->isCircFeed) {
+      /* Circular feeds ori_r, elip_r, ori_l, elip_l */
+     test = (in->antParm[i*4+1] - G_PI/4.0)*(in->antParm[i*4+1] - G_PI/4.0) + 
+            (in->antParm[i*4+3] + G_PI/4.0)*(in->antParm[i*4+3] + G_PI/4.0);
+    } else {
+      /* Linear feeds  ori_x, elip_x, ori_y, elip_y,  */
+      test = (in->antParm[i*4+1])*(in->antParm[i*4+1]) + 
+             (in->antParm[i*4+3])*(in->antParm[i*4+3]);
+    }
+    sum += test;
+    if (maxDif<test) {maxDif = test; imax=i;}
+  } /* end loop over antennas */
+
+  /* is it OK? */
+  sum /= in->nant*2.0;
+  RMS =  sqrt(sum)*RAD2DG;
+  crazyOne = (RMS > 10.0);
+  if (!crazyOne) return FALSE;
+
+  /* See if it's OK if we chuck the worst */
+  sum = 0.0; 
+  for (i=0; i<in->nant; i++) {
+    if (i==imax) continue;
+    if (in->isCircFeed) {
+      /* Circular feeds ori_r, elip_r, ori_l, elip_l */
+     test = (in->antParm[i*4+1] - G_PI/4.0)*(in->antParm[i*4+1] - G_PI/4.0) + 
+            (in->antParm[i*4+3] + G_PI/4.0)*(in->antParm[i*4+3] + G_PI/4.0);
+    } else {
+      /* Linear feeds  ori_x, elip_x, ori_y, elip_y,  */
+      test = (in->antParm[i*4+1])*(in->antParm[i*4+1]) + 
+             (in->antParm[i*4+3])*(in->antParm[i*4+3]);
+    }
+    sum += test;
+  } /* end loop over antennas */
+
+  /* is it OK now? */
+  sum /= in->nant*2.0;
+  RMS =  sqrt(sum)*RAD2DG;
+  crazyOne = (RMS <= 10.0);  /* OK = True */
+  if (!crazyOne) return FALSE;
+  
+  if (err->prtLv>=2) {
+    Obit_log_error(err, OBIT_InfoWarn, "Tossing bad antenna %d - refit", imax+1);
+    ObitErrLog(err); 
+  }
+ 
+  /* Antenna imax+1 is the baddest, rest ~ OK - Flag */
+  in->gotAnt[imax]     = FALSE;
+  for (idata=0; idata<in->nvis; idata++) {
+    if ((in->antNo[idata*2+0]==imax) || (in->antNo[idata*2+1]==imax)) {
+      for (k=0; k<4; k++) in->inWt[idata*4+k] = 0.0;
+    }
+  }
+  
+  /* Flag solutions - don't refit */
+  if (!in->isCircFeed ) {   /* Linear feed */
+    /*in->antGainFit[imax][0] = in->antGainFit[imax][1] = FALSE;*/
+    in->antGain[imax*2+0] = in->antGain[imax*2+1] = 1.0;
+  }
+  /*in->antFit[imax][0]   = in->antFit[imax][1]   = in->antFit[imax][2]   = in->antFit[imax][3]   = FALSE;*/
+  in->antParm[imax*4+0] = in->antParm[imax*4+1] = in->antParm[imax*4+2] = in->antParm[imax*4+3] = fblank;
+
+  return TRUE;
+} /* end CheckCrazyOne */
+
+/**
+ * Check for crazy antenna solutions, reset defaults if so.
  * If the RMS deviation from the default elipticity exceeds 10 deg
  * the fit is deemed crazy.
  * Uses last valid set of source parameters in reset
@@ -4892,6 +4991,7 @@ static gboolean CheckCrazy(ObitPolnCalFit *in, ObitErr *err)
 {
   gboolean crazy = FALSE;
   odouble sum, RMS;
+  ofloat fblank = ObitMagicF();
   olong i, j;
 
   if (err->error) return crazy;  /* Error detected? */
@@ -4899,6 +4999,8 @@ static gboolean CheckCrazy(ObitPolnCalFit *in, ObitErr *err)
   /* Get mean square difference from default elipticity */
   sum = 0.0;
   for (i=0; i<in->nant; i++) {
+    if ((!in->gotAnt[i]) || (in->antParm[i*4+1]==fblank) || 
+	((in->antParm[i*4+3]==fblank))) continue;
     if (in->isCircFeed) {
       /* Circular feeds ori_r, elip_r, ori_l, elip_l */
      sum += (in->antParm[i*4+1] - G_PI/4.0)*(in->antParm[i*4+1] - G_PI/4.0) + 
@@ -4961,6 +5063,45 @@ static gboolean CheckCrazy(ObitPolnCalFit *in, ObitErr *err)
   
   return crazy;
 } /* end CheckCrazy */
+
+/**
+ * Reset blanked antenna solutions
+ * \param in           Fitting object
+ */
+static void resetSoln(ObitPolnCalFit *in)
+{
+  ofloat fblank = ObitMagicF();
+  olong i;
+  for (i=0; i<in->nant; i++) {
+    if (in->gotAnt[i] && 
+	((in->antParm[i*4+1]==fblank) || (in->antParm[i*4+3]==fblank))) {
+      /*in->antFit[i][0] = in->antFit[i][1] = in->antFit[i][2] = in->antFit[i][3] = TRUE;*/
+      if (in->isCircFeed) {
+	/* Circular feeds ori_r, elip_r, ori_l, elip_l */
+	in->antParm[i*4+0] =  0.0;
+	in->antParm[i*4+1] =  G_PI/4.0;
+	in->antParm[i*4+2] =  0.0;
+	in->antParm[i*4+3] = -G_PI/4.0;
+      } else {
+	/*in->antGainFit[i][0] = in->antGainFit[i][1] = TRUE;*/
+	in->antGain[i*2+0] = in->antGain[i*2+1] = 1.0;
+	/* Linear feeds, if the antenna angles on sky are given in the AntennaList[0] use then, 
+	   otherwise assume Feeds are X, Y
+	   ori_x, elip_x, ori_y, elip_y,  */
+	in->antParm[i*4+1] = 0.0;  /* ellipticity */
+	in->antParm[i*4+3] = 0.0;
+	if (fabs (in->AntLists[0]->ANlist[i]->FeedAPA-in->AntLists[0]->ANlist[i]->FeedBPA)<1.0) {
+	  /* Assume X, Y */
+	  in->antParm[i*4+0] = 0.0;
+	  in->antParm[i*4+2] = +G_PI/2.0;
+	} else {  /* Use what's in the AN table as initial convert to radians */
+	  in->antParm[i*4+0] = in->AntLists[0]->ANlist[i]->FeedAPA*DG2RAD;
+	  in->antParm[i*4+2] = in->AntLists[0]->ANlist[i]->FeedBPA*DG2RAD;
+	}
+      }
+    }
+  }
+} /* end resetSoln */
 
 #ifdef HAVE_GSL
 /**

@@ -732,6 +732,7 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
   if (in->nPixel<=0) {
     Obit_log_error(err, OBIT_InfoWarn,"%s NO Residuals to CLEAN in %s",
 		   routine, in->name);
+    in->complCode = OBIT_CompReasonNoPixel;
     return TRUE;
   }
   minFluxLoad = in->minFluxLoad;
@@ -1111,6 +1112,7 @@ gboolean ObitDConCleanPxListMFSDI (ObitDConCleanPxList *inn, ObitErr *err)
   if (in->nPixel<=0) {
     Obit_log_error(err, OBIT_InfoWarn,"%s NO Residuals to CLEAN in %s",
 		   routine, in->name);
+    in->complCode = OBIT_CompReasonNoPixel;
     return TRUE;
   }
 

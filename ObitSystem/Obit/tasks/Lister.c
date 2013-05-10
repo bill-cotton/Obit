@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Task to print the contents of various data files                   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2012                                          */
+/*;  Copyright (C) 2009-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1527,7 +1527,7 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 	    } else {  /* CL table */
 	      iretCode = ObitTableCLReadRow (CLTable, iRow, CLRow, err);
 	      time   = CLRow->Time;
-	      souID  = CLRow->SourID;
+	      souID  = MAX(1, CLRow->SourID);
 	      freqID = CLRow->FreqID;
 	      antNo  = CLRow->antNo-1;
 	      SubA   = CLRow->SubA;

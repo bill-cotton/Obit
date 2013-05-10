@@ -704,7 +704,7 @@ ObitUV* getOutputData (ObitInfoList *myInput, ObitErr *err)
     } else { /* Didn't find */
       strncpy (Aclass, "NoClas", 7);
     }
-    /* Default out class is "UVSub" */
+    /* Default out class is "WVRCal" */
     if (!strncmp(Aclass, "      ", 6)) strncpy (Aclass, "UVSub", 7);
 
     /* input AIPS disk - default is outDisk */
@@ -726,6 +726,10 @@ ObitUV* getOutputData (ObitInfoList *myInput, ObitErr *err)
     /* Allocate catalog number */
     cno = ObitAIPSDirAlloc(disk, AIPSuser, Aname, Aclass, Atype, Aseq, &exist, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
+
+    /* Output file really should exist */
+    Obit_retval_if_fail(exist, err, outUV,
+			"%s: Output data does not exist", routine);
     
     /* define object */
     nvis = 1000;
@@ -872,7 +876,7 @@ void WVRCalScanCal (ObitUV* inUV, ObitUV* outUV, ObitWVRCoef *wvrcoef,
   /* open UV data  */
   retCode = ObitUVOpen (inUV, OBIT_IO_ReadCal, err);
   if (err->error) Obit_traceback_msg (err, routine, inUV->name);
-  retCode = ObitUVOpen (outUV, OBIT_IO_ReadCal, err);
+  retCode = ObitUVOpen (outUV, OBIT_IO_ReadWrite, err);
   if (err->error) Obit_traceback_msg (err, routine,outUV->name);
   
   /* Make sure some data */

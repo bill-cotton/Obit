@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -497,6 +497,10 @@ ObitTable* ObitGainCalCalc (ObitUV *inData, gboolean doSN, ObitErr *err)
       } /* end  antenna loop */
       lastTime += calInt;
     } /* end loop over scan */
+
+    /* Check if endTime<last time written */
+    if (doSN && (SNRow->Time>=endTime)) continue;
+    else if     (CLRow->Time>=endTime)  continue;
 
     /* End of scan */
     if (doSN) SNRow->Time   = endTime;

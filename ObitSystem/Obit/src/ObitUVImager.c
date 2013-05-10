@@ -126,6 +126,7 @@ ObitUVImager* ObitUVImagerFromInfo (gchar *prefix, ObitInfoList *inList,
      "RAShift", "DecShift", "Sources", 
      "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
+     "RobustIF", "TaperIF", "MFTaper",
      NULL};
   gchar ctemp[50];
   gchar *routine = "ObitUVImagerFromInfo";
@@ -397,6 +398,7 @@ void ObitUVImagerWeight (ObitUVImager *in, ObitErr *err)
      "RAShift", "DecShift", "Sources",  "Beam",
      "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
+     "RobustIF", "TaperIF", "MFTaper",
      NULL};
   gchar *routine = "ObitUVImagerWeight";
 
@@ -749,6 +751,7 @@ void ObitUVImagerGetInfo (ObitUVImager *in, gchar *prefix, ObitInfoList *outList
      "RAShift", "DecShift", "Sources", 
      "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
+     "RobustIF", "TaperIF", "MFTaper",
      NULL};
   gchar *routine = "ObitUVImagerGetInfo";
 

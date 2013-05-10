@@ -119,6 +119,7 @@ gconstpointer ObitDConGetClass (void)
 ObitDCon* ObitDConCopy  (ObitDCon *in, ObitDCon *out, ObitErr *err)
 {
   const ObitClassInfo *ParentClass;
+  ObitImageMosaicClassInfo *mosaicClass;
   gboolean oldExist;
   gchar *outName;
 
@@ -146,7 +147,8 @@ ObitDCon* ObitDConCopy  (ObitDCon *in, ObitDCon *out, ObitErr *err)
   /* free any old mosaic */
   out->mosaic = ObitImageMosaicUnref(out->mosaic);
   /* Copy new */
-  out->mosaic = ObitImageMosaicRef(in->mosaic);
+  mosaicClass = (ObitImageMosaicClassInfo*)in->mosaic->ClassInfo;
+  out->mosaic = (ObitImageMosaic*)mosaicClass->ObitCopy((ObitImageMosaic*)in->mosaic, NULL, err);
 
   return out;
 } /* end ObitDConCopy */

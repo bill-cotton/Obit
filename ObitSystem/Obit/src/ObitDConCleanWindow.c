@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2010                                          */
+/*;  Copyright (C) 2004-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -198,7 +198,7 @@ ObitDConCleanWindow* ObitDConCleanWindowCopy  (ObitDConCleanWindow *in,
   out->outWindow = ObitMemAlloc0Name (out->nfield*sizeof(gpointer), "Clean outer Window");
 
   for (i=0; i<in->nfield; i++) {
-    out->naxis = ObitMemAlloc0 (2*sizeof(olong));
+    out->naxis[i] = ObitMemAlloc0 (2*sizeof(olong));
     out->naxis[i][0] = in->naxis[i][0];
     out->naxis[i][1] = in->naxis[i][1];
     maxId            = 0;

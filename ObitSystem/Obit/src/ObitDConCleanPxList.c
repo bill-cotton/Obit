@@ -890,6 +890,7 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
   if (in->nPixel<=0) {
     Obit_log_error(err, OBIT_InfoWarn,"%s NO Residuals to CLEAN in %s",
 		   routine, in->name);
+    in->complCode = OBIT_CompReasonNoPixel;
     return TRUE;
   }
 
@@ -1217,6 +1218,7 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
   if (in->nPixel<=0) {
     Obit_log_error(err, OBIT_InfoWarn,"%s NO Residuals to CLEAN in %s",
 		   routine, in->name);
+    in->complCode = OBIT_CompReasonNoPixel;
     return TRUE;
   }
 

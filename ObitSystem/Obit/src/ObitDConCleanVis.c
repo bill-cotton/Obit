@@ -510,7 +510,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   gboolean done, fin=TRUE, quit=FALSE, doSub, bail, doMore, moreClean, notDone;
   gboolean redo, isBeamCor;
   olong jtemp, i, *startCC=NULL, *newCC=NULL, count, ifld;
-  olong redoCnt=0, damnCnt=0, lastIter, lastFld;
+  olong redoCnt=0, damnCnt=0, lastIter, lastFld, NoPixelCnt;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   const ObitDConCleanVisClassInfo *inClass;
@@ -532,6 +532,8 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
 
   inClass     = (ObitDConCleanVisClassInfo*)in->ClassInfo; /* clean class structure */
   imagerClass = (ObitUVImagerClassInfo*)in->imager->ClassInfo;  /* imager class structure */
+
+  NoPixelCnt  = 0;  /* How many times minor cycles had no residuals to CLEAN */
 
   /* Reset highest peak */
   in->peakFlux = -1000.0;
@@ -721,6 +723,12 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
       if (err->error) Obit_traceback_msg (err, routine, in->name);
       count++;
     } /* End middle CLEAN loop */
+    
+    /* Check if there were no pixels this cycle */
+    if (in->Pixels->complCode==OBIT_CompReasonNoPixel) NoPixelCnt++; /* Count times */
+    /* Call CLEAN done if no pixels more than 2*nfield */
+    moreClean = NoPixelCnt<=(2*in->nfield);
+    if (!moreClean) break;
     
     /* Update quality list for new max value on fields just CLEANed */
     for (ifld=0; ifld<in->nfield; ifld++) {
