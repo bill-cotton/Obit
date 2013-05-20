@@ -176,7 +176,7 @@ gconstpointer ObitUVGridMFGetClass (void)
 /**
  * Prepares for gridding uv data of the type described by UVin and
  * with derived image as described by image.
- * Wideband version
+ * Wideband, multi frequency version
  * Input data should be fully edited and calibrated, with any weighting applied 
  * and converted to the appropriate Stokes type.
  * The object UVin will be opened during this call if it is not already open.
@@ -184,6 +184,15 @@ gconstpointer ObitUVGridMFGetClass (void)
  * image.
  * The beams corresponding to each image should be made first using the
  * same ObitUVGridMF.
+ * If imagee is of type ObitImageMF then the selection of IFs and channels per 
+ * output channel are obtained from this object, otherwise, the imagee info member 
+ * is expected to contain
+ * \li "nSpec"     OBIT_long scalar = number of spectral channels, imagee should be 
+ *                 adequately dimensioned.
+ * \li "BIFSpec"   OBIT_long(nSpec)  = Beginning IF 0-rel in UVIn per spectral channel
+ * \li "EIFSpec"   OBIT_long(nSpec)  = Endinging IF 0-rel in UVIn per spectral channel
+ * \li "BChanSpec" OBIT_long(nSpec)  = Beginning channel 0-rel in UVIn per spectral channel
+ * \li "EChanSpec" OBIT_long(nSpec)  = Endinging channel 0-rel in UVIn per spectral channel
  * \param in       Object to initialize
  * \param UVin     Uv data object to be gridded.
  *                 info entry "MFTaper" gives frequency dependent taper fudge factor
@@ -200,10 +209,11 @@ void ObitUVGridMFSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
   ObitUVDesc *uvDesc;
   ObitUVGridMF *in = (ObitUVGridMF*)inn;
   ObitImageDesc *theDesc=NULL;
-  ObitImageMF *image = (ObitImageMF*)imagee;
+  ObitImage *image = (ObitImage*)imagee;
   ObitImage *myBeam;
   olong nx, ny, naxis[2], iSpec, size, nif, nfreq, nn;
   ofloat cellx, celly, dxyzc[3], xt, yt, zt, MFTape=0.8, BeamTaper=0.0;
+  olong nSpec=1, maxOrder=-1, *BIFSpec=NULL, *EIFSpec=NULL, *BChanSpec=NULL, *EChanSpec=NULL;
   ofloat *ramp=NULL, *data=NULL;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
@@ -219,7 +229,7 @@ void ObitUVGridMFSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
   if (err->error) return;
   g_assert (ObitUVGridMFIsA(in));
   g_assert (ObitUVIsA(UVin));
-  g_assert (ObitImageMFIsA(image));
+  g_assert (ObitImageIsA(image));
   Obit_return_if_fail((image->myDesc->inaxes[0]>0) && 
 		      (image->myDesc->inaxes[1]>0), err,
 		      "%s: MUST fully define image descriptor %s",
@@ -235,6 +245,35 @@ void ObitUVGridMFSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
   ObitInfoListGetTest(UVin->info, "doCalSelect", &type, dim, &doCalSelect);
   if (doCalSelect) access = OBIT_IO_ReadCal;
   else access = OBIT_IO_ReadOnly;
+
+  /* Spectral information */
+  if (ObitImageMFIsA(image)) {  /* MF Image */
+      nSpec      = ((ObitImageMF*)image)->nSpec;     /* save number of coarse channels */;
+      maxOrder   = ((ObitImageMF*)image)->maxOrder;  /* save max imaging order */
+      BIFSpec    = ((ObitImageMF*)image)->BIFSpec;
+      EIFSpec    = ((ObitImageMF*)image)->EIFSpec;
+      BChanSpec  = ((ObitImageMF*)image)->BChanSpec;
+      EChanSpec  = ((ObitImageMF*)image)->EChanSpec;
+    } else {                   /* Spectral cube */
+      ObitInfoListGetTest(image->info, "nSpec",     &type, dim, &nSpec);
+      ObitInfoListGetP(image->info, "BIFSpec",   &type, dim, (gpointer*)&BIFSpec);
+      ObitInfoListGetP(image->info, "EIFSpec",   &type, dim, (gpointer*)&EIFSpec);
+      ObitInfoListGetP(image->info, "BChanSpec", &type, dim, (gpointer*)&BChanSpec);
+      ObitInfoListGetP(image->info, "EChanSpec", &type, dim, (gpointer*)&EChanSpec);
+      /* Check consistency with image size */
+      Obit_return_if_fail((image->myDesc->inaxes[image->myDesc->jlocf]>=nSpec), err,
+			  "%s: Image %s inadequately dimensioned for %d channels", 
+			  routine, image->name, nSpec);
+    }
+
+    /* Spectral stuff defined? */
+    Obit_return_if_fail(((BIFSpec!=NULL)   && (EIFSpec!=NULL) &&
+			 (BChanSpec!=NULL) && (EChanSpec!=NULL)), err,
+			"%s: Channel selection not given", 
+			routine);
+    in->nSpec    = nSpec;
+    in->maxOrder = maxOrder;
+
   
   /* open uv data to fully instantiate if not already open */
   if (in->myStatus==OBIT_Inactive) {
@@ -243,8 +282,6 @@ void ObitUVGridMFSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
   }
 
   uvDesc = UVin->myDesc;
-  in->nSpec    = ((ObitImageMF*)image)->nSpec;     /* save number of coarse channels */
-  in->maxOrder = ((ObitImageMF*)image)->maxOrder;  /* save max imaging order */
 
   /* Get source position if it's not already in header */
   if ((uvDesc->crval[uvDesc->jlocr]==0.0) && 
@@ -255,12 +292,12 @@ void ObitUVGridMFSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
   }
 
   /* Beam, image dependent stuff */
-  in->nxBeam = myBeam->myDesc->inaxes[0];
-  in->nyBeam = myBeam->myDesc->inaxes[1];
-  in->icenxBeam = in->nxBeam/2 + 1; 
-  in->icenyBeam = in->nyBeam/2 + 1;
-  in->nxImage = image->myDesc->inaxes[0];
-  in->nyImage = image->myDesc->inaxes[1];
+  in->nxBeam     = myBeam->myDesc->inaxes[0];
+  in->nyBeam     = myBeam->myDesc->inaxes[1];
+  in->icenxBeam  = in->nxBeam/2 + 1; 
+  in->icenyBeam  = in->nyBeam/2 + 1;
+  in->nxImage    = image->myDesc->inaxes[0];
+  in->nyImage    = image->myDesc->inaxes[1];
   in->icenxImage = in->nxImage/2 + 1;
   in->icenyImage = in->nyImage/2 + 1;
    
@@ -313,10 +350,10 @@ void ObitUVGridMFSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
     } else {
       in->grids[iSpec] = ObitCArrayRealloc (in->grids[iSpec], 2, naxis);
     }
-    in->BIFSpec[iSpec]   = image->BIFSpec[iSpec];
-    in->EIFSpec[iSpec]   = image->EIFSpec[iSpec];
-    in->BChanSpec[iSpec] = image->BChanSpec[iSpec];
-    in->EChanSpec[iSpec] = image->EChanSpec[iSpec];
+    in->BIFSpec[iSpec]   = BIFSpec[iSpec];
+    in->EIFSpec[iSpec]   = EIFSpec[iSpec];
+    in->BChanSpec[iSpec] = BChanSpec[iSpec];
+    in->EChanSpec[iSpec] = EChanSpec[iSpec];
   } /* end loop over coarse channel */
 
   /* Scaling to cells */
@@ -402,7 +439,7 @@ void ObitUVGridMFSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
   tarFreq = UVin->myDesc->freqIF[0];  /* Frequency of lowest IF */
 
   for (iSpec=0; iSpec<nn; iSpec++) {
-    if (MFTape>=0) {
+    if (MFTape>0) {
       /* Target beam size scaled to this frequency */
       tarBeam[0] = Beam[0] * tarFreq/uvDesc->freqArr[iSpec];
       tarBeam[1] = Beam[1] * tarFreq/uvDesc->freqArr[iSpec];
@@ -423,23 +460,10 @@ void ObitUVGridMFSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
       in->sigma3[iSpec]  = 2.0*cpa*spa*(sigma2v - sigma2u);
     } else {
       /* No frequency dependent taper */
-      corrBeam[0] = sqrt (MAX(1.0e-10,Beam[0]*Beam[0]-tarBeam[0]*tarBeam[0]) + BeamTaper);
-      corrBeam[1] = sqrt (MAX(1.0e-10,Beam[1]*Beam[1]-tarBeam[1]*tarBeam[1]) + BeamTaper);
-      corrBeam[2] = Beam[2];
-      /* MFTape = beam fudge factor */
-      taper   = (MFTape/ (((corrBeam[0]/2.35)/206265.))/(G_PI));
-      sigma2u = log(0.3)/(taper*taper);
-      taper   = (MFTape/ (((corrBeam[1]/2.35)/206265.))/(G_PI));
-      sigma2v = log(0.3)/(taper*taper);
-      cpa     = cos(corrBeam[2]*DG2RAD);
-      spa     = sin(corrBeam[2]*DG2RAD);
-      in->sigma1[iSpec]  = (cpa*cpa*sigma2v + spa*spa*sigma2u);
-      in->sigma2[iSpec]  = (spa*spa*sigma2v + cpa*cpa*sigma2u);
-      in->sigma3[iSpec]  = 2.0*cpa*spa*(sigma2v - sigma2u);
-      /*in->sigma1[iSpec]  = 0.0;
-	in->sigma2[iSpec]  = 0.0;
-	in->sigma3[iSpec]  = 0.0; */
-	}
+      in->sigma1[iSpec]  = 0.0;
+      in->sigma2[iSpec]  = 0.0;
+      in->sigma3[iSpec]  = 0.0; 
+    }
   } /* End setting tapers */
  
   if (ramp) g_free (ramp); ramp = NULL;
@@ -933,16 +957,18 @@ void ObitUVGridMFFFT2Im (ObitUVGrid *inn, Obit *oout, ObitErr *err)
       }
       
       /* Write output */
-      pln = 2+in->maxOrder+j;  /* Get channel/plane number */
-      if (in->nSpec==1) pln = 1;       /* Normal imaging */
+      pln = 2+in->maxOrder+j;                             /* MF channel/plane number */
+      if ((in->nSpec>1)  && (in->maxOrder<0)) pln = j+1;  /* Spectral imaging */
+      if (in->nSpec==1)                       pln = 1;    /* Normal imaging */
       plane[0] = pln;
       ObitImagePutPlane (out, array->array, plane, err);
       if (err->error) goto cleanup;
       
     } /* end loop over spectral planes */
 
-    /* Determine combined beam */
-    if (in->nSpec>1) ObitImageMFCombine ((ObitImageMF*)out, FALSE, err);
+    /* Determine combined beam unless a spectral cube */
+    if ((in->nSpec>1) && (ObitImageMFIsA(out))) 
+      ObitImageMFCombine ((ObitImageMF*)out, FALSE, err);
     if (err->error) goto cleanup;
 
     /* Save BeamNorms array on Beam */
@@ -1013,7 +1039,8 @@ void ObitUVGridMFFFT2Im (ObitUVGrid *inn, Obit *oout, ObitErr *err)
     } /* end loop over spectral planes */
 
     /* Determine combined image */
-    if (in->nSpec>1) ObitImageMFCombine ((ObitImageMF*)out, TRUE, err);
+    if ((in->nSpec>1)  && (ObitImageMFIsA(out))) 
+      ObitImageMFCombine ((ObitImageMF*)out, TRUE, err);
     if (err->error) goto cleanup;
 
   } /* end make image */
@@ -1059,8 +1086,8 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
   gboolean OK;
   ofloat fact, *Corrp, fblank = ObitMagicF();
   gchar *routine = "ObitUVGridMFFFT2ImPar";
-  /* DEBUG 
-     ObitFArray *dbgRArr=NULL, *dbgIArr=NULL;*/
+  /* DEBUG
+     ObitFArray *dbgRArr=NULL, *dbgIArr=NULL; */
 
   /* error checks */
   if (err->error) return;
@@ -1146,8 +1173,8 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
     
   } /* end loop doing FFTs */
 
-  /* DEBUG 
-  ObitImageUtilArray2Image ("DbugRawBeam0.fits",  0, array[0], err);  */
+  /* DEBUG  
+  ObitImageUtilArray2Image ("DbugRawBeam0.fits",  0, array[0], err); */
   /* END DEBUG */
 
   if (err->prtLv>=5) {  /* Diagnostics */
@@ -1202,8 +1229,8 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
     } /* end loop over rest */
   } /* End loop gridding correcting images */
 
-  /* DEBUG
-  ObitImageUtilArray2Image ("DbugRawBeam1.fits",  0, array[0], err);   */
+  /* DEBUG 
+  ObitImageUtilArray2Image ("DbugRawBeam1.fits",  0, array[0], err);  */
   /* END DEBUG */
 
    if (err->prtLv>=5) {  /* Diagnostics */
@@ -1262,7 +1289,8 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
 	Obit_log_error(err, OBIT_InfoErr, "Start Combine Beam field %d",i+1);
       }
       /* Determine combined beam */
-      if (in[i]->nSpec>1) ObitImageMFCombine ((ObitImageMF*)out[i], FALSE, err);
+      if ((in[i]->nSpec>1) && (ObitImageMFIsA(out[i]))) 
+	ObitImageMFCombine ((ObitImageMF*)out[i], FALSE, err);
       if (err->error) goto cleanup;
       if (err->prtLv>=5) {  /* Diagnostics */
 	Obit_log_error(err, OBIT_InfoErr, "End Combine Beam");
@@ -1309,7 +1337,8 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
       Obit_log_error(err, OBIT_InfoErr, "Start Combine Image field %d",i+1);
     }
      /* Determine combined image */
-    if (in[i]->nSpec>1) ObitImageMFCombine ((ObitImageMF*)out[i], TRUE, err);
+    if ((in[i]->nSpec>1) && (ObitImageMFIsA(out[i]))) 
+      ObitImageMFCombine ((ObitImageMF*)out[i], TRUE, err);
     if (err->error) goto cleanup;
     if (err->prtLv>=6) {  /* Diagnostics */
       Obit_log_error(err, OBIT_InfoErr, "End Combine Image");

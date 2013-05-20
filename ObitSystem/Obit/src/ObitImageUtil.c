@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -436,6 +436,7 @@ void ObitImageUtilMakeImageFileInfo (ObitInfoList *inList, ObitErr *err)
 /**
  * Grids, FFTs and makes corrections for the gridding convolution.
  * Uses (creating if necessary) the myGrid member of out.
+ * Can make multichannel continuum or spectral line images
  * \param inUV     Input uv data. Should be in form of stokes to be imaged
  *                 will all calibration and selection applied and any 
  *                 weighting applied.
@@ -479,7 +480,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
 			     ObitErr *err)
 {
   ObitImage *theBeam=NULL;
-  ObitImageDesc *imDesc, *bmDesc;
+  ObitImageDesc *imDesc, *bmDesc, *IODesc;
   ObitIOSize IOBy;
   ObitInfoType type;
   ofloat sumwts, imMax, imMin, BeamTaper=0., BeamNorm=0.0, Beam[3];
@@ -513,6 +514,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
   ObitInfoListGetTest(inUV->info, "Beam", &type, dim, Beam);
 
   /* Need new gridding member? */
+  IODesc = (ObitImageDesc*)outImage->myIO->myDesc;
   outName = g_strconcat ("UVGrid for: ",inUV->name,NULL);
   if (outImage->myGrid == NULL) {
     /* WB Image? */
@@ -521,6 +523,9 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
     /* MF Image? */
     else if (ObitImageMFIsA(outImage))
       outImage->myGrid = (ObitUVGrid*)newObitUVGridMF(outName);
+    /* Spectroscopic Image cube? - use MF Gridding */
+    else if (IODesc->inaxes[IODesc->jlocf]>1)
+      outImage->myGrid = (ObitUVGrid*)newObitUVGridMF(outName);
     else 
       outImage->myGrid = newObitUVGrid(outName);
     if (outName) g_free(outName); outName = NULL;
@@ -528,6 +533,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
   /* Need separate gridder for different size beam? */
   if (doBeam) {
     imDesc = outImage->myDesc;
+    IODesc = ((ObitImage*)(ObitImageDesc*)outImage->myBeam)->myIO->myDesc;
     bmDesc = ((ObitImage*)outImage->myBeam)->myDesc;
     if ((imDesc->inaxes[0]!=bmDesc->inaxes[0]) || 
 	(imDesc->inaxes[1]!=bmDesc->inaxes[1])) {
@@ -539,6 +545,9 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
 	    outImage->myGrid = (ObitUVGrid*)newObitUVGridWB(outName);
 	  /* MF Image? */
 	  else if (ObitImageMFIsA(outImage))
+	    outImage->myGrid = (ObitUVGrid*)newObitUVGridMF(outName);
+	  /* Spectroscopic Image cube? - use MF Gridding */
+	  else if (IODesc->inaxes[IODesc->jlocf]>1)
 	    outImage->myGrid = (ObitUVGrid*)newObitUVGridMF(outName);
 	  else 
 	    outImage->myGrid = newObitUVGrid(outName);
@@ -594,13 +603,16 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
   imgClass  =  (ObitImageClassInfo*)outImage->ClassInfo;          /* Image class */
 
   /* Loop over channels selected */
+  IODesc = (ObitImageDesc*)outImage->myIO->myDesc;
   icLo = 1; 
-  icHi = outImage->myDesc->inaxes[outImage->myDesc->jlocf];
+  icHi = IODesc->inaxes[IODesc->jlocf];
   if (channel>0) {icLo = channel; icHi = channel;}
   /* WB Image? Only 1 channel */
   if (ObitImageWBIsA(outImage)) icHi = icLo = 1;
   /* MF Image? Channels handled in gridding */
-  if (ObitImageMFIsA(outImage)) icHi = icLo = 1;
+  else if (ObitImageMFIsA(outImage)) icHi = icLo = 1;
+  /* Multiple parallel channels */
+  else if (IODesc->inaxes[IODesc->jlocf]>1) icHi = icLo = 1;
   for (ichannel=icLo; ichannel<=icHi; ichannel++) {
 
     /* Make beam if needed */
@@ -799,7 +811,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
  * Uses (creating if necessary) the myGrid member of out.
  * If calibration is being applied, a UV data opject will be open for each
  * image and beam; this may blow the limit on open file descriptors.
- * Images all channels selected together.
+ * Can make multichannel continuum or spectral line images
  * \param inUV     Input uv data. Should be in form of stokes to be imaged
  *                 will all calibration and selection applied and any 
  *                 weighting applied.  If calibration is specified then
@@ -847,6 +859,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
 				ObitErr *err)
 {
   ObitImage *theBeam=NULL;
+  ObitImageDesc *IODesc;
   ObitIOCode retCode;
   ObitIOSize IOBy;
   ofloat sumwts, imMax, imMin, BeamTaper=0.0, Beam[3]={0.0,0.0,0.0};
@@ -930,10 +943,14 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
     
     /* Need new gridding member? */
     sprintf (outName, "UVGrid for %s ",outImage[j]->name);
+    IODesc = (ObitImageDesc*)outImage[j]->myIO->myDesc;
     if (outImage[j]->myGrid == NULL) {
       if (ObitImageWBIsA(outImage[j]))
 	outImage[j]->myGrid = (ObitUVGrid*)newObitUVGridWB(outName);
       else if (ObitImageMFIsA(outImage[j]))
+	outImage[j]->myGrid = (ObitUVGrid*)newObitUVGridMF(outName);
+      /* Spectroscopic Image cube? - use MF Gridding */
+      else if (IODesc->inaxes[IODesc->jlocf]>1)
 	outImage[j]->myGrid = (ObitUVGrid*)newObitUVGridMF(outName);
       else
 	outImage[j]->myGrid = newObitUVGrid(outName);
@@ -971,11 +988,15 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
 	arrayNx[ip] = theBeam->myDesc->inaxes[0];
 	arrayNy[ip] = theBeam->myDesc->inaxes[1];
 	sprintf (outName, "UVGrid for %s Beam %d",outImage[j]->name,iorder);
+	IODesc = (ObitImageDesc*)outImage[j]->myIO->myDesc;
 	/* WB or MF Image? */
 	if (ObitImageWBIsA(outImage[j])) {
 	  grids[ip] = (ObitUVGrid*)newObitUVGridWB(outName);
 	} else if (ObitImageMFIsA(outImage[j])) {
 	  grids[ip] = (ObitUVGrid*)newObitUVGridMF(outName);
+	  /* Spectroscopic Image cube? - use MF Gridding */
+	} else if (IODesc->inaxes[IODesc->jlocf]>1) {
+	    grids[ip] = (ObitUVGrid*)newObitUVGridMF(outName);
 	} else {
 	  grids[ip] = newObitUVGrid(outName);
 	}
@@ -2874,7 +2895,7 @@ void ObitImageUtilInsertPlane (ObitImage *in, ObitImage *out, olong *plane,
 {
   ObitIOSize IOBy = OBIT_IO_byPlane;
   ObitImageDesc *inDesc=NULL, *outDesc=NULL;
-  olong i;
+  olong i, ip, np, pln[5];
   olong blc[IM_MAXDIM] = {1,1,1,1,1};
   olong trc[IM_MAXDIM] = {1,1,1,1,1};
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -2900,21 +2921,21 @@ void ObitImageUtilInsertPlane (ObitImage *in, ObitImage *out, olong *plane,
 		      "%s: Output does not have plane %d  %d", 
 		      routine, plane[0], plane[1]);
 
+  /* How many input planes */
+  np = inDesc->inaxes[2];
+
   /* Read input plane */
   /* Set blc, trc */
   for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
-  for (i=0; i<2; i++) trc[i] = inDesc->inaxes[i];
-  for (i=2; i<IM_MAXDIM; i++) trc[i] = 1;
+  for (i=0; i<3; i++) trc[i] = inDesc->inaxes[i];
+  for (i=3; i<IM_MAXDIM; i++) trc[i] = 1;
   
   dim[0] = 1;
-  ObitInfoListPut (in->info, "IOBy", OBIT_long, dim, &IOBy, err);
+  ObitInfoListAlwaysPut (in->info, "IOBy", OBIT_long, dim, &IOBy);
   dim[0] = 7;
-  ObitInfoListPut (in->info, "BLC", OBIT_long, dim, blc, err); 
-  ObitInfoListPut (in->info, "TRC", OBIT_long, dim, trc, err);
-  ObitImageOpen (in, OBIT_IO_ReadOnly, err);
-  ObitImageRead (in, NULL, err);
-  ObitImageClose (in, err);
-  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  ObitInfoListAlwaysPut (in->info, "BLC", OBIT_long, dim, blc); 
+  ObitInfoListAlwaysPut (in->info, "TRC", OBIT_long, dim, trc);
+
 
   /* Write to output */
   /* Set blc, trc */
@@ -2929,7 +2950,17 @@ void ObitImageUtilInsertPlane (ObitImage *in, ObitImage *out, olong *plane,
   ObitInfoListPut (out->info, "TRC", OBIT_long, dim, trc, err);
   out->extBuffer = TRUE;  /* Don't need output buffer */
   ObitImageOpen (out, OBIT_IO_ReadWrite, err);
-  ObitImageWrite (out, in->image->array, err);
+  pln[0] = pln[1] = pln[2] = pln[3] = pln[4] = 1;
+  /* Loop over input planes */
+  for (ip=0; ip<np; ip++) {
+    pln[0] = ip+1;  pln[1] = pln[2] = pln[3] = pln[4] = 1;
+    ObitImageGetPlane (in, NULL, pln, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    pln[0] = plane[0]+ip; 
+    for (i=1; i<5; i++) pln[i] = plane[i];
+    ObitImagePutPlane (out, in->image->array, pln, err);
+    if (err->error) Obit_traceback_msg (err, routine, out->name);
+  } /* end loop copying planes */
   /* Copy Beam information if needed */
   if ((out->myDesc->beamMaj<=0.0) || (out->myDesc->beamMin<=0.0)) {
     out->myDesc->beamMaj = in->myDesc->beamMaj;
@@ -3181,7 +3212,7 @@ ObitImageUtilUV2ImageDesc(ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
   /* More complex if spectral line observations */
   /* May average channels */
   if ((nif==1) && (nchavg<nfreq)) {
-    nch = nfreq / nchavg; /* how many output channels? */
+    nch = (olong)(0.999 + (ofloat)nfreq / nchavg); /* how many output channels? */
     imageDesc->inaxes[iaxis] = nch;
     imageDesc->cdelt[iaxis] = nch*UVDesc->cdelt[UVDesc->jlocf]; 
     imageDesc->crpix[iaxis] = 1.0 + (nch-1.0) / 2.0; /* reference pixel */

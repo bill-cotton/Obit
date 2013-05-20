@@ -1452,13 +1452,16 @@ void ObitImageMosaicAddField (ObitImageMosaic *in, ObitUV *uvData,
  * Ignore facets with BeamTaper>0
  * Routine translated from the AIPSish 4MASS/SUB/FLATEN.FOR/FLATEN  
  * \param in     The object with images
+ * Control info on info member:
+ * \li "planeNo" OBIT_long (1,1,1) plane (1-rel) in mosiac to flatten [def 1]
  * \param err     Error stack, returns if not empty.
  */
 void ObitImageMosaicFlatten (ObitImageMosaic *in, ObitErr *err)
 {
   olong   blc[IM_MAXDIM]={1,1,1,1,1}, trc[IM_MAXDIM]={0,0,0,0,0};
   olong i, j, radius, rad, plane[IM_MAXDIM] = {1,1,1,1,1}, hwidth = 2;
-  olong *naxis, pos1[IM_MAXDIM], pos2[IM_MAXDIM];
+  olong *naxis, pos1[IM_MAXDIM], pos2[IM_MAXDIM], planeNo;
+  ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitImage *out=NULL, *tout1=NULL, *tout2=NULL;
   ObitFArray *sc2=NULL, *sc1=NULL;
@@ -1477,8 +1480,12 @@ void ObitImageMosaicFlatten (ObitImageMosaic *in, ObitErr *err)
     return;
   }
 
+  /* plane number */
+  planeNo = 1;
+  ObitInfoListGetTest(in->info, "planeNo", &type, dim, &planeNo);
+
   /* Tell user */
-  Obit_log_error(err, OBIT_InfoErr, "Flattening flys eye to single image");
+  Obit_log_error(err, OBIT_InfoErr, "Flattening flys eye to single image plane %d", planeNo);
 
   /* Copy beam parameters from first image to flattened */
   ObitImageOpen(in->images[0], OBIT_IO_ReadOnly, err);
@@ -1514,6 +1521,8 @@ void ObitImageMosaicFlatten (ObitImageMosaic *in, ObitErr *err)
 
   for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
   for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
+  /* set plane */
+  blc[2] = trc[2] = planeNo;
 
   /* Loop over tiles */
   for (i= 0; i<in->numberImages; i++) { /* loop 500 */

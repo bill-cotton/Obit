@@ -64,6 +64,7 @@ X    Weather.xml
 
 #include "ObitSDMData.h"
 #include "ObitEVLASysPower.h"
+#include "ObitALMACalAtm.h"
 #include "ObitFile.h"
 /*#include "glib/gqsort.h"*/
 
@@ -205,6 +206,14 @@ static ASDMcalAtmosphereRow* KillASDMcalAtmosphereRow(ASDMcalAtmosphereRow* row)
 static ASDMcalAtmosphereTable* ParseASDMcalAtmosphereTable(ObitSDMData *me,
 					 gchar *calAtmosphereFile, 
 					 ObitErr *err);
+/** Private: Parser constructor for calAtmosphere table from xml file */
+static ASDMcalAtmosphereTable* ParseASDMcalAtmosphereTableXML(ObitSDMData *me,
+							 gchar *calAtmosphereFile, 
+							 ObitErr *err);
+/** Private: Parser constructor for calAtmospherer table from binary file */
+static ASDMcalAtmosphereTable* ParseASDMcalAtmosphereTableBin(ObitSDMData *me,
+						    gchar *calAtmosphereFile, 
+						    ObitErr *err);
 /** Private: Destructor for calAtmosphere table. */
 static ASDMcalAtmosphereTable* KillASDMcalAtmosphereTable(ASDMcalAtmosphereTable* table);
 
@@ -458,7 +467,7 @@ static ASDMSysPowerRow* KillASDMSysPowerRow(ASDMSysPowerRow* row);
 static ASDMSysPowerTable* ParseASDMSysPowerTable(ObitSDMData *me,
 					 gchar *SysPowerFile, 
 					 ObitErr *err);
-/** Private: Parser constructor for SysPowerl table from xml file */
+/** Private: Parser constructor for SysPower table from xml file */
 static ASDMSysPowerTable* ParseASDMSysPowerTableXML(ObitSDMData *me,
 						    gchar *SysPowerFile, 
 						    ObitErr *err);
@@ -634,8 +643,8 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
-  /* calAtmosphere table */
-  fullname = g_strconcat (DataRoot,"/CalAtmosphere.xml", NULL);
+  /* calAtmosphere table from either xml or binary */
+  fullname = g_strconcat (DataRoot,"/CalAtmosphere", NULL);
   out->calAtmosphereTab = ParseASDMcalAtmosphereTable(out, fullname, err);
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
@@ -2046,9 +2055,15 @@ static gboolean FindMoreAtmData(ASDMcalAtmosphereTable *calAtmosphereTab, ObitUV
   /* Find IF - set gains */
   iif = BBIndex[calAtmosphereTab->rows[iRow]->basebandId];
   if (iif>=0) {
-    gain1[iif] = sqrt(calAtmosphereTab->rows[iRow]->tSys[0]);
-    if (numPol>1) gain2[iif] = sqrt(calAtmosphereTab->rows[iRow]->tSys[1]);
-  }
+    if (calAtmosphereTab->rows[iRow]->tSys[0]>0.0) {
+      gain1[iif] = sqrt(calAtmosphereTab->rows[iRow]->tSys[0]);
+    } else gain1[iif] = fblank;
+    if (numPol>1) {
+      if (calAtmosphereTab->rows[iRow]->tSys[1]>0.0) {
+	gain2[iif] = sqrt(calAtmosphereTab->rows[iRow]->tSys[1]);
+     } else gain2[iif] = fblank;
+    }
+ }
     
   /* More to find? */
   more = FALSE;
@@ -3945,15 +3960,51 @@ static ASDMcalAtmosphereRow* KillASDMcalAtmosphereRow(ASDMcalAtmosphereRow* row)
 } /* end   KillASDMcalAtmosphereRow */
 
 /** 
- * Constructor for calAtmosphere table parsing from file
+ * Constructor for CalAtmosphere table parsing from file
+ * \param  CalAtmosphereFile Name root of file containing table
+ * \param  err     ObitErr for reporting errors.
+ * \return table structure,  use KillASDMCalAtmosphereTable to free
+ */
+static ASDMcalAtmosphereTable* 
+ParseASDMcalAtmosphereTable(ObitSDMData *me, 
+		       gchar *CalAtmosphereFile, 
+		       ObitErr *err)
+{
+  ASDMcalAtmosphereTable* out=NULL;
+  gchar *fullname;
+  gchar *routine = "ParseASDMCalAtmosphereTable";
+
+  if (err->error) return out;
+
+  /* does either table exist? Try binary first */
+  fullname = g_strconcat (CalAtmosphereFile,".bin", NULL);
+  if (ObitFileExist(fullname, err)) {
+    out = ParseASDMcalAtmosphereTableBin(me, fullname, err);
+  }
+  if (fullname) g_free(fullname);
+  if (err->error) Obit_traceback_val (err, routine, me->name, out);
+  if (out) return out;  /* Done? */
+
+  /* does either table exist? Try binary first */
+  fullname = g_strconcat (CalAtmosphereFile,".xml", NULL);
+  if (ObitFileExist(fullname, err)) {
+    out = ParseASDMcalAtmosphereTableXML(me, fullname, err);
+  }
+  if (fullname) g_free(fullname);
+  if (err->error) Obit_traceback_val (err, routine, me->name, out);
+  return out;
+} /* end ParseASDMCalAtmosphereTable */
+
+/** 
+ * Constructor for calAtmosphere table parsing from xml file
  * \param  calAtmosphereFile Name of file containing table
  * \param  err     ObitErr for reporting errors.
  * \return table structure,  use KillASDMcalAtmosphereTable to free
  */
 static ASDMcalAtmosphereTable* 
-ParseASDMcalAtmosphereTable(ObitSDMData *me, 
-		      gchar *calAtmosphereFile, 
-		      ObitErr *err)
+ParseASDMcalAtmosphereTableXML(ObitSDMData *me, 
+			       gchar *calAtmosphereFile, 
+			       ObitErr *err)
 {
   ASDMcalAtmosphereTable* out=NULL;
   ObitIOCode retCode;
@@ -3962,7 +4013,7 @@ ParseASDMcalAtmosphereTable(ObitSDMData *me,
   gchar *endrow = "</row>";
   gchar *prior, *next, *b;
   ObitFile *file=NULL;
-  gchar *routine = " ParseASDMcalAtmosphereTable";
+  gchar *routine = " ParseASDMcalAtmosphereTableXML";
 
   /* error checks */
   if (err->error) return out;
@@ -4156,7 +4207,71 @@ ParseASDMcalAtmosphereTable(ObitSDMData *me,
   file = ObitFileUnref(file);
 
   return out;
-} /* end ParseASDMcalAtmosphereTable */
+} /* end ParseASDMcalAtmosphereTableXML */
+
+/** 
+ * Constructor for ALMA CalAtmosphere table parsing from binary file
+ * \param  calAtmosphereFile Name of file containing table
+ * \param  err          ObitErr for reporting errors.
+ * \return table structure,  use KillASDMcalAtmosphereTable to free
+ */
+static ASDMcalAtmosphereTable* 
+ParseASDMcalAtmosphereTableBin(ObitSDMData *me, 
+			  gchar *calAtmosphereFile, 
+			  ObitErr *err)
+{
+  ASDMcalAtmosphereTable* out=NULL;
+  ObitALMACalAtm*  binTab=NULL;
+  olong nrow, orow, irow;
+  gchar *routine = "ParseASDMcalAtmosphereTableBin";
+
+  if (err->error) return out;
+
+  /* Basic output */
+  out = g_malloc0(sizeof(ASDMcalAtmosphereTable));
+  out->rows = NULL;
+
+  /* Create binary table parsing structure */
+  binTab = ObitALMACalAtmCreate ("ALMACalAtm", err);
+  if (err->error) Obit_traceback_val (err, routine, me->name, out);
+
+  /* Init file */
+  ObitALMACalAtmInitFile (binTab, calAtmosphereFile, err);
+  if (err->error) goto cleanup;
+
+  /* Really stupid format - doesn't tell how many rows */
+  if (binTab->nrow<=0) binTab->nrow = me->ASDMTab->calAtmosphereRows;
+
+  /* How big */
+  nrow = ObitALMACalAtmGetNrow (binTab);
+  /* If not given use ASDM table */
+  if (nrow<0) {
+    nrow = me->ASDMTab->calAtmosphereRows;
+    binTab->nrow = nrow;
+  }
+  out->nrows = nrow;
+  if (nrow<1) return out;
+
+  /* Finish building output */
+  out->rows = g_malloc0((out->nrows+1)*sizeof(ASDMcalAtmosphereRow*));
+  for (irow=0; irow<out->nrows; irow++) out->rows[irow] = g_malloc0(sizeof(ASDMcalAtmosphereRow));
+
+  /* Loop reading rows */
+  for (irow=0; irow<out->nrows; irow++) {
+    orow = ObitALMACalAtmGetRow (binTab, out->rows[irow], err);
+    if (orow<=0) break;  /* Done? */
+    if (err->error) goto cleanup;
+    nrow = orow;
+  } /* end loop reading */
+  out->nrows = nrow;
+
+  /* Cleanup */
+  binTab = ObitALMACalAtmUnref(binTab); 
+
+ cleanup:
+  if (err->error) Obit_traceback_val (err, routine, me->name, out);
+  return out;
+} /* end ParseASDMCalAtmosphereTableBin */
 
 /** 
  * Destructor for calAtmosphere table

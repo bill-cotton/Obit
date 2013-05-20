@@ -1320,3 +1320,28 @@ Obit/src/ObitBDFData.c:
   InitScan: Always set isLSB=False, i.e. don't flip lsb data, it should be 
   correctly labeled.  ALMA LSB data was having the spectra reversed.
 10 May 2013, svn version 449
+
+Fast spectral line imaging and fixes to BDFIn for ALMA CalAtmosphere table
+Obit/changes.log:
+Obit/src/ObitBDFData.c:
+  various: use new routine findString rather than the dysfunctional g_strstr_len
+Obit/include/ObitALMACalAtm.h Obit/include/ObitALMACalAtmDef.h:
+Obit/src/ObitALMACalAtm.c Obit/include/ObitALMACalAtmClassDef.h :
+  New class for fast parallel multithreaded spectral line CLEANs.
+Obit/src/ObitSDMData.c:
+  Implement reading either xml or binary ALMA CalAtmosphere tables.
+Obit/include/ObitDConCleanVisLine.h Obit/include/ObitDConCleanVisLineDef.h :
+Obit/src/ObitDConCleanVisLine.c Obit/include/ObitDConCleanVisLineClassDef.h :
+  New class to parse ALMA SysAtmosphere binary tables
+Obit/src/ObitDConCleanVis.c Obit/include/ObitDConCleanVis.h Obit/include/ObitDConCleanVisDef.h:
+ Upgraded to support VisLine child class.
+Obit/src/ObitTableCCUtil.c Obit/include/ObitTableCCUtil.h:
+  New function CombTSpec to combine simple tables into a TSpec table.
+Obit/src/ObitImageUtil.c Obit/src/ObitImageMosaic.c :
+Obit/src/ObitUVGridMF.c  Obit/src/ObitUVWeight.c :
+  Support fast variant of spectral line multithread CLEAN.
+Obit/TDF/Imager.TDF Obit/tasks/Imager.c:
+  Implement fast variant of spectral line multithread CLEAN.
+Obit/src/ObitUVReweight.c:
+  Do: initialize firstVis
+20 May 2013, svn version 450

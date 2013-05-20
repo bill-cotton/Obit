@@ -58,7 +58,7 @@ void ObitUVReweightDo (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 {
   ObitIOCode iretCode, oretCode;
   gboolean doCalSelect;
-  olong i, j, k, iwt, jwt, firstVis, startVis, endVis, suba;
+  olong i, j, k, iwt, jwt, firstVis=1, startVis=1, endVis=1, suba;
   olong countAll;
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
   ObitInfoType type;

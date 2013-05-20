@@ -129,6 +129,8 @@ static void Strip (gchar *s);
 /** Private: Get axis order */
 static olong GetAxisOrder (ObitBDFAxisName *axes, ObitBDFAxisName axis);
 
+/** Private: find string */
+static gchar* findString (gchar *start, olong maxStr, gchar *match);
 /*----------------- Union definitions ----------------------*/
 /** Used for byte swapping shorts */
  union sequiv { 
@@ -445,8 +447,10 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   /* Find first non null */
   while (*in->current==0) (*in->current)++;  /* dangerous */
   maxStr    = in->nBytesInBuffer - (in->current-in->buffer);
-  startInfo = g_strstr_len (in->current, maxStr, "<sdmDataHeader ");
-  endInfo   = g_strstr_len (in->current, maxStr, "</sdmDataHeader>");
+  /*startInfo = g_strstr_len (in->current, maxStr, "<sdmDataHeader ");*/
+  startInfo = findString (in->current, maxStr, "<sdmDataHeader ");
+  /*endInfo   = g_strstr_len (in->current, maxStr, "</sdmDataHeader>");*/
+  endInfo   = findString (in->current, maxStr, "</sdmDataHeader>");
   maxStr    = (olong)(endInfo-startInfo);
   
   /* Start Time */
@@ -504,9 +508,11 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   
   /* first find limits of dataStruct */
   maxStr    = in->nBytesInBuffer - (in->current-in->buffer);
-  startInfo = g_strstr_len (in->current, maxStr, "<dataStruct ");
+  /*startInfo = g_strstr_len (in->current, maxStr, "<dataStruct ");*/
+  startInfo = findString (in->current, maxStr, "<dataStruct ");
   maxStr    = in->nBytesInBuffer - (olong)(startInfo-in->buffer);
-  endInfo   = g_strstr_len (startInfo, maxStr, "</dataStruct>");
+  /*endInfo   = g_strstr_len (startInfo, maxStr, "</dataStruct>");*/
+  endInfo   = findString (startInfo, maxStr, "</dataStruct>");
   maxStr    = (olong)(endInfo-startInfo);
 
   /* flags */
@@ -600,11 +606,12 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   while (i<MAXBBINFO) {
     /* first find limits of next baseband info */
     maxStr = (olong)(endInfo-next);
-    startBB = g_strstr_len (next, maxStr, "<baseband ");
+    /*startBB = g_strstr_len (next, maxStr, "<baseband ");*/
+    startBB = findString (next, maxStr, "<baseband ");
     /* More? */
     if (startBB==NULL) break;
     maxStr2 = (olong)(endInfo-next);
-    endBB   = g_strstr_len (startBB, maxStr, "</baseband>");
+    endBB   = findString (startBB, maxStr, "</baseband>");
     maxStr2 = (olong)(endBB-startBB);
  
     in->ScanInfo->BBinfo[i] = KillBDFBasebandInfo(in->ScanInfo->BBinfo[i]);/* delete old */
@@ -977,20 +984,23 @@ ObitIOCode ObitBDFDataInitInteg  (ObitBDFData *in, ObitErr *err)
 
   /* Parse scan header - first find limits */
   maxStr    = in->nBytesInBuffer - (in->current-in->buffer);
-  startInfo = g_strstr_len (in->current, maxStr, "<sdmDataSubsetHeader ");
+  /*startInfo = g_strstr_len (in->current, maxStr, "<sdmDataSubsetHeader ");*/
+  startInfo = findString (in->current, maxStr, "<sdmDataSubsetHeader ");
   /* May need next buffer */
   while (startInfo==NULL) {
     retCode = ObitBDFDataFillBuffer (in, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
     maxStr = in->nBytesInBuffer;
-    startInfo = g_strstr_len (in->buffer, maxStr, "<sdmDataSubsetHeader ");
+    /*startInfo = g_strstr_len (in->buffer, maxStr, "<sdmDataSubsetHeader ");*/
+    startInfo = findString (in->buffer, maxStr, "<sdmDataSubsetHeader ");
    if (retCode==OBIT_IO_EOF) startInfo = in->buffer;
   }
   /* If the entire file was read and no start info - then something is wrong */
   if (retCode==OBIT_IO_EOF) return retCode;
 
   maxStr    = in->nBytesInBuffer - (olong)(startInfo-in->buffer);
-  endInfo   = g_strstr_len (startInfo, maxStr, "</sdmDataSubsetHeader>");
+  /*endInfo   = g_strstr_len (startInfo, maxStr, "</sdmDataSubsetHeader>");*/
+  endInfo   = findString (startInfo, maxStr, "</sdmDataSubsetHeader>");
   maxStr    = (olong)(endInfo-startInfo);
   
   /* Start Time */
@@ -1004,7 +1014,8 @@ ObitIOCode ObitBDFDataInitInteg  (ObitBDFData *in, ObitErr *err)
   in->currIntTime = in->IntegInfo->interval;
   
   /* Data type from dataStruct */
-  startInfo = g_strstr_len (startInfo, maxStr, "<dataStruct ");
+  /*startInfo = g_strstr_len (startInfo, maxStr, "<dataStruct ");*/
+  startInfo = findString (startInfo, maxStr, "<dataStruct ");
   maxStr    = (olong)(endInfo-startInfo);
   prior = "type=";
   tstr = BDFparse_quote_str (startInfo, maxStr, prior, &next);
@@ -1553,7 +1564,8 @@ static olong BDFparse_int(gchar *string, olong maxChar,
   gchar *b;
 
   *next = string;  /* if not found */
-  b = g_strstr_len (string, maxChar, prior);
+  /*b = g_strstr_len (string, maxChar, prior);*/
+  b = findString (string, maxChar, prior);
   if (b==NULL) return out;  /* Found? */
   b += strlen(prior);
   out = (olong)strtol(b, next, 10);
@@ -1578,7 +1590,8 @@ static gchar* BDFparse_str(gchar *string, olong maxChar,
   olong i, n;
 
   *next = string;  /* if not found */
-  b = g_strstr_len (string, maxChar, prior);
+  /*b = g_strstr_len (string, maxChar, prior);*/
+  b = findString (string, maxChar, prior);
   if (b==NULL) return out;  /* Found? */
   b += strlen(prior);
 
@@ -1613,7 +1626,8 @@ static gchar* BDFparse_quote_str(gchar *string, olong maxChar,
   olong i, n;
 
   *next = string;  /* if not found */
-  b = g_strstr_len (string, maxChar, prior);
+  /*b = g_strstr_len (string, maxChar, prior);*/
+  b = findString (string, maxChar, prior);
   if (b==NULL) return out;  /* Found? */
   b += strlen(prior);
   if (*b!='"') return out;  /* Make sure quote */
@@ -1651,7 +1665,8 @@ static gchar** BDFparse_strarray(gchar *string, olong maxChar,
   olong i, j, n;
 
   *next = string;  /* if not found */
-  b = g_strstr_len (string, maxChar, prior);
+  /*b = g_strstr_len (string, maxChar, prior);*/
+  b = findString (string, maxChar, prior);
   if (b==NULL) return out;  /* Found? */
   b += strlen(prior);
 
@@ -1701,7 +1716,8 @@ static ObitBDFAxisName* BDFparse_axesarray(gchar *string, olong maxChar,
   olong i, j, n;
   
   *next = string;  /* if not found */
-  b = g_strstr_len (string, maxChar, prior);
+  /*b = g_strstr_len (string, maxChar, prior);*/
+  b = findString (string, maxChar, prior);
   if (b==NULL) return out;  /* Found? */
   b += strlen(prior);
   
@@ -1749,7 +1765,8 @@ static odouble BDFparse_time(gchar *string, olong maxChar,
   odouble mjdJD0=2400000.5; /* JD of beginning of mjd time */
 
   *next = string;  /* if not found */
-  b = g_strstr_len (string, maxChar, prior);
+  /*b = g_strstr_len (string, maxChar, prior);*/
+  b = findString (string, maxChar, prior);
   if (b==NULL) return out;  /* Found? */
   b += strlen(prior);
   temp = strtoll(b, next, 10);
@@ -1774,7 +1791,8 @@ static odouble BDFparse_timeint(gchar *string, olong maxChar,
   gchar *b;
 
   *next = string;  /* if not found */
-  b = g_strstr_len (string, maxChar, prior);
+  /*b = g_strstr_len (string, maxChar, prior);*/
+  b = findString (string, maxChar, prior);
   if (b==NULL) return out;  /* Found? */
   b += strlen(prior);
   temp = strtoll(b, next, 10);
@@ -2178,7 +2196,8 @@ static ObitBDFMIMEType GetNextMIME(ObitBDFData *in,
   /* Look for MIME_boundary-2 */
   maxStr    = in->nBytesInBuffer - (olong)(last-in->buffer);
   prior = "--MIME_boundary-2";
-  tstr = g_strstr_len (last, maxStr, prior);
+  /*tstr = g_strstr_len (last, maxStr, prior);*/
+  tstr = findString (last, maxStr, prior);
   /* Possibly junk in file */
   warn = TRUE;
   while (tstr==NULL) {
@@ -2200,7 +2219,8 @@ static ObitBDFMIMEType GetNextMIME(ObitBDFData *in,
 		     "Hit EOF before next MIME block");
       return out;
     }
-    tstr = g_strstr_len (last, maxStr, prior);
+    /*tstr = g_strstr_len (last, maxStr, prior);*/
+    tstr = findString (last, maxStr, prior);
   }
   *start = tstr + strlen(prior);
 
@@ -2253,15 +2273,18 @@ static ObitBDFMIMEType GetNextMIMEType(ObitBDFData *in,
   /* Look for boundaries */
   maxStr    = in->nBytesInBuffer - (olong)(last-in->buffer);
   prior = "Content-Location:";
-  tstr = g_strstr_len (last, maxStr, prior);
+  /*tstr = g_strstr_len (last, maxStr, prior);*/
+  tstr = findString (last, maxStr, prior);
   if (tstr==NULL) return out;  /* Cannot find? */
   s = tstr + strlen(prior);
   slash = s;  /* In case no slashing */
   prior = "X-pad: **";
-  Xpad = g_strstr_len (last, maxStr, prior);
+  /*Xpad = g_strstr_len (last, maxStr, prior);*/
+  Xpad = findString (last, maxStr, prior);
   if (Xpad==NULL) {;  /* Cannot find? ALMA doesn't have look for \n\n*/
     prior = "\n\n";
-    Xpad = g_strstr_len (last, maxStr, prior);
+    /*Xpad = g_strstr_len (last, maxStr, prior);*/
+    Xpad = findString (last, maxStr, prior);
   }
   if (Xpad==NULL) return out;  /* Still Cannot find? */
   e = Xpad;
@@ -2289,7 +2312,8 @@ static ObitBDFMIMEType GetNextMIMEType(ObitBDFData *in,
   /* Find start - after **\n\n */
   maxStr    = in->nBytesInBuffer - (olong)(Xpad-in->buffer);
   prior = "**\n\n";
-  tstr = g_strstr_len (Xpad, maxStr, prior);
+  /*tstr = g_strstr_len (Xpad, maxStr, prior);*/
+  tstr = findString (Xpad, maxStr, prior);
   /* If not found assume it's ALMA data and use the "\n\n" */
   if (tstr==NULL)  {prior = "\n\n"; tstr = Xpad;}
   *start = tstr + strlen(prior);  /* First byte of data */
@@ -2340,3 +2364,35 @@ static olong GetAxisOrder (ObitBDFAxisName *axes, ObitBDFAxisName axis)
   return out;
 } /* end GetAxisOrder */
 
+/**
+ * Find first occurance of a string in an array of gchar
+ * \param start  beginning of array, may include NULLs
+ * \param maxStr maximum length of search
+ * \param match  Null terminated string to match, at least 2 characters
+ * \return start of match or NULL if not found
+ */
+static gchar* findString (gchar *start, olong maxStr, gchar *match)
+{
+  gchar *out=NULL, *test, *end;
+  gboolean OK;
+  olong i, len;
+
+  len  = strlen (match);
+  end  = start + maxStr;
+  test = start;
+  while (test<end) {
+    if ((test[0]==match[0]) && (test[1]==match[1])) {
+      if ((test+len)>end) return out;   /* End? */
+      /* Check if rest match */
+      OK = TRUE;
+      for (i=2; i<len; i++) {
+	OK = OK && (test[i]==match[i]);
+	if (!OK) break;
+      }
+      if (OK) return test;
+    } /* end first two match */
+    test++;
+  }
+
+  return out;
+} /* end findString */

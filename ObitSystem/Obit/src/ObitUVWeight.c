@@ -511,13 +511,13 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
     sigma2v = log(0.3)/(farr[1]*farr[1]);
     cpa = cos(farr[2]*DG2RAD);
     spa = sin(farr[2]*DG2RAD);
-    for (i=0; i<dim[0]; i++) in->sigma1[i] = (cpa*cpa*sigma2v + spa*spa*sigma2u);
-    for (i=0; i<dim[0]; i++) in->sigma2[i] = (spa*spa*sigma2v + cpa*cpa*sigma2u);
-    for (i=0; i<dim[0]; i++) in->sigma3[i] = 2.0*cpa*spa*(sigma2v - sigma2u);
+    for (i=0; i<nif; i++) in->sigma1[i] = (cpa*cpa*sigma2v + spa*spa*sigma2u);
+    for (i=0; i<nif; i++) in->sigma2[i] = (spa*spa*sigma2v + cpa*cpa*sigma2u);
+    for (i=0; i<nif; i++) in->sigma3[i] = 2.0*cpa*spa*(sigma2v - sigma2u);
   } else {
-    for (i=0; i<dim[0]; i++) in->sigma1[i] = 0.0;
-    for (i=0; i<dim[0]; i++) in->sigma2[i] = 0.0;
-    for (i=0; i<dim[0]; i++) in->sigma3[i] = 0.0;
+    for (i=0; i<nif; i++) in->sigma1[i] = 0.0;
+    for (i=0; i<nif; i++) in->sigma2[i] = 0.0;
+    for (i=0; i<nif; i++) in->sigma3[i] = 0.0;
   }
 
   /* Is array of taper given? */
