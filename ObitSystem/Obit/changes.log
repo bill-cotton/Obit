@@ -1345,3 +1345,10 @@ Obit/TDF/Imager.TDF Obit/tasks/Imager.c:
 Obit/src/ObitUVReweight.c:
   Do: initialize firstVis
 20 May 2013, svn version 450
+
+Bug fixes
+Obit/include//ObitDConCleanVisClassDef.h:
+  Missed from previous update
+Obit/tasks/FndSou.c:
+  Fix problems making very strong sources disappear
+21 May 2013, svn version 451

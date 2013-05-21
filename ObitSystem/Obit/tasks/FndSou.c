@@ -1091,7 +1091,7 @@ IslandList* Islands(ObitFArray *data, ofloat cutt)
   IslandElem* elem=NULL;
   olong i, j, k, nx, ny, *prev=NULL, *curr=NULL;
   olong blc[2], trc[2];
-  ofloat *row, fblank = ObitMagicF();
+  ofloat *row, lcut, lpeak, fblank = ObitMagicF();
   olong pos[2];
 
   /* Create output */
@@ -1102,6 +1102,12 @@ IslandList* Islands(ObitFArray *data, ofloat cutt)
   ny = data->naxis[1];
   prev = g_malloc0 (nx*sizeof(olong));
   curr = g_malloc0 (nx*sizeof(olong));
+
+  /* find peak value */
+  lpeak = ObitFArrayMax (data, pos);
+  /* Don't get carried away, don't go below 0.1% of peak */
+  lcut = MAX (cutt, 0.001*lpeak);
+
 
   /* Loop over array */
   for (j=0; j<ny; j++) {
@@ -1116,7 +1122,7 @@ IslandList* Islands(ObitFArray *data, ofloat cutt)
       if (fabs(row[i]-fblank)<0.00001*fblank) continue;
 
       /* Is point above cutoff? */
-      if ((row[i] < cutt)  ||  (row[i] == fblank)) {
+      if ((row[i] < lcut)  ||  (row[i] == fblank)) {
 	curr[i] = 0;  /* not interesting */
 	/* Are any adjacent points, on  currnt Line or previous line 
 	   already marked? */
@@ -1328,7 +1334,7 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
   ofloat fracBlank=0.0;
   olong blc[2], trc[2], pos[2], cntBlank;
   ObitFArray *pixels=NULL;
-  ofloat *pixData;
+  ofloat *pixData, lcut, lpeak;
   ofloat fblank = ObitMagicF();
   olong  maxPk=*nmodel, mmaxPk, nmpk;
   olong i, j, ind, ix, iy, idx, idy, nx, ny, peakNo, ipts, ipt, kmpk;
@@ -1366,6 +1372,7 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
   peakNo = 0;
 
   /* Find Peak if single */
+  lpeak = ObitFArrayMax (pixels, pos);
   if (!doMult) {
     ssPk[peakNo] = ObitFArrayMax (pixels, pos);
     xxPk[peakNo] = 1.0 + pos[0];
@@ -1375,6 +1382,9 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
 
   /* Multiple peaks allowed */
   if (doMult) {
+
+    /* Don't get carried away, don't go below 1% of peak */
+    lcut = MAX (cutt, 0.01*lpeak);
     
     /*  Loop over pixels excluding edges */
     for (iy= 2; iy<= ny-1; iy++) { /* loop 80 */
@@ -1384,7 +1394,7 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
 	  /*  Position in pixData */
 	  ipts = (iy-1)*nx + ix -1;
 	  /* Only count points above cutt */
-	  if (pixData[ipts] <  cutt)   continue;
+	  if (pixData[ipts] <  lcut)   continue;
 	  if (pixData[ipts] == fblank) continue;
 		  
 	  /*  Bigger than surrounding points? */
@@ -1647,7 +1657,16 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
       } else nGood++;
     }
   } /* end low peak tests */
-  
+
+  /* Toss those with fit peak < peak residuals or fit peak < residual flux */
+  for (j=0; j<reg->nmodel; j++) {
+    if ((reg->peak<reg->peakResid) || reg->peak<reg->fluxResid) {
+      reg->models[j]->Peak = 0.0;
+      rejectLoFlux++; /* count */
+    } else nGood++;
+  }
+  /* End funky fits */
+
   /* Subtract fitted model from residual */
   ObitFitRegionSubtract (reg, image, err);
   if (err->error) Obit_traceback_msg (err, routine, image->name);

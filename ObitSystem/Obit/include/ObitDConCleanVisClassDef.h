@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2010                                          */
+/*;  Copyright (C) 2005-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -35,6 +35,8 @@ ObitDConCleanVisReimageFP ObitDConCleanVisReimage;
 ObitDConCleanVisAddFieldFP ObitDConCleanVisAddField;
 /** Pointer to Determine if recentering needed.*/
 ObitDConCleanVisRecenterFP ObitDConCleanVisRecenter;
+/** Pointer to Get Cleanable flux density */
+ObitDConCleanVisCleanableFP ObitDConCleanVisCleanable;
 /** Pointer to Filter weak, isolated components.*/
 ObitDConCleanVisFilterFP ObitDConCleanVisFilter;
 /** Pointer to Set Default CLEAN windows .*/
@@ -54,3 +56,23 @@ NewPxArrayFP NewPxArray;
 KillPxArrayFP KillPxArray;
 /** Pointer to Delete BeamPatches.*/
 KillBeamPatchesFP KillBeamPatches;
+/** Pointer to Pick next 2D facets */
+PickNext2DFP PickNext2D;
+/** Pointer to Pick next 3D facets */
+PickNext3DFP PickNext3D;
+/** Pointer to Find best 3D residual image */
+WhosBestFP WhosBest;
+/** Pointer to Find best 2D residual image */
+WhosBest2DFP WhosBest2D;
+/** Pointer to determine order of facets to Image */
+OrderImageFP OrderImage;
+/** Pointer to determine order of facets to CLEAN */
+OrderCleanFP OrderClean;
+/** Pointer to determine select Taper */
+SelectTaperFP SelectTaper;
+/** Pointer to reset Sky model */
+ResetSkyModelFP ResetSkyModel;
+/** Pointer to reset PixelList */
+ResetPixelListFP ResetPixelList;
+/** Pointer to Find peak brightness in mosaic */
+FindPeakFP FindPeak;
