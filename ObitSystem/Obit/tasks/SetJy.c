@@ -982,11 +982,11 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
   /* Assume no error */
   ferror = 0.0;
   /* Taylor 1999.2 &Reynolds (1934-638) */
-  if ((ictype<=0) && (isrc!=5)) {
+  if ((ictype<=0) && (isrc!=4)) {
     dt -= 3.0e0;
     temp2 = rcoeff[isrc][0] + dt * (rcoeff[isrc][1] + dt * (rcoeff[isrc][2] + dt * rcoeff[isrc][3]));
   }  
-  if ((ictype<=0) && (isrc==5)) {
+  if ((ictype<=0) && (isrc==4)) {
     temp2 = rcoeff[isrc][0] + dt * (rcoeff[isrc][1] + dt * (rcoeff[isrc][2] + dt * rcoeff[isrc][3]));
   }
 

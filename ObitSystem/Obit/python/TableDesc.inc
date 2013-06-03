@@ -71,6 +71,7 @@ extern PyObject *TableDescGetDict(ObitTableDesc* in) {
   PyObject *outDict = PyDict_New();
   PyObject *list, *value;
   gchar *ctemp;
+  Py_ssize_t doh;
   int i, pos = 0;
 
   /* test validity */
@@ -126,7 +127,8 @@ extern PyObject *TableDescGetDict(ObitTableDesc* in) {
   PyDict_SetItemString(outDict, "FieldUnit", list);
 
   /* Discard references to newly created objects. */
-  while (PyDict_Next(outDict, &pos, NULL, &value))
+  doh = pos;
+  while (PyDict_Next(outDict, &doh, NULL, &value))
     Py_DECREF(value);
 
   return outDict;

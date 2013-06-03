@@ -1352,3 +1352,63 @@ Obit/include//ObitDConCleanVisClassDef.h:
 Obit/tasks/FndSou.c:
   Fix problems making very strong sources disappear
 21 May 2013, svn version 451
+
+Improvements in Faraday rotation handling, FndSou for v. bright soutces,
+add frequency control for beam shapes, various bug fixes.
+ObitVersion:
+Obit/changes.log:
+Obit/tasks/BDFIn.c:
+  Fix indexing bug for EVLA data with subbands
+Obit/src/ObitDConCleanPxListMF.c:
+  CLEAN: only set return value True if CLEAN finished,
+  fix logic inside double loop.
+Obit/tasks/FndSou.c:
+  Improve algorithm when very bright source in field.
+Obit/src/ObitTableSUUtil.c:
+  Trap zero GMRT SU table entries 
+Obit/python/UVVis.py:
+  Document SourceID
+Obit/python/Source.py:
+  PCreateByName: Fix bug in call sequence
+Obit/python/Source.inc:
+  SourceCreateByName" Fix bug.
+Obit/python/UVVis.inc:
+   Add error check after I/O
+Obit/python/Obit_wrap.c  Obit/python/Obit_wrap.c:
+  New interface
+Obit/tasks/MapBeam.c:
+  Better diagnostics, more robust
+Obit/TDF/Splat.TDF Obit/tasks/Splat.c:
+  Add PDVer parameter.
+Obit/TDF/WVRCal.TDF:
+  Improve documentation, defaults
+Obit/src/ObitTableVLUtil.c:
+  Redun: Fix bug in logic deciding which component to keep.
+  Was losing components in the same field from complex regions.
+Obit/python/SpectrumFit.py:
+  Cube: document usage for ImageMF images.
+Obit/include/ObitBeamShape.h:
+  Add GetFreq, SetFreq as inline
+Obit/python/BeamShape.inc Obit/python/BeamShape.py:
+  implement GetFreq, SetFreq 
+Obit/TDF/PCal.TDF:
+  Improve documentation
+Obit/python/EVLACal.py Obit/python/EVLAContPipe.py:
+  Allow specifying calibrator polarization for PCal
+Obit/include/ObitPolnUnwind.h  Obit/src/ObitPolnUnwind.c:
+  New module to remove Faraday rotation from a cube
+Obit/python/ImageUtil.py Obit/python/ImageUtil.inc:
+  Implement PolnUnwind
+Obit/python/TableDesc.inc:
+  better type handling
+Obit/src/ObitRMFit.c:
+  bug in derivatives
+Obit/src/ObitUV.c:
+  document KeepSou
+Obit/src/ObitSpectrumFit.c:
+  Support for ObitImageMF images.
+Obit/src/ObitImageMosaicWB.c Obit/src/ObitImageMosaic.c Obit/src/ObitImageMosaicMF.c:
+  More overlap for facets
+Obit/tasks/SetJy.c:
+  Fix index for 1934-638
+3 June 2013, svn version 452

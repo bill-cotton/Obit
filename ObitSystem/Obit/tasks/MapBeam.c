@@ -1499,7 +1499,7 @@ void MapBeamHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "FreqID", "BIF", "EIF", "BChan", "EChan",  
     "doCalib", "gainUse", "doPol",  "PDVer", "flagVer", "doBand ",  "BPVer", "Smooth",
     "outDType", "outFile",  "outDisk", "outName", "outSeq",
-    "nx", "ny", "xCells", "yCells",  "avgTime", "avgFreq", "chAvg", "ChanSel",
+    "nx", "ny", "xCells", "yCells", "hwid", "avgTime", "avgFreq", "chAvg", "ChanSel",
     "blnkTime", "avgAnt", "doRMS", "doPhase", "doPolNorm", "Antennas", "RefAnts",
     NULL};
   gchar *routine = "MapBeamHistory";
@@ -1936,6 +1936,10 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
 	for (ichan=0; ichan<nchan; ichan++) {
 	  off  = iElem*selem + iIF*nchan + ichan;
 	  doff = indx + inData->myDesc->nrparm + iIF*incif + ichan*incf;
+	  /* DEBUG */
+	  if ((iIF==1) && (fabs((u/xCells)+5.0)<2.1) && (fabs((v/yCells)-2.0)<2.1)) {
+	    fprintf (stderr,"cx %f cy %f wt %f\n",u/xCells-10.0, v/yCells-10.0, inData->buffer[ddoff+2]);
+	  }
 	  /* I */
 	  ddoff = doff;
 	  if (inData->buffer[ddoff+2]>0.0) {
@@ -2077,9 +2081,11 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
       iy = (olong) (SumElCell[i] + ny/2 + 1.5);
       if ((SumAzCell[i]>1000.) || (SumElCell[i]>1000.)) continue;
       Obit_log_error(err, OBIT_InfoErr, 
-		     "Cell %3d %3d Az %8.1f asec, El %8.1f asec, I %6.3f Q %6.3f U %6.3f V %6.3f Jy",
-		     ix,iy, SumAzCell[i]*xCells*206265., 
-		     SumElCell[i]*yCells*206265., SumIr[i*selem], SumQr[i*selem],
+		     "%3.3d Cell %3d %3d Az %8.1f cell, El %8.1f cell, I %6.3f Q %6.3f U %6.3f V %6.3f Jy",
+		     i, ix,iy, 
+		     /*SumAzCell[i]*xCells*206265., SumElCell[i]*yCells*206265., offset in asec */
+		     SumAzCell[i], SumElCell[i],   /* offset in cells */
+		     SumIr[i*selem], SumQr[i*selem],
 		     SumUr[i*selem], SumVr[i*selem]);
     }
   } /* End loop normalizing list */
@@ -2140,7 +2146,7 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
   odouble sumIWt , sumQWt, sumUWt, sumVWt;
   odouble valIr,  valIi, valII, valQr, valQi, valQQ;
   odouble valUr,  valUi, valUU, valVr, valVi, valVV;
-  olong   i, iIF, ichan, nx=1, ny=1, ix, iy, indx, jndx, off;
+  olong   i, iIF, ichan, nx=1, ny=1, hwid=1, ix, iy, indx, jndx, off;
   ObitFArray *array;
   ObitInfoType type;
   gint32   dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -2153,6 +2159,7 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
   ObitInfoListGetTest(myInput, "ny", &type, dim, &ny);
   ObitInfoListGetTest(myInput, "xCells", &type, dim, &xCells);
   ObitInfoListGetTest(myInput, "yCells", &type, dim, &yCells);
+  ObitInfoListGetTest(myInput, "hwid",   &type, dim, &hwid);
   xcen = (ofloat)(nx/2);
   ycen = (ofloat)(ny/2);
 
@@ -2165,7 +2172,7 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
       x = ix - xcen;
       
       /* Get interpolation coefficients */
-      lagrange (x, y, nelem, 1, SumAzCell, SumElCell, coef);
+      lagrange (x, y, nelem, hwid, SumAzCell, SumElCell, coef);
 
       /* Loop over IFs */
       for (iIF=0; iIF<nIF; iIF++) {
@@ -2180,16 +2187,20 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 	  for (i=0; i<nelem; i++) {
 	    closest = MIN (closest, MAX (fabs(SumAzCell[i]-x), fabs(SumElCell[i]-y)));
 	    if (coef[i]!=0.0) {
+	      /* DEBUG */
+	      if ((iIF==1) && (abs(ix-21)<=2) && (abs(iy-28)<=2)) {
+		fprintf (stderr,"i %d x %d y %d flx %f coef %f sum %f\n",i, ix, iy, SumIr[i*selem+off], coef[i],sumIWt);
+	      }
 	      if (SumIr[i*selem+off]!=fblank) {
 		valIr  += coef[i]*SumIr[i*selem+off];
 		valIi  += coef[i]*SumIi[i*selem+off];
-		valII += coef[i]*SumII[i*selem+off];
+		valII  += coef[i]*SumII[i*selem+off];
 		sumIWt += coef[i];
 	      }
 	      if (SumQr[i*selem+off]!=fblank) {
-		valQr += coef[i]*SumQr[i*selem+off];
-		valQi += coef[i]*SumQi[i*selem+off];
-		valQQ += coef[i]*SumQQ[i*selem+off];
+		valQr  += coef[i]*SumQr[i*selem+off];
+		valQi  += coef[i]*SumQi[i*selem+off];
+		valQQ  += coef[i]*SumQQ[i*selem+off];
 		sumQWt += coef[i];
 	      }
 	      if (SumUr[i*selem+off]!=fblank) {
@@ -2206,11 +2217,15 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 	      }
 	    }
 	  } /* end loop over lists */
+	  /* DEBUG */
+	  if (iIF==1) {
+	    fprintf (stderr, "x %f y %f c %f s %f v %f\n", x, y, closest, sumIWt, valIr/sumIWt );
+	  }
 	  /* Better be something within 0.5 cells */
 	  if (closest>0.5) {
 	    sumIWt = sumQWt = sumUWt = sumVWt = 0.0;
 	  }
-	  if (sumIWt>0.5) {
+	  if (fabs(sumIWt)>0.1) {
 	    valIr /= sumIWt;
 	    valIi /= sumIWt;
 	    valII /= sumIWt;
@@ -2219,7 +2234,7 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 	    valIi = fblank;
 	    valII = fblank;
 	  }
-	  if (sumQWt>0.5) {
+	  if (fabs(sumQWt)>0.1) {
 	    valQr /= sumQWt;
 	    valQi /= sumQWt;
 	    valQQ /= sumQWt;
@@ -2228,7 +2243,7 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 	    valQi  = fblank;
 	    valQQ = fblank;
 	  }
-	  if (sumUWt>0.5) {
+	      if (fabs(sumUWt)>0.1) {
 	    valUr /= sumUWt;
 	    valUi /= sumUWt;
 	    valUU /= sumUWt;
@@ -2237,7 +2252,7 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 	    valUi = fblank;
 	    valUU = fblank;
 	  }
-	  if (sumVWt>0.5) {
+	      if (fabs(sumVWt)>0.1) {
 	    valVr /= sumVWt;
 	    valVi /= sumVWt;
 	    valVV /= sumVWt;
@@ -2250,9 +2265,13 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 	  /* Insert into FArrays */
 	  jndx  = iy*nx + ix;
 	  /* I */
+	  /* DEBUG */
+	  if ((iIF==1) && (ix==21) && (iy==28)) {
+	    fprintf (stderr,"x %d y %d r %f i %f jndx %d indx %d\n",ix,iy, valIr,valIi, jndx,indx );
+	  }
 	  indx  = ichan + iIF*nchan;
 	  array = grids[indx];
-	  if ((valIr==fblank) || (valIr==fblank)) {
+	  if ((valIr==fblank) || (valIi==fblank)) {
 	    amp = ph = fblank;
 	  } else {
 	    /* Amplitude and phase within +/- 90 deg */
@@ -2276,7 +2295,7 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 	  /* Q */
 	  indx  = ichan + iIF*nchan + nchan*nIF;
 	  array = grids[indx];
-	  if ((valQr==fblank) || (valQr==fblank)) {
+	  if ((valQr==fblank) || (valQi==fblank)) {
 	    amp = ph = fblank;
 	  } else {
 	    /* Amplitude and phase within +/- 90 deg */
@@ -2300,7 +2319,7 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 	  /* U */
 	  indx  = ichan + iIF*nchan + 2*nchan*nIF;
 	  array = grids[indx];
-	  if ((valUr==fblank) || (valUr==fblank)) {
+	  if ((valUr==fblank) || (valUi==fblank)) {
 	    amp = ph = fblank;
 	  } else {
 	    /* Amplitude and phase within +/- 90 deg */
@@ -2324,7 +2343,7 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 	  /* V */
 	  indx  = ichan + iIF*nchan + 3*nchan*nIF;
 	  array = grids[indx];
-	  if ((valVr==fblank) || (valVr==fblank)) {
+	  if ((valVr==fblank) || (valVi==fblank)) {
 	    amp = ph = fblank;
 	  } else {
 	    /* Amplitude and phase within +/- 90 deg */
@@ -2391,6 +2410,12 @@ void lagrange(ofloat x, ofloat y, olong n, olong hwid,
     /* Within hwid? and i!=j */
     if ((fabs(x-xlist[j])<=xhwid) && (fabs(y-ylist[j])<=xhwid)) {
       coef[j] = 1.0;  /* In case nothing else within hwid */
+      countx++;
+      prodx  *= (odouble)(x - xlist[j]);
+      prodxd *= (odouble)(xlist[j] - xlist[j]);
+      county++;
+      prody  *= (odouble)(y - ylist[j]);
+      prodyd *= (odouble)(ylist[j] - ylist[j]);
       
       /* Inner loop over list */
       for (i=0; i<n; i++) {
@@ -2423,9 +2448,12 @@ void lagrange(ofloat x, ofloat y, olong n, olong hwid,
   } /* end loop over list */
 
   /* Normalize if anything found */
-  if (fabs(sum)<0.3) return;
+  if (fabs(sum)<0.01) return;
   prodx = 1.0 / sum;
   for (j=0; j<n; j++) coef[j] *= prodx;
+
+  /* DEBUG */
+  fprintf(stderr,"lagrange x %f, y %f, sum %f\n", x, y, sum);
   
 } /* end lagrange */
 

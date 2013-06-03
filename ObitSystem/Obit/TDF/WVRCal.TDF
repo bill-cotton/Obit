@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry software
 ;# Task ALMA WVR calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2011-2012
+;;  Copyright (C) 2011-2013
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -77,7 +77,7 @@ solInt2           0.0               2nd Solution interval (min)
 solnVer                             SN table to write
 **PARAM** int 1
 refAnt                              Reference antenna 0=>pick.
-**PARAM** boo 1 **DEF** F
+**PARAM** boo 1 **DEF** T
 doFlip                              Flip sign of corrections
 **PARAM** int 1
 prtLv             0.0               Print level in selfcal
@@ -95,12 +95,17 @@ and converts into an AIPS SN calibration table with delay and
 phase corrections.  The SN table is written on the output UV 
 data file and the frequencies are those of the output data.
    Two passes are made through the data, the first selecting data
-by calSour and calCode doing scan averages of data (defined by 
+by calSour and calCode doing averages of data (defined by 
 source changes and solInt1) to compute average coefficients to 
 convert WVR sky temperature measurements to excess path lengths.
 These excess path lengths are then used to calculate phase and 
 delay corrections. 
-   Uses Bojan Nikolic's libAir package for the fitting.
+   Uses Bojan Nikolic's libalmawvr package for the fitting.
+
+   NOTE: Determining the coefficients to convert wvr radiometer 
+output to delays is *VERY SLOW* so proper selection of calSour 
+and solInt1 are important as is a healthy dose of patience.
+Use as many threads as you have cores available.
 
 Adverbs:
   DataType..'FITS' or 'AIPS'  type of input/output
@@ -126,8 +131,14 @@ Adverbs:
   Sources....List of sources to calibrate.
              '*' or blank = all; a "-" before a source name
              means all except ANY source named. 
+             These are the sources for which SN table entries in
+             the output SN table are top be written.
   calSour....List of calibrators during whose observations
-             to calibrate the WVR data.
+             to calibrate the WVR data.  These are only used for 
+             determining the coefficients to convert the wvr 
+             radiometer output to delays which only needs to 
+             track the general conditions.  The target(s) don't 
+             need to be be included here.
   Qual.......Only sources with a source qualifier number in the
              SU table matching Qual will be used if Qual is not
              -1.  Qual affects the selection of both the list of
@@ -154,7 +165,15 @@ Adverbs:
 
    The following control the conversion
   solInt1....Maximum "scan" solution interval (min)
+             This is the time interval over which wvr radiometer
+             data is averaged to determine the coefficients for
+             converting the radiometer outputs to phases and delays.
+             Scan averages are advisable.
   solInt2....Solution interval (min) for gains
+             This is the frequency of entries in the output SN 
+             table and need not be much shorter that the interval 
+             in the CL table (from BDFIn) to which it is to be
+             applied.
   solnVer....Solution (SN) table to write, 0=> create new
   refAnt.....Reference antenna to use.  All phase-like values in the
              combined SN table will be referenced to this antenna. 

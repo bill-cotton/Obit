@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008                                               */
+/*;  Copyright (C) 2008-2013                                           */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -124,6 +124,16 @@ odouble ObitBeamShapeAngle (ObitBeamShape *in, odouble ra,
 typedef odouble (*ObitBeamShapeAngleFP) (ObitBeamShape *in, odouble ra, 
 					 odouble dec, ofloat parAng);
 
+/** Public: get reference frequency */
+static inline odouble ObitBeamShapeGetFreq (ObitBeamShape *in) {
+  return in->refFreq;
+} /* end ObitBeamShapeGetFreq */
+
+/** Public: set reference frequency */
+static inline void ObitBeamShapeSetFreq (ObitBeamShape *in, odouble newFreq) {
+  in->refFreq = newFreq;
+} /* end  ObitBeamShapeSetFre */
+
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.
@@ -134,4 +144,4 @@ typedef struct  {
 #include "ObitBeamShapeClassDef.h"
 } ObitBeamShapeClassInfo; 
 
-#endif /* OBITFBEAMSHAPE_H */ 
+#endif /* OBITBEAMSHAPE_H */ 

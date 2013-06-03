@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2010                                          */
+/*;  Copyright (C) 2008-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -27,6 +27,7 @@
 /*--------------------------------------------------------------------*/
 
 #include "ObitSpectrumFit.h"
+#include "ObitImageMF.h"
 #include "ObitThread.h"
 #ifdef HAVE_GSL
 #include <gsl/gsl_blas.h>
@@ -409,6 +410,7 @@ ObitSpectrumFit* ObitSpectrumFitCreate (gchar* name, olong nterm)
  *              One per frequency or one for all, def 25.0
  *
  * \param inImage  Image cube to be fitted
+ *                 If an ObitImageMF the the fitter in that class is called
  * \param outImage Image cube with fitted spectra.
  *                 Should be defined but not created.
  *                 Planes 1->nterm are coefficients per pixel
@@ -427,8 +429,8 @@ void ObitSpectrumFitCube (ObitSpectrumFit* in, ObitImage *inImage,
   ObitIOCode retCode;
   union ObitInfoListEquiv InfoReal; 
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1}, PBdim[MAXINFOELEMDIM], ASdim[MAXINFOELEMDIM];
-  ofloat *calFract, *PBmin, *antSize, pbmin, antsize;
-  gboolean doGain;
+  ofloat *calFract, *PBmin, *antSize, aSize, pbmin, antsize;
+  gboolean doGain, isMF;
   gchar *today=NULL, *SPECLOGF = "SPECLOGF";
   gchar *routine = "ObitSpectrumFitCube";
 
@@ -465,6 +467,20 @@ void ObitSpectrumFitCube (ObitSpectrumFit* in, ObitImage *inImage,
   ObitInfoListGetP(in->info, "PBmin", &type, PBdim, (gpointer)&PBmin);
   /* Antenna diameter */
   ObitInfoListGetP(in->info, "antSize", &type, ASdim, (gpointer)&antSize);
+
+  /* Check if an ObitImageMF input image */
+  isMF = ObitImageMFIsA(inImage);
+  /* Use ObitImageMF class for fitting */
+  if (isMF) {
+    /* Copy pixels first */
+    outImage = (ObitImage*)ObitImageMFCopy ((ObitImageMF*)inImage, (ObitImageMF*)outImage, err);
+    /* Then Fit */
+    if (!in->doPBCorr) aSize = 0.0;
+    else               aSize = antSize[0];
+    ObitImageMFFitSpec ((ObitImageMF*)outImage, aSize, err);
+    if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+    return;
+  }
 
   /* Open input image to get info */
   IOBy = OBIT_IO_byPlane;

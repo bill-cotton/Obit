@@ -516,7 +516,7 @@ def pipeline( aipsSetup, parmFile):
     if parms["doPolCal"]:
         if parms["PCRefAnt"]<=0:
             parms["PCRefAnt"] =  parms["refAnt"]
-        retCode = EVLAPolCal(uv, parms["PCInsCals"], err, \
+        retCode = EVLAPolCal(uv, parms["PCInsCals"], err, InsCalPoln=parms["PCCalPoln"], \
                              doCalib=2, gainUse=0, doBand=-1, flagVer=0, \
                              fixPoln=parms["PCFixPoln"], pmodel=parms["PCpmodel"], avgIF=parms["PCAvgIF"], \
                              solInt=parms["PCSolInt"], refAnt=parms["PCRefAnt"], solType=parms["PCSolType"], \

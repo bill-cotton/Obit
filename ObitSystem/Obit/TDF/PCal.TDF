@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry instrumental polarization calibration
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2012
+;;  Copyright (C) 2012,2013
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -304,7 +304,7 @@ Adverbs:
   modelPos...RA and Dec offset in the sky in asec
   modelparm..Other model parameters Gaussian:
              major_axis (asec),  minor_axis (asec),  position_angle (deg),
-  RLPhase....NYI The target value of the R-L phase difference at the data 
+  RLPhase....The target value of the R-L phase difference at the data 
              reference frequency. (deg)  One value per calibrator.
   RM.........NYI The rotation measure (rad/m^2) used to convert RLPhase
              to other frequencies. One value per calibrator.

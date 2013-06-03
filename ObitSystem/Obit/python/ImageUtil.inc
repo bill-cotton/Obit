@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for Image utilities                        */
 /*                                                                    */
-/*;  Copyright (C) 2004-2011                                          */
+/*;  Copyright (C) 2004-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,6 +32,7 @@
 #include "ObitImageUtil.h"
 #include "ObitTable.h"
 #include "ObitTableCCUtil.h"
+#include "ObitPolnUnwind.h"
 %}
 
 
@@ -127,4 +128,10 @@ ImageUtilT2Spec (ObitImage *inImage, ObitImage *outImage,
   return outImage;
 } // end ImageUtilT2Spec
 
+extern void 
+PolnUnwindCube(ObitImage *rmImage, ObitImage *inQImage, ObitImage *inUImage, 
+               ObitImage *outQImage, ObitImage *outUImage, ObitErr *err)
+{
+  ObitPolnUnwindCube (rmImage, inQImage, inUImage, outQImage, outUImage, err);
+} // end PolnUnwindCube
 %}

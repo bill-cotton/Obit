@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task apply calibration snd write multi source files */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010,2012                                          */
+/*;  Copyright (C) 2010-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -841,10 +841,11 @@ void doSplat (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "Stokes", "UVRange", "timeRange", "FreqID", "Sources", "souCode", "Qual", 
     "BIF", "EIF", "BChan", "EChan", "subA", "doCalWt", "dropSubA",
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "Smooth", "flagVer", 
-    "doPol", "Mode", "corrType", "BLVer", "InputAvgTime", "timeAvg",
+    "doPol", "PDVer", "Mode", "corrType", "BLVer", "InputAvgTime", "timeAvg",
     "NumChAvg", "ChanSel",
     NULL  };
   gchar *ANInclude[] = {"AIPS AN", NULL};
+  gchar *PDInclude[] = {"AIPS PD", NULL};
   gchar *FGInclude[] = {"AIPS FG", NULL};
   gchar *BPInclude[] = {"AIPS BP", NULL};
   gchar        *outParms[] = {  /* Parameters for output data */
@@ -932,8 +933,10 @@ void doSplat (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   if (flagVer<0) 
     ObitUVCopyTables (inData, outData, NULL, FGInclude, err);
   ObitInfoListGetTest (myInput, "doPol", &type, dim, &doPol); 
-  if (!doPol) 
+  if (!doPol) {
     ObitUVCopyTables (inData, outData, NULL, ANInclude, err);
+    ObitUVCopyTables (inData, outData, NULL, PDInclude, err);
+  }
   if (err->error) Obit_traceback_msg (err, routine, inData->name);  
 
   /* Index output */
@@ -971,7 +974,7 @@ void SplatHistory (ObitInfoList* myInput, ObitUV* inData,
     "BIF", "EIF", "BChan", "EChan",  "chInc", "chAvg",
     "UVRange",  "timeRange",  "Compress", "doCalWt", "dropSubA",
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "doPol", "BLVer", "timeAvg", "avgFreq", "chAvg",  "ChanSel",
+    "doPol", "PDVer", "BLVer", "timeAvg", "avgFreq", "chAvg",  "ChanSel",
     "InputAvgTime",  "dropSubA",  "doWtCal",  "corrType",  "nThreads", 
     NULL};
   gchar *routine = "SplatHistory";

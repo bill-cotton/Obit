@@ -1106,7 +1106,7 @@ void ObitTableVLRedun (ObitTableVL *in, ObitTableVL *out, ObitErr *err)
 
     /* Search following table entries within RA window */
     for (jrow=irow+1; jrow<=erow; jrow++) {
-      /* know to be bad? */
+      /* known to be bad? */
       isbad = FALSE;
       for (ibad=0; ibad<maxbad; ibad++) {
 	if (jrow==badrow[ibad]) {isbad=TRUE; break;}
@@ -1155,7 +1155,8 @@ void ObitTableVLRedun (ObitTableVL *in, ObitTableVL *out, ObitErr *err)
 
 	/* Use this one? */
 	if (want1) {
-	  inWant = jrow;  /* keep track or desired output row */
+	  inWant = jrow;  /* keep track of desired output row */
+	  strncpy (Field, row2->Field, 8);   /* Save new field */
 
 	  /* flag old best guess */
 	  if (maxbad<mxbad-1) {
@@ -1186,7 +1187,7 @@ void ObitTableVLRedun (ObitTableVL *in, ObitTableVL *out, ObitErr *err)
     ObitTableVLReadRow (in, inWant, row, err);
     if (err->error) goto cleanup;
     if (VLdesel(row)) continue; 
-
+ 
     /* Make sure RA in range */
     if (row->Ra2000>360.0) row->Ra2000 -= 360.0;
     if (row->Ra2000<0.0)   row->Ra2000 += 360.0;

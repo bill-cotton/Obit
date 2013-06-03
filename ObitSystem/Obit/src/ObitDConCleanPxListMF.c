@@ -711,7 +711,7 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
   CLEANFuncArg **targs=NULL;
   ObitThreadFunc myThreadFunc;
   olong npix, lopix, hipix, npixPerThread, parmoff;
-  gboolean OK = TRUE, *doField=NULL;
+  gboolean OK = TRUE, *doField=NULL, quit=FALSE;
   ObitDConCleanPxListMF *in = (ObitDConCleanPxListMF*)inn;
   /* Clean loop before writing */
 #ifndef MAXBGCLOOP
@@ -858,6 +858,7 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
       
      } /* end bgc loop finding components */
 
+    quit = FALSE;
     for (ibgc=0; ibgc<nbgc; ibgc++) {   /* loop saving/testing components */
       /* If first pass set up stopping criteria */
       xflux = tcombPeak[ibgc];
@@ -963,6 +964,7 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
 	if (iter>=in->niter)     in->complCode = OBIT_CompReasonNiter; 
 	if (fabs(xflux)<minFlux) g_snprintf (reason, 50, "Reached min Clean flux");
 	if (fabs(xflux)<minFlux) in->complCode = OBIT_CompReasonMinFlux;
+	quit = TRUE;
 	break;
       } 
       
@@ -974,6 +976,7 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
 	g_snprintf (reason, 50, "Solution diverging");
 	in->complCode = OBIT_CompReasonDiverge;
 	done = TRUE;
+	quit = TRUE;
 	break;
       }
       
@@ -996,7 +999,7 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
 	  fprintf (stderr, "Quit: %f < %f, minFluxLoad %f real peak %f @ %d %d %d\n",  
 		   xflux, minFluxLoad * (1.0 + atlim), minFluxLoad, peak, pos[0], pos[1], ipeak);
 	}  /* End DEBUG */
-	done = TRUE;
+	quit = TRUE;
 	break;  /* jump out of CLEAN loop */
       }
       
@@ -1006,7 +1009,7 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
 	in->complCode = OBIT_CompReasonAutoWin;
 	/* DEBUG - this to keep SubNewCCs from running until it's fixed 
 	   in->complCode = OBIT_CompReasonMinFract;*/
-	done = TRUE;
+	quit = TRUE;
 	break;  /* jump out of CLEAN loop */
       }
       
@@ -1014,11 +1017,11 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
       if (fabs(xflux)<ccfLim) {
 	g_snprintf (reason, 50, "Reached min fract of peak resid");
 	in->complCode = OBIT_CompReasonMinFract;
-	done = TRUE;
+	quit = TRUE;
 	break;
       }
     } /* End loop saving, testing components */
-    if (done) break;
+    if (done || quit) break;
   } /* end CLEANing loop */
   
   

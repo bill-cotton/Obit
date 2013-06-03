@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -990,6 +990,9 @@ void ObitUVClone  (ObitUV *in, ObitUV *out, ObitErr *err)
  *               selector to suggest a value close to this which will
  *               evenly divided the current scan.  See #ObitUVSelSubScan
  * \param in Pointer to object to be opened.
+ *               The descriptor info (myDesc->info) may contain:
+ * \li "KeepSou" OBIT_bool (1,1,1) If present and True, keep multisource input
+ *               as multisource output even if only one source selected.
  * \param access access (OBIT_IO_ReadOnly,OBIT_IO_ReadWrite,
  *               OBIT_IO_ReadCal or OBIT_IO_WriteOnly).
  *               If OBIT_IO_WriteOnly any existing data in the output file

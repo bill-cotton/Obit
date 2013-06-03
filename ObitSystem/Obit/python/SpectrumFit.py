@@ -13,7 +13,7 @@ with the flux densities at the desired frequencies.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2008-2009
+#  Copyright (C) 2008-2013
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ with the flux densities at the desired frequencies.
 #-----------------------------------------------------------------------
 
 # Obit SpectrumFit
-import Obit, OErr, Image, InfoList, BeamShape
+import Obit, OErr, Image, InfoList
 
 # Python shadow class to ObitSpectrumFit class
 
@@ -105,10 +105,12 @@ class SpectrumFit(SpectrumFitPtr):
     
     def Cube (self, inImage, outImage, err):
         """ Fit spectra to an image cube
-        
+
         Fitted spectral polynomials returned in outImage
         Can run with multiple threads if enabled:
         OSystem.PAllowThreads(2)  # 2 threads
+        Note: for images of the type produced by MFImage (ImageMF class) use
+        MFImage.PFitSpec.
         self     = SpectrumFit object, parameters on List:
             refFreq   double scalar Reference frequency for fit [def ref for inImage]
             maxChi2   float scalar Max. Chi Sq for accepting a partial spectrum [def 2.0]
@@ -228,7 +230,7 @@ def PIsA (inSpectrumFit):
     # end PIsA
 
 def PCreate (name, nterm):
-    """ Create the underlying structures of a BeamShape
+    """ Create the underlying structures of a Spectrum fitter
 
     return object created.
     name      = Name to be given to object

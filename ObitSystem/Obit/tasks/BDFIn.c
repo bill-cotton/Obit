@@ -2156,10 +2156,8 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
       ObitErrLog(err);
 
       /* Initialize index */
-      /* ALMA has subscans */
-      if (((SDMData->isALMA) && 
-	   (SDMData->MainTab->rows[iMain]->subscanNumber==1))
-	  || (SDMData->isEVLA)) {
+      /* May have subscans */
+      if (SDMData->MainTab->rows[iMain]->subscanNumber==1) {
 	lastScan    = ScanId;
 	lastSubscan = SubscanId;
 	startTime   = -1.0e20;
@@ -2232,7 +2230,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     
     /* Write Index table */
     if (startTime>-1.0e10) {
-      /* ALMA & EVLA haave subscans */
+      /* May have subscans - write on last of sequence */
       if ((SDMData->MainTab->rows[iMain]->subscanNumber>=
 	   SDMData->ScanTab->rows[ScanTabRow]->numSubscan)) {
 	NXrow->Time     = 0.5 * (startTime + endTime);

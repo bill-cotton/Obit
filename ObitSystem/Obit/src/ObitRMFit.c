@@ -1879,17 +1879,17 @@ static int RMFitJac (const gsl_vector *x, void *params,
   /* Loop over data - gradients */
   for (i=0; i<nlamb2; i++) {
     j = 0;    /* EVPA */
-    /* d Q model/d EVPA = -2 args->Pobs[i] * args->wrk3[i]  */
+    /* d Q model/d EVPA = -args->Pobs[i] * args->wrk3[i]  */
     if ((args->Qobs[i]!=fblank) && (args->Qweight[i]>0.0)) {
-      jac = -2*(args->Pobs[i] * args->wrk3[i]) * args->Qweight[i];
+      jac = -(args->Pobs[i] * args->wrk3[i]) * args->Qweight[i];
       gsl_matrix_set(J, 2*i, j, jac);  /* Save function gradient */
     } else {  /* Invalid data */
       jac = 0.0;
       gsl_matrix_set(J, 2*i, j, jac);     /* Save function gradient */
     }
-    /* d U model/d EVPA = 2 args->Pobs[i] * args->wrk2[i]  */
+    /* d U model/d EVPA = args->Pobs[i] * args->wrk2[i]  */
     if ((args->Uobs[i]!=fblank) && (args->Uweight[i]>0.0)) {
-      jac = 2*(args->Pobs[i] * args->wrk2[i]) * args->Uweight[i];
+      jac = (args->Pobs[i] * args->wrk2[i]) * args->Uweight[i];
       gsl_matrix_set(J, 2*i+1, j, jac);  /* Save function gradient */
     } else {  /* Invalid data */
       jac = 0.0;
@@ -1967,8 +1967,8 @@ static int RMFitFuncJac (const gsl_vector *x, void *params,
 	       args->Qweight[i], args->Pobs[i]); */
       gsl_vector_set(f, 2*i, func);  /* Save function residual */
       j = 0;    /* EVPA */
-      /* d Q model/d EVPA = -2 args->Pobs[i] * args->wrk3[i]  */
-      jac = -2*(args->Pobs[i] * args->wrk3[i]) * args->Qweight[i];
+      /* d Q model/d EVPA = -args->Pobs[i] * args->wrk3[i]  */
+      jac = -(args->Pobs[i] * args->wrk3[i]) * args->Qweight[i];
       /* DEBUG
       fprintf (stderr,"FuncJac q i=%3ld j=%3ld jac=%lf\n", 2*i, j, jac); */
       gsl_matrix_set(J, 2*i, j, jac);  /* Save function residual */
@@ -1998,8 +1998,8 @@ static int RMFitFuncJac (const gsl_vector *x, void *params,
 	       args->Uweight[i], args->wrk1[i]*28.648); */
       gsl_vector_set(f, 2*i+1, func);  /* Save function residual */
       j = 0;    /* EVPA */
-      /* d U model/d EVPA = 2 args->Pobs[i] * args->wrk2[i]  */
-      jac = 2*(args->Pobs[i] * args->wrk2[i]) * args->Uweight[i];
+      /* d U model/d EVPA = args->Pobs[i] * args->wrk2[i]  */
+      jac = (args->Pobs[i] * args->wrk2[i]) * args->Uweight[i];
       /* DEBUG
       fprintf (stderr,"FuncJac u i=%3ld j=%3ld jac=%lf\n", 2*i, j, jac); */
       gsl_matrix_set(J, 2*i+1, j, jac);  /* Save function gradient */

@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for UVVis type                             */
 /*                                                                    */
-/*;  Copyright (C)2007                                                */
+/*;  Copyright (C)2007-2013                                           */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -53,6 +53,7 @@ extern PyObject* UVVisGet (ObitUV* inUV, ObitErr *err) {
     while (readMore) {	
       if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
       else iretCode = ObitUVRead (inUV, inUV->buffer, err);
+      if (err->error) Obit_traceback_val (err, "UVVisGet", "UVVisGet", vis);
       readMore = (inUV->myDesc->numVisBuff<=0);  /* keep going? */
       if (iretCode==OBIT_IO_EOF)  {
         PyDict_SetItemString(vis, "EOF",PyInt_FromLong((long)1));
@@ -135,6 +136,7 @@ extern void UVVisSet (PyObject* vis, ObitUV* outUV, ObitErr *err) {
 
     outUV->myDesc->numVisBuff = 1;
     oretCode = ObitUVWrite (outUV, outUV->buffer, err);
+    if (err->error) Obit_traceback_msg (err, "UVVisSet", "UVVisSet");
 
 } // end UVVisSet
 

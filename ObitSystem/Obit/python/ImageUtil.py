@@ -2,7 +2,7 @@
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2011
+#  Copyright (C) 2004-2013
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -736,3 +736,63 @@ def PImageT2Spec (inImage, outImage, nTerm,
         History.PWriteRec(outHistory,-1,pgmName+"  terms   = "+str(terms),err)
     History.PClose(outHistory, err)
 # end PImageT2Spec
+
+def PPolnUnwindCube (RMImage, inQImage, inUImage, outQImage, outUImage, err):
+    """
+    Unrotate the Faraday rotation in a set of Q, U cubes.
+    
+    If the input images are ObitImageMF like images then the first plane 
+    of the output images will be the average of the corrected images.
+    * RMImage   Image with rotation measures to be removed in the 
+                first plane
+    * inQImage  Q Image cube to be unwound
+    * inUImage  U Image cube to be unwound
+    * outQImage output derotated Q image
+    * outUImage output derotated U image
+    * err       Obit error stack object.
+    """
+    ################################################################
+    # Checks
+    if not Image.PIsA(RMImage):
+        raise TypeError,"RMImage MUST be a Python Obit Image"
+    if not Image.PIsA(inQImage):
+        raise TypeError,"inQImage MUST be a Python Obit Image"
+    if not Image.PIsA(inUImage):
+        raise TypeError,"inUImage MUST be a Python Obit Image"
+    if not Image.PIsA(outQImage):
+        raise TypeError,"outQImage MUST be a Python Obit Image"
+    if not Image.PIsA(outUImage):
+        raise TypeError,"outUImage MUST be a Python Obit Image"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+
+    Obit.PolnUnwindCube(RMImage.me, inQImage.me, inUImage.me, \
+                            outQImage.me, outUImage.me, err.me)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error Correcting Q, U images for Faraday rotation")
+
+    # Do histories
+    pgmName = OSystem.PGetPgmName()
+    if pgmName==None:
+        pgmName = "Obit"
+    inHistory  = History.History("history", inQImage.List, err)
+    outHistory = History.History("history", outQImage.List, err)
+    History.PCopy(inHistory, outHistory, err)
+    History.POpen(outHistory, History.READWRITE, err)
+    History.PTimeStamp(outHistory," Start Obit "+pgmName,err)
+    if inQImage.FileType=='FITS':
+        History.PWriteRec(outHistory,-1,pgmName+" /RM Image = "+RMImage.FileName, err)
+    elif inQImage.FileType=='AIPS':
+        History.PWriteRec(outHistory,-1,pgmName+" /RM Image = "+RMImage.Aname+"."+RMImage.Aname+"."+str(RMImage.Aseq), err)
+    History.PClose(outHistory, err)
+    inHistory  = History.History("history", inUImage.List, err)
+    outHistory = History.History("history", outUImage.List, err)
+    History.PCopy(inHistory, outHistory, err)
+    History.POpen(outHistory, History.READWRITE, err)
+    History.PTimeStamp(outHistory," Start Obit "+pgmName,err)
+    if inQImage.FileType=='FITS':
+        History.PWriteRec(outHistory,-1,pgmName+" /RM Image = "+RMImage.FileName, err)
+    elif inQImage.FileType=='AIPS':
+        History.PWriteRec(outHistory,-1,pgmName+" /RM Image = "+RMImage.Aname+"."+RMImage.Aname+"."+str(RMImage.Aseq), err)
+    History.PClose(outHistory, err)
+    # end PPolnUnwindCube

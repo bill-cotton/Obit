@@ -9,11 +9,12 @@
     time = Visibility time in days since 0 h on reference day
     ant1 = antenna 1 of baseline
     ant2 = antenna 2 of baseline
+    suid = Source ID number
     vis  = visibilities as list of (complex, float) (vis, wt)
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2007
+#  Copyright (C) 2007,2013
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -51,6 +52,7 @@ class UVVisPtr :
         self.time = 0.0
         self.ant1 = 0
         self.ant2 = 0
+        self.suid = 0
         self.vis=[(complex(0.0,00),1.0)]
     def __setattr__(self,name,value):
         self.__dict__[name] = value

@@ -103,7 +103,7 @@ extern ObitSource* SourceCreateByName (char *name, ObitUV *inUV, char *Name, lon
     if (err->error) Obit_traceback_val (err, routine, inUV->name, out);
     // Find source and copy reference to output
     for (i=0; i<tsList->number; i++) {
-      if ((!strncmp(Name, tsList->SUlist[i]->SourceName, MIN(20,strlen(name))))
+      if ((!strncmp(Name, tsList->SUlist[i]->SourceName, MIN(20,strlen(Name))))
         && (tsList->SUlist[i]->Qual==Qual)) {
         out = ObitSourceRef(tsList->SUlist[i]);
         break;

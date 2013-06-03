@@ -128,21 +128,21 @@ def PCreateByNumber (name, inUV, SouID, OErr):
     return out
     # end PCreateByNumber
 
-def PCreateByName (name, inUV, Souce, Qual, OErr):
+def PCreateByName (name, inUV, Sname, Qual, OErr):
     """ Create a Source from a UV for a specified Source name/qual
 
     If inUV has a SoUrce table the Source is extracted from it, otherwise
     from the information in the descriptor
      * name   = Name for object
      * inUV   = UV data for source info
-     * Source = Source name in inUV
+     * Sname  = Source name in inUV
      * Qual   =  Source qualifier  in inUV
      * err    = Python Obit Error/message stack
       returns  new Source object
     """
     ################################################################
     out    = Source(name)
-    out.me = Obit.SourceCreateByName(name, inUV.me, Source, Qual, OErr.me)
+    out.me = Obit.SourceCreateByName(name, inUV.me, Sname, Qual, OErr.me)
     return out
     # end PCreateByName
 

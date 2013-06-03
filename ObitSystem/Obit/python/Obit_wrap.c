@@ -696,6 +696,18 @@ extern int BeamShapeIsA (ObitBeamShape* in) {
   return ObitBeamShapeIsA(in);
 }
 
+extern float BeamShapeAngle (ObitBeamShape* in, float ra, float dec, float parAng) {
+  return (float) ObitBeamShapeAngle (in, (odouble)ra, (odouble)dec, (ofloat)parAng);
+}
+
+extern float BeamShapeGetFreq (ObitBeamShape* in) {
+  return (float) ObitBeamShapeGetFreq (in);
+}
+
+extern void BeamShapeSetFreq (ObitBeamShape* in, float newFreq) {
+  ObitBeamShapeSetFreq (in, (odouble)newFreq);
+}
+
 extern ObitBeamShape *newBeamShape(char *);
 extern ObitBeamShape *BeamShapeCopy(ObitBeamShape *,ObitBeamShape *,ObitErr *);
 extern ObitBeamShape *BeamShapeUnref(ObitBeamShape *);
@@ -705,6 +717,9 @@ extern float BeamShapeGain(ObitBeamShape *,double ,double ,float );
 extern float BeamShapeGainSym(ObitBeamShape *,double );
 extern char *BeamShapeGetName(ObitBeamShape *);
 extern int BeamShapeIsA(ObitBeamShape *);
+extern float BeamShapeAngle(ObitBeamShape *,float ,float ,float );
+extern float BeamShapeGetFreq(ObitBeamShape *);
+extern void BeamShapeSetFreq(ObitBeamShape *,float );
 
 typedef struct {
   ObitBeamShape *me;
@@ -3840,6 +3855,7 @@ typedef struct {
 #include "ObitImageUtil.h"
 #include "ObitTable.h"
 #include "ObitTableCCUtil.h"
+#include "ObitPolnUnwind.h"
 
 ObitImage* ImageUtilCreateImage (ObitUV *inUV, long fieldNo,
 			       int doBeam, ObitErr *err) {
@@ -3931,6 +3947,13 @@ ImageUtilT2Spec (ObitImage *inImage, ObitImage *outImage,
   return outImage;
 } // end ImageUtilT2Spec
 
+extern void 
+PolnUnwindCube(ObitImage *rmImage, ObitImage *inQImage, ObitImage *inUImage, 
+               ObitImage *outQImage, ObitImage *outUImage, ObitErr *err)
+{
+  ObitPolnUnwindCube (rmImage, inQImage, inUImage, outQImage, outUImage, err);
+} // end PolnUnwindCube
+extern void PolnUnwindCube(ObitImage *,ObitImage *,ObitImage *,ObitImage *,ObitImage *,ObitErr *);
 
 #include "ObitInfoList.h"
 
@@ -7201,7 +7224,7 @@ extern ObitSource* SourceCreateByName (char *name, ObitUV *inUV, char *Name, lon
     if (err->error) Obit_traceback_val (err, routine, inUV->name, out);
     // Find source and copy reference to output
     for (i=0; i<tsList->number; i++) {
-      if ((!strncmp(Name, tsList->SUlist[i]->SourceName, MIN(20,strlen(name))))
+      if ((!strncmp(Name, tsList->SUlist[i]->SourceName, MIN(20,strlen(Name))))
         && (tsList->SUlist[i]->Qual==Qual)) {
         out = ObitSourceRef(tsList->SUlist[i]);
         break;
@@ -12681,6 +12704,7 @@ extern PyObject* UVVisGet (ObitUV* inUV, ObitErr *err) {
     while (readMore) {	
       if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
       else iretCode = ObitUVRead (inUV, inUV->buffer, err);
+      if (err->error) Obit_traceback_val (err, "UVVisGet", "UVVisGet", vis);
       readMore = (inUV->myDesc->numVisBuff<=0);  /* keep going? */
       if (iretCode==OBIT_IO_EOF)  {
         PyDict_SetItemString(vis, "EOF",PyInt_FromLong((long)1));
@@ -12763,6 +12787,7 @@ extern void UVVisSet (PyObject* vis, ObitUV* outUV, ObitErr *err) {
 
     outUV->myDesc->numVisBuff = 1;
     oretCode = ObitUVWrite (outUV, outUV->buffer, err);
+    if (err->error) Obit_traceback_msg (err, "UVVisSet", "UVVisSet");
 
 } // end UVVisSet
 
@@ -13799,6 +13824,73 @@ static PyObject *_wrap_BeamShapeIsA(PyObject *self, PyObject *args) {
     }
     _result = (int )BeamShapeIsA(_arg0);
     _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_BeamShapeAngle(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    float  _result;
+    ObitBeamShape * _arg0;
+    float  _arg1;
+    float  _arg2;
+    float  _arg3;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Offf:BeamShapeAngle",&_argo0,&_arg1,&_arg2,&_arg3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitBeamShape_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of BeamShapeAngle. Expected _ObitBeamShape_p.");
+        return NULL;
+        }
+    }
+    _result = (float )BeamShapeAngle(_arg0,_arg1,_arg2,_arg3);
+    _resultobj = Py_BuildValue("f",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_BeamShapeGetFreq(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    float  _result;
+    ObitBeamShape * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:BeamShapeGetFreq",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitBeamShape_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of BeamShapeGetFreq. Expected _ObitBeamShape_p.");
+        return NULL;
+        }
+    }
+    _result = (float )BeamShapeGetFreq(_arg0);
+    _resultobj = Py_BuildValue("f",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_BeamShapeSetFreq(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitBeamShape * _arg0;
+    float  _arg1;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Of:BeamShapeSetFreq",&_argo0,&_arg1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitBeamShape_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of BeamShapeSetFreq. Expected _ObitBeamShape_p.");
+        return NULL;
+        }
+    }
+    BeamShapeSetFreq(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
     return _resultobj;
 }
 
@@ -27945,6 +28037,72 @@ static PyObject *_wrap_ImageUtilT2Spec(PyObject *self, PyObject *args) {
         Py_INCREF(Py_None);
         _resultobj = Py_None;
     }
+    return _resultobj;
+}
+
+static PyObject *_wrap_PolnUnwindCube(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImage * _arg0;
+    ObitImage * _arg1;
+    ObitImage * _arg2;
+    ObitImage * _arg3;
+    ObitImage * _arg4;
+    ObitErr * _arg5;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo3 = 0;
+    PyObject * _argo4 = 0;
+    PyObject * _argo5 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOOOOO:PolnUnwindCube",&_argo0,&_argo1,&_argo2,&_argo3,&_argo4,&_argo5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PolnUnwindCube. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of PolnUnwindCube. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of PolnUnwindCube. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of PolnUnwindCube. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of PolnUnwindCube. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo5) {
+        if (_argo5 == Py_None) { _arg5 = NULL; }
+        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of PolnUnwindCube. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    PolnUnwindCube(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
     return _resultobj;
 }
 
@@ -62093,6 +62251,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "InfoListCreate", _wrap_InfoListCreate, METH_VARARGS },
 	 { "freeInfoListBlob", _wrap_freeInfoListBlob, METH_VARARGS },
 	 { "makeInfoListBlob", _wrap_makeInfoListBlob, METH_VARARGS },
+	 { "PolnUnwindCube", _wrap_PolnUnwindCube, METH_VARARGS },
 	 { "ImageUtilT2Spec", _wrap_ImageUtilT2Spec, METH_VARARGS },
 	 { "ImageUtilUVFilter", _wrap_ImageUtilUVFilter, METH_VARARGS },
 	 { "ImageUtilCCScale", _wrap_ImageUtilCCScale, METH_VARARGS },
@@ -62483,6 +62642,9 @@ static PyMethodDef ObitMethods[] = {
 	 { "CArrayIsCompatable", _wrap_CArrayIsCompatable, METH_VARARGS },
 	 { "CArrayCopy", _wrap_CArrayCopy, METH_VARARGS },
 	 { "CArrayCreate", _wrap_CArrayCreate, METH_VARARGS },
+	 { "BeamShapeSetFreq", _wrap_BeamShapeSetFreq, METH_VARARGS },
+	 { "BeamShapeGetFreq", _wrap_BeamShapeGetFreq, METH_VARARGS },
+	 { "BeamShapeAngle", _wrap_BeamShapeAngle, METH_VARARGS },
 	 { "BeamShapeIsA", _wrap_BeamShapeIsA, METH_VARARGS },
 	 { "BeamShapeGetName", _wrap_BeamShapeGetName, METH_VARARGS },
 	 { "BeamShapeGainSym", _wrap_BeamShapeGainSym, METH_VARARGS },

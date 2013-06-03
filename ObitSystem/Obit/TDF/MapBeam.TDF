@@ -102,6 +102,8 @@ ny                                 Number of "Y" (El) pixels in image.
 xCells                             Image cell spacing in X in asec.
 **PARAM** float 1
 yCells                             Image cell spacing in Y in asec.
+**PARAM** int 1  **DEF** 1
+hwid                               half width of interpolation in cells
 **PARAM** float 1
 avgTime                            Averaging time (sec)
 **PARAM** int 1
@@ -274,6 +276,7 @@ Adverbs:
              It should be close to the actual separation at the 
              pointing at the holography measurements.
   yCells.....Image cell spacing in Y (Elevation) in asec. 
+  hwid.......Half width of Lagrangian interpolation in cells
   avgTime....Averaging time in seconds; normally interval
              of each pointing.
   avgFreq....If 0 < avgFreq <= 1, then spectral channels in the 

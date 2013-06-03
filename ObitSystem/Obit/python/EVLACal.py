@@ -172,6 +172,8 @@ def EVLAInitContParms():
     parms["doPolCal"]  =  False      # Determine instrumental polarization from PCInsCals?
     parms["PCInsCals"] = []          # instrumental poln calibrators, name or list of names
     parms["PCFixPoln"] = False       # if True, don't solve for source polarization in ins. cal
+    parms["PCCalPoln"] = None        # List of calibrator poln, list of (PPol, RLPhase, RM) in
+                                     # order given in PCInsCals, PPol<0 => fit
     parms["PCpmodel"]  = [0.0,0.0,0.0,0.0,0.0,0.0,0.0]  # Instrumental poln cal source poln model.
     parms["PCAvgIF"]   = False       # if True, average IFs in ins. cal.
     parms["PCSolInt"]  = 2.          # instrumental solution interval (min), 0=> scan average(?)
@@ -2918,7 +2920,7 @@ def EVLARLDelay(uv, err, \
     return 0
     # end EVLARLDelay
 
-def EVLAPolCal(uv, InsCals, err, RM=0.0, \
+def EVLAPolCal(uv, InsCals, err, InsCalPoln=None, \
                doCalib=2, gainUse=0, doBand=1, BPVer=0, flagVer=-1, \
                solType="    ", fixPoln=False, avgIF=False, \
                solInt=0.0, refAnt=0, ChInc=1, ChWid=1, \
@@ -2936,7 +2938,12 @@ def EVLAPolCal(uv, InsCals, err, RM=0.0, \
     * InsCals  = Instrumental poln calibrators, name or list of names
       If None no instrumental cal
     * err      = Obit error/message stack
-    * RM       = NYI Rotation measure of RLCal
+    * InsCalPoln if non None then the list of source parameters as
+                 tuples in the order of calibrators in  InsCals,
+                 (PPol, RLPhase, RM)
+                 PPol = fractional poln, <0 => fit
+                 RLPhase = R-L phase difference in deg
+                 RM      = Rotation measure (NYI)
     * doCalib  = Apply prior calibration table, positive=>calibrate
     * gainUse  = CL/SN table to apply
     * doBand   = >0 => apply bandpass calibration
@@ -2944,7 +2951,7 @@ def EVLAPolCal(uv, InsCals, err, RM=0.0, \
     * flagVer  = Input Flagging table version
     * solType  = solution type, "    ", "LM  "
     * fixPoln  = if True, don't solve for source polarization in ins. cal
-                 assumed 0
+                 assumed 0, ignored if InsCalPoln given
     * avgIF    = NYI if True, average IFs in ins. cal.
     * solInt   = instrumental solution interval (min)
     * refAnt   = Reference antenna
@@ -2996,8 +3003,21 @@ def EVLAPolCal(uv, InsCals, err, RM=0.0, \
             for s in InsCals:
                 pcal.doFitI[i] = True
                 i += 1
-       # Polarization fixed to 0?
-        if fixPoln:
+        # Polarization fixed?
+        if InsCalPoln: 
+            if type(InsCals)==list:
+                n = len(InsCals)
+            else:
+                n = 1
+            for i in range(0,n):
+                if InsCalPoln[i][0]>=0.0:
+                    pcal.doFitPol[i] = False
+                    pcal.PPol[i]      = InsCalPoln[i][0]
+                    pcal.RLPhase[i]   = InsCalPoln[i][1]
+                    pcal.RM[i]        = InsCalPoln[i][2]
+                else:
+                    pcal.doFitPol[i] = True
+        elif fixPoln:
             if type(InsCals)==list:
                 i = 0
                 for s in InsCals:

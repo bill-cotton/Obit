@@ -1105,8 +1105,9 @@ IslandList* Islands(ObitFArray *data, ofloat cutt)
 
   /* find peak value */
   lpeak = ObitFArrayMax (data, pos);
-  /* Don't get carried away, don't go below 0.1% of peak */
-  lcut = MAX (cutt, 0.001*lpeak);
+  /* Don't get carried away, don't go below 0.1% of peak 
+  lcut = MAX (cutt, 0.001*lpeak); NO */
+  lcut = cutt;
 
 
   /* Loop over array */

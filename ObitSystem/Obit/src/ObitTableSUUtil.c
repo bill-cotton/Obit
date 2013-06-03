@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -245,7 +245,7 @@ ObitSourceList* ObitTableSUGetList (ObitTableSU *in, ObitErr *err) {
       Obit_traceback_val (err, routine, in->name, out);
     
     maxSUid = MAX (maxSUid, row->SourID);
-    nsid++;
+    if (row->SourID>0) nsid++;
   } /* end loop over file */
   
   /* check for errors */
@@ -271,6 +271,10 @@ ObitSourceList* ObitTableSUGetList (ObitTableSU *in, ObitErr *err) {
     if (row->RAMean>360.0) row->RAMean -= 360.0;
     if (row->RAApp<0.0)    row->RAApp  += 360.0;
     if (row->RAApp>360.0)  row->RAApp  -= 360.0;
+
+    /* Check for corruption by GMRT */
+    if ((row->SourID==0) && (row->Qual==0) && (row->Epoch==0.0) && 
+	(row->RAMean==0.0)) continue;
 
     sid = row->SourID - 1;
     out->SUlist[sid]->SourID  = row->SourID;

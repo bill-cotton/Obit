@@ -1,8 +1,8 @@
 /* $Id$    */  
 /*--------------------------------------------------------------------*/
-/* Swig module description for BeamShape type                          */
+/* Swig module description for BeamShape type                         */
 /*                                                                    */
-/*;  Copyright (C) 2008                                               */
+/*;  Copyright (C) 2008-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -80,6 +80,18 @@ extern char* BeamShapeGetName (ObitBeamShape* in) {
 
 extern int BeamShapeIsA (ObitBeamShape* in) {
   return ObitBeamShapeIsA(in);
+}
+
+extern float BeamShapeAngle (ObitBeamShape* in, float ra, float dec, float parAng) {
+  return (float) ObitBeamShapeAngle (in, (odouble)ra, (odouble)dec, (ofloat)parAng);
+}
+
+extern float BeamShapeGetFreq (ObitBeamShape* in) {
+  return (float) ObitBeamShapeGetFreq (in);
+}
+
+extern void BeamShapeSetFreq (ObitBeamShape* in, float newFreq) {
+  ObitBeamShapeSetFreq (in, (odouble)newFreq);
 }
 
 %}
