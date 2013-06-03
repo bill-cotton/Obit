@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2011                                          */
+/*;  Copyright (C) 2004-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -159,4 +159,9 @@ void ObitTableCCUtilT2Spec  (ObitImage *inImage, ObitImageWB *outImage,
 void ObitTableCCUtilFixTSpec (ObitImage *inImage, olong *inCCVer, 
 			      odouble refFreq, olong nterm, ofloat *terms,
 			      olong startCC, olong endCC, ObitErr *err);
+
+/* routine to combine simple CC Tables into a TSpec table  */
+void ObitTableCCUtilCombTSpec (ObitImage *inImage, olong inCCVer, olong nCCVer,
+			       olong outCCVer, olong *bcopy, olong *bcomp, olong *ecomp, 
+			       gboolean doGaus, ObitErr *err);
 #endif /* OBITTABLECCUTIL_H */ 

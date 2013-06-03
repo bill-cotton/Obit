@@ -2230,6 +2230,128 @@ void ObitTableCCUtilFixTSpec (ObitImage *inImage, olong *inCCVer,
   if  (err->error) Obit_traceback_msg (err, routine, inImage->name);
 } /* end ObitTableCCUtiTl2Spec */
 
+/**
+ * Combine multiple simple CCTables into a tabulated spectrum CC table
+ * Output Table will have nCCVer tabulated spectral points and 
+ * the sum of the values as the "Flux" in the table.
+ * Each of the tables CC version inCCVer to inCCVer+nCCVer-1 have 
+ * each entry promoted into a spectrum with the flux density in entry
+ * CCVer-inCCVer+1 and the rest zero.
+ * All components can be forced to Gaussians (point=zero size) using
+ * doGaus.  The operation amy fail for mixed point and Gaussian input
+ * tables if doGaus=FALSE.
+ * \param image    Input ObitImage with attached CC tables
+ * \param inCCVer  first input CC table version
+ * \param nCCVer   Number of input CC table version and size of output spectrum
+ * \param outCCVer Output TSpec table
+ * \param bcopy    first component (1-rel) in each input table to copy
+ * \param bcomp    [out] first new component in outCCVer
+ * \param ecomp    [out] highest new component in outCCVer
+ * \param doGaus   Promote points to zero size Gaussians?.
+ * \param err      Obit error stack object.
+ */
+void ObitTableCCUtilCombTSpec (ObitImage *inImage, olong inCCVer, olong nCCVer,
+			       olong outCCVer, olong *bcopy, olong *bcomp, olong *ecomp, 
+			       gboolean doGaus, ObitErr *err)
+{
+  ObitTableCC *inCCTab=NULL, *outCCTab;
+  ObitTableCCRow *inCCRow=NULL, *outCCRow=NULL;
+  olong i, nSpec, ver, noParms, orow, irow, itab, ncopy;
+  ofloat  modType;
+  gboolean inPoint;
+  gchar *routine = "ObitTableCCUtilCombTSpec";
+
+  /* error checks */
+  if (err->error) return;
+  
+  /* Make sure this is an ObitImage */
+  Obit_return_if_fail((ObitImageIsA(inImage)), err, 
+		      "%s: Image %s NOT an ObitImage", 
+		      routine, inImage->name);
+
+  /* Numbers of things */
+  nSpec = nCCVer;
+  noParms = 4 + nSpec;
+  if (doGaus) modType = (ofloat)OBIT_CC_GaussModTSpec;
+  else        modType = (ofloat)OBIT_CC_PointModTSpec;
+  
+  /* Create  output CC table */
+  ver = outCCVer ;
+  outCCTab = newObitTableCCValue ("OutputTSpecCC", (ObitData*)inImage,
+				  &ver, OBIT_IO_WriteOnly, noParms, 
+				  err);
+  if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+ 
+  /* Create output table row */
+  outCCRow = newObitTableCCRow (outCCTab);
+  
+  /* Open output */
+  ObitTableCCOpen (outCCTab, OBIT_IO_ReadWrite, err);
+  ObitTableCCSetRow (outCCTab, outCCRow, err);
+  if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+ 
+  /* Check compatability - it may be an existing table */
+  Obit_return_if_fail((outCCTab->noParms==noParms), err, 
+		      "%s: Existing CC table incompatable %d %d", 
+		      routine, outCCTab->noParms, noParms);
+  
+  /* Existing rows? */
+  orow = outCCTab->myDesc->nrow+1;
+  *bcomp = orow;
+
+  /* Loop over input Tables */
+  for (itab=0; itab<nCCVer; itab++) {
+    /* Zero parms */
+    for (i=0; i<noParms; i++) outCCRow->parms[i] = 0;
+    
+    ver = inCCVer + itab;
+    i = 0;
+    inCCTab = newObitTableCCValue ("InputCC", (ObitData*)inImage,
+				   &ver, OBIT_IO_ReadOnly, i, err);
+    if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+    
+    /* Create output table row */
+    inCCRow = newObitTableCCRow (inCCTab);
+    
+    /* Open input */
+    ObitTableCCOpen (inCCTab, OBIT_IO_ReadOnly, err);
+    if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+    inPoint = inCCTab->noParms<=0;
+
+    /* Copy Rows */
+    ncopy = inCCTab->myDesc->nrow;
+    for (irow=bcopy[itab]; irow<=ncopy; irow++) {
+      ObitTableCCReadRow (inCCTab, irow, inCCRow, err);
+      if (err->error) Obit_traceback_msg (err, routine, inCCTab->name);
+      /* Copy info */
+      outCCRow->DeltaX   = inCCRow->DeltaX;
+      outCCRow->DeltaY   = inCCRow->DeltaY;
+      outCCRow->Flux   = inCCRow->Flux;
+      /* Set output type and parameters if given */
+      if (inPoint) outCCRow->parms[3] = modType;
+      else  for (i=0; i<4; i++) outCCRow->parms[i] = inCCRow->parms[i];
+      /* One point in spectrum */
+      outCCRow->parms[4+itab] = inCCRow->Flux;
+      ObitTableCCWriteRow (outCCTab, orow, outCCRow, err);
+      orow++;   /* Count rows */
+      if (err->error) Obit_traceback_msg (err, routine, outCCTab->name);
+  } /* end loop over rows in input table */
+    /* Cleanup input Table */
+    ObitTableCCClose (inCCTab, err);
+    inCCTab = ObitTableUnref(inCCTab);
+    inCCRow = ObitTableRowUnref(inCCRow);
+    if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+  } /* end loop over tables */
+
+    /* Cleanup output Table */
+  ObitTableCCClose (outCCTab, err);
+  outCCTab = ObitTableUnref(outCCTab);
+  outCCRow = ObitTableRowUnref(outCCRow);
+  if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+
+  *ecomp = orow;  /* Highest output row number */
+} /* end ObitTableCCUtilCombTSpec */
+
 /*----------------------Private functions---------------------------*/
 /**
  * Create/fill sort structure for a CC table

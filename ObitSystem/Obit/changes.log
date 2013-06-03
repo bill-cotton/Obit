@@ -1412,3 +1412,8 @@ Obit/src/ObitImageMosaicWB.c Obit/src/ObitImageMosaic.c Obit/src/ObitImageMosaic
 Obit/tasks/SetJy.c:
   Fix index for 1934-638
 3 June 2013, svn version 452
+
+missing routine:
+Obit/src/ObitTableCCUtil.c  Obit/include/ObitTableCCUtil.h:
+  Implement ObitTableCCUtilCombTSpec
+3 June 2013, svn version 453
