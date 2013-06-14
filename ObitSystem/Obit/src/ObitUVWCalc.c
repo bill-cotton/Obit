@@ -328,7 +328,7 @@ void ObitUVWCalcUVW (ObitUVWCalc *in, ofloat time, olong SId,
   ofloat t, u, v, w, equin, vw, basex, basey, basez, polar[2];
   olong i, ia1, ia2, iant;
   odouble xm, ym, zm, length;
-  odouble dRa, dDec, delta, RAOff, DecOff;
+  odouble dRa, dDec, delta, RAOff, DecOff, RAMeanR, DecMeanR, RAAppR, DecAppR;
   odouble RAAnt, DecAnt, RAAnt0, DecAnt0, GSTRA, deldat = 0.1;
   gchar *routine = "ObitUVWCalcUVW";
 
@@ -416,19 +416,29 @@ void ObitUVWCalcUVW (ObitUVWCalc *in, ofloat time, olong SId,
     else                                 equin = 2000.0;
     /* Offset of pole */
     polar[0] = in->AntList->PolarXY[0]; polar[1] = in->AntList->PolarXY[1];
+
+    RAMeanR  = in->curSource->RAMean*DG2RAD;
+    DecMeanR = in->curSource->DecMean*DG2RAD;
     ObitPrecessPrecess (in->JD, equin, deldat, 1, FALSE, in->obsPos, polar,
-			&in->curSource->RAMean, &in->curSource->DecMean,
-			&in->curSource->RAApp, &in->curSource->DecApp);
+			&RAMeanR, &DecMeanR, &RAAppR, &DecAppR);
+    in->curSource->RAApp  = RAAppR*RAD2DG;
+    in->curSource->DecApp = DecAppR*RAD2DG;
 
     /* Lorentz contraction from differential abberation - 
        precess posn. 10" north */
     delta = 10.0/3600.0;
     dDec = in->curSource->DecMean+delta;
+    RAMeanR  = in->curSource->RAMean*DG2RAD;
+    DecMeanR = dDec*DG2RAD;
     ObitPrecessPrecess (in->JD, equin, deldat, 1, FALSE, in->obsPos, polar,
-			&in->curSource->RAMean, &dDec, &RAOff, &DecOff);
+			&RAMeanR, &DecMeanR, &RAAppR, &DecAppR);
+    RAOff  =  RAAppR*RAD2DG;
+    DecOff = DecAppR*RAD2DG;
     dRa  = (RAOff-in->curSource->RAApp) * cos(DG2RAD*in->curSource->DecApp);
     dDec = (DecOff-in->curSource->DecApp);
     in->LorentzFact = sqrt(dRa*dRa + dDec*dDec) / delta;
+    /* Trap gonzo values */
+    if ((in->LorentzFact>1.05) || (in->LorentzFact<0.95)) in->LorentzFact = 1.0;
     in->cRA    = cos(in->curSource->RAMean*DG2RAD);
     in->sRA    = sin(in->curSource->RAMean*DG2RAD);
     in->cDec   = cos(in->curSource->DecMean*DG2RAD);

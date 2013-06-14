@@ -1417,3 +1417,10 @@ missing routine:
 Obit/src/ObitTableCCUtil.c  Obit/include/ObitTableCCUtil.h:
   Implement ObitTableCCUtilCombTSpec
 3 June 2013, svn version 453
+
+Fix bug in BDFIn computing u,v,w
+Obit/src/ObitUVWCalc.c:
+  UVW: Fix units if call to Precess for Lorentz correction
+Obit/src/ObitPolCalList.c:
+  Create: default refAnt = 1
+14 June 2013 svn version 454

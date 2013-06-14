@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012                                               */
+/*;  Copyright (C) 2012-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -194,6 +194,7 @@ ObitPolCalList* ObitPolCalListCreate (gchar* name, Obit *PDTabl,
   /* release row object */
   PDRow  = ObitTablePDRowUnref(PDRow);
 
+  if (out->polRefAnt<0) out->polRefAnt = 1;  /* Default reference antenna */
   return out;
 } /* end ObitPolCalListCreate */
 
