@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Instrumental polarization calibration                              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012                                               */
+/*;  Copyright (C) 2012,2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -617,7 +617,8 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gboolean     doCalSelect, KeepSou;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
-    "Sources", "Stokes", "timeRange", "FreqID", "BChan", "EChan",   "BIF", "EIF", 
+    "Sources", "Stokes", "timeRange", "UVRange", "FreqID", 
+    "BChan", "EChan", "BIF", "EIF", 
     "subA", "Antennas", "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", 
     "flagVer", "doPol", "Mode", "ModelType", "Alpha", "refAnt",
      NULL};
@@ -901,7 +902,7 @@ void PCalHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   gchar        hicard[81];
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq", 
-    "Sources", "Qual", "souCode", "timeRange",  "subA",
+    "Sources", "Qual", "souCode", "timeRange",  "UVRange", "subA",
     "selBand", "selFreq", "FreqID",  "BChan", "EChan", "BIF", "EIF",  
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
     "doPol", "Antennas", 

@@ -1424,3 +1424,33 @@ Obit/src/ObitUVWCalc.c:
 Obit/src/ObitPolCalList.c:
   Create: default refAnt = 1
 14 June 2013 svn version 454
+
+Improved source catalog handling, Various bug fixes
+Obit/src/ObitUVCalCalibrate.c:
+  Init: Check that cal tables have at least the same number of antennas as data.
+  Ignore Antennas with numbers higher than in data.
+Obit/python/UV.py:
+  PTableCLfromNX: Set number of antennas in CL table header.
+Obit/tasks/Calib.c:
+  Actually implement UVRange, WtUV
+Obit/tasks/PCal.c Obit/TDF/PCal.TDF:
+  Add UVRange parameter
+Obit/python/Catalog.py:
+  Add function PVLScale to scale table fluxes with exclusions
+     Copy beam, index
+Obit/bin/ObitTables.pl:
+  Update copyright date to 2013
+Obit/doc/OBITdoc.tex:
+Obit/python/TableAN.inc Obit/python/TableCL.inc:
+Obit/python/TableSN.inc  Obit/python/TableVL.inc :
+  Add default values to table keywords to allow access via python.
+  for AN, CL, SN, VL tables
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  update python interface.
+Obit/src/ObitDConCleanVis.c:
+  Make sure beam patches are released.
+Obit/src/ObitDConClean.c:
+  ImageStats: Allow default old BLC, TRC
+Obit/tasks/BDFIn.c:
+  GetSourceInfo: Write mean position as pointing position.
+23 June 2012, svn version 455

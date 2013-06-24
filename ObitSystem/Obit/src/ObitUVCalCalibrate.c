@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -142,6 +142,10 @@ void ObitUVCalCalibrateInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
     me->SNTableRow = (Obit*)newObitTableSNRow((ObitTableSN*)(me->SNTable));
     me->numPol = ((ObitTableSN*)me->SNTable)->numPol;
     me->numRow = ((ObitTableSN*)me->SNTable)->myDesc->nrow;
+    /* Check number of antennas */
+    Obit_return_if_fail((me->numAnt<=((ObitTableSN*)me->SNTable)->numAnt), err,
+			"%s: SN Table different number of antennas < data %d, %d",
+			routine, ((ObitTableSN*)me->SNTable)->numAnt, me->numAnt);
   } else {  /* CL */
     /* Sort to time order if needed */
     retCode = ObitTableUtilSort((ObitTable*)(me->CLTable), colName, FALSE, err);
@@ -154,6 +158,10 @@ void ObitUVCalCalibrateInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
     me->CLTableRow = (Obit*)newObitTableCLRow((ObitTableCL*)(me->CLTable));
     me->numPol = ((ObitTableCL*)me->CLTable)->numPol;
     me->numRow = ((ObitTableCL*)me->CLTable)->myDesc->nrow;
+    /* Check number of antennas */
+    Obit_return_if_fail((me->numAnt<=((ObitTableCL*)me->CLTable)->numAnt), err,
+			"%s: CL Table different number of antennas < data %d, %d",
+			routine, ((ObitTableCL*)me->CLTable)->numAnt, me->numAnt);
   }
 
   /* Allocate calibration arrays */
@@ -943,6 +951,9 @@ static void ObitUVCalCalibrateNewTime (ObitUVCalCalibrateS *in, ofloat time,
       want = want &&
 	((SNTableRow->FreqID == in->FreqID) || (SNTableRow->FreqID <= 0) ||
 	 (in->FreqID <= 0));
+
+      /* Antenna number in range */
+      want = want && (SNTableRow->antNo<=in->numAnt);
       
       /* skip if not wanted */
       if (!want) continue;
@@ -1076,6 +1087,9 @@ static void ObitUVCalCalibrateNewTime (ObitUVCalCalibrateS *in, ofloat time,
       want = want &&
 	((CLTableRow->FreqID == in->FreqID) || (CLTableRow->FreqID <= 0) ||
 	 (in->FreqID <= 0));
+      
+      /* Antenna number in range */
+      want = want && (CLTableRow->antNo<=in->numAnt);
       
       /* skip if not wanted */
       if (!want) continue;

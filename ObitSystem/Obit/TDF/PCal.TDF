@@ -51,6 +51,8 @@ Qual            -10.0               Source qualifier -1=>any
 souCode                             Calibrator code '    '=>any
 **PARAM** float 2
 timeRange                           Time range to process.
+**PARAM** float 2
+UVRange         0.                  Min & max baseline (klambda)
 **PARAM** int 1
 FreqID                              Freq. ID to select.
 **PARAM** int 1 **DEF** 1
@@ -148,7 +150,7 @@ doBlank                             Blank failed solutions
 **PARAM** int 1
 refAnt            0                 Reference antenna
 **PARAM** float 1
-solInt            0.0               Poln cal Soln interval (min)
+solInt            0.0               Data averaging interval (min)
                                     
 **PARAM** int 1
 prtLv             0.0               Print level in cal
@@ -167,11 +169,10 @@ Type:  Task
 This program determines on-axis instrumental polarization 
 parameters per channel using calibrator observations.
 For point source calibrators the source polarization can be solved 
-for or the polarization angle constrained and the polarized flux 
-solved for or a solution assuming no linear polarization.
-Up to 10 calibrators can be used but solution for the source 
-polarization required a spread of the observed parallactic angles 
-for at least some.
+for or the polarization angle and fractional polarization 
+constrained.  Up to 10 calibrators can be used but solution for 
+the source polarization requires a spread of the observed 
+parallactic angles for at least some.
    For a single resolved source a full source model may be given.
 Multiple channels may be averaged in a sliding window ChWid channels 
 wide if needed to improve sensitivity.
@@ -181,12 +182,12 @@ polarization) table and can be applied in subsequent processing.
 R/L (X/Y) phase differences are written into a BP table.
    Solutions involve one or two phases; the first a relaxation 
 fitting optionally followed by a Levenberg-Marquardt least
-squares.  The latter is somewhat more accurate but cam be quite 
+squares.  The latter is somewhat more accurate but can be quite 
 slow.
 
 NOTES:
  1) For arrays with circular feeds, the parallactic angle
-corrections MUST be made prior to any other calibratioin steps 
+corrections MUST be made prior to any other calibration steps 
 determining phases from the data.
  2) May (probably) not work for linear feeds.
  3) Dividing by a source model will help for the atmospheric 
@@ -221,6 +222,8 @@ Adverbs:
              selection of sources to process.
   timeRange..Start and end times (day)
              Use  dhms2day to convert from human readable form
+  UVRange....(Minimum,Maximum) baseline (kilo-lambda) to include
+
   BIF........First IF to process. 0=>1
   EIF........Highest IF to process 0=> do BIF to highest.
   BChan......First channel number to include, 0=>1.  Channel numbers are 1
@@ -337,8 +340,7 @@ Adverbs:
   doBlank....Blank failed solutions? else write default parameters 
              in the output PD and BP tables
   refAnt.....Reference antenna number, MUST be given.
-  solInt.....Solution interval (min).  data is averaged for 
-             this long
+  solInt.....Data is averaged for this long (min)
 
   prtLv......Print level in solution, 0=>none 
   nThreads...If the Obit libraries are compiled with multiple
@@ -357,10 +359,9 @@ Adverbs:
   noScrat....A list of AIPS disk numbers on which you do not 
              wish scratch files
 ----------------------------------------------------------------
-Copied from AIPS PCAL - not all is relevant or correct.
 PCAL:  Task to determine effective feed polarization parameters.
 Documentor: W. D. Cotton (preliminary version).
-Related Programs: CALIB, LISTR, SPLIT, CLCOR, LPCAL, SPCAL
+Related Programs: Calib, RLDly, RLPass, Split, Splat
 
      Polarization calibration of synthesis array visibility
 data consists of two distinct parts: 1) the determination of
@@ -368,125 +369,27 @@ the effective response of the feed to the incident radiation
 and the correction of the observations to the values which
 would have been obtained with perfect feeds and 2) the
 determination and removal of systematic phase delay differences
-between the right and left hand polarization systems.  PCAL
+between the right and left hand polarization systems.  PCal
 determines the effective response of the feeds, the
 polarization of unknown calibrator(s) and stores this
-information in the AN and SU tables.  Routines which can apply
+information in the PD and CP tables.  Routines which can apply
 calibration tables can then be instructed to apply the
-polarization corrections by setting the adverb DOPOL=TRUE.
+polarization corrections by setting the adverb `doPol=True 
+and PDVer = PD table number.
 
      If the systematic phase delay differences between the
 right and left hand systems is time variable (e.g. variable
 ionispheric Faraday rotation) then these effects need to be
-removed before running PCAL (see CLCOR).  If the systematic
-phase offsets are essentially constant then they may be removed
-after running PCAL by using LISTR with STOKES='POLC'; DOPOL=1
-and appropriate calibration on a source with known polarization
-angle to determine the phase offsets and then applying them
-using CLCOR and OPCODE='POLR'.  Note: this later method will
-modify the AN table as well as the CL table.
+removed before running PCal (see AIPS/CLCOR).  Correction of
+R-L delay and phase difference can be determined using 
+RLDly and RLPass.
 
-SINGLE SOURCE FILES:
 
-     In principle, PCAL can work on a single source file
-followed by SPLIT to apply the correction.  However, in
-practice, it is preferable to convert all of the files involved
-to multisource files using task MULTI followed by DBCON with
-DOARRAY=TRUE to glue the files together.  DBCON should be
-followed by INDXR to create an index table.  The flux densities
-of the calibrator source(s) to be used by PCAL should be
-entered in the Source (SU) table using SETJY.  Also, see the
-section on parallactic angles.
-     After PCAL has been successfully run and any phase offsets
-have been removed, then single source, polarization corrected
-files can be obtained using SPLIT with DOPOL=TRUE;  DOCAL=TRUE
-and GAINUSE=(relevant CL table).
+Parallactic angle correction:
 
-PARALLACTIC ANGLE:
+     PCal expects that the input has had the parallactic angle 
+removed from the phase of the cross hand visibility data.  
+This correction cal be made using task CLCor and 
+corMode="PANG".
 
-     When used with SOLTYPE='APPR', PCAL expects that the input
-data has NOT had the parallactic angle removed from the phase of
-the cross hand visibility data.  The AIPS software makes this
-correction when the instrumental corrections are applied, i.e.,
-when DOPOL=TRUE. If this correction has been made (e.g. any data
-which has been through the VLA Dec-10) then PCAL will give
-invalid results.  (VLA data read by the AIPS program FILLM has
-not had this correction made and can be feed to PCAL as is.)
-     If SOLTYPE='RAPR' or 'ORI-' then the parallactic angle
-correction SHOULD have been made before phase calibration.  Also
-for SOLTYPE='ORI-' the phase reference antenna used in the
-calibration process should be the same as REFANT given to PCAL.
-     If you are unsure about this correction then run LISTR
-with OPTYPE='MATX'; STOKES='POLC'; DPARM(1)=1; SOURCES='(your
-calibrator source)'; DOPOL=FALSE; DOCAL=TRUE;
-GAINUSE=appropriate CL (or SN for single source files) table.
-The parallactic angle may be determined from LISTR using
-OPTYPE='GAIN'; DPARM(1)=9.  If the parallactic angle correction
-has NOT been applied then the phase of the RL correlations will
-vary approximately as the negative of the parallactic angle.
-If the range of phase of the RL correlator is much less than
-the range of the parallactic angle then the parallactic angle
-correction has been made and needs to be removed.
-
-REMOVAL OF THE PARALLACTIC ANGLE CORRECTION:
-
-     Before removing the parallactic angle correction by
-modifying the CL table it is best to copy the current working
-CL table to the next available sequence number with TACOP and
-modify the copy.  If something goes wrong you can start over
-using the previous version (also CLCOR refuses to modify CL
-table version 1).  Remember to set the OUTNAME etc. in TACOP.
-     If you have determined that the parallactic angle
-correction has already been made to your data then it can be
-removed using CLCOR with SOURCES=''; STOKES=''; BIF=1; EIF=0
-TIMERANG=0; ANTENNAS=0; SUBARRAY=subarray number; GAINVER=CL
-table no. to modify; OPCODE='PANG'; BPARM=0.  CLCOR will remove
-the parallactic angle correction by rotating the phases of the
-complex gains to be applied the the data. If there is more than
-one subarray present then CLCOR must be run for each subarray;
-the number of subarrays can be determined from the number of AN
-tables present in the file as shown by IMHEAD. After this
-correction is made, then PCAL should be run with DOCAL=TRUE and
-GAINUSE=(the CL table modified by CLCOR).
-
-CALIBRATION DATA MEASURED WITH LINEARLY POLARIZED FEEDS
-
-     Data obtained with systems using linearly polarized feeds
-(especially the Australia Telescope) may determine the
-instrumental polarization using a linear approximation.  This
-type of solution is indicated in the AN table as
-POLTYPE='X-Y LIN '.  The standard calibration routines will
-apply these corrections if adverb DOPOL=TRUE.
-   NOTE: X-Y linear data (STOKES = -5) MUST be polarization
-before attempting to use Q, U or V polarization.
-
-SOLTYPE:
-   SOLTYPE='APPR' does a fits a linear approximation to the feed
-parameters and source polarizations using one or more unresolved
-calibrator sources.
-   SOLTYPE='RAPR' also fits a linear approximation to the feed
-parameters but allows the sources to be resolved.  The method
-explicitly assumes that the polarization structure has constant
-position angle and is the same as the total intensity structure
-with a scaling factor.  This assumption will seriously break
-down if the source is significantly resolved (larger that 1 - 2
-synthesized beam widths).
-   SOLTYPE='ORI' fits for feed ellipticity and orientation.
-Since this procedure can be quite expensive in compute time it
-should only be used in cases where the linear approximation
-breaks down (more than a few percent instrumental polarization).
-This method can optionally solve for the R-L phase offset if a
-polarization model is given.
-
-USING RESOLVED CALIBRATORS
-
-   Although SOLTYPEs 'RAPR' and 'ORI-' allow resolved
-calibrators the assumptions inherent in their use break down in
-cases of significant resolution.  In this case it may be useful
-to make a few iterations of PCAL, image, and deconvolve to
-develop a accurate model to give to PCAL (IN2NAME etc.).
-
-For calibrators that are very resolved, and/or have polarization
-structure, PCAL will not work well.  LPCAL was designed for
-this case.
 

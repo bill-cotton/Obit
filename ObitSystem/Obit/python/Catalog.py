@@ -8,7 +8,7 @@ VSAD or SAD.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2006
+#  Copyright (C) 2006-2013
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ VSAD or SAD.
 #-----------------------------------------------------------------------
 
 # Python utility package for source catalog manipulation
-import Obit, Image, Table, InfoList, OErr
+import Obit, Image, ImageDesc, Table, InfoList, OErr, History, SkyGeom
 
 def PMF2VL(MFTable, VLTable, image, err):
     """
@@ -262,7 +262,7 @@ def PVLRedun (inVL, outVL, err, centerPix=[512,512], maxDist=15.0):
 def PVLFilter (inVL, outVL, err, \
                    col1="PEAK INT", col2="I RMS", minRatio=5.0):
     """
-    Select entriies in a VL table based on the ratio of the values
+    Select entries in a VL table based on the ratio of the values
     
     Copy table rows whose ratio of the values in two columns exceed minRatio
     value(col1)/value(col2) > minRatio are copied
@@ -299,6 +299,93 @@ def PVLFilter (inVL, outVL, err, \
     outVL.Close(err)
 
     # end PVLFilter 
+
+def PVLScale (inImage, inVL, outVL, scale, err,
+              exclude=None):
+    """
+    Scale the flux density values in a VL table
+    
+    Copies beam parameters and indexes when done.
+    * inImage   = Input image with VL tables
+    * inVL      = Input Obit VL Table
+    * outVL     = Output Obit VL Table, new data appended to end of old
+    * scale     = scale factor for flux densities
+    * err       = Python Obit Error/message stack
+    * exclude   = list of tuples with (ra, deg, size) all in deg
+                  describing regions not to rescale
+    """
+    ################################################################
+    # Checks
+    if not Table.PIsA(inVL):
+        print "Actually ",inVL.__class__
+        raise TypeError,"inVL MUST be a Python Obit Table"
+    if not Table.PIsA(outVL):
+        print "Actually ",outVL.__class__
+        raise TypeError,"VLTable MUST be a Python Obit Table"
+    fblank = Obit.FArrayGetBlank ()  # Blanked value
+    inVL.Open(Table.READONLY,err)
+    outVL.Open(Table.READWRITE,err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error Opening tables")
+    # Copy beam info
+    outVL.keys["BeamMajor"] = inVL.keys["BeamMajor"]
+    outVL.keys["BeamMinor"] = inVL.keys["BeamMinor"]
+    outVL.keys["BeamPA"]    = inVL.keys["BeamPA"]
+    #print "debug",outVL.keys
+    nrow = inVL.Desc.Dict['nrow']
+    orow = -1;
+    for irow in range(1,nrow+1):
+        row = inVL.ReadRow(irow,err)
+        if err.isErr:
+            break
+        doScale = True    # Need to scale?
+        if exclude:
+            for pos in exclude:
+                (dra,ddec) = SkyGeom.PShiftXY(row["RA(2000)"][0], row["DEC(2000)"][0], 0.0, pos[0], pos[1])
+                if (abs(dra)<=pos[2]) and (abs(ddec)<=pos[2]):
+                    doScale = False
+                    print "exclude", irow, ImageDesc.PRA2HMS(row["RA(2000)"][0]), ImageDesc.PDec2DMS(row["DEC(2000)"][0]), \
+                        row["PEAK INT"][0]
+                    break
+        if doScale:
+            row["PEAK INT"][0] *= scale
+            row["I RMS"][0]    *= scale
+            row["RES RMS"][0]  *= scale
+            row["RES PEAK"][0] *= scale
+            row["RES FLUX"][0] *= scale
+            # Have poln data?
+            if (row["Q CENTER"][0]!=fblank) and (row["U CENTER"][0]!=fblank):
+                row["Q CENTER"][0] *= scale
+                row["U CENTER"][0] *= scale
+                row["P Flux"][0]   *= scale
+                row["POL RMS"][0]  *= scale
+        # write
+        outVL.WriteRow(orow, row, err)
+        if err.isErr:
+            break
+    inVL.Close(err)
+    outVL.Close(err)
+
+    # History
+    #outVL.Open(Table.READWRITE,err)
+    inHistory  = History.History("history", inImage.List, err)
+    inHistory.Open(History.READWRITE, err)
+    inHistory.TimeStamp("Start PVLScale", err)
+    inHistory.WriteRec(-1,"PVLScale / scale = "+str(scale),err)
+    if exclude:
+        i = 0
+        for pos in exclude:
+            i += 1
+            hi = "PVLScale exclude[%d] = (%9.5f,%9.5f,%8.6f) \ no Scale"%(i,pos[0], pos[1],pos[2])
+            inHistory.WriteRec(-1,hi,err)
+    inHistory.Close(err)
+    #outVL.Close(err)
+
+    # Index
+    print "Index output"
+    PVLIndex (outVL,err)
+
+    # end PVLScale
 
 def PVLPrint (VLTable, image, err, file="stdout"):
     """

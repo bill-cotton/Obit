@@ -1814,8 +1814,8 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
     ObitPrecessUVJPrecessApp (outData->myDesc, source);
     outRow->RAApp  = source->RAApp;
     outRow->DecApp = source->DecApp;
-    outRow->RAObs  = source->RAApp;
-    outRow->DecObs = source->DecApp;
+    outRow->RAObs  = source->RAMean;
+    outRow->DecObs = source->DecMean;
     source = ObitSourceUnref(source);
 
     /* blank fill source name */

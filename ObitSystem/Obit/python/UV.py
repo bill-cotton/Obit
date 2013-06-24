@@ -1966,6 +1966,9 @@ def PTableCLfromNX(outUV, nant, err, outVer=1, calInt=1.0):
     if err.isErr:
         OErr.printErrMsg(err, "Error opening table")
     # Update header
+    d = cltab.Desc.List.Dict
+    d["numAnt"] = nant
+    cltab.Desc.List.Dict = d
     # Create row
     ia = [];     fa1 = []; fa0 = []
     for iif in range(0,noif):

@@ -1561,7 +1561,7 @@ ObitTableDesc.
 {Revision number of the table definition.}
 ]
 % Must be position 2 to index
-\tablekey[{"NO\_IF  "}{J}{numIF}{1}{()}
+\tablekey[{"NO\_IF  "}{J}{numIF}{0}{()}
 {The number of IFs}
 ]
 \tablekey[{"ARRAYX  "}{D}{ArrayX}{0.0}{}
@@ -1591,7 +1591,7 @@ ObitTableDesc.
 \tablekey[{"POLARY  "}{E}{PolarY}{0.0}{}
 {Polar position Y (meters) on ref. date}
 ]
-\tablekey[{"UT1UTC  "}{E}{ut1Utc}{}{}
+\tablekey[{"UT1UTC  "}{E}{ut1Utc}{0.0}{}
 {UT1-UTC  (time sec.)  }
 ]
 \tablekey[{"DATUTC  "}{E}{dataUtc}{0.0}{}
@@ -1600,7 +1600,7 @@ ObitTableDesc.
 \tablekey[{"TIMSYS"}{A}{TimeSys}{"IAT"}{}
 {Time system, 'IAT' or 'UTC'}
 ]
-\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
+\tablekey[{"ARRNAM  "}{A}{ArrName}{"unknown"}{}
 {Array name}
 ]
 \tablekey[{"XYZHAND"}{A}{XYZHand}{"RIGHT"}{}
@@ -2112,7 +2112,7 @@ ObitTableDesc.
 \tablekey[{"NO\_IF  "}{J}{numIF}{}{()}
 {The number of IFs}
 ]
-\tablekey[{"NO\_ANT  "}{J}{numAnt}{}{}
+\tablekey[{"NO\_ANT  "}{J}{numAnt}{1}{}
 {The number of antennas in table}
 ]
 \tablekey[{"NO\_TERM"}{J}{numTerm}{0}{()}
@@ -3734,7 +3734,7 @@ ObitTableDesc.
 {The number of IFs
 }
 ]
-\tablekey[{"NO\_ANT  "}{J}{numAnt}{}{}
+\tablekey[{"NO\_ANT  "}{J}{numAnt}{1}{}
 {The number of antennas in table.
 }
 ]
@@ -4024,16 +4024,16 @@ ObitTableDesc.
 \tablekey[{"REVISION"}{J}{revision}{1}{}
 {Revision number of the table definition}
 ]
-\tablekey[{"BM\_MAJOR"}{E}{BeamMajor}{}{}
+\tablekey[{"BM\_MAJOR"}{E}{BeamMajor}{0.0125}{}
 {Restoring beam major axis in deg.}
 ]
-\tablekey[{"BM\_MINOR"}{E}{BeamMinor}{}{}
+\tablekey[{"BM\_MINOR"}{E}{BeamMinor}{0.0125}{}
 {Restoring beam minor axis in deg.}
 ]
-\tablekey[{"BM\_PA"}{E}{BeamPA}{}{}
+\tablekey[{"BM\_PA"}{E}{BeamPA}{0.0}{}
 {Restoring beam position angle of major axis in deg.}
 ]
-\tablekey[{"SORTORT"}{J}{SortOrder}{}{}
+\tablekey[{"SORTORT"}{J}{SortOrder}{0}{}
 {Column number for sort (neg -> descending)}
 ]
 \tablekey[{"NUM\_INDE"}{J}{numIndexed}{1}{}
@@ -4045,7 +4045,7 @@ ObitTableDesc.
 \tablekey[{"INDEX01"}{J}{index01}{1}{}
 {First entry for RA=01 h}
 ]
-\tablekey[{"INDEX02"}{J}{index02}1{}{}
+\tablekey[{"INDEX02"}{J}{index02}{1}{}
 {First entry for RA=02 h}
 ]
 \tablekey[{"INDEX03"}{J}{index03}{1}{}

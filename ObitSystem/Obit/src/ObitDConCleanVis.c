@@ -842,6 +842,10 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   /* Find peak brightness in mosaic */
   inClass->FindPeak (in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Clear BeamPatches array - to be sure */
+  inClass->KillBeamPatches (in);
+  
 } /* end ObitDConCleanVisDeconvolve */
 
 /**
@@ -2071,11 +2075,16 @@ void ObitDConCleanVisAddField (ObitDConCleanVis *in, ObitUV* uvdata,
   olong i, oldField, *itemp;
   gboolean *btemp;
   ofloat *ftemp;
+  const ObitDConCleanVisClassInfo *inClass;
   gchar *routine = "ObitDConCleanVisAddField";
 
   /* Error checks */
   if (err->error) return;  /* previous error? */
   g_assert(ObitDConCleanVisIsA(in));
+
+  /* Clear BeamPatches array */
+  inClass     = (ObitDConCleanVisClassInfo*)in->ClassInfo; /* clean class structure */
+  inClass->KillBeamPatches (in);
 
    /* field to add */
   oldField = in->nfield;

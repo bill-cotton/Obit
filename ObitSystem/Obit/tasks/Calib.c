@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2012                                         */
+/*;  Copyright (C) 2006-2013                                         */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -109,8 +109,10 @@ int main ( int argc, char **argv )
     NULL};
   gchar        *solverParms[] = {  /* Calibration parameters */
     "solInt", "solnVer", "solType", "solMode", "avgPol", "avgIF", "doMGM", "elevMGM",
-    "refAnt", "refAnts", "doTwo", "ampScalar", "minSNR",  "minNo", "prtLv",
+    "WtUV", "refAnt", "refAnts", "doTwo", "ampScalar", "minSNR",  "minNo", "prtLv",
     NULL};
+  gchar        *solverRenameIn[]  = {"UVRange", NULL};
+  gchar        *solverRenameOut[] = {"UVR_Full", NULL};
 
   /* Startup - parse command line */
   err = newObitErr();
@@ -178,6 +180,8 @@ int main ( int argc, char **argv )
 
   /* Copy calibration control to solver */
   ObitInfoListCopyList (myInput, solver->info, solverParms);
+  /* Rename parms */
+  ObitInfoListCopyListRename (myInput, solver->info, solverRenameIn, solverRenameOut);
 
   /* Do solution */
   solnClass = (ObitUVGSolveClassInfo*)solver->ClassInfo;
@@ -1147,8 +1151,8 @@ void CalibHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   gchar        hicard[81];
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq", 
-    "Sources", "Qual", "souCode", "timeRange",  "subA", "solnVer",
-    "selBand", "selFreq", "FreqID", "BChan", "EChan", 
+    "Sources", "Qual", "souCode", "timeRange", "UVRange", "WtUV", 
+    "subA", "solnVer", "selBand", "selFreq", "FreqID", "BChan", "EChan", 
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
     "doPol", "PDVer", "Antennas",  "refAnts", "doTwo",
     "DataType2", "in2File", "in2Disk", "in2Name", "in2Class", "in2Seq", 

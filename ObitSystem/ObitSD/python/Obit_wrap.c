@@ -714,6 +714,18 @@ extern int BeamShapeIsA (ObitBeamShape* in) {
   return ObitBeamShapeIsA(in);
 }
 
+extern float BeamShapeAngle (ObitBeamShape* in, float ra, float dec, float parAng) {
+  return (float) ObitBeamShapeAngle (in, (odouble)ra, (odouble)dec, (ofloat)parAng);
+}
+
+extern float BeamShapeGetFreq (ObitBeamShape* in) {
+  return (float) ObitBeamShapeGetFreq (in);
+}
+
+extern void BeamShapeSetFreq (ObitBeamShape* in, float newFreq) {
+  ObitBeamShapeSetFreq (in, (odouble)newFreq);
+}
+
 extern ObitBeamShape *newBeamShape(char *);
 extern ObitBeamShape *BeamShapeCopy(ObitBeamShape *,ObitBeamShape *,ObitErr *);
 extern ObitBeamShape *BeamShapeUnref(ObitBeamShape *);
@@ -723,6 +735,9 @@ extern float BeamShapeGain(ObitBeamShape *,double ,double ,float );
 extern float BeamShapeGainSym(ObitBeamShape *,double );
 extern char *BeamShapeGetName(ObitBeamShape *);
 extern int BeamShapeIsA(ObitBeamShape *);
+extern float BeamShapeAngle(ObitBeamShape *,float ,float ,float );
+extern float BeamShapeGetFreq(ObitBeamShape *);
+extern void BeamShapeSetFreq(ObitBeamShape *,float );
 
 typedef struct {
   ObitBeamShape *me;
@@ -3858,6 +3873,7 @@ typedef struct {
 #include "ObitImageUtil.h"
 #include "ObitTable.h"
 #include "ObitTableCCUtil.h"
+#include "ObitPolnUnwind.h"
 
 ObitImage* ImageUtilCreateImage (ObitUV *inUV, long fieldNo,
 			       int doBeam, ObitErr *err) {
@@ -3949,6 +3965,13 @@ ImageUtilT2Spec (ObitImage *inImage, ObitImage *outImage,
   return outImage;
 } // end ImageUtilT2Spec
 
+extern void 
+PolnUnwindCube(ObitImage *rmImage, ObitImage *inQImage, ObitImage *inUImage, 
+               ObitImage *outQImage, ObitImage *outUImage, ObitErr *err)
+{
+  ObitPolnUnwindCube (rmImage, inQImage, inUImage, outQImage, outUImage, err);
+} // end PolnUnwindCube
+extern void PolnUnwindCube(ObitImage *,ObitImage *,ObitImage *,ObitImage *,ObitImage *,ObitErr *);
 
 #include "ObitInfoList.h"
 
@@ -7219,7 +7242,7 @@ extern ObitSource* SourceCreateByName (char *name, ObitUV *inUV, char *Name, lon
     if (err->error) Obit_traceback_val (err, routine, inUV->name, out);
     // Find source and copy reference to output
     for (i=0; i<tsList->number; i++) {
-      if ((!strncmp(Name, tsList->SUlist[i]->SourceName, MIN(20,strlen(name))))
+      if ((!strncmp(Name, tsList->SUlist[i]->SourceName, MIN(20,strlen(Name))))
         && (tsList->SUlist[i]->Qual==Qual)) {
         out = ObitSourceRef(tsList->SUlist[i]);
         break;
@@ -7448,9 +7471,9 @@ extern ObitTable* TableAN (ObitData *inData, long *tabVer,
  {
    ObitIOAccess laccess;
    /* Cast structural keywords to correct type */
-   oint lnumOrb  = (oint)numOrb;
+   oint lnumIF = (oint)numIF;
+   oint lnumOrb = (oint)numOrb;
    oint lnumPCal = (oint)numPCal;
-   oint lnumIF   = (oint)numIF;
    olong ltabVer = (olong)*tabVer;
    ObitTable *outTable=NULL;
    laccess = OBIT_IO_ReadOnly;
@@ -7467,8 +7490,10 @@ extern ObitTable* TableAN (ObitData *inData, long *tabVer,
 extern PyObject* TableANGetHeadKeys (ObitTable *inTab) {
   PyObject *outDict=PyDict_New();
   ObitTableAN *lTab = (ObitTableAN*)inTab;
+  PyDict_SetItemString(outDict, "numIF",  PyInt_FromLong((long)lTab->numIF));
   PyDict_SetItemString(outDict, "numOrb",  PyInt_FromLong((long)lTab->numOrb));
   PyDict_SetItemString(outDict, "numPCal",  PyInt_FromLong((long)lTab->numPCal));
+  PyDict_SetItemString(outDict, "revision",  PyInt_FromLong((long)lTab->revision));
   PyDict_SetItemString(outDict, "ArrayX",  PyFloat_FromDouble((double)lTab->ArrayX));
   PyDict_SetItemString(outDict, "ArrayY",  PyFloat_FromDouble((double)lTab->ArrayY));
   PyDict_SetItemString(outDict, "ArrayZ",  PyFloat_FromDouble((double)lTab->ArrayZ));
@@ -7478,8 +7503,12 @@ extern PyObject* TableANGetHeadKeys (ObitTable *inTab) {
   PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
   PyDict_SetItemString(outDict, "PolarX",  PyFloat_FromDouble((double)lTab->PolarX));
   PyDict_SetItemString(outDict, "PolarY",  PyFloat_FromDouble((double)lTab->PolarY));
+  PyDict_SetItemString(outDict, "ut1Utc",  PyFloat_FromDouble((double)lTab->ut1Utc));
   PyDict_SetItemString(outDict, "dataUtc",  PyFloat_FromDouble((double)lTab->dataUtc));
   PyDict_SetItemString(outDict, "TimeSys", PyString_InternFromString(lTab->TimeSys));
+  PyDict_SetItemString(outDict, "ArrName", PyString_InternFromString(lTab->ArrName));
+  PyDict_SetItemString(outDict, "XYZHand", PyString_InternFromString(lTab->XYZHand));
+  PyDict_SetItemString(outDict, "FRAME", PyString_InternFromString(lTab->FRAME));
   PyDict_SetItemString(outDict, "FreqID",  PyInt_FromLong((long)lTab->FreqID));
   PyDict_SetItemString(outDict, "iatUtc",  PyFloat_FromDouble((double)lTab->iatUtc));
   PyDict_SetItemString(outDict, "polType", PyString_InternFromString(lTab->polType));
@@ -7501,6 +7530,7 @@ extern void TableANSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
   char *tstr;
   int lstr=MAXKEYCHARTABLEAN;
 
+  lTab->revision = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "revision"));
   lTab->ArrayX = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ArrayX"));
   lTab->ArrayY = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ArrayY"));
   lTab->ArrayZ = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ArrayZ"));
@@ -7511,9 +7541,16 @@ extern void TableANSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
   strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
   lTab->PolarX = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "PolarX"));
   lTab->PolarY = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "PolarY"));
+  lTab->ut1Utc = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ut1Utc"));
   lTab->dataUtc = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "dataUtc"));
   tstr = PyString_AsString(PyDict_GetItemString(inDict, "TimeSys"));
   strncpy (lTab->TimeSys, tstr, lstr); lTab->TimeSys[lstr-1]=0;
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "ArrName"));
+  strncpy (lTab->ArrName, tstr, lstr); lTab->ArrName[lstr-1]=0;
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "XYZHand"));
+  strncpy (lTab->XYZHand, tstr, lstr); lTab->XYZHand[lstr-1]=0;
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "FRAME"));
+  strncpy (lTab->FRAME, tstr, lstr); lTab->FRAME[lstr-1]=0;
   lTab->FreqID = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "FreqID"));
   lTab->iatUtc = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "iatUtc"));
   tstr = PyString_AsString(PyDict_GetItemString(inDict, "polType"));
@@ -7851,6 +7888,7 @@ extern PyObject* TableCLGetHeadKeys (ObitTable *inTab) {
   PyDict_SetItemString(outDict, "numIF",  PyInt_FromLong((long)lTab->numIF));
   PyDict_SetItemString(outDict, "numTerm",  PyInt_FromLong((long)lTab->numTerm));
   PyDict_SetItemString(outDict, "revision",  PyInt_FromLong((long)lTab->revision));
+  PyDict_SetItemString(outDict, "numAnt",  PyInt_FromLong((long)lTab->numAnt));
   PyDict_SetItemString(outDict, "mGMod",  PyFloat_FromDouble((double)lTab->mGMod));
 
   return outDict;
@@ -7862,6 +7900,7 @@ extern void TableCLSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
   int lstr=MAXKEYCHARTABLECL;
 
   lTab->revision = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "revision"));
+  lTab->numAnt = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "numAnt"));
   lTab->mGMod = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "mGMod"));
 
   if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
@@ -10945,6 +10984,7 @@ extern PyObject* TableSNGetHeadKeys (ObitTable *inTab) {
   PyDict_SetItemString(outDict, "numPol",  PyInt_FromLong((long)lTab->numPol));
   PyDict_SetItemString(outDict, "numIF",  PyInt_FromLong((long)lTab->numIF));
   PyDict_SetItemString(outDict, "revision",  PyInt_FromLong((long)lTab->revision));
+  PyDict_SetItemString(outDict, "numAnt",  PyInt_FromLong((long)lTab->numAnt));
   PyDict_SetItemString(outDict, "numNodes",  PyInt_FromLong((long)lTab->numNodes));
   PyDict_SetItemString(outDict, "mGMod",  PyFloat_FromDouble((double)lTab->mGMod));
  PyDict_SetItemString(outDict, "isApplied",  PyInt_FromLong((long)lTab->isApplied));
@@ -10958,6 +10998,7 @@ extern void TableSNSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
   int lstr=MAXKEYCHARTABLESN;
 
   lTab->revision = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "revision"));
+  lTab->numAnt = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "numAnt"));
   lTab->numNodes = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "numNodes"));
   lTab->mGMod = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "mGMod"));
   lTab->isApplied = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "isApplied"));
@@ -11206,9 +11247,14 @@ extern PyObject* TableVLGetHeadKeys (ObitTable *inTab) {
   PyObject *outDict=PyDict_New();
   ObitTableVL *lTab = (ObitTableVL*)inTab;
   PyDict_SetItemString(outDict, "revision",  PyInt_FromLong((long)lTab->revision));
+  PyDict_SetItemString(outDict, "BeamMajor",  PyFloat_FromDouble((double)lTab->BeamMajor));
+  PyDict_SetItemString(outDict, "BeamMinor",  PyFloat_FromDouble((double)lTab->BeamMinor));
+  PyDict_SetItemString(outDict, "BeamPA",  PyFloat_FromDouble((double)lTab->BeamPA));
+  PyDict_SetItemString(outDict, "SortOrder",  PyInt_FromLong((long)lTab->SortOrder));
   PyDict_SetItemString(outDict, "numIndexed",  PyInt_FromLong((long)lTab->numIndexed));
   PyDict_SetItemString(outDict, "index00",  PyInt_FromLong((long)lTab->index00));
   PyDict_SetItemString(outDict, "index01",  PyInt_FromLong((long)lTab->index01));
+  PyDict_SetItemString(outDict, "index02",  PyInt_FromLong((long)lTab->index02));
   PyDict_SetItemString(outDict, "index03",  PyInt_FromLong((long)lTab->index03));
   PyDict_SetItemString(outDict, "index04",  PyInt_FromLong((long)lTab->index04));
   PyDict_SetItemString(outDict, "index05",  PyInt_FromLong((long)lTab->index05));
@@ -11240,9 +11286,14 @@ extern void TableVLSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
   int lstr=MAXKEYCHARTABLEVL;
 
   lTab->revision = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "revision"));
+  lTab->BeamMajor = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "BeamMajor"));
+  lTab->BeamMinor = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "BeamMinor"));
+  lTab->BeamPA = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "BeamPA"));
+  lTab->SortOrder = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "SortOrder"));
   lTab->numIndexed = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "numIndexed"));
   lTab->index00 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index00"));
   lTab->index01 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index01"));
+  lTab->index02 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index02"));
   lTab->index03 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index03"));
   lTab->index04 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index04"));
   lTab->index05 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index05"));
@@ -12699,6 +12750,7 @@ extern PyObject* UVVisGet (ObitUV* inUV, ObitErr *err) {
     while (readMore) {	
       if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
       else iretCode = ObitUVRead (inUV, inUV->buffer, err);
+      if (err->error) Obit_traceback_val (err, "UVVisGet", "UVVisGet", vis);
       readMore = (inUV->myDesc->numVisBuff<=0);  /* keep going? */
       if (iretCode==OBIT_IO_EOF)  {
         PyDict_SetItemString(vis, "EOF",PyInt_FromLong((long)1));
@@ -12781,6 +12833,7 @@ extern void UVVisSet (PyObject* vis, ObitUV* outUV, ObitErr *err) {
 
     outUV->myDesc->numVisBuff = 1;
     oretCode = ObitUVWrite (outUV, outUV->buffer, err);
+    if (err->error) Obit_traceback_msg (err, "UVVisSet", "UVVisSet");
 
 } // end UVVisSet
 
@@ -16476,6 +16529,73 @@ static PyObject *_wrap_BeamShapeIsA(PyObject *self, PyObject *args) {
     }
     _result = (int )BeamShapeIsA(_arg0);
     _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_BeamShapeAngle(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    float  _result;
+    ObitBeamShape * _arg0;
+    float  _arg1;
+    float  _arg2;
+    float  _arg3;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Offf:BeamShapeAngle",&_argo0,&_arg1,&_arg2,&_arg3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitBeamShape_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of BeamShapeAngle. Expected _ObitBeamShape_p.");
+        return NULL;
+        }
+    }
+    _result = (float )BeamShapeAngle(_arg0,_arg1,_arg2,_arg3);
+    _resultobj = Py_BuildValue("f",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_BeamShapeGetFreq(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    float  _result;
+    ObitBeamShape * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:BeamShapeGetFreq",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitBeamShape_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of BeamShapeGetFreq. Expected _ObitBeamShape_p.");
+        return NULL;
+        }
+    }
+    _result = (float )BeamShapeGetFreq(_arg0);
+    _resultobj = Py_BuildValue("f",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_BeamShapeSetFreq(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitBeamShape * _arg0;
+    float  _arg1;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Of:BeamShapeSetFreq",&_argo0,&_arg1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitBeamShape_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of BeamShapeSetFreq. Expected _ObitBeamShape_p.");
+        return NULL;
+        }
+    }
+    BeamShapeSetFreq(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
     return _resultobj;
 }
 
@@ -30622,6 +30742,72 @@ static PyObject *_wrap_ImageUtilT2Spec(PyObject *self, PyObject *args) {
         Py_INCREF(Py_None);
         _resultobj = Py_None;
     }
+    return _resultobj;
+}
+
+static PyObject *_wrap_PolnUnwindCube(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImage * _arg0;
+    ObitImage * _arg1;
+    ObitImage * _arg2;
+    ObitImage * _arg3;
+    ObitImage * _arg4;
+    ObitErr * _arg5;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo3 = 0;
+    PyObject * _argo4 = 0;
+    PyObject * _argo5 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOOOOO:PolnUnwindCube",&_argo0,&_argo1,&_argo2,&_argo3,&_argo4,&_argo5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PolnUnwindCube. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of PolnUnwindCube. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of PolnUnwindCube. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of PolnUnwindCube. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of PolnUnwindCube. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo5) {
+        if (_argo5 == Py_None) { _arg5 = NULL; }
+        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of PolnUnwindCube. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    PolnUnwindCube(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
     return _resultobj;
 }
 
@@ -74520,6 +74706,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "InfoListCreate", _wrap_InfoListCreate, METH_VARARGS },
 	 { "freeInfoListBlob", _wrap_freeInfoListBlob, METH_VARARGS },
 	 { "makeInfoListBlob", _wrap_makeInfoListBlob, METH_VARARGS },
+	 { "PolnUnwindCube", _wrap_PolnUnwindCube, METH_VARARGS },
 	 { "ImageUtilT2Spec", _wrap_ImageUtilT2Spec, METH_VARARGS },
 	 { "ImageUtilUVFilter", _wrap_ImageUtilUVFilter, METH_VARARGS },
 	 { "ImageUtilCCScale", _wrap_ImageUtilCCScale, METH_VARARGS },
@@ -74910,6 +75097,9 @@ static PyMethodDef ObitMethods[] = {
 	 { "CArrayIsCompatable", _wrap_CArrayIsCompatable, METH_VARARGS },
 	 { "CArrayCopy", _wrap_CArrayCopy, METH_VARARGS },
 	 { "CArrayCreate", _wrap_CArrayCreate, METH_VARARGS },
+	 { "BeamShapeSetFreq", _wrap_BeamShapeSetFreq, METH_VARARGS },
+	 { "BeamShapeGetFreq", _wrap_BeamShapeGetFreq, METH_VARARGS },
+	 { "BeamShapeAngle", _wrap_BeamShapeAngle, METH_VARARGS },
 	 { "BeamShapeIsA", _wrap_BeamShapeIsA, METH_VARARGS },
 	 { "BeamShapeGetName", _wrap_BeamShapeGetName, METH_VARARGS },
 	 { "BeamShapeGainSym", _wrap_BeamShapeGainSym, METH_VARARGS },
