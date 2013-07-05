@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -1172,12 +1172,12 @@ void ObitPlotContour (ObitPlot* in, gchar *label, ObitImage *image,
       g_snprintf (xlabel,120,"X (%s)", units);
   }
   /* Dec Equatorial or Galactic? */
-  if (!strncmp(image->myDesc->ctype[0],"DEC-", 4)) {
+  if (!strncmp(image->myDesc->ctype[1],"DEC-", 4)) {
     if (fabs(image->myDesc->crota[1])==0.0)
       g_snprintf (ylabel,120,"Declination (%s)", units);
     else  /* Don't call it Dec */
       g_snprintf (ylabel,120,"Rotated Declination (%s)", units);
-  } else if (!strncmp(image->myDesc->ctype[0],"GLON", 4)) {
+  } else if (!strncmp(image->myDesc->ctype[1],"GLON", 4)) {
       g_snprintf (ylabel,120,"Gal. Lat. (%s)", units);
   } else { /* Don't recognize */
       g_snprintf (ylabel,120,"Y (%s)", units);
@@ -1367,12 +1367,12 @@ void ObitPlotContour (ObitPlot* in, gchar *label, ObitImage *image,
       g_snprintf (xlabel,120,"X (%s)", units);
   }
   /* Dec Equatorial or Galactic? */
-  if (!strncmp(image->myDesc->ctype[0],"DEC-", 4)) {
+  if (!strncmp(image->myDesc->ctype[1],"DEC-", 4)) {
     if (fabs(image->myDesc->crota[1])==0.0)
       g_snprintf (ylabel,120,"Declination (%s)", units);
     else  /* Don't call it Dec */
       g_snprintf (ylabel,120,"Rotated Declination (%s)", units);
-  } else if (!strncmp(image->myDesc->ctype[0],"GLON", 4)) {
+  } else if (!strncmp(image->myDesc->ctype[1],"GLON", 4)) {
       g_snprintf (ylabel,120,"Gal. Lat. (%s)", units);
   } else { /* Don't recognize */
       g_snprintf (ylabel,120,"Y (%s)", units);
@@ -1689,12 +1689,12 @@ void ObitPlotGrayScale (ObitPlot* in, gchar *label, ObitImage *image,
       g_snprintf (xlabel,120,"X (%s)", units);
   }
   /* Dec Equatorial or Galactic? */
-  if (!strncmp(image->myDesc->ctype[0],"DEC-", 4)) {
+  if (!strncmp(image->myDesc->ctype[1],"DEC-", 4)) {
     if (fabs(image->myDesc->crota[1])==0.0)
       g_snprintf (ylabel,120,"Declination (%s)", units);
     else  /* Don't call it Dec */
       g_snprintf (ylabel,120,"Rotated Declination (%s)", units);
-  } else if (!strncmp(image->myDesc->ctype[0],"GLON", 4)) {
+  } else if (!strncmp(image->myDesc->ctype[1],"GLON", 4)) {
       g_snprintf (ylabel,120,"Gal. Lat. (%s)", units);
   } else { /* Don't recognize */
       g_snprintf (ylabel,120,"Y (%s)", units);
@@ -1925,12 +1925,12 @@ void ObitPlotGrayScale (ObitPlot* in, gchar *label, ObitImage *image,
       g_snprintf (xlabel,120,"X (%s)", units);
   }
   /* Dec Equatorial or Galactic? */
-  if (!strncmp(image->myDesc->ctype[0],"DEC-", 4)) {
+  if (!strncmp(image->myDesc->ctype[1],"DEC-", 4)) {
     if (fabs(image->myDesc->crota[1])==0.0)
       g_snprintf (ylabel,120,"Declination (%s)", units);
     else  /* Don't call it Dec */
       g_snprintf (ylabel,120,"Rotated Declination (%s)", units);
-  } else if (!strncmp(image->myDesc->ctype[0],"GLON", 4)) {
+  } else if (!strncmp(image->myDesc->ctype[1],"GLON", 4)) {
       g_snprintf (ylabel,120,"Gal. Lat. (%s)", units);
   } else { /* Don't recognize */
       g_snprintf (ylabel,120,"Y (%s)", units);

@@ -2714,30 +2714,39 @@ void ObitFArraySelInc (ObitFArray *in, ObitFArray *out, olong *blc, olong *trc,
   for (i10=0; i10<naxis[9]; i10+=linc[9]) {
     opos[9]++;
     if(ndim>9) ipos[9] = blc[9] + i10;
+    if (ipos[9]>=trc[9]) continue;
     for (i9=0; i9<naxis[8]; i9+=linc[8]) {
       opos[8]++;
       if(ndim>8) ipos[8] = blc[8] + i9;
+      if (ipos[8]>=trc[8]) continue;
       for (i8=0; i8<naxis[7]; i8+=linc[7]) {
 	opos[7]++;
 	if(ndim>7) ipos[7] = blc[7] + i8;
+	if (ipos[7]>=trc[7]) continue;
 	for (i7=0; i7<naxis[6]; i7+=linc[6]) {
 	  opos[6]++;
 	  if(ndim>6) ipos[6] = blc[6] + i7;
+	  if (ipos[6]>=trc[6]) continue;
 	  for (i6=0; i6<naxis[5]; i6+=linc[5]) {
 	    opos[5]++;
 	    if(ndim>5) ipos[5] = blc[5] + i6;
+	    if (ipos[5]>=trc[5]) continue;
 	    for (i5=0; i5<naxis[4]; i5+=linc[4]) {
 	      opos[4]++;
 	      if(ndim>4) ipos[4] = blc[4] + i5;
+	      if (ipos[4]>=trc[4]) continue;
 	      for (i4=0; i4<naxis[3]; i4+=linc[3]) {
 		opos[3]++;
 		if(ndim>3) ipos[3] = blc[3] + i4;
+		if (ipos[3]>=trc[3]) continue;
 		for (i3=0; i3<naxis[2]; i3+=linc[2]) {
 		  opos[2]++;
 		  if(ndim>2) ipos[2] = blc[2] + i3;
+		  if (ipos[2]>=trc[2]) continue;
 		  for (i2=0; i2<naxis[1]; i2+=linc[1]) {
 		    opos[1]++;
 		    if(ndim>1) ipos[1] = blc[1] + i2;
+		    if (ipos[1]>=trc[1]) continue;
 		    opos[0] = 0;
 		    ipos[0] = blc[0];
 		    
@@ -2747,6 +2756,7 @@ void ObitFArraySelInc (ObitFArray *in, ObitFArray *out, olong *blc, olong *trc,
 
 		    /* Copy row */
 		    for (i1=0; i1<naxis[0]; i1+=linc[0]) {
+		      if (blc[0]+i1>=trc[0]) continue;
 		      *outp++ = inp[i1];
 		    }
 		  }

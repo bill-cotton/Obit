@@ -114,7 +114,7 @@ int main ( int argc, char **argv )
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* cleanup */
-  for (i=0; i<<numImage; i++) {
+  for (i=0; i<numImage; i++) {
     inImage[i] = ObitImageUnref(inImage[i]);
   }
   outImage    = ObitImageUnref(outImage);

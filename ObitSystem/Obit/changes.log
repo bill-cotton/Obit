@@ -1453,4 +1453,18 @@ Obit/src/ObitDConClean.c:
   ImageStats: Allow default old BLC, TRC
 Obit/tasks/BDFIn.c:
   GetSourceInfo: Write mean position as pointing position.
-23 June 2012, svn version 455
+23 June 2013, svn version 455
+
+Various bug fixes
+Obit/src/ObitPlot.c:
+  various: Test for Declination/GLat axis 1 not 0
+Obit/tasks/Feather.c:
+  Fix bug in do loop
+Obit/tasks/UVSim.c:
+  Add model to history
+  Avoid infinite loop with min el.
+Obit/src/ObitSkyModel.c:
+  SetSelect: Don't look for CLEAN comps if modelType==OBIT_SkyModel_Image
+Obit/src/ObitFArray.c:
+  SelInc: Check array bounds on looping with increment
+5 July 2013, svn version 456

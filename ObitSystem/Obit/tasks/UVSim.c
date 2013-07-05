@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Simulate UV data                                                   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2012                                          */
+/*;  Copyright (C) 2009-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1151,7 +1151,7 @@ void GetData (ObitUV *outData, ObitInfoList *myInput, ObitErr *err)
     chad = cos (HrAng);
     darg = sin (ArrLat) * sindec + cos (ArrLat) * cosdec * chad;
     el = (1.570796327 - acos (MIN (darg, 1.000)));
-    if (el<minEl) continue;
+    if (el<minEl) goto skip;
 
     /* LST and hour angle (radians) */
     AntLst = AntList->GSTIAT0 + ArrLong + time*AntList->RotRate;
@@ -1192,6 +1192,7 @@ void GetData (ObitUV *outData, ObitInfoList *myInput, ObitErr *err)
     } /* end loop over first antenna */
 
     /* Next time */
+  skip:
     time += delTime;
   } /* end loop over time */
 
@@ -1618,6 +1619,10 @@ void UVSimHistory (ObitInfoList* myInput, ObitUV* outData, ObitErr* err)
     "Source", "RA", "Dec", "minEl",
     "refFreq", "nFreq", "delFreq", "nIF", "delIF",
     "arrayXYZ", "nAnts", "antXYZ", "Noise", "Compress",
+    "DataType", "in2File", "in2Name", "in2Class", "in2Disk", "in2Seq",
+    "nmaps", "CCVer", "BComp", "Ecomp", "Flux", "Factor", "Cmethod", "Cmodel",
+    "modelFlux", "modelPos", "modelParm", "mrgCC', PBCor", "antSize",
+    "outDType", "outFile", "outName", "outClass", "outSeq", "outDisk", 
     NULL};
   gchar        *hiEntriesOld[] = {
     "timeRange", "delTime",  "Source", "RA", "Dec", "minEl", "Noise",

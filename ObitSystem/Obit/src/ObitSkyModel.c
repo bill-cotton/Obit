@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2011                                          */
+/*;  Copyright (C) 2004-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -3559,7 +3559,8 @@ void ObitSkyModelSetSelect (ObitSkyModel* in, ObitUV* uvdata, ObitErr *err)
     in->stokFactor = -1.0;
 
   /* Find actual number of Clean components */
-  if ((in->pointFlux == 0.0) && (in->mosaic!=NULL)) {
+  if ((in->pointFlux == 0.0) && (in->mosaic!=NULL) && 
+      (in->modelType!=OBIT_SkyModel_Image)) {
     imDesc = in->mosaic->images[0]->myDesc; /* Image descriptor */
     for (field=0; field<in->mosaic->numberImages; field++) {
       /* Open Image */
