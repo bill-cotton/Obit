@@ -914,7 +914,8 @@ void ObitDConCleanImageStats(ObitDConClean *in, olong field, gboolean doBeam,
   ObitIOSize IOsize = OBIT_IO_byPlane;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  olong  blc[IM_MAXDIM], trc[IM_MAXDIM], oblc[IM_MAXDIM], otrc[IM_MAXDIM];
+  olong  blc[IM_MAXDIM]={1,1,1,1,1,1,1},  trc[IM_MAXDIM]={0,0,0,0,0,0,0}, 
+	oblc[IM_MAXDIM]={1,1,1,1,1,1,1}, otrc[IM_MAXDIM]={0,0,0,0,0,0,0};
   olong nThreads, i, it, nTh, nrow, nrowPerThread, hirow, lorow, count;
   olong  lo, hi;
   ofloat tmax, tmax2, sum, sum2;
@@ -962,8 +963,8 @@ void ObitDConCleanImageStats(ObitDConClean *in, olong field, gboolean doBeam,
       image = in->mosaic->images[i];
 
     /* Get existing BLC, TRC */
-    ObitInfoListGet (image->info, "BLC", &type, dim, oblc, err); 
-    ObitInfoListGet (image->info, "TRC", &type, dim, otrc, err); 
+    ObitInfoListGetTest (image->info, "BLC", &type, dim, oblc); 
+    ObitInfoListGetTest (image->info, "TRC", &type, dim, otrc); 
 
     /* Set output to full image, plane at a time */
     dim[0] = IM_MAXDIM;

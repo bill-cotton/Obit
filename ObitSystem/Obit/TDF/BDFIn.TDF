@@ -4,7 +4,7 @@
 ;! Obit Convert EVLA BDF data and append to a UV data file.
 ;# Task Obit BDF
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2010,2011
+;;  Copyright (C) 2010,2013
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ dropZero                            Drop records with all zero vis
 **PARAM** boo 1  **DEF** F
 doCode                              Each calcode a different source?
 **PARAM** boo 1  **DEF** F
-doOnline                            Don't flag "online" calibration data
+doOnline                            Keep "online" calibration data
 **PARAM** boo 1  **DEF** F
 SWOrder                             Keep data in Spectral window order?
 **PARAM** float 1 **DEF** 0.5
@@ -149,11 +149,9 @@ Data selection
              will be generate distinct source ID (entry in the 
              AIPS SU table).  If False, all data for a given source 
              name will have the same source ID.
-  doOnline...Data in scans with stated intents indicating an onliine
-             calibration, such as "CALIBRATE_POINTING", will be written 
-             but marked as flagged in the FG table if doOnline=False.
-             If doOnline=True, no flagging entries will be written for
-             these scans.
+  doOnline...Data in scans with stated intents indicating an online
+             calibration, such as "CALIBRATE_POINTING","UNSPECIFIED" 
+             will be written skipped unless doOnline=True.
   SWOrder....If True keep frequencies in Spectral window order
              If False IF will be in ascending frequency order.
   calInt.....Interval in min between AIPS CL table entries.

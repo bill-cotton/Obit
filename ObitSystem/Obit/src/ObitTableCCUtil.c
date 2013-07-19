@@ -2320,6 +2320,7 @@ void ObitTableCCUtilCombTSpec (ObitImage *inImage, olong inCCVer, olong nCCVer,
 
     /* Copy Rows */
     ncopy = inCCTab->myDesc->nrow;
+    if (ncopy<=0) goto done;
     for (irow=bcopy[itab]; irow<=ncopy; irow++) {
       ObitTableCCReadRow (inCCTab, irow, inCCRow, err);
       if (err->error) Obit_traceback_msg (err, routine, inCCTab->name);
@@ -2337,6 +2338,7 @@ void ObitTableCCUtilCombTSpec (ObitImage *inImage, olong inCCVer, olong nCCVer,
       if (err->error) Obit_traceback_msg (err, routine, outCCTab->name);
   } /* end loop over rows in input table */
     /* Cleanup input Table */
+  done:
     ObitTableCCClose (inCCTab, err);
     inCCTab = ObitTableUnref(inCCTab);
     inCCRow = ObitTableRowUnref(inCCRow);
@@ -2349,7 +2351,7 @@ void ObitTableCCUtilCombTSpec (ObitImage *inImage, olong inCCVer, olong nCCVer,
   outCCRow = ObitTableRowUnref(outCCRow);
   if (err->error) Obit_traceback_msg (err, routine, inImage->name);
 
-  *ecomp = orow;  /* Highest output row number */
+  *ecomp = orow-1;  /* Highest actual output row number */
 } /* end ObitTableCCUtilCombTSpec */
 
 /*----------------------Private functions---------------------------*/

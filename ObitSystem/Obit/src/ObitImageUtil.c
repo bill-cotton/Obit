@@ -3214,12 +3214,12 @@ ObitImageUtilUV2ImageDesc(ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
   if ((nif==1) && (nchavg<nfreq)) {
     nch = (olong)(0.999 + (ofloat)nfreq / nchavg); /* how many output channels? */
     imageDesc->inaxes[iaxis] = nch;
-    imageDesc->cdelt[iaxis] = nch*UVDesc->cdelt[UVDesc->jlocf]; 
-    imageDesc->crpix[iaxis] = 1.0 + (nch-1.0) / 2.0; /* reference pixel */
-    /* average first nch uv channels out output reference frequency */
+    imageDesc->cdelt[iaxis] = nchavg*UVDesc->cdelt[UVDesc->jlocf]; 
+    imageDesc->crpix[iaxis] = 1.0 + (nchavg-1.0) / 2.0; /* reference pixel */
+    /* average first nchavg uv channels out output reference frequency */
     sum = 0.0;
-    for (i=0; i<nch; i++) sum += UVDesc->freqArr[i];
-    imageDesc->crval[iaxis] = sum / (nch);
+    for (i=0; i<nchavg; i++) sum += UVDesc->freqArr[i];
+    imageDesc->crval[iaxis] = sum / (nchavg);
 } /* end update for spectral line */
 
   /* Stokes Axis */

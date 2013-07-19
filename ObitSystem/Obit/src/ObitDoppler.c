@@ -1,6 +1,6 @@
 /* $Id$            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012                                               */
+/*;  Copyright (C) 2012-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1716,7 +1716,7 @@ static ofloat defaultRefChan(ObitDoppler *doppler, ObitErr *err)
     ObitUVGetRADec (doppler->uvdata, 
 		      &doppler->source->RAMean, &doppler->source->DecMean, 
 		      err);
-      if (err->error) Obit_traceback_val (err, routine, doppler->name, shift);
+      if (err->error) Obit_traceback_val (err, routine, doppler->name, refChan);
       /* Compute apparent position */
       ObitPrecessUVJPrecessApp (uvDesc, doppler->source);
    } else { /* Multi source */

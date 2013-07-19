@@ -74,7 +74,7 @@ def EVLAInitContParms():
     parms["shadBl"]       = 25.0        # Minimum shadowing baseline (m)
     
     parms["doFD1"]       = True         # Do initial frequency domain flagging
-    parms["FD1widMW"]    = 31           # Width of the initial FD median window
+    parms["FD1widMW"]    = None        # Width of the initial FD median window
     parms["FD1maxRes"]   = 5.0          # Clipping level in sigma
     parms["FD1TimeAvg"]  = 1.0          # time averaging in min. for initial FD flagging
     
@@ -292,14 +292,16 @@ def EVLAInitContFQParms(parms):
         # end IPol clipping
     if (parms["FDmaxAmp"]==None):
         parms["FDmaxAmp"]    = parms["IClip"][0]     # Maximum average amplitude (Jy)
-
+    
     # Drop end channels, more for low frequencies
     if freq<8.0e9:
         if parms["BChDrop"]==None:
             ch = int (max(2, 6.*(nchan/64.)+0.5))
+            ch = min (32, ch)
             parms["BChDrop"] = ch     # number of channels to drop from start of each spectrum
         if parms["EChDrop"]==None:
             ch = int (max(2, 4.*(nchan/64.)+0.5))
+            ch = min (24, ch)
             parms["EChDrop"] = ch     # number of channels to drop from start of each spectrum
     else:
         if parms["BChDrop"]==None:
@@ -309,11 +311,14 @@ def EVLAInitContFQParms(parms):
 
     # Set spectral baseline for FD flagging ignoring end channels
     if parms["FDbaseSel"]==None:
-        ch1 = int (max(2, 6.*(nchan/64.)+0.5))
-        ch2 = nchan - int (max(2, 4.*(nchan/64.)+0.5))
+        ch1 = parms["BChDrop"] 
+        ch2 = nchan - parms["EChDrop"]
         parms["FDbaseSel"] = [ch1, ch2, 1, 0]
     
     # FD flagging
+    # number of channels for FD median window
+    if (parms["FD1widMW"]==None):
+        parms["FD1widMW"] = MIN (127, MAX(((nchan/2)-1), 3))
     if parms["FDmaxRMS"]==None:
         if cfg[0:1]=='A' or cfg[0:1]=='B' or freq>8.0e9:
             parms["FDmaxRMS"]    = [5.0,.1]     # Channel RMS limits (Jy)
@@ -1380,6 +1385,11 @@ def EVLAAutoFlag(uv, target, err, \
     * logfile    = Log file for task
     """
     ################################################################
+    # Test if full poln
+    d     = uv.Desc.Dict
+    nstoke = d["inaxes"][d["jlocs"]]
+    if nstoke<4:
+        XClip = None    # No X clip if not full poln
     # Anything requested?
     if (IClip==None or IClip[0]==0.) and (VClip==None or VClip[0]==0.) and \
        (XClip==None or XClip[0]==0.) and (RMSClip==None or RMSClip[0]==0.) and \
@@ -4320,6 +4330,14 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
     hiBP = uv.GetHighVer("AIPS BP")
     if hiBP<=0:
         doBand = -1
+    hiPD = uv.GetHighVer("AIPS PD")
+    if hiPD<=0:
+        doPol=False; PDVer=-1; Stokes="I"
+    # Tests if have full poln
+    nstoke =  uv.Desc.Dict["inaxes"][uv.Desc.Dict["jlocs"]]
+    if nstoke<4:
+        doPol=False; PDVer=-1; Stokes="I"
+       
     # get reference Freq
     refFreq = uv.Desc.Dict["crval"][uv.Desc.Dict["jlocf"]]
     # If list empty get all sources

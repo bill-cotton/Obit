@@ -745,7 +745,7 @@ olong ObitALMACalAtmGetRow (ObitALMACalAtm *in,
   olong out = in->curRow+1;
   olong maxStr, elem, nelem, i, n, ijunk;
   odouble *dbljunk=NULL;
-  ofloat *fltjunk=NULL, fjunk;
+  ofloat *fltjunk=NULL;
   gchar *start, *next, *done, *strjunk=NULL;
   gboolean gotIt; 
   gchar *routine = "ObitALMACalAtmGetRow";

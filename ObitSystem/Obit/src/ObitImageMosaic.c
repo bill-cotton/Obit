@@ -1483,7 +1483,18 @@ void ObitImageMosaicFlatten (ObitImageMosaic *in, ObitErr *err)
   /* plane number */
   planeNo = 1;
   ObitInfoListGetTest(in->info, "planeNo", &type, dim, &planeNo);
+  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
+  for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
+  /* set plane */
+  blc[2] = trc[2] = planeNo;
 
+  /* Set output plane */
+  dim[0] = IM_MAXDIM;
+  ObitInfoListPut (in->FullField->info, "BLC", OBIT_long, dim, blc, err); 
+  ObitInfoListPut (in->FullField->info, "TRC", OBIT_long, dim, trc, err); 
+  dim[0] = 1;
+  ObitInfoListPut (in->FullField->info, "IOBy", OBIT_long, dim, &IOsize, err);
+  
   /* Tell user */
   Obit_log_error(err, OBIT_InfoErr, "Flattening flys eye to single image plane %d", planeNo);
 
@@ -1519,11 +1530,6 @@ void ObitImageMosaicFlatten (ObitImageMosaic *in, ObitErr *err)
   ObitFArrayFill (sc1, 0.0);
   ObitFArrayFill (sc2, 0.0);
 
-  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
-  for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
-  /* set plane */
-  blc[2] = trc[2] = planeNo;
-
   /* Loop over tiles */
   for (i= 0; i<in->numberImages; i++) { /* loop 500 */
 
@@ -1555,8 +1561,10 @@ void ObitImageMosaicFlatten (ObitImageMosaic *in, ObitErr *err)
     trc[0] = MIN (naxis[0]-1, trc[0]);
     trc[1] = (naxis[1] / 2) + 1 + rad;
     trc[1] = MIN (naxis[1]-1, trc[1]);
-
-   /* Open/read sub window of image */
+    /* set plane */
+    blc[2] = trc[2] = planeNo;
+    
+    /* Open/read sub window of image */
     dim[0] = IM_MAXDIM;
     ObitInfoListPut (in->images[i]->info, "BLC", OBIT_long, dim, blc, err); 
     ObitInfoListPut (in->images[i]->info, "TRC", OBIT_long, dim, trc, err); 
@@ -2632,18 +2640,20 @@ void ObitImageMosaicGetInfo (ObitImageMosaic *in, gchar *prefix, ObitInfoList *o
 
 /**
  * Concatenate any CC files from facet images onto the FullField member
- * Uses CC version 1 in all cases.
+ * Uses CC versions 1 to numPar
  * If there are multiple tapered images, the following keywords are added to
  * the output table descriptor list:
  *   \li "NTAPER"   olong Number of tapers
  *   \li "TAPEnnnn" ofloat Taper nnnn in deg.
- * \param mosaic   ImageMosaic to process
+ * \param mosaic   ImageMosaic to process, info member has
+ *   \li "numPar"  olong Number of parallel images, default = 1
  * \param err      Error/message stack
  */
 void ObitImageMosaicCopyCC (ObitImageMosaic *in, ObitErr *err)
 {
   ObitTableCC *inCCTab=NULL, *outCCTab=NULL;
-  olong i, CCVer, noParms, ifield;
+  olong i, CCVer, noParms, ifield, numPar;
+  ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar keyword[9];
   gchar *routine = "ObitImageMosaicCopyCC";
@@ -2659,79 +2669,82 @@ void ObitImageMosaicCopyCC (ObitImageMosaic *in, ObitErr *err)
 		   routine, in->name);
   }
 
-  /* Get first input table to get structure */
-  CCVer   = 1;
-  noParms = 0;
-  inCCTab = newObitTableCCValue ("in CC", (ObitData*)in->images[0],
-				  &CCVer, OBIT_IO_ReadOnly, noParms, err);
-  if  (err->error) Obit_traceback_msg (err, routine,in->images[0]->name);
+  /* How many parallel tables? */
+  numPar = 1;
+  ObitInfoListGetTest(in->info, "numPar", &type, dim, &numPar);
+
+  for (CCVer=1; CCVer<=numPar; CCVer++) {
   
-  /* Create output CC table on in->FullField if exists */
-  if (in->FullField) {
-    CCVer    = 1;
-    if (in->numBeamTapes>1) /* Promote points if tapering */
-      noParms  = MAX (4, inCCTab->noParms);
-    else
-      noParms  = inCCTab->noParms;
-    outCCTab = newObitTableCCValue ("out CC", (ObitData*)in->FullField,
-				    &CCVer, OBIT_IO_ReadWrite, noParms, err);
-    /* Clear any existing rows */
-    ObitTableClearRows ((ObitTable*)outCCTab, err);
-    if  (err->error) Obit_traceback_msg (err, routine, outCCTab->name);
-
-    /* Copy first */
-    ObitTableCCUtilAppend (inCCTab, outCCTab, 0, 0, err);
-    if  (err->error) Obit_traceback_msg (err, routine, inCCTab->name);
-    inCCTab = ObitTableCCUnref(inCCTab);
-  } else { /* Copy others to first image */
-    CCVer    = 1;
-    noParms  = inCCTab->noParms;;
-    outCCTab = newObitTableCCValue ("out CC", (ObitData*)in->images[0],
-				    &CCVer, OBIT_IO_ReadWrite, noParms, err);
-  }
-
-  /* Loop over other tables */
-  for (ifield=1; ifield<in->numberImages; ifield++) {
-    CCVer   = 1;
+    /* Get first input table to get structure */
     noParms = 0;
-    inCCTab = newObitTableCCValue ("in CC", (ObitData*)in->images[ifield],
+    inCCTab = newObitTableCCValue ("in CC", (ObitData*)in->images[0],
 				   &CCVer, OBIT_IO_ReadOnly, noParms, err);
-    if  (err->error) Obit_traceback_msg (err, routine, in->images[ifield]->name);
-    if (inCCTab==NULL) continue;  /* Is there one? */
-    ObitTableCCUtilAppend (inCCTab, outCCTab, 0, 0, err);
-    if  (err->error) Obit_traceback_msg (err, routine, inCCTab->name);
-    inCCTab = ObitTableCCUnref(inCCTab); /* Cleanup */
-  } /* end loop copying rest of tables */
-
-  /* Add taper info if needed */
-  if (in->numBeamTapes>1) {
-    ObitTableOpen ((ObitTable*)outCCTab, OBIT_IO_ReadWrite, err);
-    if  (err->error) Obit_traceback_msg (err, routine, outCCTab->name);
-    dim[0] = dim[1] = 1;
-    /* Add to myIO as well */
-    ObitInfoListAlwaysPut (outCCTab->myDesc->info, 
-			   "NTAPER", OBIT_long, dim, &in->numBeamTapes);
-    ObitInfoListAlwaysPut (((ObitTableDesc*)outCCTab->myIO->myDesc)->info, 
-			   "NTAPER", OBIT_long, dim, &in->numBeamTapes);
-    for (i=0; i<in->numBeamTapes; i++) {
-      sprintf(keyword, "TAPE%4.4d", i+1);
-      ObitInfoListAlwaysPut (outCCTab->myDesc->info, keyword, OBIT_float, 
-			     dim, &in->BeamTaper[i]);
-      ObitInfoListAlwaysPut (((ObitTableDesc*)outCCTab->myIO->myDesc)->info, 
-			     keyword, OBIT_float, dim, &in->BeamTaper[i]);
+    if  (err->error) Obit_traceback_msg (err, routine,in->images[0]->name);
+    
+    /* Create output CC table on in->FullField if exists */
+    if (in->FullField) {
+      if (in->numBeamTapes>1) /* Promote points if tapering */
+	noParms  = MAX (4, inCCTab->noParms);
+      else
+	noParms  = inCCTab->noParms;
+      outCCTab = newObitTableCCValue ("out CC", (ObitData*)in->FullField,
+				      &CCVer, OBIT_IO_ReadWrite, noParms, err);
+      /* Clear any existing rows */
+      ObitTableClearRows ((ObitTable*)outCCTab, err);
+      if  (err->error) Obit_traceback_msg (err, routine, outCCTab->name);
+      
+      /* Copy first */
+      ObitTableCCUtilAppend (inCCTab, outCCTab, 0, 0, err);
+      if  (err->error) Obit_traceback_msg (err, routine, inCCTab->name);
+      inCCTab = ObitTableCCUnref(inCCTab);
+    } else { /* Copy others to first image */
+      noParms  = inCCTab->noParms;;
+      outCCTab = newObitTableCCValue ("out CC", (ObitData*)in->images[0],
+				      &CCVer, OBIT_IO_ReadWrite, noParms, err);
     }
-    outCCTab->myStatus = OBIT_Modified;
-    ObitTableClose ((ObitTable*)outCCTab, err);
-    if  (err->error) Obit_traceback_msg (err, routine, outCCTab->name);
-  }
-
-  /* Update number of CCs */
-  ObitImageOpen(in->FullField, OBIT_IO_ReadWrite, err);
-  in->FullField->myDesc->niter = outCCTab->myDesc->nrow;
-  in->FullField->myStatus = OBIT_Modified;
-  ObitImageClose(in->FullField, err);
-  
-  outCCTab = ObitTableCCUnref(outCCTab); /* Cleanup */
+    
+    /* Loop over other tables */
+    for (ifield=1; ifield<in->numberImages; ifield++) {
+      noParms = 0;
+      inCCTab = newObitTableCCValue ("in CC", (ObitData*)in->images[ifield],
+				     &CCVer, OBIT_IO_ReadOnly, noParms, err);
+      if  (err->error) Obit_traceback_msg (err, routine, in->images[ifield]->name);
+      if (inCCTab==NULL) continue;  /* Is there one? */
+      ObitTableCCUtilAppend (inCCTab, outCCTab, 0, 0, err);
+      if  (err->error) Obit_traceback_msg (err, routine, inCCTab->name);
+      inCCTab = ObitTableCCUnref(inCCTab); /* Cleanup */
+    } /* end loop copying rest of tables */
+    
+    /* Add taper info if needed */
+    if (in->numBeamTapes>1) {
+      ObitTableOpen ((ObitTable*)outCCTab, OBIT_IO_ReadWrite, err);
+      if  (err->error) Obit_traceback_msg (err, routine, outCCTab->name);
+      dim[0] = dim[1] = 1;
+      /* Add to myIO as well */
+      ObitInfoListAlwaysPut (outCCTab->myDesc->info, 
+			     "NTAPER", OBIT_long, dim, &in->numBeamTapes);
+      ObitInfoListAlwaysPut (((ObitTableDesc*)outCCTab->myIO->myDesc)->info, 
+			     "NTAPER", OBIT_long, dim, &in->numBeamTapes);
+      for (i=0; i<in->numBeamTapes; i++) {
+	sprintf(keyword, "TAPE%4.4d", i+1);
+	ObitInfoListAlwaysPut (outCCTab->myDesc->info, keyword, OBIT_float, 
+			       dim, &in->BeamTaper[i]);
+	ObitInfoListAlwaysPut (((ObitTableDesc*)outCCTab->myIO->myDesc)->info, 
+			       keyword, OBIT_float, dim, &in->BeamTaper[i]);
+      }
+      outCCTab->myStatus = OBIT_Modified;
+      ObitTableClose ((ObitTable*)outCCTab, err);
+      if  (err->error) Obit_traceback_msg (err, routine, outCCTab->name);
+    }
+    
+    /* Update number of CCs */
+    ObitImageOpen(in->FullField, OBIT_IO_ReadWrite, err);
+    in->FullField->myDesc->niter = outCCTab->myDesc->nrow;
+    in->FullField->myStatus = OBIT_Modified;
+    ObitImageClose(in->FullField, err);
+    
+    outCCTab = ObitTableCCUnref(outCCTab); /* Cleanup */
+  } /* end loop over tables */
 } /* end ObitImageMosaicCopyCC */
 
 /**

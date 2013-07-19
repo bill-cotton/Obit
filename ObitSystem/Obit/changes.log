@@ -1505,6 +1505,6 @@ Obit/src/ObitTableCCUtil.c:
    ObitTableCCUtilCombTSpec: fix bug in number of output rows
 Obit/tasks/Imager.c Obit/TDF/Imager.TDF:
    Implement doLine.
-Obit/src/ALMACalAtm.c Obit/src/Doppler.c:
+Obit/src/ObitALMACalAtm.c Obit/src/ObitDoppler.c:
    Cleanup
 19 July 2013, svn ver. 457

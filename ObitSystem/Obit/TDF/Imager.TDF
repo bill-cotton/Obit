@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry imaging software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005-2012
+;;  Copyright (C) 2005-2013
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -164,6 +164,8 @@ doFull                             Make full field (flattened) image?
 doRestore                          Restore CCs to images?
 **PARAM** boo 1 **DEF** T
 do3D                               3D imaging, else 2D
+**PARAM** boo 1 **DEF** F
+doLine                             Fast Line/shallow CLEAN mode
 **PARAM** str 48  **DEF** NVSSVZ.FIT
 Catalog                            Outlier catalog name (NVSSVZ.FIT)
 **PARAM** int 1 **DEF** 1
@@ -511,6 +513,13 @@ Adverbs:
   do3D.......If True, make the reference pixel in each facet tangent
              to the celestial sphere, else on single tangent plane.
              If False, CLEAN components are left on flattened image.
+  doLine.....If making a line image (multiple channels out) and if the 
+             CLEAN in most channels is shallow, and nThreads>~4, 
+             then doLine=True may speed the processing by imaging
+             and CLEANing nThreads channels at a time.  In this case,
+             Robust weighting will use blocks of nThreads channels.
+             Interactive setting of CLEAN box is disabled for 
+	     doLine=True.  See explain section.
 
    The following control CLEANing:
   CLEANBox...A 4x50 array with the specification of a search
@@ -752,6 +761,27 @@ the CLEAN fields covering the specified field of view (FOV).
 input uv data.  This table can be used to determine the current
 processing status of a field as well as limited information and
 quality measures for the field.
+
+****************************************************************
+******************  SPECTRAL LINE IMAGING    *****************
+****************************************************************
+
+The image output of Imager is a spectral cube if 1 IF is selected,
+chAvg>0 and chAvg<number of channels selected. The option doLine
+can be used to specify a potentially faster mode where blocks of 
+nThreads channels are processed in parallel.  doLine==True MAY
+be faster than doLine==False if there is little to no CLEANing of
+each channel image and in some cases is slower.  In addition,
+the Robust weighting is in blocks of nThread channels rather than 
+one channel at a time.  Furthermore, the CLEANing drops the 
+middle loop used when autoWindow==True resulting in more major 
+cycles.
+   In general, it is better to form line cubes from continuum 
+subtracted images.  The quality of the continuum model derived 
+from wideband data is much better than that derived from each 
+channel.
+   If Doppler corrections for the Earth's velocity and rotation
+are needed, use CVel prior to Imager.
 
 ****************************************************************
 ******************   EXTENDED SOURCE OPTIONS   *****************

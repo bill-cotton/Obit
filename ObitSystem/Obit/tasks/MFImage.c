@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN/selfcalibrate a uv data set               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2012                                          */
+/*;  Copyright (C) 2010-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2672,7 +2672,7 @@ void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
       NumChAvg = MAX (1, NumChAvg);
       /* Leave at least 4 */
       NumChAvg = MIN (NumChAvg, inData->myDesc->inaxes[inData->myDesc->jlocf]/4);
-      NumChAvg = MIN (NumChAvg, 1);
+      NumChAvg = MAX (NumChAvg, 1);
       Obit_log_error(err, OBIT_InfoErr, 
 		     "Averaging %d channels", NumChAvg);
     }
