@@ -1507,4 +1507,9 @@ Obit/tasks/Imager.c Obit/TDF/Imager.TDF:
    Implement doLine.
 Obit/src/ObitALMACalAtm.c Obit/src/ObitDoppler.c:
    Cleanup
-19 July 2013, svn ver. 457
+19 July 2013, svn ver. 457,458
+
+BDFIn bug with multiple numbers of channels/configuration
+Obit/tasks/BDFIn.c:
+  Fix indexing problem with two numbers of channels in a configuration.
+19 July 2013, svn ver. 459

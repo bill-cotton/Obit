@@ -2089,24 +2089,24 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     while (iSW<BDFData->SWArray->nwinds) {
       /* Get from ordered list */
       jSW = BDFData->SWArray->order[iSW];
-      if (BDFData->SWArray->winds[jSW]->selected) {
-	Obit_return_if_fail((nchan==BDFData->SWArray->winds[jSW]->numChan), err,
+      if (BDFData->SWArray->winds[iSW]->selected) {
+	Obit_return_if_fail((nchan==BDFData->SWArray->winds[iSW]->numChan), err,
 			    "%s: Input number freq. incompatible %d != %d", 
-			    routine, nchan, BDFData->SWArray->winds[jSW]->numChan);
-	Obit_return_if_fail((nstok==BDFData->SWArray->winds[jSW]->nCPoln), err,
+			    routine, nchan, BDFData->SWArray->winds[iSW]->numChan);
+	Obit_return_if_fail((nstok==BDFData->SWArray->winds[iSW]->nCPoln), err,
 			    "%s: Input number Poln incompatible %d != %d", 
-			    routine, nstok, BDFData->SWArray->winds[jSW]->nCPoln);
+			    routine, nstok, BDFData->SWArray->winds[iSW]->nCPoln);
 	/* Baseband - assume name starts with "BB_" and ends in number 
 	   BBNum = (olong)strtol(&BDFData->ScanInfo->BBinfo[kBB]->basebandName[3], NULL, 10);
-	   Obit_return_if_fail((BBNum==BDFData->SWArray->winds[jSW]->basebandNum), err,
+	   Obit_return_if_fail((BBNum==BDFData->SWArray->winds[iSW]->basebandNum), err,
 	   "%s: Input basebands inconsistent %d != %d, IF %d", 
-	   routine, BBNum, BDFData->SWArray->winds[jSW]->basebandNum, nIFsel);*/
+	   routine, BBNum, BDFData->SWArray->winds[iSW]->basebandNum, nIFsel);*/
 	/* Test frequency */
 	Obit_return_if_fail((fabs(BDFData->SWArray->winds[iSW]->chanFreqStart-
 				  outData->myDesc->freqIF[kSW]) < 1.0e3), err,
 			    "%s: Frequencies inconsistent %lf != %lf, IF %d", 
 			    routine, BDFData->SWArray->winds[iSW]->chanFreqStart, 
-			    outData->myDesc->freqIF[iSW], nIFsel);
+			    outData->myDesc->freqIF[kSW], nIFsel);
   	nIFsel++;
 	kSW++;
       } 
@@ -2203,7 +2203,6 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	  }
 	  {desc->isort[0]=' '; desc->isort[1]=' ';}
 	}
-	tlast = Buffer[desc->iloct];
 	
 	/* set number of records */
 	desc->numVisBuff = 1;
@@ -2213,6 +2212,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	  continue;
 	}
 
+	tlast = Buffer[desc->iloct];
 	/* Get indexing information on first vis written for scan */
 	if (startTime<-1.0e10) {
 	  startTime = Buffer[desc->iloct];
