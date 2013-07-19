@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to Map beam polarization                                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2012                                          */
+/*;  Copyright (C) 2009-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1936,12 +1936,12 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
 	for (ichan=0; ichan<nchan; ichan++) {
 	  off  = iElem*selem + iIF*nchan + ichan;
 	  doff = indx + inData->myDesc->nrparm + iIF*incif + ichan*incf;
-	  /* DEBUG */
+	  ddoff = doff;
+	  /* DEBUG 
 	  if ((iIF==1) && (fabs((u/xCells)+5.0)<2.1) && (fabs((v/yCells)-2.0)<2.1)) {
 	    fprintf (stderr,"cx %f cy %f wt %f\n",u/xCells-10.0, v/yCells-10.0, inData->buffer[ddoff+2]);
-	  }
+	  }*/
 	  /* I */
-	  ddoff = doff;
 	  if (inData->buffer[ddoff+2]>0.0) {
 	    SumIr[off]  += inData->buffer[ddoff]*inData->buffer[ddoff+2];
 	    SumIi[off]  += inData->buffer[ddoff+1]*inData->buffer[ddoff+2];
@@ -2265,11 +2265,11 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 	  /* Insert into FArrays */
 	  jndx  = iy*nx + ix;
 	  /* I */
-	  /* DEBUG */
+	  indx  = ichan + iIF*nchan;
+	  /* DEBUG 
 	  if ((iIF==1) && (ix==21) && (iy==28)) {
 	    fprintf (stderr,"x %d y %d r %f i %f jndx %d indx %d\n",ix,iy, valIr,valIi, jndx,indx );
-	  }
-	  indx  = ichan + iIF*nchan;
+	  }*/
 	  array = grids[indx];
 	  if ((valIr==fblank) || (valIi==fblank)) {
 	    amp = ph = fblank;

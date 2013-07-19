@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry data editing software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005-2011
+;;  Copyright (C) 2005-2013
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -255,6 +255,9 @@ Adverbs:
              correlator are flagged in a given interval, then all
              baselines using that correlator (freq/poln)are flagged 
              in that interval.
+             For doFD editing, maxBad is the fraction of possible 
+             time samples at and below which the data are flagged.
+             Default 0.25, -1 ->no flagging by fraction of samples.
   timeAvg....Flagging interval (min)
              Interval over which data is vector averaged for 
              I/VPol flagging and over which RMS fluctuations are
@@ -366,7 +369,11 @@ and a spectral baseline is established for the average values, either
 using a  median window filter (FDwidMW>0) or a linear baseline fit
 (FDwidMW<=0) to specified channels.  If median filtering is used, the
 alpha filtered (robust) RMS estimator is used to determine the sigma
-aginst which the residual is compared. Channels with excessive RMSes or
-residual amplitudes are flagged. 
+aginst which the residual is compared. Channels with excessive RMSes 
+(FDmaxRMS) or residual amplitudes (FDmaxRes, FDmaxResBL) are flagged. 
 Options other than FDmaxAmp and FDmaxV can be used on uncalibrated data;
 all can be used on calibrated data.
+   If 4 or more time samples are in the averaging bin, then any samples 
+with input with fewer valid samples than maxBad of the maximum time samples
+are flagged.  The assumption is that if most of the data in this 
+channel/interval has been flagged, it all should be.  

@@ -74,7 +74,7 @@ doPol            -1.0       10.0   If >0 correct polarization.
 **PARAM** int 1 **DEF** -1
 PDVer                              PD table to apply
                                    If >=0, per channel corrections
-***PARAM** int 1
+**PARAM** int 1
 flagVer                            Flag table version
 **PARAM** int 1
 doBand           -1.0       10.0   If >0 apply bandpass cal.

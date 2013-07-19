@@ -84,6 +84,65 @@ typedef struct {
   ollong number; 
 } UVMednEditFuncArg;
 
+/* FD Median calculations threaded function argument */
+typedef struct {
+  /* ObitThread with restart queue */
+  ObitThread *thread;
+  /* thread number, <0 -> no threading   */
+  olong        ithread;
+  /*  Number of baselines */
+  olong numBL;
+  /* First (1-rel) baseline to process this thread */
+  olong        first;
+  /* Highest (1-rel) baseline to process this thread  */
+  olong        last;
+  /* Number of polarizations */
+  olong numPol; 
+  /* Number of Channels */
+  olong numChan; 
+  /* Number of IFs */
+  olong numIF; 
+  /*  Count of entries in each cell of avg, RMS */
+  ollong *count;
+  /* Average (freq, IF, poln, baseline) */
+  ofloat *avg;
+  /* Amp^2 in RMS out (freq, IF, poln, baseline) */
+  ofloat *RMS;
+  /* [out] median alpha sigma for values in avg (MW only) */
+  ofloat *sigma;
+  /* If > 0 the width of the median window in channels.
+     If <= 0 use linear baseline and chanMask */
+  olong widMW;  
+  /* Mask, True if channel is to be used in baseline fit  */
+  gboolean *chanMask;
+  /*   Entry per element of sumA which if >0 is the 0-rel index of the 
+       corresponding Stokes RR for a Stokes LL measurement, used with maxV */
+  olong *corV;
+  /* Maximum allowable average amplitude */
+  ofloat maxAmp;
+  /* Maximum allowable VPol, >1.0e10=> no VPol clipping */
+  ofloat maxV;
+  /* Flag all channels having RMS values > maxRMS[0] of the 
+     channel median sigma.[default 6.0] plus maxRMS[1] (default 0.1) 
+     of the channel average in quadrature
+     if maxRMS[0] > 100.0 no RMS flagging */
+  ofloat *maxRMS;
+  /* Max. residual flux in sigma allowed for channels outside 
+     the baseline fitting regions. */
+  ofloat maxRes;
+  /* Max. residual flux in sigma allowed for channels within 
+     the baseline fitting regions */
+  ofloat maxResBL;
+  /* Min. fraction of good times */
+  ofloat minGood;
+ /* TRUE if using median window baselines. */
+  gboolean doMW;   
+  /* Error stack, returns if error. */
+  ObitErr* err;   
+  /* Work arrays at least the size of numChan */
+  ofloat *work, *work2;
+} UVMednFuncArg;
+
 /*---------------Private function prototypes----------------*/
 /** 
  * Private: Determine minimum clipping levels based on histogram of baseline  
@@ -110,21 +169,8 @@ static void digestCorrFD (ObitUVDesc *inDesc, olong *corChan, olong *corIF,
 static void EditFDChanMask(olong numChan, olong numIF, olong numPol, olong *chanSel, 
 			   gboolean *chanMask);
 
-/** Private: Average for FD, get RMSes  */
-static void EditFDAvg(olong numChan, olong numIF, olong numPol, olong numBL, ollong *count, 
-		      ofloat *sumA, ofloat *sumA2, ofloat maxAmp, 
-		      ofloat maxV, olong *corV);
-
-/** Private: Fit baselines  for FD to averages, subtract */
-static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL, 
-			   ollong *count, ofloat *avg, ofloat *RMS, ofloat *sigma,
-			   olong widMW, gboolean *chanMask, ObitErr* err);
-	    
-/** Private: Do editing for FD */
-static void EditFDEdit(olong numChan, olong numIF, olong numPol, olong numBL, 
-		       ollong *count, ofloat *avg, ofloat *RMS, ofloat *sigma,
-		       ofloat *maxRMS, ofloat maxRes, ofloat maxResBL, 
-		       gboolean *chanMask, gboolean doMW);
+/** Private: Process for FD */
+static void EditFDProcess(olong nThread, UVMednFuncArg** args, ObitErr *err);
 
 /** Private: Get median value of an array */
 static ofloat medianVal (ofloat *array, olong incs, olong n);
@@ -176,7 +222,8 @@ static olong* medianPoln (ObitUVDesc *inDesc, ObitUVDesc *outDesc);
 static void T2String (ofloat time, gchar *msgBuf);
 /** Private: Threaded MedianDev */
 static gpointer ThreadMedianDev (gpointer arg);
-
+/** Private: Threaded FD median/linear editing */
+static gpointer ThreadEditFDProcess(gpointer arg);
 
 /*----------------------Public functions---------------------------*/
 /**
@@ -1706,7 +1753,7 @@ void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 } /* end  ObitUVEditTDRMSAvgVec */
 
 /**
- * Frequency domain editing of visibility data.  
+ * Frequency domain editing of visibility data.  possible threaded.
  * Editing is done independently for each visibility measure.  
  * First clipping is done on correlator and Vpol amplitudes.  
  * Following this, an average and RMS is determined for each channel 
@@ -1753,6 +1800,9 @@ void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
  *             Channel increments defaults to 1
  *             If the IF==0 then the group applies to all IF.
  *             Default is channels 2 => nchan-1 all IFs
+ * \li "maxBad" OBIT_float (1,1,1) maximum fraction of time samples 
+ *             at and below which a channel/interval will be flagged.  
+ *             [default 0.25, -1 ->no flagging by fraction of samples.]
  * \param outUV    UV data onto which the FG table is to be attached.
  *                 May be the same as inUV.
  * \param err      Error stack, returns if not empty.
@@ -1767,8 +1817,10 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   gint32 dim[MAXINFOELEMDIM];
   ObitIOAccess access;
   ObitUVDesc *inDesc;
-  olong flagTab, iFGRow;
-  ofloat timeAvg, maxAmp, maxV, maxResBL, maxRes, maxRMS[2];
+  UVMednFuncArg** args=NULL;
+  ObitThread *myThread=NULL;
+  olong flagTab, iFGRow, nThread, nBLpTh;
+  ofloat timeAvg, maxAmp, maxV, maxResBL, maxRes, maxRMS[2], minGood;
   olong  ncorr, numChan, numPol, numIF, numAnt, numBL, widMW, *chanSel;
   olong js, jf, jif, jbl, jndx, indx, kndx, jj,BIF, BChan;
   olong i, j, k, kk, itemp, lastSourceID, curSourceID, lastSubA;
@@ -1778,7 +1830,7 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   ofloat startTime, endTime, curTime, amp2, *Buffer;
   ofloat lastTime=-1.0, cbase;
   olong *corChan=NULL, *corIF=NULL, *corStok=NULL, *corV=NULL;
-  gboolean *chanMask=NULL, done, gotOne, doMW;
+  gboolean *chanMask=NULL, done, gotOne;
   /* Accumulators per spectral channel/IF/poln/baseline */
   ofloat *sumA=NULL, *sumA2=NULL, *sigma=NULL;
   olong *blLookup=NULL, *BLAnt1=NULL, *BLAnt2=NULL;
@@ -1842,6 +1894,9 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   if ((chanSel[0]<=0) && (chanSel[1]<=0) && (chanSel[2]<=0) && (chanSel[3]<=0)) {
     chanSel = defSel;  /* Use default = channels 2 => n-1 */
   }
+  /* Min. fraction of good times */
+  minGood = 0.25;           /* default 0.25 */
+  ObitInfoListGetTest(inUV->info, "maxBad", &type, dim,  &minGood);  
 
    /* Data Selection */
   BIF = 1;
@@ -1926,6 +1981,45 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   for (i=1; i<numAnt; i++) {
     blLookup[i] = blLookup[i-1] + numAnt-i;
     for (j=i+2; j<=numAnt; j++) {BLAnt1[k]=i+1; BLAnt2[k]=j; k++;}
+  }
+
+  /* How many Threads? */
+  myThread = newObitThread();
+  nThread = MAX (1, ObitThreadNumProc(myThread));
+  nThread = MIN (nThread, numBL);
+  nBLpTh  = MAX (1, (olong)(0.999+(ofloat)numBL/nThread));  /* Baselines per thread */
+  nBLpTh  = MIN (nBLpTh, numBL);
+
+  /* Create Thread object arrays */
+  args = g_malloc0(nThread*sizeof(UVMednFuncArg*));
+  for (i=0; i<nThread; i++) {
+    args[i] = g_malloc0(sizeof(UVMednFuncArg));
+    args[i]->thread = myThread;
+    if (nThread>1) args[i]->ithread = i;
+    else           args[i]->ithread = -1;
+    args[i]->first    = 1 + i*nBLpTh;
+    args[i]->last     = MIN(numBL, args[i]->first + nBLpTh - 1);
+    args[i]->numBL    = numBL;
+    args[i]->numPol   = numPol;
+    args[i]->numChan  = numChan;
+    args[i]->numIF    = numIF;
+    args[i]->count    = count;
+    args[i]->avg      = sumA;
+    args[i]->RMS      = sumA2;
+    args[i]->sigma    = sigma;
+    args[i]->corV     = corV;
+    args[i]->widMW    = widMW;
+    args[i]->chanMask = chanMask;
+    args[i]->maxAmp   = maxAmp;
+    args[i]->maxV     = maxV;
+    args[i]->maxRMS   = maxRMS;
+    args[i]->maxRes   = maxRes;
+    args[i]->maxResBL = maxResBL;
+    args[i]->minGood  = minGood;
+    args[i]->doMW     = widMW>0;
+    args[i]->err      = err;
+    args[i]->work     = g_malloc(numChan*sizeof(ofloat));   /* Deallocate when done */
+    args[i]->work2    = g_malloc(numChan*sizeof(ofloat));   /* Deallocate when done */
   }
 
   /* Initialize things */
@@ -2044,7 +2138,7 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
 	  /* Accumulate
 	     count =  count per correlation, baseline
 	     sumA  = sum of amplitudes for correlation, baseline, then residual
-	     sumA  = sum of amplitudes**2 for correlation, baseline, then RMS */
+	     sumA2 = sum of amplitudes**2 for correlation, baseline, then RMS */
 	  indx = inDesc->nrparm; /* offset of start of vis data */
 	  for (i=0; i<ncorr; i++) { /* loop 120 */
 	    if (Buffer[indx+2] > 0.0) {
@@ -2068,20 +2162,10 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
 	/* Now have the next record in the IO Buffer */
 	if (iretCode==OBIT_IO_OK) gotOne = TRUE;
 
-	/* Average, get RMSes  */
-	EditFDAvg(numChan, numIF, numPol, numBL, count, sumA, sumA2, 
-		  maxAmp, maxV, corV);
-	    
-	/* Fit baselines to averages, subtract */
-	EditFDBaseline(numChan, numIF, numPol, numBL, count, sumA, sumA2, sigma,
-		       widMW, chanMask, err);
+	/* Process  */
+	EditFDProcess(nThread, args, err); 
 	if (err->error) goto cleanup;
 	    
-	/* Do editing on residuals, RMSes */
-	doMW = widMW>0;
-	EditFDEdit(numChan, numIF, numPol, numBL, count, sumA, sumA2, sigma,
-		   maxRMS, maxRes, maxResBL, chanMask, doMW);
-
 	/* Init Flagging table entry */
 	row->SourID  = lastSourceID; 
 	row->SubA    = lastSubA; 
@@ -2187,6 +2271,19 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   if (corStok)  g_free(corStok);
   if (corV)     g_free(corV);
   if (chanMask) g_free(chanMask);
+  /* Shut down any threading */
+  ObitThreadPoolFree (myThread);
+  /* Delete Thread object arrays */
+  if (args) {
+    for (i=0; i<nThread; i++) {
+      if (args[i]) {
+	if (args[i]->work)  g_free(args[i]->work);
+	if (args[i]->work2) g_free(args[i]->work2);
+	g_free(args[i]); args[i] = NULL;
+      }
+    }
+    g_free(args); args = NULL;
+  }
   if (err->error) Obit_traceback_msg (err, routine, inUV->name);
 
   /* Give report */
@@ -2195,7 +2292,7 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
 		 100.0*(odouble)countBad/((odouble)countAll));
 
   return;
-} /* end  ObitUVEditTD */
+} /* end  ObitUVEditFD */
 
 /**
  * Stokes editing of UV data, FG table out
@@ -4825,287 +4922,29 @@ static void EditFDChanMask(olong numChan, olong numIF, olong numPol, olong *chan
 } /* end EditFDChanMask */
 
 /**
- * Average values, get RMSes and do clipping
- * \param numChan Number of spectral channels in count, sumA, sumA2
- * \param numIF   Number of IFs in count, sumA, sumA2
- * \param numPol  Number of polarizations in count, sumA, sumA2
- * \param numBL   Number of baselines in count, sumA, sumA2
- * \param count   Count of entries in each cell of sumA, sumA2
- * \param sumA    [In/Out] Sum of amplitudes in time interval for 
- *                freq, IF, poln, baseline <=0.0 => no data or flagged, 
- *                [Out] average
- *                -9999 => flagged
- * \param sumA2   [In] Sum of amplitude**2 in time interval for 
- *                freq, IF, poln, baseline
- *                [Out] RMS
- * \param maxAmp  Maximum allowable average amplitude
- * \param maxV    Maximum allowable VPol, >1.0e10=> no VPol clipping
- * \param corV    Entry per element of sumA which if >0 is the 0-rel index of the 
- *                corresponding Stokes RR for a Stokes LL measurement, used with maxV
+ * Do processing for FD editing, possible with threading
+ * \param nThread  Number of parallel threads
+ * \param args     arguments per thread
+ * \param err      Error stack, returns if  error.
  */
-static void EditFDAvg(olong numChan, olong numIF, olong numPol, olong numBL, ollong *count, 
-		      ofloat *sumA, ofloat *sumA2, ofloat maxAmp, 
-		      ofloat maxV, olong *corV)
+static void EditFDProcess(olong nThread, UVMednFuncArg** args, ObitErr *err)
 {
-  olong js, jf, jif, jbl, indx, vindx;
-  ofloat vpol;
-
-  /* Loop over array averaging, clip excessive amplitude*/
-  indx = 0;
-  for (jbl=0; jbl<numBL; jbl++) {
-    for (js=0; js<numPol; js++) {
-      for (jif=0; jif<numIF; jif++) {
-	for (jf=0; jf<numChan; jf++) {
-	  if (count[indx]>0) {  /* Any data? */
-	    sumA[indx] /= count[indx];
-	    if (sumA[indx]>maxAmp) sumA[indx] = -9999.0; /* Too large? */
-	    if (count[indx]>1) { /* Enough data for RMS? */
-	      sumA2[indx] = sqrt((sumA2[indx]/count[indx] - sumA[indx]*sumA[indx])*
-				 ((odouble)count[indx])/(count[indx]-1.0));
-	    } else sumA2[indx] = 0.0;
-	  } /* end if data */
-	  indx++;
-	} /* end loop over Channel */
-      } /* end loop over IF */
-    } /* end loop over polarization */
-  } /* end loop over baseline */
-
-  /* Vpol clipping? */
-  if (maxV>1.0e10) return;
-  /* Loop over array */
-  indx = 0;
-  for (jbl=0; jbl<numBL; jbl++) {
-    vindx = 0;
-    for (js=0; js<numPol; js++) {
-      for (jif=0; jif<numIF; jif++) {
-	for (jf=0; jf<numChan; jf++) {
-	  /* Anything to do? */
-	  if ((sumA[indx]>0.0) && (corV[vindx]>0) && (sumA[corV[vindx]]>0.0)){ 
-	    vpol = fabs(sumA[indx]-sumA[corV[vindx]]);
-	    if (vpol>maxV) { /* Flag both */
-	      sumA[indx] = sumA[corV[vindx]] = -9999.0;
-	    }
-	  } /* end if anything to do */
-	  vindx++;
-	  indx++;
-	} /* end loop over Channel */
-      } /* end loop over IF */
-    } /* end loop over polarization */
-  } /* end loop over baseline */
-
-} /* end EditFDAvg */
-
-/**
- * Fit Spectral baseline, either linear or Median Window, subtract
- * Checks than baselines fitted to each IF.
- * \param numChan  Number of spectral channels in count, sumA, RMS
- * \param numIF    Number of IFs in count, sumA, RMS
- * \param numPol   Number of polarizations in count, sumA, RMS
- * \param numBL    Number of baselines in count, sumA, RMS
- * \param count    Count of entries in each cell of avg, RMS
- * \param avg      Sum of amplitudes in time interval for freq, IF, poln, baseline
- *                  <=0.0 => no data or flagged
- * \param RMS      Sum of amplitude**2 in time interval for freq, IF, poln, baseline
- * \param sigma    [out] median alpha sigma for values in avg (MW only)
- * \param widMW    If > 0 the width of the median window in channels.
- *                 If <= 0 use linear baseline and chanMask
- * \param chanMask Mask, True if channel is to be used in baseline fit
- * \param err      Error stack, returns if not empty.
- */
-static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL, 
-			   ollong *count, ofloat *avg, ofloat *RMS, ofloat *sigma,
-			   olong widMW, gboolean *chanMask, ObitErr* err)
-{
-  olong js, jf, jif, jbl, jj, jjj, indx, jndx, cnt, half;
-  gboolean haveBL, doMW = widMW>0;  /* Median window filter or linear baseline */
-  ofloat a, b, aaa, *temp=NULL, *temp2=NULL;
-  /*gchar *routine = "EditFDBaseline";*/
+  gboolean OK;
+  ObitThreadFunc func=(ObitThreadFunc)ThreadEditFDProcess;
+  gchar *routine = "EditFDprocess";
 
   /* error checks */
   if (err->error) return;
 
-  /* Which method? */
-  if (doMW) { /* Median window filter */
-    temp  = g_malloc0(2*widMW*sizeof(ofloat)); /* Work array for sorting */
-    temp2 = g_malloc0(numChan*sizeof(ofloat)); /* Work array for sorting */
-    half  = widMW/2;  /* Half width of window */
-    /* Loop over array */
-    indx = 0;
-    for (jbl=0; jbl<numBL; jbl++) {
-      for (js=0; js<numPol; js++) {
-	for (jif=0; jif<numIF; jif++) {
-	  for (jf=0; jf<numChan; jf++) temp2[jf] =  avg[indx+jf];
-	  for (jf=0; jf<numChan; jf++) {
-	    /* Median window are we at the beginning, end or middle? */
-	    cnt = 0;
-	    if (jf<half) { /* Beginning */
-	      for (jj=0; jj<widMW; jj++) {
-		jjj = jj - jf;  /* If we're no longer at the beginning */
-		if ((count[indx+jjj]>0) && (temp2[jj]>-9900.0)) {  /* Any data? */
-		  temp[cnt++] = temp2[jj];
-		}
-	      }
-	    } else if (jf>=(numChan-half-1)) { /* End */
-	      for (jj=numChan-widMW; jj<numChan; jj++) {
-		jjj = jj - jf;  /* If we're no longer at the beginning */
-		if ((count[indx+jjj]>0) && (temp2[jj]>-9900.0)) {  /* Any data? */
-		  temp[cnt++] =  temp2[jj];
-		}
-	      }
-	    } else { /* Middle */
-	      for (jj=-half; jj<=half; jj++) {
-		if ((count[indx+jj]>0) && (temp2[jf+jj]>-9900.0)) {  /* Any data? */
-		  temp[cnt++] = temp2[jf+jj];
-		}
-	      }
-	    }
-	    /* Get Median and subtract */
-	    if ((count[indx]>0) && (avg[indx]>-9900.0)) {
-	      aaa = medianVal (temp, 1, cnt);
-	      avg[indx] -= aaa;
-	      sigma[indx] = MedianSigma (cnt, temp, aaa, 0.2);
-	    } else {  /* Datum bad */
-	      if (avg[indx]>-9900.0) avg[indx]   = 0.0;
-	      sigma[indx] = 100.0;
-	    }
-	    indx++;
-	  } /* end loop over Channel */
-	} /* end loop over IF */
-      } /* end loop over polarization */
-    } /* end loop over baseline */
-    g_free(temp);
-    g_free(temp2);
+  /* Do operation on buffer possibly with threads */
+  OK = ObitThreadIterator (args[0]->thread, nThread, func, (gpointer**)args);
 
-  } else { /* Linear baseline fit */
-    /* Loop over spectra */
-    indx = 0;
-    temp = g_malloc0(numChan*sizeof(ofloat)); /* Work array for channel number */
-    for (jf=0; jf<numChan; jf++) temp[jf] = (ofloat)jf;
-    for (jbl=0; jbl<numBL; jbl++) {
-      jndx = 0;
-      for (js=0; js<numPol; js++) {
-	haveBL = FALSE;
-	for (jif=0; jif<numIF; jif++) {
+  /* Check for problems */
+  if (!OK) {
+    Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+  }
 
-	  /* Fit spectral baseline */
-	  EditFDBLFit (temp, &avg[indx], &chanMask[jndx], numChan, &a, &b);
-	  jndx += numChan;
-	  
-	  /* Baseline fitted? */
-	  haveBL = a>-900.0;  /* Some baseline data this IF */
-	  /* Baseline for this IF? */
-	  if (!haveBL) continue;
-
-	  /* Remove baseline */
-	  for (jf=0; jf<numChan; jf++) {
-	    if (avg[indx]>-9900.0) {
-	      avg[indx] -= a + b*temp[jf];
-	      indx++;
-	    }
-	  }
-	} /* end loop over IF */
-      } /* end loop over polarization */
-    } /* end loop over baseline */
-   
-    g_free(temp);
-  } /* end fitting */ 
-} /* end  EditFDBaseline */
-	    
-/**
- * Frequency Domain editing
- * \param numChan  Number of spectral channels in count, avg, RMS
- * \param numIF    Number of IFs in count, avg, RMS
- * \param numPol   Number of polarizations in count, avg, RMS
- * \param numBL    Number of baselines in count, avg, RMS
- * \param count    Count of entries in each cell of avg, RMS
- * \param avg      Sum of amplitudes in time interval for freq, IF, poln, baseline
- *                 <=0.0 => no data or flagged, -9999 => flagged
- * \param RMS      Sum of amplitude**2 in time interval for freq, IF, poln, baseline
- * \param sigma    [out] median alpha sigma for values in avg (not MW only)
- * \param maxRMS   Flag all channels having RMS values > maxRMS[0] of the 
- *                 channel median sigma.[default 6.0] plus maxRMS[1] (default 0.1) 
- *                 of the channel average in quadrature
- *                 if maxRMS[0] > 100.0 no RMS flagging
- * \param maxRes   Max. residual flux in sigma allowed for channels outside 
- *                 the baseline fitting regions.
- * \param maxResBL Max. residual flux in sigma allowed for channels within 
- *                 the baseline fitting regions. 
- * \param chanMask Mask, True if channel is to be used in baseline fit
- * \param doMW     True if using median window baselines.
- */
-static void EditFDEdit(olong numChan, olong numIF, olong numPol, olong numBL, 
-		       ollong *count, ofloat *avg, ofloat *RMS, ofloat *sigma,
-		       ofloat *maxRMS, ofloat maxRes, ofloat maxResBL, 
-		       gboolean *chanMask, gboolean doMW)
-{
-  olong js, jf, jif, jbl, indx, jndx, cnt;
-  odouble sum1, sum2, meanRMS, residualRMS;
-  ofloat *temp=NULL;
-
-  if (maxRMS[0]<100.0)
-    temp = g_malloc0(numChan*sizeof(ofloat)); /* Work array for median */
-
-  /* Loop over array */
-  indx = 0;
-  for (jbl=0; jbl<numBL; jbl++) {
-    jndx = 0;
-    for (js=0; js<numPol; js++) {
-      for (jif=0; jif<numIF; jif++) {
-	
-	/* Determine average RMS for spectrum */
-	if (maxRMS[0]<100.0) {
-	  cnt = 0;
-	  for (jf=0; jf<numChan; jf++) {
-	    if (avg[indx+jf]>-9900.0) temp[cnt++] = RMS[indx+jf];
-	  }
-	  
-	  /* Median rms */
-	  if (cnt>0) meanRMS = medianVal(temp, 1, cnt);
-	  else meanRMS = 0.0;
-	  
-	  /* RMS flagging */
-	  for (jf=0; jf<numChan; jf++) {
-	    if ((avg[indx+jf]>-9900.0) && 
-		(RMS[indx+jf] > 
-		 sqrt(maxRMS[0]*meanRMS*maxRMS[0]*meanRMS + 
-		      (avg[indx+jf]*maxRMS[1]*avg[indx+jf]*maxRMS[1]))))
-	      avg[indx+jf] = -9999.0;
-	  } /* end flagging loop */
-	} /* end RMS flagging */
-
-	/* Get residual RMS */
-	sum1 = sum2 = 0.0; cnt = 0.0;
-	for (jf=0; jf<numChan; jf++) {
-	  if (avg[indx+jf]>-9900.0) {
-	    if (avg[indx+jf]>0.0) {
-	      cnt++; 
-	      sum1 += avg[indx+jf];
-	      sum2 += avg[indx+jf]*avg[indx+jf];
-	    }
-	  }
-	}
-	/* Residual RMS */
-	if (cnt>0) residualRMS = sqrt (sum2/cnt + (sum1/cnt)*(sum1/cnt));
-	else residualRMS = 1.0e20;
-	if (!doMW) sigma[indx+jf] = residualRMS;
-
-	/* Residual flagging */
-	for (jf=0; jf<numChan; jf++) {
-	  if (chanMask[jndx+jf]) { /* In baseline */
-	    if (fabs(avg[indx+jf])>maxResBL*sigma[indx+jf]) avg[indx+jf] = -9999.0;
-	  } else {  /* Not in baseline */
-	    if (fabs(avg[indx+jf])>maxRes*sigma[indx+jf])   avg[indx+jf] = -9999.0;
-	  }
-	} /* end loop over Channel */
-	jndx += numChan;
-	indx += numChan;
-      } /* end loop over IF */
-    } /* end loop over polarization */
-  } /* end loop over baseline */
-
-  if (temp) g_free(temp); /* Cleanup */
-  
-} /* end EditFDEdit */
+} /* end EditFDAvg */
 
 /**
  * Return median of an array
@@ -5819,4 +5658,301 @@ static gpointer ThreadMedianDev (gpointer arg)
   
   return NULL;
 } /* end ThreadMedianDev */
+
+/**
+ * Threaded Processing for Frequency domain editing
+ * Flag channels with less than or equal minGood of time samples valid
+ * \param arg     pointer to structure with:
+ * \li numChan  Number of spectral channels in count, sumA, RMS
+ * \li numIF    Number of IFs in count, sumA, RMS
+ * \li numPol   Number of polarizations in count, sumA, RMS
+ * \li numBL    Number of baselines in count, sumA, RMS
+ * \li count    Count of entries in each cell of avg, RMS
+ * \li avg      Sum of amplitudes in time interval for freq, IF, poln, baseline
+ *                  <=0.0 => no data or flagged
+ * \li RMS      Sum of amplitude**2 in time interval for freq, IF, poln, baseline
+ * \li sigma    [out] median alpha sigma for values in avg (MW only)
+ * \li corV     Entry per element of sumA which if >0 is the 0-rel index of the 
+ *                corresponding Stokes RR for a Stokes LL measurement, used with maxV
+ * \li maxAmp   Maximum allowable average amplitude
+ * \li maxV     Maximum allowable VPol, >1.0e10=> no VPol clipping
+ * \li widMW    If > 0 the width of the median window in channels.
+ *                 If <= 0 use linear baseline and chanMask
+ * \li chanMask Mask, True if channel is to be used in baseline fit
+ * \li maxRMS   Flag all channels having RMS values > maxRMS[0] of the 
+ *              channel median sigma.[default 6.0] plus maxRMS[1] (default 0.1) 
+ *              of the channel average in quadrature
+ *              if maxRMS[0] > 100.0 no RMS flagging
+ * \li maxRes   Max. residual flux in sigma allowed for channels outside 
+ *              the baseline fitting regions.
+ * \li maxResBL Max. residual flux in sigma allowed for channels within 
+ *              the baseline fitting regions. 
+ * \li minGood  Min. fraction of good times.
+ * \li doMW     True if using median window baselines.
+ * \li err      Error stack, returns if not empty.
+ */
+static gpointer ThreadEditFDProcess(gpointer arg)
+{
+  /* Get arguments from structure */
+  UVMednFuncArg *largs = (UVMednFuncArg*)arg;
+  olong loBL         = largs->first-1;
+  olong hiBL         = largs->last;
+  ofloat *sumA       = largs->avg;
+  ofloat *avg        = largs->avg;
+  ofloat *sumA2      = largs->RMS;
+  ofloat *RMS        = largs->RMS;
+  ofloat *sigma      = largs->sigma;
+  ollong *count      = largs->count;
+  olong numPol       = largs->numPol; 
+  olong numIF        = largs->numIF; 
+  olong numChan      = largs->numChan; 
+  olong *corV        = largs->corV;
+  ofloat maxAmp      = largs->maxAmp;
+  ofloat maxV        = largs->maxV;
+  olong widMW        = largs->widMW;
+  gboolean *chanMask = largs->chanMask;
+  ofloat *maxRMS     = largs->maxRMS;
+  ofloat maxRes      = largs->maxRes;
+  ofloat maxResBL    = largs->maxResBL;
+  ofloat minGood     = largs->minGood;
+  gboolean doMW      = largs->doMW;
+
+  olong js, jf, jif, jbl, indx, jndx, vindx, jj, jjj, cnt, half;
+  ollong maxCount, flagCount;
+  gboolean haveBL;
+  ofloat vpol, a, b, aaa, *temp, *temp2;
+  odouble sum1, sum2, meanRMS, residualRMS;
+
+  /* error checks */
+  if (largs->err->error) goto done;
+
+  /* Formerly EditFDAvg */
+  /* Loop over array averaging, clip excessive amplitude*/
+  indx = loBL*numChan*numIF*numPol;
+  for (jbl=loBL; jbl<hiBL; jbl++) {
+    for (js=0; js<numPol; js++) {
+      for (jif=0; jif<numIF; jif++) {
+	for (jf=0; jf<numChan; jf++) {
+	  if (count[indx]>0) {  /* Any data? */
+	    sumA[indx] /= count[indx];
+	    if (sumA[indx]>maxAmp) sumA[indx] = -9999.0; /* Too large? */
+	    if (count[indx]>1) { /* Enough data for RMS? */
+	      sumA2[indx] = sqrt((sumA2[indx]/count[indx] - sumA[indx]*sumA[indx])*
+				 ((odouble)count[indx])/(count[indx]-1.0));
+	    } else sumA2[indx] = 0.0;
+	  } /* end if data */
+	  indx++;
+	} /* end loop over Channel */
+      } /* end loop over IF */
+    } /* end loop over polarization */
+  } /* end loop over baseline */
+
+  /* Vpol clipping? */
+  if (maxV>1.0e10) goto baseline;
+  /* Loop over array */
+  indx = loBL*numChan*numIF*numPol;
+  for (jbl=loBL; jbl<hiBL; jbl++) {
+    vindx = 0;
+    for (js=0; js<numPol; js++) {
+      for (jif=0; jif<numIF; jif++) {
+	for (jf=0; jf<numChan; jf++) {
+	  /* Anything to do? */
+	  if ((sumA[indx]>0.0) && (corV[vindx]>0) && (sumA[corV[vindx]]>0.0)){ 
+	    vpol = fabs(sumA[indx]-sumA[corV[vindx]]);
+	    if (vpol>maxV) { /* Flag both */
+	      sumA[indx] = sumA[corV[vindx]] = -9999.0;
+	    }
+	  } /* end if anything to do */
+	  vindx++;
+	  indx++;
+	} /* end loop over Channel */
+      } /* end loop over IF */
+    } /* end loop over polarization */
+  } /* end loop over baseline */
+
+  /* Formerly EditFDBaseline */
+ baseline:
+  /* Which method? */
+  if (doMW) { /* Median window filter */
+    temp  = largs->work;
+    temp2 = largs->work2;
+    half  = widMW/2;  /* Half width of window */
+    /* Loop over array */
+    indx = loBL*numChan*numIF*numPol;
+    for (jbl=loBL; jbl<hiBL; jbl++) {
+      for (js=0; js<numPol; js++) {
+	for (jif=0; jif<numIF; jif++) {
+	  for (jf=0; jf<numChan; jf++) temp2[jf] =  avg[indx+jf];
+	  for (jf=0; jf<numChan; jf++) {
+	    /* Median window are we at the beginning, end or middle? */
+	    cnt = 0;
+	    if (jf<half) { /* Beginning */
+	      for (jj=0; jj<widMW; jj++) {
+		jjj = jj - jf;  /* If we're no longer at the beginning */
+		if ((count[indx+jjj]>0) && (temp2[jj]>-9900.0)) {  /* Any data? */
+		  temp[cnt++] = temp2[jj];
+		}
+	      }
+	    } else if (jf>=(numChan-half-1)) { /* End */
+	      for (jj=numChan-widMW; jj<numChan; jj++) {
+		jjj = jj - jf;  /* If we're no longer at the beginning */
+		if ((count[indx+jjj]>0) && (temp2[jj]>-9900.0)) {  /* Any data? */
+		  temp[cnt++] =  temp2[jj];
+		}
+	      }
+	    } else { /* Middle */
+	      for (jj=-half; jj<=half; jj++) {
+		if ((count[indx+jj]>0) && (temp2[jf+jj]>-9900.0)) {  /* Any data? */
+		  temp[cnt++] = temp2[jf+jj];
+		}
+	      }
+	    }
+	    /* Get Median and subtract */
+	    if ((count[indx]>0) && (avg[indx]>-9900.0)) {
+	      aaa = medianVal (temp, 1, cnt);
+	      avg[indx] -= aaa;
+	      sigma[indx] = MedianSigma (cnt, temp, aaa, 0.2);
+	    } else {  /* Datum bad */
+	      if (avg[indx]>-9900.0) avg[indx]   = 0.0;
+	      sigma[indx] = 100.0;
+	    }
+	    indx++;
+	  } /* end loop over Channel */
+	} /* end loop over IF */
+      } /* end loop over polarization */
+    } /* end loop over baseline */
+
+  } else { /* Linear baseline fit */
+    /* Loop over spectra */
+    indx = loBL*numChan*numIF*numPol;
+    temp = largs->work; /* Work array for channel number */
+    for (jf=0; jf<numChan; jf++) temp[jf] = (ofloat)jf;
+    for (jbl=loBL; jbl<hiBL; jbl++) {
+      jndx = 0;
+      for (js=0; js<numPol; js++) {
+	haveBL = FALSE;
+	for (jif=0; jif<numIF; jif++) {
+
+	  /* Fit spectral baseline */
+	  EditFDBLFit (temp, &avg[indx], &chanMask[jndx], numChan, &a, &b);
+	  jndx += numChan;
+	  
+	  /* Baseline fitted? */
+	  haveBL = a>-900.0;  /* Some baseline data this IF */
+	  /* Baseline for this IF? */
+	  if (!haveBL) {indx += numChan; continue;}
+
+	  /* Remove baseline */
+	  for (jf=0; jf<numChan; jf++) {
+	    if (avg[indx]>-9900.0) {
+	      avg[indx] -= a + b*temp[jf];
+	      indx++;
+	    }
+	  }
+	} /* end loop over IF */
+      } /* end loop over polarization */
+    } /* end loop over baseline */
+   
+  } /* end fitting type */ 
+
+  /* Formerly EditFDEdit */
+  temp = largs->work; /* Work array for median */
+ 
+  /* Loop over array */
+  indx = loBL*numChan*numIF*numPol;
+  for (jbl=loBL; jbl<hiBL; jbl++) {
+    jndx = 0;
+    for (js=0; js<numPol; js++) {
+      for (jif=0; jif<numIF; jif++) {
+	
+	/* Determine average RMS for spectrum */
+	if (maxRMS[0]<100.0) {
+	  cnt = 0;
+	  for (jf=0; jf<numChan; jf++) {
+	    if ((avg[indx+jf]>-9900.0) && (RMS[indx+jf]>0.0)) {
+	      temp[cnt++] = RMS[indx+jf];
+	    }
+	  }
+	  
+	  /* Median rms */
+	  if (cnt>0) meanRMS = medianVal(temp, 1, cnt);
+	  else meanRMS = 0.0;
+	  
+	  /* RMS flagging */
+	  for (jf=0; jf<numChan; jf++) {
+	    if ((avg[indx+jf]>-9900.0) && (meanRMS>0.0) &&
+		(RMS[indx+jf] > 
+		 sqrt(maxRMS[0]*meanRMS*maxRMS[0]*meanRMS + 
+		      (avg[indx+jf]*maxRMS[1]*avg[indx+jf]*maxRMS[1]))))
+	      avg[indx+jf] = -9999.0;
+	  } /* end flagging loop */
+	} /* end RMS flagging */
+
+	/* Get residual RMS */
+	sum1 = sum2 = 0.0; cnt = 0.0;
+	for (jf=0; jf<numChan; jf++) {
+	  if (avg[indx+jf]>-9900.0) {
+	    if (avg[indx+jf]>0.0) {
+	      cnt++; 
+	      sum1 += avg[indx+jf];
+	      sum2 += avg[indx+jf]*avg[indx+jf];
+	    }
+	  }
+	}
+	/* Residual RMS */
+	if (cnt>0) residualRMS = sqrt (sum2/cnt + (sum1/cnt)*(sum1/cnt));
+	else residualRMS = 1.0e20;
+	if (!doMW) sigma[indx+jf] = residualRMS;
+
+	/* Residual flagging */
+	for (jf=0; jf<numChan; jf++) {
+	  if (chanMask[jndx+jf]) { /* In baseline */
+	    if (fabs(avg[indx+jf])>maxResBL*sigma[indx+jf]) avg[indx+jf] = -9999.0;
+	  } else {  /* Not in baseline */
+	    if (fabs(avg[indx+jf])>maxRes*sigma[indx+jf])   avg[indx+jf] = -9999.0;
+	  }
+	} /* end loop over Channel */
+	jndx += numChan;
+	indx += numChan;
+      } /* end loop over IF */
+    } /* end loop over polarization */
+  } /* end loop over baseline */
+
+  /* Flag data with fewer than 1/4 of time samples */
+  /* Find maximum number of time samples */
+  maxCount = 0;
+  indx = loBL*numChan*numIF*numPol;
+  for (jbl=loBL; jbl<hiBL; jbl++) {
+    for (js=0; js<numPol; js++) {
+      for (jif=0; jif<numIF; jif++) {
+	for (jf=0; jf<numChan; jf++) {
+	  maxCount = MAX (count[indx++], maxCount);
+	}
+      }
+    }
+  }
+  flagCount = (ollong)(maxCount*minGood);  /* Level at which to flag */
+  if (flagCount>0) {
+    indx = loBL*numChan*numIF*numPol;
+    for (jbl=loBL; jbl<hiBL; jbl++) {
+      for (js=0; js<numPol; js++) {
+	for (jif=0; jif<numIF; jif++) {
+	  for (jf=0; jf<numChan; jf++) {
+	    if ((count[indx]<=flagCount) && (count[indx]>0))
+	      avg[indx] = -9999.0;
+	    indx++;
+	  }
+	}
+      }
+    }
+  } /* end if enough time samples to flag */
+
+  /* Indicate completion */
+ done:
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (largs->thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+} /* end ThreadEditFDProcess */
+
 

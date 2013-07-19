@@ -1468,3 +1468,43 @@ Obit/src/ObitSkyModel.c:
 Obit/src/ObitFArray.c:
   SelInc: Check array bounds on looping with increment
 5 July 2013, svn version 456
+
+MultiThread FD data editing, implement fast line imaging, numerous bug fixes
+Obit/changes.log:
+Obit/tasks/MapBeam.c:
+  gridData, accumData: Comment out debug 
+Obit/TDF/Splat.TDF:
+  Remove extra * in definition of flagVer
+Obit/src/ObitDConCleanVisLine.c:
+  Fix bugs in tricky logic with CLEAN obj.
+  Fix AutoWindow bugs
+  Fix numerous other bugs
+Obit/src/ObitSkyModelMF.c:
+  LoadComps: Default spectral index (fitparms)
+Obit/src/ObitUVEdit.c:
+  FD editing - implement threading
+  flag samples with fewer than 1/4 of time samples.
+Obit/TDF/AutoFlag.TDF
+  Improve documentation of FD editing
+Obit/tasks/MFImage.c:
+  BLAvg: Fix bug in number of channels to average.
+Obit/src/ObitDConClean.c:
+  ImageStats: allow default BLC, TRC
+Obit/python/EVLACal.py:
+  Various, test to trap lack of RL/LR data
+Obit/src/ObitSkyModelMF.c:
+  ThreadSkyModelMFFTDFT: better testing for valid data.
+  LoadComps: better handling of nSpec
+Obit/TDF/BDFIn.TDF:
+  Correct documentation on doOnline
+Obit/src/ObitImageMosaic.c:
+  Flatten: Write correct output plane.
+Obit/src/ObitImageUtil.c:
+  UV2ImageDesc: fix bugs in calculating freq info for line imaging
+Obit/src/ObitTableCCUtil.c:
+   ObitTableCCUtilCombTSpec: fix bug in number of output rows
+Obit/tasks/Imager.c Obit/TDF/Imager.TDF:
+   Implement doLine.
+Obit/src/ALMACalAtm.c Obit/src/Doppler.c:
+   Cleanup
+19 July 2013, svn ver. 457

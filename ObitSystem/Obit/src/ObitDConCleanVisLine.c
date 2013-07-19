@@ -638,7 +638,8 @@ void ObitDConCleanVisLineSub(ObitDConClean *inn, ObitErr *err)
 {
   ObitDConCleanVisLine *in;
   const ObitDConCleanVisClassInfo *ParentClass = myClassInfo.ParentClass;
-  olong ifld, ichan, *bcopy=NULL, bcomp, ecomp, iCCVer, nCCVer, oCCVer;
+  olong ifld, ichan,  bcomp, ecomp, iCCVer, nCCVer, oCCVer;
+  olong *bcopy=NULL, *bc=NULL, *ec=NULL, *cv=NULL;
   gboolean doGaus;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ChanFuncArg *inArr=NULL;
@@ -653,7 +654,9 @@ void ObitDConCleanVisLineSub(ObitDConClean *inn, ObitErr *err)
 
   /* Collect new components into a TSpec CC table */
   bcopy = g_malloc0(in->nArgs*sizeof(olong));
-
+  bc    = g_malloc0(in->nfield*sizeof(olong));
+  ec    = g_malloc0(in->nfield*sizeof(olong));
+  cv    = g_malloc0(in->nfield*sizeof(olong));
   /* Loop over fields building TSpec CC Tables */
   for (ifld=0; ifld<in->nfield; ifld++) {
     /* Get number of components to use from each */
@@ -671,29 +674,52 @@ void ObitDConCleanVisLineSub(ObitDConClean *inn, ObitErr *err)
       doGaus = in->maxBeamTaper>0.0;
       ObitTableCCUtilCombTSpec (in->mosaic->images[ifld], iCCVer, nCCVer, oCCVer,
 				bcopy, &bcomp, &ecomp, doGaus, err);
-      /* Set components on Sky Model */
+      cv[ifld] = oCCVer;
+      bc[ifld] = bcomp;
+      ec[ifld] = ecomp;
       in->skyModel->startComp[ifld] = bcomp;
       in->skyModel->endComp[ifld]   = ecomp;
-      in->skyModel->CCver[ifld]     = oCCVer;
+      /* Lower routines too clever */
+      in->Pixels->iterField[ifld] = ecomp;
+      /* Number of spectral planes */
+      dim[0] = dim[1] = dim[2] = dim[3] = 1;
+      ObitInfoListAlwaysPut (in->mosaic->images[ifld]->info, "NSPEC", OBIT_long, dim, &in->nPar);
     } else {  /* 1 channel */
       iCCVer = 1;
       in->skyModel->CCver[ifld] = iCCVer;
       oCCVer = iCCVer;
       inArr = ((ChanFuncArg*)in->chArgs[0]);
+      cv[ifld] = oCCVer;
+      bc[ifld] = inArr->in->skyModel->startComp[ifld];
+      ec[ifld] = inArr->in->skyModel->endComp[ifld];
       in->skyModel->startComp[ifld] = inArr->in->skyModel->startComp[ifld];
       in->skyModel->endComp[ifld]   = inArr->in->skyModel->endComp[ifld];
-    }
+      in->Pixels->iterField[ifld]   = inArr->in->Pixels->iterField[ifld];
+   }
   } /* end loop over fields */
 
-  /* Set CC Table to use */
-  ObitInfoListAlwaysPut (in->skyModel->info, "CCVer", OBIT_long, dim, &oCCVer);
+  /* Set components on Sky Model */
+  dim[0] = in->nfield; dim[1] = dim[2] = dim[3] = 1;
+  ObitInfoListAlwaysPut (in->skyModel->info, "CCVer", OBIT_long, dim, cv);
+  ObitInfoListAlwaysPut (in->skyModel->info, "BComp", OBIT_long, dim, bc);
+  ObitInfoListAlwaysPut (in->skyModel->info, "EComp", OBIT_long, dim, ec);
+
   in->CCver = oCCVer;
 
   /* Most work in parent class */
   ParentClass->ObitDConCleanSub(inn, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
+  /* Mark everything as unfresh */
+    for (ichan=0; ichan<in->nPar; ichan++) {
+      inArr = ((ChanFuncArg*)in->chArgs[ichan]);
+      for (ifld=0; ifld<in->nfield; ifld++)inArr->in->fresh[ifld] = FALSE;
+    }
+
+
   if (bcopy) g_free(bcopy);
+  if (bc)    g_free(bc);
+  if (ec)    g_free(ec);
 
 } /* end ObitDConCleanVisLineSub */
 
@@ -711,12 +737,16 @@ gboolean ObitDConCleanVisLinePixelStats(ObitDConClean *inn, ObitFArray **pixarra
 					ObitErr *err)
 {
   const ObitDConCleanVisClassInfo *ParentClass = myClassInfo.ParentClass;
-  ObitDConCleanVisLine *in=(ObitDConCleanVisLine*)inn;
+  ObitDConCleanVisLine *tin=(ObitDConCleanVisLine*)inn, *in;
   gboolean t, newWin=FALSE;
   olong ichan, ifld, best;
   ofloat bestQuality;
   ChanFuncArg *inArr=NULL;
   gchar *routine = "ObitDConCleanVisLinePixelStats";
+
+   /* May need to use upper level Clean for this, use motherShip if inn is a lower level */
+  if (tin->chArgs==NULL) in = (ObitDConCleanVisLine*)tin->motherShip;
+  else                   in = tin;
 
   /* error checks */
   if (err->error) return newWin;
@@ -913,10 +943,14 @@ gboolean ObitDConCleanVisLineAutoWindow(ObitDConClean *inn, olong *fields, ObitF
 {
   gboolean newWin = FALSE, t;
   const ObitDConCleanVisClassInfo *ParentClass = myClassInfo.ParentClass;
-  ObitDConCleanVisLine *in=(ObitDConCleanVisLine*)inn;
+  ObitDConCleanVisLine *tin=(ObitDConCleanVisLine*)inn, *in;
   olong ichan, ifld;
   ChanFuncArg *inArr=NULL;
   gchar *routine = "ObitDConCleanVisLinAutoWindowe";
+  
+  /* May need to use upper level Clean for this, use motherShip if inn is a lower level */
+  if (tin->chArgs==NULL) in = (ObitDConCleanVisLine*)tin->motherShip;
+  else                   in = tin;
 
   /* error checks */
   if (err->error) return newWin;
@@ -925,6 +959,7 @@ gboolean ObitDConCleanVisLineAutoWindow(ObitDConClean *inn, olong *fields, ObitF
   /* Loop over channels */
   for (ichan=0; ichan<in->nPar; ichan++) {
     inArr = ((ChanFuncArg*)in->chArgs[ichan]);
+    inArr->in->window = ObitDConCleanWindowRef(in->window);
     /* Channel work in parent */
     t = ParentClass->ObitDConCleanAutoWindow((ObitDConClean*)inArr->in, 
 					     inArr->in->currentFields,
@@ -973,11 +1008,16 @@ gboolean ObitDConCleanVisLineSelect(ObitDConClean *inn, ObitFArray **pixarray,
   /* Loop over channels */
   for (ichan=0; ichan<in->nPar; ichan++) {
     inArr = ((ChanFuncArg*)in->chArgs[ichan]);
+    ((ObitDConClean*)inArr->in)->CCver = ichan+1;
     /* Channel work in parent */
-    if (!inArr->done)
+    if (!inArr->done) {
+     if (err->prtLv>=2) Obit_log_error(err, OBIT_InfoErr, 
+					"Clean chan %d of %d",
+					ichan+1, in->nPar);
+     
       t = ParentClass->ObitDConCleanSelect((ObitDConClean*)inArr->in, 
 					   inArr->pixarray, err);
-    else t = TRUE;
+    } else t = TRUE;
     done = done && t;
     if (err->error) Obit_traceback_val (err, routine, in->name, done);
     in->Pixels->complCode = MAX (in->Pixels->complCode, inArr->in->Pixels->complCode);
@@ -1089,7 +1129,9 @@ void ObitDConCleanVisLineFlatten(ObitDConClean *inn, ObitErr *err)
   for (ichan=0; ichan<in->nPar; ichan++) {
     inArr = ((ChanFuncArg*)in->chArgs[ichan]);
 
-    fprintf (stderr, "Oh shit, need more here in Flatten\n");
+    /* Set Full field on channel clean */
+    if (inArr->in->mosaic->FullField==NULL) 
+      inArr->in->mosaic->FullField = ObitImageRef(in->mosaic->FullField);
 
     /* Set channel */
     inArr->in->plane[0] = ichan+1;
@@ -1669,7 +1711,7 @@ static void  MakeResiduals (ObitDConCleanVis *inn, olong *fields,
   ofloat bestQuality;
   gchar *routine = "LineMakeResidual";
 
-  /* Need to use upper level Clean for this, use motherShip if inn is a lower level */
+  /* May need to use upper level Clean for this, use motherShip if inn is a lower level */
   if (tin->chArgs==NULL) in = (ObitDConCleanVisLine*)tin->motherShip;
   else                   in = tin;
 

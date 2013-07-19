@@ -1128,6 +1128,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 
   /* Loop over images counting CCs */
   count = 0;
+  maxTerm = in->nSpec;
   in->modType = OBIT_SkyModel_Unknown; /* Model type not known */
   if (in->mosaic) {lo = 0; hi = in->mosaic->numberImages-1;}
   else {lo = 0; hi = 0;}
@@ -1245,6 +1246,9 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
     fitArg = ObitSpectrumFitMakeArg (in->nSpec, 2, in->specFreq[0], in->specFreq, 
 				     FALSE, &fitParms, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, gotSome);
+  } else {   /* Default spectral index = 0 */
+    fitParms = g_malloc(2*sizeof(ofloat));
+    fitParms[0] = fitParms[1] = 0.0;
   }
   
   /* Spectral correction for prior alpha array */
@@ -1275,9 +1279,9 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
     outCCVer = 0;
     ver = in->CCver[i];
     startComp = in->startComp[i];
-    endComp = in->endComp[i];
-    range[0] = in->minDFT;  /* Range of merged fluxes for DFT */
-    range[1] = 1.0e20;
+    endComp   = in->endComp[i];
+    range[0]  = in->minDFT;  /* Range of merged fluxes for DFT */
+    range[1]  = 1.0e20;
     if (endComp>=startComp) {
       CCTable = ObitSkyModelMFgetPBCCTab (in, uvdata, (olong)i, &ver, 
 					  &outCCVer, &startComp, &endComp, range, err); 
@@ -1841,21 +1845,21 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	  } /*end outer loop over components */
 	  break;
 	case OBIT_SkyModel_PointModTSpec:     /* Point + tabulated spectrum */
+	  itab = 5 + in->specIndex[ifq];
 	  for (it=0; it<mcomp; it+=FazArrSize) {
 	    itcnt = jtcnt = 0;
 	    for (iComp=it; iComp<mcomp; iComp++) {
-	      if (ccData[0]!=0.0) {  /* valid? */
+	      if (ccData[itab]!=0.0) {  /* valid? */
 		tx = ccData[1]*(odouble)visData[ilocu];
 		ty = ccData[2]*(odouble)visData[ilocv];
 		tz = ccData[3]*(odouble)visData[ilocw];
 		FazArr[itcnt] = freqFact * (tx + ty + tz);
 		ExpArg2[itcnt] = logNuONu0 * ccData[4];
 		if (ccData[4]!=0.0) jtcnt = itcnt+1;
-		itab = 5 + in->specIndex[ifq];
 		AmpArr[itcnt] = ccData[itab];
+		itcnt++;          /* Count in amp/phase buffers */
 	      }  /* end if valid */
 	      ccData += lcomp;  /* update pointer */
-	      itcnt++;          /* Count in amp/phase buffers */
 	      if (itcnt>=FazArrSize) break;
 	    } /* end inner loop over components */
 	    
@@ -1928,9 +1932,9 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 		AmpArr[itcnt]  = amp;
 		ExpArg2[itcnt] = logNuONu0 * ccData[7];
 		if (ccData[7]!=0.0) jtcnt = itcnt+1;
+		itcnt++;          /* Count in amp/phase buffers */
 	      } /* end if valid */
 	      ccData += lcomp;  /* update pointer */
-	      itcnt++;          /* Count in amp/phase buffers */
 	      if (itcnt>=FazArrSize) break;
 	    }  /* end inner loop over components */
 	    
@@ -1999,9 +2003,9 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 		AmpArr[itcnt] = amp;
 		ExpArg2[itcnt] = logNuONu0 * ccData[6];
 		if (ccData[6]!=0.0) jtcnt = itcnt+1;
+		itcnt++;          /* Count in amp/phase buffers */
 	      } /* end if valid */
 	      ccData += lcomp;  /* update pointer */
-	      itcnt++;          /* Count in amp/phase buffers */
 	      if (itcnt>=FazArrSize) break;
 	    }  /* end inner loop over components */
 	    
