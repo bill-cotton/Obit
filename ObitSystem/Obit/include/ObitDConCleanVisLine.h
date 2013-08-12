@@ -180,6 +180,9 @@ void  ObitDConCleanVisLineGetParms (ObitDCon *in, ObitErr *err);
 /** Public: Subtract components from UV data */
 void ObitDConCleanVisLineSub(ObitDConClean *in, ObitErr *err);
 
+/** Public: Any valid Images? */
+gboolean ObitDConCleanVisLineValid(ObitDConCleanVisLine *in);
+
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

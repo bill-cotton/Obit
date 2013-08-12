@@ -1417,7 +1417,7 @@ def EVLAAutoFlag(uv, target, err, \
     af.BPVer      = BPVer
     af.VClip      = VClip
     af.IClip      = IClip
-    if  "XClip" in af.__dict__:
+    if  ("XClip" in af.__dict__) and (XClip!=None):
         af.XClip      = XClip
     af.minAmp     = minAmp
     af.RMSClip    = RMSClip
@@ -2520,6 +2520,9 @@ def EVLACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
     mess =  "Average/calibrate data"
     printMess(mess, logfile)
     splat=ObitTask.ObitTask("Splat")
+    # sanity check for averaging in freq
+    if avgFreq==0:
+        chAvg = 1
     try:
         splat.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
     except Exception, exception:
@@ -5356,6 +5359,8 @@ def EVLAStdModel(Cals, freq):
             (freq<=model["freqRange"][1]):
                 Cal["CalFile"] = model["file"]
                 Cal["CalDisk"] = model["disk"]
+                Cal["CalDataType"] = 'FITS'
+                Cal["CalNField"]   = 1
                 break
 # end EVLAStdModel
 

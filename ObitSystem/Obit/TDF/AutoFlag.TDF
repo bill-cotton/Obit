@@ -132,6 +132,9 @@ FDbaseSel                           Channels for baseline fit
 nThreads            1               Number of threads to use
 **PARAM** str 128
 taskLog                             Logfile to write task messages to
+**PARAM** int 10
+noScrat                             AIPS disk numbers for which
+                                    scratch files are disallowed
 ----------------------------------------------------------------
 AutoFlag Automated editing for radio Interferometry data
 Type:  Task
@@ -302,6 +305,8 @@ Adverbs:
              This is useful in long runs or batch files.
              Path is absolute or relative to where the task 
              executes.
+  noScrat....A list of AIPS disk numbers on which you do not 
+             wish scratch files
 ----------------------------------------------------------------
 Automatic editing task for radio interferometer data
 Documenter:  W. D. Cotton,  NRAO

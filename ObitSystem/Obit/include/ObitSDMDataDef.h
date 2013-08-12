@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2011                                          */
+/*;  Copyright (C) 2010-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -46,8 +46,10 @@ olong selConfig;
 ObitASDMBand selBand;
 /** Selected number of channels, <=0 => any */
 olong selChan;
-/** Selected Bandwidth (Hz), <=0.0 => any */
-olong selBW;
+/** Selected Bandwidth (kHz), <=0.0 => any */
+ofloat selChBW;
+/** Actual Bandwidth (Hz) */
+ofloat selBW;
 /** ASDM table */
 ASDMTable* ASDMTab;
 /** Main table */

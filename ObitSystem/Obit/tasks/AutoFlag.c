@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to automatically edit visibility data                    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2011                                          */
+/*;  Copyright (C) 2005-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -799,12 +799,17 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean     doCalSelect;
   oint         doCalib;
-  /*gchar *routine = "digestInputs";*/
+  gchar *routine = "digestInputs";
 
   /* error checks */
   g_assert(ObitErrIsA(err));
   if (err->error) return;
   g_assert (ObitInfoListIsA(myInput));
+
+  /* noScrat - no scratch files for AIPS disks */
+  ObitAIPSSetnoScrat(myInput, err);
+  if (err->error) Obit_traceback_msg (err, routine, "task Input");
+
   /* Make sure doCalSelect set properly */
   doCalSelect = TRUE;
   ObitInfoListGetTest(myInput, "doCalSelect",  &type, dim, &doCalSelect);

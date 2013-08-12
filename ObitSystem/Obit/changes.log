@@ -1513,3 +1513,32 @@ BDFIn bug with multiple numbers of channels/configuration
 Obit/tasks/BDFIn.c:
   Fix indexing problem with two numbers of channels in a configuration.
 19 July 2013, svn ver. 459
+
+Numerous bug fixes, enhance BDFIn selection, fitting source RM from CP table
+Obit/python/Image.py:
+  Better document how to create new image.
+Obit/tasks/CLCor.c:
+  CLCorDoCor: Set number of antennas in output CL table.
+Obit/python/UV.py:
+  PGetFreq: correct function call
+Obit/python/UVPolnUtil.py:
+  New utility package for fitting RM from CP table and plotting 
+  source and instrumental poln.
+Obit/python/EVLACal.py:
+  EVLACalAvg: set chAvg to 1 if avgFreq==0
+  EVLAStdModel: set CalDataType and CalNField
+  EVLAAutoFlag: Do not set XClip on af if XClip is None
+Obit/include/ObitDConCleanVisLine.h  Obit/src/ObitDConCleanVisLine.c:
+  Add function ObitDConCleanVisLineValid
+Obit/tasks/Imager.c:
+  doImage: Be more forgiving of channels in an image completely blanked.
+Obit/include/ObitBDFData.h  Obit/src/ObitBDFData.c:
+Obit/src/ObitSDMData.c Obit/include/ObitSDMDataDef.h:
+Obit/tasks/BDFIn.c Obit/TDF/BDFIn.TDF:
+ fix bugs in data selection with multiple sets of channels
+ enable selection by channel bandwidth.
+Obit/TDF/AutoFlag.TDF Obit/tasks/AutoFlag.c:
+  Add noScrat parameter
+Obit/tasks/UVAppend.c:
+  Make frequency test 1/4 of a channel 
+12 aug. 2013, svn version 460

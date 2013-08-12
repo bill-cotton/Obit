@@ -55,6 +55,8 @@ selConfig                           Config ID, -1 ->first.
 selBand                             Band to select, "  "=>first.
 **PARAM** str 4
 selCode                             Source code to select, "  "=>any.
+**PARAM** float 1 **DEF** -1.0
+selChBW                             Channel bandwidth (kHz) to select
 **PARAM** boo 1  **DEF** T
 dropZero                            Drop records with all zero vis
 **PARAM** boo 1  **DEF** F
@@ -138,10 +140,11 @@ Data selection
              "NONE" matches "NONE" (not a calibrator).
              otherwise if any character matches the first character 
              in Field Table code, the scan is selected
- selConfig..ASDM array configuration index to select.  Used in 
+ selConfig...ASDM array configuration index to select.  Used in 
              conjunction with selChan, overrides selBand.
              Task ASDMList can be used to decide which configuration
              number(s) are desired.
+  selChBW....Channel bandwidth selected in kHz.  <=0 -> any.
   dropZero...If True, visibility records with all zero records 
              will be dropped.  In any case, visibilities which are 
              exactly zero will be flagged (zero weight).

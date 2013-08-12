@@ -1066,7 +1066,7 @@ ObitSDMData* ObitSDMIntentCreate (gchar* name, gchar *DataRoot, ObitErr *err)
  * Parses the ASMD XML tables and stores
  * \param in       ASDM object to use
  * \param mainRow  Scan row number (in ASDMMain table)
- * \param SWOrder  If TRUE leave data is SW order
+ * \param SWOrder  If TRUE leave data in SW order
  * \return the new structure, NULL on error, delete using ObitSDMKillSWArray
  */
 ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow, 
@@ -1078,7 +1078,6 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
   olong i, ii, j, jj, k, iMain, iConfig, jSW, iSW, jDD, numDD, iJD, ncomp;
   odouble JD, deltaFreq;
   gboolean first = TRUE, isALMA;
-  ASDMSpectralWindowArrayEntry **twinds=NULL;
   ofloat refChan, *sortStruct=NULL;
   gint number;
   size_t size;
@@ -1219,11 +1218,13 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
     } else out->winds[iSW]->subbandNum = out->winds[iSW]->basebandNum;
 
     /* Is this one selected? */
+    /* Correct number of channels */
     if ((in->selChan>0) && (in->selChan!=out->winds[iSW]->numChan)) 
       out->winds[iSW]->selected = FALSE;
-    /* NO if ((in->selBW>0.0) && (fabs(in->selBW-out->winds[iSW]->chanWidth)>100.0))
-       out->winds[iSW]->selected = FALSE;*/
-
+    /* Correct bandwidth */
+    if ((in->selChBW>0.0) && 
+	(fabs(in->selChBW-(out->winds[iSW]->chanWidth*1.0e-3))>1.0))
+      out->winds[iSW]->selected = FALSE;
     iSW++;
   } /* end loop over DataDescriptions */
 
@@ -1248,12 +1249,8 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
     g_qsort_with_data (sortStruct, number, size, CompareFreq, &ncomp);
     
     /* Save sorted results */
-    /* save initial windows to temporary array */
-    twinds     = out->winds;
-    out->winds = g_malloc0(in->SpectralWindowTab->nrows*sizeof(ASDMSpectralWindowArrayEntry));
     for (i=0; i<out->nwinds; i++) {
       j = (olong)(sortStruct[i*2]+0.5);
-      out->winds[i] = twinds[j];
       out->order[i] = j;
     }
   } /* end sorting frequencies */
@@ -1288,7 +1285,6 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
 
   /* Cleanup */
   if (sortStruct) g_free(sortStruct);
-  if (twinds)     g_free(twinds);
   return out;
 } /* end ObitSDMDataGetSWArray */
 
@@ -1321,6 +1317,7 @@ ASDMSpectralWindowArray* ObitSDMDataKillSWArray (ASDMSpectralWindowArray *in)
 
  /**
  * Select Spectral windows by number of channels/band
+ * Honors any prior selection
  * \param in       The structure to update
  * \param selChan selected number of channels
  * \param band    Selected band
@@ -1336,7 +1333,7 @@ gboolean ObitSDMDataSelChan  (ASDMSpectralWindowArray *in, olong selChan,
     damn = (in->winds[iSW]->numChan == selChan) &&
       ((ObitSDMDataFreq2Band (in->winds[iSW]->refFreq)==band) || 
        (band==ASDMBand_Any)) &&   (in->nwinds==selIF);
-    in->winds[iSW]->selected = in->winds[iSW]->selected || damn;
+    in->winds[iSW]->selected = in->winds[iSW]->selected && damn;
     if (in->winds[iSW]->selected) out = TRUE;
   }
   return out;

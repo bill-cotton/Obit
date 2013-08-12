@@ -1090,7 +1090,7 @@ def PGetFreq (inUV, err):
     if not OErr.OErrIsA(err):
         raise TypeError,"err MUST be an OErr"
     #
-    ret = Obit.UVGetSubA(inUV.cast(myClass), err.me)
+    ret = Obit.UVGetFreq(inUV.cast(myClass), err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error getting frequency info")
     return ret

@@ -357,10 +357,12 @@ ObitIOCode ObitBDFDataFillBuffer (ObitBDFData *in, ObitErr *err)
  * \param in      The object to update
  * \param iMain   The ASDM Main table row
  * \param SWOrder If TRUE leave data is SW order
+ * \param selChan Number of channels selected
+ * \param selIF   Number of IFs selected
  * \param err     Obit error stack object.
  */
 void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
-			   ObitErr *err)
+			   olong selChan, olong selIF, ObitErr *err)
 {
   gchar *startInfo, *endInfo, *startBB, *endBB, *prior, *next, *xnext, *tstr;
   olong  configDescriptionId, fieldId, sourceId, inext, ScanId=0, iScan, iIntent;
@@ -730,18 +732,29 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   }
 
 
-  /* Numbers of things THIS IS NOT REALLY RIGHT */
+  /* Numbers of things */
   in->numBaseline       = (in->ScanInfo->numAntenna * (in->ScanInfo->numAntenna-1))/2;
   in->currBaseline      = 0;
   in->numBaseband       = in->ScanInfo->numBaseband;
-  in->numSpectralWindow = in->ScanInfo->BBinfo[0]->numSpectralWindow; /* NOT ALWAYS CORRECT */
-  in->numSpectralChann  = in->ScanInfo->BBinfo[0]->SWinds[0]->numSpectralPoint;
-  in->numCPoln = in->ScanInfo->BBinfo[0]->SWinds[0]->numCrossPolProducts;
-  in->numAPoln = in->ScanInfo->BBinfo[0]->SWinds[0]->numSdPolProducts;
 
   /* Spectral window array */
   in->SWArray = ObitSDMDataKillSWArray(in->SWArray);
   in->SWArray = ObitSDMDataGetSWArray (in->SDMData, iMain, SWOrder);
+
+  /* Set selection */
+  ObitBDFDataSelChan (in, selChan, selIF,  ASDMBand_Any);
+
+  /* More reliable - find selected SW, count */
+  in->numSpectralWindow = 0;
+  for (iSW=0; iSW<in->SWArray->nwinds; iSW++) {
+    if (in->SWArray->winds[iSW]->selected) {
+      jSW = iSW;
+      in->numSpectralWindow++;
+    }
+  }
+  in->numSpectralChann  = in->SWArray->winds[jSW]->numChan;
+  in->numCPoln          = in->SWArray->winds[jSW]->nCPoln;
+  in->numAPoln          = in->SWArray->winds[jSW]->nAPoln;
 
   /* Init antennas */
   in->nant   = in->ScanInfo->numAntenna;
@@ -847,11 +860,9 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
 
   /* Offsets of the crosscorrelation Spectral windows in input */
   SWoff = g_malloc0((in->SWArray->nwinds+2)*sizeof(olong));
-  inext    = 0;
   SWoff[0] = 0;
-  for (iSW=0; iSW<in->SWArray->nwinds; iSW++) {
-    inext++;
-    SWoff[inext] = SWoff[inext-1] + 
+  for (iSW=0; iSW<in->SWArray->nwinds-1; iSW++) {
+    SWoff[iSW+1] = SWoff[iSW] + 
       in->SWArray->winds[iSW]->numChan * in->SWArray->winds[iSW]->nCPoln * 2 ;
   }
 
@@ -859,7 +870,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   if (in->coffif) g_free(in->coffif);
   in->coffif = g_malloc0((in->SWArray->nwinds+2)*sizeof(olong));
   /* Which ones selected? */
-  inext = 0;
+  inext         = 0;
   in->coffif[0] = 0;
   for (iSW=0; iSW<in->SWArray->nwinds; iSW++) {
     /* Use ordering */
@@ -867,11 +878,11 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
     if (in->SWArray->winds[jSW]->selected) {
       /* Correct for selection of Atm corr - 
 	 this assumes Atm corr axis earlier than freq, poln*/
-      in->coffif[inext] = (SWoff[jSW]+
-			   in->offAtmCorr*in->SWArray->winds[iSW]->numChan*in->SWArray->winds[iSW]->nCPoln*2);
+      in->coffif[inext] = (SWoff[jSW] +
+			   in->offAtmCorr*in->SWArray->winds[jSW]->numChan*in->SWArray->winds[jSW]->nCPoln*2);
       inext++;
     }  
-  }
+ }
   if (SWoff) g_free(SWoff); SWoff = NULL; /* Cleanup*/
   
   /* Spectral window (IF) sidebands */
@@ -913,19 +924,16 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
 
   /* Offsets of the autocorrelation Spectral windows in input */
   SWoff    = g_malloc0((in->SWArray->nwinds+2)*sizeof(olong));
-  inext    = 0;
   SWoff[0] = 0;
-  for (iSW=0; iSW<in->SWArray->nwinds; iSW++) {
-    inext++;
-    SWoff[inext] = SWoff[inext-1] + 
-      in->SWArray->winds[iSW]->numChan * in->aincf;
+  for (iSW=0; iSW<in->SWArray->nwinds-1; iSW++) {
+    SWoff[iSW+1] = SWoff[iSW] + in->SWArray->winds[jSW]->numChan * in->aincf;
   }
 
   /* Which auto correlation IF/Spectral windows */
   if (in->aoffif) g_free(in->aoffif);
   in->aoffif = g_malloc0((in->SWArray->nwinds+2)*sizeof(olong));
   /* Which ones selected? */
-  inext = 0;
+  inext         = 0;
   in->aoffif[0] = 0;
   for (iSW=0; iSW<in->SWArray->nwinds; iSW++) {
     /* Use ordering */
@@ -936,9 +944,8 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
     }
     
     /* Count size of visibilities */
-    in->crossVisSize += in->SWArray->winds[iSW]->numChan * in->cincf * in->numAtmCorr; 
-    in->autoVisSize  += in->SWArray->winds[iSW]->numChan * in->aincf;
-    
+    in->crossVisSize += 2*in->SWArray->winds[iSW]->numChan * in->SWArray->winds[iSW]->nCPoln * in->numAtmCorr; 
+    in->autoVisSize  +=   in->SWArray->winds[iSW]->numChan * in->SWArray->winds[iSW]->nAPoln;
   }
   if (SWoff) g_free(SWoff); SWoff = NULL;  /* Cleanup*/
 } /* end ObitBDFDataInitScan */

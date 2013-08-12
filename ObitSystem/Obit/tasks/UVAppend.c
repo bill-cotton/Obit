@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task to append/concatenate uv data           .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012                                               */
+/*;  Copyright (C) 2012-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1034,8 +1034,8 @@ void ObitUVAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
       return ;
  }
 
-  /* Check frequency - within 1 Hz */
-  incompatible = fabs(inDesc->freq-outDesc->freq) > 1.0;
+  /* Check frequency - within 1/4 channel */
+  incompatible = fabs(inDesc->freq-outDesc->freq) > 0.25*fabs(inDesc->crval[inDesc->jlocf]);
   if (incompatible) {
      Obit_log_error(err, OBIT_Error,"%s inUV and outUV have incompatible frequencies",
 		   routine);

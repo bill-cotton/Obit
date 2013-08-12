@@ -1928,7 +1928,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean     Fl = FALSE, Tr = TRUE, init=TRUE, doRestore, doFlatten, doSC, doBeam;
   gboolean     noSCNeed, reimage, didSC=FALSE, imgOK=FALSE, converged = FALSE;
-  gboolean     btemp, noNeg, doneRecenter=FALSE;
+  gboolean     btemp, noNeg, allBlank, doneRecenter=FALSE;
   gchar        soltyp[5], solmod[5], stemp[5];
   gchar        *SCParms[] = {  /* Self cal parameters */
     "minFluxPSC", "minFluxASC", "refAnt",  "WtUV", 
@@ -2350,11 +2350,17 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 
   if (ncomp) g_free(ncomp);   ncomp  = NULL;  /* Done with array */
 
-  /* Make sure at least images made */
-  Obit_return_if_fail((myClean->maxAbsRes[0]>0.0), err, 
-		      "%s: No image(s) generated", 
-		      routine);
-  
+  /* Make sure at least some images made */
+  if (ObitDConCleanVisLineIsA(myClean)) {  /* Multiple parallel planes */
+    allBlank = !ObitDConCleanVisLineValid ((ObitDConCleanVisLine*)myClean);
+  } else {  /* Single image plane */
+     allBlank = (myClean->maxAbsRes[0]<=0.0);
+  }
+  if (allBlank) {
+     Obit_log_error(err, OBIT_InfoWarn,"NO image for current channel(s)");
+     goto flatten;
+  }
+ 
   /* Any final CC Filtering? */
   if (CCFilter[0]>0.0) {
     /* Compress CC files */
@@ -2396,6 +2402,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   }
 
   /* Flatten if requested */
+  flatten:
   doFlatten = TRUE;
   ObitInfoListGetTest(myInput, "doFlatten", &type, dim, &doFlatten);
   if (doFlatten) {

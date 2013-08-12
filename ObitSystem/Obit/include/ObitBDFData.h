@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -254,7 +254,7 @@ ObitIOCode ObitBDFDataFillBuffer (ObitBDFData *in, ObitErr *err);
 
 /** Public: Initialize Scan */
 void ObitBDFDataInitScan (ObitBDFData *in, olong iMain, gboolean SWOrder,
-			  ObitErr *err);
+			  olong selChan, olong selIF, ObitErr *err);
 
 /** Public: Select Spectral window by number of channels  */
 gboolean ObitBDFDataSelChan  (ObitBDFData *in, olong selChan, 

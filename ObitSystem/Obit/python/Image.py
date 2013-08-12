@@ -628,6 +628,25 @@ def newPFImage(name, filename, disk, exists, err, verbose=True):
     isOK member set to indicate success
     Returns the Python Image object
 
+    To create a new file, the descriptor must be defined before 
+    image is first opened.
+    # Create basic structures
+    x = Image.newPFImage("new file", myFile, 0, False, err)
+
+    From scratch, 
+    d = x.Desc.Dict                            # dict with defaults 
+    d["bitpix"]      = -32                     # pixels as floats
+    d["naxis"]       = 2                       # Number of axes
+    d["inaxes"][0:2] = [nx, ny]                # Image size
+    d["crpix"][0:2]  = [nx/2, ny/2]            # Set reference pixel
+    d["ctype"][0:2]  = ["RA---SIN","DEC--SIN"] # Set axis types
+    d["crval"][0:2]  = [RACen, DecCen]         # Set position
+    d["cdelt"][0:2]  = [cells,cells]           # Set cell size
+    x.Desc.Dict = d                            # Copy to descriptor
+
+    To clone from extant file y
+    y.Clone(x, err)
+
     * name     = name desired for object (labeling purposes)
     * filename = name of FITS file
     * disk     = FITS directory number
@@ -677,6 +696,25 @@ def newPAImage(name, Aname, Aclass, disk, seq, exists, err, verbose=False):
     and if exists verifies the file.
     Returns the Python Image object
     isOK member set to indicate success
+
+    To create a new file, the descriptor must be defined before 
+    image is first opened.
+    # Create basic structures
+    x = Image.newPAImage("new file", Aname, Aclass, disk, seq, False, err)
+
+    From scratch, 
+    d = x.Desc.Dict                            # dict with defaults 
+    d["bitpix"]      = -32                     # pixels as floats
+    d["naxis"]       = 2                       # Number of axes
+    d["inaxes"][0:2] = [nx, ny]                # Image size
+    d["crpix"][0:2]  = [nx/2, ny/2]            # Set reference pixel
+    d["ctype"][0:2]  = ["RA---SIN","DEC--SIN"] # Set axis types
+    d["crval"][0:2]  = [RACen, DecCen]         # Set position
+    d["cdelt"][0:2]  = [cells,cells]           # Set cell size
+    x.Desc.Dict = d                            # Copy to descriptor
+
+    To clone from extant file y
+    y.Clone(x, err)
 
     * name     = name desired for object (labeling purposes)
     * Aname    = AIPS name of file

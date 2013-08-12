@@ -724,6 +724,30 @@ void ObitDConCleanVisLineSub(ObitDConClean *inn, ObitErr *err)
 } /* end ObitDConCleanVisLineSub */
 
 /**
+ * \param in        The CLEAN object.
+ * \param pixarray  If NonNULL use instead of the flux densities from the image file.
+ *                  This is an array of ObitFarrays corresponding to fields in
+                    in->currentFields
+ * \param err       Obit error stack object.
+ * \return TRUE if some planes had good data.
+ */
+gboolean ObitDConCleanVisLineValid(ObitDConCleanVisLine *in)
+{
+  gboolean allBlank, anyGood;
+  olong ipln, npln;
+  ObitDConCleanVisLine *tmpClean;
+
+  allBlank = TRUE;
+  npln = in->nArgs;
+  for (ipln=0; ipln<npln; ipln++) {
+    tmpClean = ((ChanFuncArg*)in->chArgs[ipln])->in;
+    allBlank = allBlank && (tmpClean->maxAbsRes[0]<=0.0);
+  }
+  anyGood = !allBlank;
+  return anyGood;
+} /* end  ObitDConCleanVisLineValid */
+
+/**
  * Get image and beam statistics and prepare to deconvolve
  * If autoWindow option is selected then windows may be added 
  * \param in        The object to deconvolve

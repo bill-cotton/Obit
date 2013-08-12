@@ -375,6 +375,11 @@ ObitInfoList* BDFInin (int argc, char **argv, ObitErr *err)
   /* Make default inputs InfoList */
   list = defaultInputs(err);
 
+  /* Initialize output */
+  myOutput = defaultOutputs(err);
+  ObitReturnDumpRetCode (-999, outfile, myOutput, err);
+  if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
+
   /* command line arguments */
   if (argc<=1) Usage(); /* must have arguments */
   /* parse command line */
@@ -483,11 +488,6 @@ ObitInfoList* BDFInin (int argc, char **argv, ObitErr *err)
       strTemp += dim[0];
     }
   }
-
-  /* Initialize output */
-  myOutput = defaultOutputs(err);
-  ObitReturnDumpRetCode (-999, outfile, myOutput, err);
-  if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
  return list;
 } /* end BDFInin */
@@ -761,8 +761,8 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   ObitUVDesc *desc;
   olong ncol;
   gchar *today=NULL;
-  olong i, iWind, lim, selConfig, iMain;
-  ofloat epoch=2000.0, equinox=2000.0;
+  olong i, jSW, iWind, lim, selConfig, iMain;
+  ofloat epoch=2000.0, equinox=2000.0, selChBW;
   olong nchan=1, npoln=1, nIF=1;
   odouble refFreq, startFreq=1.0;
   ofloat refChan=1.0, freqStep=1.0;
@@ -817,6 +817,10 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   sprintf (selCode, "        ");
   ObitInfoListGetTest(myInput, "selCode", &type, dim, selCode);
 
+  /* Channel bandwidth selection */
+  selChBW = -1.0;
+  ObitInfoListGetTest(myInput, "selChBW", &type, dim, &selChBW);
+
   /* Check if Spectral window order desired */
   ObitInfoListGetTest(myInput, "SWOrder", &type, dim, &SWOrder);
   if (SWOrder)
@@ -833,6 +837,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   SDMData->selConfig = selConfig;
   SDMData->selBand   = band;
   SDMData->selChan   = selChan;
+  SDMData->selChBW   = selChBW;
 
   /* Create ObitUV for data */
   *outData = setOutputData (myInput, err);
@@ -896,6 +901,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   ObitInfoListAlwaysPut(myInput, "selChan", OBIT_long, dim, &selChan);
   Obit_log_error(err, OBIT_InfoErr, "Selecting spectral windows with %d channels", selChan);
   Obit_log_error(err, OBIT_InfoErr, "Selecting calCode '%s'", selCode);
+  Obit_log_error(err, OBIT_InfoErr, "Selecting channel bandwidth %f kHz", selChBW);
   ObitErrLog(err);
  
  /* Define output descriptor */
@@ -915,13 +921,14 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
 
   /* Frequency info from first selected Spectral window */
   for (i=0; i<SpWinArray->nwinds; i++) {
-    if (SpWinArray->winds[i]->selected) {
-      nchan     = SpWinArray->winds[i]->numChan;
-      refChan   = SpWinArray->winds[i]->refChan;
-      npoln     = SpWinArray->winds[i]->nCPoln;
-      refFreq   = SpWinArray->winds[i]->refFreq;
-      startFreq = SpWinArray->winds[i]->chanFreqStart;
-      freqStep  = fabs((ofloat)SpWinArray->winds[i]->chanFreqStep);
+    jSW = SpWinArray->order[i];  /* use ordering */
+    if (SpWinArray->winds[jSW]->selected) {
+      nchan     = SpWinArray->winds[jSW]->numChan;
+      refChan   = SpWinArray->winds[jSW]->refChan;
+      npoln     = SpWinArray->winds[jSW]->nCPoln;
+      refFreq   = SpWinArray->winds[jSW]->refFreq;
+      startFreq = SpWinArray->winds[jSW]->chanFreqStart;
+      freqStep  = fabs((ofloat)SpWinArray->winds[jSW]->chanFreqStep);
       break;
     }
   } /* end loop over spectral windows */
@@ -1120,6 +1127,7 @@ void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData,
   gchar          hicard[81], begString[17], endString[17];
   gchar         *hiEntries[] = {
     "DataRoot", "selChan", "selIF", "selBand", "selConfig", "selCode", 
+    "selChBW",
     "dropZero", "doCode", "calInt", "doSwPwr", "doOnline", "SWOrder", 
     "doAtmCor", 
     NULL};
@@ -1542,7 +1550,7 @@ void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData,
 {
   ObitTableFQ*            outTable=NULL;
   ObitTableFQRow*         outRow=NULL;
-  olong i, j, iif, oRow, ver, numIF, iIF;
+  olong i, j, jSW, iif, oRow, ver, numIF, iIF;
   odouble refFreq=0.0;
   ObitIOAccess access;
   gchar *routine = "GetFrequencyInfo";
@@ -1554,8 +1562,9 @@ void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData,
 
   /* Frequency info from first selected Spectral window */
   for (i=0; i<SpWinArray->nwinds; i++) {
-    if (SpWinArray->winds[i]->selected) {
-      refFreq   = SpWinArray->winds[i]->chanFreqStart;
+    jSW = SpWinArray->order[i];  /* Use ordering */
+    if (SpWinArray->winds[jSW]->selected) {
+      refFreq   = SpWinArray->winds[jSW]->chanFreqStart;
       break;
     }
   }
@@ -1604,11 +1613,12 @@ void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData,
   outRow->fqid    = 1;
   iIF  = 0;
   for (i=0; i<SpWinArray->nwinds; i++) {
-    if (!SpWinArray->winds[i]->selected) continue; /* Want this one? */
-    outRow->freqOff[iIF]  = SpWinArray->winds[i]->chanFreqStart - refFreq;
-    outRow->chWidth[iIF]  = SpWinArray->winds[i]->chanWidth;
-    outRow->totBW[iIF]    = SpWinArray->winds[i]->totBandwidth;
-    if (SpWinArray->winds[i]->netSideband[0]=='U') outRow->sideBand[iIF] = 1;
+    jSW = SpWinArray->order[i];  /* Use ordering */
+    if (!SpWinArray->winds[jSW]->selected) continue; /* Want this one? */
+    outRow->freqOff[iIF]  = SpWinArray->winds[jSW]->chanFreqStart - refFreq;
+    outRow->chWidth[iIF]  = SpWinArray->winds[jSW]->chanWidth;
+    outRow->totBW[iIF]    = SpWinArray->winds[jSW]->totBandwidth;
+    if (SpWinArray->winds[jSW]->netSideband[0]=='U') outRow->sideBand[iIF] = 1;
     else outRow->sideBand[iIF] = -1;
     /* FOR EVLA everything is upper even if it's not */
     if (isEVLA) outRow->sideBand[iIF] = 1;
@@ -1616,18 +1626,18 @@ void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData,
     if (isEVLA) {
       for (iif=0; iif<numIF; iif++) {
 	for (j=0; j<8; j++) outRow->RxCode[iif*8+j] = ' ';
-	if (SpWinArray->winds[i]->bandcode)
-	  for (j=0; j<MIN(8,strlen(SpWinArray->winds[i]->bandcode)); j++) 
-	    outRow->RxCode[iif*8+j] = SpWinArray->winds[i]->bandcode[j];
+	if (SpWinArray->winds[jSW]->bandcode)
+	  for (j=0; j<MIN(8,strlen(SpWinArray->winds[jSW]->bandcode)); j++) 
+	    outRow->RxCode[iif*8+j] = SpWinArray->winds[jSW]->bandcode[j];
       } /* End IF loop */
     }
     if (isALMA) {  /* Drop underscores */
       for (iif=0; iif<numIF; iif++) {
 	for (j=0; j<8; j++) outRow->RxCode[iif*8+j] = ' ';
 	if (SpWinArray->winds[i]->bandcode) {
-	  for (j=0; j<4; j++)  outRow->RxCode[iif*8+j  ] = SpWinArray->winds[i]->bandcode[j];
-	  for (j=5; j<7; j++)  outRow->RxCode[iif*8+j-1] = SpWinArray->winds[i]->bandcode[j];
-	  for (j=8; j<10; j++) outRow->RxCode[iif*8+j-2] = SpWinArray->winds[i]->bandcode[j];
+	  for (j=0; j<4; j++)  outRow->RxCode[iif*8+j  ] = SpWinArray->winds[jSW]->bandcode[j];
+	  for (j=5; j<7; j++)  outRow->RxCode[iif*8+j-1] = SpWinArray->winds[jSW]->bandcode[j];
+	  for (j=8; j<10; j++) outRow->RxCode[iif*8+j-2] = SpWinArray->winds[jSW]->bandcode[j];
 	} 
       } /* end IF loop */
     }
@@ -2074,12 +2084,9 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
     
     /* Init Scan */
-    ObitBDFDataInitScan (BDFData, iMain, SWOrder, err);
+    ObitBDFDataInitScan (BDFData, iMain, SWOrder, selChan, selIF, err);
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
  
-    /* Set selection - here mostly by ConfigID */
-    ObitBDFDataSelChan (BDFData, selChan, selIF, ASDMBand_Any);
-
     /* Consistency check - loop over selected Spectral windows */
     nIFsel = 0;   /* Number of selected IFs */
     iSW    = 0;   /* input Spectral window index */
@@ -2089,23 +2096,23 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     while (iSW<BDFData->SWArray->nwinds) {
       /* Get from ordered list */
       jSW = BDFData->SWArray->order[iSW];
-      if (BDFData->SWArray->winds[iSW]->selected) {
-	Obit_return_if_fail((nchan==BDFData->SWArray->winds[iSW]->numChan), err,
+      if (BDFData->SWArray->winds[jSW]->selected) {
+	Obit_return_if_fail((nchan==BDFData->SWArray->winds[jSW]->numChan), err,
 			    "%s: Input number freq. incompatible %d != %d", 
-			    routine, nchan, BDFData->SWArray->winds[iSW]->numChan);
-	Obit_return_if_fail((nstok==BDFData->SWArray->winds[iSW]->nCPoln), err,
+			    routine, nchan, BDFData->SWArray->winds[jSW]->numChan);
+	Obit_return_if_fail((nstok==BDFData->SWArray->winds[jSW]->nCPoln), err,
 			    "%s: Input number Poln incompatible %d != %d", 
-			    routine, nstok, BDFData->SWArray->winds[iSW]->nCPoln);
+			    routine, nstok, BDFData->SWArray->winds[jSW]->nCPoln);
 	/* Baseband - assume name starts with "BB_" and ends in number 
 	   BBNum = (olong)strtol(&BDFData->ScanInfo->BBinfo[kBB]->basebandName[3], NULL, 10);
-	   Obit_return_if_fail((BBNum==BDFData->SWArray->winds[iSW]->basebandNum), err,
+	   Obit_return_if_fail((BBNum==BDFData->SWArray->winds[jSW]->basebandNum), err,
 	   "%s: Input basebands inconsistent %d != %d, IF %d", 
-	   routine, BBNum, BDFData->SWArray->winds[iSW]->basebandNum, nIFsel);*/
+	   routine, BBNum, BDFData->SWArray->winds[jSW]->basebandNum, nIFsel);*/
 	/* Test frequency */
-	Obit_return_if_fail((fabs(BDFData->SWArray->winds[iSW]->chanFreqStart-
+	Obit_return_if_fail((fabs(BDFData->SWArray->winds[jSW]->chanFreqStart-
 				  outData->myDesc->freqIF[kSW]) < 1.0e3), err,
 			    "%s: Frequencies inconsistent %lf != %lf, IF %d", 
-			    routine, BDFData->SWArray->winds[iSW]->chanFreqStart, 
+			    routine, BDFData->SWArray->winds[jSW]->chanFreqStart, 
 			    outData->myDesc->freqIF[kSW], nIFsel);
   	nIFsel++;
 	kSW++;

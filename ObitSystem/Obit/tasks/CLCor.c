@@ -2,7 +2,7 @@
 /* Obit Radio interferometry calibration software                     */
 /* applies user-selected corrections to the calibration CL table      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012                                               */
+/*;  Copyright (C) 2012-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -704,6 +704,8 @@ void CLCorDoCor (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     outRow  = newObitTableCLRow (oCLTable);
     ObitTableCLSetRow (oCLTable, outRow, err);
     if (err->error) goto cleanup;
+    /* Set number of antennas */
+    oCLTable->numAnt = iCLTable->numAnt;
   } else {  /* Same */
     oCLTable = ObitTableCLRef(iCLTable);
     outRow   = ObitTableCLRowRef(inRow);
