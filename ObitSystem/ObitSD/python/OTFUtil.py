@@ -2,7 +2,7 @@
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2008
+#  Copyright (C) 2004-2013
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -293,6 +293,29 @@ def PFitOnOff (inOTF, detect, err):
     #
     Obit.OTFUtilFitOnOff (inOTF.me, detect, err.me)
     # end PFitOnOff
+
+def PFitBPOnOff (inOTF, scans, err, BPVer=1):
+    """ Fits bandpass from On/Off scan pair
+
+    Gets calibrator information from the Target table (flux density)
+    Writes results in OTFBP table
+    Input values on inOTF
+    inOTF   = Python Obit OTF
+    scans   = pair of scans [off,on]
+    err     = Python Obit Error/message stack
+    BPVer   = output BP table,  0=>new
+    """
+    ################################################################
+    # Checks
+    if not OTF.PIsA(inOTF):
+        raise TypeError,"inOTF MUST be a Python Obit OTF"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be a Python ObitErr"
+    if err.isErr: # existing error?
+        return
+    #
+    Obit.OTFUtilFitBPOnOff (inOTF.me, scans[0], scans[1], BPVer, err.me)
+    # end PFitBPOnOff
 
 def PFitTip (inOTF, err):
     """ Fits tipping scans

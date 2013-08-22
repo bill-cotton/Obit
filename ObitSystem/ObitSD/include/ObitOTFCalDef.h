@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -53,6 +53,10 @@ Obit *SolnTableRow;
 Obit *CalTable;
 /** Calibration Table Row (as Obit*)*/
 Obit *CalTableRow;
+/** Bandpass Calibration  table (as Obit*) */
+Obit *BPCalTable;
+/** Bandpass Calibration Table Row (as Obit*)*/
+Obit *BPCalTableRow;
 /** Last Row read */
 olong LastRowRead;
 /** Number of rows in table */
@@ -61,6 +65,8 @@ olong numRow;
 gboolean doSolnTable;
 /** Apply flagging? */
 gboolean doFlag;
+/** Apply bandpass calibration? */
+gboolean doBP;
 /** number of detectors (all feeds, poln, frequencies)*/
 olong numDet;
 /** number of polynomial terms */
@@ -131,3 +137,5 @@ ofloat *CalFollowPoly;
 ofloat *poly;
 /** Feed wanted detectors */
 gboolean *WantDetect;
+/** Bandpass calibration structure */
+ObitOTFCalBandpassS *bandpassCal;

@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2011                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1319,7 +1319,7 @@ ObitIOImageFITSWriteDescriptor (ObitIOImageFITS *in, ObitErr *err)
   fits_update_key_flt (in->myFptr, "EPOCH", (float)desc->epoch, 6,  (char*)commnt, 
 		       &status);
   strncpy (commnt, "Celestial coordiate equinox", FLEN_COMMENT);
-  fits_update_key_flt (in->myFptr, "EQUINOX", (float)desc->epoch, 6,  (char*)commnt, 
+  fits_update_key_flt (in->myFptr, "EQUINOX", (float)desc->equinox, 6,  (char*)commnt, 
 		       &status);
   strncpy (commnt, "Maximum in data array", FLEN_COMMENT);
   fits_update_key_flt (in->myFptr, "DATAMAX", (float)desc->maxval, 8,  (char*)commnt, 

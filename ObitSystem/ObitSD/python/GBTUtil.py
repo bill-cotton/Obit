@@ -5,7 +5,7 @@ Some of these must be run from ObitTalk.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2007,2008
+#  Copyright (C) 2007-2013
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -49,10 +49,12 @@ def UpdateOTF (OTFTask, Rcvr, outFile, outDisk, DataRoot, err, \
                DCR = "DCROTF"
                PAR = "PAROTF" (Mustang)
                CCB = "CCBOTF"
+               VEGAS = "VEGASOTF"
     Rcvr     = directory name with data for receiver.
                DCR = "DCR"
                PAR = "Rcvr_PAR" (Mustang)
                CCB = "CCB26_40"
+               VEGAS = GBT VEGAS spectrometer
     outFile  = Name of output OTF FITS file
     outDisk  = disk number for outFile, 0=> current working directory
     DataRoot = Root of GBT archive for current project
@@ -61,10 +63,10 @@ def UpdateOTF (OTFTask, Rcvr, outFile, outDisk, DataRoot, err, \
 
     Optional, backend specific values
     scanList = All, list of scan numbers, None=>all
-    offTime  = PAR, CCB Offset in sec to be added to time
+    offTime  = PAR, CCB, VEGAS Offset in sec to be added to time
     avgTime  = PAR Data averaging time in seconds
     config   = PAR  path of configuration file
-    scanNo   = PAR, CCB, replace GBT scan number with this value
+    scanNo   = PAR, CCB, VEGAS, replace GBT scan number with this value
     doBS     = CCB, output beamswitched data
     dataNorm = CCB normalization factors for beamswitched data
     """
@@ -145,7 +147,7 @@ def UpdateOTF (OTFTask, Rcvr, outFile, outDisk, DataRoot, err, \
             #print "DEBUG scan",scanstr, Rcvr, OK
             if  OK:
                 scnstr.append(scanstr)
-                # Run PAROTF to append this scan
+                # Run selected translator to append this scan
                 otf.Scan=scanstr
                 try:
                     otf.debug = True # DEBUG

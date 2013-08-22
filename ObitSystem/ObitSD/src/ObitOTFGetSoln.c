@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -600,10 +600,12 @@ ObitTableOTFSoln* ObitOTFGetSolnGain (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr *
   ObitTableOTFSolnRow *row=NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
+  ObitOTFDesc *desc=inOTF->myDesc;
   ofloat lastScan=-1.0, lastTarget=-1.0;
   ofloat *rec=NULL, solInt, minEl, el, t0, tEnd, value, fblank = ObitMagicF();
   ofloat *time, *cal, *data, *lastgood, sumTime, minrms, *calJy=NULL;
   ofloat *value1=NULL, *value2=NULL;
+  olong nfeed, nstok, nchan, nscal, ifeed, istok, incs, incfeed, ilocdata;
   olong iRow, ver, i, j, lrec, nsample;
   olong  npoly, ndetect, incdatawt;
   ObitIOCode retCode;
@@ -632,20 +634,36 @@ ObitTableOTFSoln* ObitOTFGetSolnGain (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr *
   g_free (tname);
   if (err->error) Obit_traceback_val (err, routine, inOTF->name, outSoln);
 
+  /* How many detectors? */
+  if (desc->OTFType==OBIT_GBTOTF_VEGAS) {
+    incs      = desc->incs;
+    incfeed   = desc->incfeed;
+    ilocdata  = desc->ilocdata;
+    nfeed     = desc->inaxes[desc->jlocfeed];
+    nstok     = desc->inaxes[desc->jlocs];
+    nscal     = MIN (2, nstok);              /* Number of stokes in cal table */
+    nchan     = desc->inaxes[desc->jlocf];
+    ndetect   = nscal*nfeed;
+    /* Better be frequency averaged */
+    Obit_retval_if_fail ((nchan==1), err, outSoln,
+			 "%s VEGAS data must be frequency averaged",  
+			 routine);  
+  } else { /* Non VEGAS */
+    ndetect = inOTF->geom->numberDetect;  /* number of detectors */
+  }
   /* Create work arrays */
-  ndetect = inOTF->geom->numberDetect;  /* number of detectors */
-  lrec = inOTF->myDesc->lrec;
+  lrec     = inOTF->myDesc->lrec;
   lastgood = g_malloc0(ndetect*sizeof(ofloat));
-  time = g_malloc0(MAXSAMPLE*sizeof(ofloat));
-  cal  = g_malloc0(MAXSAMPLE*sizeof(ofloat));
-  data = g_malloc0(ndetect*MAXSAMPLE*sizeof(ofloat));
-  calJy = g_malloc0(ndetect*sizeof(ofloat));
-  value1 = g_malloc0(ndetect*sizeof(ofloat));
-  value2 = g_malloc0(ndetect*sizeof(ofloat));
-  nsample = 0;
-  t0   = -1.0e20;
-  tEnd = -1.0e20;
-  sumTime = 0.0;
+  time     = g_malloc0(MAXSAMPLE*sizeof(ofloat));
+  cal      = g_malloc0(MAXSAMPLE*sizeof(ofloat));
+  data     = g_malloc0(ndetect*MAXSAMPLE*sizeof(ofloat));
+  calJy    = g_malloc0(ndetect*sizeof(ofloat));
+  value1   = g_malloc0(ndetect*sizeof(ofloat));
+  value2   = g_malloc0(ndetect*sizeof(ofloat));
+  nsample  = 0;
+  t0       = -1.0e20;
+  tEnd     = -1.0e20;
+  sumTime  = 0.0;
   lastScan = -1000;
   incdatawt = inOTF->myDesc->incdatawt; /* increment in data-wt axis */
   someData = FALSE;
@@ -810,11 +828,25 @@ ObitTableOTFSoln* ObitOTFGetSolnGain (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr *
 	sumTime += rec[inOTF->myDesc->iloct];
 	time[nsample] = rec[inOTF->myDesc->iloct];
 	cal[nsample]  = rec[inOTF->myDesc->iloccal];
-	for (j=0; j<ndetect; j++ ) 
-	  data[nsample+j*MAXSAMPLE] = rec[inOTF->myDesc->ilocdata+j*incdatawt];
+	/* VEGAS different use, parallel poln and feeds */
+	j = 0;
+	if (desc->OTFType==OBIT_GBTOTF_VEGAS) {
+	  /* Loop over feed */
+	  for (ifeed=0; ifeed<nfeed; ifeed++) {
+	    /* Loop over parallel Stokes */
+	    for (istok=0; istok<nscal; istok++) {
+	       data[nsample+j*MAXSAMPLE] = 
+		 rec[ilocdata + ifeed*incfeed + istok*incs];
+	       j++;
+	    } /* end Stokes loop */
+	  } /* end feed loop */
+	} else { /* Non VEGAS */
+	  for (j=0; j<ndetect; j++ ) 
+	    data[nsample+j*MAXSAMPLE] = rec[ilocdata+j*incdatawt];
+	} /* end non VEGAS */
 	nsample++;
 	someData = TRUE;  /* Any valid data? */
-      }
+      } /* end if not flagged */
       /* last time in accumulation */
       tEnd       = rec[inOTF->myDesc->iloct]+1.0E-20;
       lastScan   = rec[inOTF->myDesc->ilocscan]; /* Which scan number */
@@ -935,6 +967,7 @@ ObitTableOTFSoln* ObitOTFGetSolnFilter (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
   ObitTableOTFSoln *outSoln=NULL;
   ObitTableOTFSolnRow *row=NULL;
   ObitTimeFilter *filter = NULL;
+  ObitOTFDesc *desc=inOTF->myDesc;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   ObitIOAccess access;
@@ -942,6 +975,7 @@ ObitTableOTFSoln* ObitOTFGetSolnFilter (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
   ofloat *rec, solInt, minEl, el, t0, fblank = ObitMagicF();
   ofloat *time, *data, clip;
   ofloat totalTime, samp, parms[10];
+  olong nfeed, nstok, nchan, nscal, ifeed, istok, incs, incfeed, ilocdata;
   olong iRow, ver, i, j, k, ibuf, lrec, nsample;
   olong  npoly, ndetect, incdatawt, nTime=0;
   ObitIOCode retCode;
@@ -975,8 +1009,24 @@ ObitTableOTFSoln* ObitOTFGetSolnFilter (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
   g_free (tname);
   if (err->error) Obit_traceback_val (err, routine, inOTF->name, outSoln);
 
+  /* How many detectors? */
+  if (desc->OTFType==OBIT_GBTOTF_VEGAS) {
+    incs      = desc->incs;
+    incfeed   = desc->incfeed;
+    ilocdata  = desc->ilocdata;
+    nfeed     = desc->inaxes[desc->jlocfeed];
+    nstok     = desc->inaxes[desc->jlocs];
+    nscal     = MIN (2, nstok);              /* Number of stokes in cal table */
+    nchan     = desc->inaxes[desc->jlocf];
+    ndetect   = nscal*nfeed;
+    /* Better be frequency averaged */
+    Obit_retval_if_fail ((nchan==1), err, outSoln,
+			 "%s VEGAS data must be frequency averaged",  
+			 routine);  
+  } else { /* Non VEGAS */
+    ndetect = inOTF->geom->numberDetect;  /* number of detectors */
+  }
   /* Create work arrays */
-  ndetect = inOTF->geom->numberDetect;  /* number of detectors */
   lrec = inOTF->myDesc->lrec;
   time = g_malloc0(MAXSAMPSCAN*sizeof(ofloat));
   data = g_malloc0(ndetect*MAXSAMPSCAN*sizeof(ofloat));
@@ -1162,22 +1212,37 @@ ObitTableOTFSoln* ObitOTFGetSolnFilter (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
       /* accumulate */
       time[nsample] = rec[inOTF->myDesc->iloct];
       if (!flag) { /* OK */
-	for (j=0; j<ndetect; j++ ) {
-	  data[nsample+j*MAXSAMPSCAN] = rec[inOTF->myDesc->ilocdata+j*incdatawt];
-	  someOK = someOK || (data[nsample+j*MAXSAMPSCAN]!=fblank);
-	}
+	/* VEGAS different use, parallel poln and feeds */
+	j = 0;
+	if (desc->OTFType==OBIT_GBTOTF_VEGAS) {
+	  /* Loop over feed */
+	  for (ifeed=0; ifeed<nfeed; ifeed++) {
+	    /* Loop over parallel Stokes */
+	    for (istok=0; istok<nscal; istok++) {
+	      data[nsample+j*MAXSAMPSCAN] = 
+		rec[ilocdata + ifeed*incfeed + istok*incs];
+	      someOK = someOK || (data[nsample+j*MAXSAMPSCAN]!=fblank);
+	      j++;
+	    } /* end Stokes loop */
+	  } /* end feed loop */
+	} else { /* Non VEGAS */
+	  for (j=0; j<ndetect; j++ ) {
+	    data[nsample+j*MAXSAMPSCAN] = rec[inOTF->myDesc->ilocdata+j*incdatawt];
+	    someOK = someOK || (data[nsample+j*MAXSAMPSCAN]!=fblank);
+	  }
+	}   /* end non VEGAS */
+	someData = someData || someOK;  /* Any valid data? */
       } else { /* too low el - blank */
 	for (j=0; j<ndetect; j++ ) data[nsample+j*MAXSAMPSCAN] = fblank;
       }
       nsample++; /* how many samples in buffer */
-      someData = someData || someOK;  /* Any valid data? */
       
       if (lastScan<0.0) {
 	lastScan   = rec[inOTF->myDesc->ilocscan]; /* Which scan number */
       }
       lastTarget = rec[inOTF->myDesc->iloctar];  /* Which target number */
       rec += inOTF->myDesc->lrec; /* Update data record pointer */
-      
+    
     } /* end loop over buffer load */
   } /* end loop reading data */
   
@@ -1321,6 +1386,7 @@ ObitTableOTFSoln* ObitOTFGetSolnPolyBL (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
   ObitTableOTFSoln *outSoln=NULL;
   ObitTableOTFSolnRow *row=NULL;
   ObitTimeFilter *filter = NULL;
+  ObitOTFDesc *desc=inOTF->myDesc;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitIOAccess access;
   ObitInfoType type;
@@ -1329,6 +1395,7 @@ ObitTableOTFSoln* ObitOTFGetSolnPolyBL (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
   ofloat *time, *data, *mtime, *mdata, *mwt, *poly;
   olong order, torder, iRow, ver, i, j, k, ibuf, lrec, nsample, msample;
   olong  npoly, ndetect, incdatawt;
+  olong nfeed, nstok, nchan, nscal, ifeed, istok, incs, incfeed, ilocdata;
   ObitIOCode retCode;
   gboolean flag, doCalSelect, someOK, done, someData;
   gchar *tname;
@@ -1373,8 +1440,24 @@ ObitTableOTFSoln* ObitOTFGetSolnPolyBL (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
   order = 1;
   ObitInfoListGetTest(inOTF->info, "Order",  &type, dim, &order);
 
-  /* Create work arrays */
-  ndetect = inOTF->geom->numberDetect;  /* number of detectors */
+  /* How many detectors? */
+  if (desc->OTFType==OBIT_GBTOTF_VEGAS) {
+    incs      = desc->incs;
+    incfeed   = desc->incfeed;
+    ilocdata  = desc->ilocdata;
+    nfeed     = desc->inaxes[desc->jlocfeed];
+    nstok     = desc->inaxes[desc->jlocs];
+    nscal     = MIN (2, nstok);              /* Number of stokes in cal table */
+    nchan     = desc->inaxes[desc->jlocf];
+    ndetect   = nscal*nfeed;
+    /* Better be frequency averaged */
+    Obit_retval_if_fail ((nchan==1), err, outSoln,
+			 "%s VEGAS data must be frequency averaged",  
+			 routine);  
+  } else { /* Non VEGAS */
+    ndetect = inOTF->geom->numberDetect;  /* number of detectors */
+  }
+ /* Create work arrays */
   lrec = inOTF->myDesc->lrec;
   time  = g_malloc0(MAXBLSAMPLE*sizeof(ofloat));
   data  = g_malloc0(ndetect*MAXBLSAMPLE*sizeof(ofloat));
@@ -1514,16 +1597,31 @@ ObitTableOTFSoln* ObitOTFGetSolnPolyBL (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
       /* accumulate */
       time[nsample] = rec[inOTF->myDesc->iloct];
       if (!flag) { /* OK */
-	for (j=0; j<ndetect; j++ ) {
-	  data[nsample+j*MAXBLSAMPLE] = rec[inOTF->myDesc->ilocdata+j*incdatawt];
-	  someOK = someOK || (data[nsample+j*MAXBLSAMPLE]!=fblank);
-	}  
+	/* VEGAS different use, parallel poln and feeds */
+	j = 0;
+	if (desc->OTFType==OBIT_GBTOTF_VEGAS) {
+	  /* Loop over feed */
+	  for (ifeed=0; ifeed<nfeed; ifeed++) {
+	    /* Loop over parallel Stokes */
+	    for (istok=0; istok<nscal; istok++) {
+	       data[nsample+j*MAXSAMPLE] = 
+		 rec[ilocdata + ifeed*incfeed + istok*incs];
+	       someOK = someOK || (data[nsample+j*MAXBLSAMPLE]!=fblank);
+	       j++;
+	    } /* end Stokes loop */
+	  } /* end feed loop */
+	} else { /* Non VEGAS */
+	  for (j=0; j<ndetect; j++ ) {
+	    data[nsample+j*MAXBLSAMPLE] = rec[inOTF->myDesc->ilocdata+j*incdatawt];
+	    someOK = someOK || (data[nsample+j*MAXBLSAMPLE]!=fblank);
+	  }
+	}   /* end non VEGAS */
+	someData = someData || someOK;  /* Any valid data? */
       } else { /* too low el - blank */
 	for (j=0; j<ndetect; j++ ) data[nsample+j*MAXBLSAMPLE] = fblank;
       }
       nsample++; /* how many samples in buffer */
-      someData = someData || someOK;  /* Any valid data? */
-      
+       
       lastTarget = rec[inOTF->myDesc->iloctar];  /* Which target number */
       rec += inOTF->myDesc->lrec; /* Update data record pointer */
       
@@ -1932,12 +2030,12 @@ ObitTableOTFSoln* ObitOTFGetSolnMBBase (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
 	    wt[nsample+j*MAXSAMPSCAN] = 0.0;
 	  }
 	}
+	someData = someData || someOK;  /* Any valid data? */
       } else { /* too low el - blank */
 	for (j=0; j<ndetect; j++ ) data[nsample+j*MAXSAMPSCAN] = fblank;
 	for (j=0; j<ndetect; j++ ) wt[nsample+j*MAXSAMPSCAN] = 0.0;
       }
       nsample++; /* how many samples in buffer */
-      someData = someData || someOK;  /* Any valid data? */
       
       if (lastScan<0.0) {
 	lastScan   = rec[inOTF->myDesc->ilocscan]; /* Which scan number */
@@ -4109,7 +4207,7 @@ static void PlotMBBL (olong npoly, ofloat *tpoly, ofloat *poly, ofloat *offset,
   ymin =  1.0e20;
   j = plotDetect-1;
   off = 0;
-  atm = poly[2*off] + poly[2*off+1]*(x[i]);
+  atm = poly[2*off] + poly[2*off+1]*(x[j]);
   for (i=0; i<n; i++) {
     /*if ((y[i+j*maxdata]!=fblank) && (wt[i+j*maxdata]>0.0)) {*/
     if (y[i+j*maxdata]!=fblank) {

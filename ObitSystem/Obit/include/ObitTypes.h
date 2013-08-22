@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2011                                          */
+/*;  Copyright (C) 2002-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -82,6 +82,7 @@ typedef gdouble odouble;
 /** Equivalence for obtaining a single element of an uncertain type
    from InfoList */
   union ObitInfoListEquiv { 
+    ollong  ltg;
     olong   otg;
     oint    itg;
     ofloat  flt;
@@ -218,6 +219,8 @@ enum obitInfoType {
   OBIT_uint,  
   /** 32 bit unsigned signed integer */
   OBIT_ulong, 
+  /** 64 bit signed signed integer */
+  OBIT_llong, 
   /** single precision float */
   OBIT_float, 
   /** double precision float */

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -322,6 +322,8 @@ void ObitTableDescIndex (ObitTableDesc* in)
 	  nadd = sizeof(ofloat) * in->repeat[j];
 	} else if (in->type[j]==OBIT_long) {
 	  nadd = sizeof(olong) * in->repeat[j];
+	} else if (in->type[j]==OBIT_llong) {
+	  nadd = sizeof(ollong) * in->repeat[j];
 	} else if (in->type[j]==OBIT_int) {
 	  nadd = sizeof(olong) * in->repeat[j];
 	} else if (in->type[j]==OBIT_oint) {
@@ -353,6 +355,8 @@ void ObitTableDescIndex (ObitTableDesc* in)
       in->offset[i] = nbytes / sizeof (ofloat);
     } else if (in->type[i]==OBIT_long) {
       in->offset[i] = nbytes / sizeof (olong);
+    } else if (in->type[i]==OBIT_llong) {
+      in->offset[i] = nbytes / sizeof (ollong);
     } else if (in->type[i]==OBIT_int) {
       in->offset[i] = nbytes / sizeof (olong);
     } else if (in->type[i]==OBIT_byte) {

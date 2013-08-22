@@ -32,7 +32,9 @@
 #include "Obit2DLegendre.h"
 #include "ObitTableOTFCal.h"
 #include "ObitTableOTFSoln.h"
+#include "ObitTableOTFBP.h"
 #include "ObitOTFCalFlag.h"
+#include "ObitOTFCalBandpass.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -329,13 +331,19 @@ void ObitOTFCalStart (ObitOTFCal *in, ObitOTFSel *sel, ObitOTFDesc *inDesc,
     in->numDet = in->numChan * in->numStok * in->numFeed;
   } /* end initialize calibration */
 
+  /* Initialize bandpass calibration */
+  if (sel->doBP) {
+    ObitOTFCalBandpassInit (in, sel, inDesc, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+  } /* end BP cal setup */
+
   /* Must have some detectors */
   if (in->numDet<=0) {
     Obit_log_error(err, OBIT_Error, 
 		   "ERROR: NO detectors in %s", 
 		   in->name);
     return;
- }
+  }
 
   /* more arrays */
   in->WantDetect     = g_malloc0(in->numDet*sizeof(gboolean));
@@ -363,8 +371,9 @@ gboolean  ObitOTFCalApply (ObitOTFCal *in, ofloat *recIn, ofloat *recOut, ObitEr
 {
   gboolean OK;
   ofloat *data, time, corr, dRa, dDec, fblank = ObitMagicF();
-  olong  i, j;
-  olong scan, incdatawt;
+  olong  i, j, scan, incdatawt;
+  olong nfeed, nstok, nchan, nscal, ifeed, istok, ichan;
+  ofloat  add, mult, cal;
   gboolean doDataWt;
   ObitOTFDesc *desc;
   ObitOTFSel *sel;
@@ -413,37 +422,96 @@ gboolean  ObitOTFCalApply (ObitOTFCal *in, ofloat *recIn, ofloat *recOut, ObitEr
 
     /* Gain and offset */
     OK = FALSE;
-    for (i=0; i<in->numDet; i++) {
-      if ((*data!=fblank) && (in->CalApplyAdd[i] != fblank) && (in->CalApplyCal[i] != fblank)) {
-	/* Subtract cal value if on */
-	if (fabs(recIn[desc->iloccal])>0.0) *data -= in->CalApplyCal[i];
-	
-	/* Replace data with cal value? */
-	if (sel->replCal) *data = 0.0;
+    /* VEGAS data different 1 or 2 polarizations, 1 or more channels, 1 or more feeds, possibly with XPol
+       cal data presumed in order, stokes0, stokes2 per feed */
+    if (desc->OTFType==OBIT_GBTOTF_VEGAS) {
+      /* How many detectors? */
+      nfeed = desc->inaxes[desc->jlocfeed];
+      nstok = desc->inaxes[desc->jlocs];
+      nscal = MIN (2, nstok);              /* Number of stokes in cal table */
+      nchan = desc->inaxes[desc->jlocf];
+      /* Loop over feed */
+      for (ifeed=0; ifeed<nfeed; ifeed++) {
+	/* Loop over Stokes */
+	for (istok=0; istok<nstok; istok++) {
+	  /* Loop over Channel - apply same correction to all channels */
+	  /* Depends on istok */
+	  if (istok==0) {  /* XX */
+	    cal = in->CalApplyCal[ifeed*nscal];
+	    add = in->CalApplyAdd[ifeed*nscal];
+	    mult = in->CalApplyMult[ifeed*nscal];
+	  } else if (istok==1) { /* YY */
+	    cal = in->CalApplyCal[ifeed*nscal+1];
+	    add = in->CalApplyAdd[ifeed*nscal+1];
+	    mult = in->CalApplyMult[ifeed*nscal+1];
+	  } else if (istok>=2) { /* Real(XY) or Imag(XY) */
+	    cal = 0.0;
+	    add = 0.0;
+	    mult = sqrt(fabs(in->CalApplyMult[ifeed*nscal]*in->CalApplyMult[ifeed*nscal+1]));
+	  }
+	  for (ichan=0; ichan<nchan; ichan++) {
+	    if ((*data!=fblank) && (add!=fblank) && (mult!=fblank)) {
+	      /* Subtract cal value if on */
+	      if (fabs(recIn[desc->iloccal])>0.0) *data -= cal ;
+	      
+	      /* Replace data with cal value? */
+	      if (sel->replCal) *data = 0.0;
+	      
+	      /* Additive and multiplicative terms */
+	      *data = mult * (*data + add);
 
-	/* Additive and multiplicative terms */
-	*data = in->CalApplyMult[i] * (*data + in->CalApplyAdd[i]);
-
-	/* polynomial atmosphere term */
-	corr = 0.0;
-	for (j=0; j<in->numPoly; j++) corr += in->poly[i*in->numPoly+j]*in->CalApplyPoly[j];
-	*data += corr;
+	      /* polynomial atmosphere term */
+	      corr = 0.0;
+	      for (j=0; j<in->numPoly; j++) corr += in->poly[i*in->numPoly+j]*in->CalApplyPoly[j];
+	      *data += corr;
+	      
+	      /* Weight */
+	      if (doDataWt) *(data+1) *= in->CalApplyWt[i];
+	      
+	      OK = TRUE;
+	    } else *data = fblank; /* End if valid */
+	    data += incdatawt; /* next channel */
+	  } /* end channel loop */
+	} /* end Stokes loop */
+      } /* end feed loop */
+    } else {  /* Non VEGAS */
+      for (i=0; i<in->numDet; i++) {
+	if ((*data!=fblank) && (in->CalApplyAdd[i] != fblank) && (in->CalApplyCal[i] != fblank)) {
+	  /* Subtract cal value if on */
+	  if (fabs(recIn[desc->iloccal])>0.0) *data -= in->CalApplyCal[i];
+	  
+	  /* Replace data with cal value? */
+	  if (sel->replCal) *data = 0.0;
+	  
+	  /* Additive and multiplicative terms */
+	  *data = in->CalApplyMult[i] * (*data + in->CalApplyAdd[i]);
+	  
+	  /* polynomial atmosphere term */
+	  corr = 0.0;
+	  for (j=0; j<in->numPoly; j++) corr += in->poly[i*in->numPoly+j]*in->CalApplyPoly[j];
+	  *data += corr;
+	  
+	  /* Weight */
+	  if (doDataWt) *(data+1) *= in->CalApplyWt[i];
+	  
+	  OK = TRUE;
+	} else {
+	  *data = fblank;
+	  if (doDataWt) *(data+1) = 0.0;
+	}
 	
-	/* Weight */
-	if (doDataWt) *(data+1) *= in->CalApplyWt[i];
-	
-	OK = TRUE;
-      } else {
-	*data = fblank;
-	if (doDataWt) *(data+1) = 0.0;
+	data += incdatawt; /* next detector */
       }
-      
-      data += incdatawt; /* next detector */
-    }
-  } /* end of calibration */
+    } /* end of non VEGAS calibration */
+  } /* end apply calibration */
+
+  /* Bandpass calibration if requested */
+  if (sel->doBP) ObitOTFCalBandpass (in, time, recIn, data, err);
+  if (err->error) Obit_traceback_val (err, routine, in->name, FALSE);
 
   /* Flagging if requested */
   if (sel->doFlag) ObitOTFCalFlag (in, time, recIn, err);
+  if (err->error) Obit_traceback_val (err, routine, in->name, FALSE);
 
   /* Copy descriptive data to output */
   for (i=0; i<desc->numDesc; i++) recOut[i] = recIn[i];
@@ -455,7 +523,7 @@ gboolean  ObitOTFCalApply (ObitOTFCal *in, ofloat *recIn, ofloat *recOut, ObitEr
   OK = OK && ObitOTFCalSelect (in, &recIn[desc->ilocdata], &recOut[desc->ilocdata], err);
   
   return OK;
-} /* end ObitOTFCalApply */
+  } /* end ObitOTFCalApply */
 
 /**
  * Deletes structures and shuts down any open I/O
@@ -580,8 +648,11 @@ void ObitOTFCalInit  (gpointer inn)
   in->mySel          = newObitOTFSel(in->name);
   in->CalTable       = NULL;
   in->CalTableRow    = NULL;
+  in->BPCalTable     = NULL;
+  in->BPCalTableRow  = NULL;
   in->SolnTable      = NULL;
   in->SolnTableRow   = NULL;
+  in->bandpassCal    = NULL;
   in->CalApplyCal    = NULL;
   in->CalApplyAdd    = NULL;
   in->CalApplyMult   = NULL;
@@ -623,8 +694,11 @@ void ObitOTFCalClear (gpointer inn)
   in->mySel       = ObitOTFSelUnref(in->mySel);
   in->CalTable    = ObitTableOTFCalUnref((ObitTableOTFCal*)in->CalTable);
   in->CalTableRow = ObitTableOTFCalRowUnref((ObitTableOTFCalRow*)in->CalTableRow);
+  in->BPCalTable    = ObitTableOTFBPUnref((ObitTableOTFBP*)in->BPCalTable);
+  in->BPCalTableRow = ObitTableOTFBPRowUnref((ObitTableOTFBPRow*)in->BPCalTableRow);
   in->SolnTable   = ObitTableOTFSolnUnref((ObitTableOTFSoln*)in->SolnTable);
   in->SolnTableRow= ObitTableOTFSolnRowUnref((ObitTableOTFSolnRow*)in->SolnTableRow);
+  in->bandpassCal = ObitOTFCalBandpassSUnref(in->bandpassCal);
   if (in->CalApplyCal)    g_free(in->CalApplyCal);   in->CalApplyCal    = NULL;
   if (in->CalApplyAdd)    g_free(in->CalApplyAdd);   in->CalApplyAdd    = NULL;
   if (in->CalApplyMult)   g_free(in->CalApplyMult);  in->CalApplyMult   = NULL;

@@ -1541,4 +1541,124 @@ Obit/TDF/AutoFlag.TDF Obit/tasks/AutoFlag.c:
   Add noScrat parameter
 Obit/tasks/UVAppend.c:
   Make frequency test 1/4 of a channel 
-12 aug. 2013, svn version 460
+12 Aug. 2013, svn version 460
+
+Implement reading GBT/VEGAS data, update cfitsio for 64 bit integers.
+Add partial support for GBT/VEGAS.
+Bug fixes.
+Obit/python/EVLACal.py Obit/python/EVLAContPipe.py:
+  Enable selection by channel bandwidth in BDFIn.
+Obit/src/ObitDConCleanVisLine.c:
+  Fix error in type (label) of frequency axis.
+Obit/src/ObitUVSel.c:
+  Next: Trap bug in AIPS NX table (EndVis=0)
+ObitIOImageFITS.c:
+  WriteDescriptor: Update Equinox
+Obit/tasks/Calib.c Obit/tasks/UVSub.c:
+  Proper handling of images with do3D=False.
+ObitSD/src/ObitOTFSel.c:
+  WantFeed: If only one feed, all are selected
+ObitSD/include/ObitTableOTFBPClassDef.h  ObitSD/include/ObitTableOTFBPDef.h
+ObitSD/include/ObitTableOTFBP.h ObitSD/include/ObitTableOTFBPRowClassDef.h
+ObitSD/include/ObitTableOTFBPRowDef.h ObitSD/python/TableOTFBP.inc
+ObitSD/src/ObitTableOTFBP.c :
+  New Table for OTF bandpass calibration
+ObitSD/include/ObitVEGASUtil.h ObitSD/src/ObitVEGASUtil.c:
+  New GBT/VEGAS utility module.
+ObitSD/python/VEGASUtil.inc ObitSD/python/VEGASUtil.py:
+  New python interface to GBT/VEGAS utility module
+ObitSD/src/ObitOTFCalBandpass.c ObitSD/include/ObitOTFCalBandpass.h
+ObitSD/include/ObitOTFCalBandpassDef.h:
+  New bandpass calibration structure and utility
+ObitSD/src/ObitOTF.c ObitSD/src/ObitOTFCal.c ObitSD/src/ObitOTFSel.c
+ObitSD/include/ObitOTFCal.h ObitSD/include/ObitOTFCalDef.h
+ObitSD/include/ObitOTFSelDef.h ObitSD/include/ObitOTFSel.h:
+  Implement bandpass calibration.
+  Implement VEGAS calibration application.
+ObitSD/include/ObitOTFCalUtil.h ObitSD/src/ObitOTFCalUtil.c:
+  new function FitBPOnOFF for determining BP calibration.
+ObitSD/python/OTFUtil.inc ObitSD/python/OTFUtil.py:
+  python interface to BP calibration.
+ObitSD/src/OTFDesc.c ObitSD/include/OTFDesc.h:
+  Add VEGAS to OTF data types
+ObitSD/python/Obit_wrap.c:
+  rebuild python interface
+ObitSD/include/ObitGBTVEGASAct_StateInfoClassDef.h
+ObitSD/include/ObitGBTVEGASAct_StateInfoDef.h
+ObitSD/include/ObitGBTVEGASAct_StateInfo.h
+ObitSD/src/ObitGBTVEGASAct_StateInfo.c:
+  New class for VEGAS Act_state
+ObitSD/include/ObitGBTVEGASPortInfoClassDef.h
+ObitSD/include/ObitGBTVEGASPortInfoDef.h
+ObitSD/include/ObitGBTVEGASPortInfo.h
+ObitSD/src/ObitGBTVEGASPortInfo.c :
+  New class for VEGAS Port
+ObitSD/include/ObitGBTVEGASSamplerInfoClassDef.h
+ObitSD/include/ObitGBTVEGASSamplerInfoDef.h
+ObitSD/include/ObitGBTVEGASSamplerInfo.h
+ObitSD/src/ObitGBTVEGASSamplerInfo.c:
+  New class for VEGAS Sampler
+ObitSD/include/ObitGBTVEGASStateInfoClassDef.h
+ObitSD/include/ObitGBTVEGASStateInfoDef.h
+ObitSD/include/ObitGBTVEGASStateInfo.h
+ObitSD/src/ObitGBTVEGASStateInfo.c:
+  New class for VEGAS State
+ObitSD/include/ObitTableGBTVEGASACT_STATEClassDef.h
+ObitSD/include/ObitTableGBTVEGASACT_STATEDef.h
+ObitSD/include/ObitTableGBTVEGASACT_STATE.h
+ObitSD/include/ObitTableGBTVEGASACT_STATERowClassDef.h
+ObitSD/include/ObitTableGBTVEGASACT_STATERowDef.h
+ObitSD/python/TableGBTVEGASACT_STATE.inc
+ObitSD/src/ObitTableGBTVEGASACT_STATE.c:
+  New class for VEGAS ACT_STATE table
+ObitSD/include/ObitTableGBTVEGASDATAClassDef.h
+ObitSD/include/ObitTableGBTVEGASDATADef.h
+ObitSD/include/ObitTableGBTVEGASDATA.h
+ObitSD/include/ObitTableGBTVEGASDATARowClassDef.h
+ObitSD/include/ObitTableGBTVEGASDATARowDef.h
+ObitSD/python/TableGBTVEGASDATA.inc
+ObitSD/src/ObitTableGBTVEGASDATA.c:
+  New class for VEGAS DATA table
+ObitSD/include/ObitTableGBTVEGASPORTClassDef.h
+ObitSD/include/ObitTableGBTVEGASPORTDef.h
+ObitSD/include/ObitTableGBTVEGASPORT.h
+ObitSD/include/ObitTableGBTVEGASPORTRowClassDef.h
+ObitSD/include/ObitTableGBTVEGASPORTRowDef.h
+ObitSD/python/TableGBTVEGASPORT.inc
+ObitSD/src/ObitTableGBTVEGASPORT.c:
+  New class for VEGAS PORT table
+ObitSD/include/ObitTableGBTVEGASSAMPLERClassDef.h
+ObitSD/include/ObitTableGBTVEGASSAMPLERDef.h
+ObitSD/include/ObitTableGBTVEGASSAMPLER.h
+ObitSD/include/ObitTableGBTVEGASSAMPLERRowClassDef.h
+ObitSD/include/ObitTableGBTVEGASSAMPLERRowDef.h
+ObitSD/python/TableGBTVEGASSAMPLER.inc
+ObitSD/src/ObitTableGBTVEGASSAMPLER.c:
+  New class for VEGAS SAMPLER table
+ObitSD/include/ObitTableGBTVEGASSTATEClassDef.h
+ObitSD/include/ObitTableGBTVEGASSTATEDef.h
+ObitSD/include/ObitTableGBTVEGASSTATE.h
+ObitSD/include/ObitTableGBTVEGASSTATERowClassDef.h
+ObitSD/include/ObitTableGBTVEGASSTATERowDef.h
+ObitSD/python/TableGBTVEGASSTATE.inc
+ObitSD/src/ObitTableGBTVEGASSTATE.c:
+  New class for VEGAS STATE table
+ObitSD/tasks/VEGASOTF.c ObitSD/TDF/VEGASOTF.TDF:
+ New task to translate VEGAS archive format to OTF
+ObitSD/include/ObitOTFDesc.h ObitSD/src/ObitOTFDesc.c:
+  Add VEGAS
+ObitSD/include/ObitGBTBeamOffInfo.h ObitSD/src/ObitGBTBeamOffInfo.c
+ObitSD/include/ObitGBTIFInfo.h  ObitSD/src/ObitGBTIFInfo.c:
+  Add constructor using DataRoot
+ObitSD/doc/ObitSD.tex:
+  Add VEGAS tables.
+ObitSD/bin/ObitSDTables.pl:
+  implement longlong data types
+Obit/include/ObitTypes.h :
+Obit/src/ObitIOTableFITS.c Obit/src/ObitTableDesc.c Obit/src/ObitInfoElem.c  :
+  implement longlong data
+ObitSD/ObitOTFGetSoln.c:
+  ObitOTFGetSolnGain: get solutions for VEGAS like data
+ObitSD/python/GBTUtil.py:
+  Document VEGAS
+22 Aug. 2013, svn version 461

@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for OTF Utilities                          */
 /*                                                                    */
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -95,6 +95,10 @@ extern void OTFUtilFitCal (ObitOTF *inOTF, int detect, ObitErr *err) {
 extern void OTFUtilFitOnOff (ObitOTF *inOTF, int detect, ObitErr *err) {
   ObitOTFCalUtilFitOnOff (inOTF, detect, err);
 }  // end OTFUtilFitOnOff
+
+extern void OTFUtilFitBPOnOff (ObitOTF *inOTF, int offScan, int onScan, int BPVer, ObitErr *err) {
+  ObitOTFCalUtilFitBPOnOff (inOTF, (olong)offScan, (olong)onScan, (olong) BPVer, err);
+}  // end OTFUtilFitBPOnOff
 
 extern void OTFCalUtilFitTip (ObitOTF *inOTF, ObitErr *err) {
   ObitOTFCalUtilFitTip (inOTF, err);

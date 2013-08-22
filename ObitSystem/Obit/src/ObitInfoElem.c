@@ -309,6 +309,9 @@ olong ObitInfoElemSize  (ObitInfoType type, gint32 *dim)
     case OBIT_long:
       size = sizeof(olong);
       break;
+    case OBIT_llong:
+      size = sizeof(ollong);
+      break;
     case OBIT_ubyte:
       size = sizeof(guint8);
       break;
@@ -362,13 +365,15 @@ olong ObitInfoElemSize  (ObitInfoType type, gint32 *dim)
  */
 void  ObitInfoElemPrint(ObitInfoElem *me, FILE *file)
 {
+  /* Should match order of enum obitInfoType in ObitTypes.h */
   gchar *infoType[] = {"byte", "short", "int", "oint", "long",  
-		       "ubyte", "ushort", "uint", "ulong", 
+		       "ubyte", "ushort", "uint", "ulong", "llong",
 		       "float", "double", "complex", "dcomplex",
 		       "string", "bool", "bits"};
   olong        *ldata, i, j, more, indx, ltemp, lstr, size;
+  ollong       *lldata, lltemp;
   gboolean     *bdata;
-  olong         *idata;
+  olong        *idata;
   oint         *odata;
   ofloat       *fdata;
   odouble      *ddata;
@@ -424,6 +429,24 @@ void  ObitInfoElemPrint(ObitInfoElem *me, FILE *file)
       for (j=0; j<20; j++) {
 	ltemp = (olong)(*ldata++);
 	g_snprintf (&line[indx], 80-indx, " %d ", ltemp);
+	indx = strlen (line);
+	more--;                    /* finished? */
+	if (more<=0) break;
+	if (indx>60) break;        /* Line full? */
+      }
+      fprintf (file, "%s\n", line);
+      g_snprintf (line, 80, "    ");
+      indx = strlen (line);
+    }
+    break;
+    
+  case OBIT_llong:
+    lldata = (ollong*)me->data;
+    more = size;
+    while (more>0) {
+      for (j=0; j<20; j++) {
+	lltemp = (ollong)(*ldata++);
+	g_snprintf (&line[indx], 80-indx, " %ld ", (long)lltemp);
 	indx = strlen (line);
 	more--;                    /* finished? */
 	if (more<=0) break;

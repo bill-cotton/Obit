@@ -886,9 +886,6 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
 	if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
       } /* end loop over fields */
       
-      /* get do3D from first image */
-      do3D = image[0]->myDesc->do3D;
-      
     } else if (!strncmp (Type2, "FITS", 4)) {  /* FITS input */
       /* input FITS file name */
       if (ObitInfoListGetP(myInput, "in2File", &type, dim, (gpointer)&strTemp)) {
@@ -940,9 +937,6 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
 	} /* end loop over fields */
       }
 
-      /* get do3D from first image */
-      do3D = image[0]->myDesc->do3D;
-      
    } else { /* Unknown type - barf and bail */
       Obit_log_error(err, OBIT_Error, "%s: Unknown Data type %s", 
 		     pgmName, Type2);
@@ -976,6 +970,9 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
   ObitInfoListCopyList (myInput, skyModel->info, dataParms);
   if (err->error) Obit_traceback_val (err, routine, skyModel->name, skyModel);
   
+  /* get do3D from first image */
+  do3D = image[0]->myDesc->do3D;
+      
   /* Save do3D */
   dim[0] = 1; dim[1] = 1;
   ObitInfoListAlwaysPut (skyModel->info, "do3D", OBIT_bool, dim, &do3D);

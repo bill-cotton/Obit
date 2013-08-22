@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -59,7 +59,7 @@ static ObitIOTableFITSClassInfo myClassInfo = {FALSE};
  * should match ObitInfoType definition in ObitTypes.h */
 static const olong DataTypeLookup[] =
 {TBYTE, TSHORT, TINT, TINT, TLONG, TBYTE, TUSHORT, TUINT, TULONG, 
- TFLOAT, TDOUBLE, TCOMPLEX, TDBLCOMPLEX, TSTRING, TLOGICAL, 
+ TLONGLONG, TFLOAT, TDOUBLE, TCOMPLEX, TDBLCOMPLEX, TSTRING, TLOGICAL, 
  TBIT};
 
 /*---------------Private function prototypes----------------*/
@@ -731,6 +731,10 @@ ObitIOCode ObitIOTableFITSReadRow (ObitIOTableFITS *in, olong rowno,
 	fits_read_col_lng(in->myFptr,
 			  iCol, iRow, 1, (long)desc->repeat[iCol-1], 0,
 			  (void*)&cdata[offset+desc->byteOffset[iCol-1]], &anynull, &status);
+      } else if (ftype==TLONGLONG) { /* longlong */
+	fits_read_col_lnglng(in->myFptr,
+			  iCol, iRow, 1, (long)desc->repeat[iCol-1], 0,
+			  (void*)&cdata[offset+desc->byteOffset[iCol-1]], &anynull, &status);
       } else if (ftype==TLOGICAL) { /* boolean - stored as char in FITS */
 	 /* use bitarray buffer */
 	 outBool = (gboolean*)&cdata[offset+desc->byteOffset[iCol-1]];
@@ -1049,6 +1053,10 @@ ObitIOCode ObitIOTableFITSWriteRow (ObitIOTableFITS *in, olong rowno,
 	  fits_write_col_lng(in->myFptr, iCol, iRow, 1,
 			 (long)desc->repeat[iCol-1], (void*)&cdata[offset+desc->byteOffset[iCol-1]],
 			  &status);
+	} else if (ftype==TLONGLONG) { /* longlong integer */
+	  fits_write_col_lnglng(in->myFptr, iCol, iRow, 1,
+			 (long)desc->repeat[iCol-1], (void*)&cdata[offset+desc->byteOffset[iCol-1]],
+			  &status);
 	} else if (ftype==TFLOAT) { /* float */
 	  /* Allow conversion from fblank to NaN */
 	  fits_write_colnull_flt(in->myFptr, iCol, iRow, 1,
@@ -1251,6 +1259,8 @@ ObitIOCode ObitIOTableFITSReadDescriptor (ObitIOTableFITS *in, ObitErr *err)
       desc->type[i] = OBIT_short;
     } else if (typechar[0]=='J') {
       desc->type[i] = OBIT_oint;
+    } else if (typechar[0]=='K') {
+      desc->type[i] = OBIT_llong;
     } else if (typechar[0]=='A') {
       desc->type[i] = OBIT_string;
     } else if (typechar[0]=='E') {
@@ -1336,6 +1346,7 @@ ObitIOTableFITSWriteDescriptor (ObitIOTableFITS *in, ObitErr *err)
     gboolean b;
     oint     o;
     olong    i;
+    ollong   l;
   } blob;
   gchar *routine = "ObitIOTableFITSWriteDescriptor";
 
@@ -1399,6 +1410,8 @@ ObitIOTableFITSWriteDescriptor (ObitIOTableFITS *in, ObitErr *err)
  	dtype = 'I';
       } else if (desc->type[i]==OBIT_oint) {
 	dtype = 'J';
+      } else if (desc->type[i]==OBIT_llong) {
+	dtype = 'K';
       } else if (desc->type[i]==OBIT_string) {
  	dtype = 'A';
       } else if (desc->type[i]==OBIT_float) {
@@ -1508,6 +1521,9 @@ ObitIOTableFITSWriteDescriptor (ObitIOTableFITS *in, ObitErr *err)
 			   &status);
     } else if (keyType==OBIT_long) { 
       fits_update_key_lng (in->myFptr, (char*)keyName, (long)blob.i, (char*)commnt, 
+			   &status);
+    } else if (keyType==OBIT_llong) { /* gets converted to long */
+      fits_update_key_lng (in->myFptr, (char*)keyName, (long)blob.l, (char*)commnt, 
 			   &status);
     } else if (keyType==OBIT_bool) { 
       fits_update_key_log (in->myFptr, (char*)keyName, (int)blob.b, (char*)commnt, 

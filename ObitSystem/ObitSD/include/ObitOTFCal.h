@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -35,6 +35,7 @@
 #include "ObitOTFDesc.h"
 #include "ObitOTFSel.h"
 #include "ObitOTFCalFlagDef.h"
+#include "ObitOTFCalBandpassDef.h"
 #include "ObitOTFArrayGeom.h"
 #include "ObitTableOTFCal.h"
 #include "ObitTableOTFSoln.h"

@@ -399,7 +399,8 @@ ObitDConCleanVisLineCreate (gchar* name, olong nPar,  olong nAvg, ObitUV *uvdata
   nchan = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
   if (uvdata->myDesc->jlocif>=0) nchan = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
   else nif = 1;
-  /* Frequency of IF faster in data */
+
+  /* Frequency or IF faster in data */
   freqFirst = (uvdata->myDesc->jlocf<uvdata->myDesc->jlocif) || (uvdata->myDesc->jlocif<0);
   for (i=0; i<nPar; i++) {
     /* Get frequencies */
@@ -420,8 +421,6 @@ ObitDConCleanVisLineCreate (gchar* name, olong nPar,  olong nAvg, ObitUV *uvdata
     sprintf (keyword, "FREH%4.4d",i+1);
     ObitInfoListAlwaysPut(img->myDesc->info, keyword, OBIT_double, dim, &hiFreq);
   }
-  /* Update Stokes Frequency type */
-  strncpy (img->myDesc->ctype[img->myDesc->jlocf], "SPECLNMF", 8);
   img->myStatus = OBIT_Modified;  /* Force update */
   ObitImageClose(img, err);
   if  (err->error) Obit_traceback_val (err, routine, img->name, out);

@@ -14159,6 +14159,10 @@ extern void OTFUtilFitOnOff (ObitOTF *inOTF, int detect, ObitErr *err) {
   ObitOTFCalUtilFitOnOff (inOTF, detect, err);
 }  // end OTFUtilFitOnOff
 
+extern void OTFUtilFitBPOnOff (ObitOTF *inOTF, int offScan, int onScan, int BPVer, ObitErr *err) {
+  ObitOTFCalUtilFitBPOnOff (inOTF, (olong)offScan, (olong)onScan, (olong) BPVer, err);
+}  // end OTFUtilFitBPOnOff
+
 extern void OTFCalUtilFitTip (ObitOTF *inOTF, ObitErr *err) {
   ObitOTFCalUtilFitTip (inOTF, err);
 }  // end OTFCalUtilFitTip
@@ -14197,6 +14201,7 @@ extern void OTFUtilMakeImage(ObitOTF *,ObitImage *,int ,ObitImage *,ObitImage *,
 extern void OTFUtilIndex(ObitOTF *,ObitErr *);
 extern void OTFUtilFitCal(ObitOTF *,int ,ObitErr *);
 extern void OTFUtilFitOnOff(ObitOTF *,int ,ObitErr *);
+extern void OTFUtilFitBPOnOff(ObitOTF *,int ,int ,int ,ObitErr *);
 extern void OTFCalUtilFitTip(ObitOTF *,ObitErr *);
 extern void OTFCalUtilFitNod(ObitOTF *,int ,ObitErr *);
 extern void OTFUtilDiffNod(ObitOTF *,int ,ObitErr *);
@@ -15096,6 +15101,59 @@ extern void TableOTFArrayGeomSetHeadKeys(ObitTable *,PyObject *);
 
 #include "Obit.h"
 #include "ObitData.h"
+#include "ObitTableOTFBP.h"
+
+ 
+extern ObitTable* TableOTFBP (ObitData *inData, long *tabVer,
+ 	                   int access,
+ 	                   char *tabName,
+                           int numChan, int numPol, int numFeed,
+                           ObitErr *err)
+ {
+   ObitIOAccess laccess;
+   /* Cast structural keywords to correct type */
+   oint lnumChan = (oint)numChan;
+   oint lnumPol = (oint)numPol;
+   oint lnumFeed = (oint)numFeed;
+   olong ltabVer = (olong)*tabVer;
+   ObitTable *outTable=NULL;
+   laccess = OBIT_IO_ReadOnly;
+   if (access==2) laccess = OBIT_IO_WriteOnly;
+   else if (access==3) laccess = OBIT_IO_ReadWrite;
+   outTable = (ObitTable*)newObitTableOTFBPValue ((gchar*)tabName, inData, (olong*)&ltabVer,
+   			   laccess, 
+                           lnumChan, lnumPol, lnumFeed,
+                           err);
+   *tabVer = (long)ltabVer;
+   return outTable;
+   }
+ 
+extern PyObject* TableOTFBPGetHeadKeys (ObitTable *inTab) {
+  PyObject *outDict=PyDict_New();
+  ObitTableOTFBP *lTab = (ObitTableOTFBP*)inTab;
+  PyDict_SetItemString(outDict, "numChan",  PyInt_FromLong((long)lTab->numChan));
+  PyDict_SetItemString(outDict, "numPol",  PyInt_FromLong((long)lTab->numPol));
+  PyDict_SetItemString(outDict, "numFeed",  PyInt_FromLong((long)lTab->numFeed));
+
+  return outDict;
+} 
+
+extern void TableOTFBPSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
+  ObitTableOTFBP *lTab = (ObitTableOTFBP*)inTab;
+  char *tstr;
+  int lstr=MAXKEYCHARTABLEOTFBP;
+
+
+  if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
+    lTab->myStatus = OBIT_Modified;
+} 
+
+extern ObitTable *TableOTFBP(ObitData *,long *,int ,char *,int ,int ,int ,ObitErr *);
+extern PyObject *TableOTFBPGetHeadKeys(ObitTable *);
+extern void TableOTFBPSetHeadKeys(ObitTable *,PyObject *);
+
+#include "Obit.h"
+#include "ObitData.h"
 #include "ObitTableOTFCal.h"
 
  
@@ -15497,6 +15555,15 @@ extern void TableSkyModelSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 extern ObitTable *TableSkyModel(ObitData *,long *,int ,char *,ObitErr *);
 extern PyObject *TableSkyModelGetHeadKeys(ObitTable *);
 extern void TableSkyModelSetHeadKeys(ObitTable *,PyObject *);
+
+#include "ObitVEGASUtil.h"
+
+extern void VEGASAverage(ObitOTF *inOTF,ObitOTF * outOTF, int chAvg, 
+    ObitErr *err) {
+  ObitVEGASUtilAverage(inOTF, outOTF, (olong)chAvg, err);
+ }
+
+extern void VEGASAverage(ObitOTF *,ObitOTF *,int ,ObitErr *);
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -61672,6 +61739,39 @@ static PyObject *_wrap_OTFUtilFitOnOff(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OTFUtilFitBPOnOff(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitOTF * _arg0;
+    int  _arg1;
+    int  _arg2;
+    int  _arg3;
+    ObitErr * _arg4;
+    PyObject * _argo0 = 0;
+    PyObject * _argo4 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OiiiO:OTFUtilFitBPOnOff",&_argo0,&_arg1,&_arg2,&_arg3,&_argo4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitOTF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OTFUtilFitBPOnOff. Expected _ObitOTF_p.");
+        return NULL;
+        }
+    }
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of OTFUtilFitBPOnOff. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    OTFUtilFitBPOnOff(_arg0,_arg1,_arg2,_arg3,_arg4);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_OTFCalUtilFitTip(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitOTF * _arg0;
@@ -64531,6 +64631,158 @@ static PyObject *_wrap_TableOTFArrayGeomSetHeadKeys(PyObject *self, PyObject *ar
     return _resultobj;
 }
 
+static PyObject *_wrap_TableOTFBP(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitData * _arg0;
+    long * _arg1;
+    int  _arg2;
+    char * _arg3;
+    int  _arg4;
+    int  _arg5;
+    int  _arg6;
+    ObitErr * _arg7;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo7 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiOiiiO:TableOTFBP",&_argo0,&_obj1,&_arg2,&_obj3,&_arg4,&_arg5,&_arg6,&_argo7)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableOTFBP. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    int size = PyList_Size(_obj1);
+    int i = 0;
+    _arg1 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj1,i);
+      if (PyInt_Check(o)) {
+         _arg1[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg1);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo7) {
+        if (_argo7 == Py_None) { _arg7 = NULL; }
+        else if (SWIG_GetPtrObj(_argo7,(void **) &_arg7,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 8 of TableOTFBP. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TableOTFBP(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((long *) _arg1);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableOTFBPGetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitTable * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:TableOTFBPGetHeadKeys",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableOTFBPGetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)TableOTFBPGetHeadKeys(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableOTFBPSetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    PyObject * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:TableOTFBPSetHeadKeys",&_argo0,&_obj1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableOTFBPSetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    _arg1 = PyDict_Copy(PyList_GetItem(_obj1,0));
+  } else if (PyDict_Check(_obj1)) {
+    _arg1 = PyDict_Copy(_obj1);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+    TableOTFBPSetHeadKeys(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  Py_XDECREF (_arg1);
+}
+    return _resultobj;
+}
+
 static PyObject *_wrap_TableOTFCal(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitTable * _result;
@@ -65726,6 +65978,46 @@ static PyObject *_wrap_TableSkyModelSetHeadKeys(PyObject *self, PyObject *args) 
 {
   Py_XDECREF (_arg1);
 }
+    return _resultobj;
+}
+
+static PyObject *_wrap_VEGASAverage(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitOTF * _arg0;
+    ObitOTF * _arg1;
+    int  _arg2;
+    ObitErr * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo3 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiO:VEGASAverage",&_argo0,&_argo1,&_arg2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitOTF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of VEGASAverage. Expected _ObitOTF_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitOTF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of VEGASAverage. Expected _ObitOTF_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of VEGASAverage. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    VEGASAverage(_arg0,_arg1,_arg2,_arg3);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
     return _resultobj;
 }
 
@@ -73893,6 +74185,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "new_AntennaList", _wrap_new_AntennaList, METH_VARARGS },
 	 { "AntennaList_me_get", _wrap_AntennaList_me_get, METH_VARARGS },
 	 { "AntennaList_me_set", _wrap_AntennaList_me_set, METH_VARARGS },
+	 { "VEGASAverage", _wrap_VEGASAverage, METH_VARARGS },
 	 { "TableSkyModelSetHeadKeys", _wrap_TableSkyModelSetHeadKeys, METH_VARARGS },
 	 { "TableSkyModelGetHeadKeys", _wrap_TableSkyModelGetHeadKeys, METH_VARARGS },
 	 { "TableSkyModel", _wrap_TableSkyModel, METH_VARARGS },
@@ -73917,6 +74210,9 @@ static PyMethodDef ObitMethods[] = {
 	 { "TableOTFCalSetHeadKeys", _wrap_TableOTFCalSetHeadKeys, METH_VARARGS },
 	 { "TableOTFCalGetHeadKeys", _wrap_TableOTFCalGetHeadKeys, METH_VARARGS },
 	 { "TableOTFCal", _wrap_TableOTFCal, METH_VARARGS },
+	 { "TableOTFBPSetHeadKeys", _wrap_TableOTFBPSetHeadKeys, METH_VARARGS },
+	 { "TableOTFBPGetHeadKeys", _wrap_TableOTFBPGetHeadKeys, METH_VARARGS },
+	 { "TableOTFBP", _wrap_TableOTFBP, METH_VARARGS },
 	 { "TableOTFArrayGeomSetHeadKeys", _wrap_TableOTFArrayGeomSetHeadKeys, METH_VARARGS },
 	 { "TableOTFArrayGeomGetHeadKeys", _wrap_TableOTFArrayGeomGetHeadKeys, METH_VARARGS },
 	 { "TableOTFArrayGeom", _wrap_TableOTFArrayGeom, METH_VARARGS },
@@ -73976,6 +74272,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "OTFUtilDiffNod", _wrap_OTFUtilDiffNod, METH_VARARGS },
 	 { "OTFCalUtilFitNod", _wrap_OTFCalUtilFitNod, METH_VARARGS },
 	 { "OTFCalUtilFitTip", _wrap_OTFCalUtilFitTip, METH_VARARGS },
+	 { "OTFUtilFitBPOnOff", _wrap_OTFUtilFitBPOnOff, METH_VARARGS },
 	 { "OTFUtilFitOnOff", _wrap_OTFUtilFitOnOff, METH_VARARGS },
 	 { "OTFUtilFitCal", _wrap_OTFUtilFitCal, METH_VARARGS },
 	 { "OTFUtilIndex", _wrap_OTFUtilIndex, METH_VARARGS },

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -131,47 +131,155 @@ newObitGBTBeamOffInfoValue (gchar *name, olong disk, gchar *scan, ObitErr *err)
   ver = 1; 
   nrow = 1;
   ObitTableSetFITS(BeamOfftable,disk,FullFile,tab,ver,nrow,err);
-  
-  /* Open */
-  retCode = ObitTableGBTBEAM_OFFSETSOpen (BeamOfftable, OBIT_IO_ReadOnly, err);
-  if (err->error) return out;
-  
-  /* Create Row structure */
-  BeamOffrow = newObitTableGBTBEAM_OFFSETSRow (BeamOfftable);
 
-  /* Loop over table */
-  iout = 0;
-  for (irow = 1; irow<=BeamOfftable->myDesc->nrow; irow++) {
-    retCode = ObitTableGBTBEAM_OFFSETSReadRow (BeamOfftable, irow, BeamOffrow, err);
-    if (err->error) return out;
-
-    for (j=0; j<8; j++) out->BeamName[iout][j] = BeamOffrow->Name[j];
-    out->xeloff[iout]  = BeamOffrow->xeloff;
-    out->eloff[iout]   = BeamOffrow->eloff;
-    out->srfeed1[iout] = BeamOffrow->srfeed1;
-    out->srfeed2[iout] = BeamOffrow->srfeed2;
-    iout++;
-
-    /* Done? */
-    if (iout>=MAXNUMBEAMOFF) {
-      Obit_log_error(err, OBIT_Error, "%s ERROR exceed limit %d BeamOffs", 
-		     routine, MAXNUMBEAMOFF);
-      return out;
-    }
+  /* Does table exist? */
+  if (BeamOfftable!=NULL) {
     
-  } /* end loop over table */
-  out->nBeamOff = iout;
+    /* Open */
+    retCode = ObitTableGBTBEAM_OFFSETSOpen (BeamOfftable, OBIT_IO_ReadOnly, err);
+    if (err->error) return out;
+    
+    /* Create Row structure */
+    BeamOffrow = newObitTableGBTBEAM_OFFSETSRow (BeamOfftable);
+    
+    /* Loop over table */
+    iout = 0;
+    for (irow = 1; irow<=BeamOfftable->myDesc->nrow; irow++) {
+      retCode = ObitTableGBTBEAM_OFFSETSReadRow (BeamOfftable, irow, BeamOffrow, err);
+      if (err->error) return out;
+      
+      for (j=0; j<8; j++) out->BeamName[iout][j] = BeamOffrow->Name[j];
+      out->xeloff[iout]  = BeamOffrow->xeloff;
+      out->eloff[iout]   = BeamOffrow->eloff;
+      out->srfeed1[iout] = BeamOffrow->srfeed1;
+      out->srfeed2[iout] = BeamOffrow->srfeed2;
+      iout++;
+      
+      /* Done? */
+      if (iout>=MAXNUMBEAMOFF) {
+	Obit_log_error(err, OBIT_Error, "%s ERROR exceed limit %d BeamOffs", 
+		       routine, MAXNUMBEAMOFF);
+	return out;
+      }
+      
+    } /* end loop over table */
+    out->nBeamOff = iout;
 
-  /* Close */
-  retCode = ObitTableGBTBEAM_OFFSETSClose (BeamOfftable, err);
-  if (err->error) return out;
-  
-  /* Cleanup */
-  BeamOfftable = ObitTableGBTBEAM_OFFSETSUnref(BeamOfftable);
-  BeamOffrow   = ObitTableGBTBEAM_OFFSETSUnref(BeamOffrow);
+    /* Close */
+    retCode = ObitTableGBTBEAM_OFFSETSClose (BeamOfftable, err);
+    if (err->error) return out;
+    
+    /* Cleanup */
+    BeamOfftable = ObitTableGBTBEAM_OFFSETSUnref(BeamOfftable);
+    BeamOffrow   = ObitTableGBTBEAM_OFFSETSUnref(BeamOffrow);
+  } else { /* No offset table - assume 1 beam */
+    iout = 0;
+    strncpy(out->BeamName[iout],"on axis",7);
+    out->xeloff[iout]  = 0.0;
+    out->eloff[iout]   = 0.0;
+    out->srfeed1[iout] = 0;
+    out->srfeed2[iout] = 0;
+    iout++;
+    out->nBeamOff = iout;
+  }
 
   return out;
 } /* end newObitGBTBeamOffInfoValue */
+
+/**
+ * Constructor from values.
+ * \param name  A name for the object
+ * \param DataRoot Root of data directory.
+ * \param scan     Date/time scan name (e.g. "2003_05_05_05:32:56")
+ * \param err      Obit error stack object.
+ * \return the new object.
+ */
+ObitGBTBeamOffInfo* 
+newObitGBTBeamOffInfoValueRoot (gchar *name, gchar *DataRoot, gchar *scan, ObitErr *err)
+{
+  ObitGBTBeamOffInfo* out=NULL;
+  ObitTableGBTBEAM_OFFSETS     *BeamOfftable=NULL;
+  ObitTableGBTBEAM_OFFSETSRow  *BeamOffrow=NULL;
+  ObitIOCode retCode;
+  gchar *tab, FullFile[128];
+  olong j, irow, disk=0;
+  olong ver, nrow, iout;
+  gchar *routine = "newObitGBTBeamOffInfoValue";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return out;
+  g_assert (scan!=NULL);
+
+  /* Create basic object */
+  out = newObitGBTBeamOffInfo(name);
+
+  /* Get BeamOff setup information from the BeamOff table */
+  /* get full file name */
+  sprintf (FullFile,"%s/Antenna/%s.fits", DataRoot, scan);
+
+  /* Create table structure */
+  BeamOfftable = newObitTableGBTBEAM_OFFSETS("BEAM_OFFSETS");
+
+  /* Setup */
+  tab = "BEAM_OFFSETS";
+  ver = 1; 
+  nrow = 1;
+  ObitTableSetFITS(BeamOfftable,disk,FullFile,tab,ver,nrow,err);
+
+  /* Does table exist? */
+  if (BeamOfftable!=NULL) {
+    
+    /* Open */
+    retCode = ObitTableGBTBEAM_OFFSETSOpen (BeamOfftable, OBIT_IO_ReadOnly, err);
+    if (err->error) return out;
+    
+    /* Create Row structure */
+    BeamOffrow = newObitTableGBTBEAM_OFFSETSRow (BeamOfftable);
+    
+    /* Loop over table */
+    iout = 0;
+    for (irow = 1; irow<=BeamOfftable->myDesc->nrow; irow++) {
+      retCode = ObitTableGBTBEAM_OFFSETSReadRow (BeamOfftable, irow, BeamOffrow, err);
+      if (err->error) return out;
+      
+      for (j=0; j<8; j++) out->BeamName[iout][j] = BeamOffrow->Name[j];
+      out->xeloff[iout]  = BeamOffrow->xeloff;
+      out->eloff[iout]   = BeamOffrow->eloff;
+      out->srfeed1[iout] = BeamOffrow->srfeed1;
+      out->srfeed2[iout] = BeamOffrow->srfeed2;
+      iout++;
+      
+      /* Done? */
+      if (iout>=MAXNUMBEAMOFF) {
+	Obit_log_error(err, OBIT_Error, "%s ERROR exceed limit %d BeamOffs", 
+		       routine, MAXNUMBEAMOFF);
+	return out;
+      }
+      
+    } /* end loop over table */
+    out->nBeamOff = iout;
+
+    /* Close */
+    retCode = ObitTableGBTBEAM_OFFSETSClose (BeamOfftable, err);
+    if (err->error) return out;
+    
+    /* Cleanup */
+    BeamOfftable = ObitTableGBTBEAM_OFFSETSUnref(BeamOfftable);
+    BeamOffrow   = ObitTableGBTBEAM_OFFSETSUnref(BeamOffrow);
+  } else { /* No offset table - assume 1 beam */
+    iout = 0;
+    strncpy(out->BeamName[iout],"on axis",7);
+    out->xeloff[iout]  = 0.0;
+    out->eloff[iout]   = 0.0;
+    out->srfeed1[iout] = 0;
+    out->srfeed2[iout] = 0;
+    iout++;
+    out->nBeamOff = iout;
+  }
+
+  return out;
+} /* end newObitGBTBeamOffInfoValueRoot */
 
 /**
  * Returns ClassInfo pointer for the class.

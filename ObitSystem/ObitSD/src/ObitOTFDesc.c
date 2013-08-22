@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -442,15 +442,17 @@ void ObitOTFDescJD2Date (odouble JD, gchar *date)
  * Possibilities:\\
  * ``Unknown'',  ``DCR'': GBT DCR, ``SP'': GBT Spectral processor,
  * ``CCB'':CalTech Continuum Backend, ``PAR'':Penn Array Receiver
+ * ``VEGAS'':GBT/VEGAS spectrometer
  * \param OTFType [in] enum
  * \param TString [out] readable representation (8 char+NULL)
  */
 void ObitOTFDescType2String (ObitGBTOTFType OTFType, gchar *TString)
 {
-  if (OTFType==OBIT_GBTOTF_DCR)      strncpy (TString, "DCR     ",9);
-  else if (OTFType==OBIT_GBTOTF_SP)  strncpy (TString, "SP      ",9);
-  else if (OTFType==OBIT_GBTOTF_CCB) strncpy (TString, "CCB     ",9);
-  else if (OTFType==OBIT_GBTOTF_PAR) strncpy (TString, "PAR     ",9);
+  if (OTFType==OBIT_GBTOTF_DCR)        strncpy (TString, "DCR     ",9);
+  else if (OTFType==OBIT_GBTOTF_SP)    strncpy (TString, "SP      ",9);
+  else if (OTFType==OBIT_GBTOTF_CCB)   strncpy (TString, "CCB     ",9);
+  else if (OTFType==OBIT_GBTOTF_PAR)   strncpy (TString, "PAR     ",9);
+  else if (OTFType==OBIT_GBTOTF_VEGAS) strncpy (TString, "VEGAS   ",9);
   else strncpy (TString, "Unknown ",9);
 } /* end  ObitOTFDescType2String */
 
@@ -467,6 +469,7 @@ ObitGBTOTFType ObitOTFDescString2Type (gchar *TString) {
   else if (!strncmp(TString, "SP",2)) return OBIT_GBTOTF_SP;
   else if (!strncmp(TString, "CCB",3)) return OBIT_GBTOTF_CCB;
   else if (!strncmp(TString, "PAR",3)) return OBIT_GBTOTF_PAR;
+  else if (!strncmp(TString, "VEGAS",5)) return OBIT_GBTOTF_VEGAS;
   return OBIT_GBTOTF_Unknown;
 } /* end ObitOTFDescString2Type */
 

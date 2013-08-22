@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -142,6 +142,7 @@ ObitOTFSel* ObitOTFSelCopy (ObitOTFSel* in, ObitOTFSel* out,
   out->doCalSelect  = in->doCalSelect;
   out->calVersion   = in->calVersion;
   out->doCal        = in->doCal;
+  out->doBP         = in->doBP;
   out->doIndex      = in->doIndex;
   out->transPol     = in->transPol;
   out->doFlag       = in->doFlag;
@@ -634,9 +635,11 @@ void ObitOTFSelInit  (gpointer inn)
   /* set members in this class */
   in->nRecPIO       = 1;
   in->doCalSelect   = FALSE;
-  in->feeds   = NULL;
-  in->numberFeedList = 0;
-  in->targets = NULL;
+  in->doCal         = FALSE;
+  in->doBP          = FALSE;
+  in->feeds         = NULL;
+  in->numberFeedList= 0;
+  in->targets       = NULL;
   in->numberTargetList = 0;
   in->IndexTable    = NULL;
   in->IndexTableRow = NULL;

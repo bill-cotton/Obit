@@ -1,6 +1,6 @@
 /* $Id$                            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -88,6 +88,8 @@ ObitGBTIFInfo* newObitGBTIFInfo (gchar* name);
 /** Public: Constructor from values. */
 ObitGBTIFInfo* 
 newObitGBTIFInfoValue (gchar *name, gchar *backend, olong disk, gchar *scan, ObitErr *err);
+ObitGBTIFInfo* 
+newObitGBTIFInfoValueRoot (gchar *name, gchar *backend, gchar *DataRoot, gchar *scan, ObitErr *err);
 
 /** Public: ClassInfo pointer */
 gconstpointer ObitGBTIFInfoGetClass (void);

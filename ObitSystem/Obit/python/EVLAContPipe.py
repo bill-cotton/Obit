@@ -105,7 +105,7 @@ def pipeline( aipsSetup, parmFile):
     if parms["doLoadArchive"]:
         uv = EVLAUVLoadArch(parms["archRoot"], EVLAAIPSName(project, session), loadClass, disk, parms["seq"], err, \
                             selConfig=parms["selConfig"], doSwPwr=parms["doSwPwr"], \
-                            selBand=parms["selBand"], selChan=parms["selChan"], \
+                            selBand=parms["selBand"], selChan=parms["selChan"], selChBW=parms["selChBW"], \
                             selNIF=parms["selNIF"], calInt=parms["calInt"], \
                             logfile=logFile, Compress=parms["Compress"], check=check, debug=debug)
         if uv==None and not check:

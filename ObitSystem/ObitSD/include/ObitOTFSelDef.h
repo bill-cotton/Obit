@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -43,6 +43,8 @@ olong calVersion;
 gboolean doCalSelect;
 /** Calibrate Data? */
 gboolean doCal;
+/** Bandpass calibrate Data? */
+gboolean doBP;
 /** Index Data? */
 gboolean doIndex;
 /** Translate Stokes? */
@@ -54,6 +56,8 @@ Obit *IndexTableRow;
 gboolean doFlag;
 /** version number of FG table for flagging */
 olong FGversion;
+/** version number of OTFBP table for bandpass */
+olong BPVer;
 /** Number of rows in flag table */
 olong numRow;
 /** Last Row read */

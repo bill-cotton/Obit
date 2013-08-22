@@ -1,6 +1,6 @@
 /* $Id$*/
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004                                               */
+/*;  Copyright (C) 2004-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -88,6 +88,8 @@ ObitGBTBeamOffInfo* newObitGBTBeamOffInfo (gchar* name);
 /** Public: Constructor from values. */
 ObitGBTBeamOffInfo* 
 newObitGBTBeamOffInfoValue (gchar *name, olong disk, gchar *scan, ObitErr *err);
+ObitGBTBeamOffInfo* 
+newObitGBTBeamOffInfoValueRoot (gchar *name, gchar *DataRoot, gchar *scan, ObitErr *err);
 
 /** Public: ClassInfo pointer */
 gconstpointer ObitGBTBeamOffInfoGetClass (void);

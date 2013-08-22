@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,10 +32,14 @@
 #include "ObitTableOTFIndex.h"
 #include "ObitTableOTFTargetUtil.h"
 #include "ObitTableOTFFlag.h"
+#include "ObitTableOTFBP.h"
 #include "ObitPlot.h"
 #include "gsl/gsl_blas.h"
 #include "gsl/gsl_vector.h"
 #include "gsl/gsl_multifit_nlin.h"
+#ifndef VELIGHT
+#define VELIGHT 2.997924562e8
+#endif
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -55,7 +59,12 @@ static void FitCalAverage (ObitOTF *inOTF, olong detect, olong scan,
 			ofloat *calOff, ofloat *cal, 
 			ofloat *data, olong *targID, ObitErr *err);
 
-/** Private: Average onsource and offsource for a single scan */
+/** Private: Average spectra for a single scan */
+static void SpectrumAverage (ObitOTF *inOTF, olong scan,  ofloat *data, 
+			     ofloat *work, olong *targID, ofloat *parAng, 
+			     ofloat *Time, ObitErr *err);
+
+//** Private: Average onsource and offsource for a single scan */
 static void FitCalNod (ObitOTF *inOTF, olong detect, olong scan,
 		       ofloat *avgOff, ofloat *avgOn, ofloat *avgCal, 
 		       olong *targID, ObitErr *err);
@@ -355,6 +364,202 @@ void ObitOTFCalUtilFitOnOff (ObitOTF *inOTF, olong detect, ObitErr *err)
   if (calAvg) g_free(calAvg);
  
 }  /* end ObitOTFCalUtilFitOnOff */
+
+/**
+ * Fits calibrator bandpass from On/Off scan pair.
+ * Gets calibrator information from the Target table (flux density)
+ * Writes BP table
+ * \param inOTF    Input OTF data. 
+ *    Optional parameters on info:
+ * \li "calFlux"    OBIT_float scalar Flux density (Jy) at reference freq
+ *                  Default is to get from the Target table
+ * \li "calIndex"  OBIT_float scalar Calibrator spectral index def [0]
+ * \li "calFPol"   OBIT_float scalar Calibrator poln. orientation in deg [def 0]
+ * \li "calEVPA"   OBIT_float scalar Calibrator fractional polarization [def 0]
+ * \li "calRM"     OBIT_float scalar Calibrator RM in Rad/m*2 [def 0]
+ * \param offScan  off source scan
+ * \param onScan   on source scan
+ * \param BPVer    BP table version number, 0=>new
+ * \param err      Error stack, returns if not empty.
+ */
+void ObitOTFCalUtilFitBPOnOff (ObitOTF *inOTF,  olong offScan, olong onScan, 
+			       olong BPVer, ObitErr *err)
+{
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+  ObitTableOTFTarget* targetTable=NULL;
+  ObitTableOTFBP* BPTable=NULL;
+  ObitTableOTFBPRow* BPRow=NULL;
+  ObitOTFDesc *desc = inOTF->myDesc;
+  ofloat *data[2]={NULL, NULL}, *wt[2]={NULL,NULL}, Time[2];
+  ofloat calFlux=0.0, calIndex=0.0, calFPol=0.0, calEVPA=0.0, calRM=0.0;
+  ofloat QPol, UPol, polAdd=0.0, EVPA, lambda, lambda0, deltaNu, refPixNu;
+  olong ndetect, iDet, nfeed, nstok, nchan, ifeed, istok, ichan, iRow;
+  olong scans[2], sscans[2], iscan, scan, targID[2]={0,0};
+  olong ver;
+  gboolean isLinear;
+  odouble RACal, DecCal, refFreq, freq;
+  ofloat FluxCal, freqFlux, parAng, fblank = ObitMagicF();
+  gchar *routine = "ObitOTFCalUtilFitOnOff";
+
+   /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return;
+  g_assert (ObitOTFIsA(inOTF));
+
+  /* How many detectors? */
+  nfeed = desc->inaxes[desc->jlocfeed];
+  nstok = desc->inaxes[desc->jlocs];
+  /* Stokes limited to 2 solutions */
+  if (nstok>2) nstok = 2;
+  nchan = desc->inaxes[desc->jlocf];
+  ndetect = nfeed * nstok * nchan;
+
+  /* Create arrays */
+  data[0] = g_malloc0(ndetect*sizeof(float));
+  data[1] = g_malloc0(ndetect*sizeof(float));
+  wt[0]   = g_malloc0(ndetect*sizeof(float));
+  wt[1]   = g_malloc0(ndetect*sizeof(float));
+ 
+  /* Loop over input scans averaging spectra*/
+  sscans[0] = offScan; sscans[1] = onScan;
+  for (iscan = 0; iscan<2; iscan++) {
+    scan = sscans[iscan];
+    /* Set selected scan */
+    scans[0] = scan; scans[1] = scan;
+    dim[0] = 2;
+    ObitInfoListAlwaysPut(inOTF->info, "Scans", OBIT_long, dim, scans);
+
+    SpectrumAverage (inOTF, scan, data[iscan], wt[iscan], &targID[iscan], 
+		     &parAng, &Time[iscan], err);
+    if (err->error) Obit_traceback_msg (err, routine, inOTF->name);
+  } /* end loop over scans */
+
+  /* Check that same source */
+  Obit_return_if_fail ((targID[1]==targID[0]), err,
+		       "s:Target source not the same for on (%d), off(%d)",
+		       targID[1], targID[0]);
+
+  /* Get cal flux density/spectral index */
+  ObitInfoListGetTest(inOTF->info, "calIndex", &type, dim, &calIndex);
+  ObitInfoListGetTest(inOTF->info, "calFlux",  &type, dim, &calFlux);
+  ObitInfoListGetTest(inOTF->info, "calFPol",  &type, dim, &calFPol);
+  ObitInfoListGetTest(inOTF->info, "calEVPA",  &type, dim, &calEVPA);
+  ObitInfoListGetTest(inOTF->info, "calRM",    &type, dim, &calRM);
+  if (calFlux>0.0) {
+    FluxCal = calFlux;
+  } else { 
+    /* Not provided, Get cal flux density */
+    ver = 1;
+    targetTable = 
+      newObitTableOTFTargetValue ("TargetTable", (ObitData*)inOTF, &ver, 
+				  OBIT_IO_ReadWrite, err);
+    ObitTableOTFTargetGetSource (targetTable, targID[0], &RACal, &DecCal, 
+				 &FluxCal, err);
+    targetTable = ObitTableOTFTargetUnref(targetTable);
+    if (err->error) Obit_traceback_msg (err, routine, inOTF->name);
+  } /* End lookup from table */
+    /* Make sure there is something */
+  if (FluxCal==0.0) {
+    Obit_log_error(err, OBIT_Error, "%s: MISSING Calibrator info for %d %f in %s", 
+		   routine, targID[0], FluxCal, inOTF->name);
+  }
+
+  /* Frequency info */
+  refFreq  = desc->crval[desc->jlocf];
+  deltaNu  = desc->cdelt[desc->jlocf];
+  refPixNu = desc->crpix[desc->jlocf];
+  /* Circular or linear feeds */
+  isLinear = desc->crval[desc->jlocs]<-4.0;
+
+  /* Calculate the calibration (to Jy) for each channel, leave in data[0] */
+  iDet = 0;
+  /* Loop over feed */
+  for (ifeed=0; ifeed<nfeed; ifeed++) {
+    /* Loop over Stokes */
+    for (istok=0; istok<nstok; istok++) {
+      /* Loop over Channel */
+      for (ichan=0; ichan<nchan; ichan++) {
+	/* Get frequency/poln related */
+	freq     = refFreq + (ichan + 1.0 - refPixNu) * deltaNu;
+	freqFlux = FluxCal * pow((freq/refFreq), calIndex);
+
+	/* Corrections for linear feeds */
+	if (isLinear) {
+	  lambda0 = VELIGHT/refFreq;   /* reference wavelength */
+	  lambda  = VELIGHT/freq;      /* channel wavelength */
+	  /* Correct EVPA for RM */
+	  EVPA = calEVPA*DG2RAD + (lambda*lambda-lambda0*lambda0)*calRM;
+	  /* Polarization additions including parallactic angle */
+	  QPol = freqFlux * calFPol * cos(2.0*EVPA) * cos(2*parAng*DG2RAD);
+	  UPol = freqFlux * calFPol * sin(2.0*EVPA) * sin(2*parAng*DG2RAD);
+	  if (istok==0) { /* XX */
+	    polAdd = QPol + UPol;
+	  } else {        /* YY */
+	    polAdd = -QPol - UPol;
+	  }
+	} /* End isLinear */
+	if ((data[0][iDet]!=fblank) && (data[1][iDet]!=fblank) &&
+	    (fabs(data[1][iDet]-data[0][iDet])>fabs(0.01*(data[1][iDet])))) {
+	  data[0][iDet] = (freqFlux+polAdd) / (data[1][iDet]-data[0][iDet]);
+	} else {  /* Bad */
+	  data[0][iDet] = fblank;
+	}
+	iDet++;
+      } /* end channel loop */
+    } /* end Stokes loop */
+  } /* end feed loop */
+
+  /* Write in OTFBP table */
+  ver = BPVer;
+  if (ver<=0) ver = ObitTableListGetHigh (inOTF->tableList, "OTFBP");
+  BPTable = newObitTableOTFBPValue("BP Table", (ObitData*)inOTF, &ver, 
+				   OBIT_IO_ReadWrite, nchan, nstok, nfeed, err);
+  if (err->error) Obit_traceback_msg (err, routine, inOTF->name);
+
+  /* Open table */
+  ObitTableOTFBPOpen (BPTable, OBIT_IO_ReadWrite, err);
+  if (err->error) Obit_traceback_msg (err, routine, inOTF->name);
+
+  /* Create Table Row */
+  BPRow = newObitTableOTFBPRow (BPTable);
+  
+  /* Attach  row to output buffer */
+  ObitTableOTFBPSetRow (BPTable, BPRow, err);
+  if (err->error) Obit_traceback_msg (err, routine, inOTF->name);
+
+  /* If there are entries in the table, mark it unsorted */
+  if (BPTable->myDesc->nrow>0) 
+    {BPTable->myDesc->sort[0]=0; BPTable->myDesc->sort[1]=0;}
+  
+  /* Fill in BP row */
+  BPRow->Time   = 0.5*(Time[1]+Time[0]);
+  BPRow->TimeI  = fabs(Time[1]-Time[0]);
+  BPRow->Target = targID[1];
+
+  for (iDet=0; iDet<ndetect; iDet++) {
+    BPRow->mult[iDet] = data[0][iDet];
+    BPRow->wt[iDet]   = wt[0][iDet]+wt[1][iDet];
+    }
+  
+  /* write row */
+  iRow = BPTable->myDesc->nrow+1;
+  ObitTableOTFBPWriteRow (BPTable, iRow, BPRow, err);
+  if (err->error) Obit_traceback_msg (err, routine, inOTF->name);
+   
+  /* Close BP table */
+  ObitTableOTFBPClose (BPTable, err);
+  if (err->error) Obit_traceback_msg (err, routine, inOTF->name);
+
+  /* Cleanup */
+  BPTable = ObitTableOTFBPUnref(BPTable);
+  BPRow   = ObitTableOTFBPRowUnref(BPRow);
+  if (data[0])    g_free(data[0]);
+  if (data[1])    g_free(data[1]);
+  if (wt[0])      g_free(wt[0]);
+  if (wt[1])      g_free(wt[1]);
+ 
+}  /* end ObitOTFCalUtilFitBPOnOff */
 
 /**
  * Fits calibrator Nodding scan.
@@ -1191,6 +1396,131 @@ ObitIOCode ObitOTFCalUtilFlag (ObitOTF *inOTF, ObitErr *err)
    */
   } /* end loop over detectors */
 }  /* end FitCalAverage */
+
+/**
+ * Averages the spectra in a given scan
+ * \param inOTF    Input OTF data. 
+ * \param scan     which scan to process
+ * \param data     [out] Average selected spectra, fblanked
+ * \param wt       [out] weight array the size of data
+ * \param targID   [out] Target ID of scan
+ * \param parAng   [out] Average parallactic angle (deg)
+ * \param Time     [out] Average time  (day)
+ * \param err      Error stack, returns if not empty.
+ */
+static void SpectrumAverage (ObitOTF *inOTF,olong scan, ofloat *data, 
+			     ofloat *wt, olong *targID, ofloat *parAng, 
+			     ofloat *Time, ObitErr *err)
+{
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitIOCode retCode;
+  gboolean doCalSelect;
+  ObitOTFDesc *desc = inOTF->myDesc;
+  olong i, doCal, scans[2], nfeed, nstok, nchan, Count, ifeed, istok, ichan, ndetect;
+  olong incdatawt, incf, incs, incfeed, indx, jndx;
+  ofloat *rec, sumPA, cntPA, sumTim, cntTim, fblank = ObitMagicF();
+  gchar *routine = "SpectrumAverage";
+  
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return;
+  g_assert (ObitOTFIsA(inOTF));
+  
+  /* How many detectors? */
+  nfeed   = desc->inaxes[desc->jlocfeed];
+  nstok   = desc->inaxes[desc->jlocs];
+   /* Stokes limited to 2 solutions */
+  if (nstok>2) nstok = 2;
+  nchan   = desc->inaxes[desc->jlocf];
+  ndetect = nfeed * nstok * nchan;
+
+  /* Select scan on input */
+  doCalSelect = TRUE;
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(inOTF->info, "doCalSelect", OBIT_bool, dim, &doCalSelect);
+  doCal = 1;
+  ObitInfoListAlwaysPut(inOTF->info, "doCalib", OBIT_bool, dim, &doCal);
+  scans[0] = scan; scans[1] = scan;
+  dim[0] = 2;
+  ObitInfoListAlwaysPut(inOTF->info, "Scans", OBIT_long, dim, scans);
+  incdatawt = desc->incdatawt; /* increment in data-wt axis */
+  incf      = desc->incf;
+  incs      = desc->incs;
+  incfeed   = desc->incfeed;
+ 
+  /* open OTF data  */
+  retCode = ObitOTFOpen (inOTF, OBIT_IO_ReadCal, err);
+  if (err->error) Obit_traceback_msg (err, routine, inOTF->name);
+  
+  /* Read data into storage */
+  /* Init */
+  for (i=0; i<ndetect; i++) data[i] = wt[i] = 0.0;
+  Count = 0;  
+  sumPA  = cntPA  = 0.0;
+  sumTim = cntTim = 0.0;
+  /* loop accumulating data */
+  retCode = OBIT_IO_OK;
+  while (retCode == OBIT_IO_OK) {
+    
+    /* read buffer */
+    retCode = ObitOTFReadSelect (inOTF, NULL, err);
+    if (err->error) Obit_traceback_msg (err, routine, inOTF->name);
+    if (retCode==OBIT_IO_EOF) break; /* done? */
+    
+    /* Record pointer */
+    rec = inOTF->buffer;
+    
+    /* Loop over buffer */
+    for (i=0; i<inOTF->myDesc->numRecBuff; i++) {
+      
+      /* Accumulate values, order chan/Stokes/feed  */
+      *targID  = (olong)rec[inOTF->myDesc->iloctar];
+      sumPA    += rec[inOTF->myDesc->ilocrot];
+      cntPA++;
+      sumTim   += rec[inOTF->myDesc->iloct];
+      cntTim++;
+      jndx = 0;
+      /* Loop over feed */
+      for (ifeed=0; ifeed<nfeed; ifeed++) {
+	/* Loop over Stokes */
+	for (istok=0; istok<nstok; istok++) {
+	  /* Loop over Channel */
+	  for (ichan=0; ichan<nchan; ichan++) {
+	    indx = desc->ilocdata + ichan*incf + istok*incs + ifeed*incfeed;
+	    if ((rec[indx+1]>0.0) && (rec[indx]!=fblank)) {
+	      data[jndx] += rec[indx]*rec[indx+1];
+	      wt[jndx]   += rec[indx+1];
+	    }
+	    jndx++;
+	    Count++;
+	  } /* end channel loop */
+	} /* end Stokes loop */
+      } /* end feed loop */
+      rec += inOTF->myDesc->lrec; /* Data record pointer */	 
+    } /* end loop over buffer load */
+  } /* end loop reading data */ 
+  
+  /* Close data */
+  retCode = ObitOTFClose (inOTF, err);
+  if (err->error) Obit_traceback_msg (err, routine, inOTF->name);
+  
+  /* Better have some data */
+  if (Count<=0) {
+    Obit_log_error(err, OBIT_Error, "%s: NO data selected in %s", 
+		   routine, inOTF->name);
+    return;
+  }
+  
+  /* Loop over detectors averaging */
+  for (i=0; i<ndetect; i++) {
+    if (wt[i]>0.0) data[i] /= wt[i];
+    else           data[i] = fblank;
+  } /* end averaging loop */
+
+  /* Average parallactic angle */
+  *parAng = sumPA/(cntPA+1.0e-9);
+  *Time   = sumTim/(cntTim+1.0e-9);
+}  /* end SpectrumAverage */
 
 /**
  * Averages on source, off source and the and cal value for dual beam

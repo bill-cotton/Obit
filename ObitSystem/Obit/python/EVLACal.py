@@ -251,6 +251,9 @@ def EVLAInitContParms():
     parms["doMetadata"]    =  True       # Save source and project metadata
     parms["doHTML"]        =  True       # Output HTML report
 
+    # Default selection
+    parms["selChBW"] = -1.0              # Selected channel bandwidth, All
+
     return parms
 # end EVLAInitContParms
 
@@ -774,7 +777,7 @@ def EVLAUVLoadT(filename, disk, Aname, Aclass, Adisk, Aseq, err, logfile="  ", \
     # end EVLAUVLoadT
 
 def EVLAUVLoadArch(dataroot, Aname, Aclass, Adisk, Aseq, err, \
-                   selConfig=-1, selBand="", selChan=0, selNIF=0, \
+                   selConfig=-1, selBand="", selChan=0, selNIF=0, selChBW=-1.0, \
                    dropZero=True, calInt=0.5,  doSwPwr=False, Compress=False, \
                    logfile = "", check=False, debug = False):
     """
@@ -792,6 +795,7 @@ def EVLAUVLoadArch(dataroot, Aname, Aclass, Adisk, Aseq, err, \
     * selBand  = Selected band, def first
     * selChan  = Selected number of channels, def first
     * selNIF   = Selected number of IFs, def first
+    * selChBW  = Selected channel BW (kHz)
     * dropZero = If true drop records with all zeroes
     * calInt   = CL table interval
     * doSwPwr  = Make EVLA Switched power corr?
@@ -819,6 +823,8 @@ def EVLAUVLoadArch(dataroot, Aname, Aclass, Adisk, Aseq, err, \
     bdf.selBand  = selBand
     bdf.selChan  = selChan
     bdf.selIF    = selNIF
+    if  ("selChBW" in bdf.__dict__):
+        bdf.selChBW    = selChBW
     bdf.dropZero = dropZero
     bdf.calInt   = calInt
     bdf.doSwPwr  = doSwPwr
@@ -2519,10 +2525,10 @@ def EVLACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
     ################################################################
     mess =  "Average/calibrate data"
     printMess(mess, logfile)
-    splat=ObitTask.ObitTask("Splat")
     # sanity check for averaging in freq
     if avgFreq==0:
         chAvg = 1
+    splat=ObitTask.ObitTask("Splat")
     try:
         splat.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
     except Exception, exception:

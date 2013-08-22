@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -29,6 +29,7 @@
 #include "ObitGBTIFInfo.h"
 #include "ObitTableGBTIF.h"
 #include "ObitTableGBTSPDATA.h"
+#include "ObitTableGBTVEGASDATA.h"
 
 /*-------------- Obit: Merx mollis mortibus nuper ------------*/
 /**
@@ -106,6 +107,7 @@ newObitGBTIFInfoValue (gchar *name, gchar *backend, olong disk, gchar *scan, Obi
 {
   ObitGBTIFInfo* out=NULL;
   ObitTableGBTSPDATA *DATAtable=NULL;
+  ObitTableGBTVEGASDATA *VDATAtable=NULL;
   ObitTableGBTIF     *IFtable=NULL;
   ObitTableGBTIFRow  *IFrow=NULL;
   ObitIOCode retCode;
@@ -161,6 +163,34 @@ newObitGBTIFInfoValue (gchar *name, gchar *backend, olong disk, gchar *scan, Obi
   } else if (!strncmp (backend, "CCB26_40", 8)) { 
     isCCB = TRUE;
     out->nchan = 4;
+  } else if (!strncmp (backend, "VEGAS", 5)) { 
+    /* Get number of channels from first dimension of data col in data table */
+    /* get full file name */
+    sprintf (FullFile,"VEGAS/%sA.fits", scan);
+
+    /* Create table structure */
+    VDATAtable = newObitTableGBTVEGASDATA("Data");
+
+    /* Setup */
+    tab = "DATA";
+    ver = 1; 
+    nrow = 1;
+    ObitTableSetFITS(VDATAtable,disk,FullFile,tab,ver,nrow,err);
+
+    /* Open */
+    retCode = ObitTableGBTVEGASDATAOpen (VDATAtable, OBIT_IO_ReadOnly, err);
+    if (err->error) return out;
+
+    /* Get number of channels = first dimension of Data column */
+    out->nchan = VDATAtable->myDesc->dim[VDATAtable->dataCol][0];
+    
+    /* Close */
+    retCode = ObitTableGBTVEGASDATAClose (VDATAtable, err);
+    if (err->error) return out;
+    
+    /* Cleanup */
+    VDATAtable = ObitTableGBTVEGASDATAUnref(VDATAtable);
+
   } else { /* Something else, only one channel */
     out->nchan = 1;
   } /* End of getting number of channels */
@@ -227,6 +257,172 @@ newObitGBTIFInfoValue (gchar *name, gchar *backend, olong disk, gchar *scan, Obi
 
   return out;
 } /* end newObitGBTIFInfoValue */
+
+/**
+ * Constructor from values.
+ * \param name  A name for the object
+ * \param backend  Name of the backend for which the information is desired
+ *                 (e.g. "DCR", "SpectralProcessor")
+ * \param DataRoot Root of data directory.
+ * \param scan     Date/time scan name (e.g. "2003_05_05_05:32:56")
+ * \param err      Obit error stack object.
+ * \return the new object.
+ */
+ObitGBTIFInfo* 
+newObitGBTIFInfoValueRoot (gchar *name, gchar *backend, gchar *DataRoot, gchar *scan, ObitErr *err)
+{
+  ObitGBTIFInfo* out=NULL;
+  ObitTableGBTSPDATA *DATAtable=NULL;
+  ObitTableGBTVEGASDATA *VDATAtable=NULL;
+  ObitTableGBTIF     *IFtable=NULL;
+  ObitTableGBTIFRow  *IFrow=NULL;
+  ObitIOCode retCode;
+  gchar *tab, FullFile[128];
+  gboolean isCCB=FALSE;
+  olong irow, disk=0;
+  olong ver, nrow, iout;
+  gchar *routine = "newObitGBTIFInfoValue";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return out;
+  g_assert (backend!=NULL);
+  g_assert (scan!=NULL);
+
+  /* Create basic object */
+  out = newObitGBTIFInfo(name);
+
+  /* Fill in values */
+  out->Backend = g_strdup(backend);
+
+  /* if the Spectral Processor, get number of channels from the 
+     SPDATA first dimension */
+  if (!strncmp (backend, "SpectralProcessor", 17)) {
+
+    /* get full file name */
+    sprintf (FullFile,"%s/SpectralProcessor/%s.fits", DataRoot, scan);
+
+    /* Create table structure */
+    DATAtable = newObitTableGBTSPDATA("Data");
+
+    /* Setup */
+    tab = "DATA";
+    ver = 1; 
+    nrow = 1;
+    ObitTableSetFITS(DATAtable,disk,FullFile,tab,ver,nrow,err);
+
+    /* Open */
+    retCode = ObitTableGBTSPDATAOpen (DATAtable, OBIT_IO_ReadOnly, err);
+    if (err->error) return out;
+
+    /* Get number of channels = first dimension of Data column */
+    out->nchan = DATAtable->myDesc->dim[DATAtable->dataCol][0];
+    
+    /* Close */
+    retCode = ObitTableGBTSPDATAClose (DATAtable, err);
+    if (err->error) return out;
+    
+    /* Cleanup */
+    DATAtable = ObitTableGBTSPDATAUnref(DATAtable);
+
+    /* If CCB nchan = 4 */
+  } else if (!strncmp (backend, "CCB26_40", 8)) { 
+    isCCB = TRUE;
+    out->nchan = 4;
+  } else if (!strncmp (backend, "VEGAS", 5)) { 
+    /* Get number of channels from first dimension of data col in data table */
+    /* get full file name */
+    sprintf (FullFile,"%s/VEGAS/%sA.fits", DataRoot, scan);
+
+    /* Create table structure */
+    VDATAtable = newObitTableGBTVEGASDATA("Data");
+
+    /* Setup */
+    tab = "DATA";
+    ver = 1; 
+    nrow = 1;
+    ObitTableSetFITS(VDATAtable,disk,FullFile,tab,ver,nrow,err);
+
+    /* Open */
+    retCode = ObitTableGBTVEGASDATAOpen (VDATAtable, OBIT_IO_ReadOnly, err);
+    if (err->error) return out;
+
+    /* Get number of channels = first dimension of Data column */
+    out->nchan = VDATAtable->myDesc->dim[VDATAtable->dataCol][0];
+    
+    /* Close */
+    retCode = ObitTableGBTVEGASDATAClose (VDATAtable, err);
+    if (err->error) return out;
+    
+    /* Cleanup */
+    VDATAtable = ObitTableGBTVEGASDATAUnref(VDATAtable);
+
+  } else { /* Something else, only one channel */
+    out->nchan = 1;
+  } /* End of getting number of channels */
+
+  /* Get IF setup information from the IF table */
+  /* get full file name */
+  sprintf (FullFile,"%s/IF/%s.fits", DataRoot, scan);
+
+  /* Create table structure */
+  IFtable = newObitTableGBTIF("IF");
+
+  /* Setup */
+  tab = "IF";
+  ver = 1; 
+  nrow = 1;
+  ObitTableSetFITS(IFtable,disk,FullFile,tab,ver,nrow,err);
+  
+  /* Open */
+  retCode = ObitTableGBTIFOpen (IFtable, OBIT_IO_ReadOnly, err);
+  if (err->error) return out;
+  
+  /* Create Row structure */
+  IFrow = newObitTableGBTIFRow (IFtable);
+
+  /* Loop over table */
+  iout = 0;
+  for (irow = 1; irow<=IFtable->myDesc->nrow; irow++) {
+    retCode = ObitTableGBTIFReadRow (IFtable, irow, IFrow, err);
+    if (err->error) return out;
+
+    /* Want this one? */
+    if (!strncmp (backend, IFrow->backend, strlen(backend))) {
+      out->poln[iout]  = IFrow->polarize[0];
+      if (isCCB) out->delta[iout] = IFrow->bandwdth;
+      else out->delta[iout] = IFrow->bandwdth/out->nchan;
+      /* Lower sideband? */
+      if (IFrow->sideband[0]=='L') out->delta[iout] = -out->delta[iout];
+      out->refPixel[iout]     = 1;
+      out->refFrequency[iout] = IFrow->CenterSky;
+      out->bank[iout][0] = IFrow->bank[0];
+      out->bank[iout][1] = IFrow->bank[1];
+      out->port[iout]    = IFrow->port;
+      out->feed[iout]    = IFrow->feed;
+      out->srfeed1[iout] = IFrow->srfeed1;
+      out->srfeed2[iout] = IFrow->srfeed2;
+      iout++;
+    }
+    /* Done? */
+    if (iout>=MAXNUMIF) {
+      Obit_log_error(err, OBIT_Error, "%s ERROR exceep limit %d IFs", routine, MAXNUMIF);
+      return out;
+    }
+    
+  } /* end loop over table */
+  out->nIF = iout;
+
+  /* Close */
+  retCode = ObitTableGBTIFClose (IFtable, err);
+  if (err->error) return out;
+  
+  /* Cleanup */
+  IFtable = ObitTableGBTIFUnref(IFtable);
+  IFrow   = ObitTableGBTIFUnref(IFrow);
+
+  return out;
+} /* end newObitGBTIFInfoValueRoot */
 
 /**
  * Returns ClassInfo pointer for the class.

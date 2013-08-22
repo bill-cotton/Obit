@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -56,6 +56,10 @@ void ObitOTFCalUtilFitCal (ObitOTF *inOTF, olong detect, ObitErr *err);
 
 /** Public: Fit calibrator on/off scans */
 void ObitOTFCalUtilFitOnOff (ObitOTF *inOTF, olong detect, ObitErr *err);
+
+/** Public: Fit bandpass cal from on/off scans */
+void ObitOTFCalUtilFitBPOnOff (ObitOTF *inOTF, olong offScan, olong onScan, 
+			       olong BPVer, ObitErr *err);
 
 /** Public: Fit calibrator nod scan */
 void ObitOTFCalUtilFitNod (ObitOTF *inOTF, olong detect, ObitErr *err);

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -55,6 +55,8 @@
  * \li  "doCalSelect" OBIT_bool (1,1,1) Select/calibrate/edit data?
  * \li  "doCalib" OBIT_int (1,1,1) >0 -> calibrate,
  * \li  "gainUse" OBIT_int (1,1,1) SN/CL table version number, 0-> use highest
+ * \li  "doBand"  OBIT_int (1,1,1) >0 -> bandpass calibrate,
+ * \li  "BPVer"   OBIT_int (1,1,1) OTFBP table version number, 0-> use highest
  * \li  "flagVer" OBIT_int (1,1,1) Flag table version, 0-> use highest, <0-> none
  * \li  "BChan" OBIT_int (1,1,1) First spectral channel selected. [def all]
  * \li  "EChan" OBIT_int (1,1,1) Highest spectral channel selected. [def all]

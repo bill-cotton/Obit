@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -33,6 +33,7 @@
 #include "ObitTableOTFTargetUtil.h"
 #include "ObitTableOTFIndex.h"
 #include "ObitTableOTFFlag.h"
+#include "ObitTableOTFBP.h"
 #include "ObitSystem.h"
 #include "ObitHistory.h"
 
@@ -170,6 +171,7 @@ ObitOTF* ObitOTFFromFileInfo (gchar *prefix, ObitInfoList *inList,
   gpointer     listPnt;
   gchar        *keyword=NULL, *DataTypeKey = "DataType", *DataType=NULL;
   gchar        *parm[] = {"doCalSelect", "doCalib", "gainUse", "flagVer",
+			  "doBand", "BPVer",
 			  "BChan", "EChan", "Targets", "timeRange", "Scans",
 			  "Feeds", "keepCal", "replCal",
 			  NULL};
@@ -480,6 +482,8 @@ void ObitOTFRename (ObitOTF *in, ObitErr *err)
  * \li "doCalSelect" OBIT_boolean scalar if TRUE, calibrate/select/edit input data.
  * \li  "doCalib" OBIT_int (1,1,1) >0 -> calibrate,
  * \li  "gainUse" OBIT_int (1,1,1) SN/CL table version number, 0-> use highest
+ * \li  "doBand"  OBIT_int (1,1,1) >0 -> bandpass calibrate,
+ * \li  "BPVer"   OBIT_int (1,1,1) OTFBP table version number, 0-> use highest
  * \param in  The object to copy
  * \param out An existing object pointer for output or NULL if none exists.
  * \param err Error stack, returns if not empty.
@@ -659,6 +663,8 @@ ObitOTF* ObitOTFCopy (ObitOTF *in, ObitOTF *out, ObitErr *err)
  * \li "doCalSelect" OBIT_boolean scalar if TRUE, calibrate/select/edit input data.
  * \li "doCalib" OBIT_int (1,1,1) >0 -> calibrate,
  * \li "gainUse" OBIT_int (1,1,1) SN/CL table version number, 0-> use highest
+ * \li "doBand"  OBIT_int (1,1,1) >0 -> bandpass calibrate,
+ * \li "BPVer"   OBIT_int (1,1,1) OTFBP table version number, 0-> use highest
  * \param in  The object to copy
  * \param out An existing object pointer for output or NULL if none exists.
  * \param err Error stack, returns if not empty.
@@ -2023,6 +2029,23 @@ static void ObitOTFGetSelect (ObitOTF *in, ObitInfoList *info, ObitOTFSel *sel,
     /*???sel->doCalSelect = FALSE;*/
     sel->doCal = FALSE;
   }
+
+  /*  Bandpass Calibration */
+  InfoReal.itg = 0; type = OBIT_oint;
+  ObitInfoListGetTest(info, "doBand", &type, (gint32*)dim, &InfoReal);
+  if (type==OBIT_float) itemp = InfoReal.flt + 0.5;
+  else itemp = InfoReal.itg;
+  sel->doBP = itemp > 0;
+  itemp = 0;
+  ObitInfoListGetTest(info, "BPVer", &type, (gint32*)dim, &itemp);
+  sel->BPVer = itemp;
+  /* Make sure it actually exists */
+  highVer = ObitTableListGetHigh (in->tableList, "OTFBP");
+  if (sel->BPVer==0) sel->BPVer = highVer;  /* Highest if not specified */
+  if (highVer<=0) {
+    sel->BPVer = -1;
+    sel->doBP = FALSE;
+  }
  
   /* Flagging */
   InfoReal.itg = 0; type = OBIT_oint;
@@ -2098,7 +2121,7 @@ static void ObitOTFSetupCal (ObitOTF *in, ObitErr *err)
   /* Setup tables as needed for calibration */
   sel = in->mySel;
   
-  /* Applyig calibration? */
+  /* Applying calibration? */
   if (sel->doCal) {
 
     cal->doSolnTable = FALSE;
@@ -2148,9 +2171,27 @@ static void ObitOTFSetupCal (ObitOTF *in, ObitErr *err)
       Obit_log_error(err, OBIT_InfoErr,
 		     "Applying OTFSoln table version %d",  useVer);
     } /* end get cal table */
-  }
+  } /* end setup calibration */
   if (err->error) Obit_traceback_msg (err, routine, in->name);
   
+  /* Applying calibration? */
+  if (sel->doBP) {
+    useVer = sel->BPVer;
+    cal->BPCalTable =
+      (Obit*) newObitTableOTFBPValue (in->name, (ObitData*)in, &useVer, 
+				      OBIT_IO_ReadWrite, 0, 0, 0, err);
+    if (cal->BPCalTable==NULL) {
+      Obit_log_error(err, OBIT_Error, 
+		     "%s: NO bandpass calibration table %d for %s", routine, useVer, 
+		     in->name);
+      return;
+    }
+    /* Tell what you're about to do */
+    Obit_log_error(err, OBIT_InfoErr,
+		   "Applying OTFBP table version %d",  useVer);
+  } /* End setup bandbass calibration */
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
   /* Flag table for Flagging */
   if (sel->doFlag) {
     /* if sel->FGversion ==0 use highest */

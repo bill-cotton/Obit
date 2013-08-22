@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -94,8 +94,10 @@ enum obitGBTOTFType {
   OBIT_GBTOTF_SP,
   /** CalTech Continuum Backend */
   OBIT_GBTOTF_CCB,
-  /** Penn Array Receiver */
-  OBIT_GBTOTF_PAR
+  /** Penn Array Receiver AKA Mustang */
+  OBIT_GBTOTF_PAR,
+  /** GBT/VEGAS Spectrometer Receiver */
+  OBIT_GBTOTF_VEGAS
 }; /* end enum obitGBTOTFType */
 /** typedef for enum for GBT OTF data source */
 typedef enum obitGBTOTFType ObitGBTOTFType;

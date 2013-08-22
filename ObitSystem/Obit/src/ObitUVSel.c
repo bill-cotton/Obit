@@ -500,8 +500,8 @@ gboolean ObitUVSelNext (ObitUVSel *in, ObitUVDesc *desc, ObitErr *err)
       
 	/* Save info if scan found */
       if (gotIt) {
-	in->scanFirstVis = row->StartVis;
-	in->scanLastVis  = row->EndVis;
+	in->scanFirstVis = row->StartVis; 
+	in->scanLastVis  = MAX (row->EndVis, row->StartVis); /* Trap AIPS bug */
 	desc->firstVis   = in->scanFirstVis; /* beginning of scan */
 	/* Suggest subscan length */
 	SuggestSubScan(in, row->TimeI);
