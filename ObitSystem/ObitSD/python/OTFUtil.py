@@ -452,7 +452,6 @@ def PFlag (inOTF, err,
     InfoList.PAlwaysPutString(inInfo, "Stokes", dim, [Stokes])
     dim[0] = len(Reason)
     InfoList.PAlwaysPutString(inInfo, "Reason", dim, [Reason])
-    #print "debug stokes",stokes,"reason",reason
     #
     Obit.OTFCalUtilFlag (inOTF.me, err.me)
     # end PFlag
@@ -564,4 +563,44 @@ def PSubModel (inOTF, outOTF, modelImg, beamImg, err):
 
     return out
     # end PSubModel
+
+def PEditFD(inOTF, outOTF, err):
+    """ Frequency domain editing of an OTF
+
+    Compares data with a running median in frequency and makes flag table
+    entries for channels with discrepant values or excessive RMSes.
+    Data in channels which are mostly, but not completely flagged may also
+    be flagged.
+    Generates an OTFFlag flagging table on outOTF.
+    Multiple threads may be used, up to one per spectrum.
+    Control parameters on inOTF List member:
+      flagTab  int   FG table version number [ def. 1]
+      timeAvg  float Time interval over which to average (min) [def. 1]
+      FDwidMW  int   The width of the median window in channels. 
+                     An odd number (5) is recommended, [def nchan-1]
+      FDmaxRMS float[2] Flag all channels having RMS values > FDmaxRMS[0] 
+                        of the channel median sigma.[def 6.]
+                        plus FDmaxRMS[1] (def 0.1) of the channel 
+                        average in quadrature.
+      FDmaxRes float Max. residual flux in sigma allowed [def 6.]
+      minGood  float Minimum fraction of time samples at and below 
+               which a channel/interval will be flagged.  
+               [def 0.25, -1 ->no flagging by fraction of samples.]
+    inOTF   = input Python Obit OTF, prior editing and calibration honored
+    outOTF  = output Python Obit OTF for flag table
+    err     = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not OTF.PIsA(inOTF):
+        raise TypeError,"inOTF MUST be a Python Obit OTF"
+    if not OTF.PIsA(outOTF):
+        raise TypeError,"outOTF MUST be a Python Obit OTF"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be a Python ObitErr"
+    if err.isErr: # existing error?
+        return
+    #
+    Obit.OTFFlagEditFD(inOTF.me, outOTF.me, err.me)
+    # end PEditFD
 

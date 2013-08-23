@@ -1662,3 +1662,16 @@ ObitSD/ObitOTFGetSoln.c:
 ObitSD/python/GBTUtil.py:
   Document VEGAS
 22 Aug. 2013, svn version 461
+
+bug fixes
+ObitSD/include/ObitOTFFlagUtil.h  ObitSD/src/ObitOTFFlagUtil.c:
+  New flagging utility with frequency domain editing
+ObitSD/python/OTFUtil.py  ObitSD/python/OTFUtil.inc:
+  Add interface to FD editing
+ObitSD/python/Obit_wrap.c:
+  New python interface
+ObitSD/python/VEGASUtil.py:
+  PlotSpectrum: Fix bug in initializing accumulators
+ObitSD/tasks/VEGASOTF.c:
+ Normalize data by integration time.
+23 Aug 2013, svn version 462

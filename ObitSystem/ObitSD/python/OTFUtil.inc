@@ -32,6 +32,7 @@
 #include "ObitFInterpolate.h"
 #include "ObitOTFUtil.h"
 #include "ObitOTFCalUtil.h"
+#include "ObitOTFCalFlag.h"
 %}
 
 
@@ -128,4 +129,9 @@ extern ObitFArray* OTFUtilConvBeam (ObitTable *inTab, ObitImage *Beam,
   CCTab = ObitTableCCUnref(CCTab);
   return out;
 } // end OTFUtilConvBeam
+
+extern void OTFFlagEditFD (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr *err) {
+    ObitOTFFlagEditFD (inOTF, outOTF, err);
+}
+
 %}

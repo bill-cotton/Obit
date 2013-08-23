@@ -14099,6 +14099,7 @@ extern ObitTable *OTFSoln2Cal(ObitOTF *,ObitOTF *,ObitErr *);
 #include "ObitFInterpolate.h"
 #include "ObitOTFUtil.h"
 #include "ObitOTFCalUtil.h"
+#include "ObitOTFCalFlag.h"
 
 
 //extern void OTFUtilSubSkyModelBuff (ObitOTF *in, ObitOTFSkyModel *sky, float factor) {
@@ -14191,6 +14192,11 @@ extern ObitFArray* OTFUtilConvBeam (ObitTable *inTab, ObitImage *Beam,
   CCTab = ObitTableCCUnref(CCTab);
   return out;
 } // end OTFUtilConvBeam
+
+extern void OTFFlagEditFD (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr *err) {
+    ObitOTFFlagEditFD (inOTF, outOTF, err);
+}
+
 extern void OTFUtilSubImage(ObitOTF *,ObitOTF *,ObitFArray *,ObitImageDesc *,ObitErr *);
 extern void OTFUtilModelImage(ObitOTF *,ObitOTF *,ObitFArray *,ObitImageDesc *,ObitErr *);
 extern void OTFUtilScale(ObitOTF *,ObitOTF *,float ,float ,ObitErr *);
@@ -14207,6 +14213,7 @@ extern void OTFCalUtilFitNod(ObitOTF *,int ,ObitErr *);
 extern void OTFUtilDiffNod(ObitOTF *,int ,ObitErr *);
 extern int OTFCalUtilFlag(ObitOTF *,ObitErr *);
 extern ObitFArray *OTFUtilConvBeam(ObitTable *,ObitImage *,ObitFArray *,ObitErr *);
+extern void OTFFlagEditFD(ObitOTF *,ObitOTF *,ObitErr *);
 
 #include "Obit.h"
 #include "ObitData.h"
@@ -15031,6 +15038,241 @@ extern void TableGBTSPSTATESetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 extern ObitTable *TableGBTSPSTATE(ObitData *,long *,int ,char *,ObitErr *);
 extern PyObject *TableGBTSPSTATEGetHeadKeys(ObitTable *);
 extern void TableGBTSPSTATESetHeadKeys(ObitTable *,PyObject *);
+
+#include "Obit.h"
+#include "ObitData.h"
+#include "ObitTableGBTVEGASACT_STATE.h"
+
+ 
+extern ObitTable* TableGBTVEGASACT_STATE (ObitData *inData, long *tabVer,
+ 	                   int access,
+ 	                   char *tabName,
+                          
+                           ObitErr *err)
+ {
+   ObitIOAccess laccess;
+   /* Cast structural keywords to correct type */
+   olong ltabVer = (olong)*tabVer;
+   ObitTable *outTable=NULL;
+   laccess = OBIT_IO_ReadOnly;
+   if (access==2) laccess = OBIT_IO_WriteOnly;
+   else if (access==3) laccess = OBIT_IO_ReadWrite;
+   outTable = (ObitTable*)newObitTableGBTVEGASACT_STATEValue ((gchar*)tabName, inData, (olong*)&ltabVer,
+   			   laccess, 
+                          
+                           err);
+   *tabVer = (long)ltabVer;
+   return outTable;
+   }
+ 
+extern PyObject* TableGBTVEGASACT_STATEGetHeadKeys (ObitTable *inTab) {
+  PyObject *outDict=PyDict_New();
+  ObitTableGBTVEGASACT_STATE *lTab = (ObitTableGBTVEGASACT_STATE*)inTab;
+
+  return outDict;
+} 
+
+extern void TableGBTVEGASACT_STATESetHeadKeys (ObitTable *inTab, PyObject *inDict) {
+  ObitTableGBTVEGASACT_STATE *lTab = (ObitTableGBTVEGASACT_STATE*)inTab;
+  char *tstr;
+  int lstr=MAXKEYCHARTABLEACT_STATE;
+
+
+  if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
+    lTab->myStatus = OBIT_Modified;
+} 
+
+extern ObitTable *TableGBTVEGASACT_STATE(ObitData *,long *,int ,char *,ObitErr *);
+extern PyObject *TableGBTVEGASACT_STATEGetHeadKeys(ObitTable *);
+extern void TableGBTVEGASACT_STATESetHeadKeys(ObitTable *,PyObject *);
+
+#include "Obit.h"
+#include "ObitData.h"
+#include "ObitTableGBTVEGASDATA.h"
+
+ 
+extern ObitTable* TableGBTVEGASDATA (ObitData *inData, long *tabVer,
+ 	                   int access,
+ 	                   char *tabName,
+                          
+                           ObitErr *err)
+ {
+   ObitIOAccess laccess;
+   /* Cast structural keywords to correct type */
+   olong ltabVer = (olong)*tabVer;
+   ObitTable *outTable=NULL;
+   laccess = OBIT_IO_ReadOnly;
+   if (access==2) laccess = OBIT_IO_WriteOnly;
+   else if (access==3) laccess = OBIT_IO_ReadWrite;
+   outTable = (ObitTable*)newObitTableGBTVEGASDATAValue ((gchar*)tabName, inData, (olong*)&ltabVer,
+   			   laccess, 
+                          
+                           err);
+   *tabVer = (long)ltabVer;
+   return outTable;
+   }
+ 
+extern PyObject* TableGBTVEGASDATAGetHeadKeys (ObitTable *inTab) {
+  PyObject *outDict=PyDict_New();
+  ObitTableGBTVEGASDATA *lTab = (ObitTableGBTVEGASDATA*)inTab;
+
+  return outDict;
+} 
+
+extern void TableGBTVEGASDATASetHeadKeys (ObitTable *inTab, PyObject *inDict) {
+  ObitTableGBTVEGASDATA *lTab = (ObitTableGBTVEGASDATA*)inTab;
+  char *tstr;
+  int lstr=MAXKEYCHARTABLEDATA;
+
+
+  if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
+    lTab->myStatus = OBIT_Modified;
+} 
+
+extern ObitTable *TableGBTVEGASDATA(ObitData *,long *,int ,char *,ObitErr *);
+extern PyObject *TableGBTVEGASDATAGetHeadKeys(ObitTable *);
+extern void TableGBTVEGASDATASetHeadKeys(ObitTable *,PyObject *);
+
+#include "Obit.h"
+#include "ObitData.h"
+#include "ObitTableGBTVEGASPORT.h"
+
+ 
+extern ObitTable* TableGBTVEGASPORT (ObitData *inData, long *tabVer,
+ 	                   int access,
+ 	                   char *tabName,
+                          
+                           ObitErr *err)
+ {
+   ObitIOAccess laccess;
+   /* Cast structural keywords to correct type */
+   olong ltabVer = (olong)*tabVer;
+   ObitTable *outTable=NULL;
+   laccess = OBIT_IO_ReadOnly;
+   if (access==2) laccess = OBIT_IO_WriteOnly;
+   else if (access==3) laccess = OBIT_IO_ReadWrite;
+   outTable = (ObitTable*)newObitTableGBTVEGASPORTValue ((gchar*)tabName, inData, (olong*)&ltabVer,
+   			   laccess, 
+                          
+                           err);
+   *tabVer = (long)ltabVer;
+   return outTable;
+   }
+ 
+extern PyObject* TableGBTVEGASPORTGetHeadKeys (ObitTable *inTab) {
+  PyObject *outDict=PyDict_New();
+  ObitTableGBTVEGASPORT *lTab = (ObitTableGBTVEGASPORT*)inTab;
+
+  return outDict;
+} 
+
+extern void TableGBTVEGASPORTSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
+  ObitTableGBTVEGASPORT *lTab = (ObitTableGBTVEGASPORT*)inTab;
+  char *tstr;
+  int lstr=MAXKEYCHARTABLEPORT;
+
+
+  if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
+    lTab->myStatus = OBIT_Modified;
+} 
+
+extern ObitTable *TableGBTVEGASPORT(ObitData *,long *,int ,char *,ObitErr *);
+extern PyObject *TableGBTVEGASPORTGetHeadKeys(ObitTable *);
+extern void TableGBTVEGASPORTSetHeadKeys(ObitTable *,PyObject *);
+
+#include "Obit.h"
+#include "ObitData.h"
+#include "ObitTableGBTVEGASSAMPLER.h"
+
+ 
+extern ObitTable* TableGBTVEGASSAMPLER (ObitData *inData, long *tabVer,
+ 	                   int access,
+ 	                   char *tabName,
+                          
+                           ObitErr *err)
+ {
+   ObitIOAccess laccess;
+   /* Cast structural keywords to correct type */
+   olong ltabVer = (olong)*tabVer;
+   ObitTable *outTable=NULL;
+   laccess = OBIT_IO_ReadOnly;
+   if (access==2) laccess = OBIT_IO_WriteOnly;
+   else if (access==3) laccess = OBIT_IO_ReadWrite;
+   outTable = (ObitTable*)newObitTableGBTVEGASSAMPLERValue ((gchar*)tabName, inData, (olong*)&ltabVer,
+   			   laccess, 
+                          
+                           err);
+   *tabVer = (long)ltabVer;
+   return outTable;
+   }
+ 
+extern PyObject* TableGBTVEGASSAMPLERGetHeadKeys (ObitTable *inTab) {
+  PyObject *outDict=PyDict_New();
+  ObitTableGBTVEGASSAMPLER *lTab = (ObitTableGBTVEGASSAMPLER*)inTab;
+
+  return outDict;
+} 
+
+extern void TableGBTVEGASSAMPLERSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
+  ObitTableGBTVEGASSAMPLER *lTab = (ObitTableGBTVEGASSAMPLER*)inTab;
+  char *tstr;
+  int lstr=MAXKEYCHARTABLEPORT;
+
+
+  if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
+    lTab->myStatus = OBIT_Modified;
+} 
+
+extern ObitTable *TableGBTVEGASSAMPLER(ObitData *,long *,int ,char *,ObitErr *);
+extern PyObject *TableGBTVEGASSAMPLERGetHeadKeys(ObitTable *);
+extern void TableGBTVEGASSAMPLERSetHeadKeys(ObitTable *,PyObject *);
+
+#include "Obit.h"
+#include "ObitData.h"
+#include "ObitTableGBTVEGASSTATE.h"
+
+ 
+extern ObitTable* TableGBTVEGASSTATE (ObitData *inData, long *tabVer,
+ 	                   int access,
+ 	                   char *tabName,
+                          
+                           ObitErr *err)
+ {
+   ObitIOAccess laccess;
+   /* Cast structural keywords to correct type */
+   olong ltabVer = (olong)*tabVer;
+   ObitTable *outTable=NULL;
+   laccess = OBIT_IO_ReadOnly;
+   if (access==2) laccess = OBIT_IO_WriteOnly;
+   else if (access==3) laccess = OBIT_IO_ReadWrite;
+   outTable = (ObitTable*)newObitTableGBTVEGASSTATEValue ((gchar*)tabName, inData, (olong*)&ltabVer,
+   			   laccess, 
+                          
+                           err);
+   *tabVer = (long)ltabVer;
+   return outTable;
+   }
+ 
+extern PyObject* TableGBTVEGASSTATEGetHeadKeys (ObitTable *inTab) {
+  PyObject *outDict=PyDict_New();
+  ObitTableGBTVEGASSTATE *lTab = (ObitTableGBTVEGASSTATE*)inTab;
+
+  return outDict;
+} 
+
+extern void TableGBTVEGASSTATESetHeadKeys (ObitTable *inTab, PyObject *inDict) {
+  ObitTableGBTVEGASSTATE *lTab = (ObitTableGBTVEGASSTATE*)inTab;
+  char *tstr;
+  int lstr=MAXKEYCHARTABLESTATE;
+
+
+  if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
+    lTab->myStatus = OBIT_Modified;
+} 
+
+extern ObitTable *TableGBTVEGASSTATE(ObitData *,long *,int ,char *,ObitErr *);
+extern PyObject *TableGBTVEGASSTATEGetHeadKeys(ObitTable *);
+extern void TableGBTVEGASSTATESetHeadKeys(ObitTable *,PyObject *);
 
 #include "Obit.h"
 #include "ObitData.h"
@@ -61949,6 +62191,45 @@ static PyObject *_wrap_OTFUtilConvBeam(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OTFFlagEditFD(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitOTF * _arg0;
+    ObitOTF * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:OTFFlagEditFD",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitOTF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OTFFlagEditFD. Expected _ObitOTF_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitOTF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OTFFlagEditFD. Expected _ObitOTF_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of OTFFlagEditFD. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    OTFFlagEditFD(_arg0,_arg1,_arg2);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_TableGBTANTPOSGR(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitTable * _result;
@@ -64474,6 +64755,751 @@ static PyObject *_wrap_TableGBTSPSTATESetHeadKeys(PyObject *self, PyObject *args
   }
 }
     TableGBTSPSTATESetHeadKeys(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  Py_XDECREF (_arg1);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableGBTVEGASACT_STATE(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitData * _arg0;
+    long * _arg1;
+    int  _arg2;
+    char * _arg3;
+    ObitErr * _arg4;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo4 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiOO:TableGBTVEGASACT_STATE",&_argo0,&_obj1,&_arg2,&_obj3,&_argo4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTVEGASACT_STATE. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    int size = PyList_Size(_obj1);
+    int i = 0;
+    _arg1 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj1,i);
+      if (PyInt_Check(o)) {
+         _arg1[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg1);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of TableGBTVEGASACT_STATE. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TableGBTVEGASACT_STATE(_arg0,_arg1,_arg2,_arg3,_arg4);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((long *) _arg1);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableGBTVEGASACT_STATEGetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitTable * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:TableGBTVEGASACT_STATEGetHeadKeys",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTVEGASACT_STATEGetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)TableGBTVEGASACT_STATEGetHeadKeys(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableGBTVEGASACT_STATESetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    PyObject * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:TableGBTVEGASACT_STATESetHeadKeys",&_argo0,&_obj1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTVEGASACT_STATESetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    _arg1 = PyDict_Copy(PyList_GetItem(_obj1,0));
+  } else if (PyDict_Check(_obj1)) {
+    _arg1 = PyDict_Copy(_obj1);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+    TableGBTVEGASACT_STATESetHeadKeys(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  Py_XDECREF (_arg1);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableGBTVEGASDATA(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitData * _arg0;
+    long * _arg1;
+    int  _arg2;
+    char * _arg3;
+    ObitErr * _arg4;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo4 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiOO:TableGBTVEGASDATA",&_argo0,&_obj1,&_arg2,&_obj3,&_argo4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTVEGASDATA. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    int size = PyList_Size(_obj1);
+    int i = 0;
+    _arg1 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj1,i);
+      if (PyInt_Check(o)) {
+         _arg1[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg1);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of TableGBTVEGASDATA. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TableGBTVEGASDATA(_arg0,_arg1,_arg2,_arg3,_arg4);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((long *) _arg1);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableGBTVEGASDATAGetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitTable * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:TableGBTVEGASDATAGetHeadKeys",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTVEGASDATAGetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)TableGBTVEGASDATAGetHeadKeys(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableGBTVEGASDATASetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    PyObject * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:TableGBTVEGASDATASetHeadKeys",&_argo0,&_obj1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTVEGASDATASetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    _arg1 = PyDict_Copy(PyList_GetItem(_obj1,0));
+  } else if (PyDict_Check(_obj1)) {
+    _arg1 = PyDict_Copy(_obj1);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+    TableGBTVEGASDATASetHeadKeys(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  Py_XDECREF (_arg1);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableGBTVEGASPORT(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitData * _arg0;
+    long * _arg1;
+    int  _arg2;
+    char * _arg3;
+    ObitErr * _arg4;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo4 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiOO:TableGBTVEGASPORT",&_argo0,&_obj1,&_arg2,&_obj3,&_argo4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTVEGASPORT. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    int size = PyList_Size(_obj1);
+    int i = 0;
+    _arg1 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj1,i);
+      if (PyInt_Check(o)) {
+         _arg1[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg1);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of TableGBTVEGASPORT. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TableGBTVEGASPORT(_arg0,_arg1,_arg2,_arg3,_arg4);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((long *) _arg1);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableGBTVEGASPORTGetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitTable * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:TableGBTVEGASPORTGetHeadKeys",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTVEGASPORTGetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)TableGBTVEGASPORTGetHeadKeys(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableGBTVEGASPORTSetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    PyObject * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:TableGBTVEGASPORTSetHeadKeys",&_argo0,&_obj1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTVEGASPORTSetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    _arg1 = PyDict_Copy(PyList_GetItem(_obj1,0));
+  } else if (PyDict_Check(_obj1)) {
+    _arg1 = PyDict_Copy(_obj1);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+    TableGBTVEGASPORTSetHeadKeys(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  Py_XDECREF (_arg1);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableGBTVEGASSAMPLER(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitData * _arg0;
+    long * _arg1;
+    int  _arg2;
+    char * _arg3;
+    ObitErr * _arg4;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo4 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiOO:TableGBTVEGASSAMPLER",&_argo0,&_obj1,&_arg2,&_obj3,&_argo4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTVEGASSAMPLER. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    int size = PyList_Size(_obj1);
+    int i = 0;
+    _arg1 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj1,i);
+      if (PyInt_Check(o)) {
+         _arg1[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg1);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of TableGBTVEGASSAMPLER. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TableGBTVEGASSAMPLER(_arg0,_arg1,_arg2,_arg3,_arg4);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((long *) _arg1);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableGBTVEGASSAMPLERGetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitTable * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:TableGBTVEGASSAMPLERGetHeadKeys",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTVEGASSAMPLERGetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)TableGBTVEGASSAMPLERGetHeadKeys(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableGBTVEGASSAMPLERSetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    PyObject * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:TableGBTVEGASSAMPLERSetHeadKeys",&_argo0,&_obj1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTVEGASSAMPLERSetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    _arg1 = PyDict_Copy(PyList_GetItem(_obj1,0));
+  } else if (PyDict_Check(_obj1)) {
+    _arg1 = PyDict_Copy(_obj1);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+    TableGBTVEGASSAMPLERSetHeadKeys(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  Py_XDECREF (_arg1);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableGBTVEGASSTATE(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitData * _arg0;
+    long * _arg1;
+    int  _arg2;
+    char * _arg3;
+    ObitErr * _arg4;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo4 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiOO:TableGBTVEGASSTATE",&_argo0,&_obj1,&_arg2,&_obj3,&_argo4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTVEGASSTATE. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    int size = PyList_Size(_obj1);
+    int i = 0;
+    _arg1 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj1,i);
+      if (PyInt_Check(o)) {
+         _arg1[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg1);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of TableGBTVEGASSTATE. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TableGBTVEGASSTATE(_arg0,_arg1,_arg2,_arg3,_arg4);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((long *) _arg1);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableGBTVEGASSTATEGetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitTable * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:TableGBTVEGASSTATEGetHeadKeys",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTVEGASSTATEGetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)TableGBTVEGASSTATEGetHeadKeys(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableGBTVEGASSTATESetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    PyObject * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:TableGBTVEGASSTATESetHeadKeys",&_argo0,&_obj1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTVEGASSTATESetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    _arg1 = PyDict_Copy(PyList_GetItem(_obj1,0));
+  } else if (PyDict_Check(_obj1)) {
+    _arg1 = PyDict_Copy(_obj1);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+    TableGBTVEGASSTATESetHeadKeys(_arg0,_arg1);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
 {
@@ -74216,6 +75242,21 @@ static PyMethodDef ObitMethods[] = {
 	 { "TableOTFArrayGeomSetHeadKeys", _wrap_TableOTFArrayGeomSetHeadKeys, METH_VARARGS },
 	 { "TableOTFArrayGeomGetHeadKeys", _wrap_TableOTFArrayGeomGetHeadKeys, METH_VARARGS },
 	 { "TableOTFArrayGeom", _wrap_TableOTFArrayGeom, METH_VARARGS },
+	 { "TableGBTVEGASSTATESetHeadKeys", _wrap_TableGBTVEGASSTATESetHeadKeys, METH_VARARGS },
+	 { "TableGBTVEGASSTATEGetHeadKeys", _wrap_TableGBTVEGASSTATEGetHeadKeys, METH_VARARGS },
+	 { "TableGBTVEGASSTATE", _wrap_TableGBTVEGASSTATE, METH_VARARGS },
+	 { "TableGBTVEGASSAMPLERSetHeadKeys", _wrap_TableGBTVEGASSAMPLERSetHeadKeys, METH_VARARGS },
+	 { "TableGBTVEGASSAMPLERGetHeadKeys", _wrap_TableGBTVEGASSAMPLERGetHeadKeys, METH_VARARGS },
+	 { "TableGBTVEGASSAMPLER", _wrap_TableGBTVEGASSAMPLER, METH_VARARGS },
+	 { "TableGBTVEGASPORTSetHeadKeys", _wrap_TableGBTVEGASPORTSetHeadKeys, METH_VARARGS },
+	 { "TableGBTVEGASPORTGetHeadKeys", _wrap_TableGBTVEGASPORTGetHeadKeys, METH_VARARGS },
+	 { "TableGBTVEGASPORT", _wrap_TableGBTVEGASPORT, METH_VARARGS },
+	 { "TableGBTVEGASDATASetHeadKeys", _wrap_TableGBTVEGASDATASetHeadKeys, METH_VARARGS },
+	 { "TableGBTVEGASDATAGetHeadKeys", _wrap_TableGBTVEGASDATAGetHeadKeys, METH_VARARGS },
+	 { "TableGBTVEGASDATA", _wrap_TableGBTVEGASDATA, METH_VARARGS },
+	 { "TableGBTVEGASACT_STATESetHeadKeys", _wrap_TableGBTVEGASACT_STATESetHeadKeys, METH_VARARGS },
+	 { "TableGBTVEGASACT_STATEGetHeadKeys", _wrap_TableGBTVEGASACT_STATEGetHeadKeys, METH_VARARGS },
+	 { "TableGBTVEGASACT_STATE", _wrap_TableGBTVEGASACT_STATE, METH_VARARGS },
 	 { "TableGBTSPSTATESetHeadKeys", _wrap_TableGBTSPSTATESetHeadKeys, METH_VARARGS },
 	 { "TableGBTSPSTATEGetHeadKeys", _wrap_TableGBTSPSTATEGetHeadKeys, METH_VARARGS },
 	 { "TableGBTSPSTATE", _wrap_TableGBTSPSTATE, METH_VARARGS },
@@ -74267,6 +75308,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "TableGBTANTPOSGRSetHeadKeys", _wrap_TableGBTANTPOSGRSetHeadKeys, METH_VARARGS },
 	 { "TableGBTANTPOSGRGetHeadKeys", _wrap_TableGBTANTPOSGRGetHeadKeys, METH_VARARGS },
 	 { "TableGBTANTPOSGR", _wrap_TableGBTANTPOSGR, METH_VARARGS },
+	 { "OTFFlagEditFD", _wrap_OTFFlagEditFD, METH_VARARGS },
 	 { "OTFUtilConvBeam", _wrap_OTFUtilConvBeam, METH_VARARGS },
 	 { "OTFCalUtilFlag", _wrap_OTFCalUtilFlag, METH_VARARGS },
 	 { "OTFUtilDiffNod", _wrap_OTFUtilDiffNod, METH_VARARGS },

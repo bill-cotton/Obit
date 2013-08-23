@@ -108,7 +108,7 @@ def PlotSpectrum (inData, targets, scans, feed, Stokes, channs, err, \
     # Init accumulators
     spec = []; wt = []
     for i in range(0,nchan):
-        spec.append(FArray.fblank)
+        spec.append(0.0)
         wt.append(0.0)
     # Loop over data
     for i in range(1,nrec+1):

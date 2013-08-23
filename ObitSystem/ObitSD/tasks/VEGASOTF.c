@@ -1130,6 +1130,7 @@ void GetData (ObitOTF *outData, gchar *infile, ObitInfoList *myInput,
   startTime = -1.0e20;        /* dummy start time */
   
   /* Loop over table */
+  /* Note: this assumes a data order in the VEGAS file of chan, sampler, state */
   for (irow = 1; irow<=table->myDesc->nrow; irow++) {
     retCode = ObitTableGBTVEGASDATAReadRow (table, irow, row, err);
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
@@ -1140,8 +1141,6 @@ void GetData (ObitOTF *outData, gchar *infile, ObitInfoList *myInput,
     
     /* Loop over state */
     for (istate=0; istate<nstate; istate++) {
-      /* DEBUG 
-      sum = cnt = 0.0;*/
       /* Init data to blank */	
       for (i=0; i<ndetect; i++) {
 	data[desc->ilocdata+i*incdatawt]   = fblank;
@@ -1172,22 +1171,15 @@ void GetData (ObitOTF *outData, gchar *infile, ObitInfoList *myInput,
 	joff = desc->ilocdata + istok*desc->incs; /* Offset in output record */
 	/* Loop over spectrum */
 	for (ichan=0; ichan<nchan; ichan++) {
-	  data[joff+ichan*desc->incf]   = row->data[ioff+ichan];
+	  data[joff+ichan*desc->incf]   = 
+	    row->data[ioff+ichan]/row->integrat[istok+istate*nstok]; 
 	  data[joff+ichan*desc->incf+1] = 1.0;
-	  /* DEBUG 
-	  if ((istok==0) && (data[desc->iloccal]<0.5) && (ichan>256) && (ichan<500)) {
-	    sum += data[joff+ichan*desc->incf]; cnt++;
-	  }*/
 	} /* End channel loop */
       }   /* End Stokes loop */
       
       /* set number of records */
       desc->numRecBuff = 1;
       
-      /* DEBUG
-      if ((off==0.0) && (cnt>0)) off = sum/cnt;
-      if (cnt>0) fprintf (stderr, "%d %f\n", irow, (sum/cnt)-off); */
-
      /* Write output  */
       if ((ObitOTFWrite (outData, NULL, err) != OBIT_IO_OK) || (err->error>0))
 	Obit_log_error(err, OBIT_Error, "ERROR writing output Table file");
