@@ -399,7 +399,7 @@ void ObitOTFCalUtilFitBPOnOff (ObitOTF *inOTF,  olong offScan, olong onScan,
   olong ver;
   gboolean isLinear;
   odouble RACal, DecCal, refFreq, freq;
-  ofloat FluxCal, freqFlux, parAng, fblank = ObitMagicF();
+  ofloat FluxCal, freqFlux, parAng=0.0, fblank = ObitMagicF();
   gchar *routine = "ObitOTFCalUtilFitOnOff";
 
    /* error checks */

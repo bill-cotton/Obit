@@ -1128,7 +1128,7 @@ void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData,
   gchar         *hiEntries[] = {
     "DataRoot", "selChan", "selIF", "selBand", "selConfig", "selCode", 
     "selChBW",
-    "dropZero", "doCode", "calInt", "doSwPwr", "doOnline", "SWOrder", 
+    "dropZero", "doCode", "defCode", "calInt", "doSwPwr", "doOnline", "SWOrder", 
     "doAtmCor", 
     NULL};
   gchar *routine = "BDFInHistory";
@@ -1688,7 +1688,7 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
   ObitIOAccess access;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gboolean *isDone=NULL, doCode=TRUE, doneIt;
+  gboolean *isDone=NULL, doCode=TRUE, defCode=TRUE, doneIt;
   olong *souNoList=NULL, nSouDone=0;
   gchar *blank = "        ";
   gchar *routine = "GetSourceInfo";
@@ -1700,6 +1700,12 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
 
   /* Print any messages */
   ObitErrLog(err);
+
+  /* Set default calcodes by intent if blank,
+     coded as decreed by B. Butler */
+  ObitInfoListGetTest(myInput, "defCode", &type, dim, &defCode);
+  if (defCode) ObitSDMDataGetDefaultCalCode (SDMData, err);
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
   
   /* Give each source in source table by name a constant source number 
      include calcode or not? */

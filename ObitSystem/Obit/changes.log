@@ -1675,3 +1675,26 @@ ObitSD/python/VEGASUtil.py:
 ObitSD/tasks/VEGASOTF.c:
  Normalize data by integration time.
 23 Aug 2013, svn version 462
+
+Default CalCodes for EVLA/ALMA data
+Single dish upgrades for GBT/VEGAS
+bug fixes:
+ObitSD/python/OTFSoln2Cal.py:
+  POTFSoln2Cal: Fix checks
+ObitSD/tasks/OTFImage.c ObitSD/TDF/OTFImage.TDF:
+ Enable bandpass calibration
+ Fix channel looping
+ObitSD/python/OTF.py:
+  Document bandpass cal
+ObitSD/src/ObitOTFCal.c  ObitSD/src/ObitOTFCalUtil.c ObitSD/src/ObitOTFGetSoln.c:
+  Uninitialized variables
+Obit/tasks/BDFIn.c Obit/TDF/BDFIn.TDF
+Obit/include/ObitSDMData.h Obit/src/ObitSDMData.c:
+  Implement optional default calCodes
+Obit/tasks/Calib.c Obit/tasks/UVSub.c :
+  Fix logic error in setting do3D
+Obit/src/ObitUVCalCalibrate.c:
+  Init:  Hack to allow CL table claiming 0 antennas.
+Obit/tasks/Imager.c:
+  Fix bugs when channel increment not = chAvg
+30 Aug. 2013 snv version 463

@@ -497,6 +497,10 @@ static ASDMXXXXTable* ParseASDMXXXXTable(ObitSDMData *me,
 					 ObitErr *err);
 /** Private: Destructor for XXXX table. */
 static ASDMXXXXTable* KillASDMXXXXTable(ASDMXXXXTable* table);
+
+/** Private: get CalCode from scan intents */
+static void DefaultCalCode(ObitSDMData *in, olong iMain, gchar* code);
+
 /** Private: Count rows in a table */
 static olong CountTableRows(gchar *XXXXFile, ObitErr *err);
 
@@ -2252,6 +2256,66 @@ ObitTableSN* ObitSDMDataAtm2SN (ObitUV *inUV, ObitSDMData *SDM,
 
   return outSN;
 } /* end ObitSDMDataAtm2SN  */
+
+/**
+ * Set default calcodes if entries blanked
+ *              for intents, assign code
+ *            OBSERVE_TARGET        = 1
+ *	      CALIBRATE_AMPLI       = 2
+ *	      CALIBRATE_PHASE       = 3
+ *            CALIBRATE_FLUX        = 4
+ *            CALIBRATE_BAND_PASS   = 5
+ *            CALIBRATE_POL_ANGLE   = 6
+ *            CALIBRATE_POL_LEAKAGE = 7
+ *            CALIBRATE_POINTING    = 8
+ *         for given combinations of intents that occur for a scan, 
+ *         the resulting calibrator codes are:
+ *             1 -> " "
+ *            2 + 3 -> "D"
+ *            4 -> "E"
+ *            5 -> "F"
+ *            6 -> "G"
+ *            7 -> "H"
+ *            8 -> "P"
+ *            2 + 3 + 5 -> "I"
+ *            2 + 3 + 6 -> "J"
+ *            4 + 5 -> "K"
+ *            4 + 6 -> "L"
+ *            5 + 6 -> "M"
+ *            4 + 5 + 6 -> "N"
+ *            2 + 3 + 4 -> "O"
+ *            2 + 3 + 4 + 5 -> "Q"
+ *            2 + 3 + 4 + 5 + 6 -> "R"
+ *            any other combination -> "Z"
+ * \param in         ASDM srtucture
+ * \param err        Error stack, returns if not empty.
+ * \return Pointer to the newly created ObitTableSN
+ */
+void ObitSDMDataGetDefaultCalCode (ObitSDMData *in, ObitErr *err)
+{
+  olong iMain, iField, fieldId;
+
+  if (err->error) return;  /* existing error? */
+
+  /* Loop over Main Table in ASDM */
+  for (iMain=0; iMain<in->MainTab->nrows; iMain++) {
+    
+    /* Find Field table row */
+    fieldId = in->MainTab->rows[iMain]->fieldId;
+    for (iField=0; iField<in->FieldTab->nrows; iField++) {
+      if (in->FieldTab->rows[iField]->fieldId==fieldId) break;
+    }
+
+    /* Need possible default? */
+    if (!strncmp(in->FieldTab->rows[iField]->code, "NONE", 4) ||
+	!strncmp(in->FieldTab->rows[iField]->code, "none", 4)) {
+      DefaultCalCode(in, iMain, in->FieldTab->rows[iField]->code);
+    } /* End lookup default cal code */
+    
+
+  } /* end loop over main table */
+
+} /* end ObitSDMDataGetDefaultCalCode */
 
 /**
  * Initialize global ClassInfo Structure.
@@ -9091,6 +9155,61 @@ static olong CountTableRows(gchar *CntFile, ObitErr *err)
 
   return out;
 } /* end CountTableRows */
+
+/** 
+ * Get CalCode from scan intents 
+ * \param  in      ASDM structure
+ * \param  iMain   Row in main table defining scan
+ * \param  code    [out] default calcode
+ */
+static void DefaultCalCode(ObitSDMData *in, olong iMain, gchar* code)
+{
+  olong i, j, iScan, scanNo, numIntent;
+  olong maxIntent=8;   /* Known intents */
+  gchar *intents[] = {
+    "OBSERVE_TARGET", "CALIBRATE_AMPLI", "CALIBRATE_PHASE",
+    "CALIBRATE_FLUX", "CALIBRATE_BANDPASS", "CALIBRATE_POL_ANGLE",
+    "CALIBRATE_POL_LEAKAGE", "CALIBRATE_POINTING" };
+  /* Corresponding booleans */
+  gboolean haveIntent[] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
+
+  /* Look up scan */
+  scanNo = in->MainTab->rows[iMain]->scanNumber;
+  for (iScan=0; iScan<in->ScanTab->nrows; iScan++) {
+    if (in->ScanTab->rows[iScan]->scanNumber==scanNo) break;
+  }
+  /* Bail if not found */
+  if (iScan>=in->ScanTab->nrows) return;
+
+  /* blank fill end of code */
+  code[0] = '?';  code[1] = code[2] = code[3] = ' ';
+  numIntent = in->ScanTab->rows[iScan]->numIntent;
+  for (i=0; i<numIntent; i++) {
+    for (j=0; j<maxIntent; j++) {
+      if (!strncmp(in->ScanTab->rows[iScan]->scanIntent[i], intents[j], strlen(intents[j])))
+	  haveIntent[i] = TRUE;
+    } /* end loop over known intents */
+  } /* end loop over scan intents */
+
+  /* Set default calcode */
+  if (haveIntent[0]) code[0] = ' ';
+  if (haveIntent[1]&&haveIntent[2]) code[0] = 'D';
+  if (haveIntent[3]) code[0] = 'E';
+  if (haveIntent[4]) code[0] = 'F';
+  if (haveIntent[5]) code[0] = 'G';
+  if (haveIntent[6]) code[0] = 'H';
+  if (haveIntent[7]) code[0] = 'P';
+  if (haveIntent[1]&&haveIntent[2]&&haveIntent[4]) code[0] = 'I';
+  if (haveIntent[1]&&haveIntent[2]&&haveIntent[5]) code[0] = 'J';
+  if (haveIntent[3]&&haveIntent[4]) code[0] = 'K';
+  if (haveIntent[3]&&haveIntent[5]) code[0] = 'L';
+  if (haveIntent[4]&&haveIntent[5]) code[0] = 'M';
+  if (haveIntent[3]&&haveIntent[4]&&haveIntent[5]) code[0] = 'N';
+  if (haveIntent[1]&&haveIntent[2]&&haveIntent[3]) code[0] = 'O';
+  if (haveIntent[1]&&haveIntent[2]&&haveIntent[3]&&haveIntent[4]) code[0] = 'Q';
+  if (haveIntent[1]&&haveIntent[2]&&haveIntent[3]&&haveIntent[4]&&haveIntent[5]) code[0] = 'R';
+  if (code[0]=='?') code[0] = 'Z';  /* Anything else */
+} /* end DefaultCalCode */
 
 /**
  * Compare frequencies, to give ascending order.

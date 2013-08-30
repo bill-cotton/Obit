@@ -1854,8 +1854,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     /* End DEBUG */
     
     /* next output channel number */
-    ochan += MIN(nParTh, (olong)(0.999 + (ofloat)nChLeft/chAvg)); 
-    nChLeft -= nParTh*chAvg;   /* How many channels left? */
+    ochan += MIN(nParTh, (olong)(0.999 + (ofloat)nChLeft/chInc)); 
+    nChLeft -= nParTh*chInc;   /* How many channels left? */
   } /* end loop over channels */
 
   /* Save number of fields */

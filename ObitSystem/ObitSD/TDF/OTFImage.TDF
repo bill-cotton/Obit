@@ -4,7 +4,7 @@
 ;! Obit Radio Single dish On The Fly imaging software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006-2008
+;;  Copyright (C) 2006-2013
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -61,6 +61,10 @@ doCalib          -1         10      Apply calibration table
 keepCal                             Keep "cal-on" data
 **PARAM** int 1
 gainUse                             Cal/Soln table to apply
+**PARAM** int 1
+doBand           -1         10      Apply bandpass calibration
+**PARAM** int 1
+BPVer                               OTFBP table to apply
 **PARAM** int 1
 flagVer                             Flag table version
 **PARAM** str 4  **DEF** FITS
@@ -198,6 +202,8 @@ Adverbs:
   keepCal....if True, include "cal-on" data in image
              For CCB data, use FALSE
   gainUse....Cal/Soln table version number to apply. 0=> highest.
+  doBand.....If true, apply OTFBP bandpass table
+  BPVer......OTFBP table version number to apply. 0=> highest.
   flagVer....FG table to use for editing. 0 => highest.
 
       Output files

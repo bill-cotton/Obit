@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2005
+#  Copyright (C) 2004-2013
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -47,11 +47,11 @@ def POTFSoln2Cal(inOTF, outOTF, err):
     """
     ################################################################
     # Checks
-    if not OTF.POTFIsA(inOTF):
+    if not OTF.PIsA(inOTF):
         raise TypeError,"inOTF MUST be a Python Obit OTF"
-    if not OTF.POTFIsA(outOTF):
+    if not OTF.PIsA(outOTF):
         raise TypeError,"outOTF MUST be a Python Obit OTF"
-    if not Oerr.OErrIsA(err):
+    if not OErr.OErrIsA(err):
         raise TypeError,"err MUST be a Python ObitErr"
     #
     out = Table.Table(" ")

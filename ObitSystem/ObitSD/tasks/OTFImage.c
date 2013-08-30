@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit  Radio Single dish On The Fly imaging software                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -663,7 +663,7 @@ void doChan (ObitInfoList* myInput, ObitOTF* inData, ObitErr* err)
   gchar        *targets, target[24], *CCType = "AIPS CC";
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Targets", "Scans", "Feeds", "timeRange", "keepCal",
-    "doCalSelect", "doCalib", "gainUse", "flagVer", 
+    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
     NULL
   };
   gchar        *imgparms[] = {  /* Imaging parameters */
@@ -765,7 +765,7 @@ void doChan (ObitInfoList* myInput, ObitOTF* inData, ObitErr* err)
     
   /* Loop over channels */
   ochan = RChan - BChan;
-  for (ichan = RChan; ichan<=EChan; ichan+=chInc) {
+  for (ichan = RChan; ichan<EChan; ichan+=chInc) {
     ochan++; /* output channel number */
     
     if (BChan<=EChan)
@@ -879,7 +879,8 @@ void OTFImageHistory (ObitInfoList* myInput, ObitOTF* inData,
     "inFile",  "inDisk", 
     "outDType", "outName", "outClass", "out2Class", "outSeq", "outFile",  "outDisk", 
     "Targets", "Scans", "Feeds", "timeRange",  "keepCal", "minWt", "deMode", "deBias",
-    "doScale", "doFilter", "doCalSelect",  "doCalib",  "gainUse", "flagVer", 
+    "doScale", "doFilter", 
+    "doCalSelect",  "doCalib",  "gainUse", "doBand", "BPVer", "flagVer", 
     "CLEANBox",  "Gain",  "minFlux",  "Niter",  "Patch",
     "BeamSize",  "fracPeak", "noResid", "doRestore", "fracPeak", 
     "autoWindow", "nThreads",

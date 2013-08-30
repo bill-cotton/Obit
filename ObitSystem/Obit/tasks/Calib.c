@@ -971,7 +971,9 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, skyModel->name, skyModel);
   
   /* get do3D from first image */
-  do3D = image[0]->myDesc->do3D;
+  if ((skyModel->mosaic) && (skyModel->mosaic->images[0]))
+    do3D = skyModel->mosaic->images[0]->myDesc->do3D;
+  else do3D = FALSE;
       
   /* Save do3D */
   dim[0] = 1; dim[1] = 1;

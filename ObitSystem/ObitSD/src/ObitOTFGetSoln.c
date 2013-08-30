@@ -605,7 +605,7 @@ ObitTableOTFSoln* ObitOTFGetSolnGain (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr *
   ofloat *rec=NULL, solInt, minEl, el, t0, tEnd, value, fblank = ObitMagicF();
   ofloat *time, *cal, *data, *lastgood, sumTime, minrms, *calJy=NULL;
   ofloat *value1=NULL, *value2=NULL;
-  olong nfeed, nstok, nchan, nscal, ifeed, istok, incs, incfeed, ilocdata;
+  olong nfeed=1, nstok, nchan, nscal=1, ifeed, istok, incs=1, incfeed=1, ilocdata=1;
   olong iRow, ver, i, j, lrec, nsample;
   olong  npoly, ndetect, incdatawt;
   ObitIOCode retCode;
@@ -975,7 +975,7 @@ ObitTableOTFSoln* ObitOTFGetSolnFilter (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
   ofloat *rec, solInt, minEl, el, t0, fblank = ObitMagicF();
   ofloat *time, *data, clip;
   ofloat totalTime, samp, parms[10];
-  olong nfeed, nstok, nchan, nscal, ifeed, istok, incs, incfeed, ilocdata;
+  olong nfeed=0, nstok, nchan, nscal=0, ifeed, istok, incs=1, incfeed=1, ilocdata=0;
   olong iRow, ver, i, j, k, ibuf, lrec, nsample;
   olong  npoly, ndetect, incdatawt, nTime=0;
   ObitIOCode retCode;
@@ -1395,7 +1395,7 @@ ObitTableOTFSoln* ObitOTFGetSolnPolyBL (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
   ofloat *time, *data, *mtime, *mdata, *mwt, *poly;
   olong order, torder, iRow, ver, i, j, k, ibuf, lrec, nsample, msample;
   olong  npoly, ndetect, incdatawt;
-  olong nfeed, nstok, nchan, nscal, ifeed, istok, incs, incfeed, ilocdata;
+  olong nfeed=0, nstok, nchan, nscal=0, ifeed, istok, incs=1, incfeed=1, ilocdata=0;
   ObitIOCode retCode;
   gboolean flag, doCalSelect, someOK, done, someData;
   gchar *tname;

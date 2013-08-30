@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010,2012                                          */
+/*;  Copyright (C) 2010-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -407,6 +407,9 @@ ObitTableSN* ObitSDMDataWVR2SN (ObitUV *inUV, ObitSDMData *SDM,
 ObitTableSN* ObitSDMDataAtm2SN (ObitUV *inUV, ObitSDMData *SDM,
 				ASDMSpectralWindowArray* SpWinArray, 
 				ObitErr *err);
+
+/** Public: Get default calcodes by intent  */
+void ObitSDMDataGetDefaultCalCode (ObitSDMData *SDM, ObitErr *err);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

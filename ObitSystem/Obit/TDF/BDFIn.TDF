@@ -61,6 +61,8 @@ selChBW                             Channel bandwidth (kHz) to select
 dropZero                            Drop records with all zero vis
 **PARAM** boo 1  **DEF** F
 doCode                              Each calcode a different source?
+**PARAM** boo 1  **DEF** T
+defCode                             Default CalCodes by Intent
 **PARAM** boo 1  **DEF** F
 doOnline                            Keep "online" calibration data
 **PARAM** boo 1  **DEF** F
@@ -152,6 +154,35 @@ Data selection
              will be generate distinct source ID (entry in the 
              AIPS SU table).  If False, all data for a given source 
              name will have the same source ID.
+  defCode....If True, then set blank calcodes to a default calcode:
+              for intents, assign code
+              OBSERVE_TARGET        = 1
+	      CALIBRATE_AMPLI       = 2
+	      CALIBRATE_PHASE       = 3
+              CALIBRATE_FLUX        = 4
+              CALIBRATE_BAND_PASS   = 5
+              CALIBRATE_POL_ANGLE   = 6
+              CALIBRATE_POL_LEAKAGE = 7
+              CALIBRATE_POINTING    = 8
+           for given combinations of intents that occur for a scan, 
+           the resulting calibrator codes are:
+              1 -> " "
+              2 + 3 -> "D"
+              4 -> "E"
+              5 -> "F"
+              6 -> "G"
+              7 -> "H"
+              8 -> "P"
+              2 + 3 + 5 -> "I"
+              2 + 3 + 6 -> "J"
+              4 + 5 -> "K"
+              4 + 6 -> "L"
+              5 + 6 -> "M"
+              4 + 5 + 6 -> "N"
+              2 + 3 + 4 -> "O"
+              2 + 3 + 4 + 5 -> "Q"
+              2 + 3 + 4 + 5 + 6 -> "R"
+              any other combination -> "Z"
   doOnline...Data in scans with stated intents indicating an online
              calibration, such as "CALIBRATE_POINTING","UNSPECIFIED" 
              will be written skipped unless doOnline=True.

@@ -159,7 +159,8 @@ void ObitUVCalCalibrateInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
     me->numPol = ((ObitTableCL*)me->CLTable)->numPol;
     me->numRow = ((ObitTableCL*)me->CLTable)->myDesc->nrow;
     /* Check number of antennas */
-    Obit_return_if_fail((me->numAnt<=((ObitTableCL*)me->CLTable)->numAnt), err,
+    Obit_return_if_fail((((ObitTableCL*)me->CLTable)->numAnt<=0) || 
+			(me->numAnt<=((ObitTableCL*)me->CLTable)->numAnt), err,
 			"%s: CL Table different number of antennas < data %d, %d",
 			routine, ((ObitTableCL*)me->CLTable)->numAnt, me->numAnt);
   }

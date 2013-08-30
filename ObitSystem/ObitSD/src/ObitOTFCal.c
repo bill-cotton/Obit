@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -373,7 +373,7 @@ gboolean  ObitOTFCalApply (ObitOTFCal *in, ofloat *recIn, ofloat *recOut, ObitEr
   ofloat *data, time, corr, dRa, dDec, fblank = ObitMagicF();
   olong  i, j, scan, incdatawt;
   olong nfeed, nstok, nchan, nscal, ifeed, istok, ichan;
-  ofloat  add, mult, cal;
+  ofloat  add, mult, cal, wt;
   gboolean doDataWt;
   ObitOTFDesc *desc;
   ObitOTFSel *sel;
@@ -437,17 +437,20 @@ gboolean  ObitOTFCalApply (ObitOTFCal *in, ofloat *recIn, ofloat *recOut, ObitEr
 	  /* Loop over Channel - apply same correction to all channels */
 	  /* Depends on istok */
 	  if (istok==0) {  /* XX */
-	    cal = in->CalApplyCal[ifeed*nscal];
-	    add = in->CalApplyAdd[ifeed*nscal];
+	    cal  = in->CalApplyCal[ifeed*nscal];
+	    add  = in->CalApplyAdd[ifeed*nscal];
 	    mult = in->CalApplyMult[ifeed*nscal];
+	    wt   = in->CalApplyWt[ifeed*nscal];
 	  } else if (istok==1) { /* YY */
-	    cal = in->CalApplyCal[ifeed*nscal+1];
-	    add = in->CalApplyAdd[ifeed*nscal+1];
+	    cal  = in->CalApplyCal[ifeed*nscal+1];
+	    add  = in->CalApplyAdd[ifeed*nscal+1];
 	    mult = in->CalApplyMult[ifeed*nscal+1];
+	    wt   = in->CalApplyWt[ifeed*nscal+1];
 	  } else if (istok>=2) { /* Real(XY) or Imag(XY) */
 	    cal = 0.0;
 	    add = 0.0;
 	    mult = sqrt(fabs(in->CalApplyMult[ifeed*nscal]*in->CalApplyMult[ifeed*nscal+1]));
+	    wt   = in->CalApplyWt[ifeed*nscal]+in->CalApplyWt[ifeed*nscal+1];
 	  }
 	  for (ichan=0; ichan<nchan; ichan++) {
 	    if ((*data!=fblank) && (add!=fblank) && (mult!=fblank)) {
@@ -462,11 +465,11 @@ gboolean  ObitOTFCalApply (ObitOTFCal *in, ofloat *recIn, ofloat *recOut, ObitEr
 
 	      /* polynomial atmosphere term */
 	      corr = 0.0;
-	      for (j=0; j<in->numPoly; j++) corr += in->poly[i*in->numPoly+j]*in->CalApplyPoly[j];
+	      for (j=0; j<in->numPoly; j++) corr += in->poly[ifeed*in->numPoly+j]*in->CalApplyPoly[j];
 	      *data += corr;
 	      
 	      /* Weight */
-	      if (doDataWt) *(data+1) *= in->CalApplyWt[i];
+	      if (doDataWt) *(data+1) *= wt;
 	      
 	      OK = TRUE;
 	    } else *data = fblank; /* End if valid */

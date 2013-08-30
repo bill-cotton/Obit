@@ -27,8 +27,10 @@ function.
 Data selection, calibration and editing parameters on List member
   "doCalSelect" bool (1,1,1) Select/calibrate/edit data?
   "doCalib"     int  (1,1,1) >0 -> calibrate,
-  "gainUse"     int  (1,1,1) SN/CL table version number, 0-> use highest
-  "flagVer"     int  (1,1,1) Flag table version, 0-> use highest, <0-> none
+  "gainUse"     int  (1,1,1) OTFSoln/OTFCal table version number, 0-> use highest
+  "doBand"      int  (1,1,1) >0 -> calibrate,
+  "BPVer"       int  (1,1,1) OTFBP table version number, 0-> use highest
+  "flagVer"     int  (1,1,1) OTFFlag table version, 0-> use highest, <0-> none
   "BChan"       int  (1,1,1) First spectral channel selected. [def all]
   "EChan"       int  (1,1,1) Highest spectral channel selected. [def all]
   "Targets"     string (?,?,1) Target names selected. [def all]
@@ -39,7 +41,7 @@ Data selection, calibration and editing parameters on List member
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2009
+#  Copyright (C) 2004-2013
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
