@@ -7,7 +7,7 @@
  - currently antenna offset correction turned off 
  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008-2008                                     */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -49,7 +49,7 @@
 static void 
 ObitIoN2SolNTableModel(ObitTableNI *NITable, ObitTableNIRow *NIRow, 
 		       ObitAntennaList *Ant, olong numIF, olong numPol, odouble *freqIF,
-		       odouble ra, odouble dec, ofloat off[2], 
+		       odouble ra, odouble dec, ofloat off[2], ofloat psign,
 		       gboolean do3Dmul, gboolean doAntOff, ofloat URot3D[3][3], 
 		       ObitTableSNRow *SNRow, ObitErr *err);
 
@@ -88,7 +88,7 @@ ObitTableSN* ObitIoN2SolNTableConvert (ObitUV *inUV, ObitTableNI *NITable,
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   gboolean bad, do3Dmul, allBad=TRUE, doAntOff, do3D;
-  ofloat  URot3D[3][3], PRot3D[3][3], off[2], fblank =  ObitMagicF();
+  ofloat  URot3D[3][3], PRot3D[3][3], off[2], psign, fblank =  ObitMagicF();
   odouble ra, dec, raPnt, decPnt;
   gchar *routine = "ObitIoN2SolNTableConvert";
  
@@ -144,6 +144,12 @@ ObitTableSN* ObitIoN2SolNTableConvert (ObitUV *inUV, ObitTableNI *NITable,
 
   /* 3D/rotation matrices */
   do3Dmul = ObitUVDescShift3DPos (inUV->myDesc, shift, 0.0,  do3D, URot3D, PRot3D);
+
+  /* Need to flip signs for GMRT & LOFAR */
+  if (!strncmp(inUV->myDesc->teles, "LOFAR", 5) || 
+      !strncmp(inUV->myDesc->teles, "GMRT", 4)) 
+        psign = -1.0;
+  else  psign =  1.0;
 
   /* Open IoN table for read */
   retCode = ObitTableNIOpen (NITable, OBIT_IO_ReadOnly, err);
@@ -286,7 +292,7 @@ ObitTableSN* ObitIoN2SolNTableConvert (ObitUV *inUV, ObitTableNI *NITable,
 	/* convert NI model to SN */
 	ObitIoN2SolNTableModel (NITable, NIRow, antennaLists[NIRow->SubA-1], 
 				numIF, numPol, inUV->myDesc->freqIF, ra, dec, 
-				off, do3Dmul, doAntOff, URot3D, SNRow, err);
+				off, psign, do3Dmul, doAntOff, URot3D, SNRow, err);
 
 	/* write it */
  	retCode = ObitTableSNWriteRow (outSN, iSNRow, SNRow, err);
@@ -315,7 +321,7 @@ ObitTableSN* ObitIoN2SolNTableConvert (ObitUV *inUV, ObitTableNI *NITable,
  	  /* convert NI model to SN */
 	  ObitIoN2SolNTableModel (NITable, NIRow, antennaLists[NIRow->SubA-1], 
 				  numIF, numPol, inUV->myDesc->freqIF, ra, dec, 
-				  off, do3Dmul, doAntOff, URot3D,  SNRow, err);
+				  off, psign, do3Dmul, doAntOff, URot3D,  SNRow, err);
 
 	  /* write it */
 	  iSNRow = -1;
@@ -361,6 +367,7 @@ ObitTableSN* ObitIoN2SolNTableConvert (ObitUV *inUV, ObitTableNI *NITable,
  * \param ra       RA of field center (rad)
  * \param dec      Dec of field center (rad)
  * \param off      RA and Dec offsets(deg/10) in which NITable to be evaluated.
+ * \param psign    sign (+1.0 or -1.0) of sign and delay
  * \param do3Dmul  if 3D rotation need to be applied.
  * \param doAntOff if Antenna offset from array center correction wanted.
  * \param URot3Dl  3D rotation matrix for u,v,w 
@@ -371,7 +378,7 @@ ObitTableSN* ObitIoN2SolNTableConvert (ObitUV *inUV, ObitTableNI *NITable,
 static void 
 ObitIoN2SolNTableModel(ObitTableNI *NITable, ObitTableNIRow *NIRow, 
 		       ObitAntennaList *Ant, olong numIF, olong numPol, odouble *freqIF,
-		       odouble ra, odouble dec, ofloat off[2], 
+		       odouble ra, odouble dec, ofloat off[2], ofloat psign,
 		       gboolean do3Dmul, gboolean doAntOff, ofloat URot3D[3][3], 
 		       ObitTableSNRow *SNRow, ObitErr *err)
 {
@@ -518,13 +525,13 @@ ObitIoN2SolNTableModel(ObitTableNI *NITable, ObitTableNIRow *NIRow,
   for (iif = 0; iif < numIF; iif++) {
     phase = pdly * 2.0 * G_PI * freqIF[iif];
     SNRow->Real1[iif]   = cos (phase);
-    SNRow->Imag1[iif]   = sin (phase);
-    SNRow->Delay1[iif]  = pdly;
+    SNRow->Imag1[iif]   = psign*sin (phase);
+    SNRow->Delay1[iif]  = psign*pdly;
     SNRow->Rate1[iif]   = 0.0;
     if (numPol>1) { /* Second polarization */
       SNRow->Real2[iif]   = cos (phase);
-      SNRow->Imag2[iif]   = sin (phase);
-      SNRow->Delay2[iif]  = pdly;
+      SNRow->Imag2[iif]   = psign*sin (phase);
+      SNRow->Delay2[iif]  = psign*pdly;
       SNRow->Rate2[iif]   = 0.0;
     }
   }

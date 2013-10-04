@@ -844,7 +844,7 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar keyword[12];
   gboolean done, lsb;
-  olong IFBreak[101], ChBreak[101], nBreak=100;  /* Frequency bin breaks */
+  olong IFBreak[1001], ChBreak[1001], nBreak=1000;  /* Frequency bin breaks */
   gchar *routine = "ObitImageMFSetSpec";
   
   /* error checks */
@@ -910,12 +910,12 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
 	  /* This bin finished? */
 	  if (lsb) done = freqHi>mxFreq;   /* LSB */
 	  else     done = freqHi<mxFreq;   /* USB */
-	  /* Check blown array */
-	  Obit_return_if_fail((nSpec<=nBreak), err, 
-			      "%s: Too many coarse spectral planes, >%d for %s", 
-			      routine, nBreak-1,in->name);
 	}
       }
+      /* Check blown array */
+      Obit_return_if_fail((nSpec<=nBreak), err, 
+			  "%s: Too many coarse spectral planes, >%d for %s", 
+			  routine, nBreak-1,in->name);
     } /* end loop over IF */
     
    /* End */

@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Filter SN table phases to remove peculiar phases  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2010                                          */
+/*;  Copyright (C) 2007-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -76,7 +76,7 @@ void GradFit (olong itime, ofloat *phase, ofloat *gradX, ofloat *gradY, ofloat *
 gboolean EditSNData (ofloat maxRMS, gboolean *allBad, ObitErr *err);
 /* Write output */
 void  WriteSNTab (ObitTableSN *inTab, ObitTableSN *outTab, 
-		  gboolean doGrad, gboolean doRes, ObitErr *err);
+		  gboolean doGrad, gboolean doRes, gboolean doBlank, ObitErr *err);
 /* Show model, residuals */
 void  ShowModel (ObitErr* err);
 /* Smooth gradients */
@@ -648,7 +648,7 @@ void SNFiltHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   gchar        hicard[81];
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq", 
-    "solnIn", "solnOut", "maxRMS", "doGrad", "doRes", "doUnwrap",
+    "solnIn", "solnOut", "maxRMS", "doGrad", "doRes", "doBlank", "doUnwrap",
     "timeRange", "refAnt", "width", "alpha", "search", 
     NULL};
   gchar *routine = "SNFiltHistory";
@@ -696,7 +696,7 @@ void SNFilter (ObitInfoList* myInput, ObitUV* inData,  ObitErr* err)
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong solnIn, solnOut, highVer;
   olong itemp;
-  gboolean drop,allBad,  doGrad, doRes=FALSE;
+  gboolean drop,allBad,  doGrad, doRes=FALSE, doBlank=FALSE;
   ofloat maxRMS;
   gchar  *routine = "SNFiltCopy";
   
@@ -710,7 +710,9 @@ void SNFilter (ObitInfoList* myInput, ObitUV* inData,  ObitErr* err)
   doGrad = FALSE;
   ObitInfoListGetTest(myInput, "doGrad", &type, dim, &doGrad);
   doRes = FALSE;
-  ObitInfoListGetTest(myInput, "doRes", &type, dim, &doRes);
+  ObitInfoListGetTest(myInput, "doRes",  &type, dim, &doRes);
+  doBlank = FALSE;
+  ObitInfoListGetTest(myInput, "doblank", &type, dim, &doBlank);
   maxRMS = 1.0e20;
   ObitInfoListGetTest(myInput, "maxRMS", &type, dim, &maxRMS);
   if (maxRMS<=1.0e-10) maxRMS = 1.0e20;
@@ -784,7 +786,7 @@ void SNFilter (ObitInfoList* myInput, ObitUV* inData,  ObitErr* err)
   ObitErrLog(err); /* show any error messages on err */
 
   /* Write output SN table */
-  WriteSNTab (inTab, outTab, doGrad, doRes, err);
+  WriteSNTab (inTab, outTab, doGrad, doRes, doBlank, err);
   if (err->error) Obit_traceback_msg (err, routine, inTab->name);
 } /* end SNFilter */
 
@@ -1678,10 +1680,12 @@ gboolean EditSNData (ofloat maxRMS, gboolean *allBad, ObitErr *err)
  * \param outTab  Output SN table to swallow 
  * \param doGrad  True if ionospheric gradients are to be added
  * \param doRes   True if residuals to model requested.
+ * \param doBlank True if to ignore prior blanking.
  * \param err     Obit Error stack     
  */
 void WriteSNTab (ObitTableSN *inTab, ObitTableSN *outTab, 
-		 gboolean doGrad, gboolean doRes, ObitErr *err)
+		 gboolean doGrad, gboolean doRes, gboolean doBlank, 
+		 ObitErr *err)
 {
   olong   loop, i, ipol, iif, itime, osnrow, antno;
   ofloat amp, faz, refiph;
@@ -1744,14 +1748,14 @@ void WriteSNTab (ObitTableSN *inTab, ObitTableSN *outTab,
     if (inRow->status==-1) continue;
 
     /* Update output row */
-    outRow->Time = inRow->Time;
-    outRow->TimeI = inRow->TimeI;
-    outRow->SourID = inRow->SourID;
-    outRow->antNo = inRow->antNo;
-    outRow->SubA = inRow->SubA;
-    outRow->FreqID = inRow->FreqID;
-    outRow->IFR = inRow->IFR;
-    outRow->NodeNo = inRow->NodeNo;
+    outRow->Time     = inRow->Time;
+    outRow->TimeI    = inRow->TimeI;
+    outRow->SourID   = inRow->SourID;
+    outRow->antNo    = inRow->antNo;
+    outRow->SubA     = inRow->SubA;
+    outRow->FreqID   = inRow->FreqID;
+    outRow->IFR      = inRow->IFR;
+    outRow->NodeNo   = inRow->NodeNo;
     outRow->MBDelay1 = inRow->MBDelay1;
     if (numpol>1) {
       outRow->MBDelay2 = inRow->MBDelay2;
@@ -1788,14 +1792,20 @@ void WriteSNTab (ObitTableSN *inTab, ObitTableSN *outTab,
       outRow->Weight1[iif] = inRow->Weight1[iif];
       outRow->RefAnt1[iif] = inRow->RefAnt1[iif];
       /* in case no solution - blank */
-      outRow->Real1[iif] = fblank;
-      outRow->Imag1[iif] = fblank;
+      jndx = ARR_INDEX(0,antno,iif,0);
+      if (!doBlank && !doRes) {  /*replace blanking unless giving residuals */
+	outRow->Real1[iif]   = cos(insphs[jndx]);
+	outRow->Imag1[iif]   = sin(insphs[jndx]);
+	outRow->Weight1[iif] = 1.0;
+      } else { /* blanking */
+	outRow->Real1[iif] = fblank;
+	outRow->Imag1[iif] = fblank;
+      }
       
       /* Is previous solution for pol 1 good? */
       if ((inRow->Weight1[iif] > 0.0)  &&  
 	  (inRow->Imag1[iif] != fblank)  &&  (inRow->Real1[iif] != fblank)) {
 	/* Have solution? */
-	jndx = ARR_INDEX(0,antno,iif,0);
 	if ((insphs[jndx] != fblank)  &&  (gradX[itime] != fblank)) {
 	  amp = sqrt (inRow->Real1[iif]*inRow->Real1[iif] + 
 		      inRow->Imag1[iif]*inRow->Imag1[iif]);
@@ -1833,14 +1843,21 @@ void WriteSNTab (ObitTableSN *inTab, ObitTableSN *outTab,
 	outRow->Rate2[iif]   = inRow->Rate2[iif];
 	outRow->Weight2[iif] = inRow->Weight2[iif];
 	outRow->RefAnt2[iif] = inRow->RefAnt2[iif];
-	/* In case No solution - blank */
-	outRow->Real2[iif] = fblank;
-	outRow->Imag2[iif] = fblank;
+	
+	/* in case no solution - blank */
+	jndx = ARR_INDEX(0,antno,iif,1);
+	if (!doBlank && !doRes) {  /*replace blanking unless giving residuals */
+	  outRow->Real2[iif]   = cos(insphs[jndx]);
+	  outRow->Imag2[iif]   = sin(insphs[jndx]);
+	  outRow->Weight2[iif] = 1.0;
+	} else { /* blanking */
+	  outRow->Real2[iif] = fblank;
+	  outRow->Imag2[iif] = fblank;
+	}
 	
 	if ((inRow->Weight2[iif] > 0.0)  &&  
 	    (inRow->Imag2[iif] != fblank)  &&  (inRow->Real2[iif] != fblank)) {
 	  /* Have solution? */
-	  jndx = ARR_INDEX(0,antno,iif,1);
 	  if ((insphs[jndx] != fblank)  &&  (gradX[itime] != fblank)) {
 	    amp = sqrt (inRow->Real2[iif]*inRow->Real2[iif] + inRow->Imag2[iif]*inRow->Imag2[iif]);
 	    

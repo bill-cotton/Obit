@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2011                                          */
+/*;  Copyright (C) 2006-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2573,8 +2573,9 @@ FitAll (ObitIonCal *in, olong ncoef, olong nEpoch,
 
   /* further constraints on weights */
   for (i=0; i<n; i++) { /* loop 60 */
-    /* Toss data if integrated value less than a third the peak */
-    if (sint[i]  <  (0.35*flux[i])) wt[i] = 0.0;
+    /* Toss data if integrated value less than a third the peak
+    if (sint[i]  <  (0.35*flux[i])) wt[i] = 0.0; */
+    if (sint[i]  <  (0.05*flux[i])) wt[i] = 0.0; /* DEBUG */
     /* ... more than thrice the peak */
     if (sint[i]  >  (3.0*flux[i])) wt[i] = 0.0;
   } /* end loop  L60:  */

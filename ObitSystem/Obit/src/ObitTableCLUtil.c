@@ -379,6 +379,8 @@ ObitTableCL* ObitTableCLGetDummy (ObitUV *inUV, ObitUV *outUV, olong ver,
     /* read buffer */
     if (doCalSelect) retCode = ObitUVReadSelect (inUV, NULL, err);
     else retCode = ObitUVRead (inUV, NULL, err);
+    /* EOF is OK */
+    if (retCode==OBIT_IO_EOF) ObitErrClear(err);
     if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
     if (retCode==OBIT_IO_EOF) break; /* done? */
     

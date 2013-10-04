@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1073,6 +1073,7 @@ ObitFilePadFile (ObitFile *in, olong blksize, ObitErr *err)
     Obit_log_error(err, OBIT_Error, 
 		   "ERROR stating file for %s", in->name);
     ObitFileErrMsg(err);     /* system error message*/
+    return OBIT_IO_OpenErr;
   }
 
   /* is padding needed? Total number of blocks needed */

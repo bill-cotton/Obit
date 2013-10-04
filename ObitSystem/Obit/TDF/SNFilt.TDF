@@ -3,7 +3,7 @@
 ;! Filter SN table phases to remove peculiar phases
 ;# Task Obit Table 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007,2010
+;;  Copyright (C) 2007,2013
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -50,6 +50,8 @@ solnOut                            Output SN table; 0=>new
 doGrad                             If true, include gradient
 **PARAM** boo 1 **DEF** F
 doRes                              If true, write residuals
+**PARAM** boo 1 **DEF** F
+doBlank                            If true, replace blanked solutions
 **PARAM** boo 1 **DEF** F
 doUnwrap                           If true, unwrap VLA phase
 **PARAM** float 1 **DEF** 10.0
@@ -100,6 +102,9 @@ Adverbs:
   doRes......If True, write residuals from model rather than 
              instrumental phases in output table.
              For normal calibration, this should be False.
+  doBlank....If True replaced blanked solutions with amplitude 1.
+             Should not be used if solutions are to be used for
+             amplitude corrections.
   doUnwrap...If True attempt to unwrap phases down thearms of the 
              VLA.  This process may be useful when there are 
              large phase gradients across the VLA and doRes=False.  

@@ -3,7 +3,7 @@
 ;! Task to enter source info into the source (AIPS SU) table.
 ;# TASK CALIBRATION
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007
+;;  Copyright (C) 2007-2013
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -95,10 +95,13 @@ Parms                              [0]: Pixel to which SysVel
                                          values or for 1934-638
                                          the ATCA value of
                                          30Jul94.
-                                     >= 3 => use oldest VLA
+                                        3 => use oldest VLA
                                          values (1990) or,
                                          for 1934-638, the
                                          ATCA value of 30Jul94.
+                                     >= 4 => Perley & Butler 2012
+                                         3C123, 3C196, 3C286, 
+                                         3C295
                                    [2]: Only for 'CALC' option:
                                         multiply the calculated
                                         fluxes by Parms[2] with
@@ -183,9 +186,13 @@ Adverbs:
                      2 => use mid-1990s VLA determined values
                           (1995.2) or, for 1934-638, the ATCA
                           value of 30Jul94.
-                  >= 3 => use oldest VLA determined values
+                     3 => use oldest VLA determined values
                           (1990) or, for 1934-638, the ATCA
                           value of 30Jul94.
+                   >=4 => Use Perley & Butler 2012 values for
+                          3C123, 3C196, 3C286 and 3C295
+                          NB: there are always used for 
+			  3C123, 3C196
              [2]: Only for 'CALC' option:
                   You may wish to reduce the "official" flux computed
                   from the VLA measurements to account for resolution

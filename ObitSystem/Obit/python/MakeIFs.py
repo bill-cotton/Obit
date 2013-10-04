@@ -326,8 +326,9 @@ def CopyData (inUV, outUV, err):
                              type=numarray.Float32, shape=shape)
     obuffer =  numarray.array(sequence=outUV.VisBuf,
                              type=numarray.Float32, shape=shape)
-    od['numVisBuff'] = 1;
-    outUV.Desc.Dict = od
+    od['numVisBuff'] = 1; # Gotta tell it to write 1 vis
+    outUV.Desc.Dict   = od
+    outUV.IODesc.Dict = od
 
     # Loop over data, copying 1 vis at a time
     for ivis in range(1,nvis+1):

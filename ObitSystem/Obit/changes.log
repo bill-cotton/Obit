@@ -1698,3 +1698,36 @@ Obit/src/ObitUVCalCalibrate.c:
 Obit/tasks/Imager.c:
   Fix bugs when channel increment not = chAvg
 30 Aug. 2013 snv version 463
+
+Fixes related to low frequency data
+Obit/TDF/SNFilt.TDF Obit/tasks/SNFilt.c:
+  Add doBlank parameter
+Obit/src/ObitIoN2SolNTable.c :
+  Model: Flip signs of phase and delay for GMRT, LOFAR
+Obit/src/ObitIonCal.c:
+  initIonModel: Relax intergrated flux density constraint
+Obit/python/MakeIFs.py:
+  CopyData: Update I/O descriptor with numVisBuff
+Obit/TDF/SetJy.TDF Obit/tasks/SetJy.c:
+  Update with Perley & Butler 2012 spectra
+Obit/python/AddSource.py:
+  New module to create a "multisource" single source file
+Obit/src/ObitDConCleanVis.c:
+  Deconvolve: Make sure last set of CCs gets subtracted.
+  Deconvolve: Better check for reaching min flux
+Obit/src/ObitUVUtil.c:
+  Several: check that number of antennas actually in descriptor
+  Index: EOF on read is OK
+Obit/src/ObitTableANUtil.c:
+  Several: if antenna numbers missing substitute row number,
+  This patches a bug in the CASA UVFITS writer
+Obit/src/ObitImageMF.c:
+  SetSpec: Increase number of bins to 1000
+  Better check for blown array
+Obit/src/ObitTableCLUtil.c:
+  GetDummy: EOF on read is OK
+Obit/src/ObitFile.c:
+  PadFile: ( from M.Kettenis) return error on error
+Obit/src/ObitImageMosaic.c:
+  GetFull: Return first image if FullField not defined.
+4 Oct. 2013 svn version 463

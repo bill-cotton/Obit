@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2011                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -54,6 +54,7 @@ ObitIOCode ObitTableANGetInfo (ObitTableAN *in, oint *numAnt, odouble *refFreq,
   ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitTableANRow *row;
   oint maxAnt = 0;
+  olong countAnt;
   gchar *routine = "ObitTableANGetInfo";
 
   /* error checks */
@@ -75,6 +76,7 @@ ObitIOCode ObitTableANGetInfo (ObitTableAN *in, oint *numAnt, odouble *refFreq,
 
     /* Create table row */
     row = newObitTableANRow (in);
+    countAnt = 0;
 
     /* loop over table */
     while (retCode==OBIT_IO_OK) {
@@ -82,6 +84,8 @@ ObitIOCode ObitTableANGetInfo (ObitTableAN *in, oint *numAnt, odouble *refFreq,
       if (retCode == OBIT_IO_EOF) break;
       
       /* Get maximum antenna number */
+      countAnt++;    /* data from a MS may be defective */
+      if (row->noSta<=0) row->noSta = countAnt;  /* Make sure non zero */
       maxAnt = MAX (maxAnt, row->noSta);
     }
     
@@ -117,7 +121,7 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
   ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitTableANRow *row;
   olong irow;
-  olong maxANid, i, iant, numPCal;
+  olong maxANid, i, iant, numPCal, countAnt;
   ObitInfoType type;
   gboolean doVLA, doVLBI, doATCA, doEVLA, doALMA;
   odouble x, y, z, ArrLong, rho, dtemp;
@@ -234,13 +238,16 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
   /* loop over table saving information */
   retCode = OBIT_IO_OK;
   irow = 0;
+  countAnt = 0;
   while (retCode==OBIT_IO_OK) {
     irow++;
+    countAnt++;    /* data from a MS may be defective */
     retCode = ObitTableANReadRow (in, irow, row, err);
     if (retCode == OBIT_IO_EOF) break;
     if ((retCode != OBIT_IO_OK) || (err->error)) 
       Obit_traceback_val (err, routine, in->name, out);
 
+    if (row->noSta<=0) row->noSta = countAnt;  /* Make sure non zero */
     iant = row->noSta-1;
     /* Check antenna number */
     Obit_retval_if_fail((iant>=0), err, out,

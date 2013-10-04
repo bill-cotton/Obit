@@ -1015,6 +1015,9 @@ void ObitUVUtilIndex (ObitUV *inUV, ObitErr *err)
   /* Loop over UV */
   while (retCode==OBIT_IO_OK) {
     retCode = ObitUVRead (inUV, inUV->buffer, err);
+    /*if (retCode!=OBIT_IO_OK) fprintf(stderr, "retcode=%d\n", retCode);*/
+    /* EOF is OK */
+    if (retCode==OBIT_IO_EOF) ObitErrClear(err);
     if (retCode!=OBIT_IO_OK) break;
     if (err->error) goto cleanup;
 
@@ -1776,6 +1779,10 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   /* Set number of output vis per read to twice number of baselines */
   suba    = 1;
   numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
+  /* Better be some */
+  Obit_retval_if_fail ((numAnt>1), err, outUV,
+		       "%s Number of antennas NOT in descriptor",  
+		       routine);  
   numBL   = (numAnt*(numAnt+1))/2;  /* Include auto correlations */
   NPIO = 1;
   ObitInfoListGetTest(inUV->info, "nVisPIO", &type, dim, &NPIO);
@@ -2272,6 +2279,10 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   /* Create work arrays for time averaging */
   suba    = 1;
   numAnt  = inDesc->numAnt[suba-1]; /* actually highest antenna number */
+  /* Better be some */
+  Obit_retval_if_fail ((numAnt>1), err, outUV,
+		       "%s Number of antennas NOT in descriptor",  
+		       routine);  
   numBL   = (numAnt*(numAnt+1))/2;  /* Include auto correlations */
   ncorr   = inDesc->ncorr;
   nrparm  = inDesc->nrparm;

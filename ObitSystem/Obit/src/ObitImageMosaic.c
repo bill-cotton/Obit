@@ -621,7 +621,11 @@ ObitImageMosaicGetFullImage  (ObitImageMosaic *in, ObitErr *err)
   if (err->error) return NULL;
   g_assert (ObitIsA(in, &myClassInfo));
 
-  out = ObitImageRef(in->FullField);
+  /* If full field image exists, pass it otherwise the first */
+  if (in->FullField)
+    out = ObitImageRef(in->FullField);
+  else 
+    out = ObitImageRef(in->images[0]);
 
   return out;
 } /* end ObitImageMosaicGetFullImage */

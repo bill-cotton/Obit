@@ -717,12 +717,23 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
       count++;
     } /* End middle CLEAN loop */
     
+    /* If CLEAN stopped due to OBIT_CompReasonMinFlux check that all fields
+       are below the limit */
+    if (fin && (in->Pixels->complCode==OBIT_CompReasonMinFlux)) {
+      for (ifld=0; ifld<in->nfield; ifld++) {
+	if (in->maxAbsRes[ifld]>in->minFlux[ifld]) {
+	  in->Pixels->complCode = OBIT_CompReasonAutoWin;
+	  fin = FALSE;
+	}
+      } 
+    }    /* end check for min CLEAN */
+
     /* Check if there were no pixels this cycle */
     if (in->Pixels->complCode==OBIT_CompReasonNoPixel) NoPixelCnt++; /* Count times */
     /* Call CLEAN done if no pixels more than 2*nfield */
     moreClean = (!fin) && NoPixelCnt<=(2*in->nfield);
     if (!moreClean) break;
-    
+
     /* Update quality list for new max value on fields just CLEANed */
     for (ifld=0; ifld<in->nfield; ifld++) {
       if (in->currentFields[ifld] <= 0) break;  /* List terminates? */
@@ -770,6 +781,10 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   } /* end clean loop */
   if (err->prtLv>1) ObitErrLog(err);  /* Progress Report */
   else ObitErrClear(err);
+
+  /* Subtract any remaining components from visibility data */
+  inClass->ObitDConCleanSub((ObitDConClean*)in, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Cleanup */
   if (startCC) g_free(startCC);
