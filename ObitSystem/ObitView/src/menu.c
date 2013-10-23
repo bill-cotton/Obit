@@ -44,6 +44,7 @@
 #include "scrolltext.h"
 #include "helpbox.h"
 #include "aboutbox.h"
+#include "AIPSfilebox.h"
 #include "logger.h"
 #include "saveimwindow.h"
 #include "messagebox.h"
@@ -58,8 +59,9 @@
 /*--------------- file global data ----------------*/
 /* global widget arrays for menu items */
 Widget Zoom_w[7] = {0, 0, 0, 0, 0, 0, 0};
-Widget File_w[6] = {0, 0, 0, 0, 0, 0};
-Widget FITS_Box=0;     /* FITS file dialog widget */
+Widget File_w[7] = {0, 0, 0, 0, 0, 0};
+Widget FITS_Box=0;                /* FITS file dialog widget */
+AIPSFileBoxStuff *AIPS_Box=NULL;  /* AIPS file dialog structure */
 
 /**
  * Routine to create main menu bar
@@ -86,47 +88,54 @@ Widget MakeMainMenu (Widget mainWindow, XtPointer image, XtPointer IDdata)
 			       menu, XmNsubMenuId, pulldown, 
 			       XmNmnemonic, 'F',
 			       NULL);
-  /* "Open" */
-  File_w[0] = XtVaCreateManagedWidget ("Open", xmPushButtonWidgetClass,
+  /* "Open FITS" */
+  File_w[0] = XtVaCreateManagedWidget ("Open FITS", xmPushButtonWidgetClass,
 				       pulldown,
 				       XmNmnemonic, 'O',
 				       NULL);
   XtAddCallback (File_w[0], XmNactivateCallback, OpenCB, IDdata);
   
+  /* "Open AIPS" */
+  File_w[1] = XtVaCreateManagedWidget ("Open AIPS", xmPushButtonWidgetClass,
+				       pulldown,
+				       XmNmnemonic, 'A',
+				       NULL);
+  XtAddCallback (File_w[1], XmNactivateCallback, OpenACB, IDdata);
+  
   /* "Preview" */
-  File_w[1] = XtVaCreateManagedWidget ("Preview", xmPushButtonWidgetClass,
+  File_w[2] = XtVaCreateManagedWidget ("Preview", xmPushButtonWidgetClass,
 				       pulldown,
 				       XmNmnemonic, 'P',
 				       NULL);
-  XtAddCallback (File_w[1], XmNactivateCallback, PreviewCB, IDdata);
+  XtAddCallback (File_w[2], XmNactivateCallback, PreviewCB, IDdata);
   
   /* "Save as" */
-  File_w[2] = XtVaCreateManagedWidget ("Save As", xmPushButtonWidgetClass,
+  File_w[3] = XtVaCreateManagedWidget ("Save As", xmPushButtonWidgetClass,
 				       pulldown,
 				       XmNmnemonic, 'S',
 				       NULL);
-  XtAddCallback (File_w[2], XmNactivateCallback, SaveAsCB, IDdata);
+  XtAddCallback (File_w[3], XmNactivateCallback, SaveAsCB, IDdata);
   
   /* "Source info" */
-  File_w[3] = XtVaCreateManagedWidget ("Source Info", xmPushButtonWidgetClass,
+  File_w[4] = XtVaCreateManagedWidget ("Source Info", xmPushButtonWidgetClass,
 				       pulldown,
 				       XmNmnemonic, 'I',
 				       NULL);
-  XtAddCallback (File_w[3], XmNactivateCallback, InfoBoxCB, IDdata);
+  XtAddCallback (File_w[4], XmNactivateCallback, InfoBoxCB, IDdata);
   /* "Position logging" */
-  File_w[4] = XtVaCreateManagedWidget ("Start Position Logging", 
+  File_w[5] = XtVaCreateManagedWidget ("Start Position Logging", 
 				       xmPushButtonWidgetClass,
 				       pulldown,
 				       XmNmnemonic, 'L',
 				       NULL);
-  XtAddCallback (File_w[4], XmNactivateCallback, LoggerCB, IDdata);
+  XtAddCallback (File_w[5], XmNactivateCallback, LoggerCB, IDdata);
   /* "Save window as" */
-  File_w[5] = XtVaCreateManagedWidget ("Save Image window as", 
+  File_w[6] = XtVaCreateManagedWidget ("Save Image window as", 
 				       xmPushButtonWidgetClass,
 				       pulldown,
 				       XmNmnemonic, 'L',
 				       NULL);
-  XtAddCallback (File_w[5], XmNactivateCallback, SaveImWindowCB, IDdata);
+  XtAddCallback (File_w[6], XmNactivateCallback, SaveImWindowCB, IDdata);
   /* help */
   w = XtVaCreateManagedWidget ("Help", xmPushButtonWidgetClass,
 			       pulldown,
@@ -449,18 +458,79 @@ void FileOKCB (Widget filebox, XtPointer clientData, XtPointer callData)
   
 } /* end FileOKCB */
 
+/* Loads selected AIPS Image into the ImageData attached to the display 
+ * resets display when image is read
+ * \param filebox     widget activated
+ * \param clientData  client data
+ * \param callData    call data
+ */
+void AFileOKCB (Widget filebox, XtPointer clientData, XtPointer callData)
+{
+  gchar szErrMess[121];
+  ImageDisplay  *IDdata;
+  AIPSFileBoxStuff *AFBdia;
+  
+  AFBdia = (AIPSFileBoxStuff *)clientData;
+  IDdata = AFBdia->IDdata;
+  
+  /* Get CNO, name, class, seq, user, directory name from widget
+     read file to pixmap 
+     Get instructions AFBdia = browser structure */
+  image[CurImag].DataType = OBIT_IO_AIPS;
+  image[CurImag].AIPSseq  = AFBdia->ASeq;
+  image[CurImag].AIPSuser = AFBdia->AUser;
+  FStrngFill (image[CurImag].FileName,  AFBdia->AName->sp);
+  FStrngFill (image[CurImag].AIPSName,  AFBdia->AName->sp);
+  FStrngFill (image[CurImag].AIPSClass, AFBdia->AClass->sp);
+  FStrngFill (image[CurImag].AIPSDir,   AFBdia->AIPS_dir->sp);
+  image[CurImag].reLoad   = TRUE;            /* Force load */
+  if (Image2Pix (&image[CurImag], IDdata, TRUE)) {
+    /* error */
+    sprintf (szErrMess, "Error reading Image = %s", AFBdia->AName->sp);
+    MessageShow (szErrMess);
+  }
+  
+  /* reset display */
+  ResetDisplay(IDdata);
+
+  /* get directory name */
+  FStrngFill (AIPS_dir, AFBdia->AIPS_dir->sp);
+  
+  /* Shazam disappear and die */
+#ifndef KEEP_FILE_DIALOG  /* option to let it hang around */
+  XtUnmanageChild (filebox);
+  /* DEBUG XtPopdown (XtParent (filebox));*/
+  XtDestroyWidget(filebox);
+  AIPS_Box = NULL;
+#endif
+  
+  /* reset display */
+  ResetDisplay(IDdata);
+  
+} /* end AFileOKCB */
+
 void FileCancelCB (Widget filebox, XtPointer clientData, XtPointer callData)
      /* cancel file selection dialog box */
 {
   /* Shazam disappear and die */
   XtUnmanageChild (filebox); 
-  XtPopdown (XtParent (filebox)); 
-  XtDestroyWidget(filebox); 
-  FITS_Box = 0;     /* it's gone */
+  /* NO XtPopdown (XtParent (filebox)); 
+     XtDestroyWidget(filebox); 
+     FITS_Box = 0;      it's gone */
 } /* end FileCancelCB */
 
+void AFileCancelCB (Widget filebox, XtPointer clientData, XtPointer callData)
+     /* cancel AIPS image selection dialog box */
+{
+  /* Shazam disappear and die */
+  XtUnmanageChild (filebox); 
+  /* NO XtPopdown (XtParent (filebox)); */
+  XtDestroyWidget(filebox); 
+  AIPS_Box = NULL;
+} /* end AFileCancelCB */
+
 /**
- * Callback for Open: Load new FITS file
+ * Callback for Open FITS: Load new FITS file
  * \param w           widget activated
  * \param clientData  client data
  * \param callData    call data
@@ -488,7 +558,7 @@ void OpenCB (Widget w, XtPointer clientData, XtPointer callData)
   
   /* set directory if it is defined */
   if (FITS_dir) {
-    wierdstring = XmStringCreateSimple (FITS_dir->sp);
+    wierdstring = XmStringCreateLocalized (FITS_dir->sp);
     XtSetArg (wargs[0], XmNdirectory, wierdstring);
     XtSetValues (filebox, wargs, 1);
     if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
@@ -498,6 +568,38 @@ void OpenCB (Widget w, XtPointer clientData, XtPointer callData)
   XtPopup (XtParent (filebox), XtGrabNone);
   /* all the action is in the callback routine */
 } /* end OpenCB */
+
+/**
+ * Callback for Open AIPS: Load new AIPS image
+ * \param w           widget activated
+ * \param clientData  client data = IDdata
+ * \param callData    call data 
+ */
+void OpenACB (Widget w, XtPointer clientData, XtPointer callData)
+{
+  ImageDisplay *IDdata;
+  AIPSFileBoxStuff *AFBdia=NULL;
+  
+  IDdata = (ImageDisplay *)clientData;
+
+  if (!AIPS_dir) AIPS_dir = MakeFStrng("specify AIPS directory");
+  if (AIPS_Box) {
+    AFBdia  = AIPSFileBox (w, &image[CurImag]);  /* Create dialog */
+   } else {   /* create */
+     AFBdia   = AIPSFileBox (w, &image[CurImag]);  /* Create dialog */
+     AIPS_Box = AFBdia;
+  }
+  AFBdia->IDdata = IDdata;   /* Pass Image display */
+  XtAddCallback (AFBdia->Open,   XmNactivateCallback, AFileOKCB,      (XtPointer)AFBdia);
+  XtAddCallback (AFBdia->Cancel, XmNactivateCallback, AFileCancelCB,  (XtPointer)AFBdia);
+  XtAddCallback (AFBdia->Help,   XmNactivateCallback, HelpBoxTopicCB, 
+    (XtPointer)"File/Open AIPS");
+  
+  /* Shazam appear: */
+  XtManageChild (AFBdia->Form);
+  XtPopup (XtParent (AFBdia->dialog), XtGrabNone);
+  /* all the action is in the callback routine */
+} /* end OpenACB */
 
 /**
  * Callback for Preview: show text or FITS header in scroll box
@@ -547,14 +649,14 @@ void MenuMarkZoom (int number)
   /* clear all first */
   for (loop=0; loop<7; loop++)
     {
-      wierdstring = XmStringCreateSimple (clear[loop]);
+      wierdstring = XmStringCreateLocalized (clear[loop]);
       XtVaSetValues(Zoom_w[loop], 
 		    XmNlabelString,  wierdstring,
 		    NULL);
       if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
     }
   /* set the specified one */
-  wierdstring = XmStringCreateSimple (set[number]);
+  wierdstring = XmStringCreateLocalized (set[number]);
   XtVaSetValues(Zoom_w[number], 
 		XmNlabelString,  wierdstring,
 		NULL);
@@ -571,9 +673,9 @@ void MenuMarkLogger (int onoff)
   XmString  wierdstring;
   
   if (onoff==1) /* turn on */
-    wierdstring = XmStringCreateSimple ("Start Position Logging");
+    wierdstring = XmStringCreateLocalized ("Start Position Logging");
   else if (onoff==2) /* turn off */
-    wierdstring = XmStringCreateSimple ("Stop Position Logging");
+    wierdstring = XmStringCreateLocalized ("Stop Position Logging");
   else /* can't deal with this */
     return;
   

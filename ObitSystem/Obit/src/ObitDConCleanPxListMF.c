@@ -1694,6 +1694,8 @@ gpointer ThreadCLEAN (gpointer args)
   field  = in->pixelFld[ipeak];
   lpatch = in->BeamPatch[field-1]->naxis[0];
   beamPatch = lpatch/2;
+  peak  = -1.0;
+  xflux  = 0.0;
   if (fabs(combPeak)>0.0) {
     pos[0]  = pos[1] = 0;
     beam00  = ObitFArrayIndex(in->BeamPatch[field-1], pos); /* Beam patch pointer */
@@ -1714,17 +1716,22 @@ gpointer ThreadCLEAN (gpointer args)
 	  in->channelFlux[ispec][iresid] -= in->gain[field-1] * Spec[ispec] * Sbeam[iBeam];
 	}
       }
+      /* Now, Find Peak */
+      xflux = fabs(in->pixelFlux[iresid]);
+      if (xflux>peak) {
+	peak = xflux;
+	ipeak = iresid;
+      }
     } /* end loop over array */
-  }
+  } else {  /* Only find peak */
     
-  /* Find peak abs residual */
-  peak  = -1.0;
-  xflux  = 0.0;
-  for (iresid=loPix; iresid<hiPix; iresid++) {
-    xflux = fabs(in->pixelFlux[iresid]);
-    if (xflux>peak) {
-      peak = xflux;
-      ipeak = iresid;
+    /* Find peak abs residual */
+    for (iresid=loPix; iresid<hiPix; iresid++) {
+      xflux = fabs(in->pixelFlux[iresid]);
+      if (xflux>peak) {
+	peak = xflux;
+	ipeak = iresid;
+      }
     }
   }
 

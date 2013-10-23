@@ -1,7 +1,7 @@
 /* $Id$ */
 /* imagedisp (image display widget) header file */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1999-2009
+*  Copyright (C) 1996,1999-2013
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as

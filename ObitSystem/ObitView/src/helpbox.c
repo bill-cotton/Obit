@@ -121,6 +121,7 @@ Boolean HelpBoxCreate (Widget parent,
   XFont = XQueryFont(XtDisplay (parent), XGContextFromGC(gc));
   chei = XFont->ascent + XFont->descent + 2;
   cwid = XFont->max_bounds.width;
+  XFreeFontInfo(NULL, XFont, 0);
   
   /* text ~80 char x 20 lines, topics ~25 char wide */
   topicWid = 35*cwid;
@@ -381,7 +382,7 @@ void InitHelpText(void) {
     "*** FINISHED ***"}; /* end of text */
   
   static  char *intro_text[] = {
-    "                         ObitView 1.2\n",
+    "                         ObitView 1.3\n",
     "  \n",
     "Please relay comments and/or suggestions to Bill Cotton at NRAO \n ",
     "(bcotton@nrao.edu) \n",
@@ -410,11 +411,9 @@ void InitHelpText(void) {
     "image containing the position (if any) and load this image centered on \n",
     "the requested position. \n",
     "   \n",
-    "   This image browser can either load FITS files selected from a file\n",
-    "browser or as specified through an xmlrpc interface.  Files specified\n",
-    "in this later fashion can be any type supported by Obit (AIPS, FITS).\n",
-    "The xmlrpc interface can also be used to interactively edit CLEAN\n",
-    "boxes. \n",
+    "   This image browser can either load FITS or AIPS files selected from a\n",
+    "filebrowser or as specified through an xmlrpc interface. The xmlrpc \n",
+    "interface can also be used to interactively edit CLEAN boxes.\n",
     "    \n",
     "   Either interface is internet enabled for FITS files. File names of\n",
     "the form ftp://ftp.here.there.com/myFile.fits.gz or\n",
@@ -521,7 +520,7 @@ void InitHelpText(void) {
     "*** FINISHED ***"} ; /* end of text */   
   
   static char*fileopen_text[] = {
-    "  Open \n",
+    "  Open FITS\n",
     "   \n",
     "     This item will bring up a file browser dialog box to select the \n",
     "FITS file to load.  When a file is loaded, the previous image is \n",
@@ -540,6 +539,29 @@ void InitHelpText(void) {
     "Options dialog.  This may be the result of a previous image with a very \n",
     "different range of pixel values.  Setting both values to zero will get \n",
     "the default display.  \n",
+    "   \n",
+    "*** FINISHED ***"} ; /* end of text */   
+  
+  static char*afileopen_text[] = {
+    "  Open AIPS\n",
+    "   \n",
+    "     This item will bring up an image browser dialog box to select the \n",
+    "AIPS image to load.  When an image is loaded, the previous image is \n",
+    "discarded.  The title bar of the main window gives the name of the \n",
+    "currently loaded file. \n",
+    "     To select an image, set the AIPS user number and path to the AIPS \n",
+    "directory.  Then either the full specification of the AIPS image can be\n",
+    "entered in the textboxes at the bottom or after entering the user number \n",
+    "and directory name, activate the directory name box (hit return) if needed\n",
+    "to obtain a listing of the images. Clicking on a line in the image list\n",
+    "will select it. Loading an image from ObitTalk saves the user & directory\n",
+    "The Open button will cause the image to be displayed.\n",
+    "The Cancel button will cancel the dialog.\n",
+    "The Help button gets this help description.\n",
+    "     When the default Pixel Range (0, 0), is specified, a  first pass \n",
+    "is made through the plane to determine an appropriate range of  pixel \n",
+    "values to display.  This decision is based on a histogram to determine  \n",
+    "the sky and noise levels. \n",
     "   \n",
     "*** FINISHED ***"} ; /* end of text */   
   
@@ -1327,8 +1349,10 @@ void InitHelpText(void) {
   /* file menu */
   topic_title[number_topics] = "File menu";
   topic_text[number_topics++] = file_text;
-  topic_title[number_topics] = "File/Open";
+  topic_title[number_topics] = "File/Open FITS";
   topic_text[number_topics++] = fileopen_text;
+  topic_title[number_topics] = "File/Open AIPS";
+  topic_text[number_topics++] = afileopen_text;
   topic_title[number_topics] = "File/Preview";
   topic_text[number_topics++] = filepreview_text;
   topic_title[number_topics] = "File/Save as";

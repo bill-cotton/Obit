@@ -1731,3 +1731,15 @@ Obit/src/ObitFile.c:
 Obit/src/ObitImageMosaic.c:
   GetFull: Return first image if FullField not defined.
 4 Oct. 2013 svn version 463
+
+
+Allow browsing AIPS images in ObitView, CLEAN efficiency improvements
+ObitTalk/doc/ObitTalk.tex:
+  More documentation on setting up AIPS directories
+ObitView:
+  Allow browsing AIPS images
+Obit/src/ObitDConCleanPxList.c Obit/src/ObitDConCleanPxListMF.c:
+  Efficiency improvements
+Obit/src/ObitSkyModel.c Obit/src/ObitSkyModelMF.c:
+  Efficiency  improvements in threaded FTDFT routine
+23 Oct 2013, svn version 465

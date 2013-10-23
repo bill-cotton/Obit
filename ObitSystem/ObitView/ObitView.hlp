@@ -1,5 +1,5 @@
 # $Id$
-                         ObitView 1.2
+                         ObitView 1.3
 
 -----------------------------------------------------------------------
   Copyright (C) 2005,2013
@@ -158,7 +158,7 @@ Blink and Current' item swaps the current and blink images.
   This menu includes a number items related to files.  Note: the
 following may read gzip compressed files.
   
-  Open
+  Open FITS
   
      This item will bring up a file browser dialog box to select the
 FITS file to load.  When a file is loaded, the previous image is
@@ -173,6 +173,27 @@ indicates inappropriate values in the Set Pixel Range option in the
 Options dialog.  This may be the result of a previous image with a very
 different range of pixel values.  Setting both values to zero will get
 the default display.  
+
+  Open AIPS
+
+     This item will bring up an image browser dialog box to select the 
+AIPS image to load.  When an image is loaded, the previous image is 
+discarded.  The title bar of the main window gives the name of the 
+currently loaded file. 
+     To select an image, set the AIPS user number and path to the AIPS 
+directory.  Then either the full specification of the AIPS image can be
+entered in the textboxes at the bottom or after entering the user number 
+and directory name, activate the directory name box (hit return) if needed
+to obtain a listing of the images. Clicking on a line in the image list
+will select it. Loading an image from ObitTalk saves the user & directory
+The Open button will cause the image to be displayed.
+The Cancel button will cancel the dialog.
+The Help button gets this help description.
+     When the default Pixel Range (0, 0), is specified, a  first pass 
+is made through the plane to determine an appropriate range of  pixel 
+values to display.  This decision is based on a histogram to determine  
+the sky and noise levels. 
+
   
   Preview
   
@@ -572,7 +593,7 @@ Position" size to zero does a test of the window editing).
   
 --------------------------- (Clean) Window editing -------------------
 
-                   Interactive Window Editing \n",
+                   Interactive Window Editing 
    ObitView can be used as a data processing image display server to 
 interactively edit a set of windows on an image.  These are frequently
 used in the CLEAN deconvolution algorithm but is not limited to this use.

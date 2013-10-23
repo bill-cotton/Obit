@@ -1695,6 +1695,8 @@ gpointer ThreadCLEAN (gpointer args)
   ofloat xflux, subval, *beam=NULL;
   olong iresid, iXres, iYres, lpatch, beamPatch, iBeam, field, pos[2];
  
+  peak  = -1.0;
+  xflux = 0.0;
   /* Do subtraction if peak non zero */
   if (fabs(peak)>0.0) {
     field  = in->pixelFld[ipeak];
@@ -1718,19 +1720,24 @@ gpointer ThreadCLEAN (gpointer args)
 	in->pixelFlux[iresid] -= subval * beam[iBeam];
       }
       /* May not be ordered if (in->pixelY[iresid]-iYres > (beamPatch+5)) break; No more in Y? */
+      /* Now find peak */
+      xflux = fabs(in->pixelFlux[iresid]);
+      if (xflux>peak) {
+	peak = xflux;
+	ipeak = iresid;
+      }
     } /* end loop over array */
-  }
+  } else { /* Only find peak */
     
-  /* Find peak abs residual */
-  peak  = -1.0;
-  xflux = 0.0;
-  for (iresid=loPix; iresid<hiPix; iresid++) {
-    xflux = fabs(in->pixelFlux[iresid]);
-    if (xflux>peak) {
-      peak = xflux;
-      ipeak = iresid;
+    /* Find peak abs residual */
+    for (iresid=loPix; iresid<hiPix; iresid++) {
+      xflux = fabs(in->pixelFlux[iresid]);
+      if (xflux>peak) {
+	peak = xflux;
+	ipeak = iresid;
+      }
     }
-  }
+  } /* end only peak */
   
   /* Return values */
   largs->peak  = peak;

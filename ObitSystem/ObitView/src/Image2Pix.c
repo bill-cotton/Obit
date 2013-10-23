@@ -49,6 +49,7 @@ static Widget   dialog=NULL;
 static Widget   line1, CancelButton;
 static Boolean  stopped;
 gboolean LoadDone;
+gboolean ReadFail;
 pthread_t readThread;
 pthread_attr_t readThread_attr;
 ObitImage *workImage;  /* in case load stopps */
@@ -91,20 +92,22 @@ olong Image2Pix (ImageData *image, ImageDisplay *IDdata, gboolean verbose)
      image doesn't need to be reloaded */
 
   if ((image->reLoad) || (!image->valid)) {
-
+    
     image->reLoad = FALSE; /* May not need next time */
-
+    image->valid  = FALSE; /* while reloading */
     /* Start Read in another thread */
     /* Allow immediate cancellation of threads */
     pthread_setcanceltype( PTHREAD_CANCEL_ASYNCHRONOUS, &oldType);
     /* initialize attributes */
     if (pthread_attr_init(&readThread_attr)) {
       MessageShow ("Image2Pix: Failed to initialize attributes for thread");
+      /*ObitThreadUnlock (image->thread);*/
       return -1;
     }
     RIArg.data = image;
     RIArg.err  = err;
     LoadDone = FALSE;
+    ReadFail = FALSE;
     pthread_create (&readThread, &readThread_attr, ReadImage, 
 		    (void*)&RIArg);
     /* restore cancellation type */
@@ -131,15 +134,19 @@ olong Image2Pix (ImageData *image, ImageDisplay *IDdata, gboolean verbose)
   } /* End load image */
   
   /* Did Load work? */
-  if ((!image->valid) || err->error) {
+  if ((!image->valid) || err->error || ReadFail) {
     ObitErrLog(err); /* show any error messages on err */
     /* Clean up mess and bail out */
-    workImage = ObitImageUnref (workImage);
+    workImage       = ObitImageUnref (workImage);
     image->myDesc   = ObitImageDescUnref(image->myDesc);
     image->myPixels = ObitImageDescUnref(image->myPixels);
-    image->valid = FALSE;  /* now no valid data */
+    image->valid    = FALSE;  /* now no valid data */
+    /*ObitThreadUnlock (image->thread);*/
     return -1;
   }
+  
+  /* Lock */
+  ObitThreadLock (image->thread);
   
   /* set center scroll */
   IDdata->scrollx  = image->myDesc->inaxes[0] / 2; 
@@ -193,6 +200,7 @@ olong Image2Pix (ImageData *image, ImageDisplay *IDdata, gboolean verbose)
     image->myDesc   = ObitImageDescUnref(image->myDesc);
     image->myPixels = ObitImageDescUnref(image->myPixels);
     image->valid = FALSE;  /* now no valid data */
+    ObitThreadUnlock (image->thread);  /* Unlock */
     return -1;
   }
   
@@ -237,6 +245,8 @@ olong Image2Pix (ImageData *image, ImageDisplay *IDdata, gboolean verbose)
     } /* end loop over columns */
   } /* end loop over rows */
 
+  /* Unlock */
+  ObitThreadUnlock (image->thread);
   if (eq_map) g_free(eq_map);  /* Cleanup */
   return 0;
 }  /* end of Image2Pix */
@@ -305,18 +315,18 @@ void WorkingCursor(gboolean on, gboolean verbose)
 	
 	/* info label widgets */
 	g_snprintf (cstring, 120, "Loading Image");
-	str = XmStringCreateSimple (cstring);
+	str = XmStringCreateLocalized (cstring);
 	line1 = XtVaCreateManagedWidget ("Line1", xmLabelWidgetClass, 
 					 form, 
-					 XmNlabelString,   str,
-					 XmNtopAttachment, XmATTACH_FORM,
+					 XmNlabelString,     str,
+					 XmNtopAttachment,   XmATTACH_FORM,
 					 XmNrightAttachment, XmATTACH_FORM,
 					 XmNleftAttachment,  XmATTACH_FORM,
 					 NULL);
 	if (str) XmStringFree(str); str = NULL;
 	
 	g_snprintf (cstring, 120, "Canceling FITS load behaves poorly");
-	str = XmStringCreateSimple (cstring);
+	str = XmStringCreateLocalized (cstring);
 	line2 = XtVaCreateManagedWidget ("Line2", xmLabelWidgetClass, 
 					 form, 
 					 XmNlabelString,   str,
@@ -485,8 +495,9 @@ void* ReadImage (void *arg)
     AClass[6] = 0;
     cno = ObitAIPSDirFindCNO(disk, data->AIPSuser, AName, AClass,
 			     "MA", data->AIPSseq, err);
-    if (cno<0) {
+   if (cno<=0) {
       LoadDone = TRUE;
+      ReadFail = TRUE;
       Obit_log_error(err, OBIT_Error, "Failure looking up input file");
       image = ObitImageUnref(image);  /* Cleanup */
       return NULL;
@@ -504,6 +515,7 @@ void* ReadImage (void *arg)
   /* Error? */
   if (err->error) {
     LoadDone = TRUE;
+    ReadFail = TRUE;
     image = ObitImageUnref(image);  /* Cleanup */
     Obit_traceback_val (err, routine, "LoadImage", NULL);
   }
@@ -512,6 +524,7 @@ void* ReadImage (void *arg)
   ObitImageOpen (image, OBIT_IO_ReadOnly, err);
   /* Error? */
   if (err->error) {
+    ReadFail = TRUE;
     LoadDone = TRUE;
     image = ObitImageUnref(image);  /* Cleanup */
     Obit_traceback_val (err, routine, "LoadImage", NULL);
@@ -521,6 +534,7 @@ void* ReadImage (void *arg)
   ObitImageRead (image, NULL, err);
   /* Error? */
   if (err->error) {
+    ReadFail = TRUE;
     LoadDone = TRUE;
     image = ObitImageUnref(image);  /* Cleanup */
     Obit_traceback_val (err, routine, "LoadImage", NULL);
@@ -529,7 +543,7 @@ void* ReadImage (void *arg)
   /* Save descriptor and pixel array */
   data->myDesc   = ObitImageDescRef(image->myDesc);
   data->myPixels = ObitImageDescRef(image->image);
-  data->valid = TRUE;
+  data->valid = FALSE;   /* Not yet */
 
   /* Get number of planes from IO descriptor */
   desc = (ObitImageDesc*)image->myIO->myDesc;
@@ -541,6 +555,7 @@ void* ReadImage (void *arg)
   ObitImageClose (image, err);
   /* Error? */
   if (err->error) {
+    ReadFail = TRUE;
     LoadDone = TRUE;
     image = ObitImageUnref(image);  /* Cleanup */
     Obit_traceback_val (err, routine, "LoadImage", NULL);
@@ -552,5 +567,6 @@ void* ReadImage (void *arg)
 
   data->valid = TRUE;  /* Now have valid data */
   LoadDone = TRUE;
+  ReadFail = FALSE;
   return NULL;
 } /* end ReadImage */

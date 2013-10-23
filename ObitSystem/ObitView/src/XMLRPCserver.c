@@ -239,6 +239,9 @@ void* XMLRPCWatcher (XtPointer clientData)
       /* reset display */
       ResetDisplay(IDdata);
       return_flag=1;   /* Set return flag */
+
+      /* Save AIPS directory name */
+      FStrngFill (AIPS_dir, myFileInfo.ADir);
   
       break;
    case XMLRPC_EditWindow:   /* Edit Window - returns the window */

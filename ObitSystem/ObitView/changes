@@ -25,4 +25,6 @@ X src/helpbox.c  update editing function descriptions
    Remove call to BlinkCheckQuit, this seems to be what was causing
    the blink crashes.
 
+15 Oct 2013, AIPS image browsing, Version 1.3
+   Some bug fixes fixing crash when loading.
 

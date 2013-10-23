@@ -50,10 +50,10 @@ typedef struct {
   FStrng *AIPSName;  /* AIPS name */
   FStrng *AIPSClass; /* AIPS class */
   FStrng *AIPSDir;   /* AIPS directory name */
-  olong AIPSseq;      /* AIPS sequence number */
-  olong AIPSuser;     /* AIPS user number */
-  olong Field;        /* Field number (1-rel) of mosaic */
-  olong NField;       /* Number of fields in mosaic */
+  olong AIPSseq;     /* AIPS sequence number */
+  olong AIPSuser;    /* AIPS user number */
+  olong Field;       /* Field number (1-rel) of mosaic */
+  olong NField;      /* Number of fields in mosaic */
   ofloat usr_equinox;/* User specified equinox */
   ofloat maxVal;     /* Maximum pixel value in plane */
   ofloat minVal;     /* Minimum pixel value in plane */
@@ -64,9 +64,10 @@ typedef struct {
   ofloat fYpixel;    /* fitted Y pixel number 1-rel*/
   ofloat fBpixel;    /* fitted peak brightness */
   ofloat PixRange[2];/* range of pixel values to display */
-  olong   mapFunc;   /* mapping: 0=>linear, 1=>sqrt, 2=>histo. Eq. */
+  olong  mapFunc;    /* mapping: 0=>linear, 1=>sqrt, 2=>histo. Eq. */
   olong PlaneNo;     /* image plane to display 0 rel */
   olong hiDim[3];    /* image dimensions 4-6 to display 0 rel */
+  ObitThread *thread;   /* Thread to lock access */
 } ImageData;
 
 /* global data structures */
@@ -74,7 +75,8 @@ typedef struct {
 XtAppContext myApp;  /* Program application context */     
 ImageData image[2];  /* images */
 gshort  CurImag;     /* which image is current 0 or 1 */
-FStrng *FITS_dir;    /* FITSfile directory */
+FStrng *FITS_dir;    /* FITS file directory */
+FStrng *AIPS_dir;    /* AIPS data directory */
 FStrng *mark_dir;    /* Mark position directory */
 FStrng *log_dir;     /* logging directory */
 gboolean doLog;      /* it true position logging turned on */
@@ -89,6 +91,7 @@ extern XtAppContext myApp;  /* Program application context */
 extern ImageData image[2];  /* images */
 extern gshort  CurImag;     /* which image is current 0 or 1 */
 extern FStrng *FITS_dir;    /* FITSfile directory */
+extern FStrng *AIPS_dir;    /* AIPS data directory */
 extern FStrng *mark_dir;    /* Mark position directory */
 extern FStrng *log_dir;     /* logging directory */
 extern gboolean doLog;      /* if true position logging turned on */

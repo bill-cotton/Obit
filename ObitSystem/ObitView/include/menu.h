@@ -1,7 +1,7 @@
 /* $Id$ */
 /* headers for XFITSview menu routines  */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996
+*  Copyright (C) 1996-2013
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -30,6 +30,7 @@ void MenuMarkLogger (int onoff);
 /* callback prototypes */
 void QuitCB (Widget w, XtPointer clientData, XtPointer callData);
 void OpenCB (Widget w, XtPointer clientData, XtPointer callData);
+void OpenACB (Widget w, XtPointer clientData, XtPointer callData);
 void PreviewCB (Widget w, XtPointer clientData, XtPointer callData);
 void FileCancelCB (Widget filebox, XtPointer clientData, XtPointer callData);
 void FileOKCB (Widget filebox, XtPointer clientData, XtPointer callData);

@@ -64,7 +64,7 @@ void ZoomDisplay (ImageDisplay *IDdata, olong iXsize, olong iYsize, olong iXpos,
 		  olong iYpos, olong Width, olong Height)
 {
   olong xinc, yinc, xrep, yrep, ix, iy, iix=0, iiy, i, j;
-  olong yaddr, addr=0, yaddr2, addr2, nxin, nxout, ival;
+  olong yaddr, addr=0, yaddr2, addr2, nxin, nxout, xMin, xMax, yMin, yMax, ival;
   XImage *work;
   unsigned long cval;
   gchar *pixarray, *gpharray, *work_data;
@@ -93,9 +93,12 @@ void ZoomDisplay (ImageDisplay *IDdata, olong iXsize, olong iYsize, olong iXpos,
   if (!image[CurImag].valid) return;
   if (!image[CurImag].pixarray) return;
   
-  pixarray = image[CurImag].pixarray;
+  /* Lock */
+  ObitThreadLock (image[CurImag].thread);
+  
+ pixarray = image[CurImag].pixarray;
   gpharray = image[CurImag].gpharray;
-  nxin = image[CurImag].myDesc->inaxes[0]; 
+  nxin = image[CurImag].nxArray;
   work = IDdata->work;
   nxout = work->bytes_per_line;
   work_data = work->data;
@@ -112,6 +115,12 @@ void ZoomDisplay (ImageDisplay *IDdata, olong iXsize, olong iYsize, olong iXpos,
     yrep = 1;}
   
   
+  /* Size displayed */
+  xMin = MAX (0, iXpos);
+  yMin = MAX (0, iYpos);
+  xMax = MIN (image[CurImag].nxArray, iXpos+Width);
+  yMax = MIN (image[CurImag].nyArray, iYpos+Height);
+  
   /* ix, iy are image pixel numbers, iix, iiy are display pixels */
   
   if (IDdata->depth==8) /* 8 bit display goes faster */
@@ -119,10 +128,10 @@ void ZoomDisplay (ImageDisplay *IDdata, olong iXsize, olong iYsize, olong iXpos,
       /* copy selected portion of image to display */
       if (IDdata->zoom<=1) /* no zooming or zoom out */
 	{iiy = -1;
-	for (iy=iYpos; iy<iYpos+Height; iy += yinc)  /* loop over columns */
+	for (iy=yMin; iy<yMax; iy += yinc)  /* loop over columns */
 	  {iiy++; iix = -1;
 	  yaddr = iy * nxin; yaddr2 = iiy * nxout;
-	  for (ix=iXpos; ix<iXpos+Width; ix += xinc)  /* loop down rows */
+	  for (ix=xMin; ix<xMax; ix += xinc)  /* loop down rows */
 	    {iix++;
 	    addr = yaddr + ix; addr2 = yaddr2 + iix;
 	    /* Graphics or image? */
@@ -136,11 +145,11 @@ void ZoomDisplay (ImageDisplay *IDdata, olong iXsize, olong iYsize, olong iXpos,
 	}
       else  /* zooming */
 	{iiy = -1;
-	for (iy=iYpos; iy<iYpos+Height; iy++)  /* loop over columns */
+	for (iy=yMin; iy<yMax; iy++)  /* loop over columns */
 	  {for (j=0; j<yrep; j++)
 	    {iiy++; iix = -1;
 	    yaddr = iy * nxin; yaddr2 = iiy * nxout;
-	    for (ix=iXpos; ix<iXpos+Width; ix++)  /* loop down rows */
+	    for (ix=xMin; ix<xMax; ix++)  /* loop down rows */
 	      {addr = yaddr + ix; 
 	      /* Graphics or image? */
 	      if ((*(gpharray + addr))>0) {
@@ -159,10 +168,10 @@ void ZoomDisplay (ImageDisplay *IDdata, olong iXsize, olong iYsize, olong iXpos,
     }
   else  /* slowly for non 8-bit displays */
     {iiy = -1;
-    for (iy=iYpos; iy<iYpos+Height; iy+=yinc)  /* loop over columns */
+    for (iy=yMin; iy<yMax; iy+=yinc)  /* loop over columns */
       {for (j=0; j<yrep; j++)
 	{iiy++; iix = -1;
-	for (ix=iXpos; ix<iXpos+Width; ix+=xinc)  /* loop down rows */
+	for (ix=xMin; ix<xMax; ix+=xinc)  /* loop down rows */
 	  { for (i=0; i<xrep; i++)
 	    {iix++;
 	    /* Graphics or image? */
@@ -184,6 +193,9 @@ void ZoomDisplay (ImageDisplay *IDdata, olong iXsize, olong iYsize, olong iXpos,
   XPutImage (XtDisplay (IDdata->canvas), XtWindow(IDdata->canvas), 
 	     IDdata->gc, IDdata->work, 0, 0, 0, 0,
 	     (unsigned int)iix, (unsigned int)iiy);
+  /* Unlock */
+  ObitThreadUnlock (image[CurImag].thread);
+  
 } /* end ZoomDisplay */
 
 /**
@@ -200,7 +212,7 @@ void ZoomDisplay24 (ImageDisplay *IDdata, int iXsize, int iYsize, int iXpos,
 		    int iYpos, int Width, int Height)
 {
   olong xinc, yinc, xrep, yrep, ix, iy, iix=0, iiy, i, j;
-  olong yaddr, addr, nxin, nxout, ival;
+  olong yaddr, addr, nxin, nxout, xMin, xMax, yMin, yMax, ival;
   unsigned long cval;
   XImage *work;
   gchar *pixarray, *gpharray, *work_data;
@@ -226,9 +238,12 @@ void ZoomDisplay24 (ImageDisplay *IDdata, int iXsize, int iYsize, int iXpos,
   if (!image[CurImag].valid) return;
   if (!image[CurImag].pixarray) return;
   
+  /* Lock */
+  ObitThreadLock (image[CurImag].thread);
+  
   pixarray = image[CurImag].pixarray;
   gpharray = image[CurImag].gpharray;
-  nxin = image[CurImag].myDesc->inaxes[0]; 
+  nxin = image[CurImag].nxArray;
   work = IDdata->work;
   nxout = work->bytes_per_line;
   work_data = work->data;
@@ -245,15 +260,21 @@ void ZoomDisplay24 (ImageDisplay *IDdata, int iXsize, int iYsize, int iXpos,
     yrep = 1;}
   
   
+  /* Size displayed */
+  xMin = MAX (0, iXpos);
+  yMin = MAX (0, iYpos);
+  xMax = MIN (image[CurImag].nxArray, iXpos+Width);
+  yMax = MIN (image[CurImag].nyArray, iYpos+Height);
+  
   /* ix, iy are image pixel numbers, iix, iiy are display pixels */
   /* copy selected portion of image to display */
   
   if (IDdata->zoom<=1) /* no zooming or zoom out */
     {iiy = -1;
-    for (iy=iYpos; iy<iYpos+Height; iy += yinc)  /* loop over columns */
+    for (iy=yMin; iy<yMax; iy += yinc)  /* loop over columns */
       {iiy++; iix = -1;
       yaddr = iy * nxin;
-      for (ix=iXpos; ix<iXpos+Width; ix += xinc)  /* loop down rows */
+      for (ix=xMin; ix<xMax; ix += xinc)  /* loop down rows */
 	{iix++;
 	addr = yaddr + ix;
 	/* Graphics or image? */
@@ -266,11 +287,11 @@ void ZoomDisplay24 (ImageDisplay *IDdata, int iXsize, int iYsize, int iXpos,
     }
   else  /* zooming */
     {iiy = -1;
-    for (iy=iYpos; iy<iYpos+Height; iy++)  /* loop over columns */
+    for (iy=yMin; iy<yMax; iy++)  /* loop over columns */
       {for (j=0; j<yrep; j++)
 	{iiy++; iix = -1;
 	yaddr = iy * nxin;
-	for (ix=iXpos; ix<iXpos+Width; ix++)  /* loop down rows */
+	for (ix=xMin; ix<xMax; ix++)  /* loop down rows */
 	  {addr = yaddr + ix; 
 	  /* Graphics or image? */
 	  if ((*(gpharray + addr))>0) 
@@ -290,6 +311,9 @@ void ZoomDisplay24 (ImageDisplay *IDdata, int iXsize, int iYsize, int iXpos,
   XPutImage (XtDisplay (IDdata->canvas), XtWindow(IDdata->canvas), 
 	     IDdata->gc, IDdata->work, 0, 0, 0, 0,
 	     (unsigned int)iix, (unsigned int)iiy);
+  /* Unlock */
+  ObitThreadUnlock (image[CurImag].thread);
+  
 } /* end ZoomDisplay24 */
 
 /**

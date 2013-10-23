@@ -2210,6 +2210,7 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
   ofloat ExpArg[FazArrSize],  ExpVal[FazArrSize];
   olong it, jt, itcnt;
   odouble tx, ty, tz, sumReal, sumImag, *freqArr, SMRefFreq, specFreqFact;
+  odouble u, v, w;
   gchar *routine = "ThreadSkyModelFTDFT";
 
   /* error checks - assume most done at higher level */
@@ -2296,7 +2297,11 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	freqFact = fscale[iIF*kincif + iChannel*kincf];  /* Frequency scaling factor */
 	freq2    = freqFact*freqFact;    /* Frequency factor squared */
 	specFreqFact = freqArr[iIF*kincif + iChannel*kincf] * SMRefFreq;
-	
+	/* u,v,w at frequency */
+	u = (odouble)visData[ilocu]*freqFact;
+	v = (odouble)visData[ilocv]*freqFact;
+	w = (odouble)visData[ilocw]*freqFact;
+
 	/* Sum over components */
 	sumReal = sumImag = 0.0;
 	ccData  = data;
@@ -2309,16 +2314,11 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	  for (it=0; it<mcomp; it+=FazArrSize) {
 	    itcnt = 0;
 	    for (iComp=it; iComp<mcomp; iComp++) {
-	      if (ccData[0]!=0.0) {  /* valid? */
-		tx = ccData[1]*(odouble)visData[ilocu];
-		ty = ccData[2]*(odouble)visData[ilocv];
-		tz = ccData[3]*(odouble)visData[ilocw];
-		FazArr[itcnt] = freqFact * (tx + ty + tz);
-		AmpArr[itcnt] = ccData[0];
-	      } else { /* end if valid */
-		FazArr[itcnt] = 0.0;
-		AmpArr[itcnt] = 0.0;
-	      }  /* end if valid */
+	      AmpArr[itcnt] = ccData[0];
+	      tx = ccData[1]*u;
+	      ty = ccData[2]*v;
+	      tz = ccData[3]*w;
+	      FazArr[itcnt] = (tx + ty + tz);
 	      ccData += lcomp;  /* update pointer */
 	      itcnt++;          /* Count in amp/phase buffers */
 	      if (itcnt>=FazArrSize) break;
@@ -2338,9 +2338,9 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	    itcnt = 0;
 	    for (iComp=it; iComp<mcomp; iComp++) {
 	      if (ccData[0]!=0.0) {  /* valid? */
-		tx = ccData[1]*(odouble)visData[ilocu];
-		ty = ccData[2]*(odouble)visData[ilocv];
-		tz = ccData[3]*(odouble)visData[ilocw];
+		tx = ccData[1]*u;
+		ty = ccData[2]*v;
+		tz = ccData[3]*w;
 		/* Frequency dependent term */
 		lll = ll = log(specFreqFact);
 		arg = 0.0;
@@ -2349,8 +2349,8 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 		  lll *= ll;
 		}
 		specFact = exp(arg);
-		FazArr[itcnt] = freqFact * (tx + ty + tz);
 		AmpArr[itcnt] = specFact * ccData[0];
+		FazArr[itcnt] = (tx + ty + tz);
 	      } else { /* end if valid */
 		FazArr[itcnt] = 0.0;
 		AmpArr[itcnt] = 0.0;
@@ -2375,15 +2375,13 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	    itcnt = 0;
 	    for (iComp=it; iComp<mcomp; iComp++) {
 	      if (ccData[0]!=0.0) {  /* valid? */
-		arg = freq2 * (ccData[4]*visData[ilocu]*visData[ilocu] +
-			       ccData[5]*visData[ilocv]*visData[ilocv] +
-			       ccData[6]*visData[ilocu]*visData[ilocv]);
 		amp = ccData[0];
-		tx = ccData[1]*(odouble)visData[ilocu];
-		ty = ccData[2]*(odouble)visData[ilocv];
-		tz = ccData[3]*(odouble)visData[ilocw];
+		arg = (ccData[4]*u*u + ccData[5]*v*v + ccData[6]*w*w);
+		tx = ccData[1]*u;
+		ty = ccData[2]*v;
+		tz = ccData[3]*w;
 		ExpArg[itcnt] = -arg;
-		FazArr[itcnt] = freqFact * (tx + ty + tz);
+		FazArr[itcnt] = (tx + ty + tz);
 		AmpArr[itcnt] = amp;
 	      } else { /* end if valid */
 		FazArr[itcnt] = 0.0;
@@ -2421,15 +2419,13 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 		  lll *= ll;
 		}
 		specFact = exp(arg);
-		arg = freq2 * (ccData[4]*visData[ilocu]*visData[ilocu] +
-			       ccData[5]*visData[ilocv]*visData[ilocv] +
-			       ccData[6]*visData[ilocu]*visData[ilocv]);
 		amp = specFact * ccData[0];
-		tx = ccData[1]*(odouble)visData[ilocu];
-		ty = ccData[2]*(odouble)visData[ilocv];
-		tz = ccData[3]*(odouble)visData[ilocw];
+		arg = (ccData[4]*u*u + ccData[5]*v*v + ccData[6]*w*w);
+		tx = ccData[1]*u;
+		ty = ccData[2]*v;
+		tz = ccData[3]*w;
 		ExpArg[itcnt] = -arg;
-		FazArr[itcnt] = freqFact * (tx + ty + tz);
+		FazArr[itcnt] = (tx + ty + tz);
 		AmpArr[itcnt] = amp;
 	      } else { /* end if valid */
 		FazArr[itcnt] = 0.0;
@@ -2459,15 +2455,14 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	    itcnt = 0;
 	    for (iComp=it; iComp<mcomp; iComp++) {
 	      if (ccData[0]!=0.0) {  /* valid? */
-		arg = freqFact * sqrt(visData[ilocu]*visData[ilocu] +
-				      visData[ilocv]*visData[ilocv]) * ccData[4];
+		arg = sqrt(u*u + v*v) * ccData[4];
 		
 		arg = MAX (arg, 0.1);
 		amp = ccData[0] * ((sin(arg)/(arg*arg*arg)) - cos(arg)/(arg*arg));
-		tx = ccData[1]*(odouble)visData[ilocu];
-		ty = ccData[2]*(odouble)visData[ilocv];
-		tz = ccData[3]*(odouble)visData[ilocw];
-		FazArr[itcnt] = freqFact * (tx + ty + tz);
+		tx = ccData[1]*u;
+		ty = ccData[2]*v;
+		tz = ccData[3]*w;
+		FazArr[itcnt] = (tx + ty + tz);
 		AmpArr[itcnt] = amp;
 	      } else { /* end if valid */
 		FazArr[itcnt] = 0.0;
@@ -2500,14 +2495,13 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 		  lll *= ll;
 		}
 		specFact = exp(arg);
-		arg = freqFact * sqrt(visData[ilocu]*visData[ilocu] +
-				      visData[ilocv]*visData[ilocv]) * ccData[4];
+		arg = sqrt(u*u + v*v) * ccData[4];
 		arg = MAX (arg, 0.1);
 		amp = specFact * ccData[0] * ((sin(arg)/(arg*arg*arg)) - cos(arg)/(arg*arg));
-		tx = ccData[1]*(odouble)visData[ilocu];
-		ty = ccData[2]*(odouble)visData[ilocv];
-		tz = ccData[3]*(odouble)visData[ilocw];
-		FazArr[itcnt] = freqFact * (tx + ty + tz);
+		tx = ccData[1]*u;
+		ty = ccData[2]*v;
+		tz = ccData[3]*w;
+		FazArr[itcnt] = (tx + ty + tz);
 		AmpArr[itcnt] = amp;
 	      } else { /* end if valid */
 		FazArr[itcnt] = 0.0;

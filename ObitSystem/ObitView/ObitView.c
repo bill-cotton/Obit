@@ -267,6 +267,7 @@ void InitImage (ImageDisplay *IDdata, olong narg, gchar *filename)
   
   CurImag     = 0; /* set current image pointer */
   FITS_dir    = NULL;
+  AIPS_dir    = NULL;
   mark_dir    = NULL;
   log_dir     = NULL;
   requestList = NULL;
@@ -287,10 +288,10 @@ void InitImage (ImageDisplay *IDdata, olong narg, gchar *filename)
     image[j].myDesc    = NULL;
     image[j].myPixels  = NULL;
     image[j].DataType  = OBIT_IO_FITS;
-    image[j].FileName  = MakeFStrng("NONE");
-    image[j].AIPSName  = MakeFStrng("NONE");
-    image[j].AIPSClass = MakeFStrng("NONE");
-    image[j].AIPSDir   = MakeFStrng("NONE");
+    image[j].FileName  = MakeFStrng("specify FITS file                                                         ");
+    image[j].AIPSName  = MakeFStrng("NONE        ");
+    image[j].AIPSClass = MakeFStrng("NONE  ");
+    image[j].AIPSDir   = MakeFStrng("specify AIPS directory                                                    ");
     image[j].AIPSseq   = 0;
     image[j].AIPSuser  = 0;
     image[j].Field     = 0;
@@ -309,6 +310,7 @@ void InitImage (ImageDisplay *IDdata, olong narg, gchar *filename)
     image[j].hiDim[0]    = 0;
     image[j].hiDim[1]    = 0;
     image[j].hiDim[2]    = 0;
+    image[j].thread      = newObitThread();
   } /* end of loop over ImageData structures */
 
   /* was a FITS file name passed as an argument? */
