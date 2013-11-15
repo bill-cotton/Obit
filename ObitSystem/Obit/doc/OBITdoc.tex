@@ -414,7 +414,7 @@ ClassInfo pointer for class with name, base and function pointers.
 \item gint ReferenceCount;\\
  Reference count for object (numbers of pointers attaching).
 \item gchar *name;\\
- Name of object [Optional], this is used in error and informative messages.
+ Name of object [OPTIONAL], this is used in error and informative messages.
 \end{enumerate}
 
 The Obit virtual class structure contains the following members:
@@ -1853,7 +1853,7 @@ ObitTableDesc.
 }
 ]
 % Must be position 2 to index
-\tablekey[{"NO\_POL "}{J}{numPol}{}{(1,2)}
+\tablekey[{"NO\_POL "}{J}{numPol}{1}{(1,2)}
 {The number of polarizations.
 }
 ]
@@ -1934,13 +1934,13 @@ ObitTableDesc.
 {The number of antennas}
 ]
 % Must be position 2 to index
-\tablekey[{"NO\_POL "}{J}{numPol}{}{(1,2)}
+\tablekey[{"NO\_POL "}{J}{numPol}{1}{(1,2)}
 {The number of antennas}
 ]
-\tablekey[{"NO\_IF  "}{J}{numIF}{}{()}
+\tablekey[{"NO\_IF  "}{J}{numIF}{1}{()}
 {The number of IFs}
 ]
-\tablekey[{"NO\_CHAN"}{J}{numChan}{}{()}
+\tablekey[{"NO\_CHAN"}{J}{numChan}{1}{()}
 {Number of frequency channels}
 ]
 \tablekey[{"STRT\_CHN"}{J}{startChan}{1}{}
@@ -2106,10 +2106,10 @@ ObitTableDesc.
 {Revision number of the table definition}
 ]
 % Must be position 2 to index
-\tablekey[{"NO\_POL  "}{J}{numPol}{}{(1,2)}
+\tablekey[{"NO\_POL  "}{J}{numPol}{1}{(1,2)}
 {The number of polarizations}
 ]
-\tablekey[{"NO\_IF  "}{J}{numIF}{}{()}
+\tablekey[{"NO\_IF  "}{J}{numIF}{1}{()}
 {The number of IFs}
 ]
 \tablekey[{"NO\_ANT  "}{J}{numAnt}{1}{}
@@ -2686,10 +2686,10 @@ ObitTableDesc.
 {The number of Bands(?).}
 ]
 % Must be position 2 to index
-\tablekey[{"NO\_POL"}{J}{numPol}{}{(1,2)}
+\tablekey[{"NO\_POL"}{J}{numPol}{1}{(1,2)}
 {The number of polarizations.}
 ]
-\tablekey[{"NO\_TABS"}{J}{numTabs}{}{()}
+\tablekey[{"NO\_TABS"}{J}{numTabs}{1}{()}
 {The number of ??.}
 ]
 \tablekey[{"TABREV"}{J}{revision}{3}{}
@@ -2771,7 +2771,7 @@ ObitTableDesc.
 {Reference date as "YYYYMMDD"}
 ]
 % Must be position 2 to index
-\tablekey[{"NO\_POL "}{J}{numPol}{}{(1,2)}
+\tablekey[{"NO\_POL "}{J}{numPol}{1}{(1,2)}
 {The number of polarizations.}
 ]
 \tablekey[{"OBSCODE"}{A}{obscode}{"AA000"}{}
@@ -2963,7 +2963,7 @@ ObitTableDesc.
 {Observation code}
 ]
 % Must be position 2 to index
-\tablekey[{"NO\_POL"}{J}{numPol}{}{(1,2)}
+\tablekey[{"NO\_POL"}{J}{numPol}{1}{(1,2)}
 {The number of polarizations.}
 ]
 \tablekey[{"RDATE   "}{A}{RefDate}{"YYYYMMDD"}{}
@@ -3461,13 +3461,13 @@ ObitTableDesc.
 {Revision number of the table definition.}
 ]
 % Must be position 2 to index
-\tablekey[{"NO\_POL"}{J}{numPol}{}{(1,2)}
+\tablekey[{"NO\_POL"}{J}{numPol}{1}{(1,2)}
 {The number of polarizations.}
 ]
-\tablekey[{"NO\_BAND "}{J}{numBand}{}{()}
+\tablekey[{"NO\_BAND "}{J}{numBand}{1}{()}
 {The number of Bands(?).}
 ]
-\tablekey[{"NO\_TONES"}{J}{numTones}{}{()}
+\tablekey[{"NO\_TONES"}{J}{numTones}{1}{()}
 {The number of Tones.}
 ]
 \end{keywords}
@@ -3556,7 +3556,7 @@ ObitTableDesc.
 \tablekey[{"NO\_POL  "}{J}{numPol}{2}{(1,2)}
 {The number of orthogonal polarizations.}
 ]
-\tablekey[{"NO\_IF  "}{J}{numIF}{}{()}
+\tablekey[{"NO\_IF  "}{J}{numIF}{1}{()}
 {The number of IFs}
 ]
 \tablekey[{"NO\_CHAN"}{J}{numChan}{}{()}
@@ -3726,7 +3726,7 @@ ObitTableDesc.
 }
 ]
 % Must be position 2 to index
-\tablekey[{"NO\_POL  "}{J}{numPol}{}{(1,2)}
+\tablekey[{"NO\_POL  "}{J}{numPol}{1}{(1,2)}
 {The number of polarizations.
 }
 ]
@@ -3951,7 +3951,7 @@ ObitTableDesc.
 {The number of IFs}
 ]
 % Must be position 2 to index
-\tablekey[{"NO\_POL "}{J}{numPol}{}{(1,2)}
+\tablekey[{"NO\_POL "}{J}{numPol}{1}{(1,2)}
 {The number of polarizations.}
 ]
 \tablekey[{"REVISION"}{J}{revision}{10}{}
@@ -4264,9 +4264,6 @@ ObitTableDesc.
 \begin{keywords}
 \tablekey[{"TABREV"}{J}{revision}{3}{}
 {Revision number of the table definition.}
-]
-\tablekey[{"OBSCODE"}{A}{obscode}{"AA000"}{}
-{Observation code}
 ]
 \tablekey[{"RDATE   "}{A}{RefDate}{"YYYYMMDD"}{}
 {Reference date as "YYYYMMDD"}
@@ -4603,20 +4600,29 @@ ObitTableDesc.
 {Table format revision number}
 ]
 % Must be position 2 to index
-\tablekey[{"NO\_POL  "}{J}{numPol}{}{(1,2)}
+\tablekey[{"NO\_POL  "}{J}{numPol}{1}{(1,2)}
 {The number of polarizations}
+]
+\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
+{[OPTIONAL] Number of frequency bands }
+]
+\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
+{[OPTIONAL] Number of frequency channels}
+]
+\tablekey[{"NO\_ANT  "}{J}{numAnt}{2}{()}
+{The maximum antenna number}
+]
+\tablekey[{"NO\_BACH "}{J}{numBach}{1}{()}
+{The number of spectral channels tabulated}
+]
+\tablekey[{"STRT\_CHN"}{J}{strtChn}{1}{()}
+{Data channel number (1-rel) of first channel in the table}
 ]
 \tablekey[{"NO\_STKD "}{J}{no\_stkd}{1}{}
 {Number of Stokes parameters}
 ]
 \tablekey[{"STK\_1   "}{J}{stk\_1}{-1}{}
 {First Stokes parameter}
-]
-\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
-{Number of frequency bands }
-]
-\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
-{Number of frequency channels}
 ]
 \tablekey[{"REF\_FREQ"}{D}{ref\_freq}{1.0}{}
 {Reference frequency (Hz)}
@@ -4630,21 +4636,6 @@ ObitTableDesc.
 \tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
 {Observation project code}
 ]
-\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
-{Array name}
-]
-\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
-{Reference date as "YYYY-MM-DD"}
-]
-\tablekey[{"NO\_ANT  "}{J}{numAnt}{}{()}
-{The maximum antenna number}
-]
-\tablekey[{"NO\_BACH "}{J}{numBach}{}{()}
-{The number of spectral channels tabulated}
-]
-\tablekey[{"STRT\_CHN"}{J}{strtChn}{}{()}
-{Data channel number (1-rel) of first channel in the table}
-]
 \end{keywords}
 %
 % Table column description
@@ -4652,7 +4643,7 @@ ObitTableDesc.
 \tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
 {The center time}
 ] 
-\tablecol[{"TIME INTERVAL"}{"DAYS    "}{E}{(1)}{TimeI}
+\tablecol[{"TIME\_INTERVAL"}{"DAYS    "}{E}{(1)}{TimeI}
 {Time interval.}
 ] 
 \tablecol[{"SOURCE\_ID"}{"        "}{J}{(1)}{SourID}
@@ -4721,17 +4712,20 @@ ObitTableDesc.
 {Table format revision number}
 ]
 % Must be position 2 to index
-\tablekey[{"NO\_POL  "}{J}{numPol}{}{(1,2)}
+\tablekey[{"NO\_POL  "}{J}{numPol}{1}{(1,2)}
 {The number of polarizations}
+]
+\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
+{[OPTIONAL] Number of frequency bands }
+]
+\tablekey[{"NO\_ANT  "}{J}{numAnt}{}{()}
+{The maximum antenna number}
 ]
 \tablekey[{"NO\_STKD "}{J}{no\_stkd}{1}{}
 {Number of Stokes parameters}
 ]
 \tablekey[{"STK\_1   "}{J}{stk\_1}{-1}{}
 {First Stokes parameter}
-]
-\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
-{Number of frequency bands }
 ]
 \tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
 {Number of frequency channels}
@@ -4748,15 +4742,6 @@ ObitTableDesc.
 \tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
 {Observation project code}
 ]
-\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
-{Array name}
-]
-\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
-{Reference date as "YYYY-MM-DD"}
-]
-\tablekey[{"NO\_ANT  "}{J}{numAnt}{}{()}
-{The maximum antenna number}
-]
 \end{keywords}
 %
 % Table column description
@@ -4764,7 +4749,7 @@ ObitTableDesc.
 \tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
 {The center time}
 ] 
-\tablecol[{"TIME INTERVAL"}{"DAYS    "}{E}{(1)}{TimeI}
+\tablecol[{"TIME\_INTERVAL"}{"DAYS    "}{E}{(1)}{TimeI}
 {Time interval.}
 ] 
 \tablecol[{"SOURCE\_ID"}{"        "}{J}{(1)}{SourID}
@@ -4848,14 +4833,14 @@ ObitTableDesc.
 \tablekey[{"TABREV  "}{J}{tabrev}{1}{}
 {Table format revision number}
 ]
+\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
+{[OPTIONAL] Number of frequency bands }
+]
 \tablekey[{"NO\_STKD "}{J}{no\_stkd}{1}{}
 {Number of Stokes parameters}
 ]
 \tablekey[{"STK\_1   "}{J}{stk\_1}{-1}{}
 {First Stokes parameter}
-]
-\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
-{Number of frequency bands }
 ]
 \tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
 {Number of frequency channels}
@@ -4871,12 +4856,6 @@ ObitTableDesc.
 ]
 \tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
 {Observation project code}
-]
-\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
-{Array name}
-]
-\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
-{Reference date as "YYYY-MM-DD"}
 ]
 \end{keywords}
 %
@@ -5044,19 +5023,22 @@ ObitTableDesc.
 ]
 % Must be position 2 to index
 \tablekey[{"NO\_POL  "}{J}{numPol}{}{(1,2)}
-{The number of polarizations}
+{[OPTIONAL] The number of polarizations}
+]
+\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
+{[OPTIONAL] Number of frequency bands }
+]
+\tablekey[{"NO\_TABS"}{J}{numTabs}{}{()}
+{The number of tabulated terms}
+]
+\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
+{Number of frequency channels}
 ]
 \tablekey[{"NO\_STKD "}{J}{no\_stkd}{1}{}
 {Number of Stokes parameters}
 ]
 \tablekey[{"STK\_1   "}{J}{stk\_1}{-1}{}
 {First Stokes parameter}
-]
-\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
-{Number of frequency bands }
-]
-\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
-{Number of frequency channels}
 ]
 \tablekey[{"REF\_FREQ"}{D}{ref\_freq}{1.0}{}
 {Reference frequency (Hz)}
@@ -5069,15 +5051,6 @@ ObitTableDesc.
 ]
 \tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
 {Observation project code}
-]
-\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
-{Array name}
-]
-\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
-{Reference date as "YYYY-MM-DD"}
-]
-\tablekey[{"NO\_TABS"}{J}{numTabs}{}{()}
-{The number of tabulated terms}
 ]
 \end{keywords}
 %
@@ -5155,8 +5128,8 @@ ObitTableDesc.
 {Table format revision number}
 ]
 % Must be position 2 to index
-\tablekey[{"NO\_POL  "}{J}{numPol}{}{(1,2)}
-{The number of polarizations}
+\tablekey[{"NO\_POL  "}{J}{numPol}{1}{(1,2)}
+{[OPTIONAL] The number of polarizations}
 ]
 \tablekey[{"NPOLY "}{J}{npoly}{1}{()}
 {Number of polynomial parameters}
@@ -5168,7 +5141,7 @@ ObitTableDesc.
 {First Stokes parameter}
 ]
 \tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
-{Number of frequency bands }
+{[OPTIONAL] Number of frequency bands }
 ]
 \tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
 {Number of frequency channels}
@@ -5184,12 +5157,6 @@ ObitTableDesc.
 ]
 \tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
 {Observation project code}
-]
-\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
-{Array name}
-]
-\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
-{Reference date as "YYYY-MM-DD"}
 ]
 \end{keywords}
 %
@@ -5246,10 +5213,10 @@ ObitTableDesc.
 %
 \clearpage
 
-%%%%%%%%%%%%%%% ObitTableIDI\_PHASE_CAL Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%% ObitTableIDI\_PHASE-CAL Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 %
-\ClassName[{ObitTableIDI\_PHASE\_CAL}]
+\ClassName[{ObitTableIDI\_PHASE-CAL}]
 
 \tabletitle{IDI UV data Interferometer Model Table}
 % table name
@@ -5257,7 +5224,7 @@ ObitTableDesc.
 \tableintro[
 {This class contains tabular data and allows access.
 This table is part of the IDI uv data format.
-"IDI\_PHASE\_CAL" contains instrumental phase calibration data
+"IDI\_PHASE-CAL" contains instrumental phase calibration data
 Only FITS cataloged data are supported.
 This class is derived from the ObitTable class.}
 ]
@@ -5276,20 +5243,23 @@ ObitTableDesc.
 {Table format revision number}
 ]
 % Must be position 2 to index
-\tablekey[{"NO\_POL  "}{J}{numPol}{}{(1,2)}
+\tablekey[{"NO\_POL  "}{J}{numPol}{1}{(1,2)}
 {The number of polarizations}
+]
+\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
+{[OPTIONAL] Number of frequency bands }
+]
+\tablekey[{"NO\_TABS "}{J}{numTones}{1}{()}
+{Number of tones used}
+]
+\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
+{Number of frequency channels}
 ]
 \tablekey[{"NO\_STKD "}{J}{no\_stkd}{1}{}
 {Number of Stokes parameters}
 ]
 \tablekey[{"STK\_1   "}{J}{stk\_1}{-1}{}
 {First Stokes parameter}
-]
-\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
-{Number of frequency bands }
-]
-\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
-{Number of frequency channels}
 ]
 \tablekey[{"REF\_FREQ"}{D}{ref\_freq}{1.0}{}
 {Reference frequency (Hz)}
@@ -5302,15 +5272,6 @@ ObitTableDesc.
 ]
 \tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
 {Observation project code}
-]
-\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
-{Array name}
-]
-\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
-{Reference date as "YYYY-MM-DD"}
-]
-\tablekey[{"NO\_TABS "}{J}{numTones}{1}{()}
-{Number of tones used}
 ]
 \end{keywords}
 %
@@ -5391,17 +5352,17 @@ ObitTableDesc.
 \tablekey[{"TABREV  "}{J}{tabrev}{1}{}
 {Table format revision number}
 ]
+\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
+{[OPTIONAL] Number of frequency bands }
+]
+\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
+{Number of frequency channels}
+]
 \tablekey[{"NO\_STKD "}{J}{no\_stkd}{1}{}
 {Number of Stokes parameters}
 ]
 \tablekey[{"STK\_1   "}{J}{stk\_1}{-1}{}
 {First Stokes parameter}
-]
-\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
-{Number of frequency bands }
-]
-\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
-{Number of frequency channels}
 ]
 \tablekey[{"REF\_FREQ"}{D}{ref\_freq}{1.0}{}
 {Reference frequency (Hz)}
@@ -5415,15 +5376,15 @@ ObitTableDesc.
 \tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
 {Observation project code}
 ]
-\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
-{Reference date as "YYYY-MM-DD"}
-]
 \end{keywords}
 %
 % Table column description
 \begin{columns}
 \tablecol[{"SOURCE\_ID"}{"       " }{J}{(1)}{SourID}
-{Source ID}
+{[OPTIONAL] Source ID}
+] 
+\tablecol[{"ID\_NO."}{"       " }{J}{(1)}{VLBAID}
+{[OPTIONAL] Non conforming VLBA version of Source ID}
 ] 
 \tablecol[{"SOURCE  "}{"       " }{A}{(16)}{Source}
 {Source name }
@@ -5462,7 +5423,10 @@ ObitTableDesc.
 {Declination at mean EPOCH (actually equinox) }
 ] 
 \tablecol[{"EQUINOX  "}{"       " }{A}{(8)}{Equinox}
-{Mean Epoch (really equinox) for position in yr. since year 0.0}
+{[OPTIONAL] Mean Epoch (really equinox) for position in yr. since year 0.0}
+] 
+\tablecol[{ "EPOCH   "}{"       " }{A}{(8)}{VLBAEquinox}
+{[OPTIONAL] VLBA screwup Mean Epoch (really equinox) for position in yr. since year 0.0}
 ] 
 \tablecol[{"RAAPP   "}{"DEGREES " }{D}{(1)}{RAApp}
 {Apparent Right ascension }
@@ -5536,19 +5500,19 @@ ObitTableDesc.
 ]
 % Must be position 2 to index
 \tablekey[{"NO\_POL  "}{J}{numPol}{}{(1,2)}
-{The number of polarizations}
+{[OPTIONAL] The number of polarizations}
+]
+\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
+{[OPTIONAL] Number of frequency bands }
+]
+\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
+{Number of frequency channels}
 ]
 \tablekey[{"NO\_STKD "}{J}{no\_stkd}{1}{}
 {Number of Stokes parameters}
 ]
 \tablekey[{"STK\_1   "}{J}{stk\_1}{-1}{}
 {First Stokes parameter}
-]
-\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
-{Number of frequency bands }
-]
-\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
-{Number of frequency channels}
 ]
 \tablekey[{"REF\_FREQ"}{D}{ref\_freq}{1.0}{}
 {Reference frequency (Hz)}
@@ -5562,12 +5526,6 @@ ObitTableDesc.
 \tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
 {Observation project code}
 ]
-\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
-{Array name}
-]
-\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
-{Reference date as "YYYY-MM-DD"}
-]
 \end{keywords}
 %
 % Table column description
@@ -5575,7 +5533,7 @@ ObitTableDesc.
 \tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
 {The center time}
 ] 
-\tablecol[{"TIME INTERVAL"}{"DAYS    "}{E}{(1)}{TimeI}
+\tablecol[{"TIME\_INTERVAL"}{"DAYS    "}{E}{(1)}{TimeI}
 {Time interval.}
 ] 
 \tablecol[{"SOURCE\_ID"}{"        "}{J}{(1)}{SourID}
@@ -5841,13 +5799,31 @@ ObitTableDesc.
 % Table column description
 \begin{columns}
 \tablecol[{"UU      "}{"SECONDS " }{E}{(1)}{uu}
-{U component of baseline.}
+{[OPTIONAL] U component of baseline. Unspecified projection}
 ] 
 \tablecol[{"VV      "}{"SECONDS " }{E}{(1)}{vv}
-{V component of baseline.}
+{[OPTIONAL] V component of baseline. Unspecified projection}
 ] 
 \tablecol[{"WW      "}{"SECONDS " }{E}{(1)}{ww}
-{W component of baseline.}
+{[OPTIONAL] W component of baseline. Unspecified projection}
+] 
+\tablecol[{"UU---SIN"}{"SECONDS " }{E}{(1)}{uusin}
+{[OPTIONAL] U component of baseline. Sine projection}
+] 
+\tablecol[{"VV---SIN"}{"SECONDS " }{E}{(1)}{vvsin}
+{[OPTIONAL] V component of baseline. Sine projection}
+] 
+\tablecol[{"WW---SIN"}{"SECONDS " }{E}{(1)}{wwsin}
+{[OPTIONAL] W component of baseline. Sine projection}
+] 
+\tablecol[{"UU---NCP"}{"SECONDS " }{E}{(1)}{uuncp}
+{[OPTIONAL] U component of baseline. NCP projection}
+] 
+\tablecol[{"VV---NCP"}{"SECONDS " }{E}{(1)}{vvncp}
+{[OPTIONAL] V component of baseline. NCP projection}
+] 
+\tablecol[{"WW---NCP"}{"SECONDS " }{E}{(1)}{wwncp}
+{[OPTIONAL] W component of baseline. NCP projection}
 ] 
 \tablecol[{"DATE    "}{"DAYS    " }{D}{(1)}{date}
 {Julian Date}
@@ -5859,13 +5835,16 @@ ObitTableDesc.
 {Interferometer baseline as ant 1*256+ant1 (1-rel).}
 ] 
 \tablecol[{"ARRAY   "}{"        " }{J}{(1)}{Array}
-{Array number (1-rel)}
+{[OPTIONAL] Array number (1-rel)}
 ] 
 \tablecol[{"FILTER  "}{"        " }{J}{(1)}{Filter}
 {[OPTIONAL]  VLBA Filter number.}
 ] 
 \tablecol[{"SOURCE\_ID"}{"        " }{J}{(1)}{Source}
 {[OPTIONAL] Source ID, index into SOURCE table.}
+] 
+\tablecol[{"SOURCE"}{"        " }{J}{(1)}{VLBASource}
+{[OPTIONAL] Hack for nonstandard VLBA usage Source ID, index into SOURCE table.}
 ] 
 \tablecol[{"FREQID  "}{"        " }{J}{(1)}{FreqID}
 {[OPTIONAL] Frequency group ID.}
@@ -5923,17 +5902,20 @@ ObitTableDesc.
 \tablekey[{"TABREV  "}{J}{tabrev}{2}{}
 {Table format revision number}
 ]
-\tablekey[{"NO\_STKD "}{J}{no\_stkd}{1}{}
-{Number of Stokes parameters}
-]
-\tablekey[{"STK\_1   "}{J}{stk\_1}{-1}{}
-{First Stokes parameter}
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
+{Reference date as "YYYY-MM-DD"}
 ]
 \tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
 {Number of frequency bands }
 ]
 \tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
 {Number of frequency channels}
+]
+\tablekey[{"NO\_STKD "}{J}{no\_stkd}{1}{}
+{Number of Stokes parameters}
+]
+\tablekey[{"STK\_1   "}{J}{stk\_1}{-1}{}
+{First Stokes parameter}
 ]
 \tablekey[{"REF\_FREQ"}{D}{ref\_freq}{1.0}{}
 {Reference frequency (Hz)}
@@ -5947,12 +5929,6 @@ ObitTableDesc.
 \tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
 {Observation project code}
 ]
-\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
-{Array name}
-]
-\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
-{Reference date as "YYYY-MM-DD"}
-]
 \end{keywords}
 %
 % Table column description
@@ -5960,7 +5936,7 @@ ObitTableDesc.
 \tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
 {The center time}
 ] 
-\tablecol[{"TIME INTERVAL"}{"DAYS    "}{E}{(1)}{TimeI}
+\tablecol[{"TIME\_INTERVAL"}{"DAYS    "}{E}{(1)}{TimeI}
 {Time interval.}
 ] 
 \tablecol[{"ANTENNA\_NO"}{"       " }{J}{(1)}{antNo}

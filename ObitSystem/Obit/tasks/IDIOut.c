@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Convert Obit UV to FITS IDI format                                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2012                                          */
+/*;  Copyright (C) 2009-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1049,7 +1049,7 @@ void PutAntennaInfo (ObitInfoList *myInput, ObitUV *inData,
       strncpy (outTable->obscode,   inData->myDesc->observer, 8);
       lim = MIN (MAXKEYCHARTABLEIDI_ANTENNA, MAXKEYCHARTABLEAN);
       strncpy (outTable->RefDate, inTable->RefDate, lim);
-      strncpy (outTable->ArrName, inTable->ArrName, lim);
+      /*strncpy (outTable->ArrName, inTable->ArrName, lim);*/
       if (doPol)  /* Applying cal? */
 	strncpy (outTable->polType, "        ", lim);
       else
@@ -1214,7 +1214,7 @@ void PutSourceInfo (ObitUV *inData, ObitData *outData, ObitErr *err)
   lim = MIN (UVLEN_VALUE,MAXKEYCHARTABLEIDI_ARRAY_GEOMETRY);
   strncpy (outTable->obscode,   inData->myDesc->observer, 8);
   lim = MIN (MAXKEYCHARTABLEIDI_ANTENNA, UVLEN_VALUE);
-  strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);
+  /*strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);*/
   outTable->myStatus = OBIT_Modified; /* Mark as modified */
 
   /* Initialize output row */
@@ -1408,7 +1408,7 @@ void PutFlagInfo (ObitInfoList *myInput, ObitUV *inData, ObitData *outData,
     lim = MIN (UVLEN_VALUE,MAXKEYCHARTABLEIDI_ARRAY_GEOMETRY);
     strncpy (outTable->obscode,   inData->myDesc->observer, 8);
     lim = MIN (MAXKEYCHARTABLEIDI_ANTENNA, UVLEN_VALUE);
-    strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);
+    /*strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);*/
     outTable->myStatus = OBIT_Modified; /* Mark as modified */
     
     /* Initialize output row */
@@ -1575,7 +1575,7 @@ void PutCalibrationInfo (ObitInfoList *myInput, ObitUV *inData,
     lim = MIN (UVLEN_VALUE,MAXKEYCHARTABLEIDI_ARRAY_GEOMETRY);
     strncpy (outTable->obscode,   inData->myDesc->observer, 8);
     lim = MIN (MAXKEYCHARTABLEIDI_ANTENNA, UVLEN_VALUE);
-    strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);
+    /*strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);*/
     outTable->myStatus = OBIT_Modified; /* Mark as modified */
     
     /* Initialize output row */
@@ -1765,7 +1765,7 @@ void PutBandpassInfo (ObitInfoList *myInput, ObitUV *inData,
     lim = MIN (UVLEN_VALUE,MAXKEYCHARTABLEIDI_ARRAY_GEOMETRY);
     strncpy (outTable->obscode,   inData->myDesc->observer, 8);
     lim = MIN (MAXKEYCHARTABLEIDI_ANTENNA, UVLEN_VALUE);
-    strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);
+    /*strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);*/
     outTable->myStatus = OBIT_Modified; /* Mark as modified */
     
     /* Initialize output row */
@@ -1923,7 +1923,7 @@ void PutTSysInfo (ObitInfoList *myInput, ObitUV *inData, ObitData *outData,
     lim = MIN (UVLEN_VALUE,MAXKEYCHARTABLEIDI_ARRAY_GEOMETRY);
     strncpy (outTable->obscode,   inData->myDesc->observer, 8);
     lim = MIN (MAXKEYCHARTABLEIDI_ANTENNA, UVLEN_VALUE);
-    strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);
+    /*strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);*/
     outTable->myStatus = OBIT_Modified; /* Mark as modified */
     
     /* Initialize output row */

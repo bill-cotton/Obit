@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Read IDI format data, convert to Obit UV                           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2010                                          */
+/*;  Copyright (C) 2007-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -91,7 +91,7 @@ void GetAntennaInfo (ObitData *inData, ObitUV *outData, olong arrno,
 void GetFrequencyInfo (ObitData *inData, ObitUV *outData, ObitErr *err);
 /* Get Source info */
 void GetSourceInfo (ObitData *inData, ObitUV *outData, gboolean isNew, 
-		    ObitErr *err);
+		    oint no_band, ObitErr *err);
 /* Copy any FLAG tables */
 void GetFlagInfo (ObitData *inData, ObitUV *outData, ObitErr *err);
 /* Copy any CALIBRATION tables */
@@ -137,6 +137,7 @@ ObitInfoList *myInput  = NULL; /* Input parameter list */
 ObitInfoList *myOutput = NULL; /* Output parameter list */
 gchar **FITSdirs=NULL; /* List of FITS data directories */
 gchar DataRoot[128];   /* Root directory of input data */
+gchar DataSufx[8];     /* Suffix for data file */
 odouble refJD = 0.0;   /* reference Julian date */
 odouble refMJD = 0.0;  /* reference Modified Julian date */
 odouble integTime;     /* Integration time in days */
@@ -169,6 +170,7 @@ int main ( int argc, char **argv )
   ObitErr *err= NULL;
   gchar inscan[128];
   ObitInfoType type;
+  gboolean exist=FALSE;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar FullFile[128];
   olong disk;
@@ -198,6 +200,16 @@ int main ( int argc, char **argv )
   ObitInfoListGet(myInput, "DataRoot", &type, dim, DataRoot, err);
   DataRoot[dim[0]] = 0;  /* null terminate */
   ObitTrimTrail(DataRoot);  /* Trim trailing blanks */
+
+  /* Determine file suffix */
+  sprintf (FullFile,"%s%s.fits", DataRoot, inscan);
+  exist = ObitFileExist (FullFile, err);
+  if (exist) sprintf (DataSufx, "fits");
+  else {
+    sprintf (FullFile,"%s%s.idifits", DataRoot, inscan);
+    exist = ObitFileExist (FullFile, err);
+    if (exist) sprintf (DataSufx, "idifits");
+  }
 
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
@@ -239,8 +251,11 @@ int main ( int argc, char **argv )
   inData = newObitData("Input Data");
   disk = 0;
   /* Full input file name */
-  sprintf (FullFile,"%s%s.fits", DataRoot, inscan);
+  sprintf (FullFile,"%s%s.%s", DataRoot, inscan, DataSufx);
   ObitDataSetFITS(inData, disk, FullFile, err);
+  /* Open and close to init TableList */
+  ObitDataOpen (inData, OBIT_IO_ReadOnly, err);
+  ObitDataClose (inData,  err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Copy tables */
@@ -681,7 +696,7 @@ void GetHeader (ObitUV *outData, gchar *inscan,
   olong ncol;
   gchar FullFile[128], *today=NULL;
   olong i, iarr, disk, lim;
-  ofloat epoch, equinox;
+  ofloat epoch=2000., equinox=2000.;
   oint no_band=0, maxis1=0, maxis2=0, maxis3=0, maxis4=0, maxis5=0;
   ObitIOAccess access;
   olong ver;
@@ -694,7 +709,7 @@ void GetHeader (ObitUV *outData, gchar *inscan,
   g_assert(myInput!=NULL);
 
   /* Full input file name */
-  sprintf (FullFile,"%s%s.fits", DataRoot, inscan);
+  sprintf (FullFile,"%s%s.%s", DataRoot, inscan, DataSufx);
 
   /* Create input Data from which to read tables */
   inData = newObitData("Input Data");
@@ -725,16 +740,6 @@ void GetHeader (ObitUV *outData, gchar *inscan,
     return;
   }
 
-
-  /* Get source info, copy to output SU table, save lookup table in SourceID */
-  ObitUVOpen (outData, OBIT_IO_ReadWrite, err);
-  GetSourceInfo (inData, outData, isNew, err);
-  /* Save any equinox information */
-  epoch   = outData->myDesc->epoch;
-  equinox = outData->myDesc->equinox;
-  ObitUVClose (outData, err);
-  if (err->error) Obit_traceback_msg (err, routine, inData->name);
- 
   /* Define output descriptor if isNew */
   if (isNew) {
     desc = outData->myDesc;
@@ -754,6 +759,12 @@ void GetHeader (ObitUV *outData, gchar *inscan,
       Obit_log_error(err, OBIT_Error, "ERROR opening input IDI_UV_DATA table");
       return;
     }
+
+    /* Get source info, copy to output SU table, save lookup table in SourceID */
+    ObitUVOpen (outData, OBIT_IO_ReadWrite, err);
+    GetSourceInfo (inData, outData, isNew, inTable->no_band, err);
+    ObitUVClose (outData, err);
+    if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
     /* Define header */
     desc->nvis = 0;
@@ -808,7 +819,14 @@ void GetHeader (ObitUV *outData, gchar *inscan,
     ncol++;
     
     /* Source - must have input SOURCE table */
-    if ((inTable->myDesc->repeat[inTable->SourceCol]>0) && SourceID) {
+    /* VLBA hack */
+    if ((inTable->SourceCol<0) && (inTable->VLBASourceCol>=0)) {
+      inTable->SourceCol = inTable->VLBASourceCol;
+      inTable->SourceOff = inTable->VLBASourceOff;
+    }
+    if ((inTable->SourceCol>=0) && 
+	(inTable->myDesc->repeat[inTable->SourceCol]>0) && 
+	SourceID) {
       strncpy (desc->ptype[ncol], "SOURCE  ", UVLEN_KEYWORD);
       ncol++;
     }
@@ -940,10 +958,10 @@ void GetHeader (ObitUV *outData, gchar *inscan,
 	strncpy (inTable->ctype7, "IF      ", strlen(inTable->ctype7)-1);
       }
       desc->inaxes[ncol] = inTable->maxis7;
-      desc->cdelt[ncol] = inTable->cdelt7;
-      desc->crpix[ncol] = inTable->crpix7;
-      desc->crval[ncol] = inTable->crval7;
-      desc->crota[ncol] = 0.0;
+      desc->cdelt[ncol]  = inTable->cdelt7;
+      desc->crpix[ncol]  = inTable->crpix7;
+      desc->crval[ncol]  = inTable->crval7;
+      desc->crota[ncol]  = 0.0;
       /* Stokes may be mislabeled - use stk_1 */
       if (!strncmp(desc->ctype[ncol], "STOKES ",6)) desc->crval[ncol] = inTable->stk_1;
       ncol++;
@@ -968,7 +986,15 @@ void GetHeader (ObitUV *outData, gchar *inscan,
     ObitUVClose (outData, err);
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
-  } /* End define descriptor */
+  } /* End define new descriptor */
+  else {  /* Existing file */
+    /* Get source info, copy to output SU table, save lookup table in SourceID */
+    ObitUVOpen (outData, OBIT_IO_ReadWrite, err);
+    GetSourceInfo (inData, outData, isNew, 
+		   outData->myDesc->inaxes[outData->myDesc->jlocif], err);
+    ObitUVClose (outData, err);
+    if (err->error) Obit_traceback_msg (err, routine, inData->name);
+  }  /* End exists */
 
   /* Instantiate output Data */
   ObitUVFullInstantiate (outData, FALSE, err);
@@ -1018,7 +1044,7 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
   g_assert(ObitUVIsA(outData));
 
   /* Full input file name */
-  sprintf (FullFile,"%s%s.fits", DataRoot, inscan);
+  sprintf (FullFile,"%s%s.%s", DataRoot, inscan, DataSufx);
 
   /* Create input Data from which to read tables */
   inData = newObitData("Input Data");
@@ -1093,7 +1119,23 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
       strncpy (inTable->ctype7, "IF      ", strlen(inTable->ctype7)-1);
   }
 
-/* Truncate strings to last non blank */
+  /* Get projection type, set offsets for, u,v,w */
+  if (inTable->uuCol<0) {
+    if (inTable->uusinCol>=0) {
+      inTable->uuOff = inTable->uusinOff;
+      inTable->vvOff = inTable->vvsinOff;
+      inTable->wwOff = inTable->wwsinOff;
+    } else if  (inTable->uuncpCol>=0) {
+      inTable->uuOff = inTable->uuncpOff;
+      inTable->vvOff = inTable->vvncpOff;
+      inTable->wwOff = inTable->wwncpOff;
+      desc->ptype[0][5] = desc->ptype[1][5] = desc->ptype[1][5] = 'N';
+      desc->ptype[0][6] = desc->ptype[1][6] = desc->ptype[1][6] = 'C';
+      desc->ptype[0][7] = desc->ptype[1][7] = desc->ptype[1][7] = 'P';
+    }
+  } /* end projection specified */
+
+  /* Truncate strings to last non blank */
   strncpy(tstr1, inTable->ctype1, 32);
   ObitTrimTrail(tstr1);
   strncpy(tstr2, desc->ctype[0], 32);
@@ -1221,6 +1263,10 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
       refMJD = refJD - 2400000.5;
     } /* end get reference date */
 
+    /* VLBA Hacks */
+    if (inTable->ArrayCol<0) inRow->Array = 1;
+    inRow->Source = MAX (inRow->Source, inRow->VLBASource);
+
     /* Array number (0-rel)*/
     iarr = inRow->Array - 1;
     /* Array reference JD */
@@ -1243,7 +1289,7 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
     Buffer[desc->ilocb] = (ofloat)(ant1*256+ant2+iarr*0.01);
     Buffer[desc->iloct] = (ofloat)(inRow->date+inRow->Time-arrJD+iarr*5.0);
     if (desc->ilocsu>=0) {
-      if (SourceID) sid = SourceID[inRow->Source-1];
+      if (SourceID) sid = SourceID[inRow->Source];
       else sid = inRow->Source;
       Buffer[desc->ilocsu] = sid;
       inRow->Source = sid;  /* save for uvw calc */
@@ -1343,10 +1389,13 @@ void GetAntennaInfo (ObitData *inData, ObitUV *outData, olong arrno,
   g_assert (ObitDataIsA(inData));
   g_assert (ObitUVIsA(outData));
 
-  /* Create input Antenna table object */
+  /* Number of bands = IFs */
+  numIF = outData->myDesc->inaxes[outData->myDesc->jlocif];
+
+   /* Create input Antenna table object */
   ver     = 1;
   access  = OBIT_IO_ReadOnly;
-  numIF   =  numPCal = 0;
+  numPCal = 0;
   inTable = newObitTableIDI_ANTENNAValue ("Input table", inData, 
 					  &ver, access, numIF, numPCal, err);
   if (inTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with IDI_ANTENNA table");
@@ -1365,7 +1414,7 @@ void GetAntennaInfo (ObitData *inData, ObitUV *outData, olong arrno,
   /* Create input Array geometry table object */
   ver      = arrno;
   access   = OBIT_IO_ReadOnly;
-  numIF    = numOrb = 0;
+  numOrb = 0;
   in2Table = newObitTableIDI_ARRAY_GEOMETRYValue ("Input table", inData, 
 						  &ver, access, numIF, numOrb, err);
   if (in2Table==NULL) Obit_log_error(err, OBIT_Error, "ERROR with IDI_ARRAY_GEOMETRY table");
@@ -1397,7 +1446,6 @@ void GetAntennaInfo (ObitData *inData, ObitUV *outData, olong arrno,
   access   = OBIT_IO_ReadWrite;
   numOrb   = in2Table->numOrb;
   numPCal  = MIN (2, inTable->numPCal);
-  numIF    = outData->myDesc->inaxes[outData->myDesc->jlocif];
   outTable = newObitTableANValue ("Output table", (ObitData*)outData, 
 				  &ver, access, numIF, numOrb, numPCal, err);
   if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with AN table");
@@ -1491,7 +1539,7 @@ void GetAntennaInfo (ObitData *inData, ObitUV *outData, olong arrno,
     for (i2Row = 1; i2Row<=in2Table->myDesc->nrow; i2Row++) {
       if ((ObitTableIDI_ARRAY_GEOMETRYReadRow (in2Table, i2Row, in2Row, err)
 	   != OBIT_IO_OK) || (err->error>0)) { 
-	Obit_log_error(err, OBIT_Error, "ERROR reading IDI_ARRAY_GEOMETRYR Table");
+	Obit_log_error(err, OBIT_Error, "ERROR reading IDI_ARRAY_GEOMETRY Table");
 	return;
       }
     if (inRow->antenna_no==in2Row->noSta) {
@@ -1499,6 +1547,13 @@ void GetAntennaInfo (ObitData *inData, ObitUV *outData, olong arrno,
       found = TRUE;
       break;
       }  
+    /* VLBA (VLITE?) hack - antenna numbers may not be given in 
+       ARRAY_GEOMETRY Table */
+    if (!strncmp(inRow->AntName, in2Row->AntName, 
+		 inTable->myDesc->repeat[inTable->AntNameCol])) {
+      found = TRUE;
+      break;
+      }
     } /* end loop over table */
 
     /* Set output Row */
@@ -1588,10 +1643,12 @@ void GetFrequencyInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
   g_assert (ObitDataIsA(inData));
   g_assert (ObitUVIsA(outData));
 
+  /* Number of bands = IFs */
+  numIF = outData->myDesc->inaxes[outData->myDesc->jlocif];
+  
   /* Create input FREQUENCY table object */
   ver = 1;
   access = OBIT_IO_ReadOnly;
-  numIF = 0;
   inTable = newObitTableIDI_FREQUENCYValue ("Input table", inData, 
 					 &ver, access, numIF, err);
   if (inTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with IDI_FREQUENCY table");
@@ -1610,7 +1667,6 @@ void GetFrequencyInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
   /* Create output FQ table object */
   ver = 1;
   access = OBIT_IO_ReadWrite;
-  numIF = inTable->no_band;
   outTable = newObitTableFQValue ("Output table", (ObitData*)outData, 
 				  &ver, access, numIF, err);
   if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with FQ table");
@@ -1687,12 +1743,12 @@ void GetFrequencyInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
 } /* end  GetFrequencyInfo */
 
 void GetSourceInfo (ObitData *inData, ObitUV *outData, gboolean isNew, 
-		    ObitErr *err)
+		    oint no_band, ObitErr *err)
 /*----------------------------------------------------------------------- */
 /*  Get Source info from IDI_SOURCE table on inData                       */
 /*  Copies source info from intput to putput data and generated a lookup  */
 /*  table, global, SourceID to give translation from input source ID      */
-/*  to output.  If no SOURCE table leafe SourceID=NULL                    */
+/*  to output.  If no SOURCE table leave SourceID=NULL                    */
 /*   Input:                                                               */
 /*      inData   Input IDI FITS object                                    */
 /*      outData  Output UV object                                         */
@@ -1722,8 +1778,8 @@ void GetSourceInfo (ObitData *inData, ObitUV *outData, gboolean isNew,
   
   /* Create input Source table object */
   ver = 1;
-  access = OBIT_IO_ReadOnly;
-  numIF = 0;
+  access  = OBIT_IO_ReadOnly;
+  numIF   = no_band;
   inTable = newObitTableIDI_SOURCEValue ("Input table", inData, 
 					 &ver, access, numIF, err);
     /* Find it?  If not, just return */
@@ -1749,7 +1805,6 @@ void GetSourceInfo (ObitData *inData, ObitUV *outData, gboolean isNew,
   /* Create output Source table object */
   ver = 1;
   access = OBIT_IO_ReadWrite;
-  numIF = inTable->no_band;
   outTable = newObitTableSUValue ("Output table", (ObitData*)outData, 
 				  &ver, access, numIF, err);
   if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with SU table");
@@ -1774,7 +1829,7 @@ void GetSourceInfo (ObitData *inData, ObitUV *outData, gboolean isNew,
   outRow->Bandwidth = 0.0;
   outRow->RAMean    = 0.0;
   outRow->DecMean   = 0.0;
-  outRow->Epoch     = 0.0;
+  outRow->Epoch     = 2000.;
   outRow->RAApp     = 0.0;
   outRow->DecApp    = 0.0;
   outRow->PMRa      = 0.0;
@@ -1800,6 +1855,13 @@ void GetSourceInfo (ObitData *inData, ObitUV *outData, gboolean isNew,
       Obit_log_error(err, OBIT_Error, "ERROR reading IDI_SOURCE Table");
       return;
     }
+
+    /* Hacks for non conforming VLBA files */
+    if ((inTable->SourIDCol<0) && (inTable->VLBAIDCol>=0))
+      inRow->SourID = inRow->VLBAID;
+    outRow->SourID    = inRow->SourID;
+    if ((inTable->EquinoxCol<0) && (inTable->VLBAEquinoxCol>=0))
+      inRow->Equinox = inRow->VLBAEquinox;
 
     /* Replace NANs with zeros */
     for (i=0; i<inTable->no_band; i++) {
@@ -1835,7 +1897,7 @@ void GetSourceInfo (ObitData *inData, ObitUV *outData, gboolean isNew,
 
     /* If found just remember output source ID */
     if (found) {
-      /* Save source no. in globla lookup table */
+      /* Save source no. in global lookup table */
       SourceID[inRow->SourID] = outRow->SourID;
     } else { /* Not found - add */
       /* If first time update header */
@@ -1898,6 +1960,10 @@ void GetSourceInfo (ObitData *inData, ObitUV *outData, gboolean isNew,
 	Obit_log_error(err, OBIT_Error, "ERROR updating Source Table");
 	return;
       }
+      /* Get equinox */
+      outData->myDesc->equinox = outRow->Epoch;
+      outData->myDesc->epoch   = outRow->Epoch;
+
    } /* End add new entry */
  } /* end loop over input table */
   
@@ -1946,6 +2012,9 @@ void GetFlagInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
   g_assert (ObitDataIsA(inData));
   g_assert (ObitUVIsA(outData));
 
+  /* Number of bands = IFs */
+  numIF = outData->myDesc->inaxes[outData->myDesc->jlocif];
+
   /* Loop over plausible versions */
   highver = ObitTableListGetHigh (inData->tableList, "FLAG");
   for (iver=1; iver<=highver; iver++) {
@@ -1956,7 +2025,6 @@ void GetFlagInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
     /* Create input Flag table object */
     ver = iver;
     access = OBIT_IO_ReadOnly;
-    numIF = 0;
     inTable = newObitTableIDI_FLAGValue ("Input table", inData, 
 					 &ver, access, numIF, err);
     /* Find it? */
@@ -1965,7 +2033,6 @@ void GetFlagInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
       break;
     }
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
-    numIF = inTable->no_band;
     
     /* Open table */
     if ((ObitTableIDI_FLAGOpen (inTable, access, err) 
@@ -1980,7 +2047,6 @@ void GetFlagInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
     /* Create output FG table object */
     ver = iver;
     access = OBIT_IO_ReadWrite;
-    numIF = inTable->no_band;
     outTable = newObitTableFGValue ("Output table", (ObitData*)outData, 
 				    &ver, access, err);
     if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with FG table");
@@ -2093,6 +2159,10 @@ void GetCalibrationInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
   g_assert (ObitDataIsA(inData));
   g_assert (ObitUVIsA(outData));
 
+  /* Number of bands = IFs */
+  numIF  = outData->myDesc->inaxes[outData->myDesc->jlocif];
+  numPol = MIN (2, outData->myDesc->inaxes[outData->myDesc->jlocs]);
+
   /* Loop over plausible versions */
   highver = ObitTableListGetHigh (inData->tableList, "CALIBRATION");
   for (iver=1; iver<=highver; iver++) {
@@ -2102,8 +2172,8 @@ void GetCalibrationInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
 
     /* Create input Flag table object */
     ver = iver;
-    access = OBIT_IO_ReadOnly;
-    numIF = numAnt = numPol = 0;
+    access  = OBIT_IO_ReadOnly;
+    numAnt  = 0;
     inTable = newObitTableIDI_CALIBRATIONValue ("Input table", inData, 
 						&ver, access, numIF, numAnt, numPol, err);
     /* Find it? */
@@ -2126,9 +2196,7 @@ void GetCalibrationInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
     /* Create output CL table object */
     ver = iver;
     access  = OBIT_IO_ReadWrite;
-    numIF   = inTable->no_band;
     numAnt  = inTable->numAnt;
-    numPol  = inTable->numPol;
     numTerm = 0;
     outTable = newObitTableCLValue ("Output table", (ObitData*)outData, 
 				    &ver, access, numPol, numIF, numTerm, err);
@@ -2263,6 +2331,10 @@ void GetBandpassInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
   g_assert (ObitDataIsA(inData));
   g_assert (ObitUVIsA(outData));
 
+  /* Number of bands = IFs */
+  numIF  = outData->myDesc->inaxes[outData->myDesc->jlocif];
+  numPol = MIN (2, outData->myDesc->inaxes[outData->myDesc->jlocs]);
+
   /* Loop over plausible versions */
   highver = ObitTableListGetHigh (inData->tableList, "BANDPASS");
   for (iver=1; iver<=highver; iver++) {
@@ -2273,7 +2345,7 @@ void GetBandpassInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
     /* Create input Flag table object */
     ver = iver;
     access = OBIT_IO_ReadOnly;
-    numIF = numAnt = numPol = numBach =  strtChn = 0;
+    numAnt = numBach =  strtChn = 0;
     inTable = newObitTableIDI_BANDPASSValue ("Input table", inData, 
 					     &ver, access, 
 					     numIF, numAnt, numPol, numBach, strtChn,
@@ -2298,9 +2370,7 @@ void GetBandpassInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
     /* Create output BP table object */
     ver = iver;
     access  = OBIT_IO_ReadWrite;
-    numIF   = inTable->no_band;
     numAnt  = inTable->numAnt;
-    numPol  = inTable->numPol;
     numBach = inTable->numBach;
     outTable = newObitTableBPValue ("Output table", (ObitData*)outData, 
 				    &ver, access, numPol, numIF, numBach, err);
@@ -2415,6 +2485,10 @@ void GetTSysInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
   g_assert (ObitDataIsA(inData));
   g_assert (ObitUVIsA(outData));
 
+  /* Number of bands = IFs */
+  numIF  = outData->myDesc->inaxes[outData->myDesc->jlocif];
+  numPol = MIN (2, outData->myDesc->inaxes[outData->myDesc->jlocs]);
+
   /* Loop over plausible versions */
   for (iver=1; iver<1000; iver++) {
     
@@ -2424,9 +2498,8 @@ void GetTSysInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
     /* Create input Flag table object */
     ver = iver;
     access = OBIT_IO_ReadOnly;
-    numIF = numPol = 0;
     inTable = newObitTableIDI_SYSTEM_TEMPERATUREValue ("Input table", inData, 
-						       &ver, access, numIF, numPol, err);
+						       &ver, access, numPol,  numIF, err);
     /* Find it? */
     if (inTable==NULL) {
       ObitErrClearErr (err);
@@ -2447,10 +2520,8 @@ void GetTSysInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
     /* Create output TY table object */
     ver = iver;
     access  = OBIT_IO_ReadWrite;
-    numIF   = inTable->no_band;
-    numPol  = inTable->numPol;
     outTable = newObitTableTYValue ("Output table", (ObitData*)outData, 
-				    &ver, access, numPol, numIF, err);
+				    &ver, access, numIF, numPol, err);
     if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with TY table");
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
     
@@ -2557,6 +2628,10 @@ void GetGainCurveInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
   g_assert (ObitDataIsA(inData));
   g_assert (ObitUVIsA(outData));
 
+  /* Number of bands = IFs */
+  numIF  = outData->myDesc->inaxes[outData->myDesc->jlocif];
+  numPol = MIN (2, outData->myDesc->inaxes[outData->myDesc->jlocs]);
+
   /* Loop over plausible versions */
   highver = ObitTableListGetHigh (inData->tableList, "GAIN_CURVE");
   for (iver=1; iver<=highver; iver++) {
@@ -2567,7 +2642,7 @@ void GetGainCurveInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
     /* Create input Flag table object */
     ver = iver;
     access = OBIT_IO_ReadOnly;
-    numIF = numPol = numTabs = 0;
+    numTabs = 0;
     inTable = newObitTableIDI_GAIN_CURVEValue ("Input table", inData, &ver, access, 
 					       numPol, numIF, numTabs, 
 					       err);
@@ -2590,10 +2665,8 @@ void GetGainCurveInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
     
     /* Create output GC table object */
     ver = iver;
-    access  = OBIT_IO_ReadWrite;
-    numIF   = inTable->no_band;
-    numPol  = inTable->numPol;
-    numTabs =  inTable->numTabs;
+    access   = OBIT_IO_ReadWrite;
+    numTabs  = inTable->numTabs;
     outTable = newObitTableGCValue ("Output table", (ObitData*)outData, 
 				    &ver, access, numIF, numPol, numTabs, err);
     if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with GC table");
@@ -2715,6 +2788,10 @@ void GetPhaseCalInfo (ObitData *inData, ObitUV *outData,
   g_assert (ObitDataIsA(inData));
   g_assert (ObitUVIsA(outData));
 
+  /* Number of bands = IFs */
+  numIF  = outData->myDesc->inaxes[outData->myDesc->jlocif];
+  numPol = MIN (2, outData->myDesc->inaxes[outData->myDesc->jlocs]);
+
   /* Loop over plausible versions */
   highver = ObitTableListGetHigh (inData->tableList, "PHASE_CAL");
   for (iver=1; iver<=highver; iver++) {
@@ -2725,7 +2802,7 @@ void GetPhaseCalInfo (ObitData *inData, ObitUV *outData,
     /* Create input Flag table object */
     ver = iver;
     access = OBIT_IO_ReadOnly;
-    numIF = numPol = numTones = 0;
+    numTones = 0;
     inTable = newObitTableIDI_PHASE_CALValue ("Input table", inData, &ver, access, 
 					      numPol, numIF, numTones, 
 					      err);
@@ -2749,8 +2826,6 @@ void GetPhaseCalInfo (ObitData *inData, ObitUV *outData,
     /* Create output PC table object */
     ver = iver;
     access   = OBIT_IO_ReadWrite;
-    numIF    = inTable->no_band;
-    numPol   = inTable->numPol;
     numTones =  inTable->numTones;
     outTable = newObitTablePCValue ("Output table", (ObitData*)outData, 
 				    &ver, access, numPol, numIF, numTones, err);
@@ -2863,6 +2938,10 @@ void GetInterferometerModelInfo (ObitData *inData, ObitUV *outData,
   ObitIOAccess access;
   gchar *routine = "GetInterferometerModelInfo";
 
+  /* Number of bands = IFs */
+  numIF  = outData->myDesc->inaxes[outData->myDesc->jlocif];
+  numPol = MIN (2, outData->myDesc->inaxes[outData->myDesc->jlocs]);
+
   /* error checks */
   if (err->error) return;
   g_assert (ObitDataIsA(inData));
@@ -2878,7 +2957,7 @@ void GetInterferometerModelInfo (ObitData *inData, ObitUV *outData,
     /* Create input Flag table object */
     ver = iver;
     access = OBIT_IO_ReadOnly;
-    numIF = numPol = npoly = 0;
+    npoly = 0;
     inTable = newObitTableIDI_INTERFEROMETER_MODELValue ("Input table", inData, &ver, access, 
 							 numPol, npoly, numIF, 
 							 err);
@@ -2902,8 +2981,6 @@ void GetInterferometerModelInfo (ObitData *inData, ObitUV *outData,
     /* Create output IM table object */
     ver = iver;
     access  = OBIT_IO_ReadWrite;
-    numIF   = inTable->no_band;
-    numPol  = inTable->numPol;
     npoly   =  inTable->npoly;
     outTable= newObitTableIMValue ("Output table", (ObitData*)outData, 
 				   &ver, access, numPol, numIF, npoly, err);
@@ -3027,7 +3104,7 @@ void GetWeatherInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
   ObitTableWX*          outTable=NULL;
   ObitTableWXRow*       outRow=NULL;
   olong iver, iRow, oRow, ver, highver;
-  oint numIF;
+  oint  no_band=0;
   ObitIOAccess access;
   gchar *routine = "GetWeatherInfo";
 
@@ -3046,9 +3123,8 @@ void GetWeatherInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
     /* Create input Flag table object */
     ver = iver;
     access = OBIT_IO_ReadOnly;
-    numIF =0;
     inTable = newObitTableIDI_WEATHERValue ("Input table", inData, 
-					    &ver, access, numIF,err);
+					    &ver, access, no_band, err);
     /* Find it? */
     if (inTable==NULL) {
       ObitErrClearErr (err);

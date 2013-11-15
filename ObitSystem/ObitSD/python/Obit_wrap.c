@@ -8787,14 +8787,13 @@ extern PyObject* TableIDI_BANDPASSGetHeadKeys (ObitTable *inTab) {
   PyDict_SetItemString(outDict, "numBach",  PyInt_FromLong((long)lTab->numBach));
   PyDict_SetItemString(outDict, "strtChn",  PyInt_FromLong((long)lTab->strtChn));
   PyDict_SetItemString(outDict, "tabrev",  PyInt_FromLong((long)lTab->tabrev));
+  PyDict_SetItemString(outDict, "no_chan",  PyInt_FromLong((long)lTab->no_chan));
   PyDict_SetItemString(outDict, "no_stkd",  PyInt_FromLong((long)lTab->no_stkd));
   PyDict_SetItemString(outDict, "stk_1",  PyInt_FromLong((long)lTab->stk_1));
-  PyDict_SetItemString(outDict, "no_chan",  PyInt_FromLong((long)lTab->no_chan));
   PyDict_SetItemString(outDict, "ref_freq",  PyFloat_FromDouble((double)lTab->ref_freq));
   PyDict_SetItemString(outDict, "chan_bw",  PyFloat_FromDouble((double)lTab->chan_bw));
   PyDict_SetItemString(outDict, "ref_pixl",  PyInt_FromLong((long)lTab->ref_pixl));
   PyDict_SetItemString(outDict, "obscode", PyString_InternFromString(lTab->obscode));
-  PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
 
   return outDict;
 } 
@@ -8805,16 +8804,14 @@ extern void TableIDI_BANDPASSSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
   int lstr=MAXKEYCHARTABLEIDI_BANDPASS;
 
   lTab->tabrev = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "tabrev"));
+  lTab->no_chan = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_chan"));
   lTab->no_stkd = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_stkd"));
   lTab->stk_1 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "stk_1"));
-  lTab->no_chan = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_chan"));
   lTab->ref_freq = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ref_freq"));
   lTab->chan_bw = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "chan_bw"));
   lTab->ref_pixl = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "ref_pixl"));
   tstr = PyString_AsString(PyDict_GetItemString(inDict, "obscode"));
   strncpy (lTab->obscode, tstr, lstr); lTab->obscode[lstr-1]=0;
-  tstr = PyString_AsString(PyDict_GetItemString(inDict, "RefDate"));
-  strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
 
   if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
     lTab->myStatus = OBIT_Modified;
@@ -8867,7 +8864,6 @@ extern PyObject* TableIDI_CALIBRATIONGetHeadKeys (ObitTable *inTab) {
   PyDict_SetItemString(outDict, "chan_bw",  PyFloat_FromDouble((double)lTab->chan_bw));
   PyDict_SetItemString(outDict, "ref_pixl",  PyInt_FromLong((long)lTab->ref_pixl));
   PyDict_SetItemString(outDict, "obscode", PyString_InternFromString(lTab->obscode));
-  PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
 
   return outDict;
 } 
@@ -8886,8 +8882,6 @@ extern void TableIDI_CALIBRATIONSetHeadKeys (ObitTable *inTab, PyObject *inDict)
   lTab->ref_pixl = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "ref_pixl"));
   tstr = PyString_AsString(PyDict_GetItemString(inDict, "obscode"));
   strncpy (lTab->obscode, tstr, lstr); lTab->obscode[lstr-1]=0;
-  tstr = PyString_AsString(PyDict_GetItemString(inDict, "RefDate"));
-  strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
 
   if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
     lTab->myStatus = OBIT_Modified;
@@ -8936,7 +8930,6 @@ extern PyObject* TableIDI_FLAGGetHeadKeys (ObitTable *inTab) {
   PyDict_SetItemString(outDict, "chan_bw",  PyFloat_FromDouble((double)lTab->chan_bw));
   PyDict_SetItemString(outDict, "ref_pixl",  PyInt_FromLong((long)lTab->ref_pixl));
   PyDict_SetItemString(outDict, "obscode", PyString_InternFromString(lTab->obscode));
-  PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
 
   return outDict;
 } 
@@ -8955,8 +8948,6 @@ extern void TableIDI_FLAGSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
   lTab->ref_pixl = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "ref_pixl"));
   tstr = PyString_AsString(PyDict_GetItemString(inDict, "obscode"));
   strncpy (lTab->obscode, tstr, lstr); lTab->obscode[lstr-1]=0;
-  tstr = PyString_AsString(PyDict_GetItemString(inDict, "RefDate"));
-  strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
 
   if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
     lTab->myStatus = OBIT_Modified;
@@ -9071,14 +9062,13 @@ extern PyObject* TableIDI_GAIN_CURVEGetHeadKeys (ObitTable *inTab) {
   PyDict_SetItemString(outDict, "no_band",  PyInt_FromLong((long)lTab->no_band));
   PyDict_SetItemString(outDict, "numTabs",  PyInt_FromLong((long)lTab->numTabs));
   PyDict_SetItemString(outDict, "tabrev",  PyInt_FromLong((long)lTab->tabrev));
+  PyDict_SetItemString(outDict, "no_chan",  PyInt_FromLong((long)lTab->no_chan));
   PyDict_SetItemString(outDict, "no_stkd",  PyInt_FromLong((long)lTab->no_stkd));
   PyDict_SetItemString(outDict, "stk_1",  PyInt_FromLong((long)lTab->stk_1));
-  PyDict_SetItemString(outDict, "no_chan",  PyInt_FromLong((long)lTab->no_chan));
   PyDict_SetItemString(outDict, "ref_freq",  PyFloat_FromDouble((double)lTab->ref_freq));
   PyDict_SetItemString(outDict, "chan_bw",  PyFloat_FromDouble((double)lTab->chan_bw));
   PyDict_SetItemString(outDict, "ref_pixl",  PyInt_FromLong((long)lTab->ref_pixl));
   PyDict_SetItemString(outDict, "obscode", PyString_InternFromString(lTab->obscode));
-  PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
 
   return outDict;
 } 
@@ -9089,16 +9079,14 @@ extern void TableIDI_GAIN_CURVESetHeadKeys (ObitTable *inTab, PyObject *inDict) 
   int lstr=MAXKEYCHARTABLEIDI_GAIN_CURVE;
 
   lTab->tabrev = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "tabrev"));
+  lTab->no_chan = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_chan"));
   lTab->no_stkd = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_stkd"));
   lTab->stk_1 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "stk_1"));
-  lTab->no_chan = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_chan"));
   lTab->ref_freq = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ref_freq"));
   lTab->chan_bw = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "chan_bw"));
   lTab->ref_pixl = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "ref_pixl"));
   tstr = PyString_AsString(PyDict_GetItemString(inDict, "obscode"));
   strncpy (lTab->obscode, tstr, lstr); lTab->obscode[lstr-1]=0;
-  tstr = PyString_AsString(PyDict_GetItemString(inDict, "RefDate"));
-  strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
 
   if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
     lTab->myStatus = OBIT_Modified;
@@ -9151,7 +9139,6 @@ extern PyObject* TableIDI_INTERFEROMETER_MODELGetHeadKeys (ObitTable *inTab) {
   PyDict_SetItemString(outDict, "chan_bw",  PyFloat_FromDouble((double)lTab->chan_bw));
   PyDict_SetItemString(outDict, "ref_pixl",  PyInt_FromLong((long)lTab->ref_pixl));
   PyDict_SetItemString(outDict, "obscode", PyString_InternFromString(lTab->obscode));
-  PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
 
   return outDict;
 } 
@@ -9170,8 +9157,6 @@ extern void TableIDI_INTERFEROMETER_MODELSetHeadKeys (ObitTable *inTab, PyObject
   lTab->ref_pixl = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "ref_pixl"));
   tstr = PyString_AsString(PyDict_GetItemString(inDict, "obscode"));
   strncpy (lTab->obscode, tstr, lstr); lTab->obscode[lstr-1]=0;
-  tstr = PyString_AsString(PyDict_GetItemString(inDict, "RefDate"));
-  strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
 
   if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
     lTab->myStatus = OBIT_Modified;
@@ -9217,14 +9202,13 @@ extern PyObject* TableIDI_PHASE_CALGetHeadKeys (ObitTable *inTab) {
   PyDict_SetItemString(outDict, "no_band",  PyInt_FromLong((long)lTab->no_band));
   PyDict_SetItemString(outDict, "numTones",  PyInt_FromLong((long)lTab->numTones));
   PyDict_SetItemString(outDict, "tabrev",  PyInt_FromLong((long)lTab->tabrev));
+  PyDict_SetItemString(outDict, "no_chan",  PyInt_FromLong((long)lTab->no_chan));
   PyDict_SetItemString(outDict, "no_stkd",  PyInt_FromLong((long)lTab->no_stkd));
   PyDict_SetItemString(outDict, "stk_1",  PyInt_FromLong((long)lTab->stk_1));
-  PyDict_SetItemString(outDict, "no_chan",  PyInt_FromLong((long)lTab->no_chan));
   PyDict_SetItemString(outDict, "ref_freq",  PyFloat_FromDouble((double)lTab->ref_freq));
   PyDict_SetItemString(outDict, "chan_bw",  PyFloat_FromDouble((double)lTab->chan_bw));
   PyDict_SetItemString(outDict, "ref_pixl",  PyInt_FromLong((long)lTab->ref_pixl));
   PyDict_SetItemString(outDict, "obscode", PyString_InternFromString(lTab->obscode));
-  PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
 
   return outDict;
 } 
@@ -9235,16 +9219,14 @@ extern void TableIDI_PHASE_CALSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
   int lstr=MAXKEYCHARTABLEIDI_PHASE_CAL;
 
   lTab->tabrev = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "tabrev"));
+  lTab->no_chan = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_chan"));
   lTab->no_stkd = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_stkd"));
   lTab->stk_1 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "stk_1"));
-  lTab->no_chan = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_chan"));
   lTab->ref_freq = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ref_freq"));
   lTab->chan_bw = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "chan_bw"));
   lTab->ref_pixl = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "ref_pixl"));
   tstr = PyString_AsString(PyDict_GetItemString(inDict, "obscode"));
   strncpy (lTab->obscode, tstr, lstr); lTab->obscode[lstr-1]=0;
-  tstr = PyString_AsString(PyDict_GetItemString(inDict, "RefDate"));
-  strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
 
   if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
     lTab->myStatus = OBIT_Modified;
@@ -9286,14 +9268,13 @@ extern PyObject* TableIDI_SOURCEGetHeadKeys (ObitTable *inTab) {
   ObitTableIDI_SOURCE *lTab = (ObitTableIDI_SOURCE*)inTab;
   PyDict_SetItemString(outDict, "no_band",  PyInt_FromLong((long)lTab->no_band));
   PyDict_SetItemString(outDict, "tabrev",  PyInt_FromLong((long)lTab->tabrev));
+  PyDict_SetItemString(outDict, "no_chan",  PyInt_FromLong((long)lTab->no_chan));
   PyDict_SetItemString(outDict, "no_stkd",  PyInt_FromLong((long)lTab->no_stkd));
   PyDict_SetItemString(outDict, "stk_1",  PyInt_FromLong((long)lTab->stk_1));
-  PyDict_SetItemString(outDict, "no_chan",  PyInt_FromLong((long)lTab->no_chan));
   PyDict_SetItemString(outDict, "ref_freq",  PyFloat_FromDouble((double)lTab->ref_freq));
   PyDict_SetItemString(outDict, "chan_bw",  PyFloat_FromDouble((double)lTab->chan_bw));
   PyDict_SetItemString(outDict, "ref_pixl",  PyInt_FromLong((long)lTab->ref_pixl));
   PyDict_SetItemString(outDict, "obscode", PyString_InternFromString(lTab->obscode));
-  PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
 
   return outDict;
 } 
@@ -9304,16 +9285,14 @@ extern void TableIDI_SOURCESetHeadKeys (ObitTable *inTab, PyObject *inDict) {
   int lstr=MAXKEYCHARTABLEIDI_SOURCE;
 
   lTab->tabrev = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "tabrev"));
+  lTab->no_chan = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_chan"));
   lTab->no_stkd = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_stkd"));
   lTab->stk_1 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "stk_1"));
-  lTab->no_chan = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_chan"));
   lTab->ref_freq = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ref_freq"));
   lTab->chan_bw = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "chan_bw"));
   lTab->ref_pixl = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "ref_pixl"));
   tstr = PyString_AsString(PyDict_GetItemString(inDict, "obscode"));
   strncpy (lTab->obscode, tstr, lstr); lTab->obscode[lstr-1]=0;
-  tstr = PyString_AsString(PyDict_GetItemString(inDict, "RefDate"));
-  strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
 
   if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
     lTab->myStatus = OBIT_Modified;
@@ -9357,14 +9336,13 @@ extern PyObject* TableIDI_SYSTEM_TEMPERATUREGetHeadKeys (ObitTable *inTab) {
   PyDict_SetItemString(outDict, "numPol",  PyInt_FromLong((long)lTab->numPol));
   PyDict_SetItemString(outDict, "no_band",  PyInt_FromLong((long)lTab->no_band));
   PyDict_SetItemString(outDict, "tabrev",  PyInt_FromLong((long)lTab->tabrev));
+  PyDict_SetItemString(outDict, "no_chan",  PyInt_FromLong((long)lTab->no_chan));
   PyDict_SetItemString(outDict, "no_stkd",  PyInt_FromLong((long)lTab->no_stkd));
   PyDict_SetItemString(outDict, "stk_1",  PyInt_FromLong((long)lTab->stk_1));
-  PyDict_SetItemString(outDict, "no_chan",  PyInt_FromLong((long)lTab->no_chan));
   PyDict_SetItemString(outDict, "ref_freq",  PyFloat_FromDouble((double)lTab->ref_freq));
   PyDict_SetItemString(outDict, "chan_bw",  PyFloat_FromDouble((double)lTab->chan_bw));
   PyDict_SetItemString(outDict, "ref_pixl",  PyInt_FromLong((long)lTab->ref_pixl));
   PyDict_SetItemString(outDict, "obscode", PyString_InternFromString(lTab->obscode));
-  PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
 
   return outDict;
 } 
@@ -9375,16 +9353,14 @@ extern void TableIDI_SYSTEM_TEMPERATURESetHeadKeys (ObitTable *inTab, PyObject *
   int lstr=MAXKEYCHARTABLEIDI_SYSTEM_TEMPERATURE;
 
   lTab->tabrev = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "tabrev"));
+  lTab->no_chan = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_chan"));
   lTab->no_stkd = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_stkd"));
   lTab->stk_1 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "stk_1"));
-  lTab->no_chan = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_chan"));
   lTab->ref_freq = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ref_freq"));
   lTab->chan_bw = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "chan_bw"));
   lTab->ref_pixl = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "ref_pixl"));
   tstr = PyString_AsString(PyDict_GetItemString(inDict, "obscode"));
   strncpy (lTab->obscode, tstr, lstr); lTab->obscode[lstr-1]=0;
-  tstr = PyString_AsString(PyDict_GetItemString(inDict, "RefDate"));
-  strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
 
   if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
     lTab->myStatus = OBIT_Modified;
@@ -9463,31 +9439,39 @@ extern PyObject* TableIDI_UV_DATAGetHeadKeys (ObitTable *inTab) {
  PyDict_SetItemString(outDict, "tmatx13",  PyInt_FromLong((long)lTab->tmatx13));
  PyDict_SetItemString(outDict, "tmatx14",  PyInt_FromLong((long)lTab->tmatx14));
  PyDict_SetItemString(outDict, "tmatx15",  PyInt_FromLong((long)lTab->tmatx15));
+  PyDict_SetItemString(outDict, "ctype1", PyString_InternFromString(lTab->ctype1));
   PyDict_SetItemString(outDict, "cdelt1",  PyFloat_FromDouble((double)lTab->cdelt1));
   PyDict_SetItemString(outDict, "crpix1",  PyFloat_FromDouble((double)lTab->crpix1));
   PyDict_SetItemString(outDict, "crval1",  PyFloat_FromDouble((double)lTab->crval1));
+  PyDict_SetItemString(outDict, "ctype2", PyString_InternFromString(lTab->ctype2));
   PyDict_SetItemString(outDict, "cdelt2",  PyFloat_FromDouble((double)lTab->cdelt2));
   PyDict_SetItemString(outDict, "crpix2",  PyFloat_FromDouble((double)lTab->crpix2));
   PyDict_SetItemString(outDict, "crval2",  PyFloat_FromDouble((double)lTab->crval2));
+  PyDict_SetItemString(outDict, "ctype3", PyString_InternFromString(lTab->ctype3));
   PyDict_SetItemString(outDict, "cdelt3",  PyFloat_FromDouble((double)lTab->cdelt3));
   PyDict_SetItemString(outDict, "crpix3",  PyFloat_FromDouble((double)lTab->crpix3));
   PyDict_SetItemString(outDict, "crval3",  PyFloat_FromDouble((double)lTab->crval3));
+  PyDict_SetItemString(outDict, "ctype4", PyString_InternFromString(lTab->ctype4));
   PyDict_SetItemString(outDict, "cdelt4",  PyFloat_FromDouble((double)lTab->cdelt4));
   PyDict_SetItemString(outDict, "crpix4",  PyFloat_FromDouble((double)lTab->crpix4));
   PyDict_SetItemString(outDict, "crval4",  PyFloat_FromDouble((double)lTab->crval4));
+  PyDict_SetItemString(outDict, "ctype5", PyString_InternFromString(lTab->ctype5));
   PyDict_SetItemString(outDict, "cdelt5",  PyFloat_FromDouble((double)lTab->cdelt5));
   PyDict_SetItemString(outDict, "crpix5",  PyFloat_FromDouble((double)lTab->crpix5));
   PyDict_SetItemString(outDict, "crval5",  PyFloat_FromDouble((double)lTab->crval5));
   PyDict_SetItemString(outDict, "maxis6",  PyInt_FromLong((long)lTab->maxis6));
+  PyDict_SetItemString(outDict, "ctype6", PyString_InternFromString(lTab->ctype6));
   PyDict_SetItemString(outDict, "cdelt6",  PyFloat_FromDouble((double)lTab->cdelt6));
   PyDict_SetItemString(outDict, "crpix6",  PyFloat_FromDouble((double)lTab->crpix6));
   PyDict_SetItemString(outDict, "crval6",  PyFloat_FromDouble((double)lTab->crval6));
   PyDict_SetItemString(outDict, "maxis7",  PyInt_FromLong((long)lTab->maxis7));
+  PyDict_SetItemString(outDict, "ctype7", PyString_InternFromString(lTab->ctype7));
   PyDict_SetItemString(outDict, "cdelt7",  PyFloat_FromDouble((double)lTab->cdelt7));
   PyDict_SetItemString(outDict, "crpix7",  PyFloat_FromDouble((double)lTab->crpix7));
   PyDict_SetItemString(outDict, "crval7",  PyFloat_FromDouble((double)lTab->crval7));
   PyDict_SetItemString(outDict, "dateObs", PyString_InternFromString(lTab->dateObs));
   PyDict_SetItemString(outDict, "visScale",  PyFloat_FromDouble((double)lTab->visScale));
+  PyDict_SetItemString(outDict, "sort", PyString_InternFromString(lTab->sort));
 
   return outDict;
 } 
@@ -9529,32 +9513,48 @@ extern void TableIDI_UV_DATASetHeadKeys (ObitTable *inTab, PyObject *inDict) {
   lTab->tmatx13 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "tmatx13"));
   lTab->tmatx14 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "tmatx14"));
   lTab->tmatx15 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "tmatx15"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "ctype1"));
+  strncpy (lTab->ctype1, tstr, lstr); lTab->ctype1[lstr-1]=0;
   lTab->cdelt1 = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "cdelt1"));
   lTab->crpix1 = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "crpix1"));
   lTab->crval1 = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "crval1"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "ctype2"));
+  strncpy (lTab->ctype2, tstr, lstr); lTab->ctype2[lstr-1]=0;
   lTab->cdelt2 = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "cdelt2"));
   lTab->crpix2 = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "crpix2"));
   lTab->crval2 = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "crval2"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "ctype3"));
+  strncpy (lTab->ctype3, tstr, lstr); lTab->ctype3[lstr-1]=0;
   lTab->cdelt3 = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "cdelt3"));
   lTab->crpix3 = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "crpix3"));
   lTab->crval3 = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "crval3"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "ctype4"));
+  strncpy (lTab->ctype4, tstr, lstr); lTab->ctype4[lstr-1]=0;
   lTab->cdelt4 = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "cdelt4"));
   lTab->crpix4 = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "crpix4"));
   lTab->crval4 = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "crval4"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "ctype5"));
+  strncpy (lTab->ctype5, tstr, lstr); lTab->ctype5[lstr-1]=0;
   lTab->cdelt5 = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "cdelt5"));
   lTab->crpix5 = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "crpix5"));
   lTab->crval5 = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "crval5"));
   lTab->maxis6 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "maxis6"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "ctype6"));
+  strncpy (lTab->ctype6, tstr, lstr); lTab->ctype6[lstr-1]=0;
   lTab->cdelt6 = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "cdelt6"));
   lTab->crpix6 = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "crpix6"));
   lTab->crval6 = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "crval6"));
   lTab->maxis7 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "maxis7"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "ctype7"));
+  strncpy (lTab->ctype7, tstr, lstr); lTab->ctype7[lstr-1]=0;
   lTab->cdelt7 = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "cdelt7"));
   lTab->crpix7 = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "crpix7"));
   lTab->crval7 = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "crval7"));
   tstr = PyString_AsString(PyDict_GetItemString(inDict, "dateObs"));
   strncpy (lTab->dateObs, tstr, lstr); lTab->dateObs[lstr-1]=0;
   lTab->visScale = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "visScale"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "sort"));
+  strncpy (lTab->sort, tstr, lstr); lTab->sort[lstr-1]=0;
 
   if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
     lTab->myStatus = OBIT_Modified;
@@ -9596,14 +9596,14 @@ extern PyObject* TableIDI_WEATHERGetHeadKeys (ObitTable *inTab) {
   ObitTableIDI_WEATHER *lTab = (ObitTableIDI_WEATHER*)inTab;
   PyDict_SetItemString(outDict, "no_band",  PyInt_FromLong((long)lTab->no_band));
   PyDict_SetItemString(outDict, "tabrev",  PyInt_FromLong((long)lTab->tabrev));
+  PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
+  PyDict_SetItemString(outDict, "no_chan",  PyInt_FromLong((long)lTab->no_chan));
   PyDict_SetItemString(outDict, "no_stkd",  PyInt_FromLong((long)lTab->no_stkd));
   PyDict_SetItemString(outDict, "stk_1",  PyInt_FromLong((long)lTab->stk_1));
-  PyDict_SetItemString(outDict, "no_chan",  PyInt_FromLong((long)lTab->no_chan));
   PyDict_SetItemString(outDict, "ref_freq",  PyFloat_FromDouble((double)lTab->ref_freq));
   PyDict_SetItemString(outDict, "chan_bw",  PyFloat_FromDouble((double)lTab->chan_bw));
   PyDict_SetItemString(outDict, "ref_pixl",  PyInt_FromLong((long)lTab->ref_pixl));
   PyDict_SetItemString(outDict, "obscode", PyString_InternFromString(lTab->obscode));
-  PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
 
   return outDict;
 } 
@@ -9614,16 +9614,16 @@ extern void TableIDI_WEATHERSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
   int lstr=MAXKEYCHARTABLEIDI_WEATHER;
 
   lTab->tabrev = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "tabrev"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "RefDate"));
+  strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
+  lTab->no_chan = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_chan"));
   lTab->no_stkd = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_stkd"));
   lTab->stk_1 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "stk_1"));
-  lTab->no_chan = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_chan"));
   lTab->ref_freq = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ref_freq"));
   lTab->chan_bw = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "chan_bw"));
   lTab->ref_pixl = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "ref_pixl"));
   tstr = PyString_AsString(PyDict_GetItemString(inDict, "obscode"));
   strncpy (lTab->obscode, tstr, lstr); lTab->obscode[lstr-1]=0;
-  tstr = PyString_AsString(PyDict_GetItemString(inDict, "RefDate"));
-  strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
 
   if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
     lTab->myStatus = OBIT_Modified;

@@ -1743,3 +1743,68 @@ Obit/src/ObitDConCleanPxList.c Obit/src/ObitDConCleanPxListMF.c:
 Obit/src/ObitSkyModel.c Obit/src/ObitSkyModelMF.c:
   Efficiency  improvements in threaded FTDFT routine
 23 Oct 2013, svn version 465
+
+Mostly fixes to read VLBA FITS IDI files
+Obit/changes.log:
+ObitTalk/doc/ObitTalk.tex:
+  Update user documentation
+Obit/doc/OBITdoc.tex
+Obit/include/ObitTableIDI_SOURCEClassDef.h Obit/include/ObitTableIDI_SOURCEDef.h 
+Obit/include/ObitTableIDI_SOURCE.h
+Obit/include/ObitTableIDI_SOURCERowClassDef.h Obit/include/ObitTableIDI_SOURCERowDef.h
+Obit/src/ObitTableIDI_SOURCE.c Obit/python/TableIDI_SOURCE.inc
+Obit/include/ObitTableIDI_UV_DATAClassDef.h Obit/include/ObitTableIDI_UV_DATADef.h 
+Obit/include/ObitTableIDI_UV_DATA.h
+Obit/include/ObitTableIDI_UV_DATARowClassDef.h Obit/include/ObitTableIDI_UV_DATARowDef.h
+Obit/src/ObitTableIDI_UV_DATA.c Obit/python/TableIDI_UV_DATA.inc
+Obit/include/ObitTableIDI_ANTENNAClassDef.h Obit/include/ObitTableIDI_ANTENNADef.h 
+Obit/include/ObitTableIDI_ANTENNA.h
+Obit/include/ObitTableIDI_ANTENNARowClassDef.h Obit/include/ObitTableIDI_ANTENNARowDef.h
+Obit/src/ObitTableIDI_ANTENNA.c Obit/python/TableIDI_ANTENNA.inc
+Obit/include/ObitTableIDI_ARRAY_GEOMETRYClassDef.h Obit/include/ObitTableIDI_ARRAY_GEOMETRYDef.h 
+Obit/include/ObitTableIDI_ARRAY_GEOMETRY.h
+Obit/include/ObitTableIDI_ARRAY_GEOMETRYRowClassDef.h Obit/include/ObitTableIDI_ARRAY_GEOMETRYRowDef.h
+Obit/src/ObitTableIDI_ARRAY_GEOMETRY.c Obit/python/TableIDI_ARRAY_GEOMETRY.inc
+Obit/include/ObitTableIDI_BANDPASSClassDef.h Obit/include/ObitTableIDI_BANDPASSDef.h 
+Obit/include/ObitTableIDI_BANDPASS.h
+Obit/include/ObitTableIDI_BANDPASSRowClassDef.h Obit/include/ObitTableIDI_BANDPASSRowDef.h
+Obit/src/ObitTableIDI_BANDPASS.c Obit/python/TableIDI_BANDPASS.inc
+Obit/include/ObitTableIDI_CALIBRATIONClassDef.h Obit/include/ObitTableIDI_CALIBRATIONDef.h 
+Obit/include/ObitTableIDI_CALIBRATION.h
+Obit/include/ObitTableIDI_CALIBRATIONRowClassDef.h Obit/include/ObitTableIDI_CALIBRATIONRowDef.h
+Obit/src/ObitTableIDI_CALIBRATION.c Obit/python/TableIDI_CALIBRATION.inc 
+Obit/include/ObitTableIDI_FLAGClassDef.h Obit/include/ObitTableIDI_FLAGDef.h 
+Obit/include/ObitTableIDI_FLAG.h
+Obit/include/ObitTableIDI_FLAGRowClassDef.h Obit/include/ObitTableIDI_FLAGRowDef.h
+Obit/src/ObitTableIDI_FLAG.c Obit/python/TableIDI_FLAG.inc 
+Obit/include/ObitTableIDI_FREQUENCYClassDef.h Obit/include/ObitTableIDI_FREQUENCYDef.h 
+Obit/include/ObitTableIDI_FREQUENCY.h
+Obit/include/ObitTableIDI_FREQUENCYRowClassDef.h Obit/include/ObitTableIDI_FREQUENCYRowDef.h
+Obit/src/ObitTableIDI_FREQUENCY.c Obit/python/TableIDI_FREQUENCY.inc
+Obit/include/ObitTableIDI_GAIN_CURVEClassDef.h Obit/include/ObitTableIDI_GAIN_CURVEDef.h 
+Obit/include/ObitTableIDI_GAIN_CURVE.h
+Obit/include/ObitTableIDI_GAIN_CURVERowClassDef.h Obit/include/ObitTableIDI_GAIN_CURVERowDef.h
+Obit/src/ObitTableIDI_GAIN_CURVE.c Obit/python/TableIDI_GAIN_CURVE.inc
+Obit/include/ObitTableIDI_INTERFEROMETER_MODELClassDef.h Obit/include/ObitTableIDI_INTERFEROMETER_MODELDef.h 
+Obit/include/ObitTableIDI_INTERFEROMETER_MODEL.h
+Obit/include/ObitTableIDI_INTERFEROMETER_MODELRowClassDef.h
+Obit/include/ObitTableIDI_INTERFEROMETER_MODELRowDef.h
+Obit/src/ObitTableIDI_INTERFEROMETER_MODEL.c Obit/python/TableIDI_INTERFEROMETER_MODEL.inc
+Obit/include/ObitTableIDI_PHASE_CALClassDef.h Obit/include/ObitTableIDI_PHASE_CALDef.h 
+Obit/include/ObitTableIDI_PHASE_CAL.h
+Obit/include/ObitTableIDI_PHASE_CALRowClassDef.h Obit/include/ObitTableIDI_PHASE_CALRowDef.h
+Obit/src/ObitTableIDI_PHASE_CAL.c Obit/python/TableIDI_PHASE_CAL.inc 
+Obit/include/ObitTableIDI_SYSTEM_TEMPERATUREClassDef.h Obit/include/ObitTableIDI_SYSTEM_TEMPERATUREDef.h 
+Obit/include/ObitTableIDI_SYSTEM_TEMPERATURE.h
+Obit/include/ObitTableIDI_SYSTEM_TEMPERATURERowClassDef.h
+Obit/include/ObitTableIDI_SYSTEM_TEMPERATURERowDef.h
+Obit/src/ObitTableIDI_SYSTEM_TEMPERATURE.c Obit/python/TableIDI_SYSTEM_TEMPERATURE.inc
+Obit/include/ObitTableIDI_WEATHERClassDef.h Obit/include/ObitTableIDI_WEATHERDef.h 
+Obit/include/ObitTableIDI_WEATHER.h
+Obit/include/ObitTableIDI_WEATHERRowClassDef.h Obit/include/ObitTableIDI_WEATHERRowDef.h
+Obit/src/ObitTableIDI_WEATHER.c Obit/python/TableIDI_WEATHER.inc
+Obit/python/Obit_wrap.c  ObitSD/python/Obit_wrap.c
+  Allow for VLBA deviations from the IDI standard, VLBA extensions.
+Obit/tasks/IDIIn.c  Obit/tasks/IDIOut.c  Obit/TDF/IDIIn.TDF:
+  Make more robust, allow for VLBA usages.
+15 Nov. 2013, svn version 466
