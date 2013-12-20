@@ -35,6 +35,7 @@ Data selection, calibration and editing parameters on List member:
 "BIF"          int (1,1,1)    First "IF" selected. [def all]
 "EIF"          int (1,1,1)    Highest "IF" selected. [def all]
 "IFInc"        int (1,1,1)    "IF" selected increment. [def 1]
+"IFDrop"       int (?,1,1)    List of deselected (1-rel) IFs [def none]
 "doPol"        int (1,1,1)    >0 -> calibrate polarization.
 "doCalib"      int (1,1,1)    >0 -> calibrate, 2=> also calibrate Weights
 "gainUse"      int (1,1,1)    SN/CL table version number, 0-> use highest

@@ -27,13 +27,14 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVSel.h"
+#include "ObitUV.h"
 #include "ObitSystem.h"
 #include "ObitMem.h"
 #include "ObitParser.h"
 #include "ObitReturn.h"
 #include "ObitHistory.h"
 #include "ObitData.h"
-#include "ObitUV.h"
 #include "ObitAIPSDir.h"
 #include "ObitFITS.h"
 #include "ObitTableAN.h"
@@ -63,7 +64,7 @@ void UVAppendHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
 olong CopyAN (ObitUV* inData, ObitUV* outData, ObitErr* err);
 /* Append data */
 void ObitUVAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err);
-/* Append data */
+/* Append data with reweighting */
 void UVReweight(ObitUV *inUV, ObitUV *outUV, ObitErr *err);
 /* Copy AN Tables */
 ObitIOCode ObitTableANSelect2 (ObitUV *inUV, olong ncopy, ObitUV *outUV, 
@@ -609,9 +610,12 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gboolean     doCalSelect, OK;
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "souCode", "Qual", "Stokes", "timeRange", 
-    "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "FreqID", "corrType", 
-    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", "timeAvg",
-    "doPol", "PDVer", "Smooth", "Antennas",  "subA", "Sources", "souCode", "Qual",
+    "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "IFDrop", 
+    "FreqID", "corrType", 
+    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
+    "timeAvg",
+    "doPol", "PDVer", "Smooth", "Antennas",  "subA", "Sources", "souCode", 
+    "Qual",
      NULL};
   gchar *routine = "getInputData";
 
@@ -889,8 +893,8 @@ void UVAppendHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
   gchar        *hiEntries[] = {
     "DataType", 
     "inFile",  "inDisk", "inName", "inClass", "inSeq",
-    "FreqID", "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "Stokes", 
-    "Sources",  "Qual", "souCode", "subA", "Antennas", 
+    "FreqID", "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "IFDrop",
+    "Stokes", "Sources",  "Qual", "souCode", "subA", "Antennas", 
     "doCalSelect", "doCalib", "gainUse", "doPol", "PDVer", "flagVer", 
     "doBand", "BPVer", "Smooth",  "corrType", "reweight", "timeAvg",
     "outFile",  "outDisk",  "outName", "outClass", "outSeq", "Compress",
@@ -1191,8 +1195,9 @@ ObitIOCode ObitTableANSelect2 (ObitUV *inUV, olong ncopy, ObitUV *outUV,
   ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitTableAN    *inTab=NULL, *outTab=NULL;
   ObitTableANRow *inRow=NULL, *outRow=NULL;
+  ObitUVSel      *sel=inUV->mySel;
   ObitInfoType type;
-  olong iif, oif, i, polRefAnt;
+  olong iif, oif, i, polRefAnt, maxIF;
   olong iANver, oANver, inANRow, outANRow;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   oint numOrb, numIF, numPCal;
@@ -1226,6 +1231,13 @@ ObitIOCode ObitTableANSelect2 (ObitUV *inUV, olong ncopy, ObitUV *outUV,
   /* Open Output Data */
   ObitUVOpen (outUV, OBIT_IO_ReadWrite, err) ;
   if (err->error )Obit_traceback_val (err, routine, outUV->name, retCode);
+
+  /* How many IFs on input? */
+  if (inUV->myDesc->jlocif>=0) {
+    maxIF = ((ObitUVDesc*)inUV->myIO->myDesc)->inaxes[((ObitUVDesc*)inUV->myIO->myDesc)->jlocif];
+  } else {
+    maxIF = 1;
+  }
 
   /* Loop over AN tables */
   for (iANver=1; iANver<=ncopy; iANver++) {
@@ -1319,16 +1331,16 @@ ObitIOCode ObitTableANSelect2 (ObitUV *inUV, olong ncopy, ObitUV *outUV,
     /* R-L Phase differences */
     if (!doPol) {  
       oif = 1;
-      for (iif=inUV->mySel->startIF; 
-	   iif<=inUV->mySel->startIF+inUV->mySel->numberIF-1;
-	   iif++) {
-	g_snprintf (tempName, 9, "P_DIFF%2.2d",iif);
-	dim[0] = dim[1] = 1; type = OBIT_double; dtemp = 0.0;
-	ObitInfoListGetTest(inTab->myDesc->info, tempName, &type, dim, &dtemp);
-	g_snprintf (tempName, 9, "P_DIFF%2.2d",oif);
-	ObitInfoListAlwaysPut(outTab->myDesc->info, "tempName", type, dim, &polRefAnt);
-	oif++;
-      }
+       for (iif=1;  iif<=maxIF; iif++) {
+	if (sel->IFSel[iif]) {   /* Want this IF? */
+	  g_snprintf (tempName, 9, "P_DIFF%2.2d",iif);
+	  dim[0] = dim[1] = 1; type = OBIT_double; dtemp = 0.0;
+	  ObitInfoListGetTest(inTab->myDesc->info, tempName, &type, dim, &dtemp);
+	  g_snprintf (tempName, 9, "P_DIFF%2.2d",oif);
+	  ObitInfoListAlwaysPut(outTab->myDesc->info, "tempName", type, dim, &polRefAnt);
+	  oif++;
+	} /* end if IF wanted */
+       }
     }
 
     /* Set rows */
@@ -1362,21 +1374,21 @@ ObitIOCode ObitTableANSelect2 (ObitUV *inUV, olong ncopy, ObitUV *outUV,
       outRow->polTypeB[0] = inRow->polTypeB[0];
       /* IF dependent poln cal */
       oif = 0; 
-      for (iif=inUV->mySel->startIF-1;  
-	   iif<inUV->mySel->startIF+inUV->mySel->numberIF-1; 
-	   iif++) { 
-	if (doPol && (numPCal>0)) { /* zero cal */
-	  outRow->PolCalA[2*oif]   = 0.0; 
-	  outRow->PolCalA[2*oif+1] = 0.0; 
-	  outRow->PolCalB[2*oif]   = 0.0; 
-	  outRow->PolCalB[2*oif+1] = 0.0; 
-	} else if (numPCal>0) {  /* Copy */
-	  outRow->PolCalA[2*oif]   = inRow->PolCalA[2*iif]; 
-	  outRow->PolCalA[2*oif+1] = inRow->PolCalA[2*iif+1];
-	  outRow->PolCalB[2*oif]   = inRow->PolCalB[2*iif]; 
-	  outRow->PolCalB[2*oif+1] = inRow->PolCalB[2*iif+1];
-	} 
-      	oif++; 
+      for (iif=0;  iif<maxIF; iif++) {
+	if (sel->IFSel[iif]) {   /* Want this IF? */
+	  if (doPol && (numPCal>0)) { /* zero cal */
+	    outRow->PolCalA[2*oif]   = 0.0; 
+	    outRow->PolCalA[2*oif+1] = 0.0; 
+	    outRow->PolCalB[2*oif]   = 0.0; 
+	    outRow->PolCalB[2*oif+1] = 0.0; 
+	  } else if (numPCal>0) {  /* Copy */
+	    outRow->PolCalA[2*oif]   = inRow->PolCalA[2*iif]; 
+	    outRow->PolCalA[2*oif+1] = inRow->PolCalA[2*iif+1];
+	    outRow->PolCalB[2*oif]   = inRow->PolCalB[2*iif]; 
+	    outRow->PolCalB[2*oif+1] = inRow->PolCalB[2*iif+1];
+	  } 
+	  oif++; 
+	} /* end if IF wanted */
       } 
 
       retCode = ObitTableANWriteRow (outTab, outANRow, outRow, err);

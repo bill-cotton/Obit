@@ -4,7 +4,7 @@
 ;! Append UV data
 ;# Task UV  Obit 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2012
+;;  Copyright (C) 2012-2013
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -67,6 +67,8 @@ BIF               0.0     9999.0    First IF (0=>1)
 EIF               0.0     9999.0    Highest IF (0=>BIF to last)
 **PARAM** int 1 **DEF** 1
 IFInc             0.0     8192.0    IF increment
+**PARAM** int 32 
+IFDrop            0.0     8192.0    List of IFs to not copy
 **PARAM** int 1
 subA                                Subarray
 **PARAM** int 50
@@ -169,6 +171,8 @@ Adverbs:
   EIF........Highest IF to process 0=> do BIF to highest.
              Note: not all data sets will have IFs.
   IFInc......Increment in IF selected, 0=>1
+  IFDrop.....List of IF numbers not to copy to the output
+             Numbers refer to the input data.
   subA.......Sub-array number to use. 0=>all.
   Antennas...A list of the antennas to  have data copied.
              If any number is negative then all antennas listed are 

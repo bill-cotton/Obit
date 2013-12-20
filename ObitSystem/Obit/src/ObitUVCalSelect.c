@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,9 +26,9 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVSel.h"
 #include "ObitUVCalSelect.h"
 #include "ObitUVDesc.h"
-#include "ObitUVSel.h"
 #include "ObitUVCal.h"
 #include "ObitUVCalSelect.h"
 
@@ -231,7 +231,7 @@ void ObitUVCalSelectInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
   sel->lrecUC   = outDesc->lrec;
   sel->nrparmUC = outDesc->nrparm;
 
-  /* do we need to translate data? No is Stokes ="    " */
+  /* do we need to translate data? No if Stokes ="    " */
   in->mySel->transPol = strncmp(sel->Stokes, "    ", 4);
   if (!in->mySel->transPol) return;
 
@@ -477,7 +477,7 @@ void ObitUVCalSelectInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
 /**
  * Select data and translate to desired Stokes parameter
  * Adapted from the AIPSish DGGET.FOR.
- * U, V, W scales if selecting in IF.
+ * U, V, W scales if selecting in IF. (done in ObitUVCal)
  * \param in     Calibration Object.
  * \li mySel->transPol  if TRUE translate stokes
  * \li mySel->bothCorr  if TRUE all data needed in combination
@@ -521,19 +521,20 @@ gboolean ObitUVCalSelect (ObitUVCal *in, ofloat *RP, ofloat *visIn, ofloat *visO
   channInc = MAX (1, sel->channInc);
   maxChan  = MIN (sel->numberChann*channInc, desc->inaxes[desc->jlocf]);
   IFInc    = MAX (1, sel->IFInc);
-  maxIF    = MIN (sel->numberIF*IFInc, desc->inaxes[desc->jlocif]);
-  maxIF    = MAX (1, maxIF);
+  maxIF    =  desc->inaxes[desc->jlocif];
 
   /* loop checking  and summing weights and getting visibilities. */
   i = -1; /* output visibility number */
 
-  /* visibility offset in input */
-  lfoff = (sel->startIF-1-IFInc) * incif + (sel->startChann-1-channInc) * incf;
+  /* initial visibility offset in input */
+  lfoff = (sel->startChann-1-channInc) * incf - incif;
 
   /* loop over IF */
-  for (lf=0; lf<maxIF; lf += IFInc) { /* loop 70 */
-    lfoff += incif * IFInc;
+  for (lf=0; lf<maxIF; lf++) { /* loop 70 */
+    lfoff += incif;
     ioff   = lfoff;
+    /* This one wanted? */
+    if (!sel->IFSel[lf]) continue;
 
     /* Loop over channel */
     for (lc=0; lc<maxChan; lc += channInc) { /* loop 60 */

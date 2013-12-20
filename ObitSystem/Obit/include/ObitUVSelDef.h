@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2011                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -61,6 +61,14 @@ olong startIF;
 olong numberIF;
 /** IF increment */
 olong IFInc;
+/** Zero terminated list of IFs not to copy  */
+olong *IFDrop;
+/** Flag per input IF it is selected  */
+gboolean *IFSel;
+/** number of elements in IFSel */
+olong nifsel;
+/** Fitse (0-rel) selected element in IFSel */
+olong ifsel1;
 /** Increment in visibility float array between IFs */
 olong jincif;
 /** Selected Subarray number. <=0 -> all */

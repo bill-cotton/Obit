@@ -1090,7 +1090,8 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
 	ia2    = in->antNo[i*2+1]; 
 	/* DEBUG if ((isou==0) && (ia1==10) && (ia2==17)) {  11-18 */
 	/* DEBUG if ((isou==0)&& (ia1==2) && (ia2==3)) {  first source 3-4 */
-	if (isou==0) {   /* first source */
+	if ((isou==0)&& (ia1==4) && (ia2==19)) {  /* first source 5-20 */
+	/* DEBUG if (isou==0) {    first source */
 	  /* Function by feed type  */
 	  if (in->isCircFeed ) {
 	    /* Circular feeds */
@@ -2694,11 +2695,14 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
 	  for (i=0; i<10; i++) {
 	    tParam = sParam + delta;
 	    in->antParm[iant*4+k] = tParam;
+	    /* Restrict elipticities to [-pi/4, +pi/4] */
+	    if ((k==1) && (tParam>+0.25*G_PI)) tParam = +0.5*G_PI - tParam;
+	    if ((k==3) && (tParam<-0.25*G_PI)) tParam = -0.5*G_PI - tParam;
 	    tChi2 = GetChi2 (in->nThread, in, polnParmUnspec, k, 
 			     &ParRMS, &XRMS, NULL, NULL, err);
 	    if (tChi2<iChi2) {
 	      /* Got new value */
-	      sParam += delta;
+	      sParam = tParam;
 	      sParam = fmod (sParam, 2*G_PI);
 	      if (sParam> G_PI) sParam -= 2*G_PI;
 	      if (sParam<-G_PI) sParam += 2*G_PI;
@@ -5142,7 +5146,7 @@ static int PolnFitFuncOERL (const gsl_vector *x, void *params,
   olong isouLast=-999;
   dcomplex PRref, PLref, PPRL, PPLR, PA1, PA2, PA1c, PA2c, ct1, ct2;
   dcomplex S[4], VRR, VRL, VLR, VLL;
-  ofloat root2;
+  ofloat root2, maxElp=G_PI/4;
   size_t i, j;
 
   /* Initialize output */
@@ -5263,72 +5267,104 @@ static int PolnFitFuncOERL (const gsl_vector *x, void *params,
       switch (k) { 
       case 0:     /* RR */
 	if (wt[idata*4+k]>0.0) {
-	  /* VRR = S[0] * RS[ia1] * RSc[ia2] +        
-	           S[1] * RS[ia1] * RDc[ia2] * PA2c + 
-		   S[2] * RD[ia1] * RSc[ia2] * PA1  + 
-		   S[3] * RD[ia1] * RDc[ia2] * PA1  * PA2c; */
-	  COMPLEX_MUL3 (VRR, S[0], RS[ia1],  RSc[ia2]);
-	  COMPLEX_MUL4 (ct1, S[1], RS[ia1],  RDc[ia2],  PA2c);
-	  COMPLEX_ADD2 (VRR, VRR,  ct1);
-	  COMPLEX_MUL4 (ct1, S[2], RD[ia1], RSc[ia2], PA1);
-	  COMPLEX_ADD2 (VRR, VRR,  ct1);
-	  COMPLEX_MUL5 (ct1, S[3], RD[ia1], RDc[ia2], PA1, PA2c);
-	  COMPLEX_ADD2 (VRR, VRR,  ct1);
-	  residR = VRR.real - data[idata*10+(k+1)*2];
-	  residI = VRR.imag - data[idata*10+(k+1)*2+1];
+	  /* Check for ellipticity in range */
+	  if ((antParm[ia1*4+1]>maxElp) || (antParm[ia2*4+1]>maxElp)) {
+	    /* out of range - give big residual */
+	    residR = MAX((antParm[ia1*4+1]-maxElp),(antParm[ia2*4+1]-maxElp)) * 
+	      ipol * 100.;
+	    residI = residR;
+	  } else {  /* OK */
+	    /* VRR = S[0] * RS[ia1] * RSc[ia2] +        
+	             S[1] * RS[ia1] * RDc[ia2] * PA2c + 
+	             S[2] * RD[ia1] * RSc[ia2] * PA1  + 
+	             S[3] * RD[ia1] * RDc[ia2] * PA1  * PA2c; */
+	    COMPLEX_MUL3 (VRR, S[0], RS[ia1],  RSc[ia2]);
+	    COMPLEX_MUL4 (ct1, S[1], RS[ia1],  RDc[ia2],  PA2c);
+	    COMPLEX_ADD2 (VRR, VRR,  ct1);
+	    COMPLEX_MUL4 (ct1, S[2], RD[ia1], RSc[ia2], PA1);
+	    COMPLEX_ADD2 (VRR, VRR,  ct1);
+	    COMPLEX_MUL5 (ct1, S[3], RD[ia1], RDc[ia2], PA1, PA2c);
+	    COMPLEX_ADD2 (VRR, VRR,  ct1);
+	    residR = VRR.real - data[idata*10+(k+1)*2];
+	    residI = VRR.imag - data[idata*10+(k+1)*2+1];
+	  }
 	} else  residR = residI = 0.0; /* Invalid data */
 	break;
       case 1:     /* LL */
 	if (wt[idata*4+k]>0.0) {
-	  /* VLL = S[0] * LS[ia1] * LSc[ia2] * PA1c * PA2 +	
-	           S[1] * LS[ia1] * LDc[ia2] * PA1c +
-		   S[2] * LD[ia1] * LSc[ia2] * PA2  +
-		   S[3] * LD[ia1] * LDc[ia2]; */
-	  COMPLEX_MUL5 (VLL, S[0], LS[ia1], LSc[ia2], PA1c, PA2);
-	  COMPLEX_MUL4 (ct1, S[1], LS[ia1], LDc[ia2], PA1c);
-	  COMPLEX_ADD2 (VLL, VLL,  ct1);
-	  COMPLEX_MUL4 (ct1, S[2], LD[ia1], LSc[ia2], PA2);
-	  COMPLEX_ADD2 (VLL, VLL,  ct1);
-	  COMPLEX_MUL3 (ct1, S[3], LD[ia1], LDc[ia2]);
-	  COMPLEX_ADD2 (VLL, VLL,  ct1);
-	  residR = VLL.real - data[idata*10+(k+1)*2];
-	  residI = VLL.imag - data[idata*10+(k+1)*2+1];
+	  /* Check for ellipticity in range */
+	  if ((antParm[ia1*4+3]<-maxElp) || (antParm[ia2*4+3]<-maxElp)) {
+	    /* out of range - give big residual */
+	    residR = MAX((maxElp-antParm[ia1*4+3]),(maxElp-antParm[ia2*4+3])) * 
+	      ipol * 100.;
+	    residI = residR;
+	  } else {  /* OK */
+	    /* VLL = S[0] * LS[ia1] * LSc[ia2] * PA1c * PA2 +	
+	             S[1] * LS[ia1] * LDc[ia2] * PA1c +
+	  	     S[2] * LD[ia1] * LSc[ia2] * PA2  +
+		     S[3] * LD[ia1] * LDc[ia2]; */
+	    COMPLEX_MUL5 (VLL, S[0], LS[ia1], LSc[ia2], PA1c, PA2);
+	    COMPLEX_MUL4 (ct1, S[1], LS[ia1], LDc[ia2], PA1c);
+	    COMPLEX_ADD2 (VLL, VLL,  ct1);
+	    COMPLEX_MUL4 (ct1, S[2], LD[ia1], LSc[ia2], PA2);
+	    COMPLEX_ADD2 (VLL, VLL,  ct1);
+	    COMPLEX_MUL3 (ct1, S[3], LD[ia1], LDc[ia2]);
+	    COMPLEX_ADD2 (VLL, VLL,  ct1);
+	    residR = VLL.real - data[idata*10+(k+1)*2];
+	    residI = VLL.imag - data[idata*10+(k+1)*2+1];
+	  }
 	} else  residR = residI = 0.0; /* Invalid data */
 	break;
       case 2:     /* RL */
 	if (wt[idata*4+k]>0.0) {
-	  /* VRL = PPRL * S[0] * RS[ia1] * LSc[ia2] * PA2 +
-	           PPRL * S[1] * RS[ia1] * LDc[ia2] + 
-		   PPRL * S[2] * RD[ia1] * LSc[ia2] * PA1 * PA2 +
-		   PPRL * S[3] * RD[ia1] * LDc[ia2] * PA1; */
-	  COMPLEX_MUL4 (VRL, S[0], RS[ia1], LSc[ia2], PA2);
-	  COMPLEX_MUL3 (ct1, S[1], RS[ia1], LDc[ia2]);
-	  COMPLEX_ADD2 (VRL, VRL,  ct1);
-	  COMPLEX_MUL5 (ct1, S[2], RD[ia1], LSc[ia2],  PA1,  PA2);
-	  COMPLEX_ADD2 (VRL, VRL,  ct1);
-	  COMPLEX_MUL4 (ct1, S[3], RD[ia1], LDc[ia2],  PA1);
-	  COMPLEX_ADD2 (ct2, VRL,  ct1);
-	  COMPLEX_MUL2 (VRL, PPRL, ct2);
-	  residR = VRL.real - data[idata*10+(k+1)*2];
-	  residI = VRL.imag - data[idata*10+(k+1)*2+1];
+	  /* Check for ellipticity in range */
+	  if ((antParm[ia1*4+1]>maxElp) || (antParm[ia2*4+3]<-maxElp)) {
+	    /* out of range - give big residual */
+	    residR = MAX((antParm[ia1*4+1]-maxElp),(maxElp-antParm[ia2*4+3])) * 
+	      ipol * 100.;
+	    residI = residR;
+	  } else {  /* OK */
+	    /* VRL = PPRL * S[0] * RS[ia1] * LSc[ia2] * PA2 +
+	             PPRL * S[1] * RS[ia1] * LDc[ia2] + 
+		     PPRL * S[2] * RD[ia1] * LSc[ia2] * PA1 * PA2 +
+		     PPRL * S[3] * RD[ia1] * LDc[ia2] * PA1; */
+	    COMPLEX_MUL4 (VRL, S[0], RS[ia1], LSc[ia2], PA2);
+	    COMPLEX_MUL3 (ct1, S[1], RS[ia1], LDc[ia2]);
+	    COMPLEX_ADD2 (VRL, VRL,  ct1);
+	    COMPLEX_MUL5 (ct1, S[2], RD[ia1], LSc[ia2],  PA1,  PA2);
+	    COMPLEX_ADD2 (VRL, VRL,  ct1);
+	    COMPLEX_MUL4 (ct1, S[3], RD[ia1], LDc[ia2],  PA1);
+	    COMPLEX_ADD2 (ct2, VRL,  ct1);
+	    COMPLEX_MUL2 (VRL, PPRL, ct2);
+	    residR = VRL.real - data[idata*10+(k+1)*2];
+	    residI = VRL.imag - data[idata*10+(k+1)*2+1];
+	  }
 	} else  residR = residI = 0.0; /* Invalid data */
 	break;
       case 3:     /* LR */
 	if (wt[idata*4+k]>0.0) {
-	  /* VLR = PPLR * S[0] * LS[ia1] * RSc[ia2] * PA1c +
-	           PPLR * S[1] * LS[ia1] * RDc[ia2] * PA1c * PA2c +
-		   PPLR * S[2] * LD[ia1] * RSc[ia2] +
-		   PPLR * S[3] * LD[ia1] * RDc[ia2] * PA2c */
-	  COMPLEX_MUL4 (VLR, S[0], LS[ia1], RSc[ia2], PA1c);
-	  COMPLEX_MUL5 (ct1, S[1], LS[ia1], RDc[ia2], PA1c,  PA2c);
-	  COMPLEX_ADD2 (VLR, VLR,  ct1);
-	  COMPLEX_MUL3 (ct1, S[2], LD[ia1], RSc[ia2]);
-	  COMPLEX_ADD2 (VLR, VLR,  ct1);
-	  COMPLEX_MUL4 (ct1, S[3], LD[ia1], RDc[ia2], PA2c);
-	  COMPLEX_ADD2 (ct2, VLR,  ct1);
-	  COMPLEX_MUL2 (VLR, PPLR, ct2);
-	  residR = VLR.real - data[idata*10+(k+1)*2];
-	  residI = VLR.imag - data[idata*10+(k+1)*2+1];
+	  /* Check for ellipticity in range */
+	  if ((antParm[ia1*4+3]<-maxElp) || (antParm[ia2*4+1]>maxElp)) {
+	    /* out of range - give big residual */
+	    residR = MAX((maxElp-antParm[ia1*4+3]),(antParm[ia2*4+1]-maxElp)) * 
+	      ipol * 100.;
+	    residI = residR;
+	  } else {  /* OK */
+	    /* VLR = PPLR * S[0] * LS[ia1] * RSc[ia2] * PA1c +
+	             PPLR * S[1] * LS[ia1] * RDc[ia2] * PA1c * PA2c +
+		     PPLR * S[2] * LD[ia1] * RSc[ia2] +
+		     PPLR * S[3] * LD[ia1] * RDc[ia2] * PA2c */
+	    COMPLEX_MUL4 (VLR, S[0], LS[ia1], RSc[ia2], PA1c);
+	    COMPLEX_MUL5 (ct1, S[1], LS[ia1], RDc[ia2], PA1c,  PA2c);
+	    COMPLEX_ADD2 (VLR, VLR,  ct1);
+	    COMPLEX_MUL3 (ct1, S[2], LD[ia1], RSc[ia2]);
+	    COMPLEX_ADD2 (VLR, VLR,  ct1);
+	    COMPLEX_MUL4 (ct1, S[3], LD[ia1], RDc[ia2], PA2c);
+	    COMPLEX_ADD2 (ct2, VLR,  ct1);
+	    COMPLEX_MUL2 (VLR, PPLR, ct2);
+	    residR = VLR.real - data[idata*10+(k+1)*2];
+	    residI = VLR.imag - data[idata*10+(k+1)*2+1];
+	  }
 	} else  residR = residI = 0.0; /* Invalid data */
 	break;
       default:
@@ -5389,7 +5425,7 @@ static int PolnFitJacOERL (const gsl_vector *x, void *params,
   dcomplex PRref, PLref, PPRL, PPLR, mPPRL, mPPLR, PA1, PA2, PA1c, PA2c;
   dcomplex ct1, ct2, ct3, ct4, ct5, ct6;
   dcomplex S[4], VRR, VRL, VLR, VLL, DFDP, MC1, MC2, MC3, MC4;
-  ofloat root2;
+  ofloat root2, maxElp=G_PI/4;
   size_t i, j;
 
    /* Initialize output */
@@ -5545,8 +5581,16 @@ static int PolnFitJacOERL (const gsl_vector *x, void *params,
 	  COMPLEX_MUL2 (ct1, S[3], MC4);
 	  COMPLEX_ADD2 (VRR, VRR,  ct1);
 	  modelR = VRR.real; modelI = VRR.imag;
-	  residR = modelR - data[idata*10+(kk+1)*2];
-	  residI = modelI - data[idata*10+(kk+1)*2+1];
+	  /* Check for ellipticity in range */
+	  if ((antParm[ia1*4+1]>maxElp) || (antParm[ia2*4+1]>maxElp)) {
+	    /* out of range - give big residual */
+	    residR = MAX((antParm[ia1*4+1]-maxElp),(antParm[ia2*4+1]-maxElp)) * 
+	      ipol * 100.;
+	    residI = residR;
+	  } else {  /* OK */
+	    residR = modelR - data[idata*10+(kk+1)*2];
+	    residI = modelI - data[idata*10+(kk+1)*2+1];
+	  }
 	} else  residR = residI = 0.0; /* Invalid data */
 	
 	/* Loop over first antenna parameters */
@@ -5775,7 +5819,7 @@ static int PolnFitJacOERL (const gsl_vector *x, void *params,
 	break;  /* End RR */
 	    
       case 1:     /* LL */
-	if (wt[idata*4+kk]>0.0) {
+ 	if (wt[idata*4+kk]>0.0) {
 	  /* VLL = S[0] * LS[ia1] * LSc[ia2] * PA1c * PA2 +	
 	           S[1] * LS[ia1] * LDc[ia2] * PA1c +
 		   S[2] * LD[ia1] * LSc[ia2] * PA2  +
@@ -5792,8 +5836,16 @@ static int PolnFitJacOERL (const gsl_vector *x, void *params,
 	  COMPLEX_MUL2 (ct1, S[3], MC4);
 	  COMPLEX_ADD2 (VLL, VLL,  ct1);
 	  modelR = VLL.real; modelI = VLL.imag;
-	  residR = modelR - data[idata*10+(kk+1)*2];
-	  residI = modelI - data[idata*10+(kk+1)*2+1];
+	  /* Check for ellipticity in range */
+	  if ((antParm[ia1*4+3]<-maxElp) || (antParm[ia2*4+3]<-maxElp)) {
+	    /* out of range - give big residual */
+	    residR = MAX((maxElp-antParm[ia1*4+3]),(maxElp-antParm[ia2*4+3])) * 
+	      ipol * 100.;
+	    residI = residR;
+	  } else {  /* OK */
+	    residR = modelR - data[idata*10+(kk+1)*2];
+	    residI = modelI - data[idata*10+(kk+1)*2+1];
+	  }
 	} else  residR = residI = 0.0; /* Invalid data */
 	  
 	/* Loop over first antenna parameters */
@@ -6043,8 +6095,16 @@ static int PolnFitJacOERL (const gsl_vector *x, void *params,
 	  COMPLEX_MUL2 (ct1, S[3], MC4);
 	  COMPLEX_ADD2 (VRL, VRL,  ct1);
 	  modelR = VRL.real; modelI = VRL.imag;
-	  residR = modelR - data[idata*10+(kk+1)*2];
-	  residI = modelI - data[idata*10+(kk+1)*2+1];
+	  /* Check for ellipticity in range */
+	  if ((antParm[ia1*4+1]>maxElp) || (antParm[ia2*4+3]<-maxElp)) {
+	    /* out of range - give big residual */
+	    residR = MAX((antParm[ia1*4+1]-maxElp),(maxElp-antParm[ia2*4+3])) * 
+	      ipol * 100.;
+	    residI = residR;
+	  } else {  /* OK */
+	    residR = modelR - data[idata*10+(kk+1)*2];
+	    residI = modelI - data[idata*10+(kk+1)*2+1];
+	  }
 	} else  residR = residI = 0.0; /* Invalid data */
 
 	/* Loop over first antenna parameters */
@@ -6304,8 +6364,16 @@ static int PolnFitJacOERL (const gsl_vector *x, void *params,
 	  COMPLEX_MUL2 (ct1, S[3], MC4);
 	  COMPLEX_ADD2 (VLR, VLR, ct1);
 	  modelR = VLR.real; modelI = VLR.imag;
-	  residR = modelR - data[idata*10+(kk+1)*2];
-	  residI = modelI - data[idata*10+(kk+1)*2+1];
+	  /* Check for ellipticity in range */
+	  if ((antParm[ia1*4+3]<-maxElp) || (antParm[ia2*4+1]>maxElp)) {
+	    /* out of range - give big residual */
+	    residR = MAX((maxElp-antParm[ia1*4+3]),(antParm[ia2*4+1]-maxElp)) * 
+	      ipol * 100.;
+	    residI = residI;
+	  } else {  /* OK */
+	    residR = modelR - data[idata*10+(kk+1)*2];
+	    residI = modelI - data[idata*10+(kk+1)*2+1];
+	  }
 	} else  residR = residI = 0.0; /* Invalid data */
 	
 	/* Loop over first antenna parameters */
@@ -6601,7 +6669,7 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
   dcomplex PRref, PLref, PPRL, PPLR, mPPRL, mPPLR, PA1, PA2, PA1c, PA2c;
   dcomplex ct1, ct2, ct3, ct4, ct5, ct6;
   dcomplex S[4], VRR, VRL, VLR, VLL, DFDP, MC1, MC2, MC3, MC4;
-  ofloat root2;
+  ofloat root2, maxElp=G_PI/4;
   size_t i, j;
 
    /* Initialize output */
@@ -6759,8 +6827,16 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
 	  COMPLEX_MUL2 (ct1, S[3], MC4);
 	  COMPLEX_ADD2 (VRR, VRR,  ct1);
 	  modelR = VRR.real; modelI = VRR.imag;
-	  residR = modelR - data[idata*10+(kk+1)*2];
-	  residI = modelI - data[idata*10+(kk+1)*2+1];
+	  /* Check for ellipticity in range */
+	  if ((antParm[ia1*4+1]>maxElp) || (antParm[ia2*4+1]>maxElp)) {
+	    /* out of range - give big residual */
+	    residR = MAX((antParm[ia1*4+1]-maxElp),(antParm[ia2*4+1]-maxElp)) * 
+	      ipol * 100.;
+	    residI = residR;
+	  } else {  /* OK */
+	    residR = modelR - data[idata*10+(kk+1)*2];
+	    residI = modelI - data[idata*10+(kk+1)*2+1];
+	  }
 	  gsl_vector_set(f, i*2,   residR*isigma); /* Save function resids */
 	  gsl_vector_set(f, i*2+1, residI*isigma); /* Save function resids */
 	} else  residR = residI = 0.0; /* Invalid data */
@@ -7009,8 +7085,16 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
 	  COMPLEX_MUL2 (ct1, S[3], MC4);
 	  COMPLEX_ADD2 (VLL, VLL,  ct1);
 	  modelR = VLL.real; modelI = VLL.imag;
-	  residR = modelR - data[idata*10+(kk+1)*2];
-	  residI = modelI - data[idata*10+(kk+1)*2+1];
+	  /* Check for ellipticity in range */
+	  if ((antParm[ia1*4+3]<-maxElp) || (antParm[ia2*4+3]<-maxElp)) {
+	    /* out of range - give big residual */
+	    residR = MAX((maxElp-antParm[ia1*4+3]),(maxElp-antParm[ia2*4+3])) * 
+	      ipol * 100.;
+	    residI = residR;
+	  } else {  /* OK */
+	    residR = modelR - data[idata*10+(kk+1)*2];
+	    residI = modelI - data[idata*10+(kk+1)*2+1];
+	  }
 	  gsl_vector_set(f, i*2,   residR*isigma); /* Save function resids */
 	  gsl_vector_set(f, i*2+1, residI*isigma); /* Save function resids */
 	} else  residR = residI = 0.0; /* Invalid data */
@@ -7261,8 +7345,16 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
 	  COMPLEX_MUL2 (ct1, S[3], MC4);
 	  COMPLEX_ADD2 (VRL, VRL,  ct1);
 	  modelR = VRL.real; modelI = VRL.imag;
-	  residR = modelR - data[idata*10+(kk+1)*2];
-	  residI = modelI - data[idata*10+(kk+1)*2+1];
+	  /* Check for ellipticity in range */
+	  if ((antParm[ia1*4+1]>maxElp) || (antParm[ia2*4+3]<-maxElp)) {
+	    /* out of range - give big residual */
+	    residR = MAX((antParm[ia1*4+1]-maxElp),(maxElp-antParm[ia2*4+3])) * 
+	      ipol * 100.;
+	    residI = residR;
+	  } else {  /* OK */
+	    residR = modelR - data[idata*10+(kk+1)*2];
+	    residI = modelI - data[idata*10+(kk+1)*2+1];
+	  }
 	  gsl_vector_set(f, i*2,   residR*isigma); /* Save function resids */
 	  gsl_vector_set(f, i*2+1, residI*isigma); /* Save function resids */
 	} else  residR = residI = 0.0; /* Invalid data */
@@ -7527,8 +7619,16 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
 	  COMPLEX_MUL2 (ct1, S[3], MC4);
 	  COMPLEX_ADD2 (VLR, VLR, ct1);
 	  modelR = VLR.real; modelI = VLR.imag;
-	  residR = modelR - data[idata*10+(kk+1)*2];
-	  residI = modelI - data[idata*10+(kk+1)*2+1];
+	  /* Check for ellipticity in range */
+	  if ((antParm[ia1*4+3]<-maxElp) || (antParm[ia2*4+1]>maxElp)) {
+	    /* out of range - give big residual */
+	    residR = MAX((maxElp-antParm[ia1*4+3]),(antParm[ia2*4+1]-maxElp)) * 
+	      ipol * 100.;
+	    residI = residI;
+	  } else {  /* OK */
+	    residR = modelR - data[idata*10+(kk+1)*2];
+	    residI = modelI - data[idata*10+(kk+1)*2+1];
+	  }
 	  gsl_vector_set(f, i*2,   residR*isigma); /* Save function resids */
 	  gsl_vector_set(f, i*2+1, residI*isigma); /* Save function resids */
 	} else  residR = residI = 0.0; /* Invalid data */

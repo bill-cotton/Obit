@@ -1808,3 +1808,26 @@ Obit/python/Obit_wrap.c  ObitSD/python/Obit_wrap.c
 Obit/tasks/IDIIn.c  Obit/tasks/IDIOut.c  Obit/TDF/IDIIn.TDF:
   Make more robust, allow for VLBA usages.
 15 Nov. 2013, svn version 466
+
+Various bug fixes, minor improvements
+Obit/include/ObitEVLASysPower.h Obit/src/ObitEVLASysPower.c \
+  Make more robust against incomplete tables
+Obit/include/ObitSDMDataTypeDef.h Obit/src/ObitSDMData.c \
+  Add band code enum to ASDMSpectralWindowArray.
+  Make Band2Band more general.
+Obit/tasks/BDFIn.c \
+  Don't tell user about selChBW unless it specifies a bandwidth.
+  Cleanup band selection
+Obit/include/ObitUVSelDef.h \
+Obit/src/ObitUV.c Obit/src/ObitUVCal.c Obit/src/ObitUVCalSelect.c \
+Obit/src/ObitUVSel.c Obit/src/ObitTableFQUtil.c \
+  implement IFDrop parameter to deselect IFs in data to read.
+Obit/tasks/UVAppend.c Obit/TDF/UVAppend.TDF \
+  Add IFDrop parameter.
+Obit/python/UV.py \
+  Add IFDrop to documentation
+Obit/src/ObitPolnCalFit.c \
+  Disallow invalid solutions for elipticity.
+20 December 2013, svn version 467
+
+

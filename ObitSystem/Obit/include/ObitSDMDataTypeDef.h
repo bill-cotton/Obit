@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2012                                          */
+/*;  Copyright (C) 2010-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -78,6 +78,8 @@ typedef struct {
   odouble refJD;
   /** Number of rows */
   olong nwinds;
+  /** Band designation code */
+  ObitASDMBand band;
   /** 0-rel order number of Spectral windows in data */
   olong *order;
   /** Array of ASDMSpectralWindowArray rows */

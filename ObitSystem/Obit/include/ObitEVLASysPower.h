@@ -1,6 +1,6 @@
-/* $Id$        */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011                                               */
+/*;  Copyright (C) 2011-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -100,7 +100,7 @@ typedef enum obitESPEndian ObitESPEndian;
 
 /*----------------- Macroes ---------------------------*/
 /** Granularity of buffer operations (frame size) */
-#define ESPBUFFERSIZE 2048
+#define ESPBUFFERSIZE 32768
 /** Number of frames in buffer */
 #define ESPBUFFERFRAMES 2
 /** 

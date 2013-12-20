@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2011                                          */
+/*;  Copyright (C) 2003-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,6 +26,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVSel.h"
 #include "ObitTableFQUtil.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
@@ -218,6 +219,7 @@ ObitIOCode ObitTableFQSelect (ObitUV *inUV, ObitUV *outUV, odouble *SouIFOff,
   ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitTableFQ    *inTab=NULL, *outTab=NULL;
   ObitTableFQRow *inRow=NULL, *outRow=NULL;
+  ObitUVSel      *sel=inUV->mySel;
   ObitErr *terr=NULL;
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -257,15 +259,16 @@ ObitIOCode ObitTableFQSelect (ObitUV *inUV, ObitUV *outUV, odouble *SouIFOff,
 
   /* Should only be one FQ table */
   iFQver = 1;
+ 
+  /* How many IFs on input? */
   if (inUV->myDesc->jlocif>=0) {
     nif   = inUV->myDesc->inaxes[inUV->myDesc->jlocif];
     IFInc = MAX (1, inUV->mySel->IFInc);   /* IF increment */
-    maxIF = inUV->mySel->startIF+inUV->mySel->numberIF*IFInc-1;
-    maxIF = MIN (maxIF, 
-		 ((ObitUVDesc*)inUV->myIO->myDesc)->inaxes[((ObitUVDesc*)inUV->myIO->myDesc)->jlocif]);
+    maxIF = ((ObitUVDesc*)inUV->myIO->myDesc)->inaxes[((ObitUVDesc*)inUV->myIO->myDesc)->jlocif];
   } else {
-    nif = 1;
+    nif   = 1;
     IFInc = 1;
+    maxIF = 1;
   }
 
   /* Get input table */
@@ -327,16 +330,18 @@ ObitIOCode ObitTableFQSelect (ObitUV *inUV, ObitUV *outUV, odouble *SouIFOff,
     /* Copy selected data */
     outRow->fqid     = inRow->fqid;
     oif = 0;
-    for (iif=inUV->mySel->startIF-1; iif<maxIF; iif+=IFInc) {
-      outRow->freqOff[oif]  = inRow->freqOff[iif] - 
-	inRow->freqOff[inUV->mySel->startIF-1]; /* New reference freq */
-      outRow->chWidth[oif]  = inRow->chWidth[iif] * nchAvg;
-      outRow->totBW[oif]    = inRow->totBW[iif];
-      outRow->sideBand[oif] = inRow->sideBand[iif];
-      /* Source dependent OFFSets */
-      if (SouIFOff!=NULL) outRow->freqOff[oif] += SouIFOff[oif];
-      if (SouBW>0.0) outRow->totBW[oif] = SouBW;
-      oif++;
+    for (iif=0; iif<maxIF; iif++) {
+      if (sel->IFSel[iif]) {  /* This IF wanted? */
+	outRow->freqOff[oif]  = inRow->freqOff[iif] - 
+	  inRow->freqOff[inUV->mySel->startIF-1]; /* New reference freq */
+	outRow->chWidth[oif]  = inRow->chWidth[iif] * nchAvg;
+	outRow->totBW[oif]    = inRow->totBW[iif];
+	outRow->sideBand[oif] = inRow->sideBand[iif];
+	/* Source dependent OFFSets */
+	if (SouIFOff!=NULL) outRow->freqOff[oif] += SouIFOff[oif];
+	if (SouBW>0.0) outRow->totBW[oif] = SouBW;
+	oif++;
+      }
     }
     
     retCode = ObitTableFQWriteRow (outTab, outFQRow, outRow, err);

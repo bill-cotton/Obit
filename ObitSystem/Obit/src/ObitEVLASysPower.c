@@ -1,6 +1,6 @@
-/* $Id$        */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012                                               */
+/*;  Copyright (C) 2012-2013                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -107,6 +107,10 @@ ofloat* ESPparse_flt_arr(gchar *buffer,
 odouble* ESPparse_dbl_arr(gchar *buffer, 
 			  gchar *prior, gchar **next, 
 			  gboolean byteFlip);
+
+/** Private: Find string in buffer */
+static gchar* ESPFindString(gchar *buffer, olong maxChar, 
+			    const gchar *string);
 
 /** Private: Look up endian enum */
 static ObitESPEndian LookupEndian(gchar *name);
@@ -481,11 +485,12 @@ olong ObitEVLASysPowerGetRow (ObitEVLASysPower *in,
 {
   olong out = in->curRow+1;
   olong maxStr, elem, nelem=8;
-  gchar *start, *next, *done;
+  gchar *start, *next, *done, *temp;
   gboolean gotIt;
   odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
+  ObitIOCode retCode;
   gchar *routine = "ObitEVLASysPowerGetRow";
-
+  
   /* error checks */
   if (err->error) return out;
   g_assert (ObitIsA(in, &myClassInfo));
@@ -503,7 +508,20 @@ olong ObitEVLASysPowerGetRow (ObitEVLASysPower *in,
   /* Loop over elements in row */
   for (elem=0; elem<nelem; elem++) {
     if (elem==in->ordantennaId) {
-      /* antennaId */
+      row->antennaId = -1;
+      /* antennaId 
+	 Find next occurance of prefix */
+      temp = g_strstr_len (start+4, in->nBytesInBuffer-(start-in->buffer), "Antenna_");
+      if (temp) start = temp-4;
+      else {
+	temp = ESPFindString(start, in->nBytesInBuffer-(start-in->buffer), "Antenna_");
+	if (temp) start = temp-4;
+	else {
+	  /* Something wrong force read new buffer */
+	  start = in->buffer+in->nBytesInBuffer;
+	  break;  
+	}
+      }
       row->antennaId = ESPparse_intstr(in->buffer, "Antenna_", start, &next, in->byteFlip);
     } else if (elem==in->ordspectralWindowId) {
       /* spectralWindowId */  
@@ -552,9 +570,12 @@ olong ObitEVLASysPowerGetRow (ObitEVLASysPower *in,
 
   /* If out of first segment of buffer read more */
   if (((in->current-in->buffer)>ESPBUFFERSIZE) && (in->curRow<in->nrow)) {
-    ObitEVLASysPowerFillBuffer (in, err);
+    retCode = ObitEVLASysPowerFillBuffer (in, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, out);
   }
+
+  /* Check if read all of file */
+  if (retCode==OBIT_IO_EOF) out = -1;
   
   return out;
 } /* end ObitEVLASysPowerGetRow  */
@@ -778,7 +799,7 @@ olong ESPparse_intstr(gchar *buffer, gchar *prefix,
   olong maxChar;
   gchar *temp, *b, *e;
 
-  /* read string */
+   /* read string */
   temp = ESPparse_str(buffer, prior, next, byteFlip);
 
   maxChar = strlen(temp);
@@ -1042,6 +1063,32 @@ odouble* ESPparse_dbl_arr(gchar *buffer,
 
   return out;
 } /* end ESPparse_dbl_arr */
+
+/**  Find string in buffer, allows many nulls in buffer
+ * \param  buffer   buffer start to search
+ * \param  maxChar  Maximum number of characters to search
+ * \param  string   String to locate
+ * \return pointer to start of string if found, else NULL
+ */
+static gchar* ESPFindString (gchar *buffer, olong maxChar, const gchar *string)
+{
+  gchar *out = NULL, *tstr;
+  olong nt, nchk, i;
+
+  /* How far to check? */
+  nt   = strlen(string);
+  nchk = maxChar - nt;
+
+  /* Loop */
+  for (i=0; i<nchk; i++) {
+    if (buffer[i]==string[0]) {  /* Maybe */
+      tstr = g_strstr_len (&buffer[i], nt, string);
+      if (tstr) return tstr;  /* Got it */
+    }
+  } /* end loop over buffer */
+
+  return out;
+} /* end ESPFindString */
 
  /**
  * Find beginning of next Mime segment

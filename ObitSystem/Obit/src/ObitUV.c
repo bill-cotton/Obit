@@ -26,6 +26,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVSel.h"
 #include "ObitUVCal.h"
 #include "ObitUV.h"
 #include "ObitIOUVFITS.h"
@@ -33,7 +34,6 @@
 #include "ObitAIPSDir.h"
 #include "ObitFITS.h"
 #include "ObitUVDesc.h"
-#include "ObitUVSel.h"
 #include "ObitTableFQ.h"
 #include "ObitTableANUtil.h"
 #include "ObitTableBP.h"
@@ -163,7 +163,8 @@ ObitUV* newObitUV (gchar* name)
  * \li xxxBIF   OBIT_int (1,1,1) First "IF" selected. [def all]
  * \li xxxEIF   OBIT_int (1,1,1) Highest "IF" selected. [def all]
  * \li xxxIFInc OBIT_int (1,1,1) "IF" increment. [def 1]
- * \li xxxdoPol OBIT_int (1,1,1) >0 -> calibrate polarization.
+ * \li xxxIFDrop OBIT_int (?,1,1) List of input IF numbers not to copy [def none]
+ * \li xxxdoPol  OBIT_int (1,1,1) >0 -> calibrate polarization.
  * \li xxxdoCalib OBIT_int (1,1,1) >0 -> calibrate, 2=> also calibrate Weights
  * \li xxxgainUse OBIT_int (1,1,1) SN/CL table version number, 0-> use highest
  * \li xxxflagVer OBIT_int (1,1,1) Flag table version, 0-> use highest, <0-> none
@@ -243,7 +244,7 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
   gpointer     listPnt;
   gchar        *keyword=NULL, *DataTypeKey = "DataType", *DataType=NULL;
   gchar        *parm[] = {"DoCalSelect", "Stokes", 
-			  "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc",
+			  "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "IFDrop",
 			  "doPol", "PDVer", "doCalib", "gainUse", "flagVer", "BLVer", "BPVer",
 			  "Subarray", "dropSubA", "FreqID", "timeRange", "UVRange",
 			  "InputAvgTime", "Sources", "souCode", "Qual", "Antennas",
@@ -2891,13 +2892,13 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   ObitInfoType type;
   gint32 i, dim[MAXINFOELEMDIM];
   olong itemp, *iptr, Qual;
-  olong iver, j, count=0;
+  olong iver, j, k, n, count=0;
   ofloat ftempArr[10];/* fblank = ObitMagicF();*/
   odouble dtempArr[10];
   ObitTableSU *SUTable=NULL;
   union ObitInfoListEquiv InfoReal; 
   gchar tempStr[5], souCode[5], *sptr;
-  gboolean badChar;
+  gboolean badChar, match;
   ObitUVDesc *desc;
   gchar *routine = "ObitUVGetSelect";
 
@@ -3023,7 +3024,44 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   /* Reset number of IF for increment */
   sel->numberIF = 1 + (sel->numberIF-1)/sel->IFInc;
   sel->numberIF = MAX (1, MIN (sel->numberIF, desc->inaxes[desc->jlocif]));
- 
+
+  /* Deselected IFs */
+  if (sel->IFDrop) g_free(sel->IFDrop); sel->IFDrop=NULL;
+  if (ObitInfoListGetP(info, "IFDrop", &type, (gint32*)dim, (gpointer)&iptr)) {
+    n = 0;
+    while (iptr[n]>0) {n++;}
+    sel->IFDrop = g_malloc0((n+1)*sizeof(olong));
+    for (j=0; j<n; j++) sel->IFDrop[j] = iptr[j]; sel->IFDrop[j] = 0;
+  } else {  /* Not given */
+    sel->IFDrop = g_malloc0(sizeof(olong));
+    sel->IFDrop[0] = 0;
+  }
+
+  /* List of selected IFs */
+  if (sel->IFSel && (sel->nifsel<desc->jlocif)) /* Different number of IFs? */
+    {g_free(sel->IFSel); sel->IFSel=NULL;}
+  if (sel->IFSel==NULL) {  /* Default */
+    if (desc->jlocif>=0) sel->nifsel = desc->inaxes[desc->jlocif];
+    else                 sel->nifsel = 1;
+    sel->IFSel  = g_malloc(sel->nifsel*sizeof(gboolean));
+    for (j=1; j<=sel->nifsel; j++) sel->IFSel[j] = TRUE;
+  }
+  sel->ifsel1 = -1; 
+  for (j=1; j<=sel->nifsel; j++) {
+    /* Is this in the IFDrop list? */
+    match = FALSE;
+    k = 0;
+    while(sel->IFDrop[k]>0) {
+      if (j==sel->IFDrop[k]) {match=TRUE; break;}
+      k++;
+    }
+    sel->IFSel[j-1] = (!match) && 
+      (j>=sel->startIF) && 
+      (j<=(sel->startIF+sel->numberIF-1)) && 
+      (((j-1)%(sel->IFInc))==0);
+    /* first selected */
+    if ((sel->ifsel1<0) && sel->IFSel[j-1]) sel->ifsel1 = j-1;
+  }
 
   for (i=0; i<4; i++) tempStr[i] = ' '; tempStr[4] = 0;
   ObitInfoListGetTest(info, "Stokes", &type, dim, &tempStr);
@@ -3152,7 +3190,7 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
     sel->selectAnts = FALSE;
     sel->numberAntList = 0;
   }
-
+ 
   /* Selected sources */
   Qual = -1;   /* Qualifier - default = all */
   ObitInfoListGetTest(info, "Qual", &type, dim, &Qual);
@@ -3213,7 +3251,7 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   sel->numberVis   = 1;
   sel->numberPoln  = MAX (1, MIN (2, desc->inaxes[desc->jlocs]));
 
-} /* end ObitUVGetSelect */
+  } /* end ObitUVGetSelect */
 
 /**
  * Do various operation that have to be done in the ObitUV class

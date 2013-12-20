@@ -445,8 +445,8 @@ gboolean  ObitUVCalApply (ObitUVCal *in, ofloat *recIn,
   OK = ObitUVCalSelect(in, recIn, visIn, visOut,err);
 
   /* If selecting in IF, scale U,V.W */
-  if (sel->startIF>1) {
-    scl = desc->freqIF[sel->startIF-1] / desc->freq;
+  if (sel->ifsel1>0) {
+    scl = desc->freqIF[sel->ifsel1] / desc->freq;
     recOut[desc->ilocu] *= scl;
     recOut[desc->ilocv] *= scl;
     recOut[desc->ilocw] *= scl;

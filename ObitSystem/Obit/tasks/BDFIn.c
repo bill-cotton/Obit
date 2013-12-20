@@ -854,7 +854,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   if (selConfig>=0) {
     /* Set selIF, selBand, default selChan */
     selIF = SpWinArray->nwinds;
-    band  = ObitSDMDataFreq2Band(SpWinArray->refFreq);
+    band  = SpWinArray->band;
     /* Default selChans? use first Spectral window */
     if (selChan<=0) selChan = SpWinArray->winds[0]->numChan;
 
@@ -862,7 +862,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
     /* Default selChans? use first Spectral window */
     if (selChan<=0) selChan = SpWinArray->winds[0]->numChan;
     if (selIF<=0)   selIF   = SpWinArray->nwinds;
-    if (band==ASDMBand_Any)  band  = ObitSDMDataFreq2Band(SpWinArray->refFreq);
+    if (band==ASDMBand_Any)  band  = SpWinArray->band;
     /* Set default configID */
     if (selConfig<0) selConfig = SDMData->MainTab->rows[iMain]->configDescriptionId;
   }
@@ -901,7 +901,8 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   ObitInfoListAlwaysPut(myInput, "selChan", OBIT_long, dim, &selChan);
   Obit_log_error(err, OBIT_InfoErr, "Selecting spectral windows with %d channels", selChan);
   Obit_log_error(err, OBIT_InfoErr, "Selecting calCode '%s'", selCode);
-  Obit_log_error(err, OBIT_InfoErr, "Selecting channel bandwidth %f kHz", selChBW);
+  if (selChBW>0.0)
+    Obit_log_error(err, OBIT_InfoErr, "Selecting channel bandwidth %f kHz", selChBW);
   ObitErrLog(err);
  
  /* Define output descriptor */

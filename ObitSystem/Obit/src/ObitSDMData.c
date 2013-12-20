@@ -1125,6 +1125,12 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
   /* Finally */
   out->refFreq = in->SpectralWindowTab->rows[jSW]->chanFreqStart;
 
+  /* Band code */
+  out->band = ASDMBand_Any;
+  out->band = ObitSDMDataBand2Band (in->SpectralWindowTab->rows[jSW]->bandcode);
+  if (out->band == ASDMBand_Any) 
+    out->band = ObitSDMDataFreq2Band (out->refFreq);
+
   /* Reference JD (0 h ) */
   JD = in->MainTab->rows[iMain]->time;
   iJD = (olong)(JD-0.5);
@@ -1330,13 +1336,17 @@ gboolean ObitSDMDataSelChan  (ASDMSpectralWindowArray *in, olong selChan,
 			      olong selIF, ObitASDMBand band)
 {
   gboolean out = FALSE, damn;
+  ObitASDMBand SWband;
   olong iSW;
   /*gchar *routine = "ObitSDMDataSelChan";*/
   
   for (iSW=0; iSW<in->nwinds; iSW++) {
+    SWband = ObitSDMDataBand2Band (in->winds[iSW]->bandcode);
+    if (SWband == ASDMBand_Any) 
+      SWband = ObitSDMDataFreq2Band (in->winds[iSW]->refFreq);
+   
     damn = (in->winds[iSW]->numChan == selChan) &&
-      ((ObitSDMDataFreq2Band (in->winds[iSW]->refFreq)==band) || 
-       (band==ASDMBand_Any)) &&   (in->nwinds==selIF);
+      ((SWband==band) || (band==ASDMBand_Any)) && (in->nwinds==selIF);
     in->winds[iSW]->selected = in->winds[iSW]->selected && damn;
     if (in->winds[iSW]->selected) out = TRUE;
   }
@@ -1615,17 +1625,38 @@ ObitASDMBand ObitSDMDataBand2Band (gchar *code)
   if (!strncmp (code, "Ka",  2)) return ASDMBand_Ka;
   if (!strncmp (code, "K",   1)) return ASDMBand_K;
   if (!strncmp (code, "Q",   1)) return ASDMBand_Q;
-  if (!strncmp (code, "A3",  1)) return ASDMBand_A3;
-  if (!strncmp (code, "A4",  1)) return ASDMBand_A4;
-  if (!strncmp (code, "A5",  1)) return ASDMBand_A5;
-  if (!strncmp (code, "A6",  1)) return ASDMBand_A6;
-  if (!strncmp (code, "A7",  1)) return ASDMBand_A7;
-  if (!strncmp (code, "A8",  1)) return ASDMBand_A8;
-  if (!strncmp (code, "A9",  1)) return ASDMBand_A9;
-  if (!strncmp (code, "A10", 1)) return ASDMBand_A10;
-  if (!strncmp (code, "A11", 1)) return ASDMBand_A11;
+  if (!strncmp (code, "EVLA_4",   6)) return ASDMBand_4;
+  if (!strncmp (code, "EVLA_P",   6)) return ASDMBand_P;
+  if (!strncmp (code, "EVLA_L",   6)) return ASDMBand_L;
+  if (!strncmp (code, "EVLA_S",   6)) return ASDMBand_S;
+  if (!strncmp (code, "EVLA_C",   6)) return ASDMBand_C;
+  if (!strncmp (code, "EVLA_X",   6)) return ASDMBand_X;
+  if (!strncmp (code, "EVLA_Ku",  7)) return ASDMBand_Ku;
+  if (!strncmp (code, "EVLA_KU",  7)) return ASDMBand_Ku;
+  if (!strncmp (code, "EVLA_Ka",  7)) return ASDMBand_Ka;
+  if (!strncmp (code, "EVLA_KA",  7)) return ASDMBand_Ka;
+  if (!strncmp (code, "EVLA_K",   6)) return ASDMBand_K;
+  if (!strncmp (code, "EVLA_Q",   6)) return ASDMBand_Q;
+  if (!strncmp (code, "A3",  2)) return ASDMBand_A3;
+  if (!strncmp (code, "A4",  2)) return ASDMBand_A4;
+  if (!strncmp (code, "A5",  2)) return ASDMBand_A5;
+  if (!strncmp (code, "A6",  2)) return ASDMBand_A6;
+  if (!strncmp (code, "A7",  2)) return ASDMBand_A7;
+  if (!strncmp (code, "A8",  2)) return ASDMBand_A8;
+  if (!strncmp (code, "A9",  2)) return ASDMBand_A9;
+  if (!strncmp (code, "A10", 3)) return ASDMBand_A10;
+  if (!strncmp (code, "A11", 3)) return ASDMBand_A11;
+  if (!strncmp (code, "ALMA_RB_03",  10)) return ASDMBand_A3;
+  if (!strncmp (code, "ALMA_RB_04",  10)) return ASDMBand_A4;
+  if (!strncmp (code, "ALMA_RB_05",  10)) return ASDMBand_A5;
+  if (!strncmp (code, "ALMA_RB_06",  10)) return ASDMBand_A6;
+  if (!strncmp (code, "ALMA_RB_07",  10)) return ASDMBand_A7;
+  if (!strncmp (code, "ALMA_RB_08",  10)) return ASDMBand_A8;
+  if (!strncmp (code, "ALMA_RB_09",  10)) return ASDMBand_A9;
+  if (!strncmp (code, "ALMA_RB_10",  10)) return ASDMBand_A10;
+  if (!strncmp (code, "ALMA_RB_11",  10)) return ASDMBand_A11;
   return out;
-} /* end ObitSDMDataBand2Band */
+} /* end Obi0tSDMDataBand2Band */
 
 /**  Look up  Band code enum from frequency (Hz)
  * \param  freq  Frequency (Hz) to lookup
@@ -1637,7 +1668,7 @@ ObitASDMBand ObitSDMDataFreq2Band (odouble freq)
  
   if (freq<100.0e6) return ASDMBand_4;
   if (freq<900.0e6) return ASDMBand_P;
-  if (freq<2.0e9)   return ASDMBand_L;
+  if (freq<1.9e9)   return ASDMBand_L;
   if (freq<3.7e9)   return ASDMBand_S;
   if (freq<7.5e9)   return ASDMBand_C;
   if (freq<12.0e9)  return ASDMBand_X;
@@ -1672,7 +1703,8 @@ olong ObitASDSelScan(ObitSDMData *in, olong selChan, olong selIF,
   olong configDescriptionId, dataDescriptionId, spectralWindowId;
   olong iMain, iConfig, iDD, jSW, jDD, numDD, i;
   gboolean doConfigId = selConfig>=0;
- 
+  ObitASDMBand SWband;
+
   /* Loop over scans in Main table */
   for (iMain=0; iMain<in->MainTab->nrows; iMain++) {
     out = iMain;  /* In case this is OK */
@@ -1710,6 +1742,14 @@ olong ObitASDSelScan(ObitSDMData *in, olong selChan, olong selIF,
       }
       if (jSW>=in->SpectralWindowTab->nrows) return -1;
       /* Finally, is this one a match? */
+      SWband = ObitSDMDataBand2Band (in->SpectralWindowTab->rows[jSW]->bandcode);
+      if (SWband == ASDMBand_Any) 
+	SWband = ObitSDMDataFreq2Band (in->SpectralWindowTab->rows[jSW]->refFreq);
+
+      if (((SWband==selBand) || (selBand==ASDMBand_Any)) && 
+	  ((in->SpectralWindowTab->rows[jSW]->numChan==selChan) || (selChan<=0)) && 
+	  ((numDD==selIF) || (selIF<=0))) return out;
+
       if (((ObitSDMDataFreq2Band (in->SpectralWindowTab->rows[jSW]->refFreq)==selBand) || 
 	   (selBand==ASDMBand_Any)) && 
 	  ((in->SpectralWindowTab->rows[jSW]->numChan==selChan) || (selChan<=0)) && 

@@ -119,7 +119,7 @@ ObitUVSel* ObitUVSelCopy (ObitUVSel* in, ObitUVSel* out,
   const ObitClassInfo *ParentClass;
   gboolean oldExist;
   gchar *outName;
-  olong i;
+  olong i, n;
 
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -181,8 +181,27 @@ ObitUVSel* ObitUVSelCopy (ObitUVSel* in, ObitUVSel* out,
   out->FGversion   = in->FGversion;
   out->passAll     = in->passAll;
   out->alpha       = in->alpha;
+  out->ifsel1     = in->ifsel1;
   for (i=0; i<5; i++) out->Stokes[i] = in->Stokes[i];
   for (i=0; i<3; i++) out->smooth[i] = in->smooth[i];
+  /* Selected IFs */
+  if (out->IFSel && (out->nifsel!=in->nifsel)) 
+    {g_free(out->IFSel); out->IFSel=NULL;}
+  if (out->IFSel==NULL) {
+    out->nifsel = in->nifsel;
+    out->IFSel = g_malloc0(out->nifsel*sizeof(gboolean));
+  }
+  for (i=0; i<MIN(in->nifsel, out->nifsel); i++) 
+	 out->IFSel[i] = in->IFSel[i];
+
+  /* Deselected IFs */
+  n = 0;
+  if (in->IFDrop) {
+    i = 0;
+    while(in->IFDrop[n]>0) n++;
+    out->IFDrop = g_malloc0((n+1)*sizeof(olong));
+    for (i=0; i<n; i++) out->IFDrop[i] = in->IFDrop[i];
+  }
 
   /* (de)Selected antenna list */
   out->selectAnts = in->selectAnts;
@@ -214,8 +233,7 @@ ObitUVSel* ObitUVSelCopy (ObitUVSel* in, ObitUVSel* out,
  * \param sel UV selector.
  * \return size in floats needed for I/O.
  */
-olong ObitUVSelBufferSize (ObitUVDesc* desc, 
-			       ObitUVSel* sel)
+olong ObitUVSelBufferSize (ObitUVDesc* desc, ObitUVSel* sel)
 {
   olong size = 0;
 
@@ -241,11 +259,20 @@ olong ObitUVSelBufferSize (ObitUVDesc* desc,
  */
 void ObitUVSelDefault (ObitUVDesc* in, ObitUVSel* sel)
 {
+  olong i;
 
   /* error checks */
   g_assert (ObitIsA(in, ObitUVDescGetClass()));
   g_assert (ObitIsA(sel, &myClassInfo));
 
+  /* Selected IFs if needed */
+  if (sel->IFSel==NULL) {
+    sel->ifsel1 = 0;   /* first selected */
+    if (in->jlocif>=0) sel->nifsel = in->inaxes[in->jlocif];
+    else               sel->nifsel = 1;
+    sel->IFSel = g_malloc0(sel->nifsel*sizeof(gboolean));
+    for (i=0; i<sel->nifsel; i++) sel->IFSel[i] = TRUE;
+  }
 
   /* Index as well */
   ObitUVDescIndex(in);
@@ -270,7 +297,7 @@ void ObitUVSelDefault (ObitUVDesc* in, ObitUVSel* sel)
 void ObitUVSelGetDesc (ObitUVDesc* in, ObitUVSel* sel,
 		       ObitUVDesc* out, ObitErr *err)
 {
-
+ 
   /* error checks */
   g_assert (ObitErrIsA(err));
   if (err->error) return;
@@ -328,8 +355,9 @@ void ObitUVSelGetDesc (ObitUVDesc* in, ObitUVSel* sel,
  * \param err Obit error stack
  */
 void ObitUVSelSetDesc (ObitUVDesc* in, ObitUVSel* sel,
-			  ObitUVDesc* out, ObitErr *err)
+		       ObitUVDesc* out, ObitErr *err)
 {
+  olong i;
 
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -383,11 +411,17 @@ void ObitUVSelSetDesc (ObitUVDesc* in, ObitUVSel* sel,
   if (sel->startChann<=0)  sel->startChann = 1;
   sel->numberChann = MIN (sel->numberChann, in->inaxes[in->jlocf]);
 
-  if (sel->IFInc<=0) sel->IFInc = 1;
-  if ((sel->numberIF<=0) && (in->jlocif>=0)) 
-    sel->numberIF = in->inaxes[in->jlocif] / sel->IFInc;
-  if (sel->numberIF<=0) sel->numberIF = 1;
+
+  /* Count number of selected IF */
   if (sel->startIF<=0)  sel->startIF = 1;
+  if (sel->IFInc<=0) sel->IFInc = 1;
+  if (in->jlocif>=0) {
+    sel->numberIF = 0;
+    for (i=0; i<in->inaxes[in->jlocif]; i++) {
+      if (sel->IFSel[i]) sel->numberIF++;
+    }
+  } else {sel->numberIF = 1;}
+  if (sel->numberIF<=0) sel->numberIF = 1;
   if (in->jlocif>=0) 
     sel->numberIF = MIN (sel->numberIF, in->inaxes[in->jlocif]);
 
@@ -860,6 +894,10 @@ void ObitUVSelInit  (gpointer inn)
   in->startIF       = 1;
   in->numberIF      = 1;
   in->IFInc         = 1;
+  in->IFDrop        = NULL;
+  in->IFSel         = NULL;
+  in->nifsel        = 0;
+  in->ifsel1        = 0;
   in->jincif        = 3;
   in->selectAnts    = TRUE;
   in->ants          = NULL;
@@ -907,6 +945,8 @@ void ObitUVSelClear (gpointer inn)
   /* free this class members */
   if (in->ants) g_free(in->ants);       in->ants    = NULL;
   if (in->sources) g_free(in->sources); in->sources = NULL;
+  if (in->IFDrop)  g_free(in->IFDrop);  in->IFDrop  = NULL;
+  if (in->IFSel)   g_free(in->IFSel);   in->IFSel   = NULL;
   in->NXTable    = ObitTableNXUnref(in->NXTable);
   in->NXTableRow = ObitTableNXRowUnref(in->NXTableRow);
   
