@@ -1524,6 +1524,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   gchar        *CLEANParms[] = {  /* Clean parameters */
     "CLEANBox", "autoWindow", "Gain", "minFlux", "Niter", "minPatch", "Beam", 
     "Mode", "CCFilter", "maxPixel", "dispURL", "ccfLim", "SDIGain", "prtLv",
+    "MResKnob",
     NULL
   };
   olong MemCount, MemTotal; /* DEBUG */

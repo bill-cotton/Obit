@@ -36,7 +36,7 @@ X    SysPower.xml
 X    Weather.xml
  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2013                                          */
+/*;  Copyright (C) 2010-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1613,7 +1613,7 @@ ASDMSourceArray* ObitSDMDataKillSourceArray (ASDMSourceArray *in)
 ObitASDMBand ObitSDMDataBand2Band (gchar *code)
 {
   ObitASDMBand out = ASDMBand_Any;
- 
+  if (code==NULL) return ASDMBand_Any;  /* For older data */
   if (!strncmp (code, "Any", 3)) return ASDMBand_Any;
   if (!strncmp (code, "4",   1)) return ASDMBand_4;
   if (!strncmp (code, "P",   1)) return ASDMBand_P;

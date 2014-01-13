@@ -972,7 +972,7 @@ void  ObitDConCleanVisGetParms (ObitDCon *inn, ObitErr *err)
   ObitInfoListGetTest(in->info, "minBeamTaper", &type, dim, &in->minBeamTaper);
 
   /* Resolution selection controls */
-  if (ObitInfoListGetTest(in->info, "MResKnob", &type, dim, (gpointer)&farr)) {
+  if (ObitInfoListGetP(in->info, "MResKnob", &type, dim, (gpointer)&farr)) {
     n = MIN (10, dim[0]);
     for (i=0; i<n; i++) in->MResKnob[i] = farr[i];
   }

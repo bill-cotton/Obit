@@ -1830,4 +1830,12 @@ Obit/src/ObitPolnCalFit.c \
   Disallow invalid solutions for elipticity.
 20 December 2013, svn version 467
 
-
+Various bug fixes, minor improvements
+Obit/tasks/Imager.c Obit/tasks/MFImage.c \
+  copy MResKnob to CLEAN object
+Obit/src/ObitDConCleanVis.c \
+  GetParms: fix call to fetch MResKnob
+Obit/src/ObitSDMData.c \
+   ObitSDMDataBand2Band: return ASDMBand_Any if code is NULL
+   this caused ASDMList and BDFIn to abort
+13 Jan 2014 svn version 468
