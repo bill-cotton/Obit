@@ -426,6 +426,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   /* Is this a holography scan/subscan? */
   in->ScanInfo->isHolo = FALSE;
   for (iIntent=0; iIntent<in->SDMData->ScanTab->rows[ScanId]->numIntent; iIntent++) {
+    if (in->SDMData->ScanTab->rows[ScanId]->scanIntent[iIntent]==NULL) break;
     in->ScanInfo->isHolo = in->ScanInfo->isHolo ||  
       (!strncmp(in->SDMData->ScanTab->rows[ScanId]->scanIntent[iIntent], 
  		"MAP_ANTENNA_SURFACE", 19));
@@ -913,7 +914,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   } else if (in->numAPoln==2) {
     in->aoffs[0] = 0;
     in->aoffs[1] = 1;
- } else if (in->numAPoln==3) {
+  } else if ((in->numAPoln==3) || (in->numAPoln==4)) {
     in->aoffs[0] = 0;
     in->aoffs[1] = 3;
     in->aoffs[2] = 1;

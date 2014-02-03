@@ -1705,7 +1705,7 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
   /* Set default calcodes by intent if blank,
      coded as decreed by B. Butler */
   ObitInfoListGetTest(myInput, "defCode", &type, dim, &defCode);
-  if (defCode) ObitSDMDataGetDefaultCalCode (SDMData, err);
+  if (isEVLA && defCode) ObitSDMDataGetDefaultCalCode (SDMData, err);
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
   
   /* Give each source in source table by name a constant source number 
@@ -2057,7 +2057,8 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	     SDMData->ScanTab->rows[ScanId]->scanNumber) break;
       }
       for (iIntent=0; iIntent<SDMData->ScanTab->rows[ScanId]->numIntent; iIntent++) {
-	ig = 0;   /* Check list of intenta to ignore */
+	if (SDMData->ScanTab->rows[ScanId]->scanIntent[iIntent]==NULL) break;
+	ig = 0;   /* Check list of intents to ignore */
 	while (ignoreIntent[ig]) {
 	  drop = drop ||  (!strncmp(SDMData->ScanTab->rows[ScanId]->scanIntent[iIntent], 
 				    ignoreIntent[ig], strlen(ignoreIntent[ig])));

@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2893,6 +2893,7 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   gint32 i, dim[MAXINFOELEMDIM];
   olong itemp, *iptr, Qual;
   olong iver, j, k, n, count=0;
+  ollong ltest;
   ofloat ftempArr[10];/* fblank = ObitMagicF();*/
   odouble dtempArr[10];
   ObitTableSU *SUTable=NULL;
@@ -2930,6 +2931,12 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   sel->nVisPIO = 100;
   ObitInfoListGetTest(info, "nVisPIO", &type, dim, &sel->nVisPIO);
   sel->nVisPIO = MAX (1, sel->nVisPIO); /* no fewer than 1 */
+  /* Make sure the size of the subsequent buffer doesn't blow a 32 bit integer */
+  ltest = (ollong)sel->nVisPIO * desc->lrec * sizeof(ofloat);
+  while (ltest>=(2L<<31)) {
+    sel->nVisPIO /= 2;
+    ltest = (ollong)sel->nVisPIO * desc->lrec * sizeof(ofloat);
+  }
 
   /* Compress output? */
   sel->Compress = FALSE;
@@ -3044,7 +3051,7 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
     if (desc->jlocif>=0) sel->nifsel = desc->inaxes[desc->jlocif];
     else                 sel->nifsel = 1;
     sel->IFSel  = g_malloc(sel->nifsel*sizeof(gboolean));
-    for (j=1; j<=sel->nifsel; j++) sel->IFSel[j] = TRUE;
+    for (j=0; j<sel->nifsel; j++) sel->IFSel[j] = TRUE;
   }
   sel->ifsel1 = -1; 
   for (j=1; j<=sel->nifsel; j++) {

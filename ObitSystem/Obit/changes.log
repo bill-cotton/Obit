@@ -1839,3 +1839,19 @@ Obit/src/ObitSDMData.c \
    ObitSDMDataBand2Band: return ASDMBand_Any if code is NULL
    this caused ASDMList and BDFIn to abort
 13 Jan 2014 svn version 468
+
+Various bug fixes, minor improvements
+Obit/src/ObitUV.c:
+  ObitUVGetSelect: make sure nVisPIO doesn't blow 32 bit integer buffer size
+Obit/src/ObitSinCos.c Obit/include/ObitSinCos.h:
+  Implement AVX version, needs -DHAVE_AVX -march=native
+Obit/tasks/BDFIn.c:
+  Only call ObitSDMDataGetDefaultCalCode for EVLA data.
+  GetData: Tolerate fewer intents given than stated.
+Obit/src/ObitSDMData.c:
+  DefaultCalCode: return if not EVLA data.
+  GetSWArray: nAPoln of 3 is really 4
+Obit/src/ObitBDFData.c:
+  InitScan: Tolerate fewer intents given than stated.
+  InitScan: set aoffs for nAPoln =4
+3 Feb 2014 svn version 469

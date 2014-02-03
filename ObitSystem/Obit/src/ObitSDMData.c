@@ -1216,6 +1216,8 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
 
     out->winds[iSW]->nCPoln = in->PolarizationTab->rows[jPoln]->numCorr;
     out->winds[iSW]->nAPoln = MIN (3,in->PolarizationTab->rows[jPoln]->numCorr);
+    /* Hack for screwy way autocorr x pol is kept */
+    if (out->winds[iSW]->nAPoln==3) out->winds[iSW]->nAPoln = 4;
 
     /* Baseband - assume name starts with "BB_" and ends in number */
     out->winds[iSW]->basebandNum = 
@@ -9197,7 +9199,7 @@ static olong CountTableRows(gchar *CntFile, ObitErr *err)
 } /* end CountTableRows */
 
 /** 
- * Get CalCode from scan intents 
+ * Get EVLA CalCode from scan intents 
  * \param  in      ASDM structure
  * \param  iMain   Row in main table defining scan
  * \param  code    [out] default calcode
@@ -9212,6 +9214,9 @@ static void DefaultCalCode(ObitSDMData *in, olong iMain, gchar* code)
     "CALIBRATE_POL_LEAKAGE", "CALIBRATE_POINTING" };
   /* Corresponding booleans */
   gboolean haveIntent[] = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
+
+  /* EVLA? */
+  if (!in->isEVLA) return;
 
   /* Look up scan */
   scanNo = in->MainTab->rows[iMain]->scanNumber;

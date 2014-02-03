@@ -41,6 +41,8 @@
 
 #ifndef OBITSINCOS_H 
 #define OBITSINCOS_H 
+/** Init sine/cosine  */
+void ObitSinCosInit();
 /** Calculate sine/cosine of angle */
 void ObitSinCosCalc(ofloat angle, ofloat *sin, ofloat *cos);
 /** Calculate sine/cosine of vector of angles */
