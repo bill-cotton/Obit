@@ -230,6 +230,7 @@ def EVLAInitContParms():
     parms["antSize"]     = 24.5         # ant. diameter (m) for PBCor
     parms["CleanRad"]    = None         # CLEAN radius (pix?) about center or None=autoWin
     parms["Beam"]        = [0.,0.,0.]   # Clean restoring beam (asec, asec, deg)
+    parms["doOutlier"]   = None         # Default outliers
     
     # Final
     parms["doReport"]  =     True       # Generate source report?
@@ -1612,6 +1613,7 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
 
     # Loop over calibrators
     for DlyCal in DlyCals:
+        print "DlyCal",DlyCal
         calib.Sources[0]= DlyCal["Source"]
         calib.DataType2 = DlyCal["CalDataType"]
         calib.in2File   = DlyCal["CalFile"]
@@ -1768,6 +1770,118 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
     uv.Close(err)
     return 0
     # end EVLADelayCal
+
+def EVLASYCal(uv, err, SYVer=1,  SYOut=0, calInt=0.1,  \
+                  smoTime=0.0833, smoFunc="MWF", SWUse=None,  \
+                  doPlot=False, plotFile="./DelayCal.ps", \
+                  nThreads=1, logfile='', check=False, debug=False):
+    """
+    Gain calibration using Sys power (SY) table
+    
+    Apply SN table to the highest CL table writing a new CL table (Obit/CLCal)
+    Returns task error code, 0=OK, else failed
+
+    * uv         = UV data object to calibrate
+    * err        = Python Obit Error/message stack
+    * SYVer      = Input SY table; 0=>highest
+    * SYOut      = Output SY table; 0=>new
+    * calInt     = Interval in output table (min)
+    * smoTime    = Smoothing time (hrs)
+    * smoFunc    = Smoothing function (alpha) "MWF", "BOX", "GAUS"
+    * SWUse      = if not None, a list of the ref SW per SW to use for
+                   values in SY table
+    * doPlot     = If True make plots of SN gains
+    * plotFile   = Name of postscript file for plots
+    * nThreads   = Number of threads for MWF smoothing
+    * logfile    = logfile for messages
+    * check      = Only check script, don't execute tasks
+    * debug      = show input
+    """
+    ################################################################
+    mess = "SysPower gain calibration"
+    printMess(mess, logfile)
+
+    # Open and close image to sync with disk 
+    uv.Open(UV.READONLY, err)
+    uv.Close(err)
+
+    # Set output (new) SN table
+    SNver = uv.GetHighVer("AIPS SN")+1
+
+    sygain = ObitTask.ObitTask("SYGain")
+    try:
+        sygain.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
+    OK = False   # Must have some work
+    sygain.taskLog  = logfile
+    if not check:
+        setname(uv,sygain)
+    sygain.SYVer   = SYVer
+    sygain.SYOut   = SYOut
+    sygain.solnOut = SNver
+    sygain.calInt  = calInt
+    sygain.smoFunc = smoFunc
+    sygain.smoParm = [smoTime,smoTime]
+    sygain.nThreads= nThreads
+    if SWUse!=None:
+        sygain.SWUse = SWUse
+        
+    if debug:
+        sygain.i
+        sygain.debug = debug
+    # Trap failure
+    try:
+        mess = "Run SYGain"
+        printMess(mess, logfile)
+        if not check:
+            sygain.g
+    except Exception, exception:
+        print exception
+        mess = "Sygain Failed retCode= "+str(sygain.retCode)+" Source "+sygain.Sources[0]
+        printMess(mess, logfile)
+            #return None  # Allow some to fail
+    else:
+        OK = True
+
+    # Something work?
+    if not OK:
+        printMess("SYGain calibration failed", logfile)
+        return 1  
+    
+    # Open/close UV to update header
+    uv.Open(UV.READONLY,err)
+    uv.Close(err)
+    if err.isErr:
+        OErr.printErr(err)
+        printMess("Update UV header failed", logfile)
+        return 1
+    SNver = uv.GetHighVer("AIPS SN")
+
+    # Plot fits?
+    if doPlot:
+        retCode = EVLAPlotTab(uv, "SN", SNver, err, nplots=6, optype="AMP ", \
+                                  logfile=logfile, check=check, debug=debug)
+        if retCode!=0:
+            return retCode
+  
+        retCode = EVLAWritePlots (uv, 1, 0, plotFile, err, \
+                                  plotDesc="SysPower gain plots", \
+                                  logfile=logfile, check=check, debug=debug)
+        if retCode!=0:
+            return retCode
+        
+    # end SN table plot
+    # Apply to CL table
+    retCode = EVLAApplyCal(uv, err, maxInter=1440.0, logfile=logfile, check=check,debug=debug)
+    if retCode!=0:
+        return retCode
+    
+    # Open and close image to sync with disk 
+    uv.Open(UV.READONLY, err)
+    uv.Close(err)
+    return 0
+    # end EVLASYCal
 
 def EVLACalAP(uv, target, ACals, err, \
               PCals=None, FQid=0, calFlux=None, timeRange = [0.0,1.0e20], \
@@ -3406,6 +3520,7 @@ def EVLARLCal(uv, err, \
             elif img.DataType=="FITS":
                 # Stokes I
                 outFile  = img.Sources[0].strip()+"ITEMPPOLCAL.fits"
+                outFile = re.sub('\s','_',outFile) # Deblank filename
                 x =  Image.newPFImage("I",outFile,img.outDisk,True,err)
                 h = x.Desc.Dict
                 blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
@@ -3417,6 +3532,7 @@ def EVLARLCal(uv, err, \
                 del x
                 # Stokes Q
                 outFile  = img.Sources[0].strip()+"ITEMPPOLCAL.fits"
+                outFile = re.sub('\s','_',outFile) # Deblank filename
                 x =  Image.newPFImage("Q",outFile,img.outDisk,True,err)
                 stat = imstat(x, err, blc=blc,trc=trc,logfile=None)
                 IFlux.append(stat["Flux"])
@@ -3425,6 +3541,7 @@ def EVLARLCal(uv, err, \
                 del x
                 # Stokes U
                 outFile  = img.Sources[0].strip()+"ITEMPPOLCAL.fits"
+                outFile = re.sub('\s','_',outFile) # Deblank filename
                 x =  Image.newPFImage("Q",outFile,img.outDisk,True,err)
                 stat = imstat(x, err, blc=blc,trc=trc,logfile=None)
                 IFlux.append(stat["Flux"])
@@ -3432,6 +3549,7 @@ def EVLARLCal(uv, err, \
                 x.Zap(err)  # Cleanup
                 del x
                 out2File = img.Sources[0].strip()+"TEMPPOLCAL2.uvtab"
+                out2File = re.sub('\s','_',out2File) # Deblank filename
                 u =  UV.newPFUV("UV",outFile,img.outDisk,True,err)
                 u.Zap(err)
                 del u
@@ -5351,10 +5469,88 @@ def EVLAStdModel(Cals, freq):
     """
     # Standard models in FITS files
     stdModel = []
-    # 3C286Chi
+    # 3C286 Chi
     model = {"Source":["3C286","J1331+3030","1331+305=3C286"],
-             "freqRange":[2.0e9,12.0e9],
+             "freqRange":[4.1e9,12.0e9],
              "file":"3C286ChiModel.fits","disk":1}
+    stdModel.append(model)
+    # 3C286 S
+    model = {"Source":["3C286","J1331+3030","1331+305=3C286"],
+             "freqRange":[1.9e9,4.1e9],
+             "file":"3C286SModel.fits","disk":1}
+    # 3C286 P
+    model = {"Source":["3C286","J1331+3030","1331+305=3C286"],
+             "freqRange":[1.5e8,7.0e8],
+             "file":"3C286PModel.fits","disk":1}
+    stdModel.append(model)
+    # 3C147 S
+    model = {"Source":["3C147","J0542+4951"],
+             "freqRange":[1.9e9,4.1e9],
+             "file":"3C147SModel.fits","disk":1}
+    stdModel.append(model)
+    # 3C147 P
+    model = {"Source":["3C147","J0542+4951"],
+             "freqRange":[1.5e8,7.0e8],
+             "file":"3C147PModel.fits","disk":1}
+    stdModel.append(model)
+    # 3C48 P
+    model = {"Source":["3C48","J0137+3309"],
+             "freqRange":[1.5e8,7.0e8],
+             "file":"3C48PModel.fits","disk":1}
+    stdModel.append(model)
+
+    # 3C48 S
+    model = {"Source":["3C48","J0137+3309"],
+             "freqRange":[1.9e9,4.1e9],
+             "file":"3C48SModel.fits","disk":1}
+    stdModel.append(model)
+
+    # 3C123 P
+    model = {"Source":["3C123","J0437+2940"],
+             "freqRange":[1.5e8,7.0e8],
+             "file":"3C123PModel.fits","disk":1}
+    stdModel.append(model)
+
+    # 3C123 S
+    model = {"Source":["3C123","J0437+2940"],
+             "freqRange":[1.9e9,4.1e9],
+             "file":"3C123SModel.fits","disk":1}
+    stdModel.append(model)
+
+    # 3C138 P
+    model = {"Source":["3C138","J0521+1638"],
+             "freqRange":[1.5e8,7.0e8],
+             "file":"3C138PModel.fits","disk":1}
+    stdModel.append(model)
+
+    # 3C138 S
+    model = {"Source":["3C138","J0521+1638"],
+             "freqRange":[1.9e9,4.1e9],
+             "file":"3C138SModel.fits","disk":1}
+    stdModel.append(model)
+
+    # 3C295 P
+    model = {"Source":["3C295","J1411+5212"],
+             "freqRange":[1.5e8,7.0e8],
+             "file":"3C295PModel.fits","disk":1}
+    stdModel.append(model)
+
+    # 3C295 S
+    model = {"Source":["3C295","J1411+5212"],
+             "freqRange":[1.9e9,4.1e9],
+             "file":"3C295SModel.fits","disk":1}
+    stdModel.append(model)
+
+    # 3C380 P
+    model = {"Source":["3C380","J1829+4844"],
+             "freqRange":[1.5e8,7.0e8],
+             "file":"3C380PModel.fits","disk":1}
+    stdModel.append(model)
+
+    # 3C380 S
+    model = {"Source":["3C380","J1829+4844"],
+             "freqRange":[1.9e9,4.1e9],
+             "file":"3C380SModel.fits","disk":1}
     stdModel.append(model)
 
     # loop testing
@@ -5366,7 +5562,7 @@ def EVLAStdModel(Cals, freq):
                 Cal["CalFile"] = model["file"]
                 Cal["CalDisk"] = model["disk"]
                 Cal["CalDataType"] = 'FITS'
-                Cal["CalNField"]   = 1
+                Cal["CalNfield"]   = 1
                 break
 # end EVLAStdModel
 
@@ -5841,6 +6037,33 @@ def EVLAMakeParmFile(subs, parmfile, template=None):
     fdout.close()
 # end EVLAMakeParmFile
 
+def EVLALowBandMakeParmFile(subs, parmfile, template=None):
+    """
+    Generate a parameter file from a template and a list of substitutions
+
+    Lowband (P) specific version
+    * subs     = list of substitutions as tuple: ("@PARAMETER@", "valuestring")
+    * parmfile = output parameter file
+    * template = name of template parameter file; if none, use default
+    """
+    if not template:
+        template = os.getenv('EVLAPIPE','..')+'/EVLALowBandTemplateParm.py'
+        if not os.path.exists(template):
+            template = os.environ['OBIT'] + '/share/scripts/EVLALowBandTemplateParm.py'
+            if not os.path.exists(template):
+                template = 'EVLALowBandTemplateParm.py'
+    fdin  = open(template, "r")
+    fdout = open(parmfile,"w")
+    line = fdin.readline()
+    while (line):
+        for s in subs:
+            line = line.replace(s[0],s[1])
+        fdout.write(line)
+        line = fdin.readline()
+    fdin.close()
+    fdout.close()
+# end EVLAMakeLowBandParmFile
+
 def EVLAGetParms( fileDict):
     """
     Return a list for initializing the EVLA pipeline parameters file.
@@ -6084,7 +6307,7 @@ def EVLAParseASDM(ASDMRoot, err):
 #VLBA    template="EVLAContTemplateParm.py", parmFile=None ):
 def EVLAPrepare( ASDMRoot, err, \
                  project=None, session=None, template=None, parmFile=None,
-                 outputDest=''): 
+                 outputDest='', doLow=False): 
     """
     Prepare pipeline for processing. 
     Create parameter file. Give user the command to execute the pipeline.
@@ -6095,6 +6318,7 @@ def EVLAPrepare( ASDMRoot, err, \
     * session  = session name of project, default = 'C'config'N'nchan
     * template = name of template parameter file, def "EVLAContTemplateParm.py"
     * parmFile = name of output parameter file; None => used default name
+    * doLow    = True ifthe probles is the the EVLA lowband (P)
     """
     # Check that DataRoot exists
     if not os.path.exists(ASDMRoot):
@@ -6106,31 +6330,28 @@ def EVLAPrepare( ASDMRoot, err, \
         parts   = ASDMRoot.split(os.sep)
         project = parts[len(parts)-1].split('.')[0]
     print "Project", project
-    #VLBA response = QueryArchive( starttime, stoptime, project )
     # Get config info and parameters
     fileList = EVLAParseASDM( ASDMRoot, err )
-    #VLBA print SummarizeArchiveResponse( fileList )
-    #VLBA print "Download file #: ",
-    #VLBA fileNum = int( sys.stdin.readline() )
     # Loop over files
     print "Start pipeline with command(s):"
     for fileNum in range (0,len(fileList)):
         fileDict = fileList[fileNum]
-        # ***** MORE WORK HERE
         fileDict['project_code'] = project
         if session:
             fileDict['session'] = session
         else:
             fileDict['session']      = 'C' + str(fileDict['selConfig']) + 'N' + str(fileDict['selChan'])
-        #response = DownloadArchiveFile( fileDict, fitsDest )
-        #VLBA if response != None:
-        #VLBA     PollDownloadStatus( fileDict, fitsDest )
         parmList = EVLAGetParms( fileDict)
-        #??? if not parmFile:
         parmFile = "EVLAContParm_" + fileDict['project_code'] + \
-                   '_Cfg' + str(fileDict['selConfig']) + '_Nch' + str(fileDict['selChan']) + '.py'
-        EVLAMakeParmFile( parmList, parmFile, template=template )
-        print "ObitTalk EVLAContPipe.py AIPSSetup.py " + parmFile
+            '_Cfg' + str(fileDict['selConfig']) + '_Nch' + str(fileDict['selChan']) + '.py'
+        if doLow:
+            # P band
+            EVLALowBandMakeParmFile( parmList, parmFile, template=template )
+            print "ObitTalk EVLALowBandPipe.py AIPSSetup.py " + parmFile
+        else:
+            # Cassegrain frequencies
+            EVLAMakeParmFile( parmList, parmFile, template=template )
+            print "ObitTalk EVLAContPipe.py AIPSSetup.py " + parmFile
 # end EVLAPrepare
 
 def EVLAWriteVOTable( projMeta, srcMeta, filename="votable.xml", logfile='' ):
@@ -6719,6 +6940,7 @@ def EVLAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
         kntr.blc[1]=nx/4.0;   kntr.blc[2]=ny/4.0;
         name = image.Aname.rstrip() # Image name w/o whitespace
         outfile = project+'_'+session+'_'+band+'_'+name+'.cntr.ps'
+        outfile = re.sub('\s','_',outfile) # Deblank filename
         # Trap failure - KNTR too stupid to live
         try:
             if not check:
@@ -6748,6 +6970,7 @@ def EVLAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
         tmpPS = outfile[:-3] + '.1.ps'
         tmpPDF = outfile[:-3] + '.pdf'
         jpg = outfile[:-3] + '.jpg'
+        jpg = re.sub('\s','_',jpg) # deblank
         printMess('Converting '+outfile+' (1st page) -> '+jpg,logfile)
         # Extract first page of PS; Convert to PDF; Convert to JPG
         # (on 64-bit, converting directly from PS to JPG does not work)

@@ -1,0 +1,239 @@
+; UVXpnd
+;---------------------------------------------------------------
+;! Task to expand uv data in frequency
+;# Task Obit UV Calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2014
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+UVXpnd    LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+UVXpnd    Task to expand uv data in frequency
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                             FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                             Input AIPS UV file 
+**PARAM** str 6
+inClass                            Input AIPS UV file class
+**PARAM** int 1
+inSeq             0.0     9999.0   Input AIPS UV file seq. #
+**PARAM** int 1
+inDisk            0.0        9.0   Input UV file disk unit #
+**PARAM** str 48
+in2File                            FITS Target uvdata if Type=='FITS'
+**PARAM** str 12
+in2Name                            Target AIPS UV file 
+**PARAM** str 6
+in2Class                           Target AIPS UV file class
+**PARAM** int 1
+in2Seq             0.0     9999.0  Target AIPS UV file seq. #
+**PARAM** int 1
+in2Disk            0.0        9.0  Target UV file disk unit #
+**PARAM** str 16 30
+Sources                            Source list
+**PARAM** int 1 **DEF** -1
+Qual             -1.0              Source qualifier -1=>all
+**PARAM** str 4
+souCode                            Calibrator code '    '=>all
+**PARAM** float 2
+timeRange                          Time range to copy
+**PARAM** str 4
+Stokes                             Stokes type to pass.
+**PARAM** int 1 **DEF** -1
+FreqID                             Freq. ID to select.
+**PARAM** int 1 **DEF** 1
+BIF               0.0      100.0   Lowest IF number 0=>all
+**PARAM** int 1
+EIF               0.0      100.0   Highest IF number 0=>all
+**PARAM** int 1 **DEF** 1
+BChan             0.0    65536.0   Lowest channel number 0=>all
+**PARAM** int 1
+EChan             0.0    65536.0   Highest channel number
+**PARAM** int 1
+subA          0.0     1000.0       Subarray, 0=>all
+**PARAM** int 1
+doCalib          -1.0        2.0   If >0 calibrate data
+                                   = 2 calibrate weights
+**PARAM** int 1
+gainUse                            CL (or SN) table to apply
+**PARAM** boo 1 **DEF** F
+doPol            -1.0       10.0   If >0 correct polarization.
+**PARAM** int 1
+PDVer                              Pol Cal table version
+**PARAM** int 1 **DEF** -1
+flagVer                            Flag table version
+**PARAM** int 1
+doBand           -1.0       10.0   If >0 apply bandpass cal.
+                                   Method used depends on value
+                                   of doBand (see Help file).
+**PARAM** int 1
+BPVer                              Bandpass table version
+**PARAM** str 4
+outDType                           "FITS" or "AIPS" type of output
+**PARAM** str 48
+outFile                            Output FITS UV file ending
+**PARAM** str 12
+outName                            Output UV AIPS file name
+**PARAM** str 6
+outClass                           Output AIPS UV file class
+**PARAM** int 1
+outSeq           -1.0     9999.0   Output AIPS UV seq. #
+**PARAM** int 1
+outDisk           0.0        9.0   Output UV file disk unit #.
+**PARAM** boo 1 
+Compress                           True => write compressed data
+**PARAM** int 1 **DEF** 1
+corrType                           Cross or auto correlations
+                                     0 pass only xc data
+                                     1 pass xc and ac data
+                                     2 pass only ac data
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
+----------------------------------------------------------------
+UVXpnd
+
+Task: Expand UV data in frequency to look like a target dataset.
+   Multiples of the input data are duplicating channel data to
+   make input data match target dataset.  Target data set must 
+   have same structure as input with a channel width an integral
+   submultiple of the input channel width.  Extra channels will
+   be zeroed.
+      The intent is that this operation will allow the 
+   concatenation of the output with the target dataset.
+   NOTES: Currently this does not modify channel numbers in any 
+   AIPS FG, PD or BP tables.  Apply tables if needed.
+
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input/output
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input AIPS UV file name.      Standard defaults.
+  inClass....Input AIPS UV file class.     Standard defaults.
+  inSeq......Input AIPS UV file seq. #.    0 => highest.
+  inDisk.....Disk drive # of input UV, either AIPS or FITS, NO def.
+  in2File....FITS target uvdata if Type=='FITS'
+  in2Name....Target AIPS UV file name.      Standard defaults.
+  in2Class...Target AIPS UV file class.     Standard defaults.
+  in2Seq.....Target AIPS UV file seq. #.    0 => highest.
+  in2Disk....Disk drive # of target UV, either AIPS or FITS, NO def.
+  Sources....Source list.  One output file will be made per source.
+             '*' = all; a "-" before a source name means all except ANY
+             source named.
+  Qual.......Only sources with a source qualifier number in the SU table
+             matching Qual will be used if Qual is >= 0.  If Qual < 0,
+             all qualifiers will be written.  These qualifiers will be
+             written to separate output files.  Note that outSeq must be
+             zero in this case.
+  souCode....Sources may be selected on the basis of the calibrator code
+             given in the SU table.
+                  '    ' => any calibrator code selected
+                  '*   ' => any non blank code (cal. only)
+                  '-CAL' => blank codes only (no calibrators)
+                  anything else = calibrator code to select.
+             NB: The souCode test is applied in addition to the other
+             tests, i.e. Sources and Qual, in the selection of sources to
+             process.
+  timeRange..Time range of the data to be copied. In order:
+             Start and end times in days relative to ref.date.  
+             Use  dhms2day to convert from human readable form
+  Stokes.....The desired Stokes type of the output data:
+             'I','V','Q','U','IQU','IQUV','IV','RR','LL','RL',
+             'LR','HALF' (=RR,LL), 'FULL' (=RR,LL,RL,LR)
+  FreqID.....Frequency identifier to select (you may determine which is
+             applicable from the OPTYPE='SCAN' listing produced by
+             AIPS task LISTR). <=0=>any
+  BIF........First IF to copy. 0=>all.
+  EIF........Highest IF to copy. 0=>all higher than BIF
+  BChan......First channel to copy. 0=>all.
+  EChan......Highest channel to copy. 0=>all higher than BChan
+             If avgFreq = 1, the actual # of output channels will be
+                  (BChan-EChan+1-chAvg)/chInc + 1
+             Thus, EChan is the highest channel in the input averaged
+             into the output and is the highest output channel only if
+             chAvg and chInc are 1.
+  subA.......Subarray number to copy. 0=>all.
+  doCalib....If > 0, calibrate the data using information in the
+             specified Cal (CL) table for multi-source or SN table for
+             single-source data.  If > 1.5, also calibrate the weights
+             (new for VLA, normal for VLBI).  This is a synonym for
+             the doWtCal) option - weights are calibrated if either
+             requests it.
+  gainUse....Version number of the CL table to apply to multi-source
+             files or the SN table for single-source files.
+             0 => highest.
+  doPol......If > 0 then correct data for instrumental polarization as
+             represented in the AN table.  This correction is only
+             useful if PCAL has been run or feed polarization parameters
+             have been otherwise obtained. 
+  flagVer....specifies the version of the flagging table to be applied.
+             0 => highest numbered table. <0 => no flagging to be
+             applied.
+  doBand.....If >0 then correct the data for the shape of the
+             antenna bandpasses using the BP table specified by BPVer.
+             The correction has five modes:
+             (a) if doBand=1 all entries for an antenna in the table
+             are averaged together before correcting the data.
+             (b) if doBand=2 the entry nearest in time (including
+             solution weights) is used to correct the data.
+             (c) if doBand=3 the table entries are interpolated in
+             time (using solution weights) and the data are then
+             corrected.
+             (d) if doBand=4 the entry nearest in time (ignoring
+             solution weights) is used to correct the data.
+             (e) if doBand=5 the table entries are interpolated in
+             time (ignoring solution weights) and the data are then
+             corrected.
+  BPVer......Specifies the version of the BP table to be applied if
+             doBand > 0.  0 => highest numbered table.
+             <0 => no bandpass correction to be applied.
+ outDType...'FITS' or 'AIPS'  type of output
+ outFile.....Output UV FITS file name    Standard defaults.
+ outName.....Output UV AIPS file name    Standard defaults.
+ outClass....Output UV AIPS file class.    Standard defaults.
+             The output file name will be the first 12 characters of the
+             name of the source.
+  outSeq.....Output UV AIPS file (seq. #).   0 => highest unique
+             If Qual = -1, outSeq must be zero if there are in fact more
+             than one qualifier for a given source name.
+  outDisk....Disk drive # of output UV files. NO default.
+             This is either AIPS or FITS
+  Compress...If True  the output data is written in
+             compressed format which can result in a substantial
+             reduction in disk space needed.  DO NOT USE THIS OPTION if
+             there is channel-dependent flagging and and you are doing
+             spectral averaging (avgFreq > 0).  If there is
+             IF-dependent flagging and you are using IF averaging
+             (avgFreq > 2.5) this option is also not recommended.
+
+  corrType...If corrType = 0 then pass only cross-power data, 
+             this is the default mode. 
+             If corr=1 then both cross-power and total-power data 
+             will be passed; 
+             if corr=2 then only total-power data will be passed. 
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files.
+             Path is absolute or relative to where the task 
+             executes.
+----------------------------------------------------------------

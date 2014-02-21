@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -116,8 +116,8 @@ typedef ObitIOCode (*ObitUVGridReadUVFP) (ObitUVGrid *in, ObitUV *UVin,
 					 ObitErr *err);
 
 /** Public: Parallel read uv data accumulating to grid */
-void ObitUVGridReadUVPar (olong nPar, ObitUVGrid **in, ObitUV **UVin, ObitErr *err);
-typedef ObitIOCode (*ObitUVGridReadUVParFP) (olong nPar, ObitUVGrid **in, ObitUV **UVin, 
+void ObitUVGridReadUVPar (olong nPar, ObitUVGrid **in, ObitUV *UVin, ObitErr *err);
+typedef ObitIOCode (*ObitUVGridReadUVParFP) (olong nPar, ObitUVGrid **in, ObitUV *UVin, 
 					     ObitErr *err);
 
 /** Public: FFT grid to image plane with gridding correction. */

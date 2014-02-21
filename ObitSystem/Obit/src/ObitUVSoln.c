@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2013                                          */
+/*;  Copyright (C) 2006-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1890,8 +1890,9 @@ ObitUVSolnSmooBox (ofloat width, ofloat* x, ofloat* y, ofloat* w, olong n,
  * Routine translated from the AIPSish SMGAUS.FOR/SMGAUS  
  * \param width   Width of boxcar in same units as X: 0 => replace 
  *                blanks with interpolated closest 2, < 0 => replace 
- *                only blanks with the b oxcar smoothed values (all 
+ *                only blanks with the Gaussian smoothed values (all 
  *                others remain unchanged) 
+ *                width = twice sigma of Gaussian
  * \param x       Abscissas of points to be smoothed in increasing 
  *                order 
  * \param y       Values to be smoothed. 
@@ -1907,7 +1908,7 @@ ObitUVSolnSmooGauss (ofloat width, ofloat* x, ofloat* y, ofloat* w, olong n,
 		     ofloat* ys, ofloat* ws, ofloat* wtsum, gboolean doBlank) 
 {
   olong   i , j, k, l, i1, i2;
-  ofloat      hw, d, temp, s=0.0, g, fblank =  ObitMagicF();
+  ofloat      hw, d, temp, s=0.5*width, g, fblank =  ObitMagicF();
   gboolean   wasb, onlyb, blnkd;
 
 

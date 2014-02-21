@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2011                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -24,7 +24,7 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/*  Define the basic components of the ObitUV structure               */
+/*  Define the basic components of the ObitUVGrid structure           */
 /*  This is intended to be included in a class structure definition   */
 /**
  * \file ObitUVGridDef.h
@@ -77,6 +77,8 @@ ofloat PRot3D[3][3];
 ObitCArray *grid;
 /** Gridding convolution table */
 ObitFArray *convfn;
+/** Gridding convolution for gridding table */
+ObitFArray *convgfn;
 /** ObitFFT for making a beam */
 ObitFFT *FFTBeam;
 /** ObitFFT for making image */

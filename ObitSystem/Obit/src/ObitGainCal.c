@@ -88,6 +88,7 @@ static void CalcGain (ObitTableRow *row, olong numIF, olong numPoln, olong maxTe
  * \li doSwPwr  OBIT_boo   (1) Apply EVLA switched power correction  [def FALSE]
  * \li SYVer    OBIT_int   (1) SY table to use, 0=>highest [def 0]
  * \li CDVer    OBIT_int   (1) CD table to use, 0=>highest [def 0]
+ * \li doSmoo   OBIT_boo   (1) Smooth SY table to calInt?  [def TRUE]
  * \param doSN   If TRUE write SN table, else CL   
  * \param err    ObitError/message stack
  * \return Pointer to the newly created ObitTableCL object which is 
@@ -499,8 +500,8 @@ ObitTable* ObitGainCalCalc (ObitUV *inData, gboolean doSN, ObitErr *err)
     } /* end loop over scan */
 
     /* Check if endTime<last time written */
-    if (doSN && (SNRow->Time>=endTime)) continue;
-    else if     (CLRow->Time>=endTime)  continue;
+    if (doSN && (SNRow->Time>=endTime))       continue;
+    else if (!doSN && (CLRow->Time>=endTime))  continue;
 
     /* End of scan */
     if (doSN) SNRow->Time   = endTime;
@@ -813,7 +814,7 @@ static void CalcGain (ObitTableRow *row, olong numIF, olong numPoln, olong maxTe
   for (i=0; i<numIF; i++) gain1[i] = gain2[i] = 1.0;
 
   /* Which type of table */
-  isSN = ObitTableSNIsA (row);
+  isSN = ObitTableSNRowIsA (row);
   if (isSN) {
     SNRow  = (ObitTableSNRow*)row;
     Time   = SNRow->Time;

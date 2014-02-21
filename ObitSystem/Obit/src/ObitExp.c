@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011                                               */
+/*;  Copyright (C) 2011-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -27,6 +27,7 @@
 /*--------------------------------------------------------------------*/
 /* Utility routine for fast exp(-x) calculation                   */
 #include "ObitExp.h"
+#include <math.h>
 
 #define OBITEXPTAB  512  /* tabulated points */
 /** Is initialized? */
@@ -42,8 +43,86 @@ static ofloat minTable=1.0e-5;
 /**max value tabulated */
 static ofloat maxTable=10.0;
 
-/** SSE implementation */
-#ifdef HAVE_SSE
+/** AVX implementation 8 floats in parallel */
+#if HAVE_AVX==1
+#include <immintrin.h>
+
+typedef __m256  v8sf;
+typedef __m256i v8si;
+
+/* gcc or icc */
+# define ALIGN32_BEG
+# define ALIGN32_END __attribute__((aligned(32)))
+
+/* Union allowing c interface */
+typedef ALIGN32_BEG union {
+  float f[8];
+  int   i[8];
+  v8sf   v;
+} ALIGN32_END V8SF;
+
+/* Union allowing c interface */
+typedef ALIGN32_BEG union {
+  int  i[8];
+  v8si v;
+} ALIGN32_END V8SI;
+
+/* Constants */
+#define _OBIT_DELTA     0.02   /* table spacing MUST match delta */
+#define _OBIT_IDELTA    50.0   /* 1/table spacing  */
+#define _OBIT_MINTABLE  1.0e-5 /* minimum tabulated value, MUST match minTable */
+#define _OBIT_MAXTABLE  10.0   /* maximum tabulated value, MUST match maxTable */
+static const v8sf _half = {0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5}; /* 0.5 vector */
+static const v8sf _one  = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; /* 1.0 vector */
+static const v8sf _mintab = {_OBIT_MINTABLE, _OBIT_MINTABLE, _OBIT_MINTABLE ,_OBIT_MINTABLE,
+			     _OBIT_MINTABLE, _OBIT_MINTABLE, _OBIT_MINTABLE, _OBIT_MINTABLE};
+static const v8sf _maxtab = {_OBIT_MAXTABLE, _OBIT_MAXTABLE, _OBIT_MAXTABLE ,_OBIT_MAXTABLE,
+			     _OBIT_MAXTABLE, _OBIT_MAXTABLE, _OBIT_MAXTABLE, _OBIT_MAXTABLE};
+static const v8sf _delta  = {_OBIT_DELTA, _OBIT_DELTA, _OBIT_DELTA ,_OBIT_DELTA,
+			     _OBIT_DELTA, _OBIT_DELTA, _OBIT_DELTA, _OBIT_DELTA};
+static const v8sf _idelta = {_OBIT_IDELTA, _OBIT_IDELTA, _OBIT_IDELTA ,_OBIT_IDELTA,
+			     _OBIT_IDELTA, _OBIT_IDELTA, _OBIT_IDELTA, _OBIT_IDELTA};
+/** 
+ * Fast vector exp(-arg) using AVX (8 float) instructions
+ * \param arg    argument array
+ * \param table  lookup table
+ * \param e      [out] array of exp(-arg)
+ */
+void fast_exp_ps(v8sf arg, float *table, v8sf *e) {
+  v8sf cellf, temp, exptabl, d;
+  V8SI addr;
+
+  /* Clip to range */
+  arg   = _mm256_max_ps (arg, _mintab);      /* Lower bound */
+  arg   = _mm256_min_ps (arg, _maxtab);      /* Upper bound */
+
+  /* get arg in cells */
+  d      = _mm256_sub_ps(arg, _mintab);       /* arg-minTable */
+  cellf  = _mm256_mul_ps(d, _idelta);         /* (arg-minTable)/table spacing */
+  cellf  = _mm256_add_ps(cellf, _half);       /* Round to cell */
+  cellf  = _mm256_floor_ps(cellf); 
+  addr.v = _mm256_cvtps_epi32(cellf);         /* to integers */
+
+  /* Fetch tabulated values */
+  exptabl = _mm256_set_ps(table[addr.i[7]], table[addr.i[6]],
+			  table[addr.i[5]], table[addr.i[4]],
+			  table[addr.i[3]], table[addr.i[2]],
+			  table[addr.i[1]], table[addr.i[0]]);
+
+  /* Get difference in arg from tabulated points */
+  temp  = _mm256_mul_ps(cellf, _delta);        /* cell*delta */
+  d     = _mm256_sub_ps(d, temp);              /* d = arg-cell*delta-minTable */
+
+  /* One term Taylor's series */   
+  d     = _mm256_sub_ps(_one, d);              /* 1-d */
+  *e    = _mm256_mul_ps(d, exptabl);           /* table[cell]*(1.0-d) */
+
+ /*  _mm_empty();  wait for operations to finish */
+  return ;
+} /* end fast_exp_ps */
+
+/** SSE implementation 4 floats in parallel */
+#elif HAVE_SSE==1
 #include <xmmintrin.h>
 
 typedef __m128 v4sf;
@@ -147,6 +226,7 @@ void fast_exp_ps(v4sf arg, float *table, v4sf *e) {
   olong i, cell;
   ofloat arg;
 
+  if (isInit) return;   /* Only once */
   isInit = TRUE;  /* Now initialized */
 
   for (i=0; i<OBITEXPTAB-1; i++) {
@@ -206,20 +286,34 @@ void ObitExpVec(olong n, ofloat *argarr, ofloat *exparr)
 {
   olong i, nleft, cell;
   ofloat argt, d;
-  /** SSE implementation */
-#ifdef HAVE_SSE
+#if   HAVE_AVX==1
+  olong ndo;
+  v8sf varg, vexp;
+#elif HAVE_SSE==1
   olong ndo;
   V4SF vargt, vex;
 #endif /* HAVE_SSE */
   
+  if (n<=0) return;
+
   /* Initialize? */
   if (!isInit) ObitExpInit();
   
   nleft = n;   /* Number left to do */
   i     = 0;   /* None done yet */
 
+ /** avx implementation */
+#if HAVE_AVX==1
+  /* Loop in groups of 8 */
+  ndo = nleft - nleft%8;  /* Only full groups of 8 */
+  for (i=0; i<ndo; i+=8) {
+    varg = _mm256_loadu_ps(argarr); argarr += 8;
+      
+    fast_exp_ps(varg, exptab, &vexp);
+    _mm256_storeu_ps(exparr, vexp); exparr += 8;
+ } /* end AVX loop */
  /** SSE implementation */
-#ifdef HAVE_SSE
+#elif HAVE_SSE==1
   /* Loop in groups of 4 */
   ndo = nleft - nleft%4;  /* Only full groups of 4 */
   for (i=0; i<ndo; i+=4) {

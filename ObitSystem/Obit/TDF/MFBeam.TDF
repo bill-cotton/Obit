@@ -218,6 +218,8 @@ ccfLim   *                         Min. fraction of residual peak to CLEAN
 SDIGain  *                         SDI trigger, <=0 -> no SDI Clean
 **PARAM** float 3
 Beam     *      -999.9             Clean beam (maj, min, PA)
+**PARAM** float 3
+targBeam *      -999.9             Target Clean beam (maj, min, PA)
 **PARAM** float 1  **DEF** 10.0
 Reuse    *                         Factor * RMS to reuse each cycle
 **PARAM** float 1  **DEF** 1.0e20
@@ -724,6 +726,8 @@ Adverbs:
             A value of 0.1 is a reasonable initial value
   Beam......CLEAN restoring beam major, minor axis size in asec and
             the position angle.  If zeroes, fit beam.
+  targBeam..Target CLEAN beam to be used in frquency dependent weighting.
+            The actual bean will be different, usually somewhat smaller.
   Reuse.....If >0 then each cycle of self cal after the first will
             begin with all summed components whose abs value exceeds
             Reuse*RMS(Field 1). Default 10

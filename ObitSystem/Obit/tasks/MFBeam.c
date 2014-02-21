@@ -1,7 +1,7 @@
 /* $Id$ */
 /*  Imaging software correcting for tabulated beamshape               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2012                                          */
+/*;  Copyright (C) 2011-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -615,7 +615,7 @@ ObitInfoList* defaultInputs(ObitErr *err)
   ObitInfoListPut (out, "Stokes", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
-  /* Beam squint correction threshold def = 0.0 */
+  /* Beam correction threshold def = 0.0 */
   dim[0] = 1;dim[1] = 1;
   ftemp = 0.0; 
   ObitInfoListPut (out, "Threshold", OBIT_float, dim, &ftemp, err);
@@ -774,6 +774,7 @@ ObitInfoList* defaultInputs(ObitErr *err)
   dim[0] = 3;dim[1] = 1;
   farray[0] = 0.0; farray[1] = 0.0; farray[2] = 0.0;
   ObitInfoListPut (out, "Beam", OBIT_float, dim, farray, err);
+  ObitInfoListPut (out, "targBeam", OBIT_float, dim, farray, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* Modeling method: 'DFT','GRID','    ', def = '    ' (chose fastest) */
@@ -1504,7 +1505,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
     "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "WtPower",
     "MFTaper", "RobustIF", "TaperIF",
-    "MaxBaseline", "MinBaseline", "rotate", "Beam", "minFlux",
+    "MaxBaseline", "MinBaseline", "rotate", "targBeam", "Beam", "minFlux",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
     "nxBeam", "nyBeam", "Alpha", "doCalSelect", 
     "numBeamTapes", "BeamTapes", "MResKnob",
@@ -1524,7 +1525,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     NULL
   };
   gchar        *CLEANParms[] = {  /* Clean parameters */
-    "CLEANBox", "autoWindow", "Gain", "minFlux", "Niter", "minPatch", "Beam", 
+    "CLEANBox", "autoWindow", "Gain", "minFlux", "Niter", "minPatch", "Beam", "targBeam",
     "Mode", "CCFilter", "maxPixel", "dispURL", "Threshold", "ccfLim", "SDIGain",
     "doCalSelect",
     NULL
@@ -1954,7 +1955,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
     "dispURL", 
     NULL };
   gchar        *CLEANParms[] = {  /* Clean parameters */
-    "autoWindow", "Gain", "minFlux", "Niter", "minPatch", "Beam", 
+    "autoWindow", "Gain", "minFlux", "Niter", "minPatch", "Beam",  "targBeam",
     "Mode", "CCFilter", "maxPixel", "dispURL", "ccfLim", "SDIGain",
     NULL
   };
@@ -2609,7 +2610,7 @@ void subIPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver,
 
 
 /*----------------------------------------------------------------------- */
-/*  Write History for MFBeam                                             */
+/*  Write History for MFBeam                                              */
 /*   Input:                                                               */
 /*      Source    Name of source being imaged                             */
 /*      myInput   Input parameters on InfoList                            */
@@ -2637,7 +2638,7 @@ void MFBeamHistory (gchar *Source, ObitInfoList* myInput,
     "doPol", "PDVer", "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI",
     "OutlierSize",  "CLEANBox",  "Gain",  "minFlux",  "Niter",  "minPatch",
     "ccfLim", "SDIGain", "BLFact", "BLFOV", "BLchAvg",
-    "Reuse", "autoCen", "Beam",  "Cmethod",  "CCFilter",  "maxPixel", 
+    "Reuse", "autoCen", "targBeam", "Beam",  "Cmethod",  "CCFilter",  "maxPixel", 
     "PBCor", "antSize", "doRestore", "doFit", "doFull", "doComRes", "do3D", 
     "autoWindow", "subA",  "Alpha",
     "modelFlux", "modelPos", "modelParm",
@@ -3116,8 +3117,8 @@ void getBeam (ObitInfoList *myInput, gboolean doPhase,
 } /* end getBeam */
 
 /*----------------------------------------------------------------------- */
-/*  If a Beam size is not specified in myInput then calculate the beam    */
-/*  size of thefirst IF and write it into myInput                         */
+/*  If a target Beam size is not specified in myInput then calculate the  */
+/*  beam size of the first IF and write it into myInput                   */
 /*   Input:                                                               */
 /*      myInput   Input parameters on InfoList use:                       */
 /*      inData    ObitUV to test image                                    */
@@ -3145,7 +3146,7 @@ void BeamOne (ObitInfoList* myInput, ObitUV* inData,
     "doFull", "do3D", "FOV", "PBCor", "antSize", 
     "Catalog", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
     "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "WtPower",
-    "MaxBaseline", "MinBaseline", "rotate", "Beam",
+    "MaxBaseline", "MinBaseline", "rotate", "targBeam", "Beam",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
     "nxBeam", "nyBeam", "Alpha", "doCalSelect",
     NULL
@@ -3154,8 +3155,8 @@ void BeamOne (ObitInfoList* myInput, ObitUV* inData,
 
   if (err->error) return;
 
-  /* See if Beam already specified? */
-  ObitInfoListGetTest(myInput, "Beam", &type, dim, Beam);
+  /* See if target Beam already specified? */
+  ObitInfoListGetTest(myInput, "targBeam", &type, dim, Beam);
   if (Beam[0]>0.0) return;
 
   /* Tell about it */
@@ -3250,8 +3251,8 @@ void BeamOne (ObitInfoList* myInput, ObitUV* inData,
   Beam[2] =  scrImage->myDesc->beamPA;
 
   dim[0] = 3;dim[1] = 1;
-  ObitInfoListAlwaysPut (myInput, "Beam", OBIT_float, dim, Beam);
-  ObitInfoListAlwaysPut (inData->info,  "Beam", OBIT_float, dim, Beam);
+  ObitInfoListAlwaysPut (myInput, "targBeam", OBIT_float, dim, Beam);
+  ObitInfoListAlwaysPut (inData->info,  "targBeam", OBIT_float, dim, Beam);
 
   /* Tell about it */
   Obit_log_error(err, OBIT_InfoErr, 

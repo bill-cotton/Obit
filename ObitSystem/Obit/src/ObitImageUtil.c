@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -866,14 +866,13 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   gchar outName[120];
   olong i, j, ip, pln, nImage, nGain=0, *gainUse=NULL, gain;
   olong plane[5], NPIO, oldNPIO, *arrayNx=NULL, *arrayNy=NULL;
-  olong doCalib = 0, norder, iorder, itemp;
+  olong doCalib = 0, norder, iorder;
   olong blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   gboolean forceBeam, doCalSelect=FALSE;
   ObitIOAccess access;
-  ObitUV    **data  =NULL;
   ObitUVGrid **grids=NULL;
   ObitImage **imArray=NULL;
   ObitUVGridClassInfo *gridClass;
@@ -916,11 +915,14 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   nGain = dim[0];
   
   /* Create work arrays */
-  data    = g_malloc0(nImage*sizeof(ObitUV*));
   grids   = g_malloc0(nImage*sizeof(ObitUVGrid*));
   imArray = g_malloc0(nImage*sizeof(ObitImage*));
   arrayNx = g_malloc0(nImage*sizeof(olong));
   arrayNy = g_malloc0(nImage*sizeof(olong));
+  
+  /* Ensure data fully instantiated and OK */
+  ObitUVFullInstantiate (inUV, TRUE, err);
+  if (err->error) goto cleanup;
   
   /* Loop over images creating things */
   ip = 0;
@@ -971,18 +973,6 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
       
       /* Loop over beams */
       for (iorder=0; iorder<=norder; iorder++) {
-	sprintf (outName, "UV for %s Beam %d ",outImage[j]->name,iorder);
-	data[ip]  = newObitUV(outName);
-	
-	/* Copy controls */
-	data[ip]->info  = ObitInfoListCopyData(inUV->info, data[ip]->info);
-	dim[0] = 1; dim[1] = 1; dim[2] = 1; /* No cal for now */
-	itemp = -1;
-	ObitInfoListAlwaysPut(data[ip]->info, "doCalib", OBIT_long, dim, &itemp);
-	/* Ensure out fully instantiated and OK */
-	ObitUVFullInstantiate (data[ip], TRUE, err);
-	if (err->error) goto cleanup;
-	
 	/*array[ip] = theBeam->image;*/
 	imArray[ip] = ObitImageRef(theBeam);
 	arrayNx[ip] = theBeam->myDesc->inaxes[0];
@@ -1005,21 +995,21 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
 	dim[0] = dim[1] = dim[2] = 1;
 	ObitInfoListAlwaysPut (grids[ip]->info, "Channel",  OBIT_long, dim,  &pln);
 	/* Any calibration setup */
-	if (doCalib>0) {
+	if ((doCalib>0) && (ip==0) ) {
 	  gain = 0;
 	  if (nGain==1)    gain = gainUse[0];
 	  if (nGain>=nPar) gain = gainUse[j];
 	  dim[0] = 1; dim[1] = 1; dim[2] = 1;
-	  ObitInfoListAlwaysPut(data[ip]->info, "gainUse", OBIT_long, dim, &gain);
-	  ObitInfoListAlwaysPut(data[ip]->info, "doCalib", OBIT_long, dim, &doCalib);
+	  ObitInfoListAlwaysPut(inUV->info, "gainUse", OBIT_long, dim, &gain);
+	  ObitInfoListAlwaysPut(inUV->info, "doCalib", OBIT_long, dim, &doCalib);
 	}
 	/* Gridding setup */
 	gridClass = (ObitUVGridClassInfo*)grids[ip]->ClassInfo; /* Gridder class */
-	gridClass->ObitUVGridSetup (grids[ip], data[ip], (Obit*)theBeam, TRUE, err);
+	gridClass->ObitUVGridSetup (grids[ip], inUV, (Obit*)theBeam, TRUE, err);
 	/* WB Image? Save beam order */
 	if (ObitImageWBIsA(outImage[j])) ((ObitUVGridWB*)grids[ip])->order = iorder;
-	if (doCalib<=0) {  /* Need files open for calibration */
-	  ObitUVClose(data[ip], err);
+	if ((doCalib<=0) && (ip==0)) {  /* Need files open for calibration */
+	  ObitUVClose(inUV, err);
 	  if (err->error) goto cleanup;
 	}
 	ip++;
@@ -1032,16 +1022,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
 			routine, ip, nImage) ;
     /* Image grid */
     sprintf (outName, "UVGrid for %s image",outImage[j]->name);
-    data[ip]  = newObitUV(outName);
-    /* Copy controls */
-    data[ip]->info  = ObitInfoListCopyData(inUV->info, data[ip]->info);
-    dim[0] = 1; dim[1] = 1; dim[2] = 1; /* No cal for now */
-    itemp = -1;
-    ObitInfoListAlwaysPut(data[ip]->info, "doCalib", OBIT_long, dim, &itemp);
     
-    /* Ensure out fully instantiated and OK */
-    ObitUVFullInstantiate (data[ip], TRUE, err);
-    if (err->error) goto cleanup;
     imArray[ip] = ObitImageRef(outImage[j]);
     pln = 1;
     dim[0] = dim[1] = dim[2] = 1;
@@ -1050,21 +1031,12 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
     arrayNy[ip] = outImage[j]->myDesc->inaxes[1];
     /*array[ip] = outImage[j]->image;*/
     grids[ip]   = ObitUVGridRef(outImage[j]->myGrid);
-    /* Any calibration setup */
-    if (doCalib>0) {
-      gain = 0;
-      if (nGain==1)    gain = gainUse[0];
-      if (nGain>=nPar) gain = gainUse[j];
-      dim[0] = 1; dim[1] = 1; dim[2] = 1;
-      ObitInfoListAlwaysPut(data[ip]->info, "gainUse", OBIT_long, dim, &gain);
-      ObitInfoListAlwaysPut(data[ip]->info, "doCalib", OBIT_long, dim, &doCalib);
-    }
     /* Gridding setup */
     gridClass = (ObitUVGridClassInfo*)grids[ip]->ClassInfo; /* Gridder class */
-    gridClass->ObitUVGridSetup (grids[ip], data[ip], (Obit*)outImage[j], FALSE, err);
+    gridClass->ObitUVGridSetup (grids[ip], inUV, (Obit*)outImage[j], FALSE, err);
     if (doCalib<=0) {  /* Need files open for calibration - 
 			  this may blow limit on open files */
-      ObitUVClose(data[ip], err);
+      ObitUVClose(inUV, err);
       if (err->error) goto cleanup;
     }
     ip++;
@@ -1118,16 +1090,16 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   
   /* Reset UV buffer size to at least 2 MByte per thread */
   oldNPIO  = 1000;
-  ObitInfoListGetTest (data[0]->info, "nVisPIO", &type, dim,  (gpointer)&oldNPIO);
+  ObitInfoListGetTest (inUV->info, "nVisPIO", &type, dim,  (gpointer)&oldNPIO);
   /* How many threads? */
   grids[0]->nThreads = MAX (1, ObitThreadNumProc(grids[0]->thread));
-  NPIO = ObitImageUtilBufSize(data[0]);
+  NPIO = ObitImageUtilBufSize(inUV);
   dim[0] = dim[1] = dim[2] = 1;
-  ObitInfoListAlwaysPut (data[0]->info, "nVisPIO",  OBIT_long, dim,  (gpointer)&NPIO);
+  ObitInfoListAlwaysPut (inUV->info, "nVisPIO",  OBIT_long, dim,  (gpointer)&NPIO);
   
   /*  Open uv data for first if needed */
-  if ((data[0]->myStatus!=OBIT_Active) && (data[0]->myStatus!=OBIT_Modified)) {
-    retCode = ObitUVOpen (data[0], access, err);
+  if ((inUV->myStatus!=OBIT_Active) && (inUV->myStatus!=OBIT_Modified)) {
+    retCode = ObitUVOpen (inUV, access, err);
     if (err->error) goto cleanup;
   }
   
@@ -1135,15 +1107,15 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
      Grid  */
   gridClass = (ObitUVGridClassInfo*)grids[0]->ClassInfo; /* Gridder class */
   if (nImage>1) 
-    gridClass->ObitUVGridReadUVPar (nImage, grids, data, err);
+    gridClass->ObitUVGridReadUVPar (nImage, grids, inUV, err);
   else /* Only one */
-    gridClass->ObitUVGridReadUV (grids[0], data[0], err);
+    gridClass->ObitUVGridReadUV (grids[0], inUV, err);
   if (err->error) goto cleanup;
   
   /* Close uv data files if needed */
   if (doCalib>0) {  /* Need files open for calibration */
     for (ip=0; ip<nImage; ip++) {
-      ObitUVClose(data[ip], err);
+      ObitUVClose(inUV, err);
       if (err->error) goto cleanup;
     }
   }
@@ -1178,7 +1150,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
 	  /* Tell Sum of gridding weights */
 	  Obit_log_error(err, OBIT_InfoErr, 
 			 "Sum of Weights %g for %s",
-			 outImage[j]->myGrid->BeamNorm,outImage[j]->name);
+			 grids[j]->BeamNorm,outImage[j]->name);
 	  
 	  /* tell Max/Min */
 	  imMax = theBeam->myDesc->maxval;
@@ -1260,12 +1232,6 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   for (j=0; j<nPar; j++) {
     outImage[j]->myGrid = ObitUVGridUnref(outImage[j]->myGrid);
   }
-  
-  /* Free uv objects */
-  if (data) {
-    for (j=0; j<nImage; j++) data[j] = ObitUVUnref(data[j]);
-    g_free(data);
-  } /* end if data */
   
   g_free(imArray); 
   g_free(arrayNx);

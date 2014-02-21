@@ -314,6 +314,7 @@ void ObitSwPowerClone  (ObitSwPower *in, ObitSwPower *out, ObitErr *err)
  * \param SYTable SwPower table to interpolate
  * \param UVData  UV data used to get antenna/array information, info items:
  * \li calInt   OBIT_float (1) Calibration interval in sec [def 30 sec]
+ * \li doSmoo   OBIT_boo   (1) Smooth SY table to calInt?  [def TRUE]
  * \param err     Obit error stack object.
  * \return the new object.
  */
@@ -327,6 +328,7 @@ ObitSwPower* ObitSwPowerCreate (gchar* name, ObitTableSY *SYTable,
   olong highVer, ver, iver, isuba;
   ofloat calInt=30.0, smoParm[3];
   olong numOrb=0, numPCal=0;
+  gboolean doSmoo=TRUE;
   gchar *routine = "ObitSwPowerCreate";
 
   /* Create basic structure */
@@ -334,7 +336,8 @@ ObitSwPower* ObitSwPowerCreate (gchar* name, ObitTableSY *SYTable,
 
   /* Copy/smooth input? */
   ObitInfoListGetTest(UVData->info, "calInt",  &type, dim, &calInt);
-  if (calInt>0.0) {
+  ObitInfoListGetTest(UVData->info, "doSmoo",  &type, dim, &doSmoo);
+  if ((calInt>0.0) && doSmoo) {
     /* Copy/smooth */
     highVer = ObitTableListGetHigh (UVData->tableList, "AIPS SY");
     ver     = highVer+1;

@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -266,6 +266,8 @@ void ObitUVSelDefault (ObitUVDesc* in, ObitUVSel* sel)
   g_assert (ObitIsA(sel, &myClassInfo));
 
   /* Selected IFs if needed */
+  /* resize? */
+  if (in->inaxes[in->jlocif]!=sel->nifsel) {g_free(sel->IFSel); sel->IFSel=NULL;}
   if (sel->IFSel==NULL) {
     sel->ifsel1 = 0;   /* first selected */
     if (in->jlocif>=0) sel->nifsel = in->inaxes[in->jlocif];
@@ -273,7 +275,6 @@ void ObitUVSelDefault (ObitUVDesc* in, ObitUVSel* sel)
     sel->IFSel = g_malloc0(sel->nifsel*sizeof(gboolean));
     for (i=0; i<sel->nifsel; i++) sel->IFSel[i] = TRUE;
   }
-
   /* Index as well */
   ObitUVDescIndex(in);
 

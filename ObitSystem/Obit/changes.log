@@ -1855,3 +1855,53 @@ Obit/src/ObitBDFData.c:
   InitScan: Tolerate fewer intents given than stated.
   InitScan: set aoffs for nAPoln =4
 3 Feb 2014 svn version 469
+
+Major performanence boost for gridding, support for EVLA lowband, calibrator models,
+Obit/src/ObitGainCal.c:
+  several: fix bugs with writing output SN table.
+Obit/src/ObitSwPower.c:
+  Allow turning off smoothing.
+Obit/tasks/SYGain.c Obit/TDF/SYGain.TDF
+  New task to compute EVLA gains from SY/CD tables
+Obit/src/ObitUVSoln.c:
+  SmooGauss: fix bug in Gaussian
+Obit/src/ObitImageUtil.c:
+  SelCopy: bug in size, initialization of lblc, ltrc, linc
+Obit/TDF/MFImage.TDF Obit/TDF/MFBeam.TDF Obit/tasks/MFImage.c Obit/tasks/MFBeam.c:
+  Add parameter targBeam as the target beam.
+Obit/src/ObitUVGridMF.c:
+  Setup: Use "targBeam" if given for target beam
+Obit/src/ObitUVWeight.c:
+  Input: Use PA from TaperIF rather than UVTaper
+  GridBuffer: protect against data out of grid.
+Obit/TDF/MFImage.TDF:
+  Better documentation for TaperIF
+Obit/TDF/UVXpnd.TDF Obit/tasks/UVXpnd.c:
+  New task for expand data in frequency.
+Obit/python/EVLACal.py:
+  Add support for LowBand/VLITE
+  add cal models, fix bug
+Obit/src/ObitUVSel.c:
+  Default: resize IFSel if needed.
+Obit/include/ObitExp.h  Obit/src/ObitExp.c:
+  AVX implementation
+Obit/include/ObitThreadGrid.h  Obit/include/ObitThreadGridDef.h Obit/include/ObitThreadGridClassDef.h:
+Obit/src/ObitThreadGrid.c:
+  New, faster UV data gridding class
+Obit/include/ObitUVGrid.h Obit/include/ObitUVGridDef.h
+Obit/include/ObitUVGridMFDef.h Obit/include/ObitUVGridWBDef.h
+Obit/src/ObitUVGrid.c Obit/src/ObitUVGridMF.c Obit/src/ObitUVGridWB.c:
+Obit/src/ObitImageUtil.c:
+  Implement ObitThreadGrid
+Obit/python/EVLALowBandPipe.py Obit/share/scripts/EVLALowBandTemplateParm.py:
+  Scripts for Lowband/VLITE
+Obit/share/data/3C286PModel.fits.gz Obit/share/data/3C147PModel.fits.gz
+Obit/share/data/3C123PModel.fits.gz Obit/share/data/3C138PModel.fits.gz
+Obit/share/data/3C196PModel.fits.gz Obit/share/data/3C295PModel.fits.gz
+Obit/share/data/3C380PModel.fits.gz Obit/share/data/3C48PModel.fits.gz
+Obit/share/data/3C286SModel.fits.gz Obit/share/data/3C147SModel.fits.gz
+Obit/share/data/3C123SModel.fits.gz Obit/share/data/3C138SModel.fits.gz
+Obit/share/data/3C196SModel.fits.gz Obit/share/data/3C295SModel.fits.gz
+Obit/share/data/3C380SModel.fits.gz Obit/share/data/3C48SModel.fits.gz
+  Wideband calibrator models
+21 Feb. 2014 svn version 470

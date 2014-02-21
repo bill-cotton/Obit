@@ -1,0 +1,176 @@
+; SYGain
+;---------------------------------------------------------------
+;! Derives a gain calibration AIPS SN table from an AIPS SY table
+;# Obit Task Calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2014
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+SYGain    LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+SYGain    Task to derive an AIPS SN table from an AIPS SY table.
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                             FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                             Input UV file name (name)
+**PARAM** str 6
+inClass                            Input UV file name (class)
+**PARAM** int 1
+inSeq             0.0     9999.0   Input UV file name (seq. #)
+**PARAM** int 1
+inDisk            0.0        9.0   Input UV file disk unit #
+**PARAM** str 16 30
+Sources                            Source list ' '=>all.
+**PARAM** int 1 **DEF** -1
+Qual             -1.0              Source qualifier -1=>all
+**PARAM** str 4
+souCode                            Calibrator code '    '=>all
+**PARAM** int 1
+FreqID                             Freq. ID to select, 0=>all
+**PARAM** float 2
+timeRange                          Time range to use.
+**PARAM** int 50
+Antennas                           Antennas to correct.
+**PARAM** int 1
+subA              0.0     9999.0   Subarray; 0 => all.
+**PARAM** int 64
+SWUse                              List of replacement SWs
+**PARAM** str 4
+smoFunc                            Smoothing function
+**PARAM** float 5 
+smoParm                            Smoothing parameters
+**PARAM** float 1 **DEF** 0.5
+alpha                              Smoothing parameter.
+**PARAM** float 5 
+clipSmo                            Smoothing time for clipping
+**PARAM** float 5 
+clipParm                           Clipping values
+**PARAM** int 1
+SYVer                              Input SY table; 0=>highest
+**PARAM** int 1
+SYOut                              Output SY table; 0=>new
+**PARAM** int 1
+solnOut                            Output SN table; 0=>new
+**PARAM** float 1 **DEF** 0.1
+calInt                             Interval in output table for 
+				   solutions (min).
+**PARAM** int 1 **DEF** 1
+nThreads            0              Number of threads to use
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
+----------------------------------------------------------------
+SYGain
+Task: Clip and smooth an SY table and write an AIPS SN table for 
+selected sources and times in the iNdeX table.
+Only for EVLA data with SY and CD tables.
+
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input AIPS UV file name (name).      Standard defaults.
+  inClass....Input AIPS UV file name (class).     Standard defaults.
+  inSeq......Input AIPS UV file name (seq. #).    0 => highest.
+  inDisk.....Disk drive # of input UV file.  0 => any.
+  Sources....list of sources to process.
+             '*' = all; a "-" before a source name
+             means all except ANY source named.
+  Qual.......Only sources with a source qualifier number in the SU table
+             matching Qual will be used if Qual is >= 0.  If Qual < 0,
+             all qualifiers will be written.  These qualifiers will be
+             written to separate output files.  Note that outSeq must be
+             zero in this case.
+  souCode....Sources may be selected on the basis of the calibrator code
+             given in the SU table.
+                  '    ' => any calibrator code selected
+                  '*   ' => any non blank code (cal. only)
+                  '-CAL' => blank codes only (no calibrators)
+                  anything else = calibrator code to select.
+             NB: The souCode test is applied in addition to the other
+             tests, i.e. Sources and Qual, in the selection of sources to
+             process.
+  FreqID.....Frequency identifier to select (you may determine
+	     which is applicable from the OPTYPE='SCAN' listing
+	     produced by LISTR).
+  timeRange..Time range of the data to be used. 
+             start day, end day.
+             Use  dhms2day to convert from human readable form
+  Antennas...A list of the antennas to be modified.  If any
+             number is negative then all antennas listed  are
+             NOT to be modified.  All 0 => use all.
+  subA.......The subarray to modify.  0 -> all.
+  SWUse......List of (1-rel) spectral windows to substitute
+             for each (0-rel) SW when SY table SYVer is copied 
+             to SYOut.  At lower frequencies this help with
+             spectral windows badly contaminated by RFI.
+             0 => no change.
+  smoFunc....The smoothing function
+             'BOX ' = boxcar smoothing.
+             'MWF ' = Median window filter
+             'GAUS' = Gaussian filter
+             other => boxcar
+  smoParm......Parameters for smoothing function.
+             'BOX':
+             smoParm gives the boxcar width in hours.
+              [0] => smoothing time for power diff,
+              [1] => smoothing time for power sum,
+              [2] => smoothing time for post gain
+             'MWF':
+             smoParm gives the window width in hours.
+              (1) => smoothing time for power diff,
+              (2) => smoothing time for power sum,
+              (3) => smoothing time for post gain
+  alpha......Controls the MWF smoothing process.
+             The data are first sorted and the most extreme alpha/2
+             values are ignored and the rest averaged.
+             0 -> 1 = pure boxcar -> pure median window filter.
+  clipSmo....Data can be clipped by comparison with a median
+             window filter.  The width of the Median window
+             is specified in clipSmo:
+              (0) => smoothing time for power diff,
+              (1) => smoothing time for power sum,
+              (2) => smoothing time for post gain
+  clipParm...The maximum allowed deviation (0 => all values OK)
+              (0) => Max. deviation for power diff,
+              (1) => Max. deviation for power sum,
+              (2) => Max. deviation for post gain
+  SYVer......input version number of the SY table to smooth.
+             0 => Highest.
+  SYOut......output version number of the SY table clipped and
+             smoothed.   0 => New
+  solnOut....output version of SN table to write.
+             0 => create new table.
+  calInt.....Interval (min) between entries.
+  nThreads...If the Obit libraries are compiled with multiple
+             thread operation enabled, this parameter sets the 
+             number of threads that can be used for parallel 
+             operations. 
+             NB: This only improves performance if there are 
+             multiple processors and/or cores in the host.
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files.
+             Path is absolute or relative to where the task 
+             executes.
+----------------------------------------------------------------

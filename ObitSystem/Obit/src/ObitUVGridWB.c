@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2011                                          */
+/*;  Copyright (C) 2010-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -28,6 +28,7 @@
 
 #include <math.h>
 #include "ObitUVGridWB.h"
+#include "ObitThreadGrid.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -712,7 +713,6 @@ static void ObitUVGridWBClassInfoDefFn (gpointer inClass)
   theClass->ObitUVGridSetup      = (ObitUVGridSetupFP)ObitUVGridWBSetup;
   theClass->ObitUVGridFFT2Im     = (ObitUVGridFFT2ImFP)ObitUVGridWBFFT2Im;
   theClass->ObitUVGridFFT2ImPar  = (ObitUVGridFFT2ImParFP)ObitUVGridWBFFT2ImPar;
-  theClass->PrepBuffer           = (PrepBufferFP)PrepBufferWB;
 
 } /* end ObitUVGridWBClassDefFn */
 
@@ -763,199 +763,6 @@ void ObitUVGridWBClear (gpointer inn)
     ParentClass->ObitClear (inn);
   
 } /* end ObitUVGridWBClear */
-
-/**
- * Prepares a buffer load of visibility data for gridding:
- * \li rotate (u,v,w) if doing 3D imaging and a shift.
- * \li shift position if needed.
- * \li if doBeam then replace data with beam data.
- * \li enforce guardband - no data near outer edges of grid 
- * \li Convert to cells at the reference frequency.
- * \li All data  converted to the positive V half plane.
- * \param in      Object with grid to accumulate.
- * \param uvdata  Object with uvdata in buffer.
- * \param loVis   (0-rel) first vis in buffer in uv data
- * \param hiVis   (1-rel) highest vis in buffer in uv data
- */
- static void PrepBufferWB (ObitUVGrid* inn, ObitUV *uvdata, 
-			   olong loVis, olong hiVis)
-{
-  olong ivis, nvis, ifreq, nif, iif, nfreq, ifq, loFreq, hiFreq;
-  ofloat *u, *v, *w, *vis, *ifvis, *vvis;
-  ofloat phase, cp, sp, vr, vi, uu, vv, ww, uf, vf, wf, tfact;
-  ofloat bl2, blmax2, blmin2, wt, guardu, guardv, ftemp, tape;
-  odouble ifreq0;
-  ObitUVDesc *desc;
-  olong fincf, fincif, order;
-  gboolean doShift, doFlag, flip, doTaper;
-  ObitUVGridWB *in = (ObitUVGridWB*)inn;
-
-  /* error checks */
-  g_assert (ObitUVGridWBIsA(in));
-  g_assert (ObitUVIsA(uvdata));
-  g_assert (uvdata->myDesc != NULL);
-  g_assert (uvdata->buffer != NULL);
-
-  /* how much data? */
-  desc  = uvdata->myDesc;
-  nvis  = desc->numVisBuff;
-  if (nvis<=0) return; /* need something */
-  nfreq = desc->inaxes[desc->jlocf];
-  nif = 1;
-  if (desc->jlocif>=0) nif = desc->inaxes[desc->jlocif];
-  order = in->order;  /* Order number if beam */
-  if (!in->doBeam) order = -1;  /* Not beam */
-
-  /* range of channels (0-rel) */
-  loFreq = in->startChann-1;
-  hiFreq = loFreq + in->numberChann;
-  if (in->numberChann<=0) hiFreq = (nfreq - in->startChann);
-
-  /* Channel and IF increments in frequency scaling array */
-  fincf  = MAX (1, (desc->incf  / 3) / desc->inaxes[desc->jlocs]);
-  fincif = MAX (1, (desc->incif / 3) / desc->inaxes[desc->jlocs]);
-
- /* initialize data pointers into buffer */
-  u   = uvdata->buffer+desc->lrec*loVis+desc->ilocu;
-  v   = uvdata->buffer+desc->lrec*loVis+desc->ilocv;
-  w   = uvdata->buffer+desc->lrec*loVis+desc->ilocw;
-  vis = uvdata->buffer+desc->lrec*loVis+desc->nrparm;
-
-  ifreq0 = 1.0 / in->refFreq;
-  /* what needed */
-  doShift = (in->dxc!=0.0) || (in->dyc!=0.0) || (in->dzc!=0.0);
-  doShift = doShift && (!in->doBeam); /* no shift for beam */
-
-  /* Need additional taper? */
-  doTaper = (in->BeamTaperUV!=0.0);
-
-  /* Baseline max, min values */
-  blmax2 = in->blmax * in->blmax;
-  blmin2 = in->blmin * in->blmin;
-
-  /* guardband in wavelengths */
-  guardu = ((1.0-in->guardband) * (ofloat)in->grid->naxis[0]) / fabs(in->UScale);
-  guardv = ((1.0-in->guardband) * ((ofloat)in->grid->naxis[1])/2) / fabs(in->VScale);
-
-  /* Loop over visibilities */
-  for (ivis=loVis; ivis<hiVis; ivis++) {
-
-    /* check exterma */
-    bl2 = (*u)*(*u) + (*v)*(*v);
-    doFlag = ((bl2<blmin2) || (bl2>blmax2));
-
-    /* rotate (u,v,w) if 3D */
-    if (in->do3Dmul ) {
-      uu = (*u)*in->URot3D[0][0] + (*v)*in->URot3D[0][1] + (*w)*in->URot3D[0][2];
-      vv = (*u)*in->URot3D[1][0] + (*v)*in->URot3D[1][1] + (*w)*in->URot3D[1][2];
-      ww = (*u)*in->URot3D[2][0] + (*v)*in->URot3D[2][1] + (*w)*in->URot3D[2][2];
-      *u = uu;
-      *v = vv;
-      *w = ww;
-    } /* end rotate u,v,w */
-    
-    /* in the correct half plane? */
-    flip = (*u) <= 0.0;
-
-    /* loop over IFs */
-    ifvis = vis;
-    for (iif = 0; iif<nif; iif++) {
-
-      /* loop over frequencies */
-      vvis = ifvis;
-      for (ifreq = loFreq; ifreq<=hiFreq; ifreq++) {
-	ifq = iif*fincif + ifreq*fincf;  /* index in IF/freq table */
-
-	/* is this one wanted? */
-	if (doFlag)  vvis[2] = 0.0;  /* baseline out of range? */
-	wt = vvis[2];                /* data weight */
-	if (wt <= 0.0) {vvis += desc->incf; continue;}
-	
-	/* Scale coordinates to frequency */
-	uf = *u * desc->fscale[ifq];
-	vf = *v * desc->fscale[ifq];
-	wf = *w * desc->fscale[ifq];
-
-	/* shift position if needed */
-	if (doShift) {
-	  phase = (uf*in->dxc + vf*in->dyc + wf*in->dzc);
-	  cp = cos(phase);
-	  sp = sin(phase);
-	  vr = vvis[0];
-	  vi = vvis[1];
-	  /* rotate phase of visibility */
-	  vvis[0] = cp * vr - sp * vi;
-	  vvis[1] = sp * vr + cp * vi;
-	}
-	
-	/* Making a beam - if so replace data with (1,0) */
-	/* Branch on beam/data order */
-	switch (order) {
-	case -1:   /* Not beam - grid data */
-	  break;
-	case 0:   /* Dirty beam */
-	  vvis[0] = 1.0;
-	  vvis[1] = 0.0;
-	  break;
-	case 1:   /* first order */
-	  vvis[0] = log(desc->freqArr[ifq]*ifreq0); /*  ln(nu/nu0) */
-	  /* DEBUG vvis[0] = (desc->freqArr[ifq]-in->refFreq)*ifreq0;  */ /* linear in nu */
-	  vvis[1] = 0.0;
-	  break;
-	case 2:   /* second order */
-	  ftemp   = log(desc->freqArr[ifq]*ifreq0); /* ln(nu/nu0) */
-	  /* DEBUG ftemp = (desc->freqArr[ifq]-in->refFreq)*ifreq0; *//* linear in nu */
-	  vvis[0] = ftemp*ftemp;
-	  vvis[1] = 0.0;
-	  break;
-	case 3:   /* third order */
-	  ftemp   = log(desc->freqArr[ifq]*ifreq0);  /* ln(nu/nu0) */
-	  /* DEBUG ftemp = (desc->freqArr[ifq]-in->refFreq)*ifreq0;*/ /* linear in nu */
-	  vvis[0] = ftemp*ftemp*ftemp;
-	  vvis[1] = 0.0;
-	  break;
-	  
-	default: /* grid data */
-	  break;
-	}; /* end switch */
-	
-	/* conjugate phase if needed */
-	if (flip)  vvis[1] = - vvis[1];
-	
-	/* enforce guardband */
-	if ((fabs(uf)>guardu) || (fabs(vf)>guardv)) vvis[2] = 0.0;
-	
-	/* apply any taper to the weight. */
-	if (doTaper) {
-	  tape = ((uf*uf) + (vf*vf))*in->BeamTaperUV;
-	  if (tape<-14.0) tfact = 0.0; /* underflow */
-	  else tfact = exp(tape);
-	  vvis[2] *= tfact;
-	}
-	
-	vvis += desc->incf; /* visibility pointer */
-      } /* end loop over frequencies */
-      ifvis += desc->incif; /* visibility pointer */
-    } /* Loop over IFs */
-
-    /* Scale u,v,w to cells at reference frequency */
-    if (flip) { /* put in other half plane */
-      *u = -((*u) * in->UScale);
-      *v = -((*v) * in->VScale);
-      *w = -((*w) * in->WScale);
-    } else { /* no flip */
-      *u *= in->UScale;
-      *v *= in->VScale;
-      *w *= in->WScale;
-    }
-
-    /* update data pointers */
-    u += desc->lrec;
-    v += desc->lrec;
-    w += desc->lrec;
-    vis += desc->lrec;
-  } /* end loop over visibilities */
-} /* end PrepBufferWB */
 
 /** 
  * Reorders grid and do gridding correction.

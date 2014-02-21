@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -529,8 +529,8 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
 	  ftemp2 = fptr[j+1] * 1.0e3;  /* To lambdas */
 	  sigma2u = log(0.3)/(ftemp1*ftemp1);
 	  sigma2v = log(0.3)/(ftemp2*ftemp2);
-	  cpa = cos(farr[2]*DG2RAD);
-	  spa = sin(farr[2]*DG2RAD);
+	  cpa = cos(fptr[j+2]*DG2RAD);
+	  spa = sin(fptr[j+2]*DG2RAD);
 	  in->sigma1[i] = (cpa*cpa*sigma2v + spa*spa*sigma2u);
 	  in->sigma2[i] = (spa*spa*sigma2v + cpa*cpa*sigma2u);
 	  in->sigma3[i] = 2.0*cpa*spa*(sigma2v - sigma2u);
@@ -935,19 +935,21 @@ static void GridBuffer (ObitUVWeight* in, ObitUV *uvdata)
 	      pos[0] = -iu;
 	      pos[1] = -iv + lGridCol/2;
 	      grid = ObitFArrayIndex (in->wtGrid[iif], pos); /* pointer in grid */
-	      ncol = -iu;
-	      vvoff = voff;
-	      for (icv=0; icv<in->convWidth; icv++) {
-		uuoff = uoff;
-		ggrid  = grid;
-		for (icu=0; icu<=ncol; icu++) {
-		  *ggrid   += weight * convfnp[uuoff+vvoff];
-		  uuoff += uConvInc;  /* Convolution kernel pointer */
-		  ggrid -= 1; /* gridding pointer - opposite of normal gridding */
-		} /* end inner gridding loop */
-		vvoff += vConvInc;  /* Convolution kernel pointer */
-		grid -= lGridRow; /* gridding pointer - reverse direction for conjugate */
-	      } /* end outer loop */
+	      if (grid) { /* in grid */
+		ncol = -iu;
+		vvoff = voff;
+		for (icv=0; icv<in->convWidth; icv++) {
+		  uuoff = uoff;
+		  ggrid  = grid;
+		  for (icu=0; icu<=ncol; icu++) {
+		    *ggrid   += weight * convfnp[uuoff+vvoff];
+		    uuoff += uConvInc;  /* Convolution kernel pointer */
+		    ggrid -= 1; /* gridding pointer - opposite of normal gridding */
+		  } /* end inner gridding loop */
+		  vvoff += vConvInc;  /* Convolution kernel pointer */
+		  grid -= lGridRow; /* gridding pointer - reverse direction for conjugate */
+		} /* end outer loop */
+	      } /* end in grid */
 	      
 	      /* set up for rest of grid */
 	      ncol = (in->convWidth + iu); /* how many columns left? */
@@ -959,18 +961,20 @@ static void GridBuffer (ObitUVWeight* in, ObitUV *uvdata)
 	    
 	    /* main loop gridding */
 	    grid = ObitFArrayIndex (in->wtGrid[iif], pos); /* pointer in grid */
-	    vvoff = voff;
-	    for (icv=0; icv<in->convWidth; icv++) {
-	      uuoff = uoff;
-	      ggrid  = grid;
-	      for (icu=0; icu<ncol; icu++) {
-		*ggrid   += weight * convfnp[uuoff+vvoff];
-		uuoff += uConvInc;  /* Convolution kernel pointer */
-		ggrid += 1; /* gridding pointer */
-	      } /* end inner gridding loop */
-	      vvoff += vConvInc;  /* Convolution kernel pointer */
-	      grid += lGridRow; /* gridding pointer */
-	    } /* end outer gridding loop */
+	    if (grid) {  /* In grid */
+	      vvoff = voff;
+	      for (icv=0; icv<in->convWidth; icv++) {
+		uuoff = uoff;
+		ggrid  = grid;
+		for (icu=0; icu<ncol; icu++) {
+		  *ggrid   += weight * convfnp[uuoff+vvoff];
+		  uuoff += uConvInc;  /* Convolution kernel pointer */
+		  ggrid += 1; /* gridding pointer */
+		} /* end inner gridding loop */
+		vvoff += vConvInc;  /* Convolution kernel pointer */
+		grid += lGridRow; /* gridding pointer */
+	      } /* end outer gridding loop */
+	    } /* end if grid */
 	    vvis += desc->incs; /* visibility pointer */
 	  } /* end of Stokes gridding loop */
 	  
