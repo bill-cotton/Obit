@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -111,7 +111,7 @@ void ObitUVGridMFSetup (ObitUVGrid *in, ObitUV *UVin,
 void ObitUVGridMFReadUV (ObitUVGrid *in, ObitUV *UVin, ObitErr *err);
 
 /** Public: Parallel read uv data accumulating to grid */
-void ObitUVGridMFReadUVPar (olong nPar, ObitUVGrid **in, ObitUV **UVin, 
+void ObitUVGridMFReadUVPar (olong nPar, ObitUVGrid **in, ObitUV *UVin, 
 			    ObitErr *err);
 
 /** Public: FFT grid to image plane with gridding correction. */
