@@ -70,7 +70,7 @@ typedef struct {
   ObitThread *thread;
   /* SkyModel with model components loaded (ObitSkyModelLoad) */
   ObitUVGrid *in;
-  /* UV data set to model and subtract from current buffer */
+  /* output image array */
   ObitFArray *array;
   /* thread number, >0 -> no threading   */
   olong        ithread;
@@ -726,13 +726,14 @@ void ObitUVGridFFT2ImPar (olong nPar, ObitUVGrid **in, Obit **oout, ObitErr *err
 {
   ObitImage **out = (ObitImage**)oout;
   olong i, nTh, nnTh, off, channel, nLeft, pos[5], xdim[7], plane[5]={1,1,1,1,1};
+  olong nThread;
   FFT2ImFuncArg *args=NULL;
   ObitFArray *array;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   ObitThreadFunc func=(ObitThreadFunc)ThreadFFT2Im;
   gboolean OK;
-  ofloat BeamNorm, fact, *Corrp;
+  ofloat BeamNorm, *Corrp;
   gchar *routine = "ObitUVGridFFT2ImPar";
   /*ObitFArray *temp1=NULL, *temp2=NULL;  
     gboolean damn=TRUE;  DEBUG */
@@ -750,6 +751,11 @@ void ObitUVGridFFT2ImPar (olong nPar, ObitUVGrid **in, Obit **oout, ObitErr *err
     g_assert (2*(in[i]->grid->naxis[0]-1) == array->naxis[0]);
     g_assert (in[i]->grid->naxis[1] == array->naxis[1]);
   }
+
+  /* How many threads for FFT? 2 per 1K pixels in x */
+  nThread = MAX (1, ObitThreadNumProc(in[0]->thread));
+  nThread = MIN (MAX (1, 2*in[0]->nxImage/1024), nThread);
+  ObitFFTNThreads (nThread);   /* Enable FFT with threading */
 
   /* FFTs */
   for (i=0; i<nPar; i++) {
@@ -790,6 +796,31 @@ void ObitUVGridFFT2ImPar (olong nPar, ObitUVGrid **in, Obit **oout, ObitErr *err
       ObitFFTC2R (in[i]->FFTImage, in[i]->grid, array);
     }
   } /* end loop doing FFTs */
+
+  /* Determine normalization- loop looking for an in entry with doBeam member set,
+   the center peak is measured and used to normalize,  this peak is assumed
+   to be the normalization for the subsequent image.
+   if an image without corresponding beam is encountered, the BeamNorm
+   member of it in[] is used to normalize */
+
+  for (i=0; i<nPar; i++) {
+    array = out[i]->image;  /* image pixel matrix */
+    /* is this a beam? */
+    if (in[i]->doBeam) {
+      pos[0] = 0; pos[1] = 0;
+      Corrp = ObitFArrayIndex(array, pos);
+      BeamNorm = *Corrp;
+      /* Check */
+      if (BeamNorm==0.0) {
+	Obit_log_error(err, OBIT_Error, "%s ERROR peak in beam is zero for: %s",
+		       routine, in[i]->name);
+	return;
+      }
+      /* Save normalization on in[i,i+1] */
+      if (!in[i+1]->doBeam) in[i+1]->BeamNorm = BeamNorm;
+      in[i]->BeamNorm = BeamNorm;
+     } /* end if beam */
+  } /* end normalization loop */
 
   /* How many threads? */
   in[0]->nThreads = MAX (1, ObitThreadNumProc(in[0]->thread));
@@ -853,60 +884,17 @@ void ObitUVGridFFT2ImPar (olong nPar, ObitUVGrid **in, Obit **oout, ObitErr *err
     nLeft -= nnTh;  /* update number left */
   } /* end loop over rest */
   
-  /* Normalize & write - loop looking for an in entry with doBeam member set,
-   the center peak is measured and used to normalize,  this peak is assumed
-   to be the normalization for the subsequent image.
-   if an image without corresponding beam is encountered, the BeamNorm
-   member of it in[] is used to normalize */
+  /* Write output */
 
   for (i=0; i<nPar; i++) {
-    array = out[i]->image;  /* image pixel matrix */
-    /* is this a beam? */
-    if (in[i]->doBeam) {
-      pos[0] = in[i]->icenxBeam-1; pos[1] = in[i]->icenyBeam-1; pos[2] = 1;
-      Corrp = ObitFArrayIndex(array, pos);
-      BeamNorm = *Corrp;
-      /* Check */
-      if (BeamNorm==0.0) {
-	Obit_log_error(err, OBIT_Error, "%s ERROR peak in beam is zero for: %s",
-		       routine, in[i]->name);
-	return;
-      }
-      fact = 1.0 / MAX (1.0e-20, BeamNorm);
-      ObitFArraySMul (array, fact);  /* Normalize beam */
-      /* Save normalization on in[i,i+1] */
-      if (!in[i+1]->doBeam) in[i+1]->BeamNorm = BeamNorm;
-       in[i]->BeamNorm = BeamNorm;
-
-       /* Write output */
-       channel = 1;  /* get channel/plane number */
-       ObitInfoListGetTest(in[i]->info, "Channel", &type, dim, &channel);
-       plane[0] = channel;
-       ObitImagePutPlane (out[i], array->array, plane, err);
-       if (err->error) Obit_traceback_msg (err, routine, out[0]->name);
-	out[i]->image = ObitFArrayUnref(out[i]->image);  /* Free buffer */
-
-       i++;       /* Advance to image */
-    } /* end if beam */
-
-    /*  Now image */
-    if (in[i]->BeamNorm==0.0) {
-      Obit_log_error(err, OBIT_Error, "%s ERROR image normalization is zero for: %s",
-		     routine, in[i]->name);
-      return;
-    }
-    array = out[i]->image;  /* image pixel matrix */
-    fact = 1.0 / MAX (1.0e-20, in[i]->BeamNorm);
-    ObitFArraySMul (array, fact);  /* Normalize image */
-
     /* Write output */
     channel = 1;  /* get channel/plane number */
     ObitInfoListGetTest(in[i]->info, "Channel", &type, dim, &channel);
     plane[0] = channel;
-    ObitImagePutPlane (out[i], array->array, plane, err);
-    if (err->error) Obit_traceback_msg (err, routine, out[0]->name);
+    ObitImagePutPlane (out[i], out[i]->image->array, plane, err);
+    if (err->error) Obit_traceback_msg (err, routine, out[i]->name);
 	out[i]->image = ObitFArrayUnref(out[i]->image);  /* Free buffer */
-  } /* end normalization loop */
+  } /* end  loop writing */
 
   /* Shutdown threading */
   ObitThreadPoolFree (in[0]->thread);
@@ -1012,6 +1000,7 @@ void ObitUVGridInit  (gpointer inn)
   in->threadArgs   = NULL;
   in->workGrids    = NULL;
   in->BeamTaperUV  = 0.0;
+  in->BeamNorm     = 1.0;
 
   /* initialize convolving function table */
   /* pillbox (0) for testing (4=exp*sinc, 5=Spherodial wave) */
@@ -1499,6 +1488,8 @@ static gpointer ThreadFFT2Im (gpointer arg)
   ObitUVGrid *in     = largs->in;
   ObitFArray *array  = largs->array;
 
+  ofloat norm        = 1.0/in->BeamNorm; /* Normalization factor */
+
   /* local */
   ofloat *ramp=NULL, *data=NULL;
   olong size, naxis[2];
@@ -1527,6 +1518,9 @@ static gpointer ThreadFFT2Im (gpointer arg)
       
       /* If Y axis */
       GridCorrFn (in, in->nyBeam, in->icenyBeam, data, ramp, in->yCorrBeam);
+
+      /* Normalization factor in Y corr */
+      ObitFArraySMul (in->yCorrBeam, norm);
     } /* end initialize correction functions */
     
     /* Do multiply to make griding correction */
@@ -1556,6 +1550,9 @@ static gpointer ThreadFFT2Im (gpointer arg)
       /* If Y axis */
       GridCorrFn (in, in->nyImage, in->icenyImage, data, ramp, in->yCorrImage);
  
+      /* Normalization factor in Y corr */
+      ObitFArraySMul (in->yCorrImage, norm);
+
       /* Do multiply to make griding correction */
       ObitFArrayMulColRow (array, in->xCorrImage, in->yCorrImage, array);
     } /* end initialize correction functions */

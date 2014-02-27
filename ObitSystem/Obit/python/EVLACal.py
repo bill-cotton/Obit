@@ -5471,13 +5471,24 @@ def EVLAStdModel(Cals, freq):
     stdModel = []
     # 3C286 Chi
     model = {"Source":["3C286","J1331+3030","1331+305=3C286"],
-             "freqRange":[4.1e9,12.0e9],
+             "freqRange":[5.1e9,12.0e9],
              "file":"3C286ChiModel.fits","disk":1}
+    stdModel.append(model)
+    # 3C286 C
+    model = {"Source":["3C286","J1331+3030","1331+305=3C286"],
+             "freqRange":[3.9e9,8.1e9],
+             "file":"3C286CModel.fits","disk":1}
     stdModel.append(model)
     # 3C286 S
     model = {"Source":["3C286","J1331+3030","1331+305=3C286"],
              "freqRange":[1.9e9,4.1e9],
              "file":"3C286SModel.fits","disk":1}
+    stdModel.append(model)
+    # 3C286 L
+    model = {"Source":["3C286","J1331+3030","1331+305=3C286"],
+             "freqRange":[0.9e9,2.1e9],
+             "file":"3C286LModel.fits","disk":1}
+    stdModel.append(model)
     # 3C286 P
     model = {"Source":["3C286","J1331+3030","1331+305=3C286"],
              "freqRange":[1.5e8,7.0e8],
@@ -5488,27 +5499,48 @@ def EVLAStdModel(Cals, freq):
              "freqRange":[1.9e9,4.1e9],
              "file":"3C147SModel.fits","disk":1}
     stdModel.append(model)
+    # 3C147 C
+    model = {"Source":["3C147","J0542+4951"],
+             "freqRange":[3.9e9,8.1e9],
+             "file":"3C147CModel.fits","disk":1}
+    stdModel.append(model)
+    # 3C147 L
+    model = {"Source":["3C147","J0542+4951"],
+             "freqRange":[0.9e9,2.1e9],
+             "file":"3C147LModel.fits","disk":1}
+    stdModel.append(model)
     # 3C147 P
     model = {"Source":["3C147","J0542+4951"],
              "freqRange":[1.5e8,7.0e8],
              "file":"3C147PModel.fits","disk":1}
     stdModel.append(model)
+    # 3C48 C
+    model = {"Source":["3C48","J0137+3309"],
+             "freqRange":[1.9e9,4.1e9],
+             "file":"3C48CModel.fits","disk":1}
+    stdModel.append(model)
+    # 3C48 S
+    model = {"Source":["3C48","J0137+3309"],
+             "freqRange":[3.9e9,8.1e9],
+             "file":"3C48SModel.fits","disk":1}
+    stdModel.append(model)
+
+    # 3C48 L
+    model = {"Source":["3C48","J0137+3309"],
+             "freqRange":[0.9e9,2.1e9],
+             "file":"3C48LModel.fits","disk":1}
+    stdModel.append(model)
+
     # 3C48 P
     model = {"Source":["3C48","J0137+3309"],
              "freqRange":[1.5e8,7.0e8],
              "file":"3C48PModel.fits","disk":1}
     stdModel.append(model)
 
-    # 3C48 S
-    model = {"Source":["3C48","J0137+3309"],
-             "freqRange":[1.9e9,4.1e9],
-             "file":"3C48SModel.fits","disk":1}
-    stdModel.append(model)
-
-    # 3C123 P
+    # 3C123 C
     model = {"Source":["3C123","J0437+2940"],
-             "freqRange":[1.5e8,7.0e8],
-             "file":"3C123PModel.fits","disk":1}
+             "freqRange":[3.9e9,8.1e9],
+             "file":"3C123CModel.fits","disk":1}
     stdModel.append(model)
 
     # 3C123 S
@@ -5517,10 +5549,22 @@ def EVLAStdModel(Cals, freq):
              "file":"3C123SModel.fits","disk":1}
     stdModel.append(model)
 
-    # 3C138 P
-    model = {"Source":["3C138","J0521+1638"],
+    # 3C123 L
+    model = {"Source":["3C123","J0437+2940"],
+             "freqRange":[0.9e9,0.1e9],
+             "file":"3C123LModel.fits","disk":1}
+    stdModel.append(model)
+
+    # 3C123 P
+    model = {"Source":["3C123","J0437+2940"],
              "freqRange":[1.5e8,7.0e8],
-             "file":"3C138PModel.fits","disk":1}
+             "file":"3C123PModel.fits","disk":1}
+    stdModel.append(model)
+
+    # 3C138 C
+    model = {"Source":["3C138","J0521+1638"],
+             "freqRange":[3.9e9,8.1e9],
+             "file":"3C138CModel.fits","disk":1}
     stdModel.append(model)
 
     # 3C138 S
@@ -5529,10 +5573,22 @@ def EVLAStdModel(Cals, freq):
              "file":"3C138SModel.fits","disk":1}
     stdModel.append(model)
 
-    # 3C295 P
-    model = {"Source":["3C295","J1411+5212"],
+    # 3C138 L
+    model = {"Source":["3C138","J0521+1638"],
+             "freqRange":[0.9e9,2.1e9],
+             "file":"3C138LModel.fits","disk":1}
+    stdModel.append(model)
+
+    # 3C138 P
+    model = {"Source":["3C138","J0521+1638"],
              "freqRange":[1.5e8,7.0e8],
-             "file":"3C295PModel.fits","disk":1}
+             "file":"3C138PModel.fits","disk":1}
+    stdModel.append(model)
+
+    # 3C295 C
+    model = {"Source":["3C295","J1411+5212"],
+             "freqRange":[3.9e9,8.1e9],
+             "file":"3C295CModel.fits","disk":1}
     stdModel.append(model)
 
     # 3C295 S
@@ -5541,16 +5597,40 @@ def EVLAStdModel(Cals, freq):
              "file":"3C295SModel.fits","disk":1}
     stdModel.append(model)
 
-    # 3C380 P
-    model = {"Source":["3C380","J1829+4844"],
+    # 3C295 L
+    model = {"Source":["3C295","J1411+5212"],
+             "freqRange":[0.9e9,2.1e9],
+             "file":"3C295LModel.fits","disk":1}
+    stdModel.append(model)
+
+    # 3C295 P
+    model = {"Source":["3C295","J1411+5212"],
              "freqRange":[1.5e8,7.0e8],
-             "file":"3C380PModel.fits","disk":1}
+             "file":"3C295PModel.fits","disk":1}
+    stdModel.append(model)
+
+    # 3C380 C
+    model = {"Source":["3C380","J1829+4844"],
+             "freqRange":[3.9e9,8.1e9],
+             "file":"3C380CModel.fits","disk":1}
     stdModel.append(model)
 
     # 3C380 S
     model = {"Source":["3C380","J1829+4844"],
              "freqRange":[1.9e9,4.1e9],
              "file":"3C380SModel.fits","disk":1}
+    stdModel.append(model)
+
+    # 3C380 L
+    model = {"Source":["3C380","J1829+4844"],
+             "freqRange":[0.9e9,2.1e9],
+             "file":"3C380LModel.fits","disk":1}
+    stdModel.append(model)
+
+    # 3C380 P
+    model = {"Source":["3C380","J1829+4844"],
+             "freqRange":[1.5e8,7.0e8],
+             "file":"3C380PModel.fits","disk":1}
     stdModel.append(model)
 
     # loop testing
@@ -5562,6 +5642,7 @@ def EVLAStdModel(Cals, freq):
                 Cal["CalFile"] = model["file"]
                 Cal["CalDisk"] = model["disk"]
                 Cal["CalDataType"] = 'FITS'
+                Cal["CalCmethod"]  = 'DFT'
                 Cal["CalNfield"]   = 1
                 break
 # end EVLAStdModel

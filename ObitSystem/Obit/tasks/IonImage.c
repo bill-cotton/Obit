@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN a uv data set with field-based cal        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2012                                          */
+/*;  Copyright (C) 2006-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1638,7 +1638,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
 
       /* If 2D imaging concatenate CC tables */
       if ((myClean->nfield>1) && (!myClean->mosaic->images[0]->myDesc->do3D) && doFlat)
-	ObitImageMosaicCopyCC (myClean->mosaic, err);
+	ObitImageMosaicCopyCC (myClean->mosaic, outData,  err);
       
       /* Copy result to output */
       plane[0] = ochan;

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2010                                          */
+/*;  Copyright (C) 2005-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -255,6 +255,8 @@ ObitUVSelfCal* ObitUVSelfCalCreate (gchar* name, ObitSkyModel *skyModel)
  *                                  image pixel value to use to determine if SC needed
  *                                  else use sum of CC in SkyModel.
  * \li "noNeg"   OBIT_bool  (1,1,1) If True, exclude negative summed CLEAN components 
+ * On output the following is set
+ * \li "FractOK"    OBIT_float (1,1,1) The fraction of solutions which are OK
  *                                  from the model calculation def [FALSE]
  * \param inUV     Input UV data. 
  * \param init     If True, this is the first SC in a series.
@@ -273,7 +275,7 @@ gboolean ObitUVSelfCalSelfCal (ObitUVSelfCal *in, ObitUV *inUV, gboolean init,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   olong i, j, jj, nfield, *iatemp, itemp, isuba, refant, bestSN=0, oldDoCal;
-  ofloat best, posFlux, peakFlux;
+  ofloat best, posFlux, peakFlux, FractOK;
   ofloat minFluxPSC, minFluxASC, minFlux;
   gchar *dispURL=NULL, tname[129], solmod[5], tbuff[128], *Stokes="    ";
   gboolean Tr=TRUE, Fl=FALSE, diverged, quit, doSmoo, doDelay, noNeg;
@@ -531,6 +533,14 @@ gboolean ObitUVSelfCalSelfCal (ObitUVSelfCal *in, ObitUV *inUV, gboolean init,
   ObitInfoListAlwaysPut(inUV->info, "gainUse", OBIT_long, dim, &itemp);
   /* Use all components */
   ObitInfoListAlwaysPut(in->skyModel->info, "noNeg", OBIT_bool, dim, &Fl);
+
+  /* Copy FractOK to in */
+  FractOK = 1.0; dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  ObitInfoListGetTest(in->mySolver->info, "FractOK", &type, dim, &FractOK);
+  ObitInfoListAlwaysPut(in->info, "FractOK", OBIT_float, dim, &FractOK);
+
+  /* Cleanup */
+  in->mySolver = ObitUVGSolveUnref(in->mySolver);
 
   return converged;
 } /* end ObitUVSelfCalSelfCal */

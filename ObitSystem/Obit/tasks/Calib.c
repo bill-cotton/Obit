@@ -759,14 +759,14 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
   ObitImage    **image=NULL;
   ObitCCCompType CCType;
   ObitInfoType type;
-  gboolean      do3D=TRUE;
-  olong         Aseq, disk, cno,i=0, ver, nmaps;
+  gboolean     do3D=TRUE;
+  olong        Aseq, disk, cno,i=0, ver, nmaps;
   gchar        *Type, *Type2, *strTemp, inFile[129], inRoot[129];
   gchar        Aname[13], Aclass[7], Aroot[7], *Atype = "MA";
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong         blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
-  olong         trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
-  ofloat       smodel[20], modptflx,  modptxof, modptyof, modptypm[4];
+  olong        blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
+  olong        trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  ofloat       smodel[20], modptflx,  modptxof, modptyof, modptypm[8];
   gchar        name[101];
   gchar        *dataParms[] = {  /* Control parameters */
     "CCVer",  "BComp",  "EComp",  "Flux", "PBCor", "antSize", "Factor", 
@@ -788,20 +788,18 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
   ObitInfoListGetTest (myInput, "modelFlux", &type, dim, &smodel[0]);
   if ((smodel!=NULL) && (smodel[0]!=0.0)) {
     /* Model passed - get rest */
+    for (i=1; i<11; i++) smodel[i] = 0.0;
     ObitInfoListGetTest (myInput, "modelPos",  &type, dim, &smodel[1]);
     ObitInfoListGetTest (myInput, "modelParm", &type, dim, &smodel[3]);
     modptflx = smodel[0];
     modptxof = smodel[1] / 3600.0;
     modptyof = smodel[2] / 3600.0;
-    modptypm[0] = smodel[3];
-    modptypm[1] = smodel[4];
-    modptypm[2] = smodel[5];
-    modptypm[3] = smodel[6];
+    for (i=0; i<8; i++) modptypm[i] = smodel[3+i];
     dim[0] = dim[1] = 1;
     ObitInfoListAlwaysPut (myInput, "MODPTFLX", OBIT_float, dim, &modptflx);
     ObitInfoListAlwaysPut (myInput, "MODPTXOF", OBIT_float, dim, &modptxof);
     ObitInfoListAlwaysPut (myInput, "MODPTYOF", OBIT_float, dim, &modptyof);
-    dim[0] = 4;
+    dim[0] = 6;
     ObitInfoListAlwaysPut (myInput, "MODPTYPM", OBIT_float, dim, modptypm);
 
     /* Create Sky Model */

@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2013                                          */
+/*;  Copyright (C) 2004-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -142,6 +142,11 @@ void ObitTableCCUtilScale (ObitTableCC *in, olong startComp,
 /** Append CLEAN components from one table to another */
 void ObitTableCCUtilAppend  (ObitTableCC *inCC, ObitTableCC *outCC, 
 			     olong startComp, olong endComp, ObitErr *err);
+
+/** Append CLEAN components from one table to another with position shift */
+void ObitTableCCUtilAppendShift (ObitTableCC *inCC, ObitTableCC *outCC, 
+				 ObitUVDesc *uvDesc, ObitImageDesc *imDesc, 
+				 olong startComp, olong endComp, ObitErr *err);
 
 /** Filter weak, isolated components */
 gboolean ObitTableCCUtilFiltCC (ObitTableCC *CCTab, ofloat radius, ofloat minFlux, 

@@ -845,7 +845,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
 
     /* If 2D imaging concatenate CC tables */
     if (!in->mosaic->images[0]->myDesc->do3D) 
-      ObitImageMosaicCopyCC (in->mosaic, err);
+      ObitImageMosaicCopyCC (in->mosaic, in->imager->uvwork, err);
     
     /* Display flattened image if enabled */
     if (in->display && in->mosaic->FullField) 

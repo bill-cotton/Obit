@@ -1555,7 +1555,7 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
   ObitSkyModelCompType modType, maxModType=OBIT_SkyModel_PointMod;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong warray, larray;
+  olong warray, larray, toff;
   ofloat *array, parms[20];
   olong ver, i, j, hi, lo, count, ncomp, startComp, endComp, irow, lrec;
   olong nterm, iterm, maxTerm=1, outCCVer, ndim, naxis[2], lenEntry;
@@ -1794,7 +1794,11 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
       gp3 = -2.0 *  cpa * spa * (xmaj*xmaj - xmin*xmin);
     }
 
-    /* loop over CCs */
+    /* Does the CC table have a DeltaZ column? */
+    if (CCTable->DeltaZCol>=0) toff = 4;
+    else                       toff = 3;
+
+   /* loop over CCs */
     for (j=0; j<larray; j++) {
 
       /* Only down to first negative? */
@@ -1809,7 +1813,8 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
 	table[0] = array[0] * in->factor;
 	xp[0] = (array[1] + xpoff) * konst;
 	xp[1] = (array[2] + ypoff) * konst;
-	xp[2] = 0.0;
+	if (CCTable->DeltaZCol>=0) xp[2] = array[3];
+	else                       xp[2] = 0.0;
 	if (do3Dmul) {
 	  xyz[0] = xp[0]*umat[0][0] + xp[1]*umat[1][0];
 	  xyz[1] = xp[0]*umat[0][1] + xp[1]*umat[1][1];
@@ -1818,7 +1823,7 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
 	} else {  /* no rotn matrix */
 	  xyz[0] = ccrot * xp[0] + ssrot * xp[1];
 	  xyz[1] = ccrot * xp[1] - ssrot * xp[0];
-	  xyz[2] = 0.0;
+	  xyz[2] = xp[2];
  	}
 	table[1] = xyz[0] + xxoff;
 	table[2] = xyz[1] + yyoff;
@@ -1839,7 +1844,7 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
 	    
 	    /* Only Point with spectrum */
 	  } else if (modType==OBIT_SkyModel_PointModSpec) {
-	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+4] = array[iterm+3];
+	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+4] = array[iterm+toff];
 	    
 	    /* Only Gaussian */
 	  } else if (in->modType==OBIT_SkyModel_GaussMod) {
@@ -1853,7 +1858,7 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
 	    table[5] = gp2;
 	    table[6] = gp3;
 	    /*  spectrum */
-	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+7] = array[iterm+3];
+	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+7] = array[iterm+toff];
 	    
 	    /* Only Uniform sphere */
 	  } else if (in->modType==OBIT_SkyModel_USphereMod) {
@@ -1867,7 +1872,7 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
 	    table[4] = parms[1]  * 0.109662271 * 2.7777778e-4;
 	    table[5] = 0.1;
 	    /*  spectrum */
-	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+6] = array[iterm+3];
+	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+6] = array[iterm+toff];
 	  }
 	} else { /* Mixed type - zero unused model components */
 
@@ -1888,7 +1893,7 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
 	    table[4] = 0.0;
 	    table[5] = 0.0;
 	    table[6] = 0.0;
-	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+7] = array[iterm+3];
+	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+7] = array[iterm+toff];
 	  
 	    /* GaussianSpectrum here but also some PointSpectrum */
 	  } else if ((in->modType==OBIT_SkyModel_PointModSpec) && (modType==OBIT_SkyModel_GaussModSpec)) {
@@ -1896,7 +1901,7 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
 	    table[5] = gp2;
 	    table[6] = gp3;
 	    /*  spectrum */
-	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+7] = array[iterm+3];
+	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+7] = array[iterm+toff];
 	  
 	  /* Only Point here but some with spectrum - zero spectra (Unlikely) */
 	  } else if ((modType==OBIT_SkyModel_PointMod) && (in->modType==OBIT_SkyModel_PointModSpec)) {

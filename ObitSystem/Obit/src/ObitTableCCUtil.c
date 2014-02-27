@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2013                                          */
+/*;  Copyright (C) 2004-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -63,7 +63,8 @@ static void CCMerge (ofloat *base, olong size, olong number);
 
 /** Private: Merge spectral entries in Sort structure */
 static void CCMergeSpec (ofloat *base, olong size, olong number, 
-			 gboolean doSpec, gboolean doTSpec); 
+			 gboolean doSpec, gboolean doTSpec, 
+			 gboolean doZ); 
 
 /** Private: reorder table based on Sort structure */
 static ObitIOCode 
@@ -501,7 +502,7 @@ ObitIOCode ObitTableCCUtilGridSpect (ObitTableCC *in, olong OverSample, olong it
  * Return an ObitFArray containing the list of components in the CC table
  * from one image which appear in another.
  * Returned array has component values on the first axis and one row per
- * overlapping component.  (X cell (0-rel), Y cell (0-rel), flux).  
+ * overlapping component.  (X cell (0-rel), Y cell (0-rel), flux, Z).  
  * CCs on cells within 0.5 pixels of outDesc are included.
  * Components in the same cell are combined.
  * If the components are Gaussians, their parameters are returned in gparm.
@@ -530,7 +531,7 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
   olong nrow, ndim, naxis[2], size, fsize, tsize;
   ofloat *table, inPixel[2], outPixel[2], *SortStruct = NULL;
   ofloat *entry;
-  gboolean wanted, doSpec=TRUE, doTSpec=FALSE;
+  gboolean wanted, doSpec=TRUE, doTSpec=FALSE, doZ=FALSE;
   gchar *outName;
   ObitCCCompType modType;
   gchar *routine = "ObitTableCCUtilCrossList";
@@ -548,13 +549,17 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
   if ((retCode != OBIT_IO_OK) || (err->error))
       Obit_traceback_val (err, routine, inCC->name, outArray);
 
-  /* Create sortStruct 
+  /* Does the CC table have a DeltaZ column? */
+  doZ = inCC->DeltaZCol>=0;
+
+ /* Create sortStruct 
      element size */
   nrow = inCC->myDesc->nrow;
   /* Normal CCs or with spectra? */
   doSpec = (inCC->noParms>4);
   if (doSpec) fsize = 4;
   else fsize = 3;
+  if (doZ) fsize++;  /* One for deltaZ */
   size = fsize * sizeof(ofloat);
   /*   Total size of structure in case all rows valid */
   tsize = size * (nrow+10);
@@ -621,6 +626,7 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
       entry[0] = outPixel[0] - 1.0;  /* Make zero rel. pixels */
       entry[1] = outPixel[1] - 1.0;
       entry[2] = CCRow->Flux;
+      if (doZ) entry[3] = CCRow->DeltaZ;
       count++; /* How many? */
     }
   } /* end loop over TableCC */
@@ -644,7 +650,7 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
   /* Merge entries - Normal or with spectra? */
   doSpec = (inCC->noParms>4);
   if (doSpec || doTSpec) 
-    CCMergeSpec (SortStruct, fsize, number, doSpec, doTSpec);
+    CCMergeSpec (SortStruct, fsize, number, doSpec, doTSpec, doZ);
   else
     CCMerge (SortStruct, fsize, number);
   
@@ -662,6 +668,7 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
 
   /* Create FArray list large enough for merged CCs */
   ndim = 2; naxis[0] = 3; naxis[1] = count;
+  if (doZ) naxis[0]++;   /* One for delta Z*/
   nout = naxis[1];
   lrec = naxis[0];   /* size of table row */
   nout = naxis[1];   /* Size of output array */
@@ -690,6 +697,7 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
       table[0] = entry[0];
       table[1] = entry[1];
       table[2] = entry[2];
+      if (doZ) table[3] = entry[3];
       table += lrec;
       count++;
     } /* end of contains value */
@@ -743,13 +751,13 @@ ObitTableCCUtilCrossListSpec (ObitTableCC *inCC, ObitImageDesc *inDesc,
   ObitFArray *outArray=NULL;
   ObitIOCode retCode;
   ObitTableCCRow *CCRow = NULL;
-  olong i, count, number, nout, irow, lrec;
+  olong i, count, number, nout, irow, lrec, toff;
   olong ncomp, parmoff=3;
   olong nrow, ndim, naxis[2], size, fsize, tsize;
   ofloat *table, inPixel[2], outPixel[2], *SortStruct = NULL;
   ofloat *entry, spectTerm;
   gboolean wanted;
-  gboolean doSpec=TRUE, doTSpec=FALSE;
+  gboolean doSpec=TRUE, doTSpec=FALSE, doZ=FALSE;
   gchar *outName;
   ObitCCCompType modType;
   gchar *routine = "ObitTableCCUtilCrossListSpec";
@@ -767,10 +775,16 @@ ObitTableCCUtilCrossListSpec (ObitTableCC *inCC, ObitImageDesc *inDesc,
   if ((retCode != OBIT_IO_OK) || (err->error))
       Obit_traceback_val (err, routine, inCC->name, outArray);
 
-  /* Create sortStruct 
+  /* Does the CC table have a DeltaZ column? */
+  doZ = inCC->DeltaZCol>=0;
+  if (doZ) toff = 4;
+  else     toff = 3;
+  
+ /* Create sortStruct 
      element size */
   nrow = inCC->myDesc->nrow;
   fsize = 4;
+  if (doZ) fsize++;  /* One for deltaZ */
   size = fsize * sizeof(ofloat);
   /*   Total size of structure in case all rows valid */
   tsize = size * (nrow+10);
@@ -847,7 +861,8 @@ ObitTableCCUtilCrossListSpec (ObitTableCC *inCC, ObitImageDesc *inDesc,
       entry[0] = outPixel[0] - 1.0;  /* Make zero rel. pixels */
       entry[1] = outPixel[1] - 1.0;
       entry[2] = CCRow->Flux;
-      entry[3] = spectTerm;
+      if (doZ) entry[3] = CCRow->DeltaZ;
+      entry[toff] = spectTerm;
       count++; /* How many? */
     }
   } /* end loop over TableCC */
@@ -869,7 +884,7 @@ ObitTableCCUtilCrossListSpec (ObitTableCC *inCC, ObitImageDesc *inDesc,
   g_qsort_with_data (SortStruct, number, size, CCComparePos, &ncomp);
 
   /* Merge entries */
-  CCMergeSpec (SortStruct, fsize, number, doSpec, doTSpec);
+  CCMergeSpec (SortStruct, fsize, number, doSpec, doTSpec, doZ);
   
   /* Sort to descending merged flux densities */
   ncomp = 1;
@@ -914,6 +929,7 @@ ObitTableCCUtilCrossListSpec (ObitTableCC *inCC, ObitImageDesc *inDesc,
       table[1] = entry[1];
       table[2] = entry[2];
       table[3] = entry[3];
+      if (doZ) table[4] = entry[4];
       table += lrec;
       count++;
     } /* end of contains value */
@@ -1072,7 +1088,7 @@ ObitIOCode ObitTableCCUtilMerge (ObitTableCC *in, ObitTableCC *out,
   olong i, size, fsize, number=0, ncomp;
   ofloat parms[20];
   ofloat *SortStruct = NULL;
-  gboolean doSpec=TRUE, doTSpec=FALSE;
+  gboolean doSpec=TRUE, doTSpec=FALSE, doZ=FALSE;
   gchar *routine = "ObitTableCCUtilMerge";
 
   /* error checks */
@@ -1093,6 +1109,9 @@ ObitIOCode ObitTableCCUtilMerge (ObitTableCC *in, ObitTableCC *out,
     return OBIT_IO_OK;
   }
 
+  /* Does the CC table have a DeltaZ column? */
+  doZ = in->DeltaZCol>=0;
+ 
   /* build sort structure from table */
   for (i=0; i<20; i++) parms[i] = 0.0;
   SortStruct = MakeCCSortStruct (in, &size, &number, &ncomp, parms, err);
@@ -1113,7 +1132,7 @@ ObitIOCode ObitTableCCUtilMerge (ObitTableCC *in, ObitTableCC *out,
   /* Merge entries - Normal or with spectra? */
   fsize = size/sizeof(ofloat);
   if (doSpec || doTSpec) 
-    CCMergeSpec (SortStruct, fsize, number, doSpec, doTSpec);
+    CCMergeSpec (SortStruct, fsize, number, doSpec, doTSpec, doZ);
   else
     CCMerge (SortStruct, fsize, number);
   
@@ -1163,10 +1182,10 @@ ObitFArray* ObitTableCCUtilMergeSel (ObitTableCC *in, olong startComp,
   ObitFArray *out = NULL;
   olong i, j, count, lout, nout, ndim, naxis[2];
   ObitIOCode retCode;
-  olong size, fsize, number=0, ncomp, nterms;
+  olong size, fsize, number=0, ncomp, nterms, toff;
   ofloat lparms[20];
   ofloat *entry, *outArray, *SortStruct = NULL;
-  gboolean doSpec=TRUE, doTSpec=FALSE;
+  gboolean doSpec=TRUE, doTSpec=FALSE, doZ=FALSE;
   gchar *routine = "ObitTableCCUtilMergeSel";
 
   /* error checks */
@@ -1178,6 +1197,11 @@ ObitFArray* ObitTableCCUtilMergeSel (ObitTableCC *in, olong startComp,
   retCode = ObitTableCCOpen (in, OBIT_IO_ReadOnly, err);
   if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
   
+  /* Does the CC table have a DeltaZ column? */
+  doZ = in->DeltaZCol>=0;
+  if (doZ) {lout = 4; toff = 4;}
+  else     {lout = 3; toff = 3;}
+
   /* Must be something in the table else just return */
   if (in->myDesc->nrow<=0) {
     retCode = ObitTableCCClose (in, err);
@@ -1210,7 +1234,7 @@ ObitFArray* ObitTableCCUtilMergeSel (ObitTableCC *in, olong startComp,
   /* Merge entries */
   fsize = size/sizeof(ofloat);
   if (doSpec || doTSpec) 
-    CCMergeSpec (SortStruct, fsize, number, doSpec, doTSpec);
+    CCMergeSpec (SortStruct, fsize, number, doSpec, doTSpec, doZ);
   else
     CCMerge (SortStruct, fsize, number);
   
@@ -1228,7 +1252,6 @@ ObitFArray* ObitTableCCUtilMergeSel (ObitTableCC *in, olong startComp,
 
 
   /* Create output Array */
-  lout = 3;
   /* Need room for spectral terms? */
   if (in->noParms>4)  nterms = in->noParms-4;
   else nterms = 0;
@@ -1261,7 +1284,8 @@ ObitFArray* ObitTableCCUtilMergeSel (ObitTableCC *in, olong startComp,
       outArray[0] = entry[2];
       outArray[1] = entry[0];
       outArray[2] = entry[1];
-      for (j=0; j<nterms; j++) outArray[3+j] = entry[3+j];
+      if (doZ) outArray[3] = entry[3];  /* DeltaZ */
+      for (j=0; j<nterms; j++) outArray[toff+j] = entry[toff+j];
       outArray += lout;
       count++;
     } /* end of contains value */
@@ -1304,11 +1328,11 @@ ObitFArray* ObitTableCCUtilMergeSelSpec (ObitTableCC *in, olong startComp,
 					  ObitErr *err)
 {
   ObitFArray *out = NULL;
-  olong i, j, count, lout, nout, ndim, naxis[2];
+  olong i, j, count, lout, nout, toff, ndim, naxis[2];
   ObitIOCode retCode;
   olong size, fsize, number=0, ncomp, nterms;
   ofloat lparms[20];
-  gboolean doSpec=TRUE, doTSpec=FALSE;
+  gboolean doSpec=TRUE, doTSpec=FALSE, doZ=FALSE;
   ofloat *entry, *outArray, *SortStruct = NULL;
   gchar *routine = "ObitTableCCUtilMergeSelSpec";
 
@@ -1332,6 +1356,9 @@ ObitFArray* ObitTableCCUtilMergeSelSpec (ObitTableCC *in, olong startComp,
   startComp = MAX (1, startComp);
   endComp   = MIN (in->myDesc->nrow, endComp);
 
+  /* Does the CC table have a DeltaZ column? */
+  doZ = in->DeltaZCol>=0;
+  
   /* build sort structure from table */
   for (i=0; i<20; i++) lparms[i] = 0;
   SortStruct = MakeCCSortStructSel (in, startComp, endComp, 
@@ -1352,7 +1379,7 @@ ObitFArray* ObitTableCCUtilMergeSelSpec (ObitTableCC *in, olong startComp,
 
   /* Merge entries */
   fsize = size/sizeof(ofloat);
-  CCMergeSpec (SortStruct, fsize, number, doSpec, doTSpec);
+  CCMergeSpec (SortStruct, fsize, number, doSpec, doTSpec, doZ);
   
   /* Sort to descending merged flux densities */
   ncomp = 1;
@@ -1367,7 +1394,9 @@ ObitFArray* ObitTableCCUtilMergeSelSpec (ObitTableCC *in, olong startComp,
   }
 
   /* Create output Array */
-  lout = 3;
+  if (doZ) {lout = 4; toff = 4;}
+  else     {lout = 3; toff = 3;}
+
   /* Need room for spectral terms? */
   if (in->noParms>4)  nterms = in->noParms-4;
   else nterms = 0;
@@ -1400,7 +1429,8 @@ ObitFArray* ObitTableCCUtilMergeSelSpec (ObitTableCC *in, olong startComp,
       outArray[0] = entry[2];
       outArray[1] = entry[0];
       outArray[2] = entry[1];
-      for (j=0; j<nterms; j++) outArray[3+j] = entry[3+j];
+      if (doZ) outArray[3] = entry[3];  /* DeltaZ */
+      for (j=0; j<nterms; j++) outArray[toff+j] = entry[toff+j];
       outArray += lout;
       count++;
     } /* end of contains value */
@@ -1440,9 +1470,9 @@ ObitTableCCUtilMergeSel2Tab (ObitImage *image, olong inCCver, olong *outCCver,
   ObitTableCC *inCCTable = NULL, *outCCTable = NULL;
   ObitTableCCRow *CCRow = NULL;
   gchar *tabType = "AIPS CC";
-  olong naxis[2], warray, larray, i, j, ver, orow, offset, nSpec=0;
+  olong naxis[2], warray, larray, i, j, ver, orow, offset, toff, nSpec=0;
   ofloat *array, parms[20];
-  gboolean doSpec=FALSE, doTSpec=FALSE;
+  gboolean doSpec=FALSE, doTSpec=FALSE, doZ=FALSE;
   gchar *routine = "bitTableCCUtilMergeSel2Tab";
 
    /* error checks */
@@ -1497,7 +1527,11 @@ ObitTableCCUtilMergeSel2Tab (ObitImage *image, olong inCCver, olong *outCCver,
   /* Create table row */
   CCRow = newObitTableCCRow (outCCTable);
 
-  /* Copy Parms to row */
+   /* Does the CC table have a DeltaZ column? */
+  doZ = inCCTable->DeltaZCol>=0;
+  if (doZ) toff = 4;
+  else     toff = 3;
+ /* Copy Parms to row */
   for (j=0; j<MIN(4,inCCTable->noParms); j++) CCRow->parms[j] = parms[j];
   
   offset = 4;
@@ -1509,11 +1543,12 @@ ObitTableCCUtilMergeSel2Tab (ObitImage *image, olong inCCver, olong *outCCver,
       CCRow->Flux   = array[0];
       CCRow->DeltaX = array[1];
       CCRow->DeltaY = array[2];
+      if (doZ) CCRow->DeltaZ =  array[3];
       /* Copy any spectra */
       if (doSpec) {
-	for (i=0; i<nSpec; i++) CCRow->parms[i+offset] = array[3+i];
+	for (i=0; i<nSpec; i++) CCRow->parms[i+offset] = array[toff+i];
       } else if (doTSpec) {
-	for (i=0; i<nSpec; i++) CCRow->parms[i+offset] = array[3+i];
+	for (i=0; i<nSpec; i++) CCRow->parms[i+offset] = array[toff+i];
       }
       
       /* Write output */
@@ -1675,6 +1710,116 @@ void ObitTableCCUtilAppend  (ObitTableCC *inCC, ObitTableCC *outCC,
   row = ObitTableCCRowUnref (row); /* Release table row */
   if (err->error) Obit_traceback_msg (err, routine, inCC->name);
 } /* end ObitTableCCUtilAppend */
+
+/*
+ * Append the selected components of one table onto another
+ * \param inCC      Table to copy from
+ * \param outCC     Table to copy to
+ * \param uvDesc    UVData descriptor fro data from which the image was made.
+ * \param imDesc    Output Image descriptor
+ * \param startComp First component to select , 0=>1
+ * \param endComp   Last component to select, 0=> all
+ * \param err       ObitErr error stack.
+ */
+void ObitTableCCUtilAppendShift (ObitTableCC *inCC, ObitTableCC *outCC, 
+				 ObitUVDesc *uvDesc, ObitImageDesc *imDesc, 
+				 olong startComp, olong endComp, ObitErr *err)
+{
+  ObitTableCCRow *row=NULL;
+  olong irow, orow;
+  ObitIOCode retCode;
+  gboolean dummyParms=FALSE;
+  ofloat xxoff, yyoff, zzoff, *parms=NULL;
+  ofloat dxyzc[3], maprot, uvrot, ccrot, ssrot, xpoff, ypoff, xyz[3], xp[3];
+  gchar *routine = "ObitTableCCUtilAppendShift";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitTableCCIsA(inCC));
+  g_assert (ObitTableCCIsA(outCC));
+
+  /* Open input table */
+  retCode = ObitTableCCOpen (inCC, OBIT_IO_ReadOnly, err);
+  if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+  
+  /* Must be something in the table else just return */
+  if (inCC->myDesc->nrow<=0) {
+    retCode = ObitTableCCClose (inCC, err);
+    if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+    return;
+  }
+
+  /* Open output table */
+  retCode = ObitTableCCOpen (outCC, OBIT_IO_ReadWrite, err);
+  if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+
+   /* Dummy output parms if needed */
+  dummyParms = ((inCC->parmsCol<0) && (outCC->parmsCol>0));
+  if (dummyParms) parms = g_malloc0(outCC->myDesc->repeat[outCC->parmsCol]*sizeof(ofloat));
+
+  /* Check range of components */
+  startComp = MAX (1, startComp);
+  endComp   = MIN (inCC->myDesc->nrow, endComp);
+  if (endComp<=0) endComp = inCC->myDesc->nrow;
+
+  /* Create table row */
+  row = newObitTableCCRow (outCC);
+  ObitTableCCSetRow (outCC, row, err);
+  if (err->error) goto cleanup;
+
+  /* Shift parameters -  rotation */
+  maprot = ObitImageDescRotate(imDesc);
+  uvrot  = ObitUVDescRotate(uvDesc);
+  ssrot = sin (DG2RAD * (uvrot - maprot));
+  ccrot = cos (DG2RAD * (uvrot - maprot));
+
+  /* Phase shift */
+  ObitUVDescShiftPhase(uvDesc, imDesc, dxyzc, err);
+  if (err->error) Obit_traceback_msg (err, routine, inCC->name);
+ 
+  /* rotate phase shift */
+  xxoff = dxyzc[0] * ccrot + dxyzc[1] * ssrot;
+  yyoff = dxyzc[1] * ccrot - dxyzc[0] * ssrot;
+  zzoff = dxyzc[2];
+  /* Pixel offset */
+  xpoff = imDesc->xPxOff * imDesc->cdelt[imDesc->jlocr];
+  ypoff = imDesc->yPxOff * imDesc->cdelt[imDesc->jlocd];
+
+
+  /* Loop over table */
+  for (irow=startComp; irow<=endComp; irow++) {
+    retCode = ObitTableCCReadRow (inCC, irow, row, err);
+    if (row->status<0) continue;  /* Skip deselected record */
+    if (err->error) goto cleanup;
+    /* Dummy parms? */
+    if (dummyParms) row->parms = parms;
+    /* Apply position shift */
+    xp[0]  = row->DeltaX + xpoff;
+    xp[1]  = row->DeltaY + ypoff;
+    xp[2]  = 0.0;
+    xyz[0] = ccrot * xp[0] + ssrot * xp[1];
+    xyz[1] = ccrot * xp[1] - ssrot * xp[0];
+    xyz[2] = 0.0;
+    row->DeltaX = xyz[0] + xxoff;
+    row->DeltaY = xyz[1] + yyoff;
+    if (inCC->DeltaZCol>=0) row->DeltaZ = zzoff;
+    orow = -1;
+    retCode = ObitTableCCWriteRow (outCC, orow, row, err);
+    if (err->error) goto cleanup;
+  } /* End loop over table */
+
+  /* Close tables */
+  retCode = ObitTableCCClose (inCC, err);
+  if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+  retCode = ObitTableCCClose (outCC, err);
+  if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+
+  /* Cleanup */
+ cleanup:
+  if (parms) g_free(parms);
+  row = ObitTableCCRowUnref (row); /* Release table row */
+  if (err->error) Obit_traceback_msg (err, routine, inCC->name);
+} /* end ObitTableCCUtilAppendShift */
 
 /**
  * Filter out weak, isolated components in a table 
@@ -1868,6 +2013,7 @@ void ObitTableCCUtilT2Spec  (ObitImage *image, ObitImageWB *outImage,
   olong irow, orow, ver, i, j, offset, nSpec, sCC, eCC, noParms, nterm;
   olong planeNo[5] = {1,1,1,1,1};
   gchar keyword[12];
+  gboolean doZ;
   gchar *tabType = "AIPS CC";
   gchar *routine = "ObitTableCCUtilT2Spec";
 
@@ -1980,6 +2126,9 @@ void ObitTableCCUtilT2Spec  (ObitImage *image, ObitImageWB *outImage,
   /* Create table row */
   outCCRow = newObitTableCCRow (outCCTable);
   
+    /* Does the CC table have a DeltaZ column? */
+  doZ = inCCTable->DeltaZCol>=0;
+
   offset = 4;
   sCC = MAX (1, startCC);
   if (endCC>0) eCC = MIN (endCC, inCCTable->myDesc->nrow);
@@ -1998,6 +2147,7 @@ void ObitTableCCUtilT2Spec  (ObitImage *image, ObitImageWB *outImage,
     /* Copy row data */
     outCCRow->DeltaX   = inCCRow->DeltaX;
     outCCRow->DeltaY   = inCCRow->DeltaY;
+    if (doZ) outCCRow->DeltaZ   = inCCRow->DeltaZ;
     outCCRow->parms[0] = inCCRow->parms[0]; /* Model parameters */
     outCCRow->parms[1] = inCCRow->parms[1];
     outCCRow->parms[2] = inCCRow->parms[2];
@@ -2091,7 +2241,7 @@ void ObitTableCCUtilFixTSpec (ObitImage *inImage, olong *inCCVer,
   ofloat fblank = ObitMagicF();
   odouble *Freq=NULL, rfAlpha;
   olong irow, orow, ver, i, j, iterm, offset, nSpec, sCC, eCC;
-  union ObitInfoListEquiv InfoReal; 
+   union ObitInfoListEquiv InfoReal; 
   gchar *tabType = "AIPS CC";
   gchar keyword[12];
   gchar *routine = "ObitTableCCUtilFixTSpec";
@@ -2258,7 +2408,7 @@ void ObitTableCCUtilCombTSpec (ObitImage *inImage, olong inCCVer, olong nCCVer,
   ObitTableCCRow *inCCRow=NULL, *outCCRow=NULL;
   olong i, nSpec, ver, noParms, orow, irow, itab, ncopy;
   ofloat  modType;
-  gboolean inPoint;
+  gboolean inPoint, doZ;
   gchar *routine = "ObitTableCCUtilCombTSpec";
 
   /* error checks */
@@ -2318,6 +2468,9 @@ void ObitTableCCUtilCombTSpec (ObitImage *inImage, olong inCCVer, olong nCCVer,
     if (err->error) Obit_traceback_msg (err, routine, inImage->name);
     inPoint = inCCTab->noParms<=0;
 
+    /* Does the CC table have a DeltaZ column? */
+    doZ = inCCTab->DeltaZCol>=0;
+
     /* Copy Rows */
     ncopy = inCCTab->myDesc->nrow;
     if (ncopy<=0) goto done;
@@ -2327,6 +2480,7 @@ void ObitTableCCUtilCombTSpec (ObitImage *inImage, olong inCCVer, olong nCCVer,
       /* Copy info */
       outCCRow->DeltaX   = inCCRow->DeltaX;
       outCCRow->DeltaY   = inCCRow->DeltaY;
+      if (doZ) outCCRow->DeltaY   = inCCRow->DeltaZ;
       outCCRow->Flux   = inCCRow->Flux;
       /* Set output type and parameters if given */
       if (inPoint) outCCRow->parms[3] = modType;
@@ -2380,8 +2534,9 @@ MakeCCSortStruct (ObitTableCC *in, olong *size, olong *number, olong *ncomp,
   ofloat *out = NULL;
   ObitTableCCRow *row = NULL;
   ofloat *entry;
-  olong irow, nrow, tsize, count, i, j;
+  olong irow, nrow, tsize, count, i, j, toff;
   olong nterms, fsize;
+  gboolean haveDeltaZ=FALSE;
   gchar *routine = "MakeCCSortStruct";
 
   /* error checks */
@@ -2392,8 +2547,12 @@ MakeCCSortStruct (ObitTableCC *in, olong *size, olong *number, olong *ncomp,
   /* Get table info */
   nrow = in->myDesc->nrow;
 
+  /* Does the CC table have a DeltaZ column? */
+  haveDeltaZ = in->DeltaZCol>=0;
+  
   /* element size */
-  fsize = 3;
+  if (haveDeltaZ) {fsize = 4; toff = 4;}
+  else            {fsize = 3; toff = 3;}
   /* Need room for spectral terms? */
   if (in->noParms>4)  nterms = in->noParms-4;
   else nterms = 0;
@@ -2428,8 +2587,9 @@ MakeCCSortStruct (ObitTableCC *in, olong *size, olong *number, olong *ncomp,
     entry[0] = row->DeltaX;
     entry[1] = row->DeltaY;
     entry[2] = row->Flux;
+    if (haveDeltaZ) entry[3] = row->DeltaZ;
     /* First 4 parms are model, following are spectral parameters */
-    for (j=0; j<nterms; j++) entry[3+j] = row->parms[4+j];
+    for (j=0; j<nterms; j++) entry[toff+j] = row->parms[4+j];
 
     /* Save parms if any for first record */
     if ((count<=0) && (in->noParms>0)) {
@@ -2479,9 +2639,10 @@ MakeCCSortStructSel (ObitTableCC *in, olong startComp, olong endComp,
   ofloat *out = NULL;
   ObitTableCCRow *row = NULL;
   ofloat *entry;
-  olong irow, nrow, tsize, count, i, j;
+  olong irow, nrow, tsize, count, i, j, toff;
   olong nterms, fsize;
-  gchar *routine = "MakeCCSortStruct";
+  gboolean haveDeltaZ=FALSE;
+ gchar *routine = "MakeCCSortStruct";
 
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -2491,8 +2652,12 @@ MakeCCSortStructSel (ObitTableCC *in, olong startComp, olong endComp,
   /* Get table info */
   nrow = in->myDesc->nrow;
 
+  /* Does the CC table have a DeltaZ column? */
+  haveDeltaZ = in->DeltaZCol>=0;
+  
   /* element size */
-  fsize = 3;
+  if (haveDeltaZ) {fsize = 4; toff = 4;}
+  else            {fsize = 3; toff = 3;}
   /* Need room for spectral terms? */
   if (in->noParms>4)  nterms = in->noParms-4;
   else nterms = 0;
@@ -2527,8 +2692,9 @@ MakeCCSortStructSel (ObitTableCC *in, olong startComp, olong endComp,
     entry[0] = row->DeltaX;
     entry[1] = row->DeltaY;
     entry[2] = row->Flux;
+    if (haveDeltaZ) entry[3] = row->DeltaZ;
     /* First 4 parms are model, following are spectral parameters */
-    for (j=0; j<nterms; j++) entry[3+j] = row->parms[4+j];
+    for (j=0; j<nterms; j++) entry[toff+j] = row->parms[4+j];
 
     /* Save 1st 4 parms if any for first record */
     if ((count<=0) && (in->noParms>0)) {
@@ -2647,18 +2813,23 @@ static void CCMerge (ofloat *base, olong size, olong number)
  * \param number  Number of sort elements
  * \param doSpec  TRUE if parameterized spectra
  * \param doTSpec TRUE if tabulated spectra
+ * \param doZ     TRUE if have delta Z in table
  */
 static void CCMergeSpec (ofloat *base, olong size, olong number, 
-			 gboolean doSpec, gboolean doTSpec)
+			 gboolean doSpec, gboolean doTSpec, 
+			 gboolean doZ)
 {
-  olong i, j, k;
+  olong i, j, k, toff;
   ofloat *array = base;
   
+  if (doZ) toff = 4;
+  else     toff = 3;
+
   /* Multiply parameterized spectral terms by flux */
   if (doSpec) {
     j = 0;
     while (j<number) {
-      for (k=3; k<size; k++) 
+      for (k=toff; k<size; k++) 
 	array[j*size+k] *=  array[j*size+2];
       j++;
     }
@@ -2671,7 +2842,7 @@ static void CCMergeSpec (ofloat *base, olong size, olong number,
       if ((array[j*size]!=array[i*size]) || (array[j*size+1]!=array[i*size+1]))
 	break;
       /* Sum spectral components  flux */
-      for (k=3; k<size; k++) 
+      for (k=toff; k<size; k++) 
 	array[i*size+k] += array[j*size+k]; 
       array[i*size+2] += array[j*size+2];  /* sum fluxes */
       array[j*size] = -1.0e20;             /* Don't need any more */
@@ -2685,7 +2856,7 @@ static void CCMergeSpec (ofloat *base, olong size, olong number,
     i = 0;
     while (i<number) {
       if ((array[i*size]>-1.0e-19) && (fabs(array[i*size+3])>0.0)) {
-	for (k=3; k<size; k++) 
+	for (k=toff; k<size; k++) 
 	  array[i*size+k] /= array[i*size+2]; 
       }
       i++;
@@ -2711,7 +2882,8 @@ ReWriteTable(ObitTableCC *out, ofloat *base, olong size, olong number,
   ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitTableCCRow *row = NULL;
   ofloat *entry;
-  olong irow, i, nterms, count;
+  olong irow, i, nterms, count, toff;
+  gboolean doZ;
   gchar *routine = "ReWriteTable";
 
   /* error checks */
@@ -2724,13 +2896,18 @@ ReWriteTable(ObitTableCC *out, ofloat *base, olong size, olong number,
   if ((retCode != OBIT_IO_OK) || (err->error))
     Obit_traceback_val (err, routine, out->name, retCode);
 
-  /* Mark as sorted by descending flux */
+  /* Does the CC table have a DeltaZ column? */
+  doZ = out->DeltaZCol>=0;
+  if (doZ) toff = 4;
+  else     toff = 3;
+
+   /* Mark as sorted by descending flux */
   out->myDesc->sort[0] = -(out->FluxCol+257);
   out->myDesc->sort[1] = 0;
 
   /* Fooey!  This one counts */
  ((ObitTableDesc*)out->myIO->myDesc)->sort[0] = -(out->FluxCol+257);
-  ((ObitTableDesc*)out->myIO->myDesc)->sort[1] = 0;
+ ((ObitTableDesc*)out->myIO->myDesc)->sort[1] = 0;
   
   /* Need to copy any  spectral terms? */
   if (out->noParms>4) nterms = out->noParms-4;
@@ -2742,7 +2919,7 @@ ReWriteTable(ObitTableCC *out, ofloat *base, olong size, olong number,
   /* loop over table */
   retCode = OBIT_IO_OK;
   entry = (ofloat*)base;
-  irow = 0;
+  irow  = 0;
   count = 0;
   while (count<number) {
 
@@ -2753,12 +2930,13 @@ ReWriteTable(ObitTableCC *out, ofloat *base, olong size, olong number,
       row->DeltaX = entry[0];
       row->DeltaY = entry[1];
       row->Flux   = entry[2];
+      if (doZ) row->DeltaY = entry[3];
             /* copy any model parms - only one of these */
       if (out->noParms>0) {
 	for (i=0; i<MAX(4, out->noParms); i++) row->parms[i] = parms[i];
       }
       /* any spectral terms - one per entry */
-      for (i=0; i<nterms; i++) row->parms[4+i] = entry[3+i];
+      for (i=0; i<nterms; i++) row->parms[4+i] = entry[toff+i];
 
       /* Write */
       irow++;

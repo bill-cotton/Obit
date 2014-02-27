@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN/selfcalibrate a uv data set             */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2012                                          */
+/*;  Copyright (C) 2006-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1882,7 +1882,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
     ObitDConCleanFlatten((ObitDConClean*)myClean, err);
     /* If 2D imaging concatenate CC tables */
     if (!myClean->mosaic->images[0]->myDesc->do3D) 
-      ObitImageMosaicCopyCC (myClean->mosaic, err);
+      ObitImageMosaicCopyCC (myClean->mosaic, inUV, err);
     
     outImage = ObitImageMosaicGetFullImage (myClean->mosaic, err);
   } else  outImage = ObitImageMosaicGetImage (myClean->mosaic, 0, err);

@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2011                                          */
+/*;  Copyright (C) 2006-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -665,7 +665,7 @@ gboolean ObitSkyModelVMLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
   ObitSkyModelCompType modType, maxModType=OBIT_SkyModel_PointMod;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong warray, larray, iterm, nterm, maxTerm=1;
+  olong warray, larray, iterm, nterm, maxTerm=1, toff;
   ofloat *array, parms[20], range[2], gp1=0., gp2=0., gp3=0.;
   olong ver, i, j, hi, lo, count, ncomp, startComp, endComp, irow, lrec;
   olong outCCVer, ndim, naxis[2], lenEntry;
@@ -887,7 +887,11 @@ gboolean ObitSkyModelVMLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
       gp3 = -2.0 *  cpa * spa * (xmaj*xmaj - xmin*xmin);
     }
 
-    /* loop over CCs */
+    /* Does the CC table have a DeltaZ column? */
+    if (CCTable->DeltaZCol>=0) toff = 4;
+    else                       toff = 3;
+
+   /* loop over CCs */
     for (j=0; j<larray; j++) {
  
      /* Only down to first negative? */
@@ -908,7 +912,8 @@ gboolean ObitSkyModelVMLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 	table[3] = array[0] * in->factor;
 	xp[0] = (array[1] + xpoff) * konst;
 	xp[1] = (array[2] + ypoff) * konst;
-	xp[2] = 0.0;
+	if (CCTable->DeltaZCol>=0) xp[2] = array[3];
+	else                       xp[2] = 0.0;
 	if (do3Dmul) {
 	  xyz[0] = xp[0]*umat[0][0] + xp[1]*umat[1][0];
 	  xyz[1] = xp[0]*umat[0][1] + xp[1]*umat[1][1];
@@ -921,7 +926,7 @@ gboolean ObitSkyModelVMLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 	} else {  /* no rotation  */
 	  xyz[0] = ccrot * xp[0] + ssrot * xp[1];
 	  xyz[1] = ccrot * xp[1] - ssrot * xp[0];
-	  xyz[2] = 0.0;
+	  xyz[2] = xp[2];
  	}
 	table[4] = xyz[0] + xxoff;
 	table[5] = xyz[1] + yyoff;
@@ -938,7 +943,7 @@ gboolean ObitSkyModelVMLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 	    
 	    /* Only Point with spectrum */
 	  } else if (modType==OBIT_SkyModel_PointModSpec) {
-	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+7] = array[iterm+3];
+	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+7] = array[iterm+toff];
 	    
 	    /* Only Gaussian */
 	  } else if (in->modType==OBIT_SkyModel_GaussMod) {
@@ -952,7 +957,7 @@ gboolean ObitSkyModelVMLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 	    table[8] = gp2;
 	    table[9] = gp2;
 	    /*  spectrum */
-	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+10] = array[iterm+3];
+	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+10] = array[iterm+toff];
 	    
 	    /* Only Uniform sphere */
 	  } else if (in->modType==OBIT_SkyModel_USphereMod) {
@@ -966,7 +971,7 @@ gboolean ObitSkyModelVMLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 	    table[7] = parms[1]  * 0.109662271 * 2.7777778e-4;
 	    table[8] = 0.1;
 	    /*  spectrum */
-	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+9] = array[iterm+3];
+	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+9] = array[iterm+toff];
 	  }
 	} else { /* Mixed type - zero unused model components */
 
@@ -987,7 +992,7 @@ gboolean ObitSkyModelVMLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 	    table[7] = 0.0;
 	    table[8] = 0.0;
 	    table[9] = 0.0;
-	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+10] = array[iterm+3];
+	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+10] = array[iterm+toff];
 	  
 	    /* GaussianSpectrum here but also some PointSpectrum */
 	  } else if ((in->modType==OBIT_SkyModel_PointModSpec) && (modType==OBIT_SkyModel_GaussModSpec)) {
@@ -995,7 +1000,7 @@ gboolean ObitSkyModelVMLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 	    table[8] = gp2;
 	    table[9] = gp3;
 	    /*  spectrum */
-	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+10] = array[iterm+3];
+	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+10] = array[iterm+toff];
 	  
 	  /* Only Point here but some with spectrum - zero spectra (Unlikely) */
 	  } else if ((modType==OBIT_SkyModel_PointMod) && (in->modType==OBIT_SkyModel_PointModSpec)) {

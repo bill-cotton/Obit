@@ -72,6 +72,8 @@ typedef struct {
   ObitUVGrid *in;
   /* UV data set to model and subtract from current buffer */
   ObitFArray *array;
+  /* plane number 0-rel  */
+  olong       iplane;
   /* thread number, >0 -> no threading   */
   olong       ithread;
 } FFT2ImFuncArg;
@@ -756,7 +758,6 @@ void ObitUVGridMFFFT2Im (ObitUVGrid *inn, Obit *oout, ObitErr *err)
       /* reorder to center at center */
       ObitFArray2DCenter (array);
  
-
       /* Do gridding corrections */
       /* Normalization: use center value of beam */
       pos[0] = in->icenxBeam-1; pos[1] = in->icenyBeam-1;
@@ -916,7 +917,7 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
   ObitImageClassInfo *imgClass;
   ObitImage *theBeam;
   gboolean OK;
-  ofloat fact, *Corrp, fblank = ObitMagicF();
+  ofloat *Corrp, fblank = ObitMagicF();
   gchar *routine = "ObitUVGridMFFFT2ImPar";
   /* DEBUG
      ObitFArray *dbgRArr=NULL, *dbgIArr=NULL; */
@@ -1014,7 +1015,45 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
     ObitErrLog(err); 
   }
 
-   /*  Do gridding corrections threaded */
+  /* Get normalization loop looking for an in entry with doBeam member set an,
+   the center peak is measured and used to normalize,  this peak is assumed
+   to be the normalization for the subsequent image.
+   if an image without corresponding beam is encountered, the BeamNorms
+   member of it in[] is used to normalize */
+
+
+  for (i=0; i<nPar; i++) {
+    /* is this a beam? */
+    if (in[i]->doBeam) {
+      pos[0] = 0; pos[1] = 0; pos[2] = 0;
+      /* Loop over planes */
+      in[i]->BeamNorm = 0.0;
+      for (j=0; j<in[i]->nSpec; j++) {
+	Corrp = ObitFArrayIndex(array[i*in[i]->nSpec+j], pos);
+	in[i]->BeamNorms[j] = *Corrp;
+	in[i]->BeamNorm += in[i]->BeamNorms[j]; /* track sum of weights */
+	/* Deal with blanked planes */
+	if (in[i]->BeamNorms[j]==0.0) in[i]->BeamNorms[j] = fblank;
+	
+	/* Save normalization on in[i+1] */
+	if (!in[i+1]->doBeam) in[i+1]->BeamNorms[j] = in[i]->BeamNorms[j];
+	in[i+1]->BeamNorm = in[i]->BeamNorm;
+      } /* end loop over planes */
+      /* Save BeamNorms array on Beam */
+      dim[0] = in[i]->nSpec;  dim[1] = dim[2] = dim[3] = dim[4] = 1;
+      ObitInfoListAlwaysPut(out[i]->info, "BeamNorms", OBIT_float, dim, in[i]->BeamNorms);
+    } /* end if beam */
+    /* Fetch BeamNorms from beam if needed */
+    if ((in[i]->BeamNorms[0]==0.0) || (in[i]->BeamNorms[0]==fblank)) {
+      imgClass  = (ObitImageClassInfo*)out[i]->ClassInfo;    /* Image class */
+      theBeam   = imgClass->ObitImageGetBeam(out[i], 0, plane, err);
+      ObitInfoListGetTest(theBeam->info, "BeamNorms", &type, dim, in[i]->BeamNorms);
+      if (err->error) goto cleanup;
+    } /* end fetch Beam Norms */
+
+  } /* end normalization factor loop */
+
+  /*  Do gridding corrections threaded */
   /* How many threads? */
   in[0]->nThreads = MAX (1, ObitThreadNumProc(in[0]->thread));
   in[0]->nThreads = MIN (nPar*in[0]->nSpec, in[0]->nThreads);
@@ -1044,6 +1083,7 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
 	args->thread = in[0]->thread;
 	args->in     = inn[i];
 	args->array  = array[ii+off];
+	args->iplane = (ii+off) % in[0]->nSpec;
 	if (nnTh>1) args->ithread = ii;
 	else args->ithread = -1;
       }
@@ -1058,7 +1098,7 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
       }
       nLeft -= nnTh;  /* update number left */
       off += nnTh;
-    } /* end loop over rest */
+    } /* end loop over channels */
   } /* End loop gridding correcting images */
 
   /* DEBUG 
@@ -1069,24 +1109,14 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
     Obit_log_error(err, OBIT_InfoErr, "%s: finished Gridding corr",routine);
     ObitErrLog(err); 
   }
-  /* Normalize - loop looking for an in entry with doBeam member set an,
-   the center peak is measured and used to normalize,  this peak is assumed
-   to be the normalization for the subsequent image.
-   if an image without corresponding beam is encountered, the BeamNorm
-   member of it in[] is used to normalize */
 
-
+  /* Loop writing and combining */
   for (i=0; i<nPar; i++) {
     out[i]->image = ObitFArrayUnref(out[i]->image);  /* Free buffer */
     /* is this a beam? */
     if (in[i]->doBeam) {
-      pos[0] = in[i]->icenxBeam-1; pos[1] = in[i]->icenyBeam-1; pos[2] = 1;
       /* Loop over planes */
-      in[i]->BeamNorm = 0.0;
       for (j=0; j<in[i]->nSpec; j++) {
-	Corrp = ObitFArrayIndex(array[i*in[i]->nSpec+j], pos);
-	in[i]->BeamNorms[j] = *Corrp;
-	in[i]->BeamNorm += in[i]->BeamNorms[j]; /* track sum of weights */
 	/* Check */
 	if (in[i]->BeamNorms[j]==0.0) {  /* No data? */
 	  Obit_log_error(err, OBIT_InfoWarn, 
@@ -1096,21 +1126,7 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
 	  /* DEBUG
 	  ObitImageUtilArray2Image ("DbugRawBeamBad.fits",  0, array[i*in[i]->nSpec+j], err);   */
 	  /* END DEBUG */
-	  ObitFArrayFill (array[i*in[i]->nSpec+j], fblank); /* Blank fill */
-
-	} else {  /* OK */
-	  
-	  /* Normalize */
-	  fact = 1.0 / MAX (1.0e-20, in[i]->BeamNorms[j]);
-	  ObitFArraySMul (array[i*in[i]->nSpec+j], fact);  /* Normalize beam */
-	}
-	
-	/* Save normalization on in[i+1] */
-	if (!in[i+1]->doBeam) in[i+1]->BeamNorms[j] = in[i]->BeamNorms[j];
-	in[i+1]->BeamNorm = in[i]->BeamNorm;
-	/* Save BeamNorms array on Beam */
-	dim[0] = in[i]->nSpec;  dim[1] = dim[2] = dim[3] = dim[4] = 1;
-	ObitInfoListAlwaysPut(out[i]->info, "BeamNorms", OBIT_float, dim, in[i]->BeamNorms);
+	} /* end no data */
 	
 	pln = 2+in[i]->maxOrder+j;      /* Get channel/plane number */
 	if (in[i]->nSpec==1) pln = 1;   /* Normal imaging */
@@ -1136,30 +1152,10 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
     } /* end if beam */
     /*  Now image */
 
-    /* Fetch BeamNorms from beam */
-    imgClass  = (ObitImageClassInfo*)out[i]->ClassInfo;    /* Image class */
-    theBeam   = imgClass->ObitImageGetBeam(out[i], 0, plane, err);
-    ObitInfoListGetTest(theBeam->info, "BeamNorms", &type, dim, in[i]->BeamNorms);
-    if (err->error) goto cleanup;
-    
     /* Loop over planes */
     for (j=0; j<in[i]->nSpec; j++) {
-      if (in[i]->BeamNorms[j]==0.0) {
-	Obit_log_error(err, OBIT_Error,
-		       "%s ERROR image normalization is zero for: %s",
-		       routine, in[i]->name);
-	goto cleanup;
-      } else if (in[i]->BeamNorms[j]==fblank) { /* Plane blanked? */
-
-	ObitFArrayFill (array[i*in[i]->nSpec+j], fblank); /* Blank fill */
-	
-      } else {
-
-	/* Normalize */
-	fact = 1.0 / MAX (1.0e-20, in[i]->BeamNorms[j]);
-	ObitFArraySMul (array[i*in[i]->nSpec+j], fact);  /* Normalize image */
-      }
-    
+      /* Deal with blanked planes */
+      if (in[i]->BeamNorms[j]==0.0) in[i]->BeamNorms[j] = fblank;
       /* Write output */
       pln = 2+j+in[i]->maxOrder;       /* Get channel/plane number */
       if (in[i]->nSpec==1) pln = 1;    /* Normal imaging */
@@ -1355,15 +1351,35 @@ static gpointer ThreadFFT2ImMF (gpointer arg)
   FFT2ImFuncArg *largs = (FFT2ImFuncArg*)arg;
   ObitUVGridMF *in     = (ObitUVGridMF*)largs->in;
   ObitFArray *array    = largs->array;
+  olong iplane         = largs->iplane;
 
+  olong  i;
+  ObitFArray *YCorr   = NULL;
+  ofloat norm, fblank = ObitMagicF();
+
+  if ((in->BeamNorms[iplane]<=0.0) || (in->BeamNorms[iplane]==fblank)){
+    ObitFArrayFill (array, fblank); /* Blank fill */
+    goto finish;
+  } else norm = 1.0/in->BeamNorms[iplane]; /* Normalization factor */
+ 
   /* reorder to center at center */
   ObitFArray2DCenter (array);
   
   /* Do multiply to make griding correction */
-  if (in->doBeam) 
-    ObitFArrayMulColRow (array, in->xCorrBeam, in->yCorrBeam, array);
-  else
-    ObitFArrayMulColRow (array, in->xCorrImage, in->yCorrImage, array);
+  if (in->doBeam) {
+    /* Temporary array with normalization */
+    YCorr = ObitFArrayCreate ("tmp", in->yCorrBeam->ndim, in->yCorrBeam->naxis);
+    for (i=0; i<in->yCorrBeam->arraySize; i++) 
+      YCorr->array[i] = in->yCorrBeam->array[i] * norm;
+    ObitFArrayMulColRow (array, in->xCorrBeam, YCorr, array);
+  } else {
+    /* Temporary array with normalization */
+    YCorr = ObitFArrayCreate ("tmp", in->yCorrImage->ndim, in->yCorrImage->naxis);
+    for (i=0; i<in->yCorrImage->arraySize; i++) 
+      YCorr->array[i] = in->yCorrImage->array[i] * norm;
+    ObitFArrayMulColRow (array, in->xCorrImage, YCorr, array);
+  }
+  YCorr = ObitFArrayUnref(YCorr);
   goto finish;
   
   /* cleanup */

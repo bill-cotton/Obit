@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2012                                          */
+/*;  Copyright (C) 2004-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -206,8 +206,8 @@ typedef void (*ObitImageMosaicMaxCCFP) (ObitTableCC *CCTab, olong nccpos, ofloat
 					ofloat* xoff, ofloat* yoff, ObitErr* err);
 
 /** Public:  Get combined CC table */
-ObitTableCC* ObitImageMosaicCombineCC (ObitImageMosaic *mosaic, olong field,
-				       olong CCver, ObitErr* err); 
+ObitTableCC* ObitImageMosaicCombineCC (ObitImageMosaic *mosaic, 
+				       olong field, olong CCver, ObitErr* err); 
 typedef ObitTableCC* (*ObitImageMosaicCombineCCFP) (ObitImageMosaic *mosaic, 
 						    olong field, olong CCver, 
 						    ObitErr* err); 
@@ -245,8 +245,9 @@ typedef void
 			     ObitErr *err);
 
 /** Public: Concatenate Image CC tables onto the FullField Image */
-void ObitImageMosaicCopyCC (ObitImageMosaic *in, ObitErr *err);
-typedef void (*ObitImageMosaicCopyCCFP) (ObitImageMosaic *in, ObitErr *err);
+void ObitImageMosaicCopyCC (ObitImageMosaic *in, ObitUV *inUV, ObitErr *err);
+typedef void (*ObitImageMosaicCopyCCFP) (ObitImageMosaic *in, ObitUV *inUV,
+					 ObitErr *err);
 
 /* Private functions for derived classes */
 /** Private: Cover specified field of view */

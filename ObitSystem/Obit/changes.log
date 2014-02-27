@@ -1905,3 +1905,46 @@ Obit/share/data/3C196SModel.fits.gz Obit/share/data/3C295SModel.fits.gz
 Obit/share/data/3C380SModel.fits.gz Obit/share/data/3C48SModel.fits.gz
   Wideband calibrator models
 21 Feb. 2014 svn version 470
+
+3D Clean components, more EVLA calibrator models, bug fixes
+Obit/src/ObitUVSelfCal.c:
+  SelfCal: Free Solver at end, copy FractOK
+Obit/tasks/BeamCor.c Obit/tasks/Imager.c Obit/tasks/MFBeam
+Obit/tasks/MFImage.c Obit/tasks/Squint.c Obit/tasks/SWImag.c:
+  get FractOk from selfcal not it's solver
+Obit/share/data/3C286LModel.fits.gz Obit/share/data/3C147LModel.fits.gz
+Obit/share/data/3C123LModel.fits.gz Obit/share/data/3C138LModel.fits.gz
+Obit/share/data/3C196LModel.fits.gz Obit/share/data/3C295LModel.fits.gz
+Obit/share/data/3C380LModel.fits.gz Obit/share/data/3C48LModel.fits.gz
+Obit/share/data/3C286CModel.fits.gz Obit/share/data/3C147CModel.fits.gz
+Obit/share/data/3C123CModel.fits.gz Obit/share/data/3C138CModel.fits.gz
+Obit/share/data/3C196CModel.fits.gz Obit/share/data/3C295CModel.fits.gz
+Obit/share/data/3C380CModel.fits.gz Obit/share/data/3C48CModel.fits.gz:
+  new standard calibrator models
+Obit/python/EVLACal.py:
+  more calibrator models.
+Obit/src/Obit/DConCleanPxListMF.c:
+  GetSpecBeamPatch: Allow beam beak epsilon > 1.0
+Obit/src/ObitUVGrid.c Obit/src/ObitUVGridMF.c:
+  Efficiency improvements
+Obit/tasks/Calib.c:
+  Pass all of modelParms to calibration routines.
+Obit/include/ObitTableCCUtil.h Obit/src/ObitTableCCUtil.c:
+  new routine AppendShift to copy table with shifted coordinates
+Obit/include/ObitImageMosaic.h  Obit/src/ObitImageMosaic.c:
+  Add  UV data to CopyCC parameters
+  CopyCC: use ObitTableCCUtilAppendShift to copy CCs to FullField
+Obit/tasks/MFImage.c Obit/tasks/BeamCor.c Obit/tasks/Imager.c
+Obit/tasks/IonImage.c Obit/tasks/MFBeam.c Obit/tasks/SCMap.c
+Obit/tasks/Squint.c Obit/tasks/SWImag.c Obit/src/ObitDConCleanVis.c :
+  Add UVdata to ObitImageMosaicCopyCC call
+Obit/doc/OBITdoc.tex Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c
+Obit/include/ObitTableCCClassDef.h Obit/include/ObitTableCCDef.h Obit/include/ObitTableCC.h
+Obit/includeObitTableCCRowClassDef.h/ Obit/include/ObitTableCCRowDef.h Obit/src/ObitTableCC.c:
+Obit/python/TableCC.inc:
+  Add optional column DELTAZ
+Obit/src/ObitSkyModel.c Obit/src/ObitSkyModelMF.c
+Obit/src/ObitSkyModelVM.c Obit/src/ObitSkyModelVMBeamMF.c:
+  Implement DeltaZ member of CC table row
+27 Feb 2014, svn version 472
+

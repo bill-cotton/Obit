@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2013                                          */
+/*;  Copyright (C) 2010-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1628,7 +1628,7 @@ static void GetSpecBeamPatch (ObitDConCleanPxListMF *in, olong ifld,
     FAtemp = ObitFArrayUnref(FAtemp);
 
     /* Set if Beam OK - peak>0.5 and near center */
-    bad = (fmax<0.5) || (fmax>1.0) || 
+    bad = (fmax<0.5) || (fmax>1.01) || 
       (abs(pos[0]+ablc[0]-icenx)>3) || (abs(pos[1]+ablc[1]-iceny)>3);
     if (!bad) {
       icenx = pos[0]+ablc[0];

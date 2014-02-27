@@ -1842,7 +1842,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     if ((myClean->nfield>1) && doFlat) {
       if ((!myClean->mosaic->images[0]->myDesc->do3D) || 
 	  (myClean->mosaic->nFlyEye==1))
-	ObitImageMosaicCopyCC (myClean->mosaic, err);
+	ObitImageMosaicCopyCC (myClean->mosaic, outData, err);
     }
     
     /* Copy result to output */
@@ -2175,8 +2175,8 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	
 	/* May need to remake beams - depends on success of selfcal */
 	FractOK = 1.0;
-	if (selfCal->mySolver!=NULL)
-	  ObitInfoListGetTest(selfCal->mySolver->info, "FractOK", &type, dim, &FractOK);
+	if (selfCal!=NULL)
+	  ObitInfoListGetTest(selfCal->info, "FractOK", &type, dim, &FractOK);
 	doBeam = FractOK < 0.9;
 	dim[0] = 1;dim[1] = 1;
 	ObitInfoListAlwaysPut(myClean->info, "doBeam", OBIT_bool, dim, &doBeam);
@@ -2365,7 +2365,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	init = FALSE;
 	
 	/* May need to remake beams - depends on success of selfcal */
-	ObitInfoListGetTest(selfCal->mySolver->info, "FractOK", &type, dim, &FractOK);
+	ObitInfoListGetTest(selfCal->info, "FractOK", &type, dim, &FractOK);
 	doBeam = FractOK < 0.9;
 
 	dim[0] = 1;dim[1] = 1;
@@ -2482,7 +2482,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   if ((myClean->nfield>1) && myClean->mosaic->FullField) {
     if ((!myClean->mosaic->images[0]->myDesc->do3D) || 
 	(myClean->mosaic->nFlyEye==1))
-      ObitImageMosaicCopyCC (myClean->mosaic, err);
+      ObitImageMosaicCopyCC (myClean->mosaic, inUV, err);
   }
 
   /* Cleanup */

@@ -1,7 +1,7 @@
 /* $Id$ */
 /* Obit VLA Squint correcting Radio interferometry imaging software  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2012                                          */
+/*;  Copyright (C) 2006-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1687,7 +1687,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     if ((myClean->nfield>1) && doFlat) {
       if ((!myClean->mosaic->images[0]->myDesc->do3D) || 
 	  (myClean->mosaic->nFlyEye==1))
-	ObitImageMosaicCopyCC (myClean->mosaic, err);
+	ObitImageMosaicCopyCC (myClean->mosaic, outData, err);
     }
 
     /* Copy result to output */
@@ -1989,8 +1989,8 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	
 	/* May need to remake beams - depends on success of selfcal */
 	FractOK = 1.0;
-	if (selfCal->mySolver!=NULL)
-	  ObitInfoListGetTest(selfCal->mySolver->info, "FractOK", &type, dim, &FractOK);
+	if (selfCal!=NULL)
+	  ObitInfoListGetTest(selfCal->info, "FractOK", &type, dim, &FractOK);
 	doBeam = FractOK < 0.9;
 	dim[0] = 1;dim[1] = 1;
 	ObitInfoListAlwaysPut(myClean->info, "doBeam", OBIT_bool, dim, &doBeam);
@@ -2179,7 +2179,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	ObitInfoListAlwaysPut (myClean->skyModel->info, "doAlphaCorr", OBIT_bool, dim, &btemp);
 
 	/* May need to remake beams - depends on success of selfcal */
-	ObitInfoListGetTest(selfCal->mySolver->info, "FractOK", &type, dim, &FractOK);
+	ObitInfoListGetTest(selfCal->info, "FractOK", &type, dim, &FractOK);
 	doBeam = FractOK < 0.9;
 
 	dim[0] = 1;dim[1] = 1;

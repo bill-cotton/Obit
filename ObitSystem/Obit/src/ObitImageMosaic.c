@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2013                                          */
+/*;  Copyright (C) 2004-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2008,8 +2008,7 @@ ObitTableCC* ObitImageMosaicCombineCC (ObitImageMosaic *mosaic, olong field,
   hiVer = ObitTableListGetHigh (mosaic->images[ifield]->tableList, "AIPS CC");
   ver = hiVer+1;
   outCC = newObitTableCCValue ("Comb CC", (ObitData*)mosaic->images[ifield],
-				    &ver, OBIT_IO_ReadWrite, inCC->noParms, 
-				    err);
+				    &ver, OBIT_IO_ReadWrite, inCC->noParms, err);
   ObitTableCCUtilMerge (inCC, outCC, err);
   if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, outCC);
   inCC  = ObitTableCCUnref(inCC);
@@ -2649,11 +2648,12 @@ void ObitImageMosaicGetInfo (ObitImageMosaic *in, gchar *prefix, ObitInfoList *o
  * the output table descriptor list:
  *   \li "NTAPER"   olong Number of tapers
  *   \li "TAPEnnnn" ofloat Taper nnnn in deg.
- * \param mosaic   ImageMosaic to process, info member has
+ * \param in   ImageMosaic to process, info member has
  *   \li "numPar"  olong Number of parallel images, default = 1
+ * \param inUV     UV data from which image mosaic was made.
  * \param err      Error/message stack
  */
-void ObitImageMosaicCopyCC (ObitImageMosaic *in, ObitErr *err)
+void ObitImageMosaicCopyCC (ObitImageMosaic *in, ObitUV *inUV, ObitErr *err)
 {
   ObitTableCC *inCCTab=NULL, *outCCTab=NULL;
   olong i, CCVer, noParms, ifield, numPar;
@@ -2714,7 +2714,9 @@ void ObitImageMosaicCopyCC (ObitImageMosaic *in, ObitErr *err)
 				     &CCVer, OBIT_IO_ReadOnly, noParms, err);
       if  (err->error) Obit_traceback_msg (err, routine, in->images[ifield]->name);
       if (inCCTab==NULL) continue;  /* Is there one? */
-      ObitTableCCUtilAppend (inCCTab, outCCTab, 0, 0, err);
+      ObitTableCCUtilAppendShift (inCCTab, outCCTab, 
+				  inUV->myDesc, in->images[ifield]->myDesc,
+				  0, 0, err);
       if  (err->error) Obit_traceback_msg (err, routine, inCCTab->name);
       inCCTab = ObitTableCCUnref(inCCTab); /* Cleanup */
     } /* end loop copying rest of tables */
