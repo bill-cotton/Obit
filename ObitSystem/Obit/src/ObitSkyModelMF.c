@@ -1423,7 +1423,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 	} else {  /* no rotn matrix */
 	  xyz[0] = ccrot * xp[0] + ssrot * xp[1];
 	  xyz[1] = ccrot * xp[1] - ssrot * xp[0];
-	  xyz[2] = xp[0];
+	  xyz[2] = xp[2];
  	}
 	table[1] = xyz[0] + xxoff;
 	table[2] = xyz[1] + yyoff;

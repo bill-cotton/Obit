@@ -1948,3 +1948,7 @@ Obit/src/ObitSkyModelVM.c Obit/src/ObitSkyModelVMBeamMF.c:
   Implement DeltaZ member of CC table row
 27 Feb 2014, svn version 472
 
+bug fixes
+Obit/src/ObitSkyModelMF.c Obit/src/ObitTableCCUtil.c:
+  Fix 3D CC bug from last update.
+28 Feb 2014 svn version 473

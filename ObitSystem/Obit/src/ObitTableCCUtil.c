@@ -2480,7 +2480,7 @@ void ObitTableCCUtilCombTSpec (ObitImage *inImage, olong inCCVer, olong nCCVer,
       /* Copy info */
       outCCRow->DeltaX   = inCCRow->DeltaX;
       outCCRow->DeltaY   = inCCRow->DeltaY;
-      if (doZ) outCCRow->DeltaY   = inCCRow->DeltaZ;
+      if (doZ) outCCRow->DeltaZ   = inCCRow->DeltaZ;
       outCCRow->Flux   = inCCRow->Flux;
       /* Set output type and parameters if given */
       if (inPoint) outCCRow->parms[3] = modType;
@@ -2930,7 +2930,7 @@ ReWriteTable(ObitTableCC *out, ofloat *base, olong size, olong number,
       row->DeltaX = entry[0];
       row->DeltaY = entry[1];
       row->Flux   = entry[2];
-      if (doZ) row->DeltaY = entry[3];
+      if (doZ) row->DeltaZ = entry[3];
             /* copy any model parms - only one of these */
       if (out->noParms>0) {
 	for (i=0; i<MAX(4, out->noParms); i++) row->parms[i] = parms[i];
