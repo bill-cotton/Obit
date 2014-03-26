@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2011                                          */
+/*;  Copyright (C) 2006-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1129,7 +1129,7 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
   olong lrec, nrparm, naxis[2];
   olong startPoln, numberPoln, jincs, startChannel, numberChannel;
   olong jincf, startIF, numberIF, jincif, kincf, kincif;
-  olong offset, offsetChannel, offsetIF;
+  olong offset, offsetChannel, offsetIF, lim;
   olong ilocu, ilocv, ilocw, iloct, ilocb, suba, itemp, ant1, ant2, mcomp;
   ofloat *visData, *Data, *ddata, *fscale;
   ofloat sumRealRR, sumImagRR, modRealRR, modImagRR;
@@ -1280,7 +1280,8 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
 	  freq2 = freqFact * freqFact;    /* Frequency factor squared */
 	  for (it=0; it<mcomp; it+=FazArrSize) {
 	    itcnt = 0;
-	    for (iComp=it; iComp<mcomp; iComp++) {
+	    lim = MIN (mcomp, it+FazArrSize);
+	    for (iComp=it; iComp<lim; iComp++) {
 	      FazArr[itcnt] = freqFact * (ddata[4]*visData[ilocu] + 
 					  ddata[5]*visData[ilocv] + 
 					  ddata[6]*visData[ilocw]);
@@ -1297,7 +1298,6 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
 	      AmpArrL[itcnt] = ampl;
 	      ddata += lcomp;   /* update pointer */
 	      itcnt++;          /* Count in amp/phase buffers */
-	      if (itcnt>=FazArrSize) break;
 	    }  /* end inner loop over components */
 	    
 	    /* Convert phases to sin/cos */
@@ -1318,7 +1318,8 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
 	  /* From the AIPSish QSPSUB.FOR  */
 	  for (it=0; it<mcomp; it+=FazArrSize) {
 	    itcnt = 0;
-	    for (iComp=it; iComp<mcomp; iComp++) {
+	    lim = MIN (mcomp, it+FazArrSize);
+	    for (iComp=it; iComp<lim; iComp++) {
 	      FazArr[itcnt] = freqFact * (ddata[4]*visData[ilocu] + 
 					  ddata[5]*visData[ilocv] + 
 					  ddata[6]*visData[ilocw]);
@@ -1332,7 +1333,6 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
 	    AmpArrL[itcnt] = ampl;
 	    ddata += lcomp;   /* update pointer */
 	    itcnt++;          /* Count in amp/phase buffers */
-	    if (itcnt>=FazArrSize) break;
 	  } /* end inner loop over components */
 	    
 	    /* Convert phases to sin/cos */

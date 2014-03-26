@@ -834,6 +834,9 @@ void ObitThreadGridGrid (ObitThreadGrid *grids)
   GridFuncArg **funcarg = (GridFuncArg**)grids->GridInfo->thArgs;
   gboolean OK;
 
+  /* Anything to do? */
+  if (grids->UVin->myDesc->numVisBuff<=0) return;
+
   /* Did the number of visibilities change? */
   if (grids->GridInfo->nvis!=grids->UVin->myDesc->numVisBuff) {
     /* Reset on funcarg */

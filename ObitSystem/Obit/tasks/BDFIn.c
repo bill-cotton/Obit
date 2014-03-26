@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Read BDF format data, convert to Obit UV                           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2013                                          */
+/*;  Copyright (C) 2010-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -3360,7 +3360,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     }
     
     if (want) {
-      IFno = SpWinLookup2[inTab->rows[iRow]->spectralWindowId];
+      IFno = SpWinLookup[inTab->rows[iRow]->spectralWindowId];
       IFno = MAX (0, MIN(IFno, (numIF-1)));
     } else continue;
     
@@ -3389,9 +3389,9 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       if (inTab->rows[jRow]->antennaId!=inTab->rows[iRow]->antennaId) continue;
 
       /* Must want this one - work out IF number - must be valid and selected */
-      SWId = SpWinLookup[inTab->rows[jRow]->spectralWindowId];
+      SWId = SpWinLookup[inTab->rows[jRow]->spectralWindowId]; /* Really reordered */
       if ((SWId>=0) && (SWId<SpWinArray->nwinds) &&  SpWinArray->winds[SWId]->selected) {
-	IFno = SpWinLookup2[inTab->rows[jRow]->spectralWindowId];
+	IFno = SpWinLookup[inTab->rows[jRow]->spectralWindowId];
 	IFno = MAX (0, MIN(IFno, (numIF-1)));
       } else continue;
       

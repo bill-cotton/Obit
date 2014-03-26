@@ -5130,7 +5130,7 @@ def EVLAEditSNAmp(uv, SNver, err, \
    # end EVLAEditSNAmp
 
 def EVLAFlagFailSN(uv, SNver, err, \
-                   FGver=-1, logfile='', check=False, debug=False):
+                   FGver=-1, FGuv=None, logfile='', check=False, debug=False):
     """
     Make entries in FG table for times of failed SN solutions
 
@@ -5140,6 +5140,7 @@ def EVLAFlagFailSN(uv, SNver, err, \
     * SNver      = SN table to flag, 0=> highest
     * err        = Python Obit Error/message stack
     * FGver      = FG table to add flags to, <=0 ->none
+    * FGuv       = None or uv data to write flag s to, None=>uv
     * logfile    = logfile for messages
     * check      = Only check script
     * debug      = Only debug - no effect
@@ -5149,7 +5150,12 @@ def EVLAFlagFailSN(uv, SNver, err, \
         snver =  uv.GetHighVer("AIPS SN")
     else:
         snver = SNver;
-    mess = "Failed solutions in SN %d flagged in FG %d" % (snver,FGver)
+    # Flag uv data
+    if FGuv==None:
+        outuv = uv
+    else:
+        outuv = FGuv
+        mess = "Failed solutions in SN %d flagged in FG %d" % (snver,FGver)
     printMess(mess, logfile)
     fblank = FArray.PGetBlank() # Magic blanking value
     # Number of IFs
@@ -5177,7 +5183,7 @@ def EVLAFlagFailSN(uv, SNver, err, \
             total += 1
             if (SNrow["WEIGHT 1"][iif]<=0.0) or (SNrow["REAL1"][iif]==fblank):
                 # Flag table?
-                EVLAFlagSNClip(uv, SNrow, iif+1, 1, err, FGver=FGver, reason="Failed soln", \
+                EVLAFlagSNClip(uv, SNrow, iif+1, 1, err, FGver=FGver, FGuv=outuv, reason="Failed soln", \
                                logfile=logfile, check=check, debug=debug)
                 count += 1
                 dirty = True
@@ -5186,7 +5192,7 @@ def EVLAFlagFailSN(uv, SNver, err, \
                 total += 1
             if (npoln>1) and (SNrow["WEIGHT 2"][iif]<=0.0) or (SNrow["REAL2"][iif]==fblank):
                 # Flag table?
-                EVLAFlagSNClip(uv, SNrow, iif+1, 2, err, FGver=FGver, reason="Failed soln", \
+                EVLAFlagSNClip(uv, SNrow, iif+1, 2, err, FGver=FGver, FGuv=outuv, reason="Failed soln", \
                                logfile=logfile, check=check, debug=debug)
                 count += 1
                 dirty = True
@@ -5285,7 +5291,7 @@ def EVLASNAmpStats(uv, SNver, err, logfile='', check=False, debug=False):
     # end EVLASNAmpStats
 
 def EVLAClipSNAmp(uv, SNver, arange, err, \
-                  FGver=-1, logfile='', check=False, debug=False):
+                  FGver=-1, FGuv=None, logfile='', check=False, debug=False):
     """
     Flag SN table entries with amplitudes outside of [range[0]-range[1]]
 
@@ -5298,6 +5304,7 @@ def EVLAClipSNAmp(uv, SNver, arange, err, \
                    IF with None entry are ignored
     * err        = Python Obit Error/message stack
     * FGver      = FG table to add flags to, <=0 ->none
+    * FGuv       = None or uv data to write flag s to, None=>uv
     * logfile    = logfile for messages
     * check      = Only check script
     * debug      = Only debug - no effect
@@ -5312,7 +5319,12 @@ def EVLAClipSNAmp(uv, SNver, arange, err, \
                         numIF=nif, numPol=npoln)
     if err.isErr:
         return
-    # Open
+    # Flag uv data
+    if FGuv==None:
+        outuv = uv
+    else:
+        outuv = FGuv
+     # Open
     SNTab.Open(Table.READWRITE, err)
     if err.isErr:
         return
@@ -5334,7 +5346,7 @@ def EVLAClipSNAmp(uv, SNver, arange, err, \
                     amp = (SNrow["REAL1"][iif]**2+SNrow["IMAG1"][iif]**2)**0.5
                     if (amp<amin) or (amp>amax):
                         # Flag table?
-                        EVLAFlagSNClip(uv, SNrow, iif+1, 1, err, FGver=FGver, \
+                        EVLAFlagSNClip(uv, SNrow, iif+1, 1, err, FGver=FGver, FGuv=outuv, \
                                        logfile=logfile, check=check, debug=debug)
                         SNrow["REAL1"][iif]    = fblank
                         SNrow["IMAG1"][iif]    = fblank
@@ -5347,7 +5359,7 @@ def EVLAClipSNAmp(uv, SNver, arange, err, \
                     amp = (SNrow["REAL2"][iif]**2+SNrow["IMAG2"][iif]**2)**0.5
                     if (amp<amin) or (amp>amax):
                         # Flag table?
-                        EVLAFlagSNClip(uv, SNrow, iif+1, 2, err, FGver=FGver, \
+                        EVLAFlagSNClip(uv, SNrow, iif+1, 2, err, FGver=FGver, FGuv=outuv, \
                                        logfile=logfile, check=check, debug=debug)
                         SNrow["REAL2"][iif]    = fblank
                         SNrow["IMAG2"][iif]    = fblank
@@ -5371,7 +5383,7 @@ def EVLAClipSNAmp(uv, SNver, arange, err, \
     # end EVLAClipSNAmp
 
 def EVLAFlagSNClip(uv, SNrow, IFno, poln, err, \
-               FGver=-1, reason="BadAmp", logfile='', check=False, debug=False):
+               FGver=-1,  FGuv=None, reason="BadAmp", logfile='', check=False, debug=False):
     """
     Write flag table entry for SN table row
 
@@ -5383,6 +5395,7 @@ def EVLAFlagSNClip(uv, SNrow, IFno, poln, err, \
     * poln       = polarization (1 or 2)
     * err        = Python Obit Error/message stack
     * FGver      = FG table to add flags to, <=0 ->none
+    * FGuv       = None or uv data to write flag s to, None=>uv
     * reason     = reason string
     * logfile    = logfile for messages
     * check      = Only check script
@@ -5391,6 +5404,11 @@ def EVLAFlagSNClip(uv, SNrow, IFno, poln, err, \
     ################################################################
     if FGver<=0:   # Anthing wanted?
         return
+    # Flag uv data
+    if FGuv==None:
+        outuv = uv
+    else:
+        outuv = FGuv
     tr   = [SNrow["TIME"][0]-SNrow["TIME INTERVAL"][0],SNrow["TIME"][0]+SNrow["TIME INTERVAL"][0]]
     Ants = [SNrow["ANTENNA NO."][0],0]
     IFs  = [IFno, IFno]
@@ -5402,7 +5420,7 @@ def EVLAFlagSNClip(uv, SNrow, IFno, poln, err, \
         Stokes="0111"
         amp = (SNrow["REAL2"][IFno-1]**2+SNrow["IMAG2"][IFno-1]**2)**0.5
     if not check:
-        UV.PFlag(uv, err, flagVer=FGver,
+        UV.PFlag(outuv, err, flagVer=FGver,
                  timeRange=tr, Ants=Ants, IFs=IFs, Stokes=Stokes, 
                  Reason=reason)
     if err.isErr:

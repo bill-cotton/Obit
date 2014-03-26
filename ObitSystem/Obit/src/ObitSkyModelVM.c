@@ -1173,7 +1173,7 @@ static gpointer ThreadSkyModelVMFTDFT (gpointer args)
   olong lrec, nrparm, naxis[2];
   olong startPoln, numberPoln, jincs, startChannel, numberChannel;
   olong jincf, startIF, numberIF, jincif, kincf, kincif;
-  olong offset, offsetChannel, offsetIF;
+  olong offset, offsetChannel, offsetIF, lim;
   olong ilocu, ilocv, ilocw, iloct, suba, itemp;
   ofloat *visData, *ccData, *data, *fscale;
   ofloat modReal, modImag;
@@ -1183,6 +1183,7 @@ static gpointer ThreadSkyModelVMFTDFT (gpointer args)
   ofloat AmpArr[FazArrSize], FazArr[FazArrSize];
   ofloat CosArr[FazArrSize], SinArr[FazArrSize];
   ofloat ExpArg[FazArrSize],  ExpVal[FazArrSize];
+  gboolean OK;
   olong it, jt, itcnt;
   const ObitSkyModelVMClassInfo 
     *myClass=(const ObitSkyModelVMClassInfo*)in->ClassInfo;
@@ -1262,8 +1263,16 @@ static gpointer ThreadSkyModelVMFTDFT (gpointer args)
     /* Loop over IFs */
     for (iIF=startIF; iIF<startIF+numberIF; iIF++) {
       offsetIF = nrparm + iIF*jincif; 
+      /* Loop over channel */
       for (iChannel=startChannel; iChannel<startChannel+numberChannel; iChannel++) {
 	offsetChannel = offsetIF + iChannel*jincf; 
+	/* Anything to model? */
+	OK = FALSE;
+	for (iStoke=startPoln; iStoke<startPoln+numberPoln; iStoke++) {
+	  offset = offsetChannel + iStoke*jincs; /* Visibility offset */
+	  OK = OK || (visData[offset+2]>0.0);
+	}
+	if (!OK && !in->doReplace) continue;
 	freqFact = fscale[iIF*kincif + iChannel*kincf];  /* Frequency scaling factor */
 	freq2    = freqFact * freqFact;    /* Frequency factor squared */
 
@@ -1278,7 +1287,8 @@ static gpointer ThreadSkyModelVMFTDFT (gpointer args)
 	  /* From the AIPSish QXXPTS.FOR  */
 	  for (it=0; it<ncomp; it+=FazArrSize) {
 	    itcnt = 0;
-	    for (iComp=it; iComp<ncomp; iComp++) {
+	    lim = MIN (ncomp, it+FazArrSize);
+	    for (iComp=it; iComp<lim; iComp++) {
 	      tx = ccData[1]*(odouble)visData[ilocu];
 	      ty = ccData[2]*(odouble)visData[ilocv];
 	      tz = ccData[3]*(odouble)visData[ilocw];
@@ -1286,7 +1296,6 @@ static gpointer ThreadSkyModelVMFTDFT (gpointer args)
 	      AmpArr[itcnt] = ccData[0];
 	      ccData += lcomp;  /* update pointer */
 	      itcnt++;          /* Count in amp/phase buffers */
-	      if (itcnt>=FazArrSize) break;
 	    } /* end inner loop over components */
 	    
 	    /* Convert phases to sin/cos */
@@ -1302,7 +1311,8 @@ static gpointer ThreadSkyModelVMFTDFT (gpointer args)
 	  /* From the AIPSish QGASUB.FOR  */
 	  for (it=0; it<ncomp; it+=FazArrSize) {
 	    itcnt = 0;
-	    for (iComp=it; iComp<ncomp; iComp++) {
+	    lim = MIN (ncomp, it+FazArrSize);
+	    for (iComp=it; iComp<lim; iComp++) {
 	      arg = freq2 * (ccData[4]*visData[ilocu]*visData[ilocu] +
 			     ccData[5]*visData[ilocv]*visData[ilocv] +
 			     ccData[6]*visData[ilocu]*visData[ilocv]);
@@ -1315,7 +1325,6 @@ static gpointer ThreadSkyModelVMFTDFT (gpointer args)
 	      AmpArr[itcnt] = amp;
 	      ccData += lcomp;  /* update pointer */
 	      itcnt++;          /* Count in amp/phase buffers */
-	      if (itcnt>=FazArrSize) break;
 	    }  /* end inner loop over components */
 	    
 	    /* Convert phases to sin/cos */
@@ -1333,7 +1342,8 @@ static gpointer ThreadSkyModelVMFTDFT (gpointer args)
 	  /* From the AIPSish QSPSUB.FOR  */
 	  for (it=0; it<ncomp; it+=FazArrSize) {
 	    itcnt = 0;
-	    for (iComp=it; iComp<ncomp; iComp++) {
+	    lim = MIN (ncomp, it+FazArrSize);
+	    for (iComp=it; iComp<lim; iComp++) {
 	      arg = freqFact * sqrt(visData[ilocu]*visData[ilocu] +
 				    visData[ilocv]*visData[ilocv]);
 	      arg = MAX (arg, 0.1);
@@ -1345,7 +1355,6 @@ static gpointer ThreadSkyModelVMFTDFT (gpointer args)
 	      AmpArr[itcnt] = amp;
 	      ccData += lcomp;  /* update pointer */
 	      itcnt++;          /* Count in amp/phase buffers */
-	      if (itcnt>=FazArrSize) break;
 	    }  /* end loop over components */
 	    
 	    /* Convert phases to sin/cos */
@@ -1409,11 +1418,8 @@ static gpointer ThreadSkyModelVMFTDFT (gpointer args)
 	  modReal *= in->stokFactor;
 	  modImag *= in->stokFactor;
 	  
-	  offset += jincs;
 	} /* end loop over Stokes */
-	  offsetChannel += jincf;
       } /* end loop over Channel */
- 	  offsetIF += jincif;
    } /* end loop over IF */
 
     visData += lrec; /* Update vis pointer */

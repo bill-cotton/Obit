@@ -1729,7 +1729,8 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 #define FazArrSize 100  /* Size of the amp/phase/sine/cosine arrays */
   ofloat AmpArr[FazArrSize], FazArr[FazArrSize], CosArr[FazArrSize], SinArr[FazArrSize];
   ofloat ExpArg[FazArrSize],  ExpVal[FazArrSize], ExpArg2[FazArrSize], ExpVal2[FazArrSize];
-  olong it, jt, itcnt, jtcnt, ifq, itab;
+  gboolean PhsFlp[FazArrSize], OK;
+  olong it, jt, itcnt, ifq, itab, jtcnt, lim;
   odouble tx, ty, tz, sumReal, sumImag, *freqArr, *freqIF;
   odouble u, v, w;
   gchar *routine = "ThreadSkyModelMFFTDFT";
@@ -1809,13 +1810,21 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
     /* Loop over IFs */
     for (iIF=startIF; iIF<startIF+numberIF; iIF++) {
       offsetIF = nrparm + iIF*jincif; 
+      /* Loop over channels */
       for (iChannel=startChannel; iChannel<startChannel+numberChannel; iChannel++) {
 	offsetChannel = offsetIF + iChannel*jincf; 
+	/* Anything to model? */
+	OK = FALSE;
+	for (iStoke=startPoln; iStoke<startPoln+numberPoln; iStoke++) {
+	  offset = offsetChannel + iStoke*jincs; /* Visibility offset */
+	  OK = OK || (visData[offset+2]>0.0);
+	}
+	if (!OK && !in->doReplace) continue;
 	ifq = iIF*kincif + iChannel*kincf;
 	freqFact = fscale[ifq];  /* Frequency scaling factor */
 	/* Log ratio of channel freq to Tabulated freq */
 	itab      = in->specIndex[ifq];
-	logNuONu0 = -(ofloat)log(freqArr[ifq]/in->specFreq[itab]);
+	logNuONu0 = (ofloat)log(freqArr[ifq]/in->specFreq[itab]);
 
 	/* u,v,w at frequency */
 	u = (odouble)visData[ilocu]*freqFact;
@@ -1833,7 +1842,8 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	  /* outer loop */
 	  for (it=0; it<mcomp; it+=FazArrSize) {
 	    itcnt = 0;
-	    for (iComp=it; iComp<mcomp; iComp++) {
+	    lim = MIN (mcomp, it+FazArrSize);
+	    for (iComp=it; iComp<lim; iComp++) {
 	      if (ccData[0]!=0.0) {  /* valid? */
 		AmpArr[itcnt] = ccData[0];
 		tx = ccData[1]*u;
@@ -1846,7 +1856,6 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	      }  /* end if valid */
 	      ccData += lcomp;  /* update pointer */
 	      itcnt++;          /* Count in amp/phase buffers */
-	      if (itcnt>=FazArrSize) break;
 	    } /* end inner loop over components */
 
 	    /* Convert phases to sin/cos */
@@ -1860,34 +1869,39 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	  break;
 	case OBIT_SkyModel_PointModTSpec:     /* Point + tabulated spectrum */
 	  itab = 5 + in->specIndex[ifq];
+	  jtcnt = 0;
 	  for (it=0; it<mcomp; it+=FazArrSize) {
-	    itcnt = jtcnt = 0;
-	    for (iComp=it; iComp<mcomp; iComp++) {
+	    itcnt = 0;
+	    lim = MIN (mcomp, it+FazArrSize);
+	    for (iComp=it; iComp<lim; iComp++) {
+	      /* DEBUG
+	      if (((ccData-data)/lcomp)>=mcomp) {
+		fprintf (stderr, "Oh shit\n");
+	      }   END DEBUG */
 	      if (ccData[itab]!=0.0) {  /* valid? */
 		tx = ccData[1]*u;
 		ty = ccData[2]*v;
 		tz = ccData[3]*w;
-		FazArr[itcnt] = (tx + ty + tz);
+		FazArr[itcnt]  = (tx + ty + tz);
 		ExpArg2[itcnt] = logNuONu0 * ccData[4];
-		if (ccData[4]!=0.0) jtcnt = itcnt+1;
-		AmpArr[itcnt] = ccData[itab];
+		/* Deal with ObitExpVec pecularities */
+		PhsFlp[itcnt] = (ExpArg2[itcnt]<0.0);
+		if (PhsFlp[itcnt]) ExpArg2[itcnt] = -ExpArg2[itcnt];
+		AmpArr[itcnt]  = ccData[itab];
 		itcnt++;          /* Count in amp/phase buffers */
 	      }  /* end if valid */
-	      ccData += lcomp;  /* update pointer */
-	      if (itcnt>=FazArrSize) break;
+	      ccData += lcomp; jtcnt++; /* update pointer */
 	    } /* end inner loop over components */
 	    
 	    /* Convert phases to sin/cos */
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
 	    /* Evaluate spectral index */
-	    ObitExpVec(jtcnt, ExpArg2, ExpVal2);
+	    ObitExpVec(itcnt, ExpArg2, ExpVal2);
 	    /* Accumulate real and imaginary parts */
-	    for (jt=0; jt<jtcnt; jt++) {
+	    for (jt=0; jt<itcnt; jt++) {
+	      /* Positive spectral index */
+	      if (PhsFlp[jt]) ExpVal2[jt] = 1.0 / ExpVal2[jt];
 	      AmpArr[jt] *= ExpVal2[jt];
-	      sumReal += AmpArr[jt]*CosArr[jt];
-	      sumImag += AmpArr[jt]*SinArr[jt];
-	    }
-	    for (jt=jtcnt; jt<itcnt; jt++) {
 	      sumReal += AmpArr[jt]*CosArr[jt];
 	      sumImag += AmpArr[jt]*SinArr[jt];
 	    }
@@ -1898,7 +1912,8 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	  freq2 = freqFact*freqFact;    /* Frequency factor squared */
 	  for (it=0; it<mcomp; it+=FazArrSize) {
 	    itcnt = 0;
-	    for (iComp=it; iComp<mcomp; iComp++) {
+	    lim = MIN (mcomp, it+FazArrSize);
+	    for (iComp=it; iComp<lim; iComp++) {
 	      if (ccData[0]!=0.0) {  /* valid? */
 		amp = ccData[0];
 		arg = (ccData[4]*u*u + ccData[5]*v*v + ccData[6]*w*w);
@@ -1911,7 +1926,6 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	      } /* end if valid */
 	      ccData += lcomp;  /* update pointer */
 	      itcnt++;          /* Count in amp/phase buffers */
-	      if (itcnt>=FazArrSize) break;
 	    }  /* end inner loop over components */
 	    
 	    /* Convert phases to sin/cos */
@@ -1928,8 +1942,9 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	case OBIT_SkyModel_GaussModTSpec:     /* Gaussian on sky + tabulated spectrum*/
 	  freq2 = freqFact*freqFact;    /* Frequency factor squared */
 	  for (it=0; it<mcomp; it+=FazArrSize) {
-	    itcnt = jtcnt = 0;
-	    for (iComp=it; iComp<mcomp; iComp++) {
+	    itcnt = 0;
+	    lim = MIN (mcomp, it+FazArrSize);
+	    for (iComp=it; iComp<lim; iComp++) {
 	      itab = 8 + in->specIndex[ifq];
 	      if (ccData[itab]!=0.0) {  /* valid? */
 		arg = (ccData[4]*u*u + ccData[5]*v*v + ccData[6]*w*w);
@@ -1941,11 +1956,12 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 		FazArr[itcnt]  = (tx + ty + tz);
 		AmpArr[itcnt]  = amp;
 		ExpArg2[itcnt] = logNuONu0 * ccData[7];
-		if (ccData[7]!=0.0) jtcnt = itcnt+1;
+		/* Deal with ObitExpVec pecularities */
+		PhsFlp[itcnt] = (ExpArg2[itcnt]<0.0);
+		if (PhsFlp[itcnt]) ExpArg2[itcnt] = -ExpArg2[itcnt];
 		itcnt++;          /* Count in amp/phase buffers */
 	      } /* end if valid */
 	      ccData += lcomp;  /* update pointer */
-	      if (itcnt>=FazArrSize) break;
 	    }  /* end inner loop over components */
 	    
 	    /* Convert phases to sin/cos */
@@ -1953,16 +1969,14 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	    /* Convert Gaussian exp arguments */
 	    ObitExpVec(itcnt, ExpArg, ExpVal);
 	    /* Evaluate spectral index */
-	    ObitExpVec(jtcnt, ExpArg2, ExpVal2);
+	    ObitExpVec(itcnt, ExpArg2, ExpVal2);
 	    /* Accumulate real and imaginary parts */
-	    for (jt=0; jt<jtcnt; jt++) {
-	      AmpArr[jt] *= ExpVal2[jt];
-	      sumReal += ExpVal[jt]*AmpArr[jt]*CosArr[jt];
-	      sumImag += ExpVal[jt]*AmpArr[jt]*SinArr[jt];
-	    }
-	    for (jt=jtcnt; jt<itcnt; jt++) {
-	      sumReal += ExpVal[jt]*AmpArr[jt]*CosArr[jt];
-	      sumImag += ExpVal[jt]*AmpArr[jt]*SinArr[jt];
+	    for (jt=0; jt<itcnt; jt++) {
+	      /* Positive spectral index */
+	      if (PhsFlp[jt]) ExpVal2[jt] = 1.0 / ExpVal2[jt];
+	      AmpArr[jt] *= ExpVal[jt]*ExpVal2[jt];
+	      sumReal += AmpArr[jt]*CosArr[jt];
+	      sumImag += AmpArr[jt]*SinArr[jt];
 	    }
 	  } /* end outer loop over components */
 	  break;
@@ -1970,7 +1984,8 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	  /* From the AIPSish QSPSUB.FOR  */
 	  for (it=0; it<mcomp; it+=FazArrSize) {
 	    itcnt = 0;
-	    for (iComp=it; iComp<mcomp; iComp++) {
+	    lim = MIN (mcomp, it+FazArrSize);
+	    for (iComp=it; iComp<lim; iComp++) {
 	      if (ccData[0]!=0.0) {  /* valid? */
 		arg = sqrt(u*u+v*v) * ccData[4];
 		arg = MAX (arg, 0.1);
@@ -1980,10 +1995,9 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 		tz = ccData[3]*w;
 		FazArr[itcnt] = (tx + ty + tz);
 		AmpArr[itcnt] = amp;
+		itcnt++;          /* Count in amp/phase buffers */
 	      } /* end if valid */
 	      ccData += lcomp;  /* update pointer */
-	      itcnt++;          /* Count in amp/phase buffers */
-	      if (itcnt>=FazArrSize) break;
 	    }  /* end inner ver components */
 	    
 	    /* Convert phases to sin/cos */
@@ -1997,8 +2011,9 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	  break;
 	case OBIT_SkyModel_USphereModTSpec:    /* Uniform sphere + tabulated spectrum*/
 	  for (it=0; it<mcomp; it+=FazArrSize) {
-	    itcnt = jtcnt = 0;
-	    for (iComp=it; iComp<mcomp; iComp++) {
+	    itcnt = 0;
+	    lim = MIN (mcomp, it+FazArrSize);
+	    for (iComp=it; iComp<lim; iComp++) {
 	      if (ccData[0]!=0.0) {  /* valid? */
 		itab = 7 + in->specIndex[ifq];
 		arg = sqrt(u*u+v*v) * ccData[4];
@@ -2010,24 +2025,23 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 		FazArr[itcnt] = (tx + ty + tz);
 		AmpArr[itcnt] = amp;
 		ExpArg2[itcnt] = logNuONu0 * ccData[6];
-		if (ccData[6]!=0.0) jtcnt = itcnt+1;
+		/* Deal with ObitExpVec pecularities */
+		PhsFlp[itcnt] = (ExpArg2[itcnt]<0.0);
+		if (PhsFlp[itcnt]) ExpArg2[itcnt] = -ExpArg2[itcnt];
 		itcnt++;          /* Count in amp/phase buffers */
 	      } /* end if valid */
 	      ccData += lcomp;  /* update pointer */
-	      if (itcnt>=FazArrSize) break;
 	    }  /* end inner loop over components */
 	    
 	    /* Convert phases to sin/cos */
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
-	    /* Evaluate spectral index */
-	    ObitExpVec(jtcnt, ExpArg2, ExpVal2);
+	    /* Evaluate spectral index
+	    ObitExpVec(itcnt, ExpArg2, ExpVal2); */
 	    /* Accumulate real and imaginary parts */
-	    for (jt=0; jt<jtcnt; jt++) {
+	    for (jt=0; jt<itcnt; jt++) {
+	      /* Positive spectral index */
+	      if (PhsFlp[jt]) ExpVal2[jt] = 1.0 / ExpVal2[jt];
 	      AmpArr[jt] *= ExpVal2[jt];
-	      sumReal += AmpArr[jt]*CosArr[jt];
-	      sumImag += AmpArr[jt]*SinArr[jt];
-	    }
-	    for (jt=jtcnt; jt<itcnt; jt++) {
 	      sumReal += AmpArr[jt]*CosArr[jt];
 	      sumImag += AmpArr[jt]*SinArr[jt];
 	    }
@@ -2093,9 +2107,7 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	  
 	  offset += jincs;
 	} /* end loop over Stokes */
-	  offsetChannel += jincf;
       } /* end loop over Channel */
- 	  offsetIF += jincif;
    } /* end loop over IF */
 
     visData += lrec; /* Update vis pointer */

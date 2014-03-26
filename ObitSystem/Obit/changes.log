@@ -1952,3 +1952,26 @@ bug fixes
 Obit/src/ObitSkyModelMF.c Obit/src/ObitTableCCUtil.c:
   Fix 3D CC bug from last update.
 28 Feb 2014 svn version 473
+
+mostly bug fixes
+Obit/python/EVLACal.py:
+  EVLAEditSNAmp, EVLAFlagFailSN, EVLAFlagSNClip, allow different input and output uv for FG
+Obit/python/ImageUtil.py:
+  PImageT2Spec: Allow specifying maximum distance from pointing for CCs in the normalization.
+Obit/src/ObitTableCCUtil.c:
+  FixTSpec: Allow specifying maximum distance from pointing for CCs in the normalization.
+  AppendShift: apply 2D rotation.
+Obit/src/ObitImage.c:
+  Clone: Check that in exists.
+  GetSelect: More informative message if FileType not found.
+Obit/src/ObitThreadGrid.c:
+  Grid: test that there is data to process.
+Obit/tasks/BDFIn.c:
+  GetSysPowerInfo: fix logic in matching SW to IF.
+Obit/src/ObitSkyModelMF.c:
+  ThreadSkyModelMFFTDFT: Fix bug in spectral index correction for PointModTSpec.
+  ThreadSkyModelMFFTDFT: Fix bugs in looping logic
+Obit/src/ObitSkyModel.c Obit/src/ObitSkyModelVM.c Obit/src/ObitSkyModelVMSquint.c
+Obit/src/ObitSkyModelVMBeam.c Obit/src/ObitSkyModelVMBeamMF.c:
+  ThreadSkyModelFTDFT: Fix bugs in looping logic
+26 March 2014, svn version 474.

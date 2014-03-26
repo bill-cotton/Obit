@@ -2,7 +2,7 @@
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2013
+#  Copyright (C) 2004-2014
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -663,7 +663,7 @@ def PImageFFT (inImage, outAImage, outPImage, err):
 
 def PImageT2Spec (inImage, outImage, nTerm, 
                   inCCVer, outCCVer, err,
-                  refFreq=1.0e9, terms=None, startCC=1, endCC=0):
+                  refFreq=1.0e9, terms=None, startCC=1, endCC=0, dist=None):
     """
     Convert an ObitImage(MF) (TSpec CCs) to an ObitImageWB (Spec CCs)
     
@@ -677,7 +677,7 @@ def PImageT2Spec (inImage, outImage, nTerm,
       Must have freq axis type = "SPECLNMF"
     * outImage = output Obit Python image
       must be defined but not instantiated
-      On return will be replaced bu image created
+      On return will be replaced by image created
     * nTerm    = Number of output Spectral terms, 2=SI, 3=also curve.
     * inCCVer  = Input CCTable to convert, 0=> highest
     * outCCVer = Output CCTable, 0=>1
@@ -687,6 +687,8 @@ def PImageT2Spec (inImage, outImage, nTerm,
       [flux density at refFreq, spectral index at refFreq, ...]
     * startCC  = First 1-rel component to convert
     * endCC    = Last 1-rel component to convert, 0=> all
+    * dist     = max distance in deg from pointing to accept CCs for the
+                 normalization to the specified spectrum, None=very large
     """
     ################################################################
     # Checks
@@ -696,6 +698,13 @@ def PImageT2Spec (inImage, outImage, nTerm,
         raise TypeError,"outImage MUST be a Python Obit Image"
     if not OErr.OErrIsA(err):
         raise TypeError,"err MUST be an OErr"
+
+    # Limit on distance
+    if dist==None:
+        limit = 1.0e20
+    else:
+        limit = dist
+    inImage.List.set("Limit", limit)  # Save on info list
 
     # Update output header
     d = outImage.Desc.Dict

@@ -1728,8 +1728,8 @@ void ObitTableCCUtilAppendShift (ObitTableCC *inCC, ObitTableCC *outCC,
   ObitTableCCRow *row=NULL;
   olong irow, orow;
   ObitIOCode retCode;
-  gboolean dummyParms=FALSE;
-  ofloat xxoff, yyoff, zzoff, *parms=NULL;
+  gboolean dummyParms=FALSE, do3Dmul;
+  ofloat xxoff, yyoff, zzoff, *parms=NULL, umat[3][3], pmat[3][3], konst;
   ofloat dxyzc[3], maprot, uvrot, ccrot, ssrot, xpoff, ypoff, xyz[3], xp[3];
   gchar *routine = "ObitTableCCUtilAppendShift";
 
@@ -1773,6 +1773,9 @@ void ObitTableCCUtilAppendShift (ObitTableCC *inCC, ObitTableCC *outCC,
   ssrot = sin (DG2RAD * (uvrot - maprot));
   ccrot = cos (DG2RAD * (uvrot - maprot));
 
+  /* projection rotation matrix if needed */
+  do3Dmul = ObitUVDescShift3DMatrix (uvDesc, imDesc, umat, pmat);
+  
   /* Phase shift */
   ObitUVDescShiftPhase(uvDesc, imDesc, dxyzc, err);
   if (err->error) Obit_traceback_msg (err, routine, inCC->name);
@@ -1781,10 +1784,14 @@ void ObitTableCCUtilAppendShift (ObitTableCC *inCC, ObitTableCC *outCC,
   xxoff = dxyzc[0] * ccrot + dxyzc[1] * ssrot;
   yyoff = dxyzc[1] * ccrot - dxyzc[0] * ssrot;
   zzoff = dxyzc[2];
+  /* undo factor to be applied later */
+  konst = DG2RAD * 2.0 * G_PI;
+  xxoff /= konst;
+  yyoff /= konst;
+
   /* Pixel offset */
   xpoff = imDesc->xPxOff * imDesc->cdelt[imDesc->jlocr];
   ypoff = imDesc->yPxOff * imDesc->cdelt[imDesc->jlocd];
-
 
   /* Loop over table */
   for (irow=startComp; irow<=endComp; irow++) {
@@ -1797,12 +1804,20 @@ void ObitTableCCUtilAppendShift (ObitTableCC *inCC, ObitTableCC *outCC,
     xp[0]  = row->DeltaX + xpoff;
     xp[1]  = row->DeltaY + ypoff;
     xp[2]  = 0.0;
-    xyz[0] = ccrot * xp[0] + ssrot * xp[1];
-    xyz[1] = ccrot * xp[1] - ssrot * xp[0];
-    xyz[2] = 0.0;
+    if (do3Dmul) {
+      xyz[0] = xp[0]*umat[0][0] + xp[1]*umat[1][0];
+      xyz[1] = xp[0]*umat[0][1] + xp[1]*umat[1][1];
+      xyz[2] = xp[0]*umat[0][2] + xp[1]*umat[1][2];
+      /* PRJMUL (2, XP, UMAT, XYZ); */
+    } else {  /* no rotn matrix */
+      xyz[0] = ccrot * xp[0] + ssrot * xp[1];
+      xyz[1] = ccrot * xp[1] - ssrot * xp[0];
+      xyz[2] = 0.0;
+    }
+    /* May need to undo any field rotation */
     row->DeltaX = xyz[0] + xxoff;
     row->DeltaY = xyz[1] + yyoff;
-    if (inCC->DeltaZCol>=0) row->DeltaZ = zzoff;
+    if (inCC->DeltaZCol>=0) row->DeltaZ = xyz[2]*konst +  zzoff;
     orow = -1;
     retCode = ObitTableCCWriteRow (outCC, orow, row, err);
     if (err->error) goto cleanup;
@@ -2216,6 +2231,9 @@ void ObitTableCCUtilT2Spec  (ObitImage *image, ObitImageWB *outImage,
  * Antenna beam pattern included; all model types supported.
  * \param image    Input ObitImage(MF) with attached CC table
  *                 Must have freq axis type = "SPECLNMF"
+ *                 possible control parameters:
+ * \li "Limit" OBIT_float scalar maximum distance [deg] from pointing for 
+ *      CCs in the normalization, default = very large
  * \param inCCVer  input CC table version
  * \param refFreq  Reference frequency for spectrum (Hz)
  * \param nterm    Number of terms in spectrum
@@ -2239,6 +2257,7 @@ void ObitTableCCUtilFixTSpec (ObitImage *inImage, olong *inCCVer,
   ObitInfoType type;
   ofloat *FreqFact=NULL, ll, lll, arg, alpha=0.0, specFact, *sumFlux=NULL;
   ofloat fblank = ObitMagicF();
+  ofloat Limit, dist;
   odouble *Freq=NULL, rfAlpha;
   olong irow, orow, ver, i, j, iterm, offset, nSpec, sCC, eCC;
    union ObitInfoListEquiv InfoReal; 
@@ -2260,6 +2279,11 @@ void ObitTableCCUtilFixTSpec (ObitImage *inImage, olong *inCCVer,
 		      "%s: Image %s NOT an ObitImageMF - no SPECLNMF axis", 
 		      routine, inImage->name);
 
+  /* Limit on distance from pointing */
+  Limit = 1.0e20;
+  ObitInfoListGetTest(inImage->info, "Limit", &type, dim, &Limit);
+  if (Limit<=0.0) Limit = 1.0e20;
+  
   /* Numbers of things */
   nSpec = 1;
   ObitInfoListGetTest(imDesc->info, "NSPEC", &type, dim, &nSpec);
@@ -2298,6 +2322,10 @@ void ObitTableCCUtilFixTSpec (ObitImage *inImage, olong *inCCVer,
     /* Make sure this has a spectrum */
     Obit_return_if_fail((inCCRow->parms && (inCCRow->parms[3]>=20.)), err, 
 			"%s: CCs do not contain tab. spectra", routine);
+
+    /* Close enough? */
+    dist = sqrt(inCCRow->DeltaX*inCCRow->DeltaX + inCCRow->DeltaY*inCCRow->DeltaY);
+    if (dist>Limit) continue;
 
     /* Sum */
     for (i=0; i<nSpec; i++) {

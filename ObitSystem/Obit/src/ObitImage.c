@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -735,6 +735,10 @@ void ObitImageClone  (ObitImage *in, ObitImage *out, ObitErr *err)
 		   routine, in->name);
     return;
   }
+
+  /* Ensure in fully instantiated and OK  */
+  ObitImageFullInstantiate (in, TRUE, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* deep copy any base class members */
   ParentClass = myClassInfo.ParentClass;
@@ -2069,7 +2073,7 @@ static void ObitImageGetSelect (ObitInfoList *info, ObitImageDesc* desc,
 		       (gpointer)&sel->FileType, err)) {
     /* couldn't find it - add message to err and return */
     Obit_log_error(err, OBIT_Error, 
-		"%s: entry FileType not in InfoList Object %s",	routine, sel->name);
+		"%s: Image %s incompletely defined",	routine, sel->name);
   }
 
   /* set defaults */

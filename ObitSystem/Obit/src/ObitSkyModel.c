@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2013                                          */
+/*;  Copyright (C) 2004-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2213,7 +2213,8 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 #define FazArrSize 100  /* Size of the amp/phase/sine/cosine arrays */
   ofloat AmpArr[FazArrSize], FazArr[FazArrSize], CosArr[FazArrSize], SinArr[FazArrSize];
   ofloat ExpArg[FazArrSize],  ExpVal[FazArrSize];
-  olong it, jt, itcnt;
+  gboolean OK;
+  olong it, jt, itcnt, lim;
   odouble tx, ty, tz, sumReal, sumImag, *freqArr, SMRefFreq, specFreqFact;
   odouble u, v, w;
   gchar *routine = "ThreadSkyModelFTDFT";
@@ -2299,6 +2300,13 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
       offsetIF = nrparm + iIF*jincif; 
       for (iChannel=startChannel; iChannel<startChannel+numberChannel; iChannel++) {
 	offsetChannel = offsetIF + iChannel*jincf; 
+	/* Anything to model? */
+	OK = FALSE;
+	for (iStoke=startPoln; iStoke<startPoln+numberPoln; iStoke++) {
+	  offset = offsetChannel + iStoke*jincs; /* Visibility offset */
+	  OK = OK || (visData[offset+2]>0.0);
+	}
+	if (!OK && !in->doReplace) continue;
 	freqFact = fscale[iIF*kincif + iChannel*kincf];  /* Frequency scaling factor */
 	freq2    = freqFact*freqFact;    /* Frequency factor squared */
 	specFreqFact = freqArr[iIF*kincif + iChannel*kincf] * SMRefFreq;
@@ -2318,7 +2326,8 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	  /* outer loop */
 	  for (it=0; it<mcomp; it+=FazArrSize) {
 	    itcnt = 0;
-	    for (iComp=it; iComp<mcomp; iComp++) {
+	    lim = MIN (mcomp, it+FazArrSize);
+	    for (iComp=it; iComp<lim; iComp++) {
 	      AmpArr[itcnt] = ccData[0];
 	      tx = ccData[1]*u;
 	      ty = ccData[2]*v;
@@ -2326,7 +2335,6 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	      FazArr[itcnt] = (tx + ty + tz);
 	      ccData += lcomp;  /* update pointer */
 	      itcnt++;          /* Count in amp/phase buffers */
-	      if (itcnt>=FazArrSize) break;
 	    } /* end inner loop over components */
 
 	    /* Convert phases to sin/cos */
@@ -2341,7 +2349,8 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	case OBIT_SkyModel_PointModSpec:     /* Point + spectrum */
 	  for (it=0; it<mcomp; it+=FazArrSize) {
 	    itcnt = 0;
-	    for (iComp=it; iComp<mcomp; iComp++) {
+	    lim = MIN (mcomp, it+FazArrSize);
+	    for (iComp=it; iComp<lim; iComp++) {
 	      if (ccData[0]!=0.0) {  /* valid? */
 		tx = ccData[1]*u;
 		ty = ccData[2]*v;
@@ -2362,7 +2371,6 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	      }  /* end if valid */
 	      ccData += lcomp;  /* update pointer */
 	      itcnt++;          /* Count in amp/phase buffers */
-	      if (itcnt>=FazArrSize) break;
 	    } /* end inner loop over components */
 	    
 	    /* Convert phases to sin/cos */
@@ -2377,8 +2385,9 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	case OBIT_SkyModel_GaussMod:     /* Gaussian on sky */
 	  /* From the AIPSish QGASUB.FOR  */
 	  for (it=0; it<mcomp; it+=FazArrSize) {
+	    lim = MIN (mcomp, it+FazArrSize);
 	    itcnt = 0;
-	    for (iComp=it; iComp<mcomp; iComp++) {
+	    for (iComp=it; iComp<lim; iComp++) {
 	      if (ccData[0]!=0.0) {  /* valid? */
 		amp = ccData[0];
 		arg = (ccData[4]*u*u + ccData[5]*v*v + ccData[6]*w*w);
@@ -2394,7 +2403,6 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	      } /* end if valid */
 	      ccData += lcomp;  /* update pointer */
 	      itcnt++;          /* Count in amp/phase buffers */
-	      if (itcnt>=FazArrSize) break;
 	    }  /* end inner loop over components */
 	    
 	    /* Convert phases to sin/cos */
@@ -2414,7 +2422,8 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	  freq2 = freqFact*freqFact;    /* Frequency factor squared */
 	  for (it=0; it<mcomp; it+=FazArrSize) {
 	    itcnt = 0;
-	    for (iComp=it; iComp<mcomp; iComp++) {
+	    lim = MIN (mcomp, it+FazArrSize);
+	    for (iComp=it; iComp<lim; iComp++) {
 	      if (ccData[0]!=0.0) {  /* valid? */
 		/* Frequency dependent term */
 		lll = ll = log(specFreqFact);
@@ -2438,7 +2447,6 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	      } /* end if valid */
 	      ccData += lcomp;  /* update pointer */
 	      itcnt++;          /* Count in amp/phase buffers */
-	      if (itcnt>=FazArrSize) break;
 	    }  /* end inner loop over components */
 	    
 	    /* Convert phases to sin/cos */
@@ -2458,7 +2466,8 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	  /* From the AIPSish QSPSUB.FOR  */
 	  for (it=0; it<mcomp; it+=FazArrSize) {
 	    itcnt = 0;
-	    for (iComp=it; iComp<mcomp; iComp++) {
+	    lim = MIN (mcomp, it+FazArrSize);
+	    for (iComp=it; iComp<lim; iComp++) {
 	      if (ccData[0]!=0.0) {  /* valid? */
 		arg = sqrt(u*u + v*v) * ccData[4];
 		
@@ -2475,7 +2484,6 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	      } /* end if valid */
 	      ccData += lcomp;  /* update pointer */
 	      itcnt++;          /* Count in amp/phase buffers */
-	      if (itcnt>=FazArrSize) break;
 	    }  /* end inner ver components */
 	    
 	    /* Convert phases to sin/cos */
@@ -2490,7 +2498,8 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	case OBIT_SkyModel_USphereModSpec:    /* Uniform sphere + spectrum*/
 	  for (it=0; it<mcomp; it+=FazArrSize) {
 	    itcnt = 0;
-	    for (iComp=it; iComp<mcomp; iComp++) {
+	    lim = MIN (mcomp, it+FazArrSize);
+	    for (iComp=it; iComp<lim; iComp++) {
 	      if (ccData[0]!=0.0) {  /* valid? */
 		/* Frequency dependent term */
 		lll = ll = log(specFreqFact);
@@ -2514,7 +2523,6 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	      } /* end if valid */
 	      ccData += lcomp;  /* update pointer */
 	      itcnt++;          /* Count in amp/phase buffers */
-	      if (itcnt>=FazArrSize) break;
 	    }  /* end inner loop over components */
 	    
 	    /* Convert phases to sin/cos */
@@ -2584,11 +2592,8 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	  modReal *= in->stokFactor;
 	  modImag *= in->stokFactor;
 	  
-	  offset += jincs;
 	} /* end loop over Stokes */
-	  offsetChannel += jincf;
       } /* end loop over Channel */
- 	  offsetIF += jincif;
    } /* end loop over IF */
 
     visData += lrec; /* Update vis pointer */
