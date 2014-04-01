@@ -723,7 +723,6 @@ void ObitSkyModelInitMod (ObitSkyModel* in, ObitUV *uvdata, ObitErr *err)
 
   /* Init Sine/Cosine, exp calculator - just to be sure about threading */
   ObitSinCosCalc(phase, &sp, &cp);
-  ObitExpCalc(phase);
 
   /* Tell selected model info if prtLv>1 */
   if (in->prtLv>1) {
@@ -1583,7 +1582,7 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
 
   /* Loop over images counting CCs */
   count = 0;
-  in->modType = OBIT_SkyModel_Unknown; /* Model type not known */
+  in->modType   = OBIT_SkyModel_Unknown; /* Model type not known */
   if (in->mosaic) {lo = 0; hi = in->mosaic->numberImages-1;}
   else {lo = 0; hi = 0;}
   if (n>=0) {lo = n; hi = n;}
@@ -1659,10 +1658,7 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
     if ((retCode != OBIT_IO_OK) || (err->error))
       Obit_traceback_val (err, routine, in->name, retCode);
 
-    /* release table  */
-    CCTable = ObitTableCCUnref (CCTable);
-
-    /* Is spectral information included? */
+   /* Is spectral information included? */
     if (!strncmp (in->mosaic->images[i]->myDesc->ctype[in->mosaic->images[i]->myDesc->jlocf], 
 		  "SPECLOGF", 8)) {
       /* IO descriptor give true size */
@@ -1671,9 +1667,17 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
       maxTerm = MAX (nterm, maxTerm);
       ObitInfoListGetTest (in->mosaic->images[i]->myDesc->info, "NTERM", &type, dim, &nterm);
       in->nSpecTerm = nterm - 1;  /* Only higher order terms */
+    } else if ((maxModType==OBIT_SkyModel_PointModSpec) || 
+	       (maxModType==OBIT_SkyModel_GaussModSpec) || 
+	       (maxModType==OBIT_SkyModel_USphereModSpec)) {
+      /* get from table */
+      maxTerm =  MAX(maxTerm, CCTable->myDesc->repeat[CCTable->parmsOff]-3);
     }
 
-  } /* end loop counting CCs */
+    /* release table  */
+    CCTable = ObitTableCCUnref (CCTable);
+
+   } /* end loop counting CCs */
 
   /* Use mode type, nterm of the highest encountered */
   in->modType   = maxModType;
@@ -1813,7 +1817,7 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
 	table[0] = array[0] * in->factor;
 	xp[0] = (array[1] + xpoff) * konst;
 	xp[1] = (array[2] + ypoff) * konst;
-	if (CCTable->DeltaZCol>=0) xp[2] = array[3];
+	if (CCTable->DeltaZCol>=0) xp[2] = array[3] * konst;
 	else                       xp[2] = 0.0;
 	if (do3Dmul) {
 	  xyz[0] = xp[0]*umat[0][0] + xp[1]*umat[1][0];
@@ -2212,10 +2216,10 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
   ofloat amp, arg, freq2, freqFact, wt=0.0, temp, ll, lll;
 #define FazArrSize 100  /* Size of the amp/phase/sine/cosine arrays */
   ofloat AmpArr[FazArrSize], FazArr[FazArrSize], CosArr[FazArrSize], SinArr[FazArrSize];
-  ofloat ExpArg[FazArrSize],  ExpVal[FazArrSize];
+  ofloat ExpArg[FazArrSize],  ExpVal[FazArrSize], ExpArg2[FazArrSize], ExpVal2[FazArrSize];
   gboolean OK;
   olong it, jt, itcnt, lim;
-  odouble tx, ty, tz, sumReal, sumImag, *freqArr, SMRefFreq, specFreqFact;
+  odouble tx, ty, tz, sumReal, sumImag, *freqArr, SMRefFreq, specFreqFact, lnspecFreqFact;
   odouble u, v, w;
   gchar *routine = "ThreadSkyModelFTDFT";
 
@@ -2309,7 +2313,8 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	if (!OK && !in->doReplace) continue;
 	freqFact = fscale[iIF*kincif + iChannel*kincf];  /* Frequency scaling factor */
 	freq2    = freqFact*freqFact;    /* Frequency factor squared */
-	specFreqFact = freqArr[iIF*kincif + iChannel*kincf] * SMRefFreq;
+	specFreqFact   = freqArr[iIF*kincif + iChannel*kincf] * SMRefFreq;
+	lnspecFreqFact = log(specFreqFact);
 	/* u,v,w at frequency */
 	u = (odouble)visData[ilocu]*freqFact;
 	v = (odouble)visData[ilocv]*freqFact;
@@ -2356,18 +2361,19 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 		ty = ccData[2]*v;
 		tz = ccData[3]*w;
 		/* Frequency dependent term */
-		lll = ll = log(specFreqFact);
+		lll = ll = lnspecFreqFact;
 		arg = 0.0;
 		for (iterm=0; iterm<nterm; iterm++) {
 		  arg += ccData[4+iterm] * lll;
 		  lll *= ll;
 		}
-		specFact = exp(arg);
-		AmpArr[itcnt] = specFact * ccData[0];
+		ExpArg2[itcnt] = arg;
+		AmpArr[itcnt] = ccData[0];
 		FazArr[itcnt] = (tx + ty + tz);
 	      } else { /* end if valid */
-		FazArr[itcnt] = 0.0;
-		AmpArr[itcnt] = 0.0;
+		ExpArg2[itcnt] = 0.0;
+		FazArr[itcnt]  = 0.0;
+		AmpArr[itcnt]  = 0.0;
 	      }  /* end if valid */
 	      ccData += lcomp;  /* update pointer */
 	      itcnt++;          /* Count in amp/phase buffers */
@@ -2375,8 +2381,11 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	    
 	    /* Convert phases to sin/cos */
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	    /* Evaluate spectrum */
+	    ObitExpVec(itcnt, ExpArg2, ExpVal2);
 	    /* Accumulate real and imaginary parts */
 	    for (jt=0; jt<itcnt; jt++) {
+	      AmpArr[jt] *= ExpVal2[jt];
 	      sumReal += AmpArr[jt]*CosArr[jt];
 	      sumImag += AmpArr[jt]*SinArr[jt];
 	    }
@@ -2390,14 +2399,15 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	    for (iComp=it; iComp<lim; iComp++) {
 	      if (ccData[0]!=0.0) {  /* valid? */
 		amp = ccData[0];
-		arg = (ccData[4]*u*u + ccData[5]*v*v + ccData[6]*w*w);
+		arg = (ccData[4]*u*u + ccData[5]*v*v + ccData[6]*u*v);
 		tx = ccData[1]*u;
 		ty = ccData[2]*v;
 		tz = ccData[3]*w;
-		ExpArg[itcnt] = -arg;
+		ExpArg[itcnt] = arg;
 		FazArr[itcnt] = (tx + ty + tz);
 		AmpArr[itcnt] = amp;
 	      } else { /* end if valid */
+		ExpArg[itcnt] = 0.0;
 		FazArr[itcnt] = 0.0;
 		AmpArr[itcnt] = 0.0;
 	      } /* end if valid */
@@ -2426,7 +2436,7 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	    for (iComp=it; iComp<lim; iComp++) {
 	      if (ccData[0]!=0.0) {  /* valid? */
 		/* Frequency dependent term */
-		lll = ll = log(specFreqFact);
+		lll = ll = lnspecFreqFact;
 		arg = 0.0;
 		for (iterm=0; iterm<nterm; iterm++) {
 		  arg += ccData[7+iterm] * lll;
@@ -2434,14 +2444,15 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 		}
 		specFact = exp(arg);
 		amp = specFact * ccData[0];
-		arg = (ccData[4]*u*u + ccData[5]*v*v + ccData[6]*w*w);
+		arg = (ccData[4]*u*u + ccData[5]*v*v + ccData[6]*u*v);
 		tx = ccData[1]*u;
 		ty = ccData[2]*v;
 		tz = ccData[3]*w;
-		ExpArg[itcnt] = -arg;
+		ExpArg[itcnt] = arg;
 		FazArr[itcnt] = (tx + ty + tz);
 		AmpArr[itcnt] = amp;
 	      } else { /* end if valid */
+		ExpArg[itcnt] = 0.0;
 		FazArr[itcnt] = 0.0;
 		AmpArr[itcnt] = 0.0;
 	      } /* end if valid */
@@ -2502,7 +2513,7 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	    for (iComp=it; iComp<lim; iComp++) {
 	      if (ccData[0]!=0.0) {  /* valid? */
 		/* Frequency dependent term */
-		lll = ll = log(specFreqFact);
+		lll = ll = lnspecFreqFact;
 		arg = 0.0;
 		for (iterm=0; iterm<nterm; iterm++) {
 		  arg += ccData[4+iterm] * lll;

@@ -4381,7 +4381,7 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
                      solAMode="A&P", solAType= "  ", \
                      avgPol=False, avgIF=False, minSNR = 5.0, refAnt=0, \
                      do3D=True, BLFact=0.999, BLchAvg=False, doOutlier=None, \
-                     doMB=False, norder=2, maxFBW=0.05, doComRes=True, \
+                     doMB=False, norder=2, maxFBW=0.05, doComRes=False, \
                      PBCor=True, antSize=24.5, nTaper=0, Tapers=[20.0], \
                      nThreads=1, noScrat=[], logfile='', check=False, debug=False):
     """

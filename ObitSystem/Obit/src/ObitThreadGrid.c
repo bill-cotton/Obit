@@ -234,8 +234,6 @@ void ObitThreadGridSetupBase (ObitThreadGrid *in, ObitUV *UVin,
 
    /* Init sincos */
   ObitSinCosInit ();
-  /* Init exp */
-  ObitExpInit ();
 
   uvDesc   = UVin->myDesc;     /* UV descriptor */
   in->UVin = ObitUVRef(UVin);  /* Save UV data */
@@ -433,8 +431,6 @@ void ObitThreadGridSetupMF (ObitThreadGrid *in, ObitUV *UVin,
 
    /* Init sincos */
   ObitSinCosInit ();
-  /* Init exp */
-  ObitExpInit ();
 
   uvDesc   = UVin->myDesc;     /* UV descriptor */
   in->UVin = ObitUVRef(UVin);  /* Save UV data */
@@ -651,8 +647,6 @@ void ObitThreadGridSetupWB (ObitThreadGrid *in, ObitUV *UVin,
 
    /* Init sincos */
   ObitSinCosInit ();
-  /* Init exp */
-  ObitExpInit ();
 
   uvDesc   = UVin->myDesc;     /* UV descriptor */
   in->UVin = ObitUVRef(UVin);  /* Save UV data */

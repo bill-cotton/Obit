@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2392,8 +2392,8 @@ void ObitFArray2DCGauss (ObitFArray *array, olong Cen[2], ofloat FWHM)
       indx = iy*nx + ix;
       x = (ofloat)(ix - Cen[0]);
       y = (ofloat)(iy - Cen[1]);
-      arg = (x*x + y*y) * factor;
-      if (arg<15.0) arg = ObitExpCalc (arg);
+      arg = -(x*x + y*y) * factor;
+      if (arg>-15.0) arg = ObitExpCalc (arg);
       else arg = 0.0;
       data[indx] = arg;
     }
@@ -2441,8 +2441,8 @@ void ObitFArray2DEGauss (ObitFArray *array, ofloat amp, ofloat Cen[2], ofloat Ga
       /* Rotate to elipse frame */
       x = CosPA*xp + yp*SinPA;
       y = CosPA*yp - xp*SinPA;
-      arg = x*x*factorX + y*y*factorY;
-      if (arg<15.0) {
+      arg = -(x*x*factorX + y*y*factorY);
+      if (arg>-15.0) {
 	arg = amp * ObitExpCalc (arg);
 	data[indx] += arg;
       }
@@ -3411,8 +3411,8 @@ static gpointer ThreadFAConvGaus (gpointer arg)
       for (ix = 0; ix<in->naxis[0]; ix++) {
 	dx = ix - table[0];   /* x offset */
 	if (aa*dx*dx>minGaus) {indx++; continue;}
-	farg = aa*dx*dx + bb*dy*dy + cc*dx*dy;
-	if (farg<minGaus) {
+	farg = -(aa*dx*dx + bb*dy*dy + cc*dx*dy);
+	if (farg>-minGaus) {
 	  image[indx] += table[2] * ObitExpCalc(farg);
 	}
 	indx++;

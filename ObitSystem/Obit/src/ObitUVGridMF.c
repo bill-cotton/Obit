@@ -415,9 +415,9 @@ void ObitUVGridMFSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
       sigma2v = log(0.3)/(taper*taper);
       cpa     = cos(corrBeam[2]*DG2RAD);
       spa     = sin(corrBeam[2]*DG2RAD);
-      in->sigma1[iSpec]  = fabs((cpa*cpa*sigma2v + spa*spa*sigma2u));
-      in->sigma2[iSpec]  = fabs((spa*spa*sigma2v + cpa*cpa*sigma2u));
-      in->sigma3[iSpec]  = fabs(2.0*cpa*spa*(sigma2v - sigma2u));
+      in->sigma1[iSpec]  = -fabs((cpa*cpa*sigma2v + spa*spa*sigma2u));
+      in->sigma2[iSpec]  = -fabs((spa*spa*sigma2v + cpa*cpa*sigma2u));
+      in->sigma3[iSpec]  = -fabs(2.0*cpa*spa*(sigma2v - sigma2u));
     } else {
       /* No frequency dependent taper */
       in->sigma1[iSpec]  = 0.0;

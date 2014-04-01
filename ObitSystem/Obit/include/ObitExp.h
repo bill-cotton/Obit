@@ -27,20 +27,16 @@ hacked version for test*/
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 /** 
- * Utility routine for fast exp(-x) calculation 
- * This routine uses a table lookup followed by a 1 term Taylor's 
- * series expansion.
- * This produces moderate accuracy but fast calculation of exp(-x), x>=0
+ * Utility routine for fast exp(x) calculation 
+ * This routine uses a MacLauren's series expansion.
+ * This produces moderate accuracy but fast calculation of exp(x), 
  * This utility is useful for calculating instrumental responses to models 
  * or other applications in which errors do not seriously accumulate.
  */
 #include "Obit.h"
-#include <glib.h>
 
 #ifndef OBITEXP_H 
 #define OBITEXP_H 
-/** Init lookup table */
-void ObitExpInit();
 /** Calculate exponential of -arg */
 ofloat ObitExpCalc(ofloat arg);
 /** Calculate exp of negatives of a vector */

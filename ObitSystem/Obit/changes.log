@@ -1975,3 +1975,40 @@ Obit/src/ObitSkyModel.c Obit/src/ObitSkyModelVM.c Obit/src/ObitSkyModelVMSquint.
 Obit/src/ObitSkyModelVMBeam.c Obit/src/ObitSkyModelVMBeamMF.c:
   ThreadSkyModelFTDFT: Fix bugs in looping logic
 26 March 2014, svn version 474.
+
+mostly bug fixes, better vector exp
+Obit/src/ObitSkyModel.c:
+  ThreadSkyModelFTDFT: Speedup spectrum evaluation
+  ThreadSkyModelFTDFT: Fix bug in calculating Gaussian
+  New interface to ObitExp
+  LoadComps: DeltaZ in deg
+Obit/src/ObitImageUtil.c:
+  T2Spec: Only one "FREQ" plane output, cleanup Descriptor list
+  T2Spec: Implement dropNeg
+Obit/src/ObitSkyModelMF.c:
+  ThreadSkyModelMFFTDFT: Fix bug in calculating Gaussian
+  New interface to ObitExp
+  LoadComps: DeltaZ in deg
+Obit/src/ObitTableCCUtil.c:
+  CCMergeSpec: Don't try to merge doSpec data.
+  AppendShift: DeltaZ in deg
+  FixTSpec: ignore negative flux densities.
+  T2Spec: implement dropNeg
+Obit/include/ObitExp.h Obit/src/ObitExp.c:
+  Major rework, now exp(x) with either sign.
+Obit/src/ObitFArray.c  Obit/src/ObitThreadGrid.c
+Obit/src/ObitSkyModelVMBeamMF.c Obit/src/ObitSkyModelVM.c Obit/src/ObitSkyModelVMSquint.c:
+  New interface to ObitExp
+  LoadComps: DeltaZ in deg
+Obit/src/ObitUVGridMF.c:
+  Make frequency dependent tapers negative
+Obit/src/ObitDConCleanVisMF.c:
+  CommonRes: Don't convolve residuals if output beam is smaller than fitted, warn.
+Obit/python/EVLACal.py:
+  EVLAImageTargets: change default doComRes to False
+Obit/python/ImageUtil.py:
+  PImageT2Spec: add argument dropNeg to drop negative flux components.
+Obit/python/EVLALowBandPipe.py:
+  Update parameters  
+  Remove parallactic angle correction.
+1 April 2014 svn version 475

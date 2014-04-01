@@ -4315,6 +4315,8 @@ void ObitImageUtilTwoDShift (ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
  * Copies spectral planes and converts specified CC table
  * Tabulated spectrum fitted with spectrum weighting by primary beam
  * \param inImage  Input Image.
+ *                 possible control parameter:
+ * \li "dropNeg" OBIT_boolean if True, drop negative components [True] 
  * \param outImage Image to be written.  Must be previously defined.
  *                 Returned as ObitImageWB.
  * \param nTerm    Number of output Spectral terms, 2=SI, 3=also curve.
@@ -4344,7 +4346,7 @@ void ObitImageUtilT2Spec  (ObitImage *inImage, ObitImage **outImage,
   /* error checks */
   if (err->error) return;
   g_assert (ObitImageIsA(inImage));
-  
+
   /* Do I/O by plane and all of plane */
   IOBy = OBIT_IO_byPlane;
   dim[0] = 1;
@@ -4358,7 +4360,7 @@ void ObitImageUtilT2Spec  (ObitImage *inImage, ObitImage **outImage,
   ObitInfoListAlwaysPut (inImage->info,  "BLC",  OBIT_long, dim, blc); 
   ObitInfoListAlwaysPut (inImage->info,  "TRC",  OBIT_long, dim, trc);
 
- /* Size of spectra, number spectral terms */
+  /* Size of spectra, number spectral terms */
   nSpec = 1;
   ObitInfoListGetTest(inImage->myDesc->info, "NSPEC", &type, dim, &nSpec);
   inTerm = 1;
@@ -4396,7 +4398,7 @@ void ObitImageUtilT2Spec  (ObitImage *inImage, ObitImage **outImage,
   for (i=0; i<IM_MAXDIM; i++) (*outImage)->myDesc->inaxes[i] = 1;
   (*outImage)->myDesc->inaxes[0] = imDesc->inaxes[0];
   (*outImage)->myDesc->inaxes[1] = imDesc->inaxes[1];
-  (*outImage)->myDesc->inaxes[2] = nTerm;
+  (*outImage)->myDesc->inaxes[2] = 1;
   /* Convert to ObitImageWB */
   outImageWB = ObitImageWBFromImage (*outImage, nTerm-1, err);
   if (err->error) Obit_traceback_msg (err, routine, (*outImage)->name);
@@ -4407,62 +4409,70 @@ void ObitImageUtilT2Spec  (ObitImage *inImage, ObitImage **outImage,
   dim[0] = IM_MAXDIM;
   ObitInfoListAlwaysPut (outImageWB->info, "BLC",  OBIT_long, dim, blc); 
   ObitInfoListAlwaysPut (outImageWB->info, "TRC",  OBIT_long, dim, trc);
-  *outImage = ObitImageUnref(*outImage);
-  *outImage = (ObitImage*)ObitImageWBRef(outImageWB);
-
-  /* Add order to descriptor infolist */
-  dim[0] = dim[1] = dim[2] = 1;
-  norder = nTerm-1;
-  ObitInfoListAlwaysPut(outImageWB->myDesc->info, "NTERM", OBIT_long, dim, &norder);
-
+  (*outImage) = ObitImageUnref(*outImage);
+  (*outImage) = (ObitImage*)ObitImageWBRef(outImageWB);
+  
   /* use same data buffer on input and output 
      so don't assign buffer for output */
-  outImageWB->extBuffer = TRUE;
+  (*outImage)->extBuffer = TRUE;
 
   /* Open output */
-  retCode = ObitImageOpen ((ObitImage*)outImageWB, OBIT_IO_ReadWrite, err);
+  retCode = ObitImageOpen ((*outImage), OBIT_IO_ReadWrite, err);
   if ((retCode != OBIT_IO_OK) || (err->error>0)) { /* error test */
     Obit_log_error(err, OBIT_Error, "%s: ERROR opening image %s", 
-		   routine, outImageWB->name);
+		   routine, (*outImage)->name);
     return;
   }
 
-  /* Copy planes */
-  for (iplane=0; iplane<inTerm; iplane++) {
+  /* Copy first plane */
+  for (iplane=0; iplane<1; iplane++) {
     /* Write it */
     planeNo[0] = iplane+1; 
     ObitImageGetPlane (inImage, NULL, planeNo, err);
-    ObitImagePutPlane ((ObitImage*)outImageWB, inImage->image->array, 
+    ObitImagePutPlane ((*outImage), inImage->image->array, 
 		       planeNo, err);
     if (err->error) Obit_traceback_msg (err, routine, inImage->name);
   } /* end loop writing planes */
 
-  /* Zero any higher order planes not in input */
-  if (nTerm>inTerm) {
-    ObitFArrayFill (inImage->image, 0.0);  /* Zero */
-    for (iplane=inTerm; iplane<nTerm; iplane++) {
-      /* Write it */
-      planeNo[0] = iplane+1; 
-      ObitImagePutPlane ((ObitImage*)outImageWB, inImage->image->array, 
-			 planeNo, err);
-      if (err->error) Obit_traceback_msg (err, routine, inImage->name);
-    } /* end loop writing planes */
-  }  /* End zero higher terms */
-
   /* Copy/convert table */
-  ObitTableCCUtilT2Spec (inImage, outImageWB, nTerm, inCCVer, outCCVer, 
+  ObitTableCCUtilT2Spec (inImage, (ObitImageWB*)(*outImage), nTerm, inCCVer, outCCVer, 
 			 startCC, endCC, err);
   if (err->error) Obit_traceback_msg (err, routine, inImage->name);
 
   /* Copy any history  unless Scratch */
-  if (!inImage->isScratch && !outImageWB->isScratch) {
+  if (!inImage->isScratch && !(*outImage)->isScratch) {
     inHist  = newObitDataHistory((ObitData*)inImage, OBIT_IO_ReadOnly, err);
-    outHist = newObitDataHistory((ObitData*)outImageWB, OBIT_IO_WriteOnly, err);
+    outHist = newObitDataHistory((ObitData*)(*outImage), OBIT_IO_WriteOnly, err);
     outHist = ObitHistoryCopy (inHist, outHist, err);
     if (err->error) Obit_traceback_msg (err, routine, inImage->name);
     inHist  = ObitHistoryUnref(inHist);
     outHist = ObitHistoryUnref(outHist);
   }
+  /* Make sure output closed */
+  ObitImageClose ((*outImage),err);
+  if (err->error) Obit_traceback_msg (err, routine, (*outImage)->name);
+  (*outImage)->extBuffer = FALSE;  /* May need buffer later */
+
+  /* Open output */
+  retCode = ObitImageOpen ((*outImage), OBIT_IO_ReadWrite, err);
+  if ((retCode != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR opening image %s", 
+		   routine, (*outImage)->name);
+    return;
+  }
+  /* Relabel output frequency axis */
+  strncpy((*outImage)->myDesc->ctype[(*outImage)->myDesc->jlocf], "FREQ    ", 8);
+
+  /* Cleanup output Descriptor list */
+  (*outImage)->myDesc->info = ObitInfoListUnref((*outImage)->myDesc->info);
+  (*outImage)->myDesc->info = newObitInfoList();
+
+  /* Add order to descriptor infolist */
+  dim[0] = dim[1] = dim[2] = 1;
+  norder = nTerm-1;
+  ObitInfoListAlwaysPut((*outImage)->myDesc->info, "NTERM", OBIT_long, dim, &norder);
+  /* Force update */
+  (*outImage)->myStatus = OBIT_Modified;
 
   /* Close files */
   ObitImageClose (inImage, err) ;
@@ -4471,9 +4481,9 @@ void ObitImageUtilT2Spec  (ObitImage *inImage, ObitImage **outImage,
   if (inImage->mySel->FileType!=OBIT_IO_MEM) 
     inImage->image = ObitFArrayUnref(inImage->image);
 
-  ObitImageClose ((ObitImage*)outImageWB,err);
-  if (err->error) Obit_traceback_msg (err, routine, outImageWB->name);
-  outImageWB->extBuffer = FALSE;  /* May need buffer later */
+  ObitImageClose ((*outImage),err);
+  if (err->error) Obit_traceback_msg (err, routine, (*outImage)->name);
+  (*outImage)->extBuffer = FALSE;  /* May need buffer later */
 
   } /* end ObitImageUtilT2Spec */
 

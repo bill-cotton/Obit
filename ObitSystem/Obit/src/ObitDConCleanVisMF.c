@@ -1820,6 +1820,8 @@ static void CommonRes(ObitDConCleanVisMF *in, olong field, ObitErr *err)
     rescale = img->myDesc->beamMaj/beam->myDesc->beamMaj * 
       img->myDesc->beamMin/beam->myDesc->beamMin;
     /* DEBUG 
+    fprintf (stderr,"DEBUG plane %d rescale %f\n", iplane, rescale);*/
+    /* DEBUG 
        if ((field==0) && (iplane==5)) {
        ObitImageGetPlane ((ObitImage*)img, NULL, plane, err);
        if (err->error) Obit_traceback_msg (err, routine, in->name);
@@ -1830,9 +1832,15 @@ static void CommonRes(ObitDConCleanVisMF *in, olong field, ObitErr *err)
        ObitImagePutPlane ((ObitImage*)img, NULL, plane, err);
        }
        DEBUG */
-    ConvGauss ((ObitImage*)img, plane, bmaj*3600.0, bmin*3600.0, bpa, 
-			   rescale, err);  
-    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    /* Don't rescale if "new" beam has smaller area */
+    if (rescale>1.0) {
+      ConvGauss ((ObitImage*)img, plane, bmaj*3600.0, bmin*3600.0, bpa, 
+		 rescale, err);  
+      if (err->error) Obit_traceback_msg (err, routine, in->name);
+    } else {
+      Obit_log_error(err, OBIT_InfoWarn, 
+		     "%s: Output beam smaller than fitted, no convolution", routine);
+    }
      /* DEBUG
 	if ((field==0) && (iplane==5)) {
 	ObitImageGetPlane ((ObitImage*)img, NULL, plane, err);

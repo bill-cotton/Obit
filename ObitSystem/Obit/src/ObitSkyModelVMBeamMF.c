@@ -888,7 +888,6 @@ void ObitSkyModelVMBeamMFInitMod (ObitSkyModel* inn, ObitUV *uvdata,
   
    /* Init Sine/Cosine, exp calculator - just to be sure about threading */
   ObitSinCosCalc(phase, &sp, &cp);
-  ObitExpCalc(phase);
 
   /* Create spectrum info arrays */
   nSpec = 1;
@@ -2364,7 +2363,7 @@ gboolean ObitSkyModelVMBeamMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvda
 	table[3] = array[0] * in->factor;
 	xp[0] = (array[1] + xpoff) * konst;
 	xp[1] = (array[2] + ypoff) * konst;
-	if (CCTable->DeltaZCol>=0) xp[2] = array[3];
+	if (CCTable->DeltaZCol>=0) xp[2] = array[3] * konst;
 	else                       xp[2] = 0.0;
 	if (do3Dmul) {
 	  xyz[0] = xp[0]*umat[0][0] + xp[1]*umat[1][0];
@@ -3115,7 +3114,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 			     ddata[9]*visData[ilocu]*visData[ilocv]);
 	      ampr = ddata[3] * rgain1[iComp];
 	      ampl = ddata[3] * lgain1[iComp];
-	      ExpArg[itcnt]  = -arg;
+	      ExpArg[itcnt]  = arg;
 	      AmpArrR[itcnt] = ampr;
 	      AmpArrL[itcnt] = ampl;
 	      itcnt++;          /* Count in amp/phase buffers */
@@ -3168,7 +3167,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 		tx = ddata[4]*(odouble)visData[ilocu];
 		ty = ddata[5]*(odouble)visData[ilocv];
 		tz = ddata[6]*(odouble)visData[ilocw];
-		ExpArg[itcnt] = -arg;
+		ExpArg[itcnt] = arg;
 		FazArr[itcnt] = freqFact * (tx + ty + tz);
 		AmpArrR[itcnt] = amp * rgain1[iComp];
 		AmpArrL[itcnt] = amp * lgain1[iComp];
@@ -3216,7 +3215,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 		tx = ddata[4+nSpec]*(odouble)visData[ilocu];
 		ty = ddata[5+nSpec]*(odouble)visData[ilocv];
 		tz = ddata[6+nSpec]*(odouble)visData[ilocw];
-		ExpArg[itcnt] = -arg;
+		ExpArg[itcnt] = arg;
 		FazArr[itcnt] = freqFact * (tx + ty + tz);
 		/* Parallel  pol */
 		/* Amplitude from component flux and two gains */
@@ -3939,7 +3938,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
 		arg = freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
 				ddata[8]*visData[ilocv]*visData[ilocv] +
 				ddata[9]*visData[ilocu]*visData[ilocv]);
-		ExpArg[itcnt]  = -arg;
+		ExpArg[itcnt]  = arg;
 		amp  = ddata[3];
 		ampr = amp * rgain1[iComp];
 		ampl = amp * lgain1[iComp];
@@ -4002,8 +4001,8 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
 		  tx = ddata[4]*(odouble)visData[ilocu];
 		  ty = ddata[5]*(odouble)visData[ilocv];
 		  tz = ddata[6]*(odouble)visData[ilocw];
-		  ExpArg[itcnt]  = -arg;
-		  FazArr[itcnt] = freqFact * (tx + ty + tz);
+		  ExpArg[itcnt]   = arg;
+		  FazArr[itcnt]   = freqFact * (tx + ty + tz);
 		  AmpArrRr[itcnt] = amp * rgain1[iComp];
 		  AmpArrLr[itcnt] = amp * lgain1[iComp];
 		  AmpArrRi[itcnt] = amp * rgain1i[iComp];
@@ -4054,7 +4053,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
 		  tx = ddata[4+nSpec]*(odouble)visData[ilocu];
 		  ty = ddata[5+nSpec]*(odouble)visData[ilocv];
 		  tz = ddata[6+nSpec]*(odouble)visData[ilocw];
-		  ExpArg[itcnt]  = -arg;
+		  ExpArg[itcnt]  = arg;
 		  FazArr[itcnt] = freqFact * (tx + ty + tz);
 		  /* Parallel  pol */
 		  /* Amplitude from component flux and two gains */

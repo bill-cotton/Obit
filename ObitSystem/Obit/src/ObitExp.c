@@ -25,23 +25,19 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/* Utility routine for fast exp(-x) calculation                   */
+/* Utility routine for fast exp(x) calculation                        */
 #include "ObitExp.h"
 #include <math.h>
 
-#define OBITEXPTAB  512  /* tabulated points */
-/** Is initialized? */
-static gboolean isInit = FALSE;
-/** Exp lookup table covering minTable to maxTable */
-static ofloat exptab[OBITEXPTAB];
-/** Arg spacing  in table */
-static ofloat delta=0.02;
-/** inverse of delta */
-static ofloat idelta=50.0;
-/** min value tabulated */
-static ofloat minTable=1.0e-5;
-/**max value tabulated */
-static ofloat maxTable=10.0;
+/* Coefficients of expansion for powers of x */
+#define COEF0 1.0
+#define COEF1 1.0/2.0
+#define COEF2 1.0/(2.0*3.0)
+#define COEF3 1.0/(2.0*3.0*4.0)
+#define COEF4 1.0/(2.0*3.0*4.0*5.0)
+#define COEF5 1.0/(2.0*3.0*4.0*5.0*6.0)
+#define COEF6 1.0/(2.0*3.0*4.0*5.0*6.0*7.0)
+#define COEF7 1.0/(2.0*3.0*4.0*5.0*6.0*7.0*8.0)
 
 /** AVX implementation 8 floats in parallel */
 #if HAVE_AVX==1
@@ -68,56 +64,54 @@ typedef ALIGN32_BEG union {
 } ALIGN32_END V8SI;
 
 /* Constants */
-#define _OBIT_DELTA     0.02   /* table spacing MUST match delta */
-#define _OBIT_IDELTA    50.0   /* 1/table spacing  */
-#define _OBIT_MINTABLE  1.0e-5 /* minimum tabulated value, MUST match minTable */
-#define _OBIT_MAXTABLE  10.0   /* maximum tabulated value, MUST match maxTable */
-static const v8sf _half = {0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5}; /* 0.5 vector */
-static const v8sf _one  = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; /* 1.0 vector */
-static const v8sf _mintab = {_OBIT_MINTABLE, _OBIT_MINTABLE, _OBIT_MINTABLE ,_OBIT_MINTABLE,
-			     _OBIT_MINTABLE, _OBIT_MINTABLE, _OBIT_MINTABLE, _OBIT_MINTABLE};
-static const v8sf _maxtab = {_OBIT_MAXTABLE, _OBIT_MAXTABLE, _OBIT_MAXTABLE ,_OBIT_MAXTABLE,
-			     _OBIT_MAXTABLE, _OBIT_MAXTABLE, _OBIT_MAXTABLE, _OBIT_MAXTABLE};
-static const v8sf _delta  = {_OBIT_DELTA, _OBIT_DELTA, _OBIT_DELTA ,_OBIT_DELTA,
-			     _OBIT_DELTA, _OBIT_DELTA, _OBIT_DELTA, _OBIT_DELTA};
-static const v8sf _idelta = {_OBIT_IDELTA, _OBIT_IDELTA, _OBIT_IDELTA ,_OBIT_IDELTA,
-			     _OBIT_IDELTA, _OBIT_IDELTA, _OBIT_IDELTA, _OBIT_IDELTA};
+static const v8sf _c0 = {COEF0,COEF0,COEF0,COEF0,COEF0,COEF0,COEF0,COEF0};
+static const v8sf _c1 = {COEF1,COEF1,COEF1,COEF1,COEF1,COEF1,COEF1,COEF1};
+static const v8sf _c2 = {COEF2,COEF2,COEF2,COEF2,COEF2,COEF2,COEF2,COEF2};
+static const v8sf _c3 = {COEF3,COEF3,COEF3,COEF3,COEF3,COEF3,COEF3,COEF3};
+static const v8sf _c4 = {COEF4,COEF4,COEF4,COEF4,COEF4,COEF4,COEF4,COEF4};
+static const v8sf _c5 = {COEF5,COEF5,COEF5,COEF5,COEF5,COEF5,COEF5,COEF5};
+static const v8sf _c6 = {COEF6,COEF6,COEF6,COEF6,COEF6,COEF6,COEF6,COEF6};
+static const v8sf _c7 = {COEF7,COEF7,COEF7,COEF7,COEF7,COEF7,COEF7,COEF7};
 /** 
- * Fast vector exp(-arg) using AVX (8 float) instructions
+ * Fast vector exp(arg) using AVX (8 float) instructions
  * \param arg    argument array
- * \param table  lookup table
- * \param e      [out] array of exp(-arg)
+ * \param e      [out] array of exp(arg)
  */
-void fast_exp_ps(v8sf arg, float *table, v8sf *e) {
-  v8sf cellf, temp, exptabl, d;
-  V8SI addr;
+void fast_exp_ps(v8sf arg,  v8sf *e) {
+  v8sf sum, argp, tmp;
 
-  /* Clip to range */
-  arg   = _mm256_max_ps (arg, _mintab);      /* Lower bound */
-  arg   = _mm256_min_ps (arg, _maxtab);      /* Upper bound */
+  /* Init sum, 0 and 1st power terms */
+  sum   = _mm256_add_ps(_c0, arg);
 
-  /* get arg in cells */
-  d      = _mm256_sub_ps(arg, _mintab);       /* arg-minTable */
-  cellf  = _mm256_mul_ps(d, _idelta);         /* (arg-minTable)/table spacing */
-  cellf  = _mm256_add_ps(cellf, _half);       /* Round to cell */
-  cellf  = _mm256_floor_ps(cellf); 
-  addr.v = _mm256_cvtps_epi32(cellf);         /* to integers */
+  /* Init arg to power */
+  argp  = _mm256_mul_ps(arg, arg);         /* arg^2 */
+  tmp   = _mm256_mul_ps(argp, _c1);
+  sum   = _mm256_add_ps(sum, tmp);
 
-  /* Fetch tabulated values */
-  exptabl = _mm256_set_ps(table[addr.i[7]], table[addr.i[6]],
-			  table[addr.i[5]], table[addr.i[4]],
-			  table[addr.i[3]], table[addr.i[2]],
-			  table[addr.i[1]], table[addr.i[0]]);
+  argp  = _mm256_mul_ps(argp, arg);         /* arg^3 */
+  tmp   = _mm256_mul_ps(argp, _c2);
+  sum   = _mm256_add_ps(sum, tmp);
 
-  /* Get difference in arg from tabulated points */
-  temp  = _mm256_mul_ps(cellf, _delta);        /* cell*delta */
-  d     = _mm256_sub_ps(d, temp);              /* d = arg-cell*delta-minTable */
+  argp  = _mm256_mul_ps(argp, arg);         /* arg^4 */
+  tmp   = _mm256_mul_ps(argp, _c3);
+  sum   = _mm256_add_ps(sum, tmp);
 
-  /* One term Taylor's series */   
-  d     = _mm256_sub_ps(_one, d);              /* 1-d */
-  *e    = _mm256_mul_ps(d, exptabl);           /* table[cell]*(1.0-d) */
+  argp  = _mm256_mul_ps(argp, arg);         /* arg^5 */
+  tmp   = _mm256_mul_ps(argp, _c4);
+  sum   = _mm256_add_ps(sum, tmp);
 
- /*  _mm_empty();  wait for operations to finish */
+  argp  = _mm256_mul_ps(argp, arg);         /* arg^6 */
+  tmp   = _mm256_mul_ps(argp, _c5);
+  sum   = _mm256_add_ps(sum, tmp);
+
+  argp  = _mm256_mul_ps(argp, arg);         /* arg^7 */
+  tmp   = _mm256_mul_ps(argp, _c6);
+  sum   = _mm256_add_ps(sum, tmp);
+
+  argp  = _mm256_mul_ps(argp, arg);         /* arg^8 */
+  tmp   = _mm256_mul_ps(argp, _c7);
+  *e    = _mm256_add_ps(sum, tmp);
+
   return ;
 } /* end fast_exp_ps */
 
@@ -145,73 +139,53 @@ typedef ALIGN16_BEG union {
   v2si  v;
 } ALIGN16_END V2SI;
 
-/* Constants */
-#define _PS_CONST(Name, Val)                                              \
-  static const ALIGN16_BEG float _ps_##Name[4] ALIGN16_END = { Val, Val, Val, Val }
-#define _PI32_CONST(Name, Val)                                            \
-  static const ALIGN16_BEG int _pi32_##Name[4] ALIGN16_END = { Val, Val, Val, Val }
-
-_PI32_CONST(Obit_NTAB,  512);     /* size of table */
-_PS_CONST(Obit_delta, 0.02);      /* table spacing MUST match delta */
-_PS_CONST(Obit_idelta, 50.0);     /* 1/table spacing */
-_PS_CONST(Obit_minTable, 1.0e-5); /* minimum tabulated value, MUST match minTable */
-_PS_CONST(Obit_maxTable, 10.0);   /* maximum tabulated value, MUST match maxTable */
-_PS_CONST(Obit_HALF,  0.5);       /* 0.5 */
-_PS_CONST(Obit_ONE,   1.0);       /* 1.0 */
-
-#define _OBIT_DELTA     0.02   /* table spacing MUST match delta */
-#define _OBIT_IDELTA    50.0   /* 1/table spacing  */
-#define _OBIT_MINTABLE  1.0e-5 /* minimum tabulated value, MUST match minTable */
-#define _OBIT_MAXTABLE  10.0   /* maximum tabulated value, MUST match maxTable */
-#define _OBIT_HALF       0.5   /* 0.5 */
-#define _OBIT_ONE        1.0   /* 1.0 */
-#define _OBIT_NTAB       512   /* size of table */
-
 /** 
- * Fast vector exp(-arg) using SSE instructions
+ * Fast vector exp(arg) using SSE instructions
  * \param arg    argument array
- * \param table  lookup table
- * \param e      [out] array of exp(-arg)
+ * \param e      [out] array of exp(arg)
  */
-void fast_exp_ps(v4sf arg, float *table, v4sf *e) {
-  v4sf cellf, temp, it,  one, exptabl, d;
-  V2SI iaddrLo, iaddrHi;
+void fast_exp_ps(v4sf arg, v4sf *e) {
+  v4sf sum, argp, tmp, coef;
 
-  /* Clip to range */
-  temp  = _mm_set_ps1 (_OBIT_MINTABLE);
-  arg   = _mm_max_ps (arg, temp);      /* Lower bound */
-  temp  = _mm_set_ps1 (_OBIT_MAXTABLE); 
-  arg   = _mm_min_ps (arg, temp);      /* Upper bound */
+  /* Init sum, 0 and 1st power terms */
+  coef  = _mm_set_ps1 (COEF0);
+  sum   = _mm_add_ps(coef, arg);
 
-  /* get arg in cells */
-  cellf = _mm_set_ps1 (_OBIT_MINTABLE);  /* Min table value */
-  d     = _mm_sub_ps(arg, cellf);        /* arg-minTable */
-  temp  = _mm_set_ps1 (_OBIT_IDELTA);    /* 1/table spacing */
-  cellf = _mm_mul_ps(d, temp);           /* (arg-minTable)/table spacing */
-  temp  = _mm_set_ps1 (_OBIT_HALF);      /* 0.5 */
-  cellf = _mm_add_ps(cellf, temp);  
-  iaddrLo.v = _mm_cvttps_pi32 (cellf);    /* Round lower half */
-  temp      = _mm_movehl_ps (cellf,cellf);/* swap */
-  iaddrHi.v = _mm_cvttps_pi32 (temp);     /* Round upper half */
+  /* Init arg to power */
+  argp  = _mm_mul_ps(arg, arg);         /* arg^2 */
+  coef  = _mm_set_ps1 (COEF1);
+  tmp   = _mm_mul_ps(argp, coef);
+  sum   = _mm_add_ps(sum, tmp);
 
-  /* Fetch tabulated values */
-  exptabl   = _mm_setr_ps(table[iaddrLo.i[0]],table[iaddrLo.i[1]],
-			  table[iaddrHi.i[0]],table[iaddrHi.i[1]]);
+  argp  = _mm_mul_ps(argp, arg);         /* arg^3 */
+  coef  = _mm_set_ps1 (COEF2);
+  tmp   = _mm_mul_ps(argp, coef);
+  sum   = _mm_add_ps(sum, tmp);
 
-  /* Get difference in arg from tabulated points */
-  temp   = _mm_cvtpi32_ps (temp, iaddrHi.v);      /* float upper values */
-  it     = _mm_movelh_ps (temp,temp);           /* swap */
-  it     = _mm_cvtpi32_ps (it, iaddrLo.v);      /* float lower values */
-  /* it now has the floated, truncated cells */
-  temp  = _mm_set_ps1 (_OBIT_DELTA);            /* table spacing */
-  temp  = _mm_mul_ps(it, temp);                 /* cell*delta */
-  d     = _mm_sub_ps(d, temp);                  /* d = arg-cell*delta-minTable */
+  argp  = _mm_mul_ps(argp, arg);         /* arg^4 */
+  coef  = _mm_set_ps1 (COEF3);
+  tmp   = _mm_mul_ps(argp, coef);
+  sum   = _mm_add_ps(sum, tmp);
 
-  /* One term Taylor's series */   
-  one   = _mm_set_ps1 (1.0);                   /* ones */
-  d     = _mm_sub_ps(one, d);                  /* 1-d */
-  *e    = _mm_mul_ps(d, exptabl);              /* table[cell]*(1.0-d) */
+  argp  = _mm_mul_ps(argp, arg);         /* arg^5 */
+  coef  = _mm_set_ps1 (COEF4);
+  tmp   = _mm_mul_ps(argp, coef);
+  sum   = _mm_add_ps(sum, tmp);
 
+  argp  = _mm_mul_ps(argp, arg);         /* arg^6 */
+  coef  = _mm_set_ps1 (COEF5);
+  tmp   = _mm_mul_ps(argp, coef);
+  sum   = _mm_add_ps(sum, tmp);
+
+  argp  = _mm_mul_ps(argp, arg);         /* arg^7 */
+  coef  = _mm_set_ps1 (COEF6);
+  tmp   = _mm_mul_ps(argp, coef);
+  sum   = _mm_add_ps(sum, tmp);
+
+  argp  = _mm_mul_ps(argp, arg);         /* arg^8 */
+  coef  = _mm_set_ps1 (COEF7);
+  tmp   = _mm_mul_ps(argp, coef);
+  *e    = _mm_add_ps(sum, tmp);
   _mm_empty();  /* wait for operations to finish */
   return ;
 } /* end fast_exp_ps */
@@ -219,73 +193,45 @@ void fast_exp_ps(v4sf arg, float *table, v4sf *e) {
 #endif  /* HAVE_SSE */
 
 /** 
- * Initialization 
- */
- void ObitExpInit(void)
-{
-  olong i, cell;
-  ofloat arg;
-
-  if (isInit) return;   /* Only once */
-  isInit = TRUE;  /* Now initialized */
-
-  for (i=0; i<OBITEXPTAB-1; i++) {
-    arg = minTable + delta * i;
-    exptab[i] = exp(-arg);
-  }
-  exptab[OBITEXPTAB-1] = 0.0;  /* Higher values */
-
-  /* Zero cell for maxTable */
-  cell = (olong)((maxTable-minTable)*idelta + 0.5);
-  exptab[cell] = 0.0;
-} /* end ObitSinCosInit */
-
-/** 
  * Calculate exp of -arg 
  * arg<minTable => 1.0
  * arg>maxTable => 0.0
  * Lookup table initialized on first call
  * \param arg    argument
- * \return exp(-arg)
+ * \return exp(arg)
 */
 ofloat ObitExpCalc(ofloat arg)
 {
-  olong cell;
-  ofloat out, d;
-
-  /* Initialize? */
-  if (!isInit) ObitExpInit();
-
-  /* Range test */
-  if (arg<minTable) return 1.0;
-  if (arg>maxTable) return 0.0;
-
-
-  /* Cell in lookup table */
-  cell = (olong)((arg-minTable)*idelta + 0.5);
-
-  /* Difference from tabulated value */
-  d = arg - minTable -cell*delta;
-
-  /* Lookup plus one Taylor term,  
-     NB, d(exp(-x)/dx = -exp(-x) */
-  out = exptab[cell]*(1.0-d);
+  ofloat out, argp;
+  return exp(arg);  /* library routine better optimized */
+  out  = COEF0 + arg;
+  argp = arg*arg;     /* arg^2 */
+  out += argp * COEF1;
+  argp = argp*arg;     /* arg^3 */
+  out += argp * COEF2;
+  argp = argp*arg;     /* arg^4 */
+  out += argp * COEF3;
+  argp = argp*arg;     /* arg^5 */
+  out += argp * COEF4;
+  argp = argp*arg;     /* arg^6 */
+  out += argp * COEF5;
+  argp = argp*arg;     /* arg^7 */
+  out += argp * COEF6;
+  argp = argp*arg;     /* arg^8 */
+  out += argp * COEF7;
   return out;
 } /* end ObitExpCalc */
 
 /** 
- * Calculate exp(-x) of vector of args uses SSE implementation is available
- * arg<minTable => 1.0
- * arg>maxTable => 0.0
- * Lookup table initialized on first call
+ * Calculate exp(x) of vector of args uses SSE or AVX implementation if available
  * \param n      Number of elements to process
  * \param argarr array of args
- * \param exparr [out] exp(-arg)
+ * \param exparr [out] exp(arg)
 */
 void ObitExpVec(olong n, ofloat *argarr, ofloat *exparr)
 {
-  olong i, nleft, cell;
-  ofloat argt, d;
+  olong i, nleft;
+  ofloat argt;
 #if   HAVE_AVX==1
   olong ndo;
   v8sf varg, vexp;
@@ -296,9 +242,6 @@ void ObitExpVec(olong n, ofloat *argarr, ofloat *exparr)
   
   if (n<=0) return;
 
-  /* Initialize? */
-  if (!isInit) ObitExpInit();
-  
   nleft = n;   /* Number left to do */
   i     = 0;   /* None done yet */
 
@@ -309,7 +252,7 @@ void ObitExpVec(olong n, ofloat *argarr, ofloat *exparr)
   for (i=0; i<ndo; i+=8) {
     varg = _mm256_loadu_ps(argarr); argarr += 8;
       
-    fast_exp_ps(varg, exptab, &vexp);
+    fast_exp_ps(varg, &vexp);
     _mm256_storeu_ps(exparr, vexp); exparr += 8;
  } /* end AVX loop */
  /** SSE implementation */
@@ -321,7 +264,7 @@ void ObitExpVec(olong n, ofloat *argarr, ofloat *exparr)
     vargt.f[1] = *argarr++;
     vargt.f[2] = *argarr++;
     vargt.f[3] = *argarr++;
-    fast_exp_ps(vargt.v, exptab, &vex.v);
+    fast_exp_ps(vargt.v,  &vex.v);
     *exparr++ = vex.f[0];
     *exparr++ = vex.f[1];
     *exparr++ = vex.f[2];
@@ -331,23 +274,10 @@ void ObitExpVec(olong n, ofloat *argarr, ofloat *exparr)
 
   nleft = n-i;  /* How many left? */
 
- /* Loop doing any elements not done in SSE loop */
+ /* Loop doing any elements not done in SSE/AVX loop */
   for (i=0; i<nleft; i++) {
     /* arg  */
     argt = (*argarr++);
-
-    /* range check */
-    if (argt<minTable) {*exparr++=1.0; continue;}
-    if (argt>maxTable) {*exparr++=0.0; continue;}
-
-    /* Cell in lookup table */
-    cell = (olong)((argt-minTable)*idelta + 0.5);
-    
-    /* Difference from tabulated value */
-    d = argt - minTable -cell*delta;
-    
-    /* Lookup plus one Taylor term,  
-       NB, d(exp(-x)/dx = -exp(-x) */
-    *exparr++ = exptab[cell]*(1.0-d);
+    *exparr++ = ObitExpCalc(argt);
   } /* end loop over vector */
 } /* end ObitExpVec */

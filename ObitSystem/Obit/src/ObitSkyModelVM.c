@@ -303,7 +303,6 @@ void ObitSkyModelVMInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   }
   /* Init Sine/Cosine, exp calculator - just to be sure about threading */
   ObitSinCosCalc(phase, &sp, &cp);
-  ObitExpCalc(phase);
 
 } /* end ObitSkyModelVMInitMod */
 
@@ -912,7 +911,7 @@ gboolean ObitSkyModelVMLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 	table[3] = array[0] * in->factor;
 	xp[0] = (array[1] + xpoff) * konst;
 	xp[1] = (array[2] + ypoff) * konst;
-	if (CCTable->DeltaZCol>=0) xp[2] = array[3];
+	if (CCTable->DeltaZCol>=0) xp[2] = array[3] * konst;
 	else                       xp[2] = 0.0;
 	if (do3Dmul) {
 	  xyz[0] = xp[0]*umat[0][0] + xp[1]*umat[1][0];
@@ -1317,7 +1316,7 @@ static gpointer ThreadSkyModelVMFTDFT (gpointer args)
 			     ccData[5]*visData[ilocv]*visData[ilocv] +
 			     ccData[6]*visData[ilocu]*visData[ilocv]);
 	      amp = ccData[0];
-	      ExpArg[itcnt]  = -arg;
+	      ExpArg[itcnt]  = arg;
 	      tx = ccData[1]*(odouble)visData[ilocu];
 	      ty = ccData[2]*(odouble)visData[ilocv];
 	      tz = ccData[3]*(odouble)visData[ilocw];

@@ -424,7 +424,6 @@ void ObitSkyModelVMSquintInitMod (ObitSkyModel* inn, ObitUV *uvdata,
 
   /* Init Sine/Cosine, exp calculator - just to be sure about threading */
   ObitSinCosCalc(phase, &sp, &cp);
-  ObitExpCalc(phase);
 
 } /* end ObitSkyModelVMSquintInitMod */
 
@@ -1285,11 +1284,11 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
 	      FazArr[itcnt] = freqFact * (ddata[4]*visData[ilocu] + 
 					  ddata[5]*visData[ilocv] + 
 					  ddata[6]*visData[ilocw]);
-	      ExpArgR[itcnt] = -freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
+	      ExpArgR[itcnt] = freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
 					ddata[8]*visData[ilocv]*visData[ilocv] +
 					ddata[9]*visData[ilocu]*visData[ilocv]);
 	      ampr = ddata[3] * rgain1[iComp] * rgain2[iComp];
-	      ExpArgL[itcnt] = -freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
+	      ExpArgL[itcnt] = freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
 					 ddata[8]*visData[ilocv]*visData[ilocv] +
 					 ddata[9]*visData[ilocu]*visData[ilocv]);
 	      ampl = ddata[3] * lgain1[iComp] * lgain2[iComp];

@@ -663,7 +663,8 @@ def PImageFFT (inImage, outAImage, outPImage, err):
 
 def PImageT2Spec (inImage, outImage, nTerm, 
                   inCCVer, outCCVer, err,
-                  refFreq=1.0e9, terms=None, startCC=1, endCC=0, dist=None):
+                  refFreq=1.0e9, terms=None, startCC=1, endCC=0, 
+                  dropNeg=True, dist=None):
     """
     Convert an ObitImage(MF) (TSpec CCs) to an ObitImageWB (Spec CCs)
     
@@ -687,6 +688,7 @@ def PImageT2Spec (inImage, outImage, nTerm,
       [flux density at refFreq, spectral index at refFreq, ...]
     * startCC  = First 1-rel component to convert
     * endCC    = Last 1-rel component to convert, 0=> all
+    * dropNeg  = if True, drop components with negative flux.
     * dist     = max distance in deg from pointing to accept CCs for the
                  normalization to the specified spectrum, None=very large
     """
@@ -705,6 +707,7 @@ def PImageT2Spec (inImage, outImage, nTerm,
     else:
         limit = dist
     inImage.List.set("Limit", limit)  # Save on info list
+    inImage.List.set("dropNeg", dropNeg) 
 
     # Update output header
     d = outImage.Desc.Dict

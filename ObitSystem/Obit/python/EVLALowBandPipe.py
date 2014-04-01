@@ -385,13 +385,6 @@ def pipeline( aipsSetup, parmFile):
         printMess(mess, logFile)
         EVLAClearCal(uv, err, doGain=True, doFlag=False, doBP=True, check=check, logfile=logFile)
         OErr.printErrMsg(err, "Error resetting calibration")
-        # Parallactic angle correction?
-        if parms["doPACor"] or parms["doPolCal"]:
-            retCode = EVLAPACor(uv, err, \
-                                logfile=logFile, check=check, debug=debug)
-            if retCode!=0:
-                raise RuntimeError,"Error in Parallactic angle correction"
-    
         # Delay recalibration
         if parms["doDelayCal2"] and parms["DCals"] and not check:
             plotFile = "./"+fileRoot+"DelayCal2.ps"
@@ -543,7 +536,7 @@ def pipeline( aipsSetup, parmFile):
                           do3D=parms["do3D"], BLFact=parms["BLFact"], BLchAvg=parms["BLchAvg"], \
                           doMB=parms["doMB"], norder=parms["MBnorder"], maxFBW=parms["MBmaxFBW"], \
                           PBCor=parms["PBCor"],antSize=parms["antSize"], \
-                          nTaper=parms["nTaper"], Tapers=parms["Tapers"], \
+                          nTaper=parms["nTaper"], Tapers=parms["Tapers"], doOutlier=parms["doOutlier"], \
                           nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
         # End image
     

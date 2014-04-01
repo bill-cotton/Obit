@@ -1788,6 +1788,7 @@ void ObitTableCCUtilAppendShift (ObitTableCC *inCC, ObitTableCC *outCC,
   konst = DG2RAD * 2.0 * G_PI;
   xxoff /= konst;
   yyoff /= konst;
+  zzoff /= konst;
 
   /* Pixel offset */
   xpoff = imDesc->xPxOff * imDesc->cdelt[imDesc->jlocr];
@@ -1817,7 +1818,7 @@ void ObitTableCCUtilAppendShift (ObitTableCC *inCC, ObitTableCC *outCC,
     /* May need to undo any field rotation */
     row->DeltaX = xyz[0] + xxoff;
     row->DeltaY = xyz[1] + yyoff;
-    if (inCC->DeltaZCol>=0) row->DeltaZ = xyz[2]*konst +  zzoff;
+    if (inCC->DeltaZCol>=0) row->DeltaZ = xyz[2] +  zzoff;
     orow = -1;
     retCode = ObitTableCCWriteRow (outCC, orow, row, err);
     if (err->error) goto cleanup;
@@ -1994,6 +1995,8 @@ ObitCCCompType ObitTableCCUtilGetType (ObitData *file, olong ver, ObitErr* err)
  * Antenna beam pattern weighed fitting; all model types supported.
  * \param image    Input ObitImageMF with attached CC table
  *                 Must have freq axis type = "SPECLNMF"
+ *                 possible control parameter:
+ * \li "dropNeg" OBIT_boolean if True, drop negative components [True] 
  * \param outImage Output ObitImageWB with attached CC table
  * \param nTerm    Number of output Spectral terms, 2=SI, 3=also curve.
  * \param inCCVer  input CC table version
@@ -2028,7 +2031,7 @@ void ObitTableCCUtilT2Spec  (ObitImage *image, ObitImageWB *outImage,
   olong irow, orow, ver, i, j, offset, nSpec, sCC, eCC, noParms, nterm;
   olong planeNo[5] = {1,1,1,1,1};
   gchar keyword[12];
-  gboolean doZ;
+  gboolean doZ, dropNeg;
   gchar *tabType = "AIPS CC";
   gchar *routine = "ObitTableCCUtilT2Spec";
 
@@ -2046,6 +2049,10 @@ void ObitTableCCUtilT2Spec  (ObitImage *image, ObitImageWB *outImage,
 		      "%s: Image %s NOT an ObitImageMF - no SPECLNMF axis", 
 		      routine, image->name);
 
+  /* Drop negatives? */
+  dropNeg = TRUE;
+  ObitInfoListGetTest(image->info, "dropNeg", &type, dim, &dropNeg);
+  
   /* Create spectrum info arrays */
   nSpec = 1;
   ObitInfoListGetTest(imDesc->info, "NSPEC", &type, dim, &nSpec);
@@ -2199,6 +2206,7 @@ void ObitTableCCUtilT2Spec  (ObitImage *image, ObitImageWB *outImage,
     for (i=0; i<nTerm; i++) outCCRow->parms[offset+i] = fitResult[i+1];
     
     /* Write output */
+    if (dropNeg && (outCCRow->Flux<0.0)) continue;  /* Want this one? */
     orow = -1;
     retCode = ObitTableCCWriteRow (outCCTable, orow, outCCRow, err);
     if  (err->error) goto cleanup;
@@ -2260,7 +2268,7 @@ void ObitTableCCUtilFixTSpec (ObitImage *inImage, olong *inCCVer,
   ofloat Limit, dist;
   odouble *Freq=NULL, rfAlpha;
   olong irow, orow, ver, i, j, iterm, offset, nSpec, sCC, eCC;
-   union ObitInfoListEquiv InfoReal; 
+  union ObitInfoListEquiv InfoReal; 
   gchar *tabType = "AIPS CC";
   gchar keyword[12];
   gchar *routine = "ObitTableCCUtilFixTSpec";
@@ -2329,7 +2337,8 @@ void ObitTableCCUtilFixTSpec (ObitImage *inImage, olong *inCCVer,
 
     /* Sum */
     for (i=0; i<nSpec; i++) {
-      if (inCCRow->parms[offset+i]!=fblank) sumFlux[i] += inCCRow->parms[offset+i];
+      if (inCCRow->parms[offset+i]!=fblank) 
+	sumFlux[i] += MAX (0.0, inCCRow->parms[offset+i]);
     }
   
   } /* end loop over table summing */
@@ -2849,6 +2858,9 @@ static void CCMergeSpec (ofloat *base, olong size, olong number,
 {
   olong i, j, k, toff;
   ofloat *array = base;
+
+  /* Merging doSpec data too risky */
+  if (doSpec) return;
   
   if (doZ) toff = 4;
   else     toff = 3;
