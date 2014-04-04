@@ -305,6 +305,7 @@ void ObitThreadGridSetupBase (ObitThreadGrid *in, ObitUV *UVin,
     funcarg[iTh]->cnvfnv   = g_malloc0(wrksize*sizeof(ofloat*));
     funcarg[iTh]->iuarr    = g_malloc0(wrksize*sizeof(olong));
     funcarg[iTh]->ivarr    = g_malloc0(wrksize*sizeof(olong));
+    funcarg[iTh]->beamOrd  = 0;
    } /* End loop creating Thread args */
 
   /* order grids first by beam/non beam, then in order of UVGrids */
@@ -500,6 +501,7 @@ void ObitThreadGridSetupMF (ObitThreadGrid *in, ObitUV *UVin,
     funcarg[iTh]->cnvfnv   = g_malloc0(wrksize*sizeof(ofloat*));
     funcarg[iTh]->iuarr    = g_malloc0(wrksize*sizeof(olong));
     funcarg[iTh]->ivarr    = g_malloc0(wrksize*sizeof(olong));
+    funcarg[iTh]->beamOrd  = 0;
    } /* End loop creating Thread args */
 
   /* order grids first by beam/non beam, then in order of UVGrids */
@@ -718,6 +720,7 @@ void ObitThreadGridSetupWB (ObitThreadGrid *in, ObitUV *UVin,
     funcarg[iTh]->cnvfnv   = g_malloc0(wrksize*sizeof(ofloat*));
     funcarg[iTh]->iuarr    = g_malloc0(wrksize*sizeof(olong));
     funcarg[iTh]->ivarr    = g_malloc0(wrksize*sizeof(olong));
+    funcarg[iTh]->beamOrd  = 0;
    } /* End loop creating Thread args */
 
   /* order grids first by beam/non beam, then in order of UVGrids */
@@ -1236,6 +1239,160 @@ void ObitThreadGridClear (gpointer inn)
   
 } /* end ObitThreadGridClear */
 
+/** 
+ * c version first pass at preparing to grid one visibility/facet
+ * \param kvis   visibiliy number (0-rel)
+ * \param args   Threaded gridding function argument
+ * Saves values:
+ * \li   fwork1    Visibility array as (r,i)
+ * \li   cnvfnu    Address of u convolving vector
+ * \li   cnvfnv    Address of v convolving vector
+ * \li   iuarr     first u cell (0-rel)
+ * \li   ivarr     first v cell (0-rel)
+*/
+void fast_prep_grid(olong kvis, GridFuncArg *args)  
+{
+  ObitThreadGridInfo *gridInfo = args->gridInfo;
+  olong ifacet          = args->facet;
+  ofloat *vis_in        = args->data;
+  olong  bChan          = args->bChan;
+  olong  eChan          = args->eChan;
+  olong  beamOrd        = args->beamOrd;
+
+  olong halfWidth    = gridInfo->convWidth/2;         // half width of convolution kernal
+  olong fullWidth    = gridInfo->convWidth;           // full width of convolution kernal
+  olong convNperCell = gridInfo->convNperCell;        // resolution of kernal
+  olong ichan, ivis, jvis, lrow, halfv, it, iphase, iu, iv;
+  ofloat *rot        = &gridInfo->rotUV[ifacet*9];
+  ofloat *shift      = &gridInfo->shift[ifacet*3];
+  ofloat *convfn     = gridInfo->convfn;
+  ofloat u,v,w, uu, vv, ww, maxBL2, minBL2, bmTaper, BL2, fact;
+  ofloat vr, vi, vw, vvr, vvi, phase, guardu, guardv, ftemp;
+  ofloat c, s, phaseSign, freqFact;
+  gdouble dshift[3], dphase, doTape;
+  gboolean want;
+  static const gdouble twopi = 2*G_PI;
+  static const gdouble itwopi = 1.0/(2*G_PI);
+
+  lrow  = 2*(1 + gridInfo->nx[ifacet]/2 + halfWidth);  // length of grid row in floats
+  halfv = gridInfo->ny[ifacet]/2;
+  maxBL2  = gridInfo->maxBL[ifacet]*gridInfo->maxBL[ifacet];
+  minBL2  = gridInfo->minBL[ifacet]*gridInfo->minBL[ifacet];
+  bmTaper = gridInfo->BeamTaperUV[ifacet];
+  doTape  = (bmTaper>0.0) || ((args->sigma1!=NULL) && (args->sigma1[0]!=0.0));
+
+  /* guardband in wavelengths */
+  guardu = fabs(gridInfo->guardu[ifacet] / gridInfo->uscale[ifacet]);
+  guardv = fabs(gridInfo->guardv[ifacet] / gridInfo->vscale[ifacet]);
+
+  dshift[0] = (gdouble)shift[0];  dshift[1] = (gdouble)shift[1];  dshift[2] = (gdouble)shift[2];
+  ivis = kvis * gridInfo->lenvis; /* beginning of visibility */
+  /*  Assume random parameters start with u,v,w */
+  u = vis_in[ivis];
+  v = vis_in[ivis+1];
+  w = vis_in[ivis+2];
+  /* rotate u,v,w for facet */
+  uu = u*rot[0] + v*rot[1] + w*rot[2];
+  vv = u*rot[3] + v*rot[4] + w*rot[5];
+  ww = u*rot[6] + v*rot[7] + w*rot[8];
+  /* Only gridding half plane, need to flip to other side? */
+  if (uu<=0.0) {
+    phaseSign = -1.0;
+  } else { /* no flip */
+    phaseSign = 1.0;
+  }
+  /* loop over channels for position shift */
+  for (ichan=bChan; ichan<eChan; ichan++) {
+    freqFact = phaseSign * gridInfo->freqArr[ichan];
+    u = uu * freqFact;  // Scale u,v,w to channel
+    v = vv * freqFact;
+    w = ww * freqFact;
+    jvis = ivis + gridInfo->nrparm + ichan*3;
+    vvr = vis_in[jvis];
+    vvi = phaseSign*vis_in[jvis+1];   /* Conjugate if neg u */
+    vw  = vis_in[jvis+2];
+    /* Data valid? positive weight and within guardband */
+    want = ((vw>0.) && (u<guardu) && (fabs(v)<guardv));
+    /* Baseline limits */
+    BL2 = u*u + v*v;
+    if ((maxBL2>0) && want) want = want && maxBL2>BL2;
+    if ((minBL2>0) && want) want = want && minBL2<BL2;
+    if (want) {
+      /* If this a beam - don't bother shifting - replace data with (wt*1,0) */
+      if (!gridInfo->isBeam[ifacet]) {
+	/* real part of vis */
+	/* position shift in double, reduce range */
+	dphase =  (u*dshift[0] + v*dshift[1] + w*dshift[2]);
+	iphase = (olong)(dphase*itwopi);
+	phase  = (ofloat)(dphase - iphase * twopi);
+	ObitSinCosCalc (phase, &s, &c);
+	vr = c*vvr - s*vvi;
+	vi = s*vvr + c*vvi; 
+      } else {
+	vr = 1.0; vi = 0.0;
+      }
+      /* Tapering? */
+      if (doTape) {
+	/* Beam taper? */
+	/* Other (MF) tapering */
+	if ((args->sigma1!=NULL) && (args->sigma1[ichan]!=0.0)) {
+	  ftemp = u*u*(args->sigma2[ichan]+bmTaper) + 
+	          v*v*(args->sigma1[ichan]+bmTaper) + 
+	          u*v*(args->sigma3[ichan]);
+	  fact = ObitExpCalc (ftemp);
+	  vw  *= fact;
+	}  /* end Other (MF) tapering */
+	else if (bmTaper>0.0) {
+	  fact = ObitExpCalc(bmTaper*BL2);
+	  vw  *= fact;
+	}  /* end beam Taper */
+      } /* end any taper */
+      /* SW Beam order */
+      switch (beamOrd) {
+      case 0:   /* Dirty beam */
+	break;
+      case 1:   /* first order ln(nu/nu0) */
+	ftemp = log(gridInfo->freqArr[ichan]);
+	vw *= ftemp;
+	break;
+      case 2:   /* second order ln(nu/nu0)**2 */
+	ftemp = log(gridInfo->freqArr[ichan]);
+	vw *= ftemp*ftemp;
+	break;
+      case 3:   /* third order ln(nu/nu0)**3 */
+	ftemp = log(gridInfo->freqArr[ichan]);
+	vw *= ftemp*ftemp*ftemp;
+	break;
+      default:
+	break;
+      }; /* end beamOrd switch */
+      /* weighted data - save in fwork1 */
+      args->fwork1[2*ichan]   = vr * vw;
+      args->fwork1[2*ichan+1] = vi * vw;
+      /* convert to u,v cells */
+      u *= gridInfo->uscale[ifacet];
+      v *= gridInfo->vscale[ifacet];
+      iu = (olong)(u+0.5);   /* to grid cell number */
+      iv = _lroundf(v);
+      /* start in convolution function in blocks of fullWidth */
+      it = convNperCell + _lroundf(convNperCell * (iu - u - 0.5));
+      args->cnvfnu[ichan] = convfn + fullWidth * it;
+      it = convNperCell + _lroundf(convNperCell * (iv - v - 0.5));
+      args->cnvfnv[ichan] = convfn + fullWidth * it;
+      args->iuarr[ichan]  = iu;
+      args->ivarr[ichan]  = iv - halfWidth + halfv;
+    } /* end if valid */
+    else {  /* Invalid data */
+      args->fwork1[2*ichan]   = 0.0;
+      args->fwork1[2*ichan+1] = 0.0;
+      args->iuarr[ichan]      = halfWidth; 
+      args->ivarr[ichan]      = halfv;
+      args->cnvfnu[ichan]     = convfn;
+      args->cnvfnv[ichan]     = convfn ;
+    } /* end invalid data */
+  } /* end channel loop */
+} /* end fast_prep_grid */
+
 /** AVX implementation 8 floats in parallel */
 #if HAVE_AVX==1
 #include <immintrin.h>
@@ -1275,6 +1432,8 @@ static const v8sf _mhalf = {-0.5, -0.5,- 0.5, -0.5, -0.5, -0.5, -0.5, -0.5}; /* 
 static const v8sf _one   =  {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; /* 1 vector */
 
 /** 
+ * SOMETHING IS WRONG IN THIS VERSION - using c version
+ * Get aliased version of strong source at origin
  * AVX version first pass at preparing to grid one visibility/facet
  * \param kvis   visibiliy number (0-rel)
  * \param args   Threaded gridding function argument
@@ -1285,7 +1444,7 @@ static const v8sf _one   =  {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; /* 1 vecto
  * \li   iuarr     first u cell (0-rel)
  * \li   ivarr     first v cell (0-rel)
 */
-void fast_prep_grid(olong kvis, GridFuncArg *args)  
+void fast_prep_gridAVX(olong kvis, GridFuncArg *args)  
 {
   ObitThreadGridInfo *gridInfo = args->gridInfo;
   olong ifacet          = args->facet;
@@ -1782,159 +1941,6 @@ void fast_grid7(ofloat *grid, ofloat vis[2], olong iu, olong iv, olong lrow,
   /* _mm_empty();  wait for operations to finish */
 } /* end fast_grid7 */
 #else  /* C only versions */
-/** 
- * c version first pass at preparing to grid one visibility/facet
- * \param kvis   visibiliy number (0-rel)
- * \param args   Threaded gridding function argument
- * Saves values:
- * \li   fwork1    Visibility array as (r,i)
- * \li   cnvfnu    Address of u convolving vector
- * \li   cnvfnv    Address of v convolving vector
- * \li   iuarr     first u cell (0-rel)
- * \li   ivarr     first v cell (0-rel)
-*/
-void fast_prep_grid(olong kvis, GridFuncArg *args)  
-{
-  ObitThreadGridInfo *gridInfo = args->gridInfo;
-  olong ifacet          = args->facet;
-  ofloat *vis_in        = args->data;
-  olong  bChan          = args->bChan;
-  olong  eChan          = args->eChan;
-  olong  beamOrd        = args->beamOrd;
-
-  olong halfWidth    = gridInfo->convWidth/2;         // half width of convolution kernal
-  olong fullWidth    = gridInfo->convWidth;           // full width of convolution kernal
-  olong convNperCell = gridInfo->convNperCell;        // resolution of kernal
-  olong ichan, ivis, jvis, lrow, halfv, it, iphase, iu, iv;
-  ofloat *rot        = &gridInfo->rotUV[ifacet*9];
-  ofloat *shift      = &gridInfo->shift[ifacet*3];
-  ofloat *convfn     = gridInfo->convfn;
-  ofloat u,v,w, uu, vv, ww, maxBL2, minBL2, bmTaper, BL2, fact;
-  ofloat vr, vi, vw, vvr, vvi, phase, guardu, guardv, ftemp;
-  ofloat c, s, phaseSign, freqFact;
-  gdouble dshift[3], dphase, doTape;
-  gboolean want;
-  static const gdouble twopi = 2*G_PI;
-  static const gdouble itwopi = 1.0/(2*G_PI);
-
-  lrow  = 2*(1 + gridInfo->nx[ifacet]/2 + halfWidth);  // length of grid row in floats
-  halfv = gridInfo->ny[ifacet]/2;
-  maxBL2  = gridInfo->maxBL[ifacet]*gridInfo->maxBL[ifacet];
-  minBL2  = gridInfo->minBL[ifacet]*gridInfo->minBL[ifacet];
-  bmTaper = gridInfo->BeamTaperUV[ifacet];
-  doTape  = (bmTaper>0.0) || ((args->sigma1!=NULL) && (args->sigma1[0]!=0.0));
-
-  /* guardband in wavelengths */
-  guardu = fabs(gridInfo->guardu[ifacet] / gridInfo->uscale[ifacet]);
-  guardv = fabs(gridInfo->guardv[ifacet] / gridInfo->vscale[ifacet]);
-
-  dshift[0] = (gdouble)shift[0];  dshift[1] = (gdouble)shift[1];  dshift[2] = (gdouble)shift[2];
-  ivis = kvis * gridInfo->lenvis; /* beginning of visibility */
-  /*  Assume random parameters start with u,v,w */
-  u = vis_in[ivis];
-  v = vis_in[ivis+1];
-  w = vis_in[ivis+2];
-  /* rotate u,v,w for facet */
-  uu = u*rot[0] + v*rot[1] + w*rot[2];
-  vv = u*rot[3] + v*rot[4] + w*rot[5];
-  ww = u*rot[6] + v*rot[7] + w*rot[8];
-  /* Only gridding half plane, need to flip to other side? */
-  if (uu<=0.0) {
-    phaseSign = -1.0;
-  } else { /* no flip */
-    phaseSign = 1.0;
-  }
-  /* loop over channels for position shift */
-  for (ichan=bChan; ichan<eChan; ichan++) {
-    freqFact = phaseSign * gridInfo->freqArr[ichan];
-    u = uu * freqFact;  // Scale u,v,w to channel
-    v = vv * freqFact;
-    w = ww * freqFact;
-    jvis = ivis + gridInfo->nrparm + ichan*3;
-    vvr = vis_in[jvis];
-    vvi = phaseSign*vis_in[jvis+1];   /* Conjugate if neg u */
-    vw  = vis_in[jvis+2];
-    /* Data valid? positive weight and within guardband */
-    want = ((vw>0.) && (u<guardu) && (fabs(v)<guardv));
-    /* Baseline limits */
-    BL2 = u*u + v*v;
-    if ((maxBL2>0) && want) want = want && maxBL2>BL2;
-    if ((minBL2>0) && want) want = want && minBL2<BL2;
-    if (want) {
-      /* If this a beam - don't bother shifting - replace data with (wt*1,0) */
-      if (!gridInfo->isBeam[ifacet]) {
-	/* real part of vis */
-	/* position shift in double, reduce range */
-	dphase =  (u*dshift[0] + v*dshift[1] + w*dshift[2]);
-	iphase = (olong)(dphase*itwopi);
-	phase  = (ofloat)(dphase - iphase * twopi);
-	ObitSinCosCalc (phase, &s, &c);
-	vr = c*vvr - s*vvi;
-	vi = s*vvr + c*vvi; 
-      } else {
-	vr = 1.0; vi = 0.0;
-      }
-      /* Tapering? */
-      if (doTape) {
-	/* Beam taper? */
-	/* Other (MF) tapering */
-	if ((args->sigma1!=NULL) && (args->sigma1[ichan]!=0.0)) {
-	  ftemp = u*u*(args->sigma2[ichan]+bmTaper) + 
-	          v*v*(args->sigma1[ichan]+bmTaper) + 
-	          u*v*(args->sigma3[ichan]);
-	  fact = ObitExpCalc (ftemp);
-	  vw  *= fact;
-	}  /* end Other (MF) tapering */
-	else if (bmTaper>0.0) {
-	  fact = ObitExpCalc(bmTaper*BL2);
-	  vw  *= fact;
-	}  /* end beam Taper */
-      } /* end any taper */
-      /* SW Beam order */
-      switch (beamOrd) {
-      case 0:   /* Dirty beam */
-	break;
-      case 1:   /* first order ln(nu/nu0) */
-	ftemp = log(gridInfo->freqArr[ichan]);
-	vw *= ftemp;
-	break;
-      case 2:   /* second order ln(nu/nu0)**2 */
-	ftemp = log(gridInfo->freqArr[ichan]);
-	vw *= ftemp*ftemp;
-	break;
-      case 3:   /* third order ln(nu/nu0)**3 */
-	ftemp = log(gridInfo->freqArr[ichan]);
-	vw *= ftemp*ftemp*ftemp;
-	break;
-      default:
-	break;
-      }; /* end beamOrd switch */
-      /* weighted data - save in fwork1 */
-      args->fwork1[2*ichan]   = vr * vw;
-      args->fwork1[2*ichan+1] = vi * vw;
-      /* convert to u,v cells */
-      u *= gridInfo->uscale[ifacet];
-      v *= gridInfo->vscale[ifacet];
-      iu = (olong)(u+0.5);   /* to grid cell number */
-      iv = _lroundf(v);
-      /* start in convolution function in blocks of fullWidth */
-      it = convNperCell + _lroundf(convNperCell * (iu - u - 0.5));
-      args->cnvfnu[ichan] = convfn + fullWidth * it;
-      it = convNperCell + _lroundf(convNperCell * (iv - v - 0.5));
-      args->cnvfnv[ichan] = convfn + fullWidth * it;
-      args->iuarr[ichan]  = iu;
-      args->ivarr[ichan]  = iv - halfWidth + halfv;
-    } /* end if valid */
-    else {  /* Invalid data */
-      args->fwork1[2*ichan]   = 0.0;
-      args->fwork1[2*ichan+1] = 0.0;
-      args->iuarr[ichan]      = halfWidth; 
-      args->ivarr[ichan]      = halfv;
-      args->cnvfnu[ichan]     = convfn;
-      args->cnvfnv[ichan]     = convfn ;
-    } /* end invalid data */
-  } /* end channel loop */
-} /* end fast_prep_grid */
 /** 
  * c version grid for any nconv
  * \param grid  base of visibility grid

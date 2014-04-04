@@ -2517,6 +2517,8 @@ def EVLABPCal(uv, BPCals, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
             bpass.debug = debug
         # Trap failure
         try:
+            mess = "Run BPass on "+bpass.Sources[0]
+            printMess(mess, logfile)
             if not check:
                 bpass.g
         except Exception, exception:
@@ -5156,7 +5158,7 @@ def EVLAFlagFailSN(uv, SNver, err, \
     else:
         outuv = FGuv
         mess = "Failed solutions in SN %d flagged in FG %d" % (snver,FGver)
-    printMess(mess, logfile)
+        printMess(mess, logfile)
     fblank = FArray.PGetBlank() # Magic blanking value
     # Number of IFs
     nif   = uv.Desc.Dict["inaxes"][uv.Desc.Dict["jlocif"]]

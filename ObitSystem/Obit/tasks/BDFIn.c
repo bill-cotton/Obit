@@ -1047,6 +1047,12 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   desc->crpix[ncol]  = refChan;
   desc->crval[ncol]  = startFreq;
   desc->crota[ncol]  = 0.0;
+  /* Shift EVLA to band center */
+  if (!strncmp(AntArray->arrayName, "EVLA", 4)) {
+    desc->crval[ncol] += ((1+nchan/2) - refChan) * freqStep;
+    desc->crpix[ncol]  = (1+nchan/2);
+    desc->freq         = desc->crval[ncol];
+  }
   ncol++;
   
   /* Dimension 4 = IF (SpectralWindow in BDF) */
@@ -1551,8 +1557,9 @@ void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData,
 {
   ObitTableFQ*            outTable=NULL;
   ObitTableFQRow*         outRow=NULL;
-  olong i, j, jSW, iif, oRow, ver, numIF, iIF;
+  olong i, j, jSW, iif, oRow, ver, numIF, iIF, nChan=1;
   odouble refFreq=0.0;
+  ofloat chwid;
   ObitIOAccess access;
   gchar *routine = "GetFrequencyInfo";
 
@@ -1566,6 +1573,7 @@ void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData,
     jSW = SpWinArray->order[i];  /* Use ordering */
     if (SpWinArray->winds[jSW]->selected) {
       refFreq   = SpWinArray->winds[jSW]->chanFreqStart;
+      nChan     = SpWinArray->winds[jSW]->numChan;
       break;
     }
   }
@@ -1578,6 +1586,9 @@ void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData,
   /* Better be some */
   Obit_return_if_fail((numIF>=1), err,
 		      "%s: NO SpectralWindows selected", routine);
+
+  /* Data descriptor channel width */
+  chwid = outData->myDesc->cdelt[outData->myDesc->jlocf];
 
   /* Create output FQ table object */
   ver = 1;
@@ -1621,6 +1632,11 @@ void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData,
     outRow->totBW[iIF]    = SpWinArray->winds[jSW]->totBandwidth;
     if (SpWinArray->winds[jSW]->netSideband[0]=='U') outRow->sideBand[iIF] = 1;
     else outRow->sideBand[iIF] = -1;
+    /* Correct to band center */
+    /* For EVLA, modify frequency offset if the channel width differs from the file header */
+    if (isEVLA && (outRow->chWidth[iIF]!=chwid)) {
+      outRow->freqOff[iIF] += (1+nChan/2) * (outRow->chWidth[iIF]-chwid);
+    }
     /* FOR EVLA everything is upper even if it's not */
     if (isEVLA) outRow->sideBand[iIF] = 1;
     /* bandcodes */
@@ -2116,12 +2132,12 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	   Obit_return_if_fail((BBNum==BDFData->SWArray->winds[jSW]->basebandNum), err,
 	   "%s: Input basebands inconsistent %d != %d, IF %d", 
 	   routine, BBNum, BDFData->SWArray->winds[jSW]->basebandNum, nIFsel);*/
-	/* Test frequency */
+	/* Test frequency  DEBUG THIS
 	Obit_return_if_fail((fabs(BDFData->SWArray->winds[jSW]->chanFreqStart-
 				  outData->myDesc->freqIF[kSW]) < 1.0e3), err,
 			    "%s: Frequencies inconsistent %lf != %lf, IF %d", 
 			    routine, BDFData->SWArray->winds[jSW]->chanFreqStart, 
-			    outData->myDesc->freqIF[kSW], nIFsel);
+			    outData->myDesc->freqIF[kSW], nIFsel); */
   	nIFsel++;
 	kSW++;
       } 
@@ -2659,6 +2675,9 @@ void HoloUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
  if ((fabs(off2[1])<1.0e-10) && (fabs(off1[1])>1.0e-10)) isHolRef[ant2-1] = TRUE;
   
   /* direction cosines - from R. Perley 20 Jun 2011
+     Note that the projection center must be the antenna beam center,
+     not the source.
+     
      l = sin(alpha) = cos(E_s)sin(Delta-A)
      m = sin(beta) = cos(E_a).sin(E_s) - cos(E_s).sin(E_a).cos(Delta-A)
 
@@ -2669,18 +2688,32 @@ void HoloUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
      E_s = antenna elevation of the (raster) pointing direction
      E_a = antenna elevation of the zero-offset (reference) pointing
            direction. */
-  uvw[0] = cos(off[1]+elev) * sin(off[0]) / cos(elev);  /* No cos(el) correction */
-  uvw[1] = cos(elev)*sin(off[1]+elev) - cos(off[1]+elev)*sin(elev)*cos(off[0]);
+
+  /* Undo cos(el) correction  of az offset *before* taking sin.
+     Additionally, the l, m system is in the plane tangent to the 
+     pointing centre of the *offset* antennas, so the first cos must
+     be of the elevation of the *source*, not the antenna*/
+  uvw[0] = cos(elev) * sin(off[0] / cos(elev));
+  /* Here, too, the first SIN must be that of the *source* elevation
+     instead of that of the *antenna* elevation, and the first cos
+     must be that of the projection centre, which is the elevation of
+     the *antenna*. In the second term, the argument of the first cos
+     must be the elevation of the source, whereas the argument of the
+     sin is that of the projection center: the elevation of the
+     antenna. Here too, the azimuth offset must be corrected for the
+     cosine of the *source* elevation, before taking the cosine.
+  */
+  uvw[1] = cos(off[1]+elev)*sin(elev) - cos(elev)*sin(off[1]+elev)*cos(off[0] / cos(elev));
   uvw[2] = (ofloat)BDFData->ScanInfo->subScanNumber;
 
   /* Description of what's in the SDM from Bryan Butler 28 Jun 2011:
      +el means that the antenna is pointed by +el from the source - i.e., to 
      the north.  same for +az.  so it's pointed minus source. 
       so need to flip to get to source offsets from the antenna center */
-  uvw[0] = -uvw[0];
-  uvw[1] = -uvw[1];
+  /* uvw[0] = -uvw[0];  This one is not needed because of negation below*/
+  /* uvw[1] = -uvw[1];  This one is not needed at all */
 
-  Buffer[BDFData->desc->ilocu] = -uvw[0];
+  Buffer[BDFData->desc->ilocu] = -uvw[0];  /*  Make l run positive with *increasing* azimuth */
   Buffer[BDFData->desc->ilocv] = +uvw[1];
   Buffer[BDFData->desc->ilocw] = +uvw[2];
 
@@ -3255,7 +3288,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 	(SpWinArray->winds[i]->spectralWindowId<SDMData->SpectralWindowTab->nrows) &&
 	SpWinArray->winds[i]->selected) {
       SpWinLookup[SpWinArray->winds[i]->spectralWindowId]  = SpWinArray->order[i];
-      SpWinLookup2[SpWinArray->winds[i]->spectralWindowId] = cnt; cnt++;
+      SpWinLookup2[SpWinArray->winds[i]->spectralWindowId] = SpWinArray->order[cnt]; cnt++;
     }
   }
 
@@ -3360,7 +3393,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     }
     
     if (want) {
-      IFno = SpWinLookup[inTab->rows[iRow]->spectralWindowId];
+      IFno = SpWinLookup2[inTab->rows[iRow]->spectralWindowId];
       IFno = MAX (0, MIN(IFno, (numIF-1)));
     } else continue;
     
@@ -3391,7 +3424,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       /* Must want this one - work out IF number - must be valid and selected */
       SWId = SpWinLookup[inTab->rows[jRow]->spectralWindowId]; /* Really reordered */
       if ((SWId>=0) && (SWId<SpWinArray->nwinds) &&  SpWinArray->winds[SWId]->selected) {
-	IFno = SpWinLookup[inTab->rows[jRow]->spectralWindowId];
+	IFno = SpWinLookup2[inTab->rows[jRow]->spectralWindowId];
 	IFno = MAX (0, MIN(IFno, (numIF-1)));
       } else continue;
       

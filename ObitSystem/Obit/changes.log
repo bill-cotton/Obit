@@ -2012,3 +2012,18 @@ Obit/python/EVLALowBandPipe.py:
   Update parameters  
   Remove parallactic angle correction.
 1 April 2014 svn version 475
+
+mostly bug fixes
+Obit/python/EVLACal.py:
+  EVLAFlagFailSN: Fix bad indentation.
+  EVLABPCal: Give calibrator name in log for each run of BPass
+Obit/src/ObitThreadGrid.c:
+  back out of AVX version of fast_prep_grid, getting aliases.
+  init beamOrd
+Obit/tasks/BDFIn.c:
+  Implement band center reference frequencies.
+  Holography fixes.
+  GetSysPowerInfo: Yet more fixes
+Obit/src/ObitBDFData.c:
+  InitScan: fix indexing bug in calculating SWoff for autocorr
+4 April 2014 svn version 476
