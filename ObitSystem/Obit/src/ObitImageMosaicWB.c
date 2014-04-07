@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2013                                          */
+/*;  Copyright (C) 2010-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -845,6 +845,9 @@ ObitImageMosaicWB* ObitImageMosaicWBCreate (gchar *name, olong order, ObitUV *uv
 			routine, Cells);
     Radius *= ratio;  /* Correct Radius to actual cell size */
   }
+
+  /* For NCP data facets can be arbitrarily large */
+  if (ObitUVDescGetProj(uvData->myDesc)==OBIT_SkyGeom_NCP) Radius = 50000;
 
   /* Get cells spacing and maximum undistorted radius from uv data if needed */
   if ((FOV>0.0) || (xCells<=0.0) || (yCells<=0.0)) {

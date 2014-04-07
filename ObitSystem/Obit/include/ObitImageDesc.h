@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -29,6 +29,7 @@
 #include "Obit.h"
 #include "ObitErr.h"
 #include "ObitInfoList.h"
+#include "ObitSkyGeom.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -161,6 +162,8 @@ void ObitImageDescGetPoint(ObitImageDesc *in, odouble *RAPnt, odouble *DecPnt);
 /** Public:  Determine the angular distance to the antenna pointing position */
 ofloat ObitImageDescAngle (ObitImageDesc *in, ofloat y, ofloat x);
 
+/** Public: Determine projection type */
+ObitSkyGeomProj ObitImageDescGetProj(ObitImageDesc *imDesc);
 /*-------------------Class Info--------------------------*/
 /**
  * ClassInfo Structure.

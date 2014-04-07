@@ -1074,6 +1074,9 @@ ObitImageMosaic* ObitImageMosaicCreate (gchar *name, ObitUV *uvData, ObitErr *er
     Radius *= ratio;  /* Correct Radius to actual cell size */
   }
 
+  /* For NCP data facets can be arbitrarily large */
+  if (ObitUVDescGetProj(uvData->myDesc)==OBIT_SkyGeom_NCP) Radius = 50000;
+
   /* Get cells spacing and maximum undistorted radius from uv data if needed */
   if ((FOV>0.0) || (xCells<=0.0) || (yCells<=0.0)) {
     if (xCells==0.0) xCells = -Cells;

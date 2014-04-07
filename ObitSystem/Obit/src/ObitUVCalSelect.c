@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -521,7 +521,8 @@ gboolean ObitUVCalSelect (ObitUVCal *in, ofloat *RP, ofloat *visIn, ofloat *visO
   channInc = MAX (1, sel->channInc);
   maxChan  = MIN (sel->numberChann*channInc, desc->inaxes[desc->jlocf]);
   IFInc    = MAX (1, sel->IFInc);
-  maxIF    =  desc->inaxes[desc->jlocif];
+  if (desc->jlocif>=0) maxIF =  desc->inaxes[desc->jlocif];
+  else                 maxIF = 1;
 
   /* loop checking  and summing weights and getting visibilities. */
   i = -1; /* output visibility number */

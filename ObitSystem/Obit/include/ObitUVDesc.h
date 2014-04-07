@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -30,6 +30,7 @@
 #include "ObitErr.h"
 #include "ObitInfoList.h"
 #include "ObitImageDesc.h"
+#include "ObitSkyGeom.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -151,6 +152,9 @@ gboolean ObitUVDescShift3DPos (ObitUVDesc *uvDesc,  ofloat shift[2], ofloat mrot
 
 /**  Public: Determine number of vis per IO not to exceed memory limit */
 olong ObitUVDescSetNVis (ObitUVDesc *uvDesc, ObitInfoList* info, olong nvis);
+
+/** Public: Determine projection type */
+ObitSkyGeomProj ObitUVDescGetProj(ObitUVDesc *uvDesc);
 /*-------------------Class Info--------------------------*/
 /**
  * ClassInfo Structure.

@@ -12,7 +12,7 @@ Dict      - Python dictionary with contents of InfoList
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2008
+#  Copyright (C) 2004-2014
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -767,13 +767,13 @@ def PSetDict (outList, inDict):
         # Switch on type
         if data[0] in [1,2,3,4]:       # int
             PAlwaysPutInt (outList, x, data[1], data[2])
-        elif data[0]==9:             # float
+        elif data[0]==10:             # float
             PAlwaysPutFloat (outList, x, data[1], data[2])
-        elif data[0]==10:            # double
+        elif data[0]==11:            # double
             PAlwaysPutDouble (outList, x, data[1], data[2])
-        elif data[0]==13:            # string
+        elif data[0]==14:            # string
             PAlwaysPutString (outList, x, data[1], data[2])
-        elif data[0]==14:            # boolean
+        elif data[0]==15:            # boolean
             PAlwaysPutBoolean (outList, x, data[1], data[2])
         else:  # Unknown
             raise RuntimeError,"Unknown data type code "+str(data[0])+" for "+x

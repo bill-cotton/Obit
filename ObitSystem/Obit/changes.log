@@ -2027,3 +2027,17 @@ Obit/tasks/BDFIn.c:
 Obit/src/ObitBDFData.c:
   InitScan: fix indexing bug in calculating SWoff for autocorr
 4 April 2014 svn version 476
+
+mostly bug fixes
+Obit/src/ObitUVCalSelect.c:
+  Select: trap no IF axis.
+Obit/src/ObitBDFData.c:
+  InitScan: initialize jSW
+Obit/include/ObitImageDesc.h Obit/src/ObitImageDesc.c:
+Obit/include/ObitUVDesc.h Obit/src/ObitUVDesc.c:
+  New function GetProj to get projection type
+Obit/src/ObitImageMosaic.c Obit/src/ObitImageMosaicMF.c Obit/src/ObitImageMosaicWB.c:
+  Allow very large facets for NCP data.
+Obit/python/InfoList.py:
+  PSetDist: get type codes correct
+7 April 2014 svn version 477

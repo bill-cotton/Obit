@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -1402,6 +1402,27 @@ olong ObitUVDescSetNVis (ObitUVDesc *uvDesc, ObitInfoList* info, olong nvis)
   return nvispio;
 } /* end ObitUVDescSetNVis  */
 
+
+/**
+ * Get data projection code
+ * \param uvDesc   UV data descriptor
+ * \return Projection type, one of
+ *  OBIT_SkyGeom_SIN,  OBIT_SkyGeom_TAN, OBIT_SkyGeom_ARC, OBIT_SkyGeom_NCP, 
+ *  OBIT_SkyGeom_GLS,  OBIT_SkyGeom_MER, OBIT_SkyGeom_AIT, OBIT_SkyGeom_STG
+ */
+ObitSkyGeomProj ObitUVDescGetProj (ObitUVDesc *uvDesc)
+{
+  if (!strncmp(&uvDesc->ptype[uvDesc->ilocu][4], "-SIN", 4)) return OBIT_SkyGeom_SIN;
+  if (!strncmp(&uvDesc->ptype[uvDesc->ilocu][4], "-NCP", 4)) return OBIT_SkyGeom_NCP;
+  if (!strncmp(&uvDesc->ptype[uvDesc->ilocu][4], "    ", 4)) return OBIT_SkyGeom_SIN;
+  if (!strncmp(&uvDesc->ptype[uvDesc->ilocu][4], "-TAN", 4)) return OBIT_SkyGeom_TAN;
+  if (!strncmp(&uvDesc->ptype[uvDesc->ilocu][4], "-ARC", 4)) return OBIT_SkyGeom_ARC;
+  if (!strncmp(&uvDesc->ptype[uvDesc->ilocu][4], "-GLS", 4)) return OBIT_SkyGeom_GLS;
+  if (!strncmp(&uvDesc->ptype[uvDesc->ilocu][4], "-MER", 4)) return OBIT_SkyGeom_MER;
+  if (!strncmp(&uvDesc->ptype[uvDesc->ilocu][4], "-AIT", 4)) return OBIT_SkyGeom_AIT;
+  if (!strncmp(&uvDesc->ptype[uvDesc->ilocu][4], "-STG", 4)) return OBIT_SkyGeom_STG;
+  return OBIT_SkyGeom_SIN;  /* Default */
+} /* end ObitUVDescGetProj  */
 
 /**
  * Initialize global ClassInfo Structure.
