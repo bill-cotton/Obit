@@ -723,6 +723,7 @@ void ObitSkyModelInitMod (ObitSkyModel* in, ObitUV *uvdata, ObitErr *err)
 
   /* Init Sine/Cosine, exp calculator - just to be sure about threading */
   ObitSinCosCalc(phase, &sp, &cp);
+  ObitExpInit();
 
   /* Tell selected model info if prtLv>1 */
   if (in->prtLv>1) {
@@ -2781,14 +2782,19 @@ gpointer ThreadSkyModelFTGrid (gpointer args)
   numberPoln = in->numberPoln;
   jincs      = uvDesc->incs;  /* increment in real array */
   /* Increments in frequency tables */
-  if (uvdata->myDesc->jlocf<uvdata->myDesc->jlocif) { /* freq before IF */
-    kincf = 1;
-    kincif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
-  } else { /* IF before freq  */
+  if (uvdata->myDesc->jlocif>=0) {
+    if (uvdata->myDesc->jlocf<uvdata->myDesc->jlocif) { /* freq before IF */
+      kincf = 1;
+      kincif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
+    } else { /* IF before freq  */
+      kincif = 1;
+      kincf = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
+    }
+  } else {  /* NO IF axis */
     kincif = 1;
-    kincf = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
+    kincf  = 1;
   }
-
+  
   /* Get pointer for frequency correction tables */
   fscale  = uvDesc->fscale;
   freqArr = uvDesc->freqArr;

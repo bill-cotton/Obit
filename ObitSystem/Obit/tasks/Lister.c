@@ -1417,14 +1417,17 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   ObitPrinterOpen (myPrint, LinesPerPage, Title1, Title2, err);
   if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
 	
-  /* Loop in IF */
+  numPol  = MIN (2, inDesc->inaxes[inDesc->jlocs]);  /* only up to 2 in gain table */
+  /* Only one pol for Stokes I */
+  if (inDesc->crval[inDesc->jlocs]>0.0)  numPol = 1;
+  
+ /* Loop in IF */
   if (inDesc->jlocif>=0) numIF = inDesc->inaxes[inDesc->jlocif];
   else numIF = 1;
   for (iif=BIF-1; iif<BIF+numIF-1; iif++) {
     
     /* Loop in poln */
-    numPol  = MIN (2, inDesc->inaxes[inDesc->jlocs]);  /* only up to 2 in gain table */
-    for (ipol=0; ipol<numPol; ipol++) {
+   for (ipol=0; ipol<numPol; ipol++) {
       /* Is this the first poln in the table? */
       test = -1.5;                                         /* Circular feeds */
       if (inDesc->crval[inDesc->jlocs]<-4.0) test = -5.5;  /* Linear feeds */
@@ -1818,8 +1821,8 @@ ofloat getSNValue (ObitTableSNRow *SNRow, gboolean firstPol,
 
   value = fblank;  /* Initial value */
 
-  /* is Antenna in array? (X==0) */
-  if (AntList && fabs(AntList->ANlist[iant]->AntXYZ[0])<0.1) return value;
+  /* is VLA Antenna in array? (X==0) */
+  if (AntList && AntList->isVLA && fabs(AntList->ANlist[iant]->AntXYZ[0])<0.1) return value;
 
   /* Data by type */
   switch (dtype) {

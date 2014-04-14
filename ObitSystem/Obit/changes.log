@@ -2041,3 +2041,31 @@ Obit/src/ObitImageMosaic.c Obit/src/ObitImageMosaicMF.c Obit/src/ObitImageMosaic
 Obit/python/InfoList.py:
   PSetDist: get type codes correct
 7 April 2014 svn version 477
+
+mostly bug fixes
+Obit/src/ObitUVUtil.c:
+Obit/src/ObitSkyModelMF.c Obit/src/ObitSkyModelVM.c Obit/src/ObitSkyModel.c:
+Obit/src/ObitSkyModelVMBeam.c Obit/src/ObitSkyModelVMBeamMF.c:
+  various: correctly set number of IFs.
+  call ObitExpInit
+Obit/tasks/MFImage.c:
+  BLAvg: leave at least 1/32 channels in average
+Obit/src/ObitThreadGrid.c:
+  bugs in tapering.
+  call ObitExpInit
+Obit/src/ObitUVGSolve.c Obit/src/ObitUVGSolveWB.c:
+  1 Stokes if data has IPol
+Obit/tasks/Lister.c:
+  doGAIN: Only one poln in table for Stokes I...
+Obit/include/ObitExp.h  Obit/src/ObitExp.c:
+  revert to table lookup version
+  enforce range on inputs, correct bugs.
+Obit/src/ObitImageDesc.c  Obit/src/ObitUVDesc.c:
+  CopyDesc: Copy items on info member
+Obit/src/ObitUVDesc.c:
+  ShiftPhase: fix NCP bugs
+Obit/src/ObitDConCleanVis.c:
+  FindPeak: Scale maximum to full resolution.
+Obit/share/data/MGPSVZTab.fits.gz:
+  Mongolo MGPS galactic plane survey VZ catalog
+14 April 2014 svn version 478

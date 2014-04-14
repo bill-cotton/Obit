@@ -232,8 +232,9 @@ void ObitThreadGridSetupBase (ObitThreadGrid *in, ObitUV *UVin,
   g_assert (ObitThreadGridIsA(in));
   g_assert (ObitUVGridIsA(UVGrids[0]));
 
-   /* Init sincos */
+   /* Init sincos, exp */
   ObitSinCosInit ();
+  ObitExpInit();
 
   uvDesc   = UVin->myDesc;     /* UV descriptor */
   in->UVin = ObitUVRef(UVin);  /* Save UV data */
@@ -430,8 +431,9 @@ void ObitThreadGridSetupMF (ObitThreadGrid *in, ObitUV *UVin,
   g_assert (ObitThreadGridIsA(in));
   g_assert (ObitUVGridIsA(UVGrids[0]));
 
-   /* Init sincos */
+   /* Init sincos, exp */
   ObitSinCosInit ();
+  ObitExpInit();
 
   uvDesc   = UVin->myDesc;     /* UV descriptor */
   in->UVin = ObitUVRef(UVin);  /* Save UV data */
@@ -647,8 +649,9 @@ void ObitThreadGridSetupWB (ObitThreadGrid *in, ObitUV *UVin,
   g_assert (ObitThreadGridIsA(in));
   g_assert (ObitUVGridIsA(UVGrids[0]));
 
-   /* Init sincos */
+   /* Init sincos, exp */
   ObitSinCosInit ();
+  ObitExpInit();
 
   uvDesc   = UVin->myDesc;     /* UV descriptor */
   in->UVin = ObitUVRef(UVin);  /* Save UV data */
@@ -1279,7 +1282,7 @@ void fast_prep_grid(olong kvis, GridFuncArg *args)
   maxBL2  = gridInfo->maxBL[ifacet]*gridInfo->maxBL[ifacet];
   minBL2  = gridInfo->minBL[ifacet]*gridInfo->minBL[ifacet];
   bmTaper = gridInfo->BeamTaperUV[ifacet];
-  doTape  = (bmTaper>0.0) || ((args->sigma1!=NULL) && (args->sigma1[0]!=0.0));
+  doTape  = (fabs(bmTaper)>0.0) || ((args->sigma1!=NULL) && (args->sigma1[0]!=0.0));
 
   /* guardband in wavelengths */
   guardu = fabs(gridInfo->guardu[ifacet] / gridInfo->uscale[ifacet]);
@@ -1342,7 +1345,7 @@ void fast_prep_grid(olong kvis, GridFuncArg *args)
 	  fact = ObitExpCalc (ftemp);
 	  vw  *= fact;
 	}  /* end Other (MF) tapering */
-	else if (bmTaper>0.0) {
+	else if (fabs(bmTaper)>0.0) {
 	  fact = ObitExpCalc(bmTaper*BL2);
 	  vw  *= fact;
 	}  /* end beam Taper */
@@ -1489,7 +1492,7 @@ void fast_prep_gridAVX(olong kvis, GridFuncArg *args)
   maxBL2  = gridInfo->maxBL[ifacet]*gridInfo->maxBL[ifacet];
   minBL2  = gridInfo->minBL[ifacet]*gridInfo->minBL[ifacet];
   bmTaper = gridInfo->BeamTaperUV[ifacet];
-  doTape  = (bmTaper>0.0) || ((args->sigma1!=NULL) && (args->sigma1[0]!=0.0));
+  doTape  = (fabs(bmTaper)>0.0) || ((args->sigma1!=NULL) && (args->sigma1[0]!=0.0));
 
   ivis = kvis * gridInfo->lenvis; /* beginning of visibility */
   /*  Assume random parameters start with u,v,w */
@@ -1578,7 +1581,7 @@ void fast_prep_gridAVX(olong kvis, GridFuncArg *args)
 	vvalid = _mm256_mul_ps(vout.v, vvalid);
       }  /* end Other (MF) tapering */
       /* Beam taper only if given multiply by vvalid */
-      else if (bmTaper>0.0) {
+      else if (fabs(bmTaper)>0.0) {
 	vt    = _mm256_set1_ps (bmTaper);
 	vin.v = _mm256_mul_ps (vBL2, vt);
 	ObitExpVec(8, vin.f, vout.f); 
@@ -1657,7 +1660,7 @@ void fast_prep_gridAVX(olong kvis, GridFuncArg *args)
 	valid[ichan] *= fact;
       }  /* end Other (MF) tapering */
       /* Beam taper if given multiply by valid */
-      else if (bmTaper>0.0) {
+      else if (fabs(bmTaper)>0.0) {
 	fact = ObitExpCalc (bmTaper*BL2);
 	valid[ichan] *= fact;
       }  /* end beam Taper */

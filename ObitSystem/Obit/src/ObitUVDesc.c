@@ -287,6 +287,9 @@ void ObitUVDescCopyDesc (ObitUVDesc* in, ObitUVDesc* out,
   /* index output */
   ObitUVDescIndex (out);
 
+  /* Copy list */
+  ObitInfoListCopyData(in->info, out->info);
+
   return;
 } /* end ObitUVDescCopyDesc */
 
@@ -748,11 +751,11 @@ void ObitUVDescShiftPhase (ObitUVDesc* uvDesc,
   /* which projection type? Use projection code on first image axis to decide. */
   if (!strncmp(&imDesc->ctype[0][4], "-NCP", 4)) {
     
-    /* correct positions for shift since not 3D imaging */
+    /* correct positions for shift since not 3D imaging ???
     uvra  += uvDesc->xshift;
     uvdec += uvDesc->yshift;
     imra  += imDesc->xshift;
-    imdec += imDesc->yshift;
+    imdec += imDesc->yshift; */
 
     /*  -NCP projection */
     ObitSkyGeomShiftNCP (uvra, uvdec, maprot, imra, imdec, dxyzc);

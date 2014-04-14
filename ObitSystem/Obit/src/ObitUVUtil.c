@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2013                                          */
+/*;  Copyright (C) 2004-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -3835,7 +3835,7 @@ static ofloat AvgFSetDesc (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
 
   /* Set up for parsing data */
   nchan = inDesc->inaxes[inDesc->jlocf];
-  if (inDesc->jlocf>=0) nif = inDesc->inaxes[inDesc->jlocif];
+  if (inDesc->jlocif>=0) nif = inDesc->inaxes[inDesc->jlocif];
   else nif = 1;
   if (inDesc->jlocs>=0) nstok = inDesc->inaxes[inDesc->jlocs];
   else nstok = 1;
@@ -4021,7 +4021,7 @@ static void AvgFAver (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
   if (err->error) return;
 
   nchan = inDesc->inaxes[inDesc->jlocf];
-  if (inDesc->jlocf>=0) nif = inDesc->inaxes[inDesc->jlocif];
+  if (inDesc->jlocif>=0) nif = inDesc->inaxes[inDesc->jlocif];
   else nif = 1;
   if (inDesc->jlocs>=0) nstok = inDesc->inaxes[inDesc->jlocs];
   else nstok = 1;
@@ -4029,7 +4029,7 @@ static void AvgFAver (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
   incf  = outDesc->incf;
   incif = outDesc->incif;
   nochan = outDesc->inaxes[outDesc->jlocf];
-  if (outDesc->jlocf>=0) noif = outDesc->inaxes[outDesc->jlocif];
+  if (outDesc->jlocif>=0) noif = outDesc->inaxes[outDesc->jlocif];
   else noif = 1;
 
   /* Zero work accumulator */
@@ -4101,7 +4101,7 @@ static void Hann (ObitUVDesc *inDesc, ObitUVDesc *outDesc, gboolean doDescm,
   iincf  = inDesc->incf;
   iincif = inDesc->incif;
   nchan = inDesc->inaxes[inDesc->jlocf];
-  if (inDesc->jlocf>=0) nif = inDesc->inaxes[inDesc->jlocif];
+  if (inDesc->jlocif>=0) nif = inDesc->inaxes[inDesc->jlocif];
   else nif = 1;
   if (inDesc->jlocs>=0) nstok = inDesc->inaxes[inDesc->jlocs];
   else nstok = 1;
@@ -4109,7 +4109,7 @@ static void Hann (ObitUVDesc *inDesc, ObitUVDesc *outDesc, gboolean doDescm,
   incf  = outDesc->incf;
   incif = outDesc->incif;
   nochan = outDesc->inaxes[outDesc->jlocf];
-  if (outDesc->jlocf>=0) noif = outDesc->inaxes[outDesc->jlocif];
+  if (outDesc->jlocif>=0) noif = outDesc->inaxes[outDesc->jlocif];
   else noif = 1;
 
   /* Zero work accumulator */

@@ -37,7 +37,9 @@ hacked version for test*/
 
 #ifndef OBITEXP_H 
 #define OBITEXP_H 
-/** Calculate exponential of -arg */
+/** Initialize */
+void ObitExpInit(void);
+/** Calculate exponential of arg */
 ofloat ObitExpCalc(ofloat arg);
 /** Calculate exp of negatives of a vector */
 void ObitExpVec(olong n, ofloat *argarr, ofloat *exparr);

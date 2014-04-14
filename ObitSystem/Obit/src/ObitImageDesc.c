@@ -282,6 +282,9 @@ void ObitImageDescCopyDesc (ObitImageDesc* in, ObitImageDesc* out,
   /* index output */
   ObitImageDescIndex (out);
 
+  /* Copy list */
+  ObitInfoListCopyData(in->info, out->info);
+
   return;
 } /* end ObitImageDescCopyDesc */
 

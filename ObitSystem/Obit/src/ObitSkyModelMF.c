@@ -790,6 +790,7 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
 
   /* Init Sine/Cosine calculator, exp calculator - just to be sure about threading */
   ObitSinCosCalc(phase, &sp, &cp);
+  ObitExpInit();
 
   /* Create spectrum info arrays */
   nSpec = 1;
@@ -1786,8 +1787,8 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
       kincf = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
     } 
   } else {  /* NO IF axis */
-      kincif = 1;
-      kincf  = 1;
+    kincif = 1;
+    kincf  = 1;
   }
 
   /* DEBUG 
@@ -2283,13 +2284,19 @@ gpointer ThreadSkyModelMFFTGrid (gpointer args)
   numberPoln = in->numberPoln;
   jincs      = uvDesc->incs;  /* increment in real array */
   /* Increments in frequency tables */
-  if (uvdata->myDesc->jlocf<uvdata->myDesc->jlocif) { /* freq before IF */
-    kincf = 1;
-    kincif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
-  } else { /* IF before freq  */
+  if (uvdata->myDesc->jlocif>=0) {
+    if (uvdata->myDesc->jlocf<uvdata->myDesc->jlocif) { /* freq before IF */
+      kincf = 1;
+      kincif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
+    } else { /* IF before freq  */
+      kincif = 1;
+      kincf = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
+    }
+  } else {  /* NO IF axis */
     kincif = 1;
-    kincf = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
+    kincf  = 1;
   }
+
 
   /* Get pointer for frequency correction tables */
   fscale  = uvDesc->fscale;

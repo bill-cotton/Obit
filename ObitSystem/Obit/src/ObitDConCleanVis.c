@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2013                                          */
+/*;  Copyright (C) 2005-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -4481,7 +4481,7 @@ static void FindPeak (ObitDConCleanVis *in, ObitErr *err)
   ObitTableCC *CCTab=NULL;
   gint32 dim[MAXINFOELEMDIM];
   ObitInfoType type;
-  ofloat tmax, xcenter, ycenter, xoff, yoff, radius, cells[2];
+  ofloat tmax, xcenter, ycenter, xoff, yoff, radius, beamrat, cells[2];
   olong   nfield, ifield, itemp, nccpos, CCVer;
   gchar *routine = "FindPeak";
 
@@ -4513,9 +4513,16 @@ static void FindPeak (ObitDConCleanVis *in, ObitErr *err)
     ObitImageMosaicMaxCC (CCTab, nccpos, radius, &tmax, &xcenter, &ycenter, &xoff, &yoff, err);
     if  (err->error) Obit_traceback_msg (err, routine, mosaic->images[ifield]->name);
 
+    /* Scale tmax by beam ratio */
+    beamrat = (in->mosaic->images[0]->myDesc->beamMaj * 
+	       in->mosaic->images[0]->myDesc->beamMin) / 
+      ((in->mosaic->images[ifield]->myDesc->beamMaj * 
+	in->mosaic->images[ifield]->myDesc->beamMin));
+    tmax *= beamrat;
+     
     /* get max */
     peakFlux = MAX (peakFlux, tmax);
-    
+
     /* Delete temporary table */
     ObitDataZapTable((ObitData*)mosaic->images[ifield], CCTab->tabType, CCTab->tabVer, err);
     if  (err->error) Obit_traceback_msg (err, routine, mosaic->images[ifield]->name);
@@ -4523,7 +4530,7 @@ static void FindPeak (ObitDConCleanVis *in, ObitErr *err)
  } /* end loop over fields */
 
   /* set peak */
-  in->peakFlux = MAX(in->peakFlux, peakFlux);
+  in->peakFlux = peakFlux;
 
   /* Tell */
   if (err->prtLv>1) {

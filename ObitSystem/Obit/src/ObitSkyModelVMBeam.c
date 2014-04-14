@@ -38,6 +38,7 @@
 #include "ObitTableANUtil.h"
 #include "ObitSkyGeom.h"
 #include "ObitSinCos.h"
+#include "ObitExp.h"
 #ifndef VELIGHT
 #define VELIGHT 2.997924562e8
 #endif /* VELIGHT */
@@ -408,7 +409,7 @@ ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
 
  /* Get list of planes per channel */
   nchan = uvData->myDesc->inaxes[uvData->myDesc->jlocf];
-  if (uvData->myDesc->jlocf>=0) 
+  if (uvData->myDesc->jlocif>=0) 
     nif = uvData->myDesc->inaxes[uvData->myDesc->jlocif];
   else nif = 1;
   out->numUVChann = nchan*nif;
@@ -571,6 +572,7 @@ void ObitSkyModelVMBeamInitMod (ObitSkyModel* inn, ObitUV *uvdata,
 
   /* Init Sine/Cosine calculator - just to be sure about threading */
   ObitSinCosCalc(phase, &sp, &cp);
+  ObitExpInit();
 
 } /* end ObitSkyModelVMBeamInitMod */
 
@@ -796,14 +798,19 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
   ncomp = in->numComp;          /* number of components */
 
   /* Increments in frequency tables */
-  if (uvdata->myDesc->jlocf<uvdata->myDesc->jlocif) { /* freq before IF */
-    kincf = 1;
-    kincif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
-  } else { /* IF beforefreq  */
+  if (uvdata->myDesc->jlocif>=0) {
+    if (uvdata->myDesc->jlocf<uvdata->myDesc->jlocif) { /* freq before IF */
+      kincf = 1;
+      kincif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
+    } else { /* IF beforefreq  */
+      kincif = 1;
+      kincf = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
+    }
+  } else {  /* NO IF axis */
     kincif = 1;
-    kincf = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
+    kincf  = 1;
   }
-
+  
   /* Scale by ratio of frequency to beam image ref. frequency */
   plane = in->FreqPlane[MIN(args->channel, in->numUVChann-1)];
   fscale = args->BeamFreq / in->IBeam->freqs[plane];
@@ -1414,12 +1421,17 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
   nUVpoln       = uvdata->myDesc->inaxes[ uvdata->myDesc->jlocs];
   jincs         = uvdata->myDesc->incs;  /* increment in real array */
   /* Increments in frequency tables */
-  if (uvdata->myDesc->jlocf<uvdata->myDesc->jlocif) { /* freq before IF */
-    kincf = 1;
-    kincif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
-  } else { /* IF beforefreq  */
-    kincif = 1;
-    kincf = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
+  if (uvdata->myDesc->jlocif>=0) {
+    if (uvdata->myDesc->jlocf<uvdata->myDesc->jlocif) { /* freq before IF */
+      kincf = 1;
+      kincif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
+    } else { /* IF beforefreq  */
+      kincif = 1;
+      kincf = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
+    }
+  } else {  /* NO IF axis */
+      kincif = 1;
+      kincf  = 1;
   }
 
   /* Cross or only parallel pol? */
@@ -2030,12 +2042,17 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
   nUVpoln       = uvdata->myDesc->inaxes[ uvdata->myDesc->jlocs];
   jincs         = uvdata->myDesc->incs;  /* increment in real array */
   /* Increments in frequency tables */
-  if (uvdata->myDesc->jlocf<uvdata->myDesc->jlocif) { /* freq before IF */
-    kincf = 1;
-    kincif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
-  } else { /* IF beforefreq  */
+  if (uvdata->myDesc->jlocif>=0) {
+    if (uvdata->myDesc->jlocf<uvdata->myDesc->jlocif) { /* freq before IF */
+      kincf = 1;
+      kincif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
+    } else { /* IF beforefreq  */
+      kincif = 1;
+      kincf = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
+    }
+  } else {  /* NO IF axis */
     kincif = 1;
-    kincf = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
+    kincf  = 1;
   }
 
   /* Cross or only parallel pol? */

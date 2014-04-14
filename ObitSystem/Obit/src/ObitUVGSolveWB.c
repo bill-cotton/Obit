@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2012                                          */
+/*;  Copyright (C) 2010-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -422,8 +422,10 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
   if (inUV->myDesc->jlocs>=0)
     numPol = MIN (2, inUV->myDesc->inaxes[inUV->myDesc->jlocs]);
   else numPol = 1;
+  /* Only one pol for Stokes I */
+  if (inUV->myDesc->crval[inUV->myDesc->jlocs]>0.0)  numPol = 1;
   if (inUV->myDesc->jlocif>=0)
-    numIF  = inUV->myDesc->inaxes[inUV->myDesc->jlocif];
+	numIF  = inUV->myDesc->inaxes[inUV->myDesc->jlocif];
   else numIF  = 1;
   outSoln = newObitTableSNValue(tname, (ObitData*)outUV, &SNver, OBIT_IO_ReadWrite, 
 				numPol, numIF, err);
@@ -867,6 +869,8 @@ SetupFitter (ObitUVGSolveWB *in, ObitUV *inUV, ObitErr* err)
   if (inUV->myDesc->jlocs>=0)
     in->numPoln    = MIN (2, inUV->myDesc->inaxes[inUV->myDesc->jlocs]);
   else in->numPoln = 1;
+  /* Only one pol for Stokes I */
+  if (inUV->myDesc->crval[inUV->myDesc->jlocs]>0.0)  in->numPoln = 1;
   if (inUV->myDesc->jlocif>=0)
     in->numIF  = inUV->myDesc->inaxes[inUV->myDesc->jlocif];
   else in->numIF  = 1;
@@ -2588,6 +2592,8 @@ static ScanData* MakeScanData (ObitUV *inUV, gboolean avgPoln)
   if (inUV->myDesc->jlocs>=0)
     numPoln = MIN (2, inUV->myDesc->inaxes[inUV->myDesc->jlocs]);
   else numPoln = 1;
+  /* Only one pol for Stokes I */
+  if (inUV->myDesc->crval[inUV->myDesc->jlocs]>0.0)  numPoln = 1;
   if (inUV->myDesc->jlocif>=0)
     numIF  = inUV->myDesc->inaxes[inUV->myDesc->jlocif];
   else numIF  = 1;
