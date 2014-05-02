@@ -1,12 +1,12 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2013                                               */
+/*;  Copyright (C) 2013,2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
 /*;  published by the Free Software Foundation; either version 2 of   */
-/*;  the License, or (at your op2tion) any later version.              */
+/*;  the License, or (at your option) any later version.              */
 /*;                                                                   */
 /*;  This program is distributed in the hope that it will be useful,  */
 /*;  but WITHOUT ANY WARRANTY; without even the implied warranty of   */
@@ -637,7 +637,7 @@ void ObitDConCleanVisLineSub(ObitDConClean *inn, ObitErr *err)
 {
   ObitDConCleanVisLine *in;
   const ObitDConCleanVisClassInfo *ParentClass = myClassInfo.ParentClass;
-  olong ifld, ichan,  bcomp, ecomp, iCCVer, nCCVer, oCCVer;
+  olong ifld, ichan,  bcomp, ecomp, iCCVer, nCCVer, oCCVer=1;
   olong *bcopy=NULL, *bc=NULL, *ec=NULL, *cv=NULL;
   gboolean doGaus;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};

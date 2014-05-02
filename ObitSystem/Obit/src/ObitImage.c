@@ -318,11 +318,13 @@ ObitImage* ObitImageFromFileInfo (gchar *prefix, ObitInfoList *inList,
   if (err->error) Obit_traceback_val (err, routine, "inList", out);
 
   /* Set defaults BLC, TRC - use size on myIO as blc, trc incorporated into myDesc */
-  for (i=0; i<IM_MAXDIM; i++) {
-    if (blc[i]<=0) blc[i] = 1;
-    blc[i] = MAX (1,  blc[i]);
-    if (trc[i]<=0) trc[i] = ((ObitImageDesc*)out->myIO->myDesc)->inaxes[i];
-    trc[i] = MIN (trc[i], ((ObitImageDesc*)out->myIO->myDesc)->inaxes[i]);
+  if (exist) {
+    for (i=0; i<IM_MAXDIM; i++) {
+      if (blc[i]<=0) blc[i] = 1;
+      blc[i] = MAX (1,  blc[i]);
+      if (trc[i]<=0) trc[i] = ((ObitImageDesc*)out->myIO->myDesc)->inaxes[i];
+      trc[i] = MIN (trc[i], ((ObitImageDesc*)out->myIO->myDesc)->inaxes[i]);
+    }
   }
 
   /* Save blc, trc */

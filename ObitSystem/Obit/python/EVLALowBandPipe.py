@@ -286,7 +286,7 @@ def pipeline( aipsSetup, parmFile):
         retCode = EVLADelayCal(uv, parms["DCals"], err,  \
                                BChan=parms["delayBChan"], EChan=parms["delayEChan"], \
                                doCalib=2, flagVer=2, doBand=-1, \
-                               solInt=parms["delaySolInt"], smoTime=1.0/60.0,  \
+                               solInt=parms["delaySolInt"], smoTime=parms["delaySmoo"],  \
                                refAnts=[parms["refAnt"]], doTwo=parms["doTwo"], 
                                doZeroPhs=parms["delayZeroPhs"], \
                                doPlot=parms["doSNPlot"], plotFile=plotFile, \
@@ -307,12 +307,15 @@ def pipeline( aipsSetup, parmFile):
 
     # Bandpass calibration
     if parms["doBPCal"] and parms["BPCals"]:
+        plotFile = "./"+fileRoot+"BPCal.ps"
         retCode = EVLABPCal(uv, parms["BPCals"], err, noScrat=noScrat, solInt1=parms["bpsolint1"], \
                             solInt2=parms["bpsolint2"], solMode=parms["bpsolMode"], \
                             BChan1=parms["bpBChan1"], EChan1=parms["bpEChan1"], \
                             BChan2=parms["bpBChan2"], EChan2=parms["bpEChan2"], ChWid2=parms["bpChWid2"], \
                             doCenter1=parms["bpDoCenter1"], refAnt=parms["refAnt"], \
                             UVRange=parms["bpUVRange"], doCalib=2, gainUse=0, flagVer=2, doPlot=False, \
+                            doAmpEdit=parms["doAmpEdit"], ampSigma=parms["ampSigma"], \
+                            doBPPlot=parms["doBPPlot"], plotBPFile=plotFile, \
                             nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
             raise RuntimeError,"Error in Bandpass calibration"
@@ -371,27 +374,68 @@ def pipeline( aipsSetup, parmFile):
         if retCode!=0:
            raise  RuntimeError,"Error in AutoFlag"
     
-    # Redo the calibration using new flagging?
-    if parms["doBPCal2"]==None:
-        parms["doBPCal2"] = parms["doBPCal"]
-    if parms["doDelayCal2"]==None:
-        parms["doDelayCal2"] = parms["doDelayCal2"]
-    if parms["doAmpPhaseCal2"]==None:
-        parms["doAmpPhaseCal2"] = parms["doAmpPhaseCal"]
-    if parms["doAutoFlag2"]==None:
-        parms["doAutoFlagCal2"] = parms["doAutoFlag"]
+    # Machinegun the lifeboats!
+    if parms["doSrvrEdt"]:
+        mess =  "Survivor editing:"
+        printMess(mess, logFile)
+        retCode = EVLASrvrEdt (uv, err, minOK=parms["minSrvrOK"], flagTab=2, 
+                             doCalib=2, doBand=1, BPVer=1, flagVer=2, nThreads=nThreads, \
+                             logfile=logFile, check=check, debug=debug)
+        if retCode!=0:
+            raise RuntimeError,"Error survivor editing"
+    
+   # Redo the calibration using new flagging?
     if parms["doRecal"]:
         mess =  "Redo calibration:"
         printMess(mess, logFile)
+        if parms["doMedn2"]==None:
+            parms["doMedn2"] = parms["doMedn"]
+        if parms["doFD2"]==None:
+            parms["doFD2"] = parms["doFD1"]
+        if parms["doBPCal2"]==None:
+            parms["doBPCal2"] = parms["doBPCal"]
+        if parms["doDelayCal2"]==None:
+            parms["doDelayCal2"] = parms["doDelayCal2"]
+        if parms["doAmpPhaseCal2"]==None:
+            parms["doAmpPhaseCal2"] = parms["doAmpPhaseCal"]
+        if parms["doAutoFlag2"]==None:
+            parms["doAutoFlagCal2"] = parms["doAutoFlag"]
+        if parms["doSrvrEdt2"]==None:
+            parms["doSrvrEdt2"] = parms["doSrvrEdt"]
         EVLAClearCal(uv, err, doGain=True, doFlag=False, doBP=True, check=check, logfile=logFile)
         OErr.printErrMsg(err, "Error resetting calibration")
+
+        # Median window time editing, for RFI impulsive in time
+        if parms["doMedn2"]:
+            mess =  "Median window time editing, for RFI impulsive in time:"
+            printMess(mess, logFile)
+            retCode = EVLAMedianFlag (uv, "    ", err, noScrat=noScrat, nThreads=nThreads, \
+                                      avgTime=parms["avgTime"], avgFreq=parms["avgFreq"],  chAvg= parms["chAvg"], \
+                                      timeWind=parms["timeWind"], flagVer=2, flagSig=parms["mednSigma"], \
+                                      logfile=logFile, check=check, debug=False)
+            if retCode!=0:
+                raise RuntimeError,"Error in MednFlag"
+        
+        # Median window frequency editing, for RFI impulsive in frequency
+        if parms["doFD2"]:
+            mess =  "Median window frequency editing, for RFI impulsive in frequency:"
+            printMess(mess, logFile)
+            retCode = EVLAAutoFlag (uv, "    ", err,  flagVer=2, doCalib=-1, doBand=-1,   \
+                                    timeAvg=parms["FD1TimeAvg"], \
+                                    doFD=True, FDmaxAmp=1.0e20, FDmaxV=1.0e20, FDwidMW=parms["FD1widMW"],  \
+                                    FDmaxRMS=[1.0e20,0.1], FDmaxRes=parms["FD1maxRes"],  \
+                                    FDmaxResBL= parms["FD1maxRes"],  \
+                                    nThreads=nThreads, logfile=logFile, check=check, debug=debug)
+            if retCode!=0:
+               raise  RuntimeError,"Error in AutoFlag"
+    
         # Delay recalibration
         if parms["doDelayCal2"] and parms["DCals"] and not check:
             plotFile = "./"+fileRoot+"DelayCal2.ps"
             retCode = EVLADelayCal(uv, parms["DCals"], err, \
                                    BChan=parms["delayBChan"], EChan=parms["delayEChan"], \
                                    doCalib=2, flagVer=2, doBand=-1, \
-                                   solInt=parms["delaySolInt"], smoTime=1.0/60.0,  \
+                                   solInt=parms["delaySolInt"], smoTime=parms["delaySmoo"],  \
                                    refAnts=[parms["refAnt"]], doTwo=parms["doTwo"], \
                                    doZeroPhs=parms["delayZeroPhs"], \
                                    doPlot=parms["doSNPlot"], plotFile=plotFile, \
@@ -411,12 +455,15 @@ def pipeline( aipsSetup, parmFile):
     
     # Bandpass calibration
     if parms["doBPCal2"] and parms["BPCals"]:
+        plotFile = "./"+fileRoot+"BPCal2.ps"
         retCode = EVLABPCal(uv, parms["BPCals"], err, noScrat=noScrat, solInt1=parms["bpsolint1"], \
                             solInt2=parms["bpsolint2"], solMode=parms["bpsolMode"], \
                             BChan1=parms["bpBChan1"], EChan1=parms["bpEChan1"], \
                             BChan2=parms["bpBChan2"], EChan2=parms["bpEChan2"], ChWid2=parms["bpChWid2"], \
                             doCenter1=parms["bpDoCenter1"], refAnt=parms["refAnt"], \
                             UVRange=parms["bpUVRange"], doCalib=2, gainUse=0, flagVer=2, doPlot=False, \
+                            doAmpEdit=parms["doAmpEdit"], ampSigma=parms["ampSigma"], \
+                            doBPPlot=parms["doBPPlot"], plotBPFile=plotFile, \
                             nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
             raise RuntimeError,"Error in Bandpass calibration"
@@ -459,6 +506,17 @@ def pipeline( aipsSetup, parmFile):
             if retCode!=0:
                 raise  RuntimeError,"Error in AutoFlag"
             
+
+        # Machinegun the lifeboats!
+        if parms["doSrvrEdt2"]:
+            mess =  "Survivor editing:"
+            printMess(mess, logFile)
+            retCode = EVLASrvrEdt (uv, err, minOK=parms["minSrvrOK"], flagTab=2, 
+                                   doCalib=2, doBand=1, BPVer=1, flagVer=2, nThreads=nThreads, \
+                                   logfile=logFile, check=check, debug=debug)
+            if retCode!=0:
+                raise RuntimeError,"Error survivor editing"
+    
     # end recal
     
     

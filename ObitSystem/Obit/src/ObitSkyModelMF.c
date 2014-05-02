@@ -967,8 +967,6 @@ gboolean ObitSkyModelMFLoadPoint (ObitSkyModel *inn, ObitUV *uvdata, ObitErr *er
   if (err->error) return gotSome;
   retCode = OBIT_IO_OK;
 
-  /* NEEDS MORE WORK TO BE USEFUL */
-
   gotSome = (in->pointFlux * in->factor!=0.0);  /* Non zero model? */
   if (!gotSome) return gotSome;
 
@@ -1123,8 +1121,8 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
   konst = DG2RAD * 2.0 * G_PI;
   /* konst2 converts FWHM(deg) to coefficients for u*u, v*v, u*v */
   /*konst2 = DG2RAD * (G_PI / 1.17741022) * sqrt (0.5);*/
-  /*konst2 = DG2RAD * 2.15169;*/
-  konst2 = DG2RAD * (G_PI / 1.17741022) * sqrt (0.5);
+  /*konst2 = DG2RAD * (G_PI / 1.17741022) * sqrt (0.5);*/
+  konst2 = DG2RAD * sqrt(2.0) * G_PI / 2.35482044;
 
   /* Loop over images counting CCs */
   count = 0;
@@ -1354,24 +1352,6 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
     larray = CompArr->naxis[1];
     modType = (ObitSkyModelCompType)(parms[3]+0.5);  /* model type +20 */
     in->modType = MAX (in->modType, modType);  /* Need highest number */
-
-    /* DEBUG - replace model with fitted beam */
-    if(modType==OBIT_SkyModel_GaussModTSpec) {
-      parms[0] = imDesc->beamMaj;
-      parms[1] = imDesc->beamMin;
-      parms[2] = imDesc->beamPA;
-    }
-   /* DEBUG - replace data with single 20" Gaussian model 
-       in->doReplace = TRUE;
-       modType = in->modType = OBIT_SkyModel_GaussModTSpec;
-       larray = CompArr->naxis[1] = 1; 
-       parms[0] = 20.0 / 3600.0; 
-       parms[1] = 20.0 / 3600.0; 
-       parms[2] = 0.0;
-       array[0] = 1.0;
-       array[1] = array[2] = 0.0;
-       for (j=0; j<in->nSpec; j++ ) array[3+j] = 1.0;
-       END DEBUG */
 
     /* Gaussian parameters */
     if ((modType==OBIT_SkyModel_GaussMod) || (modType==OBIT_SkyModel_GaussModTSpec)) {

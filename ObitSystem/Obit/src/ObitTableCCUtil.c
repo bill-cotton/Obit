@@ -50,6 +50,12 @@ MakeCCSortStructSel (ObitTableCC *in, olong startComp, olong endComp,
 		     olong *size, olong *number, olong *ncomp, ofloat *parms, 
 		     ObitErr *err);
 
+/** Private: Form sort structure for a table with selection by row w/ mixed Gaussians */
+static ofloat* 
+MakeCCSortStructSel2 (ObitTableCC *in, olong startComp, olong endComp, 
+		      olong *size, olong *number, olong *ncomp,
+		      ObitSkyModelCompType *type, ObitErr *err);
+
 /** Private: Sort comparison function for positions */
 static gint CCComparePos (gconstpointer in1, gconstpointer in2, 
 			  gpointer ncomp);
@@ -63,6 +69,11 @@ static void CCMerge (ofloat *base, olong size, olong number);
 
 /** Private: Merge spectral entries in Sort structure */
 static void CCMergeSpec (ofloat *base, olong size, olong number, 
+			 gboolean doSpec, gboolean doTSpec, 
+			 gboolean doZ); 
+
+/** Private: Merge spectral entries in Sort structure w/ mixed Gaussians */
+static void CCMergeSpec2 (ofloat *base, olong size, olong number, 
 			 gboolean doSpec, gboolean doTSpec, 
 			 gboolean doZ); 
 
@@ -1299,6 +1310,148 @@ ObitFArray* ObitTableCCUtilMergeSel (ObitTableCC *in, olong startComp,
 
   return out;
 } /* end ObitTableCCUtilMergeSel */
+
+/**
+ * Merge elements of an ObitTableCC on the same position.
+ * with selection by row number.
+ * First sorts table, collapses, sorts to desc. flux
+ * \param in        Table to sort
+ * \param startComp First component to select 
+ * \param endComp   Last component to select, 0=> all
+ * \param parms     [out] Type of CC entries
+ * \param err       ObitErr error stack.
+ * \return FArray containing merged CC table contents; MUST be Unreffed.
+ *                Will contain flux, X, Y, + any spectral terms
+ * \li Flux
+ * \li Delta X
+ * \li Delta Y
+ * \li model 1 (major axis FWHM deg)
+ * \li model 2 (minor axis FWHM deg)
+ * \li model 3 (PA deg)
+ * \li ... spectralcomponents
+ */
+ObitFArray* ObitTableCCUtilMergeSel2 (ObitTableCC *in, olong startComp, 
+				     olong endComp, ObitSkyModelCompType *type,
+				     ObitErr *err)
+{
+  ObitFArray *out = NULL;
+  olong i, j, count, lout, nout, ndim, off, naxis[2];
+  ObitIOCode retCode;
+  olong size, fsize, number=0, ncomp, nterms, toff;
+  ofloat lparms[20];
+  ofloat *entry, *outArray, *SortStruct = NULL;
+  gboolean doSpec=TRUE, doTSpec=FALSE, doZ=FALSE;
+  gchar *routine = "ObitTableCCUtilMergeSel";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return out;
+  g_assert (ObitTableCCIsA(in));
+
+  /* Open table */
+  retCode = ObitTableCCOpen (in, OBIT_IO_ReadOnly, err);
+  if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+  
+  /* Does the CC table have a DeltaZ column? */
+  doZ = in->DeltaZCol>=0;
+  if (doZ) {lout = 7; toff = 7;}
+  else     {lout = 6; toff = 6;}
+
+  /* Must be something in the table else just return */
+  if (in->myDesc->nrow<=0) {
+    retCode = ObitTableCCClose (in, err);
+    if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+    return NULL;
+  }
+
+  /* Check range of components */
+  startComp = MAX (1, startComp);
+  endComp   = MIN (in->myDesc->nrow, endComp);
+
+  /* build sort structure from table */
+  for (i=0; i<20; i++) lparms[i] = 0;
+  SortStruct = MakeCCSortStructSel2 (in, startComp, endComp, 
+				    &size, &number, &ncomp, type, 
+				    err);
+  if (err->error) goto cleanup;
+
+  /* Close table */
+  retCode = ObitTableCCClose (in, err);
+  if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+
+  /* Sort */
+  g_qsort_with_data (SortStruct, number, size, CCComparePos, &ncomp);
+
+  /* Get spectrum type */
+  doSpec  = (lparms[3]>=9.9)  && (lparms[3]<=19.0);
+  doTSpec = (lparms[3]>=19.9) && (lparms[3]<=29.0);
+
+  /* Merge entries */
+  fsize = size/sizeof(ofloat);
+  if (doSpec || doTSpec) 
+    CCMergeSpec2 (SortStruct, fsize, number, doSpec, doTSpec, doZ);
+  else
+    CCMerge (SortStruct, fsize, number);
+  
+  /* Sort to descending merged flux densities */
+  ncomp = 1;
+  g_qsort_with_data (SortStruct, number, size, CCCompareFlux, &ncomp);
+
+  /* Count number of valid entries left */
+  entry = SortStruct;
+  count = 0;
+  for (i=0; i<number; i++) {
+    if (entry[0]>-1.0e19) count++;
+    entry += fsize;  /* pointer in table */
+  }
+
+  /* Create output Array */
+  /* Need room for spectral terms? */
+  if (in->noParms>4)  nterms = in->noParms-4;
+  else nterms = 0;
+  if (in->noParms>4) lout += nterms;
+
+  ndim = 2; naxis[0] = lout; naxis[1] = count;
+  nout = count;
+  out      = ObitFArrayCreate ("MergedCC", ndim, naxis);
+  naxis[0] = naxis[1] = 0;
+  outArray = ObitFArrayIndex(out, naxis);
+
+  /* Copy structure to output array */
+  entry = SortStruct;
+  count = 0;
+  for (i=0; i<number; i++) {
+
+    /* Deleted? */
+    if (entry[0]>-1.0e19) {
+      /* Check that array not blown */
+      if (count>nout) {
+	Obit_log_error(err, OBIT_Error,"%s: Internal array overrun",
+		       routine);
+	goto cleanup;
+      }
+      /* copy to out */
+      outArray[0] = entry[2];
+      outArray[1] = entry[0];
+      outArray[2] = entry[1]; off = 2;
+      if (doZ) {outArray[3] = entry[3]; off++;} /* DeltaZ */
+      outArray[off+1] = entry[off+1];  /* Gaussian comps */
+      outArray[off+2] = entry[off+2];
+      outArray[off+3] = entry[off+3];
+      for (j=0; j<nterms; j++) outArray[toff+j] = entry[toff+j];
+      outArray += lout;
+      count++;
+    } /* end of contains value */
+    entry += fsize;  /* pointer in table */
+  } /* end loop over array */
+  
+  /* Cleanup */
+ cleanup:
+  if (SortStruct) ObitMemFree(SortStruct);
+  if (err->error) Obit_traceback_val (err, routine, in->name, out);
+
+  return out;
+} /* end ObitTableCCUtilMergeSel2 */
 
 
 /**
@@ -2679,7 +2832,7 @@ MakeCCSortStructSel (ObitTableCC *in, olong startComp, olong endComp,
   olong irow, nrow, tsize, count, i, j, toff;
   olong nterms, fsize;
   gboolean haveDeltaZ=FALSE;
- gchar *routine = "MakeCCSortStruct";
+  gchar *routine = "MakeCCSortStructSel";
 
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -2712,7 +2865,7 @@ MakeCCSortStructSel (ObitTableCC *in, olong startComp, olong endComp,
   /* Create table row */
   row = newObitTableCCRow (in);
 
- /* loop over table */
+  /* loop over table */
   irow = startComp-1;
   count = 0;
   retCode = OBIT_IO_OK;
@@ -2753,6 +2906,122 @@ MakeCCSortStructSel (ObitTableCC *in, olong startComp, olong endComp,
 
   return out;
 } /* end MakeSortStrucSel */ 
+
+/**
+ * Create/fill sort structure for a CC table selecting by row
+ * The sort structure has one "entry" per row which contains 
+ * \li Delta X
+ * \li Delta Y
+ * \li Delta Flux
+ *
+ * Each valid row in the table has an entry.
+ * \param in        Table to sort, assumed already open;
+ * \param startComp First component to select 
+ * \param endComp   Last component to select, 0=> all
+ * \param size      [out] Number of bytes in entry
+ * \param number    [out] Number of entries
+ * \param ncomp     [out] Number of values to compare
+ * \param type      [out] Type of components
+ * \param err        ObitErr error stack.
+ * \return sort structure, should be ObitMemFreeed when done.
+ */
+static ofloat* 
+MakeCCSortStructSel2 (ObitTableCC *in, olong startComp, olong endComp, 
+		      olong *size, olong *number, olong *ncomp, 
+		      ObitSkyModelCompType *type, ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_SpecErr;
+  ofloat *out = NULL;
+  ObitTableCCRow *row = NULL;
+  ofloat *entry;
+  olong irow, nrow, tsize, count, j, toff, off;
+  olong nterms, fsize, tmpType;
+  gboolean haveDeltaZ=FALSE;
+  ObitSkyModelCompType  maxType = OBIT_SkyModel_PointMod;
+  gchar *routine = "MakeCCSortStructSel2";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return out;
+  g_assert (ObitTableCCIsA(in));
+
+  /* Get table info */
+  nrow = in->myDesc->nrow;
+
+  /* Does the CC table have a DeltaZ column? */
+  haveDeltaZ = in->DeltaZCol>=0;
+  
+  /* element size - allow 3 Gaussian components */
+  if (haveDeltaZ) {fsize = 7; toff = 7;}
+  else            {fsize = 6; toff = 6;}
+  /* Need room for spectral terms? */
+  if (in->noParms>4)  nterms = in->noParms-4;
+  else nterms = 0;
+  fsize += nterms;
+  *size = fsize * sizeof(ofloat);
+
+  /* Total size of structure in case all rows valid */
+  tsize = (*size) * (nrow+10);
+  /* create output structure */
+  out = ObitMemAlloc0Name (tsize, "CCSortStructure");
+  
+  /* Compare 2  (X, Y pos) */
+  *ncomp = 2;
+
+  /* Create table row */
+  row = newObitTableCCRow (in);
+
+  /* loop over table */
+  irow = startComp-1;
+  count = 0;
+  retCode = OBIT_IO_OK;
+  while ((irow<endComp) && (retCode==OBIT_IO_OK)) {
+    irow++;
+    retCode = ObitTableCCReadRow (in, irow, row, err);
+    if (retCode == OBIT_IO_EOF) break;
+    if ((retCode != OBIT_IO_OK) || (err->error)) 
+      Obit_traceback_val (err, routine, in->name, out);
+    if (row->status<0) continue;  /* Skip deselected record */
+
+    /* add to structure */
+    entry = (ofloat*)(out + count * fsize);  /* set pointer to entry */
+    entry[0] = row->DeltaX;
+    entry[1] = row->DeltaY;
+    entry[2] = row->Flux; off = 2;
+    if (haveDeltaZ) {entry[3] = row->DeltaZ; off = 3;}
+    if (in->noParms>=3) {
+      entry[off+1] = row->parms[0];
+      entry[off+2] = row->parms[1];
+      entry[off+3] = row->parms[2];
+    } else { /* only points */
+      entry[off+1] = 0.;
+      entry[off+2] = 0.;
+      entry[off+3] = 0.;
+   }
+   /* First 4 parms are model, following are spectral parameters */
+    for (j=0; j<nterms; j++) entry[toff+j] = row->parms[4+j];
+
+    /* Save 1st 4 parms if any for first record */
+    if (in->noParms>=4) {
+      tmpType = (olong)row->parms[3];
+      maxType = MAX(maxType, tmpType);
+    }
+    
+    count++;  /* How many valid */
+  } /* end loop over file */
+  
+  /* check for errors */
+  if ((retCode > OBIT_IO_EOF) || (err->error))
+    Obit_traceback_val (err, routine, in->name, out);
+  
+  /* Release table row */
+  row = ObitTableCCRowUnref (row);
+  
+  /* Actual number */
+  *number = count;
+  *type   = maxType;  /* output type */
+  return out;
+} /* end MakeSortStrucSel2 */ 
 
 /**
  * Compare two lists of floats
@@ -2904,6 +3173,79 @@ static void CCMergeSpec (ofloat *base, olong size, olong number,
   }
 
 } /* end CCMergeSpec */
+
+/**
+ * Merge Spectral entries in sort structure allowing mixed Gaussians
+ * leaves "X" posn entry in defunct rows -1.0e20
+ * table and then copies over the input table.
+ * For parameterized spectra:
+ * Takes flux weighted average of spectral components,
+ * assumed to be entries 3+
+ * For tabulated spectra:
+ * Takes sums spectral components assumed to be entries 3+
+ * \param base    Base address of sort structure
+ * \param size    Size in gfloats of an element
+ * \param number  Number of sort elements
+ * \param doSpec  TRUE if parameterized spectra
+ * \param doTSpec TRUE if tabulated spectra
+ * \param doZ     TRUE if have delta Z in table
+ */
+static void CCMergeSpec2 (ofloat *base, olong size, olong number, 
+			  gboolean doSpec, gboolean doTSpec, 
+			  gboolean doZ)
+{
+  olong i, j, k, toff;
+  ofloat *array = base;
+
+  /* Merging doSpec data too risky */
+  if (doSpec) return;
+  
+  if (doZ) toff = 7;
+  else     toff = 6;
+
+  /* Multiply parameterized spectral terms by flux */
+  if (doSpec) {
+    j = 0;
+    while (j<number) {
+      for (k=toff; k<size; k++) 
+	array[j*size+k] *=  array[j*size+2];
+      j++;
+    }
+  }
+
+  i = 0;
+  while (i<number) {
+    j=i+1;
+    while (j<number) {
+      if ((array[j*size]!=array[i*size]) || (array[j*size+1]!=array[i*size+1]))
+	break;
+      /* only combine like sized Gaussians (and same DELTAZ) */
+      if ((array[j*size+3]==array[i*size+3]) && 
+	  (array[j*size+4]==array[i*size+4]) && 
+	  (array[j*size+5]==array[i*size+5])) {
+	/* Sum spectral components  flux */
+	for (k=toff; k<size; k++) array[i*size+k] += array[j*size+k]; 
+	array[i*size+2] += array[j*size+2];  /* sum fluxes */
+	array[j*size]    = -1.0e20;          /* Don't need any more */
+      }
+      j++;
+    } /* end finding matches */
+    i = j;   /* move on */
+  } /* end loop over table */
+
+  /* Normalize parameterized spectra by sum of flux */
+  if (doSpec) {
+    i = 0;
+    while (i<number) {
+      if ((array[i*size]>-1.0e-19) && (fabs(array[i*size+3])>0.0)) {
+	for (k=toff; k<size; k++) 
+	  array[i*size+k] /= array[i*size+2]; 
+      }
+      i++;
+    }
+  }
+
+} /* end CCMergeSpec2 */
 
 /**
  * Write valid entries in sort structure

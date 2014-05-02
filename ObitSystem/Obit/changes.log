@@ -2069,3 +2069,56 @@ Obit/src/ObitDConCleanVis.c:
 Obit/share/data/MGPSVZTab.fits.gz:
   Mongolo MGPS galactic plane survey VZ catalog
 14 April 2014 svn version 478
+
+Enhancements for EVLA LowBand and VLITE, many bug fixes, esp. multi resolution CLEAN
+Obit/src/ObitSkyModel.c Obit/src/ObitSkyModelMF.c
+Obit/src/ObitSkyModelVM.c Obit/src/ObitSkyModelVMBeamMF.c :
+  LoadComps: correct value of konst2 for Gaussian factors
+Obit/src/ObitUVGrid.c  Obit/src/ObitUVGridMF.c :
+  Setup: correct FWHM to Gaussian sigma factor
+Obit/src/ObitDConCleanPxList.c Obit/src/ObitDConCleanPxListMF.c:
+  ThreadClean: fix bug with peak on first pass
+  Update: better maxChFlux test
+Obit/src/ObitUVImagerMF.c:
+  Weight: copy "targBeam" to scratch file.
+Obit/python/EVLAContPipe.py:
+  Enhanced bandpass diagnostics/editing
+Obit/python/EVLALowBandPipe.py:
+  Pass parms["delaySmoo"] to  EVLADelayCal for smoothing time
+  Implement 2nd pass Median and Auto flagging, doMedn2, doFD2
+  Enhanced bandpass diagnostics/editing
+Obit/python/EVLACal.py:
+  EVLAInitContParms: add default (None) values for second pass parameters
+  EVLACalAP: Fix indentation bugs in smoothing section, 
+             Move smoothing to after editing by deviant amplitudes, smooth all cals.
+             More options for BPass, plotting, editing
+  EVLASrvrEdt: New function for survivir editing
+Obit/TDF/SrvrEdt.TDF  Obit/tasks/SrvrEdt.c: 
+  New task to flag data below a given previous flagging threshold.
+Obit/tasks/Faces.c Obit/TDF/Faces.TDF:
+  New task to create model imge fron VL catalog.
+Obit/src/ObitTableCCUtil.c Obit/include/ObitTableCCUtil.h:
+  Add routine MergeSel2 to return merged CCs with mixed Gaussian sizes.
+Obit/src/ObitImage.c:
+  FromFileInfo: Fix bugs if output doesn't exist
+Obit/bin/ObitTables.pl:
+  Change copyright date to 2014.
+Obit/src/ObitDConCleanPxList.c Obit/src/ObitDConCleanVisLine.c  Obit/src/ObitEVLASysPower.c
+Obit/src/ObitInfoElem.c Obit/src/ObitPolnCalFit.c Obit/python/Table.inc:
+  cleanup, mostly uninitialized variables
+Obit/src/ObitThreadGrid.c:
+  SetupMF: fix bug in bChan, eChan
+Obit/src/ObitSkyGeom.c:
+  XYShift: trap pole
+Obit/share/data/3C286PModel.fits.gz Obit/share/data/3C147PModel.fits.gz
+Obit/share/data/3C123PModel.fits.gz Obit/share/data/3C138PModel.fits.gz
+Obit/share/data/3C196PModel.fits.gz Obit/share/data/3C295PModel.fits.gz
+Obit/share/data/3C380PModel.fits.gz Obit/share/data/3C48PModel.fits.gz
+  Update P band EVLA models.
+Obit/share/scripts/EVLALowBandTemplateParm.py:
+  Update editing controls
+Obit/src/ObitUVDesc.c:
+  RegularIndices: replace g_error with g_warning
+Obit/tasks/BPass.c:
+  Implement UVRange
+2 May 2014 svn version 479

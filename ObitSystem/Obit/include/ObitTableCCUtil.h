@@ -35,7 +35,8 @@
 #include "ObitImageMF.h"
 #include "ObitImageWB.h"
 #include "ObitImageDesc.h"
-#include "ObitFArray.h"
+#include "ObitImageDesc.h"
+#include "ObitSkyModel.h"
 #include "ObitData.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
@@ -122,6 +123,11 @@ ObitIOCode ObitTableCCUtilMerge (ObitTableCC *in, ObitTableCC *out,
 /** Merge elements of an ObitTableCC with selection */
 ObitFArray* ObitTableCCUtilMergeSel (ObitTableCC *in, olong startComp, 
 				     olong endComp, ofloat *parms,
+				     ObitErr *err);
+
+/** Merge elements of an ObitTableCC with selection and mixed Gaussians */
+ObitFArray* ObitTableCCUtilMergeSel2 (ObitTableCC *in, olong startComp, 
+				     olong endComp, ObitSkyModelCompType *type,
 				     ObitErr *err);
 
 /** Merge spectral elements of an ObitTableCC with selection */

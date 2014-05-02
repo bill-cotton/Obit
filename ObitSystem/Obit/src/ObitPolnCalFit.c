@@ -114,7 +114,7 @@ static odouble GetChi2 (olong nThreads, ObitPolnCalFit *in,
 			ObitErr *err);
 
 /** Private: Fit R/L Phase difference */
-static ofloat FitRLPhase (ObitPolnCalFit *in, ObitErr *err);
+ofloat FitRLPhase (ObitPolnCalFit *in, ObitErr *err);
 
 /** Private: Make Threaded args */
 static void MakePolnFitFuncArgs (ObitPolnCalFit *in, ObitErr *err);
@@ -2895,7 +2895,7 @@ static odouble GetChi2 (olong nThreads, ObitPolnCalFit *in,
  * \param err          Obit error stack object.
  * \return             Chi^2
  */
-static ofloat FitRLPhase (ObitPolnCalFit *in, ObitErr *err)
+ofloat FitRLPhase (ObitPolnCalFit *in, ObitErr *err)
 {
   ofloat PD = 0.0;
   ofloat *RLr=NULL, *RLi=NULL, *LRr=NULL, *LRi=NULL, *RLwt=NULL, *LRwt=NULL;
@@ -7624,7 +7624,7 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
 	    /* out of range - give big residual */
 	    residR = MAX((maxElp-antParm[ia1*4+3]),(antParm[ia2*4+1]-maxElp)) * 
 	      ipol * 100.;
-	    residI = residI;
+	    residI = residR;
 	  } else {  /* OK */
 	    residR = modelR - data[idata*10+(kk+1)*2];
 	    residI = modelI - data[idata*10+(kk+1)*2+1];

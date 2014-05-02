@@ -1,0 +1,143 @@
+; FACES
+;---------------------------------------------------------------
+;! makes images of catalog sources for initial calibration
+;# Task Imaging Modeling Calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2014
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: Bill Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;;-----------------------------------------------------------------------
+Faces     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+Faces:  Makes images of catalog sources for initial calibration
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of file
+**PARAM** str 48
+inFile                             input Filename if FITS image
+**PARAM** str 12
+inName                             input AIPS Image name (name)
+**PARAM** str 6
+inClass                            input AIPS Image name (class)
+**PARAM** int 1
+inSeq            0.0       9999.0  input AIPS Image name (seq. #)
+**PARAM** int 1
+inDisk           0.0          9.0  input AIPS Disk drive #
+**PARAM** str 16 30
+Sources                             Source (pointings) list
+**PARAM** str 4
+outDType                            "FITS" or "AIPS" type of output
+**PARAM** str 48 **DEF** .fits
+outFile                             Output FITS image file ending
+**PARAM** str 12
+outName                             Output AIPS image name
+**PARAM** str 6
+outClass                            Output AIPS image class
+**PARAM** int 1
+outSeq          -1.0     9999.0     Output AIPS image seq. no.
+**PARAM** int 1
+outDisk                             Output image disk drive #
+**PARAM** int 1
+CCVer                               Output CC table version number
+**PARAM** float 1
+xCells                             Image cell spacing in X in asec.
+**PARAM** float 1
+yCells                             Image cell spacing in Y in asec.
+**PARAM** float 1
+FOV             0.0       180.     Radius of field to image (deg)
+**PARAM** str 48  **DEF** NVSSVL.FIT
+Catalog                            Outlier VL catalog name (NVSSVZ.FIT)
+**PARAM** int 1 **DEF** 1
+CatDisk                            Catalog FITS disk number
+**PARAM** float 1
+maxDist                            Maximum distance to add sources (deg)
+**PARAM** float 1 **DEF** 0.01
+minFlux                            Minimum estimated flux density (Jy)
+**PARAM** float 1  **DEF** -0.75
+SI                                 Spectral index to estimate flux density
+**PARAM** float 1  **DEF** 24.5
+antSize                            Diameter of ant. for beam corr.
+**PARAM** boo 1 
+useGauss                           Use Gaussians in Catalog
+**PARAM** int 1 
+prtLv             0                Print level in selfcal
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
+----------------------------------------------------------------
+Faces
+Type:  Task
+Use:   Faces creates (mostly empty) images and CC files containing all
+       NVSS (or WENSS or ??) sources > OutlierFlux that would fall in
+       the images.  The survey flux of each source is multiplied by
+       the single-dish beam pattern out to a specified cutoff.
+       Sources beyond this point are not included.
+       Note: CC table entries are with a variety of Gaussian sizes
+       and in Obit should be used with Cmeth="DFT" in Calib.
+       Entries in the image and CC table will be Gaussians with 
+       the deconvolved size of the catalog entry.
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input multisource UV data file
+  inClass....Input UV data file (class).      Standard defaults.
+  inSeq......Input UV data file (seq. #).     0 => highest.
+  inDisk.....Input UV data file disk drive #. Must give.
+  Sources....List of sources (pointings) to be processed.
+             '*' or blank = all; a "-" before a source name
+             means all except ANY source named. 
+  outDType..'FITS' or 'AIPS'  type of output
+             Defaults to DataType.
+  outFile....Ending of output FITS image file name
+             filename = source_name+outFile
+  outName....Ending of output AIPS Image Name, 
+             Name = source_name+outName
+  outClass...Output image class.  Default = 'IModel'
+  outSeq.....Output image sequence number.
+  outDisk....The disk drive # of output images. Must give.
+  outSeq.....Output sequence number.
+  CCVer......CC table version number.
+             version number.
+  xCells.....Image cell spacing in X in asec.  
+  yCells.....Image cell spacing in Y in asec. 
+  FOV........Radius of the desired image field of view in deg.
+             Entries in CC Table are controled by maxDist,minFlux
+  Catalog....Name of FITS file containing outlier catalog
+             Default  NVSSVL.FIT
+             This must be in the form of an "AIPS VL" table.
+  CatDisk....FITS disk number for Catalog, 0=>cwd, 1=>$FITS
+  maxDist....max. distance from pointing to include (deg)
+               default = 10
+  minFlux....min. estimated flux density (Jy)
+               default = 0.01
+  SI.........Spectral index to use,   default = -0.75
+  antSize....Diameter of antenna for PBCor (m), default = 24.5
+  prtLv......Print level in selfcal, 0=>none
+  useGauss...If True, use deconvolved Gaussian sizes from catalog.
+             If the Gaussian size is deemed inadequate then it
+             is set to zero.
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files where
+             a bug in the ObitTalk message handling may lose
+             messages.  Path is absolute or relative to where
+             the task executes.
+ 
+----------------------------------------------------------------

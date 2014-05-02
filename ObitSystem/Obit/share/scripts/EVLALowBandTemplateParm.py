@@ -71,7 +71,8 @@ for cal in calist:
     BPCals.append(EVLACalModel(cal))
 # Check for standard model
 EVLAStdModel(BPCals, freq)
-parms["BPCals"]       = BPCals      # Bandpass calibrator(s)
+parms["BPCals"]     = BPCals  # Bandpass calibrator(s)
+parms["bpChWid2"]   = 5       # Number of channels to smooth in BP calibration                                                                              
 
 # Amp/phase calibration
 calist = @PHSCAL@
@@ -153,11 +154,15 @@ parms["doDelayCal"]    = T                   # Group Delay calibration?
 parms["doBPCal"]       = T                   # Determine Bandpass calibration
 parms["doAmpPhaseCal"] = T                   # Amplitude/phase calibration
 parms["doAutoFlag"]    = T                   # Autoflag editing after final calibration?
+parms["doSrvrEdt"]     = T                   # Survivor editing
 parms["doRecal"]       = T                   # Redo calibration after editing
+parms["doMedn2"]       = T                   # redo Median editing?, 2nd pass
+parms["doFD2"]         = T                   # Redo initial frequency domain flagging, 2nd pass
 parms["doDelayCal2"]   = T                   # Group Delay calibration of averaged data?, 2nd pass
 parms["doBPCal2"]      = T                   # Determine Bandpass calibration, 2nd pass
 parms["doAmpPhaseCal2"]= T                   # Amplitude/phase calibration, 2nd pass
 parms["doAutoFlag2"]   = T                   # Autoflag editing after final calibration?
+parms["doSrvrEdt2"]    = T                   # Survivor editing, 2nd pass
 parms["doCalAvg"]      = T                   # calibrate and average data
 parms["doImage"]       = T                   # Image targets
 parms["doSaveImg"]     = T                   # Save results to FITS
@@ -172,6 +177,9 @@ parms["doCleanup"]     = T                   # Destroy AIPS files
 
 # diagnostics
 parms["doSNPlot"]      = T                   # Plot SN tables etc
+parms["doBPPlot"]      = T                   # Plot BP tables etc
 parms["doReport"]      = T                   # Individual source report
 parms["doRawSpecPlot"] = @PLOTSRC@!='None'   # Plot Raw spectrum
 parms["doSpecPlot"]    = @PLOTSRC@!='None'   # Plot spectrum at various stages of processing
+
+parms["XClip"]         = F                   # No X pol clipping                                                                                                       

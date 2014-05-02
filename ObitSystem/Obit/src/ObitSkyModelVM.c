@@ -689,7 +689,8 @@ gboolean ObitSkyModelVMLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
   konst = DG2RAD * 2.0 * G_PI;
   /* konst2 converts FWHM(deg) to coefficients for u*u, v*v, u*v */
   /*konst2 = DG2RAD * (G_PI / 1.17741022) * sqrt (0.5);*/
-  konst2 = DG2RAD * 2.15169;
+  konst2 = DG2RAD * sqrt(2)*G_PI / 2.35482044;
+
 
   /* Loop over images counting CCs */
   count = 0;

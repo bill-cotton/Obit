@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for Table type                             */
 /*                                                                    */
-/*;  Copyright (C) 2004-2012                                          */
+/*;  Copyright (C) 2004-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -437,7 +437,7 @@ extern int TableWriteRow (ObitTable *in, int rowno, PyObject *inDict,
   olong     *jdata;
   oint     *kdata;
   olong    *ldata, ltemp;
-  gchar    *cdata, *ctemp, *tstr;
+  gchar    *cdata, *ctemp, *tstr=NULL;
   gboolean *bdata, bad;
   ofloat   *fdata;
   odouble  *ddata;

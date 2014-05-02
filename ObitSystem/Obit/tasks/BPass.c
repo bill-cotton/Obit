@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2012                                          */
+/*;  Copyright (C) 2009-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -641,7 +641,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "FreqID", "BChan", "EChan",   "BIF", "EIF", 
     "subA", "Antennas", "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", 
-    "flagVer", "doPol", "PDVer", "Mode", "ModelType", "Alpha", "refAnt",
+    "flagVer", "doPol", "PDVer", "Mode", "ModelType", "Alpha", "refAnt", "UVRange",
      NULL};
   gchar *routine = "getInputData";
 
@@ -1081,7 +1081,7 @@ void BPassHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   gchar        hicard[81];
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq", 
-    "Sources", "Qual", "souCode", "timeRange",  "subA",
+    "Sources", "Qual", "souCode", "timeRange",  "subA", "UVRange",
     "selBand", "selFreq", "FreqID", 
     "BChan1", "EChan1", "BChan2", "EChan2", "ChWid2", 
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 

@@ -478,7 +478,7 @@ olong ObitUVDescRegularIndices(ObitUVDesc* in)
     else
     {
       /* Unknown regular parameter, means trouble. */
-      g_error("Unknown regular parameter");
+      g_warning("Unknown regular parameter %s", in->ctype[i]);
     }
   }  
 

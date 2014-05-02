@@ -647,9 +647,9 @@ void ObitDConCleanPxListMFUpdate (ObitDConCleanPxList *inn,
 		}
 		/* Only accept this one if the combined value is less than the max abs 
 		   channel value.  This prevents the convolution from putting components
-		   on top of a cell that is exxentially zero in all channels which can cause 
+		   on top of a cell that is essentially zero in all channels which can cause 
 		   CLEAN to get stuck */
-		if (fabs(data[ix])<maxChFlux) number++;
+		if (fabs(data[ix])<maxChFlux*1.0001) number++;
 	      }
 	    }
 	  } else { /* skip this one to make them fit */
@@ -1682,7 +1682,7 @@ gpointer ThreadCLEAN (gpointer args)
   ofloat combPeak         = largs->combPeak;
   ofloat *Spec            = largs->Spec;
 
-  ofloat xflux, subCval, peak;
+  ofloat xflux, subCval, peak=-1.0;
   olong j, iresid, nSpec, ispec, iXres, iYres, lpatch, beamPatch, iBeam, field, pos[2];
   ofloat *beam00=NULL, *Sbeam=NULL;
 
@@ -1694,7 +1694,6 @@ gpointer ThreadCLEAN (gpointer args)
   field  = in->pixelFld[ipeak];
   lpatch = in->BeamPatch[field-1]->naxis[0];
   beamPatch = lpatch/2;
-  peak  = -1.0;
   xflux  = 0.0;
   if (fabs(combPeak)>0.0) {
     pos[0]  = pos[1] = 0;
@@ -1724,7 +1723,6 @@ gpointer ThreadCLEAN (gpointer args)
       }
     } /* end loop over array */
   } else {  /* Only find peak */
-    
     /* Find peak abs residual */
     for (iresid=loPix; iresid<hiPix; iresid++) {
       xflux = fabs(in->pixelFlux[iresid]);

@@ -268,8 +268,9 @@ void ObitUVGridMFSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
   if (BeamTaper>0.0) {
     /* DEBUG taper   = (1.0 / (BeamTaper*DG2RAD/2.35)/(G_PI));
        in->BeamTaperUV = log(0.3)/(taper*taper);*/
-    taper = BeamTaper*DG2RAD;
-    in->BeamTaperUV = -taper*taper*2.15169;
+    taper = BeamTaper*DG2RAD*sqrt(2.0)*G_PI/2.35482;
+    taper = BeamTaper*DG2RAD*sqrt(2.0)*G_PI / 1.17741022; /* DEBUG */
+    in->BeamTaperUV = -taper*taper;
   } else in->BeamTaperUV = 0.0;
   
  /* Get values by Beam/Image */
@@ -730,7 +731,9 @@ void ObitUVGridMFFFT2Im (ObitUVGrid *inn, Obit *oout, ObitErr *err)
   ObitInfoType type;
   ObitImageClassInfo *imgClass;
   gchar *routine = "ObitUVGridMFFFT2Im";
-  
+   /* DEBUG
+  ObitFArray *dbgRArr=NULL, *dbgIArr=NULL; */
+ 
   /* error checks */
   if (err->error) return;
   g_assert (ObitUVGridIsA(in));
@@ -814,6 +817,17 @@ void ObitUVGridMFFFT2Im (ObitUVGrid *inn, Obit *oout, ObitErr *err)
     xdim[0] = in->nxImage; 
     xdim[1] = in->nyImage; 
     array = ObitFArrayCreate("Beam", 2, xdim);
+
+    /* DEBUG - look at first complex grid 
+    dbgRArr = ObitCArrayMakeF(in->grids[0]);
+    dbgIArr = ObitCArrayMakeF(in->grids[0]);
+    ObitCArrayReal (in->grids[0], dbgRArr);
+    ObitCArrayImag (in->grids[0], dbgIArr);
+    ObitImageUtilArray2Image ("DbugGridReal1.fits", 0, dbgRArr, err);  
+    ObitImageUtilArray2Image ("DbugGridImag1.fits", 0, dbgIArr, err);  
+    dbgRArr = ObitFArrayUnref(dbgRArr);
+    dbgIArr = ObitFArrayUnref(dbgIArr);  */
+    /*   end DEBUG */
 
     /* Fetch BeamNorms from beam */
     imgClass  = (ObitImageClassInfo*)out->ClassInfo;    /* Image class */
@@ -920,7 +934,7 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
   ofloat *Corrp, fblank = ObitMagicF();
   gchar *routine = "ObitUVGridMFFFT2ImPar";
   /* DEBUG
-     ObitFArray *dbgRArr=NULL, *dbgIArr=NULL; */
+  ObitFArray *dbgRArr=NULL, *dbgIArr=NULL; */
 
   /* error checks */
   if (err->error) return;
@@ -996,6 +1010,17 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
 	in[i]->FFTImage = newObitFFT ("Image FFT", OBIT_FFT_Reverse, OBIT_FFT_HalfComplex,
 				      2, xdim);
       }
+      /* DEBUG - look at first complex grid
+      if (i==1) {
+	dbgRArr = ObitCArrayMakeF(in[i]->grids[0]);
+	dbgIArr = ObitCArrayMakeF(in[i]->grids[0]);
+	ObitCArrayReal (in[i]->grids[0], dbgRArr);
+	ObitCArrayImag (in[i]->grids[0], dbgIArr);
+	ObitImageUtilArray2Image ("DbugGridRealPar.fits", 0, dbgRArr, err);  
+	ObitImageUtilArray2Image ("DbugGridImagPar.fits", 0, dbgIArr, err);  
+	dbgRArr = ObitFArrayUnref(dbgRArr);
+	dbgIArr = ObitFArrayUnref(dbgIArr);
+      }  *//* end DEBUG */
       /* Create array of pixel arrays */
       for (j=0; j<in[i]->nSpec; j++) {
 	array[ip] = ObitFArrayCreate("Image", 2, xdim);

@@ -1,0 +1,154 @@
+; $Id$
+; SrvrEdt
+;---------------------------------------------------------------
+;! Survivor visibility editing
+;# Task UV Calibration Editing
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2014
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+SrvrEdt   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+SrvrEdt   Survivor visibility editing
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                              FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                             Input UV file name (name)
+**PARAM** str 6
+inClass                            Input UV file name (class)
+**PARAM** int 1
+inSeq             0.0     9999.0   Input UV file name (seq. #)
+**PARAM** int 1
+inDisk            0.0        9.0   Input UV file disk unit #
+**PARAM** int 1
+subA          0.0     1000.0       Subarray, 0=>all
+**PARAM** str 16 30
+Sources                            Sources selected/deselected
+**PARAM** int 1 **DEF** -1
+Qual             -1.0              Source qualifier -1=>all
+**PARAM** int 1
+FreqID                             Freq. ID to flag. -1=>all.
+                                   0=> first Freq. ID.
+**PARAM** int 1
+doCalib          -1         10     Apply calibration table
+**PARAM** int 1
+gainUse                            CL/SN table to apply
+**PARAM** int 1
+doBand           -1.0       10.0   If >0.5 apply bandpass cal.
+**PARAM** int 1
+BPVer                              Bandpass table version
+**PARAM** int 1 **DEF** -1
+flagVer                            Flag table version
+**PARAM** boo 1 **DEF** F
+doPol                              Apply polarization cal?
+**PARAM** int 1 **DEF** -1
+PDVer                              PD table to apply
+                                   If >=0, per channel corrections
+**PARAM** float 2
+timeRange                          Time range to process.
+**PARAM** int 50
+Antennas         0.0     1000.0    List of antennas to include
+**PARAM** int 1 **DEF** 1 
+flagTab                            Output Flagging table version 
+**PARAM** float 5 **DEF** 0.10
+minOK                              Min OK fraction (per IF, record)
+**PARAM** int 1 **DEF** 1
+nThreads            0              Number of threads to allow
+**PARAM** int 1 **DEF** 1
+prtLv             0.0              Print level for diagnostics
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
+----------------------------------------------------------------
+SrvrEdt
+Task:  "Machine gun the lifeboats!"
+    Survivor editing of visibility data.  On a visibility record 
+basis, flag remaining data if more than a given fraction has 
+already been flagged.
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input multisource UV data file
+  inClass....Input UV data file (class).      Standard defaults.
+  inSeq......Input UV data file (seq. #).     0 => highest.
+  inDisk.....Input UV data file disk drive #. 0 => any.
+  subA.......Subarray number to check. 0=>all.
+  Sources....List of sources in the data file to be checked.
+             All blank = all
+  Qual.......Only sources with a source qualifier number in the SU table
+             matching Qual will be used if Qual is >= 0.  If Qual < 0,
+             all qualifiers will be written.  These qualifiers will be
+             written to separate output files.  Note that outSeq must be
+             zero in this case.
+  FreqID.....Frequency identifier to flag.
+  doCalib....If true, apply SN or CL table
+  gainUse....CL/SN table version number to apply. 0=> highest.
+  doBand.....If true (>0) then correct the data for the shape of the
+             antenna bandpasses using the BP table specified by BPVer.
+             The correction has five modes:
+             (a) if DOBAND=1 all entries for an antenna in the table
+             are averaged together before correcting the data.
+             (b) if DOBAND=2 the entry nearest in time (including
+             solution weights) is used to correct the data.
+             (c) if DOBAND=3 the table entries are interpolated in
+             time (using solution weights) and the data are then
+             corrected.
+             (d) if DOBAND=4 the entry nearest in time (ignoring
+             solution weights) is used to correct the data.
+             (e) if DOBAND=5 the table entries are interpolated in
+             time (ignoring solution weights) and the data are then
+             corrected.
+  BPVer......Specifies the version of the BP table to be applied
+                0 => highest numbered table.
+               <0 => no bandpass correction to be applied.
+  flagVer....FG table to apply prior to  editing. 0 => highest.
+  doPol......True -> apply polarization calibration
+  PDVer......AIPS PD table to use for per channel instrumental
+             polarization corrections if doPol=True. 0=> highest
+             -1 => use IF corrections from AIPS AN table.
+  timeRange..The specified time range to be considered
+             Start and end times in days relative to ref. date.  
+             Use  dhms2day to convert from human readable form
+             0-s => all times
+  Antennas...A list of the antennas to be flagged or considered.
+             Only these antennas are considered for any flagging.
+  flagTab....Output Flagging table version. Default 1. 
+             May be flagVer
+  minOK......Minimum fraction allowed:
+             [0] = per IF
+             [1] = per visibility
+  prtLv......Print level for diagnostics, 0=>none [def. 0]
+             >3 => rather verbose.
+  nThreads...If The Obit libraries are compiled with multiple
+             thread operation enabled, this parameter sets the 
+             number of threads that can be used for parallel 
+             operations (applying previous flags).
+             NB: This only improves performance if there are 
+             multiple processors and/or cores in the host.
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files.
+             Path is absolute or relative to where the task 
+             executes.
+----------------------------------------------------------------

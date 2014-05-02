@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2010                                          */
+/*;  Copyright (C) 2004-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -108,6 +108,7 @@ void ObitSkyGeomXYShift (odouble ra, odouble dec,
   /* Simple linear shift */
   *shiftDec = dec + yyshft;
   cosDec = cos (DG2RAD * dec);
+  if (fabs(cosDec)<0.001) cosDec = 1.0;  /* trap pole */
   if (cosDec != 0.0) 
     *shiftRA = ra + xxshft / cosDec;
   else
@@ -241,7 +242,6 @@ ObitSkyGeomShiftNCP (odouble ra, odouble dec, ofloat rotate,
     dxyzc[0] = 2.0*G_PI * dxyzc[0];
     dxyzc[1] = 2.0*G_PI * dxyzc[1];
     dxyzc[2] = 0.0;
-    
 } /* end  ObitSkyGeomShiftNCP */
 
 /**

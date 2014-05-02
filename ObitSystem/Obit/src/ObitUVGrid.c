@@ -225,8 +225,10 @@ void ObitUVGridSetup (ObitUVGrid *in, ObitUV *UVin, Obit *imagee,
   if (BeamTaper>0.0) {
     /* DEBUG taper   = (1.0 / (BeamTaper*DG2RAD/2.35)/(G_PI));
        in->BeamTaperUV = log(0.3)/(taper*taper);*/
-    taper = BeamTaper*DG2RAD;
-    in->BeamTaperUV = -taper*taper*2.15169;
+    taper = BeamTaper*DG2RAD*sqrt(2.0)*G_PI / 2.35482;
+    /*taper = BeamTaper*DG2RAD*sqrt(2.0)*G_PI / 1.17741022;*/
+    /*in->BeamTaperUV = -taper*taper*2.66822318;*/
+    in->BeamTaperUV = -taper*taper;
   } else in->BeamTaperUV = 0.0;
   
   /* Get values by Beam/Image */

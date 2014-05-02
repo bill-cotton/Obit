@@ -302,12 +302,15 @@ def pipeline( aipsSetup, parmFile):
 
     # Bandpass calibration
     if parms["doBPCal"] and parms["BPCals"]:
+        plotFile = "./"+fileRoot+"BPCal.ps"
         retCode = EVLABPCal(uv, parms["BPCals"], err, noScrat=noScrat, solInt1=parms["bpsolint1"], \
                             solInt2=parms["bpsolint2"], solMode=parms["bpsolMode"], \
                             BChan1=parms["bpBChan1"], EChan1=parms["bpEChan1"], \
                             BChan2=parms["bpBChan2"], EChan2=parms["bpEChan2"], ChWid2=parms["bpChWid2"], \
                             doCenter1=parms["bpDoCenter1"], refAnt=parms["refAnt"], \
                             UVRange=parms["bpUVRange"], doCalib=2, gainUse=0, flagVer=2, doPlot=False, \
+                            doAmpEdit=parms["doAmpEdit"], ampSigma=parms["ampSigma"], \
+                            doBPPlot=parms["doBPPlot"], plotBPFile=plotFile, \
                             nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
             raise RuntimeError,"Error in Bandpass calibration"
@@ -413,12 +416,15 @@ def pipeline( aipsSetup, parmFile):
     
     # Bandpass calibration
     if parms["doBPCal2"] and parms["BPCals"]:
+        plotFile = "./"+fileRoot+"BPCal2.ps"
         retCode = EVLABPCal(uv, parms["BPCals"], err, noScrat=noScrat, solInt1=parms["bpsolint1"], \
                             solInt2=parms["bpsolint2"], solMode=parms["bpsolMode"], \
                             BChan1=parms["bpBChan1"], EChan1=parms["bpEChan1"], \
                             BChan2=parms["bpBChan2"], EChan2=parms["bpEChan2"], ChWid2=parms["bpChWid2"], \
                             doCenter1=parms["bpDoCenter1"], refAnt=parms["refAnt"], \
                             UVRange=parms["bpUVRange"], doCalib=2, gainUse=0, flagVer=2, doPlot=False, \
+                            doAmpEdit=parms["doAmpEdit"], ampSigma=parms["ampSigma"], \
+                            doBPPlot=parms["doBPPlot"], plotBPFile=plotFile, \
                             nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
             raise RuntimeError,"Error in Bandpass calibration"

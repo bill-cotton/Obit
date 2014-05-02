@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2013                                          */
+/*;  Copyright (C) 2004-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1695,7 +1695,6 @@ gpointer ThreadCLEAN (gpointer args)
   ofloat xflux, subval, *beam=NULL;
   olong iresid, iXres, iYres, lpatch, beamPatch, iBeam, field, pos[2];
  
-  peak  = -1.0;
   xflux = 0.0;
   /* Do subtraction if peak non zero */
   if (fabs(peak)>0.0) {
@@ -1730,7 +1729,8 @@ gpointer ThreadCLEAN (gpointer args)
   } else { /* Only find peak */
     
     /* Find peak abs residual */
-    for (iresid=loPix; iresid<hiPix; iresid++) {
+   peak  = -1.0;
+   for (iresid=loPix; iresid<hiPix; iresid++) {
       xflux = fabs(in->pixelFlux[iresid]);
       if (xflux>peak) {
 	peak = xflux;

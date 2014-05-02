@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2013                                          */
+/*;  Copyright (C) 2012-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -488,7 +488,7 @@ olong ObitEVLASysPowerGetRow (ObitEVLASysPower *in,
   gchar *start, *next, *done, *temp;
   gboolean gotIt;
   odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
-  ObitIOCode retCode;
+  ObitIOCode retCode=OBIT_IO_OK;
   gchar *routine = "ObitEVLASysPowerGetRow";
   
   /* error checks */

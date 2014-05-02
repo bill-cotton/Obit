@@ -109,6 +109,10 @@ def EVLAInitContParms():
     parms["EChDrop"]     = None         # number of channels to drop from end of each spectrum
                                         # NB: based on original number of channels, halved for Hanning
 
+    parms["doSrvrEdt"]   = True         # Survivor editing
+    parms["minSrvrOK"]   = [0.1,0.1]    # Minimum prior editing survival fraction
+    parms["ampSigma"]    = None         # Multiple of median RMS about median gain to clip/flag
+
     # Delay calibration
     parms["doDelayCal"]   =  True       # Determine/apply delays from contCals
     parms["delaySolInt"]  =  None       # delay solution interval (min)
@@ -125,6 +129,7 @@ def EVLAInitContParms():
     parms["bpDoCenter1"] =   None       # Fraction of  channels in 1st, overrides bpBChan1, bpEChan1
     parms["bpBChan2"] =      1          # Low freq. channel for BP cal
     parms["bpEChan2"] =      0          # Highest freq channel for BP cal,  0=>all 
+    parms["bpChWid2"] =      None       # Number of channels in running mean BP soln
     parms["bpChWid2"] =      1          # Number of channels in running mean BP soln
     parms["bpdoAuto"] =      False      # Use autocorrelations rather than cross?
     parms["bpsolMode"] =     'A&P'      # Band pass type 'A&P', 'P', 'P!A'
@@ -246,6 +251,7 @@ def EVLAInitContParms():
     parms["doRawSpecPlot"] = False       # Plot diagnostic raw spectra?
     parms["doSpecPlot"]    = False       # Plot diagnostic spectra?
     parms["doSNPlot"]      =  True       # Plot SN tables etc
+    parms["doBPPlot"]      =  True       # Plot BP tables etc
     parms["doDiagPlots"]   =  True       # Plot single source diagnostics
     parms["doKntrPlots"]   =  True       # Contour plots
     parms["prtLv"]         =  2          # Amount of task print diagnostics
@@ -254,6 +260,15 @@ def EVLAInitContParms():
 
     # Default selection
     parms["selChBW"] = -1.0              # Selected channel bandwidth, All
+
+    # send pass defaults
+    parms["doMedn2"]        = None
+    parms["doFD2"]          = None
+    parms["doBPCal2"]       = None
+    parms["doDelayCal2"]    = None
+    parms["doAmpPhaseCal2"] = None
+    parms["doAutoFlag2"]    = None
+    parms["doSrvrEdt2"]     = None
 
     return parms
 # end EVLAInitContParms
@@ -283,8 +298,6 @@ def EVLAInitContFQParms(parms):
     parms["ampBChan"]  =  max(2, 0.05*nchan)                # first channel to use in A&P solutions
     parms["ampEChan"]  =  min(nchan-2, nchan-0.05*nchan)    # highest channel to use in A&P solutions
     parms["doAmpEdit"] =  True                              # Edit/flag on the basis of amplitude solutions
-    parms["ampSigma"]  =  20.0                              # Multiple of median RMS about median gain to clip/flag
-    # Should be fairly large
     parms["ampEditFG"] =  2                                 # FG table to add flags to, <=0 -> no FG entries
 
     # Ipol clipping levels
@@ -408,6 +421,10 @@ def EVLAInitContFQParms(parms):
             parms["solPInt"]     =  0.10        # phase self cal solution interval (min)
         if parms["solAInt"]==None:
             parms["solAInt"]     =  3.0         # amp+phase self cal solution interval (min)
+        if parms["bpChWid2"] == None:
+            parms["bpChWid2"] =      5          # Number of channels in running mean BP soln
+        if parms["ampSigma"]==None:
+            parms["ampSigma"]  =  10.0          # Multiple of median RMS about median gain to clip/flag
     elif freq<2.0e9:                      # L band
         if parms["delaySmoo"]==None:
             parms["delaySmoo"]   =  0.25        # Delay smoothing time (hr)
@@ -419,6 +436,10 @@ def EVLAInitContFQParms(parms):
             parms["solPInt"]     =  0.25        # phase self cal solution interval (min)
         if parms["solAInt"]==None:
             parms["solAInt"]     =  3.0         # amp+phase self cal solution interval (min)
+        if parms["bpChWid2"] == None:
+            parms["bpChWid2"] =      3          # Number of channels in running mean BP soln
+        if parms["ampSigma"]==None:
+            parms["ampSigma"]  =  10.0          # Multiple of median RMS about median gain to clip/flag
     elif freq<3.0e9:                     # S band
         if parms["delaySmoo"]==None:
             parms["delaySmoo"]   =  0.25        # Delay smoothing time (hr)
@@ -430,6 +451,10 @@ def EVLAInitContFQParms(parms):
             parms["solPInt"]     =  0.25        # phase self cal solution interval (min)
         if parms["solAInt"]==None:
             parms["solAInt"]     =  3.0         # amp+phase self cal solution interval (min)
+        if parms["bpChWid2"] == None:
+            parms["bpChWid2"] =      3          # Number of channels in running mean BP soln
+        if parms["ampSigma"]==None:
+            parms["ampSigma"]  =  10.0          # Multiple of median RMS about median gain to clip/flag
     elif freq<8.0e9:                      # C band
         if parms["delaySmoo"]==None:
             parms["delaySmoo"]   =  0.25        # Delay smoothing time (hr)
@@ -441,6 +466,10 @@ def EVLAInitContFQParms(parms):
             parms["solPInt"]     =  0.25        # phase self cal solution interval (min)
         if parms["solAInt"]==None:
             parms["solAInt"]     =  3.0         # amp+phase self cal solution interval (min)
+        if parms["bpChWid2"] == None:
+            parms["bpChWid2"] =      3          # Number of channels in running mean BP soln
+        if parms["ampSigma"]==None:
+            parms["ampSigma"]  =  15.0          # Multiple of median RMS about median gain to clip/flag
     elif freq<10.0e9:                      # X band
         if parms["delaySmoo"]==None:
             parms["delaySmoo"]   =  0.25        # Delay smoothing time (hr)
@@ -452,6 +481,10 @@ def EVLAInitContFQParms(parms):
             parms["solPInt"]     =  0.25        # phase self cal solution interval (min)
         if parms["solAInt"]==None:
             parms["solAInt"]     =  3.0         # amp+phase self cal solution interval (min)
+        if parms["bpChWid2"] == None:
+            parms["bpChWid2"] =      3          # Number of channels in running mean BP soln
+        if parms["ampSigma"]==None:
+            parms["ampSigma"]  =  20.0          # Multiple of median RMS about median gain to clip/flag
     elif freq<18.0e9:                      # Ku band
         if parms["delaySmoo"]==None:
             parms["delaySmoo"]   =  0.25        # Delay smoothing time (hr)
@@ -463,6 +496,10 @@ def EVLAInitContFQParms(parms):
             parms["solPInt"]     =  0.25        # phase self cal solution interval (min)
         if parms["solAInt"]==None:
             parms["solAInt"]     =  3.0         # amp+phase self cal solution interval (min)
+        if parms["bpChWid2"] == None:
+            parms["bpChWid2"] =      3          # Number of channels in running mean BP soln
+        if parms["ampSigma"]==None:
+            parms["ampSigma"]  =  20.0          # Multiple of median RMS about median gain to clip/flag
     elif freq<26.0e9:                      # K band
         if parms["delaySmoo"]==None:
             parms["delaySmoo"]   =  0.25        # Delay smoothing time (hr)
@@ -474,6 +511,10 @@ def EVLAInitContFQParms(parms):
             parms["solPInt"]     =  0.25        # phase self cal solution interval (min)
         if parms["solAInt"]==None:
             parms["solAInt"]     =  3.0         # amp+phase self cal solution interval (min)
+        if parms["bpChWid2"] == None:
+            parms["bpChWid2"] =      3          # Number of channels in running mean BP soln
+        if parms["ampSigma"]==None:
+            parms["ampSigma"]  =  20.0          # Multiple of median RMS about median gain to clip/flag
     elif freq<38.0e9:                     # Ka band
         if parms["delaySmoo"]==None:
             parms["delaySmoo"]   =  0.25        # Delay smoothing time (hr)
@@ -485,6 +526,10 @@ def EVLAInitContFQParms(parms):
             parms["solPInt"]     =  0.25        # phase self cal solution interval (min)
         if parms["solAInt"]==None:
             parms["solAInt"]     =  3.0         # amp+phase self cal solution interval (min)
+        if parms["bpChWid2"] == None:
+            parms["bpChWid2"] =      3          # Number of channels in running mean BP soln
+        if parms["ampSigma"]==None:
+            parms["ampSigma"]  =  20.0          # Multiple of median RMS about median gain to clip/flag
     elif freq<50.0e9:                      # Q band
         if parms["delaySmoo"]==None:
             parms["delaySmoo"]   =  0.5         # Delay smoothing time (hr)
@@ -496,6 +541,11 @@ def EVLAInitContFQParms(parms):
             parms["solPInt"]     =  0.10        # phase self cal solution interval (min)
         if parms["solAInt"]==None:
             parms["solAInt"]     =  3.0         # amp+phase self cal solution interval (min)
+        if parms["bpChWid2"] == None:
+            parms["bpChWid2"] =      3          # Number of channels in running mean BP soln
+        if parms["ampSigma"]==None:
+            parms["ampSigma"]  =  20.0          # Multiple of median RMS about median gain to clip/flag
+                                                # Should be fairly large
     else:                                   # Above Q band
         if parms["delaySmoo"]==None:
             parms["delaySmoo"]   =  0.5         # Delay smoothing time (hr)
@@ -507,6 +557,10 @@ def EVLAInitContFQParms(parms):
             parms["solPInt"]     =  0.10        # phase self cal solution interval (min)
         if parms["solAInt"]==None:
             parms["solAInt"]     =  3.0         # amp+phase self cal solution interval (min)
+        if parms["bpChWid2"] == None:
+            parms["bpChWid2"] =      3          # Number of channels in running mean BP soln
+        if parms["ampSigma"]==None:
+            parms["ampSigma"]  =  20.0          # Multiple of median RMS about median gain to clip/flag
     # end EVLAInitContFqParms
 
 def EVLAClearCal(uv, err, doGain=True, doBP=False, doFlag=False,
@@ -1458,6 +1512,73 @@ def EVLAAutoFlag(uv, target, err, \
     return 0
     # end EVLAAutoFlag
 
+def EVLASrvrEdt(uv, err, minOK=[0.1,0.1], flagTab=2, target=None, \
+                    doCalib=0, gainUse=0, doBand=0, BPVer=0, flagVer=-1, \
+                    nThreads=1, check=False, debug=False, logfile = ""):
+    """
+    Survivor editing
+    
+    See documentation for task Obit/UVFlag for details
+    Returns task error code, 0=OK, else failed
+
+    * uv       = UV data object to flag
+    * err      = Obit error/message stack
+    * minOK    = Min OK fraction (per IF, record)
+    * flagTab  = Output Flag table version, 0 => new highest
+    * target   = Target source name or list of names, blank/None = all
+                 max. 30 entries
+    * doCalib  = Apply calibration table
+    * gainUse  = CL/SN table to apply
+    * doBand   = If >0.5 apply bandpass cal.
+    * BPVer    = Bandpass table version
+    * flagVer  = Input Flagging table version
+    * nThreads = Max allowed number of threads
+    * check    = Only check script, don't execute tasks
+    * debug    = Run tasks debug, show input
+    * logfile  = Log file for task
+    """
+    ################################################################
+    mess =  "Machine gun the lifeboats!"
+    printMess(mess, logfile)
+    se=ObitTask.ObitTask("SrvrEdt")
+    try:
+        se.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
+    
+    if not check:
+        setname(uv, se)
+    if target!=None:
+        if type(target)==list:
+            se.Sources=target
+        else:
+            se.Sources=[target]
+    se.flagVer   = flagVer
+    se.doCalib   = doCalib
+    se.gainUse   = gainUse
+    se.doBand    = doBand
+    se.BPVer     = BPVer
+    se.minOK     = minOK
+    se.flagTab   = flagTab
+    se.nThreads  = nThreads
+    se.taskLog   = logfile
+    if debug:
+        se.debug = debug
+        se.i
+    # Trap failure
+    try:
+        if not check:
+            se.g
+    except Exception, exception:
+        print exception
+        mess = "UVFlag Failed retCode= "+str(se.retCode)
+        printMess(mess, logfile)
+        return 1
+    else:
+        pass
+    return 0
+    # end EVLASrvrEdt
+    
 def EVLAPACor(uv, err, CLver=0, FreqID=0,\
               logfile='', check=False, debug=False):
     """
@@ -1536,7 +1657,7 @@ def EVLAPACor(uv, err, CLver=0, FreqID=0,\
     # end EVLAPACor
 
 def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
-                     BChan=1, EChan=0, \
+                     BChan=1, EChan=0, UVRange=[0.,0.], \
                      timeRange=[0.,0.], FreqID=1, doCalib=-1, gainUse=0, minSNR=5.0, \
                      refAnts=[0], doBand=-1, BPVer=0, flagVer=-1, doTwo=True, doZeroPhs=False, \
                      doPlot=False, plotFile="./DelayCal.ps", \
@@ -1555,6 +1676,7 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
     * BChan      = First (1-rel channel to include
     * EChan      = Highest channel to include
     * timeRange  = timerange of data to use
+    * UVRange    = UV range (klambda) for solutions
     * solInt     = Calib solution interval (min)
     * smoTime    = Smoothing time applied to SN table (hr) if >0.0
     * FreqID     = Frequency group identifier
@@ -1597,6 +1719,7 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
         setname(uv,calib)
     calib.flagVer   = flagVer
     calib.timeRange = timeRange
+    calib.UVRange   = UVRange
     calib.doCalib   = doCalib
     calib.gainUse   = gainUse
     calib.doBand    = doBand
@@ -1884,7 +2007,7 @@ def EVLASYCal(uv, err, SYVer=1,  SYOut=0, calInt=0.1,  \
     # end EVLASYCal
 
 def EVLACalAP(uv, target, ACals, err, \
-              PCals=None, FQid=0, calFlux=None, timeRange = [0.0,1.0e20], \
+              PCals=None, FQid=0, calFlux=None, timeRange = [0.0,1.0e20], UVRange=[0.,0.], \
               doCalib=-1, gainUse=0, doBand=0, BPVer=0, flagVer=-1, \
               BChan=1, EChan=1,  avgPol=False, \
               solnver=0, solInt=10.0/60.0, solSmo=0.0, nThreads=1, refAnt=0, ampScalar=False, \
@@ -1909,6 +2032,7 @@ def EVLACalAP(uv, target, ACals, err, \
     * BChan    = First (1-rel channel to include
     * EChan    = Highest channel to include
     * timeRange= timeRange for solutions
+    * UVRange  = UV range (klambda) for solutions
     * avgPol   = Average polarizations before solving?
     * doCalib  = Apply calibration table, positive=>calibrate
     * gainUse  = CL/SN table to apply
@@ -2044,6 +2168,7 @@ def EVLACalAP(uv, target, ACals, err, \
     calib.noScrat  = noScrat
     calib.solnVer  = solnVer
     calib.avgPol   = avgPol
+    calib.UVRange  = UVRange
     calib.timeRange= timeRange
     OK      = False   # Must have some work
     OKCals2 = []      # List of ones that worked
@@ -2179,73 +2304,6 @@ def EVLACalAP(uv, target, ACals, err, \
         # end if phase cals
 
     solnVer2 = calib.solnVer
-    # Smoothing?   
-    if solSmo>solInt:
-        # Get list of calibrators
-        smoList = []
-        for ACal in ACals:
-            smoList.append(ACal["Source"])
-            if PCals:
-                for PCal in PCals:
-                    if PCal["Source"] not in smoList:
-                        smoList.append(PCal["Source"])
-            solnVer2 = solnVer+1
-            snsmo=ObitTask.ObitTask("SNSmo")
-            try:
-                snsmo.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-            except Exception, exception:
-                pass
-            snsmo.taskLog  = logfile
-            if not check:
-                setname(uv,snsmo)
-            snsmo.solnIn  = solnVer
-            snsmo.solnOut = solnVer2
-            snsmo.smoType = "AMPL"
-            snsmo.smoFunc = "MWF"
-            snsmo.refAnt  = refAnt
-            snsmo.clipSmo = [24.]  # Clip wild amplitudes
-            snsmo.clipParm= [100.0]
-            mess = "Smooth SN "+str(snsmo.solnIn)+" to "+str(snsmo.solnOut)
-            printMess(mess, logfile)
-            if debug:
-                snsmo.i
-                snsmo.debug = debug
-            # run on all sources for clipping then on individual cal.
-            # Trap failure
-            try:
-                if not check:
-                    snsmo.g
-            except Exception, exception:
-                print exception
-                mess = "SNSmo Failed retCode="+str(snsmo.retCode)
-                printMess(mess, logfile)
-                return 1
-            else:
-                pass
-            snsmo.clipSmo = [solSmo/60.0] 
-            snsmo.clipParm= [0.5]
-            # Next time smooth
-            snsmo.smoParm = [solSmo/60., solSmo/60.]
-            snsmo.solnIn  = solnVer2
-            snsmo.solnOut = solnVer2+1
-            solnVer2     +=1
-            # Loop over sources
-            for s in smoList:
-                snsmo.Sources[0] = s
-                # Trap failure
-                try:
-                    if not check:
-                        snsmo.g
-                except Exception, exception:
-                    print exception
-                    mess = "SNSmo Failed retCode="+str(snsmo.retCode)
-                    printMess(mess, logfile)
-                    return 1
-                else:
-                    pass
-        else:   # No smoothing
-            solnVer2 = solnVer
-
     # Tell OKCals2 etc if debug
     if debug:
         mess = "OKCals2="+str(OKCals2)
@@ -2313,6 +2371,45 @@ def EVLACalAP(uv, target, ACals, err, \
         OErr.printErrMsg(err, "Error clip/flag bad amplitudes")
     # end Amp edit
     
+    # Smoothing?   
+    if solSmo>solInt:
+        solnVer = solnVer2    # input is old output
+        solnVer2 = solnVer+1  # new output= smoothed
+        snsmo=ObitTask.ObitTask("SNSmo")
+        try:
+            snsmo.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+        except Exception, exception:
+            pass
+        snsmo.taskLog  = logfile
+        if not check:
+            setname(uv,snsmo)
+        snsmo.solnIn  = solnVer
+        snsmo.solnOut = solnVer2
+        snsmo.smoType = "AMPL"
+        snsmo.smoFunc = "MWF"
+        snsmo.refAnt  = refAnt
+        snsmo.smoParm = [solSmo/60., solSmo/60.]
+        snsmo.clipSmo = [solSmo/60.0]  # Clip wild amplitudes
+        snsmo.clipParm= [0.5]
+        mess = "Smooth SN "+str(snsmo.solnIn)+" to "+str(snsmo.solnOut)
+        printMess(mess, logfile)
+        if debug:
+            snsmo.i
+            snsmo.debug = debug
+        # run on all sources 
+        # Trap failure
+        try:
+            if not check:
+                snsmo.g
+        except Exception, exception:
+            print exception
+            mess = "SNSmo Failed retCode="+str(snsmo.retCode)
+            printMess(mess, logfile)
+            return 1
+        else:
+            pass
+    # end smoothing
+
     # Plot gain corrections?
     if solnVer2==None:
         solnVer2 = solnVer
@@ -2346,12 +2443,15 @@ def EVLACalAP(uv, target, ACals, err, \
     else:
         clcal.solnVer = 1
     ical = 0
+    maxCal = len(clcal.calSour)  # Maximum number of entries in clcal.calSour
     if PCals:
         for PCal in PCals:
             clcal.calSour[ical] = PCal["Source"]
+            if ical>=maxCal:
+                break
             ical += 1
     for ACal in ACals:
-        if ACal["Source"] not in clcal.calSour:
+        if ACal["Source"] not in clcal.calSour and ical<maxCal:
             clcal.calSour[ical] = ACal["Source"]
             ical += 1
     # Apply to all
@@ -2381,9 +2481,9 @@ def EVLABPCal(uv, BPCals, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
               doCalib=2, gainUse=0, doBand=0, BPVer=0, flagVer=-1,  \
               doCenter1=None, BChan1=1, EChan1=0, \
               BChan2=1, EChan2=0, ChWid2=1, \
-              solInt1=0.0, solInt2=0.0, solMode="A&P", refAnt=0, ampScalar=False, \
-              doAuto=False, doPol=False, avgPol=False, avgIF=False, \
-              doPlot=False, plotFile="./BPCal.ps", \
+              solInt1=0.0, solInt2=0.0, solMode="A&P", solType="L1",refAnt=0, ampScalar=False, \
+              doAuto=False, doPol=False, avgPol=False, avgIF=False, doAmpEdit=False, ampSigma=20, \
+              doPlot=False, plotFile="./BPSpec.ps", doBPPlot=False, plotBPFile="./BPTab.ps", \
               check=False, debug = False, nThreads=1, noScrat=[], logfile = ""):
     """
     Bandbass calibration
@@ -2399,6 +2499,8 @@ def EVLABPCal(uv, BPCals, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
     2) Second channels in the range BChan2 to EChan2 averaging blocks
        of ChWid2 are calibrated using solType and solMode for solInt2 and
        the results written as the output BP table.
+    3) Output BP table may be edited blanking solutions excessively
+       deviant from the antenna median. 
     
     The Calibrator model may be given as either and Image with CC table,
     a parameterized model or a point source with the flux density in 
@@ -2416,6 +2518,7 @@ def EVLABPCal(uv, BPCals, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
     * BPVer    = previous Bandpass table (BP) version
     * flagVer  = Input Flagging table version
     * timerange= timerange in days to use
+    * UVRange  = UV range (klambda) for solutions
     * doCenter1= If defined, the center fraction of the bandpass to use first pass
     * BChan1   = Low freq. channel,  initial cal
     * EChan1   = Highest freq channel, initial cal
@@ -2431,8 +2534,13 @@ def EVLABPCal(uv, BPCals, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
     * doPol    = Apply polarization cal?
     * avgPol   = Avg. poln. in solutions?
     * avgIF    = Avg. IFs. in solutions?
+    * doAmpEdit= Edit/flag on the basis of amplitude solutions
+    * ampSigma = Multiple of median RMS about median gain to clip/flag
+                 Should be fairly large
     * doPlot   = If True make plots of corrected data
     * plotFile = Name of postscript file for plots
+    * doBPPlot = If True make plots of bandpass table
+    * plotBPFile = Name of postscript file for bandpass table plots
     * check    = Only check script, don't execute tasks
     * debug    = Run tasks debug, show input
     * nThreads = Number of threads to use
@@ -2461,6 +2569,7 @@ def EVLABPCal(uv, BPCals, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
     bpass.solInt1   = solInt1
     bpass.solInt2   = solInt2
     bpass.solMode   = solMode
+    bpass.solType   = solType
     bpass.refAnt    = refAnt
     bpass.timeRange = timerange
     bpass.UVRange   = UVRange
@@ -2521,6 +2630,7 @@ def EVLABPCal(uv, BPCals, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
             printMess(mess, logfile)
             if not check:
                 bpass.g
+                pass
         except Exception, exception:
             print exception
             mess = "BPass Failed retCode="+str(bpass.retCode)
@@ -2533,6 +2643,17 @@ def EVLABPCal(uv, BPCals, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
     if not OK:
         printMess("All BPass calibration failed", logfile)
         return 1  
+    
+    # Open and close image to sync with disk 
+    uv.Open(UV.READONLY, err)
+    uv.Close(err)
+
+    # Clip/flag by deviant amplitudes?
+    if doAmpEdit:
+        EVLAEditBPAmp(uv, newBPVer, err, sigma=ampSigma,  \
+                      logfile=logfile, check=check, debug=debug)
+        OErr.printErrMsg(err, "Error clip/flag bad amplitudes")
+    # end Amp edit
     
     # Plot corrected data?
     if doPlot:
@@ -2547,7 +2668,21 @@ def EVLABPCal(uv, BPCals, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
         if retCode!=0:
             return retCode
         scr.Zap(err)
-        # end plots
+        # end data plots
+
+    # Plot BP table?
+    if doBPPlot:
+        retCode = EVLAPlotBPTab(uv, newBPVer, err, \
+                   check=check, logfile=logfile )
+        if retCode!=0:
+            return 0   # tolerate failure
+        retCode = EVLAWritePlots (uv, 1, 0, plotBPFile, err, \
+                                  plotDesc="Bandpass table plots", \
+                                  logfile=logfile, check=check, debug=debug)
+        if retCode!=0:
+            return retCode
+        # end BP tableplots
+
     return 0
     # End EVLABPCal
 
@@ -4750,6 +4885,70 @@ def EVLAPlotTab(uv, inext, invers, err, \
     return 0
     # end EVLAPlotTab
 
+def EVLAPlotBPTab(uv, invers, err, inext = 'BP', \
+                source=None, timerang=[0.,0.,0.,0.,0.,0.,0.,0.], \
+                stokes="    ",  \
+                logfile=None, check=False, debug=False):
+    """
+    Makes AIPS plots of BP tables
+    
+    Returns task error code, 0=OK, else failed
+
+    * uv       = UV data object to plot
+    * inver    = version number, 0-> highest
+    * inext    = table type 'BP', 'BD', CP', 'PD'
+    * source   = if given the name of the source
+    * timerang = timerange to plot.
+    * stokes   = Stokes type to plot
+    * err      = Obit error/message stack
+    * logfile  = logfile for messages
+    * check    = Only check script, don't execute tasks
+    * debug    = show input
+    """
+    ################################################################
+    bplot = AIPSTask.AIPSTask("bplot")
+    try:
+        bplot.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
+    if not check:
+        setname(uv,bplot)
+    bplot.inext   = inext
+    bplot.invers  = invers
+    bplot.stokes  = stokes
+    bplot.msgkill = 5        # Suppress blather
+    i = 1
+    for t in timerang:
+        bplot.timerang[i] = t
+        i  += 1
+    bplot.logFile = logfile
+    if debug:
+        bplot.i
+    # Trap failure
+    try:
+        if not check:
+            bplot.g
+    except Exception, exception:
+        print exception
+        mess = "BPLOT Failed "
+        printMess(mess, logfile)
+        return 1
+    else:
+        pass
+
+    # Open/close UV to update header
+    if not check:
+        uv.Open(UV.READONLY,err)
+        uv.Close(err)
+    if err.isErr:
+        OErr.printErr(err)
+        mess = "Update UV header failed"
+        printMess(mess, logfile)
+        return 1
+    
+    return 0
+    # end EVLAPlotBPTab
+
 def EVLAWritePlots(uv, loPL, hiPL, plotFile, err, \
                    plotDesc="Diagnostic plot", \
                    logfile=None, check=False, debug=False):
@@ -5105,6 +5304,7 @@ def EVLAEditSNAmp(uv, SNver, err, \
     for s in stats:
         if s!=None:
             t.append(s[1])
+    t.sort()
     RMS = t[len(t)/2]
     mess = "Median RMS %f" % (RMS)
     printMess(mess, logfile)
@@ -5130,6 +5330,63 @@ def EVLAEditSNAmp(uv, SNver, err, \
         printMess(mess, logfile)
         return
    # end EVLAEditSNAmp
+
+def EVLAEditBPAmp(uv, BPver, err, \
+                  sigma=10.0, logfile='', check=False, debug=False):
+    """
+    Flag BP table entries with amplitudes discrepant from Antenna median
+
+    For each Antenna in a BP table, the median amplitude and the RMS of
+    the 80% amplitudes least different from the median are determined.
+    Then BP table entries with amplitudes further from the median than
+    sigma*RMS are flagged.
+    Returns with err set on error
+
+    * uv         = UV data object
+    * BPver      = BP table to flag, 0=> highest
+    * err        = Python Obit Error/message stack
+    * sigma      = multiple of inner RMS different from median to flag
+                   Should be pretty big
+    * logfile    = logfile for messages
+    * check      = Only check script
+    * debug      = Only debug - no effect
+    """
+    ################################################################
+    if BPver<=0:
+        bpver =  uv.GetHighVer("AIPS BP")
+    else:
+        bpver = BPver;
+    mess = "Edit BP table %d amplitudes by sigma %f" % (bpver,sigma)
+    printMess(mess, logfile)
+    # Get statistics
+    stats = EVLABPAmpStats(uv, bpver, err, \
+                           logfile=logfile, check=check, debug=debug)
+    if stats==None or err.isErr:
+        mess = "Problem with BP table statistics"
+        printMess(mess, logfile)
+        return
+    # Set clipping levels
+    cl = []
+    iant = 1
+    for s in stats:
+        if s!=None:
+            rang = [max(0.0,s[0]-sigma*s[1]),s[0]+sigma*s[1]]
+            cl.append(rang)
+            mess = "Ant %d valid range = %s medn %f RMS %f" % (iant,str(rang), s[0],s[1])
+            printMess(mess, logfile)
+        else:
+            cl.append(None)
+            mess = "Ant %d: Too few data to edit" % (iant)
+            printMess(mess, logfile)
+        iant += 1;
+    # Clip/flag
+    EVLAClipBPAmp(uv, bpver, cl, err, \
+                  logfile=logfile, check=check, debug=debug)
+    if err.isErr:
+        mess = "Problem with clipping BP table or flagging"
+        printMess(mess, logfile)
+        return
+   # end EVLAEditBPAmp
 
 def EVLAFlagFailSN(uv, SNver, err, \
                    FGver=-1, FGuv=None, logfile='', check=False, debug=False):
@@ -5220,7 +5477,7 @@ def EVLASNAmpStats(uv, SNver, err, logfile='', check=False, debug=False):
 
     Returns with err set on error
     Return list:
-        [(medn1, RMS1),...,(mednnumIF,RMDnumIF)]
+        [(medn1, RMS1),...,(mednnumIF,RMSnumIF)]
 
     * uv         = UV data object
     * SNver      = SN table to flag
@@ -5277,7 +5534,7 @@ def EVLASNAmpStats(uv, SNver, err, logfile='', check=False, debug=False):
             amps[iif].sort()
             num  = len(amps[iif])
             medn = amps[iif][num/2]
-            # inner half RMS about median
+            # inner 80% RMS about median
             b = num/10; e = 9*num/10;
             sum2 = 0.0; count = 0
             for i in range(b,e+1):
@@ -5291,6 +5548,93 @@ def EVLASNAmpStats(uv, SNver, err, logfile='', check=False, debug=False):
     # end IF loop
     return out
     # end EVLASNAmpStats
+
+def EVLABPAmpStats(uv, BPver, err, logfile='', check=False, debug=False):
+    """
+    Determine median and RMS of inner 80% of amplitude distribution per Ant
+
+    Returns with err set on error
+    Return list:
+        [(medn1, RMS1),...,(mednnumAnt,RMSnumAnt)]
+
+    * uv         = UV data object
+    * BPver      = BP table to flag
+    * err        = Python Obit Error/message stack
+    * logfile    = logfile for messages
+    * check      = Only check script
+    * debug      = Only debug - no effect
+    """
+    ################################################################
+    fblank = FArray.PGetBlank() # Magic blanking value
+    # Number of IFs
+    nif   = uv.Desc.Dict["inaxes"][uv.Desc.Dict["jlocif"]]
+    # Number of channels
+    nchan = uv.Desc.Dict["inaxes"][uv.Desc.Dict["jlocf"]]
+    # Number of Stokes
+    npoln = uv.Desc.Dict["inaxes"][uv.Desc.Dict["jlocs"]]
+    npoln = min(2, npoln)   # No more than 2
+    BPtab = uv.NewTable(Table.READONLY, "AIPS BP", BPver, err, \
+                        numIF=nif, numPol=npoln)
+    if err.isErr:
+        return None
+    # Open
+    BPtab.Open(Table.READWRITE, err)
+    if err.isErr:
+        return None
+    # Number of antennas
+    nant = BPtab.Desc.List.Dict["NO_ANT"][2][0]
+    # Number of BP rows
+    nrow =  BPtab.Desc.Dict["nrow"]
+    # Initialize accumulators, 1 per Antenna
+    # Each a list of amplitudes
+    amps = []
+    for i in range(0,nant):
+        amps.append([])
+    for i in range (0,nrow):    # Loop over rows
+        BProw = BPtab.ReadRow(i+1, err)
+        if err.isErr:
+            return None
+        iant = BProw["ANTENNA"][0]-1   # 0 rel
+        for iif in range(0,nif*nchan):
+            if(BProw["REAL 1"][iif]!=fblank):
+                amp = (BProw["REAL 1"][iif]**2+BProw["IMAG 1"][iif]**2)**0.5
+                amps[iant].append(amp)
+            if (npoln>1) and (BProw["REAL 2"][iif]!=fblank):
+                amp = (BProw["REAL 2"][iif]**2+BProw["IMAG 2"][iif]**2)**0.5
+                amps[iant].append(amp)
+        # end IF loop
+    # End loop over table
+    if debug:
+        for i in range(0,nant):
+            if len(amps[i])>3:
+                print "EVLABPAmpStats max/min Ant ",i+1,max(amps[i]), min(amps[i])
+ 
+    # Close table
+    BPtab.Close(err)
+    if err.isErr:
+        return None
+
+    # Sort lists, get median, inner RMS
+    out = []   # Initialize output
+    for iant in range(0,nant):
+        if len(amps[iant])>3:   # Need a min. amount of data
+            amps[iant].sort()
+            num  = len(amps[iant])
+            medn = amps[iant][num/2]
+            # inner half RMS about median
+            b = num/10; e = 9*num/10;
+            sum2 = 0.0; count = 0
+            for i in range(b,e+1):
+                val    = amps[iant][i]-medn
+                sum2  += val*val
+                count += 1
+            RMS = (sum2/count)**0.5
+            out.append((medn,RMS))
+        else:
+            out.append(None)   # Too little
+    # end antenna loop
+    return out
+    # end EVLABPAmpStats
 
 def EVLAClipSNAmp(uv, SNver, arange, err, \
                   FGver=-1, FGuv=None, logfile='', check=False, debug=False):
@@ -5383,6 +5727,92 @@ def EVLAClipSNAmp(uv, SNver, arange, err, \
     mess = "Flagged %d of total %d Gain entries" % (count, total)
     printMess(mess, logfile)
     # end EVLAClipSNAmp
+
+def EVLAClipBPAmp(uv, BPver, arange, err, \
+                  logfile='', check=False, debug=False):
+    """
+    Flag BP table entries with amplitudes outside of [range[0]-range[1]]
+
+    Optionally adds entry to flag (FG) table
+    Returns with err set on error
+
+    * uv         = UV data object
+    * BPver      = BP table to flag
+    * arange     = [min amp, max amp] allowed. list per Antenna
+                   Ant with None entry are ignored
+    * err        = Python Obit Error/message stack
+    * logfile    = logfile for messages
+    * check      = Only check script
+    * debug      = Only debug messages - no effect
+    """
+    ################################################################
+    fblank = FArray.PGetBlank() # Magic blanking value
+    # Number of IFs
+    nif   = uv.Desc.Dict["inaxes"][uv.Desc.Dict["jlocif"]]
+    # Number of channels
+    nchan = uv.Desc.Dict["inaxes"][uv.Desc.Dict["jlocf"]]
+    # Number of Stokes
+    npoln = uv.Desc.Dict["inaxes"][uv.Desc.Dict["jlocs"]]
+    BPTab = uv.NewTable(Table.READONLY, "AIPS BP", BPver, err, \
+                        numIF=nif, numPol=npoln)
+    if err.isErr:
+        return
+     # Open
+    BPTab.Open(Table.READWRITE, err)
+    if err.isErr:
+        return
+    # Number of antennas
+    nant = BPTab.Desc.List.Dict["NO_ANT"][2][0]
+    # Number of rows
+    nrow =  BPTab.Desc.Dict["nrow"]
+    count = 0; total = 0
+    for i in range (0,nrow):    # Loop over rows
+        BProw = BPTab.ReadRow(i+1, err)
+        if err.isErr:
+            return
+        dirty = False
+        iant = BProw["ANTENNA"][0]-1   # 0 rel
+        if arange[iant]!=None:
+            amin = arange[iant][0]
+            amax = arange[iant][1]
+            # Loop over IF,chan
+            for iif in range (0, nif*nchan):
+                   if (BProw["REAL 1"][iif]!=fblank):
+                        total += 1
+                        amp = (BProw["REAL 1"][iif]**2+BProw["IMAG 1"][iif]**2)**0.5
+                        if (amp<amin) or (amp>amax):
+                            BProw["REAL 1"][iif]    = fblank
+                            BProw["IMAG 1"][iif]    = fblank
+                            count += 1
+                            dirty = True
+                            if debug:
+                                print "EVLAClipBPAmp flag ant "+str(iant+1)+" pol 1 iif "+str(iif)+" amp "+str(amp)
+                     # Second Poln
+                   if (npoln>1) and (BProw["REAL 2"][iif]!=fblank):
+                       total += 1
+                       amp = (BProw["REAL 2"][iif]**2+BProw["IMAG 2"][iif]**2)**0.5
+                       if (amp<amin) or (amp>amax):
+                           BProw["REAL 2"][iif]    = fblank
+                           BProw["IMAG 2"][iif]    = fblank
+                           count += 1
+                           dirty = True
+                           if debug:
+                               print "EVLAClipBPAmp flag ant "+str(iant+1)+" pol 1 iif "+str(iif)+" amp "+str(amp)
+            # Rewrite if modified
+            if dirty and not check:
+                BPTab.WriteRow(i+1, BProw, err)
+                if err.isErr:
+                    return
+  # end loop over rows
+
+    # Close table
+    BPTab.Close(err)
+    if err.isErr:
+        return
+
+    mess = "Flagged %d of total %d Gain entries" % (count, total)
+    printMess(mess, logfile)
+    # end EVLAClipBPAmp
 
 def EVLAFlagSNClip(uv, SNrow, IFno, poln, err, \
                FGver=-1,  FGuv=None, reason="BadAmp", logfile='', check=False, debug=False):

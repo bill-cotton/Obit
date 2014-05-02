@@ -445,7 +445,7 @@ void  ObitInfoElemPrint(ObitInfoElem *me, FILE *file)
     more = size;
     while (more>0) {
       for (j=0; j<20; j++) {
-	lltemp = (ollong)(*ldata++);
+	lltemp = (ollong)(*lldata++);
 	g_snprintf (&line[indx], 80-indx, " %ld ", (long)lltemp);
 	indx = strlen (line);
 	more--;                    /* finished? */

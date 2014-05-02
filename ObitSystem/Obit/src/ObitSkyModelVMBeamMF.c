@@ -2099,8 +2099,9 @@ gboolean ObitSkyModelVMBeamMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvda
 
   konst = DG2RAD * 2.0 * G_PI;
   /* konst2 converts FWHM(deg) to coefficients for u*u, v*v, u*v */
-  konst2 = DG2RAD * (G_PI / 1.17741022) * sqrt (0.5);
   /*konst2 = DG2RAD * 2.15169;*/
+  /* konst2 = DG2RAD * (G_PI / 1.17741022) * sqrt (0.5);*/
+  konst2 = DG2RAD * sqrt(2.0) * G_PI / 2.35482044;
 
   /* Loop over images counting CCs */
   count = 0;
@@ -2320,13 +2321,6 @@ gboolean ObitSkyModelVMBeamMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvda
     modType = (ObitSkyModelCompType)(parms[3]+0.5);  /* model type */
     in->modType = MAX (in->modType, modType);  /* Need highest number */
  
-    /* DEBUG - replace model with fitted beam */
-    if(modType==OBIT_SkyModel_GaussModTSpec) {
-      parms[0] = imDesc->beamMaj;
-      parms[1] = imDesc->beamMin;
-      parms[2] = imDesc->beamPA;
-    }
-
     /* Gaussian parameters */
     if ((modType==OBIT_SkyModel_GaussMod) || (modType==OBIT_SkyModel_GaussModSpec) || 
 	(modType==OBIT_SkyModel_GaussModTSpec)) {

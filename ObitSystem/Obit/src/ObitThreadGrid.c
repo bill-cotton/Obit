@@ -421,7 +421,7 @@ void ObitThreadGridSetupMF (ObitThreadGrid *in, ObitUV *UVin,
   ObitUVGridMF **UVGrids = (ObitUVGridMF**)UVGridss;
   GridFuncArg **funcarg;
   olong i, j, k, iGrid, iTh, wrksize, nGrid, nGpI, size;
-  olong nvis, nvisPth, nChan, mChan, bCh, eCh, iSpec;
+  olong nvis, nvisPth, nChan, bCh, eCh, iSpec;
   ofloat noRot[] = {1.0,0.0,0.0, 0.0,1.0,0.0, 0.0,0.0,1.0};
   /*gchar *routine="ObitThreadGridSetup";*/
 
@@ -549,10 +549,8 @@ void ObitThreadGridSetupMF (ObitThreadGrid *in, ObitUV *UVin,
 	  /* Channel selection */
 	  bCh = UVGrids[i]->BIFSpec[iSpec]*nChan + UVGrids[i]->BChanSpec[iSpec];
 	  eCh = UVGrids[i]->EIFSpec[iSpec]*nChan + UVGrids[i]->EChanSpec[iSpec];
-	  mChan = eCh - bCh;
-	  funcarg[iGrid]->bChan = bCh + j * mChan / nGpI;
-	  funcarg[iGrid]->eChan = bCh + (j+1) * mChan / nGpI;
-	  if (j==(nGpI-1)) funcarg[iGrid]->eChan = eCh;  /* Be sure to get all */
+	  funcarg[iGrid]->bChan = bCh;
+	  funcarg[iGrid]->eChan = eCh;
 	  /* beam Tapering parameters */
 	  funcarg[iGrid]->sigma1   = UVGrids[i]->sigma1;
 	  funcarg[iGrid]->sigma2   = UVGrids[i]->sigma2;
@@ -564,7 +562,7 @@ void ObitThreadGridSetupMF (ObitThreadGrid *in, ObitUV *UVin,
     } /* end if beam */
   } /* End loop adding beams */
  
- /* Loop over images */
+  /* Loop over images */
   for (i=0; i<nPar; i++) {
     if (!UVGrids[i]->doBeam) {
       /* add gridding facets */
@@ -605,10 +603,8 @@ void ObitThreadGridSetupMF (ObitThreadGrid *in, ObitUV *UVin,
 	  /* Channel selection */
 	  bCh = UVGrids[i]->BIFSpec[iSpec]*nChan + UVGrids[i]->BChanSpec[iSpec];
 	  eCh = UVGrids[i]->EIFSpec[iSpec]*nChan + UVGrids[i]->EChanSpec[iSpec];
-	  mChan = eCh - bCh;
-	  funcarg[iGrid]->bChan = bCh + j * mChan / nGpI;
-	  funcarg[iGrid]->eChan = bCh + (j+1) * mChan / nGpI;
-	  if (j==(nGpI-1)) funcarg[iGrid]->eChan = eCh;  /* Be sure to get all */
+	  funcarg[iGrid]->bChan = bCh;
+	  funcarg[iGrid]->eChan = eCh;
 	  /* beam Tapering parameters */
 	  funcarg[iGrid]->sigma1   = UVGrids[i]->sigma1;
 	  funcarg[iGrid]->sigma2   = UVGrids[i]->sigma2;
@@ -1025,6 +1021,11 @@ static gpointer ThreadFlip (gpointer args)
       gxo[1] = xxo[1] - cji[1];
       gco[0] = cjo[0] + xxi[0];
       gco[1] = cjo[1] - xxi[1];
+	/* hard core debug 
+      if ((fabs(gxo[1]>0.00001) || (fabs(gxo[1]>0.00001)) {
+	  fprintf (stdout,"dbg %d %15.7f %15.7f  \n",
+		   iu, gxo[1], gco[1]);
+	}*/
       gxo += 2; gco += 2; gxi -= 2; gci -= 2;
     } /* end u loop */
   } /* end v loop */
