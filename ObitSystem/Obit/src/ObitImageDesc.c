@@ -162,6 +162,10 @@ ObitImageDesc* ObitImageDescCopy (ObitImageDesc* in, ObitImageDesc* out,
   out->obsra   = in->obsra;
   out->obsdec  = in->obsdec;
   out->plane   = in->plane;
+  out->plane4  = in->plane4;
+  out->plane5  = in->plane5;
+  out->plane6  = in->plane6;
+  out->plane7  = in->plane7;
   out->row     = in->row;
   out->IOsize  = in->IOsize;
   out->areBlanks = in->areBlanks;
@@ -313,6 +317,10 @@ ObitImageDesc* ObitImageDescDefault (gchar *name)
   out->obsra   = 0.0;
   out->obsdec  = 0.0;
   out->plane   = 0;
+  out->plane4  = 0;
+  out->plane5  = 0;
+  out->plane6  = 0;
+  out->plane7  = 0;
   out->row     = 0;
   out->IOsize  = OBIT_IO_byPlane;
   out->areBlanks = FALSE;
@@ -982,6 +990,10 @@ void ObitImageDescInit  (gpointer inn)
   in->maxval = -1.0e20;
   in->minval =  1.0e20;
   in->plane   = 0;
+  in->plane4  = 0;
+  in->plane5  = 0;
+  in->plane6  = 0;
+  in->plane7  = 0;
   in->row     = 0;
   in->areBlanks = FALSE;
   in->do3D      = TRUE;

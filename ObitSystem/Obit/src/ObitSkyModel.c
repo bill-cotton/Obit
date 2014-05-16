@@ -28,6 +28,9 @@
 
 #include <math.h>
 #include "ObitThread.h"
+#if HAVE_GPU==1  /* GPU? */
+#include "ObitGPUSkyModel.h"
+#endif /* HAVE_GPU */
 #include "ObitSkyModel.h"
 #include "ObitSkyModelVMSquint.h"
 #include "ObitSkyModelVMIon.h"
@@ -681,6 +684,10 @@ ObitSkyModel* ObitSkyModelCreate (gchar* name, ObitImageMosaic* mosaic)
     for (i=0; i<number; i++) out->endComp[i] = 0;
   }
 
+  /* Possibly using GPU? */
+#if HAVE_GPU==1  /*  GPU? */
+    out->GPUSkyModel = ObitGPUSkyModelCreate ("GPU", "DFT");
+#endif /* HAVE_GPU */
   return out;
 } /* end ObitSkyModelCreate */
 
@@ -695,6 +702,7 @@ void ObitSkyModelInitMod (ObitSkyModel* in, ObitUV *uvdata, ObitErr *err)
   olong i;
   ofloat phase=0.5, cp, sp;
   FTFuncArg *args;
+  /*gchar *routine = "ObitSkyModelInitMod";*/
 
   /* Fourier transform threading routines */
   in->DFTFunc  = (ObitThreadFunc)ThreadSkyModelFTDFT;
@@ -734,6 +742,18 @@ void ObitSkyModelInitMod (ObitSkyModel* in, ObitUV *uvdata, ObitErr *err)
     else if (in->modelMode==OBIT_SkyModel_Fastest)
       Obit_log_error(err, OBIT_InfoErr, "SkyModel using Fastest calculation type");
   }
+#if HAVE_GPU==1  /*  GPU?*/
+  gchar *routine = "ObitSkyModelInitModel";
+  /* Init GPU, create object if necessary */
+  if (in->GPUSkyModel==NULL)
+    in->GPUSkyModel = ObitGPUSkyModelCreate ("GPU", "DFT");
+  const ObitGPUSkyModelClassInfo *GPUClass;
+  GPUClass = (ObitGPUSkyModelClassInfo*)in->GPUSkyModel->ClassInfo;
+  if ((in->doGPU) && (in->modelMode==OBIT_SkyModel_DFT))
+    GPUClass->ObitGPUSkyModelDFTInit(in->GPUSkyModel, uvdata, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+#endif /* HAVE_GPU */
+
 } /* end ObitSkyModelInitMod */
 
 /**
@@ -764,17 +784,28 @@ void ObitSkyModelShutDownMod (ObitSkyModel* in, ObitUV *uvdata, ObitErr *err)
       in->nThreads   = 0;
     } /* end if this a "base" threadArg */
   }
+#if HAVE_GPU==1  /*  GPU? */
+  in->GPUSkyModel = ObitGPUSkyModelUnref (in->GPUSkyModel);
+#endif /* HAVE_GPU */
 } /* end ObitSkyModelShutDownMod */
 
 /**
  * Initializes an ObitSkyModel for a pass through data in time order
- * No op in this class
+ * Copy model to GPU if used.
  * \param in  SkyModel to initialize
  * \param err Obit error stack object.
  */
 void ObitSkyModelInitModel (ObitSkyModel* in, ObitErr *err)
 {
-  /* nada */
+#if HAVE_GPU==1  /*  GPU? */
+  gchar *routine = "ObitSkyModelInitModel";
+  const ObitGPUSkyModelClassInfo *GPUClass;
+  GPUClass = (ObitGPUSkyModelClassInfo*)in->GPUSkyModel->ClassInfo;
+  if ((in->doGPU) && (in->modelMode==OBIT_SkyModel_DFT) && 
+      ((in->modType==OBIT_SkyModel_PointMod)))
+    GPUClass->ObitGPUSkyModelDFTSetMod (in->GPUSkyModel, in->comps, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+#endif /* HAVE_GPU */
 } /* end ObitSkyModelInitModel */
 
 /**
@@ -1369,6 +1400,9 @@ gboolean ObitSkyModelLoad (ObitSkyModel *in, olong image, ObitUV *uvdata,
 void ObitSkyModelFT (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr *err)
 {
   const ObitSkyModelClassInfo *myClass;
+#if HAVE_GPU==1  /*  GPU? */
+  const ObitGPUSkyModelClassInfo *GPUClass;
+#endif /* HAVE_GPU */
   gchar *routine = "ObitSkyModelFT";
   
   /* error checks */
@@ -1382,7 +1416,16 @@ void ObitSkyModelFT (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr *err
  /* Do by model type */
   switch (in->currentMode) {
   case OBIT_SkyModel_DFT:
-    myClass->ObitSkyModelFTDFT(in, field, uvdata, err);
+#if HAVE_GPU==1  /*  GPU? */
+    GPUClass = (ObitGPUSkyModelClassInfo*)in->GPUSkyModel->ClassInfo;
+    /* Only some now */
+    if ((in->doGPU) && (in->modType==OBIT_SkyModel_PointMod))
+      GPUClass->ObitGPUSkyModelDFTCalc (in->GPUSkyModel, uvdata, err);
+    else
+      myClass->ObitSkyModelFTDFT(in, field, uvdata, err);
+#else
+   myClass->ObitSkyModelFTDFT(in, field, uvdata, err);
+#endif /* HAVE_GPU */
     break;
   case OBIT_SkyModel_Grid:
     myClass->ObitSkyModelFTGrid(in, field, uvdata, err);
@@ -3229,6 +3272,11 @@ void ObitSkyModelGetInput (ObitSkyModel* in, ObitErr *err)
   ObitInfoListGetTest(in->info, "noNeg", &type, (gint32*)dim, &InfoReal);
   in->noNeg = InfoReal.itg;
 
+  /* GPU wanted? */
+  InfoReal.itg = (olong)in->doGPU; type = OBIT_bool;
+  ObitInfoListGetTest(in->info, "doGPU", &type, (gint32*)dim, &InfoReal);
+  in->doGPU = InfoReal.itg;
+
   /* Relative Primary Beam correction wanted? */
   InfoReal.itg = (olong)in->doPBCor; type = OBIT_bool;
   ObitInfoListGetTest(in->info, "PBCor", &type, (gint32*)dim, &InfoReal);
@@ -4783,6 +4831,7 @@ void ObitSkyModelInit  (gpointer inn)
   in->doDivide  = FALSE;
   in->doReplace = FALSE;
   in->doPBCor   = TRUE;
+  in->doGPU     = FALSE;
   in->noNeg     = FALSE;
   in->PBFreq    = 1.0e9;
   in->nfreqPB   = 1;
@@ -4821,6 +4870,9 @@ void ObitSkyModelInit  (gpointer inn)
   in->GridFunc  = NULL;
   in->nSpecTerm = 0;
   for (i=0; i<10; i++) in->pointParms[i] = 0.0;
+#if HAVE_GPU==1  /*  GPU? */
+  in->GPUSkyModel = NULL;
+#endif /* HAVE_GPU */
 
 } /* end ObitSkyModelInit */
 
@@ -4864,6 +4916,10 @@ void ObitSkyModelClear (gpointer inn)
     } /* end if this a "base" threadArg */
   }
   
+#if HAVE_GPU==1  /*  GPU? */
+  in->GPUSkyModel = ObitGPUSkyModelUnref(in->GPUSkyModel);
+#endif /* HAVE_GPU */
+
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
   /* delete parent class members */

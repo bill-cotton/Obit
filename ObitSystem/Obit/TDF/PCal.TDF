@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry instrumental polarization calibration
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2012,2013
+;;  Copyright (C) 2012-2014
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -56,11 +56,11 @@ UVRange         0.                  Min & max baseline (klambda)
 **PARAM** int 1
 FreqID                              Freq. ID to select.
 **PARAM** int 1 **DEF** 1
-BIF               0.0      100.0    Lowest IF number 0=>all
+BIF               1.0      100.0    Lowest IF number 0=>all
 **PARAM** int 1
 EIF               0.0      100.0    Highest IF number 0=>all
 **PARAM** int 1 **DEF** 1
-BChan            0.0     8192.0     Low freq. channel
+BChan            1.0     8192.0     Low freq. channel
 **PARAM** int 1
 EChan            0.0     8192.0     Highest freq channel, 0=>all
 **PARAM** int 1
@@ -194,6 +194,9 @@ determining phases from the data.
 calibration but may confuse the polarization calibration and the 
 flux density will be different than in the SU table.
 Solving for IPol flux may help in this case.
+ 4) For the first run in a ginve output PD table, BChan and BIF 
+must =1, otherwise the output table will not be written. 
+Subsequent runs may restart with higher values.
 
 
 Adverbs:

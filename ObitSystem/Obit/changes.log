@@ -2122,3 +2122,37 @@ Obit/src/ObitUVDesc.c:
 Obit/tasks/BPass.c:
   Implement UVRange
 2 May 2014 svn version 479
+
+Bug fixes, initial implementation of partial GPU based SkyModel
+Obit/share/data/3C286LModel.fits.gz:
+  Correct, wrong source
+Obit/tasks/PCal.c:
+  Remove descriptor keyword KeepSou when done
+Obit/src/ObitTableFQUtil.c:
+  ObitTableFQSelect: Fix bug in sign of correction to IF freq offsets.
+Obit/TDF/PCal.TDF:
+  Set min BIF, BChan to 1
+Obit/src/ObitPolnCalFit.c:
+ Fit: Min BChan, BIF = 1.
+Obit/src/ObitUVDesc.c:
+  CopyFreq: correctly allocate fscale
+Obit/TDF/MapBeam.TDF:
+  Improve documentation
+Obit/tasks/MapBeam.c:
+  Remove debug diagnostics
+  Correct units of timeAvg
+Obit/include/ObitImageDescDef.h Obit/src/ObitImageDesc.c:
+Obit/src/ObitIOImageFITS.c Obit/src/ObitIOImageAIPS.c:
+  Implement image planes 4-7, failing in FITS
+Obit/src/ObitTableFQUtil.c:
+  Select: Don't overflow table buffer with too many IFs more than selected
+Obit/include/ObitSkyModel.h Obit/include/ObitSkyModelDef.h:
+Obit/include/ObitCUDASkyModel.h Obit/include/ObitCUDASkyModelInfoDef.h Obit/include/ObitCUDAUtil.h
+Obit/include/ObitGPUSkyModelClassDef.h Obit/include/ObitGPUSkyModelDef.h Obit/include/ObitGPUSkyModel.h
+Obit/src/ObitGPUSkyModel.c Obit/src/ObitSkyModel.c Obit/src/ObitUVImager.c
+Obit/src/ObitCUDASkyModel.cu Obit/src/ObitCUDAUtil.cu
+Obit/tasks/Imager.c Obit/tasks/UVSub.c
+Obit/TDF/Imager.TDF Obit/TDF/UVSub.TDF
+  Implement partial GPU version of SkyModel
+  CUDA routines not implemented in build scripts
+16 May 2014, svn version 480

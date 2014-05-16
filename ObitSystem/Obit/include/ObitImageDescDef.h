@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -105,8 +105,8 @@
   ObitCoordType coordType;
   /** current row  (1-rel) read/write in buffer  */
   olong row;
-  /** current plane (1-rel) read/write in buffer */
-  olong plane;
+  /** current plane (1-rel) plus higher order planes read/write in buffer */
+  olong plane, plane4, plane5, plane6, plane7;
   /** Access size code  */
   ObitIOSize IOsize;
   /** 0-rel axis order: RA (or longitude) , -1 means not present. */

@@ -327,9 +327,9 @@ void ObitUVDescCopyFreq (ObitUVDesc* in, ObitUVDesc* out,
   /* Frequency Scaling */
   if (in->fscale) {
     if (out->fscale)
-      out->fscale = g_realloc(out->fscale, size*sizeof(odouble));
+      out->fscale = g_realloc(out->fscale, size*sizeof(ofloat));
     else
-      out->fscale = g_malloc0(size*sizeof(odouble));
+      out->fscale = g_malloc0(size*sizeof(ofloat));
     for (i=0; i<size; i++) out->fscale[i] = in->fscale[i];
   }
   

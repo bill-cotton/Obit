@@ -1604,6 +1604,7 @@ ObitUV* doAvgData (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   ObitInfoListGetTest(myInput, "chAvg",  &type, dim, &nchAvg);
   timeAvg = 0.0;
   ObitInfoListGetTest(myInput, "avgTime",  &type, dim, &timeAvg);
+  timeAvg /= 60.0;  /* Convert to min. */
 
   /* Average all channels/IFs? */
   doAvgAll = (avgFreq==3);
@@ -2081,12 +2082,12 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
       iy = (olong) (SumElCell[i] + ny/2 + 1.5);
       if ((SumAzCell[i]>1000.) || (SumElCell[i]>1000.)) continue;
       Obit_log_error(err, OBIT_InfoErr, 
-		     "%3.3d Cell %3d %3d Az %8.1f cell, El %8.1f cell, I %6.3f Q %6.3f U %6.3f V %6.3f Jy",
+		     "%3.3d Cell %3d %3d Az %8.1f cell, El %8.1f cell, I %6.3f %6.3f Q %6.3f %6.3f U %6.3f %6.3f V %6.3f %6.3f Jy",
 		     i, ix,iy, 
 		     /*SumAzCell[i]*xCells*206265., SumElCell[i]*yCells*206265., offset in asec */
 		     SumAzCell[i], SumElCell[i],   /* offset in cells */
-		     SumIr[i*selem], SumQr[i*selem],
-		     SumUr[i*selem], SumVr[i*selem]);
+		     SumIr[i*selem],SumIi[i*selem], SumQr[i*selem],SumQi[i*selem],
+		     SumUr[i*selem],SumUi[i*selem], SumVr[i*selem],SumVi[i*selem]);
     }
   } /* End loop normalizing list */
 
@@ -2217,10 +2218,10 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 	      }
 	    }
 	  } /* end loop over lists */
-	  /* DEBUG */
+	  /* DEBUG 
 	  if (iIF==1) {
 	    fprintf (stderr, "x %f y %f c %f s %f v %f\n", x, y, closest, sumIWt, valIr/sumIWt );
-	  }
+	  }*/
 	  /* Better be something within 0.5 cells */
 	  if (closest>0.5) {
 	    sumIWt = sumQWt = sumUWt = sumVWt = 0.0;

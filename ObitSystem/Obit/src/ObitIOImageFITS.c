@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -630,8 +630,12 @@ ObitIOCode ObitIOImageFITSOpen (ObitIOImageFITS *in, ObitIOAccess access,
   /* ???  desc->minval =  1.0e20;*/
 
   /* initialize location in image */
-  desc->row   = 0;
-  desc->plane = 0;
+  desc->row    = 0;
+  desc->plane  = 0;
+  desc->plane4 = 0;
+  desc->plane5 = 0;
+  desc->plane6 = 0;
+  desc->plane7 = 0;
 
   retCode = OBIT_IO_OK;
   return retCode;
@@ -696,8 +700,12 @@ ObitIOCode ObitIOImageFITSSet (ObitIOImageFITS *in, ObitInfoList *info,
   }
 
   /* Reset values in descriptor */
-  ((ObitImageDesc*)in->myDesc)->plane = 0;
-  ((ObitImageDesc*)in->myDesc)->row   = 0;
+  ((ObitImageDesc*)in->myDesc)->plane  = 0;
+  ((ObitImageDesc*)in->myDesc)->plane4 = 0;
+  ((ObitImageDesc*)in->myDesc)->plane5 = 0;
+  ((ObitImageDesc*)in->myDesc)->plane6 = 0;
+  ((ObitImageDesc*)in->myDesc)->plane7 = 0;
+  ((ObitImageDesc*)in->myDesc)->row    = 0;
 
   return retCode;
 } /* end ObitIOImageFITSSet */
@@ -717,7 +725,7 @@ ObitIOCode ObitIOImageFITSRead (ObitIOImageFITS *in, ofloat *data,
 				ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
-  olong row, plane;
+  olong row, plane, plane4, plane5, plane6, plane7;
   long bblc[IM_MAXDIM], ttrc[IM_MAXDIM], incs[IM_MAXDIM]={1,1,1,1,1,1,1};
   long inaxes[10];
   int group=0, i, anyf, status = 0;
@@ -739,12 +747,14 @@ ObitIOCode ObitIOImageFITSRead (ObitIOImageFITS *in, ofloat *data,
   desc = in->myDesc; /* descriptor pointer */
   sel  = in->mySel;  /* selector pointer */
 
-  row   = MAX (desc->row, sel->blc[1]-1);
-  plane = MAX (desc->plane, sel->blc[2]-1);
+  row    = MAX (desc->row,    sel->blc[1]-1);
+  plane  = MAX (desc->plane,  sel->blc[2]-1);
+  plane4 = MAX (desc->plane4, sel->blc[3]);
+  plane5 = MAX (desc->plane5, sel->blc[4]);
+  plane6 = MAX (desc->plane6, sel->blc[5]);
+  plane7 = MAX (desc->plane7, sel->blc[6]);
   /* set current request by desc->IOsize */
   if (desc->IOsize==OBIT_IO_byRow) {
-
-    plane = MAX(plane, sel->blc[2]);
     /* increment row */
     row++;
     if (row>sel->trc[1]) { /* next plane */
@@ -767,25 +777,46 @@ ObitIOCode ObitIOImageFITSRead (ObitIOImageFITS *in, ofloat *data,
     ttrc[0] = sel->trc[0];
     ttrc[1] = sel->trc[1];
   }
-  desc->row   = row;
-  desc->plane = plane;
+  if (plane>sel->trc[2]) { /* next plane4 */
+    plane4++;
+    plane = sel->blc[2];
+  }
+  if (plane4>sel->trc[3]) { /* next plane5 */
+    plane5++;
+    plane4 = sel->blc[3];
+  }
+  if (plane5>sel->trc[4]) { /* next plane6 */
+    plane6++;
+    plane5 = sel->blc[4];
+  }
+  if (plane6>sel->trc[5]) { /* next plane7 */
+    plane7++;
+    plane6 = sel->blc[5];
+  }
+  desc->row    = row;
+  desc->plane  = plane;
+  desc->plane4 = plane4;
+  desc->plane5 = plane5;
+  desc->plane6 = plane6;
+  desc->plane7 = plane7;
 
   /* check if done - starting on the plane past the highest. */
-  if (plane > sel->trc[2]) {
+  if ((plane>sel->trc[2]) || (plane4>sel->trc[3]) || (plane5>sel->trc[4]) ||
+      (plane5>sel->trc[5]) || (plane7>sel->trc[6])) {
     /* ObitIOImageFITSClose (in, err); Close */
     return OBIT_IO_EOF;
   }
 
   /* set plane */
-  bblc[2] = plane;
-  ttrc[2] = plane;
-  for (i=3;i<desc->naxis;i++) {
-    ttrc[i] = (long)sel->trc[i]; 
-    bblc[i] = (long)sel->blc[i];
-  }
+  bblc[2] = ttrc[2] = MAX(1, plane);
+  bblc[3] = ttrc[3] = MAX(1, plane4);
+  bblc[4] = ttrc[4] = MAX(1, plane5);
+  bblc[5] = ttrc[5] = MAX(1, plane6);
+  bblc[6] = ttrc[6] = MAX(1, plane7);
+
   for (i=0; i<desc->naxis; i++) inaxes[i] = (long)desc->inaxes[i];
 
-  /*  Read selected portion of input */
+ /*  Read selected portion of input */
   if (fits_read_subset_flt (in->myFptr, group, (int)desc->naxis, 
 			    inaxes, 
 			    bblc, ttrc, incs, (float)fblank, (float*)data, 
@@ -825,7 +856,8 @@ ObitIOCode ObitIOImageFITSWrite (ObitIOImageFITS *in, ofloat *data,
   ObitImageDesc* desc;
   ObitImageSel* sel;
   long size, fpixel[IM_MAXDIM]={1,1,1,1,1,1,1};
-  olong i, offset, len=0, iRow, nRows=0, row, plane;
+  olong i, offset, len=0, iRow, nRows=0;
+  olong row, plane, plane4, plane5, plane6, plane7;
   int status = 0;
   ofloat val, fblank = ObitMagicF();
   gboolean windowed;
@@ -855,12 +887,15 @@ ObitIOCode ObitIOImageFITSWrite (ObitIOImageFITS *in, ofloat *data,
     (sel->trc[1]!=desc->inaxes[1]);
 
   /* set cfitsio request parameters */
-  row   = MAX (desc->row,   sel->blc[1]-1);
-  plane = MAX (desc->plane, sel->blc[2]-1);
+  row    = MAX (desc->row,    sel->blc[1]-1);
+  plane  = MAX (desc->plane,  sel->blc[2]-1);
+  plane4 = MAX (desc->plane4, sel->blc[3]);
+  plane5 = MAX (desc->plane5, sel->blc[4]);
+  plane6 = MAX (desc->plane6, sel->blc[5]);
+  plane7 = MAX (desc->plane7, sel->blc[6]);
 
   /* set current request by desc->IOsize */
   if (desc->IOsize==OBIT_IO_byRow) {
-    plane = MAX (sel->blc[2], plane);
     row++; /* increment row */
     nRows = 1;
     if (row>sel->trc[1]) { /* next plane */
@@ -878,32 +913,44 @@ ObitIOCode ObitIOImageFITSWrite (ObitIOImageFITS *in, ofloat *data,
 
      if (windowed) {
       nRows = sel->trc[1] - sel->blc[1] + 1;
-      len = sel->trc[0] - sel->blc[0]+1;   /* size of a transfer (row) */
+      len   = sel->trc[0] - sel->blc[0]+1;   /* size of a transfer (row) */
     } else {   /* all at once */
       nRows = 1;
       len = desc->inaxes[0] * desc->inaxes[1]; /* whole plane */
     }
    }
 
+  if (plane>sel->trc[2]) { /* next plane4 */
+    plane4++;
+    plane = sel->blc[2];
+  }
+  if (plane4>sel->trc[3]) { /* next plane5 */
+    plane5++;
+    plane4 = sel->blc[3];
+  }
+  if (plane5>sel->trc[4]) { /* next plane6 */
+    plane6++;
+    plane5 = sel->blc[4];
+  }
+  if (plane6>sel->trc[5]) { /* next plane7 */
+    plane7++;
+    plane6 = sel->blc[5];
+  }
+  desc->row    = row;
+  desc->plane  = plane;
+  desc->plane4 = plane4;
+  desc->plane5 = plane5;
+  desc->plane6 = plane6;
+  desc->plane7 = plane7;
+
   /* Set first pixel, size */
   fpixel[0] = sel->blc[0];
   fpixel[1] = row;
-  fpixel[2] = plane;
-  if (fpixel[2]>desc->inaxes[2]) {
-    fpixel[3] = MAX (1, 1 + (fpixel[2]-1)/desc->inaxes[2]);
-    fpixel[2] = MAX (1, 1 + (fpixel[2]-1)%desc->inaxes[2]);
-  }
-  if (fpixel[3]>desc->inaxes[3]) {
-    fpixel[4] = MAX (1, 1 + (fpixel[3]-1)/desc->inaxes[3]);
-    fpixel[3] = MAX (1, 1 + (fpixel[3]-1)%desc->inaxes[3]);
-  }
-  if (fpixel[4]>desc->inaxes[4]) {
-    fpixel[5] = MAX (1, 1 + (fpixel[4]-1)/desc->inaxes[4]);
-    fpixel[4] = MAX (1, 1 + (fpixel[4]-1)%desc->inaxes[4]);
-  }
-
-  desc->row   = row;
-  desc->plane = plane;
+  fpixel[2] = MAX(1,plane);
+  fpixel[3] = MAX(1,plane4);
+  fpixel[4] = MAX(1,plane5);
+  fpixel[5] = MAX(1,plane6);
+  fpixel[6] = MAX(1,plane7);
 
    /* check if done - starting on the plane past the highest. */
   if ((fpixel[2]>sel->trc[2]) || (fpixel[3]>sel->trc[3]) 

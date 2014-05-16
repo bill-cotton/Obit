@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -90,6 +90,8 @@ gboolean doDivide;
 gboolean doReplace;
 /** Make relative Primary Beam corrections? */
 gboolean doPBCor;
+/** Use GPU */
+gboolean doGPU;
 /** Selected start channel[1-rel] and number */
 olong startChannel, numberChannel;
 /** Selected start IF [1-rel] and number  */
@@ -131,3 +133,6 @@ gpointer **threadArgs;
 ObitThreadFunc DFTFunc;
 /** Gridded Fourier transform routine  */
 ObitThreadFunc GridFunc;
+#if HAVE_GPU==1  /*  GPU? */
+ObitGPUSkyModel *GPUSkyModel;
+#endif /* HAVE_GPU */

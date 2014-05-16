@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2013                                          */
+/*;  Copyright (C) 2012-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -759,7 +759,9 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
   ObitInfoListGetTest(in->info, "doBand",   &type, dim, &in->doBand);
   ObitInfoListGetTest(in->info, "BPVer",    &type, dim, &in->BPVer);
   ObitInfoListGetTest(in->info, "BIF",      &type, dim, &in->BIF);
+  in->BIF = MAX (1, in->BIF);
   ObitInfoListGetTest(in->info, "BChan",    &type, dim, &in->BChan);
+  in->BChan = MAX (1, in->BChan);
   ObitInfoListGetTest(in->info, "refAnt",   &type, dim, &in->refAnt);
   ObitInfoListGetTest(in->info, "prtLv",    &type, dim, &in->prtLv);
   ObitInfoListGetTest(in->info, "Qual",     &type, dim, &Qual);
@@ -1090,7 +1092,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
 	ia2    = in->antNo[i*2+1]; 
 	/* DEBUG if ((isou==0) && (ia1==10) && (ia2==17)) {  11-18 */
 	/* DEBUG if ((isou==0)&& (ia1==2) && (ia2==3)) {  first source 3-4 */
-	if ((isou==0)&& (ia1==4) && (ia2==19)) {  /* first source 5-20 */
+	if ((isou==0)&& (ia1==10) && (ia2==17)) {  /* first source 11 18 */
 	/* DEBUG if (isou==0) {    first source */
 	  /* Function by feed type  */
 	  if (in->isCircFeed ) {
@@ -1606,7 +1608,7 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
 	curPA2 = ObitAntennaListParAng (in->AntLists[suba-1], ant2, curTime, curSource);
 	lastTime = curTime;
       }
-      
+
       /* Save info */
       in->souNo[jvis]     = jsou;  /* relative to list, not data ID */
       in->antNo[jvis*2+0] = ant1-1;
@@ -1649,6 +1651,16 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
 	in->inData[jvis*10+(istok+1)*2]   = sumRe;
 	in->inData[jvis*10+(istok+1)*2+1] = sumIm;
       } /* end Stokes loop */
+      
+      /* DEBUG */
+      if ((err->prtLv>=4) && (ant1==11) && (ant2==18)) {
+	fprintf (stderr,"vis %d bl %d %d sou %d time %f PA %f Data %8.5f %8.5f  %8.5f %8.5f  %8.5f %8.5f  %8.5f %8.5f\n",
+		 jvis, ant1, ant2, isou, curTime, curPA1,
+		 in->inData[jvis*10+2],in->inData[jvis*10+3],
+		 in->inData[jvis*10+4],in->inData[jvis*10+5],
+		 in->inData[jvis*10+6],in->inData[jvis*10+7],
+		 in->inData[jvis*10+8],in->inData[jvis*10+9]);
+      }
       
       jvis++;  /* Data array visibility index */
     endloop:  /* to here if data bad */

@@ -156,14 +156,20 @@ int main ( int argc, char **argv )
   /* show any messages and errors */
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
   
+  /* Shutdown Obit */
+ exit: 
+  /* Remove KeepSou keyword on imput descriptor */
+  ObitUVOpen(inData, OBIT_IO_ReadWrite, err);
+  ObitInfoListRemove (inData->myDesc->info, "KeepSou");
+  ObitInfoListRemove (((ObitUVDesc*)inData->myIO->myDesc)->info, "KeepSou");
+  inData->myStatus = OBIT_Modified;
+  ObitUVClose(inData,  err);
   /* cleanup */
+  PolnFitter = ObitPolnCalFitUnref(PolnFitter); 
   myInput    = ObitInfoListUnref(myInput); 
   inData     = ObitUnref(inData);
   scrData    = ObitUnref(scrData);
   avgData    = ObitUnref(avgData);
-  PolnFitter = ObitPolnCalFitUnref(PolnFitter); 
-  /* Shutdown Obit */
- exit: 
   ObitReturnDumpRetCode (ierr, outfile, myOutput, err);
   myOutput  = ObitInfoListUnref(myOutput);
   mySystem = ObitSystemShutdown (mySystem);

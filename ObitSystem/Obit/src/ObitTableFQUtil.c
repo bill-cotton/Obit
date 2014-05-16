@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -265,6 +265,8 @@ ObitIOCode ObitTableFQSelect (ObitUV *inUV, ObitUV *outUV, odouble *SouIFOff,
     nif   = inUV->myDesc->inaxes[inUV->myDesc->jlocif];
     IFInc = MAX (1, inUV->mySel->IFInc);   /* IF increment */
     maxIF = ((ObitUVDesc*)inUV->myIO->myDesc)->inaxes[((ObitUVDesc*)inUV->myIO->myDesc)->jlocif];
+    /* but no more than selected */
+    maxIF = MIN (maxIF, inUV->mySel->startIF+inUV->mySel->numberIF-1);
   } else {
     nif   = 1;
     IFInc = 1;
@@ -326,11 +328,11 @@ ObitIOCode ObitTableFQSelect (ObitUV *inUV, ObitUV *outUV, odouble *SouIFOff,
     wanted = ((inUV->mySel->FreqID<=0) || 
 	      (inRow->fqid==inUV->mySel->FreqID));
     if (!wanted) continue;
-    
+   
     /* Copy selected data */
     outRow->fqid     = inRow->fqid;
     oif = 0;
-    for (iif=0; iif<maxIF; iif++) {
+    for (iif=inUV->mySel->startIF-1; iif<maxIF; iif++) {
       if (sel->IFSel[iif]) {  /* This IF wanted? */
 	outRow->freqOff[oif]  = inRow->freqOff[iif] - 
 	  inRow->freqOff[inUV->mySel->startIF-1]; /* New reference freq */

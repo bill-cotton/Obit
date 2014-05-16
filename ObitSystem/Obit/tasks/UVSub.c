@@ -27,9 +27,9 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
-#include "ObitImageMosaic.h"
 #include "ObitSkyModel.h"
 #include "ObitSkyModelMF.h"
+#include "ObitImageMosaic.h"
 #include "ObitSystem.h"
 #include "ObitMem.h"
 #include "ObitParser.h"
@@ -785,7 +785,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     "Sources", "Stokes", "timeRange", "BChan", "EChan",  "BIF", "EIF", "subA",
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
     "doPol", "PDVer", "Smooth", "Antennas",  "Sources",  "souCode", "Qual", 
-    "FreqID", "Alpha", 
+    "FreqID", "Alpha",
      NULL};
   gchar *routine = "getInputData";
 
@@ -922,7 +922,7 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
     "CCVer",  "BComp",  "EComp",  "Flux", "PBCor", "antSize", "Factor", 
     "minFlux", "Mode", "ModelType", "REPLACE", "Stokes", 
     "BIF", "EIF", "BCHAN", "ECHAN",
-    "MODPTFLX", "MODPTXOF", "MODPTYOF", "MODPTYPM", 
+    "MODPTFLX", "MODPTXOF", "MODPTYOF", "MODPTYPM",  "doGPU",
     NULL};
   gchar *routine = "getInputSkyModel";
 
@@ -1288,7 +1288,7 @@ void UVSubHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     "Cmethod", "Cmodel", "Factor",  "Opcode", 
     "modelFlux", "modelPos", "modelParm", "noNeg",
     "mrgCC", "PBCor", "antSize", "Alpha",
-    "nThreads",
+    "nThreads", "doGPU",
     NULL};
   gchar *routine = "UVSubHistory";
 
