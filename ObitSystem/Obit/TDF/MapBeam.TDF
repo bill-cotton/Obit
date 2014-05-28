@@ -135,6 +135,10 @@ doPolNorm                          True => normalize pol by max
 **PARAM** int 50
 Antennas         0.0     1000.0    List of antennas to include
                                    NB: MUST include RefAnts
+**PARAM** float 50
+OffAz                              List of ant. offsets in Az (')
+**PARAM** float 50
+OffEl                              List of ant. offsets in El (')
 **PARAM** int 20
 RefAnts                            Reference antenna list, 
                                    NO Default!!
@@ -307,7 +311,12 @@ Adverbs:
   doRMS......True: Write RMS images as well as Stokes images
   doPolNorm..True: Normalize each poln. image by its max. NYI
   Antennas...A list of the antennas to use.  All 0 => use all.
+  OffAz......A list of antenna pointing offsets (') in Az to be 
+             added to the data.  OffAz[1]=ant 1, OffAz[2]=ant 2...
+  OffEl......A list of antenna pointing offsets (') in El to be 
+             added to the data. 
   RefAnts....List of reference antennas,  Must be given!!!
+  
   prtLv......Print level, 0=>none, 2=>obs. locations, Ipol
   noScrat....A list of AIPS disk numbers on which you do not 
              wish scratch files

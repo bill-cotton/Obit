@@ -1509,7 +1509,6 @@ static void ObitSkyModelVMBeamMFClassInfoDefFn (gpointer inClass)
   theClass->ObitSkyModelLoadImage    = (ObitSkyModelLoadImageFP)ObitSkyModelVMBeamMFLoadImage;
   theClass->ObitSkyModelFTDFT        = (ObitSkyModelFTDFTFP)ObitSkyModelVMBeamMFFTDFT;
   theClass->ObitSkyModelFTGrid       = (ObitSkyModelFTGridFP)ObitSkyModelVMBeamMFFTGrid;
-  theClass->ObitSkyModelLoadComps    = (ObitSkyModelLoadCompsFP)ObitSkyModelVMBeamMFLoadComps;
   theClass->ObitSkyModelGetInput     = (ObitSkyModelGetInputFP)ObitSkyModelVMBeamMFGetInput;
   theClass->ObitSkyModelChose        = (ObitSkyModelChoseFP)ObitSkyModelVMBeamMFChose;
   theClass->ObitSkyModelGetInfo= (ObitSkyModelGetInfoFP)ObitSkyModelVMBeamMFGetInfo;
@@ -3024,7 +3023,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 		lll = ll = log(specFreqFact);
 		arg = 0.0;
 		for (iterm=0; iterm<nterm; iterm++) {
-		  arg += ddata[6+iterm] * lll;
+		  arg += ddata[7+iterm] * lll;
 		  lll *= ll;
 		}
 		specFact = exp(arg);
@@ -3157,17 +3156,17 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 		lll = ll = log(specFreqFact);
 		arg = 0.0;
 		for (iterm=0; iterm<nterm; iterm++) {
-		  arg += ddata[9+iterm] * lll;
+		  arg += ddata[4+iterm] * lll;
 		  lll *= ll;
 		}
 		specFact = exp(arg);
-		arg = freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
-			       ddata[8]*visData[ilocv]*visData[ilocv] +
-			       ddata[9]*visData[ilocu]*visData[ilocv]);
+		arg = freq2 * (ddata[7+nterm]*visData[ilocu]*visData[ilocu] +
+			       ddata[8+nterm]*visData[ilocv]*visData[ilocv] +
+			       ddata[9+nterm]*visData[ilocu]*visData[ilocv]);
 		amp = specFact * ddata[3];
-		tx = ddata[4]*(odouble)visData[ilocu];
-		ty = ddata[5]*(odouble)visData[ilocv];
-		tz = ddata[6]*(odouble)visData[ilocw];
+		tx = ddata[4+nterm]*(odouble)visData[ilocu];
+		ty = ddata[5+nterm]*(odouble)visData[ilocv];
+		tz = ddata[6+nterm]*(odouble)visData[ilocw];
 		ExpArg[itcnt] = arg;
 		FazArr[itcnt] = freqFact * (tx + ty + tz);
 		AmpArrR[itcnt] = amp * rgain1[iComp];
@@ -3308,12 +3307,12 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 		}
 		specFact = exp(arg);
 		arg = freqFact * sqrt(visData[ilocu]*visData[ilocu] +
-				      visData[ilocv]*visData[ilocv]) * ddata[7];
+				      visData[ilocv]*visData[ilocv]) * ddata[7+nterm];
 		arg = MAX (arg, 0.1);
 		amp = specFact * ddata[3] * ((sin(arg)/(arg*arg*arg)) - cos(arg)/(arg*arg));
-		tx = ddata[4]*(odouble)visData[ilocu];
-		ty = ddata[5]*(odouble)visData[ilocv];
-		tz = ddata[6]*(odouble)visData[ilocw];
+		tx = ddata[4+nterm]*(odouble)visData[ilocu];
+		ty = ddata[5+nterm]*(odouble)visData[ilocv];
+		tz = ddata[6+nterm]*(odouble)visData[ilocw];
 		FazArr[itcnt] = freqFact * (tx + ty + tz);
 		AmpArrR[itcnt] = amp * rgain1[iComp];
 		AmpArrL[itcnt] = amp * lgain1[iComp];

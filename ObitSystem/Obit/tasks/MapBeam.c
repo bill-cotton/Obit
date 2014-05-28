@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to Map beam polarization                                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2013                                          */
+/*;  Copyright (C) 2009-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -83,7 +83,7 @@ void MapBeamHistory (gchar *Source, gchar Stok, ObitInfoList* myInput,
 ObitUV* doAvgData (ObitInfoList *myInput, ObitUV* inData, ObitErr *err);
 
 /* Get list of antennas */
-olong* getAntList (ObitInfoList* myInput, ObitErr* err);
+olong* getAntList (ObitInfoList* myInput, ObitUV* inData, ObitErr* err);
 
 /* Accumulate data into lists */
 void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
@@ -1087,7 +1087,7 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
   /* Get list of antennas */
-  antList = getAntList(myInput, err);
+  antList = getAntList(myInput, inData, err);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
   /* Loop over list of sources */
@@ -1349,6 +1349,8 @@ ObitFArray** doImage (gboolean doRMS, gboolean doPhase, olong ant,
   selem = (*nIF) * (*nchan); /* size of list element */
   nelem = nx * ny;           /* Number of list elements */
   nelem *= 2;                /* To be sure big enough */
+  /* May need alot bigger if averaging antennas and offsets given */
+  if (ant<=0) nelem *= 100;
   size = selem * nelem;      /* size of list */
   SumIr     = g_malloc0(size*sizeof(ofloat));
   SumIi     = g_malloc0(size*sizeof(ofloat));
@@ -1501,6 +1503,7 @@ void MapBeamHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "outDType", "outFile",  "outDisk", "outName", "outSeq",
     "nx", "ny", "xCells", "yCells", "hwid", "avgTime", "avgFreq", "chAvg", "ChanSel",
     "blnkTime", "avgAnt", "doRMS", "doPhase", "doPolNorm", "Antennas", "RefAnts",
+    "OffAz", "OffEl",
     NULL};
   gchar *routine = "MapBeamHistory";
 
@@ -1665,16 +1668,19 @@ ObitUV* doAvgData (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 /*   Return:                                                              */
 /*     -1 terminated list, 0=> average antennas, g_free when done         */
 /*----------------------------------------------------------------------- */
-olong* getAntList (ObitInfoList* myInput, ObitErr* err)
+olong* getAntList (ObitInfoList* myInput, ObitUV *inData, ObitErr* err)
 {
   olong        *out=NULL;
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM];
-  gboolean     avgAnt=TRUE;
-  olong        i, count, *Antennas;
+  gboolean     avgAnt=TRUE, want;
+  olong        i, j, iout, count, *Antennas, *RefAnts, nant, nref;
   gchar        *routine= "getAntList";
 
   if (err->error) return out;  /* Prior error? */
+  /* reference antennas */
+  ObitInfoListGetP(myInput, "RefAnts",  &type, dim, (gpointer)&RefAnts);
+  nref = dim[0];
 
   ObitInfoListGetTest(myInput, "avgAnt", &type, dim, &avgAnt);
   if (avgAnt) { /* Average all selected */
@@ -1697,13 +1703,26 @@ olong* getAntList (ObitInfoList* myInput, ObitErr* err)
     }
     /* If none selected all wanted */
     if (count<=0) {
-      out = g_malloc0((dim[0]+1)*sizeof(olong));
-      for (i=0; i<dim[0]; i++) out[i] = i+1;
-      out[i] = -1;
+      out  = g_malloc0((dim[0]+1)*sizeof(olong));
+      iout = 0;
+      nant = MIN (dim[0], inData->myDesc->numAnt[0]);
+      for (i=0; i<nant; i++) {
+	/* Want? */
+	want = TRUE;
+	for (j=0; j<nref; j++) if ((i+1)==RefAnts[j]) want = FALSE;
+	if (want) out[iout++] = i+1;
+      }
+      out[iout] = -1;
     } else { /* explicit list */
-      out = g_malloc0((count+1)*sizeof(olong));
-      for (i=0; i<count; i++) out[i] = Antennas[i];
-      out[i] = -1;
+      out  = g_malloc0((count+1)*sizeof(olong));
+      iout = 0;
+      for (i=0; i<count; i++) {
+ 	/* Want? */
+	want = TRUE;
+	for (j=0; j<nref; j++) if (Antennas[i]==RefAnts[j]) want = FALSE;
+	if (want) out[iout++] = Antennas[i];
+     }
+      out[iout] = -1;
     }
   } /* end individual antenna output */
 
@@ -1770,8 +1789,8 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
   ObitInfoType type;
   gint32   dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ofloat   xCells=1.0, yCells=1.0, blnkTime=0.0, tblank=-1.0e20;
-  ofloat   u, v, time, base, ulast, vlast, tol, Az, El, PA;
-  ofloat   ss, cc, xr, xi, fblank =  ObitMagicF();
+  ofloat   u, v, time, base, ulast, vlast, tol, Az, El, PA, *farr;
+  ofloat   ss, cc, xr, xi, *OffAz=NULL, *OffEl=NULL, fblank =  ObitMagicF();
   odouble  sumAz, sumEl, sumPA;
   olong    count, maxElem=*nelem, iElem, indx, iant, ant1, ant2, off=0, iver;
   olong    i, j, jlocs, jlocf, jlocif, incs, incf, incif, doff, ddoff;
@@ -1795,6 +1814,17 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
   yCells = (yCells / 3600.0) * DG2RAD;
   /* Blanking time to days */
   blnkTime /= 86400.0;
+
+  /* Pointing offsets */
+  if (ObitInfoListGetP(myInput, "OffAz",  &type, dim, (gpointer)&farr)) {
+    OffAz = g_malloc0(dim[0]*sizeof(ofloat));
+    for (i=0; i<dim[0]; i++) OffAz[i] = DG2RAD * farr[i]/60.0;  /* to radians */
+  }
+  if (ObitInfoListGetP(myInput, "OffEl",  &type, dim, (gpointer)&farr)) {
+    OffEl = g_malloc0(dim[0]*sizeof(ofloat));
+    for (i=0; i<dim[0]; i++) OffEl[i] = DG2RAD * farr[i]/60.0;  /* to radians */
+  }
+  
 
   /* Ref antennas */
   nRefAnt = 0;
@@ -1898,6 +1928,16 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
       }
       if (!(OK1 || OK2)) goto next;
       if (OK1 && OK2)    goto next;
+
+      /* Add pointing offsets */
+      if (OffAz) {
+	u += OffAz[ant1];
+	u += OffAz[ant2];
+      }
+      if (OffEl) {
+	v += OffEl[ant1];
+	v += OffEl[ant2];
+      }
 
       /* First time in pointing? */
       if (CntCell[iElem]<=0) {
@@ -2091,6 +2131,10 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
     }
   } /* End loop normalizing list */
 
+  /* Cleanup */
+  if (OffAz) g_free(OffAz);
+  if (OffEl) g_free(OffEl);
+
 } /* end accumData  */
 
 /*----------------------------------------------------------------------- */
@@ -2188,10 +2232,11 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 	  for (i=0; i<nelem; i++) {
 	    closest = MIN (closest, MAX (fabs(SumAzCell[i]-x), fabs(SumElCell[i]-y)));
 	    if (coef[i]!=0.0) {
-	      /* DEBUG */
-	      if ((iIF==1) && (abs(ix-21)<=2) && (abs(iy-28)<=2)) {
-		fprintf (stderr,"i %d x %d y %d flx %f coef %f sum %f\n",i, ix, iy, SumIr[i*selem+off], coef[i],sumIWt);
-	      }
+	      /* DEBUG
+	      if ((iIF==15) && (ichan==2) && (abs(ix-32)<=0) && (abs(iy-32)<=0)) {
+		fprintf (stderr,"i %d x %8.5f y %8.5f az %8.5f el %8.5f flx %8.5f coef %8.6f sum %8.6f\n",
+			 i, x, y, SumAzCell[i], SumElCell[i], SumIr[i*selem+off], coef[i],sumIWt);
+	      } */
 	      if (SumIr[i*selem+off]!=fblank) {
 		valIr  += coef[i]*SumIr[i*selem+off];
 		valIi  += coef[i]*SumIi[i*selem+off];
@@ -2411,33 +2456,22 @@ void lagrange(ofloat x, ofloat y, olong n, olong hwid,
     /* Within hwid? and i!=j */
     if ((fabs(x-xlist[j])<=xhwid) && (fabs(y-ylist[j])<=xhwid)) {
       coef[j] = 1.0;  /* In case nothing else within hwid */
-      countx++;
-      prodx  *= (odouble)(x - xlist[j]);
-      prodxd *= (odouble)(xlist[j] - xlist[j]);
-      county++;
-      prody  *= (odouble)(y - ylist[j]);
-      prodyd *= (odouble)(ylist[j] - ylist[j]);
-      
+     
       /* Inner loop over list */
       for (i=0; i<n; i++) {
-	/* X Within hwid? and i!=j */
-	/*if (fabs(x-xlist[i])<=xhwid) {*/
-	if ((fabs(x-xlist[i])<=xhwid) && 
-	    (i!=j) && (fabs(xlist[j]-xlist[i])>0.3)) {
+	if (i==j) continue;                    /* i!=j */
+	if (fabs(x-xlist[i])>xhwid) continue;  /* X within halfwidth */
+	if (fabs(y-ylist[i])>xhwid) continue;  /* Y within halfwidth */
+	if (fabs(xlist[j]-xlist[i])<0.3) continue;
+	if (fabs(ylist[j]-ylist[i])<0.3) continue;
 	  countx++;
 	  prodx  *= (odouble)(x - xlist[i]);
 	  prodxd *= (odouble)(xlist[j] - xlist[i]);
-	}
-	/* Y Within hwid? and i!=j */
-	/*if (fabs(y-ylist[i])<=xhwid) {*/
-	if ((fabs(y-ylist[i])<=xhwid) &&
-	    (i!=j) &&  (fabs(ylist[j]-ylist[i])>0.3)) {
 	  county++;
 	  prody  *= (odouble)(y - ylist[i]);
 	  prodyd *= (odouble)(ylist[j] - ylist[i]);
-	}
-      }
-    }
+      } /* end inner loop */
+    } /* end j within half width */
     /* put it together */
     if ((countx>=1)  || (county>=1)) {
       if ((prodxd!=0.0) && (prodyd!=0.0))
@@ -2448,13 +2482,14 @@ void lagrange(ofloat x, ofloat y, olong n, olong hwid,
     }
   } /* end loop over list */
 
+  /* DEBUG
+  if ((x==0.0) && (y==0.0))
+    fprintf(stderr,"lagrange x %f, y %f, sum %f\n", x, y, sum); */
+  
   /* Normalize if anything found */
   if (fabs(sum)<0.01) return;
   prodx = 1.0 / sum;
   for (j=0; j<n; j++) coef[j] *= prodx;
 
-  /* DEBUG */
-  fprintf(stderr,"lagrange x %f, y %f, sum %f\n", x, y, sum);
-  
-} /* end lagrange */
+  } /* end lagrange */
 

@@ -2156,3 +2156,21 @@ Obit/TDF/Imager.TDF Obit/TDF/UVSub.TDF
   Implement partial GPU version of SkyModel
   CUDA routines not implemented in build scripts
 16 May 2014, svn version 480
+
+
+Bug fixes 
+Obit/changes.log:
+Obit/src/ObitExp.c:
+  Back out of fast routine and use library version.
+Obit/tasks/Splat.c:
+  doSplat: if avgFreq==0; chAvgv=1
+Obit/src/ObitSkyModelVMBeamMF.c:
+  ThreadSkyModelVMBeamMFFTDFT: Fix indexing for models with a spectrum
+Obit/tasks/MapBeam.c Obit/TDF/MapBeam.TDF:
+  Add pointing offsets
+  getAntList: Don't include reference antennas
+Obit/src/ObitBDFData.c:
+  InitScan: may need to refill buffer.
+  This was causing aborts in BDFIn
+  Trap fewer antennas than claimed in the ASDM.
+28 May 2014 svn version 481

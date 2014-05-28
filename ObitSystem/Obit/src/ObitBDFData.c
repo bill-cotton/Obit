@@ -371,6 +371,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   olong *SWoff=NULL;
   gboolean done;
   gchar *aname;
+  ObitIOCode retCode = OBIT_IO_OK;
   gchar *routine = "ObitBDFDataInitScan";
 
   /* error checks */
@@ -513,6 +514,17 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   maxStr    = in->nBytesInBuffer - (in->current-in->buffer);
   /*startInfo = g_strstr_len (in->current, maxStr, "<dataStruct ");*/
   startInfo = findString (in->current, maxStr, "<dataStruct ");
+  /* May need next buffer */
+  while (startInfo==NULL) {
+    retCode = ObitBDFDataFillBuffer (in, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    maxStr = in->nBytesInBuffer;
+    /*startInfo = g_strstr_len (in->buffer, maxStr, "<sdmDataSubsetHeader ");*/
+    startInfo = findString (in->buffer, maxStr, "<sdmDataSubsetHeader ");
+   if (retCode==OBIT_IO_EOF) startInfo = in->buffer;
+  }
+  /* If the entire file was read and no start info - then something is wrong */
+  if (retCode==OBIT_IO_EOF) return;
   maxStr    = in->nBytesInBuffer - (olong)(startInfo-in->buffer);
   /*endInfo   = g_strstr_len (startInfo, maxStr, "</dataStruct>");*/
   endInfo   = findString (startInfo, maxStr, "</dataStruct>");
@@ -780,6 +792,8 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   antIds = in->SDMData->ConfigDescriptionTab->rows[iConfig]->antennaId;
   /* Loop over antennas */
   for (iAnt=0; iAnt<in->nant; iAnt++) {
+    /* See if past all on list */
+    if (antIds[iAnt]<0) continue;
     /* Find antenna */
     for (jAnt=0; jAnt<in->SDMData->AntennaTab->nrows; jAnt++) {
       if (in->SDMData->AntennaTab->rows[jAnt]->antennaId==antIds[iAnt]) break;

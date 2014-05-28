@@ -253,8 +253,8 @@ ofloat ObitExpCalc(ofloat arg)
   olong cell;
   ofloat out, d;
 
-  /* DEBUG 
-  return exp(arg); */
+  /* Fast scheme not accurate enough, use library */
+  return exp(arg); 
 
   /* Initialize? */
   if (!isInit) ObitExpInit();
@@ -299,9 +299,9 @@ void ObitExpVec(olong n, ofloat *argarr, ofloat *exparr)
   
   if (n<=0) return;
 
-  /* DEBUG
+  /* Fast scheme not accurate enough, use library */
   for (i=0; i<n; i++) exparr[i] = exp(argarr[i]);
-  return; */
+  return; 
 
   /* Initialize? */
   if (!isInit) ObitExpInit();

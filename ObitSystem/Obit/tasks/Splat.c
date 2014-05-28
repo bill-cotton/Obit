@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task apply calibration snd write multi source files */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2013                                          */
+/*;  Copyright (C) 2010-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -864,7 +864,8 @@ void doSplat (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   timeAvg = 0.0;
   ObitInfoListGetTest(myInput, "timeAvg",  &type, dim, &timeAvg);
   nchAvg = 1;
-  ObitInfoListGetTest(myInput, "chAvg",  &type, dim, &nchAvg);
+  if (avgFreq>0)
+    ObitInfoListGetTest(myInput, "chAvg",  &type, dim, &nchAvg);
 
   /* Get input parameters from myInput, copy to inData */
   ObitInfoListCopyList (myInput, inData->info, dataParms);
