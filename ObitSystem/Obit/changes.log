@@ -2174,3 +2174,8 @@ Obit/src/ObitBDFData.c:
   This was causing aborts in BDFIn
   Trap fewer antennas than claimed in the ASDM.
 28 May 2014 svn version 481
+
+Fix CUDA related build problems
+Obit/include/ObitCUDAUtil.h Obit/include/ObitCUDASkyModel.h:
+  Stubbed versions of CUDA routines if not GPU enabled.
+29 May 2014 svn version 482

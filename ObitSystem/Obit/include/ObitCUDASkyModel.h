@@ -1,4 +1,4 @@
-/* $Id$        */
+/* $Id$    */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2014                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
@@ -35,10 +35,12 @@
  *
  * Define interface to (primitive) CUDA routines
  * Sky models are calculated using a GPU.
+ * Real GPU/CUDA versions are called if HAVE_GPU==1, else stubbed versions
  * 
  */
 
 /*---------------Public functions---------------------------*/
+#if HAVE_GPU==1  /* GPU? Real versioins */
 /* Public: Initialize DFT Model */
 void ObitCUDASkyModelDFTInit (GPUInfo *gpuInfo, GPUVisInfo *visInfo, GPUModelInfo *modelInfo);
 
@@ -49,5 +51,31 @@ void ObitCUDASkyModelDFTSetMod (GPUInfo *gpuInfo, GPUVisInfo *visInfo, GPUModelI
 void ObitCUDASkyModelDFTCalc (GPUInfo *gpuInfo, GPUVisInfo *visInfo, GPUModelInfo *modelInfo);
 
 /* Public: Shutdown DFT Model */
-void ObitCUDASkyModelDFTShutdown (GPUInfo *gpuinfo, GPUVisInfo   *visInfo, GPUModelInfo *modelInfo);
+void ObitCUDASkyModelDFTShutdown (GPUInfo *gpuinfo, GPUVisInfo *visInfo, GPUModelInfo *modelInfo);
+
+#else  /* No GPU - stubb */
+/* Public: Initialize DFT Model */
+void ObitCUDASkyModelDFTInit (GPUInfo *gpuInfo, GPUVisInfo *visInfo, GPUModelInfo *modelInfo)
+{
+  g_error("GPU/CUDA not implemented");
+} /* end ObitCUDASkyModelDFTInit */
+
+/* Public: Set DFT sky model Model */
+void ObitCUDASkyModelDFTSetMod (GPUInfo *gpuInfo, GPUVisInfo *visInfo, GPUModelInfo *modelInfo)
+{
+  g_error("GPU/CUDA not implemented");
+} /* end  ObitCUDASkyModelDFTSetMod  */
+
+/* Public: Calculate DFT Model */
+void ObitCUDASkyModelDFTCalc (GPUInfo *gpuInfo, GPUVisInfo *visInfo, GPUModelInfo *modelInfo)
+{
+  g_error("GPU/CUDA not implemented");
+} /* end  ObitCUDASkyModelDFTCalc */
+
+/* Public: Shutdown DFT Model */
+void ObitCUDASkyModelDFTShutdown (GPUInfo *gpuinfo, GPUVisInfo *visInfo, GPUModelInfo *modelInfo)
+{
+  g_error("GPU/CUDA not implemented");
+} /* end ObitCUDASkyModelDFTShutdown */
+#endif /* HAVE_GPU */
 #endif /* OBITFCUDASKYMODEL_H */ 

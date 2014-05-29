@@ -34,9 +34,11 @@
  *
  * C callable CUDA GPU routines
  * Routines abort on error
+ * Real GPU/CUDA versions are called if HAVE_GPU==1, else stubbed versions
  */
 
 /*---------------Public functions---------------------------*/
+#if HAVE_GPU==1  /* GPU? Real versioins */
 /* Public: Set device */
 void ObitCUDASetGPU (int cuda_device);
 
@@ -82,4 +84,99 @@ void ObitCUDAUtilHost2GPU(float *GPU, float *host, int memsize, int* stream);
 /* Public: Copy GPU to Host memory */
 void ObitCUDAUtilGPU2Host(float *host, float *GPU, int memsize, int* stream);
 
+#else  /* No GPU - stubb *
+/* Public: Set device */
+void ObitCUDASetGPU (int cuda_device)
+{
+  g_error("GPU/CUDA not implemented");
+} /* end ObitCUDASetGPU */
+
+/* Public: Reset device */
+void ObitCUDAResetGPU ()
+{
+  g_error("GPU/CUDA not implemented");
+} /* end  ObitCUDAResetGPU */
+
+/* Public: synchronize GPU */
+void ObitCUDADeviceSynchronize (int* event)
+{
+  g_error("GPU/CUDA not implemented");
+} /* end ObitCUDADeviceSynchronize */
+
+/* Public: Create stream */
+int* ObitCUDAStreamCreate ()
+{
+  g_error("GPU/CUDA not implemented");
+  return NULL;
+} /* end  ObitCUDAStreamCreate */
+
+/* Public: Destroy stream */
+void ObitCUDAStreamDestroy (int* stream)
+{
+  g_error("GPU/CUDA not implemented");
+} /* end ObitCUDAStreamDestroy */
+
+/* Public: Create event */
+int* ObitCUDAEventCreate ()
+{
+  g_error("GPU/CUDA not implemented");
+  return NULL;
+} /* end ObitCUDAEventCreate */
+
+/* Public: Destroy event */
+void ObitCUDAEventDestroy (int* event)
+{
+  g_error("GPU/CUDA not implemented");
+} /* end ObitCUDAEventDestroy */
+
+/* Public: record event */
+void ObitCUDAEventRecord (int* event, int *stream)
+{
+  g_error("GPU/CUDA not implemented");
+} /* end ObitCUDAEventRecord */
+
+/* Public: synchronize event */
+void ObitCUDAEventSynchronize (int* event)
+{
+  g_error("GPU/CUDA not implemented");
+} /* end ObitCUDAEventSynchronize */
+
+/* Public: Allocate locked host memory */
+float* ObitCUDAUtilAllocHost (int memsize)
+{
+  g_error("GPU/CUDA not implemented");
+  return NULL;
+} /* end ObitCUDAUtilAllocHost */
+
+/* Public: Deallocate locked host memory */
+void ObitCUDAUtilFreeHost (float *host)
+{
+  g_error("GPU/CUDA not implemented");
+} /* end ObitCUDAUtilFreeHost */
+
+/* Public: Allocate locked Device memory */
+float* ObitCUDAUtilAllocGPU (int memsize)
+{
+  g_error("GPU/CUDA not implemented");
+  return NULL;
+} /* end ObitCUDAUtilAllocGPU  */
+
+/* Public: Deallocate Device memory */
+void ObitCUDAUtilFreeGPU (float *GPU)
+{
+  g_error("GPU/CUDA not implemented");
+} /* end ObitCUDAUtilFreeGPU */
+
+/* Public: Copy Host to GPU memory */
+void ObitCUDAUtilHost2GPU(float *GPU, float *host, int memsize, int* stream)
+{
+  g_error("GPU/CUDA not implemented");
+} /* end ObitCUDAUtilHost2GPU */
+
+/* Public: Copy GPU to Host memory */
+void ObitCUDAUtilGPU2Host(float *host, float *GPU, int memsize, int* stream)
+{
+  g_error("GPU/CUDA not implemented");
+} /* end ObitCUDAUtilGPU2Host */
+#endif /* HAVE_GPU */
 #endif /* OBITFCUDAUtil_H */ 
