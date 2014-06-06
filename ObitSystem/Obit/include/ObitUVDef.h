@@ -38,7 +38,7 @@ ObitUVSel* mySel;
 /** uvdata buffer */
 ofloat *buffer;
 /** uv data buffer size in floats */
-olong bufferSize;
+ollong bufferSize;
 /** Number of parallel buffers */
 olong nParallel;
 /** Array of IOs for parallel buffers */

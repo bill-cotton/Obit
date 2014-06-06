@@ -631,7 +631,7 @@ void InitIDI (gchar *FITSfile, olong disk, ObitErr *err)
     FullName = ObitFITSFilename (disk, FITSfile, err);
 
   /* If file exists and starts with '!' - Zap first */
-  if (ObitFileExist(&FITSfile[1], err) && (FITSfile[0]=='!')) {
+  if (ObitFileExist(FullName, err) && (FITSfile[0]=='!')) {
     ObitFileZapFile (FullName, err);
   }
   if (err->error) Obit_traceback_msg (err, routine, "Output");
@@ -1547,7 +1547,7 @@ void PutCalibrationInfo (ObitInfoList *myInput, ObitUV *inData,
     numPol  = inTable->numPol;
     numTerm = 0;
     outTable = newObitTableIDI_CALIBRATIONValue ("Output table", outData, 
-						 &ver, access, numIF, numAnt, numPol, err);
+						 &ver, access, numPol, numIF, numAnt, err);
     if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with CALIBRATION table");
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
     

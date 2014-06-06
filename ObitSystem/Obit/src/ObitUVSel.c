@@ -233,9 +233,9 @@ ObitUVSel* ObitUVSelCopy (ObitUVSel* in, ObitUVSel* out,
  * \param sel UV selector.
  * \return size in floats needed for I/O.
  */
-olong ObitUVSelBufferSize (ObitUVDesc* desc, ObitUVSel* sel)
+ollong ObitUVSelBufferSize (ObitUVDesc* desc, ObitUVSel* sel)
 {
-  olong size = 0;
+  ollong size = 0;
 
   /* error checks */
   if (desc==NULL) return size; 
@@ -246,7 +246,8 @@ olong ObitUVSelBufferSize (ObitUVDesc* desc, ObitUVSel* sel)
   ObitUVSelDefault (desc, sel);
 
   /* size of uncompressed vis * number of vis */
-  size = sel->lrecUC * sel->nVisPIO;
+  size = sel->lrecUC;
+  size *= sel->nVisPIO;
 
   return size;
 } /* end ObitUVSelBufferSize */

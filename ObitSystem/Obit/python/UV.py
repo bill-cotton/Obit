@@ -115,7 +115,7 @@ Data selection, calibration and editing parameters on List member:
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2009
+#  Copyright (C) 2004-2014
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -1968,7 +1968,7 @@ def PTableCLfromNX(outUV, nant, err, outVer=1, calInt=1.0):
         OErr.printErrMsg(err, "Error opening table")
     # Update header
     d = cltab.Desc.List.Dict
-    d["numAnt"] = nant
+    d["NO_ANT"] =  [3, [1, 1, 1, 1, 1], [nant]]
     cltab.Desc.List.Dict = d
     # Create row
     ia = [];     fa1 = []; fa0 = []

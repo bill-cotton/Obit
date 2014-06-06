@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -171,9 +171,9 @@ ObitIOCode ObitIOUVFITSWriteDescriptor (ObitIOUVFITS *in, ObitErr *err);
 
 /** Public:  Create buffer */
 void
-ObitIOUVFITSCreateBuffer (ofloat **data, olong *size, 
-			     ObitIOUVFITS *in, ObitInfoList *info, 
-			     ObitErr *err);
+ObitIOUVFITSCreateBuffer (ofloat **data, ollong *size, 
+			  ObitIOUVFITS *in, ObitInfoList *info, 
+			  ObitErr *err);
 
 /** Public: Create an associated Table 
  * Typed as base class to avoid problems. */

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -181,7 +181,7 @@ ObitUVSel* ObitUVSelCopy (ObitUVSel* in, ObitUVSel* out,
 			  ObitErr *err);
 
 /** Public: How big a buffer is needed for a data transfer? */
-olong ObitUVSelBufferSize (ObitUVDesc* desc, 
+ollong ObitUVSelBufferSize (ObitUVDesc* desc, 
 			   ObitUVSel* sel);
 
 /** Public: Enforces defaults in inaxes, blc, trc */

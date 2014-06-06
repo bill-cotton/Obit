@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -871,9 +871,11 @@ static void SetInvJonesIF(ObitUVCalPolarizationS *in, ObitAntennaList *Ant,
 	 POLCA and POLCB */
       doJones = FALSE;  /* Jones matrix terms computed here */
       elp_r = Ant->ANlist[iant-1]->FeedAPCal[2*iif+0];
-      ori_r = Ant->ANlist[refAnt-1]->FeedAPCal[2*iif+1];
+      if (refAnt>0) ori_r = Ant->ANlist[refAnt-1]->FeedAPCal[2*iif+1];
+      else          ori_r = 0.0;
       elp_l = Ant->ANlist[iant-1]->FeedBPCal[2*iif+0];
-      ori_l = Ant->ANlist[refAnt-1]->FeedBPCal[2*iif+1];
+      if (refAnt>0) ori_l = Ant->ANlist[refAnt-1]->FeedBPCal[2*iif+1];
+      else          ori_l = 0.0;
       
       if ((elp_r!=fblank) && (elp_l!=fblank)) {
 	/* OK */
@@ -882,8 +884,10 @@ static void SetInvJonesIF(ObitUVCalPolarizationS *in, ObitAntennaList *Ant,
 	  
 	  /* Sines/cosines */
 	  angle[0] = elp_r; angle[1] = 2*ori_r; angle[2] = elp_l; angle[3] = -2*ori_l;
-	  angle[4] = Ant->ANlist[PCal->polRefAnt-1]->FeedAPCal[2*iif+1];
-	  angle[5] = -Ant->ANlist[PCal->polRefAnt-1]->FeedBPCal[2*iif+1] + Ant->RLPhaseDiff[iif];
+	  if (PCal->polRefAnt>0) angle[4] = Ant->ANlist[PCal->polRefAnt-1]->FeedAPCal[2*iif+1];
+	  else                   angle[4] = 0.0;
+	  if (PCal->polRefAnt>0) angle[5] = -Ant->ANlist[PCal->polRefAnt-1]->FeedBPCal[2*iif+1] + Ant->RLPhaseDiff[iif];
+	  else                   angle[5] =  Ant->RLPhaseDiff[iif];
 	  ObitSinCosVec(6, angle, sina, cosa);
 	  
 	  /* Complex terms */
@@ -1136,8 +1140,10 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
 	    
 	    /* Sines/cosines */
 	    angle[0] = elp_r; angle[1] = 2*ori_r; angle[2] = elp_l; angle[3] = -2*ori_l;
-	    angle[4] =  PCal->ANlist[PCal->polRefAnt-1][kndx+1];
-	    angle[5] = -PCal->ANlist[PCal->polRefAnt-1][kndx+3] + PD;
+	    if (PCal->polRefAnt>0) angle[4] =  PCal->ANlist[PCal->polRefAnt-1][kndx+1];
+	    else                   angle[4] = 0.0;
+	    if (PCal->polRefAnt>0) angle[5] = -PCal->ANlist[PCal->polRefAnt-1][kndx+3] + PD;
+	    else                   angle[5] = 0.0;
 	    ObitSinCosVec(6, angle, sina, cosa);
 	    
 	    /* Complex terms */

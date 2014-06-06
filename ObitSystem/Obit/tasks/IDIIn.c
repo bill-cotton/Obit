@@ -61,6 +61,7 @@
 #include "ObitTableIDI_INTERFEROMETER_MODEL.h"
 #include "ObitTableIDI_WEATHER.h"
 #include "ObitTableIDI_UV_DATA.h"
+#include "ObitFileFITS.h"
 #include "ObitHistory.h"
 #include "ObitPrecess.h"
 #ifndef VELIGHT
@@ -693,6 +694,11 @@ void GetHeader (ObitUV *outData, gchar *inscan,
   ObitUVDesc *desc;
   ObitTableIDI_UV_DATA *inTable=NULL;
   ObitData *inData=NULL;
+  ObitIOCode retCode;
+  gchar strTemp[80], Comment[80];
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitFileFITS *inFITS=NULL;
+  /*gboolean exist=FALSE;*/
   olong ncol;
   gchar FullFile[128], *today=NULL;
   olong i, iarr, disk, lim;
@@ -977,6 +983,18 @@ void GetHeader (ObitUV *outData, gchar *inscan,
 
     /* index descriptor */
     ObitUVDescIndex (desc);
+
+    /* Pri HDU keywords  */
+    inFITS = newObitFileFITS("FITS File");
+    retCode = ObitFileFITSOpen (inFITS, FullFile, 0, OBIT_IO_ReadOnly, err);
+    retCode = ObitFileFITSReadKeyStr (inFITS, "PRIBAND ", strTemp, Comment, err);
+    if (retCode==OBIT_IO_OK) {
+      dim[0] = MIN (8, strlen(strTemp)); dim[1] = dim[2] = dim[3] = dim[4] = 1;
+      ObitInfoListAlwaysPut(outData->myDesc->info, "PRIBAND ", OBIT_string, dim, strTemp);
+    }
+    retCode = ObitFileFITSClose (inFITS, err);
+    if (err->error) Obit_log_error(err, OBIT_Error, "ERROR with primary HDU keywords");
+    inFITS = ObitFileFITSUnref(inFITS);
 
     /* Add Antenna and Frequency info */
     ObitUVOpen (outData, OBIT_IO_WriteOnly, err) ;
@@ -2175,7 +2193,7 @@ void GetCalibrationInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
     access  = OBIT_IO_ReadOnly;
     numAnt  = 0;
     inTable = newObitTableIDI_CALIBRATIONValue ("Input table", inData, 
-						&ver, access, numIF, numAnt, numPol, err);
+						&ver, access, numPol, numIF, numAnt, err);
     /* Find it? */
     if (inTable==NULL) {
       ObitErrClearErr (err);

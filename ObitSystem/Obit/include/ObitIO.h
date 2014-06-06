@@ -1,6 +1,6 @@
 /* $Id$              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -197,7 +197,7 @@ ObitIOCode ObitIOWriteDescriptor (ObitIO *in, ObitErr *err);
 typedef ObitIOCode (*ObitIOWriteDescriptorFP) (ObitIO *in, ObitErr *err);
 
 /** Public:  Create buffer */
-void ObitIOCreateBuffer (ofloat **data, olong *size, ObitIO *in, 
+void ObitIOCreateBuffer (ofloat **data, ollong *size, ObitIO *in, 
 			 ObitInfoList *info, ObitErr *err);
 typedef void (*ObitIOCreateBufferFP) (ofloat **data, olong *size, ObitIO *in, 
 			 ObitInfoList *info, ObitErr *err);

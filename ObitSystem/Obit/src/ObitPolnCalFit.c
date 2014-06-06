@@ -369,8 +369,13 @@ static void calcmodelRL (ObitPolnCalFit *args, ofloat Rarray[8], olong idata)
   }
 
   /* Reference antenna phase terms */
-  COMPLEX_EXP (PRref,  antParm[(args->refAnt-1)*4+0]);
-  COMPLEX_EXP (PLref, -antParm[(args->refAnt-1)*4+2]+PD);
+  if (args->refAnt>0) {
+    COMPLEX_EXP (PRref,  antParm[(args->refAnt-1)*4+0]);
+    COMPLEX_EXP (PLref, -antParm[(args->refAnt-1)*4+2]+PD);
+  } else {
+    COMPLEX_SET(PRref, 1.0, 0.0);
+    COMPLEX_EXP (PLref, PD);
+  }
   COMPLEX_CONJUGATE (ct1, PLref);
   COMPLEX_MUL2 (PPRL, PRref, ct1);
   COMPLEX_CONJUGATE (ct1, PRref);
@@ -663,7 +668,7 @@ static void calcmodelXY (ObitPolnCalFit *args, ofloat Rarray[8], olong idata)
  * \li doBlank    OBIT_boolean scalar If True blanked failed solns, else default values [T]
  * \li doBand     OBIT_long scalar If >0 then BP table BPVer was applied to input  [0]
  * \li BPVer      OBIT_long scalar Input BP table  [0]
- * \li refAnt     OBIT_long scalar Reference antenna  [1]
+ * \li refAnt     OBIT_long scalar Reference antenna  [0-> none, def 1]
  * \li BIF        OBIT_long scalar First IF (1-rel) selected in outUV  [1]
  * \li BChan      OBIT_long scalar First channel (1-rel) selected in outUV  [1]
  * \param inUV  Averaged/calibrated/divided UV data to be fitted
@@ -966,7 +971,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
 
     if (in->prtLv>=2) {
       Obit_log_error(err, OBIT_InfoErr, "Process IF %d Channel %d no chan %d",
-		     in->IFno, in->Chan+in->BChan-1, in->ChWid);
+		     in->IFno+in->BIF-1, in->Chan+in->BChan-1, in->ChWid);
       ObitErrLog(err); 
    }
 
@@ -2077,7 +2082,7 @@ static void UpdateInstrumentalTab(ObitPolnCalFit* in, gboolean isOK,
     /* Rewrite */
     ObitTablePDWriteRow (in->PDTable, irow, row, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
-  } /* End loop onver source writing */
+  } /* End loop over antenna writing */
 
   /* Close */
   ObitTablePDClose (in->PDTable, err);
@@ -2538,6 +2543,7 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
     in->selAnt = -1;
     begChi2 = GetChi2 (in->nThread, in,  polnParmUnspec, 0,
 		       &ParRMS, &XRMS, NULL, NULL, err);  /* Initial value */
+    if (iter==0) in->initChiSq = begChi2;  /* Save initial */
     /* Test for valid data */
     if (begChi2<=0.0) {
       Obit_log_error(err, OBIT_InfoErr, "No valid data");
@@ -2738,6 +2744,10 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
     in->selAnt = -1;
     endChi2 = GetChi2 (in->nThread, in, polnParmUnspec, 0, 
 		       &ParRMS, &XRMS, NULL, NULL, err);  /* Final value */
+    /* Save (final) values */
+    in->ChiSq = endChi2;
+    in->ParRMS = ParRMS;
+    in->XRMS   = XRMS;
 
     /* Convergence test */
     difChi2 = fabs(begChi2 - endChi2);
@@ -3122,8 +3132,13 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
   }
 
   /* Reference antenna phase terms */
-  COMPLEX_EXP (PRref,  antParm[(args->refAnt-1)*4+0]);
-  COMPLEX_EXP (PLref, -antParm[(args->refAnt-1)*4+2]+PD);
+  if (args->refAnt>0) {
+    COMPLEX_EXP (PRref,  antParm[(args->refAnt-1)*4+0]);
+    COMPLEX_EXP (PLref, -antParm[(args->refAnt-1)*4+2]+PD);
+  } else {
+    COMPLEX_SET (PRref, 1.0, 0.0);
+    COMPLEX_EXP (PLref, PD);
+  }
   COMPLEX_CONJUGATE (ct1, PLref);
   COMPLEX_MUL2(PPRL, PRref, ct1);
   COMPLEX_CONJUGATE (ct1, PRref);
@@ -4919,9 +4934,14 @@ static gboolean CheckCrazyOne(ObitPolnCalFit *in, ObitErr *err)
   gboolean crazyOne = FALSE;
   odouble sum, RMS, test, maxDif;
   ofloat fblank = ObitMagicF();
-  olong i, k, imax, idata;
+  olong i, j, k, imax, idata;
 
   if (err->error) return crazyOne;  /* Error detected? */
+
+  /* Was final Chi^2 not 50% better than initial 
+   and Was parallel hand fit better than cross?*/
+  if ((in->ChiSq>0.5*in->initChiSq) && 
+      (in->XRMS>1.1*in->ParRMS)) goto reset;
 
   /* DEBUG test - toss ant 18
   in->antParm[17*4+1] = in->antParm[17*4+3] = 50.0; */
@@ -4991,6 +5011,42 @@ static gboolean CheckCrazyOne(ObitPolnCalFit *in, ObitErr *err)
   /*in->antFit[imax][0]   = in->antFit[imax][1]   = in->antFit[imax][2]   = in->antFit[imax][3]   = FALSE;*/
   in->antParm[imax*4+0] = in->antParm[imax*4+1] = in->antParm[imax*4+2] = in->antParm[imax*4+3] = fblank;
 
+  return TRUE;
+
+  /* Reset solutions */
+ reset:
+  Obit_log_error(err, OBIT_InfoWarn, "Questionable solution, reset, retry");
+  for (i=0; i<in->nant; i++) {
+    for (j=0; j<4; j++) in->antParm[i*4+j] = 0.0;
+    if (in->isCircFeed) {
+      /* Circular feeds ori_r, elip_r, ori_l, elip_l */
+      in->antParm[i*4+0] =  0.0;
+      in->antParm[i*4+1] =  G_PI/4.0;
+      in->antParm[i*4+2] =  0.0;
+      in->antParm[i*4+3] = -G_PI/4.0;
+    } else {
+      /* Linear feeds, if the antenna angles on sky are given in the AntennaList[0] use then, 
+	 otherwise assume Feeds are X, Y
+	 ori_x, elip_x, ori_y, elip_y,  */
+      if (fabs (in->AntLists[0]->ANlist[i]->FeedAPA-in->AntLists[0]->ANlist[i]->FeedBPA)<1.0) {
+	/* Assume X, Y */
+	in->antParm[i*4+0] = 0.0;
+	in->antParm[i*4+2] = +G_PI/2.0;
+      } else {  /* Use what's in the AN table as initial convert to radians */
+	in->antParm[i*4+0] = in->AntLists[0]->ANlist[i]->FeedAPA*DG2RAD;
+	in->antParm[i*4+2] = in->AntLists[0]->ANlist[i]->FeedBPA*DG2RAD;
+      } /* end if antenna angle given */
+    }
+  } /* end loop over antennas */
+  
+  /* Reset source parameters */
+  for (i=0; i<in->nsou; i++) {
+    for (j=0; j<4; j++) {
+      if (in->lastSouParm[i*4+j]>0.0) 
+	in->souParm[i*4+j] = in->lastSouParm[i*4+j];
+      else 	in->souParm[i*4+j] = 0.0;
+    } 
+  }
   return TRUE;
 } /* end CheckCrazyOne */
 
@@ -5189,7 +5245,7 @@ static int PolnFitFuncOERL (const gsl_vector *x, void *params,
   } /* end loop over antennas */
 
   /* Ref antenna - 0 rel */
-  refAnt = MAX(0, args->refAnt-1);
+  refAnt = MAX(-1, args->refAnt-1);
 
   /* now source */
   for (isou=0; isou<args->nsou; isou++) {
@@ -5227,8 +5283,13 @@ static int PolnFitFuncOERL (const gsl_vector *x, void *params,
   }
 
   /* Reference antenna phase terms */
-  COMPLEX_EXP (PRref,  antParm[(args->refAnt-1)*4+0]);
-  COMPLEX_EXP (PLref, -antParm[(args->refAnt-1)*4+2]+PD);
+  if (args->refAnt>0) {
+    COMPLEX_EXP (PRref,  antParm[(args->refAnt-1)*4+0]);
+    COMPLEX_EXP (PLref, -antParm[(args->refAnt-1)*4+2]+PD);
+  } else {
+    COMPLEX_SET (PRref, 1.0, 0.0);
+    COMPLEX_EXP (PLref, PD);
+  }
   COMPLEX_CONJUGATE (ct1, PLref);
   COMPLEX_MUL2 (PPRL, PRref, ct1);
   COMPLEX_CONJUGATE (ct1, PRref);
@@ -5478,7 +5539,7 @@ static int PolnFitJacOERL (const gsl_vector *x, void *params,
   } /* end loop over antennas */
   
   /* Ref antenna - 0 rel */
-  refAnt = MAX(0, args->refAnt-1);
+  refAnt = MAX(-1, args->refAnt-1);
   
   /* now source */
   for (isou=0; isou<args->nsou; isou++) {
@@ -5522,8 +5583,13 @@ static int PolnFitJacOERL (const gsl_vector *x, void *params,
   }
 
   /* Reference antenna phase terms */
-  COMPLEX_EXP (PRref,  antParm[(args->refAnt-1)*4+0]);
-  COMPLEX_EXP (PLref, -antParm[(args->refAnt-1)*4+2]+PD);
+  if (args->refAnt>0) {
+    COMPLEX_EXP (PRref,  antParm[(args->refAnt-1)*4+0]);
+    COMPLEX_EXP (PLref, -antParm[(args->refAnt-1)*4+2]+PD);
+  } else {
+    COMPLEX_SET (PRref, 1.0, 0.0);
+    COMPLEX_EXP (PLref, PD);
+  }
   COMPLEX_CONJUGATE (ct1, PLref);
   COMPLEX_MUL2 (PPRL, PRref, ct1);
   COMPLEX_CONJUGATE (ct1, PRref);
@@ -6723,7 +6789,7 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
   } /* end loop over antennas */
   
   /* Ref antenna - 0 rel */
-  refAnt = MAX(0, args->refAnt-1);
+  refAnt = MAX(-1, args->refAnt-1);
   
   /* now source */
   for (isou=0; isou<args->nsou; isou++) {
@@ -6767,8 +6833,13 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
   }
 
   /* Reference antenna phase terms */
-  COMPLEX_EXP (PRref,  antParm[(args->refAnt-1)*4+0]);
-  COMPLEX_EXP (PLref, -antParm[(args->refAnt-1)*4+2]+PD);
+  if (args->refAnt>0) {
+    COMPLEX_EXP (PRref,  antParm[(args->refAnt-1)*4+0]);
+    COMPLEX_EXP (PLref, -antParm[(args->refAnt-1)*4+2]+PD);
+   } else {
+    COMPLEX_SET (PRref, 1.0, 0.0);
+    COMPLEX_EXP (PLref, PD);
+  }
   COMPLEX_CONJUGATE (ct1, PLref);
   COMPLEX_MUL2 (PPRL, PRref, ct1);
   COMPLEX_CONJUGATE (ct1, PRref);
@@ -7990,7 +8061,7 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
   } /* end loop over antennas */
   
   /* Ref antenna - 0 rel */
-  refAnt = MAX(0, args->refAnt-1);
+  refAnt = MAX(-1, args->refAnt-1);
   
   /* now source */
   for (isou=0; isou<args->nsou; isou++) {
@@ -8306,7 +8377,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
   } /* end loop over antennas */
   
   /* Ref antenna - 0 rel */
-  refAnt = MAX(0, args->refAnt-1);
+  refAnt = MAX(-1, args->refAnt-1);
   
   /* now source */
   for (isou=0; isou<args->nsou; isou++) {
@@ -9679,7 +9750,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
   } /* end loop over antennas */
   
   /* Ref antenna - 0 rel */
-  refAnt = MAX(0, args->refAnt-1);
+  refAnt = MAX(-1, args->refAnt-1);
   
   /* now source */
   for (isou=0; isou<args->nsou; isou++) {

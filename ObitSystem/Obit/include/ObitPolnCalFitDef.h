@@ -128,8 +128,12 @@ olong *isouIDs;
 odouble refFreq;
 /**  frequency of current data */
 odouble freq;
+/**  Initial Chi**2 */
+odouble initChiSq;
 /**  Chi**2 of model fit */
 odouble ChiSq;
+/** Parallel, cross hand RMS residual */
+ofloat ParRMS, XRMS;
 /** Input R-L Phase of calibrators (deg) at refFreq */
 ofloat *RLPhaseIn;
 /** R-L Phase of calibrators (deg) at freq */

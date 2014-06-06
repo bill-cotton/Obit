@@ -1705,9 +1705,9 @@ ObitIOCode ObitIOUVAIPSFlush (ObitIOUVAIPS *in, ObitErr *err)
  * \param err ObitErr for reporting errors.
  */
 void 
-ObitIOUVAIPSCreateBuffer (ofloat **data, olong *size, 
-			     ObitIOUVAIPS *in, ObitInfoList *info, 
-			     ObitErr *err)
+ObitIOUVAIPSCreateBuffer (ofloat **data, ollong *size, 
+			  ObitIOUVAIPS *in, ObitInfoList *info, 
+			  ObitErr *err)
 {
   gchar *name;
   

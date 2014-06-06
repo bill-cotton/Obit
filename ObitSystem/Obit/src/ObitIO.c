@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -745,7 +745,7 @@ ObitIOCode ObitIOFlush (ObitIO *in, ObitErr *err)
  * \param info ObitInfoList with instructions
  * \param err ObitErr for reporting errors.
  */
-void ObitIOCreateBuffer (ofloat **data, olong *size, ObitIO *in, 
+void ObitIOCreateBuffer (ofloat **data, ollong *size, ObitIO *in, 
 			    ObitInfoList *info, ObitErr *err)
 {
   const ObitIOClassInfo *myClass;

@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -173,7 +173,7 @@ ObitIOCode ObitIOUVAIPSReadDescriptor (ObitIOUVAIPS *in, ObitErr *err);
 ObitIOCode ObitIOUVAIPSWriteDescriptor (ObitIOUVAIPS *in, ObitErr *err);
 
 /** Public:  Create buffer */
-void ObitIOUVAIPSCreateBuffer (ofloat **data, olong *size, 
+void ObitIOUVAIPSCreateBuffer (ofloat **data, ollong *size, 
 				  ObitIOUVAIPS *in, ObitInfoList *info, 
 				  ObitErr *err);
 

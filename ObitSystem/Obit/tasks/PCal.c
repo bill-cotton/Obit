@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Instrumental polarization calibration                              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012,2013                                          */
+/*;  Copyright (C) 2012,2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -206,7 +206,6 @@ ObitInfoList* PCalIn (int argc, char **argv, ObitErr *err)
 
   /* Initialize output */
   myOutput = defaultOutputs(err);
-  ObitReturnDumpRetCode (-999, outfile, myOutput, err);
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
   
   /* command line arguments */
@@ -217,7 +216,12 @@ ObitInfoList* PCalIn (int argc, char **argv, ObitErr *err)
 
      /*fprintf (stderr,"DEBUG next arg %s %s\n",argv[ax],argv[ax+1]); DEBUG */
     arg = argv[ax];
-    if (strcmp(arg, "-input") == 0){ /* input parameters */
+    if (strcmp(arg, "-output") == 0){ /* output results */
+      outfile = argv[++ax];
+      ObitReturnDumpRetCode (-999, outfile, myOutput, err);
+      if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
+
+    } else if (strcmp(arg, "-input") == 0){ /* input parameters */
       infile = argv[++ax];
       /* parse input file */
       ObitParserParse (infile, list, err);
@@ -634,6 +638,11 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   if (err->error) return inData;
   g_assert (ObitInfoListIsA(myInput));
 
+  /* Make sure multisource nature kept even if only selecting one source */
+  KeepSou = TRUE;
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  ObitInfoListAlwaysPut (myInput, "inKeepSou", OBIT_bool, dim, &KeepSou);
+
   /* Build basic input UV data Object */
   inData = ObitUVFromFileInfo ("in", myInput, err);
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
@@ -669,7 +678,6 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   KeepSou = TRUE;
   dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
   ObitInfoListAlwaysPut (inData->myDesc->info, "KeepSou", OBIT_bool, dim, &KeepSou);
-
   return inData;
 } /* end getInputData */
 
