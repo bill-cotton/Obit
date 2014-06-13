@@ -1289,7 +1289,7 @@ ObitIOCode ObitUVRead (ObitUV *in, ofloat *data, ObitErr *err)
     need = in->mySel->nVisPIO*in->myDesc->lrec;
     if (need > in->bufferSize) {
       Obit_log_error(err, OBIT_Error, 
-		     "IO buffer ( %d) too small, need %d for %s", 
+		     "IO buffer ( %ld) too small, need %d for %s", 
 		     in->bufferSize, need, in->name);
       return retCode;
     }
@@ -1370,7 +1370,7 @@ ObitIOCode ObitUVReadMulti (olong nBuff, ObitUV **in, ofloat **data,
       need = in[ib]->mySel->nVisPIO*in[0]->myDesc->lrec;
       if (need > in[ib]->bufferSize) {
 	Obit_log_error(err, OBIT_Error, 
-		       "IO buffer ( %d) too small, need %d for %s buff %d", 
+		       "IO buffer ( %ld) too small, need %d for %s buff %d", 
 		       in[ib]->bufferSize, need, in[ib]->name, ib);
 	return retCode;
       }
@@ -1449,7 +1449,7 @@ ObitIOCode ObitUVReReadMulti (olong nBuff, ObitUV **in, ofloat **data,
       need = in[ib]->mySel->nVisPIO*in[0]->myDesc->lrec;
       if (need > in[ib]->bufferSize) {
 	Obit_log_error(err, OBIT_Error, 
-		       "IO buffer ( %d) too small, need %d for %s buff %d", 
+		       "IO buffer ( %ld) too small, need %d for %s buff %d", 
 		       in[ib]->bufferSize, need, in[ib]->name, ib);
 	return retCode;
       }
@@ -1520,7 +1520,7 @@ ObitIOCode ObitUVReadSelect (ObitUV *in, ofloat *data, ObitErr *err)
     need = in->mySel->nVisPIO*in->myDesc->lrec;
     if (need > in->bufferSize) {
       Obit_log_error(err, OBIT_Error, 
-		     "IO buffer ( %d) too small, need %d for %s", 
+		     "IO buffer ( %ld) too small, need %d for %s", 
 		     in->bufferSize, need, in->name);
       return retCode;
     }
@@ -1600,7 +1600,7 @@ ObitIOCode ObitUVReadMultiSelect (olong nBuff, ObitUV **in, ofloat **data,
       need = in[0]->mySel->nVisPIO*in[0]->myDesc->lrec;
       if (need > in[ib]->bufferSize) {
 	Obit_log_error(err, OBIT_Error, 
-		       "IO buffer ( %d) too small, need %d for %s", 
+		       "IO buffer ( %ld) too small, need %d for %s", 
 		       in[0]->bufferSize, need, in[ib]->name);
 	return retCode;
       }
@@ -1675,7 +1675,7 @@ ObitIOCode ObitUVReReadMultiSelect (olong nBuff, ObitUV **in, ofloat **data,
       need = in[0]->mySel->nVisPIO*in[0]->myDesc->lrec;
       if (need > in[ib]->bufferSize) {
 	Obit_log_error(err, OBIT_Error, 
-		       "IO buffer ( %d) too small, need %d for %s", 
+		       "IO buffer ( %ld) too small, need %d for %s", 
 		       in[0]->bufferSize, need, in[ib]->name);
 	return retCode;
       }
@@ -1749,7 +1749,7 @@ ObitIOCode ObitUVWrite (ObitUV *in, ofloat *data, ObitErr *err)
     need = in->mySel->nVisPIO*in->myDesc->lrec;
     if (need > in->bufferSize) {
       Obit_log_error(err, OBIT_Error, 
-		     "IO buffer ( %d) too small, need %d for %s", 
+		     "IO buffer ( %ld) too small, need %d for %s", 
 		     in->bufferSize, need, in->name);
       return retCode;
     }

@@ -4497,7 +4497,7 @@ void ObitImageUtilT2Spec  (ObitImage *inImage, ObitImage **outImage,
 void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err)
 {
   olong blc[2], trc[2], center[2], prtLv, iplane, plane[] = {1,1,1,1,1};
-  ofloat peak, cellx, celly;
+  ofloat peak, cellx, celly, fblank =  ObitMagicF();
   ofloat bmaj, bmin, bpa, dx, dy;
   olong nmodel, nparm, corner[2], fdim[2];
   ofloat Peak, RMSResid, peakResid, fluxResid, DeltaX,  DeltaY, parms[3];
@@ -4514,14 +4514,17 @@ void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err)
   if (err->error) return;
   g_assert (ObitImageIsA(beam));
 
-  /* plane number */
+  /* plane number - first one with data */
   iplane = 1;
   ObitInfoListGetTest(beam->info, "PLANE", &type, dim, &iplane);
-  plane[0] = iplane;
-
-  /* Read beam if necessary */
-  if (beam->image==NULL) ObitImageGetPlane (beam, NULL, plane, err);
-  if (err->error) goto cleanup;
+  while (iplane<=beam->myDesc->inaxes[2]) {
+    plane[0] = iplane++;
+    
+    /* Read beam until non blanked plane */
+    ObitImageGetPlane (beam, NULL, plane, err);
+    if (err->error) goto cleanup;
+    if (beam->image->array[10]!=fblank) break;  /* This one OK? */
+  }
 
   /* Trim edges of beam */
   blc[0] = beam->image->naxis[0]/4;

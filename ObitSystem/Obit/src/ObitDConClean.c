@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2013                                          */
+/*;  Copyright (C) 2004-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2145,6 +2145,10 @@ void ReadBP (ObitDConClean* in, ObitErr *err)
     dim[0] = IM_MAXDIM;
     for (j=0; j<IM_MAXDIM; j++) blc[j] = 1;
     for (j=0; j<IM_MAXDIM; j++) trc[j] = 0;
+    /* Select plane */
+    blc[2] = trc[2] = in->plane[0];
+    blc[3] = trc[3] = in->plane[1];
+    blc[4] = trc[4] = in->plane[2];
     ObitInfoListPut (Beam->info, "BLC", OBIT_long, dim, blc, err); 
     ObitInfoListPut (Beam->info, "TRC", OBIT_long, dim, trc, err); 
     dim[0] = 1;

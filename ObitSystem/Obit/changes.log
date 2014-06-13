@@ -2206,3 +2206,29 @@ Obit/tasks/IDIIn.c Obit/tasks/IDIOut.c:
 Obit/python/UV.py:
   PTableCLfromNX: Fix problem updating table header
 6 June 2014, svn version 483
+
+Mostly bug fixes
+Obit/src/ObitUVGridMF.c:
+  FFT2ImPar: Deal with all blanked planes
+Obit/src/ObitThreadGrid.c:
+  Various: Fix upper channel loop index
+Obit/src/ObitUV.c:
+  Various: fix message format for longlong buffer size
+Obit/tasks/MFImage.c Obit/tasks/MFBeam.c:
+  doImage: tolerate better no cleaning if possibly self caling
+Obit/tasks/Imager.c:
+ getInputData: set nvis per IO after inistantiating uv data.
+Obit/src/ObitDConClean.c:
+  ReadBP: read correct plane in beam
+Obit/src/ObitDConCleanVis.c:
+  FindPeak: Look in correct CC table 
+Obit/src/ObitDConCleanVisLine.c:
+  Select: Reset Pixels->resMax
+Obit/src/ObitImageUtil.c:
+  FitBeam: Try planes until a non blank beam found
+Obit/tasks/BDFIn.c:
+  GetCalDeviceInfo: Fix logic in calculating IF number 
+Obit/src/ObitIOImageAIPS.c:
+  ObitIOImageAIPSRead: Fix plane indexing for IO_byRow
+13 June 2014, svn version 484
+

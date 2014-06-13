@@ -2021,14 +2021,15 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
       ObitInfoListAlwaysPut (inUV->info, "Stokes", OBIT_string, dim, Stokes);
       
       /* Image/Clean */
+      myClean->peakFlux = 0.0;
       ObitDConCleanVisDeconvolve ((ObitDCon*)myClean, err);
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
       imgOK = TRUE; 
      
-      /* Make sure image Cleaned if Self cal wanted */
-      if (doSC) {
-	Obit_return_if_fail((myClean->Pixels->currentIter>0), err, 
-			    "%s: Image NOT CLEANed", routine);
+      /* Make sure image Cleaned if Self cal wanted, else complain and skip SC */
+      if (doSC && (myClean->peakFlux==0.0)) {
+	Obit_log_error(err, OBIT_InfoWarn,  "%s: Image NOT CLEANed", routine);
+	goto finalFilter;
       }
 
       /* Only recenter/reimage once */
@@ -2312,6 +2313,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   if (ncomp) g_free(ncomp);   ncomp  = NULL;  /* Done with array */
 
   /* Any final CC Filtering? */
+ finalFilter:
   if (CCFilter[0]>0.0) {
     /* Compress CC files */
     ObitSkyModelCompressCC (myClean->skyModel, err);

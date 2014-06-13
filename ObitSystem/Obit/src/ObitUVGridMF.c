@@ -687,7 +687,7 @@ void ObitUVGridMFReadUVPar (olong nPar, ObitUVGrid **inn, ObitUV *UVin, ObitErr 
   ObitErrLog(err);
 
   /* DEBUG - look at first complex grid
-  dbgRArr = ObitCArrayMakeF(in[0]->grids[0]);
+  dbgRArr = ObitCArrayakeF(in[0]->grids[0]);
   dbgIArr = ObitCArrayMakeF(in[0]->grids[0]);
   ObitCArrayReal (in[0]->grids[0], dbgRArr);
   ObitCArrayImag (in[0]->grids[0], dbgIArr);
@@ -731,6 +731,7 @@ void ObitUVGridMFFFT2Im (ObitUVGrid *inn, Obit *oout, ObitErr *err)
   ObitInfoType type;
   ObitImageClassInfo *imgClass;
   gchar *routine = "ObitUVGridMFFFT2Im";
+  gboolean allBlank;
    /* DEBUG
   ObitFArray *dbgRArr=NULL, *dbgIArr=NULL; */
  
@@ -755,6 +756,7 @@ void ObitUVGridMFFFT2Im (ObitUVGrid *inn, Obit *oout, ObitErr *err)
 
     /* Loop over spectral planes */
     in->BeamNorm = 0.0;
+    allBlank = TRUE;  /* All planes blanked */
     for (j=0; j<in->nSpec; j++) {
       /* do FFT */
       ObitFFTC2R (in->FFTBeam, in->grids[j], array);
@@ -930,7 +932,7 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
   ObitFArray **array=NULL;
   ObitImageClassInfo *imgClass;
   ObitImage *theBeam;
-  gboolean OK;
+  gboolean OK, allBlank;
   ofloat *Corrp, fblank = ObitMagicF();
   gchar *routine = "ObitUVGridMFFFT2ImPar";
   /* DEBUG
@@ -1053,13 +1055,14 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
       pos[0] = 0; pos[1] = 0; pos[2] = 0;
       /* Loop over planes */
       in[i]->BeamNorm = 0.0;
+      allBlank = TRUE;  /* All planes blanked */
       for (j=0; j<in[i]->nSpec; j++) {
 	Corrp = ObitFArrayIndex(array[i*in[i]->nSpec+j], pos);
 	in[i]->BeamNorms[j] = *Corrp;
 	in[i]->BeamNorm += in[i]->BeamNorms[j]; /* track sum of weights */
 	/* Deal with blanked planes */
 	if (in[i]->BeamNorms[j]==0.0) in[i]->BeamNorms[j] = fblank;
-	
+	allBlank = allBlank &&  (in[i]->BeamNorms[j]==fblank);
 	/* Save normalization on in[i+1] */
 	if (!in[i+1]->doBeam) in[i+1]->BeamNorms[j] = in[i]->BeamNorms[j];
 	in[i+1]->BeamNorm = in[i]->BeamNorm;
@@ -1069,10 +1072,14 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
       ObitInfoListAlwaysPut(out[i]->info, "BeamNorms", OBIT_float, dim, in[i]->BeamNorms);
     } /* end if beam */
     /* Fetch BeamNorms from beam if needed */
-    if ((in[i]->BeamNorms[0]==0.0) || (in[i]->BeamNorms[0]==fblank)) {
+    if ((!allBlank) && ((in[i]->BeamNorms[0]==0.0) || (in[i]->BeamNorms[0]==fblank))) {
       imgClass  = (ObitImageClassInfo*)out[i]->ClassInfo;    /* Image class */
-      theBeam   = imgClass->ObitImageGetBeam(out[i], 0, plane, err);
-      ObitInfoListGetTest(theBeam->info, "BeamNorms", &type, dim, in[i]->BeamNorms);
+      if (!in[i]->doBeam) {   /* This is not a beam */
+	theBeam   = imgClass->ObitImageGetBeam(out[i], 0, plane, err);
+	ObitInfoListGetTest(theBeam->info, "BeamNorms", &type, dim, in[i]->BeamNorms);
+      } else {  /* Is a beam */
+ 	ObitInfoListGetTest(out[i]->info, "BeamNorms", &type, dim, in[i]->BeamNorms);
+     }
       if (err->error) goto cleanup;
     } /* end fetch Beam Norms */
 

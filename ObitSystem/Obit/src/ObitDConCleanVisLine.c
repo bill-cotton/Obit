@@ -1037,9 +1037,9 @@ gboolean ObitDConCleanVisLineSelect(ObitDConClean *inn, ObitFArray **pixarray,
      if (err->prtLv>=2) Obit_log_error(err, OBIT_InfoErr, 
 					"Clean chan %d of %d",
 					ichan+1, in->nPar);
-     
-      t = ParentClass->ObitDConCleanSelect((ObitDConClean*)inArr->in, 
-					   inArr->pixarray, err);
+     inArr->in->Pixels->resMax    = -1.0e20;  /* Maximum residual */
+     t = ParentClass->ObitDConCleanSelect((ObitDConClean*)inArr->in, 
+					  inArr->pixarray, err);
     } else t = TRUE;
     done = done && t;
     if (err->error) Obit_traceback_val (err, routine, in->name, done);

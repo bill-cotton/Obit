@@ -965,7 +965,7 @@ static gpointer ThreadGrid (gpointer args)
   olong kvis, ichan, lrow;
 
   lrow  = 2*(1 + gridInfo->nx[ifacet]/2 + halfWidth);  // length of grid row in floats
-  
+  eChan = MAX (eChan, bChan+1);  /* At least 1 channel */
   /* Loop over vis */
   for (kvis=largs->lovis; kvis<largs->hivis; kvis++) {
     /* Prep grid */
@@ -1279,6 +1279,7 @@ void fast_prep_grid(olong kvis, GridFuncArg *args)
   static const gdouble itwopi = 1.0/(2*G_PI);
 
   lrow  = 2*(1 + gridInfo->nx[ifacet]/2 + halfWidth);  // length of grid row in floats
+  eChan = MAX (eChan, bChan+1);  /* At least 1 channel */
   halfv = gridInfo->ny[ifacet]/2;
   maxBL2  = gridInfo->maxBL[ifacet]*gridInfo->maxBL[ifacet];
   minBL2  = gridInfo->minBL[ifacet]*gridInfo->minBL[ifacet];
@@ -1487,6 +1488,7 @@ void fast_prep_gridAVX(olong kvis, GridFuncArg *args)
   v4sf v4t, v4out ;
 
   lrow  = 2*(1 + gridInfo->nx[ifacet]/2 + halfWidth);  // length of grid row in floats
+  eChan = MAX (eChan, bChan+1);  /* At least 1 channel */
   halfv = gridInfo->ny[ifacet]/2;
   iscaleu = 1.0 / gridInfo->uscale[ifacet];
   iscalev = 1.0 / gridInfo->vscale[ifacet];

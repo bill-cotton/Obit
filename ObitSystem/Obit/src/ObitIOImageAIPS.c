@@ -532,7 +532,8 @@ ObitIOCode ObitIOImageAIPSRead (ObitIOImageAIPS *in, ofloat *data,
  
   /* set current request by desc->IOsize */
   if (desc->IOsize==OBIT_IO_byRow) {
-    row++; /* increment row */
+    plane = MAX (sel->blc[2], plane);
+    row++;   /* increment row */
     if (row>sel->trc[1]) { /* next plane */
       row = sel->blc[1];
       plane++;

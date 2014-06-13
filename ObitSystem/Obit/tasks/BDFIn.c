@@ -3031,7 +3031,7 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ASDMcalDeviceTable*   inTab=SDMData->calDeviceTab;
   ASDMAntennaArray*    AntArray;
   ASDMSpectralWindowArray* SpWinArray;
-  olong i, j, iRow, oRow, ver, maxAnt, iAnt, jAnt, IFno;
+  olong i, j, iRow, oRow, ver, maxAnt, iAnt, jAnt, IFno, cnt;
   olong *antLookup, *SpWinLookup=NULL, *SpWinLookup2=NULL;
   oint numIF, numPol;
   ofloat fblank = ObitMagicF();
@@ -3080,6 +3080,7 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   SpWinLookup  = g_malloc0(SDMData->SpectralWindowTab->nrows*sizeof(olong));
   /* Lookup2[SWId] = SpWinArray element for that SW, -1=not */
   SpWinLookup2 = g_malloc0(SDMData->SpectralWindowTab->nrows*sizeof(olong));
+  cnt = 0;  /* Number of selected IFs/SWs */
   for (i=0; i<SDMData->SpectralWindowTab->nrows; i++) SpWinLookup[i] = -1;  /* For deselected */
   for (i=0; i<SDMData->SpectralWindowTab->nrows; i++) SpWinLookup2[i] = -1;
   for (i=0; i<SpWinArray->nwinds; i++) {
@@ -3087,7 +3088,7 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     if ((SpWinArray->winds[i]->spectralWindowId>=0) && 
 	(SpWinArray->winds[i]->spectralWindowId<SDMData->SpectralWindowTab->nrows) &&
 	SpWinArray->winds[i]->selected)
-      SpWinLookup[SpWinArray->winds[i]->spectralWindowId] = SpWinArray->order[i];
+      {SpWinLookup[SpWinArray->winds[i]->spectralWindowId] = SpWinArray->order[cnt]; cnt++;}
   }
 
   /* Create output CD table object */
@@ -3151,7 +3152,7 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       }
 
       if (want) {
-	IFno = SpWinLookup2[inTab->rows[iRow]->spectralWindowId];
+	IFno = SpWinLookup[inTab->rows[iRow]->spectralWindowId];
 	IFno = MAX (0, MIN(IFno, (numIF-1)));
       } else continue;
       
