@@ -4501,9 +4501,9 @@ static void FindPeak (ObitDConCleanVis *in, ObitErr *err)
   ObitInfoListGetTest(mosaic->info, "CCVer", &type, dim, &itemp);
   CCVer = itemp;
 
-  /* If multipel channels */
-  if (in->plane[0]>1) CCVer = in->plane[0];
-
+  /* If multiple channels */
+  if (in->plane[0]>1) CCVer = in->plane[0]; 
+  
   /* Loop over fields */
   peakFlux = -1.0e20;
   for (ifield=0; ifield<nfield; ifield++) { 

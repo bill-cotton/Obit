@@ -731,7 +731,7 @@ void ObitUVGridMFFFT2Im (ObitUVGrid *inn, Obit *oout, ObitErr *err)
   ObitInfoType type;
   ObitImageClassInfo *imgClass;
   gchar *routine = "ObitUVGridMFFFT2Im";
-  gboolean allBlank;
+  gboolean allBlank=FALSE;
    /* DEBUG
   ObitFArray *dbgRArr=NULL, *dbgIArr=NULL; */
  
@@ -932,7 +932,7 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
   ObitFArray **array=NULL;
   ObitImageClassInfo *imgClass;
   ObitImage *theBeam;
-  gboolean OK, allBlank;
+  gboolean OK, allBlank=FALSE;
   ofloat *Corrp, fblank = ObitMagicF();
   gchar *routine = "ObitUVGridMFFFT2ImPar";
   /* DEBUG

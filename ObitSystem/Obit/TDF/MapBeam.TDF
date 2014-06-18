@@ -50,6 +50,8 @@ Qual             -1.0              Source qualifier -1=>all
 souCode                            Source calibrator code '    '=>all
 **PARAM** float 2
 timeRange                          Time range to select
+**PARAM** str 4 **DEF** IQUV
+Stokes                              Stokes to process
 **PARAM** float 2
 UVRange         0.                 Min & max baseline (klambda)
 **PARAM** int 1
@@ -198,6 +200,11 @@ Adverbs:
              NB: The souCode test is applied in addition to the
              other tests, i.e. Sources and Qual, in the
              selection of sources to process.
+  Stokes.....Stokes parameters to process.
+             'I' = Stokes I only, 'IQU' = also Q, U
+             'RR', 'LL' also.
+             '    ' => I, Q, U, 
+             'F'=> formal I (both orthogonal Stokes needed)
   timeRange..Time range of the data to be processed. In order:
              Start and end times in days relative to ref. date.  
              Use  dhms2day to convert from human readable form

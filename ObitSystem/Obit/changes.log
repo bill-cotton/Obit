@@ -2232,3 +2232,17 @@ Obit/src/ObitIOImageAIPS.c:
   ObitIOImageAIPSRead: Fix plane indexing for IO_byRow
 13 June 2014, svn version 484
 
+Mostly bug fixes
+Obit/src/ObitDConCleanVis.c:
+  Find Peak: Fix spelling
+Obit/src/ObitUVGridMF.c:
+  Several: initialize allBlank to FALSE, was being used w/o initialization
+Obit/python/EVLALowBandPipe.py:
+  Indent Bandpass recalibration properly
+Obit/TDF/MapBeam.TDF Obit/tasks/MapBeam.c:
+  Add Stokes parameter.
+Obit/python/EVLACal.py  Obit/python/EVLAContPipe.py:
+  Added support for specifying UVrange in various operations.
+  Added knowledge of several more standard calibrator files.
+  Runs Lister after BDFIn, writing to log
+17 June 2014, svn version 485

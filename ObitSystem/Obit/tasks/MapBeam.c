@@ -802,8 +802,10 @@ ObitImage* setOutput (gchar *Source, olong iStoke, olong ant,
   olong     blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong     trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   gboolean  exist;
-  gchar     tname[129], *chStokes="IQUV";
-  odouble   StokCrval[4] = {1.0,2.0,3.0,4.0};
+  gboolean trueStokes=FALSE;
+  gchar     tname[129], *chStokes, *chTStokes="IQUV", *chCcor="RLPQ", *chLcor="XYPQ";
+  odouble   *StokCrval, TStokCrval[4] = {1.0,2.0,3.0,4.0};
+  odouble   CFCrval[4] = {-1.0, -2.0,-3.0,-4.0}, LFCrval[4] = {-5.0, -6.0,-7.0,-8.0};
   gfloat    xCells = 1.0, yCells=1.0;
   gchar     *FITS = "FITS";
   ObitImageDesc *outDesc;
@@ -813,6 +815,15 @@ ObitImage* setOutput (gchar *Source, olong iStoke, olong ant,
   if (err->error) return outImage;
   g_assert (ObitInfoListIsA(myInput));
   g_assert (ObitUVIsA(inData));
+
+  /* Stokes or correlator values */
+  trueStokes = inData->myDesc->crval[inData->myDesc->jlocs]>0.0;
+  if (trueStokes)                                             chStokes = chTStokes;
+  else if (inData->myDesc->crval[inData->myDesc->jlocs]<-3.0) chStokes = chLcor;
+  else                                                        chStokes = chCcor;
+  if (trueStokes)                                             StokCrval = TStokCrval;
+  else if (inData->myDesc->crval[inData->myDesc->jlocs]<-3.0) StokCrval = LFCrval;
+  else                                                        StokCrval = CFCrval;
 
   /* Notes:
      1) AIPS Name = Source +outName
@@ -1324,6 +1335,7 @@ ObitFArray** doImage (gboolean doRMS, gboolean doPhase, olong ant,
   ofloat       *SumAzCell=NULL, *SumElCell=NULL, *SumPACell=NULL;
   ofloat       *Center, *ICenter, value;
   olong        *CntCell=NULL;
+  gboolean trueStokes=FALSE;
   gchar *routine = "doImage";
 
   /* error checks */
@@ -1339,6 +1351,8 @@ ObitFArray** doImage (gboolean doRMS, gboolean doPhase, olong ant,
   else *nIF = 1;
   /* Number of polarizations */
   *npoln = inData->myDesc->inaxes[inData->myDesc->jlocs];
+  /* Stokes or correlator values */
+  trueStokes = inData->myDesc->crval[inData->myDesc->jlocs]>0.0;
 
   /* How big an image? */
   ObitInfoListGetTest(myInput, "nx", &type, dim, &nx);
@@ -1402,46 +1416,49 @@ ObitFArray** doImage (gboolean doRMS, gboolean doPhase, olong ant,
   /* No normalization for RMS, phase */
   if (doRMS|| doPhase) goto cleanup;
 
-  /* Subtract center Q, U (source poln) * Ipol beam from rest */
-  fatemp = ObitFArrayCreate (NULL, 2, naxis);  /* Work array */
+  /* true Stokes: Subtract center Q, U (source poln) * Ipol beam from rest */
+  if (trueStokes) {
+    fatemp = ObitFArrayCreate (NULL, 2, naxis);  /* Work array */
+    ipos[0] = nx/2; ipos[1] = ny/2;
+    for (iIF=0; iIF<(*nIF); iIF++) {
+      for (ichan=0; ichan<(*nchan); ichan++) {
+	/* Q */ 
+	indx = 0*selem + iIF*(*nchan) + ichan;
+	qndx = 1*selem + iIF*(*nchan) + ichan;
+	ICenter = ObitFArrayIndex (out[indx],  ipos);
+	Center  = ObitFArrayIndex (out[qndx],  ipos);
+	value = -(*Center) / (*ICenter);  /* Normalize IPol beam */
+	fatemp = ObitFArrayCopy (out[indx], fatemp, err);
+	if (err->error) goto cleanup;
+	ObitFArraySMul (fatemp, value);  /* Q * IPol beam */
+	ObitFArrayAdd (out[qndx], fatemp, out[qndx]);
+	/* U */ 
+	undx = 2*selem + iIF*(*nchan) + ichan;
+	Center = ObitFArrayIndex (out[undx],  ipos);
+	value = -(*Center) / (*ICenter);
+	fatemp = ObitFArrayCopy (out[indx], fatemp, err);
+	if (err->error) goto cleanup;
+	ObitFArraySMul (fatemp, value);  /* U * IPol beam */
+	ObitFArrayAdd (out[undx], fatemp, out[undx]);
+      }
+    }
+
+    /* Divide Q,U,V by I  */
+    for (iIF=0; iIF<(*nIF); iIF++) {
+      for (ichan=0; ichan<(*nchan); ichan++) {
+	indx = 0*selem + iIF*(*nchan) + ichan;
+	qndx = 1*selem + iIF*(*nchan) + ichan;
+	ObitFArrayDiv (out[qndx], out[indx], out[qndx]);
+	undx = 2*selem + iIF*(*nchan) + ichan;
+	ObitFArrayDiv (out[undx], out[indx], out[undx]);
+	vndx = 3*selem + iIF*(*nchan) + ichan;
+	ObitFArrayDiv (out[vndx], out[indx], out[vndx]);
+      }
+    }
+  } /* end true Stokes */
+
+  /* Normalize I or parallel hand correlations */
   ipos[0] = nx/2; ipos[1] = ny/2;
-  for (iIF=0; iIF<(*nIF); iIF++) {
-    for (ichan=0; ichan<(*nchan); ichan++) {
-      /* Q */ 
-      indx = 0*selem + iIF*(*nchan) + ichan;
-      qndx = 1*selem + iIF*(*nchan) + ichan;
-      ICenter = ObitFArrayIndex (out[indx],  ipos);
-      Center  = ObitFArrayIndex (out[qndx],  ipos);
-      value = -(*Center) / (*ICenter);  /* Normalize IPol beam */
-      fatemp = ObitFArrayCopy (out[indx], fatemp, err);
-      if (err->error) goto cleanup;
-      ObitFArraySMul (fatemp, value);  /* Q * IPol beam */
-      ObitFArrayAdd (out[qndx], fatemp, out[qndx]);
-      /* U */ 
-      undx = 2*selem + iIF*(*nchan) + ichan;
-      Center = ObitFArrayIndex (out[undx],  ipos);
-      value = -(*Center) / (*ICenter);
-      fatemp = ObitFArrayCopy (out[indx], fatemp, err);
-      if (err->error) goto cleanup;
-      ObitFArraySMul (fatemp, value);  /* U * IPol beam */
-      ObitFArrayAdd (out[undx], fatemp, out[undx]);
-    }
-  }
-
-  /* Divide Q,U,V by I  */
-  for (iIF=0; iIF<(*nIF); iIF++) {
-    for (ichan=0; ichan<(*nchan); ichan++) {
-      indx = 0*selem + iIF*(*nchan) + ichan;
-      qndx = 1*selem + iIF*(*nchan) + ichan;
-      ObitFArrayDiv (out[qndx], out[indx], out[qndx]);
-      undx = 2*selem + iIF*(*nchan) + ichan;
-      ObitFArrayDiv (out[undx], out[indx], out[undx]);
-      vndx = 3*selem + iIF*(*nchan) + ichan;
-      ObitFArrayDiv (out[vndx], out[indx], out[vndx]);
-    }
-  }
-
-  /* Normalize I */
   for (iIF=0; iIF<(*nIF); iIF++) {
     for (ichan=0; ichan<(*nchan); ichan++) {
       indx = 0*selem + iIF*(*nchan) + ichan;
@@ -1449,8 +1466,15 @@ ObitFArray** doImage (gboolean doRMS, gboolean doPhase, olong ant,
       value = (*Center);
       if (value!=0.0) value = 1.0 / value;
       ObitFArraySMul (out[indx], value);
+      if (!trueStokes) {
+       indx = 1*selem + iIF*(*nchan) + ichan;
+       Center = ObitFArrayIndex (out[indx],  ipos);
+       value = (*Center);
+       if (value!=0.0) value = 1.0 / value;
+       ObitFArraySMul (out[indx], value);
+      }
     }
-  }
+  } /* end IF Loop */
 
   /* Cleanup */
  cleanup:
@@ -1497,7 +1521,7 @@ void MapBeamHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
   gchar        hicard[81];
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq",
-    "Sources", "Qual", "souCode", "timeRange",  
+    "Sources", "Qual", "souCode", "timeRange",  "Stokes",
     "FreqID", "BIF", "EIF", "BChan", "EChan",  
     "doCalib", "gainUse", "doPol",  "PDVer", "flagVer", "doBand ",  "BPVer", "Smooth",
     "outDType", "outFile",  "outDisk", "outName", "outSeq",
@@ -1579,10 +1603,10 @@ ObitUV* doAvgData (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   olong        avgFreq, nchAvg;
   ofloat       timeAvg;
   gboolean     isScratch, doAvgAll;
-  gchar        Stokes[5];
+  /*gchar        Stokes[5];*/
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "UVRange", "timeRange", "doCalSelect", 
-    "BIF", "EIF", "BChan", "EChan","subA", "Antennas",
+    "BIF", "EIF", "BChan", "EChan","subA", "Antennas", "Stokes",
     "doCalib", "gainUse", "doBand", "BPVer", "Smooth", "flagVer", 
     "doPol", "PDVer",  "avgTime", "avgFreq", "ChanSel", 
     NULL
@@ -1595,10 +1619,10 @@ ObitUV* doAvgData (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   ObitInfoListCopyList (myInput, inData->info, dataParms);
   if (err->error) Obit_traceback_val (err, routine, inData->name, avgData);
   
-  /* Convert to IQUV */
+  /* Convert to IQUV 
   strcpy (Stokes, "IQUV");
   dim[0] = strlen(Stokes);
-  ObitInfoListAlwaysPut (inData->info, "Stokes", OBIT_string, dim, Stokes);
+  ObitInfoListAlwaysPut (inData->info, "Stokes", OBIT_string, dim, Stokes);*/
 
   /* Make scratch file, possibly with time and freq averaging */
   avgFreq = 0;

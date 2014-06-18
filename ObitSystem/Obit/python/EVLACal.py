@@ -145,7 +145,8 @@ def EVLAInitContParms():
     parms["solInt"]  =      None        # solution interval (min)
     parms["ampScalar"]=    False        # Ampscalar solutions?
     parms["solSmo"]   =    0.0          # Smoothing interval for Amps (min)
-    
+    parms["gainUVRange"] = [0.0,0.0]    # Range of baseline used in kilowavelengths, zeros=all
+   
     # Apply calibration and average?
     parms["doCalAvg"] =      True       # calibrate and average cont. calibrator data
     parms["avgClass"] =      "UVAvg"    # AIPS class of calibrated/averaged uv data
@@ -154,8 +155,8 @@ def EVLAInitContParms():
     parms["CAEIF"] =         0          # Highest IF to copy
     parms["CABChan"] =       1          # First Channel to copy
     parms["CAEChan"] =       0          # Highest Channel to copy
-    parms["chAvg"] =         1          # No channel average
-    parms["avgFreq"] =       1          # No channel average
+    parms["CAchAvg"] =       1          # No channel average
+    parms["CAavgFreq"] =     1          # No channel average
     
     # Right-Left delay calibration
     parms["doRLDelay"] =  False             # Determine/apply R-L delays
@@ -209,6 +210,7 @@ def EVLAInitContParms():
     parms["FOV"]         = None         # Field of view radius in deg.
     parms["Niter"]       = 500          # Max number of clean iterations
     parms["minFlux"]     = 0.0          # Minimum CLEAN flux density
+    parms["UVRange"]     = [0.,0.]      # Imaging UV range in kLambda, 0s => all
     parms["minSNR"]      = 4.0          # Minimum Allowed SNR
     parms["solPMode"]    = "P"          # Phase solution for phase self cal
     parms["solPType"]    = "    "       # Solution type for phase self cal
@@ -909,6 +911,26 @@ def EVLAUVLoadArch(dataroot, Aname, Aclass, Adisk, Aseq, err, \
     if not check:
         UV.PFlag (outuv, err, timeRange=[1.0e20,1.0e21], Ants=[999,0], Reason="Dummy flag")
 
+    # Scan listing
+    listr = ObitTask.ObitTask("Lister")
+    try:
+        listr.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
+    except Exception, exception:
+        pass
+    setname(outuv,listr)
+    listr.taskLog  = logfile
+    listr.prtFile  = logfile
+    listr.doCrt    = -1      # To log file
+    try:
+        if not check:
+            listr.g
+    except Exception, exception:
+        print exception
+        mess = "Lister Failed retCode="+str(listr.retCode)
+        printMess(mess, logfile)
+    else:
+        pass
+                                                   
     return outuv
     # end EVLAUVLoadArch
 
@@ -4513,7 +4535,7 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
                      doPol=False, PDVer=-1,  minFlux=0.0, Beam=[0.,0.,0.], \
                      Stokes="I", FOV=0.1/3600.0, Robust=0, Niter=300, CleanRad=None, \
                      maxPSCLoop=0, minFluxPSC=0.1, solPInt=20.0/60., \
-                     solPMode="P", solPType= "  ", \
+                     solPMode="P", solPType= "  ", UVRange=[0.,0.], \
                      maxASCLoop=0, minFluxASC=0.5, solAInt=2.0, \
                      solAMode="A&P", solAType= "  ", \
                      avgPol=False, avgIF=False, minSNR = 5.0, refAnt=0, \
@@ -4549,6 +4571,7 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
     * Robust     = Weighting robustness parameter
     * Niter      = max no. iterations
     * Beam       = Clean restoring beam
+    * UVRange    = Imaging UV range in kLambda, 0s => all
     * CleanRad   = CLEAN radius about center or None=autoWin
     * maxPSCLoop = max. number of phase sc loops
     * minFluxPSC = Trip level for phase self cal (Jy)
@@ -4655,6 +4678,7 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
     imager.Robust      = Robust
     imager.Niter       = Niter
     imager.Beam        = Beam
+    imager.UVRange     = UVRange
     imager.minFlux     = minFlux
     imager.maxPSCLoop  = maxPSCLoop
     imager.minFluxPSC  = minFluxPSC
@@ -5919,9 +5943,26 @@ def EVLAStdModel(Cals, freq):
     """
     # Standard models in FITS files
     stdModel = []
+    # 3C286 Q
+    model = {"Source":["3C286","J1331+3030","1331+305=3C286"],
+             "freqRange":[40.0e9,50.0e9],
+             "file":"3C286QModel.fits","disk":1}
+    # 3C286 Ka
+    model = {"Source":["3C286","J1331+3030","1331+305=3C286"],
+             "freqRange":[28.0e9,40.0e9],
+             "file":"3C286KaModel.fits","disk":1}
+    # 3C286 Ku
+    model = {"Source":["3C286","J1331+3030","1331+305=3C286"],
+             "freqRange":[12.0e9,18.0e9],
+             "file":"3C286KuModel.fits","disk":1}
+    # 3C286 X
+    model = {"Source":["3C286","J1331+3030","1331+305=3C286"],
+             "freqRange":[8.0e9,12.0e9],
+             "file":"3C286XModel.fits","disk":1}
+    stdModel.append(model)
     # 3C286 Chi
     model = {"Source":["3C286","J1331+3030","1331+305=3C286"],
-             "freqRange":[5.1e9,12.0e9],
+             "freqRange":[6.0e9,8.0e9],
              "file":"3C286ChiModel.fits","disk":1}
     stdModel.append(model)
     # 3C286 C
