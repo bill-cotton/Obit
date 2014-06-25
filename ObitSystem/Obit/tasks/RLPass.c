@@ -1,7 +1,7 @@
 /* $Id$  */
 /* R-L phase bandpass calibration                                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2012                                          */
+/*;  Copyright (C) 2010-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -627,7 +627,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gboolean     doCalSelect;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
-    "Sources", "Stokes", "timeRange", "FreqID", "BChan", "EChan",   "BIF", "EIF", 
+    "Sources", "Stokes", "timeRange", "FreqID", "BChan", "EChan", "BIF", "EIF", 
     "subA", "Antennas", "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", 
     "flagVer", "doPol", "PDVer", "Mode", "ModelType", "Alpha", "refAnt",
      NULL};
@@ -1108,7 +1108,7 @@ ObitUV* InitialCal (ObitInfoList* myInput, ObitUV* scrData, ObitErr* err)
   ObitTableCL  *CLTable1 = NULL, *CLTable2 = NULL;
   ObitUVGSolve *solver=NULL;
   ObitUV       *avgData=NULL;
-  gboolean     btemp;
+  gboolean     btemp, avgPol=TRUE;
   ofloat       ftemp, solInt;
   olong        itemp, ver=1;
   ObitInfoType type;
@@ -1143,6 +1143,8 @@ ObitUV* InitialCal (ObitInfoList* myInput, ObitUV* scrData, ObitErr* err)
   ObitInfoListAlwaysPut(solver->info, "solInt", OBIT_float, dim, &ftemp);
   itemp = 1;
   ObitInfoListAlwaysPut(solver->info, "solnVer", OBIT_long, dim, &itemp);
+  /* Average polarizations */
+  ObitInfoListAlwaysPut(solver->info, "avgPol", OBIT_bool, dim, &avgPol);
   ObitInfoListGet(myInput, "BChan1", &type, dim, &itemp, err);
   ObitInfoListAlwaysPut(scrData->info, "BChan", OBIT_long, dim, &itemp);
   ObitInfoListGet(myInput, "EChan1", &type, dim, &itemp, err);

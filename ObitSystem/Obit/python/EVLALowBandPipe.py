@@ -356,7 +356,7 @@ def pipeline( aipsSetup, parmFile):
                     clist.append(DCal["Source"])
             for PCal in PCals:
                 if PCal["Source"] not in clist:
-                    clist.append(DCal["Source"])
+                    clist.append(PCal["Source"])
             for ACal in ACals:
                 if ACal["Source"] not in clist:
                     clist.append(ACal["Source"])
@@ -585,7 +585,7 @@ def pipeline( aipsSetup, parmFile):
         EVLAImageTargets (uv, err, Sources=slist, seq=parms["seq"], sclass=outIClass, \
                           doCalib=2, doBand=1,  flagVer=1, doPol=parms["doPol"], PDVer=parms["PDVer"],  \
                           Stokes=parms["Stokes"], FOV=parms["FOV"], Robust=parms["Robust"], Niter=parms["Niter"], \
-                          CleanRad=parms["CleanRad"], minFlux=parms["minFlux"], \
+                          CleanRad=parms["CleanRad"], minFlux=parms["minFlux"], UVRange=parms["UVRange'], \
                           maxPSCLoop=parms["maxPSCLoop"], minFluxPSC=parms["minFluxPSC"], \
                           solPInt=parms["solPInt"], solPMode=parms["solPMode"], solPType=parms["solPType"], \
                           maxASCLoop=parms["maxASCLoop"], minFluxASC=parms["minFluxASC"], \
@@ -594,7 +594,8 @@ def pipeline( aipsSetup, parmFile):
                           do3D=parms["do3D"], BLFact=parms["BLFact"], BLchAvg=parms["BLchAvg"], \
                           doMB=parms["doMB"], norder=parms["MBnorder"], maxFBW=parms["MBmaxFBW"], \
                           PBCor=parms["PBCor"],antSize=parms["antSize"], \
-                          nTaper=parms["nTaper"], Tapers=parms["Tapers"], doOutlier=parms["doOutlier"], \
+                          nTaper=parms["nTaper"], Tapers=parms["Tapers"], \
+                          doOutlier=parms["doOutlier"], OutlierDist=parms["OutlierDist"], OutlierFlux=parms["OutlierFlux"], \
                           nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
         # End image
     

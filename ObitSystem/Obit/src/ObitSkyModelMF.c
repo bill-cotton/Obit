@@ -1631,7 +1631,7 @@ void ObitSkyModelMFFTDFT (ObitSkyModel *inn, olong field, ObitUV *uvdata, ObitEr
 
   /* Divide up work - single threaded if too little data per call */
   nvis = uvdata->myDesc->numVisBuff;
-  if (nvis<1000) nThreads = 1;
+  if (nvis<100) nThreads = 1;
   else nThreads = in->nThreads;
   nvisPerThread = MAX (1, nvis/nThreads);
   lovis = 1;
@@ -2131,7 +2131,7 @@ void ObitSkyModelMFFTGrid (ObitSkyModel *inn, olong field, ObitUV *uvdata, ObitE
   
   /* Divide up work - single threaded if too little data per call */
   nvis = uvdata->myDesc->numVisBuff;
-  if (nvis<1000) nThreads = 1;
+  if (nvis<100) nThreads = 1;
   else nThreads = in->nThreads;
   nvisPerThread = MAX (1, nvis/nThreads);
   lovis = 1;

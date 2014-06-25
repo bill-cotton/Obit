@@ -794,8 +794,9 @@ ObitImage* setOutput (gchar *Source, olong iStoke, olong ant,
   ObitImage *outImage=NULL;
   ObitInfoType type;
   ObitIOType IOType;
-  olong      i, n, Aseq, disk, cno, axNum, axFNum, axIFNum, nx=11, ny=11;
-  gchar     *Type, *strTemp, outFile[129], *outName, *outF, stemp[32];;
+  olong     i, n, Aseq, disk, cno, axNum, axFNum, axIFNum, nx=11, ny=11;
+  olong     jStoke;
+  gchar     *Type, *strTemp, outFile[129], *outName, *outF, stemp[32];
   gchar     Aname[13], Aclass[7], *Atype = "MA";
   gchar     *today=NULL;
   gint32    dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -824,6 +825,10 @@ ObitImage* setOutput (gchar *Source, olong iStoke, olong ant,
   if (trueStokes)                                             StokCrval = TStokCrval;
   else if (inData->myDesc->crval[inData->myDesc->jlocs]<-3.0) StokCrval = LFCrval;
   else                                                        StokCrval = CFCrval;
+  /* Which poln? */
+  jStoke = iStoke;
+  if (!trueStokes && inData->myDesc->crval[inData->myDesc->jlocs]==-2) jStoke = 1;
+  if (!trueStokes && inData->myDesc->crval[inData->myDesc->jlocs]==-6) jStoke = 1;
 
   /* Notes:
      1) AIPS Name = Source +outName
@@ -834,7 +839,7 @@ ObitImage* setOutput (gchar *Source, olong iStoke, olong ant,
   */
 
   /* Create basic output Image Object */
-  g_snprintf (tname, 100, "output Image %cPol",chStokes[iStoke-1]);
+  g_snprintf (tname, 100, "output Image %cPol",chStokes[jStoke]);
   outImage = newObitImage(tname);
     
   /* File type - could be either AIPS or FITS */
@@ -868,22 +873,22 @@ ObitImage* setOutput (gchar *Source, olong iStoke, olong ant,
     if (doRMS) {  /* RMS */
       /* One or all antennas? */
       if (ant>0) {   /* One */
-	g_snprintf (tname, 100, "%c%3.3dRM", chStokes[iStoke],ant);
+	g_snprintf (tname, 100, "%c%3.3dRM", chStokes[jStoke],ant);
       } else {       /* all */
-	g_snprintf (tname, 100, "%cAllRM", chStokes[iStoke]);
+	g_snprintf (tname, 100, "%cAllRM", chStokes[jStoke]);
       }
     }  else if (doPhase) {  /* Phase */
       /* One or all antennas? */
       if (ant>0) {   /* One */
-	g_snprintf (tname, 100, "%c%3.3dPH", chStokes[iStoke],ant);
+	g_snprintf (tname, 100, "%c%3.3dPH", chStokes[jStoke],ant);
       } else {       /* all */
-	g_snprintf (tname, 100, "%cAllPH", chStokes[iStoke]);
+	g_snprintf (tname, 100, "%cAllPH", chStokes[jStoke]);
       }
     } else {      /* Stokes */
       if (ant>0) {   /* One */
-	g_snprintf (tname, 100, "%c%3.3d  ", chStokes[iStoke],ant);
+	g_snprintf (tname, 100, "%c%3.3d  ", chStokes[jStoke],ant);
       } else {       /* all */
-	g_snprintf (tname, 100, "%cAll  ", chStokes[iStoke]);
+	g_snprintf (tname, 100, "%cAll  ", chStokes[jStoke]);
       }
     } /* end of branch by type */
     strncpy (Aclass, tname, 7); 
@@ -931,22 +936,22 @@ ObitImage* setOutput (gchar *Source, olong iStoke, olong ant,
     if (doRMS) {  /* RMS */
       /* One or all antennas? */
       if (ant>0) {   /* One */
-	g_snprintf (outFile, 128, "%s%c%3.3dRMS%s", stemp,chStokes[iStoke],ant,tname);
+	g_snprintf (outFile, 128, "%s%c%3.3dRMS%s", stemp,chStokes[jStoke],ant,tname);
       } else {       /* all */
-	g_snprintf (outFile, 128, "%s%cAllRMS%s", stemp,chStokes[iStoke],tname);
+	g_snprintf (outFile, 128, "%s%cAllRMS%s", stemp,chStokes[jStoke],tname);
       }
      } else if (doPhase) {  /* Phase */
       /* One or all antennas? */
       if (ant>0) {   /* One */
-	g_snprintf (outFile, 128, "%s%c%3.3dPh%s", stemp,chStokes[iStoke],ant,tname);
+	g_snprintf (outFile, 128, "%s%c%3.3dPh%s", stemp,chStokes[jStoke],ant,tname);
       } else {       /* all */
-	g_snprintf (outFile, 128, "%s%cAllPh%s", stemp,chStokes[iStoke],tname);
+	g_snprintf (outFile, 128, "%s%cAllPh%s", stemp,chStokes[jStoke],tname);
       }
     } else {      /* Stokes */
       if (ant>0) {   /* One */
-	g_snprintf (outFile, 128, "%s%c%3.3d%s", stemp,chStokes[iStoke],ant,tname);
+	g_snprintf (outFile, 128, "%s%c%3.3d%s", stemp,chStokes[jStoke],ant,tname);
       } else {       /* all */
-	g_snprintf (outFile, 128, "%s%cAll%s", stemp,chStokes[iStoke],tname);
+	g_snprintf (outFile, 128, "%s%cAll%s", stemp,chStokes[jStoke],tname);
       }
     }  /* end branch by type */
 
@@ -1044,7 +1049,7 @@ ObitImage* setOutput (gchar *Source, olong iStoke, olong ant,
   outImage->myDesc->inaxes[axNum] = 1;
   outImage->myDesc->crpix[axNum]  = 1.0;
   outImage->myDesc->cdelt[axNum]  = 1.0;
-  outImage->myDesc->crval[axNum]  = StokCrval[iStoke];
+  outImage->myDesc->crval[axNum]  = StokCrval[jStoke];
   axNum++;
 
   outImage->myDesc->naxis = axNum;  /* Total number of axes */
@@ -1466,7 +1471,7 @@ ObitFArray** doImage (gboolean doRMS, gboolean doPhase, olong ant,
       value = (*Center);
       if (value!=0.0) value = 1.0 / value;
       ObitFArraySMul (out[indx], value);
-      if (!trueStokes) {
+      if (!trueStokes && (*npoln>1)) {
        indx = 1*selem + iIF*(*nchan) + ichan;
        Center = ObitFArrayIndex (out[indx],  ipos);
        value = (*Center);
@@ -2362,6 +2367,7 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 	  } else {      /* Stokes ampl */
 	    array->array[jndx] = amp;
 	  }
+	  if (npoln<=1) continue;   /* multiple polarizations */
 	  /* Q */
 	  indx  = ichan + iIF*nchan + nchan*nIF;
 	  array = grids[indx];

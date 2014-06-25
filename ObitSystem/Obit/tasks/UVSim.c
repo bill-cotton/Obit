@@ -539,7 +539,7 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
     ObitInfoListGetP (myInput, "outFile", &type, dim, (gpointer)&strTemp);
     /* if not use inName */
     if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12)))
-      ObitInfoListGetP (myInput, "inFile", &type, dim, (gpointer)&strTemp);
+      ObitInfoListGetP (myInput, "in2File", &type, dim, (gpointer)&strTemp);
     n = MIN (128, dim[0]);
     for (i=0; i<n; i++) outFile[i] = strTemp[i]; outFile[i] = 0;
     ObitTrimTrail(outFile);  /* remove trailing blanks */
@@ -785,14 +785,14 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
       
     } else if (!strncmp (Type, "FITS", 4)) {  /* FITS input */
       /* input FITS file name */
-      if (ObitInfoListGetP(myInput, "inFile", &type, dim, (gpointer)&strTemp)) {
+      if (ObitInfoListGetP(myInput, "in2File", &type, dim, (gpointer)&strTemp)) {
 	strncpy (inRoot, strTemp, 128);
       } else { 
 	strncpy (inRoot, "No_Filename_Given", 128);
       }
       
       /* input FITS disk */
-      ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
+      ObitInfoListGet(myInput, "in2Disk", &type, dim, &disk, err);
       
       /* Loop over fields */
       for (i=0; i<nmaps; i++) {
@@ -1145,6 +1145,10 @@ void GetData (ObitUV *outData, ObitInfoList *myInput, ObitErr *err)
   time = timeRange[0];
   while (time<=timeRange[1]) {
 
+    /* LST and hour angle (radians) */
+    AntLst = AntList->GSTIAT0 + ArrLong + time*AntList->RotRate;
+    HrAng  = AntLst - RAR;
+
     /* Min el (same for array) */
     cosdec = cos (DecR);
     sindec = sin (DecR);
@@ -1152,10 +1156,6 @@ void GetData (ObitUV *outData, ObitInfoList *myInput, ObitErr *err)
     darg = sin (ArrLat) * sindec + cos (ArrLat) * cosdec * chad;
     el = (1.570796327 - acos (MIN (darg, 1.000)));
     if (el<minEl) goto skip;
-
-    /* LST and hour angle (radians) */
-    AntLst = AntList->GSTIAT0 + ArrLong + time*AntList->RotRate;
-    HrAng  = AntLst - RAR;
 
     /* Loop over antennas  */
     for (ant1=1; ant1<nAnt; ant1++) {

@@ -603,7 +603,13 @@ void ObitDConCleanVisLineDefWindow(ObitDConClean *inn, ObitErr *err)
   ChanFuncArg *inArr=NULL;
   const ObitDConCleanVisClassInfo *ParentClass = myClassInfo.ParentClass;
   olong ichan;
-  /*gchar *routine = "ObitDConCleanVisLineDefWindow";*/
+   gchar        *CLEANParms[] = {  /* Clean parameters */
+    "CLEANBox", "autoWindow", "Gain", "minFlux", "Niter", "minPatch", "Beam", 
+    "Mode", "CCFilter", "maxPixel", "dispURL", "ccfLim", "SDIGain", "prtLv",
+    "MResKnob",
+    NULL
+  };
+ /*gchar *routine = "ObitDConCleanVisLineDefWindow";*/
 
   /* Cast input to this type */
   in = (ObitDConCleanVisLine*)inn;
@@ -620,6 +626,9 @@ void ObitDConCleanVisLineDefWindow(ObitDConClean *inn, ObitErr *err)
     inArr = ((ChanFuncArg*)in->chArgs[ichan]);
 
     inArr->done = FALSE;  /* initialize inArr */
+
+    /* Makesure CLEAN parameters copied */
+    ObitInfoListCopyList (in->info, inArr->in->info, CLEANParms);
 
     /* Call parent for operation */
     ParentClass->ObitDConCleanDefWindow((ObitDConClean*)inArr->in, err);

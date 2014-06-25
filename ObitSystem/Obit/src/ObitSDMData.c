@@ -3295,6 +3295,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
   ObitFile *file=NULL;
   ObitIOCode retCode;
   olong  maxLine = 4098;
+  gboolean OK = FALSE;
   gchar line[4099], *schemaVersion, *next, *prior, *tstr;
   gchar *routine = " ParseASDMTable";
 
@@ -3347,6 +3348,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     /* schema version ALMA and EVLA differ here */
@@ -3645,6 +3647,9 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
 
   if (out->schemaVersion<0) out->schemaVersion = 2;  /* Who knows??? */
 
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading ASDM Table");
+
   return out;
 } /* end ParseASDMTable */
 
@@ -3693,6 +3698,7 @@ static ASDMMainTable* ParseASDMMainTable(ObitSDMData *me,
   gchar *endrow = "</row>";
   gchar *prior, *next, *tstr;
   ObitFile *file=NULL;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMMainTable";
 
   /* error checks */
@@ -3720,6 +3726,7 @@ static ASDMMainTable* ParseASDMMainTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     prior = "<time>";
@@ -3850,6 +3857,9 @@ static ASDMMainTable* ParseASDMMainTable(ObitSDMData *me,
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
 
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading Main Table");
+
   return out;
 } /* end ParseASDMMainTable */
 
@@ -3908,6 +3918,7 @@ ParseASDMAntennaTable(ObitSDMData *me,
   gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next, *tstr;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMAntennaTable";
 
   /* error checks */
@@ -3935,6 +3946,7 @@ ParseASDMAntennaTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     /* Antenna ID */
@@ -4013,6 +4025,9 @@ ParseASDMAntennaTable(ObitSDMData *me,
   retCode = ObitFileClose (file, err);
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
+
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading Antenna Table");
 
   return out;
 } /* end ParseASDMAntennaTable */
@@ -4116,6 +4131,7 @@ ParseASDMcalAtmosphereTableXML(ObitSDMData *me,
   gchar *endrow = "</row>";
   gchar *prior, *next, *b;
   ObitFile *file=NULL;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMcalAtmosphereTableXML";
 
   /* error checks */
@@ -4143,6 +4159,7 @@ ParseASDMcalAtmosphereTableXML(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     /* receiverBand */
@@ -4308,6 +4325,9 @@ ParseASDMcalAtmosphereTableXML(ObitSDMData *me,
   retCode = ObitFileClose (file, err);
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
+
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading calAtmosphere Table");
 
   return out;
 } /* end ParseASDMcalAtmosphereTableXML */
@@ -4539,6 +4559,7 @@ ParseASDMcalDeviceTable(ObitSDMData *me,
   gchar *prior, *next;
   ObitFile *file=NULL;
   odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMcalDeviceTable";
 
   /* error checks */
@@ -4566,6 +4587,7 @@ ParseASDMcalDeviceTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     prior = "<antennaId>";
@@ -4643,6 +4665,9 @@ ParseASDMcalDeviceTable(ObitSDMData *me,
   retCode = ObitFileClose (file, err);
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
+
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading calDevice Table");
 
   return out;
 } /* end ParseASDMcalDeviceTable */
@@ -5093,6 +5118,7 @@ ParseASDMConfigDescriptionTable(ObitSDMData *me,
   gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next, *tstr, *b;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMConfigDescriptionTable";
   
   /* error checks */
@@ -5121,6 +5147,7 @@ ParseASDMConfigDescriptionTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     prior = "<numAntenna>";
@@ -5253,6 +5280,9 @@ ParseASDMConfigDescriptionTable(ObitSDMData *me,
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
   
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading ConfigDescription Table");
+
   return out;
 } /* end ParseASDMConfigDescriptionTable */
 
@@ -5314,6 +5344,7 @@ ParseASDMCorrelatorModeTable(ObitSDMData *me,
   gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next, *b, *tstr;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMCorrelatorModeTable";
 
   /* error checks */
@@ -5341,6 +5372,7 @@ ParseASDMCorrelatorModeTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     prior = "<correlatorModeId>";
@@ -5493,7 +5525,10 @@ ParseASDMCorrelatorModeTable(ObitSDMData *me,
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
 
-  return out;
+   /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading CorrelatorMode Table");
+
+ return out;
 } /* end ParseASDMCorrelatorModeTable */
 
 /** 
@@ -5550,6 +5585,7 @@ ParseASDMDataDescriptionTable(ObitSDMData *me,
   gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMDataDescriptionTable";
 
   /* error checks */
@@ -5578,6 +5614,7 @@ ParseASDMDataDescriptionTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     prior = "<dataDescriptionId>";
@@ -5613,6 +5650,9 @@ ParseASDMDataDescriptionTable(ObitSDMData *me,
   retCode = ObitFileClose (file, err);
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
+
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading DataDescription Table");
 
   return out;
 } /* end ParseASDMDataDescriptionTable */
@@ -5783,6 +5823,7 @@ ParseASDMExecBlockTable(ObitSDMData *me,
   gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMExecBlockTable";
 
   /* error checks */
@@ -5811,6 +5852,7 @@ ParseASDMExecBlockTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     prior = "<execBlockId>";
@@ -5982,6 +6024,9 @@ ParseASDMExecBlockTable(ObitSDMData *me,
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
 
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading ExecBlock Table");
+
   return out;
 } /* end ParseASDMExecBlockTable */
 
@@ -6043,6 +6088,7 @@ static ASDMFeedTable* ParseASDMFeedTable(ObitSDMData *me,
   gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next, *b;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMFeedTable";
 
   /* error checks */
@@ -6070,6 +6116,7 @@ static ASDMFeedTable* ParseASDMFeedTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     prior = "<feedId>";
@@ -6168,6 +6215,9 @@ static ASDMFeedTable* ParseASDMFeedTable(ObitSDMData *me,
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
 
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading Feed Table");
+
   return out;
 } /* end ParseASDMFeedTable */
 
@@ -6227,6 +6277,7 @@ static ASDMFieldTable* ParseASDMFieldTable(ObitSDMData *me,
   gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMFieldTable";
 
   /* error checks */
@@ -6254,6 +6305,7 @@ static ASDMFieldTable* ParseASDMFieldTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     prior = "<fieldId>";
@@ -6319,6 +6371,9 @@ static ASDMFieldTable* ParseASDMFieldTable(ObitSDMData *me,
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
 
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading Field Table");
+
   return out;
 } /* end ParseASDMFieldTable */
 
@@ -6377,6 +6432,7 @@ static ASDMFlagTable* ParseASDMFlagTable(ObitSDMData *me,
   gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next, *carr=NULL;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMFlagTable";
 
   /* error checks */
@@ -6407,6 +6463,7 @@ static ASDMFlagTable* ParseASDMFlagTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     /* old EVLA version */
@@ -6499,6 +6556,9 @@ static ASDMFlagTable* ParseASDMFlagTable(ObitSDMData *me,
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
 
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading Flag Table");
+
   return out;
 } /* end ParseASDMFlagTable */
 
@@ -6559,6 +6619,7 @@ static ASDMPointingTable* ParseASDMPointingTable(ObitSDMData *me,
   gchar *endrow = "</row>";
   odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
   gchar *prior, *next;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMPointingTable";
 
   /* error checks */
@@ -6587,6 +6648,7 @@ static ASDMPointingTable* ParseASDMPointingTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     prior = "<timeInterval>";
@@ -6674,6 +6736,9 @@ static ASDMPointingTable* ParseASDMPointingTable(ObitSDMData *me,
   retCode = ObitFileClose (file, err);
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
+
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading Pointing Table");
 
   return out;
 } /* end ParseASDMPointingTable */
@@ -6846,6 +6911,7 @@ ParseASDMPolarizationTable(ObitSDMData *me,
   gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMPolarizationTable";
 
   /* error checks */
@@ -6873,6 +6939,7 @@ ParseASDMPolarizationTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     prior = "<polarizationId>";
@@ -6915,6 +6982,9 @@ ParseASDMPolarizationTable(ObitSDMData *me,
   retCode = ObitFileClose (file, err);
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
+
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading Polarization Table");
 
   return out;
 } /* end ParseASDMPolarizationTable */
@@ -6973,6 +7043,7 @@ ParseASDMProcessorTable(ObitSDMData *me,
   gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMProcessorTable";
 
   /* error checks */
@@ -7000,6 +7071,7 @@ ParseASDMProcessorTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     prior = "<processorId>";
@@ -7040,6 +7112,9 @@ ParseASDMProcessorTable(ObitSDMData *me,
   retCode = ObitFileClose (file, err);
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
+
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading MProcessor Table");
 
   return out;
 } /* end ParseASDMProcessorTable */
@@ -7108,6 +7183,7 @@ ParseASDMReceiverTable(ObitSDMData *me,
   gchar *endrow = "</row>";
   gchar *prior, *next;
   odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMReceiverTable";
 
   /* error checks */
@@ -7135,6 +7211,7 @@ ParseASDMReceiverTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     prior = "<receiverId>";
@@ -7208,6 +7285,9 @@ ParseASDMReceiverTable(ObitSDMData *me,
   retCode = ObitFileClose (file, err);
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
+
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading Receiver Table");
 
   return out;
 } /* end ParseASDMReceiverTable */
@@ -7382,6 +7462,7 @@ static ASDMScanTable* ParseASDMScanTable(ObitSDMData *me,
   gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMScanTable";
 
   /* error checks */
@@ -7410,6 +7491,7 @@ static ASDMScanTable* ParseASDMScanTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+   OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     prior = "<scanNumber>";
@@ -7489,6 +7571,9 @@ static ASDMScanTable* ParseASDMScanTable(ObitSDMData *me,
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
 
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading Scan Table");
+
   return out;
 } /* end ParseASDMScanTable */
 
@@ -7550,6 +7635,7 @@ static ASDMSourceTable* ParseASDMSourceTable(ObitSDMData *me,
   gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMSourceTable";
 
   /* error checks */
@@ -7577,6 +7663,7 @@ static ASDMSourceTable* ParseASDMSourceTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     prior = "<sourceId>";
@@ -7649,7 +7736,10 @@ static ASDMSourceTable* ParseASDMSourceTable(ObitSDMData *me,
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
 
-  return out;
+   /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading Source Table");
+
+ return out;
 } /* end ParseASDMSourceTable */
 
 /** 
@@ -7714,6 +7804,7 @@ ParseASDMSpectralWindowTable(ObitSDMData *me,
   gchar *line=me->line, **assNat=NULL;
   gchar *endrow = "</row>";
   gchar *prior, *next, *tstr;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMSpectralWindowTable";
 
   /* error checks */
@@ -7742,6 +7833,7 @@ ParseASDMSpectralWindowTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     prior = "<spectralWindowId>";
@@ -7909,6 +8001,9 @@ ParseASDMSpectralWindowTable(ObitSDMData *me,
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
 
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading SpectralWindow Table");
+
   return out;
 } /* end ParseASDMSpectralWindowTable */
 
@@ -7965,6 +8060,7 @@ static ASDMStateTable* ParseASDMStateTable(ObitSDMData *me,
   gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMStateTable";
 
   /* error checks */
@@ -7993,6 +8089,7 @@ static ASDMStateTable* ParseASDMStateTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
      prior = "<stateId>";
@@ -8036,6 +8133,9 @@ static ASDMStateTable* ParseASDMStateTable(ObitSDMData *me,
   retCode = ObitFileClose (file, err);
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
+
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading State Table");
 
   return out;
 } /* end ParseASDMStateTable */
@@ -8093,6 +8193,7 @@ static ASDMStationTable* ParseASDMStationTable(ObitSDMData *me,
   gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next, *tstr;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMStationTable";
 
   /* error checks */
@@ -8121,6 +8222,7 @@ static ASDMStationTable* ParseASDMStationTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     /* Station ID */
@@ -8173,6 +8275,9 @@ static ASDMStationTable* ParseASDMStationTable(ObitSDMData *me,
   retCode = ObitFileClose (file, err);
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
+
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading Station Table");
 
   return out;
 } /* end ParseASDMStationTable */
@@ -8232,6 +8337,7 @@ ParseASDMSubscanTable(ObitSDMData *me,
   gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMSubscanTable";
 
   /* error checks */
@@ -8259,6 +8365,7 @@ ParseASDMSubscanTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     prior = "<scanNumber>";
@@ -8329,6 +8436,9 @@ ParseASDMSubscanTable(ObitSDMData *me,
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
 
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading Subscan Table");
+
   return out;
 } /* end ParseASDMSubscanTable */
 
@@ -8388,6 +8498,7 @@ ParseASDMSwitchCycleTable(ObitSDMData *me,
   gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMSwitchCycleTable";
 
   /* error checks */
@@ -8415,6 +8526,7 @@ ParseASDMSwitchCycleTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     prior = "<switchCycleId>";
@@ -8463,7 +8575,10 @@ ParseASDMSwitchCycleTable(ObitSDMData *me,
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
 
-  return out;
+   /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading SwitchCycle Table");
+
+ return out;
 } /* end ParseASDMSwitchCycleTable */
 
 /** 
@@ -8658,6 +8773,7 @@ ParseASDMSysPowerTableXML(ObitSDMData *me,
   gchar *line=me->line;
   gchar *endrow = "</row>";
   gchar *prior, *next;
+  gboolean OK = FALSE;
   gchar *routine = "ParseASDMSysPowerTableXML";
 
   /* error checks */
@@ -8685,6 +8801,7 @@ ParseASDMSysPowerTableXML(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     prior = "<antennaId>";
@@ -8748,7 +8865,10 @@ ParseASDMSysPowerTableXML(ObitSDMData *me,
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
 
-  return out;
+   /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading SysPower Table");
+
+ return out;
 } /* end ParseASDMSysPowerTable */
 
 /** 
@@ -8869,6 +8989,7 @@ static ASDMWeatherTable* ParseASDMWeatherTable(ObitSDMData *me,
   gchar line[1025];
   gchar *endrow = "</row>";
   gchar *prior, *next;
+  gboolean OK = FALSE;
   gchar *routine = " ParseASDMWeatherTable";
 
   /* error checks */
@@ -8899,6 +9020,7 @@ static ASDMWeatherTable* ParseASDMWeatherTable(ObitSDMData *me,
     retCode = ObitFileReadXML (file, line, maxLine, err);
     if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
     if (retCode==OBIT_IO_EOF) break;
+    OK = TRUE;    /* Something in file */
 
     /* Parse entries */
     prior = "<timeInterval>";
@@ -9024,6 +9146,9 @@ static ASDMWeatherTable* ParseASDMWeatherTable(ObitSDMData *me,
   retCode = ObitFileClose (file, err);
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
+
+  /* Something in file? */
+  if (!OK) Obit_log_error(err, OBIT_Error, "Error reading Weather Table");
 
   return out;
 } /* end ParseASDMWeatherTable */

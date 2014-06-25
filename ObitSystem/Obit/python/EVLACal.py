@@ -238,6 +238,8 @@ def EVLAInitContParms():
     parms["CleanRad"]    = None         # CLEAN radius (pix?) about center or None=autoWin
     parms["Beam"]        = [0.,0.,0.]   # Clean restoring beam (asec, asec, deg)
     parms["doOutlier"]   = None         # Default outliers
+    parms["OutlierDist"] = None         # Outlier max distance (deg)
+    parms["OutlierFlux"] = None         # Outlier min flux (Jy)
     
     # Final
     parms["doReport"]  =     True       # Generate source report?
@@ -4538,8 +4540,9 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
                      solPMode="P", solPType= "  ", UVRange=[0.,0.], \
                      maxASCLoop=0, minFluxASC=0.5, solAInt=2.0, \
                      solAMode="A&P", solAType= "  ", \
+                     doOutlier=None,   OutlierDist=None, OutlierFlux=None, \
                      avgPol=False, avgIF=False, minSNR = 5.0, refAnt=0, \
-                     do3D=True, BLFact=0.999, BLchAvg=False, doOutlier=None, \
+                     do3D=True, BLFact=0.999, BLchAvg=False, \
                      doMB=False, norder=2, maxFBW=0.05, doComRes=False, \
                      PBCor=True, antSize=24.5, nTaper=0, Tapers=[20.0], \
                      nThreads=1, noScrat=[], logfile='', check=False, debug=False):
@@ -4591,8 +4594,10 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
     * doComRes   = Force common resolution in frequency? (MF)
     * BLFact     = Baseline dependent averaging factor
     * BLchAvg    = If True and BLFact>=1.0 also average channels
-    * doOutlier  = Outliers from NVSS?  Yes=> 4*FOV, 10 mJy >1 GHz else 50 mJy
+    * doOutlier  = Outliers from NVSS?  Yes=> 4*FOV, 10 mJy >1 GHz else 100 mJy
                    None = Default, Yes if freq<6 GHz
+    * OutlierDist = maximum distance for outliers (deg) None = Default
+    * OutlierFlux = minimum flux density for outliers (Jy) None = Default
     * doMB       = If True is wideband imaging
     * norder     = order on wideband imaging
     * maxFBW     = max. fractional wideband imaging
@@ -4706,7 +4711,12 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
         if refFreq>1.0e9:
             imager.OutlierFlux = 0.01
         else:
-            imager.OutlierFlux = 0.05
+            imager.OutlierFlux = 0.10
+    # Actual values if given
+    if OutlierDist!=None:
+        imager.OutlierDist = OutlierDist
+    if OutlierFlux!=None:
+        imager.OutlierFlux = OutlierFlux
     # Auto window or centered box
     if CleanRad:
         imager.CLEANBox=[-1,CleanRad,0,0]
