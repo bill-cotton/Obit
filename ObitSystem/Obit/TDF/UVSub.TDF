@@ -96,6 +96,8 @@ in2Seq            0.0     9999.0   Cleaned AIPS seq. #
 in2Disk                            Cleaned map disk unit #
 **PARAM** int 1   **DEF** 1
 nfield            0.0     4192.0   No. fields to use for model.
+**PARAM** int 1 **DEF** 1
+nStokes                            Number of Stokes'
 **PARAM** int 1
 CCVer            -1.0    46655.0   CC file version #.
 **PARAM** int 64
@@ -204,7 +206,9 @@ Adverbs:
   doPol......If > 0 then correct data for instrumental polarization as
              represented in the AN table.  This correction is only
              useful if PCAL has been run or feed polarization parameters
-             have been otherwise obtained. 
+             have been otherwise obtained. If a full stokes model is 
+             being used (nStokes>1) it is usually best to turn this 
+             option to False.
   PDVer......AIPS PD table to use for per channel instrumental
              polarization corrections if doPol=True. 0=> highest
              -1 => use IF corrections from AIPS AN table.
@@ -263,6 +267,11 @@ Adverbs:
              subsequent image files will be the same as the first file
              except that the LAST two characters of the Class will be
              '01' thru 'E7' for files number 2 thru 4192.  Maximum 4192.
+  nStokes....The number of Stokes parameter models (I,Q,U,V).
+             The first character of the Class in 'I','Q','U' or 'V'
+             The full stokes parameter model is calculated and used with
+             PD file PDVer to correct the model.
+             Only DFT method supported.
   CCVer......CC file ver. number.          0 => highest.
   BComp......The first clean component to process. One value is
              specified for each field used.

@@ -143,7 +143,7 @@ gboolean timeInNXTable (ofloat time);
 /* Program globals */
 gchar *pgmName = "BDFIn";       /* Program name */
 gchar *infile  = "BDFIn.inp";   /* File with program inputs */
-gchar *outfile = "BDFIn.out";   /* File to contain program outputs */
+gchar *outfile = "/tmp/BDFIn.out";   /* File to contain program outputs */
 olong  pgmNumber;      /* Program number (like POPS no.) */
 olong  AIPSuser;       /* AIPS user number number (like POPS no.) */
 olong  nAIPS=0;        /* Number of AIPS directories */

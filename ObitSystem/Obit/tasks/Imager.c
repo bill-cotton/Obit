@@ -96,7 +96,7 @@ void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
 /* Program globals */
 gchar *pgmName = "Imager";       /* Program name */
 gchar *infile  = "Imager.in" ;   /* File with program inputs */
-gchar *outfile = "Imager.out";   /* File to contain program outputs */
+gchar *outfile = "/tmp/Imager.out";   /* File to contain program outputs */
 olong  pgmNumber;       /* Program number (like POPS no.) */
 olong  AIPSuser;        /* AIPS user number number (like POPS no.) */
 olong  nAIPS=0;         /* Number of AIPS directories */
@@ -904,7 +904,7 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *strTemp;
   ofloat ftemp, tapes[20];
-  gboolean *booTemp, btemp;
+  gboolean *booTemp, btemp, do3D;
   olong itemp;
   ObitSkyModelMode modelMode;
   gchar *routine = "digestInputs";
@@ -952,6 +952,19 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   /* Convert Tapers to Tapes */
   if (ObitInfoListGetTest(myInput, "Tapers", &type, dim,  tapes)) {
     ObitInfoListAlwaysPut (myInput, "BeamTapes", type, dim, tapes);
+  }
+
+  /* Force do3D=False for doLine */
+  btemp  = FALSE;
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListGetTest(myInput, "doLine", &type, dim, &btemp);
+  do3D   = FALSE;
+  ObitInfoListGetTest(myInput, "do3D", &type, dim, &do3D);
+  if (btemp) {
+    btemp = FALSE;
+    ObitInfoListAlwaysPut (myInput, "do3D", type, dim, &btemp);
+    if (do3D)
+      Obit_log_error(err, OBIT_InfoWarn,"Setting do3D=F for doLine=T");
   }
 
   /* Initialize Threading */
@@ -1766,9 +1779,9 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       /* Number of parallel images */
       ObitInfoListAlwaysPut(myClean->mosaic->info, "numPar", OBIT_long, dim, &nPar);
 
-      /* (Re)Set windows for Stokes I */
+      /* (Re)Set windows for Stokes I or multichannel */
       clnClass = (ObitDConCleanVisClassInfo*)myClean->ClassInfo;
-      if (istok==bstok) 
+      if ((istok==bstok) || ((nParTh>1) && doLine))
 	clnClass->ObitDConCleanVisDefWindow((ObitDConClean*)myClean, err);
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
       
@@ -2684,11 +2697,19 @@ void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
 {
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong NumChAvg=1;
+  olong RChan, NumChAvg=1;
   odouble Freq;
   gboolean BLchAvg=FALSE;
   ofloat BLFact=0.0, FOV=0.0, solPInt=0.0, solAInt=0.0, maxInt;
   gchar *routine = "BLAvg";
+
+  /* If restarting assume outData exists and is OK */
+  RChan = 0;
+  ObitInfoListGetTest(myInput, "RChan",  &type, dim, &RChan);
+  if (RChan>1) {
+     /*Obit_log_error(err, OBIT_InfoWarn, "Assuming output data OK on restart");
+       return;*/
+  }
 
   /* What to do? */
   ObitInfoListGetTest(myInput, "BLFact", &type, dim, &BLFact);

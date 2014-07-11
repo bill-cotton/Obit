@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task to subtract CLEAN components from uvdata.                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2013                                          */
+/*;  Copyright (C) 2005-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -29,6 +29,7 @@
 
 #include "ObitSkyModel.h"
 #include "ObitSkyModelMF.h"
+#include "ObitSkyModelVMPoln.h"
 #include "ObitImageMosaic.h"
 #include "ObitSystem.h"
 #include "ObitMem.h"
@@ -55,7 +56,8 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err);
 /* Get input data */
 ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err);
 /* Get input sky model */
-ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err);
+ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitUV *uvdata, 
+				ObitErr *err);
 /* Create output uvdata */
 ObitUV* setOutputData (ObitInfoList *myInput, ObitUV* inData, ObitErr *err);
 /* Write history */
@@ -65,7 +67,7 @@ void UVSubHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
 /* Program globals */
 gchar *pgmName = "UVSub";       /* Program name */
 gchar *infile  = "UVSub.in" ;   /* File with program inputs */
-gchar *outfile = "UVSub.out";   /* File to contain program outputs */
+gchar *outfile = "/tmp/UVSub.out";   /* File to contain program outputs */
 olong  pgmNumber;       /* Program number (like POPS no.) */
 olong  AIPSuser;        /* AIPS user number number (like POPS no.) */
 olong  nAIPS=0;         /* Number of AIPS directories */
@@ -114,7 +116,7 @@ int main ( int argc, char **argv )
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
   /* Get input sky model */
-  skyModel = getInputSkyModel (myInput, err);
+  skyModel = getInputSkyModel (myInput, inData, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
   /* Get output uvdata */
@@ -894,17 +896,18 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
 /*   Return                                                               */
 /*      Sky Model to be used                                              */
 /*----------------------------------------------------------------------- */
-ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
+ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitUV *uvdata, 
+				ObitErr *err)
 {
   ObitSkyModel *skyModel=NULL;
-  ObitImageMosaic *mosaic=NULL;
-  ObitImage    **image=NULL;
+  ObitImageMosaic *mosaic[4]={NULL,NULL,NULL,NULL};
+  ObitImage    **image[4]={NULL,NULL,NULL,NULL};
   ObitCCCompType CCType;
   ObitInfoType type;
   ObitTableCC *inCC=NULL;
   gboolean     mrgCC=FALSE, do3D=TRUE, gotT2=FALSE;
   oint         noParms, CCVer, ver;
-  olong        Aseq, disk, cno, i, nparm, nfield, channel;
+  olong        Aseq, disk, cno, i, nparm, nfield, channel, iStokes, nStokes=1;
   gchar        *Type, *Type2, *strTemp, inFile[129], inRoot[129];
   gchar        Aname[13], Aclass[7], Aroot[7], *Atype = "MA";
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -924,6 +927,7 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
     "BIF", "EIF", "BCHAN", "ECHAN",
     "MODPTFLX", "MODPTXOF", "MODPTYOF", "MODPTYPM",  "doGPU",
     NULL};
+  gchar schar[] = {'I','Q','U','U','V'};
   gchar *routine = "getInputSkyModel";
 
   /* error checks */
@@ -957,128 +961,144 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
     /* Create Sky Model */
     skyModel = newObitSkyModel ("Sky Model");
 
-  } else {
-    /* image or components model */
+  } else {  /* image or components model */
     
-    /* How many fields? */
-    nfield = 1;
-    ObitInfoListGetTest(myInput, "nfield", &type, dim, &nfield);
+    /* How many Stokes' mosaics? */
+    ObitInfoListGetTest (myInput, "nStokes", &type, dim, &nStokes); 
 
-    /* Allocate Image array */
-    image = g_malloc0(nfield*sizeof(ObitImage));
-    
-    /* Create image mosaic */
-    mosaic = newObitImageMosaic ("Mosaic", nfield);
-    
     /* File type - could be either AIPS or FITS  use DataType2 (default DataType) */
     ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
     gotT2 = ObitInfoListGetP (myInput, "DataType2", &type, dim, (gpointer)&Type2);
     if ((!gotT2) || !strncmp (Type2, "    ", 4)) Type2 = Type;
-    if (!strncmp (Type2, "AIPS", 4)) { /* AIPS input */
-      /* input AIPS disk */
-      ObitInfoListGet(myInput, "in2Disk", &type, dim, &disk, err);
-      /* input AIPS name */
-      if (ObitInfoListGetP(myInput, "in2Name", &type, dim, (gpointer)&strTemp)) {
-	strncpy (Aname, strTemp, 13);
-      } else { /* Didn't find */
-	strncpy (Aname, "No Name ", 13);
-      } 
-      Aname[12] = 0;
-      /* input AIPS class */
-      if  (ObitInfoListGetP(myInput, "in2Class", &type, dim, (gpointer)&strTemp)) {
-	strncpy (Aroot, strTemp, 7);
-      } else { /* Didn't find */
-	strncpy (Aroot, "NoClas", 7);
-      }
-      if (nfield>1) Aroot[2] = 0;  /* Multiple facets */
 
-      /* input AIPS sequence */
-      ObitInfoListGet(myInput, "in2Seq", &type, dim, &Aseq, err);
-      
-      /* if ASeq==0 want highest existing sequence */
-      if (Aseq<=0) {
-	g_snprintf (Aclass, 7, "%s%4.4d",Aroot,1);
-	Aseq = ObitAIPSDirHiSeq(disk, AIPSuser, Aname, Aclass, Atype, TRUE, err);
-	if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
-	/* Save on myInput*/
-	dim[0] = dim[1] = 1;
-	ObitInfoListAlwaysPut(myInput, "inSeq", OBIT_oint, dim, &Aseq);
-      }
-      
-      /* Loop over fields */
-      for (i=0; i<nfield; i++) {
-	g_snprintf (name, 100, "Input image %d",i+1);
-	if (nfield>1)  g_snprintf (Aclass, 7, "%s%4.4d",Aroot,i+1); /* Multiple facets */
-	else strncpy (Aclass, Aroot, 7);
+    /* How many fields? */
+    nfield = 1;
+    ObitInfoListGetTest(myInput, "nfield", &type, dim, &nfield);
 
-	/* Find catalog number */
-	cno = ObitAIPSDirFindCNO(disk, AIPSuser, Aname, Aclass, Atype, Aseq, err);
-	if (cno<0) Obit_log_error(err, OBIT_Error, "Failure looking up %s", name);
-	if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
+    /* Loop over Stokes Mosaics */
+    for (iStokes=0; iStokes<nStokes; iStokes++) {
+
+      /* Allocate Image array */
+      image[iStokes] = g_malloc0(nfield*sizeof(ObitImage));
+    
+      /* Create image mosaic */
+      mosaic[iStokes] = newObitImageMosaic ("Mosaic", nfield);
+    
+      if (!strncmp (Type2, "AIPS", 4)) { /* AIPS input */
+	/* input AIPS disk */
+	ObitInfoListGet(myInput, "in2Disk", &type, dim, &disk, err);
+	/* input AIPS name */
+	if (ObitInfoListGetP(myInput, "in2Name", &type, dim, (gpointer)&strTemp)) {
+	  strncpy (Aname, strTemp, 13);
+	} else { /* Didn't find */
+	  strncpy (Aname, "No Name ", 13);
+	} 
+	Aname[12] = 0;
+	/* input AIPS class */
+	if  (ObitInfoListGetP(myInput, "in2Class", &type, dim, (gpointer)&strTemp)) {
+	  strncpy (Aroot, strTemp, 7);
+	} else { /* Didn't find */
+	  strncpy (Aroot, "NoClas", 7);
+	}
+	if (nfield>1)  Aroot[2] = 0;               /* Multiple facets */
+	if (iStokes>0) Aroot[0] = schar[iStokes];  /* Multiple Stokes */
 	
- 	/* define object */
-	image[i] = newObitImage(name);
-	ObitImageSetAIPS(image[i], OBIT_IO_byPlane, disk, cno, AIPSuser,  blc, trc, err);
-	if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
-
-	/* Attach Image */
-	ObitImageMosaicSetImage (mosaic, i, image[i], err);
-	if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
-      } /* end loop over fields */
-
-    } else if (!strncmp (Type2, "FITS", 4)) {  /* FITS input */
-      /* input FITS file name */
-      if (ObitInfoListGetP(myInput, "in2File", &type, dim, (gpointer)&strTemp)) {
-	strncpy (inRoot, strTemp, 128);
-      } else { 
-	strncpy (inRoot, "No_Filename_Given", 128);
+	/* input AIPS sequence */
+	ObitInfoListGet(myInput, "in2Seq", &type, dim, &Aseq, err);
+	
+	/* if ASeq==0 want highest existing sequence */
+	if (Aseq<=0) {
+	  g_snprintf (Aclass, 7, "%s%4.4d",Aroot,1);
+	  Aseq = ObitAIPSDirHiSeq(disk, AIPSuser, Aname, Aclass, Atype, TRUE, err);
+	  if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
+	  /* Save on myInput*/
+	  dim[0] = dim[1] = 1;
+	  ObitInfoListAlwaysPut(myInput, "inSeq", OBIT_oint, dim, &Aseq);
+	}
+	
+	/* Loop over fields */
+	for (i=0; i<nfield; i++) {
+	  g_snprintf (name, 100, "Input image %d",i+1);
+	  if (nfield>1)  g_snprintf (Aclass, 7, "%s%4.4d",Aroot,i+1); /* Multiple facets */
+	  else strncpy (Aclass, Aroot, 7);
+	  
+	  /* Find catalog number */
+	  cno = ObitAIPSDirFindCNO(disk, AIPSuser, Aname, Aclass, Atype, Aseq, err);
+	  if (cno<0) Obit_log_error(err, OBIT_Error, "Failure looking up %s", name);
+	  if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
+	  
+	  /* define object */
+	  image[iStokes][i] = newObitImage(name);
+	  ObitImageSetAIPS(image[iStokes][i], OBIT_IO_byPlane, disk, cno, AIPSuser,  blc, trc, err);
+	  if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
+	  
+	  /* Attach Image */
+	  ObitImageMosaicSetImage (mosaic[iStokes], i, image[iStokes][i], err);
+	  if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
+	} /* end loop over fields */
+	
+      } else if (!strncmp (Type2, "FITS", 4)) {  /* FITS input */
+	/* input FITS file name */
+	if (ObitInfoListGetP(myInput, "in2File", &type, dim, (gpointer)&strTemp)) {
+	  strncpy (inRoot, strTemp, 128);
+	} else { /* No in2File given */
+	  strncpy (inRoot, "No_Filename_Given", 128);
+	}
+	if (iStokes>0) inRoot[0] = schar[iStokes];  /* Multiple Stokes */
+	
+	/* input FITS disk */
+	ObitInfoListGet(myInput, "in2Disk", &type, dim, &disk, err);
+	
+	/* Loop over fields */
+	for (i=0; i<nfield; i++) {
+	  /* Set file name */
+	  if (nfield>1) g_snprintf (inFile, 128, "%s%4.4d",inRoot,i);
+	  else g_snprintf (inFile, 128, "%s",inRoot);
+	  
+	  /* define object */
+	  g_snprintf (name, 100, "Input image %d",i+1);
+	  image[iStokes][i] = newObitImage(name);
+	  ObitImageSetFITS(image[iStokes][i], OBIT_IO_byPlane, disk, inFile, blc, trc, err);
+	  if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
+	  
+	  /* Attach Image */
+	  ObitImageMosaicSetImage (mosaic[iStokes], i, image[iStokes][i], err);
+	  if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
+	} /* end loop over fields */
+	
+      } else { /* Unknown type - barf and bail */
+	Obit_log_error(err, OBIT_Error, "%s: Unknown Data type %s", 
+		       pgmName, Type2);
+	return skyModel;
       }
-      
-      /* input FITS disk */
-      ObitInfoListGet(myInput, "in2Disk", &type, dim, &disk, err);
-      
-      /* Loop over fields */
-      for (i=0; i<nfield; i++) {
-	/* Set file name */
-	if (nfield>1) g_snprintf (inFile, 128, "%s%4.4d",inRoot,i);
-	else g_snprintf (inFile, 128, "%s",inRoot);
-
- 	/* define object */
-	g_snprintf (name, 100, "Input image %d",i+1);
-	image[i] = newObitImage(name);
-	ObitImageSetFITS(image[i], OBIT_IO_byPlane, disk, inFile, blc, trc, err);
-	if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
-
-	/* Attach Image */
-	ObitImageMosaicSetImage (mosaic, i, image[i], err);
-	if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
-      } /* end loop over fields */
-      
-    } else { /* Unknown type - barf and bail */
-      Obit_log_error(err, OBIT_Error, "%s: Unknown Data type %s", 
-		     pgmName, Type2);
-      return skyModel;
-    }
+    } /* end loop over Stokes mosaics */
 
     /* Create Sky Model for appropriate type */
-    ver = 0;
-    ObitInfoListGetTest(myInput, "CCVer", &type, dim, &ver);
-    CCType   = ObitTableCCUtilGetType ((ObitData*)mosaic->images[0], ver, err);
-    if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
-    if ((CCType==OBIT_CC_PointModTSpec)|| (CCType==OBIT_CC_GaussModTSpec) ||
-	(CCType==OBIT_CC_CGaussModTSpec) || (CCType==OBIT_CC_USphereModTSpec)) {
-      skyModel = (ObitSkyModel*)ObitSkyModelMFCreate ("Sky Model", mosaic);
-      Obit_log_error(err, OBIT_InfoErr, "Using tabulated spectrum sky model");
-    } else
-      skyModel = ObitSkyModelCreate ("Sky Model", mosaic);
+    if (nStokes>1) { /* Poln Sky model */
+      skyModel = 
+	(ObitSkyModel*)ObitSkyModelVMPolnCreate ("Sky Model", uvdata,
+						 mosaic[0], mosaic[1], mosaic[2], mosaic[3], 
+						 err);
+      if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
+    } else {  /* Single Stokes model */
+      ver = 0;
+      ObitInfoListGetTest(myInput, "CCVer", &type, dim, &ver);
+      CCType   = ObitTableCCUtilGetType ((ObitData*)mosaic[0]->images[0], ver, err);
+      if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
+      if ((CCType==OBIT_CC_PointModTSpec)|| (CCType==OBIT_CC_GaussModTSpec) ||
+	  (CCType==OBIT_CC_CGaussModTSpec) || (CCType==OBIT_CC_USphereModTSpec)) {
+	skyModel = (ObitSkyModel*)ObitSkyModelMFCreate ("Sky Model", mosaic[0]);
+	Obit_log_error(err, OBIT_InfoErr, "Using tabulated spectrum sky model");
+      } else
+	skyModel = ObitSkyModelCreate ("Sky Model", mosaic[0]);
+    } /* end type Sky model */
 
     /* Save parameters */
     ObitInfoListCopyList (myInput, skyModel->info, skyModelParms);
 
     /* get do3D from first image */
-    if ((skyModel->mosaic) && (skyModel->mosaic->images[0]))
-      do3D = skyModel->mosaic->images[0]->myDesc->do3D;
-    else do3D = FALSE;
+    if (mosaic[0]->images[0]) do3D = mosaic[0]->images[0]->myDesc->do3D;
+    else                      do3D = FALSE;
     
     /* Save do3D */
     dim[0] = 1; dim[1] = 1;
@@ -1088,37 +1108,42 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
     ObitInfoListGetTest(myInput, "mrgCC", &type, dim, &mrgCC); 
     CCVer = 1;
     ObitInfoListGetTest(myInput, "CCVer", &type, dim, &CCVer); 
-    if (mrgCC) {
-      noParms = 0;
-      for (i=0; i<nfield; i++) {
-
-	/* Open Image to get table List */
-	ObitImageOpen (image[i], OBIT_IO_ReadWrite, err);
-	if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
-	inVer = CCVer;
-	inCC = newObitTableCCValue ("inCC", (ObitData*)image[i], &inVer, OBIT_IO_ReadOnly, 
-				    noParms, err);
-	if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
-	if (inCC) {  /* May not exist */
-	  ObitTableCCUtilMerge (inCC, inCC, err);
-	  if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
-	  inCC = ObitTableCCUnref(inCC);
-	  ObitImageClose (image[i],  err);
-	  if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
-	}
-	image[i] = ObitImageUnref(image[i]);  /* deallocate image */
-      }
-      /* give messages */
-      ObitErrLog(err); 
-    } /* end merge CC tables */
-    else {
-      /* deallocate images */
-      for (i=0; i<nfield; i++) image[i] = ObitImageUnref(image[i]);
-    }
     
-    g_free(image);  /* Deallocate array */
+    /* Loop over Stokes Mosaics */
+    for (iStokes=0; iStokes<nStokes; iStokes++) {
 
-  } /* End image or components model */
+      if (mrgCC) {
+	noParms = 0;
+	for (i=0; i<nfield; i++) {
+	  
+	  /* Open Image to get table List */
+	  ObitImageOpen (image[iStokes][i], OBIT_IO_ReadWrite, err);
+	  if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
+	  inVer = CCVer;
+	  inCC = newObitTableCCValue ("inCC", (ObitData*)image[iStokes][i], &inVer, 
+				      OBIT_IO_ReadOnly, noParms, err);
+	  if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
+	  if (inCC) {  /* May not exist */
+	    ObitTableCCUtilMerge (inCC, inCC, err);
+	    if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
+	    inCC = ObitTableCCUnref(inCC);
+	    ObitImageClose (image[iStokes][i],  err);
+	    if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
+	  }
+	  image[iStokes][i] = ObitImageUnref(image[iStokes][i]);  /* deallocate image */
+	}
+	/* give messages */
+	ObitErrLog(err); 
+      } /* end merge CC tables */
+      else {
+	/* deallocate images */
+	for (i=0; i<nfield; i++) image[iStokes][i] = ObitImageUnref(image[iStokes][i]);
+      }
+      
+      g_free(image[iStokes]);  /* Deallocate array */
+      
+    } /* End loop over Stokes */
+    } /* End image or components model */
   
   /* Get input parameters from myInput, copy to skyModel */
   ObitInfoListCopyList (myInput, skyModel->info, dataParms);
@@ -1283,7 +1308,7 @@ void UVSubHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     "doCalSelect", "doCalib", "gainUse", "doPol", "PDVer", "flagVer", 
     "doBand", "BPVer", "Smooth", 
     "in2File",  "in2Disk", "in2Name", "in2Class", "in2Seq",
-    "nfield", "CCVer", "BComp",  "EComp", "Flux",
+    "nfield", "nStokes", "CCVer", "BComp",  "EComp", "Flux",
     "outFile",  "outDisk",  "outName", "outClass", "outSeq",
     "Cmethod", "Cmodel", "Factor",  "Opcode", 
     "modelFlux", "modelPos", "modelParm", "noNeg",

@@ -1556,11 +1556,13 @@ static gboolean PickNext2D(ObitDConCleanVis *inn, ObitErr *err)
 
   /* Main values reset */
   in->peakFlux = 0.0;
-  for (i=0; i<in->nfield; i++) in->minFlux[i] = 0.0;
+  /* What??? for (i=0; i<in->nfield; i++) in->minFlux[i] = 0.0; */
   
   /* Loop over channels */
   for (ichan=0; ichan<in->nPar; ichan++) {
     inArr = ((ChanFuncArg*)in->chArgs[ichan]);
+    for (i=0; i<in->nfield; i++) 
+      inArr->in->minFlux[i] = MAX(in->minFlux[i], in->Pixels->minFlux[i]);
     /* Call parent for operation */
     t = ParentClass->PickNext2D((ObitDConCleanVis*)inArr->in, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, done);
@@ -1568,8 +1570,7 @@ static gboolean PickNext2D(ObitDConCleanVis *inn, ObitErr *err)
 
     /* Set some values on main CLEAN */
     in->peakFlux = MAX (in->peakFlux, inArr->in->peakFlux);
-    for (i=0; i<in->nfield; i++) in->minFlux[i] = MAX(in->minFlux[i], inArr->in->minFlux[i]);
- 
+  
     /* Fields selected */
     if (inArr->in->numCurrentField>in->numCurrentField) {
       in->numCurrentField = inArr->in->numCurrentField;

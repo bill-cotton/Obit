@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2012                                          */
+/*;  Copyright (C) 2006-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -65,7 +65,7 @@ gboolean WantTable (ObitTable *inTab, gchar *KeyWord, ofloat KeyRange[2],
 /* Program globals */
 gchar *pgmName = "TabCopy";       /* Program name */
 gchar *infile  = "TabCopy.in" ;   /* File with program inputs */
-gchar *outfile = "TabCopy.out";   /* File to contain program outputs */
+gchar *outfile = "/tmp/TabCopy.out";   /* File to contain program outputs */
 olong  pgmNumber;       /* Program number (like POPS no.) */
 olong  AIPSuser;        /* AIPS user number number (like POPS no.) */
 olong  nAIPS=0;         /* Number of AIPS directories */
@@ -634,18 +634,18 @@ ObitData* getOutputData (ObitInfoList *myInput, ObitErr *err)
     if (ObitInfoListGetP(myInput, "outFile", &type, dim, (gpointer)&strTemp)) {
       strncpy (outFile, strTemp, 128);
     } else { 
-      g_snprintf (outFile, 129, "Squish%s", strTemp2);
+      g_snprintf (outFile, 129, "TabCop%s", strTemp2);
     }
-    /* If blank use Squish+inFile */
+    /* If blank use TabCop+inFile */
     if (!strncmp (outFile, "    ", 4)) {
-      g_snprintf (outFile, 129, "Squish%s", strTemp2);
+      g_snprintf (outFile, 129, "TabCop%s", strTemp2);
     }
     
     /* output FITS disk default = inDisk */
     ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
     idisk = disk;
     ObitInfoListGetTest(myInput, "outDisk", &type, dim, &disk);
-    if (disk<=0) disk = idisk;
+    /* NO if (disk<=0) disk = idisk; */
 
     /* Tell about it */
     Obit_log_error(err, OBIT_InfoErr, "Making FITS image %s on disk %d",
