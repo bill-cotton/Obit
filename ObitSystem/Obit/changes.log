@@ -2270,5 +2270,37 @@ Obit/tasks/MapBeam.c:
 Obit/tasks/UVSim.c:
   Multiple bug fixes for input FITS model.
 Obit/src/ObitSkyModelMF.c:
-  FTDFT: reduce number of vis to use multithreads.
+  FTDFT: reduce number of vis needed to use multithreads.
 25 June 2014, svn ver. 486
+
+New UV data, poln calibration and sky modeling, bug fixes
+Post smeagle crash recovery
+Obit/TDF/AvgBL.TDF Obit/tasks/AvgBL.c:
+  New task to average all baselines
+Obit/TDF/DPCal.TDF Obit/tasks/DPCal.c 
+  New task for differential instrumental polarization calibration
+Obit/include/ObitSkyModelVMPolnClassDef.h Obit/include/ObitSkyModelVMPolnDef.h:
+Obit/include/ObitSkyModelVMPoln.h Obit/src/ObitSkyModelVMPoln.c:
+  New Sky model for calculating full polarization
+Obit/TDF/UVSub.TDF Obit/tasks/UVSub.c :
+  Implement full polarization skymodel option.
+Obit/python/EVLAContPipe.py:
+  Add second RLPass
+  Subscripts on parms["VClip"], parms["XClip"]
+Obit/src/ObitDConCleanVisLine.c:
+  Set minFlux on channel CLEAN objects
+Obit/tasks/TabCopy.c:
+  Better defaults for output files
+Obit/tasks/Imager.c:
+  Better handilng of CLEAN windows for doLine=True
+  disallow do3D=True for doLine=True
+Obit/tasks/BDFIn.c :
+   default output file in /tmp
+11 July 2014, svn ver. 487
+
+minor updates
+Obit/python/EVLAContPipe.py:
+   stupid svn !!!!!!!!
+Obit/share/scripts/SumImage.py:
+  Utility to average planes of a cube
+18 July 2014, svn ver. 488

@@ -280,7 +280,7 @@ def pipeline( aipsSetup, parmFile):
         plotFile = "./"+fileRoot+"DelayCal.ps"
         retCode = EVLADelayCal(uv, parms["DCals"], err,  \
                                BChan=parms["delayBChan"], EChan=parms["delayEChan"], \
-                               doCalib=2, flagVer=2, doBand=-1, UVRange=parms["gainUVRange"], \
+                               doCalib=2, flagVer=2, doBand=-1, \
                                solInt=parms["delaySolInt"], smoTime=1.0/60.0,  \
                                refAnts=[parms["refAnt"]], doTwo=parms["doTwo"], 
                                doZeroPhs=parms["delayZeroPhs"], \
@@ -302,15 +302,12 @@ def pipeline( aipsSetup, parmFile):
 
     # Bandpass calibration
     if parms["doBPCal"] and parms["BPCals"]:
-        plotFile = "./"+fileRoot+"BPCal.ps"
         retCode = EVLABPCal(uv, parms["BPCals"], err, noScrat=noScrat, solInt1=parms["bpsolint1"], \
                             solInt2=parms["bpsolint2"], solMode=parms["bpsolMode"], \
                             BChan1=parms["bpBChan1"], EChan1=parms["bpEChan1"], \
                             BChan2=parms["bpBChan2"], EChan2=parms["bpEChan2"], ChWid2=parms["bpChWid2"], \
                             doCenter1=parms["bpDoCenter1"], refAnt=parms["refAnt"], \
                             UVRange=parms["bpUVRange"], doCalib=2, gainUse=0, flagVer=2, doPlot=False, \
-                            doAmpEdit=parms["doAmpEdit"], ampSigma=parms["ampSigma"], \
-                            doBPPlot=parms["doBPPlot"], plotBPFile=plotFile, \
                             nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
             raise RuntimeError,"Error in Bandpass calibration"
@@ -329,7 +326,7 @@ def pipeline( aipsSetup, parmFile):
         plotFile = "./"+fileRoot+"APCal.ps"
         retCode = EVLACalAP (uv, [], parms["ACals"], err, PCals=parms["PCals"], 
                              doCalib=2, doBand=1, BPVer=1, flagVer=2, \
-                             BChan=parms["ampBChan"], EChan=parms["ampEChan"], UVRange=parms["gainUVRange"], \
+                             BChan=parms["ampBChan"], EChan=parms["ampEChan"], \
                              solInt=parms["solInt"], solSmo=parms["solSmo"], ampScalar=parms["ampScalar"], \
                              doAmpEdit=parms["doAmpEdit"], ampSigma=parms["ampSigma"], \
                              ampEditFG=parms["ampEditFG"], \
@@ -395,7 +392,7 @@ def pipeline( aipsSetup, parmFile):
             plotFile = "./"+fileRoot+"DelayCal2.ps"
             retCode = EVLADelayCal(uv, parms["DCals"], err, \
                                    BChan=parms["delayBChan"], EChan=parms["delayEChan"], \
-                                   doCalib=2, flagVer=2, doBand=-1, UVRange=parms["gainUVRange"], \
+                                   doCalib=2, flagVer=2, doBand=-1, \
                                    solInt=parms["delaySolInt"], smoTime=1.0/60.0,  \
                                    refAnts=[parms["refAnt"]], doTwo=parms["doTwo"], \
                                    doZeroPhs=parms["delayZeroPhs"], \
@@ -416,15 +413,12 @@ def pipeline( aipsSetup, parmFile):
     
     # Bandpass calibration
     if parms["doBPCal2"] and parms["BPCals"]:
-        plotFile = "./"+fileRoot+"BPCal2.ps"
         retCode = EVLABPCal(uv, parms["BPCals"], err, noScrat=noScrat, solInt1=parms["bpsolint1"], \
                             solInt2=parms["bpsolint2"], solMode=parms["bpsolMode"], \
                             BChan1=parms["bpBChan1"], EChan1=parms["bpEChan1"], \
                             BChan2=parms["bpBChan2"], EChan2=parms["bpEChan2"], ChWid2=parms["bpChWid2"], \
                             doCenter1=parms["bpDoCenter1"], refAnt=parms["refAnt"], \
                             UVRange=parms["bpUVRange"], doCalib=2, gainUse=0, flagVer=2, doPlot=False, \
-                            doAmpEdit=parms["doAmpEdit"], ampSigma=parms["ampSigma"], \
-                            doBPPlot=parms["doBPPlot"], plotBPFile=plotFile, \
                             nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
             raise RuntimeError,"Error in Bandpass calibration"
@@ -443,7 +437,7 @@ def pipeline( aipsSetup, parmFile):
             plotFile = "./"+fileRoot+"APCal2.ps"
             retCode = EVLACalAP (uv, [], parms["ACals"], err, PCals=parms["PCals"], \
                                  doCalib=2, doBand=1, BPVer=1, flagVer=2, \
-                                 BChan=parms["ampBChan"], EChan=parms["ampEChan"], UVRange=parms["gainUVRange"], \
+                                 BChan=parms["ampBChan"], EChan=parms["ampEChan"], \
                                  solInt=parms["solInt"], solSmo=parms["solSmo"], ampScalar=parms["ampScalar"], \
                                  doAmpEdit=parms["doAmpEdit"], ampSigma=parms["ampSigma"], \
                                  ampEditFG=parms["ampEditFG"], \
@@ -475,7 +469,7 @@ def pipeline( aipsSetup, parmFile):
     if parms["doCalAvg"]:
         retCode = EVLACalAvg (uv, avgClass, parms["seq"], parms["CalAvgTime"], err, \
                               flagVer=2, doCalib=2, gainUse=0, doBand=1, BPVer=1, doPol=False, \
-                              avgFreq=parms["CAavgFreq"], chAvg=parms["CAchAvg"], \
+                              avgFreq=parms["avgFreq"], chAvg=parms["chAvg"], \
                               BChan=parms["CABChan"], EChan=parms["CAEChan"], \
                               BIF=parms["CABIF"], EIF=parms["CAEIF"], Compress=parms["Compress"], \
                               nThreads=nThreads, logfile=logFile, check=check, debug=debug)
@@ -490,7 +484,7 @@ def pipeline( aipsSetup, parmFile):
             OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
     
     # XClip
-    if parms["XClip"] and parms["XClip"]>0.0:
+    if parms["XClip"] and parms["XClip"][0]>0.0:
         mess =  "Cross Pol clipping:"
         printMess(mess, logFile)
         retCode = EVLAAutoFlag (uv, [], err, flagVer=-1, flagTab=1, \
@@ -517,30 +511,13 @@ def pipeline( aipsSetup, parmFile):
                               check=check, debug=debug)
         if retCode!=0:
             raise RuntimeError,"Error in R-L delay calibration"
-        # Now initial RLPass
-        if parms["rlrefAnt"]<=0:
-            parms["rlrefAnt"] =  parms["refAnt"]
-        retCode = EVLARLCal(uv, err,\
-                            RLDCal=parms["RLDCal"], BChan=parms["rlBChan"],
-                            EChan=parms["rlEChan"], UVRange=parms["rlUVRange"], \
-                            ChWid2=parms["rlChWid"], solInt1=parms["rlsolint1"], solInt2=parms["rlsolint2"], \
-                            RLPCal=parms["RLPCal"], RLPhase=parms["RLPhase"], \
-                            RM=parms["RLRM"], CleanRad=parms["rlCleanRad"], \
-                            calcode=parms["rlCalCode"], doCalib=parms["rlDoCal"], gainUse=parms["rlgainUse"], \
-                            timerange=parms["rltimerange"], FOV=parms["rlFOV"], \
-                            doBand=-1, BPVer=1, flagVer=parms["rlflagVer"], \
-                            refAnt=parms["rlrefAnt"], doPol=False, PDVer=0,  \
-                            nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
-                            check=check, debug=debug)
-        if retCode!=0:
-            raise RuntimeError,"Error in RL phase spectrum calibration"
     
     # Polarization calibration
     if parms["doPolCal"]:
         if parms["PCRefAnt"]<=0:
             parms["PCRefAnt"] =  parms["refAnt"]
         retCode = EVLAPolCal(uv, parms["PCInsCals"], err, InsCalPoln=parms["PCCalPoln"], \
-                             doCalib=2, gainUse=0, doBand=1, flagVer=0, \
+                             doCalib=2, gainUse=0, doBand=-1, flagVer=0, \
                              fixPoln=parms["PCFixPoln"], pmodel=parms["PCpmodel"], avgIF=parms["PCAvgIF"], \
                              solInt=parms["PCSolInt"], refAnt=parms["PCRefAnt"], solType=parms["PCSolType"], \
                              ChInc=parms["PCChInc"], ChWid=parms["PCChWid"], \
@@ -550,7 +527,7 @@ def pipeline( aipsSetup, parmFile):
         # end poln cal.
     
     
-    # R-L phase calibration cal., creates new BP table updating prior BP table
+    # R-L phase calibration cal., creates new BP table
     if parms["doRLCal"] and parms["RLDCal"][0][0]!=None:
         plotFile = "./"+fileRoot+"RLSpec2.ps"
         if parms["rlrefAnt"]<=0:
@@ -563,22 +540,7 @@ def pipeline( aipsSetup, parmFile):
                             RM=parms["RLRM"], CleanRad=parms["rlCleanRad"], \
                             calcode=parms["rlCalCode"], doCalib=parms["rlDoCal"], gainUse=parms["rlgainUse"], \
                             timerange=parms["rltimerange"], FOV=parms["rlFOV"], \
-                            doBand=1, BPVer=1, flagVer=parms["rlflagVer"], \
-                            refAnt=parms["rlrefAnt"], doPol=parms["doPol"], PDVer=parms["PDVer"],  \
-                            nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
-                            check=check, debug=debug)
-        if retCode!=0:
-            raise RuntimeError,"Error in RL phase spectrum calibration"
-        # BP cal and pol cal don't commute, do RLCal again for good measure updating BP 2
-        retCode = EVLARLCal(uv, err,\
-                            RLDCal=parms["RLDCal"], BChan=parms["rlBChan"],
-                            EChan=parms["rlEChan"], UVRange=parms["rlUVRange"], \
-                            ChWid2=parms["rlChWid"], solInt1=parms["rlsolint1"], solInt2=parms["rlsolint2"], \
-                            RLPCal=parms["RLPCal"], RLPhase=parms["RLPhase"], \
-                            RM=parms["RLRM"], CleanRad=parms["rlCleanRad"], \
-                            calcode=parms["rlCalCode"], doCalib=parms["rlDoCal"], gainUse=parms["rlgainUse"], \
-                            timerange=parms["rltimerange"], FOV=parms["rlFOV"], \
-                            doBand=1, BPVer=2, flagVer=parms["rlflagVer"], \
+                            doBand=-1, BPVer=1, flagVer=parms["rlflagVer"], \
                             refAnt=parms["rlrefAnt"], doPol=parms["doPol"], PDVer=parms["PDVer"],  \
                             doPlot=parms["doSpecPlot"], plotFile=plotFile, \
                             nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
@@ -587,7 +549,7 @@ def pipeline( aipsSetup, parmFile):
             raise RuntimeError,"Error in RL phase spectrum calibration"
     
     # VClip
-    if parms["VClip"] and parms["VClip"]>0.0:
+    if parms["VClip"] and parms["VClip"][0]>0.0:
         mess =  "VPol clipping:"
         printMess(mess, logFile)
         retCode = EVLAAutoFlag (uv, [], err, flagVer=-1, flagTab=1, \
@@ -617,7 +579,7 @@ def pipeline( aipsSetup, parmFile):
         EVLAImageTargets (uv, err, Sources=slist, seq=parms["seq"], sclass=outIClass, \
                           doCalib=2, doBand=1,  flagVer=1, doPol=parms["doPol"], PDVer=parms["PDVer"],  \
                           Stokes=parms["Stokes"], FOV=parms["FOV"], Robust=parms["Robust"], Niter=parms["Niter"], \
-                          CleanRad=parms["CleanRad"], minFlux=parms["minFlux"], UVRange=parms["UVRange"], \
+                          CleanRad=parms["CleanRad"], minFlux=parms["minFlux"], \
                           maxPSCLoop=parms["maxPSCLoop"], minFluxPSC=parms["minFluxPSC"], \
                           solPInt=parms["solPInt"], solPMode=parms["solPMode"], solPType=parms["solPType"], \
                           maxASCLoop=parms["maxASCLoop"], minFluxASC=parms["minFluxASC"], \
