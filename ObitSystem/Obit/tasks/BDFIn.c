@@ -375,11 +375,6 @@ ObitInfoList* BDFInin (int argc, char **argv, ObitErr *err)
   /* Make default inputs InfoList */
   list = defaultInputs(err);
 
-  /* Initialize output */
-  myOutput = defaultOutputs(err);
-  ObitReturnDumpRetCode (-999, outfile, myOutput, err);
-  if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
-
   /* command line arguments */
   if (argc<=1) Usage(); /* must have arguments */
   /* parse command line */
@@ -450,6 +445,11 @@ ObitInfoList* BDFInin (int argc, char **argv, ObitErr *err)
     }
   } /* end parsing input arguments */
   
+  /* Initialize output */
+  myOutput = defaultOutputs(err);
+  ObitReturnDumpRetCode (-999, outfile, myOutput, err);
+  if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
+
   /* Read defaults if no file specified */
   if (!init) ObitParserParse (input_file, list, err);
 

@@ -514,7 +514,7 @@ def pipeline( aipsSetup, parmFile):
     
     # Polarization calibration
     if parms["doPolCal"]:
-        if parms["PCRefAnt"]<=0:
+        if parms["PCRefAnt"]<0:
             parms["PCRefAnt"] =  parms["refAnt"]
         retCode = EVLAPolCal(uv, parms["PCInsCals"], err, InsCalPoln=parms["PCCalPoln"], \
                              doCalib=2, gainUse=0, doBand=-1, flagVer=0, \

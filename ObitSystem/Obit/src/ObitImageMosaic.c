@@ -3124,7 +3124,7 @@ FlyEye (ofloat radius, olong imsize, ofloat cells[2], olong overlap,
 
 /**
  * Add a field the the field list if there is room and if it not within 3/4 
- * the radius of another field.
+ * the radius of another field or within 90% of minImpact
  * Translated from the AIPSish ADFLDX in $FOURMASS/SUB/ADDFIELDS.FOR
  * \param   shift    x,y shift in deg 
  * \param   dec      declination of new field (deg) 
@@ -3132,8 +3132,8 @@ FlyEye (ofloat radius, olong imsize, ofloat cells[2], olong overlap,
  * \param   cells    cell size in arc sec 
  * \param   qual     input field quality (crowding) code. 
  * \param   check    if true check if this is in another field 
- * \param  minImpact if check then MIN (minImpact, 0.75*fldsize) is the 
- *                   distance in cells to consider a match
+ * \param  minImpact if check then MIN (0.9*minImpact, 0.75*fldsize)  
+ *                   is the distance in cells to consider a match
  * \param   nfield   (output) number fields already added 
  * \param   fldsiz   (output) circular image field sizes (pixels) 
  * \param   rash     (output) ra shifts (asec) 
@@ -3168,7 +3168,7 @@ AddField (ofloat shift[2], ofloat dec, olong imsize, ofloat cells[2],
 	(cosdec * (xxsh - xsh) / cells[0]) + 
 	((yysh - ysh) / cells[1]) * ((yysh - ysh) / cells[1]);
       /* Minimum distance for a match */
-      mindist = MIN (minImpact, 0.5*0.75*fldsiz[i]);
+      mindist = MIN (0.9*minImpact, 0.5*0.75*fldsiz[i]);
       /* distance in pixel**2 to consider a match */
       maxdis = mindist*mindist;
       if (dist < maxdis) {

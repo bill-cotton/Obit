@@ -2304,3 +2304,16 @@ Obit/python/EVLAContPipe.py:
 Obit/share/scripts/SumImage.py:
   Utility to average planes of a cube
 18 July 2014, svn ver. 488
+
+mostly bug fixes
+Obit/tasks/IDIIn.c:
+  GetInterferometerModelInfo: Add obscode and RefData to output.
+Obit/python/EVLAContPipe.py:
+  Allow no PCal reference antenna
+Obit/src/ObitUVImager.c:
+  Add doGPU to various parameter lists.
+Obit/src/ObitImageMosaic.c:
+  AddField: Use 90% of minImpact to determine is a position is in a previous facet.
+Obit/tasks/BDFIn.c Obit/tasks/ASDMList.c:
+  Create proper output file.
+5 Aug. 2014, svn ver. 489

@@ -3017,6 +3017,12 @@ void GetInterferometerModelInfo (ObitData *inData, ObitUV *outData,
     /* attach to table buffer */
     ObitTableIMSetRow (outTable, outRow, err);
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
+
+    /* Copy table keywords */
+    for (i=0; i<MIN(MAXKEYCHARTABLEIDI_INTERFEROMETER_MODEL,MAXKEYCHARTABLEIM); i++)
+      outTable->obscode[i] = inTable->obscode[i];
+    for (i=0; i<MIN(UVLEN_VALUE,MAXKEYCHARTABLEIM); i++)
+      outTable->RefDate[i] = outData->myDesc->obsdat[i];
     
     /* Initialize output row */
     outRow->status      = 0;
