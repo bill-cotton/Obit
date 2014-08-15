@@ -797,7 +797,8 @@ void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
 ofloat ObitUVUtilVisCompare (ObitUV *inUV1, ObitUV *inUV2, ObitErr *err)
 {
   ObitIOCode iretCode;
-  olong i, j, indx, jndx, count, vscnt;
+  olong i, j, indx, jndx, vscnt;
+  ollong count, vNo;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong NPIO;
@@ -872,7 +873,16 @@ ofloat ObitUVUtilVisCompare (ObitUV *inUV1, ObitUV *inUV2, ObitErr *err)
       incompatible = 
 	inUV1->buffer[indx+in1Desc->iloct]!=inUV2->buffer[jndx+in2Desc->iloct] ||
 	inUV1->buffer[indx+in1Desc->ilocb]!=inUV2->buffer[jndx+in2Desc->ilocb];
-      if (incompatible) break;
+      if (incompatible) {
+	vNo = indx+in1Desc->firstVis + i;  /* Which visibility */
+	if (inUV1->buffer[indx+in1Desc->iloct]!=inUV2->buffer[jndx+in2Desc->iloct])
+	  Obit_log_error(err, OBIT_Error, "Incompatible Times %f != %f @ vis %ld", 
+			 inUV1->buffer[indx+in1Desc->iloct], inUV2->buffer[jndx+in2Desc->iloct], vNo);
+	if (inUV1->buffer[indx+in1Desc->ilocb]!=inUV2->buffer[jndx+in2Desc->ilocb])
+	  Obit_log_error(err, OBIT_Error, "Incompatible Baselines %f != %f @ vis %ld", 
+			 inUV1->buffer[indx+in1Desc->ilocb], inUV2->buffer[jndx+in2Desc->ilocb], vNo);
+	break;
+      }
 
       indx += in1Desc->nrparm;
       jndx += in2Desc->nrparm;

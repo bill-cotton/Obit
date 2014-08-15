@@ -33,5 +33,3 @@
 #include "ObitDef.h"  /* Parent class instance definitions */
 /* Needs definitions in ObitCUDASkyModelInfoDef.h */
 GPUInfo      *gpuInfo;
-GPUVisInfo   *visInfo;
-GPUModelInfo *modelInfo;

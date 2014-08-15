@@ -64,7 +64,7 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err);
 /* Program globals */
 gchar *pgmName = "AvgBL";       /* Program name */
 gchar *infile  = "AvgBL.in" ;   /* File with program inputs */
-gchar *outfile = "/tmp/AvgBL.out";   /* File to contain program outputs */
+gchar *outfile = "AvgBL.out";   /* File to contain program outputs */
 olong  pgmNumber;               /* Program number (like POPS no.) */
 olong  AIPSuser;                /* AIPS user number number (like POPS no.) */
 olong  nAIPS=0;                 /* Number of AIPS directories */
@@ -166,10 +166,6 @@ ObitInfoList* AvgBLIn (int argc, char **argv, ObitErr *err)
   /* Make default inputs InfoList */
   list = defaultInputs(err);
   myOutput = defaultOutputs(err);
-
-  /* Initialize output */
-  ObitReturnDumpRetCode (-999, outfile, myOutput, err);
-  if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
   /* command line arguments */
   /* fprintf (stderr,"DEBUG arg %d %s\n",argc,argv[0]); DEBUG */
@@ -317,6 +313,10 @@ ObitInfoList* AvgBLIn (int argc, char **argv, ObitErr *err)
       strTemp += dim[0];
     }
   }
+
+  /* Initialize output */
+  ObitReturnDumpRetCode (-999, outfile, myOutput, err);
+  if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
   return list;
 } /* end AvgBLIn */

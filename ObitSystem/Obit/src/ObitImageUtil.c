@@ -4036,7 +4036,7 @@ void ObitImageUtilMFShift (ObitImage *inImage, ObitImage *outImage, ofloat *shif
 {
   ObitIOSize IOBy;
   ObitIOCode retCode;
-  olong blc[IM_MAXDIM], trc[IM_MAXDIM];
+  olong blc[IM_MAXDIM], trc[IM_MAXDIM], plane[5] = {1,1,1,1,1};
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitFFT *FFTfor=NULL, *FFTrev=NULL;
   ObitFArray *inFArray=NULL, *outFArray=NULL;
@@ -4066,10 +4066,6 @@ void ObitImageUtilMFShift (ObitImage *inImage, ObitImage *outImage, ofloat *shif
   nTerm = ((ObitImageMF*)inImage)->maxOrder + 1;
   doShift = (shift[0]!=0.0) || (shift[1]!=0.0);  /* Need shift? */
 
-  /* Set plane range */
-  blc[2] = 1 + nTerm;
-  trc[3] = 1 + nTerm + nSpec;
-  
   /* Do I/O by plane and all of plane */
   IOBy = OBIT_IO_byPlane;
   dim[0] = 1;
@@ -4137,9 +4133,10 @@ void ObitImageUtilMFShift (ObitImage *inImage, ObitImage *outImage, ofloat *shif
 
   /* Loop over coarse planes */
   for (iplane = 0; iplane<nSpec; iplane++) {
+    plane[0] = 1 + nTerm + iplane;
     
     /* Read input plane */
-    retCode = ObitImageRead (inImage, NULL, err);
+    retCode = ObitImageGetPlane (inImage, NULL,  plane,err);
     if ((retCode != OBIT_IO_OK) || (err->error>0)) { /* error test */
       Obit_log_error(err, OBIT_Error, "%s: ERROR reading image %s", 
 		     routine, inImage->name);
@@ -4201,7 +4198,7 @@ void ObitImageUtilMFShift (ObitImage *inImage, ObitImage *outImage, ofloat *shif
     ObitFArrayBlank (outImage->image, inFArray, outImage->image);
     
     /* Write */
-    retCode = ObitImageWrite (outImage, outImage->image->array, err);
+    retCode = ObitImagePutPlane (outImage, outImage->image->array, plane, err);
     if (err->error) Obit_traceback_msg (err, routine, outImage->name);
   } /* end loop over planes */
 

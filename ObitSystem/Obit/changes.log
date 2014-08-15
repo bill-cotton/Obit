@@ -2317,3 +2317,50 @@ Obit/src/ObitImageMosaic.c:
 Obit/tasks/BDFIn.c Obit/tasks/ASDMList.c:
   Create proper output file.
 5 Aug. 2014, svn ver. 489
+
+Further development of GPU DFT Sky Model
+Add full polarization sky model
+New task SysPowerView to display EVLA SysPower tables
+New task AvgBL to average all baselines into a single pseudo baseline
+New task DPCal for differential instrumental polarization calibration
+Cleanup, bug fixes
+Obit/tasks/SysPowerView.c Obit/TDF/SysPowerView.TDF:
+  New task to display selected EVLA SysPower table entries
+Obit/TDF/MFImage.TDF:
+  Fix documentation for Tapers.
+Obit/tasks/IDIIn.c Obit/TDF/IDIIn.TDF:
+  Allow full datafile name to be specified.
+Obit/src/ObitUVUtil.c:
+  VisCompare:  Make count a longlong, better error messages
+Obit/src/ObitImageUtil.c:
+  MFShift: correct trc in plane range
+Obit/src/ObitDConClean.c:
+  ImageStats: Correct type for maxAbsResid in info list.
+Obit/python/EVLAContPipe.py:
+  Beef up polarization calibration, BP plotting
+Obit/include/ObitCUDASkyModel.h Obit/include/ObitCUDASkyModelInfoDef.h 
+Obit/include/ObitCUDAUtil.h
+Obit/include/ObitGPUSkyModelDef.h Obit/include/ObitGPUSkyModel.h
+Obit/src/ObitGPUSkyModel.c Obit/src/ObitSkyModel.c Obit/src/ObitSkyModelMF.c:
+Obit/src/ObitCUDASkyModel.cu:
+  Further development of DFT GPU, spectrum, wideband, Gaussians
+Obit/tasks/MFImage.c Obit/TDF/MFImage.TDF:
+  Implement GPU
+Obit/include/ObitSkyModelVMPoln.h Obit/include/ObitSkyModelVMPolnClassDef.h 
+Obit/include/ObitSkyModelVMPolnDef.h
+Obit/src/ObitSkyModelVMPoln.c:
+  Full Stokes sky model.
+Obit/tasks/SNCor.c Obit/tasks/SNSmo.c Obit/tasks/CLCor.c:
+  ?In: create myOutput before parsing command line, write after.
+Obit/tasks/AvgBL.c Obit/tasks/BDFIn.c  Obit/tasks/DPCal.c: 
+Obit/tasks/Imager.c Obit/tasks/TabCopy.c Obit/tasks/UVSub.c:
+  Eliminate bogus .out file in /tmp
+Obit/src/ObitIOImageFITS.c:
+  ObitIOImageAIPSCLEANRead: increase dimension of array card
+Obit/include/ObitTableDef.h Obit/include/ObitIO.h:
+  Change BufferSize to ollong
+Obit/src/ObitUVGridWB.c:
+  Remove unused definition of PrepBufferWB
+Obit/src/ObitTable.c:
+  Change BufferSize to ollong in format
+15 Aug. 2014, svn ver. 490

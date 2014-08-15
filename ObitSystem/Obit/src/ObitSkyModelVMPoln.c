@@ -1,5 +1,3 @@
-/* To DO
- */
 /* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2014                                               */
@@ -512,7 +510,11 @@ void ObitSkyModelVMPolnInitMod (ObitSkyModel* inn, ObitUV *uvdata,
       mosaic    = in->mosaicV;
       StartComp = in->startVComp;
       EndComp   = in->endVComp;
-    } /* End select Stokes */
+    } else { /* default = I */
+      mosaic    = in->mosaicI;
+      StartComp = in->startIComp;
+      EndComp   = in->endIComp;
+   } /* End select Stokes */
     /* Check start and end component numbers */
     for (i=0; i<mosaic->numberImages; i++) {
       
@@ -941,6 +943,15 @@ gboolean ObitSkyModelVMPolnLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata
       nSpec     = &in->nSpecV;
       specFreq  = in->specFreqV;
       priorAlpha = in->AlphaV; priorAlphaRefF = in->AlphaVRefF;
+    } else {  /* Default I */
+      mosaic    = in->mosaicI;
+      StartComp = in->startIComp;
+      EndComp   = in->endIComp;
+      VMComps   = &in->VMIComps;
+      numComp   = &in->numIComp;
+      nSpec     = &in->nSpecI;
+      specFreq  = in->specFreqI;
+      priorAlpha = in->AlphaI; priorAlphaRefF = in->AlphaIRefF;
     } /* End select Stokes */
 
     /* Don't bother if no components requested */
@@ -1733,7 +1744,7 @@ static gpointer ThreadSkyModelVMPolnFTDFT (gpointer args)
   ofloat CosArr[FazArrSize], SinArr[FazArrSize];
   ofloat cosSumPA, sinSumPA, cosDifPA, sinDifPA;
   ofloat model[8], stokes[8], u, v, w;
-  olong it, jt, itcnt, qtcnt, utcnt, vtcnt, itab=0, qtab=0, utab=0, vtab=0;
+  olong it, jt, itcnt=0, qtcnt=0, utcnt=0, vtcnt=0, itab=0, qtab=0, utab=0, vtab=0;
   odouble *freqArr;
   const ObitSkyModelVMClassInfo 
     *myClass=(const ObitSkyModelVMClassInfo*)in->ClassInfo;

@@ -36,6 +36,31 @@
  *
  */
 
+/*----------------------------------- enumerations -------------------------*/
+/**
+ * \enum gpuModType
+ * enum for sky model types supported in GPU
+ */
+enum gpuModType {
+  GPUModTypePoint=0,        /* Simple point model */
+  GPUModTypePointSpec,      /* Point model with parameterized spectrum */
+  GPUModTypePointTSpec,     /* Point model with tabulated spectrum */
+  GPUModTypeGauss,          /* Simple Gaussian model */
+  GPUModTypeGaussSpec,      /* Gaussian model with parameterized spectrum */
+  GPUModTypeGaussTSpec,     /* Gaussian model with tabulated spectrum */
+}; /* end enum  gpuModType */
+typedef enum gpuModType GPUModType;
+
+/**
+ * \enum gpuOpType
+ * enum for sky model operation types supported in GPU
+ */
+enum gpuOpType {
+  GPUOpTypeSub=0,          /* Subtract model */
+  GPUOpTypeDiv,            /* Divide model */
+  GPUOpTypeRepl,           /* Replace data with model */
+}; /* end enum  gpuOpType */
+typedef enum gpuOpType GPUOpType;
 
 /*---------------------------------- Structures ----------------------------*/
 typedef struct {
@@ -89,19 +114,35 @@ typedef struct {
   int kincif;
   /* increment in freqScale for frequency */
   int kincf;
+  /* Ratio of UV ref. freq. to image ref. freq. (per coarse channel for TSpec) */
+  float *freqRat;
+  /* GPU pointer for freqRat */
+  float *d_freqRat;
   /* GPU Frequency factor array dim nchan*nif */
   float *freqScale;
  } GPUVisInfo;
 
 typedef struct {
-  /* Number of components */
-  int nmodel;
+  /* Number of spectral terms */
+  int nterm;
   /* Size of components */
   int size;
+  /* Swap R/I? */
+  int doSwap;
   /* Type of components */
-  int type;
-  /* GPU Model Data array */
-  float *model;
+  GPUModType type;
+  /* Type of operation */
+  GPUOpType opType;
+  /* array of coarse frequency index per frequency channel */
+  int *specIndex;
+  /* GPU address of specIndex */
+  int *d_specIndex;
+  /* Number of components per Stokes */
+  int nmodel[4];
+  /* GPU Model Data array per Stokes */
+  float *model[4];
+  /* Factors per Stokes */
+  float stokFact[4];
  } GPUModelInfo;
 
 typedef struct {
@@ -113,8 +154,6 @@ typedef struct {
   int nrparm;
   /* Length of visibilities in buffer */
   int lenvis;
-  /* number of model components */
-  int nmodel;
   /* size of model components */
   int modelSize;
   /* number of streams */
@@ -127,20 +166,20 @@ typedef struct {
   int cuda_device;
   /* data buffer size in floats */
   int bufferSize;
-  /* model component array */
-  float *d_model;
+  /* number of model components  per poln */
+  int nmodel[4];
+  /* device model component array per poln */
+  float *d_model[4];
   /* Frequency scaling array  */
   float *d_freq;
   /* host data buffer */
   float *h_data;
-  /* device input data buffer, per stream  */
-  float **d_data_in;
-  /* device output data buffer, per stream */
-  float **d_data_out;
+  /* device data buffer, per stream  */
+  float **d_data;
   /* description of visibilities */
   GPUVisInfo *d_visInfo, *h_visInfo;
   /* description of model */
-  GPUModelInfo *d_modelInfo;
+  GPUModelInfo *d_modelInfo, *h_modelInfo;
   /* CUDA dependent values */
  #if IS_CUDA==1
    /* stream structures */

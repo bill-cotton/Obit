@@ -1527,7 +1527,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "MaxBaseline", "MinBaseline", "rotate", "targBeam", "Beam", "minFlux",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
     "nxBeam", "nyBeam", "Alpha", "doCalSelect",
-    "numBeamTapes", "BeamTapes", "MResKnob",
+    "numBeamTapes", "BeamTapes", "MResKnob", "doGPU",
     NULL
   };
   gchar        *saveParms[] = {  /* Imaging, weighting parameters to save*/
@@ -2432,7 +2432,7 @@ void MFImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "PeelMinFlux", "PeelAvgPol", "PeelAvgIF",
     "doMGM", "minSNR", "minNo", "PBCor", "antSize", "Alpha",
     "nTaper", "Tapers", "MResKnob",
-    "nThreads",
+    "nThreads", "doGPU",
     NULL};
   gchar *routine = "MFImageHistory";
 

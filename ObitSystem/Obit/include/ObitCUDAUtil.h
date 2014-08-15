@@ -84,7 +84,7 @@ void ObitCUDAUtilHost2GPU(float *GPU, float *host, int memsize, int* stream);
 /* Public: Copy GPU to Host memory */
 void ObitCUDAUtilGPU2Host(float *host, float *GPU, int memsize, int* stream);
 
-#else  /* No GPU - stubb *
+#else  /* No GPU - stubb */
 /* Public: Set device */
 void ObitCUDASetGPU (int cuda_device)
 {

@@ -1974,7 +1974,7 @@ void ObitIOImageFITSClear (gpointer inn)
  */
 void  ObitIOImageAIPSCLEANRead(ObitIOImageFITS *in, olong *lstatus)
 {
-  gchar commnt[FLEN_COMMENT], card[FLEN_COMMENT], temp[128];
+  gchar commnt[FLEN_COMMENT], card[128], temp[128];
   int i, j, k, keys, morekeys, status=0;
   long ltemp;
   float ftemp;

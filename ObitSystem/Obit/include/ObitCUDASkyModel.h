@@ -40,40 +40,40 @@
  */
 
 /*---------------Public functions---------------------------*/
-#if HAVE_GPU==1  /* GPU? Real versioins */
+#if HAVE_GPU==1  /* GPU? Real versions */
 /* Public: Initialize DFT Model */
-void ObitCUDASkyModelDFTInit (GPUInfo *gpuInfo, GPUVisInfo *visInfo, GPUModelInfo *modelInfo);
+void ObitCUDASkyModelDFTInit (GPUInfo *gpuInfo);
 
 /* Public: Set DFT sky model Model */
-void ObitCUDASkyModelDFTSetMod (GPUInfo *gpuInfo, GPUVisInfo *visInfo, GPUModelInfo *modelInfo);
+void ObitCUDASkyModelDFTSetMod (GPUInfo *gpuInfo);
 
 /* Public: Calculate DFT Model */
-void ObitCUDASkyModelDFTCalc (GPUInfo *gpuInfo, GPUVisInfo *visInfo, GPUModelInfo *modelInfo);
+void ObitCUDASkyModelDFTCalc (GPUInfo *gpuInfo);
 
 /* Public: Shutdown DFT Model */
-void ObitCUDASkyModelDFTShutdown (GPUInfo *gpuinfo, GPUVisInfo *visInfo, GPUModelInfo *modelInfo);
+void ObitCUDASkyModelDFTShutdown (GPUInfo *gpuinfo);
 
 #else  /* No GPU - stubb */
 /* Public: Initialize DFT Model */
-void ObitCUDASkyModelDFTInit (GPUInfo *gpuInfo, GPUVisInfo *visInfo, GPUModelInfo *modelInfo)
+void ObitCUDASkyModelDFTInit (GPUInfo *gpuInfo)
 {
   g_error("GPU/CUDA not implemented");
 } /* end ObitCUDASkyModelDFTInit */
 
 /* Public: Set DFT sky model Model */
-void ObitCUDASkyModelDFTSetMod (GPUInfo *gpuInfo, GPUVisInfo *visInfo, GPUModelInfo *modelInfo)
+void ObitCUDASkyModelDFTSetMod (GPUInfo *gpuInfo)
 {
   g_error("GPU/CUDA not implemented");
 } /* end  ObitCUDASkyModelDFTSetMod  */
 
 /* Public: Calculate DFT Model */
-void ObitCUDASkyModelDFTCalc (GPUInfo *gpuInfo, GPUVisInfo *visInfo, GPUModelInfo *modelInfo)
+void ObitCUDASkyModelDFTCalc (GPUInfo *gpuInfo)
 {
   g_error("GPU/CUDA not implemented");
 } /* end  ObitCUDASkyModelDFTCalc */
 
 /* Public: Shutdown DFT Model */
-void ObitCUDASkyModelDFTShutdown (GPUInfo *gpuinfo, GPUVisInfo *visInfo, GPUModelInfo *modelInfo)
+void ObitCUDASkyModelDFTShutdown (GPUInfo *gpuinfo)
 {
   g_error("GPU/CUDA not implemented");
 } /* end ObitCUDASkyModelDFTShutdown */

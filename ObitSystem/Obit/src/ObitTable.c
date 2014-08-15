@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -888,7 +888,7 @@ ObitIOCode ObitTableRead (ObitTable *in, olong rowno, ofloat *data,
     /* need = ObitTableSelBufferSize (in->myDesc, in->mySel);   DEBUG */
     if (need > in->bufferSize) {
       Obit_log_error(err, OBIT_Error, 
-		     "IO buffer ( %d) too small, need %d for %s", 
+		     "IO buffer ( %ld) too small, need %d for %s", 
 		     in->bufferSize, need, in->name);
       return retCode;
     }
@@ -956,7 +956,7 @@ ObitIOCode ObitTableReadSelect (ObitTable *in, olong rowno, ofloat *data,
     need = ObitTableSelBufferSize (in->myDesc, in->mySel);
     if (need > in->bufferSize) {
       Obit_log_error(err, OBIT_Error, 
-		     "IO buffer ( %d) too small, need %d for %s", 
+		     "IO buffer ( %ld) too small, need %d for %s", 
 		     in->bufferSize, need, in->name);
       return retCode;
     }
@@ -1022,7 +1022,7 @@ ObitIOCode ObitTableWrite (ObitTable *in, olong rowno, ofloat *data,
     need = ObitTableSelBufferSize (in->myDesc, in->mySel);
     if (need > in->bufferSize) {
       Obit_log_error(err, OBIT_Error, 
-		     "IO buffer ( %d) too small, need %d for %s", 
+		     "IO buffer ( %ld) too small, need %d for %s", 
 		     in->bufferSize, need, in->name);
       return retCode;
     }

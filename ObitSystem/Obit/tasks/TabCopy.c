@@ -65,7 +65,7 @@ gboolean WantTable (ObitTable *inTab, gchar *KeyWord, ofloat KeyRange[2],
 /* Program globals */
 gchar *pgmName = "TabCopy";       /* Program name */
 gchar *infile  = "TabCopy.in" ;   /* File with program inputs */
-gchar *outfile = "/tmp/TabCopy.out";   /* File to contain program outputs */
+gchar *outfile = "TabCopy.out";   /* File to contain program outputs */
 olong  pgmNumber;       /* Program number (like POPS no.) */
 olong  AIPSuser;        /* AIPS user number number (like POPS no.) */
 olong  nAIPS=0;         /* Number of AIPS directories */

@@ -106,12 +106,16 @@ ObitGPUSkyModel* ObitGPUSkyModelCopy  (ObitGPUSkyModel *in, ObitGPUSkyModel *out
 void ObitGPUSkyModelClone (ObitGPUSkyModel *in, ObitGPUSkyModel *out, ObitErr *err);
 
 /* Public: Initialize DFT Model */
-void ObitGPUSkyModelDFTInit (ObitGPUSkyModel *in, ObitUV *uvdata, ObitErr *err);
-typedef void (*ObitGPUSkyModelDFTInitFP) (ObitGPUSkyModel *in, ObitUV *uvdata, ObitErr *err);
+void ObitGPUSkyModelDFTInit (ObitGPUSkyModel *in, Obit *skyModel,
+			     ObitUV *uvdata, ObitErr *err);
+typedef void (*ObitGPUSkyModelDFTInitFP) (ObitGPUSkyModel *in, Obit *skyModel, 
+					  ObitUV *uvdata, ObitErr *err);
 
 /* Public: Set DFT sky model Model */
-void ObitGPUSkyModelDFTSetMod (ObitGPUSkyModel *in, ObitFArray *model, ObitErr *err);
-typedef void (*ObitGPUSkyModelDFTSetModFP) (ObitGPUSkyModel *in, ObitFArray *model, ObitErr *err);
+void ObitGPUSkyModelDFTSetMod (ObitGPUSkyModel *in, Obit *skyModel,
+			       ObitFArray *model, ObitErr *err);
+typedef void (*ObitGPUSkyModelDFTSetModFP) (ObitGPUSkyModel *in, Obit *skyModel,
+					    ObitFArray *model, ObitErr *err);
 
 /* Public: Calculate DFT Model */
 void ObitGPUSkyModelDFTCalc (ObitGPUSkyModel *in, ObitUV *uvdata, ObitErr *err);

@@ -1,6 +1,4 @@
 /* Still need 
-2) Spectral index
-4) Gaussian model 
 5) Grid
 */
 /* $Id: $        */
@@ -63,16 +61,16 @@ __global__ void debugKernal( float* __restrict__ d_debug, GPUVisInfo* visInfo)
     d_debug[2] = threadIdx.x;
     d_debug[3] = threadIdx.y;
 } /* end debugKernel */
+
 /**
  * Point DFT GPU kernal.
  * block = vis, threads in block = data product = channel/stokes/IF
  * does full model for one data product
- * \param  g_out      input data
- * \param  g_in       output data
+ * \param  g_data     vis data
  * \param  modelInfo  model information
  * \param  visInfo    visibility information
  */
-__global__ void dftPointKernel(float* __restrict__ g_out, float* __restrict__ g_in, 
+__global__ void dftPointKernel(float* __restrict__ g_data, 
 	   GPUModelInfo* modelInfo,  GPUVisInfo* visInfo)
 {
     int lenvis     = visInfo->lenvis;
@@ -80,13 +78,12 @@ __global__ void dftPointKernel(float* __restrict__ g_out, float* __restrict__ g_
     int iprod      = threadIdx.x+256*blockIdx.y; // product number
     int nrparm     = visInfo->nrparm;
     float *FreqArr = visInfo->freqScale;
-    int nModel     = modelInfo->nmodel;
     int modelSize  = modelInfo->size;
-    float *Model   = modelInfo->model;
-    int i, ichan, istok, iIF, ivis;
-    int iMod = 0;
+    int nModel;
+    float *Model;
+    int ichan, istok, iIF, ivis, iMod;
     float arg, amp, s, c, sumR, sumI; 
-    float u, v, w;
+    float u, v, w, tr, ti;
     float freqFact;
 
     // No more than actual number of products
@@ -97,34 +94,34 @@ __global__ void dftPointKernel(float* __restrict__ g_out, float* __restrict__ g_
     istok = (iprod / visInfo->incs)  % visInfo->nstok;
     iIF   = (iprod / visInfo->incif) % visInfo->nIF;
 
-   // This one desired?
-    if ((ichan<visInfo->chanb) || (ichan>visInfo->chane) ||
-        (istok<visInfo->stokb) || (istok>visInfo->stoke) ||
-	(iIF<visInfo->IFb)     || (iIF>visInfo->IFe)) return;
-
-    // frequency scaling factor	  
-    freqFact = FreqArr[ichan*visInfo->kincf+iIF*visInfo->kincif];
-    // copy random parameters if first channel
-    if (ichan==visInfo->chanb) {
-       for (i=0; i<nrparm; i++) g_out[idx+i] = g_in[idx+i];
-    }
- 
     // real part of vis
     ivis = idx + nrparm + iprod*3;
  
-  // bail if weight non positive, doesn't really matter
-    //if (g_in[ivis+2]<=0.0) return;
+    // This one desired?
+    if ((ichan<visInfo->chanb) || (ichan>visInfo->chane) ||
+        (istok<visInfo->stokb) || (istok>visInfo->stoke) ||
+	(iIF<visInfo->IFb)     || (iIF>visInfo->IFe) || (g_data[ivis+2]<=0.0)) {
+	return;
+    }
 
-   // get scaled u,v,w factors
-    u = g_in[idx+visInfo->ilocu];  // this seems faster???
-    v = g_in[idx+visInfo->ilocv];
-    w = g_in[idx+visInfo->ilocw];
+    // Model per poln 
+    nModel = modelInfo->nmodel[istok];
+    Model  = modelInfo->model[istok];
+
+    // frequency scaling factor	  
+    freqFact = FreqArr[ichan*visInfo->kincf+iIF*visInfo->kincif];
+
+    // get scaled u,v,w factors
+    u = g_data[idx+visInfo->ilocu];
+    v = g_data[idx+visInfo->ilocv];
+    w = g_data[idx+visInfo->ilocw];
     u *= freqFact;
     v *= freqFact;
     w *= freqFact;
     sumR = sumI = 0.0;
+ 
     // model = flux, x,y,z factors
-
+    iMod = 0;
     for (int i=0; i<nModel; i++) {
 	amp = Model[iMod];
  	arg = u*Model[iMod+1] + v*Model[iMod+2] + w*Model[iMod+3];
@@ -133,10 +130,576 @@ __global__ void dftPointKernel(float* __restrict__ g_out, float* __restrict__ g_
         sumI += amp * s;
         iMod += modelSize;
     } // end loop over model comps
-    g_out[ivis]   = g_in[ivis]   - sumR;
-    g_out[ivis+1] = g_in[ivis+1] - sumI;
-    g_out[ivis+2] = g_in[ivis+2];
+
+    // Multiply by Factor
+    sumR *= modelInfo->stokFact[istok];
+    sumI *= modelInfo->stokFact[istok];
+    // Swap R/-I for LR?
+    if ((modelInfo->doSwap) && (istok==3)) {
+      arg  =  sumR;
+      sumR = -sumI;
+      sumI =  arg;
+    }
+    // Correct Data by operation type 
+    if (modelInfo->opType==GPUOpTypeRepl) {      // Replace
+      g_data[ivis]   = sumR;
+      g_data[ivis+1] = sumI;
+    } else if (modelInfo->opType==GPUOpTypeDiv) { // Divide
+      amp = sumR*sumR + sumI*sumI;
+      sumR /= amp;
+      sumI /= amp;
+      amp = sqrt(amp);
+      tr = g_data[ivis];
+      ti = g_data[ivis+1];
+      g_data[ivis]   = sumR*tr + sumI*ti;
+      g_data[ivis+1] = sumR*ti - sumI*tr;
+      g_data[ivis+2] *= amp;
+    } else {                                     // Subtract
+      g_data[ivis]   -= sumR;
+      g_data[ivis+1] -= sumI;
+    } // end opType
  } // end dftPointKernel
+
+/**
+ * Point DFT with spectrum GPU kernal.
+ * block = vis, threads in block = data product = channel/stokes/IF
+ * does full model for one data product
+ * \param  g_data     vis data
+ * \param  modelInfo  model information
+ * \param  visInfo    visibility information
+ */
+__global__ void dftPointSpecKernel(float* __restrict__ g_data, 
+	   GPUModelInfo* modelInfo,  GPUVisInfo* visInfo)
+{
+    int lenvis       = visInfo->lenvis;
+    int idx          = blockIdx.x * lenvis;        // beginning of a visibility
+    int iprod        = threadIdx.x+256*blockIdx.y; // product number
+    int nrparm       = visInfo->nrparm;
+    float *FreqArr   = visInfo->freqScale;
+    float freqRat    = visInfo->d_freqRat[0];
+    int modelSize    = modelInfo->size;
+    int iterm, nterm = modelInfo->nterm;
+    int nModel;
+    float *Model;
+    int ichan, istok, iIF, ivis, iMod;
+    float arg, amp, s, c, sumR, sumI; 
+    float u, v, w, tr, ti;
+    float freqFact, lll, lnspecFreqFact;
+
+    // No more than actual number of products
+    if (iprod>=visInfo->nprod) return;
+
+    // get channel,stokes, IF from data product
+    ichan = (iprod / visInfo->incf)  % visInfo->nchan;
+    istok = (iprod / visInfo->incs)  % visInfo->nstok;
+    iIF   = (iprod / visInfo->incif) % visInfo->nIF;
+
+    // real part of vis
+    ivis = idx + nrparm + iprod*3;
+ 
+   // This one desired?
+    if ((ichan<visInfo->chanb) || (ichan>visInfo->chane) ||
+        (istok<visInfo->stokb) || (istok>visInfo->stoke) ||
+	(iIF<visInfo->IFb)     || (iIF>visInfo->IFe) || (g_data[ivis+2]<=0.0)) {
+	return;
+    }
+
+    // Model per poln 
+    nModel = modelInfo->nmodel[istok];
+    Model  = modelInfo->model[istok];
+
+    // frequency scaling factor	  
+    freqFact = FreqArr[ichan*visInfo->kincf+iIF*visInfo->kincif];
+    // log of ratio to reference freq
+    lnspecFreqFact = __logf(freqFact*freqRat);
+
+    // get scaled u,v,w factors
+    u = g_data[idx+visInfo->ilocu];
+    v = g_data[idx+visInfo->ilocv];
+    w = g_data[idx+visInfo->ilocw];
+    u *= freqFact;
+    v *= freqFact;
+    w *= freqFact;
+    sumR = sumI = 0.0;
+
+    // model = flux, x,y,z factors, spectral terms
+    iMod = 0;
+    for (int i=0; i<nModel; i++) {
+        // Frequency dependent spectral term */
+        lll = lnspecFreqFact;
+        arg = 0.0;
+        for (iterm=0; iterm<nterm; iterm++) {
+	  arg += Model[iMod+4+iterm] * lll;
+	  lll *= lnspecFreqFact;
+	}
+	amp = Model[iMod] * __expf(-arg);
+ 	arg = u*Model[iMod+1] + v*Model[iMod+2] + w*Model[iMod+3];
+	__sincosf(arg, &s, &c);
+        sumR += amp * c;
+        sumI += amp * s;
+        iMod += modelSize;
+    } // end loop over model comps
+
+    // Multiply by Factor
+    sumR *= modelInfo->stokFact[istok];
+    sumI *= modelInfo->stokFact[istok];
+    // Swap R/-I for LR?
+    if ((modelInfo->doSwap) && (istok==3)) {
+      arg  =  sumR;
+      sumR = -sumI;
+      sumI =  arg;
+    }
+    // Correct Data by operation type 
+    if (modelInfo->opType==GPUOpTypeRepl) {      // Replace
+      g_data[ivis]   = sumR;
+      g_data[ivis+1] = sumI;
+    } else if (modelInfo->opType==GPUOpTypeDiv) { // Divide
+      amp = sumR*sumR + sumI*sumI;
+      sumR /= amp;
+      sumI /= amp;
+      amp = sqrt(amp);
+      tr = g_data[ivis];
+      ti = g_data[ivis+1];
+      g_data[ivis]   = sumR*tr + sumI*ti;
+      g_data[ivis+1] = sumR*ti - sumI*tr;
+      g_data[ivis+2] *= amp;
+    } else {                                     // Subtract
+      g_data[ivis]   -= sumR;
+      g_data[ivis+1] -= sumI;
+    } // end opType
+ } // end dftPointSpecKernel
+
+/**
+ * Point DFT with tabulated spectrum GPU kernal.
+ * block = vis, threads in block = data product = channel/stokes/IF
+ * does full model for one data product
+ * \param  g_data     vis data
+ * \param  modelInfo  model information
+ * \param  visInfo    visibility information
+ * \param  debug      debug array
+ */
+__global__ void dftPointTSpecKernel(float* __restrict__ g_data,
+	   GPUModelInfo* modelInfo,  GPUVisInfo* visInfo)
+//, float* __restrict__ debug)
+{
+    int lenvis       = visInfo->lenvis;
+    int idx          = blockIdx.x * lenvis;        // beginning of a visibility
+    int iprod        = threadIdx.x+256*blockIdx.y; // product number
+    int nrparm       = visInfo->nrparm;
+    float *FreqArr   = visInfo->freqScale;
+    float *freqRat   = visInfo->d_freqRat;
+    int modelSize    = modelInfo->size;
+    int *specIndex   = modelInfo->specIndex;
+    int nModel;
+    float *Model;
+    int ichan, istok, iIF, ivis, itab, iMod, ifq;
+    float arg, amp, s, c, sumR, sumI; 
+    float u, v, w, tr, ti;
+    float freqFact, lnspecFreqFact;
+
+    // No more than actual number of products
+    if (iprod>=visInfo->nprod) return;
+
+    // get channel,stokes, IF from data product
+    ichan = (iprod / visInfo->incf)  % visInfo->nchan;
+    istok = (iprod / visInfo->incs)  % visInfo->nstok;
+    iIF   = (iprod / visInfo->incif) % visInfo->nIF;
+
+    // real part of vis
+    ivis = idx + nrparm + iprod*3;
+ 
+    // This one desired?
+    if ((ichan<visInfo->chanb) || (ichan>visInfo->chane) ||
+        (istok<visInfo->stokb) || (istok>visInfo->stoke) ||
+	(iIF<visInfo->IFb)     || (iIF>visInfo->IFe) || (g_data[ivis+2]<=0.0)) {
+	return;
+    }
+
+    // Model per poln 
+    nModel = modelInfo->nmodel[istok];
+    Model  = modelInfo->model[istok];
+
+    // frequency scaling factor	  
+    ifq = ichan*visInfo->kincf+iIF*visInfo->kincif;
+    itab = 5 + specIndex[ifq]; // which coarse channel?
+    freqFact = FreqArr[ifq];   // channel frequency scaling factor
+    // log of ratio to reference freq
+    lnspecFreqFact = -__logf(freqFact*freqRat[itab-5]);
+
+    // get scaled u,v,w factors
+    u = g_data[idx+visInfo->ilocu];
+    v = g_data[idx+visInfo->ilocv];
+    w = g_data[idx+visInfo->ilocw];
+    u *= freqFact;
+    v *= freqFact;
+    w *= freqFact;
+    sumR = sumI = 0.0;
+
+    // model = [flux], x,y,z factors, spectral index, coarse channel fluxes
+    iMod = 0;
+    for (int i=0; i<nModel; i++) {
+        // include spectral index
+	arg = lnspecFreqFact*Model[iMod+4];
+	amp = Model[iMod+itab] * __expf(arg);
+ 	arg = u*Model[iMod+1] + v*Model[iMod+2] + w*Model[iMod+3];
+	__sincosf(arg, &s, &c);
+        sumR += amp * c;
+        sumI += amp * s;
+        iMod += modelSize;
+    } // end loop over model comps
+
+    // Multiply by Factor
+    sumR *= modelInfo->stokFact[istok];
+    sumI *= modelInfo->stokFact[istok];
+    // Swap R/-I for LR?
+    if ((modelInfo->doSwap) && (istok==3)) {
+      arg  =  sumR;
+      sumR = -sumI;
+      sumI =  arg;
+    }
+    // Correct Data by operation type 
+    if (modelInfo->opType==GPUOpTypeRepl) {      // Replace
+      g_data[ivis]   = sumR;
+      g_data[ivis+1] = sumI;
+    } else if (modelInfo->opType==GPUOpTypeDiv) { // Divide
+      amp = sumR*sumR + sumI*sumI;
+      sumR /= amp;
+      sumI /= amp;
+      amp = sqrt(amp);
+      tr = g_data[ivis];
+      ti = g_data[ivis+1];
+      g_data[ivis]   = sumR*tr + sumI*ti;
+      g_data[ivis+1] = sumR*ti - sumI*tr;
+      g_data[ivis+2] *= amp;
+    } else {                                     // Subtract
+      g_data[ivis]   -= sumR;
+      g_data[ivis+1] -= sumI;
+    } // end opType
+ } // end dftPointTSpecKernel
+
+/**
+ * Gauss DFT GPU kernal.
+ * block = vis, threads in block = data product = channel/stokes/IF
+ * does full model for one data product
+ * \param  g_data     vis data
+ * \param  modelInfo  model information
+ * \param  visInfo    visibility information
+ */
+__global__ void dftGaussKernel(float* __restrict__ g_data,
+	   GPUModelInfo* modelInfo,  GPUVisInfo* visInfo)
+{
+    int lenvis     = visInfo->lenvis;
+    int idx        = blockIdx.x * lenvis;        // beginning of a visibility
+    int iprod      = threadIdx.x+256*blockIdx.y; // product number
+    int nrparm     = visInfo->nrparm;
+    float *FreqArr = visInfo->freqScale;
+    int modelSize  = modelInfo->size;
+    int nModel;
+    float *Model;
+    int ichan, istok, iIF, ivis, iMod;
+    float arg, amp, s, c, sumR, sumI; 
+    float u, v, w, tr, ti;
+    float freqFact;
+
+    // No more than actual number of products
+    if (iprod>=visInfo->nprod) return;
+
+    // get channel,stokes, IF from data product
+    ichan = (iprod / visInfo->incf)  % visInfo->nchan;
+    istok = (iprod / visInfo->incs)  % visInfo->nstok;
+    iIF   = (iprod / visInfo->incif) % visInfo->nIF;
+
+    // real part of vis
+    ivis = idx + nrparm + iprod*3;
+ 
+    // This one desired?
+    if ((ichan<visInfo->chanb) || (ichan>visInfo->chane) ||
+        (istok<visInfo->stokb) || (istok>visInfo->stoke) ||
+	(iIF<visInfo->IFb)     || (iIF>visInfo->IFe) || (g_data[ivis+2]<=0.0)) {
+	return;
+    }
+
+    // Model per poln 
+    nModel = modelInfo->nmodel[istok];
+    Model  = modelInfo->model[istok];
+
+    // frequency scaling factor	  
+    freqFact = FreqArr[ichan*visInfo->kincf+iIF*visInfo->kincif];
+
+    // get scaled u,v,w factors
+    u = g_data[idx+visInfo->ilocu];
+    v = g_data[idx+visInfo->ilocv];
+    w = g_data[idx+visInfo->ilocw];
+    u *= freqFact;
+    v *= freqFact;
+    w *= freqFact;
+    sumR = sumI = 0.0;
+ 
+    // model = flux, x,y,z factors, uu, vv, uv factors
+    iMod = 0;
+    for (int i=0; i<nModel; i++) {
+ 	arg = u*Model[iMod+1] + v*Model[iMod+2] + w*Model[iMod+3];
+	__sincosf(arg, &s, &c);
+        arg = u*u*Model[iMod+4] + v*v*Model[iMod+5] + u*v*Model[iMod+6];
+	amp = Model[iMod] * __expf(arg);
+        sumR += amp * c;
+        sumI += amp * s;
+        iMod += modelSize;
+    } // end loop over model comps
+
+    // Multiply by Factor
+    sumR *= modelInfo->stokFact[istok];
+    sumI *= modelInfo->stokFact[istok];
+    // Swap R/-I for LR?
+    if ((modelInfo->doSwap) && (istok==3)) {
+      arg  =  sumR;
+      sumR = -sumI;
+      sumI =  arg;
+    }
+    // Correct Data by operation type 
+    if (modelInfo->opType==GPUOpTypeRepl) {      // Replace
+      g_data[ivis]   = sumR;
+      g_data[ivis+1] = sumI;
+    } else if (modelInfo->opType==GPUOpTypeDiv) { // Divide
+      amp = sumR*sumR + sumI*sumI;
+      sumR /= amp;
+      sumI /= amp;
+      amp = sqrt(amp);
+      tr = g_data[ivis];
+      ti = g_data[ivis+1];
+      g_data[ivis]   = sumR*tr + sumI*ti;
+      g_data[ivis+1] = sumR*ti - sumI*tr;
+      g_data[ivis+2] *= amp;
+    } else {                                     // Subtract
+      g_data[ivis]   -= sumR;
+      g_data[ivis+1] -= sumI;
+    } // end opType
+ } // end dftGaussKernel
+
+/**
+ * Gauss DFT with spectrum GPU kernal.
+ * block = vis, threads in block = data product = channel/stokes/IF
+ * does full model for one data product
+ * \param  g_data     vis data
+ * \param  modelInfo  model information
+ * \param  visInfo    visibility information
+ */
+__global__ void dftGaussSpecKernel(float* __restrict__ g_data,
+	   GPUModelInfo* modelInfo,  GPUVisInfo* visInfo)
+{
+    int lenvis       = visInfo->lenvis;
+    int idx          = blockIdx.x * lenvis;        // beginning of a visibility
+    int iprod        = threadIdx.x+256*blockIdx.y; // product number
+    int nrparm       = visInfo->nrparm;
+    float *FreqArr   = visInfo->freqScale;
+    float freqRat    = visInfo->d_freqRat[0];
+    int modelSize    = modelInfo->size;
+    int iterm, nterm = modelInfo->nterm;
+    int nModel;
+    float *Model;
+    int ichan, istok, iIF, ivis, iMod;
+    float arg, amp, s, c, sumR, sumI; 
+    float u, v, w, tr, ti;
+    float freqFact, lll, lnspecFreqFact;
+
+    // No more than actual number of products
+    if (iprod>=visInfo->nprod) return;
+
+    // get channel,stokes, IF from data product
+    ichan = (iprod / visInfo->incf)  % visInfo->nchan;
+    istok = (iprod / visInfo->incs)  % visInfo->nstok;
+    iIF   = (iprod / visInfo->incif) % visInfo->nIF;
+
+    // real part of vis
+    ivis = idx + nrparm + iprod*3;
+ 
+    // This one desired?
+    if ((ichan<visInfo->chanb) || (ichan>visInfo->chane) ||
+        (istok<visInfo->stokb) || (istok>visInfo->stoke) ||
+	(iIF<visInfo->IFb)     || (iIF>visInfo->IFe) || (g_data[ivis+2]<=0.0)) {
+	return;
+    }
+
+    // Model per poln 
+    nModel = modelInfo->nmodel[istok];
+    Model  = modelInfo->model[istok];
+
+    // frequency scaling factor	  
+    freqFact = FreqArr[ichan*visInfo->kincf+iIF*visInfo->kincif];
+    // log of ratio to reference freq
+    lnspecFreqFact = __logf(freqFact*freqRat);
+
+   // get scaled u,v,w factors
+    u = g_data[idx+visInfo->ilocu];
+    v = g_data[idx+visInfo->ilocv];
+    w = g_data[idx+visInfo->ilocw];
+    u *= freqFact;
+    v *= freqFact;
+    w *= freqFact;
+    sumR = sumI = 0.0;
+
+    // model = flux, x,y,z factors, uu, vv, uv factors, spectral terms
+    iMod = 0;
+    for (int i=0; i<nModel; i++) {
+        // Frequency dependent spectral term */
+        lll = lnspecFreqFact;
+        arg = 0.0;
+        for (iterm=0; iterm<nterm; iterm++) {
+	  arg += Model[iMod+4+iterm] * lll;
+	  lll *= lnspecFreqFact;
+	}
+	amp = Model[iMod] * __expf(-arg);
+        // Gaussian factor
+        arg  = u*u*Model[iMod+4] + v*v*Model[iMod+5] + u*v*Model[iMod+6];
+	amp *= __expf(arg);
+ 	// Phase
+ 	arg = u*Model[iMod+1] + v*Model[iMod+2] + w*Model[iMod+3];
+	__sincosf(arg, &s, &c);
+        sumR += amp * c;
+        sumI += amp * s;
+        iMod += modelSize;
+    } // end loop over model comps
+
+    // Multiply by Factor
+    sumR *= modelInfo->stokFact[istok];
+    sumI *= modelInfo->stokFact[istok];
+    // Swap R/-I for LR?
+    if ((modelInfo->doSwap) && (istok==3)) {
+      arg  =  sumR;
+      sumR = -sumI;
+      sumI =  arg;
+    }
+    // Correct Data by operation type 
+    if (modelInfo->opType==GPUOpTypeRepl) {      // Replace
+      g_data[ivis]   = sumR;
+      g_data[ivis+1] = sumI;
+    } else if (modelInfo->opType==GPUOpTypeDiv) { // Divide
+      amp = sumR*sumR + sumI*sumI;
+      sumR /= amp;
+      sumI /= amp;
+      amp = sqrt(amp);
+      tr = g_data[ivis];
+      ti = g_data[ivis+1];
+      g_data[ivis]   = sumR*tr + sumI*ti;
+      g_data[ivis+1] = sumR*ti - sumI*tr;
+      g_data[ivis+2] *= amp;
+    } else {                                     // Subtract
+      g_data[ivis]   -= sumR;
+      g_data[ivis+1] -= sumI;
+    } // end opType
+ } // end dftGaussSpecKernel
+
+/**
+ * Gauss DFT with tabulated spectrum GPU kernal.
+ * block = vis, threads in block = data product = channel/stokes/IF
+ * does full model for one data product
+ * \param  g_data     vis data
+ * \param  modelInfo  model information
+ * \param  visInfo    visibility information
+ * \param  debug      debug array
+ */
+__global__ void dftGaussTSpecKernel(float* __restrict__ g_data,
+	   GPUModelInfo* modelInfo,  GPUVisInfo* visInfo)
+//, float* __restrict__ debug)
+{
+    int lenvis       = visInfo->lenvis;
+    int idx          = blockIdx.x * lenvis;        // beginning of a visibility
+    int iprod        = threadIdx.x+256*blockIdx.y; // product number
+    int nrparm       = visInfo->nrparm;
+    float *FreqArr   = visInfo->freqScale;
+    float *freqRat   = visInfo->d_freqRat;
+    int modelSize    = modelInfo->size;
+    int *specIndex   = modelInfo->specIndex;
+    int nModel;
+    float *Model;
+    int ichan, istok, iIF, ivis, itab, iMod, ifq;
+    float arg, amp, s, c, sumR, sumI; 
+    float u, v, w, tr, ti;
+    float freqFact, lnspecFreqFact;
+
+    // No more than actual number of products
+    if (iprod>=visInfo->nprod) return;
+
+    // get channel,stokes, IF from data product
+    ichan = (iprod / visInfo->incf)  % visInfo->nchan;
+    istok = (iprod / visInfo->incs)  % visInfo->nstok;
+    iIF   = (iprod / visInfo->incif) % visInfo->nIF;
+
+    // real part of vis
+    ivis = idx + nrparm + iprod*3;
+ 
+    // This one desired?
+    if ((ichan<visInfo->chanb) || (ichan>visInfo->chane) ||
+        (istok<visInfo->stokb) || (istok>visInfo->stoke) ||
+	(iIF<visInfo->IFb)     || (iIF>visInfo->IFe) || (g_data[ivis+2]<=0.0)) {
+	return;
+    }
+
+    // Model per poln 
+    nModel = modelInfo->nmodel[istok];
+    Model  = modelInfo->model[istok];
+
+    // frequency scaling factor	  
+    ifq = ichan*visInfo->kincf+iIF*visInfo->kincif;
+    itab = 8 + specIndex[ifq]; // which coarse channel?
+    freqFact = FreqArr[ifq];   // channel frequency scaling factor
+    // log of ratio to reference freq
+    lnspecFreqFact = -__logf(freqFact*freqRat[itab-8]);
+
+    // get scaled u,v,w factors
+    u = g_data[idx+visInfo->ilocu];
+    v = g_data[idx+visInfo->ilocv];
+    w = g_data[idx+visInfo->ilocw];
+    u *= freqFact;
+    v *= freqFact;
+    w *= freqFact;
+    sumR = sumI = 0.0;
+
+    // model = [flux], x,y,z factors, uu, vv, uv factors, spectral index, coarse channel fluxes
+    iMod = 0;
+    for (int i=0; i<nModel; i++) {
+        // include spectral index
+	arg = lnspecFreqFact*Model[iMod+4];
+	amp = Model[iMod+itab] * __expf(arg);
+        // Gaussian factor
+        arg = u*u*Model[iMod+4] + v*v*Model[iMod+5] + u*v*Model[iMod+6];
+	amp = Model[iMod] * __expf(arg);
+        // Phase
+ 	arg = u*Model[iMod+1] + v*Model[iMod+2] + w*Model[iMod+3];
+	__sincosf(arg, &s, &c);
+        sumR += amp * c;
+        sumI += amp * s;
+        iMod += modelSize;
+    } // end loop over model comps
+
+    // Multiply by Factor
+    sumR *= modelInfo->stokFact[istok];
+    sumI *= modelInfo->stokFact[istok];
+    // Swap R/-I for LR?
+    if ((modelInfo->doSwap) && (istok==3)) {
+      arg  =  sumR;
+      sumR = -sumI;
+      sumI =  arg;
+    }
+    // Correct Data by operation type 
+    if (modelInfo->opType==GPUOpTypeRepl) {      // Replace
+      g_data[ivis]   = sumR;
+      g_data[ivis+1] = sumI;
+    } else if (modelInfo->opType==GPUOpTypeDiv) { // Divide
+      amp = sumR*sumR + sumI*sumI;
+      sumR /= amp;
+      sumI /= amp;
+      amp = sqrt(amp);
+      tr = g_data[ivis];
+      ti = g_data[ivis+1];
+      g_data[ivis]   = sumR*tr + sumI*ti;
+      g_data[ivis+1] = sumR*ti - sumI*tr;
+      g_data[ivis+2] *= amp;
+    } else {                                     // Subtract
+      g_data[ivis]   -= sumR;
+      g_data[ivis+1] -= sumI;
+    } // end opType
+ } // end dftGaussTSpecKernel
 #endif /* HAVE_GPU */
 
 #if HAVE_GPU==1  /* CUDA code */
@@ -145,7 +708,7 @@ static void DFTprocessWithStreams(int streams_used, int nvis,
             GPUVisInfo* h_visInfo, GPUVisInfo* d_visInfo, 
             cudaStream_t* stream, cudaEvent_t* cycleDone,
             float *h_data_source, float *h_data_sink, 
-            float *d_data_in[], float *d_data_out[], int prtLv);
+            float *d_data[], int prtLv);
 #endif /* HAVE_GPU */
 
 /*----------------------Public functions---------------------------*/
@@ -153,11 +716,9 @@ static void DFTprocessWithStreams(int streams_used, int nvis,
  * Initialize an ObitCUDASkyModel 
  * Currently only DFT point supported
  * \param gpuInfo    processing info
- * \param visInfo    visibility info
- * \param modelInfo  model info
  */
 extern "C"
-void ObitCUDASkyModelDFTInit (GPUModelInfo *gpuInfo, GPUVisInfo *visInfo, GPUModelInfo *modelInfo)
+void ObitCUDASkyModelDFTInit (GPUModelInfo *gpuInfo)
 {
 } /* end  ObitCUDASkyModelDFTInit */
 
@@ -166,11 +727,9 @@ void ObitCUDASkyModelDFTInit (GPUModelInfo *gpuInfo, GPUVisInfo *visInfo, GPUMod
  * Setup model for ObitCUDASkyModel 
  * Currently only DFT point supported
  * \param gpuInfo    processing info
- * \param visInfo    visibility info
- * \param modelInfo  model info
  */
 extern "C"
-void ObitCUDASkyModelDFTSetMod (GPUModelInfo *gpuInfo, GPUVisInfo *visInfo, GPUModelInfo *modelInfo)
+void ObitCUDASkyModelDFTSetMod (GPUModelInfo *gpuInfo)
 {
 #if HAVE_GPU==1  /* CUDA code */
 #endif /* HAVE_GPU */
@@ -181,21 +740,19 @@ void ObitCUDASkyModelDFTSetMod (GPUModelInfo *gpuInfo, GPUVisInfo *visInfo, GPUM
  * Calculate an ObitCUDASkyModel 
  * Currently only DFT point supported
  * \param gpuInfo    processing info
- * \param visInfo    visibility info
- * \param modelInfo  model info
  */
 extern "C"
-void ObitCUDASkyModelDFTCalc (GPUInfo *gpuInfo, GPUVisInfo *visInfo, GPUModelInfo *modelInfo)
+void ObitCUDASkyModelDFTCalc (GPUInfo *gpuInfo)
 {
 #if HAVE_GPU==1  /* CUDA code */
    // Put available fast memory in L1 cache - no apparent effect
    checkCudaErrors(cudaFuncSetCacheConfig(dftPointKernel, cudaFuncCachePreferL1));
 
    /* Process with streams */
-   DFTprocessWithStreams(gpuInfo->nstream, gpuInfo->nvis, modelInfo, gpuInfo->d_modelInfo, 
+   DFTprocessWithStreams(gpuInfo->nstream, gpuInfo->nvis,gpuInfo->h_modelInfo, gpuInfo->d_modelInfo, 
                         gpuInfo->h_visInfo, gpuInfo->d_visInfo, 
                         (cudaStream_t *)gpuInfo->stream, (cudaEvent_t *)gpuInfo->cycleDone, 
-                        gpuInfo->h_data, gpuInfo->h_data, gpuInfo->d_data_in, gpuInfo->d_data_out, 0);
+                        gpuInfo->h_data, gpuInfo->h_data, gpuInfo->d_data, 0);
 #endif /* HAVE_GPU */
     return;
 } /* end ObitCUDASkyModelDFTCalc */
@@ -205,11 +762,9 @@ void ObitCUDASkyModelDFTCalc (GPUInfo *gpuInfo, GPUVisInfo *visInfo, GPUModelInf
  * Shutdown  ObitCUDASkyModel 
  * Currently only DFT point supported
  * \param gpuInfo    processing info
- * \param visInfo    visibility info
- * \param modelInfo  model info
  */
 extern "C"
-void ObitCUDASkyModelDFTShutdown (GPUInfo *gpuInfo, GPUVisInfo *visInfo, GPUModelInfo *modelInfo)
+void ObitCUDASkyModelDFTShutdown (GPUInfo *gpuInfo)
 {
 
 #if HAVE_GPU==1  /* CUDA code */
@@ -233,8 +788,7 @@ void ObitCUDASkyModelDFTShutdown (GPUInfo *gpuInfo, GPUVisInfo *visInfo, GPUMode
  * \param  h_data_source Host resident input buffer, should be locked
  * \param  h_data_sink   Host resident output buffer, should be locked
  *                       may be h_data_source
- * \param  d_data_in     GPU resident input data buffer (nvis/streams_used)
- * \param  d_data_out    GPU resident output data buffer (nvis/streams_used)
+ * \param  d_data        GPU resident data buffer (nvis/streams_used)
  * \param  prtLv         Print level, 5=>much directly printed
  */
 static void DFTprocessWithStreams(int streams_used, int nvis, 
@@ -242,26 +796,27 @@ static void DFTprocessWithStreams(int streams_used, int nvis,
             GPUVisInfo* h_visInfo, GPUVisInfo* d_visInfo, 
             cudaStream_t* stream, cudaEvent_t* cycleDone,
             float *h_data_source, float *h_data_sink, 
-            float *d_data_in[], float *d_data_out[], int prtLv)
+            float *d_data[], int prtLv)
 {
 
     int  last_stream, current_stream = 0;
     int npass = streams_used;
-    int nvisPass = (nvis+npass+1)/npass;  // round up
+    int nvisPass = (nvis+npass-1)/npass;  // nearly round up
     int lenvis = h_visInfo->lenvis;
     int off, nprod, dovis;
     int memsize = (lenvis*nvisPass)*sizeof(float);
     dim3 numBlocks, thPerBlock;
 
-    // DEBUG
+    // DEBUG  create debug arrays
     //int ms = 10000*sizeof(float);
+    //float *d_debug, *h_debug;
     //checkCudaErrors(cudaMalloc(&d_debug, ms));
     //checkCudaErrors(cudaMallocHost(&h_debug, ms));
-    //h_debug[0]=999.999;
+    //h_debug[0] = 111.111;  h_debug[2] = 123456.;
     //checkCudaErrors(cudaMemcpyAsync(d_debug,h_debug,  ms, cudaMemcpyHostToDevice,0));
 
-    // Number opf data products
-    nprod = h_visInfo->nchan * h_visInfo->nstok * h_visInfo->nIF;
+    // Number of data products
+    nprod = h_visInfo->nchan * h_visInfo->nIF * h_visInfo->nstok;
 
     if (prtLv>=5) printf ("Start\n");
  
@@ -275,7 +830,7 @@ static void DFTprocessWithStreams(int streams_used, int nvis,
 
     // Upload first frame
     if (prtLv>=5) printf ("upload current_stream %d off %d\n",0,0);
-    checkCudaErrors(cudaMemcpyAsync(d_data_in[0],
+    checkCudaErrors(cudaMemcpyAsync(d_data[0],
 			  	   &h_data_source[0],
 				   memsize,
 				   cudaMemcpyHostToDevice,
@@ -291,7 +846,7 @@ static void DFTprocessWithStreams(int streams_used, int nvis,
 
 	// Upload next frame
 	if (prtLv>=5) printf ("upload next_stream %d off %d\n",next_stream,off);
-	checkCudaErrors(cudaMemcpyAsync(d_data_in[next_stream],
+	checkCudaErrors(cudaMemcpyAsync(d_data[next_stream],
 			    &h_data_source[off],
                             memsize,
                             cudaMemcpyHostToDevice,
@@ -302,7 +857,7 @@ static void DFTprocessWithStreams(int streams_used, int nvis,
 	  off = prev_stream*lenvis*nvisPass;  /* Offset in data buffers */
 	  if (prtLv>=5) printf ("download prev_stream %d off %d\n",prev_stream,off);
 	  checkCudaErrors(cudaMemcpyAsync(&h_data_sink[off],
-					  d_data_out[prev_stream],
+					  d_data[prev_stream],
 					  memsize,
 					  cudaMemcpyDeviceToHost,
 					  stream[prev_stream]));
@@ -317,13 +872,48 @@ static void DFTprocessWithStreams(int streams_used, int nvis,
 	else            dovis = nvisPass;
 
 	// package work
-	numBlocks.x  = dovis; numBlocks.y = (nprod+127)/128;
-	thPerBlock.x = 128;   thPerBlock.y = 1;
+	numBlocks.x  = dovis; numBlocks.y = (nprod+255)/256;
+	thPerBlock.x = 256;   thPerBlock.y = 1;
+
 	//debugKernal<<<numBlocks, thPerBlock, 0, stream[current_stream]>>>(d_debug, d_visInfo);
-	dftPointKernel<<<numBlocks, thPerBlock, 0, stream[current_stream]>>>(
-            d_data_out[current_stream],
-            d_data_in[current_stream],
-            d_modelInfo, d_visInfo);
+
+        // by model type
+        switch (h_modelInfo->type) {
+        case GPUModTypePoint:
+  	  dftPointKernel<<<numBlocks, thPerBlock, 0, stream[current_stream]>>>(
+              d_data[current_stream],
+              d_modelInfo, d_visInfo);
+          break;
+        case GPUModTypePointSpec:
+  	  dftPointSpecKernel<<<numBlocks, thPerBlock, 0, stream[current_stream]>>>(
+              d_data[current_stream],
+              d_modelInfo, d_visInfo);
+          break;
+        case GPUModTypePointTSpec:
+  	  dftPointTSpecKernel<<<numBlocks, thPerBlock, 0, stream[current_stream]>>>(
+              d_data[current_stream],
+              //d_modelInfo, d_visInfo);
+              d_modelInfo, d_visInfo);
+//, d_debug);
+          break;
+        case GPUModTypeGauss:
+  	  dftGaussKernel<<<numBlocks, thPerBlock, 0, stream[current_stream]>>>(
+              d_data[current_stream],
+              d_modelInfo, d_visInfo);
+          break;
+        case GPUModTypeGaussSpec:
+  	  dftGaussSpecKernel<<<numBlocks, thPerBlock, 0, stream[current_stream]>>>(
+              d_data[current_stream],
+              d_modelInfo, d_visInfo);
+          break;
+        case GPUModTypeGaussTSpec:
+  	  dftGaussTSpecKernel<<<numBlocks, thPerBlock, 0, stream[current_stream]>>>(
+              d_data[current_stream],
+              d_modelInfo, d_visInfo);
+          break;
+          default:
+              printf("Model type not supported in GPU",d_modelInfo->type);
+          };  // End switch by model type 
 
 	// make sure previous frame done
 	if (i>0) cudaEventSynchronize(cycleDone[prev_stream]);
@@ -342,14 +932,14 @@ static void DFTprocessWithStreams(int streams_used, int nvis,
     off = last_stream*lenvis*nvisPass;  /* Offset in data buffers */
     if (prtLv>=5) printf ("download last_stream %d off %d\n",last_stream,off);
     checkCudaErrors(cudaMemcpyAsync(&h_data_sink[off],
-				    d_data_out[last_stream],
+				    d_data[last_stream],
 				    memsize,
 				    cudaMemcpyDeviceToHost,
 				    stream[last_stream]));
     if (prtLv>=5) printf ("Finish\n");
     cudaDeviceSynchronize();
 
-    // DEBUG
+    // DEBUG fetch debug arrays from GPU memory
     //checkCudaErrors(cudaMemcpyAsync(h_debug, d_debug, ms, cudaMemcpyDeviceToHost,0));
     //cudaFreeHost(h_debug);
     //cudaFree(d_debug);		 

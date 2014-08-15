@@ -29,6 +29,9 @@
 #include <math.h>
 #include "ObitFFT.h"
 #include "ObitThread.h"
+#if HAVE_GPU==1  /* GPU? */
+#include "ObitGPUSkyModel.h"
+#endif /* HAVE_GPU */
 #include "ObitSkyModelMF.h"
 #include "ObitSkyModelVMSquint.h"
 #include "ObitSkyModelVMIon.h"
@@ -734,6 +737,10 @@ ObitSkyModelMF* ObitSkyModelMFCreate (gchar* name, ObitImageMosaic* mosaic)
     for (i=0; i<number; i++) out->endComp[i] = 0;
   }
 
+  /* Possibly using GPU? */
+#if HAVE_GPU==1  /*  GPU? */
+    out->GPUSkyModel = ObitGPUSkyModelCreate ("GPU", "DFT");
+#endif /* HAVE_GPU */
   return out;
 } /* end ObitSkyModelMFCreate */
 
@@ -883,6 +890,16 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
       Obit_log_error(err, OBIT_InfoErr, "SkyModelMF using Fastest calculation type");
   }
 
+#if HAVE_GPU==1  /*  GPU?*/
+  /* Init GPU, create object if necessary */
+  if (in->GPUSkyModel==NULL)
+    in->GPUSkyModel = ObitGPUSkyModelCreate ("GPU", "DFT");
+  const ObitGPUSkyModelClassInfo *GPUClass;
+  GPUClass = (ObitGPUSkyModelClassInfo*)in->GPUSkyModel->ClassInfo;
+  if ((in->doGPU) && (in->modelMode==OBIT_SkyModel_DFT))
+    GPUClass->ObitGPUSkyModelDFTInit(in->GPUSkyModel, (Obit*)in, uvdata, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+#endif /* HAVE_GPU */
 } /* end ObitSkyModelMFInitMod */
 
 /**
@@ -924,17 +941,33 @@ void ObitSkyModelMFShutDownMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   if (in->specFreqLo)  g_free(in->specFreqLo);  in->specFreqLo = NULL;
   if (in->specFreqHi)  g_free(in->specFreqHi);  in->specFreqHi = NULL;
   if (in->specIndex)   g_free(in->specIndex);   in->specIndex  = NULL;
+#if HAVE_GPU==1  /*  GPU? */
+  in->GPUSkyModel = ObitGPUSkyModelUnref (in->GPUSkyModel);
+#endif /* HAVE_GPU */
 } /* end ObitSkyModelMFShutDownMod */
 
 /**
  * Initializes an ObitSkyModelMF for a pass through data in time order
- * No op in this class
- * \param inn  SkyModel to initialize
+ * Copy model to GPU if used.
+ * \param in   SkyModel to initialize
  * \param err  Obit error stack object.
  */
-void ObitSkyModelMFInitModel (ObitSkyModel* inn, ObitErr *err)
+void ObitSkyModelMFInitModel (ObitSkyModel* in, ObitErr *err)
 {
-  /* nada */
+#if HAVE_GPU==1  /*  GPU? */
+  gchar *routine = "ObitSkyModelInitModel";
+  const ObitGPUSkyModelClassInfo *GPUClass;
+  GPUClass = (ObitGPUSkyModelClassInfo*)in->GPUSkyModel->ClassInfo;
+  if ((in->doGPU) && (in->modelMode==OBIT_SkyModel_DFT) && 
+      ((in->modType==OBIT_SkyModel_PointMod)      || 
+       (in->modType==OBIT_SkyModel_PointModSpec)  || 
+       (in->modType==OBIT_SkyModel_PointModTSpec) ||
+       (in->modType==OBIT_SkyModel_GaussMod)      || 
+       (in->modType==OBIT_SkyModel_GaussModSpec)  || 
+       (in->modType==OBIT_SkyModel_GaussModTSpec)))
+    GPUClass->ObitGPUSkyModelDFTSetMod (in->GPUSkyModel, (Obit*)in, in->comps, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+#endif /* HAVE_GPU */
 } /* end ObitSkyModelMFInitModel */
 
 /**
@@ -1742,6 +1775,11 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
     ccData += lcomp;  /* update pointer */
   } /* end loop over components */
   
+  if ((largs->ithread==1) && (uvdata->myDesc->firstVis<10)) { /* DEBUG */
+    Obit_log_error(err, OBIT_InfoErr, "SkyModel with %d components", mcomp);
+    ObitErrLog(err);
+  }
+
   /* Visibility pointers */
   ilocu =  uvdata->myDesc->ilocu;
   ilocv =  uvdata->myDesc->ilocv;

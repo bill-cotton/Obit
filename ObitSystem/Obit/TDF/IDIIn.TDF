@@ -4,7 +4,7 @@
 ;! Obit Convert IDI data and append to a UV data file.
 ;# Task Obit IDI
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007-2013
+;;  Copyright (C) 2007-2014
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@ Adverbs:
   File.......Name of scan or file name 
              (e.g."lwda_uv_2006_10_28_23_59_42")
              This is the input file name minus the postfix
-             '.fits' or '.idifits'
+             '.fits' or '.idifits'.  Full name can be used.
   DataRoot...Archive directory for project 
              MUST end in '/'
              Expects full file name to be DataRoot+File+".fits"

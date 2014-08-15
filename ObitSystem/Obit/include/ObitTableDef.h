@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -46,7 +46,7 @@ ObitTableSel* mySel;
 /** Table buffer */
 ofloat *buffer;
 /** Table buffer size in floats */
-olong bufferSize;
+ollong bufferSize;
 /** Table type (name of type, e.g. "AIPS AN") */
 gchar *tabType;
 /** Table version number(1-rel) */

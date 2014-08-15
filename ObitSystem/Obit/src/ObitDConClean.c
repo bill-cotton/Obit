@@ -1048,7 +1048,7 @@ void ObitDConCleanImageStats(ObitDConClean *in, olong field, gboolean doBeam,
 
     /* Save max residual on image */
     dim[0] = 1;
-    ObitInfoListPut (image->info, "maxAbsResid", OBIT_long, dim, &tmax, err); 
+    ObitInfoListPut (image->info, "maxAbsResid", OBIT_float, dim, &tmax, err); 
 
     retCode = ObitImageClose (image, err);
     if (err->error) Obit_traceback_msg (err, routine, image->name);

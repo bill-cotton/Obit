@@ -67,7 +67,7 @@ void DPCalHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
 /* Program globals */
 gchar *pgmName = "DPCal";       /* Program name */
 gchar *infile  = "DPCal.in" ;   /* File with program inputs */
-gchar *outfile = "/tmp/DPCal.out";   /* File to contain program outputs */
+gchar *outfile = "DPCal.out";   /* File to contain program outputs */
 olong  pgmNumber;       /* Program number (like POPS no.) */
 olong  AIPSuser;        /* AIPS user number number (like POPS no.) */
 olong  nAIPS=0;         /* Number of AIPS directories */
@@ -840,8 +840,6 @@ void GetCalSoln (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 	      lambda = VELIGHT/freq;
 	      pdif = RLPhase[0] + 2.0 * (lambda*lambda - reflambda*reflambda) * RM[0];
 
-	      /*PARALLACTIC ANGLE CORRECTION?; **************************????????????; */
-
 	      Qsum[iif] -= pflux * cos(pdif);
 	      Usum[iif] -= pflux * sin(pdif);
 	      Qsum[iif] /= Isum[iif];
@@ -950,7 +948,7 @@ void GetCalSoln (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
       }
       if (Qwt[0]>0.0) Qsum[0] /= Qwt[0];
       else            Qsum[0] = -1.0;
-      if (Uwt[0]>0.0) Usum[0] /= Uwt[1];
+      if (Uwt[0]>0.0) Usum[0] /= Uwt[0];
       else            Usum[0] = -1.0;
       Obit_log_error(err, OBIT_InfoErr,
 		     "%8.6f  %6.3f %6.3f   %6.3f %6.3f   %6.3f %6.3f   %7.4f %7.4f",
@@ -1150,7 +1148,6 @@ void ApplyCalSoln (ObitInfoList *myInput, ObitUV* inData, ObitUV* outData,
 	} /* end average loop over frequencies */
 
 	/* Apply correction */
-	/*PARALLACTIC ANGLE CORRECTION; **************************????????????; */
 	indx = (iTime-1)*nIF*2 + iif*2;
 	if ((Iwt>0.0) && (calData[indx]!=fblank)) {
 	  IPol = Isum/Iwt;

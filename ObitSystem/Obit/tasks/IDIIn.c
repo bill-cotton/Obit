@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Read IDI format data, convert to Obit UV                           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2013                                          */
+/*;  Copyright (C) 2007-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -138,7 +138,7 @@ ObitInfoList *myInput  = NULL; /* Input parameter list */
 ObitInfoList *myOutput = NULL; /* Output parameter list */
 gchar **FITSdirs=NULL; /* List of FITS data directories */
 gchar DataRoot[128];   /* Root directory of input data */
-gchar DataSufx[8];     /* Suffix for data file */
+gchar DataSufx[16];    /* Suffix for data file */
 odouble refJD = 0.0;   /* reference Julian date */
 odouble refMJD = 0.0;  /* reference Modified Julian date */
 odouble integTime;     /* Integration time in days */
@@ -202,14 +202,15 @@ int main ( int argc, char **argv )
   DataRoot[dim[0]] = 0;  /* null terminate */
   ObitTrimTrail(DataRoot);  /* Trim trailing blanks */
 
-  /* Determine file suffix */
+  /* Determine virtual file suffix */
   sprintf (FullFile,"%s%s.fits", DataRoot, inscan);
+  DataSufx[0] = 0;   /* In case none */
   exist = ObitFileExist (FullFile, err);
-  if (exist) sprintf (DataSufx, "fits");
+  if (exist) sprintf (DataSufx, ".fits");
   else {
     sprintf (FullFile,"%s%s.idifits", DataRoot, inscan);
     exist = ObitFileExist (FullFile, err);
-    if (exist) sprintf (DataSufx, "idifits");
+    if (exist) sprintf (DataSufx, ".idifits");
   }
 
   /* Initialize Obit */
@@ -252,7 +253,7 @@ int main ( int argc, char **argv )
   inData = newObitData("Input Data");
   disk = 0;
   /* Full input file name */
-  sprintf (FullFile,"%s%s.%s", DataRoot, inscan, DataSufx);
+  sprintf (FullFile,"%s%s%s", DataRoot, inscan, DataSufx);
   ObitDataSetFITS(inData, disk, FullFile, err);
   /* Open and close to init TableList */
   ObitDataOpen (inData, OBIT_IO_ReadOnly, err);
@@ -715,7 +716,7 @@ void GetHeader (ObitUV *outData, gchar *inscan,
   g_assert(myInput!=NULL);
 
   /* Full input file name */
-  sprintf (FullFile,"%s%s.%s", DataRoot, inscan, DataSufx);
+  sprintf (FullFile,"%s%s%s", DataRoot, inscan, DataSufx);
 
   /* Create input Data from which to read tables */
   inData = newObitData("Input Data");
@@ -1062,7 +1063,7 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
   g_assert(ObitUVIsA(outData));
 
   /* Full input file name */
-  sprintf (FullFile,"%s%s.%s", DataRoot, inscan, DataSufx);
+  sprintf (FullFile,"%s%s%s", DataRoot, inscan, DataSufx);
 
   /* Create input Data from which to read tables */
   inData = newObitData("Input Data");

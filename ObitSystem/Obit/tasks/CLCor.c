@@ -2,7 +2,7 @@
 /* Obit Radio interferometry calibration software                     */
 /* applies user-selected corrections to the calibration CL table      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2013                                          */
+/*;  Copyright (C) 2012-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -193,8 +193,6 @@ ObitInfoList* CLCorIn (int argc, char **argv, ObitErr *err)
 
   /* Initialize output */
   myOutput = defaultOutputs(err);
-  ObitReturnDumpRetCode (-999, outfile, myOutput, err);
-  if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
   /* command line arguments */
   /* fprintf (stderr,"DEBUG arg %d %s\n",argc,argv[0]); DEBUG */
@@ -297,6 +295,10 @@ ObitInfoList* CLCorIn (int argc, char **argv, ObitErr *err)
       strTemp += dim[0];
     }
   }
+
+  /* Initialize output */
+  ObitReturnDumpRetCode (-999, outfile, myOutput, err);
+  if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
   return list;
 } /* end CLCorIn */

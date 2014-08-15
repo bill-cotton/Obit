@@ -199,7 +199,7 @@ typedef ObitIOCode (*ObitIOWriteDescriptorFP) (ObitIO *in, ObitErr *err);
 /** Public:  Create buffer */
 void ObitIOCreateBuffer (ofloat **data, ollong *size, ObitIO *in, 
 			 ObitInfoList *info, ObitErr *err);
-typedef void (*ObitIOCreateBufferFP) (ofloat **data, olong *size, ObitIO *in, 
+typedef void (*ObitIOCreateBufferFP) (ofloat **data, ollong *size, ObitIO *in, 
 			 ObitInfoList *info, ObitErr *err);
 
 /** Public: Destroy buffer */

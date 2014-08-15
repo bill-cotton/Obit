@@ -96,7 +96,7 @@ void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
 /* Program globals */
 gchar *pgmName = "Imager";       /* Program name */
 gchar *infile  = "Imager.in" ;   /* File with program inputs */
-gchar *outfile = "/tmp/Imager.out";   /* File to contain program outputs */
+gchar *outfile = "Imager.out";   /* File to contain program outputs */
 olong  pgmNumber;       /* Program number (like POPS no.) */
 olong  AIPSuser;        /* AIPS user number number (like POPS no.) */
 olong  nAIPS=0;         /* Number of AIPS directories */

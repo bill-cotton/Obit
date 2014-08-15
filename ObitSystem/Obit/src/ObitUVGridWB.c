@@ -84,10 +84,6 @@ void  ObitUVGridWBClear (gpointer in);
 /** Private: Set Class function pointers. */
 static void ObitUVGridWBClassInfoDefFn (gpointer inClass);
 
-/** Private: Prepare visibility data for gridding */
-static void PrepBufferWB (ObitUVGrid* in, ObitUV *uvdata, 
-			  olong loVis, olong hiVis);
-
 /** Private: Threaded FFT/gridding correct */
 static gpointer ThreadFFT2ImWB (gpointer arg);
 

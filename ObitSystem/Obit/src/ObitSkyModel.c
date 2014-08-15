@@ -750,7 +750,7 @@ void ObitSkyModelInitMod (ObitSkyModel* in, ObitUV *uvdata, ObitErr *err)
   const ObitGPUSkyModelClassInfo *GPUClass;
   GPUClass = (ObitGPUSkyModelClassInfo*)in->GPUSkyModel->ClassInfo;
   if ((in->doGPU) && (in->modelMode==OBIT_SkyModel_DFT))
-    GPUClass->ObitGPUSkyModelDFTInit(in->GPUSkyModel, uvdata, err);
+    GPUClass->ObitGPUSkyModelDFTInit(in->GPUSkyModel, (Obit*)in, uvdata, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 #endif /* HAVE_GPU */
 
@@ -802,8 +802,13 @@ void ObitSkyModelInitModel (ObitSkyModel* in, ObitErr *err)
   const ObitGPUSkyModelClassInfo *GPUClass;
   GPUClass = (ObitGPUSkyModelClassInfo*)in->GPUSkyModel->ClassInfo;
   if ((in->doGPU) && (in->modelMode==OBIT_SkyModel_DFT) && 
-      ((in->modType==OBIT_SkyModel_PointMod)))
-    GPUClass->ObitGPUSkyModelDFTSetMod (in->GPUSkyModel, in->comps, err);
+      ((in->modType==OBIT_SkyModel_PointMod)      || 
+       (in->modType==OBIT_SkyModel_PointModSpec)  || 
+       (in->modType==OBIT_SkyModel_PointModTSpec) ||
+       (in->modType==OBIT_SkyModel_GaussMod)      || 
+       (in->modType==OBIT_SkyModel_GaussModSpec)  || 
+       (in->modType==OBIT_SkyModel_GaussModTSpec)))
+    GPUClass->ObitGPUSkyModelDFTSetMod (in->GPUSkyModel, (Obit*)in, in->comps, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 #endif /* HAVE_GPU */
 } /* end ObitSkyModelInitModel */
@@ -1419,7 +1424,12 @@ void ObitSkyModelFT (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr *err
 #if HAVE_GPU==1  /*  GPU? */
     GPUClass = (ObitGPUSkyModelClassInfo*)in->GPUSkyModel->ClassInfo;
     /* Only some now */
-    if ((in->doGPU) && (in->modType==OBIT_SkyModel_PointMod))
+    if ((in->doGPU) && ((in->modType==OBIT_SkyModel_PointMod)      || 
+			(in->modType==OBIT_SkyModel_PointModSpec)  || 
+			(in->modType==OBIT_SkyModel_PointModTSpec) ||
+			(in->modType==OBIT_SkyModel_GaussMod)      || 
+			(in->modType==OBIT_SkyModel_GaussModSpec)  || 
+			(in->modType==OBIT_SkyModel_GaussModTSpec)))
       GPUClass->ObitGPUSkyModelDFTCalc (in->GPUSkyModel, uvdata, err);
     else
       myClass->ObitSkyModelFTDFT(in, field, uvdata, err);
