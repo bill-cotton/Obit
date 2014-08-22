@@ -142,7 +142,7 @@ void ObitSinCosVec(olong n, ofloat *angle, ofloat *sin, ofloat *cos)
     vanglet.f[1] = *angle++;
     vanglet.f[2] = *angle++;
     vanglet.f[3] = *angle++;    
-    sse_sincos_ps(vanglet, &vss, &vcc);
+    sse_sincos_ps(vanglet.v, &vss.v, &vcc.v);
     *sin++ = vss.f[0];
     *sin++ = vss.f[1];
     *sin++ = vss.f[2];
@@ -156,7 +156,7 @@ void ObitSinCosVec(olong n, ofloat *angle, ofloat *sin, ofloat *cos)
   nleft = n-i;  /* How many left? */
   for (i=0; i<nleft; i++) vanglet.f[i] = *angle++;
   for (i=nleft; i<4; i++) vanglet.f[i] = 0.0;
-  avx_sincos_ps(vanglet.v, &vss.v, &vcc.v);
+  sse_sincos_ps(vanglet.v, &vss.v, &vcc.v);
   for (i=0; i<nleft; i++) 
     {*sin++ = vss.f[i]; *cos++ = vcc.f[i]; }
    /* end HAVE_SSE */

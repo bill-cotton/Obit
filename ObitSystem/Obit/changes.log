@@ -2377,3 +2377,8 @@ Obit/include/ObitVecFunc.h Obit/src/ObitVecFunc.c:
 Obit/src/ObitExp.c Obit/src/ObitSinCos.c:
   Implement SSE/AVX vector functions.
 22 Aug. 2014, svn ver. 491
+
+Obit/src/ObitVecFunc.c Obit/src/ObitSinCos.c:
+  SSE bug fixes
+22 Aug. 2014, svn ver. 493
+

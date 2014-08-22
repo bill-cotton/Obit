@@ -59,7 +59,7 @@ void avx_sincos_ps(V8SF x, V8SF *s, V8SF *c) {
 #include  "sse_mathfun.h"
 /** Natural log of array of 4 floats */
 V4SF sse_log_ps(V4SF x) {
-  return (V4SF) log_ps((v4sf) x)
+  return (V4SF) log_ps((v4sf) x);
 }
 /** Exponential of array of 4 floats  */
 V4SF sse_exp_ps(V4SF x) {
