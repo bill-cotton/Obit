@@ -2364,3 +2364,16 @@ Obit/src/ObitUVGridWB.c:
 Obit/src/ObitTable.c:
   Change BufferSize to ollong in format
 15 Aug. 2014, svn ver. 490
+
+Implement better AVX function routines, bug fixes
+Obit/src/ObitCUDASkyModel.cu:
+   Fix bugs, better optimize
+Obit/src/ObitImageUtil.c:
+  T2Spec: Copy first *two* planes
+Obit/include/avx_mathfun.h Obit/include/sse_mathfun.h:
+  New: Third party AVX/SSE vector implementations of functions
+Obit/include/ObitVecFunc.h Obit/src/ObitVecFunc.c:
+  New: Obit interface to Third party AVX/SSE vector implementations of functions
+Obit/src/ObitExp.c Obit/src/ObitSinCos.c:
+  Implement SSE/AVX vector functions.
+22 Aug. 2014, svn ver. 491

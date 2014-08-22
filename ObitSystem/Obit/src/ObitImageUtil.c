@@ -4421,8 +4421,8 @@ void ObitImageUtilT2Spec  (ObitImage *inImage, ObitImage **outImage,
     return;
   }
 
-  /* Copy first plane */
-  for (iplane=0; iplane<1; iplane++) {
+  /* Copy first two planes */
+  for (iplane=0; iplane<2; iplane++) {
     /* Write it */
     planeNo[0] = iplane+1; 
     ObitImageGetPlane (inImage, NULL, planeNo, err);

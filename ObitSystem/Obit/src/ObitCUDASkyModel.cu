@@ -225,6 +225,11 @@ __global__ void dftPointSpecKernel(float* __restrict__ g_data,
     // model = flux, x,y,z factors, spectral terms
     iMod = 0;
     for (int i=0; i<nModel; i++) {
+        // amplitude
+	amp = Model[iMod];
+        // phase
+ 	arg = u*Model[iMod+1] + v*Model[iMod+2] + w*Model[iMod+3];
+	__sincosf(arg, &s, &c);
         // Frequency dependent spectral term */
         lll = lnspecFreqFact;
         arg = 0.0;
@@ -232,9 +237,7 @@ __global__ void dftPointSpecKernel(float* __restrict__ g_data,
 	  arg += Model[iMod+4+iterm] * lll;
 	  lll *= lnspecFreqFact;
 	}
-	amp = Model[iMod] * __expf(-arg);
- 	arg = u*Model[iMod+1] + v*Model[iMod+2] + w*Model[iMod+3];
-	__sincosf(arg, &s, &c);
+	amp *= __expf(-arg);
         sumR += amp * c;
         sumI += amp * s;
         iMod += modelSize;
@@ -338,11 +341,12 @@ __global__ void dftPointTSpecKernel(float* __restrict__ g_data,
     // model = [flux], x,y,z factors, spectral index, coarse channel fluxes
     iMod = 0;
     for (int i=0; i<nModel; i++) {
-        // include spectral index
-	arg = lnspecFreqFact*Model[iMod+4];
-	amp = Model[iMod+itab] * __expf(arg);
+        // phase
  	arg = u*Model[iMod+1] + v*Model[iMod+2] + w*Model[iMod+3];
 	__sincosf(arg, &s, &c);
+        // include spectral index
+	arg = lnspecFreqFact*Model[iMod+4];
+	amp =  Model[iMod+itab] * __expf(arg);
         sumR += amp * c;
         sumI += amp * s;
         iMod += modelSize;
@@ -438,10 +442,11 @@ __global__ void dftGaussKernel(float* __restrict__ g_data,
     // model = flux, x,y,z factors, uu, vv, uv factors
     iMod = 0;
     for (int i=0; i<nModel; i++) {
- 	arg = u*Model[iMod+1] + v*Model[iMod+2] + w*Model[iMod+3];
+	amp = Model[iMod];
+  	arg = u*Model[iMod+1] + v*Model[iMod+2] + w*Model[iMod+3];
 	__sincosf(arg, &s, &c);
         arg = u*u*Model[iMod+4] + v*v*Model[iMod+5] + u*v*Model[iMod+6];
-	amp = Model[iMod] * __expf(arg);
+	amp *= __expf(arg);
         sumR += amp * c;
         sumI += amp * s;
         iMod += modelSize;
@@ -541,20 +546,22 @@ __global__ void dftGaussSpecKernel(float* __restrict__ g_data,
     // model = flux, x,y,z factors, uu, vv, uv factors, spectral terms
     iMod = 0;
     for (int i=0; i<nModel; i++) {
+        // amplitude
+	amp = Model[iMod];
+  	// Phase
+ 	arg = u*Model[iMod+1] + v*Model[iMod+2] + w*Model[iMod+3];
+	__sincosf(arg, &s, &c);
+        arg  = u*u*Model[iMod+4] + v*v*Model[iMod+5] + u*v*Model[iMod+6];
+	amp *= __expf(arg);
         // Frequency dependent spectral term */
         lll = lnspecFreqFact;
         arg = 0.0;
         for (iterm=0; iterm<nterm; iterm++) {
-	  arg += Model[iMod+4+iterm] * lll;
+	  arg += Model[iMod+7+iterm] * lll;
 	  lll *= lnspecFreqFact;
 	}
-	amp = Model[iMod] * __expf(-arg);
+	amp *= __expf(-arg);
         // Gaussian factor
-        arg  = u*u*Model[iMod+4] + v*v*Model[iMod+5] + u*v*Model[iMod+6];
-	amp *= __expf(arg);
- 	// Phase
- 	arg = u*Model[iMod+1] + v*Model[iMod+2] + w*Model[iMod+3];
-	__sincosf(arg, &s, &c);
         sumR += amp * c;
         sumI += amp * s;
         iMod += modelSize;
@@ -658,15 +665,15 @@ __global__ void dftGaussTSpecKernel(float* __restrict__ g_data,
     // model = [flux], x,y,z factors, uu, vv, uv factors, spectral index, coarse channel fluxes
     iMod = 0;
     for (int i=0; i<nModel; i++) {
-        // include spectral index
-	arg = lnspecFreqFact*Model[iMod+4];
-	amp = Model[iMod+itab] * __expf(arg);
-        // Gaussian factor
-        arg = u*u*Model[iMod+4] + v*v*Model[iMod+5] + u*v*Model[iMod+6];
-	amp = Model[iMod] * __expf(arg);
         // Phase
  	arg = u*Model[iMod+1] + v*Model[iMod+2] + w*Model[iMod+3];
 	__sincosf(arg, &s, &c);
+        // Gaussian factor
+        arg = u*u*Model[iMod+4] + v*v*Model[iMod+5] + u*v*Model[iMod+6];
+	amp  =__expf(arg);
+        // include spectral index
+	arg = lnspecFreqFact*Model[iMod+7];
+	amp *= Model[iMod+itab] * __expf(arg);
         sumR += amp * c;
         sumI += amp * s;
         iMod += modelSize;
