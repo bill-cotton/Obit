@@ -63,11 +63,11 @@ void avx_sincos_ps(V8SF x, V8SF *s, V8SF *c);
 #elif HAVE_SSE==1
 #include <xmmintrin.h>
 typedef __m128 V4SF;  // vector of 4 float
-typedef ALIGN16_BEG union {
+typedef ALIGN32_BEG union {
   float f[4];
   int   i[4];
   V4SF  v;
-} ALIGN16_END CV4SF;
+} ALIGN32_END CV4SF;
 
 /** Natural log of array of 4 floats */
 V4SF sse_log_ps(V4SF x);
