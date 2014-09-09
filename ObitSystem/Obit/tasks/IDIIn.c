@@ -1654,6 +1654,7 @@ void GetFrequencyInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
   ObitTableFQRow*         outRow=NULL;
   olong i, iRow, oRow, ver;
   oint numIF;
+  odouble fshift;
   ObitIOAccess access;
   gchar *routine = "GetFrequencyInfo";
 
@@ -1722,10 +1723,14 @@ void GetFrequencyInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
       return;
     }
 
+    /* First FQ frequency offset = 0 */
+    fshift = inRow->bandfreq[0];
+    if (iRow==1) outData->myDesc->crval[outData->myDesc->jlocf] += fshift;
+
     /* Save to FQ table */
     outRow->fqid    = inRow->fqid;
     for (i=0; i<numIF; i++) {
-      outRow->freqOff[i]  = inRow->bandfreq[i];
+      outRow->freqOff[i]  = inRow->bandfreq[i] - fshift;
       outRow->chWidth[i]  = inRow->chWidth[i];
       outRow->totBW[i]    = inRow->totBW[i];
       outRow->sideBand[i] = inRow->sideBand[i];

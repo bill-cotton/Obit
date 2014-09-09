@@ -1957,7 +1957,7 @@ def PTableCLfromNX(outUV, nant, err, outVer=1, calInt=1.0):
             OErr.printErrMsg(err, "Error zapping old FQ table")
     noif   = outUV.Desc.Dict["inaxes"][outUV.Desc.Dict["jlocif"]]
     npol   = outUV.Desc.Dict["inaxes"][outUV.Desc.Dict["jlocs"]]
-    calI = (calInt-(1.0/60))/1440  # Imcrement in days
+    calI = (calInt-(1.0/60))/1440  # Increment in days
     cltab = outUV.NewTable(Table.READWRITE, "AIPS CL",outVer,err,numIF=noif,numPol=npol,numTerm=1)
     nxtab = outUV.NewTable(Table.READONLY, "AIPS NX", 1,err)
     if err.isErr:
@@ -1967,9 +1967,8 @@ def PTableCLfromNX(outUV, nant, err, outVer=1, calInt=1.0):
     if err.isErr:
         OErr.printErrMsg(err, "Error opening table")
     # Update header
-    d = cltab.Desc.List.Dict
-    d["NO_ANT"] =  [3, [1, 1, 1, 1, 1], [nant]]
-    cltab.Desc.List.Dict = d
+    cltab.keys["numAnt"] = nant
+
     # Create row
     ia = [];     fa1 = []; fa0 = []
     for iif in range(0,noif):

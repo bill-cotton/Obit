@@ -150,7 +150,7 @@ def pipeline( aipsSetup, parmFile):
     if parms["doCopyFG"] and (parms["BChDrop"]>0) or (parms["EChDrop"]>0):
         # Channels based on original number, reduced if Hanning
         nchan = uv.Desc.Dict["inaxes"][uv.Desc.Dict["jlocf"]]
-        fact = parms["selChan"]/nchan   # Hanning reduction factor
+        fact = max (1,parms["selChan"]/nchan)   # Hanning reduction factor
         BChDrop = parms["BChDrop"]/fact
         EChDrop = parms["EChDrop"]/fact
         mess =  "Trim %d channels from start and %d from end of each spectrum"%(BChDrop,EChDrop)
@@ -585,7 +585,7 @@ def pipeline( aipsSetup, parmFile):
         EVLAImageTargets (uv, err, Sources=slist, seq=parms["seq"], sclass=outIClass, \
                           doCalib=2, doBand=1,  flagVer=1, doPol=parms["doPol"], PDVer=parms["PDVer"],  \
                           Stokes=parms["Stokes"], FOV=parms["FOV"], Robust=parms["Robust"], Niter=parms["Niter"], \
-                          CleanRad=parms["CleanRad"], minFlux=parms["minFlux"], UVRange=parms["UVRange'], \
+                          CleanRad=parms["CleanRad"], minFlux=parms["minFlux"], UVRange=parms["UVRange"], \
                           maxPSCLoop=parms["maxPSCLoop"], minFluxPSC=parms["minFluxPSC"], \
                           solPInt=parms["solPInt"], solPMode=parms["solPMode"], solPType=parms["solPType"], \
                           maxASCLoop=parms["maxASCLoop"], minFluxASC=parms["minFluxASC"], \

@@ -2382,3 +2382,20 @@ Obit/src/ObitVecFunc.c Obit/src/ObitSinCos.c:
   SSE bug fixes
 22 Aug. 2014, svn ver. 493
 
+
+Multi thread FArray routines, bug fixes
+Obit/tasks/IDIIn.c:
+  Fix frequencies if bandfreq[0] != 0.
+Obit/python/UV.py:
+  PTableCLfromNX: Correctly write number of antennas in header
+Obit/src/ObitDoppler.c:
+  coordTran: fix bug in calculation of a2, BAD things to CVel
+Obit/python/EVLALowBandPipe.py:
+  Fix typo
+Obit/src/ObitDConCleanWindow.c:
+  AutoWindow: Trap all blanked planes.
+Obit/src/ObitFArray.c:
+  Multithreaded implementations for several routines
+Obit/TDF/FndSou.TDF:
+  Increase range allowed for BLC, TRC
+9 Sept 2014, svn version 494

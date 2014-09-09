@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2013                                          */
+/*;  Copyright (C) 2004-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1630,16 +1630,18 @@ gboolean ObitDConCleanWindowAutoWindow (ObitDConCleanWindow *in,
 
   /* if PeakInPos not blanked and > 4 RMS  addWin = TRUE; */
   data = ObitFArrayIndex(tmpImage, PeakInPos);
-  addWin = addWin || ((*data)!=fblank);
-  /* Reduce threshold for more extended regions */
-  window[0] = GetWindowSize(image, PeakInPos, *RMS);
-  if (window[0]<5)
-    minFlux = 4.0*(*RMS);
-  else
-    minFlux = 3.0*(*RMS);
-  /* Window not set because peak too close to noise? */
-  noWin  = (fabs(*data) < minFlux); 
-  addWin = addWin && (!noWin);
+  if (data!=NULL) {
+    addWin = addWin || ((*data)!=fblank);
+    /* Reduce threshold for more extended regions */
+    window[0] = GetWindowSize(image, PeakInPos, *RMS);
+    if (window[0]<5)
+      minFlux = 4.0*(*RMS);
+    else
+      minFlux = 3.0*(*RMS);
+    /* Window not set because peak too close to noise? */
+    noWin  = (fabs(*data) < minFlux); 
+    addWin = addWin && (!noWin);
+  } else addWin = FALSE;  /* Data all blanked */
 
   /* Add new clean box? */
   if (addWin) {

@@ -1,6 +1,6 @@
-/* $Id$            */
+/* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2013                                          */
+/*;  Copyright (C) 2012-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1066,8 +1066,7 @@ odouble VelLSR (odouble ra, odouble dec, olong year, olong doy,
   hop /= 86400.0;
 
   /* v is the projection onto the line of sight to the star of  the
-     velocity 
-     of the earth-moon barycenter with respect to the sun (km/sec) */
+     velocity of the earth-moon barycenter with respect to the sun (km/sec) */
   v = -hop * cos (beta) * (sin(alam - along) - e * sin (pie - along));
 
   /* Calculate moon's orbit around the earth-moon barycentre,. 
@@ -1183,7 +1182,7 @@ static void coordTran (odouble ao, odouble bo, odouble ap, odouble bp,
   ca2 = caa * cbb + saa * sbb;
   if (ca2<=0.0) ta2o2 = (1.0 - ca2) / sa2;
   else          ta2o2 = sa2 / (1.0 + ca2);
-  (*a2) = 2.0 * atan(ta2o2-1);
+  (*a2) = 2.0 * atan(ta2o2);
 
 return;
 } /* end of routine coordTran */ 
@@ -1613,6 +1612,10 @@ static ofloat CalcShift (ObitDoppler *doppler, olong ant1, olong ant2,
     ObitErrLog(err); /* Show messages */
   }
 
+  /* Sanity check */
+  Obit_retval_if_fail((shift<uvDesc->inaxes[uvDesc->jlocf]), err, shift,
+		      "%s: Excessive shift %f ch, check RestFreq", 
+		      routine, shift);
   return shift;
 } /* end  CalcShift */
 

@@ -4,7 +4,7 @@
 ;! fits Gaussians to portions of an image
 ;# Obit Task 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006-2011
+;;  Copyright (C) 2006-2014
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -44,10 +44,10 @@ inDisk            0            9   Disk drive # 1
 **PARAM** str 48
 inFile                             Filename 1 if FITS image
 **PARAM** int 7
-BLC              0.0       4096.0  Bottom left corner of image
+BLC              0.0      64000.0  Bottom left corner of image
                                      0=>entire image
 **PARAM** int 7
-TRC              0.0       4096.0  Top right corner of image
+TRC              0.0      64000.0  Top right corner of image
                                      0=>entire image
 **PARAM** boo 1 
 doVL                               Convert to VL table?

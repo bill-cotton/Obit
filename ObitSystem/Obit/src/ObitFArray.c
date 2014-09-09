@@ -60,6 +60,10 @@ typedef struct {
   ObitThread *thread;
   /* ObitFArray to work on */
   ObitFArray *in;
+  /* Second ObitFArray to work on */
+  ObitFArray *in2;
+  /* Output ObitFArray */
+  ObitFArray *out;
   /* First element (1-rel) number */
   olong        first;
   /* Highest element (1-rel) number */
@@ -102,8 +106,24 @@ static gpointer ThreadFAHisto (gpointer arg);
 /** Private: Threaded Convolve Gaussian */
 static gpointer ThreadFAConvGaus (gpointer arg);
 
+/** Private: Threaded Add */
+static gpointer ThreadFAAdd (gpointer arg);
+
+/** Private: Threaded Sub */
+static gpointer ThreadFASub (gpointer arg);
+
+/** Private: Threaded Multiply */
+static gpointer ThreadFAMul (gpointer arg);
+
+/** Private: Threaded Divide */
+static gpointer ThreadFADiv (gpointer arg);
+
+/** Private: Threaded ShiftAdd */
+static gpointer ThreadFAShAdd (gpointer arg);
+
 /** Private: Make Threaded args */
 static olong MakeFAFuncArgs (ObitThread *thread, ObitFArray *in,
+			     ObitFArray *in2, ObitFArray *out,
 			     olong larg1, olong larg2, olong larg3, 
 			     olong larg4, olong larg5, 
 			     olong larg6, olong larg7, 
@@ -671,7 +691,7 @@ ofloat ObitFArrayMax (ObitFArray *in, olong *pos)
   g_assert (pos != NULL);
 
   /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in->thread, in, 0, 0, 0, 0, 0, 0, 0,
+  nThreads = MakeFAFuncArgs (in->thread, in, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -741,7 +761,7 @@ ofloat ObitFArrayMaxAbs (ObitFArray *in, olong *pos)
   g_assert (pos != NULL);
 
    /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in->thread, in, 0, 0, 0, 0, 0, 0, 0,
+  nThreads = MakeFAFuncArgs (in->thread, in, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -811,7 +831,7 @@ ofloat ObitFArrayMin (ObitFArray *in, olong *pos)
   g_assert (pos != NULL);
 
   /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in->thread, in, 0, 0, 0, 0, 0, 0, 0,
+  nThreads = MakeFAFuncArgs (in->thread, in, NULL, NULL, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -931,7 +951,7 @@ ofloat ObitFArrayRMS (ObitFArray* in)
 
   /* Initialize Threading */
   nThreads = 
-    MakeFAFuncArgs (in->thread, in, 
+    MakeFAFuncArgs (in->thread, in, NULL, NULL, 
 		    sizeof(olong),  sizeof(ollong), numCell*sizeof(ofloat),sizeof(ofloat), sizeof(ofloat), 
 		    sizeof(ollong), sizeof(ollong),
 		    &threadArgs);
@@ -1109,7 +1129,7 @@ ofloat ObitFArrayRawRMS (ObitFArray* in)
 
   /* Initialize Threading */
   nThreads = 
-    MakeFAFuncArgs (in->thread, in, 
+    MakeFAFuncArgs (in->thread, in, NULL, NULL, 
 		    sizeof(olong), sizeof(ofloat), sizeof(ofloat), 0, 0, 0, 0,
 		    &threadArgs);
   
@@ -1185,7 +1205,7 @@ ofloat ObitFArrayRMS0 (ObitFArray* in)
 
   /* Initialize Threading */
   nThreads = 
-    MakeFAFuncArgs (in->thread, in, 
+    MakeFAFuncArgs (in->thread, in, NULL, NULL, 
 		    sizeof(olong), sizeof(ofloat), sizeof(ofloat), 0, 0, 0, 0,
 		    &threadArgs);
   
@@ -1928,7 +1948,9 @@ void ObitFArrayAvgArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 void ObitFArrayAdd (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 {
   olong i;
-  ofloat fblank = ObitMagicF();
+  olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
+  gboolean OK;
+  FAFuncArg **threadArgs;
 
    /* error checks */
   g_assert (ObitIsA(in1, &myClassInfo));
@@ -1936,11 +1958,40 @@ void ObitFArrayAdd (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   g_assert (ObitFArrayIsCompatable(in1, in2));
   g_assert (ObitFArrayIsCompatable(in1, out));
 
-  for (i=0; i<in1->arraySize; i++) {
-    if ((in1->array[i]!=fblank) && (in2->array[i]!=fblank)) 
-      out->array[i] = in1->array[i] + in2->array[i];
-    else out->array[i] = fblank;
+  /* Initialize Threading */
+  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, 0, 0, 0, 0, 0, 0, 0,
+			     &threadArgs);
+  
+  /* Divide up work */
+  nElem = in1->arraySize;
+  nElemPerThread = nElem/nThreads;
+  nTh = nThreads;
+  if (nElem<1000000) {nElemPerThread = nElem; nTh = 1;}
+  loElem = 1;
+  hiElem = nElemPerThread;
+  hiElem = MIN (hiElem, nElem);
+
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hiElem = nElem;  /* Make sure do all */
+    threadArgs[i]->first   = loElem;
+    threadArgs[i]->last    = hiElem;
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which Elem */
+    loElem += nElemPerThread;
+    hiElem += nElemPerThread;
+    hiElem = MIN (hiElem, nElem);
   }
+
+  /* Do operation */
+  OK = ObitThreadIterator (in1->thread, nTh, 
+			   (ObitThreadFunc)ThreadFAAdd,
+			   (gpointer**)threadArgs);
+
+  /* Free local objects */
+  KillFAFuncArgs(nThreads, threadArgs);
+  
 } /* end ObitFArrayAdd */
 
 /**
@@ -1981,7 +2032,9 @@ void ObitFArrayAddAbs (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 void ObitFArraySub (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 {
   olong i;
-  ofloat fblank = ObitMagicF();
+  olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
+  gboolean OK;
+  FAFuncArg **threadArgs;
 
    /* error checks */
   g_assert (ObitIsA(in1, &myClassInfo));
@@ -1989,11 +2042,40 @@ void ObitFArraySub (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   g_assert (ObitFArrayIsCompatable(in1, in2));
   g_assert (ObitFArrayIsCompatable(in1, out));
 
-  for (i=0; i<in1->arraySize; i++) {
-    if ((in1->array[i]!=fblank) && (in2->array[i]!=fblank)) 
-      out->array[i] = in1->array[i] - in2->array[i];
-    else out->array[i] = fblank;
+  /* Initialize Threading */
+  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, 0, 0, 0, 0, 0, 0, 0,
+			     &threadArgs);
+  
+  /* Divide up work */
+  nElem = in1->arraySize;
+  nElemPerThread = nElem/nThreads;
+  nTh = nThreads;
+  if (nElem<1000000) {nElemPerThread = nElem; nTh = 1;}
+  loElem = 1;
+  hiElem = nElemPerThread;
+  hiElem = MIN (hiElem, nElem);
+
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hiElem = nElem;  /* Make sure do all */
+    threadArgs[i]->first   = loElem;
+    threadArgs[i]->last    = hiElem;
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which Elem */
+    loElem += nElemPerThread;
+    hiElem += nElemPerThread;
+    hiElem = MIN (hiElem, nElem);
   }
+
+  /* Do operation */
+  OK = ObitThreadIterator (in1->thread, nTh, 
+			   (ObitThreadFunc)ThreadFASub,
+			   (gpointer**)threadArgs);
+
+  /* Free local objects */
+  KillFAFuncArgs(nThreads, threadArgs);
+  
  } /* end ObitFArraySub */
 
 /**
@@ -2032,7 +2114,9 @@ void ObitFArraySign (ObitFArray* in1, ObitFArray* in2)
 void ObitFArrayMul (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 {
   olong i;
-  ofloat fblank = ObitMagicF();
+  olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
+  gboolean OK;
+  FAFuncArg **threadArgs;
 
    /* error checks */
   g_assert (ObitIsA(in1, &myClassInfo));
@@ -2040,11 +2124,40 @@ void ObitFArrayMul (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   g_assert (ObitFArrayIsCompatable(in1, in2));
   g_assert (ObitFArrayIsCompatable(in1, out));
 
-  for (i=0; i<in1->arraySize; i++) {
-    if ((in1->array[i]!=fblank) && (in2->array[i]!=fblank)) 
-      out->array[i] = in1->array[i] * in2->array[i];
-    else out->array[i] = fblank;
+  /* Initialize Threading */
+  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, 0, 0, 0, 0, 0, 0, 0,
+			     &threadArgs);
+  
+  /* Divide up work */
+  nElem = in1->arraySize;
+  nElemPerThread = nElem/nThreads;
+  nTh = nThreads;
+  if (nElem<1000000) {nElemPerThread = nElem; nTh = 1;}
+  loElem = 1;
+  hiElem = nElemPerThread;
+  hiElem = MIN (hiElem, nElem);
+
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hiElem = nElem;  /* Make sure do all */
+    threadArgs[i]->first   = loElem;
+    threadArgs[i]->last    = hiElem;
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which Elem */
+    loElem += nElemPerThread;
+    hiElem += nElemPerThread;
+    hiElem = MIN (hiElem, nElem);
   }
+
+  /* Do operation */
+  OK = ObitThreadIterator (in1->thread, nTh, 
+			   (ObitThreadFunc)ThreadFAMul,
+			   (gpointer**)threadArgs);
+
+  /* Free local objects */
+  KillFAFuncArgs(nThreads, threadArgs);
+  
 } /* end ObitFArrayMul */
 
 /**
@@ -2057,7 +2170,9 @@ void ObitFArrayMul (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 void ObitFArrayDiv (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 {
   olong i;
-  ofloat fblank = ObitMagicF();
+  olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
+  gboolean OK;
+  FAFuncArg **threadArgs;
 
    /* error checks */
   g_assert (ObitIsA(in1, &myClassInfo));
@@ -2065,12 +2180,40 @@ void ObitFArrayDiv (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   g_assert (ObitFArrayIsCompatable(in1, in2));
   g_assert (ObitFArrayIsCompatable(in1, out));
 
-  for (i=0; i<in1->arraySize; i++) {
-    if ((in1->array[i]!=fblank) && (in2->array[i]!=fblank)
-	&& (in2->array[i]!=0.0)) 
-      out->array[i] = in1->array[i] / in2->array[i];
-    else out->array[i] = fblank;
+  /* Initialize Threading */
+  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, 0, 0, 0, 0, 0, 0, 0,
+			     &threadArgs);
+  
+  /* Divide up work */
+  nElem = in1->arraySize;
+  nElemPerThread = nElem/nThreads;
+  nTh = nThreads;
+  if (nElem<1000000) {nElemPerThread = nElem; nTh = 1;}
+  loElem = 1;
+  hiElem = nElemPerThread;
+  hiElem = MIN (hiElem, nElem);
+
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hiElem = nElem;  /* Make sure do all */
+    threadArgs[i]->first   = loElem;
+    threadArgs[i]->last    = hiElem;
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which Elem */
+    loElem += nElemPerThread;
+    hiElem += nElemPerThread;
+    hiElem = MIN (hiElem, nElem);
   }
+
+  /* Do operation */
+  OK = ObitThreadIterator (in1->thread, nTh, 
+			   (ObitThreadFunc)ThreadFADiv,
+			   (gpointer**)threadArgs);
+
+  /* Free local objects */
+  KillFAFuncArgs(nThreads, threadArgs);
+  
 } /* end ObitFArrayDiv */
 
 /**
@@ -2473,9 +2616,10 @@ void ObitFArrayShiftAdd (ObitFArray* in1, olong *pos1,
 			 ObitFArray* in2, olong *pos2, 
 			 ofloat scalar, ObitFArray* out)
 {
-  olong ix, iy, ip, np, hix, lox, hiy, loy, offx, offy;
-  olong nx1, ny1, nx2, ny2, lenp1, lenp2, indx1, indx2;
-  ofloat fblank = ObitMagicF();
+  olong ip, np, hiy, loy, nx1, ny1, nx2, ny2, offy;
+  olong i, nTh, nRow, loRow, hiRow, nRowPerThread, nThreads;
+  gboolean OK;
+  FAFuncArg **threadArgs;
 
   /* error checks */
   g_assert (ObitIsA(in1, &myClassInfo));
@@ -2489,65 +2633,70 @@ void ObitFArrayShiftAdd (ObitFArray* in1, olong *pos1,
   g_assert (in1->naxis[0]==out->naxis[0]);
   g_assert (in1->naxis[1]==out->naxis[1]);
 
-  /* Size of in1/out */
-  nx1 = in1->naxis[0];
-  ny1 = in1->naxis[1];
-  if (in1->ndim>2) np = in1->naxis[2];
+  if (in1->ndim>2) np = in1->naxis[2];  /* NUmber of planes */
   else np = 1;
-  lenp1 = nx1*ny1;
- 
-  /* Size of in2 */
-  nx2 = in2->naxis[0];
-  ny2 = in2->naxis[1];
-  if (in2->ndim>2) lenp2 = nx2*ny2;
-  else lenp2 = 0;
 
   /* determine regions of overlap in in1/out of in2 */
-  offx = pos2[0] - pos1[0];
   offy = pos2[1] - pos1[1];
-  lox = MAX (0, pos1[0] - in2->naxis[0]/2);
-  hix = MIN (nx1-1, pos1[0] + in2->naxis[0]/2);
+  nx1 = in1->naxis[0];
+  ny1 = in1->naxis[1];
+  nx2 = in2->naxis[0];
+  ny2 = in2->naxis[1];
   loy = MAX (0, pos1[1] - in2->naxis[1]/2);
   hiy = MIN (ny1-1, pos1[1] + in2->naxis[1]/2);
   /* In case in2 not centered */
-  if (lox+offx<0) lox -= lox+offx;
   if (loy+offy<0) loy -= loy+offy;
-  if (hix+offx>=nx2) hix -= hix+offx-nx2+1;
   if (hiy+offy>=ny2) hiy -= hiy+offy-ny2+1;
   /* Keep in range */
-  lox = MAX (0, lox);
-  hix = MIN (hix, nx1-1);
   loy = MAX (0, loy);
   hiy = MIN (hiy, ny1-1);
+
+  /* Initialize Threading */
+  nThreads = MakeFAFuncArgs (in1->thread, in1, in2, out, 0, 0, 0, 0, 0, 0, 0,
+			     &threadArgs);
+  
+  /* Divide up work */
+  nRow = hiy - loy + 1;          /* How many rows? */
+  nRowPerThread = nRow/nThreads;
+  nTh = nThreads;
+  if (nRow<5*nThreads) {nRowPerThread = nRow; nTh = 1;}
+  loRow = loy;
+  hiRow = nRowPerThread-1;
+  hiRow = MIN (hiRow, nRow);
+
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    threadArgs[i]->value = scalar; /* Scaling factor */
+    threadArgs[i]->pos[0] = 0;     /* Plane */
+    threadArgs[i]->pos[1] = pos1[0]; threadArgs[i]->pos[2] = pos1[1];   /* Alignment */
+    threadArgs[i]->pos[3] = pos2[0]; threadArgs[i]->pos[4] = pos2[1];   /* Alignment */
+    if (i==(nTh-1)) hiRow  = hiy;  /* Make sure do all */
+    threadArgs[i]->first   = loRow;
+    threadArgs[i]->last    = hiRow;
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which Row */
+    loRow += nRowPerThread;
+    hiRow += nRowPerThread;
+    hiRow = MIN (hiRow, ny1);
+  }
 
   /* Loop over planes */
   for (ip = 0; ip<np; ip++) {
 
-    /* Loop over rows */
-    for (iy=loy; iy<=hiy; iy++) {
+    for (i=0; i<nTh; i++) threadArgs[i]->pos[0] = ip;    /* Plane */
 
-      /* Loop over columns */
-      for (ix=lox; ix<=hix; ix++) {
-
-	/* indices in arrays */
-	indx1 = ip*lenp1 + iy*nx1 + ix;
-	indx2 = ip*lenp2 + (iy+offy) * nx2 + ix + offx;
-	
-	/* do operation */
-	if (in1->array[indx1]!=fblank) {
-	  if (in2->array[indx2]!=fblank) {
-	    out->array[indx1] = in1->array[indx1] + scalar * in2->array[indx2];
-	    /* debug
-	    if (out->array[indx1] >1.0e5) fprintf (stderr,"bad accum %d  %d %g %g %g\n",
-					       ix,iy,in1->array[indx1],in2->array[indx2],out->array[indx1]); */
-	  }
-	} else {
-	  out->array[indx1] = fblank;
-	}
-      } 
-    } 
+    /* Do operation */
+    OK = ObitThreadIterator (in1->thread, nTh, 
+			     (ObitThreadFunc)ThreadFAShAdd,
+			     (gpointer**)threadArgs);
+    if (!OK) goto cleanup;
   } /* end loop over planes */
- 
+
+  /* Free local objects */
+ cleanup:
+  KillFAFuncArgs(nThreads, threadArgs);
+  
 } /* end ObitFArrayShiftAdd */
 
 /**
@@ -2615,7 +2764,7 @@ void  ObitFArrayConvGaus (ObitFArray* in, ObitFArray* list, olong ncomp,
 
 
   /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in->thread, in, 
+  nThreads = MakeFAFuncArgs (in->thread, in, NULL, NULL, 
 			     0, sizeof(olong), 3*sizeof(ofloat), 0, 0, 0, 0,
 			     &threadArgs);
   
@@ -2807,7 +2956,7 @@ ObitFArray*  ObitFArrayHisto (ObitFArray* in, olong n, ofloat min, ofloat max)
 
   /* Initialize Threading */
   nThreads = 
-    MakeFAFuncArgs (in->thread, in, 
+    MakeFAFuncArgs (in->thread, in, NULL, NULL, 
 		    sizeof(ollong), sizeof(olong), n*sizeof(ofloat), sizeof(ofloat), sizeof(ofloat), 
 		    sizeof(ollong), sizeof(ollong),
 		    &threadArgs);
@@ -3167,6 +3316,282 @@ static gpointer ThreadFAMin (gpointer arg)
 } /*  end ThreadFAMin */
 
 /**
+ * Add portions of two FArrays, out = in + in2
+ * Magic value blanking supported.
+ * Callable as thread
+ * \param arg Pointer to FAFuncArg argument with elements:
+ * \li in       ObitFArray to work on
+ * \li in2      2nd ObitFArray to work on
+ * \li out      Output ObitFArray
+ * \li first    First element (1-rel) number
+ * \li last     Highest element (1-rel) number
+ * \li ithread  thread number, <0 -> no threading
+ * \return NULL
+ */
+static gpointer ThreadFAAdd (gpointer arg)
+{
+  /* Get arguments from structure */
+  FAFuncArg *largs = (FAFuncArg*)arg;
+  ObitFArray *in1       = largs->in;
+  ObitFArray *in2       = largs->in2;
+  ObitFArray *out       = largs->out;
+  olong      loElem     = largs->first-1;
+  olong      hiElem     = largs->last-1;
+
+
+  /* local */
+  olong   i;
+  ofloat  fblank = ObitMagicF();
+
+  if (hiElem<loElem) goto finish;
+
+  /* Loop over array */
+  for (i=loElem; i<hiElem; i++) {
+    if ((in1->array[i]!=fblank) && (in2->array[i]!=fblank)) 
+      out->array[i] = in1->array[i] * in2->array[i];
+    else out->array[i] = fblank;
+  }
+
+  /* Indicate completion */
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (largs->thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+  
+} /*  end ThreadFAAdd */
+
+/**
+ * Subtract portions of two FArrays, out = in - in2
+ * Magic value blanking supported.
+ * Callable as thread
+ * \param arg Pointer to FAFuncArg argument with elements:
+ * \li in       ObitFArray to work on
+ * \li in2      2nd ObitFArray to work on
+ * \li out      Output ObitFArray
+ * \li first    First element (1-rel) number
+ * \li last     Highest element (1-rel) number
+ * \li ithread  thread number, <0 -> no threading
+ * \return NULL
+ */
+static gpointer ThreadFASub (gpointer arg)
+{
+  /* Get arguments from structure */
+  FAFuncArg *largs = (FAFuncArg*)arg;
+  ObitFArray *in1       = largs->in;
+  ObitFArray *in2       = largs->in2;
+  ObitFArray *out       = largs->out;
+  olong      loElem     = largs->first-1;
+  olong      hiElem     = largs->last-1;
+
+
+  /* local */
+  olong   i;
+  ofloat  fblank = ObitMagicF();
+
+  if (hiElem<loElem) goto finish;
+
+  /* Loop over array */
+  for (i=loElem; i<hiElem; i++) {
+    if ((in1->array[i]!=fblank) && (in2->array[i]!=fblank)) 
+      out->array[i] = in1->array[i] * in2->array[i];
+    else out->array[i] = fblank;
+  }
+
+  /* Indicate completion */
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (largs->thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+  
+} /*  end ThreadFASub */
+
+/**
+ * Multiply portions of two FArrays, out = in * in2
+ * Magic value blanking supported.
+ * Callable as thread
+ * \param arg Pointer to FAFuncArg argument with elements:
+ * \li in       ObitFArray to work on
+ * \li in2      2nd ObitFArray to work on
+ * \li out      Output ObitFArray
+ * \li first    First element (1-rel) number
+ * \li last     Highest element (1-rel) number
+ * \li ithread  thread number, <0 -> no threading
+ * \return NULL
+ */
+static gpointer ThreadFAMul (gpointer arg)
+{
+  /* Get arguments from structure */
+  FAFuncArg *largs = (FAFuncArg*)arg;
+  ObitFArray *in1       = largs->in;
+  ObitFArray *in2       = largs->in2;
+  ObitFArray *out       = largs->out;
+  olong      loElem     = largs->first-1;
+  olong      hiElem     = largs->last-1;
+
+
+  /* local */
+  olong   i;
+  ofloat  fblank = ObitMagicF();
+
+  if (hiElem<loElem) goto finish;
+
+  /* Loop over array */
+  for (i=loElem; i<hiElem; i++) {
+    if ((in1->array[i]!=fblank) && (in2->array[i]!=fblank)) 
+      out->array[i] = in1->array[i] * in2->array[i];
+    else out->array[i] = fblank;
+  }
+
+  /* Indicate completion */
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (largs->thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+  
+} /*  end ThreadFAMul */
+
+/**
+ * Divide portions of two FArrays, out = in / in2
+ * Magic value blanking supported.
+ * Callable as thread
+ * \param arg Pointer to FAFuncArg argument with elements:
+ * \li in       ObitFArray to work on
+ * \li in2      2nd ObitFArray to work on
+ * \li out      Output ObitFArray
+ * \li first    First element (1-rel) number
+ * \li last     Highest element (1-rel) number
+ * \li ithread  thread number, <0 -> no threading
+ * \return NULL
+ */
+static gpointer ThreadFADiv (gpointer arg)
+{
+  /* Get arguments from structure */
+  FAFuncArg *largs = (FAFuncArg*)arg;
+  ObitFArray *in1       = largs->in;
+  ObitFArray *in2       = largs->in2;
+  ObitFArray *out       = largs->out;
+  olong      loElem     = largs->first-1;
+  olong      hiElem     = largs->last-1;
+
+
+  /* local */
+  olong   i;
+  ofloat  fblank = ObitMagicF();
+
+  if (hiElem<loElem) goto finish;
+
+  /* Loop over array */
+  for (i=loElem; i<hiElem; i++) {
+    if ((in1->array[i]!=fblank) && (in2->array[i]!=fblank)
+	&& (in2->array[i]!=0.0)) 
+      out->array[i] = in1->array[i] / in2->array[i];
+    else out->array[i] = fblank;
+  }
+
+  /* Indicate completion */
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (largs->thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+  
+} /*  end ThreadFADiv */
+
+/**
+ * Inner shiftAdd
+ * Magic value blanking supported.
+ * Callable as thread
+ * \param arg Pointer to FAFuncArg argument with elements:
+ * \li in       ObitFArray to work on
+ * \li first    First row (0-rel) number
+ * \li last     Highest row(0-rel) number
+ * \li value    scaling value
+ * \li pos      [0] = plane number
+ *              [1,2] = pos1, [3,4] = pos2
+ * \li ithread  thread number, <0 -> no threading
+ * \return NULL
+ */
+static gpointer ThreadFAShAdd (gpointer arg)
+{
+  /* Get arguments from structure */
+  FAFuncArg *largs = (FAFuncArg*)arg;
+  ObitFArray *in1       = largs->in;
+  ObitFArray *in2       = largs->in2;
+  ObitFArray *out       = largs->out;
+  ofloat     scalar     = largs->value;
+  olong      loRow      = largs->first;
+  olong      hiRow      = largs->last;
+  olong      *pos       = largs->pos;
+
+
+  /* local */
+  olong   ix, iy, lox, hix, ip, indx1, indx2, nx1, nx2, ny1, ny2, offx, offy, lenp1, lenp2;
+  olong   pos1[2], pos2[2];
+  ofloat  fblank = ObitMagicF();
+
+  if (hiRow<loRow) goto finish;
+
+  ip = pos[0];                          /* Plane number */
+  pos1[0] = pos[1]; pos1[1] = pos[2];   /* Alognment pixels */
+  pos2[0] = pos[3]; pos2[1] = pos[4];
+
+  /* Size of in1/out */
+  nx1 = in1->naxis[0];
+  ny1 = in1->naxis[1];
+  lenp1 = nx1*ny1;
+ 
+  /* Size of in2 */
+  nx2 = in2->naxis[0];
+  ny2 = in2->naxis[1];
+  if (in2->ndim>2) lenp2 = nx2*ny2;
+  else lenp2 = 0;
+
+  /* determine regions of overlap in in1/out of in2 */
+  offx = pos2[0] - pos1[0];
+  offy = pos2[1] - pos1[1];
+  lox = MAX (0, pos1[0] - in2->naxis[0]/2);
+  hix = MIN (nx1-1, pos1[0] + in2->naxis[0]/2);
+  /* In case in2 not centered */
+  if (lox+offx<0) lox -= lox+offx;
+  if (hix+offx>=nx2) hix -= hix+offx-nx2+1;
+  /* Keep in range */
+  lox = MAX (0, lox);
+  hix = MIN (hix, nx1-1);
+
+  /* Loop over rows */
+  for (iy=loRow; iy<=hiRow; iy++) {
+    
+    /* Loop over columns */
+    for (ix=lox; ix<=hix; ix++) {
+      
+      /* indices in arrays */
+      indx1 = ip*lenp1 + iy*nx1 + ix;
+      indx2 = ip*lenp2 + (iy+offy) * nx2 + ix + offx;
+      
+      /* do operation */
+      if (in1->array[indx1]!=fblank) {
+	if (in2->array[indx2]!=fblank) {
+	  out->array[indx1] = in1->array[indx1] + scalar * in2->array[indx2];
+	}
+      } else {
+	out->array[indx1] = fblank;
+      }
+    } /* end x loop */
+  } /* end y loop */ 
+
+  /* Indicate completion */
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (largs->thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+  
+} /*  end ThreadFADShAdd */
+
+/**
  * Find maximum abs value and position in a subset of an FArray, 
  * Magic value blanking supported.
  * Callable as thread
@@ -3434,6 +3859,8 @@ static gpointer ThreadFAConvGaus (gpointer arg)
  * Make arguments for a Threaded ThreadFAFunc?
  * \param thread     ObitThread object to be used
  * \param in         FA to be operated on
+ * \param in2        2nd FA to be operated on
+ * \param out        output FA
  * \param larg1      Length of function dependent arg1 in bytes
  * \param larg2      Length of function dependent arg2 in bytes
  * \param larg3      Length of function dependent arg3 in bytes
@@ -3446,6 +3873,7 @@ static gpointer ThreadFAConvGaus (gpointer arg)
  * \return number of elements in args (number of allowed threads).
  */
 static olong MakeFAFuncArgs (ObitThread *thread, ObitFArray *in,
+			     ObitFArray *in2, ObitFArray *out,
 			     olong larg1, olong larg2, olong larg3, 
 			     olong larg4, olong larg5,
 			     olong larg6, olong larg7, 
@@ -3465,6 +3893,10 @@ static olong MakeFAFuncArgs (ObitThread *thread, ObitFArray *in,
   for (i=0; i<nThreads; i++) {
     (*ThreadArgs)[i]->thread= ObitThreadRef(thread);
     (*ThreadArgs)[i]->in    = ObitFArrayRef(in);
+    if (in2) (*ThreadArgs)[i]->in2   = ObitFArrayRef(in2);
+    else (*ThreadArgs)[i]->in2   = NULL;
+    if (out) (*ThreadArgs)[i]->out   = ObitFArrayRef(out);
+    else (*ThreadArgs)[i]->out = NULL;
     (*ThreadArgs)[i]->first = 1;
     (*ThreadArgs)[i]->last  = in->arraySize;
     (*ThreadArgs)[i]->value = 0.0;
@@ -3504,6 +3936,8 @@ static void KillFAFuncArgs (olong nargs, FAFuncArg **ThreadArgs)
     if (ThreadArgs[i]) {
       if (ThreadArgs[i]->thread) ObitThreadUnref(ThreadArgs[i]->thread);
       if (ThreadArgs[i]->in)   ObitFArrayUnref(ThreadArgs[i]->in);
+      if (ThreadArgs[i]->in2)  ObitFArrayUnref(ThreadArgs[i]->in2);
+      if (ThreadArgs[i]->out)  ObitFArrayUnref(ThreadArgs[i]->out);
       if (ThreadArgs[i]->arg1) g_free(ThreadArgs[i]->arg1);
       if (ThreadArgs[i]->arg2) g_free(ThreadArgs[i]->arg2);
       if (ThreadArgs[i]->arg3) g_free(ThreadArgs[i]->arg3);
