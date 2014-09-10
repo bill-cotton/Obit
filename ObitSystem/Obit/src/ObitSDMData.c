@@ -1366,7 +1366,8 @@ ASDMAntennaArray* ObitSDMDataGetAntArray (ObitSDMData *in, olong mainRow)
 { 
   ASDMAntennaArray* out=NULL;
   olong  configDescriptionId, stationId, dataDescriptionId, spectralWindowId, execBlockId;
-  olong i, iMain, iConfig, iAnt, jAnt, jDD, jSW, numAnt, iJD, iExec;
+  olong  polOrHoloId;
+  olong i, iMain, iConfig, iAnt, jAnt, jDD, jSW, jPL, numAnt, iJD, iExec;
   odouble JD;
 
   /* Find scan in Main table */
@@ -1429,6 +1430,13 @@ ASDMAntennaArray* ObitSDMDataGetAntArray (ObitSDMData *in, olong mainRow)
   /* To 0 hours */
   out->refJD = iJD + 0.5;
 
+  /* Find polarization */
+  polOrHoloId = in->DataDescriptionTab->rows[jDD]->polOrHoloId;
+  for (jPL=0; jPL<in->PolarizationTab->nrows; jPL++) {
+    if (in->PolarizationTab->rows[jPL]->polarizationId==polOrHoloId) break;
+  }
+  if (jPL>=in->PolarizationTab->nrows) return NULL;
+  
   /* Loop over antennas */
   for (iAnt=0; iAnt<numAnt; iAnt++) {
     out->ants[iAnt] = g_malloc0(sizeof(ASDMAntennaArrayEntry));
@@ -1464,13 +1472,12 @@ ASDMAntennaArray* ObitSDMDataGetAntArray (ObitSDMData *in, olong mainRow)
     out->ants[iAnt]->staPosition = g_malloc0(3*sizeof(odouble));
     for (i=0; i<3; i++) out->ants[iAnt]->staPosition[i] = in->StationTab->rows[jAnt]->position[i];
     out->ants[iAnt]->type        = in->StationTab->rows[jAnt]->type;
-
-    /* Assume polarization for first PolarizationTab entry */
-    out->ants[iAnt]->numPoln     = MIN(2, in->PolarizationTab->rows[0]->numCorr);
-    out->ants[iAnt]->numPolnCorr = in->PolarizationTab->rows[0]->numCorr;
-    out->ants[iAnt]->polnType[0] = in->PolarizationTab->rows[0]->corrType[0][0];
+    /* PolarizationTab entry jPL */
+    out->ants[iAnt]->numPoln     = MIN(2, in->PolarizationTab->rows[jPL]->numCorr);
+    out->ants[iAnt]->numPolnCorr = in->PolarizationTab->rows[jPL]->numCorr;
+    out->ants[iAnt]->polnType[0] = in->PolarizationTab->rows[jPL]->corrType[0][0];
     if (out->ants[iAnt]->numPolnCorr>1)
-      out->ants[iAnt]->polnType[1] = in->PolarizationTab->rows[0]->corrType[1][1];
+      out->ants[iAnt]->polnType[1] = in->PolarizationTab->rows[jPL]->corrType[1][1];
   } /* end loop over antennas */
   
   return out;

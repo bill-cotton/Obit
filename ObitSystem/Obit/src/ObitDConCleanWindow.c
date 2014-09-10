@@ -1563,7 +1563,7 @@ gboolean ObitDConCleanWindowAutoWindow (ObitDConCleanWindow *in,
   ObitFArray *tmpImage=NULL;
   olong ix, iy, nx, ny, pos[2];
   olong window[4];
-  ofloat *data, minFlux, fblank =  ObitMagicF();
+  ofloat *data, minFlux=0.0, fblank =  ObitMagicF();
   gchar *routine = "ObitDConCleanWindowAutoWindow";
 
   /* error checks */

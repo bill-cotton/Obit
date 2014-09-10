@@ -2399,3 +2399,10 @@ Obit/src/ObitFArray.c:
 Obit/TDF/FndSou.TDF:
   Increase range allowed for BLC, TRC
 9 Sept 2014, svn version 494
+
+Bug fixes
+Obit/src/ObitSDMData.c:
+  GetAntArray: Find correct polarization entry
+Obit/src/ObitDConCleanWindow.c:
+  AutoWindow: initialize variable
+9 Sept 2014, svn version 495
