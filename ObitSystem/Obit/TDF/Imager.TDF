@@ -212,7 +212,7 @@ CCFilter                           Clean component filter
                                     [0] min. sum flux.
                                     [1] radius of search
 **PARAM** int 1  **DEF** 50000
-maxPixel           0.0    500000   Maximum pixels searched
+maxPixel           0.0   5000000   Maximum pixels searched
 
                                        Selfcal info
 **PARAM** int 1

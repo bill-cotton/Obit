@@ -2406,3 +2406,11 @@ Obit/src/ObitSDMData.c:
 Obit/src/ObitDConCleanWindow.c:
   AutoWindow: initialize variable
 9 Sept 2014, svn version 495
+
+Bug fixes
+Obit/src/ObitFArray.c:
+  ShiftAdd: Fix indexing problem in threading
+  Various: fix bugs, indexing
+Obit/TDF/Imager.TDF Obit/TDF/MFImage.TDF:
+  MaxPixel limit to 5,000,000
+13 Sept 2014, svn version 496
