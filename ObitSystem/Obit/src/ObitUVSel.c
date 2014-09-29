@@ -431,6 +431,12 @@ void ObitUVSelSetDesc (ObitUVDesc* in, ObitUVSel* sel,
      as though the feeds were circular */
   if (sel->doPolCal && (out->crval[out->jlocs]==-5.0)) 
     out->crval[in->jlocs] = -1.0;
+
+  /* If only one source selected make sure no "SOURCE" 
+     random parameter is written */
+  if ((sel->numberSourcesList==1) && (out->ilocsu>=0) )
+    strncpy (out->ptype[out->ilocsu], "REMOVED ", UVLEN_KEYWORD); 
+
 } /* end ObitUVSelSetDesc */
 
 /**

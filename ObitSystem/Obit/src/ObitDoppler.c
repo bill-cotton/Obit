@@ -653,7 +653,7 @@ ObitUV* ObitDopplerCVel (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 	    for (ichan=0; ichan<nchan; ichan++) {
 	      foff  = iindx + inUV->myDesc->nrparm  + osoff + ichan * incf;
 	      ofoff = oindx + outUV->myDesc->nrparm + osoff + ichan * oincf;
-	      toff = foff+off+2;  /* roughly align new and old */
+	      toff = foff + (off*incf) + 2;  /* roughly align new and old */
 	      if ((inBuffer[toff]>0.0) && (ichan>off) && ((ichan+off)<nchan)) {
 		outBuffer[ofoff+0] = Spectrum[tndx++];
 		outBuffer[ofoff+1] = Spectrum[tndx++];

@@ -1698,11 +1698,11 @@ gpointer ThreadCLEAN (gpointer args)
   xflux = 0.0;
   /* Do subtraction if peak non zero */
   if (fabs(peak)>0.0) {
+    peak   = -1.0;   /* find new one */
     field  = in->pixelFld[ipeak];
     lpatch = in->BeamPatch[field-1]->naxis[0];
     beamPatch = (lpatch-1)/2;
     pos[0] = pos[1] = 0;
-    field  = in->pixelFld[ipeak];
     beam = ObitFArrayIndex(in->BeamPatch[field-1], pos); /* Beam patch pointer */
     xflux  = in->pixelFlux[ipeak];
     subval = xflux * in->gain[field-1];
@@ -1722,7 +1722,7 @@ gpointer ThreadCLEAN (gpointer args)
       /* Now find peak */
       xflux = fabs(in->pixelFlux[iresid]);
       if (xflux>peak) {
-	peak = xflux;
+	peak  = xflux;
 	ipeak = iresid;
       }
     } /* end loop over array */

@@ -2414,3 +2414,31 @@ Obit/src/ObitFArray.c:
 Obit/TDF/Imager.TDF Obit/TDF/MFImage.TDF:
   MaxPixel limit to 5,000,000
 13 Sept 2014, svn version 496
+
+Mosaicing improvements, bug fixes
+Obit/python/MosaicUtil.py \
+  New functions GetOverlay, PMaskCube, PMaskCube2
+  History various places
+Obit/TDF/Squish.TDF Obit/tasks/Squish.c \
+  Allow threading
+Obit/src/ObitImageUtil.c \
+  InterpolateImage: blank zeroes before interpolating
+Obit/python/EVLACal.py \
+  EVLAPlotBPTab: Trap newly added parameters in BPLOT
+Obit/src/ObitDoppler.c \
+  CVel: correct index for weight
+Obit/src/ObitUVSel.c \
+  SetDesc: replace "SOURCE" random parameter with "REMOVED" if 1 source selected.
+Obit/tasks/Imager.c \
+ doChanPoln: Keep track of proper output plane number
+Obit/src/ObitDConCleanPxList.c \
+  ThreadClean: Reset search for new peak
+Obit/tasks/Squish.c \
+  Magic value blank output if requested
+Obit/TDF/Squish.TDF \
+  Correct documentation for Parms
+Obit/TDF/MFImage.TDF \
+  Fix documentation of Tapers
+Obit/src/ObitFInterpolate.c \
+  Pixel: Higher threshold for weight
+29 Sept. 2014, svn ver. 497

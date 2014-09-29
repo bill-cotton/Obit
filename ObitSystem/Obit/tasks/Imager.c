@@ -1684,7 +1684,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       Obit_log_error(err, OBIT_InfoWarn,"NO data channel %d", ichan);
       if (first) {SChan = ichan+1; RChan = ichan+1; }
       /*if (first) {RChan = ichan+1;}*/
-      continue;  /* Go on to next */
+      goto endChan;  /* Go on to next */
     }
     ObitInfoListCopyList (myInput, outData->info, tmpParms);
     ObitInfoListCopyList (inData->info, outData->info, tmpName);
@@ -1868,6 +1868,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     /* End DEBUG */
     
     /* next output channel number */
+  endChan:
     ochan += MIN(nParTh, (olong)(0.999 + (ofloat)nChLeft/chInc)); 
     nChLeft -= nParTh*chInc;   /* How many channels left? */
   } /* end loop over channels */

@@ -4947,8 +4947,11 @@ def EVLAPlotBPTab(uv, invers, err, inext = 'BP', \
         pass
     if not check:
         setname(uv,bplot)
-    bplot.inext   = inext
-    bplot.invers  = invers
+    try:
+        bplot.inext   = inext
+        bplot.invers  = invers
+    except Exception, exception:
+        pass
     bplot.stokes  = stokes
     bplot.msgkill = 5        # Suppress blather
     i = 1

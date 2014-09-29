@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task - Collapse a 3-D image to 2-D                            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2010                                          */
+/*;  Copyright (C) 2005-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -304,7 +304,10 @@ ObitInfoList* SquishIn (int argc, char **argv, ObitErr *err)
   ObitReturnDumpRetCode (-999, outfile, myOutput, err);
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
-  return list;
+   /* Initialize Threading */
+  ObitThreadInit (list);
+ 
+ return list;
 } /* end SquishIn */
 
 void Usage(void)
@@ -715,7 +718,7 @@ void SquishHistory (ObitInfoList* myInput, ObitImage* inImage,
   gchar        hicard[81];
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq",
-    "BLC",  "TRC",  "Parms", 
+    "BLC",  "TRC",  "Parms", "nThreads",
     NULL};
   gchar *routine = "SquishHistory";
 
@@ -878,7 +881,13 @@ void SquishCollapse (ObitInfoList* myInput, ObitImage* inImage,
   inImage->image = ObitFArrayUnref(inImage->image);
 
 
-  /* Open output image */
+  /* Blank zero pixels if requested */
+  if (newVal!=0.0) {
+    minAllow = 1.0e-25;
+    ObitFArrayInClip (accum, -minAllow, minAllow, newVal);
+  }
+
+   /* Open output image */
   /* Use external buffer for writing output */
   outImage->extBuffer = TRUE;
   oretCode = ObitImageOpen (outImage, OBIT_IO_WriteOnly, err);

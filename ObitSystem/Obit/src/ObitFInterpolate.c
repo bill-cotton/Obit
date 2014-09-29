@@ -378,7 +378,7 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
     value = sum / sumwt;
     if (isnan(value)) g_error("INVALID VALUE, sum=%f wt=%f\n",sum, sumwt); /* DEBUG */
     return value;
-  } 
+  } else return fblank; 
 
   /* too much blanked data; try again  using knowledge of blanks if 
      sufficient data need at least a third of points. */

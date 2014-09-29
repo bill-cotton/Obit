@@ -1266,6 +1266,7 @@ ObitImageUtilInterpolateImage (ObitImage *inImage, ObitImage *outImage,
   odouble RAPnt, DecPnt;
   olong nTh, nrow, lorow, hirow, nrowPerThread, nThreads;
   InterpFuncArg **threadArgs;
+  ofloat fblank = ObitMagicF();
   gboolean OK;
   gchar *today=NULL;
   gchar *routine = "ObitImageUtilInterpolateImage";
@@ -1360,6 +1361,9 @@ ObitImageUtilInterpolateImage (ObitImage *inImage, ObitImage *outImage,
 		   routine, inImage->name);
     return;
   }
+
+  /* Convert pure zero to fblank */
+  ObitFArrayInClip (inImage->image, -1.0e-25, 1.0e-25, fblank);
 
   /* Make interpolator */
   interp = newObitFInterpolateCreate ("Interpolator", inImage->image, 

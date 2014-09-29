@@ -285,7 +285,7 @@ PeelAvgIF                          Avg. IFs in peel self cal?
 **PARAM** int 1 
 nTaper            0                Number of additional tapers
 **PARAM** float 10
-Tapers            0                List of tapers (asec)
+Tapers            0                List of tapers (pixels)
 **PARAM** float 10
 MResKnob          0                Multiresolution controls 
 
