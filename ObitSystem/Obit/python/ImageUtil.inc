@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for Image utilities                        */
 /*                                                                    */
-/*;  Copyright (C) 2004-2013                                          */
+/*;  Copyright (C) 2004-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -30,6 +30,7 @@
 
 %{
 #include "ObitImageUtil.h"
+#include "ObitGPUImage.h"
 #include "ObitTable.h"
 #include "ObitTableCCUtil.h"
 #include "ObitPolnUnwind.h"
@@ -57,6 +58,33 @@ ImageUtilInterpolateImage (ObitImage *inImage, ObitImage *outImage,
   ObitImageUtilInterpolateImage (inImage, outImage, inPlane, outPlane,
 			         hwidth, err);
 } // end ImageUtilInterpolateImage
+
+void 
+ImageUtilInterpolateImageXY (ObitImage *inImage, ObitImage *outImage, 
+			     ObitImage *XPix, ObitImage *YPix,
+			     int *inPlane, int *outPlane,
+			     long hwidth, ObitErr *err)
+{
+  ObitImageUtilInterpolateImageXY (inImage, outImage, XPix, YPix,
+                                   inPlane, outPlane, hwidth, err);
+} // end ImageUtilInterpolateImageXY
+
+void 
+GPUImageInterpolateImageXY (ObitGPUFInterpolate *finterp,
+                            ObitImage *inImage, ObitImage *outImage, 
+			    int *inPlane, int *outPlane,
+			    ObitErr *err)
+{
+  ObitGPUImageInterpolateImageXY (finterp, inImage, outImage, 
+                                   inPlane, outPlane, err);
+} // end GPUImageInterpolateImageXY
+
+void 
+ImageUtilGetXYPixels (ObitImage *inImage, ObitImage *outImage, 
+	              ObitImage *XPix, ObitImage *YPix, ObitErr *err)
+{
+  ObitImageUtilGetXYPixels (inImage, outImage, XPix, YPix, err);
+} // end ImageUtilGetXYPixels
 
 void 
 ImageUtilPBApply (ObitImage *inImage, ObitImage *pntImage, ObitImage *outImage, 

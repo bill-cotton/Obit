@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2013                                          */
+/*;  Copyright (C) 2010-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -877,13 +877,13 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
     nSpec = 1;   /* Number of break points including ends */
     IFBreak[0] = 0;
     ChBreak[0] = -1;
-    freqLo = (uvdesc->freqIF[0] - (1.0-uvdesc->crpix[uvdesc->jlocf])*uvdesc->cdelt[uvdesc->jlocf]);
+    freqLo = (uvdesc->freqIF[0] + (1.0-uvdesc->crpix[uvdesc->jlocf])*uvdesc->cdelt[uvdesc->jlocf]);
     if (lsb) mxFreq = (1.0-maxFBW) * freqLo;  /* Lowest frequency in first bin */
     else     mxFreq = (1.0+maxFBW) * freqLo;  /* Highest frequency in first bin */
     /* Loop over IFs */
     for (iif=0; iif<nIF; iif++) {
       /* Is this IF all in current bin? */
-      freqLo = (uvdesc->freqIF[iif] - (1.0-uvdesc->crpix[uvdesc->jlocf])*uvdesc->cdelt[uvdesc->jlocf]);
+      freqLo = (uvdesc->freqIF[iif] + (1.0-uvdesc->crpix[uvdesc->jlocf])*uvdesc->cdelt[uvdesc->jlocf]);
       freqHi = (uvdesc->freqIF[iif] + (nChan-uvdesc->crpix[uvdesc->jlocf]+1)*uvdesc->cdelt[uvdesc->jlocf]);
       if (lsb) done = freqHi>mxFreq;   /* LSB */
       else     done = freqHi<mxFreq;   /* USB */

@@ -67,6 +67,10 @@ typedef struct {
   ObitImageDesc *outDesc;
   /* Output plane pixel data */
   ObitFArray *outData;
+  /* X Pixel array */
+  ObitFArray *XPixData;
+  /* Y Pixel array */
+  ObitFArray *YPixData;
   /* Also do Weights? */
   gboolean   doWeight;
   /* Output weight plane pixel data */
@@ -97,6 +101,9 @@ static void ObitImageUtilCurDate (gchar *date, olong len);
 
 /** Private: Threaded Image interpolator */
 static gpointer ThreadImageInterp (gpointer arg);
+
+/** Private: Threaded Calculate pixels */
+static gpointer ThreadGetXYPixels (gpointer arg);
 
 /** Private: Make Threaded Image interpolator args */
 static olong MakeInterpFuncArgs (ObitThread *thread, olong radius,
@@ -1446,6 +1453,413 @@ ObitImageUtilInterpolateImage (ObitImage *inImage, ObitImage *outImage,
   if (outImage->mySel->FileType!=OBIT_IO_MEM) 
     outImage->image = ObitFArrayUnref(outImage->image);
 } /* end  ObitImageUtilInterpolateImage */
+
+/**
+ * Fill the pixels in outImage by interpolation to the corresponding locations
+ * in inImage.
+ * There is no interpolation between planes
+ * \param inImage  Image to be interpolated.
+ * \param outImage Image to be written.  Must be previously instantiated.
+ * \param XPix     Image of x pixels in inImage for outImage
+ * \param YPix     Image of y pixels in inImage for outImage
+ * \param inPlane  desired plane in inImage, 1-rel pixel numbers on planes 3-7
+ * \param outPlane desired plane in outImage
+ * \param hwidth   interpolation halfwidth (1 or 2 usually OK, 4 max)
+ * \param err      Error stack, returns if not empty.
+ */
+void 
+ObitImageUtilInterpolateImageXY (ObitImage *inImage, ObitImage *outImage, 
+				 ObitImage *XPix, ObitImage *YPix, 
+			         olong *inPlane, olong *outPlane,
+			         olong hwidth, ObitErr *err)
+{
+  ObitIOSize IOBy;
+  ObitFInterpolate *interp=NULL;
+  ObitImageDesc *tmpDesc=NULL;
+  olong iblc[IM_MAXDIM], itrc[IM_MAXDIM], oblc[IM_MAXDIM], otrc[IM_MAXDIM];
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+  olong i, j, pln[5];
+  odouble RAPnt, DecPnt;
+  olong nTh, nrow, lorow, hirow, nrowPerThread, nThreads;
+  InterpFuncArg **threadArgs;
+  ofloat fblank = ObitMagicF();
+  gboolean OK;
+  gchar *today=NULL;
+  gchar *routine = "ObitImageUtilInterpolateImageXY";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return;
+  g_assert (ObitImageIsA(inImage));
+  g_assert (ObitImageIsA(outImage));
+  g_assert (inPlane!=NULL);
+  g_assert (outPlane!=NULL);
+
+  /* Precomputed pixels */
+  /* Open images */
+  if ((ObitImageOpen (XPix, OBIT_IO_ReadWrite, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR opening image %s", 
+		   routine, inImage->name);
+    return;
+  }
+  if ((ObitImageOpen (YPix, OBIT_IO_ReadWrite, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR opening image %s", 
+		   routine, outImage->name);
+    return;
+  }
+  /* Read */
+  pln[0] = pln[1] = pln[2] = pln[3] = pln[4] = 1;
+  ObitImageGetPlane (XPix, NULL, pln, err);
+  if (err->error) Obit_traceback_msg (err, routine, XPix->name);
+  ObitImageGetPlane (YPix, NULL, pln, err);
+  if (err->error) Obit_traceback_msg (err, routine, YPix->name);
+ 
+  for (i=0; i<IM_MAXDIM; i++) iblc[i] = 1;
+  for (i=0; i<IM_MAXDIM; i++) itrc[i] = 0;
+  for (i=0; i<IM_MAXDIM; i++) oblc[i] = 1;
+  for (i=0; i<IM_MAXDIM; i++) otrc[i] = 0;
+
+  /* Do I/O by plane and all of plane */
+  IOBy = OBIT_IO_byPlane;
+  dim[0] = 1;
+  ObitInfoListPut (inImage->info, "IOBy", OBIT_long, dim, (gpointer)&IOBy, err);
+  ObitInfoListPut (outImage->info, "IOBy", OBIT_long, dim, (gpointer)&IOBy, err);
+  /* Get any previous blc, trc */
+  ObitInfoListGetTest (inImage->info, "BLC", &type, dim, iblc); 
+  ObitInfoListGetTest (inImage->info, "TRC", &type, dim, itrc);
+  dim[0] = 7;
+  for (i=0; i<5; i++) iblc[i+2] = itrc[i+2] = inPlane[i];
+  ObitInfoListPut (inImage->info, "BLC", OBIT_long, dim, iblc, err); 
+  ObitInfoListPut (inImage->info, "TRC", OBIT_long, dim, itrc, err);
+  for (i=0; i<5; i++) oblc[i+2] = otrc[i+2] = outPlane[i];
+  ObitInfoListPut (outImage->info, "BLC", OBIT_long, dim, oblc, err); 
+  ObitInfoListPut (outImage->info, "TRC", OBIT_long, dim, otrc, err);
+
+  /* Open images */
+  if ((ObitImageOpen (inImage, OBIT_IO_ReadOnly, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR opening image %s", 
+		   routine, inImage->name);
+    return;
+  }
+  if ((ObitImageOpen (outImage, OBIT_IO_ReadWrite, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR opening image %s", 
+		   routine, outImage->name);
+    return;
+  }
+  /* Adjust output descriptor on first plane - copy from input */
+  if ((outPlane[0]==1) && (outPlane[1]==1) && (outPlane[2]==1) && (outPlane[3]==1) 
+      && (outPlane[4]==1)) {
+    /* Copy of old descriptor */
+    tmpDesc = ObitImageDescCopy (outImage->myDesc, tmpDesc, err);
+    /* update Descriptive stuff from input */
+    ObitImageDescCopyDesc (inImage->myDesc, outImage->myDesc, err);
+    if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+
+    /* Creation date today */
+    today = ObitToday();
+    strncpy (outImage->myDesc->date, today, IMLEN_VALUE-1);
+    if (today) g_free(today);
+
+    /* Precess pointing position if necessary */
+    if (inImage->myDesc->equinox!=tmpDesc->equinox) {
+      ObitImageDescGetPoint (inImage->myDesc, &RAPnt, &DecPnt);
+      if ((fabs(inImage->myDesc->equinox-1950.0)<0.01) && 
+	  (fabs(tmpDesc->equinox-2000.0)<0.01))
+	ObitSkyGeomBtoJ (&RAPnt, &DecPnt);
+      else if ((fabs(inImage->myDesc->equinox-2000.0)<0.01) && 
+	       (fabs(tmpDesc->equinox-1950.0)<0.01))
+	ObitSkyGeomJtoB (&RAPnt, &DecPnt);
+      outImage->myDesc->obsra  = RAPnt;
+      outImage->myDesc->obsdec = DecPnt;
+    }
+
+    /* restore first two planes geometry */
+    outImage->myDesc->epoch   = tmpDesc->epoch;
+    outImage->myDesc->equinox = tmpDesc->equinox;
+    for (j=0; j<2; j++) {
+      outImage->myDesc->inaxes[j] = tmpDesc->inaxes[j];
+      outImage->myDesc->cdelt[j]  = tmpDesc->cdelt[j];
+      outImage->myDesc->crota[j]  = tmpDesc->crota[j];
+      outImage->myDesc->crpix[j]  = tmpDesc->crpix[j];
+      outImage->myDesc->crval[j]  = tmpDesc->crval[j];
+      for (i=0; i<IMLEN_KEYWORD; i++) outImage->myDesc->ctype[j][i] = tmpDesc->ctype[j][i];
+    }
+    tmpDesc = ObitImageDescUnref(tmpDesc);
+  }
+  
+  /* Read input plane */
+  if ((ObitImageRead (inImage,NULL , err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR reading image %s", 
+		   routine, inImage->name);
+    return;
+  }
+
+  /* Convert pure zero to fblank */
+  ObitFArrayInClip (inImage->image, -1.0e-25, 1.0e-25, fblank);
+
+  /* Make interpolator */
+  interp = newObitFInterpolateCreate ("Interpolator", inImage->image, 
+				      inImage->myDesc, hwidth);
+
+   /* Initialize Threading */
+  nThreads = MakeInterpFuncArgs (inImage->thread, -1, 0, NULL,
+				 inImage->myDesc, outImage->myDesc, 
+				 interp, err, &threadArgs);
+
+  /* Divide up work */
+  nrow = outImage->myDesc->inaxes[1];
+  nrowPerThread = nrow/nThreads;
+  nTh = nThreads;
+  if (nrow<64) {nrowPerThread = nrow; nTh = 1;}
+  /* No fewer than 64 rows per thread */
+  if ((nrowPerThread)<64) {
+    nTh = (olong)(0.5 + nrow/64.0);
+   if (nTh>0)  nrowPerThread = nrow/nTh;
+  }
+  if (nTh<=0) {nrowPerThread = nrow; nTh = 1;}
+  lorow = 1;
+  hirow = nrowPerThread;
+  hirow = MIN (hirow, nrow);
+
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hirow = nrow;  /* Make sure do all */
+    threadArgs[i]->inData  = ObitFArrayRef(inImage->image);
+    threadArgs[i]->outData = ObitFArrayRef(outImage->image);
+    threadArgs[i]->XPixData = ObitFArrayRef(XPix->image);
+    threadArgs[i]->YPixData = ObitFArrayRef(YPix->image);
+    threadArgs[i]->first   = lorow;
+    threadArgs[i]->last    = hirow;
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which row */
+    lorow += nrowPerThread;
+    hirow += nrowPerThread;
+    hirow = MIN (hirow, nrow);
+  }
+
+  /* Do operation */
+  OK = ObitThreadIterator (inImage->thread, nTh, 
+			   (ObitThreadFunc)ThreadImageInterp,
+			   (gpointer**)threadArgs);
+
+  /* Check for problems */
+  if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+  /* */
+
+  /* Free local objects */
+  interp = ObitFInterpolateUnref(interp);
+  KillInterpFuncArgs(nThreads, threadArgs);
+
+  /* Write output */
+  if ((ObitImageWrite (outImage, NULL, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR writing image %s", 
+		   routine, outImage->name);
+    return;
+  }
+
+  /* Close */
+  if ((ObitImageClose (XPix, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR closing image %s", 
+		   routine, XPix->name);
+    return;
+  }
+  if ((ObitImageClose (YPix, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR closing image %s", 
+		   routine, YPix->name);
+    return;
+  }
+  if ((ObitImageClose (inImage, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR closing image %s", 
+		   routine, inImage->name);
+    return;
+  }
+  /* Free image buffer if not memory resident */
+  if (inImage->mySel->FileType!=OBIT_IO_MEM) 
+    inImage->image = ObitFArrayUnref(inImage->image);
+
+  if ((ObitImageClose (outImage, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR closing image %s", 
+		   routine, outImage->name);
+    return;
+  }
+  /* Free image buffer if not memory resident */
+  if (outImage->mySel->FileType!=OBIT_IO_MEM) 
+    outImage->image = ObitFArrayUnref(outImage->image);
+} /* end  ObitImageUtilInterpolateImageXY */
+
+/**
+ * Get input pixels in InImage for outImage.
+ * \param inImage  Image to be interpolated.
+ * \param outImage Image to be written.
+ * \param XPix     Image of x pixels in inImage for outImage
+ * \param YPix     Image of y pixels in inImage for outImage
+ * \param err      Error stack, returns if not empty.
+ */
+void 
+ObitImageUtilGetXYPixels (ObitImage *inImage, ObitImage *outImage, 
+				 ObitImage *XPix, ObitImage *YPix, 
+			         ObitErr *err)
+{
+  ObitImageDesc *tmpDesc=NULL;
+  olong i, j;
+  odouble RAPnt, DecPnt;
+  olong nTh, nrow, lorow, hirow, nrowPerThread, nThreads;
+  InterpFuncArg **threadArgs;
+  gboolean OK;
+  gchar *today=NULL;
+  gchar *routine = "ObitImageUtilGetXYPixels";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return;
+  g_assert (ObitImageIsA(inImage));
+  g_assert (ObitImageIsA(outImage));
+ 
+  /* Open images */
+  if ((ObitImageOpen (XPix, OBIT_IO_ReadWrite, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR opening image %s", 
+		   routine, inImage->name);
+    return;
+  }
+  if ((ObitImageOpen (YPix, OBIT_IO_ReadWrite, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR opening image %s", 
+		   routine, outImage->name);
+    return;
+  }
+  /* Adjust out put descriptor  - copy from input */
+  /* Copy of old descriptor */
+  tmpDesc = ObitImageDescCopy (outImage->myDesc, tmpDesc, err);
+  /* update Descriptive stuff from input */
+  ObitImageDescCopyDesc (inImage->myDesc, outImage->myDesc, err);
+  if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+  
+  /* Creation date today */
+  today = ObitToday();
+  strncpy (outImage->myDesc->date, today, IMLEN_VALUE-1);
+  if (today) g_free(today);
+  
+  /* Precess pointing position if necessary */
+  if (inImage->myDesc->equinox!=tmpDesc->equinox) {
+    ObitImageDescGetPoint (inImage->myDesc, &RAPnt, &DecPnt);
+    if ((fabs(inImage->myDesc->equinox-1950.0)<0.01) && 
+	(fabs(tmpDesc->equinox-2000.0)<0.01))
+      ObitSkyGeomBtoJ (&RAPnt, &DecPnt);
+    else if ((fabs(inImage->myDesc->equinox-2000.0)<0.01) && 
+	     (fabs(tmpDesc->equinox-1950.0)<0.01))
+      ObitSkyGeomJtoB (&RAPnt, &DecPnt);
+    outImage->myDesc->obsra  = RAPnt;
+    outImage->myDesc->obsdec = DecPnt;
+  }
+  
+  /* restore first two planes geometry */
+  outImage->myDesc->epoch   = tmpDesc->epoch;
+  outImage->myDesc->equinox = tmpDesc->equinox;
+  for (j=0; j<2; j++) {
+    outImage->myDesc->inaxes[j] = tmpDesc->inaxes[j];
+    outImage->myDesc->cdelt[j]  = tmpDesc->cdelt[j];
+    outImage->myDesc->crota[j]  = tmpDesc->crota[j];
+    outImage->myDesc->crpix[j]  = tmpDesc->crpix[j];
+    outImage->myDesc->crval[j]  = tmpDesc->crval[j];
+    for (i=0; i<IMLEN_KEYWORD; i++) outImage->myDesc->ctype[j][i] = tmpDesc->ctype[j][i];
+  }
+  tmpDesc = ObitImageDescUnref(tmpDesc);
+
+  /* Initialize Threading */
+  nThreads = MakeInterpFuncArgs (inImage->thread, -1, 0, NULL,
+				 inImage->myDesc, outImage->myDesc, 
+				 NULL, err, &threadArgs);
+
+  /* Divide up work */
+  nrow = outImage->myDesc->inaxes[1];
+  nrowPerThread = nrow/nThreads;
+  nTh = nThreads;
+  if (nrow<64) {nrowPerThread = nrow; nTh = 1;}
+  /* No fewer than 64 rows per thread */
+  if ((nrowPerThread)<64) {
+    nTh = (olong)(0.5 + nrow/64.0);
+   if (nTh>0)  nrowPerThread = nrow/nTh;
+  }
+  if (nTh<=0) {nrowPerThread = nrow; nTh = 1;}
+  lorow = 1;
+  hirow = nrowPerThread;
+  hirow = MIN (hirow, nrow);
+
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hirow = nrow;  /* Make sure do all */
+    threadArgs[i]->inData  = ObitFArrayRef(inImage->image);
+    threadArgs[i]->outData = ObitFArrayRef(outImage->image);
+    threadArgs[i]->XPixData = ObitFArrayRef(XPix->image);
+    threadArgs[i]->YPixData = ObitFArrayRef(YPix->image);
+    threadArgs[i]->first   = lorow;
+    threadArgs[i]->last    = hirow;
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which row */
+    lorow += nrowPerThread;
+    hirow += nrowPerThread;
+    hirow = MIN (hirow, nrow);
+  }
+
+  /* Do operation */
+  OK = ObitThreadIterator (inImage->thread, nTh, 
+			   (ObitThreadFunc)ThreadGetXYPixels,
+			   (gpointer**)threadArgs);
+
+  /* Check for problems */
+  if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+
+  /* Free local objects */
+  KillInterpFuncArgs(nThreads, threadArgs);
+
+  /* Write outputs */
+  if ((ObitImageWrite (XPix, NULL, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR writing image %s", 
+		   routine, XPix->name);
+    return;
+  }
+  if ((ObitImageWrite (YPix, NULL, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR writing image %s", 
+		   routine, YPix->name);
+    return;
+  }
+
+  /* Close */
+  if ((ObitImageClose (XPix, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR closing image %s", 
+		   routine, XPix->name);
+    return;
+  }
+  if ((ObitImageClose (YPix, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR closing image %s", 
+		   routine, YPix->name);
+    return;
+  }
+  /* Free image buffer if not memory resident */
+  if (XPix->mySel->FileType!=OBIT_IO_MEM) 
+    XPix->image = ObitFArrayUnref(XPix->image);
+  if (YPix->mySel->FileType!=OBIT_IO_MEM) 
+    YPix->image = ObitFArrayUnref(YPix->image);
+
+} /* end  ObitImageUtilGetXYPixels */
 
 /**
  * Fill the pixels in outImage by interpolation to the corresponding locations
@@ -3088,7 +3502,7 @@ ObitImageUtilUV2ImageDesc(ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
   odouble sum;
   gchar *st1, *st2;
   gchar *today=NULL;
-  gchar *origin="Obit";
+  gchar *origin="Obit", *sinstr="-SIN";
 
   /* error checks */
   g_assert (ObitUVDescIsA(UVDesc));
@@ -3130,7 +3544,10 @@ ObitImageUtilUV2ImageDesc(ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
     if (st1[i]==0)   st1[i]='-';
   }
   st2 = UVDesc->ptype[UVDesc->ilocu]; /* Projection */
-  for (i=0; i<4; i++)  st1[i+4]=st2[i+4];
+  for (i=0; i<4; i++)  {   /* Replace blank with -SIN */
+    if (st2[i+4]==' ') st1[i+4] = sinstr[i];
+    else               st1[i+4] = st2[i+4];
+  }
   st1[9] = 0;
 
   /* Reference pixel for 3D */
@@ -3151,7 +3568,10 @@ ObitImageUtilUV2ImageDesc(ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
     if (st1[i]==0)   st1[i]='-';
   }
   st2 = UVDesc->ptype[UVDesc->ilocu]; /* Projection */
-  for (i=0; i<4; i++)  st1[i+4]=st2[i+4];
+  for (i=0; i<4; i++)  {   /* Replace blank with -SIN */
+    if (st2[i+4]==' ') st1[i+4] = sinstr[i];
+    else               st1[i+4] = st2[i+4];
+  }
   st1[9] = 0;
 
   /* Reference pixel for 3D */
@@ -4717,6 +5137,7 @@ static void ObitImageUtilCurDate (gchar *date, olong len)
 /**
  * Interpolate selected rows from one image onto another, 
  * possibly including weighting across the image
+ * Precalculated input pixel in output image may be passed
  * If doWeight, outData will be filled with the pixel values
  * interpolated from inData multiplied by a weight based on a 
  * circle defined by radius from the center; this is 1.0 
@@ -4729,6 +5150,8 @@ static void ObitImageUtilCurDate (gchar *date, olong len)
  * \li inData   ObitFArray with input plane pixel data
  * \li outDesc  Image Descriptor for output image
  * \li outData  ObitFArray for output plane pixel data
+ * \li XPix     ObitFArray for X pixels, if NULL calculate
+ * \li YPix     ObitFArray for y pixels
  * \li doWeight gboolean if TRUE, also do primary beam weighting
  * \li wtData   ObitFArray for output weight plane pixel data
  *              only used if doWeight
@@ -4756,6 +5179,8 @@ static gpointer ThreadImageInterp (gpointer args)
   ObitFArray *outData   = largs->outData;
   gboolean   doWeight   = largs->doWeight;
   ObitFArray *wtData    = largs->wtData;
+  ObitFArray *XPix      = largs->XPixData;
+  ObitFArray *YPix      = largs->YPixData;
   olong      radius     = largs->radius;
   olong      nZern      = largs->nZern;
   ofloat     *ZCoef     = largs->ZCoef;
@@ -4767,13 +5192,18 @@ static gpointer ThreadImageInterp (gpointer args)
   /* local */
   olong ix, iy, indx, pos[2];
   ofloat inPixel[2], outPixel[2], *out, *outWt=NULL, rad2=0.0, dist2, irad2=0.0;
-  ofloat crpix[2], wt, val, fblank =  ObitMagicF();
-  gboolean OK;
+  ofloat crpix[2], wt, val, *xp=NULL, *yp=NULL, fblank =  ObitMagicF();
+  gboolean OK, doPixel;
   gchar *routine = "ThreadImageInterp";
 
   /* Get output aray pointer */
   pos[0] = pos[1] = 0;
   out   = ObitFArrayIndex (outData, pos);
+  doPixel = XPix!=NULL;
+  if (doPixel) {
+    xp    = ObitFArrayIndex (XPix, pos);
+    yp    = ObitFArrayIndex (YPix, pos);
+  }
 
   /* Coordinate reference pixel of input */
   crpix[0] = inDesc->crpix[0] - inDesc->xPxOff;
@@ -4793,20 +5223,29 @@ static gpointer ThreadImageInterp (gpointer args)
     for (ix = 1; ix<=outDesc->inaxes[0]; ix++) {/* loop in x */
       outPixel[0] = (ofloat)ix;
 
-     /* Get pixel in input image - Zernike correction?*/
-      if (nZern>0) { /* yes */
-	OK = ObitImageDescCvtZern (outDesc, inDesc, nZern, ZCoef, 
-				 outPixel, inPixel, err);
-      } else {       /* no */
-	OK = ObitImageDescCvtPixel (outDesc, inDesc, outPixel, inPixel, err);
-      }
-      if (err->error) {
-	ObitThreadLock(thread);  /* Lock against other threads */
-	Obit_log_error(err, OBIT_Error,"%s: Error projecting pixel",
-		       routine);
-	ObitThreadUnlock(thread); 
-	goto finish;
-      }
+      /* array index in out for this pixel */
+      indx = (iy-1) * outDesc->inaxes[0] + (ix-1);
+      
+      /* Get pixel in input image*/
+      if (doPixel) {   /* Precalculated? */
+	inPixel[0] = xp[indx];
+	inPixel[1] = yp[indx];
+	OK = (inPixel[0]>=0.0) && (inPixel[1]>=0.0);
+      } else {  /* Calculate  - Zernike correction? */
+	if (nZern>0) { /* yes */
+	  OK = ObitImageDescCvtZern (outDesc, inDesc, nZern, ZCoef, 
+				     outPixel, inPixel, err);
+	} else {       /* no */
+	  OK = ObitImageDescCvtPixel (outDesc, inDesc, outPixel, inPixel, err);
+	}
+	if (err->error) {
+	  ObitThreadLock(thread);  /* Lock against other threads */
+	  Obit_log_error(err, OBIT_Error,"%s: Error projecting pixel",
+			 routine);
+	  ObitThreadUnlock(thread); 
+	  goto finish;
+	}
+      } /* End get Pixel */
 
       if (doWeight) { /* weighting? */
 	if (OK) { /* In image? */
@@ -4826,18 +5265,6 @@ static gpointer ThreadImageInterp (gpointer args)
       } else wt = 1.0;
       
       /* interpolate */
-      /* array index in out for this pixel */
-      indx = (iy-1) * outDesc->inaxes[0] + (ix-1);
-
-      /* DEBUG - check for blown array 
-	 if ((indx>=outData->arraySize) || (indx>=wtData->arraySize)) {
-	 ObitThreadLock(thread); 
-	 Obit_log_error(err, OBIT_Error,"%s: Overflowed output array",
-	 routine);
-	 ObitThreadUnlock(thread); 
-	 goto finish;
-	 } */
-
       if (wt != fblank ) {
 	val = ObitFInterpolatePixel (interp, inPixel, err);
 	if (doWeight & (val != fblank )) val *= wt;
@@ -4865,6 +5292,97 @@ static gpointer ThreadImageInterp (gpointer args)
   
   return NULL;
 } /* ThreadImageInterp */
+
+/**
+ * Threaded get input pixels in InImage for outImage.
+ * Callable as thread
+ * \param arg Pointer to InterpFuncArg argument with elements:
+ * \li inDesc   Image Descriptor for input image
+ * \li inData   ObitFArray with input plane pixel data
+ * \li outDesc  Image Descriptor for output image
+ * \li outData  ObitFArray for output plane pixel data
+ * \li XPix     ObitFArray for X pixels
+ * \li YPix     ObitFArray for y pixels
+ * \li nZern    If>0 apply cernike corrections to position
+ *              nZern is the number of terms in ZCoef
+ * \li zCoef    Zernike correction coefficients
+ *              only used if zCoef>0
+ * \li first    First (1-rel) row in image to process this thread
+ * \li last     Highest (1-rel) row in image to process this thread
+ * \li ithread  thread number, <0 -> no threading
+ * \li err      ObitErr Obit error stack object
+ * \li thread   thread Object
+ * \li Interp   ObitFInterpolate Input Image Interpolator
+ * \return NULL
+ */
+static gpointer ThreadGetXYPixels (gpointer args)
+{
+  /* Get arguments from structure */
+  InterpFuncArg *largs = (InterpFuncArg*)args;
+  ObitImageDesc *inDesc = largs->inDesc;
+  /* ObitFArray *inData    = largs->inData;*/
+  ObitImageDesc *outDesc= largs->outDesc;
+  /*ObitFArray *outData   = largs->outData;*/
+  ObitFArray *XPix      = largs->XPixData;
+  ObitFArray *YPix      = largs->YPixData;
+  olong      nZern      = largs->nZern;
+  ofloat     *ZCoef     = largs->ZCoef;
+  olong      loRow      = largs->first;
+  olong      hiRow      = largs->last;
+  ObitErr    *err       = largs->err;
+  ObitThread *thread    = largs->thread;
+
+  /* local */
+  olong ix, iy, indx, pos[2];
+  ofloat inPixel[2], outPixel[2], *xp, *yp;
+  gboolean OK;
+  gchar *routine = "ThreadGetXYPixels";
+
+  /* Get output aray pointers */
+  pos[0] = pos[1] = 0;
+  xp    = ObitFArrayIndex (XPix, pos);
+  yp    = ObitFArrayIndex (YPix, pos);
+
+  /* Loop over image determining pixel numbers */
+  for (iy = loRow; iy<=hiRow; iy++) { /* loop in y */
+    outPixel[1] = (ofloat)iy;
+    for (ix = 1; ix<=outDesc->inaxes[0]; ix++) {/* loop in x */
+      outPixel[0] = (ofloat)ix;
+
+     /* Get pixel in input image - Zernike correction?*/
+      if (nZern>0) { /* yes */
+	OK = ObitImageDescCvtZern (outDesc, inDesc, nZern, ZCoef, 
+				 outPixel, inPixel, err);
+      } else {       /* no */
+	OK = ObitImageDescCvtPixel (outDesc, inDesc, outPixel, inPixel, err);
+      }
+      if (err->error) {
+	ObitThreadLock(thread);  /* Lock against other threads */
+	Obit_log_error(err, OBIT_Error,"%s: Error projecting pixel",
+		       routine);
+	ObitThreadUnlock(thread); 
+	goto finish;
+      }
+      /* Save - array index in outout for this pixel */
+      indx = (iy-1) * outDesc->inaxes[0] + (ix-1);
+      if (OK) {
+	xp[indx] = inPixel[0];
+	yp[indx] = inPixel[1];
+      } else {  /* Not in image */
+	xp[indx] = -1;
+	yp[indx] = -1;
+      }
+
+    } /* end loop over x */
+  } /* end loop over y */
+  
+  /* Indicate completion */
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+} /* ThreadGetXYPixels */
 
 /**
  * Make arguments for Threaded ThreadImageInterp
@@ -4903,6 +5421,8 @@ static olong MakeInterpFuncArgs (ObitThread *thread, olong radius,
     (*ThreadArgs)[i]->inData   = NULL;
     (*ThreadArgs)[i]->outDesc  = ObitImageDescRef(outDesc);
     (*ThreadArgs)[i]->outData  = NULL;
+    (*ThreadArgs)[i]->XPixData = NULL;
+    (*ThreadArgs)[i]->YPixData = NULL;
     (*ThreadArgs)[i]->doWeight = radius>0;
     (*ThreadArgs)[i]->wtData   = NULL;
     (*ThreadArgs)[i]->radius   = radius;
@@ -4913,8 +5433,10 @@ static olong MakeInterpFuncArgs (ObitThread *thread, olong radius,
     } else (*ThreadArgs)[i]->ZCoef = NULL;
     (*ThreadArgs)[i]->first    = 1;
     (*ThreadArgs)[i]->last     = inDesc->inaxes[1];
-    if (i==0) (*ThreadArgs)[i]->Interp = ObitFInterpolateRef(Interp);
-    else (*ThreadArgs)[i]->Interp      = ObitFInterpolateClone(Interp, NULL);
+    if (Interp!=NULL) {
+      if (i==0) (*ThreadArgs)[i]->Interp = ObitFInterpolateRef(Interp);
+      else (*ThreadArgs)[i]->Interp      = ObitFInterpolateClone(Interp, NULL);
+    }
     (*ThreadArgs)[i]->ithread  = i;
     (*ThreadArgs)[i]->thread   = thread;
     (*ThreadArgs)[i]->err      = err;
@@ -4935,13 +5457,15 @@ static void KillInterpFuncArgs (olong nargs, InterpFuncArg **ThreadArgs)
   if (ThreadArgs==NULL) return;
   for (i=0; i<nargs; i++) {
     if (ThreadArgs[i]) {
-      if (ThreadArgs[i]->inDesc)  ObitImageDescUnref(ThreadArgs[i]->inDesc);
-      if (ThreadArgs[i]->inData)  ObitFArrayUnref(ThreadArgs[i]->inData);
-      if (ThreadArgs[i]->outDesc) ObitImageDescUnref(ThreadArgs[i]->outDesc);
-      if (ThreadArgs[i]->outData) ObitFArrayUnref(ThreadArgs[i]->outData);
-      if (ThreadArgs[i]->wtData)  ObitFArrayUnref(ThreadArgs[i]->wtData);
-      if (ThreadArgs[i]->Interp)  ObitFInterpolateUnref(ThreadArgs[i]->Interp);
-      if (ThreadArgs[i]->ZCoef)   g_free(ThreadArgs[i]->ZCoef);
+      if (ThreadArgs[i]->inDesc)   ObitImageDescUnref(ThreadArgs[i]->inDesc);
+      if (ThreadArgs[i]->inData)   ObitFArrayUnref(ThreadArgs[i]->inData);
+      if (ThreadArgs[i]->outDesc)  ObitImageDescUnref(ThreadArgs[i]->outDesc);
+      if (ThreadArgs[i]->outData)  ObitFArrayUnref(ThreadArgs[i]->outData);
+      if (ThreadArgs[i]->XPixData) ObitFArrayUnref(ThreadArgs[i]->XPixData);
+      if (ThreadArgs[i]->YPixData) ObitFArrayUnref(ThreadArgs[i]->YPixData);
+      if (ThreadArgs[i]->wtData)   ObitFArrayUnref(ThreadArgs[i]->wtData);
+      if (ThreadArgs[i]->Interp)   ObitFInterpolateUnref(ThreadArgs[i]->Interp);
+      if (ThreadArgs[i]->ZCoef)    g_free(ThreadArgs[i]->ZCoef);
       g_free(ThreadArgs[i]);
     }
   }

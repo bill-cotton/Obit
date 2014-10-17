@@ -1,7 +1,7 @@
 /* $Id$ */
 /* menu routines for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyight (C) 1996,1997,2002-2013
+*  Copyight (C) 1996,1997,2002-2014
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -679,7 +679,7 @@ void MenuMarkLogger (int onoff)
   else /* can't deal with this */
     return;
   
-  XtVaSetValues(File_w[4], XmNlabelString,  wierdstring, NULL);
+  XtVaSetValues(File_w[5], XmNlabelString,  wierdstring, NULL);
   if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
 } /* end MenuMarkLogger */
 

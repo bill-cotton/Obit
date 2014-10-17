@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to automatically edit visibility data                    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2012                                          */
+/*;  Copyright (C) 2007-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -86,7 +86,7 @@ int main ( int argc, char **argv )
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitErr      *err= NULL;
   gchar        *editParms[] = {  /* Parameters to edit data */
-    "flagTab", "flagSig",  "alpha", "timeWind", 
+    "flagTab", "flagSig",  "alpha", "timeWind", "killAll",
     NULL};
 
    /* Startup - parse command line */
@@ -909,7 +909,7 @@ void MednFlagHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "outFile",  "outDisk", "outName", "outClass", "outSeq", 
     "Sources", "Stokes", "timeRange",  "subA",
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "doPol",  "PDVer",
+    "doPol",  "PDVer", "killAll",
     "flagTab", "flagSig", "alpha", "avgTime", "timeWind", 
     "avgFreq", "chAvg", "ChanSel", "nThreads",
     NULL};

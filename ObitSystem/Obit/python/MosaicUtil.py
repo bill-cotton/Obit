@@ -27,7 +27,7 @@
 #-----------------------------------------------------------------------
 
 # Python utility package for Mosaicing images by weighting them together
-import Image, ImageDesc, ImageUtil, FArray, InfoList, OErr, History
+import Image, ImageDesc, ImageUtil, FArray, InfoList, OErr, History, GPUFInterpolate
 import os
 
 def PMakeMaster(template, size, SumWtImage, SumWt2, err):
@@ -119,7 +119,7 @@ def PMakeMaster(template, size, SumWtImage, SumWt2, err):
     # end PMakeMaster
 
 def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
-                 iblc=[1,1], itrc=[0,0], restart=0):
+                 iblc=[1,1], itrc=[0,0], restart=0, hwidth=2, doGPU=False):
     """
     Sum an image onto Weighting accumulators using PB corrections
     
@@ -129,13 +129,16 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     * inImage    = Image to be accumulated
     * factor     = Additional multiplication factor, normally 1.0
     * SumWtImage = First output image, must be defined (i.e. files named)
-      but not fully created.
+                   but not fully created.
     * SumWt2     = Second output image, like SumWtImage
     * err        = Python Obit Error/message stack
     * minGain    = minimum allowed gain (lower values blanked).
     * iblc       = BLC in plane to start selection
     * itrc       = TRC in plane to end selection
-    * restart   = restart channel no. 0-rel
+    * restart    = restart channel no. 0-rel
+    * hwidth     = half width of interpolation kernal [1-4] default 2
+    * doGPU      = If true and GPU enables, use a GPU for the interpolation.
+    *              NB: routine will fail if GPU is not enabled.
     """
     ################################################################
     # Checks
@@ -165,7 +168,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     inDescDict = ImageDesc.PGetDict(inDesc)
     ndim       = inDescDict["naxis"]
     inNaxis    = inDescDict["inaxes"]
-    
+    finterp    = None  # GPU not yet enabled
     # Test if compatible
     if inNaxis[2] < outNaxis[2]:
         print "input has",inNaxis[2],"planes and output",outNaxis[2]
@@ -179,7 +182,6 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     inImage.List.set("BLC",[iblc[0], iblc[1],1,1,1,1,1])
     inImage.List.set("TRC",[itrc[0], itrc[1],0,0,0,0,0])
     # Loop over planes
-    #print "Before loop",os.times()
     WtImage = None
     for iPlane in planes:
         doPlane = [iPlane+1,1,1,1,1]
@@ -189,7 +191,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         if WtImage == None:
             # Get image 
             Image.PGetPlane (inImage, None, doPlane, err)
-            #OErr.printErrMsg(err, "Error reading image for "+Image.PGetName(inImage))
+            OErr.printErrMsg(err, "Error reading image for "+Image.PGetName(inImage))
             #
             WtImage = Image.Image("WeightImage")
             Image.PCloneMem(inImage, WtImage, err)
@@ -200,11 +202,26 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
             # The interpolated versions
             InterpWtImage = Image.Image("InterpWtImage")
             Image.PClone2(inImage, SumWtImage, InterpWtImage, err)
-            
+ 
+            # input x, y pixels for output
+            XPixelImage = Image.Image("XPixelImage")
+            YPixelImage = Image.Image("YPixelImage")
+            Image.PClone2(inImage, SumWtImage, XPixelImage, err)
+            Image.PClone2(inImage, SumWtImage, YPixelImage, err)
+            ImageUtil.PGetXYPixels(WtImage, InterpWtImage, XPixelImage, YPixelImage, err)
+           
             # Interpolated weight image
             InterpWt = Image.Image("InterpWt")
             Image.PClone2(inImage, SumWtImage, InterpWt, err)
-            ImageUtil.PInterpolateImage(WtImage, InterpWt, err)
+            # Is GPU interpolation requested?
+            if doGPU:
+                finterp = GPUFInterpolate.PCreate("GPUinterp", WtImage.FArray, 
+                                                  XPixelImage.FArray, YPixelImage.FArray, 
+                                                  hwidth, err)
+                OErr.printErrMsg(err, "Creating GPU FInterpolator")
+            ImageUtil.PInterpolateImage(WtImage, InterpWt, err, \
+                                        XPix=XPixelImage, YPix=YPixelImage,
+                                        hwidth=hwidth, finterp=finterp)
             #OErr.printErrMsg(err, "Error interpolating wt*wt "+Image.PGetName(inImage))
             # Interpolated weight image Squared
             InterpWtWt = Image.Image("InterpWtWt")
@@ -219,57 +236,52 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
             xpos1 = [float(pos1[0]),float(pos1[1])]
             xpos2 = ImageDesc.PCvtPixel (inDesc, xpos1, outDesc, err)
             pos2 = [int(xpos2[0]+0.5), int(xpos2[1]+0.5)]
-            # End init wt image
+            # Is GPU interpolation requested?
+            if doGPU:
+                del finterp
+                finterp = GPUFInterpolate.PCreate("GPUinterp", inImage.FArray, 
+                                                  XPixelImage.FArray, YPixelImage.FArray, 
+                                                  hwidth, err)
+                OErr.printErrMsg(err, "Creating GPU FInterpolator")
+           # End init wt image
         # Interpolate image plane
-        ImageUtil.PInterpolateImage(inImage, InterpWtImage, err, inPlane=doPlane)
-        #print "after interpolate",os.times()
-        #pos=[0,0]  # DEBUG
-        #print "Max  I",FArray.PMax(inImage.FArray,pos),pos
-        #print "Max interpolated I",FArray.PMax(InterpWtImage.FArray,pos),pos
-        #inImage.Close(err)
-        #OErr.printErrMsg(err, "Error interpolating image "+Image.PGetName(inImage))
-
-
+        ImageUtil.PInterpolateImage(inImage, InterpWtImage, err, \
+                                    inPlane=doPlane, XPix=XPixelImage, YPix=YPixelImage,
+                                    hwidth=hwidth, finterp=finterp)
+        OErr.printErrMsg(err, "Error interpolating plane "+str(doPlane))
         # Interpolated image times beam
         FArray.PMul(InterpWtImage.FArray, InterpWt.FArray, InterpWtImage.FArray)
-        #print "after mul 1",os.times()
         #
         # Read accumulation image planes
         Image.PGetPlane(SumWt2,  None, doPlane, err)
         Image.PGetPlane(SumWtImage, None, doPlane, err)
-        #print "after read accum",os.times()
-        #OErr.printErrMsg(err, "Error reading accumulation image ")
+        OErr.printErrMsg(err, "Error reading accumulation image ")
         #
-        #
-        #pos=[0,0]  # DEBUG
-        #print "Max I*Wt",FArray.PMax(InterpWtImage.FArray,pos),pos
         # Accumulate
         FArray.PShiftAdd (SumWtImage.FArray, pos2, InterpWtImage.FArray,  pos1, factor, SumWtImage.FArray)
-        #print "after shift Add 1",os.times()
 
         # Square weight image
         FArray.PMul(InterpWt.FArray, InterpWt.FArray, InterpWtWt.FArray)
-        #print "after mul 2",os.times()
         
         # Blank weight whereever image is blank or zero
         FArray.PInClip(InterpWt.FArray, -1.0e-20, 1.0e-20, FArray.PGetBlank())
         # Blank weight squared where image * Wt is blanked
         FArray.PBlank (InterpWtWt.FArray, InterpWt.FArray, InterpWtWt.FArray);
-        #print "after blank",os.times()
         # Accumulate Wt*Wt
         FArray.PShiftAdd (SumWt2.FArray,     pos2, InterpWtWt.FArray,pos1, factor, SumWt2.FArray)
-        #print "after shift Add 2",os.times()
         #
         # Write output
         Image.PPutPlane(SumWt2, None, doPlane, err)
         Image.PPutPlane(SumWtImage, None, doPlane, err)
-        #print "after write",os.times()
-        #OErr.printErrMsg(err, "Error writing accumulation image ")
+        OErr.printErrMsg(err, "Error writing accumulation image ")
         # end loop over planes
     # close output
     #Image.PClose(inImage, err)
     Image.PClose(SumWtImage, err)
     Image.PClose(SumWt2, err)
+    del XPixelImage, YPixelImage, InterpWtImage, InterpWtWt,  WtImage
+    if finterp!=None:
+        del finterp
 
     # end PWeightImage
     

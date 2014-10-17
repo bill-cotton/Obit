@@ -281,6 +281,8 @@ def POpen (inTab, access, err):
         inTab.keys = Obit.TableFGGetHeadKeys(inTab.me)
     elif tabtype=="AIPS FQ":
         inTab.keys = Obit.TableFQGetHeadKeys(inTab.me)
+    elif tabtype=="AIPS FS":
+        inTab.keys = Obit.TableFSGetHeadKeys(inTab.me)
     elif tabtype=="AIPS GC":
         inTab.keys = Obit.TableGCGetHeadKeys(inTab.me)
     elif tabtype=="AIPS IM":
@@ -371,6 +373,8 @@ def PClose (inTab, err):
         Obit.TableFGSetHeadKeys(inTab.me, inTab.keys)
     elif tabtype=="AIPS FQ" and inTab.keys:
         Obit.TableFQSetHeadKeys(inTab.me, inTab.keys)
+    elif tabtype=="AIPS FS" and inTab.keys:
+        Obit.TableFSSetHeadKeys(inTab.me, inTab.keys)
     elif tabtype=="AIPS GC" and inTab.keys:
         Obit.TableGCSetHeadKeys(inTab.me, inTab.keys)
     elif tabtype=="AIPS IM" and inTab.keys:

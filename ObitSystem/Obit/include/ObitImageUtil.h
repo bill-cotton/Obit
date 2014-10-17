@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -129,6 +129,16 @@ ObitImageUtilUV2ImageDesc(ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
 void ObitImageUtilInterpolateImage (ObitImage *inImage, ObitImage *outImage, 
 				    olong *inPlane, olong *outPlane,
 				    olong hwidth, ObitErr *err);
+
+/** Public: Interpolate pixels in one image to another given pixels. */
+void ObitImageUtilInterpolateImageXY (ObitImage *inImage, ObitImage *outImage,
+				      ObitImage *XPix, ObitImage *YPix,
+				      olong *inPlane, olong *outPlane,
+				      olong hwidth, ObitErr *err);
+
+/** Public: Get input pixels in InImage for outImage. */
+void ObitImageUtilGetXYPixels (ObitImage *inImage, ObitImage *outImage,
+			       ObitImage *XPix, ObitImage *YPix, ObitErr *err);
 
 /** Public: Interpolate pixels in one image to another with Zernike corrections */
 void 

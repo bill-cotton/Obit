@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to automatically edit visibility data                    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2013                                          */
+/*;  Copyright (C) 2005-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -843,7 +843,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "BChan", "EChan",   "BIF", "EIF", "subA",
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", "doPol",
-    "timeAvg", "maxBad", "flagTab", "FreqID", "souCode", "Qual", 
+    "timeAvg", "maxBad", "killAll", "flagTab", "FreqID", "souCode", "Qual", 
     NULL};
   gchar *routine = "getInputData";
 
@@ -1072,7 +1072,7 @@ void AutoFlagHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
     "doPol",  
     "flagTab", "IClip", "XClip", "VClip", "RMSClip", 
-    "doHiEdit", "RMSAvg", "maxBad", "timeAvg", "minAmp", 
+    "doHiEdit", "RMSAvg", "maxBad", "killAll", "timeAvg", "minAmp", 
     "doFD", "FDmaxAmp", "FDmaxV", "FDwidMW", "FDmaxRMS", 
     "FDmaxRes", "FDmaxResBL", "FDbaseSel", "nThreads", 
     NULL};

@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry data editing software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005-2012
+;;  Copyright (C) 2005-2014
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -98,6 +98,8 @@ flagSig                             Flagging level (sigma)
 alpha                               Smoothing parameter.
 **PARAM** float 1
 timeWind                            Sliding window interval (min)
+**PARAM** boo 1 **DEF** F
+killAll                             Flag all poln if any flagged
 **PARAM** float 1
 avgTime                             preaveraging time (min)
 **PARAM** int 1
@@ -226,6 +228,9 @@ Adverbs:
   timeWind...Sliding window width (min) over which each timeFlag
              averaged sample is compared with the window average.
              Must be several times timeAvg.
+  killAll....If True then is any Stokes correlation in a 
+             visibility/channel is flagged then all Stokes 
+             correlations are flagged.
 
       Averaging control
   avgTime....Interval (min) over which data is vector preaveraged

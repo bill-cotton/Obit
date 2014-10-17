@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2011                                          */
+/*;  Copyright (C) 2003-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -154,7 +154,9 @@ void ObitUVCalBandpassInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
   /* Which subarrays are VLBA arrays? */
   me->isVLBA = g_malloc0(me->numSubA*sizeof(gboolean));
   for (i=0; i<me->numSubA; i++ ) 
-    me->isVLBA[i] = !strncmp(in->antennaLists[i]->ArrName, "VLBA    ", 8);
+    me->isVLBA[i] = !strncmp(in->antennaLists[i]->ArrName, "VLBA    ", 8) &&
+      /* Horrible hack for VLite , names = V0, V1...*/
+     in->antennaLists[i]->ANlist[0]->AntName[0]!='V';
 
   /* Spectra work  arrays */
   dim[0] = 4 * me->numChan;
@@ -700,7 +702,7 @@ static void ObitUVCalBandpassUpdate (ObitUVCalBandpassS *in, ObitUVCal *UVCal,
     desc = UVCal->myDesc;
 
     /* Create FFT objects if needed */
-    dim[0] = in->eChan - in->bChan + 1;
+    dim[0] = ObitFFTSuggestSize (in->numChan);
     if (in->ACFFTFor==NULL) in->ACFFTFor = newObitFFT ("AC Forward", OBIT_FFT_Forward, OBIT_FFT_FullComplex, 1, dim);
     if (in->ACFFTRev==NULL) in->ACFFTRev = newObitFFT ("AC Reverse", OBIT_FFT_Reverse, OBIT_FFT_FullComplex, 1, dim);
     dim[0] *= 2;
@@ -1325,9 +1327,9 @@ static void BPCCShift (ObitCArray *Spectrum,  ObitCArray *Work,
      double sideband (2 x nchan complex) correlation function with the zero delay  
      in the nfrq+1'th channel. Multiply by phase ramp. */
   for (i= 0; i< nxcf; i++) { /* loop 50 */
-    store     = work[i*2];
+    store       = work[i*2];
     work[i*2]   = work[i*2]*c - work[i*2+1]*s;
-    work[i*2+1] =     store*s     + work[i*2+1]*c;
+    work[i*2+1] = store*s     + work[i*2+1]*c;
     store = c;
     c     = c*cd - s*sd;
     s     = store*sd + s*cd;

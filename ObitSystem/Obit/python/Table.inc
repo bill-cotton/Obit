@@ -151,6 +151,9 @@ extern int TableOpen (ObitTable *in, int access, ObitErr *err) {
   else if (!strncmp (in->tabType,"AIPS FQ", 7)) {
     ret =  ObitTableFQOpen ((ObitTableFQ*)in, laccess, err);
   }
+  else if (!strncmp (in->tabType,"AIPS FS", 7)) {
+    ret =  ObitTableFSOpen ((ObitTableFS*)in, laccess, err);
+  }
   else if (!strncmp (in->tabType,"AIPS GC", 7)) {
     ret =  ObitTableGCOpen ((ObitTableGC*)in, laccess, err);
   }
@@ -248,6 +251,9 @@ extern int TableClose (ObitTable *in, ObitErr *err) {
   }
   else if (!strncmp (in->tabType,"AIPS FQ", 7)) {
     ret =  ObitTableFQClose ((ObitTableFQ*)in, err);
+  }
+  else if (!strncmp (in->tabType,"AIPS FS", 7)) {
+    ret =  ObitTableFSClose ((ObitTableFS*)in, err);
   }
   else if (!strncmp (in->tabType,"AIPS GC", 7)) {
     ret =  ObitTableGCClose ((ObitTableGC*)in, err);

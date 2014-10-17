@@ -2796,7 +2796,10 @@ ObitTableDesc.
 {Channel bandwidth.}
 ]
 \tablekey[{"REF\_PIXL "}{E}{refPixl}{}{}
-{Reference Pixel..}
+{Reference frequency Pixel.}
+]
+\tablekey[{"STK\_1   "}{E}{stk1}{-1.0}{}
+{[OPTIONAL]Reference frequency Pixel.}
 ]
 \tablekey[{"NPOLY "}{J}{npoly}{}{()}
 {The number of polynomial terms.}
@@ -2804,7 +2807,7 @@ ObitTableDesc.
 \tablekey[{"TABREV"}{J}{tabrev}{2}{}
 {Revision number of the table definition.}
 ]
-\tablekey[{"REVISION"}{E}{revision}{1.0}{}
+\tablekey[{"REVISION"}{E}{revision}{2.0}{}
 {Revision number of the table definition.}
 ]
 \end{keywords}
@@ -2858,6 +2861,7 @@ ObitTableDesc.
 % Table modification history
 \begin{history}
 \modhistory[{W. D. Cotton}{02/22/2006}{Revision 1: Copied from AIPS}]
+\modhistory[{W. D. Cotton}{10/15/2014}{Revision 2: Add STK\_1}]
 \end{history}
 %
 \clearpage
@@ -5155,7 +5159,7 @@ ObitTableDesc.
 \tablekey[{"CHAN\_BW "}{D}{chan\_bw}{1.0}{}
 {Channel bandwidth (Hz)}
 ]
-\tablekey[{"REF\_PIXL"}{J}{ref\_pixl}{1.0}{}
+\tablekey[{"REF\_PIXL"}{D}{ref\_pixl}{1.0}{}
 {Reference frequency bin}
 ]
 \tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
@@ -5971,6 +5975,221 @@ ObitTableDesc.
 % Table modification history
 \begin{history}
 \modhistory[{W. D. Cotton}{02/09/2009}{Revision 1: Initial definition}]
+\end{history}
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableFS Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+\ClassName[{ObitTableFS}]
+ObitTableFS Class 
+\tabletitle{Spectral source catalog file}
+% table name
+\tablename{FS}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS FS" contains a catalog of sources allowing spectral information.
+The table contains an index in the INDEX?? keywords that give the
+first table row number (1-rel) for a given hour of RA.
+An ObitTableFS is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"REVISION"}{J}{revision}{1}{}
+{Revision number of the table definition}
+]
+\tablekey[{"NO\_CH"}{J}{numCh}{}{()}
+{The number of spectral channels}
+]
+\tablekey[{"BM\_MAJOR"}{E}{BeamMajor}{}{}
+{Restoring beam major axis in deg.}
+]
+\tablekey[{"BM\_MINOR"}{E}{BeamMinor}{}{}
+{Restoring beam minor axis in deg.}
+]
+\tablekey[{"BM\_PA"}{E}{BeamPA}{}{}
+{Restoring beam position angle of major axis in deg.}
+]
+\tablekey[{"VEL\_REF"}{E}{VelRef}{}{}
+{Velocity at reference channel (m/s).}
+]
+\tablekey[{"VEL\_RPIX"}{E}{VelRPix}{}{}
+{Velocity reference channel (1=rel).}
+]
+\tablekey[{"VEL\_DEL"}{E}{VelDelt}{}{}
+{Velocity channel width (m/s).}
+]
+\tablekey[{"SORTORT"}{J}{SortOrder}{}{}
+{Column number for sort (neg -> descending)}
+]
+\tablekey[{"NUM\_INDE"}{J}{numIndexed}{1}{}
+{Number of rows in table when indexed}
+]
+\tablekey[{"INDEX00"}{J}{index00}{1}{}
+{First entry for RA=00 h}
+]
+\tablekey[{"INDEX01"}{J}{index01}{1}{}
+{First entry for RA=01 h}
+]
+\tablekey[{"INDEX02"}{J}{index02}1{}{}
+{First entry for RA=02 h}
+]
+\tablekey[{"INDEX03"}{J}{index03}{1}{}
+{First entry for RA=03 h}
+]
+\tablekey[{"INDEX04"}{J}{index04}{1}{}
+{First entry for RA=04 h}
+]
+\tablekey[{"INDEX05"}{J}{index05}{1}{}
+{First entry for RA=05 h}
+]
+\tablekey[{"INDEX06"}{J}{index06}{1}{}
+{First entry for RA=06 h}
+]
+\tablekey[{"INDEX07"}{J}{index07}{1}{}
+{First entry for RA=07 h}
+]
+\tablekey[{"INDEX08"}{J}{index08}{1}{}
+{First entry for RA=08 h}
+]
+\tablekey[{"INDEX09"}{J}{index09}{1}{}
+{First entry for RA=09 h}
+]
+\tablekey[{"INDEX10"}{J}{index10}{1}{}
+{First entry for RA=10 h}
+]
+\tablekey[{"INDEX11"}{J}{index11}{1}{}
+{First entry for RA=11 h}
+]
+\tablekey[{"INDEX12"}{J}{index12}{1}{}
+{First entry for RA=12 h}
+]
+\tablekey[{"INDEX13"}{J}{index13}{1}{}
+{First entry for RA=13 h}
+]
+\tablekey[{"INDEX14"}{J}{index14}{1}{}
+{First entry for RA=14 h}
+]
+\tablekey[{"INDEX15"}{J}{index15}{1}{}
+{First entry for RA=15 h}
+]
+\tablekey[{"INDEX16"}{J}{index16}{1}{}
+{First entry for RA=16 h}
+]
+\tablekey[{"INDEX17"}{J}{index17}{1}{}
+{First entry for RA=17 h}
+]
+\tablekey[{"INDEX18"}{J}{index18}{1}{}
+{First entry for RA=18 h}
+]
+\tablekey[{"INDEX19"}{J}{index19}{1}{}
+{First entry for RA=19 h}
+]
+\tablekey[{"INDEX20"}{J}{index20}{1}{}
+{First entry for RA=20 h}
+]
+\tablekey[{"INDEX21"}{J}{index21}{1}{}
+{First entry for RA=21 h}
+]
+\tablekey[{"INDEX22"}{J}{index22}{1}{}
+{First entry for RA=22 h}
+]
+\tablekey[{"INDEX23"}{J}{index23}{1}{}
+{First entry for RA=23 h}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+%] 
+\tablecol[{"RA(2000)"}{"DEGREE  " }{D}{(1)}{Ra2000}
+{RA (J2000)}
+] 
+\tablecol[{"DEC(2000)"}{"DEGREE  " }{D}{(1)}{Dec2000}
+{Dec (J2000)}
+] 
+\tablecol[{"VELOCITY"}{"M/S     " }{D}{(1)}{Velocity}
+{Overall LSR velocity}
+] 
+\tablecol[{"VEL WID "}{"M/S     " }{E}{(1)}{VelWidth}
+{Velocity width}
+] 
+\tablecol[{"PEAK INT  "}{"JY/BEAM " }{E}{(1)}{PeakInt}
+{Peak Ipol }
+] 
+\tablecol[{"MAJOR AX"}{"DEGREE  " }{E}{(1)}{MajorAxis}
+{Fitted major axis size}
+] 
+\tablecol[{"MINOR AX"}{"DEGREE  " }{E}{(1)}{MinorAxis}
+{Fitted minor axis siz}
+] 
+\tablecol[{"POSANGLE"}{"DEGREE  " }{E}{(1)}{PosAngle}
+{Fitted PA}
+] 
+\tablecol[{"Q CENTER"}{"JY/BEAM " }{E}{(1)}{QCenter}
+{Center Q flux density}
+] 
+\tablecol[{"U CENTER"}{"JY/BEAM " }{E}{(1)}{UCenter}
+{enter U flux density}
+] 
+\tablecol[{"P FLUX"}{"JY      " }{E}{(1)}{PFlux}
+{Integrated polarized flux density}
+] 
+\tablecol[{"I RMS "}{"JY/BEAM " }{E}{(1)}{IRMS}
+{Ipol RMS uncertainty }
+] 
+\tablecol[{"POL RMS "}{"JY/BEAM " }{E}{(1)}{PolRMS}
+{RMS (sigma) in Qpol and Upol}
+] 
+\tablecol[{"RES RMS"}{"JY/BEAM " }{E}{(1)}{ResRMS}
+{RMS of Ipol residual}
+] 
+\tablecol[{"RES PEAK"}{"JY/BEAM " }{E}{(1)}{ResPeak}
+{Peak in Ipol residual}
+] 
+\tablecol[{"RES FLUX"}{"JY      " }{E}{(1)}{ResFlux}
+{Integrated Ipol residual}
+] 
+\tablecol[{"CENTER X"}{"PIXEL   " }{E}{(1)}{CenterX}
+{Center x position in pixels in FIELD}
+] 
+\tablecol[{"CENTER Y"}{"PIXEL   " }{E}{(1)}{CenterY}
+{Center y position in pixels in FIELD}
+] 
+\tablecol[{"CENTER Z"}{"PIXEL   " }{E}{(1)}{CenterZ}
+{Center velocity position in pixels in FIELD}
+] 
+\tablecol[{"SPECTRUM"}{"JY/BEAM " }{E}{(numCh)}{Spectrum}
+{Spectrum at Center X, Center Y}
+] 
+\tablecol[{"RMSCH"}{"JY/BEAM " }{E}{(numCh)}{RMSCh}
+{RMS in each channel}
+] 
+\tablecol[{"PEAKCH"}{"JY/BEAM " }{E}{(numCh)}{PEAKCh}
+{Peak in each channel}
+] 
+\tablecol[{"FIELD  "}{"       " }{A}{(8)}{Field}
+{Name of survey field}
+] 
+\tablecol[{"JD PROCESSED"}{"DAYS    " }{J}{(1)}{JDProcess}
+{Julian date on which entry was derived from image.}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{04/02/2012}{Revision 1: Make up}]
+\modhistory[{W. D. Cotton}{10/02/2014}{Revision 2: Add velocity axis labeling}]
 \end{history}
 %
 \clearpage

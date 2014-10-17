@@ -1577,6 +1577,8 @@ def PEditTD (inUV, outUV, err):
                 amplitude coefficient. 
       "maxBad"  float (1,1,1) Fraction of allowed flagged baselines 
                 [default 0.25]
+      "killAll" boolean (1,1,1) If True and any Stokes correlation is flagged,
+                all Stokes correlations are flagged [def. False]
 
     inUV   = Python UV object to clip/flag
     outUV  = UV data onto which the FG table is to be attached.
@@ -1697,6 +1699,8 @@ def PEditStokes (inUV, outUV, err):
       "maxBad"  float (1,1,1) Fraction of allowed flagged baselines 
                 to an antenna above which all baselines are flagged.
                 [default 0.25]
+      "killAll" boolean (1,1,1) If True and any Stokes correlation is flagged,
+                all Stokes correlations are flagged [def. False]
  
     inUV   = Python UV object to clip/flag
     outUV  = UV data onto which the FG table is to be attached.

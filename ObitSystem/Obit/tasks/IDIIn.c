@@ -1041,10 +1041,10 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
   olong iRow, kinc, lim, ver, ant1, ant2, tant1, tant2, iarr;
   olong disk, i, lvis, iwt, ipol, iif,ichan, indx, incs, incif, incf;
   oint no_band=0, maxis1=0, maxis2=0, maxis3=0, maxis4=0, maxis5=0;
-  ofloat lambdaPerSec, sid;
+  ofloat lambdaPerSec, sid, minWt;
   ofloat *Buffer=NULL;
   odouble JD, arrJD, *dRow;
-  gboolean doWeight, uvwDouble;
+  gboolean doWeight, uvwDouble, doCalcUVW, stokesFirst;
   ObitUVDesc *desc;
   ObitIOAccess access;
   ObitData *inData=NULL;
@@ -1065,6 +1065,10 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
   /* Full input file name */
   sprintf (FullFile,"%s%s%s", DataRoot, inscan, DataSufx);
 
+  /* Minimum weight def 0.95 */
+  minWt = 0.95;
+  ObitInfoListGetTest(myInput, "minWt", &type, dim, &minWt);
+ 
   /* Create input Data from which to read tables */
   inData = newObitData("Input Data");
   disk = 0;
@@ -1089,6 +1093,9 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
     Obit_log_error(err, OBIT_Error, "ERROR opening input IDI_UV_DATA table");
     return;
   }
+
+  /* Is Stokes of Frequency first in the data cube? */
+  stokesFirst = !strncmp(inTable->ctype2, "STOKES", 5);
 
   /* Create Row */
   inRow = newObitTableIDI_UV_DATARow (inTable);
@@ -1233,6 +1240,8 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
   Buffer = outData->buffer;
   desc->firstVis = desc->nvis+1;  /* Append to end of data */
 
+  /* Need to calculate U,V,W? */
+  doCalcUVW = (inTable->uuCol<0) && (inTable->uusinCol<0) && (inTable->uuncpCol<0);
   /* Are the u,v and w float or double? */
   uvwDouble = inTable->myDesc->type[inTable->uuCol] == OBIT_double;
   dRow = (odouble*)inTable->buffer;
@@ -1252,8 +1261,8 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
   /* Number of values on axis 1 */
   kinc = inTable->maxis1;
 
-  /* Number of wavelengths per second */
-  lambdaPerSec = inTable->ref_freq;
+  /* Number of wavelengths per second  uv reference frequency */
+  lambdaPerSec = desc->crval[desc->jlocf];
 
   /* Are weights given separately? */
   doWeight = inTable->WeightCol>=0;
@@ -1317,40 +1326,85 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
     if (desc->ilocit>=0) Buffer[desc->ilocit] = (ofloat)inRow->IntTim;
 
     /* Calculate uvw if necessary, convert to lambda */
-    CalcUVW (outData, inRow, inTable, err);
+    if (doCalcUVW)
+      CalcUVW (outData, inRow, inTable, err);
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
     if (uvwDouble) {  /* Work out from buffer */
       Buffer[desc->ilocu] = (ofloat)dRow[inTable->uuOff]*lambdaPerSec;
       Buffer[desc->ilocv] = (ofloat)dRow[inTable->vvOff]*lambdaPerSec;
       Buffer[desc->ilocw] = (ofloat)dRow[inTable->wwOff]*lambdaPerSec;
-    } else {
+    } else if (inTable->uuCol>=0) {   /* Sin in sec */
       Buffer[desc->ilocu] = (ofloat)inRow->uu*lambdaPerSec;
       Buffer[desc->ilocv] = (ofloat)inRow->vv*lambdaPerSec;
       Buffer[desc->ilocw] = (ofloat)inRow->ww*lambdaPerSec;
+    } else if (inTable->uusinCol>=0) {   /* Sine in sec */
+      Buffer[desc->ilocu] = (ofloat)inRow->uusin*lambdaPerSec;
+      Buffer[desc->ilocv] = (ofloat)inRow->vvsin*lambdaPerSec;
+      Buffer[desc->ilocw] = (ofloat)inRow->wwsin*lambdaPerSec;
+    } else if (inTable->uuncpCol>=0) {   /* NCP in sec */
+      Buffer[desc->ilocu] = (ofloat)inRow->uuncp*lambdaPerSec;
+      Buffer[desc->ilocv] = (ofloat)inRow->vvncp*lambdaPerSec;
+      Buffer[desc->ilocw] = (ofloat)inRow->wwncp*lambdaPerSec;
+    } else { /* Who knows? */
+      Buffer[desc->ilocu] = 0.;
+      Buffer[desc->ilocv] = 0.;
+      Buffer[desc->ilocw] = 0.;
     }
 
-   /* Loop over Stokes */
-    i = -1;
-    for (ipol=0; ipol<nstok; ipol++) {
+    /* Stokes or Frequency first in data? - this assumes IF is always slowest */
+    if (stokesFirst) {
+      i = -1;
       /* Loop over IF */
       for (iif=0; iif<nIF; iif++) {
 	/* Loop over channel */
 	for (ichan=0; ichan<nchan; ichan++) {
-	  i++;   /* input data index */
-	  /* output data index */
-	  indx = desc->nrparm + ipol*incs + iif*incif + ichan*incf;
-	  Buffer[indx  ] = inRow->Flux[i*kinc];
-	  Buffer[indx+1] = inRow->Flux[i*kinc+1];
-	  if (doWeight) {
+	  /* Loop over poln */
+	  for (ipol=0; ipol<nstok; ipol++) {
+	    i++;   /* input data index */
+	    /* output data index */
+	    indx = desc->nrparm + ipol*incs + iif*incif + ichan*incf;
+	    Buffer[indx  ] =  inRow->Flux[i*kinc];
+	    Buffer[indx+1] = -inRow->Flux[i*kinc+1];  /* Flip phase */
 	    iwt = ipol + iif * nstok;
-	    Buffer[indx+2] = inRow->Weight[iwt];
-	  } else {
-	    Buffer[indx+2] = inRow->Flux[i*kinc+2];
-	  }
-	} /* end freq loop */
+	    /* Enforce minimum weight */
+	    if (inRow->Weight[iwt]<minWt) inRow->Weight[iwt] = 0.0;
+	    /* Weight is fraction of good data - correct vis */
+	    if (inRow->Weight[iwt]>0.0) {
+	      Buffer[indx  ] /= inRow->Weight[iwt];
+	      Buffer[indx+1] /= inRow->Weight[iwt];
+	    }
+	    if (doWeight) {
+	      Buffer[indx+2] = inRow->Weight[iwt];
+	    } else {
+	      Buffer[indx+2] = inRow->Flux[i*kinc+2];
+	    }
+	  } /* end pol loop */
+	} /* end freqn loop */
       } /* end IF loop */
-    } /* end poln loop */
-    
+    } else { /* Frequency first */
+      i = -1;
+      /* Loop over IF */
+      for (iif=0; iif<nIF; iif++) {
+	/* Loop over poln */
+	for (ipol=0; ipol<nstok; ipol++) {
+	  /* Loop over channel */
+	  for (ichan=0; ichan<nchan; ichan++) {
+	    i++;   /* input data index */
+	    /* output data index */
+	    indx = desc->nrparm + ipol*incs + iif*incif + ichan*incf;
+	    Buffer[indx  ] = inRow->Flux[i*kinc];
+	    Buffer[indx+1] = inRow->Flux[i*kinc+1];
+	    if (doWeight) {
+	      iwt = ipol + iif * nstok;
+	      Buffer[indx+2] = inRow->Weight[iwt];
+	    } else {
+	      Buffer[indx+2] = inRow->Flux[i*kinc+2];
+	    }
+	  } /* end freq loop */
+	} /* end poln loop */
+      } /* end IF loop */
+    } /* End frequency first */
+
     /* set number of records */
     desc->numVisBuff = 1;
     
@@ -2119,11 +2173,13 @@ void GetFlagInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
 	outRow->ifs[1]       = i+1;
 	outRow->chans[0]     = inRow->chans[0];
 	outRow->chans[1]     = inRow->chans[1];
+        /* bit flag implementation kinda screwy */
 	outRow->pFlags[0]    = inRow->pflags[0];
-	outRow->pFlags[1]    = inRow->pflags[1];
-	outRow->pFlags[2]    = inRow->pflags[2];
-	outRow->pFlags[3]    = inRow->pflags[3];
-	strncpy (outRow->reason, inRow->reason ,24);
+	if (inRow->pflags[1]) outRow->pFlags[0] |= 1<<1;
+	if (inRow->pflags[2]) outRow->pFlags[0] |= 1<<2;
+	if (inRow->pflags[3]) outRow->pFlags[0] |= 1<<3;
+
+	strncpy (outRow->reason, inRow->reason, 24);
 	/* Write */
 	oRow = -1;
 	if ((ObitTableFGWriteRow (outTable, oRow, outRow, err)
@@ -3029,6 +3085,12 @@ void GetInterferometerModelInfo (ObitData *inData, ObitUV *outData,
       outTable->obscode[i] = inTable->obscode[i];
     for (i=0; i<MIN(UVLEN_VALUE,MAXKEYCHARTABLEIM); i++)
       outTable->RefDate[i] = outData->myDesc->obsdat[i];
+    outTable->refFreq = inTable->ref_freq;
+    outTable->chanBW  = inTable->chan_bw;
+    outTable->refPixl = inTable->ref_pixl;
+    outTable->numStkd = inTable->no_stkd;
+    outTable->numChan = inTable->no_chan;
+    outTable->stk1    = inTable->stk_1;
     
     /* Initialize output row */
     outRow->status      = 0;
@@ -3265,7 +3327,7 @@ void IDIInHistory (ObitData* inData, ObitInfoList* myInput, ObitUV* outData,
   ObitHistory *inHistory=NULL, *outHistory=NULL;
   gchar        hicard[81];
   gchar        *hiEntries[] = {
-    "File", "DataRoot",
+    "File", "DataRoot", "minWt",
     NULL};
   gchar *routine = "IDIInHistory";
 

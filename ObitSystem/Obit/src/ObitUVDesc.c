@@ -407,9 +407,9 @@ void ObitUVDescIndex (ObitUVDesc* in)
   /* loop over parameters looking for labels */
   for (i=0; i<in->nrparm; i++) {
     /* ignore projection codes */
-    if (!strncmp (in->ptype[i], "UU-",      3)) in->ilocu  = i;
-    if (!strncmp (in->ptype[i], "VV-",      3)) in->ilocv  = i;
-    if (!strncmp (in->ptype[i], "WW-",      3)) in->ilocw  = i;
+    if (!strncmp (in->ptype[i], "UU",       2)) in->ilocu  = i;
+    if (!strncmp (in->ptype[i], "VV",       2)) in->ilocv  = i;
+    if (!strncmp (in->ptype[i], "WW",       2)) in->ilocw  = i;
     if (!strncmp (in->ptype[i], "BASELINE", 8)) in->ilocb  = i;
     if (!strncmp (in->ptype[i], "TIME1",    5)) in->iloct  = i;
     if (!strncmp (in->ptype[i], "TIME",     4)) in->iloct  = i;

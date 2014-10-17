@@ -529,9 +529,9 @@ void ObitGPUSkyModelDFTShutdown (ObitGPUSkyModel *in, ObitUV *uvdata, ObitErr *e
   ObitCUDAUtilFreeGPU((float*)in->gpuInfo->d_modelInfo);
   ObitCUDAUtilFreeGPU((float*)in->gpuInfo->d_model[0]);
   for (i =0; i<in->gpuInfo->nstream; ++i)    {
-    if (in->gpuInfo->stream)    ObitCUDAUtilFreeGPU(in->gpuInfo->d_data[i]);
-    if (in->gpuInfo->cycleDone) ObitCUDAStreamDestroy((in->gpuInfo->stream)[i]);
-    if (in->gpuInfo->d_data)    ObitCUDAEventDestroy((in->gpuInfo->cycleDone)[i]);
+    if (in->gpuInfo->stream)    ObitCUDAStreamDestroy((in->gpuInfo->stream)[i]);
+    if (in->gpuInfo->cycleDone) ObitCUDAEventDestroy((in->gpuInfo->cycleDone)[i]);
+    if (in->gpuInfo->d_data)    ObitCUDAUtilFreeGPU(in->gpuInfo->d_data[i]);
   }
   if (in->gpuInfo->stream)    g_free(in->gpuInfo->stream);
   if (in->gpuInfo->cycleDone) g_free(in->gpuInfo->cycleDone);

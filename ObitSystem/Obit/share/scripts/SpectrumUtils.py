@@ -779,3 +779,45 @@ def labelLogPlot(plot, xmin, xmax, ymin, ymax, err, vals=None):
             coord = (math.log10(num)-logymin) / (logymax - logymin)
             OPlot.PRelText (plot, "LV", disp, coord, fjust, val, err)
     # end loop
+
+def FSSpectrum(fstab, entry, err, bchan=1, echan=0):
+    """ Obtain a spectrum from a given entry in an FS table
+
+    returns a dictionary with entries
+       ch   = channel numbers
+       vel  = velocity (km/s) coordinate (first col)
+       freq = frequency (Hz)
+       flux = spectral values
+    fstab = FS table
+    entry = FS table entry Id
+    bchan = first 1-rel plane number
+    echan = highest plane number 0->all
+    """
+    ################################################################
+    fstab.Open(Table.READONLY,err)
+    fsrow = fstab.ReadRow(entry, err)
+    OErr.printErrMsg(err, "Error reading Table")
+    VelRef  = fstab.Desc.List.Dict['VEL_REF'][2][0]
+    VelRPix = fstab.Desc.List.Dict['VEL_RPIX'][2][0]
+    VelDelt = fstab.Desc.List.Dict['VEL_DEL'][2][0]
+    nchan = echan
+    if echan<=0:
+        echan = fstab.Desc.List.Dict['NO_CH'][2][0]
+    bchan = max (0, bchan)
+    echan = min (echan, fstab.Desc.List.Dict['NO_CH'][2][0]-1)
+    # Loop over channels
+    ch = []; vel = []; freq=[]; flux=[]
+    for i in range(bchan,echan+1):
+        # save
+        ch.append(i)
+        v = 1.0e-3*(VelRef + (i-VelRPix)*VelDelt)  # Velocity
+        s = fsrow['SPECTRUM'][i-1]                 # Spectral value
+        vel.append(v)
+        freq.append(v)
+        flux.append(s)
+        #print "debug", i, s, v
+    fstab.Close(err)
+    OErr.printErrMsg(err, "Error closinging image")
+    return {'ch':ch,'vel':vel,'freq':freq,'flux':flux}
+    # end FSSpectrum
+    

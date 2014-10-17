@@ -2442,3 +2442,69 @@ Obit/TDF/MFImage.TDF \
 Obit/src/ObitFInterpolate.c \
   Pixel: Higher threshold for weight
 29 Sept. 2014, svn ver. 497
+
+Implement AIPS FS table for catalog with spectrum
+Implement GPU image interpolator
+Numerous bug fixes, VLITE enhancements
+ObitView/src/menu.c:
+  MenuMarkLogger: update correct menu item.
+Obit/src/ObitImageMF.c:
+  SetSpec: Fix error in logic calculating lower frequency bound
+Obit/src/ObitUVCalBandpass.c:
+  Horrible hack for VLite, it isn't VLBA but says it is.
+  Fix size of FFT in VLBA bandpass shift
+Obit/src/ObitImageUtil.c Obit/include/ObitImageUtil.h:
+Obit/python/ImageUtil.inc Obit/python/ImageUtil.py Obit/python/MosaicUtil.py:
+  New routines to support precomputed pixels in image interpolation
+Obit/include/ObitTableFSClassDef.h Obit/include/ObitTableFSDef.h Obit/include/ObitTableFS.h
+Obit/include/ObitTableFSRowClassDef.h   Obit/include/ObitTableFSRowDef.h 
+Obit/include/ObitTableFSUtil.h
+Obit/src/ObitTableFS.c Obit/src/ObitTableFSUtil.c
+Obit/python/TableFS.inc Obit/python/Table.inc Obit/python/Table.py Obit/python/OData.py
+Obit/TDF/VL2FS.TDF Obit/tasks/VL2FS.c
+Obit/python/Catalog.inc Obit/python/Catalog.py:
+Obit/doc/OBITdoc.tex:
+  Implement FS tables
+Obit/python/Obit_wrap.c  ObitSD/python/Obit_wrap.c:
+  New python interface
+Obit/share/scripts/SpectrumUtils.py:
+  Plotting for FS spectrum table
+Obit/src/ObitGPUSkyModel.c:
+  Fix login in destructor
+Obit/include/CUDAFArrayDef.h  Obit/include/CUDAFArray.h
+Obit/include/CUDAFInterpolateDef.h  Obit/include/CUDAFInterpolate.h
+Obit/src/CUDAFArray.cu Obit/src/CUDAFInterpolate.cu
+Obit/include/ObitGPUFArrayDef.h  Obit/include/ObitGPUFArray.h
+Obit/include/ObitGPUFArrayClassDef.h Obit/src/ObitGPUFArray.c
+Obit/include/ObitGPUFInterpolateDef.h  Obit/include/ObitGPUFInterpolate.h
+Obit/include/ObitGPUFInterpolateClassDef.h Obit/src/ObitGPUFInterpolate.c
+Obit/include/ObitGPUImage.h  Obit/src/ObitGPUImage.c
+Obit/python/GPUFArray.py Obit/python/GPUFInterpolate.py
+Obit/python/GPUFArray.inc Obit/python/GPUFInterpolate.inc:
+  Implementation of GPU based image interpolator
+Obit/include/ObitCUDAUtil.h Obit/src/ObitCUDAUtil.cu
+Obit/python/ImageUtil.inc Obit/python/ImageUtil.py Obit/python/MosaicUtil.py
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  Implementation of GPU based image interpolator
+Obit/src/ObitTableIDI_UV_DATA.c:
+  Hack for VLITE DifX bug
+Obit/tasks/IDIIn.c Obit/TDF/IDIIn.TDF:
+  Better parsing of input, ordering of data, u,v,w
+  Add minWT parameter
+  Multiple bug fixes.
+Obit/src/ObitTableIDI_UV_DATA.c Obit/include/ObitTableIDI_UV_DATADef.h:
+  Fix bug in definition of table (ref_pixl)
+Obit/src/ObitTableIM.c Obit/include/ObitTableIMDef.h:
+  Add keyword STK_1
+Obit/src/ObitUVEdit.c:
+  Various: implement killAll option to flag all Stokes if any Stokes is.
+Obit/python/UV.py:
+  Document killAll option in editing.
+Obit/tasks/AutoFlag.c Obit/tasks/MednFlag.c
+Obit/TDF/AutoFlag.TDF Obit/TDF/MednFlag.TDF:
+  Implement killAll to flag all Stokes if any flagged.
+Obit/src/ObitImageUtil.c:
+  UV2ImageDesc: replace blank projection with -SIN (CASA defect)
+Obit/src/ObitUVDesc.c:
+  Index: checks for u,v,w only have the first 2 char.
+17 Oct. 2014 svn ver 498

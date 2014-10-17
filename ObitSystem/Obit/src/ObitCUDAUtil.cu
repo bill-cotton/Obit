@@ -43,6 +43,7 @@
  */
 
 /*---------------Public functions---------------------------*/
+#if HAVE_GPU==1  /* CUDA code */
 /* Public: Set device */
 /**
  * Assign a GPU
@@ -51,9 +52,7 @@
 extern "C"
 void ObitCUDASetGPU (int cuda_device)
 {
-#if HAVE_GPU==1  /* CUDA code */
   checkCudaErrors(cudaSetDevice(cuda_device));
-#endif /* HAVE_GPU */
 } /* end ObitCUDASetGPU */
 
 /**
@@ -62,22 +61,83 @@ void ObitCUDASetGPU (int cuda_device)
 extern "C"
 void ObitCUDAResetGPU ()
 {
-#if HAVE_GPU==1  /* CUDA code */
   cudaDeviceReset();
-#endif /* HAVE_GPU */
 } /* end ObitCUDAResetGPU */
 
 /**
- * Wait for an event
- * \param event  that to be waited for
+ * Synchronize the device
+ * \param event  that to be waited for, not really used
  */
 extern "C"
 void ObitCUDADeviceSynchronize (int* event)
 {
-#if HAVE_GPU==1  /* CUDA code */
   cudaDeviceSynchronize();
-#endif /* HAVE_GPU */
 } /* end ObitCUDADeviceSynchronize */
+
+/**
+ * Create a processing stream
+ * Native CUDA types
+ * \return stream
+ */
+cudaStream_t ObitCUDAStreamCreateCUDA ()
+{
+  cudaStream_t out=NULL;
+  checkCudaErrors(cudaStreamCreate(&out));
+  return out;
+} /* end ObitCUDAStreamCreateCUDA */
+
+/**
+ * Destroy a stream
+ * Native CUDA types
+ * \param stream stream to destroy
+ */
+void ObitCUDAStreamDestroyCUDA (cudaStream_t stream)
+{
+  cudaStreamDestroy(stream);
+} /* end ObitCUDAStreamDestroyCUDA */
+
+/**
+ * Create an event
+ * Native CUDA types
+ * \return event
+ */
+cudaEvent_t ObitCUDAEventCreateCUDA ()
+{
+  cudaEvent_t out=NULL;
+  checkCudaErrors(cudaEventCreate(&out));
+  return out;
+} /* end ObitCUDAEventCreateCUDA */
+
+/**
+ * Destroy an event
+ * Native CUDA types
+ * \param event to be destroyed
+ */
+void ObitCUDAEventDestroyCUDA (cudaEvent_t event)
+{
+  cudaEventDestroy(event);
+} /* end ObitCUDAEventDestroyCUDA */
+
+/**
+ * Associate an event with a stream, waiting for completion
+ * Native CUDA types
+ * \param event  to wait for
+ * \param stream stream
+ */
+void ObitCUDAEventRecordCUDA (cudaEvent_t event, cudaStream_t stream)
+{
+  cudaEventRecord(event, stream);
+} /* end ObitCUDAEventRecordCUDA */
+
+/**
+ * Wait for an event defined by ObitCUDAEventRecordCUDA
+ * Native CUDA types
+ * \param event  to wait for
+ */
+void ObitCUDAEventSynchronizeCUDA (cudaEvent_t event)
+{
+  cudaEventSynchronize(event);
+} /* end ObitCUDAEventSynchronizeCUDA */
 
 /**
  * Create a processing stream
@@ -87,9 +147,7 @@ extern "C"
 int* ObitCUDAStreamCreate ()
 {
   int* out=NULL;
-#if HAVE_GPU==1  /* CUDA code */
   checkCudaErrors(cudaStreamCreate((cudaStream_t*)&out));
-#endif /* HAVE_GPU */
   return out;
 } /* end ObitCUDAStreamCreate */
 
@@ -100,9 +158,7 @@ int* ObitCUDAStreamCreate ()
 extern "C"
 void ObitCUDAStreamDestroy (int* stream)
 {
-#if HAVE_GPU==1  /* CUDA code */
   cudaStreamDestroy((cudaStream_t)stream);
-#endif /* HAVE_GPU */
 } /* end ObitCUDAStreamDestroy */
 
 /**
@@ -113,9 +169,7 @@ extern "C"
 int* ObitCUDAEventCreate ()
 {
   int* out=NULL;
-#if HAVE_GPU==1  /* CUDA code */
   checkCudaErrors(cudaEventCreate((cudaEvent_t*)&out));
-#endif /* HAVE_GPU */
   return out;
 } /* end ObitCUDAEventCreate */
 
@@ -126,9 +180,7 @@ int* ObitCUDAEventCreate ()
 extern "C"
 void ObitCUDAEventDestroy (int* event)
 {
-#if HAVE_GPU==1  /* CUDA code */
   cudaEventDestroy((cudaEvent_t)event);
-#endif /* HAVE_GPU */
 } /* end ObitCUDAEventDestroy */
 
 /**
@@ -139,9 +191,7 @@ void ObitCUDAEventDestroy (int* event)
 extern "C"
 void ObitCUDAEventRecord (int* event, int* stream)
 {
-#if HAVE_GPU==1  /* CUDA code */
   cudaEventRecord((cudaEvent_t)event, (cudaStream_t)stream);
-#endif /* HAVE_GPU */
 } /* end ObitCUDAEventRecord */
 
 /**
@@ -151,9 +201,7 @@ void ObitCUDAEventRecord (int* event, int* stream)
 extern "C"
 void ObitCUDAEventSynchronize (int* event)
 {
-#if HAVE_GPU==1  /* CUDA code */
   cudaEventSynchronize((cudaEvent_t)event);
-#endif /* HAVE_GPU */
 } /* end ObitCUDAEventSynchronize */
 
 /**
@@ -165,9 +213,7 @@ extern "C"
 float* ObitCUDAUtilAllocHost (int memsize)
 {
   float *out=NULL;
-#if HAVE_GPU==1  /* CUDA code */
   checkCudaErrors(cudaMallocHost(&out, memsize));
-#endif /* HAVE_GPU */
   return out;
 } /* end ObitCUDAUtilAllocHost */
 
@@ -178,9 +224,7 @@ float* ObitCUDAUtilAllocHost (int memsize)
 extern "C"
 void ObitCUDAUtilFreeHost (float *host)
 {
-#if HAVE_GPU==1  /* CUDA code */
   cudaFreeHost(host);
-#endif /* HAVE_GPU */
 } /* end ObitCUDAUtilFreeHost */
 
 /**
@@ -192,9 +236,7 @@ extern "C"
 float* ObitCUDAUtilAllocGPU (int memsize)
 {
   float *out=NULL;
-#if HAVE_GPU==1  /* CUDA code */
   checkCudaErrors(cudaMalloc(&out, memsize));
-#endif /* HAVE_GPU */
   return out;
 } /* end ObitCUDAUtilAllocGPU */
 
@@ -205,9 +247,7 @@ float* ObitCUDAUtilAllocGPU (int memsize)
 extern "C"
 void ObitCUDAUtilFreeGPU (float *GPU)
 {
-#if HAVE_GPU==1  /* CUDA code */
   cudaFree(GPU);
-#endif /* HAVE_GPU */
 } /* end ObitCUDAUtilFreeGPU */
 
 /**
@@ -220,14 +260,12 @@ void ObitCUDAUtilFreeGPU (float *GPU)
 extern "C"
 void ObitCUDAUtilHost2GPU(float *GPU, float *host, int memsize, int* stream)
 {
-#if HAVE_GPU==1  /* CUDA code */
   if (stream!=NULL) {
     checkCudaErrors(cudaMemcpyAsync(GPU, host, memsize, 
       cudaMemcpyHostToDevice, (cudaStream_t)stream));
   } else {
     checkCudaErrors(cudaMemcpyAsync(GPU, host, memsize, cudaMemcpyHostToDevice, 0));
   }
-#endif /* HAVE_GPU */
 } /* end ObitCUDAUtilHost2GPU */
 
 /**
@@ -240,14 +278,33 @@ void ObitCUDAUtilHost2GPU(float *GPU, float *host, int memsize, int* stream)
 extern "C"
 void ObitCUDAUtilGPU2Host(float *host, float *GPU, int memsize, int* stream)
 {
-#if HAVE_GPU==1  /* CUDA code */
   if (stream!=NULL) {
     checkCudaErrors(cudaMemcpyAsync(host,GPU,  memsize, 
       cudaMemcpyDeviceToHost, (cudaStream_t)stream));
   } else {
     checkCudaErrors(cudaMemcpyAsync(host, GPU, memsize, cudaMemcpyDeviceToHost, 0));
   }
-#endif /* HAVE_GPU */
 } /* end ObitCUDAUtilGPU2Host */
+#endif /* HAVE_GPU */
 
+
+/**
+ * Returns Obit magic blanking float value
+ * This is adopted from AIPS and correcponds to the string 'INDE'
+ * \return float magic value
+ */
+float CUDAMagicF (void)
+{
+  static union FBLANKequiv {
+    char string[4];
+    float fblank;
+  } FBLANK;
+  FBLANK.string[0] = 'I'; 
+  FBLANK.string[1] = 'N'; 
+  FBLANK.string[2] = 'D'; 
+  FBLANK.string[3] = 'E'; 
+  
+  return FBLANK.fblank;
+} /* end CUDAMagicF */
 #endif /* OBITFCUDAUtil_H */ 
+

@@ -233,7 +233,7 @@ class OData(ODataPtr):
         * numIF     = Number of IFs (CD, FQ, SN, CL, BP, BL, SY, TY, CQ, CP, PD)
         * numPol    = Number of Stokes' (AN, SN, CD, CL, BP, BL, PC, SY, TY, GC, MC, IM, PD)
         * numTerm   = Number of terms in model polynomial (CL)
-        * numChan   = Number of spectral channels (BP, CP, PD)
+        * numChan   = Number of spectral channels (BP, CP, PD, FS)
         * numTomes  = Number of Phase cal tones (PC)
         * numTabs   = Number of ??? (GC)
         * numCoef   = Number of polynomial coefficents (NI)
@@ -311,6 +311,8 @@ class OData(ODataPtr):
             outTab = Obit.TableVZ(id, [tabVer], access, tabType, err.me)
         elif tabType=="AIPS MF":
             outTab = Obit.TableMF(id, [tabVer], access, tabType, err.me)
+        elif tabType=="AIPS FS":
+            outTab = Obit.TableFS(id, [tabVer], access, tabType, numChan, err.me)
             # IDI tables
         elif tabType=="IDI_ANTENNA":
             outTab = Obit.TableIDI_ANTENNA(id, [tabVer], access, tabType,

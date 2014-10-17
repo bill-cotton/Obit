@@ -110,7 +110,8 @@ def PMakeImage (inUV, outImage, channel, doBeam, doWeight, err):
     # end PMakeImage
 
 def PInterpolateImage (inImage, outImage, err, 
-                       inPlane=[1,1,1,1,1], outPlane=[1,1,1,1,1], hwidth=2):
+                       inPlane=[1,1,1,1,1], outPlane=[1,1,1,1,1], hwidth=2,
+                       XPix=None, YPix=None, finterp=None):
     """
     Interpolates one image onto another's grid.
     
@@ -124,6 +125,9 @@ def PInterpolateImage (inImage, outImage, err,
     * outPlane = 5 element int array with 1, rel. plane number [1,1,1,1,1]
       giving location of plane to be written
     * hwidth   = half width of interpolation kernal [1-4] default 2
+    * XPix     = image of input x pixels for output, None=>Calculate
+    * YPix     = image of input y pixels for output
+    * finterp  = GPUFInterpolate to use if not NULL and GPU enabled
     """
     ################################################################
     # Checks
@@ -139,12 +143,44 @@ def PInterpolateImage (inImage, outImage, err,
         raise TypeError,"inPlane must have 5 elements"
     if len(outPlane) != 5:
         raise TypeError,"outPlane must have 5 elements"
-    #
-    Obit.ImageUtilInterpolateImage(inImage.me, outImage.me,
-                                   inPlane, outPlane, hwidth, err.me)
+    #  GPU?
+    if finterp!=None:
+        Obit.GPUImageInterpolateImageXY(finterp.me, inImage.me, outImage.me,
+                                       inPlane, outPlane, err.me)
+    elif XPix==None:
+        Obit.ImageUtilInterpolateImage(inImage.me, outImage.me,
+                                       inPlane, outPlane, hwidth, err.me)
+    # precomputed pixel values
+    else:
+        Obit.ImageUtilInterpolateImageXY(inImage.me, outImage.me, XPix.me, YPix.me,
+                                         inPlane, outPlane, hwidth, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error interpolating Image")
     # end PInterpolateImage
+
+def PGetXYPixels (inImage, outImage, XPix, YPix, err):
+    """
+    Determines inImage x and y pixels for outImage
+    
+    * inImage  = Input Python Image.
+    * outImage = Python Image to be written.  Must be previously instantiated.
+    * XPix     = image of input x pixels for output
+    * YPix     = image of input y pixels for output
+    * err      = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not Image.PIsA(inImage):
+        raise TypeError,"inImage MUST be a Python Obit Image"
+    if not Image.PIsA(outImage):
+        print "Actually ",outImage.__class__
+        raise TypeError,"outImage MUST be a Python Obit Image"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    Obit.ImageUtilGetXYPixels(inImage.me, outImage.me, XPix.me, YPix.me, err.me)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error determining pixels")
+    # end PGetXYPixels
 
 def PPBApply (inImage, pntImage, outImage, err,
               inPlane=[1,1,1,1,1], outPlane=[1,1,1,1,1], antSize=25.0):

@@ -972,6 +972,7 @@ typedef struct {
 
 #include "ObitTableMFUtil.h"
 #include "ObitTableVLUtil.h"
+#include "ObitTableFSUtil.h"
 
 /**  Convert an MF table to a VL Table */
 void TableMF2VL (ObitTable *in, ObitTable *out, 
@@ -1121,6 +1122,126 @@ ObitTable* TableVZSel (ObitTable *in, ObitData *data,
   return (ObitTable*)outVZ;
 }  /* end TableVL2VZ */
 
+/**  Convert an VL table to a FS Table */
+void TableVL2FS (ObitTable *in, ObitImage *out, int FSver, ObitErr *err)
+{
+  ObitTableVL *inVL=NULL;
+
+  inVL  = ObitTableVLConvert(in);
+  ObitTableFSUtilVL2FS (inVL, (ObitData*)out, (olong)FSver, err);
+  inVL  = ObitTableVLUnref(inVL);
+}  /* end TableVL2FS */
+
+/**  Write human readable version of an FS table to a FILE */
+void TableFSPrint (ObitTable *in, ObitImage *image, char *prtFile, 
+		   ObitErr *err)
+{
+  FILE *file;
+  ObitTableFS *inFS=NULL;
+
+  if (strncmp (prtFile, "stdout", 6)) {
+    ObitTrimTrail(prtFile);  /* Trim any trailing blanks */
+    file = fopen (prtFile, "a");
+  } else {
+    file = stdout;
+  }
+  inFS  = ObitTableFSConvert(in);
+  ObitTableFSPrint (inFS, image, file, err);
+  if (strncmp (prtFile, "stdout", 6)) {
+    fclose (file);
+  }
+  inFS  = ObitTableFSUnref(inFS);
+}  /* end TableFSPrint */
+
+/**  Append one FS table to another */
+void TableFSAppend (ObitTable *in, ObitTable *out, ObitErr *err)
+{
+  ObitTableFS *inFS=NULL, *outFS=NULL;
+
+  inFS  = ObitTableFSConvert(in);
+  outFS = ObitTableFSConvert(out);
+  ObitTableFSAppend (inFS, outFS,  err);
+  inFS  = ObitTableFSUnref(inFS);
+  outFS = ObitTableFSUnref(outFS);
+}  /* end TableFSAppend */
+
+/** Index a FS table */
+void TableFSIndex (ObitTable *in, ObitErr *err)
+{
+  ObitTableFS *inFS=NULL;
+
+  inFS  = ObitTableFSConvert(in);
+  ObitTableFSIndex (inFS, err);
+  inFS  = ObitTableFSUnref(inFS);
+}  /* end TableFSIndex */
+
+/**  Merge overlapping components */
+void TableFSMerge (ObitTable *in, ObitErr *err)
+{
+  ObitTableFS *inFS=NULL;
+
+  inFS  = ObitTableFSConvert(in);
+  ObitTableFSMerge (inFS, err);
+  inFS  = ObitTableFSUnref(inFS);
+}  /* end TableFSMerge */
+
+/**  Select significant components */
+void TableFSSelect (ObitTable *in, ObitTable *out, ObitErr *err)
+{
+  ObitTableFS *inFS=NULL, *outFS=NULL;
+
+  inFS  = ObitTableFSConvert(in);
+  outFS = ObitTableFSConvert(out);
+  ObitTableFSSelect (inFS, outFS,  err);
+  inFS  = ObitTableFSUnref(inFS);
+  outFS = ObitTableFSUnref(outFS);
+}  /* end TableFSSelect */
+
+/**  Remove entries from a given field */
+void TableFSPurge (ObitTable *in, char *field, ObitErr *err)
+{
+  ObitTableFS *inFS=NULL;
+
+  inFS  = ObitTableFSConvert(in);
+  ObitTableFSPurge (inFS, field, err);
+  inFS  = ObitTableFSUnref(inFS);
+}  /* end TableFSPurge */
+
+/**  Remove redundant entries */
+void TableFSRedun (ObitTable *in, ObitTable *out, ObitErr *err)
+{
+  ObitTableFS *inFS=NULL, *outFS=NULL;
+
+  inFS  = ObitTableFSConvert(in);
+  outFS = ObitTableFSConvert(out);
+  ObitTableFSRedun (inFS, outFS,  err);
+  inFS  = ObitTableFSUnref(inFS);
+  outFS = ObitTableFSUnref(outFS);
+}  /* end  TableFSRedun*/
+
+/**  Extract spectra from image cube */
+void TableFSGetSpectrum (ObitTable *in, ObitImage *image, ObitErr *err)
+{
+  ObitTableFS *inFS=NULL;
+
+  inFS  = ObitTableFSConvert(in);
+  ObitTableFSGetSpectrum (inFS, image, err);
+  inFS  = ObitTableFSUnref(inFS);
+}  /* end  TableFSGetSpectrum*/
+
+/**  Filter and fit spectra */
+void TableFSFiltVel (ObitTable *in, ObitImage *image, ObitTable *out, 
+                     ObitErr *err)
+{
+  ObitTableFS *inFS=NULL;
+  ObitTableFS *outFS=NULL;
+
+  inFS  = ObitTableFSConvert(in);
+  outFS = ObitTableFSConvert(out);
+  ObitTableFSFiltVel (inFS, image, outFS, err);
+  inFS  = ObitTableFSUnref(inFS);
+  outFS = ObitTableFSUnref(outFS);
+}  /* end  TableFSFiltVel */
 
 
 #include "ObitDConClean.h"
@@ -2679,6 +2800,140 @@ typedef struct {
   ObitFullBeam *me;
 } FullBeam;
 
+
+#include "ObitGPUFArray.h"
+
+extern ObitGPUFArray* GPUFArrayCreate(char* name, long ndim, long *naxis) {
+   olong i, lnaxis[10];
+   for (i=0; i<ndim; i++) lnaxis[i] = (olong)naxis[i];
+   return  ObitGPUFArrayCreate (name,(olong) ndim, (olong*)lnaxis);
+}
+
+extern void GPUFArrayToData(ObitGPUFArray* in, ObitFArray *data, ObitErr *err) {
+  ObitGPUFArrayToData(in, data->array, err);
+}
+
+extern void GPUFArrayFromData(ObitGPUFArray* in, ObitFArray *data, ObitErr *err) {
+  ObitGPUFArrayFromData(in, data->array, err);
+}
+
+extern void GPUFArrayToGPU(ObitGPUFArray* in, ObitErr *err) {
+  ObitGPUFArrayToGPU(in, err);
+}
+
+extern void GPUFArrayToHost(ObitGPUFArray* in, ObitErr *err) {
+  ObitGPUFArrayToHost(in, err);
+}
+
+ 
+extern ObitGPUFArray* GPUFArrayCopy  (ObitGPUFArray *in, ObitGPUFArray *out, ObitErr *err) {
+  return ObitGPUFArrayCopy (in, out, err);
+} // end GPUFArrayCopy 
+
+extern ObitGPUFArray* GPUFArrayClone  (ObitGPUFArray *in, ObitGPUFArray *out, ObitErr *err) {
+  ObitGPUFArrayClone (in, out, err);
+  return out;
+} // end GPUFArrayCopy 
+
+extern char* GPUFArrayGetName (ObitGPUFArray* in) {
+  if (!in) return "Undefined";
+  return in->name;
+} // end  GPUFArrayGetName
+
+extern long GPUFArrayGetNdim (ObitGPUFArray* in) {
+  return in->ndim;
+} // end  GPUFArrayGetNdim
+
+// returns an array 
+extern  PyObject* GPUFArrayGetNaxis (ObitGPUFArray* in) {
+  long i;
+  PyObject *outList= PyList_New(in->ndim);
+
+  for (i=0; i<in->ndim; i++) {
+    PyList_SetItem(outList, i, PyInt_FromLong((long)in->naxis[i]));
+  }
+  return outList;
+} // end  GPUFArrayGetNaxis
+
+extern int GPUFArrayIsA (ObitFArray* in) {
+  return ObitGPUFArrayIsA(in);
+} // end  FGPUArrayIsA 
+
+ObitGPUFArray* GPUFArrayRef (ObitGPUFArray* in) {
+  return ObitGPUFArrayRef (in);
+} // end GPUFArrayRef
+
+ObitGPUFArray* GPUFArrayUnref (ObitGPUFArray* in) {
+  if (!ObitGPUFArrayIsA(in)) return NULL;
+  if (in && (in->ReferenceCount>0)) in = ObitGPUFArrayUnref (in);
+  return in;
+} // end GPUFArrayUnref
+
+extern ObitGPUFArray *GPUFArrayCreate(char *,long ,long *);
+extern void GPUFArrayToData(ObitGPUFArray *,ObitFArray *,ObitErr *);
+extern void GPUFArrayFromData(ObitGPUFArray *,ObitFArray *,ObitErr *);
+extern void GPUFArrayToGPU(ObitGPUFArray *,ObitErr *);
+extern void GPUFArrayToHost(ObitGPUFArray *,ObitErr *);
+extern ObitGPUFArray *GPUFArrayCopy(ObitGPUFArray *,ObitGPUFArray *,ObitErr *);
+extern ObitGPUFArray *GPUFArrayClone(ObitGPUFArray *,ObitGPUFArray *,ObitErr *);
+extern char *GPUFArrayGetName(ObitGPUFArray *);
+extern long GPUFArrayGetNdim(ObitGPUFArray *);
+extern PyObject *GPUFArrayGetNaxis(ObitGPUFArray *);
+extern int GPUFArrayIsA(ObitFArray *);
+
+typedef struct {
+  ObitGPUFArray *me;
+} GPUFArray;
+
+#include "ObitGPUFInterpolate.h"
+
+extern ObitGPUFInterpolate* 
+GPUFInterpolateCreate (char* name, ObitFArray *inArray,  
+                       ObitFArray *xArray, ObitFArray *yArray, 
+		       long hwidth, ObitErr *err) {
+  return ObitGPUFInterpolateCreate (name, inArray, xArray, yArray, hwidth, err);
+} // end GPUFInterpolateCreate
+
+extern void 
+GPUFInterpolateImage (ObitGPUFInterpolate *in, ObitFArray *inArray,
+		      ObitFArray *outArray, ObitErr *err) {
+  ObitGPUFInterpolateImage (in, inArray, outArray, err);
+} // end GPUFInterpolateImage
+
+extern ObitGPUFInterpolate* 
+GPUFInterpolateCopy  (ObitGPUFInterpolate *in, ObitGPUFInterpolate *out, 
+		      ObitErr *err) {
+  return ObitGPUFInterpolateCopy (in, out, err);
+} // end GPUFInterpolateCopy
+
+extern void 
+GPUFInterpolateClone (ObitGPUFInterpolate *in, ObitGPUFInterpolate *out, ObitErr *err) {
+  ObitGPUFInterpolateClone (in, out, err);
+} // end GPUFInterpolateClone 
+
+ObitGPUFInterpolate* GPUFInterpolateRef (ObitGPUFInterpolate* in) {
+  return ObitGPUFInterpolateRef (in);
+} // end GPUFInterpolateRef
+
+ObitGPUFInterpolate* GPUFInterpolateUnref (ObitGPUFInterpolate* in) {
+  if (!ObitGPUFInterpolateIsA(in)) return NULL;
+  return ObitGPUFInterpolateUnref (in);
+} // end GPUFInterpolateUnref
+
+extern int GPUFInterpolateIsA (ObitGPUFInterpolate* in) {
+  return ObitGPUFInterpolateIsA(in);
+}
+
+extern ObitGPUFInterpolate *GPUFInterpolateCreate(char *,ObitFArray *,ObitFArray *,ObitFArray *,long ,ObitErr *);
+extern void GPUFInterpolateImage(ObitGPUFInterpolate *,ObitFArray *,ObitFArray *,ObitErr *);
+extern ObitGPUFInterpolate *GPUFInterpolateCopy(ObitGPUFInterpolate *,ObitGPUFInterpolate *,ObitErr *);
+extern void GPUFInterpolateClone(ObitGPUFInterpolate *,ObitGPUFInterpolate *,ObitErr *);
+extern int GPUFInterpolateIsA(ObitGPUFInterpolate *);
+
+typedef struct {
+  ObitGPUFInterpolate *me;
+} GPUFInterpolate;
+
 #include "ObitHistory.h"
 
 
@@ -3871,6 +4126,7 @@ typedef struct {
 } ImageMosaic;
 
 #include "ObitImageUtil.h"
+#include "ObitGPUImage.h"
 #include "ObitTable.h"
 #include "ObitTableCCUtil.h"
 #include "ObitPolnUnwind.h"
@@ -3894,6 +4150,33 @@ ImageUtilInterpolateImage (ObitImage *inImage, ObitImage *outImage,
   ObitImageUtilInterpolateImage (inImage, outImage, inPlane, outPlane,
 			         hwidth, err);
 } // end ImageUtilInterpolateImage
+
+void 
+ImageUtilInterpolateImageXY (ObitImage *inImage, ObitImage *outImage, 
+			     ObitImage *XPix, ObitImage *YPix,
+			     int *inPlane, int *outPlane,
+			     long hwidth, ObitErr *err)
+{
+  ObitImageUtilInterpolateImageXY (inImage, outImage, XPix, YPix,
+                                   inPlane, outPlane, hwidth, err);
+} // end ImageUtilInterpolateImageXY
+
+void 
+GPUImageInterpolateImageXY (ObitGPUFInterpolate *finterp,
+                            ObitImage *inImage, ObitImage *outImage, 
+			    int *inPlane, int *outPlane,
+			    ObitErr *err)
+{
+  ObitGPUImageInterpolateImageXY (finterp, inImage, outImage, 
+                                   inPlane, outPlane, err);
+} // end GPUImageInterpolateImageXY
+
+void 
+ImageUtilGetXYPixels (ObitImage *inImage, ObitImage *outImage, 
+	              ObitImage *XPix, ObitImage *YPix, ObitErr *err)
+{
+  ObitImageUtilGetXYPixels (inImage, outImage, XPix, YPix, err);
+} // end ImageUtilGetXYPixels
 
 void 
 ImageUtilPBApply (ObitImage *inImage, ObitImage *pntImage, ObitImage *outImage, 
@@ -8478,6 +8761,105 @@ extern void TableFQSetHeadKeys(ObitTable *,PyObject *);
 
 #include "Obit.h"
 #include "ObitData.h"
+#include "ObitTableFS.h"
+
+ 
+extern ObitTable* TableFS (ObitData *inData, long *tabVer,
+ 	                   int access,
+ 	                   char *tabName,
+                           int numCh,
+                           ObitErr *err)
+ {
+   ObitIOAccess laccess;
+   /* Cast structural keywords to correct type */
+   oint lnumCh = (oint)numCh;
+   olong ltabVer = (olong)*tabVer;
+   ObitTable *outTable=NULL;
+   laccess = OBIT_IO_ReadOnly;
+   if (access==2) laccess = OBIT_IO_WriteOnly;
+   else if (access==3) laccess = OBIT_IO_ReadWrite;
+   outTable = (ObitTable*)newObitTableFSValue ((gchar*)tabName, inData, (olong*)&ltabVer,
+   			   laccess, 
+                           lnumCh,
+                           err);
+   *tabVer = (long)ltabVer;
+   return outTable;
+   }
+ 
+extern PyObject* TableFSGetHeadKeys (ObitTable *inTab) {
+  PyObject *outDict=PyDict_New();
+  ObitTableFS *lTab = (ObitTableFS*)inTab;
+  PyDict_SetItemString(outDict, "numCh",  PyInt_FromLong((long)lTab->numCh));
+  PyDict_SetItemString(outDict, "revision",  PyInt_FromLong((long)lTab->revision));
+  PyDict_SetItemString(outDict, "numIndexed",  PyInt_FromLong((long)lTab->numIndexed));
+  PyDict_SetItemString(outDict, "index00",  PyInt_FromLong((long)lTab->index00));
+  PyDict_SetItemString(outDict, "index01",  PyInt_FromLong((long)lTab->index01));
+  PyDict_SetItemString(outDict, "index03",  PyInt_FromLong((long)lTab->index03));
+  PyDict_SetItemString(outDict, "index04",  PyInt_FromLong((long)lTab->index04));
+  PyDict_SetItemString(outDict, "index05",  PyInt_FromLong((long)lTab->index05));
+  PyDict_SetItemString(outDict, "index06",  PyInt_FromLong((long)lTab->index06));
+  PyDict_SetItemString(outDict, "index07",  PyInt_FromLong((long)lTab->index07));
+  PyDict_SetItemString(outDict, "index08",  PyInt_FromLong((long)lTab->index08));
+  PyDict_SetItemString(outDict, "index09",  PyInt_FromLong((long)lTab->index09));
+  PyDict_SetItemString(outDict, "index10",  PyInt_FromLong((long)lTab->index10));
+  PyDict_SetItemString(outDict, "index11",  PyInt_FromLong((long)lTab->index11));
+  PyDict_SetItemString(outDict, "index12",  PyInt_FromLong((long)lTab->index12));
+  PyDict_SetItemString(outDict, "index13",  PyInt_FromLong((long)lTab->index13));
+  PyDict_SetItemString(outDict, "index14",  PyInt_FromLong((long)lTab->index14));
+  PyDict_SetItemString(outDict, "index15",  PyInt_FromLong((long)lTab->index15));
+  PyDict_SetItemString(outDict, "index16",  PyInt_FromLong((long)lTab->index16));
+  PyDict_SetItemString(outDict, "index17",  PyInt_FromLong((long)lTab->index17));
+  PyDict_SetItemString(outDict, "index18",  PyInt_FromLong((long)lTab->index18));
+  PyDict_SetItemString(outDict, "index19",  PyInt_FromLong((long)lTab->index19));
+  PyDict_SetItemString(outDict, "index20",  PyInt_FromLong((long)lTab->index20));
+  PyDict_SetItemString(outDict, "index21",  PyInt_FromLong((long)lTab->index21));
+  PyDict_SetItemString(outDict, "index22",  PyInt_FromLong((long)lTab->index22));
+  PyDict_SetItemString(outDict, "index23",  PyInt_FromLong((long)lTab->index23));
+
+  return outDict;
+} 
+
+extern void TableFSSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
+  ObitTableFS *lTab = (ObitTableFS*)inTab;
+  char *tstr;
+  int lstr=MAXKEYCHARTABLEFS;
+
+  lTab->revision = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "revision"));
+  lTab->numIndexed = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "numIndexed"));
+  lTab->index00 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index00"));
+  lTab->index01 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index01"));
+  lTab->index03 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index03"));
+  lTab->index04 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index04"));
+  lTab->index05 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index05"));
+  lTab->index06 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index06"));
+  lTab->index07 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index07"));
+  lTab->index08 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index08"));
+  lTab->index09 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index09"));
+  lTab->index10 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index10"));
+  lTab->index11 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index11"));
+  lTab->index12 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index12"));
+  lTab->index13 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index13"));
+  lTab->index14 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index14"));
+  lTab->index15 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index15"));
+  lTab->index16 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index16"));
+  lTab->index17 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index17"));
+  lTab->index18 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index18"));
+  lTab->index19 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index19"));
+  lTab->index20 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index20"));
+  lTab->index21 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index21"));
+  lTab->index22 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index22"));
+  lTab->index23 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "index23"));
+
+  if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
+    lTab->myStatus = OBIT_Modified;
+} 
+
+extern ObitTable *TableFS(ObitData *,long *,int ,char *,int ,ObitErr *);
+extern PyObject *TableFSGetHeadKeys(ObitTable *);
+extern void TableFSSetHeadKeys(ObitTable *,PyObject *);
+
+#include "Obit.h"
+#include "ObitData.h"
 #include "ObitTableGC.h"
 
  
@@ -9816,6 +10198,9 @@ extern int TableOpen (ObitTable *in, int access, ObitErr *err) {
   else if (!strncmp (in->tabType,"AIPS FQ", 7)) {
     ret =  ObitTableFQOpen ((ObitTableFQ*)in, laccess, err);
   }
+  else if (!strncmp (in->tabType,"AIPS FS", 7)) {
+    ret =  ObitTableFSOpen ((ObitTableFS*)in, laccess, err);
+  }
   else if (!strncmp (in->tabType,"AIPS GC", 7)) {
     ret =  ObitTableGCOpen ((ObitTableGC*)in, laccess, err);
   }
@@ -9913,6 +10298,9 @@ extern int TableClose (ObitTable *in, ObitErr *err) {
   }
   else if (!strncmp (in->tabType,"AIPS FQ", 7)) {
     ret =  ObitTableFQClose ((ObitTableFQ*)in, err);
+  }
+  else if (!strncmp (in->tabType,"AIPS FS", 7)) {
+    ret =  ObitTableFSClose ((ObitTableFS*)in, err);
   }
   else if (!strncmp (in->tabType,"AIPS GC", 7)) {
     ret =  ObitTableGCClose ((ObitTableGC*)in, err);
@@ -10102,7 +10490,7 @@ extern int TableWriteRow (ObitTable *in, int rowno, PyObject *inDict,
   olong     *jdata;
   oint     *kdata;
   olong    *ldata, ltemp;
-  gchar    *cdata, *ctemp, *tstr;
+  gchar    *cdata, *ctemp, *tstr=NULL;
   gboolean *bdata, bad;
   ofloat   *fdata;
   odouble  *ddata;
@@ -18784,6 +19172,421 @@ static PyObject *_wrap_TableVZSel(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_TableVL2FS(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    ObitImage * _arg1;
+    int  _arg2;
+    ObitErr * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo3 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiO:TableVL2FS",&_argo0,&_argo1,&_arg2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableVL2FS. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of TableVL2FS. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of TableVL2FS. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    TableVL2FS(_arg0,_arg1,_arg2,_arg3);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableFSPrint(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    ObitImage * _arg1;
+    char * _arg2;
+    ObitErr * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _obj2 = 0;
+    PyObject * _argo3 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOOO:TableFSPrint",&_argo0,&_argo1,&_obj2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableFSPrint. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of TableFSPrint. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyString_Check(_obj2)) {
+    int size = PyString_Size(_obj2);
+    char *str;
+    int i = 0;
+    _arg2 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj2);
+    for (i = 0; i < size; i++) {
+      _arg2[i] = str[i];
+    }
+    _arg2[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of TableFSPrint. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    TableFSPrint(_arg0,_arg1,_arg2,_arg3);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  free((char *) _arg2);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableFSAppend(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    ObitTable * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:TableFSAppend",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableFSAppend. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of TableFSAppend. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of TableFSAppend. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    TableFSAppend(_arg0,_arg1,_arg2);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableFSIndex(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:TableFSIndex",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableFSIndex. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of TableFSIndex. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    TableFSIndex(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableFSMerge(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:TableFSMerge",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableFSMerge. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of TableFSMerge. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    TableFSMerge(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableFSSelect(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    ObitTable * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:TableFSSelect",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableFSSelect. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of TableFSSelect. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of TableFSSelect. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    TableFSSelect(_arg0,_arg1,_arg2);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableFSPurge(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    char * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:TableFSPurge",&_argo0,&_obj1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableFSPurge. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyString_Check(_obj1)) {
+    int size = PyString_Size(_obj1);
+    char *str;
+    int i = 0;
+    _arg1 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj1);
+    for (i = 0; i < size; i++) {
+      _arg1[i] = str[i];
+    }
+    _arg1[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of TableFSPurge. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    TableFSPurge(_arg0,_arg1,_arg2);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  free((char *) _arg1);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableFSRedun(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    ObitTable * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:TableFSRedun",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableFSRedun. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of TableFSRedun. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of TableFSRedun. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    TableFSRedun(_arg0,_arg1,_arg2);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableFSGetSpectrum(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    ObitImage * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:TableFSGetSpectrum",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableFSGetSpectrum. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of TableFSGetSpectrum. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of TableFSGetSpectrum. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    TableFSGetSpectrum(_arg0,_arg1,_arg2);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableFSFiltVel(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    ObitImage * _arg1;
+    ObitTable * _arg2;
+    ObitErr * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo3 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOOO:TableFSFiltVel",&_argo0,&_argo1,&_argo2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableFSFiltVel. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of TableFSFiltVel. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of TableFSFiltVel. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of TableFSFiltVel. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    TableFSFiltVel(_arg0,_arg1,_arg2,_arg3);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_newCleanImage(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitDConCleanImage * _result;
@@ -25658,6 +26461,737 @@ static PyObject *_wrap_FullBeamIsA(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_GPUFArrayCreate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitGPUFArray * _result;
+    char * _arg0;
+    long  _arg1;
+    long * _arg2;
+    PyObject * _obj0 = 0;
+    PyObject * _obj2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OlO:GPUFArrayCreate",&_obj0,&_arg1,&_obj2)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+{
+  if (PyList_Check(_obj2)) {
+    int size = PyList_Size(_obj2);
+    int i = 0;
+    _arg2 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj2,i);
+      if (PyInt_Check(o)) {
+         _arg2[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg2);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+    _result = (ObitGPUFArray *)GPUFArrayCreate(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitGPUFArray_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+{
+  free((long *) _arg2);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_GPUFArrayToData(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitGPUFArray * _arg0;
+    ObitFArray * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:GPUFArrayToData",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitGPUFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFArrayToData. Expected _ObitGPUFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GPUFArrayToData. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of GPUFArrayToData. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    GPUFArrayToData(_arg0,_arg1,_arg2);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_GPUFArrayFromData(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitGPUFArray * _arg0;
+    ObitFArray * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:GPUFArrayFromData",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitGPUFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFArrayFromData. Expected _ObitGPUFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GPUFArrayFromData. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of GPUFArrayFromData. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    GPUFArrayFromData(_arg0,_arg1,_arg2);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_GPUFArrayToGPU(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitGPUFArray * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:GPUFArrayToGPU",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitGPUFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFArrayToGPU. Expected _ObitGPUFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GPUFArrayToGPU. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    GPUFArrayToGPU(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_GPUFArrayToHost(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitGPUFArray * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:GPUFArrayToHost",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitGPUFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFArrayToHost. Expected _ObitGPUFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GPUFArrayToHost. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    GPUFArrayToHost(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_GPUFArrayCopy(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitGPUFArray * _result;
+    ObitGPUFArray * _arg0;
+    ObitGPUFArray * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:GPUFArrayCopy",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitGPUFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFArrayCopy. Expected _ObitGPUFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitGPUFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GPUFArrayCopy. Expected _ObitGPUFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of GPUFArrayCopy. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitGPUFArray *)GPUFArrayCopy(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitGPUFArray_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_GPUFArrayClone(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitGPUFArray * _result;
+    ObitGPUFArray * _arg0;
+    ObitGPUFArray * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:GPUFArrayClone",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitGPUFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFArrayClone. Expected _ObitGPUFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitGPUFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GPUFArrayClone. Expected _ObitGPUFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of GPUFArrayClone. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitGPUFArray *)GPUFArrayClone(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitGPUFArray_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_GPUFArrayGetName(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+    ObitGPUFArray * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:GPUFArrayGetName",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitGPUFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFArrayGetName. Expected _ObitGPUFArray_p.");
+        return NULL;
+        }
+    }
+    _result = (char *)GPUFArrayGetName(_arg0);
+    _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GPUFArrayGetNdim(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    long  _result;
+    ObitGPUFArray * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:GPUFArrayGetNdim",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitGPUFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFArrayGetNdim. Expected _ObitGPUFArray_p.");
+        return NULL;
+        }
+    }
+    _result = (long )GPUFArrayGetNdim(_arg0);
+    _resultobj = Py_BuildValue("l",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GPUFArrayGetNaxis(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitGPUFArray * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:GPUFArrayGetNaxis",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitGPUFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFArrayGetNaxis. Expected _ObitGPUFArray_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)GPUFArrayGetNaxis(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_GPUFArrayIsA(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitFArray * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:GPUFArrayIsA",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFArrayIsA. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    _result = (int )GPUFArrayIsA(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_GPUFArrayRef(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitGPUFArray * _result;
+    ObitGPUFArray * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:GPUFArrayRef",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitGPUFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFArrayRef. Expected _ObitGPUFArray_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitGPUFArray *)GPUFArrayRef(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitGPUFArray_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_GPUFArrayUnref(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitGPUFArray * _result;
+    ObitGPUFArray * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:GPUFArrayUnref",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitGPUFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFArrayUnref. Expected _ObitGPUFArray_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitGPUFArray *)GPUFArrayUnref(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitGPUFArray_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_GPUFInterpolateCreate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitGPUFInterpolate * _result;
+    char * _arg0;
+    ObitFArray * _arg1;
+    ObitFArray * _arg2;
+    ObitFArray * _arg3;
+    long  _arg4;
+    ObitErr * _arg5;
+    PyObject * _obj0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo3 = 0;
+    PyObject * _argo5 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOOOlO:GPUFInterpolateCreate",&_obj0,&_argo1,&_argo2,&_argo3,&_arg4,&_argo5)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GPUFInterpolateCreate. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of GPUFInterpolateCreate. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of GPUFInterpolateCreate. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo5) {
+        if (_argo5 == Py_None) { _arg5 = NULL; }
+        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of GPUFInterpolateCreate. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitGPUFInterpolate *)GPUFInterpolateCreate(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitGPUFInterpolate_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_GPUFInterpolateImage(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitGPUFInterpolate * _arg0;
+    ObitFArray * _arg1;
+    ObitFArray * _arg2;
+    ObitErr * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo3 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOOO:GPUFInterpolateImage",&_argo0,&_argo1,&_argo2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitGPUFInterpolate_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFInterpolateImage. Expected _ObitGPUFInterpolate_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GPUFInterpolateImage. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of GPUFInterpolateImage. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of GPUFInterpolateImage. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    GPUFInterpolateImage(_arg0,_arg1,_arg2,_arg3);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_GPUFInterpolateCopy(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitGPUFInterpolate * _result;
+    ObitGPUFInterpolate * _arg0;
+    ObitGPUFInterpolate * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:GPUFInterpolateCopy",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitGPUFInterpolate_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFInterpolateCopy. Expected _ObitGPUFInterpolate_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitGPUFInterpolate_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GPUFInterpolateCopy. Expected _ObitGPUFInterpolate_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of GPUFInterpolateCopy. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitGPUFInterpolate *)GPUFInterpolateCopy(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitGPUFInterpolate_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_GPUFInterpolateClone(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitGPUFInterpolate * _arg0;
+    ObitGPUFInterpolate * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:GPUFInterpolateClone",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitGPUFInterpolate_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFInterpolateClone. Expected _ObitGPUFInterpolate_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitGPUFInterpolate_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GPUFInterpolateClone. Expected _ObitGPUFInterpolate_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of GPUFInterpolateClone. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    GPUFInterpolateClone(_arg0,_arg1,_arg2);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_GPUFInterpolateRef(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitGPUFInterpolate * _result;
+    ObitGPUFInterpolate * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:GPUFInterpolateRef",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitGPUFInterpolate_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFInterpolateRef. Expected _ObitGPUFInterpolate_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitGPUFInterpolate *)GPUFInterpolateRef(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitGPUFInterpolate_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_GPUFInterpolateUnref(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitGPUFInterpolate * _result;
+    ObitGPUFInterpolate * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:GPUFInterpolateUnref",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitGPUFInterpolate_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFInterpolateUnref. Expected _ObitGPUFInterpolate_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitGPUFInterpolate *)GPUFInterpolateUnref(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitGPUFInterpolate_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_GPUFInterpolateIsA(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitGPUFInterpolate * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:GPUFInterpolateIsA",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitGPUFInterpolate_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFInterpolateIsA. Expected _ObitGPUFInterpolate_p.");
+        return NULL;
+        }
+    }
+    _result = (int )GPUFInterpolateIsA(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_HistoryCreate(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitHistory * _result;
@@ -30604,6 +32138,269 @@ static PyObject *_wrap_ImageUtilInterpolateImage(PyObject *self, PyObject *args)
 {
   free((int *) _arg3);
 }
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageUtilInterpolateImageXY(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImage * _arg0;
+    ObitImage * _arg1;
+    ObitImage * _arg2;
+    ObitImage * _arg3;
+    int * _arg4;
+    int * _arg5;
+    long  _arg6;
+    ObitErr * _arg7;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo3 = 0;
+    PyObject * _obj4 = 0;
+    PyObject * _obj5 = 0;
+    PyObject * _argo7 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOOOOOlO:ImageUtilInterpolateImageXY",&_argo0,&_argo1,&_argo2,&_argo3,&_obj4,&_obj5,&_arg6,&_argo7)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageUtilInterpolateImageXY. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ImageUtilInterpolateImageXY. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of ImageUtilInterpolateImageXY. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of ImageUtilInterpolateImageXY. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj4)) {
+    int size = PyList_Size(_obj4);
+    int i = 0;
+    _arg4 = (int*) malloc((size+1)*sizeof(int));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj4,i);
+      if (PyInt_Check(o)) {
+         _arg4[i] = (int)((PyIntObject*)o)->ob_ival;
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain ints");
+         free(_arg4);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyList_Check(_obj5)) {
+    int size = PyList_Size(_obj5);
+    int i = 0;
+    _arg5 = (int*) malloc((size+1)*sizeof(int));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj5,i);
+      if (PyInt_Check(o)) {
+         _arg5[i] = (int)((PyIntObject*)o)->ob_ival;
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain ints");
+         free(_arg5);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+    if (_argo7) {
+        if (_argo7 == Py_None) { _arg7 = NULL; }
+        else if (SWIG_GetPtrObj(_argo7,(void **) &_arg7,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 8 of ImageUtilInterpolateImageXY. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    ImageUtilInterpolateImageXY(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  free((int *) _arg4);
+}
+{
+  free((int *) _arg5);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_GPUImageInterpolateImageXY(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitGPUFInterpolate * _arg0;
+    ObitImage * _arg1;
+    ObitImage * _arg2;
+    int * _arg3;
+    int * _arg4;
+    ObitErr * _arg5;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _obj4 = 0;
+    PyObject * _argo5 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOOOOO:GPUImageInterpolateImageXY",&_argo0,&_argo1,&_argo2,&_obj3,&_obj4,&_argo5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitGPUFInterpolate_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUImageInterpolateImageXY. Expected _ObitGPUFInterpolate_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GPUImageInterpolateImageXY. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of GPUImageInterpolateImageXY. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj3)) {
+    int size = PyList_Size(_obj3);
+    int i = 0;
+    _arg3 = (int*) malloc((size+1)*sizeof(int));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj3,i);
+      if (PyInt_Check(o)) {
+         _arg3[i] = (int)((PyIntObject*)o)->ob_ival;
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain ints");
+         free(_arg3);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyList_Check(_obj4)) {
+    int size = PyList_Size(_obj4);
+    int i = 0;
+    _arg4 = (int*) malloc((size+1)*sizeof(int));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj4,i);
+      if (PyInt_Check(o)) {
+         _arg4[i] = (int)((PyIntObject*)o)->ob_ival;
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain ints");
+         free(_arg4);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+    if (_argo5) {
+        if (_argo5 == Py_None) { _arg5 = NULL; }
+        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of GPUImageInterpolateImageXY. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    GPUImageInterpolateImageXY(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  free((int *) _arg3);
+}
+{
+  free((int *) _arg4);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageUtilGetXYPixels(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImage * _arg0;
+    ObitImage * _arg1;
+    ObitImage * _arg2;
+    ObitImage * _arg3;
+    ObitErr * _arg4;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo3 = 0;
+    PyObject * _argo4 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOOOO:ImageUtilGetXYPixels",&_argo0,&_argo1,&_argo2,&_argo3,&_argo4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageUtilGetXYPixels. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ImageUtilGetXYPixels. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of ImageUtilGetXYPixels. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of ImageUtilGetXYPixels. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of ImageUtilGetXYPixels. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    ImageUtilGetXYPixels(_arg0,_arg1,_arg2,_arg3,_arg4);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
     return _resultobj;
 }
 
@@ -46036,6 +47833,156 @@ static PyObject *_wrap_TableFQSetHeadKeys(PyObject *self, PyObject *args) {
   }
 }
     TableFQSetHeadKeys(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  Py_XDECREF (_arg1);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableFS(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitData * _arg0;
+    long * _arg1;
+    int  _arg2;
+    char * _arg3;
+    int  _arg4;
+    ObitErr * _arg5;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo5 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiOiO:TableFS",&_argo0,&_obj1,&_arg2,&_obj3,&_arg4,&_argo5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableFS. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    int size = PyList_Size(_obj1);
+    int i = 0;
+    _arg1 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj1,i);
+      if (PyInt_Check(o)) {
+         _arg1[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg1);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo5) {
+        if (_argo5 == Py_None) { _arg5 = NULL; }
+        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of TableFS. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TableFS(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((long *) _arg1);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableFSGetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitTable * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:TableFSGetHeadKeys",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableFSGetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)TableFSGetHeadKeys(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableFSSetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    PyObject * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:TableFSSetHeadKeys",&_argo0,&_obj1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableFSSetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    _arg1 = PyDict_Copy(PyList_GetItem(_obj1,0));
+  } else if (PyDict_Check(_obj1)) {
+    _arg1 = PyDict_Copy(_obj1);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+    TableFSSetHeadKeys(_arg0,_arg1);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
 {
@@ -68981,6 +70928,351 @@ static PyObject *_wrap_delete_FullBeam(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+#define GPUFArray_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
+static PyObject *_wrap_GPUFArray_me_set(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitGPUFArray * _result;
+    GPUFArray * _arg0;
+    ObitGPUFArray * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:GPUFArray_me_set",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_GPUFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFArray_me_set. Expected _GPUFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitGPUFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GPUFArray_me_set. Expected _ObitGPUFArray_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitGPUFArray *)GPUFArray_me_set(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitGPUFArray_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+#define GPUFArray_me_get(_swigobj) ((ObitGPUFArray *) _swigobj->me)
+static PyObject *_wrap_GPUFArray_me_get(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitGPUFArray * _result;
+    GPUFArray * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:GPUFArray_me_get",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_GPUFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFArray_me_get. Expected _GPUFArray_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitGPUFArray *)GPUFArray_me_get(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitGPUFArray_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static GPUFArray *new_GPUFArray(char *name,long ndim,long *naxis) {
+     GPUFArray *out;
+     out = (GPUFArray *) malloc(sizeof(GPUFArray));
+     if (strcmp(name, "None")) out->me = GPUFArrayCreate(name, ndim, naxis);
+     else  out->me = NULL;
+     return out;
+   }
+
+static PyObject *_wrap_new_GPUFArray(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    GPUFArray * _result;
+    char * _arg0;
+    long  _arg1;
+    long * _arg2;
+    PyObject * _obj0 = 0;
+    PyObject * _obj2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OlO:new_GPUFArray",&_obj0,&_arg1,&_obj2)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+{
+  if (PyList_Check(_obj2)) {
+    int size = PyList_Size(_obj2);
+    int i = 0;
+    _arg2 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj2,i);
+      if (PyInt_Check(o)) {
+         _arg2[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg2);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+    _result = (GPUFArray *)new_GPUFArray(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_GPUFArray_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+{
+  free((long *) _arg2);
+}
+    return _resultobj;
+}
+
+static void delete_GPUFArray(GPUFArray *self) {
+    self->me = GPUFArrayUnref(self->me);
+    free(self);
+  }
+static PyObject *_wrap_delete_GPUFArray(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    GPUFArray * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:delete_GPUFArray",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_GPUFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of delete_GPUFArray. Expected _GPUFArray_p.");
+        return NULL;
+        }
+    }
+    delete_GPUFArray(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+#define GPUFInterpolate_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
+static PyObject *_wrap_GPUFInterpolate_me_set(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitGPUFInterpolate * _result;
+    GPUFInterpolate * _arg0;
+    ObitGPUFInterpolate * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:GPUFInterpolate_me_set",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_GPUFInterpolate_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFInterpolate_me_set. Expected _GPUFInterpolate_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitGPUFInterpolate_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of GPUFInterpolate_me_set. Expected _ObitGPUFInterpolate_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitGPUFInterpolate *)GPUFInterpolate_me_set(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitGPUFInterpolate_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+#define GPUFInterpolate_me_get(_swigobj) ((ObitGPUFInterpolate *) _swigobj->me)
+static PyObject *_wrap_GPUFInterpolate_me_get(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitGPUFInterpolate * _result;
+    GPUFInterpolate * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:GPUFInterpolate_me_get",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_GPUFInterpolate_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of GPUFInterpolate_me_get. Expected _GPUFInterpolate_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitGPUFInterpolate *)GPUFInterpolate_me_get(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitGPUFInterpolate_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static GPUFInterpolate *new_GPUFInterpolate(char *name,ObitFArray *inArray,ObitFArray *xArray,ObitFArray *yArray,long hwidth,ObitErr *err) {
+     GPUFInterpolate *out;
+     /* just create  Python structure here */
+     out = (GPUFInterpolate *) malloc(sizeof(GPUFInterpolate));
+     if (strcmp(name, "None")) 
+        out->me = GPUFInterpolateCreate(name, inArray, xArray, yArray, hwidth, err);
+     else out->me = NULL;
+     return out;
+   }
+
+static PyObject *_wrap_new_GPUFInterpolate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    GPUFInterpolate * _result;
+    char * _arg0;
+    ObitFArray * _arg1;
+    ObitFArray * _arg2;
+    ObitFArray * _arg3;
+    long  _arg4;
+    ObitErr * _arg5;
+    PyObject * _obj0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo3 = 0;
+    PyObject * _argo5 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOOOlO:new_GPUFInterpolate",&_obj0,&_argo1,&_argo2,&_argo3,&_arg4,&_argo5)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of new_GPUFInterpolate. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of new_GPUFInterpolate. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of new_GPUFInterpolate. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo5) {
+        if (_argo5 == Py_None) { _arg5 = NULL; }
+        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of new_GPUFInterpolate. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (GPUFInterpolate *)new_GPUFInterpolate(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_GPUFInterpolate_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static void delete_GPUFInterpolate(GPUFInterpolate *self) {
+    self->me = GPUFInterpolateUnref(self->me);
+    free(self);
+  }
+static PyObject *_wrap_delete_GPUFInterpolate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    GPUFInterpolate * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:delete_GPUFInterpolate",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_GPUFInterpolate_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of delete_GPUFInterpolate. Expected _GPUFInterpolate_p.");
+        return NULL;
+        }
+    }
+    delete_GPUFInterpolate(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 #define History_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
 static PyObject *_wrap_History_me_set(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -75163,6 +77455,14 @@ static PyMethodDef ObitMethods[] = {
 	 { "new_History", _wrap_new_History, METH_VARARGS },
 	 { "History_me_get", _wrap_History_me_get, METH_VARARGS },
 	 { "History_me_set", _wrap_History_me_set, METH_VARARGS },
+	 { "delete_GPUFInterpolate", _wrap_delete_GPUFInterpolate, METH_VARARGS },
+	 { "new_GPUFInterpolate", _wrap_new_GPUFInterpolate, METH_VARARGS },
+	 { "GPUFInterpolate_me_get", _wrap_GPUFInterpolate_me_get, METH_VARARGS },
+	 { "GPUFInterpolate_me_set", _wrap_GPUFInterpolate_me_set, METH_VARARGS },
+	 { "delete_GPUFArray", _wrap_delete_GPUFArray, METH_VARARGS },
+	 { "new_GPUFArray", _wrap_new_GPUFArray, METH_VARARGS },
+	 { "GPUFArray_me_get", _wrap_GPUFArray_me_get, METH_VARARGS },
+	 { "GPUFArray_me_set", _wrap_GPUFArray_me_set, METH_VARARGS },
 	 { "delete_FullBeam", _wrap_delete_FullBeam, METH_VARARGS },
 	 { "new_FullBeam", _wrap_new_FullBeam, METH_VARARGS },
 	 { "FullBeam_me_get", _wrap_FullBeam_me_get, METH_VARARGS },
@@ -75720,6 +78020,9 @@ static PyMethodDef ObitMethods[] = {
 	 { "TableGCSetHeadKeys", _wrap_TableGCSetHeadKeys, METH_VARARGS },
 	 { "TableGCGetHeadKeys", _wrap_TableGCGetHeadKeys, METH_VARARGS },
 	 { "TableGC", _wrap_TableGC, METH_VARARGS },
+	 { "TableFSSetHeadKeys", _wrap_TableFSSetHeadKeys, METH_VARARGS },
+	 { "TableFSGetHeadKeys", _wrap_TableFSGetHeadKeys, METH_VARARGS },
+	 { "TableFS", _wrap_TableFS, METH_VARARGS },
 	 { "TableFQSetHeadKeys", _wrap_TableFQSetHeadKeys, METH_VARARGS },
 	 { "TableFQGetHeadKeys", _wrap_TableFQGetHeadKeys, METH_VARARGS },
 	 { "TableFQ", _wrap_TableFQ, METH_VARARGS },
@@ -76053,6 +78356,9 @@ static PyMethodDef ObitMethods[] = {
 	 { "ImageUtilPBCorr", _wrap_ImageUtilPBCorr, METH_VARARGS },
 	 { "ImageUtilPBImage", _wrap_ImageUtilPBImage, METH_VARARGS },
 	 { "ImageUtilPBApply", _wrap_ImageUtilPBApply, METH_VARARGS },
+	 { "ImageUtilGetXYPixels", _wrap_ImageUtilGetXYPixels, METH_VARARGS },
+	 { "GPUImageInterpolateImageXY", _wrap_GPUImageInterpolateImageXY, METH_VARARGS },
+	 { "ImageUtilInterpolateImageXY", _wrap_ImageUtilInterpolateImageXY, METH_VARARGS },
 	 { "ImageUtilInterpolateImage", _wrap_ImageUtilInterpolateImage, METH_VARARGS },
 	 { "ImageUtilMakeImage", _wrap_ImageUtilMakeImage, METH_VARARGS },
 	 { "ImageUtilCreateImage", _wrap_ImageUtilCreateImage, METH_VARARGS },
@@ -76185,6 +78491,26 @@ static PyMethodDef ObitMethods[] = {
 	 { "HistoryCopy", _wrap_HistoryCopy, METH_VARARGS },
 	 { "HistoryZap", _wrap_HistoryZap, METH_VARARGS },
 	 { "HistoryCreate", _wrap_HistoryCreate, METH_VARARGS },
+	 { "GPUFInterpolateIsA", _wrap_GPUFInterpolateIsA, METH_VARARGS },
+	 { "GPUFInterpolateUnref", _wrap_GPUFInterpolateUnref, METH_VARARGS },
+	 { "GPUFInterpolateRef", _wrap_GPUFInterpolateRef, METH_VARARGS },
+	 { "GPUFInterpolateClone", _wrap_GPUFInterpolateClone, METH_VARARGS },
+	 { "GPUFInterpolateCopy", _wrap_GPUFInterpolateCopy, METH_VARARGS },
+	 { "GPUFInterpolateImage", _wrap_GPUFInterpolateImage, METH_VARARGS },
+	 { "GPUFInterpolateCreate", _wrap_GPUFInterpolateCreate, METH_VARARGS },
+	 { "GPUFArrayUnref", _wrap_GPUFArrayUnref, METH_VARARGS },
+	 { "GPUFArrayRef", _wrap_GPUFArrayRef, METH_VARARGS },
+	 { "GPUFArrayIsA", _wrap_GPUFArrayIsA, METH_VARARGS },
+	 { "GPUFArrayGetNaxis", _wrap_GPUFArrayGetNaxis, METH_VARARGS },
+	 { "GPUFArrayGetNdim", _wrap_GPUFArrayGetNdim, METH_VARARGS },
+	 { "GPUFArrayGetName", _wrap_GPUFArrayGetName, METH_VARARGS },
+	 { "GPUFArrayClone", _wrap_GPUFArrayClone, METH_VARARGS },
+	 { "GPUFArrayCopy", _wrap_GPUFArrayCopy, METH_VARARGS },
+	 { "GPUFArrayToHost", _wrap_GPUFArrayToHost, METH_VARARGS },
+	 { "GPUFArrayToGPU", _wrap_GPUFArrayToGPU, METH_VARARGS },
+	 { "GPUFArrayFromData", _wrap_GPUFArrayFromData, METH_VARARGS },
+	 { "GPUFArrayToData", _wrap_GPUFArrayToData, METH_VARARGS },
+	 { "GPUFArrayCreate", _wrap_GPUFArrayCreate, METH_VARARGS },
 	 { "FullBeamIsA", _wrap_FullBeamIsA, METH_VARARGS },
 	 { "FullBeamGetName", _wrap_FullBeamGetName, METH_VARARGS },
 	 { "FullBeamFindPlane", _wrap_FullBeamFindPlane, METH_VARARGS },
@@ -76387,6 +78713,16 @@ static PyMethodDef ObitMethods[] = {
 	 { "CleanImageUnref", _wrap_CleanImageUnref, METH_VARARGS },
 	 { "CleanImageCopy", _wrap_CleanImageCopy, METH_VARARGS },
 	 { "newCleanImage", _wrap_newCleanImage, METH_VARARGS },
+	 { "TableFSFiltVel", _wrap_TableFSFiltVel, METH_VARARGS },
+	 { "TableFSGetSpectrum", _wrap_TableFSGetSpectrum, METH_VARARGS },
+	 { "TableFSRedun", _wrap_TableFSRedun, METH_VARARGS },
+	 { "TableFSPurge", _wrap_TableFSPurge, METH_VARARGS },
+	 { "TableFSSelect", _wrap_TableFSSelect, METH_VARARGS },
+	 { "TableFSMerge", _wrap_TableFSMerge, METH_VARARGS },
+	 { "TableFSIndex", _wrap_TableFSIndex, METH_VARARGS },
+	 { "TableFSAppend", _wrap_TableFSAppend, METH_VARARGS },
+	 { "TableFSPrint", _wrap_TableFSPrint, METH_VARARGS },
+	 { "TableVL2FS", _wrap_TableVL2FS, METH_VARARGS },
 	 { "TableVZSel", _wrap_TableVZSel, METH_VARARGS },
 	 { "TableVL2VZ", _wrap_TableVL2VZ, METH_VARARGS },
 	 { "TableVLPrint", _wrap_TableVLPrint, METH_VARARGS },

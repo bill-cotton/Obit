@@ -38,6 +38,9 @@
  */
 
 /*---------------Public functions---------------------------*/
+/* Magic floating value */
+float CUDAMagicF (void);
+
 #if HAVE_GPU==1  /* GPU? Real versioins */
 /* Public: Set device */
 void ObitCUDASetGPU (int cuda_device);
@@ -66,6 +69,50 @@ void ObitCUDAEventRecord (int* event, int *stream);
 /* Public: synchronize event */
 void ObitCUDAEventSynchronize (int* event);
 
+#if IS_CUDA==1  /* CUDA code */
+/* Public: Create stream */
+cudaStream_t ObitCUDAStreamCreateCUDA ();
+
+/* Public: Destroy stream */
+void ObitCUDAStreamDestroyCUDA (cudaStream_t stream);
+
+/* Public: Create event */
+cudaEvent_t ObitCUDAEventCreateCUDA ();
+
+/* Public: Destroy event */
+void ObitCUDAEventDestroyCUDA (cudaEvent_t event);
+
+/* Public: record event */
+void ObitCUDAEventRecordCUDA (cudaEvent_t event, cudaStream_t stream);
+
+/* Public: synchronize event */
+void ObitCUDAEventSynchronizeCUDA (cudaEvent_t event);
+
+/* Public: Allocate locked host memory */
+extern "C"
+float* ObitCUDAUtilAllocHost (int memsize);
+
+/* Public: Deallocate locked host memory */
+extern "C"
+void ObitCUDAUtilFreeHost (float *host);
+
+/* Public: Allocate locked Device memory */
+extern "C"
+float* ObitCUDAUtilAllocGPU (int memsize);
+
+/* Public: Deallocate Device memory */
+extern "C"
+void ObitCUDAUtilFreeGPU (float *GPU);
+
+/* Public: Copy Host to GPU memory */
+extern "C"
+void ObitCUDAUtilHost2GPU(float *GPU, float *host, int memsize, int* stream);
+
+/* Public: Copy GPU to Host memory */
+extern "C"
+void ObitCUDAUtilGPU2Host(float *host, float *GPU, int memsize, int* stream);
+
+#else /* not CUDA */
 /* Public: Allocate locked host memory */
 float* ObitCUDAUtilAllocHost (int memsize);
 
@@ -84,99 +131,102 @@ void ObitCUDAUtilHost2GPU(float *GPU, float *host, int memsize, int* stream);
 /* Public: Copy GPU to Host memory */
 void ObitCUDAUtilGPU2Host(float *host, float *GPU, int memsize, int* stream);
 
+#endif /* IS_CUDA */
 #else  /* No GPU - stubb */
 /* Public: Set device */
-void ObitCUDASetGPU (int cuda_device)
+static void ObitCUDASetGPU (int cuda_device)
 {
   g_error("GPU/CUDA not implemented");
 } /* end ObitCUDASetGPU */
 
 /* Public: Reset device */
-void ObitCUDAResetGPU ()
+static void ObitCUDAResetGPU ()
 {
   g_error("GPU/CUDA not implemented");
 } /* end  ObitCUDAResetGPU */
 
 /* Public: synchronize GPU */
-void ObitCUDADeviceSynchronize (int* event)
+static void ObitCUDADeviceSynchronize (int* event)
 {
   g_error("GPU/CUDA not implemented");
 } /* end ObitCUDADeviceSynchronize */
 
+
 /* Public: Create stream */
-int* ObitCUDAStreamCreate ()
+static int* ObitCUDAStreamCreate ()
 {
   g_error("GPU/CUDA not implemented");
   return NULL;
 } /* end  ObitCUDAStreamCreate */
 
 /* Public: Destroy stream */
-void ObitCUDAStreamDestroy (int* stream)
+static void ObitCUDAStreamDestroy (int* stream)
 {
   g_error("GPU/CUDA not implemented");
 } /* end ObitCUDAStreamDestroy */
 
 /* Public: Create event */
-int* ObitCUDAEventCreate ()
+static int* ObitCUDAEventCreate ()
 {
   g_error("GPU/CUDA not implemented");
   return NULL;
 } /* end ObitCUDAEventCreate */
 
 /* Public: Destroy event */
-void ObitCUDAEventDestroy (int* event)
+static void ObitCUDAEventDestroy (int* event)
 {
   g_error("GPU/CUDA not implemented");
 } /* end ObitCUDAEventDestroy */
 
 /* Public: record event */
-void ObitCUDAEventRecord (int* event, int *stream)
+static void ObitCUDAEventRecord (int* event, int *stream)
 {
   g_error("GPU/CUDA not implemented");
 } /* end ObitCUDAEventRecord */
 
 /* Public: synchronize event */
-void ObitCUDAEventSynchronize (int* event)
+static void ObitCUDAEventSynchronize (int* event)
 {
   g_error("GPU/CUDA not implemented");
 } /* end ObitCUDAEventSynchronize */
 
 /* Public: Allocate locked host memory */
-float* ObitCUDAUtilAllocHost (int memsize)
+static float* ObitCUDAUtilAllocHost (int memsize)
 {
   g_error("GPU/CUDA not implemented");
   return NULL;
 } /* end ObitCUDAUtilAllocHost */
 
 /* Public: Deallocate locked host memory */
-void ObitCUDAUtilFreeHost (float *host)
+static void ObitCUDAUtilFreeHost (float *host)
 {
   g_error("GPU/CUDA not implemented");
 } /* end ObitCUDAUtilFreeHost */
 
 /* Public: Allocate locked Device memory */
-float* ObitCUDAUtilAllocGPU (int memsize)
+static float* ObitCUDAUtilAllocGPU (int memsize)
 {
   g_error("GPU/CUDA not implemented");
   return NULL;
 } /* end ObitCUDAUtilAllocGPU  */
 
 /* Public: Deallocate Device memory */
-void ObitCUDAUtilFreeGPU (float *GPU)
+static void ObitCUDAUtilFreeGPU (float *GPU)
 {
   g_error("GPU/CUDA not implemented");
 } /* end ObitCUDAUtilFreeGPU */
 
 /* Public: Copy Host to GPU memory */
-void ObitCUDAUtilHost2GPU(float *GPU, float *host, int memsize, int* stream)
+static void ObitCUDAUtilHost2GPU(float *GPU, float *host, int memsize, int* stream)
 {
   g_error("GPU/CUDA not implemented");
 } /* end ObitCUDAUtilHost2GPU */
 
 /* Public: Copy GPU to Host memory */
-void ObitCUDAUtilGPU2Host(float *host, float *GPU, int memsize, int* stream)
+static void ObitCUDAUtilGPU2Host(float *host, float *GPU, int memsize, int* stream)
 {
   g_error("GPU/CUDA not implemented");
 } /* end ObitCUDAUtilGPU2Host */
 #endif /* HAVE_GPU */
+
 #endif /* OBITFCUDAUtil_H */ 

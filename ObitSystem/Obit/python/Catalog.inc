@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for Convolution utilities                  */
 /*                                                                    */
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -31,6 +31,7 @@
 %{
 #include "ObitTableMFUtil.h"
 #include "ObitTableVLUtil.h"
+#include "ObitTableFSUtil.h"
 %}
 
 
@@ -183,5 +184,125 @@ ObitTable* TableVZSel (ObitTable *in, ObitData *data,
   return (ObitTable*)outVZ;
 }  /* end TableVL2VZ */
 
+/**  Convert an VL table to a FS Table */
+void TableVL2FS (ObitTable *in, ObitImage *out, int FSver, ObitErr *err)
+{
+  ObitTableVL *inVL=NULL;
+
+  inVL  = ObitTableVLConvert(in);
+  ObitTableFSUtilVL2FS (inVL, (ObitData*)out, (olong)FSver, err);
+  inVL  = ObitTableVLUnref(inVL);
+}  /* end TableVL2FS */
+
+/**  Write human readable version of an FS table to a FILE */
+void TableFSPrint (ObitTable *in, ObitImage *image, char *prtFile, 
+		   ObitErr *err)
+{
+  FILE *file;
+  ObitTableFS *inFS=NULL;
+
+  if (strncmp (prtFile, "stdout", 6)) {
+    ObitTrimTrail(prtFile);  /* Trim any trailing blanks */
+    file = fopen (prtFile, "a");
+  } else {
+    file = stdout;
+  }
+  inFS  = ObitTableFSConvert(in);
+  ObitTableFSPrint (inFS, image, file, err);
+  if (strncmp (prtFile, "stdout", 6)) {
+    fclose (file);
+  }
+  inFS  = ObitTableFSUnref(inFS);
+}  /* end TableFSPrint */
+
+/**  Append one FS table to another */
+void TableFSAppend (ObitTable *in, ObitTable *out, ObitErr *err)
+{
+  ObitTableFS *inFS=NULL, *outFS=NULL;
+
+  inFS  = ObitTableFSConvert(in);
+  outFS = ObitTableFSConvert(out);
+  ObitTableFSAppend (inFS, outFS,  err);
+  inFS  = ObitTableFSUnref(inFS);
+  outFS = ObitTableFSUnref(outFS);
+}  /* end TableFSAppend */
+
+/** Index a FS table */
+void TableFSIndex (ObitTable *in, ObitErr *err)
+{
+  ObitTableFS *inFS=NULL;
+
+  inFS  = ObitTableFSConvert(in);
+  ObitTableFSIndex (inFS, err);
+  inFS  = ObitTableFSUnref(inFS);
+}  /* end TableFSIndex */
+
+/**  Merge overlapping components */
+void TableFSMerge (ObitTable *in, ObitErr *err)
+{
+  ObitTableFS *inFS=NULL;
+
+  inFS  = ObitTableFSConvert(in);
+  ObitTableFSMerge (inFS, err);
+  inFS  = ObitTableFSUnref(inFS);
+}  /* end TableFSMerge */
+
+/**  Select significant components */
+void TableFSSelect (ObitTable *in, ObitTable *out, ObitErr *err)
+{
+  ObitTableFS *inFS=NULL, *outFS=NULL;
+
+  inFS  = ObitTableFSConvert(in);
+  outFS = ObitTableFSConvert(out);
+  ObitTableFSSelect (inFS, outFS,  err);
+  inFS  = ObitTableFSUnref(inFS);
+  outFS = ObitTableFSUnref(outFS);
+}  /* end TableFSSelect */
+
+/**  Remove entries from a given field */
+void TableFSPurge (ObitTable *in, char *field, ObitErr *err)
+{
+  ObitTableFS *inFS=NULL;
+
+  inFS  = ObitTableFSConvert(in);
+  ObitTableFSPurge (inFS, field, err);
+  inFS  = ObitTableFSUnref(inFS);
+}  /* end TableFSPurge */
+
+/**  Remove redundant entries */
+void TableFSRedun (ObitTable *in, ObitTable *out, ObitErr *err)
+{
+  ObitTableFS *inFS=NULL, *outFS=NULL;
+
+  inFS  = ObitTableFSConvert(in);
+  outFS = ObitTableFSConvert(out);
+  ObitTableFSRedun (inFS, outFS,  err);
+  inFS  = ObitTableFSUnref(inFS);
+  outFS = ObitTableFSUnref(outFS);
+}  /* end  TableFSRedun*/
+
+/**  Extract spectra from image cube */
+void TableFSGetSpectrum (ObitTable *in, ObitImage *image, ObitErr *err)
+{
+  ObitTableFS *inFS=NULL;
+
+  inFS  = ObitTableFSConvert(in);
+  ObitTableFSGetSpectrum (inFS, image, err);
+  inFS  = ObitTableFSUnref(inFS);
+}  /* end  TableFSGetSpectrum*/
+
+/**  Filter and fit spectra */
+void TableFSFiltVel (ObitTable *in, ObitImage *image, ObitTable *out, 
+                     ObitErr *err)
+{
+  ObitTableFS *inFS=NULL;
+  ObitTableFS *outFS=NULL;
+
+  inFS  = ObitTableFSConvert(in);
+  outFS = ObitTableFSConvert(out);
+  ObitTableFSFiltVel (inFS, image, outFS, err);
+  inFS  = ObitTableFSUnref(inFS);
+  outFS = ObitTableFSUnref(outFS);
+}  /* end  TableFSFiltVel */
 
 %}

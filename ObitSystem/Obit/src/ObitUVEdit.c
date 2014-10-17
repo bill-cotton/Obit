@@ -203,7 +203,8 @@ static ofloat MedianSigma (olong n, ofloat *value, ofloat mean, ofloat alpha);
 
 /** Private: Median flagging */
 static ollong MedianFlag (ofloat *devs, ofloat flagSig, 
-			  olong numBL, olong numCorr, gboolean allFlag,
+			  olong numBL, olong numCorr, 
+			  gboolean allFlag, gboolean killAll,
 			  ofloat time, ofloat timeInt,
 			  olong *BLAnt1, olong *BLAnt2, 
 			  olong *Chan, olong *IFs, olong *Stoke,
@@ -256,6 +257,8 @@ static gpointer ThreadEditFDProcess(gpointer arg);
  *               [default 0.25]
  * \li "doHiEdit" OBIT_boolean (1,1,1) If present and TRUE, flag based 
  *                on statistics [def FALSE]
+ * \li "killAll" OBIT_bool (1,1,1) If TRUE and any Stokes correlation is flagged,
+ * all Stokes correlations are flagged [def. FALSE]
  * Routine adapted from the AIPSish TDEDIT.FOR/TDEDIT
  * \param inUV     Input uv data to edit. 
  * \param outUV    UV data onto which the FG table is to be attached.
@@ -267,7 +270,7 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitIOCode iretCode, oretCode;
   ObitTableFG *outFlag=NULL;
   ObitTableFGRow *row=NULL;
-  gboolean doCalSelect, doHiEdit;
+  gboolean doCalSelect, doHiEdit, killAll;
   olong i, j, k, jj, kk, firstVis, startVis, suba, iFGRow, ver;
   ollong countAll, countBad;
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
@@ -319,6 +322,9 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   /* Edit by histogram? */
   doHiEdit = FALSE;
   ObitInfoListGetTest(inUV->info, "doHiEdit", &type, dim,  &doHiEdit);  
+  /* killAll - any Stokes flag => flag all */
+  killAll = FALSE;
+  ObitInfoListGetTest(inUV->info, "killAll", &type, dim,  &killAll);  
 
    /* Data Selection */
   BIF = 1;
@@ -648,8 +654,10 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	    row->chans[1] = BChan + corChan[i] - 1; 
 	    row->pFlags[0]=row->pFlags[1]=row->pFlags[2]=row->pFlags[3]=0; 
 	    k = abs (corStok[i]);
+	    /* Flag all related Stokes? */
+	    if (killAll) row->pFlags[0] = 15; /* 1+2+4+8 */
 	    /* bit flag implementation kinda screwy */
-	    row->pFlags[0] |= 1<<(k-1);
+	    else row->pFlags[0] |= 1<<(k-1);
 	    
 	    /* Write */
 	    iFGRow = -1;
@@ -692,8 +700,10 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 		row->chans[1]  = BChan + corChan[jj] - 1; 
 		row->pFlags[0]=row->pFlags[1]=row->pFlags[2]=row->pFlags[3]=0; 
 		k = abs (corStok[j]);
+		/* Flag all related Stokes? */
+		if (killAll) row->pFlags[0] = 15; /* 1+2+4+8 */
 		/* bit flag implementation kinda screwy */
-		row->pFlags[0] |= 1<<(k-1);
+		else row->pFlags[0] |= 1<<(k-1);
 		
 		/* Write */
 		iFGRow = -1;
@@ -784,6 +794,8 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
  * \li "maxBad"    OBIT_float (1,1,1) Fraction of allowed flagged baselines 
  *               to a poln/channel/IF above which all baselines are flagged.
  *               [default 0.25]
+ * \li "killAll" OBIT_bool (1,1,1) If TRUE and any Stokes correlation is flagged,
+ *               all Stokes correlations are flagged [def. FALSE]
  *
  * \param inUV     Input uv data to edit. 
  * \param outUV    UV data onto which the FG table is to be attached.
@@ -809,7 +821,7 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   olong *BLAnt1=NULL, *BLAnt2=NULL, BIF, BChan;
   olong flagTab, indx, jndx, kndx, nVisPIO, itemp, ant1, ant2;
   olong ncorr, numAnt, numBL, blindx;
-  gboolean gotOne, done, isbad, *badCor=NULL;
+  gboolean gotOne, done, isbad, killAll, *badCor=NULL;
   ofloat *acc=NULL, *corCnt=NULL, *corBad=NULL, *Buffer;
   ofloat startTime, endTime, curTime, rms2, ampl2;
   ofloat sec;
@@ -845,6 +857,9 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   maxBad = 0.25;           /* default 0.25 */
   ObitInfoListGetTest(inUV->info, "maxBad", &type, dim,  &maxBad);  
   if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+  /* killAll - any Stokes flag => flag all */
+  killAll = FALSE;
+  ObitInfoListGetTest(inUV->info, "killAll", &type, dim,  &killAll);  
 
    /* Data Selection */
   BIF = 1;
@@ -1142,8 +1157,10 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	    row->chans[1] = BChan + corChan[i] - 1; 
 	    row->pFlags[0]= row->pFlags[1] = row->pFlags[2] = row->pFlags[3] = 0; 
 	    k = abs (corStok[i]);
+	    /* Flag all related Stokes? */
+	    if (killAll) row->pFlags[0] = 15; /* 1+2+4+8 */
 	    /* bit flag implementation kinda screwy */
-	    row->pFlags[0] |= 1<<(k-1);
+	    else row->pFlags[0] |= 1<<(k-1);
 	    
 	    /* Write */
 	    iFGRow = -1;
@@ -1186,8 +1203,10 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 		row->chans[1]  = BChan + corChan[jj] - 1; 
 		row->pFlags[0]=row->pFlags[1]=row->pFlags[2]=row->pFlags[3]=0; 
 		k = abs (corStok[j]);
+		/* Flag all related Stokes? */
+		if (killAll) row->pFlags[0] = 15; /* 1+2+4+8 */
 		/* bit flag implementation kinda screwy */
-		row->pFlags[0] |= 1<<(k-1);
+		else row->pFlags[0] |= 1<<(k-1);
 		
 		/* Write */
 		iFGRow = -1;
@@ -1277,6 +1296,8 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
  * \li "maxBad"    OBIT_float (1,1,1) Fraction of allowed flagged baselines 
  *               to a poln/channel/IF above which all baselines are flagged.
  *               [default 0.25]
+ * \li "killAll" OBIT_bool (1,1,1) If TRUE and any Stokes correlation is flagged,
+ *               all Stokes correlations are flagged [def. FALSE]
  *
  * \param inUV     Input uv data to edit. 
  * \param outUV    UV data onto which the FG table is to be attached.
@@ -1302,7 +1323,7 @@ void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   olong *BLAnt1=NULL, *BLAnt2=NULL, BIF, BChan;
   olong flagTab, indx, jndx, kndx, nVisPIO, itemp, ant1, ant2;
   olong ncorr, numAnt, numBL, blindx;
-  gboolean gotOne, done, isbad, *badCor=NULL;
+  gboolean gotOne, done, isbad, killAll, *badCor=NULL;
   ofloat *acc=NULL, *corCnt=NULL, *corBad=NULL, *Buffer;
   ofloat startTime, endTime, curTime, rms2, rms3, ampl2;
   ofloat sec;
@@ -1338,6 +1359,9 @@ void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   maxBad = 0.25;           /* default 0.25 */
   ObitInfoListGetTest(inUV->info, "maxBad", &type, dim,  &maxBad);  
   if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+  /* killAll - any Stokes flag => flag all */
+  killAll = FALSE;
+  ObitInfoListGetTest(inUV->info, "killAll", &type, dim,  &killAll);  
 
    /* Data Selection */
   BIF = 1;
@@ -1639,8 +1663,10 @@ void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	    row->chans[1] = BChan + corChan[i] - 1; 
 	    row->pFlags[0]=row->pFlags[1]=row->pFlags[2]=row->pFlags[3]=0; 
 	    k = abs (corStok[i]);
+	    /* Flag all related Stokes? */
+	    if (killAll) row->pFlags[0] = 15; /* 1+2+4+8 */
 	    /* bit flag implementation kinda screwy */
-	    row->pFlags[0] |= 1<<(k-1);
+	    else row->pFlags[0] |= 1<<(k-1);
 	    
 	    /* Write */
 	    iFGRow = -1;
@@ -1683,8 +1709,10 @@ void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 		row->chans[1]  = BChan + corChan[jj] - 1; 
 		row->pFlags[0]=row->pFlags[1]=row->pFlags[2]=row->pFlags[3]=0; 
 		k = abs (corStok[j]);
+		/* Flag all related Stokes? */
+		if (killAll) row->pFlags[0] = 15; /* 1+2+4+8 */
 		/* bit flag implementation kinda screwy */
-		row->pFlags[0] |= 1<<(k-1);
+		else row->pFlags[0] |= 1<<(k-1);
 		
 		/* Write */
 		iFGRow = -1;
@@ -1803,6 +1831,8 @@ void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
  * \li "maxBad" OBIT_float (1,1,1) maximum fraction of time samples 
  *             at and below which a channel/interval will be flagged.  
  *             [default 0.25, -1 ->no flagging by fraction of samples.]
+ * \li "killAll" OBIT_bool (1,1,1) If TRUE and any Stokes correlation is flagged,
+ *             all Stokes correlations are flagged [def. FALSE]
  * \param outUV    UV data onto which the FG table is to be attached.
  *                 May be the same as inUV.
  * \param err      Error stack, returns if not empty.
@@ -1830,7 +1860,7 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   ofloat startTime, endTime, curTime, amp2, *Buffer;
   ofloat lastTime=-1.0, cbase;
   olong *corChan=NULL, *corIF=NULL, *corStok=NULL, *corV=NULL;
-  gboolean *chanMask=NULL, done, gotOne;
+  gboolean *chanMask=NULL, done, gotOne, killAll;
   /* Accumulators per spectral channel/IF/poln/baseline */
   ofloat *sumA=NULL, *sumA2=NULL, *sigma=NULL;
   olong *blLookup=NULL, *BLAnt1=NULL, *BLAnt2=NULL;
@@ -1897,6 +1927,9 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   /* Min. fraction of good times */
   minGood = 0.25;           /* default 0.25 */
   ObitInfoListGetTest(inUV->info, "maxBad", &type, dim,  &minGood);  
+  /* killAll - any Stokes flag => flag all */
+  killAll = FALSE;
+  ObitInfoListGetTest(inUV->info, "killAll", &type, dim,  &killAll);  
 
    /* Data Selection */
   BIF = 1;
@@ -2207,7 +2240,10 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
 		  row->chans[1]  = BChan + jj; 
 		  row->pFlags[0]=row->pFlags[1]=row->pFlags[2]=row->pFlags[3]=0; 
 		  /* bit flag implementation kinda screwy */
-		  row->pFlags[0] |= 1<<(js);
+		  /* Flag all related Stokes? */
+		  if (killAll) row->pFlags[0] = 15; /* 1+2+4+8 */
+		  /* bit flag implementation kinda screwy */
+		  else row->pFlags[0] |= 1<<(js);
 		  
 		  /* Write */
 		  iFGRow = -1;
@@ -2318,6 +2354,8 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
  * \li "maxBad"  OBIT_float (1,1,1) Fraction of allowed flagged baselines 
  *               to an antenna above which all baselines are flagged.
  *               [default 0.25]
+ * \li "killAll" OBIT_bool (1,1,1) If TRUE and any Stokes correlation is flagged,
+ *               all Stokes correlations are flagged [def. FALSE]
  *
  * \param inUV     Input uv data to edit. 
  * \param outUV    UV data onto which the FG table is to be attached.
@@ -2334,7 +2372,7 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
-  gboolean gotOne;
+  gboolean gotOne, killAll;
   ObitIOAccess access;
   ObitUVDesc *inDesc;
   ofloat timeAvg, lastTime=-1.0, temp[2], maxAmp, maxBad, cbase, hisicc;
@@ -2386,6 +2424,9 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   /* Clipping Stokes type */
   Stokes[0] = 'V'; Stokes[1] = Stokes[2] = Stokes[3] = ' '; Stokes[4] = 0;
   ObitInfoListGetTest(inUV->info, "flagStok",   &type, dim, Stokes);  
+  /* killAll - any Stokes flag => flag all */
+  killAll = FALSE;
+  ObitInfoListGetTest(inUV->info, "killAll", &type, dim,  &killAll);  
 
   /* Data Selection */
   BIF = 1;
@@ -2522,6 +2563,8 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
     row->pFlags[0] = 1<<2 | 1<<3;
   if ((Stokes[0]=='U') && (inDesc->crval[inDesc->jlocs]< 0.0))
     row->pFlags[0] = 1<<2 | 1<<3;
+  /* Flag all related Stokes? */
+  if (killAll) row->pFlags[0] = 15; /* 1+2+4+8 */
 
   /* Reason includes time/date */
   /* Get time since 00:00:00 GMT, Jan. 1, 1970 in seconds. */
@@ -3455,6 +3498,8 @@ ObitUV* ObitUVEditClipStokes (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
  *                This takes into account any previous selection
  * \li "begChan"  OBIT_int    (1,1,1) First channel in data [ def. 1]
  * \li "allChan"  OBIT_boo    (1,1,1) If true, flag all channels [ def. FALSE]
+ * \li "killAll" OBIT_bool (1,1,1) If TRUE and any Stokes correlation is flagged,
+ *                all Stokes correlations are flagged [def. FALSE]
  *
  * \param inUV    Input uv data to edit. Any prior selection/calibration applied.
  * \param outUV   UV data onto which the FG table is to be attached.
@@ -3471,7 +3516,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitThread *myThread=NULL;
   ofloat  flagSig, alpha, timeWind, timeAvg;
   olong flagTab, begIF, begChan; 
-  gboolean doCalSelect;
+  gboolean doCalSelect, killAll;
   olong i, j, k, firstVis, startVis, suba, ver;
   ollong checked, countAll, countBad;
   olong nThread;
@@ -3535,6 +3580,9 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   timeAvg = 0.0;
   ObitInfoListGetTest(inUV->info, "timeAvg", &type, dim,  &timeAvg);  
   timeAvg /= 1440.0;
+  /* killAll - any Stokes flag => flag all */
+  killAll = FALSE;
+  ObitInfoListGetTest(inUV->info, "killAll", &type, dim,  &killAll);  
 
   /* How many integration intervals? */
   tInt = MedianUVInt (inUV, err);
@@ -3760,7 +3808,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  for (it=0; it<=itDone; it++) {
 	    checked  += MedianDev (amps, it, times, numBL, ncorr, numTime, ntime, alpha, devs, work,
 				   nThread, args, err);
-	    countBad += MedianFlag (devs, flagSig, numBL, ncorr, allChan, times[it], timeAvg, 
+	    countBad += MedianFlag (devs, flagSig, numBL, ncorr, allChan, killAll, times[it], timeAvg, 
 				    BLAnt1, BLAnt2, Chan, IFs, Stoke, outFlag, row, err);
 	    if (err->error) goto cleanup;
 	  }
@@ -3774,7 +3822,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	    if (times[it]>times[itDone]) {
 	      checked  += MedianDev (amps, it, times, numBL, ncorr, numTime, ntime, alpha, devs, work,
 				     nThread, args, err);
-	      countBad += MedianFlag (devs, flagSig, numBL, ncorr, allChan, times[it], timeAvg, 
+	      countBad += MedianFlag (devs, flagSig, numBL, ncorr, allChan, killAll, times[it], timeAvg, 
 				      BLAnt1, BLAnt2, Chan, IFs, Stoke, outFlag, row, err);
 	      if (err->error) goto cleanup;
 	    }
@@ -3795,7 +3843,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  if (itDone>=ntime) itDone = 0;
 	  checked  += MedianDev (amps, itDone, times, numBL, ncorr, numTime, ntime, alpha, devs, work,
 				 nThread, args, err);
-	  countBad += MedianFlag (devs, flagSig, numBL, ncorr, allChan, times[itDone], timeAvg, 
+	  countBad += MedianFlag (devs, flagSig, numBL, ncorr, allChan, killAll, times[itDone], timeAvg, 
 				  BLAnt1, BLAnt2, Chan, IFs, Stoke, outFlag, row, err);
 	  if (err->error) goto cleanup;
 	}
@@ -4038,6 +4086,8 @@ void ObitUVEditAppendFG (ObitUV *inUV, olong flagTab, ObitErr *err)
  * \li "flagTab" OBIT_long  (1,1,1)  output Flag table version [1]
  * \li "PFlag"   OBIT_string  (4,1,1) Stokes/PFlag string, def '1111'
  * \li "Reason"  OBIT_string  (24,1,1) Reason for flagging
+ * \li "killAll" OBIT_bool (1,1,1) If TRUE and any Stokes correlation is flagged,
+ *               all Stokes correlations are flagged [def. FALSE]
  * \param inUV     Input uv data to edit 
  * \param outUV    UV on which the FG table to be written, may be the same as inUV.
  * \param err      Error stack, returns if not empty.
@@ -4048,7 +4098,7 @@ void ObitUVEditElev (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM];
   olong i, flagTab, ver, irow, orow, maxAnt, iant, numIF=0, numPCal, numOrb;
   olong cntFlag;
-  gboolean want, *AntOK=NULL;
+  gboolean want, killAll, *AntOK=NULL;
   ofloat minElev, minElevRad, elevBeg, elevEnd, sumFlag;
   ofloat t, tBeg, tEnd, oneMin = 1.0/1440.0;
   ObitTableFG  *FlagTab=NULL;
@@ -4083,6 +4133,9 @@ void ObitUVEditElev (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   /* Default reason */
   if (!strncmp(Reason, "          ", 10))
       strncpy (Reason, "Elevation Limit         ", 24);
+  /* killAll - any Stokes flag => flag all */
+  killAll = FALSE;
+  ObitInfoListGetTest(inUV->info, "killAll", &type, dim,  &killAll);  
 
   /* Tell */
   Obit_log_error(err, OBIT_InfoErr, "Flagging data above elevation %5.1f deg",
@@ -4119,6 +4172,8 @@ void ObitUVEditElev (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
     if (Stokes[2]=='1')  row->pFlags[0] |= 4;
     if (Stokes[3]=='1')  row->pFlags[0] |= 8;
   } else row->pFlags[0] = 1+2+4+8;   /* what the hell */
+  /* Flag all related Stokes? */
+  if (killAll) row->pFlags[0] = 15; /* 1+2+4+8 */
   /* Channels/IFs selected */
   row->chans[0] = inUV->mySel->startChann; row->chans[1] = row->chans[0]+inUV->mySel->numberChann-1;
   row->ifs[0]   = inUV->mySel->startIF;    row->ifs[1]   = row->ifs[0]+inUV->mySel->numberIF-1;
@@ -4291,6 +4346,8 @@ void ObitUVEditElev (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
  * \li "flagTab"  OBIT_long   (1,1,1)  output Flag table version [1]
  * \li "PFlag"    OBIT_string  (4,1,1) Stokes/PFlag string, def '1111'
  * \li "Reason"   OBIT_string  (24,1,1) Reason for flagging
+ * \li "killAll"  OBIT_bool (1,1,1) If TRUE and any Stokes correlation is flagged,
+ *                 all Stokes correlations are flagged [def. FALSE]
  * \param inUV     Input uv data to edit 
  * \param outUV    UV on which the FG table to be written, may be the same as inUV.
  * \param err      Error stack, returns if not empty.
@@ -4302,7 +4359,7 @@ void ObitUVEditShadCross (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM];
   olong flagTab, ver, irow, orow, maxAnt, iant, ibase, oant;
   olong cntFlagS, cntFlagC;
-  gboolean *AntOK=NULL, doFlag, want;
+  gboolean *AntOK=NULL, doFlag, want, killAll;
   ofloat minShad, minShadLam2, minCross, minCrossLam2;
   ofloat sumFlagS, sumFlagC;
   ofloat tBeg, tEnd, bl2, bl2B, bl2E;
@@ -4343,6 +4400,9 @@ void ObitUVEditShadCross (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   /* Default reason */
   if (!strncmp(Reason, "          ", 10))
       strncpy (Reason, "Shadowing/crosstalk     ", 24);
+  /* killAll - any Stokes flag => flag all */
+  killAll = FALSE;
+  ObitInfoListGetTest(inUV->info, "killAll", &type, dim,  &killAll);  
 
   /* Tell */
   Obit_log_error(err, OBIT_InfoErr, "Flagging Shadow limit %5.1f m Crosstalk limit %5.1f m  ",
@@ -4379,6 +4439,9 @@ void ObitUVEditShadCross (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
     if (Stokes[2]=='1')  row->pFlags[0] |= 4;
     if (Stokes[3]=='1')  row->pFlags[0] |= 8;
   } else row->pFlags[0] = 1+2+4+8;   /* what the hell */
+  /* Flag all related Stokes? */
+  if (killAll) row->pFlags[0] = 15; /* 1+2+4+8 */
+
   /* Channels/IFs selected */
   row->chans[0] = inUV->mySel->startChann; row->chans[1] = row->chans[0]+inUV->mySel->numberChann-1;
   row->ifs[0]   = inUV->mySel->startIF;    row->ifs[1]   = row->ifs[0]+inUV->mySel->numberIF-1;
@@ -5317,6 +5380,7 @@ static ofloat MedianSigma (olong n, ofloat *value, ofloat mean, ofloat alpha)
  * \param numBL   Number of baselines
  * \param numCorr Number of correlators
  * \param allChan If TRUE flag all channels
+ * \param killAll If TRUE flag all Stokes
  * \param time    Time of this time interval
  * \param timeInt Width in time to flag
  * \param BLAnt1  First antenna number of baseline
@@ -5333,7 +5397,8 @@ static ofloat MedianSigma (olong n, ofloat *value, ofloat mean, ofloat alpha)
  * \return number of baselines/correlations flagged
  */
 static ollong MedianFlag (ofloat *devs, ofloat flagSig, 
-			  olong numBL, olong numCorr, gboolean allChan,
+			  olong numBL, olong numCorr, 
+			  gboolean allChan, gboolean killAll,
 			  ofloat time, ofloat timeInt,
 			  olong *BLAnt1, olong *BLAnt2, 
 			  olong *Chan, olong *IFs, olong *Stoke,
@@ -5384,6 +5449,8 @@ static ollong MedianFlag (ofloat *devs, ofloat flagSig,
 	else if (Stoke[kndx]==2) FGrow->pFlags[0] |= 1<<(1);
 	else if (Stoke[kndx]==4) FGrow->pFlags[0] |= 1<<(2);
 	else if (Stoke[kndx]==8) FGrow->pFlags[0] |= 1<<(3);
+	/* Flag all related Stokes? */
+	if (killAll) FGrow->pFlags[0] = 15; /* 1+2+4+8 */
 	/* DEBUG
 	fprintf (stdout," %f %d %d %d %f\n",
 		 time, BLAnt1[iBL], BLAnt2[iBL], Stoke[kndx], devs[indx]);*/

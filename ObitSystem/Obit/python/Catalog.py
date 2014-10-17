@@ -2,13 +2,13 @@
 Catalog manipulation utilities
 
 This module contains the python interfaces to  utility routines to manupulate
-ObitTableMF and ObitTableVL tables containing source catalogs.
+ObitTableMF, ObitTableVL and ObitTableFS tables containing source catalogs.
 These tables can be generated using Obit Task FndSou or the AIPS tasks
-VSAD or SAD.
+VSAD or SAD.  FS Tables also contain spectra.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2006-2013
+#  Copyright (C) 2006-2014
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -513,3 +513,279 @@ def PVZSel(VZTable, image, err):
     outVZ.me = Obit.TableVZSel (VZTable.me, id, err.me);
     return outVZ
     # end PVZSel
+
+def PVL2FS(VLTable, image, FSver, err):
+    """
+    Convert contents in an ObitTableVL to entries in an FS table
+    
+    Converts an VL table produced by FndSou (or AIPS tasks SAD, VSAD)
+    to a FS table (allows spectra).
+
+    * VLTable   = Input Obit VL Table, control parameters on List:
+                  minFlux = Minimum acceptable flux density (Jy) [def 0]
+    * image     = Image cube being cataloged
+    * FSver     = FS version
+    * err       = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not Table.PIsA(VLTable):
+        print "Actually ",VLTable.__class__
+        raise TypeError,"VLTable MUST be a Python Obit Table"
+    if not Image.PIsA(image):
+        print "Actually ",image.__class__
+        raise TypeError,"image MUST be a Python Obit Image"
+    #
+    Obit.TableVL2FS (VLTable.me, image.me, FSver, err.me);
+    # end PVL2FS
+
+def PFSAppend (inFS, outFS, err):
+    """
+    Append contents of one FS table to another
+
+    * inFS      = Input Obit FS Table
+    * outFS     = Output Obit FS Table
+    * err       = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not Table.PIsA(inFS):
+        print "Actually ",inFS.__class__
+        raise TypeError,"inFS MUST be a Python Obit Table"
+    if not Table.PIsA(outFS):
+        print "Actually ",outFS.__class__
+        raise TypeError,"FSTable MUST be a Python Obit Table"
+    #
+    Obit.TableFSAppend (inFS.me, outFS.me, err.me);
+    # end PFSAppend 
+    
+def PFSIndex (inFS,err):
+    """
+    Index a FS table
+    
+    Create an index for faster access to contents
+
+    * inFS     = Output Obit FS Table
+    * err      = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not Table.PIsA(inFS):
+        print "Actually ",inFS.__class__
+        raise TypeError,"inFS MUST be a Python Obit Table"
+    #
+    Obit.TableFSIndex (inFS.me, err.me);
+    # end PFSIndex 
+    
+def PFSMerge (inFS, err, Radius = 3, Cutoff=0.05):
+    """
+    Merge contents of FS table
+    
+    Merge overlapping components from a given field
+    Sums the flux of all components within a specified distance 
+    of each component and then merges components weaker than cutoff
+    of the total with the strongest component.  
+    The resultant position is the weighted average and the 
+    flux is the sum.
+    This should be run on a table with all entries derived from 
+    the same image.
+
+    * inFS      = Input Obit FS Table, additional control parameters on List:
+                  begRow = 1st (1-rel) row [def 1]
+                  endRow = last (1-rel) row [def all]
+    * err       = Python Obit Error/message stack
+    * Radius    = The radius in pixels within which to sum components.
+    * Cutoff    = The minimum acceptable fraction  of summed flux.
+    """
+    ################################################################
+    # Checks
+    if not Table.PIsA(inFS):
+        print "Actually ",inFS.__class__
+        raise TypeError,"inFS MUST be a Python Obit Table"
+    #
+    # Set control values
+    inInfo = inFS.List
+    dim = [1,1,1,1,1]
+    InfoList.PPutFloat   (inInfo, "Radius", dim, [Radius], err)
+    InfoList.PPutFloat   (inInfo, "Cutoff", dim, [Cutoff], err)
+    #
+    Obit.TableFSMerge (inFS.me, err.me);
+    # end PFSMerge 
+
+def PFSSelect (inFS, outFS, err, BLC=[10,10], TRC=[100000,100000], \
+               Steps=[[2.0,0.05], [3.0,0.02], [4.0,0.01]]):
+    """
+    Select significant components in a FS table
+    
+    Select significant components in a table to out
+    Given a table of radii and fractional fluxes, filter out
+    weak sources in the presence of strong.  For any non zero
+    entry in Steps, if the entry has a peak weaker than fraction 
+    of the total within radius then it is not copied to the output.
+    This should be run on a table with all entries derived from 
+    the same image.
+
+    * inFS      = Input Obit FS Table, additional control parameters on List:
+                  begRow = 1st (1-rel) row [def 1]
+                  endRow = last (1-rel) row [def all]
+    * outFS     = Output Obit FS Table
+    * err       = Python Obit Error/message stack
+    * BLC       = Lowest x,y pixel number selected
+    * TRC       = Highest pixel number selected
+    * Steps     = Pairs of values giving (radius(cells), fraction),
+      empty entries zero filled
+    """
+    ################################################################
+    # Checks
+    if not Table.PIsA(inFS):
+        print "Actually ",inFS.__class__
+        raise TypeError,"inFS MUST be a Python Obit Table"
+    if not Table.PIsA(outFS):
+        print "Actually ",outFS.__class__
+        raise TypeError,"FSTable MUST be a Python Obit Table"
+    #
+    # Set control values
+    inInfo = inFS.List
+    dim = [2,1,1,1,1]
+    InfoList.PPutInt   (inInfo, "BLC", dim, BLC, err)
+    InfoList.PPutInt   (inInfo, "TRC", dim, TRC, err)
+    # Convert Steps to 1-D
+    sss = []
+    for s in Steps:
+        sss.append(s[0])
+        sss.append(s[1])
+    dim = [2, len(Steps),1,1,1]
+    InfoList.PPutFloat   (inInfo, "Steps", dim, sss, err)
+    #
+    Obit.TableFSSelect (inFS.me, outFS.me, err.me);
+    # end PFSSelect 
+
+def PFSPurge (inFS, field, err):
+    """
+    Remove FS table entries from a given field
+    
+    Entries from "field" are deselected
+
+    * inFS      = Input Obit FS Table
+    * field     = Name of field to purge
+    * err       = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not Table.PIsA(inFS):
+        print "Actually ",inFS.__class__
+        raise TypeError,"inFS MUST be a Python Obit Table"
+    #
+    Obit.TableFSPurge (inFS.me, outFS.me, err.me);
+    # end PFSPurge 
+
+def PFSRedun (inFS, outFS, err, centerPix=[512,512], maxDist=15.0):
+    """
+    Remove redundant entries from a FS table
+    
+    Search forward from each entry until past time of possible match.
+    If a positional match (maxDist) is found then the one closest
+    to the center of its image (centerPix) is chosen.  The other
+    entry is flagged in the input table.  When the search over the
+    RA range from the original source is finished the final accepted
+    entry is written to the output table.
+
+    * inFS      = Input Obit FS Table, additional control parameters on List:
+                  begRow = 1st (1-rel) row [def 1]
+                  endRow = last (1-rel) row [def all]
+    * outFS     = Output Obit FS Table
+    * err       = Python Obit Error/message stack
+    * centerPix = Center pixel in images
+    * maxDist   = How far (asec) to search for matches
+    """
+    ################################################################
+    # Checks
+    if not Table.PIsA(inFS):
+        print "Actually ",inFS.__class__
+        raise TypeError,"inFS MUST be a Python Obit Table"
+    if not Table.PIsA(outFS):
+        print "Actually ",outFS.__class__
+        raise TypeError,"FSTable MUST be a Python Obit Table"
+    # Set control values
+    inInfo = inFS.List
+    dim = [1,1,1,1,1]
+    InfoList.PPutFloat (inInfo, "maxDist", dim, [maxDist], err)
+    dim = [2,1,1,1,1]
+    InfoList.PPutInt   (inInfo, "centerPix", dim, centerPix, err)
+    #
+    Obit.TableFSRedun (inFS.me, outFS.me, err.me);
+    # end PFSRedun 
+
+def PFSPrint (FSTable, image, err, file="stdout"):
+    """
+    Write human readable version of an FS table to a file
+    
+    Print contents of FS table
+
+    * FSTable   = Input Obit FS Table, List controls:
+    *             minSNR = min SNR to select
+    * image     = Image being cataloged
+    * err       = Python Obit Error/message stack
+    * file      = Name of a file or "stdout" for terminal display
+    """
+    ################################################################
+    # Checks
+    if not Table.PIsA(FSTable):
+        print "Actually ",FSTable.__class__
+        raise TypeError,"FSTable MUST be a Python Obit Table"
+    if not Image.PIsA(image):
+        print "Actually ",image.__class__
+        raise TypeError,"image MUST be a Python Obit Image"
+    #
+    Obit.TableFSPrint (FSTable.me, image.me, file, err.me);
+    # end PFSPrint
+
+def PFSGetSpectrum (inFS, image, err):
+    """
+    Extract spectra for FS table entries from image
+    
+    * inFS      = Input Obit FS Table
+    * image     = Image being cataloged, control parameters on List:
+                  RMSsize =  halfwidth of region to determine RMS [def 50]
+                             <0 => use full image
+    * err       = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not Table.PIsA(inFS):
+        print "Actually ",inFS.__class__
+        raise TypeError,"inFS MUST be a Python Obit Table"
+    if not Image.PIsA(image):
+        print "Actually ",image.__class__
+        raise TypeError,"image MUST be a Python Obit Image"
+    #
+    Obit.TableFSGetSpectrum (FSTable.me, image.me, err.me);
+    # end PFSGetSpectrum
+
+def PFSFiltVel (inFS, image, outFS, err):
+    """
+    Filter and fit spectra
+    
+    * inFS      = Input Obit FS Table
+    * image     = Image cube being cataloged, control parameters on List:
+                  minSNR = Minimum acceptable SNR [def 5]
+                  minFlux = Minimum acceptable flux density (Jy) [def 0]
+    * outFS     = output Obit FS Table
+    * err       = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not Table.PIsA(inFS):
+        print "Actually ",inFS.__class__
+        raise TypeError,"inFS MUST be a Python Obit Table"
+    if not Table.PIsA(outFS):
+        print "Actually ",outFS.__class__
+        raise TypeError,"outFS MUST be a Python Obit Table"
+    if not Image.PIsA(image):
+        print "Actually ",image.__class__
+        raise TypeError,"image MUST be a Python Obit Image"
+    #
+    Obit.TableFSFiltVel(inFS.me, image.me, outFS.me, err.me);
+    # end PFSFiltVel
+
+
