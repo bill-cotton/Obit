@@ -2508,3 +2508,26 @@ Obit/src/ObitImageUtil.c:
 Obit/src/ObitUVDesc.c:
   Index: checks for u,v,w only have the first 2 char.
 17 Oct. 2014 svn ver 498
+
+Various bug fixes
+Obit/tasks/RLPass.c:
+  UpdateBPTable: reset pointer to IO descriptor after it becomes invalid
+Obit/src/ObitIOImageFITS.c:
+  Write: Fix bug with Plane number
+Obit/python/EVLACal.py:
+  EVLACalAP: Use Perley and Butler 2012 in SetJy
+Obit/src/ObitUVSelfCal.c:
+  SelfCal: default noNeg now TRUE
+Obit/tasks/MFImage.c:
+  doImage: Require P Selfcal before A&P (otherwise it fails)
+Obit/src/ObitUVSel.c:
+  ObitUVSelGetDesc,ObitUVSelSetDesc, honor KeepSou parameter.
+Obit/tasks/BDFIn.c:
+  Add SYSTEM_CONFIGURATION to lists of online cal scans to ignore.
+Obit/include/ObitSkyModelDef.h:
+  Dummy GPUSkyModel if no GPU
+Obit/src/ObitDConCleanVis.c:
+  SubNewCCs: No threading (nTh=1), as threading is used in the FArray routine called.
+Obit/tasks/FndSou.c:
+  Islands: Check/merge overlapping islands
+13 Nov. 2014 svn ver 499

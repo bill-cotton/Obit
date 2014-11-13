@@ -1244,7 +1244,7 @@ void FlagIntent (ObitSDMData *SDMData, ObitUV* outData, ObitErr* err)
   ASDMScanTable*   ScanTab;
   olong            iScan, iIntent, count=0;
   gchar            *flagEntries[] = {
-    "CALIBRATE_POINTING",
+    "CALIBRATE_POINTING","SYSTEM_CONFIGURATION",
     NULL};
   gchar *routine = "FlagIntent";
   
@@ -1954,7 +1954,8 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   gboolean first=TRUE;
   gchar dataroot[132];
   gchar *filename;
-  gchar *ignoreIntent[]={"CALIBRATE_POINTING","UNSPECIFIED","INTERNAL_CALIBRATION", NULL};
+  gchar *ignoreIntent[]={"CALIBRATE_POINTING","UNSPECIFIED","INTERNAL_CALIBRATION", 
+			 "SYSTEM_CONFIGURATION", NULL};
   gchar *routine = "GetData";
 
   /* error checks */

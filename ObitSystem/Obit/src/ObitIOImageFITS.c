@@ -896,6 +896,7 @@ ObitIOCode ObitIOImageFITSWrite (ObitIOImageFITS *in, ofloat *data,
 
   /* set current request by desc->IOsize */
   if (desc->IOsize==OBIT_IO_byRow) {
+    plane = MAX (sel->blc[2], plane);
     row++; /* increment row */
     nRows = 1;
     if (row>sel->trc[1]) { /* next plane */

@@ -310,7 +310,7 @@ gboolean ObitUVSelfCalSelfCal (ObitUVSelfCal *in, ObitUV *inUV, gboolean init,
   }
 
   /* Want negative CCs in model? */
-  noNeg = FALSE;
+  noNeg = TRUE;
   ObitInfoListGetTest(in->info, "noNeg", &type, dim, &noNeg);
 
   /* Quality for convergence test of SkyModel */

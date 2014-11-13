@@ -135,4 +135,6 @@ ObitThreadFunc DFTFunc;
 ObitThreadFunc GridFunc;
 #if HAVE_GPU==1  /*  GPU? */
 ObitGPUSkyModel *GPUSkyModel;
+#else            /* Dummy pointer */
+Obit  *GPUSkyModel;
 #endif /* HAVE_GPU */

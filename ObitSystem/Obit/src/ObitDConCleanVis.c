@@ -4248,6 +4248,8 @@ static void SubNewCCs (ObitDConCleanVis *in, olong *newCC, ObitFArray **pixarray
   /* No more threads than work to spread them across */
   if (nfield>1) nTh = nThreads;
   else nTh = 1;
+  /* NO, this only uses ObitFArrayShiftAdd which is threaded */
+  nTh = 1;
 
   /* Initialize Thread args */
   for (i=0; i<nTh; i++) {
@@ -4260,6 +4262,7 @@ static void SubNewCCs (ObitDConCleanVis *in, olong *newCC, ObitFArray **pixarray
 
   /* Loop over fields */
   nTh = MIN (nThreads, nfield);
+  nTh = 1;   /* NO threading here */
   nLeft = nfield;
   for (i=0; i<nfield; i+=nTh) {
     nDo = MIN (nTh, nLeft);
@@ -4376,7 +4379,7 @@ static gpointer ThreadImSub (gpointer args)
     if (ifield<=0) break;
     comps = inComp[i];          /* Component list */
     if (comps==NULL) continue;  /* Any components? */
-    g_assert (ObitFArrayIsA(comps)); /* DEBUG */
+    /* g_assert (ObitFArrayIsA(comps)); DEBUG */
     
     /* Loop over CCs - assumes all points */
     inDesc    = in->mosaic->images[ifield-1]->myDesc;

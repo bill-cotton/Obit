@@ -294,11 +294,17 @@ void ObitUVSelDefault (ObitUVDesc* in, ObitUVSel* sel)
  *           as they appear in memory.
  * \param sel UV selector, blc, trc members changed if needed.
  * \param out Pointer to output descriptor, describing form on disk.
+ *                on input, info member "KeepSou":
+ * \li "KeepSou"  OBIT_bool (1,1,1) If present and True keep multisource input
+ *                as multisource output even if only one source selected
  * \param err Obit error stack
  */
 void ObitUVSelGetDesc (ObitUVDesc* in, ObitUVSel* sel,
 		       ObitUVDesc* out, ObitErr *err)
 {
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+  gboolean KeepSou=FALSE;
  
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -320,8 +326,10 @@ void ObitUVSelGetDesc (ObitUVDesc* in, ObitUVSel* sel,
   sel->lrecUC   = out->lrec;
 
   /* If only one source selected make sure no "SOURCE" 
-     random parameter is written */
-  if ((sel->numberSourcesList==1) && (out->ilocsu>=0) )
+     random parameter is written   
+     This can be overriden by outDesc->info member KeepSou */
+  ObitInfoListGetTest(out->info, "KeepSou", &type, dim, &KeepSou);
+  if ((sel->numberSourcesList==1) && (out->ilocsu>=0)  && !KeepSou)
     strncpy (out->ptype[out->ilocsu], "REMOVED ", UVLEN_KEYWORD); 
 
   /* compress iff sel->Compress */
@@ -354,12 +362,19 @@ void ObitUVSelGetDesc (ObitUVDesc* in, ObitUVSel* sel,
  * \param out Pointer to output descriptor, this describes the data 
  *            after any processing when read, or before any compression
  *            on output.
+ *                on input, info member "KeepSou":
+ * \li "KeepSou"  OBIT_bool (1,1,1) If present and True keep multisource input
+ *                as multisource output even if only one source selected
  * \param err Obit error stack
  */
 void ObitUVSelSetDesc (ObitUVDesc* in, ObitUVSel* sel,
 		       ObitUVDesc* out, ObitErr *err)
 {
   olong i;
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+  gboolean KeepSou=FALSE;
+  gchar *routine = "ObitUVSelSetDesc";
 
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -374,8 +389,7 @@ void ObitUVSelSetDesc (ObitUVDesc* in, ObitUVSel* sel,
   /* copy most values */
   ObitUVDescCopy (in, out, err);
   if (err->error) /* add traceback, return on error */
-      Obit_traceback_msg (err, "ObitUVSelSetDesc", 
-			  in->name);
+      Obit_traceback_msg (err, routine, in->name);
 
   /* if reading compressed data it will be uncompressed. */
   if ((in->access==OBIT_IO_ReadOnly) ||  (in->access==OBIT_IO_ReadWrite) 
@@ -433,8 +447,10 @@ void ObitUVSelSetDesc (ObitUVDesc* in, ObitUVSel* sel,
     out->crval[in->jlocs] = -1.0;
 
   /* If only one source selected make sure no "SOURCE" 
-     random parameter is written */
-  if ((sel->numberSourcesList==1) && (out->ilocsu>=0) )
+     random parameter is written    
+     This can be overriden by outDesc->info member KeepSou */
+  ObitInfoListGetTest(out->info, "KeepSou", &type, dim, &KeepSou);
+  if ((sel->numberSourcesList==1) && (out->ilocsu>=0) && !KeepSou)
     strncpy (out->ptype[out->ilocsu], "REMOVED ", UVLEN_KEYWORD); 
 
 } /* end ObitUVSelSetDesc */

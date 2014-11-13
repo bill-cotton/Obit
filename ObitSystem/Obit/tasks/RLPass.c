@@ -1681,6 +1681,9 @@ ObitTableBP* UpdateBPTable (ObitUV* inData, olong BPver, ObitUV* outData,
   BPOut->myDesc->sort[0] = BPIn->myDesc->sort[0];  /* Sort order */
   BPOut->myDesc->sort[1] = BPIn->myDesc->sort[1];
 
+  /* reset now invalid pointer to IO descriptor */
+  desc = (ObitUVDesc*)outData->myIO->myDesc;
+
   /* Loop over input table updating */
   for (irow=1; irow<=BPIn->myDesc->nrow; irow++) {
     retCode = ObitTableBPReadRow (BPIn, irow, BPRow, err);

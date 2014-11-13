@@ -160,6 +160,8 @@ static void IslandListMerge(IslandList *in, olong in1, olong in2,
 /** Private: Expand Island */
 static void IslandListExpand(IslandList *in, olong in1, 
 			     ofloat val, olong i, olong j);
+/** Private: Merge overlapping Islands */
+static void IslandOverlapMerge(IslandList *in);
 
 /* Program globals */
 gchar *pgmName = "FndSou";       /* Program name */
@@ -1125,7 +1127,7 @@ IslandList* Islands(ObitFArray *data, ofloat cutt)
       /* Is point above cutoff? */
       if ((row[i] < lcut)  ||  (row[i] == fblank)) {
 	curr[i] = 0;  /* not interesting */
-	/* Are any adjacent points, on  currnt Line or previous line 
+	/* Are any adjacent points, on  current Line or previous line 
 	   already marked? */
       } else if ((i > 0)  &&  (curr[i-1] > 0)) {
 	curr[i] = curr[i-1];
@@ -1167,7 +1169,10 @@ IslandList* Islands(ObitFArray *data, ofloat cutt)
   
   } /* end loop over array */
 
-  /* cleanup */
+  /* Merge overlapping islands */
+  IslandOverlapMerge(islands);
+  IslandOverlapMerge(islands);  /* Again for good measure */
+
   /* cleanup:*/
   if (prev) g_free(prev);
   if (curr) g_free(curr);
@@ -2301,9 +2306,11 @@ static void IslandListMerge (IslandList *in, olong in1, olong in2,
   IslandListRemove (in, elemHi);
 
   /* Update island numbers */
-  for (i=0; i<nx; i++) {
-    if (prev[i]==iHi) prev[i] = iLo;
-    if (curr[i]==iHi) curr[i] = iLo;
+  if (prev && curr) {
+    for (i=0; i<nx; i++) {
+      if (prev[i]==iHi) prev[i] = iLo;
+      if (curr[i]==iHi) curr[i] = iLo;
+    }
   }
 } /* end IslandListMerge */
 
@@ -2331,4 +2338,40 @@ static void IslandListExpand (IslandList *in, olong in1,
 
   elem1->peak = MAX (elem1->peak, val); /* new max? */ 
 } /* end IslandListExpand */
+
+/**
+ * Merge overlapping islands
+ * \param islands    Island list 
+ * \param nx         length of row
+ */
+static void IslandOverlapMerge(IslandList *islands)
+{
+  olong is1, is2, xb1, yb1, xb2, yb2, xt1, yt1, xt2, yt2;
+  GSList *tmp1, *tmp2;
+  IslandElem *elem1, *elem2;
+
+  tmp1 = islands->list;
+  while (tmp1!=NULL) {
+    elem1 = (IslandElem*)tmp1->data;
+    is1 = elem1->index;
+    xb1 = elem1->blc[0]; yb1 = elem1->blc[1];
+    xt1 = elem1->trc[0]; yt1 = elem1->trc[1];
+    /* Search remainder of list for overlap */
+    tmp2 = g_slist_next(tmp1);
+    while (tmp2!=NULL) {
+      elem2 = (IslandElem*)tmp2->data;
+      is2 = elem2->index;
+      xb2 = elem2->blc[0]; yb2 = elem2->blc[1];
+      xt2 = elem2->trc[0]; yt2 = elem2->trc[1];
+      /* Overlap? Any corner of 1 in 2 */
+      if (((xb1>=xb2) && (xb1<=xt2) && (yb1>=yb2) && (yb1<=yt2)) ||
+	  ((xb1>=xb2) && (xb1<=xt2) && (yt1>=yb2) && (yt1<=yt2)) ||
+	  ((xt1>=xb2) && (xt1<=xt2) && (yt1>=yb2) && (yt1<=yt2)) ||
+	  ((xt1>=xb2) && (xt1<=xt2) && (yb1>=yb2) && (yb1<=yt2)))
+	IslandListMerge (islands, is1, is2, 0, NULL, NULL);
+      tmp2  = g_slist_next(tmp2);
+    }
+    tmp1 = g_slist_next(tmp1);
+  } /* end loop over list */
+} /* end  IslandOverlapMerge */
 

@@ -1928,6 +1928,12 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   noNeg = TRUE;
   ObitInfoListGetTest(myInput, "noNeg", &type, dim, &noNeg);
 
+  /* Need P SC before any A&P */
+  if (maxASCLoop>0) {
+    Obit_return_if_fail(((maxPSCLoop>0)), err, 
+      "%s: MUST have P Self-cal before A&P", routine);
+  }
+ 
   /* Get input parameters from myInput, copy to myClean */
   ObitInfoListCopyList (myInput, myClean->info, CLEANParms);
   if (err->error) Obit_traceback_msg (err, routine, myClean->name);
