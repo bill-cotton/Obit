@@ -2531,3 +2531,12 @@ Obit/src/ObitDConCleanVis.c:
 Obit/tasks/FndSou.c:
   Islands: Check/merge overlapping islands
 13 Nov. 2014 svn ver 499
+
+various bug fixes
+Obit/src/ObitUVWCalc.c Obit/include/ObitUVWCalcDef.h:
+  Include differential precession in computation of u,v
+Obit/python/EVLACal.py:
+  EVLACalAP: Fix capitalization of setjy.Parms
+Obit/src/ObitPolnCalFit.c:
+  doFitFast: initialize variables
+26 Nov. 2014 svn ver 500

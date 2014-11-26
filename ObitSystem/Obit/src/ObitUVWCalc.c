@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2013                                               */
+/*;  Copyright (C) 2013,2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -325,7 +325,7 @@ void ObitUVWCalcUVW (ObitUVWCalc *in, ofloat time, olong SId,
 		     olong subA, olong ant1, olong ant2, ofloat *uvw, 
 		     ObitErr *err)
 {
-  ofloat t, u, v, w, equin, vw, basex, basey, basez, polar[2];
+  ofloat t, u, v, w, equin, uvrot, vw, basex, basey, basez, polar[2];
   olong i, ia1, ia2, iant;
   odouble xm, ym, zm, length;
   odouble dRa, dDec, delta, RAOff, DecOff, RAMeanR, DecMeanR, RAAppR, DecAppR;
@@ -405,7 +405,10 @@ void ObitUVWCalcUVW (ObitUVWCalc *in, ofloat time, olong SId,
 			"%s: Source ID %d not found", routine, SId);
 
     /* Reference wavelength plus source specific offset */
-    in->ilambda = 1.0 / (VELIGHT/(in->myData->myDesc->freq + in->curSource->FreqOff[0]));  
+    if (in->curSource->FreqOff)
+      in->ilambda = 1.0 / (VELIGHT/(in->myData->myDesc->freq + in->curSource->FreqOff[0]));  
+    else
+      in->ilambda = 1.0 / (VELIGHT/(in->myData->myDesc->freq));
  
     /* Precess this source for now 
        Current UTC Julian Date corrected to UT1 */
@@ -432,7 +435,7 @@ void ObitUVWCalcUVW (ObitUVWCalc *in, ofloat time, olong SId,
     DecMeanR = dDec*DG2RAD;
     ObitPrecessPrecess (in->JD, equin, deldat, 1, FALSE, in->obsPos, polar,
 			&RAMeanR, &DecMeanR, &RAAppR, &DecAppR);
-    RAOff  =  RAAppR*RAD2DG;
+    RAOff  = RAAppR*RAD2DG;
     DecOff = DecAppR*RAD2DG;
     dRa  = (RAOff-in->curSource->RAApp) * cos(DG2RAD*in->curSource->DecApp);
     dDec = (DecOff-in->curSource->DecApp);
@@ -443,6 +446,11 @@ void ObitUVWCalcUVW (ObitUVWCalc *in, ofloat time, olong SId,
     in->sRA    = sin(in->curSource->RAMean*DG2RAD);
     in->cDec   = cos(in->curSource->DecMean*DG2RAD);
     in->sDec   = sin(in->curSource->DecMean*DG2RAD);
+    /* uvrot global = rotation to north */
+    uvrot = -(ofloat)atan2(dRa, dDec);
+    /* Rotation due to differential precession */
+    in->cuvrot = cos(uvrot);
+    in->suvrot = sin(uvrot);
   } /* end new source */
 
   /* Baseline vector in celestial coordinates */
@@ -467,6 +475,12 @@ void ObitUVWCalcUVW (ObitUVWCalc *in, ofloat time, olong SId,
   uvw[0] = u*in->LorentzFact*in->ilambda;
   uvw[1] = v*in->LorentzFact*in->ilambda;
   uvw[2] = w*in->ilambda;
+
+  /* Rotate in u-v plane to north of standard epoch */
+  u = uvw[0];
+  v = uvw[1];
+  uvw[0] = u*in->cuvrot - v*in->suvrot;
+  uvw[1] = v*in->cuvrot + u*in->suvrot;
   
 } /* end ObitUVWCalcUVW */
 

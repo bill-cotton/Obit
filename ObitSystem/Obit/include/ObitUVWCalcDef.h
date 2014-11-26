@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2013                                               */
+/*;  Copyright (C) 2013,2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -59,6 +59,8 @@ ofloat curTime;
 ofloat LorentzFact;
 /** inverse of wavelength for curent source */
 ofloat ilambda;
+/** Cosine, Sine of current source rotation of u-v for differential precession */
+ofloat cuvrot, suvrot;
 /** Earth's rotation rate, turns per day */
 odouble Rate;
 /** Greenwich Sidereal Time at UT=0, hours*/

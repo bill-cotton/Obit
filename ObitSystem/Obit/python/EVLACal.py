@@ -2108,7 +2108,7 @@ def EVLACalAP(uv, target, ACals, err, \
         else:
             setjy.OPType="CALC"
             setjy.ZeroFlux=[1.0,0.0,0.0,0.0]
-            setjy.parms[1] = 4   # Perley and Butler 2012
+            setjy.Parms[1] = 4   # Perley and Butler 2012
         if debug:
             setjy.i
             setjy.debug = debug

@@ -897,8 +897,10 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     in->antGainFit  = g_malloc0(in->nant*sizeof(gboolean*));
     for (i=0; i<in->nant; i++) {
       in->antGainFit[i] = g_malloc0(2*sizeof(gboolean));
-      in->antGainFit[i][0] = in->antGainFit[i][1] = in->doFitGain;
+      in->antGainFit[i][0] = FALSE; /* Don't fit  Xpol gain */
+      in->antGainFit[i][1] = in->doFitGain;
     }
+    /* NEED MORE HERE */
     in->antGainPNumb = g_malloc0(in->nant*sizeof(gboolean*));
     for (i=0; i<in->nant; i++) 
       in->antGainPNumb[i] = g_malloc0(2*sizeof(gboolean));
@@ -1691,8 +1693,10 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
       } else  {
  	/* Linear feeds, if the antenna angles on sky are given in the AntennaList[0] use then, 
            otherwise assume Feeds are X, Y
-	   ori_x, elip_x, ori_y, elip_y,  */
-	in->antParm[i*4+1] = 0.0;  /* ellipticity */
+	   ori_x, elip_x, ori_y, elip_y,  
+	*/
+	in->antGain[i*2] = in->antGain[i*2+1] = 1.0;  /* Gain */
+	in->antParm[i*4+1] = 0.0;                     /* ellipticity */
 	in->antParm[i*4+3] = 0.0;
 	if (fabs (in->AntLists[0]->ANlist[i]->FeedAPA-in->AntLists[0]->ANlist[i]->FeedBPA)<1.0) {
 	  /* Assume X, Y */
@@ -2530,14 +2534,17 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
   odouble begChi2, endChi2=0.0, iChi2, tChi2, deriv=0.0, deriv2=1.0;
   odouble difParam, difChi2=0.0, hiChi2=0.0, dChi2, d2Chi2;
   ofloat tParam, sParam, delta, sdelta = 0.01;
-  ofloat ParRMS, XRMS, fpol, fpa;
+  ofloat ParRMS=0.0, XRMS=0.0, fpol, fpa;
   olong isou=0, iant, i, k=0, iter;
   olong pas=0, ptype=0, pnumb=-1;
   gchar *routine="ObitPolnCalFit:doFitFast";
 
   if (err->error) return TRUE;  /* Error exists? */
-  
   iter = 0;
+  iter = 1000; /*  DEBUG */
+  /* DEBUG set source poln to faked value */
+  in->souParm[0] = 1.0; in->souParm[3] = -0.05;
+  in->souParm[4] = 1.0; in->souParm[7] = -0.05;
   while (iter<300) { 
     in->selSou = -1;
     in->selAnt = -1;
