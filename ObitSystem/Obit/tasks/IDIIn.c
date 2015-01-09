@@ -1267,6 +1267,9 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
   /* Are weights given separately? */
   doWeight = inTable->WeightCol>=0;
 
+  /* Previous reference day? */
+  refMJD = desc->JDObs;
+
   /* Loop over table */
   for (iRow = 1; iRow<=inTable->myDesc->nrow; iRow++) {
 
@@ -1297,7 +1300,8 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
 
     /* Array number (0-rel)*/
     iarr = inRow->Array - 1;
-    /* Array reference JD */
+    /* Array reference JD, may not work for multiple arrays */
+    if (arrayRefJDs[iarr]<=0.0) arrayRefJDs[iarr] = refMJD;
     arrJD = arrayRefJDs[iarr];
     /* Get reference for first occurance */
     if (arrJD<=0.0) {

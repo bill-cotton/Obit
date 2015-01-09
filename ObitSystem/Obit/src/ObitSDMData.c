@@ -1366,8 +1366,8 @@ ASDMAntennaArray* ObitSDMDataGetAntArray (ObitSDMData *in, olong mainRow)
 { 
   ASDMAntennaArray* out=NULL;
   olong  configDescriptionId, stationId, dataDescriptionId, spectralWindowId, execBlockId;
-  olong  polOrHoloId;
-  olong i, iMain, iConfig, iAnt, jAnt, jDD, jSW, jPL, numAnt, iJD, iExec;
+  olong  polOrHoloId, FeedId;
+  olong i, iMain, iConfig, iAnt, jAnt, jDD, jSW, jPL,jFd, numAnt, iJD, iExec;
   odouble JD;
 
   /* Find scan in Main table */
@@ -1440,6 +1440,7 @@ ASDMAntennaArray* ObitSDMDataGetAntArray (ObitSDMData *in, olong mainRow)
   /* Loop over antennas */
   for (iAnt=0; iAnt<numAnt; iAnt++) {
     out->ants[iAnt] = g_malloc0(sizeof(ASDMAntennaArrayEntry));
+    out->ants[iAnt]->receptorAngle[0] = out->ants[iAnt]->receptorAngle[1] = 0.0;
     
     /* Save antenna info */
     jAnt                          = iAnt;
@@ -1476,9 +1477,27 @@ ASDMAntennaArray* ObitSDMDataGetAntArray (ObitSDMData *in, olong mainRow)
     out->ants[iAnt]->numPoln     = MIN(2, in->PolarizationTab->rows[jPL]->numCorr);
     out->ants[iAnt]->numPolnCorr = in->PolarizationTab->rows[jPL]->numCorr;
     out->ants[iAnt]->polnType[0] = in->PolarizationTab->rows[jPL]->corrType[0][0];
-    if (out->ants[iAnt]->numPolnCorr>1)
+    if (out->ants[iAnt]->numPolnCorr>1) 
       out->ants[iAnt]->polnType[1] = in->PolarizationTab->rows[jPL]->corrType[1][1];
-  } /* end loop over antennas */
+
+  /* Find Feed info  */
+  FeedId = in->ConfigDescriptionTab->rows[iConfig]->feedId[0];
+  for (jFd=0; jFd<in->FeedTab->nrows; jFd++) {
+    if (in->FeedTab->rows[jFd]->feedId==FeedId) break;
+  }
+  if (jFd<in->DataDescriptionTab->nrows) {
+    /* Save Feed info */
+    out->ants[iAnt]->receptorAngle[0] = 
+      ((ofloat)in->FeedTab->rows[jFd]->receptorAngle[0])*RAD2DG;
+    if (out->ants[iAnt]->numPolnCorr>1) 
+      out->ants[iAnt]->receptorAngle[1] = 
+	((ofloat)in->FeedTab->rows[jFd]->receptorAngle[1])*RAD2DG;
+  } else { /*not found use default */
+    out->ants[iAnt]->receptorAngle[0] = 0.0;
+    if (out->ants[iAnt]->numPolnCorr>1) 
+      out->ants[iAnt]->receptorAngle[1] = 0.0;
+  }
+ } /* end loop over antennas */
   
   return out;
 } /* end ObitSDMDataGetAntArray */

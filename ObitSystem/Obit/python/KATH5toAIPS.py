@@ -99,7 +99,7 @@ def KAT2AIPS (h5datafile, outUV, err, \
     # initial CL table
     OErr.PLog(err, OErr.Info, "Create Initial CL table")
     OErr.printErr(err)
-    nant = len(meta["ants"])  # Number of antennas
+    nant = 7 # It is KAT-7 after all len(meta["ants"])  # Number of antennas
     CLfromNX(outUV, nant, err, calInt=calInt)
     #UV.PTableCLGetDummy(outUV, outUV, 1, err, solInt=calInt)
     outUV.Open(UV.READONLY,err)
@@ -270,7 +270,7 @@ def WriteANTable(outUV, meta, err):
     irow = 0
     for ant in meta["ants"]:
         irow += 1
-        row['NOSTA']    = [ant[0]]
+        row['NOSTA']    = [int(ant[1][3:])] # Use antenna number [ant[0]]
         row['ANNAME']   = [ant[1]+"    "]
         row['STABXYZ']  = [ant[2],ant[3],ant[4]]
         row['DIAMETER'] = [ant[5]]
@@ -459,7 +459,7 @@ def ConvertKATData(outUV, katdata, meta, err):
             continue                    # Only on source data
         # Fetch data
         vs = katdata.vis[:]
-        wt = katdata.weights()
+        wt = katdata.weights[:]
         tm = katdata.timestamps[:]
         uu = katdata.u
         vv = katdata.v

@@ -7246,6 +7246,13 @@ float PBUtilPoly (double Angle, double Freq, float pbmin) {
   return (float)out;
 }
 
+/** Public: Compute kat-7 beam shape from a fitted polynomial */
+float PBUtilKAT7 (double Angle, double Freq, float pbmin) {
+  ofloat out;
+  out = ObitPBUtilKAT7 ((odouble)Angle, (odouble)Freq, (ofloat)pbmin);
+  return (float)out;
+}
+
 /** Public:  Compute Antenna beam assuming uniform illumination of an antenna */
 float PBUtilJinc (double Angle, double Freq, float antSize, float pbmin) {
   ofloat out;
@@ -43447,6 +43454,21 @@ static PyObject *_wrap_PBUtilPoly(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_PBUtilKAT7(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    float  _result;
+    double  _arg0;
+    double  _arg1;
+    float  _arg2;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ddf:PBUtilKAT7",&_arg0,&_arg1,&_arg2)) 
+        return NULL;
+    _result = (float )PBUtilKAT7(_arg0,_arg1,_arg2);
+    _resultobj = Py_BuildValue("f",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_PBUtilJinc(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     float  _result;
@@ -78133,6 +78155,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "newSkyModel", _wrap_newSkyModel, METH_VARARGS },
 	 { "PBUtilRelPB", _wrap_PBUtilRelPB, METH_VARARGS },
 	 { "PBUtilJinc", _wrap_PBUtilJinc, METH_VARARGS },
+	 { "PBUtilKAT7", _wrap_PBUtilKAT7, METH_VARARGS },
 	 { "PBUtilPoly", _wrap_PBUtilPoly, METH_VARARGS },
 	 { "SkyGeomRADec2Zern", _wrap_SkyGeomRADec2Zern, METH_VARARGS },
 	 { "SkyGeomEc2Eq", _wrap_SkyGeomEc2Eq, METH_VARARGS },

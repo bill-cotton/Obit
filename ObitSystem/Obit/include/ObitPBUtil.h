@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -46,6 +46,9 @@ ofloat ObitPBUtilPoly (odouble Angle, odouble Freq, ofloat pbmin);
 
 /** Use Jinc beam shape - useful for frequencies > 1.0 GHz */
 ofloat ObitPBUtilJinc (odouble Angle, odouble Freq, ofloat antSize, ofloat pbmin);
+
+/** Use KAT-7 beam shape  */
+ofloat ObitPBUtilKAT7 (odouble Angle, odouble Freq, ofloat pbmin);
 
 /** Function which returns relative primary beam correction */
 ofloat ObitPBUtilRelPB (odouble Angle, olong nfreq, odouble *Freq, ofloat antSize, 

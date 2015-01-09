@@ -112,6 +112,8 @@ typedef struct {
   gchar *staName;
   /** position */
   odouble *staPosition;
+  /** Feed orientation */
+  ofloat receptorAngle[2];
   /** type */
   ObitASDMStationType type;
   /** Number of polarizations (1 or 2) */

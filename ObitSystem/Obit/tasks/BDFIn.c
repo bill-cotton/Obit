@@ -1488,13 +1488,13 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     outRow->noSta          = AntArray->ants[iRow-1]->antennaNo;
     /* For ALMA these are 0 rel rather than 1 rel */
     if (isALMA) outRow->noSta++;
-    outRow->PolAngA        = 0.0;
+    outRow->PolAngA        = AntArray->ants[iRow-1]->receptorAngle[0];
     outRow->polTypeA       = g_strdup("    "); 
     outRow->polTypeA[0]    = AntArray->ants[iRow-1]->polnType[0];
     for (i=0; i<numPCal; i++) 
 	outRow->PolCalA[i] = 0.0;
     if (AntArray->ants[iRow-1]->numPoln>1) {  /* Multiple polarizations */
-      outRow->PolAngB      = 0.0;   
+      outRow->PolAngB      = AntArray->ants[iRow-1]->receptorAngle[1];
       outRow->polTypeB     = g_strdup("    "); 
       outRow->polTypeB[0]  = AntArray->ants[iRow-1]->polnType[1];
       for (i=0; i<numPCal; i++) 

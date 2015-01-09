@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for Image utilities                        */
 /*                                                                    */
-/*;  Copyright (C) 2007                                               */
+/*;  Copyright (C) 2007,2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -186,6 +186,13 @@ void SkyGeomRADec2Zern (double ra, double dec, float xshift, float yshift,
 float PBUtilPoly (double Angle, double Freq, float pbmin) {
   ofloat out;
   out = ObitPBUtilPoly ((odouble)Angle, (odouble)Freq, (ofloat)pbmin);
+  return (float)out;
+}
+
+/** Public: Compute kat-7 beam shape from a fitted polynomial */
+float PBUtilKAT7 (double Angle, double Freq, float pbmin) {
+  ofloat out;
+  out = ObitPBUtilKAT7 ((odouble)Angle, (odouble)Freq, (ofloat)pbmin);
   return (float)out;
 }
 

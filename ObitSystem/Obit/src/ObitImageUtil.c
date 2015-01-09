@@ -2259,7 +2259,7 @@ ObitImageUtilPBCorr (ObitImage *inImage, ObitImage *pntImage, ObitImage *outImag
   ofloat inPixel[2], *in, *out;
   odouble RAPnt, DecPnt, Freq, ra, dec, xx, yy, zz, dist;
   ofloat pbf, equinox, fblank = ObitMagicF();
-  gboolean doJinc, bad;
+  gboolean doJinc, bad, doKAT;
   ObitImageDesc *inDesc;
   gchar *routine = "ObitImageUtilPBCorr";
 
@@ -2302,6 +2302,9 @@ ObitImageUtilPBCorr (ObitImage *inImage, ObitImage *pntImage, ObitImage *outImag
   }
   pntImage->extBuffer = FALSE;  /* May need buffer later */
 
+  /* Trap telescope, default = VLA */
+  doKAT = !strncmp(pntImage->myDesc->teles, "KAT-7",5); /* Kat-7 */
+  
   /* Do I/O by plane and all of plane */
   IOBy = OBIT_IO_byPlane;
   dim[0] = 1;
@@ -2408,7 +2411,9 @@ ObitImageUtilPBCorr (ObitImage *inImage, ObitImage *pntImage, ObitImage *outImag
 	dist = acos (zz) * RAD2DG;
 	
 	/* primary beam correction */
-	if (doJinc) {
+	if (doKAT) {  /* KAT-7 */
+	  pbf = ObitPBUtilKAT7 (dist, Freq, 0.0);
+	} else if (doJinc) {
 	  pbf = ObitPBUtilJinc (dist, Freq, antSize, 0.0);
 	} else {
 	  pbf = ObitPBUtilPoly (dist, Freq, 0.0);
@@ -2477,7 +2482,7 @@ ObitImageUtilPBApply (ObitImage *inImage, ObitImage *pntImage, ObitImage *outIma
   ofloat inPixel[2], *in, *out;
   odouble RAPnt, DecPnt, Freq, ra, dec, xx, yy, zz, dist ;
   ofloat pbf, equinox, fblank = ObitMagicF();
-  gboolean doJinc, bad;
+  gboolean doJinc, bad, doKAT;
   ObitImageDesc *inDesc;
   gchar *routine = "ObitImageUtilPBApply";
 
@@ -2520,7 +2525,10 @@ ObitImageUtilPBApply (ObitImage *inImage, ObitImage *pntImage, ObitImage *outIma
     return;
   }
   pntImage->extBuffer = FALSE;  /* May need buffer later */
-
+  
+  /* Trap telescope, default = VLA */
+  doKAT = !strncmp(pntImage->myDesc->teles, "KAT-7",5); /* Kat-7 */
+  
   /* Do I/O by plane and all of plane */
   IOBy = OBIT_IO_byPlane;
   dim[0] = 1;
@@ -2627,7 +2635,9 @@ ObitImageUtilPBApply (ObitImage *inImage, ObitImage *pntImage, ObitImage *outIma
 	dist = acos (zz) * RAD2DG;
 	
 	/* primary beam correction */
-	if (doJinc) {
+	if (doKAT) {  /* KAT-7 */
+	  pbf = ObitPBUtilKAT7 (dist, Freq, 0.0);
+	} else if (doJinc) {
 	  pbf = ObitPBUtilJinc (dist, Freq, antSize, 0.0);
 	} else {
 	  pbf = ObitPBUtilPoly (dist, Freq, 0.0);
@@ -2700,7 +2710,7 @@ ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
   ofloat inPixel[2], *out, fblank = ObitMagicF();
   odouble RAPnt, DecPnt, Freq, ra, dec, xx, yy, zz, dist ;
   ofloat pbf, equinox;
-  gboolean doJinc, bad;
+  gboolean doJinc, bad, doKAT;
   ObitImageDesc *outDesc;
   gchar *routine = "ObitImageUtilPBApply";
 
@@ -2742,6 +2752,9 @@ ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
     return;
   }
   pntImage->extBuffer = FALSE;  /* May need buffer later */
+
+  /* Trap telescope, default = VLA */
+  doKAT = !strncmp(pntImage->myDesc->teles, "KAT-7",5); /* Kat-7 */
 
   /* Do I/O by plane and all of plane */
   IOBy = OBIT_IO_byPlane;
@@ -2818,9 +2831,12 @@ ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
       zz = sin (yy) * sin (DecPnt) + cos (yy) * cos (DecPnt) * cos (xx-RAPnt);
       zz = MIN (zz, 1.000);
       dist = acos (zz) * RAD2DG;
-      
+
+      /*doKAT = doJinc = FALSE;*/
       /* primary beam correction */
-      if (doJinc) {
+      if (doKAT) {  /* KAT-7 */
+	pbf = ObitPBUtilKAT7 (dist, Freq, 0.0);
+      } else if (doJinc) {
 	pbf = ObitPBUtilJinc (dist, Freq, antSize, 0.0);
       } else {
 	pbf = ObitPBUtilPoly (dist, Freq, 0.0);
@@ -4923,6 +4939,7 @@ void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err)
   olong nmodel, nparm, corner[2], fdim[2];
   ofloat Peak, RMSResid, peakResid, fluxResid, DeltaX,  DeltaY, parms[3];
   ObitFArray *beamData = NULL, *beamCenter = NULL, *matx = NULL;
+  ObitImageDesc *desc=(ObitImageDesc*)beam->myIO->myDesc;
   ObitImageFit *imFit=NULL;
   ObitFitRegion *reg=NULL;
   ObitFitModel **models = {NULL};
@@ -4937,8 +4954,9 @@ void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err)
 
   /* plane number - first one with data */
   iplane = 1;
-  ObitInfoListGetTest(beam->info, "PLANE", &type, dim, &iplane);
-  while (iplane<=beam->myDesc->inaxes[2]) {
+  if (desc->inaxes[2]>1)
+    ObitInfoListGetTest(beam->info, "PLANE", &type, dim, &iplane);
+  while (iplane<=desc->inaxes[2]) {
     plane[0] = iplane++;
     
     /* Read beam until non blanked plane */
@@ -4946,7 +4964,9 @@ void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err)
     if (err->error) goto cleanup;
     if (beam->image->array[10]!=fblank) break;  /* This one OK? */
   }
-
+  /* test if have beam */
+  Obit_return_if_fail((beam->image!=NULL), err, 
+		      "%s: Problem with beam",  routine);
   /* Trim edges of beam */
   blc[0] = beam->image->naxis[0]/4;
   blc[1] = beam->image->naxis[1]/4;

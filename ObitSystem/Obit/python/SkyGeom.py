@@ -5,7 +5,7 @@ Also primary beam calculations
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2007
+#  Copyright (C) 2007,2014
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -433,6 +433,44 @@ def PPBPoly (Desc, RA, Dec, cutoff=None):
         pbfact =  Obit.PBUtilPoly(angle, freq, 0.0)
     return pbfact
     # end  PPBPoly
+
+def PPBKAT (Desc, RA, Dec, cutoff=None):
+    """ Compute KAT-7 beam shape from a fitted polynomial
+    
+    Compute primary beam at RA, Dec with pointing given in Desc
+      Desc   = Data (UV or Image) descriptor with pointing position
+               and frequency
+      Ra     = Right Ascension in degrees
+      Dec    = Declination in degrees
+      cutoff = distance from pointing beyond which to set primary
+               beam to zero
+      Return Primary beam  power factor [0.0, 1.0].
+    """
+    ################################################################
+    d = Desc.Dict    # Descriptor as dictionary
+    freq = d["crval"][d["jlocf"]]   # Frequency
+    rotate = d["crota"][d["jlocd"]] # Rotation
+    # Get pointing position, obsra, obsdec if possible
+    if "obsra" in d:
+        obsra  = d["obsra"]
+    else:
+        obsra  = 0.0
+    if "obsdec" in d:
+        obsdec = d["obsdec"]
+    else:
+        obsdec  = 0.0
+    if (obsra == 0.0) and (obsdec == 0.0):
+        obsra  = d["crval"][d["jlocr"]]
+        obsdec = d["crval"][d["jlocd"]]
+    # Angle from obs posn
+    (dra, ddec) =  PShiftXY (obsra, obsdec, rotate, RA, Dec)
+    angle = math.sqrt (dra*dra+ddec*ddec)
+    if cutoff and (angle>cutoff):
+        pbfact = 0.0
+    else:
+        pbfact =  Obit.PBUtilKAT(angle, freq, 0.0)
+    return pbfact
+    # end  PPBKAT
 
 def PPBJinc (Desc, RA, Dec, antSize=25.0, cutoff=None):
     """ Compute Antenna beam assuming uniform illumination of an antenna

@@ -2,7 +2,7 @@
 /* this version        2008-10-01 20:20:00  juan.uson      */
 /* J1 extended with large angle approximation              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2013                                          */
+/*;  Copyright (C) 2004-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -200,6 +200,49 @@ ofloat ObitPBUtilJinc (odouble Angle, odouble Freq, ofloat antSize,
 
   return bmfact;
 } /*  end ObitPBUtilJinc */
+
+/**
+ * Compute KAT-7 beam shape from a fitted polynomial
+ * \param Angle  Angle from the pointing position (deg)
+ * \param Freq   Frequency (Hz) of observations
+ * \param pbmin  Minimum antenna gain 0=>0.05
+ * \return Fractional antenna power [pbmin, 1]
+ */
+ofloat ObitPBUtilKAT7 (odouble Angle, odouble Freq, ofloat pbmin)
+{
+  ofloat bmfact;
+  olong  i;
+  odouble x, bm[7], bmult;
+  static ofloat  table[1][5] = {
+     /* 1822 MHz Fitted to KAT holography to 15% */
+    {-2.28198367e-01,2.60701387e-01,-2.30688241e-02,1.64530193e-03,-5.98086197e-05}
+  };
+ 
+  bmfact = 0.0;
+  /* Get frequency with scaling to amin/GHz */
+  bmult = Freq * 60.0e-9;
+  if (Freq < 2.0e9) {
+    i = 0;
+  } else  {
+    i = 0;
+   } 
+  bm[0] = table[i][0]*1.0e-3;
+  bm[1] = table[i][1]*1.0e-7;
+  bm[2] = table[i][2]*1.0e-10;
+  bm[3] = table[i][3]*1.0e-13;
+  bm[4] = table[i][4]*1.0e-16;
+
+  x = (Angle * bmult) * (Angle * bmult);
+
+  bmfact = 1.0 + (bm[0] + (bm[1] + (bm[2] + (bm[3] + bm[4] * x) * x) * x) * x) * x;
+  
+  /* here, make some "reasonable" estimate on the rumbling around 
+     in far sidelobes, and the depths of the nulls... */
+  if (pbmin<=0.0) pbmin = 0.05;
+  bmfact = MIN (1.0, MAX (bmfact, pbmin));
+
+  return bmfact;
+} /*  end ObitPBUtilKAT7 */
 
 /**
  * Calculates the relative gain at a reference frequency (refFreq) 

@@ -123,7 +123,7 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
   olong irow;
   olong maxANid, i, iant, numPCal, countAnt;
   ObitInfoType type;
-  gboolean doVLA, doVLBI, doATCA, doEVLA, doALMA;
+  gboolean doVLA, doVLBI, doATCA, doEVLA, doALMA, doKAT;
   odouble x, y, z, ArrLong, rho, dtemp;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar tempName[101]; /* should always be big enough */
@@ -228,11 +228,14 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
   /* ALMA? Earth centered */
   doALMA  = !strncmp(in->ArrName, "ALMA    ", 8);
 
+  /* KAT7? Earth centered, no flip */
+  doKAT  = !strncmp(in->ArrName, "KAT-7   ", 8);
+
   /* Is this the ATCA? It uses earth center but without Y flip like VLBI */
   doATCA = !strncmp(in->ArrName, "ATCA    ", 8);
 
   /* Otherwise VLBI Uses earth center, but with Y with sign flip */
-  doVLBI = (!doATCA && !doEVLA && !doALMA) &&
+  doVLBI = (!doATCA && !doEVLA && !doALMA && !doKAT) &&
     (fabs(in->ArrayX)<1000.0) && (fabs(in->ArrayY)<1000.0) && (fabs(in->ArrayZ)<1000.0);
 
   /* loop over table saving information */

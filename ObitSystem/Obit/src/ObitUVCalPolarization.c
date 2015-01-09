@@ -398,8 +398,9 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
 	gr = 1.0;
 	gi = 0.0;
       } else if (me->polType==OBIT_UVPoln_ELORI && !me->circFeed) { /* Linear feeds */
-	gr =  me->curCosPA[ia1];
-	gi = -me->curSinPA[ia1];
+	/* Correct for parallactic angle */
+	gr = me->curCosPA[ia1] * me->curCosPA[ia2] - me->curSinPA[ia1] * me->curSinPA[ia2];
+	gi = me->curCosPA[ia1] * me->curSinPA[ia2] + me->curSinPA[ia1] * me->curCosPA[ia2]; 
       } else { /* others - need parallactic angle correction */
 	gr = me->curCosPA[ia1] * me->curCosPA[ia2] - me->curSinPA[ia1] * me->curSinPA[ia2];
 	gi = me->curCosPA[ia1] * me->curSinPA[ia2] + me->curSinPA[ia1] * me->curCosPA[ia2];
@@ -918,7 +919,7 @@ static void SetInvJonesIF(ObitUVCalPolarizationS *in, ObitAntennaList *Ant,
 	} else {  /* Linear */
 	  /* Jones matrix: 
 	     i cos(pi/4+elp_r)exp(-i ori_r)exp(i -chi)  sin(pi/4+elp_r)exp(+i ori_r)exp(i chi)
-	     i sin(pi/4-elp_l)exp(-i ori_l)exp(i -chi)  cos(pi/4-elp_l)exp(+i ori_l)exp(i chi)
+	    -i sin(pi/4-elp_l)exp(-i ori_l)exp(i -chi) -cos(pi/4-elp_l)exp(+i ori_l)exp(i chi)
 	  */
 	  /* Sines/cosines */
 	  chi = in->curPA[iant-1];  /* Parallactic angle */
@@ -929,10 +930,10 @@ static void SetInvJonesIF(ObitUVCalPolarizationS *in, ObitAntennaList *Ant,
 	  Jones[1] =  cosa[0]*cosa[2];
 	  Jones[2] =  sina[0]*cosa[2];
 	  Jones[3] =  sina[0]*sina[2];
-	  Jones[4] =  sina[1]*sina[3];
-	  Jones[5] =  sina[1]*cosa[3];
-	  Jones[6] =  cosa[1]*cosa[3];
-	  Jones[7] =  cosa[1]*sina[3];
+	  Jones[4] = -sina[1]*sina[3];  /* Flip sign of "Y" */
+	  Jones[5] = -sina[1]*cosa[3];
+	  Jones[6] = -cosa[1]*cosa[3];
+	  Jones[7] = -cosa[1]*sina[3];
 	} /* end linear feeds */
 	/* Also need (inverse of) determinant */
 	Det[0] = (Jones[0]*Jones[6] - Jones[1]*Jones[7]) - (Jones[2]*Jones[4] - Jones[3]*Jones[5]);
@@ -1109,7 +1110,7 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
   root2  = 1.0 / sqrt(2.0);
 
   /* parallactic angle */
-  COMPLEX_EXP (PA, 2*in->curPA[iant-1]);
+  COMPLEX_EXP (PA, 2*in->curPA[ia]);
   COMPLEX_CONJUGATE (PAc, PA);
 
   /* Loop over IFs (index 0 rel) */
@@ -1177,17 +1178,25 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
 	    */
 	    /* Sines/cosines */
 	    chi = in->curPA[ia];  /* Parallactic angle */
+	    /* angle[0] = G_PI*0.25+elp_r; angle[1] = G_PI*0.25-elp_l;
+	       angle[2] = ori_r+chi;       angle[3] = ori_l+chi;
+	       Obit SinCosVec(4, angle, sina, cosa);
+	       Jones[0] =  cosa[0]*sina[2]; Jones[1] =  cosa[0]*cosa[2];
+	       Jones[2] =  sina[0]*cosa[2]; Jones[3] =  sina[0]*sina[2];
+	       Jones[4] =  sina[1]*sina[3]; Jones[5] =  sina[1]*cosa[3];
+	       Jones[6] =  cosa[1]*cosa[3]; Jones[7] =  cosa[1]*sina[3];*/
+	    /* Jones matrix: 
+	       cos(pi/4+elp_r)exp(-j ori_r)  sin(pi/4+elp_r)exp(+i ori_r)
+	       sin(pi/4-elp_l)exp(-j ori_l)  cos(pi/4-elp_l)exp(+i ori_l) 
+	       Not a function of chi so only calculate once */
+	    if (in->Jones[ia][jndx]!=0.0) return;  /* Already done? */
 	    angle[0] = G_PI*0.25+elp_r; angle[1] = G_PI*0.25-elp_l;
-	    angle[2] = ori_r+chi;       angle[3] = ori_l+chi;
+	    angle[2] = ori_r;           angle[3] = ori_l;
 	    ObitSinCosVec(4, angle, sina, cosa);
-	    Jones[0] =  cosa[0]*sina[2];
-	    Jones[1] =  cosa[0]*cosa[2];
-	    Jones[2] =  sina[0]*cosa[2];
-	    Jones[3] =  sina[0]*sina[2];
-	    Jones[4] =  sina[1]*sina[3];
-	    Jones[5] =  sina[1]*cosa[3];
-	    Jones[6] =  cosa[1]*cosa[3];
-	    Jones[7] =  cosa[1]*sina[3];
+	    Jones[0] =  cosa[0]*cosa[2]; Jones[1] = -cosa[0]*sina[2];
+	    Jones[2] =  sina[0]*cosa[2]; Jones[3] =  sina[0]*sina[2];
+	    Jones[4] =  sina[1]*cosa[3]; Jones[5] = -sina[1]*sina[3];
+	    Jones[6] =  cosa[1]*cosa[3]; Jones[7] =  cosa[1]*sina[3];
 	  } /* end linear feeds */
 	  
 	  /* Also need (inverse of) determinant */
@@ -1254,7 +1263,7 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
 	g_assert_not_reached(); /* unknown, barf */
       }; /* end switch */
       
-      /* Need to compute Jones matric ain inverse determinant? */
+      /* Need to compute Jones matrix and inverse determinant? */
       if (doJones) {
 	/* Calculate Jones Matrix */
 	Jones[0] = 1.0;

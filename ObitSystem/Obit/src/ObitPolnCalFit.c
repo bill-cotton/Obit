@@ -484,8 +484,8 @@ static void calcmodelXY (ObitPolnCalFit *args, ofloat Rarray[8], olong idata)
   odouble ipol=0.0, qpol=0.0, upol=0.0, vpol=0.0;
   olong i, ia1, ia2, isou;
 
-  dcomplex Jp, Jm, SPA, DPA, SPAc, DPAc, ct1, ct2;
-  dcomplex S[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4;
+  dcomplex Jp, Jm, SPA, DPA, SPAc, DPAc, ct1, ct2, ct3;
+  dcomplex S[4], S0[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4;
   dcomplex SM1, SM2, SM3, SM4, ggPD;
   ofloat root2, chi1, chi2, PD;
 
@@ -498,10 +498,8 @@ static void calcmodelXY (ObitPolnCalFit *args, ofloat Rarray[8], olong idata)
   COMPLEX_SET (Jm,  0.0,-1.0);
   chi1  = data[idata*10+0];   /* parallactic angle ant 1 */
   chi2  = data[idata*10+1];   /* parallactic angle ant 2 */
-  COMPLEX_EXP (SPA,chi1+chi2);
-  /*COMPLEX_SET (SPA, 1.0, 0.0); DEBUG */
+  COMPLEX_EXP (SPA,(chi1+chi2));
   COMPLEX_EXP (DPA,chi1-chi2);
-  /*COMPLEX_SET (DPA, 1.0, 0.0);  DEBUG */
   COMPLEX_CONJUGATE (SPAc, SPA);
   COMPLEX_CONJUGATE (DPAc, DPA);
   
@@ -517,33 +515,35 @@ static void calcmodelXY (ObitPolnCalFit *args, ofloat Rarray[8], olong idata)
   qpol = souParm[isou*4+1];
   upol = souParm[isou*4+2];
   vpol = souParm[isou*4+3];
-  /* Complex Stokes array as R/L correlations */
-  COMPLEX_SET (S[0], ipol+vpol, 0.0);
-  COMPLEX_SET (S[1], qpol,  upol);
-  COMPLEX_SET (S[2], qpol, -upol);
-  COMPLEX_SET (S[3], ipol-vpol, 0.0);
-  
-  /* Injest model factorize into antenna components - 
+  /* Complex Stokes array  */
+  COMPLEX_SET (S0[0], ipol+vpol, 0.0);
+  COMPLEX_SET (S0[1], qpol,  upol);
+  COMPLEX_SET (S0[2], qpol, -upol);
+  COMPLEX_SET (S0[3], ipol-vpol, 0.0);
+
+  /* Rotate Stokes by parallactic angle */
+  COMPLEX_MUL2(S[0], DPAc, S0[0]);
+  COMPLEX_MUL2(S[1], SPAc, S0[1]);
+  COMPLEX_MUL2(S[2], SPA,  S0[2]);
+  COMPLEX_MUL2(S[3], DPA,  S0[3]);
+
+   /* Injest model factorize into antenna components - 
      data in order 0: Orientation X, 1: Elipticity X, 2: Orientation Y, 3: Elipticity Y */
   root2 = 1.0 / sqrt(2.0);
   /* Elipticity, Orientation terms */
   for (i=0; i<args->nant; i++) {
     COMPLEX_EXP (ct1, -antParm[i*4+0]);
-    /*COMPLEX_EXP (ct1, -antParm[i*4+0]-chi1); DEBUG */
     COMPLEX_SET (ct2, cos(G_PI*0.25+antParm[i*4+1]), 0.0);
-    COMPLEX_MUL3 (CX[i], Jp, ct1, ct2);
+    COMPLEX_MUL2 (CX[i], ct2, ct1);
     COMPLEX_EXP (ct1, antParm[i*4+0]);
-    /* COMPLEX_EXP (ct1, antParm[i*4+0]+chi1);  DEBUG*/
     COMPLEX_SET (ct2, sin(G_PI*0.25+antParm[i*4+1]), 0.0);
-    COMPLEX_MUL2 (SX[i], ct1, ct2);
+    COMPLEX_MUL2 (SX[i], ct2, ct1);
     COMPLEX_EXP (ct1, antParm[i*4+2]);
-    /*COMPLEX_EXP (ct1, antParm[i*4+2]+chi1); DEBUG */
     COMPLEX_SET (ct2, cos(G_PI*0.25-antParm[i*4+3]), 0.0);
-    COMPLEX_MUL2 (CY[i], ct1, ct2);
+    COMPLEX_MUL2 (CY[i], ct2, ct1);
     COMPLEX_EXP (ct1, -antParm[i*4+2]);
-    /*COMPLEX_EXP (ct1, -antParm[i*4+2]-chi1); DEBUG */
     COMPLEX_SET (ct2, sin(G_PI*0.25-antParm[i*4+3]), 0.0);
-    COMPLEX_MUL3 (SY[i], Jp, ct1, ct2);
+    COMPLEX_MUL2 (SY[i], ct2, ct1);
     COMPLEX_CONJUGATE (CXc[i], CX[i]);
     COMPLEX_CONJUGATE (SXc[i], SX[i]);
     COMPLEX_CONJUGATE (CYc[i], CY[i]);
@@ -553,94 +553,89 @@ static void calcmodelXY (ObitPolnCalFit *args, ofloat Rarray[8], olong idata)
   ia1    = args->antNo[idata*2+0];
   ia2    = args->antNo[idata*2+1]; 
   
-  /* VXX = {S[0] * CX[ia1] * CXc[ia2] * DPAc  +
-            S[1] * CX[ia1] * SXc[ia2] * SPAc  +
-	    S[2] * SX[ia1] * CXc[ia2] * SPA   + 
-	    S[3] * SX[ia1] * SXc[ia2] * DPA} * g1X * g2X ;
+  /* VXX = {S[0] * CX[ia1] * CXc[ia2]c  +
+            S[1] * CX[ia1] * SXc[ia2]c  +
+	    S[2] * SX[ia1] * CXc[ia2]   + 
+	    S[3] * SX[ia1] * SXc[ia2]} * g1X * g2X ;
   */
-  COMPLEX_MUL3 (MC1, CX[ia1], CXc[ia2], DPAc);
-  COMPLEX_MUL3 (MC2, CX[ia1], SXc[ia2], SPAc);
-  COMPLEX_MUL3 (MC3, SX[ia1], CXc[ia2], SPA);
-  COMPLEX_MUL3 (MC4, SX[ia1], SXc[ia2], DPA);
+  COMPLEX_MUL2 (MC1, CX[ia1], CXc[ia2]);
+  COMPLEX_MUL2 (MC2, CX[ia1], SXc[ia2]);
+  COMPLEX_MUL2 (MC3, SX[ia1], CXc[ia2]);
+  COMPLEX_MUL2 (MC4, SX[ia1], SXc[ia2]);
   COMPLEX_MUL2 (VXX, S[0], MC1);
   COMPLEX_MUL2 (ct1, S[1], MC2);
   COMPLEX_ADD2 (VXX, VXX,  ct1);
   COMPLEX_MUL2 (ct1, S[2], MC3);
   COMPLEX_ADD2 (VXX, VXX,  ct1);
   COMPLEX_MUL2 (ct1, S[3], MC4);
-  COMPLEX_ADD2 (VXX, VXX,  ct1);
+  COMPLEX_ADD2 (ct3, VXX,  ct1);
   COMPLEX_SET (ct1,  antGain[ia1*2+0]*antGain[ia2*2+0], 0);
-  COMPLEX_MUL2 (VXX, VXX, ct1);
+  COMPLEX_MUL2 (VXX, ct3, ct1);
   Rarray[0] = VXX.real;
   Rarray[1] = VXX.imag;
 
-  /* VYY = {S[0] * SY[ia1] * SYc[ia2] * DPAc +       
-            S[1] * SY[ia1] * CYc[ia2] * SPAc +
-	    S[2] * CY[ia1] * SYc[ia2] * SPA  + 
-	    S[3] * CY[ia1] * CYc[ia2] * DPA} * g1Y * g2Y ;
+  /* VYY = {S[0] * SY[ia1] * SYc[ia2] +       
+            S[1] * SY[ia1] * CYc[ia2] +
+	    S[2] * CY[ia1] * SYc[ia2]  + 
+	    S[3] * CY[ia1] * CYc[ia2]} * g1Y * g2Y ;
   */
-  COMPLEX_MUL3 (MC1, SY[ia1], SYc[ia2], DPAc);
-  COMPLEX_MUL3 (MC2, SY[ia1], CYc[ia2], SPAc);
-  COMPLEX_MUL3 (MC3, CY[ia1], SYc[ia2], SPA);
-  COMPLEX_MUL3 (MC4, CY[ia1], CYc[ia2], DPA);
+  COMPLEX_MUL2 (MC1, SY[ia1], SYc[ia2]);
+  COMPLEX_MUL2 (MC2, SY[ia1], CYc[ia2]);
+  COMPLEX_MUL2 (MC3, CY[ia1], SYc[ia2]);
+  COMPLEX_MUL2 (MC4, CY[ia1], CYc[ia2]);
   COMPLEX_MUL2 (VYY, S[0], MC1);
   COMPLEX_MUL2 (ct1, S[1], MC2);
   COMPLEX_ADD2 (VYY, VYY,  ct1);
   COMPLEX_MUL2 (ct1, S[2], MC3);
   COMPLEX_ADD2 (VYY, VYY,  ct1);
   COMPLEX_MUL2 (ct1, S[3], MC4);
-  COMPLEX_ADD2 (VYY, VYY,  ct1);
+  COMPLEX_ADD2 (ct3, VYY,  ct1);
   COMPLEX_SET (ct1,  antGain[ia1*2+1]*antGain[ia2*2+1], 0);
-  COMPLEX_MUL2 (VYY, VYY, ct1);
+  COMPLEX_MUL2 (VYY, ct3, ct1);
   Rarray[6] = VYY.real;
   Rarray[7] = VYY.imag;
 
-  /* VXY = {S[0] * CX[ia1] * SYc[ia2] * DPAc +       
-            S[1] * CX[ia1] * CYc[ia2] * SPAc +
-	    S[2] * SX[ia1] * SYc[ia2] * SPA  + 
-	    S[3] * SX[ia1] * CYc[ia2] * DPA}} * g1X * g2Y * exp(i PD);
+  /* VXY = {S[0] * CX[ia1] * SYc[ia2] +       
+            S[1] * CX[ia1] * CYc[ia2] +
+	    S[2] * SX[ia1] * SYc[ia2] + 
+	    S[3] * SX[ia1] * CYc[ia2]}} * g1X * g2Y * exp(i PD);
   */
-  COMPLEX_MUL3 (MC1, CX[ia1], SYc[ia2], DPAc);
-  COMPLEX_MUL3 (MC2, CX[ia1], CYc[ia2], SPAc);
-  COMPLEX_MUL3 (MC3, SX[ia1], SYc[ia2], SPA);
-  COMPLEX_MUL3 (MC4, SX[ia1], CYc[ia2], DPA);
+  COMPLEX_MUL2 (MC1, CX[ia1], SYc[ia2]);
+  COMPLEX_MUL2 (MC2, CX[ia1], CYc[ia2]);
+  COMPLEX_MUL2 (MC3, SX[ia1], SYc[ia2]);
+  COMPLEX_MUL2 (MC4, SX[ia1], CYc[ia2]);
   COMPLEX_MUL2 (SM1, S[0], MC1);
   COMPLEX_MUL2 (SM2, S[1], MC2);
   COMPLEX_MUL2 (SM3, S[2], MC3);
   COMPLEX_MUL2 (SM4, S[3], MC4);
-  COMPLEX_ADD4 (VXY, SM1, SM2, SM3, SM4);
-  COMPLEX_SET (ct1,  antGain[ia1*2+0]*antGain[ia2*2+1], 0);
+  COMPLEX_ADD4 (ct3, SM1, SM2, SM3, SM4);
+  COMPLEX_SET (ct1, antGain[ia1*2+0]*antGain[ia2*2+1], 0);
   COMPLEX_EXP (ct2, PD);
   COMPLEX_MUL2 (ggPD, ct1, ct2);
-  COMPLEX_MUL2 (VXY, VXY, ggPD);
+  COMPLEX_MUL2 (VXY, ct3, ggPD);
   Rarray[2] = VXY.real;
   Rarray[3] = VXY.imag;
 
-  /* VYX = {S[0] * SY[ia1] * CXc[ia2] * DPAc +       
-            S[1] * SY[ia1] * SXc[ia2] * SPAc +
-	    S[2] * CY[ia1] * CXc[ia2] * SPA  + 
-	    S[3] * CY[ia1] * SXc[ia2] * DPA} * g1Y * g2X * exp(-i PD);
+  /* VYX = {S[0] * SY[ia1] * CXc[ia2] +       
+            S[1] * SY[ia1] * SXc[ia2] +
+	    S[2] * CY[ia1] * CXc[ia2] + 
+	    S[3] * CY[ia1] * SXc[ia2]} * g1Y * g2X * exp(-i PD);
   */
-  COMPLEX_MUL3 (MC1, SY[ia1], CXc[ia2], DPAc);
-  COMPLEX_MUL3 (MC2, SY[ia1], SXc[ia2], SPAc);
-  COMPLEX_MUL3 (MC3, CY[ia1], CXc[ia2], SPA);
-  COMPLEX_MUL3 (MC4, CY[ia1], SXc[ia2], DPA);
+  COMPLEX_MUL2 (MC1, SY[ia1], CXc[ia2]);
+  COMPLEX_MUL2 (MC2, SY[ia1], SXc[ia2]);
+  COMPLEX_MUL2 (MC3, CY[ia1], CXc[ia2]);
+  COMPLEX_MUL2 (MC4, CY[ia1], SXc[ia2]);
   COMPLEX_MUL2 (SM1, S[0], MC1);
   COMPLEX_MUL2 (SM2, S[1], MC2);
   COMPLEX_MUL2 (SM3, S[2], MC3);
   COMPLEX_MUL2 (SM4, S[3], MC4);
-  COMPLEX_ADD4 (VYX, SM1, SM2, SM3, SM4);
+  COMPLEX_ADD4 (ct3, SM1, SM2, SM3, SM4);
   COMPLEX_SET (ct1,  antGain[ia1*2+1]*antGain[ia2*2+0], 0);
   COMPLEX_EXP (ct2, -PD);
   COMPLEX_MUL2 (ggPD, ct1, ct2);
-  COMPLEX_MUL2 (VYX, VYX, ggPD);
+  COMPLEX_MUL2 (VYX, ct3, ggPD);
   Rarray[4] = VYX.real;
   Rarray[5] = VYX.imag;
-  /* DEBUG 
-      fprintf (stdout, "model %4d %d %d XY M %8.3f %8.3f SM %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f ggPD %8.3f %8.3f \n",
-	       idata,ia1, ia2, VYX.real, VYX.imag, 
-               SM1.real, SM1.imag, SM2.real, SM2.imag, SM3.real, SM3.imag, SM4.real, SM4.imag, ggPD.real, ggPD.imag);
-    end DEBUG */
 } /* end calcmodelXY */
 
 /**
@@ -697,7 +692,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
 #ifdef HAVE_GSL
   const gsl_multifit_fdfsolver_type *T=NULL;
 #endif /* HAVE_GSL */ 
-  /* DEBUG */
+  /* Diagnostics */
   ofloat RArray[8];
   odouble RRr, RRi, LLr, LLi, RLr, RLi, LRr, LRi;
   olong ia1, ia2, refAnt;
@@ -898,6 +893,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     for (i=0; i<in->nant; i++) {
       in->antGainFit[i] = g_malloc0(2*sizeof(gboolean));
       in->antGainFit[i][0] = FALSE; /* Don't fit  Xpol gain */
+      /* in->antGainFit[i][0] = in->doFitGain;  DEBUG */
       in->antGainFit[i][1] = in->doFitGain;
     }
     /* NEED MORE HERE */
@@ -918,10 +914,8 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
 
     /* Antenna terms */
     for (j=0; j<4; j++) in->antFit[i][j] = TRUE;
-    /* Don't fit reference antenna terms for R */
-    if  (((i+1)==in->refAnt) && in->isCircFeed) {
-      in->antFit[i][0] = FALSE;
-    }
+    /* Don't fit reference antenna terms*/
+    if  ((i+1)==in->refAnt) in->antFit[i][0] = FALSE;
   } /* end filling antenna fitting flags */
 
   /* Order of source parameters:
@@ -1025,35 +1019,36 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     nvis       = inUV->myDesc->nvis;
     in->ndata  = nvis*4*2;   /* 4 complex visibililties */
 #ifdef HAVE_GSL
-    /* Need to rebuild? */
-    if ((in->solver!=NULL) || (oldNparam!=in->nparam) || (oldNdata!=in->ndata))  {
-      if( in->solver)    gsl_multifit_fdfsolver_free (in->solver); in->solver = NULL;
-      if (in->funcStruc) g_free(in->funcStruc);                    in->funcStruc = NULL;
-      if (in->work)      gsl_vector_free(in->work);                in->work = NULL;
-      if (in->covar)     gsl_matrix_free(in->covar);               in->covar = NULL;
-    }
-    if (in->solver==NULL) {
-      oldNparam = in->nparam;
-      oldNdata  = in->ndata;
-      T = gsl_multifit_fdfsolver_lmder;
-      in->solver    = gsl_multifit_fdfsolver_alloc(T, in->ndata, in->nparam);
-      in->funcStruc = g_malloc0(sizeof(gsl_multifit_function_fdf));
-      in->work      = gsl_vector_alloc(in->nparam);
-      in->covar     = gsl_matrix_alloc(in->nparam, in->nparam);
-      /* Function by feed type  */
-      if (in->isCircFeed) {
-	/* Circular feeds */
-	in->funcStruc->f   = &PolnFitFuncOERL;
-	in->funcStruc->df  = &PolnFitJacOERL;
-	in->funcStruc->fdf = &PolnFitFuncJacOERL;
-      } else {
-	/* Linear feeds  */
-	in->funcStruc->f   = &PolnFitFuncOEXY;
-	in->funcStruc->df  = &PolnFitJacOEXY;
-	in->funcStruc->fdf = &PolnFitFuncJacOEXY;
+    if ((in->solnType[0]=='L') && (in->solnType[1]=='M')) { 
+      /* Need to rebuild? */
+      if ((in->solver!=NULL) || (oldNparam!=in->nparam) || (oldNdata!=in->ndata))  {
+	if( in->solver)    gsl_multifit_fdfsolver_free (in->solver); in->solver = NULL;
+	if (in->funcStruc) g_free(in->funcStruc);                    in->funcStruc = NULL;
+	if (in->work)      gsl_vector_free(in->work);                in->work = NULL;
+	if (in->covar)     gsl_matrix_free(in->covar);               in->covar = NULL;
       }
-    }
-  
+      if (in->solver==NULL) {
+	oldNparam = in->nparam;
+	oldNdata  = in->ndata;
+	T = gsl_multifit_fdfsolver_lmder;
+	in->solver    = gsl_multifit_fdfsolver_alloc(T, in->ndata, in->nparam);
+	in->funcStruc = g_malloc0(sizeof(gsl_multifit_function_fdf));
+	in->work      = gsl_vector_alloc(in->nparam);
+	in->covar     = gsl_matrix_alloc(in->nparam, in->nparam);
+	/* Function by feed type  */
+	if (in->isCircFeed) {
+	  /* Circular feeds */
+	  in->funcStruc->f   = &PolnFitFuncOERL;
+	  in->funcStruc->df  = &PolnFitJacOERL;
+	  in->funcStruc->fdf = &PolnFitFuncJacOERL;
+	} else {
+	  /* Linear feeds  */
+	  in->funcStruc->f   = &PolnFitFuncOEXY;
+	  in->funcStruc->df  = &PolnFitJacOEXY;
+	  in->funcStruc->fdf = &PolnFitFuncJacOEXY;
+	}
+      }
+    } /* If using LM */
 #endif /* HAVE_GSL */ 
 
     /* Do actual fitting  */
@@ -1082,7 +1077,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     done = iIF > EIF;
     /* Diagnostics */
     if (isOK && (err->prtLv>=4)) {
-      /* BL 11-18 sou 1 */
+      /* BL 10-19 sou 1 */
       refAnt = in->refAnt-1;
       fprintf (stderr, "Source 0 IF %d Chan %d\n", in->IFno, in->Chan);
       /* Header by feed type  */
@@ -1097,10 +1092,8 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
 	isou   = MAX(0, in->souNo[i]);    /* Source number */
 	ia1    = in->antNo[i*2+0];
 	ia2    = in->antNo[i*2+1]; 
-	/* DEBUG if ((isou==0) && (ia1==10) && (ia2==17)) {  11-18 */
-	/* DEBUG if ((isou==0)&& (ia1==2) && (ia2==3)) {  first source 3-4 */
-	if ((isou==0)&& (ia1==10) && (ia2==17)) {  /* first source 11 18 */
-	/* DEBUG if (isou==0) {    first source */
+	/* Diagnostics */
+	if ((isou==0) && (ia1==2) && (ia2==4)) {  /* first source 3-5 */
 	  /* Function by feed type  */
 	  if (in->isCircFeed ) {
 	    /* Circular feeds */
@@ -1659,8 +1652,8 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
 	in->inData[jvis*10+(istok+1)*2+1] = sumIm;
       } /* end Stokes loop */
       
-      /* DEBUG */
-      if ((err->prtLv>=4) && (ant1==11) && (ant2==18)) {
+      /* Diagnostic - sample data */
+      if ((err->prtLv>=5) && (ant1==2) && (ant2==4)) {
 	fprintf (stderr,"vis %d bl %d %d sou %d time %f PA %f Data %8.5f %8.5f  %8.5f %8.5f  %8.5f %8.5f  %8.5f %8.5f\n",
 		 jvis, ant1, ant2, isou, curTime, curPA1,
 		 in->inData[jvis*10+2],in->inData[jvis*10+3],
@@ -1702,9 +1695,6 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
 	  /* Assume X, Y */
 	  in->antParm[i*4+0] = 0.0;
 	  in->antParm[i*4+2] = +G_PI/2.0;
-	  /* DEBUG KAT 
-	  in->antParm[i*4+2] = 0.0;
-	  in->antParm[i*4+0] = +G_PI/2.0;*/
 	} else {  /* Use what's in the AN table as initial convert to radians */
 	  in->antParm[i*4+0] = in->AntLists[0]->ANlist[i]->FeedAPA*DG2RAD;
 	  in->antParm[i*4+2] = in->AntLists[0]->ANlist[i]->FeedBPA*DG2RAD;
@@ -2331,7 +2321,7 @@ static void doFitGSL (ObitPolnCalFit *in, ObitErr *err)
   } /* end Chi2 */
 
     /* Diagnostics */
-    if (err->prtLv>=3) {
+    if (err->prtLv>=5) {
       sumwt = (ofloat)gsl_blas_dnrm2(solver->f);
       /*Obit_log_error(err, OBIT_InfoErr,"iter %d status %d ant 1 %g %g %g %g sumwt %f", 
 	iter, status, in->antParm[0], in->antParm[1], in->antParm[2], in->antParm[3], sumwt); */
@@ -2533,19 +2523,15 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
 {
   odouble begChi2, endChi2=0.0, iChi2, tChi2, deriv=0.0, deriv2=1.0;
   odouble difParam, difChi2=0.0, hiChi2=0.0, dChi2, d2Chi2;
-  ofloat tParam, sParam, delta, sdelta = 0.01;
-  ofloat ParRMS=0.0, XRMS=0.0, fpol, fpa;
-  olong isou=0, iant, i, k=0, iter;
+  ofloat tParam, sParam, delta, sdelta = 0.02;
+  ofloat ParRMS, XRMS, fpol, fpa;
+  olong isou=0, iant, i, k=0, iter, maxIter;
   olong pas=0, ptype=0, pnumb=-1;
   gchar *routine="ObitPolnCalFit:doFitFast";
 
   if (err->error) return TRUE;  /* Error exists? */
-  iter = 0;
-  iter = 1000; /*  DEBUG */
-  /* DEBUG set source poln to faked value */
-  in->souParm[0] = 1.0; in->souParm[3] = -0.05;
-  in->souParm[4] = 1.0; in->souParm[7] = -0.05;
-  while (iter<300) { 
+  iter = 0; maxIter = 300;
+  while (iter<maxIter) { 
     in->selSou = -1;
     in->selAnt = -1;
     begChi2 = GetChi2 (in->nThread, in,  polnParmUnspec, 0,
@@ -2567,7 +2553,7 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
 
     /* Fit phase difference? */
     if (in->doFitRL) {
-      iChi2 = GetChi2 (in->nThread, in, polnParmPD, k,
+      iChi2 = GetChi2 (in->nThread, in, polnParmPD, 0,
 		       &ParRMS, &XRMS, &dChi2, &d2Chi2, err);     /* Initial value */
       sParam = in->PD;
       deriv  = dChi2;
@@ -2580,7 +2566,7 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
 	/* Loop decreasing delta until fit improves */
 	for (i=0; i<10; i++) {
 	  in->PD = sParam + delta;
-	  tChi2 = GetChi2 (in->nThread, in, polnParmUnspec, k, 
+	  tChi2 = GetChi2 (in->nThread, in, polnParmUnspec, 0, 
 			   &ParRMS, &XRMS, NULL, NULL, err);
 	  if (tChi2<iChi2) {
 	    /* Got new value? */
@@ -2614,6 +2600,7 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
 	  if (fabs(deriv2)>(fabs(deriv)*1.0e-4))      /* Bother with this one?*/
 	    delta = -0.5*atan2(deriv, deriv2);
 	  else {in->souParm[isou*4+k] = sParam; continue;}
+	  delta *= 5;  /* Speed up */
 	  if (delta>0.) delta = MIN (delta, 20*sdelta);
 	  if (delta<0.) delta = MAX (delta, -20*sdelta);
 	  /* Loop decreasing delta until fit improves */
@@ -2716,6 +2703,7 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
 	  if ((fabs(deriv2)>(fabs(deriv)*1.0e-4)) && (fabs(deriv)>(fabs(deriv2)*1.0e-3)))  /* Bother with this one?*/
 	    delta = -0.5*atan2(deriv, deriv2);
 	  else {in->antParm[iant*4+k] = sParam; continue;}
+	  if ((k==0) || (k==2)) delta *= 5;  /*  Speed up orientation */
 	  /* Loop decreasing delta until fit improves */
 	  for (i=0; i<10; i++) {
 	    tParam = sParam + delta;
@@ -2759,11 +2747,11 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
     /* Convergence test */
     difChi2 = fabs(begChi2 - endChi2);
 
-    if ((fabs(difParam)<1.0e-6) || 
-      ((fabs(difParam)<5.0e-3)&&(difChi2<=1.0e-5*hiChi2))) break; 
+    if ((fabs(difParam)<1.0e-7) || 
+      ((fabs(difParam)<5.0e-4)&&(difChi2<=1.0e-6*hiChi2))) break; 
 
     /* Diagnostics */
-    if (err->prtLv>=4) {
+    if (err->prtLv>=5) {
       Obit_log_error(err, OBIT_InfoErr, 
 		     "%d iter Chi2=%g Param %g type %d numb %d sou/ant %d dChi2 %g", 
 		     iter+1, endChi2, difParam, ptype, pnumb, pas, difChi2);
@@ -3225,10 +3213,6 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
     sum += isigma * residI * residI; sumwt += isigma;
     nPobs++;
     sumParResid += residR * residR + residI * residI;
-    /* DEBUG 
-       if ((paramType==polnParmUnspec) && ((fabs(residR)>10.0) || ((fabs(residI)>10.0))))
-       fprintf (stderr, "vis %d RR %d-%d %f %f\n", idata, ia1, ia2, residR, residI);
-       end DEBUG */
     /* Derivatives */
     if (paramType==polnParmAnt) {         /* Antenna parameters */
       /* Default partials */
@@ -3391,10 +3375,6 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
     sum += isigma * residI * residI; sumwt += isigma; 
     nPobs++;
     sumParResid += residR * residR + residI * residI;
-    /* DEBUG 
-       if ((paramType==polnParmUnspec) && ((fabs(residR)>5.0) || ((fabs(residI)>5.0))))
-       fprintf (stderr, "vis %d LL %d-%d %f %f\n", idata, ia1, ia2, residR, residI);
-       end DEBUG */
     /* Derivatives */
     if (paramType==polnParmAnt) {         /* Antenna parameters */
       /* Default partials */
@@ -3978,7 +3958,7 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
 
   dcomplex  SPA, DPA, SPAc, DPAc, ggPD;
   dcomplex ct1, ct2, ct3, ct4, ct5, dt1, dt2, Jm, Jp;
-  dcomplex S[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4, DFDP, DFDP2;
+  dcomplex S0[4], S[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4, DFDP, DFDP2;
   dcomplex SM1, SM2, SM3, SM4;
 
   COMPLEX_SET (S[0], 0.0, 0.0);  /* Initialize poln vector */
@@ -4015,16 +3995,17 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
   for (i=0; i<args->nant; i++) {
     COMPLEX_EXP (ct1, -antParm[i*4+0]);
     COMPLEX_SET (ct2, cos(G_PI*0.25+antParm[i*4+1]), 0.0);
-    COMPLEX_MUL3 (CX[i], Jp, ct1, ct2);
+    COMPLEX_MUL2 (CX[i], ct2, ct1);
     COMPLEX_EXP (ct1, antParm[i*4+0]);
     COMPLEX_SET (ct2, sin(G_PI*0.25+antParm[i*4+1]), 0.0);
-    COMPLEX_MUL2 (SX[i], ct1, ct2);
+    COMPLEX_MUL2 (SX[i], ct2, ct1);
     COMPLEX_EXP (ct1, antParm[i*4+2]);
     COMPLEX_SET (ct2, cos(G_PI*0.25-antParm[i*4+3]), 0.0);
-    COMPLEX_MUL2 (CY[i], ct1, ct2);
+    COMPLEX_MUL2 (CY[i], ct2, ct1);
     COMPLEX_EXP (ct1, -antParm[i*4+2]);
     COMPLEX_SET (ct2, sin(G_PI*0.25-antParm[i*4+3]), 0.0);
-    COMPLEX_MUL3 (SY[i], Jp, ct1, ct2);
+    COMPLEX_MUL2 (SY[i], ct2, ct1);
+
     COMPLEX_CONJUGATE (CXc[i], CX[i]);
     COMPLEX_CONJUGATE (SXc[i], SX[i]);
     COMPLEX_CONJUGATE (CYc[i], CY[i]);
@@ -4037,7 +4018,7 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
     /* Parallactic angle terms */
     chi1  = data[idata*10+0];   /* parallactic angle ant 1 */
     chi2  = data[idata*10+1];   /* parallactic angle ant 2 */
-    COMPLEX_EXP (SPA,chi1+chi2);
+    COMPLEX_EXP (SPA,(chi1+chi2));
     COMPLEX_EXP (DPA,chi1-chi2);
     COMPLEX_CONJUGATE (SPAc, SPA);
     COMPLEX_CONJUGATE (DPAc, DPA);
@@ -4062,12 +4043,18 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
 	upol = args->PPol[isou]*ipol*sin(args->RLPhase[isou]);
       vpol = souParm[isou*4+3];
       /* Complex Stokes array */
-      COMPLEX_SET (S[0], ipol+vpol, 0.0);
-      COMPLEX_SET (S[1], qpol,  upol);
-      COMPLEX_SET (S[2], qpol, -upol);
-      COMPLEX_SET (S[3], ipol-vpol, 0.0);
+      COMPLEX_SET (S0[0], ipol+vpol, 0.0);
+      COMPLEX_SET (S0[1], qpol,  upol);
+      COMPLEX_SET (S0[2], qpol, -upol);
+      COMPLEX_SET (S0[3], ipol-vpol, 0.0);
     }
 
+    /* Rotate Stokes by parallactic angle */
+    COMPLEX_MUL2(S[0], DPAc, S0[0]);
+    COMPLEX_MUL2(S[1], SPAc, S0[1]);
+    COMPLEX_MUL2(S[2], SPA,  S0[2]);
+    COMPLEX_MUL2(S[3], DPA,  S0[3]);
+    
     /* Antenna parameters (0 ref) */
     ia1    = args->antNo[idata*2+0];
     ia2    = args->antNo[idata*2+1]; 
@@ -4081,38 +4068,26 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
   if (wt[idata*4]>0.0) {
     isigma = wt[idata*4];
     
-    /* VXX = {S[0] * CX[ia1] * CXc[ia2] * DPAc  +
-              S[1] * CX[ia1] * SXc[ia2] * SPAc  +
-	      S[2] * SX[ia1] * CXc[ia2] * SPA   + 
-	      S[3] * SX[ia1] * SXc[ia2] * DPA} * g1X * g2X ;
+    /* VXX = {S[0] * CX[ia1] * CXc[ia2]  +
+              S[1] * CX[ia1] * SXc[ia2]  +
+	      S[2] * SX[ia1] * CXc[ia2]  + 
+	      S[3] * SX[ia1] * SXc[ia2]} * g1X * g2X ;
     */
-    COMPLEX_MUL3 (MC1, CX[ia1], CXc[ia2], DPAc);
-    COMPLEX_MUL3 (MC2, CX[ia1], SXc[ia2], SPAc);
-    COMPLEX_MUL3 (MC3, SX[ia1], CXc[ia2], SPA);
-    COMPLEX_MUL3 (MC4, SX[ia1], SXc[ia2], DPA);
+    COMPLEX_MUL2 (MC1, CX[ia1], CXc[ia2]);
+    COMPLEX_MUL2 (MC2, CX[ia1], SXc[ia2]);
+    COMPLEX_MUL2 (MC3, SX[ia1], CXc[ia2]);
+    COMPLEX_MUL2 (MC4, SX[ia1], SXc[ia2]);
     COMPLEX_MUL2 (SM1, S[0], MC1);
     COMPLEX_MUL2 (SM2, S[1], MC2);
     COMPLEX_MUL2 (SM3, S[2], MC3);
     COMPLEX_MUL2 (SM4, S[3], MC4);
-    COMPLEX_ADD4 (VXX, SM1, SM2, SM3, SM4);
+    COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
     COMPLEX_SET (ggPD,  antGain[ia1*2+0]*antGain[ia2*2+0], 0);
-    COMPLEX_MUL2 (VXX, VXX, ggPD);
+    COMPLEX_MUL2 (VXX, ct5, ggPD);
     residR = VXX.real - data[idata*10+2];
     sum += isigma * residR * residR; sumwt += isigma;
     residI = VXX.imag - data[idata*10+3];
     sum += isigma * residI * residI; sumwt += isigma;
-    /* DEBUG  
-       if ((paramType==polnParmAnt) && (paramNumber==1) && (selAnt==2) && (ia1==2) && (ia2==3)) {
-       fprintf (stdout, "vis %4d %d %d XX chi2 %8.3f M %8.3f %8.3f O %8.3f %8.3f R %8.3f %8.3f \n",
-       idata,ia1, ia2, isigma*(residR*residR+residI*residI),
-       VXX.real, VXX.imag, data[idata*10+2], data[idata*10+3], residR, residI);
-       if (idata==0) {
-       fprintf (stdout, "ant %d parm %f %f %f %f PD %f\n", 
-       ia1, antParm[ia1*4+0],  antParm[ia1*4+1], antParm[ia1*4+2], antParm[ia1*4+3], PD);
-       fprintf (stdout, "ant %d parm %f %f %f %f PA %f %f\n", 
-       ia2, antParm[ia2*4+0],  antParm[ia2*4+1], antParm[ia2*4+2], antParm[ia2*4+3], chi1, chi2);
-       }
-       }   End Debug  */
     nPobs++;
     sumParResid += residR * residR + residI * residI;
     /* Derivatives */
@@ -4153,31 +4128,35 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
       case 1:     /* XX wrt Ex */
 	if (isAnt1) {
 	  if (antFit[ia1][paramNumber]) {
-	    /* part = (0, -1) * {S[0] * CXc[ia2] * DPAc * SXc[ia1] +
-	                         S[1] * SXc[ia2] * SPAc * SXc[ia1] +
-				 S[2] * CXc[ia2] * SPA  * CXc[ia1] +	       
-				 S[3] * SXc[ia2] * DPA  * CXc[ia1]}  * gX[ia1] * gX[ia2]  */
-	    COMPLEX_MUL4(ct1, S[0], CXc[ia2], DPAc, SXc[ia1]);
-	    COMPLEX_MUL4(ct2, S[1], SXc[ia2], SPAc, SXc[ia1]);
-	    COMPLEX_MUL4(ct3, S[2], CXc[ia2], SPA,  SXc[ia1]);
-	    COMPLEX_MUL4(ct4, S[3], SXc[ia2], DPA,  CXc[ia1]);
+	    /* part = {-S[0] * CXc[ia2] * SXc[ia1] -
+	                S[1] * SXc[ia2] * SXc[ia1] +
+		        S[2] * CXc[ia2] * CXc[ia1] +	       
+		        S[3] * SXc[ia2] * CXc[ia1]}  * gX[ia1] * gX[ia2]  */
+	    COMPLEX_MUL3(ct5, S[0], CXc[ia2], SXc[ia1]);
+	    COMPLEX_NEGATE(ct1, ct5);
+	    COMPLEX_MUL3(ct5, S[1], SXc[ia2], SXc[ia1]);
+	    COMPLEX_NEGATE(ct2, ct5);
+	    COMPLEX_MUL3(ct3, S[2], CXc[ia2], SXc[ia1]);
+	    COMPLEX_MUL3(ct4, S[3], SXc[ia2], CXc[ia1]);
 	    COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-	    COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+	    COMPLEX_MUL2(DFDP, ct5, ggPD);
 	    /* part2 = -VXX */
 	    COMPLEX_NEGATE(DFDP2, VXX);
 	  }
 	} else if (isAnt2) {
 	  if (antFit[ia2][paramNumber]) {
-	    /* part = (0, -1) * {S[0] * CX[ia1] * DPAc * SX[ia2] +
-                                 S[1] * CX[ia1] * SPAc * CX[ia2] +
-				 S[2] * SX[ia1] * SPA  * SX[ia2] +
-				 S[3] * SX[ia1] * DPA  * CX[ia2]} * gX[ia1] * gX[ia2]  */
-	    COMPLEX_MUL4(ct1, S[0], CX[ia1], DPAc, SX[ia2]);
-	    COMPLEX_MUL4(ct2, S[1], CX[ia1], SPAc, CX[ia2]);
-	    COMPLEX_MUL4(ct3, S[2], SX[ia1], SPA,  SX[ia2]);
-	    COMPLEX_MUL4(ct4, S[3], SX[ia1], DPA,  CX[ia2]);
+	    /* part = {-S[0] * CX[ia1] * SX[ia2] +
+                        S[1] * CX[ia1] * CX[ia2] -
+		        S[2] * SX[ia1] * SX[ia2] +
+		        S[3] * SX[ia1] * CX[ia2]} * gX[ia1] * gX[ia2]  */
+	    COMPLEX_MUL3(ct5, S[0], CX[ia1], SX[ia2]);
+	    COMPLEX_NEGATE(ct1, ct5);
+	    COMPLEX_MUL3(ct2, S[1], CX[ia1], CX[ia2]);
+	    COMPLEX_MUL3(ct5, S[2], SX[ia1], SX[ia2]);
+	    COMPLEX_NEGATE(ct3, ct5);
+	    COMPLEX_MUL3(ct4, S[3], SX[ia1], CX[ia2]);
 	    COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-	    COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+	    COMPLEX_MUL2(DFDP, ct5, ggPD);
 	    /* part2 = -VXX */
 	    COMPLEX_NEGATE(DFDP2, VXX);
 	  }
@@ -4195,29 +4174,37 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
       switch (paramNumber) {   /* Switch over parameter */
       case 0:     /* XX wrt I */
 	if (souFit[isou][paramNumber]) {
-	  /* part =   (MC1 + MC4) * gX[ia1] * gX[ia2] */
-	  COMPLEX_ADD2(ct1, MC1, MC4);
+	  /* part =   (MC1*DPAc + MC4*DPA) * gX[ia1] * gX[ia2] */
+	  COMPLEX_MUL2(ct2, MC1, DPAc);
+	  COMPLEX_MUL2(ct3, MC4, DPA);
+	  COMPLEX_ADD2(ct1, ct2, ct3);
 	  COMPLEX_MUL2(DFDP, ct1, ggPD);
 	}
 	break;
       case 1:     /* XX wrt QPol */
 	if (souFit[isou][paramNumber]) {
-	  /* part = (MC2 + MC3) * gX[ia1] * gX[ia2] */
-	  COMPLEX_ADD2(ct1, MC2, MC3);
+	  /* part = (MC2*SPAc + MC3*SPA) * gX[ia1] * gX[ia2] */
+	  COMPLEX_MUL2(ct2, MC2, SPAc);
+	  COMPLEX_MUL2(ct3, MC3, SPA);
+	  COMPLEX_ADD2(ct1, ct2, ct3);
 	  COMPLEX_MUL2(DFDP, ct1, ggPD);
 	}
 	break;
       case 2:     /* XX wrt UPol */
 	if (souFit[isou][paramNumber]) {
-	  /* i (MC2 - MC3) * gX[ia1] * gX[ia2] */
-	  COMPLEX_SUB(ct1, MC2, MC3);
-	  COMPLEX_MUL3(DFDP, Jp, ct1, ggPD);
+	  /* (j MC2*SPAc - j MC3*SPA) * gX[ia1] * gX[ia2] */
+	  COMPLEX_MUL3(ct2, Jp, MC2, SPAc);
+	  COMPLEX_MUL3(ct3, Jp, MC3, SPA);
+	  COMPLEX_SUB(ct1, ct2, ct3);
+	  COMPLEX_MUL2(DFDP, ct1, ggPD);
 	}
 	break;
       case 3:     /* XX wrt Vpol */
 	if (souFit[isou][paramNumber]) {
-	  /* (MC1 - MC4) * gX[ia1] * gX[ia2] */
-	  COMPLEX_SUB(ct1, MC1, MC4);
+	  /* (MC1*DPAc - MC4*DPA) * gX[ia1] * gX[ia2] */
+	  COMPLEX_MUL2(ct2, MC1, DPAc);
+	  COMPLEX_MUL2(ct3, MC4, DPA);
+	  COMPLEX_SUB(ct1, ct2, ct3);
 	  COMPLEX_MUL2(DFDP, ct1, ggPD);
 	}
 	break;  
@@ -4225,6 +4212,7 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
 	break;
       }; /* end source parameter switch */
       /* end source param */
+
     } else if (paramType==polnParmGain) {   /* Antenna Gains */
       switch (paramNumber) {   /* Switch over parameter */
       case 0:     /* XX wrt gX */
@@ -4260,32 +4248,26 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
   /*      YY */
   if (wt[idata*4+1]>0.0) {
     isigma = wt[idata*4+1];
-    /* VYY = {S[0] * SY[ia1] * SYc[ia2] * DPAc +       
-              S[1] * SY[ia1] * CYc[ia2] * SPAc +
-	      S[2] * CY[ia1] * SYc[ia2] * SPA  + 
-	      S[3] * CY[ia1] * CYc[ia2] * DPA} * g1Y * g2Y ;
+    /* VYY = {S[0] * SY[ia1] * SYc[ia2] +       
+              S[1] * SY[ia1] * CYc[ia2] +
+	      S[2] * CY[ia1] * SYc[ia2] + 
+	      S[3] * CY[ia1] * CYc[ia2]} * g1Y * g2Y ;
     */
-    COMPLEX_MUL3 (MC1, SY[ia1], SYc[ia2], DPAc);
-    COMPLEX_MUL3 (MC2, SY[ia1], CYc[ia2], SPAc);
-    COMPLEX_MUL3 (MC3, CY[ia1], SYc[ia2], SPA);
-    COMPLEX_MUL3 (MC4, CY[ia1], CYc[ia2], DPA);
+    COMPLEX_MUL2 (MC1, SY[ia1], SYc[ia2]);
+    COMPLEX_MUL2 (MC2, SY[ia1], CYc[ia2]);
+    COMPLEX_MUL2 (MC3, CY[ia1], SYc[ia2]);
+    COMPLEX_MUL2 (MC4, CY[ia1], CYc[ia2]);
     COMPLEX_MUL2 (SM1, S[0], MC1);
     COMPLEX_MUL2 (SM2, S[1], MC2);
     COMPLEX_MUL2 (SM3, S[2], MC3);
     COMPLEX_MUL2 (SM4, S[3], MC4);
-    COMPLEX_ADD4 (VYY, SM1, SM2, SM3, SM4);
+    COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
     COMPLEX_SET (ggPD,  antGain[ia1*2+1]*antGain[ia2*2+1], 0);
-    COMPLEX_MUL2 (VYY, VYY, ggPD);
+    COMPLEX_MUL2 (VYY, ct5, ggPD);
     residR = VYY.real - data[idata*10+4];
     sum += isigma * residR * residR; sumwt += isigma; 
     residI = VYY.imag - data[idata*10+5];
     sum += isigma * residI * residI; sumwt += isigma; 
-    /* DEBUG 
-       if ((paramType==polnParmAnt) && (paramNumber==1) && (selAnt==2) && (ia1==2) && (ia2==3)) {
-       fprintf (stdout, "vis %4d %d %d YY chi2 %8.3f M %8.3f %8.3f O %8.3f %8.3f R %8.3f %8.3f \n",
-       idata,ia1, ia2, isigma*(residR*residR+residI*residI),
-       VYY.real, VYY.imag, data[idata*10+4], data[idata*10+5], residR, residI);
-       }  End Debug */
     nPobs++;
     sumParResid += residR * residR + residI * residI;
     /* Derivatives */
@@ -4333,31 +4315,35 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
       case 3:     /* YY wrt Ey */
 	if (isAnt1) {
 	  if (antFit[ia1][paramNumber]) {
-	    /* part = (0, -1) * {S[0] * SYc[ia2] * DPAc * CYc[ia1] +
-                                 S[1] * CYc[ia2] * SPAc * CYc[ia1] +
-				 S[2] * SYc[ia2] * SPA  * SYc[ia1] +	       
-				 S[3] * CYc[ia2] * DPA  * SYc[ia1]}  * gX[ia1] * gX[ia2]  */
-	    COMPLEX_MUL4(ct1, S[0], SYc[ia2], DPAc, CYc[ia1]);
-	    COMPLEX_MUL4(ct2, S[1], CYc[ia2], SPAc, CYc[ia1]);
-	    COMPLEX_MUL4(ct3, S[2], SYc[ia2], SPA,  SYc[ia1]);
-	    COMPLEX_MUL4(ct4, S[3], CYc[ia2], DPA,  SYc[ia1]);
+	    /* part = {-S[0] * SYc[ia2] * CYc[ia1] -
+                        S[1] * CYc[ia2] * CYc[ia1] +
+		        S[2] * SYc[ia2] * SYc[ia1] +	       
+		        S[3] * CYc[ia2] * SYc[ia1]}  * gX[ia1] * gX[ia2]  */
+	    COMPLEX_MUL3(ct5, S[0], SYc[ia2], CYc[ia1]);
+	    COMPLEX_NEGATE(ct1, ct5);
+	    COMPLEX_MUL3(ct5, S[1], CYc[ia2], CYc[ia1]);
+	    COMPLEX_NEGATE(ct2, ct5);
+	    COMPLEX_MUL3(ct3, S[2], SYc[ia2], SYc[ia1]);
+	    COMPLEX_MUL3(ct4, S[3], CYc[ia2], SYc[ia1]);
 	    COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-	    COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+	    COMPLEX_MUL2(DFDP, ct5, ggPD);
 	    /* part2 = -VYY */
 	    COMPLEX_NEGATE(DFDP2, VYY);
 	  }
 	} else if (isAnt2) {
 	  if (antFit[ia2][paramNumber]) {
-	    /* part = (0, -1) * {S[0] * SY[ia1] * DPAc * CY[ia2] + 
-                                 S[1] * SY[ia1] * SPAc * SY[ia2] +
-				 S[2] * CY[ia1] * SPA  * CY[ia2]  + 
-				 S[3] * CY[ia1] * DPA  * SY[ia2]} * gY[ia1] * gY[ia2] */
-	    COMPLEX_MUL4(ct1, S[0], SY[ia1], DPAc, CY[ia2]);
-	    COMPLEX_MUL4(ct2, S[1], SY[ia1], SPAc, SY[ia2]);
-	    COMPLEX_MUL4(ct3, S[2], CY[ia1], SPA,  CY[ia2]);
-	    COMPLEX_MUL4(ct4, S[3], CY[ia1], DPA,  SY[ia2]);
+	    /* part = {-S[0] * SY[ia1] * CY[ia2] + 
+                        S[1] * SY[ia1] * SY[ia2] -
+		        S[2] * CY[ia1] * CY[ia2]  + 
+		        S[3] * CY[ia1] * SY[ia2]} * gY[ia1] * gY[ia2] */
+	    COMPLEX_MUL3(ct5, S[0], SY[ia1], CY[ia2]);
+	    COMPLEX_NEGATE(ct1, ct5);
+	    COMPLEX_MUL3(ct2, S[1], SY[ia1], SY[ia2]);
+	    COMPLEX_MUL3(ct5, S[2], CY[ia1], CY[ia2]);
+	    COMPLEX_NEGATE(ct3, ct5);
+	    COMPLEX_MUL3(ct4, S[3], CY[ia1], SY[ia2]);
 	    COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-	    COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+	    COMPLEX_MUL2(DFDP, ct5, ggPD);
 	    /* part2 = -VYY */
 	    COMPLEX_NEGATE(DFDP2, VYY);
 	  }
@@ -4371,29 +4357,37 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
       switch (paramNumber) {   /* Switch over parameter */
       case 0:     /* YY wrt IPol */
 	if (souFit[isou][paramNumber]) {
-	  /* part =   (MC1 + MC4) * gY[ia1] * gY[ia2] */
-	  COMPLEX_ADD2(ct1, MC1, MC4);
+	  /* part =   (MC1*DPAc + MC4*DPA) * gX[ia1] * gX[ia2] */
+	  COMPLEX_MUL2(ct2, MC1, DPAc);
+	  COMPLEX_MUL2(ct3, MC4, DPA);
+	  COMPLEX_ADD2(ct1, ct2, ct3);
 	  COMPLEX_MUL2(DFDP, ct1, ggPD);
 	}
 	break;
       case 1:     /* YY wrt QPol */
 	if (souFit[isou][paramNumber]) {
-	  /* part = (MC2 + MC3) * gY[ia1] * gY[ia2] */
-	  COMPLEX_ADD2(ct1, MC2, MC3);
+	  /* part = (MC2*SPAc + MC3*SPA) * gX[ia1] * gX[ia2] */
+	  COMPLEX_MUL2(ct2, MC2, SPAc);
+	  COMPLEX_MUL2(ct3, MC3, SPA);
+	  COMPLEX_ADD2(ct1, ct2, ct3);
 	  COMPLEX_MUL2(DFDP, ct1, ggPD);
 	}
 	break;
       case 2:     /* YY wrt UPol */
 	if (souFit[isou][paramNumber]) {
-	  /* i (MC2 - MC3) * gY[ia1] * gY[ia2] */
-	  COMPLEX_SUB(ct1, MC2, MC3);
-	  COMPLEX_MUL3(DFDP, Jp, ct1, ggPD);
+	  /* (j MC2*SPAc - j MC3*SPA) * gX[ia1] * gX[ia2] */
+	  COMPLEX_MUL3(ct2, Jp, MC2, SPAc);
+	  COMPLEX_MUL3(ct3, Jp, MC3, SPA);
+	  COMPLEX_SUB(ct1, ct2, ct3);
+	  COMPLEX_MUL2(DFDP, ct1, ggPD);
 	}
 	break;
       case 3:     /* YY wrt Vpol */
 	if (souFit[isou][paramNumber]) {
-	  /* (MC1 - MC4) * gY[ia1] * gY[ia2] */
-	  COMPLEX_SUB (ct1, MC1, MC4);
+	  /* (MC1*DPAc - MC4*DPA) * gX[ia1] * gX[ia2] */
+	  COMPLEX_MUL2(ct2, MC1, DPAc);
+	  COMPLEX_MUL2(ct3, MC4, DPA);
+	  COMPLEX_SUB(ct1, ct2, ct3);
 	  COMPLEX_MUL2(DFDP, ct1, ggPD);
 	}
 	break;  
@@ -4438,35 +4432,28 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
     /* 	    XY */
   if (wt[idata*4+2]>0.0) {
     isigma = wt[idata*4+2];
-    /* VXY = {S[0] * CX[ia1] * SYc[ia2] * DPAc +       
-              S[1] * CX[ia1] * CYc[ia2] * SPAc +
-	      S[2] * SX[ia1] * SYc[ia2] * SPA  + 
-	      S[3] * SX[ia1] * CYc[ia2] * DPA}} * g1X * g2Y * exp(i PD);
+    /* VXY = {S[0] * CX[ia1] * SYc[ia2] +       
+              S[1] * CX[ia1] * CYc[ia2] +
+	      S[2] * SX[ia1] * SYc[ia2]  + 
+	      S[3] * SX[ia1] * CYc[ia2]}} * g1X * g2Y * exp(j PD);
     */
-    COMPLEX_MUL3 (MC1, CX[ia1], SYc[ia2], DPAc);
-    COMPLEX_MUL3 (MC2, CX[ia1], CYc[ia2], SPAc);
-    COMPLEX_MUL3 (MC3, SX[ia1], SYc[ia2], SPA);
-    COMPLEX_MUL3 (MC4, SX[ia1], CYc[ia2], DPA);
+    COMPLEX_MUL2 (MC1, CX[ia1], SYc[ia2]);
+    COMPLEX_MUL2 (MC2, CX[ia1], CYc[ia2]);
+    COMPLEX_MUL2 (MC3, SX[ia1], SYc[ia2]);
+    COMPLEX_MUL2 (MC4, SX[ia1], CYc[ia2]);
     COMPLEX_MUL2 (SM1, S[0], MC1);
     COMPLEX_MUL2 (SM2, S[1], MC2);
     COMPLEX_MUL2 (SM3, S[2], MC3);
     COMPLEX_MUL2 (SM4, S[3], MC4);
-    COMPLEX_ADD4 (VXY, SM1, SM2, SM3, SM4);
+    COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
     COMPLEX_SET (ct1,  antGain[ia1*2+0]*antGain[ia2*2+1], 0);
     COMPLEX_EXP (ct2, PD);
     COMPLEX_MUL2 (ggPD, ct1, ct2);
-    COMPLEX_MUL2 (VXY, VXY, ggPD);
+    COMPLEX_MUL2 (VXY, ct5, ggPD);
     residR = VXY.real - data[idata*10+6];
     sum += isigma * residR * residR; sumwt += isigma;
     residI = VXY.imag - data[idata*10+7];
     sum += isigma * residI * residI; sumwt += isigma;
-    /* DEBUG 
-       if ((paramType==polnParmAnt) && (paramNumber==1) && (selAnt==2) && (ia1==2) && (ia2==3)) {
-       fprintf (stdout, "vis %4d %d %d XY chi2 %8.3f M %8.3f %8.3f O %8.3f %8.3f R %8.3f %8.3f SM %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f ggPD %8.3f %8.3f \n",
-       idata,ia1, ia2, isigma*(residR*residR+residI*residI),
-       VXY.real, VXY.imag, data[idata*10+6], data[idata*10+7], residR, residI,
-       SM1.real, SM1.imag, SM2.real, SM2.imag, SM3.real, SM3.imag, SM4.real, SM4.imag, ggPD.real, ggPD.imag);
-       }  End Debug */
     nXobs++;
     sumXResid += residR * residR + residI * residI;
     /* Derivatives */
@@ -4480,7 +4467,7 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
 	  if (antFit[ia1][paramNumber]) {
 	    /* part = {(0, -1) * S[0] * MC1 + (0, -1) * S[1] * MC2 + 
 	               (0,  1) * S[2] * MC3 + (0,  1) * S[3] * MC4} *
-		                        gX[ia1] * gY[ia2] * exp(i PD) */
+		                        gX[ia1] * gY[ia2] * exp(j PD) */
 	    COMPLEX_ADD2 (ct1, SM1, SM2);
 	    COMPLEX_MUL2 (ct2, Jm, ct1);
 	    COMPLEX_ADD2 (ct1, SM3, SM4);
@@ -4495,17 +4482,19 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
       case 1:     /* XY wrt Ex */
 	if (isAnt1) {
 	  if (antFit[ia1][paramNumber]) {
-	    /* part =  (0, -1) * {S[0] * SYc[ia2] * DPAc * SXc[ia1]  + 
-                                  S[1] * CYc[ia2] * SPAc * SXc[ia1]  +
-				  S[2] * SYc[ia2] * SPA  * CXc[ia1]  + 
-				  S[3] * CYc[ia2] * DPA  * CXc[ia1]  } * 
-				         gX[ia1] * gY[ia2] * exp(i PD) */
-	    COMPLEX_MUL4(ct1, S[0], SYc[ia2], DPAc, SXc[ia1]);
-	    COMPLEX_MUL4(ct2, S[1], CYc[ia2], SPAc, SXc[ia1]);
-	    COMPLEX_MUL4(ct3, S[2], SYc[ia2], SPA,  CXc[ia1]);
-	    COMPLEX_MUL4(ct4, S[3], CYc[ia2], DPA,  CXc[ia1]);
+	    /* part =  {-S[0] * SYc[ia2] * SXc[ia1]  - 
+                         S[1] * CYc[ia2] * SXc[ia1]  +
+		         S[2] * SYc[ia2] * CXc[ia1]  + 
+		         S[3] * CYc[ia2] * CXc[ia1]  } * 
+				         gX[ia1] * gY[ia2] * exp(j PD) */
+	    COMPLEX_MUL3(ct5, S[0], SYc[ia2], SXc[ia1]);
+	    COMPLEX_NEGATE(ct1, ct5);
+	    COMPLEX_MUL3(ct5, S[1], CYc[ia2], SXc[ia1]);
+	    COMPLEX_NEGATE(ct2, ct5);
+	    COMPLEX_MUL3(ct3, S[2], SYc[ia2], CXc[ia1]);
+	    COMPLEX_MUL3(ct4, S[3], CYc[ia2], CXc[ia1]);
 	    COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-	    COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+	    COMPLEX_MUL2(DFDP, ct5, ggPD);
 	    /*   part2 = -VXY  */
 	    COMPLEX_NEGATE(DFDP2, VXY);
 	  }
@@ -4516,13 +4505,13 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
 	  if (antFit[ia2][paramNumber]) {
 	    /* part = {(0,  1) * S[0] * MC1 + (0, -1) * S[1] * MC2 + 
 	               (0,  1) * S[2] * MC3 + (0, -1) * S[3] * MC4} * 
-                             gX[ia1] * gY[ia2] * exp(i PD) */
+                             gX[ia1] * gY[ia2] * exp(j PD) */
 	    COMPLEX_ADD2 (ct1, SM1, SM3);
 	    COMPLEX_MUL2 (ct2, Jp, ct1);
 	    COMPLEX_ADD2 (ct1, SM2, SM4);
 	    COMPLEX_MUL2 (ct3, Jm, ct1);
-	    COMPLEX_ADD2 (ct2, ct2, ct3);
-	    COMPLEX_MUL2 (DFDP,  ct2, ggPD);
+	    COMPLEX_ADD2 (ct5, ct2, ct3);
+	    COMPLEX_MUL2 (DFDP,  ct5, ggPD);
 	    /* part2 = -VXY */
 	    COMPLEX_NEGATE(DFDP2, VXY);
 	  }
@@ -4531,17 +4520,19 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
       case 3:     /* XY wrt Ey */
 	if (isAnt2) {
 	  if (antFit[ia2][paramNumber]) {
-	    /* part = (0, -1) *{S[0] * CX[ia1] * DPAc * CY[ia2] +       
-	                        S[1] * CX[ia1] * SPAc * SY[ia2] +
-				S[2] * SX[ia1] * SPA  * CY[ia2] + 
-				S[3] * SX[ia1] * DPA  * SY[ia2]} * 
-			   	       gX[ia1] * gY[ia2] * exp(i PD) */
-	    COMPLEX_MUL4(ct1, S[0], CX[ia1], DPAc, CY[ia2]);
-	    COMPLEX_MUL4(ct2, S[1], CX[ia1], SPAc, SY[ia2]);
-	    COMPLEX_MUL4(ct3, S[2], SX[ia1], SPA,  CY[ia2]);
-	    COMPLEX_MUL4(ct4, S[3], SX[ia1], DPA,  SY[ia2]);
+	    /* part = {-S[0] * CX[ia1] * CY[ia2] +       
+	                S[1] * CX[ia1] * SY[ia2] -
+		      	S[2] * SX[ia1] * CY[ia2] + 
+		      	S[3] * SX[ia1] * SY[ia2]} * 
+			   	       gX[ia1] * gY[ia2] * exp(j PD) */
+	    COMPLEX_MUL3(ct5, S[0], CX[ia1], CY[ia2]);
+	    COMPLEX_NEGATE(ct1, ct5);
+	    COMPLEX_MUL3(ct5, S[1], CX[ia1], SY[ia2]);
+	    COMPLEX_NEGATE(ct2, ct5);
+	    COMPLEX_MUL3(ct3, S[2], SX[ia1], CY[ia2]);
+	    COMPLEX_MUL3(ct4, S[3], SX[ia1], SY[ia2]);
 	    COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-	    COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+	    COMPLEX_MUL2(DFDP, ct5, ggPD);
 	    /* part2 = -VXY */
 	    COMPLEX_NEGATE(DFDP2, VXY);
 	  }
@@ -4555,29 +4546,37 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
       switch (paramNumber) {   /* Switch over parameter */
       case 0:     /* XY wrt I */
 	if (souFit[isou][paramNumber]) {
-	  /* part =   (MC1 + MC4) * gX[ia1] * gY[ia2] * exp(i PD) */
-	  COMPLEX_ADD2(ct1, MC1, MC4);
+	  /* part =   (MC1*DPAc + MC4*DPA) * gX[ia1] * gX[ia2] * exp(j PD) */
+	  COMPLEX_MUL2(ct2, MC1, DPAc);
+	  COMPLEX_MUL2(ct3, MC4, DPA);
+	  COMPLEX_ADD2(ct1, ct2, ct3);
 	  COMPLEX_MUL2(DFDP, ct1, ggPD);
 	}
 	break;
       case 1:     /* XY wrt QPol */
 	if (souFit[isou][paramNumber]) {
-	  /* part = (MC2 + MC3) * gX[ia1] * gY[ia2] * exp(i PD) */
-	  COMPLEX_ADD2(ct1, MC2, MC3);
+	  /* part = (MC2*SPAc + MC3*SPA) * gX[ia1] * gX[ia2] * exp(j PD) */
+	  COMPLEX_MUL2(ct2, MC2, SPAc);
+	  COMPLEX_MUL2(ct3, MC3, SPA);
+	  COMPLEX_ADD2(ct1, ct2, ct3);
 	  COMPLEX_MUL2(DFDP, ct1, ggPD);
 	}
 	break;
       case 2:     /* XY wrt UPol */
 	if (souFit[isou][paramNumber]) {
-	  /* i (MC2 - MC3) * gX[ia1] * gY[ia2] * exp(i PD) */
-	  COMPLEX_SUB(ct1, MC2, MC3);
-	  COMPLEX_MUL3(DFDP, Jp, ct1, ggPD);
+	  /* (j MC2*SPAc - j MC3*SPA) * gX[ia1] * gX[ia2] * exp(j PD) */
+	  COMPLEX_MUL3(ct2, Jp, MC2, SPAc);
+	  COMPLEX_MUL3(ct3, Jp, MC3, SPA);
+	  COMPLEX_SUB(ct1, ct2, ct3);
+	  COMPLEX_MUL2(DFDP, ct1, ggPD);
 	}
 	break;
       case 3:     /* XY wrt Vpol */
 	if (souFit[isou][paramNumber]) {
-	  /* (MC1 - MC4) * gX[ia1] * gY[ia2] * exp(i PD) */
-	  COMPLEX_SUB (ct1, MC1, MC4);
+	  /* (MC1*DPAc - MC4*DPA) * gX[ia1] * gX[ia2] * exp(j PD) */
+	  COMPLEX_MUL2(ct2, MC1, DPAc);
+	  COMPLEX_MUL2(ct3, MC4, DPA);
+	  COMPLEX_SUB(ct1, ct2, ct3);
 	  COMPLEX_MUL2(DFDP, ct1, ggPD);
 	}
 	break;  
@@ -4590,7 +4589,7 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
       case 0:     /* XY wrt gX */
 	if (isAnt1 && (antGainFit[ia1][paramNumber])) {
 	  /* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) 
-                           * gY[ia2]  * exp(i PD) */
+                           * gY[ia2]  * exp(j PD) */
 	  COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
 	  COMPLEX_SET (ct2, antGain[ia2*2+1], 0);
 	  COMPLEX_EXP (ct3, PD);
@@ -4601,7 +4600,7 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
       case 1:     /* XY wrt gY */
 	if (isAnt2 && (antGainFit[ia2][paramNumber])) {
 	  /* part = {S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) 
-	                    * gX[ia1] * exp(i PD) */
+	                    * gX[ia1] * exp(j PD) */
 	  COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
 	  COMPLEX_SET (ct2, antGain[ia1*2+0], 0);
 	  COMPLEX_EXP (ct3, PD);
@@ -4630,35 +4629,28 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
     /*        YX */
   if (wt[idata*4+3]>0.0) {
     isigma = wt[idata*4+3];
-    /* VYX = {S[0] * SY[ia1] * CXc[ia2] * DPAc +       
-              S[1] * SY[ia1] * SXc[ia2] * SPAc +
-	      S[2] * CY[ia1] * CXc[ia2] * SPA  + 
-	      S[3] * CY[ia1] * SXc[ia2] * DPA} * g1Y * g2X * exp(-i PD)
+    /* VYX = {S[0] * SY[ia1] * CXc[ia2] +       
+              S[1] * SY[ia1] * SXc[ia2] +
+	      S[2] * CY[ia1] * CXc[ia2]  + 
+	      S[3] * CY[ia1] * SXc[ia2]} * g1Y * g2X * exp(-j PD)
     */
-    COMPLEX_MUL3 (MC1, SY[ia1], CXc[ia2], DPAc);
-    COMPLEX_MUL3 (MC2, SY[ia1], SXc[ia2], SPAc);
-    COMPLEX_MUL3 (MC3, CY[ia1], CXc[ia2], SPA);
-    COMPLEX_MUL3 (MC4, CY[ia1], SXc[ia2], DPA);
+    COMPLEX_MUL2 (MC1, SY[ia1], CXc[ia2]);
+    COMPLEX_MUL2 (MC2, SY[ia1], SXc[ia2]);
+    COMPLEX_MUL2 (MC3, CY[ia1], CXc[ia2]);
+    COMPLEX_MUL2 (MC4, CY[ia1], SXc[ia2]);
     COMPLEX_MUL2 (SM1, S[0], MC1);
     COMPLEX_MUL2 (SM2, S[1], MC2);
     COMPLEX_MUL2 (SM3, S[2], MC3);
     COMPLEX_MUL2 (SM4, S[3], MC4);
-    COMPLEX_ADD4 (VYX, SM1, SM2, SM3, SM4);
+    COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
     COMPLEX_SET (ct1,  antGain[ia1*2+1]*antGain[ia2*2+0], 0);
     COMPLEX_EXP (ct2, -PD);
     COMPLEX_MUL2 (ggPD, ct1, ct2);
-    COMPLEX_MUL2 (VYX, VYX, ggPD);
+    COMPLEX_MUL2 (VYX, ct5, ggPD);
     residR = VYX.real - data[idata*10+8];
     sum += isigma * residR * residR; sumwt += isigma;
     residI = VYX.imag - data[idata*10+9];
     sum += isigma * residI * residI; sumwt += isigma;
-    /* DEBUG
-       if ((paramType==polnParmAnt) && (paramNumber==1) && (selAnt==2) && (ia1==2) && (ia2==3)) {
-       fprintf (stdout, "vis %4d %d %d YX chi2 %8.3f M %8.3f %8.3f O %8.3f %8.3f R %8.3f %8.3f SM %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f ggPD %8.3f %8.3f \n",
-       idata,ia1, ia2, isigma*(residR*residR+residI*residI),
-       VYX.real, VYX.imag, data[idata*10+8], data[idata*10+9], residR, residI,
-       SM1.real, SM1.imag, SM2.real, SM2.imag, SM3.real, SM3.imag, SM4.real, SM4.imag, ggPD.real, ggPD.imag);
-       }   End Debug */
     nXobs++;
     sumXResid += residR * residR + residI * residI;
     /* Derivatives */
@@ -4672,7 +4664,7 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
 	  if (antFit[ia2][paramNumber]) {
 	    /* part = {(0,  1) * S[0] * MC1 + (0, -1) * S[1] * MC2 + 
                        (0,  1) * S[2] * MC3 + (0, -1) * S[3] * MC4} * 
-		       gY[ia1] * gX[ia2]  * exp(-i PD) */
+		       gY[ia1] * gX[ia2]  * exp(-j PD) */
 	    COMPLEX_ADD2 (ct1, SM1, SM3);
 	    COMPLEX_MUL2 (ct2, Jp, ct1);
 	    COMPLEX_ADD2 (ct1, SM2, SM4);
@@ -4687,17 +4679,19 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
       case 1:     /* YX wrt Ex */
 	if (isAnt2) {
 	  if (antFit[ia2][paramNumber]) {
-	    /* part = (0, -1) * {S[0] * SY[ia1] * DPAc * SX[ia2] + 
-	                         S[1] * SY[ia1] * SPAc * CX[ia2] +
-				 S[2] * CY[ia1] * SPA  * SX[ia2] + 
-				 S[3] * CY[ia1] * DPA  * CX[ia2]} * 
-				        gY[ia1] * gX[ia2] * exp(-i PD)*/
-	    COMPLEX_MUL4(ct1, S[0], SY[ia1], DPAc, SX[ia2]);
-	    COMPLEX_MUL4(ct2, S[1], SY[ia1], SPAc, CX[ia2]);
-	    COMPLEX_MUL4(ct3, S[2], CY[ia1], SPA,  SX[ia2]);
-	    COMPLEX_MUL4(ct4, S[3], CY[ia1], DPA,  CX[ia2]);
+	    /* part = {-S[0] * SY[ia1] * SX[ia2] + 
+	                S[1] * SY[ia1] * CX[ia2] -
+		        S[2] * CY[ia1] * SX[ia2] + 
+		        S[3] * CY[ia1] * CX[ia2]} * 
+				        gY[ia1] * gX[ia2] * exp(-j PD)*/
+	    COMPLEX_MUL3(ct5, S[0], SY[ia1], SX[ia2]);
+	    COMPLEX_NEGATE(ct1, ct5);
+	    COMPLEX_MUL3(ct2, S[1], SY[ia1], CX[ia2]);
+	    COMPLEX_MUL3(ct5, S[2], CY[ia1], SX[ia2]);
+	    COMPLEX_NEGATE(ct3, ct5);
+	    COMPLEX_MUL3(ct4, S[3], CY[ia1], CX[ia2]);
 	    COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-	    COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+	    COMPLEX_MUL2(DFDP, ct5, ggPD);
 	    /*   part2 = -VYX  */
 	    COMPLEX_NEGATE(DFDP2, VYX);
 	  }
@@ -4708,13 +4702,13 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
 	  if (antFit[ia1][paramNumber]) {
 	    /* part = {(0, -1) * S[0] * MC1 + (0, -1) * S[1] * MC2 + 
 	               (0,  1) * S[2] * MC3 + (0,  1) * S[3] * MC4} * 
-		       gX[ia1] * gY[ia2] * exp(-i PD) */
+		       gX[ia1] * gY[ia2] * exp(-j PD) */
 	    COMPLEX_ADD2 (ct1, SM1, SM2);
 	    COMPLEX_MUL2 (ct2, Jm, ct1);
 	    COMPLEX_ADD2 (ct1, SM3, SM4);
 	    COMPLEX_MUL2 (ct3, Jp, ct1);
 	    COMPLEX_ADD2 (ct2, ct2, ct3);
-	    COMPLEX_MUL2 (DFDP,  ct2, ggPD);
+	    COMPLEX_MUL2 (DFDP, ct2, ggPD);
 	    /* part2 = -VYX */
 	    COMPLEX_NEGATE(DFDP2, VYX);
 	  }
@@ -4723,17 +4717,19 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
       case 3:     /* YX wrt Ey */
 	if (isAnt1) {
 	  if (antFit[ia1][paramNumber]) {
-	    /* part = (0, -1) * {S[0] * CXc[ia2] * DPAc * CYc[ia1] +       
-	                         S[1] * SXc[ia2] * SPAc * CYc[ia1] +
-				 S[2] * CXc[ia2] * SPA  * SYc[ia1]  + 
-				 S[3] * SXc[ia2] * DPA  * SYc[ia1]} * 
-				 gY[ia1] * gX[ia2] * exp(-i PD) */
-	    COMPLEX_MUL4(ct1, S[0], CXc[ia2], DPAc, CYc[ia1]);
-	    COMPLEX_MUL4(ct2, S[1], SXc[ia2], SPAc, CYc[ia1]);
-	    COMPLEX_MUL4(ct3, S[2], CXc[ia2], SPA,  SYc[ia1]);
-	    COMPLEX_MUL4(ct4, S[3], SXc[ia2], DPA,  SYc[ia1]);
+	    /* part = {-S[0] * CXc[ia2] * CYc[ia1] -       
+	                S[1] * SXc[ia2] * CYc[ia1] +
+		        S[2] * CXc[ia2] * SYc[ia1] + 
+		        S[3] * SXc[ia2] * SYc[ia1]} * 
+				 gY[ia1] * gX[ia2] * exp(-j PD) */
+	    COMPLEX_MUL3(ct5, S[0], CXc[ia2], CYc[ia1]);
+	    COMPLEX_NEGATE(ct1, ct5);
+	    COMPLEX_MUL3(ct5, S[1], SXc[ia2], CYc[ia1]);
+	    COMPLEX_NEGATE(ct2, ct5);
+	    COMPLEX_MUL3(ct3, S[2], CXc[ia2], SYc[ia1]);
+	    COMPLEX_MUL3(ct4, S[3], SXc[ia2], SYc[ia1]);
 	    COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-	    COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+	    COMPLEX_MUL2(DFDP, ct5, ggPD);
 	    /* part2 = -VYX */
 	    COMPLEX_NEGATE(DFDP2, VYX);
 	  }
@@ -4747,29 +4743,37 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
       switch (paramNumber) {   /* Switch over parameter */
       case 0:     /* YX wrt IPol */
 	if (souFit[isou][paramNumber]) {
-	  /* part =   (MC1 + MC4) * gY[ia1] * gX[ia2] * exp(-i PD) */
-	  COMPLEX_ADD2(ct1, MC1, MC4);
+	  /* part =   (MC1*DPAc + MC4*DPA) * gX[ia1] * gX[ia2] * exp(-j PD) */
+	  COMPLEX_MUL2(ct2, MC1, DPAc);
+	  COMPLEX_MUL2(ct3, MC4, DPA);
+	  COMPLEX_ADD2(ct1, ct2, ct3);
 	  COMPLEX_MUL2(DFDP, ct1, ggPD);
 	}
 	break;
       case 1:     /* YX wrt QPol */
 	if (souFit[isou][paramNumber]) {
-	  /* part = (MC2 + MC3) * gY[ia1] * gX[ia2] * exp(-i PD)  */
-	  COMPLEX_ADD2(ct1, MC2, MC3);
+	  /* part = (MC2*SPAc + MC3*SPA) * gX[ia1] * gX[ia2] * exp(-j PD) */
+	  COMPLEX_MUL2(ct2, MC2, SPAc);
+	  COMPLEX_MUL2(ct3, MC3, SPA);
+	  COMPLEX_ADD2(ct1, ct2, ct3);
 	  COMPLEX_MUL2(DFDP, ct1, ggPD);
 	}
 	break;
       case 2:     /* YX wrt UPol */
 	if (souFit[isou][paramNumber]) {
-	  /* i (MC2 - MC3) * gY[ia1] * gX[ia2] * exp(-i PD)  */
-	  COMPLEX_SUB(ct1, MC2, MC3);
-	  COMPLEX_MUL3(DFDP, Jp, ct1, ggPD);
+	  /* (j MC2*SPAc - j MC3*SPA) * gX[ia1] * gX[ia2] * exp(-j PD) */
+	  COMPLEX_MUL3(ct2, Jp, MC2, SPAc);
+	  COMPLEX_MUL3(ct3, Jp, MC3, SPA);
+	  COMPLEX_SUB(ct1, ct2, ct3);
+	  COMPLEX_MUL2(DFDP, ct1, ggPD);
 	}
 	break;
       case 3:     /* YX wrt Vpol */
 	if (souFit[isou][paramNumber]) {
-	  /* (MC1 - MC4) * gY[ia1] * gX[ia2] * exp(-i PD)  */
-	  COMPLEX_SUB (ct1, MC1, MC4);
+	  /* (MC1*DPAc - MC4*DPA) * gX[ia1] * gX[ia2] * exp(-j PD) */
+	  COMPLEX_MUL2(ct2, MC1, DPAc);
+	  COMPLEX_MUL2(ct3, MC4, DPA);
+	  COMPLEX_SUB(ct1, ct2, ct3);
 	  COMPLEX_MUL2(DFDP, ct1, ggPD);
 	}
 	break;  
@@ -4782,7 +4786,7 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
       case 0:     /* YX wrt gX */
 	if (isAnt2 && (antGainFit[ia2][paramNumber])) {
 	  /* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) 
-                           * gY[ia1]  * exp(-i PD) */
+                           * gY[ia1]  * exp(-j PD) */
 	  COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
 	  COMPLEX_SET (ct2, antGain[ia1*2+1], 0);
 	  COMPLEX_EXP (ct3, -PD);
@@ -4793,7 +4797,7 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
       case 1:     /* YX wrt gY */
 	if  (isAnt1 && (antGainFit[ia1][paramNumber])) {
 	  /* part =  (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * 
-	                 gX[ia2] * exp(-i PD) */
+	                 gX[ia2] * exp(-j PD) */
 	  COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
 	  COMPLEX_SET (ct2, antGain[ia2*2+0], 0);
 	  COMPLEX_EXP (ct3, -PD);
@@ -4949,9 +4953,6 @@ static gboolean CheckCrazyOne(ObitPolnCalFit *in, ObitErr *err)
    and Was parallel hand fit better than cross?*/
   if ((in->ChiSq>0.5*in->initChiSq) && 
       (in->XRMS>1.1*in->ParRMS)) goto reset;
-
-  /* DEBUG test - toss ant 18
-  in->antParm[17*4+1] = in->antParm[17*4+3] = 50.0; */
 
   /* Get mean square difference from default elipticity */
   sum = 0.0; maxDif=0.0; imax = -1;
@@ -5115,9 +5116,6 @@ static gboolean CheckCrazy(ObitPolnCalFit *in, ObitErr *err)
 	  /* Assume X, Y */
 	  in->antParm[i*4+0] = 0.0;
 	  in->antParm[i*4+2] = +G_PI/2.0;
-	  /* DEBUG KAT 
-	  in->antParm[i*4+2] = 0.0;
-	  in->antParm[i*4+0] = +G_PI/2.0; */
 	} else {  /* Use what's in the AN table as initial convert to radians */
 	  in->antParm[i*4+0] = in->AntLists[0]->ANlist[i]->FeedAPA*DG2RAD;
 	  in->antParm[i*4+2] = in->AntLists[0]->ANlist[i]->FeedBPA*DG2RAD;
@@ -6973,7 +6971,6 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
 		gradR = DFDP.real;    /* RrrR wrt Er1 */
 		gradI = DFDP.imag;    /* RrrI wrt Er1 */
 	      } else gradR = gradI = 0.0;    /* invalid data */
-	      /* gradR = -gradR; gradI = -gradI; DEBUG */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
@@ -7473,8 +7470,6 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
-	      /* DEBUG 
-	      if (ia1==22) fprintf (stdout, "ant 23 grad RL wrt Or1 %g %g\n",gradR, gradI);*/
 	    }
 	    break;
 	  case 1:     /* wrt Er1 */
@@ -7822,8 +7817,6 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
-	      /* DEBUG 
-	      if (ia2==22) fprintf (stdout, "ant 23 grad LR wrt Or2 %g %g\n",gradR, gradI);*/
 	    }
 	    break;
 	  case 1:     /* wrt Er2 */
@@ -8011,8 +8004,8 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
   olong k, kk, iant, ia1, ia2, isou, idata, refAnt;
   olong isouLast=-999;
   dcomplex  SPA, DPA, SPAc, DPAc, ggPD;
-  dcomplex ct1, ct2, Jm, Jp;
-  dcomplex S[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4;
+  dcomplex ct1, ct2, ct5, Jm, Jp;
+  dcomplex S0[4], S[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4;
   dcomplex SM1, SM2, SM3, SM4;
   size_t i, j;
 
@@ -8093,7 +8086,7 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
   for (i=0; i<args->nant; i++) {
     COMPLEX_EXP (ct1, -antParm[i*4+0]);
     COMPLEX_SET (ct2, cos(G_PI*0.25+antParm[i*4+1]), 0.0);
-    COMPLEX_MUL3 (CX[i], Jp, ct1, ct2);
+    COMPLEX_MUL2 (CX[i], ct1, ct2);
     COMPLEX_EXP (ct1, antParm[i*4+0]);
     COMPLEX_SET (ct2, sin(G_PI*0.25+antParm[i*4+1]), 0.0);
     COMPLEX_MUL2 (SX[i], ct1, ct2);
@@ -8102,7 +8095,8 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
     COMPLEX_MUL2 (CY[i], ct1, ct2);
     COMPLEX_EXP (ct1, -antParm[i*4+2]);
     COMPLEX_SET (ct2, sin(G_PI*0.25-antParm[i*4+3]), 0.0);
-    COMPLEX_MUL3 (SY[i], Jp, ct1, ct2);
+    COMPLEX_MUL2 (SY[i], ct1, ct2);
+
     COMPLEX_CONJUGATE (CXc[i], CX[i]);
     COMPLEX_CONJUGATE (SXc[i], SX[i]);
     COMPLEX_CONJUGATE (CYc[i], CY[i]);
@@ -8115,7 +8109,7 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
     /* Parallactic angle terms */
     chi1  = data[idata*10+0];   /* parallactic angle ant 1 */
     chi2  = data[idata*10+1];   /* parallactic angle ant 2 */
-    COMPLEX_EXP (SPA,chi1+chi2);
+    COMPLEX_EXP (SPA,(chi1+chi2));
     COMPLEX_EXP (DPA,chi1-chi2);
     COMPLEX_CONJUGATE (SPAc, SPA);
     COMPLEX_CONJUGATE (DPAc, DPA);
@@ -8136,18 +8130,24 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
       else
 	upol = args->PPol[isou]*ipol*sin(args->RLPhase[isou]);
       vpol = souParm[isou*4+3];
-      /* Complex Stokes array */
-      COMPLEX_SET (S[0], ipol+vpol, 0.0);
-      COMPLEX_SET (S[1], qpol,  upol);
-      COMPLEX_SET (S[2], qpol, -upol);
-      COMPLEX_SET (S[3], ipol-vpol, 0.0);
+       /* Complex Stokes array */
+      COMPLEX_SET (S0[0], ipol+vpol, 0.0);
+      COMPLEX_SET (S0[1], qpol,  upol);
+      COMPLEX_SET (S0[2], qpol, -upol);
+      COMPLEX_SET (S0[3], ipol-vpol, 0.0);
     }
 
+    /* Rotate Stokes by parallactic angle */
+    COMPLEX_MUL2(S[0], DPAc, S0[0]);
+    COMPLEX_MUL2(S[1], SPAc, S0[1]);
+    COMPLEX_MUL2(S[2], SPA,  S0[2]);
+    COMPLEX_MUL2(S[3], DPA,  S0[3]);
+ 
     /* Antenna parameters */
     ia1    = args->antNo[idata*2+0];
     ia2    = args->antNo[idata*2+1]; 
     
-    /* i = datum number */
+    /* idata = datum number */
     /* Loop over correlations calculating derivatives */
     for (kk=0; kk<4; kk++) {
       switch (kk) { 
@@ -8155,26 +8155,25 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
       case 0:     /* XX */
 	if (wt[idata*4+kk]>0.0) {
 	  isigma = wt[idata*4+kk];
-	  /* VXX = {S[0] * CX[ia1] * CXc[ia2] * DPAc  +
-	            S[1] * CX[ia1] * SXc[ia2] * SPAc  +
-		    S[2] * SX[ia1] * CXc[ia2] * SPA   + 
-		    S[3] * SX[ia1] * SXc[ia2] * DPA} * g1X * g2X ;
+	  /* VXX = {S[0] * CX[ia1] * CXc[ia2]  +
+	            S[1] * CX[ia1] * SXc[ia2]  +
+		    S[2] * SX[ia1] * CXc[ia2]  + 
+		    S[3] * SX[ia1] * SXc[ia2]} * g1X * g2X ;
 	  */
-	  COMPLEX_MUL3 (MC1, CX[ia1], CXc[ia2], DPAc);
-	  COMPLEX_MUL3 (MC2, CX[ia1], SXc[ia2], SPAc);
-	  COMPLEX_MUL3 (MC3, SX[ia1], CXc[ia2], SPA);
-	  COMPLEX_MUL3 (MC4, SX[ia1], SXc[ia2], DPA);
+	  COMPLEX_MUL2 (MC1, CX[ia1], CXc[ia2]);
+	  COMPLEX_MUL2 (MC2, CX[ia1], SXc[ia2]);
+	  COMPLEX_MUL2 (MC3, SX[ia1], CXc[ia2]);
+	  COMPLEX_MUL2 (MC4, SX[ia1], SXc[ia2]);
 	  COMPLEX_MUL2 (SM1, S[0], MC1);
 	  COMPLEX_MUL2 (SM2, S[1], MC2);
 	  COMPLEX_MUL2 (SM3, S[2], MC3);
 	  COMPLEX_MUL2 (SM4, S[3], MC4);
-	  COMPLEX_ADD4 (VXX, SM1, SM2, SM3, SM4);
+	  COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
 	  COMPLEX_SET (ggPD,  antGain[ia1*2+0]*antGain[ia2*2+0], 0);
-	  COMPLEX_MUL2 (VXX, VXX, ggPD);
+	  COMPLEX_MUL2 (VXX, ct5, ggPD);
 	  modelR = VXX.real; modelI = VXX.imag;
 	  residR = modelR - data[idata*10+(kk+1)*2];
 	  residI = modelI - data[idata*10+(kk+1)*2+1];
-	  /* residR = -residR; residI = - residI;   DEBUG */
 	  gsl_vector_set(f, i*2,   residR*isigma); /* Save function resids */
 	  gsl_vector_set(f, i*2+1, residI*isigma); /* Save function resids */
 	} 
@@ -8184,26 +8183,25 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
       case 1:     /* YY */
 	if (wt[idata*4+kk]>0.0) {
 	  isigma = wt[idata*4+kk];
-	  /* VYY = {S[0] * SY[ia1] * SYc[ia2] * DPAc +       
-	            S[1] * SY[ia1] * CYc[ia2] * SPAc +
-		    S[2] * CY[ia1] * SYc[ia2] * SPA  + 
-		    S[3] * CY[ia1] * CYc[ia2] * DPA} * g1Y * g2Y ;
+	  /* VYY = {S[0] * SY[ia1] * SYc[ia2] +       
+	            S[1] * SY[ia1] * CYc[ia2] +
+		    S[2] * CY[ia1] * SYc[ia2]  + 
+		    S[3] * CY[ia1] * CYc[ia2]} * g1Y * g2Y ;
 	  */
-	  COMPLEX_MUL3 (MC1, SY[ia1], SYc[ia2], DPAc);
-	  COMPLEX_MUL3 (MC2, SY[ia1], CYc[ia2], SPAc);
-	  COMPLEX_MUL3 (MC3, CY[ia1], SYc[ia2], SPA);
-	  COMPLEX_MUL3 (MC4, CY[ia1], CYc[ia2], DPA);
+	  COMPLEX_MUL2 (MC1, SY[ia1], SYc[ia2]);
+	  COMPLEX_MUL2 (MC2, SY[ia1], CYc[ia2]);
+	  COMPLEX_MUL2 (MC3, CY[ia1], SYc[ia2]);
+	  COMPLEX_MUL2 (MC4, CY[ia1], CYc[ia2]);
 	  COMPLEX_MUL2 (SM1, S[0], MC1);
 	  COMPLEX_MUL2 (SM2, S[1], MC2);
 	  COMPLEX_MUL2 (SM3, S[2], MC3);
 	  COMPLEX_MUL2 (SM4, S[3], MC4);
-	  COMPLEX_ADD4 (VYY, SM1, SM2, SM3, SM4);
+	  COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
 	  COMPLEX_SET (ggPD,  antGain[ia1*2+1]*antGain[ia2*2+1], 0);
-	  COMPLEX_MUL2 (VYY, VYY, ggPD);
+	  COMPLEX_MUL2 (VYY, ct5, ggPD);
 	  modelR = VYY.real; modelI = VYY.imag;
 	  residR = modelR - data[idata*10+(kk+1)*2];
 	  residI = modelI - data[idata*10+(kk+1)*2+1];
-	  /* residR = -residR; residI = - residI;   DEBUG */
 	  gsl_vector_set(f, i*2,   residR*isigma); /* Save function resids */
 	  gsl_vector_set(f, i*2+1, residI*isigma); /* Save function resids */
 	} 
@@ -8213,28 +8211,27 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
       case 2:     /* XY */
 	if (wt[idata*4+kk]>0.0) {
 	  isigma = wt[idata*4+kk];
-	  /* VXY = {S[0] * CX[ia1] * SYc[ia2] * DPAc +       
-	            S[1] * CX[ia1] * CYc[ia2] * SPAc +
-		    S[2] * SX[ia1] * SYc[ia2] * SPA  + 
-		    S[3] * SX[ia1] * CYc[ia2] * DPA}} * g1X * g2Y * exp(i PD);
+	  /* VXY = {S[0] * CX[ia1] * SYc[ia2] +       
+	            S[1] * CX[ia1] * CYc[ia2] +
+		    S[2] * SX[ia1] * SYc[ia2]  + 
+		    S[3] * SX[ia1] * CYc[ia2]}} * g1X * g2Y * exp(j PD);
 	  */
-	  COMPLEX_MUL3 (MC1, CX[ia1], SYc[ia2], DPAc);
-	  COMPLEX_MUL3 (MC2, CX[ia1], CYc[ia2], SPAc);
-	  COMPLEX_MUL3 (MC3, SX[ia1], SYc[ia2], SPA);
-	  COMPLEX_MUL3 (MC4, SX[ia1], CYc[ia2], DPA);
+	  COMPLEX_MUL2 (MC1, CX[ia1], SYc[ia2]);
+	  COMPLEX_MUL2 (MC2, CX[ia1], CYc[ia2]);
+	  COMPLEX_MUL2 (MC3, SX[ia1], SYc[ia2]);
+	  COMPLEX_MUL2 (MC4, SX[ia1], CYc[ia2]);
 	  COMPLEX_MUL2 (SM1, S[0], MC1);
 	  COMPLEX_MUL2 (SM2, S[1], MC2);
 	  COMPLEX_MUL2 (SM3, S[2], MC3);
 	  COMPLEX_MUL2 (SM4, S[3], MC4);
-	  COMPLEX_ADD4 (VXY, SM1, SM2, SM3, SM4);
+	  COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
 	  COMPLEX_SET (ct1,  antGain[ia1*2+0]*antGain[ia2*2+1], 0);
 	  COMPLEX_EXP (ct2, PD);
 	  COMPLEX_MUL2 (ggPD, ct1, ct2);
-	  COMPLEX_MUL2 (VXY, VXY, ggPD);
+	  COMPLEX_MUL2 (VXY, ct5, ggPD);
 	  modelR = VXY.real; modelI = VXY.imag;
 	  residR = modelR - data[idata*10+(kk+1)*2];
 	  residI = modelI - data[idata*10+(kk+1)*2+1];
-	  /* residR = -residR; residI = - residI;   DEBUG */
 	  gsl_vector_set(f, i*2,   residR*isigma); /* Save function resids */
 	  gsl_vector_set(f, i*2+1, residI*isigma); /* Save function resids */
 	} 
@@ -8244,28 +8241,27 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
       case 3:     /* YX */
 	if (wt[idata*4+kk]>0.0) {
 	  isigma = wt[idata*4+kk];
-	  /* VYX = {S[0] * SY[ia1] * CXc[ia2] * DPAc +       
-	            S[1] * SY[ia1] * SXc[ia2] * SPAc +
-		    S[2] * CY[ia1] * CXc[ia2] * SPA  + 
-		    S[3] * CY[ia1] * SXc[ia2] * DPA} * g1Y * g2X * exp(-i PD)
+	  /* VYX = {S[0] * SY[ia1] * CXc[ia2] +       
+	            S[1] * SY[ia1] * SXc[ia2] +
+		    S[2] * CY[ia1] * CXc[ia2] + 
+		    S[3] * CY[ia1] * SXc[ia2]} * g1Y * g2X * exp(-j PD)
 	  */
-	  COMPLEX_MUL3 (MC1, SY[ia1], CXc[ia2], DPAc);
-	  COMPLEX_MUL3 (MC2, SY[ia1], SXc[ia2], SPAc);
-	  COMPLEX_MUL3 (MC3, CY[ia1], CXc[ia2], SPA);
-	  COMPLEX_MUL3 (MC4, CY[ia1], SXc[ia2], DPA);
+	  COMPLEX_MUL2 (MC1, SY[ia1], CXc[ia2]);
+	  COMPLEX_MUL2 (MC2, SY[ia1], SXc[ia2]);
+	  COMPLEX_MUL2 (MC3, CY[ia1], CXc[ia2]);
+	  COMPLEX_MUL2 (MC4, CY[ia1], SXc[ia2]);
 	  COMPLEX_MUL2 (SM1, S[0], MC1);
 	  COMPLEX_MUL2 (SM2, S[1], MC2);
 	  COMPLEX_MUL2 (SM3, S[2], MC3);
 	  COMPLEX_MUL2 (SM4, S[3], MC4);
-	  COMPLEX_ADD4 (VYX, SM1, SM2, SM3, SM4);
+	  COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
 	  COMPLEX_SET (ct1,  antGain[ia1*2+1]*antGain[ia2*2+0], 0);
 	  COMPLEX_EXP (ct2, -PD);
 	  COMPLEX_MUL2 (ggPD, ct1, ct2);
-	  COMPLEX_MUL2 (VYX, VYX, ggPD);
+	  COMPLEX_MUL2 (VYX, ct5, ggPD);
 	  modelR = VYX.real; modelI = VYY.imag;
 	  residR = modelR - data[idata*10+(kk+1)*2];
 	  residI = modelI - data[idata*10+(kk+1)*2+1];
-	  /* residR = -residR; residI = - residI;   DEBUG */
 	  gsl_vector_set(f, i*2,   residR*isigma); /* Save function resids */
 	  gsl_vector_set(f, i*2+1, residI*isigma); /* Save function resids */
 	} 
@@ -8323,7 +8319,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
   olong isouLast=-999;
   dcomplex  SPA, DPA, SPAc, DPAc, ggPD;
   dcomplex ct1, ct2, ct3, ct4, ct5, Jm, Jp;
-  dcomplex S[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4, DFDP;
+  dcomplex S0[4], S[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4, DFDP;
   dcomplex SM1, SM2, SM3, SM4;
   size_t i, j;
 
@@ -8408,7 +8404,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
   for (i=0; i<args->nant; i++) {
     COMPLEX_EXP (ct1, -antParm[i*4+0]);
     COMPLEX_SET (ct2, cos(G_PI*0.25+antParm[i*4+1]), 0.0);
-    COMPLEX_MUL3 (CX[i], Jp, ct1, ct2);
+    COMPLEX_MUL2 (CX[i], ct1, ct2);
     COMPLEX_EXP (ct1, antParm[i*4+0]);
     COMPLEX_SET (ct2, sin(G_PI*0.25+antParm[i*4+1]), 0.0);
     COMPLEX_MUL2 (SX[i], ct1, ct2);
@@ -8417,7 +8413,8 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
     COMPLEX_MUL2 (CY[i], ct1, ct2);
     COMPLEX_EXP (ct1, -antParm[i*4+2]);
     COMPLEX_SET (ct2, sin(G_PI*0.25-antParm[i*4+3]), 0.0);
-    COMPLEX_MUL3 (SY[i], Jp, ct1, ct2);
+    COMPLEX_MUL2 (SY[i], ct1, ct2);
+
     COMPLEX_CONJUGATE (CXc[i], CX[i]);
     COMPLEX_CONJUGATE (SXc[i], SX[i]);
     COMPLEX_CONJUGATE (CYc[i], CY[i]);
@@ -8430,7 +8427,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
     /* Parallactic angle terms */
     chi1  = data[idata*10+0];   /* parallactic angle ant 1 */
     chi2  = data[idata*10+1];   /* parallactic angle ant 2 */
-    COMPLEX_EXP (SPA,chi1+chi2);
+    COMPLEX_EXP (SPA,(chi1+chi2));
     COMPLEX_EXP (DPA,chi1-chi2);
     COMPLEX_CONJUGATE (SPAc, SPA);
     COMPLEX_CONJUGATE (DPAc, DPA);
@@ -8451,13 +8448,19 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
       else
 	upol = args->PPol[isou]*ipol*sin(args->RLPhase[isou]);
       vpol = souParm[isou*4+3];
-      /* Complex Stokes array */
-      COMPLEX_SET (S[0], ipol+vpol, 0.0);
-      COMPLEX_SET (S[1], qpol,  upol);
-      COMPLEX_SET (S[2], qpol, -upol);
-      COMPLEX_SET (S[3], ipol-vpol, 0.0);
+       /* Complex Stokes array */
+      COMPLEX_SET (S0[0], ipol+vpol, 0.0);
+      COMPLEX_SET (S0[1], qpol,  upol);
+      COMPLEX_SET (S0[2], qpol, -upol);
+      COMPLEX_SET (S0[3], ipol-vpol, 0.0);
     }
 
+    /* Rotate Stokes by parallactic angle */
+    COMPLEX_MUL2(S[0], DPAc, S0[0]);
+    COMPLEX_MUL2(S[1], SPAc, S0[1]);
+    COMPLEX_MUL2(S[2], SPA,  S0[2]);
+    COMPLEX_MUL2(S[3], DPA,  S0[3]);
+  
     /* Antenna parameters */
     ia1    = args->antNo[idata*2+0];
     ia2    = args->antNo[idata*2+1]; 
@@ -8470,32 +8473,31 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
       case 0:     /* XX */
 	if (wt[idata*4+kk]>0.0) {
 	  isigma = wt[idata*4+kk];
-	  /* VXX = {S[0] * CX[ia1] * CXc[ia2] * DPAc  +
-	            S[1] * CX[ia1] * SXc[ia2] * SPAc  +
-		    S[2] * SX[ia1] * CXc[ia2] * SPA   + 
-		    S[3] * SX[ia1] * SXc[ia2] * DPA} * g1X * g2X ;
+	  /* VXX = {S[0] * CX[ia1] * CXc[ia2]  +
+	            S[1] * CX[ia1] * SXc[ia2]  +
+		    S[2] * SX[ia1] * CXc[ia2]  + 
+		    S[3] * SX[ia1] * SXc[ia2]} * g1X * g2X ;
 	  */
-	  COMPLEX_MUL3 (MC1, CX[ia1], CXc[ia2], DPAc);
-	  COMPLEX_MUL3 (MC2, CX[ia1], SXc[ia2], SPAc);
-	  COMPLEX_MUL3 (MC3, SX[ia1], CXc[ia2], SPA);
-	  COMPLEX_MUL3 (MC4, SX[ia1], SXc[ia2], DPA);
+	  COMPLEX_MUL2 (MC1, CX[ia1], CXc[ia2]);
+	  COMPLEX_MUL2 (MC2, CX[ia1], SXc[ia2]);
+	  COMPLEX_MUL2 (MC3, SX[ia1], CXc[ia2]);
+	  COMPLEX_MUL2 (MC4, SX[ia1], SXc[ia2]);
 	  COMPLEX_MUL2 (SM1, S[0], MC1);
 	  COMPLEX_MUL2 (SM2, S[1], MC2);
 	  COMPLEX_MUL2 (SM3, S[2], MC3);
 	  COMPLEX_MUL2 (SM4, S[3], MC4);
-	  COMPLEX_ADD4 (VXX, SM1, SM2, SM3, SM4);
+	  COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
 	  COMPLEX_SET (ggPD,  antGain[ia1*2+0]*antGain[ia2*2+0], 0);
-	  COMPLEX_MUL2 (VXX, VXX, ggPD);
+	  COMPLEX_MUL2 (VXX, ct5, ggPD);
 	  modelR = VXX.real; modelI = VXX.imag;
 	  residR = modelR - data[idata*10+(kk+1)*2];
 	  residI = modelI - data[idata*10+(kk+1)*2+1];
-	  /* residR = -residR; residI = - residI;   DEBUG */
 	} else  residR = residI = 0.0; /* Invalid data */
 	
 	/* Loop over first antenna parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt Ox1 */
+	  case 0:     /* XX wrt Ox1 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
@@ -8509,37 +8511,37 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt Ox1 */
 		gradI = DFDP.imag;    /* RxxI wrt Ox1 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI =0.0;     /* Invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt Ex1 */
+	  case 1:     /* XX wrt Ex1 */
 	    /* Fitting? */
  	    if (antFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (0, -1) * {S[0] * CXc[ia2] * DPAc * SXc[ia1] +
-		                     S[1] * SXc[ia2] * SPAc * SXc[ia1] +
-				     S[2] * CXc[ia2] * SPA  * CXc[ia1] +	       
-				     S[3] * SXc[ia2] * DPA  * CXc[ia1]}  * gX[ia1] * gX[ia2]  */
-		COMPLEX_MUL4(ct1, S[0], CXc[ia2], DPAc, SXc[ia1]);
-		COMPLEX_MUL4(ct2, S[1], SXc[ia2], SPAc, SXc[ia1]);
-		COMPLEX_MUL4(ct3, S[2], CXc[ia2], SPA,  SXc[ia1]);
-		COMPLEX_MUL4(ct4, S[3], SXc[ia2], DPA,  CXc[ia1]);
+		/* part = {-S[0] * CXc[ia2] * SXc[ia1] -
+		            S[1] * SXc[ia2] * SXc[ia1] +
+			    S[2] * CXc[ia2] * CXc[ia1] +	       
+			    S[3] * SXc[ia2] * CXc[ia1]}  * gX[ia1] * gX[ia2]  */
+		COMPLEX_MUL3(ct5, S[0], CXc[ia2], SXc[ia1]);
+		COMPLEX_NEGATE(ct1, ct5);
+		COMPLEX_MUL3(ct5, S[1], SXc[ia2], SXc[ia1]);
+		COMPLEX_NEGATE(ct2, ct5);
+		COMPLEX_MUL3(ct3, S[2], CXc[ia2], SXc[ia1]);
+		COMPLEX_MUL3(ct4, S[3], SXc[ia2], CXc[ia1]);
 		COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-		COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt Ex1 */
 		gradI = DFDP.imag;    /* RxxI wrt Ex1 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt OY1 = 0 */
+	  case 2:     /* XX wrt OY1 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      gradR = gradI = 0.0;
@@ -8548,7 +8550,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt EY1 = 0 */
+	  case 3:     /* XX wrt EY1 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      gradR = gradI = 0.0;
@@ -8565,7 +8567,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over second antenna parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt Ox2 */
+	  case 0:     /* XX wrt Ox2 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
@@ -8579,37 +8581,37 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt Ox2 */
 		gradI = DFDP.imag;    /* RxxI wrt Ox2 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt Ex2 */
+	  case 1:     /* XX wrt Ex2 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (0, -1) * {S[0] * CX[ia1] * DPAc * SX[ia2] +
-		                     S[1] * CX[ia1] * SPAc * CX[ia2] +
-				     S[2] * SX[ia1] * SPA  * SX[ia2] +
-				     S[3] * SX[ia1] * DPA  * CX[ia2]} * gX[ia1] * gX[ia2]  */
-		COMPLEX_MUL4(ct1, S[0], CX[ia1], DPAc, SX[ia2]);
-		COMPLEX_MUL4(ct2, S[1], CX[ia1], SPAc, CX[ia2]);
-		COMPLEX_MUL4(ct3, S[2], SX[ia1], SPA,  SX[ia2]);
-		COMPLEX_MUL4(ct4, S[3], SX[ia1], DPA,  CX[ia2]);
+		/* part = {-S[0] * CX[ia1] * SX[ia2] +
+		            S[1] * CX[ia1] * CX[ia2] -
+			    S[2] * SX[ia1] * SX[ia2] +
+			    S[3] * SX[ia1] * CX[ia2]} * gX[ia1] * gX[ia2]  */
+		COMPLEX_MUL3(ct5, S[0], CX[ia1], SX[ia2]);
+		COMPLEX_NEGATE(ct1, ct5);
+		COMPLEX_MUL3(ct2, S[1], CX[ia1], CX[ia2]);
+		COMPLEX_MUL3(ct5, S[2], SX[ia1], SX[ia2]);
+		COMPLEX_NEGATE(ct3, ct5);
+		COMPLEX_MUL3(ct4, S[3], SX[ia1], CX[ia2]);
 		COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-		COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt Ox2 */
 		gradI = DFDP.imag;    /* RxxI wrt Ox2 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt Oy2 = 0 */
+	  case 2:     /* XX wrt Oy2 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      gradR = gradI = 0.0;
@@ -8618,7 +8620,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI); /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt Ey2 = 0 */
+	  case 3:     /* XX wrt Ey2 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      gradR = gradI = 0.0;
@@ -8635,64 +8637,68 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over source parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt IPol */
+	  case 0:     /* XX wrt IPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part =   (MC1 + MC4) * gX[ia1] * gX[ia2] */
-		COMPLEX_ADD2(ct1, MC1, MC4);
+		/* part =   (MC1*DPAc + MC4*DPA) * gX[ia1] * gX[ia2] */
+		COMPLEX_MUL2(ct2, MC1, DPAc);
+		COMPLEX_MUL2(ct3, MC4, DPA);
+		COMPLEX_ADD2(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt ipol */
 		gradI = DFDP.imag;    /* RxxI wrt ipol */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt QPol */
+	  case 1:     /* XX wrt QPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (MC2 + MC3) * gX[ia1] * gX[ia2] */
-		COMPLEX_ADD2(ct1, MC2, MC3);
+		/* part = (MC2*SPAc + MC3*SPA) * gX[ia1] * gX[ia2] */
+		COMPLEX_MUL2(ct2, MC2, SPAc);
+		COMPLEX_MUL2(ct3, MC3, SPA);
+		COMPLEX_ADD2(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt qpol */
 		gradI = DFDP.imag;    /* RxxI wrt qpol */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt UPol */
+	  case 2:     /* XX wrt UPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* i (MC2 - MC3) * gX[ia1] * gX[ia2] */
-		COMPLEX_SUB(ct1, MC2, MC3);
-		COMPLEX_MUL3(DFDP, Jp, ct1, ggPD);
+		/* (j MC2*SPAc - j MC3*SPA) * gX[ia1] * gX[ia2] */
+		COMPLEX_MUL3(ct2, Jp, MC2, SPAc);
+		COMPLEX_MUL3(ct3, Jp, MC3, SPA);
+		COMPLEX_SUB(ct1, ct2, ct3);
+		COMPLEX_MUL2(DFDP, ct1, ggPD);
  		gradR = DFDP.real;    /* RxxR wrt upol */
 		gradI = DFDP.imag;    /* RxxI wrt upol */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt VPol */
+	  case 3:     /* XX wrt VPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* (MC1 - MC4) * gX[ia1] * gX[ia2] */
-		COMPLEX_SUB(ct1, MC1, MC4);
+		/* (MC1*DPAc - MC4*DPA) * gX[ia1] * gX[ia2] */
+		COMPLEX_MUL2(ct2, MC1, DPAc);
+		COMPLEX_MUL2(ct3, MC4, DPA);
+		COMPLEX_SUB(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt vpol */
 		gradI = DFDP.imag;    /* RxxI wrt vpol */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -8715,7 +8721,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over antenna gains */
 	for (k=0; k<2; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt gX1 */
+	  case 0:     /* XX wrt gX1 */
 	    /* Fitting? */
 	    if (antGainFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
@@ -8725,15 +8731,13 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct1, ct2);
 		gradR = DFDP.real;    /* RxxR wrt gX1 */
 		gradI = DFDP.imag;    /* RxxI wrt gX1 */
-		/* gradR = 0.0; gradI = 0.0;  DEBUG GAIN */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia1][0];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	      }
 	    break;
-	  case 1:  /* wrt gX2 */
+	  case 1:  /* XX wrt gX2 */
 	    if (antGainFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * gX[ia1] */
@@ -8742,8 +8746,6 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct1, ct2);
 		gradR = DFDP.real;    /* RxxR wrt gX2 */
 		gradI = DFDP.imag;    /* RxxI wrt gX2 */
-		/* gradR = 0.0; gradI = 0.0;  DEBUG GAIN */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia2][0];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -8759,32 +8761,31 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
       case 1:     /* YY */
 	if (wt[idata*4+kk]>0.0) {
 	  isigma = wt[idata*4+kk];
-	  /* VYY = {S[0] * SY[ia1] * SYc[ia2] * DPAc +       
-	            S[1] * SY[ia1] * CYc[ia2] * SPAc +
-		    S[2] * CY[ia1] * SYc[ia2] * SPA  + 
-		    S[3] * CY[ia1] * CYc[ia2] * DPA} * g1Y * g2Y ;
+	  /* VYY = {S[0] * SY[ia1] * SYc[ia2] +       
+	            S[1] * SY[ia1] * CYc[ia2] +
+		    S[2] * CY[ia1] * SYc[ia2] + 
+		    S[3] * CY[ia1] * CYc[ia2]} * g1Y * g2Y ;
 	  */
-	  COMPLEX_MUL3 (MC1, SY[ia1], SYc[ia2], DPAc);
-	  COMPLEX_MUL3 (MC2, SY[ia1], CYc[ia2], SPAc);
-	  COMPLEX_MUL3 (MC3, CY[ia1], SYc[ia2], SPA);
-	  COMPLEX_MUL3 (MC4, CY[ia1], CYc[ia2], DPA);
+	  COMPLEX_MUL2 (MC1, SY[ia1], SYc[ia2]);
+	  COMPLEX_MUL2 (MC2, SY[ia1], CYc[ia2]);
+	  COMPLEX_MUL2 (MC3, CY[ia1], SYc[ia2]);
+	  COMPLEX_MUL2 (MC4, CY[ia1], CYc[ia2]);
 	  COMPLEX_MUL2 (SM1, S[0], MC1);
 	  COMPLEX_MUL2 (SM2, S[1], MC2);
 	  COMPLEX_MUL2 (SM3, S[2], MC3);
 	  COMPLEX_MUL2 (SM4, S[3], MC4);
-	  COMPLEX_ADD4 (VYY, SM1, SM2, SM3, SM4);
+	  COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
 	  COMPLEX_SET (ggPD,  antGain[ia1*2+1]*antGain[ia2*2+1], 0);
-	  COMPLEX_MUL2 (VYY, VYY, ggPD);
+	  COMPLEX_MUL2 (VYY, ct5, ggPD);
 	  modelR = VYY.real; modelI = VYY.imag;
 	  residR = modelR - data[idata*10+(kk+1)*2];
 	  residI = modelI - data[idata*10+(kk+1)*2+1];
-	  /* residR = -residR; residI = - residI;   DEBUG */
 	} else  residR = residI = 0.0; /* Invalid data */
 	  
 	/* Loop over first antenna parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt Ox1 = 0 */
+	  case 0:     /* YY wrt Ox1 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      gradR = gradI = 0.0;
@@ -8793,7 +8794,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt Ex1 = 0 */
+	  case 1:     /* YY wrt Ex1 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      gradR = gradI = 0.0;
@@ -8802,7 +8803,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt Ol1 */
+	  case 2:     /* YY wrt Oy1 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
@@ -8814,32 +8815,32 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (ct3, Jp, ct1);
 		COMPLEX_ADD2 (ct2, ct2, ct3);
 		COMPLEX_MUL2 (DFDP, ct2, ggPD);
-		gradR = DFDP.real;    /* RyyR wrt Oy1 */
-		gradI = DFDP.imag;    /* RyyI wrt Oy1 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
+		gradR = DFDP.real;    /* RyyR wrt Oy2 */
+		gradI = DFDP.imag;    /* RyyI wrt Oy2 */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
-	      gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
+	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt El1 */
+	  case 3:     /* YY wrt Ey1 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (0, -1) * {S[0] * SYc[ia2] * DPAc * CYc[ia1] +
-		                     S[1] * CYc[ia2] * SPAc * CYc[ia1] +
-				     S[2] * SYc[ia2] * SPA  * SYc[ia1] +	       
-				     S[3] * CYc[ia2] * DPA  * SYc[ia1]}  * gX[ia1] * gX[ia2]  */
-		COMPLEX_MUL4(ct1, S[0], SYc[ia2], DPAc, CYc[ia1]);
-		COMPLEX_MUL4(ct2, S[1], CYc[ia2], SPAc, CYc[ia1]);
-		COMPLEX_MUL4(ct3, S[2], SYc[ia2], SPA,  SYc[ia1]);
-		COMPLEX_MUL4(ct4, S[3], CYc[ia2], DPA,  SYc[ia1]);
+		/* part = {-S[0] * SYc[ia2] * CYc[ia1] -
+                            S[1] * CYc[ia2] * CYc[ia1] +
+			    S[2] * SYc[ia2] * SYc[ia1] +	       
+			    S[3] * CYc[ia2] * SYc[ia1]}  * gX[ia1] * gX[ia2]  */
+		COMPLEX_MUL3(ct5, S[0], SYc[ia2], CYc[ia1]);
+		COMPLEX_NEGATE(ct1, ct5);
+		COMPLEX_MUL3(ct5, S[1], CYc[ia2], CYc[ia1]);
+		COMPLEX_NEGATE(ct2, ct5);
+		COMPLEX_MUL3(ct3, S[2], SYc[ia2], SYc[ia1]);
+		COMPLEX_MUL3(ct4, S[3], CYc[ia2], SYc[ia1]);
 		COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-		COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt Ey1 */
 		gradI = DFDP.imag;    /* RyyI wrt Ey1 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -8854,7 +8855,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over second antenna parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt Ox2 = 0 */
+	  case 0:     /* YY wrt Ox2 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      gradR = gradI = 0.0;
@@ -8863,7 +8864,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* Ryy wrt Ex2 = 0 */
+	  case 1:     /* YY wrt Ex2 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      gradR = gradI = 0.0;
@@ -8872,7 +8873,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* Rll wrt Oy2 */
+	  case 2:     /* YY wrt Oy2 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
@@ -8886,34 +8887,34 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP,  ct2, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt Oy2 */
 		gradI = DFDP.imag;    /* RyyI wrt Oy2 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
-	      gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
+	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt El2  */
+	  case 3:     /* YY wrt Ey2  */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (0, -1) * {S[0] * SY[ia1] * DPAc * CY[ia2] + 
-		                     S[1] * SY[ia1] * SPAc * SY[ia2] +
-				     S[2] * CY[ia1] * SPA  * CY[ia2]  + 
-				     S[3] * CY[ia1] * DPA  * SY[ia2]} * gY[ia1] * gY[ia2] */
-		COMPLEX_MUL4(ct1, S[0], SY[ia1], DPAc, CY[ia2]);
-		COMPLEX_MUL4(ct2, S[1], SY[ia1], SPAc, SY[ia2]);
-		COMPLEX_MUL4(ct3, S[2], CY[ia1], SPA,  CY[ia2]);
-		COMPLEX_MUL4(ct4, S[3], CY[ia1], DPA,  SY[ia2]);
+		/* part = {-S[0] * SY[ia1] * CY[ia2] + 
+                            S[1] * SY[ia1] * SY[ia2] -
+			    S[2] * CY[ia1] * CY[ia2]  + 
+			    S[3] * CY[ia1] * SY[ia2]} * gY[ia1] * gY[ia2] */
+		COMPLEX_MUL3(ct5, S[0], SY[ia1], CY[ia2]);
+		COMPLEX_NEGATE(ct1, ct5);
+		COMPLEX_MUL3(ct2, S[1], SY[ia1], SY[ia2]);
+		COMPLEX_MUL3(ct5, S[2], CY[ia1], CY[ia2]);
+		COMPLEX_NEGATE(ct3, ct5);
+		COMPLEX_MUL3(ct4, S[3], CY[ia1], SY[ia2]);
 		COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-		COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt Ey2 */
 		gradI = DFDP.imag;    /* RyyI wrt Ey2 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
-	      gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
+	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
 	  default:
@@ -8924,64 +8925,68 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over source parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt IPol */
+	  case 0:     /* YY wrt IPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part =   (MC1 + MC4) * gY[ia1] * gY[ia2] */
-		COMPLEX_ADD2(ct1, MC1, MC4);
+		/* part =   (MC1*DPAc + MC4*DPA) * gX[ia1] * gX[ia2] */
+		COMPLEX_MUL2(ct2, MC1, DPAc);
+		COMPLEX_MUL2(ct3, MC4, DPA);
+		COMPLEX_ADD2(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt ipol */
 		gradI = DFDP.imag;    /* RyyI wrt ipol */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt Qpol */
+	  case 1:     /* YY wrt Qpol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (MC2 + MC3) * gY[ia1] * gY[ia2] */
-		COMPLEX_ADD2(ct1, MC2, MC3);
+		/* part = (MC2*SPAc + MC3*SPA) * gX[ia1] * gX[ia2] */
+		COMPLEX_MUL2(ct2, MC2, SPAc);
+		COMPLEX_MUL2(ct3, MC3, SPA);
+		COMPLEX_ADD2(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt qpol */
 		gradI = DFDP.imag;    /* RyyI wrt qpol */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt UPol */
+	  case 2:     /* YY wrt UPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* i (MC2 - MC3) * gY[ia1] * gY[ia2] */
-		COMPLEX_SUB(ct1, MC2, MC3);
-		COMPLEX_MUL3(DFDP, Jp, ct1, ggPD);
+		/* (j MC2*SPAc - j MC3*SPA) * gX[ia1] * gX[ia2] */
+		COMPLEX_MUL3(ct2, Jp, MC2, SPAc);
+		COMPLEX_MUL3(ct3, Jp, MC3, SPA);
+		COMPLEX_SUB(ct1, ct2, ct3);
+		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt upol */
 		gradI = DFDP.imag;    /* RyyI wrt upol */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt VPol */
+	  case 3:     /* YY wrt VPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* (MC1 - MC4) * gY[ia1] * gY[ia2] */
-		COMPLEX_SUB (ct1, MC1, MC4);
+		/* (MC1*DPAc - MC4*DPA) * gX[ia1] * gX[ia2] */
+		COMPLEX_MUL2(ct2, MC1, DPAc);
+		COMPLEX_MUL2(ct3, MC4, DPA);
+		COMPLEX_SUB(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt vpol */
 		gradI = DFDP.imag;    /* RyyI wrt vpol */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9004,7 +9009,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over antenna gains */
 	for (k=0; k<2; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt gY1 */
+	  case 0:     /* YY wrt gY1 */
 	    /* Fitting? */
 	    if (antGainFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
@@ -9014,15 +9019,13 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct1, ct2);
 		gradR = DFDP.real;    /* RyyR wrt gY1 */
 		gradI = DFDP.imag;    /* RyyI wrt gY1 */
-	 	/* gradR = 0.0; gradI = 0.0;  DEBUG GAIN */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia1][1];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	      }
 	    break;
-	  case 1:  /* wrt gY2 */
+	  case 1:  /* YY wrt gY2 */
 	    if (antGainFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * gY[ia1] */
@@ -9031,8 +9034,6 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct1, ct2);
 		gradR = DFDP.real;    /* RyyR wrt gY2 */
 		gradI = DFDP.imag;    /* RyyI wrt gY2 */
-		/* gradR = 0.0; gradI = 0.0;  DEBUG GAIN */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia2][1];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9049,40 +9050,39 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
       case 2:     /* XY */
 	if (wt[idata*4+kk]>0.0) {
 	  isigma = wt[idata*4+kk];
-	  /* VXY = {S[0] * CX[ia1] * SYc[ia2] * DPAc +       
-	            S[1] * CX[ia1] * CYc[ia2] * SPAc +
-		    S[2] * SX[ia1] * SYc[ia2] * SPA  + 
-		    S[3] * SX[ia1] * CYc[ia2] * DPA}} * g1X * g2Y * exp(i PD);
+	  /* VXY = {S[0] * CX[ia1] * SYc[ia2] +       
+	            S[1] * CX[ia1] * CYc[ia2] +
+		    S[2] * SX[ia1] * SYc[ia2] + 
+		    S[3] * SX[ia1] * CYc[ia2]}} * g1X * g2Y * exp(j PD);
 	  */
-	  COMPLEX_MUL3 (MC1, CX[ia1], SYc[ia2], DPAc);
-	  COMPLEX_MUL3 (MC2, CX[ia1], CYc[ia2], SPAc);
-	  COMPLEX_MUL3 (MC3, SX[ia1], SYc[ia2], SPA);
-	  COMPLEX_MUL3 (MC4, SX[ia1], CYc[ia2], DPA);
+	  COMPLEX_MUL2 (MC1, CX[ia1], SYc[ia2]);
+	  COMPLEX_MUL2 (MC2, CX[ia1], CYc[ia2]);
+	  COMPLEX_MUL2 (MC3, SX[ia1], SYc[ia2]);
+	  COMPLEX_MUL2 (MC4, SX[ia1], CYc[ia2]);
 	  COMPLEX_MUL2 (SM1, S[0], MC1);
 	  COMPLEX_MUL2 (SM2, S[1], MC2);
 	  COMPLEX_MUL2 (SM3, S[2], MC3);
 	  COMPLEX_MUL2 (SM4, S[3], MC4);
-	  COMPLEX_ADD4 (VXY, SM1, SM2, SM3, SM4);
+	  COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
 	  COMPLEX_SET (ct1,  antGain[ia1*2+0]*antGain[ia2*2+1], 0);
 	  COMPLEX_EXP (ct2, PD);
 	  COMPLEX_MUL2 (ggPD, ct1, ct2);
-	  COMPLEX_MUL2 (VXY, VXY, ggPD);
+	  COMPLEX_MUL2 (VXY, ct5, ggPD);
 	  modelR = VXY.real; modelI = VXY.imag;
 	  residR = modelR - data[idata*10+(kk+1)*2];
 	  residI = modelI - data[idata*10+(kk+1)*2+1];
-	  /* residR = -residR; residI = - residI;   DEBUG */
 	} else  residR = residI = 0.0; /* Invalid data */
 	
 	/* Loop over first antenna parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt Or1 */
+	  case 0:     /* XY wrt Ox1 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = {(0, -1) * S[0] * MC1 + (0, -1) * S[1] * MC2 + 
 		           (0,  1) * S[2] * MC3 + (0,  1) * S[3] * MC4} *
-			   gX[ia1] * gY[ia2] * exp(i PD) */
+			   gX[ia1] * gY[ia2] * exp(j PD) */
 		COMPLEX_ADD2 (ct1, SM1, SM2);
 		COMPLEX_MUL2 (ct2, Jm, ct1);
 		COMPLEX_ADD2 (ct1, SM3, SM4);
@@ -9091,38 +9091,38 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt Ex1 */
+	  case 1:     /* XY wrt Ex1 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part =  (0, -1) * {S[0] * SYc[ia2] * DPAc * SXc[ia1]  + 
-		                      S[1] * CYc[ia2] * SPAc * SXc[ia1]  +
-				      S[2] * SYc[ia2] * SPA  * CXc[ia1]  + 
-				      S[3] * CYc[ia2] * DPA  * CXc[ia1]  } * 
-				              gX[ia1] * gY[ia2] * exp(i PD) */
-		COMPLEX_MUL4(ct1, S[0], SYc[ia2], DPAc, SXc[ia1]);
-		COMPLEX_MUL4(ct2, S[1], CYc[ia2], SPAc, SXc[ia1]);
-		COMPLEX_MUL4(ct3, S[2], SYc[ia2], SPA,  CXc[ia1]);
-		COMPLEX_MUL4(ct4, S[3], CYc[ia2], DPA,  CXc[ia1]);
+		/* part =  {-S[0] * SYc[ia2] * SXc[ia1]  - 
+		   S[1] * CYc[ia2] * SXc[ia1]  +
+		   S[2] * SYc[ia2] * CXc[ia1]  + 
+		   S[3] * CYc[ia2] * CXc[ia1]  } * 
+		            gX[ia1] * gY[ia2] * exp(j PD) */
+		COMPLEX_MUL3(ct5, S[0], SYc[ia2], SXc[ia1]);
+		COMPLEX_NEGATE(ct1, ct5);
+		COMPLEX_MUL3(ct5, S[1], CYc[ia2], SXc[ia1]);
+		COMPLEX_NEGATE(ct2, ct5);
+		COMPLEX_MUL3(ct3, S[2], SYc[ia2], CXc[ia1]);
+		COMPLEX_MUL3(ct4, S[3], CYc[ia2], CXc[ia1]);
 		COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-		COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt Ol1 =0 */
+	  case 2:     /* XY wrt Oy1 =0 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      gradR = gradI = 0.0;
@@ -9131,7 +9131,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt El1 = 0 */
+	  case 3:     /* XY wrt Ey1 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      gradR = gradI = 0.0;
@@ -9148,7 +9148,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over second antenna parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt Ox2 = 0 */
+	  case 0:     /* XY wrt Ox2 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      gradR = gradI = 0.0;
@@ -9157,7 +9157,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt Ex2 = 0 */
+	  case 1:     /* XY wrt Ex2 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      gradR = gradI = 0.0;
@@ -9166,13 +9166,13 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt Oy2 */
+	  case 2:     /* XY wrt Oy2 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = {(0,  1) * S[0] * MC1 + (0, -1) * S[1] * MC2 + 
 		           (0,  1) * S[2] * MC3 + (0, -1) * S[3] * MC4} * 
-                                 gX[ia1] * gY[ia2] * exp(i PD) */
+                                 gX[ia1] * gY[ia2] * exp(j PD) */
 		COMPLEX_ADD2 (ct1, SM1, SM3);
 		COMPLEX_MUL2 (ct2, Jp, ct1);
 		COMPLEX_ADD2 (ct1, SM2, SM4);
@@ -9181,31 +9181,31 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP,  ct2, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt Ey2 */
+	  case 3:     /* XY wrt Ey2 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (0, -1) *{S[0] * CX[ia1] * DPAc * CY[ia2] +       
-		                    S[1] * CX[ia1] * SPAc * SY[ia2] +
-				    S[2] * SX[ia1] * SPA  * CY[ia2] + 
-				    S[3] * SX[ia1] * DPA  * SY[ia2]} * 
-			   	          gX[ia1] * gY[ia2] * exp(i PD) */
-		COMPLEX_MUL4(ct1, S[0], CX[ia1], DPAc, CY[ia2]);
-		COMPLEX_MUL4(ct2, S[1], CX[ia1], SPAc, SY[ia2]);
-		COMPLEX_MUL4(ct3, S[2], SX[ia1], SPA,  CY[ia2]);
-		COMPLEX_MUL4(ct4, S[3], SX[ia1], DPA,  SY[ia2]);
+		/* part = {-S[0] * CX[ia1] * CY[ia2] +       
+	                    S[1] * CX[ia1] * SY[ia2] -
+			    S[2] * SX[ia1] * CY[ia2] + 
+			    S[3] * SX[ia1] * SY[ia2]} * 
+			        gX[ia1] * gY[ia2] * exp(j PD) */
+		COMPLEX_MUL3(ct5, S[0], CX[ia1], CY[ia2]);
+		COMPLEX_NEGATE(ct1, ct5);
+		COMPLEX_MUL3(ct5, S[1], CX[ia1], SY[ia2]);
+		COMPLEX_NEGATE(ct2, ct5);
+		COMPLEX_MUL3(ct3, S[2], SX[ia1], CY[ia2]);
+		COMPLEX_MUL3(ct4, S[3], SX[ia1], SY[ia2]);
 		COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-		COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9215,65 +9215,68 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	  default:
 	    break;
 	  }; /* end second antenna parameter switch */
-	  } /* end loop over second antenna parameters */
+	} /* end loop over second antenna parameters */
 	
 	/* Loop over source parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt IPol */
+	  case 0:     /* XY wrt IPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part =   (MC1 + MC4) * gX[ia1] * gY[ia2] * exp(i PD) */
-		COMPLEX_ADD2(ct1, MC1, MC4);
+		/* part =   (MC1*DPAc + MC4*DPA) * gX[ia1] * gX[ia2] * exp(j PD) */
+		COMPLEX_MUL2(ct2, MC1, DPAc);
+		COMPLEX_MUL2(ct3, MC4, DPA);
+		COMPLEX_ADD2(ct1, ct2, ct3);
+		COMPLEX_MUL2(DFDP, ct1, ggPD);
+	      } else gradR = gradI = 0.0;   /* invalid data */
+	      j = souPNumb[isou][k];
+	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
+	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
+	    }
+	    break;
+	  case 1:     /* XY wrt QPol */
+	    /* Fitting? */
+	    if (souFit[isou][k]) {
+	      if (wt[idata*4+kk]>0.0) {
+		/* part = (MC2*SPAc + MC3*SPA) * gX[ia1] * gX[ia2] * exp(j PD) */
+		COMPLEX_MUL2(ct2, MC2, SPAc);
+		COMPLEX_MUL2(ct3, MC3, SPA);
+		COMPLEX_ADD2(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt QPol */
+	  case 2:     /* XY wrt UPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (MC2 + MC3) * gX[ia1] * gY[ia2] * exp(i PD) */
-		COMPLEX_ADD2(ct1, MC2, MC3);
+		/* (j MC2*SPAc - j MC3*SPA) * gX[ia1] * gX[ia2] * exp(j PD) */
+		COMPLEX_MUL3(ct2, Jp, MC2, SPAc);
+		COMPLEX_MUL3(ct3, Jp, MC3, SPA);
+		COMPLEX_SUB(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt UPol */
+	  case 3:     /* XY wrt VPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* i (MC2 - MC3) * gX[ia1] * gY[ia2] * exp(i PD) */
-		COMPLEX_SUB(ct1, MC2, MC3);
-		COMPLEX_MUL3(DFDP, Jp, ct1, ggPD);
-		gradR = DFDP.real;
-		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
-	      } else gradR = gradI = 0.0;   /* invalid data */
-	      j = souPNumb[isou][k];
-	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
-	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
-	    }
-	    break;
-	  case 3:     /* wrt VPol */
-	    /* Fitting? */
-	    if (souFit[isou][k]) {
-	      if (wt[idata*4+kk]>0.0) {
-		/* (MC1 - MC4) * gX[ia1] * gY[ia2] * exp(i PD) */
-		COMPLEX_SUB (ct1, MC1, MC4);
+		/* (MC1*DPAc - MC4*DPA) * gX[ia1] * gX[ia2] * exp(j PD) */
+		COMPLEX_MUL2(ct2, MC1, DPAc);
+		COMPLEX_MUL2(ct3, MC4, DPA);
+		COMPLEX_SUB(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
@@ -9293,7 +9296,6 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	    COMPLEX_MUL2 (DFDP, Jp, VXY);
 	    gradR = DFDP.real;
 	    gradI = DFDP.imag;
-	    /* gradR = -gradR; gradI = -gradI;   DEBUG */
 	  } else gradR = gradI = 0.0;    /* invalid data */
 	  j = args->PDPNumb;
 	  gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9303,35 +9305,35 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over antenna gains */
 	for (k=0; k<2; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt gX1 */
+	  case 0:     /* XY wrt gX1 */
 	    /* Fitting? */
 	    if (antGainFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * gY[ia2] */
+		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) 
+		             * gY[ia2]  * exp(j PD) */
 		COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
 		COMPLEX_SET (ct2, antGain[ia2*2+1], 0);
-		COMPLEX_MUL2 (DFDP, ct1, ct2);
+		COMPLEX_EXP (ct3, PD);
+		COMPLEX_MUL3 (DFDP, ct1, ct2, ct3);
 		gradR = DFDP.real;    /* RxyR wrt gX1 */
 		gradI = DFDP.imag;    /* RxyI wrt gX1 */
-		/* gradR = 0.0; gradI = 0.0;  DEBUG GAIN */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia1][0];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	      }
 	    break;
-	  case 1:  /* wrt gY2 */
+	  case 1:  /* XY wrt gY2 */
 	    if (antGainFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * gX[ia1] */
+		/* part = {S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) 
+	                    * gX[ia1] * exp(j PD) */
 		COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
-		COMPLEX_SET (ct2, antGain[ia1*2+0], 1);
-		COMPLEX_MUL2 (DFDP, ct1, ct2);
+		COMPLEX_SET (ct2, antGain[ia1*2+0], 0);
+		COMPLEX_EXP (ct3, PD);
+		COMPLEX_MUL3 (DFDP, ct1, ct2, ct3);
 		gradR = DFDP.real;    /* RxyR wrt gY2 */
 		gradI = DFDP.imag;    /* RxyI wrt gY2 */
-		/* gradR = 0.0; gradI = 0.0;  DEBUG GAIN */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia2][1];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9348,31 +9350,31 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
       case 3:     /* YX */
 	if (wt[idata*4+kk]>0.0) {
 	  isigma = wt[idata*4+kk];
-	  /* VYX = {S[0] * SY[ia1] * CXc[ia2] * DPAc +       
-	            S[1] * SY[ia1] * SXc[ia2] * SPAc +
-		    S[2] * CY[ia1] * CXc[ia2] * SPA  + 
-		    S[3] * CY[ia1] * SXc[ia2] * DPA} * g1Y * g2X * exp(-i PD)
+	  /* VYX = {S[0] * SY[ia1] * CXc[ia2] +       
+	            S[1] * SY[ia1] * SXc[ia2] +
+		    S[2] * CY[ia1] * CXc[ia2]  + 
+		    S[3] * CY[ia1] * SXc[ia2]} * g1Y * g2X * exp(-j PD)
 	  */
-	  COMPLEX_MUL3 (MC1, SY[ia1], CXc[ia2], DPAc);
-	  COMPLEX_MUL3 (MC2, SY[ia1], SXc[ia2], SPAc);
-	  COMPLEX_MUL3 (MC3, CY[ia1], CXc[ia2], SPA);
-	  COMPLEX_MUL3 (MC4, CY[ia1], SXc[ia2], DPA);
+	  COMPLEX_MUL2 (MC1, SY[ia1], CXc[ia2]);
+	  COMPLEX_MUL2 (MC2, SY[ia1], SXc[ia2]);
+	  COMPLEX_MUL2 (MC3, CY[ia1], CXc[ia2]);
+	  COMPLEX_MUL2 (MC4, CY[ia1], SXc[ia2]);
 	  COMPLEX_MUL2 (SM1, S[0], MC1);
 	  COMPLEX_MUL2 (SM2, S[1], MC2);
 	  COMPLEX_MUL2 (SM3, S[2], MC3);
 	  COMPLEX_MUL2 (SM4, S[3], MC4);
-	  COMPLEX_ADD4 (VYX, SM1, SM2, SM3, SM4);
+	  COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
 	  COMPLEX_SET (ct1,  antGain[ia1*2+1]*antGain[ia2*2+0], 0);
 	  COMPLEX_EXP (ct2, -PD);
 	  COMPLEX_MUL2 (ggPD, ct1, ct2);
-	  COMPLEX_MUL2 (VYX, VYX, ggPD);
+	  COMPLEX_MUL2 (VYX, ct5, ggPD);
 	  modelR = VYX.real; modelI = VYX.imag;
 	} else  residR = residI = 0.0; /* Invalid data */
 	
 	/* Loop over first antenna parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt Ox1 = 0 */
+	  case 0:     /* YX wrt Ox1 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      gradR = gradI = 0.0;
@@ -9381,7 +9383,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt Ex1 = 0 */
+	  case 1:     /* YX wrt Ex1 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      gradR = gradI = 0.0;
@@ -9390,46 +9392,46 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt Oy1 */
+	  case 2:     /* YX wrt Oy1 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = {(0,  1) * S[0] * MC1 + (0, -1) * S[1] * MC2 + 
-		           (0,  1) * S[2] * MC3 + (0, -1) * S[3] * MC4} * 
-			        gY[ia1] * gX[ia2]  * exp(-i PD) */
-		COMPLEX_ADD2 (ct1, SM1, SM3);
-		COMPLEX_MUL2 (ct2, Jp, ct1);
-		COMPLEX_ADD2 (ct1, SM2, SM4);
-		COMPLEX_MUL2 (ct3, Jm, ct1);
+		/* part = {(0, -1) * S[0] * MC1 + (0, -1) * S[1] * MC2 + 
+		   (        0,  1) * S[2] * MC3 + (0,  1) * S[3] * MC4} * 
+	                          gX[ia1] * gY[ia2] * exp(-j PD) */
+		COMPLEX_ADD2 (ct1, SM1, SM2);
+		COMPLEX_MUL2 (ct2, Jm, ct1);
+		COMPLEX_ADD2 (ct1, SM3, SM4);
+		COMPLEX_MUL2 (ct3, Jp, ct1);
 		COMPLEX_ADD2 (ct2, ct2, ct3);
-		COMPLEX_MUL2 (DFDP,  ct2, ggPD);
+		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt Ey1 */
+	  case 3:     /* YX wrt Ey1 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (0, -1) * {S[0] * CXc[ia2] * DPAc * CYc[ia1] +       
-		                     S[1] * SXc[ia2] * SPAc * CYc[ia1] +
-				     S[2] * CXc[ia2] * SPA  * SYc[ia1]  + 
-				     S[3] * SXc[ia2] * DPA  * SYc[ia1]} * 
-				           gY[ia1] * gX[ia2] * exp(-i PD) */
-		COMPLEX_MUL4(ct1, S[0], CXc[ia2], DPAc, CYc[ia1]);
-		COMPLEX_MUL4(ct2, S[1], SXc[ia2], SPAc, CYc[ia1]);
-		COMPLEX_MUL4(ct3, S[2], CXc[ia2], SPA,  SYc[ia1]);
-		COMPLEX_MUL4(ct4, S[3], SXc[ia2], DPA,  SYc[ia1]);
+		/* part = {-S[0] * CXc[ia2] * CYc[ia1] -       
+	                    S[1] * SXc[ia2] * CYc[ia1] +
+			    S[2] * CXc[ia2] * SYc[ia1] + 
+			    S[3] * SXc[ia2] * SYc[ia1]} * 
+			           gY[ia1] * gX[ia2] * exp(-j PD) */
+		COMPLEX_MUL3(ct5, S[0], CXc[ia2], CYc[ia1]);
+		COMPLEX_NEGATE(ct1, ct5);
+		COMPLEX_MUL3(ct5, S[1], SXc[ia2], CYc[ia1]);
+		COMPLEX_NEGATE(ct2, ct5);
+		COMPLEX_MUL3(ct3, S[2], CXc[ia2], SYc[ia1]);
+		COMPLEX_MUL3(ct4, S[3], SXc[ia2], SYc[ia1]);
 		COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-		COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9444,53 +9446,53 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over second antenna parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt Ox2 */
+	  case 0:     /* YX wrt Ox2 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = {(0,  1) * S[0] * MC1 + (0, -1) * S[1] * MC2 + 
 		           (0,  1) * S[2] * MC3 + (0, -1) * S[3] * MC4} * 
-			         gY[ia1] * gX[ia2]  * exp(-i PD) */
+			         gY[ia1] * gX[ia2]  * exp(-j PD) */
 		COMPLEX_ADD2 (ct1, SM1, SM3);
 		COMPLEX_MUL2 (ct2, Jp, ct1);
 		COMPLEX_ADD2 (ct1, SM2, SM4);
 		COMPLEX_MUL2 (ct3, Jm, ct1);
 		COMPLEX_ADD2 (ct2, ct2, ct3);
-		COMPLEX_MUL2 (DFDP,  ct2, ggPD);
+		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt Ex2 */
+	  case 1:     /* YX wrt Ex2 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (0, -1) * {S[0] * CXc[ia2] * DPAc * CYc[ia1] +       
-		                     S[1] * SXc[ia2] * SPAc * CYc[ia1] +
-				     S[2] * CXc[ia2] * SPA  * SYc[ia1]  + 
-				     S[3] * SXc[ia2] * DPA  * SYc[ia1]} * 
-				          gY[ia1] * gX[ia2] * exp(-i PD) */
-		COMPLEX_MUL4(ct1, S[0], CXc[ia2], DPAc, CYc[ia1]);
-		COMPLEX_MUL4(ct2, S[1], SXc[ia2], SPAc, CYc[ia1]);
-		COMPLEX_MUL4(ct3, S[2], CXc[ia2], SPA,  SYc[ia1]);
-		COMPLEX_MUL4(ct4, S[3], SXc[ia2], DPA,  SYc[ia1]);
+		/* part = {-S[0] * SY[ia1] * SX[ia2] + 
+	                    S[1] * SY[ia1] * CX[ia2] -
+			    S[2] * CY[ia1] * SX[ia2] + 
+			    S[3] * CY[ia1] * CX[ia2]} * 
+			        gY[ia1] * gX[ia2] * exp(-j PD)*/
+		COMPLEX_MUL3(ct5, S[0], SY[ia1], SX[ia2]);
+		COMPLEX_NEGATE(ct1, ct5);
+		COMPLEX_MUL3(ct2, S[1], SY[ia1], CX[ia2]);
+		COMPLEX_MUL3(ct5, S[2], CY[ia1], SX[ia2]);
+		COMPLEX_NEGATE(ct3, ct5);
+		COMPLEX_MUL3(ct4, S[3], CY[ia1], CX[ia2]);
 		COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-		COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt Oy2 = 0 */
+	  case 2:     /* YX wrt Oy2 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      gradR = gradI = 0.0;
@@ -9499,7 +9501,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt Ey2 = 0 */
+	  case 3:     /* YX wrt Ey2 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      gradR = gradI = 0.0;
@@ -9516,64 +9518,68 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over source parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt IPol */
+	  case 0:     /* YX wrt IPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part =   (MC1 + MC4) * gY[ia1] * gX[ia2] */
-		COMPLEX_ADD2(ct1, MC1, MC4);
+		/* part =   (MC1*DPAc + MC4*DPA) * gX[ia1] * gX[ia2] * exp(-j PD) */
+		COMPLEX_MUL2(ct2, MC1, DPAc);
+		COMPLEX_MUL2(ct3, MC4, DPA);
+		COMPLEX_ADD2(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt QPol */
+	  case 1:     /* YX wrt QPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (MC2 + MC3) * gY[ia1] * gX[ia2] */
-		COMPLEX_ADD2(ct1, MC2, MC3);
+		/* part = (MC2*SPAc + MC3*SPA) * gX[ia1] * gX[ia2] * exp(-j PD) */
+		COMPLEX_MUL2(ct2, MC2, SPAc);
+		COMPLEX_MUL2(ct3, MC3, SPA);
+		COMPLEX_ADD2(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt UPol */
+	  case 2:     /* YX wrt UPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* i (MC2 - MC3) * gY[ia1] * gX[ia2] */
-		COMPLEX_SUB(ct1, MC2, MC3);
-		COMPLEX_MUL3(DFDP, Jp, ct1, ggPD);
+		/* (j MC2*SPAc - j MC3*SPA) * gX[ia1] * gX[ia2] * exp(-j PD) */
+		COMPLEX_MUL3(ct2, Jp, MC2, SPAc);
+		COMPLEX_MUL3(ct3, Jp, MC3, SPA);
+		COMPLEX_SUB(ct1, ct2, ct3);
+		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt VPol */
+	  case 3:     /* YX wrt VPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* (MC1 - MC4) * gY[ia1] * gX[ia2] */
-		COMPLEX_SUB (ct1, MC1, MC4);
+		/* (MC1*DPAc - MC4*DPA) * gX[ia1] * gX[ia2] * exp(-j PD) */
+		COMPLEX_MUL2(ct2, MC1, DPAc);
+		COMPLEX_MUL2(ct3, MC4, DPA);
+		COMPLEX_SUB(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9592,7 +9598,6 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	    COMPLEX_MUL2 (DFDP, Jm, VYX);
 	    gradR = DFDP.real;
 	    gradI = DFDP.imag;
-	    /* gradR = -gradR; gradI = -gradI;   DEBUG */
 	  } else gradR = gradI = 0.0;    /* invalid data */
 	  j = args->PDPNumb;
 	  gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9601,18 +9606,18 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over antenna gains */
 	for (k=0; k<2; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt gY1 */
+	  case 0:     /* YX wrt gY1 */
 	    /* Fitting? */
 	    if (antGainFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * gX[ia2] */
+		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) 
+                           * gY[ia1]  * exp(-j PD) */
 		COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
-		COMPLEX_SET (ct2, antGain[ia2*2+0], 0);
-		COMPLEX_MUL2 (DFDP, ct1, ct2);
+		COMPLEX_SET (ct2, antGain[ia1*2+1], 0);
+		COMPLEX_EXP (ct3, -PD);
+		COMPLEX_MUL3 (DFDP, ct1, ct2, ct3);
 		gradR = DFDP.real;    /* RyxR wrt gY1 */
 		gradI = DFDP.imag;    /* RyxI wrt gY1 */
-		/* gradR = 0.0; gradI = 0.0;  DEBUG GAIN */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia1][0];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9622,14 +9627,14 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	  case 1:  /* wrt gX2 */
 	    if (antGainFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * gY[ia1] */
+		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) 
+                              * gY[ia1]  * exp(-j PD) */
 		COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
-		COMPLEX_SET (ct2, antGain[ia1*2+1], 1);
-		COMPLEX_MUL2 (DFDP, ct1, ct2);
+		COMPLEX_SET (ct2, antGain[ia1*2+1], 0);
+		COMPLEX_EXP (ct3, -PD);
+		COMPLEX_MUL3 (DFDP, ct1, ct2, ct3);
 		gradR = DFDP.real;    /* RyxR wrt gX2 */
 		gradI = DFDP.imag;    /* RyxI wrt gX2 */
-		/* gradR = 0.0; gradI = 0.0;  DEBUG GAIN */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia2][1];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9694,7 +9699,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
   olong isouLast=-999;
   dcomplex  SPA, DPA, SPAc, DPAc, ggPD;
   dcomplex ct1, ct2, ct3, ct4, ct5, Jm, Jp;
-  dcomplex S[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4, DFDP;
+  dcomplex S0[4], S[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4, DFDP;
   dcomplex SM1, SM2, SM3, SM4;
   size_t i, j;
 
@@ -9781,7 +9786,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
   for (i=0; i<args->nant; i++) {
     COMPLEX_EXP (ct1, -antParm[i*4+0]);
     COMPLEX_SET (ct2, cos(G_PI*0.25+antParm[i*4+1]), 0.0);
-    COMPLEX_MUL3 (CX[i], Jp, ct1, ct2);
+    COMPLEX_MUL2 (CX[i], ct1, ct2);
     COMPLEX_EXP (ct1, antParm[i*4+0]);
     COMPLEX_SET (ct2, sin(G_PI*0.25+antParm[i*4+1]), 0.0);
     COMPLEX_MUL2 (SX[i], ct1, ct2);
@@ -9790,7 +9795,8 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
     COMPLEX_MUL2 (CY[i], ct1, ct2);
     COMPLEX_EXP (ct1, -antParm[i*4+2]);
     COMPLEX_SET (ct2, sin(G_PI*0.25-antParm[i*4+3]), 0.0);
-    COMPLEX_MUL3 (SY[i], Jp, ct1, ct2);
+    COMPLEX_MUL2 (SY[i], ct1, ct2);
+ 
     COMPLEX_CONJUGATE (CXc[i], CX[i]);
     COMPLEX_CONJUGATE (SXc[i], SX[i]);
     COMPLEX_CONJUGATE (CYc[i], CY[i]);
@@ -9803,7 +9809,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
     /* Parallactic angle terms */
     chi1  = data[idata*10+0];   /* parallactic angle ant 1 */
     chi2  = data[idata*10+1];   /* parallactic angle ant 2 */
-    COMPLEX_EXP (SPA,chi1+chi2);
+    COMPLEX_EXP (SPA,(chi1+chi2));
     COMPLEX_EXP (DPA,chi1-chi2);
     COMPLEX_CONJUGATE (SPAc, SPA);
     COMPLEX_CONJUGATE (DPAc, DPA);
@@ -9825,12 +9831,18 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	upol = args->PPol[isou]*ipol*sin(args->RLPhase[isou]);
       vpol = souParm[isou*4+3];
       /* Complex Stokes array */
-      COMPLEX_SET (S[0], ipol+vpol, 0.0);
-      COMPLEX_SET (S[1], qpol,  upol);
-      COMPLEX_SET (S[2], qpol, -upol);
-      COMPLEX_SET (S[3], ipol-vpol, 0.0);
+      COMPLEX_SET (S0[0], ipol+vpol, 0.0);
+      COMPLEX_SET (S0[1], qpol,  upol);
+      COMPLEX_SET (S0[2], qpol, -upol);
+      COMPLEX_SET (S0[3], ipol-vpol, 0.0);
     }
 
+    /* Rotate Stokes by parallactic angle */
+    COMPLEX_MUL2(S[0], DPAc, S0[0]);
+    COMPLEX_MUL2(S[1], SPAc, S0[1]);
+    COMPLEX_MUL2(S[2], SPA,  S0[2]);
+    COMPLEX_MUL2(S[3], DPA,  S0[3]);
+ 
     /* Antenna parameters */
     ia1    = args->antNo[idata*2+0];
     ia2    = args->antNo[idata*2+1]; 
@@ -9843,26 +9855,25 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
       case 0:     /* XX */
 	if (wt[idata*4+kk]>0.0) {
 	  isigma = wt[idata*4+kk];
-	  /* VXX = {S[0] * CX[ia1] * CXc[ia2] * DPAc  +
-	            S[1] * CX[ia1] * SXc[ia2] * SPAc  +
-		    S[2] * SX[ia1] * CXc[ia2] * SPA   + 
-		    S[3] * SX[ia1] * SXc[ia2] * DPA} * g1X * g2X ;
+	  /* VXX = {S[0] * CX[ia1] * CXc[ia2] +
+	            S[1] * CX[ia1] * SXc[ia2] +
+		    S[2] * SX[ia1] * CXc[ia2] + 
+		    S[3] * SX[ia1] * SXc[ia2]} * g1X * g2X ;
 	  */
-	  COMPLEX_MUL3 (MC1, CX[ia1], CXc[ia2], DPAc);
-	  COMPLEX_MUL3 (MC2, CX[ia1], SXc[ia2], SPAc);
-	  COMPLEX_MUL3 (MC3, SX[ia1], CXc[ia2], SPA);
-	  COMPLEX_MUL3 (MC4, SX[ia1], SXc[ia2], DPA);
+	  COMPLEX_MUL2 (MC1, CX[ia1], CXc[ia2]);
+	  COMPLEX_MUL2 (MC2, CX[ia1], SXc[ia2]);
+	  COMPLEX_MUL2 (MC3, SX[ia1], CXc[ia2]);
+	  COMPLEX_MUL2 (MC4, SX[ia1], SXc[ia2]);
 	  COMPLEX_MUL2 (SM1, S[0], MC1);
 	  COMPLEX_MUL2 (SM2, S[1], MC2);
 	  COMPLEX_MUL2 (SM3, S[2], MC3);
 	  COMPLEX_MUL2 (SM4, S[3], MC4);
-	  COMPLEX_ADD4 (VXX, SM1, SM2, SM3, SM4);
+	  COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
 	  COMPLEX_SET (ggPD,  antGain[ia1*2+0]*antGain[ia2*2+0], 0);
-	  COMPLEX_MUL2 (VXX, VXX, ggPD);
+	  COMPLEX_MUL2 (VXX, ct5, ggPD);
 	  modelR = VXX.real; modelI = VXX.imag;
 	  residR = modelR - data[idata*10+(kk+1)*2];
 	  residI = modelI - data[idata*10+(kk+1)*2+1];
-	  /* residR = -residR; residI = - residI;   DEBUG */
 	  gsl_vector_set(f, i*2,   residR*isigma); /* Save function resids */
 	  gsl_vector_set(f, i*2+1, residI*isigma); /* Save function resids */
 	} else  residR = residI = 0.0; /* Invalid data */
@@ -9870,7 +9881,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over first antenna parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt Ox1 */
+	  case 0:     /* XX wrt Ox1 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
@@ -9884,37 +9895,37 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt Ox1 */
 		gradI = DFDP.imag;    /* RxxI wrt Ox1 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI =0.0;     /* Invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt Ex1 */
+	  case 1:     /* XX wrt Ex1 */
 	    /* Fitting? */
  	    if (antFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (0, -1) * {S[0] * CXc[ia2] * DPAc * SXc[ia1] +
-		                     S[1] * SXc[ia2] * SPAc * SXc[ia1] +
-				     S[2] * CXc[ia2] * SPA  * CXc[ia1] +	       
-				     S[3] * SXc[ia2] * DPA  * CXc[ia1]}  * gX[ia1] * gX[ia2]  */
-		COMPLEX_MUL4(ct1, S[0], CXc[ia2], DPAc, SXc[ia1]);
-		COMPLEX_MUL4(ct2, S[1], SXc[ia2], SPAc, SXc[ia1]);
-		COMPLEX_MUL4(ct3, S[2], CXc[ia2], SPA,  SXc[ia1]);
-		COMPLEX_MUL4(ct4, S[3], SXc[ia2], DPA,  CXc[ia1]);
+		/* part = {-S[0] * CXc[ia2] * SXc[ia1] -
+		            S[1] * SXc[ia2] * SXc[ia1] +
+			    S[2] * CXc[ia2] * CXc[ia1] +	       
+			    S[3] * SXc[ia2] * CXc[ia1]}  * gX[ia1] * gX[ia2]  */
+		COMPLEX_MUL3(ct5, S[0], CXc[ia2], SXc[ia1]);
+		COMPLEX_NEGATE(ct1, ct5);
+		COMPLEX_MUL3(ct5, S[1], SXc[ia2], SXc[ia1]);
+		COMPLEX_NEGATE(ct2, ct5);
+		COMPLEX_MUL3(ct3, S[2], CXc[ia2], SXc[ia1]);
+		COMPLEX_MUL3(ct4, S[3], SXc[ia2], CXc[ia1]);
 		COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-		COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt Ex1 */
 		gradI = DFDP.imag;    /* RxxI wrt Ex1 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt OY1 = 0 */
+	  case 2:     /* XX wrt OY1 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      gradR = gradI = 0.0;
@@ -9923,7 +9934,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt EY1 = 0 */
+	  case 3:     /* XX wrt EY1 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      gradR = gradI = 0.0;
@@ -9940,7 +9951,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over second antenna parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt Ox2 */
+	  case 0:     /* XX wrt Ox2 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
@@ -9954,52 +9965,52 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt Ox2 */
 		gradI = DFDP.imag;    /* RxxI wrt Ox2 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
-	      gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
+	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt Ex2 */
+	  case 1:     /* XX wrt Ex2 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (0, -1) * {S[0] * CX[ia1] * DPAc * SX[ia2] +
-		                     S[1] * CX[ia1] * SPAc * CX[ia2] +
-				     S[2] * SX[ia1] * SPA  * SX[ia2] +
-				     S[3] * SX[ia1] * DPA  * CX[ia2]} * gX[ia1] * gX[ia2]  */
-		COMPLEX_MUL4(ct1, S[0], CX[ia1], DPAc, SX[ia2]);
-		COMPLEX_MUL4(ct2, S[1], CX[ia1], SPAc, CX[ia2]);
-		COMPLEX_MUL4(ct3, S[2], SX[ia1], SPA,  SX[ia2]);
-		COMPLEX_MUL4(ct4, S[3], SX[ia1], DPA,  CX[ia2]);
+		/* part = {-S[0] * CX[ia1] * SX[ia2] +
+		            S[1] * CX[ia1] * CX[ia2] -
+			    S[2] * SX[ia1] * SX[ia2] +
+			    S[3] * SX[ia1] * CX[ia2]} * gX[ia1] * gX[ia2]  */
+		COMPLEX_MUL3(ct5, S[0], CX[ia1], SX[ia2]);
+		COMPLEX_NEGATE(ct1, ct5);
+		COMPLEX_MUL3(ct2, S[1], CX[ia1], CX[ia2]);
+		COMPLEX_MUL3(ct5, S[2], SX[ia1], SX[ia2]);
+		COMPLEX_NEGATE(ct3, ct5);
+		COMPLEX_MUL3(ct4, S[3], SX[ia1], CX[ia2]);
 		COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-		COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt Ox2 */
 		gradI = DFDP.imag;    /* RxxI wrt Ox2 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
-	      gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
+	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt Oy2 = 0 */
+	  case 2:     /* XX wrt Oy2 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      gradR = gradI = 0.0;
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR);  /* Save Jacobian */
-	      gsl_matrix_set(J, i*2+1, j, gradI); /* Save Jacobian */
+	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt Ey2 = 0 */
+	  case 3:     /* XX wrt Ey2 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      gradR = gradI = 0.0;
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR);  /* Save Jacobian */
-	      gsl_matrix_set(J, i*2+1, j, gradI); /* Save Jacobian */
+	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
 	  default:
@@ -10010,64 +10021,68 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over source parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt IPol */
+	  case 0:     /* XX wrt IPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part =   (MC1 + MC4) * gX[ia1] * gX[ia2] */
-		COMPLEX_ADD2(ct1, MC1, MC4);
+		/* part =   (MC1*DPAc + MC4*DPA) * gX[ia1] * gX[ia2] */
+		COMPLEX_MUL2(ct2, MC1, DPAc);
+		COMPLEX_MUL2(ct3, MC4, DPA);
+		COMPLEX_ADD2(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt ipol */
 		gradI = DFDP.imag;    /* RxxI wrt ipol */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
-	      gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
+	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt QPol */
+	  case 1:     /* XX wrt QPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (MC2 + MC3) * gX[ia1] * gX[ia2] */
-		COMPLEX_ADD2(ct1, MC2, MC3);
+		/* part = (MC2*SPAc + MC3*SPA) * gX[ia1] * gX[ia2] */
+		COMPLEX_MUL2(ct2, MC2, SPAc);
+		COMPLEX_MUL2(ct3, MC3, SPA);
+		COMPLEX_ADD2(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt qpol */
 		gradI = DFDP.imag;    /* RxxI wrt qpol */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt UPol */
+	  case 2:     /* XX wrt UPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* i (MC2 - MC3) * gX[ia1] * gX[ia2] */
-		COMPLEX_SUB(ct1, MC2, MC3);
-		COMPLEX_MUL3(DFDP, Jp, ct1, ggPD);
+		/* (j MC2*SPAc - j MC3*SPA) * gX[ia1] * gX[ia2] */
+		COMPLEX_MUL3(ct2, Jp, MC2, SPAc);
+		COMPLEX_MUL3(ct3, Jp, MC3, SPA);
+		COMPLEX_SUB(ct1, ct2, ct3);
+		COMPLEX_MUL2(DFDP, ct1, ggPD);
  		gradR = DFDP.real;    /* RxxR wrt upol */
 		gradI = DFDP.imag;    /* RxxI wrt upol */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt VPol */
+	  case 3:     /* XX wrt VPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* (MC1 - MC4) * gX[ia1] * gX[ia2] */
-		COMPLEX_SUB(ct1, MC1, MC4);
+		/* (MC1*DPAc - MC4*DPA) * gX[ia1] * gX[ia2] */
+		COMPLEX_MUL2(ct2, MC1, DPAc);
+		COMPLEX_MUL2(ct3, MC4, DPA);
+		COMPLEX_SUB(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt vpol */
 		gradI = DFDP.imag;    /* RxxI wrt vpol */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10090,7 +10105,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over antenna gains */
 	for (k=0; k<2; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt gX1 */
+	  case 0:     /* XX wrt gX1 */
 	    /* Fitting? */
 	    if (antGainFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
@@ -10100,15 +10115,13 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct1, ct2);
 		gradR = DFDP.real;    /* RxxR wrt gX1 */
 		gradI = DFDP.imag;    /* RxxI wrt gX1 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
-		 /* gradR = 0.0; gradI = 0.0; DEBUG GAIN */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia1][0];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	      }
 	    break;
-	  case 1:  /* wrt gX2 */
+	  case 1:  /* XX wrt gX2 */
 	    if (antGainFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * gX[ia1] */
@@ -10117,8 +10130,6 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct1, ct2);
 		gradR = DFDP.real;    /* RxxR wrt gX2 */
 		gradI = DFDP.imag;    /* RxxI wrt gX2 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
-		/* gradR = 0.0; gradI = 0.0;  DEBUG GAIN */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia2][0];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10134,26 +10145,25 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
       case 1:     /* YY */
 	if (wt[idata*4+kk]>0.0) {
 	  isigma = wt[idata*4+kk];
-	  /* VYY = {S[0] * SY[ia1] * SYc[ia2] * DPAc +       
-	            S[1] * SY[ia1] * CYc[ia2] * SPAc +
-		    S[2] * CY[ia1] * SYc[ia2] * SPA  + 
-		    S[3] * CY[ia1] * CYc[ia2] * DPA} * g1Y * g2Y ;
+	  /* VYY = {S[0] * SY[ia1] * SYc[ia2] +       
+	            S[1] * SY[ia1] * CYc[ia2] +
+		    S[2] * CY[ia1] * SYc[ia2] + 
+		    S[3] * CY[ia1] * CYc[ia2]} * g1Y * g2Y ;
 	  */
-	  COMPLEX_MUL3 (MC1, SY[ia1], SYc[ia2], DPAc);
-	  COMPLEX_MUL3 (MC2, SY[ia1], CYc[ia2], SPAc);
-	  COMPLEX_MUL3 (MC3, CY[ia1], SYc[ia2], SPA);
-	  COMPLEX_MUL3 (MC4, CY[ia1], CYc[ia2], DPA);
+	  COMPLEX_MUL2 (MC1, SY[ia1], SYc[ia2]);
+	  COMPLEX_MUL2 (MC2, SY[ia1], CYc[ia2]);
+	  COMPLEX_MUL2 (MC3, CY[ia1], SYc[ia2]);
+	  COMPLEX_MUL2 (MC4, CY[ia1], CYc[ia2]);
 	  COMPLEX_MUL2 (SM1, S[0], MC1);
 	  COMPLEX_MUL2 (SM2, S[1], MC2);
 	  COMPLEX_MUL2 (SM3, S[2], MC3);
 	  COMPLEX_MUL2 (SM4, S[3], MC4);
-	  COMPLEX_ADD4 (VYY, SM1, SM2, SM3, SM4);
+	  COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
 	  COMPLEX_SET (ggPD,  antGain[ia1*2+1]*antGain[ia2*2+1], 0);
-	  COMPLEX_MUL2 (VYY, VYY, ggPD);
+	  COMPLEX_MUL2 (VYY, ct5, ggPD);
 	  modelR = VYY.real; modelI = VYY.imag;
 	  residR = modelR - data[idata*10+(kk+1)*2];
 	  residI = modelI - data[idata*10+(kk+1)*2+1];
-	  /* residR = -residR; residI = - residI;   DEBUG */
 	  gsl_vector_set(f, i*2,   residR*isigma); /* Save function resids */
 	  gsl_vector_set(f, i*2+1, residI*isigma); /* Save function resids */
 	} else  residR = residI = 0.0; /* Invalid data */
@@ -10161,7 +10171,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over first antenna parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt Ox1 = 0 */
+	  case 0:     /* YY wrt Ox1 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      gradR = gradI = 0.0;
@@ -10170,7 +10180,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt Ex1 = 0 */
+	  case 1:     /* YY wrt Ex1 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      gradR = gradI = 0.0;
@@ -10179,7 +10189,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt Oy1 */
+	  case 2:     /* YY wrt Oy1 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
@@ -10193,34 +10203,34 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt Oy1 */
 		gradI = DFDP.imag;    /* RyyI wrt Oy1 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
-	      gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
+	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt Ey1 */
+	  case 3:     /* YY wrt Ey1 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (0, -1) * {S[0] * SYc[ia2] * DPAc * CYc[ia1] +
-		                     S[1] * CYc[ia2] * SPAc * CYc[ia1] +
-				     S[2] * SYc[ia2] * SPA  * SYc[ia1] +	       
-				     S[3] * CYc[ia2] * DPA  * SYc[ia1]}  * gX[ia1] * gX[ia2]  */
-		COMPLEX_MUL4(ct1, S[0], SYc[ia2], DPAc, CYc[ia1]);
-		COMPLEX_MUL4(ct2, S[1], CYc[ia2], SPAc, CYc[ia1]);
-		COMPLEX_MUL4(ct3, S[2], SYc[ia2], SPA,  SYc[ia1]);
-		COMPLEX_MUL4(ct4, S[3], CYc[ia2], DPA,  SYc[ia1]);
+		/* part = {-S[0] * SYc[ia2] * CYc[ia1] -
+                            S[1] * CYc[ia2] * CYc[ia1] +
+			    S[2] * SYc[ia2] * SYc[ia1] +	       
+			    S[3] * CYc[ia2] * SYc[ia1]}  * gX[ia1] * gX[ia2]  */
+		COMPLEX_MUL3(ct5, S[0], SYc[ia2], CYc[ia1]);
+		COMPLEX_NEGATE(ct1, ct5);
+		COMPLEX_MUL3(ct5, S[1], CYc[ia2], CYc[ia1]);
+		COMPLEX_NEGATE(ct2, ct5);
+		COMPLEX_MUL3(ct3, S[2], SYc[ia2], SYc[ia1]);
+		COMPLEX_MUL3(ct4, S[3], CYc[ia2], SYc[ia1]);
 		COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-		COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt Ey1 */
 		gradI = DFDP.imag;    /* RyyI wrt Ey1 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
-	      gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
+	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
 	  default:
@@ -10231,7 +10241,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over second antenna parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt Ox2 = 0 */
+	  case 0:     /* YY wrt Ox2 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      gradR = gradI = 0.0;
@@ -10240,7 +10250,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* Ryy wrt Ex2 = 0 */
+	  case 1:     /* YY wrt Ex2 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      gradR = gradI = 0.0;
@@ -10249,7 +10259,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* Rll wrt Oy2 */
+	  case 2:     /* YY wrt Oy2 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
@@ -10263,34 +10273,34 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP,  ct2, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt Oy2 */
 		gradI = DFDP.imag;    /* RyyI wrt Oy2 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
-	      gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
+	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt Ey2  */
+	  case 3:     /* YY wrt Ey2  */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (0, -1) * {S[0] * SY[ia1] * DPAc * CY[ia2] + 
-		                     S[1] * SY[ia1] * SPAc * SY[ia2] +
-				     S[2] * CY[ia1] * SPA  * CY[ia2]  + 
-				     S[3] * CY[ia1] * DPA  * SY[ia2]} * gY[ia1] * gY[ia2] */
-		COMPLEX_MUL4(ct1, S[0], SY[ia1], DPAc, CY[ia2]);
-		COMPLEX_MUL4(ct2, S[1], SY[ia1], SPAc, SY[ia2]);
-		COMPLEX_MUL4(ct3, S[2], CY[ia1], SPA,  CY[ia2]);
-		COMPLEX_MUL4(ct4, S[3], CY[ia1], DPA,  SY[ia2]);
+		/* part = {-S[0] * SY[ia1] * CY[ia2] + 
+                            S[1] * SY[ia1] * SY[ia2] -
+			    S[2] * CY[ia1] * CY[ia2]  + 
+			    S[3] * CY[ia1] * SY[ia2]} * gY[ia1] * gY[ia2] */
+		COMPLEX_MUL3(ct5, S[0], SY[ia1], CY[ia2]);
+		COMPLEX_NEGATE(ct1, ct5);
+		COMPLEX_MUL3(ct2, S[1], SY[ia1], SY[ia2]);
+		COMPLEX_MUL3(ct5, S[2], CY[ia1], CY[ia2]);
+		COMPLEX_NEGATE(ct3, ct5);
+		COMPLEX_MUL3(ct4, S[3], CY[ia1], SY[ia2]);
 		COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-		COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt Ey2 */
 		gradI = DFDP.imag;    /* RyyI wrt Ey2 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
-	      gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
+	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
 	  default:
@@ -10301,64 +10311,68 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over source parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt IPol */
+	  case 0:     /* YY wrt IPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part =   (MC1 + MC4) * gY[ia1] * gY[ia2] */
-		COMPLEX_ADD2(ct1, MC1, MC4);
+		/* part =   (MC1*DPAc + MC4*DPA) * gX[ia1] * gX[ia2] */
+		COMPLEX_MUL2(ct2, MC1, DPAc);
+		COMPLEX_MUL2(ct3, MC4, DPA);
+		COMPLEX_ADD2(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt ipol */
 		gradI = DFDP.imag;    /* RyyI wrt ipol */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
-	      } else gradR = gradI = 0.0;    /* invalid data */
-	      j = souPNumb[isou][k];
-	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
-	      gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
-	    }
-	    break;
-	  case 1:     /* wrt Qpol */
-	    /* Fitting? */
-	    if (souFit[isou][k]) {
-	      if (wt[idata*4+kk]>0.0) {
-		/* part = (MC2 + MC3) * gY[ia1] * gY[ia2] */
-		COMPLEX_ADD2(ct1, MC2, MC3);
-		COMPLEX_MUL2(DFDP, ct1, ggPD);
-		gradR = DFDP.real;    /* RyyR wrt qpol */
-		gradI = DFDP.imag;    /* RyyI wrt qpol */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt UPol */
+	  case 1:     /* YY wrt Qpol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* i (MC2 - MC3) * gY[ia1] * gY[ia2] */
-		COMPLEX_SUB(ct1, MC2, MC3);
-		COMPLEX_MUL3(DFDP, Jp, ct1, ggPD);
+		/* part = (MC2*SPAc + MC3*SPA) * gX[ia1] * gX[ia2] */
+		COMPLEX_MUL2(ct2, MC2, SPAc);
+		COMPLEX_MUL2(ct3, MC3, SPA);
+		COMPLEX_ADD2(ct1, ct2, ct3);
+		COMPLEX_MUL2(DFDP, ct1, ggPD);
+		gradR = DFDP.real;    /* RyyR wrt qpol */
+		gradI = DFDP.imag;    /* RyyI wrt qpol */
+	      } else gradR = gradI = 0.0;    /* invalid data */
+	      j = souPNumb[isou][k];
+	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
+	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
+	    }
+	    break;
+	  case 2:     /* YY wrt UPol */
+	    /* Fitting? */
+	    if (souFit[isou][k]) {
+	      if (wt[idata*4+kk]>0.0) {
+		/* (j MC2*SPAc - j MC3*SPA) * gX[ia1] * gX[ia2] */
+		COMPLEX_MUL3(ct2, Jp, MC2, SPAc);
+		COMPLEX_MUL3(ct3, Jp, MC3, SPA);
+		COMPLEX_SUB(ct1, ct2, ct3);
+		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt upol */
 		gradI = DFDP.imag;    /* RyyI wrt upol */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt VPol */
+	  case 3:     /* YY wrt VPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* (MC1 - MC4) * gY[ia1] * gY[ia2] */
-		COMPLEX_SUB (ct1, MC1, MC4);
+		/* (MC1*DPAc - MC4*DPA) * gX[ia1] * gX[ia2] */
+		COMPLEX_MUL2(ct2, MC1, DPAc);
+		COMPLEX_MUL2(ct3, MC4, DPA);
+		COMPLEX_SUB(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt vpol */
 		gradI = DFDP.imag;    /* RyyI wrt vpol */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10381,7 +10395,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over antenna gains */
 	for (k=0; k<2; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt gY1 */
+	  case 0:     /* YY wrt gY1 */
 	    /* Fitting? */
 	    if (antGainFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
@@ -10391,15 +10405,13 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct1, ct2);
 		gradR = DFDP.real;    /* RyyR wrt gY1 */
 		gradI = DFDP.imag;    /* RyyI wrt gY1 */
-		/* gradR = 0.0; gradI = 0.0; DEBUG GAIN */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia1][1];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	      }
 	    break;
-	  case 1:  /* wrt gY2 */
+	  case 1:  /* YY wrt gY2 */
 	    if (antGainFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * gY[ia1] */
@@ -10408,8 +10420,6 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct1, ct2);
 		gradR = DFDP.real;    /* RyyR wrt gY2 */
 		gradI = DFDP.imag;    /* RyyI wrt gY2 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
-		/* gradR = 0.0; gradI = 0.0;  DEBUG GAIN */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia2][1];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10426,28 +10436,27 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
       case 2:     /* XY */
 	if (wt[idata*4+kk]>0.0) {
 	  isigma = wt[idata*4+kk];
-	  /* VXY = {S[0] * CX[ia1] * SYc[ia2] * DPAc +       
-	            S[1] * CX[ia1] * CYc[ia2] * SPAc +
-		    S[2] * SX[ia1] * SYc[ia2] * SPA  + 
-		    S[3] * SX[ia1] * CYc[ia2] * DPA}} * g1X * g2Y * exp(i PD);
+	  /* VXY = {S[0] * CX[ia1] * SYc[ia2] +       
+	            S[1] * CX[ia1] * CYc[ia2] +
+		    S[2] * SX[ia1] * SYc[ia2] + 
+		    S[3] * SX[ia1] * CYc[ia2]}} * g1X * g2Y * exp(j PD);
 	  */
-	  COMPLEX_MUL3 (MC1, CX[ia1], SYc[ia2], DPAc);
-	  COMPLEX_MUL3 (MC2, CX[ia1], CYc[ia2], SPAc);
-	  COMPLEX_MUL3 (MC3, SX[ia1], SYc[ia2], SPA);
-	  COMPLEX_MUL3 (MC4, SX[ia1], CYc[ia2], DPA);
+	  COMPLEX_MUL2 (MC1, CX[ia1], SYc[ia2]);
+	  COMPLEX_MUL2 (MC2, CX[ia1], CYc[ia2]);
+	  COMPLEX_MUL2 (MC3, SX[ia1], SYc[ia2]);
+	  COMPLEX_MUL2 (MC4, SX[ia1], CYc[ia2]);
 	  COMPLEX_MUL2 (SM1, S[0], MC1);
 	  COMPLEX_MUL2 (SM2, S[1], MC2);
 	  COMPLEX_MUL2 (SM3, S[2], MC3);
 	  COMPLEX_MUL2 (SM4, S[3], MC4);
-	  COMPLEX_ADD4 (VXY, SM1, SM2, SM3, SM4);
+	  COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
 	  COMPLEX_SET (ct1,  antGain[ia1*2+0]*antGain[ia2*2+1], 0);
 	  COMPLEX_EXP (ct2, PD);
 	  COMPLEX_MUL2 (ggPD, ct1, ct2);
-	  COMPLEX_MUL2 (VXY, VXY, ggPD);
+	  COMPLEX_MUL2 (VXY, ct5, ggPD);
 	  modelR = VXY.real; modelI = VXY.imag;
 	  residR = modelR - data[idata*10+(kk+1)*2];
 	  residI = modelI - data[idata*10+(kk+1)*2+1];
-	  /* residR = -residR; residI = - residI;   DEBUG */
 	  gsl_vector_set(f, i*2,   residR*isigma); /* Save function resids */
 	  gsl_vector_set(f, i*2+1, residI*isigma); /* Save function resids */
 	} else  residR = residI = 0.0; /* Invalid data */
@@ -10455,13 +10464,13 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over first antenna parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt Ox1 */
+	  case 0:     /* XY wrt Ox1 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = {(0, -1) * S[0] * MC1 + (0, -1) * S[1] * MC2 + 
 		           (0,  1) * S[2] * MC3 + (0,  1) * S[3] * MC4} *
-			   gX[ia1] * gY[ia2] * exp(i PD) */
+			   gX[ia1] * gY[ia2] * exp(j PD) */
 		COMPLEX_ADD2 (ct1, SM1, SM2);
 		COMPLEX_MUL2 (ct2, Jm, ct1);
 		COMPLEX_ADD2 (ct1, SM3, SM4);
@@ -10470,38 +10479,38 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt Ex1 */
+	  case 1:     /* XY wrt Ex1 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part =  (0, -1) * {S[0] * SYc[ia2] * DPAc * SXc[ia1]  + 
-		                      S[1] * CYc[ia2] * SPAc * SXc[ia1]  +
-				      S[2] * SYc[ia2] * SPA  * CXc[ia1]  + 
-				      S[3] * CYc[ia2] * DPA  * CXc[ia1]  } * 
-				              gX[ia1] * gY[ia2] * exp(i PD) */
-		COMPLEX_MUL4(ct1, S[0], SYc[ia2], DPAc, SXc[ia1]);
-		COMPLEX_MUL4(ct2, S[1], CYc[ia2], SPAc, SXc[ia1]);
-		COMPLEX_MUL4(ct3, S[2], SYc[ia2], SPA,  CXc[ia1]);
-		COMPLEX_MUL4(ct4, S[3], CYc[ia2], DPA,  CXc[ia1]);
+		/* part =  {-S[0] * SYc[ia2] * SXc[ia1]  - 
+		   S[1] * CYc[ia2] * SXc[ia1]  +
+		   S[2] * SYc[ia2] * CXc[ia1]  + 
+		   S[3] * CYc[ia2] * CXc[ia1]  } * 
+		            gX[ia1] * gY[ia2] * exp(j PD) */
+		COMPLEX_MUL3(ct5, S[0], SYc[ia2], SXc[ia1]);
+		COMPLEX_NEGATE(ct1, ct5);
+		COMPLEX_MUL3(ct5, S[1], CYc[ia2], SXc[ia1]);
+		COMPLEX_NEGATE(ct2, ct5);
+		COMPLEX_MUL3(ct3, S[2], SYc[ia2], CXc[ia1]);
+		COMPLEX_MUL3(ct4, S[3], CYc[ia2], CXc[ia1]);
 		COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-		COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt Oy1 =0 */
+	  case 2:     /* XY wrt Oy1 =0 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      gradR = gradI = 0.0;
@@ -10510,7 +10519,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt Ey1 = 0 */
+	  case 3:     /* XY wrt Ey1 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      gradR = gradI = 0.0;
@@ -10527,7 +10536,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over second antenna parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt Ox2 = 0 */
+	  case 0:     /* XY wrt Ox2 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      gradR = gradI = 0.0;
@@ -10536,7 +10545,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt Ex2 = 0 */
+	  case 1:     /* XY wrt Ex2 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      gradR = gradI = 0.0;
@@ -10545,13 +10554,13 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt Oy2 */
+	  case 2:     /* XYwrt Oy2 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = {(0,  1) * S[0] * MC1 + (0, -1) * S[1] * MC2 + 
 		           (0,  1) * S[2] * MC3 + (0, -1) * S[3] * MC4} * 
-                                 gX[ia1] * gY[ia2] * exp(i PD) */
+                                 gX[ia1] * gY[ia2] * exp(j PD) */
 		COMPLEX_ADD2 (ct1, SM1, SM3);
 		COMPLEX_MUL2 (ct2, Jp, ct1);
 		COMPLEX_ADD2 (ct1, SM2, SM4);
@@ -10560,31 +10569,31 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP,  ct2, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt Ey2 */
+	  case 3:     /* XY wrt Ey2 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (0, -1) *{S[0] * CX[ia1] * DPAc * CY[ia2] +       
-		                    S[1] * CX[ia1] * SPAc * SY[ia2] +
-				    S[2] * SX[ia1] * SPA  * CY[ia2] + 
-				    S[3] * SX[ia1] * DPA  * SY[ia2]} * 
-			   	          gX[ia1] * gY[ia2] * exp(i PD) */
-		COMPLEX_MUL4(ct1, S[0], CX[ia1], DPAc, CY[ia2]);
-		COMPLEX_MUL4(ct2, S[1], CX[ia1], SPAc, SY[ia2]);
-		COMPLEX_MUL4(ct3, S[2], SX[ia1], SPA,  CY[ia2]);
-		COMPLEX_MUL4(ct4, S[3], SX[ia1], DPA,  SY[ia2]);
+		/* part = {-S[0] * CX[ia1] * CY[ia2] +       
+	                    S[1] * CX[ia1] * SY[ia2] -
+			    S[2] * SX[ia1] * CY[ia2] + 
+			    S[3] * SX[ia1] * SY[ia2]} * 
+			        gX[ia1] * gY[ia2] * exp(j PD) */
+		COMPLEX_MUL3(ct5, S[0], CX[ia1], CY[ia2]);
+		COMPLEX_NEGATE(ct1, ct5);
+		COMPLEX_MUL3(ct5, S[1], CX[ia1], SY[ia2]);
+		COMPLEX_NEGATE(ct2, ct5);
+		COMPLEX_MUL3(ct3, S[2], SX[ia1], CY[ia2]);
+		COMPLEX_MUL3(ct4, S[3], SX[ia1], SY[ia2]);
 		COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-		COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10594,65 +10603,70 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	  default:
 	    break;
 	  }; /* end second antenna parameter switch */
-	  } /* end loop over second antenna parameters */
+	} /* end loop over second antenna parameters */
 	
 	/* Loop over source parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt IPol */
+	  case 0:     /* XY wrt IPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part =   (MC1 + MC4) * gX[ia1] * gY[ia2] * exp(i PD) */
-		COMPLEX_ADD2(ct1, MC1, MC4);
+		/* part =   (MC1*DPAc + MC4*DPA) * gX[ia1] * gX[ia2] * exp(j PD) */
+		COMPLEX_MUL2(ct2, MC1, DPAc);
+		COMPLEX_MUL2(ct3, MC4, DPA);
+		COMPLEX_ADD2(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt QPol */
+	  case 1:     /* XY wrt QPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (MC2 + MC3) * gX[ia1] * gY[ia2] * exp(i PD) */
-		COMPLEX_ADD2(ct1, MC2, MC3);
+		/* part = (MC2*SPAc + MC3*SPA) * gX[ia1] * gX[ia2] * exp(j PD) */
+		COMPLEX_MUL2(ct2, MC2, SPAc);
+		COMPLEX_MUL2(ct3, MC3, SPA);
+		COMPLEX_ADD2(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt UPol */
+	  case 2:     /* XY wrt UPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* i (MC2 - MC3) * gX[ia1] * gY[ia2] * exp(i PD) */
-		COMPLEX_SUB(ct1, MC2, MC3);
-		COMPLEX_MUL3(DFDP, Jp, ct1, ggPD);
+		/* (j MC2*SPAc - j MC3*SPA) * gX[ia1] * gX[ia2] * exp(j PD) */
+		COMPLEX_MUL3(ct2, Jp, MC2, SPAc);
+		COMPLEX_MUL3(ct3, Jp, MC3, SPA);
+		COMPLEX_SUB(ct1, ct2, ct3);
+		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt VPol */
+	  case 3:     /* XY wrt VPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* (MC1 - MC4) * gX[ia1] * gY[ia2] * exp(i PD) */
-		COMPLEX_SUB (ct1, MC1, MC4);
+		/* (MC1*DPAc - MC4*DPA) * gX[ia1] * gX[ia2] * exp(j PD) */
+		COMPLEX_MUL2(ct2, MC1, DPAc);
+		COMPLEX_MUL2(ct3, MC4, DPA);
+		COMPLEX_SUB(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
@@ -10672,45 +10686,44 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	    COMPLEX_MUL2 (DFDP, Jp, VXY);
 	    gradR = DFDP.real;
 	    gradI = DFDP.imag;
-	    /* gradR = -gradR; gradI = -gradI;   DEBUG */
 	  } else gradR = gradI = 0.0;    /* invalid data */
 	  j = args->PDPNumb;
 	  gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
-	  gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
+	  gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	}
 	
 	/* Loop over antenna gains */
 	for (k=0; k<2; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt gX1 */
+	  case 0:     /* XY wrt gX1 */
 	    /* Fitting? */
 	    if (antGainFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * gY[ia2] */
+		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) 
+		             * gY[ia2]  * exp(j PD) */
 		COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
 		COMPLEX_SET (ct2, antGain[ia2*2+1], 0);
-		COMPLEX_MUL2 (DFDP, ct1, ct2);
+		COMPLEX_EXP (ct3, PD);
+		COMPLEX_MUL3 (DFDP, ct1, ct2, ct3);
 		gradR = DFDP.real;    /* RxyR wrt gX1 */
 		gradI = DFDP.imag;    /* RxyI wrt gX1 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
-		/* gradR = 0.0; gradI = 0.0;  DEBUG GAIN */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia1][0];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	      }
 	    break;
-	  case 1:  /* wrt gY2 */
+	  case 1:  /* XY wrt gY2 */
 	    if (antGainFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * gX[ia1] */
+		/* part = {S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) 
+	                    * gX[ia1] * exp(j PD) */
 		COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
-		COMPLEX_SET (ct2, antGain[ia1*2+0], 1);
-		COMPLEX_MUL2 (DFDP, ct1, ct2);
+		COMPLEX_SET (ct2, antGain[ia1*2+0], 0);
+		COMPLEX_EXP (ct3, PD);
+		COMPLEX_MUL3 (DFDP, ct1, ct2, ct3);
 		gradR = DFDP.real;    /* RxyR wrt gY2 */
 		gradI = DFDP.imag;    /* RxyI wrt gY2 */
-		/* gradR = 0.0; gradI = 0.0;  DEBUG GAIN */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia2][1];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10727,28 +10740,27 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
       case 3:     /* YX */
 	if (wt[idata*4+kk]>0.0) {
 	  isigma = wt[idata*4+kk];
-	  /* VYX = {S[0] * SY[ia1] * CXc[ia2] * DPAc +       
-	            S[1] * SY[ia1] * SXc[ia2] * SPAc +
-		    S[2] * CY[ia1] * CXc[ia2] * SPA  + 
-		    S[3] * CY[ia1] * SXc[ia2] * DPA} * g1Y * g2X * exp(-i PD)
+	  /* VYX = {S[0] * SY[ia1] * CXc[ia2] +       
+	            S[1] * SY[ia1] * SXc[ia2] +
+		    S[2] * CY[ia1] * CXc[ia2] + 
+		    S[3] * CY[ia1] * SXc[ia2]} * g1Y * g2X * exp(-j PD)
 	  */
-	  COMPLEX_MUL3 (MC1, SY[ia1], CXc[ia2], DPAc);
-	  COMPLEX_MUL3 (MC2, SY[ia1], SXc[ia2], SPAc);
-	  COMPLEX_MUL3 (MC3, CY[ia1], CXc[ia2], SPA);
-	  COMPLEX_MUL3 (MC4, CY[ia1], SXc[ia2], DPA);
+	  COMPLEX_MUL2 (MC1, SY[ia1], CXc[ia2]);
+	  COMPLEX_MUL2 (MC2, SY[ia1], SXc[ia2]);
+	  COMPLEX_MUL2 (MC3, CY[ia1], CXc[ia2]);
+	  COMPLEX_MUL2 (MC4, CY[ia1], SXc[ia2]);
 	  COMPLEX_MUL2 (SM1, S[0], MC1);
 	  COMPLEX_MUL2 (SM2, S[1], MC2);
 	  COMPLEX_MUL2 (SM3, S[2], MC3);
 	  COMPLEX_MUL2 (SM4, S[3], MC4);
-	  COMPLEX_ADD4 (VYX, SM1, SM2, SM3, SM4);
+	  COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
 	  COMPLEX_SET (ct1,  antGain[ia1*2+1]*antGain[ia2*2+0], 0);
 	  COMPLEX_EXP (ct2, -PD);
 	  COMPLEX_MUL2 (ggPD, ct1, ct2);
-	  COMPLEX_MUL2 (VYX, VYX, ggPD);
+	  COMPLEX_MUL2 (VYX, ct5, ggPD);
 	  modelR = VYX.real; modelI = VYX.imag;
 	  residR = modelR - data[idata*10+(kk+1)*2];
 	  residI = modelI - data[idata*10+(kk+1)*2+1];
-	  /* residR = -residR; residI = - residI;   DEBUG */
 	  gsl_vector_set(f, i*2,   residR*isigma); /* Save function resids */
 	  gsl_vector_set(f, i*2+1, residI*isigma); /* Save function resids */
 	} else  residR = residI = 0.0; /* Invalid data */
@@ -10756,7 +10768,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over first antenna parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt Ox1 = 0 */
+	  case 0:     /* YX wrt Ox1 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      gradR = gradI = 0.0;
@@ -10765,7 +10777,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt Ex1 = 0 */
+	  case 1:     /* YX wrt Ex1 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      gradR = gradI = 0.0;
@@ -10774,46 +10786,46 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt Oy1 */
+	  case 2:     /* YX wrt Oy1 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = {(0,  1) * S[0] * MC1 + (0, -1) * S[1] * MC2 + 
-		           (0,  1) * S[2] * MC3 + (0, -1) * S[3] * MC4} * 
-			        gY[ia1] * gX[ia2]  * exp(-i PD) */
-		COMPLEX_ADD2 (ct1, SM1, SM3);
-		COMPLEX_MUL2 (ct2, Jp, ct1);
-		COMPLEX_ADD2 (ct1, SM2, SM4);
-		COMPLEX_MUL2 (ct3, Jm, ct1);
+		/* part = {(0, -1) * S[0] * MC1 + (0, -1) * S[1] * MC2 + 
+		   (        0,  1) * S[2] * MC3 + (0,  1) * S[3] * MC4} * 
+	                          gX[ia1] * gY[ia2] * exp(-j PD) */
+		COMPLEX_ADD2 (ct1, SM1, SM2);
+		COMPLEX_MUL2 (ct2, Jm, ct1);
+		COMPLEX_ADD2 (ct1, SM3, SM4);
+		COMPLEX_MUL2 (ct3, Jp, ct1);
 		COMPLEX_ADD2 (ct2, ct2, ct3);
-		COMPLEX_MUL2 (DFDP,  ct2, ggPD);
+		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma); /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt Ey1 */
+	  case 3:     /* YX wrt Ey1 */
 	    /* Fitting? */
 	    if (antFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (0, -1) * {S[0] * CXc[ia2] * DPAc * CYc[ia1] +       
-		                     S[1] * SXc[ia2] * SPAc * CYc[ia1] +
-				     S[2] * CXc[ia2] * SPA  * SYc[ia1]  + 
-				     S[3] * SXc[ia2] * DPA  * SYc[ia1]} * 
-				           gY[ia1] * gX[ia2] * exp(-i PD) */
-		COMPLEX_MUL4(ct1, S[0], CXc[ia2], DPAc, CYc[ia1]);
-		COMPLEX_MUL4(ct2, S[1], SXc[ia2], SPAc, CYc[ia1]);
-		COMPLEX_MUL4(ct3, S[2], CXc[ia2], SPA,  SYc[ia1]);
-		COMPLEX_MUL4(ct4, S[3], SXc[ia2], DPA,  SYc[ia1]);
+		/* part = {-S[0] * CXc[ia2] * CYc[ia1] -       
+	                    S[1] * SXc[ia2] * CYc[ia1] +
+			    S[2] * CXc[ia2] * SYc[ia1] + 
+			    S[3] * SXc[ia2] * SYc[ia1]} * 
+			           gY[ia1] * gX[ia2] * exp(-j PD) */
+		COMPLEX_MUL3(ct5, S[0], CXc[ia2], CYc[ia1]);
+		COMPLEX_NEGATE(ct1, ct5);
+		COMPLEX_MUL3(ct5, S[1], SXc[ia2], CYc[ia1]);
+		COMPLEX_NEGATE(ct2, ct5);
+		COMPLEX_MUL3(ct3, S[2], CXc[ia2], SYc[ia1]);
+		COMPLEX_MUL3(ct4, S[3], SXc[ia2], SYc[ia1]);
 		COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-		COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10828,53 +10840,53 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over second antenna parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt Ox2 */
+	  case 0:     /* YX wrt Ox2 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = {(0,  1) * S[0] * MC1 + (0, -1) * S[1] * MC2 + 
 		           (0,  1) * S[2] * MC3 + (0, -1) * S[3] * MC4} * 
-			         gY[ia1] * gX[ia2]  * exp(-i PD) */
+			         gY[ia1] * gX[ia2]  * exp(-j PD) */
 		COMPLEX_ADD2 (ct1, SM1, SM3);
 		COMPLEX_MUL2 (ct2, Jp, ct1);
 		COMPLEX_ADD2 (ct1, SM2, SM4);
 		COMPLEX_MUL2 (ct3, Jm, ct1);
 		COMPLEX_ADD2 (ct2, ct2, ct3);
-		COMPLEX_MUL2 (DFDP,  ct2, ggPD);
+		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt Ex2 */
+	  case 1:     /* YX wrt Ex2 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (0, -1) * {S[0] * CXc[ia2] * DPAc * CYc[ia1] +       
-		                     S[1] * SXc[ia2] * SPAc * CYc[ia1] +
-				     S[2] * CXc[ia2] * SPA  * SYc[ia1]  + 
-				     S[3] * SXc[ia2] * DPA  * SYc[ia1]} * 
-				          gY[ia1] * gX[ia2] * exp(-i PD) */
-		COMPLEX_MUL4(ct1, S[0], CXc[ia2], DPAc, CYc[ia1]);
-		COMPLEX_MUL4(ct2, S[1], SXc[ia2], SPAc, CYc[ia1]);
-		COMPLEX_MUL4(ct3, S[2], CXc[ia2], SPA,  SYc[ia1]);
-		COMPLEX_MUL4(ct4, S[3], SXc[ia2], DPA,  SYc[ia1]);
+		/* part = {-S[0] * SY[ia1] * SX[ia2] + 
+	                    S[1] * SY[ia1] * CX[ia2] -
+			    S[2] * CY[ia1] * SX[ia2] + 
+			    S[3] * CY[ia1] * CX[ia2]} * 
+			        gY[ia1] * gX[ia2] * exp(-j PD)*/
+		COMPLEX_MUL3(ct5, S[0], SY[ia1], SX[ia2]);
+		COMPLEX_NEGATE(ct1, ct5);
+		COMPLEX_MUL3(ct2, S[1], SY[ia1], CX[ia2]);
+		COMPLEX_MUL3(ct5, S[2], CY[ia1], SX[ia2]);
+		COMPLEX_NEGATE(ct3, ct5);
+		COMPLEX_MUL3(ct4, S[3], CY[ia1], CX[ia2]);
 		COMPLEX_ADD4(ct5, ct1, ct2, ct3, ct4);
-		COMPLEX_MUL3(DFDP, Jm, ct5, ggPD);
+		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt Oy2 = 0 */
+	  case 2:     /* YX wrt Oy2 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      gradR = gradI = 0.0;
@@ -10883,7 +10895,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	      gsl_matrix_set(J, i*2+1, j, gradI);  /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt Ey2 = 0 */
+	  case 3:     /* YX wrt Ey2 = 0 */
 	    /* Fitting? */
 	    if (antFit[ia2][k]) {
 	      gradR = gradI = 0.0;
@@ -10900,64 +10912,68 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over source parameters */
 	for (k=0; k<4; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt IPol */
+	  case 0:     /* YX wrt IPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part =   (MC1 + MC4) * gY[ia1] * gX[ia2] */
-		COMPLEX_ADD2(ct1, MC1, MC4);
+		/* part =   (MC1*DPAc + MC4*DPA) * gX[ia1] * gX[ia2] * exp(-j PD) */
+		COMPLEX_MUL2(ct2, MC1, DPAc);
+		COMPLEX_MUL2(ct3, MC4, DPA);
+		COMPLEX_ADD2(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 1:     /* wrt QPol */
+	  case 1:     /* YX wrt QPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (MC2 + MC3) * gY[ia1] * gX[ia2] */
-		COMPLEX_ADD2(ct1, MC2, MC3);
+		/* part = (MC2*SPAc + MC3*SPA) * gX[ia1] * gX[ia2] * exp(-j PD) */
+		COMPLEX_MUL2(ct2, MC2, SPAc);
+		COMPLEX_MUL2(ct3, MC3, SPA);
+		COMPLEX_ADD2(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 2:     /* wrt UPol */
+	  case 2:     /* YX wrt UPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* i (MC2 - MC3) * gY[ia1] * gX[ia2] */
-		COMPLEX_SUB(ct1, MC2, MC3);
-		COMPLEX_MUL3(DFDP, Jp, ct1, ggPD);
+		/* (j MC2*SPAc - j MC3*SPA) * gX[ia1] * gX[ia2] * exp(-j PD) */
+		COMPLEX_MUL3(ct2, Jp, MC2, SPAc);
+		COMPLEX_MUL3(ct3, Jp, MC3, SPA);
+		COMPLEX_SUB(ct1, ct2, ct3);
+		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	    }
 	    break;
-	  case 3:     /* wrt VPol */
+	  case 3:     /* YX wrt VPol */
 	    /* Fitting? */
 	    if (souFit[isou][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* (MC1 - MC4) * gY[ia1] * gX[ia2] */
-		COMPLEX_SUB (ct1, MC1, MC4);
+		/* (MC1*DPAc - MC4*DPA) * gX[ia1] * gX[ia2] * exp(-j PD) */
+		COMPLEX_MUL2(ct2, MC1, DPAc);
+		COMPLEX_MUL2(ct3, MC4, DPA);
+		COMPLEX_SUB(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10976,7 +10992,6 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	    COMPLEX_MUL2 (DFDP, Jm, VYX);
 	    gradR = DFDP.real;
 	    gradI = DFDP.imag;
-	    /* gradR = -gradR; gradI = -gradI;   DEBUG */
 	  } else gradR = gradI = 0.0;    /* invalid data */
 	  j = args->PDPNumb;
 	  gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10985,35 +11000,35 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	/* Loop over antenna gains */
 	for (k=0; k<2; k++) {
 	  switch (k) {   /* Switch over parameter */
-	  case 0:     /* wrt gY1 */
+	  case 0:     /* YX wrt gY1 */
 	    /* Fitting? */
 	    if (antGainFit[ia1][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * gX[ia2] */
+		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) 
+                           * gY[ia1]  * exp(-j PD) */
 		COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
-		COMPLEX_SET (ct2, antGain[ia2*2+0], 0);
-		COMPLEX_MUL2 (DFDP, ct1, ct2);
+		COMPLEX_SET (ct2, antGain[ia1*2+1], 0);
+		COMPLEX_EXP (ct3, -PD);
+		COMPLEX_MUL3 (DFDP, ct1, ct2, ct3);
 		gradR = DFDP.real;    /* RyxR wrt gY1 */
 		gradI = DFDP.imag;    /* RyxI wrt gY1 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
-		/* gradR = 0.0; gradI = 0.0;  DEBUG GAIN */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia1][0];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	      }
 	    break;
-	  case 1:  /* wrt gX2 */
+	  case 1:  /* YX wrt gX2 */
 	    if (antGainFit[ia2][k]) {
 	      if (wt[idata*4+kk]>0.0) {
-		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * gY[ia1] */
+		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) 
+                              * gY[ia1]  * exp(-j PD) */
 		COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
-		COMPLEX_SET (ct2, antGain[ia1*2+1], 1);
-		COMPLEX_MUL2 (DFDP, ct1, ct2);
+		COMPLEX_SET (ct2, antGain[ia1*2+1], 0);
+		COMPLEX_EXP (ct3, -PD);
+		COMPLEX_MUL3 (DFDP, ct1, ct2, ct3);
 		gradR = DFDP.real;    /* RyxR wrt gX2 */
 		gradI = DFDP.imag;    /* RyxI wrt gX2 */
-		/* gradR = -gradR; gradI = -gradI;   DEBUG */
-		/* gradR = 0.0; gradI = 0.0;  DEBUG GAIN */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia2][1];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */

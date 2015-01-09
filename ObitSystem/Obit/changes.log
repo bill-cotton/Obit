@@ -2540,3 +2540,25 @@ Obit/python/EVLACal.py:
 Obit/src/ObitPolnCalFit.c:
   doFitFast: initialize variables
 26 Nov. 2014 svn ver 500
+
+Improvements to KAT-7 data handling, linear feed polarization, bug fixes
+Obit/include/ObitSDMDataTypeDef.h Obit/src/ObitSDMData.c
+Obit/tasks/BDFIn.c:
+  Write feed orientation to AN table.
+Obit/src/ObitImageUtil.c:
+  PBImage: Trap KAT-7, use approprate beam
+  FitBeam: Use descriptor on IO beam member
+Obit/src/ObitPBUtil.c Obit/include/ObitPBUtil.h:
+  Add KAT7 beam
+Obit/python/SkyGeom.py Obit/python/SkyGeom.inc
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  Add KAT-7 beam
+Obit/python/KATH5toAIPS.py:
+  Update weights in HDF format
+Obit/src/ObitTableANUtil.c:
+  GetList: Recognize KAT-7 data 
+Obit/tasks/IDIIn.c:
+  GetData: Correct day numbers for data spanning several days.
+Obit/src/ObitPolnCalFit.c Obit/src/ObitUVCalPolarization.c:
+  Fixes for Poln data with linear feeds. 
+9 Jan. 2015, svn ver 501
