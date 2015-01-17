@@ -2562,3 +2562,13 @@ Obit/tasks/IDIIn.c:
 Obit/src/ObitPolnCalFit.c Obit/src/ObitUVCalPolarization.c:
   Fixes for Poln data with linear feeds. 
 9 Jan. 2015, svn ver 501
+
+Enhance PCal, Bug fixes 
+Obit/src/ObitPolnCalFit.c:
+  XPhase parameter
+  Uninitialized variables
+Obit/tasks/PCal.c Obit/TDF/PCal.TDF:
+  Add XPhase parameter
+Obit/src/ObitSDMData.c:
+  Trap ALMA pecularity.
+17 Jan 2015, svn ver 502

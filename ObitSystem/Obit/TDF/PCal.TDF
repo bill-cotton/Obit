@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry instrumental polarization calibration
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2012-2014
+;;  Copyright (C) 2012-2015
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -121,6 +121,8 @@ RLPhase       -4000.      400.      R-L phase difference per calibrator
 RM                                  Rotation measure, per calibrator
 **PARAM** float 10  **DEF** 0.0
 PPol          0.0          1.0      Fract lin poln per calibrator
+**PARAM** float 10  **DEF** 0.0
+XPhase        0.0          1.0      Cross hand phase difference (deg)
                                        
                                        Calibration info
 **PARAM** str 4  **DEF** LM
@@ -315,6 +317,7 @@ Adverbs:
   RM.........NYI The rotation measure (rad/m^2) used to convert RLPhase
              to other frequencies. One value per calibrator.
   PPol.......Fractional linear polarization of calibrators
+  XPhase.....Cross hand phase difference [deg]
 
       Calibration control
   solnType...Solution type:'LM  ' 
@@ -327,8 +330,8 @@ Adverbs:
              If False polarization fixed at (0,i0)
   doFitI.....If True fit for Stokes I, one per source
   doFitV.....If True fit for Stokes V, one per source
-  doFitRL....If True, fit for global R-L phase  difference per 
-             channel, based on RLPhase, RM and PPol
+  doFitRL....If True, fit for global R-L (X-Y) phase  difference
+             per block of channels, otherwise use XPhase for all.
   doFitGain..If True, fit for X & Y gains per per antenna and
              channel.  Generally needed for linear feeds.
   ChWid......If >0, The calibration will use ChWid channels 
@@ -342,7 +345,8 @@ Adverbs:
              with the RL Phase solutions and written to BPSoln.
   doBlank....Blank failed solutions? else write default parameters 
              in the output PD and BP tables
-  refAnt.....Reference antenna number, MUST be given.
+  refAnt.....Reference antenna number.  If not given no reference 
+             antenna will be used.
   solInt.....Data is averaged for this long (min)
 
   prtLv......Print level in solution, 0=>none 

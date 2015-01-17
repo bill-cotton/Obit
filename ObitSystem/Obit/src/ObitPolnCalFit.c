@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2014                                          */
+/*;  Copyright (C) 2012-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -321,9 +321,7 @@ static void calcmodelRL (ObitPolnCalFit *args, ofloat Rarray[8], olong idata)
   ofloat root2, chi1, chi2;
 
   /* R-L phase difference  at reference antenna */
-  if (args->doFitRL) {
-    PD = args->PD;
-  } else PD = 0.0;
+  PD = args->PD;
 
   COMPLEX_SET (MC1, 0.0, 0.0);  /* Other stuff */
   COMPLEX_SET (MC2, 0.0, 0.0);
@@ -506,9 +504,7 @@ static void calcmodelXY (ObitPolnCalFit *args, ofloat Rarray[8], olong idata)
   isou  = MAX (0, args->souNo[idata]);    /* Source number */
   
    /* X-Y phase difference  at reference antenna */
-  if (args->doFitRL) {
-    PD = args->PD;
-  } else PD = 0.0;
+  PD = args->PD;
 
  /* Source parameters */
   ipol = souParm[isou*4+0];
@@ -651,6 +647,7 @@ static void calcmodelXY (ObitPolnCalFit *args, ofloat Rarray[8], olong idata)
  * \li doFitPol   OBIT_boolean [*] If True fit source linear poln, per cal  [T]
  * \li doFitV     OBIT_boolean [*] If True fit Stokes V poln, per cal  [F]
  * \li doFitRL    OBIT_boolean  If True fit R-L phase difference  [F]
+ * \li XYPhase    OBIT_float scalar cross hand phase difference  (deg) [def 0.0]
  * \li RLPhase    OBIT_float scalar R-L phase difference @ ref Freq per calibrator
  *                <= -999 => fit value [-1000.] in deg.
  * \li RM         OBIT_float scalar Rotation measure (rad/m^2) to be used with RLPhase
@@ -693,7 +690,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
   const gsl_multifit_fdfsolver_type *T=NULL;
 #endif /* HAVE_GSL */ 
   /* Diagnostics */
-  ofloat RArray[8];
+  ofloat ftemp, RArray[8];
   odouble RRr, RRi, LLr, LLi, RLr, RLi, LRr, LRi;
   olong ia1, ia2, refAnt;
   gchar *routine = "ObitPolnCalFitFit";
@@ -770,6 +767,9 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
   ObitInfoListGetTest(in->info, "solnType", &type, dim, solnType);
   strncpy (in->solnType, solnType, 4);
   ObitInfoListGetP(in->info, "Sources", &type, sdim, (gpointer)&Sources);
+  ftemp = 0.0;
+  ObitInfoListGetTest(in->info, "XPhase",   &type, dim, &ftemp);
+  in->PD = ftemp * DG2RAD;   /* Phase difference in radians */
 
   /* Open input data to get info */
   retCode = ObitUVOpen (inUV, OBIT_IO_ReadOnly, err);
@@ -896,7 +896,6 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
       /* in->antGainFit[i][0] = in->doFitGain;  DEBUG */
       in->antGainFit[i][1] = in->doFitGain;
     }
-    /* NEED MORE HERE */
     in->antGainPNumb = g_malloc0(in->nant*sizeof(gboolean*));
     for (i=0; i<in->nant; i++) 
       in->antGainPNumb[i] = g_malloc0(2*sizeof(gboolean));
@@ -1704,7 +1703,7 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
   } /* end init */
 
   /* Some parameters always need updating */
-  in->PD = 0.0;  /* R-L (X/Y) phase difference */
+  /* in->PD = 0.0;  R-L (X/Y) phase difference */
   for (i=0; i<in->nsou; i++) {
     
     /* Stokes I - evaluate spectrum in ln(nu/nu_ref) */
@@ -2583,7 +2582,6 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
       } 
       in->PD = sParam;   /* Set parameter to new or old value */
     } /* end  Fit phase difference */
-    else in->PD = 0.0;
 
     /* Loop over sources */
     for (isou=0; isou<in->nsou; isou++) {
@@ -2767,7 +2765,7 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
 		   iter+1, endChi2, ParRMS, XRMS);
     /* Don't give fit is using GSL */
     
-    if (strncmp(in->solnType, "LM  ", 4)) {
+    if (strncmp(in->solnType, "LM  ", 4) || (err->prtLv>=5)) {
       Obit_log_error(err, OBIT_InfoErr, "Phase difference %8.2f",  in->PD*57.296);
       for (isou=0; isou<in->nsou; isou++) {
 	fpol = sqrt (in->souParm[isou*4+1]*in->souParm[isou*4+1] + in->souParm[isou*4+2]*in->souParm[isou*4+2]) /
@@ -3097,9 +3095,7 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
   sumd = sumd2 = 0.0;
   nPobs = nXobs = 0;
   /* R-L phase difference  at reference antenna */
-  if (args->doFitRL) {
-    PD = args->PD;
-  } else PD = 0.0;
+  PD = args->PD;
 
   /* Injest model, factorize into antenna components - 
      data in order Orientation R/X, Elipticity R/X, Orientation L/Y, Elipticity L/Y */
@@ -3965,6 +3961,10 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
   COMPLEX_SET (S[1], 0.0, 0.0);
   COMPLEX_SET (S[2], 0.0, 0.0);
   COMPLEX_SET (S[3], 0.0, 0.0);
+  COMPLEX_SET (S0[0], 0.0, 0.0);
+  COMPLEX_SET (S0[1], 0.0, 0.0);
+  COMPLEX_SET (S0[2], 0.0, 0.0);
+  COMPLEX_SET (S0[3], 0.0, 0.0);
   COMPLEX_SET (MC1, 0.0, 0.0);  /* Other stuff */
   COMPLEX_SET (MC2, 0.0, 0.0);
   COMPLEX_SET (MC3, 0.0, 0.0);
@@ -3985,9 +3985,7 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
   sumd = sumd2 = 0.0;
   nPobs = nXobs = 0;
   /* X-Y phase difference  at reference antenna */
-  if (args->doFitRL) {
-    PD = args->PD;
-  } else PD = 0.0;
+  PD = args->PD;
 
   /* Injest model, factorize into antenna components - 
      data in order Orientation R/X, Elipticity R/X, Orientation L/Y, Elipticity L/Y */
@@ -4010,6 +4008,9 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
     COMPLEX_CONJUGATE (SXc[i], SX[i]);
     COMPLEX_CONJUGATE (CYc[i], CY[i]);
     COMPLEX_CONJUGATE (SYc[i], SY[i]);
+
+    /* Default X gain = 1.0/Y gain
+    if (!antGainFit[i][0]) antGain[i*2+0] = 1.0 / antGain[i*2+1]; */
   }
 
   /* Loop over data */
@@ -4262,7 +4263,7 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
     COMPLEX_MUL2 (SM3, S[2], MC3);
     COMPLEX_MUL2 (SM4, S[3], MC4);
     COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
-    COMPLEX_SET (ggPD,  antGain[ia1*2+1]*antGain[ia2*2+1], 0);
+    COMPLEX_SET (ggPD,  antGain[ia1*2+1]*antGain[ia2*2+1], 0); 
     COMPLEX_MUL2 (VYY, ct5, ggPD);
     residR = VYY.real - data[idata*10+4];
     sum += isigma * residR * residR; sumwt += isigma; 
@@ -8019,6 +8020,10 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
   COMPLEX_SET (S[1], 0.0, 0.0);
   COMPLEX_SET (S[2], 0.0, 0.0);
   COMPLEX_SET (S[3], 0.0, 0.0);
+  COMPLEX_SET (S0[0], 0.0, 0.0);
+  COMPLEX_SET (S0[1], 0.0, 0.0);
+  COMPLEX_SET (S0[2], 0.0, 0.0);
+  COMPLEX_SET (S0[3], 0.0, 0.0);
   COMPLEX_SET (MC1, 0.0, 0.0);  /* Other stuff */
   COMPLEX_SET (MC2, 0.0, 0.0);
   COMPLEX_SET (MC3, 0.0, 0.0);
@@ -8058,7 +8063,9 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
 	antGain[iant*2+k] = gsl_vector_get(x, j);
       }
     } /* end loop over antenna parameters */
-  } /* end loop over antennas */
+    /* Default X gain = 1.0/Y gain
+    if (!antGainFit[iant][0]) antGain[iant*2+0] = 1.0 / antGain[iant*2+1]; */
+   } /* end loop over antennas */
   
   /* Ref antenna - 0 rel */
   refAnt = MAX(-1, args->refAnt-1);
@@ -8197,7 +8204,7 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
 	  COMPLEX_MUL2 (SM3, S[2], MC3);
 	  COMPLEX_MUL2 (SM4, S[3], MC4);
 	  COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
-	  COMPLEX_SET (ggPD,  antGain[ia1*2+1]*antGain[ia2*2+1], 0);
+	  COMPLEX_SET (ggPD, antGain[ia1*2+1]*antGain[ia2*2+1], 0); 
 	  COMPLEX_MUL2 (VYY, ct5, ggPD);
 	  modelR = VYY.real; modelI = VYY.imag;
 	  residR = modelR - data[idata*10+(kk+1)*2];
@@ -8333,6 +8340,10 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
   COMPLEX_SET (S[1], 0.0, 0.0);
   COMPLEX_SET (S[2], 0.0, 0.0);
   COMPLEX_SET (S[3], 0.0, 0.0);
+  COMPLEX_SET (S0[0], 0.0, 0.0);
+  COMPLEX_SET (S0[1], 0.0, 0.0);
+  COMPLEX_SET (S0[2], 0.0, 0.0);
+  COMPLEX_SET (S0[3], 0.0, 0.0);
   COMPLEX_SET (MC1, 0.0, 0.0);  /* Other stuff */
   COMPLEX_SET (MC2, 0.0, 0.0);
   COMPLEX_SET (MC3, 0.0, 0.0);
@@ -8377,6 +8388,8 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	antGain[iant*2+k] = gsl_vector_get(x, j);
       }
     } /* end loop over antenna parameters */
+    /* Default X gain = 1.0/Y gain
+    if (!antGainFit[iant][0]) antGain[iant*2+0] = 1.0 / antGain[iant*2+1]; */
   } /* end loop over antennas */
   
   /* Ref antenna - 0 rel */
@@ -8511,6 +8524,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt Ox1 */
 		gradI = DFDP.imag;    /* RxxI wrt Ox1 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI =0.0;     /* Invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -8535,6 +8549,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt Ex1 */
 		gradI = DFDP.imag;    /* RxxI wrt Ex1 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -8581,6 +8596,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt Ox2 */
 		gradI = DFDP.imag;    /* RxxI wrt Ox2 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -8605,6 +8621,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt Ox2 */
 		gradI = DFDP.imag;    /* RxxI wrt Ox2 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -8648,6 +8665,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt ipol */
 		gradI = DFDP.imag;    /* RxxI wrt ipol */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -8665,6 +8683,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt qpol */
 		gradI = DFDP.imag;    /* RxxI wrt qpol */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -8682,6 +8701,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
  		gradR = DFDP.real;    /* RxxR wrt upol */
 		gradI = DFDP.imag;    /* RxxI wrt upol */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -8699,6 +8719,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt vpol */
 		gradI = DFDP.imag;    /* RxxI wrt vpol */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -8723,7 +8744,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	  switch (k) {   /* Switch over parameter */
 	  case 0:     /* XX wrt gX1 */
 	    /* Fitting? */
-	    if (antGainFit[ia1][k]) {
+	    if (antGainFit[ia1][0]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * gX[ia2] */
 		COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
@@ -8731,6 +8752,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct1, ct2);
 		gradR = DFDP.real;    /* RxxR wrt gX1 */
 		gradI = DFDP.imag;    /* RxxI wrt gX1 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia1][0];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -8738,7 +8760,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	      }
 	    break;
 	  case 1:  /* XX wrt gX2 */
-	    if (antGainFit[ia2][k]) {
+	    if (antGainFit[ia2][0]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * gX[ia1] */
 		COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
@@ -8746,6 +8768,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct1, ct2);
 		gradR = DFDP.real;    /* RxxR wrt gX2 */
 		gradI = DFDP.imag;    /* RxxI wrt gX2 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia2][0];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -8817,6 +8840,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt Oy2 */
 		gradI = DFDP.imag;    /* RyyI wrt Oy2 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -8841,6 +8865,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt Ey1 */
 		gradI = DFDP.imag;    /* RyyI wrt Ey1 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -8887,6 +8912,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP,  ct2, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt Oy2 */
 		gradI = DFDP.imag;    /* RyyI wrt Oy2 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -8911,6 +8937,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt Ey2 */
 		gradI = DFDP.imag;    /* RyyI wrt Ey2 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -8936,6 +8963,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt ipol */
 		gradI = DFDP.imag;    /* RyyI wrt ipol */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -8953,6 +8981,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt qpol */
 		gradI = DFDP.imag;    /* RyyI wrt qpol */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -8970,6 +8999,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt upol */
 		gradI = DFDP.imag;    /* RyyI wrt upol */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -8987,6 +9017,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt vpol */
 		gradI = DFDP.imag;    /* RyyI wrt vpol */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9011,7 +9042,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	  switch (k) {   /* Switch over parameter */
 	  case 0:     /* YY wrt gY1 */
 	    /* Fitting? */
-	    if (antGainFit[ia1][k]) {
+	    if (antGainFit[ia1][1]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * gY[ia2] */
 		COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
@@ -9019,6 +9050,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct1, ct2);
 		gradR = DFDP.real;    /* RyyR wrt gY1 */
 		gradI = DFDP.imag;    /* RyyI wrt gY1 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia1][1];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9026,7 +9058,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	      }
 	    break;
 	  case 1:  /* YY wrt gY2 */
-	    if (antGainFit[ia2][k]) {
+	    if (antGainFit[ia2][1]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * gY[ia1] */
 		COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
@@ -9034,6 +9066,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct1, ct2);
 		gradR = DFDP.real;    /* RyyR wrt gY2 */
 		gradI = DFDP.imag;    /* RyyI wrt gY2 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia2][1];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9091,6 +9124,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9116,6 +9150,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9181,6 +9216,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP,  ct2, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9206,6 +9242,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9229,6 +9266,9 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(ct3, MC4, DPA);
 		COMPLEX_ADD2(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
+		gradR = DFDP.real;    /* RyxR wrt gY1 */
+		gradI = DFDP.imag;    /* RyxI wrt gY1 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9246,6 +9286,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9263,6 +9304,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9278,6 +9320,9 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(ct3, MC4, DPA);
 		COMPLEX_SUB(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
+		gradR = DFDP.real;    /* RyxR wrt gY1 */
+		gradI = DFDP.imag;    /* RyxI wrt gY1 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9296,6 +9341,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	    COMPLEX_MUL2 (DFDP, Jp, VXY);
 	    gradR = DFDP.real;
 	    gradI = DFDP.imag;
+	    /*gradR = -gradR; gradI = -gradI;    DEBUG */
 	  } else gradR = gradI = 0.0;    /* invalid data */
 	  j = args->PDPNumb;
 	  gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9307,16 +9353,17 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	  switch (k) {   /* Switch over parameter */
 	  case 0:     /* XY wrt gX1 */
 	    /* Fitting? */
-	    if (antGainFit[ia1][k]) {
+	    if (antGainFit[ia1][0]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) 
 		             * gY[ia2]  * exp(j PD) */
 		COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
-		COMPLEX_SET (ct2, antGain[ia2*2+1], 0);
+		COMPLEX_SET (ct2, 1./antGain[ia2*2+1], 0);
 		COMPLEX_EXP (ct3, PD);
 		COMPLEX_MUL3 (DFDP, ct1, ct2, ct3);
 		gradR = DFDP.real;    /* RxyR wrt gX1 */
 		gradI = DFDP.imag;    /* RxyI wrt gX1 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia1][0];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9324,7 +9371,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	      }
 	    break;
 	  case 1:  /* XY wrt gY2 */
-	    if (antGainFit[ia2][k]) {
+	    if (antGainFit[ia2][1]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = {S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) 
 	                    * gX[ia1] * exp(j PD) */
@@ -9334,6 +9381,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL3 (DFDP, ct1, ct2, ct3);
 		gradR = DFDP.real;    /* RxyR wrt gY2 */
 		gradI = DFDP.imag;    /* RxyI wrt gY2 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia2][1];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9407,6 +9455,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9432,6 +9481,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9461,6 +9511,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9486,6 +9537,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9529,6 +9581,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9546,6 +9599,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9563,6 +9617,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9580,6 +9635,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9598,6 +9654,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	    COMPLEX_MUL2 (DFDP, Jm, VYX);
 	    gradR = DFDP.real;
 	    gradI = DFDP.imag;
+	    /*gradR = -gradR; gradI = -gradI;    DEBUG */
 	  } else gradR = gradI = 0.0;    /* invalid data */
 	  j = args->PDPNumb;
 	  gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9608,7 +9665,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	  switch (k) {   /* Switch over parameter */
 	  case 0:     /* YX wrt gY1 */
 	    /* Fitting? */
-	    if (antGainFit[ia1][k]) {
+	    if (antGainFit[ia1][1]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) 
                            * gY[ia1]  * exp(-j PD) */
@@ -9618,14 +9675,15 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL3 (DFDP, ct1, ct2, ct3);
 		gradR = DFDP.real;    /* RyxR wrt gY1 */
 		gradI = DFDP.imag;    /* RyxI wrt gY1 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
-	      j = antGainPNumb[ia1][0];
+	      j = antGainPNumb[ia1][1];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	      }
 	    break;
 	  case 1:  /* wrt gX2 */
-	    if (antGainFit[ia2][k]) {
+	    if (antGainFit[ia2][0]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) 
                               * gY[ia1]  * exp(-j PD) */
@@ -9635,8 +9693,9 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL3 (DFDP, ct1, ct2, ct3);
 		gradR = DFDP.real;    /* RyxR wrt gX2 */
 		gradI = DFDP.imag;    /* RyxI wrt gX2 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
-	      j = antGainPNumb[ia2][1];
+	      j = antGainPNumb[ia2][0];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	      }
@@ -9715,6 +9774,10 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
   COMPLEX_SET (S[1], 0.0, 0.0);
   COMPLEX_SET (S[2], 0.0, 0.0);
   COMPLEX_SET (S[3], 0.0, 0.0);
+  COMPLEX_SET (S0[0], 0.0, 0.0);
+  COMPLEX_SET (S0[1], 0.0, 0.0);
+  COMPLEX_SET (S0[2], 0.0, 0.0);
+  COMPLEX_SET (S0[3], 0.0, 0.0);
   COMPLEX_SET (MC1, 0.0, 0.0);  /* Other stuff */
   COMPLEX_SET (MC2, 0.0, 0.0);
   COMPLEX_SET (MC3, 0.0, 0.0);
@@ -9759,7 +9822,9 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	antGain[iant*2+k] = gsl_vector_get(x, j);
       }
     } /* end loop over antenna parameters */
-  } /* end loop over antennas */
+     /* Default X gain = 1.0/Y gain
+    if (!antGainFit[iant][0]) antGain[iant*2+0] = 1.0 / antGain[iant*2+1]; */
+ } /* end loop over antennas */
   
   /* Ref antenna - 0 rel */
   refAnt = MAX(-1, args->refAnt-1);
@@ -9895,6 +9960,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt Ox1 */
 		gradI = DFDP.imag;    /* RxxI wrt Ox1 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI =0.0;     /* Invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9919,6 +9985,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt Ex1 */
 		gradI = DFDP.imag;    /* RxxI wrt Ex1 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9965,6 +10032,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt Ox2 */
 		gradI = DFDP.imag;    /* RxxI wrt Ox2 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -9989,6 +10057,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt Ox2 */
 		gradI = DFDP.imag;    /* RxxI wrt Ox2 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10032,6 +10101,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt ipol */
 		gradI = DFDP.imag;    /* RxxI wrt ipol */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10049,6 +10119,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt qpol */
 		gradI = DFDP.imag;    /* RxxI wrt qpol */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10066,6 +10137,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
  		gradR = DFDP.real;    /* RxxR wrt upol */
 		gradI = DFDP.imag;    /* RxxI wrt upol */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10083,6 +10155,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RxxR wrt vpol */
 		gradI = DFDP.imag;    /* RxxI wrt vpol */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10107,7 +10180,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	  switch (k) {   /* Switch over parameter */
 	  case 0:     /* XX wrt gX1 */
 	    /* Fitting? */
-	    if (antGainFit[ia1][k]) {
+	    if (antGainFit[ia1][0]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * gX[ia2] */
 		COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
@@ -10115,6 +10188,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct1, ct2);
 		gradR = DFDP.real;    /* RxxR wrt gX1 */
 		gradI = DFDP.imag;    /* RxxI wrt gX1 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia1][0];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10122,7 +10196,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	      }
 	    break;
 	  case 1:  /* XX wrt gX2 */
-	    if (antGainFit[ia2][k]) {
+	    if (antGainFit[ia2][0]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * gX[ia1] */
 		COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
@@ -10130,6 +10204,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct1, ct2);
 		gradR = DFDP.real;    /* RxxR wrt gX2 */
 		gradI = DFDP.imag;    /* RxxI wrt gX2 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia2][0];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10203,6 +10278,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt Oy1 */
 		gradI = DFDP.imag;    /* RyyI wrt Oy1 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10227,6 +10303,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt Ey1 */
 		gradI = DFDP.imag;    /* RyyI wrt Ey1 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10273,6 +10350,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP,  ct2, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt Oy2 */
 		gradI = DFDP.imag;    /* RyyI wrt Oy2 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10297,6 +10375,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt Ey2 */
 		gradI = DFDP.imag;    /* RyyI wrt Ey2 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10322,6 +10401,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt ipol */
 		gradI = DFDP.imag;    /* RyyI wrt ipol */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10339,6 +10419,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt qpol */
 		gradI = DFDP.imag;    /* RyyI wrt qpol */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10356,6 +10437,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt upol */
 		gradI = DFDP.imag;    /* RyyI wrt upol */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10373,6 +10455,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;    /* RyyR wrt vpol */
 		gradI = DFDP.imag;    /* RyyI wrt vpol */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10397,7 +10480,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	  switch (k) {   /* Switch over parameter */
 	  case 0:     /* YY wrt gY1 */
 	    /* Fitting? */
-	    if (antGainFit[ia1][k]) {
+	    if (antGainFit[ia1][1]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * gY[ia2] */
 		COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
@@ -10405,6 +10488,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct1, ct2);
 		gradR = DFDP.real;    /* RyyR wrt gY1 */
 		gradI = DFDP.imag;    /* RyyI wrt gY1 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia1][1];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10412,7 +10496,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	      }
 	    break;
 	  case 1:  /* YY wrt gY2 */
-	    if (antGainFit[ia2][k]) {
+	    if (antGainFit[ia2][1]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) * gY[ia1] */
 		COMPLEX_ADD4(ct1, SM1, SM2, SM3, SM4);
@@ -10420,6 +10504,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct1, ct2);
 		gradR = DFDP.real;    /* RyyR wrt gY2 */
 		gradI = DFDP.imag;    /* RyyI wrt gY2 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia2][1];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10479,6 +10564,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10504,6 +10590,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10569,6 +10656,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP,  ct2, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10594,6 +10682,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10619,6 +10708,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10636,6 +10726,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10653,6 +10744,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		gradR = -gradR; gradI = -gradI;  /*  DEBUG why does this help??? */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10668,6 +10760,9 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(ct3, MC4, DPA);
 		COMPLEX_SUB(ct1, ct2, ct3);
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
+		gradR = DFDP.real;    /* RyxR wrt gY1 */
+		gradI = DFDP.imag;    /* RyxI wrt gY1 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10686,6 +10781,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	    COMPLEX_MUL2 (DFDP, Jp, VXY);
 	    gradR = DFDP.real;
 	    gradI = DFDP.imag;
+	    /*gradR = -gradR; gradI = -gradI;    DEBUG */
 	  } else gradR = gradI = 0.0;    /* invalid data */
 	  j = args->PDPNumb;
 	  gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10697,7 +10793,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	  switch (k) {   /* Switch over parameter */
 	  case 0:     /* XY wrt gX1 */
 	    /* Fitting? */
-	    if (antGainFit[ia1][k]) {
+	    if (antGainFit[ia1][0]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) 
 		             * gY[ia2]  * exp(j PD) */
@@ -10707,6 +10803,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL3 (DFDP, ct1, ct2, ct3);
 		gradR = DFDP.real;    /* RxyR wrt gX1 */
 		gradI = DFDP.imag;    /* RxyI wrt gX1 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia1][0];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10714,7 +10811,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	      }
 	    break;
 	  case 1:  /* XY wrt gY2 */
-	    if (antGainFit[ia2][k]) {
+	    if (antGainFit[ia2][1]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = {S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) 
 	                    * gX[ia1] * exp(j PD) */
@@ -10724,6 +10821,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL3 (DFDP, ct1, ct2, ct3);
 		gradR = DFDP.real;    /* RxyR wrt gY2 */
 		gradI = DFDP.imag;    /* RxyI wrt gY2 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
 	      j = antGainPNumb[ia2][1];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10801,6 +10899,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10826,6 +10925,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia1][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10855,6 +10955,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2 (DFDP, ct2, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10880,6 +10981,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct5, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = antPNumb[ia2][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10923,6 +11025,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10940,6 +11043,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10957,6 +11061,8 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		gradR = -gradR; gradI = -gradI; /*   DEBUG  why does this help??? */
+		/*gradR = gradI = 0.0;  DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10974,6 +11080,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL2(DFDP, ct1, ggPD);
 		gradR = DFDP.real;
 		gradI = DFDP.imag;
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;   /* invalid data */
 	      j = souPNumb[isou][k];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -10992,6 +11099,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	    COMPLEX_MUL2 (DFDP, Jm, VYX);
 	    gradR = DFDP.real;
 	    gradI = DFDP.imag;
+	    /*gradR = -gradR; gradI = -gradI;    DEBUG */
 	  } else gradR = gradI = 0.0;    /* invalid data */
 	  j = args->PDPNumb;
 	  gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
@@ -11002,7 +11110,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 	  switch (k) {   /* Switch over parameter */
 	  case 0:     /* YX wrt gY1 */
 	    /* Fitting? */
-	    if (antGainFit[ia1][k]) {
+	    if (antGainFit[ia1][1]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) 
                            * gY[ia1]  * exp(-j PD) */
@@ -11012,14 +11120,15 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL3 (DFDP, ct1, ct2, ct3);
 		gradR = DFDP.real;    /* RyxR wrt gY1 */
 		gradI = DFDP.imag;    /* RyxI wrt gY1 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
-	      j = antGainPNumb[ia1][0];
+	      j = antGainPNumb[ia1][1];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	      }
 	    break;
 	  case 1:  /* YX wrt gX2 */
-	    if (antGainFit[ia2][k]) {
+	    if (antGainFit[ia2][0]) {
 	      if (wt[idata*4+kk]>0.0) {
 		/* part = (S[0]*MC1 + S[1]*MC2 + S[2]*MC3 + S[3]*MC4) 
                               * gY[ia1]  * exp(-j PD) */
@@ -11029,8 +11138,9 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
 		COMPLEX_MUL3 (DFDP, ct1, ct2, ct3);
 		gradR = DFDP.real;    /* RyxR wrt gX2 */
 		gradI = DFDP.imag;    /* RyxI wrt gX2 */
+		/*gradR = -gradR; gradI = -gradI;    DEBUG */
 	      } else gradR = gradI = 0.0;    /* invalid data */
-	      j = antGainPNumb[ia2][1];
+	      j = antGainPNumb[ia2][0];
 	      gsl_matrix_set(J, i*2,   j, gradR*isigma);  /* Save Jacobian */
 	      gsl_matrix_set(J, i*2+1, j, gradI*isigma);  /* Save Jacobian */
 	      }

@@ -36,7 +36,7 @@ X    SysPower.xml
 X    Weather.xml
  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2014                                          */
+/*;  Copyright (C) 2010-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1183,17 +1183,29 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
       out->winds[iSW]->chanFreqStart    = in->SpectralWindowTab->rows[jSW]->chanFreqArray[0];
       out->winds[iSW]->chanFreqStep     = in->SpectralWindowTab->rows[jSW]->chanFreqArray[1] - 
 	in->SpectralWindowTab->rows[jSW]->chanFreqArray[0];
-      out->winds[iSW]->chanWidth        = in->SpectralWindowTab->rows[jSW]->chanWidthArray[0];
-      out->winds[iSW]->effectiveBw      = in->SpectralWindowTab->rows[jSW]->effectiveBwArray[0];
-      out->winds[iSW]->resolution       = in->SpectralWindowTab->rows[jSW]->resolutionArray[0];
+      if (in->SpectralWindowTab->rows[jSW]->chanWidthArray!=NULL)
+	out->winds[iSW]->chanWidth        = in->SpectralWindowTab->rows[jSW]->chanWidthArray[0];
+      else 
+	out->winds[iSW]->chanWidth        = in->SpectralWindowTab->rows[jSW]->chanWidth;
+      if (in->SpectralWindowTab->rows[jSW]->effectiveBwArray!=NULL)
+	out->winds[iSW]->effectiveBw      = in->SpectralWindowTab->rows[jSW]->effectiveBwArray[0];
+      else
+	out->winds[iSW]->effectiveBw      = in->SpectralWindowTab->rows[jSW]->effectiveBw;
+      if (in->SpectralWindowTab->rows[jSW]->resolutionArray!=NULL)
+	out->winds[iSW]->resolution       = in->SpectralWindowTab->rows[jSW]->resolutionArray[0];
+      else
+	out->winds[iSW]->resolution       = in->SpectralWindowTab->rows[jSW]->resolution;
       /* Can I cope with/want this one??? */
       for (k=1; k<in->SpectralWindowTab->rows[jSW]->numChan; k++) {
-	if (in->SpectralWindowTab->rows[jSW]->chanWidthArray[0] != 
-	    in->SpectralWindowTab->rows[jSW]->chanWidthArray[k])  out->winds[iSW]->selected = FALSE;
-	if (in->SpectralWindowTab->rows[jSW]->effectiveBwArray[0] != 
-	    in->SpectralWindowTab->rows[jSW]->effectiveBwArray[k])  out->winds[iSW]->selected = FALSE;
-	if (in->SpectralWindowTab->rows[jSW]->resolutionArray[0] != 
-	    in->SpectralWindowTab->rows[jSW]->resolutionArray[k])  out->winds[iSW]->selected = FALSE;
+	if ((in->SpectralWindowTab->rows[jSW]->chanWidthArray!=NULL) &&
+	    (in->SpectralWindowTab->rows[jSW]->chanWidthArray[0] != 
+	     in->SpectralWindowTab->rows[jSW]->chanWidthArray[k]))  out->winds[iSW]->selected = FALSE;
+	if ((in->SpectralWindowTab->rows[jSW]->effectiveBwArray!=NULL) &&
+	    (in->SpectralWindowTab->rows[jSW]->effectiveBwArray[0] != 
+	     in->SpectralWindowTab->rows[jSW]->effectiveBwArray[k]))  out->winds[iSW]->selected = FALSE;
+	if ((in->SpectralWindowTab->rows[jSW]->resolutionArray!=NULL) &&
+	    (in->SpectralWindowTab->rows[jSW]->resolutionArray[0] != 
+	     in->SpectralWindowTab->rows[jSW]->resolutionArray[k]))  out->winds[iSW]->selected = FALSE;
       }
     }
 
