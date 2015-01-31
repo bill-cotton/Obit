@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -305,13 +305,14 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
   ofloat sum, sumwt, wty, wt, prod, den, xp, yp, row[10];
   ofloat *xKernal, *yKernal, *data;
   olong i, j, k, good, xStart, yStart, iwid, indx, planeOff, iplane, iprod;
+  olong ixpix, iypix;
   /*gchar *routine = "ObitFInterpolatePixel";*/
 
   /* error checks */
-  g_assert(ObitErrIsA(err));
+  /*g_assert(ObitErrIsA(err));*/
   if (err->error) return value;
-  g_assert (ObitIsA(in, &myClassInfo));
-  g_assert (ObitFArrayIsA(in->myArray));
+  /* g_assert (ObitIsA(in, &myClassInfo));*/
+  /* g_assert (ObitFArrayIsA(in->myArray));*/
   /* Must be inside array */
   iplane = 1;
   iprod = 1;
@@ -330,6 +331,18 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
     }
   }
   if (err->error) return value;
+
+  /* Offset to start of plane */
+  planeOff = (iplane-1) * in->nx * in->ny;
+    
+  /* If exactly (within 0.01 pixel) on a pixel no need to interpolate */
+  ixpix = (olong)(pixel[0]+0.5);
+  iypix = (olong)(pixel[1]+0.5);
+  if ((fabs(pixel[0]-ixpix)<0.01) && (fabs(pixel[1]-iypix)<0.01)) {
+    ixpix--; iypix--;  /* to zero rel */
+    indx = planeOff + ixpix + iypix*in->nx;
+    return in->array[indx];
+  }
 
   /* Update convolving x, y kernals as needed */
   if (pixel[0] != in->xPixel) {
@@ -350,9 +363,6 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
   yStart  = in->yStart;
   iwid    = 1 + 2 * in->hwidth;
 
-  /* Offset to start of plane */
-  planeOff = (iplane-1) * in->nx * in->ny;
-    
   /* Zero sums */
   sum   = 0.0;
   sumwt = 0.0;

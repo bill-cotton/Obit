@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2014
+#  Copyright (C) 2004-2015
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -543,37 +543,76 @@ def PGetOverlap(in1Image, in2Image, err):
         xpos = [float(0), float(ny2)]
         ypos = ImageDesc.PCvtPixel (in2Image.Desc, xpos, in1Image.Desc, err)
         corn2.append([int(ypos[0]+0.5), int(ypos[1]+0.5)])
-        xpos = [float(nx1), float(ny2)]
+        xpos = [float(nx2), float(ny2)]
         ypos = ImageDesc.PCvtPixel (in2Image.Desc, xpos, in1Image.Desc, err)
         corn2.append([int(ypos[0]+0.5), int(ypos[1]+0.5)])
         xpos = [float(nx2), float(0)]
         ypos = ImageDesc.PCvtPixel (in2Image.Desc, xpos, in1Image.Desc, err)
         corn2.append([int(ypos[0]+0.5), int(ypos[1]+0.5)])
+        #print "DEBUG"
+        #print corn1,nx1,ny1
+        #print corn2,nx2,ny2
         # 1 entirely inside 2?
-        if ((corn1[0][0]>0) and (corn1[2][0]>0) and (corn1[0][1]<=nx2) and (corn1[2][0]<=ny2)):
+        if ((corn1[0][0]>0) and (corn1[0][1]>0) and (corn1[2][0]<=nx2) and (corn1[2][1]<=ny2)):
+            print "1 entirely inside 2"
             return ([1,1,1,1,1,1,1], [nx1, ny1, 0,0,0,0,0])
+        # 2 entirely inside 1?
+        if ((corn2[0][0]>0) and (corn2[0][1]>0) and (corn2[2][0]<=nx1) and (corn2[2][1]<=ny1)):
+            blc = [corn2[0][0],corn2[0][1], 1,1,1,1,1]
+            trc = [corn2[2][0],corn2[2][1], 0,0,0,0,0]
+            print "2 entirely inside 1"
+            return(blc,trc)
         # Corner 0 in in2?
         if ((corn1[0][0]>0) and (corn1[0][0]<=nx2) and (corn1[0][1]>0) and (corn1[0][1]<=ny2)):
             blc = [1, 1, 1, 1, 1, 1, 1]
             trc = [min(corn2[2][0],nx1), min(corn2[2][1],ny1), 0,0,0,0,0]
+            print "Corner 0 in in2"
             return (blc, trc)
         # Corner 1 in in2?
         if ((corn1[1][0]>0) and (corn1[1][0]<=nx2) and (corn1[1][1]>0) and (corn1[1][1]<=ny2)):
             blc = [1, min(corn2[3][1], ny1), 1, 1, 1, 1, 1]
             trc = [min (corn2[3][0], nx1), ny1, 0,0,0,0,0]
+            print "Corner 1 in in2"
             return (blc, trc)
         # Corner 2 in in2?
         if ((corn1[2][0]>0) and (corn1[2][0]<=nx2) and (corn1[2][1]>0) and (corn1[2][1]<=ny2)):
             blc = [max(1, corn2[0][0]), max(1, corn2[0][1]), 1, 1, 1, 1, 1]
             trc = [nx1, ny1,  0,0,0,0,0]
+            print "Corner 2 in in2"
             return (blc, trc)
-         # Corner 3 in in2?
+        # Corner 3 in in2?
         if ((corn1[3][0]>0) and (corn1[3][0]<=nx2) and (corn1[3][1]>0) and (corn1[3][1]<=ny2)):
             blc = [max(1,corn2[1][0]), 1, 1, 1, 1, 1]
             trc = [nx1, min(corn2[1][1],ny1), 0,0,0,0,0]
+            print "Corner 3 in in2"
             return (blc, trc)
-        # What the hell, make it all
-        return ([1,1,1,1,1,1,1], [nx1,ny1,0,0,0,0,0])
+        # 2 straddle bottom of 1?
+        if ((corn2[0][1]<0.0) and (corn2[1][1]>0.0) and (corn2[0][0]>0.0) and (corn2[3][0]<=nx1)):
+            blc = [corn2[0][0], 1,1,1,1,1,1]
+            trc = [corn2[2][0], corn2[2][1],0,0,0,0,0]
+            print "2 straddles bottom of 1"
+            return (blc, trc)
+        # 2 straddle top of 1?
+        if ((corn2[0][1]<ny1) and (corn2[1][1]>ny1) and (corn2[0][0]>0.0) and (corn2[3][0]<=nx1)):
+            blc = [corn2[0][0], corn2[0][1], 1,1,1,1,1,1]
+            trc = [corn2[2][0], ny1,0,0,0,0,0]
+            print "2 straddles top of 1"
+            return (blc, trc)
+        # 2 straddle right edge of 1?
+        if ((corn2[0][0]<nx1) and (corn2[3][0]>nx1) and (corn2[0][1]>0.0) and (corn2[1][1]<=ny1)):
+            blc = [corn2[0][0], corn2[0][1], 1,1,1,1,1,1]
+            trc = [nx1, corn2[2][1], 0,0,0,0,0]
+            print "2 straddles right edge of 1"
+            return (blc, trc)
+        # 2 straddle left edge of 1?
+        if ((corn2[0][0]<0) and (corn2[3][0]>0) and (corn2[0][1]>0.0) and (corn2[1][1]<=ny1)):
+            blc = [1, corn2[0][1], 1,1,1,1,1,1]
+            trc = [corn2[2][0], corn2[2][1], 0,0,0,0,0]
+            print "2 straddles left edge of 1"
+            return (blc, trc)
+       # Likely no overlap
+        print "Confused, do it all"
+        return ([1,1,1,1,1,1,1], [nx1,ny1,1,1,1,1,1])
     else:
         # Default is no overlap
         print "no overlap"

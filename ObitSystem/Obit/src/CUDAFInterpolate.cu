@@ -71,7 +71,7 @@ __global__ void floatInterpolateKernel(CUDAFInterpolate* __restrict__ g_fInterp,
     float pixel[2]; 
 
     // No more than actual number of output pixels
-    if ((i>nx) || (j>ny)) return;
+    if ((i>=nx) || (j>=ny)) return;
 
     // pixel numbers
     pixel[0] = g_XPix->d_array[indx];

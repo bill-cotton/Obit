@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -152,6 +152,9 @@ void ObitImageDescGetPixel(ObitImageDesc* in, odouble *pos,
 
 /**  Public: Is there overlap in two images */
 gboolean ObitImageDescOverlap(ObitImageDesc *in1, ObitImageDesc *in2, ObitErr *err);
+
+/**  Public: Are image grids aligned? */
+gboolean ObitImageDescAligned(ObitImageDesc *in1, ObitImageDesc *in2, ObitErr *err);
 
 /**  Public: Tell rotation angle of image */
 ofloat ObitImageDescRotate(ObitImageDesc *in);

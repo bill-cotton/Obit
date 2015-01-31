@@ -2572,3 +2572,36 @@ Obit/tasks/PCal.c Obit/TDF/PCal.TDF:
 Obit/src/ObitSDMData.c:
   Trap ALMA pecularity.
 17 Jan 2015, svn ver 502
+
+Various performanance enhancements and bug fixes
+Obit/changes.log:
+Obit/python/Image.py:
+  newPAImage: Error message if image not found
+Obit/tasks/SetJy.c:
+  Add aliases for calibrators (e.g. "3c286")
+Obit/python/MosaicUtil.py:
+  GetOverlap: Better determination of overlapping regions.
+Obit/python/KATH5toAIPS.py:
+  Update from Tom Mauch
+Obit/src/ObitTableVLUtil.c:
+  Redun: better allocation of work array.
+Obit/src/ObitGPUFInterpolate.c:
+  Fix bug in compatability test
+Obit/src/CUDAFInterpolate.cu:
+  Fix bug in range check
+Obit/src/ObitDoppler.c:
+  defaultRefChan: Give channel requiring the minimum shift of the spectrum.
+Obit/TDF/CVel.TDF:
+  Update documentation.
+Obit/src/ObitFInterpolate.c:
+  Pixel: no need to interpolate if within 0.01 pixel.
+Obit/src/ObitFArray.c:
+  RMS: put upper bound of 1000 on histogram size, other "fixes"
+Obit/include/ObitImageDesc.h Obit/src/ObitImageDesc.c:
+  Add Aligned routine to determine if image grids are aligned.
+Obit/src/ObitImageUtil.c:
+  ThreadImageInterp: faster pixel conversion if grids aligned.
+Obit/src/ObitDConCleanVis.c:
+  Sub: Only reset fresh if something actually subtracted.
+  MakeResiduals: Fix logic handling all fresh images
+30 Jan. 2015 svn version 503

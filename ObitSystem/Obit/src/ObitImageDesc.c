@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -826,6 +826,43 @@ gboolean ObitImageDescOverlap(ObitImageDesc *in1, ObitImageDesc *in2,
 } /* end ObitImageDescOverlap */
 
 /**
+ * Determine if the pixels of two image grids are coincident (within 0.001 cell)
+ * Images must both have do3D FALSE, the same spacing, rotation, and tangent point.
+ * \param in1      first input image descriptor
+ * \param in2      second input image descriptor
+ * \param err      ObitErr error stack
+ * \return TRUE if there is overlap, else FALSE
+ */
+gboolean ObitImageDescAligned(ObitImageDesc *in1, ObitImageDesc *in2,
+			      ObitErr *err)
+{
+  gboolean out = FALSE;
+  odouble pos1[2], pos2[2];
+  gchar *routine = "ObitImageDescAligned";
+
+  /* Both do3D? */
+  if (in1->do3D || in2->do3D) return out;
+
+  /* X Cell spacing? */
+  if (fabs(in1->cdelt[0]-in2->cdelt[0]) > 0.001*fabs(in1->cdelt[0])) return out;
+
+  /* Y Cell spacing? */
+  if (fabs(in1->cdelt[1]-in2->cdelt[1]) > 0.001*fabs(in1->cdelt[1])) return out;
+
+  /* Rotation? */
+  if (fabs(in1->crota[1]-in2->crota[1]) > 0.001) return out;
+
+  /* Common reference (tangent) position? */
+  ObitImageDescGetPos(in1, in1->crpix, pos1, err);
+  ObitImageDescGetPos(in2, in2->crpix, pos2, err);
+  if (err->error) Obit_traceback_val (err, routine, "Descriptor", out);
+  if (fabs(pos1[0]-pos2[0]) > 0.001*fabs(in1->cdelt[0])) return out;
+  if (fabs(pos1[1]-pos2[1]) > 0.001*fabs(in1->cdelt[1])) return out;
+
+  return TRUE;  /* If it gets here, they are aligned */
+} /* end ObitImageDescAligned */
+
+/**
  * Return image rotation angle on sky.
  * \param imDesc Image descriptor
  * \return rotation angle on sky (of u,v,w) in deg.
@@ -997,8 +1034,8 @@ void ObitImageDescInit  (gpointer inn)
   in->row     = 0;
   in->areBlanks = FALSE;
   in->do3D      = TRUE;
-  in-> xPxOff   = 0.0;
-  in-> yPxOff   = 0.0;
+  in->xPxOff    = 0.0;
+  in->yPxOff    = 0.0;
   in->info      = newObitInfoList();
   for (i=0; i<IM_MAXDIM; i++) {
     in->inaxes[i] = 0;

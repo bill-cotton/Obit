@@ -22,7 +22,7 @@ Additional  Functions are available in ImageUtil.
 # Python/Obit Astronomical Image class
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2012
+#  Copyright (C) 2004-2015
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -765,6 +765,9 @@ def newPAImage(name, Aname, Aclass, disk, seq, exists, err, verbose=False):
 
     # It work?
     if not out.isOK:
+        OErr.PLog(err, OErr.Info, \
+                      "Image not found: "+Aname+", "+Aclass+" "+str(disk)+" "+str(seq))
+        OErr.printErrMsg(err, "Error creating AIPS Image object")
         return out
     
     # Add File info

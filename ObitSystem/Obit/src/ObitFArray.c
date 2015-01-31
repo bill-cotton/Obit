@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -962,7 +962,8 @@ ofloat ObitFArrayRMS (ObitFArray* in)
 
   /* Make histogram size such that the average cell has 30 entries */
   numCell = count / 30;
-  numCell = MAX (100, numCell);  /* but not too few */
+  numCell = MAX (100,  numCell);  /* but not too few */
+  numCell = MIN (1000, numCell);  /* or too many */
 
   /* Initialize Threading */
   nThreads = 
@@ -1066,6 +1067,8 @@ ofloat ObitFArrayRMS (ObitFArray* in)
       mean = amin + (modeCell-0.5) /  cellFact;
       /* don't spread over whole histogram - try for 25 cells*/
       half *= numCell / 25.0; 
+      /* Don't go below rawRMS */
+      half = MAX(half,2*rawRMS);
       amax = mean + half;
       amin = mean - half;
       /* amin = MAX (amin, omin);
@@ -1076,6 +1079,8 @@ ofloat ObitFArrayRMS (ObitFArray* in)
       half = (0.5 * (ipHalf-imHalf)) / cellFact; /* ~ halfwidth */
       /* don't spread over whole histogram - try for 25 cells*/
       half *= numCell / 25.0;  
+      /* Don't go below rawRMS */
+      half = MAX(half,rawRMS);
       amax = mean + half;
       amin = mean - half;
       continue;  /* try it again */

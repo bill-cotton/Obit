@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -5211,10 +5211,36 @@ static gpointer ThreadImageInterp (gpointer args)
   ObitFInterpolate *interp = largs->Interp;
   /* local */
   olong ix, iy, indx, pos[2];
-  ofloat inPixel[2], outPixel[2], *out, *outWt=NULL, rad2=0.0, dist2, irad2=0.0;
+  ofloat *out, *outWt=NULL, rad2=0.0, dist2, irad2=0.0;
   ofloat crpix[2], wt, val, *xp=NULL, *yp=NULL, fblank =  ObitMagicF();
-  gboolean OK, doPixel;
+  ofloat inPixel[2], outPixel[2], offPixel[2];
+  gboolean OK=TRUE, doPixel, sameGrid;
   gchar *routine = "ThreadImageInterp";
+
+  /* Previous error? */
+  if (err->error) goto finish;
+
+  /* Are the grids the same? */
+  sameGrid = (nZern==0) && ObitImageDescAligned(inDesc, outDesc, err);
+  if (sameGrid) {
+    inPixel[0] = 0.0; inPixel[1] = 0.0;
+    OK = ObitImageDescCvtPixel (outDesc, inDesc, inPixel, offPixel, err);
+    OK = TRUE;  /* Reset */
+    /* further sanity check, must be integer */
+    if (offPixel[0]>0.0) ix = (olong)(offPixel[0]+0.5);
+    else                 ix = (olong)(offPixel[0]-0.5);
+    sameGrid = sameGrid && (fabs(offPixel[0]-ix)<0.001);
+    if (offPixel[1]>0.0) iy = (olong)(offPixel[1]+0.5);
+    else                 iy = (olong)(offPixel[1]-0.5);
+    sameGrid = sameGrid && (fabs(offPixel[1]-iy)<0.001);
+  }
+  if (err->error) {  /* Oh bother! */
+    ObitThreadLock(thread);  /* Lock against other threads */
+    Obit_log_error(err, OBIT_Error,"%s: Error determining alignment",
+		   routine);
+    ObitThreadUnlock(thread); 
+    goto finish;
+  }
 
   /* Get output aray pointer */
   pos[0] = pos[1] = 0;
@@ -5255,8 +5281,16 @@ static gpointer ThreadImageInterp (gpointer args)
 	if (nZern>0) { /* yes */
 	  OK = ObitImageDescCvtZern (outDesc, inDesc, nZern, ZCoef, 
 				     outPixel, inPixel, err);
-	} else {       /* no */
+	} else {       /* not precalculated */
+	  if (sameGrid) {  /* Simple shift */
+	    inPixel[0] = outPixel[0] + offPixel[0];
+	    inPixel[1] = outPixel[1] + offPixel[1];
+	    /* Check that in image */
+	    OK = (inPixel[0]>=0.0) && (inPixel[1]>=0.0) &&
+	      (inPixel[0]<inDesc->inaxes[0]) && (inPixel[0]<inDesc->inaxes[1]);
+	  } else { /* Need to convert */
 	  OK = ObitImageDescCvtPixel (outDesc, inDesc, outPixel, inPixel, err);
+	  }
 	}
 	if (err->error) {
 	  ObitThreadLock(thread);  /* Lock against other threads */

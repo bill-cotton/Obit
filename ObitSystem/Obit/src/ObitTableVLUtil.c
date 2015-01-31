@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2011                                          */
+/*;  Copyright (C) 2006-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1051,7 +1051,7 @@ void ObitTableVLRedun (ObitTableVL *in, ObitTableVL *out, ObitErr *err)
   if (nrow<=0) return;  /* Anything selected? */
 
   /* Guess about size of bad row buffer (current list to be dropped) */
-  mxbad = nrow/10;
+  mxbad = MAX(100,nrow/10);
 
   /* Allocate arrays */
   badrow  = g_malloc0(mxbad*sizeof(olong));

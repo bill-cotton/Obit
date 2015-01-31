@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2014                                          */
+/*;  Copyright (C) 2012-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1700,6 +1700,7 @@ static void UpdateSUTable  (ObitDoppler *in, ObitUV *inData, ObitErr *err)
 /**
  * Calculate default reference channel 
  * Pick channel for which the desired LSR velocity is the closest at 0h
+ * Return alt ref. channel requiring minimum shift of the spectrum
  * on the reference day.
  * \param doppler  ObitDoppler object
  * \param err      Error stack, returns if not empty.
@@ -1709,8 +1710,8 @@ static ofloat defaultRefChan(ObitDoppler *doppler, ObitErr *err)
 {
   ofloat refChan = 0.0;
   ofloat ut;
-  odouble appFreq, shift, cenFreq;
-  olong year, doy, ishift, i, iant;
+  odouble appFreq, shift, refFreq;
+  olong year, doy, i, iant;
   ObitUVDesc *uvDesc = doppler->uvdata->myDesc;
   gchar *routine = "defaultRefChan";
 
@@ -1747,16 +1748,12 @@ static ofloat defaultRefChan(ObitDoppler *doppler, ObitErr *err)
 				doppler->antList->ANlist[iant]->AntXYZ[0],
 				doppler->antList->ANlist[iant]->AntXYZ[1],
 				doppler->antList->ANlist[iant]->AntXYZ[2]);
-  /* How many channel shifted from center frequency? */
-  cenFreq = uvDesc->crval[uvDesc->jlocf] + 
-    ((uvDesc->inaxes[uvDesc->jlocf]/2) - uvDesc->crpix[uvDesc->jlocf]) *
-    uvDesc->cdelt[uvDesc->jlocf];
-  shift = (appFreq-cenFreq) / uvDesc->cdelt[uvDesc->jlocf];
+  /* How many channel shifted from reference frequency? */
+  refFreq = uvDesc->crval[uvDesc->jlocf];
+  shift = (appFreq-refFreq) / uvDesc->cdelt[uvDesc->jlocf];
 
-  /* Minimal shift from center */
-  if (shift>0.0) ishift = (olong)(shift+0.5);
-  else           ishift = (olong)(shift-0.5);
-  refChan = uvDesc->crpix[uvDesc->jlocf] + (uvDesc->inaxes[uvDesc->jlocf]/2) - 1 + ishift;
+  /* Minimal shift of spectrum */
+  refChan = uvDesc->crpix[uvDesc->jlocf] + shift;
 
   return refChan;
 } /* end defaultRefChan */

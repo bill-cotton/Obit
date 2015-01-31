@@ -115,6 +115,7 @@ CVel
 Task:  Apply Doppler corrections to UV data
 Data are aligned such that a given channel becomes a given LSR
 velocity and the output data are properly labeled.
+Use Doppler.PDopplerFreqLSR to get the sky frequency of a line.
 
 Adverbs:
   DataType..'FITS' or 'AIPS'  type of input
@@ -221,10 +222,10 @@ Adverbs:
              channel refChan in m/s.
              Will be used for all sources.
   refChan....Desired reference channel, default minimal channel 
-             shift and refChan near the center of the bandpass if
-             refChan=-9999 
+             shift if refChan=-9999 
              Using the default refChan and specifying the same 
-             refDate should align data from multiple datasets.
+             refDate should align data from multiple datasets 
+             if they have the same reference frequency and pixel.
   outDType..'FITS' or 'AIPS'  type of output
   outFile....Output UV FITS file name.
   outName....Output UV AIPS file name    Standard defaults.

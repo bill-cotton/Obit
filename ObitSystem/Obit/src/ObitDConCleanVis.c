@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2014                                          */
+/*;  Copyright (C) 2005-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1041,7 +1041,7 @@ void ObitDConCleanVisSub(ObitDConCleanVis *in, ObitErr *err)
   ObitTable *tempTable = NULL;
   ObitTableCC *CCTable = NULL;
   ObitIOCode retCode;
-  gboolean Fl=FALSE, doCalSelect;
+  gboolean Fl=FALSE, doCalSelect, subbed=FALSE;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   ofloat ftemp;
@@ -1130,10 +1130,14 @@ void ObitDConCleanVisSub(ObitDConCleanVis *in, ObitErr *err)
   dim[0] = dim[1] = dim[2] = 1;  /* Grumble, grumble  */
   ObitInfoListAlwaysPut (in->imager->uvwork->info, "doCalSelect",OBIT_bool, dim, &doCalSelect);
 
-  /* Update CC counts */
+  /* Update CC counts - was anything actually subtracted? */
   for (i=0; i<in->mosaic->numberImages; i++) {
+    subbed = subbed || in->skyModel->endComp[i]>=in->skyModel->startComp[i];
     in->skyModel->startComp[i] = in->skyModel->endComp[i]+1;
-    in->fresh[i] = FALSE;  /* Need to remake all images */
+  }
+  /* Update Fresh? */
+  for (i=0; i<in->mosaic->numberImages; i++) {
+    if (subbed) in->fresh[i] = FALSE;  /* Need to remake all images? */
   }
 
   /* Reset max residual on Pixel List */
@@ -3086,13 +3090,16 @@ static void  MakeResiduals (ObitDConCleanVis *in, olong *fields,
   }
   stale[jfld] = 0;
 
-  /* If all stale then add all to list */
+  /* If all stale then add all to list - NO, this isn't right
   if (stale[0]<=0) {
    for (ifld=0; ifld<in->nfield; ifld++) {
      stale[ifld] = ifld+1;
    }
    stale[ifld] = 0;
-  }
+  }*/
+
+  /* If all fresh, bail */
+  if (stale[0]<=0) {g_free(stale); return;}
 
   /* Make residual images for stale fields */
   imgClass->ObitUVImagerImage (in->imager, stale, doWeight, doBeam, doFlatten, err);

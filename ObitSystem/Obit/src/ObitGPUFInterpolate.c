@@ -1,6 +1,6 @@
 /* $Id: $   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014                                               */
+/*;  Copyright (C) 2014-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -260,12 +260,12 @@ void ObitGPUFInterpolateImage (ObitGPUFInterpolate *in, ObitFArray *inArray,
 #if HAVE_GPU==1  /* GPU? Real versions */
   int i, memsize, nrowBuff, nx=outArray->naxis[0], ny=outArray->naxis[1]; 
   /* Compatibility checks */
-  Obit_return_if_fail ((nx==in->xArray->naxis[0]) && (ny==in->xArray->naxis[0]), err, 
+  Obit_return_if_fail ((nx==in->xArray->naxis[0]) && (ny==in->xArray->naxis[1]), err, 
 		       "outArray incompatable with xArray %d!=%d or %d!=%d ",
-		       nx,in->xArray->naxis[0],ny,in->xArray->naxis[0]);
-  Obit_return_if_fail ((nx==in->yArray->naxis[0]) && (ny==in->yArray->naxis[0]), err, 
+		       nx,in->xArray->naxis[0],ny,in->xArray->naxis[1]);
+  Obit_return_if_fail ((nx==in->yArray->naxis[0]) && (ny==in->yArray->naxis[1]), err, 
 		       "outArray incompatable with yArray %d!=%d or %d!=%d ",
-		       nx,in->yArray->naxis[0],ny,in->yArray->naxis[0]);
+		       nx,in->yArray->naxis[0],ny,in->yArray->naxis[1]);
 
   /* (re)create GPU buffers if needed */
   if ((in->FInterpolate->nxBuff!=nx) || (in->FInterpolate->nyBuff!=ny)) {
