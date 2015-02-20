@@ -748,6 +748,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
   ObitInfoListGetTest(in->info, "doFitRL",  &type, dim, &in->doFitRL);
   ObitInfoListGetTest(in->info, "doBlank",  &type, dim, &in->doBlank);
   ObitInfoListGetTest(in->info, "doFitGain",&type, dim, &in->doFitGain);
+  ObitInfoListGetTest(in->info, "doFitOri", &type, dim, &in->doFitOri);
   ObitInfoListGetTest(in->info, "ChWid",    &type, dim, &in->ChWid);
   ObitInfoListGetTest(in->info, "ChInc",    &type, dim, &in->ChInc);
   ObitInfoListGetTest(in->info, "CPSoln",   &type, dim, &in->CPSoln);
@@ -788,6 +789,8 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
 
   /* Gain fitting only for linear feeeds */
   if (in->isCircFeed) in->doFitGain = FALSE;
+  /* Orientation fitting required for circular Feeds */
+  if (in->isCircFeed) in->doFitGain = TRUE;
 
   /* Number of antennas */
   numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
@@ -915,7 +918,12 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     for (j=0; j<4; j++) in->antFit[i][j] = TRUE;
     /* Don't fit reference antenna terms*/
     if  ((i+1)==in->refAnt) in->antFit[i][0] = FALSE;
-  } /* end filling antenna fitting flags */
+    /* doFitOri=False-> fix orientations */
+    if (!in->doFitOri) {
+      in->antFit[i][0] = FALSE;
+      in->antFit[i][2] = FALSE;
+    }
+ } /* end filling antenna fitting flags */
 
   /* Order of source parameters:
      0, Stokes I,
@@ -1235,6 +1243,7 @@ ObitPolnCalFit *in = inn;
   in->doFitRL    = FALSE;
   in->doBlank    = TRUE;
   in->doFitGain  = TRUE;
+  in->doFitOri   = TRUE;
   in->BIF        = 1;
   in->BChan      = 1;
   in->ChWid      = 1;
@@ -2701,7 +2710,12 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
 	  if ((fabs(deriv2)>(fabs(deriv)*1.0e-4)) && (fabs(deriv)>(fabs(deriv2)*1.0e-3)))  /* Bother with this one?*/
 	    delta = -0.5*atan2(deriv, deriv2);
 	  else {in->antParm[iant*4+k] = sParam; continue;}
-	  if ((k==0) || (k==2)) delta *= 5;  /*  Speed up orientation */
+	  if ((k==0) || (k==2)) {  /* Orientation */
+	    delta *= 5;  /*  Speed up orientation */
+	    /* But don't go crazy */
+	    if (delta>0.1)  delta = +0.1;
+	    if (delta<-0.1) delta = -0.1;
+	  }
 	  /* Loop decreasing delta until fit improves */
 	  for (i=0; i<10; i++) {
 	    tParam = sParam + delta;
@@ -2726,6 +2740,11 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
 	    delta *= -0.7;  /* Test signs */
 	    if (fabs(delta)<1.0e-6) break;
 	  } /* end loop decreasing */
+	  if ((k==0) || (k==2)) {  /* Orientation */
+	    /* Make sure in range +/- 2 pi
+	    if (sParam>2*G_PI)  sParam -= 2*G_PI;
+	    if (sParam,-2*G_PI) sParam += 2*G_PI; */
+	  }
 	  in->antParm[iant*4+k] = sParam;   /* Set parameter to new or old value */
 	} /* end if fitting parameter */ 
 	if (err->error) Obit_traceback_val (err, routine, in->name, FALSE);

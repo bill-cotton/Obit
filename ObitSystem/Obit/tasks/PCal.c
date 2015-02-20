@@ -924,8 +924,8 @@ void PCalHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "nfield", "CCVer", "BComp", "EComp", "Cmethod", "Cmodel", "Flux",
     "modelFlux", "modelPos", "modelParm", "solInt", 
     "solnType", "Sources", "Qual", "souCode", "doFitI", "doFitPol", "doFitV", 
-    "doFitGain", "doFitRL", "RLPhase", "RM", "PPol", "XPhase", "ChWid", "ChInc", 
-    "CPSoln", "PDSoln", "BPSoln", "doBlank", 
+    "doFitGain", "doFitOri", "doFitRL", "RLPhase", "RM", "PPol", "XPhase", 
+    "ChWid", "ChInc", "CPSoln", "PDSoln", "BPSoln", "doBlank", 
     "nThreads",
    NULL};
   gchar *routine = "PCalHistory";
@@ -972,7 +972,7 @@ ObitUV* AverData (ObitInfoList* myInput, ObitUV* scrData,
   gchar *PolCalParms[] = {     /* Polarization calibration parameters */
     "solnType", "Sources", "Qual", "souCode", "doFitI", "doFitPol", "doFitV", 
     "doFitGn", "doFitRL", "RLPhase", "RM", "PPol", "XPhase", "ChWid", "ChInc", 
-    "CPSoln", "PDSoln", "BPSoln",  "doBlank", "doFitGain", 
+    "CPSoln", "PDSoln", "BPSoln",  "doBlank", "doFitGain", "doFitOri", 
     "doBand", "BPVer", "refAnt", "prtLv", "BIF", "BChan",
     NULL};
   gchar *FQInclude[] = {"AIPS FQ", "AIPS AN", NULL};

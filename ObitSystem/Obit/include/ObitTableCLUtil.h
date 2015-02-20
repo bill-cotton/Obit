@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005,2009                                          */
+/*;  Copyright (C) 2005-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -46,5 +46,9 @@ ObitIOCode ObitTableCLSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err);
 /** Public: Create Dummy Cal table. */
 ObitTableCL* ObitTableCLGetDummy (ObitUV *in, ObitUV *out, olong ver, 
 				  ObitErr *err);
+
+/** Public: Create Dummy Cal table from an iNdeX table. */
+ObitTableCL* ObitTableCLGetDummyNX (ObitUV *in, ObitUV *out, olong ver, 
+				    ObitErr *err);
 
 #endif /* OBITTABLECLUTIL_H */ 

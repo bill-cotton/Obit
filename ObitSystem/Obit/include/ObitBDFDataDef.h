@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010,2011                                          */
+/*;  Copyright (C) 2010-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -64,6 +64,8 @@ gboolean haveAutoData;
 olong nAutoCorr;
 /** Auto correlation data for integration */
 ofloat *autoCorr;
+/** Apply binary flags? */
+gboolean binFlag;
 /** Have Flag data? */
 gboolean haveFlag;
 /** Number of olongs in flagData  */
@@ -146,6 +148,14 @@ olong cincif;
 olong *coffs;
 /** IF (spectral window) offsets in cross correlations */
 olong *coffif;
+/** Frequency increment in flag for cross correlations */
+olong cfincf;
+/**  IF increment in in flag for cross correlations */
+olong cfincif;
+/** Stokes offsets in in flag for cross correlations for RR, LL, RL, LR */
+olong *cfoffs;
+/** IF (spectral window) offsets in flag for cross correlations */
+olong *cfoffif;
 /** Size of BDF autocorrelation visibility  */
 olong autoVisSize;
 /** Frequency increment in auto correlations */
@@ -156,6 +166,14 @@ olong aincif;
 olong *aoffs;
 /** IF (spectral window) offsets in auto correlations */
 olong *aoffif;
+/** Frequency increment in flag for auto correlations */
+olong afincf;
+/**  IF increment in in flag for auto correlations */
+olong afincif;
+/** Stokes offsets in in flag for auto correlations for RR, LL, RL, LR */
+olong *afoffs;
+/** IF (spectral window) offsets in flag for cross correlations */
+olong *afoffif;
 /** IF (spectral window) sideband, true = LSB */
 gboolean *isLSB;
 /** Is this EVLA data? */

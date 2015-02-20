@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2013                                          */
+/*;  Copyright (C) 2010-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -282,11 +282,12 @@ typedef struct {
   ASDMMainRow **rows;
 } ASDMMainTable;
 
-
  /* Antenna Table */
 typedef struct {
   /** Antenna ID */
   olong antennaId;
+  /** Antenna ID */
+  olong antennaNo;
   /** name */
   gchar* name;
   /** antenna Make enum */

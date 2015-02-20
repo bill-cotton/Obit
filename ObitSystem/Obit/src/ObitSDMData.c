@@ -195,7 +195,7 @@ static ASDMMainTable* KillASDMMainTable(ASDMMainTable* table);
 static ASDMAntennaRow* KillASDMAntennaRow(ASDMAntennaRow* row);
 /** Private: Parser constructor for Antenna table from file */
 static ASDMAntennaTable* ParseASDMAntennaTable(ObitSDMData *me,
-					 gchar *AntennaFile, 
+					 gchar *AntennaFile, gboolean isALMA,
 					 ObitErr *err);
 /** Private: Destructor for Antenna table. */
 static ASDMAntennaTable* KillASDMAntennaTable(ASDMAntennaTable* table);
@@ -606,6 +606,7 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   gchar *fullname;
   ObitSDMData* out;
   ASDMSpectralWindowArray *damn=NULL;
+  gboolean isALMA;
   gchar *routine="ObitSDMDataCreate";
 
   /* Create basic structure */
@@ -635,6 +636,12 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
+  /* Is this ALMA data? */
+  isALMA = !strncmp(out->ExecBlockTab->rows[0]->telescopeName, "ALMA", 4);
+  /* ALMA may be a bit confused */
+  if (!isALMA) isALMA = !strncmp(out->ExecBlockTab->rows[0]->telescopeName, "OSF", 3);
+  out->isALMA    = isALMA;
+
   /* Main table */
   fullname = g_strconcat (DataRoot,"/Main.xml", NULL);
   out->MainTab = ParseASDMMainTable(out, fullname, err);
@@ -643,7 +650,7 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
 
   /* Antenna table */
   fullname = g_strconcat (DataRoot,"/Antenna.xml", NULL);
-  out->AntennaTab = ParseASDMAntennaTable(out, fullname, err);
+  out->AntennaTab = ParseASDMAntennaTable(out, fullname, isALMA, err);
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
@@ -858,6 +865,7 @@ ObitSDMData* ObitSDMIntentCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   gchar *fullname;
   ObitSDMData* out;
   ASDMSpectralWindowArray *damn=NULL;
+  gboolean isALMA;
   gchar *routine="ObitSDMIntentCreate";
 
   /* Create basic structure */
@@ -887,6 +895,12 @@ ObitSDMData* ObitSDMIntentCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
+  /* Is this ALMA data? */
+  isALMA = !strncmp(out->ExecBlockTab->rows[0]->telescopeName, "ALMA", 4);
+  /* ALMA may be a bit confused */
+  if (!isALMA) isALMA = !strncmp(out->ExecBlockTab->rows[0]->telescopeName, "OSF", 3);
+  out->isALMA    = isALMA;
+
   /* Main table */
   fullname = g_strconcat (DataRoot,"/Main.xml", NULL);
   out->MainTab = ParseASDMMainTable(out, fullname, err);
@@ -895,7 +909,7 @@ ObitSDMData* ObitSDMIntentCreate (gchar* name, gchar *DataRoot, ObitErr *err)
 
   /* Antenna table */
   fullname = g_strconcat (DataRoot,"/Antenna.xml", NULL);
-  out->AntennaTab = ParseASDMAntennaTable(out, fullname, err);
+  out->AntennaTab = ParseASDMAntennaTable(out, fullname, isALMA, err);
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
@@ -1470,7 +1484,7 @@ ASDMAntennaArray* ObitSDMDataGetAntArray (ObitSDMData *in, olong mainRow)
     /* Crack name to get number Assume EVLA starts with "ea" */
     if ((out->ants[iAnt]->antName[0]=='e') && (out->ants[iAnt]->antName[1]=='a'))
       out->ants[iAnt]->antennaNo = strtol(&out->ants[iAnt]->antName[2],NULL,10);
-    else out->ants[iAnt]->antennaNo = out->ants[iAnt]->antennaId;
+    else out->ants[iAnt]->antennaNo = in->AntennaTab->rows[jAnt]->antennaNo;
     out->maxAnt = MAX(out->maxAnt, out->ants[iAnt]->antennaNo);
 
     /* Find Station */
@@ -1853,6 +1867,142 @@ void ObitSDMSourceTabFixCode (ObitSDMData *in)
   return;
 } /* end ObitSDMSourceTabFixCode */
 
+/**   
+ * Revise source numbers in an ASDMSourceTable to agree with a source list 
+ * Entries in in->SourceTab are assigned a source number in sourceList if
+ * in common or a new number not conflicting with sourceList.
+ * \param  in         ASDM object with SourceTab to modify
+ * \param  sourceList Previous definitions of source numbers
+ * \param  isDone     [out] flags, TRUE is corresponding entry in in->SourceTab
+ *                    is in sourceList
+ * \param  doCode     If TRUE, codes must also match
+ * \param  err        Obit error/message stack
+ */
+void ObitSDMDataRenumberSrc(ObitSDMData *in,  ObitSourceList *sourceList, 
+			    gboolean *isDone,  gboolean doCode, ObitErr *err)
+{
+  olong i, j, len, nextID=1;
+  gboolean matches, areNew=FALSE,renum=FALSE;
+  gchar *routine = "RenumberSrc";
+
+  /* Error checks */
+  if (err->error) return;  /* Existing error condition */
+  Obit_return_if_fail((sourceList!=NULL), err,
+		      "%s: input SourceList not defined", 
+		      routine);
+  Obit_return_if_fail((isDone!=NULL), err,
+		      "%s: output isDone array not defined", 
+		      routine);
+
+  /* Find highest ID in sourceList */
+  for (i=0; i<sourceList->number; i++) {
+    nextID = MAX(nextID, sourceList->SUlist[i]->SourID+1);
+  }
+
+  /* Loop over in->SourceTab */
+  for (j=0; j<in->SourceTab->nrows; j++) {
+    /* Loop over sourceList */
+    for (i=0; i<sourceList->number; i++) {
+      /* Check name */
+      len = MIN (strlen(in->SourceTab->rows[j]->sourceName),strlen(sourceList->SUlist[i]->SourceName));
+      len = MIN(len,20);
+      matches = !strncmp(in->SourceTab->rows[j]->sourceName, sourceList->SUlist[i]->SourceName,len);
+      if (!matches) continue;
+      /* Code? */
+      if (doCode) {
+	len = MIN (strlen(in->SourceTab->rows[j]->code),strlen(sourceList->SUlist[i]->CalCode));
+	len = MIN(len,8);
+	matches = !strncmp(in->SourceTab->rows[j]->code, sourceList->SUlist[i]->CalCode,len);
+      }
+      if (matches) {
+	if (in->SourceTab->rows[j]->sourceNo != sourceList->SUlist[i]->SourID) renum = TRUE;
+	in->SourceTab->rows[j]->sourceNo = sourceList->SUlist[i]->SourID;
+	isDone[j] = TRUE;
+	break;
+      }
+    } /* end loop over sourceList */
+    /* If not found, assign new value */
+    if (!isDone[j]) {
+      in->SourceTab->rows[j]->sourceNo = nextID++;
+      areNew = TRUE;
+    }
+  } /* end loop over in->SourceTab */
+  /* Say if anything renumbered */
+  if (renum)
+    Obit_log_error(err, OBIT_InfoErr, "Renumbered Sources");
+  if (areNew)
+    Obit_log_error(err, OBIT_InfoErr, "New Sources added");
+} /* end ObitSDMDataRenumberSrc */
+
+/**   
+ * Revise antenna numbers in an ASDMAntennaTable to agree with an antenna list 
+ * Entries in in->AntennaTab are assigned a antenna number in antennaList if
+ * in common or a new number not conflicting with antennaList.
+ * Name obtained from Station
+ * \param  in         ASDM object with AntennaTab to modify
+ * \param  antennaList Previous definitions of antenna numbers
+ * \param  isDone     [out] flags, TRUE is corresponding entry in in->AntennaTab
+ *                    is in antennaList
+ * \param  err        Obit error/message stack
+ */
+void ObitSDMDataRenumberAnt(ObitSDMData *in,  ObitAntennaList *antennaList, 
+			    gboolean *isDone, ObitErr *err)
+{
+  olong i, j, k, len, stationId, nextID=1;
+  gboolean matches, areNew=FALSE,renum=FALSE;
+  gchar *routine = "RenumberAnt";
+
+  /* Error checks */
+  if (err->error) return;  /* Existing error condition */
+  Obit_return_if_fail((antennaList!=NULL), err,
+		      "%s: input AntennaList not defined", 
+		      routine);
+ 
+  /* Find highest ID in antennaList */
+  for (i=0; i<antennaList->number; i++) {
+    nextID = MAX(nextID, antennaList->ANlist[i]->AntID+1);
+  }
+
+  /* Loop over in->AntennaTab */
+  for (j=0; j<in->AntennaTab->nrows; j++) {
+    /* Find Station */
+    stationId = in->AntennaTab->rows[j]->stationId;
+    for (k=0; k<in->StationTab->nrows; k++) {
+      if (in->StationTab->rows[k]->stationId==stationId) break;
+    }
+    if (k>=in->StationTab->nrows) continue;  /* Not found? */
+    /* Loop over antennaList  */
+    for (i=0; i<antennaList->number; i++) {
+      if (antennaList->ANlist[i]->AntID<1) continue;  /* Anybody home? */
+      /* Check station name */
+      len = MIN (strlen(in->StationTab->rows[k]->name),strlen(antennaList->ANlist[i]->AntName));
+      len = MIN(len,8);
+      matches = !strncmp(in->StationTab->rows[k]->name, antennaList->ANlist[i]->AntName,len);
+      if (!matches) continue;
+      if (matches) {
+	isDone[j] = TRUE;  /* OK, no need to rewriteAN table */
+	if (in->AntennaTab->rows[j]->antennaId != (antennaList->ANlist[i]->AntID-1)) {
+	  /*fprintf(stderr,"DEBUG ant %d -> %d\n",in->AntennaTab->rows[j]->antennaNo ,antennaList->ANlist[i]->AntID);*/
+	  in->AntennaTab->rows[j]->antennaNo = antennaList->ANlist[i]->AntID;
+	  renum = TRUE;
+	}
+	break;
+      }
+    } /* end loop over antennaList */
+    /* If not found, assign new value */
+    if (!matches) {
+      /*fprintf(stderr,"DEBUG New ant %d -> %d\n",in->AntennaTab->rows[j]->antennaNo , nextID);*/
+      in->AntennaTab->rows[j]->antennaNo = nextID++;
+      areNew = TRUE;
+    }
+  } /* end loop over in->AntennaTab */
+  /* Say if anything renumbered or new */
+  if (renum)
+    Obit_log_error(err, OBIT_InfoErr, "Renumbered Antennas");
+  if (areNew)
+    Obit_log_error(err, OBIT_InfoErr, "New Antennas added");
+} /* end ObitSDMDataRenumberAnt */
+
 /**   Select Scan by source code
  * \param  in      ASDM object
  * \param  iMain   Main table number of scan in question
@@ -2050,7 +2200,7 @@ ObitTableSN* ObitSDMDataWVR2SN (ObitUV *inUV, ObitSDMData *SDM,
     /* Lookup antenna number */
     for (iant=0; iant<antArray->nants; iant++) {
       if (!strcmp(WVRRow->antennaName, antArray->ants[iant]->antName)) {
-	SNRow->antNo  = antArray->ants[iant]->antennaNo+1;
+	SNRow->antNo  = antArray->ants[iant]->antennaNo;
 	break;
       }
     } /* end looking up antenna number */
@@ -2202,8 +2352,8 @@ ObitTableSN* ObitSDMDataAtm2SN (ObitUV *inUV, ObitSDMData *SDM,
   else numIF = 1;
   if (outSN==NULL) {
     tname = g_strconcat ("Calibration for: ",inUV->name, NULL);
-    ver = 0;
-    outSN = newObitTableSNValue (tname, (ObitData*)inUV, &ver, OBIT_IO_WriteOnly,  
+    ver = 1;
+    outSN = newObitTableSNValue (tname, (ObitData*)inUV, &ver, OBIT_IO_ReadWrite,  
 				 numPol, numIF, err);
     g_free (tname);
     if (err->error) Obit_traceback_val (err, routine, inUV->name, outSN);
@@ -2213,7 +2363,7 @@ ObitTableSN* ObitSDMDataAtm2SN (ObitUV *inUV, ObitSDMData *SDM,
   Obit_log_error(err, OBIT_InfoErr, "Converting CalAtmosphere data to SN table %d", ver);
   
   /* Open SN table for write */
-  retCode = ObitTableSNOpen (outSN, OBIT_IO_WriteOnly, err);
+  retCode = ObitTableSNOpen (outSN, OBIT_IO_ReadWrite, err);
   if ((retCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
     Obit_traceback_val (err, routine, outSN->name, outSN);
 
@@ -2278,13 +2428,13 @@ ObitTableSN* ObitSDMDataAtm2SN (ObitUV *inUV, ObitSDMData *SDM,
 			   BBIndex, gain1, gain2));
     
     /* Set antenna invariant values */
-    SNRow->Time   = AtmRow->startValidTime - antArray->refJD;
+    SNRow->Time   = AtmRow->startValidTime - inUV->myDesc->JDObs;
     SNRow->TimeI  = 0.5 * (AtmRow->endValidTime - AtmRow->startValidTime);
     
     /* Lookup antenna number */
     for (iant=0; iant<antArray->nants; iant++) {
       if (!strcmp(AtmRow->antennaName, antArray->ants[iant]->antName)) {
-	SNRow->antNo  = antArray->ants[iant]->antennaNo+1;
+	SNRow->antNo  = antArray->ants[iant]->antennaNo;
 	break;
       }
     } /* end looking up antenna number */
@@ -2314,6 +2464,7 @@ ObitTableSN* ObitSDMDataAtm2SN (ObitUV *inUV, ObitSDMData *SDM,
     } /* end IF loop */
     
     /* write it - first start time */
+    iSNRow = -1;
     retCode = ObitTableSNWriteRow (outSN, iSNRow, SNRow, err);
     /* then end time - no they're bogus
        SNRow->Time = AtmRow->endValidTime - antArray->refJD;
@@ -3946,7 +4097,7 @@ static ASDMAntennaRow* KillASDMAntennaRow(ASDMAntennaRow* row)
  */
 static ASDMAntennaTable* 
 ParseASDMAntennaTable(ObitSDMData *me, 
-		      gchar *AntennaFile, 
+		      gchar *AntennaFile, gboolean isALMA,
 		      ObitErr *err)
 {
   ASDMAntennaTable* out=NULL;
@@ -3992,6 +4143,9 @@ ParseASDMAntennaTable(ObitSDMData *me,
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       prior = "Antenna_";
       out->rows[irow]->antennaId = ASDMparse_int (line, maxLine, prior, &next);
+      /* ANtenna number, EVLA 1 rel, ALMA 0 */
+      if (isALMA) out->rows[irow]->antennaNo = out->rows[irow]->antennaId+1;
+      else        out->rows[irow]->antennaNo = out->rows[irow]->antennaId;
       continue;
     }
     /* name */

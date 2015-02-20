@@ -927,20 +927,20 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
     {0.05702,  2.09340, -0.70760,  0.05477},   /* 3C147 */
     {1.97498, -0.23918,  0.01333, -0.01389},   /* 3C138 */
     {-30.7667, 26.4908, -7.0977,   0.605334},  /* 1934-638 (Reynolds, 02/Jul/94) */
-    {1.28872,  0.94172, -0.31113,  0.00569},   /* 3C295 */
+    {1.28872,  0.94172, -0.31113,  0.00569},   /* 3C295  */
     {1.8077,   -0.8018, -0.1157,   0.000},     /* 3C123 P&B 2012*/
     {1.2969,   -0.8690, -0.1788,   0.0305}     /* 3C196 P&B 2012*/
  };
   /* Source lists, Perley & Butler 2012 */
   ofloat pbcoeff[8][4] = {  /*  */
-    {1.2515,  -0.4605,  -0.1715,   0.0336},    /* 3C286 */
+    {1.2515,  -0.4605,  -0.1715,   0.0336},    /* 3C286 P&B 2012 */
     {1.16801,  1.07526, -0.42254,  0.02699},   /* 3C48 Perley 1995.2 */
     {0.05702,  2.09340, -0.70760,  0.05477},   /* 3C147  Perley 1995.2 */
     {1.97498, -0.23918,  0.01333, -0.01389},   /* 3C138 Perley 1995.2 */
     {-30.7667,  26.4908,  -7.0977, 0.605334},  /* 1934-638 (Reynolds, 02/Jul/94) */
-    {1.4866,   -0.7871, -0.3440,   0.0749},    /* 3C295 */
-    {1.8077,   -0.8018, -0.1157,   0.000},     /* 3C123 P&B 2012*/
-    {1.2969,   -0.8690, -0.1788,   0.0305}     /* 3C196 P&B 2012*/
+    {1.4866,   -0.7871, -0.3440,   0.0749},    /* 3C295 P&B 2012 */
+    {1.8077,   -0.8018, -0.1157,   0.000},     /* 3C123 P&B 2012 */
+    {1.2969,   -0.8690, -0.1788,   0.0305}     /* 3C196 P&B 2012 */
   };
   /* Source list - aliases */
   gchar *knosou[] = {
@@ -950,7 +950,7 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
     "3C138",   "0518+165", "0521+166", "J0521+1638", "3c138",
     "1934-638","1934-638", "1934-638", "J1939-6342", "PKS1934-638",
     "3C295",   "1409+524", "1411+522", "J1411+5212", "3c295",
-    "3C123",   "0433+295", "0437+296", "J0437+2934", "3c123",
+    "3C123",   "0433+295", "0437+296", "J0437+2940", "3c123",
     "3C196",   "0809+483", "0813+482", "J0813+4822", "3c196"
   };
   /* Number of characters to check */
@@ -1003,6 +1003,9 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
 
   /*  Compute flux */
   dt = log10 (freqm);
+  /* All entries for 3C123 and 3C196 are from P&B 2012 with coefficients in GHz */
+  if ((isrc==6) || (isrc==7)) dt -= 3.0e0;
+
 
   /* Assume no error */
   ferror = 0.0;
@@ -1037,6 +1040,8 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
   }
   /* Perley & Butler 2012 with others for completeness */
   if (ictype>=4) {
+    /* coefficients for P&B 2012 for GHz, rest MHz, 3C123, 3C196 already changed. */
+    if ((isrc==0) || (isrc==5)) dt -= 3.0e0;
     temp2 = pbcoeff[isrc][0] + dt * (pbcoeff[isrc][1] + dt * (pbcoeff[isrc][2] + dt * pbcoeff[isrc][3]));
   }
   

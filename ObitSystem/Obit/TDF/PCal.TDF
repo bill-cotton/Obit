@@ -121,7 +121,7 @@ RLPhase       -4000.      400.      R-L phase difference per calibrator
 RM                                  Rotation measure, per calibrator
 **PARAM** float 10  **DEF** 0.0
 PPol          0.0          1.0      Fract lin poln per calibrator
-**PARAM** float 10  **DEF** 0.0
+**PARAM** float 1   **DEF** 0.0
 XPhase        0.0          1.0      Cross hand phase difference (deg)
                                        
                                        Calibration info
@@ -137,6 +137,8 @@ doFitV                              If True fit Stokes V poln, per cal
 doFitRL                             If True fit R-L phase of gain per ant.
 **PARAM** boo 1 **DEF** T
 doFitGain                           If True fit X,Y gains per ant.
+**PARAM** boo 1 **DEF** T
+doFitOri                            If True Orientation per ant.
 **PARAM** int 1 **DEF** 1
 ChWid            0.0                Number of channels in poln soln
 **PARAM** int 1 **DEF** 1
@@ -334,6 +336,9 @@ Adverbs:
              per block of channels, otherwise use XPhase for all.
   doFitGain..If True, fit for X & Y gains per per antenna and
              channel.  Generally needed for linear feeds.
+  doFitOri...If True, fit feed orientations.  For linear feeds 
+             with no calibrator with a specified RLPhase, it may
+             be useful to set this to False
   ChWid......If >0, The calibration will use ChWid channels 
              centered on each channel, should be odd.
   ChInc......Increment between center channel in solution,

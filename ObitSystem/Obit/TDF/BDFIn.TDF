@@ -4,7 +4,7 @@
 ;! Obit Convert EVLA BDF data and append to a UV data file.
 ;# Task Obit BDF
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2010,2013
+;;  Copyright (C) 2010-2015
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -73,6 +73,10 @@ calInt                              CL Table interval
 doSwPwr                             Make EVLA Switched power corr?
 **PARAM** boo 1  **DEF** F
 doAtmCor                            Select data with Atm. Corr?
+**PARAM** boo 1  **DEF** F
+doAppend                            True => append to existing data
+**PARAM** boo 1  **DEF** F
+binFlag                             True => apply binary flags
 **PARAM** boo 1  **DEF** F
 Compress                            True => write compressed data
 **PARAM** str 128
@@ -197,8 +201,9 @@ Data selection
   doAtmCor...If True select data with estimates of atmospheric phase
              fluctuations removed (ALMA) if such data is available.
              Otherwise select uncorrected data.
-
-doAtmCor                            Select data with Atm. Corr?
+  doAppend...If True append data to existing, fully specified dataset.
+  binFlag....If True, apply binary flags from BDF data directly to the
+             data, not in the FG table.  Used by ALMA.
   Compress...If True  the output data is written in
              compressed format which can result in a substantial
              reduction in disk space needed.  DO NOT USE THIS OPTION if

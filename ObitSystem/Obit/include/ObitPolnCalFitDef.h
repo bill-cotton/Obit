@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012                                               */
+/*;  Copyright (C) 2012,2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -42,6 +42,8 @@ gboolean doFitRL;
 gboolean doBlank;
 /** Fit global X & Y feed gains?: */
 gboolean doFitGain;
+/** Fit Feed orientations? */
+gboolean doFitOri;
 /** Are the feeds circularly polarized? */
 gboolean isCircFeed;
 /** R-L (or X-Y) phase difference */

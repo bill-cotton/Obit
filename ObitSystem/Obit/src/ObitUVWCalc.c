@@ -264,7 +264,10 @@ ObitUVWCalc* ObitUVWCalcCreate (gchar* name, ObitUV *inUV, ObitErr *err)
   /* (1-rel) Index into list */
   out->antIndex = g_malloc0((out->maxAnt+2)*sizeof(olong));
   for (i=0; i<out->maxAnt; i++) out->antIndex[i] = -1;
-  for (i=0; i<out->AntList->number; i++) out->antIndex[out->AntList->ANlist[i]->AntID] = i;
+  for (i=0; i<out->AntList->number; i++) {
+    if (out->AntList->ANlist[i]->AntID>=0)
+      out->antIndex[out->AntList->ANlist[i]->AntID] = i;
+  }
 
 
   /* Average  antenna location */
@@ -351,7 +354,11 @@ void ObitUVWCalcUVW (ObitUVWCalc *in, ofloat time, olong SId,
   ia1 = in->antIndex[ant1];
   ia2 = in->antIndex[ant2];
 
- /* New time? Compute antenna coordinates in celestial frame */
+  /* Check range */
+  if ((ia1<0) || (ia2<0)) return;
+  if ((ia1>=in->maxAnt) || (ia2>=in->maxAnt)) return;
+
+      /* New time? Compute antenna coordinates in celestial frame */
   if (time>in->curTime) {
     in->curTime = time;
     /* Current UTC Julian Date corrected to UT1*/

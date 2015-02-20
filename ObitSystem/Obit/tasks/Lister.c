@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Task to print the contents of various data files                   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2013                                          */
+/*;  Copyright (C) 2009-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1526,6 +1526,9 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 	      SubA   = SNRow->SubA;
 	      if (SouList) curSource = SouList->SUlist[souID-1];
 	      else curSource = mySource;
+	      if (souID<=0) curSource = NULL;  /* Unspecified? */
+	      Obit_return_if_fail(((souID>=1) || ((dt!=6) && (dt!=7))), err, 
+				  "Cannot evaluate for unspecified source");
 	      value  = getSNValue(SNRow, firstPol, iif, dt, AntList, curSource);
 	    } else {  /* CL table */
 	      iretCode = ObitTableCLReadRow (CLTable, iRow, CLRow, err);
@@ -1536,6 +1539,8 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 	      SubA   = CLRow->SubA;
 	      if (SouList) curSource = SouList->SUlist[souID-1];
 	      else curSource = mySource;
+	      Obit_return_if_fail(((souID>=1) || ((dt!=6) && (dt!=7))), err, 
+				  "Cannot evaluate for unspecified source");
 	      value  = getCLValue(CLRow, firstPol, iif, dt, AntList, curSource);
 	    } /* End CL table */
 	    if (err->error) Obit_traceback_msg (err, routine, inData->name);

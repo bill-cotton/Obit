@@ -2605,3 +2605,35 @@ Obit/src/ObitDConCleanVis.c:
   Sub: Only reset fresh if something actually subtracted.
   MakeResiduals: Fix logic handling all fresh images
 30 Jan. 2015 svn version 503
+
+Major upgrade to BDFIn to allow appending data to an existing dataset, other enhancements,  bug fixes
+Obit/TDF/PCal.TDF Obit/tasks/PCal.c:
+  Correct dimention of XPhase
+  Parameter doFitOri to control fitting orientations
+Obit/src/ObitPolnCalFit.c Obit/include/ObitPolnCalFitDef.h:
+  Constrain instrumental fits in doFitFast better
+  Allow fixing orientations
+Obit/src/ObitUVWCalc.c:
+  Better trapping of bad values
+Obit/TDF/BDFIn.TDF Obit/tasks/BDFIn.c:
+  Add option doAppend to append new data to an existing dataset
+  Add parameter binFlag to enable applying binary flags.
+  Faster creation of CL table for ALMA.
+Obit/include/ObitSDMData.h Obit/include/ObitSDMDataTypeDef.h Obit/src/ObitSDMData.c:
+Obit/src/ObitBDFData.c  Obit/include/ObitBDFDataDef.h:
+  Functionality to assist in appending data in BDFIn
+  Enable binary flagging.
+  Fix bug in atmospheric phase corr selection.
+Obit/include/ObitTableCLUtil.h Obit/src/ObitTableCLUtil.c:
+  New routine GetDummyNX to make Dummy CL table from an NX table
+Obit/tasks/SetJy.c:
+  Fix alias for 3C123
+  Fix P&B 2012 calculation
+Obit/tasks/Lister.c:
+  Trap unspecified source when computing observing geometry.
+Obit/tasks/MapBeam.c:
+  Trap only Stokes I
+  Better error trap, copy Stokes parameter to input uv data.
+Obit/python/EVLACal.py: 
+  Fix problems in EVLAStdModel
+20 Feb 2015, svn ver 504

@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2013                                          */
+/*;  Copyright (C) 2010-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,6 +32,8 @@
 #include "ObitErr.h"
 #include "ObitUV.h"
 #include "ObitTableSN.h"
+#include "ObitSourceList.h"
+#include "ObitAntennaList.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -391,6 +393,15 @@ void ObitSDMSourceTabFix(ObitSDMData *in);
 
 /** Fix source numbers in an ASDMSourceTable including the calcode */
 void ObitSDMSourceTabFixCode(ObitSDMData *in);
+
+/** Revise source numbers in an ASDMSourceTable to agree with a source list */
+void ObitSDMDataRenumberSrc(ObitSDMData *in,  ObitSourceList *sourceList, 
+			    gboolean *isDone, gboolean doCode, ObitErr *err);
+
+/** Revise numbers in an ASDMAntennaTable to agree with a antenna list */
+void ObitSDMDataRenumberAnt(ObitSDMData *in,  ObitAntennaList *antennaList, 
+			    gboolean *isDone, ObitErr *err);
+
 
 /** Public: Select Scan by code  */
 gboolean ObitSDMDataSelCode  (ObitSDMData *in, olong iMain, gchar *selCode);

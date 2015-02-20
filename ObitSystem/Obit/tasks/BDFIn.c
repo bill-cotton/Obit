@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Read BDF format data, convert to Obit UV                           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2014                                          */
+/*;  Copyright (C) 2010-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -91,6 +91,9 @@ void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData,
 /* Get Source info */
 void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iScan, 
 		    ObitErr *err);
+/* Update Source info */
+void UpdateSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iScan, 
+		       ObitErr *err);
 /* Copy any FLAG tables */
 void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err);
 /* Copy  CalDevice to AIPS CD table */
@@ -184,9 +187,11 @@ gboolean SWOrder=FALSE;               /* Leave in SW Order? */
 gboolean warnHolo=TRUE;               /* Give holography warning? */
 gboolean *isHolRef;                   /* Array of antenna flags for holography, 
                                          isHoloRef[iant-1]=TRUE => used as reference */
+gboolean newOutput=TRUE;              /* Did output previous exist? */
+ofloat dayOff = 0.0;                  /* Offset from previous reference date */
 
 /* NX table structure, times only */
-olong noNXTimes=0;       /* Number of entries in NXTimes */
+olong noNXTimes=0;        /* Number of entries in NXTimes */
 ofloat *NXTimes =NULL;    /* Array of pairs of start/stop times in days */
 
 int main ( int argc, char **argv )
@@ -266,7 +271,7 @@ int main ( int argc, char **argv )
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
   
   /* Copy EVLA tables */
-  if (isEVLA) {
+  if (SDMData->isEVLA) {
     /* GetCalibrationInfo (inData, outData, err);   CALIBRATION tables */
     /* GetBandpassInfo (inData, outData, err);      BANDPASS tables */
     /* GetTSysInfo (inData, outData, err);          SYSTEM_TEMPERATURE tables */
@@ -283,7 +288,7 @@ int main ( int argc, char **argv )
 
   /* Check scan intents for online only calibrations */
   ObitInfoListGetTest(myInput, "doOnline", &type, dim, &doOnline);
-  if (isEVLA && !doOnline) FlagIntent (SDMData, outData, err);
+  if (SDMData->isEVLA && !doOnline) FlagIntent (SDMData, outData, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Update An tables with correct ref. date */
@@ -291,7 +296,7 @@ int main ( int argc, char **argv )
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Create CL table - interval etc,  set in setOutputData */
-  if (isEVLA) {
+  if (SDMData->isEVLA) {
     Obit_log_error(err, OBIT_InfoErr, "Creating CL Table");
     ObitErrLog(err);
     /*ObitTableCLGetDummy (outData, outData, 1, err); */
@@ -299,8 +304,10 @@ int main ( int argc, char **argv )
     if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
   }
 
-  if (isALMA) {
-    ObitTableCLGetDummy (outData, outData, 1, err); 
+  if (SDMData->isALMA) {
+    Obit_log_error(err, OBIT_InfoErr, "Creating CL Table");
+    ObitErrLog(err);
+    ObitTableCLGetDummyNX (outData, outData, 1, err);
     /* Convert ALMA WVR table to SN Table
     if (SDMData->CalWVRTab && (SDMData->CalWVRTab->nrows>0)) {
       SNTab = ObitSDMDataWVR2SN (outData, SDMData, err);
@@ -603,6 +610,8 @@ ObitInfoList* defaultOutputs(ObitErr *err)
 /*  Create output uv data                                                 */
 /*   Input:                                                               */
 /*      myInput   Input parameters on InfoList                            */
+/*   In global                                                            */
+/*      newOutput TRUE if output just created                             */
 /*   Output:                                                              */
 /*      err       Obit Error stack                                        */
 /* Returns the output uv data                                             */
@@ -674,7 +683,7 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
     /* Allocate catalog number */
     cno = ObitAIPSDirAlloc(disk, AIPSuser, Aname, Aclass, Atype, Aseq, &exist, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
-
+    newOutput = !exist;  /* Is this new? */
    
     /* define object */
     nvis = 1;
@@ -702,6 +711,7 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
     /* Did it previously exist */
     fullname = ObitFITSFilename (disk, outFile, err);
     exist =  ObitFileExist (fullname, err);
+    newOutput = !exist;
     if (fullname) g_free(fullname);
     if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
     
@@ -718,6 +728,9 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
 		   pgmName, Type);
     return outUV;
   }
+
+  /* New output? */
+  if (!newOutput) Obit_log_error(err, OBIT_InfoErr, "Appending to existing dataset");
 
   /* Set CL table interval */
   ObitInfoListGetTest(myInput, "calInt", &type, dim, &calInt);
@@ -749,7 +762,6 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
 /*----------------------------------------------------------------------- */
 /*  Get header information from scan header files                         */
 /*  Creates output data                                                   */
-/*  Returns TRUE if the file is just created                              */
 /*   Input:                                                               */
 /*      outData  Pointer to Output UV object                              */
 /*      SDMData  ASDM structure                                           */
@@ -945,169 +957,214 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   Obit_log_error(err, OBIT_InfoErr, "Selecting %d spectral windows (IFs)", nIF);
   ObitErrLog(err);
   
-  /* Define header */
-  desc->nvis = 0;
-  strncpy (desc->origin, "Obit ", UVLEN_VALUE);
-  desc->isort[0] = 'T'; 
-  desc->isort[1] = 'B'; 
-  desc->nrparm = 0;
+  /* Creating file? */
+  if (newOutput) {
+    /* Define header */
+    desc->nvis = 0;
+    strncpy (desc->origin, "Obit ", UVLEN_VALUE);
+    desc->isort[0] = 'T'; 
+    desc->isort[1] = 'B'; 
+    desc->nrparm = 0;
+    
+    /* Creation date today */
+    today = ObitToday();
+    strncpy (desc->date, today, UVLEN_VALUE-1);
+    if (today) g_free(today);
+    desc->freq    = startFreq;
+    desc->JDObs   = SDMData->refJD;
+    refJD         = SDMData->refJD;
+    desc->epoch   = epoch;
+    desc->equinox = equinox;
+    desc->obsra   = 0.0;
+    desc->obsdec  = 0.0;
+    desc->altCrpix = 0.0;
+    desc->altRef = 0.0;
+    desc->restFreq = 0.0;
+    desc->xshift = 0.0;
+    desc->yshift = 0.0;
+    desc->VelDef = 0;
+    desc->VelReference = 0;
+    strncpy (desc->bunit, "        ", UVLEN_VALUE);
+    lim = UVLEN_VALUE;
+    ObitUVDescJD2Date (SDMData->refJD, desc->obsdat);
+    strncpy (desc->teles,      AntArray->arrayName, lim);
+    strncpy (desc->observer,   AntArray->obsName, lim);
+    strncpy (desc->instrument, AntArray->arrayName, lim);
+    strncpy (desc->object,   "MULTI   ", lim);
   
-  /* Creation date today */
-  today = ObitToday();
-  strncpy (desc->date, today, UVLEN_VALUE-1);
-  if (today) g_free(today);
-  desc->freq    = startFreq;
-  desc->JDObs   = SDMData->refJD;
-  refJD         = SDMData->refJD;
-  desc->epoch   = epoch;
-  desc->equinox = equinox;
-  desc->obsra   = 0.0;
-  desc->obsdec  = 0.0;
-  desc->altCrpix = 0.0;
-  desc->altRef = 0.0;
-  desc->restFreq = 0.0;
-  desc->xshift = 0.0;
-  desc->yshift = 0.0;
-  desc->VelDef = 0;
-  desc->VelReference = 0;
-  strncpy (desc->bunit, "        ", UVLEN_VALUE);
-  lim = UVLEN_VALUE;
-  ObitUVDescJD2Date (SDMData->refJD, desc->obsdat);
-  strncpy (desc->teles,      AntArray->arrayName, lim);
-  strncpy (desc->observer,   AntArray->obsName, lim);
-  strncpy (desc->instrument, AntArray->arrayName, lim);
-  strncpy (desc->object,   "MULTI   ", lim);
+    /* Random parameters */
+    ncol = 0;
+    /* U */
+    strncpy (desc->ptype[ncol], "UU-L-SIN", UVLEN_KEYWORD);
+    ncol++;
+    
+    /* V */
+    strncpy (desc->ptype[ncol], "VV-L-SIN", UVLEN_KEYWORD);
+    ncol++;
+    
+    /* W */
+    strncpy (desc->ptype[ncol], "WW-L-SIN", UVLEN_KEYWORD);
+    ncol++;
+    
+    /* Baseline */
+    strncpy (desc->ptype[ncol], "BASELINE", UVLEN_KEYWORD);
+    ncol++;
+    
+    /* Time */
+    strncpy (desc->ptype[ncol], "TIME1   ", UVLEN_KEYWORD);
+    ncol++;
+    
+    /* Source  */
+    strncpy (desc->ptype[ncol], "SOURCE  ", UVLEN_KEYWORD);
+    ncol++;
+    
+    /* Integration time */
+    strncpy (desc->ptype[ncol], "INTTIM  ", UVLEN_KEYWORD);
+    ncol++;
+    
+    /* FreqID - NYI */
+    /* strncpy (desc->ptype[ncol], "FREQSEL ", UVLEN_KEYWORD);
+       ncol++; */
+    
+    desc->nrparm = ncol;  /* Number of random parameters */
   
-  /* Random parameters */
-  ncol = 0;
-  /* U */
-  strncpy (desc->ptype[ncol], "UU-L-SIN", UVLEN_KEYWORD);
-  ncol++;
+    /* Data Matrix */
+    ncol = 0;
+    lim = UVLEN_KEYWORD;
+    /* Dimension 1 = COMPLEX */
+    strncpy (desc->ctype[ncol], "COMPLEX ", lim);
+    desc->inaxes[ncol] = 3;
+    desc->cdelt[ncol]  = 1.0;
+    desc->crpix[ncol]  = 1.0;
+    desc->crval[ncol]  = 1.0;
+    desc->crota[ncol]  = 0.0;
+    ncol++;
+    
+    /* Dimension 2 = STOKES */
+    strncpy (desc->ctype[ncol], "STOKES  ", lim);
+    desc->inaxes[ncol] = npoln;
+    desc->crota[ncol]  =  0.0;
+    desc->cdelt[ncol]  = -1.0;
+    desc->crpix[ncol]  =  1.0;
+    /* Circular or linear */
+    if (AntArray->ants[0]->polnType[0]=='R') { /* Circular */
+      desc->crval[ncol]  = -1.0;
+    } else { /* Assume linear */
+      desc->crval[ncol]  = -5.0;
+    }
+    ncol++;
+    
+    /* Dimension 3 = FREQ */
+    strncpy (desc->ctype[ncol], "FREQ    ", lim);
+    desc->inaxes[ncol] = nchan;
+    desc->cdelt[ncol]  = freqStep;
+    desc->crpix[ncol]  = refChan;
+    desc->crval[ncol]  = startFreq;
+    desc->crota[ncol]  = 0.0;
+    /* Shift EVLA to band center */
+    if (!strncmp(AntArray->arrayName, "EVLA", 4)) {
+      desc->crval[ncol] += ((1+nchan/2) - refChan) * freqStep;
+      desc->crpix[ncol]  = (1+nchan/2);
+      desc->freq         = desc->crval[ncol];
+    }
+    ncol++;
+    
+    /* Dimension 4 = IF (SpectralWindow in BDF) */
+    strncpy (desc->ctype[ncol], "IF      ", lim);
+    desc->inaxes[ncol] = nIF;
+    desc->cdelt[ncol]  = 1.0;
+    desc->crpix[ncol]  = 1.0;
+    desc->crval[ncol]  = 1.0;
+    desc->crota[ncol]  = 0.0;
+    ncol++;  
+    
+    /* Dimension 5 Dummy RA */
+    strncpy (desc->ctype[ncol], "RA      ", lim);
+    desc->inaxes[ncol] = 1;
+    desc->cdelt[ncol]  = 1.0;
+    desc->crpix[ncol]  = 1.0;
+    desc->crval[ncol]  = 0.0;
+    desc->crota[ncol]  = 0.0;
+    ncol++;  
+    
+    /* Dimension 6 Dummy Dec */
+    strncpy (desc->ctype[ncol], "DEC     ", lim);
+    desc->inaxes[ncol] = 1;
+    desc->cdelt[ncol]  = 1.0;
+    desc->crpix[ncol]  = 1.0;
+    desc->crval[ncol]  = 0.0;
+    desc->crota[ncol]  = 0.0;
+    ncol++;  
+    
+    desc->naxis = ncol;  /* Number of dimensions */
+    
+    /* index descriptor */
+    ObitUVDescIndex (desc);
   
-  /* V */
-  strncpy (desc->ptype[ncol], "VV-L-SIN", UVLEN_KEYWORD);
-  ncol++;
-  
-  /* W */
-  strncpy (desc->ptype[ncol], "WW-L-SIN", UVLEN_KEYWORD);
-  ncol++;
-  
-  /* Baseline */
-  strncpy (desc->ptype[ncol], "BASELINE", UVLEN_KEYWORD);
-  ncol++;
-  
-  /* Time */
-  strncpy (desc->ptype[ncol], "TIME1   ", UVLEN_KEYWORD);
-  ncol++;
-  
-  /* Source  */
-  strncpy (desc->ptype[ncol], "SOURCE  ", UVLEN_KEYWORD);
-  ncol++;
-  
-  /* Integration time */
-  strncpy (desc->ptype[ncol], "INTTIM  ", UVLEN_KEYWORD);
-  ncol++;
-  
-  /* FreqID - NYI */
-  /* strncpy (desc->ptype[ncol], "FREQSEL ", UVLEN_KEYWORD);
-     ncol++; */
-  
-  desc->nrparm = ncol;  /* Number of random parameters */
-  
-  /* Data Matrix */
-  ncol = 0;
-  lim = UVLEN_KEYWORD;
-  /* Dimension 1 = COMPLEX */
-  strncpy (desc->ctype[ncol], "COMPLEX ", lim);
-  desc->inaxes[ncol] = 3;
-  desc->cdelt[ncol]  = 1.0;
-  desc->crpix[ncol]  = 1.0;
-  desc->crval[ncol]  = 1.0;
-  desc->crota[ncol]  = 0.0;
-  ncol++;
-  
-  /* Dimension 2 = STOKES */
-  strncpy (desc->ctype[ncol], "STOKES  ", lim);
-  desc->inaxes[ncol] = npoln;
-  desc->crota[ncol]  =  0.0;
-  desc->cdelt[ncol]  = -1.0;
-  desc->crpix[ncol]  =  1.0;
-  /* Circular or linear */
-  if (AntArray->ants[0]->polnType[0]=='R') { /* Circular */
-    desc->crval[ncol]  = -1.0;
-  } else { /* Assume linear */
-    desc->crval[ncol]  = -5.0;
-  }
-  ncol++;
- 
-  /* Dimension 3 = FREQ */
-  strncpy (desc->ctype[ncol], "FREQ    ", lim);
-  desc->inaxes[ncol] = nchan;
-  desc->cdelt[ncol]  = freqStep;
-  desc->crpix[ncol]  = refChan;
-  desc->crval[ncol]  = startFreq;
-  desc->crota[ncol]  = 0.0;
-  /* Shift EVLA to band center */
-  if (!strncmp(AntArray->arrayName, "EVLA", 4)) {
-    desc->crval[ncol] += ((1+nchan/2) - refChan) * freqStep;
-    desc->crpix[ncol]  = (1+nchan/2);
-    desc->freq         = desc->crval[ncol];
-  }
-  ncol++;
-  
-  /* Dimension 4 = IF (SpectralWindow in BDF) */
-  strncpy (desc->ctype[ncol], "IF      ", lim);
-  desc->inaxes[ncol] = nIF;
-  desc->cdelt[ncol]  = 1.0;
-  desc->crpix[ncol]  = 1.0;
-  desc->crval[ncol]  = 1.0;
-  desc->crota[ncol]  = 0.0;
-  ncol++;  
-  
-  /* Dimension 5 Dummy RA */
-  strncpy (desc->ctype[ncol], "RA      ", lim);
-  desc->inaxes[ncol] = 1;
-  desc->cdelt[ncol]  = 1.0;
-  desc->crpix[ncol]  = 1.0;
-  desc->crval[ncol]  = 0.0;
-  desc->crota[ncol]  = 0.0;
-  ncol++;  
-  
-  /* Dimension 6 Dummy Dec */
-  strncpy (desc->ctype[ncol], "DEC     ", lim);
-  desc->inaxes[ncol] = 1;
-  desc->cdelt[ncol]  = 1.0;
-  desc->crpix[ncol]  = 1.0;
-  desc->crval[ncol]  = 0.0;
-  desc->crota[ncol]  = 0.0;
-  ncol++;  
-  
-  desc->naxis = ncol;  /* Number of dimensions */
-  
-  /* index descriptor */
-  ObitUVDescIndex (desc);
-  
-  /* Get source info, copy to output SU table, save lookup table in SourceID */
-  ObitUVOpen (*outData, OBIT_IO_WriteOnly, err);
-  GetSourceInfo (SDMData, *outData, iMain, err);
-  if (err->error) Obit_traceback_msg (err, routine, (*outData)->name);
+    /* Get source info, copy to output SU table, save lookup table in SourceID */
+    ObitUVOpen (*outData, OBIT_IO_WriteOnly, err);
+    GetSourceInfo (SDMData, *outData, iMain, err);
+    if (err->error) Obit_traceback_msg (err, routine, (*outData)->name);
+    
+    /* Save any equinox information */
+    (*outData)->myDesc->epoch   = 2000;   /* ASDM Lacking */
+    (*outData)->myDesc->equinox = 2000;
+    epoch   = (*outData)->myDesc->epoch;
+    equinox = (*outData)->myDesc->equinox;
+    
+    /* Add Antenna and Frequency info */
+    GetAntennaInfo (SDMData, *outData,err);
+    GetFrequencyInfo (SDMData, *outData,  SpWinArray, err);
+    ObitUVClose (*outData, err);
+    if (err->error) Obit_traceback_msg (err, routine, (*outData)->name);
+    
+    /* Instantiate output Data */
+    ObitUVFullInstantiate (*outData, FALSE, err);
+    if (err->error)Obit_traceback_msg (err, routine, (*outData)->name);
 
-  /* Save any equinox information */
-  (*outData)->myDesc->epoch   = 2000;   /* ASDM Lacking */
-  (*outData)->myDesc->equinox = 2000;
-  epoch   = (*outData)->myDesc->epoch;
-  equinox = (*outData)->myDesc->equinox;
- 
-  /* Add Antenna and Frequency info */
-  GetAntennaInfo (SDMData, *outData,err);
-  GetFrequencyInfo (SDMData, *outData,  SpWinArray, err);
-  ObitUVClose (*outData, err);
-  if (err->error) Obit_traceback_msg (err, routine, (*outData)->name);
-  
-  /* Instantiate output Data */
-  ObitUVFullInstantiate (*outData, FALSE, err);
-  if (err->error)Obit_traceback_msg (err, routine, (*outData)->name);
+  } else {  /* appending to existing */
+    /* Open uv data to get descriptor */
+    ObitUVOpen (*outData, OBIT_IO_ReadWrite, err);
+    if (err->error) Obit_traceback_msg (err, routine, (*outData)->name);
+    /* Check */
+    Obit_return_if_fail((!strncmp (desc->teles, AntArray->arrayName, 4)), err,
+			"%s: Incompatible arrays %s != %s", 
+			routine,desc->teles, AntArray->arrayName);
+    Obit_return_if_fail((desc->inaxes[1] == npoln), err,
+			"%s: Incompatible number of Stokes %d != %d", 
+			routine ,desc->inaxes[1], nstok);
+    Obit_return_if_fail((desc->inaxes[2] == nchan), err,
+			"%s: Incompatible number of Channels %d != %d", 
+			routine ,desc->inaxes[2], nchan);
+    Obit_return_if_fail((fabs(desc->crval[2]-startFreq)<0.000001*startFreq), err,
+			"%s: Incompatible reference frequency %lf != %lf", 
+			routine ,desc->crval[2], startFreq);
+    Obit_return_if_fail((fabs(desc->cdelt[2]-freqStep)<0.000001*freqStep), err,
+			"%s: Incompatible channel width %f != %f", 
+			routine ,desc->cdelt[2], freqStep);
+    Obit_return_if_fail((fabs(desc->crpix[2]-refChan)<0.01), err,
+			"%s: Incompatible channel width %f != %f", 
+			routine ,desc->crpix[2], refChan);
+    Obit_return_if_fail((desc->inaxes[3] == nIF), err,
+			"%s: Incompatible number of Spectral Windows %d != %d", 
+			routine ,desc->inaxes[3], nIF);
+    
+    /* time offset */
+    dayOff = SDMData->refJD - desc->JDObs;
+    refJD  = desc->JDObs;
 
+    /* Update source info, copy to output SU table, save lookup table in SourceID */
+    UpdateSourceInfo (SDMData, *outData, iMain, err);
+    if (err->error) Obit_traceback_msg (err, routine, (*outData)->name);
+    
+    /* Update Antenna and Frequency info */
+    GetAntennaInfo (SDMData, *outData,err);
+
+    /* Instantiate output Data */
+    ObitUVFullInstantiate (*outData, TRUE, err);
+    if (err->error)Obit_traceback_msg (err, routine, (*outData)->name);
+    
+  }
   /* Cleanup */
   SpWinArray = ObitSDMDataKillSWArray (SpWinArray);
   AntArray   = ObitSDMDataKillAntArray(AntArray);
@@ -1136,7 +1193,7 @@ void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData,
     "DataRoot", "selChan", "selIF", "selBand", "selConfig", "selCode", 
     "selChBW",
     "dropZero", "doCode", "defCode", "calInt", "doSwPwr", "doOnline", "SWOrder", 
-    "doAtmCor", 
+    "doAtmCor", "doAppend", "binFlag",
     NULL};
   gchar *routine = "BDFInHistory";
   
@@ -1350,10 +1407,12 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 /*----------------------------------------------------------------------- */
 {
   ASDMAntennaArray*  AntArray;
+  ObitAntennaList    *antList=NULL;
   ObitTableAN        *outTable=NULL;
   ObitTableANRow     *outRow=NULL;
   olong i, lim, iRow, oRow, ver, iarr;
   oint numIF, numPCal, numOrb;
+  gboolean *isDone=NULL;
   odouble JD, GASTM, Rate;
   ObitIOAccess access;
   gchar *out = "OUT";
@@ -1367,6 +1426,10 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   /* Extract antenna info */
   AntArray    = ObitSDMDataGetAntArray(SDMData, selMain);
 
+  /* Flags if table row done */
+  isDone = g_malloc0((AntArray->nants+5)*sizeof(gboolean));
+  for (iRow=0; iRow<=AntArray->nants; iRow++) isDone[iRow] = FALSE;
+
   /* Create output Antenna table object */
   ver      = 1;
   access   = OBIT_IO_ReadWrite;
@@ -1378,6 +1441,17 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with AN table");
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
 
+  /* If using an existing output then may need to renumber antennas */
+  if (!newOutput) {
+    antList = ObitTableANGetList(outTable, err);
+    ObitSDMDataRenumberAnt(SDMData, antList, isDone, err);
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    antList = ObitAntennaListUnref(antList);
+    /* Rebuild AntArray */
+    AntArray = ObitSDMDataKillAntArray(AntArray);
+    AntArray = ObitSDMDataGetAntArray(SDMData, selMain);
+  } /* End renumbering antennas */
+  
   /* Open table */
   if ((ObitTableANOpen (outTable, access, err) 
        != OBIT_IO_OK) || (err->error))  { /* error test */
@@ -1396,54 +1470,55 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   /* Is this the ALMA? */
   isALMA = SDMData->isALMA;
 
-  /* Set AN table values */
-  outTable->ArrayX  = 0.0;   /* Earth centered */
-  outTable->ArrayY  = 0.0;
-  outTable->ArrayZ  = 0.0;
-  
-  outTable->Freq    = outData->myDesc->crval[outData->myDesc->jlocf];
-  /*MORE;*/
-  outTable->PolarX  = 0.0;    /* ASDM Lacks */
-  outTable->PolarY  = 0.0;
-  outTable->dataUtc = 0.0;
-  lim = MAXKEYCHARTABLEAN;
-  strncpy (outTable->FRAME,   "ITRF    ", lim);        /* ASDM doesn't say */
-  for (i=0; i<lim; i++) if (outTable->FRAME[i]==0) outTable->FRAME[i]=' ';
-  if (isEVLA)  
-    strncpy (outTable->TimeSys, "UTC     ", lim);        /* ASDM doesn't say */
-  else
-    strncpy (outTable->TimeSys, "IAT     ", lim);        /* ASDM doesn't say */
-  for (i=0; i<lim; i++) if (outTable->TimeSys[i]==0) outTable->TimeSys[i]=' ';
-  if (isEVLA) strncpy (outTable->ArrName, "EVLA", lim);
-  else if (isALMA) strncpy (outTable->ArrName, "ALMA", lim);
-  else strncpy (outTable->ArrName, AntArray->arrayName, lim);
-  for (i=0;i<lim;i++) if (outTable->ArrName[i]==0) outTable->ArrName[i] = ' ';
-  outTable->FreqID = 0;
-  outTable->iatUtc = 0.0;                        /* ASDM Lacks */
-  strncpy (outTable->polType, "        ", lim);  /* ASDM Lacks */
-  for (i=0;i<lim;i++) if (outTable->polType[i]==0) outTable->polType[i] = ' ';
-  outTable->P_Refant = 0;
-  outTable->P_Diff01 = 0.0;
-  outTable->P_Diff02 = 0.0;
-  outTable->P_Diff03 = 0.0;
-  outTable->P_Diff04 = 0.0;
-  outTable->P_Diff05 = 0.0;
-  outTable->P_Diff06 = 0.0;
-  outTable->P_Diff07 = 0.0;
-  outTable->P_Diff08 = 0.0;
-  /* Get reference date for array  */
-  ObitUVDescJD2Date (SDMData->refJD, outTable->RefDate);
-
-  /* Calculate earth rotation rate, GMST at UT midnight if not given */
-  JD = SDMData->refJD;
-  iarr = 0;
-  arrayRefJDs[iarr] = JD;
-  ObitUVDescJD2Date (JD, outTable->RefDate);
-  ObitPrecessGST0 (JD, &GASTM, &Rate);
-  outTable->DegDay  = Rate * 360.0;
-  outTable->GSTiat0 = GASTM * 15.0;
-  if (outTable->GSTiat0 < 0.0)  outTable->GSTiat0 += 360.0;;
-
+  /* Set AN table values if new file */
+  if (newOutput) {
+    outTable->ArrayX  = 0.0;   /* Earth centered */
+    outTable->ArrayY  = 0.0;
+    outTable->ArrayZ  = 0.0;
+    
+    outTable->Freq    = outData->myDesc->crval[outData->myDesc->jlocf];
+    /*MORE;*/
+    outTable->PolarX  = 0.0;    /* ASDM Lacks */
+    outTable->PolarY  = 0.0;
+    outTable->dataUtc = 0.0;
+    lim = MAXKEYCHARTABLEAN;
+    strncpy (outTable->FRAME,   "ITRF    ", lim);        /* ASDM doesn't say */
+    for (i=0; i<lim; i++) if (outTable->FRAME[i]==0) outTable->FRAME[i]=' ';
+    if (isEVLA)  
+      strncpy (outTable->TimeSys, "UTC     ", lim);        /* ASDM doesn't say */
+    else
+      strncpy (outTable->TimeSys, "IAT     ", lim);        /* ASDM doesn't say */
+    for (i=0; i<lim; i++) if (outTable->TimeSys[i]==0) outTable->TimeSys[i]=' ';
+    if (isEVLA) strncpy (outTable->ArrName, "EVLA", lim);
+    else if (isALMA) strncpy (outTable->ArrName, "ALMA", lim);
+    else strncpy (outTable->ArrName, AntArray->arrayName, lim);
+    for (i=0;i<lim;i++) if (outTable->ArrName[i]==0) outTable->ArrName[i] = ' ';
+    outTable->FreqID = 0;
+    outTable->iatUtc = 0.0;                        /* ASDM Lacks */
+    strncpy (outTable->polType, "        ", lim);  /* ASDM Lacks */
+    for (i=0;i<lim;i++) if (outTable->polType[i]==0) outTable->polType[i] = ' ';
+    outTable->P_Refant = 0;
+    outTable->P_Diff01 = 0.0;
+    outTable->P_Diff02 = 0.0;
+    outTable->P_Diff03 = 0.0;
+    outTable->P_Diff04 = 0.0;
+    outTable->P_Diff05 = 0.0;
+    outTable->P_Diff06 = 0.0;
+    outTable->P_Diff07 = 0.0;
+    outTable->P_Diff08 = 0.0;
+    /* Get reference date for array  */
+    ObitUVDescJD2Date (SDMData->refJD, outTable->RefDate);
+    
+    /* Calculate earth rotation rate, GMST at UT midnight if not given */
+    JD = SDMData->refJD;
+    iarr = 0;
+    arrayRefJDs[iarr] = JD;
+    ObitUVDescJD2Date (JD, outTable->RefDate);
+    ObitPrecessGST0 (JD, &GASTM, &Rate);
+    outTable->DegDay  = Rate * 360.0;
+    outTable->GSTiat0 = GASTM * 15.0;
+    if (outTable->GSTiat0 < 0.0)  outTable->GSTiat0 += 360.0;;
+  } /* end initialize new table */
   /* Initialize output row */
   outRow->noSta     = 0;
   outRow->mntSta    = 0;
@@ -1459,14 +1534,14 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   outRow->PolCalA[0]  = 0.0;
   outRow->polTypeB[0] =  ' ';
   outRow->PolCalB[0]  = 0.0;
+  outRow->diameter    = 0.0;
   outRow->status      = 0;
 
   /* loop through input Antenna table */
   oRow = 1;
   for (iRow = 1; iRow<=AntArray->nants; iRow++) {
-
-    /* Dummy missing antennas  */
-    while (oRow<AntArray->ants[iRow-1]->antennaNo) {
+    /* Dummy missing antennas if new file */
+    while (newOutput && (oRow<AntArray->ants[iRow-1]->antennaNo)) {
       for (i=0; i<3; i++) outRow->AntName[i] = out[i];
       outRow->noSta     = oRow;
       outRow->status    = 0;
@@ -1486,8 +1561,9 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     } /* end dummy loop */
     /* Set output Row */
     outRow->noSta          = AntArray->ants[iRow-1]->antennaNo;
-    /* For ALMA these are 0 rel rather than 1 rel */
-    if (isALMA) outRow->noSta++;
+    /* For ALMA these are 0 rel rather than 1 rel 
+    if (isALMA) outRow->noSta++; not no mo */
+    outRow->diameter       = AntArray->ants[iRow-1]->dishDiameter;
     outRow->PolAngA        = AntArray->ants[iRow-1]->receptorAngle[0];
     outRow->polTypeA       = g_strdup("    "); 
     outRow->polTypeA[0]    = AntArray->ants[iRow-1]->polnType[0];
@@ -1519,11 +1595,13 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     outRow->StaXYZ[1] = AntArray->ants[iRow-1]->staPosition[1];
     outRow->StaXYZ[2] = AntArray->ants[iRow-1]->staPosition[2];
     for (i=0; i<numOrb; i++) outRow->OrbParm[i] = 0.0;
-
-    if ((ObitTableANWriteRow (outTable, oRow, outRow, err)
-	 != OBIT_IO_OK) || (err->error>0)) { 
-      Obit_log_error(err, OBIT_Error, "ERROR updating ANTENNA Table");
-      return;
+    if (!isDone[iRow-1]) {  /* Write if needed */
+      if (!newOutput) oRow = outRow->noSta;
+      if ((ObitTableANWriteRow (outTable, oRow, outRow, err)
+	   != OBIT_IO_OK) || (err->error>0)) { 
+	Obit_log_error(err, OBIT_Error, "ERROR updating ANTENNA Table");
+	return;
+      }
     }
     oRow++;
   } /* end loop over input table */
@@ -1539,7 +1617,8 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   AntArray  = ObitSDMDataKillAntArray(AntArray);
   outRow    = ObitTableANRowUnref(outRow);
   outTable  = ObitTableANUnref(outTable);
-
+  if (isDone) g_free(isDone);
+ 
 } /* end GetAntennaInfo */
 
 void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData, 
@@ -1795,7 +1874,7 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
   outRow->status    = 0;
 
   /* Flags if table row done */
-  isDone = g_malloc0(SourceArray->nsou*sizeof(gboolean));
+  isDone = g_malloc0((SourceArray->nsou+5)*sizeof(gboolean));
   for (iRow=0; iRow<SourceArray->nsou; iRow++) isDone[iRow] = FALSE;
 
   /* List of source numbers already processed */
@@ -1925,6 +2004,250 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
 
 } /* end  GetSourceInfo */
 
+void UpdateSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
+		       ObitErr *err)
+/*----------------------------------------------------------------------- */
+/*  Update Source info from ASDM for appending to existing file           */
+/*  ASDM structure has one source entry per spectral window(=IF)          */
+/*   Input:                                                               */
+/*      SDMData  ASDM structure                                           */
+/*      outData  Output UV object                                         */
+/*      iMain    SDM Main row number to use for Spectral Window array     */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+{
+  ASDMSourceArray*   SourceArray=NULL;
+  ASDMSpectralWindowArray* SpWinArray;
+  ObitTableSU*       outTable=NULL;
+  ObitTableSURow*    outRow=NULL;
+  ObitSource *source=NULL;
+  ObitSourceList *sourceList=NULL;
+  olong i, j, jSU, lim, iRow, oRow, ver, SourceID, lastSID=-1, iSW, SWId;
+  oint numIF;
+  ObitIOAccess access;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gboolean *isDone=NULL, doCode=TRUE, defCode=TRUE, doneIt;
+  olong *souNoList=NULL, nSouDone=0;
+  gchar *routine = "GetSourceInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (SDMData);
+  g_assert (ObitUVIsA(outData));
+
+  /* Print any messages */
+  ObitErrLog(err);
+
+  /* Set default calcodes by intent if blank,
+     coded as decreed by B. Butler */
+  ObitInfoListGetTest(myInput, "defCode", &type, dim, &defCode);
+  if (isEVLA && defCode) ObitSDMDataGetDefaultCalCode (SDMData, err);
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  
+  /* Give each source in source table by name a constant source number 
+     include calcode or not? */
+  ObitInfoListGetTest(myInput, "doCode", &type, dim, &doCode);
+  if (doCode) 
+    ObitSDMSourceTabFixCode(SDMData);
+  else
+    ObitSDMSourceTabFix(SDMData);
+ 
+  /* Extract info */
+  SourceArray = ObitSDMDataGetSourceArray(SDMData);
+  Obit_return_if_fail((SourceArray), err,
+		      "%s: Could not extract Source info from ASDM", 
+		      routine);
+  SpWinArray  = ObitSDMDataGetSWArray (SDMData, iMain, SWOrder);
+  Obit_return_if_fail((SpWinArray), err,
+		      "%s: Could not extract Spectral Windows from ASDM", 
+		      routine);
+
+  /* Create output Source table object */
+  ver      = 1;
+  access   = OBIT_IO_ReadWrite;
+  numIF    = outData->myDesc->inaxes[outData->myDesc->jlocif];
+  outTable = newObitTableSUValue ("Output table", (ObitData*)outData, 
+				  &ver, access, numIF, err);
+  if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with SU table");
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+
+  /* Flags if table row done */
+  isDone = g_malloc0(SourceArray->nsou*sizeof(gboolean));
+  for (iRow=0; iRow<SourceArray->nsou; iRow++) isDone[iRow] = FALSE;
+
+  /* Get existing source list */
+  sourceList = ObitTableSUGetList (outTable, err);
+
+  /* Renumber in SDMData to agree with old version */
+  ObitSDMDataRenumberSrc(SDMData, sourceList, isDone, doCode, err);
+
+  /* Open table */
+  if ((ObitTableSUOpen (outTable, access, err) 
+       != OBIT_IO_OK) || (err->error))  { /* error test */
+    Obit_log_error(err, OBIT_Error, "ERROR opening output SU table");
+    return;
+  }
+
+  /* Create output Row */
+  outRow = newObitTableSURow (outTable);
+  /* attach to table buffer */
+  ObitTableSUSetRow (outTable, outRow, err);
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+
+  /* Initialize output row */
+  outRow->SourID    = 0;
+  outRow->Qual      = 0;
+  outRow->Bandwidth = 0.0;
+  outRow->RAMean    = 0.0;
+  outRow->DecMean   = 0.0;
+  outRow->Epoch     = 0.0;
+  outRow->RAApp     = 0.0;
+  outRow->DecApp    = 0.0;
+  outRow->PMRa      = 0.0;
+  outRow->PMDec     = 0.0;
+  outRow->Source[0] = 0;
+  outRow->CalCode[0]= 0;
+  for (i=0; i<numIF; i++) {
+    outRow->IFlux[i]     = 0.0;
+    outRow->QFlux[i]     = 0.0;
+    outRow->UFlux[i]     = 0.0;
+    outRow->VFlux[i]     = 0.0;
+    outRow->FreqOff[i]   = 0.0;
+    outRow->LSRVel[i]    = 0.0;
+    outRow->RestFreq [i] = 0.0;
+  }
+  outRow->status    = 0;
+
+  /* List of source numbers already processed */
+  souNoList = g_malloc0(SourceArray->nsou*sizeof(olong));
+  for (iRow=0; iRow<SourceArray->nsou; iRow++) souNoList[iRow] = 0;
+
+  /* loop through input table */
+  for (iRow=0; iRow<SourceArray->nsou; iRow++) {
+
+    /* Done this one? */
+    /*if ((isDone[iRow]) || (SourceArray->sou[iRow]->sourceNo<=lastSID)) continue;*/
+    if (isDone[iRow]) continue;
+
+    /* Is this one selected? - check in Spectral Window array */
+    SWId = SourceArray->sou[iRow]->spectralWindowId;
+    for (iSW=0; iSW<SpWinArray->nwinds; iSW++) {
+      if (SpWinArray->winds[iSW]->spectralWindowId==SWId) break;
+    }
+    /* Not found or not selected? */
+    if ((iSW>=SpWinArray->nwinds) || (!SpWinArray->winds[iSW]->selected)) 
+      continue; 
+
+    /* Is this a duplicate? */
+    doneIt = FALSE;
+    for (j=0; j<nSouDone; j++) {
+      if (SourceArray->sou[iRow]->sourceNo==souNoList[j]) {
+	doneIt = TRUE;
+	break;
+      }
+    }
+    if (doneIt) continue;
+    souNoList[nSouDone++] = SourceArray->sou[iRow]->sourceNo;
+
+    /* Set output row  */
+    outRow->SourID    = SourceArray->sou[iRow]->sourceNo;
+    isDone[iRow]      = TRUE;   /* Mark as done */
+    outRow->RAMean    = SourceArray->sou[iRow]->direction[0]*RAD2DG;
+    outRow->DecMean   = SourceArray->sou[iRow]->direction[1]*RAD2DG;
+    outRow->PMRa      = SourceArray->sou[iRow]->properMotion[0]*RAD2DG*365.25;
+    outRow->PMDec     = SourceArray->sou[iRow]->properMotion[1]*RAD2DG*365.25;
+    outRow->Epoch     = 2000.0;   /* ASDM Lacking - AIPS naming is wrong */
+    lastSID           = SourceArray->sou[iRow]->sourceNo;
+    /* Precess */
+    source = newObitSource("Temp");
+    source->equinox = outRow->Epoch;
+    source->RAMean  = outRow->RAMean;
+    source->DecMean = outRow->DecMean;
+    /* Compute apparent position */
+    ObitPrecessUVJPrecessApp (outData->myDesc, source);
+    outRow->RAApp  = source->RAApp;
+    outRow->DecApp = source->DecApp;
+    outRow->RAObs  = source->RAMean;
+    outRow->DecObs = source->DecMean;
+    source = ObitSourceUnref(source);
+
+    /* blank fill source name */
+    lim = outTable->myDesc->repeat[outTable->SourceCol];
+    for (i=0; i<lim; i++) outRow->Source[i] = ' ';
+    lim = MIN(strlen(SourceArray->sou[iRow]->sourceName), 
+	      outTable->myDesc->repeat[outTable->SourceCol]);
+    for (i=0; i<lim; i++) outRow->Source[i] = SourceArray->sou[iRow]->sourceName[i];
+    if (SourceArray->sou[iRow]->code) {
+      lim = outTable->myDesc->repeat[outTable->CalCodeCol];
+      for (i=0; i<lim; i++) outRow->CalCode[i] = ' ';
+      lim = MIN(strlen(SourceArray->sou[iRow]->code), 
+		outTable->myDesc->repeat[outTable->CalCodeCol]);
+      for (i=0; i<lim; i++) outRow->CalCode[i]= SourceArray->sou[iRow]->code[i];
+    } else {outRow->CalCode[0]=outRow->CalCode[1]=outRow->CalCode[2]=outRow->CalCode[3] = ' ';}
+
+    /* Lines in first IF */
+    if (SourceArray->sou[iRow]->sysVel)
+      outRow->LSRVel[0]   = SourceArray->sou[iRow]->sysVel[0];
+    else
+      outRow->LSRVel[0]   = 0.0;
+    if (SourceArray->sou[iRow]->restFrequency)
+      outRow->RestFreq[0] = SourceArray->sou[iRow]->restFrequency[0];
+    else
+      outRow->RestFreq[0] = 0.0;
+    outRow->FreqOff[0]  = 0.0;   /* ASDM lacking */
+
+    /* Grumble, grumble, lookup velocity info for first line in other SWs */
+    for (i=1; i<numIF; i++) {
+      SourceID = SourceArray->sou[iRow]->sourceId;
+      for (jSU=iRow+i; jSU<SourceArray->nsou; jSU++) {
+	if (SourceArray->sou[jSU]->sourceId==SourceID) break;
+      }
+      if (jSU<SourceArray->nsou) {
+	isDone[jSU] = TRUE;    /* Mark as done */
+	if (SourceArray->sou[jSU]->sysVel)
+	  outRow->LSRVel[i]   = SourceArray->sou[jSU]->sysVel[0];
+	else
+	  outRow->LSRVel[i]   = 0.0;
+	if (SourceArray->sou[jSU]->restFrequency)
+	  outRow->RestFreq[i] = SourceArray->sou[jSU]->restFrequency[0];
+	else
+	  outRow->RestFreq[i] = 0.0;
+	outRow->FreqOff[i]  = 0.0;   /* ASDM lacking */
+      } else {  /* No more found */
+	  outRow->LSRVel[i]   = 0.0;
+  	  outRow->RestFreq[i] = 0.0;
+	  outRow->FreqOff[i]  = 0.0;   /* ASDM lacking */
+      }
+    }
+    outRow->status    = 0;
+    
+    oRow = -1; /*outRow->SourID;*/
+    if ((ObitTableSUWriteRow (outTable, oRow, outRow, err)
+	 != OBIT_IO_OK) || (err->error>0)) { 
+      Obit_log_error(err, OBIT_Error, "ERROR updating Source Table");
+      return;
+    }
+  } /* end loop over input table */
+  
+  if ((ObitTableSUClose (outTable, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "ERROR closing output Source Table file");
+    return;
+  }
+
+  /* Cleanup */
+  SourceArray = ObitSDMDataKillSourceArray(SourceArray);
+  SpWinArray  = ObitSDMDataKillSWArray (SpWinArray);
+  sourceList  = ObitSourceListUnref(sourceList);
+  outRow      = ObitTableSURowUnref(outRow);
+  outTable    = ObitTableSUUnref(outTable);
+  if (isDone)    g_free(isDone);
+  if (souNoList) g_free(souNoList);
+
+} /* end  UpdateSourceInfo */
+
 void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData, 
 	      ObitErr *err)
 /*----------------------------------------------------------------------- */
@@ -1951,7 +2274,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   ObitASDMBand band;
   ASDMSpectralWindowArray* SpWinArray=NULL;
   gboolean dropZero=TRUE, found=FALSE, doOnline=FALSE, drop, doAtmCor=FALSE;
-  gboolean first=TRUE;
+  gboolean binFlag=FALSE, first=TRUE;
   gchar dataroot[132];
   gchar *filename;
   gchar *ignoreIntent[]={"CALIBRATE_POINTING","UNSPECIFIED","INTERNAL_CALIBRATION", 
@@ -2007,6 +2330,10 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   ObitInfoListGetTest(myInput, "selBand", &type, dim, selBand);
   band = ObitSDMDataBand2Band (selBand);
 
+  /* Want binary flagging? */
+  ObitInfoListGetTest(myInput, "binFlag", &type, dim, &binFlag);
+  BDFData->binFlag = binFlag;
+
   /* input DataRoot name */
   for (i=0; i<132; i++) dataroot[i] = 0;
   ObitInfoListGet(myInput, "DataRoot", &type, dim, dataroot, err);
@@ -2019,12 +2346,12 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 				 OBIT_IO_ReadWrite, err);
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
   
-  /* Clear existing rows */
-  ObitTableClearRows ((ObitTable*)NXtable, err);
+  /* Clear existing rows for new file */
+  if (newOutput) ObitTableClearRows ((ObitTable*)NXtable, err);
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
 
   /* Open Index table */
-  if ((ObitTableNXOpen (NXtable, OBIT_IO_WriteOnly, err)
+  if ((ObitTableNXOpen (NXtable, OBIT_IO_ReadWrite, err)
        != OBIT_IO_OK) || (err->error)) goto done;
 
   /* Create Index Row */
@@ -2043,9 +2370,8 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   ObitTableNXSetRow (NXtable, NXrow, err);
   if (err->error)  goto done;
 
-  /* Write at beginning of iNdeX Table */
-  iRow = 0;
-  NXtable->myDesc->nrow = 0; /* ignore any previous entries */
+  /* Write at beginning of iNdeX Table if new */
+  if (newOutput) NXtable->myDesc->nrow = 0; /* ignore any previous entries, if new */
 
   /* Loop over Main Table in ASDM */
   for (iMain=0; iMain<SDMData->MainTab->nrows; iMain++) {
@@ -2220,6 +2546,9 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	/* Done? */
 	if (retCode == OBIT_IO_EOF) break;
 	if (err->error) Obit_traceback_msg (err, routine, outData->name);
+
+	/* Update time if appending */
+	if (!newOutput) Buffer[desc->iloct] += dayOff;
 	
 	/* Calculate uvw */
 	CalcUVW (outData, BDFData, Buffer, err);
@@ -2269,7 +2598,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	NXrow->TimeI    = (endTime - startTime);
 	NXrow->EndVis   = desc->nvis;
 	NXrow->SourID   = sourId;
-	iRow++;
+	iRow = -1;
 	if ((ObitTableNXWriteRow (NXtable, iRow, NXrow, err)
 	     != OBIT_IO_OK) || (err->error>0)) goto done; 
 	NXrow->StartVis = NXrow->EndVis+1;
@@ -2838,6 +3167,9 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     /* extend range on each end by 1.5 integrations */
     outRow->TimeRange[0] -= SDMData->integTime;
     outRow->TimeRange[1] += SDMData->integTime;
+    /* Day offset */
+    outRow->TimeRange[0] += dayOff;
+    outRow->TimeRange[1] += dayOff;
 
     /* Loop over antennas in antennaId */
     numAnt = MAX (1, SDMData->FlagTab->rows[iRow]->numAntenna);

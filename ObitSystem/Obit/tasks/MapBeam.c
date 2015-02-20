@@ -1085,7 +1085,7 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   gboolean     isBad = FALSE;
   gchar        *Fail="Failed  ", *Done="Done    ";
   gchar        *dataParms[] = {  /* Source selection*/
-    "Sources", "souCode", "Qual", "timeRange", "UVRange", "FreqID",
+    "Sources", "souCode", "Qual", "Stokes", "timeRange", "UVRange", "FreqID",
     NULL
   };
   gchar *routine = "doSources";
@@ -1097,6 +1097,7 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   /* Make sure selector set on inData */
   ObitUVOpen (inData, OBIT_IO_ReadCal, err);
   ObitUVClose (inData, err);
+  if (err->error) Obit_traceback_msg (err, routine, inData->name);
   
   /* Get source list to do */
   doList = ObitUVUtilWhichSources (inData, err);
@@ -1340,7 +1341,8 @@ ObitFArray** doImage (gboolean doRMS, gboolean doPhase, olong ant,
   ofloat       *SumAzCell=NULL, *SumElCell=NULL, *SumPACell=NULL;
   ofloat       *Center, *ICenter, value;
   olong        *CntCell=NULL;
-  gboolean trueStokes=FALSE;
+  gchar        Stokes[10];
+  gboolean trueStokes=FALSE, doPolStokes=FALSE;
   gchar *routine = "doImage";
 
   /* error checks */
@@ -1359,6 +1361,11 @@ ObitFArray** doImage (gboolean doRMS, gboolean doPhase, olong ant,
   /* Stokes or correlator values */
   trueStokes = inData->myDesc->crval[inData->myDesc->jlocs]>0.0;
 
+  /* Stokes */
+  Stokes[0] = 'I'; Stokes[1] = 0;
+  ObitInfoListGetTest(myInput, "Stokes", &type, dim, Stokes);
+  doPolStokes = trueStokes && (Stokes[1]=='Q') && (Stokes[2]=='U');
+
   /* How big an image? */
   ObitInfoListGetTest(myInput, "nx", &type, dim, &nx);
   ObitInfoListGetTest(myInput, "ny", &type, dim, &ny);
@@ -1375,18 +1382,20 @@ ObitFArray** doImage (gboolean doRMS, gboolean doPhase, olong ant,
   SumIi     = g_malloc0(size*sizeof(ofloat));
   SumII     = g_malloc0(size*sizeof(ofloat));
   SumIWt    = g_malloc0(size*sizeof(ofloat));
-  SumQr     = g_malloc0(size*sizeof(ofloat));
-  SumQi     = g_malloc0(size*sizeof(ofloat));
-  SumQQ     = g_malloc0(size*sizeof(ofloat));
-  SumQWt    = g_malloc0(size*sizeof(ofloat));
-  SumUr     = g_malloc0(size*sizeof(ofloat));
-  SumUi     = g_malloc0(size*sizeof(ofloat));
-  SumUU     = g_malloc0(size*sizeof(ofloat));
-  SumUWt    = g_malloc0(size*sizeof(ofloat));
-  SumVr     = g_malloc0(size*sizeof(ofloat));
-  SumVi     = g_malloc0(size*sizeof(ofloat));
-  SumVWt    = g_malloc0(size*sizeof(ofloat));
-  SumVV     = g_malloc0(size*sizeof(ofloat));
+  if (doPolStokes) {
+    SumQr     = g_malloc0(size*sizeof(ofloat));
+    SumQi     = g_malloc0(size*sizeof(ofloat));
+    SumQQ     = g_malloc0(size*sizeof(ofloat));
+    SumQWt    = g_malloc0(size*sizeof(ofloat));
+    SumUr     = g_malloc0(size*sizeof(ofloat));
+    SumUi     = g_malloc0(size*sizeof(ofloat));
+    SumUU     = g_malloc0(size*sizeof(ofloat));
+    SumUWt    = g_malloc0(size*sizeof(ofloat));
+    SumVr     = g_malloc0(size*sizeof(ofloat));
+    SumVi     = g_malloc0(size*sizeof(ofloat));
+    SumVWt    = g_malloc0(size*sizeof(ofloat));
+    SumVV     = g_malloc0(size*sizeof(ofloat));
+  }
   SumAzCell = g_malloc0(nelem*sizeof(ofloat));  
   SumElCell = g_malloc0(nelem*sizeof(ofloat));
   SumPACell = g_malloc0(nelem*sizeof(ofloat));
@@ -1422,7 +1431,7 @@ ObitFArray** doImage (gboolean doRMS, gboolean doPhase, olong ant,
   if (doRMS|| doPhase) goto cleanup;
 
   /* true Stokes: Subtract center Q, U (source poln) * Ipol beam from rest */
-  if (trueStokes) {
+  if (doPolStokes) {
     fatemp = ObitFArrayCreate (NULL, 2, naxis);  /* Work array */
     ipos[0] = nx/2; ipos[1] = ny/2;
     for (iIF=0; iIF<(*nIF); iIF++) {
@@ -1833,6 +1842,7 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
   /* Get control parameters */
   ObitInfoListGetTest(myInput, "xCells", &type,   dim, &xCells);
   ObitInfoListGetTest(myInput, "yCells", &type,   dim, &yCells);
+  if (yCells==0.0) yCells = xCells;
   ObitInfoListGetTest(myInput, "blnkTime", &type, dim, &blnkTime);
   ObitInfoListGetTest(myInput, "prtLv",  &type, dim, &prtLv);
   /* How big an image? */
@@ -2020,7 +2030,7 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
 	  }
 	  /* Q */
 	  ddoff = doff + incs;
-	  if (inData->buffer[ddoff+2]>0.0) {
+	  if (SumQr && inData->buffer[ddoff+2]>0.0) {
 	    SumQr[off]  += inData->buffer[ddoff]*inData->buffer[ddoff+2];
 	    SumQi[off]  += inData->buffer[ddoff+1]*inData->buffer[ddoff+2];
 	    SumQQ[off]  += inData->buffer[ddoff]*inData->buffer[ddoff]*inData->buffer[ddoff+2];
@@ -2028,7 +2038,7 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
 	  }
 	  /* U */
 	  ddoff = doff + 2*incs;
-	  if (inData->buffer[ddoff+2]>0.0) {
+	  if (SumUr && inData->buffer[ddoff+2]>0.0) {
 	    SumUr[off]  += inData->buffer[ddoff]*inData->buffer[ddoff+2];
 	    SumUi[off]  += inData->buffer[ddoff+1]*inData->buffer[ddoff+2];
 	    SumUU[off]  += inData->buffer[ddoff]*inData->buffer[ddoff]*inData->buffer[ddoff+2];
@@ -2036,7 +2046,7 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
 	  }
 	  /* V */
 	  ddoff = doff + 3*incs;
-	  if (inData->buffer[ddoff+2]>0.0) {
+	  if (SumVr && inData->buffer[ddoff+2]>0.0) {
 	    SumVr[off]   += inData->buffer[ddoff]*inData->buffer[ddoff+2];
 	    SumVi[off]   += inData->buffer[ddoff+1]*inData->buffer[ddoff+2];
 	    SumVV[off]   += inData->buffer[ddoff]*inData->buffer[ddoff]*inData->buffer[ddoff+2];
@@ -2094,41 +2104,47 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
 	  SumIi[off] = fblank;
 	  SumII[off] = fblank;
 	}
-	if (SumQWt[off]>0) {
-	  SumQr[off] /= SumQWt[off];
-	  SumQi[off] /= SumQWt[off];
-	  SumQQ[off] = (((SumQQ[off]/SumQWt[off]) - SumQr[off]*SumQr[off]))/SumQWt[off];
-	  if (SumQQ[off]>0.0) SumQQ[off] = sqrt(SumQQ[off]);
-	  SumQQ[off] /= SumIr[off];  /* Normalize variance by I */
-	} else {
-	  SumQr[off]  = fblank;
-	  SumQi[off]  = fblank;
-	  SumQQ[off] = fblank;
+	if (SumQWt) {
+	  if (SumQWt[off]>0) {
+	    SumQr[off] /= SumQWt[off];
+	    SumQi[off] /= SumQWt[off];
+	    SumQQ[off] = (((SumQQ[off]/SumQWt[off]) - SumQr[off]*SumQr[off]))/SumQWt[off];
+	    if (SumQQ[off]>0.0) SumQQ[off] = sqrt(SumQQ[off]);
+	    SumQQ[off] /= SumIr[off];  /* Normalize variance by I */
+	  } else {
+	    SumQr[off]  = fblank;
+	    SumQi[off]  = fblank;
+	    SumQQ[off] = fblank;
+	  }
 	}
-	if (SumUWt[off]>0) {
-	  SumUr[off] /= SumUWt[off];
-	  SumUi[off] /= SumUWt[off];
-	  SumUU[off] = (((SumUU[off]/SumUWt[off]) - SumUr[off]*SumUr[off]))/SumUWt[off];
-	  if (SumUU[off]>0.0) SumUU[off] = sqrt(SumUU[off]);
-	  SumUU[off] /= SumIr[off];  /* Normalize variance by I */
-	} else {
-	  SumUr[off] = fblank;
-	  SumUi[off] = fblank;
-	  SumUU[off] = fblank;
+	if (SumUWt) {
+	  if (SumUWt[off]>0) {
+	    SumUr[off] /= SumUWt[off];
+	    SumUi[off] /= SumUWt[off];
+	    SumUU[off] = (((SumUU[off]/SumUWt[off]) - SumUr[off]*SumUr[off]))/SumUWt[off];
+	    if (SumUU[off]>0.0) SumUU[off] = sqrt(SumUU[off]);
+	    SumUU[off] /= SumIr[off];  /* Normalize variance by I */
+	  } else {
+	    SumUr[off] = fblank;
+	    SumUi[off] = fblank;
+	    SumUU[off] = fblank;
+	  }
 	}
-	if (SumVWt[off]>0) {
-	  SumVr[off] /= SumVWt[off];
-	  SumVi[off] /= SumVWt[off];
-	  SumVV[off] = (((SumVV[off]/SumVWt[off]) - SumVr[off]*SumVr[off]))/SumVWt[off];
-	  if (SumVV[off]>0.0) SumVV[off] = sqrt(SumVV[off]);
-	  SumVV[off] /= SumIr[off];  /* Normalize variance by I */
-	} else {
-	  SumVr[off] = fblank;
-	  SumVi[off] = fblank;
-	  SumVV[off] = fblank;
+	if (SumVWt) {
+	  if (SumVWt[off]>0) {
+	    SumVr[off] /= SumVWt[off];
+	    SumVi[off] /= SumVWt[off];
+	    SumVV[off] = (((SumVV[off]/SumVWt[off]) - SumVr[off]*SumVr[off]))/SumVWt[off];
+	    if (SumVV[off]>0.0) SumVV[off] = sqrt(SumVV[off]);
+	    SumVV[off] /= SumIr[off];  /* Normalize variance by I */
+	  } else {
+	    SumVr[off] = fblank;
+	    SumVi[off] = fblank;
+	    SumVV[off] = fblank;
+	  }
 	}
 	/* Counter rotate (Q+iU) for parallactic angle */
-	if ((SumQr[off]!=fblank) && (SumUr[off]!=fblank)) {
+	if (SumQr && (SumQr[off]!=fblank) && (SumUr[off]!=fblank)) {
 	  cc =  cos(2.0*SumPACell[i]);
 	  ss = -sin(2.0*SumPACell[i]);
 	  /* Not sure this works */
@@ -2150,13 +2166,22 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
       ix = (olong) (SumAzCell[i] + nx/2 + 1.5);
       iy = (olong) (SumElCell[i] + ny/2 + 1.5);
       if ((SumAzCell[i]>1000.) || (SumElCell[i]>1000.)) continue;
-      Obit_log_error(err, OBIT_InfoErr, 
-		     "%3.3d Cell %3d %3d Az %8.1f cell, El %8.1f cell, I %6.3f %6.3f Q %6.3f %6.3f U %6.3f %6.3f V %6.3f %6.3f Jy",
-		     i, ix,iy, 
-		     /*SumAzCell[i]*xCells*206265., SumElCell[i]*yCells*206265., offset in asec */
-		     SumAzCell[i], SumElCell[i],   /* offset in cells */
-		     SumIr[i*selem],SumIi[i*selem], SumQr[i*selem],SumQi[i*selem],
-		     SumUr[i*selem],SumUi[i*selem], SumVr[i*selem],SumVi[i*selem]);
+      if (SumQr) { /* Poln data? */
+	Obit_log_error(err, OBIT_InfoErr, 
+		       "%3.3d Cell %3d %3d Az %8.1f cell, El %8.1f cell, I %6.3f %6.3f Q %6.3f %6.3f U %6.3f %6.3f V %6.3f %6.3f Jy",
+		       i, ix,iy, 
+		       /*SumAzCell[i]*xCells*206265., SumElCell[i]*yCells*206265., offset in asec */
+		       SumAzCell[i], SumElCell[i],   /* offset in cells */
+		       SumIr[i*selem],SumIi[i*selem], SumQr[i*selem],SumQi[i*selem],
+		       SumUr[i*selem],SumUi[i*selem], SumVr[i*selem],SumVi[i*selem]);
+      } else {
+	Obit_log_error(err, OBIT_InfoErr, 
+		       "%3.3d Cell %3d %3d Az %8.1f cell, El %8.1f cell, I %6.3f %6.3f Jy",
+		       i, ix,iy, 
+		       /*SumAzCell[i]*xCells*206265., SumElCell[i]*yCells*206265., offset in asec */
+		       SumAzCell[i], SumElCell[i],   /* offset in cells */
+		       SumIr[i*selem],SumIi[i*selem]);
+      }
     }
   } /* End loop normalizing list */
 
@@ -2272,19 +2297,19 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 		valII  += coef[i]*SumII[i*selem+off];
 		sumIWt += coef[i];
 	      }
-	      if (SumQr[i*selem+off]!=fblank) {
+	      if (SumQr && SumQr[i*selem+off]!=fblank) {
 		valQr  += coef[i]*SumQr[i*selem+off];
 		valQi  += coef[i]*SumQi[i*selem+off];
 		valQQ  += coef[i]*SumQQ[i*selem+off];
 		sumQWt += coef[i];
 	      }
-	      if (SumUr[i*selem+off]!=fblank) {
+	      if (SumUr && SumUr[i*selem+off]!=fblank) {
 		valUr += coef[i]*SumUr[i*selem+off];
 		valUi += coef[i]*SumUi[i*selem+off];
 		valUU += coef[i]*SumUU[i*selem+off];
 		sumUWt += coef[i];
 	      }
-	      if (SumVr[i*selem+off]!=fblank) {
+	      if (SumVr && SumVr[i*selem+off]!=fblank) {
 		valVr += coef[i]*SumVr[i*selem+off];
 		valVi += coef[i]*SumVi[i*selem+off];
 		valVV += coef[i]*SumVV[i*selem+off];
