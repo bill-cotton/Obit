@@ -53,6 +53,7 @@
 #include "ObitTableWX.h"
 #include "ObitTableNX.h"
 #include "ObitTableOT.h"
+#include "ObitTablePO.h"
 #include "ObitSDMData.h"
 #include "ObitBDFData.h"
 #include "ObitHistory.h"
@@ -127,6 +128,9 @@ void UpdateAntennaInfo (ObitUV *outData, olong arrno, ObitErr *err);
 void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer, ObitErr *err);
 /* Fake u,v,w for holography */
 void HoloUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer, ObitErr *err);
+/* Update PO tables */
+void UpdateEphemerisInfo (ObitUV *outData, ObitSourceEphemerus *srcEphem, 
+			  ofloat time, ofloat sourId, ObitErr *err);
 /* Days to human string */
 void day2dhms(ofloat time, gchar *timeString);
 /* Check for zero visibilities */
@@ -173,6 +177,8 @@ ObitSourceList *uvwSourceList=NULL;   /* Source List for uvw calc */
 ObitSource     *curSource=NULL;       /* Current source for uvw calc */
 ObitUVWCalc    *uvwCalc=NULL;         /* u,v,w calculator */
 ObitSourceEphemerus *srcEphem=NULL;   /* Source Ephemerus */
+ObitTablePO    *TabPO=NULL;           /* Planetary position table */
+ObitTablePORow *PORow=NULL;           /* Planetary position row */
 olong uvwSourID=-1;                   /* Source ID for uvw calc */
 olong uvwcurSourID=-1;                /* Current source ID for uvw calc */
 ofloat uvrot=-0.0;                    /* Current source rotation of u-v */
@@ -265,6 +271,15 @@ int main ( int argc, char **argv )
   /* Close output uv data */
   if ((ObitUVClose (outData, err) != OBIT_IO_OK) || (err->error>0))
     Obit_log_error(err, OBIT_Error, "ERROR closing output file");
+
+  /* Close PO table if active */
+  if (TabPO) {
+    if ((ObitTablePOClose (TabPO, err)  != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR closing output PO Table file");
+    }
+    TabPO = ObitTablePOUnref(TabPO);
+    PORow = ObitTablePORowUnref(PORow);
+  }
 
   /* Read NX table to internal array */
   ReadNXTable(outData, err);  
@@ -2573,6 +2588,13 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	  continue;
 	}
 
+	/* Planetary position table each integration */
+	if (Buffer[desc->iloct]>tlast) {
+	  UpdateEphemerisInfo(outData, srcEphem, Buffer[desc->iloct], 
+			      Buffer[desc->ilocsu], err);
+	  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+	}
+
 	tlast = Buffer[desc->iloct];
 	/* Get indexing information on first vis written for scan */
 	if (startTime<-1.0e10) {
@@ -2661,7 +2683,7 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
 
   /* Need source ephemerus for moving targets? */
   if (srcEphem==NULL) {
-    srcEphem = ObitSourceEphemerusCreate("Ephemerus");
+    srcEphem = ObitSourceEphemerusCreate("Ephemeris");
     ObitSourceEphemerusSetup (srcEphem, BDFData->SDMData, 10.0/86400.0,
 			      outData->myDesc, err);
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
@@ -4330,14 +4352,13 @@ void ReadNXTable (ObitUV *outData, ObitErr *err)
  } /* end ReadNXTable */
 
 /*----------------------------------------------------------------------- */
-/*  Is a given time in the NX table>                                      */
+/*  Is a given time in the NX table                                       */
 /*  Looks up time in  NXTimes                                             */
 /*   Input:                                                               */
 /*     time Time wrt reftime in days                                      */
 /*   Return:                                                              */
 /*       TRUE if time in NX Times                                         */
 /*----------------------------------------------------------------------- */
-/* Is a time in the NX Table */
 gboolean timeInNXTable (ofloat time)
 {
   gboolean out=FALSE;
@@ -4350,3 +4371,71 @@ gboolean timeInNXTable (ofloat time)
 
   return out;
 } /* end timeInNXTable */
+
+/*----------------------------------------------------------------------- */
+/*  Update PO (Planetary position) Table                                  */
+/*  If sourId is a source in the Ephemeris, a PO table entry is made      */
+/*  Uses global TabPO, PORow                                              */
+/*   Input:                                                               */
+/*     outData   Output UV object                                         */
+/*     srcEpmem  Source Ephemeris object                                  */
+/*     time      Time wrt reftime in days                                 */
+/*     sourId    Source Id                                                */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+void UpdateEphemerisInfo (ObitUV *outData,  ObitSourceEphemerus *srcEphem, 
+			  ofloat time, ofloat sourId, ObitErr *err) {
+  odouble       DecR, RAR, dist;
+  ofloat        tuvrot;
+  olong         oRow, ver;
+  ObitIOAccess  access;
+  olong         srcId = (olong)(sourId+0.5);
+  gchar *routine="UpdateEphemerisInfo";
+
+   /* error checks */
+  if (err->error) return;
+
+  if (srcEphem==NULL) return;  /* Have an ephemeris? */
+  /* Something to do? */
+  if (ObitSourceEphemerusCheckSource(srcEphem, srcId, time, &RAR, &DecR, &dist, &tuvrot)) {
+    /* Create/Open table if needed */
+    if (TabPO==NULL) {
+      ver      = 1;
+      access   = OBIT_IO_ReadWrite;
+      TabPO = newObitTablePOValue ("Output PO table", (ObitData*)outData, 
+				   &ver, access, err);
+      if (TabPO==NULL) Obit_log_error(err, OBIT_Error, "ERROR with PO table");
+      if (err->error) Obit_traceback_msg (err, routine, outData->name);
+      
+      /* Open table */
+      if ((ObitTablePOOpen (TabPO, access, err) 
+	   != OBIT_IO_OK) || (err->error))  { /* error test */
+	Obit_log_error(err, OBIT_Error, "ERROR opening output PO table");
+	return;
+      }
+      
+      /* Create output Row */
+      PORow = newObitTablePORow (TabPO);
+      /* attach to table buffer */
+      ObitTablePOSetRow (TabPO, PORow, err);
+      if (err->error) Obit_traceback_msg (err, routine, outData->name);
+      
+    } /* End initialize table */
+ 
+   /* Set values */
+    PORow->Time   = time;
+    PORow->SourID = srcId;
+    PORow->RA     = RAR*RAD2DG;
+    PORow->Dec    = DecR*RAD2DG;
+    PORow->Dist   = dist;
+
+    /* Write */
+    oRow = -1;
+    if ((ObitTablePOWriteRow (TabPO, oRow, PORow, err)
+	 != OBIT_IO_OK) || (err->error>0)) { 
+      Obit_log_error(err, OBIT_Error, "ERROR writing PO Table");
+      return;
+    }
+  }
+} /* end UpdateEphemerisInfo */

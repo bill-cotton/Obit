@@ -15,6 +15,7 @@ X    CorrelatorMode.xml
 X    DataDescription.xml
      Doppler.xml
 X    ExecBlock.xml
+X    Ephemeris.xml
 X    Feed.xml
 X    Field.xml
 X    Flag.xml
@@ -298,6 +299,15 @@ static ASDMDopplerTable* ParseASDMDopplerTable(ObitSDMData *me,
 					 ObitErr *err);
 /** Private: Destructor for Doppler table. */
 static ASDMDopplerTable* KillASDMDopplerTable(ASDMDopplerTable* table);
+
+/** Private: Destructor for Ephemeris table row. */
+static ASDMEphemerisRow* KillASDMEphemerisRow(ASDMEphemerisRow* row);
+/** Private: Parser constructor for Ephemeris table from file */
+static ASDMEphemerisTable* ParseASDMEphemerisTable(ObitSDMData *me,
+					 gchar *EphemerisFile, 
+					 ObitErr *err);
+/** Private: Destructor for Ephemeris table. */
+static ASDMEphemerisTable* KillASDMEphemerisTable(ASDMEphemerisTable* table);
 
 /** Private: Destructor for ExecBlock table row. */
 static ASDMExecBlockRow* KillASDMExecBlockRow(ASDMExecBlockRow* row);
@@ -714,6 +724,12 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
+  /* Ephemeris table */
+  fullname = g_strconcat (DataRoot,"/Ephemeris.xml", NULL);
+  out->EphemerisTab = ParseASDMEphemerisTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
   /* Feed table */
   fullname = g_strconcat (DataRoot,"/Feed.xml", NULL);
   out->FeedTab = ParseASDMFeedTable(out, fullname, err);
@@ -952,6 +968,12 @@ ObitSDMData* ObitSDMIntentCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   /* Doppler table */
   fullname = g_strconcat (DataRoot,"/Doppler.xml", NULL);
   out->DopplerTab = ParseASDMDopplerTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* Ephemeris table */
+  fullname = g_strconcat (DataRoot,"/Ephemeris.xml", NULL);
+  out->EphemerisTab = ParseASDMEphemerisTable(out, fullname, err);
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
@@ -1394,7 +1416,7 @@ ASDMAntennaArray* ObitSDMDataGetAntArray (ObitSDMData *in, olong mainRow)
   olong  configDescriptionId, stationId, dataDescriptionId, spectralWindowId, execBlockId;
   olong  polOrHoloId, FeedId;
   olong i, iMain, iConfig, iAnt, jAnt, jDD, jSW, jPL,jFd, numAnt, iJD, iExec;
-  odouble JD;
+  odouble JD, rho, acolat, along, off1[3], off2[3];
 
   /* Find scan in Main table */
   iMain = mainRow;
@@ -1506,24 +1528,45 @@ ASDMAntennaArray* ObitSDMDataGetAntArray (ObitSDMData *in, olong mainRow)
     if (out->ants[iAnt]->numPolnCorr>1) 
       out->ants[iAnt]->polnType[1] = in->PolarizationTab->rows[jPL]->corrType[1][1];
 
-  /* Find Feed info  */
-  FeedId = in->ConfigDescriptionTab->rows[iConfig]->feedId[0];
-  for (jFd=0; jFd<in->FeedTab->nrows; jFd++) {
-    if (in->FeedTab->rows[jFd]->feedId==FeedId) break;
-  }
-  if (jFd<in->DataDescriptionTab->nrows) {
-    /* Save Feed info */
-    out->ants[iAnt]->receptorAngle[0] = 
-      ((ofloat)in->FeedTab->rows[jFd]->receptorAngle[0])*RAD2DG;
-    if (out->ants[iAnt]->numPolnCorr>1) 
-      out->ants[iAnt]->receptorAngle[1] = 
-	((ofloat)in->FeedTab->rows[jFd]->receptorAngle[1])*RAD2DG;
-  } else { /*not found use default */
-    out->ants[iAnt]->receptorAngle[0] = 0.0;
-    if (out->ants[iAnt]->numPolnCorr>1) 
-      out->ants[iAnt]->receptorAngle[1] = 0.0;
-  }
- } /* end loop over antennas */
+    /* If an antPosition is given (ALMA), rotate to station frame and add to station position */
+    if (fabs(out->ants[iAnt]->antPosition[2])>0.001) {
+      /* Get colatitude and longitude */
+      if (fabs(out->ants[iAnt]->staPosition[0])<0.001) out->ants[iAnt]->staPosition[0] = 1.0;  /* trap bad position */
+      rho = sqrt(out->ants[iAnt]->staPosition[0]*out->ants[iAnt]->staPosition[0] +
+		 out->ants[iAnt]->staPosition[1]*out->ants[iAnt]->staPosition[1] +
+		 out->ants[iAnt]->staPosition[2]*out->ants[iAnt]->staPosition[2]);
+      acolat = 0.5*G_PI - asin(out->ants[iAnt]->staPosition[2]/rho);
+      along  = atan2(out->ants[iAnt]->staPosition[1],out->ants[iAnt]->staPosition[0]);
+      /* rotate by co lat around x axis */
+      off1[0] = out->ants[iAnt]->antPosition[0];
+      off1[1] = cos(acolat)*out->ants[iAnt]->antPosition[1] - sin(acolat)*out->ants[iAnt]->antPosition[2];
+      off1[2] = sin(acolat)*out->ants[iAnt]->antPosition[1] + cos(acolat)*out->ants[iAnt]->antPosition[2];
+      /* rotate by longitude around z axis */
+      off2[0] = cos(along)*off1[0] - sin(along)*off1[1];
+      off2[1] = sin(along)*off1[0] + cos(along)*off1[1];
+      off2[2] = off1[2];
+      /* Add to station coordinates */
+      for (i=0; i<3; i++) out->ants[iAnt]->staPosition[i] += off2[i];
+    } /* End add station offset */
+
+    /* Find Feed info  */
+    FeedId = in->ConfigDescriptionTab->rows[iConfig]->feedId[0];
+    for (jFd=0; jFd<in->FeedTab->nrows; jFd++) {
+      if (in->FeedTab->rows[jFd]->feedId==FeedId) break;
+    }
+    if (jFd<in->DataDescriptionTab->nrows) {
+      /* Save Feed info */
+      out->ants[iAnt]->receptorAngle[0] = 
+	((ofloat)in->FeedTab->rows[jFd]->receptorAngle[0])*RAD2DG;
+      if (out->ants[iAnt]->numPolnCorr>1) 
+	out->ants[iAnt]->receptorAngle[1] = 
+	  ((ofloat)in->FeedTab->rows[jFd]->receptorAngle[1])*RAD2DG;
+    } else { /*not found use default */
+      out->ants[iAnt]->receptorAngle[0] = 0.0;
+      if (out->ants[iAnt]->numPolnCorr>1) 
+	out->ants[iAnt]->receptorAngle[1] = 0.0;
+    }
+  } /* end loop over antennas */
   
   return out;
 } /* end ObitSDMDataGetAntArray */
@@ -2632,6 +2675,7 @@ void ObitSDMDataInit  (gpointer inn)
   in->CorrelatorModeTab    = NULL;
   in->DataDescriptionTab   = NULL;
   in->DopplerTab           = NULL;
+  in->EphemerisTab         = NULL;
   in->ExecBlockTab         = NULL;
   in->FeedTab              = NULL;
   in->FieldTab             = NULL;
@@ -2686,6 +2730,7 @@ void ObitSDMDataClear (gpointer inn)
   in->CorrelatorModeTab    = KillASDMCorrelatorModeTable(in->CorrelatorModeTab);
   in->DataDescriptionTab   = KillASDMDataDescriptionTable(in->DataDescriptionTab);
   in->DopplerTab           = KillASDMDopplerTable(in->DopplerTab);
+  in->EphemerisTab         = KillASDMEphemerisTable(in->EphemerisTab);
   in->ExecBlockTab         = KillASDMExecBlockTable(in->ExecBlockTab);
   in->FeedTab              = KillASDMFeedTable(in->FeedTab);
   in->FieldTab             = KillASDMFieldTable(in->FieldTab);
@@ -3506,6 +3551,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
   out->CorrelatorModeRows   = -1;
   out->DataDescriptionRows  = -1;
   out->DopplerRows          = -1;
+  out->EphemerisRows        = -1;
   out->ExecBlockRows        = -1;
   out->FeedRows             = -1;
   out->FieldRows            = -1;
@@ -3664,6 +3710,14 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
       out->DopplerRows = ASDMparse_int(line, maxLine, "<NumberRows>", &next);
+      continue;
+    }
+    /* Number of Ephemeris rows */
+    if (!strcmp(tstr,"Ephemeris")) {
+      retCode = ObitFileReadXML (file, line, maxLine, err);
+      if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+      if (retCode==OBIT_IO_EOF) break;
+      out->EphemerisRows = ASDMparse_int(line, maxLine, "<NumberRows>", &next);
       continue;
     }
     /* Number of ExecBlock rows */
@@ -5970,6 +6024,179 @@ static ASDMDopplerTable* KillASDMDopplerTable(ASDMDopplerTable* table)
   return NULL;
 } /* end KillASDMDopplerTable */
 
+/* ---------------------- Ephemeris ----------------------------------- */
+/** 
+ * Destructor for Ephemeris table row.
+ * \param  row structure to destroy
+ * \return NULL row pointer
+ */
+static ASDMEphemerisRow* KillASDMEphemerisRow(ASDMEphemerisRow* row)
+{
+  if (row == NULL) return NULL;
+  if (row->timeInterval)     g_free(row->timeInterval);
+  if (row->observerLocation) g_free(row->observerLocation);
+  if (row->dir)              g_free(row->dir);
+  if (row->distance)         g_free(row->distance);
+  if (row->radVel)           g_free(row->radVel);
+  if (row->origin)           g_free(row->origin);
+  g_free(row);
+  return NULL;
+} /* end   KillASDMEphemerisRow */
+
+/** 
+ * Constructor for Ephemeris table parsing from file
+ * \param  EphemerisFile Name of file containing table
+ * \param  err     ObitErr for reporting errors.
+ * \return table structure,  use KillASDMEphemerisTable to free
+ */
+static ASDMEphemerisTable* ParseASDMEphemerisTable(ObitSDMData *me, 
+					 gchar *EphemerisFile, 
+					 ObitErr *err)
+{
+  ASDMEphemerisTable* out=NULL;
+  ObitFile *file=NULL;
+  ObitIOCode retCode;
+  odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
+  gchar *endrow = "</row>";
+  gchar *prior, *next;
+  gchar *routine = " ParseASDMEphemerisTable";
+
+  /* error checks */
+  if (err->error) return out;
+
+  out = g_malloc0(sizeof(ASDMEphemerisTable));
+  out->rows = NULL;
+
+  /* How many rows? */
+  out->nrows = MAX(0, me->ASDMTab->EphemerisRows);
+  if (out->nrows<1) return out;
+
+  /* Finish building it */
+  out->rows = g_malloc0((out->nrows+1)*sizeof(ASDMEphemerisRow*));
+  for (irow=0; irow<out->nrows; irow++) out->rows[irow] = g_malloc0(sizeof(ASDMEphemerisRow));
+
+  file = newObitFile("ASDM");
+  retCode = ObitFileOpen(file, EphemerisFile, OBIT_IO_ReadOnly, OBIT_IO_Text, 0, err);
+  if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+
+  /* Loop over file */
+  irow = 0;
+  while (retCode!=OBIT_IO_EOF) {
+
+    retCode = ObitFileReadXML (file, line, maxLine, err);
+    if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+    if (retCode==OBIT_IO_EOF) break;
+
+    /* Parse entries */
+    prior = "<ephemerisId>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->ephemerisId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+
+    prior = "<numPolyDir>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->numPolyDir = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+
+    prior = "<numPolyDist>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->numPolyDist = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+
+    prior = "<numPolyRadVel>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->numPolyRadVel = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+
+    prior = "<timeOrigin>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->timeOrigin = ASDMparse_time (line, maxLine, prior, &next);
+      continue;
+    }
+
+    prior = "<timeInterval>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->timeInterval = ASDMparse_timeRange(line, maxLine, prior, &next);
+      /* Remove offset from second */
+      if ((out->rows[irow]->timeInterval[1]<out->rows[irow]->timeInterval[0]) &&
+	  (out->rows[irow]->timeInterval[1]>mjdJD0))
+	out->rows[irow]->timeInterval[1] -= mjdJD0;
+      continue;
+    }
+
+     prior = "<observerLocation>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->observerLocation = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+
+     prior = "<distance>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->distance = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+
+     prior = "<radVel>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->radVel = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+
+     prior = "<dir>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->dir = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+
+    prior = "<origin>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->origin = ASDMparse_str (line, maxLine, prior, &next);
+      continue;
+    }
+   /* Is this the end of a row? */
+    if (g_strstr_len (line, maxLine, endrow)!=NULL) irow++;
+
+    /* Check overflow */
+    Obit_retval_if_fail((irow<=out->nrows), err, out,
+			"%s: Found more rows than allocated (%d)", 
+			routine, out->nrows);
+  } /* end loop over table */
+
+  /* Close up */
+  retCode = ObitFileClose (file, err);
+  if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+  file = ObitFileUnref(file);
+
+  return out;
+} /* end ParseASDMEphemerisTable */
+
+/** 
+ * Destructor for Ephemeris table
+ * \param  structure to destroy
+ * \return NULL pointer
+ */
+static ASDMEphemerisTable* KillASDMEphemerisTable(ASDMEphemerisTable* table)
+{
+  olong i;
+
+  if (table==NULL) return NULL;  /* Anybody home? */
+
+  /* Delete row structures */
+  if (table->rows) {
+    for (i=0; i<table->nrows; i++) 
+      table->rows[i] = KillASDMEphemerisRow(table->rows[i]);
+    g_free(table->rows);
+  }
+  g_free(table);
+  return NULL;
+} /* end KillASDMEphemerisTable */
+
 /* ----------------------  ExecBlock ----------------------------------- */
 /** 
  * Destructor for ExecBlock table row.
@@ -6484,7 +6711,10 @@ static ASDMFieldTable* ParseASDMFieldTable(ObitSDMData *me,
 
   /* Finish building it */
   out->rows = g_malloc0((out->nrows+1)*sizeof(ASDMFieldRow*));
-  for (irow=0; irow<out->nrows; irow++) out->rows[irow] = g_malloc0(sizeof(ASDMFieldRow));
+  for (irow=0; irow<out->nrows; irow++) {
+    out->rows[irow] = g_malloc0(sizeof(ASDMFieldRow));
+    out->rows[irow]->ephemerisId = -1;  /* Null value */
+  }
 
   file = newObitFile("ASDM");
   retCode = ObitFileOpen(file, FieldFile, OBIT_IO_ReadOnly, OBIT_IO_Text, 0, err);
@@ -6504,6 +6734,11 @@ static ASDMFieldTable* ParseASDMFieldTable(ObitSDMData *me,
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       prior = "Field_";
       out->rows[irow]->fieldId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<ephemerisId>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->ephemerisId = ASDMparse_int (line, maxLine, prior, &next);
       continue;
     }
     prior = "<fieldName>";

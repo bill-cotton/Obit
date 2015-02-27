@@ -3611,7 +3611,66 @@ channel varing fastest.}
 \end{history}
 %
 \clearpage
-%%%%%%%%%%%%%%% ObitTablePS Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%% ObitTablePO Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTablePO}]
+ObitTablePO Class
+\tabletitle{Planetary position table for uv data}
+% table name
+\tablename{PO}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS PO" contains position information for solar system objects.
+An ObitTablePC is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TABREV"}{J}{revision}{1}{}
+{Revision number of the table definition.}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYYMMDD"}{}
+{Reference date as "YYYYMMDD"}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time.}
+] 
+\tablecol[{"SOURCE\_ID  "}{"        " }{J}{(1)}{SourID}
+{Source ID number}
+] 
+\tablecol[{"SOURCE RA"}{"DEGREES " }{D}{(1)}{RA}
+{Right ascension at mean EPOCH (actually equinox) }
+] 
+\tablecol[{"SOURCE DEC"}{"DEGREES " }{D}{(1)}{Dec}
+{Declination at mean EPOCH (actually equinox) }
+] 
+\tablecol[{"SOURCE DISTANCE"}{"AU      " }{D}{(1)}{Dist}
+{Declination at mean EPOCH (actually equinox) }
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/25/2015}{Revision 1: Copied from AIPS}]
+\end{history}
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTablePO Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 %
 \ClassName[{ObitTablePS}]

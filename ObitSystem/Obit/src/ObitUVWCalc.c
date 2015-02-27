@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2013,2014                                          */
+/*;  Copyright (C) 2013-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -483,11 +483,12 @@ void ObitUVWCalcUVW (ObitUVWCalc *in, ofloat time, olong SId,
   uvw[1] = v*in->LorentzFact*in->ilambda;
   uvw[2] = w*in->ilambda;
 
-  /* Rotate in u-v plane to north of standard epoch */
+  /* Rotate in u-v plane to north of standard epoch
+     THIS DOESN'T SEEM TO BE RIGHT
   u = uvw[0];
   v = uvw[1];
   uvw[0] = u*in->cuvrot - v*in->suvrot;
-  uvw[1] = v*in->cuvrot + u*in->suvrot;
+  uvw[1] = v*in->cuvrot + u*in->suvrot; */
   
 } /* end ObitUVWCalcUVW */
 

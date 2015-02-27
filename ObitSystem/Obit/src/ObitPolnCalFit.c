@@ -2143,7 +2143,7 @@ static void UpdateBandpassTab(ObitPolnCalFit* in, gboolean isOK, ObitErr *err)
 
     iant = row->antNo - 1;
     /* Amplitudes of gains */
-    if (in->doFitGain) 
+    if (in->doFitGain && in->antGain) 
       {amp1 = in->antGain[iant*2];amp2 = in->antGain[iant*2+1];}
     else {amp1 = 1.0; amp2 = 1.0;}
 

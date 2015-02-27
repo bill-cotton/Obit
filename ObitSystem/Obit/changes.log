@@ -2637,3 +2637,22 @@ Obit/tasks/MapBeam.c:
 Obit/python/EVLACal.py: 
   Fix problems in EVLAStdModel
 20 Feb 2015, svn ver 504
+
+Upgrade to BDFIn to ingest VLA Planetary Ephemeris tables and write PO table
+other bug fixes
+Obit/tasks/BDFIn.c Obit/src/ObitSourceEphemerus.c:
+  Implement Ephemeris xml table in calculaing u,v,w and PO table
+Obit/src/ObitSDMData.c:
+  Add antenna offset (ALMA) to the station position 
+Obit/src/ObitTablePO.c Obit/include/ObitTablePO.h Obit/include/ObitTablePODef.h
+Obit/include/ObitTablePOClassDef.h
+Obit/include/ObitTablePORowDef.h Obit/include/ObitTablePORowClassDef.h
+Obit/python/Table.inc  Obit/python/Table.py
+Obit/doc/OBITdoc.tex Obit/python/TablePO.inc
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c
+  Implement PO table for planetary ephemeris.
+Obit/src/ObitPolnCalFit.c:
+  Trap logic error in UpdateBPTable with in->antGain.
+Obit/src/ObitUVWCalc.c:
+  Remove "differential precession correction" - not correct?
+27 Feb 2015 svn version 505

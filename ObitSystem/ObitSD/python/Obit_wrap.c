@@ -10107,6 +10107,7 @@ extern void TableIMSetHeadKeys(ObitTable *,PyObject *);
 #include "ObitTableOF.h"
 #include "ObitTablePC.h"
 #include "ObitTablePD.h"
+#include "ObitTablePO.h"
 #include "ObitTablePS.h"
 #include "ObitTableSN.h"
 #include "ObitTableSU.h"
@@ -10238,6 +10239,9 @@ extern int TableOpen (ObitTable *in, int access, ObitErr *err) {
   else if (!strncmp (in->tabType,"AIPS PD", 7)) {
     ret =  ObitTablePDOpen ((ObitTablePD*)in, laccess, err);
   }
+  else if (!strncmp (in->tabType,"AIPS PO", 7)) {
+    ret =  ObitTablePOOpen ((ObitTablePO*)in, laccess, err);
+  }
   else if (!strncmp (in->tabType,"AIPS PS", 7)) {
     ret =  ObitTablePSOpen ((ObitTablePS*)in, laccess, err);
   }
@@ -10338,6 +10342,9 @@ extern int TableClose (ObitTable *in, ObitErr *err) {
   }
   else if (!strncmp (in->tabType,"AIPS PD", 7)) {
     ret =  ObitTablePDClose ((ObitTablePD*)in, err);
+  }
+  else if (!strncmp (in->tabType,"AIPS PO", 7)) {
+    ret =  ObitTablePOClose ((ObitTablePO*)in, err);
   }
   else if (!strncmp (in->tabType,"AIPS PS", 7)) {
     ret =  ObitTablePSClose ((ObitTablePS*)in, err);
@@ -11295,6 +11302,58 @@ extern void TablePDSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 extern ObitTable *TablePD(ObitData *,long *,int ,char *,int ,int ,int ,ObitErr *);
 extern PyObject *TablePDGetHeadKeys(ObitTable *);
 extern void TablePDSetHeadKeys(ObitTable *,PyObject *);
+
+#include "Obit.h"
+#include "ObitData.h"
+#include "ObitTablePO.h"
+
+ 
+extern ObitTable* TablePO (ObitData *inData, long *tabVer,
+ 	                   int access,
+ 	                   char *tabName,
+                          
+                           ObitErr *err)
+ {
+   ObitIOAccess laccess;
+   /* Cast structural keywords to correct type */
+   olong ltabVer = (olong)*tabVer;
+   ObitTable *outTable=NULL;
+   laccess = OBIT_IO_ReadOnly;
+   if (access==2) laccess = OBIT_IO_WriteOnly;
+   else if (access==3) laccess = OBIT_IO_ReadWrite;
+   outTable = (ObitTable*)newObitTablePOValue ((gchar*)tabName, inData, (olong*)&ltabVer,
+   			   laccess, 
+                          
+                           err);
+   *tabVer = (long)ltabVer;
+   return outTable;
+   }
+ 
+extern PyObject* TablePOGetHeadKeys (ObitTable *inTab) {
+  PyObject *outDict=PyDict_New();
+  ObitTablePO *lTab = (ObitTablePO*)inTab;
+  PyDict_SetItemString(outDict, "revision",  PyInt_FromLong((long)lTab->revision));
+  PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
+
+  return outDict;
+} 
+
+extern void TablePOSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
+  ObitTablePO *lTab = (ObitTablePO*)inTab;
+  char *tstr;
+  int lstr=MAXKEYCHARTABLEPO;
+
+  lTab->revision = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "revision"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "RefDate"));
+  strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
+
+  if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
+    lTab->myStatus = OBIT_Modified;
+} 
+
+extern ObitTable *TablePO(ObitData *,long *,int ,char *,ObitErr *);
+extern PyObject *TablePOGetHeadKeys(ObitTable *);
+extern void TablePOSetHeadKeys(ObitTable *,PyObject *);
 
 #include "Obit.h"
 #include "ObitData.h"
@@ -52778,6 +52837,155 @@ static PyObject *_wrap_TablePDSetHeadKeys(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_TablePO(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitData * _arg0;
+    long * _arg1;
+    int  _arg2;
+    char * _arg3;
+    ObitErr * _arg4;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo4 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiOO:TablePO",&_argo0,&_obj1,&_arg2,&_obj3,&_argo4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TablePO. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    int size = PyList_Size(_obj1);
+    int i = 0;
+    _arg1 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj1,i);
+      if (PyInt_Check(o)) {
+         _arg1[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg1);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of TablePO. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TablePO(_arg0,_arg1,_arg2,_arg3,_arg4);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((long *) _arg1);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TablePOGetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitTable * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:TablePOGetHeadKeys",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TablePOGetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)TablePOGetHeadKeys(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TablePOSetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    PyObject * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:TablePOSetHeadKeys",&_argo0,&_obj1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TablePOSetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    _arg1 = PyDict_Copy(PyList_GetItem(_obj1,0));
+  } else if (PyDict_Check(_obj1)) {
+    _arg1 = PyDict_Copy(_obj1);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+    TablePOSetHeadKeys(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  Py_XDECREF (_arg1);
+}
+    return _resultobj;
+}
+
 static PyObject *_wrap_TablePS(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitTable * _result;
@@ -77936,6 +78144,9 @@ static PyMethodDef ObitMethods[] = {
 	 { "TablePSSetHeadKeys", _wrap_TablePSSetHeadKeys, METH_VARARGS },
 	 { "TablePSGetHeadKeys", _wrap_TablePSGetHeadKeys, METH_VARARGS },
 	 { "TablePS", _wrap_TablePS, METH_VARARGS },
+	 { "TablePOSetHeadKeys", _wrap_TablePOSetHeadKeys, METH_VARARGS },
+	 { "TablePOGetHeadKeys", _wrap_TablePOGetHeadKeys, METH_VARARGS },
+	 { "TablePO", _wrap_TablePO, METH_VARARGS },
 	 { "TablePDSetHeadKeys", _wrap_TablePDSetHeadKeys, METH_VARARGS },
 	 { "TablePDGetHeadKeys", _wrap_TablePDGetHeadKeys, METH_VARARGS },
 	 { "TablePD", _wrap_TablePD, METH_VARARGS },

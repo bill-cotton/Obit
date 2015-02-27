@@ -246,21 +246,23 @@ ObitSourceEphemerus* ObitSourceEphemerusCreate (gchar* name)
 } /* end ObitSourceEphemerusCreate */
 
 /**
- * Initialize an ObitSourceEphemerusSetup given an ObitASDM
+ * Initialize an ObitSourceEphemerus given an ObitASDM
+ * If an EphemerisTable is present in the SDM, it is used, else the Source Table
  * \param in      The object to setup
  * \param SDM     SDM with info
  * \param updtime How often to update position (day)
  * \param uvDesc  UV data descriptor
  * \param err     Obit error stack object.
  */
-/** Public: Setup given an ObitASDM. */
 void ObitSourceEphemerusSetup (ObitSourceEphemerus *in, ObitSDMData *SDM,
 			       odouble updtime, ObitUVDesc *uvDesc,
 			       ObitErr *err)
 {
-  olong i, j, n, count;
+  olong i, j, k,  n, m, count;
   ASDMSourceArray*   SourceArray=NULL;
-  ASDMFieldTable     *Tab;
+  ASDMFieldTable     *Tab=NULL;
+  ASDMEphemerisTable *EpTab=NULL;
+  gboolean            haveEph=FALSE;
   gchar *routine = "ObitSourceEphemerusSetup";
 
   /* Cleanup any old */
@@ -288,11 +290,19 @@ void ObitSourceEphemerusSetup (ObitSourceEphemerus *in, ObitSDMData *SDM,
   } /* end cleanup old */
 
   /* Check if any sources have derivatives on position */
-  Tab   = SDM->FieldTab;
+  Tab    = SDM->FieldTab;
+  EpTab  = SDM->EphemerisTab;
+  haveEph = EpTab!=NULL;
   count = 0;
-  for (i=0; i<Tab->nrows; i++) {
-    if (Tab->rows[i]->numPoly>1) count++;
-  }
+  if (haveEph) {  /* Ephemeris table */
+    for (i=0; i<EpTab->nrows; i++) {
+      if (EpTab->rows[i]->numPolyDir>=1) count++;
+    }
+   } else { /* Use Field info */
+    for (i=0; i<Tab->nrows; i++) {
+      if (Tab->rows[i]->numPoly>1) count++;
+    }
+  } /* end counting derivatives */
 
   /* If none then it's easy */
   if (count<=0) return;
@@ -322,31 +332,68 @@ void ObitSourceEphemerusSetup (ObitSourceEphemerus *in, ObitSDMData *SDM,
   in->DistDeriv    = g_malloc0(count*sizeof(odouble*));
   in->nsrc         = 0;
 
-  /* Loop over array */
-  count = 0;
-  for (i=0; i<Tab->nrows; i++) {
-    if (Tab->rows[i]->numPoly>1) {
-      n = Tab->rows[i]->numPoly;
-      /* Setup/fill */
-      for (j=0; j<SourceArray->nsou; j++) {
-	if (SourceArray->sou[j]->sourceId==Tab->rows[i]->sourceId)
-	  in->SID[count] = SourceArray->sou[j]->sourceNo;
+  /* Loop over array by type */
+  if (haveEph) { /* use Ephemeris Table */
+    count = 0;
+    for (i=0; i<EpTab->nrows; i++) {
+      if (EpTab->rows[i]->numPolyDir>=1) {
+	n = EpTab->rows[i]->numPolyDir;
+	m = EpTab->rows[i]->numPolyDist;
+	/* get Source ID - first find entry in Field table */
+	for (k=0; k<Tab->nrows; k++) {
+	  if (EpTab->rows[i]->ephemerisId==Tab->rows[k]->ephemerisId) break;
+	}
+	  /* Then look up in Source Table */
+	for (j=0; j<SourceArray->nsou; j++) {
+	  if (SourceArray->sou[j]->sourceId==Tab->rows[k]->sourceId)
+	    in->SID[count] = SourceArray->sou[j]->sourceNo;
+	}
+	in->refTime[count]      = EpTab->rows[i]->timeOrigin - SDM->refJD;
+	in->RARef[count]        = EpTab->rows[i]->dir[0];
+	in->numRADeriv[count]   = n;
+	in->RADeriv[count]      = g_malloc0(n*sizeof(odouble));
+	for (j=1; j<n; j++) in->RADeriv[count][j-1] = EpTab->rows[i]->dir[j*2];
+	/* Add Field rerefernce position */
+	in->RADeriv[count][0] += Tab->rows[k]->referenceDir[0];
+	in->DecRef[count]       = EpTab->rows[i]->dir[1];
+	in->numDecDeriv[count]  = n;
+	in->DecDeriv[count]     = g_malloc0(n*sizeof(odouble));
+	for (j=1; j<n; j++) in->DecDeriv[count][j-1] = EpTab->rows[i]->dir[1+j*2];
+	/* Add Field rerefernce position */
+	in->DecDeriv[count][0] += Tab->rows[k]->referenceDir[1];
+	in->distRef[count]      = EpTab->rows[i]->distance[0];
+	in->numDistDeriv[count] = m;
+	in->DistDeriv[count]    = g_malloc0(m*sizeof(odouble));
+	for (j=1; j<n; j++) in->DistDeriv[count][j] = EpTab->rows[i]->distance[j];
+	count++;
       }
-      in->refTime[count]      = Tab->rows[i]->time - SDM->refJD;
-      in->RARef[count]        = Tab->rows[i]->referenceDir[0];
-      in->numRADeriv[count]   = n;
-      in->RADeriv[count]      = g_malloc0(n*sizeof(odouble));
-      for (j=1; j<n; j++) in->RADeriv[count][j] = Tab->rows[i]->referenceDir[j*2];
-      in->DecRef[count]       = Tab->rows[i]->referenceDir[1];
-      in->numDecDeriv[count]  = n;
-      in->DecDeriv[count]     = g_malloc0(n*sizeof(odouble));
-      for (j=1; j<n; j++) in->DecDeriv[count][j] = Tab->rows[i]->referenceDir[1+j*2];
-      in->distRef[count]      = 0.0;
-      in->numDistDeriv[count] = 0;
-      in->DistDeriv[count]    = NULL;
-      count++;
     }
-  }
+  } else { /* Field/Source Tables */
+    count = 0;
+    for (i=0; i<Tab->nrows; i++) {
+      if (Tab->rows[i]->numPoly>1) {
+	n = Tab->rows[i]->numPoly;
+	/* Setup/fill */
+	for (j=0; j<SourceArray->nsou; j++) {
+	  if (SourceArray->sou[j]->sourceId==Tab->rows[i]->sourceId)
+	    in->SID[count] = SourceArray->sou[j]->sourceNo;
+	}
+	in->refTime[count]      = Tab->rows[i]->time - SDM->refJD;
+	in->RARef[count]        = Tab->rows[i]->referenceDir[0];
+	in->numRADeriv[count]   = n;
+	in->RADeriv[count]      = g_malloc0(n*sizeof(odouble));
+	for (j=1; j<n; j++) in->RADeriv[count][j] = Tab->rows[i]->referenceDir[j*2];
+	in->DecRef[count]       = Tab->rows[i]->referenceDir[1];
+	in->numDecDeriv[count]  = n;
+	in->DecDeriv[count]     = g_malloc0(n*sizeof(odouble));
+	for (j=1; j<n; j++) in->DecDeriv[count][j] = Tab->rows[i]->referenceDir[1+j*2];
+	in->distRef[count]      = 0.0;
+	in->numDistDeriv[count] = 0;
+	in->DistDeriv[count]    = NULL;
+	count++;
+      }
+    }
+  } /* End create table from Source/Field tables */
   in->nsrc = count;
 
   /* Cleanup */

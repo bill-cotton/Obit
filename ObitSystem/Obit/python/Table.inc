@@ -51,6 +51,7 @@
 #include "ObitTableOF.h"
 #include "ObitTablePC.h"
 #include "ObitTablePD.h"
+#include "ObitTablePO.h"
 #include "ObitTablePS.h"
 #include "ObitTableSN.h"
 #include "ObitTableSU.h"
@@ -184,6 +185,9 @@ extern int TableOpen (ObitTable *in, int access, ObitErr *err) {
   else if (!strncmp (in->tabType,"AIPS PD", 7)) {
     ret =  ObitTablePDOpen ((ObitTablePD*)in, laccess, err);
   }
+  else if (!strncmp (in->tabType,"AIPS PO", 7)) {
+    ret =  ObitTablePOOpen ((ObitTablePO*)in, laccess, err);
+  }
   else if (!strncmp (in->tabType,"AIPS PS", 7)) {
     ret =  ObitTablePSOpen ((ObitTablePS*)in, laccess, err);
   }
@@ -284,6 +288,9 @@ extern int TableClose (ObitTable *in, ObitErr *err) {
   }
   else if (!strncmp (in->tabType,"AIPS PD", 7)) {
     ret =  ObitTablePDClose ((ObitTablePD*)in, err);
+  }
+  else if (!strncmp (in->tabType,"AIPS PO", 7)) {
+    ret =  ObitTablePOClose ((ObitTablePO*)in, err);
   }
   else if (!strncmp (in->tabType,"AIPS PS", 7)) {
     ret =  ObitTablePSClose ((ObitTablePS*)in, err);
