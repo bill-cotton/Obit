@@ -2656,3 +2656,8 @@ Obit/src/ObitPolnCalFit.c:
 Obit/src/ObitUVWCalc.c:
   Remove "differential precession correction" - not correct?
 27 Feb 2015 svn version 505
+
+Missing changes for last update
+Obit/include/ObitSDMDataTypeDef.h Obit/include/ObitSDMDataDef.h:
+ Changes for ephemeris table
+27 Feb 2015 svn version 506

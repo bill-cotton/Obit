@@ -201,6 +201,8 @@ typedef struct {
   olong DataDescriptionRows;
   /** Number of Doppler rows */
   olong DopplerRows;
+  /** Number of Ephemeris rows */
+  olong EphemerisRows;
   /** Number of ExecBlock rows */
   olong ExecBlockRows;
   /** Number of Feed rows */
@@ -573,6 +575,38 @@ typedef struct {
   ASDMDopplerRow **rows;
 } ASDMDopplerTable;
 
+ /* Ephemeris Table */
+typedef struct {
+  /** Ephemeris Id */
+  olong ephemerisId;
+   /** number of Polynomial coefficients in dir  */
+  olong numPolyDir;
+  /** number of Polynomial coefficients in distance  */
+  olong numPolyDist;
+  /** number of Polynomial coefficients in radVel  */
+  olong numPolyRadVel;
+  /** Time origin JD of the polynomial expansion */
+  odouble timeOrigin;
+  /** a triple of double precision values defining the observer location. */
+  odouble *observerLocation;
+  /** time Interval as JD */
+  odouble *timeInterval;
+  /** Ephermeris direction, numPolyDir pairs*/
+  odouble *dir;
+  /** Ephermeris distance, numPolyDist elements */
+  odouble *distance;
+  /** Ephermeris radial velocity, numPolyRadVel elements */
+  odouble *radVel;
+  /** Origin of ephemeris information */
+  gchar *origin;
+} ASDMEphemerisRow;
+typedef struct {
+  /** Number of rows */
+  olong nrows;
+  /** Array of ASDMEphemeris rows */
+  ASDMEphemerisRow **rows;
+} ASDMEphemerisTable;
+
  /* ExecBlock Table */
 typedef struct {
   /** exec Block Id */
@@ -669,6 +703,8 @@ typedef struct {
 typedef struct {
   /** field Id */
   olong fieldId;
+  /** Ephemeris Id - index in EphemerisTab -1=>no entry*/
+  olong ephemerisId;
   /** field Name */
   gchar *fieldName;
   /** code */
