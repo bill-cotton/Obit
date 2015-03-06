@@ -2143,9 +2143,12 @@ static void UpdateBandpassTab(ObitPolnCalFit* in, gboolean isOK, ObitErr *err)
 
     iant = row->antNo - 1;
     /* Amplitudes of gains */
-    if (in->doFitGain && in->antGain) 
+    if (in->doFitGain && in->antGain) {
       {amp1 = in->antGain[iant*2];amp2 = in->antGain[iant*2+1];}
-    else {amp1 = 1.0; amp2 = 1.0;}
+      /* Divide the correction between pol1 and pol 2 
+      amp1 = 1.0/sqrt(in->antGain[iant*2+1]);
+      amp2 =     sqrt(in->antGain[iant*2+1]);*/
+    } else {amp1 = 1.0; amp2 = 1.0;}
 
     /* Update */
     /* Loop over chans */
@@ -2607,7 +2610,13 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
 	  if (fabs(deriv2)>(fabs(deriv)*1.0e-4))      /* Bother with this one?*/
 	    delta = -0.5*atan2(deriv, deriv2);
 	  else {in->souParm[isou*4+k] = sParam; continue;}
-	  delta *= 5;  /* Speed up */
+	  if (k<3) delta *= 5;  /* Speed up I,Q, U, slow down V*/
+	  else {
+	    delta *= 0.03;
+	    /* Set bound of 1% of I */
+	    if (in->souParm[isou*4+k]> 0.01*in->souParm[isou*4]) delta = -delta;
+	    if (in->souParm[isou*4+k]<-0.01*in->souParm[isou*4]) delta = -delta;
+	  }
 	  if (delta>0.) delta = MIN (delta, 20*sdelta);
 	  if (delta<0.) delta = MAX (delta, -20*sdelta);
 	  /* Loop decreasing delta until fit improves */
@@ -2681,6 +2690,8 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
 	      if (fabs(delta)<1.0e-6) break;
 	    } /* end loop decreasing */
 	    in->antGain[iant*2+k] = sParam;   /* Set parameter to new or old value */
+	  } else if (k==0) {  /* Not fitting gain_X, use 1.gain_Y */
+	    in->antGain[iant*2] = 1.0/in->antGain[iant*2+1];
 	  } /* end if fitting parameter */ 
 	  if (err->error) Obit_traceback_val (err, routine, in->name, FALSE);
 	} /* end loop over parameters */

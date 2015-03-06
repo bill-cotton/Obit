@@ -2661,3 +2661,19 @@ Missing changes for last update
 Obit/include/ObitSDMDataTypeDef.h Obit/include/ObitSDMDataDef.h:
  Changes for ephemeris table
 27 Feb 2015 svn version 506
+
+Enhancement to Lin Feed poln cal, ALMA enhancements to BDFIn, bug fixes
+Obit/src/ObitSDMData.c Obit/include/ObitSDMDataTypeDef.h:
+  Add missing equinoxEquator variable to Equinox table.
+  Correct calculation of ALMA antenna locations.
+  uninitialized variable
+Obit/src/ObitSourceEphemerus.c Obit/include/ObitSourceEphemerusDef.h:
+  Reorganize to adapt to ALMA scheme
+Obit/tasks/IDIIn.c:
+  Fix logic bugs in reference day for concatenating data spanning a day boundry.
+Obit/TDF/CubeClip.TDF Obit/tasks/CubeClip.c:
+  Add parameter for absolute minimum value.
+Obit/src/ObitPolnCalFit.c:
+  divide X/Y gain between X,Y
+  constraints on fitting Stokes V
+6 Mar 2015, svn ver. 507

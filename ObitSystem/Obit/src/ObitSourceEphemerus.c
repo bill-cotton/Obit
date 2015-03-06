@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012                                               */
+/*;  Copyright (C) 2012-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -140,8 +140,8 @@ ObitSourceEphemerus* ObitSourceEphemerusCopy  (ObitSourceEphemerus *in,
   ParentClass->ObitCopy (in, out, err);
 
   /* Cleanup any old */
-  if (out->nsrc>0) {
-    for (i=0; i<out->nsrc; i++) {
+  if (out->nentry>0) {
+    for (i=0; i<out->nentry; i++) {
       if (out->RADeriv)
 	if (out->RADeriv[i])   {g_free(out->RADeriv[i]);   out->RADeriv[i]=NULL;}
       if (out->DecDeriv)
@@ -151,6 +151,8 @@ ObitSourceEphemerus* ObitSourceEphemerusCopy  (ObitSourceEphemerus *in,
     }
     if (out->SID)          {g_free(out->SID);          out->SID=NULL;}
     if (out->refTime)      {g_free(out->refTime);      out->refTime=NULL;}
+    if (out->startTime)    {g_free(out->startTime);    out->startTime=NULL;}
+    if (out->endTime)      {g_free(out->endTime);      out->endTime=NULL;}
     if (out->RARef)        {g_free(out->RARef);        out->RARef=NULL;}
     if (out->numRADeriv)   {g_free(out->numRADeriv);   out->numRADeriv=NULL;}
     if (out->RADeriv)      {g_free(out->RADeriv);      out->RADeriv=NULL;}
@@ -160,40 +162,44 @@ ObitSourceEphemerus* ObitSourceEphemerusCopy  (ObitSourceEphemerus *in,
     if (out->distRef)      {g_free(out->distRef);      out->distRef=NULL;}
     if (out->numDistDeriv) {g_free(out->numDistDeriv); out->numDistDeriv=NULL;}
     if (out->DistDeriv)    {g_free(out->DistDeriv);    out->DistDeriv=NULL;}
-    out->nsrc = 0;
+    out->nentry = 0;
   } /* end cleanup old */
 
   /*  copy this class -  Allocate arrays */
-  out->SID          = g_malloc0(in->nsrc*sizeof(olong));
-  out->refTime      = g_malloc0(in->nsrc*sizeof(odouble));
-  out->RARef        = g_malloc0(in->nsrc*sizeof(odouble));
-  out->numRADeriv   = g_malloc0(in->nsrc*sizeof(olong));
-  out->RADeriv      = g_malloc0(in->nsrc*sizeof(odouble*));
-  out->DecRef       = g_malloc0(in->nsrc*sizeof(odouble));
-  out->numDecDeriv  = g_malloc0(in->nsrc*sizeof(olong));
-  out->DecDeriv     = g_malloc0(in->nsrc*sizeof(odouble*));
-  out->distRef      = g_malloc0(in->nsrc*sizeof(odouble));
-  out->numDistDeriv = g_malloc0(in->nsrc*sizeof(olong));
-  out->DistDeriv    = g_malloc0(in->nsrc*sizeof(odouble*));
-  out->nsrc         = 0;
+  out->SID          = g_malloc0(in->nentry*sizeof(olong));
+  out->refTime      = g_malloc0(in->nentry*sizeof(odouble));
+  out->startTime    = g_malloc0(in->nentry*sizeof(odouble));
+  out->endTime      = g_malloc0(in->nentry*sizeof(odouble));
+  out->RARef        = g_malloc0(in->nentry*sizeof(odouble));
+  out->numRADeriv   = g_malloc0(in->nentry*sizeof(olong));
+  out->RADeriv      = g_malloc0(in->nentry*sizeof(odouble*));
+  out->DecRef       = g_malloc0(in->nentry*sizeof(odouble));
+  out->numDecDeriv  = g_malloc0(in->nentry*sizeof(olong));
+  out->DecDeriv     = g_malloc0(in->nentry*sizeof(odouble*));
+  out->distRef      = g_malloc0(in->nentry*sizeof(odouble));
+  out->numDistDeriv = g_malloc0(in->nentry*sizeof(olong));
+  out->DistDeriv    = g_malloc0(in->nentry*sizeof(odouble*));
+  out->nentry         = 0;
 
   /* Loop over array */
-  for (i=0; i<in->nsrc; i++) {
-      n = in->numRADeriv[in->nsrc];
-      out->SID[in->nsrc] = in->SID[in->nsrc];
-      out->refTime[in->nsrc]      = 
-      out->RARef[in->nsrc]        = 
-      out->numRADeriv[in->nsrc]   = n;
-      out->RADeriv[in->nsrc]      = g_malloc0(n*sizeof(odouble));
-      for (j=1; j<n; j++) out->RADeriv[in->nsrc][j] = in->RADeriv[in->nsrc][j];
-      out->DecRef[in->nsrc]       = in->DecRef[in->nsrc];
-      out->numDecDeriv[in->nsrc]  = n;
-      out->DecDeriv[in->nsrc]     = g_malloc0(n*sizeof(odouble));
-      for (j=1; j<n; j++) out->DecDeriv[in->nsrc][j] = in->DecDeriv[in->nsrc][j];
-      out->distRef[in->nsrc]      = 0.0;
-      out->numDistDeriv[in->nsrc] = 0;
-      out->DistDeriv[in->nsrc]    = NULL;
-      in->nsrc++;
+  for (i=0; i<in->nentry; i++) {
+      n = in->numRADeriv[in->nentry];
+      out->SID[in->nentry]          = in->SID[in->nentry];
+      out->refTime[in->nentry]      = in->refTime[in->nentry];
+      out->startTime[in->nentry]    = in->startTime[in->nentry];
+      out->endTime[in->nentry]      = in->endTime[in->nentry];
+      out->RARef[in->nentry]        = in->RARef[in->nentry];
+      out->numRADeriv[in->nentry]   = n;
+      out->RADeriv[in->nentry]      = g_malloc0(n*sizeof(odouble));
+      for (j=1; j<n; j++) out->RADeriv[in->nentry][j] = in->RADeriv[in->nentry][j];
+      out->DecRef[in->nentry]       = in->DecRef[in->nentry];
+      out->numDecDeriv[in->nentry]  = n;
+      out->DecDeriv[in->nentry]     = g_malloc0(n*sizeof(odouble));
+      for (j=1; j<n; j++) out->DecDeriv[in->nentry][j] = in->DecDeriv[in->nentry][j];
+      out->distRef[in->nentry]      = 0.0;
+      out->numDistDeriv[in->nentry] = 0;
+      out->DistDeriv[in->nentry]    = NULL;
+      in->nentry++;
     }
   
   return out;
@@ -266,8 +272,8 @@ void ObitSourceEphemerusSetup (ObitSourceEphemerus *in, ObitSDMData *SDM,
   gchar *routine = "ObitSourceEphemerusSetup";
 
   /* Cleanup any old */
-  if (in->nsrc>0) {
-    for (i=0; i< in->nsrc; i++) {
+  if (in->nentry>0) {
+    for (i=0; i< in->nentry; i++) {
       if (in->RADeriv)
 	if (in->RADeriv[i])   {g_free(in->RADeriv[i]);   in->RADeriv[i]=NULL;}
       if (in->DecDeriv)
@@ -278,6 +284,8 @@ void ObitSourceEphemerusSetup (ObitSourceEphemerus *in, ObitSDMData *SDM,
     if (in->SID)          {g_free(in->SID);          in->SID=NULL;}
     if (in->refTime)      {g_free(in->refTime);      in->refTime=NULL;}
     if (in->RARef)        {g_free(in->RARef);        in->RARef=NULL;}
+    if (in->startTime)    {g_free(in->startTime);    in->startTime=NULL;}
+    if (in->endTime)      {g_free(in->endTime);      in->endTime=NULL;}
     if (in->numRADeriv)   {g_free(in->numRADeriv);   in->numRADeriv=NULL;}
     if (in->RADeriv)      {g_free(in->RADeriv);      in->RADeriv=NULL;}
     if (in->DecRef)       {g_free(in->DecRef);       in->DecRef=NULL;}
@@ -286,7 +294,7 @@ void ObitSourceEphemerusSetup (ObitSourceEphemerus *in, ObitSDMData *SDM,
     if (in->distRef)      {g_free(in->distRef);      in->distRef=NULL;}
     if (in->numDistDeriv) {g_free(in->numDistDeriv); in->numDistDeriv=NULL;}
     if (in->DistDeriv)    {g_free(in->DistDeriv);    in->DistDeriv=NULL;}
-    in->nsrc = 0;
+    in->nentry = 0;
   } /* end cleanup old */
 
   /* Check if any sources have derivatives on position */
@@ -295,9 +303,7 @@ void ObitSourceEphemerusSetup (ObitSourceEphemerus *in, ObitSDMData *SDM,
   haveEph = EpTab!=NULL;
   count = 0;
   if (haveEph) {  /* Ephemeris table */
-    for (i=0; i<EpTab->nrows; i++) {
-      if (EpTab->rows[i]->numPolyDir>=1) count++;
-    }
+    count = EpTab->nrows;
    } else { /* Use Field info */
     for (i=0; i<Tab->nrows; i++) {
       if (Tab->rows[i]->numPoly>1) count++;
@@ -317,10 +323,13 @@ void ObitSourceEphemerusSetup (ObitSourceEphemerus *in, ObitSDMData *SDM,
   in->updtime   = updtime;   /* Save update interval */
   in->lastTime  = -1.0e-10;  /* Force update */
   in->validTime = -1.0e-10;
+  in->lastEntry = -1;
 
   /* Allocate arrays */
   in->SID          = g_malloc0(count*sizeof(olong));
   in->refTime      = g_malloc0(count*sizeof(odouble));
+  in->startTime    = g_malloc0(count*sizeof(odouble));
+  in->endTime      = g_malloc0(count*sizeof(odouble));
   in->RARef        = g_malloc0(count*sizeof(odouble));
   in->numRADeriv   = g_malloc0(count*sizeof(olong));
   in->RADeriv      = g_malloc0(count*sizeof(odouble*));
@@ -330,7 +339,7 @@ void ObitSourceEphemerusSetup (ObitSourceEphemerus *in, ObitSDMData *SDM,
   in->distRef      = g_malloc0(count*sizeof(odouble));
   in->numDistDeriv = g_malloc0(count*sizeof(olong));
   in->DistDeriv    = g_malloc0(count*sizeof(odouble*));
-  in->nsrc         = 0;
+  in->nentry         = 0;
 
   /* Loop over array by type */
   if (haveEph) { /* use Ephemeris Table */
@@ -349,6 +358,8 @@ void ObitSourceEphemerusSetup (ObitSourceEphemerus *in, ObitSDMData *SDM,
 	    in->SID[count] = SourceArray->sou[j]->sourceNo;
 	}
 	in->refTime[count]      = EpTab->rows[i]->timeOrigin - SDM->refJD;
+	in->startTime[count]    = EpTab->rows[i]->timeInterval[0] - SDM->refJD;
+	in->endTime[count]      = in->startTime[count] + EpTab->rows[i]->timeInterval[1];
 	in->RARef[count]        = EpTab->rows[i]->dir[0];
 	in->numRADeriv[count]   = n;
 	in->RADeriv[count]      = g_malloc0(n*sizeof(odouble));
@@ -378,7 +389,9 @@ void ObitSourceEphemerusSetup (ObitSourceEphemerus *in, ObitSDMData *SDM,
 	  if (SourceArray->sou[j]->sourceId==Tab->rows[i]->sourceId)
 	    in->SID[count] = SourceArray->sou[j]->sourceNo;
 	}
-	in->refTime[count]      = Tab->rows[i]->time - SDM->refJD;
+        in->refTime[count]      = Tab->rows[i]->time - SDM->refJD;
+	in->startTime[count]    = SourceArray->sou[j]->timeInterval[0] - SDM->refJD;
+	in->endTime[count]      = in->startTime[count] + SourceArray->sou[j]->timeInterval[1];
 	in->RARef[count]        = Tab->rows[i]->referenceDir[0];
 	in->numRADeriv[count]   = n;
 	in->RADeriv[count]      = g_malloc0(n*sizeof(odouble));
@@ -394,7 +407,7 @@ void ObitSourceEphemerusSetup (ObitSourceEphemerus *in, ObitSDMData *SDM,
       }
     }
   } /* End create table from Source/Field tables */
-  in->nsrc = count;
+  in->nentry = count;
 
   /* Cleanup */
   SourceArray = ObitSDMDataKillSourceArray(SourceArray);
@@ -409,8 +422,8 @@ void ObitSourceEphemerusSetup (ObitSourceEphemerus *in, ObitSDMData *SDM,
  * \param time   Time (days)
  * \param RA     [out] Apparent RA of date (rad)
  * \param Dec    [out] Apparent Dec of date (rad)
- * \param dist   [out] Distance (m), 0 if not known
- * \param uvroe  [out] rotation angle (rad) for uv to align v with J2000 north.
+ * \param dist   [out] Distance (AU), 0 if not known
+ * \param uvrot  [out] rotation angle (rad) for uv to align v with J2000 north.
  * \return TRUE if source found, else FALSE
  */
 gboolean 
@@ -419,8 +432,9 @@ ObitSourceEphemerusCheckSource(ObitSourceEphemerus *in, olong srcID,
 			       odouble *dist, ofloat *uvrot)
 {
   gboolean found=FALSE;
-  olong isrc, i;
+  olong ientry, i;
   odouble dtime, sum, fact, ra, dec, RAOff, DecOff, dRa, RAApp, DecApp;
+  odouble AU=149597870700.0;   /* 1 AU in meters */
 
   /* Initialize output */
   *RA    = 0.0;
@@ -429,18 +443,20 @@ ObitSourceEphemerusCheckSource(ObitSourceEphemerus *in, olong srcID,
   *uvrot = 0.0;  
 
   /* Anything? */
-  if (in->nsrc<=0) return found;
+  if (in->nentry<=0) return found;
 
-  /* Loop over list */
-  for (isrc=0; isrc<in->nsrc; isrc++) {
-    if (srcID==in->SID[isrc]) {found=TRUE; break;}
+  /* Loop over list - find source and interval */
+  for (ientry=0; ientry<in->nentry; ientry++) {
+    if ((srcID==in->SID[ientry]) && 
+	(time>=in->startTime[ientry]) && 	(time<=in->endTime[ientry])) {found=TRUE; break;}
   }
   if (!found) return found;
 
-  /* Must have it - is it a new source? */
-  if (srcID!=in->lastSrc) {
+  /* Must have it - is it a new soure or entry? */
+  if ((srcID!=in->lastSrc) || (ientry!=in->lastEntry)) {
     in->validTime = -1.0e10;  /* force update */
     in->lastSrc   = srcID;
+    in->lastEntry = ientry;
   }
 
   /* Current position still valid? */
@@ -454,32 +470,34 @@ ObitSourceEphemerusCheckSource(ObitSourceEphemerus *in, olong srcID,
 
   /* Need to update */
   in->lastTime = time;
-  dtime = in->lastTime - in->refTime[isrc];
+  dtime = in->lastTime - in->refTime[ientry];
   /* RA */
   fact = dtime;
-  sum  = in->RARef[isrc];
-  for (i=0; i<in->numRADeriv[isrc]; i++) {
-    sum += fact*in->RADeriv[isrc][i];
+  sum  = in->RARef[ientry];
+  for (i=0; i<in->numRADeriv[ientry]; i++) {
+    sum += fact*in->RADeriv[ientry][i];
     fact *= dtime;
   }
   ra = sum*RAD2DG;  /* Convert RA to deg */
  
   /* Dec */
   fact = dtime;
-  sum  = in->DecRef[isrc];
-  for (i=0; i<in->numDecDeriv[isrc]; i++) {
-    sum += fact*in->DecDeriv[isrc][i];
+  sum  = in->DecRef[ientry];
+  for (i=0; i<in->numDecDeriv[ientry]; i++) {
+    sum += fact*in->DecDeriv[ientry][i];
     fact *= dtime;
   }
   dec = sum*RAD2DG; /* Convert Dec to deg */
 
   /* Distance */
   fact = dtime;
-  sum  = in->distRef[isrc];
-  for (i=0; i<in->numDistDeriv[isrc]; i++) {
-    sum += fact*in->DistDeriv[isrc][i];
+  sum  = in->distRef[ientry];
+  for (i=0; i<in->numDistDeriv[ientry]; i++) {
+    sum += fact*in->DistDeriv[ientry][i];
     fact *= dtime;
   }
+  /* Make sure it's in AU */
+  if (sum>100000.) sum /= AU;
   in->lastDist = sum;
 
   /* Precess to apparent */
@@ -511,7 +529,7 @@ ObitSourceEphemerusCheckSource(ObitSourceEphemerus *in, olong srcID,
   *dist  = in->lastDist;
 
   /* Update validity time  */
-  in->validTime = in->lastTime + in->updtime;
+  in->validTime = MIN(in->lastTime+in->updtime, in->endTime[ientry]);
 
   return found;
 } /* end ObitSourceEphemerusCheckSource  */
@@ -586,9 +604,11 @@ void ObitSourceEphemerusInit  (gpointer inn)
     ParentClass->ObitInit (inn);
 
   /* set members in this class */
-  in->nsrc         = 0;
+  in->nentry         = 0;
   in->SID          = NULL;
   in->refTime      = NULL;
+  in->startTime    = NULL;
+  in->endTime      = NULL;
   in->RARef        = NULL;
   in->numRADeriv   = NULL;
   in->RADeriv      = NULL;
@@ -600,6 +620,7 @@ void ObitSourceEphemerusInit  (gpointer inn)
   in->DistDeriv    = NULL;
   in->source       = NULL;
   in->lastSrc      = -999;
+  in->lastEntry    = -999;
   in->lastTime     = -1.0e-10;  /* Force update */
   in->validTime    = -1.0e-10;
 
@@ -621,8 +642,8 @@ void ObitSourceEphemerusClear (gpointer inn)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* delete this class members */
-   if (in->nsrc>0) {
-    for (i=0; i< in->nsrc; i++) {
+   if (in->nentry>0) {
+    for (i=0; i< in->nentry; i++) {
       if (in->RADeriv)
 	if (in->RADeriv[i])   {g_free(in->RADeriv[i]);   in->RADeriv[i]=NULL;}
       if (in->DecDeriv)
@@ -632,6 +653,8 @@ void ObitSourceEphemerusClear (gpointer inn)
     }
     if (in->SID)          {g_free(in->SID);          in->SID=NULL;}
     if (in->refTime)      {g_free(in->refTime);      in->refTime=NULL;}
+    if (in->startTime)    {g_free(in->startTime);    in->startTime=NULL;}
+    if (in->endTime)      {g_free(in->endTime);      in->endTime=NULL;}
     if (in->RARef)        {g_free(in->RARef);        in->RARef=NULL;}
     if (in->numRADeriv)   {g_free(in->numRADeriv);   in->numRADeriv=NULL;}
     if (in->RADeriv)      {g_free(in->RADeriv);      in->RADeriv=NULL;}
@@ -641,7 +664,7 @@ void ObitSourceEphemerusClear (gpointer inn)
     if (in->distRef)      {g_free(in->distRef);      in->distRef=NULL;}
     if (in->numDistDeriv) {g_free(in->numDistDeriv); in->numDistDeriv=NULL;}
     if (in->DistDeriv)    {g_free(in->DistDeriv);    in->DistDeriv=NULL;}
-    in->nsrc = 0;
+    in->nentry = 0;
   } /* end cleanup old */
 
    in->source = ObitSourceUnref(in->source);

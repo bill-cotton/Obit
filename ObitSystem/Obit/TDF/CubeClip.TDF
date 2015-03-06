@@ -3,7 +3,7 @@
 ;! Clip insignificant pixels
 ;# Task Obit
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006-2012
+;;  Copyright (C) 2006-2015
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -61,11 +61,12 @@ outSeq         -1.0      9999.0    Output image seq. #.
 **PARAM** int 1
 outDisk                            Output disk drive #
                                      0 => highest with room
-**PARAM** float 4
+**PARAM** float 5
 Parms           0.0      9999.0    [0] min. RMS 
                                    [1] min. peak
                                    [2] >0.5 => blank fill
                                    [3] Acceptance size (0->5)
+                                   [4] Min abs value
 **PARAM** int 1 **DEF** 1
 nThreads            0              Number of threads to use
 **PARAM** str 128
@@ -76,7 +77,8 @@ Type: Task
 Use:  CubeClip Copies a sub region of a cube and replaces values
 below a cutoff value.  This cutoff value is determined for each 
 plane and is the greater of Parms[0] times the RMS of that plane
-(convolved) or Parms[1] times the peak abs. value in that plane. 
+(convolved) or Parms[1] times the peak abs. value in that plane,
+or Parms[4]. 
 If any pixel within Parms[3] of a given pixel passes the test, 
 the given pixel is passed.
    All CC tables with version numbers corresponding to planes 

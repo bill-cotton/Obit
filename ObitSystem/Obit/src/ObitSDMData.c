@@ -1416,7 +1416,8 @@ ASDMAntennaArray* ObitSDMDataGetAntArray (ObitSDMData *in, olong mainRow)
   olong  configDescriptionId, stationId, dataDescriptionId, spectralWindowId, execBlockId;
   olong  polOrHoloId, FeedId;
   olong i, iMain, iConfig, iAnt, jAnt, jDD, jSW, jPL,jFd, numAnt, iJD, iExec;
-  odouble JD, rho, acolat, along, off1[3], off2[3];
+  odouble JD, x, y, z, rho, gclat, dlat, acolat, acolong, off1[3], off2[3];
+  odouble c1=-3.358513e-3, c2=5.6398e-6, c3=-0.01261e-6;
 
   /* Find scan in Main table */
   iMain = mainRow;
@@ -1531,19 +1532,21 @@ ASDMAntennaArray* ObitSDMDataGetAntArray (ObitSDMData *in, olong mainRow)
     /* If an antPosition is given (ALMA), rotate to station frame and add to station position */
     if (fabs(out->ants[iAnt]->antPosition[2])>0.001) {
       /* Get colatitude and longitude */
-      if (fabs(out->ants[iAnt]->staPosition[0])<0.001) out->ants[iAnt]->staPosition[0] = 1.0;  /* trap bad position */
-      rho = sqrt(out->ants[iAnt]->staPosition[0]*out->ants[iAnt]->staPosition[0] +
-		 out->ants[iAnt]->staPosition[1]*out->ants[iAnt]->staPosition[1] +
-		 out->ants[iAnt]->staPosition[2]*out->ants[iAnt]->staPosition[2]);
-      acolat = 0.5*G_PI - asin(out->ants[iAnt]->staPosition[2]/rho);
-      along  = atan2(out->ants[iAnt]->staPosition[1],out->ants[iAnt]->staPosition[0]);
-      /* rotate by co lat around x axis */
-      off1[0] = out->ants[iAnt]->antPosition[0];
-      off1[1] = cos(acolat)*out->ants[iAnt]->antPosition[1] - sin(acolat)*out->ants[iAnt]->antPosition[2];
-      off1[2] = sin(acolat)*out->ants[iAnt]->antPosition[1] + cos(acolat)*out->ants[iAnt]->antPosition[2];
-      /* rotate by longitude around z axis */
-      off2[0] = cos(along)*off1[0] - sin(along)*off1[1];
-      off2[1] = sin(along)*off1[0] + cos(along)*off1[1];
+      x = out->ants[iAnt]->staPosition[0];  y = out->ants[iAnt]->staPosition[1]; z = out->ants[iAnt]->staPosition[2];
+      if (fabs(x)<0.001) x = 1.0;  /* trap bad position */
+      rho      = sqrt (x*x + y*y + z*z);
+      gclat    = asin(z/rho);
+      dlat     = c1*sin(2*gclat) + c2*sin(4*gclat) + c3*sin(6*gclat);  /* Geodetic latitude */
+      acolat   = 0.5*G_PI - (gclat - dlat);
+      acolong  = 0.5*G_PI + atan2(y,x);
+      /* rotate offset by co lat around x axis */
+      x = out->ants[iAnt]->antPosition[0]; y = out->ants[iAnt]->antPosition[1]; z = out->ants[iAnt]->antPosition[2];
+      off1[0] = x;
+      off1[1] = cos(acolat)*y - sin(acolat)*z;
+      off1[2] = sin(acolat)*y + cos(acolat)*z;
+      /* rotate by co longitude around z axis */
+      off2[0] = cos(acolong)*off1[0] - sin(acolong)*off1[1];
+      off2[1] = sin(acolong)*off1[0] + cos(acolong)*off1[1];
       off2[2] = off1[2];
       /* Add to station coordinates */
       for (i=0; i<3; i++) out->ants[iAnt]->staPosition[i] += off2[i];
@@ -1992,7 +1995,7 @@ void ObitSDMDataRenumberAnt(ObitSDMData *in,  ObitAntennaList *antennaList,
 			    gboolean *isDone, ObitErr *err)
 {
   olong i, j, k, len, stationId, nextID=1;
-  gboolean matches, areNew=FALSE,renum=FALSE;
+  gboolean matches=FALSE, areNew=FALSE,renum=FALSE;
   gchar *routine = "RenumberAnt";
 
   /* Error checks */
@@ -6111,6 +6114,12 @@ static ASDMEphemerisTable* ParseASDMEphemerisTable(ObitSDMData *me,
     prior = "<numPolyRadVel>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->numPolyRadVel = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+
+    prior = "<equinoxEquator>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->equinoxEquator = ASDMparse_time (line, maxLine, prior, &next);
       continue;
     }
 

@@ -587,6 +587,8 @@ typedef struct {
   olong numPolyRadVel;
   /** Time origin JD of the polynomial expansion */
   odouble timeOrigin;
+  /** Equinox of positions */
+  odouble equinoxEquator;
   /** a triple of double precision values defining the observer location. */
   odouble *observerLocation;
   /** time Interval as JD */

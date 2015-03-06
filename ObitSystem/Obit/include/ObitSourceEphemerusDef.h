@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012                                               */
+/*;  Copyright (C) 2012-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -33,10 +33,12 @@
  * ObitSourceEphemerus structure members for this and any derived classes.
  */
 #include "ObitDef.h"  /* Parent class instance definitions */
-/** Number of sources given */
-olong nsrc;
+/** Number of entries given */
+olong nentry;
 /** Last source number */
 olong lastSrc;
+/** Last entry number */
+olong lastEntry;
 /** Time (day) of last calculation */
 ofloat lastTime;
 /** Time (day) until which last calculation is valid */
@@ -53,27 +55,31 @@ odouble lastDist;
 odouble updtime;
 /* Reference day as JD */
 odouble refJD;
-/** List of source IDs */
+/** List of source IDs per entry */
 olong *SID;
-/** Reference time wrt reference day (days) per source */
+/** Reference time wrt reference day (days) per entry */
 odouble *refTime;
-/** Apparent RA at reference time (deg), per source */
+/** beginning of validity (days) per entry */
+odouble *startTime;
+/** end of validity (days) per entry */
+odouble *endTime;
+/** Apparent RA at reference time (deg), per entry*/
 odouble *RARef;
-/** number of RA derivatives per source */
+/** number of RA derivatives per entry */
 olong *numRADeriv;
-/** Array of arrays of RA derivatives per source, deg/day... */
+/** Array of arrays of RA derivatives per entry, deg/day... */
 odouble **RADeriv;
-/** Apparent Declination at reference time (deg), per source */
+/** Apparent Declination at reference time (deg), per entry */
 odouble *DecRef;
-/** number of Dec derivatives per source */
+/** number of Dec derivatives per entry */
 olong *numDecDeriv;
-/** Array of arrays of Dec derivatives per source, deg/day... */
+/** Array of arrays of Dec derivatives per entry, deg/day... */
 odouble **DecDeriv;
-/** Distance at reference time (m), per source */
+/** Distance at reference time (m), per entry */
 odouble *distRef;
-/** number of distance derivatives per source */
+/** number of distance derivatives per entry */
 olong *numDistDeriv;
-/** Array of arrays of distance derivatives per source, m/day... */
+/** Array of arrays of distance derivatives per entry, m/day... */
 odouble **DistDeriv;
 /** Work source for precessing */
 ObitSource *source;

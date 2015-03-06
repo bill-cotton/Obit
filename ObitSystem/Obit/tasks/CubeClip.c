@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task - Clip insignificant pixels                              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2012                                          */
+/*;  Copyright (C) 2006-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -471,8 +471,8 @@ ObitInfoList* defaultInputs(ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* Parms */
-  dim[0] = 4;
-  for (i=0; i<4; i++) ftemp[i] = 0.0; ftemp[3] = 5.0;
+  dim[0] = 5;
+  for (i=0; i<5; i++) ftemp[i] = 0.0; ftemp[3] = 5.0;
   ObitInfoListPut (out, "Parms", OBIT_float, dim, ftemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
@@ -797,6 +797,7 @@ void CubeClipHistory (ObitInfoList* myInput, ObitImage* inImage,
 /*      [1] min. fraction of  peak                                        */
 /*      [2] >0.5 => blank fill, else zero fill                            */
 /*      [3] Convolution size (0->5)                                       */
+/*      [4] Min abs value                                                 */
 /*   Input:                                                               */
 /*      myInput   Input parameters on InfoList                            */
 /*      inImage   Image to copy history from                              */
@@ -810,7 +811,7 @@ void CubeClipClip (ObitInfoList* myInput, ObitImage* inImage,
   oint         noParms;
   ObitIOCode   iretCode, oretCode;
   ofloat       RMS, maxF, newVal, *Parms=NULL, fblank =  ObitMagicF();
-  ofloat       minAllow, radius, rad2;
+  ofloat       minAllow, minAbs, radius, rad2;
   ObitInfoType type;
   ObitTableCC *inCC=NULL, *outCC=NULL;
   ObitThread   *thread;
@@ -837,6 +838,7 @@ void CubeClipClip (ObitInfoList* myInput, ObitImage* inImage,
 
   /* Control parameters */
   ObitInfoListGetP(myInput, "Parms", &type, dim, (gpointer)&Parms); 
+  minAbs = Parms[4];
   /* Get region from myInput */
   ObitInfoListGetTest(myInput, "BLC", &type, dim, blc);
   /* Defaults */
@@ -936,6 +938,7 @@ void CubeClipClip (ObitInfoList* myInput, ObitImage* inImage,
     maxF = fabs (ObitFArrayMaxAbs(inImage->image, pos));
     RMS  = ObitFArrayRMS(inImage->image);
     minAllow = MAX (Parms[0]*RMS, Parms[1]*maxF);
+    minAllow = MAX (minAllow, minAbs);
     radius   = Parms[3];
     if (radius<=0.0) radius = 5.0;
     rad2 = radius * radius;

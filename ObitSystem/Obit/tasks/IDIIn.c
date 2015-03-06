@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Read IDI format data, convert to Obit UV                           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2014                                          */
+/*;  Copyright (C) 2007-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1299,7 +1299,7 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
     inRow->Source = MAX (inRow->Source, inRow->VLBASource);
 
     /* Array number (0-rel)*/
-    iarr = inRow->Array - 1;
+    iarr = MAX(0, inRow->Array - 1);
     /* Array reference JD, may not work for multiple arrays */
     if (arrayRefJDs[iarr]<=0.0) arrayRefJDs[iarr] = refMJD;
     arrJD = arrayRefJDs[iarr];
@@ -1309,6 +1309,9 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
       arrJD = dataRefJDs[iarr];
       /* Any correction for array ref date to data ref date */
       arrRefJDCor[iarr] = arrJD - arrayRefJDs[iarr];
+    } else { /* Subsequent data set */
+      ObitUVDescDate2JD (inTable->RefDate, &JD);
+      arrRefJDCor[iarr] = JD - arrayRefJDs[iarr];
     }
 
     /* Antenna numbers in proper order */
@@ -2158,21 +2161,22 @@ void GetFlagInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
 	return;
       }
 
-      /* Array number 0-rel */
-      iarr = inRow->Array-1;
+      /* Array number 1-rel, 0=> all match */
+      iarr = MAX(0,inRow->Array-1);
+      
+      /* Save to FG table */
+      outRow->SourID       = inRow->SourID;
+      outRow->SubA         = inRow->Array;
+      outRow->freqID       = inRow->fqid;
+      outRow->ants[0]      = inRow->ants[0];
+      outRow->ants[1]      = inRow->ants[1];
+      outRow->TimeRange[0] = inRow->timerange[0] + arrRefJDCor[iarr];
+      outRow->TimeRange[1] = inRow->timerange[1] + arrRefJDCor[iarr];
       
       /* Loop over bands - write one at a time in FG table */
       for (i=0; i<numIF; i++) {
 	/* Flagged? */
 	if (!inRow->bands[i]) continue;
-	/* Save to FG table */
-	outRow->SourID       = inRow->SourID;
-	outRow->SubA         = inRow->Array;
-	outRow->freqID       = inRow->fqid;
-	outRow->ants[0]      = inRow->ants[0];
-	outRow->ants[1]      = inRow->ants[1];
-	outRow->TimeRange[0] = inRow->timerange[0] - arrRefJDCor[iarr];
-	outRow->TimeRange[1] = inRow->timerange[1] - arrRefJDCor[iarr];
 	outRow->ifs[0]       = i+1;
 	outRow->ifs[1]       = i+1;
 	outRow->chans[0]     = inRow->chans[0];
@@ -2191,7 +2195,7 @@ void GetFlagInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
 	  Obit_log_error(err, OBIT_Error, "ERROR updating FG Table");
 	  return;
 	}
-      }
+      } /* End IF loop */
     } /* end loop over input table */
     
     /* Close  tables */
@@ -2329,10 +2333,10 @@ void GetCalibrationInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
       }
       
       /* Array number 0-rel */
-      iarr = inRow->Array-1;
+      iarr = MAX(0,inRow->Array-1);
 
       /* Save to CL table */
-      outRow->Time        = inRow->Time - arrRefJDCor[iarr];
+      outRow->Time        = inRow->Time + arrRefJDCor[iarr];
       outRow->TimeI       = inRow->TimeI;
       outRow->SourID      = inRow->SourID;
       outRow->antNo       = inRow->antNo;
@@ -2487,10 +2491,10 @@ void GetBandpassInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
       }
       
        /* Array number 0-rel */
-      iarr = inRow->Array-1;
+      iarr = MAX(0,inRow->Array-1);
       
      /* Save to BP table */
-      outRow->Time        = inRow->Time - arrRefJDCor[iarr];
+      outRow->Time        = inRow->Time + arrRefJDCor[iarr];
       outRow->TimeI       = inRow->TimeI;
       outRow->SourID      = inRow->SourID;
       outRow->SubA        = inRow->Array;
@@ -2634,10 +2638,10 @@ void GetTSysInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
       }
       
       /* Array number 0-rel */
-      iarr = inRow->Array-1;
+      iarr = MAX(0,inRow->Array-1);
 
       /* Save to TY table */
-      outRow->Time      = inRow->Time - arrRefJDCor[iarr];
+      outRow->Time      = inRow->Time + arrRefJDCor[iarr];
       outRow->TimeI     = inRow->TimeI;
       outRow->SourID    = inRow->SourID;
       outRow->antennaNo = inRow->antNo;
@@ -2941,10 +2945,10 @@ void GetPhaseCalInfo (ObitData *inData, ObitUV *outData,
       }
       
       /* Array number 0-rel */
-      iarr = inRow->Array-1;
+      iarr = MAX(0,inRow->Array-1);
       
       /* Save to PC table */
-      outRow->Time     = inRow->Time - arrRefJDCor[iarr];
+      outRow->Time     = inRow->Time + arrRefJDCor[iarr];
       outRow->SourID   = inRow->SourID;
       outRow->antennaNo= inRow->antennaNo;
       outRow->Array    = inRow->Array;
@@ -3108,10 +3112,10 @@ void GetInterferometerModelInfo (ObitData *inData, ObitUV *outData,
       }
       
       /* Array number 0-rel */
-      iarr = inRow->Array-1;
+      iarr = MAX(0,inRow->Array-1);
 
       /* Save to IM table */
-      outRow->Time      = inRow->Time - arrRefJDCor[iarr];
+      outRow->Time      = inRow->Time + arrRefJDCor[iarr];
       outRow->TimeI     = inRow->TimeI;
       outRow->SourID    = inRow->SourID;
       outRow->antennaNo = inRow->antennaNo;
@@ -3377,7 +3381,7 @@ void UpdateAntennaInfo (ObitUV *outData, olong arrno, ObitErr *err)
 {
   ObitTableAN  *outTable=NULL;
   oint numIF, numPCal, numOrb;
-  olong ver;
+  olong iarr, ver;
   odouble JD;
   ObitIOAccess access;
   gchar *routine = "UpdateAntennaInfo";
@@ -3387,7 +3391,8 @@ void UpdateAntennaInfo (ObitUV *outData, olong arrno, ObitErr *err)
   g_assert (ObitUVIsA(outData));
   
   /* Something to do? */
-  if (fabs(arrRefJDCor[arrno-1])<0.1) return;
+  iarr = MAX (0, arrno-1);
+  if (fabs(arrRefJDCor[iarr])<0.1) return;
 
   /* Create output Antenna table object */
   ver      = arrno;
@@ -3409,7 +3414,7 @@ void UpdateAntennaInfo (ObitUV *outData, olong arrno, ObitErr *err)
 
   /* Update AN table reference date  */
   ObitUVDescDate2JD (outTable->RefDate, &JD);
-  JD -= arrRefJDCor[arrno-1];
+  JD += arrRefJDCor[iarr];
   ObitUVDescJD2Date (JD, outTable->RefDate);
 
   /* Close */
