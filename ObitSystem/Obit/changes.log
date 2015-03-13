@@ -2677,3 +2677,15 @@ Obit/src/ObitPolnCalFit.c:
   divide X/Y gain between X,Y
   constraints on fitting Stokes V
 6 Mar 2015, svn ver. 507
+
+Bug fixes
+Obit/src/ObitSDMData.c:
+ Fix bugs in renumbering source table
+ Fix bugs in converting ALMA CalAtmosphere table to SN table
+Obit/src/ObitBDFData.c:
+ Fix bugs in applying binary flags
+Obit/src/ObitSourceEphemerus.c:
+ Fix bugs in looking up source
+Obit/src/ObitUVDesc.c:
+ Calculate correct frequency increment for lower sideband.
+13 March 2015 svn version 508

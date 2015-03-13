@@ -1919,16 +1919,16 @@ void ObitSDMSourceTabFixCode (ObitSDMData *in)
  * in common or a new number not conflicting with sourceList.
  * \param  in         ASDM object with SourceTab to modify
  * \param  sourceList Previous definitions of source numbers
- * \param  isDone     [out] flags, TRUE is corresponding entry in in->SourceTab
- *                    is in sourceList
+ * \param  isDone     [out] flags, TRUE if corresponding entry in in->SourceTab
+ *                    is in sourceList or
  * \param  doCode     If TRUE, codes must also match
  * \param  err        Obit error/message stack
  */
 void ObitSDMDataRenumberSrc(ObitSDMData *in,  ObitSourceList *sourceList, 
 			    gboolean *isDone,  gboolean doCode, ObitErr *err)
 {
-  olong i, j, len, nextID=1;
-  gboolean matches, areNew=FALSE,renum=FALSE;
+  olong i, j, k, len, nextID=1, lastOld;
+  gboolean matches, *renumsrc=NULL, areNew=FALSE, renum=FALSE;
   gchar *routine = "RenumberSrc";
 
   /* Error checks */
@@ -1944,6 +1944,10 @@ void ObitSDMDataRenumberSrc(ObitSDMData *in,  ObitSourceList *sourceList,
   for (i=0; i<sourceList->number; i++) {
     nextID = MAX(nextID, sourceList->SUlist[i]->SourID+1);
   }
+
+  /* Flags for renumbered SourceTab entries */
+  renumsrc = g_malloc0(in->SourceTab->nrows*sizeof(gboolean));
+  for (k=0; k<in->SourceTab->nrows; k++) renumsrc[k] = FALSE;
 
   /* Loop over in->SourceTab */
   for (j=0; j<in->SourceTab->nrows; j++) {
@@ -1968,11 +1972,20 @@ void ObitSDMDataRenumberSrc(ObitSDMData *in,  ObitSourceList *sourceList,
       }
     } /* end loop over sourceList */
     /* If not found, assign new value */
-    if (!isDone[j]) {
+    if ((!isDone[j]) && (!renumsrc[j])) {
+      lastOld = in->SourceTab->rows[j]->sourceNo;   /* previous */
       in->SourceTab->rows[j]->sourceNo = nextID++;
       areNew = TRUE;
+      /* Renumber any subsequent entries */
+      for (k=j+1; k<in->SourceTab->nrows; k++) {
+	if (in->SourceTab->rows[k]->sourceNo==lastOld) {
+	  in->SourceTab->rows[k]->sourceNo = in->SourceTab->rows[j]->sourceNo;
+	  renumsrc[k] = TRUE;
+	}
+      }
     }
   } /* end loop over in->SourceTab */
+  if (renumsrc) g_free(renumsrc); renumsrc = NULL;
   /* Say if anything renumbered */
   if (renum)
     Obit_log_error(err, OBIT_InfoErr, "Renumbered Sources");
@@ -2316,9 +2329,6 @@ static gboolean FindMoreAtmData(ASDMcalAtmosphereTable *calAtmosphereTab, ObitUV
 
   /* Init on first */
   if (iAtmRow==oldRow) {
-    for (i=0; i<numIF; i++) {
-      gain1[i] = gain2[i] = fblank;
-    }
     iRow = iAtmRow;
   } else {  /* Subsequent call - check if same antenna */
     if (!strcmp(calAtmosphereTab->rows[iAtmRow]->antennaName, 
@@ -2372,11 +2382,12 @@ ObitTableSN* ObitSDMDataAtm2SN (ObitUV *inUV, ObitSDMData *SDM,
   ObitTableSNRow *SNRow   = NULL;
   ASDMcalAtmosphereRow  *AtmRow  = NULL;
   ASDMAntennaArray *antArray= NULL;
-  olong i, iant, numPol, numIF, iif, mainRow=0;
+  olong i, cnt, iant, numPol, numIF, iif, mainRow=0;
   olong ver, iSNRow=0, iAtmRow, jAtmRow;
   olong BBIndex[33];
   ofloat *gain1=NULL, *gain2=NULL;
   ofloat fblank = ObitMagicF();
+  gboolean OK=FALSE;
   gchar *tname;
   gchar *routine = "ObitSDMCalAtm2SN";
   
@@ -2389,7 +2400,11 @@ ObitTableSN* ObitSDMDataAtm2SN (ObitUV *inUV, ObitSDMData *SDM,
 
   /* Baseband lookup table 0-rel IF number */
   for (i=0; i<33; i++) BBIndex[i] = -1;
-  for (i=0; i<SpWinArray->nwinds; i++) BBIndex[SpWinArray->winds[i]->basebandNum] = i;
+  cnt = 0;
+  for (i=0; i<SpWinArray->nwinds; i++) {
+    if (SpWinArray->winds[i]->selected)
+      BBIndex[SpWinArray->winds[i]->basebandNum] = cnt++;
+  }
   
   /* create output table  */
   if (inUV->myDesc->jlocs>=0) numPol = MIN (2, inUV->myDesc->inaxes[inUV->myDesc->jlocs]);
@@ -2422,7 +2437,9 @@ ObitTableSN* ObitSDMDataAtm2SN (ObitUV *inUV, ObitSDMData *SDM,
 
   outSN->numAnt = 1;
 
- /* Initialize SN Row structure */
+  /* Initialize SN Row structure */
+  OK = FALSE; /* Logic still isn't quite right, 
+		 there will be a second, totally invalid record for each unless trapped */
   SNRow->Time   = 0.0;
   SNRow->TimeI  = 0.0;
   SNRow->SourID = 0;
@@ -2470,11 +2487,14 @@ ObitTableSN* ObitSDMDataAtm2SN (ObitUV *inUV, ObitSDMData *SDM,
     
     /* Routine to find further entries for this antenna and return array of gains */
     jAtmRow = iAtmRow;
+    for (i=0; i<numIF; i++) { /* Init */
+      gain1[i] = gain2[i] = fblank;
+    }
     while (FindMoreAtmData(SDM->calAtmosphereTab, inUV->myDesc, iAtmRow, &jAtmRow, 
 			   BBIndex, gain1, gain2));
     
     /* Set antenna invariant values */
-    SNRow->Time   = AtmRow->startValidTime - inUV->myDesc->JDObs;
+    SNRow->Time   = 0.5 * (AtmRow->endValidTime+AtmRow->startValidTime) - inUV->myDesc->JDObs;
     SNRow->TimeI  = 0.5 * (AtmRow->endValidTime - AtmRow->startValidTime);
     
     /* Lookup antenna number */
@@ -2491,6 +2511,7 @@ ObitTableSN* ObitSDMDataAtm2SN (ObitUV *inUV, ObitSDMData *SDM,
 	SNRow->Real1[iif]   = gain1[iif];
 	SNRow->Imag1[iif]   = 0.0;
 	SNRow->Weight1[iif] = 1.0;
+	OK = TRUE;
       } else {
 	SNRow->Real1[iif]   = fblank;
 	SNRow->Imag1[iif]   = fblank;
@@ -2501,6 +2522,7 @@ ObitTableSN* ObitSDMDataAtm2SN (ObitUV *inUV, ObitSDMData *SDM,
 	  SNRow->Real2[iif]   = gain2[iif];
 	  SNRow->Imag2[iif]   = 0.0;
 	  SNRow->Weight2[iif] = 1.0;
+	  OK = TRUE;
 	} else {
 	  SNRow->Real2[iif]   = fblank;
 	  SNRow->Imag2[iif]   = fblank;
@@ -2510,11 +2532,14 @@ ObitTableSN* ObitSDMDataAtm2SN (ObitUV *inUV, ObitSDMData *SDM,
     } /* end IF loop */
     
     /* write it - first start time */
-    iSNRow = -1;
-    retCode = ObitTableSNWriteRow (outSN, iSNRow, SNRow, err);
-    /* then end time - no they're bogus
-       SNRow->Time = AtmRow->endValidTime - antArray->refJD;
-       retCode = ObitTableSNWriteRow (outSN, iSNRow, SNRow, err); */
+    if (OK) {
+      iSNRow = -1;
+      retCode = ObitTableSNWriteRow (outSN, iSNRow, SNRow, err);
+      /* then end time - no they're bogus
+	 SNRow->Time = AtmRow->endValidTime - antArray->refJD;
+	 retCode = ObitTableSNWriteRow (outSN, iSNRow, SNRow, err); */
+    }
+    OK = FALSE;
     if (err->error) goto cleanup;
     iAtmRow = jAtmRow;  /* skip ones done */
   } /* end loop over Atm Table */

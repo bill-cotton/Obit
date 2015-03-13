@@ -352,10 +352,12 @@ void ObitSourceEphemerusSetup (ObitSourceEphemerus *in, ObitSDMData *SDM,
 	for (k=0; k<Tab->nrows; k++) {
 	  if (EpTab->rows[i]->ephemerisId==Tab->rows[k]->ephemerisId) break;
 	}
-	  /* Then look up in Source Table */
+	  /* Then look up first entry in Source Table */
 	for (j=0; j<SourceArray->nsou; j++) {
-	  if (SourceArray->sou[j]->sourceId==Tab->rows[k]->sourceId)
+	  if (SourceArray->sou[j]->sourceId==Tab->rows[k]->sourceId) {
 	    in->SID[count] = SourceArray->sou[j]->sourceNo;
+	    break;
+	  }
 	}
 	in->refTime[count]      = EpTab->rows[i]->timeOrigin - SDM->refJD;
 	in->startTime[count]    = EpTab->rows[i]->timeInterval[0] - SDM->refJD;

@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010,2011                                          */
+/*;  Copyright (C) 2010-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -374,7 +374,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   olong  configDescriptionId, fieldId, sourceId, inext, ScanId=0, iScan, iIntent;
   olong maxStr, maxStr2, i, j, count, *antIds, iConfig, iAnt, jAnt, jField, iSW, jSW=0, jSource;
   olong blOrder, polnOrder, freqOrder, SPWOrder, BBOrder, APCOrder, binOrder;
-  olong *SWoff=NULL;
+  olong flagcnt, *SWoff=NULL;
   gboolean done;
   gchar *aname;
   ObitIOCode retCode = OBIT_IO_OK;
@@ -896,6 +896,17 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
       in->SWArray->winds[iSW]->numChan * in->SWArray->winds[iSW]->nCPoln * in->numAtmCorr * 2 ;
   }
 
+  /* Notes on binary flags 
+     no_flags = Napc * Nbl * Nbb * nCPoln + Nant * Nbb * nAPol
+     where Napc = number of atmospheric corrected/uncorrected
+     Nant = number antennas, Nbl = number of baselines, 
+     Nbb = number of basebands, here assumed to be same as spectral windows
+     nCPol = no. cross correlation polarizations (1,2,4)
+     nAPol = number auto correlation poln (1,2,3)
+     Axis order (sorta) defined in APCOrder (InitScan) but apparently in order 
+     given in equation (first most slowly variable).
+     NB: The bits in the flags have meaning and may need to be masked.
+   */
   /* Which cross correlation IF/Spectral windows */
   if (in->coffif) g_free(in->coffif);                               /* Vis */
   in->coffif = g_malloc0((in->SWArray->nwinds+2)*sizeof(olong));    /* Vis */
@@ -905,6 +916,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   inext         = 0;
   in->coffif[0]  = 0;    /* Vis */
   in->cfoffif[0] = 0;   /* Flag */
+  flagcnt = in->SWArray->winds[iSW]->nCPoln;  /* Offset in flagging array */
   for (iSW=0; iSW<in->SWArray->nwinds; iSW++) {
     /* Use ordering */
     jSW = in->SWArray->order[iSW];
@@ -913,10 +925,12 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
 	 this assumes Atm corr axis earlier than freq, poln*/
       in->coffif[inext] = (SWoff[jSW] +
 			   in->offAtmCorr*in->SWArray->winds[jSW]->numChan*in->SWArray->winds[jSW]->nCPoln*2);
-      in->cfoffif[inext] = SWoff[jSW];      /* Flag */
-     inext++;
+      in->cfoffif[inext] = flagcnt;
+      /*    SWoff[jSW]/(in->numSpectralChann * in->numAtmCorr * 2); */ 
+      inext++;
     }  
- }
+    flagcnt += in->SWArray->winds[iSW]->nCPoln;
+  }
   if (SWoff) g_free(SWoff); SWoff = NULL; /* Cleanup*/
   
   /* Spectral window (IF) sidebands */
@@ -1347,6 +1361,7 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
 	    /* Binary flagging per baseline/IF/Stokes (not chan)*/
 	    if (in->haveFlag && in->binFlag) {
 	      kndx = foff + in->cfoffs[iStok] + in->cfoffif[iIF];
+	      /* May need to mask unwanted bits */
 	      if (in->flagData[kndx]!=0) vis[ondx+2] = -fabs(vis[ondx+2]);
 	    }
 	  } /* end Stokes loop */
@@ -1577,12 +1592,12 @@ void ObitBDFDataInit  (gpointer inn)
   in->antId               = NULL;
   in->coffs               = NULL;
   in->coffif              = NULL;
-  in->cfoffs               = NULL;
-  in->cfoffif              = NULL;
+  in->cfoffs              = NULL;
+  in->cfoffif             = NULL;
   in->aoffs               = NULL;
   in->aoffif              = NULL;
-  in->afoffs               = NULL;
-  in->afoffif              = NULL;
+  in->afoffs              = NULL;
+  in->afoffif             = NULL;
   in->isLSB               = NULL;
   in->isEVLA              = FALSE;
   in->isALMA              = FALSE;

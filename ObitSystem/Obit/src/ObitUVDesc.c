@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -605,6 +605,7 @@ void ObitUVDescGetFreq (ObitUVDesc* in, Obit *fqtab, odouble *SouIFOff,
   for (j=0; j<nif; j++) {
     in->freqIF[j]  = in->freq + freqOff[j];
     in->chIncIF[j] = chBandw[j];
+    if (sideBand[j]<0) in->chIncIF[j] = -fabs(in->chIncIF[j]); /* LSB */
     in->sideband[j]= sideBand[j];
   }
 
