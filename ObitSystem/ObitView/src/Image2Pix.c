@@ -90,9 +90,7 @@ olong Image2Pix (ImageData *image, ImageDisplay *IDdata, gboolean verbose)
   /* Does the file need to be reloaded?
      if only the pix range or mapping type changed then the 
      image doesn't need to be reloaded */
-
   if ((image->reLoad) || (!image->valid)) {
-    
     image->reLoad = FALSE; /* May not need next time */
     image->valid  = FALSE; /* while reloading */
     /* Start Read in another thread */
@@ -114,13 +112,13 @@ olong Image2Pix (ImageData *image, ImageDisplay *IDdata, gboolean verbose)
     pthread_setcanceltype(oldType, NULL);
     
     /*  start Cancel load dialog box */
-    WorkingCursor(TRUE, verbose);
+    if (verbose) WorkingCursor(TRUE, verbose);
     
     /*  check for disgruntled user - will set LoadDone*/
     if (verbose) {
       /* This will terminate when Load done or user cancels */
       while (1) {
-	usleep(250000);  /* sleep 250 msec */
+	usleep(1000000);  /* sleep 1000 msec */
 	CheckForCancel();
 	if (LoadDone) break;
       }
@@ -130,7 +128,7 @@ olong Image2Pix (ImageData *image, ImageDisplay *IDdata, gboolean verbose)
     pthread_join (readThread, NULL);
     
     /* end progress message/cancel box if it's still there */
-    WorkingCursor(FALSE, FALSE);
+    if (verbose) WorkingCursor(FALSE, FALSE);
   } /* End load image */
   
   /* Did Load work? */
@@ -543,6 +541,7 @@ void* ReadImage (void *arg)
   /* Save descriptor and pixel array */
   data->myDesc   = ObitImageDescRef(image->myDesc);
   data->myPixels = ObitImageDescRef(image->image);
+  LoadDone = TRUE;
   data->valid = FALSE;   /* Not yet */
 
   /* Get number of planes from IO descriptor */

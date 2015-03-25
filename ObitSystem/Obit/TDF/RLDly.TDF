@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry R-L delay/phase calibration 
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2011-2012
+;;  Copyright (C) 2011-2015
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -128,6 +128,8 @@ fitType                             Fitting type,  0=joint, 1=R/X only,
 SNSoln                              SN table to write
 **PARAM** float 1  **DEF** 1.0e10
 solInt           0.0                Soln interval (min)
+**PARAM** int 1 **DEF** 1
+numIFs                              No. IFs in each soln.
 **PARAM** int 1
 prtLv             0.0               Print level in cal
 **PARAM** int 1 **DEF** 1
@@ -297,6 +299,11 @@ Adverbs:
                  Questionable utility.
   SNSoln.....Solution (SN) table to write, 0=> create new
   solInt.....Solution interval (min).
+  numIFs.....Number of solutions to be included in each solution.
+             This is useful for the EVLA for which there are
+             typically 16 IFs per baseband which share the same 
+             delay. NB: These blocks of IFs MUST be contigious in 
+             frequency.
   prtLv......Print level in solution, 0=>none 
   nThreads...If the Obit libraries are compiled with multiple
              thread operation enabled, this parameter sets the 

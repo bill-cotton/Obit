@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2014                                          */
+/*;  Copyright (C) 2004-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2100,7 +2100,7 @@ ObitCCCompType ObitTableCCUtilGetType (ObitData *file, olong ver, ObitErr* err)
   ObitCCCompType out=OBIT_CC_Unknown;
   ObitTableCC *CCTab=NULL;
   ObitTableCCRow *CCRow = NULL;
-  olong noParms=0, iver=ver, row;
+  olong noParms=0, iver=ver, row, ttype;
   gchar *routine = "ObitTableCCUtilGetType";
 
   /* Error */
@@ -2129,13 +2129,14 @@ ObitCCCompType ObitTableCCUtilGetType (ObitData *file, olong ver, ObitErr* err)
   CCRow = newObitTableCCRow (CCTab);
   ObitTableCCReadRow (CCTab, row, CCRow, err);
   if (err->error) Obit_traceback_val (err, routine, file->name, out);
+  ttype = (olong)(CCRow->parms[3]+0.5);
 
   ObitTableCCClose (CCTab, err);
   if (err->error) Obit_traceback_val (err, routine, file->name, out);
 
   /* What is it? */
   if (CCTab->noParms<=0)      out = OBIT_CC_PointMod;
-  else if (CCTab->noParms>=0) out = CCRow->parms[3]+0.5;
+  else if (CCTab->noParms>=0) out = ttype;
 
   /* Cleanup */
   CCRow = ObitTableCCRowUnref(CCRow);  

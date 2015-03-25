@@ -1,6 +1,6 @@
 /* $Id:  $ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2014                                          */
+/*;  Copyright (C) 2012-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1413,12 +1413,14 @@ void ObitTableFSFiltVel(ObitTableFS *inFS, ObitImage *im, ObitTableFS *outFS,
     if (median==fblank) continue;  /* Any data? */
     /* Get robust RMS */
     rms =  MedianSigma (nch, spec, median);
-    for (i=0; i<nch; i++) spec[i] = FSrow->Spectrum[i] - median;
+    for (i=0; i<nch; i++) 
+      if (fabs(spec[i]-fblank)>1.0) spec[i] = FSrow->Spectrum[i] - median;
+      else spec[i] = fblank;
     /* Find maximum */
     chmax = -1;
     maxV  = -1.0e-20;
     for (i=0; i<nch; i++) {
-      if ((fabs(spec[i]-fblank)>0.1) && (spec[i]>maxV)) {
+      if ((fabs(spec[i]-fblank)>10.0) && (spec[i]>maxV)) {
 	maxV  = spec[i];
 	chmax = i;
       }
@@ -1433,7 +1435,7 @@ void ObitTableFSFiltVel(ObitTableFS *inFS, ObitImage *im, ObitTableFS *outFS,
     limit = MAX (spec[i]>fabs(maxV)*0.2, 4*MAX(rms,FSrow->RMSCh[chmax]));
     sum1 = sum2 = sum = 0.0;
     for (i=0; i<nch; i++) {
-      if ((fabs(spec[i]-fblank)>0.1) && (spec[i]>limit)) {
+      if ((fabs(spec[i]-fblank)>10.0) && (spec[i]>limit)) {
 	sum  += spec[i];
 	sum1 += (i - chmax)*spec[i];
 	sum2 += (i - chmax)*(i - chmax)*spec[i];

@@ -2689,3 +2689,23 @@ Obit/src/ObitSourceEphemerus.c:
 Obit/src/ObitUVDesc.c:
  Calculate correct frequency increment for lower sideband.
 13 March 2015 svn version 508
+
+Bug fixes, scripting enhancements
+Obit/src/ObitTableFSUtil.c:
+  FiltVel: Better test for blanked spectrum
+ObitView/src/menu.c ObitView/src/Image2Pix.c:
+  Suppress multiple FITS image loads.
+Obit/python/EVLACal.py:
+  Add options to polarization calibration
+  Add numIFs parameter for RLdly
+Obit/python/EVLAContPipe.py:
+  Remove RLPass before PolCal, add options to PolCal.
+  Add numIFs parameter for RLdly
+Obit/src/ObitTableCCUtil.c:
+  GetType: More robust method of getting CC type
+Obit/src/ObitImageFit.c:
+  Fit: increse prtLv needed for RMS residual display
+Obit/src/ObitUVRLDelay.c
+Obit/tasks/RLDly.c Obit/TDF/RLDly.TDF:
+  Make cross pol. delay fitting more robust.
+25 March 2015 svn version 509

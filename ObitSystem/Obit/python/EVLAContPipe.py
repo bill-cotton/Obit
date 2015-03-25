@@ -509,7 +509,7 @@ def pipeline( aipsSetup, parmFile):
                               RLDCal=parms["RLDCal"], BChan=parms["rlBChan"], \
                               EChan=parms["rlEChan"], UVRange=parms["rlUVRange"], \
                               soucode=parms["rlCalCode"], doCalib=parms["rlDoCal"], gainUse=parms["rlgainUse"], \
-                              timerange=parms["rltimerange"], \
+                              timerange=parms["rltimerange"], numIFs=parms["rlnumIFs"], \
                               # NOT HERE doBand=parms["rlDoBand"], BPVer=parms["rlBPVer"],  \
                               flagVer=parms["rlflagVer"], \
                               refAnt=parms["rlrefAnt"], doPol=False,  \
@@ -517,33 +517,17 @@ def pipeline( aipsSetup, parmFile):
                               check=check, debug=debug)
         if retCode!=0:
             raise RuntimeError,"Error in R-L delay calibration"
-        # Now initial RLPass
-        if parms["rlrefAnt"]<=0:
-            parms["rlrefAnt"] =  parms["refAnt"]
-        retCode = EVLARLCal(uv, err,\
-                            RLDCal=parms["RLDCal"], BChan=parms["rlBChan"],
-                            EChan=parms["rlEChan"], UVRange=parms["rlUVRange"], \
-                            ChWid2=parms["rlChWid"], solInt1=parms["rlsolint1"], solInt2=parms["rlsolint2"], \
-                            RLPCal=parms["RLPCal"], RLPhase=parms["RLPhase"], \
-                            RM=parms["RLRM"], CleanRad=parms["rlCleanRad"], \
-                            calcode=parms["rlCalCode"], doCalib=parms["rlDoCal"], gainUse=parms["rlgainUse"], \
-                            timerange=parms["rltimerange"], FOV=parms["rlFOV"], \
-                            doBand=-1, BPVer=1, flagVer=parms["rlflagVer"], \
-                            refAnt=parms["rlrefAnt"], doPol=False, PDVer=0,  \
-                            nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
-                            check=check, debug=debug)
-        if retCode!=0:
-            raise RuntimeError,"Error in RL phase spectrum calibration"
     
     # Polarization calibration
     if parms["doPolCal"]:
         if parms["PCRefAnt"]<0:
             parms["PCRefAnt"] =  parms["refAnt"]
         retCode = EVLAPolCal(uv, parms["PCInsCals"], err, InsCalPoln=parms["PCCalPoln"], \
-                             doCalib=2, gainUse=0, doBand=1, flagVer=0, \
-                             fixPoln=parms["PCFixPoln"], pmodel=parms["PCpmodel"], avgIF=parms["PCAvgIF"], \
+                             doCalib=2, gainUse=0, doBand=-1, flagVer=0, \
+                             fixPoln=parms["PCFixPoln"], avgIF=parms["PCAvgIF"], \
                              solInt=parms["PCSolInt"], refAnt=parms["PCRefAnt"], solType=parms["PCSolType"], \
-                             ChInc=parms["PCChInc"], ChWid=parms["PCChWid"], \
+                             ChInc=parms["PCChInc"], ChWid=parms["PCChWid"], doFitRL=parms['doFitRL'], 
+                             doFitOri=parms['doFitOri'], \
                              nThreads=nThreads, check=check, debug=debug, noScrat=noScrat, logfile=logFile)
         if retCode!=0 and (not check):
            raise  RuntimeError,"Error in polarization calibration: "+str(retCode)

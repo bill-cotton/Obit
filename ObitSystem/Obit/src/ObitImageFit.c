@@ -307,7 +307,7 @@ olong ObitImageFitFit (ObitImageFit* in,  ObitImage *image,
   ObitImageFitData2Reg (in->data, reg);
 
   /* RMS residual if requested */
-  if (err->prtLv>0) {
+  if (err->prtLv>1) {
     fopt = ObitFArrayRMS0(in->data->resids);
     fopt /= in->data->rscale;
     Obit_log_error(err, OBIT_InfoErr, "RMS residual = %g", fopt);

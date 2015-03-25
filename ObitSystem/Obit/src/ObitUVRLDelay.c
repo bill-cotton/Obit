@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2012                                          */
+/*;  Copyright (C) 2011-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -74,9 +74,10 @@ static ofloat testDelay (olong numFreq, ofloat *xpol1, ofloat *xpol2, ofloat del
  * \li "SNSoln"  OBIT_long  (1,1,1)  Output SN table, 0=>new
  * \li "solInt"  OBIT_float  (1,1,1) Solution interval (min), def [long]
  * \li "minSNR"  OBIT_float  (1,1,1) Minimum SNR allowed
+ * \li "numIFs"  OBIT_int   (1,1,1) Number of IF to include in solutions(default 1)
  * \param outUV  UV with which the output  SN is to be associated
  * Control parameters are on the info member.
- * \li "BChan"    OBIT_int   (1,1,1) BChan used to generate inUV (default 1)
+ * \li "BChan"   OBIT_int   (1,1,1) BChan used to generate inUV (default 1)
  * \param err    Error/message stack, returns if error.
  * \return Pointer to the newly created SN object which is associated with outUV.
  */
@@ -90,8 +91,8 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitIOCode retCode;
   ObitInfoType type;
   olong i, j, iAnt, SNver, iAnt1, iAnt2, suba, refAnt, BChan, SNSoln;
-  olong iSNRow, numFreq, jndx, indx, numPol, numIF, numAnt;
-  olong incs, incf, incif, js, jf, jif, numVis;
+  olong iSNRow, numFreq, jndx, indx, numPol, numIF, numAnt, nIFs;
+  olong incs, incf, incif, js, jf, jif, kif, numVis;
   ofloat uvrang[2], wtuv, weight, wt, dFreq, snrmin, bl, solInt;
   ofloat p1, p2, cp1, cp2, corr, cori, tr, ti, lambda0, lambda;
   ofloat *vis, *u, *v, *base, *time, *delay=NULL, *phase=NULL, *snr=NULL;
@@ -167,6 +168,10 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   BChan = 1;
   ObitInfoListGetTest(outUV->info, "BChan", &type, dim, &BChan);
   BChan -= 1; /* Zero rel */
+  nIFs = 1;   /* Number of IFs to include in solution */
+  ObitInfoListGetTest(inUV->info, "numIFs", &type, dim, &nIFs);
+  if (err->prtLv>=1) 
+    Obit_log_error(err, OBIT_InfoErr, "Averaging blocks of %d IFs", nIFs);
   SNSoln = 0;
   ObitInfoListGetTest(outUV->info, "SNSoln", &type, dim, &SNSoln);
   solInt = 1440.0*1.0e5;   /* Very long default solution interval */
@@ -307,17 +312,27 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
       dump = *time>endTime;
       dump =  dump || done;
       if (dump) {
-	/* Process  Fit delays */
-	for (jif=0; jif<numIF; jif++) {   /* IF loop */
-	  FitDelay (numFreq, BChan, dFreq, &xpol1[jif*numFreq*3], &xpol2[jif*numFreq*3], 
+	/* Process  Fit delays in blocks of nIFs IFs */
+	for (jif=0; jif<numIF; jif+=nIFs) {   /* IF loop */
+	  FitDelay (numFreq*nIFs, BChan, dFreq, &xpol1[jif*numFreq*3], &xpol2[jif*numFreq*3], 
 		    ftype, &delay[jif], &phase[jif], &snr[jif], err);
+	  /* Phase to reference frequency 
+	  phase[jif] -= 2.0*G_PI*(inUV->myDesc->freqIF[jif]-inUV->myDesc->freq) * delay[jif];*/
 	  /* R-L phase correction - apply RM */
 	  lambda = VELIGHT/inUV->myDesc->freqIF[jif];
-	  phase[jif] -= rlp + RM * (lambda*lambda - lambda0*lambda0);
+	  phase[jif] = rlp + RM * (lambda*lambda - lambda0*lambda0) - phase[jif];
+	  /* Fill IF values */
+	  for (kif=1; kif<nIFs; kif++) {
+	    delay[jif+kif] = delay[jif];
+	    snr[jif+kif]   = snr[jif];
+	    phase[jif+kif] = phase[jif] + kif*dFreq*delay[jif]*numFreq*2.0*G_PI;
+	  }
 	  
 	  /* Diagnostics */
 	  if (err->prtLv>=2) {
-	    for (i=0; i<numFreq; i++) {
+	    for (i=0; i<numFreq*nIFs; i++) {
+	      if ((xpol1[(jif*numFreq+i)*3]==0.0) && 
+		  (xpol1[(jif*numFreq+i)*3+1]==0.0)) continue;
 	      corr = cos(2.0*G_PI*(delay[jif]*dFreq)*(i+BChan));
 	      cori = sin(2.0*G_PI*(delay[jif]*dFreq)*(i+BChan));
 	      tr   = xpol1[(jif*numFreq+i)*3];
@@ -349,25 +364,23 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  /* Minimum SNR */
 	  if (snr[jif]<snrmin) snr[jif] = 0.0;
 
-	  /* Phase to reference frequency 
-	     phase[jif] -= 2.0*G_PI*(inUV->myDesc->freqIF[jif]-inUV->myDesc->freq) * delay[jif];*/
 	  /* Take into account BChan
 	     phase[jif] -= 2.0*G_PI * dFreq*BChan*delay[jif]; */
 	  /* Set solutions into table */
 	  row->Time   = 0.5 * (lastTime+startTime); 
 	  row->TimeI  = (lastTime-startTime); 
 	  if (numPol>1) {
-	    for (i=0; i<numIF; i++) {
+	    for (i=0; i<nIFs; i++) {
 	      if (snr[jif]>0.0) {
-		row->Real2[jif]   =  cos(phase[jif]); 
-		row->Imag2[jif]   = -sin(phase[jif]); 
-		row->Delay2[jif]  =  delay[jif]; 
-		row->Weight2[jif] = snr[jif]; 
+		row->Real2[jif+i]   =  cos(phase[jif+i]); 
+		row->Imag2[jif+i]   =  sin(phase[jif+i]); 
+		row->Delay2[jif+i]  =  delay[jif+i]; 
+		row->Weight2[jif+i] =  snr[jif+i]; 
 	      } else {
-		row->Real2[jif]   = 1.0;
-		row->Imag2[jif]   = 0.0;
-		row->Delay2[jif]  = 0.0;
-		row->Weight2[jif] = 1.0; 
+		row->Real2[jif+i]   = 1.0;
+		row->Imag2[jif+i]   = 0.0;
+		row->Delay2[jif+i]  = 0.0;
+		row->Weight2[jif+i] = 1.0; 
 	      } 
 	    }
 	  }
@@ -486,7 +499,7 @@ static void FitDelay (olong numFreq, olong BChan, ofloat dFreq,
 		      ofloat *xpol1, ofloat *xpol2, olong ftype,
 		      ofloat *delay, ofloat *phase, ofloat *snr, ObitErr *err)
 {
-  olong i, j, cnt, cnt1, cnt2;
+  olong i, j, cnt, cnt1, cnt2, ntry;
   ofloat td1, td2, td3, td4, d1, d2, d3, d4, dd, test, test2, best, best2;
   ofloat corr, cori, tr, ti, w, p, tp, dp;
   odouble sumr, sumi, sumw, sumr1, sumi1, sumw1, sumr2, sumi2, sumw2;
@@ -498,12 +511,15 @@ static void FitDelay (olong numFreq, olong BChan, ofloat dFreq,
   *delay = 0.0;
   *phase = 0.0;
   *snr   = 0.0;
+
+  /* How many attempts */
+  ntry =  51;
   
   /* Iterations of direct parameter search - amplitude of weighted sum */
   d1   = dd = 0.0;
   best = best2 = -1.0e20;
-  for (i=0; i<15; i++) {
-    td1 = (i-7) * 0.1;  /* delay in turns per channel */
+  for (i=0; i<ntry; i++) {
+    td1 = (i-ntry/2) * 0.01;  /* delay in turns per channel */
     if (ftype==0) {
       test = testDelay (numFreq, xpol1, xpol2, td1);
     } else if (ftype==1) {
@@ -527,8 +543,8 @@ static void FitDelay (olong numFreq, olong BChan, ofloat dFreq,
   
   d2   = dd = d1;
   best =  best2 = -1.0e20;
-  for (i=0; i<15; i++) {
-    td2 = d1 + (i-7) * 0.01;  /* delay in turns per channel */
+  for (i=0; i<ntry; i++) {
+    td2 = d1 + (i-ntry/2) * 0.003;  /* delay in turns per channel */
     if (ftype==0) {
       test = testDelay (numFreq, xpol1, xpol2, td2);
     } else if (ftype==1) {
@@ -577,8 +593,8 @@ static void FitDelay (olong numFreq, olong BChan, ofloat dFreq,
 
   d4   = dd = d3;
   best =  best2 = -1.0e20;
-  for (i=0; i<121; i++) {
-    td4 = d3 + (i-60) * 0.00001;  /* delay in turns per channel */
+  for (i=0; i<361; i++) {
+    td4 = d3 + (i-180) * 0.000003;  /* delay in turns per channel */
     if (ftype==0) {
       test = testDelay (numFreq, xpol1, xpol2, td4);
     } else if (ftype==1) {
@@ -596,6 +612,7 @@ static void FitDelay (olong numFreq, olong BChan, ofloat dFreq,
     if (test>best) {
       best = test;
       d4   = td4;
+      /*fprintf(stderr,"test %f delay %f\n",best,1.0e9*td4/dFreq);*/
     }
   }
   if (ftype==3) d4 = d4*0.5 + dd*0.5;

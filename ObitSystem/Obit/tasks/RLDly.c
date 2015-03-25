@@ -1,7 +1,7 @@
 /* $Id$  */
 /* R-L delay/phase calibration                                        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2012                                          */
+/*;  Copyright (C) 2011-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1044,7 +1044,7 @@ void RLDlyHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "DataType2", "in2File", "in2Disk", "in2Name", "in2Class", "in2Seq", 
     "nfield", "CCVer", "BComp", "EComp", "Cmethod", "Cmodel", "Flux",
     "modelFlux", "modelPos", "modelParm", "RLPhase", "RM",  "refAnt", 
-    "UVR_Full", "WtUV", "fitType",
+    "UVR_Full", "WtUV", "fitType", "numIFs",
     "minSNR",  "prtLv", "nThreads",
     NULL};
   gchar *routine = "RLDlyHistory";
@@ -1085,7 +1085,7 @@ void  RLDelayCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData,
 {
   ObitTableSN *SNTable=NULL;
   gchar        *dataParms[] = {  /* Parameters to control calibration */
-    "UVR_Full", "WtUV", "RLPhase", "RM", "minSNR", 
+    "UVR_Full", "WtUV", "RLPhase", "RM", "minSNR", "numIFs",
      NULL};
   gchar *routine = "RLDelayCal";
 

@@ -173,6 +173,7 @@ def EVLAInitContParms():
     parms["rlBPVer"]   = 0                  # BP table to apply, 0=>highest
     parms["rlflagVer"] = 2                  # FG table version to apply
     parms["rlrefAnt"]  = 0                  # Reference antenna, defaults to refAnt
+    parms["rlnumIFs"]  = 1                  # Number of IFs per solution
     
     # Instrumental polarization cal?
     parms["doPolCal"]  =  False      # Determine instrumental polarization from PCInsCals?
@@ -180,7 +181,6 @@ def EVLAInitContParms():
     parms["PCFixPoln"] = False       # if True, don't solve for source polarization in ins. cal
     parms["PCCalPoln"] = None        # List of calibrator poln, list of (PPol, RLPhase, RM) in
                                      # order given in PCInsCals, PPol<0 => fit
-    parms["PCpmodel"]  = [0.0,0.0,0.0,0.0,0.0,0.0,0.0]  # Instrumental poln cal source poln model.
     parms["PCAvgIF"]   = False       # if True, average IFs in ins. cal.
     parms["PCSolInt"]  = 2.          # instrumental solution interval (min), 0=> scan average(?)
     parms["PCRefAnt"]  = 0           # Reference antenna, defaults to refAnt
@@ -189,6 +189,8 @@ def EVLAInitContParms():
     parms["PDVer"]     = 1           # Apply PD table in subsequent polarization cal?
     parms["PCChInc"] = 5             # Channel increment in instrumental polarization
     parms["PCChWid"] = 5             # Channel averaging in instrumental polarization
+    parms['doFitRL'] = False         # Fit R-L (or X-Y) gain phase
+    parms['doFitOri']= True          # Fit (linear feed) orientations?
     
     # Right-Left phase (EVPA) calibration, uses same  values as Right-Left delay calibration
     parms["doRLCal"]    = False    # Set RL phases from RLCal - RLDCal or RLPCal
@@ -3094,7 +3096,7 @@ def EVLARLDelay(uv, err, \
                 UVRange=[0.0,0.0], timerange = [0.0,1000.0], \
                 soucode="    ", doCalib=-1, gainUse=0, \
                 doBand=0, BPVer=0, flagVer=-1,  \
-                refAnt=0, Antennas=[0], doPol=-1,  \
+                refAnt=0, Antennas=[0], doPol=-1,  numIFs=1, \
                 nThreads=1, noScrat=[], logfile = "",check=False, debug = False):
     """
     Determine R-L delay 
@@ -3119,6 +3121,7 @@ def EVLARLDelay(uv, err, \
     * BPVer    = previous Bandpass table (BP) version
     * flagVer  = Flagging table to apply
     * refAnt   = Reference antenna REQUIRED
+    * numIFs   = number of IFs to use per solution
     * Antennas = List of antennas to include
     * doPol    = Apply polarization cal?
     * noScrat  = list of AIPS disks to avoid for scratch files
@@ -3158,6 +3161,8 @@ def EVLARLDelay(uv, err, \
     rldly.doCalib = doCalib
     rldly.gainUse = gainUse
     rldly.flagVer = flagVer
+    if ("numIFs" in rldly.__dict__):
+       rldly.numIFs = numIFs
     rldly.doPol   = doPol
     rldly.doBand  = doBand
     rldly.BPVer   = BPVer
@@ -3219,7 +3224,7 @@ def EVLAPolCal(uv, InsCals, err, InsCalPoln=None, \
                doCalib=2, gainUse=0, doBand=1, BPVer=0, flagVer=-1, \
                solType="    ", fixPoln=False, avgIF=False, \
                solInt=0.0, refAnt=0, ChInc=1, ChWid=1, \
-               pmodel=[0.0,0.0,0.0,0.0,0.0,0.0,0.0], \
+               doFitRL=False, doFitOri=True,
                check=False, debug = False, \
                nThreads=1, noScrat=[], logfile = ""):
     """
@@ -3252,17 +3257,8 @@ def EVLAPolCal(uv, InsCals, err, InsCalPoln=None, \
     * refAnt   = Reference antenna
     * ChInc    = channel increment for solutions
     * ChWid    = number of channels to average for solution.
-    * pmodel   = NYI Instrumental poln cal source poln model.
-
-      =========  ========================
-      pmodel[0]  I flux density (Jy)
-      pmodel[1]  Q flux density (Jy)
-      pmodel[2]  U flux density (Jy)
-      pmodel[3]  V flux density (Jy)
-      pmodel[4]  X offset in sky (arcsec)
-      pmodel[5]  Y offset in sky (arcsec)
-      =========  ========================
-
+    * doFitRL  =  Fit R-L (or X-Y) gain phase
+    * doFitOri = Fit (linear feed) orientations?
     * nThreads = Number of threads to use in imaging
     * check    = Only check script, don't execute tasks
     * debug    = Run tasks debug, show input
@@ -3330,6 +3326,8 @@ def EVLAPolCal(uv, InsCals, err, InsCalPoln=None, \
         pcal.ChInc    = ChInc
         pcal.ChWid    = ChWid
         pcal.refAnt   = refAnt
+        pcal.doFitRL  = doFitRL
+        pcal.doFitOri = doFitOri
         pcal.prtLv    = 2
         pcal.PDSoln   = 1
         pcal.CPSoln   = 1

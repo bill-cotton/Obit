@@ -63,6 +63,8 @@ Widget File_w[7] = {0, 0, 0, 0, 0, 0};
 Widget FITS_Box=0;                /* FITS file dialog widget */
 AIPSFileBoxStuff *AIPS_Box=NULL;  /* AIPS file dialog structure */
 
+/* Dark thoughts */
+gboolean FITSLoadDone=FALSE;  /* Has requested FITS image been loaded? */
 /**
  * Routine to create main menu bar
  * \param mainWindow  main window
@@ -421,6 +423,8 @@ void FileOKCB (Widget filebox, XtPointer clientData, XtPointer callData)
   XmFileSelectionBoxCallbackStruct *cbs;
   ImageDisplay  *IDdata;
   
+  /* Already done? Then ignore */
+  if (FITSLoadDone) return;
   cbs = (XmFileSelectionBoxCallbackStruct *) callData;
   IDdata = (ImageDisplay *)clientData;
   
@@ -437,7 +441,7 @@ void FileOKCB (Widget filebox, XtPointer clientData, XtPointer callData)
     g_snprintf (szErrMess, 120, "Error reading FITS file = %s", filename);
     MessageShow (szErrMess);
   }
-  
+  FITSLoadDone = TRUE;    /* It is now */
   /* get directory name */
   if (!XmStringGetLtoR (cbs->dir, XmSTRING_DEFAULT_CHARSET, &directory))
     return; /* error */
@@ -543,6 +547,7 @@ void OpenCB (Widget w, XtPointer clientData, XtPointer callData)
   Arg          wargs[5]; 
   
   IDdata = (ImageDisplay *)clientData;
+  FITSLoadDone=FALSE;  /* global, Has requested FITS image been loaded? */
 
   if (FITS_Box) {
     filebox = FITS_Box;  /* Reuse old */
