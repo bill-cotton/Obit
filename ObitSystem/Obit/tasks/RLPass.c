@@ -1,7 +1,7 @@
 /* $Id$  */
 /* R-L phase bandpass calibration                                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2014                                          */
+/*;  Copyright (C) 2010-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1707,9 +1707,8 @@ ObitTableBP* UpdateBPTable (ObitUV* inData, olong BPver, ObitUV* outData,
 	pdif = RLPhase + 2.0 * (lambda*lambda - reflambda*reflambda) * RM;
 	indx = iif*nc + ichan-bchan;
 	jndx = iif*nchan + ichan -1;
-	if (phase[indx]!=fblank) {
-	  BPRow->Real1[jndx]   = 1.0;
-	  BPRow->Imag1[jndx]   = 0.0;
+	if ((phase[indx]!=fblank) && (BPRow->Real2[jndx]!=fblank) && 
+	    (BPRow->Imag2[jndx]!=fblank))  {
 	  if (npol>1) {   /* There better be or this is pretty pointless */
 	    yr = BPRow->Real2[jndx];
 	    yi = BPRow->Imag2[jndx];
@@ -1718,9 +1717,7 @@ ObitTableBP* UpdateBPTable (ObitUV* inData, olong BPver, ObitUV* outData,
 	    BPRow->Real2[jndx] = xr*yr - xi*yi;
 	    BPRow->Imag2[jndx] = xr*yi + xi*yr;
 	  }
-	} else {  /* No value - blank */
-	  BPRow->Real1[jndx]   = fblank;
-	  BPRow->Imag1[jndx]   = fblank;
+	} else {  /* No value - blank 2nd poln */
 	  if (npol>1) { 
 	    BPRow->Real2[jndx] = fblank;
 	    BPRow->Imag2[jndx] = fblank;

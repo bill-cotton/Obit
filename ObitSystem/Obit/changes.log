@@ -2709,3 +2709,10 @@ Obit/src/ObitUVRLDelay.c
 Obit/tasks/RLDly.c Obit/TDF/RLDly.TDF:
   Make cross pol. delay fitting more robust.
 25 March 2015 svn version 509
+
+Bug fixes
+Obit/src/ObitTableFSUtil.c Obit/tasks/RLPass.c:
+  Update: Do not unflag previously flagged BP entries.
+Obit/src/ObitImageUtil.c:
+  MakeImage, MakeImagePar: use first fitted beam size if none specified
+31 Mar 2015, svn ver 510

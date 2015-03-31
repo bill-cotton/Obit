@@ -709,7 +709,11 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
 	     theBeam->myDesc->beamMaj = Beam[0]/3600.0;
 	     theBeam->myDesc->beamMin = Beam[1]/3600.0;
 	     theBeam->myDesc->beamPA  = Beam[2];
-	     }
+	  } else if (Beam[0]<=0.0) {  /* Use first fitted beam if none given */
+	    Beam[0] = theBeam->myDesc->beamMaj*3600.0;
+	    Beam[1] = theBeam->myDesc->beamMin*3600.0;
+	    Beam[2] = theBeam->myDesc->beamPA;
+	  }
 	}  /* End dirty beam stuff */
 	
 	/* Close Image */
@@ -1172,13 +1176,16 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
 	  /* Beam specified? */
 	  ObitInfoListGetTest(outImage[j]->myDesc->info, "BeamTapr", &type, dim, &BeamTaper);
 	  if ((Beam[0]>0.0) && (BeamTaper<=0.0)) {
-	     if (j==0)
-	     Obit_log_error(err, OBIT_InfoErr, 
+	     if (j==0) Obit_log_error(err, OBIT_InfoErr, 
 	     "Using Beam %f %f %f", Beam[0], Beam[1], Beam[2]);
 	     theBeam->myDesc->beamMaj = Beam[0]/3600.0;
 	     theBeam->myDesc->beamMin = Beam[1]/3600.0;
 	     theBeam->myDesc->beamPA  = Beam[2];
-	     } 
+	  } else if (Beam[0]<=0.0) {  /* Use first fitted beam if none given */
+	    Beam[0] = theBeam->myDesc->beamMaj*3600.0;
+	    Beam[1] = theBeam->myDesc->beamMin*3600.0;
+	    Beam[2] = theBeam->myDesc->beamPA;
+	  }
 	  
 	  /* Save last beam normalization in Beam infoList as "SUMWTS" */
 	  sumwts = outImage[j]->myGrid->BeamNorm;
