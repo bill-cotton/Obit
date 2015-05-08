@@ -1,6 +1,6 @@
-/* $Id$  */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,6 +26,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitUVCalPolarizationDef.h"
 #include "ObitUVCalPolarization.h"
 #include "ObitTablePD.h"
@@ -193,9 +194,9 @@ void ObitUVCalPolarizationInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
 void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2, 
 			    ofloat *RP, ofloat *visIn, ObitErr *err)
 {
-  olong itemp, SubA, SourID, FreqID, iChan, limit, index, jndex, loff;
+  olong SubA, SourID, FreqID, iChan, limit, index, jndex, loff;
   olong i, iif, ifreq, nch, ipol, ioff, joff, koff, jrl, jlr, ia1, ia2, ifoff;
-  olong j, voff[4], choff, chdelta;
+  olong j, voff[4], choff, chdelta, it1, it2;
   gboolean wflag, someOK;
   ofloat xtemp[8], ytemp[8], dtemp[8], Lambda2, fblank = ObitMagicF();
   ofloat gr, gi, gr1, gi1, tr, ti;
@@ -222,8 +223,7 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
   for (j=0; j<8; j++) xtemp[j] = 0.0;  xtemp[0] =  xtemp[6] = 1.0;
 
   /* Subarray number in data */
-  itemp = (olong)RP[desc->ilocb];
-  SubA = 1 + (olong)(100.0*(RP[desc->ilocb] -(ofloat)itemp) + 0.1);
+  ObitUVDescGetAnts(desc, RP, &it1, &it2, &SubA);
   SubA = MIN (SubA, in->numANTable);
   nch  = in->eChan - in->bChan + 1;
   ia1  = ant1 - 1;

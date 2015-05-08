@@ -1321,7 +1321,7 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
     ant2 = MAX (tant1, tant2);
  
     /* Convert table to UV data form */
-    Buffer[desc->ilocb] = (ofloat)(ant1*256+ant2+iarr*0.01);
+    ObitUVDescSetAnts(desc, Buffer, ant1, ant2, iarr+1);
     Buffer[desc->iloct] = (ofloat)(inRow->date+inRow->Time-arrJD+iarr*5.0);
     if (desc->ilocsu>=0) {
       if (SourceID) sid = SourceID[inRow->Source];

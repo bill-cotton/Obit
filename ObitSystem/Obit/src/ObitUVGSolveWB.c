@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2014                                          */
+/*;  Copyright (C) 2010-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,6 +26,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitUVSel.h"
 #include "ObitUVGSolveWB.h"
 #include "ObitMem.h"
@@ -981,7 +982,7 @@ NextAvgWB (ObitUV* inUV, ofloat interv, ofloat* antwt,
   gboolean done=FALSE;
   BaselineData *BLData;
   ObitIOCode retCode= OBIT_IO_OK;
-  ofloat linterv, ctime, cbase, stime, ltime=0, weight, wt, bl, *visPnt, temp;
+  ofloat linterv, ctime, stime, ltime=0, weight, wt, bl, *visPnt, temp;
   ofloat *wtArray, *visArray, *phArray, fblank = ObitMagicF();
   olong i, ip, csid, cfqid, a1, a2, *blLookup=NULL, blIndex, visIndex;
   olong iFreq, iIF, iStok, jBL, jIF, jStok, mPol, mIF, numBL, suba;
@@ -1073,10 +1074,7 @@ NextAvgWB (ObitUV* inUV, ofloat interv, ofloat* antwt,
     ltime = ctime;   /* Last time in accumulation */
     
     /* crack Baseline */
-    cbase = visPnt[inUV->myDesc->ilocb]; /* Baseline */
-    suba  = 1 + 0.01*(visPnt[inUV->myDesc->ilocb] - (olong)cbase);
-    a1 = (cbase / 256.0) + 0.001;
-    a2 = (cbase - a1 * 256) + 0.001;
+    ObitUVDescGetAnts(inUV->myDesc, visPnt, &a1, &a2, &suba);
     if (timeCount==0) scanData->suba = suba;  /* Set subarray first vis */
 
     /* Check that antenna numbers in range */

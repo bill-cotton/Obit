@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,8 +26,8 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
-#include "ObitUVCal.h"
 #include "ObitUVDesc.h"
+#include "ObitUVCal.h"
 #include "ObitUVSel.h"
 #include "ObitUVCalCalibrate.h"
 #include "ObitUVCalSelect.h"
@@ -402,7 +402,7 @@ gboolean  ObitUVCalApply (ObitUVCal *in, ofloat *recIn,
 {
   gboolean OK;
   ofloat *visIn, *visOut, time, scl;
-  olong  i,nrparm, ant1, ant2;
+  olong  i,nrparm, ant1, ant2, suba;
   ObitUVDesc *desc;
   ObitUVSel *sel;
 
@@ -424,11 +424,13 @@ gboolean  ObitUVCalApply (ObitUVCal *in, ofloat *recIn,
 
   /* Get time and baseline */
   time = recIn[desc->iloct];
-  ant1 = (olong)(recIn[desc->ilocb]/256);
-  ant2 = (olong)(recIn[desc->ilocb] - ant1*256);
+  ObitUVDescGetAnts(desc, recIn, &ant1, &ant2, &suba);
 
   /* Remove subarray info? */
-  if (in->dropSubA) recIn[desc->ilocb] = ant2 + ant1*256;
+  if (in->dropSubA) {
+    suba = 1;
+    ObitUVDescSetAnts(desc, recIn, ant1, ant2, suba);
+  }
 
   /* Is this visibility wanted? */
   OK = ObitUVCalWant (in, time, ant1, ant2, recIn, visIn, err);
@@ -515,10 +517,9 @@ gboolean ObitUVCalWant (ObitUVCal *in, ofloat time, olong ant1, olong ant2,
   ObitUVDesc *desc;
   ObitUVSel *sel;
   ofloat uvmin2, uvmax2, uvdis2;
-  olong   kbase, FQID, SourID, iSubA;
+  olong   it1, it2, FQID, SourID, iSubA;
    
-
-   /* error checks */
+  /* error checks */
   g_assert(ObitErrIsA(err));
   if (err->error) return FALSE;
   g_assert (ObitUVCalIsA(in));
@@ -543,8 +544,8 @@ gboolean ObitUVCalWant (ObitUVCal *in, ofloat time, olong ant1, olong ant2,
   }
 
   /* Baseline and subarray number in data */
-  kbase = (olong)RP[desc->ilocb];
-  iSubA = 1 + (olong)(100.0*(RP[desc->ilocb] -(ofloat)kbase) + 0.1);
+  ObitUVDescGetAnts(desc, RP, &it1, &it2, &iSubA);
+
   /* Wanted? */
   if ((sel->SubA > 0) && (sel->SubA != iSubA)) return FALSE;
 

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009                                               */
+/*;  Copyright (C) 2009-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,6 +26,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitUVRFIXize.h"
 #include "ObitTableUtil.h"
 #include "ObitTableSNUtil.h"
@@ -241,7 +242,7 @@ void ObitUVRFIXizeFilter (ObitUVRFIXize *in, ObitErr* err)
   ofloat timeInt=10.0, timeAvg=0.95, minamp2=50.0, amp2;
   ofloat maxRot=2.0, minRot = 0.25;
   odouble freq;
-  olong i, jndx, indx, ant1, ant2;
+  olong i, jndx, indx, ant1, ant2, suba;
   olong incs, incif, incf,  nif, nfreq, nstok, iif, ichan, istok;
   ObitUVDesc *inDesc;
   ObitInfoType type;
@@ -322,8 +323,7 @@ void ObitUVRFIXizeFilter (ObitUVRFIXize *in, ObitErr* err)
 	if (err->error) Obit_traceback_msg (err, routine, in->SNSoln->name);
       }
       /* Which baseline? */
-      ant1 = (in->RFIUV->buffer[jndx+inDesc->ilocb] / 256.0) + 0.001;
-      ant2 = (in->RFIUV->buffer[jndx+inDesc->ilocb] - ant1 * 256) + 0.001;
+      ObitUVDescGetAnts(inDesc, &in->RFIUV->buffer[jndx], &ant1, &ant2, &suba);
 
       /* loop over IF */
       for (iif=0; iif<nif; iif++) {
@@ -401,7 +401,7 @@ void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err)
   ObitInfoType type;
   ObitIOAccess access;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong i, j, jndx, iindx, oindx, ant1, ant2;
+  olong i, j, jndx, iindx, oindx, ant1, ant2, suba;
   olong incs, incif, incf,  nif, nchan, nstok, iif, ichan, istok;
   olong BLindx, BLoff;
   odouble totalVis=1.0e-10; /* Total number of output visibilities sampled */
@@ -485,8 +485,7 @@ void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err)
       if (!want) continue;
 
       /* Which baseline? */
-      ant1 = (in->myUV->buffer[jndx+inDesc->ilocb] / 256.0) + 0.001;
-      ant2 = (in->myUV->buffer[jndx+inDesc->ilocb] - ant1 * 256) + 0.001;
+      ObitUVDescGetAnts(inDesc, &in->myUV->buffer[jndx], &ant1, &ant2, &suba);
       /* Baseline index this assumes a1<a2 always - ignore auto correlations */
       if (ant1!=ant2) {
 	BLoff = (in->blLookup[ant1-1] + ant2-ant1-1) * in->myUV->myDesc->lrec
@@ -1217,7 +1216,7 @@ static void ObitUVRFIXizeNewTime (ObitUVRFIXize *in, ofloat time,
 {
   ObitIOCode retCode;
   ofloat sum, endTime;
-  olong  j, ant1, ant2, count, indx, jndx, BLoff;
+  olong  j, ant1, ant2, suba, count, indx, jndx, BLoff;
   gboolean done, readAll=FALSE;
   ObitUVDesc *inDesc = in->RFIUV->myDesc;
   gchar *routine="ObitUVRFIXizeNewTime";
@@ -1274,8 +1273,7 @@ static void ObitUVRFIXizeNewTime (ObitUVRFIXize *in, ofloat time,
     if (in->RFIUV->buffer[indx+inDesc->iloct] >= endTime) break;
 
     /* Which baseline? */
-    ant1  = (in->RFIUV->buffer[indx+inDesc->ilocb] / 256.0) + 0.001;
-    ant2  = (in->RFIUV->buffer[indx+inDesc->ilocb] - ant1 * 256) + 0.001;
+    ObitUVDescGetAnts(inDesc, &in->RFIUV->buffer[indx], &ant1, &ant2, &suba);
 
     /* Trap bad data */
     if ((ant1<1) || (ant2<1) || (ant1>in->numAnt) || (ant2>in->numAnt)) goto skip;

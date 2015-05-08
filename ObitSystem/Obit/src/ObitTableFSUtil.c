@@ -1201,7 +1201,9 @@ void ObitTableFSGetSpectrum(ObitTableFS *inFS, ObitImage *im, ObitErr *err)
   /* Need to convert position to Galactic? */
   toGal = im->myDesc->ctype[0][0]=='G' && im->myDesc->ctype[0][1]=='L';
 
-  /* Check compatability in no. freq */
+  /* Check compatability in no. freq - how many channels actually? */
+  if (inFS->numCh<inFS->myDesc->repeat[inFS->SpectrumCol])
+    inFS->numCh = inFS->myDesc->repeat[inFS->SpectrumCol];
   Obit_return_if_fail((nch==inFS->numCh), err,
 		      "%s: Incompatible no, channels, %d != %d ", 
 		      routine, nch, inFS->numCh);

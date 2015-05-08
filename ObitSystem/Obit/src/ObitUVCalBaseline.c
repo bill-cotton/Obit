@@ -1,6 +1,6 @@
 /* $Id$                            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,9 +26,9 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitUVCalBaseline.h"
 #include "ObitUVCalBaselineDef.h"
-#include "ObitUVDesc.h"
 #include "ObitUVSel.h"
 #include "ObitTableBL.h"
 
@@ -158,7 +158,7 @@ void ObitUVCalBaselineInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
 void ObitUVCalBaseline (ObitUVCal *in, float time, olong ant1, olong ant2, 
 			ofloat *RP, ofloat *visIn, ObitErr *err)
 {
-  olong   blndx, lentry, blindx, iif, ipol, ifreq, ioff, joff, index, nstoke, iSubA, itemp, numIF;
+  olong   blndx, lentry, blindx, iif, ipol, ifreq, ioff, joff, index, nstoke, iSubA, it1, it2, numIF;
   gboolean   ccor;
   gboolean calBad;
   ofloat gwt, tvr, tvi, gr, gi, fblank = ObitMagicF();
@@ -187,8 +187,7 @@ void ObitUVCalBaseline (ObitUVCal *in, float time, olong ant1, olong ant2,
     corID = 1;
 
   /* Subarray number in data */
-  itemp = (olong)RP[desc->ilocb];
-  iSubA = 1 + (olong)(100.0*(RP[desc->ilocb] -(ofloat)itemp) + 0.1);
+  ObitUVDescGetAnts(desc, RP, &it1, &it2, &iSubA);
 
   /* see if new time - update cal. */
   if ((time > me->CalTime) && (me->LastRowRead < me->numRow)) {

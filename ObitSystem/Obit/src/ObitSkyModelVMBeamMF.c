@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2014                                          */
+/*;  Copyright (C) 2011-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,6 +26,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitThread.h"
 #include "ObitSkyModelVMBeamMF.h"
 #include "ObitSkyModelVMSquint.h"
@@ -2756,13 +2757,13 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
   olong lstartChannel, lstartIF, lim;
   olong jincf, startIF, numberIF, jincif, kincf, kincif;
   olong offset, offsetChannel, offsetIF, iterm, nterm=0, nUVchan, nUVIF, nUVpoln;
-  olong ilocu, ilocv, ilocw, iloct, ilocb, suba, itemp, ant1, ant2, mcomp;
+  olong ilocu, ilocv, ilocw, iloct, suba, it1, it2, ant1, ant2, mcomp;
   ofloat *visData, *Data, *ddata, *fscale, oldPB, newPB;
   ofloat sumRealRR, sumImagRR, modRealRR=0.0, modImagRR=0.0;
   ofloat sumRealLL, sumImagLL, modRealLL=0.0, modImagLL=0.0;
   ofloat sumRealQ,  sumImagQ,  modRealQ=0.0,  modImagQ=0.0;
   ofloat sumRealU,  sumImagU,  modRealU=0.0,  modImagU=0.0;
-  ofloat cbase, *rgain1, *lgain1, *rgain2, *lgain2, tx, ty, tz, ll, lll;
+  ofloat *rgain1, *lgain1, *rgain2, *lgain2, tx, ty, tz, ll, lll;
   ofloat *qgain1, *ugain1, *qgain2, *ugain2, re, im, specFact;
   ofloat amp, ampr, ampl, arg, freq2=0.0,freqFact, wtRR=0.0, wtLL=0.0, temp;
 #define FazArrSize 100  /* Size of the amp/phase/sine/cosine arrays */
@@ -2785,7 +2786,6 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
   ilocv =  uvdata->myDesc->ilocv;
   ilocw =  uvdata->myDesc->ilocw;
   iloct =  uvdata->myDesc->iloct;
-  ilocb =  uvdata->myDesc->ilocb;
 
   /* Set channel, IF and Stokes ranges (to 0-rel)*/
   nSpec         = in->nSpec - 1;  /* Offset in comp array using TSpec */
@@ -2917,8 +2917,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 	largs->channel  = ifq;
 	largs->BeamFreq = freqArr[ifq];
 	/* Subarray 0-rel */
-	itemp = (olong)visData[ilocb];
-	suba = 100.0 * (visData[ilocb]-itemp) + 0.5; 
+	ObitUVDescGetAnts(uvdata->myDesc, visData, &it1, &it2, &suba);
 	/* Update antenna gains */
 	myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba, uvdata, ithread, err);
 	/* DEBUG
@@ -2943,8 +2942,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 	/* Exceed current time validity for gains */
 	if (visData[iloct] > largs->endVMModelTime) {
 	  /* Subarray 0-rel */
-	  itemp = (olong)visData[ilocb];
-	  suba = 100.0 * (visData[ilocb]-itemp) + 0.5; 
+	  ObitUVDescGetAnts(uvdata->myDesc, visData, &it1, &it2, &suba);
 	  /* Update */
 	  reGain = TRUE;
 	  myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba, uvdata, ithread, err);
@@ -2958,9 +2956,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 	} /* end update */
 	
 	  /* Need antennas numbers */
-	cbase = visData[ilocb]; /* Baseline */
-	ant1 = (cbase / 256.0) + 0.001;
-	ant2 = (cbase - ant1 * 256) + 0.001;
+	ObitUVDescGetAnts(uvdata->myDesc, visData, &ant1, &ant2, &it1);
 	ant1--;    /* 0 rel */
 	ant2--;    /* 0 rel */
 	
@@ -3590,7 +3586,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
   olong lstartChannel, lstartIF, lim;
   olong jincf, startIF, numberIF, jincif, kincf, kincif;
   olong offset, offsetChannel, offsetIF, iterm, nterm=0, nUVchan, nUVIF, nUVpoln;
-  olong ilocu, ilocv, ilocw, iloct, ilocb, suba, itemp, ant1, ant2, mcomp;
+  olong ilocu, ilocv, ilocw, iloct, suba, it1, it2, ant1, ant2, mcomp;
   ofloat *visData, *Data, *ddata, *fscale, oldPB, newPB;
   ofloat sumRealRR, sumImagRR, modRealRR=0.0, modImagRR=0.0;
   ofloat sumRealLL, sumImagLL, modRealLL=0.0, modImagLL=0.0;
@@ -3598,7 +3594,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
   ofloat sumRealU,  sumImagU,  modRealU=0.0,  modImagU=0.0;
   ofloat *rgain1, *lgain1, *rgain2, *lgain2, *rgain1i, *lgain1i, *rgain2i, *lgain2i;
   ofloat *qgain1, *ugain1, *qgain2, *ugain2, *qgain1i, *ugain1i, *qgain2i, *ugain2i;
-  ofloat cbase, tx, ty, tz, ll, lll;
+  ofloat tx, ty, tz, ll, lll;
   ofloat re, im, specFact;
   ofloat amp, ampr, ampl, arg, freq2=0.0,freqFact, wtRR=0.0, wtLL=0.0, temp;
 #ifndef FazArrSize
@@ -3623,7 +3619,6 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
   ilocv =  uvdata->myDesc->ilocv;
   ilocw =  uvdata->myDesc->ilocw;
   iloct =  uvdata->myDesc->iloct;
-  ilocb =  uvdata->myDesc->ilocb;
 
   /* Set channel, IF and Stokes ranges (to 0-rel)*/
   nSpec         = in->nSpec - 1;  /* Offset in comp array using TSpec */
@@ -3740,8 +3735,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
 	  largs->channel  = ifq;
 	  largs->BeamFreq = freqArr[ifq];
 	  /* Subarray 0-rel */
-	  itemp = (olong)visData[ilocb];
-	  suba = 100.0 * (visData[ilocb]-itemp) + 0.5; 
+	  ObitUVDescGetAnts(uvdata->myDesc, visData, &it1, &it2, &suba);
 	  /* Update antenna gains */
 	  /* Update */
 	  myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba, uvdata, ithread, err);
@@ -3761,8 +3755,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
 	  /* Exceed current time validity for gains */
 	  if (visData[iloct] > largs->endVMModelTime) {
 	    /* Subarray 0-rel */
-	    itemp = (olong)visData[ilocb];
-	    suba = 100.0 * (visData[ilocb]-itemp) + 0.5; 
+	    ObitUVDescGetAnts(uvdata->myDesc, visData, &it1, &it2, &suba);
 	    /* Update */
 	    reGain = TRUE;
 	    myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba, uvdata, ithread, err);
@@ -3776,9 +3769,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
 	  } /* end update */
       
 	  /* Need antennas numbers */
-	  cbase = visData[ilocb]; /* Baseline */
-	  ant1 = (cbase / 256.0) + 0.001;
-	  ant2 = (cbase - ant1 * 256) + 0.001;
+	  ObitUVDescGetAnts(uvdata->myDesc, visData, &ant1, &ant2, &it1);
 	  ant1--;    /* 0 rel */
 	  ant2--;    /* 0 rel */
 	  

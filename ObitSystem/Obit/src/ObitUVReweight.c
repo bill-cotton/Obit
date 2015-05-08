@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2012                                          */
+/*;  Copyright (C) 2005-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -28,6 +28,7 @@
 
 #include <sys/types.h>
 #include <time.h>
+#include "ObitUVDesc.h"
 #include "ObitUVReweight.h"
 /*----------------------Private functions---------------------------*/
 /** Private: qsort ofloat comparison */
@@ -66,7 +67,7 @@ void ObitUVReweightDo (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitIOAccess access;
   ObitUVDesc *inDesc, *outDesc, *scrDesc;
   ObitUV *scrUV=NULL;
-  ofloat timeAvg, lastTime=-1.0, timeOff, subAOff, cbase;
+  ofloat timeAvg, lastTime=-1.0, timeOff, subAOff;
   olong *blLookup=NULL, BIF, BChan;
   olong indx, jndx, nVisPIO, itemp, ant1, ant2;
   olong ncorr, numAnt, numBL, blindx;
@@ -252,10 +253,7 @@ void ObitUVReweightDo (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
       if ((curTime<endTime) && (curSourceID == lastSourceID) && 
 	  (scrDesc->firstVis<=scrDesc->nvis) && (iretCode==OBIT_IO_OK)) {
 	/* accumulate statistics */
-	cbase = Buffer[scrDesc->ilocb]; /* Baseline */
-	ant1 = (cbase / 256.0) + 0.001;
-	ant2 = (cbase - ant1 * 256) + 0.001;
-	lastSubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 1.5);
+	ObitUVDescGetAnts(scrDesc, Buffer, &ant1, &ant2, &lastSubA);
 	/* Baseline index this assumes a1<a2 always - ignore auto correlations */
 	if (ant1!=ant2) {
 	  blindx =  blLookup[ant1-1] + ant2-ant1-1;
@@ -331,9 +329,7 @@ void ObitUVReweightDo (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 
 	  /* reweight */
 	  countAll++;  /* count */
-	  cbase = Buffer[scrDesc->ilocb]; /* Baseline */
-	  ant1 = (cbase / 256.0) + 0.001;
-	  ant2 = (cbase - ant1 * 256) + 0.001;
+	  ObitUVDescGetAnts(scrDesc, Buffer, &ant1, &ant2, &suba);
 	  if (ant1!=ant2) {
 	    blindx =  blLookup[ant1-1] + ant2-ant1-1;
 	    indx = scrDesc->nrparm; /* offset of start of vis data */
@@ -349,8 +345,8 @@ void ObitUVReweightDo (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 
 	  /* Modify time, subarray */
 	  Buffer[scrDesc->iloct] += timeOff;
-	  Buffer[scrDesc->ilocb] += subAOff;
-
+	  if (scrDesc->ilocb>=0) Buffer[scrDesc->ilocb] += subAOff;
+	  else Buffer[scrDesc->iloca2] += subAOff;
 	  /* How many? */
 	  outDesc->numVisBuff = scrDesc->numVisBuff;
 	  

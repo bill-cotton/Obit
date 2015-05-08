@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2014                                          */
+/*;  Copyright (C) 2006-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,6 +26,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitThread.h"
 #include "ObitSkyModelVM.h"
 #include "ObitTableCCUtil.h"
@@ -1175,7 +1176,7 @@ static gpointer ThreadSkyModelVMFTDFT (gpointer args)
   olong startPoln, numberPoln, jincs, startChannel, numberChannel;
   olong jincf, startIF, numberIF, jincif, kincf, kincif;
   olong offset, offsetChannel, offsetIF, lim;
-  olong ilocu, ilocv, ilocw, iloct, suba, itemp;
+  olong ilocu, ilocv, ilocw, iloct, suba, it1, it2;
   ofloat *visData, *ccData, *data, *fscale;
   ofloat modReal, modImag;
   ofloat amp, arg, freq2, freqFact, wt=0.0, temp;
@@ -1253,8 +1254,7 @@ static gpointer ThreadSkyModelVMFTDFT (gpointer args)
     /* Is current model still valid? */
     if (visData[iloct] > largs->endVMModelTime) {
       /* Subarray 0-rel */
-      itemp = (olong)visData[uvdata->myDesc->ilocb];
-      suba = 100.0 * (visData[uvdata->myDesc->ilocb]-itemp) + 0.5; 
+      ObitUVDescGetAnts(uvdata->myDesc, visData, &it1, &it2, &suba);
       /* Update */
       myClass->ObitSkyModelVMUpdateModel (in, visData[iloct], suba, uvdata, ithread, err);
     }

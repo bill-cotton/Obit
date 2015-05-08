@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to Flag selected UV-data       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014                                               */
+/*;  Copyright (C) 2014-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -27,6 +27,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitSystem.h"
 #include "ObitMem.h"
 #include "ObitParser.h"
@@ -519,7 +520,7 @@ void  FlagData(ObitUV* inData, ObitErr* err)
   olong recGood, recBad, *IFGood=NULL, *IFBad=NULL;
   olong ant1, ant2, subA;
   ollong count=0, total = 0;
-  ofloat *Buffer, fracOK, cbase,  minOK[5]={0.1,0.1,0.,0.,0.};
+  ofloat *Buffer, fracOK,  minOK[5]={0.1,0.1,0.,0.,0.};
   ofloat sec;
   gchar reason[25];
   struct tm *lp;
@@ -641,10 +642,7 @@ void  FlagData(ObitUV* inData, ObitErr* err)
       if (inDesc->ilocfq>=0) row->freqID = (olong)(Buffer[inDesc->ilocfq]+0.5); 
       row->TimeRange[0] = Buffer[inDesc->iloct]-1.0e-6; /* +/-100 msec */
       row->TimeRange[1] = Buffer[inDesc->iloct]+1.0e-6; 
-      cbase = Buffer[inDesc->ilocb]; /* Baseline */
-      ant1 = (cbase / 256.0) + 0.001;
-      ant2 = (cbase - ant1 * 256) + 0.001;
-      subA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 1.5);
+      ObitUVDescGetAnts(inDesc, Buffer, &ant1, &ant2, &subA);
       row->ants[0]      = ant1; 
       row->ants[1]      = ant2; 
       row->SubA         = subA; 

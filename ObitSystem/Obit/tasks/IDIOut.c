@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Convert Obit UV to FITS IDI format                                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2013                                          */
+/*;  Copyright (C) 2009-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -27,7 +27,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
-#include "ObitUV.h"
+#include "ObitUVDesc.h"
 #include "ObitFITS.h"
 #include "ObitSystem.h"
 #include "ObitAIPSDir.h"
@@ -2154,7 +2154,7 @@ void PutData (ObitUV *inData, ObitData *outData,
   ObitTableIDI_UV_DATA    *outTable=NULL;
   ObitTableIDI_UV_DATARow *outRow=NULL;
   ObitIOCode retCode;
-  olong lim, oRow, i, nwt;
+  olong lim, oRow, i, nwt,ant1, ant2, suba;
   oint no_band=0;
   ObitIOAccess access;
   ofloat uvwFact;
@@ -2245,9 +2245,10 @@ void PutData (ObitUV *inData, ObitData *outData,
     if (desc->ilocv>=0) outRow->vv = uvwFact*inData->buffer[desc->ilocv];
     if (desc->ilocw>=0) outRow->ww = uvwFact*inData->buffer[desc->ilocw];
     if (desc->iloct>=0) outRow->Time = (odouble)inData->buffer[desc->iloct];
+    ObitUVDescGetAnts(desc, inData->buffer, &ant1, &ant2, &suba);
     if (desc->ilocb>=0) {
-      outRow->Baseline = (olong)inData->buffer[desc->ilocb];
-      outRow->Array = (olong)(1 + (inData->buffer[desc->ilocb]-outRow->Baseline)*100);
+      outRow->Baseline = ant1*256+ant2;  /* Problem in no. ants>255 */
+      outRow->Array    = suba;
     }
     if (desc->ilocsu>=0) outRow->Source = (olong)inData->buffer[desc->ilocsu];
     if (desc->ilocfq>=0) outRow->FreqID = (olong)inData->buffer[desc->ilocfq];

@@ -374,7 +374,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   olong  configDescriptionId, fieldId, sourceId, inext, ScanId=0, iScan, iIntent;
   olong maxStr, maxStr2, i, j, count, *antIds, iConfig, iAnt, jAnt, jField, iSW, jSW=0, jSource;
   olong blOrder, polnOrder, freqOrder, SPWOrder, BBOrder, APCOrder, binOrder;
-  olong flagcnt, *SWoff=NULL;
+  olong *SWoff=NULL, flagoff;
   gboolean done;
   gchar *aname;
   ObitIOCode retCode = OBIT_IO_OK;
@@ -913,10 +913,10 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   if (in->cfoffif) g_free(in->cfoffif);                             /* Flag */
   in->cfoffif = g_malloc0((in->SWArray->nwinds+2)*sizeof(olong));   /* Flag */
   /* Which ones selected? */
-  inext         = 0;
+  inext          = 0;
+  flagoff        = 0;
   in->coffif[0]  = 0;    /* Vis */
   in->cfoffif[0] = 0;   /* Flag */
-  flagcnt = in->SWArray->winds[iSW]->nCPoln;  /* Offset in flagging array */
   for (iSW=0; iSW<in->SWArray->nwinds; iSW++) {
     /* Use ordering */
     jSW = in->SWArray->order[iSW];
@@ -925,11 +925,11 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
 	 this assumes Atm corr axis earlier than freq, poln*/
       in->coffif[inext] = (SWoff[jSW] +
 			   in->offAtmCorr*in->SWArray->winds[jSW]->numChan*in->SWArray->winds[jSW]->nCPoln*2);
-      in->cfoffif[inext] = flagcnt;
+      in->cfoffif[inext] = jSW * in->numAtmCorr * in->SWArray->winds[jSW]->nCPoln; /* nAtm * nPoln */
       /*    SWoff[jSW]/(in->numSpectralChann * in->numAtmCorr * 2); */ 
       inext++;
     }  
-    flagcnt += in->SWArray->winds[iSW]->nCPoln;
+    flagoff +=  in->numAtmCorr * in->SWArray->winds[jSW]->nCPoln; /* Offset in flagging array for next ACor */
   }
   if (SWoff) g_free(SWoff); SWoff = NULL; /* Cleanup*/
   
@@ -995,16 +995,17 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   in->afoffif = g_malloc0((in->SWArray->nwinds+2)*sizeof(olong));  /* Flag */
   /* Which ones selected? */
   inext         = 0;
-  in->aoffif[0] = 0;
+  in->aoffif[0] = 0;   /* Flag */
+  /* flagcnt = in->SWArray->winds[iSW]->nCPoln;  Offset in flagging array - initialized above */
   for (iSW=0; iSW<in->SWArray->nwinds; iSW++) {
     /* Use ordering */
     jSW = in->SWArray->order[iSW];
     if (in->SWArray->winds[jSW]->selected) {
       in->aoffif[inext]  = SWoff[jSW];  /* Vis */
-      in->afoffif[inext] = SWoff[jSW];  /* Flag */
+      in->afoffif[inext] = flagoff + jSW * in->SWArray->winds[jSW]->nAPoln; /* nAtm * nPoln */
       inext++;
     }
-    
+   
     /* Count size of visibilities */
     in->crossVisSize += 2*in->SWArray->winds[iSW]->numChan * in->SWArray->winds[iSW]->nCPoln * in->numAtmCorr; 
     in->autoVisSize  +=   in->SWArray->winds[iSW]->numChan * in->SWArray->winds[iSW]->nAPoln;
@@ -1218,6 +1219,8 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
 	in->flagData = g_realloc(in->flagData, (in->ScanInfo->FlagSize+10)*sizeof(olong));
       }
       in->nFlagData = in->ScanInfo->FlagSize;
+      /* Size of XCor entry=  Napc * Nbb * nCPoln */
+      in->FlagSize = in->numAtmCorr * in->numBaseband * in->numCPoln;
       /* Create if needed */
       if (in->flagData==NULL)
 	/*in->flagData = g_malloc0(sizeof(olong)*(in->ScanInfo->FlagSize+10)/8);*/
@@ -1307,7 +1310,7 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
 ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_EOF;
-  olong iStok, iChan, iIF, indx, ondx, kndx, voff, foff, jChan, ant1, ant2;
+  olong iStok, iChan, iIF, indx, ondx, kndx, voff, foff, jChan, ant1, ant2, suba=1;
   olong nChan, nIF, nStok;
   ofloat weight;
   /*gchar *routine = "ObitBDFDataGetVis";*/
@@ -1341,11 +1344,12 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
 
     /* Is the order of the baseline correct, ant1<ant2 ? */
     if (ant1<ant2) {
-      vis[in->desc->ilocb]  = (ofloat)(ant1*256 + ant2);
+      ObitUVDescSetAnts (in->desc, vis, ant1, ant2, suba);
     
       /* Loop over visibilities */
       voff = in->nextCVis * in->crossVisSize;
-      foff = in->nextCVis * (in->crossVisSize/(2*nChan));
+      /* in->nextCVis x flagSize =  Napc * Nbb * nCPoln*/
+      foff = in->nextCVis * in->FlagSize;
       for (iIF=0; iIF<nIF; iIF++) {
 	for (iChan=0; iChan<nChan; iChan++) {
 	  /* Need to reverse order for LSB? */
@@ -1368,7 +1372,7 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
 	} /* end Channel loop */
       } /* end IF loop */
     } else {   /* Flip baseline */
-      vis[in->desc->ilocb]  = (ofloat)(ant2*256 + ant1);
+      ObitUVDescSetAnts (in->desc, vis, ant2, ant1, suba);
       
       /* Loop over visibilities */
       voff = in->nextCVis * in->crossVisSize;
@@ -1435,13 +1439,13 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
     vis[in->desc->ilocw]  = 0.0;
     vis[in->desc->iloct]  = in->currTime;
     vis[in->desc->ilocit] = in->currIntTime;
-    vis[in->desc->ilocb]  = (ofloat)(in->antNo[in->ant1]*256 + in->antNo[in->ant1]);
+    ObitUVDescSetAnts (in->desc, vis,in->antNo[in->ant1], in->antNo[in->ant1], suba);
     vis[in->desc->ilocsu] = (ofloat)in->sourceNo;
     weight = vis[in->desc->ilocit];  /* Use integration time as weight */
     
     /* Loop over visibilities */
     voff = in->nextAVis * in->autoVisSize;
-    foff = (in->nextCVis-1) * (in->crossVisSize/(2*nChan)) + (voff/nChan);  /* Assumes cross flags before auto */
+    foff = (in->nextCVis-1) * in->FlagSize + (voff/nChan);  /* Assumes cross flags before auto */
     for (iIF=0; iIF<nIF; iIF++) {
       for (iChan=0; iChan<nChan; iChan++) {
 	/* Need to reverse order for LSB? */

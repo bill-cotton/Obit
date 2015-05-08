@@ -27,6 +27,7 @@
 /*--------------------------------------------------------------------*/
 
 #include <math.h>
+#include "ObitUVDesc.h"
 #include "ObitTableCLUtil.h"
 #include "ObitTableNX.h"
 
@@ -253,7 +254,7 @@ ObitTableCL* ObitTableCLGetDummy (ObitUV *inUV, ObitUV *outUV, olong ver,
   ObitIOAccess access;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  ofloat *rec, solInt, t0, sumTime, cbase;
+  ofloat *rec, solInt, t0, sumTime;
   ofloat lastTime=-1.0, lastSource=-1.0, lastFQID=-1.0, curSource=1.0, curFQID=0.0;
   olong iRow, i, ia, lrec, maxant, highVer;
   olong  nTime, SubA=-1, ant1, ant2, lastSubA=-1;
@@ -394,10 +395,7 @@ ObitTableCL* ObitTableCLGetDummy (ObitUV *inUV, ObitUV *outUV, olong ver,
       if (inUV->myDesc->ilocsu>=0) lastSource = rec[inUV->myDesc->ilocsu];
       if (inUV->myDesc->ilocfq>=0) lastFQID   = rec[inUV->myDesc->ilocfq];
       lastTime   = rec[inUV->myDesc->iloct];
-      cbase      = rec[inUV->myDesc->ilocb]; /* Baseline */
-      ant1       = (cbase / 256.0) + 0.001;
-      ant2       = (cbase - ant1 * 256) + 0.001;
-      lastSubA   = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 0.5);
+      ObitUVDescGetAnts(inUV->myDesc, rec, &ant1, &ant2, &lastSubA);
     }
     
     /* Loop over buffer */
@@ -496,10 +494,7 @@ ObitTableCL* ObitTableCLGetDummy (ObitUV *inUV, ObitUV *outUV, olong ver,
       
       /* accumulate statistics
 	 Antennas etc. */
-      cbase = rec[inUV->myDesc->ilocb]; /* Baseline */
-      ant1 = (cbase / 256.0) + 0.001;
-      ant2 = (cbase - ant1 * 256) + 0.001;
-      SubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 0.5);
+      ObitUVDescGetAnts(inUV->myDesc, rec, &ant1, &ant2, &SubA);
       if(lastSubA<=0) lastSubA = SubA;
       gotAnt[ant1] = TRUE;
       gotAnt[ant2] = TRUE;

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -142,6 +142,12 @@
   olong iloct;
   /** Random parameter offset: Baseline */
   olong ilocb;
+  /** Random parameter offset: Antenna 1 */
+  olong iloca1;
+  /** Random parameter offset: Antenna 2 + subarray*0.01 */
+  olong iloca2;
+  /** Random parameter offset: subarray */
+  olong ilocsa;
   /** Random parameter offset: Source id. */
   olong ilocsu;
   /** Random parameter offset:Freq id.  */

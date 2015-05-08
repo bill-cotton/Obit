@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -155,6 +155,57 @@ olong ObitUVDescSetNVis (ObitUVDesc *uvDesc, ObitInfoList* info, olong nvis);
 
 /** Public: Determine projection type */
 ObitSkyGeomProj ObitUVDescGetProj(ObitUVDesc *uvDesc);
+
+/**
+ * Public: inline function to get antenna numbers, subaray from data buffer
+ * Allows access to either data with "BASELINE" random parameters or
+ * "ANTENNA1" and "ANTENNA2" (with 0.01*(subarray-1)).
+ * \param uvDesc  Data descriptor
+ * \param buffer  UV data buffer for single visibility
+ * \param ant1    [out] First antenna number (1-rel)
+ * \param ant2    [out] Second antenna number (1-rel)
+ * \param suba    [out] Subarray number (1-rel)
+ */
+static inline void ObitUVDescGetAnts(ObitUVDesc *uvDesc, ofloat *buffer,
+				     olong *ant1, olong *ant2, olong *suba)
+{
+  ofloat cbase;
+
+  /* Which type? */
+  if (uvDesc->ilocb>=0) {  /* Baseline */
+    cbase = buffer[uvDesc->ilocb];
+    *ant1 = (cbase / 256.0) + 0.001;
+    *ant2 = (cbase - *ant1 * 256) + 0.001;
+    *suba = (olong)(100.0 * (cbase -  *ant1 * 256 - *ant2) + 1.5);
+  } else { /* Antennas */
+    *ant1 = (olong)(buffer[uvDesc->iloca1]+0.5);
+    *ant2 = (olong)(buffer[uvDesc->iloca2]+0.5);
+    *suba = (olong)(buffer[uvDesc->ilocsa]+0.5);
+  }
+} /* end ObitUVDescGetAnts */
+
+/**
+ * Public: inline function to set antenna numbers, subaray in data buffer
+ * Allows access to either data with "BASELINE" random parameters or
+ * "ANTENNA1" and "ANTENNA2" (with 0.01*(subarray-1)).
+ * \param uvDesc  Data descriptor
+ * \param buffer  UV data buffer for single visibility
+ * \param ant1    First antenna number (1-rel)
+ * \param ant2    Second antenna number (1-rel)
+ * \param suba    Subarray number (1-rel)
+ */
+static inline void ObitUVDescSetAnts(ObitUVDesc *uvDesc, ofloat *buffer,
+				     olong ant1, olong ant2, olong suba)
+{
+  /* Which type? */
+  if (uvDesc->ilocb>=0) {  /* Baseline */
+    buffer[uvDesc->ilocb] = (ofloat)(ant1*256 + ant2 + 0.01*(suba-1));
+  } else { /* Antennas */
+    buffer[uvDesc->iloca1] = (ofloat)(ant1);
+    buffer[uvDesc->iloca2] = (ofloat)(ant2);
+    buffer[uvDesc->ilocsa] = (ofloat)(suba);
+  }
+} /* end ObitUVDescSetAnts */
 /*-------------------Class Info--------------------------*/
 /**
  * ClassInfo Structure.

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,9 +26,9 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitUVCalCalibrate.h"
 #include "ObitUVCalCalibrateDef.h"
-#include "ObitUVDesc.h"
 #include "ObitUVSel.h"
 #include "ObitTableAN.h"
 #include "ObitTableCL.h"
@@ -239,7 +239,7 @@ void ObitUVCalCalibrate (ObitUVCal *in, ofloat time, olong ant1, olong ant2,
 			 ofloat *RP, ofloat *visIn, ObitErr *err)
 {
   olong   indxa1, indxa2, asize, iif, ipol, ifreq, ioff, joff, index, 
-    jndxa1, jndxa2, maxpol, idndx, itfilt, corID, iSubA, itemp;
+    jndxa1, jndxa2, maxpol, idndx, itfilt, corID, iSubA, it1, it2;
   gboolean   sombad, somflg, allflg, smpflg, alpflg, allded, ccor;
   gboolean calBad, doDisp, badDsp;
   ofloat tvr, tvi, tvr1, gr, gi, dgr, dgi, ddgr=1.0, ddgi=0.0, phase, grd, gid;
@@ -263,8 +263,7 @@ void ObitUVCalCalibrate (ObitUVCal *in, ofloat time, olong ant1, olong ant2,
     corID = 1;
 
   /* Subarray number in data */
-  itemp = (olong)RP[desc->ilocb];
-  iSubA = 1 + (olong)(100.0*(RP[desc->ilocb] -(ofloat)itemp) + 0.1);
+  ObitUVDescGetAnts(desc, RP, &it1, &it2, &iSubA);
 
   /* Integration time if in data and not already specified */
   if (me->DeltaTime<=0.0) {

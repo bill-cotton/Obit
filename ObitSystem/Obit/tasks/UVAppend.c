@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task to append/concatenate uv data           .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2013                                          */
+/*;  Copyright (C) 2012-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -27,6 +27,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitUVSel.h"
 #include "ObitUV.h"
 #include "ObitSystem.h"
@@ -1104,7 +1105,8 @@ void ObitUVAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
     for (i=0; i<inDesc->numVisBuff; i++) { /* loop over visibilities */
       indx = i*inDesc->lrec;
       inUV->buffer[indx+inDesc->iloct] += timeAdd;
-      inUV->buffer[indx+inDesc->ilocb] += blAdd;
+      if (inDesc->ilocb>=0) inUV->buffer[indx+inDesc->ilocb]  += blAdd; 
+      else                  inUV->buffer[indx+inDesc->ilocsa] = (ofloat)(newSubA);
     } /* end visibility loop */
 
     /* Write buffer */

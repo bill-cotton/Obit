@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Average data on multiple baselines               .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014                                               */
+/*;  Copyright (C) 2014-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -27,6 +27,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitSystem.h"
 #include "ObitMem.h"
 #include "ObitParser.h"
@@ -832,7 +833,10 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	/* Average etc */
 	accVis[inDesc->ilocu] = accVis[inDesc->ilocv] = 1.0;
 	accVis[inDesc->iloct] = lastTime + 0.5*timeAvg;
-	accVis[inDesc->ilocb] = 258.;
+	if (inDesc->ilocb>=0) accVis[inDesc->ilocb] = 258.; /* Baseline or antennas? */
+	else {
+	  accVis[inDesc->iloca1] = 1.0; accVis[inDesc->iloca2] = 2.0;
+	}
 	if (inDesc->ilocsu>=0) 	accVis[inDesc->ilocsu] = lastSou;
 	jndx = inDesc->nrparm;
 	for (j=0; j<inDesc->ncorr; j++) { /* loop over correlations */
@@ -867,7 +871,10 @@ ObitUV* ObitUVBLAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   /* final integration -  Average etc */
   accVis[inDesc->ilocu] = accVis[inDesc->ilocv] = 1.0;
   accVis[inDesc->iloct] = lastTime + 0.5*timeAvg;
-  accVis[inDesc->ilocb] = 258.;
+  if (inDesc->ilocb>=0) accVis[inDesc->ilocb] = 258.; /* Baseline or antennas? */
+  else {
+    accVis[inDesc->iloca1] = 1.0; accVis[inDesc->iloca2] = 2.0;
+  }
   if (inDesc->ilocsu>=0) accVis[inDesc->ilocsu] = lastSou;
   jndx = inDesc->nrparm;
   for (j=0; j<inDesc->ncorr; j++) { /* loop over correlations */

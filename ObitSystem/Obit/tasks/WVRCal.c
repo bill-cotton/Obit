@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Convert an ALMA WVR dataset to an SN table              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2013                                          */
+/*;  Copyright (C) 2011-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -27,6 +27,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitUV.h"
 #include "ObitSystem.h"
 #include "ObitMem.h"
@@ -1400,9 +1401,9 @@ gboolean AvgWVR1 (ObitUV* inUV, ofloat solInt, olong numAnt,
 {
   gboolean done=TRUE;
 #ifdef HAVE_WVR  /* Only if libALMAWVR available */
-  olong iAnt, jAnt, iTh, jTh, tsid;
+  olong iAnt, jAnt, iTh, jTh, tsid, it1, it2;
   odouble endTime, begTime;
-  ofloat elev, time, weight, base, tr[2], dTdL[4], TObs[4], wt;
+  ofloat elev, time, weight, tr[2], dTdL[4], TObs[4], wt;
   gboolean more, doCalSelect, OK, first;
   ObitIOCode retCode;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -1445,8 +1446,7 @@ gboolean AvgWVR1 (ObitUV* inUV, ofloat solInt, olong numAnt,
     if (!more) break;
     first = FALSE;
     
-    base = inUV->buffer[inUV->myDesc->ilocb]; /* Baseline */
-    iAnt = (base / 256.0) + 0.001;
+    ObitUVDescGetAnts(inUV->myDesc, inUV->buffer, &iAnt, &it1, &it2);
     if (inUV->myDesc->ilocsu>=0) 
       *sid = (olong)(inUV->buffer[inUV->myDesc->ilocsu]+0.5);
     
@@ -1607,9 +1607,9 @@ gboolean AvgWVR2 (ObitUV* inUV, ofloat solInt, olong numAnt,
 		  ObitErr* err)
 {
   gboolean done=TRUE;
-  olong iAnt, tsid;
+  olong iAnt, it1, it2, tsid;
   odouble endTime, begTime;
-  ofloat elev, time, weight, base, refDelay, TObs[4];
+  ofloat elev, time, weight, refDelay, TObs[4];
   ofloat fblank = ObitMagicF();
   gboolean more, doCalSelect, first;
   ObitIOCode retCode;
@@ -1657,8 +1657,7 @@ gboolean AvgWVR2 (ObitUV* inUV, ofloat solInt, olong numAnt,
     if (!more) break;
     first = FALSE;
     
-    base = inUV->buffer[inUV->myDesc->ilocb]; /* Baseline */
-    iAnt = (base / 256.0) + 0.001;
+    ObitUVDescGetAnts(inUV->myDesc, inUV->buffer, &iAnt, &it1, &it2);
     if (inUV->myDesc->ilocsu>=0) *sid = tsid;
     
     /* Get source elevation */

@@ -3,7 +3,7 @@
 */
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014                                               */
+/*;  Copyright (C) 2014-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -288,7 +288,7 @@ void ObitGPUSkyModelDFTInit (ObitGPUSkyModel *in,  Obit *skyModel,
   in->gpuInfo->h_visInfo->ilocv  = inDesc->ilocv;
   in->gpuInfo->h_visInfo->ilocw  = inDesc->ilocw;
   in->gpuInfo->h_visInfo->iloct  = inDesc->iloct;
-  in->gpuInfo->h_visInfo->ilocb  = inDesc->ilocb;
+  in->gpuInfo->h_visInfo->ilocb  = inDesc->ilocb;  /* doesn't appear to be used */
   in->gpuInfo->h_visInfo->ilocsu = inDesc->ilocsu;
   in->gpuInfo->h_visInfo->chanb  = uvdata->mySel->startChann-1;;
   in->gpuInfo->h_visInfo->chane  = uvdata->mySel->startChann+uvdata->mySel->numberChann-2;

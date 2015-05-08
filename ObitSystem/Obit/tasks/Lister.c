@@ -28,6 +28,7 @@
 /*--------------------------------------------------------------------*/
 
 #include <unistd.h>
+#include "ObitUVDesc.h"
 #include "ObitPrinter.h"
 #include "ObitUV.h"
 #include "ObitUVSel.h"
@@ -585,7 +586,7 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   olong        pLimit=1000000;  /* Page limit */
   olong        LinesPerPage = 0, BPVer=1, PDVer;
   olong        i, ii, indx, jndx, count, bPrint, nPrint, doCrt=1, lenLine=0;
-  ofloat       u, v, w, cbase, re, im, amp, phas, wt;
+  ofloat       u, v, w, re, im, amp, phas, wt;
   ofloat       blscale=1., wtscale=1., ampscale=1.;
   olong        start, ic, ncor, mcor, maxcor, ant1, ant2, souID, SubA, inc=2;
   olong        bif=1, eif, bchan=1, ichan, doCalib, gainUse, flagVer=-1;
@@ -785,10 +786,7 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
       if (w> 9999.0) w = inData->buffer[indx+inDesc->ilocw];
       if (w<-9999.0) w = inData->buffer[indx+inDesc->ilocw];
       day2dhms (inData->buffer[indx+inDesc->iloct], timeString);
-      cbase = inData->buffer[indx+inDesc->ilocb]; /* Baseline */
-      ant1 = (cbase / 256.0) + 0.001;
-      ant2 = (cbase - ant1 * 256) + 0.001;
-      SubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 0.5);
+      ObitUVDescGetAnts(inDesc, &inData->buffer[indx], &ant1, &ant2, &SubA);
       if (inDesc->ilocsu>=0) 
 	souID = (olong)(inData->buffer[indx+inDesc->ilocsu]+0.5);
       else souID = 0;

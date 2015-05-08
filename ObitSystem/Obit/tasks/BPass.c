@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2014                                          */
+/*;  Copyright (C) 2009-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -27,6 +27,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitSystem.h"
 #include "ObitMem.h"
 #include "ObitParser.h"
@@ -1668,7 +1669,7 @@ void AutoCorrBP (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
   olong  numAnt, numChan, numIF, numStoke, indx, jndx;
   olong corrType=2, refAnt = 1, iant, iif, istok, ichan, incs, incf, incif;
   olong ant1, ant2, ivis, orow, count = 0, cnt1, cnt2;
-  ofloat cbase, curTime, norm1=1.0, norm2=1.0;
+  ofloat curTime, norm1=1.0, norm2=1.0;
   ofloat **BPSum=NULL, **BPWt=NULL, solInt, *inBuffer;
   ofloat fblank = ObitMagicF();
   odouble startTime=0.0, endTime=0.0, lastTime = -1.0e20; 
@@ -1788,11 +1789,8 @@ void AutoCorrBP (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
       for (ivis=0; ivis<inDesc->numVisBuff; ivis++) { 
 	curTime = inBuffer[inDesc->iloct]; /* Time */
 	if (inDesc->ilocsu>=0) curSourceID = (olong)(inBuffer[inDesc->ilocsu]+0.5);
-	cbase = inBuffer[inData->myDesc->ilocb]; /* Baseline */
-	ant1 = (cbase / 256.0) + 0.001;
-	ant2 = (cbase - ant1 * 256) + 0.001;
+	ObitUVDescGetAnts(inData->myDesc, inBuffer, &ant1, &ant2, &lastSubA);
 	if (ant1!=ant2) {inBuffer += lrec; continue;}
-	lastSubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 0.5);
 	if (startTime < -1000.0) {  /* Set time window etc. if needed */
 	  startTime = curTime;
 	  lastTime  = curTime;

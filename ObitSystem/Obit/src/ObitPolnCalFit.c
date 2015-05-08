@@ -1496,7 +1496,7 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
   olong ivis, ant1, ant2, isou, jsou, lastSou=-999, jvis, istok, suba;
   olong nChan, bch, ech, cnt, i, j, indx, indx1, indx2, indx3, indx4;
   olong ChInc=in->ChInc, jChan, jIF;
-  ofloat *buffer, cbase, curPA1=0.0, curPA2=0.0, curTime=0.0, lastTime=-1.0e20;
+  ofloat *buffer, curPA1=0.0, curPA2=0.0, curTime=0.0, lastTime=-1.0e20;
   ofloat sumRe, sumIm, sumWt; 
   odouble lambdaRef, lambda, ll, sum;
   gboolean OK, allBad;
@@ -1597,10 +1597,7 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
       else isou = in->souIDs[0];
       jsou = in->isouIDs[isou-1];  /* Calibrator number */
       /* Antennas */
-      cbase = buffer[inUV->myDesc->ilocb]; 
-      ant1 = (cbase / 256.0) + 0.001;
-      ant2 = (cbase - ant1 * 256) + 0.001;
-      suba = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 1.5);
+      ObitUVDescGetAnts(inUV->myDesc, buffer, &ant1, &ant2, &suba);
       
       /* Source change? */
       if (isou!=lastSou) {

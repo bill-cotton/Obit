@@ -70,6 +70,8 @@ gboolean binFlag;
 gboolean haveFlag;
 /** Number of olongs in flagData  */
 olong nFlagData;
+/** Number of olong per XCor per baseline  */
+olong FlagSize;
 /** Flag data for integration */
 olong *flagData;
 /** Have actualTimes data? */

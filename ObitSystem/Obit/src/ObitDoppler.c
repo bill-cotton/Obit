@@ -25,6 +25,7 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
+#include "ObitUVDesc.h"
 #include "ObitDoppler.h"
 #include "ObitTableANUtil.h"
 #include "ObitTableSUUtil.h"
@@ -380,7 +381,7 @@ ObitUV* ObitDopplerCVel (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   ObitUVDesc *inDesc, *outDesc;
   olong suba, lastSourceID, curSourceID, lastSubA;
   gchar *today=NULL;
-  ofloat cbase,  *tmpVis=NULL, uvwScale=1.0;
+  ofloat *tmpVis=NULL, uvwScale=1.0;
   ofloat *inBuffer, *outBuffer, *Spectrum, shift;
   olong j, ant1, ant2,ivis=0, iindx=0, oindx=0, NPIO, oldNPIO;
   olong iif, nif, istok, nstok, ichan, nchan, tndx;
@@ -589,10 +590,7 @@ ObitUV* ObitDopplerCVel (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 	for (j=0; j<inDesc->nrparm; j++) outBuffer[oindx+j] = inBuffer[iindx+j];
 
 	/* Now process this visibility */
-	cbase = inBuffer[iindx+inDesc->ilocb]; /* Baseline */
-	ant1 = (cbase / 256.0) + 0.001;
-	ant2 = (cbase - ant1 * 256) + 0.001;
-	lastSubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 0.5);
+	ObitUVDescGetAnts(inDesc, &inBuffer[iindx], &ant1, &ant2, &lastSubA);
 	/* source ID */
 	if (inDesc->ilocsu>=0) curSourceID = inBuffer[iindx+inDesc->ilocsu];
 	/* Loop over data in visibility, copy to Spectrum to shift 

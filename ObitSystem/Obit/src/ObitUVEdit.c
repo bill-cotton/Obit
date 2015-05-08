@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2013                                          */
+/*;  Copyright (C) 2005-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -28,7 +28,8 @@
 
 #include <sys/types.h>
 #include <time.h>
-#include "ObitUVUtil.h"
+#include "ObitUVDesc.h"
+#include "ObitUVEdit.h"
 #include "ObitTableFG.h"
 #include "ObitTableNX.h"
 #include "ObitTableANUtil.h"
@@ -278,7 +279,7 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM];
   ObitIOAccess access;
   ObitUVDesc *inDesc;
-  ofloat timeAvg, lastTime=-1.0, maxRMS[2], *maxRMS2=NULL, maxBad, cbase, hisicc;
+  ofloat timeAvg, lastTime=-1.0, maxRMS[2], *maxRMS2=NULL, maxBad, hisicc;
   olong *hissig=NULL, *blLookup=NULL, *crossBL1=NULL, *crossBL2=NULL;
   olong *corChan=NULL, *corIF=NULL, *corStok=NULL;
   olong *BLAnt1=NULL, *BLAnt2=NULL, BIF, BChan;
@@ -498,10 +499,7 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
       if ((curTime<endTime) && (curSourceID == lastSourceID) && 
 	  (inDesc->firstVis<=inDesc->nvis) && (iretCode==OBIT_IO_OK)) {
 	/* accumulate statistics */
-	cbase = Buffer[inUV->myDesc->ilocb]; /* Baseline */
-	ant1 = (cbase / 256.0) + 0.001;
-	ant2 = (cbase - ant1 * 256) + 0.001;
-	lastSubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 1.5);
+	ObitUVDescGetAnts(inUV->myDesc, Buffer, &ant1, &ant2, &lastSubA);
 	/* Baseline index this assumes a1<a2 always - ignore auto correlations */
 	if (ant1!=ant2) {
 	  blindx =  blLookup[ant1-1] + ant2-ant1-1;
@@ -815,7 +813,7 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM];
   ObitIOAccess access;
   ObitUVDesc *inDesc;
-  ofloat timeAvg, lastTime=-1.0, maxRMSAvg, *maxRMS2=NULL, maxBad, cbase;
+  ofloat timeAvg, lastTime=-1.0, maxRMSAvg, *maxRMS2=NULL, maxBad;
   olong *blLookup=NULL, *crossBL1=NULL, *crossBL2=NULL;
   olong *corChan=NULL, *corIF=NULL, *corStok=NULL;
   olong *BLAnt1=NULL, *BLAnt2=NULL, BIF, BChan;
@@ -1027,10 +1025,7 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
       if ((curTime<endTime) && (curSourceID == lastSourceID) && 
 	  (inDesc->firstVis<=inDesc->nvis) && (iretCode==OBIT_IO_OK)) {
 	/* accumulate statistics */
-	cbase = Buffer[inUV->myDesc->ilocb]; /* Baseline */
-	ant1 = (cbase / 256.0) + 0.001;
-	ant2 = (cbase - ant1 * 256) + 0.001;
-	lastSubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 1.5);
+	ObitUVDescGetAnts(inUV->myDesc, Buffer, &ant1, &ant2, &lastSubA);
 	/* Baseline index this assumes a1<a2 always - ignore auto correlations */
 	if (ant1!=ant2) {
 	  blindx =  blLookup[ant1-1] + ant2-ant1-1;
@@ -1317,7 +1312,7 @@ void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM];
   ObitIOAccess access;
   ObitUVDesc *inDesc;
-  ofloat timeAvg, lastTime=-1.0, maxRMSAvg, *maxRMS2=NULL, maxBad, cbase;
+  ofloat timeAvg, lastTime=-1.0, maxRMSAvg, *maxRMS2=NULL, maxBad;
   olong *blLookup=NULL, *crossBL1=NULL, *crossBL2=NULL;
   olong *corChan=NULL, *corIF=NULL, *corStok=NULL;
   olong *BLAnt1=NULL, *BLAnt2=NULL, BIF, BChan;
@@ -1529,10 +1524,7 @@ void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
       if ((curTime<endTime) && (curSourceID == lastSourceID) && 
 	  (inDesc->firstVis<=inDesc->nvis) && (iretCode==OBIT_IO_OK)) {
 	/* accumulate statistics */
-	cbase = Buffer[inUV->myDesc->ilocb]; /* Baseline */
-	ant1 = (cbase / 256.0) + 0.001;
-	ant2 = (cbase - ant1 * 256) + 0.001;
-	lastSubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 1.5);
+	ObitUVDescGetAnts(inUV->myDesc, Buffer, &ant1, &ant2, &lastSubA);
 	/* Baseline index this assumes a1<a2 always - ignore auto correlations */
 	if (ant1!=ant2) {
 	  blindx =  blLookup[ant1-1] + ant2-ant1-1;
@@ -1858,7 +1850,7 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   ollong  countAll, countBad, *count=NULL;
   olong nVisPIO, ver, firstVis, startVis, suba, kstoke0;
   ofloat startTime, endTime, curTime, amp2, *Buffer;
-  ofloat lastTime=-1.0, cbase;
+  ofloat lastTime=-1.0;
   olong *corChan=NULL, *corIF=NULL, *corStok=NULL, *corV=NULL;
   gboolean *chanMask=NULL, done, gotOne, killAll;
   /* Accumulators per spectral channel/IF/poln/baseline */
@@ -2157,10 +2149,7 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
       if ((curTime<endTime) && (curSourceID == lastSourceID) && 
 	  (inDesc->firstVis<=inDesc->nvis) && (iretCode==OBIT_IO_OK)) {
 	/* accumulate statistics */
-	cbase = Buffer[inUV->myDesc->ilocb]; /* Baseline */
-	ant1 = (cbase / 256.0) + 0.001;
-	ant2 = (cbase - ant1 * 256) + 0.001;
-	lastSubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 1.5);
+	ObitUVDescGetAnts(inUV->myDesc, Buffer, &ant1, &ant2, &lastSubA);
 	/* Baseline index this assumes a1<a2 always - ignore auto correlations */
 	if (ant1!=ant2) {
 	  blindx =  blLookup[ant1-1] + ant2-ant1-1;
@@ -2375,7 +2364,7 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   gboolean gotOne, killAll;
   ObitIOAccess access;
   ObitUVDesc *inDesc;
-  ofloat timeAvg, lastTime=-1.0, temp[2], maxAmp, maxBad, cbase, hisicc;
+  ofloat timeAvg, lastTime=-1.0, temp[2], maxAmp, maxBad, hisicc;
   olong *hissig=NULL, *blLookup=NULL;
   olong *corChan=NULL, *corIF=NULL, *corStok=NULL;
   olong *BLAnt1=NULL, *BLAnt2=NULL, BIF, BChan;
@@ -2617,9 +2606,7 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
       if ((curTime<endTime) && (curSourceID == lastSourceID) && 
 	  (inDesc->firstVis<=inDesc->nvis) && (iretCode==OBIT_IO_OK)) {
 	/* accumulate statistics */
-	cbase = Buffer[inUV->myDesc->ilocb]; /* Baseline */
-	ant1 = (cbase / 256.0) + 0.001;
-	ant2 = (cbase - ant1 * 256) + 0.001;
+	ObitUVDescGetAnts(inUV->myDesc, Buffer, &ant1, &ant2, &lastSubA);
 	/* DEBUG 
 	   if ((ant1==11) && (ant2==28)) {
 	   indx = inDesc->nrparm;
@@ -2628,7 +2615,6 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	   Buffer[indx], Buffer[indx+1], Buffer[indx+2], 
 	   Buffer[indx+3], Buffer[indx+4]);
 	   }*/
-	lastSubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 1.5);
 	/* Baseline index this assumes a1<a2 always - ignore auto correlations */
 	if (ant1!=ant2) {
 	  blindx =  blLookup[ant1-1] + ant2-ant1-1;
@@ -3525,7 +3511,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM];
   ObitIOAccess access;
   ObitUVDesc *inDesc;
-  ofloat lastTime=-1.0, tInt, cbase, tWind=0.0;
+  ofloat lastTime=-1.0, tInt, tWind=0.0;
   olong *blLookup=NULL;
   olong *BLAnt1=NULL, *BLAnt2=NULL;
   olong indx, jndx;
@@ -3893,10 +3879,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
       } /* end new time processing */
       
       /* accumulate data */
-      cbase = Buffer[inUV->myDesc->ilocb]; /* Baseline */
-      ant1 = (cbase / 256.0) + 0.001;
-      ant2 = (cbase - ant1 * 256) + 0.001;
-      lastSubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 1.5);
+      ObitUVDescGetAnts(inUV->myDesc, Buffer, &ant1, &ant2, &lastSubA);
       /* Baseline index this assumes a1<a2 always - ignore auto correlations */
       if (ant1!=ant2) {
 	blindx =  blLookup[ant1-1] + ant2-ant1-1;

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014                                               */
+/*;  Copyright (C) 2014-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,6 +26,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitThread.h"
 #include "ObitSkyModelVMPoln.h"
 #include "ObitTableCCUtil.h"
@@ -1724,7 +1725,7 @@ static gpointer ThreadSkyModelVMPolnFTDFT (gpointer args)
   olong lstartChannel, lstartIF, lim, ifq;
   olong jincf, startIF, numberIF, jincif, kincf, kincif;
   olong offset, offsetChannel, offsetIF, iterm, nterm=0, nUVchan, nUVpoln;
-  olong ilocu, ilocv, ilocw, iloct, ilocb, suba, itemp, ant1, ant2;
+  olong ilocu, ilocv, ilocw, iloct, suba, it1, it2, ant1, ant2;
   olong lcompI, lcompQ, lcompU, lcompV, ncompI, ncompQ, ncompU, ncompV;
   olong mcomp, mcompI, mcompQ, mcompU, mcompV;
   ofloat *visData, *IData, *QData=NULL, *UData=NULL, *VData=NULL;
@@ -1733,7 +1734,7 @@ static gpointer ThreadSkyModelVMPolnFTDFT (gpointer args)
   ofloat sumRealQ,  sumImagQ,  modRealLL=0.0,  modImagLL=0.0;
   ofloat sumRealU,  sumImagU,  modRealRL=0.0,  modImagRL=0.0;
   ofloat sumRealV,  sumImagV,  modRealLR=0.0,  modImagLR=0.0;
-  ofloat cbase, tx, ty, tz, ll, lll,  specFact;
+  ofloat tx, ty, tz, ll, lll,  specFact;
   ofloat amp,  arg, freq2=0.0, freqFact, wtI=0.0, temp;
   ofloat logNuONu0I=0.0, logNuONu0Q=0.0, logNuONu0U=0.0, logNuONu0V=0.0; 
 #define FazArrSize 100  /* Size of the amp/phase/sine/cosine arrays */
@@ -1758,7 +1759,6 @@ static gpointer ThreadSkyModelVMPolnFTDFT (gpointer args)
   ilocv =  uvdata->myDesc->ilocv;
   ilocw =  uvdata->myDesc->ilocw;
   iloct =  uvdata->myDesc->iloct;
-  ilocb =  uvdata->myDesc->ilocb;
 
   /* Set channel, IF and Stokes ranges (to 0-rel)*/
   startIF       = in->startIFPB-1;
@@ -1838,8 +1838,7 @@ static gpointer ThreadSkyModelVMPolnFTDFT (gpointer args)
       /* Is current parallactic angles still valid? */
       if ((visData[iloct] > largs->endVMModelTime) || (visData[iloct] < largs->begVMModelTime)) {
 	/* Subarray 0-rel */
-	itemp = (olong)visData[ilocb];
-	suba = 100.0 * (visData[ilocb]-itemp) + 0.5; 
+	ObitUVDescGetAnts(uvdata->myDesc, visData, &it1, &it2, &suba);
 	/* Update */
 	myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba, uvdata, ithread, err);
 	if (err->error) {
@@ -1852,9 +1851,7 @@ static gpointer ThreadSkyModelVMPolnFTDFT (gpointer args)
       }
       
       /* Need antennas numbers */
-      cbase = visData[ilocb]; /* Baseline */
-      ant1 = (cbase / 256.0) + 0.001;
-      ant2 = (cbase - ant1 * 256) + 0.001;
+      ObitUVDescGetAnts(uvdata->myDesc, visData, &ant1, &ant2, &it1);
       ant1--;    /* 0 rel */
       ant2--;    /* 0 rel */
       /* Baseline sum and difference of parallactic angles */

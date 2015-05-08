@@ -2716,3 +2716,30 @@ Obit/src/ObitTableFSUtil.c Obit/tasks/RLPass.c:
 Obit/src/ObitImageUtil.c:
   MakeImage, MakeImagePar: use first fitted beam size if none specified
 31 Mar 2015, svn ver 510
+
+Implement >255 antenna AIPS data format, bug fixes
+ Obit/python/Catalog.py:
+  PFSGetSpectrum,  PFSPurge: Correct call sequence
+Obit/src/ObitTableFSUtil.c:
+  GetSpectrum: Get actual number of channels from size of Spectrum.
+Obit/src/ObitBDFData.c Obit/include/ObitBDFDataDef.h:
+  Allow both UV data with a "BASELINE" or "ANTENNAn" random parameters
+  InitScan, GetVis: Fix bugs in binary flagging  logic.
+Obit/include/ObitUVDescDef.h Obit/include/ObitUVDesc.h
+Obit/src/ObitUVDesc.c Obit/src/ObitUVEdit.c Obit/src/ObitUVReweight.c
+Obit/src/ObitUVRFIXize.c Obit/src/ObitUVSortBuffer.c Obit/src/ObitUVUtil.c
+Obit/src/ObitBDFData.c Obit/src/ObitUVGSolveWB.c Obit/src/ObitUVGSolve.c
+Obit/src/ObitUVCalPolarization.c Obit/src/ObitUVCalFlag.c
+Obit/src/ObitUVCalCalibrate.c  Obit/src/ObitUVCal.c
+Obit/src/ObitUVCalBaseline.c Obit/src/ObitTableSNUtil.c
+Obit/src/ObitTableCLUtil.c Obit/src/ObitSkyModelVMSquint.c
+Obit/src/ObitSkyModelVMPoln.c Obit/src/ObitSkyModelVM.c
+Obit/src/ObitSkyModelVMBeamMF.c Obit/src/ObitSkyModelVMBeam.c
+Obit/src/ObitPolnCalFit.c Obit/src/ObitGPUSkyModel.c
+Obit/src/ObitDoppler.c
+Obit/tasks/AvgBL.c Obit/tasks/BPass.c
+Obit/tasks/IDIIn.c Obit/tasks/IDIOut.c Obit/tasks/Lister.c
+Obit/tasks/MapBeam.c Obit/tasks/SrvrEdt.c Obit/tasks/UVAppend.c
+Obit/tasks/UVSim.c Obit/tasks/WVRCal.c:
+  Allow both UV data with a "BASELINE" or "ANTENNAn" random parameters
+08 May 2015, svn ver 511

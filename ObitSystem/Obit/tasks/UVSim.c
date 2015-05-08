@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Simulate UV data                                                   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2013                                          */
+/*;  Copyright (C) 2009-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -27,6 +27,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitUV.h"
 #include "ObitFITS.h"
 #include "ObitSystem.h"
@@ -1087,7 +1088,7 @@ void GetData (ObitUV *outData, ObitInfoList *myInput, ObitErr *err)
 /*       err       Obit return error stack                                */
 /*----------------------------------------------------------------------- */
 {
-  olong ant1, ant2,  i, count=0;
+  olong ant1, ant2,  suba=1, i, count=0;
   ofloat *Buffer=NULL;
   odouble DecR, RAR, ArrLong, ArrLat, AntLst, HrAng=0.0, cosdec, sindec, darg;
   ObitUVDesc *desc;
@@ -1169,7 +1170,7 @@ void GetData (ObitUV *outData, ObitInfoList *myInput, ObitErr *err)
 	Buffer[desc->ilocu] = uvw[0];
 	Buffer[desc->ilocv] = uvw[1];
 	Buffer[desc->ilocw] = uvw[2];
-	Buffer[desc->ilocb] = (ofloat)(ant1*256+ant2);
+	ObitUVDescSetAnts(desc, Buffer, ant1, ant2, suba);
 	Buffer[desc->iloct] = time;
 	Buffer[desc->ilocsu] = SourceID;
 	Buffer[desc->ilocfq] = 1;

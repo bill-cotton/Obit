@@ -399,6 +399,9 @@ void ObitUVDescIndex (ObitUVDesc* in)
   in->ilocw  = -1;
   in->iloct  = -1;
   in->ilocb  = -1;
+  in->iloca1 = -1;
+  in->iloca2 = -1;
+  in->ilocsa = -1;
   in->ilocsu = -1;
   in->ilocfq = -1;
   in->ilocit = -1;
@@ -411,6 +414,9 @@ void ObitUVDescIndex (ObitUVDesc* in)
     if (!strncmp (in->ptype[i], "VV",       2)) in->ilocv  = i;
     if (!strncmp (in->ptype[i], "WW",       2)) in->ilocw  = i;
     if (!strncmp (in->ptype[i], "BASELINE", 8)) in->ilocb  = i;
+    if (!strncmp (in->ptype[i], "ANTENNA1", 8)) in->iloca1 = i;
+    if (!strncmp (in->ptype[i], "ANTENNA2", 8)) in->iloca2 = i;
+    if (!strncmp (in->ptype[i], "SUBARRAY", 8)) in->ilocsa = i;
     if (!strncmp (in->ptype[i], "TIME1",    5)) in->iloct  = i;
     if (!strncmp (in->ptype[i], "TIME",     4)) in->iloct  = i;
     if (!strncmp (in->ptype[i], "DATE",     4)) in->iloct  = i;

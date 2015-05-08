@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2014                                          */
+/*;  Copyright (C) 2004-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,6 +26,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitUVUtil.h"
 #include "ObitTableSUUtil.h"
 #include "ObitTableNXUtil.h"
@@ -482,8 +483,10 @@ void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
       /* compatability check - check time and baseline code */
       indx = i*in1Desc->lrec ;
       incompatible = 
-	inUV1->buffer[indx+in1Desc->iloct]!=inUV2->buffer[indx+in2Desc->iloct] ||
-	inUV1->buffer[indx+in1Desc->ilocb]!=inUV2->buffer[indx+in2Desc->ilocb];
+	inUV1->buffer[indx+in1Desc->iloct] !=inUV2->buffer[indx+in2Desc->iloct] ||
+	inUV1->buffer[indx+in1Desc->ilocb] !=inUV2->buffer[indx+in2Desc->ilocb] ||
+	inUV1->buffer[indx+in1Desc->iloca1]!=inUV2->buffer[indx+in2Desc->iloca1] ||
+	inUV1->buffer[indx+in1Desc->iloca2]!=inUV2->buffer[indx+in2Desc->iloca2];
       if (incompatible) break;
 
       indx += in1Desc->nrparm;
@@ -715,8 +718,10 @@ void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
       /* compatability check - check time and baseline code */
       indx = i*in1Desc->lrec ;
       incompatible = 
-	inUV1->buffer[indx+in1Desc->iloct]!=inUV2->buffer[indx+in2Desc->iloct] ||
-	inUV1->buffer[indx+in1Desc->ilocb]!=inUV2->buffer[indx+in2Desc->ilocb];
+	inUV1->buffer[indx+in1Desc->iloct] !=inUV2->buffer[indx+in2Desc->iloct] ||
+	inUV1->buffer[indx+in1Desc->ilocb] !=inUV2->buffer[indx+in2Desc->ilocb] ||
+	inUV1->buffer[indx+in1Desc->iloca1]!=inUV2->buffer[indx+in2Desc->iloca1] ||
+	inUV1->buffer[indx+in1Desc->iloca2]!=inUV2->buffer[indx+in2Desc->iloca2];
       if (incompatible) break;
 
       indx += in1Desc->nrparm;
@@ -871,15 +876,23 @@ ofloat ObitUVUtilVisCompare (ObitUV *inUV1, ObitUV *inUV2, ObitErr *err)
       indx = i*in1Desc->lrec ;
       jndx = i*in2Desc->lrec ;
       incompatible = 
-	inUV1->buffer[indx+in1Desc->iloct]!=inUV2->buffer[jndx+in2Desc->iloct] ||
-	inUV1->buffer[indx+in1Desc->ilocb]!=inUV2->buffer[jndx+in2Desc->ilocb];
+	inUV1->buffer[indx+in1Desc->iloct] !=inUV2->buffer[jndx+in2Desc->iloct]  ||
+	inUV1->buffer[indx+in1Desc->ilocb] !=inUV2->buffer[jndx+in2Desc->ilocb]  ||
+	inUV1->buffer[indx+in1Desc->iloca1]!=inUV2->buffer[jndx+in2Desc->iloca1] ||
+	inUV1->buffer[indx+in1Desc->iloca2]!=inUV2->buffer[jndx+in2Desc->iloca2];
       if (incompatible) {
 	vNo = indx+in1Desc->firstVis + i;  /* Which visibility */
 	if (inUV1->buffer[indx+in1Desc->iloct]!=inUV2->buffer[jndx+in2Desc->iloct])
 	  Obit_log_error(err, OBIT_Error, "Incompatible Times %f != %f @ vis %ld", 
 			 inUV1->buffer[indx+in1Desc->iloct], inUV2->buffer[jndx+in2Desc->iloct], vNo);
-	if (inUV1->buffer[indx+in1Desc->ilocb]!=inUV2->buffer[jndx+in2Desc->ilocb])
+	if ((in1Desc->ilocb>=0) && (inUV1->buffer[indx+in1Desc->ilocb]!=inUV2->buffer[jndx+in2Desc->ilocb]))
 	  Obit_log_error(err, OBIT_Error, "Incompatible Baselines %f != %f @ vis %ld", 
+			 inUV1->buffer[indx+in1Desc->ilocb], inUV2->buffer[jndx+in2Desc->ilocb], vNo);
+	if ((in1Desc->iloca2>=0) && (inUV1->buffer[indx+in1Desc->iloca1]!=inUV2->buffer[jndx+in2Desc->iloca1]))
+	  Obit_log_error(err, OBIT_Error, "Incompatible Antenna 1 %f != %f @ vis %ld", 
+			 inUV1->buffer[indx+in1Desc->ilocb], inUV2->buffer[jndx+in2Desc->ilocb], vNo);
+	if ((in1Desc->iloca2>=0) && (inUV1->buffer[indx+in1Desc->iloca2]!=inUV2->buffer[jndx+in2Desc->iloca2]))
+	  Obit_log_error(err, OBIT_Error, "Incompatible Antenna 2 %f != %f @ vis %ld", 
 			 inUV1->buffer[indx+in1Desc->ilocb], inUV2->buffer[jndx+in2Desc->ilocb], vNo);
 	break;
       }
@@ -954,7 +967,7 @@ void ObitUVUtilIndex (ObitUV *inUV, ObitErr *err)
   ObitTableNXRow* row=NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  olong num, i, lrec, iRow, ver, startVis=1, curVis, itemp;
+  olong num, i, lrec, iRow, ver, startVis=1, curVis, itemp, jtemp;
   olong suba, lastSubA=0, source, lastSource=0, fqid, lastFQID=0;
   ofloat maxScan, maxGap, *vis;
   odouble startTime=0.0, endTime=0.0, lastTime = -1.0e20; 
@@ -1050,9 +1063,8 @@ void ObitUVUtilIndex (ObitUV *inUV, ObitErr *err)
 
       /* require some time change for further checks */
       if (vis[inUV->myDesc->iloct]==lastTime) goto endloop;
-
-      itemp  = vis[inUV->myDesc->ilocb];           /* Subarray number */
-      suba = (100.0*(vis[inUV->myDesc->ilocb]-itemp)) + 1.5;
+      /* Subarray number */
+      ObitUVDescGetAnts(inUV->myDesc, vis, &itemp, &jtemp, &suba);
       if (inUV->myDesc->ilocfq>=0) 
 	fqid   = vis[inUV->myDesc->ilocfq] + 0.5;  /* Which FQ Id */
       if (inUV->myDesc->ilocsu>=0) 
@@ -1734,7 +1746,7 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   ObitUVSortBuffer *outBuffer=NULL;
   olong suba, lastSourceID, curSourceID, lastSubA, lastFQID=-1;
   gchar *today=NULL;
-  ofloat cbase, timeAvg, curTime, startTime, endTime, lastTime=-1.0;
+  ofloat timeAvg, curTime, startTime, endTime, lastTime=-1.0;
   ofloat *accVis=NULL, *accRP=NULL, *ttVis=NULL;
   ofloat *inBuffer;
   olong ant1, ant2, blindx, *blLookup=NULL;
@@ -1901,10 +1913,7 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
       if ((curTime<endTime) && (curSourceID == lastSourceID) && 
 	  (inDesc->firstVis<=inDesc->nvis) && (iretCode==OBIT_IO_OK)) {
 	/* accumulate */
-	cbase = inBuffer[iindx+inUV->myDesc->ilocb]; /* Baseline */
-	ant1 = (cbase / 256.0) + 0.001;
-	ant2 = (cbase - ant1 * 256) + 0.001;
-	lastSubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 0.5);
+	ObitUVDescGetAnts(inUV->myDesc, &inBuffer[iindx], &ant1, &ant2, &lastSubA);
 	/* Baseline index this assumes a1<=a2 always */
 	blindx =  blLookup[ant1-1] + ant2-ant1;
 	if (inDesc->ilocfq>=0) lastFQID = (olong)(inBuffer[iindx+inDesc->ilocfq]+0.5);
@@ -2003,10 +2012,7 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 	for (i=0; i<(nrparm+1)*numBL; i++) accRP[i] = 0.0;
 
 	/* Now accumulate this visibility */
-	cbase = inBuffer[iindx+inUV->myDesc->ilocb]; /* Baseline */
-	ant1 = (cbase / 256.0) + 0.001;
-	ant2 = (cbase - ant1 * 256) + 0.001;
-	lastSubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 0.5);
+	ObitUVDescGetAnts(inUV->myDesc, &inBuffer[iindx], &ant1, &ant2, &lastSubA);
 	/* Baseline index this assumes a1<=a2 always */
 	blindx =  blLookup[ant1-1] + ant2-ant1;
 	if (inDesc->ilocfq>=0) lastFQID = (olong)(inBuffer[iindx+inDesc->ilocfq]+0.5);
@@ -2127,7 +2133,7 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   ObitUVDesc *inDesc, *outDesc;
   olong suba, lastSourceID, curSourceID, lastSubA, lastFQID=-1;
   gchar *today=NULL;
-  ofloat cbase, curTime=-1.0e20, startTime;
+  ofloat curTime=-1.0e20, startTime;
   ofloat *accVis=NULL, *accRP=NULL, *lsBlTime=NULL, *stBlTime=NULL, *stBlU=NULL, *stBlV=NULL;
   ofloat *tVis=NULL, *ttVis=NULL;
   ofloat *inBuffer;
@@ -2364,10 +2370,7 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
       
       /* Which data is this? */
       iindx = ivis*inDesc->lrec;
-      cbase = inBuffer[iindx+inUV->myDesc->ilocb]; /* Baseline */
-      ant1 = (cbase / 256.0) + 0.001;
-      ant2 = (cbase - ant1 * 256) + 0.001;
-      lastSubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 0.5);
+      ObitUVDescGetAnts(inUV->myDesc, &inBuffer[iindx], &ant1, &ant2, &lastSubA);
       /* Baseline index this assumes a1<=a2 always */
       blindx =  blLookup[ant1-1] + ant2-ant1;
       blindx = MAX (0, MIN (blindx, numBL-1));
@@ -3401,7 +3404,7 @@ void ObitUVUtilCalcUVW (ObitUV *inUV, ObitUV *outUV,  ObitErr *err)
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   ObitUVWCalc *uvwCalc=NULL;
   olong i, indx, SId, subA, ant1, ant2;
-  ofloat uvw[3], cbase;
+  ofloat uvw[3];
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   ObitIOAccess access;
@@ -3509,10 +3512,7 @@ void ObitUVUtilCalcUVW (ObitUV *inUV, ObitUV *outUV,  ObitErr *err)
       indx = i*inDesc->lrec;
       if (inUV->myDesc->ilocsu>=0) 
 	SId = (olong)(inUV->buffer[indx+inUV->myDesc->ilocsu] + 0.5);
-      cbase = inUV->buffer[indx+inUV->myDesc->ilocb]; /* Baseline */
-      ant1 = (cbase / 256.0) + 0.001;
-      ant2 = (cbase - ant1 * 256) + 0.001;
-      subA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 0.5);
+      ObitUVDescGetAnts(inUV->myDesc, &inUV->buffer[indx], &ant1, &ant2, &subA);
       ObitUVWCalcUVW(uvwCalc, inUV->buffer[indx+inDesc->iloct], SId, 
 		     subA, ant1, ant2, uvw, err);
       inUV->buffer[indx+inDesc->ilocu] = uvw[0];

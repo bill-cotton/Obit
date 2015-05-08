@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to Map beam polarization                                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2014                                          */
+/*;  Copyright (C) 2009-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -27,6 +27,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitImageUtil.h"
 #include "ObitUVUtil.h"
 #include "ObitSystem.h"
@@ -1827,10 +1828,10 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
   ObitInfoType type;
   gint32   dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ofloat   xCells=1.0, yCells=1.0, blnkTime=0.0, tblank=-1.0e20;
-  ofloat   u, v, time, base, ulast, vlast, tol, Az, El, PA, *farr;
+  ofloat   u, v, time, ulast, vlast, tol, Az, El, PA, *farr;
   ofloat   ss, cc, xr, xi, *OffAz=NULL, *OffEl=NULL, fblank =  ObitMagicF();
   odouble  sumAz, sumEl, sumPA;
-  olong    count, maxElem=*nelem, iElem, indx, iant, ant1, ant2, off=0, iver;
+  olong    count, maxElem=*nelem, iElem, indx, iant, ant1, ant2, suba, off=0, iver;
   olong    i, j, jlocs, jlocf, jlocif, incs, incf, incif, doff, ddoff;
   olong    nx, ny, iIF, ichan, *refAnts, nRefAnt, ix, iy, prtLv=0;
   gboolean OK1, OK2;
@@ -1951,10 +1952,7 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
       if (time<tblank) goto next;
 
       /* Want antennas? */
-      base = inData->buffer[indx+inData->myDesc->ilocb];
-      /* crack Baseline */
-      ant1 = (base / 256.0) + 0.001;
-      ant2 = (base - ant1 * 256) + 0.001;
+      ObitUVDescGetAnts(inData->myDesc, &inData->buffer[indx], &ant1, &ant2, &suba);
       if (ant>0) {
 	if ((ant1!=ant) && (ant2!=ant)) goto next;
       }

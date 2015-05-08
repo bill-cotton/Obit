@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2014                                          */
+/*;  Copyright (C) 2006-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,6 +26,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitThread.h"
 #include "ObitSkyModelVMSquint.h"
 #include "ObitTableCCUtil.h"
@@ -1129,11 +1130,11 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
   olong startPoln, numberPoln, jincs, startChannel, numberChannel;
   olong jincf, startIF, numberIF, jincif, kincf, kincif;
   olong offset, offsetChannel, offsetIF, lim;
-  olong ilocu, ilocv, ilocw, iloct, ilocb, suba, itemp, ant1, ant2, mcomp;
+  olong ilocu, ilocv, ilocw, iloct, suba, it1, it2, ant1, ant2, mcomp;
   ofloat *visData, *Data, *ddata, *fscale;
   ofloat sumRealRR, sumImagRR, modRealRR, modImagRR;
   ofloat sumRealLL, sumImagLL, modRealLL, modImagLL;
-  ofloat cbase, *rgain1, *lgain1, *rgain2, *lgain2;
+  ofloat *rgain1, *lgain1, *rgain2, *lgain2;
 #define FazArrSize 100  /* Size of the amp/phase/sine/cosine arrays */
   ofloat AmpArrR[FazArrSize], AmpArrL[FazArrSize], FazArr[FazArrSize];
   ofloat CosArr[FazArrSize], SinArr[FazArrSize];
@@ -1149,11 +1150,10 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
   if (err->error) goto finish;
 
  /* Visibility pointers */
-  ilocu =  uvdata->myDesc->ilocu;
-  ilocv =  uvdata->myDesc->ilocv;
-  ilocw =  uvdata->myDesc->ilocw;
-  iloct =  uvdata->myDesc->iloct;
-  ilocb =  uvdata->myDesc->ilocb;
+  ilocu  =  uvdata->myDesc->ilocu;
+  ilocv  =  uvdata->myDesc->ilocv;
+  ilocw  =  uvdata->myDesc->ilocw;
+  iloct  =  uvdata->myDesc->iloct;
 
   /* Set channel, IF and Stokes ranges (to 0-rel)*/
   startIF  = in->startIFPB-1;
@@ -1195,8 +1195,7 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
     /* Is current model still valid? */
     if (visData[iloct] > largs->endVMModelTime) {
       /* Subarray 0-rel */
-      itemp = (olong)visData[ilocb];
-      suba = 100.0 * (visData[ilocb]-itemp) + 0.5; 
+      ObitUVDescGetAnts(uvdata->myDesc, visData, &it1, &it2, &suba);
       /* Update */
       myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba, uvdata, ithread, err);
       if (err->error) {
@@ -1209,9 +1208,7 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
     }
 
     /* Need antennas numbers */
-    cbase = visData[ilocb]; /* Baseline */
-    ant1 = (cbase / 256.0) + 0.001;
-    ant2 = (cbase - ant1 * 256) + 0.001;
+    ObitUVDescGetAnts(uvdata->myDesc, visData, &ant1, &ant2, &it1);
     ant1--;    /* 0 rel */
     ant1 = MAX (0, ant1);
     ant2--;    /* 0 rel */

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2011                                          */
+/*;  Copyright (C) 2003-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -27,9 +27,9 @@
 /*--------------------------------------------------------------------*/
 
 #include <glib.h>
+#include "ObitUVDesc.h"
 #include "ObitUVCalFlag.h"
 #include "ObitUVCalFlagDef.h"
-#include "ObitUVDesc.h"
 #include "ObitUVSel.h"
 #include "ObitTableFG.h"
 #include "ObitTableUtil.h"
@@ -176,7 +176,7 @@ void ObitUVCalFlagInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
 void ObitUVCalFlag (ObitUVCal *in, float time, olong ant1, olong ant2, 
 		    ofloat *RP, ofloat *visIn, ObitErr *err)
 {
-  olong   kbase, FQID, SourID, iSubA;
+  olong   kbase, it1, it2, FQID, SourID, iSubA;
   olong   i, nElem, nElemPerThread, nTh, loElem, hiElem;
   gboolean OK;
   ObitUVCalFlagS *me;
@@ -205,8 +205,8 @@ void ObitUVCalFlag (ObitUVCal *in, float time, olong ant1, olong ant2,
   if (me->numFlag <= 0) return;
   
   /* Baseline and subarray number in data */
-  kbase = (olong)RP[desc->ilocb];
-  iSubA = 1 + (olong)(100.0*(RP[desc->ilocb] -(ofloat)kbase) + 0.1);
+  ObitUVDescGetAnts(desc, RP, &it1, &it2, &iSubA);
+  kbase = it1*256 + it2;   /* Baseline number */
 
   /* Data FQ id */
   if (desc->ilocfq >= 0) FQID = RP[desc->ilocfq] + 0.1;

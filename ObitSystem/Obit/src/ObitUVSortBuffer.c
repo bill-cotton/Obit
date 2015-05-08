@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2013                                          */
+/*;  Copyright (C) 2009-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,6 +26,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitUVSortBuffer.h"
 #include <math.h>
 #include <string.h>
@@ -360,7 +361,7 @@ void ObitUVSortBufferFlush (ObitUVSortBuffer *in, ObitErr *err)
  */
 void ObitUVSortBufferSort (ObitUVSortBuffer *in, ObitErr *err)
 {
-  olong i, delta, lrec, iloct, ilocb, number, size, ncomp; 
+  olong i, delta, lrec, iloct, ilocb, iloca1, iloca2, number, size, ncomp; 
   ObitUVSortStruct *sortKeys;
 
   /* error checks */
@@ -368,15 +369,20 @@ void ObitUVSortBufferSort (ObitUVSortBuffer *in, ObitErr *err)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* Set sort keys */
-  delta = sizeof(ObitUVSortStruct)/sizeof(ofloat);
-  lrec  = in->myUVdata->myDesc->lrec;
-  iloct = in->myUVdata->myDesc->iloct;
-  ilocb = in->myUVdata->myDesc->ilocb;
+  delta  = sizeof(ObitUVSortStruct)/sizeof(ofloat);
+  lrec   = in->myUVdata->myDesc->lrec;
+  iloct  = in->myUVdata->myDesc->iloct;
+  ilocb  = in->myUVdata->myDesc->ilocb;
+  iloca1 = in->myUVdata->myDesc->iloca1;
+  iloca2 = in->myUVdata->myDesc->iloca2;
   for (i=0; i<in->hiVis; i++) {
     sortKeys = (ObitUVSortStruct*)&in->SortStruct[i*delta];
     sortKeys->index.itg = i;
     sortKeys->key[0]    = in->myBuffer[i*lrec+iloct];
-    sortKeys->key[1]    = in->myBuffer[i*lrec+ilocb];
+    /* Baseline or antennas */
+    if (ilocb>=0) sortKeys->key[1] = in->myBuffer[i*lrec+ilocb];
+    else sortKeys->key[1] = 
+	   (1000.0*in->myBuffer[i*lrec+iloca1])+in->myBuffer[i*lrec+iloca2];
   }
 
   /* Sort SortStruct */

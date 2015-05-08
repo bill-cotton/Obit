@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2014                                          */
+/*;  Copyright (C) 2006-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,6 +26,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitUVSel.h"
 #include "ObitUVGSolve.h"
 #include "ObitMem.h"
@@ -821,9 +822,9 @@ NextAvg (ObitUV* inUV, ofloat interv,
 {
   gboolean done=FALSE;
   ObitIOCode retCode= OBIT_IO_OK;
-  ofloat linterv, ctime, cbase, stime, ltime=0, weight, wt, bl, *visPnt, temp;
+  ofloat linterv, ctime, stime, ltime=0, weight, wt, bl, *visPnt, temp;
   ofloat tmp1, tmp2;
-  olong i, j, csid, cfqid, a1, a2, *blLookup=NULL, blIndex, visIndex, lenEntry;
+  olong i, j, csid, cfqid, a1, a2, *blLookup=NULL, blIndex, visIndex, lenEntry, suba;
   olong iFreq, iIF, iStok, jBL, jIF, jStok, jncs, jncif, mPol, mIF, offset, numBL;
   odouble timeSum;
   olong timeCount, accumIndex;
@@ -931,7 +932,6 @@ NextAvg (ObitUV* inUV, ofloat interv,
     if (inUV->myDesc->ilocfq>=0) cfqid = (olong)visPnt[inUV->myDesc->ilocfq]; /* FQid */
     else cfqid  = 0;
     if (*fqid<0) *fqid = cfqid;  /* Set output fq id first vis */
-    cbase = visPnt[inUV->myDesc->ilocb]; /* Baseline */
     
     /* Is this integration done? */
     if ((*sid!=csid) || (*fqid!=cfqid) || (ctime-stime>=linterv)) break;
@@ -942,8 +942,7 @@ NextAvg (ObitUV* inUV, ofloat interv,
     ltime = ctime;   /* Last time in accumulation */
     
     /* crack Baseline */
-    a1 = (cbase / 256.0) + 0.001;
-    a2 = (cbase - a1 * 256) + 0.001;
+    ObitUVDescGetAnts(inUV->myDesc, visPnt, &a1, &a2, &suba);
 
     /* Check that antenna numbers in range */
     if (!((a1>0) && (a2>0) && (a1<=numAnt)&& (a2<=numAnt))) {
