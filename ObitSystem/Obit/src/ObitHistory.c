@@ -809,7 +809,7 @@ olong ObitHistoryNumRec (ObitHistory *in)
 
 /**
  * Copy values from a list of entries in an ObitInfoList to an open History
- * Only first 64 characters of string values copied
+ * Only first 3x64 characters of 1st string values copied, then 64
  * \param out  Output object for HISTORY header entries.
  * \param list NULL terminated list of entries in info
  * \param info ObitInfoList with values to copy
@@ -825,12 +825,12 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gpointer     xdata;
   gboolean     found, *bdata;
-  olong        i, j, more, indx, ltemp, lstr, *ldata, size;
+  olong        i, j, is, ns, lens, more, indx, ltemp, lstr, *ldata, size;
   olong         *idata;
   oint         *odata;
   ofloat       *fdata;
   odouble      *ddata;
-  gchar        hicard[81], bchar, *cdata, cstring[65], bpgmName[80];
+  gchar        hicard[81], bchar, *cdata, cstring[200], cs[68], bpgmName[80];
   const ObitIOHistoryClassInfo *outClass;
   gchar *routine = "ObitHistoryyCopyInfoList";
 
@@ -975,24 +975,43 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
 	}
 
 	break;
-      case OBIT_string:   /* only 64 char of string */
+      case OBIT_string:   /* only 3x48 char of first string then 64 */
 	cdata = (gchar*)xdata;
 	lstr = dim[0];  /* length of string */
-	strncpy (cstring, cdata, MIN (lstr, 64));
-	cstring[MIN (lstr, 64)] = 0;  /* null terminate */
-	cdata += lstr;         /* move down string array */
-	g_snprintf (hicard, 80, "%s %s = '%s' ",
-		    pgmName, list[i], cstring);
+	strncpy (cstring, cdata, MIN (lstr, 3*64));
+	cstring[MIN (lstr, 3*48)] = 0;  /* null terminate */
+	cdata += lstr;          /* move down string array */
+	ObitTrimTrail(cstring);  /* trim blanks */
+	/* How many cards for this one? */
+	lens = MIN (lstr, strlen(cstring));
+	ns = 1 + (MIN (lens, 3*48)-1)/48;
+	lens = MIN (lens, 48);  /* How long? */
+	strncpy (cs, cstring, lens); /* First card */
+	cs[lens] = 0;
+	ObitTrimTrail(cs);  /* trim blanks */
+	g_snprintf (hicard, 80, "%s %s='%s' ",
+		    pgmName, list[i], cs);
 	outClass->ObitIOHistoryWriteRec (out->myIO, -1, hicard, err);
 	if (err->error) Obit_traceback_val (err, routine, out->name, retCode);
 	more = (size / lstr) - 1;
+	/* Loop over further cards */
+	for (is=1; is<ns; is++) {
+	  lens = MIN (lstr-is*48, 48);         /* How long? */
+	  strncpy (cs, &cstring[is*48], lens); /* next card */
+	  cs[lens] = 0;
+	  ObitTrimTrail(cs);  /* trim blanks */
+	  g_snprintf (hicard, 80, "              +'%s' ", cs);
+	  outClass->ObitIOHistoryWriteRec (out->myIO, -1, hicard, err);
+	  if (err->error) Obit_traceback_val (err, routine, out->name, retCode);
+	} /* end further cards */
 	g_snprintf (hicard, 80, "%s ", pgmName);
 	indx = strlen (hicard);
 	while (more>0) {
 	  for (j=0; j<2; j++) {
 	    strncpy (cstring, cdata, MIN (lstr, 64));
 	    cstring[MIN (lstr, 64)] = 0;  /* null terminate */
-	    cdata += lstr;         /* move down string array */
+	    ObitTrimTrail(cstring);  /* trim blanks */
+	    cdata += lstr;           /* move down string array */
 	    g_snprintf (&hicard[indx], 80-indx, "'%s' ", cstring);
 	    indx = strlen (hicard);
 	    more--;                    /* finished? */

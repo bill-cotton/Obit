@@ -2743,3 +2743,9 @@ Obit/tasks/MapBeam.c Obit/tasks/SrvrEdt.c Obit/tasks/UVAppend.c
 Obit/tasks/UVSim.c Obit/tasks/WVRCal.c:
   Allow both UV data with a "BASELINE" or "ANTENNAn" random parameters
 08 May 2015, svn ver 511
+
+History improvement
+Obit/src/ObitHistory.c:
+  CopyInfoList: Allow up to 3x64 characters in first string
+15 May 2015, svn ver 512
+
