@@ -267,7 +267,11 @@ def OImageSpectrum(inImage, pixel, err, chOff=-9999,bchan=1, echan=0):
     """
     ################################################################
     imDict = inImage.Desc.Dict
-    nplane = imDict["inaxes"][2]
+    # save info
+    nx       = imDict["inaxes"][0]
+    ny       = imDict["inaxes"][1]
+    nplane   = imDict["inaxes"][2]
+    altCrpix = imDict["altCrpix"]
     blc = [pixel[0],pixel[1],1];
     trc=[pixel[0], imDict["inaxes"][1], 1]
     trc=[pixel[0], pixel[1], 1]
@@ -296,6 +300,10 @@ def OImageSpectrum(inImage, pixel, err, chOff=-9999,bchan=1, echan=0):
         vel.append(v)
         flux.append(s)
     
+    # restore info
+    imDict["inaxes"][0] = nx; imDict["inaxes"][1] = ny; imDict["inaxes"][2] = nplane
+    imDict["altCrpix"]  = altCrpix
+    inImage.Desc.Dict   = imDict
     inImage.Close(err)
     OErr.printErrMsg(err, "Error closinging image")
     return {'ch':ch,'vel':vel,'flux':flux}
@@ -575,6 +583,63 @@ def doSimplePlot(spec, label, file="None", \
     OPlot.PShow  (plot, err)
     del plot
     # end doSimplePlot
+
+def doFourPlot(specs, labels, file="None", \
+           xlabel="Velocity (km/s)", ylabel="Flux Density (Jy)", \
+           lwidth=1,csize=1,symbol=3):
+    """ Plots and displays a simple spectrum
+
+    accepts spectrum in a dictionary with entries
+       vel = vel coordinate
+       flux = flux
+    specs  = list of input spectra (up to four) to plot with symbol
+    labels = plot label list
+    file   = name of output postscript file, if "None" ask
+             "/xterm" gives xterm display
+    xlabel = [optional] x axis label
+    ylabel = [optional] y axis label
+    lwidth = [optional] line width (integer)
+    csize  = [optional] symbol size (integer)
+    symbol = [optional] plot symbol code
+    """
+    ################################################################
+    # Add "/PS" for postscript files
+    if file!="None" and file!="/xterm":
+        filename = file+"/ps"
+    else:
+        filename = file
+    # Create plot object
+    err=Image.err
+    plot=OPlot.newOPlot("plot", err,output=filename, nx=2,ny=2)
+    # Loop over plots
+    for i in range(0,len(specs)):
+        spec = specs[i]; label = labels[i]
+        xmin=0.95*min(spec['vel'])
+        xmax=1.05*max(spec['vel'])
+        ymin=0.95*min(spec['flux'])
+        ymax=1.05*max(spec['flux'])
+    # Set labeling on plot InfoList member
+        info = plot.List
+        dim = [1,1,1,1,1]
+        InfoList.PPutFloat   (info, "XMAX", dim, [xmax],err)
+        InfoList.PPutFloat   (info, "XMIN", dim, [xmin],err)
+        InfoList.PPutFloat   (info, "YMAX", dim, [ymax],err)
+        InfoList.PPutFloat   (info, "YMIN", dim, [ymin],err)
+        InfoList.PPutInt     (info, "LWIDTH", dim, [lwidth],err)
+        InfoList.PPutInt     (info, "CSIZE",  dim, [csize],err)
+        dim[0] = max (1,len(label))
+        InfoList.PAlwaysPutString  (info, "TITLE", dim, [label])
+        dim[0] = max (1,len(xlabel))
+        InfoList.PAlwaysPutString  (info, "XLABEL",dim, [xlabel])
+        dim[0] =  max (1,len(ylabel))
+        InfoList.PAlwaysPutString  (info, "YLABEL",dim, [ylabel])
+        x   = spec["vel"]
+        y   = spec["flux"]
+        OPlot.PXYPlot (plot, symbol, x, y, err)
+        # end loop over plots
+    OPlot.PShow  (plot, err)
+    del plot
+    # end doFourPlot
 
 def doSimpleLogPlot(spec, label, file="None", \
            xlabel="Freq (MHz)", ylabel="Flux Density (mJy)", \

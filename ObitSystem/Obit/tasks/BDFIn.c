@@ -27,6 +27,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitUV.h"
 #include "ObitFITS.h"
 #include "ObitSystem.h"
@@ -1729,7 +1730,7 @@ void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData,
     /* Correct to band center */
     /* For EVLA, modify frequency offset if the channel width differs from the file header */
     if (isEVLA && (outRow->chWidth[iIF]!=chwid)) {
-      outRow->freqOff[iIF] += (1+nChan/2) * (outRow->chWidth[iIF]-chwid);
+      outRow->freqOff[iIF] += (nChan/2) * (outRow->chWidth[iIF]-chwid);
     }
     /* FOR EVLA everything is upper even if it's not */
     if (isEVLA) outRow->sideBand[iIF] = 1;
@@ -2661,12 +2662,12 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
 /*       err     Obit return error stack                                  */
 /*----------------------------------------------------------------------- */
 {
-  olong souId, ant1, ant2, i, iANver, iarr, cnt;
+  olong souId, ant1, ant2, it1, i, iANver, iarr, cnt;
   ObitTableAN *ANTable=NULL;
   ObitTableSU *SUTable=NULL;
   ObitSource *source=NULL;
   ObitAntennaList *AntList;
-  ofloat time, uvw[3], bl[3], tmp, u, v, tuvrot;
+  ofloat time, uvw[3], bl[3], u, v, tuvrot;
   odouble arrJD, DecR, RAR, AntLst, HrAng=0.0, ArrLong, ArrLat, dRa;
   odouble sum, xx, yy, zz, lambda, DecOff, RAOff, dist;
   gchar *routine = "CalcUVW";
@@ -2690,9 +2691,7 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
   }
 
   /* Which antennas? */
-  tmp = outData->buffer[outData->myDesc->ilocb];
-  ant1 = (olong)(tmp/256.0);
-  ant2 = (olong)(tmp - ant1*256 +0.00005);
+  ObitUVDescGetAnts(outData->myDesc, outData->buffer, &ant1, &ant2, &it1);
   
   /* NOP for autocorrelations  */
   if (ant1==ant2) return;
@@ -2845,14 +2844,14 @@ void HoloUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
 /*       err     Obit return error stack                                  */
 /*----------------------------------------------------------------------- */
 {
-  olong souId, ant1, ant2, ant1Id, ant2Id, i, iANver, iarr, cnt;
+  olong souId, ant1, ant2, it1, ant1Id, ant2Id, i, iANver, iarr, cnt;
   ofloat elev1, elev2, elev;
   ASDMPointingRow *pointA1=NULL, *pointA2=NULL;
   ObitTableAN *ANTable=NULL;
   ObitTableSU *SUTable=NULL;
   ObitSource *source=NULL;
   ObitAntennaList *AntList;
-  ofloat temp, time, uvw[3];
+  ofloat time, uvw[3];
   odouble *off1, *off2, off[2];
   odouble JD, ArrLong, dRa;
   odouble sum, xx, yy, zz, lambda, DecOff, RAOff;
@@ -2869,9 +2868,7 @@ void HoloUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
   }
 
   /* Which antennas? */
-  temp = outData->buffer[outData->myDesc->ilocb];
-  ant1 = (olong)(temp/256.0);
-  ant2 = (olong)(temp - ant1*256 +0.00005);
+  ObitUVDescGetAnts(outData->myDesc, outData->buffer, &ant1, &ant2, &it1);
   
   /* NOP for autocorrelations  */
   if (ant1==ant2) return;

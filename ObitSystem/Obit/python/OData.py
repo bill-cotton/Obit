@@ -17,7 +17,7 @@ List   used to pass instructions to processing
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2007-2012
+#  Copyright (C) 2007-2015
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -237,7 +237,7 @@ class OData(ODataPtr):
         * numTomes  = Number of Phase cal tones (PC)
         * numTabs   = Number of ??? (GC)
         * numCoef   = Number of polynomial coefficents (NI)
-        * numBand   = Number of Bands(?) (IM, GC)
+        * numBand   = Number of Bands(?) (IM, GC, MC)
         * npoly     = number of polynomial terms (IM)
         * noParms   = Number of parameters in CC table model
         * maxis1-5  = Dimension of axes of IDI data matrix
@@ -283,9 +283,9 @@ class OData(ODataPtr):
             outTab = Obit.TableTY(id, [tabVer], access, tabType, numPol, numIF, err.me)
         elif tabType=="AIPS GC":
             outTab = Obit.TableGC(id, [tabVer], access, tabType, \
-                                  numBand, numPol, numTabs, err.me)
+                                numBand,  numPol, numTabs, err.me)
         elif tabType=="AIPS MC":
-            outTab = Obit.TableMC(id, [tabVer], access, tabType, numPol, err.me)
+            outTab = Obit.TableMC(id, [tabVer], access, tabType, numPol, numBand, err.me)
         elif tabType=="AIPS NI":
             outTab = Obit.TableNI(id, [tabVer], access, tabType, numCoef, err.me)
         elif tabType=="AIPS PS":
@@ -296,7 +296,7 @@ class OData(ODataPtr):
             outTab = Obit.TableCQ(id, [tabVer], access, tabType, numIF, err.me)
         elif tabType=="AIPS IM":
             outTab = Obit.TableIM(id, [tabVer], access, tabType, \
-                                  numBand, numPol, npoly, err.me)
+                                  numPol, numBand, npoly, err.me)
         elif tabType=="AIPS CT":
             outTab = Obit.TableCT(id, [tabVer], access, tabType, err.me)
         elif tabType=="AIPS OB":

@@ -2749,3 +2749,32 @@ Obit/src/ObitHistory.c:
   CopyInfoList: Allow up to 3x64 characters in first string
 15 May 2015, svn ver 512
 
+Improvements in linear feed polarization fitting, bug fixes
+Obit/src/ObitIOImageFITS.c:
+  WriteDescriptor: Allow '_' in keywords.
+Obit/share/scripts/SpectrumUtils.py:
+  OImageSpectrum: restore descriptor state
+  doFourPlots: multiple spectrum plots
+Obit/python/EVLACal.py:
+  Model fixes for 3C48, 
+  EVLACalAP: Correct model flux to CalModelFlux
+  Allow specyfing poln cal in ploting spectra.
+Obit/python/EVLAContPipe.py:
+  Apply poln corrections when plotting RL/LR spectra
+Obit/tasks/BDFIn.c:
+   GetFrequencyInfo: Correct correction for EVLA variable channel width.
+Obit/src/ObitPolnCalFit.c :
+  UpdateBandpassTab: Invert gains.
+  FitFit: If refAnt given for lin feeds, fix first ellipticity,
+     second fit with ellipticity unconstrained.
+  several: enable constraining Linear feed ellipticities to average to zero. 
+Obit/TDF/PCal.TDF:
+  Document changed use of refAnt for linear feeds
+Obit/src/ObitUVCalPolarization.c:
+  SetInvJonesIF: Don't double apply RLPhaseDif
+Obit/python/OData.py:
+  Add numBand in call to Obit.TableMC
+  TableIM: correct order of arguments.
+Obit/doc/OBITdoc.tex Obit/src/ObitTableMC.c:
+  MC table, add underscores to DISP_* and DDISP_* column names.
+1 July 2015, svn. version 513

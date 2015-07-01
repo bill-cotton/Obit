@@ -189,6 +189,18 @@ fitting optionally followed by a Levenberg-Marquardt least
 squares.  The latter is somewhat more accurate but can be quite 
 slow.
 
+Linear feeds:
+   When fitting data taken with linearly polarized feeds, use of
+refAnt is suggested.  If refAnt is >0 then it specifies the 
+reference antenna.  The first fitting constrains the X pol 
+ellipticity to zero followed by an unconstrained fitting.
+A preferable option is to use refAnt=-1 in which case the 
+average ellipticity is set to zero.  These options are most 
+useful when Stokes V is to be calibrated.
+   Application of iinstrumental calibration for linear feed data 
+in Obit will result in the data being transformed into a circular 
+basis, i.e. into RR,LL,RL,LR.
+
 NOTES:
  1) For arrays with circular feeds, the parallactic angle
 corrections MUST be made prior to any other calibration steps 

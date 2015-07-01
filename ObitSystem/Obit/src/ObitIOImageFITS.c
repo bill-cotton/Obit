@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1434,7 +1434,8 @@ ObitIOImageFITSWriteDescriptor (ObitIOImageFITS *in, ObitErr *err)
     /* Check for trash characters */
     n = strlen(keyName);
     bad = FALSE;
-    for (j=0; j<n; j++) if (!g_ascii_isalnum (keyName[j])) bad = TRUE;
+    for (j=0; j<n; j++) 
+      if ((keyName[j]!='_') && (!g_ascii_isalnum (keyName[j]))) bad = TRUE;
     if (bad) continue;
 
     /* write by type */

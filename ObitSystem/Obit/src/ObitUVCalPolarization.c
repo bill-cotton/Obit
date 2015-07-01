@@ -887,8 +887,11 @@ static void SetInvJonesIF(ObitUVCalPolarizationS *in, ObitAntennaList *Ant,
 	  angle[0] = elp_r; angle[1] = 2*ori_r; angle[2] = elp_l; angle[3] = -2*ori_l;
 	  if (PCal->polRefAnt>0) angle[4] = Ant->ANlist[PCal->polRefAnt-1]->FeedAPCal[2*iif+1];
 	  else                   angle[4] = 0.0;
-	  if (PCal->polRefAnt>0) angle[5] = -Ant->ANlist[PCal->polRefAnt-1]->FeedBPCal[2*iif+1] + Ant->RLPhaseDiff[iif];
-	  else                   angle[5] =  Ant->RLPhaseDiff[iif];
+	  /* RLPhaseDiff should have been applied in BP table 
+	     if (PCal->polRefAnt>0) angle[5] = -Ant->ANlist[PCal->polRefAnt-1]->FeedBPCal[2*iif+1] + Ant->RLPhaseDiff[iif];
+	     else                   angle[5] =  Ant->RLPhaseDiff[iif];*/
+	  if (PCal->polRefAnt>0) angle[5] = -Ant->ANlist[PCal->polRefAnt-1]->FeedBPCal[2*iif+1];
+	  else                   angle[5] =  0.0;
 	  ObitSinCosVec(6, angle, sina, cosa);
 	  
 	  /* Complex terms */

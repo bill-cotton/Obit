@@ -137,6 +137,9 @@ static gboolean CheckCrazyOne(ObitPolnCalFit *in, ObitErr *err);
 /** Private: Reset blanked solutions */
 static void resetSoln(ObitPolnCalFit *in);
 
+/** Private: Constrain Linear feed fits */
+static ofloat ConstrLinFeed (ObitPolnCalFit *in);
+
 #ifdef HAVE_GSL
 /** Private: Circular feed Solver function evaluation */
 static int PolnFitFuncOERL (const gsl_vector *x, void *params, 
@@ -916,8 +919,13 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
 
     /* Antenna terms */
     for (j=0; j<4; j++) in->antFit[i][j] = TRUE;
-    /* Don't fit reference antenna terms*/
-    if  ((i+1)==in->refAnt) in->antFit[i][0] = FALSE;
+    /* Don't fit reference antenna terms,
+     Fix ori 1 if circ. feeds, elip 1&2 if linear feeds*/
+    if (in->isCircFeed) { /* Circular */
+      if  ((i+1)==in->refAnt) in->antFit[i][0] = FALSE;
+    } else  { /* Linear */
+      if  ((i+1)==in->refAnt) in->antFit[i][1] = FALSE;
+    }
     /* doFitOri=False-> fix orientations */
     if (!in->doFitOri) {
       in->antFit[i][0] = FALSE;
@@ -1063,8 +1071,24 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     /* Make sure solutions are not blanked from last fit */
     resetSoln(in);
 
+    /* zero reference antenna ellipticity for lin. feeds */
+    if ((!in->isCircFeed) &&(in->refAnt>0)) {
+      refAnt = in->refAnt;
+      in->antParm[(refAnt-1)*4+1] = 0.0;
+    }
+
     /* Do fit - fast method to get better soln, then possibly GSL */
     isOK = doFitFast (in, err);
+    /* refit with no reference antenna for lin. feeds 
+     This doesn't actually do much except better elip. for ref ant */
+    if ((!in->isCircFeed) &&(in->refAnt>0)) {
+      refAnt = in->refAnt-1;
+      in->antFit[refAnt][1] = TRUE;
+      isOK = doFitFast (in, err);
+      in->antFit[refAnt][1] = FALSE;
+      in->refAnt = refAnt+1;
+    }
+    /* end refit linear */
     /* If only one screwy antenna chunk it and try again */
     if (CheckCrazyOne(in, err)) isOK = doFitFast (in, err);
     if (isOK) {
@@ -1496,7 +1520,7 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
   olong ivis, ant1, ant2, isou, jsou, lastSou=-999, jvis, istok, suba;
   olong nChan, bch, ech, cnt, i, j, indx, indx1, indx2, indx3, indx4;
   olong ChInc=in->ChInc, jChan, jIF;
-  ofloat *buffer, curPA1=0.0, curPA2=0.0, curTime=0.0, lastTime=-1.0e20;
+  ofloat *buffer, cbase, curPA1=0.0, curPA2=0.0, curTime=0.0, lastTime=-1.0e20;
   ofloat sumRe, sumIm, sumWt; 
   odouble lambdaRef, lambda, ll, sum;
   gboolean OK, allBad;
@@ -1597,7 +1621,10 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
       else isou = in->souIDs[0];
       jsou = in->isouIDs[isou-1];  /* Calibrator number */
       /* Antennas */
-      ObitUVDescGetAnts(inUV->myDesc, buffer, &ant1, &ant2, &suba);
+      cbase = buffer[inUV->myDesc->ilocb]; 
+      ant1 = (cbase / 256.0) + 0.001;
+      ant2 = (cbase - ant1 * 256) + 0.001;
+      suba = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 1.5);
       
       /* Source change? */
       if (isou!=lastSou) {
@@ -2140,7 +2167,8 @@ static void UpdateBandpassTab(ObitPolnCalFit* in, gboolean isOK, ObitErr *err)
 
     iant = row->antNo - 1;
     /* Amplitudes of gains */
-    if (in->doFitGain && in->antGain) {
+    if (in->doFitGain && in->antGain) {  /* Inverse? */
+      /*{amp1 = 1.0/in->antGain[iant*2];amp2 = 1.0/in->antGain[iant*2+1];}*/
       {amp1 = in->antGain[iant*2];amp2 = in->antGain[iant*2+1];}
       /* Divide the correction between pol1 and pol 2 
       amp1 = 1.0/sqrt(in->antGain[iant*2+1]);
@@ -2768,6 +2796,16 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
     in->ChiSq = endChi2;
     in->ParRMS = ParRMS;
     in->XRMS   = XRMS;
+
+    /*Constrain ellipticities for Lin. Feeds if refAnt<0 */
+    if ((!in->isCircFeed) &&(in->refAnt<0)) {
+      tParam = ConstrLinFeed(in);
+      if (err->prtLv>=5) {  /* Diagnostics */
+	Obit_log_error(err, OBIT_InfoErr, "iter %d Remove average Ellip =  %g", 
+		       iter+1, tParam);
+	ObitErrLog(err); 
+      }
+    } /* end constrain feeds */
 
     /* Convergence test */
     difChi2 = fabs(begChi2 - endChi2);
@@ -4459,7 +4497,8 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
   
     /* 	    XY */
   if (wt[idata*4+2]>0.0) {
-    isigma = wt[idata*4+2];
+    /* Increase X hand weight */
+    isigma = 3.0 * wt[idata*4+2];
     /* VXY = {S[0] * CX[ia1] * SYc[ia2] +       
               S[1] * CX[ia1] * CYc[ia2] +
 	      S[2] * SX[ia1] * SYc[ia2]  + 
@@ -4656,7 +4695,8 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
   
     /*        YX */
   if (wt[idata*4+3]>0.0) {
-    isigma = wt[idata*4+3];
+    /* Increase X hand weight */
+    isigma = 3.0 * wt[idata*4+3];
     /* VYX = {S[0] * SY[ia1] * CXc[ia2] +       
               S[1] * SY[ia1] * SXc[ia2] +
 	      S[2] * CY[ia1] * CXc[ia2]  + 
@@ -5207,6 +5247,46 @@ static void resetSoln(ObitPolnCalFit *in)
     }
   }
 } /* end resetSoln */
+/**
+ * Constrain linear feed values if refAnt<0
+ * subtract average
+ * \param in           Fitting object
+ * \return amount by which ellipticies were corrected in deg.
+ */
+static ofloat ConstrLinFeed(ObitPolnCalFit *in)
+{
+  ofloat out, sum;
+  ofloat fblank = ObitMagicF();
+  olong i, cnt;
+  /* Do I want to do this? */
+  out = 0.0;
+  if (in->isCircFeed) return out;
+  if (in->refAnt>=0) return out;
+  /* Sum values */
+  sum = 0.0; cnt = 0;
+  for (i=0; i<in->nant; i++) {
+    if (in->gotAnt[i] && in->antFit[i][1] && (in->antParm[i*4+1]!=fblank)) {
+      cnt++;
+      sum += in->antParm[i*4+1];
+    }
+    if (in->gotAnt[i] && in->antFit[i][3] && (in->antParm[i*4+3]!=fblank)) {
+      cnt++;
+      sum -= in->antParm[i*4+3];  /* Opposite sign */
+    }
+  } /* end summing loop */
+  /* Correction */
+  out = sum / cnt;
+  /* Correct values */
+  for (i=0; i<in->nant; i++) {
+    if (in->gotAnt[i] && in->antFit[i][1] && (in->antParm[i*4+1]!=fblank)) {
+      in->antParm[i*4+1] -= out;
+    }
+    if (in->gotAnt[i] && in->antFit[i][3] && (in->antParm[i*4+3]!=fblank)) {
+      in->antParm[i*4+3] += out;
+    }
+  } /* end correcting loop */
+  return out*RAD2DG;
+} /* end ConstrLinFeed */
 
 #ifdef HAVE_GSL
 /**

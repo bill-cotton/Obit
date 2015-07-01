@@ -2105,8 +2105,8 @@ def EVLACalAP(uv, target, ACals, err, \
         setjy.Sources[0] = ACal["Source"]
         if FQid:
             setjy.FreqID=FQid
-        if ACal["CalFlux"]>0.0:
-            setjy.ZeroFlux[0] = ACal["CalFlux"]
+        if ACal["CalModelFlux"]>0.0:
+            setjy.ZeroFlux[0] = ACal["CalModelFlux"]
         else:
             setjy.OPType="CALC"
             setjy.ZeroFlux=[1.0,0.0,0.0,0.0]
@@ -5259,8 +5259,8 @@ def EVLAApplyCal(uv, err, SNver=0, CLin=0, CLout=0, maxInter=240.0, \
     return 0
     # end EVLAApplyCal
 
-def EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
-                 Stokes=["RR","LL"], doband=-1,                   \
+def EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err,      \
+                 Stokes=["RR","LL"], doband=-1, doPol=False, PDVer=-1, \
                  logfile=None, check=False, debug=False):
     """
     Spectrum plot of selected data
@@ -5281,8 +5281,8 @@ def EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
     """
     ################################################################
     # POSSM can't apply flags so write scratch file and plot
-    scr = EVLASpecPlot( uv, plotSource,  plotTime, refAnt, err, \
-                        Stokes=Stokes, doband=doband,          \
+    scr = EVLASpecPlot( uv, plotSource,  plotTime, refAnt, err,                  \
+                        Stokes=Stokes, doband=doband, doPol=doPol, PDVer=PDVer,  \
                         plotFile=plotFile, check=check, logfile=logfile )
     retCode = 0
     if scr and scr.UVIsA():
@@ -6056,25 +6056,37 @@ def EVLAStdModel(Cals, freq):
              "freqRange":[1.5e8,7.0e8],
              "file":"3C147PModel.fits","disk":1}
     stdModel.append(model)
+    # 3C48 Q
+    model = {"Source":["3C48","3c48","J0137+3309","0137+331=3C48"],
+             "freqRange":[40.0e9,50.0e9],
+             "file":"3C48QModel.fits","disk":1}
+    # 3C48 Ka
+    model = {"Source":["3C48","3c48","J0137+3309","0137+331=3C48"],
+             "freqRange":[28.0e9,40.0e9],
+             "file":"3C48KaModel.fits","disk":1}
+    # 3C48 K
+    model = {"Source":["3C48","3c48","J0137+3309","0137+331=3C48"],
+             "freqRange":[18.01e9,28.0e9],
+             "file":"3C48KModel.fits","disk":1}
     # 3C48 C
-    model = {"Source":["3C48","3c48","J0137+3309"],
+    model = {"Source":["3C48","3c48","J0137+3309","0137+331=3C48"],
              "freqRange":[1.9e9,4.1e9],
              "file":"3C48CModel.fits","disk":1}
     stdModel.append(model)
     # 3C48 S
-    model = {"Source":["3C48","3c48","J0137+3309"],
+    model = {"Source":["3C48","3c48","J0137+3309","0137+331=3C48"],
              "freqRange":[3.9e9,8.1e9],
              "file":"3C48SModel.fits","disk":1}
     stdModel.append(model)
 
     # 3C48 L
-    model = {"Source":["3C48","3c48","J0137+3309"],
+    model = {"Source":["3C48","3c48","J0137+3309","0137+331=3C48"],
              "freqRange":[0.9e9,2.1e9],
              "file":"3C48LModel.fits","disk":1}
     stdModel.append(model)
 
     # 3C48 P
-    model = {"Source":["3C48","3c48","J0137+3309"],
+    model = {"Source":["3C48","3c48","J0137+3309","0137+331=3C48"],
              "freqRange":[1.5e8,7.0e8],
              "file":"3C48PModel.fits","disk":1}
     stdModel.append(model)

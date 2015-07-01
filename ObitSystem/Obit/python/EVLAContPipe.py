@@ -594,7 +594,8 @@ def pipeline( aipsSetup, parmFile):
         plotFile = "./"+fileRoot+"RL_Spec.ps"
         retCode = EVLASpectrum(uv, parms["plotSource"], parms["plotTime"], \
                                plotFile, parms["refAnt"], err, \
-                               Stokes=["RL","LR"], doband = -1,\
+                               Stokes=["RL","LR"], doband=1,   \
+                               doPol=parms["doPol"], PDVer=parms["PDVer"],  \
                                check=check, debug=debug, logfile=logFile )
         if retCode!=0:
             raise  RuntimeError,"Error in Plotting spectrum"
