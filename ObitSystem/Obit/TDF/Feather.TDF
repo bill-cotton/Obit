@@ -4,7 +4,7 @@
 ;! Feather together images
 ;# Obit Task 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005-2010
+;;  Copyright (C) 2005-2015
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -139,7 +139,7 @@ in10Disk          0         9999   Disk drive # 10
 **PARAM** str 48
 outFile                            Output Filename if FITS image
 **PARAM** str 4
-outDType                            "FITS" or "AIPS" type of output
+outDType                           "FITS" or "AIPS" type of output
 **PARAM** str 12
 outName                            Output Image Name
 **PARAM** str 6
@@ -170,6 +170,8 @@ or even the same equinox (B1950 and J2000 supported).
 resolution and this resolution must be reflected by the "CLEAN beam"
 size given in the image header.  The output image will have the same
 size and pixel grid as the first (highest resolution) image.
+   Line cubes may be given although the only check is that the number 
+of planes is the same in all images.
    Either AIPS or FITS images may be used but currently all input and
 output images must be the same type (AIPS or FITS).
    History written to an output FITS image is into a History table.
@@ -182,7 +184,7 @@ Adverbs:
   in?Seq......In Image Name(Seq. #).?       0 => highest.
   in?Disk.....In Disk drive # of image."    0 => any.
   in?File.....Input File Name if a FITS file
-  outDType...'FITS' or 'AIPS'  type of output
+ outDType...'FITS' or 'AIPS'  type of output
               Defaults to DataType.
   outName.....Output Image Name(Name).         
   outClass....Output Image Name(Class).        

@@ -259,7 +259,7 @@ ObitBDFData* ObitBDFDataCreate (gchar* name,  ObitUVDesc *desc,
   out->SDMData = ObitSDMDataRef(SDMData);
 
   /* Init buffer */
-  out->buffer = g_malloc0(BDFBUFFERSIZE*BDFBUFFERFRAMES);
+  out->buffer = g_malloc0(BDFBUFFERSIZE*BDFBUFFERFRAMES+100);
   out->nBytesInBuffer = 0;
   out->current = out->buffer;
 
@@ -1186,6 +1186,8 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
       if (in->crossCorr==NULL)
 	in->crossCorr = g_malloc0((in->nCrossCorr+10)*sizeof(ofloat));
       Dtype = in->IntegInfo->type;
+      scale = 1.0;
+      if (in->isALMA) scale = 1.0 / in->ScanInfo->BBinfo[0]->SWinds[0]->scaleFactor;
       retCode = CopyFloats (in, start, in->crossCorr, in->nCrossCorr, byteFlip, scale, Dtype, err);
       if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
       if (retCode==OBIT_IO_EOF) return retCode;
@@ -1205,6 +1207,8 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
 	in->autoCorr = g_malloc0((in->nAutoCorr+10)*sizeof(ofloat));
       if (in->isALMA) Dtype = BDFDataType_FLOAT32_TYPE;
       else Dtype = in->IntegInfo->type;
+      scale = 1.0;
+      if (in->isALMA) scale = 1.0 / in->ScanInfo->BBinfo[0]->SWinds[0]->scaleFactor;
       retCode = CopyFloats (in, start, in->autoCorr, in->nAutoCorr, byteFlip, scale, Dtype, err);
       if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
       if (retCode==OBIT_IO_EOF) return retCode;
@@ -1241,6 +1245,8 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
 	/*in->actualTimesData = g_malloc0(sizeof(ofloat)*(in->ScanInfo->actualTimesSize+10)/8);*/
 	in->actualTimesData = g_malloc0(sizeof(ofloat)*(in->ScanInfo->actualTimesSize+10));
       Dtype = in->IntegInfo->type;
+      scale = 1.0;
+      if (in->isALMA) scale = 1.0 / in->ScanInfo->BBinfo[0]->SWinds[0]->scaleFactor;
       /*retCode = CopyFloats (in, start, (ofloat*)in->actualTimesData, in->ScanInfo->actualTimesSize/8, */
       retCode = CopyFloats (in, start, (ofloat*)in->actualTimesData, in->ScanInfo->actualTimesSize, 
 			    byteFlip, scale, Dtype, err);
@@ -1256,6 +1262,8 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
       if (in->actualDurationsData==NULL)
 	in->actualDurationsData = g_malloc0(sizeof(olong)*(in->ScanInfo->actualDurationsSize+10));
       Dtype = in->IntegInfo->type;  scale = 1.0;
+      scale = 1.0;
+      if (in->isALMA) scale = 1.0 / in->ScanInfo->BBinfo[0]->SWinds[0]->scaleFactor;
       retCode = CopyFloats (in, start, (ofloat*)in->actualDurationsData, in->ScanInfo->actualDurationsSize, 
 			    byteFlip, scale, Dtype, err);
       if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
@@ -1270,6 +1278,8 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
       if (in->weightData==NULL)
 	in->weightData = g_malloc0(sizeof(olong)*(in->ScanInfo->weightSize+10));
       Dtype = in->IntegInfo->type; scale = 1.0;
+      scale = 1.0;
+      if (in->isALMA) scale = 1.0 / in->ScanInfo->BBinfo[0]->SWinds[0]->scaleFactor;
       retCode = CopyFloats (in, start, (ofloat*)in->weightData, in->ScanInfo->weightSize, byteFlip, 
 			    scale, Dtype, err);
       if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
@@ -1285,6 +1295,8 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
 	in->zeroLagData = g_malloc0(sizeof(olong)*(in->ScanInfo->zeroLagSize+10));
       if (in->isALMA) Dtype = BDFDataType_FLOAT32_TYPE;
       else Dtype = in->IntegInfo->type;  scale = 1.0;
+      scale = 1.0;
+      if (in->isALMA) scale = 1.0 / in->ScanInfo->BBinfo[0]->SWinds[0]->scaleFactor;
       retCode = CopyFloats (in, start, (ofloat*)in->zeroLagData, in->ScanInfo->zeroLagSize, byteFlip, 
 			    scale, Dtype, err);
       if (err->error) Obit_traceback_val (err, routine, in->name, retCode);

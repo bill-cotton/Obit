@@ -1727,13 +1727,14 @@ void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData,
     outRow->totBW[iIF]    = SpWinArray->winds[jSW]->totBandwidth;
     if (SpWinArray->winds[jSW]->netSideband[0]=='U') outRow->sideBand[iIF] = 1;
     else outRow->sideBand[iIF] = -1;
+    /* Hack for EVLA screwup (2015) when spectra were reversed, otherwise USB */
+    if (isEVLA && (SpWinArray->winds[jSW]->chanWidth<0.0)) outRow->sideBand[iIF] = -1;
+    if (isEVLA && (SpWinArray->winds[jSW]->chanWidth>0.0)) outRow->sideBand[iIF] = +1;
     /* Correct to band center */
     /* For EVLA, modify frequency offset if the channel width differs from the file header */
     if (isEVLA && (outRow->chWidth[iIF]!=chwid)) {
       outRow->freqOff[iIF] += (nChan/2) * (outRow->chWidth[iIF]-chwid);
     }
-    /* FOR EVLA everything is upper even if it's not */
-    if (isEVLA) outRow->sideBand[iIF] = 1;
     /* bandcodes */
     if (isEVLA) {
       for (iif=0; iif<numIF; iif++) {

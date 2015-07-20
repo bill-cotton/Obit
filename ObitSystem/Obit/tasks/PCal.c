@@ -922,7 +922,7 @@ void PCalHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "doPol", "Antennas", 
     "DataType2", "in2File", "in2Disk", "in2Name", "in2Class", "in2Seq", 
     "nfield", "CCVer", "BComp", "EComp", "Cmethod", "Cmodel", "Flux",
-    "modelFlux", "modelPos", "modelParm", "solInt", 
+    "modelFlux", "modelPos", "modelParm", "solInt", "refAnt", 
     "solnType", "Sources", "Qual", "souCode", "doFitI", "doFitPol", "doFitV", 
     "doFitGain", "doFitOri", "doFitRL", "RLPhase", "RM", "PPol", "XPhase", 
     "ChWid", "ChInc", "CPSoln", "PDSoln", "BPSoln", "doBlank", 

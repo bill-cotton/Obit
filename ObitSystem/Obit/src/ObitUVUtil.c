@@ -1914,6 +1914,9 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 	  (inDesc->firstVis<=inDesc->nvis) && (iretCode==OBIT_IO_OK)) {
 	/* accumulate */
 	ObitUVDescGetAnts(inUV->myDesc, &inBuffer[iindx], &ant1, &ant2, &lastSubA);
+	/* Check antenna number */
+	Obit_retval_if_fail ((ant2<=numAnt), err, outUV, 
+			     "%s Antenna 2=%d > max %d", routine, ant2, numAnt);  
 	/* Baseline index this assumes a1<=a2 always */
 	blindx =  blLookup[ant1-1] + ant2-ant1;
 	if (inDesc->ilocfq>=0) lastFQID = (olong)(inBuffer[iindx+inDesc->ilocfq]+0.5);
@@ -2014,6 +2017,9 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 	/* Now accumulate this visibility */
 	ObitUVDescGetAnts(inUV->myDesc, &inBuffer[iindx], &ant1, &ant2, &lastSubA);
 	/* Baseline index this assumes a1<=a2 always */
+	/* Check antenna number */
+	Obit_retval_if_fail ((ant2<=numAnt), err, outUV, 
+			     "%s Antenna 2=%d > max %d", routine, ant2, numAnt);  
 	blindx =  blLookup[ant1-1] + ant2-ant1;
 	if (inDesc->ilocfq>=0) lastFQID = (olong)(inBuffer[iindx+inDesc->ilocfq]+0.5);
 	else lastFQID = 0;
@@ -2371,6 +2377,9 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
       /* Which data is this? */
       iindx = ivis*inDesc->lrec;
       ObitUVDescGetAnts(inUV->myDesc, &inBuffer[iindx], &ant1, &ant2, &lastSubA);
+      /* Check antenna number */
+      Obit_retval_if_fail ((ant2<=numAnt), err, outUV,
+			   "%s Antenna 2=%d > max %d", routine, ant2, numAnt);  
       /* Baseline index this assumes a1<=a2 always */
       blindx =  blLookup[ant1-1] + ant2-ant1;
       blindx = MAX (0, MIN (blindx, numBL-1));

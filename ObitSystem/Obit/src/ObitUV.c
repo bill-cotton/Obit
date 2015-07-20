@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -650,7 +650,7 @@ ObitUV* ObitUVZap (ObitUV *in, ObitErr *err)
  * \li "doCalSelect" OBIT_boolean scalar if TRUE, calibrate/select/edit input data.
  * \param in  The object to copy
  * \param out An existing object pointer for output or NULL if none exists.
- * \param err Error stack, returns if not empty.
+ * \param err Error stack, returns if not empty. err->error = 10 => No data
  * \return pointer to the new object.
  */
 ObitUV* ObitUVCopy (ObitUV *in, ObitUV *out, ObitErr *err)
@@ -677,7 +677,6 @@ ObitUV* ObitUVCopy (ObitUV *in, ObitUV *out, ObitErr *err)
   Obit_retval_if_fail((in!=out), err, out,
  		      "%s: input and output are the same", routine);
   
-
   /* Create if it doesn't exist */
   oldExist = out!=NULL;
   if (!oldExist) {
@@ -856,9 +855,12 @@ ObitUV* ObitUVCopy (ObitUV *in, ObitUV *out, ObitErr *err)
   if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
     Obit_traceback_val (err, routine,in->name, out);
   
-  /* Make sure something copied - if there is anything to copy */
-  Obit_retval_if_fail(((count>0) || (in->myDesc->nvis<=0)), err, out,
- 		      "%s: NO Data copied for %s", routine, in->name);
+  /* Make sure something copied - if there is anything to copy - err->error = 10 */
+  if (!((count>0) || (in->myDesc->nvis<=0))) {
+    Obit_log_error(err, OBIT_Error, "%s: NO Data copied for %s", routine, in->name);
+    err->error = 10;
+    return out;
+  }
   
   return out;
 } /* end ObitUVCopy */

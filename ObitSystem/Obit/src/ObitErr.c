@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2010                                          */
+/*;  Copyright (C) 2002-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <stdio.h>
+#include <glib.h>
 #include "ObitErr.h"
 #include "ObitMem.h"
 #include "ObitSystem.h"
@@ -322,8 +323,8 @@ void ObitErrPush (ObitErr *in, ObitErrCode errLevel, gchar *errMsg)
   /* add to stack */
   g_queue_push_head (in->stack, (gpointer)elem);
   in->number++;   /* add one to the count */
-  /* Is this an error or info?*/
-  in->error = in->error || (errLevel >= OBIT_Traceback);
+  /* Is this an error or info? save higher value than 1 */
+  if (in->error<=1) in->error = (in->error || (errLevel >= OBIT_Traceback));
 } /* end ObitErrPush */
 
 /**

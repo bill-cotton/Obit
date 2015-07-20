@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -484,6 +484,7 @@ void ObitFeatherUtilAccumImage (ObitFFT *FFTfor, ObitImage *inImage,
  *  HGEOM-like operation (Before EWG got to it)
  *  Extract a Real array from one padded for FFTs
  * \param inImage   Image to be interpolated
+ *  Plane number extracted from info BLC member if given
  * \param tmplImage Image whose geometry is to be used.
  * \param outImage  values from inImage on grid of tmplImage
  *                  undefined values set to zero to allow FFT.
@@ -492,10 +493,12 @@ void ObitFeatherUtilAccumImage (ObitFFT *FFTfor, ObitImage *inImage,
 void ObitFeatherUtilInterpol (ObitImage *inImage, ObitImage *tmplImage, 
 			      ObitImage *outImage, ObitErr *err)
 {
-  olong i;
-  olong inPlane[5] = {1,1,1,1,1};   /* Might need these passed */
+  olong i, iplane;
+  olong inPlane[5] = {1,1,1,1,1};
   olong outPlane[5] = {1,1,1,1,1};
-  olong hwidth = 2;
+  olong hwidth = 2, blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
+  ObitInfoType type;
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *routine = "ObitFeatherUtilInterpol";
 
   /* Checks */
@@ -503,6 +506,11 @@ void ObitFeatherUtilInterpol (ObitImage *inImage, ObitImage *tmplImage,
   g_assert(ObitImageIsA(tmplImage));
   g_assert(ObitImageIsA(outImage));
   if (err->error) return;
+
+  /* Get plane number */
+  ObitInfoListGetTest(inImage->info, "BLC", &type, dim, blc);
+  iplane = blc[2];
+  inPlane[0] = iplane;
 
   /* Clone, interpolate, deblank */
   ObitImageClone(tmplImage, outImage, err);

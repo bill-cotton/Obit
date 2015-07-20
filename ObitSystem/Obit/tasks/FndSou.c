@@ -1,7 +1,7 @@
 /* $Id$  */
 /* FndSou Obit task - generate source list from image                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2013                                          */
+/*;  Copyright (C) 2006-2014                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1516,7 +1516,7 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
   gboolean doMult, doPoint, revert, doFDR;
   odouble dtemp;
   ofloat gain, parms[20], icut, tcut, rcut, xcut, cbeam[3], oldRMS, oldPeak;
-  ofloat maxFDR, minFlux;
+  ofloat maxFDR, minFlux, major, minor;
   olong blc[2], trc[2], FDRsize=0;
   ObitFArray *pixels=NULL;
   gchar *FitParms[] = {  
@@ -1672,6 +1672,19 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
     } else nGood++;
   }
   /* End funky fits */
+
+  /* enforce minimum beam size */
+  if (parms[3]>0.0) {
+    for (j=0; j<reg->nmodel; j++) {
+      major = MAX (reg->models[j]->parms[0], reg->models[j]->parms[1]);
+      minor = MIN (reg->models[j]->parms[0], reg->models[j]->parms[1]);
+      if ((major<cbeam[0]) || (minor<cbeam[1])) {
+	reg->models[j]->parms[0] = cbeam[0];
+	reg->models[j]->parms[1] = cbeam[1];
+	reg->models[j]->parms[2] = cbeam[2];
+      }
+    }
+  }
 
   /* Subtract fitted model from residual */
   ObitFitRegionSubtract (reg, image, err);

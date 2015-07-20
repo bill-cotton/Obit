@@ -1,16 +1,16 @@
 #! /usr/bin/env ObitTalk
 """
 
-The EVLA Continuum Pipeline.  The pipeline can be invoked from the command line 
+The ALMA Pipeline.  The pipeline can be invoked from the command line 
 as, ::
 
-    $ EVLAContPipe AipsSetupScript PipelineParamScript
+    ObitTalk ALMAPipe.py AipsSetupScript PipelineParamScript
 
 where the required arguments are
 
 * *AipsSetupScript* = an AIPS setup script (an example of this file is stored in 
     ``Obit/share/scripts``)
-* *PipelineParamScript* = the EVLA continuum pipeline input parameters script 
+* *PipelineParamScript* = the ALMA continuum pipeline input parameters script 
     (a template is in ``Obit/share/scripts``)
 """
 
@@ -22,11 +22,11 @@ import ObitTalkUtil
 from AIPS import AIPSDisk
 from FITS import FITSDisk
 from PipeUtil import *
-from EVLACal import *
+from ALMACal import *
 
 def pipeline( aipsSetup, parmFile):
     """
-    EVLA Continuum pipeline.
+    ALMA Continuum pipeline.
     
     * *aipsSetup* = AIPS setup file
     * *parmFile* = pipeline input parameters file
@@ -34,20 +34,20 @@ def pipeline( aipsSetup, parmFile):
     ############################# Initialize OBIT ##########################################
     noScrat     = []    
     exec(open(aipsSetup).read())
-    EVLAAddOutFile( aipsSetup, 'project', "Obit's AIPS setup file" )
+    ALMAAddOutFile( aipsSetup, 'project', "Obit's AIPS setup file" )
     
     ############################# Default parameters ##########################################
     
     # Initialize parameters
-    parms = EVLAInitContParms()
+    parms = ALMAInitContParms()
     
     ############################# Set Project Processing parameters ##################
     print "parmFile",parmFile
     exec(open(parmFile).read())
-    EVLAAddOutFile( parmFile, 'project', 'Pipeline input parameters' )
+    ALMAAddOutFile( parmFile, 'project', 'Pipeline input parameters' )
 
     # frequency/configuration dependent default parameters
-    EVLAInitContFQParms(parms)
+    ALMAInitContFQParms(parms)
 
     # General data parameters
     band      = parms["band"]           # Observing band
@@ -62,19 +62,20 @@ def pipeline( aipsSetup, parmFile):
     uvc           = None
     avgClass      = ("UVAv"+band)[0:6]  # Averaged data AIPS class
     outIClass     =  parms["outIClass"] # image AIPS class
+    outCClass     =  parms["outCClass"] # image AIPS class
 
     # Load the outputs pickle jar
-    EVLAFetchOutFiles()
+    ALMAFetchOutFiles()
 
     # Logging directly to logFile
     OErr.PInit(err, parms["prtLv"], logFile)
     OSystem.PAllowThreads(nThreads)   # Allow threads in Obit/oython
     retCode = 0
-    EVLAAddOutFile( logFile, 'project', 'Pipeline log file' )
+    ALMAAddOutFile( logFile, 'project', 'Pipeline log file' )
    
     mess = "Start project "+parms["project"]+" session "+parms["session"]+\
            " "+parms["band"]+" Band"+" AIPS user no. "+str(AIPS.userno)+\
-           ", EVLA configuration "+parms["VLACfg"]
+           ", ALMA Max. baseline "+str(parms["ALMAMaxBl"])
     printMess(mess, logFile)
     if debug:
         pydoc.ttypager = pydoc.plainpager # don't page task input displays
@@ -85,15 +86,16 @@ def pipeline( aipsSetup, parmFile):
         printMess(mess, logFile)
     
     # Log parameters
-    printMess("Parameter settings", logFile)
-    for p in parms:
-        mess = "  "+p+": "+str(parms[p])
-        printMess(mess, logFile)
+    if parms['doLogParms']:
+        printMess("Parameter settings", logFile)
+        for p in parms:
+            mess = "  "+p+": "+str(parms[p])
+            printMess(mess, logFile)
 
     # Save parameters to pickle jar, manifest
     ParmsPicklefile = project+"_"+session+"_"+band+".Parms.pickle"   # Where results saved
     SaveObject(parms, ParmsPicklefile, True)
-    EVLAAddOutFile( ParmsPicklefile, 'project', 'Processing parameters used' )
+    ALMAAddOutFile( ParmsPicklefile, 'project', 'Processing parameters used' )
 
     # Are we going to be doing Hanning?
     if parms["doHann"]:
@@ -103,30 +105,29 @@ def pipeline( aipsSetup, parmFile):
     
     # Load Data from Archive directory
     if parms["doLoadArchive"]:
-        uv = EVLAUVLoadArch(parms["archRoot"], EVLAAIPSName(project, session), loadClass, disk, parms["seq"], err, \
-                            selConfig=parms["selConfig"], doSwPwr=parms["doSwPwr"], \
-                            selBand=parms["selBand"], selChan=parms["selChan"], selChBW=parms["selChBW"], \
-                            selNIF=parms["selNIF"], calInt=parms["calInt"], \
+        uv = ALMAUVLoadArch(parms["archRoots"], ALMAAIPSName(project, session), loadClass, disk, parms["seq"], err, \
+                            selConfig=parms["selConfig"], selBand=parms["selBand"], selChan=parms["selChan"], \
+                            selChBW=parms["selChBW"], selNIF=parms["selNIF"], calInt=parms["calInt"], \
                             logfile=logFile, Compress=parms["Compress"], check=check, debug=debug)
         if uv==None and not check:
-            raise RuntimeError,"Cannot load "+parms["DataRoot"]
+            raise RuntimeError,"Cannot load "+parms["archRoots"]
     
     # Hanning
     if parms["doHann"]:
         # Set uv if not done
         if uv==None and not check:
-            uv = UV.newPAUV("AIPS UV DATA", EVLAAIPSName(project, session), loadClass[0:6], disk, parms["seq"], True, err)
+            uv = UV.newPAUV("AIPS UV DATA", ALMAAIPSName(project, session), loadClass[0:6], disk, parms["seq"], True, err)
             if err.isErr:
                 OErr.printErrMsg(err, "Error creating AIPS data")
     
-        uv = EVLAHann(uv, EVLAAIPSName(project, session), dataClass, disk, parms["seq"], err, \
+        uv = ALMAHann(uv, ALMAAIPSName(project, session), dataClass, disk, parms["seq"], err, \
                       doDescm=parms["doDescm"], logfile=logFile, check=check, debug=debug)
         if uv==None and not check:
             raise RuntimeError,"Cannot Hann data "
     
-    # Set uv is not done
+    # Set uv if not done
     if uv==None and not check:
-        uv = UV.newPAUV("AIPS UV DATA", EVLAAIPSName(project, session), dataClass[0:6], \
+        uv = UV.newPAUV("AIPS UV DATA", ALMAAIPSName(project, session), dataClass[0:6], \
                         disk, parms["seq"], True, err)
         if err.isErr:
             OErr.printErrMsg(err, "Error creating AIPS data")
@@ -135,14 +136,14 @@ def pipeline( aipsSetup, parmFile):
     if parms["doClearTab"]:
         mess =  "Clear previous calibration"
         printMess(mess, logFile)
-        EVLAClearCal(uv, err, doGain=parms["doClearGain"], doFlag=parms["doClearFlag"], doBP=parms["doClearBP"], check=check)
+        ALMAClearCal(uv, err, doGain=parms["doClearGain"], doFlag=parms["doClearFlag"], doBP=parms["doClearBP"], check=check)
         OErr.printErrMsg(err, "Error resetting calibration")
     
     # Copy FG 1 to FG 2
     if parms["doCopyFG"]:
         mess =  "Copy FG 1 to FG 2"
         printMess(mess, logFile)
-        retCode = EVLACopyFG (uv, err, logfile=logFile, check=check, debug=debug)
+        retCode = ALMACopyFG (uv, err, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
             raise RuntimeError,"Error Copying FG table"
 
@@ -150,16 +151,42 @@ def pipeline( aipsSetup, parmFile):
     if parms["doCopyFG"] and (parms["BChDrop"]>0) or (parms["EChDrop"]>0):
         # Channels based on original number, reduced if Hanning
         nchan = uv.Desc.Dict["inaxes"][uv.Desc.Dict["jlocf"]]
-        fact = parms["selChan"]/nchan   # Hanning reduction factor
+        fact = max (1,parms["selChan"]/nchan)   # Hanning reduction factor
         BChDrop = parms["BChDrop"]/fact
         EChDrop = parms["EChDrop"]/fact
         mess =  "Trim %d channels from start and %d from end of each spectrum"%(BChDrop,EChDrop)
         printMess(mess, logFile)
-        retCode = EVLADropChan (uv, BChDrop, EChDrop, err, flagVer=parms["editFG"], \
+        retCode = ALMADropChan (uv, BChDrop, EChDrop, err, flagVer=parms["editFG"], \
                                 logfile=logFile, check=check, debug=debug)
         if retCode!=0:
             raise RuntimeError,"Error Copying FG table"
-   
+
+    # Get list of source in data
+    AllSource = ALMAAllSource(uv,err,logfile=logFile,check=check,debug=debug)
+    # Edit source lists to remove sources not present
+    for c in parms["PCInsCals"]:
+        if c not in AllSource:
+             parms["PCInsCals"].remove(c)
+    for t in parms["targets"]:
+        if t not in AllSource:
+            parms["targets"].remove(t)
+    if parms["XYGainSource"] not in AllSource:
+        parms["XYGainSource"] = None
+    if parms["XYDelaySource"] not in AllSource:
+        parms["XYDelaySource"] = None
+    for c in parms["DCals"]:
+        if c['Source'] not in AllSource:
+            c['Source'] = None
+    for c in parms["BPCals"]:
+        if c['Source'] not in AllSource:
+            c['Source'] = None
+    for c in parms["PCals"]:
+        if c['Source'] not in AllSource:
+            c['Source'] = None
+    for c in parms["ACals"]:
+        if c['Source'] not in AllSource:
+            c['Source'] = None
+
     # Special editing
     if parms["doEditList"] and not check:
         mess =  "Special editing"
@@ -172,7 +199,7 @@ def pipeline( aipsSetup, parmFile):
     
     # Quack to remove data from start and end of each scan
     if parms["doQuack"]:
-        retCode = EVLAQuack (uv, err, begDrop=parms["quackBegDrop"], endDrop=parms["quackEndDrop"], \
+        retCode = ALMAQuack (uv, err, begDrop=parms["quackBegDrop"], endDrop=parms["quackEndDrop"], \
                              Reason=parms["quackReason"], \
                              logfile=logFile, check=check, debug=debug)
         if retCode!=0:
@@ -180,16 +207,22 @@ def pipeline( aipsSetup, parmFile):
     
     # Flag antennas shadowed by others?
     if parms["doShad"]:
-        retCode = EVLAShadow (uv, err, shadBl=parms["shadBl"], \
+        retCode = ALMAShadow (uv, err, shadBl=parms["shadBl"], \
                               logfile=logFile, check=check, debug=debug)
         if retCode!=0:
             raise RuntimeError,"Error Shadow flagging data"
+    
+    # Apply online calibration
+    if parms["doOnlineCal"]:
+        retCode = ALMAOnlineCal (uv,err, logfile=logFile, check=check, debug=debug)
+        if retCode!=0:
+            raise RuntimeError,"Error applying online calibration"
     
     # Median window time editing, for RFI impulsive in time
     if parms["doMedn"]:
         mess =  "Median window time editing, for RFI impulsive in time:"
         printMess(mess, logFile)
-        retCode = EVLAMedianFlag (uv, "    ", err, noScrat=noScrat, nThreads=nThreads, \
+        retCode = ALMAMedianFlag (uv, "    ", err, noScrat=noScrat, nThreads=nThreads, \
                                   avgTime=parms["avgTime"], avgFreq=parms["avgFreq"],  chAvg= parms["chAvg"], \
                                   timeWind=parms["timeWind"], flagVer=2,flagSig=parms["mednSigma"], \
                                   logfile=logFile, check=check, debug=False)
@@ -200,7 +233,7 @@ def pipeline( aipsSetup, parmFile):
     if parms["doFD1"]:
         mess =  "Median window frequency editing, for RFI impulsive in frequency:"
         printMess(mess, logFile)
-        retCode = EVLAAutoFlag (uv, "    ", err,  flagVer=2, doCalib=-1, doBand=-1,   \
+        retCode = ALMAAutoFlag (uv, "    ", err,  flagVer=2, doCalib=-1, doBand=-1,   \
                                 timeAvg=parms["FD1TimeAvg"], \
                                 doFD=True, FDmaxAmp=1.0e20, FDmaxV=1.0e20, FDwidMW=parms["FD1widMW"],  \
                                 FDmaxRMS=[1.0e20,0.1], FDmaxRes=parms["FD1maxRes"],  \
@@ -209,35 +242,17 @@ def pipeline( aipsSetup, parmFile):
         if retCode!=0:
            raise  RuntimeError,"Error in AutoFlag"
     
-    
     # RMS/Mean editing for calibrators
     if parms["doRMSAvg"]:
         mess =  "RMS/Mean editing for calibrators:"
         printMess(mess, logFile)
-        clist = []   # Calibrator list
-        for s in parms["ACals"]:
-            if s['Source'] not in clist:
-                clist.append(s['Source'])
-        for s in parms["PCals"]:
-            if s['Source'] not in clist:
-                clist.append(s['Source'])
-        for s in parms["DCals"]:
-            if s['Source'] not in clist:
-                clist.append(s['Source'])
-        retCode = EVLAAutoFlag (uv, clist, err,  flagVer=2, doCalib=-1, doBand=-1,   \
+        clist =  ALMACombineCals(parms["ACals"], parms["PCals"],  parms["DCals"])   # Calibrator list
+        retCode = ALMAAutoFlag (uv, clist, err,  flagVer=2, doCalib=-1, doBand=-1,   \
                                     RMSAvg=parms["RMSAvg"], timeAvg=parms["RMSTimeAvg"], \
                                     nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
            raise  RuntimeError,"Error in AutoFlag"
-    
-    
-    # Parallactic angle correction?
-    if parms["doPACor"]:
-        retCode = EVLAPACor(uv, err, \
-                                logfile=logFile, check=check, debug=debug)
-        if retCode!=0:
-            raise RuntimeError,"Error in Parallactic angle correction"
-    
+
     # Need to find a reference antenna?  See if we have saved it?
     if (parms["refAnt"]<=0):
         refAnt = FetchObject(project+"_"+session+"_"+band+".refAnt.pickle")
@@ -247,7 +262,7 @@ def pipeline( aipsSetup, parmFile):
     if parms["refAnt"]<=0:
         mess = "Find best reference antenna: run Calib on BP Cal(s) "
         printMess(mess, logFile)
-        parms["refAnt"] = EVLAGetRefAnt(uv, parms["BPCals"], err, flagVer=2, \
+        parms["refAnt"] = ALMAGetRefAnt(uv, parms["BPCals"], err, flagVer=2, \
                                         solInt=parms["bpsolint1"], nThreads=nThreads, \
                                         logfile=logFile, check=check, debug=debug)
         if err.isErr:
@@ -268,20 +283,20 @@ def pipeline( aipsSetup, parmFile):
         mess =  "Raw Spectral plot for: "+parms["plotSource"]
         printMess(mess, logFile)
         plotFile = "./"+fileRoot+"RawSpec.ps"
-        retCode = EVLASpectrum(uv, parms["plotSource"], parms["plotTime"], plotFile, parms["refAnt"], err, \
-                               flagVer=2, Stokes=["RR","LL"], doband=-1,          \
+        retCode = ALMASpectrum(uv, parms["plotSource"], parms["plotTime"], plotFile, parms["refAnt"], err, \
+                               flagVer=2, Stokes=["XX","YY"], doband=-1,          \
                                check=check, debug=debug, logfile=logFile )
         if retCode!=0:
             raise  RuntimeError,"Error in Plotting spectrum"
-        EVLAAddOutFile( plotFile, 'project', 'Pipeline log file' )
+        ALMAAddOutFile( plotFile, 'project', 'Pipeline log file' )
 
     # delay calibration
     if parms["doDelayCal"] and parms["DCals"] and not check:
         plotFile = "./"+fileRoot+"DelayCal.ps"
-        retCode = EVLADelayCal(uv, parms["DCals"], err,  \
+        retCode = ALMADelayCal(uv, parms["DCals"], err,  \
                                BChan=parms["delayBChan"], EChan=parms["delayEChan"], \
-                               doCalib=2, flagVer=2, doBand=-1, UVRange=parms["gainUVRange"], \
-                               solInt=parms["delaySolInt"], smoTime=1.0/60.0,  \
+                               doCalib=2, flagVer=2, doBand=-1, \
+                               solInt=parms["delaySolInt"], smoTime=parms["delaySmoo"],  \
                                refAnts=[parms["refAnt"]], doTwo=parms["doTwo"], 
                                doZeroPhs=parms["delayZeroPhs"], \
                                doPlot=parms["doSNPlot"], plotFile=plotFile, \
@@ -293,9 +308,9 @@ def pipeline( aipsSetup, parmFile):
         # Plot corrected data?
         if parms["doSpecPlot"] and parms["plotSource"]:
             plotFile = "./"+fileRoot+"DelaySpec.ps"
-            retCode = EVLASpectrum(uv, parms["plotSource"], parms["plotTime"], \
+            retCode = ALMASpectrum(uv, parms["plotSource"], parms["plotTime"], \
                                    plotFile, parms["refAnt"], err, \
-                                   flagVer=2, Stokes=["RR","LL"], doband=-1,          \
+                                   flagVer=2, Stokes=["XX","YY"], doband=-1,  \
                                    check=check, debug=debug, logfile=logFile )
             if retCode!=0:
                 raise  RuntimeError,"Error in Plotting spectrum"
@@ -303,7 +318,7 @@ def pipeline( aipsSetup, parmFile):
     # Bandpass calibration
     if parms["doBPCal"] and parms["BPCals"]:
         plotFile = "./"+fileRoot+"BPCal.ps"
-        retCode = EVLABPCal(uv, parms["BPCals"], err, noScrat=noScrat, solInt1=parms["bpsolint1"], \
+        retCode = ALMABPCal(uv, parms["BPCals"], err, noScrat=noScrat, solInt1=parms["bpsolint1"], \
                             solInt2=parms["bpsolint2"], solMode=parms["bpsolMode"], \
                             BChan1=parms["bpBChan1"], EChan1=parms["bpEChan1"], \
                             BChan2=parms["bpBChan2"], EChan2=parms["bpEChan2"], ChWid2=parms["bpChWid2"], \
@@ -318,19 +333,61 @@ def pipeline( aipsSetup, parmFile):
         # Plot corrected data?
         if parms["doSpecPlot"] and  parms["plotSource"]:
             plotFile = "./"+fileRoot+"BPSpec.ps"
-            retCode = EVLASpectrum(uv, parms["plotSource"], parms["plotTime"], plotFile, \
-                                   parms["refAnt"], err, Stokes=["RR","LL"], doband=1,          \
+            retCode = ALMASpectrum(uv, parms["plotSource"], parms["plotTime"], plotFile, \
+                                   parms["refAnt"], err, flagVer=2, Stokes=["XX","YY"], doband=1, \
                                    check=check, debug=debug, logfile=logFile )
             if retCode!=0:
                 raise  RuntimeError,"Error in Plotting spectrum"
 
+    # set X/Y gains and initial calibration
+    if parms["doXYFixGain"] and parms["XYGainSource"] and not check:
+        mess =  "Fix X/Y gain ratios"
+        printMess(mess, logFile)
+        retCode = ALMAXYGain(uv, err, \
+                             XYCal=parms["XYGainSource"],timerange=parms["XYGainTime"],  \
+                             doCalib=2, gainUse=0, doBand=1, flagVer=2, refAnt=parms["refAnt"],  \
+                             nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
+                             check=check, debug=debug)
+        if retCode!=0:
+            raise RuntimeError,"Error in X-Y gain fix"
+    
+    # Self calibrate calibrators
+    if parms["doImgCal"] and not check:
+        mess =  "SelfCalibrate/Image calibrators"
+        printMess(mess, logFile)
+        src =  ALMACombineCals(parms["ACals"], parms["PCals"])   # Source list
+        ALMAImageCals(uv, err, Sources=src, seq=parms["seq"], \
+            sclass=parms["outCClass"], doCalib=2, flagVer=2, doBand=1, FOV=parms["CalFOV"], \
+            maxPSCLoop=parms["maxPSCLoop"], minFluxPSC=parms["minFluxPSC"], solPInt=parms["solPInt"], \
+            maxASCLoop=parms["maxASCLoop"], minFluxASC=parms["minFluxASC"],\
+            solAInt=parms["solAInt"], avgPol=parms["avgPol"],\
+            avgIF=parms["avgIF"], minSNR=parms["minSNR"],\
+            refAnt=parms["refAnt"], nThreads=nThreads, noScrat=noScrat,\
+            logfile=logFile, check=check, debug=debug)
+
+    # Self calibrated models now available
+    ALMAImageModel(parms["ACals"], parms["outCClass"], disk, parms["seq"], err)
+    ALMAImageModel(parms["PCals"], parms["outCClass"], disk, parms["seq"], err)
+    
+    # Phase Calibrate
+    if parms["doPhaseCal"]:
+        plotFile = "./"+fileRoot+"PhaseCal.ps"
+        retCode = ALMAPhaseCal (uv, parms["PCals"], err,  ACals=parms["ACals"], \
+                                doCalib=2, doBand=1, BPVer=1, flagVer=2, refAnt=parms["refAnt"], \
+                                BChan=parms["ampBChan"], EChan=parms["ampEChan"], \
+                                solInt=parms["solPInt"],  avgIF = parms['avgIF'], \
+                                ampScalar=parms["ampScalar"], doPlot=parms["doSNPlot"], plotFile=plotFile,  \
+                                nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
+        if retCode!=0:
+            raise RuntimeError,"Error calibrating"
+    
     # Amp & phase Calibrate
     if parms["doAmpPhaseCal"]:
         plotFile = "./"+fileRoot+"APCal.ps"
-        retCode = EVLACalAP (uv, [], parms["ACals"], err, PCals=parms["PCals"], 
+        retCode = ALMACalAP (uv, [], parms["ACals"], err, PCals=parms["APCals"], \
                              doCalib=2, doBand=1, BPVer=1, flagVer=2, \
-                             BChan=parms["ampBChan"], EChan=parms["ampEChan"], UVRange=parms["gainUVRange"], \
-                             solInt=parms["solInt"], solSmo=parms["solSmo"], ampScalar=parms["ampScalar"], \
+                             BChan=parms["ampBChan"], EChan=parms["ampEChan"], \
+                             solInt=parms["solAInt"], solSmo=parms["solSmo"], ampScalar=parms["ampScalar"], \
                              doAmpEdit=parms["doAmpEdit"], ampSigma=parms["ampSigma"], \
                              ampEditFG=parms["ampEditFG"], \
                              doPlot=parms["doSNPlot"], plotFile=plotFile,  refAnt=parms["refAnt"], \
@@ -342,23 +399,8 @@ def pipeline( aipsSetup, parmFile):
     if parms["doAutoFlag"]:
         mess =  "Post calibration editing:"
         printMess(mess, logFile)
-        # if going to redo then only calibrators
-        if parms["doRecal"]:
-            # Only calibrators
-            clist = []
-            for DCal in DCals:
-                if DCal["Source"] not in clist:
-                    clist.append(DCal["Source"])
-            for PCal in PCals:
-                if PCal["Source"] not in clist:
-                    clist.append(DCal["Source"])
-            for ACal in ACals:
-                if ACal["Source"] not in clist:
-                    clist.append(ACal["Source"])
-        else:
-            clist = []
-    
-        retCode = EVLAAutoFlag (uv, clist, err, flagVer=2, \
+        clist = []
+        retCode = ALMAAutoFlag (uv, clist, err, flagVer=2, \
                                 doCalib=2, gainUse=0, doBand=1, BPVer=1,  \
                                 IClip=parms["IClip"], minAmp=parms["minAmp"], timeAvg=parms["timeAvg"], \
                                 doFD=parms["doAFFD"], FDmaxAmp=parms["FDmaxAmp"], FDmaxV=parms["FDmaxV"], \
@@ -369,246 +411,80 @@ def pipeline( aipsSetup, parmFile):
         if retCode!=0:
            raise  RuntimeError,"Error in AutoFlag"
     
-    # Redo the calibration using new flagging?
-    if parms["doBPCal2"]==None:
-        parms["doBPCal2"] = parms["doBPCal"]
-    if parms["doDelayCal2"]==None:
-        parms["doDelayCal2"] = parms["doDelayCal2"]
-    if parms["doAmpPhaseCal2"]==None:
-        parms["doAmpPhaseCal2"] = parms["doAmpPhaseCal"]
-    if parms["doAutoFlag2"]==None:
-        parms["doAutoFlagCal2"] = parms["doAutoFlag"]
-    if parms["doRecal"]:
-        mess =  "Redo calibration:"
-        printMess(mess, logFile)
-        EVLAClearCal(uv, err, doGain=True, doFlag=False, doBP=True, check=check, logfile=logFile)
-        OErr.printErrMsg(err, "Error resetting calibration")
-        # Parallactic angle correction?
-        if parms["doPACor"] or parms["doPolCal"]:
-            retCode = EVLAPACor(uv, err, \
-                                logfile=logFile, check=check, debug=debug)
-            if retCode!=0:
-                raise RuntimeError,"Error in Parallactic angle correction"
-    
-        # Delay recalibration
-        if parms["doDelayCal2"] and parms["DCals"] and not check:
-            plotFile = "./"+fileRoot+"DelayCal2.ps"
-            retCode = EVLADelayCal(uv, parms["DCals"], err, \
-                                   BChan=parms["delayBChan"], EChan=parms["delayEChan"], \
-                                   doCalib=2, flagVer=2, doBand=-1, UVRange=parms["gainUVRange"], \
-                                   solInt=parms["delaySolInt"], smoTime=1.0/60.0,  \
-                                   refAnts=[parms["refAnt"]], doTwo=parms["doTwo"], \
-                                   doZeroPhs=parms["delayZeroPhs"], \
-                                   doPlot=parms["doSNPlot"], plotFile=plotFile, \
-                                   nThreads=nThreads, noScrat=noScrat, \
-                                   logfile=logFile, check=check, debug=debug)
-            if retCode!=0:
-                raise RuntimeError,"Error in delay calibration"
-                
-            # Plot corrected data?
-            if parms["doSpecPlot"] and parms["plotSource"]:
-                plotFile = "./"+fileRoot+"DelaySpec2.ps"
-                retCode = EVLASpectrum(uv, parms["plotSource"], parms["plotTime"], plotFile, parms["refAnt"], err, \
-                                       flagVer=2, Stokes=["RR","LL"], doband=-1,          \
-                                       check=check, debug=debug, logfile=logFile )
-                if retCode!=0:
-                    raise  RuntimeError,"Error in Plotting spectrum"
-    
-    # Bandpass calibration
-    if parms["doBPCal2"] and parms["BPCals"]:
-        plotFile = "./"+fileRoot+"BPCal2.ps"
-        retCode = EVLABPCal(uv, parms["BPCals"], err, noScrat=noScrat, solInt1=parms["bpsolint1"], \
-                            solInt2=parms["bpsolint2"], solMode=parms["bpsolMode"], \
-                            BChan1=parms["bpBChan1"], EChan1=parms["bpEChan1"], \
-                            BChan2=parms["bpBChan2"], EChan2=parms["bpEChan2"], ChWid2=parms["bpChWid2"], \
-                            doCenter1=parms["bpDoCenter1"], refAnt=parms["refAnt"], \
-                            UVRange=parms["bpUVRange"], doCalib=2, gainUse=0, flagVer=2, doPlot=False, \
-                            doAmpEdit=parms["doAmpEdit"], ampSigma=parms["ampSigma"], \
-                            doBPPlot=parms["doBPPlot"], plotBPFile=plotFile, \
-                            nThreads=nThreads, logfile=logFile, check=check, debug=debug)
-        if retCode!=0:
-            raise RuntimeError,"Error in Bandpass calibration"
-        
-        # Plot corrected data?
-        if parms["doSpecPlot"] and parms["plotSource"]:
-            plotFile = "./"+fileRoot+"BPSpec2.ps"
-            retCode = EVLASpectrum(uv, parms["plotSource"], parms["plotTime"], plotFile, parms["refAnt"], err, \
-                                   Stokes=["RR","LL"], doband=1,          \
-                                   check=check, debug=debug, logfile=logFile )
-            if retCode!=0:
-                raise  RuntimeError,"Error in Plotting spectrum"
-    
-        # Amp & phase Recalibrate
-        if parms["doAmpPhaseCal2"]:
-            plotFile = "./"+fileRoot+"APCal2.ps"
-            retCode = EVLACalAP (uv, [], parms["ACals"], err, PCals=parms["PCals"], \
-                                 doCalib=2, doBand=1, BPVer=1, flagVer=2, \
-                                 BChan=parms["ampBChan"], EChan=parms["ampEChan"], UVRange=parms["gainUVRange"], \
-                                 solInt=parms["solInt"], solSmo=parms["solSmo"], ampScalar=parms["ampScalar"], \
-                                 doAmpEdit=parms["doAmpEdit"], ampSigma=parms["ampSigma"], \
-                                 ampEditFG=parms["ampEditFG"], \
-                                 doPlot=parms["doSNPlot"], plotFile=plotFile, refAnt=parms["refAnt"], \
-                                 noScrat=noScrat, nThreads=nThreads, logfile=logFile, check=check, debug=debug)
-            if retCode!=0:
-                raise RuntimeError,"Error calibrating"
-    
-        # More editing
-        if parms["doAutoFlag2"]:
-            mess =  "Post recalibration editing:"
-            printMess(mess, logFile)
-            retCode = EVLAAutoFlag (uv, [], err, flagVer=2, \
-                                    doCalib=2, gainUse=0, doBand=1, BPVer=1,  \
-                                    IClip=parms["IClip"], minAmp=parms["minAmp"], timeAvg=parms["timeAvg"], \
-                                    doFD=parms["doAFFD"], FDmaxAmp=parms["FDmaxAmp"], FDmaxV=parms["FDmaxV"], \
-                                    FDwidMW=parms["FDwidMW"], FDmaxRMS=parms["FDmaxRMS"], \
-                                    FDmaxRes=parms["FDmaxRes"],  FDmaxResBL= parms["FDmaxResBL"], \
-                                    FDbaseSel=parms["FDbaseSel"], \
-                                    nThreads=nThreads, logfile=logFile, check=check, debug=debug)
-            if retCode!=0:
-                raise  RuntimeError,"Error in AutoFlag"
-            
-    # end recal
-    
-    
     
     # Calibrate and average data
     if parms["doCalAvg"]:
-        retCode = EVLACalAvg (uv, avgClass, parms["seq"], parms["CalAvgTime"], err, \
+        retCode = ALMACalAvg (uv, avgClass, parms["seq"], parms["CalAvgTime"], err, \
                               flagVer=2, doCalib=2, gainUse=0, doBand=1, BPVer=1, doPol=False, \
                               avgFreq=parms["CAavgFreq"], chAvg=parms["CAchAvg"], \
                               BChan=parms["CABChan"], EChan=parms["CAEChan"], \
                               BIF=parms["CABIF"], EIF=parms["CAEIF"], Compress=parms["Compress"], \
-                               noScrat=noScrat, nThreads=nThreads, logfile=logFile, check=check, debug=debug)
+                              nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
            raise  RuntimeError,"Error in CalAvg"
        
     # Get calibrated/averaged data
     if not check:
-        uv = UV.newPAUV("AIPS UV DATA", EVLAAIPSName(project, session), avgClass[0:6], \
+        uv = UV.newPAUV("AIPS UV DATA", ALMAAIPSName(project, session), avgClass[0:6], \
                         disk, parms["seq"], True, err)
         if err.isErr:
             OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
     
     # XClip
-    if parms["XClip"] and parms["XClip"][0]>0.0:
+    if parms["XClip"] and parms["XClip"]>0.0:
         mess =  "Cross Pol clipping:"
         printMess(mess, logFile)
-        retCode = EVLAAutoFlag (uv, [], err, flagVer=-1, flagTab=1, \
+        retCode = ALMAAutoFlag (uv, [], err, flagVer=-1, flagTab=1, \
                                 doCalib=2, gainUse=0, doBand=-1, maxBad=1.0,  \
                                 XClip=parms["XClip"], timeAvg=1./60., \
                                 nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
             raise  RuntimeError,"Error in AutoFlag"
     
-    # R-L  delay calibration cal if needed,
-    if parms["doRLDelay"] and parms["RLDCal"][0][0]!=None:
-        if parms["rlrefAnt"]<=0:
-            parms["rlrefAnt"] =  parms["refAnt"]
-        # parms["rlDoBand"] if before average, BPVer=parms["rlBPVer"], 
-        retCode = EVLARLDelay(uv, err,\
-                              RLDCal=parms["RLDCal"], BChan=parms["rlBChan"], \
-                              EChan=parms["rlEChan"], UVRange=parms["rlUVRange"], \
-                              soucode=parms["rlCalCode"], doCalib=parms["rlDoCal"], gainUse=parms["rlgainUse"], \
-                              timerange=parms["rltimerange"], numIFs=parms["rlnumIFs"], \
-                              # NOT HERE doBand=parms["rlDoBand"], BPVer=parms["rlBPVer"],  \
-                              flagVer=parms["rlflagVer"], \
-                              refAnt=parms["rlrefAnt"], doPol=False,  \
+    # X/Y Delay calibration
+    if parms["doXYDelay"] and parms["XYDelaySource"]!=None:
+        retCode = ALMAXYDelay(uv, err, \
+                              XYDCal=parms["XYDelaySource"], timerange=parms["XYDelayTime"], \
+                              BChan=parms["xyBChan"], EChan=parms["xyEChan"], UVRange=parms["xyUVRange"], \
+                              doCalib=parms["xyDoCal"], gainUse=parms["xygainUse"], numIFs=parms["xynumIFs"], \
+                              flagVer=parms["xyflagVer"], refAnt=parms["refAnt"], doPol=False,  \
                               nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
                               check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error in R-L delay calibration"
+            raise RuntimeError,"Error in X-Y delay calibration"
     
-    # Polarization calibration
+    # Instrumental polarization calibration
     if parms["doPolCal"]:
-        if parms["PCRefAnt"]<0:
+        if parms["PCRefAnt"]==-10:
             parms["PCRefAnt"] =  parms["refAnt"]
-        retCode = EVLAPolCal(uv, parms["PCInsCals"], err, InsCalPoln=parms["PCCalPoln"], \
-                             doCalib=2, gainUse=0, doBand=-1, flagVer=0, \
-                             fixPoln=parms["PCFixPoln"], avgIF=parms["PCAvgIF"], \
+        retCode = ALMAPolCal(uv, parms["PCInsCals"], err, InsCalPoln=parms["PCCalPoln"], \
+                             doCalib=2, gainUse=0, doBand=-1, flagVer=0, doFitXY=parms["doFitXY"], \
                              solInt=parms["PCSolInt"], refAnt=parms["PCRefAnt"], solType=parms["PCSolType"], \
-                             ChInc=parms["PCChInc"], ChWid=parms["PCChWid"], doFitRL=parms['doFitRL'], 
-                             doFitOri=parms['doFitOri'], \
+                             ChInc=parms["PCChInc"], ChWid=parms["PCChWid"], doFitOri=parms["doFitOri"], \
                              nThreads=nThreads, check=check, debug=debug, noScrat=noScrat, logfile=logFile)
         if retCode!=0 and (not check):
            raise  RuntimeError,"Error in polarization calibration: "+str(retCode)
         # end poln cal.
     
     
-    # R-L phase calibration cal., creates new BP table updating prior BP table
-    if parms["doRLCal"] and parms["RLDCal"][0][0]!=None:
-        plotFile = "./"+fileRoot+"RLSpec2.ps"
-        if parms["rlrefAnt"]<=0:
-            parms["rlrefAnt"] =  parms["refAnt"]
-        retCode = EVLARLCal(uv, err,\
-                            RLDCal=parms["RLDCal"], BChan=parms["rlBChan"],
-                            EChan=parms["rlEChan"], UVRange=parms["rlUVRange"], \
-                            ChWid2=parms["rlChWid"], solInt1=parms["rlsolint1"], solInt2=parms["rlsolint2"], \
-                            RLPCal=parms["RLPCal"], RLPhase=parms["RLPhase"], \
-                            RM=parms["RLRM"], CleanRad=parms["rlCleanRad"], \
-                            calcode=parms["rlCalCode"], doCalib=parms["rlDoCal"], gainUse=parms["rlgainUse"], \
-                            timerange=parms["rltimerange"], FOV=parms["rlFOV"], \
-                            doBand=1, BPVer=1, flagVer=parms["rlflagVer"], \
-                            refAnt=parms["rlrefAnt"], doPol=parms["doPol"], PDVer=parms["PDVer"],  \
-                            nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
-                            check=check, debug=debug)
-        if retCode!=0:
-            raise RuntimeError,"Error in RL phase spectrum calibration"
-        # BP cal and pol cal don't commute, do RLCal again for good measure updating BP 2
-        retCode = EVLARLCal(uv, err,\
-                            RLDCal=parms["RLDCal"], BChan=parms["rlBChan"],
-                            EChan=parms["rlEChan"], UVRange=parms["rlUVRange"], \
-                            ChWid2=parms["rlChWid"], solInt1=parms["rlsolint1"], solInt2=parms["rlsolint2"], \
-                            RLPCal=parms["RLPCal"], RLPhase=parms["RLPhase"], \
-                            RM=parms["RLRM"], CleanRad=parms["rlCleanRad"], \
-                            calcode=parms["rlCalCode"], doCalib=parms["rlDoCal"], gainUse=parms["rlgainUse"], \
-                            timerange=parms["rltimerange"], FOV=parms["rlFOV"], \
-                            doBand=1, BPVer=2, flagVer=parms["rlflagVer"], \
-                            refAnt=parms["rlrefAnt"], doPol=parms["doPol"], PDVer=parms["PDVer"],  \
-                            doPlot=parms["doSpecPlot"], plotFile=plotFile, \
-                            nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
-                            check=check, debug=debug)
-        if retCode!=0:
-            raise RuntimeError,"Error in RL phase spectrum calibration"
-    
-    # VClip
-    if parms["VClip"] and parms["VClip"][0]>0.0:
-        mess =  "VPol clipping:"
-        printMess(mess, logFile)
-        retCode = EVLAAutoFlag (uv, [], err, flagVer=-1, flagTab=1, \
-                                doCalib=2, gainUse=0, doBand=-1,  \
-                                VClip=parms["VClip"], timeAvg=parms["timeAvg"], \
-                                nThreads=nThreads, logfile=logFile, check=check, debug=debug)
-        if retCode!=0:
-            raise  RuntimeError,"Error in AutoFlag VClip"
-    
     # Plot corrected data?
     if parms["doSpecPlot"] and parms["plotSource"]:
         plotFile = "./"+fileRoot+"Spec.ps"
-        retCode = EVLASpectrum(uv, parms["plotSource"], parms["plotTime"], \
+        retCode = ALMASpectrum(uv, parms["plotSource"], parms["plotTime"], \
                                plotFile, parms["refAnt"], err, \
-                               flagVer=1, Stokes=["RR","LL"], doband=-1,          \
+                               flagVer=1, Stokes=["XX","YY"], doband=-1,    \
                                check=check, debug=debug, logfile=logFile )
         if retCode!=0:
             raise  RuntimeError,"Error in Plotting spectrum"
-
-        plotFile = "./"+fileRoot+"RL_Spec.ps"
-        retCode = EVLASpectrum(uv, parms["plotSource"], parms["plotTime"], \
-                               plotFile, parms["refAnt"], err, \
-                               flagVer=1, Stokes=["RL","LR"], doband=1,   \
-                               doPol=parms["doPol"], PDVer=parms["PDVer"],  \
-                               check=check, debug=debug, logfile=logFile )
-        if retCode!=0:
-            raise  RuntimeError,"Error in Plotting spectrum"
-
     
     # Image targets
     if parms["doImage"]:
         # If targets not specified, image all
         if len(parms["targets"])<=0:
-            slist = EVLAAllSource(uv,err,logfile=logFile,check=check,debug=debug)
+            slist = ALMAAllSource(uv,err,logfile=logFile,check=check,debug=debug)
         else:
             slist = parms["targets"]
-        EVLAImageTargets (uv, err, Sources=slist, seq=parms["seq"], sclass=outIClass, \
+        ALMAImageTargets (uv, err, Sources=slist, seq=parms["seq"], sclass=outIClass, \
                           doCalib=2, doBand=1,  flagVer=1, doPol=parms["doPol"], PDVer=parms["PDVer"],  \
                           Stokes=parms["Stokes"], FOV=parms["FOV"], Robust=parms["Robust"], Niter=parms["Niter"], \
                           CleanRad=parms["CleanRad"], minFlux=parms["minFlux"], UVRange=parms["UVRange"], \
@@ -621,6 +497,7 @@ def pipeline( aipsSetup, parmFile):
                           doMB=parms["doMB"], norder=parms["MBnorder"], maxFBW=parms["MBmaxFBW"], \
                           PBCor=parms["PBCor"],antSize=parms["antSize"], \
                           nTaper=parms["nTaper"], Tapers=parms["Tapers"], \
+                          doOutlier=parms["doOutlier"], OutlierDist=parms["OutlierDist"], OutlierFlux=parms["OutlierFlux"], \
                           nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
         # End image
     
@@ -628,10 +505,10 @@ def pipeline( aipsSetup, parmFile):
     if parms["doReport"]:
         # If targets not specified, do all
         if len(parms["targets"])<=0:
-            slist = EVLAAllSource(uv,err,logfile=logFile,check=check,debug=debug)
+            slist = ALMAAllSource(uv,err,logfile=logFile,check=check,debug=debug)
         else:
             slist = parms["targets"]
-        Report = EVLAReportTargets(uv, err, Sources=slist, seq=parms["seq"], sclass=outIClass, \
+        Report = ALMAReportTargets(uv, err, Sources=slist, seq=parms["seq"], sclass=outIClass, \
                                        Stokes=parms["Stokes"], logfile=logFile, check=check, debug=debug)
         # Save to pickle jar
         ReportPicklefile = "./"+fileRoot+"Report.pickle"   # Where results saved
@@ -640,36 +517,36 @@ def pipeline( aipsSetup, parmFile):
     # Write results, cleanup    
     # Save cal/average UV data? 
     if parms["doSaveUV"] and (not check):
-        Aname = EVLAAIPSName(project, session)
+        Aname = ALMAAIPSName(project, session)
         cno = AIPSDir.PTestCNO(disk, user, Aname, avgClass[0:6], "UV", parms["seq"], err)
         if cno>0:
             uvt = UV.newPAUV("AIPS CAL UV DATA", Aname, avgClass, disk, parms["seq"], True, err)
             filename = parms["project"]+parms["session"]+parms["band"]+"Cal.uvtab"
-            fuv = EVLAUVFITS (uvt, filename, 0, err, compress=parms["Compress"], logfile=logFile)
-            EVLAAddOutFile( filename, 'project', "Calibrated Averaged UV data" )
+            fuv = ALMAUVFITS (uvt, filename, 0, err, compress=parms["Compress"], logfile=logFile)
+            ALMAAddOutFile( filename, 'project', "Calibrated Averaged UV data" )
             # Save list of output files
-            EVLASaveOutFiles()
+            ALMASaveOutFiles()
             del uvt
     # Save raw UV data tables?
     if parms["doSaveTab"] and (not check):
-        Aname = EVLAAIPSName(project, session)
+        Aname = ALMAAIPSName(project, session)
         cno = AIPSDir.PTestCNO(disk, user, Aname, dataClass[0:6], "UV", parms["seq"], err)
         if cno>0:
             uvt = UV.newPAUV("AIPS RAW UV DATA", Aname, dataClass[0:6], disk, parms["seq"], True, err)
             filename = parms["project"]+parms["session"]+parms["band"]+"CalTab.uvtab"
-            fuv = EVLAUVFITSTab (uvt, filename, 0, err, logfile=logFile)
-            EVLAAddOutFile( filename, 'project', "Calibrated AIPS tables" )
+            fuv = ALMAUVFITSTab (uvt, filename, 0, err, logfile=logFile)
+            ALMAAddOutFile( filename, 'project', "Calibrated AIPS tables" )
             del uvt
             # Write History
             filename = project+'_'+session+'_'+band+".History.text"
             OTObit.PrintHistory(uv, file=filename)
-            EVLAAddOutFile( filename, 'project', "Processing history of calibrated data" )
+            ALMAAddOutFile( filename, 'project', "Processing history of calibrated data" )
             # Save list of output files
-            EVLASaveOutFiles()
+            ALMASaveOutFiles()
     # Imaging results
     # If targets not specified, save all
     if len(parms["targets"])<=0:
-        slist = EVLAAllSource(uv,err,logfile=logFile,check=check,debug=debug)
+        slist = ALMAAllSource(uv,err,logfile=logFile,check=check,debug=debug)
     else:
         slist = parms["targets"]
     for target in slist:
@@ -683,24 +560,24 @@ def pipeline( aipsSetup, parmFile):
                     continue
                 x = Image.newPAImage("out", outname, oclass, disk, parms["seq"], True, err)
                 outfile = "./"+fileRoot+target+"."+oclass+".fits"
-                xf = EVLAImFITS (x, outfile, 0, err, logfile=logFile)
-                EVLAAddOutFile( outfile, target, 'Image of '+ target)
+                xf = ALMAImFITS (x, outfile, 0, err, logfile=logFile)
+                ALMAAddOutFile( outfile, target, 'Image of '+ target)
                 # Statistics
                 zz=imstat(x, err, logfile=logFile)
     # end writing loop
     
     # Save list of output files
-    EVLASaveOutFiles()
+    ALMASaveOutFiles()
     OErr.printErrMsg(err, "Writing output")
     
     # Contour plots
     if parms["doKntrPlots"]:
         mess = "INFO --> Contour plots (doKntrPlots)"
         printMess(mess, logFile)
-        EVLAKntrPlots( err, imName=parms["targets"], project=project,
+        ALMAKntrPlots( err, imName=parms["targets"], project=project,
             session=session, band=band, disk=disk, debug=debug )
         # Save list of output files
-        EVLASaveOutFiles()
+        ALMASaveOutFiles()
     elif debug:
         mess = "Not creating contour plots ( doKntrPlots = "+str(parms["doKntrPlots"])+ " )"
         printMess(mess, logFile)
@@ -710,16 +587,16 @@ def pipeline( aipsSetup, parmFile):
         mess = "INFO --> Diagnostic plots (doDiagPlots)"
         printMess(mess, logFile)
         # Get the highest number avgClass catalog file
-        Aname = EVLAAIPSName( project, session )
+        Aname = ALMAAIPSName( project, session )
         uvc = None
         if not check:
             uvname = project+"_"+session+"_"+band+"_Cal"
             uvc = UV.newPAUV(uvname, Aname, avgClass, disk, parms["seq"], True, err)
-        EVLADiagPlots( uvc, err, cleanUp=parms["doCleanup"], \
+        ALMADiagPlots( uvc, err, cleanUp=parms["doCleanup"], \
                            project=project, session=session, band=band, \
                            logfile=logFile, check=check, debug=debug )
         # Save list of output files
-        EVLASaveOutFiles()
+        ALMASaveOutFiles()
     elif debug:
         mess = "Not creating diagnostic plots ( doDiagPlots = "+str(parms["doDiagPlots"])+ " )"
         printMess(mess, logFile)
@@ -733,29 +610,29 @@ def pipeline( aipsSetup, parmFile):
         uvc = None
         if not uvc:
             # Get calibrated/averaged data
-            Aname = EVLAAIPSName(project, session)
+            Aname = ALMAAIPSName(project, session)
             uvname = project+"_"+session+"_"+band+"_Cal"
             uvc = UV.newPAUV(uvname, Aname, avgClass, disk, parms["seq"], True, err)
             if err.isErr:
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
     
         # Get source metadata; save to pickle file
-        srcMetadata = EVLASrcMetadata( uvc, err, Sources=parms["targets"], seq=parms["seq"], \
+        srcMetadata = ALMASrcMetadata( uvc, err, Sources=parms["targets"], seq=parms["seq"], \
                                        sclass=outIClass, Stokes=parms["Stokes"],\
                                        logfile=logFile, check=check, debug=debug )
         picklefile = "./"+fileRoot+".SrcReport.pickle" 
         SaveObject( srcMetadata, picklefile, True ) 
-        EVLAAddOutFile( picklefile, 'project', 'All source metadata' )
+        ALMAAddOutFile( picklefile, 'project', 'All source metadata' )
     
         # Get project metadata; save to pickle file
-        projMetadata = EVLAProjMetadata( uvc, AIPS_VERSION, err, \
+        projMetadata = ALMAProjMetadata( uvc, AIPS_VERSION, err, \
             PCals=parms["PCals"], ACals=parms["ACals"], \
             BPCals=parms["BPCals"], DCals=parms["DCals"], \
             project = project, session = session, band = band, \
-            dataInUVF = parms["archRoot"], archFileID = 66666 )
+            dataInUVF = parms["archRoots"][0], archFileID = 66666 )
         picklefile = "./"+fileRoot+".ProjReport.pickle"
         SaveObject(projMetadata, picklefile, True) 
-        EVLAAddOutFile( picklefile, 'project', 'Project metadata' )
+        ALMAAddOutFile( picklefile, 'project', 'Project metadata' )
     else:
         # Fetch from pickle jar
          picklefile = "./"+fileRoot+".SrcReport.pickle"
@@ -767,7 +644,7 @@ def pipeline( aipsSetup, parmFile):
     if parms["doHTML"]:
         mess = "INFO --> Write HTML report (doHTML)"
         printMess(mess, logFile)
-        EVLAHTMLReport( projMetadata, srcMetadata, \
+        ALMAHTMLReport( projMetadata, srcMetadata, \
                             outfile="./"+fileRoot+".report.html", \
                             logFile=logFile )
     
@@ -775,11 +652,11 @@ def pipeline( aipsSetup, parmFile):
     if parms["doVOTable"]:
         mess = "INFO --> Write VOTable (doVOTable)"
         printMess(mess, logFile)
-        EVLAAddOutFile( 'VOTable.xml', 'project', 'VOTable report' ) 
-        EVLAWriteVOTable( projMetadata, srcMetadata, filename='VOTable.xml' )
+        ALMAAddOutFile( 'VOTable.xml', 'project', 'VOTable report' ) 
+        ALMAWriteVOTable( projMetadata, srcMetadata, filename='VOTable.xml' )
     
     # Save list of output files
-    EVLASaveOutFiles()
+    ALMASaveOutFiles()
     
     # Cleanup - delete AIPS files
     if parms["doCleanup"] and (not check):
@@ -791,9 +668,11 @@ def pipeline( aipsSetup, parmFile):
         for istok in range(0,nstok):
             oclass = parms["Stokes"][istok:istok+1]+outIClass[1:]
             AllDest(err, disk=disk,Aseq=parms["seq"],Aclass=oclass)
+            oclass = parms["Stokes"][istok:istok+1]+outCClass[1:]
+            AllDest(err, disk=disk,Aseq=parms["seq"],Aclass=oclass)
         
         # Delete initial UV data
-        Aname = EVLAAIPSName(project, session)
+        Aname = ALMAAIPSName(project, session)
         # Test if data exists
         cno = AIPSDir.PTestCNO(disk, user, Aname, dataClass[0:6], "UV", parms["seq"], err)
         if cno>0:

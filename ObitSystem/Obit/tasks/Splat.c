@@ -565,13 +565,17 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean doCalWt;
   olong doCalib;
-  /*gchar *routine = "digestInputs";*/
+  gchar *routine = "digestInputs";
 
   /* error checks */
   if (err->error) return;
   g_assert (ObitInfoListIsA(myInput));
 
-  /* If doCalWt set, make sure doCalib OK */
+  /* noScrat - no scratch files for AIPS disks */
+  ObitAIPSSetnoScrat(myInput, err);
+  if (err->error) Obit_traceback_msg (err, routine, "task Input");
+
+   /* If doCalWt set, make sure doCalib OK */
   doCalWt = FALSE;
   ObitInfoListGetTest(myInput, "doCalWt",  &type, dim, &doCalWt);
   doCalib = -1;

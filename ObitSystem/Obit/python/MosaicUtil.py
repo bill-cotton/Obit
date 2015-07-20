@@ -128,6 +128,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
 
     * inImage    = Image to be accumulated
     * factor     = Additional multiplication factor, normally 1.0
+                   >0 => use the factor/RMS of each image plane
     * SumWtImage = First output image, must be defined (i.e. files named)
                    but not fully created.
     * SumWt2     = Second output image, like SumWtImage
@@ -169,12 +170,18 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     ndim       = inDescDict["naxis"]
     inNaxis    = inDescDict["inaxes"]
     finterp    = None  # GPU not yet enabled
+    # Range of planes
+    bpln = max (1,iblc[2]); 
+    epln = min (inNaxis[2], itrc[2])
+    if epln<bpln:
+        epln = inNaxis[2]
+    npln = epln-bpln+1
     # Test if compatible
-    if inNaxis[2] < outNaxis[2]:
-        print "input has",inNaxis[2],"planes and output",outNaxis[2]
+    if npln < outNaxis[2]:
+        print "input has",npln,"planes selected and output has",outNaxis[2]
         raise RuntimeError,"input image has too few planes "
-    if (ndim>0) and (inNaxis[2]>0):  # list of planes to loop over (0-rel)
-        planes = range(restart,inNaxis[2])
+    if (ndim>0) and (inNaxis[2]>0):  # list of 0-rel planes to loop over
+        planes = range(bpln+restart,bpln+npln)
     else:
         planes = [0]
     #
@@ -184,7 +191,8 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     # Loop over planes
     WtImage = None
     for iPlane in planes:
-        doPlane = [iPlane+1,1,1,1,1]
+        doPlane  = [iPlane+1,1,1,1,1]        # Input plane
+        outPlane = [iPlane+1-bpln,1,1,1,1]   # output plane
         if not (iPlane%20):
             print "At plane", iPlane+1,os.times()
         # Make weight image, first pass
@@ -193,6 +201,12 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
             Image.PGetPlane (inImage, None, doPlane, err)
             OErr.printErrMsg(err, "Error reading image for "+Image.PGetName(inImage))
             #
+            # Special weighting?
+            if factor<0.0:
+                RMS = inImage.FArray.RMS
+                fact = abs(factor)/RMS
+            else:
+                fact = factor
             WtImage = Image.Image("WeightImage")
             Image.PCloneMem(inImage, WtImage, err)
             pln = [max(1,inNaxis[2]/2),1,1,1,1]
@@ -243,7 +257,18 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
                                                   XPixelImage.FArray, YPixelImage.FArray, 
                                                   hwidth, err)
                 OErr.printErrMsg(err, "Creating GPU FInterpolator")
-           # End init wt image
+            # End init wt image
+        # Special weighting?
+        if factor<0.0:
+            # Get image 
+            Image.PGetPlane (inImage, None, doPlane, err)
+            OErr.printErrMsg(err, "Error reading image for "+Image.PGetName(inImage))
+            RMS = inImage.FArray.RMS
+            fact = abs(factor)/RMS
+            if not (iPlane%20):
+                print "Factor",fact, "plane",iPlane,"RMS",RMS
+        else:
+            fact = factor
         # Interpolate image plane
         ImageUtil.PInterpolateImage(inImage, InterpWtImage, err, \
                                     inPlane=doPlane, XPix=XPixelImage, YPix=YPixelImage,
@@ -253,12 +278,12 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         FArray.PMul(InterpWtImage.FArray, InterpWt.FArray, InterpWtImage.FArray)
         #
         # Read accumulation image planes
-        Image.PGetPlane(SumWt2,  None, doPlane, err)
-        Image.PGetPlane(SumWtImage, None, doPlane, err)
+        Image.PGetPlane(SumWt2,  None, outPlane, err)
+        Image.PGetPlane(SumWtImage, None, outPlane, err)
         OErr.printErrMsg(err, "Error reading accumulation image ")
         #
         # Accumulate
-        FArray.PShiftAdd (SumWtImage.FArray, pos2, InterpWtImage.FArray,  pos1, factor, SumWtImage.FArray)
+        FArray.PShiftAdd (SumWtImage.FArray, pos2, InterpWtImage.FArray, pos1, fact, SumWtImage.FArray)
 
         # Square weight image
         FArray.PMul(InterpWt.FArray, InterpWt.FArray, InterpWtWt.FArray)
@@ -268,11 +293,11 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         # Blank weight squared where image * Wt is blanked
         FArray.PBlank (InterpWtWt.FArray, InterpWt.FArray, InterpWtWt.FArray);
         # Accumulate Wt*Wt
-        FArray.PShiftAdd (SumWt2.FArray,     pos2, InterpWtWt.FArray,pos1, factor, SumWt2.FArray)
+        FArray.PShiftAdd (SumWt2.FArray, pos2, InterpWtWt.FArray,pos1, fact, SumWt2.FArray)
         #
         # Write output
-        Image.PPutPlane(SumWt2, None, doPlane, err)
-        Image.PPutPlane(SumWtImage, None, doPlane, err)
+        Image.PPutPlane(SumWt2, None, outPlane, err)
+        Image.PPutPlane(SumWtImage, None, outPlane, err)
         OErr.printErrMsg(err, "Error writing accumulation image ")
         # end loop over planes
     # close output
@@ -611,8 +636,10 @@ def PGetOverlap(in1Image, in2Image, err):
             print "2 straddles left edge of 1"
             return (blc, trc)
        # Likely no overlap
-        print "Confused, do it all"
-        return ([1,1,1,1,1,1,1], [nx1,ny1,1,1,1,1,1])
+        print "Confused, probably no overlap"
+        print "corn1", corn1
+        print "corn2", corn2
+        return ([1,1,1,1,1,1,1], [1,1,1,1,1,1,1])
     else:
         # Default is no overlap
         print "no overlap"

@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Feather Obit task - Feathers together images            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2010                                          */
+/*;  Copyright (C) 2005-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -81,8 +81,11 @@ int main ( int argc, char **argv )
   oint ierr = 0;
   ObitSystem   *mySystem= NULL;
   ObitErr      *err= NULL;
-  olong        numImage;
-  olong         i;
+  ObitInfoType type;
+  gint32       dim[MAXINFOELEMDIM] = {IM_MAXDIM,1,1,1,1};
+  olong        blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
+  olong        trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  olong        i, j, numImage, nplane, iplane, BChan=1, EChan=0;
 
    /* Startup - parse command line */
   err = newObitErr();
@@ -105,9 +108,29 @@ int main ( int argc, char **argv )
   featherGetImage(myInput, &numImage, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
-  /* Feather them together */
-  doFeather (myInput, numImage, inImage, outImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  /* Feather them together - loop over planes */
+  nplane = inImage[0]->myDesc->inaxes[2];
+  ObitInfoListGetTest(myInput, "BChan", &type, dim, &BChan);
+  ObitInfoListGetTest(myInput, "EChan", &type, dim, &EChan);
+  dim[0] = IM_MAXDIM;
+  if (EChan<BChan) EChan = nplane;
+  for (iplane=BChan; iplane<=EChan; iplane++) {
+    /* Tell if more than one */
+    if (nplane>1) {
+      Obit_log_error(err, OBIT_InfoErr, "Plane %d", iplane);
+      ObitErrLog(err);
+      blc[2] = trc[2] = iplane;
+      for (j=0; j<numImage; j++) {
+	ObitInfoListAlwaysPut (inImage[j]->info, "BLC", OBIT_long, dim, blc); 
+	ObitInfoListAlwaysPut (inImage[j]->info, "TRC", OBIT_long, dim, trc);
+      }
+      ObitInfoListAlwaysPut (outImage->info, "BLC", OBIT_long, dim, blc); 
+      ObitInfoListAlwaysPut (outImage->info, "TRC", OBIT_long, dim, trc);
+    }
+    /* doit */
+    doFeather (myInput, numImage, inImage, outImage, err);
+    if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  } /* end loop over planes */
 
   /* History */
   doHistory (numImage, inImage, outImage, err);
@@ -441,11 +464,12 @@ void featherGetImage(ObitInfoList *myInput, olong *numImage,
   olong         trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   olong         i, j, k, Aseq, disk, cno;
   ofloat       ftemp;
-  olong        number;
+  olong        number, nplane;
   gboolean     exist;
   gchar        *strTemp=NULL, inFile[128];
   gchar        Aname[13], Aclass[9], *Atype = "MA";
   gchar        tname[101], *Type, *FITS="FITS";
+  gchar        *feathr = "Feathr";
   gchar *routine = "featherGetImage";
 
   if (err->error) return;  /* existing error? */
@@ -592,9 +616,11 @@ void featherGetImage(ObitInfoList *myInput, olong *numImage,
     ObitInfoListGet(myInput, "outName", &type, dim, Aname, err);
     Aname[dim[0]] = 0;
     /* AIPS class */
-    for (k=0; k<6; k++) Aclass[k] = ' '; Aclass[k] = 0;
+    for (k=0; k<6; k++) Aclass[k] = feathr[k]; Aclass[k] = 0;
     ObitInfoListGet(myInput, "outClass", &type, dim, Aclass, err);
     Aclass[dim[0]] = 0;
+    if (!strncmp (Aclass, "      ", 6)) 
+      for (k=0; k<6; k++) Aclass[k] = feathr[k]; Aclass[k] = 0;
     /* AIPS sequence */
     ObitInfoListGet(myInput, "outSeq", &type, dim, &Aseq, err);
     if (err->error) Obit_traceback_msg (err, routine, routine);
@@ -660,6 +686,19 @@ void featherGetImage(ObitInfoList *myInput, olong *numImage,
                    pgmName, strTemp);
   }
   if (err->error) Obit_traceback_msg (err, routine, routine);
+
+  /* Check that images all have the same number of planes */
+  nplane = inImage[0]->myDesc->inaxes[2];
+  for (i=1; i<*numImage; i++) {
+    Obit_return_if_fail((nplane==inImage[i]->myDesc->inaxes[2]), err,
+			 "%s: Number of planes image %d = %d not %d", 
+			 routine, i+1, inImage[i]->myDesc->inaxes[2], nplane);
+   }
+
+  /* Clone outImage from first input image */
+  ObitImageClone (inImage[0], outImage, err);
+  if (err->error) Obit_traceback_msg (err, routine, inImage[0]->name);
+  
 } /* end featherGetImage */
 
 /*----------------------------------------------------------------------- */
@@ -824,10 +863,6 @@ void doFeather (ObitInfoList *myInput, olong numImage, ObitImage *inImage[],
   else norm = 1.0;
   ObitFArraySMul(resultArray, norm);
   
-  /* Clone outImage from first input image */
-  ObitImageClone (inImage[0], outImage, err);
-  if (err->error) Obit_traceback_msg (err, routine, inImage[0]->name);
-  
   /* Extract to outImage from resultArray */
   ObitFeatherUtilSubImage (padImage[0], resultArray, outImage, err);
   if (err->error) Obit_traceback_msg (err, routine, inImage[0]->name);
@@ -848,6 +883,8 @@ void doFeather (ObitInfoList *myInput, olong numImage, ObitImage *inImage[],
   workArray   = ObitCArrayUnref(workArray);
   resultArray = ObitFArrayUnref(resultArray);
   workArray2  = ObitFArrayUnref(workArray2);
+  FFTfor      = ObitFFTUnref(FFTfor);
+  FFTrev      = ObitFFTUnref(FFTrev);
 } /* end doFeather */
 
 /*----------------------------------------------------------------------- */
@@ -865,7 +902,7 @@ void doHistory (olong numImage, ObitImage *inImage[], ObitImage *outImage,
   olong         i;
   gchar        hicard[81];
   gchar        *hiEntries[] = {
-    "weight", 
+    "weight", "BChan", "EChan",
     NULL};
   gchar *routine = "doHistory";
 

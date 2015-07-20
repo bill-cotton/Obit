@@ -1,7 +1,7 @@
 /* $Id:  */
 /* Convert VL table to FS table                                       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012                                               */
+/*;  Copyright (C) 2012-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -161,11 +161,15 @@ int main ( int argc, char **argv )
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
   /* Fit Spectra */
-  FSver += 1;
-  outTab2 = newObitTableFSValue (outData->name, (ObitData*)outData, 
-				 &FSver,  OBIT_IO_ReadWrite, 
-				 (oint)outData->myDesc->inaxes[outData->myDesc->jlocf], 
-				 err);
+  if (doSpec || doVL2FS) {
+    FSver += 1;
+    outTab2 = newObitTableFSValue (outData->name, (ObitData*)outData, 
+				   &FSver,  OBIT_IO_ReadWrite, 
+				   (oint)outData->myDesc->inaxes[outData->myDesc->jlocf], 
+				   err);
+  } else { /* output = input */
+    outTab2 = ObitTableFSRef(outTab);
+  }
   /* Get input parameters from myInput, copy to outTab2 */
   ObitInfoListCopyList (myInput, outTab2->info, odataParms);
 

@@ -334,7 +334,7 @@ static PyObject* OASDMGetSpectralWindow(ObitSDMData *asdm)
     PyDict_SetItemString(dict, "effectiveBw",            PyFloat_FromDouble((double)Tab->rows[irow]->effectiveBw));
     PyDict_SetItemString(dict, "resolution",             PyFloat_FromDouble((double)Tab->rows[irow]->resolution));
     PyDict_SetItemString(dict, "windowFunction",         PyInt_FromLong((long)Tab->rows[irow]->windowFunction));
-    PyDict_SetItemString(dict, "correlationBit",         PyString_InternFromString(Tab->rows[irow]->correlationBit));
+    /*PyDict_SetItemString(dict, "correlationBit",         PyString_InternFromString(Tab->rows[irow]->correlationBit));*/
     PyDict_SetItemString(dict, "name",                   PyString_InternFromString(Tab->rows[irow]->name));
     PyDict_SetItemString(dict, "oversampling",           PyBool_FromLong((long)Tab->rows[irow]->oversampling));	
     PyDict_SetItemString(dict, "quantization",           PyBool_FromLong((long)Tab->rows[irow]->quantization));	

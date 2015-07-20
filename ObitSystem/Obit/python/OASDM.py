@@ -5,7 +5,7 @@ The information meant to derive contents and intent of a BDF data set.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2012,2013
+#  Copyright (C) 2012,2015
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -225,13 +225,14 @@ class OASDM(OASDMPtr):
         * self   = ASDM object
         *
         """
-        # Amplitude calibrators known to SeyJy:
+        # Amplitude calibrators known to SetJy plus ALMA cals:
         known = ["3C286","1328+307","1331+305", "J1331+3030", "1331+305=3C286",   \
                  "3C48",    "0134+329", "0137+331", "J0137+3309", "0137+331=3C48", \
                  "3C147",   "0538+498", "0542+498", "J0542+4951", "0542+498=3C147",\
                  "3C138",   "0518+165", "0521+166", "J0521+1638", "0521+166=3C138",\
                  "1934-638","1934-638", "1934-638", "J1939-6342", \
-                 "3C295",   "1409+524", "1411+522", "J1411+5212", "1411+522=3C295"  \
+                 "3C295",   "1409+524", "1411+522", "J1411+5212", "1411+522=3C295",  \
+                 "Titan", 
                  ] 
         out = []
         scan = self.Scan
@@ -272,6 +273,27 @@ class OASDM(OASDMPtr):
         return out
     # end GetBandpassCal 
                     
+    def GetPolnCal (self, config):
+        """
+        Return list of polarization calibrator names
+    
+        * self   = ASDM object
+        """
+        out = []
+        scan = self.Scan
+        main = self.Main
+        for m in main:
+            if m["configDescriptionId"]==config:
+                for s in scan:
+                    want = False
+                    # Check intents
+                    for int in s['scanIntent']:
+                        if int=='CALIBRATE_POLARIZATION' and s['sourceName'] not in out:
+                            out.append(s['sourceName'])
+        del scan, main
+        return out
+    # end GetPolnCal 
+    
     def GetTargets (self, config):
         """
         Return list of bandpass calibrator names

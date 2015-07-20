@@ -500,6 +500,9 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  (inDesc->firstVis<=inDesc->nvis) && (iretCode==OBIT_IO_OK)) {
 	/* accumulate statistics */
 	ObitUVDescGetAnts(inUV->myDesc, Buffer, &ant1, &ant2, &lastSubA);
+	/* Check antenna number */
+	Obit_return_if_fail ((ant2<=numAnt), err, 
+			     "%s Antenna 2=%d > max %d", routine, ant2, numAnt);  
 	/* Baseline index this assumes a1<a2 always - ignore auto correlations */
 	if (ant1!=ant2) {
 	  blindx =  blLookup[ant1-1] + ant2-ant1-1;
@@ -1026,6 +1029,9 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  (inDesc->firstVis<=inDesc->nvis) && (iretCode==OBIT_IO_OK)) {
 	/* accumulate statistics */
 	ObitUVDescGetAnts(inUV->myDesc, Buffer, &ant1, &ant2, &lastSubA);
+	/* Check antenna number */
+	Obit_return_if_fail ((ant2<=numAnt), err, 
+			     "%s Antenna 2=%d > max %d", routine, ant2, numAnt);  
 	/* Baseline index this assumes a1<a2 always - ignore auto correlations */
 	if (ant1!=ant2) {
 	  blindx =  blLookup[ant1-1] + ant2-ant1-1;
@@ -1525,6 +1531,9 @@ void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  (inDesc->firstVis<=inDesc->nvis) && (iretCode==OBIT_IO_OK)) {
 	/* accumulate statistics */
 	ObitUVDescGetAnts(inUV->myDesc, Buffer, &ant1, &ant2, &lastSubA);
+	/* Check antenna number */
+	Obit_return_if_fail ((ant2<=numAnt), err, 
+			     "%s Antenna 2=%d > max %d", routine, ant2, numAnt);  
 	/* Baseline index this assumes a1<a2 always - ignore auto correlations */
 	if (ant1!=ant2) {
 	  blindx =  blLookup[ant1-1] + ant2-ant1-1;
@@ -2150,6 +2159,9 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
 	  (inDesc->firstVis<=inDesc->nvis) && (iretCode==OBIT_IO_OK)) {
 	/* accumulate statistics */
 	ObitUVDescGetAnts(inUV->myDesc, Buffer, &ant1, &ant2, &lastSubA);
+	/* Check antenna number */
+	Obit_return_if_fail ((ant2<=numAnt), err, 
+			     "%s Antenna 2=%d > max %d", routine, ant2, numAnt);  
 	/* Baseline index this assumes a1<a2 always - ignore auto correlations */
 	if (ant1!=ant2) {
 	  blindx =  blLookup[ant1-1] + ant2-ant1-1;
@@ -2607,6 +2619,9 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  (inDesc->firstVis<=inDesc->nvis) && (iretCode==OBIT_IO_OK)) {
 	/* accumulate statistics */
 	ObitUVDescGetAnts(inUV->myDesc, Buffer, &ant1, &ant2, &lastSubA);
+	/* Check antenna number */
+	Obit_return_if_fail ((ant2<=numAnt), err, 
+			     "%s Antenna 2=%d > max %d", routine, ant2, numAnt);  
 	/* DEBUG 
 	   if ((ant1==11) && (ant2==28)) {
 	   indx = inDesc->nrparm;
@@ -5096,7 +5111,7 @@ static ofloat MedianUVInt (ObitUV *inUV, ObitErr *err)
   ObitUVDesc *inDesc;
   ObitIOCode iretCode;
   gboolean doCalSelect;
-  ofloat  lastTime, curTime, tInt;
+  ofloat  lastTime, curTime, tInt, halfsec=0.5/86400.0;
   ObitIOAccess access;
   gchar *routine = "ObitUVEditMedian";
 
@@ -5129,7 +5144,7 @@ static ofloat MedianUVInt (ObitUV *inUV, ObitErr *err)
       indx = i*inDesc->lrec ;
       curTime = inUV->buffer[indx+inDesc->iloct];
       if (curTime>lastTime) {
-	if ((curTime-lastTime)>0.0) tInt = MIN (tInt, curTime-lastTime);
+	if ((curTime-lastTime)>halfsec) tInt = MIN (tInt, curTime-lastTime);
 	lastTime = curTime;
 	count++;
 	if (count>20) break;

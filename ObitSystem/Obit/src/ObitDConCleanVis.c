@@ -96,6 +96,9 @@ static void  MakeResiduals (ObitDConCleanVis *in, olong *fields,
 /** Private: (re)make all residuals. */
 static void  MakeAllResiduals (ObitDConCleanVis *in, ObitErr *err);
 
+/** Private: Zero all residuals. */
+static void  ClearAllResiduals (ObitDConCleanVis *in, ObitErr *err);
+
 /** Private: Set Class function pointers. */
 static void ObitDConCleanVisClassInfoDefFn (gpointer inClass);
 
@@ -545,6 +548,15 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
 
   /* Visibility selection and weighting */
   if (in->doWeight) imagerClass->ObitUVImagerWeight (in->imager, err);
+  /* Trap no data and return */
+  if (err->error==10) {
+    ObitErrClear(err);  /* Change to warning */
+    Obit_log_error(err, OBIT_InfoWarn, "%s: NO Data copied for %s", routine, in->name);
+    ClearAllResiduals (in, err);  /* Zero Images */
+    doSub = inClass->ResetSkyModel (in, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    return;
+  }
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* If doing SDI Clean save copy of uvwork data */
@@ -3230,6 +3242,41 @@ static void  MakeAllResiduals (ObitDConCleanVis *in, ObitErr *err)
 } /* end MakeAllResiduals */
 
 /**
+ * Zero all residual images
+ * \param in     The Clean object
+ * \param err    Obit error stack object.
+ */
+static void  ClearAllResiduals (ObitDConCleanVis *in, ObitErr *err)
+{
+  olong i, ip, np;
+  ObitIOCode retCode;
+  ObitImage *image=NULL;
+  olong plane[5] = {1,1,1,1,1};
+  gchar *routine = "ClearAllResiduals";
+
+  if (err->error) return;   /* existing error */
+  
+  /* Loop over fields */
+  for (i=0; i<in->nfield; i++) {
+    image = in->mosaic->images[i];
+    retCode = ObitImageOpen (image, OBIT_IO_ReadWrite, err);
+    /* Loop over planes */
+    np = image->myDesc->inaxes[2];
+    for (ip=1; ip<=np; ip++) {
+      plane[0] = ip;
+      retCode = ObitImageGetPlane (image, image->image->array, plane, err);
+      if (err->error) Obit_traceback_msg (err, routine, image->name);
+      ObitFArrayFill(image->image, 0.0);  /* Zero */
+      retCode = ObitImagePutPlane (image, image->image->array,plane,  err);
+      if (err->error) Obit_traceback_msg (err, routine, image->name);
+    }
+    retCode = ObitImageClose (image, err);
+    if (err->error) Obit_traceback_msg (err, routine, image->name);
+  } /* end loop over field */
+
+} /* end ClearAllResiduals */
+
+/**
  * Find current estimates best and second field  3D
  * Ignore fields with imgPeakRMS<4.0 if autoWindow, else imgPeakRMS<1.0
  * \param in     The Clean object
@@ -4458,7 +4505,7 @@ static olong MakeImSubFuncArgs (ObitThread *thread,
 } /*  end MakeImSubFuncArgs */
 
 /**
- * Delete arguments for ThreadImageStats
+ * Delete arguments for ThreadImSub
  * No objects are Unreffed
  * \param nargs      number of elements in args.
  * \param ThreadArgs Array of ImSubFuncArg

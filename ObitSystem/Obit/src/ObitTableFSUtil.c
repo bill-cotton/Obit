@@ -66,7 +66,7 @@ void ObitTableFSPrint (ObitTableFS *in, ObitImage *image, FILE  *prtFile,
 {
   ObitTableFSRow *row = NULL;
   olong i, irow, chmax;
-  ofloat maj, min, pa, rms;
+  ofloat maj, min, pa, rms, fblank=ObitMagicF();
   gchar rast[19], decst[19], field[9];
   ofloat epeak, errra, errdec, errmaj, errmin, errpa, minSNR;
   odouble glat, glong;
@@ -124,6 +124,7 @@ void ObitTableFSPrint (ObitTableFS *in, ObitImage *image, FILE  *prtFile,
     ObitTableFSReadRow (in, irow, row, err);
    if (err->error) Obit_traceback_msg (err, routine, in->name);
    if (FSdesel(row)) continue;  /* Skip deselected record */
+   if (fabs(row->CenterZ-fblank)<1.0) continue;  /* Invalid? */
 
     ObitPosLabelUtilRA2HMS (row->Ra2000, "RA---SIN", rast);
     ObitPosLabelUtilDec2DMS (row->Dec2000, "DEC--SIN", decst);
@@ -1311,7 +1312,7 @@ void ObitTableFSFiltVel(ObitTableFS *inFS, ObitImage *im, ObitTableFS *outFS,
 			ObitErr *err)
 {
   ObitTableFSRow *FSrow=NULL;
-  olong nx, ny, nch, irow, orow, i, chmax;
+  olong nx, ny, nrow, nch, irow, orow, i, chmax, l1, l2;
   ofloat minSNR, minFlux, median, rms, maxV, tCrpix, *spec=NULL;
   ofloat delnu, refnu, frline, vsign, limit, fblank=ObitMagicF();
   odouble tCrval, dvzero, velite, vel, sum, sum1, sum2;
@@ -1320,6 +1321,7 @@ void ObitTableFSFiltVel(ObitTableFS *inFS, ObitImage *im, ObitTableFS *outFS,
   ObitImageDesc *imDesc;
   gchar ctype[12];
   union ObitInfoListEquiv InfoReal; 
+  gboolean same;
   gchar *routine = "ObitTableFSFiltVel";
 
   /* error checks */
@@ -1339,8 +1341,11 @@ void ObitTableFSFiltVel(ObitTableFS *inFS, ObitImage *im, ObitTableFS *outFS,
   if (type==OBIT_float) minFlux = InfoReal.flt;
   else if (type==OBIT_double)  minFlux = InfoReal.dbl;
 
+  /* Are input abt output the same? */
+  same = inFS == outFS; 
+
   /* Get rid of any existing output rows */
-  ObitTableClearRows ((ObitTable*)outFS, err);
+  if (!same) ObitTableClearRows ((ObitTable*)outFS, err);
 
   /* Open tables */
   ObitTableFSOpen (inFS, OBIT_IO_ReadOnly, err);
@@ -1386,7 +1391,7 @@ void ObitTableFSFiltVel(ObitTableFS *inFS, ObitImage *im, ObitTableFS *outFS,
   /* Numbers of things */
   nx  = imDesc->inaxes[imDesc->jlocr];
   ny  = imDesc->inaxes[imDesc->jlocd];
-  nch = imDesc->inaxes[imDesc->jlocf];
+  nch = MAX(outFS->numCh, imDesc->inaxes[imDesc->jlocf]);
 
   /* Work array */
   spec = g_malloc0(nch*sizeof(ofloat));
@@ -1402,7 +1407,8 @@ void ObitTableFSFiltVel(ObitTableFS *inFS, ObitImage *im, ObitTableFS *outFS,
   outFS->VelDelt = imDesc->cdelt[imDesc->jlocf];
   
   /* Loop over FS Table */
-  for (irow=1; irow<=inFS->myDesc->nrow; irow++) {
+  nrow = inFS->myDesc->nrow;
+  for (irow=1; irow<=nrow; irow++) {
     ObitTableFSReadRow (inFS, irow, FSrow, err);
     if (err->error) goto cleanup;
     
@@ -1433,10 +1439,11 @@ void ObitTableFSFiltVel(ObitTableFS *inFS, ObitImage *im, ObitTableFS *outFS,
     if (fabs(maxV)<minSNR*rms) continue;
     if (fabs(maxV)<minSNR*FSrow->RMSCh[chmax]) continue;
 
-    /* Find moments above 20% of peak */
+    /* Find moments above 20% of peak within 15 channels */
     limit = MAX (spec[i]>fabs(maxV)*0.2, 4*MAX(rms,FSrow->RMSCh[chmax]));
+    l1 = MAX(0,chmax-15); l2 = MIN (nch, chmax+15);
     sum1 = sum2 = sum = 0.0;
-    for (i=0; i<nch; i++) {
+    for (i=l1; i<l2; i++) {
       if ((fabs(spec[i]-fblank)>10.0) && (spec[i]>limit)) {
 	sum  += spec[i];
 	sum1 += (i - chmax)*spec[i];
@@ -1456,7 +1463,10 @@ void ObitTableFSFiltVel(ObitTableFS *inFS, ObitImage *im, ObitTableFS *outFS,
     FSrow->IRMS     = FSrow->RMSCh[chmax];
     FSrow->Velocity = vel;
     /* Second moment */
-    if (sum!=0.0) FSrow->VelWidth = 2 * fabs(imDesc->cdelt[imDesc->jlocf]) * sqrt(sum2/sum);  
+    if (sum!=0.0) FSrow->VelWidth = 2 * fabs(imDesc->cdelt[imDesc->jlocf]) * sqrt(sum2/sum);
+    /* Min width = 1 channel */
+    if (FSrow->VelWidth<=0.01*fabs(imDesc->cdelt[imDesc->jlocf]))
+      FSrow->VelWidth = fabs(imDesc->cdelt[imDesc->jlocf]);
     FSrow->PeakInt  = maxV;
     FSrow->CenterZ  = (ofloat)(chmax+1.);
     for (i=0; i<nch; i++) FSrow->Spectrum[i] -= median;
@@ -1467,7 +1477,8 @@ void ObitTableFSFiltVel(ObitTableFS *inFS, ObitImage *im, ObitTableFS *outFS,
     fprintf (stderr, "%d %f %lf %lf %lf %lf\n", irow, limit, vel, sum, sum1, sum2); */
 
     /* reWrite row */
-    orow = -1;
+    if (!same) orow = -1;
+    else orow = irow;
     ObitTableFSWriteRow (outFS, orow, FSrow, err);
     if (err->error) goto cleanup;
   } /* end loop over  FS table */

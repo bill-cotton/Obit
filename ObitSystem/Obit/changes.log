@@ -2778,3 +2778,47 @@ Obit/python/OData.py:
 Obit/doc/OBITdoc.tex Obit/src/ObitTableMC.c:
   MC table, add underscores to DISP_* and DDISP_* column names.
 1 July 2015, svn. version 513
+
+ALMA continuum pipeline scripts added, feathering of cubes, bug fixes
+Obit/python/ALMACal.py   Obit/python/ALMAPipe.py
+Obit/python/OASDM.py Obit/share/scripts/ALMATemplateParm.py:
+  Implement ALMA continuum processing pipeline
+Obit/python/EVLAContPipe.py Obit/python/EVLACal.py:
+  various: Specify flag table
+  Add noScrat to AvgCal
+Obit/src/ObitBDFData.c:
+  ReadInteg: reset scale before each use.
+Obit/tasks/Feather.c  Obit/TDF/Feather.TDF:
+  Enable loop over planes
+Obit/src/ObitFeatherUtil.c:
+  Interpol: Get plane number from info->BLC
+Obit/python/OASDM.inc Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  ALMA has no correlationBit
+Obit/src/ObitUVUtil.c Obit/src/ObitUVEdit.c:
+  various: check for antenna number >numAnt
+  MedianUVInt: min interval = 500 msec
+Obit/src/ObitUV.c:
+  Copy: set err->error=10 if no data
+Obit/src/ObitDConCleanVis.c:
+  Deconvolve: Trap no data and return, clearing error.
+  add ClearAllResiduals to zero residual images.
+Obit/src/ObitErr.c:
+  Push: keep err->error > 1
+Obit/tasks/Imager.c:
+  BLAvg: Trap no data from UVCopy
+Obit/python/MosaicUtil.py:
+  More robust mosaicing.
+Obit/src/ObitTableFSUtil.c:
+  FiltVel: Only do moment analysis within 15 cells of peak
+  Print: Check for invalid (CenterZ==fblank) entry
+Obit/tasks/VL2FS.c:
+  FiltVel: input=output if only doFit
+Obit/tasks/BDFIn.c:
+  Set correct sideband in FQ table for VLA screwup hack
+Obit/tasks/FndSou.c:
+  enforce minimum beam size
+Obit/tasks/PCal.c:
+  History: add refAnt
+Obit/TDF/Splat.TDF Obit/tasks/Splat.c:
+  Add noScrat parameter
+20 Jul. 2015, svn version 514

@@ -2750,6 +2750,12 @@ void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
 
   } else { /* Straight copy */
     ObitUVCopy (inData, outData, err);
-    if (err->error) Obit_traceback_msg (err, routine, inData->name);
+    /* Trap no data and return */
+    if (err->error==10) {
+      ObitErrClear(err);  /* Change to warning */
+      Obit_log_error(err, OBIT_InfoWarn, "%s: NO Data copied for %s", routine, inData->name);
+      return;
+    }
+     if (err->error) Obit_traceback_msg (err, routine, inData->name);
   }
 } /* end BLAvg */
