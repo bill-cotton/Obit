@@ -355,7 +355,7 @@ def pipeline( aipsSetup, parmFile):
     if parms["doImgCal"] and not check:
         mess =  "SelfCalibrate/Image calibrators"
         printMess(mess, logFile)
-        src =  ALMACombineCals(parms["ACals"], parms["PCals"])   # Source list
+        src =  ALMACombineCals(parms["ACals"], parms["PCals"], parms["APCals"])   # Source list
         ALMAImageCals(uv, err, Sources=src, seq=parms["seq"], \
             sclass=parms["outCClass"], doCalib=2, flagVer=2, doBand=1, FOV=parms["CalFOV"], \
             maxPSCLoop=parms["maxPSCLoop"], minFluxPSC=parms["minFluxPSC"], solPInt=parms["solPInt"], \
@@ -366,8 +366,9 @@ def pipeline( aipsSetup, parmFile):
             logfile=logFile, check=check, debug=debug)
 
     # Self calibrated models now available
-    ALMAImageModel(parms["ACals"], parms["outCClass"], disk, parms["seq"], err)
-    ALMAImageModel(parms["PCals"], parms["outCClass"], disk, parms["seq"], err)
+    ALMAImageModel(parms["ACals"],  parms["outCClass"], disk, parms["seq"], err)
+    ALMAImageModel(parms["PCals"],  parms["outCClass"], disk, parms["seq"], err)
+    ALMAImageModel(parms["APCals"], parms["outCClass"], disk, parms["seq"], err)
     
     # Phase Calibrate
     if parms["doPhaseCal"]:
@@ -425,10 +426,13 @@ def pipeline( aipsSetup, parmFile):
        
     # Get calibrated/averaged data
     if not check:
-        uv = UV.newPAUV("AIPS UV DATA", ALMAAIPSName(project, session), avgClass[0:6], \
-                        disk, parms["seq"], True, err)
-        if err.isErr:
-            OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
+        try:
+            uv = UV.newPAUV("AIPS UV DATA", ALMAAIPSName(project, session), avgClass[0:6], \
+                                disk, parms["seq"], True, err)
+        except Exception, exception:
+            mess = "No Averaged/calibrated datafile"
+            printMess(mess, logFile)
+            return
     
     # XClip
     if parms["XClip"] and parms["XClip"]>0.0:

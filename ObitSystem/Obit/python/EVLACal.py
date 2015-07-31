@@ -2052,6 +2052,7 @@ def EVLACalAP(uv, target, ACals, err, \
     * uv       = UV data object to calibrate
     * target   = Target source name or list of names to calibrate
     * ACals    = List of Amp calibrators possibly with model
+                 Will use CalModelFlux and CalModelSI if given
     * err      = Obit error/message stack
     * PCals    = if given, List of phase calibrators possibly with model
     * FQid     = Frequency Id to process, 0=>any
@@ -2105,8 +2106,10 @@ def EVLACalAP(uv, target, ACals, err, \
         setjy.Sources[0] = ACal["Source"]
         if FQid:
             setjy.FreqID=FQid
-        if ACal["CalModelFlux"]>0.0:
+        if ACal["CalModelFlux"]>0.0:   # Model given?
             setjy.ZeroFlux[0] = ACal["CalModelFlux"]
+            if "Alpha" in setjy.__dict__:
+                setjy.Alpha = ACal["CalModelSI"]
         else:
             setjy.OPType="CALC"
             setjy.ZeroFlux=[1.0,0.0,0.0,0.0]
@@ -2245,7 +2248,7 @@ def EVLACalAP(uv, target, ACals, err, \
         printMess("All amplitude calibrators failed", logfile)
         return 1  
     
-   # Setup CLCal
+   # Setup CLCal for calibrators
     clcal = ObitTask.ObitTask("CLCal")
     try:
         clcal.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
@@ -2266,8 +2269,7 @@ def EVLACalAP(uv, target, ACals, err, \
     else:
         clcal.calIn   = 1
     clcal.calOut    = clcal.calIn+1
-    clcal.interMode = "2PT"
-    clcal.interMode = "SELF"  # DEBUG
+    clcal.interMode = "SELF"
     clcal.FreqID    = FQid
         
     # Calib on phase reference if given
@@ -2461,7 +2463,7 @@ def EVLACalAP(uv, target, ACals, err, \
             return retCode
     # end SN table plot
 
-    # Set up for CLCal - use phase & amp calibrators
+    # Set up for CLCal calibrators only - use phase & amp calibrators
     if not check:
         # Open and close image to sync with disk 
         uv.Open(UV.READONLY, err)
@@ -2471,18 +2473,76 @@ def EVLACalAP(uv, target, ACals, err, \
         clcal.solnVer = 1
     ical = 0
     maxCal = len(clcal.calSour)  # Maximum number of entries in clcal.calSour
+    clcal.interMode = "SELF"
     if PCals:
         for PCal in PCals:
             clcal.calSour[ical] = PCal["Source"]
+            clcal.Sources[ical] = PCal["Source"]
             if ical>=maxCal:
                 break
             ical += 1
     for ACal in ACals:
         if ACal["Source"] not in clcal.calSour and ical<maxCal:
             clcal.calSour[ical] = ACal["Source"]
+            clcal.Sources[ical] = ACal["Source"]
             ical += 1
     # Apply to all
-    mess = "Apply calibration for "+str(target)
+    mess = "Apply calibration for calibrators"
+    printMess(mess, logfile)
+    mess = "Update CL "+str(clcal.calIn)+" with SN "+str(clcal.solnVer)+" to CL "+str(clcal.calOut)
+    printMess(mess, logfile)
+
+    if debug:
+        clcal.i
+        clcal.debug = debug
+    # Trap failure
+    try:
+        if not check:
+            clcal.g
+    except Exception, exception:
+        print exception
+        mess = "clcal Failed retCode="+str(clcal.retCode)
+        printMess(mess, logfile)
+        return 1
+    else:
+        pass
+
+    # Set up for CLCal on targets, use only Phase cals
+    clcal.interMode = "2PT"
+    for k in range(0,len(clcal.calSour)):
+        clcal.calSour[k] = ''
+    for k in range(0,len(clcal.Sources)):
+        clcal.Sources[k] = ''
+    # Get list of targets not in a calibrator list
+    clist = []   # list of calibrators
+    for c in ACal:
+        clist.append(ACal["Source"])
+    for c in PCal:
+        clist.append(PCal["Source"])
+    if type(target)==list:
+        tlist = []   # List of targets not in calibrator list
+        for t in target:
+            if t not in clist:
+                tlist.append(t)
+    else:
+        tlist=[target]
+    itarg = 0
+    for t in tlist:
+        clcal.Sources[itarg] = t
+        if itarg>=maxCal:
+            break
+        itarg +=1
+    ical = 0
+    maxCal = len(clcal.calSour)  # Maximum number of entries in clcal.calSour
+    if PCals:
+        for PCal in PCals:
+            clcal.calSour[ical] = PCal["Source"]
+            clcal.Sources[ical] = PCal["Source"]
+            if ical>=maxCal:
+                break
+            ical += 1
+    # Apply to targets
+    mess = "Apply calibration for "+str(tlist)
     printMess(mess, logfile)
     mess = "Update CL "+str(clcal.calIn)+" with SN "+str(clcal.solnVer)+" to CL "+str(clcal.calOut)
     printMess(mess, logfile)
@@ -2854,6 +2914,8 @@ def EVLACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
 
     # Get calibrated/averaged data, index and make CL table 1 if doCalib>0
     if not check:
+        mess =  "Generate output CL table"
+        printMess(mess, logfile)
         try:
             uvc = UV.newPAUV("AIPS UV DATA", splat.inName, avgClass, splat.inDisk, avgSeq, True, err)
             if err.isErr:

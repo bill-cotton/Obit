@@ -2822,3 +2822,31 @@ Obit/tasks/PCal.c:
 Obit/TDF/Splat.TDF Obit/tasks/Splat.c:
   Add noScrat parameter
 20 Jul. 2015, svn version 514
+
+Enhancements to EVLA and ALMA processing scripts, FS table handling, bug fixes
+Obit/src/ObitUVEdit.c:
+  Stokes: min timeAvg=0.1 sec
+Obit/python/EVLAContPipe.py:
+  Pass source list to EVLACalAP
+Obit/python/EVLACal.py:
+  CalAvg: give mesage when generating new CL table.
+  CalAP: Use model spectral index if model flux given.
+  CalAP: "Self" calibrate calibrators, targets with "Phase" calibrators
+Obit/src/ObitTableFSUtil.c:
+  Redun: Matching source must be within 1 channel.
+Obit/TDF/SetJy.TDF Obit/tasks/SetJy.c:
+  Add Alpha = spectral index for ZeroFlux
+Obit/python/MosaicUtil.py:
+  Fix bug in mosaicing cubes, output plane one low
+Obit/share/scripts/ALMATemplateParm.py:
+  Fix bug in setting PCals
+  Correct documentation
+Obit/python/ALMAPipe.py Obit/python/ALMACal.py :
+  Make amplitude calibration more robust.
+  Bug fixes, documentation
+Obit/tasks/BDFIn.c:
+  Add positions of Ephemeris objects to SU table
+  Ignore ALMA "QA0:" gibberish in flag table
+  Enable ALMA online cal scan flagging
+  Bug fixes with sources when concatenating datasets
+31 Jul. 2015, svn version 515

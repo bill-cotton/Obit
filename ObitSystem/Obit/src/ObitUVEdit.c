@@ -2348,7 +2348,7 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
  * \li "flagTab" OBIT_int    (1,1,1) FG table version number [ def. 1]
  *               NB: this should not also being used to flag the input data!
  * \li "timeAvg" OBIT_float  (1,1,1) Time interval over which to determine
- *               data to be flagged (min) [def = 1 min.]
+ *               data to be flagged (min) [def = 1 min., min = 0.1 sec]
  * \li "maxAmp"  OBIT_float (2,1,1) Maximum value allowed
  *               [0] = clipping level, [1]==0.0 use statistical level
  * \li "minAmp"    OBIT_float (1,1,1) Minimum amplitude allowed
@@ -2409,7 +2409,7 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   /* Time interval */
   timeAvg = 1.0;  /* default 1 min */
   ObitInfoListGetTest(inUV->info, "timeAvg", &type, dim, &timeAvg);
-  if (timeAvg<=(1.0/60.0)) timeAvg = 1.0;
+  if (timeAvg<=(0.1/60.0)) timeAvg = 1.0;
   timeAvg /= 1440.0;  /* convert to days */
  /* RMS clipping parameters, no default */
   ObitInfoListGet(inUV->info, "maxAmp", &type, dim, temp, err);

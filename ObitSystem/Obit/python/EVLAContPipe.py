@@ -326,8 +326,13 @@ def pipeline( aipsSetup, parmFile):
 
     # Amp & phase Calibrate
     if parms["doAmpPhaseCal"]:
+        # If targets not specified, calibrate all
+        if len(parms["targets"])<=0:
+            slist = EVLAAllSource(uv,err,logfile=logFile,check=check,debug=debug)
+        else:
+            slist = parms["targets"]
         plotFile = "./"+fileRoot+"APCal.ps"
-        retCode = EVLACalAP (uv, [], parms["ACals"], err, PCals=parms["PCals"], 
+        retCode = EVLACalAP (uv, slist, parms["ACals"], err, PCals=parms["PCals"], 
                              doCalib=2, doBand=1, BPVer=1, flagVer=2, \
                              BChan=parms["ampBChan"], EChan=parms["ampEChan"], UVRange=parms["gainUVRange"], \
                              solInt=parms["solInt"], solSmo=parms["solSmo"], ampScalar=parms["ampScalar"], \
@@ -440,8 +445,13 @@ def pipeline( aipsSetup, parmFile):
     
         # Amp & phase Recalibrate
         if parms["doAmpPhaseCal2"]:
+            # If targets not specified, calibrate all
+            if len(parms["targets"])<=0:
+                slist = EVLAAllSource(uv,err,logfile=logFile,check=check,debug=debug)
+            else:
+                slist = parms["targets"]
             plotFile = "./"+fileRoot+"APCal2.ps"
-            retCode = EVLACalAP (uv, [], parms["ACals"], err, PCals=parms["PCals"], \
+            retCode = EVLACalAP (uv, slist, parms["ACals"], err, PCals=parms["PCals"], \
                                  doCalib=2, doBand=1, BPVer=1, flagVer=2, \
                                  BChan=parms["ampBChan"], EChan=parms["ampEChan"], UVRange=parms["gainUVRange"], \
                                  solInt=parms["solInt"], solSmo=parms["solSmo"], ampScalar=parms["ampScalar"], \

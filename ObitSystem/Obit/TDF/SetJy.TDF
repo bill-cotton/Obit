@@ -3,7 +3,7 @@
 ;! Task to enter source info into the source (AIPS SU) table.
 ;# TASK CALIBRATION
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007-2013
+;;  Copyright (C) 2007-2015
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -52,6 +52,8 @@ BIF               0.0              Low IF # for flux density
 EIF               0.0              High IF # for flux density
 **PARAM** float 4
 ZeroFlux                            I,Q,U,V flux density (Jy)
+**PARAM** float 1  **DEF** 0.0
+Alpha           -20.       20.      Spectral Index to correct
 **PARAM** str 4
 OPType                             '    ' => use other adverbs
                                    for required operation
@@ -136,12 +138,17 @@ Adverbs:
              densities are valid. 0 => 1.
   EIF........The highest IF number for which the given flux
              densities are valid. 0 => all.
-  ZeroFlux...The I, Q, U, and V flux densities in Jy.  If OPType=' ',
-             ZeroFlux is used to set the fluxes of all 4 polarizations
-             unless all 4 are zero - use REJY to do that.  If
-             ZeroFlux[0] < 0, then the I polarization flux is not
-             altered.  This allows you to CALC the I flux and set the
-             Q, U, and V fluxes.
+  ZeroFlux...The I, Q, U, and V flux densities in Jy at ref Freq.  
+             If OPType=' ', ZeroFlux is used to set the fluxes of 
+             all 4 polarizations unless all 4 are zero - 
+             use REJY to do that.  If ZeroFlux[0] < 0, then the 
+             I polarization flux is not altered.  This allows 
+             you to CALC the I flux and set the Q, U, and V 
+             fluxes.
+  Alpha......Spectral index of the values in ZeroFlux, thsi is 
+             used to convert the flux densities at the reference
+             frequency to the frequncy of each IF.
+             -0.7 is typical for synchrotron.
   OPType.....'   ' => use ZeroFlux values for the source flux
                   densities and SysVel for source velocity.
              'CALC' => use the standard Baars et al formulae

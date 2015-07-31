@@ -2,7 +2,7 @@
 
 """
 import UV, UVDesc, Image, ImageDesc, FArray, ObitTask, AIPSTask, AIPSDir, OErr, History
-import InfoList, Table, OSystem, OASDM
+import InfoList, Table, OSystem, OASDM, ImageUtil
 from AIPS import AIPS
 from FITS import FITS
 from AIPSDir import AIPSdisks, nAIPS
@@ -1846,10 +1846,15 @@ def ALMAPhaseCal(uv,PCals,  err, ACals=None, solInt=0.5, BChan=1, EChan=0, UVRan
             calib.Cmodel    = ACal["CalCmodel"]
             calib.Flux      = ACal["CalFlux"]
             calib.Alpha     = ACal["CalModelSI"]
-            calib.modelFlux = ACal["CalModelFlux"]
-            calib.modelPos  = ACal["CalModelPos"]
-            calib.modelParm = ACal["CalModelParm"]
-            
+            if calib.nfield<=0:   # If no image model
+                calib.modelFlux = ACal["CalModelFlux"]
+                calib.modelPos  = ACal["CalModelPos"]
+                calib.modelParm = ACal["CalModelParm"]
+            else:
+                calib.modelFlux = 0.0
+                calib.modelPos  = [0.0,0.0]
+                calib.modelParm = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                
             if debug:
                 calib.prtLv =6
                 calib.i
@@ -1989,11 +1994,12 @@ def ALMACalAP(uv, target, ACals, err, \
     # Loop over calibrators
     OKAmpCals = []  # Calibrators SetJy is happy with
     BadAmpCals = [] # Calibrators SetJy is unhappy with
+    badFlux    = [] # Calibrator flux densities for BadAmpCals
     for ACal in ACals:
         setjy.Sources[0] = ACal["Source"]
         if FQid:
             setjy.FreqID=FQid
-        if ACal["CalModelFlux"]>0.0:
+        if (ACal["CalModelFlux"]>0.0) and (not ACal["useSetJy"]):
             setjy.ZeroFlux[0] = ACal["CalModelFlux"]
         else:
             setjy.OPType="CALC"
@@ -2012,9 +2018,12 @@ def ALMACalAP(uv, target, ACals, err, \
             printMess(mess, logfile)
             # return 1  # allow some failures
             BadAmpCals.append(setjy.Sources[0])
+            badFlux.append(ACal["CalModelFlux"])
         else:
             OK = True
             OKAmpCals.append(setjy.Sources[0])
+        # Scale model (AIPS) image to SetJy flux
+        ALMAScaleImage(ACal, uv, err, logfile=logfile, check=check, debug=debug)
     # end loop over calibrators
     # Something work?
     if not OK:
@@ -2030,21 +2039,31 @@ def ALMACalAP(uv, target, ACals, err, \
     else:
         solnVer  = solnver
 
-    # Phase cals and failed amp cals to 1.0
+    # Phase cals and failed amp cals to 1.0 or model flux
     if PCals:   # Any given?
         callist = []
+        calflux = []
         for PCal in PCals:
             if PCal["Source"] not in OKAmpCals:
                 callist.append(PCal["Source"])
+                calflux.append(PCal["CalModelFlux"])
+        i = -1
         for cal in BadAmpCals:
+            i += 1
             if cal not in OKAmpCals:
                 callist.append(cal)
+                calflux.append(badFlux[i])
         if len(callist)>0:
             setjy.ZeroFlux=[1.0,0.0,0.0,0.0]
             setjy.OPType="REJY"
-            #setjy.debug = True # DEBUG
+            i = -1
             for cal in callist:
+                i += 1
                 setjy.Sources[0] = cal
+                if calflux[i]>0.0:
+                    setjy.ZeroFlux[0] = calflux[i]
+                else:
+                    setjy.ZeroFlux[0] = 1.0
                 if debug:
                     setjy.i
                     setjy.debug = debug
@@ -2106,10 +2125,15 @@ def ALMACalAP(uv, target, ACals, err, \
         calib.Cmodel    = ACal["CalCmodel"]
         calib.Flux      = ACal["CalFlux"]
         calib.Alpha     = ACal["CalModelSI"]
-        calib.modelFlux = ACal["CalModelFlux"]
-        calib.modelPos  = ACal["CalModelPos"]
-        calib.modelParm = ACal["CalModelParm"]
-        
+        if calib.nfield<=0:   # If no image model
+            calib.modelFlux = ACal["CalModelFlux"]
+            calib.modelPos  = ACal["CalModelPos"]
+            calib.modelParm = ACal["CalModelParm"]
+        else:
+            calib.modelFlux = 0.0
+            calib.modelPos  = [0.0,0.0]
+            calib.modelParm = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+            
         if debug:
             calib.i
             calib.debug = debug
@@ -2194,9 +2218,14 @@ def ALMACalAP(uv, target, ACals, err, \
             calib.Cmodel    = PCal["CalCmodel"]
             calib.Flux      = PCal["CalFlux"]
             calib.Alpha     = PCal["CalModelSI"]
-            calib.modelFlux = PCal["CalModelFlux"]
-            calib.modelPos  = PCal["CalModelPos"]
-            calib.modelParm = PCal["CalModelParm"]
+            if calib.nfield<=0:   # If no image model
+                calib.modelFlux = ACal["CalModelFlux"]
+                calib.modelPos  = ACal["CalModelPos"]
+                calib.modelParm = ACal["CalModelParm"]
+            else:
+                calib.modelFlux = 0.0
+                calib.modelPos  = [0.0,0.0]
+                calib.modelParm = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
             
             if debug:
                 calib.i
@@ -3315,10 +3344,16 @@ def ALMAReportTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", 
         elif Stokes=="IQUV":
             ppolSum  = (sdict["QSum"]**2  + sdict["USum"]**2)**0.5
             ppolPeak = (sdict["QPeak"]**2 + sdict["UPeak"]**2)**0.5
-            fpolSum  = ppolSum/sdict["ISum"]
-            fpolPeak = ppolPeak/sdict["ISum"]
-            vpolSum  = sdict["VSum"]/sdict["ISum"]
-            vpolPeak = sdict["VPeak"]/sdict["ISum"]
+            if sdict["ISum"]>0.0:
+                fpolSum  = ppolSum/sdict["ISum"]
+                fpolPeak = ppolPeak/sdict["ISum"]
+                vpolSum  = sdict["VSum"]/sdict["ISum"]
+                vpolPeak = sdict["VPeak"]/sdict["ISum"]
+            else:
+                fpolSum  = 0.
+                fpolPeak = 0.
+                vpolSum  = 0.
+                vpolPeak = 0.
             XYSum    = 57.296*math.atan2(sdict["USum"], sdict["QSum"])
             XYPeak   = 57.296*math.atan2(sdict["UPeak"],sdict["QPeak"])
             mess = "Sum CC PPol="+"%8.4f"%(ppolSum)+", R-L Phase="+"%8.2f"%(XYSum)+ \
@@ -4849,7 +4884,8 @@ def ALMAFlagSNClip(uv, SNrow, IFno, poln, err, \
 def ALMACalModel(Source,
                  CalDataType="  ", CalFile=" ", CalName=" ", CalClass=" ", CalSeq=0, CalDisk=0, \
                  CalNfield=0, CalCCVer=1, CalBComp=[1], CalEComp=[0], CalCmethod=" ", CalCmode=" ", CalFlux=0.0, \
-                 CalModelFlux=0.0, CalModelSI=0.0,CalModelPos=[0.,0.], CalModelParm=[0.,0.,0.]):
+                 CalModelFlux=0.0, CalModelSI=0.0,CalModelPos=[0.,0.], CalModelParm=[0.,0.,0.],  \
+                 useSetJy=False):
     """
     Create a calibrator model
 
@@ -4872,6 +4908,7 @@ def ALMACalModel(Source,
     * CalModelFlux= Parameterized model flux density (Jy)
     * CalModelPos = Parameterized model Model position offset (asec)
     * CalModelParm= Parameterized model Model parameters (maj, min, pa, type)
+    * useSetJy    = Flag to use the flux density calculated from SetJy
     """
     out = {
         "Source":Source,
@@ -4891,7 +4928,8 @@ def ALMACalModel(Source,
         "CalModelSI":CalModelSI,
         "CalModelFlux":CalModelFlux,
         "CalModelPos":CalModelPos,
-        "CalModelParm":CalModelParm
+        "CalModelParm":CalModelParm,
+        "useSetJy":useSetJy
         }
     return out
 # end ALMACalModel
@@ -6775,12 +6813,13 @@ table {
 
     s  = "<h2> Contents </h2>"
     s += "<a href='#project_Section'> Project </a>"
-    for metadata in srcMetadata: 
-        # Create links to each section
-        s += ' - <a href="#' + metadata['Source'] + '_Section">' + \
-            metadata['Source'] + '</a>' 
-    file.write( s )
-
+    if srcMetadata:
+        for metadata in srcMetadata: 
+            # Create links to each section
+            s += ' - <a href="#' + metadata['Source'] + '_Section">' + \
+                metadata['Source'] + '</a>' 
+            file.write( s )
+        
     # Write project metadata
     s  = "<a id='project_Section'><h2> Project </h2></a>\n"
     s += "<h3> Metadata </h3>\n"
@@ -6874,6 +6913,8 @@ def writeTableRow( dict, keys=None ):
     * dict = dictionary whose contents will be written
     * keys = dictionary keys to be written
     """
+    if not dict:
+        return
     if not keys:
         keys = dict.keys()
         keys.sort()
@@ -7111,6 +7152,8 @@ def ALMAImageModel(Cals, sclass, sdisk, sseq, err, \
     Set self calibrated models on Cals
     
     Enters the self calibrated model info (AIPS) 
+    Writes the CLEAN flux density as the flux density unless there is 
+    already a value
     * Cals       = List of calibrators (from ALMACalModel) on which to add model
     * sclass     = image class of self calibrated models
     * sdisk      = image disk
@@ -7122,9 +7165,9 @@ def ALMAImageModel(Cals, sclass, sdisk, sseq, err, \
     """
     ################################################################
     for Cal in Cals:
-        name = Cal["Source"][0:12].strip()
         # Does image exist?
         try:
+            name = Cal["Source"][0:12].strip()
             cno = AIPSDir.PFindCNO(sdisk, OSystem.PGetAIPSuser(), name, sclass, "MA", sseq, err)
             if cno>0:
                 Cal["CalName"]     = name
@@ -7134,6 +7177,10 @@ def ALMAImageModel(Cals, sclass, sdisk, sseq, err, \
                 Cal["CalDataType"] = 'AIPS'
                 Cal["CalCmethod"]  = 'DFT'
                 Cal["CalNfield"]   = 1
+                # Get Flux density from sum of CCs
+                if Cal['CalModelFlux']<=0.0:
+                    x = Image.newPAImage('I', name, sclass, sdisk, sseq, True, err)
+                    Cal['CalModelFlux']  = ALMAGetSumCC(x, err, logfile=logfile, check=check, debug=debug)
         except Exception, exception:
             err.Clear()
     # end ALMAImageModel
@@ -7173,3 +7220,56 @@ def ALMACombineCals(Cal1, Cal2=None, Cal3=None, Cal4=None):
 
     return clist
 # end ALMACombineCals
+
+def ALMAScaleImage(Cal, uv, err, \
+              logfile='', check=False, debug=False):
+    """
+    Scale an AIPS image and CCs to nominal flux density
+    
+    * Cal        = Calibrator structure (from ALMACalModel)
+                   describing image to modify
+    * uv         = uv data with source table giving fluxes
+    * err        = Python Obit Error/message stack
+    * logfile    = logfile for messages
+    * check      = Only check script
+    * debug      = Only debug - no effect
+    """
+    ################################################################
+    mess = "In ALMAScaleImage "+str(Cal)
+    printMess(mess, logfile)
+    # Does image exist?
+    if Cal['CalDataType'] == "FITS":
+        return
+    try:
+        name   = Cal["Source"][0:12].strip()
+        sclass = Cal["CalClass"]
+        sdisk  = Cal["CalDisk"]
+        sseq   = Cal["CalSeq"]
+        cno    = AIPSDir.PFindCNO(sdisk, OSystem.PGetAIPSuser(), name, sclass, "MA", sseq, err)
+        if cno>0:
+            x = Image.newPAImage('I', name, sclass, sdisk, sseq, True, err)
+            sumCC  = ALMAGetSumCC(x, err, logfile=logfile, check=check, debug=debug)
+            # Get flux density from SU Table
+            name   = Cal["Source"].strip()
+            SUtab = uv.NewTable(Table.READONLY, "AIPS SU", 1, err)
+            SUtab.Open(Table.READONLY, err)
+            nrow =  SUtab.Desc.Dict["nrow"]
+            for i in range (0,nrow):    # Loop over rows
+                SUrow = SUtab.ReadRow(i+1, err)
+                if err.isErr:
+                    break
+                if SUrow["SOURCE"][0].strip() == name:
+                    IFlux    = SUrow["IFLUX"]
+                    avgFlux = sum(IFlux)/len(IFlux)
+                    scale   = avgFlux/sumCC
+                    mess = "Scale "+name+" Image & CCs by "+str(scale)
+                    printMess(mess, logfile)
+                    ImageUtil.PScaleImage(x,scale,err)  # Scale it
+                    break
+            SUtab.Close(err)
+    except Exception, exception:
+        print exception
+        mess = "WARN Image scaling failed"
+        printMess(mess, logfile)
+        err.Clear()
+# end ALMAScaleImage

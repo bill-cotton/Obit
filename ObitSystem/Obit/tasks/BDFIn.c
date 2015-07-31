@@ -147,6 +147,9 @@ ofloat nomSen(ASDMAntennaArray*  AntArray);
 void ReadNXTable (ObitUV *outData, ObitErr *err);
 /* Is a time in the NX Table */
 gboolean timeInNXTable (ofloat time);
+/* Add positions in Source table for objects in the ephemeris */
+void UpdateEphemSource (ObitUV *outData, ObitSourceEphemerus *srcEphem, 
+			ObitErr *err);
 
 /* Program globals */
 gchar *pgmName = "BDFIn";       /* Program name */
@@ -304,7 +307,7 @@ int main ( int argc, char **argv )
 
   /* Check scan intents for online only calibrations */
   ObitInfoListGetTest(myInput, "doOnline", &type, dim, &doOnline);
-  if (SDMData->isEVLA && !doOnline) FlagIntent (SDMData, outData, err);
+  if (!doOnline) FlagIntent (SDMData, outData, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Update An tables with correct ref. date */
@@ -338,6 +341,10 @@ int main ( int argc, char **argv )
       if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
     }
   }
+
+  /* Add positions in Source table for objects in the ephemeris */
+  UpdateEphemSource (outData, srcEphem, err);
+  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* History */
   BDFInHistory (myInput, SDMData, outData, err);
@@ -1317,7 +1324,8 @@ void FlagIntent (ObitSDMData *SDMData, ObitUV* outData, ObitErr* err)
   ASDMScanTable*   ScanTab;
   olong            iScan, iIntent, count=0;
   gchar            *flagEntries[] = {
-    "CALIBRATE_POINTING","SYSTEM_CONFIGURATION",
+    "CALIBRATE_POINTING","SYSTEM_CONFIGURATION","OFF_SOURCE", "AMBIENT", "HOT",
+    "CALIBRATE_ATMOSPHERE", 
     NULL};
   gchar *routine = "FlagIntent";
   
@@ -2047,7 +2055,7 @@ void UpdateSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean *isDone=NULL, doCode=TRUE, defCode=TRUE, doneIt;
   olong *souNoList=NULL, nSouDone=0;
-  gchar *routine = "GetSourceInfo";
+  gchar *routine = "UpdateSourceInfo";
 
   /* error checks */
   if (err->error) return;
@@ -2071,16 +2079,6 @@ void UpdateSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
   else
     ObitSDMSourceTabFix(SDMData);
  
-  /* Extract info */
-  SourceArray = ObitSDMDataGetSourceArray(SDMData);
-  Obit_return_if_fail((SourceArray), err,
-		      "%s: Could not extract Source info from ASDM", 
-		      routine);
-  SpWinArray  = ObitSDMDataGetSWArray (SDMData, iMain, SWOrder);
-  Obit_return_if_fail((SpWinArray), err,
-		      "%s: Could not extract Spectral Windows from ASDM", 
-		      routine);
-
   /* Create output Source table object */
   ver      = 1;
   access   = OBIT_IO_ReadWrite;
@@ -2090,15 +2088,25 @@ void UpdateSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
   if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with SU table");
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
 
-  /* Flags if table row done */
-  isDone = g_malloc0(SourceArray->nsou*sizeof(gboolean));
-  for (iRow=0; iRow<SourceArray->nsou; iRow++) isDone[iRow] = FALSE;
-
   /* Get existing source list */
   sourceList = ObitTableSUGetList (outTable, err);
 
-  /* Renumber in SDMData to agree with old version */
+   /* Flags if table row done */
+  isDone = g_malloc0(SDMData->SourceTab->nrows*sizeof(gboolean));
+  for (iRow=0; iRow<SDMData->SourceTab->nrows; iRow++) isDone[iRow] = FALSE;
+
+ /* Renumber in SDMData to agree with old version */
   ObitSDMDataRenumberSrc(SDMData, sourceList, isDone, doCode, err);
+
+  /* Extract info */
+  SourceArray = ObitSDMDataGetSourceArray(SDMData);
+  Obit_return_if_fail((SourceArray), err,
+		      "%s: Could not extract Source info from ASDM", 
+		      routine);
+  SpWinArray  = ObitSDMDataGetSWArray (SDMData, iMain, SWOrder);
+  Obit_return_if_fail((SpWinArray), err,
+		      "%s: Could not extract Spectral Windows from ASDM", 
+		      routine);
 
   /* Open table */
   if ((ObitTableSUOpen (outTable, access, err) 
@@ -3161,6 +3169,9 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 
      /* Make sure valid */
     if (SDMData->FlagTab->rows[iRow]->reason==NULL) continue;
+
+    /* Ignore ALMA gibberish */
+    if (!strncmp("QA0:",SDMData->FlagTab->rows[iRow]->reason,4)) continue;
 
     /* Get numbers of IFs(SWs) and poln */
     if ((SDMData->FlagTab->rows[iRow]->numSpectralWindow>0) &&
@@ -4437,3 +4448,98 @@ void UpdateEphemerisInfo (ObitUV *outData,  ObitSourceEphemerus *srcEphem,
     }
   }
 } /* end UpdateEphemerisInfo */
+
+void UpdateEphemSource (ObitUV *outData, ObitSourceEphemerus *srcEphem, 
+			ObitErr *err)
+/*----------------------------------------------------------------------- */
+/*  Update Source table positions from ephemeris                          */
+/*   Input:                                                               */
+/*      outData  Output UV object                                         */
+/*      srcEphem Source Ephemeris, no op if NULL                          */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+{
+  ObitTableSU*       outTable=NULL;
+  ObitTableSURow*    outRow=NULL;
+  olong              ver, iRow;
+  ofloat             time, tuvrot;
+  odouble            dist;
+  oint numIF;
+  ObitIOAccess access;
+  gchar *routine = "UpdateEphemSource";
+
+  /* error checks */
+  if (srcEphem==NULL) return;
+  if (err->error) return;
+  g_assert (ObitUVIsA(outData));
+
+  /* Print any messages */
+  Obit_log_error(err, OBIT_InfoErr, "Update Source table from ephemeris");
+  ObitErrLog(err);
+
+  /* Create output Source table object */
+  ver      = 1;
+  access   = OBIT_IO_ReadWrite;
+  numIF    = outData->myDesc->inaxes[outData->myDesc->jlocif];
+  outTable = newObitTableSUValue ("Output SU table", (ObitData*)outData, 
+				  &ver, access, numIF, err);
+  if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with SU table");
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+
+  /* Open table */
+  if ((ObitTableSUOpen (outTable, access, err) 
+       != OBIT_IO_OK) || (err->error))  { /* error test */
+    Obit_log_error(err, OBIT_Error, "ERROR opening output SU table");
+    return;
+  }
+
+  /* Create output Row */
+  outRow = newObitTableSURow (outTable);
+  /* attach to table buffer */
+  ObitTableSUSetRow (outTable, outRow, err);
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+
+  /* loop through table */
+  for (iRow=0; iRow<outTable->myDesc->nrow; iRow++) {
+    if ((ObitTableSUReadRow (outTable, iRow, outRow, err)
+	 != OBIT_IO_OK) || (err->error>0)) { 
+      Obit_log_error(err, OBIT_Error, "ERROR updating Source Table");
+      return;
+    }
+    /* Position given? */
+    if (outRow->RAMean==0.0 && outRow->DecMean==0.0) {
+      time   = srcEphem->startTime[srcEphem->nentry/2];
+      if (ObitSourceEphemerusCheckSource(srcEphem, outRow->SourID, time, 
+					 &outRow->RAMean, &outRow->DecMean, &dist, &tuvrot)) {
+	outRow->RAMean  *= RAD2DG;
+	outRow->DecMean *= RAD2DG;
+	outRow->RAApp  = outRow->RAMean;
+	outRow->DecApp = outRow->DecApp;
+	outRow->RAObs  = outRow->RAMean;
+	outRow->DecObs = outRow->DecMean;
+ 	outRow->Epoch  = 2000.0;
+      } else {  /* See if RAApp OK */
+ 	outRow->RAMean = outRow->RAApp;
+	outRow->DecApp = outRow->DecApp;
+	outRow->RAObs  = outRow->RAMean;
+	outRow->DecObs = outRow->DecMean;
+     }
+      if ((ObitTableSUWriteRow (outTable, iRow, outRow, err)
+	   != OBIT_IO_OK) || (err->error>0)) { 
+	Obit_log_error(err, OBIT_Error, "ERROR updating Source Table");
+	return;
+      } /* end error check */
+    } /* end attempt to update */
+  } /* end loop over input table */
+  
+  if ((ObitTableSUClose (outTable, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "ERROR closing output Source Table file");
+    return;
+  }
+
+  /* Cleanup */
+  outRow      = ObitTableSURowUnref(outRow);
+  outTable    = ObitTableSUUnref(outTable);
+} /* end UpdateEphemSource*/

@@ -128,6 +128,8 @@ void ObitTableFSPrint (ObitTableFS *in, ObitImage *image, FILE  *prtFile,
 
     ObitPosLabelUtilRA2HMS (row->Ra2000, "RA---SIN", rast);
     ObitPosLabelUtilDec2DMS (row->Dec2000, "DEC--SIN", decst);
+    if (rast[6]==' ')  rast[6]  = '0';   /* Leading zero on seconds */
+    if (decst[7]==' ') decst[7] = '0';   /* Leading zero on seconds */
     maj = row->MajorAxis * 3600.0;
     min = row->MinorAxis * 3600.0;
     pa  = fmod(row->PosAngle, 360.0);
@@ -744,12 +746,12 @@ void ObitTableFSRedun (ObitTableFS *in, ObitTableFS *out, ObitErr *err)
   ObitTableFSRow *row = NULL, *row2 = NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  ofloat l, m, maxDist, rad1, rad2;
-  olong centerPix[7], brow, erow;
+  ofloat l, m, maxDist, rad1, rad2, bestRad, bestZ;
+  olong centerPix[7], brow, erow, inWant;
   olong mxbad, ibad, jbad, maxbad, tnobad, *badrow=NULL;
-  odouble dist2, ramax, dismax, tramax;
+  odouble dist2, ramax, dismax, tramax, bestRA, bestDec;
   gboolean isbad, toss1, want1;
-  olong irow, jrow, orow, nrow, iold, inWant, ocount;
+  olong fooey, bestRow, irow, jrow, orow, nrow, iold, ocount;
   gchar Field[9];
   gchar *routine = "ObitTableFSRedun";
   
@@ -766,7 +768,7 @@ void ObitTableFSRedun (ObitTableFS *in, ObitTableFS *out, ObitErr *err)
   maxDist = 15.0;
   ObitInfoListGetTest(in->info, "maxDist", &type, dim, &maxDist);
   maxDist /= 3600.0; /* to degrees */
-  ramax = maxDist; /* RA range  */
+  ramax = 5.0 * maxDist; /* RA range to search */
   dismax = maxDist * maxDist;  /* Square of max distance*/
 
   /* Get rid of any existing output rows */
@@ -853,8 +855,14 @@ void ObitTableFSRedun (ObitTableFS *in, ObitTableFS *out, ObitErr *err)
     /* How far from center */
     rad1 = fieldOff(row, centerPix);
     iold = irow;
+    bestRA  = row->Ra2000;   /* Until proven otherwise */
+    bestDec = row->Dec2000;
+    bestRow = irow;
+    bestRad = rad1;
+    bestZ   = row->CenterZ;
 
     inWant = irow;  /* keep track or desired output row */
+    fooey  = irow;  /* Wah? */
 
     /* Search following table entries within RA window */
     for (jrow=irow+1; jrow<=erow; jrow++) {
@@ -868,7 +876,7 @@ void ObitTableFSRedun (ObitTableFS *in, ObitTableFS *out, ObitErr *err)
       /* Read row */
       ObitTableFSReadRow (in, jrow, row2, err);
       if (err->error) goto cleanup;
-      if (FSdesel(row)) continue;  /* Skip deselected record */
+      if (FSdesel(row2)) continue;  /* Skip deselected record */
 
       /* Make sure RA in range */
       if (row2->Ra2000>360.0) row2->Ra2000 -= 360.0;
@@ -876,10 +884,13 @@ void ObitTableFSRedun (ObitTableFS *in, ObitTableFS *out, ObitErr *err)
       
       /* Is this far enough? */
       tramax = ramax / cos(row->Dec2000*DG2RAD);
-      if ((row2->Ra2000-row->Ra2000) > tramax) break;
+      if ((row2->Ra2000-bestRA) > tramax) break;
+
+      /* Ignore if more than 1 channel separation */
+      if (fabs(row2->CenterZ-bestZ)>1.1) continue;
 
       /* Determine separation */
-      ObitSkyGeomShiftXY (row->Ra2000, row->Dec2000, 0.0, 
+      ObitSkyGeomShiftXY (bestRA, bestDec, 0.0, 
 			  row2->Ra2000, row2->Dec2000, &l, &m);
       dist2 = l*l + m*m;
       toss1 = dist2<dismax;  /* Does one need to go? */
@@ -898,16 +909,21 @@ void ObitTableFSRedun (ObitTableFS *in, ObitTableFS *out, ObitErr *err)
 	/* One must die */
 	rad2 = fieldOff(row2, centerPix);
 
-	/* Decide if this is the correct field for source */
-	want1 = rad2<rad1;
-	/* If all else equal take later processing */
-	want1 = want1 || ((rad2==rad1));
+	/* Decide if this is the correct field for source - want closest to center */
+	want1 = rad2<=bestRad;
 	/* All may be processed on the same day */
  	/* && (row2->JDProcess>=row->JDProcess));*/
 
-	/* Use this one? */
+	/* Use this new one? */
 	if (want1) {
 	  inWant = jrow;  /* keep track or desired output row */
+	  fooey = jrow;
+	  bestRA  = row2->Ra2000;   /* Now proven otherwise */
+	  bestDec = row2->Dec2000;
+	  bestRow = jrow;
+	  bestRad = rad2;
+	  bestZ   = row2->CenterZ;
+	  strncpy (Field, row2->Field, 8);
 
 	  /* flag old best guess */
 	  if (maxbad<mxbad-1) {
@@ -935,6 +951,7 @@ void ObitTableFSRedun (ObitTableFS *in, ObitTableFS *out, ObitErr *err)
     } /* End forward search for matches */
 
     /* Reread entry to copy */
+    inWant = MIN (bestRow, jrow);  /* Wah? */
     ObitTableFSReadRow (in, inWant, row, err);
     if (err->error) goto cleanup;
     if (FSdesel(row)) continue; 
@@ -1439,9 +1456,9 @@ void ObitTableFSFiltVel(ObitTableFS *inFS, ObitImage *im, ObitTableFS *outFS,
     if (fabs(maxV)<minSNR*rms) continue;
     if (fabs(maxV)<minSNR*FSrow->RMSCh[chmax]) continue;
 
-    /* Find moments above 20% of peak within 15 channels */
-    limit = MAX (spec[i]>fabs(maxV)*0.2, 4*MAX(rms,FSrow->RMSCh[chmax]));
-    l1 = MAX(0,chmax-15); l2 = MIN (nch, chmax+15);
+    /* Find moments above 20% of peak and 5 sigma  within 5 channels */
+    limit = MAX (spec[i]>fabs(maxV)*0.2, 5*MAX(rms,FSrow->RMSCh[chmax]));
+    l1 = MAX(0,chmax-5); l2 = MIN (nch, chmax+5);
     sum1 = sum2 = sum = 0.0;
     for (i=l1; i<l2; i++) {
       if ((fabs(spec[i]-fblank)>10.0) && (spec[i]>limit)) {

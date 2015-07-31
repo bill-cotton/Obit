@@ -88,8 +88,8 @@ int main ( int argc, char **argv )
   ObitErr      *err= NULL;
   ObitTableSU  *SUTable = NULL;
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
-    "Sources", "Qual", "calCode", "OPType", "BIF", "EIF", "ZeroFlux",
-    "FreqID", "RestFreq", "SysVel", "VelType", "VelDef", "Parms",
+    "Sources", "Qual", "calCode", "OPType", "BIF", "EIF", "ZeroFlux", 
+    "Alpha", "FreqID", "RestFreq", "SysVel", "VelType", "VelDef", "Parms",
     NULL};
 
   /* Startup - parse command line */
@@ -291,7 +291,6 @@ void Usage(void)
     fprintf(stderr, "Obit task to modify AIPS SU table \n");
     fprintf(stderr, "Arguments:\n");
     fprintf(stderr, "  -input input parameter file, def SetJy.in\n");
-    fprintf(stderr, "  -output uv data onto which to attach FG table, def SetJy.out\n");
     fprintf(stderr, "  -pgmNumber Program (POPS) number, def 1 \n");
     fprintf(stderr, "  -DataType AIPS or FITS type for input image\n");
     fprintf(stderr, "  -AIPSuser User AIPS number, def 2\n");
@@ -321,12 +320,14 @@ void Usage(void)
 /*     inClass   Str [6]    input AIPS image class  [no def]              */
 /*     inSeq     Int        input AIPS image sequence no  [no def]        */
 /*     Sources   Str (16,1) Sources selected, blank = all                 */
+/*     Alpha     float      Spectral index=0                              */
 /*----------------------------------------------------------------------- */
 ObitInfoList* defaultInputs(ObitErr *err)
 {
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *strTemp;
   oint   itemp;
+  ofloat Alpha = 0.0;
   /*gfloat farray[3];*/
   ObitInfoList *out = newObitInfoList();
   gchar *routine = "defaultInputs";
@@ -400,7 +401,13 @@ ObitInfoList* defaultInputs(ObitErr *err)
   ObitInfoListPut (out, "Sources", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
     
-  return out;
+   /* Spectral index */
+  dim[0] = 1;dim[1] = 1;
+  itemp = 1; 
+  ObitInfoListPut (out, "Alpha", OBIT_float, dim, &Alpha, err);
+  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+
+ return out;
 } /* end defaultInputs */
 
 /*----------------------------------------------------------------------- */
@@ -561,7 +568,7 @@ void SetJyHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq", 
     "Sources", "calCode", "Qual", "OPType", "BIF", "EIF",
-    "FreqID", "ZeroFlux",  "SysVel", "RestFreq", 
+    "FreqID", "ZeroFlux",  "Alpha", "SysVel", "RestFreq", 
     "VelType", "VelDef",  "Parms", 
     NULL};
   gchar *routine = "SetJyHistory";
@@ -607,7 +614,7 @@ ObitTableSU* SetJyUpdate (ObitUV* inData, ObitErr* err)
   ObitUVDesc *desc;
   olong ver;
   oint fqid, numIF, *sideBand=NULL;
-  ofloat *chBandw=NULL;
+  ofloat *chBandw=NULL, Alpha=0.0, SIFact;
   odouble Freq, nux, *freqOff=NULL;
   ObitIOCode retCode = OBIT_IO_SpecErr;
   olong i, j, irow, lsou, nsou, iif, bif, eif;
@@ -615,9 +622,9 @@ ObitTableSU* SetJyUpdate (ObitUV* inData, ObitErr* err)
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *Sources=NULL, *calCode=NULL, *OPType=NULL, *VelType=NULL, *VelDef=NULL;
   ofloat SysVel=0.0, ZeroFlux[4]={0.0,0.0,0.0,0.0}, *Parms=NULL;
-  ofloat altrfp, refpix, centpix, velinc;
+  ofloat altrfp, refpix, centpix, velinc, IFlux=0.0;
   olong Qual, lsign, ncheck, FreqID=0, BIF=1, EIF=0;
-  odouble RestFreq=0.0;
+  odouble RestFreq=0.0, refFreq=0.0;
   gboolean wanted, match=FALSE;
   gchar tempName[101]; /* should always be big enough */
   gchar *blank = "        ";
@@ -629,8 +636,9 @@ ObitTableSU* SetJyUpdate (ObitUV* inData, ObitErr* err)
   g_assert (ObitUVIsA(inData));
 
   /* Get control parameters */
-  desc = inData->myDesc;
+  desc    = inData->myDesc;
   refpix  = desc->crpix[desc->jlocf];
+  refFreq = desc->crval[desc->jlocf];
   centpix = 1.0 + desc->inaxes[desc->jlocf]/2.0;
   ObitInfoListGetP(inData->info, "Sources",  &type, dim, (gpointer)&Sources);
   /* Count number of actual sources */
@@ -650,12 +658,14 @@ ObitTableSU* SetJyUpdate (ObitUV* inData, ObitErr* err)
   ObitInfoListGetTest(inData->info, "EIF",       &type, dim, &EIF);
   ObitInfoListGetTest(inData->info, "SysVel",    &type, dim, &SysVel);
   ObitInfoListGetTest(inData->info, "ZeroFlux",  &type, dim, ZeroFlux);
+  ObitInfoListGetTest(inData->info, "Alpha",     &type, dim, &Alpha);
   ObitInfoListGetTest(inData->info, "FreqID",    &type, dim, &FreqID);
   ObitInfoListGetTest(inData->info, "RestFreq",  &type, dim, &RestFreq);
   if (calCode==NULL) calCode = blank;
   if (OPType==NULL)  OPType  = blank;
   if (VelType==NULL) VelType = blank;
   if (VelDef==NULL)  VelDef  = blank;
+  IFlux = ZeroFlux[0];   /* Save */
 
   /* Digest velocity definition */
   lsign = 1;
@@ -738,22 +748,28 @@ ObitTableSU* SetJyUpdate (ObitUV* inData, ObitErr* err)
       /* Update flux */
       for (iif=bif; iif<=eif; iif++) {
 	Freq = desc->freq + freqOff[iif-1] + row->FreqOff[iif-1];
+	/* Spectral index factor at IF ref Freq*/
+	if (Alpha==0.0) SIFact = 1.0;
+	else            SIFact = pow(Freq/refFreq, Alpha);
 	/* Offset to IF center */
 	Freq += (centpix-refpix) * chBandw[iif] * sideBand[iif];
 	/* Calculate flux density? */
 	if (!strncmp (OPType, "CALC", 4)) {
 	  CalcFlux (row, Parms, Freq, ZeroFlux, err);
 	  if (err->error) goto cleanup;
+	} else if (IFlux>0.0) {  /* Calculate from IFlux */
+	  ZeroFlux[0] = IFlux * SIFact;
 	}
 	if (ZeroFlux[0]>=0.0) row->IFlux[iif-1] = ZeroFlux[0];
-	row->QFlux[iif-1] = ZeroFlux[1];
-	row->UFlux[iif-1] = ZeroFlux[2];
-	row->VFlux[iif-1] = ZeroFlux[3];
+	row->QFlux[iif-1] = ZeroFlux[1]*SIFact;
+	row->UFlux[iif-1] = ZeroFlux[2]*SIFact;
+	row->VFlux[iif-1] = ZeroFlux[3]*SIFact;
 	/* Message */
 	Obit_log_error(err, OBIT_InfoErr,
 		       "%s %c IF %d Flux %8.3f %8.3f %8.3f %8.3f",
-		       tempName, calCode[0], iif,  ZeroFlux[0], ZeroFlux[1], 
-		       ZeroFlux[2], ZeroFlux[3]);
+		       tempName, calCode[0], iif,  ZeroFlux[0], 
+		       ZeroFlux[1]*SIFact, ZeroFlux[2]*SIFact, 
+		       ZeroFlux[3]*SIFact);
       }
       /* Or perhaps just reset everything */
       if (!strncmp (OPType, "REJY", 4)) {

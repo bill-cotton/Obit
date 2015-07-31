@@ -180,8 +180,8 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     if npln < outNaxis[2]:
         print "input has",npln,"planes selected and output has",outNaxis[2]
         raise RuntimeError,"input image has too few planes "
-    if (ndim>0) and (inNaxis[2]>0):  # list of 0-rel planes to loop over
-        planes = range(bpln+restart,bpln+npln)
+    if (ndim>0) and (inNaxis[2]>1):  # list of 0-rel planes to loop over
+        planes = range(bpln+restart-1,bpln+npln-1)
     else:
         planes = [0]
     #
@@ -192,7 +192,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     WtImage = None
     for iPlane in planes:
         doPlane  = [iPlane+1,1,1,1,1]        # Input plane
-        outPlane = [iPlane+1-bpln,1,1,1,1]   # output plane
+        outPlane = [iPlane+2-bpln,1,1,1,1]   # output plane
         if not (iPlane%20):
             print "At plane", iPlane+1,os.times()
         # Make weight image, first pass

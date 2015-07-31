@@ -78,7 +78,7 @@ ALMAStdModel(BPCals, freq)
 parms["BPCals"]     = BPCals  # Bandpass calibrator(s)
 parms["bpChWid2"]   = 5       # Number of channels to smooth in BP calibration                                                                              
 
-# Phase only calibrators
+# Phase only and secondary calibrators
 calist = @PHSCAL@
 PCals = []
 tcals = []
@@ -96,7 +96,7 @@ APCals = []
 tcals = []
 for cal in calist:
     if not cal in tcals:
-        PCals.append(ALMACalModel(cal))
+        APCals.append(ALMACalModel(cal))
         tcals.append(cal)
 # Check for standard model
 ALMAStdModel(APCals, freq)
