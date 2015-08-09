@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2014                                          */
+/*;  Copyright (C) 2012-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -295,6 +295,9 @@ void ObitEVLASysPowerInitFile  (ObitEVLASysPower *in, gchar *DataFile, ObitErr *
   startInfo = g_strstr_len (in->current, maxStr, "<SysPowerTable>");
   endInfo   = g_strstr_len (in->current, maxStr, "</SysPowerTable>");
   maxStr    = (olong)(endInfo-startInfo);
+
+  /* Find anything? */
+  if (startInfo==NULL) return;
   
   /* Endian */
   prior = "byteOrder=";

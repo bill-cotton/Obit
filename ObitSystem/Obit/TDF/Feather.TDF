@@ -46,7 +46,7 @@ inClass                            Image Name (Class) 1
 inSeq             0         9999   Image Name (Seq. #) 1
 **PARAM** int   1
 inDisk            0         9999   Disk drive # 1
-**PARAM** str 48
+**PARAM** str 128
 in2File                            Filename 2 if FITS image
 **PARAM** str 12
 in2Name                            Image Name (Name) 2
@@ -56,7 +56,7 @@ in2Class                           Image Name (Class) 2
 in2Seq           0          9999   Image Name (Seq. #) 2
 **PARAM** int   1
 in2Disk           0         9999   Disk drive # 2
-**PARAM** str 48
+**PARAM** str 128
 in3File                            Filename 3 if FITS image
 **PARAM** str 12
 in3Name                            Image Name (Name) 3
@@ -66,7 +66,7 @@ in3Class                           Image Name (Class) 3
 in3Seq            0         9999   Image Name (Seq. #) 3
 **PARAM** int   1
 in3Disk           0         9999   Disk drive # 3
-**PARAM** str 48
+**PARAM** str 128
 in4File                            Filename 4 if FITS image
 **PARAM** str 12
 in4Name                            Image Name (Name) 4
@@ -76,7 +76,7 @@ in4Class                           Image Name (Class) 4
 in4Seq            0         9999   Image Name (Seq. #) 4
 **PARAM** int   1
 in4Disk           0         9999   Disk drive # 4
-**PARAM** str 48
+**PARAM** str 128
 in5File                            Filename 5 if FITS image
 **PARAM** str 12
 in5Name                            Image Name (Name) 5
@@ -86,7 +86,7 @@ in5Class                           Image Name (Class) 5
 in5Seq            0         9999   Image Name (Seq. #) 5
 **PARAM** int   1
 in5Disk           0         9999   Disk drive # 5
-**PARAM** str 48
+**PARAM** str 128
 in6File                            Filename 6 if FITS image
 **PARAM** str 12
 in6Name                            Image Name (Name) 6
@@ -96,7 +96,7 @@ in6Class                           Image Name (Class) 6
 in6Seq            0         9999   Image Name (Seq. #) 6
 **PARAM** int   1
 in6Disk           0         9999   Disk drive # 6
-**PARAM** str 48
+**PARAM** str 128
 in7File                            Filename 7 if FITS image
 **PARAM** str 12
 in7Name                            Image Name (Name) 7
@@ -106,7 +106,7 @@ in7Class                           Image Name (Class) 7
 in7Seq            0         9999   Image Name (Seq. #) 7
 **PARAM** int   1
 in7Disk           0         9999   Disk drive # 7
-**PARAM** str 48
+**PARAM** str 128
 in8File                            Filename 8 if FITS image
 **PARAM** str 12
 in8Name                            Image Name (Name) 8
@@ -116,7 +116,7 @@ in8Class                           Image Name (Class) 8
 in8Seq            0         9999   Image Name (Seq. #) 8
 **PARAM** int   1
 in8Disk           0         9999   Disk drive # 8
-**PARAM** str 48
+**PARAM** str 128
 in9File                            Filename 9 if FITS image
 **PARAM** str 12
 in9Name                            Image Name (Name) 9
@@ -126,7 +126,7 @@ in9Class                           Image Name (Class) 9
 in9Seq            0         9999   Image Name (Seq. #) 9
 **PARAM** int   1
 in9Disk           0         9999   Disk drive # 9
-**PARAM** str 48
+**PARAM** str 128
 in10File                           Filename 10 if FITS image
 **PARAM** str 12
 in10Name                           Image Name (Name) 10
@@ -136,7 +136,7 @@ in10Class                          Image Name (Class) 10
 in10Seq           0         9999   Image Name (Seq. #) 10
 **PARAM** int   1
 in10Disk          0         9999   Disk drive # 10
-**PARAM** str 48
+**PARAM** str 128
 outFile                            Output Filename if FITS image
 **PARAM** str 4
 outDType                           "FITS" or "AIPS" type of output
@@ -158,14 +158,15 @@ noScrat                            AIPS disk numbers for which
 ----------------------------------------------------------------
 Feather
 Type: Task
-Use:     Obit program Feather Takes up to 10 input images and feathers 
+Use:     Obit program Feather takes up to 10 input images and feathers 
 them  together in the UV plane to produce an image whose spatial 
 frequencies are from the most appropriate input image.  The resultant 
 image will have the resolution of the highest resolution input image
 (the first image)
    Prior to running Feather, the input images must be placed on the same
 astrometric and photometric scales but need not have the grid of pixels
-or even the same equinox (B1950 and J2000 supported).
+or even the same equinox (B1950 and J2000 supported).  Task FAlign
+can be used to aling cubes in frequency/velocity.
    The input images MUST be given in order of the highest to lowest
 resolution and this resolution must be reflected by the "CLEAN beam"
 size given in the image header.  The output image will have the same
@@ -175,6 +176,10 @@ of planes is the same in all images.
    Either AIPS or FITS images may be used but currently all input and
 output images must be the same type (AIPS or FITS).
    History written to an output FITS image is into a History table.
+
+   The methods used are described in Obit memo 41,
+ftp://ftp.cv.nrao.edu/NRAO-staff/bcotton/Obit/Feather.pdf
+
 Adverbs:
   DataType...."FITS" or AIPS
   numImage....Number of input images

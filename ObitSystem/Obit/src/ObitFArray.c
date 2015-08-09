@@ -3931,12 +3931,16 @@ static gpointer ThreadFAShAdd (gpointer arg)
   /* local */
   olong   ix, iy, lox, hix, ip, indx1, indx2, nx1, nx2, ny1, ny2, offx, offy, lenp1, lenp2;
   olong   pos1[2], pos2[2];
+  gboolean areSame=FALSE;
   ofloat  fblank = ObitMagicF();
 
   if (hiRow<loRow) goto finish;
 
+  /* IS the output one of the inputs? */
+  areSame = (in1==out) || (in2==out);
+
   ip = pos[0];                          /* Plane number */
-  pos1[0] = pos[1]; pos1[1] = pos[2];   /* Alognment pixels */
+  pos1[0] = pos[1]; pos1[1] = pos[2];   /* Alignment pixels */
   pos2[0] = pos[3]; pos2[1] = pos[4];
 
   /* Size of in1/out */
@@ -3977,7 +3981,7 @@ static gpointer ThreadFAShAdd (gpointer arg)
 	if (in2->array[indx2]!=fblank) {
 	  out->array[indx1] = in1->array[indx1] + scalar * in2->array[indx2];
 	}
-      } else {
+      } else if (!areSame) {  /* Don't blank if the output is the accumulation of an input */
 	out->array[indx1] = fblank;
       }
     } /* end x loop */

@@ -2850,3 +2850,31 @@ Obit/tasks/BDFIn.c:
   Enable ALMA online cal scan flagging
   Bug fixes with sources when concatenating datasets
 31 Jul. 2015, svn version 515
+
+Patch for EVLA frequency reversal, improve EVLA, ALMA processing scripts
+task to align images in frequency, bug fixes.
+Obit/python/ALMAPipe.py Obit/python/ALMACal.py:
+  Trap problems in VO table writer.
+  Use proper models in phase calibration
+  enable Alpha in model given to SetJy
+  Cleanup html writer
+Obit/python/EVLACal.py:
+  Add useSetJy in CalAP
+Obit/tasks/BDFIn.c:
+  UpdateEphemSource: Fix indexing bug in SU table
+  Hack for EVLA frequency flip.
+Obit/share/scripts/ALMATemplateParm.py:
+  abs(@SPANBW@)
+Obit/src/ObitImage.c:
+  FromFileInfo: get rid of trailing blanks in FITS file name
+Obit/include/ObitImageUtil.h Obit/src/ObitImageUtil.c:
+  Add function Interp3 to interpolate an image in frequency plane
+Obit/TDF/FAlign.TDF Obit/tasks/FAlign.c:
+  Task to align image cubes on the third axis.
+Obit/TDF/Feather.TDF:
+  Allow 128 character FITS file names, documentation
+Obit/src/ObitFArray.c:
+  ThreadFAShAdd: Don't blank if the output is the accumulation of an input
+Obit/src/ObitEVLASysPower.c:
+  Init: trap no actual table (may be error messages)
+8 Aug, 2015, svn ver. 516

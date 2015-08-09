@@ -115,6 +115,10 @@ static olong MakeInterpFuncArgs (ObitThread *thread, olong radius,
 /** Private: Delete Threaded Image interpolator args */
 static void KillInterpFuncArgs (olong nargs, InterpFuncArg **ThreadArgs);
 
+/** Private: Set convolution kernal for 3rd axis */
+static void SetConvKernal3 (ofloat Target, olong npln, olong hwidth, 
+			    olong *Start, ofloat *Kernal);
+
 
 /*----------------------Public functions---------------------------*/
 
@@ -2239,7 +2243,125 @@ ObitImageUtilInterpolateWeight (ObitImage *inImage, ObitImage *outImage,
       outWeight->image = ObitFArrayUnref(outWeight->image);
     
   } /* end of not memory only */
-} /* end  ObitImageUtilInterpolateImage */
+} /* end  ObitImageUtilInterpolateWeight */
+
+/**
+ * Interpolate 3rd axis in inImage to inPlane and write to outImage outPlane
+ * Input planes<1 or > nplanes will be blank filled.
+ * \param inImage   Image to be interpolated. Honors BLC, TRC set
+ * \param inPlane   fractional plane to interpolate (1-rel)
+ * \param outImage  Image to be written.  Must be previously instantiated.
+ * \param outPlane  plane to write in outImage (1-rel)
+ * \param hwidth    Interpolation halfwidth (1 or 2 usually OK, 4 max)
+ * \param err       Error stack, returns if not empty.
+ */
+void 
+ObitImageUtilInterp3 (ObitImage *inImage, ofloat inPlane,
+		      ObitImage *outImage, olong outPlane, 
+		      olong hwidth, ObitErr *err)
+{
+  olong plane[5]={1,1,1,1,1}, i, nplane, first, npln;
+  ofloat intWt[10];
+  gchar *routine = "ObitImageUtilInterp3";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitImageIsA(inImage));
+  g_assert (ObitImageIsA(outImage));
+
+  /* Is inPlane in bounds? */
+  npln = inImage->myDesc->inaxes[2];
+  if ((inPlane<1.0) || (inPlane>npln)) {  /* Blank */
+    if ((ObitImageOpen (outImage, OBIT_IO_ReadWrite, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "%s: ERROR opening image %s", 
+		     routine, outImage->name);
+      return;
+    }
+    /* blank */
+    ObitFArrayFill(outImage->image, ObitMagicF());
+    /* Write output */
+    plane[0] = outPlane;
+    if ((ObitImagePutPlane (outImage, NULL, plane, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "%s: ERROR writing image %s", 
+		     routine, outImage->name);
+      return;
+    }
+    return;
+  } /* end if output of bounds */
+  
+  /* Open images */
+  if ((ObitImageOpen (inImage, OBIT_IO_ReadOnly, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR opening image %s", 
+		   routine, inImage->name);
+    return;
+  }
+  if ((ObitImageOpen (outImage, OBIT_IO_ReadWrite, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR opening image %s", 
+		   routine, outImage->name);
+    return;
+  }
+  /* Zero output FArray for accumulation */
+  ObitFArrayFill(outImage->image, 0.0);
+    
+  /* Interpolation weights */
+  SetConvKernal3 (inPlane, npln, hwidth, &first, intWt);
+
+  nplane = 1 + hwidth*2;           /* How many planes to include */
+  for (i=0; i<nplane; i++) {
+    if (intWt[i]==0.0) continue;   /* don't bother if weight zero */
+    /* Read input plane */
+    plane[0] = first+i;
+    if ((ObitImageGetPlane (inImage, NULL, plane, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "%s: ERROR reading image %s", 
+		     routine, inImage->name);
+      return;
+    }
+    /* Multiply input buffer by weights */
+    ObitFArraySMul (inImage->image, intWt[i]);
+    /* Accumulate to output buffer */
+    ObitFArrayAdd (inImage->image, outImage->image, outImage->image);
+ } /* end loop over input planes */
+
+  /* Write output */
+  plane[0] = outPlane;
+  if ((ObitImagePutPlane (outImage, NULL, plane, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR writing image %s", 
+		   routine, outImage->name);
+    return;
+  }
+    
+  /* Close - free buffers */
+  if ((ObitImageClose (inImage, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR closing image %s", 
+		   routine, inImage->name);
+    return;
+  }
+  /* Free image buffer  if not memory resident */
+  if (inImage->mySel->FileType!=OBIT_IO_MEM) 
+    inImage->image = ObitFArrayUnref(inImage->image);
+  if ((ObitImageClose (outImage, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR closing image %s", 
+		   routine, outImage->name);
+    return;
+  }
+  if ((ObitImageClose (outImage, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR closing image %s", 
+		   routine, outImage->name);
+    return;
+  }
+  /* Free image buffer if not memory resident */
+  if (outImage->mySel->FileType!=OBIT_IO_MEM) 
+    outImage->image = ObitFArrayUnref(outImage->image);
+} /* end  ObitImageUtilInterp3 */
 
 /**
  * Make antenna primary beam correction to an image based on the pointing
@@ -5532,4 +5654,61 @@ static void KillInterpFuncArgs (olong nargs, InterpFuncArg **ThreadArgs)
   }
   g_free(ThreadArgs);
 } /*  end KillInterpFuncArgs */
+
+/**
+ * Set Lagrangian interpolation kernal taking into account ends of the grid.
+ * \param  Target Which is the desired fractional plane (1-rel)?
+ * \param  npln   Number of planes
+ * \param  hwidth Half width of convolution kernal
+ * \param  Start  [out] first plane (1-rel) to include
+ * \param  Kernal [out] convolving kernal.
+ */
+static void SetConvKernal3 (ofloat Target, olong npln, olong hwidth, 
+			    olong *Start, ofloat *Kernal)
+{
+  ofloat prod, sum, xx;
+  ofloat denom[10];
+  olong ipos, i, j, cen, iwid;
+
+  /* Init Lagrangian denominators for hwidth */
+  iwid = 1 + (2*hwidth);
+  for (j= 1; j<=iwid; j++) {
+    prod = 1.0;
+    for (i= 1; i<=iwid; i++) {
+      if (i != j) prod = prod * (j - i);
+    } 
+    denom[j-1] = 1.0 / prod;
+  } 
+
+  /* fractional pixel */
+  ipos = Target + 0.5;
+  iwid = hwidth*2 + 1;
+
+  /* set first pixel */
+  cen = ipos - hwidth;
+  cen = MAX (1, MIN (cen, (npln-iwid+1)));
+  *Start = cen; /* returned version */
+  /* make 0 rel */
+  cen = cen - 1;
+
+  /* set "x" at first pixel to 1.0 */
+  xx = Target - cen;
+
+  /* compute interpolating kernal */
+  sum = 0.0;
+  for (j= 0; j<iwid; j++) {
+    prod = denom[j];
+    for (i= 0; i<iwid; i++) {
+      if (i != j) prod = prod * (xx - (i+1));
+    } /* end i loop  */
+    Kernal[j] = prod;
+    sum += prod;
+  } /* end j loop */
+
+  /* Normalize to sum of 1.0 if needed */
+  if (fabs(sum-1.0)>1.0e-4) {
+     prod = 1.0/sum;
+     for (i=0; i<iwid; i++) Kernal[i] *= prod;
+  }
+} /* end SetConvKernal3 */
 

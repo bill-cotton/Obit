@@ -1803,6 +1803,14 @@ def ALMAPhaseCal(uv,PCals,  err, ACals=None, solInt=0.5, BChan=1, EChan=0, UVRan
         calib.modelFlux = PCal["CalModelFlux"]
         calib.modelPos  = PCal["CalModelPos"]
         calib.modelParm = PCal["CalModelParm"]
+        if calib.nfield<=0:   # If no image model
+            calib.modelFlux = ACal["CalModelFlux"]
+            calib.modelPos  = ACal["CalModelPos"]
+            calib.modelParm = ACal["CalModelParm"]
+        else:
+            calib.modelFlux = 0.0
+            calib.modelPos  = [0.0,0.0]
+            calib.modelParm = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         
         if debug:
             calib.prtLv =6
@@ -2001,6 +2009,8 @@ def ALMACalAP(uv, target, ACals, err, \
             setjy.FreqID=FQid
         if (ACal["CalModelFlux"]>0.0) and (not ACal["useSetJy"]):
             setjy.ZeroFlux[0] = ACal["CalModelFlux"]
+            if "Alpha" in setjy.__dict__:
+                setjy.Alpha = ACal["CalModelSI"]
         else:
             setjy.OPType="CALC"
             setjy.ZeroFlux=[1.0,0.0,0.0,0.0]
@@ -2040,13 +2050,17 @@ def ALMACalAP(uv, target, ACals, err, \
         solnVer  = solnver
 
     # Phase cals and failed amp cals to 1.0 or model flux
+    if "Alpha" in setjy.__dict__:
+        setjy.Alpha = 0.0 # reset
     if PCals:   # Any given?
         callist = []
         calflux = []
+        calSI   = []
         for PCal in PCals:
             if PCal["Source"] not in OKAmpCals:
                 callist.append(PCal["Source"])
                 calflux.append(PCal["CalModelFlux"])
+                calSI.append(PCal["CalModelSI"])
         i = -1
         for cal in BadAmpCals:
             i += 1
@@ -2062,8 +2076,12 @@ def ALMACalAP(uv, target, ACals, err, \
                 setjy.Sources[0] = cal
                 if calflux[i]>0.0:
                     setjy.ZeroFlux[0] = calflux[i]
+                    if "Alpha" in setjy.__dict__:
+                        setjy.Alpha = calSI[i]
                 else:
                     setjy.ZeroFlux[0] = 1.0
+                    if "Alpha" in setjy.__dict__:
+                        setjy.Alpha = 0.0
                 if debug:
                     setjy.i
                     setjy.debug = debug
@@ -3286,7 +3304,7 @@ def ALMAReportTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", 
                 sdict["RAPnt"]   = hd["obsra"]
                 sdict["DecPnt"]  = hd["obsdec"]
                 sdict["Freq"]    = hd["crval"][hd["jlocf"]]
-                sdict["BW"]      = hd["cdelt"][hd["jlocf"]]
+                sdict["BW"]      = abs(hd["cdelt"][hd["jlocf"]])
             blc = [hd["inaxes"][0]/4,hd["inaxes"][1]/4]
             trc = [3*hd["inaxes"][0]/4,3*hd["inaxes"][1]/4]
             stat = imstat(x,err,blc=blc,trc=trc)  # Image statistics inner quarter
@@ -4037,7 +4055,7 @@ def ALMAWritePlots(uv, loPL, hiPL, plotFile, err, \
     return 0
     # end ALMAWritePlots
 
-def ALMASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["RR","LL"], \
+def ALMASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["XX","YY"], \
                  doband=0, flagVer=0, plotFile="./spec.ps", doPol=False, PDVer=-1,  \
                  check=False, debug=False, logfile = ""):
     """
@@ -5789,13 +5807,15 @@ def ALMAWriteVOTable( projMeta, srcMeta, filename="votable.xml", logfile='' ):
             # All strings in array must have same length
             maxLen = 0
             for string in projMeta[key]:
-                length = len(string)
-                if length > maxLen:
-                    maxLen = length
+                if string:
+                    length = len(string)
+                    if length > maxLen:
+                        maxLen = length
             value = ""
             for string in projMeta[key]:
                 # Concatenate strings, left justified, with min length maxLen+1
-                value += "%-*s" % ( maxLen+1, string )
+                if string:
+                    value += "%-*s" % ( maxLen+1, string )
             arraysize = str(maxLen+1) + "x" + str( len(projMeta) )
             setAttribs( pr, [ ("name", key ),
                               ("value", value ),
@@ -6539,7 +6559,7 @@ def ALMAProjMetadata( uv, AIPS_VERSION, err,
     * project = Observation project name
     * session = Observation project session
     * band = receiver band code
-    * dataInUVF = data set archive file name
+    * dataInUVF  = list of data set archive file names
     * archFileID = archive file ID
     """
     # Get lists of calibrator names from model lists.
@@ -6575,8 +6595,7 @@ def ALMAProjMetadata( uv, AIPS_VERSION, err,
     r["AmpCals"] = ACalList # list of amp calibrators
     r["BPCals"]  = BPCalList # list of bandpass calibrators
     r["DlyCals"] = DCalList # list of delay calibrators
-    parts = dataInUVF.split(os.sep)
-    r["dataSet"] = parts[len(parts)-1]
+    r["dataSet"] = dataInUVF#parts[len(parts)-1]
     r["archFileID"] = archFileID # archive file ID
     r["fileSetID"] = r["project"] + "_" + r["obsDate"][2:].replace('-','') + "_" + \
         str(r["archFileID"])
@@ -6747,7 +6766,7 @@ def ALMASrcMetadata(uv, err,  FreqID=1, Sources=None, \
                 sdict["RAPnt"]   = hd["obsra"]
                 sdict["DecPnt"]  = hd["obsdec"]
                 sdict["Freq"]    = hd["crval"][hd["jlocf"]]
-                sdict["BW"]      = hd["cdelt"][hd["jlocf"]]
+                sdict["BW"]      = abs(hd["cdelt"][hd["jlocf"]])
                 sdict["Stokes"]  = Stokes
             blc = [hd["inaxes"][0]/4,hd["inaxes"][1]/4]
             trc = [3*hd["inaxes"][0]/4,3*hd["inaxes"][1]/4]
@@ -6818,7 +6837,7 @@ table {
             # Create links to each section
             s += ' - <a href="#' + metadata['Source'] + '_Section">' + \
                 metadata['Source'] + '</a>' 
-            file.write( s )
+    file.write( s )
         
     # Write project metadata
     s  = "<a id='project_Section'><h2> Project </h2></a>\n"
@@ -6936,19 +6955,19 @@ def writeTableRow( dict, keys=None ):
             s += '<tr><th>' + key + '</th><td>' + fs + '</td></tr>\n'
         elif (key == 'RA') or (key == 'RAPnt'):
             s += '<tr><th>' + key + '</th>' + \
-                 '<td>' + UVDesc.PRA2HMS(dict[key]) + '</td></tr>\n'
+                 '<td>' + UVDesc.PRA2HMS(dict[key]) + ':</td>\n'
         elif (key == 'Dec') or (key == 'DecPnt'):
-            s += '<tr><th>' + key + '</th>' + \
-                 '<td>' + UVDesc.PDec2DMS(dict[key]) + '</td></tr>\n'
+            s += '<th> ' + key + '</th>' + \
+                 '<td>' + UVDesc.PDec2DMS(dict[key]) + ':</td></tr>\n'
         elif (key == 'timeRange'):
             s += '<tr><th> Time Range </th>' + \
                  '<td>' + day2dhms(dict['timeRange'][0]) + ' - ' + \
                   day2dhms(dict['timeRange'][1]) + ' </td></tr>\n'
         elif (key == 'Freq'):
-            s += '<tr><th>' + key + '</th>' + \
-                 '<td>' + "%6.3f"%(dict[key]*1.0e-9) + ' GHz </td></tr>\n'
+            s += '<tr><th>' + key + ':</th>' + \
+                 '<td>' + "%6.3f"%(dict[key]*1.0e-9) + ' GHz </td>\n'
         elif (key == 'BW'):
-            s += '<tr><th>' + key + '</th>' + \
+            s += '<th>' + key + ':</th>' + \
                  '<td>' + "%6.3f"%(dict[key]*1.0e-6) + ' MHz </td></tr>\n'
         elif (key == 'SNR'):
             s += '<tr><th>' + key + '</th>' + \
@@ -6957,19 +6976,19 @@ def writeTableRow( dict, keys=None ):
             s += '<tr><th>' + key + '</th>' + \
                  '<td>' + "%6.3f"%(dict[key]*24.0) + ' Hours </td></tr>\n'
         elif (key == 'Size') or (key == "Cells"):
-            s += '<tr><th>' + key + '</th>' + \
-                 '<td>' + "%8.5f"%(dict[key]*3.6e3) + ' asec </td></tr>\n'
-        elif (key == 'ISum') or (key == "QSum") or (key == "USum"):
-            s += '<tr><th>' + key + '</th>' + \
-                 '<td>' + "%8.3f"%(dict[key]*1.0e3) + ' mJy </td></tr>\n'
-        elif (key == 'IPeak') or (key == "QPeak") or (key == "UPeak"):
-            s += '<tr><th>' + key + '</th>' + \
-                 '<td>' + "%8.3f"%(dict[key]*1.0e3) + ' mJy </td></tr>\n'
-        elif (key == 'IRMS') or (key == "QRMS") or (key == "URMS"):
-            s += '<tr><th>' + key + '</th>' + \
-                 '<td>' + "%8.5f"%(dict[key]*1.0e3) + ' mJy </td></tr>\n'
-        elif (key == 'IBeam'):
-            s += '<tr><th> Clean Beam </th>' + \
+            s += '<th>' + key + ':</th>' + \
+                 '<td>' + "%8.5f"%(dict[key]*3.6e3) + ' asec </td>\n'
+        elif (key == 'ISum') or (key == "QSum") or (key == "USum") or (key == "VSum"):
+            s += '<tr><th>' + key + ':</th>' + \
+                 '<td>' + "%8.3f"%(dict[key]*1.0e3) + ' mJy </td>\n'
+        elif (key == 'IPeak') or (key == "QPeak") or (key == "UPeak") or (key == "VPeak"):
+            s += '<th>' + key + ':</th>' + \
+                 '<td>' + "%8.3f"%(dict[key]*1.0e3) + ' mJy </td>\n'
+        elif (key == 'IRMS') or (key == "QRMS") or (key == "URMS") or (key == "VRMS"):
+            s += '<th>' + key + ':</th>' + \
+                 '<td>' + "%8.5f"%(dict[key]*1.0e3) + ' mJy </td>\n'
+        elif (key == 'IBeam') or (key == "QBeam") or (key == "UBeam") or (key == "VBeam"):
+            s += '<th>' + key + ':</th>' + \
                  '<td>' + \
             " %6.4f, %6.4f, %6.1f"%(dict[key][0]*3.6e3, dict[key][1]*3.6e3, dict[key][2]) + \
             ' (asec,asec,deg) </td></tr>\n'
@@ -7182,6 +7201,8 @@ def ALMAImageModel(Cals, sclass, sdisk, sseq, err, \
                     x = Image.newPAImage('I', name, sclass, sdisk, sseq, True, err)
                     Cal['CalModelFlux']  = ALMAGetSumCC(x, err, logfile=logfile, check=check, debug=debug)
         except Exception, exception:
+            Cal["CalNfield"]   = 0   # No model
+            Cal['CalModelFlux']= 0.0
             err.Clear()
     # end ALMAImageModel
     

@@ -1,0 +1,116 @@
+; $Id$
+; FAlign
+;---------------------------------------------------------------
+;! Resample an image cube in frequency
+;# Obit Task 
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2015
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: Bill Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+FAlign   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+FAlign:  Regrid planes of one image to those defined in another
+**PARAM** str 4
+DataType                          "FITS" or "AIPS" type of input
+**PARAM** str 12
+inName                             Image Name (Name) 1
+**PARAM** str 6
+inClass                            Image Name (Class) 1
+**PARAM** int   1
+inSeq             0         9999   Image Name (Seq. #) 1
+**PARAM** int   1
+inDisk            0          999   Disk drive # 1
+**PARAM** str 128
+inFile                             Filename 1 if FITS image
+**PARAM** int 7
+BLC              0.0       4096.0  Bottom left corner of image
+                                     0=>entire image
+**PARAM** int 7
+TRC              0.0       4096.0  Top right corner of image
+                                     0=>entire image
+**PARAM** str 12
+in2Name                            Target Image Name
+**PARAM** str 6
+in2Class                           Target Image Class
+**PARAM** int   1
+in2Seq           0          9999   Target Image Sequence
+**PARAM** int   1
+in2Disk           0          999   Target Image Disk drive
+**PARAM** str 128
+in2File                            Target Image Filename
+**PARAM** str 12
+outName                            Output Image Name
+**PARAM** str 6
+outClass                           Output Image Class
+**PARAM** int   1
+outSeq            0         9999   Output Image Seq. #
+**PARAM** int   1
+outDisk           0          999   output Disk drive
+**PARAM** str 128
+outFile                            Output Filename if FITS image
+**PARAM** int 1 **DEF** 2
+hwidth            1            4   Interpolation half width
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
+----------------------------------------------------------------
+FAlign
+Type: Task
+Use:     Create an image with the third axis on the values given
+in another image (in2...).  Lagrange interpolation is used.
+The compatibility test between the two input images is only that
+the 3rd axis labels are the same.
+   This task is useful for aligning images in frequency/velocity
+before feathering.  Blanked pixels are supported.
+Adverbs:
+  DataType...."FITS" or AIPS
+  inName......Image to be resampled Name(Name). 
+  inClass.....Image to be resampled Class
+  inSeq.......Image to be resampled  Seq. #
+  inDisk......Image to be resampled disk drive # 
+  inFile......Input File Name if a FITS file
+  BLC.........The Bottom Left-hand pixel of the subarray of the image to
+              be analysed. The value (0,0) means (1,1). 1-rel
+              Third axis is defined by second input image.
+  TRC.........The Top Right-hand pixel of the subarray of the image to
+              be analysed.  The value (0,0) means the top right hand
+              corner of the entire image.  1-rel
+  in2Name.....Target image name, only used to define 3rd axis.
+  in2Class....Target image class
+  in2Seq......Target image sequence
+  in2Disk.....Target image disk
+  in2File.....Target image fits name
+  outName.....Output AIPS Name(Name).         
+  outClass....Output AIPS Name(Class).        
+  outSeq......Output AIPS Name(Seq. #).       0 => highest.
+  outDisk.....Output Disk drive # of image. 
+  outFile.....Output File Name if a FITS file
+  hwidth.......Half width of interpolation kernal [1-4] in pixels.
+               Larger values give more accurate interpolation but
+               take longer to operate.
+  taskLog.....Log file to write messages to INSTEAD of the terminal
+              This is useful in long runs or batch files where
+              a bug in the ObitTalk message handling may cause
+              tasks to hang.  Path is absolute or relative to where
+              the task executes.
+----------------------------------------------------------------

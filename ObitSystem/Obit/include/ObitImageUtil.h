@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -152,6 +152,11 @@ void ObitImageUtilInterpolateWeight (ObitImage *inImage, ObitImage *outImage,
 				     ObitImage *outWeight, gboolean memOnly,
 				     olong radius, olong *inPlane, olong *outPlane,
 				     olong hwidth, ObitErr *err);
+
+/** Public: Interpolate a plane on the 3rd axis. */
+void ObitImageUtilInterp3 (ObitImage *inImage, ofloat inPlane,
+			   ObitImage *outImage, olong outPlane, 
+			   olong hwidth, ObitErr *err);
 
 /** Public: Correct (divide) an image by the primary beam pattern of another. */
 void ObitImageUtilPBCorr (ObitImage *inImage, ObitImage *pntImage, ObitImage *outImage, 

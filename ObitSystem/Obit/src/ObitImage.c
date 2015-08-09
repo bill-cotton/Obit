@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -279,6 +279,8 @@ ObitImage* ObitImageFromFileInfo (gchar *prefix, ObitInfoList *inList,
     } else { 
       strncpy (inFile, "No_Filename_Given", 128);
     }
+    inFile[128] = 0;
+    ObitTrimTrail(inFile);  /* No trailing blanks */
     g_free(keyword);
     
     /* input FITS disk */

@@ -150,6 +150,8 @@ gboolean timeInNXTable (ofloat time);
 /* Add positions in Source table for objects in the ephemeris */
 void UpdateEphemSource (ObitUV *outData, ObitSourceEphemerus *srcEphem, 
 			ObitErr *err);
+/* Hack for EVLA data with flipped frequencies and incomplete patch */
+void HackPTB (ObitSDMData *SDMData, ObitErr *err);
 
 /* Program globals */
 gchar *pgmName = "BDFIn";       /* Program name */
@@ -198,6 +200,7 @@ gboolean warnHolo=TRUE;               /* Give holography warning? */
 gboolean *isHolRef;                   /* Array of antenna flags for holography, 
                                          isHoloRef[iant-1]=TRUE => used as reference */
 gboolean newOutput=TRUE;              /* Did output previous exist? */
+gboolean fliped=FALSE;                /* Flip frequency axis for EVLA patch */
 ofloat dayOff = 0.0;                  /* Offset from previous reference date */
 
 /* NX table structure, times only */
@@ -252,6 +255,10 @@ int main ( int argc, char **argv )
   /* Swallow SDM */
   SDMData = ObitSDMDataCreate ("SDM", dataroot, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+
+  /* Hack to patch EVLA screwup */
+  HackPTB(SDMData, err);
+  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit; 
 
   /* Create output, get header info, array geometry, initialize output */
   GetHeader (&outData, SDMData, myInput, err); 
@@ -1238,6 +1245,13 @@ void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData,
   /* Copy selected values from myInput */
   ObitHistoryCopyInfoList (outHistory, pgmName, hiEntries, myInput, err);
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  
+  if (fliped) { /* Was Freq axis flipped for the EVLA? */
+    g_snprintf (hicard, 80, "%s / Frequency axis flipped for EVLA", 
+		pgmName);
+    ObitHistoryWriteRec (outHistory, -1, hicard, err);
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  }
 
   /* Add intent information from ASDM */
   ScanTab    = SDMData->ScanTab;
@@ -4501,7 +4515,7 @@ void UpdateEphemSource (ObitUV *outData, ObitSourceEphemerus *srcEphem,
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
 
   /* loop through table */
-  for (iRow=0; iRow<outTable->myDesc->nrow; iRow++) {
+  for (iRow=1; iRow<=outTable->myDesc->nrow; iRow++) {
     if ((ObitTableSUReadRow (outTable, iRow, outRow, err)
 	 != OBIT_IO_OK) || (err->error>0)) { 
       Obit_log_error(err, OBIT_Error, "ERROR updating Source Table");
@@ -4543,3 +4557,37 @@ void UpdateEphemSource (ObitUV *outData, ObitSourceEphemerus *srcEphem,
   outRow      = ObitTableSURowUnref(outRow);
   outTable    = ObitTableSUUnref(outTable);
 } /* end UpdateEphemSource*/
+
+void HackPTB (ObitSDMData *SDMData, ObitErr *err)
+/*----------------------------------------------------------------------- */
+/*  Hack for EVLA data with flipped frequencies and incomplete patch      */
+/*  If a chanFreqStep<0, make corresponding chanWidth negative            */
+/*  and praise PTB                                                        */
+/*   Input:                                                               */
+/*      SDMData  SDM object                                               */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+{
+  gboolean praise = FALSE;
+  olong i;
+ 
+  /* error checks */
+  if (SDMData==NULL) return;
+  if (err->error) return;
+
+  /* Is this EVLA? */
+  if (!SDMData->isEVLA) return;
+
+  for (i=0; i<SDMData->SpectralWindowTab->nrows; i++) {
+    if (SDMData->SpectralWindowTab->rows[i]->chanFreqStep<0.0) {
+      SDMData->SpectralWindowTab->rows[i]->chanWidth = 
+	-fabs(SDMData->SpectralWindowTab->rows[i]->chanWidth);
+      praise = TRUE;
+    }
+  } /* end loop */
+  /* Inform */
+  fliped = praise;
+  if (praise)
+    Obit_log_error(err, OBIT_InfoErr, "PTB be PRAISED!");
+} /* end HackPTB */

@@ -2106,7 +2106,7 @@ def EVLACalAP(uv, target, ACals, err, \
         setjy.Sources[0] = ACal["Source"]
         if FQid:
             setjy.FreqID=FQid
-        if ACal["CalModelFlux"]>0.0:   # Model given?
+        if ACal["CalModelFlux"]>0.0 and (not ACal["useSetJy"]):  # Model given?
             setjy.ZeroFlux[0] = ACal["CalModelFlux"]
             if "Alpha" in setjy.__dict__:
                 setjy.Alpha = ACal["CalModelSI"]
@@ -5968,7 +5968,8 @@ def EVLAFlagSNClip(uv, SNrow, IFno, poln, err, \
 def EVLACalModel(Source,
                  CalDataType="  ", CalFile=" ", CalName=" ", CalClass=" ", CalSeq=0, CalDisk=0, \
                  CalNfield=0, CalCCVer=1, CalBComp=[1], CalEComp=[0], CalCmethod=" ", CalCmode=" ", CalFlux=0.0, \
-                 CalModelFlux=0.0, CalModelSI=0.0,CalModelPos=[0.,0.], CalModelParm=[0.,0.,0.]):
+                 CalModelFlux=0.0, CalModelSI=0.0,CalModelPos=[0.,0.], CalModelParm=[0.,0.,0.],  \
+                 useSetJy=False):
     """
     Create a calibrator model
 
@@ -5991,6 +5992,7 @@ def EVLACalModel(Source,
     * CalModelFlux= Parameterized model flux density (Jy)
     * CalModelPos = Parameterized model Model position offset (asec)
     * CalModelParm= Parameterized model Model parameters (maj, min, pa, type)
+    * useSetJy    = Flag to use the flux density calculated from SetJy
     """
     out = {
         "Source":Source,
@@ -6011,6 +6013,7 @@ def EVLACalModel(Source,
         "CalModelFlux":CalModelFlux,
         "CalModelPos":CalModelPos,
         "CalModelParm":CalModelParm
+        "useSetJy":useSetJy
         }
     return out
 # end EVLACalModel

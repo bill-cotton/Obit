@@ -360,7 +360,7 @@ def pipeline( aipsSetup, parmFile):
             sclass=parms["outCClass"], doCalib=2, flagVer=2, doBand=1, FOV=parms["CalFOV"], \
             maxPSCLoop=parms["maxPSCLoop"], minFluxPSC=parms["minFluxPSC"], solPInt=parms["solPInt"], \
             maxASCLoop=parms["maxASCLoop"], minFluxASC=parms["minFluxASC"],\
-            solAInt=parms["solAInt"], avgPol=parms["avgPol"],\
+            solAInt=parms["solAInt"], avgPol=parms["avgPol"], Niter=1000, \
             avgIF=parms["avgIF"], minSNR=parms["minSNR"],\
             refAnt=parms["refAnt"], nThreads=nThreads, noScrat=noScrat,\
             logfile=logFile, check=check, debug=debug)
@@ -471,16 +471,32 @@ def pipeline( aipsSetup, parmFile):
         # end poln cal.
     
     
-    # Plot corrected data?
+    # Plot corrected data?  W/ polcal, i.e. in RR,LL...
     if parms["doSpecPlot"] and parms["plotSource"]:
         plotFile = "./"+fileRoot+"Spec.ps"
         retCode = ALMASpectrum(uv, parms["plotSource"], parms["plotTime"], \
                                plotFile, parms["refAnt"], err, \
-                               flagVer=1, Stokes=["XX","YY"], doband=-1,    \
+                               doPol=parms["doPol"], PDVer=parms["PDVer"],  \
+                               flagVer=1, Stokes=["RR","LL"], doband=1,    \
                                check=check, debug=debug, logfile=logFile )
         if retCode!=0:
-            raise  RuntimeError,"Error in Plotting spectrum"
-    
+            raise  RuntimeError,"Error in Plotting parallel spectrum"
+        plotFile = "./"+fileRoot+"RL_Spec.ps"
+        retCode = ALMASpectrum(uv, parms["plotSource"], parms["plotTime"], \
+                                   plotFile, parms["refAnt"], err, \
+                                   doPol=parms["doPol"], PDVer=parms["PDVer"],  \
+                                   flagVer=1, Stokes=["RL","LR"], doband=1,  \
+                                   check=check, debug=debug, logfile=logFile )
+        if retCode!=0:
+            raise  RuntimeError,"Error in Plotting calibrated cross spectrum"
+        plotFile = "./"+fileRoot+"XY_Spec.ps"
+        retCode = ALMASpectrum(uv, parms["plotSource"], parms["plotTime"], \
+                                   plotFile, parms["refAnt"], err, \
+                                   flagVer=1, Stokes=["XY","YX"], doband=-1,  \
+                                   check=check, debug=debug, logfile=logFile )
+        if retCode!=0:
+            raise  RuntimeError,"Error in Plotting uncalibrated cross spectrum"
+        
     # Image targets
     if parms["doImage"]:
         # If targets not specified, image all
@@ -633,7 +649,7 @@ def pipeline( aipsSetup, parmFile):
             PCals=parms["PCals"], ACals=parms["ACals"], \
             BPCals=parms["BPCals"], DCals=parms["DCals"], \
             project = project, session = session, band = band, \
-            dataInUVF = parms["archRoots"][0], archFileID = 66666 )
+            dataInUVF = parms["archRoots"], archFileID = 12345 )
         picklefile = "./"+fileRoot+".ProjReport.pickle"
         SaveObject(projMetadata, picklefile, True) 
         ALMAAddOutFile( picklefile, 'project', 'Project metadata' )

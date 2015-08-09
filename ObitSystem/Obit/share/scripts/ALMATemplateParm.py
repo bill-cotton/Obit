@@ -156,7 +156,7 @@ parms["doPol"]         = parms["doPolCal"]
 parms["targets"] = @TARGET@     # targets, empty = all
 parms["Stokes"]  = "I"          # Stokes to image
 # Multi frequency or narrow band?
-SpanBW = @SPANBW@
+SpanBW = abs(@SPANBW@)
 if SpanBW<=parms['ALMAFreq']*parms["MBmaxFBW"]*2.0:
     parms["doMB"] = False
 parms["MBmaxFBW"] = -parms["MBmaxFBW"]  # IF bins
