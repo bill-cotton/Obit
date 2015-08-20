@@ -102,7 +102,8 @@ void ObitUVCalFlagInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
   me->FGTable     = ObitTableRef(in->FGTable);
   me->LastRowRead = 0;
   me->numSubA     = in->numSubA;
-  me->numIF       = desc->inaxes[desc->jlocif];
+  if (desc->jlocif>0) me->numIF = desc->inaxes[desc->jlocif];
+  else                me->numIF = 1;
   me->numChan     = desc->inaxes[desc->jlocf];
   me->numStok     = desc->inaxes[desc->jlocs];
  
@@ -117,7 +118,8 @@ void ObitUVCalFlagInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
   /* Copy descriptor information */
   me->numAnt    = desc->maxAnt;
   me->numSubA   = desc->numSubA;
-  me->numIF     = desc->inaxes[desc->jlocif];
+  if (desc->jlocif>0) me->numIF = desc->inaxes[desc->jlocif];
+  else                me->numIF = 1;
   me->numChan   = desc->inaxes[desc->jlocf];
 
   /* Open Flagging table  */

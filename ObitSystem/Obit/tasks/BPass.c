@@ -1239,11 +1239,11 @@ ObitUV* InitialCal (ObitInfoList* myInput, ObitUV* scrData, ObitErr* err)
 void  BandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData, 
 		  ObitErr* err)
 {
-  ObitTableSN **SNTables = NULL;
+  ObitTableSN *SNTable = NULL;
   ObitTableBP *BPTable = NULL;
   ObitUVGSolve *solver=NULL;
   olong ichan, nchan, bchan2=0, echan2=0, chinc2=0;
-  olong nif, maxch, maxno, itemp, highVer, ver;
+  olong nif, itemp, highVer, ver;
   gboolean btemp;
   ofloat ftemp;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -1278,9 +1278,6 @@ void  BandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData,
   else
     nif = 1;
 
-  /* Array of SN tables */
-  SNTables = g_malloc0(nchan*sizeof(*SNTables));
-
   /* Create solver */
   solver = ObitUVGSolveCreate("Gain solver");
   /* Save first source id in case it's the only one */
@@ -1311,28 +1308,19 @@ void  BandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData,
     ObitInfoListAlwaysPut(avgData->info, "EChan", OBIT_long, dim, &itemp);
     
     /* Solve one channel and all IFs */
-    SNTables[ichan-1] = ObitUVGSolveCal (solver, avgData, avgData, avgData->mySel, err);
+    SNTable = ObitUVGSolveCal (solver, avgData, avgData, avgData->mySel, err);
     if (err->error) Obit_traceback_msg (err, routine, avgData->name);
+    /* Create BP table first time */
+    if ((BPTable==NULL) && (SNTable->myDesc->nrow>2))
+      BPTable = DummyBPTable (avgData, SNTable, err);
+    /* Copy results to BP Table */
+    if (BPTable) SN2BPTable (SNTable, BPTable, ichan-1, err);
+    if (err->error) Obit_traceback_msg (err, routine, avgData->name);
+    ObitUVZapTable (avgData, "AIPS SN", -1, err);
+    if (err->error) Obit_traceback_msg (err, routine, avgData->name);
+    SNTable = ObitTableSNUnref(SNTable);
   }  /* end channel loop */
 
-  /* Find channel with maximum number of solutions - 
-     use it to create initial BP table */
-  maxch = bchan2; 
-  maxno = 0;
-  for (ichan=bchan2; ichan<=echan2; ichan++) {
-    if (SNTables[ichan-1] && (SNTables[ichan-1]->myDesc->nrow>maxno)) {
-      maxch = ichan; 
-      maxno = SNTables[ichan-1]->myDesc->nrow;
-    }
-  }
-  /* Create BP table */
-  BPTable = DummyBPTable (avgData, SNTables[maxch-1], err);
-
-  /* Loop over SN tables copying to BP */
-  for (ichan=bchan2; ichan<=echan2; ichan++) {
-    SN2BPTable (SNTables[ichan-1], BPTable, ichan-1, err);
-    if (err->error) Obit_traceback_msg (err, routine, avgData->name);
-  } /* end  end loop copying */  
 
   /* Copy BP table to inData */
   ObitUVCopyTables (avgData, inData, NULL, copyBPTable, err);
@@ -1349,10 +1337,6 @@ void  BandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData,
   solver = ObitUVGSolveUnref(solver);
   ObitUVZapTable (avgData, "AIPS BP", -1, err);
   BPTable = ObitTableBPUnref(BPTable );
-  ObitUVZapTable (avgData, "AIPS SN", -1, err);
-  if (err->error) Obit_traceback_msg (err, routine, avgData->name);
-  for (ichan=0; ichan<nchan; ichan++) 
-    SNTables[ichan] = ObitTableSNUnref(SNTables[ichan]);
 
 } /* end BandpassCal  */
 

@@ -237,7 +237,8 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
 {
   ObitUV       *out = NULL;
   ObitInfoType type;
-  olong        Aseq, AIPSuser, disk, cno, i, nvis, nThreads;
+  olong        Aseq, AIPSuser, disk, cno, i, nvis, nThreads, NPIO, maxNPIO;
+  ofloat       visPGByte;
   gboolean     exist;
   gchar        *strTemp, inFile[129], stemp[256];
   gchar        Aname[13], Aclass[7], *Atype = "UV";
@@ -428,6 +429,16 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
   /* Ensure out fully instantiated and OK if it exists */
   if (exist)  ObitUVFullInstantiate (out, TRUE, err);
   if (err->error) Obit_traceback_val (err, routine, "inList", out);
+
+  /* Check that buffer not too large */
+  ObitInfoListGet (out->info, "nVisPIO", &type, dim,  (gpointer)&NPIO, err);
+  /* vis per GByte*/
+  visPGByte = (1024.0*1024.0*1024.0)/(out->myDesc->lrec*4.0);
+  /* 0.5 GByte for 64 bit else 0.1 GByte */
+  if (sizeof(olong*)==8) maxNPIO = (olong)(0.5 * visPGByte);
+  else                   maxNPIO = (olong)(0.1 * visPGByte);
+  NPIO = MIN (NPIO, maxNPIO);
+  ObitInfoListPut (out->info, "nVisPIO", type, dim,  (gpointer)&NPIO, err);
 
   return out;
 } /* end ObitUVFromFileInfo */
@@ -3026,13 +3037,17 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   ObitInfoListGetTest(info, "IFInc", &type, dim, &InfoReal);
   if (type==OBIT_float) itemp = InfoReal.flt + 0.5;
   else                  itemp = InfoReal.itg;
-  if (desc->jlocif>0) itemp = MIN (itemp, desc->inaxes[desc->jlocif]);
-  if (itemp>0) sel->IFInc = itemp;
-  else  sel->IFInc = 1;
-  sel->IFInc = MAX (1, MIN (sel->IFInc, desc->inaxes[desc->jlocif]));
-  /* Reset number of IF for increment */
-  sel->numberIF = 1 + (sel->numberIF-1)/sel->IFInc;
-  sel->numberIF = MAX (1, MIN (sel->numberIF, desc->inaxes[desc->jlocif]));
+  if (desc->jlocif>0) {
+    itemp = MIN (itemp, desc->inaxes[desc->jlocif]);
+    if (itemp>0) sel->IFInc = itemp;
+    else  sel->IFInc = 1;
+    sel->IFInc = MAX (1, MIN (sel->IFInc, desc->inaxes[desc->jlocif]));
+    /* Reset number of IF for increment */
+    sel->numberIF = 1 + (sel->numberIF-1)/sel->IFInc;
+    sel->numberIF = MAX (1, MIN (sel->numberIF, desc->inaxes[desc->jlocif]));
+  } else {
+    sel->IFInc = 1;
+  }
 
   /* Deselected IFs */
   if (sel->IFDrop) g_free(sel->IFDrop); sel->IFDrop=NULL;

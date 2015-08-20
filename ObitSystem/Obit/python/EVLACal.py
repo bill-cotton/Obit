@@ -6012,7 +6012,7 @@ def EVLACalModel(Source,
         "CalModelSI":CalModelSI,
         "CalModelFlux":CalModelFlux,
         "CalModelPos":CalModelPos,
-        "CalModelParm":CalModelParm
+        "CalModelParm":CalModelParm,
         "useSetJy":useSetJy
         }
     return out

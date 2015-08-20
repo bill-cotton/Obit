@@ -382,9 +382,10 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
 
   /* Make sure you can solve for delay */
   avgIF = FALSE;
+  if (inUV->myDesc->jlocf>=0) nif = inUV->myDesc->inaxes[inUV->myDesc->jlocf];
+  else                        nif = 1;
   ObitInfoListGetTest(in->info, "avgIF", &type, dim, &avgIF);
-  Obit_retval_if_fail(((inUV->myDesc->inaxes[inUV->myDesc->jlocf]>1) || 
-		       (avgIF && (inUV->myDesc->inaxes[inUV->myDesc->jlocif]>1))), 
+  Obit_retval_if_fail(((nif>1) || (avgIF && (nif>1))), 
 		       err, outSoln,
 		      "%s: MUST have multiple frequencies to solve for Delay", 
 		      routine);
@@ -426,7 +427,7 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
   /* Only one pol for Stokes I */
   if (inUV->myDesc->crval[inUV->myDesc->jlocs]>0.0)  numPol = 1;
   if (inUV->myDesc->jlocif>=0)
-	numIF  = inUV->myDesc->inaxes[inUV->myDesc->jlocif];
+       numIF  = inUV->myDesc->inaxes[inUV->myDesc->jlocif];
   else numIF  = 1;
   outSoln = newObitTableSNValue(tname, (ObitData*)outUV, &SNver, OBIT_IO_ReadWrite, 
 				numPol, numIF, err);

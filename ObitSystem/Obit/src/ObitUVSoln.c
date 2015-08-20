@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2014                                          */
+/*;  Copyright (C) 2006-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -272,7 +272,8 @@ void ObitUVSolnStartUp (ObitUVSoln *in, ObitErr *err)
   in->numAnt    = desc->maxAnt;
   in->numSubA   = desc->numSubA;
   in->DeltaTime = desc->DeltaTime;
-  in->numIF     = desc->inaxes[desc->jlocif];
+  if (desc->jlocif>=0) in->numIF = desc->inaxes[desc->jlocif];
+  else                 in->numIF = 1;
 
   /* Nothing read yet */
   in->LastRowRead = 0;

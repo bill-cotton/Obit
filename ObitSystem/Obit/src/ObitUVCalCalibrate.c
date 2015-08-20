@@ -119,15 +119,14 @@ void ObitUVCalCalibrateInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
   me->doSNTable   = (in->SNTable!=NULL);
   me->LastRowRead = 0;
   me->numSubA     = in->numSubA;
-  me->numIF       = desc->inaxes[desc->jlocif];
+  if (desc->jlocif>0) me->numIF = desc->inaxes[desc->jlocif];
+  else                me->numIF = 1;
   me->numChan     = desc->inaxes[desc->jlocf];
 
   /* Copy descriptor information */
   me->numAnt    = desc->maxAnt;
   me->numSubA   = desc->numSubA;
   me->DeltaTime = MAX (desc->DeltaTime, sel->InputAvgTime);
-  me->numIF     = desc->inaxes[desc->jlocif];
-  me->numChan   = desc->inaxes[desc->jlocf];
 
   /* Sort/Open calibration table, create row structure, get numPol  */
   if (me->doSNTable) { /* SN */

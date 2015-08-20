@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014                                               */
+/*;  Copyright (C) 2014-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -253,7 +253,8 @@ void ObitThreadGridSetupBase (ObitThreadGrid *in, ObitUV *UVin,
   nvis    = uvDesc->numVisBuff;
   nvisPth = nvis/nGpI;
   /* How many channel/IFs? */
-  nChan      = uvDesc->inaxes[uvDesc->jlocf] * uvDesc->inaxes[uvDesc->jlocif];
+  if (uvDesc->jlocif>=0) nChan = uvDesc->inaxes[uvDesc->jlocf] * uvDesc->inaxes[uvDesc->jlocif];
+  else                   nChan = uvDesc->inaxes[uvDesc->jlocf];
 
   /* structure arrays */
   in->GridInfo              = g_malloc0(sizeof(ObitThreadGridInfo));

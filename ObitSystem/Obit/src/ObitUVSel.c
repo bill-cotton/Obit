@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -260,7 +260,7 @@ ollong ObitUVSelBufferSize (ObitUVDesc* desc, ObitUVSel* sel)
  */
 void ObitUVSelDefault (ObitUVDesc* in, ObitUVSel* sel)
 {
-  olong i;
+  olong i, nif;
 
   /* error checks */
   g_assert (ObitIsA(in, ObitUVDescGetClass()));
@@ -268,10 +268,12 @@ void ObitUVSelDefault (ObitUVDesc* in, ObitUVSel* sel)
 
   /* Selected IFs if needed */
   /* resize? */
-  if (in->inaxes[in->jlocif]!=sel->nifsel) {g_free(sel->IFSel); sel->IFSel=NULL;}
+  if (in->jlocif>=0) nif = in->inaxes[in->jlocif];
+  else               nif = 1;
+  if (nif!=sel->nifsel) {g_free(sel->IFSel); sel->IFSel=NULL;}
   if (sel->IFSel==NULL) {
     sel->ifsel1 = 0;   /* first selected */
-    if (in->jlocif>=0) sel->nifsel = in->inaxes[in->jlocif];
+    if (in->jlocif>=0) sel->nifsel = nif;
     else               sel->nifsel = 1;
     sel->IFSel = g_malloc0(sel->nifsel*sizeof(gboolean));
     for (i=0; i<sel->nifsel; i++) sel->IFSel[i] = TRUE;

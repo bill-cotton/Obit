@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2013                                          */
+/*;  Copyright (C) 2004-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -70,6 +70,10 @@ ObitSourceList* ObitUVUtilWhichSources (ObitUV *inUV, ObitErr *err);
 
 /** Public: Hanning smooth a dataset */
 ObitUV* ObitUVUtilHann (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
+			ObitErr *err);
+
+/** Public: duplicate channels in a dataset */
+ObitUV* ObitUVUtilBloat (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 			ObitErr *err);
 
 /** Public: Average a data set in frequency */

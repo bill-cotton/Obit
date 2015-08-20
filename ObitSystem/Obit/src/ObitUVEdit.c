@@ -5548,7 +5548,8 @@ static olong* medianIFs (ObitUVDesc *inDesc, ObitUVDesc *outDesc, olong begIF)
   }
   
   /* Number of IFs averaged */
-  nifAvg = outDesc->inaxes[outDesc->jlocif] /  inDesc->inaxes[inDesc->jlocif];
+  if (outDesc->jlocif>=0) nifAvg = outDesc->inaxes[outDesc->jlocif] /  inDesc->inaxes[inDesc->jlocif];
+  else                    nifAvg = 1;
   nifAvg = MAX (1, nifAvg);  
   /* If selection - assume no averaging */
   if (begIF>1) nifAvg = 1;
@@ -5557,7 +5558,7 @@ static olong* medianIFs (ObitUVDesc *inDesc, ObitUVDesc *outDesc, olong begIF)
   for (iif=0; iif<nif; iif++) {
     bif = (begIF-1) + iif*nifAvg;
     eif = (begIF-1) + (iif+1)*nifAvg;
-    if (nifAvg==outDesc->inaxes[outDesc->jlocif]) eif = 0;  /* All? */
+    if ((outDesc->jlocif>=0) && (nifAvg==outDesc->inaxes[outDesc->jlocif])) eif = 0;  /* All? */
     if (inDesc->inaxes[outDesc->jlocif]==1) eif = bif+1;
     /* Loop over channels */
     for (ichan=0; ichan<inDesc->inaxes[inDesc->jlocf]; ichan++) {

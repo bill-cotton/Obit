@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -131,7 +131,8 @@ void ObitUVCalBandpassInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
   me->numAnt    = desc->maxAnt;
   me->numSubA   = desc->numSubA;
   me->DeltaTime = desc->DeltaTime;
-  me->numIF     = desc->inaxes[desc->jlocif];
+  if (desc->jlocif>=0) me->numIF = desc->inaxes[desc->jlocif];
+  else                 me->numIF = 1;
   me->numChan   = desc->inaxes[desc->jlocf];
 
   /* Open calibration table  */

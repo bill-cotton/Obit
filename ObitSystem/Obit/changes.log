@@ -2878,3 +2878,25 @@ Obit/src/ObitFArray.c:
 Obit/src/ObitEVLASysPower.c:
   Init: trap no actual table (may be error messages)
 8 Aug, 2015, svn ver. 516
+
+New task to duplicate channels in UV data, bug fixes
+Obit/TDF/Bloat.TDF Obit/tasks/Bloat.c:
+  New task to duplicate channels, "undo" Hanning descm.
+Obit/src/ObitUVCalCalibrate.c Obit/src/ObitGPUSkyModel.c Obit/src/ObitPolnCalFit.c
+Obit/src/ObitThreadGrid.c Obit/src/ObitUV.c Obit/src/ObitUVCalBandpass.c
+Obit/src/ObitUVCal.c Obit/src/ObitUVCalFlag.c Obit/src/ObitUVCalPolarization.c
+Obit/src/ObitUVEdit.c Obit/src/ObitUVGSolveWB.c Obit/src/ObitUVSel.c
+Obit/src/ObitUVSoln.c:
+  various: trap no IF axis
+Obit/tasks/BPass.c:
+  Write BPass table each channel rather than saving SN tables.
+Obit/src/ObitUV.c:
+  FromFileInfo: Limit nVisPIO
+Obit/src/ObitDoppler.c:
+  CVel: trap out of buffer indexing
+Obit/python/EVLACal.py:
+  EVLACalModel: fix syntax bug
+Obit/src/ObitUVUtil.c Obit/include/ObitUVUtil.h:
+  BlAvgTF: double size of sort buffer (2 GByte)
+  Bloat: Add frequency channel duplication fn
+20 Aug, 2015, svn ver 517.

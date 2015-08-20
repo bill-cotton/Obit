@@ -273,7 +273,8 @@ void ObitUVCalStart (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
   in->numChan   = sel->numberChann;
   in->bChan     = sel->startChann;
   in->eChan     = sel->startChann + sel->numberChann - 1;
-  in->numIF     = inDesc->inaxes[inDesc->jlocif];
+  if (inDesc->jlocif>=0) in->numIF = inDesc->inaxes[inDesc->jlocif];
+  else                   in->numIF = 1;
   in->numIF     = sel->numberIF;
   in->bIF       = sel->startIF;
   in->eIF       = sel->startIF + sel->numberIF - 1;
@@ -861,7 +862,8 @@ void ObitUVCalSmoothInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
   in->smooth[2]   = sel->smooth[2];
 
   /* Copy descriptor information */
-  in->numIF       = desc->inaxes[desc->jlocif];
+  if (desc->jlocif>=0) in->numIF = desc->inaxes[desc->jlocif];
+  else                 in->numIF = 1;
   in->numChan     = desc->inaxes[desc->jlocf];
   in->numStok     = desc->inaxes[desc->jlocs];
   in->numSubA     = desc->numSubA;

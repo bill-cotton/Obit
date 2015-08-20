@@ -958,7 +958,8 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
   iChan   = 1 + in->ChInc/2;
   nchleft = EChan;
   BIF     = 1;
-  EIF     = in->inDesc->inaxes[in->inDesc->jlocif];
+  if (in->inDesc->jlocif>=0) EIF = in->inDesc->inaxes[in->inDesc->jlocif];
+  else                      EIF = 1;
   iIF     = 1;
   done    = FALSE;
 
@@ -1411,7 +1412,8 @@ static void WriteOutput (ObitPolnCalFit* in, ObitUV *outUV,
     /* How many of things? Use underlying sizes */
     IODesc = (ObitUVDesc*)outUV->myIO->myDesc;
     numPol  = MIN (2,IODesc->inaxes[IODesc->jlocs]);
-    numIF   = IODesc->inaxes[IODesc->jlocif];
+    if (IODesc->jlocif>=0) numIF = IODesc->inaxes[IODesc->jlocif];
+    else                  numIF = 1;
     numChan = IODesc->inaxes[IODesc->jlocf];
 
    /* Source table */
@@ -1468,7 +1470,8 @@ static void WriteOutput (ObitPolnCalFit* in, ObitUV *outUV,
   } else { /* Make sure output tables defined */
     /* How many of things? */
     numPol  = MIN (2,in->outDesc->inaxes[in->outDesc->jlocs]);
-    numIF   = in->outDesc->inaxes[in->outDesc->jlocif];
+    if (in->outDesc->jlocif>=0) numIF = in->outDesc->inaxes[in->outDesc->jlocif];
+    else                       numIF = 1;
     numChan = in->outDesc->inaxes[in->outDesc->jlocf];
 
     if (!in->CPTable) 
@@ -1797,7 +1800,8 @@ static void InitSourceTab(ObitPolnCalFit* in, ObitErr *err)
   /* Set header values */
   in->CPTable->FreqID = 0;
 
-  nif   = in->outDesc->inaxes[in->outDesc->jlocif];
+  if (in->outDesc->jlocif>=0) nif = in->outDesc->inaxes[in->outDesc->jlocif];
+  else                       nif = 1;
   nchan = in->outDesc->inaxes[in->outDesc->jlocf];
 
  /* Initialize Row */
@@ -1853,7 +1857,8 @@ static void InitInstrumentalTab(ObitPolnCalFit* in, ObitErr *err)
   strncpy (in->PDTable->polType, "ORI-ELP", MAXKEYCHARTABLEPD);
 
   nant  = in->nant;
-  nif   = in->outDesc->inaxes[in->outDesc->jlocif];
+  if (in->outDesc->jlocif>=0) nif = in->outDesc->inaxes[in->outDesc->jlocif];
+  else                        nif = 1;
   nchan = in->outDesc->inaxes[in->outDesc->jlocf];
   npol  = MIN (2,in->outDesc->inaxes[in->outDesc->jlocs]);
 
@@ -1913,7 +1918,8 @@ static void InitBandpassTab(ObitPolnCalFit* in, ObitErr *err)
   
   /* Initialize */
   nant  = in->nant;
-  nif   = in->outDesc->inaxes[in->outDesc->jlocif];
+  if (in->outDesc->jlocif>=0) nif = in->outDesc->inaxes[in->outDesc->jlocif];
+  else                       nif = 1;
   nchan = in->outDesc->inaxes[in->outDesc->jlocf];
   npol  = MIN (2,in->outDesc->inaxes[in->outDesc->jlocs]);
 
@@ -1993,7 +1999,8 @@ static void UpdateSourceTab(ObitPolnCalFit* in, ObitErr *err)
   ObitTableCPSetRow (in->CPTable, row, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
  
-  nif   = in->outDesc->inaxes[in->outDesc->jlocif];
+  if (in->outDesc->jlocif>=0) nif = in->outDesc->inaxes[in->outDesc->jlocif];
+  else                       nif = 1;
   nchan = in->outDesc->inaxes[in->outDesc->jlocf];
 
   /* 0-rel Channels covered in ChInc */
@@ -2062,7 +2069,8 @@ static void UpdateInstrumentalTab(ObitPolnCalFit* in, gboolean isOK,
   ObitTablePDSetRow (in->PDTable, row, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
  
-  nif   = in->outDesc->inaxes[in->outDesc->jlocif];
+  if (in->outDesc->jlocif>=0) nif = in->outDesc->inaxes[in->outDesc->jlocif];
+  else                       nif = 1;
   nchan = in->outDesc->inaxes[in->outDesc->jlocf];
   npol  = MIN (2,in->outDesc->inaxes[in->outDesc->jlocs]);
 
@@ -2145,7 +2153,8 @@ static void UpdateBandpassTab(ObitPolnCalFit* in, gboolean isOK, ObitErr *err)
   ObitTableBPSetRow (in->BPTable, row, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
  
-  nif   = in->outDesc->inaxes[in->outDesc->jlocif];
+  if (in->outDesc->jlocif>=0) nif = in->outDesc->inaxes[in->outDesc->jlocif];
+  else                       nif = 1;
   nchan = in->outDesc->inaxes[in->outDesc->jlocf];
   npol  = MIN (2,in->outDesc->inaxes[in->outDesc->jlocs]);
 
@@ -2224,7 +2233,8 @@ static void FitSpectra (ObitPolnCalFit *in, ObitErr *err)
     if (err->error) return;  /* Error exists? */
 
     /* Dummy error array */
-    nfreq = in->inDesc->inaxes[in->inDesc->jlocif];
+    if (in->inDesc->jlocif>=0) nfreq = in->inDesc->inaxes[in->inDesc->jlocif];
+    else                       nfreq = 1;
     sigma = g_malloc(nfreq*sizeof(ofloat));
     for (i=0; i<nfreq; i++) sigma[i] = 0.01;
     nterm = MIN (3, nfreq);

@@ -293,7 +293,8 @@ void ObitGPUSkyModelDFTInit (ObitGPUSkyModel *in,  Obit *skyModel,
   in->gpuInfo->h_visInfo->chanb  = uvdata->mySel->startChann-1;;
   in->gpuInfo->h_visInfo->chane  = uvdata->mySel->startChann+uvdata->mySel->numberChann-2;
   in->gpuInfo->h_visInfo->incf   = inDesc->incf/3;  /* In units of correlations */
-  in->gpuInfo->h_visInfo->nIF    = inDesc->inaxes[inDesc->jlocif];
+  if (inDesc->jlocif>0) in->gpuInfo->h_visInfo->nIF = inDesc->inaxes[inDesc->jlocif];
+  else                   in->gpuInfo->h_visInfo->nIF = 1;
   in->gpuInfo->h_visInfo->IFb    = uvdata->mySel->startIF-1;
   in->gpuInfo->h_visInfo->IFe    = uvdata->mySel->startIF+uvdata->mySel->numberIF-2;
   in->gpuInfo->h_visInfo->incif  = inDesc->incif/3;

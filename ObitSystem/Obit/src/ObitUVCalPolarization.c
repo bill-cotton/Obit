@@ -122,7 +122,8 @@ void ObitUVCalPolarizationInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
   /* Copy descriptor information */
   me->numAnt    = desc->maxAnt;
   me->numSubA   = desc->numSubA;
-  me->numIF     = desc->inaxes[desc->jlocif];
+  if (desc->jlocif>=0) me->numIF = desc->inaxes[desc->jlocif];
+  else                 me->numIF = 1;
   me->numChan   = desc->inaxes[desc->jlocf];
   me->polType   = OBIT_UVPoln_Unknown;
 

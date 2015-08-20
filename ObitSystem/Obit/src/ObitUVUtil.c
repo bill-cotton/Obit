@@ -53,6 +53,10 @@ static ofloat AvgFSetDesc (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
 			   olong *corChan, olong *corIF, olong *corStok, gboolean *corMask,
 			   ObitErr *err);
 
+/** Modify output descriptor from effects of frequency bloating */
+static ofloat BloatFSetDesc (ObitUVDesc *inDesc, ObitUVDesc *outDesc, 
+			     olong nBloat, ObitErr *err);
+
 /** Average visibility in frequency */
 static void AvgFAver (ObitUVDesc *inDesc, ObitUVDesc *outDesc, 
 		      olong NumChAvg, olong *ChanSel, gboolean doAvgAll, 
@@ -65,6 +69,11 @@ static void Hann (ObitUVDesc *inDesc, ObitUVDesc *outDesc, gboolean doDescm,
 		  olong *corChan, olong *corIF, olong *corStok, gboolean *corMask,
 		  ofloat *inBuffer, ofloat *outBuffer, ofloat *work, 
 		  ObitErr *err);
+
+/** Duplicate channels */
+static void Bloat (ObitUVDesc *inDesc, ObitUVDesc *outDesc, olong nBloat,
+		   gboolean unHann, ofloat *inBuffer, ofloat *outBuffer, 
+		   ObitErr *err);
 
 /** Copy selected channels */
 static void FreqSel (ObitUVDesc *inDesc, ObitUVDesc *outDesc, 
@@ -1491,6 +1500,182 @@ ObitUV* ObitUVUtilHann (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 } /* end ObitUVUtilHann */
 
 /**
+ * Duplicate channels in input to output.
+ * \param inUV     Input uv data to average, 
+ *                 Any request for calibration, editing and selection honored
+ * Control parameters are on the info member.
+ * \li "unHann"  OBIT_bool (1,1,1) Undo previous Hanning? [def FALSE]
+ * \li "nBloat"  OBIT_int  (1,1,1) Number of duplicates of each channel [def 2]
+ *              
+ * \param scratch  True if scratch file desired, will be same type as inUV.
+ * \param outUV    If not scratch, then the previously defined output file
+ *                 May be NULL for scratch only
+ *                 If it exists and scratch, it will be Unrefed
+ * \param err      Error stack, returns if not empty.
+ * \return the frequency averaged ObitUV.
+ */
+ObitUV* ObitUVUtilBloat (ObitUV *inUV, gboolean scratch, ObitUV *outUV, 
+			ObitErr *err)
+{
+  ObitIOCode iretCode, oretCode;
+  gboolean doCalSelect, unHann;
+  gchar *exclude[]={"AIPS CL", "AIPS SN", "AIPS FG", "AIPS CQ", "AIPS WX",
+		    "AIPS AT", "AIPS CT", "AIPS OB", "AIPS IM", "AIPS MC",
+		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
+		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
+		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD",
+		    NULL};
+  gchar *sourceInclude[] = {"AIPS SU", NULL};
+  olong i, j, indx, jndx;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM];
+  ObitIOAccess access;
+  ObitUVDesc *inDesc, *outDesc;
+  gchar *today=NULL;
+  olong nBloat=2;
+  ofloat scale;
+  gchar *routine = "ObitUVUtilBloat";
+ 
+  /* error checks */
+  if (err->error) return outUV;
+  g_assert (ObitUVIsA(inUV));
+  if (!scratch && (outUV==NULL)) {
+    Obit_log_error(err, OBIT_Error,"%s Output MUST be defined for non scratch files",
+		   routine);
+      return outUV;
+  }
+
+  /* Selection/calibration/editing of input? */
+  doCalSelect = FALSE;
+  ObitInfoListGetTest(inUV->info, "doCalSelect", &type, (gint32*)dim, &doCalSelect);
+  if (doCalSelect) access = OBIT_IO_ReadCal;
+  else access = OBIT_IO_ReadOnly;
+
+  /* test open to fully instantiate input and see if it's OK */
+  iretCode = ObitUVOpen (inUV, access, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
+    Obit_traceback_val (err, routine, inUV->name, outUV);
+
+  /* Create scratch? */
+  if (scratch) {
+    if (outUV) outUV = ObitUVUnref(outUV);
+    outUV = newObitUVScratch (inUV, err);
+  } else { /* non scratch output must exist - clone from inUV */
+    outUV->myDesc = ObitUVDescCopy (inUV->myDesc, outUV->myDesc, err);
+    /*ObitUVClone (inUV, outUV, err);*/
+  }
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, inUV);
+
+  /* copy Descriptor */
+  outUV->myDesc = ObitUVDescCopy(inUV->myDesc, outUV->myDesc, err);
+ 
+  /* How much bloat output? */
+  nBloat = 2;
+  ObitInfoListGetTest(inUV->info, "nBloat", &type, dim, &nBloat);
+  unHann = FALSE;
+  ObitInfoListGetTest(inUV->info, "unHann", &type, dim, &unHann);
+  if (unHann) nBloat = 2;
+
+  /* Creation date today */
+  today = ObitToday();
+  strncpy (outUV->myDesc->date, today, UVLEN_VALUE-1);
+  if (today) g_free(today);
+  
+  /* Get descriptors */
+  inDesc  = inUV->myDesc;
+  outDesc = outUV->myDesc;
+
+  /* Modify descriptor for affects of averaging, get u,v,w scaling */
+  ObitUVGetFreq (inUV, err);   /* Make sure frequencies updated */
+  scale = BloatFSetDesc (inDesc, outDesc, nBloat, err);
+  if (err->error) goto cleanup;
+
+  /* test open output */
+  oretCode = ObitUVOpen (outUV, OBIT_IO_WriteOnly, err);
+  /* If this didn't work try OBIT_IO_ReadWrite */
+  if ((oretCode!=OBIT_IO_OK) || (err->error)) {
+    ObitErrClear(err);
+    oretCode = ObitUVOpen (outUV, OBIT_IO_ReadWrite, err);
+  }
+  /* if it didn't work bail out */
+  if ((oretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
+
+  /* Copy tables before data */
+  iretCode = ObitUVCopyTables (inUV, outUV, exclude, NULL, err);
+  /* If multisource out then copy SU table, multiple sources selected or
+   sources deselected suggest MS out */
+  if ((inUV->mySel->numberSourcesList>1) || (!inUV->mySel->selectSources))
+  iretCode = ObitUVCopyTables (inUV, outUV, NULL, sourceInclude, err);
+  /* FQ table selection */
+  iretCode = ObitTableFQSelect (inUV, outUV, NULL, 0.0, err);
+  /* Correct FQ table for averaging 
+     FQSel (outUV, NumChAvg, 1, err); done in FQSelect(?) */
+  if (err->error) goto cleanup;
+
+  /* reset to beginning of uv data */
+  iretCode = ObitIOSet (inUV->myIO,  inUV->info, err);
+  oretCode = ObitIOSet (outUV->myIO, outUV->info, err);
+  if (err->error) goto cleanup;
+
+  /* Close and reopen input to init calibration which will have been disturbed 
+     by the table copy */
+  iretCode = ObitUVClose (inUV, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
+
+  iretCode = ObitUVOpen (inUV, access, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
+
+  /* we're in business, average data */
+  while ((iretCode==OBIT_IO_OK) && (oretCode==OBIT_IO_OK)) {
+    if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
+    else iretCode = ObitUVRead (inUV, inUV->buffer, err);
+    if (iretCode!=OBIT_IO_OK) break;
+    /* How many */
+    outDesc->numVisBuff = inDesc->numVisBuff;
+
+    /* Modify data */
+    for (i=0; i<inDesc->numVisBuff; i++) { /* loop over visibilities */
+      /* Copy random parameters */
+      indx = i*inDesc->lrec;
+      jndx = i*outDesc->lrec;
+      for (j=0; j<inDesc->nrparm; j++) 
+	outUV->buffer[jndx+j] =  inUV->buffer[indx+j];
+
+      /* Scale u,v,w for new reference frequency */
+      outUV->buffer[jndx+outDesc->ilocu] *= scale;
+      outUV->buffer[jndx+outDesc->ilocv] *= scale;
+      outUV->buffer[jndx+outDesc->ilocw] *= scale;
+
+      /* Smooth data */
+      indx += inDesc->nrparm;
+      jndx += outDesc->nrparm;
+      /* duplicate channels */
+      Bloat (inUV->myDesc, outUV->myDesc, nBloat, unHann, 
+	    &inUV->buffer[indx], &outUV->buffer[jndx], err);
+      if (err->error) goto cleanup;
+    } /* end loop over visibilities */
+
+    /* Write */
+    oretCode = ObitUVWrite (outUV, outUV->buffer, err);
+    if (err->error) goto cleanup;
+  } /* end loop processing data */
+  
+  /* check for errors */
+  if ((iretCode > OBIT_IO_EOF) || (oretCode > OBIT_IO_EOF) ||
+      (err->error)) goto cleanup;
+
+  /* Cleanup */
+ cleanup:
+  /* close files */
+  iretCode = ObitUVClose (inUV, err);
+  oretCode = ObitUVClose (outUV, err);
+  if ((iretCode!=OBIT_IO_OK) || (oretCode!=OBIT_IO_OK) || (err->error))
+    Obit_traceback_val (err, routine, outUV->name, outUV);
+  
+  return outUV;
+} /* end ObitUVUtilBloat */
+
+/**
  * Spectrally average the data inObitUV.
  * \param inUV     Input uv data to average, 
  *                 Any request for calibration, editing and selection honored
@@ -2287,9 +2472,9 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
     /* Make sort buffer big  ~ 0.5 Gbyte */
     nvis = 500000000 / (outUV->myDesc->lrec*sizeof(ofloat));  
   } else if (sizeof(olong*)==8) {  /* 64 bit OS */
-    /* Make sort buffer big  ~ 1 Gbyte */
-    nvis = 1000000000 / (outUV->myDesc->lrec*sizeof(ofloat));  
-  } else nvis = 1000000000 / (outUV->myDesc->lrec*sizeof(ofloat)); 
+    /* Make sort buffer big  ~ 2 Gbyte */
+    nvis = 2000000000 / (outUV->myDesc->lrec*sizeof(ofloat));  
+  } else nvis = 2000000000 / (outUV->myDesc->lrec*sizeof(ofloat)); 
   nvis = MIN (nvis, inUV->myDesc->nvis);
   outBuffer = ObitUVSortBufferCreate ("Buffer", outUV, nvis, err);
   if (err->error) goto cleanup;
@@ -4003,6 +4188,41 @@ static ofloat AvgFSetDesc (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
 } /* end AvgFSetDesc */
 
 /**
+ * Modify descriptor for duplicatiing channels
+ * \param inDesc   Input UV descriptor
+ * \param outDesc  Output UV descriptor to be modified, assumed mostly copied.
+ * \param nBloat   Number of time to duplicate channels 
+ * \param err      Error stack, returns if not empty.
+ * \return scaling factor for U,V,W to new reference frequency
+ */
+static ofloat BloatFSetDesc (ObitUVDesc *inDesc, ObitUVDesc *outDesc, 
+			     olong nBloat, ObitErr *err)
+{
+  olong nchan;
+  ofloat scale = 1.0;
+
+  /* error checks */
+  if (err->error) return scale;
+  g_assert(ObitUVDescIsA(inDesc));
+  g_assert(ObitUVDescIsA(outDesc));
+
+  /* Modify */
+  nchan = (inDesc->inaxes[inDesc->jlocf]+nBloat-1) * nBloat;
+  outDesc->inaxes[outDesc->jlocf] = nchan;
+  outDesc->cdelt[outDesc->jlocf]  = inDesc->cdelt[inDesc->jlocf] / nBloat;
+  outDesc->crval[outDesc->jlocf]  = inDesc->crval[inDesc->jlocf] - 
+    0.5 * outDesc->cdelt[outDesc->jlocf];
+  scale = outDesc->crval[outDesc->jlocf] / inDesc->crval[inDesc->jlocf];
+
+  /* Alternate frequency/vel */
+  outDesc->altCrpix = 1.0 + (outDesc->altCrpix-1.0)*nBloat;
+  outDesc->altRef   = inDesc->altRef;
+
+  return scale;
+  
+} /* end BloatFSetDesc */
+
+/**
  * Average visibility in frequency
  * \param inDesc    Input UV descriptor
  * \param outDesc   Output UV descriptor to be modified
@@ -4194,6 +4414,65 @@ static void Hann (ObitUVDesc *inDesc, ObitUVDesc *outDesc, gboolean doDescm,
   } /* end Stokes loop */
 
 } /* end Hann */
+
+/**
+ * Duplicate channels 
+ * \param inDesc   Input UV descriptor
+ * \param outDesc  Output UV descriptor to be modified
+ * \param nBloat   Number of duplicates of each input channel
+ * \param unHann   If true, undo prior Hanning
+ * \param inBuffer  Input buffer (data matrix)
+ * \param outBuffer Output buffer (data matrix)
+ * \param err       Error stack, returns if not empty.
+ */
+static void Bloat (ObitUVDesc *inDesc, ObitUVDesc *outDesc, olong nBloat,
+		   gboolean unHann, ofloat *inBuffer, ofloat *outBuffer, 
+		   ObitErr *err)
+{
+  olong j, indx, jndx, jf, jif, js, nochan, noif;
+  olong nchan, nstok, iincs, iincf, iincif, incs, incf, incif;
+  ofloat WtFact;
+
+  /* error checks */
+  if (err->error) return;
+
+  WtFact = 1.0 / nBloat;     /* Weight factor */
+  if (unHann) WtFact = 1.0;  /* Undoing Hanning? */
+  iincs  = inDesc->incs;
+  iincf  = inDesc->incf;
+  iincif = inDesc->incif;
+  nchan = inDesc->inaxes[inDesc->jlocf];
+  if (inDesc->jlocs>=0) nstok = inDesc->inaxes[inDesc->jlocs];
+  else nstok = 1;
+  incs  = outDesc->incs;
+  incf  = outDesc->incf;
+  incif = outDesc->incif;
+  nochan = outDesc->inaxes[outDesc->jlocf];
+  if (outDesc->jlocif>=0) noif = outDesc->inaxes[outDesc->jlocif];
+  else noif = 1;
+
+  /* Duplicate to output */
+  for (js=0; js<nstok; js++) {  /* Stokes loop */
+    for (jif=0; jif<noif; jif++) {  /* IF loop */
+      for (jf=0; jf<nchan; jf++) {  /* Frequency loop */
+	indx = js*iincs + jif*iincif + jf*iincf;
+	for (j=0; j<nBloat; j++) {
+	  jndx = (jf*nBloat+j)*incf + jif*incif + js*incs;
+	  /* Check for zero data, final channels */
+	  if ((inBuffer[indx+2]>0.0) && ((jf*nBloat+j)<nochan)) {
+	    outBuffer[jndx]   = inBuffer[indx];
+	    outBuffer[jndx+1] = inBuffer[indx+1];
+	    outBuffer[jndx+2] = inBuffer[indx+2] * WtFact;
+	  } else {
+	    outBuffer[jndx]   = 0.0;
+	    outBuffer[jndx+1] = 0.0;
+	    outBuffer[jndx+2] = 0.0;
+	  }
+	} /* end duplication */
+      } /* end Frequency loop */
+    } /* end IF loop */
+  } /* end Stokes loop */
+} /* end Bloat */
 
 /**
  * Select visibility in frequency
