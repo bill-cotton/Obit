@@ -66,6 +66,10 @@ void  ObitUVWCalcClear (gpointer in);
 /** Private: Set Class function pointers. */
 static void ObitUVWCalcClassInfoDefFn (gpointer inClass);
 
+/** Private: Set Subarray stuff */
+static void ObitUVWCalcSetSubA (ObitUVWCalc *in, olong subA, ObitErr *err);
+
+
 /*----------------------Public functions---------------------------*/
 /**
  * Constructor.
@@ -208,10 +212,7 @@ ObitUVWCalc* ObitUVWCalcCreate (gchar* name, ObitUV *inUV, ObitErr *err)
 {
   ObitUVWCalc  *out=NULL;
   ObitTableSU  *SUTable=NULL;
-  ObitTableAN  *ANTable=NULL;
-  olong        i, ver, numPCal, numOrb, numIF, cnt;
-  odouble     arrX, arrY, arrZ;
-  gchar *ArrName = NULL;
+  olong        ver, numIF;
   gchar *routine = "ObitUVWCalcCreate";
   
   /* error checks */
@@ -246,79 +247,15 @@ ObitUVWCalc* ObitUVWCalcCreate (gchar* name, ObitUV *inUV, ObitErr *err)
     ObitPrecessUVJPrecessApp (inUV->myDesc, out->mySource);
   }
 
-  /* Convert AN table into AntennaList */
-  ver = 1;
-  numPCal  = 0;
-  numOrb   = 0;
-  ANTable = newObitTableANValue (inUV->name, (ObitData*)inUV, &ver, 
-				 numIF, numOrb, numPCal, OBIT_IO_ReadOnly, err);
-  if (ANTable) out->AntList = ObitTableANGetList (ANTable, err);
-  if (err->error) Obit_traceback_val (err, routine, inUV->name, out);
-  ANTable = ObitTableANUnref(ANTable);
-
-  /* maximum antenna number */
-  out->maxAnt = 0;
-  for (i=0; i<out->AntList->number; i++) 
-    out->maxAnt = MAX (out->maxAnt, out->AntList->ANlist[i]->AntID);
-
-  /* (1-rel) Index into list */
-  out->antIndex = g_malloc0((out->maxAnt+2)*sizeof(olong));
-  for (i=0; i<out->maxAnt; i++) out->antIndex[i] = -1;
-  for (i=0; i<out->AntList->number; i++) {
-    if (out->AntList->ANlist[i]->AntID>=0)
-      out->antIndex[out->AntList->ANlist[i]->AntID] = i;
-  }
-
-
-  /* Average  antenna location */
-  cnt  = 0;
-  arrX = arrY = arrZ = 0.0;
-  for (i=0; i<out->maxAnt; i++) {
-    out->AntList->ANlist[i]->AntLong = atan2 (out->AntList->ANlist[i]->AntXYZ[1], 
-					      out->AntList->ANlist[i]->AntXYZ[0]);
-    if (fabs(out->AntList->ANlist[i]->AntXYZ[1])>1.0) {
-      cnt++;
-      arrX += out->AntList->ANlist[i]->AntXYZ[0];
-      arrY += out->AntList->ANlist[i]->AntXYZ[1];
-      arrZ += out->AntList->ANlist[i]->AntXYZ[2];
-    }
-  }
-  arrX /= cnt;
-  arrY /= cnt;
-  arrZ /= cnt;
-
-  /* Antenna cordinate in celestial frame arrays */
-  out->nant = out->AntList->number;
-  out->xm   = g_malloc0(out->nant*sizeof(odouble));
-  out->ym   = g_malloc0(out->nant*sizeof(odouble));
-  out->zm   = g_malloc0(out->nant*sizeof(odouble));
-
-  out->curTime = -1.0e20;  /* Current time */
-  ObitPrecessGST0 (out->myData->myDesc->JDObs, &out->GSTUTC0, &out->Rate);
-
-  /* position for diurnal abberation correction */
-  out->obsPos[0] = atan2(arrZ, sqrt(arrX*arrX + arrY*arrY));
-  out->obsPos[1] = -atan2(-arrY, arrX);
-  out->obsPos[2] = sqrt(arrX*arrX + arrY*arrY + arrZ*arrZ);
- 
-  /* Flip direction? GMRT, LOFAR, KAT-7
-   Use name in AN table if given, else teles in descriptor */
-  ArrName = out->AntList->ArrName;
-  if (!strncmp("    ",   out->AntList->ArrName, 4)) 
-    ArrName = out->myData->myDesc->teles;
-  if (!strncmp("GMRT",   ArrName, 4)) out->doFlip = TRUE;
-  if (!strncmp("LOFAR",  ArrName, 5)) out->doFlip = TRUE;
-  if (!strncmp("KAT-7",  ArrName, 5)) out->doFlip = TRUE;
-
   return out;
 } /* end ObitUVWCalcCreate */
 
 /**
  * Calculate the u,v,w for a given source, time, baseline
  * \param in   The object with antenna/source information
- * \param time Time (days) wrt reference day for subA
+ * \param time Time (days) wrt reference day for subA, offset =5*(subA-1)
  * \param SId  Source identifier
- * \param subA Subarray number, only one supported for now
+ * \param subA Subarray number, updates if needed
  * \param ant1 First antenna number of baseline
  * \param ant2 Second antenna number of baseline
  * \param uvw  [out] [u,v,w] array in wavelengths at reference frequency
@@ -328,7 +265,7 @@ void ObitUVWCalcUVW (ObitUVWCalc *in, ofloat time, olong SId,
 		     olong subA, olong ant1, olong ant2, ofloat *uvw, 
 		     ObitErr *err)
 {
-  ofloat t, u, v, w, equin, uvrot, vw, basex, basey, basez, polar[2];
+  ofloat t,tt, u, v, w, equin, uvrot, vw, basex, basey, basez, polar[2];
   olong i, ia1, ia2, iant;
   odouble xm, ym, zm, length;
   odouble dRa, dDec, delta, RAOff, DecOff, RAMeanR, DecMeanR, RAAppR, DecAppR;
@@ -337,33 +274,39 @@ void ObitUVWCalcUVW (ObitUVWCalc *in, ofloat time, olong SId,
 
   /* error checks */
   if (err->error) return;
-  Obit_return_if_fail((subA<=1), err,
-		      "%s: Only one subarray supported", routine);
-  Obit_return_if_fail(((ant1>=0) && (ant1<=in->maxAnt)), err,
-		      "%s: Ant1 %d out of bounds", routine, ant1);
-  Obit_return_if_fail(((ant2>=0) && (ant2<=in->maxAnt)), err,
-		      "%s: Ant2 %d out of bounds", routine, ant2);
-
   /* Initialize output */
   uvw[0] = uvw[1] = uvw[2] = 0.0;
 
   /* Done for auto correlations */
   if (ant1==ant2) return;
 
+  /* Update subarray if necessary */
+  if (subA!=in->subArr) ObitUVWCalcSetSubA (in, subA, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Check antenna numbers */
+  Obit_return_if_fail(((ant1>=0) && (ant1<=in->maxAnt)), err,
+		      "%s: Ant1 %d out of bounds", routine, ant1);
+  Obit_return_if_fail(((ant2>=0) && (ant2<=in->maxAnt)), err,
+		      "%s: Ant2 %d out of bounds", routine, ant2);
+
   /* Antenna indices */
   ia1 = in->antIndex[ant1];
   ia2 = in->antIndex[ant2];
 
+  /* Subarray offset */
+  tt = time - (subA-1)*5.0;
+  
   /* Check range */
   if ((ia1<0) || (ia2<0)) return;
   if ((ia1>=in->maxAnt) || (ia2>=in->maxAnt)) return;
 
       /* New time? Compute antenna coordinates in celestial frame */
-  if (time>in->curTime) {
-    in->curTime = time;
+  if (tt>in->curTime) {
+    in->curTime = tt;
     /* Current UTC Julian Date corrected to UT1*/
-    t      =  time + in->AntList->ut1Utc + in->AntList->dataUtc;
-    in->JD = in->myData->myDesc->JDObs + t; 
+    t      =  tt + in->AntList->ut1Utc + in->AntList->dataUtc;
+    in->JD = in->AntList->JD + t; 
     /* Rotation angle for antennas to celestial */
     GSTRA  = (in->GSTUTC0 + 24*in->Rate*t) * 15 * DG2RAD;
     /* Equinox */
@@ -384,8 +327,8 @@ void ObitUVWCalcUVW (ObitUVWCalc *in, ofloat time, olong SId,
       if (length==0.0) DecAnt = asin(0.0);
       else             DecAnt = asin(zm/length);
      /* Precess from apparent to mean position */
-      ObitPrecessPrecess (in->JD, equin, deldat, -1, FALSE, in->obsPos, polar,
-			  &RAAnt0, &DecAnt0, &RAAnt, &DecAnt);
+      ObitPrecessPrecess (in->AntList->JD, equin, deldat, -1, FALSE, in->obsPos, 
+			  polar, &RAAnt0, &DecAnt0, &RAAnt, &DecAnt);
       in->xm[iant] = length * cos(DecAnt0) * cos(RAAnt0);
       in->ym[iant] = length * cos(DecAnt0) * sin(RAAnt0);
       in->zm[iant] = length * sin(DecAnt0);
@@ -419,8 +362,8 @@ void ObitUVWCalcUVW (ObitUVWCalc *in, ofloat time, olong SId,
  
     /* Precess this source for now 
        Current UTC Julian Date corrected to UT1 */
-    t      =  time + in->AntList->ut1Utc + in->AntList->dataUtc;
-    in->JD = in->myData->myDesc->JDObs + t; 
+    t      =  tt + in->AntList->ut1Utc + in->AntList->dataUtc;
+    in->JD = in->AntList->JD + t; 
     /* Equinox */
     if (in->myData->myDesc->equinox>0.0) equin = in->myData->myDesc->equinox;
     else                                 equin = 2000.0;
@@ -573,6 +516,7 @@ void ObitUVWCalcInit  (gpointer inn)
   in->xm       = NULL;
   in->nant     = 0;
   in->doFlip   = FALSE;
+  in->subArr   = -1;
   in->maxAnt   = -1;
   in->curSID   = -1;
   in->curTime  = -1.0e20;
@@ -615,3 +559,95 @@ void ObitUVWCalcClear (gpointer inn)
   
 } /* end ObitUVWCalcClear */
 
+/**
+ * Set subarray info
+ * \param in   The object with antenna/source information
+ * \param subA Subarray number
+ * \param err Obit error stack object.
+ */
+static void ObitUVWCalcSetSubA (ObitUVWCalc *in, olong subA, ObitErr *err)
+{
+  ObitTableAN  *ANTable=NULL;
+  ObitUV *inUV = in->myData;
+  olong i, ver, numPCal, numOrb, numIF, cnt;
+  odouble  arrX, arrY, arrZ;
+  gchar *ArrName = NULL;
+  gchar *routine = "ObitUVWCalcSetSubA";
+
+  /* Clear old */
+  in->AntList = ObitAntennaListUnref(in->AntList);
+  in->subArr  = -1;
+  in->curTime = -1.0e10;
+  in->curSID  = -1;
+
+  in->subArr = subA;  
+  /* Convert AN table into AntennaList */
+  ver      = subA;
+  numPCal  = 0;
+  numOrb   = 0;
+  numIF    = 0;
+  ANTable = newObitTableANValue (inUV->name, (ObitData*)inUV, &ver, 
+				 numIF, numOrb, numPCal, OBIT_IO_ReadOnly, err);
+  if (ANTable) in->AntList = ObitTableANGetList (ANTable, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  ANTable = ObitTableANUnref(ANTable);
+
+  /* maximum antenna number */
+  in->maxAnt = 0;
+  for (i=0; i<in->AntList->number; i++) 
+    in->maxAnt = MAX (in->maxAnt, in->AntList->ANlist[i]->AntID);
+
+  /* (1-rel) Index into list */
+  if (in->antIndex) g_free(in->antIndex);
+  in->antIndex = g_malloc0((in->maxAnt+2)*sizeof(olong));
+  for (i=0; i<in->maxAnt; i++) in->antIndex[i] = -1;
+  for (i=0; i<in->AntList->number; i++) {
+    if (in->AntList->ANlist[i]->AntID>=0)
+      in->antIndex[in->AntList->ANlist[i]->AntID] = i;
+  }
+
+
+  /* Average  antenna location */
+  cnt  = 0;
+  arrX = arrY = arrZ = 0.0;
+  for (i=0; i<in->maxAnt; i++) {
+    in->AntList->ANlist[i]->AntLong = atan2 (in->AntList->ANlist[i]->AntXYZ[1], 
+					      in->AntList->ANlist[i]->AntXYZ[0]);
+    if (fabs(in->AntList->ANlist[i]->AntXYZ[1])>1.0) {
+      cnt++;
+      arrX += in->AntList->ANlist[i]->AntXYZ[0];
+      arrY += in->AntList->ANlist[i]->AntXYZ[1];
+      arrZ += in->AntList->ANlist[i]->AntXYZ[2];
+    }
+  }
+  arrX /= cnt;
+  arrY /= cnt;
+  arrZ /= cnt;
+
+  /* Antenna cordinate in celestial frame arrays */
+  in->nant = in->AntList->number;
+  if (in->xm) g_free(in->xm);
+  if (in->ym) g_free(in->ym);
+  if (in->zm) g_free(in->zm);
+  in->xm   = g_malloc0(in->nant*sizeof(odouble));
+  in->ym   = g_malloc0(in->nant*sizeof(odouble));
+  in->zm   = g_malloc0(in->nant*sizeof(odouble));
+
+  in->curTime = -1.0e20;  /* Current time */
+  ObitPrecessGST0 (in->AntList->JD, &in->GSTUTC0, &in->Rate);
+
+  /* position for diurnal abberation correction */
+  in->obsPos[0] =  atan2(arrZ, sqrt(arrX*arrX + arrY*arrY));
+  in->obsPos[1] = -atan2(-arrY, arrX);
+  in->obsPos[2] =  sqrt(arrX*arrX + arrY*arrY + arrZ*arrZ);
+ 
+  /* Flip direction? GMRT, LOFAR, KAT-7
+   Use name in AN table if given, else teles in descriptor */
+  ArrName = in->AntList->ArrName;
+  if (!strncmp("    ",   in->AntList->ArrName, 4)) 
+    ArrName = in->myData->myDesc->teles;
+  if (!strncmp("GMRT",   ArrName, 4)) in->doFlip = TRUE;
+  if (!strncmp("LOFAR",  ArrName, 5)) in->doFlip = TRUE;
+  if (!strncmp("KAT-7",  ArrName, 5)) in->doFlip = TRUE;
+
+} /* end ObitUVWCalcSetSubA */

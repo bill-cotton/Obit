@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -806,8 +806,9 @@ ObitFileReadXML (ObitFile *in, gchar *line, olong lineMax, ObitErr *err)
   tstr = g_strstr_len (&in->XMLbuffer[in->XMLcurrent], max, slash);
   if (tstr==NULL) return OBIT_IO_EOF; /* treat as EOF */
   max   = &in->XMLbuffer[in->XMLmax] - tstr;
-  estr  = g_strstr_len (tstr, max, endb); estr++;
+  estr  = g_strstr_len (tstr, max, endb); 
   if (estr==NULL) return OBIT_IO_EOF; /* treat as EOF */
+  estr++;  /* move to after '>' */
   /* swallow newline if one */
   if (estr[0]=='\n') estr++;
 

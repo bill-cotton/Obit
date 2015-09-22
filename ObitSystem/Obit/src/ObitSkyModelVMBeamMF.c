@@ -2878,7 +2878,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
   in->modType   = OBIT_SkyModel_GaussModTSpec;  /* Model type */
   ddata = Data;  /* replace model */
   ddata[0] = ddata[0];  /* Field number */
-  ddata[1] = 0.0;  /* X offset from center (deg) */
+  ddata[1] = -0.124923;  /* X offset from center (deg) */
   ddata[2] = 0.0;  /* Y offset from center (deg) */
   amp = 1.0;    /* Amplitude all channels */
   for (iSpec=0; iSpec<=nSpec; iSpec++) ddata[3 + iSpec] = amp;
@@ -2886,8 +2886,8 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
   ddata[4+nSpec] = ddata[1] * DG2RAD * 2.0 * G_PI;
   ddata[5+nSpec] = ddata[2] * DG2RAD * 2.0 * G_PI;
   ddata[6+nSpec] = 0.0;
-  /* Gaussian - only round 60" */
-  ddata[7+nSpec] = (20.0/3600.0) * DG2RAD * (G_PI / 1.17741022) * sqrt (0.5);
+  /* Gaussian - only round 0.2" */
+  ddata[7+nSpec] = (0.20/3600.0) * DG2RAD * (G_PI / 1.17741022) * sqrt (0.5);
   ddata[7+nSpec] = -ddata[7+nSpec] * ddata[7+nSpec];
   ddata[8+nSpec] = ddata[7+nSpec];
   ddata[9+nSpec] = 0.0;
@@ -2919,7 +2919,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 	/* Subarray 0-rel */
 	ObitUVDescGetAnts(uvdata->myDesc, visData, &it1, &it2, &suba);
 	/* Update antenna gains */
-	myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba, uvdata, ithread, err);
+	myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba-1, uvdata, ithread, err);
 	/* DEBUG
 	ObitThreadLock(in->thread);
 	fprintf (stderr,"ch %d IF %d plane %d ifq %d rgain %f lgain %f\n",
@@ -2941,11 +2941,12 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
 	visData = uvdata->buffer+iVis*lrec;    /* Buffer pointer with appropriate offset */
 	/* Exceed current time validity for gains */
 	if (visData[iloct] > largs->endVMModelTime) {
+	  largs->BeamFreq = uvdata->myDesc->freqArr[channel];
 	  /* Subarray 0-rel */
 	  ObitUVDescGetAnts(uvdata->myDesc, visData, &it1, &it2, &suba);
 	  /* Update */
 	  reGain = TRUE;
-	  myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba, uvdata, ithread, err);
+	  myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba-1, uvdata, ithread, err);
 	  if (err->error) {
 	    ObitThreadLock(in->thread);  /* Lock against other threads */
 	    Obit_log_error(err, OBIT_Error,"%s Error updating VMComps",
@@ -3713,12 +3714,12 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
   while (sVis<eVis) {
     
     /* Loop over IFs */
-    channel = lstartIF* nUVchan + lstartChannel; /* UV Channel */
     for (iIF=lstartIF; iIF<lstartIF+numberIF; iIF++) {
       offsetIF = nrparm + iIF*jincif; 
 
       /* Loop over channels */
       for (iChannel=lstartChannel; iChannel<lstartChannel+numberChannel; iChannel++) {
+	channel = iIF* nUVchan + iChannel; /* UV Channel */
 	offsetChannel = offsetIF + iChannel*jincf; 
 	ifq      = MIN (nUVchan*nUVIF, MAX (0, iIF*kincif + iChannel*kincf));
 	iSpec    = MIN (nSpec, MAX (0,in->specIndex[ifq]));
@@ -3738,7 +3739,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
 	  ObitUVDescGetAnts(uvdata->myDesc, visData, &it1, &it2, &suba);
 	  /* Update antenna gains */
 	  /* Update */
-	  myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba, uvdata, ithread, err);
+	  myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba-1, uvdata, ithread, err);
 	} /* end new plane */
 	if (err->error) {  /* Error? */
 	  ObitThreadLock(in->thread);  /* Lock against other threads */
@@ -3758,7 +3759,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
 	    ObitUVDescGetAnts(uvdata->myDesc, visData, &it1, &it2, &suba);
 	    /* Update */
 	    reGain = TRUE;
-	    myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba, uvdata, ithread, err);
+	    myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba-1, uvdata, ithread, err);
 	    if (err->error) {
 	      ObitThreadLock(in->thread);  /* Lock against other threads */
 	      Obit_log_error(err, OBIT_Error,"%s Error updating VMComps",

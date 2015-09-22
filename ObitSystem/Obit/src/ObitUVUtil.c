@@ -492,10 +492,10 @@ void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
       /* compatability check - check time and baseline code */
       indx = i*in1Desc->lrec ;
       incompatible = 
-	inUV1->buffer[indx+in1Desc->iloct] !=inUV2->buffer[indx+in2Desc->iloct] ||
-	inUV1->buffer[indx+in1Desc->ilocb] !=inUV2->buffer[indx+in2Desc->ilocb] ||
-	inUV1->buffer[indx+in1Desc->iloca1]!=inUV2->buffer[indx+in2Desc->iloca1] ||
-	inUV1->buffer[indx+in1Desc->iloca2]!=inUV2->buffer[indx+in2Desc->iloca2];
+	(inUV1->buffer[indx+in1Desc->iloct] !=inUV2->buffer[indx+in2Desc->iloct]) ||
+	(inUV1->buffer[indx+in1Desc->ilocb] !=inUV2->buffer[indx+in2Desc->ilocb]) ||
+	((in1Desc->iloca1>=0) && (inUV1->buffer[indx+in1Desc->iloca1]!=inUV2->buffer[indx+in2Desc->iloca1])) ||
+	((in1Desc->iloca1>=0) && (inUV1->buffer[indx+in1Desc->iloca2]!=inUV2->buffer[indx+in2Desc->iloca2]));
       if (incompatible) break;
 
       indx += in1Desc->nrparm;

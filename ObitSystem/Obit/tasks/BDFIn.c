@@ -2471,11 +2471,21 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
    /* File initialization */
     ObitBDFDataInitFile (BDFData, filename, err);
     g_free(filename);
-    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    if (err->error) {
+      /* Handle failure */
+      Obit_log_error(err, OBIT_InfoWarn, "Scan File %d Init failed - continuing", iScan);
+      ObitErrLog(err);
+      goto recover;
+    }
     
     /* Init Scan */
     ObitBDFDataInitScan (BDFData, iMain, SWOrder, selChan, selIF, err);
-    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    if (err->error) {
+      /* Handle failure */
+      Obit_log_error(err, OBIT_InfoWarn, "Scan %d Init failed - continuing", iScan);
+      ObitErrLog(err);
+      goto recover;
+    }
  
     /* Consistency check - loop over selected Spectral windows */
     nIFsel = 0;   /* Number of selected IFs */
@@ -2575,8 +2585,15 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 
       /* Read integration */
       retCode =  ObitBDFDataReadInteg(BDFData, err);
-      if (retCode == OBIT_IO_EOF) break;
-      if (err->error) Obit_traceback_msg (err, routine, outData->name);
+      /*if (retCode == OBIT_IO_EOF) break;*/
+      if (err->error) {
+	/* Handle failure */
+	Obit_log_error(err, OBIT_InfoWarn, "Reading scan failed at integ %d - continuing",
+		       iInteg);
+	ObitErrLog(err);
+	goto recover;
+      }
+      
       
       /* Loop over data */
       while (1) {
@@ -2650,6 +2667,8 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	NXrow->StartVis = NXrow->EndVis+1;
       } 
     }
+  recover:
+    continue;
   } /* End loop over scans */
 
   /* Tell results */
@@ -3219,8 +3238,10 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     /* Loop over antennas in antennaId */
     numAnt = MAX (1, SDMData->FlagTab->rows[iRow]->numAntenna);
     for (ia=0; ia<numAnt; ia++) {
-      /* Look up antenna number from Id */
-      antId = SDMData->FlagTab->rows[iRow]->antennaId[ia];
+      /* Look up antenna number from Id - trap defective ASDM*/
+      if (SDMData->FlagTab->rows[iRow]->antennaId)
+	antId = SDMData->FlagTab->rows[iRow]->antennaId[ia];
+      else antId = 999;  /* Bad ASDM */
       antNo = antId;
       for (iAnt=0; iAnt<AntArray->nants; iAnt++) {
 	if (AntArray->ants[iAnt]->antennaId==antId) 
@@ -3547,8 +3568,9 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 	if (numPol>1) 
 	  outRow->TCal2[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[0]*inTab->rows[iRow]->calEff[1]);
       } else { /* - No efficiency - just single cal */
- 	outRow->TCal1[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[0]);
-	if (numPol>1) 
+	if (inTab->rows[iRow]->noiseCal)
+	  outRow->TCal1[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[0]);
+	if ((numPol>1) && (inTab->rows[iRow]->noiseCal))
 	  outRow->TCal2[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[0]);
       }
     } /* end loop over input table */

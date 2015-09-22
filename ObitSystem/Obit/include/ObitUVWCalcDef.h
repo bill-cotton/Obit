@@ -45,6 +45,8 @@ ObitSource *mySource;
 ObitSource *curSource;
 /** Antenna number index into AntList */
 olong *antIndex;
+/** Current SUbarray Number */
+olong subArr;
 /** Maximum antenna number */
 olong maxAnt;
 /** Current source ID */

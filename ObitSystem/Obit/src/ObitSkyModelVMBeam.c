@@ -837,13 +837,14 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
     ifield = ccData[i*lcomp+0]+0.5;
     if (ifield<0) continue;
 
-    /* Interpolate gains -RR and LL as voltage gains */
+    /* Interpolate gains -RR and LL as power gains */
     plane = in->FreqPlane[MIN(args->channel, in->numUVChann-1)];
     Ipol = ObitImageInterpValueInt (in->IBeam, args->BeamIInterp, x, y, curPA, plane, err);
     if ((Ipol==fblank) || (fabs(Ipol)<0.001) || (fabs(Ipol)>1.1)) Ipol = minPBCor;
-    /* Get primary beam correction for component */
-    PBCor = getPBBeam(in->mosaic->images[ifield]->myDesc, xx, yy, in->antSize,  
-		      args->BeamFreq, minPBCor) / Ipol;
+    /* Get primary (Power) beam correction for component */
+    /* DEBUG PBCor = getPBBeam(in->mosaic->images[ifield]->myDesc, xx, yy, in->antSize,  
+       args->BeamFreq, minPBCor) / (Ipol*Ipol); */
+    PBCor = Ipol;  /* DEBUG use correction image */
     if (in->IBeamPh)
       IpolPh = DG2RAD*ObitImageInterpValueInt (in->IBeamPh, args->BeamIPhInterp, x, y, curPA, plane, err);
     Vpol = ObitImageInterpValueInt (in->VBeam, args->BeamVInterp, x, y, curPA, plane, err);
@@ -853,14 +854,14 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
     if (Ipol!=fblank) {
       /* Phases given? */
       if (in->IBeamPh && in->VBeamPh) {
-	Lgain[i]  = (1.0*cos(IpolPh) - Vpol*cos(VpolPh));
-	Lgaini[i] = (1.0*sin(IpolPh) - Vpol*sin(VpolPh));
-	Rgain[i]  = (1.0*cos(IpolPh) + Vpol*cos(VpolPh));
-	Rgaini[i] = (1.0*sin(IpolPh) + Vpol*sin(VpolPh));
+	Lgain[i]  = PBCor*(1.0*cos(IpolPh) - Vpol*cos(VpolPh));
+	Lgaini[i] = PBCor*(1.0*sin(IpolPh) - Vpol*sin(VpolPh));
+	Rgain[i]  = PBCor*(1.0*cos(IpolPh) + Vpol*cos(VpolPh));
+	Rgaini[i] = PBCor*(1.0*sin(IpolPh) + Vpol*sin(VpolPh));
       } else { /* no phase */
-	Lgain[i] = (PBCor - Vpol);
+	Lgain[i] = PBCor*(1.0 - Vpol);
 	Lgaini[i] = 0.0;
-	Rgain[i] = (PBCor + Vpol);
+	Rgain[i] = PBCor*(1.0 + Vpol);
 	Rgaini[i] = 0.0;
       }
 
@@ -1392,7 +1393,7 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 #define FazArrSize 100  /* Size of the amp/phase/sine/cosine arrays */
   ofloat AmpArrR[FazArrSize], AmpArrL[FazArrSize], FazArr[FazArrSize];
   ofloat CosArr[FazArrSize], SinArr[FazArrSize];
-  olong it, jt, itcnt;
+  olong it, jt, itcnt, nextCh, ch1; /*dbgcnt=0; DEBUG */
   gboolean doCrossPol;
   odouble *freqArr;
   const ObitSkyModelVMClassInfo 
@@ -1451,14 +1452,14 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
   freqArr = uvdata->myDesc->freqArr;
 
   /* Current channel (0-rel) */
-  channel = 0;
+  channel = nextCh = 0;
   plane   = in->FreqPlane[largs->channel];  /* Which plane in correction cube */
 
   /* Outer loop over blocks of channels */
   /* Starting parameters this pass */
   lstartIF       = startIF;
   lstartChannel  = startChannel;
-  while (channel<(numberIF*numberChannel)) {
+  while (nextCh<(numberIF*numberChannel)) {
     
     /* Loop over vis in buffer */
     lrec    = uvdata->myDesc->lrec;         /* Length of record */
@@ -1475,7 +1476,7 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 	/* Subarray 0-rel */
 	ObitUVDescGetAnts(uvdata->myDesc, visData, &it1, &it2, &suba);
 	/* Update */
-	myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba, uvdata, ithread, err);
+	myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba-1, uvdata, ithread, err);
 	if (err->error) {
 	  ObitThreadLock(in->thread);  /* Lock against other threads */
 	  Obit_log_error(err, OBIT_Error,"%s Error updating VMComps",
@@ -1491,10 +1492,12 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
       ant2--;    /* 0 rel */
       
       /* Loop over IFs */
-      channel = lstartIF* nUVchan + lstartChannel; /* UV Channel */
+      ch1 = lstartChannel;
       for (iIF=lstartIF; iIF<startIF+numberIF; iIF++) {
 	offsetIF = nrparm + iIF*jincif; 
-	for (iChannel=lstartChannel; iChannel<startChannel+numberChannel; iChannel++) {
+	if (iIF>lstartIF) ch1 = 0;  /* beginning channel after first IF */
+	for (iChannel=ch1; iChannel<startChannel+numberChannel; iChannel++) {
+	  channel = iIF* nUVchan + iChannel; /* UV Channel */
 	  offsetChannel = offsetIF + iChannel*jincf; 
 	  freqFact = fscale[iIF*kincif + iChannel*kincf];  /* Frequency scaling factor */
 	  freq2    = freqFact*freqFact;    /* Frequency factor squared */
@@ -1896,22 +1899,29 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 	  } /* end crosspol */
 	  
 	  offsetChannel += jincf;
-	  channel++; /* Finished another channel */
-	  /* Have we finished this plane in the correction cubes? */
-	  if (plane!=in->FreqPlane[MIN(channel, (in->numUVChann-1))]) {
-	    plane   = in->FreqPlane[MIN(channel, (in->numUVChann-1))];  /* Which plane in correction cube */
-	    /* Reset gains & channels if this the last vis */
+	  nextCh = channel+1;  /* Next channel */
+	  /* Have we finished this plane in the correction cubes? 
+	   If so break frequency looping but continue until visibility loop done.
+	   Then, restart channel/IF loop ing in new plane */
+	  if (plane!=in->FreqPlane[MIN(nextCh, (in->numUVChann-1))]) {
+	    /* Reset gains & channels if this the last vis in loop */
 	    if (iVis>=(hiVis-1)) {
+	      plane   = in->FreqPlane[MIN(nextCh, (in->numUVChann-1))];  /* Which plane in correction cube */
 	      largs->endVMModelTime = -1.0e20;  
 	      lstartChannel = iChannel;
 	      lstartIF      = iIF;
-	      if (iChannel==(startChannel+numberChannel-1)) {  /* end of channel loop */
-		lstartChannel = 0;
+	      if (iChannel==(startChannel+numberChannel-1)) { /* end of channel loop */
+	    	lstartChannel = 0;  /* start next IF */
 		lstartIF++;
 	      }
 	    } /* end if last vis */
-	    if (channel>1) goto newPlane;
+	    /* if ((iVis==(hiVis-1)) && (dbgcnt<20)) {
+	      fprintf (stderr,"End  plane=%d ch=%d %d %d\n",plane,nextCh,lstartChannel,lstartIF);  DEBUG 
+	      dbgcnt++;}*/
+	    if (channel>1) goto newPlane;  /* Break looping except for first channel */
 	  } /* end if new plane */
+	  /* if ((dbgcnt<50) && (iVis==(hiVis-1)))
+	    fprintf (stderr,"   ch=%d IF %d channel %d\n",iChannel,iIF,nextCh); DEBUG */
 	} /* end loop over Channel */
 	offsetIF += jincif;
       } /* end loop over IF */
@@ -1920,6 +1930,9 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
     newPlane:
       visData += lrec; /* Update vis pointer */
     } /* end loop over visibilities */
+    /* if (dbgcnt<50)
+      fprintf (stderr," New chann=%d ch=%d IF=%d\n",channel,lstartChannel,lstartIF); DEBUG
+      dbgcnt++; */
   } /* end outer frequency loop */
 
   /* Indicate completion */
@@ -2009,7 +2022,7 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
   ofloat AmpArrRr[FazArrSize], AmpArrLr[FazArrSize], AmpArrRi[FazArrSize], AmpArrLi[FazArrSize];
   ofloat FazArr[FazArrSize];
   ofloat CosArr[FazArrSize], SinArr[FazArrSize];
-  olong it, jt, itcnt;
+  olong it, jt, itcnt, nextCh, ch1;
   gboolean doCrossPol;
   odouble *freqArr;
   const ObitSkyModelVMClassInfo 
@@ -2068,14 +2081,14 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
   freqArr = uvdata->myDesc->freqArr;
 
   /* Current channel (0-rel) */
-  channel = 0;
+  channel = nextCh = 0;
   plane   = in->FreqPlane[largs->channel];  /* Which plane in correction cube */
 
   /* Outer loop over blocks of channels */
   /* Starting parameters this pass */
   lstartIF       = startIF;
   lstartChannel  = startChannel;
-  while (channel<(numberIF*numberChannel)) {
+  while (nextCh<(numberIF*numberChannel)) {
     
     /* Loop over vis in buffer */
     lrec    = uvdata->myDesc->lrec;         /* Length of record */
@@ -2091,7 +2104,7 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
 	/* Subarray 0-rel */
 	ObitUVDescGetAnts(uvdata->myDesc, visData, &it1, &it2, &suba);
 	/* Update */
-	myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba, uvdata, ithread, err);
+	myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba-1, uvdata, ithread, err);
 	if (err->error) {
 	  ObitThreadLock(in->thread);  /* Lock against other threads */
 	  Obit_log_error(err, OBIT_Error,"%s Error updating VMComps",
@@ -2108,9 +2121,11 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
       
       /* Loop over IFs */
       channel = lstartIF* nUVchan + lstartChannel; /* UV Channel */
+      ch1 = lstartChannel;
       for (iIF=lstartIF; iIF<startIF+numberIF; iIF++) {
+	if (iIF>lstartIF) ch1 = 0;  /* beginning channel after first IF */
 	offsetIF = nrparm + iIF*jincif; 
-	for (iChannel=lstartChannel; iChannel<startChannel+numberChannel; iChannel++) {
+	for (iChannel=ch1; iChannel<startChannel+numberChannel; iChannel++) {
 	  offsetChannel = offsetIF + iChannel*jincf; 
 	  freqFact = fscale[iIF*kincif + iChannel*kincf];  /* Frequency scaling factor */
 	  freq2    = freqFact * freqFact;   	           /* Frequency factor squared */
@@ -2549,21 +2564,23 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
 	  } /* end crosspol */
 	  
 	  offsetChannel += jincf;
-	  channel++; /* Finished another channel */
-	  /* Have we finished this plane in the correction cubes? */
-	  if (plane!=in->FreqPlane[MIN(channel, (in->numUVChann-1))]) {
-	    /* Reset gains & channels if this the last vis */
+	  nextCh = channel+1;  /* Next channel */
+	  /* Have we finished this plane in the correction cubes? 
+	   If so break frequency looping but continue until visibility loop done.
+	   Then, restart channel/IF loop ing in new plane */
+	  if (plane!=in->FreqPlane[MIN(nextCh, (in->numUVChann-1))]) {
+	    /* Reset gains & channels if this the last vis in loop */
 	    if (iVis>=(hiVis-1)) {
+	      plane   = in->FreqPlane[MIN(nextCh, (in->numUVChann-1))];  /* Which plane in correction cube */
 	      largs->endVMModelTime = -1.0e20;  
 	      lstartChannel = iChannel;
 	      lstartIF      = iIF;
-	      if (iChannel==(startChannel+numberChannel-1)) {  /* end of channel loop */
-		lstartChannel = 0;
+	      if (iChannel==(startChannel+numberChannel-1)) { /* end of channel loop */
+	    	lstartChannel = 0;  /* start next IF */
 		lstartIF++;
 	      }
-	    }
-	    plane   = in->FreqPlane[MIN(channel, (in->numUVChann-1))];  /* Which plane in correction cube */
-	    goto newPlane;
+	    } /* end if last vis */
+	    if (channel>1) goto newPlane;  /* Break looping except for first channel */
 	  } /* end if new channel */
 	} /* end loop over Channel */
 	offsetIF += jincif;
@@ -2573,7 +2590,6 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
     newPlane:
       visData += lrec; /* Update vis pointer */
     } /* end loop over visibilities */
-    iStoke = 0;  /* DEBUG */
   } /* end outer frequency loop */
 
   /* Indicate completion */

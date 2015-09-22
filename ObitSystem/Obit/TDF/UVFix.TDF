@@ -4,7 +4,7 @@
 ;! Copy UV data recomputing u,v,w
 ;# Task UV  Obit 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2013
+;;  Copyright (C) 2013,2015
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@ BIF               0.0     9999.0    First IF (0=>1)
 EIF               0.0     9999.0    Highest IF (0=>BIF to last)
 **PARAM** int 1 **DEF** 1
 IFInc             0.0     8192.0    IF increment
-**PARAM** int 1 **DEF** 1
+**PARAM** int 1 **DEF** -1
 subA                                Subarray
 **PARAM** int 50
 Antennas         0.0     1000.0     List of antennas to calibrate
@@ -159,7 +159,7 @@ Adverbs:
   EIF........Highest IF to process 0=> do BIF to highest.
              Note: not all data sets will have IFs.
   IFInc......Increment in IF selected, 0=>1
-  subA.......Sub-array number to use. Only one allowed
+  subA.......Sub-array number to use. -1=>all
   Antennas...A list of the antennas to  have solutions
              determined. If any number is negative then all
              antennas listed  are NOT to be used to determine

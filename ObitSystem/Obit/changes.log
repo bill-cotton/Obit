@@ -2900,3 +2900,29 @@ Obit/src/ObitUVUtil.c Obit/include/ObitUVUtil.h:
   BlAvgTF: double size of sort buffer (2 GByte)
   Bloat: Add frequency channel duplication fn
 20 Aug, 2015, svn ver 517.
+
+Parallelize MapBeam, bug fixes
+Obit/TDF/UVFix.TDF :
+  Document allow multiple subarrays
+Obit/include/ObitUVWCalcDef.h Obit/src/ObitUVWCalc.c:
+  Allow multiple subarrays
+Obit/tasks/MapBeam.c:
+  accumData: Print diagnostic messages more often, to keep count from wrapping
+  change sign of u (again)
+  parallelize
+Obit/src/ObitFile.c:
+  ReadXML: Fix bug detecting premature EOF
+Obit/tasks/BDFIn.c:
+  GetCalDeviceInfo: trap missing noiseCal
+  GetFlagInfo: Trap corrupted ASDM missing AntennaId
+  Made more tolerant to bad data files
+Obit/src/ObitSkyModelVMBeam.c Obit/src/ObitSkyModelVMBeamMF.c:
+  ThreadSkyModelVMBeamFTDFT: convert suba to 0 rel for UpdateModel
+     also logic bugs in looping over channels.
+Obit/src/ObitImageInterp.c:
+  ReadImage: Add channel frequency offset to freqs
+Obit/src/ObitUVUtil.c:
+  VisDivide: fix bug from Eric Format change.
+Obit/python/FInterpolate.py:
+  fix numerous bugs
+22 Sep. 2015, svn ver 218.

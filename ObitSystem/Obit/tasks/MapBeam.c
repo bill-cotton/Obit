@@ -101,12 +101,11 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
 /* Grid data into cells */
 void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 		olong selem, olong nelem, gboolean doRMS, gboolean doPhase,
-		ofloat *SumIr, ofloat *SumIi, ofloat *SumII, ofloat *SumIWt,
-		ofloat *SumQr, ofloat *SumQi, ofloat *SumQQ, ofloat *SumQWt,
-		ofloat *SumUr, ofloat *SumUi, ofloat *SumUU, ofloat *SumUWt,
-		ofloat *SumVr, ofloat *SumVi, ofloat *SumVV, ofloat *SumVWt,
-		ofloat *SumAzCell, ofloat *SumElCell, ofloat *SumPACell, 
-		olong *CntCell, ObitFArray **grids);
+		ofloat *SumIr, ofloat *SumIi, ofloat *SumII, 
+		ofloat *SumQr, ofloat *SumQi, ofloat *SumQQ, 
+		ofloat *SumUr, ofloat *SumUi, ofloat *SumUU, 
+		ofloat *SumVr, ofloat *SumVi, ofloat *SumVV, 
+		ofloat *SumAzCell, ofloat *SumElCell, ObitFArray **grids);
 
 /* Lagrangian interpolation coefficients */
 void lagrange(ofloat x, ofloat y, olong n, olong hwid, 
@@ -126,6 +125,62 @@ ObitInfoList *myInput  = NULL;   /* Input parameter list */
 ObitInfoList *myOutput = NULL;   /* Output parameter list */
 ofloat avgAz=0.0, avgEl=0.0, avgPA=0.0; /* Average observing Az, El, par Ang (deg) */
 odouble RAMean=0.0, DecMean=0.0; /* Mean position of current source */
+
+/*---------------Private structures----------------*/
+/* Threaded function argument */
+typedef struct {
+  ObitThread *thread;  /* ObitThread to use */
+  olong loy;           /* first (0-rel) y*/
+  olong hiy;           /* laast (0-rel) y*/
+  olong nx;            /* Number of columns */
+  olong ny;            /* Number of rows */
+  olong hwid;          /* Half width of interpolation */
+  olong nchan;         /* Number of channels in output */
+  olong nIF;	       /* Number of IFs in output  */
+  olong npoln;	       /* Number of polarizations in output  */
+  olong selem;         /* Size (floats) of list element */
+  olong nelem; 	       /* Number of list elements  */
+  gboolean doRMS;      /* If TRUE, image is RMS */
+  gboolean doPhase;    /* If TRUE, image is Phase, else Amplitude */
+  ofloat xcen;         /* X center cell */
+  ofloat ycen;         /* Y center cell */
+  ofloat *SumIr;       /* Real Stokes I accumulation list */
+  ofloat *SumIi;       /* Imag Stokes I accumulation list  */
+  ofloat *SumII;       /* Stokes I*I accumulation list  */
+  ofloat *SumQr;       /* Real Stokes Q accumulation list */
+  ofloat *SumQi;       /* Imag Stokes Q accumulation list */
+  ofloat *SumQQ;       /* Stokes Q*Q accumulation list */
+  ofloat *SumUr;       /* Real Stokes U accumulation list */
+  ofloat *SumUi;       /* Imag Stokes U accumulation list */
+  ofloat *SumUU;       /* Stokes U*U accumulation list  */
+  ofloat *SumVr;       /* Real Stokes V accumulation list */
+  ofloat *SumVi;       /* Imag Stokes V accumulation list */
+  ofloat *SumVV;       /* Stokes V*V accumulation list */
+  ofloat *SumAzCell;   /* Azimuth offset accumulation list */
+  ofloat *SumElCell;   /* Elevation offset  accumulation list */
+  ofloat *coef;        /* Work space */
+  ObitFArray **grids;  /* Array of output ObitFArrays
+			  fastest to slowest, channel, IF, Stokes  */
+  olong      ithread;  /* Thread number  */
+} MBFuncArg;
+		     
+/** Private: Make Threaded args */
+static olong MakeMBFuncArgs (ObitThread *thread, 
+			     olong nchan, olong nIF, olong npoln,
+			     olong selem, olong nelem, gboolean doRMS, gboolean doPhase,
+			     olong nx, olong ny, olong hwid, ofloat xcen, ofloat ycen,
+			     ofloat *SumIr, ofloat *SumIi, ofloat *SumII, 
+			     ofloat *SumQr, ofloat *SumQi, ofloat *SumQQ, 
+			     ofloat *SumUr, ofloat *SumUi, ofloat *SumUU, 
+			     ofloat *SumVr, ofloat *SumVi, ofloat *SumVV, 
+			     ofloat *SumAzCell, ofloat *SumElCell, ObitFArray **grids,
+			     MBFuncArg ***ThreadArgs);
+
+/** Private: Delete Threaded args */
+static void KillMBFuncArgs (olong nargs, MBFuncArg **ThreadArgs);
+
+/** Private: Threaded Gridding */
+static gpointer ThreadMBGrid (gpointer arg);
 
 int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
@@ -808,7 +863,7 @@ ObitImage* setOutput (gchar *Source, olong iStoke, olong ant,
   gchar     tname[129], *chStokes, *chTStokes="IQUV", *chCcor="RLPQ", *chLcor="XYPQ";
   odouble   *StokCrval, TStokCrval[4] = {1.0,2.0,3.0,4.0};
   odouble   CFCrval[4] = {-1.0, -2.0,-3.0,-4.0}, LFCrval[4] = {-5.0, -6.0,-7.0,-8.0};
-  gfloat    xCells = 1.0, yCells=1.0;
+  gfloat    xCells, yCells;
   gchar     *FITS = "FITS";
   ObitImageDesc *outDesc;
   gchar     *routine = "setOutput";
@@ -1423,10 +1478,9 @@ ObitFArray** doImage (gboolean doRMS, gboolean doPhase, olong ant,
 
   /* Grid data */
   gridData (myInput, *nchan, *nIF, *npoln, selem, nelem, doRMS, doPhase,
-	    SumIr, SumIi, SumII, SumIWt, SumQr, SumQi, SumQQ, SumQWt,
-	    SumUr, SumUi, SumUU, SumUWt, SumVr, SumVi, SumVV, SumVWt,
-	    SumAzCell, SumElCell, SumPACell, CntCell, 
-	    out);
+	    SumIr, SumIi, SumII, SumQr, SumQi, SumQQ, 
+	    SumUr, SumUi, SumUU, SumVr, SumVi, SumVV, 
+	    SumAzCell, SumElCell, out);
 
   /* No normalization for RMS, phase */
   if (doRMS|| doPhase) goto cleanup;
@@ -1865,7 +1919,6 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
     for (i=0; i<dim[0]; i++) OffEl[i] = DG2RAD * farr[i]/60.0;  /* to radians */
   }
   
-
   /* Ref antennas */
   nRefAnt = 0;
   ObitInfoListGetP(myInput, "RefAnts",  &type, dim, (gpointer)&refAnts);
@@ -1944,9 +1997,9 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
     for (i=0; i<inData->myDesc->numVisBuff; i++) { 
       /* where are we? */
       time =  inData->buffer[indx+inData->myDesc->iloct];
-      /* fix online system bug - flip sign of u */
-      u    = -inData->buffer[indx+inData->myDesc->ilocu];
-      v    =  inData->buffer[indx+inData->myDesc->ilocv];
+      /* Sign of u seems OK */
+      u    = inData->buffer[indx+inData->myDesc->ilocu];
+      v    = inData->buffer[indx+inData->myDesc->ilocv];
 
       /* In blanked time? */
       if (time<tblank) goto next;
@@ -2166,7 +2219,7 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
       if ((SumAzCell[i]>1000.) || (SumElCell[i]>1000.)) continue;
       if (SumQr) { /* Poln data? */
 	Obit_log_error(err, OBIT_InfoErr, 
-		       "%3.3d Cell %3d %3d Az %8.1f cell, El %8.1f cell, I %6.3f %6.3f Q %6.3f %6.3f U %6.3f %6.3f V %6.3f %6.3f Jy",
+		       "%3.3d Cell %3d %3d Az%8.1f cell, El%8.1f cell, I %6.3f %6.3f Q %6.3f %6.3f U %6.3f %6.3f V %6.3f %6.3f Jy",
 		       i, ix,iy, 
 		       /*SumAzCell[i]*xCells*206265., SumElCell[i]*yCells*206265., offset in asec */
 		       SumAzCell[i], SumElCell[i],   /* offset in cells */
@@ -2181,6 +2234,7 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
 		       SumIr[i*selem],SumIi[i*selem]);
       }
     }
+    ObitErrLog(err);
   } /* End loop normalizing list */
 
   /* Cleanup */
@@ -2194,11 +2248,13 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
 /*  Accumulate real part of correlations for all Stokes/freq/IF           */
 /*  Sums are in a list with each set of entries corresponding to a given  */
 /*  pointing.                                                             */
+/*  May use threading.                                                    */
 /*  Adapted from AIPS/MAPBM.FOR                                           */
 /*   Input:                                                               */
 /*      myInput   Input parameters on InfoList                            */
 /*      nchan     Number of channels in output                            */
 /*      nIF       Number of IFs in output                                 */
+/*      npoln     Number of polarizations in output                       */
 /*      selem     Size (floats) of list element                           */
 /*      nelem     Number of list elements                                 */
 /*      doRMS     If TRUE, image is RMS                                   */
@@ -2206,24 +2262,17 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
 /*      SumIr     Real Stokes I accumulation list                         */
 /*      SumIi     Imag Stokes I accumulation list                         */
 /*      SumII     Stokes I*I accumulation list                            */
-/*      SumIWt    I Weight accumulation list                              */
 /*      SumQr     Real Stokes Q accumulation list                         */
 /*      SumQi     Imag Stokes Q accumulation list                         */
 /*      SumQQ     Stokes Q*Q accumulation list                            */
-/*      SumQWt    Q Weight accumulation list                              */
 /*      SumUr     Real Stokes U accumulation list                         */
 /*      SumUi     Imag Stokes U accumulation list                         */
 /*      SumUU     Stokes U*U accumulation list                            */
-/*      SumUWt    U Weight accumulation list                              */
 /*      SumVr     Real Stokes V accumulation list                         */
 /*      SumVi     Imag Stokes V accumulation list                         */
 /*      SumVV     Stokes V*V accumulation list                            */
-/*      SumVWt    V Weight accumulation list                              */
 /*      SumAzCell Azimuth offset accumulation list                        */
 /*      SumElCell Elevation offset  accumulation list                     */
-/*      SumPACell Parallactic angle accumulation list                     */
-/*                Contents destroyed                                      */
-/*      CntCell   Counts in geometry accumulation                         */
 /*   Output:                                                              */
 /*      grids     Array of ObitFArrays                                    */
 /*                fastest to slowest, channel, IF, Stokes                 */
@@ -2231,39 +2280,338 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
 /*----------------------------------------------------------------------- */
 void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 		olong selem, olong nelem, gboolean doRMS, gboolean doPhase,
-		ofloat *SumIr, ofloat *SumIi, ofloat *SumII, ofloat *SumIWt,
-		ofloat *SumQr, ofloat *SumQi, ofloat *SumQQ, ofloat *SumQWt,
-		ofloat *SumUr, ofloat *SumUi, ofloat *SumUU, ofloat *SumUWt,
-		ofloat *SumVr, ofloat *SumVi, ofloat *SumVV, ofloat *SumVWt,
-		ofloat *SumAzCell, ofloat *SumElCell, ofloat *SumPACell, 
-		olong *CntCell, ObitFArray **grids)
+		ofloat *SumIr, ofloat *SumIi, ofloat *SumII, 
+		ofloat *SumQr, ofloat *SumQi, ofloat *SumQQ, 
+		ofloat *SumUr, ofloat *SumUi, ofloat *SumUU, 
+		ofloat *SumVr, ofloat *SumVi, ofloat *SumVV, 
+		ofloat *SumAzCell, ofloat *SumElCell, ObitFArray **grids)
 {
-  ofloat x, y, xcen, ycen, closest, xCells=1.0, yCells=1.0;
-  ofloat *coef, amp, ph, fblank = ObitMagicF();
-  odouble sumIWt , sumQWt, sumUWt, sumVWt;
-  odouble valIr,  valIi, valII, valQr, valQi, valQQ;
-  odouble valUr,  valUi, valUU, valVr, valVi, valVV;
-  olong   i, iIF, ichan, nx=1, ny=1, hwid=1, ix, iy, indx, jndx, off;
-  ObitFArray *array;
   ObitInfoType type;
   gint32   dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-
-  /* Use SumPACell as work space */
-  coef = SumPACell;
+  olong nThreads, nx, ny, hwid;
+  ofloat xcen, ycen;
+  gboolean OK;
+  ObitThread *thread;
+  MBFuncArg **threadArgs;
 
   /* How big an image? */
   ObitInfoListGetTest(myInput, "nx", &type, dim, &nx);
   ObitInfoListGetTest(myInput, "ny", &type, dim, &ny);
-  ObitInfoListGetTest(myInput, "xCells", &type, dim, &xCells);
-  ObitInfoListGetTest(myInput, "yCells", &type, dim, &yCells);
   ObitInfoListGetTest(myInput, "hwid",   &type, dim, &hwid);
   xcen = (ofloat)(nx/2);
   ycen = (ofloat)(ny/2);
 
-  /* Loop over y (El) */
-  for (iy=0; iy<ny; iy++) {
-      y = iy - ycen;
+  /* Initialize Threading */
+  thread = newObitThread ();
+  nThreads = 
+    MakeMBFuncArgs (thread, 
+		    nchan, nIF, npoln,selem, nelem, doRMS, doPhase,
+		    nx, ny, hwid, xcen, ycen,
+		    SumIr, SumIi, SumII, SumQr, SumQi, SumQQ,
+		    SumUr, SumUi, SumUU, SumVr, SumVi, SumVV, 
+		    SumAzCell, SumElCell, grids,
+		    &threadArgs);
+  /* Do operation */
+  OK = ObitThreadIterator (thread, nThreads, 
+			   (ObitThreadFunc)ThreadMBGrid,
+			   (gpointer**)threadArgs);
 
+  /* Check for problems */
+  if (!OK) return;
+
+  /* Free local objects */
+  KillMBFuncArgs(nThreads, threadArgs);
+  ObitThreadUnref(thread);
+} /* end gridData */
+
+/*----------------------------------------------------------------------- */
+/*  Lagrangian interpolation coefficients                                 */
+/*  For interpolating in a quasi regular grid represented by lists        */
+/*  Determine coefficients for elements in lists to interpolate to (x,y)  */
+/*   Input:                                                               */
+/*      x         Coordinate on first axis                                */
+/*      y         Coordinate on second axis                               */
+/*      n         Length of lists                                         */
+/*      hwid      Halfwidth of interpolation kernal                       */
+/*      xlist     List of coordinates on  first axis                      */
+/*      ylist     List coordinate on second axis                          */
+/*   Output:                                                              */
+/*      coef      Array of interpolation coefficients for xlist,ylist     */
+/*----------------------------------------------------------------------- */
+void lagrange(ofloat x, ofloat y, olong n, olong hwid, 
+	      ofloat *xlist, ofloat *ylist, ofloat *coef)
+{
+  ofloat xhwid = (ofloat)hwid, sum;
+  odouble prodx, prodxd, prody, prodyd;
+  olong  i, j, countx, county;
+
+  /* DEBUG - closest cell 
+  for (j=0; j<n; j++) {
+    coef[j] = 0.0;
+    if ((fabs(x-xlist[j])<=0.5) && (fabs(y-ylist[j])<=0.5)) coef[j] = 1.0;
+  }
+  return; */
+  /* end DEBUG */
+
+  /* Loop over list */
+  sum = 0.0;
+  for (j=0; j<n; j++) {
+    prodx = prodxd = prody = prodyd = 1.0;
+    countx = county = 0;
+    coef[j] = 0.0;
+
+    /* Within hwid? and i!=j */
+    if ((fabs(x-xlist[j])<=xhwid) && (fabs(y-ylist[j])<=xhwid)) {
+      coef[j] = 1.0;  /* In case nothing else within hwid */
+     
+      /* Inner loop over list */
+      for (i=0; i<n; i++) {
+	if (i==j) continue;                    /* i!=j */
+	if (fabs(x-xlist[i])>xhwid) continue;  /* X within halfwidth */
+	if (fabs(y-ylist[i])>xhwid) continue;  /* Y within halfwidth */
+	if (fabs(xlist[j]-xlist[i])<0.3) continue;
+	if (fabs(ylist[j]-ylist[i])<0.3) continue;
+	  countx++;
+	  prodx  *= (odouble)(x - xlist[i]);
+	  prodxd *= (odouble)(xlist[j] - xlist[i]);
+	  county++;
+	  prody  *= (odouble)(y - ylist[i]);
+	  prodyd *= (odouble)(ylist[j] - ylist[i]);
+      } /* end inner loop */
+    } /* end j within half width */
+    /* put it together */
+    if ((countx>=1)  || (county>=1)) {
+      if ((prodxd!=0.0) && (prodyd!=0.0))
+	coef[j] = (ofloat)(prodx*prody / (prodxd*prodyd));
+      else
+	coef[j] = 1.0;
+      sum += coef[j];
+    }
+  } /* end loop over list */
+
+  /* DEBUG
+  if ((x==0.0) && (y==0.0))
+    fprintf(stderr,"lagrange x %f, y %f, sum %f\n", x, y, sum); */
+  
+  /* Normalize if anything found */
+  if (fabs(sum)<0.01) return;
+  prodx = 1.0 / sum;
+  for (j=0; j<n; j++) coef[j] *= prodx;
+
+  } /* end lagrange */
+
+/**
+ * Make arguments for a Threaded ThreadMBFunc?
+ * \param thread     ObitThread object to be used
+ * \param  nchan     Number of channels in output
+ * \param  npoln     Number of polarizations in output
+ * \param  nIF       Number of IFs in output
+ * \param  npoln     Number of polarizations in output
+ * \param  selem     Size (floats) of list element
+ * \param  nelem     Number of list elements
+ * \param  doRMS     If TRUE, image is RMS
+ * \param  doPhase   If TRUE, image is Phase, else Amplitude
+ * \param  nx;       Number of columns
+ * \param  ny;       Number of rows
+ * \param  hwid;     Half width of interpolation
+ * \param  xcen;     X center cell
+ * \param  ycen;     Y center cell
+ * \param  SumIr     Real Stokes I accumulation list
+ * \param  SumIi     Imag Stokes I accumulation list
+ * \param  SumII     Stokes I*I accumulation list
+ * \param  SumQr     Real Stokes Q accumulation list
+ * \param  SumQi     Imag Stokes Q accumulation list
+ * \param  SumQQ     Stokes Q*Q accumulation list
+ * \param  SumUr     Real Stokes U accumulation list
+ * \param  SumUi     Imag Stokes U accumulation list
+ * \param  SumUU     Stokes U*U accumulation list
+ * \param  SumVr     Real Stokes V accumulation list
+ * \param  SumVi     Imag Stokes V accumulation list
+ * \param  SumVV     Stokes V*V accumulation list
+ * \param  SumAzCell Azimuth offset accumulation list
+ * \param  SumElCell Elevation offset  accumulation list
+ * \param  grids     [out] Array of ObitFArrays
+ *                   fastest to slowest, channel, IF, Stokes
+ * \param ThreadArgs[out] Created array of MBFuncArg, 
+ *                   delete with KillMBFuncArgs
+ * \return number of elements in args (number of allowed threads).
+ */
+static olong MakeMBFuncArgs (ObitThread *thread, 
+			     olong nchan, olong nIF, olong npoln,
+			     olong selem, olong nelem, gboolean doRMS, gboolean doPhase,
+			     olong nx, olong ny, olong hwid, ofloat xcen, ofloat ycen,
+			     ofloat *SumIr, ofloat *SumIi, ofloat *SumII, 
+			     ofloat *SumQr, ofloat *SumQi, ofloat *SumQQ, 
+			     ofloat *SumUr, ofloat *SumUi, ofloat *SumUU, 
+			     ofloat *SumVr, ofloat *SumVi, ofloat *SumVV, 
+			     ofloat *SumAzCell, ofloat *SumElCell, ObitFArray **grids,
+			     MBFuncArg ***ThreadArgs)
+
+{
+  olong i, iy, nThreads, nrow;
+
+  /* Setup for threading */
+  /* How many threads? */
+  nThreads = MAX (1, ObitThreadNumProc(thread));
+
+  /* How many rows per thread? */
+  nrow = ny/nThreads;
+  iy   = 0;
+
+  /* Initialize threadArg array */
+  *ThreadArgs = g_malloc0(nThreads*sizeof(MBFuncArg*));
+  for (i=0; i<nThreads; i++) 
+    (*ThreadArgs)[i] = g_malloc0(sizeof(MBFuncArg)); 
+  for (i=0; i<nThreads; i++) {
+    (*ThreadArgs)[i]->thread    = ObitThreadRef(thread);
+    (*ThreadArgs)[i]->loy       = iy;     /* Divvy up processing */
+    (*ThreadArgs)[i]->hiy       = MIN (iy+nrow, ny);
+    iy += nrow;
+    (*ThreadArgs)[i]->nchan     = nchan;
+    (*ThreadArgs)[i]->npoln     = npoln;
+    (*ThreadArgs)[i]->nIF       = nIF;
+    (*ThreadArgs)[i]->npoln     = npoln;
+    (*ThreadArgs)[i]->selem     = selem;
+    (*ThreadArgs)[i]->nelem     = nelem;
+    (*ThreadArgs)[i]->doRMS     = doRMS;
+    (*ThreadArgs)[i]->doPhase   = doPhase;
+    (*ThreadArgs)[i]->nx        = nx;
+    (*ThreadArgs)[i]->ny        = ny;
+    (*ThreadArgs)[i]->hwid      = hwid;
+    (*ThreadArgs)[i]->xcen      = xcen;
+    (*ThreadArgs)[i]->ycen      = ycen;
+    (*ThreadArgs)[i]->SumIr     = SumIr;
+    (*ThreadArgs)[i]->SumIi     = SumIi;
+    (*ThreadArgs)[i]->SumII     = SumII;
+    (*ThreadArgs)[i]->SumQr     = SumQr;
+    (*ThreadArgs)[i]->SumQi     = SumQi;
+    (*ThreadArgs)[i]->SumQQ     = SumQQ;
+    (*ThreadArgs)[i]->SumUr     = SumUr;
+    (*ThreadArgs)[i]->SumUi     = SumUi;
+    (*ThreadArgs)[i]->SumUU     = SumUU;
+    (*ThreadArgs)[i]->SumVr     = SumVr;
+    (*ThreadArgs)[i]->SumVi     = SumVi;
+    (*ThreadArgs)[i]->SumVV     = SumVV;
+    (*ThreadArgs)[i]->SumAzCell = SumAzCell;
+    (*ThreadArgs)[i]->SumElCell = SumElCell;
+    (*ThreadArgs)[i]->grids     = grids;
+    (*ThreadArgs)[i]->coef      = g_malloc0(nelem*sizeof(ofloat));
+    (*ThreadArgs)[i]->ithread   = i;
+  }
+
+  return nThreads;
+} /*  end MakeMBFuncArgs */
+
+/**
+ * Delete arguments for ThreadMBFunc
+ * \param nargs      number of elements in ThreadArgs.
+ * \param ThreadArgs Array of MBFuncArg
+ */
+static void KillMBFuncArgs (olong nargs, MBFuncArg **ThreadArgs)
+{
+  olong i;
+
+  if (ThreadArgs==NULL) return;
+  ObitThreadPoolFree (ThreadArgs[0]->thread);  /* Free thread pool */
+  for (i=0; i<nargs; i++) {
+    if (ThreadArgs[i]) {
+      if (ThreadArgs[i]->thread) ObitThreadUnref(ThreadArgs[i]->thread);
+      if (ThreadArgs[i]->coef)   g_free(ThreadArgs[i]->coef);
+      g_free(ThreadArgs[i]);
+    }
+  }
+  g_free(ThreadArgs);
+} /*  end KillMBFuncArgs */
+
+/**
+ * Thread grid a set of rows in the image
+ * Magic value blanking supported.
+ * Callable as thread
+ * \param arg Pointer to MBFuncArg argument with elements:
+ * \li  loy       First row (0-rel) 
+ * \li  hiy       Highest row (0-rel) 
+ * \li  nchan     Number of channels in output
+ * \li  npoln     Number of polarizations in output
+ * \li  nIF       Number of IFs in output
+ * \li  npoln     Number of polarizations in output
+ * \li  selem     Size (floats) of list element
+ * \li  nelem     Number of list elements
+ * \li  doRMS     If TRUE, image is RMS
+ * \li  doPhase   If TRUE, image is Phase, else Amplitude
+ * \li  nx;       Number of columns
+ * \li  ny;       Number of rows
+ * \li  hwid;     Half width of interpolation
+ * \li  xcen;     X center cell
+ * \li  ycen;     Y center cell
+ * \li  SumIr     Real Stokes I accumulation list
+ * \li  SumIi     Imag Stokes I accumulation list
+ * \li  SumII     Stokes I*I accumulation list
+ * \li  SumQr     Real Stokes Q accumulation list
+ * \li  SumQi     Imag Stokes Q accumulation list
+ * \li  SumQQ     Stokes Q*Q accumulation list
+ * \li  SumUr     Real Stokes U accumulation list
+ * \li  SumUi     Imag Stokes U accumulation list
+ * \li  SumUU     Stokes U*U accumulation list
+ * \li  SumVr     Real Stokes V accumulation list
+ * \li  SumVi     Imag Stokes V accumulation list
+ * \li  SumVV     Stokes V*V accumulation list
+ * \li  SumAzCell Azimuth offset accumulation list
+ * \li  SumElCell Elevation offset  accumulation list
+ * \li  grids     [out] Array of ObitFArrays
+ *                   fastest to slowest, channel, IF, Stokes
+ * \li ithread  thread number, <0 -> no threading
+ * \return NULL
+ */
+static gpointer ThreadMBGrid (gpointer arg)
+{
+  /* Get arguments from structure */
+  MBFuncArg *largs = (MBFuncArg*)arg;
+  olong   loy        = largs->loy;
+  olong   hiy        = largs->hiy;
+  olong   nIF        = largs->nIF;
+  olong   nchan      = largs->nchan;
+  olong   npoln      = largs->npoln;
+  olong   selem      = largs->selem;
+  olong   nelem      = largs->nelem;
+  gboolean doRMS     = largs->doRMS;
+  gboolean doPhase   = largs->doPhase;
+  olong  nx          = largs->nx; 
+  /*olong  ny          = largs->ny;*/
+  olong  hwid        = largs->hwid;
+  ofloat xcen        = largs->xcen;  
+  ofloat ycen        = largs->ycen;  
+  ofloat* SumIr      = largs->SumIr;
+  ofloat* SumIi      = largs->SumIi;
+  ofloat* SumII      = largs->SumII;
+  ofloat* SumQr      = largs->SumQr;
+  ofloat* SumQi      = largs->SumQi;
+  ofloat* SumQQ      = largs->SumQQ;
+  ofloat* SumUr      = largs->SumUr;
+  ofloat* SumUi      = largs->SumUi;
+  ofloat* SumUU      = largs->SumUU;
+  ofloat* SumVr      = largs->SumVr;
+  ofloat* SumVi      = largs->SumVi;
+  ofloat* SumVV      = largs->SumVV;
+  ofloat* SumAzCell  = largs->SumAzCell;
+  ofloat* SumElCell  = largs->SumElCell;
+  ofloat* coef       = largs->coef;
+  ObitFArray** grids = largs->grids;
+  
+  /* local */
+  olong i, ix, iy, iIF, ichan, indx, jndx, off;
+  ofloat x, y, closest;
+  ofloat amp, ph, fblank = ObitMagicF();
+  odouble sumIWt , sumQWt, sumUWt, sumVWt;
+  odouble valIr,  valIi, valII, valQr, valQi, valQQ;
+  odouble valUr,  valUi, valUU, valVr, valVi, valVV;
+  ObitFArray *array;
+
+  if (hiy<loy) goto finish;
+  
+  /* Loop over y (El) */
+  for (iy=loy; iy<hiy; iy++) {
+    y = iy - ycen;
+    
     /* Loop over x (Az) */
     for (ix=0; ix<nx; ix++) {
       x = ix - xcen;
@@ -2284,11 +2632,6 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 	  for (i=0; i<nelem; i++) {
 	    closest = MIN (closest, MAX (fabs(SumAzCell[i]-x), fabs(SumElCell[i]-y)));
 	    if (coef[i]!=0.0) {
-	      /* DEBUG
-	      if ((iIF==15) && (ichan==2) && (abs(ix-32)<=0) && (abs(iy-32)<=0)) {
-		fprintf (stderr,"i %d x %8.5f y %8.5f az %8.5f el %8.5f flx %8.5f coef %8.6f sum %8.6f\n",
-			 i, x, y, SumAzCell[i], SumElCell[i], SumIr[i*selem+off], coef[i],sumIWt);
-	      } */
 	      if (SumIr[i*selem+off]!=fblank) {
 		valIr  += coef[i]*SumIr[i*selem+off];
 		valIi  += coef[i]*SumIi[i*selem+off];
@@ -2315,10 +2658,6 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 	      }
 	    }
 	  } /* end loop over lists */
-	  /* DEBUG 
-	  if (iIF==1) {
-	    fprintf (stderr, "x %f y %f c %f s %f v %f\n", x, y, closest, sumIWt, valIr/sumIWt );
-	  }*/
 	  /* Better be something within 0.5 cells */
 	  if (closest>0.5) {
 	    sumIWt = sumQWt = sumUWt = sumVWt = 0.0;
@@ -2341,7 +2680,7 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 	    valQi  = fblank;
 	    valQQ = fblank;
 	  }
-	      if (fabs(sumUWt)>0.1) {
+	  if (fabs(sumUWt)>0.1) {
 	    valUr /= sumUWt;
 	    valUi /= sumUWt;
 	    valUU /= sumUWt;
@@ -2350,7 +2689,7 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 	    valUi = fblank;
 	    valUU = fblank;
 	  }
-	      if (fabs(sumVWt)>0.1) {
+	  if (fabs(sumVWt)>0.1) {
 	    valVr /= sumVWt;
 	    valVi /= sumVWt;
 	    valVV /= sumVWt;
@@ -2364,10 +2703,6 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 	  jndx  = iy*nx + ix;
 	  /* I */
 	  indx  = ichan + iIF*nchan;
-	  /* DEBUG 
-	  if ((iIF==1) && (ix==21) && (iy==28)) {
-	    fprintf (stderr,"x %d y %d r %f i %f jndx %d indx %d\n",ix,iy, valIr,valIi, jndx,indx );
-	  }*/
 	  array = grids[indx];
 	  if ((valIr==fblank) || (valIi==fblank)) {
 	    amp = ph = fblank;
@@ -2468,81 +2803,11 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
     } /* end x loop */
   } /* end y loop */
 
-} /* end gridData */
-
-/*----------------------------------------------------------------------- */
-/*  Lagrangian interpolation coefficients                                 */
-/*  For interpolating in a quasi regular grid represented by lists        */
-/*  Determine coefficients for elements in lists to interpolate to (x,y)  */
-/*   Input:                                                               */
-/*      x         Coordinate on first axis                                */
-/*      y         Coordinate on second axis                               */
-/*      n         Length of lists                                         */
-/*      hwid      Halfwidth of interpolation kernal                       */
-/*      xlist     List of coordinates on  first axis                      */
-/*      ylist     List coordinate on second axis                          */
-/*   Output:                                                              */
-/*      coef      Array of interpolation coefficients for xlist,ylist     */
-/*----------------------------------------------------------------------- */
-void lagrange(ofloat x, ofloat y, olong n, olong hwid, 
-	      ofloat *xlist, ofloat *ylist, ofloat *coef)
-{
-  ofloat xhwid = (ofloat)hwid, sum;
-  odouble prodx, prodxd, prody, prodyd;
-  olong  i, j, countx, county;
-
-  /* DEBUG - closest cell 
-  for (j=0; j<n; j++) {
-    coef[j] = 0.0;
-    if ((fabs(x-xlist[j])<=0.5) && (fabs(y-ylist[j])<=0.5)) coef[j] = 1.0;
-  }
-  return; */
-  /* end DEBUG */
-
-  /* Loop over list */
-  sum = 0.0;
-  for (j=0; j<n; j++) {
-    prodx = prodxd = prody = prodyd = 1.0;
-    countx = county = 0;
-    coef[j] = 0.0;
-
-    /* Within hwid? and i!=j */
-    if ((fabs(x-xlist[j])<=xhwid) && (fabs(y-ylist[j])<=xhwid)) {
-      coef[j] = 1.0;  /* In case nothing else within hwid */
-     
-      /* Inner loop over list */
-      for (i=0; i<n; i++) {
-	if (i==j) continue;                    /* i!=j */
-	if (fabs(x-xlist[i])>xhwid) continue;  /* X within halfwidth */
-	if (fabs(y-ylist[i])>xhwid) continue;  /* Y within halfwidth */
-	if (fabs(xlist[j]-xlist[i])<0.3) continue;
-	if (fabs(ylist[j]-ylist[i])<0.3) continue;
-	  countx++;
-	  prodx  *= (odouble)(x - xlist[i]);
-	  prodxd *= (odouble)(xlist[j] - xlist[i]);
-	  county++;
-	  prody  *= (odouble)(y - ylist[i]);
-	  prodyd *= (odouble)(ylist[j] - ylist[i]);
-      } /* end inner loop */
-    } /* end j within half width */
-    /* put it together */
-    if ((countx>=1)  || (county>=1)) {
-      if ((prodxd!=0.0) && (prodyd!=0.0))
-	coef[j] = (ofloat)(prodx*prody / (prodxd*prodyd));
-      else
-	coef[j] = 1.0;
-      sum += coef[j];
-    }
-  } /* end loop over list */
-
-  /* DEBUG
-  if ((x==0.0) && (y==0.0))
-    fprintf(stderr,"lagrange x %f, y %f, sum %f\n", x, y, sum); */
+  /* Indicate completion */
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (largs->thread, (gpointer)&largs->ithread);
   
-  /* Normalize if anything found */
-  if (fabs(sum)<0.01) return;
-  prodx = 1.0 / sum;
-  for (j=0; j<n; j++) coef[j] *= prodx;
-
-  } /* end lagrange */
-
+  return NULL;
+  
+} /*  end ThreadMBGrid */

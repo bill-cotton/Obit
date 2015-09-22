@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2007
+#  Copyright (C) 2004-2015
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 #-----------------------------------------------------------------------
 
 # Python shadow class to ObitFInterpolate class
-import Obit, FArray, ImageDesc, InfoList, OErr
+import Obit, FArray, Image, ImageDesc, InfoList, OErr
 
 class FInterpolatePtr :
     def __init__(self,this):
@@ -105,8 +105,6 @@ def PReplace (inFI, newArray):
         raise TypeError,"inFI MUST be a Python Obit FInterpolate"
     if not FArray.PIsA(newArray):
         raise TypeError,"newArray MUST be a Python Obit FArray"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be a Python ObitErr"
     #
     Obit.FInterpolateReplace (inFI.me, newArray.me)
     # end PReplace
@@ -250,7 +248,7 @@ def PSetDesc (inFI, desc):
     # Checks
     if not PIsA(inFI):
         raise TypeError,"inFI MUST be a Python Obit FInterpolate"
-    if not Image.PIsA(desc):
+    if not ImageDesc.PIsA(desc):
         raise TypeError,"desc MUST be a Python Obit ImageDesc"
     #
     Obit.FInterpolateSetDesc (inFI.me, desc.me)

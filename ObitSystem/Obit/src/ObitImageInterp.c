@@ -570,8 +570,9 @@ static void  ReadImage  (ObitImageInterp *in, ObitImage *image,
   ObitImageClose (image,err);
   if (err->error) Obit_traceback_msg (err, routine, image->name);
 
-  /* Set plane frequency */
-  in->freqs[iplane] = image->myDesc->crval[image->myDesc->jlocf];
+  /* Set plane frequency - values are kinda screwy - may change*/
+  in->freqs[iplane] = image->myDesc->crval[image->myDesc->jlocf]
+    + iFreq*image->myDesc->cdelt[image->myDesc->jlocf];
 
   /* Copy to in->ImgPixels */
   ipos[0] = ipos[1] = ipos[2] = 0;
