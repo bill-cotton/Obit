@@ -108,7 +108,7 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 		ofloat *SumAzCell, ofloat *SumElCell, ObitFArray **grids);
 
 /* Lagrangian interpolation coefficients */
-void lagrange(ofloat x, ofloat y, olong n, olong hwid, 
+void lagrange(ofloat x, ofloat y, olong n, olong hwid, olong minmax[],
 	      ofloat *xlist, ofloat *ylist, ofloat *coef);
 
 /* Program globals */
@@ -1296,6 +1296,10 @@ void doChanPoln (gchar *Source, olong ant, ObitInfoList* myInput,
 	  plane[1] = ichan+1;
 	  for (iIF=0; iIF<nIF; iIF++) {
 	    plane[0] = iIF+1;
+	    /* DEBUG
+	    if ((iIF==11) && (ichan==2)) {
+	      fprintf (stderr,"IF %d ch %d val %f\n",iIF,ichan,imgList[i]->array[51+50*100]);
+	    } */
 	    ObitImagePutPlane (outImage[ipoln], imgList[i++]->array, plane,  err);
 	    if (err->error) goto cleanup;
 	  }
@@ -1305,6 +1309,14 @@ void doChanPoln (gchar *Source, olong ant, ObitInfoList* myInput,
 	  plane[1] = iIF+1;
 	  for (ichan=0; ichan<nchan; ichan++) {
 	    plane[0] = ichan+1;
+	    /* DEBUG 
+	    if ((iIF==11) && (ichan==2)) {
+	      fprintf (stdout,"IF %d ch %d 50,48 val %f\n",iIF,ichan,imgList[i]->array[50+48*100] );
+	      fprintf (stdout,"IF %d ch %d 50,49 val %f\n",iIF,ichan,imgList[i]->array[50+49*100] );
+	      fprintf (stdout,"IF %d ch %d 50,50 val %f\n",iIF,ichan,imgList[i]->array[50+50*100] );
+	      fprintf (stdout,"IF %d ch %d 50,51 val %f\n",iIF,ichan,imgList[i]->array[50+51*100] );
+	      fprintf (stdout,"IF %d ch %d 51,51 val %f\n",iIF,ichan,imgList[i]->array[51+51*100] );
+	    } */
 	    ObitImagePutPlane (outImage[ipoln], imgList[i++]->array, plane,  err);
 	    if (err->error) goto cleanup;
 	  } /* end Channel loop */
@@ -1485,7 +1497,16 @@ ObitFArray** doImage (gboolean doRMS, gboolean doPhase, olong ant,
   /* No normalization for RMS, phase */
   if (doRMS|| doPhase) goto cleanup;
 
-  /* true Stokes: Subtract center Q, U (source poln) * Ipol beam from rest */
+  /* DEBUG IF 12, ch 3 
+    indx = 0*selem + 11*(*nchan) + 2;
+    value =  1.0/out[indx]->array[50+50*100];
+    fprintf (stdout,"Grid IF %d ch %d 50,48 val %f\n",11,2,out[indx]->array[50+48*100]*value );
+    fprintf (stdout,"Grid IF %d ch %d 50,49 val %f\n",11,2,out[indx]->array[50+49*100]*value );
+    fprintf (stdout,"Grid IF %d ch %d 50,50 val %f\n",11,2,out[indx]->array[50+50*100]*value );
+    fprintf (stdout,"Grid IF %d ch %d 50,51 val %f\n",11,2,out[indx]->array[50+51*100]*value );
+    fprintf (stdout,"Grid IF %d ch %d 51,51 val %f\n",11,2,out[indx]->array[51+51*100]*value );*/
+
+   /* true Stokes: Subtract center Q, U (source poln) * Ipol beam from rest */
   if (doPolStokes) {
     fatemp = ObitFArrayCreate (NULL, 2, naxis);  /* Work array */
     ipos[0] = nx/2; ipos[1] = ny/2;
@@ -1500,7 +1521,7 @@ ObitFArray** doImage (gboolean doRMS, gboolean doPhase, olong ant,
 	fatemp = ObitFArrayCopy (out[indx], fatemp, err);
 	if (err->error) goto cleanup;
 	ObitFArraySMul (fatemp, value);  /* Q * IPol beam */
-	ObitFArrayAdd (out[qndx], fatemp, out[qndx]);
+	if ((*npoln>1) && out[qndx]) ObitFArrayAdd (out[qndx], fatemp, out[qndx]);
 	/* U */ 
 	undx = 2*selem + iIF*(*nchan) + ichan;
 	Center = ObitFArrayIndex (out[undx],  ipos);
@@ -1508,7 +1529,7 @@ ObitFArray** doImage (gboolean doRMS, gboolean doPhase, olong ant,
 	fatemp = ObitFArrayCopy (out[indx], fatemp, err);
 	if (err->error) goto cleanup;
 	ObitFArraySMul (fatemp, value);  /* U * IPol beam */
-	ObitFArrayAdd (out[undx], fatemp, out[undx]);
+	if ((*npoln>2) && out[undx]) ObitFArrayAdd (out[undx], fatemp, out[undx]);
       }
     }
 
@@ -1517,11 +1538,11 @@ ObitFArray** doImage (gboolean doRMS, gboolean doPhase, olong ant,
       for (ichan=0; ichan<(*nchan); ichan++) {
 	indx = 0*selem + iIF*(*nchan) + ichan;
 	qndx = 1*selem + iIF*(*nchan) + ichan;
-	ObitFArrayDiv (out[qndx], out[indx], out[qndx]);
+	if ((*npoln>2) && out[qndx]) ObitFArrayDiv (out[qndx], out[indx], out[qndx]);
 	undx = 2*selem + iIF*(*nchan) + ichan;
-	ObitFArrayDiv (out[undx], out[indx], out[undx]);
+	if ((*npoln>2) && out[undx]) ObitFArrayDiv (out[undx], out[indx], out[undx]);
 	vndx = 3*selem + iIF*(*nchan) + ichan;
-	ObitFArrayDiv (out[vndx], out[indx], out[vndx]);
+	if ((*npoln>3) && out[vndx]) ObitFArrayDiv (out[vndx], out[indx], out[vndx]);
       }
     }
   } /* end true Stokes */
@@ -2068,10 +2089,12 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
 	  off  = iElem*selem + iIF*nchan + ichan;
 	  doff = indx + inData->myDesc->nrparm + iIF*incif + ichan*incf;
 	  ddoff = doff;
-	  /* DEBUG 
-	  if ((iIF==1) && (fabs((u/xCells)+5.0)<2.1) && (fabs((v/yCells)-2.0)<2.1)) {
-	    fprintf (stderr,"cx %f cy %f wt %f\n",u/xCells-10.0, v/yCells-10.0, inData->buffer[ddoff+2]);
-	  }*/
+	  /* DEBUG
+	  if ((iIF==11) && (ichan==3) && (fabs((u/xCells)+2.0)<2.1) && (fabs((v/yCells)-2.0)<2.1)) {
+	    fprintf (stderr,"bl %2d - %2d cx %5.0f cy %5.0f sum %f vis %f %f wt %f\n",
+		     ant1, ant2, u/xCells, v/yCells, SumIr[off],
+		     inData->buffer[ddoff],inData->buffer[ddoff+1], inData->buffer[ddoff+2]);
+	  } */
 	  /* I */
 	  if (inData->buffer[ddoff+2]>0.0) {
 	    SumIr[off]  += inData->buffer[ddoff]*inData->buffer[ddoff+2];
@@ -2150,6 +2173,11 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
 	  SumII[off] = (((SumII[off]/SumIWt[off]) - SumIr[off]*SumIr[off]))/SumIWt[off];
 	  if (SumII[off]>0.0) SumII[off] = sqrt(SumII[off]);
 	  SumII[off] /= SumIr[off];  /* Normalize variance by I */
+	  /* DEBUG
+	  if ((iIF==11) && (ichan==2) && (fabs((SumAzCell[i])+2.0)<2.1) && (fabs((SumElCell[i])-2.0)<2.1)) {
+	    fprintf (stderr,"%5d cx %5.1f cy %5.1f sum %f \n",
+		     i, SumAzCell[i], SumElCell[i], SumIr[off]/SumIr[1624*selem + iIF*nchan + ichan]);
+	  }  */
 	} else {
 	  SumIr[off] = fblank;
 	  SumIi[off] = fblank;
@@ -2212,8 +2240,9 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
     } /* end IF loop */
 
 
-    /* Add diagnostics */
-    if (prtLv>=2) {
+    /* Add diagnostics IF 12, channel 2*/
+    off  = 11*nchan + 2; 
+    if (prtLv>=2)  { 
       ix = (olong) (SumAzCell[i] + nx/2 + 1.5);
       iy = (olong) (SumElCell[i] + ny/2 + 1.5);
       if ((SumAzCell[i]>1000.) || (SumElCell[i]>1000.)) continue;
@@ -2223,15 +2252,15 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
 		       i, ix,iy, 
 		       /*SumAzCell[i]*xCells*206265., SumElCell[i]*yCells*206265., offset in asec */
 		       SumAzCell[i], SumElCell[i],   /* offset in cells */
-		       SumIr[i*selem],SumIi[i*selem], SumQr[i*selem],SumQi[i*selem],
-		       SumUr[i*selem],SumUi[i*selem], SumVr[i*selem],SumVi[i*selem]);
+		       SumIr[off+i*selem],SumIi[off+i*selem], SumQr[off+i*selem],SumQi[off+i*selem],
+		       SumUr[off+i*selem],SumUi[off+i*selem], SumVr[off+i*selem],SumVi[off+i*selem]);
       } else {
 	Obit_log_error(err, OBIT_InfoErr, 
-		       "%3.3d Cell %3d %3d Az %8.1f cell, El %8.1f cell, I %6.3f %6.3f Jy",
+		       "%3.3d Cell %3d %3d Az %8.1f cell, El %8.1f cell, I %6.4f %6.4f Jy",
 		       i, ix,iy, 
 		       /*SumAzCell[i]*xCells*206265., SumElCell[i]*yCells*206265., offset in asec */
 		       SumAzCell[i], SumElCell[i],   /* offset in cells */
-		       SumIr[i*selem],SumIi[i*selem]);
+		       SumIr[off+i*selem],SumIi[off+i*selem]);
       }
     }
     ObitErrLog(err);
@@ -2328,77 +2357,153 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 /*  Lagrangian interpolation coefficients                                 */
 /*  For interpolating in a quasi regular grid represented by lists        */
 /*  Determine coefficients for elements in lists to interpolate to (x,y)  */
+/*   Doesn't seem to shift correctly                                                         */
 /*   Input:                                                               */
 /*      x         Coordinate on first axis                                */
 /*      y         Coordinate on second axis                               */
 /*      n         Length of lists                                         */
-/*      hwid      Halfwidth of interpolation kernal                       */
+/*      hwid      Halfwidth of interpolation kernal, decreased at edges   */
+/*                0=> closest pixel                                       */
+/*      minmax    max, min, x, y in lists                                 */
 /*      xlist     List of coordinates on  first axis                      */
 /*      ylist     List coordinate on second axis                          */
 /*   Output:                                                              */
 /*      coef      Array of interpolation coefficients for xlist,ylist     */
 /*----------------------------------------------------------------------- */
-void lagrange(ofloat x, ofloat y, olong n, olong hwid, 
+void lagrange(ofloat x, ofloat y, olong n, olong hwid, olong minmax[],
 	      ofloat *xlist, ofloat *ylist, ofloat *coef)
 {
-  ofloat xhwid = (ofloat)hwid, sum;
+  ofloat xhwid, yhwid, sum;
   odouble prodx, prodxd, prody, prodyd;
   olong  i, j, countx, county;
 
-  /* DEBUG - closest cell 
-  for (j=0; j<n; j++) {
-    coef[j] = 0.0;
-    if ((fabs(x-xlist[j])<=0.5) && (fabs(y-ylist[j])<=0.5)) coef[j] = 1.0;
-  }
-  return; */
-  /* end DEBUG */
+  for (i=0; i<n; i++) coef[i] = 0.0;  /* Init output */
 
-  /* Loop over list */
+  /* Anything to do? */
+  if ((x<minmax[0]) || (x>minmax[1]) || (y<minmax[2]) || (y>minmax[3])) return;
+
   sum = 0.0;
-  for (j=0; j<n; j++) {
-    prodx = prodxd = prody = prodyd = 1.0;
-    countx = county = 0;
-    coef[j] = 0.0;
-
-    /* Within hwid? and i!=j */
-    if ((fabs(x-xlist[j])<=xhwid) && (fabs(y-ylist[j])<=xhwid)) {
-      coef[j] = 1.0;  /* In case nothing else within hwid */
-     
-      /* Inner loop over list */
-      for (i=0; i<n; i++) {
-	if (i==j) continue;                    /* i!=j */
-	if (fabs(x-xlist[i])>xhwid) continue;  /* X within halfwidth */
-	if (fabs(y-ylist[i])>xhwid) continue;  /* Y within halfwidth */
-	if (fabs(xlist[j]-xlist[i])<0.3) continue;
-	if (fabs(ylist[j]-ylist[i])<0.3) continue;
-	  countx++;
-	  prodx  *= (odouble)(x - xlist[i]);
-	  prodxd *= (odouble)(xlist[j] - xlist[i]);
-	  county++;
-	  prody  *= (odouble)(y - ylist[i]);
-	  prodyd *= (odouble)(ylist[j] - ylist[i]);
-      } /* end inner loop */
-    } /* end j within half width */
-    /* put it together */
-    if ((countx>=1)  || (county>=1)) {
-      if ((prodxd!=0.0) && (prodyd!=0.0))
-	coef[j] = (ofloat)(prodx*prody / (prodxd*prodyd));
-      else
-	coef[j] = 1.0;
-      sum += coef[j];
+  /* chose type, hwid=0 => closest */
+  if (hwid<=0) {
+    /* Loop over list */
+    for (i=0; i<n; i++) {
+      if ((fabs(x-xlist[i])<0.2) && (fabs(y-ylist[i])<0.2)) {
+	coef[i] = 1.0;
+	sum++;
+      } else coef[i] = 0.0;
     }
-  } /* end loop over list */
+  } else {  /* Interpolate */
+    /* Trim halfwidth near edges */
+    xhwid = hwid + 0.5;
+    xhwid = MIN (xhwid, (x-minmax[0]+0.5));
+    xhwid = MIN (xhwid, (minmax[1]-x+0.5));
+    yhwid = hwid + 0.5;
+    yhwid = MIN (yhwid, (y-minmax[2]+0.5));
+    yhwid = MIN (yhwid, (minmax[3]-y+0.5));
+    for (j=0; j<n; j++) {
+      prodx =  prody  = 1.0;
+      prodxd = prodyd = 1.0;
+      countx = county = 0;
+      coef[j] = 0.0; 
+      
+      /* Within hwid? and i!=j */
+      if ((fabs(x-xlist[j])<=xhwid) && (fabs(y-ylist[j])<=yhwid)) {
+	coef[j] = 1.0;  /* In case nothing else within hwid */
+	
+	/* Inner loop over list */
+	for (i=0; i<n; i++) {
+	  if (fabs(x-xlist[i])>xhwid) continue;  /* X within halfwidth */
+	  if (fabs(y-ylist[i])>yhwid) continue;  /* Y within halfwidth */
+	  if (i==j) continue;                    /* i!=j */
+	  if (fabs(x-xlist[i])>0.5) {   /*  Not if same X  */
+	    countx++;
+	    prodx  *= (odouble)(x - xlist[i]);}
+	  if (fabs(xlist[j]-xlist[i])>0.5) prodxd *= (odouble)(xlist[j] - xlist[i]);
+	  if (fabs(y-ylist[i])>0.5) {   /*   Not if same Y*/
+	    county++;
+	    prody  *= (odouble)(y - ylist[i]);}
+	  if (fabs(ylist[j]-ylist[i])>0.5) prodyd *= (odouble)(ylist[j] - ylist[i]);
+	} /* end inner loop */
+      } /* end j within half width */
+      
+      /* put it together */
+      if ((countx>=1)  || (county>=1)) {
+	if ((prodxd!=0.0) && (prodyd!=0.0))
+	  coef[j] = (ofloat)(prodx*prody / (prodxd*prodyd));
+	else
+	  coef[j] = 1.0;
+	sum += coef[j];
+      }
+    } /* end loop over list */
+  } /* end if interpolate */
 
-  /* DEBUG
-  if ((x==0.0) && (y==0.0))
-    fprintf(stderr,"lagrange x %f, y %f, sum %f\n", x, y, sum); */
-  
   /* Normalize if anything found */
-  if (fabs(sum)<0.01) return;
+  if (sum==0.0) return;
   prodx = 1.0 / sum;
   for (j=0; j<n; j++) coef[j] *= prodx;
 
-  } /* end lagrange */
+   /* DEBUG
+  if ((x==0.0) && (y>=-1.0) && (y<=1.0)) {
+    fprintf(stdout,"lagrange x %f, y %f, sum %f\n", x, y, sum);
+     for (i=0; i<n; i++) 
+      if (fabs(coef[i])>0.0001) 
+	fprintf(stdout," final %6d, %8.4f %6.1f %6.1f\n",
+		i, coef[i], xlist[i], ylist[i]);
+  }  end DEBUG */
+} /* end lagrange */
+
+/*----------------------------------------------------------------------- */
+/*  Gaussian weighted interpolation coefficients                          */
+/*  For interpolating in a quasi regular grid represented by lists        */
+/*  Determine coefficients for elements in lists to interpolate to (x,y)  */
+/*   Input:                                                               */
+/*      x         Coordinate on first axis                                */
+/*      y         Coordinate on second axis                               */
+/*      n         Length of lists                                         */
+/*      hwid      Halfwidth of interpolation kernal                       */
+/*      minmax    max, min, x, y in lists                                 */
+/*      xlist     List of coordinates on  first axis                      */
+/*      ylist     List coordinate on second axis                          */
+/*   Output:                                                              */
+/*      coef      Array of interpolation coefficients for xlist,ylist     */
+/*----------------------------------------------------------------------- */
+void gauss(ofloat x, ofloat y, olong n, olong hwid, olong minmax[],
+	   ofloat *xlist, ofloat *ylist, ofloat *coef)
+{
+  ofloat xhwid = (ofloat)hwid, sum, d2;
+  olong  i;
+
+  for (i=0; i<n; i++) coef[i] = 0.0;  /* Init output */
+
+  /* Anything to do? */
+  if ((x<minmax[0]) || (x>minmax[1]) || (y<minmax[2]) || (y>minmax[3])) return;
+
+  sum = 0.0;
+  /* hwid=0 => closest */
+  if (hwid<=0) {
+    for (i=0; i<n; i++) {
+      if ((fabs(x-xlist[i])<0.49) && (fabs(y-ylist[i])<0.49)) {
+	coef[i] = 1.0;
+	sum++;
+      } else coef[i] = 0.0;
+    }
+  } else {  /* Interpolate */
+    /* Loop over list */
+    for (i=0; i<n; i++) {
+      if ((fabs(x-xlist[i])<=xhwid) && (fabs(y-ylist[i])<=xhwid)) {
+	/* distance**2 in pixels */
+	d2 = (x-xlist[i])*(x-xlist[i]) + (y-ylist[i])*(y-ylist[i]);
+	coef[i] = exp(-d2);
+	sum += coef[i];
+      } /* end close enough */
+    } /* end loop */
+  }
+  /* Normalize if anything found */
+  if (fabs(sum)<0.01) return;
+  if (sum==1.0) return;
+  sum = 1.0 / sum;
+  for (i=0; i<n; i++) coef[i] *= sum;
+ } /* end gauss */
 
 /**
  * Make arguments for a Threaded ThreadMBFunc?
@@ -2605,8 +2710,21 @@ static gpointer ThreadMBGrid (gpointer arg)
   odouble valIr,  valIi, valII, valQr, valQi, valQQ;
   odouble valUr,  valUi, valUU, valVr, valVi, valVV;
   ObitFArray *array;
+  olong minmax[] = {1000,-1000,1000,-1000};
 
   if (hiy<loy) goto finish;
+
+  /* Get min, max x, y from lists */
+  for (i=0; i<nelem; i++ ) {
+    if (SumAzCell[i]>0.0) ix = (olong)(SumAzCell[i]+0.5);
+    else                  ix = (olong)(SumAzCell[i]-0.5);
+    if (SumElCell[i]>0.0) iy = (olong)(SumElCell[i]+0.5);
+    else                  iy = (olong)(SumElCell[i]-0.5);
+    minmax[0] = MIN (minmax[0], ix);
+    minmax[1] = MAX (minmax[1], ix);
+    minmax[2] = MIN (minmax[2], iy);
+    minmax[3] = MAX (minmax[3], iy);
+  }
   
   /* Loop over y (El) */
   for (iy=loy; iy<hiy; iy++) {
@@ -2617,7 +2735,8 @@ static gpointer ThreadMBGrid (gpointer arg)
       x = ix - xcen;
       
       /* Get interpolation coefficients */
-      lagrange (x, y, nelem, hwid, SumAzCell, SumElCell, coef);
+      lagrange (x, y, nelem, hwid, minmax, SumAzCell, SumElCell, coef);
+	/* gauss (x, y, nelem, hwid, minmax, SumAzCell, SumElCell, coef);*/
 
       /* Loop over IFs */
       for (iIF=0; iIF<nIF; iIF++) {
@@ -2637,6 +2756,13 @@ static gpointer ThreadMBGrid (gpointer arg)
 		valIi  += coef[i]*SumIi[i*selem+off];
 		valII  += coef[i]*SumII[i*selem+off];
 		sumIWt += coef[i];
+		/* DEBUG
+		if ((x==0.0) && (y>=-1.0) && (y<=1.0) && (iIF==11) && (ichan==2) && (fabs(coef[i])>0.0001)) {
+		  amp = sqrt (valIr*valIr + valIi*valIi);
+		  fprintf(stdout,"grid %d x %4.1f, y %4.1f, sum I %8.4f sumWt %8.4f I %8.4f, %8.4f coef %8.4f total %4.4f amp %4.4f \n", 
+			    i, x, y, valIr, sumIWt, SumIr[i*selem+off]/SumIr[1624*selem+off], 
+			  SumIi[i*selem+off]/SumIr[1624*selem+off], coef[i], valIr/sumIWt, amp);
+		  }  end DEBUG */
 	      }
 	      if (SumQr && SumQr[i*selem+off]!=fblank) {
 		valQr  += coef[i]*SumQr[i*selem+off];
@@ -2704,100 +2830,113 @@ static gpointer ThreadMBGrid (gpointer arg)
 	  /* I */
 	  indx  = ichan + iIF*nchan;
 	  array = grids[indx];
-	  if ((valIr==fblank) || (valIi==fblank)) {
-	    amp = ph = fblank;
-	  } else {
-	    /* Amplitude and phase within +/- 90 deg */
-	    amp = sqrt (valIr*valIr + valIi*valIi);
-	    ph  = RAD2DG*atan2(valIi, valIr);
-	    if (ph>90.0) {
-	      amp = -amp;
-	      ph -= 180.0;
-	    } else if (ph<-90.0) {
-	      amp = -amp;
-	      ph += 180.0;
+	  if (array) {   /* Needed? */
+	    if ((valIr==fblank) || (valIi==fblank)) {
+	      amp = ph = fblank;
+	    } else {
+	      /* Amplitude and phase within +/- 90 deg */
+	      amp = sqrt (valIr*valIr + valIi*valIi);
+	      ph  = RAD2DG*atan2(valIi, valIr);
+	      if (ph>90.0) {
+		amp = -amp;
+		ph -= 180.0;
+	      } else if (ph<-90.0) {
+		amp = -amp;
+		ph += 180.0;
+	      }
 	    }
-	  }
-	  if (doRMS) {  /* RMS */
-	    array->array[jndx] = valII;
-	  } else if (doPhase) {  /* phase */
-	    array->array[jndx] = ph;
-	  } else {      /* Stokes ampl */
-	    array->array[jndx] = amp;
-	  }
+	    /* DEBUG 
+	    if ((ix==50) && (iy>=49) && (iy<=51) && (iIF==11) && (ichan==2)) {
+	      fprintf(stdout,"grid %d x %4d, y %4d, amp %8.4f phase %8.4f RMS %8.4f \n", 
+		      i, ix, iy, amp, ph, valII);
+	    }  end DEBUG */
+	    if (doRMS) {  /* RMS */
+	      array->array[jndx] = valII;
+	    } else if (doPhase) {  /* phase */
+	      array->array[jndx] = ph;
+	    } else {      /* Stokes ampl */
+	      array->array[jndx] = amp;
+	    }
+	  } /* end if Stokes needed */
 	  if (npoln<=1) continue;   /* multiple polarizations */
 	  /* Q */
 	  indx  = ichan + iIF*nchan + nchan*nIF;
 	  array = grids[indx];
-	  if ((valQr==fblank) || (valQi==fblank)) {
-	    amp = ph = fblank;
-	  } else {
-	    /* Amplitude and phase within +/- 90 deg */
-	    amp = sqrt (valQr*valQr + valQi*valQi);
-	    ph  = RAD2DG*atan2(valQi, valQr);
-	    if (ph>90.0) {
-	      amp = -amp;
-	      ph -= 180.0;
-	    } else if (ph<-90.0) {
-	      amp = -amp;
-	      ph += 180.0;
+	  if (array && (npoln>=2)) {   /* Needed? */
+	    if ((valQr==fblank) || (valQi==fblank)) {
+	      amp = ph = fblank;
+	    } else {
+	      /* Amplitude and phase within +/- 90 deg */
+	      amp = sqrt (valQr*valQr + valQi*valQi);
+	      ph  = RAD2DG*atan2(valQi, valQr);
+	      if (ph>90.0) {
+		amp = -amp;
+		ph -= 180.0;
+	      } else if (ph<-90.0) {
+		amp = -amp;
+		ph += 180.0;
+	      }
 	    }
-	  }
-	  if (doRMS) {  /* RMS */
-	    array->array[jndx] = valQQ;
-	  } else if (doPhase) {  /* phase */
-	    array->array[jndx] = ph;
-	  } else {      /* Stokes ampl */
-	    array->array[jndx] = amp;
-	  }
+	    if (doRMS) {  /* RMS */
+	      array->array[jndx] = valQQ;
+	    } else if (doPhase) {  /* phase */
+	      array->array[jndx] = ph;
+	    } else {      /* Stokes ampl */
+	      array->array[jndx] = amp;
+	    }
+	  } /* end if Stokes needed */
 	  /* U */
 	  indx  = ichan + iIF*nchan + 2*nchan*nIF;
 	  array = grids[indx];
-	  if ((valUr==fblank) || (valUi==fblank)) {
-	    amp = ph = fblank;
-	  } else {
-	    /* Amplitude and phase within +/- 90 deg */
-	    amp = sqrt (valUr*valUr + valUi*valUi);
-	    ph  = RAD2DG*atan2(valUi, valUr);
-	    if (ph>90.0) {
-	      amp = -amp;
-	      ph -= 180.0;
-	    } else if (ph<-90.0) {
-	      amp = -amp;
-	      ph += 180.0;
+	  if (array && (npoln>=3)) {   /* Needed? */
+	    if ((valUr==fblank) || (valUi==fblank)) {
+	      amp = ph = fblank;
+	    } else {
+	      /* Amplitude and phase within +/- 90 deg */
+	      amp = sqrt (valUr*valUr + valUi*valUi);
+	      ph  = RAD2DG*atan2(valUi, valUr);
+	      if (ph>90.0) {
+		amp = -amp;
+		ph -= 180.0;
+	      } else if (ph<-90.0) {
+		amp = -amp;
+		ph += 180.0;
+	      }
 	    }
-	  }
-	  if (doRMS) {  /* RMS */
-	    array->array[jndx] = valUU;
-	  } else if (doPhase) {  /* phase */
-	    array->array[jndx] = ph;
-	  } else {      /* Stokes ampl */
-	    array->array[jndx] = amp;
-	  }
+	    if (doRMS) {  /* RMS */
+	      array->array[jndx] = valUU;
+	    } else if (doPhase) {  /* phase */
+	      array->array[jndx] = ph;
+	    } else {      /* Stokes ampl */
+	      array->array[jndx] = amp;
+	    }
+	  } /* end if Stokes needed */
 	  /* V */
 	  indx  = ichan + iIF*nchan + 3*nchan*nIF;
 	  array = grids[indx];
-	  if ((valVr==fblank) || (valVi==fblank)) {
-	    amp = ph = fblank;
-	  } else {
-	    /* Amplitude and phase within +/- 90 deg */
-	    amp = sqrt (valVr*valVr + valVi*valVi);
-	    ph  = RAD2DG*atan2(valVi, valVr);
-	    if (ph>90.0) {
-	      amp = -amp;
-	      ph -= 180.0;
-	    } else if (ph<-90.0) {
-	      amp = -amp;
-	      ph += 180.0;
+	  if (array && (npoln>=4)) {   /* Needed? */
+	    if ((valVr==fblank) || (valVi==fblank)) {
+	      amp = ph = fblank;
+	    } else {
+	      /* Amplitude and phase within +/- 90 deg */
+	      amp = sqrt (valVr*valVr + valVi*valVi);
+	      ph  = RAD2DG*atan2(valVi, valVr);
+	      if (ph>90.0) {
+		amp = -amp;
+		ph -= 180.0;
+	      } else if (ph<-90.0) {
+		amp = -amp;
+		ph += 180.0;
+	      }
 	    }
-	  }
-	  if (doRMS) {  /* RMS */
-	    array->array[jndx] = valVV;
-	  } else if (doPhase) {  /* phase */
-	    array->array[jndx] = ph;
-	  } else {      /* Stokes ampl */
-	    array->array[jndx] = amp;
-	  }
+	    if (doRMS) {  /* RMS */
+	      array->array[jndx] = valVV;
+	    } else if (doPhase) {  /* phase */
+	      array->array[jndx] = ph;
+	    } else {      /* Stokes ampl */
+	      array->array[jndx] = amp;
+	    }
+	  } /* end if Stokes */
 	} /* end channel Loop */
       } /* end IF Loop */
     } /* end x loop */

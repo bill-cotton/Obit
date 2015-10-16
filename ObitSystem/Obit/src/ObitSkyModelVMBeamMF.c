@@ -28,6 +28,7 @@
 
 #include "ObitUVDesc.h"
 #include "ObitThread.h"
+#include "ObitBeamShape.h"
 #include "ObitSkyModelVMBeamMF.h"
 #include "ObitSkyModelVMSquint.h"
 #include "ObitSkyModelVMIon.h"
@@ -687,12 +688,12 @@ ObitSkyModelVMBeamMFCopy  (ObitSkyModelVMBeamMF *in,
  * \param name     An optional name for the object.
  * \param mosaic   ObitImageMosaic giving one or more images/CC tables
  * \param uvData   UV data to be operated on
- * \param IBeam    I Beam normalized image
- * \param VBeam    V Beam fractional image
+ * \param RXBeam   R/X Beam normalized image
+ * \param LYBeam   L/Y Beam normalized image
  * \param QBeam    Q Beam fractional image if nonNULL
  * \param UBeam    U Beam fractional image if nonNULL
- * \param IBeamPh  I Beam phase image if nonNULL
- * \param VBeamPh  V Beam phase image if nonNULL
+ * \param RXBeamPh  R/X Beam phase image if nonNULL
+ * \param LYBeamPh  L/Y Beam phase image if nonNULL
  * \param QBeamPh  Q Beam phase image if nonNULL
  * \param UBeamPh  U Beam phase image if nonNULL
  * \return the new object.
@@ -700,14 +701,16 @@ ObitSkyModelVMBeamMFCopy  (ObitSkyModelVMBeamMF *in,
 ObitSkyModelVMBeamMF* 
 ObitSkyModelVMBeamMFCreate (gchar* name, ObitImageMosaic* mosaic,
 			  ObitUV *uvData,
-			  ObitImage *IBeam,  ObitImage *VBeam, 
-			  ObitImage *QBeam,  ObitImage *UBeam, 
-			  ObitImage *IBeamPh,  ObitImage *VBeamPh, 
-			  ObitImage *QBeamPh,  ObitImage *UBeamPh, 
+			  ObitImage *RXBeam,  ObitImage *LYBeam, 
+			  ObitImage *QBeam,   ObitImage *UBeam, 
+			  ObitImage *RXBeamPh,  ObitImage *LYBeamPh, 
+			  ObitImage *QBeamPh,   ObitImage *UBeamPh, 
 			  ObitErr *err)
 {
   ObitSkyModelVMBeamMF* out=NULL;
   olong number, i, nchan, nif;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gboolean doTab=TRUE;
   gchar *routine = "ObitSkyModelVMBeamMFCreate";
 
   /* Error tests */
@@ -732,8 +735,8 @@ ObitSkyModelVMBeamMFCreate (gchar* name, ObitImageMosaic* mosaic,
 
   /* Swallow Beam images */
   out->doCrossPol = TRUE;
-  out->IBeam = ObitImageInterpCreate("IBeam", IBeam, 2, err);
-  out->VBeam = ObitImageInterpCreate("VBeam", VBeam, 2, err);
+  out->RXBeam = ObitImageInterpCreate("RXBeam", RXBeam, 2, err);
+  out->LYBeam = ObitImageInterpCreate("LYBeam", LYBeam, 2, err);
   if (QBeam)
     out->QBeam = ObitImageInterpCreate("QBeam", QBeam, 2, err);
   else
@@ -743,13 +746,13 @@ ObitSkyModelVMBeamMFCreate (gchar* name, ObitImageMosaic* mosaic,
   else
     out->doCrossPol = FALSE;
   if (err->error) Obit_traceback_val (err, routine, name, out);
-  out->numPlane = out->IBeam->nplanes;
+  out->numPlane = out->RXBeam->nplanes;
 
   /* Phase beams */
-  if (IBeamPh)
-    out->IBeamPh = ObitImageInterpCreate("IBeamPh", IBeamPh, 2, err);
-  if (VBeamPh)
-    out->VBeamPh = ObitImageInterpCreate("VBeamPh", VBeamPh, 2, err);
+  if (RXBeamPh)
+    out->RXBeamPh = ObitImageInterpCreate("RXBeamPh", RXBeamPh, 2, err);
+  if (LYBeamPh)
+    out->LYBeamPh = ObitImageInterpCreate("LYBeamPh", LYBeamPh, 2, err);
   if (QBeamPh)
     out->QBeamPh= ObitImageInterpCreate("QBeamPh", QBeamPh, 2, err);
   if (UBeamPh)
@@ -757,25 +760,25 @@ ObitSkyModelVMBeamMFCreate (gchar* name, ObitImageMosaic* mosaic,
   if (err->error) Obit_traceback_val (err, routine, name, out);
 
   /* Make sure they are all consistent */
-  Obit_retval_if_fail ((ObitFArrayIsCompatable(out->IBeam->ImgPixels, 
-					       out->VBeam->ImgPixels)), err, out,
+  Obit_retval_if_fail ((ObitFArrayIsCompatable(out->RXBeam->ImgPixels, 
+					       out->LYBeam->ImgPixels)), err, out,
 		       "%s: Incompatable I, L beam arrays", routine);
   if (out->doCrossPol) {
-    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->IBeam->ImgPixels, 
+    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->RXBeam->ImgPixels, 
 						 out->QBeam->ImgPixels)), err, out,
 			 "%s: Incompatable I, Q beam arrays", routine);
-    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->IBeam->ImgPixels, 
+    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->RXBeam->ImgPixels, 
 						 out->UBeam->ImgPixels)), err, out,
 		       "%s: Incompatable I, U beam arrays", routine);
   }
-  if (out->IBeamPh) {
-    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->IBeam->ImgPixels, 
-						 out->IBeamPh->ImgPixels)), err, out,
+  if (out->RXBeamPh) {
+    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->RXBeam->ImgPixels, 
+						 out->RXBeamPh->ImgPixels)), err, out,
 			 "%s: Incompatable I amp, phase beam arrays", routine);
   }
-  if (out->VBeamPh) {
-    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->VBeam->ImgPixels, 
-						 out->VBeamPh->ImgPixels)), err, out,
+  if (out->LYBeamPh) {
+    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->LYBeam->ImgPixels, 
+						 out->LYBeamPh->ImgPixels)), err, out,
 			 "%s: Incompatable V amp, phase beam arrays", routine);
   }
   if (out->doCrossPol && out->QBeamPh) {
@@ -789,6 +792,10 @@ ObitSkyModelVMBeamMFCreate (gchar* name, ObitImageMosaic* mosaic,
 			 "%s: Incompatable U amp, phase beam arrays", routine);
   }
 
+  /* Beam shape - Tabulated if possible */
+  ObitInfoListAlwaysPut (RXBeam->info, "doTab", OBIT_bool, dim, &doTab);
+  out->BeamShape = ObitBeamShapeCreate("Shape", RXBeam, 0.01, 25.0, TRUE);
+
  /* Get list of planes per channel */
   nchan = uvData->myDesc->inaxes[uvData->myDesc->jlocf];
   if (uvData->myDesc->jlocif>=0) 
@@ -798,16 +805,16 @@ ObitSkyModelVMBeamMFCreate (gchar* name, ObitImageMosaic* mosaic,
   out->FreqPlane  = g_malloc0(out->numUVChann*sizeof(olong));
   for (i=0; i<out->numUVChann; i++) 
     out->FreqPlane[i] = MAX(0, MIN (out->numPlane-1, 
-				    ObitImageInterpFindPlane(out->IBeam, uvData->myDesc->freqArr[i])));
+				    ObitImageInterpFindPlane(out->RXBeam, uvData->myDesc->freqArr[i])));
   /* Release beam buffers */
-  if (IBeam && (IBeam->image)) IBeam->image = ObitImageUnref(IBeam->image);
-  if (QBeam && (QBeam->image)) QBeam->image = ObitImageUnref(QBeam->image);
-  if (UBeam && (UBeam->image)) UBeam->image = ObitImageUnref(UBeam->image);
-  if (VBeam && (VBeam->image)) VBeam->image = ObitImageUnref(VBeam->image);
-  if (IBeamPh && (IBeamPh->image)) IBeamPh->image = ObitImageUnref(IBeamPh->image);
-  if (QBeamPh && (QBeamPh->image)) QBeamPh->image = ObitImageUnref(QBeamPh->image);
-  if (UBeamPh && (UBeamPh->image)) UBeamPh->image = ObitImageUnref(UBeamPh->image);
-  if (VBeamPh && (VBeamPh->image)) VBeamPh->image = ObitImageUnref(VBeamPh->image);
+  if (RXBeam && (RXBeam->image)) RXBeam->image = ObitImageUnref(RXBeam->image);
+  if (QBeam  && (QBeam->image))  QBeam->image  = ObitImageUnref(QBeam->image);
+  if (UBeam  && (UBeam->image))  UBeam->image  = ObitImageUnref(UBeam->image);
+  if (LYBeam && (LYBeam->image)) LYBeam->image = ObitImageUnref(LYBeam->image);
+  if (RXBeamPh && (RXBeamPh->image)) RXBeamPh->image = ObitImageUnref(RXBeamPh->image);
+  if (QBeamPh  && (QBeamPh->image))  QBeamPh->image  = ObitImageUnref(QBeamPh->image);
+  if (UBeamPh  && (UBeamPh->image))  UBeamPh->image  = ObitImageUnref(UBeamPh->image);
+  if (LYBeamPh && (LYBeamPh->image)) LYBeamPh->image = ObitImageUnref(LYBeamPh->image);
 
   return out;
 } /* end ObitSkyModelVMBeamMFCreate */
@@ -854,12 +861,12 @@ void ObitSkyModelVMBeamMFInitMod (ObitSkyModel* inn, ObitUV *uvdata,
       args->uvdata  = uvdata;
       args->ithread = i;
       args->err     = err;
-      if (in->IBeam) args->BeamIInterp = ObitImageInterpCloneInterp(in->IBeam,err);
-      if (in->VBeam) args->BeamVInterp = ObitImageInterpCloneInterp(in->VBeam,err);
+      if (in->RXBeam) args->BeamIInterp = ObitImageInterpCloneInterp(in->RXBeam,err);
+      if (in->LYBeam) args->BeamVInterp = ObitImageInterpCloneInterp(in->LYBeam,err);
       if (in->QBeam) args->BeamQInterp = ObitImageInterpCloneInterp(in->QBeam,err);
       if (in->UBeam) args->BeamUInterp = ObitImageInterpCloneInterp(in->UBeam,err);
-      if (in->IBeamPh) args->BeamIPhInterp = ObitImageInterpCloneInterp(in->IBeamPh,err);
-      if (in->VBeamPh) args->BeamVPhInterp = ObitImageInterpCloneInterp(in->VBeamPh,err);
+      if (in->RXBeamPh) args->BeamIPhInterp = ObitImageInterpCloneInterp(in->RXBeamPh,err);
+      if (in->LYBeamPh) args->BeamVPhInterp = ObitImageInterpCloneInterp(in->LYBeamPh,err);
       if (in->QBeamPh) args->BeamQPhInterp = ObitImageInterpCloneInterp(in->QBeamPh,err);
       if (in->UBeamPh) args->BeamUPhInterp = ObitImageInterpCloneInterp(in->UBeamPh,err);
       if (err->error) Obit_traceback_msg (err, routine, in->name);
@@ -1028,7 +1035,7 @@ void ObitSkyModelVMBeamMFInitModel (ObitSkyModel* inn, ObitErr *err)
 
   /* Fourier transform routines - DFT only */
   /* Are phases given? */
-  if (in->IBeamPh) 
+  if (in->RXBeamPh) 
     in->DFTFunc   = (ObitThreadFunc)ThreadSkyModelVMBeamMFFTDFTPh;
   else /* No phase */
     in->DFTFunc   = (ObitThreadFunc)ThreadSkyModelVMBeamMFFTDFT;
@@ -1547,14 +1554,14 @@ void ObitSkyModelVMBeamMFInit  (gpointer inn)
   in->Lgaini       = NULL;
   in->Qgaini       = NULL;
   in->Ugaini       = NULL;
-  in->IBeam        = NULL;
+  in->RXBeam        = NULL;
   in->QBeam        = NULL;
   in->UBeam        = NULL;
-  in->VBeam        = NULL;
-  in->IBeamPh      = NULL;
+  in->LYBeam        = NULL;
+  in->RXBeamPh      = NULL;
   in->QBeamPh      = NULL;
   in->UBeamPh      = NULL;
-  in->VBeamPh      = NULL;
+  in->LYBeamPh      = NULL;
   in->AntList      = NULL;
   in->curSource    = NULL;
   in->numAntList   = 0;
@@ -1590,15 +1597,15 @@ void ObitSkyModelVMBeamMFClear (gpointer inn)
   if (in->Lgaini) g_free(in->Lgaini); in->Lgaini = NULL;
   if (in->Qgaini) g_free(in->Qgaini); in->Qgaini = NULL;
   if (in->Ugaini) g_free(in->Ugaini); in->Ugaini = NULL;
-  in->IBeam     = ObitImageInterpUnref(in->IBeam);
-  in->QBeam     = ObitImageInterpUnref(in->QBeam);
-  in->UBeam     = ObitImageInterpUnref(in->UBeam);
-  in->VBeam     = ObitImageInterpUnref(in->VBeam);
-  in->IBeamPh   = ObitImageInterpUnref(in->IBeamPh);
-  in->QBeamPh   = ObitImageInterpUnref(in->QBeamPh);
-  in->UBeamPh   = ObitImageInterpUnref(in->UBeamPh);
-  in->VBeamPh   = ObitImageInterpUnref(in->VBeamPh);
-  in->curSource = ObitSourceUnref(in->curSource);
+  in->RXBeam     = ObitImageInterpUnref(in->RXBeam);
+  in->QBeam      = ObitImageInterpUnref(in->QBeam);
+  in->UBeam      = ObitImageInterpUnref(in->UBeam);
+  in->LYBeam     = ObitImageInterpUnref(in->LYBeam);
+  in->RXBeamPh   = ObitImageInterpUnref(in->RXBeamPh);
+  in->QBeamPh    = ObitImageInterpUnref(in->QBeamPh);
+  in->UBeamPh    = ObitImageInterpUnref(in->UBeamPh);
+  in->LYBeamPh   = ObitImageInterpUnref(in->LYBeamPh);
+  in->curSource  = ObitSourceUnref(in->curSource);
   if (in->AntList)  {
     for (i=0; i<in->numAntList; i++) { 
       in->AntList[i] = ObitAntennaListUnref(in->AntList[i]);

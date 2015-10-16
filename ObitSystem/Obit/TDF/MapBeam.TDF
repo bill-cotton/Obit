@@ -3,7 +3,7 @@
 ;! Map beam polarization
 ;#  Task Calibration Polarization UV Image VLA
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2009-2014
+;;  Copyright (C) 2009-2015
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -73,7 +73,7 @@ doCalib          -1.0        2.0   If >0 calibrate data
 gainUse                            CL (or SN) table to apply
 **PARAM** boo 1 **DEF** F
 doPol                              If True correct polarization.
-**PARAM** int 1 **DEF** -1
+**PARAM** int 1 **DEF** 1
 PDVer                              PD table to apply
                                    If >=0, per channel corrections
 **PARAM** int 1
@@ -104,7 +104,7 @@ ny                                 Number of "Y" (El) pixels in image.
 xCells                             Image cell spacing in X in asec.
 **PARAM** float 1
 yCells                             Image cell spacing in Y in asec.
-**PARAM** int 1  **DEF** 1
+**PARAM** int 1  **DEF** 0
 hwid                               half width of interpolation in cells
 **PARAM** float 1
 avgTime                            Averaging time (sec)
@@ -146,6 +146,8 @@ RefAnts                            Reference antenna list,
                                    NO Default!!
 **PARAM** int 1 
 prtLv             0                Print level in selfcal
+**PARAM** int 1 **DEF** 1
+nThreads            0              Number of threads to use
 **PARAM** str 128
 taskLog                            Logfile to write task messages to
 **PARAM** int 10
@@ -289,6 +291,7 @@ Adverbs:
              pointing at the holography measurements.
   yCells.....Image cell spacing in Y (Elevation) in asec. 
   hwid.......Half width of Lagrangian interpolation in cells
+             0 => use closest cell.
   avgTime....Averaging time in seconds; normally interval
              of each pointing.
   avgFreq....If 0 < avgFreq <= 1, then spectral channels in the 
@@ -325,6 +328,12 @@ Adverbs:
   RefAnts....List of reference antennas,  Must be given!!!
   
   prtLv......Print level, 0=>none, 2=>obs. locations, Ipol
+  nThreads...If the Obit libraries are compiled with multiple
+             thread operation enabled, this parameter sets the 
+             number of threads that can be used for parallel 
+             operations. 
+             NB: This only improves performance if there are 
+             multiple processors and/or cores in the host.
   noScrat....A list of AIPS disk numbers on which you do not 
              wish scratch files
   taskLog....Log file to write messages to INSTEAD of the terminal

@@ -1,7 +1,7 @@
 /* $Id$ */
 /*  Imaging software correcting for tabulated beamshape               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2014                                          */
+/*;  Copyright (C) 2010-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -102,9 +102,9 @@ void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
 	    ObitErr* err);
 
 /* Get beam images*/
-void getBeam (ObitInfoList *myInput, gboolean doPhase,
-	      ObitImage **Ipol, ObitImage **Vpol, ObitImage **Qpol, ObitImage **Upol, 
-	      ObitImage **IpolPh, ObitImage **VpolPh, ObitImage **QpolPh, ObitImage **UpolPh, 
+void getBeam (ObitInfoList *myInput, gboolean doPhase, ofloat Stokes0,
+	      ObitImage **RXpol, ObitImage **LYpol, ObitImage **Qpol, ObitImage **Upol, 
+	      ObitImage **RXpolPh, ObitImage **LYpolPh, ObitImage **QpolPh, ObitImage **UpolPh, 
 	      ObitErr *err);
 
 /* Program globals */
@@ -1445,8 +1445,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   ObitSkyModel *skyModel=NULL;
   ObitUVImager *imager=NULL;
   ObitInfoList* saveParmList=NULL;
-  ObitImage    *IBeam=NULL, *VBeam=NULL, *QBeam=NULL, *UBeam=NULL;
-  ObitImage    *IBeamPh=NULL, *VBeamPh=NULL, *QBeamPh=NULL, *UBeamPh=NULL;
+  ObitImage    *RXBeam=NULL, *LYBeam=NULL, *QBeam=NULL, *UBeam=NULL;
+  ObitImage    *RXBeamPh=NULL, *LYBeamPh=NULL, *QBeamPh=NULL, *UBeamPh=NULL;
   ObitImageMosaic *mosaic=NULL;
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -1599,8 +1599,9 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   ObitInfoListGetTest(myInput, "doPhase", &type, dim, &doPhase); 
 
   /* Get Beam */
-  getBeam (myInput, doPhase, &IBeam, &VBeam, &QBeam, &UBeam, 
-	   &IBeamPh, &VBeamPh, &QBeamPh, &UBeamPh, err);
+  getBeam (myInput, doPhase, inData->myDesc->crval[inData->myDesc->jlocs], 
+	   &RXBeam, &LYBeam, &QBeam, &UBeam, 
+	   &RXBeamPh, &LYBeamPh, &QBeamPh, &UBeamPh, err);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
   /* Loop over polarization */
@@ -1641,8 +1642,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       skyModel = 
 	(ObitSkyModel*)ObitSkyModelVMBeamCreate("BeamCor Model", 
 						imager->mosaic, outData,
-						IBeam, VBeam, QBeam, UBeam,
-						IBeamPh, VBeamPh, QBeamPh, UBeamPh,
+						RXBeam, LYBeam, QBeam, UBeam,
+						RXBeamPh, LYBeamPh, QBeamPh, UBeamPh,
 						err);
       if (err->error) Obit_traceback_msg (err, routine, inData->name);
       /* Save imaging parms for weighting - from defaults in mosaic creation */	
@@ -1798,12 +1799,12 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   }
   myClean  = ObitDConCleanVisUnref(myClean); /* Also gets images, skyModel */
   outData  = ObitUVUnref(outData);
-  IBeam    = ObitImageUnref(IBeam);
-  VBeam    = ObitImageUnref(VBeam);
+  RXBeam    = ObitImageUnref(RXBeam);
+  LYBeam    = ObitImageUnref(LYBeam);
   QBeam    = ObitImageUnref(QBeam);
   UBeam    = ObitImageUnref(UBeam);
-  IBeamPh  = ObitImageUnref(IBeamPh);
-  VBeamPh  = ObitImageUnref(VBeamPh);
+  RXBeamPh  = ObitImageUnref(RXBeamPh);
+  LYBeamPh  = ObitImageUnref(LYBeamPh);
   QBeamPh  = ObitImageUnref(QBeamPh);
   UBeamPh  = ObitImageUnref(UBeamPh);
 
@@ -2729,27 +2730,28 @@ void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
 /*   Input:                                                               */
 /*      myInput   Input parameters on InfoList                            */
 /*      doPhase   If TRUE, also get phase images                          */
+/*      Stokes0   First Stokes, -1=>RR,LL,. -5=>XX,YY                     */
 /*   Output:                                                              */
-/*      Ipol      I pol image                                             */
-/*      Vpol      V pol image                                             */
+/*      RXpol     R/X pol image                                           */
+/*      LYpol     L/Y pol image                                           */
 /*      Qpol      Q pol image or NULL if none                             */
 /*      Upol      U pol image or NULL if none                             */
-/*      IpoPh     I pol phase image or NULL if none                       */
-/*      VpoPh     V pol phase image or NULL if none                       */
+/*      RXpoPh    R/X pol phase image or NULL if none                     */
+/*      LYpoPh    L/Y pol phase image or NULL if none                     */
 /*      QpoPh     Q pol phase image or NULL if none                       */
 /*      UpoPh     U pol phase image or NULL if none                       */
 /*----------------------------------------------------------------------- */
-/* Get beam images*/
-void getBeam (ObitInfoList *myInput, gboolean doPhase,
-	      ObitImage **Ipol, ObitImage **Vpol, 
+void getBeam (ObitInfoList *myInput, gboolean doPhase, ofloat Stokes0,
+	      ObitImage **RXpol, ObitImage **LYpol, 
 	      ObitImage **Qpol, ObitImage **Upol, 
-	      ObitImage **IpolPh, ObitImage **VpolPh, 
+	      ObitImage **RXpolPh, ObitImage **LYpolPh, 
 	      ObitImage **QpolPh, ObitImage **UpolPh, 
 	      ObitErr *err)
 {
   ObitInfoType type;
   gchar        Aclass[20], *strTemp, *Type, inFile[129];
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gboolean     doRRLL;
   gchar *routine = "getBeam";
 
   /* error checks */
@@ -2757,13 +2759,16 @@ void getBeam (ObitInfoList *myInput, gboolean doPhase,
   if (err->error) return;
   g_assert (ObitInfoListIsA(myInput));
 
+  doRRLL = (Stokes0>-4.5);
+
   /* File type - could be either AIPS or FITS */
   ObitInfoListGetP (myInput, "in3DataType", &type, dim, (gpointer)&Type);
   if ((Type==NULL) || ((Type[0]==' ')&&(Type[1]==' ')&&(Type[2]==' ')))
     ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
   if (!strncmp (Type, "AIPS", 4)) { /* AIPS input */
     /* AIPS Class */
-    strncpy (Aclass, "I     ", 7);
+    if (doRRLL) strncpy (Aclass, "R     ", 7);
+    else        strncpy (Aclass, "X     ", 7);
     ObitInfoListGetTest(myInput, "in3Class", &type, dim, Aclass);
   } else if (!strncmp (Type, "FITS", 4)) {  /* FITS input */
     /* input FITS file name */
@@ -2779,34 +2784,38 @@ void getBeam (ObitInfoList *myInput, gboolean doPhase,
     return;
   }
   
-  /* Stokes I */
-  inFile[0]='I';
+  /* Stokes R/X */
+  if (doRRLL) inFile[0]='R';
+  else        inFile[0]='X';
   dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (myInput, "in3File", OBIT_string, dim, inFile);
-  Aclass[0]='I';
+  if (doRRLL) Aclass[0]='R';
+  else        Aclass[0]='X';
   dim[0] = 6; dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (myInput, "in3Class", OBIT_string, dim, Aclass);
-  *Ipol = ObitImageFromFileInfo ("in3", myInput, err);
+  *RXpol = ObitImageFromFileInfo ("in3", myInput, err);
    /* Set name */
-  if (*Ipol) {
-    if ((*Ipol)->name) g_free((*Ipol)->name);
-    (*Ipol)->name = g_strdup("IBeam");
+  if (*RXpol) {
+    if ((*RXpol)->name) g_free((*RXpol)->name);
+    (*RXpol)->name = g_strdup("RXBeam");
   }
   if (err->error) Obit_traceback_msg (err, routine, "myInput");
   ObitErrLog(err); /* Show messages */
 
-  /* Stokes V */
-  inFile[0]='V';
+  /* Stokes L/Y */
+  if (doRRLL) inFile[0]='L';
+  else        inFile[0]='Y';
   dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (myInput, "in3File", OBIT_string, dim, inFile);
-  Aclass[0]='V';
+  if (doRRLL) Aclass[0]='L';
+  else        Aclass[0]='Y';
   dim[0] = 6; dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (myInput, "in3Class", OBIT_string, dim, Aclass);
-  *Vpol = ObitImageFromFileInfo ("in3", myInput, err);
+  *LYpol = ObitImageFromFileInfo ("in3", myInput, err);
   /* Set name */
-  if (*Vpol) {
-    if ((*Vpol)->name) g_free((*Vpol)->name);
-    (*Vpol)->name = g_strdup("VBeam");
+  if (*LYpol) {
+    if ((*LYpol)->name) g_free((*LYpol)->name);
+    (*LYpol)->name = g_strdup("LYBeam");
   }
   if (err->error) Obit_traceback_msg (err, routine, "myInput");
   ObitErrLog(err); /* Show messages */
@@ -2861,34 +2870,38 @@ void getBeam (ObitInfoList *myInput, gboolean doPhase,
       ObitTrimTrail(inFile);  /* remove trailing blanks */
     } 
 
-    /* Stokes I */
-    inFile[0]='I';
+    /* Stokes R/X */
+    if (doRRLL) inFile[0]='R';
+    else        inFile[0]='X';
     dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (myInput, "in4File", OBIT_string, dim, inFile);
-    Aclass[0]='I';
+    if (doRRLL) Aclass[0]='R';
+    else        Aclass[0]='X';
     dim[0] = 6; dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (myInput, "in4Class", OBIT_string, dim, Aclass);
-    *IpolPh = ObitImageFromFileInfo ("in4", myInput, err);
+    *RXpolPh = ObitImageFromFileInfo ("in4", myInput, err);
     /* Set name */
-    if (*IpolPh) {
-      if ((*IpolPh)->name) g_free((*IpolPh)->name);
-      (*IpolPh)->name = g_strdup("IBeam phase");
+    if (*RXpolPh) {
+      if ((*RXpolPh)->name) g_free((*RXpolPh)->name);
+      (*RXpolPh)->name = g_strdup("RXBeam phase");
     }
     if (err->error) Obit_traceback_msg (err, routine, "myInput");
     ObitErrLog(err); /* Show messages */
 
-    /* Stokes V */
-    inFile[0]='V';
+    /* Stokes L/Y */
+    if (doRRLL) inFile[0]='L';
+    else        inFile[0]='Y';
     dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (myInput, "in4File", OBIT_string, dim, inFile);
-    Aclass[0]='V';
+    if (doRRLL) Aclass[0]='L';
+    else        Aclass[0]='Y';
     dim[0] = 6; dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (myInput, "in4Class", OBIT_string, dim, Aclass);
-    *VpolPh = ObitImageFromFileInfo ("in4", myInput, err);
+    *LYpolPh = ObitImageFromFileInfo ("in4", myInput, err);
     /* Set name */
-    if (*VpolPh) {
-      if ((*VpolPh)->name) g_free((*VpolPh)->name);
-      (*VpolPh)->name = g_strdup("VBeam phase");
+    if (*LYpolPh) {
+      if ((*LYpolPh)->name) g_free((*LYpolPh)->name);
+      (*LYpolPh)->name = g_strdup("LYBeam phase");
     }
     if (err->error) Obit_traceback_msg (err, routine, "myInput");
     ObitErrLog(err); /* Show messages */
@@ -2930,5 +2943,4 @@ void getBeam (ObitInfoList *myInput, gboolean doPhase,
     } /* end if UPol */
 
   } /* End also phase */
-
 } /* end getBeam */

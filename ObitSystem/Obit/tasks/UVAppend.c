@@ -996,7 +996,7 @@ void ObitUVAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitUVDesc *inDesc, *outDesc;
   olong inNPIO, outNPIO, NPIO, indx, i, count, newSubA=0;
-  ofloat timeAdd, blAdd;
+  ofloat timeAdd, blAdd, uvwScale;
   gchar *routine = "ObitUVAppend";
 
   /* error checks */
@@ -1025,7 +1025,7 @@ void ObitUVAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
      Obit_log_error(err, OBIT_Error,"%s inUV and outUV have incompatible structures",
 		   routine);
       return ;
- }
+  }
 
   /* Check position - same equinox and within 1 mas */
   incompatible = fabs(inDesc->equinox-outDesc->equinox) > 0.01;
@@ -1037,15 +1037,16 @@ void ObitUVAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
      Obit_log_error(err, OBIT_Error,"%s inUV and outUV have incompatible positions",
 		   routine);
       return ;
- }
+  }
 
-  /* Check frequency - within 1/4 channel */
-  incompatible = fabs(inDesc->freq-outDesc->freq) > 0.25*fabs(inDesc->crval[inDesc->jlocf]);
+  /* Check frequency - within 1 channel */
+  incompatible = fabs(inDesc->freq-outDesc->freq) > fabs(inDesc->crval[inDesc->jlocf]);
   if (incompatible) {
      Obit_log_error(err, OBIT_Error,"%s inUV and outUV have incompatible frequencies",
 		   routine);
       return ;
- }
+  }
+  uvwScale = outDesc->freq/inDesc->freq; /* Scale any residual difference */
 
   /* Calibration wanted? */ 
   doCalSelect = TRUE;
@@ -1107,6 +1108,9 @@ void ObitUVAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
       inUV->buffer[indx+inDesc->iloct] += timeAdd;
       if (inDesc->ilocb>=0) inUV->buffer[indx+inDesc->ilocb]  += blAdd; 
       else                  inUV->buffer[indx+inDesc->ilocsa] = (ofloat)(newSubA);
+      inUV->buffer[indx+inDesc->ilocu] *= uvwScale;
+      inUV->buffer[indx+inDesc->ilocv] *= uvwScale;
+      inUV->buffer[indx+inDesc->ilocw] *= uvwScale;
     } /* end visibility loop */
 
     /* Write buffer */

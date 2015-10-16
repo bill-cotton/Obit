@@ -219,13 +219,13 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 		      "%s: MUST specify a single subarray for %s", 
 		      routine, inUV->name);
   
-  /* Create arrays */
-  xpol1 =  g_malloc0(numFreq*numIF*3*sizeof(ofloat));
-  xpol2 =  g_malloc0(numFreq*numIF*3*sizeof(ofloat));
-  delay =  g_malloc0(numIF*sizeof(ofloat));
-  phase =  g_malloc0(numIF*sizeof(ofloat));
-  snr   =  g_malloc0(numIF*sizeof(ofloat));
-
+  /* Create arrays - pad */
+  xpol1 =  g_malloc0(numFreq*(numIF*+nIFs)*3*sizeof(ofloat));
+  xpol2 =  g_malloc0(numFreq*(numIF+nIFs)*3*sizeof(ofloat));
+  delay =  g_malloc0((numIF+nIFs)*sizeof(ofloat));
+  phase =  g_malloc0((numIF+nIFs)*sizeof(ofloat));
+  snr   =  g_malloc0((numIF+nIFs)*sizeof(ofloat));
+  
   numAnt = outUV->myDesc->numAnt[suba-1];
   
   /* wavelength at reference frequency */
@@ -500,9 +500,9 @@ static void FitDelay (olong numFreq, olong BChan, ofloat dFreq,
 		      ofloat *delay, ofloat *phase, ofloat *snr, ObitErr *err)
 {
   olong i, j, cnt, cnt1, cnt2, ntry;
-  ofloat td1, td2, td3, td4, d1, d2, d3, d4, dd, test, test2, best, best2;
+  ofloat td1, td2, td3, td4, d1, d2, d3, d4, dd, test=0, test2, best, best2;
   ofloat corr, cori, tr, ti, w, p, tp, dp;
-  odouble sumr, sumi, sumw, sumr1, sumi1, sumw1, sumr2, sumi2, sumw2;
+  odouble sumr=0, sumi=0, sumw=0, sumr1=0, sumi1=0, sumw1=0, sumr2=0, sumi2=0, sumw2=0;
 
   /* error checks */
   if (err->error) return;

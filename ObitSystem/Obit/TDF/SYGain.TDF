@@ -3,7 +3,7 @@
 ;! Derives a gain calibration AIPS SN table from an AIPS SY table
 ;# Obit Task Calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2014
+;;  Copyright (C) 2014,2015
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -146,16 +146,17 @@ Adverbs:
              The data are first sorted and the most extreme alpha/2
              values are ignored and the rest averaged.
              0 -> 1 = pure boxcar -> pure median window filter.
-  clipSmo....Data can be clipped by comparison with a median
+  clipSmo....Data can be clipped by comparison with a running median
              window filter.  The width of the Median window
-             is specified in clipSmo:
+             is specified in clipSmo (hours):
               (0) => smoothing time for power diff,
               (1) => smoothing time for power sum,
               (2) => smoothing time for post gain
   clipParm...The maximum allowed deviation (0 => all values OK)
-              (0) => Max. deviation for power diff,
-              (1) => Max. deviation for power sum,
-              (2) => Max. deviation for post gain
+             Clipping sigmas determined on timescale of clipSmo.
+              (0) => Max. deviation (sigma) for power diff,
+              (1) => Max. deviation (sigma) for power sum,
+              (2) => Max. deviation (sigma) for post gain
   SYVer......input version number of the SY table to smooth.
              0 => Highest.
   SYOut......output version number of the SY table clipped and

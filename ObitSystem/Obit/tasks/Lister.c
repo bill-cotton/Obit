@@ -511,7 +511,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        *strTemp;
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Qual", "souCode", "Stokes", "timeRange",  "FreqID", 
-    "BIF", "EIF", "BChan", "EChan", "Antennas", "subA", "corrType",
+    "BIF", "EIF", "BChan", "EChan", "Antennas", "subA", "UVRange", "corrType",
     "doCalib", "gainUse", "doPol", "PDVer", "flagVer", 
     "doBand", "BPVer", "Smooth", 
     "doCalSelect",

@@ -2926,3 +2926,30 @@ Obit/src/ObitUVUtil.c:
 Obit/python/FInterpolate.py:
   fix numerous bugs
 22 Sep. 2015, svn ver 218.
+
+Work on primary beam corrections, bug fixes
+Obit/include/ObitSkyModelVMBeamDef.h Obit/include/ObitSkyModelVMBeam.h
+Obit/include/ObitSkyModelVMBeamMFDef.h Obit/include/ObitSkyModelVMBeamMF.h
+Obit/src/ObitSkyModelVMBeam.c Obit/src/ObitSkyModelVMBeamMF.c
+Obit/tasks/BeamCor.c Obit/TDF/BeamCor.TDF
+Obit/tasks/MFBeam.c Obit/TDF/MFBeam.TDF:
+  Switch from I & V beam to R/X & L/Y
+Obit/include/ObitBeamShape.h Obit/include/ObitBeamShapeDef.h Obit/src/ObitBeamShape.c:
+  Added tabulated beam interpolation option.
+Obit/TDF/SYGain.TDF Obit/tasks/SYGain.c:
+  Parallelized more of the MWF smoothing.
+  Clipping levels now specified as sigmas
+  Several serious bug fixes, previously not working
+Obit/src/ObitUVReweight.c Obit/tasks/UVAppend.c:
+  Allow larger frequency difference, scale u,v,w
+Obit/src/ObitUVRLDelay.c:
+  Fix indexing bugs when averaging IFs.
+Obit/src/ObitImageUtil.c:
+  Fix bugs in non unit stride
+Obit/tasks/MapBeam.c Obit/TDF/MapBeam.TDF:
+  Fix bugs in interpolation, allow closest cell
+Obit/src/ObitSkyModelVMSquint.c:
+  ThreadSkyModelVMSquintFTDFT: bug fix, subarray to 0 rel.
+Obit/tasks/Lister.c Obit/TDF/Lister.TDF:
+  Add UVRange
+16 Oct 2015, svn ver 519

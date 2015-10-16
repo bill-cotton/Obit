@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008                                               */
+/*;  Copyright (C) 2008,2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -33,17 +33,25 @@
  * ObitBeamShape structure members for this and any derived classes.
  */
 #include "ObitDef.h"  /* Parent class instance definitions */
-/** Image descriptor */
-ObitImageDesc *myDesc;
-/** Antenna pointing position (rad)*/
-odouble raPnt, decPnt;
-/** Reference Frequency */
-odouble refFreq;
-/** Minimum desired gain */
-ofloat pbmin;
-/** Antenna diameter (m) */
-ofloat antSize;
 /** Gain wanted? */
 gboolean doGain;
 /** Use Jinc or polynomial */
 gboolean doJinc;
+/** Use Tabulated beam */
+gboolean doTab;
+/** Minimum desired gain */
+ofloat pbmin;
+/** Antenna diameter (m) */
+ofloat antSize;
+/** Antenna pointing position (rad)*/
+odouble raPnt, decPnt;
+/** Reference Frequency */
+odouble refFreq;
+/** 1/Tabulated reference Frequency */
+odouble itabRefFreq;
+/** 1/Cell size of tabulated beam (deg) */
+odouble icellSize;
+/** Image descriptor */
+ObitImageDesc *myDesc;
+/** Interpolator for tabulated Beam */
+ObitFInterpolate *myFI;

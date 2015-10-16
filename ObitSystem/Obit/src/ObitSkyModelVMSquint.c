@@ -1196,6 +1196,7 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
     if (visData[iloct] > largs->endVMModelTime) {
       /* Subarray 0-rel */
       ObitUVDescGetAnts(uvdata->myDesc, visData, &it1, &it2, &suba);
+      suba -= 1;  /* to 0-rel */
       /* Update */
       myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba, uvdata, ithread, err);
       if (err->error) {

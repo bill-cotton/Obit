@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009                                               */
+/*;  Copyright (C) 2009,2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -56,21 +56,23 @@ olong numAntList;
 ObitAntennaList **AntList;
 /** Current source */
 ObitSource *curSource;
-/** I Beam image */
-ObitImageInterp *IBeam;
-/** V Beam image */
-ObitImageInterp *VBeam;
-/** Q Beam image if doCrossPol */
+/**  Beam Shape */
+ObitBeamShape *BeamShape;
+/** R/X Beam image interpolator*/
+ObitImageInterp *RXBeam;
+/** L/Y Beam image interpolator*/
+ObitImageInterp *LYBeam;
+/** Q Beam image interpolatorif doCrossPol */
 ObitImageInterp *QBeam;
-/** U Beam image if doCrossPol */
+/** U Beam image interpolatorif doCrossPol */
 ObitImageInterp *UBeam;
-/** I Beam phase image - NULL if not given */
-ObitImageInterp *IBeamPh;
-/** V Beam phase image  - NULL if not given **/
-ObitImageInterp *VBeamPh;
-/** Q Beam phase image if doCrossPol  - NULL if not given **/
+/** R/X Beam phase image interpolator- NULL if not given */
+ObitImageInterp *RXBeamPh;
+/** L/Y Beam phase image interpolator - NULL if not given **/
+ObitImageInterp *LYBeamPh;
+/** Q Beam phase image interpolator if doCrossPol  - NULL if not given **/
 ObitImageInterp *QBeamPh;
-/** U Beam phase image if doCrossPol  - NULL if not given **/
+/** U Beam phase image interpolator if doCrossPol  - NULL if not given **/
 ObitImageInterp *UBeamPh;
 /** Array booleans, TRUE if corresponding antenna (0-rel) is EVLA */
 gboolean doCrossPol;

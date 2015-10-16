@@ -4,7 +4,7 @@
 ;! Imaging software correcting for tabulated beamshape
 ;# Task Obit self calibration Imaging
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2010-2012
+;;  Copyright (C) 2010-2015
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -327,8 +327,8 @@ calibration. Unless otherwise specified, a fly's eye pattern of
 fields with circular CLEAN boxes will be used to cover the specified
 field of view (FOV).  When processing is finished, the CLEAN images 
 are "flattened" onto a single image and the (first) CLEAN model is 
-subtracted from the output data.  If a second Stokes (V only) is 
-specified it is imaged and CLEANed as well.
+subtracted from the output data.  If further Stokes are
+specified they is imaged and CLEANed as well.
    The imaging model corrects for the effects of the deviation of
 the measured beamshape from a nominal one.  Polarized data corrected
 as well if the polarization beam are given.
@@ -460,29 +460,29 @@ Adverbs:
              DataType.
   in3Name....Power Beam AIPS name.      Standard defaults.
   in3Class...Power Beam AIPS class. Expected form "Sxxxxx" where "S"
-             is the Stokes parameter (IVQU) and "xxxx" arbitrary.
+             is the Stokes parameter (RLQU or XY) and "xxxx" arbitrary.
              The task will search for the different stokes images 
              and I+V or I+V+Q+U should be provided.
   in3Seq.....Beam AIPS seq. # .    0 => highest.
   in3Disk....Disk drive # of beam (FITS or AIPS). NO default for AIPS
-  in3File....FITS Power Beam input root if in3DType=='FITS'
+  in3File....FITS Voltage Beam input root if in3DType=='FITS'
              Expected form "Sxxxxx" where "S" is the Stokes parameter 
-             (IVQU) and "xxxx" is arbitrary. 
+             (RLQU or XY) and "xxxx" is arbitrary. 
              The task will search for the different Stokes images 
-             and I+V or I+V+Q+U should be provided
+             and R+L or X+Y or R+L+Q+U should be provided
   doPhase....If True, also include phase in beam images
-  in4Name....Power Beam phase AIPS name. Only used if doPhase = True
+  in4Name....Voltage Beam phase AIPS name. Only used if doPhase = True
   in4Class...Beam phase AIPS class. Expected form "Sxxxxx" where "S"
              is the Stokes parameter (IVQU) and "xxxx" arbitrary.
              The task will search for the different stokes images 
-             and I+V or I+V+Q+U should be provided.
+             andR+L or X+Y or R+L+Q+U should be provided.
   in4Seq.....Beam phase AIPS seq. # .    0 => highest.
   in4Disk....Disk drive # of beam phase (FITS or AIPS).
   in4File....Power FITS Beam phase input root if in3DType=='FITS'
              Expected form "Sxxxxx" where "S" is the Stokes parameter 
              (IVQU) and "xxxx" is arbitrary. 
              The task will search for the different stokes images 
-             and I+V or I+V+Q+U should be provided
+             and R+L or X+Y or R+L+Q+U should be provided
              Only used if doPhase = True
 
       Output files

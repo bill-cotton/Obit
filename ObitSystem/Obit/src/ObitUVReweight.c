@@ -73,7 +73,7 @@ void ObitUVReweightDo (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   olong ncorr, numAnt, numBL, blindx;
   gboolean gotOne, done, incompatible;
   ofloat *acc=NULL, *sortWt=NULL, maxWt, mednWt, *Buffer;
-  ofloat startTime, endTime, curTime, rms2, ampl2;
+  ofloat startTime, endTime, curTime, rms2, ampl2, uvwScale;
   gchar *routine = "ObitUVReweightDo";
 
   /* error checks */
@@ -153,13 +153,14 @@ void ObitUVReweightDo (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
       return ;
  }
 
-  /* Check frequency - within 1 Hz */
-  incompatible = fabs(inDesc->freq-outDesc->freq) > 1.0;
+  /* Check frequency - within 1 channel */
+  incompatible = fabs(inDesc->freq-outDesc->freq) > fabs(inDesc->crval[inDesc->jlocf]);
   if (incompatible) {
      Obit_log_error(err, OBIT_Error,"%s inUV and outUV have incompatible frequencies",
 		   routine);
       return ;
  }
+  uvwScale = outDesc->freq/inDesc->freq; /* Scale any residual difference */
 
   /* Copy input to scratch file to apply editing, selection, flagging */
   iretCode = ObitUVClose (inUV, err);
@@ -343,8 +344,11 @@ void ObitUVReweightDo (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	    } /* end loop over correlations */;
 	  } /* end if cross correlation */
 
-	  /* Modify time, subarray */
+	  /* Modify time, subarray, u,v,w */
 	  Buffer[scrDesc->iloct] += timeOff;
+	  Buffer[scrDesc->ilocu] *= uvwScale;
+	  Buffer[scrDesc->ilocv] *= uvwScale;
+	  Buffer[scrDesc->ilocw] *= uvwScale;
 	  if (scrDesc->ilocb>=0) Buffer[scrDesc->ilocb] += subAOff;
 	  else Buffer[scrDesc->iloca2] += subAOff;
 	  /* How many? */

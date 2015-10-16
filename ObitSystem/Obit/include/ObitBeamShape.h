@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2013                                           */
+/*;  Copyright (C) 2008-2015                                           */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -31,6 +31,7 @@
 #include "Obit.h"
 #include "ObitErr.h"
 #include "ObitImage.h"
+#include "ObitFInterpolate.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -132,7 +133,12 @@ static inline odouble ObitBeamShapeGetFreq (ObitBeamShape *in) {
 /** Public: set reference frequency */
 static inline void ObitBeamShapeSetFreq (ObitBeamShape *in, odouble newFreq) {
   in->refFreq = newFreq;
-} /* end  ObitBeamShapeSetFre */
+} /* end  ObitBeamShapeSetFreq */
+
+/** Public: set Antenna size*/
+static inline void ObitBeamShapeSetAntSize (ObitBeamShape *in, ofloat antSize) {
+  in->antSize = antSize;
+} /* end  ObitBeamShapeSetAntSize */
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

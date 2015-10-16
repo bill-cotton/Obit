@@ -4,7 +4,7 @@
 ;! Imaging software correcting for tabulated beamshape, wideband
 ;# Task Obit self calibration Imaging
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2011-2012
+;;  Copyright (C) 2011-2015
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -552,27 +552,27 @@ Adverbs:
   in3Class...Power Beam AIPS class. Expected form "Sxxxxx" where "S"
              is the Stokes parameter (IVQU) and "xxxx" arbitrary.
              The task will search for the different stokes images 
-             and I+V or I+V+Q+U should be provided.
+             and R+L or X+Y or R+L+Q+U should be provided.
   in3Seq.....Beam AIPS seq. # .    0 => highest.
   in3Disk....Disk drive # of beam (FITS or AIPS). NO default for AIPS
   in3File....FITS Power Beam input root if in3DType=='FITS'
              Expected form "Sxxxxx" where "S" is the Stokes parameter 
              (IVQU) and "xxxx" is arbitrary. 
              The task will search for the different Stokes images 
-             and I+V or I+V+Q+U should be provided
+             and R+L or X+Y or R+L+Q+U should be provided.
   doPhase....If True, also include phase in beam images
   in4Name....Power Beam phase AIPS name. Only used if doPhase = True
   in4Class...Beam phase AIPS class. Expected form "Sxxxxx" where "S"
              is the Stokes parameter (IVQU) and "xxxx" arbitrary.
              The task will search for the different stokes images 
-             and I+V or I+V+Q+U should be provided.
+             and R+L or X+Y or R+L+Q+U should be provided.
   in4Seq.....Beam phase AIPS seq. # .    0 => highest.
   in4Disk....Disk drive # of beam phase (FITS or AIPS).
   in4File....Power FITS Beam phase input root if in3DType=='FITS'
              Expected form "Sxxxxx" where "S" is the Stokes parameter 
              (IVQU) and "xxxx" is arbitrary. 
              The task will search for the different stokes images 
-             and I+V or I+V+Q+U should be provided
+             and R+L or X+Y or R+L+Q+U should be provided.
              Only used if doPhase = True
 
       Output files
@@ -584,10 +584,10 @@ Adverbs:
   outName....Ending of output AIPS Image Name, 
              Name = source_name+outName
              The Stokes I CLEAN model will have been subtracted.
-  outClass...Output image class.  Default = 'ICLEAN'
+  outClass...Output image class.  Default = 'IClean'
              Only the last 5 characters given are used and the
-             first is replaced with "I".
-             Output image name = pointing name (SOURCES)
+             first is replaced with "I" or other Stokes parameter
+             Output image name = pointing name (Sources)
              The output CLEAN image will be used during
              execution as the residual image.
   outSeq.....Output image sequence number.
@@ -604,10 +604,9 @@ Adverbs:
              with any calibration tables.
   out2Name...Ending of output AIPS UV data Name, 
              Name = source_name+out2Name
-             Defaults to 'UV'
              This file will contain the last selected data 
              with any calibration tables.
-  out2Class..Output uv data class.  Default = 'IMAGER'
+  out2Class..Output uv data class.  Default = 'MFBeam'
   out2Seq....Output AIPS uv data sequence number.
   out2Disk...The disk drive # of output uv date.  0 => highest
              with space. default  = outDisk

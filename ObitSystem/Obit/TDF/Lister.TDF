@@ -3,7 +3,7 @@
 ;! Task to print the contents of various data files
 ;# Task 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2009-2012
+;;  Copyright (C) 2009-2015
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -52,6 +52,8 @@ souCode                            Calibrator code '    '=>all
 timeRange                          Time range to copy
 **PARAM** str 4
 Stokes                             Stokes type to pass.
+**PARAM** float 2
+UVRange         0.                 Min & max baseline (klambda)
 **PARAM** int 1 **DEF** -1
 FreqID                             Freq. ID to select.
 **PARAM** int 1 **DEF** 1
@@ -159,6 +161,7 @@ Adverbs:
   Stokes.....The desired Stokes type of the output data:
              'I','V','Q','U','IQU','IQUV','IV','RR','LL','RL',
              'LR','HALF' (=RR,LL), 'FULL' (=RR,LL,RL,LR)
+  UVRange....(Minimum,Maximum) baseline (kilo-lambda) to include
   FreqID.....Frequency identifier to select (you may determine which is
              applicable from the opType='SCAN' listing produced by
              task Lister). <=0=>any

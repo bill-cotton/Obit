@@ -28,6 +28,7 @@
 
 #include "ObitUVDesc.h"
 #include "ObitThread.h"
+#include "ObitBeamShape.h"
 #include "ObitSkyModelVMBeam.h"
 #include "ObitTableCCUtil.h"
 #include "ObitFFT.h"
@@ -90,7 +91,8 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer arg);
 static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer arg);
 
 /** Private: get model frequency primary beam */
-static ofloat getPBBeam(ObitImageDesc *desc, ofloat x, ofloat y, 
+static ofloat getPBBeam(ObitBeamShape *beamShape, ObitImageDesc *desc, 
+			ofloat x, ofloat y, 
 			ofloat antSize, odouble freq, ofloat pbmin);
 
 /*---------------Private structures----------------*/
@@ -124,10 +126,10 @@ typedef struct {
   /* Thread copy of Components list*/
   ObitFArray *VMComps;
   /* VMBeam class entries */
-  /* Amp, phase interpolator for I pol Beam image */
-  ObitFInterpolate *BeamIInterp, *BeamIPhInterp;
-  /* Amp, phase interpolator for V pol Beam image */
-  ObitFInterpolate *BeamVInterp, *BeamVPhInterp;
+  /* Amp, phase interpolator for R/X pol Beam image */
+  ObitFInterpolate *BeamRXInterp, *BeamRXPhInterp;
+  /* Amp, phase interpolator for L/Y pol Beam image */
+  ObitFInterpolate *BeamLYInterp, *BeamLYPhInterp;
   /* Amp, phase interpolator for Q pol Beam image */
   ObitFInterpolate *BeamQInterp, *BeamQPhInterp;
   /* Amp, phase interpolator for U pol Beam image */
@@ -138,9 +140,9 @@ typedef struct {
   odouble  BeamFreq;
   /** Dimension of Rgain...  */
   olong dimGain;
-  /** Array of time/spatially variable R component gain, real, imag */
+  /** Array of time/spatially variable R/X component gain, real, imag */
   ofloat *Rgain, *Rgaini;
-  /** Array of time/spatially variable L component gain, real, imag */
+  /** Array of time/spatially variable L/Y component gain, real, imag */
   ofloat *Lgain, *Lgaini;
   /** Array of time/spatially variable Q component gain, real, imag */
   ofloat *Qgain, *Qgaini;
@@ -306,27 +308,29 @@ ObitSkyModelVMBeamCopy  (ObitSkyModelVMBeam *in,
  * \param name     An optional name for the object.
  * \param mosaic   ObitImageMosaic giving one or more images/CC tables
  * \param uvData   UV data to be operated on
- * \param IBeam    I Beam normalized image
- * \param VBeam    V Beam fractional image
+ * \param RXBeam   R/X Beam normalized image
+ * \param LYBeam   L/Y Beam normalized image
  * \param QBeam    Q Beam fractional image if nonNULL
  * \param UBeam    U Beam fractional image if nonNULL
- * \param IBeamPh  I Beam phase image if nonNULL
- * \param VBeamPh  V Beam phase image if nonNULL
- * \param QBeamPh  Q Beam phase image if nonNULL
- * \param UBeamPh  U Beam phase image if nonNULL
+ * \param RXBeamPh  R/X Beam phase image if nonNULL
+ * \param LYBeamPh  L/Y Beam phase image if nonNULL
+ * \param QBeamPh   Q Beam phase image if nonNULL
+ * \param UBeamPh   U Beam phase image if nonNULL
  * \return the new object.
  */
 ObitSkyModelVMBeam* 
 ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
 			  ObitUV *uvData,
-			  ObitImage *IBeam,  ObitImage *VBeam, 
-			  ObitImage *QBeam,  ObitImage *UBeam, 
-			  ObitImage *IBeamPh,  ObitImage *VBeamPh, 
-			  ObitImage *QBeamPh,  ObitImage *UBeamPh, 
+			  ObitImage *RXBeam,  ObitImage *LYBeam, 
+			  ObitImage *QBeam,   ObitImage *UBeam, 
+			  ObitImage *RXBeamPh,  ObitImage *LYBeamPh, 
+			  ObitImage *QBeamPh,   ObitImage *UBeamPh, 
 			  ObitErr *err)
 {
   ObitSkyModelVMBeam* out=NULL;
   olong number, i, nchan, nif;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gboolean doTab = TRUE;
   gchar *routine = "ObitSkyModelVMBeamCreate";
 
   /* Error tests */
@@ -351,8 +355,8 @@ ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
 
   /* Swallow Beam images */
   out->doCrossPol = TRUE;
-  out->IBeam = ObitImageInterpCreate("IBeam", IBeam, 2, err);
-  out->VBeam = ObitImageInterpCreate("VBeam", VBeam, 2, err);
+  out->RXBeam = ObitImageInterpCreate("RXBeam", RXBeam, 2, err);
+  out->LYBeam = ObitImageInterpCreate("LYBeam", LYBeam, 2, err);
   if (QBeam)
     out->QBeam = ObitImageInterpCreate("QBeam", QBeam, 2, err);
   else
@@ -362,13 +366,13 @@ ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
   else
     out->doCrossPol = FALSE;
   if (err->error) Obit_traceback_val (err, routine, name, out);
-  out->numPlane = out->IBeam->nplanes;
+  out->numPlane = out->RXBeam->nplanes;
 
   /* Phase beams */
-  if (IBeamPh)
-    out->IBeamPh = ObitImageInterpCreate("IBeamPh", IBeamPh, 2, err);
-  if (VBeamPh)
-    out->VBeamPh = ObitImageInterpCreate("VBeamPh", VBeamPh, 2, err);
+  if (RXBeamPh)
+    out->RXBeamPh = ObitImageInterpCreate("RXBeamPh", RXBeamPh, 2, err);
+  if (LYBeamPh)
+    out->LYBeamPh = ObitImageInterpCreate("LYBeamPh", LYBeamPh, 2, err);
   if (QBeamPh)
     out->QBeamPh= ObitImageInterpCreate("QBeamPh", QBeamPh, 2, err);
   if (UBeamPh)
@@ -376,25 +380,25 @@ ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
   if (err->error) Obit_traceback_val (err, routine, name, out);
 
   /* Make sure they are all consistent */
-  Obit_retval_if_fail ((ObitFArrayIsCompatable(out->IBeam->ImgPixels, 
-					       out->VBeam->ImgPixels)), err, out,
+  Obit_retval_if_fail ((ObitFArrayIsCompatable(out->RXBeam->ImgPixels, 
+					       out->LYBeam->ImgPixels)), err, out,
 		       "%s: Incompatable I, L beam arrays", routine);
   if (out->doCrossPol) {
-    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->IBeam->ImgPixels, 
+    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->RXBeam->ImgPixels, 
 						 out->QBeam->ImgPixels)), err, out,
 			 "%s: Incompatable I, Q beam arrays", routine);
-    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->IBeam->ImgPixels, 
+    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->RXBeam->ImgPixels, 
 						 out->UBeam->ImgPixels)), err, out,
 		       "%s: Incompatable I, U beam arrays", routine);
   }
-  if (out->IBeamPh) {
-    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->IBeam->ImgPixels, 
-						 out->IBeamPh->ImgPixels)), err, out,
+  if (out->RXBeamPh) {
+    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->RXBeam->ImgPixels, 
+						 out->RXBeamPh->ImgPixels)), err, out,
 			 "%s: Incompatable I amp, phase beam arrays", routine);
   }
-  if (out->VBeamPh) {
-    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->VBeam->ImgPixels, 
-						 out->VBeamPh->ImgPixels)), err, out,
+  if (out->LYBeamPh) {
+    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->LYBeam->ImgPixels, 
+						 out->LYBeamPh->ImgPixels)), err, out,
 			 "%s: Incompatable V amp, phase beam arrays", routine);
   }
   if (out->doCrossPol && out->QBeamPh) {
@@ -408,6 +412,10 @@ ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
 			 "%s: Incompatable U amp, phase beam arrays", routine);
   }
 
+  /* Beam shape - Tabulated if possible */
+  ObitInfoListAlwaysPut (RXBeam->info, "doTab", OBIT_bool, dim, &doTab);
+  out->BeamShape = ObitBeamShapeCreate("Shape", RXBeam, 0.01, 25.0, TRUE);
+
  /* Get list of planes per channel */
   nchan = uvData->myDesc->inaxes[uvData->myDesc->jlocf];
   if (uvData->myDesc->jlocif>=0) 
@@ -417,16 +425,16 @@ ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
   out->FreqPlane  = g_malloc0(out->numUVChann*sizeof(olong));
   for (i=0; i<out->numUVChann; i++) 
     out->FreqPlane[i] = MAX(0, MIN (out->numPlane-1, 
-				    ObitImageInterpFindPlane(out->IBeam, uvData->myDesc->freqArr[i])));
+				    ObitImageInterpFindPlane(out->RXBeam, uvData->myDesc->freqArr[i])));
   /* Release beam buffers */
-  if (IBeam && (IBeam->image)) IBeam->image = ObitImageUnref(IBeam->image);
-  if (QBeam && (QBeam->image)) QBeam->image = ObitImageUnref(QBeam->image);
-  if (UBeam && (UBeam->image)) UBeam->image = ObitImageUnref(UBeam->image);
-  if (VBeam && (VBeam->image)) VBeam->image = ObitImageUnref(VBeam->image);
-  if (IBeamPh && (IBeamPh->image)) IBeamPh->image = ObitImageUnref(IBeamPh->image);
-  if (QBeamPh && (QBeamPh->image)) QBeamPh->image = ObitImageUnref(QBeamPh->image);
-  if (UBeamPh && (UBeamPh->image)) UBeamPh->image = ObitImageUnref(UBeamPh->image);
-  if (VBeamPh && (VBeamPh->image)) VBeamPh->image = ObitImageUnref(VBeamPh->image);
+  if (RXBeam && (RXBeam->image)) RXBeam->image = ObitImageUnref(RXBeam->image);
+  if (QBeam  && (QBeam->image))  QBeam->image  = ObitImageUnref(QBeam->image);
+  if (UBeam  && (UBeam->image))  UBeam->image  = ObitImageUnref(UBeam->image);
+  if (LYBeam && (LYBeam->image)) LYBeam->image = ObitImageUnref(LYBeam->image);
+  if (RXBeamPh && (RXBeamPh->image)) RXBeamPh->image = ObitImageUnref(RXBeamPh->image);
+  if (QBeamPh  && (QBeamPh->image))  QBeamPh->image  = ObitImageUnref(QBeamPh->image);
+  if (UBeamPh  && (UBeamPh->image))  UBeamPh->image  = ObitImageUnref(UBeamPh->image);
+  if (LYBeamPh && (LYBeamPh->image)) LYBeamPh->image = ObitImageUnref(LYBeamPh->image);
 
   return out;
 } /* end ObitSkyModelVMBeamCreate */
@@ -497,14 +505,14 @@ void ObitSkyModelVMBeamInitMod (ObitSkyModel* inn, ObitUV *uvdata,
       args->uvdata = uvdata;
       args->ithread = i;
       args->err    = err;
-      if (in->IBeam) args->BeamIInterp = ObitImageInterpCloneInterp(in->IBeam,err);
-      if (in->VBeam) args->BeamVInterp = ObitImageInterpCloneInterp(in->VBeam,err);
-      if (in->QBeam) args->BeamQInterp = ObitImageInterpCloneInterp(in->QBeam,err);
-      if (in->UBeam) args->BeamUInterp = ObitImageInterpCloneInterp(in->UBeam,err);
-      if (in->IBeamPh) args->BeamIPhInterp = ObitImageInterpCloneInterp(in->IBeamPh,err);
-      if (in->VBeamPh) args->BeamVPhInterp = ObitImageInterpCloneInterp(in->VBeamPh,err);
-      if (in->QBeamPh) args->BeamQPhInterp = ObitImageInterpCloneInterp(in->QBeamPh,err);
-      if (in->UBeamPh) args->BeamUPhInterp = ObitImageInterpCloneInterp(in->UBeamPh,err);
+      if (in->RXBeam) args->BeamRXInterp = ObitImageInterpCloneInterp(in->RXBeam,err);
+      if (in->LYBeam) args->BeamLYInterp = ObitImageInterpCloneInterp(in->LYBeam,err);
+      if (in->QBeam)  args->BeamQInterp  = ObitImageInterpCloneInterp(in->QBeam,err);
+      if (in->UBeam)  args->BeamUInterp  = ObitImageInterpCloneInterp(in->UBeam,err);
+      if (in->RXBeamPh) args->BeamRXPhInterp = ObitImageInterpCloneInterp(in->RXBeamPh,err);
+      if (in->LYBeamPh) args->BeamLYPhInterp = ObitImageInterpCloneInterp(in->LYBeamPh,err);
+      if (in->QBeamPh)  args->BeamQPhInterp  = ObitImageInterpCloneInterp(in->QBeamPh,err);
+      if (in->UBeamPh)  args->BeamUPhInterp  = ObitImageInterpCloneInterp(in->UBeamPh,err);
       if (err->error) Obit_traceback_msg (err, routine, in->name);
       args->begVMModelTime = -1.0e20;
       args->endVMModelTime = -1.0e20;
@@ -527,7 +535,7 @@ void ObitSkyModelVMBeamInitMod (ObitSkyModel* inn, ObitUV *uvdata,
 
   /* Fourier transform routines - DFT only */
   /* Are phases given? */
-  if (in->IBeamPh) 
+  if (in->RXBeamPh) 
     in->DFTFunc   = (ObitThreadFunc)ThreadSkyModelVMBeamFTDFTPh;
   else /* No phase */
     in->DFTFunc   = (ObitThreadFunc)ThreadSkyModelVMBeamFTDFT;
@@ -601,14 +609,14 @@ void ObitSkyModelVMBeamShutDownMod (ObitSkyModel* inn, ObitUV *uvdata,
     if ((strlen(args->type)>6) || (!strncmp(args->type, "vmbeam", 6))) {
       for (i=0; i<in->nThreads; i++) {
 	args = (VMBeamFTFuncArg*)in->threadArgs[i];
-	args->BeamIInterp = ObitFInterpolateUnref(args->BeamIInterp);
-	args->BeamVInterp = ObitFInterpolateUnref(args->BeamVInterp);
-	args->BeamQInterp = ObitFInterpolateUnref(args->BeamQInterp);
-	args->BeamUInterp = ObitFInterpolateUnref(args->BeamUInterp);
-	args->BeamIPhInterp = ObitFInterpolateUnref(args->BeamIPhInterp);
-	args->BeamVPhInterp = ObitFInterpolateUnref(args->BeamVPhInterp);
-	args->BeamQPhInterp = ObitFInterpolateUnref(args->BeamQPhInterp);
-	args->BeamUPhInterp = ObitFInterpolateUnref(args->BeamUPhInterp);
+	args->BeamRXInterp = ObitFInterpolateUnref(args->BeamRXInterp);
+	args->BeamLYInterp = ObitFInterpolateUnref(args->BeamLYInterp);
+	args->BeamQInterp  = ObitFInterpolateUnref(args->BeamQInterp);
+	args->BeamUInterp  = ObitFInterpolateUnref(args->BeamUInterp);
+	args->BeamRXPhInterp = ObitFInterpolateUnref(args->BeamRXPhInterp);
+	args->BeamLYPhInterp = ObitFInterpolateUnref(args->BeamLYPhInterp);
+	args->BeamQPhInterp  = ObitFInterpolateUnref(args->BeamQPhInterp);
+	args->BeamUPhInterp  = ObitFInterpolateUnref(args->BeamUPhInterp);
 	if (args->Rgain)  g_free(args->Rgain);
 	if (args->Lgain)  g_free(args->Lgain);
 	if (args->Qgain)  g_free(args->Qgain);
@@ -714,7 +722,7 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
   ofloat *Rgaini=NULL, *Lgaini=NULL, *Qgaini=NULL, *Ugaini=NULL;
   ofloat curPA, tPA, tTime, bTime, fscale, PBCor, xx, yy;
   ofloat xr, xi, tr, ti, tri, tii;
-  ofloat Ipol, Vpol, IpolPh=0.0, VpolPh=0.0, QpolPh=0.0, UpolPh=0.0;
+  ofloat RXpol, LYpol, RXpolPh=0.0, LYpolPh=0.0, QpolPh=0.0, UpolPh=0.0;
   ofloat minPBCor=0.01, fblank = ObitMagicF();
   odouble x, y;
   VMBeamFTFuncArg *args;
@@ -814,7 +822,9 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
   
   /* Scale by ratio of frequency to beam image ref. frequency */
   plane = in->FreqPlane[MIN(args->channel, in->numUVChann-1)];
-  fscale = args->BeamFreq / in->IBeam->freqs[plane];
+  fscale = args->BeamFreq / in->RXBeam->freqs[plane];
+
+  /* curPA = -curPA; DEBUG Fiddle */
 
   /* Compute antenna gains and put in to Rgain, Lgain, Qgain, Ugain */
   for (i=0; i<ncomp; i++) {
@@ -839,30 +849,31 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
 
     /* Interpolate gains -RR and LL as power gains */
     plane = in->FreqPlane[MIN(args->channel, in->numUVChann-1)];
-    Ipol = ObitImageInterpValueInt (in->IBeam, args->BeamIInterp, x, y, curPA, plane, err);
-    if ((Ipol==fblank) || (fabs(Ipol)<0.001) || (fabs(Ipol)>1.1)) Ipol = minPBCor;
-    /* Get primary (Power) beam correction for component */
-    /* DEBUG PBCor = getPBBeam(in->mosaic->images[ifield]->myDesc, xx, yy, in->antSize,  
-       args->BeamFreq, minPBCor) / (Ipol*Ipol); */
-    PBCor = Ipol;  /* DEBUG use correction image */
-    if (in->IBeamPh)
-      IpolPh = DG2RAD*ObitImageInterpValueInt (in->IBeamPh, args->BeamIPhInterp, x, y, curPA, plane, err);
-    Vpol = ObitImageInterpValueInt (in->VBeam, args->BeamVInterp, x, y, curPA, plane, err);
-    if ((Vpol==fblank) || (fabs(Vpol)<0.001) || (fabs(Vpol)>0.5)) Vpol = minPBCor;
-    if (in->VBeamPh)
-      VpolPh = DG2RAD*ObitImageInterpValueInt (in->VBeamPh, args->BeamVPhInterp, x, y, curPA, plane, err);
-    if (Ipol!=fblank) {
+    RXpol = ObitImageInterpValueInt (in->RXBeam, args->BeamRXInterp, x, y, curPA, plane, err);
+    if ((RXpol==fblank) || (fabs(RXpol)<0.001) || (fabs(RXpol)>1.1)) RXpol = minPBCor;
+    else RXpol *= RXpol; /*   to power gain */
+    /* Get symmetric primary (Power) beam correction for component */
+    PBCor = getPBBeam(in->BeamShape, in->mosaic->images[ifield]->myDesc, xx, yy, in->antSize,  
+       args->BeamFreq, minPBCor); 
+    if (in->RXBeamPh)
+      RXpolPh = DG2RAD*ObitImageInterpValueInt (in->RXBeamPh, args->BeamRXPhInterp, x, y, curPA, plane, err);
+    LYpol = ObitImageInterpValueInt (in->LYBeam, args->BeamLYInterp, x, y, curPA, plane, err);
+    if ((LYpol==fblank) || (fabs(LYpol)<0.001) || (fabs(LYpol)>01.1)) LYpol = minPBCor;
+     else LYpol *= LYpol; /*  to power gain */
+    if (in->LYBeamPh)
+      LYpolPh = DG2RAD*ObitImageInterpValueInt (in->LYBeamPh, args->BeamLYPhInterp, x, y, curPA, plane, err);
+    if (RXpol!=fblank) {
       /* Phases given? */
-      if (in->IBeamPh && in->VBeamPh) {
-	Lgain[i]  = PBCor*(1.0*cos(IpolPh) - Vpol*cos(VpolPh));
-	Lgaini[i] = PBCor*(1.0*sin(IpolPh) - Vpol*sin(VpolPh));
-	Rgain[i]  = PBCor*(1.0*cos(IpolPh) + Vpol*cos(VpolPh));
-	Rgaini[i] = PBCor*(1.0*sin(IpolPh) + Vpol*sin(VpolPh));
+      if (in->RXBeamPh && in->LYBeamPh) {
+	Rgain[i]  = (RXpol/PBCor)*cos(RXpolPh);
+	Rgaini[i] = (RXpol/PBCor)*sin(RXpolPh);
+	Lgain[i]  = (LYpol/PBCor)*cos(LYpolPh);
+	Lgaini[i] = (LYpol/PBCor)*sin(LYpolPh);
       } else { /* no phase */
-	Lgain[i] = PBCor*(1.0 - Vpol);
-	Lgaini[i] = 0.0;
-	Rgain[i] = PBCor*(1.0 + Vpol);
+	Rgain[i] = RXpol/PBCor;
 	Rgaini[i] = 0.0;
+	Lgain[i] = LYpol/PBCor;
+	Lgaini[i] = 0.0;
       }
 
      } else {
@@ -1037,14 +1048,15 @@ void ObitSkyModelVMBeamInit  (gpointer inn)
   in->Lgaini       = NULL;
   in->Qgaini       = NULL;
   in->Ugaini       = NULL;
-  in->IBeam        = NULL;
+  in->BeamShape    = NULL;
+  in->RXBeam       = NULL;
   in->QBeam        = NULL;
   in->UBeam        = NULL;
-  in->VBeam        = NULL;
-  in->IBeamPh      = NULL;
+  in->LYBeam       = NULL;
+  in->RXBeamPh     = NULL;
   in->QBeamPh      = NULL;
   in->UBeamPh      = NULL;
-  in->VBeamPh      = NULL;
+  in->LYBeamPh     = NULL;
   in->AntList      = NULL;
   in->curSource    = NULL;
   in->numAntList   = 0;
@@ -1080,14 +1092,15 @@ void ObitSkyModelVMBeamClear (gpointer inn)
   if (in->Lgaini) g_free(in->Lgaini); in->Lgaini = NULL;
   if (in->Qgaini) g_free(in->Qgaini); in->Qgaini = NULL;
   if (in->Ugaini) g_free(in->Ugaini); in->Ugaini = NULL;
-  in->IBeam     = ObitImageInterpUnref(in->IBeam);
+  in->BeamShape = ObitBeamShapeUnref(in->BeamShape);
+  in->RXBeam    = ObitImageInterpUnref(in->RXBeam);
   in->QBeam     = ObitImageInterpUnref(in->QBeam);
   in->UBeam     = ObitImageInterpUnref(in->UBeam);
-  in->VBeam     = ObitImageInterpUnref(in->VBeam);
-  in->IBeamPh   = ObitImageInterpUnref(in->IBeamPh);
+  in->LYBeam    = ObitImageInterpUnref(in->LYBeam);
+  in->LYBeamPh  = ObitImageInterpUnref(in->RXBeamPh);
   in->QBeamPh   = ObitImageInterpUnref(in->QBeamPh);
   in->UBeamPh   = ObitImageInterpUnref(in->UBeamPh);
-  in->VBeamPh   = ObitImageInterpUnref(in->VBeamPh);
+  in->LYBeamPh  = ObitImageInterpUnref(in->LYBeamPh);
   in->curSource = ObitSourceUnref(in->curSource);
   if (in->AntList)  {
     for (i=0; i<in->numAntList; i++) { 
@@ -2602,46 +2615,45 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
 
 /** 
  *  Get model frequency primary beam 
- * \param desc    model image header
- * \param x       x offset from pointing center (deg)
- * \param y       y offset from pointing center (deg)
- * \param antSize Antenna diameter in meters. (defaults to 25.0)
- * \param freq    Frequency in Hz
- * \param pbmin   Minimum antenna gain Jinc 0=>0.05, poly 0=> 0.01
+ * \param beamSize Image BeamSize object
+ * \param dec      Image Descriptor
+ * \param x        x offset from pointing center (deg)
+ * \param y        y offset from pointing center (deg)
+ * \param antSize  Antenna diameter in meters. (defaults to 25.0)
+ * \param freq     Frequency in Hz
+ * \param pbmin    Minimum antenna gain Jinc 0=>0.05, poly 0=> 0.01
  * \return Relative gain at freq refFreq wrt average of Freq.
 */
-static ofloat getPBBeam(ObitImageDesc *desc, ofloat x, ofloat y, 
-			ofloat antSize, odouble freq, ofloat pbmin)
+static ofloat getPBBeam(ObitBeamShape *beamShape, ObitImageDesc *desc, 
+			ofloat x, ofloat y, ofloat antSize, odouble freq, ofloat pbmin)
 {
   ofloat PBBeam = 1.0;
-  gboolean doJinc;
-  odouble Angle, RAPnt, DecPnt, ra, dec, xx, yy, zz;
+  odouble Angle;
+  /*odouble RAPnt, DecPnt, ra, dec, xx, yy, zz;*/
 
-  if (antSize <=0.0) antSize = 25.0;  /* defailt antenna size */
+  if (antSize <=0.0) antSize = 25.0;  /* default antenna size */
+  ObitBeamShapeSetAntSize(beamShape, antSize);
+  ObitBeamShapeSetFreq(beamShape, freq);
 
-  /* Get pointing position */
-  ObitImageDescGetPoint(desc, &RAPnt, &DecPnt);
+  /* Get pointing position
+  ObitImageDescGetPoint(desc, &RAPnt, &DecPnt); */
 
-  /* Convert offset to position */
-  ObitSkyGeomXYShift (RAPnt, DecPnt, x, y, ObitImageDescRotate(desc), 
-		      &ra, &dec);
+  /* Convert offset to position 
+  ObitSkyGeomXYShift (RAPnt, DecPnt, x, y, ObitImageDescRotate(desc), &ra, &dec);*/
 
-  /* Angle from center */
+  /* Angle from center
   RAPnt  *= DG2RAD;
   DecPnt *= DG2RAD;
   xx = DG2RAD * ra;
   yy = DG2RAD * dec;
   zz = sin (yy) * sin (DecPnt) + cos (yy) * cos (DecPnt) * cos (xx-RAPnt);
   zz = MIN (zz, 1.000);
-  Angle = acos (zz) * RAD2DG;
+  Angle = acos (zz) * RAD2DG; */
+  Angle = sqrt (x*x + y*y);
 
-  /* Which beam shape function to use? */
-  doJinc = (freq >= 1.0e9);
-  
-  /* Gain at freq */
-  if (doJinc) PBBeam = ObitPBUtilJinc(Angle, freq, antSize, pbmin);
-  else        PBBeam = ObitPBUtilPoly(Angle, freq, pbmin);
+  /* Get gain */
+  PBBeam = ObitBeamShapeGainSym(beamShape, Angle);
  
   return PBBeam;
-} /* end  getPBBeam*/
+} /* end  getPBBeam */
 

@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014                                               */
+/*;  Copyright (C) 2014-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -60,12 +60,16 @@ typedef struct {
   ofloat alpha;   
   /* smoothing time in unints of times */  
   ofloat smoTime;
+  /* Clipping level in sigma, <=0 = no clip */  
+  ofloat clip;
   /*  Array of values to smooth */
   ofloat *vals;
   /*  Smoothed Array of values */
   ofloat *out;
   /*  Array of weights (0 or 1) */
   ofloat *weight;
+  /*  Array of output weights (0 or 1) */
+  ofloat *outWt;
   /* times of data samples, <-1000 => ignore */
   ofloat* times;   
   /* Work array at least the size of hi-lo */
@@ -99,23 +103,23 @@ void SYGainSmooth (ObitInfoList* myInput, ObitUV* inData, ObitErr* err);
 void SYGainSY2SN (ObitInfoList* myInput, ObitUV* inData, ObitErr* err);
 /* Clipping routines */
 void clipPSum (ObitTableSY *SYTable, ObitUVSel *sel,  olong iif,
-	       ofloat stpsum, ofloat mxpsum, olong sub,	
+	       ofloat alpha, ofloat stpsum, ofloat mxpsum, olong sub,	
 	       olong maxtim, olong *wrkrec, ofloat *wrktim,
 	       ofloat *work1, ofloat *work2, ofloat *work3, ofloat *work4, 
 	       ofloat *work5, ofloat *work6, ofloat *work7, ofloat *work8, 
-	       ObitErr* err);
+	       olong nThread, MednFuncArg** args, ObitErr* err);
 void clipPDif (ObitTableSY *SYTable, ObitUVSel *sel, olong iif, 
-	       ofloat stpdif, ofloat mxpdif, olong sub, 
+	       ofloat alpha, ofloat stpdif, ofloat mxpdif, olong sub, 
 	       olong maxtim, olong *wrkrec, ofloat *wrktim,
 	       ofloat *work1, ofloat *work2, ofloat *work3, ofloat *work4, 
 	       ofloat *work5, ofloat *work6, ofloat *work7, ofloat *work8, 
-	       ObitErr*  err);
+	       olong nThread, MednFuncArg** args, ObitErr*  err);
 void clipGain (ObitTableSY *SYTable, ObitUVSel *sel, olong iif, 
-	       ofloat strate, ofloat mxrate, olong sub, 
+	       ofloat alpha, ofloat strate, ofloat mxrate, olong sub, 
 	       olong maxtim, olong *wrkrec, ofloat *wrktim,
 	       ofloat *work1, ofloat *work2, ofloat *work3, ofloat *work4, 
 	       ofloat *work5, ofloat *work6, ofloat *work7, ofloat *work8, 
-	       ObitErr* err);
+	       olong nThread, MednFuncArg** args, ObitErr* err);
 /*  Smooth SY table */
 void static
 SYSmooth (ObitTableSY *SYTab, gchar* smoFunc, gchar* smoType, ofloat alpha, 
@@ -125,7 +129,7 @@ SYSmooth (ObitTableSY *SYTab, gchar* smoFunc, gchar* smoType, ofloat alpha,
 
 /* Generic smoothing */
 void static 
-SYsmoIt (gchar* smmeth, ofloat width, ofloat alpha, 
+SYsmoIt (gchar* smmeth, ofloat width, ofloat alpha, ofloat clip, 
 	 ofloat* x, ofloat *t, ofloat *w, olong n, 
 	 ofloat* xs, ofloat* ws, ofloat *wrk1, ofloat *wrk2, 
 	 gboolean doBlank, olong nThread, MednFuncArg** args);
@@ -255,7 +259,6 @@ ObitInfoList* SYGainIn (int argc, char **argv, ObitErr *err)
 
   /* Initialize output */
   myOutput = defaultOutputs(err);
-  ObitReturnDumpRetCode (-999, outfile, myOutput, err);
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
   /* command line arguments */
@@ -359,6 +362,10 @@ ObitInfoList* SYGainIn (int argc, char **argv, ObitErr *err)
       strTemp += dim[0];
     }
   }
+
+  /* Initialize output */
+  ObitReturnDumpRetCode (-999, outfile, myOutput, err);
+  if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
   return list;
 } /* end SYGainIn */
@@ -812,11 +819,13 @@ void SYGainClip (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
 /*----------------------------------------------------------------------- */
 {
   ObitTableSY *SYTable =  NULL;
-  olong SYver, highVer;
+  ObitThread *thread=NULL;
+  MednFuncArg **args=NULL;
+  olong SYver, highVer, nThreads=1;
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ofloat clipSmo[5]  = {0.0, 0.0, 0.0, 0.0, 0.0};
-  ofloat stgain, stpdif, stpsum;
+  ofloat alpha=0.5, stgain, stpdif, stpsum;
   ofloat clipParm[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
   ofloat mxgain, mxpdif, mxpsum;
   gboolean dogain, dopdif, dopsum;
@@ -837,6 +846,7 @@ void SYGainClip (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
   /* Get clipping parameters */
+  ObitInfoListGetTest(myInput, "alpha",    &type, dim, &alpha);
   ObitInfoListGetTest(myInput, "clipSmo",  &type, dim, clipSmo);
   stpdif  = clipSmo[0] / 24.0;
   stpsum  = clipSmo[1] / 24.0;
@@ -901,6 +911,10 @@ void SYGainClip (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
 		 "Clipping SY %d ",  SYver);
   ObitErrLog(err); 
 
+  /* Create threading arguments  */
+  thread = newObitThread();
+  nThreads = MakeSmoFuncArgs (thread, mxtim, &args);
+
   /* Loop over subarrays */
   for (iSub=1; iSub<=numSub; iSub++) {
     /* This one wanted? */
@@ -908,43 +922,54 @@ void SYGainClip (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     
     /* Clip Power Dif */
     if (dopdif) {
+      Obit_log_error(err, OBIT_InfoErr, "Clipping PDif ");
+      ObitErrLog(err); 
       /* Loop over IF */
       for (i= bif; i<=eif; i++) { /* loop 100 */
-	clipPDif (SYTable, inData->mySel, i, stpdif, mxpdif, iSub, 
+	/*fprintf (stderr,"DEBUG IF=%d\n", i);*/
+	clipPDif (SYTable, inData->mySel, i, alpha, stpdif, mxpdif, iSub, 
 		 mxtim, wrkrec, wrktim, work1, work2, work3,
 		 work4, work5, work6, work7, work8,
-		 err);
+		 nThreads, args, err);
 	if (err->error) goto cleanup;
       } /* end loop  L100: */;
     }
 
     /* Clip Power Sum */
     if (dopsum) {
+      Obit_log_error(err, OBIT_InfoErr, "Clipping PSum ");
+      ObitErrLog(err); 
       /* Loop over IF */
       for (i= bif; i<=eif; i++) { /* loop 100 */
-	clipPSum (SYTable, inData->mySel, i, stpsum, mxpsum, iSub, 
-		mxtim, wrkrec, wrktim, work1, work2, work3,
-		work4, work5, work6, work7, work8,
-		err);
+	/*fprintf (stderr,"DEBUG IF=%d\n", i);*/
+	clipPSum (SYTable, inData->mySel, i, alpha, stpsum, mxpsum, iSub, 
+		  mxtim, wrkrec, wrktim, work1, work2, work3,
+		  work4, work5, work6, work7, work8,
+		  nThreads, args, err);
 	if (err->error) goto cleanup;
-
+      } /* end loop */
+    }
     /* Clip gain */
     if (dogain) {
-      clipGain(SYTable, inData->mySel, i, stgain, mxgain, iSub, 
-	       mxtim, wrkrec, wrktim, work1, work2, work3, 
-	       work4, work5, work6, work7, work8,
-	       err);
-      if (err->error) goto cleanup;
-    } 
-    
-      } /* end loop  L100: */;
-    }
+      Obit_log_error(err, OBIT_InfoErr, "Clipping Gain");
+      ObitErrLog(err); 
+      /* Loop over IF */
+      for (i= bif; i<=eif; i++) { /* loop 100 */
+	clipGain(SYTable, inData->mySel, i, alpha, stgain, mxgain, iSub, 
+		 mxtim, wrkrec, wrktim, work1, work2, work3, 
+		 work4, work5, work6, work7, work8,
+		 nThreads, args, err);
+	if (err->error) goto cleanup;
+      } 
+   } /* end loop  L100: */;
   } /* end loop over subarrays */
     
  cleanup:
   /* Close SY Table */
   ObitTableSYClose (SYTable, err);
   SYTable = ObitTableSYUnref(SYTable);
+  KillSmoFuncArgs (nThreads, args);
+  thread = ObitThreadUnref(thread);
   if (wrkrec) g_free (wrkrec);
   if (wrktim) g_free (wrktim);
   if (work1)  g_free (work1);
@@ -1150,25 +1175,28 @@ cleanup:
 /*      iif      IF to operate on, 1-rel                                  */
 /*      sel      Selector telling which data wanted                       */
 /*      stpdif   Smoothing time (day) for amplitude                       */
+/*      alpha    0 -> 1 = pure boxcar -> pure MWF (ALPHA of the data      */
+/*               samples are discarded and the rest averaged).            */
 /*      mxpdif   Max. amplitude excursion from smoothed value             */
 /*      sub      Subarray (1-rel)                                         */
 /*      mxtim    Number of elements in wrkrec, wrktim, work1-8            */
 /*      wrktim, wrkrec, work* work arrays                                 */
+/*      nThreads number of threads to use for MWF                         */
+/*      args     thread argument array                                    */
 /*   Output:                                                              */
 /*      err    Obit Error stack                                           */
 /*----------------------------------------------------------------------- */
  void clipPDif (ObitTableSY *SYTable, ObitUVSel *sel, olong iif, 
-		ofloat stpdif, ofloat mxpdif, olong sub, 
+		ofloat alpha, ofloat stpdif, ofloat mxpdif, olong sub, 
 		olong maxtim, olong *wrkrec, ofloat *wrktim,
 		ofloat *work1, ofloat *work2, ofloat *work3, ofloat *work4, 
 		ofloat *work5, ofloat *work6, ofloat *work7, ofloat *work8, 
-		ObitErr* err)   {
+		olong nThreads, MednFuncArg** args, ObitErr* err)   {
    ObitTableSYRow *row=NULL;
    ofloat fblank =  ObitMagicF();
    olong   loopr, loopa, numtim, ant, fstrec, nleft, save, itime;
    olong  isyrno=0;
-   gboolean   bad, bad2, want;
-   ofloat     diff;
+   gboolean bad, bad2, want;
    odouble timoff=0.0;
    gchar *routine = "clipPDif";
    
@@ -1237,44 +1265,34 @@ cleanup:
      
      if (numtim <= 0) goto endAnt;  /* Catch anything? */
      
-     /* Smooth as requested */
-     ObitUVSolnSmooMWF (stpdif, 1.0, wrktim, work2, work4, numtim, work1, 
-			work6, work7, work8, FALSE);
+     /* Smooth/clip as requested */
+     /*ObitUVSolnSmooMWF (stpdif, 1.0, wrktim, work2, work4, numtim, work1, 
+       work6, work7, work8, FALSE);*/
+     SYsmoIt ("MWF", stpdif, alpha, mxpdif, wrktim, work2, work4, numtim, 
+	      work1, work6, work7, work8, FALSE, nThreads, args);
      /* Second Poln? */
      if (SYTable->nPol > 1) {
-       ObitUVSolnSmooMWF (stpdif, 1.0, wrktim, work3, work5, numtim, work2, 
-			  work4, work7, work8, FALSE);
+       /*ObitUVSolnSmooMWF (stpdif, 1.0, wrktim, work3, work5, numtim, work2, 
+	 work4, work7, work8, FALSE);*/
+       SYsmoIt ("MWF", stpdif, alpha, mxpdif, wrktim, work3, work5, numtim, 
+	      work2, work4, work7, work8, FALSE, nThreads, args);
      } 
      
-     /* Clip */
+     /* Apply Clip */
      for (itime=0; itime<numtim; itime++) { /* loop 200 */
+       /* either poln blanked? */
+       if (work6[itime]<=0.0) continue;
+       if ((SYTable->nPol > 1) &&  (work4[itime]<=0.0)) continue;
        isyrno = wrkrec[itime];
        ObitTableSYReadRow (SYTable, isyrno, row, err);
        if (err->error) Obit_traceback_msg (err, routine, SYTable->name);
        
-       /* Blanked? */
-       if (row->PwrDif1[iif-1]==fblank) {
-	 diff = 10.0*mxpdif;
-	 bad  = TRUE;
-       } else {
-	 
-	 bad = FALSE;
-	 diff = fabs(row->PwrDif1[iif-1] - work1[itime]);
-       }
-       if (diff > mxpdif) {
-	 row->PwrDif1[iif-1] = fblank;
-	 bad = TRUE;
-       } 
-       /* Second polarization? */
-       if (SYTable->nPol >= 2) {
-	 diff = fabs (row->PwrDif2[iif-1] - work2[itime]);
-	 if (diff > mxpdif) {
-	   row->PwrDif2[iif-1] = fblank;
-	   bad = TRUE;
-	 } 
-       } 
+       /* Blank */
+       if (work6[itime]<=0.0) row->PwrDif1[iif-1] = fblank;
+       if (work4[itime]<=0.0) row->PwrDif2[iif-1] = fblank;
+
        /* Rewrite record */
-       if (bad) ObitTableSYWriteRow (SYTable, isyrno, row, err);
+       ObitTableSYWriteRow (SYTable, isyrno, row, err);
        if (err->error) Obit_traceback_msg (err, routine, SYTable->name);
      } /* end loop clipping  */;
    endAnt: fstrec = save;
@@ -1292,6 +1310,8 @@ cleanup:
 /*      iif      IF to operate on, 1-rel                                  */
 /*      sel      Selector telling which data wanted                       */
 /*      stpdif   Smoothing time (day) for amplitude                       */
+/*      alpha    0 -> 1 = pure boxcar -> pure MWF (ALPHA of the data      */
+/*               samples are discarded and the rest averaged).            */
 /*      mxpdif   Max. amplitude excursion from smoothed value             */
 /*      dopdif   Clip by Amplitude?                                       */
 /*      stpsum   Smoothing time (day) for phases                          */
@@ -1300,21 +1320,22 @@ cleanup:
 /*      sub      Subarray (1-rel)                                         */
 /*      mxtim    Number of elements in wrkrec, wrktim, work1-8            */
 /*      wrktim, wrkrec, work* work arrays                                 */
+/*      nThreads number of threads to use for MWF                         */
+/*      args     thread argument array                                    */
 /*   Output:                                                              */
 /*      err    Obit Error stack                                           */
 /*----------------------------------------------------------------------- */
   void clipPSum (ObitTableSY *SYTable, ObitUVSel *sel, olong iif, 
-		 ofloat stpsum, ofloat mxpsum, olong sub, 
+		 ofloat alpha, ofloat stpsum, ofloat mxpsum, olong sub, 
 		 olong maxtim, olong *wrkrec, ofloat *wrktim,
 		 ofloat *work1, ofloat *work2, ofloat *work3, ofloat *work4, 
 		 ofloat *work5, ofloat *work6, ofloat *work7, ofloat *work8, 
-		 ObitErr* err)   {
+		 olong nThreads, MednFuncArg** args, ObitErr* err)   {
     ObitTableSYRow *row=NULL;
     ofloat fblank =  ObitMagicF();
     olong   loopr, loopa, numtim, ant, fstrec, nleft, save, itime;
     olong  isyrno=0;
     gboolean   bad, bad2, want;
-    ofloat     diff;
     odouble timoff=0.0;
     gchar *routine = "clipPSum";
     
@@ -1384,47 +1405,37 @@ cleanup:
       if (numtim <= 0) goto endAnt;  /* Catch anything? */
       
       /* Smooth as requested */
-      ObitUVSolnSmooMWF (stpsum, 1.0, wrktim, work2, work4, numtim, work1, 
-			 work6, work7, work8, FALSE);
+      /*ObitUVSolnSmooMWF (stpsum, 1.0, wrktim, work2, work4, numtim, work1, 
+			 work6, work7, work8, FALSE);*/
+      SYsmoIt ("MWF", stpsum, alpha, mxpsum, wrktim, work2, work4, numtim, 
+	       work1, work6, work7, work8, FALSE, nThreads, args);
       /* Second Poln? */
       if (SYTable->nPol > 1) {
-	ObitUVSolnSmooMWF (stpsum, 1.0, wrktim, work3, work5, numtim, work2, 
-			   work4, work7, work8, FALSE);
+	/*ObitUVSolnSmooMWF (stpsum, 1.0, wrktim, work3, work5, numtim, work2, 
+	  work4, work7, work8, FALSE);*/
+	SYsmoIt ("MWF", stpsum, alpha, mxpsum, wrktim, work3, work5, numtim, 
+	      work2, work4, work7, work8, FALSE, nThreads, args);
       } 
       
-      /* Clip */
-      for (itime=0; itime<numtim; itime++) {
-	isyrno = wrkrec[itime];
-	ObitTableSYReadRow (SYTable, isyrno, row, err);
-	if (err->error) Obit_traceback_msg (err, routine, SYTable->name);
-	
-	/* Blanked? */
-	if (row->PwrSum1[iif-1]==fblank) {
-	  diff = 10.0*mxpsum;
-	  bad = TRUE;
-	} else {
-	  
-	  bad = FALSE;
-	  diff = fabs (row->PwrSum1[iif-1] - work1[itime]);
-	}
-	if (diff > mxpsum) {
-	  row->PwrSum1[iif-1] = fblank;
-	  bad = TRUE;
-	} 
-	/* Second polarization? */
-	if (SYTable->nPol >= 2) {
-	  diff = fabs (row->PwrSum2[iif-1] - work2[itime]);
-	  if (diff > mxpsum) {
-	    row->PwrSum2[iif-1] = fblank;
-	    bad = TRUE;
-	  } 
-	} 
-	/* Rewrite record if clipped */
-	if (bad) ObitTableSYWriteRow (SYTable, isyrno, row, err);
-	if (err->error) Obit_traceback_msg (err, routine, SYTable->name);
-      } /* end loop clipping */;
+      /* Apply Clip */
+     for (itime=0; itime<numtim; itime++) { /* loop 200 */
+       /* either poln blanked? */
+       if (work6[itime]<=0.0) continue;
+       if ((SYTable->nPol > 1) &&  (work4[itime]<=0.0)) continue;
+       isyrno = wrkrec[itime];
+       ObitTableSYReadRow (SYTable, isyrno, row, err);
+       if (err->error) Obit_traceback_msg (err, routine, SYTable->name);
+       
+       /* Blank */
+       if (work6[itime]<=0.0) row->PwrSum1[iif-1] = fblank;
+       if (work4[itime]<=0.0) row->PwrSum2[iif-1] = fblank;
+
+       /* Rewrite record */
+       ObitTableSYWriteRow (SYTable, isyrno, row, err);
+       if (err->error) Obit_traceback_msg (err, routine, SYTable->name);
+     } /* end loop clipping  */;
     endAnt: fstrec = save;
-    } /* end loop  of antenna loop */;
+    } /* end loop  of antenna loop */
     
     /* Cleanup */
     row = ObitTableSYRowUnref (row);  
@@ -1437,25 +1448,28 @@ cleanup:
 /*      iif      IF to operate on, 1-rel                                  */
 /*      sel      Selector telling which data wanted                       */
 /*      stgain   Smoothing time (day)                                     */
+/*      alpha    0 -> 1 = pure boxcar -> pure MWF (ALPHA of the data      */
+/*               samples are discarded and the rest averaged).            */
 /*      mxgain   Max. excursion from smoothed value                       */
 /*      sub      Subarray (1-rel)                                         */
 /*      mxtim    Number of elements in wrkrec, wrktim, work1-8            */
 /*      wrktim, wrkrec, work* work arrays                                 */
+/*      nThreads number of threads to use for MWF                         */
+/*      args     thread argument array                                    */
 /*   Output:                                                              */
 /*      err    Obit Error stack                                           */
 /*----------------------------------------------------------------------- */
 void clipGain (ObitTableSY *SYTable, ObitUVSel *sel, olong iif, 
-	       ofloat stgain, ofloat mxgain, olong sub, 
+	       ofloat alpha, ofloat stgain, ofloat mxgain, olong sub, 
 	       olong maxtim, olong *wrkrec, ofloat *wrktim,
 	       ofloat *work1, ofloat *work2, ofloat *work3, ofloat *work4, 
 	       ofloat *work5, ofloat *work6, ofloat *work7, ofloat *work8, 
-	       ObitErr* err) {
+	       olong nThreads, MednFuncArg** args, ObitErr* err) {
   ObitTableSYRow *row=NULL;
   ofloat fblank =  ObitMagicF();
   olong   loopr, loopa, numtim, ant, fstrec, nleft, save, itime;
   olong  isyrno=0;
   gboolean   bad, bad2, want;
-  ofloat      diff;
   odouble timoff=0.0;
   gchar *routine = "clipGain";
 
@@ -1526,42 +1540,36 @@ void clipGain (ObitTableSY *SYTable, ObitUVSel *sel, olong iif,
 
     if (numtim <= 0) goto endAnt;  /* Catch anything? */
 
-    /* Smooth as requested */
-    ObitUVSolnSmooMWF (stgain, 1.0, wrktim, work2, work4, numtim, work1, 
-		       work6, work7, work8, FALSE);
+    /* Smooth/clip as requested */
+    /*ObitUVSolnSmooMWF (stgain, 1.0, wrktim, work2, work4, numtim, work1, 
+      work6, work7, work8, FALSE);*/
+    SYsmoIt ("MWF", stgain, alpha, mxgain, wrktim, work2, work4, numtim, 
+	     work1, work6, work7, work8, FALSE, nThreads, args);
+    /* Second Poln? */
+    if (SYTable->nPol > 1) {
+      /*ObitUVSolnSmooMWF (stpdif, 1.0, wrktim, work3, work5, numtim, work2, 
+	work4, work7, work8, FALSE);*/
+      SYsmoIt ("MWF", stgain, alpha, mxgain, wrktim, work3, work5, numtim, 
+	       work2, work4, work7, work8, FALSE, nThreads, args);
+    } 
 
-    /* Clip */
-    for (itime=0; itime<numtim; itime++) { /* loop 200 */
-      isyrno = wrkrec[itime];
-      ObitTableSYReadRow (SYTable, isyrno, row, err);
-      if (err->error) Obit_traceback_msg (err, routine, SYTable->name);
+    /* Apply Clip */
+     for (itime=0; itime<numtim; itime++) { /* loop 200 */
+       /* either poln blanked? */
+       if (work6[itime]<=0.0) continue;
+       if ((SYTable->nPol > 1) &&  (work4[itime]<=0.0)) continue;
+       isyrno = wrkrec[itime];
+       ObitTableSYReadRow (SYTable, isyrno, row, err);
+       if (err->error) Obit_traceback_msg (err, routine, SYTable->name);
+       
+       /* Blank */
+       if (work6[itime]<=0.0) row->Gain1[iif-1] = fblank;
+       if (work4[itime]<=0.0) row->Gain2[iif-1] = fblank;
 
-      bad = FALSE;
-      
-      /* Blanked? */
-      if (row->Gain1[iif-1]==fblank) {
-	diff = 10.0*mxgain;
-	bad = TRUE;
-      } else {
-	diff = fabs (row->Gain1[iif-1] - work1[itime]);
-      }
-      if (diff > mxgain) {
-	row->Gain1[iif-1] = fblank;
-	bad = TRUE;
-      } 
-      /* Second polarization? */
-      if (SYTable->nPol >= 2) {
-	diff = fabs (row->Gain2[iif-1] - work2[itime]);
-	if (diff > mxgain) {
-	  row->Gain2[iif-1] = fblank;
-	  bad = TRUE;
-	} 
-      } 
-      
-      /* Rewrite record */
-      if (bad) ObitTableSYWriteRow (SYTable, isyrno, row, err);
-      if (err->error) Obit_traceback_msg (err, routine, SYTable->name);
-    } /* end loop clipping L200: */;
+       /* Rewrite record */
+       ObitTableSYWriteRow (SYTable, isyrno, row, err);
+       if (err->error) Obit_traceback_msg (err, routine, SYTable->name);
+     } /* end loop clipping  */
   endAnt: fstrec = save;
   } /* end loop  of antenna loop L600: */;
 
@@ -1737,7 +1745,7 @@ SYSmooth (ObitTableSY *SYTab, gchar* smoFunc, gchar* smoType, ofloat alpha,
     /* Smooth as requested */
     if (n1good > 0) { /* First polarization */
       if (dodif) {  /* Diff */
-	SYsmoIt (smoFunc, stdif, alpha, &work1[8*nxt], &work1[0*nxt], &work1[3*nxt], numtim, 
+	SYsmoIt (smoFunc, stdif, alpha, -1.0, &work1[8*nxt], &work1[0*nxt], &work1[3*nxt], numtim, 
 		 &work2[0*nxt], &work2[1*nxt], &work2[2*nxt], &work2[3*nxt], doBlank, nThreads, args);
 	/* Copy back */
 	for (i=0; i<numtim; i++) work1[0*nxt+i] = work2[i];
@@ -1745,7 +1753,7 @@ SYSmooth (ObitTableSY *SYTab, gchar* smoFunc, gchar* smoType, ofloat alpha,
 	if (doBlank && (!(dosum||dogain))) for (i=0; i<numtim; i++) work1[3*nxt+i] = work2[1*nxt+i];
      }
       if (dosum) {  /* Sum */
-	SYsmoIt (smoFunc, stsum, alpha, &work1[8*nxt], &work1[1*nxt], &work1[3*nxt], numtim, 
+	SYsmoIt (smoFunc, stsum, alpha, -1.0, &work1[8*nxt], &work1[1*nxt], &work1[3*nxt], numtim, 
 		 &work2[0*nxt], &work2[1*nxt], &work2[2*nxt], &work2[3*nxt], doBlank, nThreads, args);
 	/* Copy back */
 	for (i=0; i<numtim; i++) work1[1*nxt+i] = work2[i];
@@ -1753,7 +1761,7 @@ SYSmooth (ObitTableSY *SYTab, gchar* smoFunc, gchar* smoType, ofloat alpha,
 	if (doBlank && (!dogain)) for (i=0; i<numtim; i++) work1[3*nxt+i] = work2[1*nxt+i];
       }
       if (dogain) {  /* Gain */
-	SYsmoIt (smoFunc, stsum, alpha, &work1[8*nxt], &work1[2*nxt], &work1[3*nxt], numtim, 
+	SYsmoIt (smoFunc, stsum, alpha, -1.0, &work1[8*nxt], &work1[2*nxt], &work1[3*nxt], numtim, 
 		 &work2[0*nxt], &work2[1*nxt], &work2[2*nxt], &work2[3*nxt], doBlank, nThreads, args);
 	/* Copy back */
 	for (i=0; i<numtim; i++) work1[2*nxt+i] = work2[i];
@@ -1764,7 +1772,7 @@ SYSmooth (ObitTableSY *SYTab, gchar* smoFunc, gchar* smoType, ofloat alpha,
     
     if (n2good > 0) {  /* Second polarization */
       if (dodif) {  /* Diff */
-	SYsmoIt (smoFunc, stdif, alpha, &work1[8*nxt], &work1[4*nxt], &work1[7*nxt], numtim, 
+	SYsmoIt (smoFunc, stdif, alpha, -1.0, &work1[8*nxt], &work1[4*nxt], &work1[7*nxt], numtim, 
 		 &work2[0*nxt], &work2[1*nxt], &work2[2*nxt], &work2[3*nxt], doBlank, nThreads, args);
 	/* Copy back */
 	for (i=0; i<numtim; i++) work1[4*nxt+i] = work2[i];
@@ -1772,7 +1780,7 @@ SYSmooth (ObitTableSY *SYTab, gchar* smoFunc, gchar* smoType, ofloat alpha,
 	if (doBlank && (!(dosum||dogain))) for (i=0; i<numtim; i++) work1[7*nxt+i] = work2[1*nxt+i];
       }
       if (dosum) {  /* Sum */
-	SYsmoIt (smoFunc, stsum, alpha, &work1[8*nxt], &work1[5*nxt], &work1[7*nxt], numtim, 
+	SYsmoIt (smoFunc, stsum, alpha, -1.0, &work1[8*nxt], &work1[5*nxt], &work1[7*nxt], numtim, 
 		 &work2[0*nxt], &work2[1*nxt], &work2[2*nxt], &work2[3*nxt], doBlank, nThreads, args);
 	/* Copy back */
 	for (i=0; i<numtim; i++) work1[5*nxt+i] = work2[i];
@@ -1780,7 +1788,7 @@ SYSmooth (ObitTableSY *SYTab, gchar* smoFunc, gchar* smoType, ofloat alpha,
 	if (doBlank && (!dogain)) for (i=0; i<numtim; i++) work1[7*nxt+i] = work2[1*nxt+i];
      }
       if (dogain) {  /* Gain */
-	SYsmoIt (smoFunc, stsum, alpha, &work1[8*nxt], &work1[6*nxt], &work1[7*nxt], numtim, 
+	SYsmoIt (smoFunc, stsum, alpha, -1.0, &work1[8*nxt], &work1[6*nxt], &work1[7*nxt], numtim, 
 		 &work2[0*nxt], &work2[1*nxt], &work2[2*nxt], &work2[3*nxt], doBlank, nThreads, args);
 	/* Copy back */
 	for (i=0; i<numtim; i++) work1[6*nxt+i] = work2[i];
@@ -1843,6 +1851,7 @@ SYSmooth (ObitTableSY *SYTab, gchar* smoFunc, gchar* smoType, ofloat alpha,
  * \param width   Smoothing time (days) 
  * \param alpha   0 -> 1 = pure boxcar -> pure MWF (ALPHA of the 
  *                data samples are discarded and the rest averaged). 
+ * \param clip    Clipping level in sigma
  * \param x       Abscissas of points to be smoothed in increasing 
  *                order 
  * \param y       Values to be smoothed. 
@@ -1857,7 +1866,7 @@ SYSmooth (ObitTableSY *SYTab, gchar* smoFunc, gchar* smoType, ofloat alpha,
  * \param args     thread argument array
  */
 void static
-SYsmoIt (gchar* smmeth, ofloat width, ofloat alpha, 
+SYsmoIt (gchar* smmeth, ofloat width, ofloat alpha, ofloat clip, 
 	 ofloat* x, ofloat *y, ofloat *w, olong n, 
 	 ofloat* ys, ofloat* ws, ofloat *wrk1, ofloat *wrk2, gboolean doBlank, 
 	 olong nThreads, MednFuncArg** args) 
@@ -1885,11 +1894,13 @@ SYsmoIt (gchar* smmeth, ofloat width, ofloat alpha,
     args[iTh]->hi = args[iTh]->lo + nValPth - 1;
     if (iTh==nThreads)  args[iTh]->hi = n-1;
     args[iTh]->alpha   = alpha;
+    args[iTh]->clip    = clip;
     args[iTh]->smoTime = width;
     args[iTh]->times   = x;
     args[iTh]->vals    = y;
     args[iTh]->out     = ys;
     args[iTh]->weight  = w;
+    args[iTh]->outWt   = ws;
   }
   /* Do operation */
   ObitThreadIterator (args[0]->thread, nThreads, 
@@ -1972,10 +1983,12 @@ static olong MakeSmoFuncArgs (ObitThread *thread, olong lenwrk,
   for (i=0; i<nThreads; i++) 
     (*ThreadArgs)[i] = g_malloc0(sizeof(MednFuncArg)); 
   for (i=0; i<nThreads; i++) {
+    (*ThreadArgs)[i]->clip     = -1.0;
     (*ThreadArgs)[i]->thread   = ObitThreadRef(thread);
     (*ThreadArgs)[i]->vals     = NULL;
     (*ThreadArgs)[i]->out      = NULL;
     (*ThreadArgs)[i]->weight   = NULL;
+    (*ThreadArgs)[i]->outWt    = NULL;
     (*ThreadArgs)[i]->times    = NULL;
     if (lenwrk>0)
       (*ThreadArgs)[i]->work   = g_malloc0(lenwrk*sizeof(ofloat));
@@ -2051,17 +2064,57 @@ static ofloat MedianLevel (olong n, ofloat *value, ofloat alpha)
 } /* end MedianLevel */
 
 /**
- * Thread alpha median window smooth an array
+ * Determine robust RMS value of a ofloat array about mean
+ * Use center 90% of points, excluding at least one point from each end
+ * \param n       Number of points, needs at least 4
+ * \param value   Array of values assumed sorted
+ * \param mean    Mean value of value
+ * \return RMS value, fblank if cannot determine
+ */
+ofloat MedianSigma (olong n, ofloat *value, ofloat mean)
+{
+  ofloat fblank = ObitMagicF();
+  ofloat out;
+  ofloat sum;
+  olong i, i1, i2, count;
+
+  out = fblank;
+  if (n<=4) return out;
+  if (mean==fblank) return out;
+
+  /* Get RMS around the center 90% */
+  i1 = MAX (1,   (n/2)-(olong)(0.45*n+0.5));
+  i2 = MIN (n-1, (n/2)+(olong)(0.45*n+0.5));
+
+  if (i2>i1) {
+    sum = 0.0;
+    count = 0;
+    for (i=i1; i<i2; i++) {
+      if (value[i]!=fblank) {
+	sum += (value[i]-mean)*(value[i]-mean);
+	count++;
+      }
+    }
+    if (count>1) out = sqrt(sum / (count-1));
+  }
+   
+  return out;
+} /* end MedianSigma */
+
+/**
+ * Thread alpha median window smooth an array with optional clip
  * Callable as thread
  * \param arg Pointer to MednFuncArg argument with elements:
  * \li ntime    total number of values in arrays
  * \li lo       first (0-rel) value in array to smooth
  * \li hi       highest (0-rel) value in array to smooth
  * \li alpha    control averaging of center values
+ * \li clip     clipping level in sigma, <=0 => no clip
  * \li smoTime  Smoothing time
  * \li vals     Array to smooth
  * \li out      output smoothed array
- * \li weight   Array of weights (0 or 1)
+ * \li weight   Array of input weights (0 or 1)
+ * \li outWt    Array of output weights (0 or 1)
  * \li times    times of data samples, <-1000 => ignore
  * \li work     work array for sorting
  * \li ithread  thread number, <0 -> no threading
@@ -2075,32 +2128,64 @@ static gpointer ThreadMWFSmo (gpointer arg)
   olong  lo       = largs->lo;
   olong  hi       = largs->hi;
   ofloat alpha    = largs->alpha;
+  ofloat clip     = largs->clip;
   ofloat smoTime  = largs->smoTime/2;
   ofloat *vals    = largs->vals;
   ofloat *out     = largs->out;
   ofloat *weight  = largs->weight;
+  ofloat *outWt   = largs->outWt;
   ofloat* times   = largs->times;   
   ofloat* work    = largs->work;
  
   /* local */
   olong i, j, count;
-  ofloat time;
+  ofloat time, old, RMS, fblank = ObitMagicF();
 
   if (hi<lo) goto finish;
-
-  /* Loop over values to smooth */
-  for (i=lo; i<=hi; i++) {
-    time = times[i];
-    /* Accumulate values to smooth */
-    count = 0;
-    for (j=0; j<ntime; j++) {
-      if ((fabs(time-times[j])<smoTime) && (weight[j]>0.0)) work[count++] = vals[i];
-      if (times[j]>(time+smoTime)) break;
-    } /* end accumulating */
-    if (count>3) out[i] = MedianLevel (count, work, alpha);
-    else         out[i] = vals[i]*weight[i];
-    
-  } /* End smoothing loop */
+  /* Clipping? */
+  if (clip>0.0) {  /* Clip */
+    /* Loop over values to smooth */
+    for (i=lo; i<=hi; i++) {
+      time = times[i];
+      /* Accumulate values to smooth */
+      count = 0;
+      for (j=0; j<ntime; j++) {
+	if ((fabs(time-times[j])<smoTime) && (weight[j]>0.0)) work[count++] = vals[j];
+	if (times[j]>(time+smoTime)) break;
+      } /* end accumulating */
+      old = out[i];   /* Save initial value */
+      if (count>3) {
+	out[i]   = MedianLevel (count, work, alpha);
+	RMS      = MedianSigma (count, work, out[i]);
+	/* Clipping */
+	if ((RMS!=fblank)&&(fabs(old-out[i])<RMS*clip)) outWt[i] = 1.0;
+	else                                            outWt[i] = 0.0;
+      } else {
+	out[i]  = vals[i]*weight[i];
+	outWt[i]= weight[i];
+      }
+      
+    } /* End smoothing loop */
+  } else {         /* no Clip */
+    /* Loop over values to smooth */
+    for (i=lo; i<=hi; i++) {
+      time = times[i];
+      /* Accumulate values to smooth */
+      count = 0;
+      for (j=0; j<ntime; j++) {
+	if ((fabs(time-times[j])<smoTime) && (weight[j]>0.0)) work[count++] = vals[j];
+	if (times[j]>(time+smoTime)) break;
+      } /* end accumulating */
+      if (count>3) {
+	out[i]   = MedianLevel (count, work, alpha);
+	outWt[i] = 1.0;
+      } else {
+	out[i]  = vals[i]*weight[i];
+	outWt[i]= weight[i];
+      }
+      
+    } /* End smoothing loop */
+  } /* end no clip */
   /* Indicate completion */
   finish: 
   if (largs->ithread>=0)
@@ -2110,16 +2195,18 @@ static gpointer ThreadMWFSmo (gpointer arg)
   
 } /*  end ThreadMWFSmo */
 /**
- * Thread box smooth an array
+ * Thread box smooth an array with optional clip
  * Callable as thread
  * \param arg Pointer to MednFuncArg argument with elements:
  * \li ntime    total number of values in arrays
  * \li lo       first (0-rel) value in array to smooth
  * \li hi       highest (0-rel) value in array to smooth
+ * \li clip     clipping level in sigma, <=0 => no clip
  * \li smoTime  Smoothing time
  * \li vals     Array to smooth
  * \li out      output smoothed array
- * \li weight   Array of weights (0 or 1)
+ * \li weight   Array of input weights (0 or 1)
+ * \li outWt    Array of output weights (0 or 1)
  * \li times    times of data samples, <-1000 => ignore
  * \li ithread  thread number, <0 -> no threading
  * \return NULL
@@ -2132,34 +2219,72 @@ static gpointer ThreadBoxSmo (gpointer arg)
   olong  lo       = largs->lo;
   olong  hi       = largs->hi;
   ofloat smoTime  = largs->smoTime/2;
+  ofloat clip     = largs->clip;
   ofloat *vals    = largs->vals;
   ofloat *out     = largs->out;
   ofloat *weight  = largs->weight;
+  ofloat *outWt   = largs->outWt;
   ofloat* times   = largs->times;   
  
   /* local */
   olong i, j, count;
-  ofloat time, sum;
+  ofloat time, sum, sum2, RMS, old;
 
   if (hi<lo) goto finish;
 
-  /* Loop over values to smooth */
-  for (i=lo; i<=hi; i++) {
-    time = times[i];
-    /* Accumulate values to smooth */
-    count = 0;
-    sum   = 0.0;
-    for (j=0; j<ntime; j++) {
-      if ((fabs(time-times[j])<smoTime) && (weight[j]>0.0)) {
-	sum += vals[j];
-	count++;
+  /* Clipping? */
+  if (clip>0.0) {  /* Clip */
+    /* Loop over values to smooth */
+    for (i=lo; i<=hi; i++) {
+      time = times[i];
+      /* Accumulate values to smooth */
+      count = 0;
+      sum   = sum2 = 0.0;
+      for (j=0; j<ntime; j++) {
+	if ((fabs(time-times[j])<smoTime) && (weight[j]>0.0)) {
+	  sum  += vals[j];
+	  sum2 += vals[j]*vals[j];
+	  count++;
+	}
+	if (times[j]>(time+smoTime)) break;
+      } /* end accumulating */
+      old = out[i];
+      if (count>3) {
+	out[i]   = sum / count;
+	outWt[i] = 1.0;
+	RMS      = sqrt(MIN (0.01*out[i], (sum2 / count) - out[i]*out[i]));
+	/* Clipping */
+	if (fabs(old-out[i])<RMS*clip) outWt[i] = 1.0;
+	else                           outWt[i] = 0.0;
+      } else {
+	out[i]   = vals[i]*weight[i];
+	outWt[i] = weight[i];
       }
-      if (times[j]>(time+smoTime)) break;
-    } /* end accumulating */
-    if (count>3) out[i] = sum / count;
-    else         out[i] = vals[i]*weight[i];
-    
-  } /* End smoothing loop */
+    } /* End smoothing loop */
+  } else { /* no clip */
+    /* Loop over values to smooth */
+    for (i=lo; i<=hi; i++) {
+      time = times[i];
+      /* Accumulate values to smooth */
+      count = 0;
+      sum   = sum2 = 0.0;
+      for (j=0; j<ntime; j++) {
+	if ((fabs(time-times[j])<smoTime) && (weight[j]>0.0)) {
+	  sum  += vals[j];
+	  sum2 += vals[j]*vals[j];
+	  count++;
+	}
+	if (times[j]>(time+smoTime)) break;
+      } /* end accumulating */
+      if (count>3) {
+	out[i]   = sum / count;
+	outWt[i] = 1.0;
+      } else {
+	out[i]   = vals[i]*weight[i];
+	outWt[i] = weight[i];
+      }
+    } /* End smoothing loop */
+  } /* end no clipping */
   /* Indicate completion */
   finish: 
   if (largs->ithread>=0)
@@ -2169,16 +2294,18 @@ static gpointer ThreadBoxSmo (gpointer arg)
   
 } /*  end ThreadBoxSmo */
 /**
- * Thread Gaussian smooth an array
+ * Thread Gaussian smooth an array with optional clip
  * Callable as thread
  * \param arg Pointer to MednFuncArg argument with elements:
  * \li ntime    total number of values in arrays
  * \li lo       first (0-rel) value in array to smooth
  * \li hi       highest (0-rel) value in array to smooth
+ * \li clip     clipping level in sigma, <=0 => no clip
  * \li smoTime  Smoothing time, twice sigma of Gaussian.
  * \li vals     Array to smooth
  * \li out      output smoothed array
- * \li weight   Array of weights (0 or 1)
+ * \li weight   Array of input weights (0 or 1)
+ * \li outWt    Array of output weights (0 or 1)
  * \li times    times of data samples, <-1000 => ignore
  * \li ithread  thread number, <0 -> no threading
  * \return NULL
@@ -2191,37 +2318,78 @@ static gpointer ThreadGausSmo (gpointer arg)
   olong  lo       = largs->lo;
   olong  hi       = largs->hi;
   ofloat smoTime  = largs->smoTime;
+  ofloat clip     = largs->clip;
   ofloat ivar     = 1.0 / (0.25*largs->smoTime*largs->smoTime);
   ofloat *vals    = largs->vals;
   ofloat *out     = largs->out;
   ofloat *weight  = largs->weight;
+  ofloat *outWt   = largs->outWt;
   ofloat* times   = largs->times;   
  
   /* local */
   olong i, j, count;
-  ofloat time, sum, g, dt;
+  ofloat time, sum, sum2, sum3, RMS, g, dt, old;
 
   if (hi<lo) goto finish;
 
-  /* Loop over values to smooth */
-  for (i=lo; i<=hi; i++) {
-    time = times[i];
-    /* Accumulate values to smooth */
-    count = 0;
-    sum   = 0.0;
-    for (j=0; j<ntime; j++) {
-      dt = fabs(time-times[j]);
-      if ((dt<smoTime) && (weight[j]>0.0)) {
-	g = exp(-ivar*dt*dt);
-	sum += g*vals[j];
-	count++;
+   /* Clipping? */
+  if (clip>0.0) {  /* Clip */
+    /* Loop over values to smooth */
+    for (i=lo; i<=hi; i++) {
+      time = times[i];
+      /* Accumulate values to smooth */
+      count = 0;
+      sum   = sum2 = sum3 = 0.0;
+      for (j=0; j<ntime; j++) {
+	dt = fabs(time-times[j]);
+	if ((dt<smoTime) && (weight[j]>0.0)) {
+	  g = exp(-ivar*dt*dt);
+	  sum  += g*vals[j];
+	  sum2 += vals[j];
+	  sum3 += vals[j]*vals[j];
+	  count++;
+	}
+	if (times[j]>(time+smoTime)) break;
+      } /* end accumulating */
+      old = out[i];
+      if (count>3) {
+	out[i]   = sum / count;
+	outWt[i] = 1.0;
+	sum2 /= count;
+	RMS      = sqrt(MIN (0.01*out[i], (sum3 / count) - sum2*sum2));
+	/* Clipping */
+	if (fabs(old-out[i])<RMS*clip) outWt[i] = 1.0;
+	else                           outWt[i] = 0.0;
+       } else {
+	out[i]   = vals[i]*weight[i];
+	outWt[i] = weight[i];
       }
-      if (times[j]>(time+smoTime)) break;
-    } /* end accumulating */
-    if (count>3) out[i] = sum / count;
-    else         out[i] = vals[i]*weight[i];
-    
-  } /* End smoothing loop */
+    } /* End smoothing loop */
+  } else { /* no clipping */
+    /* Loop over values to smooth */
+    for (i=lo; i<=hi; i++) {
+      time = times[i];
+      /* Accumulate values to smooth */
+      count = 0;
+      sum   = 0.0;
+      for (j=0; j<ntime; j++) {
+	dt = fabs(time-times[j]);
+	if ((dt<smoTime) && (weight[j]>0.0)) {
+	  g = exp(-ivar*dt*dt);
+	  sum += g*vals[j];
+	  count++;
+	}
+	if (times[j]>(time+smoTime)) break;
+      } /* end accumulating */
+      if (count>3) {
+	out[i]   = sum / count;
+	outWt[i] = 1.0;
+      } else {
+	out[i]   = vals[i]*weight[i];
+	outWt[i] = weight[i];
+      }
+    } /* End smoothing loop */
+  } /* end no clipping */
   /* Indicate completion */
   finish: 
   if (largs->ithread>=0)

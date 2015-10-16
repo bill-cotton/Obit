@@ -4046,7 +4046,7 @@ ObitImageUtilSelCopy (ObitImage *inImage, ObitImage *outImage, ObitErr *err)
   ObitIOCode   iretCode, oretCode;
   ofloat       tmp;
   olong         iplane,itemp,  plane[IM_MAXDIM-2] = {0,1,1,1,1};
-  olong        lblc[IM_MAXDIM], ltrc[IM_MAXDIM], linc[IM_MAXDIM];
+  olong        lblc[MAXFARRAYDIM], ltrc[MAXFARRAYDIM], linc[MAXFARRAYDIM];
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong         inc[IM_MAXDIM];
@@ -4068,16 +4068,17 @@ ObitImageUtilSelCopy (ObitImage *inImage, ObitImage *outImage, ObitErr *err)
   for (i=0; i<IM_MAXDIM; i++) trc[i]  = 0;
   for (i=0; i<IM_MAXDIM; i++) trc0[i] = 0;
   for (i=0; i<IM_MAXDIM; i++) inc[i]  = 0;
+  for (i=0; i<MAXFARRAYDIM; i++) linc[i] = lblc[i] = ltrc[i] = 1;
 
   /* Control parameters */
   ObitInfoListGetTest(inImage->info, "inc", &type, dim, inc); 
   for (i=0; i<IM_MAXDIM; i++) {
     if (inc[i]<=0) inc[i] = 1;
-    linc[i] = inc[i];
+    linc[i] = MAX (1, inc[i]);
   }
-  for (i=0; i<IM_MAXDIM; i++) blc[i] = blc0[i];
+  for (i=0; i<IM_MAXDIM; i++) blc[i] = MAX(1, blc0[i]);
   ObitInfoListGetTest(inImage->info, "BLC", &type, dim, blc);
-  for (i=0; i<IM_MAXDIM; i++) trc[i] = trc0[i];
+  for (i=0; i<IM_MAXDIM; i++) trc[i] =  MAX(1, trc0[i]);
   ObitInfoListGetTest(inImage->info, "TRC", &type, dim, trc);
 
   /* Open and close to get full size */
@@ -4133,9 +4134,9 @@ ObitImageUtilSelCopy (ObitImage *inImage, ObitImage *outImage, ObitErr *err)
       if (plane[i] > inImage->myDesc->inaxes[i+2]) {
 	plane[i+1]++;
 	plane[i] = 1;
-      } else break;
+	if (i>inImage->myDesc->naxis-3) break;
+      }	else break;
     } /* end loop updating planes */
-
     iretCode = ObitImageRead (inImage, NULL, err);
     if (iretCode == OBIT_IO_EOF) break;
     if (err->error) Obit_traceback_msg (err, routine, inImage->name);

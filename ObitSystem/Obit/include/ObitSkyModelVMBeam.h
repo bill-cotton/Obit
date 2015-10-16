@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009,2011                                          */
+/*;  Copyright (C) 2009-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -37,6 +37,7 @@
 #include "ObitUV.h"
 #include "ObitSkyModelVM.h"
 #include "ObitImageInterp.h"
+#include "ObitBeamShape.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -166,10 +167,10 @@ void ObitSkyModelVMBeamFromInfo (ObitSkyModel *out, gchar *prefix,
 /** Public: Create/initialize ObitSkyModelVMBeam structures */
 ObitSkyModelVMBeam* ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
 					      ObitUV *uvData,
-					      ObitImage *IBeam,  ObitImage *VBeam, 
-					      ObitImage *QBeam,  ObitImage *UBeam, 
-					      ObitImage *IBeamPh,  ObitImage *VBeamPh, 
-					      ObitImage *QBeamPh,  ObitImage *UBeamPh, 
+					      ObitImage *RXBeam,  ObitImage *LYBeam, 
+					      ObitImage *QBeam,   ObitImage *UBeam, 
+					      ObitImage *RXBeamPh,  ObitImage *LYBeamPh, 
+					      ObitImage *QBeamPh,   ObitImage *UBeamPh, 
 					      ObitErr *err);
 
 /** Public: Get Inputs. */
