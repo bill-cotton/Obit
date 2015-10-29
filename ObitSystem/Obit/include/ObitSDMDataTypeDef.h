@@ -199,6 +199,10 @@ typedef struct {
   olong CorrelatorModeRows;
   /** Number of DataDescription rows */
   olong DataDescriptionRows;
+  /** Number of Delay model fixed parameter rows */
+  olong DlyModFixRows;
+  /** Number of Delay model variable parameter rows */
+  olong DlyModVarRows;
   /** Number of Doppler rows */
   olong DopplerRows;
   /** Number of Ephemeris rows */
@@ -574,6 +578,94 @@ typedef struct {
   /** Array of ASDMDoppler rows */
   ASDMDopplerRow **rows;
 } ASDMDopplerTable;
+
+ /* Delay model fixed parameters Table */
+typedef struct {
+  /** model Id */
+  olong delayModelFixedParametersId;
+  /** execution block identifier */
+  olong execBlockId;
+  /** version */
+  gchar *delayModelVersion;
+  /** ephemeris Epoch  (e.g. "J2000") */
+  gchar *ephemerisEpoch;
+  /** delay model switches  */
+  gchar *delayModelFlags;
+  /** Gauss constant (near 1.990983675E-7) */
+  odouble gaussConstant;
+  /** Newtonian constant (near 6.672E-11)  */
+  odouble newtonianConstant;
+  /** gravity acceleration in m/s^2 */
+  odouble gravity;
+  /** ratio of equatorial to polar radii */
+  odouble earthFlattening;
+  /** earth equatorial radius in m */
+  odouble earthRadius;
+  /** moonEarthMassRatio */
+  odouble moonEarthMassRatio;
+  /** earthTideLag */
+  odouble earthTideLag;
+  /** earth gravitation constant */
+  odouble earthGM;
+  /** moon gravitation constant  */
+  odouble moonGM;
+  /** sun gravitation constant */
+  odouble sunGM;
+  /** earth global Love number H */
+  odouble loveNumberH;
+  /** earth global Love number L */
+  odouble loveNumberL;
+  /** precession Constant asec/s*/
+  odouble precessionConstant;
+  /** light time for 1 AU in seconds */
+  odouble lightTime1AU;
+  /** speed Of Light m/s */
+  odouble speedOfLight;
+} ASDMDlyModFixRow;
+typedef struct {
+  /** Number of rows */
+  olong nrows;
+  /** Array of ASDM rows */
+  ASDMDlyModFixRow **rows;
+} ASDMDlyModFixTable;
+
+ /* Delay model variable parameters Table */
+typedef struct {
+  /** model Id */
+  olong delayModelVariableParametersId;
+  /** Fixed parameters Id */
+  olong delayModelFixedParametersId;
+  /** time */
+  odouble time;
+  /** UT1 - UTC in sec. */
+  odouble ut1_utc;
+  /** IAT - UTC in sec */
+  odouble iat_utc;
+  /** GST at UT=0 (radian)  0 => you figure it out */
+  odouble gstAtUt0;
+  /** Earth rotation rate (rad/s) 0 => you figure it out */
+  odouble earthRotationRate;
+  /**  nutation in longitude in rad (optional) */
+  odouble nutationInLongitude;
+  /**  rate of nutation in longitude rad/s (optional) */
+  odouble nutationInLongitudeRate;
+  /** nutation in obliquity in rad (optional) */
+  odouble nutationInObliquity;
+  /** rate of nutation in obliquity rad/s (optional) */
+  odouble nutationInObliquityRate;
+  /** X, Y polar offsets in arcsec */
+  odouble *polarOffsets;
+  /** type of time differences: 'PREDICTED', 'PRELIMINARY', 'RAPID', 'FINAL' */
+  gchar *timeType;
+  /** type of polar offsets: 'PREDICTED', 'PRELIMINARY', 'RAPID', 'FINAL' */
+  gchar *polarOffsetsType;
+} ASDMDlyModVarRow;
+typedef struct {
+  /** Number of rows */
+  olong nrows;
+  /** Array of ASDM rows */
+  ASDMDlyModVarRow **rows;
+} ASDMDlyModVarTable;
 
  /* Ephemeris Table */
 typedef struct {

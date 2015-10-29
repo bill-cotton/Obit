@@ -74,6 +74,10 @@ ASDMConfigDescriptionTable* ConfigDescriptionTab;
 ASDMCorrelatorModeTable* CorrelatorModeTab;
 /** DataDescription table */
 ASDMDataDescriptionTable* DataDescriptionTab;
+/** Delay model fixed parameters table */
+ASDMDlyModFixTable* DlyModFixTab;
+/** Delay model variable parameters table */
+ASDMDlyModVarTable* DlyModVarTab;
 /** Doppler table */
 ASDMDopplerTable* DopplerTab;
 /** Ephemeris table */

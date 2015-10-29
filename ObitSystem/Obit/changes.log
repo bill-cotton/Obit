@@ -2953,3 +2953,18 @@ Obit/src/ObitSkyModelVMSquint.c:
 Obit/tasks/Lister.c Obit/TDF/Lister.TDF:
   Add UVRange
 16 Oct 2015, svn ver 519
+
+EOP in BDFIn, bug fixes
+Obit/include/ObitSDMDataDef.h Obit/include/ObitSDMDataTypeDef.h
+Obit/src/ObitSDMData.c Obit/tasks/BDFIn.c:
+  Read EOP from new delay model tables
+Obit/src/ObitUVPeelUtil.c:
+  Peel: Ignore lower resolution fields
+Obit/src/ObitDConCleanVis.c:
+  Reimage : wider sum for peak in image for autoCenter
+Obit/src/ObitImageUtil.c:
+  SelCopy: Fix multidimentional selection
+Obit/doc/OBITdoc.tex
+Obit/include/ObitTableSNRowDef.h Obit/include/ObitTableSNDef.h Obit/src/ObitTableSN.c:
+  Add dispersive delays
+29 Oct 2015, svn ver 520

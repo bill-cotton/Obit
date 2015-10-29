@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2011                                          */
+/*;  Copyright (C) 2007-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -343,12 +343,13 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     ObitSkyModelCompressCC (myClean->skyModel, err);
     if (err->error) Obit_traceback_val (err, routine, myClean->name, peeled);
 
-    /* Make list of fields already peeled to ignore */
+    /* Make list of fields already peeled or lower resolution to ignore */
     ignore = g_malloc0((myClean->mosaic->numberImages+1)*sizeof(olong));
     k = 0;
     for (j=0; j<=myClean->mosaic->numberImages; j++) ignore[j] = 0;
     for (j=0; j<myClean->mosaic->numberImages; j++) {
-      if (donePeel[j]>0) ignore[k++] = j+1;  /* 1-rel */
+      if ((donePeel[j]>0) || (myClean->mosaic->BeamTaper[j]>0.0)) 
+	  ignore[k++] = j+1;  /* 1-rel */
     }
 
     /* Get ImageMosaic for brightest field if any exceeds PeelFlux */

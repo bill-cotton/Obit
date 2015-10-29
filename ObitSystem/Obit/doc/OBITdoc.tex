@@ -3787,7 +3787,7 @@ ObitTableDesc.
 }
 % Table keyword description
 \begin{keywords}
-\tablekey[{"REVISION"}{J}{revision}{10}{}
+\tablekey[{"REVISION"}{J}{revision}{11}{}
 {Revision number of the table definition.
 }
 ]
@@ -3846,6 +3846,12 @@ ObitTableDesc.
 \tablecol[{"MBDELAY\#NO\_POL"}{"SECONDS "}{E}{(1)}{MBDelay}
 {Multiband delay poln \# NO\_POL  }
 ] 
+\tablecol[{"DISP \#NO\_POL"}{"SECONDS "}{E}{(1)}{dispers}
+{[OPTIONAL] Dispersive delay (sec at wavelength = 1m)for Poln \# NO\_POL}
+] 
+\tablecol[{"DDISP \#NO\_POL"}{"SEC/SEC"}{E}{(1)}{Ddispers}
+{[OPTIONAL] Time derivative of DISPfor Poln \# NO\_POL}
+] 
 \tablecol[{"REAL\#NO\_POL"}{"       " }{E}{(numIF)}{Real}
 {Real (gain Poln \# NO\_POL )}
 ] 
@@ -3869,6 +3875,7 @@ ObitTableDesc.
 % Table modification history
 \begin{history}
 \modhistory[{W. D. Cotton}{28/02/2002}{Revision 1: Copied from AIPS}]
+\modhistory[{W. D. Cotton(from M. Kettenis)}{26/10/2015}{Revision 11: Add dispersive delay}]
 \end{history}
 %
 \clearpage

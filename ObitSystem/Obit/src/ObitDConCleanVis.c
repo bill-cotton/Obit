@@ -795,7 +795,8 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   else ObitErrClear(err);
 
   /* Subtract any remaining components from visibility data */
-  inClass->ObitDConCleanSub((ObitDConClean*)in, err);
+  if (in->niter>0)
+    inClass->ObitDConCleanSub((ObitDConClean*)in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Cleanup */
@@ -1744,8 +1745,8 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
   /* Get cellsize */
   cells[0] =  fabs(mosaic->xCells); cells[1] = fabs(mosaic->yCells);
 
-  /* Consider components within 2.5  cells  */
-  radius = 2.5 * cells[0];
+  /* Consider components within 2.5  cells or beam  */
+  radius = MAX(2.5 * cells[0],in->mosaic->images[0]->myDesc->beamMaj);
 
   /* Tolerance for match to pixel */
   tol = 0.01;
