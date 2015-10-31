@@ -2968,3 +2968,15 @@ Obit/doc/OBITdoc.tex
 Obit/include/ObitTableSNRowDef.h Obit/include/ObitTableSNDef.h Obit/src/ObitTableSN.c:
   Add dispersive delays
 29 Oct 2015, svn ver 520
+
+Really EOP in BDFIn, GPU in Calib bug fixes
+Obit/src/ObitSDMData.c Obit/tasks/BDFIn.c:
+  Implement EOP in BDFIn
+Obit/src/ObitBeamShape.c \
+   GetTabBeam: use 1 for value within 0.1 pixel of center.
+Obit/TDF/Calib.TDF Obit/tasks/Calib.c \
+   Enable GPU model calculation
+Obit/src/ObitBeamShape.c \
+  FindTabBeam: Fix S band beam
+  GetTabBeam: Fix indexing bug
+31 Oct 2015, svn ver 521

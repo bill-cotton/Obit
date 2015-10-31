@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2013                                         */
+/*;  Copyright (C) 2006-2015                                         */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -771,7 +771,7 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
   gchar        *dataParms[] = {  /* Control parameters */
     "CCVer",  "BComp",  "EComp",  "Flux", "PBCor", "antSize", "Factor", 
     "minFlux", "Mode", "ModelType", "REPLACE", "Stokes", 
-    "MODPTFLX", "MODPTXOF", "MODPTYOF", "MODPTYPM", 
+    "MODPTFLX", "MODPTXOF", "MODPTYOF", "MODPTYPM", "doGPU",
     NULL};
   gchar *routine = "getInputSkyModel";
 
@@ -1157,7 +1157,7 @@ void CalibHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "modelFlux", "modelPos", "modelParm", "Alpha", "PBCor", "antSize", "solnVer", 
     "solInt", "solType", "solMode", "avgPol", "avgIF", "noNeg", "doMGM", "minSNR",
     "minNo", "prtLv",
-    "nThreads",
+    "nThreads", "doGPU",
    NULL};
   gchar *routine = "CalibHistory";
 

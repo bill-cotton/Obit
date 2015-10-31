@@ -13,6 +13,8 @@ X    CalWVR.xml
 X    ConfigDescription.xml
 X    CorrelatorMode.xml
 X    DataDescription.xml
+X    DelayModelFixedParameters.xml
+X    DelayModelVariableParameters.xml
      Doppler.xml
 X    ExecBlock.xml
 X    Ephemeris.xml
@@ -291,6 +293,24 @@ static ASDMDataDescriptionTable* ParseASDMDataDescriptionTable(ObitSDMData *me,
 /** Private: Destructor for DataDescription table. */
 static ASDMDataDescriptionTable* KillASDMDataDescriptionTable(ASDMDataDescriptionTable* table);
 
+/** Private: Destructor for Delay Model Fixed Parameters table row. */
+static ASDMDlyModFixRow* KillASDMDlyModFixRow(ASDMDlyModFixRow* row);
+/** Private: Parser constructor for Delay Model Fixed Parameters table from file */
+static ASDMDlyModFixTable* ParseASDMDlyModFixTable(ObitSDMData *me,
+						   gchar *DlyModFixFile, 
+						   ObitErr *err);
+/** Private: Destructor for  Delay Model Fixed Parameters table. */
+static ASDMDlyModFixTable* KillASDMDlyModFixTable(ASDMDlyModFixTable* table);
+
+/** Private: Destructor for Delay Model Variable Parameters table row. */
+static ASDMDlyModVarRow* KillASDMDlyModVarRow(ASDMDlyModVarRow* row);
+/** Private: Parser constructor for Delay Model Variable Parameters table from file */
+static ASDMDlyModVarTable* ParseASDMDlyModVarTable(ObitSDMData *me,
+						   gchar *DlyModVarFile, 
+						   ObitErr *err);
+/** Private: Destructor for Delay Model Variable Parameters table. */
+static ASDMDlyModVarTable* KillASDMDlyModVarTable(ASDMDlyModVarTable* table);
+
 /** Private: Destructor for Doppler table row. */
 static ASDMDopplerRow* KillASDMDopplerRow(ASDMDopplerRow* row);
 /** Private: Parser constructor for Doppler table from file */
@@ -299,6 +319,7 @@ static ASDMDopplerTable* ParseASDMDopplerTable(ObitSDMData *me,
 					 ObitErr *err);
 /** Private: Destructor for Doppler table. */
 static ASDMDopplerTable* KillASDMDopplerTable(ASDMDopplerTable* table);
+
 
 /** Private: Destructor for Ephemeris table row. */
 static ASDMEphemerisRow* KillASDMEphemerisRow(ASDMEphemerisRow* row);
@@ -718,6 +739,18 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
+  /* DelayModelFixedParameters table */
+  fullname = g_strconcat (DataRoot,"/DelayModelFixedParameters.xml", NULL);
+  out->DlyModFixTab = ParseASDMDlyModFixTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* DelayModelVariableParameters table */
+  fullname = g_strconcat (DataRoot,"/DelayModelVariableParameters.xml", NULL);
+  out->DlyModVarTab = ParseASDMDlyModVarTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
   /* Doppler table */
   fullname = g_strconcat (DataRoot,"/Doppler.xml", NULL);
   out->DopplerTab = ParseASDMDopplerTable(out, fullname, err);
@@ -962,6 +995,18 @@ ObitSDMData* ObitSDMIntentCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   /* DataDescription table */
   fullname = g_strconcat (DataRoot,"/DataDescription.xml", NULL);
   out->DataDescriptionTab = ParseASDMDataDescriptionTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* DelayModelFixedParameters table */
+  fullname = g_strconcat (DataRoot,"/DelayModelFixedParameters.xml", NULL);
+  out->DlyModFixTab = ParseASDMDlyModFixTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* DelayModelVariableParameters table */
+  fullname = g_strconcat (DataRoot,"/DelayModelVariableParameters.xml", NULL);
+  out->DlyModVarTab = ParseASDMDlyModVarTable(out, fullname, err);
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
@@ -2702,6 +2747,8 @@ void ObitSDMDataInit  (gpointer inn)
   in->ConfigDescriptionTab = NULL;
   in->CorrelatorModeTab    = NULL;
   in->DataDescriptionTab   = NULL;
+  in->DlyModFixTab         = NULL;
+  in->DlyModVarTab         = NULL;
   in->DopplerTab           = NULL;
   in->EphemerisTab         = NULL;
   in->ExecBlockTab         = NULL;
@@ -2757,6 +2804,8 @@ void ObitSDMDataClear (gpointer inn)
   in->ConfigDescriptionTab = KillASDMConfigDescriptionTable(in->ConfigDescriptionTab);
   in->CorrelatorModeTab    = KillASDMCorrelatorModeTable(in->CorrelatorModeTab);
   in->DataDescriptionTab   = KillASDMDataDescriptionTable(in->DataDescriptionTab);
+  in->DlyModFixTab         = KillASDMDlyModFixTable(in->DlyModFixTab);
+  in->DlyModVarTab         = KillASDMDlyModVarTable(in->DlyModVarTab);
   in->DopplerTab           = KillASDMDopplerTable(in->DopplerTab);
   in->EphemerisTab         = KillASDMEphemerisTable(in->EphemerisTab);
   in->ExecBlockTab         = KillASDMExecBlockTable(in->ExecBlockTab);
@@ -3578,6 +3627,8 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
   out->ConfigDescriptionRows= -1;
   out->CorrelatorModeRows   = -1;
   out->DataDescriptionRows  = -1;
+  out->DlyModFixRows        = -1;
+  out->DlyModVarRows        = -1;
   out->DopplerRows          = -1;
   out->EphemerisRows        = -1;
   out->ExecBlockRows        = -1;
@@ -3730,6 +3781,22 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
       out->DataDescriptionRows = ASDMparse_int(line, maxLine, "<NumberRows>", &next);
+      continue;
+    }
+    /* Number of DelayModelFixedParameters rows */
+    if (!strcmp(tstr,"DelayModelFixedParameters")) {
+      retCode = ObitFileReadXML (file, line, maxLine, err);
+      if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+      if (retCode==OBIT_IO_EOF) break;
+      out->DlyModFixRows = ASDMparse_int(line, maxLine, "<NumberRows>", &next);
+      continue;
+    }
+    /* Number of DelayModelVariableParameters rows */
+    if (!strcmp(tstr,"DelayModelVariableParameters")) {
+      retCode = ObitFileReadXML (file, line, maxLine, err);
+      if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+      if (retCode==OBIT_IO_EOF) break;
+      out->DlyModVarRows = ASDMparse_int(line, maxLine, "<NumberRows>", &next);
       continue;
     }
     /* Number of Doppler rows */
@@ -4441,49 +4508,58 @@ ParseASDMcalAtmosphereTableXML(ObitSDMData *me,
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       prior = "ALMA_RB_";
       out->rows[irow]->receiverBand = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
     }
     /* antenna Name */
     prior = "<antennaName>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->antennaName = ASDMparse_str (line, maxLine, prior, &next);
+      continue;
     }
     /* syscalType */
     prior = "<syscalType>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->syscalType = ASDMparse_str (line, maxLine, prior, &next);
+      continue;
     }
     /* baseband Id */
     prior = "<basebandName>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       prior = "BB_";
       out->rows[irow]->basebandId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
     }
     /* number of frequencies */
     prior = "<numFreq>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->numFreq = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
     }
     /* number of Loads */
     prior = "<numLoad>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->numLoad = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
     }
     /* number of Receptors */
     prior = "<numReceptor>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->numReceptor = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
     }
     /* cal Id */
     prior = "<calDataId>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       prior = "<calDataId>CalData_";
       out->rows[irow]->calDataId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
     }
     /*  cal reduction Id */
     prior = "<calReductionId>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       prior = "<calReductionId>CalReduction_";
       out->rows[irow]->calReductionId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
     }
     /* polarization types, e.g. 'X', 'Y', convert to enums */
     prior = "<polarizationTypes>";
@@ -4519,71 +4595,85 @@ ParseASDMcalAtmosphereTableXML(ObitSDMData *me,
     prior = "<startValidTime>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->startValidTime = ASDMparse_time (line, maxLine, prior, &next);
+      continue;
     }
     /* end time (days) */
     prior = "<endValidTime>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->endValidTime = ASDMparse_time (line, maxLine, prior, &next);
+      continue;
     }
     /* Ground pressure */
     prior = "<groundPressure>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->groundPressure = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
     }
     /* Ground relative humidity */
     prior = "<groundRelHumidity>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->groundRelHumidity = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
     }
     /* Ground temperature (K) */
     prior = "<groundTemperature>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->groundTemperature = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
     }
     /* Frequency range (Hz) */
     prior = "<frequencyRange>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->frequencyRange = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
     }
     /* Atm. temp per receptor */
     prior = "<tAtm>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->tAtm = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
     }
     /* Receiver temp. per receptor */
     prior = "<tRec>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->tRec = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
     }
     /* System  temp. per receptor */
     prior = "<tSys>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->tSys = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
     }
     /* Opacity per receptor */
     prior = "<tau>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->tau = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
     }
     /* Water per receptor */
     prior = "<water>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->water = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
     }
     /* Error in water, per receptor */
     prior = "<waterError>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->waterError = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
     }
     /* forward efficiency, per receptor */
     prior = "<forwardEfficiency>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->forwardEfficiency = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
     }
     /* sb(?) gain, per receptor  */
     prior = "<sbGain>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->sbGain = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
     }
 
     /* Is this the end of a row? */
@@ -5952,6 +6042,382 @@ KillASDMDataDescriptionTable(ASDMDataDescriptionTable* table)
   g_free(table);
   return NULL;
 } /* end KillASDMDataDescriptionTable */
+
+/* -------------------  Delay Model Fixed Parameters ------------------- */
+/** 
+ * Destructor for DlyModFix table row.
+ * \param  structure to destroy
+ * \return NULL row pointer
+ */
+static ASDMDlyModFixRow* KillASDMDlyModFixRow(ASDMDlyModFixRow* row)
+{
+  if (row == NULL) return NULL;
+  if (row->delayModelVersion) g_free(row->delayModelVersion);
+  if (row->ephemerisEpoch)    g_free(row->ephemerisEpoch);
+  if (row->delayModelFlags)   g_free(row->delayModelFlags);
+  g_free(row);
+  return NULL;
+} /* end   KillASDMDlyModFixRow */
+
+/** 
+ * Constructor for DlyModFix table parsing from file
+ * \param  DlyModFixFile Name of file containing table
+ * \param  err           ObitErr for reporting errors.
+ * \return table structure,  use KillASDMDlyModFixTable to free
+ */
+static ASDMDlyModFixTable* 
+ParseASDMDlyModFixTable(ObitSDMData *me, 
+		      gchar *DlyModFixFile, 
+		      ObitErr *err)
+{
+  ASDMDlyModFixTable* out=NULL;
+  ObitFile *file=NULL;
+  ObitIOCode retCode;
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
+  gchar *endrow = "</row>";
+  gchar *prior, *next;
+  gchar *routine = " ParseASDMDlyModFixTable";
+
+  /* error checks */
+  if (err->error) return out;
+
+  /* Does it exist? */
+  if (!ObitFileExist(DlyModFixFile, err)) return out;
+
+  out = g_malloc0(sizeof(ASDMDlyModFixTable));
+  out->rows = NULL;
+
+  /* How many rows? */
+  out->nrows = MAX(0, me->ASDMTab->DlyModFixRows);
+  if (out->nrows<1) return out;
+
+  /* Finish building it */
+  out->rows = g_malloc0((out->nrows+1)*sizeof(ASDMDlyModFixRow*));
+  for (irow=0; irow<out->nrows; irow++) out->rows[irow] = g_malloc0(sizeof(ASDMDlyModFixRow));
+
+  file = newObitFile("ASDM");
+  retCode = ObitFileOpen(file, DlyModFixFile, OBIT_IO_ReadOnly, OBIT_IO_Text, 0, err);
+  if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+
+  /* Loop over file */
+  irow = 0;
+  while (retCode!=OBIT_IO_EOF) {
+
+    retCode = ObitFileReadXML (file, line, maxLine, err);
+    if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+    if (retCode==OBIT_IO_EOF) break;
+
+    /* Parse entries */
+    prior = "<delayModelFixedParametersId>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      prior = "delayModelFixedParameters_";
+      out->rows[irow]->delayModelFixedParametersId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<delayModelVersion>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->delayModelVersion = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->delayModelVersion);
+      continue;
+    }
+    prior = "<gaussConstant>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->gaussConstant = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<newtonianConstant>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->newtonianConstant = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<gravity>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->gravity = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<earthFlattening>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->earthFlattening = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<earthRadius>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->earthRadius = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<moonEarthMassRatio>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->moonEarthMassRatio = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<ephemerisEpoch>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->ephemerisEpoch = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->ephemerisEpoch);
+      continue;
+    }
+    prior = "<earthTideLag>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->earthTideLag = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<earthGM>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->earthGM = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<moonGM>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->moonGM = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<sunGM>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->sunGM = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<loveNumberH>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->loveNumberH = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<loveNumberL>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->loveNumberL = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<precessionConstant>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->precessionConstant = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<lightTime1AU>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->lightTime1AU = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<speedOfLight>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->speedOfLight = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<delayModelFlags>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->delayModelFlags = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->delayModelFlags);
+      continue;
+    }
+    prior = "<execBlockId>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      prior = "execBlockId_";
+      out->rows[irow]->execBlockId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+
+    /* Is this the end of a row? */
+    if (g_strstr_len (line, maxLine, endrow)!=NULL) irow++;
+
+    /* Check overflow */
+    Obit_retval_if_fail((irow<=out->nrows), err, out,
+			"%s: Found more rows than allocated (%d)", 
+			routine, out->nrows);
+  } /* end loop over table */
+
+  /* Close up */
+  retCode = ObitFileClose (file, err);
+  if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+  file = ObitFileUnref(file);
+
+  return out;
+} /* end ParseASDMDlyModFixTable */
+
+/** 
+ * Destructor for DlyModFix table
+ * \param  structure to destroy
+ * \return NULL pointer
+ */
+static ASDMDlyModFixTable* KillASDMDlyModFixTable(ASDMDlyModFixTable* table)
+{
+  olong i;
+
+  if (table==NULL) return NULL;  /* Anybody home? */
+
+  /* Delete row structures */
+  if (table->rows) {
+    for (i=0; i<table->nrows; i++) 
+      table->rows[i] = KillASDMDlyModFixRow(table->rows[i]);
+    g_free(table->rows);
+  }
+  g_free(table);
+  return NULL;
+} /* end KillASDMDlyModFixTable */
+
+/* -------------------  Delay Model Variable Parameters ------------------- */
+/** 
+ * Destructor for DlyModVar table row.
+ * \param  structure to destroy
+ * \return NULL row pointer
+ */
+static ASDMDlyModVarRow* KillASDMDlyModVarRow(ASDMDlyModVarRow* row)
+{
+  if (row == NULL) return NULL;
+  if (row->polarOffsets)     g_free(row->polarOffsets);
+  if (row->timeType)         g_free(row->timeType);
+  if (row->polarOffsetsType) g_free(row->polarOffsetsType);
+  g_free(row);
+  return NULL;
+} /* end   KillASDMDlyModVarRow */
+
+/** 
+ * Constructor for DlyModVar table parsing from file
+ * \param  DlyModVarFile Name of file containing table
+ * \param  err     ObitErr for reporting errors.
+ * \return table structure,  use KillASDMDlyModVarTable to free
+ */
+static ASDMDlyModVarTable* 
+ParseASDMDlyModVarTable(ObitSDMData *me, 
+		      gchar *DlyModVarFile, 
+		      ObitErr *err)
+{
+  ASDMDlyModVarTable* out=NULL;
+  ObitFile *file=NULL;
+  ObitIOCode retCode;
+  olong irow, maxLine = me->maxLine;
+  gchar *line=me->line;
+  gchar *endrow = "</row>";
+  gchar *prior, *next;
+  gchar *routine = " ParseASDMDlyModVarTable";
+
+  /* error checks */
+  if (err->error) return out;
+
+  /* Does it exist? */
+  if (!ObitFileExist(DlyModVarFile, err)) return out;
+
+  out = g_malloc0(sizeof(ASDMDlyModVarTable));
+  out->rows = NULL;
+
+  /* How many rows? */
+  out->nrows = MAX(0, me->ASDMTab->DlyModVarRows);
+  if (out->nrows<1) return out;
+
+  /* Finish building it */
+  out->rows = g_malloc0((out->nrows+1)*sizeof(ASDMDlyModVarRow*));
+  for (irow=0; irow<out->nrows; irow++) out->rows[irow] = g_malloc0(sizeof(ASDMDlyModVarRow));
+
+  file = newObitFile("ASDM");
+  retCode = ObitFileOpen(file, DlyModVarFile, OBIT_IO_ReadOnly, OBIT_IO_Text, 0, err);
+  if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+
+  /* Loop over file */
+  irow = 0;
+  while (retCode!=OBIT_IO_EOF) {
+
+    retCode = ObitFileReadXML (file, line, maxLine, err);
+    if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+    if (retCode==OBIT_IO_EOF) break;
+
+    /* Parse entries */
+    prior = "<delayModelVariableParametersId>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      prior = "delayModelVariableParameters_";
+      out->rows[irow]->delayModelVariableParametersId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<time>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->time = ASDMparse_time (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<ut1_utc>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->ut1_utc = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<iat_utc>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->iat_utc = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<timeType>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->timeType = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->timeType);
+      continue;
+    }
+    prior = "<gstAtUt0>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->gstAtUt0 = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<earthRotationRate>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->earthRotationRate = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<polarOffsets>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->polarOffsets = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<polarOffsetsType>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->polarOffsetsType = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->polarOffsetsType);
+      continue;
+    }
+    prior = "<delayModelFixedParametersId>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      prior = "delayModelFixedParameters_";
+      out->rows[irow]->delayModelFixedParametersId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+ 
+    /* Is this the end of a row? */
+    if (g_strstr_len (line, maxLine, endrow)!=NULL) irow++;
+
+    /* Check overflow */
+    Obit_retval_if_fail((irow<=out->nrows), err, out,
+			"%s: Found more rows than allocated (%d)", 
+			routine, out->nrows);
+  } /* end loop over table */
+
+  /* Close up */
+  retCode = ObitFileClose (file, err);
+  if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+  file = ObitFileUnref(file);
+
+  return out;
+} /* end ParseASDMDlyModVarTable */
+
+/** 
+ * Destructor for DlyModVar table
+ * \param  structure to destroy
+ * \return NULL pointer
+ */
+static ASDMDlyModVarTable* KillASDMDlyModVarTable(ASDMDlyModVarTable* table)
+{
+  olong i;
+
+  if (table==NULL) return NULL;  /* Anybody home? */
+
+  /* Delete row structures */
+  if (table->rows) {
+    for (i=0; i<table->nrows; i++) 
+      table->rows[i] = KillASDMDlyModVarRow(table->rows[i]);
+    g_free(table->rows);
+  }
+  g_free(table);
+  return NULL;
+} /* end KillASDMDlyModVarTable */
+
+
+
+
+
+
+
 
 /* ----------------------  Doppler ----------------------------------- */
 /** 

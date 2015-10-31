@@ -55,6 +55,7 @@
 #include "ObitTableNX.h"
 #include "ObitTableOT.h"
 #include "ObitTablePO.h"
+#include "ObitTableCT.h"
 #include "ObitSDMData.h"
 #include "ObitBDFData.h"
 #include "ObitHistory.h"
@@ -100,6 +101,8 @@ void UpdateSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iScan,
 void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err);
 /* Copy  CalDevice to AIPS CD table */
 void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err);
+/* Copy  EOP info to AIPS CT table */
+void GetEOPInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err);
 /* Copy  SysPower to AIPS SY table */
 void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err);
 /* Copy  Over the top from Pointing table to AIPS OT table */
@@ -308,6 +311,7 @@ int main ( int argc, char **argv )
     GetOTTInfo  (SDMData, outData, err);       /*   Over the top table */
     GetGainCurveInfo (SDMData, outData, err);  /*   gain curve (GC) table */
   }
+  GetEOPInfo (SDMData, outData, err);        /*   Earth Orientation (CT) table */
   GetFlagInfo (SDMData, outData, err);       /*   FLAG tables */
   GetWeatherInfo   (SDMData, outData, err);  /*   Weather table */
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
@@ -1448,7 +1452,7 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ObitAntennaList    *antList=NULL;
   ObitTableAN        *outTable=NULL;
   ObitTableANRow     *outRow=NULL;
-  olong i, lim, iRow, oRow, ver, iarr;
+  olong i, lim, iRow, oRow, ver, iarr, crow;
   oint numIF, numPCal, numOrb;
   gboolean *isDone=NULL;
   odouble JD, GASTM, Rate;
@@ -1508,6 +1512,9 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   /* Is this the ALMA? */
   isALMA = SDMData->isALMA;
 
+  /* EOP given */
+  crow = 0;    /* center row in table */
+  if (SDMData->DlyModVarTab) crow = SDMData->DlyModVarTab->nrows/2;
   /* Set AN table values if new file */
   if (newOutput) {
     outTable->ArrayX  = 0.0;   /* Earth centered */
@@ -1515,10 +1522,18 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     outTable->ArrayZ  = 0.0;
     
     outTable->Freq    = outData->myDesc->crval[outData->myDesc->jlocf];
-    /*MORE;*/
-    outTable->PolarX  = 0.0;    /* ASDM Lacks */
-    outTable->PolarY  = 0.0;
-    outTable->dataUtc = 0.0;
+    /* ASDM data always in UTC? */
+    if (SDMData->DlyModVarTab) {
+      outTable->PolarX  = (ofloat)(SDMData->DlyModVarTab->rows[crow]->polarOffsets[0]);
+      outTable->PolarY  = (ofloat)(SDMData->DlyModVarTab->rows[crow]->polarOffsets[1]);
+      outTable->dataUtc = (ofloat)(SDMData->DlyModVarTab->rows[crow]->ut1_utc);
+      outTable->ut1Utc  = (ofloat)(SDMData->DlyModVarTab->rows[crow]->ut1_utc);
+    } else {
+      outTable->PolarX  = 0.0;    /* old ASDM Lacks */
+      outTable->PolarY  = 0.0;
+      outTable->dataUtc = 0.0;
+      outTable->ut1Utc  = 0.0;
+    }
     lim = MAXKEYCHARTABLEAN;
     strncpy (outTable->FRAME,   "ITRF    ", lim);        /* ASDM doesn't say */
     for (i=0; i<lim; i++) if (outTable->FRAME[i]==0) outTable->FRAME[i]=' ';
@@ -1552,9 +1567,13 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     iarr = 0;
     arrayRefJDs[iarr] = JD;
     ObitUVDescJD2Date (JD, outTable->RefDate);
-    ObitPrecessGST0 (JD, &GASTM, &Rate);
-    outTable->DegDay  = Rate * 360.0;
-    outTable->GSTiat0 = GASTM * 15.0;
+    ObitPrecessGST0 (JD, &GASTM, &Rate); 
+    if ((SDMData->DlyModVarTab) && (SDMData->DlyModVarTab->rows[crow]->earthRotationRate>0.0))
+      outTable->DegDay     = SDMData->DlyModVarTab->rows[crow]->earthRotationRate * RAD2DG / 86400.0;
+    else outTable->DegDay  = Rate * 360.0;
+    if ((SDMData->DlyModVarTab) && (SDMData->DlyModVarTab->rows[crow]->gstAtUt0>0.0))
+         outTable->GSTiat0  = SDMData->DlyModVarTab->rows[crow]->gstAtUt0 * RAD2DG;
+    else outTable->GSTiat0  = GASTM * 15.0;
     if (outTable->GSTiat0 < 0.0)  outTable->GSTiat0 += 360.0;;
   } /* end initialize new table */
   /* Initialize output row */
@@ -2471,21 +2490,11 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
    /* File initialization */
     ObitBDFDataInitFile (BDFData, filename, err);
     g_free(filename);
-    if (err->error) {
-      /* Handle failure */
-      Obit_log_error(err, OBIT_InfoWarn, "Scan File %d Init failed - continuing", iScan);
-      ObitErrLog(err);
-      goto recover;
-    }
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
     
     /* Init Scan */
     ObitBDFDataInitScan (BDFData, iMain, SWOrder, selChan, selIF, err);
-    if (err->error) {
-      /* Handle failure */
-      Obit_log_error(err, OBIT_InfoWarn, "Scan %d Init failed - continuing", iScan);
-      ObitErrLog(err);
-      goto recover;
-    }
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
  
     /* Consistency check - loop over selected Spectral windows */
     nIFsel = 0;   /* Number of selected IFs */
@@ -2585,15 +2594,8 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 
       /* Read integration */
       retCode =  ObitBDFDataReadInteg(BDFData, err);
-      /*if (retCode == OBIT_IO_EOF) break;*/
-      if (err->error) {
-	/* Handle failure */
-	Obit_log_error(err, OBIT_InfoWarn, "Reading scan failed at integ %d - continuing",
-		       iInteg);
-	ObitErrLog(err);
-	goto recover;
-      }
-      
+      if (retCode == OBIT_IO_EOF) break;
+      if (err->error) Obit_traceback_msg (err, routine, outData->name);
       
       /* Loop over data */
       while (1) {
@@ -2667,8 +2669,6 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	NXrow->StartVis = NXrow->EndVis+1;
       } 
     }
-  recover:
-    continue;
   } /* End loop over scans */
 
   /* Tell results */
@@ -3238,10 +3238,8 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     /* Loop over antennas in antennaId */
     numAnt = MAX (1, SDMData->FlagTab->rows[iRow]->numAntenna);
     for (ia=0; ia<numAnt; ia++) {
-      /* Look up antenna number from Id - trap defective ASDM*/
-      if (SDMData->FlagTab->rows[iRow]->antennaId)
-	antId = SDMData->FlagTab->rows[iRow]->antennaId[ia];
-      else antId = 999;  /* Bad ASDM */
+      /* Look up antenna number from Id */
+      antId = SDMData->FlagTab->rows[iRow]->antennaId[ia];
       antNo = antId;
       for (iAnt=0; iAnt<AntArray->nants; iAnt++) {
 	if (AntArray->ants[iAnt]->antennaId==antId) 
@@ -3568,9 +3566,8 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 	if (numPol>1) 
 	  outRow->TCal2[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[0]*inTab->rows[iRow]->calEff[1]);
       } else { /* - No efficiency - just single cal */
-	if (inTab->rows[iRow]->noiseCal)
-	  outRow->TCal1[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[0]);
-	if ((numPol>1) && (inTab->rows[iRow]->noiseCal))
+ 	outRow->TCal1[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[0]);
+	if (numPol>1) 
 	  outRow->TCal2[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[0]);
       }
     } /* end loop over input table */
@@ -3606,6 +3603,138 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   if (SpWinLookup2) g_free(SpWinLookup2);
 
 } /* end  GetCalDeviceInfo */
+
+void GetEOPInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
+/*----------------------------------------------------------------------- */
+/*  Convert the DelayModel tables to AIPS CT on outData                   */
+/*  Entries are accumulated into AIPS CT table                            */
+/*   Input:                                                               */
+/*      SDMData  ASDM structure                                           */
+/*      outData  Output UV object                                         */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+{
+  ObitTableCT*          outTable=NULL;
+  ObitTableCTRow*       outRow=NULL;
+  ASDMDlyModFixTable*   inTabF=SDMData->DlyModFixTab;
+  ASDMDlyModVarTable*   inTabV=SDMData->DlyModVarTab;
+  olong iRow, oRow, ver;
+  oint numIF, numPol, numChan;
+  ObitIOAccess access;
+  gchar *routine = "GetCalDeviceInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitUVIsA(outData));
+
+  /* Any entries? */
+  if (!inTabF || !inTabV) return;
+  if (inTabF->nrows<=0) return;
+  if (inTabV->nrows<=0) return;
+
+  /* Print any messages */
+  ObitErrLog(err);
+  
+  /* Create output CT table object */
+  numIF   = outData->myDesc->inaxes[outData->myDesc->jlocf];
+  numChan = outData->myDesc->inaxes[outData->myDesc->jlocif];
+  numPol  = MIN (2, outData->myDesc->inaxes[outData->myDesc->jlocs]);
+  ver      = 1;
+  access   = OBIT_IO_ReadWrite;
+  outTable = newObitTableCTValue ("Output table", (ObitData*)outData, 
+				  &ver, access, numIF, err);
+  if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with CT table");
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  
+  /* Open table */
+  if ((ObitTableCTOpen (outTable, access, err) 
+       != OBIT_IO_OK) || (err->error))  { /* error test */
+    Obit_log_error(err, OBIT_Error, "ERROR opening output CT table");
+    return;
+  }
+  
+  /* Table Header */
+  ObitUVDescJD2Date (SDMData->refJD, outTable->RefDate);
+  strncpy (outTable->obscode, "        ", MAXKEYCHARTABLECT);
+  outTable->numStkd = numPol;
+  outTable->stk1    = (olong)(outData->myDesc->crval[outData->myDesc->jlocs]);
+  outTable->numBand = numIF;
+  outTable->numChan = numChan;
+  outTable->refFreq = outData->myDesc->crval[outData->myDesc->jlocf];
+  outTable->chanBW  = outData->myDesc->cdelt[outData->myDesc->jlocf];
+  outTable->refPixl = outData->myDesc->crpix[outData->myDesc->jlocf];
+  strncpy (outTable->CSrvr,  "        ", MAXKEYCHARTABLECT);
+  strncpy (outTable->CVersn, "        ", MAXKEYCHARTABLECT);
+  strncpy (outTable->AVersn, "        ", MAXKEYCHARTABLECT);
+  strncpy (outTable->IVersn, "        ", MAXKEYCHARTABLECT);
+  strncpy (outTable->EVersn, "        ", MAXKEYCHARTABLECT);
+  outTable->accelgrv = inTabF->rows[0]->gravity;
+  outTable->Eflat    = inTabF->rows[0]->earthFlattening;
+  outTable->mmsems   = inTabF->rows[0]->moonEarthMassRatio;
+  outTable->earthrad = inTabF->rows[0]->earthRadius;
+  outTable->ephepoc  = 2000;
+  outTable->tidelag  = inTabF->rows[0]->earthTideLag;
+  outTable->gauss    = inTabF->rows[0]->gaussConstant;
+  outTable->gmmoon   = inTabF->rows[0]->moonGM;
+  outTable->gmsun    = inTabF->rows[0]->sunGM;
+  outTable->loveH    = inTabF->rows[0]->loveNumberH;
+  outTable->loveL    = inTabF->rows[0]->loveNumberL;
+  outTable->preData  = 0.0;  /*???inTabF->rows[0]->;*/
+  outTable->relData  = 0.0;  /*???inTabF->rows[0]->;*/
+  outTable->tidalut1 = 0.0;  /*???inTabF->rows[0]->;*/
+  outTable->tsecau   = inTabF->rows[0]->lightTime1AU;
+  outTable->UGrvCn   = 0.0;  /*???inTabF->rows[0]->;*/
+  outTable->vlight   = inTabF->rows[0]->speedOfLight;
+
+  /* Create output Row */
+  outRow = newObitTableCTRow (outTable);
+  /* attach to table buffer */
+  ObitTableCTSetRow (outTable, outRow, err);
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  
+  /* Initialize output row */
+  outRow->status      = 0;
+
+  /* Loop over entries */
+  for (iRow=0; iRow<inTabV->nrows; iRow++) {
+    outRow->Time     = inTabV->rows[iRow]->time - refJD;
+    outRow->ut1utc   = inTabV->rows[iRow]->ut1_utc;
+    outRow->iatutc   = inTabV->rows[iRow]->iat_utc;
+    outRow->ut1Type  = inTabV->rows[iRow]->timeType[0];
+    outRow->wobType  = inTabV->rows[iRow]->polarOffsetsType[0];
+    outRow->dpsi     = inTabV->rows[iRow]->nutationInLongitude;
+    outRow->ddpsi    = inTabV->rows[iRow]->nutationInLongitudeRate;;
+    outRow->deps     = inTabV->rows[iRow]->nutationInObliquity;
+    outRow->ddeps    = inTabV->rows[iRow]->nutationInObliquityRate;
+    outRow->wobXY[0] = inTabV->rows[iRow]->polarOffsets[0];
+    outRow->wobXY[1] = inTabV->rows[iRow]->polarOffsets[1];
+    /* Write */
+    oRow = -1;
+    if ((ObitTableCTWriteRow (outTable, oRow, outRow, err)
+	 != OBIT_IO_OK) || (err->error>0)) { 
+      Obit_log_error(err, OBIT_Error, "ERROR updating CT Table");
+      return;
+    }
+    
+  } /* end loop */
+
+  /* Close  table */
+  if ((ObitTableCTClose (outTable, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "ERROR closing output CT Table file");
+    return;
+  }
+  
+  /* Tell about it */
+  Obit_log_error(err, OBIT_InfoErr, "Copied delay model table %d rows",
+		 outTable->myDesc->nrow);
+  
+  /* Cleanup */
+  outRow     = ObitTableCTRowUnref(outRow);
+  outTable   = ObitTableCTUnref(outTable);
+
+} /* end  GetEOPInfo */
 
 void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 /*----------------------------------------------------------------------- */
