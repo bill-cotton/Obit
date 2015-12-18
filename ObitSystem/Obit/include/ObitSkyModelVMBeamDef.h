@@ -40,14 +40,14 @@ ofloat maxResid;
 ofloat begVMModelTime;
 /** Dimension of Rgain...  */
 olong dimGain;
-/** Array of time/spatially variable R component gain, real, imag */
+/** Array of time/spatially variable R/X component gain, real, imag */
 ofloat *Rgain, *Rgaini;
-/** Array of time/spatially variable L component gain, real, imag */
+/** Array of time/spatially variable L/Y component gain, real, imag */
 ofloat *Lgain, *Lgaini;
-/** Array of time/spatially variable Stokes Q component gain, real, imag */
-ofloat *Qgain, *Qgaini;
-/** Array of time/spatially variable Stokes U component gain, real, imag */
-ofloat *Ugain, *Ugaini;
+/** Array of time/spatially variable Stokes RL/XY component gain, real, imag */
+ofloat *RLgain, *RLgaini;
+/** Array of time/spatially variable Stokes LR/YX component gain, real, imag */
+ofloat *LRgain, *LRgaini;
 /** Array booleans, TRUE if corresponding antenna (0-rel) is EVLA */
 gboolean *isEVLA;
 /** Number of subarrays */
@@ -62,18 +62,18 @@ ObitBeamShape *BeamShape;
 ObitImageInterp *RXBeam;
 /** L/Y Beam image interpolator*/
 ObitImageInterp *LYBeam;
-/** Q Beam image interpolatorif doCrossPol */
-ObitImageInterp *QBeam;
-/** U Beam image interpolatorif doCrossPol */
-ObitImageInterp *UBeam;
+/** RL Beam image interpolatorif doCrossPol */
+ObitImageInterp *RLBeam;
+/** LR Beam image interpolatorif doCrossPol */
+ObitImageInterp *LRBeam;
 /** R/X Beam phase image interpolator- NULL if not given */
 ObitImageInterp *RXBeamPh;
 /** L/Y Beam phase image interpolator - NULL if not given **/
 ObitImageInterp *LYBeamPh;
-/** Q Beam phase image interpolator if doCrossPol  - NULL if not given **/
-ObitImageInterp *QBeamPh;
-/** U Beam phase image interpolator if doCrossPol  - NULL if not given **/
-ObitImageInterp *UBeamPh;
+/** RL Beam phase image interpolator if doCrossPol  - NULL if not given **/
+ObitImageInterp *RLBeamPh;
+/** LR Beam phase image interpolator if doCrossPol  - NULL if not given **/
+ObitImageInterp *LRBeamPh;
 /** Array booleans, TRUE if corresponding antenna (0-rel) is EVLA */
 gboolean doCrossPol;
 /** Number of Beam planes */

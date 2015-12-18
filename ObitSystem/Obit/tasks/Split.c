@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task apply calibration snd write single source files */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2013                                          */
+/*;  Copyright (C) 2007-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -836,7 +836,7 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong         maxlen, isource;
   gchar        *dataParms[] = {  /* Source selection*/
-    "Sources", "souCode", "Qual", "timeRange", "FreqID",
+    "Sources", "souCode", "Qual", "timeRange", "UVRange","FreqID",
     NULL
   };
   gchar *routine = "doSources";

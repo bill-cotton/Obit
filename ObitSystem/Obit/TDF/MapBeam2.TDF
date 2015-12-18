@@ -1,0 +1,353 @@
+; MapBeam2
+;---------------------------------------------------------------
+;! Map beam polarization correlation version
+;#  Task Calibration Polarization UV Image VLA
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2015
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: Bill Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+MapBeam2  LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+MapBeam2: Map beam polarization in correlations
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                             Filename if FITS UV data
+**PARAM** str 12
+inName                             Input UV AIPS name
+**PARAM** str 6
+inClass                            Input UV AIPS class
+**PARAM** int 1
+inSeq            0.0       9999.0  Input UV AIPS sequence
+**PARAM** int 1
+inDisk           0.0               Input disk (FITS or AIPS: no default)
+**PARAM** str 16 30
+Sources                            Source list
+**PARAM** int 1 **DEF** -1
+Qual             -1.0              Source qualifier -1=>all
+**PARAM** str 4
+souCode                            Source calibrator code '    '=>all
+**PARAM** float 2
+timeRange                          Time range to select
+**PARAM** str 4 
+Stokes                              Stokes to process
+**PARAM** float 2
+UVRange         0.                 Min & max baseline (klambda)
+**PARAM** int 1
+FreqID                             Freq. ID to select.
+**PARAM** int 1 **DEF** 1
+BChan            0.0     8192.0    Low freq. channel, 0=>all
+**PARAM** int 1
+EChan            0.0     8192.0    Highest freq channel, 0=>all
+**PARAM** int 1 **DEF** 1
+BIF               0.0      999.0   Lowest IF number, 0=>all
+**PARAM** int 1
+EIF               0.0      999.0   Highest IF number, 0=>all
+**PARAM** float 4  
+PolMod                             Source polarization
+**PARAM** int 1
+doCalib          -1.0        2.0   If >0 calibrate data
+                                   2=> calibrate weights
+**PARAM** int 1
+gainUse                            CL (or SN) table to apply
+**PARAM** boo 1 **DEF** F
+doPol                              If True correct polarization.
+**PARAM** int 1 **DEF** 1
+PDVer                              PD table to apply
+                                   If >=0, per channel corrections
+**PARAM** int 1
+flagVer                            Flag table version
+**PARAM** int 1
+doBand           -1.0       10.0   If >0 apply bandpass cal.
+                                   Method used depends on value
+                                   of doBand (see Help).
+**PARAM** int 1
+BPVer                              Bandpass table version
+**PARAM** float 3
+Smooth                             Smoothing function. 
+**PARAM** str 4
+outDType                           "FITS" or "AIPS" type of output
+**PARAM** str 48 **DEF** .fits
+outFile                            FITS output image end if Type=='FITS'
+**PARAM** str 12
+outName                            Output Image AIPS name end
+**PARAM** int 1
+outSeq           -1.0     9999.0   Output Image AIPS file seq. #
+**PARAM** int 1
+outDisk                            Output Image file disk #.
+**PARAM** int 1
+nx                                 Number of "X" (Az) pixels in image 
+**PARAM** int 1
+ny                                 Number of "Y" (El) pixels in image. 
+**PARAM** float 1
+xCells                             Image cell spacing in X in asec.
+**PARAM** float 1
+yCells                             Image cell spacing in Y in asec.
+**PARAM** float 1  **DEF** 1.0
+sclAzEl                            Az/El scaling factor
+**PARAM** int 1  **DEF** 0
+hwid                               half width of interpolation in cells
+**PARAM** float 1
+avgTime                            Averaging time (sec)
+**PARAM** int 1
+avgFreq          0.0        9.0    Frequency averaging control
+                                     1 => avg. freq. in IF
+                                          multi-channel avg
+                                     2 => avg. freq. in IF
+                                          single channel avg
+                                     3 => avg IF's also
+**PARAM** int 1
+chAvg                               Number of chan. to average.
+                                    (used if avgFreq = 1)
+                                    <= 0 -> ALL
+**PARAM** int 4 20
+ChanSel                             Array of channel start, stop,
+                                    and increment numbers and IF
+                                    number to be used when
+                                    averaging in frequency.
+**PARAM** float 1
+blnkTime                           Blank time at the begin (sec)
+**PARAM** boo 1 **DEF** True
+avgAnt                             True => Average all antennas
+**PARAM** boo 1 **DEF** True
+doPhase                            True => write phase Images
+**PARAM** boo 1 **DEF** True
+doRMS                              True => write RMS Images
+**PARAM** boo 1 **DEF** False
+doPolNorm                          True => normalize pol by max 
+**PARAM** int 50
+Antennas         0.0     1000.0    List of antennas to include
+                                   NB: MUST include RefAnts
+**PARAM** float 50
+OffAz                              List of ant. offsets in Az (')
+**PARAM** float 50
+OffEl                              List of ant. offsets in El (')
+**PARAM** int 20
+RefAnts                            Reference antenna list, 
+                                   NO Default!!
+**PARAM** int 1 
+prtLv             0                Print level in selfcal
+**PARAM** int 1 **DEF** 1
+nThreads            0              Number of threads to use
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
+**PARAM** int 10
+noScrat                            AIPS disk numbers for which
+                                   scratch files are disallowed
+----------------------------------------------------------------
+MapBeam2
+Type:  Task
+Use:   Image EVLA quasi "holography" mode data to make images of 
+       the fractional RR, LL, RL, LR (or XX, YY, XY, YX).
+       The uv data are expected to be rasters in azimuth and
+       elevation. Prior calibration and editing may be applied 
+       and the data is then averaged over baseline. 
+       Images are in Azimuth (x) and Elevation (y).  
+       Data on unpolarized sources give the best results.
+          The resultant images are freq/IF cubes of primary beam
+       (or the rms of each of these) for each of the selected antennas
+       and correlation products; the third axis is frequency 
+       (if there are multiple channels), 4th IF (if there are multiple 
+       IFs.
+          The each Stokes correlation is averaged and interpolated 
+       using a Lagrange interpolater onto the specified grid. 
+       The value is then converted into a phase between -90 and + 90
+       degrees and the corresponding "amplitude" (which will be 
+       negative for phases > 90 deg.  If avgAnt=True, each antenna 
+       beams are calculated and thenaveraged.
+           The AIPS FQ table describing the IF axis is copied to each 
+       image as is the AIPS AN table.
+          The average azimuth, elevation and parallactic angles (deg) 
+       are written into the image header as 'avgAz', 'avgEl' and 'avgPA.
+          Derived images can be applied in tasks MFBeam or BeamCor.
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input UV AIPS file name     Standard defaults.
+  inClass....Input UV AIPS file class.   Standard defaults.
+  inSeq......Input UV AIPS fileseq. #.  0 => highest.
+  inDisk.....Disk of input UV (FITS or AIPS). NO AIPS default
+  Sources... Sources  to be processed if multisource file.
+             Imaging loops over Sources.
+  Qual.......Only sources with a source qualifier number in the
+             SU table matching Qual will be used if Qual is not
+             -1.  
+  souCode....Sources may be selected on the basis of the
+             calibrator code given in the SU table.
+                  '    ' => any calibrator code selected
+                  '*   ' => any non blank code (cal. only)
+                  '-CAL' => blank codes only (no calibrators)
+                  anything else = calibrator code to select.
+             NB: The souCode test is applied in addition to the
+             other tests, i.e. Sources and Qual, in the
+             selection of sources to process.
+  Stokes.....Stokes parameters to process.
+             '    ' => all correlations
+             'HALF' => parallel hand only
+             Doesn't deal with I,Q,U, V, use MapBeam.
+  timeRange..Time range of the data to be processed. In order:
+             Start and end times in days relative to ref. date.  
+             Use  dhms2day to convert from human readable form
+  UVRange....(Minimum,Maximum) baseline (kilo-lambda) to include
+  FreqID.....Frequency identifier to select , <=0=>any
+  BChan......First channel number to image, 0=>1.  Channel numbers are 1
+             relative as defined in the input data file.
+  EChan......Highest channel number to to include in image, 0 => max 
+  BIF........First IF to image. 0=>1.
+  EIF........Highest IF to image. 0=>all higher than BIF
+  PolMod.....The Stokes parameters for the  source - from poln cal. NYI
+                PolMod[0] = I flux density (Jy)
+                PolMod[1] = Q flux density (Jy)
+                PolMod[2] = U flux density (Jy)
+                PolMod[3] = V flux density (Jy)
+  doCalib....If >0, calibrate the data using information in the
+             specified Cal (CL) table for multi-source or SN table for
+             single-source data.  If >=2, also calibrate the weights.
+  gainUse....Version number of the CL table to apply to multi-source
+             files or the SN table for single-source files.
+             0 => highest.
+  doPol......If True, apply polarization calibration
+  PDVer......AIPS PD table to use for per channel instrumental
+             polarization corrections if doPol=True. 0=> highest
+             -1 => use IF corrections from AIPS AN table.
+  flagVer....Specifies the version of the flagging table to be applied.
+             0 => highest numbered table. <0 => no flagging to be
+             applied.
+  doBand.....If > 0 then correct the data for the shape of the
+             antenna bandpasses using the BP table specified by BPVer.
+             The correction has five modes:
+             (a) if doBand=1 all entries for an antenna in the table
+             are averaged together before correcting the data.
+             (b) if doBand=2 the entry nearest in time (including
+             solution weights) is used to correct the data.
+             (c) if doBand=3 the table entries are interpolated in
+             time (using solution weights) and the data are then
+             corrected.
+             (d) if doBand=4 the entry nearest in time (ignoring
+             solution weights) is used to correct the data.
+             (e) if doBand=5 the table entries are interpolated in
+             time (ignoring solution weights) and the data are then
+             corrected.
+  BPVer......Specifies the version of the BP table to be applied if
+             doBand > 0.  0 => highest numbered table.
+             <0 => no bandpass correction to be applied.
+  Smooth.....Specifies the type of spectral smoothing to be applied to
+             a uv database . The default is not to apply any smoothing.
+             The elements of Smooth are as follows:
+             Smooth[0] = type of smoothing to apply: 0 => no smoothing
+               To smooth before applying bandpass calibration
+                 1 => Hanning, 2 => Gaussian, 3 => Boxcar, 4 => Sinc
+               To smooth after applying bandpass calibration
+                 5 => Hanning, 6 => Gaussian, 7 => Boxcar, 8 => Sinc
+             Smooth[1] = the "diameter" of the function, i.e. width
+               between first nulls of Hanning triangle and sinc
+               function, FWHM of Gaussian, width of Boxcar. Defaults
+               (if < 0.1) are 4, 2, 2 and 3 channels for Smooth[0] =
+               1 - 4 and 5 - 8, resp.
+             Smooth[2] = the diameter over which the convolving
+               function has value - in channels.  Defaults: 1,3,1,4
+               times Smooth[1] used when input Smooth[2] < net
+               Smooth[1].
+  outDType..'FITS' or 'AIPS'  type of output
+  outFile....Output FITS Image file name ending
+             Of form Source+Stokes+Antenna#(or "All")+outFile for Stokes
+                     Source+Stokes+Antenna#(or "All")+"RMS"+outFile for RMS
+                  or Source+Stokes+Antenna#(or "All")+"Ph"+outFile for Phase
+  outName....Output Image AIPS name ending
+             Of form Source+outName for Stokes
+             Class is Stokes+Antenna#(or "All") for Stokes (e.g. 'RR', 'RL')
+             Class is Stokes+Antenna#(or "All")+"R" for RMS or
+             + "P" for phase images 
+  outSeq.....Output Image AIPS file seq. #. 0 => highest unique.
+  outDisk....Disk drive # of output UV (FITS or AIPS) NO AIPS default
+             0 for FITS => current directory
+  nx.........Number of x (Az) pixels in images
+  ny.........Number of y (El) pixels in images
+  xCells.....Image cell spacing in X (Azimuth) in asec.  
+             It should be close to the actual separation at the 
+             pointing at the holography measurements.
+  yCells.....Image cell spacing in Y (Elevation) in asec. 
+  sclAzEl....Factor by which to scale Az and El ("U", "V") in
+             data.  This is to correct for any rescaling applied
+             in frequency averaging (e.g. Hanning).  The value 
+             should be ref_freq_raw/ref_Freq_current.  Any 
+             averaging applied in this task is accounted for.
+  hwid.......Half width of Lagrangian interpolation in cells
+             0 => use closest cell.
+  avgTime....Averaging time in seconds; normally interval
+             of each pointing.
+  avgFreq....If 0 < avgFreq <= 1, then spectral channels in the 
+             range from BChan to EChan are averaged in blocks of
+             chAvg channels subject to further selection by
+             ChanSel before the flagging process.
+             If avgFreq > 1, then all frequency channels in
+             each IF (under control of ChanSel) will be averaged.
+             If avgFreq > 2, then all IF's will be averaged also.
+  chAvg......If avgFreq = 1, the number of channels to be averaged
+             together in each channel to be imaged.  
+             0 => ALL.  
+  ChanSel....The channels to be averaged when avgFreq > 0 in the
+             form of an array of start and stop channels plus a
+             channel increment and the IF to which they apply.  
+             All 0 => BChan, EChan, 1, 0.  
+             ChanSel(4,i) gives the IF and 0 means all IFs.  
+             Up to 20 groups of these 4 numbers may be
+             specified.  Note that the channel numbers are absolute
+             numbers; they are NOT relative to BIF and BChan.
+  blnkTime...Time in seconds to ignore at the beginning of
+             each pointing; this allows for antenna moves.
+  avgAnt.....True:  combine data of all selected antennas
+             into one set of maps.
+             False: create separate maps for each selected ant.
+  doPhase....True: Write Phase images as well as ampl images
+  doRMS......True: Write RMS images as well as Stokes images
+  doPolNorm..True: Normalize each poln. image by its max. NYI
+  Antennas...A list of the antennas to use.  All 0 => use all.
+  OffAz......A list of antenna pointing offsets (') in Az to be 
+             added to the data.  OffAz[1]=ant 1, OffAz[2]=ant 2...
+  OffEl......A list of antenna pointing offsets (') in El to be 
+             added to the data. 
+  RefAnts....List of reference antennas,  Must be given!!!
+  
+  prtLv......Print level, 0=>none, 2=>obs. locations, Ipol
+  nThreads...If the Obit libraries are compiled with multiple
+             thread operation enabled, this parameter sets the 
+             number of threads that can be used for parallel 
+             operations. 
+             NB: This only improves performance if there are 
+             multiple processors and/or cores in the host.
+  noScrat....A list of AIPS disk numbers on which you do not 
+             wish scratch files
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files where
+             a bug in the ObitTalk message handling may cause
+             tasks to hang.  Path is absolute or relative to where
+             the task executes.
+----------------------------------------------------------------
+
+
+
+
+
+

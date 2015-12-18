@@ -4,7 +4,7 @@
 ;! Copy UV data
 ;# Task UV  Obit 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007-2012
+;;  Copyright (C) 2007-2015
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -51,6 +51,8 @@ Qual            -10.0              Source qualifier -1=>any
 souCode                             Calibrator code '    '=>any
 **PARAM** float 2
 timeRange                           Time range to process.
+**PARAM** float 2
+UVRange         0.                 Min & max baseline (klambda)
 **PARAM** str 4
 Stokes                              Stokes to process
 **PARAM** int 1
@@ -83,7 +85,7 @@ doCalib          -1.0        2.0   If >0 calibrate data
 gainUse                            CL (or SN) table to apply
 **PARAM** boo 1 **DEF** F
 doPol            -1.0       10.0   If >0 correct polarization.
-**PARAM** int 1 **DEF** -1
+**PARAM** int 1 **DEF** 1
 PDVer                              PD table to apply
                                    If >=0, per channel corrections
 **PARAM** int 1
@@ -140,6 +142,7 @@ Adverbs:
   timeRange..Time range of the data to be processed. In order:
              Start and end times in days relative to ref. date.  
              Use  dhms2day to convert from human readable form
+  UVRange....(Minimum,Maximum) baseline (kilo-lambda) to process. 
   Stokes.....Stokes parameters to copy, "    "=> Don't convert
              Otherwise will select and/or convert..
   FreqID.....Frequency identifier to select , <=0=>any

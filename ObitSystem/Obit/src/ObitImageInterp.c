@@ -1,6 +1,6 @@
-/* $Id$        */
+/* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009                                               */
+/*;  Copyright (C) 2009,2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -387,7 +387,6 @@ olong ObitImageInterpFindPlane (ObitImageInterp* in, odouble freq)
   for (i=1; i<in->nplanes; i++) {
     d = fabs (freq-in->freqs[i]);
     if (d<diff) { close=i; diff=d;}
-    if (d>diff) break;  /* Getting further away? */
   }
 
   return close;
@@ -514,11 +513,11 @@ void ObitImageInterpClear (gpointer inn)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* delete this class members */
-  in->info       = ObitInfoListUnref(in->info);
-  in->thread     = ObitThreadUnref(in->thread);
+  in->info      = ObitInfoListUnref(in->info);
+  in->thread    = ObitThreadUnref(in->thread);
   in->ImgDesc   = ObitImageDescUnref(in->ImgDesc);
   in->ImgPixels = ObitFArrayUnref(in->ImgPixels);
-  in->myInterp   = ObitFInterpolateUnref(in->myInterp);
+  in->myInterp  = ObitFInterpolateUnref(in->myInterp);
   if (in->freqs) g_free(in->freqs);
  
   /* unlink parent class members */

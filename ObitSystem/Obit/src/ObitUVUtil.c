@@ -1692,6 +1692,8 @@ ObitUV* ObitUVUtilBloat (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
  *                default increment is 1, IF=0 means all IF.
  *                The list of groups is terminated by a start <=0
  *                Default is all channels in each IF.
+ * \li "noScale" OBIT_bool Scalar, if TRUE then do NOT scale u,v,w for new 
+ *               frequency. Used for holography data.  def FALSE
  *              
  * \param scratch  True if scratch file desired, will be same type as inUV.
  * \param outUV    If not scratch, then the previously defined output file
@@ -1722,7 +1724,7 @@ ObitUV* ObitUVUtilAvgF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   gchar *today=NULL;
   ofloat *work=NULL, scale;
   olong NumChAvg, *ChanSel=NULL;
-  gboolean doAvgAll;
+  gboolean doAvgAll, noScale;
   olong defSel[] = {1,-10,1,0, 0,0,0,0};
   gchar *routine = "ObitUVUtilAvgF";
  
@@ -1740,6 +1742,8 @@ ObitUV* ObitUVUtilAvgF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   ObitInfoListGetTest(inUV->info, "NumChAvg", &type, dim, &NumChAvg);
   doAvgAll = FALSE;
   ObitInfoListGetTest(inUV->info, "doAvgAll", &type, dim, &doAvgAll);
+  noScale = FALSE;
+  ObitInfoListGetTest(inUV->info, "noScale", &type, dim, &noScale);
   ChanSel = NULL;
   if (!ObitInfoListGetP(inUV->info, "ChanSel", &type, dim, (gpointer)&ChanSel)) {
     ChanSel = defSel;  /* Use default = channels 1 => n */
@@ -1802,6 +1806,8 @@ ObitUV* ObitUVUtilAvgF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   scale = AvgFSetDesc (inDesc, outDesc, NumChAvg, ChanSel, doAvgAll, 
 		       corChan, corIF, corStok, corMask, err);
   if (err->error) goto cleanup;
+  /* Scale u,v,w? */
+  if (noScale) scale = 1.0;
 
   /* test open output */
   oretCode = ObitUVOpen (outUV, OBIT_IO_WriteOnly, err);

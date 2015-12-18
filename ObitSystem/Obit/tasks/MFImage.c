@@ -1395,9 +1395,11 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
 {
   gchar        Source[17];
   ObitSourceList* doList;
+  ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong         maxlen, isource, failed=0, good=0;
   gboolean     isBad = FALSE;
+  ofloat       oldTargBeam[3];
   gchar        *Fail="Failed  ", *Done="Done    ";
   gchar        *dataParms[] = {  /* Source selection*/
     "Sources", "souCode", "Qual", "timeRange", "doPS", "FreqID",
@@ -1409,6 +1411,9 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   /* Get input parameters from myInput, copy to inData */
   ObitInfoListCopyList (myInput, inData->info, dataParms);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
+
+  /* Get initial targBeam */
+  ObitInfoListGetTest (myInput, "targBeam", &type, dim, oldTargBeam);
 
   /* Make sure selector set on inData */
   ObitUVOpen (inData, OBIT_IO_ReadCal, err);
@@ -1432,7 +1437,11 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     dim[0] = 16; dim[1] = 1;
     ObitInfoListAlwaysPut (myInput, "FieldName", OBIT_string, dim, Source);
 
-    /* Process source */
+    /* Reset targBeam */
+    dim[0] = 3;dim[1] = 1;
+    ObitInfoListAlwaysPut (myInput, "targBeam", OBIT_float, dim, oldTargBeam);
+
+   /* Process source */
     doChanPoln (Source, myInput, inData, err);
     /* Allow up to 10 failures before first success or up to 10% of large run */
     if (err->error) {

@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task to copy uv data                        .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2012                                          */
+/*;  Copyright (C) 2005-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -574,7 +574,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean     doCalSelect;
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
-    "Sources", "souCode", "Qual", "Stokes", "timeRange", 
+    "Sources", "souCode", "Qual", "Stokes", "timeRange", "UVRange",
     "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "FreqID", "corrType", 
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
     "doPol", "PDVer", "Smooth", "Antennas",  "subA", "Sources", "souCode", "Qual",
@@ -819,7 +819,7 @@ void UVCopyHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
   gchar        hicard[81];
   gchar        *hiEntries[] = {
     "DataType", 
-    "inFile",  "inDisk", "inName", "inClass", "inSeq",
+    "inFile",  "inDisk", "inName", "inClass", "inSeq","timeRange","UVRange",
     "FreqID", "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "Stokes", 
     "Sources",  "Qual", "souCode", "subA", "Antennas", 
     "doCalSelect", "doCalib", "gainUse", "doPol", "PDVer", "flagVer", 

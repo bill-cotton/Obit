@@ -3,7 +3,7 @@
 ;!  Obit Radio interferometry software
 ;# Task Obit UV Calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007-2012
+;;  Copyright (C) 2007-2015
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -51,6 +51,8 @@ Qual             -1.0              Source qualifier -1=>all
 souCode                            Calibrator code '    '=>all
 **PARAM** float 2
 timeRange                          Time range to copy
+**PARAM** float 2
+UVRange         0.                 Min & max baseline (klambda)
 **PARAM** str 4
 Stokes                             Stokes type to pass.
 **PARAM** int 1 **DEF** -1
@@ -72,7 +74,7 @@ doCalib          -1.0        2.0   If >0 calibrate data
 gainUse                            CL (or SN) table to apply
 **PARAM** boo 1 **DEF** F
 doPol            -1.0       10.0   If >0 correct polarization.
-**PARAM** int 1 **DEF** -1
+**PARAM** int 1 **DEF** 1
 PDVer                              PD table to apply
                                    If >=0, per channel corrections
 **PARAM** int 1
@@ -171,6 +173,7 @@ Adverbs:
   timeRange..Time range of the data to be copied. In order:
              Start and end times in days relative to ref.date.  
              Use  dhms2day to convert from human readable form
+  UVRange....(Minimum,Maximum) baseline (kilo-lambda) to process. 
   Stokes.....The desired Stokes type of the output data:
              'I','V','Q','U','IQU','IQUV','IV','RR','LL','RL',
              'LR','HALF' (=RR,LL), 'FULL' (=RR,LL,RL,LR)

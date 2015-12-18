@@ -80,9 +80,9 @@ BPVer                               Bandpass table version
 flagVer                             Flag table version
 **PARAM** boo 1 **DEF** F
 doPol                               Apply polarization cal?
-**PARAM** int 1 **DEF** -1
-PDVer                              PD table to apply
-                                   If >=0, per channel corrections
+**PARAM** int 1 **DEF** 1
+PDVer                               PD table to apply
+                                    If >=0, per channel corrections
 **PARAM** float 1  **DEF** 0.0
 Alpha           -20.       20.      Spectral Index to correct
 **PARAM** float 1 **DEF** 0.999
@@ -320,7 +320,7 @@ Development Memo 17
 (Obit page: http://www.cv.nrao.edu/~bcotton/Obit.html), 
 and EVLA beam correction images c. Dec 2009 are available from 
 ftp://ftp.cv.nrao.edu/NRAO-staff/bcotton/Obit/BeamImages
-as gzipped FITS files.
+as gzipped FITS files. ***************OUT OF DATE!
 
    The products of this task are a CLEAN image and an improved 
 calibration. Unless otherwise specified, a fly's eye pattern of
@@ -458,31 +458,39 @@ Adverbs:
       Beamshape files
   in3DType..'FITS' or 'AIPS'  type of Beam images, defaults to
              DataType.
-  in3Name....Power Beam AIPS name.      Standard defaults.
-  in3Class...Power Beam AIPS class. Expected form "Sxxxxx" where "S"
-             is the Stokes parameter (RLQU or XY) and "xxxx" arbitrary.
+  in3Name....Voltage Beam AIPS name.      Standard defaults.
+  in3Class...Voltage Beam AIPS class. Expected form "SSxxxx" where "S"
+             is the correlation ('RR', 'XX'...) and "xxxx" arbitrary.
              The task will search for the different stokes images 
-             and I+V or I+V+Q+U should be provided.
+             and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
+	     NB: Application of instrumental poln cal. for linear 
+	     feeds will convert to a circular basis
   in3Seq.....Beam AIPS seq. # .    0 => highest.
   in3Disk....Disk drive # of beam (FITS or AIPS). NO default for AIPS
   in3File....FITS Voltage Beam input root if in3DType=='FITS'
-             Expected form "Sxxxxx" where "S" is the Stokes parameter 
-             (RLQU or XY) and "xxxx" is arbitrary. 
-             The task will search for the different Stokes images 
-             and R+L or X+Y or R+L+Q+U should be provided
+             Expected form "Sxxxxx" where "S" is the correlation 
+	     parameter ('RR', 'XX'...) and "xxxx" arbitrary.
+              The task will search for the different stokes images 
+             and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
+	     NB: Application of instrumental poln cal. for linear 
+	     feeds will convert to a circular basis
   doPhase....If True, also include phase in beam images
   in4Name....Voltage Beam phase AIPS name. Only used if doPhase = True
-  in4Class...Beam phase AIPS class. Expected form "Sxxxxx" where "S"
-             is the Stokes parameter (IVQU) and "xxxx" arbitrary.
+  in4Class...Beam phase AIPS class.  Expected form "SSxxxx" where "S"
+             is the correlation ('RR', 'XX'...) and "xxxx" arbitrary.
              The task will search for the different stokes images 
-             andR+L or X+Y or R+L+Q+U should be provided.
+             and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
+	     NB: Application of instrumental poln cal. for linear 
+	     feeds will convert to a circular basis
   in4Seq.....Beam phase AIPS seq. # .    0 => highest.
   in4Disk....Disk drive # of beam phase (FITS or AIPS).
   in4File....Power FITS Beam phase input root if in3DType=='FITS'
-             Expected form "Sxxxxx" where "S" is the Stokes parameter 
-             (IVQU) and "xxxx" is arbitrary. 
+             Expected form "Sxxxxx" where "S" is the correlation 
+	     parameter ('RR', 'XX'...) and "xxxx" arbitrary.
              The task will search for the different stokes images 
-             and R+L or X+Y or R+L+Q+U should be provided
+             and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
+	     NB: Application of instrumental poln cal. for linear 
+	     feeds will convert to a circular basis
              Only used if doPhase = True
 
       Output files

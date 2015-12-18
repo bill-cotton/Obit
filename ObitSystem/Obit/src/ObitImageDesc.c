@@ -425,6 +425,8 @@ void ObitImageDescIndex (ObitImageDesc* in)
   }
   /* Make sure equinox set if epoch set */
   if ((in->equinox<0.1) && (in->epoch>0.1)) in->equinox = in->epoch;
+  /* to be sure */
+  if (!strncmp (in->ctype[0], "GLON",   4)) in->coordType = OBIT_Galactic;
 } /* end ObitImageDescIndex */
 
 /**
@@ -510,7 +512,20 @@ ObitImageDescCvtPixel(ObitImageDesc* in, ObitImageDesc* out,
     Obit_log_error(err, OBIT_Error, 
 		   "%s: Error %d determining location of pixel in %s", 
 		   routine, bad, in->name);
-    return OK;
+    Obit_log_error(err, OBIT_Error, 
+		   "%s: input coord %lf %lf", routine, ra, dec);
+    /* DEBUG
+    fprintf(stderr,"in %lf %lf, %f %f, %f %f, %f, %d %s\n",
+	    in->crval[in->jlocr], in->crval[in->jlocd],
+	    in->crpix[in->jlocr], in->crpix[in->jlocd],
+	    in->cdelt[in->jlocr], in->cdelt[in->jlocd],
+	    in->crota[in->jlocd], in->coordType, in->ctype[in->jlocr]);
+    fprintf(stderr,"out %lf %lf, %f %f, %f %f, %f, %d %s\n",
+	    out->crval[out->jlocr], out->crval[out->jlocd],
+	    out->crpix[out->jlocr], out->crpix[out->jlocd],
+	    out->cdelt[out->jlocr], out->cdelt[out->jlocd],
+	    out->crota[out->jlocd], out->coordType, out->ctype[out->jlocr]); */
+     return OK;
   }
 
   /* Is outPixel in out? or close enough? */

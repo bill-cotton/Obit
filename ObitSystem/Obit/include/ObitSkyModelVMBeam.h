@@ -167,10 +167,10 @@ void ObitSkyModelVMBeamFromInfo (ObitSkyModel *out, gchar *prefix,
 /** Public: Create/initialize ObitSkyModelVMBeam structures */
 ObitSkyModelVMBeam* ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
 					      ObitUV *uvData,
-					      ObitImage *RXBeam,  ObitImage *LYBeam, 
-					      ObitImage *QBeam,   ObitImage *UBeam, 
-					      ObitImage *RXBeamPh,  ObitImage *LYBeamPh, 
-					      ObitImage *QBeamPh,   ObitImage *UBeamPh, 
+					      ObitImage *RXBeam,   ObitImage *LYBeam, 
+					      ObitImage *RLBeam,   ObitImage *LRBeam, 
+					      ObitImage *RXBeamPh, ObitImage *LYBeamPh, 
+					      ObitImage *RLBeamPh, ObitImage *LRBeamPh, 
 					      ObitErr *err);
 
 /** Public: Get Inputs. */

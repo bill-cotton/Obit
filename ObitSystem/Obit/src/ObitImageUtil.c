@@ -1339,6 +1339,8 @@ ObitImageUtilInterpolateImage (ObitImage *inImage, ObitImage *outImage,
     /* update Descriptive stuff from input */
     ObitImageDescCopyDesc (inImage->myDesc, outImage->myDesc, err);
     if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+    /* Index as well */
+    ObitImageDescIndex(outImage->myDesc);
 
     /* Creation date today */
     today = ObitToday();
@@ -1570,6 +1572,8 @@ ObitImageUtilInterpolateImageXY (ObitImage *inImage, ObitImage *outImage,
     /* update Descriptive stuff from input */
     ObitImageDescCopyDesc (inImage->myDesc, outImage->myDesc, err);
     if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+    /* Index as well */
+    ObitImageDescIndex(outImage->myDesc);
 
     /* Creation date today */
     today = ObitToday();
@@ -1720,8 +1724,8 @@ ObitImageUtilInterpolateImageXY (ObitImage *inImage, ObitImage *outImage,
  */
 void 
 ObitImageUtilGetXYPixels (ObitImage *inImage, ObitImage *outImage, 
-				 ObitImage *XPix, ObitImage *YPix, 
-			         ObitErr *err)
+			  ObitImage *XPix, ObitImage *YPix, 
+			  ObitErr *err)
 {
   ObitImageDesc *tmpDesc=NULL;
   olong i, j;
@@ -1788,6 +1792,9 @@ ObitImageUtilGetXYPixels (ObitImage *inImage, ObitImage *outImage,
     for (i=0; i<IMLEN_KEYWORD; i++) outImage->myDesc->ctype[j][i] = tmpDesc->ctype[j][i];
   }
   tmpDesc = ObitImageDescUnref(tmpDesc);
+
+  /* Index as well */
+  ObitImageDescIndex(outImage->myDesc);
 
   /* Initialize Threading */
   nThreads = MakeInterpFuncArgs (inImage->thread, -1, 0, NULL,
@@ -1947,6 +1954,8 @@ ObitImageUtilInterpolateImageZern (ObitImage *inImage, ObitImage *outImage,
     /* update Descriptive stuff from input */
     ObitImageDescCopyDesc (inImage->myDesc, outImage->myDesc, err);
     if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+    /* Index as well */
+    ObitImageDescIndex(outImage->myDesc);
 
     /* Creation date today */
     today = ObitToday();
@@ -3269,6 +3278,8 @@ ObitImage* ObitImageUtilQuanFITS (ObitImage *inImage, gchar *fileName,
   /* Copy header descriptive material */
   ObitImageDescCopyDesc (inImage->myDesc, out->myDesc, err);
   if (err->error) Obit_traceback_val (err, routine, inImage->name, out);
+  /* Index as well */
+  ObitImageDescIndex(out->myDesc);
   outDesc = out->myDesc;
   outDesc->bitpix = bitpix;
   outDesc->minval = minMin;

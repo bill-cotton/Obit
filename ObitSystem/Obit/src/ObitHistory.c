@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2010                                          */
+/*;  Copyright (C) 2004-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -826,13 +826,13 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
   gpointer     xdata;
   gboolean     found, *bdata;
   olong        i, j, is, ns, lens, more, indx, ltemp, lstr, *ldata, size;
-  olong         *idata;
+  olong        *idata;
   oint         *odata;
   ofloat       *fdata;
   odouble      *ddata;
   gchar        hicard[81], bchar, *cdata, cstring[200], cs[68], bpgmName[80];
   const ObitIOHistoryClassInfo *outClass;
-  gchar *routine = "ObitHistoryyCopyInfoList";
+  gchar *routine = "ObitHistoryCopyInfoList";
 
   /* error checks */
   g_assert(ObitErrIsA(err));
@@ -873,7 +873,7 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
 	  }
 	  outClass->ObitIOHistoryWriteRec (out->myIO, -1, hicard, err);
 	  if (err->error) Obit_traceback_val (err, routine, out->name, retCode);
-	  g_snprintf (hicard, 80, "%s ", bpgmName);
+	  g_snprintf (hicard, 80, "%s ", pgmName);
 	  indx = strlen (hicard);
 	}
 
@@ -894,7 +894,7 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
 	  }
 	  outClass->ObitIOHistoryWriteRec (out->myIO, -1, hicard, err);
 	  if (err->error) Obit_traceback_val (err, routine, out->name, retCode);
-	  g_snprintf (hicard, 80, "%s ", bpgmName);
+	  g_snprintf (hicard, 80, "%s ", pgmName);
 	  indx = strlen (hicard);
 	}
 
@@ -915,7 +915,7 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
 	  }
 	  outClass->ObitIOHistoryWriteRec (out->myIO, -1, hicard, err);
 	  if (err->error) Obit_traceback_val (err, routine, out->name, retCode);
-	  g_snprintf (hicard, 80, "%s ", bpgmName);
+	  g_snprintf (hicard, 80, "%s ", pgmName);
 	  indx = strlen (hicard);
 	}
 
@@ -933,7 +933,7 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
 	}
 	outClass->ObitIOHistoryWriteRec (out->myIO, -1, hicard, err);
 	if (err->error) Obit_traceback_val (err, routine, out->name, retCode);
-	g_snprintf (hicard, 80, "%s ", bpgmName);
+	g_snprintf (hicard, 80, "%s ", pgmName);
 	indx = strlen (hicard);
 	while (more>0) {
 	  for (j=0; j<4; j++) {
@@ -941,11 +941,11 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
 	    indx = strlen (hicard);
 	    more--;                    /* finished? */
 	    if (more<=0) break;
-	    if (indx>55) break;   /* Line full? */
+	    if (indx>56) break;   /* Line full? */
 	  }
 	  outClass->ObitIOHistoryWriteRec (out->myIO, -1, hicard, err);
 	  if (err->error) Obit_traceback_val (err, routine, out->name, retCode);
-	  g_snprintf (hicard, 80, "%s ", bpgmName);
+	  g_snprintf (hicard, 80, "%s ", pgmName);
 	  indx = strlen (hicard);
 	}
 
@@ -958,7 +958,7 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
 	outClass->ObitIOHistoryWriteRec (out->myIO, -1, hicard, err);
 	if (err->error) Obit_traceback_val (err, routine, out->name, retCode);
 	more = size - 1;
-	g_snprintf (hicard, 80, "%s ", bpgmName);
+	g_snprintf (hicard, 80, "%s ", pgmName);
 	indx = strlen (hicard);
 	while (more>0) {
 	  for (j=0; j<2; j++) {
@@ -966,11 +966,11 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
 	    indx = strlen (hicard);
 	    more--;                    /* finished? */
 	    if (more<=0) break;
-	    if (indx>45) break;   /* Line full? */
+	    if (indx>46) break;   /* Line full? */
 	  }
 	  outClass->ObitIOHistoryWriteRec (out->myIO, -1, hicard, err);
 	  if (err->error) Obit_traceback_val (err, routine, out->name, retCode);
-	  g_snprintf (hicard, 80, "%s ", bpgmName);
+	  g_snprintf (hicard, 80, "%s ", pgmName);
 	  indx = strlen (hicard);
 	}
 
@@ -1020,7 +1020,7 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
 	  }
 	  outClass->ObitIOHistoryWriteRec (out->myIO, -1, hicard, err);
 	  if (err->error) Obit_traceback_val (err, routine, out->name, retCode);
-	  g_snprintf (hicard, 80, "%s ", bpgmName);
+	  g_snprintf (hicard, 80, "%s ", pgmName);
 	  indx = strlen (hicard);
 	}
 
@@ -1042,7 +1042,7 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
 	  }
 	  outClass->ObitIOHistoryWriteRec (out->myIO, -1, hicard, err);
 	  if (err->error) Obit_traceback_val (err, routine, out->name, retCode);
-	  g_snprintf (hicard, 80, "%s ", bpgmName);
+	  g_snprintf (hicard, 80, "%s ", pgmName);
 	  indx = strlen (hicard);
 	}
 

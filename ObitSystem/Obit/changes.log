@@ -2980,3 +2980,34 @@ Obit/src/ObitBeamShape.c \
   FindTabBeam: Fix S band beam
   GetTabBeam: Fix indexing bug
 31 Oct 2015, svn ver 521
+
+Mostly partially successful EVLA beam imaging and correction, bug fixes
+Beam imaging and correction using correlation (RR,LL,RL,LR) beams
+Obit/src/ObitBeamShape.c:
+  Update P band beam
+  Update S band beam
+Obit/src/ObitUVUtil.c:
+  AvgF: Add noscale option to suppress scaling u,v,w (e.g. holography)
+Obit/TDF/MapBeam2.TDF Obit/tasks/MapBeam2.c:
+  New task to make correlation beam images
+Obit/include/ObitSkyModelVMBeamDef.h Obit/include/ObitSkyModelVMBeam.h
+Obit/src/ObitSkyModelVMBeam.c Obit/src/ObitSkyModelVMBeamMF.c:
+  Implement beam correction using correlation beams for all data.
+Obit/TDF/BeamCor.TDF Obit/TDF/MFBeam.TDF
+Obit/tasks/BeamCor.c Obit/tasks/MFBeam.c:
+  Change to use correlation beams rather than Stokes
+Obit/src/ObitHistory.c:
+  CopyInfoList: Add task name to all lines, cleanup floats
+Obit/src/ObitImageUtil.c:
+   various: Index output descriptor after copying
+Obit/tasks/MFImage.c:
+  doSources: Reset initial targBeam before each source    
+Obit/TDF/UVCopy.TDF Obit/TDF/Split.TDF:
+Obit/tasks/UVCopy.c Obit/tasks/Split.c:
+  Add UVRange parameter.
+Obit/src/ObitImageDesc.c:
+  CvtPixel: Better diagnostics in coordinate conversion.
+  Index: be sure coordType set for galactic
+Obit/src/ObitImageInterp.c:
+  FindPlane: Make more robust
+18 Dec 2015, svn ver 522
