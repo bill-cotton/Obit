@@ -3011,3 +3011,18 @@ Obit/src/ObitImageDesc.c:
 Obit/src/ObitImageInterp.c:
   FindPlane: Make more robust
 18 Dec 2015, svn ver 522
+
+Mostly bug fixes
+Obit/src/ObitIOImageFITS.c:
+  fixIRAF: Trap actual skew before determining rotation.
+Obit/src/ObitPlot.c Obit/include/ObitPlot.h:
+Obit/python/OPlot.inc Obit/python/OPlot.py:
+  Add DrawCircle
+  various: bugs in Gal. Lat. labeling
+  Grayscale: Allow extra for ticks
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  Update python interface to OPlot.
+Obit/src/ObitDisplay.c: 
+  Create: Only issue warning if more than one display is attempted.
+  Various: NOP if no display defined
+8 Jan 2016, svn ver 523

@@ -3107,8 +3107,10 @@ static void fixIRAF (ObitImageDesc *desc, ObitErr *err)
   }
 
   /*  rotation, average over skew */
-  rot1 = 57.296 * atan2 ( sdet*cd1[1], cd2[1]);
-  rot2 = 57.296 * atan2 (-sdet*cd2[0], cd1[0]);
+  if ((cd1[1]!=0.0) && (cd2[0]!=0.0)) {
+    rot1 = 57.296 * atan2 ( sdet*cd1[1], cd2[1]);
+    rot2 = 57.296 * atan2 (-sdet*cd2[0], cd1[0]);
+  } else {rot1 = rot2 = 0.0;}
 
   /* coordinate rotation */
   desc->crota[desc->jlocr] = 0.0;

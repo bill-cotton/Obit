@@ -6533,6 +6533,12 @@ extern void  PlotDrawCurve (ObitPlot* in, int n, float *x, float *y,
    ObitPlotDrawCurve (in, (olong)n, (ofloat*)x, (ofloat*)y, err);
 } // end PlotDrawCurve
 
+/**  Public: Draw a circle.*/
+extern void  PlotDrawCircle (ObitPlot* in, float x, float y, float radius, 
+                           ObitErr *err) {
+   ObitPlotDrawCircle (in, (ofloat)x, (ofloat)y, (ofloat)radius, err);
+} // end PlotDrawCircle
+
 /**  Public: Draw a Symbol.*/
 extern void  PlotDrawSymbol (ObitPlot* in, float x, float y, int symbol, 
                              ObitErr *err) {
@@ -6584,6 +6590,7 @@ extern void PlotText(ObitPlot *,float ,float ,float ,float ,float ,char *,ObitEr
 extern void PlotRelText(ObitPlot *,char *,float ,float ,float ,char *,ObitErr *);
 extern void PlotDrawLine(ObitPlot *,float ,float ,float ,float ,ObitErr *);
 extern void PlotDrawCurve(ObitPlot *,int ,float *,float *,ObitErr *);
+extern void PlotDrawCircle(ObitPlot *,float ,float ,float ,ObitErr *);
 extern void PlotDrawSymbol(ObitPlot *,float ,float ,int ,ObitErr *);
 extern int OPlotIsA(ObitPlot *);
 extern ObitPlot *OPlotRef(ObitPlot *);
@@ -39090,6 +39097,39 @@ static PyObject *_wrap_PlotDrawCurve(PyObject *self, PyObject *args) {
 {
   free((float *) _arg3);
 }
+    return _resultobj;
+}
+
+static PyObject *_wrap_PlotDrawCircle(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitPlot * _arg0;
+    float  _arg1;
+    float  _arg2;
+    float  _arg3;
+    ObitErr * _arg4;
+    PyObject * _argo0 = 0;
+    PyObject * _argo4 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OfffO:PlotDrawCircle",&_argo0,&_arg1,&_arg2,&_arg3,&_argo4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPlot_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PlotDrawCircle. Expected _ObitPlot_p.");
+        return NULL;
+        }
+    }
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of PlotDrawCircle. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    PlotDrawCircle(_arg0,_arg1,_arg2,_arg3,_arg4);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
     return _resultobj;
 }
 
@@ -78443,6 +78483,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "OPlotRef", _wrap_OPlotRef, METH_VARARGS },
 	 { "OPlotIsA", _wrap_OPlotIsA, METH_VARARGS },
 	 { "PlotDrawSymbol", _wrap_PlotDrawSymbol, METH_VARARGS },
+	 { "PlotDrawCircle", _wrap_PlotDrawCircle, METH_VARARGS },
 	 { "PlotDrawCurve", _wrap_PlotDrawCurve, METH_VARARGS },
 	 { "PlotDrawLine", _wrap_PlotDrawLine, METH_VARARGS },
 	 { "PlotRelText", _wrap_PlotRelText, METH_VARARGS },

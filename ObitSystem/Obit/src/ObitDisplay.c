@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2011                                          */
+/*;  Copyright (C) 2005-2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -150,8 +150,11 @@ ObitDisplay* ObitDisplayCreate (gchar* name, gchar *ServerURL, ObitErr *err)
   gchar *routine = "ObitDisplayCreate";
 
   /* Only allow one */
-  Obit_retval_if_fail((myClassInfo.numberDisplay<1), err, NULL,
-		      "%s: ONLY One XMLDisplay  allowed", routine);
+  if (myClassInfo.numberDisplay>1) {
+    Obit_log_error(err, OBIT_InfoWarn, "%s: One XMLDisplay  allowed",
+		   routine);
+    return NULL;
+  }
   myClassInfo.numberDisplay++;
 
   /* Create basic structure */
@@ -200,6 +203,9 @@ gboolean ObitDisplayShow (ObitDisplay* display, Obit *image,
   gchar *tmpfilename = "ObitDisplayFITS.fits.gz";
   gchar *tmpFullpath=NULL, *tmpdir = "/tmp/";
   gchar *routine = "ObitDisplayShow";
+
+  /* NOP if display not defined */
+  if (display==NULL) return out;
 
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -367,6 +373,9 @@ gboolean ObitDisplayShow (ObitDisplay* display, Obit *image,
  */
 void ObitDisplayTurnOn (ObitDisplay* display)
 {
+  /* NOP if display not defined */
+  if (display==NULL) return;
+
   /* error check */
   g_assert (ObitDisplayIsA(display));
 
@@ -379,6 +388,9 @@ void ObitDisplayTurnOn (ObitDisplay* display)
  */
 void ObitDisplayTurnOff (ObitDisplay* display)
 {
+  /* NOP if display not defined */
+  if (display==NULL) return;
+
   /* error check */
   g_assert (ObitDisplayIsA(display));
 
@@ -481,6 +493,9 @@ void ObitDisplayClear (gpointer inn)
   ObitClassInfo *ParentClass;
   ObitDisplay *in = inn;
 
+  /* NOP if display not defined */
+  if (inn==NULL) return;
+
   /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));
 
@@ -517,6 +532,9 @@ static gboolean pingServer (ObitDisplay* display, ObitErr *err)
   olong retCode;
   gchar *reason=NULL;
   gchar *routine = "ObitDisplay:pingServer";
+
+  /* NOP if display not defined */
+  if (display==NULL) return out;
 
   /* existing error? */
   if (err->error) return out;
@@ -593,6 +611,9 @@ static gboolean LoadImage (ObitDisplay* display, ObitImage *image,
   gchar *reason=NULL;
   gchar *routine = "ObitDisplay:LoadImage";
 
+  /* NOP if display not defined */
+  if (display==NULL) return out;
+
   /* existing error? */
   if (err->error) return out;
 
@@ -661,6 +682,9 @@ static ObitImage* CopyImage (ObitDisplay* display, ObitImage *image,
   olong chunk;
   ofloat factor;
   gchar *routine = "ObitDisplay:CopyImage";
+
+  /* NOP if display not defined */
+  if (display==NULL) return outFITS;
 
   /* existing error? */
   if (err->error) return outFITS;
@@ -759,6 +783,9 @@ static gboolean EditWindow (ObitDisplay* display, ObitDConCleanWindow *window,
   olong retCode;
   gchar *reason=NULL;
   gchar *routine = "ObitDisplay:EditWindow";
+
+  /* NOP if display not defined */
+  if (display==NULL) return out;
 
   /* existing error? */
   if (err->error) return out;
@@ -932,6 +959,9 @@ static gboolean  CheckDoTV (ObitDisplay* display, ObitErr *err)
   gboolean out = FALSE;
   gchar fullname[1024], *PgmName=NULL;
   gchar *routine = "ObitDisplay:CheckDoTV";
+
+  /* NOP if display not defined */
+  if (display==NULL) return out;
 
   /* existing error? */
   if (err->error) return out;

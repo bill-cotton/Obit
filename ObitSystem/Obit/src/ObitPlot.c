@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -1177,7 +1177,7 @@ void ObitPlotContour (ObitPlot* in, gchar *label, ObitImage *image,
       g_snprintf (ylabel,120,"Declination (%s)", units);
     else  /* Don't call it Dec */
       g_snprintf (ylabel,120,"Rotated Declination (%s)", units);
-  } else if (!strncmp(image->myDesc->ctype[1],"GLON", 4)) {
+  } else if (!strncmp(image->myDesc->ctype[1],"GLAT", 4)) {
       g_snprintf (ylabel,120,"Gal. Lat. (%s)", units);
   } else { /* Don't recognize */
       g_snprintf (ylabel,120,"Y (%s)", units);
@@ -1372,7 +1372,7 @@ void ObitPlotContour (ObitPlot* in, gchar *label, ObitImage *image,
       g_snprintf (ylabel,120,"Declination (%s)", units);
     else  /* Don't call it Dec */
       g_snprintf (ylabel,120,"Rotated Declination (%s)", units);
-  } else if (!strncmp(image->myDesc->ctype[1],"GLON", 4)) {
+  } else if (!strncmp(image->myDesc->ctype[1],"GLAT", 4)) {
       g_snprintf (ylabel,120,"Gal. Lat. (%s)", units);
   } else { /* Don't recognize */
       g_snprintf (ylabel,120,"Y (%s)", units);
@@ -1570,7 +1570,7 @@ void ObitPlotGrayScale (ObitPlot* in, gchar *label, ObitImage *image,
 #ifdef HAVE_PLPLOT  /* Only if plplot available */
   ObitImageDesc *id;
   olong i, just, axis;
-  ofloat xmax, xmin, ymax, ymin, cscale;
+  ofloat xmax, xmin, ymax, ymin, dx, dy, cscale;
   PLFLT px, py, wx, wy, **map=NULL, clevel[256], delta;
   ofloat maxval=0.0, minval=0.0;
   olong pos[2];
@@ -1660,14 +1660,20 @@ void ObitPlotGrayScale (ObitPlot* in, gchar *label, ObitImage *image,
   ny = image->myDesc->inaxes[1];
   
   /* Define size of plot in world coordinates */
+  dx = image->myDesc->cdelt[0]; /* X Cell size */
+  dy = image->myDesc->cdelt[1]; /* X Cell size */
   px = (PLFLT)1.0; py = (PLFLT)1.0;
   plplotCoord (px, py, &wx, &wy, (PLPointer)in);
-  xmin = (ofloat)wx;
-  ymin = (ofloat)wy;
+  if (wx>0.0) xmin = (ofloat)(wx - MAX(0.015*nx, 5)*dx*in->scalex);  /* Allow extra for ticks */
+  else        xmin = (ofloat)(wx - MAX(0.015*nx, 5)*dx*in->scalex);
+  if (wy>0.0) ymin = (ofloat)(wy - MAX(0.015*ny, 5)*dy*in->scaley);
+  else        ymin = (ofloat)(wy - MAX(0.015*nx, 5)*dy*in->scaley);
   px = (PLFLT)nx; py = (PLFLT)ny;
   plplotCoord (px, py, &wx, &wy, (PLPointer)in);
-  xmax = (ofloat)wx;
-  ymax = (ofloat)wy;
+  if (wx>0.0) xmax = (ofloat)(wx + MAX(0.015*nx, 5)*dx*in->scalex);
+  else        xmax = (ofloat)(wx + MAX(0.015*nx, 5)*dx*in->scalex);
+  if (wy>0.0) ymax = (ofloat)(wy + MAX(0.015*ny, 5)*dy*in->scaley);
+  else        ymax = (ofloat)(wy + MAX(0.015*ny, 5)*dy*in->scaley);
 
   /* set plotting area */
   axis = -2;
@@ -1694,7 +1700,7 @@ void ObitPlotGrayScale (ObitPlot* in, gchar *label, ObitImage *image,
       g_snprintf (ylabel,120,"Declination (%s)", units);
     else  /* Don't call it Dec */
       g_snprintf (ylabel,120,"Rotated Declination (%s)", units);
-  } else if (!strncmp(image->myDesc->ctype[1],"GLON", 4)) {
+  } else if (!strncmp(image->myDesc->ctype[1],"GLAT", 4)) {
       g_snprintf (ylabel,120,"Gal. Lat. (%s)", units);
   } else { /* Don't recognize */
       g_snprintf (ylabel,120,"Y (%s)", units);
@@ -1744,6 +1750,13 @@ void ObitPlotGrayScale (ObitPlot* in, gchar *label, ObitImage *image,
   ObitPlotRelText (in, "T", 1.0, 0.0, just, xlabel, err);
 
   /* Square root? */
+ /* Clip range to max/min */
+  ObitFArrayInClip (image->image, -1.0e25, minval, minval);
+  ObitFArrayInClip (image->image, maxval, 1.0e25, maxval);
+  /* blank below minval */
+  ObitFArrayDeblank (image->image, minval-1.0);
+  maxval = ObitFArrayMax (image->image, pos); /* DEBUG */
+
   if (doSQRT) {
     /* Modify image buffer */
     ObitFArraySAdd(image->image, -minval+1.0e-20);
@@ -1752,13 +1765,7 @@ void ObitPlotGrayScale (ObitPlot* in, gchar *label, ObitImage *image,
     minval = 0.0;
   }
 
-  /* Clip range to max/min */
-  ObitFArrayInClip (image->image, -1.0e25, minval, minval);
-  ObitFArrayInClip (image->image, maxval, 1.0e25, maxval);
-  /* blank below minval */
-  ObitFArrayDeblank (image->image, minval-1.0);
-
-  /* Convert Obit image to plplot array */
+   /* Convert Obit image to plplot array */
   map = reorderPixels(image->image);
 
   /* Color map */
@@ -1788,6 +1795,7 @@ void ObitPlotGrayScale (ObitPlot* in, gchar *label, ObitImage *image,
       it = green[i]; green[i] = green[nlevel-i-1]; green[nlevel-i-1] = it;
       it = blue[i];  blue[i]  = blue[nlevel-i-1];  blue[nlevel-i-1]  = it;
     }
+    i = nlevel-1; red[i] = green[i] = blue[i] = (PLINT)0;
   }
   plscmap1(red, green, blue, nlevel);
 
@@ -1930,7 +1938,7 @@ void ObitPlotGrayScale (ObitPlot* in, gchar *label, ObitImage *image,
       g_snprintf (ylabel,120,"Declination (%s)", units);
     else  /* Don't call it Dec */
       g_snprintf (ylabel,120,"Rotated Declination (%s)", units);
-  } else if (!strncmp(image->myDesc->ctype[1],"GLON", 4)) {
+  } else if (!strncmp(image->myDesc->ctype[1],"GLAT", 4)) {
       g_snprintf (ylabel,120,"Gal. Lat. (%s)", units);
   } else { /* Don't recognize */
       g_snprintf (ylabel,120,"Y (%s)", units);
@@ -3332,6 +3340,42 @@ void  ObitPlotDrawCurve (ObitPlot* in, olong n, ofloat *x, ofloat *y,
   /* Complain if plotting not available */
   if (!OK) Obit_log_error(err, OBIT_Error, "No plotting package available");
 } /* end ObitPlotDrawCurve */
+
+/** 
+ * Primitive routine draw a circle
+ * points.
+ * \param in      Pointer to Plot object.
+ * \param x       world x-coordinate of center
+ * \param y       world y-coordinate of center
+ * \param radius  world coordinate radius
+ * \param err     ObitErr error stack
+ */
+void  ObitPlotDrawCircle (ObitPlot* in, ofloat x, ofloat y, ofloat radius,
+		 	 ObitErr *err)
+{
+#define N_QUAD 15  /* Number of points per quadrant */
+  olong i, j, ns=N_QUAD, n1=N_QUAD-1;
+  /* Sin table every 1/N_QUAD of 90 deg. */
+  ofloat sc[N_QUAD] = {0.0,0.10452846326765346,0.20791169081775931,0.3090169943749474,0.40673664307580015,
+		       0.49999999999999994,0.58778525229247314,0.66913060635885824,0.74314482547739413,
+		       0.80901699437494745,0.8660254037844386,0.91354545764260087,0.95105651629515353,
+		       0.97814760073380569,0.99452189536827329};
+  ofloat xc[1+4*N_QUAD], yc[1+4*N_QUAD];
+
+  /* error checks */
+  if (err->error) return;
+  
+  /* By quadrant */
+  j = 0;
+  for (i=0; i<ns; i++) {xc[j] = x + sc[i]*radius;    yc[j] = y + sc[n1-i]*radius; j++;}
+  for (i=0; i<ns; i++) {xc[j] = x + sc[n1-i]*radius; yc[j] = y - sc[i]*radius;    j++;}
+  for (i=0; i<ns; i++) {xc[j] = x - sc[i]*radius;    yc[j] = y - sc[n1-i]*radius; j++;}
+  for (i=0; i<ns; i++) {xc[j] = x - sc[n1-i]*radius; yc[j] = y + sc[i]*radius;    j++;}
+  xc[j] = xc[0]; yc[j] = yc[0]; j++; /* Close */
+
+  /* Plot */
+  ObitPlotDrawCurve (in, j, xc, yc, err);
+} /* end ObitPlotDrawCircle */
 
 /**
  * Initialize global ClassInfo Structure.

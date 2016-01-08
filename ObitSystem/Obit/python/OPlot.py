@@ -23,7 +23,7 @@ can be used in text strings:
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2006,2008
+#  Copyright (C) 2006,2016
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -754,6 +754,24 @@ def PDrawCurve (plot, x, y, err):
     n = len(x)
     Obit.PlotDrawCurve (plot.me, n, x, y, err.me)
     # end  PDrawCurve 
+
+def PDrawCircle (plot, x, y,radius,  err):
+    """
+    Draw a circle.
+
+    * plot   = Python Plot object
+    * x      =  World x-coordinate of center
+    * y      =  World y-coordinate of center
+    * radius =  World coordinate radius
+    * err    =  ObitErr error stack
+    """
+    ################################################################
+     # Checks
+    if not PIsA(plot):
+        raise TypeError,"plot MUST be a Python Obit plot"
+    #
+    Obit.PlotDrawCircle (plot.me, x, y, radius, err.me)
+    # end  PDrawCircle 
 
 def PDrawSymbol (plot, x, y, symbol, err):
     """

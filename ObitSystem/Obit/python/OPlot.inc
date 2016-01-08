@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitPlot type                          */
 /*                                                                    */
-/*;  Copyright (C) 2006,2008                                          */
+/*;  Copyright (C) 2006,2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -178,6 +178,12 @@ extern void  PlotDrawCurve (ObitPlot* in, int n, float *x, float *y,
                            ObitErr *err) {
    ObitPlotDrawCurve (in, (olong)n, (ofloat*)x, (ofloat*)y, err);
 } // end PlotDrawCurve
+
+/**  Public: Draw a circle.*/
+extern void  PlotDrawCircle (ObitPlot* in, float x, float y, float radius, 
+                           ObitErr *err) {
+   ObitPlotDrawCircle (in, (ofloat)x, (ofloat)y, (ofloat)radius, err);
+} // end PlotDrawCircle
 
 /**  Public: Draw a Symbol.*/
 extern void  PlotDrawSymbol (ObitPlot* in, float x, float y, int symbol, 
