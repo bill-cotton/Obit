@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Instrumental polarization calibration                              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2015                                          */
+/*;  Copyright (C) 2012-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -924,7 +924,7 @@ void PCalHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "nfield", "CCVer", "BComp", "EComp", "Cmethod", "Cmodel", "Flux",
     "modelFlux", "modelPos", "modelParm", "solInt", "refAnt", 
     "solnType", "Sources", "Qual", "souCode", "doFitI", "doFitPol", "doFitV", 
-    "doFitGain", "doFitOri", "doFitRL", "RLPhase", "RM", "PPol", "XPhase", 
+    "doFitGain", "doFitOri", "doFitRL", "RLPhase", "RM", "PPol", "dPPol", "XPhase", 
     "ChWid", "ChInc", "CPSoln", "PDSoln", "BPSoln", "doBlank", 
     "nThreads",
    NULL};
@@ -971,9 +971,9 @@ ObitUV* AverData (ObitInfoList* myInput, ObitUV* scrData,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *PolCalParms[] = {     /* Polarization calibration parameters */
     "solnType", "Sources", "Qual", "souCode", "doFitI", "doFitPol", "doFitV", 
-    "doFitGn", "doFitRL", "RLPhase", "RM", "PPol", "XPhase", "ChWid", "ChInc", 
-    "CPSoln", "PDSoln", "BPSoln",  "doBlank", "doFitGain", "doFitOri", 
-    "doBand", "BPVer", "refAnt", "prtLv", "BIF", "BChan",
+    "doFitGn", "doFitRL", "RLPhase", "RM", "PPol", "dPPol", "XPhase", 
+    "ChWid", "ChInc", "CPSoln", "PDSoln", "BPSoln",  "doBlank", 
+    "doFitGain", "doFitOri", "doBand", "BPVer", "refAnt", "prtLv", "BIF", "BChan",
     NULL};
   gchar *FQInclude[] = {"AIPS FQ", "AIPS AN", NULL};
   gchar *routine = "AverData";

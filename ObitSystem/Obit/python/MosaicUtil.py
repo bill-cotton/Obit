@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2015
+#  Copyright (C) 2004-2016
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -119,7 +119,8 @@ def PMakeMaster(template, size, SumWtImage, SumWt2, err):
     # end PMakeMaster
 
 def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
-                 iblc=[1,1], itrc=[0,0], restart=0, hwidth=2, doGPU=False):
+                 iblc=[1,1], itrc=[0,0], restart=0, hwidth=2, doGPU=False,
+                 planeWt=False):
     """
     Sum an image onto Weighting accumulators using PB corrections
     
@@ -140,6 +141,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     * hwidth     = half width of interpolation kernal [1-4] default 2
     * doGPU      = If true and GPU enables, use a GPU for the interpolation.
     *              NB: routine will fail if GPU is not enabled.
+    * planeWt    = if True generate weight image per input plane
     """
     ################################################################
     # Checks
@@ -195,7 +197,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         outPlane = [iPlane+2-bpln,1,1,1,1]   # output plane
         if not (iPlane%20):
             print "At plane", iPlane+1,os.times()
-        # Make weight image, first pass
+        # Make weight image, first pass or planeWt
         if WtImage == None:
             # Get image 
             Image.PGetPlane (inImage, None, doPlane, err)
@@ -209,7 +211,10 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
                 fact = factor
             WtImage = Image.Image("WeightImage")
             Image.PCloneMem(inImage, WtImage, err)
-            pln = [max(1,inNaxis[2]/2),1,1,1,1]
+            if planeWt:
+                pln = [iPlane+1,1,1,1,1]
+            else:
+                pln = [max(1,inNaxis[2]/2),1,1,1,1]
             ImageUtil.PPBImage(inImage, WtImage, err, minGain, outPlane=pln)
             OErr.printErrMsg(err, "Error making weight image for "+Image.PGetName(inImage))
             
@@ -299,6 +304,10 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         Image.PPutPlane(SumWt2, None, outPlane, err)
         Image.PPutPlane(SumWtImage, None, outPlane, err)
         OErr.printErrMsg(err, "Error writing accumulation image ")
+        if planeWt:
+            del WtImage, InterpWtImage, InterpWt, InterpWtWt 
+            WtImage = None; InterpWtImage = None; InterpWt = None
+            InterpWtWt = None
         # end loop over planes
     # close output
     #Image.PClose(inImage, err)

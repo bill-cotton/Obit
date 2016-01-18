@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012                                               */
+/*;  Copyright (C) 2012-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -132,6 +132,10 @@ typedef struct {
   gboolean doFitGain;
   /** Are the feeds circularly polarized? */
   gboolean isCircFeed;
+  /** Reference frequency (Hz) */
+  odouble refFreq;
+  /** Current frequency (Hz) */
+  odouble curFreq;
   /** R-L (or X-Y) phase difference */
   odouble PD;
   /** Error estimate R-L (or X-Y) phase difference */
@@ -203,6 +207,8 @@ typedef struct {
   ofloat *RLPhase;
   /** Fractional polarization of calibrators */
   ofloat *PPol;
+  /** Derivative of PPol (GHz) of calibrators */
+  ofloat *dPPol;
   /** Central channel (1-rel) of fit */
   olong Chan;
   /** IF number (1-rel) */

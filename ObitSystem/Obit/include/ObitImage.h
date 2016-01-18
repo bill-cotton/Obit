@@ -1,6 +1,6 @@
 /* $Id$           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2003-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -357,10 +357,13 @@ ObitImage* ObitImageGetBeam (ObitImage *in, olong beamNo, olong plane[5],
 			     ObitErr *err);
 typedef ObitImage* (*ObitImageGetBeamFP) (ObitImage *in, olong beamNo,
 					  olong plane[5], ObitErr *err);
-
 /** Public: Return image Beam order. */
 olong ObitImageGetBeamOrder (ObitImage *in);
 typedef olong (*ObitImageGetBeamOrderFP) (ObitImage *in);
+
+/** Public: Return Frequency of current plane */
+odouble ObitImageGetPlaneFreq (ObitImage *in);
+typedef double (*ObitImageGetPlaneFreqFP) (ObitImage *in);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 

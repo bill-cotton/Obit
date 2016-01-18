@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry instrumental polarization calibration
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2012-2015
+;;  Copyright (C) 2012-2016
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -121,6 +121,8 @@ RLPhase       -4000.      400.      R-L phase difference per calibrator
 RM                                  Rotation measure, per calibrator
 **PARAM** float 10  **DEF** 0.0
 PPol          0.0          1.0      Fract lin poln per calibrator
+**PARAM** float 10  **DEF** 0.0
+dPPol        -1.0          1.0      Freq derivative of Fract lin poln
 **PARAM** float 1   **DEF** 0.0
 XPhase        0.0          1.0      Cross hand phase difference (deg)
                                        
@@ -328,9 +330,11 @@ Adverbs:
              major_axis (asec),  minor_axis (asec),  position_angle (deg),
   RLPhase....The target value of the R-L phase difference at the data 
              reference frequency. (deg)  One value per calibrator.
-  RM.........NYI The rotation measure (rad/m^2) used to convert RLPhase
+  RM.........The rotation measure (rad/m^2) used to convert RLPhase
              to other frequencies. One value per calibrator.
-  PPol.......Fractional linear polarization of calibrators
+  PPol.......Fractional linear polarization of calibrators at reference 
+             frequency. One value per calibrator.
+  dPPol......Derivative of PPol with frequency (GHz)
   XPhase.....Cross hand phase difference [deg]
 
       Calibration control

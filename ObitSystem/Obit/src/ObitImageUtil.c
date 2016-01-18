@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2015                                          */
+/*;  Copyright (C) 2003-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2508,9 +2508,9 @@ ObitImageUtilPBCorr (ObitImage *inImage, ObitImage *pntImage, ObitImage *outImag
   out = ObitFArrayIndex (outImage->image, pos);
 
   /* Set up - get frequency, default 1 GHz*/
-  Freq = 1.0e9;
-  if (inImage->myDesc->jlocf>=0) 
-    Freq = inImage->myDesc->crval[inImage->myDesc->jlocf];
+  Freq = ObitImageMFGetPlaneFreq(inImage);
+  if (Freq<=0.0) Freq = 1.0e9;
+
   /* which beam model to use */
   doJinc = (Freq >= 1.0e9);
   inDesc = inImage->myDesc; /* Input descriptor */
@@ -2732,10 +2732,9 @@ ObitImageUtilPBApply (ObitImage *inImage, ObitImage *pntImage, ObitImage *outIma
   out = ObitFArrayIndex (outImage->image, pos);
 
   /* Set up - get frequency, default 1 GHz*/
-  Freq = 1.0e9;
-  if (inImage->myDesc->jlocf>=0) 
-    Freq = inImage->myDesc->crval[inImage->myDesc->jlocf];
-  /* which beam model to use */
+  Freq = ObitImageMFGetPlaneFreq(inImage);
+  if (Freq<=0.0) Freq = 1.0e9;
+
   doJinc = (Freq >= 1.0e9);
   inDesc = inImage->myDesc; /* Input descriptor */
 
@@ -2839,7 +2838,7 @@ ObitImageUtilPBApply (ObitImage *inImage, ObitImage *pntImage, ObitImage *outIma
  */
 void 
 ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage, 
-		     olong *outPlane, ofloat antSize, ofloat minGain, ObitErr *err)
+		      olong *outPlane, ofloat antSize, ofloat minGain, ObitErr *err)
 {
   ObitIOSize IOBy;
   olong blc[IM_MAXDIM], trc[IM_MAXDIM];
@@ -2850,7 +2849,7 @@ ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
   ofloat pbf, equinox;
   gboolean doJinc, bad, doKAT;
   ObitImageDesc *outDesc;
-  gchar *routine = "ObitImageUtilPBApply";
+  gchar *routine = "ObitImageUtilPBImage";
 
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -2932,9 +2931,9 @@ ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
   out = ObitFArrayIndex (outImage->image, pos);
 
   /* Set up - get frequency, default 1 GHz*/
-  Freq = 1.0e9;
-  if (outImage->myDesc->jlocf>=0) 
-    Freq = outImage->myDesc->crval[outImage->myDesc->jlocf];
+  Freq = ObitImageMFGetPlaneFreq(outImage);
+  if (Freq<=0.0) Freq = 1.0e9;
+
   /* which beam model to use */
   doJinc = (Freq >= 1.0e9);
   outDesc = outImage->myDesc; /* output descriptor */

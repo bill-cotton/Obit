@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010,2011                                          */
+/*;  Copyright (C) 2010,2015                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -152,6 +152,10 @@ ObitImage* ObitImageMFGetBeam (ObitImage *in, olong beamNo, olong plane[5],
 
 /** Public: Return image Beam order. */
 olong ObitImageMFGetBeamOrder (ObitImage *in);
+
+/** Public: Return Frequency of current plane */
+odouble ObitImageMFGetPlaneFreq (ObitImage *in);
+
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012,2015                                          */
+/*;  Copyright (C) 2012,2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -144,6 +144,8 @@ ofloat *RLPhase;
 ofloat *RM;
 /** Fractional linear polarization per calibrator */
 ofloat *PPol;
+/** Freq derivative of PPol per calibrator */
+ofloat *dPPol;
 /** Flux density of calibrators at reference freq */
 ofloat *IFlux0;
 /** Spectral index of calibrators at reference freq */

@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2015                                          */
+/*;  Copyright (C) 2003-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1815,13 +1815,26 @@ ObitImage* ObitImageGetBeam (ObitImage *image, olong beamNo,
 /**
  * Get highest order of image beam
  * Used for Sault-Wieringa wideband imaging, 0 for base class
- * \param image  Image whose beam name is to be set 
+ * \param image  Image whose beam order is sought
  * \return order number
  */
 olong ObitImageGetBeamOrder (ObitImage *image) 
 {
   return 0;
 } /* end ObitImageGetBeam */
+
+/**
+ * Get Frequency of current image plane
+ * \param image  Image in question
+ * \return Freq Frequency (Hz), 0.0 if none in descriptor
+ */
+odouble ObitImageGetPlaneFreq (ObitImage *image) 
+{
+  odouble Freq=0.0;
+  if (image->myDesc->jlocf>=0) 
+    Freq = image->myDesc->crval[image->myDesc->jlocf];
+  return Freq;
+} /* end ObitImageGetPlaneFreq */
 
 /*-------Private functions called by ObitData class ------*/
 /** Private:  Copy Constructor for scratch file*/
@@ -1952,6 +1965,8 @@ static void ObitImageClassInfoDefFn ( gpointer inClass)
     (ObitImageGetBeamFP)ObitImageGetBeam;
   theClass->ObitImageGetBeamOrder = 
     (ObitImageGetBeamOrderFP)ObitImageGetBeamOrder;
+  theClass->ObitImageGetPlaneFreq = 
+    (ObitImageGetPlaneFreqFP)ObitImageGetPlaneFreq;
 
   /* Function pointers referenced from ObitData class */
   theClass->newObitDataScratch  = (newObitDataScratchFP)newObitDataImageScratch;

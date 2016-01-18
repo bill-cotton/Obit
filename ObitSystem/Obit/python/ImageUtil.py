@@ -263,7 +263,7 @@ def PPBCorr (inImage, pntImage, outImage, err,
     """
     Correct (divide) an image by the primary beam pattern of another
     
-    Pixels in outImage are inImage multiplied by the antenna beam pattern
+    Pixels in outImage are inImage divided by the antenna beam pattern
     from pntImage
 
     * inImage  = Input Python Image.

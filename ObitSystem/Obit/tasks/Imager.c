@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN/selfcalibrate a uv data set               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2014                                          */
+/*;  Copyright (C) 2005-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2700,7 +2700,7 @@ void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong RChan, NumChAvg=1;
   odouble Freq;
-  gboolean BLchAvg=FALSE;
+  gboolean btemp, BLchAvg=FALSE;
   ofloat BLFact=0.0, FOV=0.0, solPInt=0.0, solAInt=0.0, maxInt;
   gchar *routine = "BLAvg";
 
@@ -2711,6 +2711,16 @@ void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
      /*Obit_log_error(err, OBIT_InfoWarn, "Assuming output data OK on restart");
        return;*/
   }
+
+  /* Open and close  to be sure KeepSou reset */
+  ObitUVOpen(inData, OBIT_IO_ReadWrite, err);
+  dim[0] = dim[1] = dim[2] = dim[3] = 1;
+  btemp = FALSE;  /* Make sure KeepSou unset */
+  ObitInfoListAlwaysPut (inData->myDesc->info, "KeepSou", OBIT_bool, dim, &btemp);
+  inData->myStatus = OBIT_Modified;
+  ObitUVClose(inData, err);
+  if (err->error)Obit_traceback_msg (err, routine, inData->name);
+  inData->bufferSize = 0;  /* May need buffer later */
 
   /* What to do? */
   ObitInfoListGetTest(myInput, "BLFact", &type, dim, &BLFact);

@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2015                                          */
+/*;  Copyright (C) 2012-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -655,6 +655,7 @@ static void calcmodelXY (ObitPolnCalFit *args, ofloat Rarray[8], olong idata)
  *                <= -999 => fit value [-1000.] in deg.
  * \li RM         OBIT_float scalar Rotation measure (rad/m^2) to be used with RLPhase
  * \li PPol       OBIT_float scalar Fractional linear polarization per calibrator
+ * \li dPPol      OBIT_float scalar freq derivative of PPol (GHz) per calibrator
  * \li ChWid      OBIT_long scalar Number of channels in poln soln  [1]
  * \li ChInc      OBIT_long scalar  Spacing of poln soln  [1]
  * \li CPSoln     OBIT_long scalar Source (CP) table to write, 0=> create new  [0]
@@ -716,6 +717,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
   in->RLPhase  = g_malloc0(nCal*sizeof(ofloat));
   in->RM       = g_malloc0(nCal*sizeof(ofloat));
   in->PPol     = g_malloc0(nCal*sizeof(ofloat));
+  in->dPPol    = g_malloc0(nCal*sizeof(ofloat));
   in->doFitI   = g_malloc0(nCal*sizeof(olong));
   in->doFitV   = g_malloc0(nCal*sizeof(olong));
   in->doFitPol = g_malloc0(nCal*sizeof(olong));
@@ -736,6 +738,10 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     for (i=0; i<nCal; i++) in->PPol[i] = farr[i];
   else
     for (i=0; i<nCal; i++)  in->PPol[i] = 0.0;
+  if (ObitInfoListGetP(in->info, "dPPol", &type, dim, (gpointer)&farr))
+    for (i=0; i<nCal; i++) in->dPPol[i] = farr[i]*1.0e-9;  /* delta freq  to GHz */
+  else
+    for (i=0; i<nCal; i++)  in->dPPol[i] = 0.0;
   if (ObitInfoListGetP(in->info, "doFitI", &type, dim, (gpointer)&barr))
     for (i=0; i<nCal; i++) in->doFitI[i] = barr[i];
   else
@@ -1125,7 +1131,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
 	ia1    = in->antNo[i*2+0];
 	ia2    = in->antNo[i*2+1]; 
 	/* Diagnostics */
-	if ((isou==0) && (ia1==2) && (ia2==4)) {  /* first source 3-5 */
+	if ((isou==0) && (ia1==2) && (ia2==26)) {  /* first source 3-27 */
 	  /* Function by feed type  */
 	  if (in->isCircFeed ) {
 	    /* Circular feeds */
@@ -1151,7 +1157,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     WriteOutput(in, outUV, isOK, err);
     if (err->error) Obit_traceback_msg (err, routine, inUV->name);
 
-    } /* end loop over blocks of channels */
+  } /* end loop over blocks of channels */
   
 } /* end ObitPolnCalFitFit */
 
@@ -1256,6 +1262,7 @@ ObitPolnCalFit *in = inn;
   in->RLPhase    = NULL;
   in->RM         = NULL;
   in->PPol       = NULL;
+  in->dPPol      = NULL;
   in->doFitI     = NULL;
   in->doFitV     = NULL;
   in->doFitPol   = NULL;
@@ -1345,6 +1352,7 @@ void ObitPolnCalFitClear (gpointer inn)
   if (in->RLPhase)  g_free(in->RLPhase);
   if (in->RM)       g_free(in->RM);
   if (in->PPol)     g_free(in->PPol);
+  if (in->dPPol)    g_free(in->dPPol);
   if (in->doFitI)   g_free(in->doFitI);
   if (in->doFitV)   g_free(in->doFitV);
   if (in->doFitPol) g_free(in->doFitPol);
@@ -1524,7 +1532,7 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
   olong nChan, bch, ech, cnt, i, j, indx, indx1, indx2, indx3, indx4;
   olong ChInc=in->ChInc, jChan, jIF;
   ofloat *buffer, cbase, curPA1=0.0, curPA2=0.0, curTime=0.0, lastTime=-1.0e20;
-  ofloat sumRe, sumIm, sumWt; 
+  ofloat sumRe, sumIm, sumWt, PPol; 
   odouble lambdaRef, lambda, ll, sum;
   gboolean OK, allBad;
   gchar *routine = "ObitPolnCalFit:ReadData";
@@ -1746,10 +1754,11 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
     ll = log(in->freq/in->inDesc->freq);
     sum = in->IFlux1[i]*ll + in->IFlux2[i]*ll*ll;
     in->souParm[i*4] = exp(sum) * in->IFlux0[i];
-    /* Fixed linear poln? */
+    /* Fixed linear poln fn? */
     if (in->PPol[i]>0.0) {
-      in->souParm[i*4+1] = in->PPol[i] * in->souParm[i*4] * cos(in->RLPhase[i]);
-      in->souParm[i*4+2] = in->PPol[i] * in->souParm[i*4] * sin(in->RLPhase[i]);
+      PPol = in->PPol[i] + in->dPPol[i]*(in->freq-in->inDesc->freq);
+      in->souParm[i*4+1] = PPol * in->souParm[i*4] * cos(in->RLPhase[i]);
+      in->souParm[i*4+2] = PPol * in->souParm[i*4] * sin(in->RLPhase[i]);
     }
     /* Add 1% linear poln if fitting on init 
        if (init && in->souFit[i][1]) {
@@ -2570,7 +2579,7 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
   odouble begChi2, endChi2=0.0, iChi2, tChi2, deriv=0.0, deriv2=1.0;
   odouble difParam, difChi2=0.0, hiChi2=0.0, dChi2, d2Chi2;
   ofloat tParam, sParam, delta, sdelta = 0.02;
-  ofloat ParRMS, XRMS, fpol, fpa;
+  ofloat ParRMS, XRMS, fpol, fpa, PPol;
   olong isou=0, iant, i, k=0, iter, maxIter;
   olong pas=0, ptype=0, pnumb=-1;
   gchar *routine="ObitPolnCalFit:doFitFast";
@@ -2674,14 +2683,16 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
 	  in->souParm[isou*4+k] = sParam;   /* Set parameter to new or old value */
 	} /* end if fitting parameter */ 
 	else if (k==1) { /* Fixed Q poln? */
-	  if (in->PPol[isou]>0.0)
+	  if (in->PPol[isou]>0.0) {
+	    PPol = in->PPol[isou] + in->dPPol[isou]*(in->freq-in->inDesc->freq);
 	    in->souParm[isou*4+k] = 
-	      in->PPol[isou] * in->souParm[isou*4] * cos(in->RLPhase[isou]);
+	      PPol * in->souParm[isou*4] * cos(in->RLPhase[isou]);}
 	} /* end Fixed Q poln */
 	else if (k==2) { /* Fixed U poln? */
-	  if (in->PPol[isou]>0.0)
+	  if (in->PPol[isou]>0.0) {
+	    PPol = in->PPol[isou] + in->dPPol[isou]*(in->freq-in->inDesc->freq);
 	    in->souParm[isou*4+k] = 
-	      in->PPol[isou] * in->souParm[isou*4] * sin(in->RLPhase[isou]);
+	      PPol * in->souParm[isou*4] * sin(in->RLPhase[isou]);}
 	} /* end Fixed U poln */
 	if (err->error) Obit_traceback_val (err, routine, in->name, FALSE);
       } /* end loop over parameters */
@@ -2935,6 +2946,7 @@ static odouble GetChi2 (olong nThreads, ObitPolnCalFit *in,
     in->thArgs[iTh]->antNo  = in->antNo;
     in->thArgs[iTh]->souNo  = in->souNo;
     in->thArgs[iTh]->PD     = in->PD;
+    in->thArgs[iTh]->curFreq= in->freq;
     in->thArgs[iTh]->nvis   = in->nvis;
     in->thArgs[iTh]->paramType   = paramType;
     in->thArgs[iTh]->paramNumber = paramNumber;
@@ -3137,7 +3149,7 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
   odouble ipol=0.0, qpol=0.0, upol=0.0, vpol=0.0;
   odouble residR=0.0, residI=0.0, isigma=0.0;
   odouble sumParResid, sumXResid;
-  ofloat PD, chi1, chi2;
+  ofloat PD, chi1, chi2, PPol;
   olong nPobs, nXobs, ia1, ia2, isou, idata, isouLast=-999;
   gboolean isAnt1, isAnt2;
   size_t i;
@@ -3232,12 +3244,14 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
       ipol = souParm[isou*4+0];      /* Fitting or fixed? */
       if (args->souFit[isou][1]) 
 	qpol = souParm[isou*4+1];
-      else
-	qpol = args->PPol[isou]*ipol*cos(args->RLPhase[isou]);
+      else {
+	PPol = args->PPol[isou] + args->dPPol[isou]*(args->curFreq-args->refFreq);
+	qpol = PPol*ipol*cos(args->RLPhase[isou]);}
       if (args->souFit[isou][2]) 
 	upol = souParm[isou*4+2];
-      else
-	upol = args->PPol[isou]*ipol*sin(args->RLPhase[isou]);
+      else {
+	PPol = args->PPol[isou]+ args->dPPol[isou]*(args->curFreq-args->refFreq);
+	upol = PPol*ipol*sin(args->RLPhase[isou]);}
       vpol = souParm[isou*4+3];
       /* Complex Stokes array */
       COMPLEX_SET (S[0], ipol+vpol, 0.0);
@@ -4021,7 +4035,7 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
   odouble ipol=0.0, qpol=0.0, upol=0.0, vpol=0.0;
   odouble residR=0.0, residI=0.0, isigma=0.0;
   odouble sumParResid, sumXResid;
-  ofloat PD, chi1, chi2;
+  ofloat PD, chi1, chi2, PPol;
   olong nPobs, nXobs, ia1, ia2, isou, idata, isouLast=-999;
   gboolean isAnt1=FALSE, isAnt2=FALSE;
   size_t i;
@@ -4111,12 +4125,14 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
       /* Fitting or fixed? */
       if (args->souFit[isou][1]) 
 	qpol = souParm[isou*4+1];
-      else
-	qpol = args->PPol[isou]*ipol*cos(args->RLPhase[isou]);
+      else {
+	PPol = args->PPol[isou] + args->dPPol[isou]*(args->curFreq-args->refFreq);
+	qpol = PPol*ipol*cos(args->RLPhase[isou]);}
       if (args->souFit[isou][2]) 
 	upol = souParm[isou*4+2];
-      else
-	upol = args->PPol[isou]*ipol*sin(args->RLPhase[isou]);
+      else {
+	PPol = args->PPol[isou] + args->dPPol[isou]*(args->curFreq-args->refFreq);
+	upol = PPol*ipol*sin(args->RLPhase[isou]);}
       vpol = souParm[isou*4+3];
       /* Complex Stokes array */
       COMPLEX_SET (S0[0], ipol+vpol, 0.0);
@@ -4977,8 +4993,11 @@ static void MakePolnFitFuncArgs (ObitPolnCalFit *in, ObitErr *err)
     in->thArgs[i]->isouIDs  = in->isouIDs;
     in->thArgs[i]->nparam   = in->nparam;
     in->thArgs[i]->freq     = in->inDesc->freq;
+    in->thArgs[i]->refFreq  = in->freq;
+    in->thArgs[i]->curFreq  = in->freq;   /* Initial value */
     in->thArgs[i]->RLPhase  = in->RLPhase;
     in->thArgs[i]->PPol     = in->PPol;
+    in->thArgs[i]->dPPol    = in->dPPol;
     in->thArgs[i]->Chan     = 0;
     in->thArgs[i]->IFno     = 0;
     in->thArgs[i]->ChiSq    = 0.0;
@@ -5329,7 +5348,7 @@ static int PolnFitFuncOERL (const gsl_vector *x, void *params,
   dcomplex   *RDc    = args->RDc;
   dcomplex   *LSc    = args->LSc;
   dcomplex   *LDc    = args->LDc;
-  ofloat PD, chi1, chi2;
+  ofloat PD, chi1, chi2, PPol;
   double val;
   odouble ipol=0.0, qpol=0.0, upol=0.0, vpol=0.0;
   odouble residR=0.0, residI=0.0, isigma=0.0;
@@ -5438,12 +5457,14 @@ static int PolnFitFuncOERL (const gsl_vector *x, void *params,
       /* Fitting or fixed? */
       if (args->souFit[isou][1]) 
 	qpol = souParm[isou*4+1];
-      else
-	qpol = args->PPol[isou]*ipol*cos(args->RLPhase[isou]);
+      else {
+	PPol = args->PPol[isou] + args->dPPol[isou]*(args->freq-args->refFreq);
+	qpol = PPol*cos(args->RLPhase[isou]);}
       if (args->souFit[isou][2]) 
 	upol = souParm[isou*4+2];
-      else
-	upol = args->PPol[isou]*ipol*sin(args->RLPhase[isou]);
+      else {
+	PPol = args->PPol[isou] + args->dPPol[isou]*(args->freq-args->refFreq);
+	upol = PPol*ipol*sin(args->RLPhase[isou]);}
       vpol = souParm[isou*4+3];
       /* Complex Stokes array */
       COMPLEX_SET (S[0], ipol+vpol, 0.0);
@@ -5612,7 +5633,7 @@ static int PolnFitJacOERL (const gsl_vector *x, void *params,
   dcomplex   *RDc    = args->RDc;
   dcomplex   *LSc    = args->LSc;
   dcomplex   *LDc    = args->LDc;
-  ofloat PD, chi1, chi2;
+  ofloat PD, chi1, chi2, PPol;
   double val;
   odouble ipol=0.0, qpol=0.0, upol=0.0, vpol=0.0;
   odouble modelR, modelI, residR, residI, gradR, gradI, isigma;
@@ -5740,12 +5761,14 @@ static int PolnFitJacOERL (const gsl_vector *x, void *params,
       /* Fitting or fixed? */
       if (args->souFit[isou][1]) 
 	qpol = souParm[isou*4+1];
-      else
-	qpol = args->PPol[isou]*ipol*cos(args->RLPhase[isou]);
+      else {
+	PPol = args->PPol[isou] + args->dPPol[isou]*(args->freq-args->refFreq);
+	qpol = PPol*ipol*cos(args->RLPhase[isou]);}
       if (args->souFit[isou][2]) 
 	upol = souParm[isou*4+2];
-      else
-	upol = args->PPol[isou]*ipol*sin(args->RLPhase[isou]);
+      else {
+	PPol = args->PPol[isou] + args->dPPol[isou]*(args->freq-args->refFreq);
+	upol = PPol*ipol*sin(args->RLPhase[isou]);}
       vpol = souParm[isou*4+3];
       /* Complex Stokes array */
       COMPLEX_SET (S[0], ipol+vpol, 0.0);
@@ -6861,7 +6884,7 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
   dcomplex   *RDc    = args->RDc;
   dcomplex   *LSc    = args->LSc;
   dcomplex   *LDc    = args->LDc;
-  ofloat PD, chi1, chi2;
+  ofloat PD, chi1, chi2, PPol;
   double val;
   odouble ipol=0.0, qpol=0.0, upol=0.0, vpol=0.0;
   odouble residR, residI, gradR, gradI, modelR, modelI, isigma;
@@ -6990,12 +7013,14 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
       /* Fitting or fixed? */
       if (args->souFit[isou][1]) 
 	qpol = souParm[isou*4+1];
-      else
-	qpol = args->PPol[isou]*ipol*cos(args->RLPhase[isou]);
+      else {
+	PPol = args->PPol[isou] + args->dPPol[isou]*(args->freq-args->refFreq);
+	qpol = PPol*ipol*cos(args->RLPhase[isou]);}
       if (args->souFit[isou][2]) 
 	upol = souParm[isou*4+2];
-      else
-	upol = args->PPol[isou]*ipol*sin(args->RLPhase[isou]);
+      else {
+	PPol = args->PPol[isou] + args->dPPol[isou]*(args->freq-args->refFreq);
+	upol = PPol*ipol*sin(args->RLPhase[isou]);}
       vpol = souParm[isou*4+3];
       /* Complex Stokes array */
       COMPLEX_SET (S[0], ipol+vpol, 0.0);
@@ -8115,7 +8140,7 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
   dcomplex   *SXc    = args->RDc;
   dcomplex   *CYc    = args->LSc;
   dcomplex   *SYc    = args->LDc;
-  ofloat PD, chi1, chi2;
+  ofloat PD, chi1, chi2, PPol;
   double val;
   odouble ipol=0.0, qpol=0.0, upol=0.0, vpol=0.0;
   odouble residR, residI, modelR, modelI, isigma;
@@ -8247,12 +8272,14 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
       /* Fitting or fixed? */
       if (args->souFit[isou][1]) 
 	qpol = souParm[isou*4+1];
-      else
-	qpol = args->PPol[isou]*ipol*cos(args->RLPhase[isou]);
+      else {
+	PPol = args->PPol[isou] + args->dPPol[isou]*(args->freq-args->refFreq);
+	qpol = PPol*ipol*cos(args->RLPhase[isou]);}
       if (args->souFit[isou][2]) 
 	upol = souParm[isou*4+2];
-      else
-	upol = args->PPol[isou]*ipol*sin(args->RLPhase[isou]);
+      else {
+	PPol = args->PPol[isou] + args->dPPol[isou]*(args->freq-args->refFreq);
+	upol = PPol*ipol*sin(args->RLPhase[isou]);}
       vpol = souParm[isou*4+3];
        /* Complex Stokes array */
       COMPLEX_SET (S0[0], ipol+vpol, 0.0);
@@ -8435,7 +8462,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
   dcomplex   *SXc    = args->RDc;
   dcomplex   *CYc    = args->LSc;
   dcomplex   *SYc    = args->LDc;
-  ofloat PD, chi1, chi2;
+  ofloat PD, chi1, chi2, PPol;
   double val;
   odouble ipol=0.0, qpol=0.0, upol=0.0, vpol=0.0;
   odouble residR=0.0, residI=0.0, gradR=0.0, gradI=0.0, modelR=0.0, modelI=0.0, isigma=0.0;
@@ -8571,12 +8598,14 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
       /* Fitting or fixed? */
       if (args->souFit[isou][1]) 
 	qpol = souParm[isou*4+1];
-      else
-	qpol = args->PPol[isou]*ipol*cos(args->RLPhase[isou]);
+      else {
+	PPol = args->PPol[isou] + args->dPPol[isou]*(args->freq-args->refFreq);
+	qpol = PPol*ipol*cos(args->RLPhase[isou]);}
       if (args->souFit[isou][2]) 
 	upol = souParm[isou*4+2];
-      else
-	upol = args->PPol[isou]*ipol*sin(args->RLPhase[isou]);
+      else {
+	PPol = args->PPol[isou] + args->dPPol[isou]*(args->freq-args->refFreq);
+	upol = PPol*ipol*sin(args->RLPhase[isou]);}
       vpol = souParm[isou*4+3];
        /* Complex Stokes array */
       COMPLEX_SET (S0[0], ipol+vpol, 0.0);
@@ -9867,7 +9896,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
   dcomplex   *SXc    = args->RDc;
   dcomplex   *CYc    = args->LSc;
   dcomplex   *SYc    = args->LDc;
-  ofloat PD, chi1, chi2;
+  ofloat PD, chi1, chi2, PPol;
   double val;
   odouble ipol=0.0, qpol=0.0, upol=0.0, vpol=0.0;
   odouble residR=0.0, residI=0.0, gradR=0.0, gradI=0.0, modelR=0.0, modelI=0.0, isigma=0.0;
@@ -10005,12 +10034,14 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
       /* Fitting or fixed? */
       if (args->souFit[isou][1]) 
 	qpol = souParm[isou*4+1];
-      else
-	qpol = args->PPol[isou]*ipol*cos(args->RLPhase[isou]);
+      else {
+	PPol = args->PPol[isou] + args->dPPol[isou]*(args->freq-args->refFreq);
+	qpol = PPol*ipol*cos(args->RLPhase[isou]);}
       if (args->souFit[isou][2]) 
 	upol = souParm[isou*4+2];
-      else
-	upol = args->PPol[isou]*ipol*sin(args->RLPhase[isou]);
+      else {
+	PPol = args->PPol[isou] + args->dPPol[isou]*(args->freq-args->refFreq);
+	upol = PPol*ipol*sin(args->RLPhase[isou]);}
       vpol = souParm[isou*4+3];
       /* Complex Stokes array */
       COMPLEX_SET (S0[0], ipol+vpol, 0.0);

@@ -3026,3 +3026,23 @@ Obit/src/ObitDisplay.c:
   Create: Only issue warning if more than one display is attempted.
   Various: NOP if no display defined
 8 Jan 2016, svn ver 523
+
+Get image plane frequency from image class, bug fixes
+Obit/src/ObitUVRLDelay.c: 
+  Cal: Fix double use of loop index.
+Obit/tasks/PCal.c Obit/TDF/PCal.TDF
+Obit/include/ObitPolnCalFitDef.h Obit/include/ObitPolnCalFit.h:
+Obit/src/ObitPolnCalFit.c:
+  Add dPPol (freq. derivative of PPol) parameter
+Obit/tasks/MFImage.c Obit/tasks/Imager.c:
+  BLAvg: Make sure KeepSou set to FALSE
+Obit/src/ObitImageUtil.c:
+  PBImage: Get image frequency from image class function GetPlaneFreq
+Obit/include/ObitImage.h Obit/include/ObitImageClassDef.h Obit/include/ObitImageMF.h :
+Obit/src/ObitImage.c Obit/src/ObitImageMF.c:
+  Implement GetPlaneFreq.
+Obit/python/MosaicUtil.py:
+  PWeightImage: Option to weight each plane independently
+Obit/python/ImageUtil.py:
+  documentation
+18 Jan 2016, svn ver 524

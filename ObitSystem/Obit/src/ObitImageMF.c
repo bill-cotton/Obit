@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2014                                          */
+/*;  Copyright (C) 2010-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1521,13 +1521,42 @@ ObitImage* ObitImageMFGetBeam (ObitImage *inn, olong beamNo,
 
 /**
  * Get current highest order of image beam here 0
- * \param inn  Image whose beam name is to be set 
+ * \param inn  Image whose beam order is sought
  * \return order number
  */
 olong ObitImageMFGetBeamOrder (ObitImage *inn) 
 {
   return 0;
 } /* end ObitImageMFGetBeam */
+
+/**
+ * Get Frequency of current image plane, works for eitther Image or ImageMF
+ * \param image  ImageMF in question
+ * \return Freq Frequency (Hz), 0.0 if none in descriptor or list
+ */
+odouble ObitImageMFGetPlaneFreq (ObitImage *image) 
+{
+  odouble Freq=0.0;
+  olong nterm =0,plane = image->myDesc->plane;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM];
+  gchar keyword[20];
+
+  /* Have ImageMF keywords? */
+  if (!ObitInfoListGetTest(image->myDesc->info, "NTERM", &type, dim, &nterm)) {
+    if (image->myDesc->jlocf>=0) 
+      Freq = image->myDesc->crval[image->myDesc->jlocf];
+    return Freq;
+  }
+  /* Get from header List or header if missing, term planes will get main header freq. */
+  sprintf(keyword,"FREQ%4.4d", plane-nterm);
+  if (!ObitInfoListGetTest(image->myDesc->info, keyword, &type, dim, &Freq)) {
+    if (image->myDesc->jlocf>=0) 
+      Freq = image->myDesc->crval[image->myDesc->jlocf];
+  }
+  /* DEBUG */
+  return Freq;
+} /* end ObitImageMFGetPlaneFreq */
 
 /*-------Private functions called by ObitData class ------*/
 /** Private: Zap */
@@ -1588,6 +1617,8 @@ static void ObitImageMFClassInfoDefFn ( gpointer inClass)
     (ObitImageGetBeamFP)ObitImageMFGetBeam;
   theClass->ObitImageGetBeamOrder = 
     (ObitImageGetBeamOrderFP)ObitImageMFGetBeamOrder;
+  theClass->ObitImageGetPlaneFreq = 
+    (ObitImageGetPlaneFreqFP)ObitImageMFGetPlaneFreq;
 
   /* Function pointers referenced from ObitData class */
   theClass->ObitDataZap     = (ObitDataZapFP)ObitDataImageMFZap;

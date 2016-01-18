@@ -90,7 +90,7 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   gboolean doCalSelect;
   ObitIOCode retCode;
   ObitInfoType type;
-  olong i, j, iAnt, SNver, iAnt1, iAnt2, suba, refAnt, BChan, SNSoln;
+  olong i, j, ii, iAnt, SNver, iAnt1, iAnt2, suba, refAnt, BChan, SNSoln;
   olong iSNRow, numFreq, jndx, indx, numPol, numIF, numAnt, nIFs;
   olong incs, incf, incif, js, jf, jif, kif, numVis;
   ofloat uvrang[2], wtuv, weight, wt, dFreq, snrmin, bl, solInt;
@@ -330,13 +330,13 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  
 	  /* Diagnostics */
 	  if (err->prtLv>=2) {
-	    for (i=0; i<numFreq*nIFs; i++) {
-	      if ((xpol1[(jif*numFreq+i)*3]==0.0) && 
-		  (xpol1[(jif*numFreq+i)*3+1]==0.0)) continue;
-	      corr = cos(2.0*G_PI*(delay[jif]*dFreq)*(i+BChan));
-	      cori = sin(2.0*G_PI*(delay[jif]*dFreq)*(i+BChan));
-	      tr   = xpol1[(jif*numFreq+i)*3];
-	      ti   = xpol1[(jif*numFreq+i)*3+1];
+	    for (ii=0; ii<numFreq*nIFs; ii++) {
+	      if ((xpol1[(jif*numFreq+ii)*3]==0.0) && 
+		  (xpol1[(jif*numFreq+ii)*3+1]==0.0)) continue;
+	      corr = cos(2.0*G_PI*(delay[jif]*dFreq)*(ii+BChan));
+	      cori = sin(2.0*G_PI*(delay[jif]*dFreq)*(ii+BChan));
+	      tr   = xpol1[(jif*numFreq+ii)*3];
+	      ti   = xpol1[(jif*numFreq+ii)*3+1];
 	      p1   = 57.295*atan2(ti, tr);
 	      cp1  = p1 + fmod(360.0*(delay[jif]*dFreq)*(i+BChan),360.0) - phase[jif]*57.296;
 	      if (cp1> 180.0) cp1 -= 360.0;
@@ -353,7 +353,7 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	      if (cp2<-180.0) cp2 += 360.0;
 	      Obit_log_error(err, OBIT_InfoErr, 
 			     "ch %4d xc1 %8.2f xc2 %8.2f corr %8.2f xc1 %8.2f xc2 %8.2f",
-			     i+BChan+1, p1, p2, 360.0*(delay[jif]*dFreq)*(i+BChan), cp1, cp2);
+			     ii+BChan+1, p1, p2, 360.0*(delay[jif]*dFreq)*(ii+BChan), cp1, cp2);
 	    }
 	  }
 	  if (err->prtLv>=1) {
@@ -370,17 +370,17 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  row->Time   = 0.5 * (lastTime+startTime); 
 	  row->TimeI  = (lastTime-startTime); 
 	  if (numPol>1) {
-	    for (i=0; i<nIFs; i++) {
+	    for (ii=0; ii<nIFs; ii++) {
 	      if (snr[jif]>0.0) {
-		row->Real2[jif+i]   =  cos(phase[jif+i]); 
-		row->Imag2[jif+i]   =  sin(phase[jif+i]); 
-		row->Delay2[jif+i]  =  delay[jif+i]; 
-		row->Weight2[jif+i] =  snr[jif+i]; 
+		row->Real2[jif+ii]   =  cos(phase[jif+ii]); 
+		row->Imag2[jif+ii]   =  sin(phase[jif+ii]); 
+		row->Delay2[jif+ii]  =  delay[jif+ii]; 
+		row->Weight2[jif+ii] =  snr[jif+ii]; 
 	      } else {
-		row->Real2[jif+i]   = 1.0;
-		row->Imag2[jif+i]   = 0.0;
-		row->Delay2[jif+i]  = 0.0;
-		row->Weight2[jif+i] = 1.0; 
+		row->Real2[jif+ii]   = 1.0;
+		row->Imag2[jif+ii]   = 0.0;
+		row->Delay2[jif+ii]  = 0.0;
+		row->Weight2[jif+ii] = 1.0; 
 	      } 
 	    }
 	  }
