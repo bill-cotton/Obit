@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Read BDF format data, convert to Obit UV                           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2015                                          */
+/*;  Copyright (C) 2010-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -205,6 +205,7 @@ gboolean *isHolRef;                   /* Array of antenna flags for holography,
 gboolean newOutput=TRUE;              /* Did output previous exist? */
 gboolean fliped=FALSE;                /* Flip frequency axis for EVLA patch */
 ofloat dayOff = 0.0;                  /* Offset from previous reference date */
+odouble lastOffset[50][2];            /* Last pointing offset per EVLA antenna */
 
 /* NX table structure, times only */
 olong noNXTimes=0;        /* Number of entries in NXTimes */
@@ -412,6 +413,9 @@ ObitInfoList* BDFInin (int argc, char **argv, ObitErr *err)
   gchar *strTemp;
   ObitInfoList* list;
   gchar *routine = "BDFInin";
+
+  /* Initialize last pointing array */
+  for (i=0;i<50;i++) {lastOffset[i][0] = 0.0; lastOffset[i][1] = 0.0;}
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
@@ -2882,6 +2886,8 @@ void HoloUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
 /*      outData  Output UV object                                         */
 /*      BDFData  BDF data structure                                       */
 /*      Buffer   Input uv data row, u,v,w will be modified                */
+/*   Global:                                                              */
+/*      lastOffset  Array of last offsets per antenna for the EVLA        */
 /*   Output:                                                              */
 /*       err     Obit return error stack                                  */
 /*----------------------------------------------------------------------- */
@@ -2923,15 +2929,21 @@ void HoloUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
   time = outData->buffer[outData->myDesc->iloct];
   JD   = refJD + time;
 
-  /* Lookup antenna pointings */
+  /* Lookup antenna pointings - use last or 0 if not found */
   pointA1 = ObitSDMDataPointingLookup(BDFData->SDMData, JD, ant1Id, err);
   pointA2 = ObitSDMDataPointingLookup(BDFData->SDMData, JD, ant2Id, err);
-  off1 = pointA1->offset;
-  off2 = pointA2->offset;
+  if (pointA1) {off1 = pointA1->offset; 
+                lastOffset[ant1Id][0] = off1[0];lastOffset[ant1Id][1] = off1[1];}
+  else          off1 = lastOffset[ant1Id];
+  if (pointA2) {off2 = pointA2->offset; 
+                lastOffset[ant2Id][0] = off2[0]; lastOffset[ant2Id][1] = off2[1];}
+  else          off2 = lastOffset[ant2Id];
 
-  /* Check there there are no polynomials */
-  Obit_return_if_fail(((!pointA1->usePolynomials)&&(!pointA2->usePolynomials)), err,
-		      "%s: Cannot handle polynomial pointing", routine);
+  /* Check that there are no polynomials */
+  if (pointA1 && pointA2) {
+    Obit_return_if_fail(((!pointA1->usePolynomials)&&(!pointA2->usePolynomials)), err,
+			"%s: Cannot handle polynomial pointing", routine);
+  }
 
   /* Get antenna lists if they don't already exist */
   if (antennaLists==NULL) {
@@ -3037,16 +3049,16 @@ void HoloUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
  }
 
   /* Get elevations */
-  if (pointA1->target[1]==0.0)
-    elev1 = ObitAntennaListElev (antennaLists[iarr], ant1, time, curSource);
-  else
+  if (pointA1 && pointA1->target[1]>0.0)
     elev1 = pointA1->target[1];
-  if (pointA2->target[1]==0.0)
-    elev2 = ObitAntennaListElev (antennaLists[iarr], ant2, time, curSource);
   else
+    elev1 = ObitAntennaListElev (antennaLists[iarr], ant1, time, curSource);
+  if (pointA2 && pointA2->target[1]>0.0)
     elev2 = pointA2->target[1];
+  else
+    elev2 = ObitAntennaListElev (antennaLists[iarr], ant2, time, curSource);
   elev = 0.5*elev1+0.5*elev2;
-
+  
   /* Offset */
   if ((fabs(off1[0])<1.0e-10) && (fabs(off1[1])<1.0e-10)) {
     off[0] = off2[0];

@@ -39,7 +39,7 @@ X    SysPower.xml
 X    Weather.xml
  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2015                                          */
+/*;  Copyright (C) 2010-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2178,11 +2178,11 @@ ASDMPointingRow* ObitSDMDataPointingLookup  (ObitSDMData *in, odouble JD, olong 
 	(timeI[0]-0.5*timeI[1]<=JD) && (timeI[0]+0.5*timeI[1]>=JD))
       {itab=i; break;}
   } /* End loop looking for table */
-  /* Find it? */
+  /* Find it?
   Obit_retval_if_fail((itab>=0), err, out,
 		      "%s: Failed to find pointing for ant %d JD %lf", 
-		      routine, ant, JD);
-  out = in->PointingTab->rows[itab];
+		      routine, ant, JD); */
+  if (itab>=0) out = in->PointingTab->rows[itab];
   return out;
 } /* end ObitSDMDataPointingLookup */
 

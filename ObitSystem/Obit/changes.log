@@ -3046,3 +3046,12 @@ Obit/python/MosaicUtil.py:
 Obit/python/ImageUtil.py:
   documentation
 18 Jan 2016, svn ver 524
+
+Bug fixes
+Obit/src/ObitTablePSUtil.c:
+  WantSour: Fix logic bug for status "Failed"
+Obit/src/ObitSDMData.c:
+  PointingLookup;: do not consider missing entry an error
+Obit/tasks/BDFIn.c:
+  HoloUVW: use last offset if missing pointing data
+19 Jan 2016, svn ver 525

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006                                               */
+/*;  Copyright (C) 2006,2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -73,8 +73,8 @@ gboolean ObitTablePSWantSour (ObitTablePS *in, gchar *target,
     
     /* Is this it? */
     if (!strncmp (row->FieldName, target, mxlen)) {
-      if (!strncmp (row->Status, "Done", 4)) out = FALSE;
-      else if (!strncmp (row->Status, "Failed", 6)) out = FALSE;
+      if (!strncmp (row->Status, "Done", 4))        out = FALSE;
+      else if (!strncmp (row->Status, "Failed", 6)) out = TRUE;
       else out = TRUE;
       *theRow = irow;
       break;
