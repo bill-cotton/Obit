@@ -330,6 +330,10 @@ int main ( int argc, char **argv )
   if (SDMData->isEVLA) {
     Obit_log_error(err, OBIT_InfoErr, "Creating CL Table");
     ObitErrLog(err);
+    /* Delete old CL table */
+    if (!newOutput)
+      ObitUVZapTable (outData, "AIPS CL", 1, err);
+    if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
     /*ObitTableCLGetDummy (outData, outData, 1, err); */
     CalTab = ObitGainCalCalc (outData, FALSE, err);
     if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
@@ -985,7 +989,12 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   } /* end loop over spectral windows */
 
   /* EVLA always effectively USB */
-  if (!strncmp(AntArray->arrayName, "EVLA", 4)) freqStep = fabs(freqStep );
+  if (!strncmp(AntArray->arrayName, "EVLA", 4)) {
+    freqStep = fabs(freqStep);
+    /* VLA Ref. Freq band center */
+    startFreq += ((1+nchan/2) - refChan) * freqStep;
+    refChan = (1+nchan/2);
+  }
   
   /* Count selected Spectral windows */
   nIF = 0;
@@ -1181,7 +1190,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
 			"%s: Incompatible channel width %f != %f", 
 			routine ,desc->cdelt[2], freqStep);
     Obit_return_if_fail((fabs(desc->crpix[2]-refChan)<0.01), err,
-			"%s: Incompatible channel width %f != %f", 
+			"%s: Incompatible reference channel %f != %f", 
 			routine ,desc->crpix[2], refChan);
     Obit_return_if_fail((desc->inaxes[3] == nIF), err,
 			"%s: Incompatible number of Spectral Windows %d != %d", 

@@ -2625,6 +2625,7 @@ gboolean ObitDConCleanVisAutoWindow(ObitDConClean *inn, olong *fields, ObitFArra
   oldAutoWinFlux = in->autoWinFlux;
   if (oldAutoWinFlux<0.0) oldAutoWinFlux = 1.0e20;
   in->autoWinFlux = MAX (PeakOut-5.0*RMS, 0.5*RMS);
+  in->autoWinFlux = MIN (in->autoWinFlux, 0.85*PeakOut);
 
   /* Don't let the autoWinFlux go much below cleanable maxima in other fields */
   for (i=0; i<in->nfield; i++) {

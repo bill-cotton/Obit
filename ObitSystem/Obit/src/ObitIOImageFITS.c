@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2015                                          */
+/*;  Copyright (C) 2003-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -755,6 +755,7 @@ ObitIOCode ObitIOImageFITSRead (ObitIOImageFITS *in, ofloat *data,
   plane7 = MAX (desc->plane7, sel->blc[6]);
   /* set current request by desc->IOsize */
   if (desc->IOsize==OBIT_IO_byRow) {
+    plane = MAX (sel->blc[2], plane);
     /* increment row */
     row++;
     if (row>sel->trc[1]) { /* next plane */
@@ -816,7 +817,7 @@ ObitIOCode ObitIOImageFITSRead (ObitIOImageFITS *in, ofloat *data,
 
   for (i=0; i<desc->naxis; i++) inaxes[i] = (long)desc->inaxes[i];
 
- /*  Read selected portion of input */
+  /*  Read selected portion of input */
   if (fits_read_subset_flt (in->myFptr, group, (int)desc->naxis, 
 			    inaxes, 
 			    bblc, ttrc, incs, (float)fblank, (float*)data, 

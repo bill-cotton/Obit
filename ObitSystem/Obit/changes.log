@@ -3055,3 +3055,27 @@ Obit/src/ObitSDMData.c:
 Obit/tasks/BDFIn.c:
   HoloUVW: use last offset if missing pointing data
 19 Jan 2016, svn ver 525
+
+Mostly bug fixes
+Obit/src/ObitBeamShape.c:
+  FindTabBeam: correct inverse cell spacing for P band
+Obit/tasks/BDFIn.c:
+  GetHeader: for VLA in Append mode fix frequency test.
+Obit/src/ObitGainCal.c:
+  Calc: Always write new gain calibration table
+Obit/src/ObitSkyModelMF.c Obit/src/ObitSkyModelVMPoln.c:
+  ThreadSkyModel?FTDFT: correct sign of spectral index correction
+  LoadComps: Implement factor for tabulated spectra
+Obit/src/ObitDConCleanVis.c:
+  AutoWindow: set autoWindowFlux at least as low as 0.85*PeakOut
+Obit/src/ObitSpectrumFit.c:
+  Fix bugs in single spectrum fit.
+Obit/src/ObitIOImageFITS.c:
+  Read: Fix indexing bug for planes
+Obit/src/ObitSwPower.c:
+  UpdateTime: Only select desired Antenna.
+Obit/tasks/SYGain.c:
+  Numerous bug fixes
+Obit/tasks/Lister.c:
+  Add time and source selection for "GAIN" display.
+3 Feb 2016, svn ver 526

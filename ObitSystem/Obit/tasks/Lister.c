@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Task to print the contents of various data files                   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2015                                          */
+/*;  Copyright (C) 2009-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1519,6 +1519,10 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 	      iretCode = ObitTableSNReadRow (SNTable, iRow, SNRow, err);
 	      time   = SNRow->Time;
 	      souID  = SNRow->SourID;
+	      /* Check timeRange, source */
+	      if (time<sel->timeRange[0]) continue;
+	      if (time<sel->timeRange[0]) goto Quit;
+	      if (!ObitUVSelWantSour(sel, souID)) continue;
 	      freqID = SNRow->FreqID;
 	      antNo  = SNRow->antNo-1;
 	      SubA   = SNRow->SubA;
@@ -1532,6 +1536,10 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 	      iretCode = ObitTableCLReadRow (CLTable, iRow, CLRow, err);
 	      time   = CLRow->Time;
 	      souID  = MAX(1, CLRow->SourID);
+	      /* Check timeRange, source */
+	      if (time<sel->timeRange[0]) continue;
+	      if (time<sel->timeRange[0]) goto Quit;
+	      if (!ObitUVSelWantSour(sel, souID)) continue;
 	      freqID = CLRow->FreqID;
 	      antNo  = CLRow->antNo-1;
 	      SubA   = CLRow->SubA;

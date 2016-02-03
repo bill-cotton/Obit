@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2013                                          */
+/*;  Copyright (C) 2010-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -457,6 +457,7 @@ ObitTable* ObitGainCalCalc (ObitUV *inData, gboolean doSN, ObitErr *err)
         
     /* Loop over antennas calculating gains, writing */
     for (ia=1; ia<=numAnt; ia++) {
+      if (!ObitUVSelWantAnt (inData->mySel, ia))  continue;  /* Check Antenna */
       oRow = -1;
       if (doSN) SNRow->antNo = ia;
       else      CLRow->antNo = ia;
@@ -481,6 +482,7 @@ ObitTable* ObitGainCalCalc (ObitUV *inData, gboolean doSN, ObitErr *err)
       
       /* Loop over antennas calculating gains, writing */
       for (ia=1; ia<=numAnt; ia++) {
+      if (!ObitUVSelWantAnt (inData->mySel, ia))  continue;  /* Check Antenna */
 	oRow = -1;
 	if (doSN) SNRow->antNo = ia;
 	else      CLRow->antNo = ia;
@@ -509,6 +511,7 @@ ObitTable* ObitGainCalCalc (ObitUV *inData, gboolean doSN, ObitErr *err)
 
     /* Loop over antennas calculating gains, writing */
     for (ia=1; ia<=numAnt; ia++) {
+      if (!ObitUVSelWantAnt (inData->mySel, ia))  continue;  /* Check Antenna */
       oRow = -1;
       if (doSN) SNRow->antNo = ia;
       else      CLRow->antNo = ia;
@@ -901,11 +904,11 @@ static void CalcGain (ObitTableRow *row, olong numIF, olong numPoln, olong maxTe
     if (err->error) Obit_traceback_msg (err, routine, SwPwr->name);
     indx = (Ant-1)*numIF;
     for (iIF=0; iIF<numIF; iIF++) {
-      if (fabs(PwrDif1[iIF])>0.0)
-	gain1[iIF] *= sqrt (TCals1[indx+iIF] / fabs(PwrDif1[iIF]));
+      if ((PwrDif1[iIF]==fblank) || (fabs(PwrDif1[iIF])==0.0)) gain1[iIF] = fblank;
+      else gain1[iIF] *= sqrt (TCals1[indx+iIF] / fabs(PwrDif1[iIF]));
       if (numPoln>1) {
-	if (fabs(PwrDif2[iIF])>0.0)
-	gain2[iIF] *= sqrt (TCals2[indx+iIF] / fabs(PwrDif2[iIF]));
+	if ((PwrDif2[iIF]==fblank) || (fabs(PwrDif2[iIF])==0.0)) gain2[iIF] = fblank;
+	else gain2[iIF] *= sqrt (TCals2[indx+iIF] / fabs(PwrDif2[iIF]));
       }
     } /* end IF loop */
   } /* end EVLA switched power */
@@ -914,12 +917,44 @@ static void CalcGain (ObitTableRow *row, olong numIF, olong numPoln, olong maxTe
   if (isSN) { /* SN table */
     for (iIF=0; iIF<numIF; iIF++) {
       SNRow->Real1[iIF] = gain1[iIF];
-      if (numPoln>1) SNRow->Real2[iIF] = gain2[iIF];
+      if (gain1[iIF]==fblank) {
+	SNRow->Imag1[iIF]   = fblank;
+	SNRow->Weight1[iIF] = 0.0;
+      } else {
+	  SNRow->Imag1[iIF]   = 0.0;
+	  SNRow->Weight1[iIF] = 1.0;
+	}
+      if (numPoln>1) {
+	SNRow->Real2[iIF] = gain2[iIF];
+	if (gain2[iIF]==fblank) {
+	  SNRow->Imag2[iIF]   = fblank;
+	  SNRow->Weight2[iIF] = 0.0;
+	} else {
+	  SNRow->Imag2[iIF]   = 0.0;
+	  SNRow->Weight2[iIF] = 1.0;
+	}
+     }
     }
   } else {   /* CL table */
     for (iIF=0; iIF<numIF; iIF++) {
       CLRow->Real1[iIF] = gain1[iIF];
-      if (numPoln>1) CLRow->Real2[iIF] = gain2[iIF];
+      if (gain1[iIF]==fblank) {
+	CLRow->Imag1[iIF] = fblank;
+	CLRow->Weight1[iIF]   = 0.0;
+      } else {
+	  CLRow->Imag1[iIF]   = 0.0;
+	  CLRow->Weight1[iIF] = 1.0;
+	}
+      if (numPoln>1) {
+	CLRow->Real2[iIF] = gain2[iIF];
+	if (gain2[iIF]==fblank) {
+	  CLRow->Imag2[iIF] = fblank;
+	  CLRow->Weight2[iIF]   = 0.0;
+	} else {
+	  CLRow->Imag2[iIF]   = 0.0;
+	  CLRow->Weight2[iIF] = 1.0;
+	}
+      }
     }
   }
 } /* end CalcGain  */

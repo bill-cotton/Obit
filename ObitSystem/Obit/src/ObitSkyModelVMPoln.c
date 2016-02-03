@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014-2015                                          */
+/*;  Copyright (C) 2014-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1957,7 +1957,7 @@ static gpointer ThreadSkyModelVMPolnFTDFT (gpointer args)
 		  ty = idata[5]*(odouble)v;
 		  tz = idata[6]*(odouble)w;
 		  FazArrI[itcnt] = (tx + ty + tz);
-		  specFact = exp(-logNuONu0I * idata[7]);
+		  specFact = exp(logNuONu0I * idata[7]);
 		  AmpArrI[itcnt] = specFact * idata[itab];  itcnt++;
 		} /* end I OK */
 		if ((iComp<mcompQ) && (qdata[qtab]!=0.0)) {  /* valid? */
@@ -1965,7 +1965,7 @@ static gpointer ThreadSkyModelVMPolnFTDFT (gpointer args)
 		  ty = qdata[5]*(odouble)v;
 		  tz = qdata[6]*(odouble)w;
 		  FazArrQ[qtcnt] = (tx + ty + tz);
-		  specFact = exp(-logNuONu0Q * qdata[7]);
+		  specFact = exp(logNuONu0Q * qdata[7]);
 		  AmpArrQ[qtcnt] = specFact * qdata[qtab];  qtcnt++;
 		} /* end Q OK */
 		if ((iComp<mcompU) && (udata[utab]!=0.0)) {  /* valid? */
@@ -1973,7 +1973,7 @@ static gpointer ThreadSkyModelVMPolnFTDFT (gpointer args)
 		  ty = udata[5]*(odouble)v;
 		  tz = udata[6]*(odouble)w;
 		  FazArrU[utcnt] = (tx + ty + tz);
-		  specFact = exp(-logNuONu0U * udata[7]);
+		  specFact = exp(logNuONu0U * udata[7]);
 		  AmpArrU[utcnt] = specFact * udata[utab];  utcnt++;
 		} /* end U OK */
 		if ((iComp<mcompV) && (vdata[vtab]!=0.0)) {  /* valid? */
@@ -1981,7 +1981,7 @@ static gpointer ThreadSkyModelVMPolnFTDFT (gpointer args)
 		  ty = vdata[5]*(odouble)v;
 		  tz = vdata[6]*(odouble)w;
 		  FazArrV[vtcnt] = (tx + ty + tz);
-		  specFact = exp(-logNuONu0V * vdata[7]);
+		  specFact = exp(logNuONu0V * vdata[7]);
 		  AmpArrV[vtcnt] = specFact * vdata[vtab];  vtcnt++;
 		} /* end V OK */
 		idata += lcompI;  qdata += lcompQ; /* update indices */
@@ -2171,7 +2171,7 @@ static gpointer ThreadSkyModelVMPolnFTDFT (gpointer args)
 	      for (iComp=it; iComp<lim; iComp++) {
 		if (idata[3]!=0.0) {  /* valid? */
 		  FazArrI[itcnt] = (idata[4]*u + idata[5]*v + idata[6]*w);
-		  specFact = exp(-logNuONu0I * idata[10]);
+		  specFact = exp(logNuONu0I * idata[10]);
 		  arg = (idata[7]*u*u + idata[8]*v*v + idata[9]*u*v);
 		  if (arg<-1.0e-5) amp = specFact * exp (arg);
 		  else amp = specFact;
@@ -2179,7 +2179,7 @@ static gpointer ThreadSkyModelVMPolnFTDFT (gpointer args)
 		} /* End I OK */
 		if ((iComp<mcompQ) && (qdata[3]!=0.0)) {
 		  FazArrQ[qtcnt] = (qdata[4]*u + qdata[5]*v + qdata[6]*w);
-		  specFact = exp(-logNuONu0Q * qdata[10]);
+		  specFact = exp(logNuONu0Q * qdata[10]);
 		  arg = (qdata[7]*u*u + qdata[8]*v*v + qdata[9]*u*v);
 		  if (arg<-1.0e-5) amp = specFact * exp (arg);
 		  else amp = specFact;
@@ -2187,14 +2187,14 @@ static gpointer ThreadSkyModelVMPolnFTDFT (gpointer args)
 	      
 		if ((iComp<mcompU) && (udata[3]!=0.0)) {
 		  FazArrU[utcnt] = (udata[4]*u + udata[5]*v + udata[6]*w);
-		  specFact = exp(-logNuONu0U * udata[10]);
+		  specFact = exp(logNuONu0U * udata[10]);
 		  arg = (udata[7]*u*u + udata[8]*v*v + udata[9]*u*v);
 		  if (arg<-1.0e-5) amp = specFact * exp (arg);
 		  else amp = specFact;
 		  AmpArrU[utcnt] = amp*udata[3]; utcnt++;} /* End U */
 		if ((iComp<mcompV) && (vdata[3]!=0.0)) {
 		  FazArrV[vtcnt] = (vdata[4]*u + vdata[5]*v + vdata[6]*w);
-		  specFact = exp(-logNuONu0V * vdata[10]);
+		  specFact = exp(logNuONu0V * vdata[10]);
 		  arg = (vdata[7]*u*u + vdata[8]*v*v + vdata[9]*u*v);
 		  if (arg<-1.0e-5) amp = specFact * exp (arg);
 		  else amp = specFact;

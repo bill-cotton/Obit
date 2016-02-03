@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008,2015                                          */
+/*;  Copyright (C) 2008,2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -440,10 +440,10 @@ static void FindTabBeam (ObitBeamShape *in)
   switch (itab) {
   case 0:     /* P band */
     in->itabRefFreq = 1.0/refFreq[itab]; /* 1/tabulated ref freq */
-    in->icellSize   = 250.0/1000.0;     /* 1/Tabulated cell spacing */
-    olong  Pncell  = 300;
+    in->icellSize   = 3600.0/250.0;     /* 1/Tabulated cell spacing */
+    olong  Pncell   = 300;
     /* 10 Nov2015, P Band 300 entries  cell 250.0/3600, refFreq  = 340.0e6 */
-    ofloat Pbeam[] = {    /* Fitted to beam */
+    ofloat Pbeam[]  = {    /* Fitted to beam */
       1.000000, 0.998248, 0.993048, 0.984058, 0.970796, 0.955100, 0.939748, 0.912643, 0.886224,
       0.867500, 0.830706, 0.793851, 0.771507, 0.747092, 0.722266, 0.695144, 0.666975, 0.638199,
       0.608038, 0.577563, 0.546267, 0.514786, 0.483709, 0.451885, 0.421084, 0.391206, 0.361235,

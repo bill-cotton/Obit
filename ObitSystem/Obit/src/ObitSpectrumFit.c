@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2013                                          */
+/*;  Copyright (C) 2008-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1930,7 +1930,8 @@ static void NLFit (NLFitArg *arg)
   /* Initial fit */
   arg->coef[0] = avg;
   best = 1;  /* best fit number of terms */
-  
+  if (nvalid==1) return;  /* Only one? */
+ 
   /* determine chi squared, mean SNR */
   sum = sum2 = sumwt = 0.0;
   for (i=0; i<arg->nfreq; i++) {
@@ -1956,13 +1957,8 @@ static void NLFit (NLFitArg *arg)
 
   /* Is this good enough? */
   isDone = (arg->ChiSq<0.0) || (arg->ChiSq<=arg->maxChiSq);
-  if (meanSNR>(SNRperTerm*2.0)) isDone = FALSE;  /* Always try for high SNR */
+  if (meanSNR>(SNRperTerm*3.0)) isDone = FALSE;  /* Always try for high SNR */
   if (isDone) goto done;
-
-  /* DEBUG 
-  if (avg>2.0) {
-    fprintf (stderr, "Found one %f\n", avg);
-  } */
 
   /* Higher order terms do nonlinear least-squares fit */
   nterm = 2;
@@ -2020,8 +2016,8 @@ static void NLFit (NLFitArg *arg)
       chi2Test = (sumwt*sumwt)/(nvalid-nterm);
     } else chi2Test = -1.0;
 
-    /* Did it improve over lower order? */
-    if (chi2Test<arg->ChiSq) {
+    /* Did it significantly improve over lower order? */
+    if (chi2Test<0.9*arg->ChiSq) {
       best = nterm;
       arg->ChiSq = chi2Test;
 

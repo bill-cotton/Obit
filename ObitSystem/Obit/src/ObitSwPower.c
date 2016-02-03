@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -921,6 +921,7 @@ static void UpdateTime (ObitSwPower *in, ofloat time, olong Ant,
       start = MIN (in->priorRowNo[ant]+1, in->SYTable->myDesc->nrow);
       for (iRow=start; iRow<=in->SYTable->myDesc->nrow; iRow++) {
 	ObitTableSYReadRow (in->SYTable, iRow, in->SYRow, err);
+	if (in->SYRow->antennaNo!=Ant) continue;
 	CopySYRow (in->SYRow, in->followRow[ant], in->numIF);  /* Save values */
 	if (err->error) Obit_traceback_msg (err, routine, in->SYTable->name);
 	in->followRowNo[ant] = iRow;   /* Save row number */

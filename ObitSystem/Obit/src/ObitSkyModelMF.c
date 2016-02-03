@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2014                                          */
+/*;  Copyright (C) 2010-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1282,14 +1282,14 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
     fitParms[0] = fitParms[1] = 0.0;
   }
   
-  /* Spectral correction for prior alpha array */
+  /* Spectral correction for prior alpha array - also factor */
   specCorr = g_malloc0(in->nSpec*sizeof(ofloat));
   if (in->doAlphaCorr && (in->priorAlpha!=0.0)) {
     for (i=0; i<in->nSpec; i++) {
-      specCorr[i] = pow((in->specFreq[i]/in->priorAlphaRefF), in->priorAlpha);
+      specCorr[i] = in->factor*pow((in->specFreq[i]/in->priorAlphaRefF), in->priorAlpha);
     }
   } else { /* No correction */
-    for (i=0; i<in->nSpec; i++) specCorr[i] = 1.0;
+    for (i=0; i<in->nSpec; i++) specCorr[i] = in->factor;
   }
 
   if (in->comps!=NULL) in->comps = ObitFArrayRealloc(in->comps, ndim, naxis);
@@ -1901,7 +1901,7 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 		ty = ccData[2]*v;
 		tz = ccData[3]*w;
 		FazArr[itcnt]  = (tx + ty + tz);
-		ExpArg2[itcnt] = -logNuONu0 * ccData[4];
+		ExpArg2[itcnt] = logNuONu0 * ccData[4];
 		AmpArr[itcnt]  = ccData[itab];
 		itcnt++;          /* Count in amp/phase buffers */
 	      }  /* end if valid */
@@ -1968,7 +1968,7 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 		ExpArg[itcnt]  = arg;
 		FazArr[itcnt]  = (tx + ty + tz);
 		AmpArr[itcnt]  = amp;
-		ExpArg2[itcnt] = -logNuONu0 * ccData[7];
+		ExpArg2[itcnt] = logNuONu0 * ccData[7];
 		itcnt++;          /* Count in amp/phase buffers */
 	      } /* end if valid */
 	      ccData += lcomp;  /* update pointer */
@@ -2032,7 +2032,7 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 		tz = ccData[3]*w;
 		FazArr[itcnt] = (tx + ty + tz);
 		AmpArr[itcnt] = amp;
-		ExpArg2[itcnt] = -logNuONu0 * ccData[6];
+		ExpArg2[itcnt] = logNuONu0 * ccData[6];
 		itcnt++;          /* Count in amp/phase buffers */
 	      } /* end if valid */
 	      ccData += lcomp;  /* update pointer */
@@ -2977,11 +2977,11 @@ void  ObitSkyModelMFLoadGridComps (ObitSkyModel* inn, olong field, ObitUV* uvdat
     in->planes = g_malloc0(in->nSpec*sizeof(ObitFArray*));
   for (k=0; k<in->nSpec; k++) {
 
-    /* Spectral correction for prior alpha array */
+    /* Spectral correction for prior alpha array - also factor */
      if (in->doAlphaCorr && (in->priorAlpha!=0.0)) {
-       specCorr = pow((in->specFreq[k]/in->priorAlphaRefF), in->priorAlpha);
+       specCorr = in->factor*pow((in->specFreq[k]/in->priorAlphaRefF), in->priorAlpha);
     } else { /* No correction */
-      specCorr = 1.0;
+      specCorr = in->factor;
     }
     
     retCode = ObitTableCCUtilGridSpect (CCTable, overSample, k+1,
