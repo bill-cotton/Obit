@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2010                                          */
+/*;  Copyright (C) 2008-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -131,6 +131,9 @@ void ObitSpectrumFitImArr (ObitSpectrumFit* in, olong nimage, ObitImage **imArr,
 typedef void(*ObitSpectrumFitImArrFP) (ObitSpectrumFit* in, olong nimage, ObitImage **imArr, 
 			   ObitImage *outImage, ObitErr *err);
 
+/* Do actual fitting */
+void ObitSpectrumFitter (ObitSpectrumFit* in, ObitErr *err);
+typedef void(*ObitSpectrumFitterFP) (ObitSpectrumFit* in, ObitErr *err);
 
 /** Public: Evaluate spectrum */
 void ObitSpectrumFitEval (ObitSpectrumFit* in, ObitImage *inImage, 
@@ -139,6 +142,11 @@ void ObitSpectrumFitEval (ObitSpectrumFit* in, ObitImage *inImage,
 typedef void(*ObitSpectrumFitEvalFP) (ObitSpectrumFit* in, ObitImage *inImage, 
 				      odouble outFreq, ObitImage *outImage, 
 				      ObitErr *err);
+/** Private: Write output image */
+void ObitSpectrumWriteOutput (ObitSpectrumFit* in, ObitImage *outImage, 
+			      ObitErr *err);
+typedef void (*ObitSpectrumWriteOutputFP) (ObitSpectrumFit* in, ObitImage *outImage, 
+					   ObitErr *err);
 /** Public: Fit single spectrum */
 ofloat* ObitSpectrumFitSingle (olong nfreq, olong nterm, odouble refFreq, odouble *freq, 
 			       ofloat *flux, ofloat *sigma, gboolean doBrokePow, 

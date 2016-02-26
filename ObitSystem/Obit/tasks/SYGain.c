@@ -666,6 +666,7 @@ void SYGainHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
 /**
  * Routine to copy the input table to the output.
  * Can substitute values from one SW into another, uses "SWUse" on 
+ * NOP if SY out = SY in
  * myInput
  *  \param     myInput   Input parameters on InfoList 
  *  \param     inData    ObitUV with tables  
@@ -707,6 +708,9 @@ void SYCopy (ObitInfoList* myInput, ObitUV* inData,  ObitErr* err)
   dim[0] = dim[1] = dim[2] = 1; itemp = SYOut;
   ObitInfoListAlwaysPut(myInput, "SYOut", OBIT_long, dim, &itemp);
   outSYVer = itemp;
+
+  /* Anything to do? */
+  if (outSYVer==inSYVer) return;
 
   inTab = newObitTableSYValue (inData->name, (ObitData*)inData, &SYIn, 
 			       OBIT_IO_ReadWrite, 0, 0, err);
@@ -837,6 +841,8 @@ void SYGainClip (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     *work5=NULL, *work6=NULL, *work7=NULL, *work8=NULL;
   gboolean doBlank=TRUE;
   gchar *routine = "SYGainClip";
+
+  if (err->error) return;  /* Existing error? */
 
   /* Get SY table to clip */
   itemp = 0;
@@ -1068,11 +1074,17 @@ void SYGainSmooth (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   MednFuncArg **args=NULL;
   gchar *routine = "SYGainSmooth";
 
+  if (err->error) return;  /* Existing error? */
+
   /* Get control parameters */
   ObitInfoListGetTest(myInput, "alpha",    &type, dim, &alpha);
   ObitInfoListGetTest(myInput, "smoFunc",  &type, dim, smoFunc);
   ObitInfoListGetTest(myInput, "smoType",  &type, dim, smoType);
   ObitInfoListGetTest(myInput, "smoParm",  &type, dim, smoParm);
+
+  /* Anything to do? */
+  if ((smoParm[0]<=1.0e-10) && (smoParm[1]<=1.0e-10) && (smoParm[2]<=1.0e-10))
+    return;
 
   /* Convert times hr to days */
   smoParm[0] /= 24.0;

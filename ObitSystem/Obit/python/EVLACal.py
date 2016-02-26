@@ -41,6 +41,18 @@ def EVLAInitContParms():
     parms["doHann"]       = None        # Hanning needed for RFI?
     parms["doDescm"]      = True        # Descimate Hanning?
 
+    # SY Calibration, only PwrDif used in calibration
+    parms["doSYCal"]     = False        # Calibration from SysPower (AIPS SY)? 
+    parms["SYSWUse"]     = None         # SW substitutions for SY solutions, None= as defined
+    parms["SYcalInt"]    = 6.0/60.      # SY derives SN table interval
+    parms["SYsmoFunc"]   = "MWF"        # SY smoothing function 'MWF', "BOX", "GAUS"
+    parms["SYsmoTime"]   = 10./3600     # smooth time in hrs
+    parms["SYclipSmo"]   = 300./3600    # smooth time for clip in hrs
+    parms["SYclipParm"]  = 5.           # clip level (sigma)
+    parms["doSYEdit"]    = True         # Edit/flag on the basis of SY solutions
+    parms["SYEditFG"]    = 2            #  FG table to add flags to, <=0 -> no FG entries
+    parms["SYSigma"]     = 10.          #  Multiple of median RMS about median gain to clip/flag
+    
     # Parallactic angle correction
     parms["doPACor"] =     True         # Make parallactic angle correction
     
@@ -569,18 +581,20 @@ def EVLAInitContFQParms(parms):
             parms["ampSigma"]  =  20.0          # Multiple of median RMS about median gain to clip/flag
     # end EVLAInitContFqParms
 
-def EVLAClearCal(uv, err, doGain=True, doBP=False, doFlag=False,
+def EVLAClearCal(uv, err, doGain=True, doBP=False, doFlag=False, saveSY=False,
                  check=False, logfile=""):
     """
     Clear previous calibration
     
-    Delete all SN tables, all CL but CL 1
+    Delete all SN tables, all CL but CL 1?
+    if saveSY and an SY table ver>1 exists save SN 1, CL 1&2
 
     * uv       = UV data object to clear
     * err      = Obit error/message stack
     * doGain   = If True, delete SN and CL tables
     * doBP     = If True, delete BP tables
     * doFlag   = If True, delete FG tables except FG=1
+    * saveSY   = If True, save the potential results of SY calibration
     * check    = Only check script, don't execute tasks
     """
     ################################################################
@@ -590,13 +604,22 @@ def EVLAClearCal(uv, err, doGain=True, doBP=False, doFlag=False,
     # Open and close image to sync with disk 
     uv.Open(UV.READONLY, err)
     uv.Close(err)
+    # Need to check for SY calibration?
+    ver = uv.GetHighVer("AIPS SY")
+    if (ver>1) and saveSY:
+        minSN = 1; minCL = 2;
+    else:
+        minSN = 0; minCL = 1;
     # Gain tables
     if doGain:
-        mess =  "Delete Delete all SN tables"
-        printMess(mess, logfile)
-        uv.ZapTable("AIPS SN",-1,err)
+        ver = uv.GetHighVer("AIPS SN")
+        while (ver>minSN):
+            mess =  "Delete SN table %d" % (ver)
+            printMess(mess, logfile)
+            uv.ZapTable ('AIPS SN', ver, err)
+            ver = ver-1
         ver = uv.GetHighVer("AIPS CL")
-        while (ver>1):
+        while (ver>minCL):
             mess =  "Delete CL table %d" % (ver)
             printMess(mess, logfile)
             uv.ZapTable ('AIPS CL', ver, err)
@@ -1643,11 +1666,8 @@ def EVLAPACor(uv, err, CLver=0, FreqID=0,\
         uv.Open(UV.READONLY, err)
         uv.Close(err)
         iCLver = uv.GetHighVer("AIPS CL")
-    # If iCLver==1, copy to 2 first
-    if iCLver==1 and not check:
-        oCLver = iCLver+1
-    else:
-        oCLver = iCLver
+    
+    oCLver = iCLver+1;   # New output
         
     mess = "Parallactic angle corrections made to CL "+str(oCLver)
     printMess(mess, logfile)
@@ -1920,13 +1940,15 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
     return 0
     # end EVLADelayCal
 
-def EVLASYCal(uv, err, SYVer=1,  SYOut=0, calInt=0.1,  \
+def EVLASYCal(uv, err, SYVer=1,  SYOut=0, calInt=0.1, applyOnly=False, \
                   smoTime=0.0833, smoFunc="MWF", SWUse=None,  \
+                  clipSmo=0.1, clipParm=5., doEdit=False, Sigma=20., editFG=-1,\
                   doPlot=False, plotFile="./DelayCal.ps", \
                   nThreads=1, logfile='', check=False, debug=False):
     """
     Gain calibration using Sys power (SY) table
     
+    Generate an SN table from operations on an SN Table
     Apply SN table to the highest CL table writing a new CL table (Obit/CLCal)
     Returns task error code, 0=OK, else failed
 
@@ -1935,8 +1957,15 @@ def EVLASYCal(uv, err, SYVer=1,  SYOut=0, calInt=0.1,  \
     * SYVer      = Input SY table; 0=>highest
     * SYOut      = Output SY table; 0=>new
     * calInt     = Interval in output table (min)
+    * applyOnly  = no SY clipping/smoothing, only apply SYOut
     * smoTime    = Smoothing time (hrs)
     * smoFunc    = Smoothing function (alpha) "MWF", "BOX", "GAUS"
+    * clipSmo    = Smoothing time (hrs) for clipping
+    * clipParm   = Clipping level about smoothed (sigma)
+    * doEdit     = Edit/flag on the basis of amplitude solutions
+    * Sigma      = Multiple of median RMS about median gain to clip/flag
+                  Should be fairly large
+    * editFG     = FG table to add flags to, <=0 -> no FG entries
     * SWUse      = if not None, a list of the ref SW per SW to use for
                    values in SY table
     * doPlot     = If True make plots of SN gains
@@ -1966,13 +1995,20 @@ def EVLASYCal(uv, err, SYVer=1,  SYOut=0, calInt=0.1,  \
     sygain.taskLog  = logfile
     if not check:
         setname(uv,sygain)
-    sygain.SYVer   = SYVer
-    sygain.SYOut   = SYOut
-    sygain.solnOut = SNver
-    sygain.calInt  = calInt
-    sygain.smoFunc = smoFunc
-    sygain.smoParm = [smoTime,smoTime]
-    sygain.nThreads= nThreads
+    sygain.SYVer    = SYVer
+    sygain.SYOut    = SYOut
+    sygain.solnOut  = SNver
+    sygain.calInt   = calInt
+    sygain.smoFunc  = smoFunc
+    if applyOnly:
+        sygain.smoParm  = [0.0]
+        sygain.clipSmo  = [0.0]
+        sygain.clipParm = [0.0]
+    else:
+        sygain.smoParm  = [smoTime]
+        sygain.clipSmo  = [clipSmo]
+        sygain.clipParm = [clipParm]
+    sygain.nThreads = nThreads
     if SWUse!=None:
         sygain.SWUse = SWUse
         
@@ -2007,6 +2043,13 @@ def EVLASYCal(uv, err, SYVer=1,  SYOut=0, calInt=0.1,  \
         return 1
     SNver = uv.GetHighVer("AIPS SN")
 
+    # Clip/flag by deviant amplitudes?
+    if doEdit:
+        EVLAEditSNAmp(uv, 0, err, sigma=Sigma, FGver=editFG,  \
+                      logfile=logfile, check=check, debug=debug)
+        OErr.printErrMsg(err, "Error clip/flag bad amplitudes")
+    # end edit
+    
     # Plot fits?
     if doPlot:
         retCode = EVLAPlotTab(uv, "SN", SNver, err, nplots=6, optype="AMP ", \
@@ -3271,7 +3314,7 @@ def EVLARLDelay(uv, err, \
 
     # Apply to CL table
     retCode = EVLAApplyCal(uv, err, SNver=lsnver, CLin = gainUse, \
-                           maxInter=1440.0, \
+                           maxInter=14400.0, \
                            logfile=logfile, check=check,debug=debug)
     if retCode!=0:
         return retCode
@@ -3307,7 +3350,7 @@ def EVLAPolCal(uv, InsCals, err, InsCalPoln=None, \
                  (PPol, RLPhase, RM)
                  PPol = fractional poln, <0 => fit
                  RLPhase = R-L phase difference in deg
-                 RM      = Rotation measure (NYI)
+                 RM      = Rotation measure
     * doCalib  = Apply prior calibration table, positive=>calibrate
     * gainUse  = CL/SN table to apply
     * doBand   = >0 => apply bandpass calibration

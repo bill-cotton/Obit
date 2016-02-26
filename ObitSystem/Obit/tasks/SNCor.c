@@ -2,7 +2,7 @@
 /* Obit Radio interferometry calibration software                     */
 /* applies user-selected corrections to the calibration SN table      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2014                                          */
+/*;  Copyright (C) 2006-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1450,11 +1450,11 @@ void doREFP (ControlInfo *control, ObitTableSNRow *row, ObitErr *err)
   if (err->error) return;
 
   fblank = control->fblank;
-  kif = control->SNCorParm[0]-0.5;
+  kif = control->SNCorParm[0]+0.5;
 
   /* Phase rotations */
   if (control->bStoke==1) {
-    bad1 = (row->Real1[kif]!=fblank) || (row->Imag1[kif]!=fblank) || 
+    bad1 = (row->Real1[kif]==fblank) || (row->Imag1[kif]==fblank) || 
       (row->Weight1[kif]<=0.0);
     if (!bad1) {
       rotR1 =  row->Real1[kif];
@@ -1467,7 +1467,7 @@ void doREFP (ControlInfo *control, ObitTableSNRow *row, ObitErr *err)
     }
   }
   if ((control->eStoke==2) || (control->bStoke==2)) {
-    bad2 = (row->Real2[kif]!=fblank) || (row->Imag2[kif]!=fblank) || 
+    bad2 = (row->Real2[kif]==fblank) || (row->Imag2[kif]==fblank) || 
       (row->Weight2[kif]<=0.0);
     if (!bad2) {
       rotR2 =  row->Real2[kif];
@@ -1532,14 +1532,14 @@ void doCPRT (ControlInfo *control, ObitTableSNRow *row, ObitErr *err)
   if (err->error) return;
 
   fblank = control->fblank;
-  kif = control->SNCorParm[0]-0.5;
+  kif = control->SNCorParm[0]+0.5;
   if (control->bStoke==1) {
-    bad1 = (row->Real1[kif]!=fblank) || (row->Imag1[kif]!=fblank) || 
+    bad1 = (row->Real1[kif]==fblank) || (row->Imag1[kif]==fblank) || 
       (row->Weight1[kif]<=0.0);
   }
   
   if ((control->eStoke==2) || (control->bStoke==2)) {
-    bad2 = (row->Real2[kif]!=fblank) || (row->Imag2[kif]!=fblank) || 
+    bad2 = (row->Real2[kif]==fblank) || (row->Imag2[kif]==fblank) || 
       (row->Weight2[kif]<=0.0);
   }
 
@@ -1548,7 +1548,7 @@ void doCPRT (ControlInfo *control, ObitTableSNRow *row, ObitErr *err)
     for (istoke=control->bStoke; istoke<=control->eStoke; istoke++) {
       jif = iif - 1;
       if (istoke==1) {  /* First pol */
-	if ((row->Rate1[jif]!=fblank) && (row->Real1[jif]!=fblank) && (!bad1)) {
+	if ((row->Rate1[kif]!=fblank) && (row->Real1[kif]!=fblank) && (!bad1)) {
 	  row->Rate1[jif]   = row->Rate1[kif];
 	  /* end not blanked */
 	} else {
@@ -1556,7 +1556,7 @@ void doCPRT (ControlInfo *control, ObitTableSNRow *row, ObitErr *err)
 	  row->Weight1[jif] = 0.0;
 	}
       } else {       /* second pol */
-	if ((row->Rate2[jif]!=fblank) && (row->Real2[jif]!=fblank) && (!bad2)) {
+	if ((row->Rate2[kif]!=fblank) && (row->Real2[kif]!=fblank) && (!bad2)) {
 	  row->Rate2[jif]   = row->Rate2[kif];
 	  /* end not blanked */
 	} else {
@@ -1586,15 +1586,14 @@ void doCPSN (ControlInfo *control, ObitTableSNRow *row, ObitErr *err)
   if (err->error) return;
 
   fblank = control->fblank;
-  kif = control->SNCorParm[0]-0.5;
+  kif = control->SNCorParm[0]+0.5;
   
   /* Loop over IF */
   for (iif=control->BIF; iif<=control->EIF; iif++) {
     for (istoke=control->bStoke; istoke<=control->eStoke; istoke++) {
       jif = iif - 1;
       if (istoke==1) {  /* First pol */
-	if ((row->Real1[jif]!=fblank) && (row->Imag1[jif]!=fblank) &&
-	    (row->Real1[kif]!=fblank) && (row->Imag1[kif]!=fblank)) {
+	if ((row->Real1[kif]!=fblank) && (row->Imag1[kif]!=fblank)) {
 	  row->Real1[jif]   = row->Real1[kif];
 	  row->Imag1[jif]   = row->Imag1[kif];
 	  row->Delay1[jif]  = row->Delay1[kif];
@@ -1608,8 +1607,7 @@ void doCPSN (ControlInfo *control, ObitTableSNRow *row, ObitErr *err)
 	  row->Weight1[jif] = 0.0;
 	}
       } else {       /* second pol */
-	if ((row->Real2[jif]!=fblank) && (row->Imag2[jif]!=fblank) &&
-	   (row->Real2[kif]!=fblank) && (row->Imag2[kif]!=fblank)) {
+	if ((row->Real2[kif]!=fblank) && (row->Imag2[kif]!=fblank)) {
 	  row->Real2[jif]   = row->Real2[kif];
 	  row->Imag2[jif]   = row->Imag2[kif];
 	  row->Delay2[jif]  = row->Delay2[kif];

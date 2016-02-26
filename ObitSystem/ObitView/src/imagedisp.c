@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Display widget for images for ObitView allows zoom and scroll       */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1997,1999,2002-2009
+*  Copyright (C) 1996,1997,1999,2002-2016
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -1113,7 +1113,7 @@ void UpdateInfo (ImageDisplay *IDdata)
       /* blanked */
       g_snprintf (jerkstring, 100, "pixel blanked");
     else
-      g_snprintf (jerkstring, 100, "value=%f", image[CurImag].fBpixel);}
+      g_snprintf (jerkstring, 100, "val=%12.6g", image[CurImag].fBpixel);}
   else  /* current position */
     {val = 0;
     for (i=3; i<7; i++) ipos[i] = 0;
@@ -1130,11 +1130,11 @@ void UpdateInfo (ImageDisplay *IDdata)
 	/* blanked */
 	g_snprintf (jerkstring, 100, "pixel blanked");
       else
-	g_snprintf (jerkstring, 100, "value=%f", val);
+	g_snprintf (jerkstring, 100, "value=%12.6g", val);
     }
     }
   /* write second line (flux density) */
-  jerkstring[16] = 0; /* limit size of string */
+  jerkstring[20] = 0; /* limit size of string */
   wierdstring = XmStringCreateSimple (jerkstring);
   XtSetArg (wargs[0], XmNlabelString, wierdstring);
   XtSetValues (IDdata->Info2, wargs, 1);

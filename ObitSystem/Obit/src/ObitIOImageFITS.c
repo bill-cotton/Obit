@@ -2253,8 +2253,8 @@ void  ObitIOImageKeysOtherRead(ObitIOImageFITS *in, olong *lstatus,
 	  svalue[last-first+1] = 0; /* null terminate */
 	  /* add to InfoList */
 	  dim[0] = strlen(svalue);
-	  ObitInfoListPut(desc->info, (char*)keywrd, OBIT_string, dim, 
-			  (gconstpointer)svalue, err);
+	  ObitInfoListAlwaysPut(desc->info, (char*)keywrd, OBIT_string, dim, 
+				(gconstpointer)svalue);
 	  
 	  break;
 	case 'L':  /* logical 'T', 'F' */
@@ -2264,8 +2264,8 @@ void  ObitIOImageKeysOtherRead(ObitIOImageFITS *in, olong *lstatus,
 	  if (aT!=NULL) bvalue = TRUE;
 	  /* add to InfoList */
 	  dim[0] = 1;
-	  ObitInfoListPut(desc->info, (char*)keywrd, OBIT_bool, dim, 
-			  (gconstpointer)&bvalue, err);
+	  ObitInfoListAlwaysPut(desc->info, (char*)keywrd, OBIT_bool, dim, 
+				(gconstpointer)&bvalue);
 	  break;
 	case 'I':  /* Integer */
 	  ivalue = strtol(value, NULL, 10);

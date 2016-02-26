@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2008                                          */
+/*;  Copyright (C) 2002-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -190,9 +190,13 @@ ObitInfoList* ObitInfoListCopyData (ObitInfoList* in, ObitInfoList* out)
   tmp = in->list;
   while (tmp!=NULL) {
     elem = (ObitInfoElem*)tmp->data;
+    /* Check for bad entry */
+    if (elem->iname==NULL) goto loop;
     out->number++; /* number of elements */
     /* Check if it's already there and is so just update */
     xelem = ObitInfoListFind(out, elem->iname);
+    /* Check for bad entry */
+    if (xelem->iname==NULL) goto loop;
     if (xelem==NULL) { /* not there */
       /* make copy to attach to list */
       telem = ObitInfoElemCopy(elem);
@@ -205,6 +209,7 @@ ObitInfoList* ObitInfoListCopyData (ObitInfoList* in, ObitInfoList* out)
       telem = ObitInfoElemCopy(elem);
       out->list = g_slist_prepend(out->list, telem); /* add to new list */
     }
+  loop:
     tmp = g_slist_next(tmp);
   }
 
@@ -236,6 +241,9 @@ void  ObitInfoListCopyList (ObitInfoList* in, ObitInfoList* out, gchar **list)
   while (tmp!=NULL) {
     elem = (ObitInfoElem*)tmp->data;
     
+    /* Check for bad entry */
+    if (elem->iname==NULL) goto loop;
+
     /* Is this one on the list */
     wanted = FALSE;
     i = 0;
@@ -261,6 +269,7 @@ void  ObitInfoListCopyList (ObitInfoList* in, ObitInfoList* out, gchar **list)
 	out->list = g_slist_prepend(out->list, telem); /* add to output list */
       }
     }
+  loop:
     tmp = g_slist_next(tmp);
   }
 } /* end ObitInfoListCopyList */
@@ -289,6 +298,9 @@ void ObitInfoListCopyListRename(ObitInfoList* in, ObitInfoList* out,
   while (tmp!=NULL) {
     elem = (ObitInfoElem*)tmp->data;
     
+    /* Check for bad entry */
+    if (elem->iname==NULL) goto loop;
+
     /* Is this one on the list */
     wanted = FALSE;
     i = 0;
@@ -320,6 +332,7 @@ void ObitInfoListCopyListRename(ObitInfoList* in, ObitInfoList* out,
 	out->list = g_slist_prepend(out->list, telem); /* add to output list */
       }
     }
+  loop:
     tmp = g_slist_next(tmp);
   }
 } /* end ObitInfoListCopyListRename */
@@ -346,6 +359,8 @@ void ObitInfoListCopyAddPrefix(ObitInfoList* in, ObitInfoList* out,
   tmp = in->list;
   while (tmp!=NULL) {
     elem = (ObitInfoElem*)tmp->data;
+    /* Check for bad entry */
+    if (elem->iname==NULL) goto loop;
     /* New name */
     newName = g_strconcat(prefix, elem->iname, NULL);
     
@@ -365,6 +380,7 @@ void ObitInfoListCopyAddPrefix(ObitInfoList* in, ObitInfoList* out,
       out->list = g_slist_prepend(out->list, telem); /* add to output list */
     }
     g_free(newName);
+  loop:
     tmp = g_slist_next(tmp);
   }
 } /* end ObitInfoListCopyAddPrefix */
@@ -397,6 +413,8 @@ void ObitInfoListCopyWithPrefix(ObitInfoList* in, ObitInfoList* out,
   tmp = in->list;
   while (tmp!=NULL) {
     elem = (ObitInfoElem*)tmp->data;
+    /* Check for bad entry */
+    if (elem->iname==NULL) goto loop;
 
     /* Does this begin with the prefix? */
     wanted = !strncmp(prefix, elem->iname, nchk);     
@@ -423,6 +441,7 @@ void ObitInfoListCopyWithPrefix(ObitInfoList* in, ObitInfoList* out,
       }
       g_free(newName);
     } /* end if wanted */
+  loop:
     tmp = g_slist_next(tmp);
   }
 } /* end ObitInfoListCopyWithPrefix */
@@ -746,7 +765,7 @@ ObitInfoListGetNumber (ObitInfoList *in,  olong number,
   }
 
   elem = (ObitInfoElem*)tmp->data;
-  if (elem==NULL) { /* not found */
+  if ((elem==NULL) || (elem->iname==NULL)) { /* not found or bad */
       Obit_log_error(err, OBIT_Error, 
         "%s: I appear to have been corrupted", routine);
       return FALSE;
@@ -804,6 +823,8 @@ ObitInfoListGetNumberP (ObitInfoList *in,  olong number,
 
   elem = (ObitInfoElem*)tmp->data;
   if (elem==NULL) return FALSE;
+  /* Check for bad entry */
+  if (elem->iname==NULL) return FALSE;
 
   /* copy information */
   *type = elem->itype;

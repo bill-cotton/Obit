@@ -231,6 +231,18 @@ def pipeline( aipsSetup, parmFile):
            raise  RuntimeError,"Error in AutoFlag"
     
     
+    # SY calibration
+    if parms["doSYCal"]:
+        plotFile = "./"+fileRoot+"SYCal.ps"
+        retCode = EVLASYCal (uv, err, SYVer=1, SYOut=2, calInt=parms["SYcalInt"], \
+                                 SWUse=parms["SYSWUse"], smoTime=parms["SYsmoTime"], smoFunc=parms["SYsmoFunc"], \
+                                 clipSmo=parms["SYclipSmo"], clipParm=parms["SYclipParm"], \
+                                 doEdit=parms["doSYEdit"], Sigma=parms["SYSigma"], \
+                                 doPlot=parms["doSNPlot"], plotFile=plotFile, editFG=2, \
+                                 nThreads=nThreads, logfile=logFile, check=check, debug=debug)
+        if retCode!=0:
+            raise RuntimeError,"Error in SY calibration "
+    
     # Parallactic angle correction?
     if parms["doPACor"]:
         retCode = EVLAPACor(uv, err, \
@@ -386,9 +398,10 @@ def pipeline( aipsSetup, parmFile):
     if parms["doRecal"]:
         mess =  "Redo calibration:"
         printMess(mess, logFile)
-        EVLAClearCal(uv, err, doGain=True, doFlag=False, doBP=True, check=check, logfile=logFile)
+        EVLAClearCal(uv, err, doGain=True, doFlag=False, doBP=True, saveSY=True, \
+                         check=check, logfile=logFile)
         OErr.printErrMsg(err, "Error resetting calibration")
-        # Parallactic angle correction?
+       # Parallactic angle correction?
         if parms["doPACor"] or parms["doPolCal"]:
             retCode = EVLAPACor(uv, err, \
                                 logfile=logFile, check=check, debug=debug)

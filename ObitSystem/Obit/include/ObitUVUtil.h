@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2015                                          */
+/*;  Copyright (C) 2004-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -53,6 +53,9 @@ ObitUV* ObitUVUtilCopyZero (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 /** Public: Divide the visibilities in one ObitUVData by another */
 void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV, 
 			  ObitErr *err);
+
+/** Public: Divide the XPol visibilities by Stokes I vis */
+void ObitUVUtilXPolDivide (ObitUV *inUV, ObitUV *outUV, ObitErr *err);
 
 /** Public: Subtract the visibilities in one ObitUVData from another 
  * \relates ObitUV */

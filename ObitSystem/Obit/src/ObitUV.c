@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2015                                          */
+/*;  Copyright (C) 2003-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -3188,6 +3188,8 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   if ((sel->timeRange[0]==0.0) && (sel->timeRange[1]==0.0)) {
     sel->timeRange[0] = -1.0e20; sel->timeRange[1] = 1.0e20;
   }
+  /* if end < beginning take all times after beginning */
+  if (sel->timeRange[1]<sel->timeRange[0]) sel->timeRange[1] = 1.0e20;
 
   /* UV Range */
   ftempArr[0] = 0.0; ftempArr[1] = 1.0e20; 

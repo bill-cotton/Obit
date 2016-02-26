@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010,2015                                          */
+/*;  Copyright (C) 2010,2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -145,6 +145,9 @@ void ObitImageMFBlank (ObitImageMF *in, ObitErr *err);
 
 /** Public: Fit coarse spectrum planes and write spectral  */
 void ObitImageMFFitSpec (ObitImageMF *in, ofloat antSize, ObitErr *err);
+
+/** Public: Fit coarse spectrum planes and write spectral  */
+void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err);
 
 /** Public: Return image Beam. */
 ObitImage* ObitImageMFGetBeam (ObitImage *in, olong beamNo, olong plane[5], 

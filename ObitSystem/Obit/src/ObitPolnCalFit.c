@@ -704,10 +704,6 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
   g_assert (ObitIsA(in, &myClassInfo));
   g_assert(ObitUVIsA(inUV));
   g_assert(ObitUVIsA(outUV));
-  /* Multisource file? */
-  Obit_return_if_fail (( inUV->myDesc->ilocsu>=0), err, 
-		       "%s Input %s NOT a multisource file",  
-		       routine, inUV->name);  
 
   /* How many calibrators? */
   ObitInfoListGetTest(in->info, "nCal", &type, dim, &nCal);
@@ -831,7 +827,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
   in->souIDs = g_malloc0(in->nsou*sizeof(olong));
 
   /* Convert SU table into Source List if there is an SU table */
-  highSUver = ObitTableListGetHigh (outUV->tableList, "AIPS AN");
+  highSUver = ObitTableListGetHigh (outUV->tableList, "AIPS SU");
   if (highSUver>0) {
     ver   = 1;
     numIF = 0;
@@ -872,7 +868,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     in->souIDs[0] = 1;  /* Source ID */
     /* Inverse lookup table */
     in->isouIDs = g_malloc0(1*sizeof(olong));
-    in->isouIDs[0] = 1;
+    in->isouIDs[0] = 0;
   }
 
   /* Allocate Fitting flag/order arrays */

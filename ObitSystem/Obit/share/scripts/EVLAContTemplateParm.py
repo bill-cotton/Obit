@@ -41,6 +41,8 @@ parms["selConfig"]     = @CONFIG@     # Selected frequency config, def = first
 parms["selNIF"]        = 0            # Selected number of IFs, def = first  
 parms["selChan"]       = @SELCHAN@    # Selected number of channels, def = first  
 
+parms["doSYCal"]     = True         # Calibration from SysPower (AIPS SY) 
+
 parms["doFD1"]       = True         # Do initial frequency domain flagging
 parms["FD1widMW"]    = 31           # Width of the initial FD median window
 parms["FD1maxRes"]   = 5.0          # Clipping level in sigma
@@ -160,12 +162,14 @@ parms["doShad"]        = parms["doShad"] # Flag shadowed data?
 parms["doMedn"]        = T        # Median editing?
 parms["doFD1"]         = T        # Do initial frequency domain flagging
 parms["doRMSAvg"]      = T        # Do RMS/Mean editing for calibrators
+parms["doSYCal"]       = T        # Calibration from SysPower (AIPS SY) 
 parms["doPACor"]       = T        # Polarization angle correction?
 parms["doDelayCal"]    = T        # Group Delay calibration?
 parms["doBPCal"]       = T        # Determine Bandpass calibration
 parms["doAmpPhaseCal"] = T        # Amplitude/phase calibration
 parms["doAutoFlag"]    = T        # Autoflag editing after final calibration?
 parms["doRecal"]       = T        # Redo calibration after editing
+parms["doSYCal2"]      = parms["doSYCal"]   # Apply SY table generated from the first pass? 
 parms["doDelayCal2"]   = T        # Group Delay calibration of averaged data?, 2nd pass
 parms["doBPCal2"]      = T        # Determine Bandpass calibration, 2nd pass
 parms["doAmpPhaseCal2"]= T        # Amplitude/phase calibration, 2nd pass
@@ -174,6 +178,8 @@ parms["doCalAvg"]      = T        # calibrate and average data
 parms["doRLDelay"]     = parms["doRLDelay"] # Determine R-L delay?
 parms["doPolCal"]      = parms["doPolCal"]  # Do polarization calibration?
 parms["doRLCal"]       = parms["doRLCal"]   # Determine  R-L bandpass?
+parms["XClip"]         = parms["XClip"]     # XPol clipping, None=No clip
+parms["VClip"]         = parms["VClip"]     # VPol clipping, None=No clip
 parms["doImage"]       = T        # Image targets
 parms["doSaveImg"]     = T        # Save results to FITS
 parms["doSaveUV"]      = T        # Save calibrated UV data to FITS

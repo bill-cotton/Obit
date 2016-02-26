@@ -3079,3 +3079,49 @@ Obit/tasks/SYGain.c:
 Obit/tasks/Lister.c:
   Add time and source selection for "GAIN" display.
 3 Feb 2016, svn ver 526
+
+SysPower calibration, Spectral fitting enhancement; mostly bug fixes
+Obit/tasks/SYGain.c Obit/TDF/SYGain.TDF:
+  No copy of SY table or smoothing if not needed
+Obit/src/ObitIOImageFITS.c Obit/src/ObitIOImageAIPS.c:
+  Use ObitInfoListAlwaysPut rather than ObitInfoListPut writing keywords.
+ObitView/src/imagedisp.c:
+  Use g format for pixel value displayed
+Obit/share/scripts/EVLAContTemplateParm.py:
+Obit/python/EVLACal.py Obit/python/EVLAContPipe.py:
+  Add SY calibration to EVLA calibration script
+Obit/tasks/MapBeam2.c:
+   MakeMBFuncArgs: Be sure all rows processed when threading
+Obit/TDF/MapBeam2.TDF:
+   Documentation
+Obit/python/EVLACal.py Obit/python/EVLAContPipe.py
+Obit/share/scripts/EVLAContTemplateParm.py:
+  Add SY calibration
+Obit/tasks/SNCor.c:
+  various: correct rounding of selected IF.
+Obit/src/ObitUV.c:
+  GetSelect: if end timerange< beginning, take all after beginning.
+Obit/include/ObitUVUtil.h  Obit/src/ObitUVUtil.c
+Obit/python/UV.py Obit/python/UV.inc:
+  New function XPolDivide to divide X pol visibilities by Stokes I
+  Fix counting types (to longlong) in Count
+Obit/python/Obit_wrap.c Obit/python/ObitSD_wrap.c:
+  Rebuild python Obit interface
+Obit/src/ObitPolnCalFit.c:
+  Fix bugs involving single source file.
+Obit/tasks/PCal.c:
+  Disable KeepSou stuff.
+Obit/src/ObitSpectrumFit.c Obit/include/ObitSpectrumFit.h
+Obit/include/ObitSpectrumFitClassDef.h: 
+  Make ObitSpectrumFitter and ObitSpectrumWriteOutput public
+Obit/include/ObitImageMF.h Obit/src/ObitImageMF.c:
+  Add routine FitSpec2 to write new image fittiing spectra.
+Obit/python/ImageMF.py Obit/python/ImageMF.inc:
+   Add FitSpec2.
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  Rebuild python interface
+Obit/src/ObitInfoList.c:
+  various: ignore bad entries
+Obit/src/ObitInfoElem.c:
+  various: check for band entry (no name)
+26 Feb 2016, svn ver 527

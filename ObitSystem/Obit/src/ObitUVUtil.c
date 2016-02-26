@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2015                                          */
+/*;  Copyright (C) 2004-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -178,7 +178,7 @@ ObitUV* ObitUVUtilCopyZero (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
 		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL", "AIPS NI",
+		    "AIPS PL", "AIPS NI", "AIPS SY",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx;
@@ -343,7 +343,7 @@ void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
   gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
 		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL", "AIPS NI",
+		    "AIPS PL", "AIPS NI", "AIPS SY",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx, firstVis;
@@ -555,6 +555,216 @@ void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
 } /* end ObitUVUtilVisDivide */
 
 /**
+ * Divide the cross pol visibilities in one ObitUV by I pol (avg parallel pol)
+ * \param inUV     Input uv data, if info member KeepSou TRUE, copy SU table.
+ * \param outUV    Previously defined output, may be the same as inUV
+ * \param err      Error stack, returns if not empty.
+ */
+void ObitUVUtilXPolDivide (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
+{
+  ObitIOCode iretCode, oretCode;
+  gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
+		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
+		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
+		    "AIPS PL", "AIPS NI", "AIPS SY",
+		    NULL};
+  gchar *sourceInclude[] = {"AIPS SU", NULL};
+  olong i, indx, jndx, firstVis;
+  olong iif, nif, ichan, nchan, istok, nstok, incs, incf, incif;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ofloat work[3], Ivis[3], wt, Ireal, Iimag, Iwt;
+  gboolean KeepSou, same;
+  ObitUVDesc *inDesc, *outDesc;
+  gchar *today=NULL;
+  gchar *routine = "ObitUVUtilXPolDivide";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return;
+  g_assert (ObitUVIsA(inUV));
+  g_assert (ObitUVIsA(outUV));
+
+  /* Are input1 and output the same file? */
+  same = ObitUVSame(inUV, outUV, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+
+  /* Keep source table? */
+  KeepSou = FALSE;
+  ObitInfoListGetTest(inUV->info, "KeepSou", &type, (gint32*)dim, &KeepSou);
+
+  /* test open to fully instantiate input and see if it's OK */
+  iretCode = ObitUVOpen (inUV, OBIT_IO_ReadWrite, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
+    Obit_traceback_msg (err, routine, inUV->name);
+
+  /* Get input descriptor */
+  inDesc = inUV->myDesc;
+
+   /* Set up for parsing data */
+  nchan = inDesc->inaxes[inDesc->jlocf];
+  if (inDesc->jlocif>=0) nif = inDesc->inaxes[inDesc->jlocif];
+  else nif = 1;
+  if (inDesc->jlocs>=0) nstok = inDesc->inaxes[inDesc->jlocs];
+  else nstok = 1;
+  /* get increments */
+  incs  = inDesc->incs;
+  incf  = inDesc->incf;
+  incif = inDesc->incif;
+
+  /* Make sure at least 4 Stokes correlations */
+  Obit_return_if_fail ((nstok>=4), err,
+		       "%s: MUST have at least 4 Stokes, have  %d",  
+		       routine, nstok);  
+
+  /* copy Descriptor */
+  outUV->myDesc = ObitUVDescCopy(inUV->myDesc, outUV->myDesc, err);
+
+  /* Creation date today */
+  today = ObitToday();
+  strncpy (outUV->myDesc->date, today, UVLEN_VALUE-1);
+  if (today) g_free(today);
+ 
+  /* use same data buffer on input and output.
+     If multiple passes are made the input files will be closed
+     which deallocates the buffer, use output buffer.
+     so free input buffer */
+  if (!same) {
+    /* use same data buffer on input 1 and output 
+       so don't assign buffer for output */
+    if (outUV->buffer) ObitIOFreeBuffer(outUV->buffer); /* free existing */
+    outUV->buffer = NULL;
+    outUV->bufferSize = -1;
+  }
+
+  /* test open output */
+  oretCode = ObitUVOpen (outUV, OBIT_IO_WriteOnly, err);
+  /* If this didn't work try OBIT_IO_ReadWrite */
+  if ((oretCode!=OBIT_IO_OK) || (err->error)) {
+    ObitErrClear(err);
+    oretCode = ObitUVOpen (outUV, OBIT_IO_ReadWrite, err);
+  }
+  /* if it didn't work bail out */
+  if ((oretCode!=OBIT_IO_OK) || (err->error)) {
+    /* unset output buffer (may be multiply deallocated) */
+    outUV->buffer = NULL;
+    outUV->bufferSize = 0;
+    Obit_traceback_msg (err, routine, outUV->name);
+  }
+
+  /* Copy tables before data if in1 and out are not the same */
+  if (!ObitUVSame (inUV, outUV, err)) {
+    iretCode = ObitUVCopyTables (inUV, outUV, exclude, NULL, err);
+    /* If multisource out then copy SU table, multiple sources selected or
+       sources deselected suggest MS out or KeepSou == TRUE */
+    if ((inUV->mySel->numberSourcesList>1) || (!inUV->mySel->selectSources) ||
+	KeepSou)
+      iretCode = ObitUVCopyTables (inUV, outUV, NULL, sourceInclude, err);
+    if (err->error) {
+      outUV->buffer = NULL;
+      outUV->bufferSize = 0;
+      Obit_traceback_msg (err, routine, inUV->name);
+    }
+  }
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+
+  /* reset to beginning of uv data */
+  iretCode = ObitUVIOSet (inUV, err);
+  oretCode = ObitUVIOSet (outUV, err);
+  if (err->error) Obit_traceback_msg (err, routine,inUV->name);
+
+  /* Close and reopen input to init calibration which will have been disturbed 
+     by the table copy */
+  iretCode = ObitUVClose (inUV, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error))
+    Obit_traceback_msg (err, routine,inUV->name);
+  iretCode = ObitUVOpen (inUV, OBIT_IO_ReadWrite, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error))
+    Obit_traceback_msg (err, routine,inUV->name);
+  outUV->buffer = inUV->buffer;
+
+  outDesc = outUV->myDesc;   /* Get output descriptor */
+
+  /* we're in business, divide */
+  while ((iretCode==OBIT_IO_OK) && (oretCode==OBIT_IO_OK)) {
+    /* Read input */
+    iretCode = ObitUVRead (inUV, inUV->buffer, err);
+    if (iretCode!=OBIT_IO_OK) break;
+    /* How many */
+    outDesc->numVisBuff = inDesc->numVisBuff;
+    firstVis = inDesc->firstVis;
+
+    /* Modify data */
+    for (i=0; i<inDesc->numVisBuff; i++) { /* loop over visibilities */
+      indx = inDesc->nrparm + i*inDesc->lrec;
+      /* loop over IF */
+      for (iif=0; iif<nif; iif++) {
+	/* Loop over frequency channel */
+	for (ichan=0; ichan<nchan; ichan++) { /* loop 60 */
+	  jndx = indx + iif*incif + ichan*incf;
+	  /* Get Stokes I - average parallel hands */
+	  wt = inUV->buffer[jndx+2];
+	  if (wt>0.0) {
+	    Ireal = wt*inUV->buffer[jndx];
+	    Iimag = wt*inUV->buffer[jndx+1];
+	    Iwt   = wt;
+	  } else {
+	    Ireal = Iimag = Iwt = 0.0;
+	  }
+	  wt = inUV->buffer[jndx+5];
+	  if (wt>0.0) {
+	    Ireal += wt*inUV->buffer[jndx+3];
+	    Iimag += wt*inUV->buffer[jndx+4];
+	    Iwt   += wt;
+	  }
+	  if (Iwt > 0.0) {
+	    Ivis[0] = Ireal/Iwt;
+	    Ivis[1] = Iimag/Iwt;
+	    Ivis[2] = Iwt;
+	  } else {
+	    Ivis[0] = Ivis[1] = Ivis[2] = 0.0;
+	  }
+	  /* Loop over cross polarization */
+	  for (istok=2; istok<nstok; istok++) {
+	    jndx = indx + iif*incif + ichan*incf + istok*incs;
+	    /* Divide */
+	    ObitUVWtCpxDivide ((&inUV->buffer[jndx]), Ivis,
+			       (&inUV->buffer[jndx]), work);
+	  } /* end loop over Stokes */
+	} /* end loop over channels */
+      } /* end loop over IFs */
+    } /* end loop over visibilities */
+    
+    /* Write */
+    oretCode = ObitUVWrite (outUV, inUV->buffer, err);
+    if (same) {
+      outUV->myDesc->firstVis = firstVis;
+      ((ObitUVDesc*)(outUV->myIO->myDesc))->firstVis = firstVis;
+    }
+  } /* end loop processing data */
+  
+  /* check for errors */
+  if ((iretCode > OBIT_IO_EOF) || (oretCode > OBIT_IO_EOF) ||
+      (err->error)) /* add traceback,return */
+    Obit_traceback_msg (err, routine,inUV->name);
+    
+  /* unset output buffer (may be multiply deallocated ;'{ ) */
+  outUV->buffer = NULL;
+  outUV->bufferSize = 0;
+  
+  /* close files */
+  iretCode = ObitUVClose (inUV, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+  
+  oretCode = ObitUVClose (outUV, err);
+  if (err->error) Obit_traceback_msg (err, routine, outUV->name);
+  /* In case */
+  outUV->buffer     = NULL;
+  outUV->bufferSize = 0;
+ 
+} /* end ObitUVUtilXPolDivide */
+
+/**
  * Subtract the visibilities in one ObitUV from those in another
  * outUV = inUV1 - inUV2
  * \param inUV1    First input uv data, no calibration/selection
@@ -571,7 +781,7 @@ void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
   gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
 		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL", "AIPS NI",
+		    "AIPS PL", "AIPS NI", "AIPS SY",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx, firstVis;
@@ -1523,7 +1733,7 @@ ObitUV* ObitUVUtilBloat (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS AT", "AIPS CT", "AIPS OB", "AIPS IM", "AIPS MC",
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
-		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD",
+		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD", "AIPS SY",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx, jndx;
@@ -1711,7 +1921,7 @@ ObitUV* ObitUVUtilAvgF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS AT", "AIPS CT", "AIPS OB", "AIPS IM", "AIPS MC",
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
-		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD",
+		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD", "AIPS SY",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx, jndx;
@@ -1926,7 +2136,7 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS AT", "AIPS CT", "AIPS OB", "AIPS IM", "AIPS MC",
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
-		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD",
+		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD", "AIPS SY",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   ObitInfoType type;
@@ -2320,7 +2530,7 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS AT", "AIPS CT", "AIPS OB", "AIPS IM", "AIPS MC",
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
-		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD",
+		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD", "AIPS SY",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   ObitInfoType type;
@@ -2816,13 +3026,14 @@ ObitInfoList* ObitUVUtilCount (ObitUV *inUV, ofloat timeInt, ObitErr *err)
   ObitIOAccess access;
   ObitUVDesc *inDesc;
   ofloat lastTime=-1.0, *inBuffer;
-  olong ncorr, indx, iindx, lastSourceID, curSourceID;
+  olong numTime, ncorr, indx, iindx, lastSourceID, curSourceID;
   gboolean gotOne, done, isVLA;
   odouble GSTiat0, DegDay, ArrayX, ArrayY, ArrayZ;
   ofloat dataIat, ArrLong;
   ofloat startTime, endTime, curTime;
-  olong numTime, goodCnt[500], badCnt[500], timeCnt[500], timeSou[500];
+  ollong visCnt[500], goodCnt[500], badCnt[500], timeCnt[500], timeSou[500];
   ofloat timeSum[500];
+  odouble dtemp[500];
   gchar *routine = "ObitUVUtilCount";
 
   /* error checks */
@@ -2831,8 +3042,8 @@ ObitInfoList* ObitUVUtilCount (ObitUV *inUV, ofloat timeInt, ObitErr *err)
 
   /* Initialize sums */
   numTime = 0;
-  for (i=0; i<100; i++) {
-    goodCnt[i] = badCnt[i] = timeCnt[i] = timeSou[i] = 0;
+  for (i=0; i<500; i++) {
+    visCnt[i] = goodCnt[i] = badCnt[i] = timeCnt[i] = timeSou[i] = 0;
     timeSum[i] = 0.0;
   }
 
@@ -2882,6 +3093,7 @@ ObitInfoList* ObitUVUtilCount (ObitUV *inUV, ofloat timeInt, ObitErr *err)
     for (ivis=0; ivis<inDesc->numVisBuff; ivis++) { 
       gotOne = FALSE;
 
+      visCnt[numTime]++;  /* Count vis */
       curTime = inBuffer[iindx+inDesc->iloct]; /* Time */
       if (inDesc->ilocsu>=0) curSourceID = inBuffer[iindx+inDesc->ilocsu];
       if (startTime < -1000.0) {  /* Set time window etc. if needed */
@@ -2960,10 +3172,14 @@ ObitInfoList* ObitUVUtilCount (ObitUV *inUV, ofloat timeInt, ObitErr *err)
   ObitInfoListAlwaysPut (outList, "numTime", OBIT_long, dim, &numTime);
   ObitInfoListAlwaysPut (outList, "numCorr", OBIT_long, dim, &ncorr);
   dim[0] = numTime;
-  ObitInfoListAlwaysPut (outList, "Source", OBIT_long,   dim, timeSou);
-  ObitInfoListAlwaysPut (outList, "Count",  OBIT_long,   dim, goodCnt);
-  ObitInfoListAlwaysPut (outList, "Bad",    OBIT_long,   dim, badCnt);
-  ObitInfoListAlwaysPut (outList, "LST",    OBIT_float, dim, timeSum);
+  ObitInfoListAlwaysPut (outList, "Source", OBIT_long,     dim, timeSou);
+  ObitInfoListAlwaysPut (outList, "LST",    OBIT_float,    dim, timeSum);
+  for (i=0; i<numTime; i++) dtemp[i] = (odouble)goodCnt[i];
+  ObitInfoListAlwaysPut (outList, "Count",  OBIT_double,   dim, dtemp);
+  for (i=0; i<numTime; i++) dtemp[i] = (odouble)badCnt[i];
+  ObitInfoListAlwaysPut (outList, "Bad",    OBIT_double,   dim, dtemp);
+  for (i=0; i<numTime; i++) dtemp[i] = (odouble)visCnt[i];
+  ObitInfoListAlwaysPut (outList, "Vis",    OBIT_double,   dim, dtemp);
   /* End of processing */
 
   /* Cleanup */
@@ -2997,7 +3213,7 @@ void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV,
 		    "AIPS AT", "AIPS CT", "AIPS OB", "AIPS IM", "AIPS MC",
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
-		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD",
+		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD", "AIPS SY",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong *BChan=NULL, *numChan=NULL, *BIF=NULL, *numIF=NULL;
@@ -3248,7 +3464,7 @@ void ObitUVUtilNoise(ObitUV *inUV, ObitUV *outUV, ofloat scale, ofloat sigma,
   gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
 		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL", "AIPS NI",
+		    "AIPS PL", "AIPS NI", "AIPS SY",
 		    NULL};
 #if HAVE_GSL==1  /* GSL stuff */
   gsl_rng *ran=NULL;
@@ -3599,7 +3815,7 @@ void ObitUVUtilCalcUVW (ObitUV *inUV, ObitUV *outUV,  ObitErr *err)
   gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
 		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL", "AIPS NI",
+		    "AIPS PL", "AIPS NI", 
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   ObitUVWCalc *uvwCalc=NULL;

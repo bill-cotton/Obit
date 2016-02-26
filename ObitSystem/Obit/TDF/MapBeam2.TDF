@@ -3,7 +3,7 @@
 ;! Map beam polarization correlation version
 ;#  Task Calibration Polarization UV Image VLA
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2015
+;;  Copyright (C) 2015-2016
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -165,6 +165,8 @@ Use:   Image EVLA quasi "holography" mode data to make images of
        and the data is then averaged over baseline. 
        Images are in Azimuth (x) and Elevation (y).  
        Data on unpolarized sources give the best results.
+       The central RL/XY and LR/YX pixels are multiplitied by the 
+       Stokes I beam and subtracted.
           The resultant images are freq/IF cubes of primary beam
        (or the rms of each of these) for each of the selected antennas
        and correlation products; the third axis is frequency 
@@ -322,7 +324,8 @@ Adverbs:
              False: create separate maps for each selected ant.
   doPhase....True: Write Phase images as well as ampl images
   doRMS......True: Write RMS images as well as Stokes images
-  doPolNorm..True: Normalize each poln. image by its max. NYI
+  doPolNorm..True: Normalize each poln. image by its max.
+             Probably not desirable.
   Antennas...A list of the antennas to use.  All 0 => use all.
   OffAz......A list of antenna pointing offsets (') in Az to be 
              added to the data.  OffAz[1]=ant 1, OffAz[2]=ant 2...

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008                                               */
+/*;  Copyright (C) 2008-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -32,6 +32,10 @@ ObitSpectrumFitCreateFP ObitSpectrumFitCreate;
 ObitSpectrumFitCubeFP ObitSpectrumFitCube;
 /** Function pointer to FitImArr. */
 ObitSpectrumFitImArrFP ObitSpectrumFitImArr;
+/** Function pointer to ObitSpectrumFitter */
+ObitSpectrumFitterFP ObitSpectrumFitter;
+/** Function pointer to ObitSpectrumWriteOutput */
+ObitSpectrumWriteOutputFP ObitSpectrumWriteOutput;
 /** Function pointer to Eval. */
 ObitSpectrumFitEvalFP ObitSpectrumFitEval;
 /** Function pointer to Single. */

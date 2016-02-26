@@ -158,12 +158,12 @@ int main ( int argc, char **argv )
   
   /* Shutdown Obit */
  exit: 
-  /* Remove KeepSou keyword on imput descriptor */
+  /* Remove KeepSou keyword on imput descriptor 
   ObitUVOpen(inData, OBIT_IO_ReadWrite, err);
   ObitInfoListRemove (inData->myDesc->info, "KeepSou");
   ObitInfoListRemove (((ObitUVDesc*)inData->myIO->myDesc)->info, "KeepSou");
   inData->myStatus = OBIT_Modified;
-  ObitUVClose(inData,  err);
+  ObitUVClose(inData,  err);*/
   /* cleanup */
   PolnFitter = ObitPolnCalFitUnref(PolnFitter); 
   myInput    = ObitInfoListUnref(myInput); 
@@ -638,10 +638,10 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   if (err->error) return inData;
   g_assert (ObitInfoListIsA(myInput));
 
-  /* Make sure multisource nature kept even if only selecting one source */
+  /* Make sure multisource nature kept even if only selecting one source 
   KeepSou = TRUE;
   dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
-  ObitInfoListAlwaysPut (myInput, "inKeepSou", OBIT_bool, dim, &KeepSou);
+  ObitInfoListAlwaysPut (myInput, "inKeepSou", OBIT_bool, dim, &KeepSou);*/
 
   /* Build basic input UV data Object */
   inData = ObitUVFromFileInfo ("in", myInput, err);
@@ -674,10 +674,10 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   ObitInfoListCopyList (myInput, inData->info, dataParms);
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
 
-  /* Make sure multisource nature kept even if only selecting one source */
+  /* Make sure multisource nature kept even if only selecting one source
   KeepSou = TRUE;
   dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
-  ObitInfoListAlwaysPut (inData->myDesc->info, "KeepSou", OBIT_bool, dim, &KeepSou);
+  ObitInfoListAlwaysPut (inData->myDesc->info, "KeepSou", OBIT_bool, dim, &KeepSou); */
   return inData;
 } /* end getInputData */
 

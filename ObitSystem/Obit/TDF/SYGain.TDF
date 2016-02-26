@@ -3,7 +3,7 @@
 ;! Derives a gain calibration AIPS SN table from an AIPS SY table
 ;# Obit Task Calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2014,2015
+;;  Copyright (C) 2014-2016
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -86,6 +86,7 @@ SYGain
 Task: Clip and smooth an SY table and write an AIPS SN table for 
 selected sources and times in the iNdeX table.
 Only for EVLA data with SY and CD tables.
+Note: only Power Dif used in deriving SN table.
 
 Adverbs:
   DataType..'FITS' or 'AIPS'  type of input
@@ -132,6 +133,7 @@ Adverbs:
              'GAUS' = Gaussian filter
              other => boxcar
   smoParm......Parameters for smoothing function.
+              No smoothing if all times 0
              'BOX':
              smoParm gives the boxcar width in hours.
               [0] => smoothing time for power diff,
@@ -160,7 +162,7 @@ Adverbs:
   SYVer......input version number of the SY table to smooth.
              0 => Highest.
   SYOut......output version number of the SY table clipped and
-             smoothed.   0 => New
+             smoothed.   0 => New.  No copy if SYOut=SYVer
   solnOut....output version of SN table to write.
              0 => create new table.
   calInt.....Interval (min) between entries.

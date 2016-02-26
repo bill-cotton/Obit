@@ -1,7 +1,7 @@
 /* $Id: MapBeam2.c  $  */
 /* Obit task to Map beam polarization in correlations (RR,LL,LR,RL)   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2015                                               */
+/*;  Copyright (C) 2015-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1475,6 +1475,8 @@ void doImage (gchar *Source, gboolean ldoRMS, gboolean ldoPhase,
 	  ObitInfoListAlwaysPut (outImage[ipoln]->myDesc->info, "avgAz", OBIT_float, dim, &avgAz);
 	  ObitInfoListAlwaysPut (outImage[ipoln]->myDesc->info, "avgEl", OBIT_float, dim, &avgEl);
 	  ObitInfoListAlwaysPut (outImage[ipoln]->myDesc->info, "avgPA", OBIT_float, dim, &avgPA);
+	  ObitImageClose (outImage[ipoln], err);
+	  if (err->error) goto cleanup;
 	} /* end loop creating output images */
       
 	/* Looping over frequency */
@@ -1510,12 +1512,12 @@ void doImage (gchar *Source, gboolean ldoRMS, gboolean ldoPhase,
 	      pqCenter = ObitFArrayIndex (work[2], ipos);
 	      qpCenter = ObitFArrayIndex (work[3], ipos);
 	      ObitFArrayAdd (work[1], work[2], fatemp);            /* Ipol = 0.5*(qq+pp) */
-	      value = -0.5*(*pqCenter) / (0.5*(*ppCenter + *qqCenter));  /* Normalize by IPol beam */
+	      value = -(*pqCenter) / (0.5*(*ppCenter + *qqCenter));  /* Normalize by IPol beam */
 	      ObitFArraySMul (fatemp, value);  /* pq * IPol beam */
 	      ObitFArrayAdd (work[2], fatemp, work[2]);
 	      /* qp  (LR or YX) */ 
 	      ObitFArrayAdd (work[1], work[2], fatemp);            /* Ipol = 0.5*(qq+pp) */
-	      value = -0.5*(*qpCenter) / (0.5*(*ppCenter + *qqCenter));  /* Normalize by IPol beam */
+	      value = -(*qpCenter) / (0.5*(*ppCenter + *qqCenter));  /* Normalize by IPol beam */
 	      ObitFArraySMul (fatemp, value);  /* qp * IPol beam */
 	      ObitFArrayAdd (work[3], fatemp, work[3]);
 	      
@@ -1587,8 +1589,6 @@ void doImage (gchar *Source, gboolean ldoRMS, gboolean ldoPhase,
 	  } /* end Channel loop */
 	} /* end IF loop */
 	for (ipoln=0; ipoln<(*npoln); ipoln++) {
-	  ObitImageClose (outImage[ipoln], err);
-	  if (err->error) goto cleanup;
 	  /* Copy FQ & AN tables */
 	  ObitDataCopyTables ((ObitData*)inData, (ObitData*)outImage[ipoln], NULL,
 			      tableList, err);
@@ -1951,7 +1951,7 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
   olong    nx, ny, iIF, ichan, *refAnts, nRefAnt, ix, iy, prtLv=0;
   gboolean OK1, OK2, isCirc, doPolNorm=FALSE;
   gchar    *routine = "accumData";
-  olong soff, uc, vc;  /* DEBUG */
+  /* olong soff, uc, vc;  DEBUG */
 
   /* error checks */
   if (err->error) return;
@@ -2649,6 +2649,7 @@ static olong MakeMBFuncArgs (ObitThread *thread,
     (*ThreadArgs)[i]->thread    = ObitThreadRef(thread);
     (*ThreadArgs)[i]->loy       = iy;     /* Divvy up processing */
     (*ThreadArgs)[i]->hiy       = MIN (iy+nrow, ny);
+    if (i==(nThreads-1)) (*ThreadArgs)[i]->hiy = ny;  /* be sure to do all*/
     iy += nrow;
     (*ThreadArgs)[i]->nchan     = nchan;
     (*ThreadArgs)[i]->npoln     = npoln;

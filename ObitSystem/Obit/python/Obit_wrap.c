@@ -3975,6 +3975,10 @@ extern void ImageMFFitSpec (ObitImageMF* in, float antSize, ObitErr* err) {
   ObitImageMFFitSpec (in, antSize, err);
 }
 
+extern void ImageMFFitSpec2 (ObitImageMF* in, ObitImageMF* out, ObitErr* err) {
+  ObitImageMFFitSpec2 (in, out, err);
+}
+
 extern void ImageMFSetFITS(ObitImageMF *,int ,int ,char *,int [7],int [7],ObitErr *);
 extern void ImageMFSetAIPS(ObitImageMF *,int ,int ,int ,int ,int [7],int [7],ObitErr *);
 extern ObitData *ImageMFCastData(ObitImageMF *);
@@ -3999,6 +4003,7 @@ extern int ImageMFisScratch(ObitImageMF *);
 extern int ImageMFIsA(ObitImageMF *);
 extern char *ImageMFGetName(ObitImageMF *);
 extern void ImageMFFitSpec(ObitImageMF *,float ,ObitErr *);
+extern void ImageMFFitSpec2(ObitImageMF *,ObitImageMF *,ObitErr *);
 
 typedef struct {
   ObitImageMF *me;
@@ -12762,6 +12767,10 @@ extern void UVUtilVisDivide(ObitUV* in1, ObitUV *in2, ObitUV *out, ObitErr *err)
   ObitUVUtilVisDivide (in1, in2, out, err);
 } // end UVUtilVisDivide
 
+extern void UVUtilXPolDivide(ObitUV* in, ObitUV *out, ObitErr *err) {
+  ObitUVUtilXPolDivide (in, out, err);
+} // end UVUtilXPolDivide
+
 extern void UVUtilVisSub(ObitUV* in1, ObitUV *in2, ObitUV *out, ObitErr *err) {
   ObitUVUtilVisSub (in1, in2, out, err);
 } // end UVUtilVisSub
@@ -12934,6 +12943,7 @@ extern char *UVGetName(ObitUV *);
 extern void UVUtilUVWExtrema(ObitUV *,ObitErr *,float [2]);
 extern ObitUV *UVUtilCopyZero(ObitUV *,int ,ObitUV *,ObitErr *);
 extern void UVUtilVisDivide(ObitUV *,ObitUV *,ObitUV *,ObitErr *);
+extern void UVUtilXPolDivide(ObitUV *,ObitUV *,ObitErr *);
 extern void UVUtilVisSub(ObitUV *,ObitUV *,ObitUV *,ObitErr *);
 extern float UVUtilVisCompare(ObitUV *,ObitUV *,ObitErr *);
 extern void UVUtilIndex(ObitUV *,ObitErr *);
@@ -28505,6 +28515,45 @@ static PyObject *_wrap_ImageMFFitSpec(PyObject *self, PyObject *args) {
         }
     }
     ImageMFFitSpec(_arg0,_arg1,_arg2);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFFitSpec2(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageMF * _arg0;
+    ObitImageMF * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:ImageMFFitSpec2",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFFitSpec2. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ImageMFFitSpec2. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of ImageMFFitSpec2. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    ImageMFFitSpec2(_arg0,_arg1,_arg2);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
     return _resultobj;
@@ -54634,6 +54683,45 @@ static PyObject *_wrap_UVUtilVisDivide(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_UVUtilXPolDivide(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUV * _arg0;
+    ObitUV * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:UVUtilXPolDivide",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVUtilXPolDivide. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of UVUtilXPolDivide. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of UVUtilXPolDivide. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    UVUtilXPolDivide(_arg0,_arg1,_arg2);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_UVUtilVisSub(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitUV * _arg0;
@@ -64300,6 +64388,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "UVUtilIndex", _wrap_UVUtilIndex, METH_VARARGS },
 	 { "UVUtilVisCompare", _wrap_UVUtilVisCompare, METH_VARARGS },
 	 { "UVUtilVisSub", _wrap_UVUtilVisSub, METH_VARARGS },
+	 { "UVUtilXPolDivide", _wrap_UVUtilXPolDivide, METH_VARARGS },
 	 { "UVUtilVisDivide", _wrap_UVUtilVisDivide, METH_VARARGS },
 	 { "UVUtilCopyZero", _wrap_UVUtilCopyZero, METH_VARARGS },
 	 { "UVUtilUVWExtrema", _wrap_UVUtilUVWExtrema, METH_VARARGS },
@@ -64887,6 +64976,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "ImageMosaicUnref", _wrap_ImageMosaicUnref, METH_VARARGS },
 	 { "ImageMosaicCopy", _wrap_ImageMosaicCopy, METH_VARARGS },
 	 { "newImageMosaic", _wrap_newImageMosaic, METH_VARARGS },
+	 { "ImageMFFitSpec2", _wrap_ImageMFFitSpec2, METH_VARARGS },
 	 { "ImageMFFitSpec", _wrap_ImageMFFitSpec, METH_VARARGS },
 	 { "ImageMFGetName", _wrap_ImageMFGetName, METH_VARARGS },
 	 { "ImageMFIsA", _wrap_ImageMFIsA, METH_VARARGS },

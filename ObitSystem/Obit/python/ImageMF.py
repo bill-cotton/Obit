@@ -22,7 +22,7 @@ Additional  Functions are available in ImageUtil.
 # Python/Obit Astronomical ImageMF class
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2010
+#  Copyright (C) 2010-2016
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -476,6 +476,54 @@ def PFitSpec (inImage, err, antSize=0.0, nOrder=1):
     inImage.List.set("nOrder",nOrder)
     Obit.ImageMFFitSpec(inImage.me, antSize, err.me)
     # end PFitSpec
+
+def PFitSpec2 (inImage, outImage, err, nterm=2, \
+               refFreq=None, maxChi2=2.0, doError=False, doBrokePow=False, \
+               calFract=None, doPBCor=False, PBmin=None, antSize=None):
+    """
+    Fit spectrum to each pixel of an ImageMF writing a new cube
+
+    Fitted spectral polynomials returned in outImage
+    Can run with multiple threads if enabled:
+    OSystem.PAllowThreads(2)  # 2 threads
+     * inImage   = Python Image object; parameters on List:
+     * outImage  = Image cube with fitted spectra.
+                   Should be defined but not created.
+                   Planes 1->nterm are coefficients per pixel
+                   Planes nterm+1->2*nterm are uncertainties in coefficients
+                   Plane 2*nterm+1 = Chi squared of fit
+    * err       = Python Obit Error/message stack
+    * nterm     = Number of terms in spectral fit, 2=SI, 3=curvature
+    * refFreq   = Reference frequency for fit [def ref for inImage]
+    * maxChi2   = Max. Chi Sq for accepting a partial spectrum [def 2.0]
+    * doError   = If true do error analysis [def False]
+    * doBrokePow= If true do broken power law (3 terms). [def False]
+    * calFract  = Calibration error as fraction of flux
+                  One per frequency or one for all, def 0.05
+    * doPBCor   = If true do primary beam correction. [def False]
+    * PBmin     = Minimum beam gain correction
+                  One per frequency or one for all, def 0.05,
+                  1.0 => no gain corrections
+    * antSize   = Antenna diameter (m) for PB gain corr, 
+                  One per frequency or one for all, def 25.0
+    """
+    ################################################################
+    inImage.List.set("nterm",      nterm,      ttype='long')
+    inImage.List.set("maxChi2",    maxChi2,    ttype='float')
+    inImage.List.set("doError",    doError,    ttype='boolean')
+    inImage.List.set("doBrokePow", doBrokePow, ttype='boolean')
+    inImage.List.set("doPBCor",    doPBCor,    ttype='boolean')
+    if refFreq:
+        inImage.List.set("refFreq",  refFreq,  ttype='double')
+    if calFract:
+        inImage.List.set("calFract", calFract, ttype='float')
+    if PBmin:
+        inImage.List.set("PBmin",    PBmin,    ttype='float')
+    if antSize:
+        inImage.List.set("antSize",   antSize, ttype='float')
+
+    Obit.ImageMFFitSpec2(inImage.me, outImage.me, err.me)
+    # end PFitSpec2
 
 def PIsA (inImage):
     """

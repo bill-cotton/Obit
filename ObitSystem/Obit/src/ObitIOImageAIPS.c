@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -747,7 +747,6 @@ ObitIOCode ObitIOImageAIPSWrite (ObitIOImageAIPS *in, ofloat *data,
     if ((retCode!=OBIT_IO_OK) || (err->error)) /* add traceback on error */
       Obit_traceback_val (err, routine, in->name, retCode);
     in->filePos = in->myFile->filePos; /* remember current file position */
-
     ipos[1]++;            /* next row */
     offset  += len;       /* offset on data buffer */
     wantPos += lRow;      /* where we want to start next read */  
@@ -755,13 +754,13 @@ ObitIOCode ObitIOImageAIPSWrite (ObitIOImageAIPS *in, ofloat *data,
     /* next file position offset (AIPS images have funny rules) */
     wantPos = ObitAIPSImageFileOffset(desc->naxis, (olong*)desc->inaxes, ipos);
 
-    /* Do we need to pad out a block just finished? */
+    /* Do we need to pad out a block just finished?  */
     if ((in->myFile->access == OBIT_IO_WriteOnly) && 
 	(iRow>0) && (wantPos>in->myFile->filePos)) {
       retCode = ObitFilePad (in->myFile, wantPos, (gchar*)data, size, err);
-      if ((retCode!=OBIT_IO_OK) || (err->error)) /* add traceback on error */
+      if ((retCode!=OBIT_IO_OK) || (err->error))  /* add traceback on error */
 	Obit_traceback_val (err, routine, in->name, retCode);
-      in->filePos = in->myFile->filePos; /* remember current file position */
+	in->filePos = in->myFile->filePos; /* remember current file position */
     }
 
   }  /* end loop writing rows */
@@ -912,8 +911,8 @@ ObitIOImageAIPSReadDescriptor (ObitIOImageAIPS *in, ObitErr *err)
 	/* Save on ObitInfoList */
 	dim[0] = 1;
 	if (keyType == OBIT_string) dim[0] = 8;
-	ObitInfoListPut(desc->info, keyName, keyType, dim, 
-			(gconstpointer)blob, err);
+	ObitInfoListAlwaysPut(desc->info, keyName, keyType, dim, 
+			      (gconstpointer)blob);
 	if (err->error)  /* add trace and return on error */
 	  Obit_traceback_val (err, routine,  in->name, retCode);
 	ip +=5; /* next unit in record */

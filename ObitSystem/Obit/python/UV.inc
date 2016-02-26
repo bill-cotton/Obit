@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for UV  type                               */
 /*                                                                    */
-/*;  Copyright (C) 2004-2010                                          */
+/*;  Copyright (C) 2004-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -312,6 +312,10 @@ extern ObitUV* UVUtilCopyZero(ObitUV* in, int scratch, ObitUV *out, ObitErr *err
 extern void UVUtilVisDivide(ObitUV* in1, ObitUV *in2, ObitUV *out, ObitErr *err) {
   ObitUVUtilVisDivide (in1, in2, out, err);
 } // end UVUtilVisDivide
+
+extern void UVUtilXPolDivide(ObitUV* in, ObitUV *out, ObitErr *err) {
+  ObitUVUtilXPolDivide (in, out, err);
+} // end UVUtilXPolDivide
 
 extern void UVUtilVisSub(ObitUV* in1, ObitUV *in2, ObitUV *out, ObitErr *err) {
   ObitUVUtilVisSub (in1, in2, out, err);

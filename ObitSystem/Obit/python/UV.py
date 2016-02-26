@@ -115,7 +115,7 @@ Data selection, calibration and editing parameters on List member:
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2014
+#  Copyright (C) 2004-2016
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -1214,6 +1214,29 @@ def PUtilVisDivide (in1UV, in2UV, outUV, err):
         OErr.printErrMsg(err, "Error dividing UV data")
     # end PUtilVisDivide
 
+def PUtilXPolDivide (inUV, outUV, err):
+    """ Divides cross hand visibilites Stokes I (avg. parallel hand)
+
+    outUV   = Output Python UV object,
+    inUV    = Input Python UV object,
+    outUV   = Output python UV object
+    err     = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not inUV.UVIsA():
+        raise TypeError,"inUV MUST be a Python Obit UV"
+    if not outUV.UVIsA():
+        raise TypeError,"outUV MUST be a Python Obit UV"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    Obit.UVUtilXPolDivide(inUV.cast(myClass),  \
+                          outUV.cast(myClass), err.me)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error dividing X pol UV data")
+    # end PUtilXPolDivide
+
 def PUtilVisSub (in1UV, in2UV, outUV, err):
     """ Subtracts the visibilites in in2UV from those in in1UV
 
@@ -1517,6 +1540,7 @@ def PUtilCount (inUV, err, timeInt=1440.0):
     returns a dist with entries:
     numTime  = Number of time intervals
     numCorr  = Number of Correlations per vis
+    Vis      = Number of total visibillities
     Count    = Number of good correlation/visibilities
     Bad      = Number of flagged correlation/visibilities
     Source   = Source ID per interval (or 0 if no source ID)

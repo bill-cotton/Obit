@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2008                                          */
+/*;  Copyright (C) 2002-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -82,6 +82,9 @@ ObitInfoElem* ObitInfoElemCopy (ObitInfoElem *in)
   olong i;
   gchar *name;
  
+  /* error checks */
+  g_assert (in->iname != NULL);
+
   name =  g_strconcat ("IElem:", in->iname, NULL);
   out =  ObitMemAlloc0Name(sizeof(ObitInfoElem), name);
   g_free(name);
@@ -171,12 +174,13 @@ gboolean ObitInfoElemComp (ObitInfoElem *me, ObitInfoType type,
  * \return TRUE if OK, FALSE if object incompatable with request.
  */
 gboolean ObitInfoElemUpdate (ObitInfoElem *me, gint32 type, 
-			 gint32 *dim, gconstpointer data, gboolean warn)
+			     gint32 *dim, gconstpointer data, gboolean warn)
 { 
   gboolean OK=FALSE;
 
- /* error checks */
+  /* error checks */
   g_assert (me != NULL);
+  g_assert (me->iname != NULL);
   g_assert (dim != NULL);
   g_assert (data != NULL);
 
@@ -211,6 +215,7 @@ void ObitInfoElemSave (ObitInfoElem *me, gconstpointer data)
 
   /* error checks */
   g_assert (me != NULL);
+  g_assert (me->iname != NULL);
   g_assert (data != NULL);
    
   /* Strings are (always) different - an extra byte is allocated for final NULL */
@@ -259,6 +264,10 @@ void ObitInfoElemResize  (ObitInfoElem *me, ObitInfoType type,
   gint32 i, size; 
   gchar *name;
   
+  /* Error check */
+  g_assert (me != NULL);
+  g_assert (me->iname != NULL);
+
   me->itype = type; /* reset type */
 
   for (i=0; i<MAXINFOELEMDIM; i++)
