@@ -3125,3 +3125,7 @@ Obit/src/ObitInfoList.c:
 Obit/src/ObitInfoElem.c:
   various: check for band entry (no name)
 26 Feb 2016, svn ver 527
+
+Obit/src/ObitInfoList.c:
+ Fix bugs introduced last version
+27 Feb 2016, svn ver 528
