@@ -191,12 +191,12 @@ ObitInfoList* ObitInfoListCopyData (ObitInfoList* in, ObitInfoList* out)
   while (tmp!=NULL) {
     elem = (ObitInfoElem*)tmp->data;
     /* Check for bad entry */
-    if (elem || elem->iname==NULL) goto loop;
+    if (elem && elem->iname==NULL) goto loop;
     out->number++; /* number of elements */
     /* Check if it's already there and is so just update */
     xelem = ObitInfoListFind(out, elem->iname);
     /* Check for bad entry */
-    if (xelem || xelem->iname==NULL) goto loop;
+    if (xelem && xelem->iname==NULL) goto loop;
     if (xelem==NULL) { /* not there */
       /* make copy to attach to list */
       telem = ObitInfoElemCopy(elem);
@@ -242,7 +242,7 @@ void  ObitInfoListCopyList (ObitInfoList* in, ObitInfoList* out, gchar **list)
     elem = (ObitInfoElem*)tmp->data;
     
     /* Check for bad entry */
-    if (elem || elem->iname==NULL) goto loop;
+    if (elem && elem->iname==NULL) goto loop;
 
     /* Is this one on the list */
     wanted = FALSE;
@@ -299,7 +299,7 @@ void ObitInfoListCopyListRename(ObitInfoList* in, ObitInfoList* out,
     elem = (ObitInfoElem*)tmp->data;
     
     /* Check for bad entry */
-    if (elem || elem->iname==NULL) goto loop;
+    if (elem && elem->iname==NULL) goto loop;
 
     /* Is this one on the list */
     wanted = FALSE;
@@ -360,7 +360,7 @@ void ObitInfoListCopyAddPrefix(ObitInfoList* in, ObitInfoList* out,
   while (tmp!=NULL) {
     elem = (ObitInfoElem*)tmp->data;
     /* Check for bad entry */
-    if (elem || elem->iname==NULL) goto loop;
+    if (elem && elem->iname==NULL) goto loop;
     /* New name */
     newName = g_strconcat(prefix, elem->iname, NULL);
     
@@ -414,7 +414,7 @@ void ObitInfoListCopyWithPrefix(ObitInfoList* in, ObitInfoList* out,
   while (tmp!=NULL) {
     elem = (ObitInfoElem*)tmp->data;
     /* Check for bad entry */
-    if (elem || elem->iname==NULL) goto loop;
+    if (elem && elem->iname==NULL) goto loop;
 
     /* Does this begin with the prefix? */
     wanted = !strncmp(prefix, elem->iname, nchk);     
