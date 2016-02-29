@@ -3137,3 +3137,7 @@ Obit/src/ObitInfoList.c:
 Obit/src/ObitInfoList.c:
  Fix bugs introduced last version
 29 Feb 2016, svn ver 530
+
+Obit/src/ObitInfoList.c:
+ Fix bugs introduced last version
+29 Feb 2016, svn ver 531
