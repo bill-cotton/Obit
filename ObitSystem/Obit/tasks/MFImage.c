@@ -1557,8 +1557,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     NULL
   };
   gchar        *CLEANParms[] = {  /* Clean parameters */
-    "CLEANBox", "autoWindow", "Gain", "minFlux", "Niter", "minPatch", "Beam",  "targBeam",
-    "Mode", "CCFilter", "maxPixel", "dispURL", "ccfLim", "SDIGain", 
+    "CLEANBox", "CLEANFile", "autoWindow", "Gain", "minFlux", "Niter", "minPatch", 
+    "Beam",  "targBeam", "Mode", "CCFilter", "maxPixel", "dispURL", "ccfLim", "SDIGain", 
     "Alpha", "AlphaRefF", "norder", "doComRes", "MResKnob",
     NULL
   };
@@ -2436,7 +2436,7 @@ void MFImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "doPol",  "PDVer", "doFull", "doComRes", "do3D", "Catalog", "CatDisk",
     "OutlierDist",  "OutlierFlux", "OutlierSI",
     "FOV", "xCells", "yCells", "nx", "ny", "RAShift", "DecShift", "doRestore", "doFit",
-    "OutlierSize",  "CLEANBox", "Gain", "minFlux",  "Niter", "minPatch",
+    "OutlierSize",  "CLEANBox", "CLEANFile", "Gain", "minFlux",  "Niter", "minPatch",
     "ccfLim", "SDIGain", "BLFact", "BLFOV",  "BLchAvg", "norder", 
     "Reuse", "autoCen", "targBeam", "Beam", "Cmethod", "CCFilter", "maxPixel", 
     "maxPSCLoop", "minFluxPSC", "solPInt", "solPType", "solPMode", 

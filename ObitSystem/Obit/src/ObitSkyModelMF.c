@@ -848,15 +848,7 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
     test = 1.0e20;
     in->specIndex[i] = -1;
     for (j=0; j<nSpec; j++) {
-      if (lsb) { /* Lower sideband */
-	if ((uvdata->myDesc->freqArr[i] <= in->specFreqLo[j]) &&
-	    (uvdata->myDesc->freqArr[i] >= in->specFreqHi[j]))
-	  in->specIndex[i] = j;
-      } else {  /* Upper sideband */
-	if ((uvdata->myDesc->freqArr[i] >= in->specFreqLo[j]) &&
-	    (uvdata->myDesc->freqArr[i] <= in->specFreqHi[j]))
-	  in->specIndex[i] = j;
-      }
+	if (uvdata->myDesc->freqArr[i] >= in->specFreqLo[j]) in->specIndex[i] = j;
     }
     /* If frequency out of range, force DFT */
     if (in->specIndex[i]<0) {
@@ -1282,7 +1274,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
     fitParms[0] = fitParms[1] = 0.0;
   }
   
-  /* Spectral correction for prior alpha array - also factor */
+  /* Spectral correction for prior alpha array -  also Factor */
   specCorr = g_malloc0(in->nSpec*sizeof(ofloat));
   if (in->doAlphaCorr && (in->priorAlpha!=0.0)) {
     for (i=0; i<in->nSpec; i++) {
@@ -2977,11 +2969,11 @@ void  ObitSkyModelMFLoadGridComps (ObitSkyModel* inn, olong field, ObitUV* uvdat
     in->planes = g_malloc0(in->nSpec*sizeof(ObitFArray*));
   for (k=0; k<in->nSpec; k++) {
 
-    /* Spectral correction for prior alpha array - also factor */
+    /* Spectral correction for prior alpha array */
      if (in->doAlphaCorr && (in->priorAlpha!=0.0)) {
-       specCorr = in->factor*pow((in->specFreq[k]/in->priorAlphaRefF), in->priorAlpha);
+       specCorr = pow((in->specFreq[k]/in->priorAlphaRefF), in->priorAlpha);
     } else { /* No correction */
-      specCorr = in->factor;
+      specCorr = 1.0;
     }
     
     retCode = ObitTableCCUtilGridSpect (CCTable, overSample, k+1,

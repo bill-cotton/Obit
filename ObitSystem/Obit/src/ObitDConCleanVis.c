@@ -1879,7 +1879,9 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
 	redo  = TRUE;
 	
 	/* Add field to mosaic */
-	ObitImageDescGetPoint (imDesc, &RAPnt, &DecPnt);
+	/*ObitImageDescGetPoint (imDesc, &RAPnt, &DecPnt); No - use phase center */
+	RAPnt  = uvdata->myDesc->crval[uvdata->myDesc->jlocr];
+	DecPnt = uvdata->myDesc->crval[uvdata->myDesc->jlocd];
 	ObitSkyGeomShiftXY (RAPnt, DecPnt, ObitImageDescRotate(imDesc),
 			    pos[0], pos[1], &RAShift, &DecShift);
 	nx = ny = ObitFFTSuggestSize (128); nplane = 1;

@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry imaging software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005-2014
+;;  Copyright (C) 2005-2016
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -85,7 +85,7 @@ BPVer                               Bandpass table version
 flagVer                             Flag table version
 **PARAM** boo 1 **DEF** F
 doPol                               Apply polarization cal?
-**PARAM** int 1 **DEF** -1
+**PARAM** int 1 **DEF** 1
 PDVer                              PD table to apply
                                    If >=0, per channel corrections
 **PARAM** float 1  **DEF** 0.0
@@ -99,7 +99,7 @@ BLchAvg                             If True, and BLFact >1.0 then also
                                     average channels.
 **PARAM** str 4
 outDType                            "FITS" or "AIPS" type of output
-**PARAM** str 48 **DEF** .fits
+**PARAM** str 128 **DEF** .fits
 outFile                             Output FITS image file ending
 **PARAM** str 12
 outName                             Output AIPS image name
@@ -111,7 +111,7 @@ outSeq          -1.0     9999.0     Output AIPS image seq. no.
 outDisk                             Output image disk drive #
 **PARAM** int 1
 CCVer                               Output CC table version number
-**PARAM** str 48 **DEF** .uvtab
+**PARAM** str 128 **DEF** .uvtab
 out2File                            Output FITS uvdata file ending
 **PARAM** str 12
 out2Name                            Output AIPS uvdata name
@@ -166,7 +166,7 @@ doRestore                          Restore CCs to images?
 do3D                               3D imaging, else 2D
 **PARAM** boo 1 **DEF** F
 doLine                             Fast Line/shallow CLEAN mode
-**PARAM** str 48  **DEF** NVSSVZ.FIT
+**PARAM** str 128  **DEF** NVSSVZ.FIT
 Catalog                            Outlier catalog name (NVSSVZ.FIT)
 **PARAM** int 1 **DEF** 1
 CatDisk                            Catalog FITS disk number
@@ -178,6 +178,8 @@ OutlierFlux                        Minimum estimated outlier flux density (Jy)
 OutlierSI                          Spectral index to estimate flux density
 **PARAM** int 1  **DEF** 100
 OutlierSize                        Size of outlier field in pixels
+**PARAM** Str 200
+CLEANFile                          Name of file with CLEAN window positions
 **PARAM** int 4 50
 CLEANBox        -2.0       8192.   Four coordinates for each box
 **PARAM** boo 1   **DEF** F
@@ -285,7 +287,7 @@ MResKnob          0                Multiresolution controls
 
 **PARAM** int 1 
 prtLv             0                Print level in selfcal
-**PARAM** str 48 **DEF** ObitView
+**PARAM** str 128 **DEF** ObitView
 dispURL                            Display server URL
 **PARAM** int 1 **DEF** 1
 nThreads            0              Number of threads to use
@@ -524,6 +526,13 @@ Adverbs:
 	     doLine=True.  See explain section.
 
    The following control CLEANing:
+  CLEANFile..If non blank, the path of a text file containing positions
+             and radii of CLEAN windows to be added to the Fly's Eye 
+             (i.e NOT outlyers or specified facets).  
+	     One position per line:
+               hh mm ss.s dd mm ss.s radius
+               where radius is radius of round box in pixels,
+               negative radius -> unbox, max radius = 50
   CLEANBox...A 4x50 array with the specification of a search
              area.
              Box(1,i)=-1 indicates a circle of radius Box(2,i)

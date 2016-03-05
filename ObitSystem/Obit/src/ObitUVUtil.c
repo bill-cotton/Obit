@@ -412,6 +412,7 @@ void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
   incompatible = incompatible || (in1Desc->jlocs!=in2Desc->jlocs);
   incompatible = incompatible || (in1Desc->jlocf!=in2Desc->jlocf);
   incompatible = incompatible || (in1Desc->jlocif!=in2Desc->jlocif);
+  incompatible = incompatible || (in1Desc->ilocb!=in2Desc->ilocb);
   if (incompatible) {
      Obit_log_error(err, OBIT_Error,"%s inUV1 and inUV2 have incompatible structures",
 		   routine);
@@ -489,13 +490,19 @@ void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
 
     /* Modify data */
     for (i=0; i<in1Desc->numVisBuff; i++) { /* loop over visibilities */
-      /* compatability check - check time and baseline code */
+      /* compatability check - check time and baseline or antenna code */
       indx = i*in1Desc->lrec ;
       incompatible = 
-	(inUV1->buffer[indx+in1Desc->iloct] !=inUV2->buffer[indx+in2Desc->iloct]) ||
-	(inUV1->buffer[indx+in1Desc->ilocb] !=inUV2->buffer[indx+in2Desc->ilocb]) ||
-	((in1Desc->iloca1>=0) && (inUV1->buffer[indx+in1Desc->iloca1]!=inUV2->buffer[indx+in2Desc->iloca1])) ||
-	((in1Desc->iloca1>=0) && (inUV1->buffer[indx+in1Desc->iloca2]!=inUV2->buffer[indx+in2Desc->iloca2]));
+	inUV1->buffer[indx+in1Desc->iloct] !=inUV2->buffer[indx+in2Desc->iloct];
+      if (in1Desc->ilocb>=0) {
+	incompatible = incompatible ||
+	  inUV1->buffer[indx+in1Desc->ilocb] !=inUV2->buffer[indx+in2Desc->ilocb];
+      }
+      if (in1Desc->iloca1>=0) {
+	incompatible = incompatible ||
+	  inUV1->buffer[indx+in1Desc->iloca1]!=inUV2->buffer[indx+in2Desc->iloca1] ||
+	  inUV1->buffer[indx+in1Desc->iloca2]!=inUV2->buffer[indx+in2Desc->iloca2];
+      }
       if (incompatible) break;
 
       indx += in1Desc->nrparm;
@@ -856,6 +863,7 @@ void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
   incompatible = incompatible || (in1Desc->jlocs!=in2Desc->jlocs);
   incompatible = incompatible || (in1Desc->jlocf!=in2Desc->jlocf);
   incompatible = incompatible || (in1Desc->jlocif!=in2Desc->jlocif);
+  incompatible = incompatible || (in1Desc->ilocb!=in2Desc->ilocb);
   if (incompatible) {
      Obit_log_error(err, OBIT_Error,"%s inUV1 and inUV2 have incompatible structures",
 		   routine);
@@ -934,13 +942,19 @@ void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
 
     /* Modify data */
     for (i=0; i<in1Desc->numVisBuff; i++) { /* loop over visibilities */
-      /* compatability check - check time and baseline code */
+      /* compatability check - check time and baseline or antenna code */
       indx = i*in1Desc->lrec ;
       incompatible = 
-	inUV1->buffer[indx+in1Desc->iloct] !=inUV2->buffer[indx+in2Desc->iloct] ||
-	inUV1->buffer[indx+in1Desc->ilocb] !=inUV2->buffer[indx+in2Desc->ilocb] ||
-	inUV1->buffer[indx+in1Desc->iloca1]!=inUV2->buffer[indx+in2Desc->iloca1] ||
-	inUV1->buffer[indx+in1Desc->iloca2]!=inUV2->buffer[indx+in2Desc->iloca2];
+	inUV1->buffer[indx+in1Desc->iloct] !=inUV2->buffer[indx+in2Desc->iloct];
+      if (in1Desc->ilocb>=0) {
+	incompatible = incompatible ||
+	  inUV1->buffer[indx+in1Desc->ilocb] !=inUV2->buffer[indx+in2Desc->ilocb];
+      }
+      if (in1Desc->iloca1>=0) {
+	incompatible = incompatible ||
+	  inUV1->buffer[indx+in1Desc->iloca1]!=inUV2->buffer[indx+in2Desc->iloca1] ||
+	  inUV1->buffer[indx+in1Desc->iloca2]!=inUV2->buffer[indx+in2Desc->iloca2];
+      }
       if (incompatible) break;
 
       indx += in1Desc->nrparm;
@@ -1066,6 +1080,7 @@ ofloat ObitUVUtilVisCompare (ObitUV *inUV1, ObitUV *inUV2, ObitErr *err)
   incompatible = incompatible || (in1Desc->jlocs!=in2Desc->jlocs);
   incompatible = incompatible || (in1Desc->jlocf!=in2Desc->jlocf);
   incompatible = incompatible || (in1Desc->jlocif!=in2Desc->jlocif);
+  incompatible = incompatible || (in1Desc->ilocb!=in2Desc->ilocb);
   if (incompatible) {
      Obit_log_error(err, OBIT_Error,"%s inUV1 and inUV2 have incompatible structures",
 		   routine);
@@ -1091,14 +1106,20 @@ ofloat ObitUVUtilVisCompare (ObitUV *inUV1, ObitUV *inUV2, ObitErr *err)
     /* Compare data */
     for (i=0; i<in1Desc->numVisBuff; i++) { /* loop over visibilities */
       vscnt++;
-      /* compatability check - check time and baseline code */
+      /* compatability check - check time and baseline or antenna code */
       indx = i*in1Desc->lrec ;
       jndx = i*in2Desc->lrec ;
       incompatible = 
-	inUV1->buffer[indx+in1Desc->iloct] !=inUV2->buffer[jndx+in2Desc->iloct]  ||
-	inUV1->buffer[indx+in1Desc->ilocb] !=inUV2->buffer[jndx+in2Desc->ilocb]  ||
-	inUV1->buffer[indx+in1Desc->iloca1]!=inUV2->buffer[jndx+in2Desc->iloca1] ||
-	inUV1->buffer[indx+in1Desc->iloca2]!=inUV2->buffer[jndx+in2Desc->iloca2];
+	inUV1->buffer[indx+in1Desc->iloct] !=inUV2->buffer[jndx+in2Desc->iloct];
+      if (in1Desc->ilocb>=0) {
+	incompatible = incompatible ||
+	  inUV1->buffer[indx+in1Desc->ilocb] !=inUV2->buffer[jndx+in2Desc->ilocb];
+      }
+      if (in1Desc->iloca1>=0) {
+	incompatible = incompatible ||
+	  inUV1->buffer[indx+in1Desc->iloca1]!=inUV2->buffer[jndx+in2Desc->iloca1] ||
+	  inUV1->buffer[indx+in1Desc->iloca2]!=inUV2->buffer[jndx+in2Desc->iloca2];
+      }
       if (incompatible) {
 	vNo = indx+in1Desc->firstVis + i;  /* Which visibility */
 	if (inUV1->buffer[indx+in1Desc->iloct]!=inUV2->buffer[jndx+in2Desc->iloct])
@@ -4021,6 +4042,7 @@ void ObitUVUtilAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   incompatible = incompatible || (inDesc->jlocs!=outDesc->jlocs);
   incompatible = incompatible || (inDesc->jlocf!=outDesc->jlocf);
   incompatible = incompatible || (inDesc->jlocif!=outDesc->jlocif);
+  incompatible = incompatible || (inDesc->ilocb!=outDesc->ilocb);
   if (incompatible) {
      Obit_log_error(err, OBIT_Error,"%s inUV and outUV have incompatible structures",
 		   routine);

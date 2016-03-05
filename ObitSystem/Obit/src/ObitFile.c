@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2015                                          */
+/*;  Copyright (C) 2003-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -271,7 +271,7 @@ ObitFile* ObitFileCopy  (ObitFile *in, ObitFile *out, ObitErr *err)
 
 /**
  * Determine if a given file name exists.
- * \param fileName  Name of file to test.
+ * \param fileName  Name of file to test.(trailing blanks removed)
  * \param err       ObitErr for reporting errors.
  * \return TRUE if exists, else FALSE.
  */
@@ -285,6 +285,7 @@ gboolean ObitFileExist (gchar *fileName, ObitErr *err)
   if (err->error) return FALSE;
   g_assert (fileName!=NULL);
   errno = 0;  /* reset any system error */
+  ObitTrimTrail (fileName);  /* remove trailling blanks */
 
   /* does it exist ? */
   status = stat(fileName, &stbuf);
@@ -348,7 +349,7 @@ gchar* ObitFileName (gchar *fileName)
  * Initialize structures and open file.
  * The file will be positioned at the beginning.
  * \param in        Pointer to object to be opened.
- * \param fileName  Name of file to open.
+ * \param fileName  Name of file to open. (trailing blanks removed)
  * \param access    access (OBIT_IO_ReadOnly,OBIT_IO_ReadWrite)
  * \param type      type of file (OBIT_IO_Binary, OBIT_IO_Text).
  * \param blockSize Size of any blocking (used for AIPS files) 0->none.
@@ -371,6 +372,7 @@ ObitFileOpen (ObitFile *in, gchar *fileName, ObitIOAccess access,
   g_assert (fileName!=NULL);
   errno = 0;  /* reset any system error */
 
+  ObitTrimTrail (fileName);  /* remove trailling blanks */
   /* Save call arguments */
   in->access    = access;
   in->type      = type;

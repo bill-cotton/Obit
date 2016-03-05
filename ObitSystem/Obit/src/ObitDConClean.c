@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2014                                          */
+/*;  Copyright (C) 2004-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -33,6 +33,7 @@
 #include "ObitImageUtil.h"
 #include "ObitThread.h"
 #include "ObitConvUtil.h"
+#include "ObitFile.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -118,6 +119,9 @@ static olong MakeStatsFuncArgs (ObitThread *thread,
 
 /** Private: Delete Threaded Image statistics args */
 static void KillStatsFuncArgs (olong nargs, StatsFuncArg **ThreadArgs);
+
+/** Private: Add Clean Windows from CLEANFile */
+static void  AddCleanFileWindow(ObitDConClean *in, gchar *Cfile, ObitErr *err);
 /*----------------------Public functions---------------------------*/
 /**
  * Constructor.
@@ -640,6 +644,11 @@ void  ObitDConCleanGetParms (ObitDCon *inn, ObitErr *err)
  * Any previously existing Windows will be lost.
  * \param in   The CLEAN object, info may have CLEAN Boxes:
  * \li "CLEANBox"   OBIT_long [4,?]  = Array of Clean boxes for field 1
+ * \li "CLEANFile"  OBIT_char  = if present and nonblank, the name of a file 
+ *                  giving celestial positions and sizes of windows to add:
+ *                    hh mm ss.s dd mm ss.s radius
+ *                    where radius is radius of round box in pixels,
+ *                     negative radius -> unbox
  *    Any entries with first element=0 are ignored.
  *    If round and position<=0 then center 
  *
@@ -652,6 +661,8 @@ void ObitDConCleanDefWindow(ObitDConClean *in, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM];
   ObitInfoType itype;
   olong  *winArray, delta;
+  gchar *CLEANFile=NULL;
+  gboolean doFile=FALSE;
   gchar *routine = "ObitDConCleanDefWindow";
 
   /* error checks */
@@ -668,6 +679,10 @@ void ObitDConCleanDefWindow(ObitDConClean *in, ObitErr *err)
   ObitInfoListGetTest(in->info, "autoWindow", &itype, dim, &in->autoWindow);
   /* Set on window object */
   in->window->autoWindow = in->autoWindow;
+
+  /* See if CLEANFile given */
+  ObitInfoListGetP (in->info, "CLEANFile", &itype, dim, (gpointer)&CLEANFile);
+  doFile =  (CLEANFile && strncmp (CLEANFile,  "     ", 5));
 
   /* See if CLEANBox given */
   if (ObitInfoListGetP (in->info, "CLEANBox", &itype, dim, (gpointer)&winArray)) {
@@ -741,8 +756,8 @@ void ObitDConCleanDefWindow(ObitDConClean *in, ObitErr *err)
 			      in->mosaic->images[field-1]->myDesc->xPxOff);
 	  window[2] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[1]-
 			      in->mosaic->images[field-1]->myDesc->yPxOff);
-	  /* Add inner if CLEANBox not specified */
-	  if ((field>=sfield) && (!in->autoWindow))
+	  /* Add inner if CLEANBox and CLEANFile not specified */
+	  if ((field>=sfield) && (!in->autoWindow) && (!doFile))
 	    ObitDConCleanWindowAdd (in->window, field, type, window, err);
 	  /* Add outer window */
 	  ObitDConCleanWindowOuter (in->window, field, type, window, err);
@@ -757,8 +772,8 @@ void ObitDConCleanDefWindow(ObitDConClean *in, ObitErr *err)
 	if (in->mosaic->inFlysEye[field-1]) {
 	  window[2] = in->mosaic->images[field-1]->myDesc->inaxes[0]-5;
 	  window[3] = in->mosaic->images[field-1]->myDesc->inaxes[1]-5;
-	  /* Add inner if CLEANBox not specified */
-	  if ((field>=sfield)  && (!in->autoWindow))
+	  /* Add inner if CLEANBox and CLEANFile not specified */
+	  if ((field>=sfield)  && (!in->autoWindow) && (!doFile))
 	    ObitDConCleanWindowAdd (in->window, field, type, window, err);
 	  /* Add outer window */
 	  ObitDConCleanWindowOuter (in->window, field, type, window, err);
@@ -784,8 +799,9 @@ void ObitDConCleanDefWindow(ObitDConClean *in, ObitErr *err)
 	  window[1] = MAX (5, window[1]);
 	  window[2] = MIN ((in->mosaic->images[field-1]->myDesc->inaxes[0]-5), window[2]);
 	  window[3] = MIN ((in->mosaic->images[field-1]->myDesc->inaxes[1]-5), window[3]);
-	  /* Only use if not autoWindow */
-	  if (!in->autoWindow) ObitDConCleanWindowAdd (in->window, field, type, window, err);
+	  /* Only use if not autoWindow or CLEANFile */
+	  if ((!in->autoWindow) && (!doFile)) 
+	    ObitDConCleanWindowAdd (in->window, field, type, window, err);
 	  /* Add outer window */
 	  ObitDConCleanWindowOuter (in->window, field, type, window, err);
 	  if (err->error) Obit_traceback_msg (err, routine, in->name);
@@ -813,13 +829,16 @@ void ObitDConCleanDefWindow(ObitDConClean *in, ObitErr *err)
     for (field=sfield; field<=in->mosaic->numberImages; field++) {
       window[2] = in->mosaic->images[field-1]->myDesc->inaxes[0]-5;
       window[3] = in->mosaic->images[field-1]->myDesc->inaxes[1]-5;
-      if (!in->autoWindow) 
+      if ((!in->autoWindow) && (!doFile)) 
 	ObitDConCleanWindowAdd (in->window, field, type, window, err);
       /* Add outer window */
       ObitDConCleanWindowOuter (in->window, field, type, window, err);
       if (err->error) Obit_traceback_msg (err, routine, in->name);
     }
   }
+
+  /* Add windows from CLEANFile */
+  if (doFile) AddCleanFileWindow(in, CLEANFile, err);
 
 } /* end ObitDConCleanDefWindow */
 
@@ -2452,3 +2471,107 @@ static void KillStatsFuncArgs (olong nargs, StatsFuncArg **ThreadArgs)
   }
   g_free(ThreadArgs);
 } /*  end KillStatsFuncArgs */
+
+gboolean hmsra(olong h, olong m, ofloat s, odouble *ra)
+/* convert RA in hours min and seconds to degrees*/
+/* returns TRUE if in 0-24 hours else FALSE */
+{
+ *ra = h + m/60.0 + s/3600.0;
+ *ra = *ra * 15.0;
+ if (*ra<0.0) return FALSE;
+ if (*ra>360.0) return FALSE;
+ return TRUE;
+ } /* End of hmsra */
+
+gboolean dmsdec(olong d, olong m, ofloat s, odouble *dec)
+/* convert dec in degrees, min, sec  to degrees*/
+/* Note: this is also used for longitudes */
+/* returns TRUE if in range +/-360 else FALSE */
+{
+ olong absdec = d;
+ if (absdec<0) absdec = -absdec;
+ *dec = absdec + m/60.0 + s/3600.0;
+ if (d<0) *dec = -(*dec);
+ if (*dec<-360.0) return FALSE;
+ if (*dec>360.0) return FALSE;
+ return TRUE;
+} /* End of dmsdec */
+
+/**
+ * Add Clean Windows from CLEANFile 
+ * \param in    The CLEAN object, info may have CLEAN Boxes:
+ * \param Cfile Name of file with list of positions/sizes in form
+ *              hh mm ss.s dd mm ss.s radius
+ *              where radius is radius of round box in pixels,
+ *              negative radius -> unbox
+ * \param err   Obit error stack object.
+ */
+static void AddCleanFileWindow(ObitDConClean *in, gchar *Cfile, ObitErr *err)
+{
+  ObitFile *Cf=NULL;
+  ObitIOCode retCode;
+  gchar line[201];
+  olong h, d, rm, dm, iNumRead, iRad, cnt = 0;
+  ofloat rs, ds, dx, dy, dist, pixel[2];
+  odouble pos[2];
+  gboolean bad=FALSE;
+  olong field, sfield = 1, window[4];
+  ObitDConCleanWindowType type;
+  gchar *routine = "ObitDConClean:AddCleanFileWindow";
+
+  /* error checks */
+  if (err->error) return;
+  if (Cfile==NULL) return;
+  ObitTrimTrail (Cfile);
+  if (!ObitFileExist(Cfile, err)) return;
+
+  /* Open */
+  Cf = newObitFile("pos");
+  retCode = ObitFileOpen (Cf, Cfile, OBIT_IO_ReadOnly, OBIT_IO_Text, 0, err);
+  window[3] = 0;
+  /* Loop over file */
+  while (retCode==OBIT_IO_OK) {
+    retCode = ObitFileReadLine (Cf, line, 200, err);
+    if (retCode!=OBIT_IO_OK)  break;
+    /* Parse */
+    iNumRead = sscanf (line, "%d %d %f %d %d %f %d", 
+		       &h, &rm, &rs, &d, &dm, &ds, &iRad);
+    bad = iNumRead<7;  /* Read what expected? */
+    bad = bad || !hmsra(h, rm, rs, &pos[0]);
+    bad = bad || !dmsdec(d, dm, ds, &pos[1]);
+    bad = bad || (abs(iRad>50));
+    if (bad) {
+      Obit_log_error(err, OBIT_Error,"%s: BAD CLEAN File entry %s",routine, line);
+      return;
+    }
+    /* Loop over images in mosaic */
+    if (iRad>0) { /* Box */
+      type = OBIT_DConCleanWindow_round;
+      window[0] = iRad;
+    } else {   /* Unbox */
+      type = OBIT_DConCleanWindow_unround;
+      window[0] = -iRad;
+    }
+    for (field=sfield; field<=in->mosaic->numberImages; field++) {
+      if (in->mosaic->inFlysEye[field-1]) {
+	/* Get pixel location */
+ 	ObitImageDescGetPixel(in->mosaic->images[field-1]->myDesc, pos, pixel, err);
+	if (err->error) Obit_traceback_msg (err, routine, in->name);
+	/* Is this within outer box */
+	dx = pixel[0] - in->mosaic->images[field-1]->myDesc->inaxes[0]/2.;
+	dy = pixel[1] - in->mosaic->images[field-1]->myDesc->inaxes[1]/2.;
+	dist = sqrt(dx*dx + dy*dy);
+	if (dist<in->mosaic->Radius) {
+	  cnt++;
+	  window[1] = (olong)(pixel[0]+0.5);
+	  window[2] = (olong)(pixel[1]+0.5);
+	  ObitDConCleanWindowAdd (in->window, field, type, window, err);
+	}
+	if (err->error) Obit_traceback_msg (err, routine, in->name);
+      } /* End if in Fly's eye */
+    } /* end loop over facets */
+  } /* end loop over file */
+  /* Tell about it */
+  Obit_log_error(err, OBIT_InfoErr,"Added %d windows from %s", cnt,Cfile);
+
+} /* end AddCleanFileWindow */

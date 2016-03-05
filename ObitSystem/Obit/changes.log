@@ -3141,3 +3141,25 @@ Obit/src/ObitInfoList.c:
 Obit/src/ObitInfoList.c:
  Fix bugs introduced last version
 29 Feb 2016, svn ver 531
+
+More general specification of CLEAN boxes;
+check system memory in deciding nuber of parallel facets
+bug fixes
+Obit/TDF/MFImage.TDF Obit/tasks/MFImage.c
+Obit/TDF/Imager.TDF Obit/tasks/Imager.c
+Obit/src/ObitDConClean.c:
+  Implement CLEANFile
+Obit/src/ObitUVImager.c Obit/src/ObitUVImagerMF.c \
+  GetNumPar: Change to ask for up to 20% of total memory
+Obit/src/ObitSkyModelMF.c:
+  Fix bugs with applying factor
+  Fix bugs with Spectrum lookup table.
+Obit/src/ObitDConCleanVis.c:
+  Reimage: Use phase center to get offsets rather than antenna pointing
+Obit/src/ObitUVUtil.c:
+  Better compatability checks to cover Eric's format changes.
+Obit/src/ObitFile.c:
+  Open, Exist: remove any trailing blanks in name
+ 5 Mar 2016, svn ver 532
+
+

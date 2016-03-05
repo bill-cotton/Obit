@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2012                                          */
+/*;  Copyright (C) 2010-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,6 +32,8 @@
 #include "ObitUVWeight.h"
 #include "ObitImageUtil.h"
 #include "ObitImageMosaicMF.h"
+#include "sys/sysinfo.h"
+#include "unistd.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -592,12 +594,21 @@ olong ObitUVImagerMFGetNumPar (ObitUVImager *inn, gboolean doBeam, ObitErr *err)
 {
   ObitUVImagerMF *in  = (ObitUVImagerMF*)inn;
   olong out=8, nSpec;
-  odouble lenVis, numVis, imSize, bufSize, tSize;
+  odouble lenVis, numVis, imSize, bufSize, tSize, mSize;
   ObitImage *beam;
+  long int avphys_pages, phys_pages;
+  int pagesize;
   gchar *routine="ObitUVImagerMFGetNumPar";
 
   if (err->error) return out;
   g_assert(ObitUVImagerMFIsA(in));
+
+   /* Inquire as to the amount of available pages of memory */
+  avphys_pages = get_avphys_pages();
+  phys_pages   = get_phys_pages();
+  pagesize     = getpagesize();
+  /* How much to ask for (64-bit) - up to 1/5 total */
+  mSize = 0.2*phys_pages*pagesize;
 
   /* How big are things? */
   numVis = (odouble)ObitImageUtilBufSize (in->uvdata);  /* Size of buffer */
@@ -616,7 +627,7 @@ olong ObitUVImagerMFGetNumPar (ObitUVImager *inn, gboolean doBeam, ObitErr *err)
   bufSize *= sizeof(ofloat);               /* to bytes */
 
   if (sizeof(olong*)==4)      tSize = 0.75e9;  /* Use sizeof a pointer type to get 32/64 bit */
-  else if (sizeof(olong*)==8) tSize = 3.0e9;
+  else if (sizeof(olong*)==8) tSize =  mSize;  /*3.0e9; */
   else                        tSize = 1.0e9;  /* Shouldn't happen */
   out = tSize / bufSize;  /* How many fit in a tSize? */
 
