@@ -178,7 +178,7 @@ OutlierFlux                        Minimum estimated outlier flux density (Jy)
 OutlierSI                          Spectral index to estimate flux density
 **PARAM** int 1  **DEF** 100
 OutlierSize                        Size of outlier field in pixels
-**PARAM** Str 200
+**PARAM** str 200
 CLEANFile                          Name of file with CLEAN window positions
 **PARAM** int 4 50
 CLEANBox        -2.0       8192.   Four coordinates for each box

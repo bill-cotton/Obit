@@ -3162,4 +3162,8 @@ Obit/src/ObitFile.c:
   Open, Exist: remove any trailing blanks in name
  5 Mar 2016, svn ver 532
 
+bug fixes
+Obit/TDF/MFImage.TDF Obit/TDF/Imager.TDF
+   change 'Str' =>'str'
+ 6 Mar 2016, svn ver 533
 
