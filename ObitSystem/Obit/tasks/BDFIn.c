@@ -1539,6 +1539,17 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     if (SDMData->DlyModVarTab) {
       outTable->PolarX  = (ofloat)(SDMData->DlyModVarTab->rows[crow]->polarOffsets[0]);
       outTable->PolarY  = (ofloat)(SDMData->DlyModVarTab->rows[crow]->polarOffsets[1]);
+      /* Check if the offsets are in radians */
+      if ((fabs(outTable->PolarX)<1.0e-3) && (fabs(outTable->PolarY)<1.0e-3)) {
+	/* Convert radians to asec */
+	outTable->PolarX *= RAD2DG * 3600.;
+	outTable->PolarY *= RAD2DG * 3600.;
+      }
+      /* Convert polar offset to meters - NO leave in arcsec
+      outTable->PolarX  = (ofloat)(SDMData->DlyModVarTab->rows[0]->earthRadius * 
+				   sin(DG2RAD*outTable->PolarX/3600.));
+      outTable->PolarY  = (ofloat)(SDMData->DlyModVarTab->rows[0]->earthRadius * 
+				   sin(DG2RAD*outTable->PolarY/3600.)); */
       outTable->dataUtc = (ofloat)(SDMData->DlyModVarTab->rows[crow]->ut1_utc);
       outTable->ut1Utc  = (ofloat)(SDMData->DlyModVarTab->rows[crow]->ut1_utc);
     } else {
@@ -2334,7 +2345,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   ObitIOCode retCode;
   olong iMain, iInteg, ScanId=0, SubscanId=0, i, j, jj, iBB, selChan, selIF, selConfig, 
     iSW, jSW, kSW, kBB, nIFsel, cntDrop=0, ver, iRow, sourId=0, iIntent, iScan, ig;
-  olong lastScan=-1, lastSubscan=-1, ScanTabRow=-1, numIntegration;
+  olong lastScan=-1, lastSubscan=-1, ScanTabRow=-1, numIntegration, NXcnt=0;
   ofloat *Buffer=NULL, tlast=-1.0e20, startTime=0.0, endTime=0.0;
   ObitUVDesc *desc;
   ObitTableNX* NXtable;
@@ -2436,6 +2447,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   NXrow->StartVis = -1;
   NXrow->EndVis   = -1;
   NXrow->FreqID   = 1;
+  NXcnt           = 0;  /* vis in this record */
 
   /* attach to table buffer */
   ObitTableNXSetRow (NXtable, NXrow, err);
@@ -2659,6 +2671,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	}
 	
 	/* Write output */
+	NXcnt++;   /* Count vis in scan */
 	found   = TRUE;
 	endTime = Buffer[desc->iloct];
 	if ((ObitUVWrite (outData, NULL, err) != OBIT_IO_OK) || (err->error))
@@ -2677,10 +2690,13 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	NXrow->EndVis   = desc->nvis;
 	NXrow->SourID   = sourId;
 	iRow = -1;
-	if ((ObitTableNXWriteRow (NXtable, iRow, NXrow, err)
-	     != OBIT_IO_OK) || (err->error>0)) goto done; 
+	if (NXcnt>0) {  /* is there anything? */
+	  if ((ObitTableNXWriteRow (NXtable, iRow, NXrow, err)
+	       != OBIT_IO_OK) || (err->error>0)) goto done; 
+	}
 	NXrow->StartVis = NXrow->EndVis+1;
-      } 
+	NXcnt           = 0;  /* vis in this record */
+     } 
     }
   } /* End loop over scans */
 
@@ -3643,7 +3659,7 @@ void GetEOPInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   olong iRow, oRow, ver;
   oint numIF, numPol, numChan;
   ObitIOAccess access;
-  gchar *routine = "GetCalDeviceInfo";
+  gchar *routine = "GetEOPInfo";
 
   /* error checks */
   if (err->error) return;
@@ -3730,6 +3746,15 @@ void GetEOPInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     outRow->ddeps    = inTabV->rows[iRow]->nutationInObliquityRate;
     outRow->wobXY[0] = inTabV->rows[iRow]->polarOffsets[0];
     outRow->wobXY[1] = inTabV->rows[iRow]->polarOffsets[1];
+    /* Check if the offsets are in radians */
+    if ((fabs(outRow->wobXY[0])<1.0e-3) && (fabs(outRow->wobXY[1])<1.0e-3)) {
+      /* Convert radians to asec */
+      outRow->wobXY[0] *= RAD2DG * 3600.;
+      outRow->wobXY[1] *= RAD2DG * 3600.;
+    }
+    /* Convert polar offset to mas - NO leave in asec
+    outRow->wobXY[0] *= 1000.0;
+    outRow->wobXY[1] *= 1000.0; */
     /* Write */
     oRow = -1;
     if ((ObitTableCTWriteRow (outTable, oRow, outRow, err)

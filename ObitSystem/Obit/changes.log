@@ -3167,3 +3167,12 @@ Obit/TDF/MFImage.TDF Obit/TDF/Imager.TDF
    change 'Str' =>'str'
  6 Mar 2016, svn ver 533
 
+Protection against changing ASDM, bug fix
+Obit/TDF/MFImage.
+   change 'Str' =>'str' for real this time
+Obit/tasks/BDFIn.c:
+  GetAntennaInfo, GetEOPInfo: Use traditional AIPS units for EOP.
+  Mostly just trap if polar offsets have been changed to radians
+Obit/doc/OBITdoc.tex:
+  Update units for AIPS AN and AIPS CT tables polar X,Y offsets
+11 Mar 2016, svn ver 533

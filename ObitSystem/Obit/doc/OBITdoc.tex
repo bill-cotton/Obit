@@ -1586,10 +1586,10 @@ ObitTableDesc.
 {Reference date as "YYYYMMDD"}
 ]
 \tablekey[{"POLARX  "}{E}{PolarX}{0.0}{}
-{Polar position X (meters) on ref. date}
+{Polar position X (arcsec) on ref. date}
 ]
 \tablekey[{"POLARY  "}{E}{PolarY}{0.0}{}
-{Polar position Y (meters) on ref. date}
+{Polar position Y (arcsec) on ref. date}
 ]
 \tablekey[{"UT1UTC  "}{E}{ut1Utc}{0.0}{}
 {UT1-UTC  (time sec.)  }
@@ -1704,6 +1704,7 @@ ObitTableDesc.
 \modhistory[{W. D. Cotton}{02/03/2003}{Revision 1: Copied from AIPS}]
 \modhistory[{W. D. Cotton}{28/07/2010}{Add keywords NO\_IF, XYZHAND,
 FRAME,  columns DIAMETER, BEAMFWHM, redefine numPCal}]
+\modhistory[{W. D. Cotton}{10/03/2016}{Polar X,Y units to arcsec}]
 \end{history}
 \clearpage
 %%%%%%%%%%%%%%% ObitTableAT Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2498,7 +2499,7 @@ ObitTableDesc.
 \tablecol[{"UT1 TYPE"}{"        " }{A}{(1)}{ut1Type}
 {UT1 TYPE}
 ] 
-\tablecol[{"WOBXY "}{"MILLIARC" }{D}{(2)}{wobXY}
+\tablecol[{"WOBXY "}{"ARCSEC" }{D}{(2)}{wobXY}
 {Earth pole wobble}
 ] 
 \tablecol[{"WOB TYPE"}{"        " }{A}{(1)}{wobType}
@@ -2521,6 +2522,7 @@ ObitTableDesc.
 % Table modification history
 \begin{history}
 \modhistory[{W. D. Cotton}{02/22/2006}{Revision 1: Copied from AIPS}]
+\modhistory[{W. D. Cotton}{10/03/2016}{wobXY units to arcsec}]
 \end{history}
 %
 
