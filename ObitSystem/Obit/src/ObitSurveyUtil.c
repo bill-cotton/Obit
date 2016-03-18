@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012                                               */
+/*;  Copyright (C) 2012-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -74,7 +74,7 @@ static void NVSSbmval (ofloat bmaj, ofloat bmin, ofloat bpa,
 gboolean NVSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer, gboolean first, 
 		    gboolean last, ObitErr* err);
 static olong VLFindRA (odouble ra, olong* VLindex, ObitTableVL *VLTable, 
-			 ObitTableVLRow *VLRow, ObitErr* err);
+		       ObitTableVLRow *VLRow, ObitErr* err);
 static void GetVLIndex(ObitTableVL* VLTable, olong *numind, olong VLindex[25]);
 
 /*----------------------Public functions---------------------------*/
@@ -90,11 +90,12 @@ void ObitSurveyUtilVLPrint (ObitTableVL *in, ObitImage *image, FILE  *prtFile,
 			    ObitErr *err)
 {
   ObitTableVLRow *row = NULL;
-  olong i, irow;
+  olong i, irow, iunit;
   ofloat maj, min, pa;
-  gchar rast[19], decst[19], field[9];
+  gchar rast[19], decst[19], field[9], pre[2] = "mu";
   ofloat epeak, errra, errdec, errmaj, errmin, errpa;
   ofloat beam[3], beamas[2], xcell, flux, eflux;
+  ofloat scl, scales[2] = {1.0e3,1.0e6};
   gchar *routine = "ObitSurveyUtilVLPrint";
 
   /* error checks */
@@ -106,6 +107,15 @@ void ObitSurveyUtilVLPrint (ObitTableVL *in, ObitImage *image, FILE  *prtFile,
 
   ObitTableVLOpen (in, OBIT_IO_ReadOnly, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
+  row  = newObitTableVLRow (in);
+
+  /* Get flux scaling from first row*/
+  irow = 1;
+  ObitTableVLReadRow (in, irow, row, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  iunit = 0;
+  if ((row->PeakInt<1.0e-3) || (row->IRMS<1.0e-4)) iunit = 1;  /* Use microJy (uJy) */
+  scl = scales[iunit];
 
   /* Image stuff */
   xcell = fabs (image->myDesc->cdelt[0]);
@@ -116,18 +126,16 @@ void ObitSurveyUtilVLPrint (ObitTableVL *in, ObitImage *image, FILE  *prtFile,
   beamas[1] = image->myDesc->beamMin * 3600.0;
 
   fprintf (prtFile,"\n Listing of fitted VL table values\n");
-  fprintf (prtFile,"Fitted sizes in asec, Peak, Flux, IRMS in mJy, residual values relative to Peak\n");
-  fprintf (prtFile,"Error estimates (asec, mJy, deg) given under value\n");
+  fprintf (prtFile,"Fitted sizes in asec, Peak, Flux, IRMS in %cJy, residual values relative to Peak\n", pre[iunit]);
+  fprintf (prtFile,"Error estimates (asec, %cJy, deg) given under value\n", pre[iunit]);
   fprintf (prtFile,
 	   "             RA           Dec          Peak    Flux    IRMS  Fit Maj Fit min   PA    res. RMS res Peak  PixX    PixY   Field\n");
-
-  row  = newObitTableVLRow (in);
 
   /* Loop over table printing */
   for (irow=1; irow<=in->myDesc->nrow; irow++) {
     ObitTableVLReadRow (in, irow, row, err);
-   if (err->error) Obit_traceback_msg (err, routine, in->name);
-   /*if (VLdesel(row)) continue;  *//* Skip deselected record */
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    /*if (VLdesel(row)) continue;  *//* Skip deselected record */
 
     ObitPosLabelUtilRA2HMS (row->Ra2000, image->myDesc->ctype[0], rast);
     ObitPosLabelUtilDec2DMS (row->Dec2000, image->myDesc->ctype[1], decst);
@@ -148,12 +156,12 @@ void ObitSurveyUtilVLPrint (ObitTableVL *in, ObitImage *image, FILE  *prtFile,
 
     /* Values */
     fprintf (prtFile," %5d %14s %14s %8.2f %8.2f %7.3f %7.3f %7.3f %6.1f %8.3f %8.3f %7.1f %7.1f %8s\n",
-	     irow, rast, decst, row->PeakInt*1000.0, flux*1000.0, row->IRMS*1000.0, maj, min, pa,
+	     irow, rast, decst, row->PeakInt*scl, flux*scl, row->IRMS*scl, maj, min, pa,
 	     row->ResRMS/row->PeakInt, row->ResPeak/row->PeakInt,
 	     row->CenterX, row->CenterY, field);
     /* errors */
-    fprintf (prtFile,"              %6.2f         %6.2f %8.2f %8.2f         %7.3f %7.3f %6.1f \n",
-	     errra*xcell*3600.0, errdec*xcell*3600.0, epeak*1000.0, eflux*1000.0,
+    fprintf (prtFile,"               %6.2f         %6.2f %8.2f %8.2f         %7.3f %7.3f %6.1f \n",
+	     errra*xcell*3600.0, errdec*xcell*3600.0, epeak*scl, eflux*scl,
 	     errmaj*xcell*3600.0, errmin*xcell*3600.0, errpa*RAD2DG);
   } /* end loop over table */
   

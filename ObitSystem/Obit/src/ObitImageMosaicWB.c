@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2014                                          */
+/*;  Copyright (C) 2010-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -726,7 +726,7 @@ ObitImageMosaicWB* ObitImageMosaicWBCreate (gchar *name, olong order, ObitUV *uv
   ofloat equinox, minRad, ratio, OutlierFlux, OutlierDist, OutlierSI;
   olong  itemp, OutlierSize=0, nFlyEye = 0, *iarr=NULL;
   union ObitInfoListEquiv InfoReal; 
-  gchar Catalog[100], Aname[100], Aclass[100];
+  gchar Catalog[132], Aname[100], Aclass[100];
   ObitImageMosaicClassInfo* mosaicClass;
   gchar *routine = "ObitImageMosaicWBCreate";
 

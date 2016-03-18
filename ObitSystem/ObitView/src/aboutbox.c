@@ -1,7 +1,7 @@
 /* $Id$  */
 /* about dialog box  for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1998-2013
+*  Copyright (C) 1998-2016
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -54,7 +54,7 @@ void HelpAbout (ScrollTextPtr STextPtr)
   int loop, next, length;
   char *line[] = {
     "ObitView 1.3 Viewer for images in FITS or AIPS format ",
-    "Copyright NRAO/AUI 2005-2013 ",
+    "Copyright NRAO/AUI 2005-2016 ",
     " ",
     "   This software is distributed free of charge by NRAO. ",
     "The (USA) National Radio Astronomy Observatory (http://www.nrao.edu/) ",

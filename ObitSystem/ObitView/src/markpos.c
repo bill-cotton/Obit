@@ -1,7 +1,7 @@
 /* $Id$ */
 /* mark position dialog box  for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1997,1999,2002-2008
+*  Copyright (C) 1996,1997,1999,2002-2016
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -146,6 +146,68 @@ int ReadPosDec (Widget w)
   return 0;
 } /* end ReadPosDec */
 
+int ReadPosRADec (Widget w)
+{
+  gchar     *value=NULL, ctype[5];
+  olong      h, rm, dd, dm, toHours, iNumRead, bOK, bSouth, i;
+  ofloat    rs, ds;
+  /*Display *dpy = XtDisplay(w);*/
+  odouble   ra, dec;
+  
+  /* read value */
+  value = XmTextGetString (w);
+  if (!value) /* error */
+    {MessageShow ("Error reading RA for Mark Position");
+    return 1;}
+  /*  first axis in hours or degrees? */
+  strncpy (ctype, image[CurImag].myDesc->ctype[0], 4);
+  toHours = (!strncmp(ctype, "RA", 2)) || (!strncmp(ctype, "LL", 2));
+  iNumRead = sscanf (value, "%d %d %f %d %d %f", &h, &rm, &rs, &dd, &dm, &ds);
+  /* southern declination? look for minus sign*/
+  bSouth = 0;
+  for (i=0;i<strlen(value);i++) 
+    {if (value[i]=='-') bSouth=1; 
+    if (value[i]==0) break;}
+ if (value) XtFree(value); value = NULL;
+  bOK = 0;
+  mark.bPixel = 0; /* is this a pixel number rather than a real coordinate? */
+  /* Deal with just a single value for pixel number */
+  if (iNumRead==2) {
+    bOK = 1;
+    mark.bPixel = 1; /* coordinates are pixel values */
+    ra = h;
+  }
+  if (toHours)
+    {if (iNumRead>=3) bOK = !hmsra(h, rm, rs, &ra);}
+  else
+    if (iNumRead>=3) bOK = !dmsdec(h, rm, rs, &ra);
+  if (!bOK)
+    { /* error */
+      MessageShow ("Error reading RA for Mark Position");
+      return 1;}
+  
+  /* OK, save */
+  mark.ra = ra;
+
+  /* Declination */
+  if (iNumRead==2) {
+    bOK = 1;
+    mark.bPixel = 1; /* coordinates are pixel values */
+    dec = rm;
+  }
+  if (iNumRead>=6) bOK = !dmsdec(dd, dm, ds, &dec);
+  if (!bOK)
+    { /* error */
+      MessageShow("Error reading Dec for Mark Position");
+      return 1;}
+  
+  if (bSouth && (dec>0.0)) dec = -dec; /* make sure declination sign OK */
+  
+  /* OK, save */
+  mark.dec = dec;
+  return 0;
+} /* end ReadPosRADec */
+
 /**
  *  Read size from text window
  * \param w           text widget
@@ -259,23 +321,32 @@ void PosFileButCB (Widget w, XtPointer clientData, XtPointer callData)
 } /* end PosFileButCB */
 
 /**
- * Callback for OK button hit - get info and mark
+ * Callback for Mark button hit - get info and mark
  * \param w           widget activated
  * \param clientData  client data
  * \param callData    call data
  */
 void PosOKButCB (Widget w, XtPointer clientData, XtPointer callData)
 {
-  olong iRet, bOK=0, iX, iY, iScroll;
+  olong iRet, bOK=0, bDec=0, iX, iY, iScroll;
   ofloat xp, yp;
-  gchar ctype[5], szErrMess[120];
+  gchar ctype[5], szErrMess[120], *value=NULL;
   /*Display *dpy = XtDisplay(w);*/
   ImageDisplay *IDdata = (ImageDisplay*)clientData;
   ObitImageDesc *desc;
   
-  /* read selected values */
+  /* read selected values  - is Dec given? */
+  value = XmTextGetString (mark.data2);
+  if (!value) /* error */
+    {MessageShow("Error reading Dec for Mark Position");
+    return;}
+  bDec = strlen(value)>2;
+  if (bDec) {  /* Read RA, Dec separately */
   if (ReadPosRA(mark.data1)) return;
   if (ReadPosDec(mark.data2)) return;
+  } else { /* Read RA, Dec from RA line */
+    if (ReadPosRADec(mark.data1)) return;
+  }
   if (ReadPosSize(mark.data3)) return;
   
   /* convert to pixel */
@@ -346,6 +417,26 @@ void PosOKButCB (Widget w, XtPointer clientData, XtPointer callData)
 } /* end PosOKButCB */
 
 /**
+ * Callback for Clear button hit - clear position fields
+ * \param w           widget activated
+ * \param clientData  client data
+ * \param callData    call data
+ */
+void ClearOKButCB (Widget w, XtPointer clientData, XtPointer callData)
+{
+  gchar valuestr[100];
+  /*Display *dpy = XtDisplay(w);*/
+  /*ImageDisplay *IDdata = (ImageDisplay*)clientData;*/
+  
+  sprintf (valuestr, " ");
+  /* RA = mark.data1 */
+  XmTextSetString (mark.data1, valuestr);
+  /* Dec = mark.data2 */
+  XmTextSetString (mark.data2, valuestr);
+  
+} /* end ClearOKButCB */
+
+/**
  * Callback for Cancel button hit
  * \param w           widget activated
  * \param clientData  client data
@@ -367,7 +458,7 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
 {
   Widget form, toplabel, label3;
   Widget sep1, sep2, sep3;
-  Widget FileButton, OKButton, CancelButton;
+  Widget FileButton, OKButton, CancelButton, ClearButton;
   XmString     RA=NULL, Dec=NULL,label=NULL, sizestr=NULL, equstr=NULL;
   XmString     wierdstring = NULL;
   Arg          wargs[5]; 
@@ -476,7 +567,7 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
 				      IDdata->shell, 
 				      XmNautoUnmanage, False,
 				      XmNwidth,     150,
-				      XmNheight,    180,
+				      XmNheight,    190,
 				      XmNdeleteResponse, XmDESTROY,
 				      NULL);
   
@@ -485,7 +576,7 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
 				  mark.dialog,
 				  XmNautoUnmanage, False,
 				  XmNwidth,     150,
-				  XmNheight,    180,
+				  XmNheight,    190,
 				  XmNx,           0,
 				  XmNy,           0,
 				  NULL);
@@ -615,7 +706,7 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
 				    XmNleftAttachment,  XmATTACH_FORM,
 				    NULL);
   
-  mark.iInner = 8;  mark.iOuter = 15;
+  mark.iInner = 6;  mark.iOuter = 15;
   sprintf (valuestr, " %d %d", mark.iInner, mark.iOuter);
   mark.data3 = XtVaCreateManagedWidget ("size data", xmTextFieldWidgetClass, 
 					form, 
@@ -637,7 +728,8 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
   /* File button */
   FileButton = XtVaCreateManagedWidget ("File", xmPushButtonWidgetClass, 
 					form, 
-					XmNbottomAttachment, XmATTACH_FORM,
+					XmNtopAttachment, XmATTACH_WIDGET,
+					XmNtopWidget,     sep3,
 					XmNleftAttachment,  XmATTACH_FORM,
 					NULL);
   XtAddCallback (FileButton, XmNactivateCallback, PosFileButCB, 
@@ -646,23 +738,35 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
   /* Cancel button */
   CancelButton = XtVaCreateManagedWidget ("Cancel", xmPushButtonWidgetClass, 
 					  form, 
-					  XmNbottomAttachment, XmATTACH_FORM,
+					  XmNtopAttachment, XmATTACH_WIDGET,
+					  XmNtopWidget,     sep3,
 					  XmNleftAttachment, XmATTACH_WIDGET,
 					  XmNleftWidget,     FileButton,
 					  NULL);
   XtAddCallback (CancelButton, XmNactivateCallback, PosCancelButCB, 
 		 (XtPointer)IDdata);
   
-  /* OK button */
+  /* Mark button */
   OKButton = XtVaCreateManagedWidget ("Mark", xmPushButtonWidgetClass, 
 				      form, 
-				      XmNbottomAttachment, XmATTACH_FORM,
+				      XmNtopAttachment, XmATTACH_WIDGET,
+				      XmNtopWidget,     sep3,
 				      XmNleftAttachment, XmATTACH_WIDGET,
 				      XmNleftWidget,     CancelButton,
 				      XmNrightAttachment, XmATTACH_FORM,
 				      NULL);
   XtAddCallback (OKButton, XmNactivateCallback, PosOKButCB, (XtPointer)IDdata);
   
+  /* Clear position button */
+  ClearButton = XtVaCreateManagedWidget ("Clear", xmPushButtonWidgetClass, 
+					 form, 
+					 XmNtopAttachment, XmATTACH_WIDGET,
+					 XmNtopWidget,     FileButton,
+					 XmNbottomAttachment, XmATTACH_FORM,
+					 XmNleftAttachment, XmATTACH_FORM,
+					 NULL);
+  XtAddCallback (ClearButton, XmNactivateCallback, ClearOKButCB, (XtPointer)IDdata);
+
   if (label) XmStringFree(label); label = NULL;
   if (equstr) XmStringFree(equstr); equstr = NULL;
   if (RA) XmStringFree(RA); RA = NULL;

@@ -2,11 +2,11 @@
 Python utility package for survey catalog browsers
 """
 
-import Obit, InfoList, OErr, OPrinter, Image, UV
+import Obit, InfoList, OErr, OPrinter, Image, UV, Table
 import os
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2012
+#  Copyright (C) 2012-2016
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or

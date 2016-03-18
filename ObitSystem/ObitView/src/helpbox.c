@@ -3,7 +3,7 @@
 /* adopted from "Power programming Motif" by E. F. Johnson and
    K. Reichard, 1993, MIS Press, New York */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1998-2013
+*  Copyright (C) 1998-2016
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -821,7 +821,7 @@ void InitHelpText(void) {
     "pixels may not be among those shown.  When the desired values are \n",
     "entered into this dialog box, the 'Mark' button will proceed to mark \n",
     "the image and set the scroll to center the last position marked.  The \n",
-    "'cancel' button dismisses the box without marking any positions. \n",
+    "'Cancel' button dismisses the box without marking any positions. \n",
     "If only 1 value is given for ra and dec, it is assumed to be the pixel\n",
     "numbers to mark.\n",
     "   \n",
@@ -830,6 +830,10 @@ void InitHelpText(void) {
     "cross or the distance from the center in pixels in which the cross is \n",
     "not marked.  The second value is the 'outer' size or the distance in \n",
     "pixels from the center over which the cross appears. \n",
+    " \n",
+    "     The 'Clear' button will blank the position text boxes.  If the 'DEC'  \n",
+    "box is blank, then the full RA and Dec strings can be entered in the RA \n",
+    "field. \n",
     "   \n",
     "     If many positions are to be marked, they can be entered in a \n",
     "text file prepared by a text editor (e.g. emacs).   Each line of this \n",
@@ -865,7 +869,7 @@ void InitHelpText(void) {
     "can be specified using the 'Set Equinox' option in this menu.  Once \n",
     "the desired position is entered in the dialog, the Lookup button will \n",
     "cause ObitView to attempt to find and load the desired image.  The \n",
-    "cancel button dismisses the dialog with no change to the current image. \n",
+    "Cancel button dismisses the dialog with no change to the current image. \n",
     " \n",
     "   The index file in the FITS file directory should have name \n",
     "'findex.txt' and obey the following rules. \n",
