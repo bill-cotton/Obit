@@ -6692,10 +6692,113 @@ extern int OSurveyVLSSPrint (ObitPrinter *printer, ObitData *data,
   return ObitSurveyVLSSPrint (printer, data, (olong)VLVer, lfirst, llast, err);
 } // end OSurveyVLSSPrint
 
+// Print Selected contents of a generic VL table
+extern int OSurveyGenPrint (ObitPrinter *printer, ObitData *data, 
+  int VLVer, int first, int last, ObitErr *err) {
+  gboolean lfirst = first!=0;
+  gboolean llast  = last!=0;
+  return ObitSurveyGenPrint (printer, data, (olong)VLVer, lfirst, llast, err);
+} // end OSurveyGenPrint
+
+// Get calibrated model parameters and errors
+   extern PyObject *OSurveyGenCorErr(PyObject *VLrow, PyObject *calParms) {
+     ObitSurveyGenCalParms *calParm = NULL;
+     PyObject *outDict = PyDict_New();  
+     PyObject *list;
+     int i;
+     ofloat fluxScale, biasRA, biasDec, calRAEr, calDecEr, ClnBiasAv, ClnBiasEr,
+       calAmpEr, calSizeEr, calPolEr, beamMaj, beamMin, beamPA;
+     odouble RA, Dec;
+     ofloat peak, major, minor, posang, qcent, ucent, pflux, irms, prms,
+       flux, eflux, epflux, pang, epang, eRA, eDec, 
+       dmajor, dminor, dpa, edmajor, edminor, edpa;
+     gboolean rflag[4];
+
+     // Create calParms
+     fluxScale = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(calParms, "fluxScale"));
+     biasRA    = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(calParms, "biasRA"));
+     biasDec   = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(calParms, "biasDec"));
+     calRAEr   = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(calParms, "calRAEr"));
+     calDecEr  = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(calParms, "calDecEr"));
+     ClnBiasAv = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(calParms, "ClnBiasAv"));
+     ClnBiasEr = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(calParms, "ClnBiasEr"));
+     calAmpEr  = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(calParms, "calAmpEr"));
+     calSizeEr = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(calParms, "calSizeEr"));
+     calPolEr  = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(calParms, "calPolEr"));
+     beamMaj   = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(calParms, "beamMaj"));
+     beamMin   = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(calParms, "beamMin"));
+     beamPA    = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(calParms, "beamPA"));
+     calParm   = ObitSurveyGetCalParms(fluxScale, biasRA, biasDec, calRAEr, calDecEr, 
+       ClnBiasAv, ClnBiasEr, calAmpEr, calSizeEr, calPolEr, beamMaj, beamMin, beamPA);
+
+     // info from VLRow
+     list   = PyDict_GetItemString(VLrow, "RA(2000)");
+     RA     = PyFloat_AsDouble(PyList_GetItem(list, 0));
+     list   = PyDict_GetItemString(VLrow, "DEC(2000)");
+     Dec    = PyFloat_AsDouble(PyList_GetItem(list, 0));
+     list   = PyDict_GetItemString(VLrow, "PEAK INT");
+     peak   = (ofloat)PyFloat_AsDouble(PyList_GetItem(list, 0));
+     list   = PyDict_GetItemString(VLrow, "MAJOR AX");
+     major  = (ofloat)PyFloat_AsDouble(PyList_GetItem(list, 0));
+     list   = PyDict_GetItemString(VLrow, "MINOR AX");
+     minor  = (ofloat)PyFloat_AsDouble(PyList_GetItem(list, 0));
+     list   = PyDict_GetItemString(VLrow, "POSANGLE");
+     posang = (ofloat)PyFloat_AsDouble(PyList_GetItem(list, 0));
+     list   = PyDict_GetItemString(VLrow, "Q CENTER");
+     qcent  = (ofloat)PyFloat_AsDouble(PyList_GetItem(list, 0));
+     list   = PyDict_GetItemString(VLrow, "U CENTER");
+     ucent  = (ofloat)PyFloat_AsDouble(PyList_GetItem(list, 0));
+     list   = PyDict_GetItemString(VLrow, "I RMS");
+     irms   = (ofloat)PyFloat_AsDouble(PyList_GetItem(list, 0));
+     list   = PyDict_GetItemString(VLrow, "POL RMS");
+     prms   = (ofloat)PyFloat_AsDouble(PyList_GetItem(list, 0));
+
+     // calibrate/error analysis
+     ObitSurveyGenCorErr(calParm, &RA, &Dec, &peak, &major, &minor, &posang, 
+       qcent, ucent, &pflux, irms, prms, &flux, &eflux, &epflux, &pang, &epang, 
+       &eRA, &eDec, &dmajor, &dminor, &dpa, &edmajor, &edminor, &edpa, rflag);
+
+     // Copy to output dict
+     PyDict_SetItemString(outDict, "RA",      PyFloat_FromDouble((double)RA));
+     PyDict_SetItemString(outDict, "Dec",     PyFloat_FromDouble((double)Dec));
+     PyDict_SetItemString(outDict, "peak",    PyFloat_FromDouble((double)peak));
+     PyDict_SetItemString(outDict, "major",   PyFloat_FromDouble((double)major));
+     PyDict_SetItemString(outDict, "minor",   PyFloat_FromDouble((double)minor));
+     PyDict_SetItemString(outDict, "posang",  PyFloat_FromDouble((double)posang));
+     PyDict_SetItemString(outDict, "qcent",   PyFloat_FromDouble((double)qcent));
+     PyDict_SetItemString(outDict, "ucent",   PyFloat_FromDouble((double)ucent));
+     PyDict_SetItemString(outDict, "pflux",   PyFloat_FromDouble((double)pflux));
+     PyDict_SetItemString(outDict, "irms",    PyFloat_FromDouble((double)irms));
+     PyDict_SetItemString(outDict, "prms",    PyFloat_FromDouble((double)prms));
+     PyDict_SetItemString(outDict, "flux",    PyFloat_FromDouble((double)flux));
+     PyDict_SetItemString(outDict, "eflux",   PyFloat_FromDouble((double)eflux));
+     PyDict_SetItemString(outDict, "epflux",  PyFloat_FromDouble((double)epflux));
+     PyDict_SetItemString(outDict, "pang",    PyFloat_FromDouble((double)pang));
+     PyDict_SetItemString(outDict, "epang",   PyFloat_FromDouble((double)epang));
+     PyDict_SetItemString(outDict, "eRA",     PyFloat_FromDouble((double)eRA));
+     PyDict_SetItemString(outDict, "eDec",    PyFloat_FromDouble((double)eDec));
+     PyDict_SetItemString(outDict, "dmajor",  PyFloat_FromDouble((double)dmajor));
+     PyDict_SetItemString(outDict, "dminor",  PyFloat_FromDouble((double)dminor));
+     PyDict_SetItemString(outDict, "dpa",     PyFloat_FromDouble((double)dpa));
+     PyDict_SetItemString(outDict, "edmajor", PyFloat_FromDouble((double)edmajor));
+     PyDict_SetItemString(outDict, "edminor", PyFloat_FromDouble((double)edminor));
+     PyDict_SetItemString(outDict, "edpa",    PyFloat_FromDouble((double)edpa));
+     list = PyList_New(4);
+     for (i=0; i<4; i++) PyList_SetItem(list, i, PyInt_FromLong((long)rflag[i]));
+     PyDict_SetItemString(outDict, "rflag",    list);
+     Py_DECREF(list);
+
+     if (calParm) g_free(calParm);
+     return outDict;
+}
+// end OSurveyGenCorErr
+
 
 extern void OSurveyVLPrint(ObitTable *,ObitImage *,char *,ObitErr *);
 extern int OSurveyNVSSPrint(ObitPrinter *,ObitData *,int ,int ,int ,ObitErr *);
 extern int OSurveyVLSSPrint(ObitPrinter *,ObitData *,int ,int ,int ,ObitErr *);
+extern int OSurveyGenPrint(ObitPrinter *,ObitData *,int ,int ,int ,ObitErr *);
+extern PyObject *OSurveyGenCorErr(PyObject *,PyObject *);
 
 #include "ObitErr.h"
 #include "ObitDConClean.h"
@@ -36892,6 +36995,98 @@ static PyObject *_wrap_OSurveyVLSSPrint(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OSurveyGenPrint(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitPrinter * _arg0;
+    ObitData * _arg1;
+    int  _arg2;
+    int  _arg3;
+    int  _arg4;
+    ObitErr * _arg5;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo5 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiiiO:OSurveyGenPrint",&_argo0,&_argo1,&_arg2,&_arg3,&_arg4,&_argo5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPrinter_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OSurveyGenPrint. Expected _ObitPrinter_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OSurveyGenPrint. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+    if (_argo5) {
+        if (_argo5 == Py_None) { _arg5 = NULL; }
+        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of OSurveyGenPrint. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (int )OSurveyGenPrint(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OSurveyGenCorErr(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    PyObject * _arg0;
+    PyObject * _arg1;
+    PyObject * _obj0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:OSurveyGenCorErr",&_obj0,&_obj1)) 
+        return NULL;
+{
+  if (PyList_Check(_obj0)) {
+    _arg0 = PyDict_Copy(PyList_GetItem(_obj0,0));
+  } else if (PyDict_Check(_obj0)) {
+    _arg0 = PyDict_Copy(_obj0);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+{
+  if (PyList_Check(_obj1)) {
+    _arg1 = PyDict_Copy(PyList_GetItem(_obj1,0));
+  } else if (PyDict_Check(_obj1)) {
+    _arg1 = PyDict_Copy(_obj1);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+    _result = (PyObject *)OSurveyGenCorErr(_arg0,_arg1);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+{
+  Py_XDECREF (_arg0);
+}
+{
+  Py_XDECREF (_arg1);
+}
+    return _resultobj;
+}
+
 static PyObject *_wrap_OWindowCreate(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitDConCleanWindow * _result;
@@ -64787,6 +64982,8 @@ static PyMethodDef ObitMethods[] = {
 	 { "OWindowCopy", _wrap_OWindowCopy, METH_VARARGS },
 	 { "OWindowCreate1", _wrap_OWindowCreate1, METH_VARARGS },
 	 { "OWindowCreate", _wrap_OWindowCreate, METH_VARARGS },
+	 { "OSurveyGenCorErr", _wrap_OSurveyGenCorErr, METH_VARARGS },
+	 { "OSurveyGenPrint", _wrap_OSurveyGenPrint, METH_VARARGS },
 	 { "OSurveyVLSSPrint", _wrap_OSurveyVLSSPrint, METH_VARARGS },
 	 { "OSurveyNVSSPrint", _wrap_OSurveyNVSSPrint, METH_VARARGS },
 	 { "OSurveyVLPrint", _wrap_OSurveyVLPrint, METH_VARARGS },

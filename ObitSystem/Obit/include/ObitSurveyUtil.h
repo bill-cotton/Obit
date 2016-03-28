@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012                                               */
+/*;  Copyright (C) 2012,2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -40,10 +40,34 @@
  * ObitSurvey class utility routine definition.
  */
 
+/** Public: Define structure for Generic survey calibration constants  */
+typedef struct {
+  /** Flux density scale as factor */
+  ofloat fluxScale;
+  /** RA, dec bias (deg) */
+  ofloat biasRA, biasDec;
+  /** Calibration component of  position error (squared) */
+  ofloat  calRAEr, calDecEr;
+  /** Mean and uncertainty of CLEAN  bias  */
+  ofloat   ClnBiasAv, ClnBiasEr;
+  /** Amplitude calibration uncertainty as fraction */
+  ofloat calAmpEr;
+  /** Axis size calibration uncertainty as fraction */
+  ofloat calSizeEr;
+  /** Polarization calibration error  */
+  ofloat calPolEr;
+  /** CLEAN convolving beam, major, minor, pa in deg  */
+  ofloat beamMaj, beamMin, beamPA;
+} ObitSurveyGenCalParms;
+
 /*---------------Public functions---------------------------*/
 /** Public: Print all contents of a VL table */
 void ObitSurveyUtilVLPrint (ObitTableVL *in, ObitImage *image, FILE  *prtFile, 
 			    ObitErr *err);
+/** Public: Printed selected Generic survey catalog entries */
+gboolean ObitSurveyGenPrint (ObitPrinter *printer, ObitData *data, olong VLVer, 
+			      gboolean first, gboolean last, ObitErr* err);
+
 /** Public: Printed selected NVSS survey catalog entries */
 gboolean ObitSurveyNVSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer, 
 			      gboolean first, gboolean last, ObitErr* err);
@@ -51,4 +75,23 @@ gboolean ObitSurveyNVSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
 /** Public: Printed selected VLSS survey catalog entries */
 gboolean ObitSurveyVLSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer, 
 			      gboolean first, gboolean last, ObitErr* err);
+
+/** Create default Generic survey calibration constants */
+ObitSurveyGenCalParms* 
+ObitSurveyGetCalParms(ofloat fluxScale, ofloat biasRA, ofloat biasDec, 
+		      ofloat calRAEr, ofloat calDecEr, 
+		      ofloat ClnBiasAv, ofloat ClnBiasEr, 
+		      ofloat calAmpEr, ofloat calSizeEr, ofloat calPolEr,
+		      ofloat beamMaj, ofloat beamMin, ofloat beamPA);
+
+/** Public: Generic Survey (VL table format) error calculation */
+void ObitSurveyGenCorErr (ObitSurveyGenCalParms *calParms, odouble *ra, odouble *dec, 
+			  ofloat *peak, ofloat *major, ofloat *minor, ofloat *posang,
+			  ofloat qcent, ofloat ucent,  ofloat *pflux, 
+			  ofloat irms,  ofloat prms,   
+			  ofloat *flux, ofloat *eflux, ofloat *epflux, 
+			  ofloat *pang, ofloat *epang,  ofloat *errra, ofloat *errdec, 
+			  ofloat *cmajor, ofloat *cminor, ofloat *cpa, 
+			  ofloat *emajor, ofloat *eminor, ofloat *epa, gboolean rflag[4]);
+
 #endif /* OBITSURVEYUTIL_H */ 

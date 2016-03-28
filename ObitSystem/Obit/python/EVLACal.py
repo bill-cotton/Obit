@@ -86,7 +86,7 @@ def EVLAInitContParms():
     parms["shadBl"]       = 25.0        # Minimum shadowing baseline (m)
     
     parms["doFD1"]       = True         # Do initial frequency domain flagging
-    parms["FD1widMW"]    = None        # Width of the initial FD median window
+    parms["FD1widMW"]    = None         # Width of the initial FD median window
     parms["FD1maxRes"]   = 5.0          # Clipping level in sigma
     parms["FD1TimeAvg"]  = 1.0          # time averaging in min. for initial FD flagging
     
@@ -2570,6 +2570,9 @@ def EVLACalAP(uv, target, ACals, err, \
     else:
         tlist=[target]
     itarg = 0
+    # Expand clcal.Sources if needed
+    if len(clcal.Sources)<len(tlist):
+        clcal.__dict__["Sources"] = len(tlist)*['                ']
     for t in tlist:
         clcal.Sources[itarg] = t
         if itarg>=maxCal:
@@ -7095,7 +7098,7 @@ def EVLAPrepare( ASDMRoot, err, \
     * session  = session name of project, default = 'C'config'N'nchan
     * template = name of template parameter file, def "EVLAContTemplateParm.py"
     * parmFile = name of output parameter file; None => used default name
-    * doLow    = True ifthe probles is the the EVLA lowband (P)
+    * doLow    = True if the problem is the the EVLA lowband (P)
     """
     # Check that DataRoot exists
     if not os.path.exists(ASDMRoot):

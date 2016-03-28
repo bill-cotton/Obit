@@ -1,7 +1,7 @@
 /* $Id$  */
 /* FndSou Obit task - generate source list from image                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2014                                          */
+/*;  Copyright (C) 2006-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1467,6 +1467,10 @@ foundEnough:  /* L90 */
   cbeam[0] = image->myDesc->beamMaj / fabs (image->myDesc->cdelt[0]);
   cbeam[1] = image->myDesc->beamMin / fabs (image->myDesc->cdelt[0]);
   cbeam[2] = image->myDesc->beamPA * DG2RAD;
+  /* Default */
+  if (image->myDesc->beamMaj<0.0) {
+    cbeam[0] = cbeam[1] = 3.0; cbeam[2] = 0.0;
+  }
 
   /* For single sources use 2nd moments for starting estimates */
   if ((!doMult)  ||  (peakNo <= 1)) {

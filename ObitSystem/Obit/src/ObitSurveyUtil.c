@@ -26,6 +26,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitSurveyUtil.h"
 #include "ObitTableVLUtil.h"
 #include "ObitTableUtil.h"
 #include "ObitSkyGeom.h"
@@ -42,7 +43,7 @@
 static void NVSSCorErr (odouble *ra, odouble *dec, 
 			ofloat *peak, ofloat *major, ofloat *minor, ofloat *posang,
 			ofloat qcent, ofloat ucent, ofloat *pflux, 
-			ofloat irms, ofloat prms, ofloat *beam, 
+			ofloat irms, ofloat prms, ofloat *beam,
 			gboolean fitted, gboolean doraw, ofloat fblank,
 			ofloat *flux, ofloat *eflux, ofloat *epflux, 
 			gchar chpang[7], gchar chepan[7], ofloat * errra, ofloat *errdec, 
@@ -56,6 +57,15 @@ static void VLSSCorErr (odouble *ra, odouble *dec, ofloat *peak,
 			ofloat * errra, ofloat *errdec, 
 			gchar cmajor[7], gchar cminor[7], gchar cpa[7], 
     		        gchar emajor[7], gchar eminor[7], gchar epa[7]);
+static void GenCorErr (ObitSurveyGenCalParms *calParms, odouble *ra, odouble *dec, 
+		       ofloat *peak, ofloat *major, ofloat *minor, ofloat *posang,
+		       ofloat qcent, ofloat ucent, ofloat *pflux, 
+		       ofloat irms, ofloat prms, 
+		       gboolean fitted, gboolean doraw, 
+		       ofloat *flux, ofloat *eflux, ofloat *epflux, 
+		       gchar chpang[7], gchar chepan[7], ofloat *errra, ofloat *errdec, 
+		       gchar cmajor[7], gchar cminor[7], gchar cpa[7], 
+		       gchar emajor[7], gchar eminor[7], gchar epa[7]);
 static void NVSSpdbias (ofloat *p, ofloat rms);
 static void NVSSdeconv (ofloat ptsmaj, ofloat ptsmin, ofloat ptspa, 
 			ofloat fitmaj, ofloat ufitmj, ofloat fitmin, ofloat ufitmn, 
@@ -71,6 +81,12 @@ static void NVSSbmval (ofloat bmaj, ofloat bmin, ofloat bpa,
 		       gchar* emajor, gchar* eminor, gchar* epa, 
 		       gboolean *resolv, gboolean hafres[3], 
 		       olong *ier);
+static void GenBmval (ofloat bmaj, ofloat bmin, ofloat bpa, 
+		      ofloat bmaje, ofloat bmine, ofloat bpae, 
+		      ofloat cbmaj, ofloat cbmin, ofloat cbpa, 
+		      ofloat* cmajor, ofloat* cminor, ofloat* cpa, 
+		      ofloat* emajor, ofloat* eminor, ofloat* epa, 
+		      gboolean *resolv, gboolean hafres[3]);
 gboolean NVSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer, gboolean first, 
 		    gboolean last, ObitErr* err);
 static olong VLFindRA (odouble ra, olong* VLindex, ObitTableVL *VLTable, 
@@ -960,6 +976,844 @@ gboolean ObitSurveyNVSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
 } /* end of routine ObitSurveyNVSSPrint */ 
   
 /**
+ * Print selected Generic survey entries from VL table
+ * If Search<=0 and Box[0]<=0 and  Box[1]<=0, all entries are printed
+ * Routine adapted from the AIPSish NVSSlist.f/PRTVLT  
+ * \param printer    Printer object, created and closed externally
+ * \param data       Data file to which VL table is attached.
+ *                   info member with:
+ * \li Object    OBIT_string  Name of object
+ * \li equinCode OBIT_long    Epoch code for output, 
+ *                            1=>B1950, 2=>J2000, 3=>Galactic [def 2]
+ * \li Fitted    OBIT_bool    If TRUE give fitted values [def F]
+ * \li doraw     OBIT_bool    If TRUE give raw values from table, else 
+ *                            corrected/deconvolved.[def F]
+ * \li RA        OBIT_double  RA center of search, degrees in equinCode [def 0]
+ * \li Dec       OBIT_double  Dec center of search, degrees in equinCode [def 0]
+ * \li Search    OBIT_double  Search radius in arcsec, <= 0 => all selected. [def 15] 
+ * \li Box       OBIT_double[2] RA and Dec halfwidth of search 
+ *                              rectangle in hr,deg [0,0]
+ * \li Silent    OBIT_double  Half width asec of silent search box. [def 720]
+ * \li minFlux   OBIT_float   Minimum peak flux density. Jy [def 0]
+ * \li maxFlux   OBIT_float   Maximum peak flux density. Jy [def LARGE]
+ * \li minPol    OBIT_float   Minimum percent integrated polarization [def 0]
+ * \li minGlat   OBIT_float   Minimum abs galactic latitude [def any]
+ * \li maxGlat   OBIT_float   Minimum abs galactic latitude [def any]
+ * Calibration Parameters
+ * \li fluxScale OBIT_float Flux density scaling factor, def 1.0
+ * \li biasRA    OBIT_float RA position bias in deg, def 0.0
+ * \li biasDec   OBIT_float Dec position bias in deg, def 0.0
+ * \li calRAEr   OBIT_float Cal component of RA position error (squared), def 0.0
+ * \li calDecEr  OBIT_float Cal component of Dec position error (squared), def 0.0
+ * \li ClnBiasAv OBIT_float Mean CLEAN bias in Jy, def 0.0
+ * \li ClnBiasEr OBIT_float Uncertainty in CLEAN bias in Jy, def 0.0
+ * \li calAmpEr  OBIT_float Cal component of amplitude error as fraction, def 0.03
+ * \li calSizeEr OBIT_float Cal component of amplitude error as fraction, def 0.02
+ * \li calPolEr  OBIT_float Cal component of polarization error, def 0.003
+ * \param VLVer      VL table version number
+ * \param first      First call? open printer 
+ * \param last       Last call? close printer when done. 
+ * \param err        Obit Error/message stack
+ * \return   True if user requested Quit.
+ */
+gboolean ObitSurveyGenPrint (ObitPrinter *printer, ObitData *data, olong VLVer, 
+			     gboolean first, gboolean last, ObitErr* err)
+{
+  olong   irow, bc, ec, inc, iunit, rahm[2], decdm[2], sort=1, 
+    numind, VLindex[25], bcindx, ecindx, irab, irae, ipass, npass, 
+    beg[2], end[2], bci, eci, imark,  numcol, itemp, ibadvl, VLnrow, 
+    width=132;
+  ofloat      ras, decs, beam[3], tcut, flux, pa, eflux, epflux, 
+    errra, errdec, pctpol;
+  ofloat scl, scales[2] = {1.0e3,1.0e6};
+  gboolean   wanted, indxed=FALSE, doall, select, norad, nobox,
+    found, dosil, dogal, quit=FALSE;
+  gchar  line[133], eline[133],  dsig[2];
+  gchar cmajor[7], cminor[7], cpa[7], emajor[7], eminor[7], epa[7], 
+    chpang[7], chepan[7], cdist[7], cposa[7],  
+    chpflx[7], chepfx[7], chbdvl[5],cflux[8], ceflux[8];
+  odouble rac, decc, decx, ra0, dec0, rab, rae, radius, radr, dist, 
+    rabeg, raend, decbeg, decend, discl, rat, dect, dist2, radr2, 
+    boxra, boxdec, odiscl, mind2, mindm, sildeg, glat, glon;
+  ofloat   peak, major, minor, posang, qcent, ucent, pflux, l, m;
+  ofloat   irms, prms, resrms, respek, resflx, cenx, ceny;
+  ofloat   fblank = ObitMagicF();
+  ObitSurveyGenCalParms *calParms=NULL;
+  gchar Object[201];
+  olong equinCode;
+  gboolean fitted, doraw;
+  odouble ra, dec, search, box[2], silent;
+  ofloat minFlux, maxFlux, minPol, minGlat, maxGlat, farr[2];
+  ObitTableVL *VLTable=NULL;
+  ObitTableVLRow *VLRow=NULL;
+  ObitInfoType type;
+  union ObitInfoListEquiv InfoReal; 
+  gint32       dim[MAXINFOELEMDIM];
+  gchar field[9], datevl[21], pre[2] = "mu";
+  gchar *mark[] = {"   ", " r*", " p*", " s*"};
+  ofloat cutt = 0.002;
+  ofloat fluxScale=1.0, biasRA=0.0, biasDec=0.0, 
+    calRAEr=0.0, calDecEr=0.0, ClnBiasAv=0.0, ClnBiasEr=0.0, 
+    calAmpEr=0.03, calSizeEr=0.02, calPolEr=0.003;
+  /* Things to save between calls */
+  static gchar  Title1[133], Title2[133];
+  static olong page, pageno, lpage, scount, ecount, ncount;
+  gchar *routine = "ObitSurveyGenPrint";
+
+  /* Error checks */
+  g_assert(ObitPrinterIsA(printer));
+  if (err->error) return FALSE;  /* previous error? */
+
+  /* Get parameters - be somewhat tolerant of the types */
+  snprintf (Object, 201, "    ");
+  if (ObitInfoListGetTest(data->info, "Object",    &type, dim, Object))
+    Object[dim[0]] = 0;  /* Make sure null terminated */
+  equinCode = 2;
+  if (ObitInfoListGetTest(data->info, "equinCode", &type, dim, &InfoReal)) {
+    if (type==OBIT_oint) equinCode = InfoReal.itg;
+    else equinCode = InfoReal.otg;   
+  }
+  fitted = FALSE;
+  ObitInfoListGetTest(data->info, "Fitted",    &type, dim, &fitted);
+  doraw = FALSE;
+  ObitInfoListGetTest(data->info, "doraw",     &type, dim, &doraw);
+  ra = 0.0;
+  if (ObitInfoListGetTest(data->info, "RA",    &type, dim, &InfoReal)) {
+    if (type==OBIT_float)       ra = InfoReal.flt;
+    else if (type==OBIT_double) ra = InfoReal.dbl; }  
+  dec = 0.0;
+  if (ObitInfoListGetTest(data->info, "Dec",       &type, dim, &InfoReal)) {
+    if (type==OBIT_float)      dec = InfoReal.flt;
+    else if (type==OBIT_double) dec = InfoReal.dbl; }  
+  search = 15.0;
+  if (ObitInfoListGetTest(data->info, "Search",    &type, dim, &InfoReal)) {
+    if (type==OBIT_float)       search = InfoReal.flt;
+    else if (type==OBIT_double) search = InfoReal.dbl; }  
+  box[0] = 0.0; box[1]=0.0;
+  if (ObitInfoListGetTest(data->info, "Box",       &type, dim, &box)) {
+    if (type==OBIT_float) {     
+      ObitInfoListGetTest(data->info, "Box",       &type, dim, &farr);
+      box[0] = (odouble)farr[0];
+      box[1] = (odouble)farr[1]; } }
+  silent = 720.;
+  if (ObitInfoListGetTest(data->info, "Silent",    &type, dim, &InfoReal)) {
+    if (type==OBIT_float)      silent = InfoReal.flt;
+    else if (type==OBIT_double) silent = InfoReal.dbl; }  
+  minFlux = 0.0;
+  if (ObitInfoListGetTest(data->info, "minFlux",   &type, dim, &InfoReal)) {
+     if (type==OBIT_float)      minFlux = InfoReal.flt;
+    else if (type==OBIT_double) minFlux = InfoReal.dbl; }  
+  maxFlux = 100000.;
+  if (ObitInfoListGetTest(data->info, "maxFlux",   &type, dim, &InfoReal)) {
+    if (type==OBIT_float)       maxFlux = InfoReal.flt;
+    else if (type==OBIT_double) maxFlux = InfoReal.dbl; }  
+  minPol = 0.0;
+  if (ObitInfoListGetTest(data->info, "minPol",    &type, dim, &InfoReal)) {
+    if (type==OBIT_float)      minPol = InfoReal.flt;
+    else if (type==OBIT_double) minPol = InfoReal.dbl; }  
+  minGlat = 0.0;
+  if (ObitInfoListGetTest(data->info, "minGlat",   &type, dim, &InfoReal)) {
+    if (type==OBIT_float)      minGlat = InfoReal.flt;
+    else if (type==OBIT_double) minGlat = InfoReal.dbl; }  
+  maxGlat = 90.;
+  if (ObitInfoListGetTest(data->info, "maxGlat",   &type, dim, &InfoReal)) {
+    if (type==OBIT_float)       maxGlat = InfoReal.flt;
+    else if (type==OBIT_double) maxGlat = InfoReal.dbl; }  
+  
+  /* Calibration Parameters */
+  if (ObitInfoListGetTest(data->info, "fluxScale",   &type, dim, &InfoReal)) {
+    if (type==OBIT_float)       fluxScale = InfoReal.flt;
+    else if (type==OBIT_double) fluxScale = InfoReal.dbl; }  
+  if (ObitInfoListGetTest(data->info, "biasRA",   &type, dim, &InfoReal)) {
+    if (type==OBIT_float)       biasRA = InfoReal.flt;
+    else if (type==OBIT_double) biasRA = InfoReal.dbl; }  
+  if (ObitInfoListGetTest(data->info, "biasDec",   &type, dim, &InfoReal)) {
+    if (type==OBIT_float)       biasDec = InfoReal.flt;
+    else if (type==OBIT_double) biasDec = InfoReal.dbl; }  
+  if (ObitInfoListGetTest(data->info, "calRAEr",   &type, dim, &InfoReal)) {
+    if (type==OBIT_float)       calRAEr = InfoReal.flt;
+    else if (type==OBIT_double) calRAEr = InfoReal.dbl; }  
+  if (ObitInfoListGetTest(data->info, "calDecEr",   &type, dim, &InfoReal)) {
+    if (type==OBIT_float)       calDecEr = InfoReal.flt;
+    else if (type==OBIT_double) calDecEr = InfoReal.dbl; }  
+  if (ObitInfoListGetTest(data->info, "ClnBiasAv",   &type, dim, &InfoReal)) {
+    if (type==OBIT_float)       ClnBiasAv = InfoReal.flt;
+    else if (type==OBIT_double) ClnBiasAv = InfoReal.dbl; }  
+  if (ObitInfoListGetTest(data->info, "ClnBiasEr",   &type, dim, &InfoReal)) {
+    if (type==OBIT_float)       ClnBiasEr = InfoReal.flt;
+    else if (type==OBIT_double) ClnBiasEr = InfoReal.dbl; }  
+  if (ObitInfoListGetTest(data->info, "calAmpEr",   &type, dim, &InfoReal)) {
+    if (type==OBIT_float)       calAmpEr = InfoReal.flt;
+    else if (type==OBIT_double) calAmpEr = InfoReal.dbl; }  
+  if (ObitInfoListGetTest(data->info, "calSizeEr",   &type, dim, &InfoReal)) {
+    if (type==OBIT_float)       calSizeEr = InfoReal.flt;
+    else if (type==OBIT_double) calSizeEr = InfoReal.dbl; }  
+  if (ObitInfoListGetTest(data->info, "calPolEr",   &type, dim, &InfoReal)) {
+    if (type==OBIT_float)       calPolEr = InfoReal.flt;
+    else if (type==OBIT_double) calPolEr = InfoReal.dbl; }  
+
+  /* initialize */
+  snprintf (datevl, 21, "unknown");
+  snprintf (eline, 132, "eline not initialized ");
+  found = FALSE;
+  numcol = width; /* Output line limit */
+
+  if (first) {
+    /* Reset page titles */
+    snprintf (Title1, 132, "      ");
+    snprintf (Title2, 132, "      ");
+    scount = 0;
+    ecount = 0;
+    ncount = 0;
+    page   = 1;
+    pageno = 1;
+    odiscl = 0.0e0;
+
+    /* Print header info */
+    snprintf (line, 132, "      ");
+    ObitPrinterWrite (printer, line, &quit, err);
+    if (quit) goto Quit;
+    if (err->error) goto cleanup;
+    snprintf (line,  132, "Generic Sky Survey catalog search, ver 3.0");
+    ObitPrinterWrite (printer, line, &quit, err);
+    if (quit) goto Quit;
+    if (err->error) goto cleanup;
+    
+    snprintf (line , 132, "Error estimates appear below the value.");
+    ObitPrinterWrite (printer, line, &quit, err);
+    if (quit) goto Quit;
+    if (err->error) goto cleanup;
+    
+    snprintf (line, 132, "Using VL table %d ", VLVer);
+    ObitPrinterWrite (printer, line, &quit, err);
+    if (quit) goto Quit;
+    if (err->error) goto cleanup;
+  } /* end if first */
+    
+  /* Open input VL table */
+  VLTable = newObitTableVLValue (data->name, data, &VLVer, OBIT_IO_ReadOnly, err);
+  if (err->error) goto cleanup;
+  /* Should be there */
+  Obit_retval_if_fail((VLTable!=NULL), err, quit, "VL table %d does not exist", VLVer);
+  
+  ObitTableVLOpen (VLTable, OBIT_IO_ReadOnly, err);
+  if (err->error) goto cleanup;
+  /* Create row structure */
+  VLRow = newObitTableVLRow(VLTable);
+  VLnrow = VLTable->myDesc->nrow;   /* How many rows */
+
+  /* Get information from header */
+  beam[0] = VLTable->BeamMajor;
+  beam[1] = VLTable->BeamMinor;
+  beam[2] = VLTable->BeamPA;
+  numind  = VLTable->numIndexed;
+  strncpy (datevl, ((ObitImage*)data)->myDesc->date, 10); datevl[10] = 0;
+  GetVLIndex (VLTable, &numind, VLindex);
+  
+  if (beam[0] <= 0.0) beam[0] = 45.0 / 3600.0;
+  if (beam[1] <= 0.0) beam[1] = 45.0 / 3600.0;
+
+  /* Get flux scaling from first row */
+  irow = 1;
+  ObitTableVLReadRow (VLTable, irow, VLRow, err);
+  if (err->error) goto cleanup;
+  iunit = 0;
+  if ((VLRow->PeakInt<1.0e-3) || (VLRow->IRMS<1.0e-4)) iunit = 1;  /* Use microJy (uJy) */
+  scl = scales[iunit];
+
+  /* Calibration parameters */
+  calParms = ObitSurveyGetCalParms(fluxScale, biasRA, biasDec, 
+				   calRAEr, calDecEr, ClnBiasAv, ClnBiasEr, 
+				   calAmpEr, calSizeEr, calPolEr,
+				   beam[0], beam[1], beam[2]);
+  /* Galactic limits?*/
+  dogal = (minGlat > 0.0)  ||  (maxGlat < 90.0);
+
+  /* Rows to search */
+  bci = 1;
+  eci = VLnrow;
+  eci = MAX (bci, eci);
+  inc = 1;
+  if (inc <= 0) inc = 1;
+
+  /* Silent search? */
+  dosil = silent > 0.0e0;
+  silent = MAX (0.0, silent);
+  mind2 = 1.0e20;
+  sildeg = silent / 3600.0;
+  
+  /* Position search box */
+  rac  = ra;
+  decc = dec;
+  ra0  = rac * DG2RAD;
+  dec0 = decc * DG2RAD;
+  radius = search / 3600.0e0;
+
+  /* Search window? */
+  doall = (radius <= 0.0)  &&  (box[0] <= 0.0e0)  &&  (box[1] <= 0.0e0);
+  /* No radius specified? */
+  norad = radius <= 0.0;
+  if (norad) radius = MAX (box[0], box[1]);
+  radr  = radius;
+  radr2 = radr * radr;
+
+  /* No Box? */
+  nobox = ((box[0] <= 0.0)  &&  (box[1] <= 0.0));
+  if (box[0] <= 0.0) box[0] = MAX (MAX(box[0], box[1]), radius);
+  if (box[1] <= 0.0) box[1] = MAX (MAX(box[0], box[1]), radius);
+  if (!nobox) {
+    /*???         RADIUS = MAX (BOX(1), BOX(2)) */
+    radr2 = 1.0e20;
+    norad = TRUE;
+  } 
+
+  /* RA box fullwidth in hours */
+  boxra  = 2.0e0 * box[0];
+  boxdec = 2.0e0 * box[1];
+
+  /* Always give distance in sec and  PA */
+  discl = 3600.0e0;
+  /* All positions */
+  if (doall) {
+    decbeg = -100;
+    decend = 100;
+    bcindx = 1;
+    ecindx = VLnrow;
+    npass = 1;
+    beg[0] = bcindx;
+    end[0] = ecindx;
+    rab = 0.0;
+    rae = 360.0;
+  } else {
+    /* Select position range */
+    decbeg = decc - MAX (box[1], sildeg);
+    decend = decc + MAX (box[1], sildeg);
+    decx = MIN (89.0e0, decc);
+    rab = rac - MAX (MAX(radius, box[0]), sildeg) / cos (decx * DG2RAD);
+    if (rab < 0.0) rab = rab + 360.0;
+    rae = rac + MAX (MAX(radius, box[0]), sildeg) / cos (decx * DG2RAD);
+    if (rae > 360.0) rae = rae - 360.0;
+    irab = rab / 15.0;
+    irae = rae / 15.0;
+    irab = MIN (23, MAX (0, irab));
+    irae = MIN (24, MAX (0, irae));
+    VLindex[24] = VLnrow;
+    /* Table indexed? */
+    indxed = VLindex[0] > 0;
+    if (indxed) {
+      bcindx = VLindex[irab];
+      ecindx = VLindex[MIN(23, irae)+2];
+    } else {
+      bcindx = 1;
+      ecindx = VLnrow;
+    } 
+
+    /* It takes two passes for wrap in  RA range. */
+    if (irab > irae) {
+      npass = 2;
+      beg[0] = bcindx;
+      end[0] = VLnrow;
+      beg[1] = 1;
+      end[1] = ecindx;
+    } else {
+      npass = 1;
+      beg[0] = bcindx;
+      end[0] = ecindx;
+    } 
+  }
+ 
+  /* Tell selection criteria */
+  if (first) {
+    /* Minimum flux density */
+    if (minFlux > 1.0e-5) {
+      snprintf (line ,132,  "Selecting sources brighter than %9.1f %cJy", 
+	       minFlux*scl,pre[iunit]);
+      ObitPrinterWrite (printer, line, &quit, err);
+      if (quit) goto Quit;
+      if (err->error) goto cleanup;
+    }
+
+    /* Maximum flux density */
+    if (maxFlux < 1.0e5) {
+      snprintf (line ,132,  "Selecting sources fainter than %9.1f %cJy", 
+	       maxFlux*scl,pre[iunit]);
+      ObitPrinterWrite (printer, line, &quit, err);
+      if (quit) goto Quit;
+      if (err->error) goto cleanup;
+    } 
+
+    /* Minimum percentage pol. */
+    if (minPol > 1.0e-5) {
+      snprintf (line ,132,  "Selecting sources more than %5.1f percent polarized", 
+	       minPol);
+      ObitPrinterWrite (printer, line, &quit, err);
+      if (quit) goto Quit;
+      if (err->error) goto cleanup;
+    } 
+
+    /* Galactic latitude range */
+    snprintf (line ,132,  "abs. galactic latitude range %5.1f to %5.1f",
+	     minGlat, maxGlat);
+    ObitPrinterWrite (printer, line, &quit, err);
+    if (quit) goto Quit;
+    if (err->error) goto cleanup;
+  
+    /* Table data and number of entries */
+    snprintf (line ,132,  "catalog made on %s (dd/mm/yy) with %7i entries",
+	     datevl, VLnrow);
+    ObitPrinterWrite (printer, line, &quit, err);
+    if (quit) goto Quit;
+    if (err->error) goto cleanup;
+
+    /* Indexing */
+    if (!doall) {
+      if (indxed) {
+	snprintf (line, 132, "Table indexed for faster access");
+	ObitPrinterWrite (printer, line, &quit, err);
+	if (quit) goto Quit;
+	if (err->error) goto cleanup;
+      } else {
+ 	snprintf (line, 132, "NOTE:table not indexed");
+	ObitPrinterWrite (printer, line, &quit, err);
+	if (quit) goto Quit;
+	if (err->error) goto cleanup;
+      } 
+    }
+    
+    /* Show fitted/deconvolved sizes? */
+    if (fitted) {
+      if (doraw) snprintf (line, 132, "Displaying raw component size, peak flux density");
+      else snprintf (line, 132, "Displaying fitted component size, peak flux density");
+    } else {
+      snprintf (line, 132, "Displaying deconvolved component size, integrated flux density");
+    } 
+    ObitPrinterWrite (printer, line, &quit, err);
+    if (quit) goto Quit;
+    if (err->error) goto cleanup;
+
+    /* Res codes */
+    snprintf (line, 132, "residual (res) code; nonblank indicates complex source structure:");
+    ObitPrinterWrite (printer, line, &quit, err);
+    if (quit) goto Quit;
+    if (err->error) goto cleanup;
+
+    snprintf (line, 132, "   p* => high peak, r* => high rms, s* => high integral");
+    ObitPrinterWrite (printer, line, &quit, err);
+    if (quit) goto Quit;
+    if (err->error) goto cleanup;
+  
+     snprintf (line, 132, "      ");
+     ObitPrinterWrite (printer, line, &quit, err);
+     if (quit) goto Quit;
+     if (err->error) goto cleanup;
+  } /* end if first */
+
+  if (!doall) {
+    /* Position at input equinox */
+    ObitPosLabelUtilRAHMS  (rac,  &rahm[0],  &rahm[1],  &ras);
+    ObitPosLabelUtilDecDMS (decc, &decdm[0], &decdm[1], &decs);
+    /* Deal with sign of -0 */
+    if (decc > 0.0) dsig[0] = '+';
+    if (decc < 0.0) dsig[0] = '-';
+    dsig[1] = 0;
+    decdm[0] = abs(decdm[0]);
+
+    /* Need to change target equinx to J2000? */
+    if (equinCode == 1) {
+      ObitSkyGeomBtoJ (&rac, &decc);  /* from B1950 to J2000 */
+    } else if (equinCode==3) {
+      /* Given galactic which are defined in B1950 */
+      ObitSkyGeomGal2Eq (&rac, &decc);  /* from Galactic to B1950 */
+      ObitSkyGeomBtoJ   (&rac, &decc);  /* from B1950 to J2000 */
+    } 
+    
+    snprintf (line, 132, "      ");
+    ObitPrinterWrite (printer, line, &quit, err);
+    if (quit) goto Quit;
+    if (err->error) goto cleanup;
+    
+    /* Object label */
+    if (!norad) {
+      snprintf (line, 132, "%s: search within %8.1f arcsec of  %2.2d %2.2d %7.3f %s%2.2d %2.2d %6.2f",
+		Object, radius*3600.0, rahm[0], rahm[1], ras, dsig, decdm[0], decdm[1], decs);
+      ObitPrinterWrite (printer, line, &quit, err);
+      if (quit) goto Quit;
+      if (err->error) goto cleanup;
+    }
+    
+    if (!nobox) {
+      snprintf (line, 132, "selection box: %5.2f hr x %6.2f deg with center %2.2d %2.2d %7.3f %s%2.2d %2.2d %6.2f",
+		boxra, boxdec, rahm[0], rahm[1], ras, dsig, decdm[0], decdm[1], decs);
+      ObitPrinterWrite (printer, line, &quit, err);
+      if (quit) goto Quit;
+      if (err->error) goto cleanup;
+    } 
+    
+    snprintf (line, 132, "      ");
+    ObitPrinterWrite (printer, line, &quit, err);
+    if (quit) goto Quit;
+    if (err->error) goto cleanup;
+    
+  } /* end not doall */
+  
+  /* Page labels */
+  if (!doall) {
+    /*if (numcol < 93) numcol = 70;*/
+    /* Default with pos select */
+    if (fitted) {
+      snprintf (Title1, 132, "   RA[2000]  Dec[2000] Dist(\")  Peak  Major Minor    PA   Res P_Flux P_ang   Field    X_pix  Y_pix");
+      snprintf (Title2, 132, " h  m    s    d  m   s   ori      %cJy   \"     \"      deg       %cJy    deg",pre[iunit], pre[iunit]);
+    } else{
+      snprintf (Title1, 132, "   RA[2000]  Dec[2000] Dist(\")  Flux  Major Minor    PA   Res P_Flux P_ang   Field    X_pix  Y_pix");
+      snprintf (Title2, 132, " h  m    s    d  m   s   ori      %cJy   \"     \"     deg        %cJy   deg",pre[iunit], pre[iunit]);
+    }
+  } else {
+    /*if (numcol < 87) numcol = 64;*/
+    /* Default doall listing */
+    if (fitted) {
+      snprintf (Title1, 132, "   RA[2000]   Dec[2000]   Peak  Major Minor    PA    Res P_Flux  P_ang  Field    X_pix    Y_pix");
+      snprintf (Title2, 132, " h  m    s    d  m   s     %cJy    \"     \"      deg         %cJy    deg",pre[iunit], pre[iunit]);
+    } else {
+      snprintf (Title1, 132, "   RA[2000]   Dec[2000]   Flux  Major Minor    PA   Res P_Flux P_ang   Field    X_pix    Y_pix");
+      snprintf (Title2, 132, " h  m    s    d  m   s     %cJy    \"     \"     deg        %cJy     deg",pre[iunit], pre[iunit]);
+    }
+  } /* end doall */
+  /* Set epoch */
+  if (equinCode == 1) {
+    if (fitted) 
+      snprintf (Title1, 132, "   RA[1950]   Dec[1950]   Peak  Major Minor   PA Res P_Flux P_ang  Field    X_pix    Y_pix");
+    else
+      snprintf (Title1, 132, "   RA[1950]   Dec[1950]   Flux  Major Minor   PA Res P_Flux P_ang  Field    X_pix    Y_pix");
+  }  else if (equinCode == 3) {
+    if (fitted) 
+      snprintf (Title1, 132, "   Gal Long   Gal Lat     Peak  Major Minor   PA Res P_Flux P_ang  Field    X_pix    Y_pix");
+    else
+      snprintf (Title1, 132, "   Gal Long   Gal Lat     Flux  Major Minor   PA Res P_Flux P_ang  Field    X_pix    Y_pix");
+  } 
+  
+  /* Give headers */
+  ObitPrinterSetTitle (printer, Title1, Title2, err);  /* Page titles at top */
+  ObitPrinterWrite (printer, Title1, &quit, err);
+  ObitPrinterWrite (printer, Title2, &quit, err);
+  if (err->error) goto cleanup;
+  
+  odiscl = discl;
+  /* Passes */
+  for (ipass= 1; ipass<=npass; ipass++) { /* loop 500 */
+    /* Set range of rows. */
+    bc = MIN (MAX (bci, beg[ipass-1]), VLnrow);
+    if (ec <= 0) ec = VLnrow;
+    ec = MIN (eci,  end[ipass-1]);
+    if (inc <= 0) inc = 1;
+    if (npass == 1) {
+      /* No RA wrap in search range */
+      rabeg = rab;
+      raend = rae;
+    }  else if (ipass == 1) {
+      /* Wrap - high hours */
+      rabeg = rab;
+      raend = 360.0e0;
+    } else {
+      /* Wrap - low hours */
+      rabeg = 0.0e0;
+      raend = rae;
+    } 
+    
+    /* Find starting location  */
+    bc = VLFindRA (rabeg, VLindex, VLTable, VLRow, err);
+    if (err->error) goto cleanup;
+    
+    /* Print selected rows. */
+    for (irow=bc; irow<=ec; irow++) { /* loop 100 */
+      /* Read table row */
+      ObitTableVLReadRow (VLTable, irow, VLRow, err);
+      if (err->error) goto cleanup;
+      
+      /* Want this one? */
+      if (doall) {
+	dist2 = 0.0;
+      } else {
+	/* Quick test? */
+	if ((VLRow->Ra2000 >= rabeg)  &&  (VLRow->Ra2000 <= raend)) {
+	  
+	  /* Check Declination */
+	  if ((VLRow->Dec2000 < decbeg)  ||  (VLRow->Dec2000 > decend)) continue;
+	  
+	  /* In RA range, use full test. */
+	  ObitSkyGeomShiftXY (rac, decc, 0.0, VLRow->Ra2000, VLRow->Dec2000, &l, &m);
+	  dist2 = l*l + m*m;
+	} else if ((ipass == npass)  &&  (VLRow->Ra2000 > raend)) {
+	  /* Past RA Range, quit if sorted */
+	  if (sort == 1) break;
+	  dist2 = 1.0e10;
+	} else {
+	  /* Before RA range. */
+	  dist2 = 1.0e10;
+	} 
+      } 
+      
+      /* Closest source in silent window */
+      mind2 = MIN (mind2, dist2);
+      wanted = dist2  <=  radr2;
+      /* Rectangular box? */
+      if (!nobox) wanted = wanted  &&  ((VLRow->Dec2000 >= decbeg)  &&  (VLRow->Dec2000 <= decend));
+   
+      if (wanted) {
+	/* Set output, Need to change equinox? */
+	rat  = VLRow->Ra2000;
+	dect = VLRow->Dec2000;
+	if (equinCode == 1) {
+	  ObitSkyGeomJtoB (&rat, &dect);  /* from J2000 to B1950 */
+	} else if (equinCode==3) {
+	  /* Convert to galactic which are defined in B1950 */
+	  ObitSkyGeomJtoB   (&rat, &dect);  /* from J2000 to B1950 */
+	  ObitSkyGeomEq2Gal (&rat, &dect);  /* from B1950 to Galactic */
+	} 
+
+	/* VL row to local variables */
+	peak   = VLRow->PeakInt;
+	major  = VLRow->MajorAxis;
+	minor  = VLRow->MinorAxis;
+	posang = VLRow->PosAngle;
+	qcent  = VLRow->QCenter;
+	ucent  = VLRow->UCenter;
+	pflux  = VLRow->PFlux;
+	irms   = VLRow->IRMS;
+	prms   = VLRow->PolRMS;
+	resrms = VLRow->ResRMS;
+	respek = VLRow->ResPeak;
+	resflx = VLRow->ResFlux;
+	strncpy (field, VLRow->Field,8); field[8] = 0;
+	cenx   = VLRow->CenterX;
+	ceny   = VLRow->CenterY;
+    
+	/* Make corrections, get errors */
+	GenCorErr (calParms, &rat, &dect, &peak, &major, &minor, &posang, qcent, ucent, 
+		   &pflux, irms, prms, fitted, doraw, 
+		   &flux, &eflux, &epflux, chpang, chepan, &errra, &errdec, 
+		   cmajor, cminor, cpa, emajor, eminor, epa);
+	ObitPosLabelUtilRAHMS  (rat, &rahm[0], &rahm[1], &ras);
+	ObitPosLabelUtilDecDMS (dect, &decdm[0], &decdm[1], &decs);
+	/* Deal with sign of -0 */
+	if (dect > 0.0) dsig[0] = '+';
+	if (dect < 0.0) dsig[0] = '-';
+	dsig[1] = 0;
+	decdm[0] = abs(decdm[0]);
+
+	/* Distance from location with  possible corrections. */
+	dist = sqrt (dist2);
+	dist = MIN ((discl * dist), 99999.0);
+	
+	/* As character string */
+	if (dist >= 100.0) {
+	  itemp = dist + 0.5;
+	  snprintf (cdist, 7, "%6d", itemp);
+	}  else if (dist >= 10.0) {
+	  snprintf (cdist, 7, "%6.1f", dist);
+	} else {
+	  snprintf (cdist, 7, "%6.2f", dist);
+	} 
+	
+	/* Position angle from center */
+	pa = 57.296 * atan2 (l, m+1.0e-20);
+	if (pa < 0) {
+	  itemp = pa - 0.5;
+	} else {
+	  itemp = pa + 0.5;
+	} 
+	/* As character string */
+	snprintf (cposa, 7, "%6d", itemp);
+	
+	/* Clip flux to prevent overflows */
+	/*               IF (FLUX.GT.99.99) FLUX = 99.99 */
+	/*               IF (EFLUX.GT.99.99) EFLUX = 99.99 */
+	if ((pflux != fblank)  &&  (pflux > 0.9999)) pflux = 0.9999;
+	if (epflux > 0.9999) epflux = 0.9999;
+	
+	/* Convert units for output */
+	flux   *= scl;
+	eflux  *= scl;
+	epflux *= scl;
+	
+	/* Percent polarization */
+	if (pflux != fblank) {
+	  pctpol = 100.0 * pflux / flux;
+	  snprintf (chpflx, 7, "%6.2f", pflux*scl);
+	  snprintf (chepfx, 7, "%6.2f", epflux);
+	} else {
+	  pctpol = 0.0;
+	  snprintf (chpflx, 7, " Blank");
+	  snprintf (chepfx, 7, "   NA ");
+	} 
+	
+	/* Convert flux density to string */
+	if (flux  < 99.99) {
+	  snprintf (cflux, 8, "%7.1f", flux);
+	}  else if (flux < 999.99) {
+	  snprintf (cflux, 8, "%7.0f", flux);
+	} else {
+	  itemp = flux + 0.5;
+	  if (itemp > 9999) itemp = 9999;
+	  snprintf (cflux, 8, "%7d", itemp);
+	} 
+	
+	/* Convert flux density error to string */
+	if (eflux  < 99999.9) {
+	  snprintf (ceflux, 8, "%7.1f", eflux);
+	} else if (eflux  < 999999.) {
+	  snprintf (ceflux, 8, "%7.0f", eflux);
+	} else {
+	  itemp = eflux + 0.5;
+	  if (itemp > 9999999) itemp = 9999;
+	  snprintf (ceflux, 8, "%7d", itemp);
+	} 
+	
+	if (pctpol < 0.0) pctpol = 0.0;
+	
+	/* Goodness of fit code */
+	imark = 1;
+	tcut   = sqrt (cutt*cutt + (0.01*peak)*(0.01*peak));
+	ibadvl = 0;
+	if (resrms > tcut) {
+	  imark = 2;
+	  ibadvl = 10.0 * scl * resrms + 0.5;
+	  if (ibadvl > 9999) ibadvl = 9999;
+	} 
+	if (fabs(respek) > tcut) {
+	  imark = 3;
+	  ibadvl = 10.0 * scl * respek + 0.5;
+	  if (ibadvl > 9999) ibadvl = 9999;
+	} 
+	if (resflx > tcut) {
+	  imark = 4;
+	  ibadvl = 10.0 * scl * resflx + 0.5;
+	  if (ibadvl > 9999) ibadvl = 9999;
+	} 
+	if (imark>1) snprintf (chbdvl, 5, "%4d", ibadvl);
+	else         snprintf (chbdvl, 5, "    ");
+	
+	/* Check selection criteria */
+	select = (peak  >=  minFlux)  &&  (peak  <=  maxFlux);
+	select = select && ((pflux != fblank) || (pctpol >= MAX(0.0,minPol)));
+	
+	/* Filter out really bad fits  Peak should be at least 3 times  RMS residual */
+	select = select && ((peak/resrms) > 3.0);
+	
+	/* Galactic latitude range */
+	if (dogal) {
+	glat = VLRow->Ra2000;
+	glon = VLRow->Dec2000;
+	  ObitSkyGeomJtoB   (&glat, &glon);  /* from J2000 to B1950 */
+	  ObitSkyGeomEq2Gal (&glat, &glon);  /* from B1950 to Galactic */
+	  glat = fabs (glat);
+	  select = select  &&  ((glat >= minGlat)  &&  (glat <= maxGlat));
+	} 
+	if (select) {
+	  found = TRUE;
+	  /* Create appropriate line */
+	  if (!doall) {
+	    /* Default with pos select */
+	    snprintf (line, 132, "%2.2d %2.2d%6.2f %s%2.2d %2.2d%5.1f%s %s %s %s %s%s %s%s   %s%8.2f%8.2f", 
+		     rahm[0], rahm[1], ras, dsig, decdm[0], decdm[1], decs, cdist, 
+		     cflux, cmajor, cminor, cpa, mark[imark-1], 
+		     chpflx, chpang, field, cenx, ceny);
+	    /* Errors */
+	    snprintf (eline, 132, "     %6.2f       %5.1f%s %s %s %s %s%s%s%s", 
+		     errra, errdec, cposa, ceflux, emajor, eminor, epa, chbdvl, chepfx, chepan);
+	  } else {
+	    /* Default doall */
+	    snprintf (line, 132, "%2.2d %2.2d%6.2f %s%2.2d %2.2d%5.1f %s %s %s %s %s %s%s   %s%8.2f%8.2f", 
+		     rahm[0], rahm[1], ras, dsig, decdm[0], decdm[1], decs, 
+		     cflux, cmajor, cminor, cpa, mark[imark-1], 
+		     chpflx, chpang, field, cenx, ceny);
+	    /* Errors */
+	    snprintf (eline, 132, "     %6.2f       %5.1f %s %s %s %s %s%s%s", 
+		     errra, errdec, ceflux, emajor, eminor, epa, chbdvl, chepfx, chepan);
+	  } 
+	  
+	  /* Count number printer */
+	  scount++;
+	  
+	  /* Print line and errors */
+	  ObitPrinterWrite (printer, line, &quit, err);
+	  if (quit) goto Quit;
+	  if (err->error) goto cleanup;
+	  if (!doraw) ObitPrinterWrite (printer, eline, &quit, err);
+	  if (quit) goto Quit;
+	  if (err->error) goto cleanup;
+	  
+	  /* Don't leave widows and orphans */
+	  if (page >= lpage) page = 1000;
+	} 
+      } /* end if wanted */ 
+    } /* end loop  L100 over table */;
+  } /* end loop  L500: over passes */;
+
+  /* Stuff at end - was it found? */
+  if (!found) {
+    /* Silent search window? */
+    if (dosil) {
+      /* Min source distance in arcmin */
+      mindm = 60.0e0 * sqrt (mind2) /  DG2RAD;
+      if (mindm < 100.0e0) {
+	ecount++;
+	snprintf (line, 132, "Source not found  closest source is %8.2f arcmin away", mindm);
+      } else {
+	ncount++;
+	snprintf (line, 132, "Source not found  nothing close");
+      } 
+    } 
+    ObitPrinterWrite (printer, line, &quit, err);
+    if (quit) goto Quit;
+    if (err->error) goto cleanup;
+  } /* end if not found */
+  
+  /* Finished */
+  Quit:
+  last = last || quit;  /* Done? */
+  
+  /* Final summary */
+  if (last) {
+    /* Number found */
+    if (scount > 0) {
+      snprintf (line, 132, "Found %9d entries", scount);
+    } else {
+      snprintf (line, 132, "no sources meeting selection criteria found");
+    } 
+    if (!quit) ObitPrinterWrite (printer, line, &quit, err);
+    if (quit) goto cleanup;
+    if (err->error) goto cleanup;
+    
+    /* How many missed? */
+    if (ecount > 0) {
+      snprintf (line, 132, "%9d fields has no source", ecount);
+      if (!quit) ObitPrinterWrite (printer, line, &quit, err);
+      if (quit) goto cleanup;
+      if (err->error) goto cleanup;
+    } 
+    
+    /* How many not even close? */
+    if (ncount > 0) {
+      snprintf (line, 132, "%9d fields have nothing close", ncount);
+      if (!quit) ObitPrinterWrite (printer, line, &quit, err);
+      if (quit) goto cleanup;
+      if (err->error) goto cleanup;
+    } 
+    
+  } /* end summary on last */ 
+  
+    /* Close VL table */
+ cleanup:
+  ObitTableVLClose (VLTable, err);
+  VLTable = ObitTableVLUnref(VLTable);
+  VLRow   = ObitTableVLRowUnref(VLRow);
+  if (calParms) g_free(calParms);
+  if (err->error) Obit_traceback_val (err, routine, data->name, quit);
+  
+  return quit;
+} /* end of routine ObitSurveyGenPrint */ 
+  
+/**
  * Print selected VLSS entries from VL table
  * If Search<=0 and Box[0]<=0 and  Box[1]<=0, all entries are printed
  * Routine adapted from the AIPSish VLSSlist.f/PRTVLT  
@@ -1696,8 +2550,571 @@ gboolean ObitSurveyVLSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
   return quit;
 } /* end of routine ObitSurveyVLSSPrint */ 
   
+/**
+ * Create structure with (Generic survey) calibration and error parameters
+ * \param fluxScale Flux density scaling factor, suggest 1.0
+ * \param biasRA    RA position bias in deg, suggest 0.0
+ * \param biasDec   Dec position bias in deg, suggest 0.0
+ * \param calRAEr   Calibration component of RA position error (squared)
+ * \param calDecEr  Calibration component of Dec position error (squared)
+ * \param ClnBiasAv Mean CLEAN bias in Jy
+ * \param ClnBiasEr Uncertainty in CLEAN bias in Jy
+ * \param calAmpEr  Calibration component of amplitude error as fraction, suggest 0.03
+ * \param calSizeEr Calibration component of amplitude error as fraction, suggest 0.02
+ * \param calPolEr  Calibration component of polarization error, suggest 0.003
+ * \return pointer to structure, g_free when done
+ * \li fluxScale Flux density scaling factor
+ * \li biasRA    RA position bias in deg
+ * \li biasDec   Dec position bias in deg
+ * \li calRAEr   Calibration component of RA position error (squared)
+ * \li calDecEr  Calibration component of Dec position error (squared)
+ * \li ClnBiasAv Mean CLEAN bias in Jy
+ * \li ClnBiasEr Uncertainty in CLEAN bias in Jy
+ * \li calAmpEr  Calibration component of amplitude error as fraction
+ * \li calSizeEr Calibration component of amplitude error as fraction
+ * \li calPolEr  Calibration component of polarization error
+ * \li beamMaj   CLEAN restoring beam major axis in deg
+ * \li beamMin   CLEAN restoring beam minor axis in deg
+ * \li beamPA    CLEAN restoring beam position angle axis in deg
+ */
+ObitSurveyGenCalParms* 
+ObitSurveyGetCalParms(ofloat fluxScale, ofloat biasRA, ofloat biasDec, 
+		      ofloat calRAEr, ofloat calDecEr, 
+		      ofloat ClnBiasAv, ofloat ClnBiasEr, 
+		      ofloat calAmpEr, ofloat calSizeEr, ofloat calPolEr,
+		      ofloat beamMaj, ofloat beamMin, ofloat beamPA) {
+  ObitSurveyGenCalParms *out=NULL;
+
+  out = g_malloc0(sizeof(ObitSurveyGenCalParms));
+
+  /* Flux density scaling */
+  out->fluxScale = fluxScale;
+
+  /* Position bias */
+  out->biasRA  = biasRA;
+  out->biasDec = biasDec;
+
+  /* Calibration component of position error (squared) */
+  out->calRAEr  = calRAEr;
+  out->calDecEr = calDecEr;
+
+  /* Mean and uncertainty of CLEAN bias  */
+  out->ClnBiasAv = ClnBiasAv;
+  out->ClnBiasEr = ClnBiasEr;
+
+  /* Amplitude calibration uncertainty */
+  out->calAmpEr = calAmpEr;
+
+  /* Calibration component of axis size error as fraction */
+  out->calSizeEr = calSizeEr;
+
+  /* Polarization calibration error */
+  out->calPolEr = calPolEr;
+
+  /* CLEAN beam */
+  out->beamMaj = beamMaj;
+  out->beamMin = beamMin;
+  out->beamPA  = beamPA;
+
+  return out;
+} /* end ObitSurveyGenCalParms */
+
+/**
+ * Apply final calibration and error analysis of Generic catalog row
+ * Routine to apply any corrections to fitted source parameters  
+ * and determine errors.  
+ * 
+ * \param   calParms [in] calibration parameters
+ * \param   ra      [in/out] RA (deg)
+ * \param   dec     [in/out] Dec (deg)
+ * \param   peak    [in/out] Peak Ipol (Jy/beam)
+ * \param   major   [in/out] Fitted (in) deconvolved (out) major axis size (deg)
+ * \param   minor   [in/out] Fitted (in) deconvolved (out) minor axis size (deg)
+ * \param   posang  Fitted(in) deconvolved (out)  PA deg
+ * \param   qcent   Center Q flux density
+ * \param   ucent   Center U flux density
+ * \param   pflux   Integrated polarized flux density
+ * \param   irms    RMS (sigma) in Ipol.
+ * \param   prms    RMS (sigma) in Qpol and Upol.
+ * \param   flux    [out] Model peak/integrated Flux density (Jy)
+ * \param   eflux   [out] Error in flux
+ * \param   pflux   [out] Polarized flux density (Jy)
+ * \param           [out] Now derived from qcent, ucent
+ * \param   epflux  [out] Error in pflux
+ * \param   pang    [out] Polarization angle or fblank if probablity of a
+ * \param           false detection exceeds 2%
+ * \param   epan    [out] Error in pang or fblank
+ * \param   errra   [out] Error (asec) of Right ascension
+ * \param   errdec  [out] Error (asec) of Declination
+ * \param   cmajor  [out] Major axis size or limit (asec)
+ * \param   cminor  [out] Minor axis size or limit (asec)
+ * \param   cpa     [out] Position angle  (deg)
+ * \param   emajor  [out] Error of major axis size or limit (asec)
+ * \param   eminor  [out] Error of Minor axis size or limit (asec)
+ * \param   epa     [out] Error of position angle  (deg)
+ * \param   rflag   [out] resolution flags, 
+ *                  0=any resolution, 1=1 axis, 2=major only, 3=minor only
+ */
+void ObitSurveyGenCorErr (ObitSurveyGenCalParms *calParms, odouble *ra, odouble *dec, 
+			  ofloat *peak, ofloat *major, ofloat *minor, ofloat *posang,
+			  ofloat qcent, ofloat ucent, ofloat *pflux, 
+			  ofloat irms, ofloat prms, 
+			  ofloat *flux, ofloat *eflux, ofloat *epflux, 
+			  ofloat *pang, ofloat *epan, ofloat *errra, ofloat *errdec, 
+			  ofloat *cmajor, ofloat *cminor, ofloat *cpa, 
+			  ofloat *emajor, ofloat *eminor, ofloat *epa, gboolean rflag[4])
+{
+  ofloat bemrat, snr, snramp, snrmaj, snrmin, errpek, errpk2, 
+    sinc, cosc, tmaj, tmin, errmaj, errmin, errpa, errx2, erry2, 
+    tflux, etflux, pamp, errpan, polang, peakp, peakx, perr, psf[3];
+  ofloat   fblank = ObitMagicF();
+  gboolean   resolv, hafres[3];
+
+  /* psf size */
+  psf[0] = calParms->beamMaj; psf[1] = calParms->beamMin; psf[2] = calParms->beamPA;
+
+  /* Force fitted value to be at least as large as the PSF */
+  *major = MAX (*major, psf[0]);
+  *minor = MAX (*minor, psf[1]);
+
+  /* flux scale recalibration */
+  *peak *= calParms->fluxScale;
+  qcent *= calParms->fluxScale;
+  ucent *= calParms->fluxScale;
+  irms  *= calParms->fluxScale;
+  prms  *= calParms->fluxScale;
+
+  /* Save peak Flux density */
+  peakx = (*peak);
+
+  /* Correct position bias */
+  *ra +=  calParms->biasRA / cos (*dec * DG2RAD);
+  *dec +=  calParms->biasDec;
+
+
+  /* Beam ratio */
+  bemrat = (*major/psf[0]) * (*minor/psf[1]);
+
+  /* Trap under size beams */
+  bemrat = MAX (bemrat, 1.0);
+
+  /* Effective SNRs^2 to account for correlated noise. */
+  snr = peakx / irms;
+
+  /* SNR**2 for amplitude errors */
+  snramp = ((*major)*(*minor)/(4.0*psf[0]*psf[0])) * 
+    pow((1.0+(psf[0]/(*major))*(psf[0]/(*major))), 1.5) *
+    pow((1.0+(psf[1]/(*minor))*(psf[1]/(*minor))), 1.5) *
+    snr * snr;
+
+  /* SNR**2 for major axis error */
+  snrmaj = ((*major)*(*minor)/(4.0*psf[0]*psf[0])) * 
+    pow((1.0+(psf[0]/(*major))*(psf[0]/(*major))), 2.5) *
+    pow((1.0+(psf[1]/(*minor))*(psf[1]/(*minor))), 0.5) *
+    snr * snr;
+
+  /* SNR**2 for minor axis/PA errors */
+  snrmin = ((*major)*(*minor)/(4.0*psf[0]*psf[0])) * 
+    pow((1.0+(psf[0]/(*major))*(psf[0]/(*major))), 0.5) *
+    pow((1.0+(psf[1]/(*minor))*(psf[1]/(*minor))), 2.5) *
+    snr * snr;
+
+  /* Bias correct peak flux */
+  peakx += calParms->ClnBiasAv - (irms * irms / peakx);
+  
+  /* Flux errors, Add bias uncertainty */
+  errpek = sqrt ((2.0 * peakx*peakx / snramp) + calParms->ClnBiasEr*calParms->ClnBiasEr);
+  
+  /* Add Flux calibration  error */
+  errpek = sqrt (errpek*errpek + (calParms->calAmpEr * peakx)*(calParms->calAmpEr * peakx));
+
+  /* Polarization flux, angle and  error */
+  if ((qcent != fblank)  &&  (ucent != fblank)) {
+    polang = 28.6479 * atan2 (ucent, qcent+1.0e-20);
+    pamp = sqrt (qcent*qcent + ucent*ucent);
+
+    /* Bias correction */
+    NVSSpdbias (&pamp, prms);
+    /*         PAMP = MAX (1.0E-15, PAMP) */
+    errpan = 28.6479 * prms / MAX (1.0e-15, pamp);
+    errpan = MIN (errpan, 90.0);
+  } else {
+    pamp = 0.0;
+    polang = 0.0;
+    errpan = -1.0;
+  } 
+
+  /* Use central polarization rather than integral */
+  *pflux = pamp;
+  *pflux *= bemrat;
+  prms   *= bemrat;
+
+  /* Bad hair? (no polarization) */
+  if ((qcent == fblank)  ||  (ucent == fblank)) *pflux = fblank;
+  
+  /* Only quote Polarization angle if  Poln SNR>2.6  Poln uncertainty 
+     adding calibration term */
+  perr = sqrt (prms*prms * (calParms->calPolEr * (*peak))*(calParms->calPolEr * (*peak)));
+  
+  /* Probability of false detection < */
+  if (((*pflux) != fblank)  &&  (((*pflux)/perr) > 2.6)) {
+    *pang = polang;
+    *epan = errpan;
+  } else if (*pflux == fblank) {
+    *pang = fblank;
+    *epan = fblank;
+  } else {
+    *pang = fblank;
+    *epan = fblank;
+  } 
+  
+  /* Put position angle in range (+/- 90 deg) */
+  if (*posang < -90.0) *posang += 180.0;
+  if (*posang > 90.0)  *posang -= 180.0;
+
+  /* Error in polarized flux */
+  *epflux = prms * 1.41421 * bemrat;
+  
+  /* Errors */
+  sinc = sin (DG2RAD*(*posang));
+  cosc = cos (DG2RAD*(*posang));
+
+  /* Trap under size beams */
+  tmaj = MAX (*major, psf[1]);
+  tmin = MAX (*minor, psf[1]);
+
+  /* Axis sizes include 2% calibration error. */
+  errmaj = sqrt (((2.0 * tmaj*tmaj) / snrmaj) +  
+		 (calParms->calSizeEr*psf[0])*(calParms->calSizeEr*psf[0]));
+  errmin = sqrt (((2.0 * tmin*tmin) / snrmin) +  
+		 (calParms->calSizeEr*psf[1])*(calParms->calSizeEr*psf[1]));
+  errpa = RAD2DG * sqrt (pow(tmaj*tmin/ (tmaj*tmaj - tmin*tmin + 1.0e-20),2) * 
+			 4.0 / snrmin);
+  errpa = MIN (errpa, 90.0);
+  
+  /* Position errors */
+  errx2 = 2.0 * (2.0 * tmaj*tmaj) / (8.0 * log (2.0) * snrmaj);
+  erry2 = 2.0 * (2.0 * tmin*tmin) / (8.0 * log (2.0) * snrmin);
+
+  /* Include calibration */
+  *errra  = sqrt (calParms->calRAEr + errx2*sinc*sinc + erry2*cosc*cosc);
+  *errdec = sqrt (calParms->calDecEr + erry2*sinc*sinc + errx2*cosc*cosc);
+
+  /* RA error in seconds of time */
+  *errra /= (15.0 * cos (DG2RAD * *dec));
+  
+  /* Deconvolve */
+  GenBmval ((*major)*3600.0, (*minor)*3600.0, (*posang),  
+	     errmaj*3600.0, errmin*3600.0, errpa,  
+	     psf[0]*3600.0, psf[1]*3600.0, psf[2], 
+	     cmajor, cminor, cpa, emajor, eminor, epa,  
+	     &resolv, hafres);
+
+  /* Total flux density,  Trap resolved on one axis */
+  if (hafres[0]) {
+    /* Pseudo peak flux */
+    if (hafres[1]) {
+      /* Major axis only */
+      peakp = peakx * sqrt (MAX (1.0, (*minor)/psf[1]));
+      tflux = peakp * MAX (1.0, (*major)/psf[0]);
+    } else {
+      /* Minor axis only */
+      peakp = peakx * sqrt (MAX (1.0, (*major)/psf[0]));
+      tflux = peakp * MAX (1.0, (*minor)/psf[1]);
+    } 
+    /* Error in pseudo peak flux */
+    errpk2 = sqrt ((( calParms->calAmpEr * peakp)*( calParms->calAmpEr * peakp)) + 
+		   (3.0 * peakp*peakp / (2.0 * snramp)) + calParms->ClnBiasEr*calParms->ClnBiasEr);
+    /* Integrated flux error */
+    etflux = sqrt (tflux*tflux * ((errpk2*errpk2 / (peakp*peakp)) + 
+				  (psf[0]/(*major)) * ((errmaj*errmaj/((*major)*(*major))))));
+  } else {
+    /* Fully resolved values */
+    tflux = peakx * bemrat;
+    etflux = sqrt (tflux*tflux * ((errpek*errpek/(peakx*peakx)) + 
+				  (1.0 / bemrat) * ((errmaj*errmaj/((*major)*(*major))) + 
+						    (errmin*errmin/((*minor)*(*minor))))));
+  } 
+  if (resolv) {
+    *flux  = tflux;
+    *eflux = etflux;
+  } else {
+    /* Correct if unresolved */
+    *flux  = peakx * sqrt (bemrat);
+    *eflux = sqrt (((calParms->calAmpEr * (*flux))*(calParms->calAmpEr * (*flux))) + 
+		   ((*flux)*(*flux)/snramp) + calParms->ClnBiasEr*calParms->ClnBiasEr);
+  } 
+
+  /* Convert units for output */
+  *errra  *= 3600.0;
+  *errdec *= 3600.0;
+
+  /* Resolution flags */
+  rflag[0] = resolv;
+  rflag[1] = hafres[0];
+  rflag[2] = hafres[1];
+  rflag[3] = hafres[2];
+} /* end of routine ObitSurveyGenCorErr */ 
 
 /*----------------------Private functions ---------------------------*/
+/**
+ * Apply final calibration and error analysis of Generic catalog row
+ * Routine to apply any corrections to NVSS fitted source parameters  
+ * and determine errors.  Unless fitted, the model parameters returned  
+ * are deconvolved using the restoring beam.  
+ * 
+ * \param   calParms [in] calibration parameters
+ * \param   ra      [in/out] RA (deg)
+ * \param   dec     [in/out] Dec (deg)
+ * \param   peak    [in/out] Peak Ipol (Jy/beam)
+ * \param   major   [in/out] Fitted major axis size (deg)
+ * \param   minor   [in/out] Fitted minor axis size (deg)
+ * \param   posang  Fitted PA deg
+ * \param   qcent   Center Q flux density
+ * \param   ucent   Center U flux density
+ * \param   pflux   Integrated polarized flux density
+ * \param   irms    RMS (sigma) in Ipol.
+ * \param   prms    RMS (sigma) in Qpol and Upol.
+ * \param   fitted  If true return fitted values else deconvolved
+ * \param   doraw   If true return raw values else bias corrected.
+ * \param           Generally, fitted should be true if doraw is.
+ * \param   fblank  Magic value blanking value
+ * \param   flux    [out] Model peak/integrated Flux density (Jy)
+ * \param   eflux   [out] Error in flux
+ * \param   pflux   [out] Polarized flux density (Jy)
+ * \param           [out] Now derived from qcent, ucent
+ * \param   epflux  [out] Error in pflux
+ * \param   chpang  [out] Polarization angle or blank if probabliity of a
+ * \param           [out] false detection exceeds 2%
+ * \param   chepan  [out] Error in chpang or blank
+ * \param   errra   [out] Error (sec of time) of Right ascension
+ * \param   errdec  [out] Error (asec) of Declination
+ * \param   cmajor  [out] Major axis size or limit as string (asec)
+ * \param   cminor  [out] Minor axis size or limit as string (asec)
+ * \param   cpa     [out] Position angle or blank as string (asec)
+ * \param   emajor  [out] Error of major axis size or limit as string (asec)
+ * \param   eminor  [out] Error of Minor axis size or limit as string (asec)
+ * \param   epa     [out] Error of position angle or blank as string (asec)
+ */
+static void GenCorErr (ObitSurveyGenCalParms *calParms, odouble *ra, odouble *dec, 
+		       ofloat *peak, ofloat *major, ofloat *minor, ofloat *posang,
+		       ofloat qcent, ofloat ucent, ofloat *pflux, 
+		       ofloat irms, ofloat prms, 
+		       gboolean fitted, gboolean doraw, 
+		       ofloat *flux, ofloat *eflux, ofloat *epflux, 
+		       gchar chpang[7], gchar chepan[7], ofloat *errra, ofloat *errdec, 
+		       gchar cmajor[7], gchar cminor[7], gchar cpa[7], 
+		       gchar emajor[7], gchar eminor[7], gchar epa[7])
+{
+  ofloat bemrat, snr, snramp, snrmaj, snrmin, errpek, errpk2, 
+    sinc, cosc, tmaj, tmin, errmaj, errmin, errpa, errx2, erry2, 
+    tflux, etflux, pamp, errpan, polang, peakp, peakx, perr, psf[3];
+  ofloat fblank = ObitMagicF();
+  olong   ier;
+  gboolean   resolv, hafres[3];
+
+  /* psf size */
+  psf[0] = calParms->beamMaj; psf[1] = calParms->beamMin; psf[2] = calParms->beamPA;
+
+  /* Force fitted value to be at least as large as the PSF */
+  *major = MAX (*major, psf[0]);
+  *minor = MAX (*minor, psf[1]);
+
+  /* flux scale recalibration */
+  *peak *= calParms->fluxScale;
+  qcent *= calParms->fluxScale;
+  ucent *= calParms->fluxScale;
+  irms  *= calParms->fluxScale;
+  prms  *= calParms->fluxScale;
+
+  /* Save peak Flux density */
+  peakx = (*peak);
+
+  /* Correct position bias */
+  if (!doraw) {
+    *ra +=  calParms->biasRA / cos (*dec * DG2RAD);
+    *dec +=  calParms->biasDec;
+  } 
+
+  /* Beam ratio */
+  bemrat = (*major/psf[0]) * (*minor/psf[1]);
+
+  /* Trap under size beams */
+  bemrat = MAX (bemrat, 1.0);
+
+  /* Effective SNRs^2 to account for correlated noise. */
+  snr = peakx / irms;
+
+  /* SNR**2 for amplitude errors */
+  snramp = ((*major)*(*minor)/(4.0*psf[0]*psf[0])) * 
+    pow((1.0+(psf[0]/(*major))*(psf[0]/(*major))), 1.5) *
+    pow((1.0+(psf[1]/(*minor))*(psf[1]/(*minor))), 1.5) *
+    snr * snr;
+
+  /* SNR**2 for major axis error */
+  snrmaj = ((*major)*(*minor)/(4.0*psf[0]*psf[0])) * 
+    pow((1.0+(psf[0]/(*major))*(psf[0]/(*major))), 2.5) *
+    pow((1.0+(psf[1]/(*minor))*(psf[1]/(*minor))), 0.5) *
+    snr * snr;
+
+  /* SNR**2 for minor axis/PA errors */
+  snrmin = ((*major)*(*minor)/(4.0*psf[0]*psf[0])) * 
+    pow((1.0+(psf[0]/(*major))*(psf[0]/(*major))), 0.5) *
+    pow((1.0+(psf[1]/(*minor))*(psf[1]/(*minor))), 2.5) *
+    snr * snr;
+
+  /* Bias correct peak flux */
+  if (!doraw) peakx += calParms->ClnBiasAv - (irms * irms / peakx);
+  
+  /* Flux errors, Add bias uncertainty */
+  errpek = sqrt ((2.0 * peakx*peakx / snramp) + calParms->ClnBiasEr*calParms->ClnBiasEr);
+  
+  /* Add Flux calibration  error */
+  errpek = sqrt (errpek*errpek + (calParms->calAmpEr * peakx)*(calParms->calAmpEr * peakx));
+
+  /* Polarization flux, angle and  error */
+  if ((qcent != fblank)  &&  (ucent != fblank)) {
+    polang = 28.6479 * atan2 (ucent, qcent+1.0e-20);
+    pamp = sqrt (qcent*qcent + ucent*ucent);
+
+    /* Bias correction */
+    if (!doraw) NVSSpdbias (&pamp, prms);
+    /*         PAMP = MAX (1.0E-15, PAMP) */
+    errpan = 28.6479 * prms / MAX (1.0e-15, pamp);
+    errpan = MIN (errpan, 90.0);
+  } else {
+    pamp = 0.0;
+    polang = 0.0;
+    errpan = -1.0;
+  } 
+
+  /* Use central polarization rather than integral */
+  *pflux = pamp;
+  if (!(fitted || doraw)) {
+    *pflux *= bemrat;
+    prms   *= bemrat;
+  } 
+
+  /* Bad hair? (no polarization) */
+  if ((qcent == fblank)  ||  (ucent == fblank)) *pflux = fblank;
+  
+  /* Only quote Polarization angle if  Poln SNR>2.6  Poln uncertainty 
+     adding calibration term */
+  perr = sqrt (prms*prms * (calParms->calPolEr * (*peak))*(calParms->calPolEr * (*peak)));
+  
+  /* Probability of false detection < */
+  if (((*pflux) != fblank)  &&  (((*pflux)/perr) > 2.6)) {
+    snprintf (chpang, 6, "%6.1f", polang);
+    snprintf (chepan, 6, "%6.1f", errpan);
+  } else if (*pflux == fblank) {
+    snprintf (chpang, 6, "Blank ");
+    snprintf (chepan, 6, "      ");
+  } else {
+    snprintf (chpang, 6, "      ");
+    snprintf (chepan, 6, "      ");
+  } 
+  
+  /* Put position angle in range (+/- 90 deg) */
+  if (*posang < -90.0) *posang += 180.0;
+  if (*posang > 90.0)  *posang -= 180.0;
+
+  /* Error in polarized flux */
+  *epflux = prms * 1.41421 * bemrat;
+  
+  /* Errors */
+  sinc = sin (DG2RAD*(*posang));
+  cosc = cos (DG2RAD*(*posang));
+
+  /* Trap under size beams */
+  tmaj = MAX (*major, psf[1]);
+  tmin = MAX (*minor, psf[1]);
+
+  /* Axis sizes include 2% calibration error. */
+  errmaj = sqrt (((2.0 * tmaj*tmaj) / snrmaj) +  
+		 (calParms->calSizeEr*psf[0])*(calParms->calSizeEr*psf[0]));
+  errmin = sqrt (((2.0 * tmin*tmin) / snrmin) +  
+		 (calParms->calSizeEr*psf[1])*(calParms->calSizeEr*psf[1]));
+  errpa = RAD2DG * sqrt (pow(tmaj*tmin/ (tmaj*tmaj - tmin*tmin + 1.0e-20),2) * 
+			 4.0 / snrmin);
+  errpa = MIN (errpa, 90.0);
+  
+  /* Position errors */
+  errx2 = 2.0 * (2.0 * tmaj*tmaj) / (8.0 * log (2.0) * snrmaj);
+  erry2 = 2.0 * (2.0 * tmin*tmin) / (8.0 * log (2.0) * snrmin);
+
+  /* Include calibration */
+  *errra  = sqrt (calParms->calRAEr + errx2*sinc*sinc + erry2*cosc*cosc);
+  *errdec = sqrt (calParms->calDecEr + erry2*sinc*sinc + errx2*cosc*cosc);
+
+  /* RA error in seconds of time */
+  *errra /= (15.0 * cos (DG2RAD * *dec));
+  
+  /* Deconvolve */
+  NVSSbmval ((*major)*3600.0, (*minor)*3600.0, (*posang),  
+	     errmaj*3600.0, errmin*3600.0, errpa,  
+	     psf[0]*3600.0, psf[1]*3600.0, psf[2], 
+	     cmajor, cminor, cpa, emajor, eminor, epa,  
+	     &resolv, hafres, &ier);
+
+  /* Convert to strings */
+  if (fitted) {
+    /* Fitted values */
+    snprintf (cmajor, 7, "%6.1f", (*major)*3600.0);
+    snprintf (cminor, 7, "%6.1f", (*minor)*3600.0);
+    snprintf (cpa, 7, "%6.1f", (*posang));
+    snprintf (emajor, 7, "%6.1f", errmaj*3600.0);
+    snprintf (eminor, 7, "%6.1f", errmin*3600.0);
+    snprintf (epa, 7, "%6.1f", errpa);
+    if (resolv || doraw) {
+      *flux  = peakx;
+      *eflux = errpek;
+    } else {
+      /* Correct if unresolved */
+      *flux  = peakx * sqrt (bemrat);
+      *eflux = sqrt (((calParms->calAmpEr * (*flux))*(calParms->calAmpEr * (*flux))) + 
+		     ((*flux)*(*flux)/snramp) +calParms->ClnBiasEr*calParms->ClnBiasEr);
+    } 
+  } else {
+    /* Total flux density,  Trap resolved on one axis */
+    if (hafres[0]) {
+      /* Pseudo peak flux */
+      if (hafres[1]) {
+	/* Major axis only */
+	peakp = peakx * sqrt (MAX (1.0, (*minor)/psf[1]));
+	tflux = peakp * MAX (1.0, (*major)/psf[0]);
+      } else {
+	/* Minor axis only */
+	peakp = peakx * sqrt (MAX (1.0, (*major)/psf[0]));
+	tflux = peakp * MAX (1.0, (*minor)/psf[1]);
+      } 
+      /* Error in pseudo peak flux */
+      errpk2 = sqrt ((( calParms->calAmpEr * peakp)*( calParms->calAmpEr * peakp)) + 
+		     (3.0 * peakp*peakp / (2.0 * snramp)) + calParms->ClnBiasEr*calParms->ClnBiasEr);
+      /* Integrated flux error */
+      etflux = sqrt (tflux*tflux * ((errpk2*errpk2 / (peakp*peakp)) + 
+				    (psf[0]/(*major)) * ((errmaj*errmaj/((*major)*(*major))))));
+    } else {
+      /* Fully resolved values */
+            tflux = peakx * bemrat;
+            etflux = sqrt (tflux*tflux * ((errpek*errpek/(peakx*peakx)) + 
+					  (1.0 / bemrat) * ((errmaj*errmaj/((*major)*(*major))) + 
+							    (errmin*errmin/((*minor)*(*minor))))));
+    } 
+    if (resolv) {
+      *flux  = tflux;
+      *eflux = etflux;
+    } else {
+      /* Correct if unresolved */
+      *flux  = peakx * sqrt (bemrat);
+      *eflux = sqrt (((calParms->calAmpEr * (*flux))*(calParms->calAmpEr * (*flux))) + 
+		     ((*flux)*(*flux)/snramp) + calParms->ClnBiasEr*calParms->ClnBiasEr);
+    } 
+  } 
+  /* Convert units for output */
+  *errra  *= 3600.0;
+  *errdec *= 3600.0;
+} /* end of routine GenCorErr */ 
+
 /**
  * Apply final calibration and error analysis of NVSS catalog row
  * Routine to apply any corrections to NVSS fitted source parameters  
@@ -2559,6 +3976,75 @@ static void NVSSbmval (ofloat bmaj, ofloat bmin, ofloat bpa,
   /* One axis resolved? */
   hafres[0] = hafres[1]  ||  hafres[2];
 } /* end of routine NVSSbmval */ 
+\
+/**
+ * Deconvolves fitted Gaussian from beam, also generates appropriate errors.  
+ * \param bmaj    Fitted major axis (asec) 
+ * \param bmin    Fitted minor axis (asec) 
+ * \param bpa     Fitted pos. angle (deg) 
+ * \param bmaje   Fitted major axis error (asec) 
+ * \param bmine   Fitted minor axis error (asec) 
+ * \param bpae    Fitted pos. angle error (deg) 
+ * \param cbmaj   Clean beam major axis (asec) 
+ * \param cbmin   Clean beam minor axis (asec) 
+ * \param cbpa    Clean beam pos. angle (deg) 
+ * \param cmajor  [out] Major axis in asec 
+ * \param cminor  [out] Minor axis in asec 
+ * \param cpa     [out] position angle in deg 
+ * \param emajor  [out] error of Major axis in asec 
+ * \param eminor  [out] error of Minor axis in asec 
+ * \param epa     [out] error of position angle in deg 
+ * \param resolv  [out] If true source was resolved. 
+ * \param hafres  [out] If true source was resolved on: 
+ *                   1) one axis 
+ *                   2) Major axis only 
+ *                   3) Minor axis only 
+ */
+static void GenBmval (ofloat bmaj, ofloat bmin, ofloat bpa, 
+		      ofloat bmaje, ofloat bmine, ofloat bpae, 
+		      ofloat cbmaj, ofloat cbmin, ofloat cbpa, 
+		      ofloat* cmajor, ofloat* cminor, ofloat* cpa, 
+		      ofloat* emajor, ofloat* eminor, ofloat* epa, 
+		      gboolean *resolv, gboolean hafres[3])
+{
+  ofloat  r[3][3], srcmaj, usrcmj, srcmin, usrcmn, srcpa;
+  
+  /* Get deconvolved sizes and errors. */
+  NVSSdeconv (cbmaj, cbmin, cbpa, bmaj, bmaje, bmin, bmine, bpa, 
+	      &srcmaj, &usrcmj, &srcmin, &usrcmn, &srcpa);
+  r[0][0] = srcmaj;
+  r[1][0] = usrcmj;
+  r[2][0] = usrcmj;
+  r[0][1] = srcmin;
+  r[1][1] = usrcmn;
+  r[2][1] = usrcmn;
+  r[0][2] = srcpa;
+  r[1][2] = bpae;
+  r[2][2] = bpae;
+  *resolv = FALSE;
+  hafres[0] = hafres[1] = hafres[2] = FALSE;
+  
+  /* return values */
+  *cmajor = r[0][0];
+  *cminor = r[0][1];
+  *cpa    = r[0][2];
+  *emajor = (r[1][0] + r[2][0]) * 0.5;
+  *eminor = (r[1][1] + r[2][1]) * 0.5;
+  *epa = MIN (90.0, 0.5 * fabs (r[1][2] + r[2][2]));
+  
+  /* Some upper limits,  Major axis */
+  if (r[1][0] > 0.0) {
+    *resolv   = TRUE;
+    hafres[1] = TRUE;
+  } 
+  /* Minor axis */
+  if (r[1][1] > 0.0) {
+    *resolv   = TRUE;
+    hafres[2] = TRUE;
+  }  
+  /* One axis resolved? */
+  hafres[0] = hafres[1]  ||  hafres[2];
+} /* end of routine GenBmval */ 
 
 /**
  * To correct the NVSS "Wall problem", NVSSnewPoint  
@@ -2623,7 +4109,7 @@ static void NVSSnewPoint (ofloat decrad, ofloat spmjy,
 } /* end of routine NVSSnewPoint */ 
 
 /**
- * Thus subroutine deconvolves a gaussian point-source response from a  
+ * This subroutine deconvolves a gaussian point-source response from a  
  * fitted elliptical gaussian to yield the gaussian source parameters.  
  * This calculation is from AJ, 109, 2318 and my notes of 010209.  
  * DECONV also determines whether each source axis is significantly  

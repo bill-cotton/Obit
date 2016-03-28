@@ -2010,6 +2010,27 @@ void  ObitIOImageAIPSCLEANRead(ObitIOImageFITS *in, olong *lstatus)
   if (status==KEY_NO_EXIST) status = 0;
   desc->beamPA = (ofloat)ftemp;
 
+  /* If Beam not found try CASA usage */
+  if (!gotBeam) {
+    ftemp = -1.0;
+    fits_read_key_flt (in->myFptr, "BMAJ", &ftemp, (char*)commnt, &status);
+    gotBeam = gotBeam || (status != KEY_NO_EXIST);
+    if (status==KEY_NO_EXIST) status = 0;
+    desc->beamMaj = (ofloat)ftemp;
+    
+    ftemp = -1.0;
+    fits_read_key_flt (in->myFptr, "BMIN", &ftemp, (char*)commnt, &status);
+    gotBeam = gotBeam || (status != KEY_NO_EXIST);
+    if (status==KEY_NO_EXIST) status = 0;
+    desc->beamMin = (ofloat)ftemp;
+    
+    ftemp = -1.0;
+    fits_read_key_flt (in->myFptr, "BPA", &ftemp, (char*)commnt, &status);
+    gotBeam = gotBeam || (status != KEY_NO_EXIST);
+    if (status==KEY_NO_EXIST) status = 0;
+    desc->beamPA = (ofloat)ftemp;
+  } /* end search for CASA beams */
+
   ltemp = -1;
   fits_read_key_lng (in->myFptr, "CLEANNIT", &ltemp, (char*)commnt, &status);
   gotNiter = gotNiter || (status != KEY_NO_EXIST);

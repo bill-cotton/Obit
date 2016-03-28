@@ -136,6 +136,152 @@ def PVLSSPrint (printer, data, err, VLVer=1, first=True, last=True):
     return ret != 0
     # end PVLSSPrint
 
+def PGenPrint (printer, data, err, VLVer=1, first=True, last=True):
+    """ 
+    Print selected contents of a generic VL format catalog
+
+    Returns logical quit to indicate user wants to quit
+    * printer    = Printer for output
+    * data       = OData to to which VL table is attached
+                   will cast from Image or UV types
+                   with control parameters on the info:
+        Object    string  Name of object
+        equinCode long    Epoch code for output, 
+                          1=>B1950, 2=>J2000, 3=>Galactic [def 2]
+        Fitted    bool    If True give fitted values [def F]
+        doraw     bool    If True give raw values from table, else 
+                          corrected/deconvolved.[def F]
+        RA        double  RA center of search, degrees in equinCode [def 0]
+        Dec       double  Dec center of search, degrees in equinCode [def 0]
+        Search    double  Search radius in arcsec, <= 0 => all selected. [def 15] 
+        Box       double[2] RA and Dec halfwidth of search 
+                          rectangle in hr,deg [0,0]
+        Silent    double  Half width asec of silent search box. [def 720]
+        minFlux   float   Minimum peak flux density. [def 0]
+        maxFlux   float   Maximum peak flux density. [def LARGE]
+        minGlat   float   Minimum abs galactic latitude [def any]
+        maxGlat   float   Minimum abs galactic latitude [def any]
+        Calibration Parameters
+        fluxScale float Flux density scaling factor, def 1.0
+        biasRA    float RA position bias in deg, def 0.0
+        biasDec   float Dec position bias in deg, def 0.0
+        calRAEr   float Cal component of RA position error (squared), def 0.0
+        calDecEr  float Cal component of Dec position error (squared), def 0.0
+        ClnBiasAv float Mean CLEAN bias in Jy, def 0.0
+        ClnBiasEr float Uncertainty in CLEAN bias in Jy, def 0.0
+        calAmpEr  float Cal component of amplitude error as fraction, def 0.03
+        calSizeEr float Cal component of amplitude error as fraction, def 0.02
+        calPolEr  float Cal component of polarization error, def 0.003
+    * err        = Python Obit Error/message stack
+    * VLVer      = VL table version
+    * first      = True if this first write to printer
+    * last       = True if this is the last write to printer
+    """
+    ################################################################
+    # Checks
+    if not OPrinter.PIsA(printer):
+        raise TypeError,"printer MUST be a Python Obit printer"
+    # cast data if necessary
+    if Image.PIsA(data) or UV.PIsA(data):
+        ldata = data.cast("ObitData")
+    else:
+        ldata = data.me
+    ret = Obit.OSurveyGenPrint(printer.me, ldata, VLVer, first, last, err.me)
+    return ret != 0
+    # end PGenPrint
+
+def PGetCalParms(beamMaj, beamMin, beamPA, \
+                     fluxScale=1.0,biasRA=0.0,biasDec=0.0,calRAEr=0.0,calDecEr=0.0, \
+                     ClnBiasAv=0.0,ClnBiasEr=0.0,calAmpEr=0.03,calSizeEr=0.02,calPolEr=0.003):
+    """ 
+    Collect calibration partemeters needed for PGenCorErr
+
+    * beamMaj   CLEAN restoring beam major axis in deg
+    * beamMin   CLEAN restoring beam minor axis in deg
+    * beamPA    CLEAN restoring beam position angle axis in deg
+    * fluxScale Flux density scaling factor
+    * biasRA    RA position bias in deg
+    * biasDec   Dec position bias in deg
+    * calRAEr   Cal component of RA position error (squared)
+    * calDecEr  Cal component of Dec position error (squared)
+    * ClnBiasAv Mean CLEAN bias in Jy
+    * ClnBiasEr Uncertainty in CLEAN bias in Jy
+    * calAmpEr  Cal component of amplitude error as fraction
+    * calSizeEr Cal component of amplitude error as fraction
+    * calPolEr  Cal component of polarization error
+    Returns dict with Calibration Parameters:
+        fluxScale Flux density scaling factor
+        biasRA    RA position bias in deg
+        biasDec   Dec position bias in deg
+        calRAEr   Cal component of RA position error (squared)
+        calDecEr  Cal component of Dec position error (squared)
+        ClnBiasAv Mean CLEAN bias in Jy
+        ClnBiasEr Uncertainty in CLEAN bias in Jy
+        calAmpEr  Cal component of amplitude error as fraction
+        calSizeEr Cal component of amplitude error as fraction
+        calPolEr  Cal component of polarization error
+        beamMaj   CLEAN restoring beam major axis in deg
+        beamMin   CLEAN restoring beam minor axis in deg
+        beamPA    CLEAN restoring beam position angle axis in deg
+     """
+    ################################################################
+    out = { \
+        "fluxScale":fluxScale, \
+        "biasRA":biasRA, \
+        "biasDec":biasDec, \
+        "calRAEr":calRAEr, \
+        "calDecEr":calDecEr, \
+        "ClnBiasAv":ClnBiasAv, \
+        "ClnBiasEr":ClnBiasEr, \
+        "calAmpEr":calAmpEr, \
+        "calSizeEr":calSizeEr, \
+        "calPolEr":calPolEr, \
+        "beamMaj":beamMaj, \
+        "beamMin":beamMin, \
+        "beamPA":beamPA, \
+        }
+    return out
+   # end PGetCalParms
+
+def PGenCorErr(VLrow,calParms):
+     """ 
+    (re) calibration and error analysis of VL table row
+
+    * VLrow      = VL table row dict from ReadRow
+    * calParms   = Calibration parameters dict from PGetCalParms
+    Returns dict:
+      RA       Right Ascention in Deg
+      eRA      Error in Right Ascention in asec
+      Dec      Declination in deg
+      eDec     Error in Declination in asec
+      peak     Peak flux density in Jy
+      flux     Integrated flux density in Jy
+      eflux    Error in Integrated flux density in Jy
+      major    Fitted Gaussian major axis size in deg
+      minor    Fitted Gaussian minor axis size in deg
+      posang   Fitted Gaussian pposition angle in deg
+      pflux    Central polarized flux density in Jy
+      epflux   Error in Central polarized flux density in Jy
+      pang     Polarization angle deg (fblank if missing)
+      epang    Error in polarization angle deg (fblank if missing)
+      dmajor   Deconvolved Gaussian major axis in asec
+      edmajor  Error in deconvolved Gaussian major axis in asec
+      dminor   Deconvolved Gaussian minor axis in asec
+      edminor  Error in deconvolved Gaussian minor axis in asec
+      dpa      Deconvolved gaussian position angle (deg)
+      edpa     Error in deconvolved position angle (deg)
+      rflag    Resolution flags[4], 
+               0=any resolution, 1=1 axis, 2=major only, 3=minor only
+    """
+    ################################################################
+     out = Obit.OSurveyGenCorErr(VLrow,calParms)
+     # convert flags to booleans
+     for i in range(0,len(out['rflag'])):
+         out['rflag'][i] = out['rflag'][i]!=0
+     return out
+# end PGenCorErr
+
+
 import urllib, urllib2
 def PWebFetch (url, args, outfile, err):
     """ 

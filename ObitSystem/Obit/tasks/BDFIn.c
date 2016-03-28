@@ -3712,7 +3712,10 @@ void GetEOPInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   outTable->earthrad = inTabF->rows[0]->earthRadius;
   outTable->ephepoc  = 2000;
   outTable->tidelag  = inTabF->rows[0]->earthTideLag;
-  outTable->gauss    = inTabF->rows[0]->gaussConstant;
+  if (inTabF->rows[0]->gaussConstant<1.0e-5) 
+    outTable->gauss    = inTabF->rows[0]->gaussConstant*86400;  /* to sec */
+  else
+    outTable->gauss    = inTabF->rows[0]->gaussConstant;
   outTable->gmmoon   = inTabF->rows[0]->moonGM;
   outTable->gmsun    = inTabF->rows[0]->sunGM;
   outTable->loveH    = inTabF->rows[0]->loveNumberH;
@@ -3721,7 +3724,7 @@ void GetEOPInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   outTable->relData  = 0.0;  /*???inTabF->rows[0]->;*/
   outTable->tidalut1 = 0.0;  /*???inTabF->rows[0]->;*/
   outTable->tsecau   = inTabF->rows[0]->lightTime1AU;
-  outTable->UGrvCn   = 0.0;  /*???inTabF->rows[0]->;*/
+  outTable->UGrvCn   = 6.672e-11;  /*???inTabF->rows[0]->;*/
   outTable->vlight   = inTabF->rows[0]->speedOfLight;
 
   /* Create output Row */

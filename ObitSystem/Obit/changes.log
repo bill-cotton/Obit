@@ -3188,3 +3188,20 @@ Obit/src/ObitImageMosaic.c Obit/src/ObitImageMosaicMF.c:
 Obit/src/ObitImageMosaicWB.c:
    Define Catalog variable large enough.
 17 Mar 2016, svn ver 535
+
+Enhancemnets to survey calibration/error analysis, bug fixes.
+Obit/tasks/BDFIn.c:
+  Correct units of Gauss constant, enter universal grav. const. in CT table
+Obit/src/ObitIOImageFITS.c:
+  Pick up CASA clean beam parameters.
+Obit/tasks/FndSou.c:
+  GetInitialModel: trap missing beam and use 3 pixel round.
+Obit/src/ObitSurveyUtil.c Obit/include/ObitSurveyUtil.h:
+  New routines for generic listing and calibrating/error analysis
+Obit/python/OSurvey.py  Obit/python/OSurvey.inc 
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  Python interface to new ObitSurvey routines
+Obit/python/EVLACal.py:
+  EVLACalAP: expand clcal.Sources if needed
+28 Mar 2016, svn ver 536
+
