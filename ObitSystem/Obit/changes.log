@@ -3205,3 +3205,7 @@ Obit/python/EVLACal.py:
   EVLACalAP: expand clcal.Sources if needed
 28 Mar 2016, svn ver 536
 
+Remove unnecessary header keywords
+Obit/tasks/Imager.c Obit/tasks/MFImage.c \
+  BLAvg: Remove KeepSou keyword from header rather than set False
+31 Mar 2016, svn ver 537
