@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2014                                          */
+/*;  Copyright (C) 2005-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -351,6 +351,7 @@ gboolean ObitUVSelfCalSelfCal (ObitUVSelfCal *in, ObitUV *inUV, gboolean init,
     Obit_log_error(err, OBIT_InfoErr, "Peak Flux %g < %g - no Self cal needed", 
 		   peakFlux, minFlux);
     *noSCNeed = TRUE;
+    ObitInfoListAlwaysPut(in->skyModel->info, "noNeg", OBIT_bool, dim, &Fl);
     return TRUE;
   }
   /* Need model total flux density at least  minFlux) */
@@ -358,6 +359,7 @@ gboolean ObitUVSelfCalSelfCal (ObitUVSelfCal *in, ObitUV *inUV, gboolean init,
     Obit_log_error(err, OBIT_InfoErr, "Model Flux %g < %g - no Self cal needed", 
 		   posFlux, minFlux);
     *noSCNeed = TRUE;
+    ObitInfoListAlwaysPut(in->skyModel->info, "noNeg", OBIT_bool, dim, &Fl);
     return TRUE;
   }
 

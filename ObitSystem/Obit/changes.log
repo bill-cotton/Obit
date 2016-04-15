@@ -3209,3 +3209,34 @@ Remove unnecessary header keywords
 Obit/tasks/Imager.c Obit/tasks/MFImage.c \
   BLAvg: Remove KeepSou keyword from header rather than set False
 31 Mar 2016, svn ver 537
+
+Various bug fixes for calibration scripts etc.
+Obit/python/OSurvey.py \
+  PGenCorErr: Correct name of SWIG function
+Obit/src/ObitTableVLUtil.c \
+  Print: allow passing minSNR
+Obit/python/Catalog.py \
+  VLPrint: better documentation
+  PFSFiltVel: Add minFlux, minSNR arguments
+Obit/python/OASDM.py \
+  GetAmpCal: Drop message about "Drop unknown amp cal"
+Obit/python/EVLACal.py \
+  Prepare: Add session code to parms file.
+  StdModel: correct frequencies for 3C48 S and C band
+  CalAvg: Zap SY tables on output.
+  Add mednTarg parameters for median window targets
+Obit/python/EVLAContPipe.py \
+  Add mednTarg parameters for median window targets
+Obit/python/MosaicUtil.py \
+  MakeMaster: Copy tmpl.Desc.List to the accumulation files.
+Obit/src/ObitSkyModel.c Obit/src/ObitSkyModelMF.c \
+Obit/src/ObitSkyModelVMBeamMF.c Obit/src/ObitSkyModelVM.c \
+Obit/src/ObitSkyModelVMPoln.c \
+  LoadComps: noNeg FALSE for Stokes not I
+Obit/src/ObitUVSelfCal.c \
+   SelfCal: Reset noNeg on sky model if no self cal needed
+Obit/src/ObitUVUtil.c \
+  AvgT: change min imput time from 1.0 to 0.01 sec.
+Obit/src/ObitUVEdit.c \
+  Median: do not process segments shorter than 10 samples.
+15 Apr 2016 svn ver 538

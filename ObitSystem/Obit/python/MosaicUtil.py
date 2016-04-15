@@ -65,6 +65,7 @@ def PMakeMaster(template, size, SumWtImage, SumWt2, err):
     Image.PRead (template, err)
     desc = Image.PGetDesc(template)
     descDict = ImageDesc.PGetDict(desc)  # Python dict object
+    listDict = template.Desc.List.Dict
     Image.PClose (template, err)
     #OErr.printErrMsg(err, "Error reading input image "+Image.PGetName(template))
     #
@@ -88,6 +89,7 @@ def PMakeMaster(template, size, SumWtImage, SumWt2, err):
     #
     # Do SumWtImage
     desc   = Image.PGetDesc(SumWtImage)
+    InfoList.PSetDict(desc.List, listDict)  # Copy list stuff
     ImageDesc.PSetDict(desc, descDict) # set output descriptor
     # Write output image
     Image.POpen(SumWtImage, 2, err)
@@ -98,8 +100,9 @@ def PMakeMaster(template, size, SumWtImage, SumWt2, err):
     Image.PClose(SumWtImage, err)
     #OErr.printErrMsg(err, "Error writing image for "+Image.PGetName(SumWtImage))
     #
-    # Do SumWtImage
+    # Do SumWt2Image
     desc = Image.PGetDesc(SumWt2) 
+    InfoList.PSetDict(desc.List, listDict)  # Copy list stuff
     ImageDesc.PSetDict(desc, descDict) # set output descriptor
     # Write output image
     Image.POpen(SumWt2, 2, err)

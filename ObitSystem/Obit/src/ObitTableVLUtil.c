@@ -73,6 +73,8 @@ ObitTableVZSelCrowd (olong irow, ofloat crowd, ofloat distAvg,
 /**
  * Print raw contents of VL table
  * \param in        VL table to print
+ *   Control parameters in info:
+ * \li "minSNR"     OBIT_float (1,1,1) Minimum acceptable SNR [def 5]
  * \param prtFile   Where to write
  * \param *err      ObitErr error stack.
  */
@@ -83,8 +85,11 @@ void ObitTableVLPrint (ObitTableVL *in, ObitImage *image, FILE  *prtFile,
   olong i, irow, iunit;
   ofloat maj, min, pa;
   gchar rast[19], decst[19], field[9], pre[2] = "mu";
-  ofloat epeak, errra, errdec, errmaj, errmin, errpa;
+  ofloat epeak, errra, errdec, errmaj, errmin, errpa, minSNR;
   ofloat beam[3], beamas[2], xcell, flux, eflux;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+  union ObitInfoListEquiv InfoReal; 
   ofloat scl, scales[2] = {1.0e3,1.0e6};
   gchar *routine = "ObitTableVLPrint";
 
@@ -94,6 +99,13 @@ void ObitTableVLPrint (ObitTableVL *in, ObitImage *image, FILE  *prtFile,
 		       "%s input %s not an VL Table", routine, in->name);
   Obit_return_if_fail (ObitImageIsA(image), err, 
 		       "%s image %s not an image", routine, image->name);
+
+  /* Get parameters */
+  minSNR = 5.0;
+  InfoReal.flt = minSNR; type = OBIT_float;
+  ObitInfoListGetTest(in->info, "minSNR",  &type, dim,  &InfoReal);
+  if (type==OBIT_float) minSNR = InfoReal.flt;
+  else if (type==OBIT_double)  minSNR = InfoReal.dbl;
 
   ObitTableVLOpen (in, OBIT_IO_ReadOnly, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
@@ -118,6 +130,7 @@ void ObitTableVLPrint (ObitTableVL *in, ObitImage *image, FILE  *prtFile,
   fprintf (prtFile,"\n Listing of fitted VL table values\n");
   fprintf (prtFile,"Fitted sizes in asec, Peak, Flux, IRMS in %cJy, residual values relative to Peak\n", pre[iunit]);
   fprintf (prtFile,"Error estimates (asec, %cJy, deg) given under value\n", pre[iunit]);
+  fprintf (prtFile,"minSNR = %f\n", minSNR);
   fprintf (prtFile,
 	   "             RA           Dec          Peak    Flux    IRMS  Fit Maj Fit min   PA    res. RMS res Peak  PixX    PixY   Field\n");
 
@@ -143,6 +156,9 @@ void ObitTableVLPrint (ObitTableVL *in, ObitImage *image, FILE  *prtFile,
     /* Flux */
     flux = row->PeakInt*((maj/beamas[0]) * (min/beamas[1]));
     eflux = epeak * ((maj/beamas[0]) * (min/beamas[1]));
+
+    /* minSNR test */
+    if (fabs(flux/eflux)<minSNR) continue;
 
     /* Values */
     fprintf (prtFile," %5d %14s %14s %8.2f %8.2f %7.3f %7.3f %7.3f %6.1f %8.3f %8.3f %7.1f %7.1f %8s\n",

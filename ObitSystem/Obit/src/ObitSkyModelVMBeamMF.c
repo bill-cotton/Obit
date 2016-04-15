@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2015                                          */
+/*;  Copyright (C) 2011-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2088,7 +2088,7 @@ gboolean ObitSkyModelVMBeamMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvda
   ofloat konst, konst2, xyz[3], xp[3], umat[3][3], pmat[3][3];
   ofloat ccrot, ssrot, xpoff, ypoff, maprot, uvrot;
   ofloat dxyzc[3], cpa, spa, xmaj, xmin, *specCorr=NULL;
-  gboolean doCheck=FALSE, want, do3Dmul;
+  gboolean doCheck=FALSE, want, do3Dmul, noNeg;
   gchar *tabType = "AIPS CC";
   gchar *routine = "ObitSkyModelVMBeamMFLoadComps";
   
@@ -2291,6 +2291,10 @@ gboolean ObitSkyModelVMBeamMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvda
     ssrot = sin (DG2RAD * (uvrot - maprot));
     ccrot = cos (DG2RAD * (uvrot - maprot));
 
+    /* noNeg FALSE for Stokes != I */
+    if ((fabs(imDesc->crval[imDesc->jlocs])-1.0)>0.01) noNeg = FALSE;
+    else noNeg = in->noNeg;
+    
     /* Get position phase shift parameters */
     ObitUVDescShiftPhase(uvDesc, imDesc, dxyzc, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
@@ -2345,7 +2349,7 @@ gboolean ObitSkyModelVMBeamMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvda
     for (j=0; j<larray; j++) {
  
      /* Only down to first negative? */
-      if (in->noNeg && (array[0]<=0.0)) break;
+      if (noNeg && (array[0]<=0.0)) break;
 
       /* Do we want this one? */
       want = (fabs(array[0])>0.0);

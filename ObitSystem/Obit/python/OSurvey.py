@@ -194,7 +194,7 @@ def PGetCalParms(beamMaj, beamMin, beamPA, \
                      fluxScale=1.0,biasRA=0.0,biasDec=0.0,calRAEr=0.0,calDecEr=0.0, \
                      ClnBiasAv=0.0,ClnBiasEr=0.0,calAmpEr=0.03,calSizeEr=0.02,calPolEr=0.003):
     """ 
-    Collect calibration partemeters needed for PGenCorErr
+    Collect calibration parameters needed for PGenCorErr
 
     * beamMaj   CLEAN restoring beam major axis in deg
     * beamMin   CLEAN restoring beam minor axis in deg

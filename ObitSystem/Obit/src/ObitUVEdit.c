@@ -3510,6 +3510,9 @@ ObitUV* ObitUVEditClipStokes (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
  */
 void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 {
+#ifndef MINTIME
+#define MINTIME 10  /* Minimum number of time to process */
+#endif
   ObitIOCode iretCode, oretCode;
   ObitTableFG *outFlag=NULL;
   ObitTableFGRow *row=NULL;
@@ -3805,29 +3808,33 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	/* Has the beginning of the scan been done? */
 	if ((!scanStartDone) && (!scanDone)) {  /* Beginning of scan */
 	  itDone = ntime/2;    /* only do first half */
-	  /* Loop over times */
-	  for (it=0; it<=itDone; it++) {
-	    checked  += MedianDev (amps, it, times, numBL, ncorr, numTime, ntime, alpha, devs, work,
-				   nThread, args, err);
-	    countBad += MedianFlag (devs, flagSig, numBL, ncorr, allChan, killAll, times[it], timeAvg, 
-				    BLAnt1, BLAnt2, Chan, IFs, Stoke, outFlag, row, err);
-	    if (err->error) goto cleanup;
-	  }
-	  itDone = it-1;    /* Highest done in current scan */
-	  
-	  scanStartDone = TRUE;    /* Beginning of scan now processed */
-	  
-	} else if (scanDone) {  /* All undone intervals in scan */
-	  /* Loop over times doing all later than last one done */
-	  for (it=0; it<ntime; it++) {
-	    if (times[it]>times[itDone]) {
+	  if (ntime>=MINTIME) {  /* enough samples for this to work? */
+	    /* Loop over times */
+	    for (it=0; it<=itDone; it++) {
 	      checked  += MedianDev (amps, it, times, numBL, ncorr, numTime, ntime, alpha, devs, work,
 				     nThread, args, err);
 	      countBad += MedianFlag (devs, flagSig, numBL, ncorr, allChan, killAll, times[it], timeAvg, 
 				      BLAnt1, BLAnt2, Chan, IFs, Stoke, outFlag, row, err);
 	      if (err->error) goto cleanup;
 	    }
-	  }
+	  } /* end if enough samples */
+	  itDone = it-1;    /* Highest done in current scan */
+	  
+	  scanStartDone = TRUE;    /* Beginning of scan now processed */
+	  
+	} else if (scanDone) {  /* All undone intervals in scan */
+	  /* Loop over times doing all later than last one done */
+	  if (ntime>=MINTIME) {  /* enough samples for this to work? */
+	    for (it=0; it<ntime; it++) {
+	      if (times[it]>times[itDone]) {
+		checked  += MedianDev (amps, it, times, numBL, ncorr, numTime, ntime, alpha, devs, work,
+				       nThread, args, err);
+		countBad += MedianFlag (devs, flagSig, numBL, ncorr, allChan, killAll, times[it], timeAvg, 
+					BLAnt1, BLAnt2, Chan, IFs, Stoke, outFlag, row, err);
+		if (err->error) goto cleanup;
+	      }
+	    }
+	  } /* end if enough samples */
 	  
 	  /* Init for next scan */
 	  itDone       = 0;
@@ -3842,11 +3849,13 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	} else {  /* just do center time (next undone */
 	  itDone++;  /* Highest done in current scan */
 	  if (itDone>=ntime) itDone = 0;
-	  checked  += MedianDev (amps, itDone, times, numBL, ncorr, numTime, ntime, alpha, devs, work,
-				 nThread, args, err);
-	  countBad += MedianFlag (devs, flagSig, numBL, ncorr, allChan, killAll, times[itDone], timeAvg, 
-				  BLAnt1, BLAnt2, Chan, IFs, Stoke, outFlag, row, err);
-	  if (err->error) goto cleanup;
+	  if (ntime>=MINTIME) {  /* enough samples for this to work? */
+	    checked  += MedianDev (amps, itDone, times, numBL, ncorr, numTime, ntime, alpha, devs, work,
+				   nThread, args, err);
+	    countBad += MedianFlag (devs, flagSig, numBL, ncorr, allChan, killAll, times[itDone], timeAvg, 
+				    BLAnt1, BLAnt2, Chan, IFs, Stoke, outFlag, row, err);
+	    if (err->error) goto cleanup;
+	  } /* end if enough samples */
 	}
 
 	/* Are we there yet??? */

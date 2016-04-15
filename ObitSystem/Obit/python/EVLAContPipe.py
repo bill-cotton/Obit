@@ -189,7 +189,7 @@ def pipeline( aipsSetup, parmFile):
     if parms["doMedn"]:
         mess =  "Median window time editing, for RFI impulsive in time:"
         printMess(mess, logFile)
-        retCode = EVLAMedianFlag (uv, "    ", err, noScrat=noScrat, nThreads=nThreads, \
+        retCode = EVLAMedianFlag (uv, parms["mednTarg"], err, noScrat=noScrat, nThreads=nThreads, \
                                   avgTime=parms["avgTime"], avgFreq=parms["avgFreq"],  chAvg= parms["chAvg"], \
                                   timeWind=parms["timeWind"], flagVer=2,flagSig=parms["mednSigma"], \
                                   logfile=logFile, check=check, debug=False)

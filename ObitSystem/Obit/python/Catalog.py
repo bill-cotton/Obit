@@ -393,7 +393,8 @@ def PVLPrint (VLTable, image, err, file="stdout"):
     
     Print contents of VL table
 
-    * VLTable   = Input Obit VL Table
+    * VLTable   = Input Obit VL Table, infoList member:
+    *             minSNR = min SNR to select
     * image     = Image being cataloged
     * err       = Python Obit Error/message stack
     * file      = Name of a file or "stdout" for terminal display
@@ -762,15 +763,15 @@ def PFSGetSpectrum (inFS, image, err):
     Obit.TableFSGetSpectrum (FSTable.me, image.me, err.me);
     # end PFSGetSpectrum
 
-def PFSFiltVel (inFS, image, outFS, err):
+def PFSFiltVel (inFS, image, outFS, err, minFlux=0., minSNR=5.):
     """
     Filter and fit spectra
     
     * inFS      = Input Obit FS Table
-    * image     = Image cube being cataloged, control parameters on List:
-                  minSNR = Minimum acceptable SNR [def 5]
-                  minFlux = Minimum acceptable flux density (Jy) [def 0]
+    * image     = Image cube being cataloged
     * outFS     = output Obit FS Table
+    * minSNR    = Minimum acceptable SNR [def 5]
+    * minFlux   = Minimum acceptable flux density (Jy) [def 0]
     * err       = Python Obit Error/message stack
     """
     ################################################################
@@ -784,6 +785,10 @@ def PFSFiltVel (inFS, image, outFS, err):
     if not Image.PIsA(image):
         print "Actually ",image.__class__
         raise TypeError,"image MUST be a Python Obit Image"
+    # Set control values
+    inInfo = inFS.List
+    inInfo.set ("minSNR",  minSNR)
+    inInfo.set ("minFlux", minFlux)
     #
     Obit.TableFSFiltVel(inFS.me, image.me, outFS.me, err.me);
     # end PFSFiltVel

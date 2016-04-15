@@ -71,6 +71,7 @@ def EVLAInitContParms():
     parms["mednAvgTime"]  = 10.0/60. # Median Averaging time in min
     parms["mednAvgFreq"]  = 0        # Median 1=>avg chAvg chans, 2=>avg all chan, 3=> avg chan and IFs
     parms["mednChAvg"]    = 1        # Median number of channels to average
+    parms["mednTarg"]     = "     "  # Median Flagging target, blank = all, source or list
 
     # Editing
     parms["doClearTab"]   = True        # Clear cal/edit tables
@@ -2981,6 +2982,8 @@ def EVLACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data CL table")
             # Index - now in Splat
             #UV.PUtilIndex (uvc, err)
+            # Zap any SY tables
+            z=uvc.ZapTable("AIPS SY",-1,err)
             if err.isErr:
                 print  "Error indexing cal/avg AIPS data"
                 OErr.printErrMsg(err, "Error indexing cal/avg AIPS data")
@@ -6185,12 +6188,12 @@ def EVLAStdModel(Cals, freq):
              "file":"3C48KModel.fits","disk":1}
     # 3C48 C
     model = {"Source":["3C48","3c48","J0137+3309","0137+331=3C48"],
-             "freqRange":[1.9e9,4.1e9],
+             "freqRange":[3.9e9,8.1e9],
              "file":"3C48CModel.fits","disk":1}
     stdModel.append(model)
     # 3C48 S
     model = {"Source":["3C48","3c48","J0137+3309","0137+331=3C48"],
-             "freqRange":[3.9e9,8.1e9],
+             "freqRange":[1.9e9,4.1e9],
              "file":"3C48SModel.fits","disk":1}
     stdModel.append(model)
 
@@ -7122,7 +7125,7 @@ def EVLAPrepare( ASDMRoot, err, \
         else:
             fileDict['session']      = 'C' + str(fileDict['selConfig']) + 'N' + str(fileDict['selChan'])
         parmList = EVLAGetParms( fileDict)
-        parmFile = "EVLAContParm_" + fileDict['project_code'] + \
+        parmFile = "EVLAContParm_" + fileDict['project_code'] + '_' + fileDict['session'] + \
             '_Cfg' + str(fileDict['selConfig']) + '_Nch' + str(fileDict['selChan']) + '.py'
         if doLow:
             # P band

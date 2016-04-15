@@ -2188,7 +2188,7 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   /* Get Parameter - Time interval */
   timeAvg = 1.0;  /* default 1 min */
   ObitInfoListGetTest(inUV->info, "timeAvg", &type, dim, &timeAvg);
-  if (timeAvg<=(1.0/60.0)) timeAvg = 1.0;
+  if (timeAvg<=(0.01/60.0)) timeAvg = 1.0;
   timeAvg /= 1440.0;  /* convert to days */
 
   /* Selection/calibration/editing of input? */

@@ -247,7 +247,8 @@ class OASDM(OASDMPtr):
                             if s['sourceName'] in known:
                                 out.append(s['sourceName'])
                             else:
-                                print "Drop unknown amp calibrator",s['sourceName']
+                                #print "Drop unknown amp calibrator",s['sourceName']
+                                pass
         del scan, main
         return out
     # end GetAmpCal 

@@ -1128,7 +1128,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
   ofloat konst, konst2, xyz[3], xp[3], umat[3][3], pmat[3][3];
   ofloat ccrot, ssrot, xpoff, ypoff, maprot, uvrot;
   ofloat dxyzc[3], cpa, spa, xmaj, xmin, range[2], gp1=0., gp2=0., gp3=0.;
-  gboolean doCheck=FALSE, want, do3Dmul;
+  gboolean doCheck=FALSE, want, do3Dmul, noNeg;
   gpointer fitArg=NULL;
   ofloat *fitSigma=NULL, *fitParms=NULL;
   gchar *tabType = "AIPS CC";
@@ -1341,6 +1341,10 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
     ssrot = sin (DG2RAD * (uvrot - maprot));
     ccrot = cos (DG2RAD * (uvrot - maprot));
 
+    /* noNeg FALSE for Stokes != I */
+    if ((fabs(imDesc->crval[imDesc->jlocs])-1.0)>0.01) noNeg = FALSE;
+    else noNeg = in->noNeg;
+
     /* Get position phase shift parameters */
     ObitUVDescShiftPhase(uvDesc, imDesc, dxyzc, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
@@ -1397,7 +1401,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
     for (j=0; j<larray; j++) {
 
       /* Only down to first negative? */
-      if (in->noNeg && (array[0]<=0.0)) break;
+      if (noNeg && (array[0]<=0.0)) break;
 
       /* Do we want this one?  */
       want = (fabs(array[0])>in->minDFT);
