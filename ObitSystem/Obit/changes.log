@@ -3240,3 +3240,12 @@ Obit/src/ObitUVUtil.c \
 Obit/src/ObitUVEdit.c \
   Median: do not process segments shorter than 10 samples.
 15 Apr 2016 svn ver 538
+
+Various bug fixes/hacks for Macs
+Obit/src/ObitUVImager.c  Obit/src/ObitUVImagerMF.c:
+  Patch for Mac version of asking how big memory is
+ObitView/ObitView.c:
+  Comment out apparently extra XtVaSetValues for menu
+Obit/share/scripts/EVLAContTemplateParm.py:
+  Add doBPPlot flag
+22 Apr 2016 svn ver 539

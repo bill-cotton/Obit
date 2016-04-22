@@ -31,7 +31,11 @@
 #include "ObitImageUtil.h"
 #include "ObitUVImagerIon.h"
 #include "ObitUVImagerSquint.h"
+#ifdef __APPLE__
+#include <sys/sysctl.h>
+#else
 #include "sys/sysinfo.h"
+#endif
 #include "unistd.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
@@ -845,11 +849,24 @@ olong ObitUVImagerGetNumPar (ObitUVImager *in, gboolean doBeam, ObitErr *err)
   g_assert(ObitUVImagerIsA(in));
 
   /* Inquire as to the amount of available pages of memory */
+#ifdef __APPLE__
+  int mib[2];
+  int64_t physical_memory;
+  size_t length;
+
+  // Get the Physical memory size
+  mib[0] = CTL_HW;
+  mib[1] = HW_MEMSIZE;
+  length = sizeof(physical_memory);
+  sysctl(mib, 2, &physical_memory, &length, NULL, 0);  
+  mSize = physical_memory;
+#else
   avphys_pages = get_avphys_pages();
   phys_pages   = get_phys_pages();
   pagesize     = getpagesize();
   /* How much to ask for (64-bit) - up to 1/5 total */
   mSize = 0.2*phys_pages*pagesize;
+#endif
 
   /* How big are things? */
   numVis = (odouble)ObitImageUtilBufSize (in->uvdata);  /* Size of buffer */

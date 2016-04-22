@@ -193,6 +193,7 @@ parms["doCleanup"]     = T        # Destroy AIPS files
 
 # diagnostics
 parms["doSNPlot"]      = T        # Plot SN tables etc
+parms["doBPPlot"]      = T        # Bandpass plot?
 parms["doReport"]      = T        # Individual source report
 parms["doRawSpecPlot"] = @PLOTSRC@!='None'  # Plot Raw spectrum
 parms["doSpecPlot"]    = @PLOTSRC@!='None'  # Plot spectrum at various stages of processing

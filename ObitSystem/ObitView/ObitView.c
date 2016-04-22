@@ -202,8 +202,8 @@ int main ( int argc, char **argv )
   menu = MakeMainMenu (mainWindow, (XtPointer)&image, 
 		       (XtPointer)IDdata);
   
-  /*  save some widget names */
-  XtVaSetValues ( mainWindow, XmNmenuBar, menu, NULL );
+  /*  save some widget names - this doesn't seem necessary
+  XtVaSetValues ( mainWindow, XmNmenuBar, menu, NULL ); */
   
   /*  Presto - appear on the screen */
   XtRealizeWidget (Display_shell);
