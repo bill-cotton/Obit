@@ -130,6 +130,8 @@ typedef struct {
   ofloat maxChiSq;
   /** Reference frequency */
   ofloat refFreq;
+  /* Spectral index correction to be applied to data */
+  ofloat corAlpha;
   /** Vector of guess/fitted coefficients, optional errors */
   ofloat *coef;
   /** Chi squared of fit */
@@ -401,6 +403,8 @@ ObitSpectrumFit* ObitSpectrumFitCreate (gchar* name, olong nterm)
  *              One per frequency or one for all, def 0.05, 1.0 => no gain corrections
  * \li "antSize" OBIT_float (?,1,1) Antenna diameter (m) for gain corr, 
  *              One per frequency or one for all, def 25.0
+ * \li corAlpha OBIT_float scalar, if non zero, spectral index 
+ *                   correction to apply, def = 0.0
  *
  * \param inImage  Image cube to be fitted
  *                 If an ObitImageMF the the fitter in that class is called
@@ -456,6 +460,9 @@ void ObitSpectrumFitCube (ObitSpectrumFit* in, ObitImage *inImage,
   ObitInfoListGetTest(in->info, "doBrokePow", &type, dim, &InfoReal);
   in->doBrokePow = InfoReal.itg;
 
+  /* Spectral index correction */
+  in->corAlpha = 0.0;
+  ObitInfoListGetTest(in->info, "corAlpha", &type, dim, &in->corAlpha);
   /* Min PB gain */
   ObitInfoListGetP(in->info, "PBmin", &type, PBdim, (gpointer)&PBmin);
   /* Antenna diameter */
@@ -782,7 +789,7 @@ void ObitSpectrumFitImArr (ObitSpectrumFit* in, olong nimage, ObitImage **imArr,
     in->freqs[iplane] = imArr[iplane]->myDesc->crval[imArr[iplane]->myDesc->jlocf] + 
       imArr[iplane]->myDesc->cdelt[imArr[iplane]->myDesc->jlocf] * 
       (imArr[iplane]->myDesc->plane - imArr[iplane]->myDesc->crpix[imArr[iplane]->myDesc->jlocf]);
-    
+   
     /* Close input */
     retCode = ObitImageClose (imArr[iplane], err);
     imArr[iplane]->extBuffer = FALSE;   /* May need I/O buffer later */
@@ -1011,6 +1018,7 @@ ofloat* ObitSpectrumFitSingle (olong nfreq, olong nterm, odouble refFreq,
   arg->doError        = TRUE;
   arg->doBrokePow     = doBrokePow;
   arg->doPBCorr       = FALSE;
+  arg->corAlpha       = 0.0;
   arg->maxIter        = 100;
   arg->minDelta       = 1.0e-5;  /* Min step size */
   arg->maxChiSq       = 1.5;     /* max acceptable normalized chi squares */
@@ -1191,6 +1199,7 @@ gpointer ObitSpectrumFitMakeArg (olong nfreq, olong nterm, odouble refFreq,
   arg->doError        = TRUE;
   arg->doBrokePow     = doBrokePow;
   arg->doPBCorr       = FALSE;
+  arg->corAlpha       = 0.0;
   arg->maxIter        = 100;
   arg->minDelta       = 1.0e-5;  /* Min step size */
   arg->maxChiSq       = 3.0;     /* max acceptable normalized chi squares */
@@ -1553,6 +1562,7 @@ void ObitSpectrumFitter (ObitSpectrumFit* in, ObitErr *err)
     args->doError     = in->doError;
     args->doBrokePow  = in->doBrokePow;
     args->doPBCorr    = in->doPBCorr;
+    args->corAlpha    = in->corAlpha;
     args->maxIter     = 100;
     args->minDelta    = 1.0e-2;          /* Min step size */
     args->maxChiSq    = in->maxChi2;     /* max acceptable normalized chi squares */
@@ -1768,11 +1778,13 @@ static gpointer ThreadNLFit (gpointer arg)
   olong hi            = larg->last;     /* Highest in y range */
   gboolean doError    = larg->doError;  /* Error analysis? */
   gboolean doPBCorr   = larg->doPBCorr; /* Primary beam correction? */
+  ofloat corAlpha     = larg->corAlpha;
+  ofloat *Freq        = larg->nu;
   ObitErr *err        = larg->err;
 
   olong ix, iy, indx, i, nOut;
   odouble Angle=0.0, pos[2];
-  ofloat pbfact, pixel[2];
+  ofloat pbfact, spFact, pixel[2];
   ofloat fblank = ObitMagicF();
   ObitBeamShapeClassInfo *BSClass;
   gchar *routine = "ThreadNLFit";
@@ -1844,6 +1856,16 @@ static gpointer ThreadNLFit (gpointer arg)
 	  }
       } /* end loop over frequencies */
       
+      /* Spectral index correction */
+      if (corAlpha!=0.0) {
+	for (i=0; i<in->nfreq; i++) {
+	  spFact = (ofloat)pow(Freq[i]/in->refFreq, -corAlpha);
+	  larg->obs[i]    *= spFact;
+	  larg->weight[i] /= spFact*spFact;
+	  larg->isigma[i] /= spFact;
+	}
+      }
+
       /* initialize with values from last time */
       if (doError) {
 	for (i=0; i<nOut-1; i++) 
@@ -1870,11 +1892,14 @@ static gpointer ThreadNLFit (gpointer arg)
 	/* multi term power */
  	NLFit(larg);
       }
+
+      /* Spectral index correction */
+      if (nOut>=1) larg->coef[1] += corAlpha;
       
       /* Save to output */
       if (doError) {
 	for (i=0; i<nOut-1; i++) 
-	  in->outFArrays[i]->array[indx]  = larg->coef[i];
+	  in->outFArrays[i]->array[indx]    = larg->coef[i];
 	in->outFArrays[nOut-1]->array[indx] = larg->ChiSq;
       } else { /* only values */
  	for (i=0; i<in->nterm; i++) 

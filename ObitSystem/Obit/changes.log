@@ -3249,3 +3249,34 @@ ObitView/ObitView.c:
 Obit/share/scripts/EVLAContTemplateParm.py:
   Add doBPPlot flag
 22 Apr 2016 svn ver 539
+
+Add BDFIn support for VLA OTF mode data, FndSou FDR heuristics, bug fixes
+Obit/src/ObitSDMData.c Obit/src/ObitBDFData.c
+Obit/include/ObitBDFDataDef.h Obit/include/ObitSDMDataDef.h
+Obit/include/ObitSDMDataTypeDef.h
+Obit/tasks/BDFIn.c Obit/TDF/BDFIn.TDF: 
+  Add doQual parameter allowing support of EVLA OTF mode with
+  subscans labeled by AIPS qualifier.
+Obit/tasks/FndSou.c:
+  Improve heuristics for FDR, not as picky about blanking
+Obit/src/ObitTableVLUtil.c Obit/python/Catalog.py:
+  Print: Add control for min SNR
+Obit/src/ObitImageMF.c Obit/src/ObitSpectrumFit.c Obit/include/ObitSpectrumFitDef.h:
+Obit/python/ImageMF.py:
+  Allow correcting average spectral index before fitting spectrum 
+Obit/share/scripts/scriptPBUndo.py:
+  script to remove PB corection
+Obit/src/ObitImageMosaic.c Obit/src/ObitImageMosaicMF.c  Obit/src/ObitImageMosaicWB.c:
+  Create: Cleanup definition/use of overlap
+  FlyEye: More robust definition of overlapping facets.
+Obit/src/ObitPlot.c:
+  DrawCircle: Increase accuracy of approximation of a circle.
+ObitTalk/doc/ObitTalk.tex:
+  Change in graphics package to allow a build on Macs.
+Obit/src/ObitIOImageFITS.c:
+  fixIRAF: fix bug in intrepreting CD matrix.
+Obit/src/ObitDConClean.c:
+  Trap negative declinations 0 to -1
+Obit/src/ObitPixHisto.c:
+  Better formats for diagnostics.
+13 May 2016,svn 540

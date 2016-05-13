@@ -3,6 +3,8 @@
 %
 \documentclass[11pt]{report}
 \usepackage{psfig}
+\usepackage{graphicx}
+\usepackage{verbatim}
 \font\ttlfont=cmbxsl10 at 30pt
 \font\secfont=cmbxsl10 at 15pt
 \raggedbottom
@@ -569,7 +571,8 @@ To display image myImage on a running ObitView simply:
 
 A screen shot of the ObitView window is shown in Figure \ref{ObitViewFig}.
 \begin{figure}
-\centerline{\psfig{figure=ObitView.eps,height=4in}}
+\centering
+\includegraphics[height=4in]{ObitView.eps}
 \caption{ 
 Screenshot of ObitView window.
 }
@@ -1023,7 +1026,8 @@ the messages in a text file or closing the window.
 A screen shot of a message window is shown in Figure
 \ref{MessWinFig}.
 \begin{figure}
-\centerline{\psfig{figure=ObitMessScreen.eps,height=3in}}
+\centering
+\includegraphics[height=3in]{ObitMessScreen.eps}
 \caption{ 
 Message window for Obit task Template after completion.
 }
@@ -1938,6 +1942,7 @@ Image.PCopyQuantizeFITS (inImage, outImage, err, fract=fract, inHistory=inHistor
 OErr.printErrMsg(err, "Writing to FITS")
 \end{verbatim}
 
+%\end{alltt}
 \subsection{Image Gaussian Fitting}
 Fitting of Gaussians to an image over a large area can be performed by
 task FndSou and over more limited areas using the ImageFit class
@@ -1951,8 +1956,10 @@ interface to the fitting routines.
 The following is an example of an interactive model fitting session, a
 screen shot of the ObitView window after the fitting region and model
 are specified is shown in figure \ref{ImageFitFig}
+
 \begin{figure}
-\centerline{\psfig{figure=ImageFit.eps,angle=-90,height=3in}}
+\centering
+\includegraphics[angle=-90,origin=c,height=3in]{ImageFit.eps}
 \caption{ 
 Screenshot of ObitView window specifying fitting region with model.
 }
@@ -1980,7 +1987,9 @@ Integrated Flux density   0.0164 ( 0.00109) Jy
 Fitted Major axis   15.148 (    1.13) asec,    7.574 (    0.33) pixels
 Fitted Minor axis   11.228 (   0.661) asec,    5.614 (    0.33) pixels
 Fitted Position angle  -36.995 (    7.84) deg
+\end{verbatim}
 
+\begin{verbatim}
 Deconvolved model
 Deconvolved Major axis     10.8 (    1.12) asec,    5.385 (   0.814) pixels
 Deconvolved Minor axis     3.55 (    1.63) asec,    1.776 (   0.814) pixels
@@ -6051,7 +6060,8 @@ class FITSImage(_FITSData)
 
 % for figures
 \begin{figure}
-\centerline{\psfig{figure=graphic.eps,height=4in,angle=-90}}
+\centering
+\includegraphics[angle=-90][height=3in]{graphic.eps}
 \caption{ 
 
 }
@@ -6060,10 +6070,10 @@ class FITSImage(_FITSData)
 
 % Example figures
 \begin{figure}
-\centerline{
-\psfig{figure=ZerkFig1.eps,height=3.5in}
-\psfig{figure=ZerkFig2.eps,height=3.5in}
-}
+\centering
+\includegraphics[height=3.5in]{ZerkFig1.eps}
+\includegraphics[height=3.5in]{ZerkFig2.eps}
+
 \centerline{
 \psfig{figure=ZerkFig3.eps,height=3.5in}
 \psfig{figure=ZerkFig4.eps,height=3.5in}

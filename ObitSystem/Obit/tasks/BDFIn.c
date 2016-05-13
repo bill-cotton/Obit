@@ -826,6 +826,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar selBand[12], selCode[24];
   ObitASDMBand band;
+  gboolean doQual;
   gchar *bandCodes[] = {"Any", "4","P","L","S","C","X","Ku","K","Ka","Q",
 			"A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11"};
   gchar *routine = "GetHeader";
@@ -875,6 +876,10 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   selChBW = -1.0;
   ObitInfoListGetTest(myInput, "selChBW", &type, dim, &selChBW);
 
+  /* Use qualifiers for dufferent subscan pointings */
+  doQual = FALSE;
+  ObitInfoListGetTest(myInput, "doQual", &type, dim, &doQual);
+
   /* Check if Spectral window order desired */
   ObitInfoListGetTest(myInput, "SWOrder", &type, dim, &SWOrder);
   if (SWOrder)
@@ -892,6 +897,9 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   SDMData->selBand   = band;
   SDMData->selChan   = selChan;
   SDMData->selChBW   = selChBW;
+  SDMData->doQual    = doQual;
+  SDMData->SWOrder   = SWOrder;
+  SDMData->iMain     = iMain;
 
   /* Create ObitUV for data */
   *outData = setOutputData (myInput, err);
@@ -1240,7 +1248,7 @@ void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData,
     "DataRoot", "selChan", "selIF", "selBand", "selConfig", "selCode", 
     "selChBW",
     "dropZero", "doCode", "defCode", "calInt", "doSwPwr", "doOnline", "SWOrder", 
-    "doAtmCor", "doAppend", "binFlag",
+    "doAtmCor", "doAppend", "binFlag", "doQual",
     NULL};
   gchar *routine = "BDFInHistory";
   
@@ -1856,12 +1864,12 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
 /*       err     Obit return error stack                                  */
 /*----------------------------------------------------------------------- */
 {
-  ASDMSourceArray*   SourceArray;
   ASDMSpectralWindowArray* SpWinArray;
+  ASDMSourceArray *SourceArray=NULL;
   ObitTableSU*       outTable=NULL;
   ObitTableSURow*    outRow=NULL;
   ObitSource *source=NULL;
-  olong i, j, jSU, lim, iRow, oRow, ver, SourceID, lastSID=-1, iSW, SWId;
+  olong i, j, jSU, lim, iRow, oRow, ver, FieldID, lastSID=-1;
   oint numIF;
   ObitIOAccess access;
   ObitInfoType type;
@@ -1894,7 +1902,8 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
     ObitSDMSourceTabFix(SDMData);
 
   /* Extract info */
-  SourceArray = ObitSDMDataGetSourceArray(SDMData);
+  SDMData->SourceArray = ObitSDMDataGetSourceArray(SDMData);
+  SourceArray = SDMData->SourceArray;
   Obit_return_if_fail((SourceArray), err,
 		      "%s: Could not extract Source info from ASDM", 
 		      routine);
@@ -1955,13 +1964,11 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
   }
   outRow->status    = 0;
 
-  /* Flags if table row done */
-  isDone = g_malloc0((SourceArray->nsou+5)*sizeof(gboolean));
-  for (iRow=0; iRow<SourceArray->nsou; iRow++) isDone[iRow] = FALSE;
-
   /* List of source numbers already processed */
-  souNoList = g_malloc0(SourceArray->nsou*sizeof(olong));
-  for (iRow=0; iRow<SourceArray->nsou; iRow++) souNoList[iRow] = 0;
+  isDone = g_malloc0((SDMData->SourceArray->nsou+5)*sizeof(gboolean));
+  for (iRow=0; iRow<SDMData->SourceArray->nsou; iRow++) isDone[iRow] = FALSE;
+  souNoList = g_malloc0(SDMData->SourceArray->nsou*sizeof(olong));
+  for (iRow=0; iRow<SDMData->SourceArray->nsou; iRow++) souNoList[iRow] = 0;
 
   /* loop through input table */
   for (iRow=0; iRow<SourceArray->nsou; iRow++) {
@@ -1970,14 +1977,14 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
     /*if ((isDone[iRow]) || (SourceArray->sou[iRow]->sourceNo<=lastSID)) continue;*/
     if (isDone[iRow]) continue;
 
-    /* Is this one selected? - check in Spectral Window array */
+    /* Is this one selected? - check in Spectral Window array - NO write anyway
     SWId = SourceArray->sou[iRow]->spectralWindowId;
     for (iSW=0; iSW<SpWinArray->nwinds; iSW++) {
       if (SpWinArray->winds[iSW]->spectralWindowId==SWId) break;
-    }
-    /* Not found or not selected? */
+    } */
+    /* Not found or not selected? - NO write anyway
     if ((iSW>=SpWinArray->nwinds) || (!SpWinArray->winds[iSW]->selected)) 
-      continue; 
+      continue;  */
 
     /* Is this a duplicate? */
     doneIt = FALSE;
@@ -1992,6 +1999,7 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
 
     /* Set output row  */
     outRow->SourID    = SourceArray->sou[iRow]->sourceNo;
+    outRow->Qual      = SourceArray->sou[iRow]->sourceQual;
     isDone[iRow]      = TRUE;   /* Mark as done */
     outRow->RAMean    = SourceArray->sou[iRow]->direction[0]*RAD2DG;
     outRow->DecMean   = SourceArray->sou[iRow]->direction[1]*RAD2DG;
@@ -2039,9 +2047,9 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
 
     /* Grumble, grumble, lookup velocity info for first line in other SWs */
     for (i=1; i<numIF; i++) {
-      SourceID = SourceArray->sou[iRow]->sourceId;
+      FieldID = SourceArray->sou[iRow]->fieldId;
       for (jSU=iRow+i; jSU<SourceArray->nsou; jSU++) {
-	if (SourceArray->sou[jSU]->sourceId==SourceID) break;
+	if (SourceArray->sou[jSU]->fieldId==FieldID) break;
       }
       if (jSU<SourceArray->nsou) {
 	isDone[jSU] = TRUE;    /* Mark as done */
@@ -2077,7 +2085,6 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
   }
 
   /* Cleanup */
-  SourceArray = ObitSDMDataKillSourceArray(SourceArray);
   SpWinArray  = ObitSDMDataKillSWArray (SpWinArray);
   outRow      = ObitTableSURowUnref(outRow);
   outTable    = ObitTableSUUnref(outTable);
@@ -2099,7 +2106,7 @@ void UpdateSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
 /*       err     Obit return error stack                                  */
 /*----------------------------------------------------------------------- */
 {
-  ASDMSourceArray*   SourceArray=NULL;
+  ASDMSourceArray *SourceArray=NULL;
   ASDMSpectralWindowArray* SpWinArray;
   ObitTableSU*       outTable=NULL;
   ObitTableSURow*    outRow=NULL;
@@ -2148,15 +2155,27 @@ void UpdateSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
   /* Get existing source list */
   sourceList = ObitTableSUGetList (outTable, err);
 
-   /* Flags if table row done */
-  isDone = g_malloc0(SDMData->SourceTab->nrows*sizeof(gboolean));
-  for (iRow=0; iRow<SDMData->SourceTab->nrows; iRow++) isDone[iRow] = FALSE;
-
- /* Renumber in SDMData to agree with old version */
+  /* List of source numbers already processed */
+  if (SDMData->doQual) {  /* at most SDMData->FieldTab->nrows */
+    souNoList = g_malloc0(SDMData->FieldTab->nrows*sizeof(olong));
+    for (iRow=0; iRow<SDMData->FieldTab->nrows; iRow++) souNoList[iRow] = 0;
+    
+    isDone = g_malloc0((SDMData->FieldTab->nrows+10)*sizeof(gboolean));
+    for (iRow=0; iRow<SDMData->FieldTab->nrows+10; iRow++) isDone[iRow] = FALSE;
+  } else {                /* at most SDMData->SourceTab->nrows */
+    souNoList = g_malloc0(SDMData->SourceTab->nrows*sizeof(olong));
+    for (iRow=0; iRow<SDMData->SourceTab->nrows; iRow++) souNoList[iRow] = 0;
+    
+    isDone = g_malloc0((SDMData->SourceTab->nrows+10)*sizeof(gboolean));
+    for (iRow=0; iRow<SDMData->SourceTab->nrows+10; iRow++) isDone[iRow] = FALSE;
+  }
+  
+  /* Renumber in SDMData to agree with old version */
   ObitSDMDataRenumberSrc(SDMData, sourceList, isDone, doCode, err);
 
   /* Extract info */
-  SourceArray = ObitSDMDataGetSourceArray(SDMData);
+  SDMData->SourceArray = ObitSDMDataGetSourceArray(SDMData);
+  SourceArray = SDMData->SourceArray;
   Obit_return_if_fail((SourceArray), err,
 		      "%s: Could not extract Source info from ASDM", 
 		      routine);
@@ -2202,10 +2221,6 @@ void UpdateSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
   }
   outRow->status    = 0;
 
-  /* List of source numbers already processed */
-  souNoList = g_malloc0(SourceArray->nsou*sizeof(olong));
-  for (iRow=0; iRow<SourceArray->nsou; iRow++) souNoList[iRow] = 0;
-
   /* loop through input table */
   for (iRow=0; iRow<SourceArray->nsou; iRow++) {
 
@@ -2235,6 +2250,7 @@ void UpdateSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
 
     /* Set output row  */
     outRow->SourID    = SourceArray->sou[iRow]->sourceNo;
+    outRow->Qual      = SourceArray->sou[iRow]->sourceQual;
     isDone[iRow]      = TRUE;   /* Mark as done */
     outRow->RAMean    = SourceArray->sou[iRow]->direction[0]*RAD2DG;
     outRow->DecMean   = SourceArray->sou[iRow]->direction[1]*RAD2DG;
@@ -2320,7 +2336,6 @@ void UpdateSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
   }
 
   /* Cleanup */
-  SourceArray = ObitSDMDataKillSourceArray(SourceArray);
   SpWinArray  = ObitSDMDataKillSWArray (SpWinArray);
   sourceList  = ObitSourceListUnref(sourceList);
   outRow      = ObitTableSURowUnref(outRow);
@@ -2517,7 +2532,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     g_free(filename);
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
     
-    /* Init Scan */
+    /* Init Scan/subscan */
     ObitBDFDataInitScan (BDFData, iMain, SWOrder, selChan, selIF, err);
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
  
@@ -2591,14 +2606,15 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	day2dhms(SDMData->SubscanTab->rows[jj]->startTime-refJD, begString);
 	day2dhms(SDMData->SubscanTab->rows[jj]->endTime-refJD,   endString);
       }
-      Obit_log_error(err, OBIT_InfoErr, "Scan %3.3d sub %3.3d %s time %s  - %s", 
-		     ScanId,  SubscanId, SDMData->ScanTab->rows[j]->sourceName, 
+      Obit_log_error(err, OBIT_InfoErr, "Scan %3.3d sub %3.3d %s:%4.4d time %s  - %s", 
+		     ScanId,  SubscanId, BDFData->curSource, BDFData->sourceQual,
 		     begString, endString);
       ObitErrLog(err);
 
       /* Initialize index */
-      /* May have subscans */
-      if (SDMData->MainTab->rows[iMain]->subscanNumber==1) {
+      /* May have subscans - allways for doQual */
+      if ((SDMData->MainTab->rows[iMain]->subscanNumber==1) ||
+	  SDMData->doQual) {
 	lastScan    = ScanId;
 	lastSubscan = SubscanId;
 	startTime   = -1.0e20;
@@ -2682,9 +2698,10 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     
     /* Write Index table */
     if (startTime>-1.0e10) {
-      /* May have subscans - write on last of sequence */
+      /* May have subscans - write on last of sequence of if doQual */
       if ((SDMData->MainTab->rows[iMain]->subscanNumber>=
-	   SDMData->ScanTab->rows[ScanTabRow]->numSubscan)) {
+	   SDMData->ScanTab->rows[ScanTabRow]->numSubscan) ||
+	  SDMData->doQual) {
 	NXrow->Time     = 0.5 * (startTime + endTime);
 	NXrow->TimeI    = (endTime - startTime);
 	NXrow->EndVis   = desc->nvis;

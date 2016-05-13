@@ -1280,8 +1280,8 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
 				 &nmodel, models, err);
     if (err->error) Obit_traceback_val (err, routine, image->name, out);
 
-    /* No blanks allowed */
-    isBlanked = fracBlank>0.001;
+    /* Limit blanking allowed */
+    isBlanked = fracBlank>0.1;
     if (isBlanked) {rejectBlank++; goto doneIsland;}
     
     /* Find anything? */
@@ -2023,10 +2023,10 @@ void fitTwo (ObitFArray *pixels, ObitFitRegion *reg, ObitFitRegion *oldReg,
 
 /**
  * Determine minimum flux density for a given false detection rate. 
- * Makes histogram with 51 cells and half width 7*sigma.
+ * Makes histogram with 101 cells and half width 7*sigma.
  * \param histo   Pixel histogram object
  * \param reg     FitRegion defining location in image
- * \param maxFDR  max. fasle detection rate as fraction
+ * \param maxFDR  max. false detection rate as fraction
  * \param FDRsize half width of region for statistics
  * \param err     Obit error/message stack object.
  */
@@ -2034,7 +2034,7 @@ ofloat FDRFlux (ObitPixHisto *hist, ObitFitRegion *reg,
 		ofloat maxFDR, olong FDRsize, ObitErr *err)
 {
   ofloat out = hist->sigma*5;
-  olong cenx, ceny, off, nbin=25;
+  olong cenx, ceny, off, nbin=50;
   ofloat nsigma=7.0, test;
   gboolean     doDiff=FALSE;
   olong        blc[IM_MAXDIM] = {1,1,1,1,1,1,1};

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2015                                          */
+/*;  Copyright (C) 2010-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -140,12 +140,16 @@ typedef struct {
   ASDMAntennaArrayEntry **ants;
 } ASDMAntennaArray;
 
-/** Source array - one entry per Spectral Window */
+/** Source array  */
 typedef struct {
   /** source Id */
   olong sourceId;
+  /** field Id */
+  olong fieldId;
   /** source Number (1-rel) */
   olong sourceNo;
+  /** source qualifier */
+  olong sourceQual;
   /** time Interval as JD */
   odouble *timeInterval;
   /** cal code */
@@ -799,7 +803,9 @@ typedef struct {
   olong fieldId;
   /** Ephemeris Id - index in EphemerisTab -1=>no entry*/
   olong ephemerisId;
-  /** field Name */
+   /** field qual (AIPSish) */
+  olong fieldQual;
+ /** field Name */
   gchar *fieldName;
   /** code */
   gchar *code;
@@ -815,12 +821,18 @@ typedef struct {
   odouble time;
   /** source Id */
   olong sourceId;
+  /** source Number (1-rel) */
+  olong sourceNo;
 } ASDMFieldRow;
 typedef struct {
   /** Number of rows */
   olong nrows;
+  /** Max qual for curField */
+  olong maxQual;
   /** Array of ASDMField rows */
   ASDMFieldRow **rows;
+  /** current field name */
+  gchar *curField;
 } ASDMFieldTable;
 
  /* Flag Table */

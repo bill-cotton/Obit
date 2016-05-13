@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2009                                          */
+/*;  Copyright (C) 2008-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -48,6 +48,8 @@ gboolean doBrokePow;
 olong nx, ny;
 /** Maximum Chi square to accept a partial fit */
 ofloat maxChi2;
+/* Spectral index correction to be applied to data */
+ofloat corAlpha;
 /** Output Image descriptor */
 ObitImageDesc *outDesc;
 /** Array of pixel arrays for input data (nfreq) */

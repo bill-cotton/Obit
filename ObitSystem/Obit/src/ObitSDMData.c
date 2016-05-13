@@ -542,6 +542,9 @@ static gint CompareFreq (gconstpointer in1, gconstpointer in2,
 /** Private: Squeeze all blanks out of a string */
 static void Strip (gchar *s);
 
+/** Private: See if field name already defined? */
+static gboolean FieldCheck(ASDMFieldTable* table, olong row, gchar *name);
+
 /*----------------------Public functions---------------------------*/
 /**
  * Constructor.
@@ -647,6 +650,7 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   out->DataRoot  = strdup(DataRoot);
   out->isEVLA    = FALSE;
   out->isALMA    = FALSE;
+  out->doQual    = FALSE;
   out->selConfig = -1;
   out->selBand   = ASDMBand_Any;
 
@@ -1653,6 +1657,7 @@ ASDMAntennaArray* ObitSDMDataKillAntArray (ASDMAntennaArray *in)
 /**
  * Creates and fills a Source array
  * There is one entry per Spectral window
+ * If in->doQual then one source per FieldTab entry
  * \param in   ASDM object to use
  * \return the new structure, NULL on error, 
  *         delete using ObitSDMDataKillSourceArray
@@ -1660,64 +1665,130 @@ ASDMAntennaArray* ObitSDMDataKillAntArray (ASDMAntennaArray *in)
 ASDMSourceArray* ObitSDMDataGetSourceArray (ObitSDMData *in)
 { 
   ASDMSourceArray* out=NULL;
-  olong i, iSource, iField, sourceId, num;
+  ASDMSpectralWindowArray* SpWinArray=NULL;
+  olong i, j, iOut, iSource, jSource, jField, sourceId, num, iSW, SWId;
+  gboolean more;
 
   out = g_malloc0(sizeof(ASDMSourceArray));
 
+  /* Spectral window array */
+  SpWinArray  = ObitSDMDataGetSWArray (in, in->iMain, in->SWOrder);
+
   /* Assume no more sources than total Fields defined */
-  out->sou  = g_malloc0(in->SourceTab->nrows*sizeof(ASDMSourceArrayEntry));
+  if (in->doQual) 
+    out->sou  = g_malloc0(in->FieldTab->nrows*sizeof(ASDMSourceArrayEntry));
+  else
+    out->sou  = g_malloc0(in->SourceTab->nrows*sizeof(ASDMSourceArrayEntry));
   out->nsou = 0;
 
-  /* Loop over Sources */
+  /* Loop over Sources - this does not trap "sources" used only as online only scans */
+  iOut = 0; jField = 0;
   for (iSource=0; iSource<in->SourceTab->nrows; iSource++) {
 
-    /* Create */
-    out->sou[iSource] = g_malloc0(sizeof(ASDMSourceArrayEntry));
-    out->nsou++;
+    /* Already done this source? */
+    more = FALSE;
+    for (jSource=0; jSource< out->nsou; jSource++) {
+      if (!strcmp(in->SourceTab->rows[iSource]->sourceName,
+		  out->sou[jSource]->sourceName)) {
+	more = TRUE;
+	break;
+      }
+    }
+    if (more) continue;
 
-    /* Copy source info */
-    out->sou[iSource]->sourceId        = in->SourceTab->rows[iSource]->sourceId;
-    out->sou[iSource]->sourceNo        = in->SourceTab->rows[iSource]->sourceNo;
-    out->sou[iSource]->sourceName      = g_strdup(in->SourceTab->rows[iSource]->sourceName);
-    out->sou[iSource]->timeInterval    = g_malloc0(2*sizeof(odouble));
-    out->sou[iSource]->timeInterval[0] = in->SourceTab->rows[iSource]->timeInterval[0];
-    out->sou[iSource]->timeInterval[1] = in->SourceTab->rows[iSource]->timeInterval[1];
-    out->sou[iSource]->direction       = g_malloc0(2*sizeof(odouble));	       
-    out->sou[iSource]->direction[0]    = in->SourceTab->rows[iSource]->direction[0];
-    out->sou[iSource]->direction[1]    = in->SourceTab->rows[iSource]->direction[1];
-    out->sou[iSource]->properMotion    = g_malloc0(2*sizeof(odouble));
-    out->sou[iSource]->properMotion[0] = in->SourceTab->rows[iSource]->properMotion[0];
-    out->sou[iSource]->properMotion[1] = in->SourceTab->rows[iSource]->properMotion[1];
-    out->sou[iSource]->numLines        = in->SourceTab->rows[iSource]->numLines;
-    num                                = out->sou[iSource]->numLines;
-    out->sou[iSource]->restFrequency   = g_malloc0(num*sizeof(odouble));
-    for (i=0; i<num; i++) out->sou[iSource]->restFrequency[i] = in->SourceTab->rows[iSource]->restFrequency[i];
-    out->sou[iSource]->sysVel          = g_malloc0(num*sizeof(odouble));
-    for (i=0; i<num; i++) out->sou[iSource]->sysVel[i] = in->SourceTab->rows[iSource]->sysVel[i];
-    out->sou[iSource]->spectralWindowId = in->SourceTab->rows[iSource]->spectralWindowId;
+    /* Is this one selected? - check in Spectral Window array */
+    SWId = in->SourceTab->rows[iSource]->spectralWindowId;
+    for (iSW=0; iSW<SpWinArray->nwinds; iSW++) {
+      if (SpWinArray->winds[iSW]->spectralWindowId==SWId) break;
+    }
+    /* Not found or not selected? */
+    if ((iSW>=SpWinArray->nwinds) || (!SpWinArray->winds[iSW]->selected)) 
+      continue; 
 
-    /* Find source in Fields */
-    sourceId = out->sou[iSource]->sourceId;
-    for (iField=0; iField<in->FieldTab->nrows; iField++) {
-     if (in->FieldTab->rows[iField]->sourceId==sourceId) break;
-       } /* end loop over fields */
-    /* Try again with source names if not found */
-    if (iField>=in->FieldTab->nrows) {
-      for (iField=0; iField<in->FieldTab->nrows; iField++) {
-	if (!strcmp(in->FieldTab->rows[iField]->fieldName, 
+    /* Find source in FieldTab */
+    sourceId = in->SourceTab->rows[iSource]->sourceId;
+    for (jField=0; jField<in->FieldTab->nrows; jField++) {
+      if (in->FieldTab->rows[jField]->sourceId==sourceId) break;
+    } /* end loop over fields */
+      /* Try again with source names if not found */
+    if (jField>=in->FieldTab->nrows) {
+      for (jField=0; jField<in->FieldTab->nrows; jField++) {
+	if (!strcmp(in->FieldTab->rows[jField]->fieldName, 
 		    in->SourceTab->rows[iSource]->sourceName)) break;
       } /* end loop over fields */
-      /* Try again with source names if not found */
     }
-    if (iField>=in->FieldTab->nrows) return NULL;
-    
-    /* Save code - ignore terminally stupid "NONE" */
-    if (strcmp("NONE", in->FieldTab->rows[iField]->code) && 
-	strcmp("none", in->FieldTab->rows[iField]->code))
-	out->sou[iSource]->code = strdup(in->FieldTab->rows[iField]->code);
-    else out->sou[iSource]->code = strdup(" ");
+    if (jField>=in->FieldTab->nrows) return NULL;
+     
+    /*fprintf(stderr, "   %s %d %d %d\n",in->SourceTab->rows[iSource]->sourceName, jField,
+      in->FieldTab->rows[jField]->fieldId, in->FieldTab->rows[jField]->fieldQual);*/
+
+     /* Loop over entries in Field tab if doQual */
+    more = TRUE;
+    while (more) {
+      
+      /* Create */
+      out->sou[iOut] = g_malloc0(sizeof(ASDMSourceArrayEntry));
+      out->nsou++;
+
+      /* Copy source info */
+      out->sou[iOut]->sourceId        = in->SourceTab->rows[iSource]->sourceId;
+      out->sou[iOut]->sourceNo        = in->SourceTab->rows[iSource]->sourceNo;
+      out->sou[iOut]->sourceQual      = 0;
+      out->sou[iOut]->sourceName      = g_strdup(in->SourceTab->rows[iSource]->sourceName);
+      out->sou[iOut]->timeInterval    = g_malloc0(2*sizeof(odouble));
+      out->sou[iOut]->timeInterval[0] = in->SourceTab->rows[iSource]->timeInterval[0];
+      out->sou[iOut]->timeInterval[1] = in->SourceTab->rows[iSource]->timeInterval[1];
+      out->sou[iOut]->direction       = g_malloc0(2*sizeof(odouble));	       
+      out->sou[iOut]->direction[0]    = in->SourceTab->rows[iSource]->direction[0];
+      out->sou[iOut]->direction[1]    = in->SourceTab->rows[iSource]->direction[1];
+      out->sou[iOut]->properMotion    = g_malloc0(2*sizeof(odouble));
+      out->sou[iOut]->properMotion[0] = in->SourceTab->rows[iSource]->properMotion[0];
+      out->sou[iOut]->properMotion[1] = in->SourceTab->rows[iSource]->properMotion[1];
+      out->sou[iOut]->numLines        = in->SourceTab->rows[iSource]->numLines;
+      num                             = out->sou[iOut]->numLines;
+      out->sou[iOut]->restFrequency   = g_malloc0(num*sizeof(odouble));
+      for (i=0; i<num; i++) out->sou[iOut]->restFrequency[i] = in->SourceTab->rows[iSource]->restFrequency[i];
+      out->sou[iOut]->sysVel          = g_malloc0(num*sizeof(odouble));
+      for (i=0; i<num; i++) out->sou[iOut]->sysVel[i] = in->SourceTab->rows[iSource]->sysVel[i];
+      out->sou[iOut]->spectralWindowId = in->SourceTab->rows[iSource]->spectralWindowId;
+
+      /* Field Id */
+      out->sou[iOut]->fieldId = in->FieldTab->rows[jField]->fieldId;
+      
+      /* Save code - ignore terminally stupid "NONE" */
+      if (strcmp("NONE", in->FieldTab->rows[jField]->code) && 
+	  strcmp("none", in->FieldTab->rows[jField]->code))
+	out->sou[iOut]->code = strdup(in->FieldTab->rows[jField]->code);
+      else out->sou[iOut]->code = strdup(" ");
+
+      /* Using qualifiers? */
+      if (in->doQual) {
+	out->sou[iOut]->sourceId        = in->FieldTab->rows[jField]->sourceId;
+	out->sou[iOut]->sourceNo        = in->FieldTab->rows[jField]->sourceNo;
+	out->sou[iOut]->sourceQual      = in->FieldTab->rows[jField]->fieldQual;
+	out->sou[iOut]->fieldId         = in->FieldTab->rows[jField]->fieldId;
+	out->sou[iOut]->direction[0]    = in->FieldTab->rows[jField]->phaseDir[0];
+	out->sou[iOut]->direction[1]    = in->FieldTab->rows[jField]->phaseDir[1];
+	/* Any more for this fieldName? */
+	for (j=jField+1; j<in->FieldTab->nrows; j++) {
+	  if (!strcmp(out->sou[iOut]->sourceName, in->FieldTab->rows[j]->fieldName))
+	    break;
+	}
+	if (j<in->FieldTab->nrows) {
+	  jField = j;
+	  more = TRUE;
+	} else more = FALSE;
+	
+      } else
+	more = FALSE;   /* Only once */
+      /*fprintf(stderr, "%s:%4.4d %d %d %d\n",out->sou[iOut]->sourceName, out->sou[iOut]->sourceQual, 
+	out->sou[iOut]->fieldId, iSource, out->sou[iOut]->sourceNo);*/
+      iOut++;
+    } /* end loop over Field tab */
  } /* end loop over sources */
 
+  /* Cleanup */
+  SpWinArray = ObitSDMDataKillSWArray (SpWinArray);
   return out;
 } /* end ObitSDMDataGetSourceArray */
 
@@ -1990,47 +2061,93 @@ void ObitSDMDataRenumberSrc(ObitSDMData *in,  ObitSourceList *sourceList,
     nextID = MAX(nextID, sourceList->SUlist[i]->SourID+1);
   }
 
-  /* Flags for renumbered SourceTab entries */
-  renumsrc = g_malloc0(in->SourceTab->nrows*sizeof(gboolean));
-  for (k=0; k<in->SourceTab->nrows; k++) renumsrc[k] = FALSE;
-
-  /* Loop over in->SourceTab */
-  for (j=0; j<in->SourceTab->nrows; j++) {
-    /* Loop over sourceList */
-    for (i=0; i<sourceList->number; i++) {
-      /* Check name */
-      len = MIN (strlen(in->SourceTab->rows[j]->sourceName),strlen(sourceList->SUlist[i]->SourceName));
-      len = MIN(len,20);
-      matches = !strncmp(in->SourceTab->rows[j]->sourceName, sourceList->SUlist[i]->SourceName,len);
-      if (!matches) continue;
-      /* Code? */
-      if (doCode) {
-	len = MIN (strlen(in->SourceTab->rows[j]->code),strlen(sourceList->SUlist[i]->CalCode));
-	len = MIN(len,8);
-	matches = !strncmp(in->SourceTab->rows[j]->code, sourceList->SUlist[i]->CalCode,len);
-      }
-      if (matches) {
-	if (in->SourceTab->rows[j]->sourceNo != sourceList->SUlist[i]->SourID) renum = TRUE;
-	in->SourceTab->rows[j]->sourceNo = sourceList->SUlist[i]->SourID;
-	isDone[j] = TRUE;
-	break;
-      }
-    } /* end loop over sourceList */
-    /* If not found, assign new value */
-    if ((!isDone[j]) && (!renumsrc[j])) {
-      lastOld = in->SourceTab->rows[j]->sourceNo;   /* previous */
-      in->SourceTab->rows[j]->sourceNo = nextID++;
-      areNew = TRUE;
-      /* Renumber any subsequent entries */
-      for (k=j+1; k<in->SourceTab->nrows; k++) {
-	if (in->SourceTab->rows[k]->sourceNo==lastOld) {
-	  in->SourceTab->rows[k]->sourceNo = in->SourceTab->rows[j]->sourceNo;
-	  renumsrc[k] = TRUE;
+  /* Renumber Source or Field Table? */
+  if (in->doQual) {   /* Renumber Field Table*/
+    /* Flags for renumbered FieldTab entries */
+    renumsrc = g_malloc0(in->FieldTab->nrows*sizeof(gboolean));
+    for (k=0; k<in->FieldTab->nrows; k++) renumsrc[k] = FALSE;
+    
+    /* Loop over in->FieldTab */
+    for (j=0; j<in->FieldTab->nrows; j++) {
+      /* Loop over sourceList */
+      for (i=0; i<sourceList->number; i++) {
+	/* Check name */
+	len = MIN (strlen(in->FieldTab->rows[j]->fieldName),strlen(sourceList->SUlist[i]->SourceName));
+	len = MIN(len,20);
+	matches = !strncmp(in->FieldTab->rows[j]->fieldName, sourceList->SUlist[i]->SourceName,len);
+	if (!matches) continue;
+	/* Code? */
+	if (doCode) {
+	  len = MIN (strlen(in->FieldTab->rows[j]->code),strlen(sourceList->SUlist[i]->CalCode));
+	  len = MIN(len,8);
+	  matches = !strncmp(in->FieldTab->rows[j]->code, sourceList->SUlist[i]->CalCode,len);
+	}
+	if (matches) {
+	  if (in->FieldTab->rows[j]->sourceNo != sourceList->SUlist[i]->SourID) renum = TRUE;
+	  in->FieldTab->rows[j]->sourceNo = sourceList->SUlist[i]->SourID;
+	  isDone[j] = TRUE;
+	  break;
+	}
+      } /* end loop over sourceList */
+      /* If not found, assign new value */
+      if ((!isDone[j]) && (!renumsrc[j])) {
+	lastOld = in->FieldTab->rows[j]->sourceNo;   /* previous */
+	in->FieldTab->rows[j]->sourceNo = nextID++;
+	areNew = TRUE;
+	/* Renumber any subsequent entries */
+	for (k=j+1; k<in->FieldTab->nrows; k++) {
+	  if (in->FieldTab->rows[k]->sourceNo==lastOld) {
+	    in->FieldTab->rows[k]->sourceNo = in->FieldTab->rows[j]->sourceNo;
+	    renumsrc[k] = TRUE;
+	  }
 	}
       }
-    }
-  } /* end loop over in->SourceTab */
-  if (renumsrc) g_free(renumsrc); renumsrc = NULL;
+    } /* end loop over in->FieldTab */
+    if (renumsrc) g_free(renumsrc); renumsrc = NULL;
+    
+  } else { /* Renumber Source Table*/
+    /* Flags for renumbered SourceTab entries */
+    renumsrc = g_malloc0(in->SourceTab->nrows*sizeof(gboolean));
+    for (k=0; k<in->SourceTab->nrows; k++) renumsrc[k] = FALSE;
+    
+    /* Loop over in->SourceTab */
+    for (j=0; j<in->SourceTab->nrows; j++) {
+      /* Loop over sourceList */
+      for (i=0; i<sourceList->number; i++) {
+	/* Check name */
+	len = MIN (strlen(in->SourceTab->rows[j]->sourceName),strlen(sourceList->SUlist[i]->SourceName));
+	len = MIN(len,20);
+	matches = !strncmp(in->SourceTab->rows[j]->sourceName, sourceList->SUlist[i]->SourceName,len);
+	if (!matches) continue;
+	/* Code? */
+	if (doCode) {
+	  len = MIN (strlen(in->SourceTab->rows[j]->code),strlen(sourceList->SUlist[i]->CalCode));
+	  len = MIN(len,8);
+	  matches = !strncmp(in->SourceTab->rows[j]->code, sourceList->SUlist[i]->CalCode,len);
+	}
+	if (matches) {
+	  if (in->SourceTab->rows[j]->sourceNo != sourceList->SUlist[i]->SourID) renum = TRUE;
+	  in->SourceTab->rows[j]->sourceNo = sourceList->SUlist[i]->SourID;
+	  isDone[j] = TRUE;
+	  break;
+	}
+      } /* end loop over sourceList */
+      /* If not found, assign new value */
+      if ((!isDone[j]) && (!renumsrc[j])) {
+	lastOld = in->SourceTab->rows[j]->sourceNo;   /* previous */
+	in->SourceTab->rows[j]->sourceNo = nextID++;
+	areNew = TRUE;
+	/* Renumber any subsequent entries */
+	for (k=j+1; k<in->SourceTab->nrows; k++) {
+	  if (in->SourceTab->rows[k]->sourceNo==lastOld) {
+	    in->SourceTab->rows[k]->sourceNo = in->SourceTab->rows[j]->sourceNo;
+	    renumsrc[k] = TRUE;
+	  }
+	}
+      }
+    } /* end loop over in->SourceTab */
+    if (renumsrc) g_free(renumsrc); renumsrc = NULL;
+  }
   /* Say if anything renumbered */
   if (renum)
     Obit_log_error(err, OBIT_InfoErr, "Renumbered Sources");
@@ -2166,7 +2283,7 @@ ASDMPointingRow* ObitSDMDataPointingLookup  (ObitSDMData *in, odouble JD, olong 
   ASDMPointingRow* out=NULL;
   olong i, itab;
   odouble *timeI;
-  gchar *routine = "PointingLookup";
+  /*gchar *routine = "PointingLookup";*/
 
   if (err->error) return out;
 
@@ -2763,6 +2880,7 @@ void ObitSDMDataInit  (gpointer inn)
   in->SBSummaryTab         = NULL;
   in->ScanTab              = NULL;
   in->SourceTab            = NULL;
+  in->SourceArray          = NULL;
   in->SpectralWindowTab    = NULL;
   in->StateTab             = NULL;
   in->StationTab           = NULL;
@@ -2820,6 +2938,7 @@ void ObitSDMDataClear (gpointer inn)
   in->SBSummaryTab         = KillASDMSBSummaryTable(in->SBSummaryTab);
   in->ScanTab              = KillASDMScanTable(in->ScanTab);
   in->SourceTab            = KillASDMSourceTable(in->SourceTab);
+  in->SourceArray          = ObitSDMDataKillSourceArray(in->SourceArray);
   in->SpectralWindowTab    = KillASDMSpectralWindowTable(in->SpectralWindowTab);
   in->StateTab             = KillASDMStateTable(in->StateTab);
   in->StationTab           = KillASDMStationTable(in->StationTab);
@@ -7204,6 +7323,8 @@ static ASDMFieldTable* ParseASDMFieldTable(ObitSDMData *me,
 
   out = g_malloc0(sizeof(ASDMFieldTable));
   out->rows = NULL;
+  out->curField = NULL;
+  out->maxQual = 0;
 
   /* How many rows? */
   out->nrows = MAX(0, me->ASDMTab->FieldRows);
@@ -7214,6 +7335,7 @@ static ASDMFieldTable* ParseASDMFieldTable(ObitSDMData *me,
   for (irow=0; irow<out->nrows; irow++) {
     out->rows[irow] = g_malloc0(sizeof(ASDMFieldRow));
     out->rows[irow]->ephemerisId = -1;  /* Null value */
+    out->rows[irow]->fieldQual   = 0;   /* AIPS qualifier */
   }
 
   file = newObitFile("ASDM");
@@ -7245,7 +7367,27 @@ static ASDMFieldTable* ParseASDMFieldTable(ObitSDMData *me,
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->fieldName = ASDMparse_str (line, maxLine, prior, &next);
       Strip(out->rows[irow]->fieldName);  /* Deblank */
-     continue;
+      out->rows[irow]->sourceId  = irow;
+      out->rows[irow]->sourceNo  = irow+1;
+      /* Get qualifier if needed */
+      if (out->curField==NULL) {
+	out->curField = out->rows[irow]->fieldName;
+	out->maxQual  = 1;
+	out->rows[irow]->fieldQual = out->maxQual;
+      } else if (!strcmp(out->curField,out->rows[irow]->fieldName)) {   /* Still same? */
+	out->maxQual++;
+	out->rows[irow]->fieldQual = out->maxQual;
+      } else {     /* Different from last - see if already there */
+	if (FieldCheck(out, irow, out->rows[irow]->fieldName)) { /* found */
+	    out->maxQual++;
+	    out->rows[irow]->fieldQual = out->maxQual;
+	  } else { /* No, new */
+	    out->curField = out->rows[irow]->fieldName;
+	    out->maxQual  = 1;
+	    out->rows[irow]->fieldQual = out->maxQual;
+	  } 
+      }
+      continue;
     }
     prior = "<code>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
@@ -10355,3 +10497,27 @@ static void Strip (gchar* s)
  
 } /* end Strip */
 
+/**
+ * Check if field name previously defined and find highest qualifier
+ * \param table FieldTab to search
+ * \param row   current row, check before
+ * \param name  field name
+ * \return TRUE if found else FALSE
+ */
+static gboolean FieldCheck(ASDMFieldTable* table, olong row, gchar *name)
+{
+  gboolean found = FALSE;
+  olong i;
+
+  /* Reverse search */
+  for (i=row-1; i>=0; i--) {
+    if (!strcmp(name,table->rows[i]->fieldName)) {
+      /* Found */
+      found = TRUE;
+      table->curField = table->rows[i]->fieldName;
+      table->maxQual  = table->rows[i]->fieldQual;
+      return found;
+    }
+  } /* end loop */
+  return found;
+} /* end FieldCheck */

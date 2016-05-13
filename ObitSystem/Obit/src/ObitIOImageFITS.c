@@ -3101,7 +3101,7 @@ static void eqstd (odouble ra0, odouble dec0, odouble ra, odouble dec,
 static void fixIRAF (ObitImageDesc *desc, ObitErr *err)
 {
   ofloat rot1, rot2, det, sdet;
-  odouble cd1[2], cd2[2];
+  odouble cd1[2], cd2[2], PA;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   gchar *routine = "fixIRAF";
@@ -3119,7 +3119,7 @@ static void fixIRAF (ObitImageDesc *desc, ObitErr *err)
   desc->cdelt[desc->jlocr] = sqrt (cd1[0]*cd1[0] + cd2[0]*cd2[0]);
   desc->cdelt[desc->jlocd] = sqrt (cd1[1]*cd1[1] + cd2[1]*cd2[1]);
 
-  /* Work out signs*/
+  /* Work out signs */
   det = cd1[0]*cd2[1] - cd1[1]*cd2[0];
   if (det>0.0) sdet = 1.0; /* sign function */
   else {
@@ -3127,15 +3127,22 @@ static void fixIRAF (ObitImageDesc *desc, ObitErr *err)
     /*   if negative, it must be RA*/
     desc->cdelt[desc->jlocr] = -desc->cdelt[desc->jlocr];
   }
+  
+  /* Rotation - use 'PA      " if given else try to work it out from the CD */
+  if (ObitInfoListGetTest(desc->info, "PA", &type, dim, &PA)) {
+    desc->crota[desc->jlocr] = 0.0;
+    desc->crota[desc->jlocd] = -(ofloat)PA;
+  } else {
+    
+    /*  rotation, average over skew -  not sure how robust this all is */
+    if ((cd1[1]!=0.0) && (cd2[0]!=0.0)) {
+      rot1 = 57.296 * atan2 ( sdet*cd1[1],  cd2[1]);
+      rot2 = 57.296 * atan2 ( sdet*cd2[0], -cd1[0]);
+    } else {rot1 = rot2 = 0.0;}
 
-  /*  rotation, average over skew */
-  if ((cd1[1]!=0.0) && (cd2[0]!=0.0)) {
-    rot1 = 57.296 * atan2 ( sdet*cd1[1], cd2[1]);
-    rot2 = 57.296 * atan2 (-sdet*cd2[0], cd1[0]);
-  } else {rot1 = rot2 = 0.0;}
-
-  /* coordinate rotation */
-  desc->crota[desc->jlocr] = 0.0;
-  desc->crota[desc->jlocd] = -0.5 * (rot1+rot2);
+    /* coordinate rotation */
+    desc->crota[desc->jlocr] = 0.0;
+    desc->crota[desc->jlocd] = 0.5 * (rot1+rot2);
+  } /* end if PA not present */
 } /* end of fixIRAF */
 

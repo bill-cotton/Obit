@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2015                                          */
+/*;  Copyright (C) 2010-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -40,8 +40,14 @@ olong schemaVersion;
 gboolean isEVLA;
 /* Is this ALMA data? */
 gboolean isALMA;
+/* Use qualifiers for different pointings in subscans? */
+gboolean doQual;
+/* Leave in SW Order? */
+gboolean SWOrder;
 /** Selected configuration, <0 => any */
 olong selConfig;
+/** first selected scan */
+olong iMain;
 /** Selected band */
 ObitASDMBand selBand;
 /** Selected number of channels, <=0 => any */
@@ -106,6 +112,8 @@ ASDMSBSummaryTable* SBSummaryTab;
 ASDMScanTable* ScanTab;
 /** Source table */
 ASDMSourceTable* SourceTab;
+/** Source Array */
+ASDMSourceArray* SourceArray;
 /** SpectralWindow table */
 ASDMSpectralWindowTable* SpectralWindowTab;
 /** State table */

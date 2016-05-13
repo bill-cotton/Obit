@@ -461,25 +461,28 @@ def PHeader (inImage, err):
     # end PHeader
     
 
-def PFitSpec (inImage, err, antSize=0.0, nOrder=1):
+def PFitSpec (inImage, err, antSize=0.0, nOrder=1, corAlpha=0.0):
     """
     Fit spectrum to each pixel of an ImageMF
 
     * inImage   = Python Image object
     * antSize   = If > 0 make primary beam corrections assuming antenna
-      diameter (m) antSize
+                  diameter (m) antSize
     * nOrder    = Order of fit, 0=intensity, 1=spectral index,
-      2=also curvature
+                  2=also curvature
+    * corAlpha  = Spectral index correction to apply before fitting
     * err       = Python Obit Error/message stack
     """
     ################################################################
     inImage.List.set("nOrder",nOrder)
+    inImage.List.set("corAlpha",corAlpha, ttype='float')
     Obit.ImageMFFitSpec(inImage.me, antSize, err.me)
     # end PFitSpec
 
 def PFitSpec2 (inImage, outImage, err, nterm=2, \
                refFreq=None, maxChi2=2.0, doError=False, doBrokePow=False, \
-               calFract=None, doPBCor=False, PBmin=None, antSize=None):
+               calFract=None, doPBCor=False, PBmin=None, antSize=None, \
+               corAlpha=0.0):
     """
     Fit spectrum to each pixel of an ImageMF writing a new cube
 
@@ -506,6 +509,7 @@ def PFitSpec2 (inImage, outImage, err, nterm=2, \
                   1.0 => no gain corrections
     * antSize   = Antenna diameter (m) for PB gain corr, 
                   One per frequency or one for all, def 25.0
+    * corAlpha  = Spectral index correction to apply before fitting
     """
     ################################################################
     inImage.List.set("nterm",      nterm,      ttype='long')
@@ -513,6 +517,7 @@ def PFitSpec2 (inImage, outImage, err, nterm=2, \
     inImage.List.set("doError",    doError,    ttype='boolean')
     inImage.List.set("doBrokePow", doBrokePow, ttype='boolean')
     inImage.List.set("doPBCor",    doPBCor,    ttype='boolean')
+    inImage.List.set("corAlpha" ,  corAlpha,   ttype='float')
     if refFreq:
         inImage.List.set("refFreq",  refFreq,  ttype='double')
     if calFract:

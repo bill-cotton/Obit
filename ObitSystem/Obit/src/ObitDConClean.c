@@ -2511,10 +2511,10 @@ static void AddCleanFileWindow(ObitDConClean *in, gchar *Cfile, ObitErr *err)
   ObitFile *Cf=NULL;
   ObitIOCode retCode;
   gchar line[201];
-  olong h, d, rm, dm, iNumRead, iRad, cnt = 0;
+  olong i, h, d, rm, dm, iNumRead, iRad, cnt = 0;
   ofloat rs, ds, dx, dy, dist, pixel[2];
   odouble pos[2];
-  gboolean bad=FALSE;
+  gboolean negDec, bad=FALSE;
   olong field, sfield = 1, window[4];
   ObitDConCleanWindowType type;
   gchar *routine = "ObitDConClean:AddCleanFileWindow";
@@ -2544,6 +2544,13 @@ static void AddCleanFileWindow(ObitDConClean *in, gchar *Cfile, ObitErr *err)
       Obit_log_error(err, OBIT_Error,"%s: BAD CLEAN File entry %s",routine, line);
       return;
     }
+    /* Look for negative dec sign */
+    negDec = FALSE;
+    for (i=0; i<strlen(line); i++) {
+      if (line[i]=='-') {negDec = TRUE; break;}
+    }
+    if (negDec) pos[1] = -fabs(pos[1]);
+
     /* Loop over images in mosaic */
     if (iRad>0) { /* Box */
       type = OBIT_DConCleanWindow_round;
@@ -2556,7 +2563,8 @@ static void AddCleanFileWindow(ObitDConClean *in, gchar *Cfile, ObitErr *err)
       if (in->mosaic->inFlysEye[field-1]) {
 	/* Get pixel location */
  	ObitImageDescGetPixel(in->mosaic->images[field-1]->myDesc, pos, pixel, err);
-	if (err->error) Obit_traceback_msg (err, routine, in->name);
+	/* Ignore error and continue */
+	if (err->error) {ObitErrClear(err); continue;}
 	/* Is this within outer box */
 	dx = pixel[0] - in->mosaic->images[field-1]->myDesc->inaxes[0]/2.;
 	dy = pixel[1] - in->mosaic->images[field-1]->myDesc->inaxes[1]/2.;

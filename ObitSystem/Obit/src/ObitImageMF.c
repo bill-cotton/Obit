@@ -69,10 +69,14 @@ static ObitImageMFClassInfo myClassInfo = {FALSE};
 typedef struct {
   /* Number of spectral channels  */
   olong   nSpec;
-  /* Array (nSpec) channel frequencies (hz) */
+  /* Array (nSpec) channel frequencies (Hz) */
   odouble *Freq;
-  /* Spectral index correction previousls applied to data */
+  /* Reference Frequency */
+  odouble refFreq;
+  /* Spectral index correction previously applied to data */
   ofloat alpha;
+  /* Spectral index correction to be applied to data */
+  ofloat corAlpha;
   /* Array of sigma for each channel */
   ofloat *sigma;
   /** BeamShape object */
@@ -1322,6 +1326,8 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
  * \param in      Image to fit, info may have
  * \li nOrder OBIT_int (1,1,1) Maximum order to fit
  *            If absent use maxOrder
+ * \li corAlpha OBIT_float scalar, if non zero, spectral index 
+ *                   correction to apply, def = 0.0
  * \param antSize If > 0 make primary beam corrections assuming antenna 
  *                diameter (m) antSize
  * \param err     Obit error stack object.
@@ -1495,13 +1501,15 @@ void ObitImageMFFitSpec (ObitImageMF *in, ofloat antSize, ObitErr *err)
  *                    1.0 => no gain corrections
  * \li            antSize    float (?,1,1) Antenna diameter (m) for gain corr, 
  *                    One per frequency or one for all, def 25.0
+ * \li            corAlpha OBIT_float scalar, if non zero, spectral index 
+ *                   correction to apply, def = 0.0
  * \param out     Output Image into which to write parameters
  * \param err     Obit error stack object.
  */
 void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
 {
   ObitSpectrumFit* fitter=NULL;
-  ofloat antsize, pbmin;
+  ofloat antsize, pbmin,corAlpha=0.0;
   olong i, plane[5] = {1,1,1,1,1};
   olong nOut, iplane, naxis[2], nterm=2; 
   odouble refFreq=-1.0;
@@ -1510,7 +1518,8 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   union ObitInfoListEquiv InfoReal; 
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1}, PBdim[MAXINFOELEMDIM], ASdim[MAXINFOELEMDIM];
-  gchar *fitParms[] = {"refFreq","maxChi2","doError","doPBCor","doBrokePow","calFract","PBmin","antSize",
+  gchar *fitParms[] = {"refFreq","maxChi2","doError","doPBCor","doBrokePow","calFract",
+		       "PBmin","antSize","corAlpha",
 		       NULL};
   gchar  *today=NULL, *SPECLOGF = "SPECLOGF";
   gchar *routine = "ObitImageMFFitSpec2";
@@ -1561,8 +1570,9 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   InfoReal.itg = (olong)doPBCor; type = OBIT_bool;
   ObitInfoListGetTest(in->info, "doPBCor", &type, dim, &InfoReal);
   doPBCor = InfoReal.itg;
-  ObitInfoListGetTest (in->info, "antSize",    &type, ASdim, (gpointer)&antSize);
-  ObitInfoListGetP    (in->info, "PBmin",      &type, PBdim, (gpointer)&PBmin);
+  ObitInfoListGetTest (in->info, "corAlpha",   &type, dim,   &corAlpha);
+  ObitInfoListGetP (in->info, "antSize",    &type, ASdim, (gpointer)&antSize);
+  ObitInfoListGetP (in->info, "PBmin",      &type, PBdim, (gpointer)&PBmin);
   
   /* Create Fitter */
   fitter = ObitSpectrumFitCreate("Fitter", nterm);
@@ -1571,18 +1581,21 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   fitter->doError    = doError;
   fitter->doBrokePow = doBrokePow;
   fitter->calFract   = calFract;
+  fitter->corAlpha   = corAlpha;
+  fitter->doPBCorr   = doPBCor;
 
   /* Get fitting parameters, copy to fitter */
   ObitInfoListCopyList (in->info, fitter->info, fitParms);
 
   /* Determine number of frequency planes and initialize fitter */
-  fitter->nfreq = in->nSpec;
+  fitter->nfreq      = in->nSpec;
   fitter->BeamShapes = g_malloc0(fitter->nfreq*sizeof(ObitBeamShape*));
   for (i=0; i<fitter->nfreq; i++) fitter->BeamShapes[i] = NULL;
   fitter->RMS        = g_malloc0(fitter->nfreq*sizeof(ofloat));
   fitter->calFract   = g_malloc0(fitter->nfreq*sizeof(ofloat));
   fitter->inFArrays  = g_malloc0(fitter->nfreq*sizeof(ObitFArray*));
   fitter->freqs      = g_malloc0(fitter->nfreq*sizeof(odouble));
+  fitter->outDesc    = ObitImageDescRef(out->myDesc);  /* Output descriptor */
   
   /* How many output planes? */
   if (fitter->doError) nOut = 1+fitter->nterm*2;
@@ -1648,6 +1661,7 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
     fitter->RMS[iplane] = ObitFArrayRMS(fitter->inFArrays[iplane]);
     /* Frequency */
     fitter->freqs[iplane] = in->specFreq[iplane];
+    fitter->BeamShapes[iplane]->refFreq = fitter->freqs[iplane];
     
   } /* end loop reading planes */
 
@@ -1885,7 +1899,9 @@ void ObitImageMFClear (gpointer inn)
 
 /**
  * Make arguments for Threaded Spectrum fitting
- * \param in         MF Image to be fitted
+ * \param in         MF Image to be fitted, info may have
+ * \li corAlpha OBIT_float scalar, if non zero, spectral index 
+ *                   correction to apply, def = 0.0
  * \param maxThread  Maximum desirable no. threads
  * \param antSize    if >0 then make primary beam corrections
  * \param nOrder     Fitting order
@@ -1899,12 +1915,16 @@ static olong MakeFitSpecArgs (ObitImageMF *image, olong maxThread,
 			      ObitErr *err)
 {
   olong i, j, nx, nThreads;
-  ofloat pbmin = 0.01;
+  ofloat corAlpha=0.0,  pbmin = 0.01;
   gboolean doPBCor;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *routine = "MakeFitSpecArgs";
   
-  /* Setup for threading */
-  /* How many threads? */
+  /* Spectral index correction to apply */
+  ObitInfoListGetTest(image->info, "corAlpha", &type, dim, &corAlpha);
+
+  /* Setup for threading -  How many threads? */
   nThreads = MAX (1, ObitThreadNumProc(image->thread));
   nThreads = MIN (nThreads, maxThread);
   nx = image->myDesc->inaxes[0];
@@ -1929,6 +1949,8 @@ static olong MakeFitSpecArgs (ObitImageMF *image, olong maxThread,
     (*args)[i]->nSpec     = image->nSpec;
     (*args)[i]->nOrder    = nOrder;
     (*args)[i]->alpha     = image->alpha;
+    (*args)[i]->corAlpha  = corAlpha;
+    (*args)[i]->refFreq   = image->refFreq;
     (*args)[i]->sigma     = g_malloc0(image->nSpec*sizeof(ofloat));
     (*args)[i]->workFlux  = g_malloc0(image->nSpec*sizeof(ofloat));
     (*args)[i]->workSigma = g_malloc0(image->nSpec*sizeof(ofloat));
@@ -2018,8 +2040,10 @@ gpointer ThreadFitSpec (gpointer args)
 {
   FitSpecFuncArg *largs  = (FitSpecFuncArg*)args;
   ofloat alpha             = largs->alpha;
+  ofloat corAlpha          = largs->corAlpha;
   olong   nSpec            = largs->nSpec;
   odouble *Freq            = largs->Freq;
+  odouble refFreq          = largs->refFreq;
   ofloat *sigma            = largs->sigma;
   ObitBeamShape *BeamShape = largs->BeamShape;
   ofloat **inData          = largs->inData;
@@ -2039,7 +2063,7 @@ gpointer ThreadFitSpec (gpointer args)
 
   /* Local */
   olong ix, i, nterm;
-  ofloat PBCorr = 1.0, pixel[2];
+  ofloat PBCorr = 1.0, pixel[2], spFact;
   gboolean doJinc;
   ObitBeamShapeClassInfo *BSClass;
   odouble Angle=0.0, pos[2];
@@ -2083,12 +2107,23 @@ gpointer ThreadFitSpec (gpointer args)
   	else {workSigma[i] = 1.0e10; workFlux[i] = fblank;}
       }
     }
+
+    /* Spectral index correction */
+    if (corAlpha!=0.0) {
+      for (i=0; i<nSpec; i++) {
+	if (workFlux[i]!=fblank) {
+	  spFact = (ofloat)pow(Freq[i]/refFreq, -corAlpha);
+	  workFlux[i]  *= spFact;
+	  workSigma[i] *= spFact;
+	}
+      }
+   }
     
     /* Fit spectrum */
     ObitSpectrumFitSingleArg (fitArg, workFlux, workSigma, fitResult);
 
     /* Spectral index correction */
-    if (nterm>=2) fitResult[1] += alpha;
+    if (nterm>=2) fitResult[1] += alpha + corAlpha;
     
     /* Save values */
     for (i=0; i<nterm; i++) {

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2015                                          */
+/*;  Copyright (C) 2010-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -52,6 +52,8 @@ olong nBytesInBuffer;
 gchar *buffer;
 /* Current buffer pointer */
 gchar *current;
+/* Current Scan/subscan Source */
+gchar *curSource;
 /** Have crossData? */
 gboolean haveCrossData;
 /** Number of floats in crossCorr */
@@ -136,6 +138,8 @@ olong *antNo;
 olong *antId;
 /** Current scan source number */
 olong sourceNo;
+/** Current scan source qualifier */
+olong sourceQual;
 /** Current  time */
 ofloat currTime;
 /** Current  integration time */

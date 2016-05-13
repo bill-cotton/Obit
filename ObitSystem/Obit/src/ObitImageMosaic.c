@@ -1090,12 +1090,12 @@ ObitImageMosaic* ObitImageMosaicCreate (gchar *name, ObitUV *uvData, ObitErr *er
   }
      
   /* Set fly's eye if needed */
-  imsize = (olong)(2.0*Radius + 30.99);
+  overlap = 10;
+  imsize = (olong)(2.0*Radius+2*overlap+0.99);
   imsize = MAX (64, imsize);  /* Not too small */
   
   /* Not bigger than FOV */
-  imsize = MIN (imsize, ((2.0*3600.0*FOV/fabs(xCells))+20.99));
-  overlap = 10;
+  imsize = MIN (imsize, ((2.0*3600.0*FOV/fabs(xCells))+2*overlap+0.99));
   cells[0] = xCells; cells[1] = yCells;
   ObitUVGetRADec (uvData, &ra0, &dec0, err);
   if (err->error) Obit_traceback_val (err, routine, uvData->name, out);
@@ -2998,11 +2998,13 @@ FlyEye (ofloat radius, olong imsize, ofloat cells[2], olong overlap,
   xsh[0] = shift[0] / 3.6e3 / cosdec;
 
   /* spacing of imaging region in  rad.   */
-  drad = 0.5 * AS2RAD * fabs(cells[0]) * (imsize - overlap);
+  drad = 0.5 * AS2RAD * fabs(cells[0]) * (imsize - 2*overlap);
   /* a bit less spacing to allow for sky curvature */
   drad *= 1.0 / (1. + tan(drad));
-  dx = 1.5 * drad;
-  dy = cos (30.0*DG2RAD) * drad;
+  /* Adjust grid to get overlap in the CLEAN regions - 
+     use minimal overlap solution */
+  dx = 1.5 * drad - AS2RAD * fabs(cells[0]) * overlap;
+  dy = cos (30.0*DG2RAD) * drad - AS2RAD * fabs(cells[0]) * overlap;
 
   /* field size in deg. */
   dradd = drad * RAD2DG / sqrt (2.0);

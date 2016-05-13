@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011                                               */
+/*;  Copyright (C) 2011-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -392,7 +392,7 @@ ofloat ObitPixHistoFDRFlux (ObitPixHisto *in, ofloat maxFDR,
 
   if (err->prtLv>=2) 
     Obit_log_error(err, OBIT_InfoErr, 
-		   "Histogram analysis: Cen: %d %d, hw: %d, cell: %f",
+		   "Histogram analysis: Cen: %d %d, hw: %d, cell: %g",
 		   in->cenx, in->ceny, in->FDRsize, cell);
   /* Which histogram */
   if (doDiff)  hi = in->histo->array; 
@@ -409,7 +409,7 @@ ofloat ObitPixHistoFDRFlux (ObitPixHisto *in, ofloat maxFDR,
     /* Diagnostics? */
     if (err->prtLv>=2) {
       Obit_log_error(err, 
-		     OBIT_InfoErr, "%2.2d %2.2d hist: %8.0f flux: %6.4f FDR: %6.4f", 
+		     OBIT_InfoErr, "%2.2d %2.2d hist: %12.3g flux: %12.4g FDR: %6.4f", 
 		     i, j, hi[i], flux, fdr);
     }
     /* Cross the desired value? */
@@ -425,7 +425,7 @@ ofloat ObitPixHistoFDRFlux (ObitPixHisto *in, ofloat maxFDR,
   /* diagnostics? */
   if (err->prtLv>=1) {
    Obit_log_error(err, 
-		  OBIT_InfoErr, "FDR lim: %8.5f, range: %8.5f, sigma: %8.5f", 
+		  OBIT_InfoErr, "FDR lim: %12.5g, range: %12.5g, sigma: %12.5g", 
 		  out, amax, in->sigma);
    ObitErrLog(err); /* DEBUG */
   }

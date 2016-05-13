@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2015                                          */
+/*;  Copyright (C) 2010-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -371,8 +371,8 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
 			   olong selChan, olong selIF, ObitErr *err)
 {
   gchar *startInfo, *endInfo, *startBB, *endBB, *prior, *next, *xnext, *tstr;
-  olong  configDescriptionId, fieldId, sourceId, inext, ScanId=0, iScan, iIntent;
-  olong maxStr, maxStr2, i, j, count, *antIds, iConfig, iAnt, jAnt, jField, iSW, jSW=0, jSource;
+  olong  configDescriptionId, fieldId, inext, ScanId=0, iScan, iIntent, iField;
+  olong maxStr, maxStr2, i, j, count, *antIds, iConfig, iAnt, jAnt, iSW, jSW=0, jSource;
   olong blOrder, polnOrder, freqOrder, SPWOrder, BBOrder, APCOrder, binOrder;
   olong *SWoff=NULL, flagoff;
   gboolean done;
@@ -838,23 +838,37 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
     in->offAtmCorr = 0;
   }
 
-  /* Source Id - have to look down goddamn tree */
+  /* Source No. - find in in->SDMData->SourceArray with key fieldId */
   fieldId = in->SDMData->MainTab->rows[in->ScanInfo->iMain]->fieldId;
-  for (jField=0; jField<in->SDMData->FieldTab->nrows; jField++) {
-    if (in->SDMData->FieldTab->rows[jField]->fieldId==fieldId) break;
+  /* Depending of whether doQual (1 source per subscan) */
+  if (in->SDMData->doQual) {
+    for (jSource=0; jSource<in->SDMData->SourceArray->nsou; jSource++) {
+      if (in->SDMData->SourceArray->sou[jSource]->fieldId==fieldId) break;
+    }
+    Obit_return_if_fail((jSource<in->SDMData->SourceArray->nsou), err,
+			"%s: Could not find source Id %d in ASDM", 
+			routine, fieldId);
+  } else {  /* One source per scan - use Field Table */
+    for (iField=0; iField<in->SDMData->FieldTab->nrows; iField++) {
+      if (in->SDMData->FieldTab->rows[iField]->fieldId==fieldId) break;
+    }
+    Obit_return_if_fail((iField<in->SDMData->FieldTab->nrows), err,
+			"%s: Could not find field Id %d in ASDM", 
+			routine, fieldId);
+    /* Now look in SourceArray for name */
+    for (jSource=0; jSource<in->SDMData->SourceArray->nsou; jSource++) {
+      if (!strcmp(in->SDMData->SourceArray->sou[jSource]->sourceName, 
+		  in->SDMData->FieldTab->rows[iField]->fieldName)) break;
+    }
+    Obit_return_if_fail((jSource<in->SDMData->SourceArray->nsou), err,
+			"%s: Could not find source %s in ASDM", 
+			routine, in->SDMData->SourceTab->rows[iField]->sourceName);
+     
   }
-  Obit_return_if_fail((jField<in->SDMData->FieldTab->nrows), err,
-		      "%s: Could not find fieldId %d in ASDM", 
-		      routine, antIds[iAnt]);
-  sourceId = in->SDMData->FieldTab->rows[jField]->sourceId;
-  for (jSource=0; jSource<in->SDMData->SourceTab->nrows; jSource++) {
-    if (in->SDMData->SourceTab->rows[jSource]->sourceId==sourceId) break;
-  }
-  Obit_return_if_fail((jSource<in->SDMData->SourceTab->nrows), err,
-		      "%s: Could not find source Id %d in ASDM", 
-		      routine, sourceId);
-  sourceId = in->SDMData->SourceTab->rows[jSource]->sourceId;
-  in->sourceNo = in->SDMData->SourceTab->rows[jSource]->sourceNo;
+  in->sourceNo = in->SDMData->SourceArray->sou[jSource]->sourceNo;
+  if (in->curSource) g_free(in->curSource);
+  in->curSource = strdup(in->SDMData->SourceArray->sou[jSource]->sourceName);
+  in->sourceQual = in->SDMData->SourceArray->sou[jSource]->sourceQual;
 
   /* Cross correlation frequency increment = no poln. x 2 */
   in->cincf  = in->numCPoln * 2;
@@ -985,7 +999,8 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   SWoff    = g_malloc0((in->SWArray->nwinds+2)*sizeof(olong));
   SWoff[0] = 0;
   for (iSW=0; iSW<in->SWArray->nwinds-1; iSW++) {
-    SWoff[iSW+1] = SWoff[iSW] + in->SWArray->winds[iSW]->numChan * in->aincf;
+    SWoff[iSW+1] = SWoff[iSW] + /* Note use of boolean */
+      in->SWArray->winds[jSW]->selected*in->SWArray->winds[iSW]->numChan * in->aincf;
   }
 
   /* Which auto correlation IF/Spectral windows */
@@ -1615,6 +1630,7 @@ void ObitBDFDataInit  (gpointer inn)
   in->afoffs              = NULL;
   in->afoffif             = NULL;
   in->isLSB               = NULL;
+  in->curSource           = NULL;
   in->isEVLA              = FALSE;
   in->isALMA              = FALSE;
   in->binFlag             = FALSE;
@@ -1669,6 +1685,7 @@ void ObitBDFDataClear (gpointer inn)
   if (in->afoffs)              g_free(in->afoffs);
   if (in->afoffif)             g_free(in->afoffif);
   if (in->isLSB)               g_free(in->isLSB);
+  if (in->curSource)           g_free(in->curSource);
 
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
