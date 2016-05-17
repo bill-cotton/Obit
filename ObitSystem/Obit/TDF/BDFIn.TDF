@@ -77,9 +77,9 @@ doAtmCor                            Select data with Atm. Corr?
 doAppend                            True => append to existing data
 **PARAM** boo 1  **DEF** F
 doQual                              True => use qualifiers
-***PARAM** boo 1  **DEF** F
+**PARAM** boo 1  **DEF** F
 binFlag                             True => apply binary flags
-*PARAM** boo 1  **DEF** F
+**PARAM** boo 1  **DEF** F
 Compress                            True => write compressed data
 **PARAM** str 128
 taskLog                             Logfile to write task messages to

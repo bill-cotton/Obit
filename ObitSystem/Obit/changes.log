@@ -3280,3 +3280,10 @@ Obit/src/ObitDConClean.c:
 Obit/src/ObitPixHisto.c:
   Better formats for diagnostics.
 13 May 2016,svn 540
+
+Bug fixes
+Obit/src/ObitTableUtil.c:
+  Fix bug in Sort, attach row to output
+Obit/TDF/BDFIn.TDF:
+  Fix typo
+17 May 2016,svn 541

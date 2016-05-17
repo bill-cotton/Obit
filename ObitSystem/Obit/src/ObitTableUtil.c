@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2013                                          */
+/*;  Copyright (C) 2004-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1384,6 +1384,11 @@ ReorderTable(ObitTable *in, gpointer base, olong size, olong number,
 
   retCode = ObitTableOpen (scrTable, OBIT_IO_WriteOnly, err);
   if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+
+  /* Attach row to output buffer */
+  ObitTableSetRow (scrTable, row, err);
+  if (err->error) goto cleanup;
+
   /* loop over table */
   irow = 0;
   count = 0;
