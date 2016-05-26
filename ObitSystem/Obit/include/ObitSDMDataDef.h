@@ -44,6 +44,8 @@ gboolean isALMA;
 gboolean doQual;
 /* Leave in SW Order? */
 gboolean SWOrder;
+/* Make different source/calCode a different source? */
+gboolean doCode;
 /** Selected configuration, <0 => any */
 olong selConfig;
 /** first selected scan */
@@ -56,6 +58,8 @@ olong selChan;
 ofloat selChBW;
 /** Actual Bandwidth (Hz) */
 ofloat selBW;
+/** Selected Source Code */
+gchar *selCode;
 /** ASDM table */
 ASDMTable* ASDMTab;
 /** Main table */

@@ -1666,8 +1666,9 @@ ASDMSourceArray* ObitSDMDataGetSourceArray (ObitSDMData *in)
 { 
   ASDMSourceArray* out=NULL;
   ASDMSpectralWindowArray* SpWinArray=NULL;
-  olong i, j, iOut, iSource, jSource, jField, sourceId, num, iSW, SWId;
-  gboolean more;
+  olong i, j, iOut, iSource, jSource, jField, sourceId, num, iSW, SWId, len;
+  gboolean more, done;
+  gchar *code, *blank=" ";
 
   out = g_malloc0(sizeof(ASDMSourceArray));
 
@@ -1686,15 +1687,28 @@ ASDMSourceArray* ObitSDMDataGetSourceArray (ObitSDMData *in)
   for (iSource=0; iSource<in->SourceTab->nrows; iSource++) {
 
     /* Already done this source? */
-    more = FALSE;
+    done = FALSE;
     for (jSource=0; jSource< out->nsou; jSource++) {
       if (!strcmp(in->SourceTab->rows[iSource]->sourceName,
 		  out->sou[jSource]->sourceName)) {
-	more = TRUE;
-	break;
+	/* if doCode also check code */
+	if (in->doCode) {
+	  if ((strncmp(in->SourceTab->rows[iSource]->code, "NONE", 4))  &&
+	      (strncmp(in->SourceTab->rows[iSource]->code, "none", 4)))
+	    code = in->SourceTab->rows[iSource]->code;
+	  else code = blank;
+	  done = !strcmp(code, out->sou[jSource]->code);
+	} else done = TRUE;
+	if (done) break;
       }
     }
-    if (more) continue;
+    if (done) continue;
+
+    /* Selection by calCode? */
+    if (in->selCode) {
+      len = strlen(in->SourceTab->rows[iSource]->code);
+      if (strncmp(in->selCode, in->SourceTab->rows[iSource]->code, len)) continue;
+    }
 
     /* Is this one selected? - check in Spectral Window array */
     SWId = in->SourceTab->rows[iSource]->spectralWindowId;
@@ -1755,11 +1769,11 @@ ASDMSourceArray* ObitSDMDataGetSourceArray (ObitSDMData *in)
       /* Field Id */
       out->sou[iOut]->fieldId = in->FieldTab->rows[jField]->fieldId;
       
-      /* Save code - ignore terminally stupid "NONE" */
+      /* Save code - ignore terminally stupid "NONE" by either VLA or ALMA spelling */
       if (strcmp("NONE", in->FieldTab->rows[jField]->code) && 
 	  strcmp("none", in->FieldTab->rows[jField]->code))
 	out->sou[iOut]->code = strdup(in->FieldTab->rows[jField]->code);
-      else out->sou[iOut]->code = strdup(" ");
+      else out->sou[iOut]->code = strdup(blank);
 
       /* Using qualifiers? */
       if (in->doQual) {
@@ -2085,12 +2099,12 @@ void ObitSDMDataRenumberSrc(ObitSDMData *in,  ObitSourceList *sourceList,
 	if (matches) {
 	  if (in->FieldTab->rows[j]->sourceNo != sourceList->SUlist[i]->SourID) renum = TRUE;
 	  in->FieldTab->rows[j]->sourceNo = sourceList->SUlist[i]->SourID;
-	  isDone[j] = TRUE;
+	  isDone[i] = TRUE;
 	  break;
 	}
       } /* end loop over sourceList */
       /* If not found, assign new value */
-      if ((!isDone[j]) && (!renumsrc[j])) {
+      if ((!isDone[i]) && (!renumsrc[j])) {
 	lastOld = in->FieldTab->rows[j]->sourceNo;   /* previous */
 	in->FieldTab->rows[j]->sourceNo = nextID++;
 	areNew = TRUE;
@@ -2128,12 +2142,12 @@ void ObitSDMDataRenumberSrc(ObitSDMData *in,  ObitSourceList *sourceList,
 	if (matches) {
 	  if (in->SourceTab->rows[j]->sourceNo != sourceList->SUlist[i]->SourID) renum = TRUE;
 	  in->SourceTab->rows[j]->sourceNo = sourceList->SUlist[i]->SourID;
-	  isDone[j] = TRUE;
+	  isDone[i] = TRUE;
 	  break;
 	}
       } /* end loop over sourceList */
       /* If not found, assign new value */
-      if ((!isDone[j]) && (!renumsrc[j])) {
+      if ((!isDone[i]) && (!renumsrc[j])) {
 	lastOld = in->SourceTab->rows[j]->sourceNo;   /* previous */
 	in->SourceTab->rows[j]->sourceNo = nextID++;
 	areNew = TRUE;
@@ -2890,7 +2904,8 @@ void ObitSDMDataInit  (gpointer inn)
   in->SysPowerTab          = NULL;
   in->WeatherTab           = NULL;
   in->line                 = NULL;
-
+  in->selCode              = NULL;
+  in->doCode               = FALSE;
 } /* end ObitSDMDataInit */
 
 /**
@@ -2909,7 +2924,8 @@ void ObitSDMDataClear (gpointer inn)
 
   /* delete this class members */
   if (in->DataRoot) g_free(in->DataRoot); in->DataRoot = NULL;
-  if (in->line) g_free(in->line);  in->line = NULL;
+  if (in->line)     g_free(in->line);     in->line = NULL;
+  if (in->selCode)  g_free(in->selCode);  in->selCode = NULL;
   in->ASDMTab              = KillASDMTable(in->ASDMTab);
   in->MainTab              = KillASDMMainTable(in->MainTab);
   in->AntennaTab           = KillASDMAntennaTable(in->AntennaTab);

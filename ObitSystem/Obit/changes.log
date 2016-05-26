@@ -3287,3 +3287,15 @@ Obit/src/ObitTableUtil.c:
 Obit/TDF/BDFIn.TDF:
   Fix typo
 17 May 2016,svn 541
+
+Bug fixes
+Obit/src/ObitTableFSUtil.c:
+  Trap incompatible spectrum sizes
+Obit/include/ObitSDMDataDef.h Obit/src/ObitSDMData.c
+Obit/src/ObitBDFData.c:
+  Add selCode an doCode to ASDMData and use in source selection
+  This fixes doCode and selCode
+Obit/tasks/BDFIn.c:
+  Fix bugs in source numbering
+26 May 2016,svn 542
+  

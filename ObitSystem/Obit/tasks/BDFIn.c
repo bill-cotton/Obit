@@ -826,7 +826,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar selBand[12], selCode[24];
   ObitASDMBand band;
-  gboolean doQual;
+  gboolean doQual, doCode;
   gchar *bandCodes[] = {"Any", "4","P","L","S","C","X","Ku","K","Ka","Q",
 			"A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10", "A11"};
   gchar *routine = "GetHeader";
@@ -880,6 +880,10 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   doQual = FALSE;
   ObitInfoListGetTest(myInput, "doQual", &type, dim, &doQual);
 
+  /* Each cal code gets different numbers? */
+  doCode = FALSE;
+  ObitInfoListGetTest(myInput, "doCode", &type, dim, &doCode);
+
   /* Check if Spectral window order desired */
   ObitInfoListGetTest(myInput, "SWOrder", &type, dim, &SWOrder);
   if (SWOrder)
@@ -900,6 +904,9 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   SDMData->doQual    = doQual;
   SDMData->SWOrder   = SWOrder;
   SDMData->iMain     = iMain;
+  SDMData->doCode    = doCode;
+  if (strncmp(selCode, "    ",4)) SDMData->selCode = g_strdup(selCode);
+  else                            SDMData->selCode = NULL;
 
   /* Create ObitUV for data */
   *outData = setOutputData (myInput, err);
@@ -3824,7 +3831,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   olong curScan, curScanI, nextScanNo, bad=0, iMain, cnt;
   oint numIF, numPol;
   ofloat fblank = ObitMagicF();
-  gboolean want, ChkVis;
+  gboolean want, ChkVis, found;
   ObitIOAccess access;
   gchar *routine = "GetSysPowerInfo";
 
@@ -3959,11 +3966,15 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     if (nextScan(SDMData, curScan, inTab->rows[iRow]->timeInterval[0], 
 		&curScanI, &nextScanNo, &SourNo)) {
       curScan = nextScanNo;
+      iMain = SDMData->iMain; /* Main table entry for this scan */
 
-      /* Find Main table entry for this scan */
-      for (iMain=0; iMain<SDMData->MainTab->nrows; iMain++) {
-	if (SDMData->MainTab->rows[iMain]->scanNumber==nextScanNo) break;
+      /* Is source number in SourceArray */
+      found = FALSE;
+      for (i=0; i<SDMData->SourceArray->nsou; i++) {
+	found = SourNo==SDMData->SourceArray->sou[i]->sourceNo;
+	if (found) break;
       }
+      if (!found) continue;  /* Source in SourceArray? */
 
       /* Extract antenna info */
       AntArray = ObitSDMDataKillAntArray (AntArray);  /* Delete old */
@@ -3981,6 +3992,8 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       }
     } /* End new scan */
       
+    if (!found) continue;  /* Source in SourceArray? */
+
     /* Save info to SY table row */
     outRow->Time          = inTab->rows[iRow]->timeInterval[0]-refJD;
     outRow->TimeI         = inTab->rows[iRow]->timeInterval[1];
@@ -4111,6 +4124,7 @@ void GetOTTInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   olong i, iRow, oRow, ver, maxAnt, SourNo, iMain;
   olong *antLookup, curScan, curScanI, nextScanNo;
   ObitIOAccess access;
+  gboolean found;
   gchar *routine = "GetOTTInfo";
 
   /* error checks */
@@ -4183,11 +4197,15 @@ void GetOTTInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     if (nextScan(SDMData, curScan, inTab->rows[iRow]->timeInterval[0], 
 		&curScanI, &nextScanNo, &SourNo)) {
       curScan = nextScanNo;
+      iMain = SDMData->iMain; /* Main table entry for this scan */
 
-      /* Find Main table entry for this scan */
-      for (iMain=0; iMain<SDMData->MainTab->nrows; iMain++) {
-	if (SDMData->MainTab->rows[iMain]->scanNumber==nextScanNo) break;
+      /* Is source number in SourceArray */
+      found = FALSE;
+      for (i=0; i<SDMData->SourceArray->nsou; i++) {
+	found = SourNo==SDMData->SourceArray->sou[i]->sourceNo;
+	if (found) break;
       }
+      if (!found) continue;  /* Source in SourceArray? */
 
       /* Find it? */
       if (iMain>=SDMData->MainTab->nrows) continue;
@@ -4208,6 +4226,8 @@ void GetOTTInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       }
     } /* End new scan */
       
+    if (!found) continue;  /* Source in SourceArray? */
+
     /* Save info to OT table row */
     outRow->Time          = inTab->rows[iRow]->timeInterval[0]-refJD;
     outRow->TimeI         = inTab->rows[iRow]->timeInterval[1];
@@ -4486,6 +4506,7 @@ gboolean nextScan(ObitSDMData *SDMData, olong curScan, odouble time,
 
   /* Find it? */
   if (iMain>=SDMData->MainTab->nrows) return out;
+  SDMData->iMain = iMain;
 
   /* Source Id - have to look down goddamn tree */
   fieldId = SDMData->MainTab->rows[iMain]->fieldId;

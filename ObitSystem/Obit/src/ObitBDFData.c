@@ -376,7 +376,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   olong blOrder, polnOrder, freqOrder, SPWOrder, BBOrder, APCOrder, binOrder;
   olong *SWoff=NULL, flagoff;
   gboolean done;
-  gchar *aname;
+  gchar *aname, *code, *blank=" ";
   ObitIOCode retCode = OBIT_IO_OK;
   gchar *routine = "ObitBDFDataInitScan";
 
@@ -856,9 +856,22 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
 			"%s: Could not find field Id %d in ASDM", 
 			routine, fieldId);
     /* Now look in SourceArray for name */
-    for (jSource=0; jSource<in->SDMData->SourceArray->nsou; jSource++) {
-      if (!strcmp(in->SDMData->SourceArray->sou[jSource]->sourceName, 
-		  in->SDMData->FieldTab->rows[iField]->fieldName)) break;
+    if (in->SDMData->doCode) {  /* Using doCode? ignore none */
+      if ((strncmp(in->SDMData->FieldTab->rows[iField]->code, "NONE", 4)) &&
+	  (strncmp(in->SDMData->FieldTab->rows[iField]->code, "none", 4)))
+	code = in->SDMData->FieldTab->rows[iField]->code;
+      else code = blank;
+      for (jSource=0; jSource<in->SDMData->SourceArray->nsou; jSource++) {
+	if ((!strcmp(in->SDMData->SourceArray->sou[jSource]->sourceName, 
+		     in->SDMData->FieldTab->rows[iField]->fieldName)) &&
+	    (!strcmp(in->SDMData->SourceArray->sou[jSource]->code, code)))
+	  break;
+      }
+    } else { /* rational source numbering */
+      for (jSource=0; jSource<in->SDMData->SourceArray->nsou; jSource++) {
+	if (!strcmp(in->SDMData->SourceArray->sou[jSource]->sourceName, 
+		    in->SDMData->FieldTab->rows[iField]->fieldName)) break;
+      }
     }
     Obit_return_if_fail((jSource<in->SDMData->SourceArray->nsou), err,
 			"%s: Could not find source %s in ASDM", 

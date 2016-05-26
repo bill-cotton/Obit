@@ -1,6 +1,6 @@
 /* $Id:  $ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2015                                          */
+/*;  Copyright (C) 2012-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -804,7 +804,14 @@ void ObitTableFSRedun (ObitTableFS *in, ObitTableFS *out, ObitErr *err)
 
   /* Open output */
   ObitTableFSOpen (out, OBIT_IO_ReadWrite, err);
+  /* Attach row to output buffer */
+  ObitTableFSSetRow (out, row, err);
   if (err->error) goto cleanup;
+
+  /* Compatability checks */
+  Obit_return_if_fail ((in->numCh==out->numCh), err, 
+		       "%s incompatible no. channels %d != %d", 
+		       routine, out->numCh, in->numCh);
 
   /* copy header */
   out->BeamMajor = in->BeamMajor;
