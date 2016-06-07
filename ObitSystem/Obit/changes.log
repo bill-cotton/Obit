@@ -3299,3 +3299,22 @@ Obit/tasks/BDFIn.c:
   Fix bugs in source numbering
 26 May 2016,svn 542
   
+Major upgrade to BDFIn to support EVLA OTF data
+Obit/bin/ObitTables.pl:
+  Change copyright date
+Obit/src/ObitPointing.c Obit/include/ObitPointingClassDef.h
+Obit/include/ObitPointingDef.h Obit/include/ObitPointing.h
+  New class for parsing ASDM Pointing.bin tables
+Obit/doc/OBITdoc.tex:
+Obit/python/TablePT.inc Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c
+Obit/src/ObitTablePT.c Obit/include/ObitTablePT.h
+Obit/include/ObitTablePTDef.h Obit/include/ObitTablePTClassDef.h
+Obit/include/ObitTablePTRowDef.h Obit/include/ObitTablePTRowClassDef.h
+  New class for AIPS PT (pointing) table
+Obit/src/ObitSDMData.c Obit/include/ObitSDMData.h Obit/include/ObitSDMDataDef.h
+Obit/include/ObitSDMDataTypeDef.h Obit/python/OASDM.inc:
+  Major upgrade to source handling, add Pointing.bin parsing.
+Obit/tasks/BDFIn.c Obit/TDF/BDFIn.TDF Obit/tasks/ASDMList.c
+Obit/src/ObitBDFData.c:
+  Changes in source handling, pointing table
+7 June 2016,svn 543

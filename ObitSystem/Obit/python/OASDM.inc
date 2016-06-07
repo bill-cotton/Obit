@@ -967,7 +967,7 @@ static PyObject* OASDMGetSourceArray(ObitSDMData *asdm)
     dict = PyDict_New();
     PyDict_SetItemString(dict, "sourceId",         PyInt_FromLong((long)sa->sou[irow]->sourceId));
     PyDict_SetItemString(dict, "sourceNo",         PyInt_FromLong((long)sa->sou[irow]->sourceNo));	
-    PyDict_SetItemString(dict, "sourceName",       PyString_InternFromString(sa->sou[irow]->sourceName));
+    PyDict_SetItemString(dict, "sourceName",       PyString_InternFromString(sa->sou[irow]->fieldName));
     PyDict_SetItemString(dict, "spectralWindowId", PyInt_FromLong((long)sa->sou[irow]->spectralWindowId));
     PyDict_SetItemString(dict, "code",             PyString_InternFromString(sa->sou[irow]->code));
     PyDict_SetItemString(dict, "numLines",         PyInt_FromLong((long)sa->sou[irow]->numLines));

@@ -21,7 +21,7 @@
 \vskip 1cm
 \centerline{\ttlfont Merx mollis mortibus nuper}
 \vskip 3cm
-\centerline{\secfont Version: 1.2 \today}
+\centerline{\secfont Version: 1.3 \today}
 \vskip 1cm
 \centerline{\secfont W. D. Cotton}
 \clearpage
@@ -2568,7 +2568,7 @@ No Keywords in table.
 {Frequency ID number}
 ] 
 \tablecol[{"ANTS   "}{"       " }{J}{(2)}{ants}
-{first and secong antenna  numbers for a baseline, 0=$>$all}
+{first and second antenna  numbers for a baseline, 0=$>$all}
 ] 
 \tablecol[{"TIME RANGE "}{"DAYS    " }{E}{(2)}{TimeRange}
 {Start and end time of data to be flagged }
@@ -3670,8 +3670,6 @@ ObitTableDesc.
 \begin{history}
 \modhistory[{W. D. Cotton}{02/25/2015}{Revision 1: Copied from AIPS}]
 \end{history}
-
-\clearpage
 %%%%%%%%%%%%%%% ObitTablePO Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 %
@@ -3754,6 +3752,111 @@ ObitTableDesc.
 %
 \clearpage
 
+\clearpage
+%%%%%%%%%%%%%%% ObitTablePT Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTablePT}]
+ObitTablePT Class
+\tabletitle{Antenna PoinTing table for uv data}
+% table name
+\tablename{PT}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS PT" contains a series of antenna pointing records.
+Generated from ALMA documentation which is error filled and vague.
+An ObitTablePT is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TABREV"}{J}{revision}{1}{}
+{Revision number of the table definition.}
+]
+\tablekey[{"NO\_TERM"}{J}{numTerm}{0}{()}
+{The number of terms in model polynomial}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYYMMDD"}{}
+{Reference date as "YYYYMMDD"}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time wrt RefDate}
+] 
+\tablecol[{"TIME INTERVAL"}{"DAYS    "}{E}{(1)}{TimeI}
+{Interval over which pointing valid.}
+] 
+\tablecol[{"ANTENNA NO."}{"        " }{J}{(1)}{antNo}
+{Antenna number}
+]
+\tablecol[{"ENCODER"}{"DEGREES " }{E}{(2)}{Encoder}
+{Encoder values in Az,El}
+] 
+\tablecol[{"POINTINGTRACKING"}{"       " }{L}{(1)}{pointingTracking}
+{The antenna was in tracking mode?}
+] 
+\tablecol[{"USEPOLYNOMIALS"}{"       " }{L}{(1)}{usePolynomials}
+{Use polynomials expansions?}
+] 
+\tablecol[{"TIMEORIGIN"}{"DAYS    " }{D}{(1)}{timeOrigin}
+{The value used as origin in the polynomials expansions}
+] 
+\tablecol[{"POINTINGDIRECTION"}{"DEGREES "}{D}{(2,numTerm)}{PointingDirection}
+{The commanded pointing direction in Az,El per term}
+] 
+\tablecol[{"TARGET"}{"DEGREES " }{D}{(2,numTerm)}{target}
+{The direction of the field center in Az,El per term. }
+] 
+\tablecol[{"OFFSET"}{"DEGREES " }{D}{(2,numTerm)}{offset}
+{The offset of the pointing direction at the time of the visibility 
+dump (center time, optimally) from the field direction.}
+] 
+\tablecol[{"POINTINGMODELID"}{" " }{J}{(1)}{pointingModelId}
+{Refers to a collection of rows in PointingModelTable.}
+] 
+\tablecol[{"OVERTHETOP"}{" " }{L}{(1)}{overTheTop}
+{[OPTIONAL] Pointing at elevations larger than 90 degrees (true) or lower (false). }
+] 
+\tablecol[{"SOURCEOFFSET"}{" " }{D}{(2,numTerm)}{SourceOffset}
+{[OPTIONAL] Sources offset in Az,El per term of the polynomia). }
+] 
+\tablecol[{"SOURCEREFERENCECODEOFF"}{" " }{J}{(1)}{SourceReferenceCodeOffset}
+{[OPTIONAL] The direction reference code associated to the source offset.}
+] 
+\tablecol[{"SOURCEEQUINOXOFFSET"}{"DAYS   " }{D}{(1)}{sourceEquinoxOffset}
+{[OPTIONAL] The equinox information (if needed by sourceReferenceCode). }
+] 
+\tablecol[{"SAMPLEDTIMEINTERVAL"}{"DAYS   " }{D}{(2)}{sampledTimeInterval}
+{[OPTIONAL] An array of start, end of interval which must be given explicitly if
+the data are irregularily sampled.}
+] 
+\tablecol[{"ATMOSPHERICCORRECTION"}{"DEGREES " }{E}{(2)}{AtmosphericCorrection}
+{[OPTIONAL] This is the correction applied to the commanded position in Az,El to take 
+into account refraction and any other atmospheric effects.  This term will always 
+be zero if there is no atmosphere. For ALMA this is the atmospheric refraction 
+correction and will result in a correction in just the elevation axis. }
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{06/01/2016}{Revision 1: Invented from ASDM usage}]
+\end{history}
+
+\clearpage
 %%%%%%%%%%%%%%% ObitTableSN Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 %
@@ -3994,6 +4097,85 @@ ObitTableDesc.
 \modhistory[{W. D. Cotton}{08/29/2012}{Revision 2: Add RAOBS, DECOBS}]
 \end{history}
 %
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableSY Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableSY}]
+ObitTableSY Class
+\tabletitle{ SysPower table for uv data}
+% table name
+\tablename{SY}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS SY" contains EVLA switched power measurements.
+An ObitTableSY is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"NO\_IF"}{J}{nIF}{}{()}
+{The number of IFs}
+]
+% Must be position 2 to index
+\tablekey[{"NO\_POL "}{J}{nPol}{}{(1,2)}
+{The number of polarizations.}
+]
+\tablekey[{"NO\_ANT  "}{J}{nAnt}{}{}
+{The number of antennas in table (max. ant. number in file).
+}
+]
+\tablekey[{"REVISION"}{J}{revision}{1}{}
+{Revision number of the table definition.}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time.}
+] 
+\tablecol[{"TIME INTERVAL "}{"DAYS   " }{E}{(1)}{TimeI}
+{Time interval of record }
+] 
+\tablecol[{"SOURCE ID  "}{"        " }{J}{(1)}{SourID}
+{Source ID number}
+] 
+\tablecol[{"ANTENNA NO."}{"        " }{J}{(1)}{antennaNo}
+{Antenna number}
+]
+\tablecol[{"SUBARRAY   "}{"        " }{J}{(1)}{SubA}
+{Subarray number}
+] 
+\tablecol[{"FREQ ID  "}{"        " }{J}{(1)}{FreqID}
+{Frequency id of scan}
+] 
+\tablecol[{"POWER DIF\#NPOL"}{"    " }{E}{(nIF)}{PwrDif}
+{ (P\_on-P\_off)*G  Poln \# NPOL ), invalid data fblanked}
+] 
+\tablecol[{"POWER SUM\#NPOL"}{"    " }{E}{(nIF)}{PwrSum}
+{(P\_on+P\_off)*G  Poln \# NPOL ), invalid data fblanked}
+] 
+\tablecol[{"POST GAIN\#NPOL"}{"     "}{E}{(nIF)}{Gain}
+{Post switched power gain Poln \# NPOL), invalid data fblanked}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{09/07/2010}{Revision 1: From EVLA memo}]
+\end{history}
 %
 \clearpage
 %%%%%%%%%%%%%%% ObitTableTY Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

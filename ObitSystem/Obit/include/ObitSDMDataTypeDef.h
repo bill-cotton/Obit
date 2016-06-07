@@ -148,6 +148,8 @@ typedef struct {
   olong fieldId;
   /** source Number (1-rel) */
   olong sourceNo;
+  /** Is this a repeat entry of sourceNo? */
+  gboolean repeat;;
   /** source qualifier */
   olong sourceQual;
   /** time Interval as JD */
@@ -158,8 +160,8 @@ typedef struct {
   odouble *direction;
   /** proper Motion, array of RA, Dec in rad */
   odouble *properMotion;
-  /** sourceName */
-  gchar *sourceName;
+  /** source Name as defined in FieldTab */
+  gchar *fieldName;
   /** numLines */
   olong numLines;
   /** rest Frequency, one per line */
@@ -871,7 +873,7 @@ typedef struct {
   odouble *timeInterval;
   /** number of samples */
   olong numSample;
-  /** Encoder values */
+  /** Encoder values - NOT SURE OF TYPE */
   odouble *encoder;
   /** Was antenna in tracking mode */
   gboolean pointingTracking;
@@ -881,18 +883,28 @@ typedef struct {
   odouble timeOrigin;
   /** number of terms in the polynomial */
   olong numTerm;
+  /** SourceOffset Equinox */
+  odouble SourceEquinoxOffset;
   /** Commanded pointing direction */
   odouble *pointingDirection;
   /** Direction of target */
   odouble *target;
-  /** Horizion mapping offsets */
+  /** Field mapping offsets */
   odouble *offset;
+  /** SourceOffset offsets */
+  odouble *SourceOffset;
+  /** Sampled time interval */
+  odouble *SampledTimeInterval;
+  /** Atmospheric Correction */
+  odouble *AtmosphericCorrection;
   /** over the top observing? */
-  gboolean overTheTop;
+  gboolean OverTheTop;
+  /** Source Reference Code Offset not sure what this is, apparently an integer */
+  olong SourceReferenceCodeOffset;
   /** antenna Id identifying row in Antenna table */
   olong antennaId;
   /** pointing model Id */
-  olong pointingModelId;
+  olong PointingModelId;
 } ASDMPointingRow;
 typedef struct {
   /** Number of rows */

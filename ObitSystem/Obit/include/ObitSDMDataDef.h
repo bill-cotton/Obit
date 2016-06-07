@@ -40,8 +40,6 @@ olong schemaVersion;
 gboolean isEVLA;
 /* Is this ALMA data? */
 gboolean isALMA;
-/* Use qualifiers for different pointings in subscans? */
-gboolean doQual;
 /* Leave in SW Order? */
 gboolean SWOrder;
 /* Make different source/calCode a different source? */

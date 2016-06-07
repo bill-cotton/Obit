@@ -571,7 +571,7 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
     /* Get Calcode */
     calCode[0] = ' '; calCode[1] = 0;
     for (iSource=0; iSource<SourceArray->nsou; iSource++) {
-      if (!strcmp(SourceArray->sou[iSource]->sourceName, 
+      if (!strcmp(SourceArray->sou[iSource]->fieldName, 
 		  ScanTab->rows[iScan]->sourceName)) {
 	g_snprintf (calCode, 20, "%s", SourceArray->sou[iSource]->code);
 	break;

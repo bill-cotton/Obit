@@ -67,6 +67,7 @@ X    Weather.xml
 
 #include "ObitSDMData.h"
 #include "ObitEVLASysPower.h"
+#include "ObitPointing.h"
 #include "ObitALMACalAtm.h"
 #include "ObitFile.h"
 /*#include "glib/gqsort.h"*/
@@ -372,7 +373,15 @@ static ASDMPointingRow* KillASDMPointingRow(ASDMPointingRow* row);
 static ASDMPointingTable* ParseASDMPointingTable(ObitSDMData *me,
 					 gchar *PointingFile, 
 					 ObitErr *err);
-/** Private: Destructor for Pointing table. */
+/** Private: Parser constructor for Pointing table from xml file */
+static ASDMPointingTable* ParseASDMPointingTableXML(ObitSDMData *me,
+						    gchar *PointingFile, 
+						    ObitErr *err);
+/** Private: Parser constructor for Pointing table from binary file */
+static ASDMPointingTable* ParseASDMPointingTableBin(ObitSDMData *me,
+						    gchar *PointingFile, 
+						    ObitErr *err);
+//** Private: Destructor for Pointing table. */
 static ASDMPointingTable* KillASDMPointingTable(ASDMPointingTable* table);
 
 /** Private: Destructor for PointingModel table row. */
@@ -529,9 +538,6 @@ static ASDMXXXXTable* ParseASDMXXXXTable(ObitSDMData *me,
 /** Private: Destructor for XXXX table. */
 static ASDMXXXXTable* KillASDMXXXXTable(ASDMXXXXTable* table);
 
-/** Private: get CalCode from scan intents */
-static void DefaultCalCode(ObitSDMData *in, olong iMain, gchar* code);
-
 /** Private: Count rows in a table */
 static olong CountTableRows(gchar *XXXXFile, ObitErr *err);
 
@@ -544,6 +550,14 @@ static void Strip (gchar *s);
 
 /** Private: See if field name already defined? */
 static gboolean FieldCheck(ASDMFieldTable* table, olong row, gchar *name);
+
+/** Private find last occurance of a fieldName in SourceArray */
+static olong LastOccurance(ASDMSourceArray *in, gchar *name);
+
+/** Make entry in SourceArray */
+static void AddSourceArrayEntry(ASDMSourceArray *in, gchar *code, olong qual, 
+				olong nSW, ASDMSourceRow *sourceRow, 
+				ASDMFieldRow *fieldRow);
 
 /*----------------------Public functions---------------------------*/
 /**
@@ -650,7 +664,6 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   out->DataRoot  = strdup(DataRoot);
   out->isEVLA    = FALSE;
   out->isALMA    = FALSE;
-  out->doQual    = FALSE;
   out->selConfig = -1;
   out->selBand   = ASDMBand_Any;
 
@@ -785,8 +798,8 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
-  /* Pointing table */
-  fullname = g_strconcat (DataRoot,"/Pointing.xml", NULL);
+  /* Pointing table from either xml or binary */
+  fullname = g_strconcat (DataRoot,"/Pointing", NULL);
   out->PointingTab = ParseASDMPointingTable(out, fullname, err);
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
@@ -1656,8 +1669,8 @@ ASDMAntennaArray* ObitSDMDataKillAntArray (ASDMAntennaArray *in)
 
 /**
  * Creates and fills a Source array
- * There is one entry per Spectral window
- * If in->doQual then one source per FieldTab entry
+ * There is one entry per FieldTab entry unledd doCode=True then
+ * There may be an entry for each fieldTab+code combination.
  * \param in   ASDM object to use
  * \return the new structure, NULL on error, 
  *         delete using ObitSDMDataKillSourceArray
@@ -1666,143 +1679,116 @@ ASDMSourceArray* ObitSDMDataGetSourceArray (ObitSDMData *in)
 { 
   ASDMSourceArray* out=NULL;
   ASDMSpectralWindowArray* SpWinArray=NULL;
-  olong i, j, iOut, iSource, jSource, jField, sourceId, num, iSW, SWId, len;
-  gboolean more, done;
-  gchar *code, *blank=" ";
+  olong numr, i, ig, iOut=0, iSource, iField, sourceId, iSW, SWId, kSW;
+  olong nSelSW=0, fieldId, iMain, occur;
+  gchar *ignore[]={"OTFDUMMY","DUMMY",NULL};  /* Names to ignore */
+  gboolean want, chkSelCode;
+  gchar code[12];
 
   out = g_malloc0(sizeof(ASDMSourceArray));
 
   /* Spectral window array */
   SpWinArray  = ObitSDMDataGetSWArray (in, in->iMain, in->SWOrder);
 
-  /* Assume no more sources than total Fields defined */
-  if (in->doQual) 
-    out->sou  = g_malloc0(in->FieldTab->nrows*sizeof(ASDMSourceArrayEntry));
-  else
-    out->sou  = g_malloc0(in->SourceTab->nrows*sizeof(ASDMSourceArrayEntry));
-  out->nsou = 0;
+  /* Number of selected SWs */
+  for (i=0; i<SpWinArray->nwinds; i++) 
+    if (SpWinArray->winds[i]->selected) nSelSW++;
 
-  /* Loop over Sources - this does not trap "sources" used only as online only scans */
-  iOut = 0; jField = 0;
-  for (iSource=0; iSource<in->SourceTab->nrows; iSource++) {
+  /* Make output big enough to always be big enough - trim at end */
+  numr = 5*in->SourceTab->nrows;
+  out->sou   = g_malloc0(numr*sizeof(ASDMSourceArrayEntry));
+  out->nsou  = 0;
+  chkSelCode = in->selCode && (in->selCode[0]!=' '); /* Selecting by code? */
 
-    /* Already done this source? */
-    done = FALSE;
-    for (jSource=0; jSource< out->nsou; jSource++) {
-      if (!strcmp(in->SourceTab->rows[iSource]->sourceName,
-		  out->sou[jSource]->sourceName)) {
-	/* if doCode also check code */
-	if (in->doCode) {
-	  if ((strncmp(in->SourceTab->rows[iSource]->code, "NONE", 4))  &&
-	      (strncmp(in->SourceTab->rows[iSource]->code, "none", 4)))
-	    code = in->SourceTab->rows[iSource]->code;
-	  else code = blank;
-	  done = !strcmp(code, out->sou[jSource]->code);
-	} else done = TRUE;
-	if (done) break;
-      }
+  /* Loop over Fields */
+  for (iField=0; iField<in->FieldTab->nrows; iField++) {
+    fieldId = in->FieldTab->rows[iField]->fieldId;
+    sourceId = in->FieldTab->rows[iField]->sourceId;
+    /* Selecting by code? Only using 1 character */
+    if (chkSelCode) {
+      want = in->FieldTab->rows[iField]->code[0]==in->selCode[0];
+      if (!want) continue;
     }
-    if (done) continue;
-
-    /* Selection by calCode? */
-    if (in->selCode) {
-      len = strlen(in->SourceTab->rows[iSource]->code);
-      if (strncmp(in->selCode, in->SourceTab->rows[iSource]->code, len)) continue;
+    /* Care about this one */
+    ig = 0;  want = TRUE;
+    while (ignore[ig]) {
+      if (!strcmp(in->FieldTab->rows[iField]->fieldName, ignore[ig])) 
+	{want = FALSE; break;}
+      ig++;
     }
-
-    /* Is this one selected? - check in Spectral Window array */
-    SWId = in->SourceTab->rows[iSource]->spectralWindowId;
-    for (iSW=0; iSW<SpWinArray->nwinds; iSW++) {
-      if (SpWinArray->winds[iSW]->spectralWindowId==SWId) break;
-    }
-    /* Not found or not selected? */
-    if ((iSW>=SpWinArray->nwinds) || (!SpWinArray->winds[iSW]->selected)) 
-      continue; 
-
-    /* Find source in FieldTab */
-    sourceId = in->SourceTab->rows[iSource]->sourceId;
-    for (jField=0; jField<in->FieldTab->nrows; jField++) {
-      if (in->FieldTab->rows[jField]->sourceId==sourceId) break;
-    } /* end loop over fields */
-      /* Try again with source names if not found */
-    if (jField>=in->FieldTab->nrows) {
-      for (jField=0; jField<in->FieldTab->nrows; jField++) {
-	if (!strcmp(in->FieldTab->rows[jField]->fieldName, 
-		    in->SourceTab->rows[iSource]->sourceName)) break;
-      } /* end loop over fields */
-    }
-    if (jField>=in->FieldTab->nrows) return NULL;
-     
-    /*fprintf(stderr, "   %s %d %d %d\n",in->SourceTab->rows[iSource]->sourceName, jField,
-      in->FieldTab->rows[jField]->fieldId, in->FieldTab->rows[jField]->fieldQual);*/
-
-     /* Loop over entries in Field tab if doQual */
-    more = TRUE;
-    while (more) {
-      
-      /* Create */
-      out->sou[iOut] = g_malloc0(sizeof(ASDMSourceArrayEntry));
-      out->nsou++;
-
-      /* Copy source info */
-      out->sou[iOut]->sourceId        = in->SourceTab->rows[iSource]->sourceId;
-      out->sou[iOut]->sourceNo        = in->SourceTab->rows[iSource]->sourceNo;
-      out->sou[iOut]->sourceQual      = 0;
-      out->sou[iOut]->sourceName      = g_strdup(in->SourceTab->rows[iSource]->sourceName);
-      out->sou[iOut]->timeInterval    = g_malloc0(2*sizeof(odouble));
-      out->sou[iOut]->timeInterval[0] = in->SourceTab->rows[iSource]->timeInterval[0];
-      out->sou[iOut]->timeInterval[1] = in->SourceTab->rows[iSource]->timeInterval[1];
-      out->sou[iOut]->direction       = g_malloc0(2*sizeof(odouble));	       
-      out->sou[iOut]->direction[0]    = in->SourceTab->rows[iSource]->direction[0];
-      out->sou[iOut]->direction[1]    = in->SourceTab->rows[iSource]->direction[1];
-      out->sou[iOut]->properMotion    = g_malloc0(2*sizeof(odouble));
-      out->sou[iOut]->properMotion[0] = in->SourceTab->rows[iSource]->properMotion[0];
-      out->sou[iOut]->properMotion[1] = in->SourceTab->rows[iSource]->properMotion[1];
-      out->sou[iOut]->numLines        = in->SourceTab->rows[iSource]->numLines;
-      num                             = out->sou[iOut]->numLines;
-      out->sou[iOut]->restFrequency   = g_malloc0(num*sizeof(odouble));
-      for (i=0; i<num; i++) out->sou[iOut]->restFrequency[i] = in->SourceTab->rows[iSource]->restFrequency[i];
-      out->sou[iOut]->sysVel          = g_malloc0(num*sizeof(odouble));
-      for (i=0; i<num; i++) out->sou[iOut]->sysVel[i] = in->SourceTab->rows[iSource]->sysVel[i];
-      out->sou[iOut]->spectralWindowId = in->SourceTab->rows[iSource]->spectralWindowId;
-
-      /* Field Id */
-      out->sou[iOut]->fieldId = in->FieldTab->rows[jField]->fieldId;
-      
-      /* Save code - ignore terminally stupid "NONE" by either VLA or ALMA spelling */
-      if (strcmp("NONE", in->FieldTab->rows[jField]->code) && 
-	  strcmp("none", in->FieldTab->rows[jField]->code))
-	out->sou[iOut]->code = strdup(in->FieldTab->rows[jField]->code);
-      else out->sou[iOut]->code = strdup(blank);
-
-      /* Using qualifiers? */
-      if (in->doQual) {
-	out->sou[iOut]->sourceId        = in->FieldTab->rows[jField]->sourceId;
-	out->sou[iOut]->sourceNo        = in->FieldTab->rows[jField]->sourceNo;
-	out->sou[iOut]->sourceQual      = in->FieldTab->rows[jField]->fieldQual;
-	out->sou[iOut]->fieldId         = in->FieldTab->rows[jField]->fieldId;
-	out->sou[iOut]->direction[0]    = in->FieldTab->rows[jField]->phaseDir[0];
-	out->sou[iOut]->direction[1]    = in->FieldTab->rows[jField]->phaseDir[1];
-	/* Any more for this fieldName? */
-	for (j=jField+1; j<in->FieldTab->nrows; j++) {
-	  if (!strcmp(out->sou[iOut]->sourceName, in->FieldTab->rows[j]->fieldName))
-	    break;
-	}
-	if (j<in->FieldTab->nrows) {
-	  jField = j;
-	  more = TRUE;
-	} else more = FALSE;
-	
-      } else
-	more = FALSE;   /* Only once */
-      /*fprintf(stderr, "%s:%4.4d %d %d %d\n",out->sou[iOut]->sourceName, out->sou[iOut]->sourceQual, 
-	out->sou[iOut]->fieldId, iSource, out->sou[iOut]->sourceNo);*/
-      iOut++;
-    } /* end loop over Field tab */
- } /* end loop over sources */
+    if (!want) continue;
+    /* Find instances in Main table */
+    for (iMain=0; iMain<in->MainTab->nrows; iMain++) {
+      if (in->MainTab->rows[iMain]->fieldId==fieldId) {
+	/* Get code */
+	strcpy(code,in->FieldTab->rows[iField]->code); 
+	ObitSDMDataDefaultCalCode(in, iMain, code);
+	/* Find SourceTab with entry sourceId and selected SW */
+	for (iSource=0; iSource<in->SourceTab->nrows; iSource++) {
+	  if (in->SourceTab->rows[iSource]->sourceId==sourceId) {
+	    SWId = in->SourceTab->rows[iSource]->spectralWindowId;
+	    for (iSW=0; iSW<SpWinArray->nwinds; iSW++) 
+	      if (SpWinArray->winds[iSW]->spectralWindowId==SWId) break;
+	    if (iSW>=SpWinArray->nwinds) continue; /* Found? */
+	    if (SpWinArray->winds[iSW]->selected) {
+	      /* Is this the first occurance of fieldName? */
+	      occur = LastOccurance(out, in->FieldTab->rows[iField]->fieldName);
+	      if (occur<0) {
+	      /* First occurance, create entry */
+		AddSourceArrayEntry(out, code, 0, nSelSW, 
+				    in->SourceTab->rows[iSource],
+				    in->FieldTab->rows[iField]);
+		kSW = 0; iOut = out->nsou-1;
+	      } else if (((in->FieldTab->rows[iField]->delayDir[0]!=out->sou[occur]->direction[0]) ||
+			  (in->FieldTab->rows[iField]->delayDir[1]!=out->sou[occur]->direction[1])) &&
+			 (in->FieldTab->rows[iField]->fieldId!=out->sou[occur]->fieldId)) {
+		/* Same name different fieldId & position, increment qualifier */
+		AddSourceArrayEntry(out, code, out->sou[occur]->sourceQual+1, nSelSW, 
+				    in->SourceTab->rows[iSource],
+				    in->FieldTab->rows[iField]);
+		kSW = 0; iOut = out->nsou-1;
+	      } else if (in->doCode && strcmp(code,out->sou[occur]->code)) {
+		/* separate entry for name and code */
+		AddSourceArrayEntry(out, code, 0, nSelSW, 
+				    in->SourceTab->rows[iSource],
+				    in->FieldTab->rows[iField]);
+		kSW = 0; iOut = out->nsou-1;
+	      } else if (in->FieldTab->rows[iField]->fieldId!=out->sou[occur]->fieldId) {
+		/* separate entry if different unique fieldId */
+		want = TRUE;
+		for (i=0; i<out->nsou; i++) 
+		  if (out->sou[i]->fieldId==in->FieldTab->rows[iField]->fieldId) {want = FALSE; break;}
+		if (want) {
+		  AddSourceArrayEntry(out, code, 0, nSelSW, 
+				      in->SourceTab->rows[iSource],
+				      in->FieldTab->rows[iField]);
+		  kSW = 0; iOut = out->nsou-1;
+		  /* unless doCode=T use same sourceNo as occur */
+		  if (!in->doCode) {
+		    out->sou[iOut]->sourceNo = out->sou[occur]->sourceNo;
+		    out->sou[iOut]->repeat = TRUE;  /* This is a repeat */
+		  }
+		}
+	      } /* end add with new position */
+	      /* Line stuff for SW */
+	      if (kSW<nSelSW) {
+		if (in->SourceTab->rows[iSource]->restFrequency) 
+		  out->sou[iOut]->restFrequency[kSW]= in->SourceTab->rows[iSource]->restFrequency[0];
+		if (in->SourceTab->rows[iSource]->sysVel) 
+		  out->sou[iOut]->sysVel[kSW]       = in->SourceTab->rows[iSource]->sysVel[0];
+		kSW++;
+	      }
+	    }  /* end Spectral window selected */
+	  } /* End if has source Id */
+	} /* End source tab  search */
+      } /* End MainTab entry has fieldId */
+    } /* End loop over Main */
+  } /* End loop over FieldTab */
 
   /* Cleanup */
   SpWinArray = ObitSDMDataKillSWArray (SpWinArray);
+  /* Delete unused entries */
+  for (i=out->nsou; i<numr; i++) g_free(out->sou[i]);
   return out;
 } /* end ObitSDMDataGetSourceArray */
 
@@ -1824,7 +1810,7 @@ ASDMSourceArray* ObitSDMDataKillSourceArray (ASDMSourceArray *in)
 	if (in->sou[i]->code)          g_free(in->sou[i]->code);
 	if (in->sou[i]->direction)     g_free(in->sou[i]->direction);
 	if (in->sou[i]->properMotion)  g_free(in->sou[i]->properMotion);
-	if (in->sou[i]->sourceName)    g_free(in->sou[i]->sourceName);
+	if (in->sou[i]->fieldName)     g_free(in->sou[i]->fieldName);
 	if (in->sou[i]->restFrequency) g_free(in->sou[i]->restFrequency);
 	if (in->sou[i]->sysVel)        g_free(in->sou[i]->sysVel);
 	g_free(in->sou[i]);
@@ -1990,66 +1976,13 @@ olong ObitASDSelScan(ObitSDMData *in, olong selChan, olong selIF,
   return -1;  /* Must not have found a match */
 } /* end ObitASDSelScan */
 
-/**
- * Give all sources with the same name the same source number
- * \param in  Structure with SourceTab to fix
- */
-void ObitSDMSourceTabFix (ObitSDMData *in)
-{ 
-  olong i, j;
-  ASDMSourceRow *irow, *jrow;
-
-  if (in==NULL) return;
-  /* fix entries */  
-  for (i=0; i<in->SourceTab->nrows; i++) {
-    if (in->SourceTab->rows[i]) {
-      irow = in->SourceTab->rows[i];
-	for (j=i+1; j<in->SourceTab->nrows; j++) {
-	  if (in->SourceTab->rows[j]) {
-	    jrow = in->SourceTab->rows[j];
-	    if (!strcmp(irow->sourceName, jrow->sourceName))
-	      jrow->sourceNo = irow->sourceNo;
-	  }
-	}
-    }
-  }
-  return;
-} /* end ObitSDMSourceTabFix */
-
-/**
- * Give all sources with the same name and calcode the same source number
- * \param in  Structure with SourceTab to fix
- */
-void ObitSDMSourceTabFixCode (ObitSDMData *in)
-{ 
-  olong i, j;
-  ASDMSourceRow *irow, *jrow;
-
-  if (in==NULL) return;
-  /* fix entries */  
-  for (i=0; i<in->SourceTab->nrows; i++) {
-    if (in->SourceTab->rows[i]) {
-      irow = in->SourceTab->rows[i];
-	for (j=i+1; j<in->SourceTab->nrows; j++) {
-	  if (in->SourceTab->rows[j]) {
-	    jrow = in->SourceTab->rows[j];
-	    if (!strcmp(irow->sourceName, jrow->sourceName) &&
-		!strcmp(irow->code, jrow->code)) 
-	      jrow->sourceNo = irow->sourceNo;
-	  }
-	}
-    }
-  }
-  return;
-} /* end ObitSDMSourceTabFixCode */
-
 /**   
- * Revise source numbers in an ASDMSourceTable to agree with a source list 
- * Entries in in->SourceTab are assigned a source number in sourceList if
+ * Revise source numbers in an ASDMSourceArray to agree with a source list 
+ * Entries in in->SourceArray are assigned a source number in sourceList if
  * in common or a new number not conflicting with sourceList.
  * \param  in         ASDM object with SourceTab to modify
  * \param  sourceList Previous definitions of source numbers
- * \param  isDone     [out] flags, TRUE if corresponding entry in in->SourceTab
+ * \param  isDone     [out] flags, TRUE if corresponding entry in in->SourceArray
  *                    is in sourceList or
  * \param  doCode     If TRUE, codes must also match
  * \param  err        Obit error/message stack
@@ -2057,8 +1990,8 @@ void ObitSDMSourceTabFixCode (ObitSDMData *in)
 void ObitSDMDataRenumberSrc(ObitSDMData *in,  ObitSourceList *sourceList, 
 			    gboolean *isDone,  gboolean doCode, ObitErr *err)
 {
-  olong i, j, k, len, nextID=1, lastOld;
-  gboolean matches, *renumsrc=NULL, areNew=FALSE, renum=FALSE;
+  olong i, j, len, nextID=1;
+  gboolean matches, areNew=FALSE, renum=FALSE;
   gchar *routine = "RenumberSrc";
 
   /* Error checks */
@@ -2075,93 +2008,36 @@ void ObitSDMDataRenumberSrc(ObitSDMData *in,  ObitSourceList *sourceList,
     nextID = MAX(nextID, sourceList->SUlist[i]->SourID+1);
   }
 
-  /* Renumber Source or Field Table? */
-  if (in->doQual) {   /* Renumber Field Table*/
-    /* Flags for renumbered FieldTab entries */
-    renumsrc = g_malloc0(in->FieldTab->nrows*sizeof(gboolean));
-    for (k=0; k<in->FieldTab->nrows; k++) renumsrc[k] = FALSE;
-    
-    /* Loop over in->FieldTab */
-    for (j=0; j<in->FieldTab->nrows; j++) {
+  /* Renumber SourceArray */
+  /* Loop over in->SourceArray */
+  for (j=0; j<in->SourceArray->nsou; j++) {
       /* Loop over sourceList */
       for (i=0; i<sourceList->number; i++) {
 	/* Check name */
-	len = MIN (strlen(in->FieldTab->rows[j]->fieldName),strlen(sourceList->SUlist[i]->SourceName));
+	len = MIN (strlen(in->SourceArray->sou[j]->fieldName),strlen(sourceList->SUlist[i]->SourceName));
 	len = MIN(len,20);
-	matches = !strncmp(in->FieldTab->rows[j]->fieldName, sourceList->SUlist[i]->SourceName,len);
+	matches = !strncmp(in->SourceArray->sou[j]->fieldName, sourceList->SUlist[i]->SourceName,len);
 	if (!matches) continue;
 	/* Code? */
 	if (doCode) {
-	  len = MIN (strlen(in->FieldTab->rows[j]->code),strlen(sourceList->SUlist[i]->CalCode));
+	  len = MIN (strlen(in->SourceArray->sou[j]->code),strlen(sourceList->SUlist[i]->CalCode));
 	  len = MIN(len,8);
-	  matches = !strncmp(in->FieldTab->rows[j]->code, sourceList->SUlist[i]->CalCode,len);
+	  matches = !strncmp(in->SourceArray->sou[j]->code, sourceList->SUlist[i]->CalCode,len);
 	}
 	if (matches) {
-	  if (in->FieldTab->rows[j]->sourceNo != sourceList->SUlist[i]->SourID) renum = TRUE;
-	  in->FieldTab->rows[j]->sourceNo = sourceList->SUlist[i]->SourID;
-	  isDone[i] = TRUE;
+	  if (in->SourceArray->sou[j]->sourceNo != sourceList->SUlist[i]->SourID) renum = TRUE;
+	  in->SourceArray->sou[j]->sourceNo = sourceList->SUlist[i]->SourID;
+	  isDone[j] = TRUE;
 	  break;
 	}
       } /* end loop over sourceList */
       /* If not found, assign new value */
-      if ((!isDone[i]) && (!renumsrc[j])) {
-	lastOld = in->FieldTab->rows[j]->sourceNo;   /* previous */
-	in->FieldTab->rows[j]->sourceNo = nextID++;
+      if (!isDone[j]) {
+	in->SourceArray->sou[j]->sourceNo = nextID++;
 	areNew = TRUE;
-	/* Renumber any subsequent entries */
-	for (k=j+1; k<in->FieldTab->nrows; k++) {
-	  if (in->FieldTab->rows[k]->sourceNo==lastOld) {
-	    in->FieldTab->rows[k]->sourceNo = in->FieldTab->rows[j]->sourceNo;
-	    renumsrc[k] = TRUE;
-	  }
-	}
       }
-    } /* end loop over in->FieldTab */
-    if (renumsrc) g_free(renumsrc); renumsrc = NULL;
+    } /* end loop over in->SourceArray */
     
-  } else { /* Renumber Source Table*/
-    /* Flags for renumbered SourceTab entries */
-    renumsrc = g_malloc0(in->SourceTab->nrows*sizeof(gboolean));
-    for (k=0; k<in->SourceTab->nrows; k++) renumsrc[k] = FALSE;
-    
-    /* Loop over in->SourceTab */
-    for (j=0; j<in->SourceTab->nrows; j++) {
-      /* Loop over sourceList */
-      for (i=0; i<sourceList->number; i++) {
-	/* Check name */
-	len = MIN (strlen(in->SourceTab->rows[j]->sourceName),strlen(sourceList->SUlist[i]->SourceName));
-	len = MIN(len,20);
-	matches = !strncmp(in->SourceTab->rows[j]->sourceName, sourceList->SUlist[i]->SourceName,len);
-	if (!matches) continue;
-	/* Code? */
-	if (doCode) {
-	  len = MIN (strlen(in->SourceTab->rows[j]->code),strlen(sourceList->SUlist[i]->CalCode));
-	  len = MIN(len,8);
-	  matches = !strncmp(in->SourceTab->rows[j]->code, sourceList->SUlist[i]->CalCode,len);
-	}
-	if (matches) {
-	  if (in->SourceTab->rows[j]->sourceNo != sourceList->SUlist[i]->SourID) renum = TRUE;
-	  in->SourceTab->rows[j]->sourceNo = sourceList->SUlist[i]->SourID;
-	  isDone[i] = TRUE;
-	  break;
-	}
-      } /* end loop over sourceList */
-      /* If not found, assign new value */
-      if ((!isDone[i]) && (!renumsrc[j])) {
-	lastOld = in->SourceTab->rows[j]->sourceNo;   /* previous */
-	in->SourceTab->rows[j]->sourceNo = nextID++;
-	areNew = TRUE;
-	/* Renumber any subsequent entries */
-	for (k=j+1; k<in->SourceTab->nrows; k++) {
-	  if (in->SourceTab->rows[k]->sourceNo==lastOld) {
-	    in->SourceTab->rows[k]->sourceNo = in->SourceTab->rows[j]->sourceNo;
-	    renumsrc[k] = TRUE;
-	  }
-	}
-      }
-    } /* end loop over in->SourceTab */
-    if (renumsrc) g_free(renumsrc); renumsrc = NULL;
-  }
   /* Say if anything renumbered */
   if (renum)
     Obit_log_error(err, OBIT_InfoErr, "Renumbered Sources");
@@ -2256,6 +2132,9 @@ gboolean ObitSDMDataSelCode  (ObitSDMData *in, olong iMain, gchar *selCode)
 
   /* Checking anything? */
   if ((strlen(selCode)==0) || (selCode[0]==' ')) return want;
+
+  /* Save selCode */
+  if (in->selCode==NULL) in->selCode = strdup(selCode);
 
   /* Find Field table row */
   fieldId = in->MainTab->rows[iMain]->fieldId;
@@ -2783,16 +2662,12 @@ void ObitSDMDataGetDefaultCalCode (ObitSDMData *in, ObitErr *err)
     for (iField=0; iField<in->FieldTab->nrows; iField++) {
       if (in->FieldTab->rows[iField]->fieldId==fieldId) break;
     }
-
-    /* Need possible default? */
-    if (!strncmp(in->FieldTab->rows[iField]->code, "NONE", 4) ||
-	!strncmp(in->FieldTab->rows[iField]->code, "none", 4)) {
-      DefaultCalCode(in, iMain, in->FieldTab->rows[iField]->code);
-    } /* End lookup default cal code */
     
-
+    /* Need possible default? */
+    ObitSDMDataDefaultCalCode(in, iMain, in->FieldTab->rows[iField]->code);
+ 
   } /* end loop over main table */
-
+  
 } /* end ObitSDMDataGetDefaultCalCode */
 
 /**
@@ -3511,6 +3386,8 @@ static odouble ASDMparse_time(gchar *string, olong maxChar,
 
 /**  Parse time from XLM string  
  * Read time range as a mjd nanoseconds, return as pair of JD
+ * if second entry is less than the first, then it is assumed to be 
+ * a time interval
  * \param  string  String to parse
  * \param  maxChar Maximum size of string
  * \param  prior string prior to value
@@ -3521,7 +3398,7 @@ static odouble* ASDMparse_timeRange(gchar *string, olong maxChar,
 				   gchar *prior, gchar **next)
 {
   odouble *out;
-  long long temp;
+  long long temp, temp2;
   gchar *b;
   odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
 
@@ -3535,8 +3412,9 @@ static odouble* ASDMparse_timeRange(gchar *string, olong maxChar,
   temp = strtoll(b, next, 10);
   out[0] = (odouble)((temp*1.0e-9)/86400.0) + mjdJD0;
   b = *next;
-  temp = strtoll(b, next, 10);
-  out[1] = (odouble)((temp*1.0e-9)/86400.0) + mjdJD0;
+  temp2 = strtoll(b, next, 10);
+  if (temp2>temp) out[1] = (odouble)((temp2*1.0e-9)/86400.0) + mjdJD0;
+  else            out[1] = (odouble)((temp2*1.0e-9)/86400.0);
    
   return out;
 } /* end ASDMparse_timeRange */
@@ -7677,22 +7555,61 @@ static ASDMFlagTable* KillASDMFlagTable(ASDMFlagTable* table)
 static ASDMPointingRow* KillASDMPointingRow(ASDMPointingRow* row)
 {
   if (row == NULL) return NULL;
-  if (row->timeInterval)      g_free(row->timeInterval);
-  if (row->encoder)           g_free(row->encoder);
-  if (row->pointingDirection) g_free(row->pointingDirection);
-  if (row->target)            g_free(row->target);
-  if (row->offset)            g_free(row->offset);
+  if (row->timeInterval)              g_free(row->timeInterval);
+  if (row->encoder)                   g_free(row->encoder);
+  if (row->pointingDirection)         g_free(row->pointingDirection);
+  if (row->target)                    g_free(row->target);
+  if (row->offset)                    g_free(row->offset);
+  if (row->AtmosphericCorrection)     g_free(row->AtmosphericCorrection);
+  if (row->SampledTimeInterval)       g_free(row->SampledTimeInterval);
+  if (row->SourceOffset)              g_free(row->SourceOffset);
   g_free(row);
   return NULL;
 } /* end   KillASDMPointingRow */
 
 /** 
  * Constructor for Pointing table parsing from file
+ * \param  PointingFile Name root of file containing table
+ * \param  err     ObitErr for reporting errors.
+ * \return table structure,  use KillASDMPointingTable to free
+ */
+static ASDMPointingTable* 
+ParseASDMPointingTable(ObitSDMData *me, 
+		       gchar *PointingFile, 
+		       ObitErr *err)
+{
+  ASDMPointingTable* out=NULL;
+  gchar *fullname;
+  gchar *routine = "ParseASDMPointingTable";
+
+  if (err->error) return out;
+
+  /* does either table exist? Try binary first */
+  fullname = g_strconcat (PointingFile,".bin", NULL);
+  if (ObitFileExist(fullname, err)) {
+    out = ParseASDMPointingTableBin(me, fullname, err);
+  }
+  if (fullname) g_free(fullname);
+  if (err->error) Obit_traceback_val (err, routine, me->name, out);
+  if (out) return out;  /* Done? */
+
+  /* does either table exist? Try binary first */
+  fullname = g_strconcat (PointingFile,".xml", NULL);
+  if (ObitFileExist(fullname, err)) {
+    out = ParseASDMPointingTableXML(me, fullname, err);
+  }
+  if (fullname) g_free(fullname);
+  if (err->error) Obit_traceback_val (err, routine, me->name, out);
+  return out;
+} /* end ParseASDMPointingTable */
+
+/** 
+ * Constructor for Pointing table parsing from XML file
  * \param  PointingFile Name of file containing table
  * \param  err     ObitErr for reporting errors.
  * \return table structure,  use KillASDMPointingTable to free
  */
-static ASDMPointingTable* ParseASDMPointingTable(ObitSDMData *me, 
+static ASDMPointingTable* ParseASDMPointingTableXML(ObitSDMData *me, 
 						 gchar *PointingFile, 
 						 ObitErr *err)
 {
@@ -7705,7 +7622,7 @@ static ASDMPointingTable* ParseASDMPointingTable(ObitSDMData *me,
   odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
   gchar *prior, *next;
   gboolean OK = FALSE;
-  gchar *routine = " ParseASDMPointingTable";
+  gchar *routine = " ParseASDMPointingTableXML";
 
   /* error checks */
   if (err->error) return out;
@@ -7792,7 +7709,7 @@ static ASDMPointingTable* ParseASDMPointingTable(ObitSDMData *me,
     }
     prior = "<overTheTop>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
-      out->rows[irow]->overTheTop = ASDMparse_boo (line, maxLine, prior, &next);
+      out->rows[irow]->OverTheTop = ASDMparse_boo (line, maxLine, prior, &next);
       continue;
     }
     prior = "<antennaId>";
@@ -7803,7 +7720,32 @@ static ASDMPointingTable* ParseASDMPointingTable(ObitSDMData *me,
     }
     prior = "<pointingModelId>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
-      out->rows[irow]->pointingModelId = ASDMparse_int (line, maxLine, prior, &next);
+      out->rows[irow]->PointingModelId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<sourceOffset>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->SourceOffset = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<sourceOffsetEquinox>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->SourceEquinoxOffset = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<sampledTimeInterval>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->SampledTimeInterval = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<atmosphericCorrection>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->AtmosphericCorrection = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<sourceOffsetReferenceCode>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->SourceReferenceCodeOffset = ASDMparse_int (line, maxLine, prior, &next);
       continue;
     }
 
@@ -7826,7 +7768,69 @@ static ASDMPointingTable* ParseASDMPointingTable(ObitSDMData *me,
   if (!OK) Obit_log_error(err, OBIT_Error, "Error reading Pointing Table");
 
   return out;
-} /* end ParseASDMPointingTable */
+} /* end ParseASDMPointingTableXML */
+
+/** 
+ * Constructor for Pointing table parsing from binary file
+ * \param  PointingFile Name of file containing table
+ * \param  err          ObitErr for reporting errors.
+ * \return table structure,  use KillASDMPointingTable to free
+ */
+static ASDMPointingTable* 
+ParseASDMPointingTableBin(ObitSDMData *me, 
+			  gchar *PointingFile, 
+			  ObitErr *err)
+{
+  ASDMPointingTable* out=NULL;
+  ObitPointing*  binTab=NULL;
+  olong nrow, orow, irow;
+  gchar *routine = "ParseASDMPointingTableBin";
+
+  if (err->error) return out;
+
+  /* Basic output */
+  out = g_malloc0(sizeof(ASDMPointingTable));
+  out->rows = NULL;
+
+  /* Create binary table parsing structure */
+  binTab = ObitPointingCreate ("Pointing", err);
+  if (err->error) Obit_traceback_val (err, routine, me->name, out);
+
+  /* Init file */
+  ObitPointingInitFile (binTab, PointingFile, err);
+  if (err->error) goto cleanup;
+
+  /* How big */
+  nrow = ObitPointingGetNrow (binTab);
+  /* If not given use ASDM table */
+  if (nrow<0) {
+    nrow = me->ASDMTab->PointingRows;
+    binTab->nrow = nrow;
+  }
+  out->nrows = nrow;
+  if (nrow<1) return out;
+
+  /* Finish building output */
+  out->rows = g_malloc0((out->nrows+1)*sizeof(ASDMPointingRow*));
+  for (irow=0; irow<out->nrows; irow++) out->rows[irow] = g_malloc0(sizeof(ASDMPointingRow));
+
+  /* Loop reading rows */
+  for (irow=0; irow<out->nrows; irow++) {
+    orow = ObitPointingGetRow (binTab, out->rows[irow], err);
+    if (orow<=0) break;  /* Done? */
+    if (err->error) goto cleanup;
+    nrow = orow;
+  } /* end loop reading */
+  out->nrows = nrow;
+
+  /* Cleanup */
+  binTab = ObitPointingUnref(binTab); 
+  if (err->error) Obit_traceback_val (err, routine, me->name, out);
+
+ cleanup:
+  if (err->error) Obit_traceback_val (err, routine, me->name, out);
+  return out;
+} /* end ParseASDMPointingTableBin */
 
 /** 
  * Destructor for Pointing table
@@ -10412,9 +10416,10 @@ static olong CountTableRows(gchar *CntFile, ObitErr *err)
  * Get EVLA CalCode from scan intents 
  * \param  in      ASDM structure
  * \param  iMain   Row in main table defining scan
- * \param  code    [out] default calcode
+ * \param  code    [in/out] default calcode
  */
-static void DefaultCalCode(ObitSDMData *in, olong iMain, gchar* code)
+void ObitSDMDataDefaultCalCode(ObitSDMData *in, olong iMain, 
+				      gchar* code)
 {
   olong i, j, iScan, scanNo, numIntent;
   olong maxIntent=8;   /* Known intents */
@@ -10427,6 +10432,9 @@ static void DefaultCalCode(ObitSDMData *in, olong iMain, gchar* code)
 
   /* EVLA? */
   if (!in->isEVLA) return;
+
+  /* one already given? */
+  if (strncmp(code, "NONE", 4) && strncmp(code, "none", 4)) return;
 
   /* Look up scan */
   scanNo = in->MainTab->rows[iMain]->scanNumber;
@@ -10464,7 +10472,7 @@ static void DefaultCalCode(ObitSDMData *in, olong iMain, gchar* code)
   if (haveIntent[1]&&haveIntent[2]&&haveIntent[3]&&haveIntent[4]) code[0] = 'Q';
   if (haveIntent[1]&&haveIntent[2]&&haveIntent[3]&&haveIntent[4]&&haveIntent[5]) code[0] = 'R';
   if (code[0]=='?') code[0] = 'Z';  /* Anything else */
-} /* end DefaultCalCode */
+} /* end ObitSDMDataDefaultCalCode */
 
 /**
  * Compare frequencies, to give ascending order.
@@ -10537,3 +10545,65 @@ static gboolean FieldCheck(ASDMFieldTable* table, olong row, gchar *name)
   } /* end loop */
   return found;
 } /* end FieldCheck */
+
+/**
+ * find last occurance of a fieldName in SourceArray
+ * \param in    Array to search
+ * \param name  field name
+ * \return 0-rel index, -1-> no match
+ */
+static olong LastOccurance(ASDMSourceArray *in, gchar *name) {
+  olong i, out = -1;
+  if (in->nsou<=0) return out;   
+  for (i=in->nsou-1;i>=0; i--) {
+    if (!strcmp(name,in->sou[i]->fieldName)) {out = i; break;}
+  }
+  return out;
+} /* end LastOccurance */
+
+/**
+ * Make entry in SourceArray, source number is 1-rel index.
+ * \param in    Array to update
+ * \param code  calibrator code
+ * \param qual  source qualifier
+ * \param nSW   number of selected spectral windows
+ * \param sourceRow corresponding SourceTab row (first selected SW)
+ * \param fieldRow  FieldTab row, uses fieldName as name,  delayDir as position
+ */
+static void AddSourceArrayEntry(ASDMSourceArray *in, gchar *code, olong qual, 
+				olong nSW, ASDMSourceRow *sourceRow, 
+				ASDMFieldRow *fieldRow)
+{
+  olong iOut;
+  gchar *blank = "  ";
+
+  iOut = in->nsou;
+  /* Create */
+  in->sou[iOut] = g_malloc0(sizeof(ASDMSourceArrayEntry));
+  in->nsou++;
+  in->sou[iOut]->direction     = g_malloc0(2*sizeof(odouble));
+  in->sou[iOut]->timeInterval  = g_malloc0(2*sizeof(odouble));
+  in->sou[iOut]->properMotion  = g_malloc0(2*sizeof(odouble));
+  in->sou[iOut]->restFrequency = g_malloc0(nSW*sizeof(odouble));
+  in->sou[iOut]->sysVel        = g_malloc0(nSW*sizeof(odouble));
+  /* values */
+  in->sou[iOut]->sourceNo        = iOut + 1;
+  in->sou[iOut]->sourceQual      = qual;
+  /* Save code - ignore terminally stupid "NONE" by either VLA or ALMA spelling */
+  if (strcmp("NONE", code) && strcmp("none", code))
+    in->sou[iOut]->code          = strdup(code);
+  else in->sou[iOut]->code       = strdup(blank);
+  in->sou[iOut]->fieldName       = g_strdup(fieldRow->fieldName);
+  in->sou[iOut]->fieldId         = fieldRow->fieldId;
+  in->sou[iOut]->direction[0]    = fieldRow->delayDir[0];
+  in->sou[iOut]->direction[1]    = fieldRow->delayDir[1];
+  in->sou[iOut]->sourceId        = sourceRow->sourceId;
+  in->sou[iOut]->timeInterval[0] = sourceRow->timeInterval[0];
+  in->sou[iOut]->timeInterval[1] = sourceRow->timeInterval[1];
+  in->sou[iOut]->properMotion[0] = sourceRow->properMotion[0];
+  in->sou[iOut]->properMotion[1] = sourceRow->properMotion[1];
+  if (sourceRow->restFrequency) in->sou[iOut]->restFrequency[0]= sourceRow->restFrequency[0];
+  if (sourceRow->sysVel) in->sou[iOut]->sysVel[0]       = sourceRow->sysVel[0];
+  in->sou[iOut]->spectralWindowId= sourceRow->spectralWindowId;
+  in->sou[iOut]->repeat          = FALSE;
+} /* end AddSourceArrayEntry */

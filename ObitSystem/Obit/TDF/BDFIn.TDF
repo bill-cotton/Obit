@@ -76,8 +76,6 @@ doAtmCor                            Select data with Atm. Corr?
 **PARAM** boo 1  **DEF** F
 doAppend                            True => append to existing data
 **PARAM** boo 1  **DEF** F
-doQual                              True => use qualifiers
-**PARAM** boo 1  **DEF** F
 binFlag                             True => apply binary flags
 **PARAM** boo 1  **DEF** F
 Compress                            True => write compressed data
@@ -204,8 +202,6 @@ Data selection
              fluctuations removed (ALMA) if such data is available.
              Otherwise select uncorrected data.
   doAppend...If True append data to existing, fully specified dataset.
-  doQual.....If True, use qualifiers for different pointings in 
-             different subscans.  Needed for VLA OTF mode.
   binFlag....If True, apply binary flags from BDF data directly to the
              data, not in the FG table.  Used by ALMA.
   Compress...If True  the output data is written in

@@ -371,12 +371,12 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
 			   olong selChan, olong selIF, ObitErr *err)
 {
   gchar *startInfo, *endInfo, *startBB, *endBB, *prior, *next, *xnext, *tstr;
-  olong  configDescriptionId, fieldId, inext, ScanId=0, iScan, iIntent, iField;
+  olong  configDescriptionId, fieldId, inext, ScanId=0, iScan, iIntent;
   olong maxStr, maxStr2, i, j, count, *antIds, iConfig, iAnt, jAnt, iSW, jSW=0, jSource;
   olong blOrder, polnOrder, freqOrder, SPWOrder, BBOrder, APCOrder, binOrder;
   olong *SWoff=NULL, flagoff;
   gboolean done;
-  gchar *aname, *code, *blank=" ";
+  gchar *aname, code[12];
   ObitIOCode retCode = OBIT_IO_OK;
   gchar *routine = "ObitBDFDataInitScan";
 
@@ -838,49 +838,31 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
     in->offAtmCorr = 0;
   }
 
-  /* Source No. - find in in->SDMData->SourceArray with key fieldId */
-  fieldId = in->SDMData->MainTab->rows[in->ScanInfo->iMain]->fieldId;
-  /* Depending of whether doQual (1 source per subscan) */
-  if (in->SDMData->doQual) {
+  if (in->SDMData->doCode) {  
+    /* Get default code */
+    strcpy(code,"    "); ObitSDMDataDefaultCalCode(in->SDMData, iMain, code);
+    /* find in in->SDMData->SourceArray with key fieldId and code (1char)*/
+    fieldId = in->SDMData->MainTab->rows[in->ScanInfo->iMain]->fieldId;
+    for (jSource=0; jSource<in->SDMData->SourceArray->nsou; jSource++) {
+      if ((in->SDMData->SourceArray->sou[jSource]->fieldId==fieldId) && 
+	  (in->SDMData->SourceArray->sou[jSource]->code[0]==code[0])) break;
+    }
+    Obit_return_if_fail((jSource<in->SDMData->SourceArray->nsou), err,
+			"%s: Could not find field Id %d code %sin ASDM", 
+			routine, fieldId, code);
+  } else { /* doCode=FALSE - only use fieldId  */
+    fieldId = in->SDMData->MainTab->rows[in->ScanInfo->iMain]->fieldId;
     for (jSource=0; jSource<in->SDMData->SourceArray->nsou; jSource++) {
       if (in->SDMData->SourceArray->sou[jSource]->fieldId==fieldId) break;
     }
     Obit_return_if_fail((jSource<in->SDMData->SourceArray->nsou), err,
-			"%s: Could not find source Id %d in ASDM", 
-			routine, fieldId);
-  } else {  /* One source per scan - use Field Table */
-    for (iField=0; iField<in->SDMData->FieldTab->nrows; iField++) {
-      if (in->SDMData->FieldTab->rows[iField]->fieldId==fieldId) break;
-    }
-    Obit_return_if_fail((iField<in->SDMData->FieldTab->nrows), err,
 			"%s: Could not find field Id %d in ASDM", 
 			routine, fieldId);
-    /* Now look in SourceArray for name */
-    if (in->SDMData->doCode) {  /* Using doCode? ignore none */
-      if ((strncmp(in->SDMData->FieldTab->rows[iField]->code, "NONE", 4)) &&
-	  (strncmp(in->SDMData->FieldTab->rows[iField]->code, "none", 4)))
-	code = in->SDMData->FieldTab->rows[iField]->code;
-      else code = blank;
-      for (jSource=0; jSource<in->SDMData->SourceArray->nsou; jSource++) {
-	if ((!strcmp(in->SDMData->SourceArray->sou[jSource]->sourceName, 
-		     in->SDMData->FieldTab->rows[iField]->fieldName)) &&
-	    (!strcmp(in->SDMData->SourceArray->sou[jSource]->code, code)))
-	  break;
-      }
-    } else { /* rational source numbering */
-      for (jSource=0; jSource<in->SDMData->SourceArray->nsou; jSource++) {
-	if (!strcmp(in->SDMData->SourceArray->sou[jSource]->sourceName, 
-		    in->SDMData->FieldTab->rows[iField]->fieldName)) break;
-      }
-    }
-    Obit_return_if_fail((jSource<in->SDMData->SourceArray->nsou), err,
-			"%s: Could not find source %s in ASDM", 
-			routine, in->SDMData->SourceTab->rows[iField]->sourceName);
-     
   }
+
   in->sourceNo = in->SDMData->SourceArray->sou[jSource]->sourceNo;
   if (in->curSource) g_free(in->curSource);
-  in->curSource = strdup(in->SDMData->SourceArray->sou[jSource]->sourceName);
+  in->curSource = strdup(in->SDMData->SourceArray->sou[jSource]->fieldName);
   in->sourceQual = in->SDMData->SourceArray->sou[jSource]->sourceQual;
 
   /* Cross correlation frequency increment = no poln. x 2 */

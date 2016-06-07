@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2015                                          */
+/*;  Copyright (C) 2010-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -388,12 +388,6 @@ ObitASDMBand ObitSDMDataFreq2Band (odouble freq);
 olong ObitASDSelScan(ObitSDMData *in, olong selChan, olong selIF, 
 		     ObitASDMBand band, olong selConfig);
 
-/** Fix source numbers in an ASDMSourceTable */
-void ObitSDMSourceTabFix(ObitSDMData *in);
-
-/** Fix source numbers in an ASDMSourceTable including the calcode */
-void ObitSDMSourceTabFixCode(ObitSDMData *in);
-
 /** Revise source numbers in an ASDMSourceTable to agree with a source list */
 void ObitSDMDataRenumberSrc(ObitSDMData *in,  ObitSourceList *sourceList, 
 			    gboolean *isDone, gboolean doCode, ObitErr *err);
@@ -421,6 +415,9 @@ ObitTableSN* ObitSDMDataAtm2SN (ObitUV *inUV, ObitSDMData *SDM,
 
 /** Public: Get default calcodes by intent  */
 void ObitSDMDataGetDefaultCalCode (ObitSDMData *SDM, ObitErr *err);
+
+/** Public: Get default calcode string by intent  */
+void ObitSDMDataDefaultCalCode (ObitSDMData *SDM, olong iMain, gchar* code);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
