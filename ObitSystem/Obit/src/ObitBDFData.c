@@ -840,7 +840,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
 
   if (in->SDMData->doCode) {  
     /* Get default code */
-    strcpy(code,"    "); ObitSDMDataDefaultCalCode(in->SDMData, iMain, code);
+    strcpy(code,"NONE"); ObitSDMDataDefaultCalCode(in->SDMData, iMain, code);
     /* find in in->SDMData->SourceArray with key fieldId and code (1char)*/
     fieldId = in->SDMData->MainTab->rows[in->ScanInfo->iMain]->fieldId;
     for (jSource=0; jSource<in->SDMData->SourceArray->nsou; jSource++) {

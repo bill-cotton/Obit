@@ -1454,7 +1454,7 @@ def EVLAAutoFlag(uv, target, err, \
                      RMSClip=[0.0,0.0], RMSAvg=0.0, maxBad=0.25 ,timeAvg=1.0, \
                      doFD=False, FDmaxAmp=0.0, FDmaxV=0.0, FDwidMW=5, FDmaxRMS=[0.0,0.0], \
                      FDmaxRes=6.0, FDmaxResBL=6.0,  FDbaseSel=[0, 0, 0, 0], \
-                     nThreads=1, check=False, debug=False, logfile = ""):
+                     nThreads=1, check=False, debug=False, noScrat=[], logfile = ""):
     """
     Does Automated flagging
     
@@ -1493,6 +1493,7 @@ def EVLAAutoFlag(uv, target, err, \
     * nThreads = Number of threads to use
     * check      = Only check script, don't execute tasks
     * debug      = Run tasks debug, show input
+    * noScrat  = list of disks to avoid for scratch files
     * logfile    = Log file for task
     """
     ################################################################
@@ -1544,6 +1545,7 @@ def EVLAAutoFlag(uv, target, err, \
     af.FDmaxResBL = FDmaxResBL
     af.FDbaseSel  = FDbaseSel
     af.nThreads   = nThreads
+    af.noScrat    = noScrat
     af.taskLog    = logfile
     if debug:
         af.i
@@ -1945,7 +1947,7 @@ def EVLASYCal(uv, err, SYVer=1,  SYOut=0, calInt=0.1, applyOnly=False, \
                   smoTime=0.0833, smoFunc="MWF", SWUse=None,  \
                   clipSmo=0.1, clipParm=5., doEdit=False, Sigma=20., editFG=-1,\
                   doPlot=False, plotFile="./DelayCal.ps", \
-                  nThreads=1, logfile='', check=False, debug=False):
+                  nThreads=1, logfile='', check=False, noScrat=[], debug=False):
     """
     Gain calibration using Sys power (SY) table
     
@@ -1974,6 +1976,7 @@ def EVLASYCal(uv, err, SYVer=1,  SYOut=0, calInt=0.1, applyOnly=False, \
     * nThreads   = Number of threads for MWF smoothing
     * logfile    = logfile for messages
     * check      = Only check script, don't execute tasks
+    * noScrat    = list of disks to avoid for scratch files
     * debug      = show input
     """
     ################################################################
@@ -2001,6 +2004,7 @@ def EVLASYCal(uv, err, SYVer=1,  SYOut=0, calInt=0.1, applyOnly=False, \
     sygain.solnOut  = SNver
     sygain.calInt   = calInt
     sygain.smoFunc  = smoFunc
+    sygain.noScrat  = noScrat
     if applyOnly:
         sygain.smoParm  = [0.0]
         sygain.clipSmo  = [0.0]

@@ -540,12 +540,17 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean     doCalSelect;
   oint         doSYGain;
-  /*gchar *routine = "digestInputs";*/
+  gchar *routine = "digestInputs";
 
   /* error checks */
   g_assert(ObitErrIsA(err));
   if (err->error) return;
   g_assert (ObitInfoListIsA(myInput));
+
+  /* noScrat - no scratch files for AIPS disks */
+  ObitAIPSSetnoScrat(myInput, err);
+  if (err->error) Obit_traceback_msg (err, routine, "task Input");
+
   /* Make sure doCalSelect set properly */
   doCalSelect = FALSE;
   ObitInfoListGetTest(myInput, "doCalSelect",  &type, dim, &doCalSelect);

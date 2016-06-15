@@ -3318,3 +3318,19 @@ Obit/tasks/BDFIn.c Obit/TDF/BDFIn.TDF Obit/tasks/ASDMList.c
 Obit/src/ObitBDFData.c:
   Changes in source handling, pointing table
 7 June 2016,svn 543
+
+Bug fixes, new task for flagging OTF data
+Obit/src/ObitSDMData.c:
+  DefaultCalCode: fix indexing bug
+Obit/src/ObitBDFData.c:
+  InitScan: bug in getting default cal code.
+Obit/tasks/OTFFlag.c OBIT/TDF/OTFFlag.TDF:
+  New task for assuring consistant flagging of OTF data.
+Obit/python/EVLACal.py Obit/python/EVLAContPipe.py:
+  noScratch to several functions
+Obit/TDF/SYGain.TDF Obit/tasks/SYGain.c:
+  add noScratch
+Obit/src/ObitUVUtil.c Obit/src/ObitUV.c:
+  Various: Add "AIPS PT", to list of tables not to copy.
+15 June 2016,svn 544
+

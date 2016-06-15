@@ -189,10 +189,10 @@ def pipeline( aipsSetup, parmFile):
     if parms["doMedn"]:
         mess =  "Median window time editing, for RFI impulsive in time:"
         printMess(mess, logFile)
-        retCode = EVLAMedianFlag (uv, parms["mednTarg"], err, noScrat=noScrat, nThreads=nThreads, \
+        retCode = EVLAMedianFlag (uv, parms["mednTarg"], err, nThreads=nThreads, \
                                   avgTime=parms["avgTime"], avgFreq=parms["avgFreq"],  chAvg= parms["chAvg"], \
                                   timeWind=parms["timeWind"], flagVer=2,flagSig=parms["mednSigma"], \
-                                  logfile=logFile, check=check, debug=False)
+                                  logfile=logFile, check=check, noScrat=noScrat, debug=False)
         if retCode!=0:
             raise RuntimeError,"Error in MednFlag"
     
@@ -204,7 +204,7 @@ def pipeline( aipsSetup, parmFile):
                                 timeAvg=parms["FD1TimeAvg"], \
                                 doFD=True, FDmaxAmp=1.0e20, FDmaxV=1.0e20, FDwidMW=parms["FD1widMW"],  \
                                 FDmaxRMS=[1.0e20,0.1], FDmaxRes=parms["FD1maxRes"],  \
-                                FDmaxResBL= parms["FD1maxRes"],  \
+                                FDmaxResBL= parms["FD1maxRes"], noScrat=noScrat, \
                                 nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
            raise  RuntimeError,"Error in AutoFlag"
@@ -226,7 +226,7 @@ def pipeline( aipsSetup, parmFile):
                 clist.append(s['Source'])
         retCode = EVLAAutoFlag (uv, clist, err,  flagVer=2, doCalib=-1, doBand=-1,   \
                                     RMSAvg=parms["RMSAvg"], timeAvg=parms["RMSTimeAvg"], \
-                                    nThreads=nThreads, logfile=logFile, check=check, debug=debug)
+                                    nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
            raise  RuntimeError,"Error in AutoFlag"
     
@@ -239,7 +239,7 @@ def pipeline( aipsSetup, parmFile):
                                  clipSmo=parms["SYclipSmo"], clipParm=parms["SYclipParm"], \
                                  doEdit=parms["doSYEdit"], Sigma=parms["SYSigma"], \
                                  doPlot=parms["doSNPlot"], plotFile=plotFile, editFG=2, \
-                                 nThreads=nThreads, logfile=logFile, check=check, debug=debug)
+                                 nThreads=nThreads, logfile=logFile, check=check, noScrat=noScrat, debug=debug)
         if retCode!=0:
             raise RuntimeError,"Error in SY calibration "
     

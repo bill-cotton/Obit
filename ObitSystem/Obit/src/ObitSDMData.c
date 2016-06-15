@@ -10418,8 +10418,7 @@ static olong CountTableRows(gchar *CntFile, ObitErr *err)
  * \param  iMain   Row in main table defining scan
  * \param  code    [in/out] default calcode
  */
-void ObitSDMDataDefaultCalCode(ObitSDMData *in, olong iMain, 
-				      gchar* code)
+void ObitSDMDataDefaultCalCode(ObitSDMData *in, olong iMain, gchar* code)
 {
   olong i, j, iScan, scanNo, numIntent;
   olong maxIntent=8;   /* Known intents */
@@ -10450,7 +10449,7 @@ void ObitSDMDataDefaultCalCode(ObitSDMData *in, olong iMain,
   for (i=0; i<numIntent; i++) {
     for (j=0; j<maxIntent; j++) {
       if (!strncmp(in->ScanTab->rows[iScan]->scanIntent[i], intents[j], strlen(intents[j])))
-	  haveIntent[i] = TRUE;
+	  haveIntent[j] = TRUE;
     } /* end loop over known intents */
   } /* end loop over scan intents */
 

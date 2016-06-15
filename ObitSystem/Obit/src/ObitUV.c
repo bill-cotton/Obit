@@ -3576,7 +3576,7 @@ static ObitIOCode CopyTablesSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 		    "AIPS AN","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS CQ",
 		    "AIPS WX","AIPS AT","AIPS NI","AIPS BP","AIPS OF",
-		    "AIPS PS","AIPS PD",
+		    "AIPS PS","AIPS PD","AIPS SY","AIPS PT",
 		    "AIPS HI","AIPS PL","AIPS SL", 
 		    NULL};
   gchar *PDTable[] = {"AIPS PD", NULL};

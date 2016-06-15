@@ -178,7 +178,7 @@ ObitUV* ObitUVUtilCopyZero (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
 		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL", "AIPS NI", "AIPS SY",
+		    "AIPS PL", "AIPS NI", "AIPS SY", "AIPS PT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx;
@@ -343,7 +343,7 @@ void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
   gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
 		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL", "AIPS NI", "AIPS SY",
+		    "AIPS PL", "AIPS NI", "AIPS SY", "AIPS PT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx, firstVis;
@@ -573,7 +573,7 @@ void ObitUVUtilXPolDivide (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
 		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL", "AIPS NI", "AIPS SY",
+		    "AIPS PL", "AIPS NI", "AIPS SY", "AIPS PT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, indx, jndx, firstVis;
@@ -788,7 +788,7 @@ void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
   gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
 		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL", "AIPS NI", "AIPS SY",
+		    "AIPS PL", "AIPS NI", "AIPS SY", "AIPS PT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx, firstVis;
@@ -1755,6 +1755,7 @@ ObitUV* ObitUVUtilBloat (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
 		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD", "AIPS SY",
+		    "AIPS PT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx, jndx;
@@ -1943,6 +1944,7 @@ ObitUV* ObitUVUtilAvgF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
 		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD", "AIPS SY",
+		    "AIPS PT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx, jndx;
@@ -2158,6 +2160,7 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
 		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD", "AIPS SY",
+		    "AIPS PT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   ObitInfoType type;
@@ -2552,6 +2555,7 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
 		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD", "AIPS SY",
+		    "AIPS PT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   ObitInfoType type;
@@ -3235,6 +3239,7 @@ void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV,
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
 		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD", "AIPS SY",
+		    "AIPS PT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong *BChan=NULL, *numChan=NULL, *BIF=NULL, *numIF=NULL;
@@ -3485,7 +3490,7 @@ void ObitUVUtilNoise(ObitUV *inUV, ObitUV *outUV, ofloat scale, ofloat sigma,
   gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
 		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL", "AIPS NI", "AIPS SY",
+		    "AIPS PL", "AIPS NI", "AIPS SY", "AIPS PT",
 		    NULL};
 #if HAVE_GSL==1  /* GSL stuff */
   gsl_rng *ran=NULL;
