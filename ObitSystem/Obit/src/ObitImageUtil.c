@@ -2880,8 +2880,6 @@ ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
     RAPnt  = pntImage->myDesc->crval[pntImage->myDesc->jlocr];
     DecPnt = pntImage->myDesc->crval[pntImage->myDesc->jlocd];
   }
-  RAPnt  *= DG2RAD;
-  DecPnt *= DG2RAD;
   if ((ObitImageClose (pntImage, err) 
        != OBIT_IO_OK) || (err->error>0)) { /* error test */
     Obit_log_error(err, OBIT_Error, "%s: ERROR closing image %s", 
@@ -2925,6 +2923,8 @@ ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
   else if ((abs(equinox-2000.0)<0.01) && 
       (abs(outImage->myDesc->equinox-1950.0)<0.01))
     ObitSkyGeomJtoB (&RAPnt, &DecPnt);
+  RAPnt  *= DG2RAD;
+  DecPnt *= DG2RAD;
 
   /* Get output aray pointer */
   pos[0] = pos[1] = 0;
@@ -3014,6 +3014,231 @@ ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
     outImage->image = ObitFArrayUnref(outImage->image);
 
 } /* end  ObitImageUtilPBImage */
+
+/**
+ * Make an image of the effective antenna primary beam pattern for On-The-Fly (OTF)
+ * "Aussie mode: imaging based on the pointing position in an image.
+ * For frequencies < 1 GHz uses the VLA polynomial gain curves,
+ * for higher frequencies, it uses a jinc function based on the antenna size.
+ * \param pntImage Image with pointing position
+ * \param outImage Image to be written.  Must be previously instantiated.
+ *     List items:
+ * \li noff OBIT_long number of offsets
+ * \li RAoff  OBIT_float (?,1,1) RA offsets (deg) from pntImage, not corrected by cos(dec)
+ * \li Decoff OBIT_float (?,1,1) Dec offsets (deg) from pntImage
+ * \param outPlane Desired plane in outImage on planes 3-5; ignored if memOnly
+ * \param antSize  Antenna size
+ * \param minGain  Min. allowed antenna gain, lower values are blanked
+ * \param err      Error stack, returns if not empty.
+ */
+void 
+ObitImageUtilOTFBeam (ObitImage *pntImage, ObitImage *outImage, 
+		      olong *outPlane, ofloat antSize, ofloat minGain, ObitErr *err)
+{
+  ObitIOSize IOBy;
+  olong blc[IM_MAXDIM], trc[IM_MAXDIM];
+  gint32 i, dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+  olong ix, iy, ip, indx, pos[2],noff;
+  ofloat inPixel[2], *out, *norma, *RAoff, *Decoff, normc, fblank = ObitMagicF();
+  odouble RAPnt, DecPnt, Freq, ra, dec, xx, yy, zz, dist;
+  odouble offRA, offDec;
+  ofloat pbf, equinox;
+  gboolean doJinc, bad, doKAT;
+  ObitImageDesc *outDesc;
+  ObitFArray *norm=NULL;
+  gchar *routine = "ObitImageUtilOTFBeam";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return;
+  g_assert (ObitImageIsA(pntImage));
+  g_assert (ObitImageIsA(outImage));
+  /* Get offsets */
+  noff = 1; 
+  ObitInfoListGetTest(outImage->info, "noff", &type, dim, (gpointer)&noff);
+  RAoff = NULL;
+  ObitInfoListGetP(outImage->info, "RAoff", &type, dim, (gpointer*)&RAoff);
+  Decoff = NULL;
+  ObitInfoListGetP(outImage->info, "Decoff", &type, dim, (gpointer*)&Decoff);
+  Obit_return_if_fail((RAoff && Decoff), err, "%s: RAoff or Decoff not given", routine);
+
+  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
+  for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
+
+  if (antSize<0.01) antSize = 25.0; /* default antenna size */
+
+  /* Get pointing position */
+  pntImage->extBuffer = TRUE;  /* Don't need buffer */
+  if ((ObitImageOpen (pntImage, OBIT_IO_ReadOnly, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR opening image %s", 
+		   routine, pntImage->name);
+    return;
+  }
+
+  /* Use  "Observed" position if given */
+  RAPnt   = pntImage->myDesc->obsra;
+  DecPnt  = pntImage->myDesc->obsdec;
+  equinox = pntImage->myDesc->equinox ;
+  if ((abs(RAPnt)<1.0e-5) && (abs(DecPnt)<1.0e-5)) {
+    /* if zeroes - use reference position */
+    RAPnt  = pntImage->myDesc->crval[pntImage->myDesc->jlocr];
+    DecPnt = pntImage->myDesc->crval[pntImage->myDesc->jlocd];
+  }
+  if ((ObitImageClose (pntImage, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR closing image %s", 
+		   routine, pntImage->name);
+    return;
+  }
+  pntImage->extBuffer = FALSE;  /* May need buffer later */
+
+  /* Trap telescope, default = VLA */
+  doKAT = !strncmp(pntImage->myDesc->teles, "KAT-7",5); /* Kat-7 */
+
+  /* Do I/O by plane and all of plane */
+  IOBy = OBIT_IO_byPlane;
+  dim[0] = 1;
+  ObitInfoListPut (outImage->info, "IOBy", OBIT_long, dim, (gpointer)&IOBy, err);
+  dim[0] = 7;
+  for (i=0; i<5; i++) blc[i+2] = trc[i+2] = outPlane[i];
+  ObitInfoListPut (outImage->info, "BLC", OBIT_long, dim, blc, err); 
+  ObitInfoListPut (outImage->info, "TRC", OBIT_long, dim, trc, err);
+
+  /* Open image */
+  if ((ObitImageOpen (outImage, OBIT_IO_ReadWrite, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR opening image %s", 
+		   routine, outImage->name);
+    return;
+  }
+  
+  /* check coordinate types */
+  if (outImage->myDesc->coordType != pntImage->myDesc->coordType) {
+    Obit_log_error(err, OBIT_Error, 
+		   "%s: Output (%s) and pointing (%s) images have different coordinate types ", 
+		   routine, outImage->name, pntImage->name);
+    return;
+  }
+
+  /* Precess pointing position if needed */
+  if ((abs(equinox-1950.0)<0.01) && 
+      (abs(outImage->myDesc->equinox-2000.0)<0.01))
+    ObitSkyGeomBtoJ (&RAPnt, &DecPnt);
+  else if ((abs(equinox-2000.0)<0.01) && 
+      (abs(outImage->myDesc->equinox-1950.0)<0.01))
+    ObitSkyGeomJtoB (&RAPnt, &DecPnt);
+  RAPnt  *= DG2RAD;
+  DecPnt *= DG2RAD;
+
+
+   /* Get output aray pointer */
+  pos[0] = pos[1] = 0;
+  out = ObitFArrayIndex (outImage->image, pos);
+  /* Zero output image */
+  ObitFArrayFill(outImage->image, 0.0);
+  /* Normalization array */
+  outDesc = outImage->myDesc; /* output descriptor */
+  norm = ObitFArrayCreate("Norm", 2, outDesc->inaxes);
+  ObitFArrayFill(norm, 0.0);
+  norma = ObitFArrayIndex (norm, pos);
+
+  /* Set up - get frequency, default 1 GHz*/
+  outDesc->plane = outPlane[0];
+  Freq = ObitImageMFGetPlaneFreq(outImage);
+  if (Freq<=0.0) Freq = 1.0e9;
+   /* which beam model to use */
+  doJinc = (Freq >= 1.0e9);
+
+ /* Loop over pointings */
+  for (ip=0; ip<noff; ip++) {
+    /* offset pointing */
+    offRA  = RAPnt + RAoff[ip]*DG2RAD/cos(outDesc->crval[outDesc->jlocr]*DG2RAD);
+    offDec = DecPnt + Decoff[ip]*DG2RAD;
+
+    /* Loop over image  */
+    for (iy = 1; iy<=outDesc->inaxes[1]; iy++) { /* loop in y */
+      inPixel[1] = (ofloat)iy;
+      for (ix = 1; ix<=outDesc->inaxes[0]; ix++) {/* loop in x */
+	inPixel[0] = (ofloat)ix;
+	
+	/* array index in in and out for this pixel */
+	indx = (iy-1) * outDesc->inaxes[0] + (ix-1);
+	
+	/* Convert pixel to position */
+	bad = 
+	  ObitSkyGeomWorldPos(inPixel[0], inPixel[1],
+			      outDesc->crval[outDesc->jlocr], outDesc->crval[outDesc->jlocd],
+			      outDesc->crpix[outDesc->jlocr], outDesc->crpix[outDesc->jlocd],
+			      outDesc->cdelt[outDesc->jlocr], outDesc->cdelt[outDesc->jlocd],
+			      outDesc->crota[outDesc->jlocd], &outDesc->ctype[outDesc->jlocr][4],
+			      &ra, &dec);
+	if (bad!=0) {
+	  Obit_log_error(err, OBIT_Error, 
+			 "%s: Error %d determining location of pixel in %s", 
+			 routine, bad, outImage->name);
+	  return;
+	}
+	
+	/* Separation from pointing center */
+	xx = DG2RAD * ra;
+	yy = DG2RAD * dec;
+	zz = sin (yy) * sin (offDec) + cos (yy) * cos (offDec) * cos (xx-offRA);
+	zz = MIN (zz, 1.000);
+	dist = acos (zz) * RAD2DG;
+	
+	/*doKAT = doJinc = FALSE;*/
+	/* primary beam correction */
+	if (doKAT) {  /* KAT-7 */
+	  pbf = ObitPBUtilKAT7 (dist, Freq, 0.0);
+	} else if (doJinc) {
+	  pbf = ObitPBUtilJinc (dist, Freq, antSize, 0.0);
+	} else {
+	  pbf = ObitPBUtilPoly (dist, Freq, 0.0);
+	} 
+	
+	/* debug
+	   if (pbf>0.9) {
+	   fprintf (stderr,"pdf %f @ %d  %d %lf\n",pbf,ix,iy,dist* RAD2DG*3600.0);
+	   } */
+	
+	/* Clip by minGain */
+	if (pbf<minGain) pbf = fblank;
+	
+	/* Save beam image */
+	if (pbf!=fblank)  {out[indx] += pbf; norma[indx] += 1.0;}
+	
+      } /* end loop over x */
+    } /* end loop over y */
+  } /* end loop over offset */
+  
+    /* Normalize  */
+  ObitFArrayDiv(outImage->image, norm, outImage->image);
+  indx = outDesc->inaxes[0]*(1+outDesc->inaxes[1]/2) + (1+outDesc->inaxes[0]/2);
+  normc = 1.0 / out[indx];
+  ObitFArraySMul(outImage->image, normc);
+  
+  /* Write output */
+  if ((ObitImageWrite (outImage, NULL, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR writing image %s", 
+		   routine, outImage->name);
+    return;
+  }
+  
+  /* Close */
+  if ((ObitImageClose (outImage, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR closing image %s", 
+		   routine, outImage->name);
+    return;
+  }
+  /* Free image buffer  if not memory resident */
+  if (outImage->mySel->FileType!=OBIT_IO_MEM) 
+    outImage->image = ObitFArrayUnref(outImage->image);
+
+  } /* end  ObitImageUtilOTFBeam */
 
 /**
  * Use maximum baseline length and maximum W to set imaging cell size

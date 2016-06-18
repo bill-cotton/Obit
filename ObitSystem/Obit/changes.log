@@ -3334,3 +3334,13 @@ Obit/src/ObitUVUtil.c Obit/src/ObitUV.c:
   Various: Add "AIPS PT", to list of tables not to copy.
 15 June 2016,svn 544
 
+1Aussie mode OTF beam calculation, Bug fixes
+Obit/src/ObitPointing.c:
+  Pointingparse_flt_arr: ininitialized variable
+Obit/include/ObitImageUtil.h Obit/src/ObitImageUtil.c
+Obit/python/ImageUtil.inc Obit/python/ImageUtil.py Obit/python/MosaicUtil.py
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  implement OTF beam modification for "Aussie" mode
+Obit/tasks/BDFIn.c
+  nextScan: fixed to use SourceArray
+7 June 2016,svn 545

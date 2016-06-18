@@ -2,7 +2,7 @@
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2014
+#  Copyright (C) 2004-2016
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -257,6 +257,49 @@ def PPBImage (pntImage, outImage, err,
     if err.isErr:
         OErr.printErrMsg(err, "Error with primary beam image")
     # end PPBImage
+
+def POTFBeam (pntImage, outImage, RAoff, Decoff, err,
+              minGain=0.1, outPlane=[1,1,1,1,1], antSize=25.0):
+    """
+    Calculate an image with an OTF "Aussie mode" primary beam pattern
+    
+    Make an image of the antenna primary beam pattern based on the pointing
+    position in an image with a set of pointing offsets.
+
+    * pntImage = Python Image giving pointing position (ObsRA, ObsDec)
+    * outImage = Python Image to be written.  Must be previously instantiated.
+    * RAoff    = Array of RA offsets in deg not corrected for Declination
+    * Decoff   = Array of Declinations offsets in deg, same size as RAoff
+    * err      = Python Obit Error/message stack
+    * minGain  = minimum allowed gain (lower values blanked).
+    * outPlane = 5 element int array with 1, rel. plane number [1,1,1,1,1]
+      giving location of plane to be written
+    * antSize  = Antenna diameter assumed, default 25m
+    """
+    ################################################################
+    # Checks
+    if not Image.PIsA(pntImage):
+        print "Actually ",pntImage.__class__
+        raise TypeError,"pntImage MUST be a Python Obit Image"
+    if not Image.PIsA(outImage):
+        print "Actually ",outImage.__class__
+        raise TypeError,"outImage MUST be a Python Obit Image"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    if len(outPlane) != 5:
+        raise TypeError,"outPlane must have 5 elements"
+    if len(RAoff) != len(Decoff):
+        raise TypeError,"RAoff and Decoff must have same size"
+    #
+    noff = len(RAoff)
+    outImage.List.set("noff",noff)
+    outImage.List.set("RAoff", RAoff, ttype='float')
+    outImage.List.set("Decoff", Decoff, ttype='float')
+    Obit.ImageUtilOTFBeam(outImage.me, outImage.me,
+                          outPlane, antSize, minGain, err.me)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error with primary beam image")
+    # end POTFBeam
 
 def PPBCorr (inImage, pntImage, outImage, err,
              inPlane=[1,1,1,1,1], outPlane=[1,1,1,1,1], antSize=25.0):

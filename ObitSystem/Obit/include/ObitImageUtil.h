@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2015                                          */
+/*;  Copyright (C) 2003-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -168,6 +168,11 @@ void ObitImageUtilPBApply (ObitImage *inImage, ObitImage *pntImage, ObitImage *o
 
 /** Public: Fill image with the primary beam pattern */
 void ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage, 
+			   olong *outPlane, ofloat antSize, ofloat minGain, 
+			   ObitErr *err);
+
+/** Public: Create an OTF Beam image */
+void ObitImageUtilOTFBeam (ObitImage *pntImage, ObitImage *outImage, 
 			   olong *outPlane, ofloat antSize, ofloat minGain, 
 			   ObitErr *err);
 

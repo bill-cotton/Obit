@@ -123,7 +123,7 @@ def PMakeMaster(template, size, SumWtImage, SumWt2, err):
 
 def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
                  iblc=[1,1], itrc=[0,0], restart=0, hwidth=2, doGPU=False,
-                 planeWt=False):
+                 planeWt=False, OTFRA=None, OTFDec=None, inWtImage=None):
     """
     Sum an image onto Weighting accumulators using PB corrections
     
@@ -145,6 +145,12 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     * doGPU      = If true and GPU enables, use a GPU for the interpolation.
     *              NB: routine will fail if GPU is not enabled.
     * planeWt    = if True generate weight image per input plane
+    * OTFoffsets = if >1 then make beam using multiple pointing offsets
+                   "Aussie mode" OTF. must also go=ive OTFRA, OTFDec
+    * OTFRA      = Array of RA offsets in deg not corrected for Declination
+    * OTFDec     = Array of Declinations offsets in deg, same size as OTFRA
+    * inWtImage  = Beam (weight) image to use if not None
+                   MUST have the same size as inImage 
     """
     ################################################################
     # Checks
@@ -160,6 +166,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     if not OErr.OErrIsA(err):
         raise TypeError,"err MUST be an OErr"
     #
+    haveWtImage = inWtImage != None   # Weight image given
     # Open accumulation files
     #Image.POpen(inImage, 1, err)
     Image.POpen(SumWtImage, 3, err)
@@ -200,7 +207,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         outPlane = [iPlane+2-bpln,1,1,1,1]   # output plane
         if not (iPlane%20):
             print "At plane", iPlane+1,os.times()
-        # Make weight image, first pass or planeWt
+        # Make weight image if needed, first pass or planeWt
         if WtImage == None:
             # Get image 
             Image.PGetPlane (inImage, None, doPlane, err)
@@ -218,7 +225,15 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
                 pln = [iPlane+1,1,1,1,1]
             else:
                 pln = [max(1,inNaxis[2]/2),1,1,1,1]
-            ImageUtil.PPBImage(inImage, WtImage, err, minGain, outPlane=pln)
+            if haveWtImage:
+                # Beam provided, extract relevant plane to a memory resident WtImage
+                Image.PGetPlane (inWtImage, WtImage.FArray, doPlane, err)
+            else:
+                # Normal or OTF Beam?
+                if (OTFRA==None):
+                    ImageUtil.PPBImage(inImage, WtImage, err, minGain, outPlane=pln)
+                else:
+                    ImageUtil.POTFBeam (inImage, WtImage, OTFRA, OTFDec, err, minGain, outPlane=pln)
             OErr.printErrMsg(err, "Error making weight image for "+Image.PGetName(inImage))
             
             # The interpolated versions
@@ -308,15 +323,14 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         Image.PPutPlane(SumWtImage, None, outPlane, err)
         OErr.printErrMsg(err, "Error writing accumulation image ")
         if planeWt:
-            del WtImage, InterpWtImage, InterpWt, InterpWtWt 
-            WtImage = None; InterpWtImage = None; InterpWt = None
-            InterpWtWt = None
-        # end loop over planes
+            del InterpWtImage, InterpWt, InterpWtWt,WtImage;
+            InterpWtImage = None; InterpWt = None; InterpWtWt = None; WtImage = None
+       # end loop over planes
     # close output
     #Image.PClose(inImage, err)
     Image.PClose(SumWtImage, err)
     Image.PClose(SumWt2, err)
-    del XPixelImage, YPixelImage, InterpWtImage, InterpWtWt,  WtImage
+    del XPixelImage, YPixelImage, InterpWtImage, InterpWtWt, WtImage
     if finterp!=None:
         del finterp
 

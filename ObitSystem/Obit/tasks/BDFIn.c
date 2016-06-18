@@ -3262,7 +3262,6 @@ void GetWeatherInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ObitTableWXRow*       outRow=NULL;
   ASDMWeatherTable*     inTab=SDMData->WeatherTab;
   olong iRow, oRow, ver;
-  odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
   odouble K0 = 273.15;      /* Zero point of Centigrade in Kelvin */
   ofloat fblank = ObitMagicF();
   ObitIOAccess access;
@@ -4356,7 +4355,7 @@ gboolean nextScan(ObitSDMData *SDMData, olong curScan, odouble time,
 {
   gboolean out = FALSE;
   olong iScan = *curScanI;
-  olong i, iMain, fieldId, jField, sourceId, jSource;
+  olong i, iMain, fieldId, jField;
 
   /* New scan? */
   if ((iScan>=0) && (time<=SDMData->ScanTab->rows[iScan]->endTime)) return out;
@@ -4381,22 +4380,15 @@ gboolean nextScan(ObitSDMData *SDMData, olong curScan, odouble time,
   if (iMain>=SDMData->MainTab->nrows) return out;
   SDMData->iMain = iMain;
 
-  /* Source Id - have to look down goddamn tree */
+  /* Lookup FieldId in Source Array */
   fieldId = SDMData->MainTab->rows[iMain]->fieldId;
-  for (jField=0; jField<SDMData->FieldTab->nrows; jField++) {
-    if (SDMData->FieldTab->rows[jField]->fieldId==fieldId) break;
+  for (jField=0; jField<SDMData->SourceArray->nsou; jField++) {
+    if (SDMData->SourceArray->sou[jField]->fieldId==fieldId) break;
   }
   /* Find it? */
-  if (jField>=SDMData->FieldTab->nrows) return out;
+  if (jField>=SDMData->SourceArray->nsou) return out;
 
-  sourceId = SDMData->FieldTab->rows[jField]->sourceId;
-  for (jSource=0; jSource<SDMData->SourceTab->nrows; jSource++) {
-    if (SDMData->SourceTab->rows[jSource]->sourceId==sourceId) break;
-  }
-   /* Find it? */
-  if (jSource>=SDMData->SourceTab->nrows) return out;
-
- *SourNo = SDMData->SourceTab->rows[jSource]->sourceNo;
+  *SourNo = SDMData->SourceArray->sou[jField]->sourceNo;
 
   return out;
 } /* end nextScan */

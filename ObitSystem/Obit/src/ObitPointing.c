@@ -1116,6 +1116,7 @@ ofloat* Pointingparse_flt_arr(gchar *buffer,
   /* How many dimensions? Always 2? without saying? 
   ndim = Pointingparse_int(buffer, prior, next, byteFlip);
   b = *next;*/
+  num = 1;
   ndim = 2; b = prior;
   /* Size of each dimension */
   for (i=0; i<ndim; i++) {

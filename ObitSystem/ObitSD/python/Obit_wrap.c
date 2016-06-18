@@ -4198,6 +4198,13 @@ ImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
 } // end ImageUtilPBImage
 
 void 
+ImageUtilOTFBeam (ObitImage *pntImage, ObitImage *outImage, 
+                  int *outPlane, float antSize, float minGain, ObitErr *err)
+{
+  ObitImageUtilOTFBeam (pntImage, outImage, outPlane, antSize, minGain, err);
+} // end ImageUtilPBImage
+
+void 
 ImageUtilPBCorr (ObitImage *inImage, ObitImage *pntImage, ObitImage *outImage, 
                       int *inPlane, int *outPlane, float antSize, ObitErr *err)
 {
@@ -32840,6 +32847,72 @@ static PyObject *_wrap_ImageUtilPBImage(PyObject *self, PyObject *args) {
         }
     }
     ImageUtilPBImage(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  free((int *) _arg2);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageUtilOTFBeam(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImage * _arg0;
+    ObitImage * _arg1;
+    int * _arg2;
+    float  _arg3;
+    float  _arg4;
+    ObitErr * _arg5;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _obj2 = 0;
+    PyObject * _argo5 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOOffO:ImageUtilOTFBeam",&_argo0,&_argo1,&_obj2,&_arg3,&_arg4,&_argo5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageUtilOTFBeam. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ImageUtilOTFBeam. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj2)) {
+    int size = PyList_Size(_obj2);
+    int i = 0;
+    _arg2 = (int*) malloc((size+1)*sizeof(int));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj2,i);
+      if (PyInt_Check(o)) {
+         _arg2[i] = (int)((PyIntObject*)o)->ob_ival;
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain ints");
+         free(_arg2);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+    if (_argo5) {
+        if (_argo5 == Py_None) { _arg5 = NULL; }
+        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of ImageUtilOTFBeam. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    ImageUtilOTFBeam(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
 {
@@ -79122,6 +79195,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "ImageUtilCCScale", _wrap_ImageUtilCCScale, METH_VARARGS },
 	 { "ImageUtilQuanFITS", _wrap_ImageUtilQuanFITS, METH_VARARGS },
 	 { "ImageUtilPBCorr", _wrap_ImageUtilPBCorr, METH_VARARGS },
+	 { "ImageUtilOTFBeam", _wrap_ImageUtilOTFBeam, METH_VARARGS },
 	 { "ImageUtilPBImage", _wrap_ImageUtilPBImage, METH_VARARGS },
 	 { "ImageUtilPBApply", _wrap_ImageUtilPBApply, METH_VARARGS },
 	 { "ImageUtilGetXYPixels", _wrap_ImageUtilGetXYPixels, METH_VARARGS },

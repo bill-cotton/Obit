@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for Image utilities                        */
 /*                                                                    */
-/*;  Copyright (C) 2004-2014                                          */
+/*;  Copyright (C) 2004-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -98,6 +98,13 @@ ImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
                   int *outPlane, float antSize, float minGain, ObitErr *err)
 {
   ObitImageUtilPBImage (pntImage, outImage, outPlane, antSize, minGain, err);
+} // end ImageUtilPBImage
+
+void 
+ImageUtilOTFBeam (ObitImage *pntImage, ObitImage *outImage, 
+                  int *outPlane, float antSize, float minGain, ObitErr *err)
+{
+  ObitImageUtilOTFBeam (pntImage, outImage, outPlane, antSize, minGain, err);
 } // end ImageUtilPBImage
 
 void 
