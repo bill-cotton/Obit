@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -260,6 +260,7 @@ void ObitUVCalSelectInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
   /* linear polarized data (x-y), assume that it is being 
      calibrated and will be changed  to rr,ll,rl,lr data.
   if (kstoke0 <= -5) kstoke0 = kstoke0 + 4;  Maybe not */
+  if (kstoke0 <= -5) formalI = TRUE;  /* For linears need both */
 
   /* get start, end channels, IFs from Selector */
   ifb = sel->startIF;
@@ -591,8 +592,8 @@ gboolean ObitUVCalSelect (ObitUVCal *in, ofloat *RP, ofloat *visIn, ofloat *visO
 		visOut[3*i+1] = 2.0 * visOut[3*i+1];
 	      } 
 	    } 
-	  } /* end loop  L40:  */;
-	} /* end need all weights */
+	  } /* end need all weights */
+	} /* end loop  L40: */
 
 	/* no translation - just copy and reorder data */
       } else {
@@ -686,8 +687,10 @@ ObitUVCalSelectIInit (ObitUVCal *in, olong kstoke0, olong nstok,
     in->selFact[ivpnt][0] = 0.5;
     in->selFact[ivpnt][1] = 0.5;
     /* check if only RR or LL and if so use it. */
-    if ((nstok < 2)  ||  (kstoke0 != -1)) 
-      in->jadr[ivpnt][1] = in->jadr[ivpnt][0];
+    if (!formalI) {
+      if ((nstok < 2) && ((kstoke0 != -1) && (kstoke0 != -5)))
+	in->jadr[ivpnt][1] = in->jadr[ivpnt][0];
+    }
   }
 } /* end ObitUVCalSelectIInit */
 

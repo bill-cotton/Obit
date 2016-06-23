@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2009                                          */
+/*;  Copyright (C) 2006-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -33,6 +33,7 @@
 #include "ObitUV.h"
 #include "ObitTableSN.h"
 #include "ObitTableCL.h"
+#include "ObitTableBP.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -203,6 +204,11 @@ void ObitUVSolnDeselSN (ObitTableSN *SNTab, olong isuba, olong fqid,
 
 /** Deselect records in a CL table */
 void ObitUVSolnDeselCL (ObitTableCL *CLTab, olong isuba, olong fqid, 
+			olong nantf, olong *ants, olong nsou, olong *sources,
+			ofloat timerange[2], ObitErr* err);
+
+/** Deselect records in a BP table */
+void ObitUVSolnDeselBP (ObitTableBP *BPTab, olong isuba, olong fqid, 
 			olong nantf, olong *ants, olong nsou, olong *sources,
 			ofloat timerange[2], ObitErr* err);
 

@@ -72,7 +72,7 @@ void setOutputData (gchar *Source, olong iStoke, ObitInfoList *myInput,
 		    ObitUV* inData, ObitImage **outImage, ObitErr *err);
 
 /* Loop over sources */
-void doSources (ObitInfoList* myInput, ObitUV* inData, ObitErr* err);
+olong doSources (ObitInfoList* myInput, ObitUV* inData, ObitErr* err);
 
 /* Loop over Channels/Poln */
 void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData, 
@@ -117,8 +117,10 @@ int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
 {
   oint         ierr = 0;
+  olong        ngood=0;
   ObitSystem   *mySystem= NULL;
   ObitUV       *inData = NULL;
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitErr      *err= NULL;
  
    /* Startup - parse command line */
@@ -146,8 +148,10 @@ int main ( int argc, char **argv )
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
   /* Process */
-  doSources (myInput, inData, err);
+  ngood = doSources (myInput, inData, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (myOutput, "nImaged", OBIT_long, dim, &ngood);
 
   /* show any messages and errors */
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
@@ -1390,8 +1394,9 @@ void setOutputData (gchar *Source, olong iStoke, ObitInfoList *myInput,
 /*      inData    ObitUV to image                                         */
 /*   Output:                                                              */
 /*      err    Obit Error stack                                           */
+/*   Returns number of images successfully imaged                         */
 /*----------------------------------------------------------------------- */
-void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
+olong doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
 {
   gchar        Source[17];
   ObitSourceList* doList;
@@ -1407,10 +1412,9 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   };
   gchar *routine = "doSources";
 
-
   /* Get input parameters from myInput, copy to inData */
   ObitInfoListCopyList (myInput, inData->info, dataParms);
-  if (err->error) Obit_traceback_msg (err, routine, inData->name);
+  if (err->error) Obit_traceback_val (err, routine, inData->name, good);
 
   /* Get initial targBeam */
   ObitInfoListGetTest (myInput, "targBeam", &type, dim, oldTargBeam);
@@ -1421,7 +1425,7 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   
   /* Get source list to do */
   doList = ObitUVUtilWhichSources (inData, err);
-  if (err->error) Obit_traceback_msg (err, routine, inData->name);
+  if (err->error) Obit_traceback_val (err, routine, inData->name, good);
 
   /* Loop over list of sources */
   for (isource = 0; isource<doList->number; isource++) {
@@ -1454,7 +1458,7 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
 	/* This isn't working - Give up */
 	Obit_log_error(err, OBIT_Error, "%s: Too many failures, giving up", 
 		       routine);
-	return;
+	return good;
       }
     } else {
       isBad = FALSE;
@@ -1469,16 +1473,16 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     else
       ObitInfoListAlwaysPut (myInput, "Status", OBIT_string, dim, Done);
     ObitTablePSSummary (inData, myInput, err);
-    if (err->error) Obit_traceback_msg (err, routine, inData->name);
+    if (err->error) Obit_traceback_val (err, routine, inData->name, good);
     /* ReGet input uvdata */
     if (isource<(doList->number-1)) {
       inData = ObitUnref(inData);
       inData = getInputData (myInput, err);
-      if (err->error) Obit_traceback_msg (err, routine, inData->name);
+      if (err->error) Obit_traceback_val (err, routine, inData->name, good);
       
       /* Get input parameters from myInput, copy to inData */
       ObitInfoListCopyList (myInput, inData->info, dataParms);
-      if (err->error) Obit_traceback_msg (err, routine, inData->name);
+      if (err->error) Obit_traceback_val (err, routine, inData->name, good);
       
       /* Make sure selector set on inData */
       ObitUVOpen (inData, OBIT_IO_ReadCal, err);
@@ -1489,6 +1493,7 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
 
   doList = ObitSourceListUnref(doList);
 
+  return good;
 }  /* end doSources */
 
 /*----------------------------------------------------------------------- */

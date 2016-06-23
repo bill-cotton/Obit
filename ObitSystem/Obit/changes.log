@@ -3343,4 +3343,27 @@ Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
   implement OTF beam modification for "Aussie" mode
 Obit/tasks/BDFIn.c
   nextScan: fixed to use SourceArray
-7 June 2016,svn 545
+17 June 2016,svn 545
+
+Mostly bug fixes, recalculate image max/min
+ObitTalk/python/Proxy/ObitTask.py:
+  Fix bugs parsing task output files.
+Obit/tasks/MFImage.c Obit/TDF/MFImage.TDF:
+  Add output parameter nImaged
+Obit/include/ObitImage.h Obit/include/ObitImageClassDef.h Obit/src/ObitImage.c:
+  New routine MaxMinto determine & reset image max & min
+Obit/python/Image.py Obit/python/Image.inc
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  Python interface to ImageMaxMin
+Obit/include/ObitUVSoln.h  Obit/src/ObitUVSoln.c:
+  New function DeselBP to deselect entries in BP table
+Obit/tasks/BPass.c:
+  Implement updating existing BP table
+Obit/include/ObitTableBPUtil.h  Obit/src/ObitTableBPUtil.c:
+  New utility functions for BP tables
+Obit/src/ObitUVCalSelect.c:
+  IInit:Fix logic for linear polarization, always using XX for Stokes I.
+Obit/python/MosaicUtil.py:
+  PWeightImage: set BLC, TRC on weighting image
+23 June 2016,svn 546
+

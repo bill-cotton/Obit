@@ -365,6 +365,10 @@ typedef olong (*ObitImageGetBeamOrderFP) (ObitImage *in);
 odouble ObitImageGetPlaneFreq (ObitImage *in);
 typedef double (*ObitImageGetPlaneFreqFP) (ObitImage *in);
 
+/** Public: Determine/reset image max/min */
+void ObitImageMaxMin (ObitImage *in, ObitErr *err);
+typedef void (*ObitImageMaxMinFP) (ObitImage *in, ObitErr *err);
+
 /*----------- ClassInfo Structure -----------------------------------*/
 
 /**

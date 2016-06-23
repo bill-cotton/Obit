@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for Image type                             */
 /*                                                                    */
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -333,6 +333,16 @@ extern ObitTableList* ImageGetTableList (ObitImage* in) {
 
 extern ObitImageDesc* ImageGetDesc (ObitImage* in) {
   return ObitImageDescRef(in->myDesc);
+}
+
+extern ObitImageDesc* ImageGetIODesc (ObitImage* in) {
+  ObitImageDesc *desc=NULL;
+  if (in->myIO!=NULL) desc = (ObitImageDesc*)(in->myIO->myDesc);
+  return ObitImageDescRef(desc);
+}
+
+extern void ImageMaxMin (ObitImage* in, ObitErr *err) {
+  ObitImageMaxMin (in, err);
 }
 
 extern void ImageSetDesc (ObitImage* in, ObitImageDesc* desc) {

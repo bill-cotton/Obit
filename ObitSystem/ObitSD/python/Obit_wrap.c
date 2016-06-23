@@ -3687,6 +3687,16 @@ extern ObitImageDesc* ImageGetDesc (ObitImage* in) {
   return ObitImageDescRef(in->myDesc);
 }
 
+extern ObitImageDesc* ImageGetIODesc (ObitImage* in) {
+  ObitImageDesc *desc=NULL;
+  if (in->myIO!=NULL) desc = (ObitImageDesc*)(in->myIO->myDesc);
+  return ObitImageDescRef(desc);
+}
+
+extern void ImageMaxMin (ObitImage* in, ObitErr *err) {
+  ObitImageMaxMin (in, err);
+}
+
 extern void ImageSetDesc (ObitImage* in, ObitImageDesc* desc) {
   in->myDesc = ObitImageDescUnref(in->myDesc);
   in->myDesc = ObitImageDescRef(desc);
@@ -3760,6 +3770,8 @@ extern ObitImage *ImageRef(ObitImage *);
 extern ObitInfoList *ImageGetList(ObitImage *);
 extern ObitTableList *ImageGetTableList(ObitImage *);
 extern ObitImageDesc *ImageGetDesc(ObitImage *);
+extern ObitImageDesc *ImageGetIODesc(ObitImage *);
+extern void ImageMaxMin(ObitImage *,ObitErr *);
 extern void ImageSetDesc(ObitImage *,ObitImageDesc *);
 extern ObitFArray *ImageGetFArray(ObitImage *);
 extern void ImageSetFArray(ObitImage *,ObitFArray *);
@@ -30268,6 +30280,64 @@ static PyObject *_wrap_ImageGetDesc(PyObject *self, PyObject *args) {
         Py_INCREF(Py_None);
         _resultobj = Py_None;
     }
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageGetIODesc(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageDesc * _result;
+    ObitImage * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ImageGetIODesc",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageGetIODesc. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitImageDesc *)ImageGetIODesc(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitImageDesc_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMaxMin(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImage * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:ImageMaxMin",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMaxMin. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ImageMaxMin. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    ImageMaxMin(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
     return _resultobj;
 }
 
@@ -79263,6 +79333,8 @@ static PyMethodDef ObitMethods[] = {
 	 { "ImageSetFArray", _wrap_ImageSetFArray, METH_VARARGS },
 	 { "ImageGetFArray", _wrap_ImageGetFArray, METH_VARARGS },
 	 { "ImageSetDesc", _wrap_ImageSetDesc, METH_VARARGS },
+	 { "ImageMaxMin", _wrap_ImageMaxMin, METH_VARARGS },
+	 { "ImageGetIODesc", _wrap_ImageGetIODesc, METH_VARARGS },
 	 { "ImageGetDesc", _wrap_ImageGetDesc, METH_VARARGS },
 	 { "ImageGetTableList", _wrap_ImageGetTableList, METH_VARARGS },
 	 { "ImageGetList", _wrap_ImageGetList, METH_VARARGS },

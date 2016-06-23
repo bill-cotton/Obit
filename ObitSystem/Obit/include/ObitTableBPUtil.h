@@ -1,7 +1,8 @@
-/* $Id$ */
+/* $Id:  $     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2016                                          */
+/*;  Copyright (C) 2016                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
+/*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
 /*;  published by the Free Software Foundation; either version 2 of   */
@@ -17,41 +18,28 @@
 /*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
 /*;  MA 02139, USA.                                                   */
 /*;                                                                   */
-/*;  Correspondence this software should be addressed as follows:     */
+/*;Correspondence about this software should be addressed as follows: */
 /*;         Internet email: bcotton@nrao.edu.                         */
 /*;         Postal address: William Cotton                            */
 /*;                         National Radio Astronomy Observatory      */
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/*  Define the basic components of the ObitImage ClassInfo structure  */
-/* This is intended to be included in a classInfo structure definition*/
-#include "ObitDataClassDef.h"  /* Parent class ClassInfo definition file */
-/** Function pointer to scratch copy constructor. */
-newObitImageScratchFP newObitImageScratch;
-/** Function pointer to are two Images the same. */
-ObitImageSameFP ObitImageSame;
-/** Function pointer to read specified plane. */
-ObitImageGetPlaneFP ObitImageGetPlane;
-/** Function pointer to write specified plane. */
-ObitImagePutPlaneFP ObitImagePutPlane;
-/** Function pointer to Create an associated table. */
-newObitImageTableFP newObitImageTable;
-/** Destroy an associated Table(s) */
-ObitImageZapTableFP ObitImageZapTable;
-/** Fully instantiate. */
-ObitImageFullInstantiateFP ObitImageFullInstantiate;
-/** Copy associated Table(s) */
-ObitImageCopyTablesFP ObitImageCopyTables;
-/** Update disk resident tables information */
-ObitImageUpdateTablesFP ObitImageUpdateTables;
-/** Name beam */
-ObitImageSetBeamNameFP ObitImageSetBeamName;
-/** Get beam */
-ObitImageGetBeamFP ObitImageGetBeam;
-/** Get beam order */
-ObitImageGetBeamOrderFP ObitImageGetBeamOrder;
-/** Get plane Frequency */
-ObitImageGetPlaneFreqFP ObitImageGetPlaneFreq;
-/** Determine/reset image max/min */
-ObitImageMaxMinFP ObitImageMaxMin;
+#ifndef OBITTABLEBPUTIL_H 
+#define OBITTABLEBPUTIL_H 
+
+#include "Obit.h"
+#include "ObitErr.h"
+#include "ObitTableBP.h"
+#include "ObitData.h"
+
+/*-------- Obit: Merx mollis mortibus nuper ------------------*/
+/**
+ * \file ObitTableBPUtil.h
+ * ObitTableBP class utility routine definition.
+ */
+
+/** Append rows from one table to another */
+void ObitTableBPUtilAppend (ObitTableBP *inBP, ObitTableBP *outBP, ObitErr *err);
+
+#endif /* OBITTABLEBPUTIL_H */ 

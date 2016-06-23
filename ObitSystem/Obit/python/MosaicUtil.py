@@ -200,6 +200,11 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     # Set BLC,TRC 
     inImage.List.set("BLC",[iblc[0], iblc[1],1,1,1,1,1])
     inImage.List.set("TRC",[itrc[0], itrc[1],0,0,0,0,0])
+    if inWtImage:
+        inWtImage.List.set("BLC",[iblc[0], iblc[1],1,1,1,1,1])
+        inWtImage.List.set("TRC",[itrc[0], itrc[1],0,0,0,0,0])
+        inWtImage.Open(Image.READONLY,err)     # Open/close to update
+        inWtImage.Close(err)
     # Loop over planes
     WtImage = None
     for iPlane in planes:

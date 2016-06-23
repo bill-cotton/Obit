@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2015                                          */
+/*;  Copyright (C) 2006-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1309,6 +1309,90 @@ void ObitUVSolnDeselCL (ObitTableCL *CLTab, olong isuba, olong fqid,
   if (err->error) Obit_traceback_msg (err, routine, CLTab->name);
   row = ObitTableCLRowUnref (row);  /* Cleanup */
 } /* end ObitUVSolnDeselCL */
+
+/**
+ * Routine to deselect records in an BP table if they match a given
+ * subarray, have a selected FQ id, appear on a list of antennas and
+ * are in a given timerange.
+ * \param BPTab      BP table object 
+ * \param isub       Subarray number, <=0 -> any
+ * \param fqid       Selected FQ id, <=0 -> any
+ * \param nantf      Number of antennas in ants
+ * \param ants       List of antennas, NULL or 0 in first -> flag all
+ * \param nsou       Number of source ids in sources
+ * \param sources    List of sources, NULL or 0 in first -> flag all
+ * \param timerange  Timerange to flag, 0s -> all
+ * \param err        Error/message stack, returns if error.
+ */
+void ObitUVSolnDeselBP (ObitTableBP *BPTab, olong isuba, olong fqid, 
+			   olong nantf, olong *ants, olong nsou, olong *sources,
+			   ofloat timerange[2], ObitErr* err)
+{
+  ObitIOCode retCode;
+  ObitTableBPRow *row=NULL;
+  olong   i;
+  gboolean allAnt, allSou, flagIt;
+  ofloat tr[2];
+  olong  loop;
+  gchar  *routine = "ObitUVSolnDeselBP";
+  
+  /* Error checks */
+  g_assert(ObitErrIsA(err));
+  if (err->error) return;  /* previous error? */
+  g_assert(ObitTableBPIsA(BPTab));
+ 
+ /* Open table */
+  retCode = ObitTableBPOpen (BPTab, OBIT_IO_ReadWrite, err);
+  if (err->error) Obit_traceback_msg (err, routine, BPTab->name);
+ 
+  /* All antennas to be flagged? */
+  allAnt = ((ants==NULL) || (ants[0]<=0));
+  /* All sources to be flagged? */
+  allSou = ((sources==NULL) || (sources[0]<=0));
+
+  /* Timerange */
+  tr[0] = timerange[0];
+  tr[1] = timerange[1];
+  if ((tr[0]==0.0) && (tr[1]==0.0)) {
+    tr[0] = -1.0e20;
+    tr[1] =  1.0e20;
+  }
+
+  /* Create Row */
+  row = newObitTableBPRow (BPTab);
+  /* Loop through table */
+  for (loop=1; loop<=BPTab->myDesc->nrow; loop++) { /* loop 20 */
+
+    retCode = ObitTableBPReadRow (BPTab, loop, row, err);
+    if (err->error) Obit_traceback_msg (err, routine, BPTab->name);
+    if (row->status<0) continue;  /* Skip deselected record */
+
+    /* Flag this one? */
+    flagIt = (row->SubA==isuba) || (isuba<=0);             /* by subarray */
+    flagIt = flagIt || (row->FreqID==fqid) || (fqid<=0);      /* by FQ id */
+    flagIt = flagIt || ((row->Time>=tr[0]) && (row->Time<=tr[1])); /* by time */
+    flagIt = flagIt && allAnt;                          /* Check Antenna */
+    if (!flagIt) for (i=0; i<nantf; i++) {
+      if (row->antNo==ants[i]) {flagIt = TRUE; break;}
+    }
+    flagIt = flagIt && allSou;                          /* Check Source */
+    if (!flagIt) for (i=0; i<nsou; i++) {
+      if (row->SourID==sources[i]) {flagIt = TRUE; break;}
+    }
+
+    if (flagIt) { /* flag */
+      /* Rewrite record flagged */
+      row->status = -1;
+      retCode = ObitTableBPWriteRow (BPTab, loop, row, err);
+      if (err->error) Obit_traceback_msg (err, routine, BPTab->name);
+    } /* end if flag */
+  } /* End loop over table */
+
+  /* Close table */
+  retCode = ObitTableBPClose (BPTab, err);
+  if (err->error) Obit_traceback_msg (err, routine, BPTab->name);
+  row = ObitTableBPRowUnref (row);  /* Cleanup */
+} /* end ObitUVSolnDeselBP */
 
 /**
  * Routine to smooth amplitudes and/or phases rates in an open SN  

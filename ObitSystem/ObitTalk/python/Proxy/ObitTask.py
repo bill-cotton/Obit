@@ -20,7 +20,7 @@
 
 """
 #-----------------------------------------------------------------------
-# Copyright (C) 2005,2007,2010 Associated Universities, Inc. Washington DC, USA.
+# Copyright (C) 2005,2007,2010,2016 Associated Universities, Inc. Washington DC, USA.
 # Copyright (C) 2005 Joint Institute for VLBI in Europe
 #
 # This program is free software; you can redistribute it and/or modify
@@ -433,7 +433,6 @@ class ObitTask(Task):
         value = []       # to accept
         for line in file:
             # DEBUG
-            #print line
             # Look for header for parameter
             if line.startswith("$Key = " + adverb):
                 # remove unwanted symbols
@@ -445,7 +444,6 @@ class ObitTask(Task):
                 parts = string.split(line)
                 # How many values
                 total = 1
-                # DEBUG print parts  
                 for x in parts[3:]:
                     total *= int(x)
                 dtype  = parts[2]
@@ -615,12 +613,13 @@ class ObitTask(Task):
         tmpOutput = "/tmp/" + params.name + "Output." + str(popsno)
 
         output_dict = {}
-        out_file = open(tmpOutput, mode='r')
         for adverb in params.output_list:
+            out_file = open(tmpOutput, mode='r')
             # Need to parse whole file each time as order not specified
-            output_dict[adverb] = self.__read_adverb(params, out_file, adverb)
-        out_file.close()
-
+            val = self.__read_adverb(params, out_file, adverb)
+            output_dict[adverb] = val
+            out_file.close()
+        
         if os.access(tmpInput, os.F_OK):
             os.unlink(tmpInput)         # Remove input file.
         if os.access(tmpOutput, os.F_OK):

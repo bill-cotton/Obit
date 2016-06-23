@@ -13,7 +13,8 @@ Image Members with python interfaces:
 ==========  ==========================================================
 exist       True if object previously existed prior to object creation
 InfoList    used to pass instructions to processing
-ImageDesc   Astronomical labeling of the image Member Desc 
+Desc        Astronomical labeling of the image Member Desc 
+IODesc      Astronomical labeling of the image Member Desc on IO 
 FArray      Container used for pixel data Member FArray
 PixBuf      memory pointer into I/O Buffer
 Additional  Functions are available in ImageUtil.
@@ -110,6 +111,12 @@ class Image(OData.OData):
                 raise TypeError,"input MUST be a Python Obit Image"
             out    = ImageDesc.ImageDesc("None")
             out.me = Obit.ImageGetDesc(self.cast(myClass))
+            return out
+        if name=="IODesc":
+            if not self.ImageIsA():
+                raise TypeError,"input MUST be a Python Obit Image"
+            out    = ImageDesc.ImageDesc("None")
+            out.me = Obit.ImageGetIODesc(self.cast(myClass))
             return out
         if name=="FArray":
             return PGetFArray(self)
@@ -444,7 +451,7 @@ class Image(OData.OData):
         
         return true, false (1,0)
 
-        * self   = Python UV object
+        * self   = Python Image object
         """
         ################################################################
         # Allow derived types
@@ -907,6 +914,19 @@ def PWritePlane (Image, imageData, err):
     Image.Close(err)
     #OErr.printErrMsg(err, "Error writing images")
     # end PWritePlane
+
+def PMaxMin (im, err):
+    """
+    Determine actual image max & min and reset descriptor
+    
+    * im     = Python Image object
+    * err    = Python Obit Error/message stack
+    """
+    # Checks
+    if not im.ImageIsA():
+        raise TypeError,"Image MUST be a Python Obit Image"
+    Obit.ImageMaxMin (im.me, err.me)
+# end PmaxMin
 
 def PZap (inImage, err):
     """

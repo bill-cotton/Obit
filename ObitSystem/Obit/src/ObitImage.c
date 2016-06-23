@@ -1836,6 +1836,68 @@ odouble ObitImageGetPlaneFreq (ObitImage *image)
   return Freq;
 } /* end ObitImageGetPlaneFreq */
 
+/**
+ *  Determine/reset image max/min , uses threads if enabled.
+ * \param in    Image to be updated
+ * \param err   Obit error structure
+ */
+void ObitImageMaxMin (ObitImage *in, ObitErr *err)
+{
+  olong plane[5], np1, np2, np3, np4, np5, nax, i1, i2, i3, i4, i5, pos[2];
+  ofloat val, fblank = ObitMagicF(), maxval=-1.0e5, minval=1.0e5;
+  ObitImageDesc *Desc=in->myDesc, *IODesc=(ObitImageDesc*)in->myIO->myDesc;
+  gchar *routine="ObitImageMaxMin";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitImageIsA(in));
+
+  /* Open */
+  ObitImageOpen (in, OBIT_IO_ReadWrite, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  nax = in->myDesc->naxis;
+  np1 = MAX(1, in->myDesc->inaxes[2]);
+  np2 = MAX(1, in->myDesc->inaxes[3]); if (nax<4) np2 = 1;
+  np3 = MAX(1, in->myDesc->inaxes[4]); if (nax<5) np3 = 1;
+  np4 = MAX(1, in->myDesc->inaxes[5]); if (nax<6) np4 = 1;
+  np5 = MAX(1, in->myDesc->inaxes[6]); if (nax<7) np5 = 1;
+  for (i5=1; i5<=np5; i5++) {
+    plane[4] = i5;
+    for (i4=1; i4<=np4; i4++) {
+      plane[3] = i4;
+      for (i3=1; i3<=np3; i3++) {
+	plane[2] = i3;
+	for (i2=1; i2<=np2; i2++) {
+	  plane[1] = i2;
+	  for (i1=1; i1<=np1; i1++) {
+	    plane[0] = i1;
+	    ObitImageGetPlane (in, NULL, plane, err);
+	    if (err->error) Obit_traceback_msg (err, routine, in->name);
+	    val = ObitFArrayMax (in->image, pos);
+	    if (val!=fblank) maxval = MAX (val, maxval);
+	    val = ObitFArrayMin (in->image, pos);
+	    if (val!=fblank) minval = MIN (val, minval);
+	  } /* end loop 1 */
+	} /* end loop 2 */
+      } /* end loop 3 */
+    } /* end loop 4 */
+  } /* end loop 5 */
+
+  /* Update both descriptors */
+  if (maxval!=fblank) {Desc->maxval = maxval; IODesc->maxval = maxval;}
+  else                {Desc->maxval = fblank; IODesc->maxval = fblank;}
+  if (minval!=fblank) {Desc->minval = minval; IODesc->minval = minval;}
+  else                {Desc->minval = fblank; IODesc->minval = fblank;}
+
+  /* Mark as modified */
+  in->myStatus = OBIT_Modified;
+
+  /* Close */
+  ObitImageClose (in, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+} /* end ObitImageMaxMin  */
+
 /*-------Private functions called by ObitData class ------*/
 /** Private:  Copy Constructor for scratch file*/
 static ObitData* newObitDataImageScratch (ObitData *in, ObitErr *err)
@@ -1967,6 +2029,8 @@ static void ObitImageClassInfoDefFn ( gpointer inClass)
     (ObitImageGetBeamOrderFP)ObitImageGetBeamOrder;
   theClass->ObitImageGetPlaneFreq = 
     (ObitImageGetPlaneFreqFP)ObitImageGetPlaneFreq;
+  theClass->ObitImageMaxMin = 
+    (ObitImageMaxMinFP)ObitImageMaxMin;
 
   /* Function pointers referenced from ObitData class */
   theClass->newObitDataScratch  = (newObitDataScratchFP)newObitDataImageScratch;

@@ -29,7 +29,7 @@
 ;;                         520 Edgemont Road
 ;;                         Charlottesville, VA 22903-2475 USA
 ;---------------------------------------------------------------
-MFImage     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+MFImage   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 MFImage:  Wideband imaging
 **PARAM** str 4
 DataType                            "FITS" or "AIPS" type of input
@@ -304,6 +304,8 @@ taskLog                            Logfile to write task messages to
 **PARAM** int 10
 noScrat                            AIPS disk numbers for which
                                    scratch files are disallowed
+**PARAM** int 1
+nImaged  $                         Number of pointings imaged
 ----------------------------------------------------------------
 MFImage  Wideband imaging
 Type:  Task
@@ -773,6 +775,8 @@ Adverbs:
               executes.
   noScrat.....A list of AIPS disk numbers on which you do not 
               wish scratch files
+  nImaged.....output, Number of sources/pointings successfully 
+              imaged
 ----------------------------------------------------------------
 NB: The following is not all yet implemented
 MFImage Imaging task for radio interferometer
