@@ -885,7 +885,10 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
 
   /* Each cal code gets different numbers? */
   doCode = FALSE;
-  ObitInfoListGetTest(myInput, "doCode", &type, dim, &doCode);
+  dim[0] = dim[1] = 1;
+  ObitInfoListAlwaysPut(myInput, "doCode", OBIT_bool, dim, &doCode);
+  /* No - logic too complex 
+     ObitInfoListGetTest(myInput, "doCode", &type, dim, &doCode);*/
 
   /* Check if Spectral window order desired */
   ObitInfoListGetTest(myInput, "SWOrder", &type, dim, &SWOrder);

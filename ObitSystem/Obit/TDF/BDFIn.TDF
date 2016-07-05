@@ -60,7 +60,7 @@ selChBW                             Channel bandwidth (kHz) to select
 **PARAM** boo 1  **DEF** T
 dropZero                            Drop records with all zero vis
 **PARAM** boo 1  **DEF** F
-doCode                              Each calcode a different source?
+doCode                              DISABLED
 **PARAM** boo 1  **DEF** T
 defCode                             Default CalCodes by Intent
 **PARAM** boo 1  **DEF** F
@@ -154,7 +154,8 @@ Data selection
   dropZero...If True, visibility records with all zero records 
              will be dropped.  In any case, visibilities which are 
              exactly zero will be flagged (zero weight).
-  doCode.....If True then each calcode used for a given source name 
+  doCode.....Option disabled
+             If True then each calcode used for a given source name 
              will be generate distinct source ID (entry in the 
              AIPS SU table).  If False, all data for a given source 
              name will have the same source ID.

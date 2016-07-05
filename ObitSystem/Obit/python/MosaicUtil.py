@@ -123,7 +123,8 @@ def PMakeMaster(template, size, SumWtImage, SumWt2, err):
 
 def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
                  iblc=[1,1], itrc=[0,0], restart=0, hwidth=2, doGPU=False,
-                 planeWt=False, OTFRA=None, OTFDec=None, inWtImage=None):
+                 planeWt=False, OTFRA=None, OTFDec=None, inWtImage=None,
+                 maxRMS=None):
     """
     Sum an image onto Weighting accumulators using PB corrections
     
@@ -151,6 +152,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     * OTFDec     = Array of Declinations offsets in deg, same size as OTFRA
     * inWtImage  = Beam (weight) image to use if not None
                    MUST have the same size as inImage 
+    * maxRMS     = if given, the maximum RMS allowed
     """
     ################################################################
     # Checks
@@ -286,17 +288,25 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
                                                   hwidth, err)
                 OErr.printErrMsg(err, "Creating GPU FInterpolator")
             # End init wt image
-        # Special weighting?
-        if factor<0.0:
+        # Special weighting or editing?
+        if (factor<0.0) or maxRMS:
             # Get image 
             Image.PGetPlane (inImage, None, doPlane, err)
             OErr.printErrMsg(err, "Error reading image for "+Image.PGetName(inImage))
             RMS = inImage.FArray.RMS
-            fact = abs(factor)/RMS
+            # This plane acceptable?
+            if maxRMS and ((RMS>maxRMS) or (RMS<=0.0)):
+                #print 'drop plane',doPlane[0],'RMS',RMS
+                continue
+            if (factor<0.0):
+                fact = abs(factor)/RMS
+            else:
+                fact = factor
             if not (iPlane%20):
                 print "Factor",fact, "plane",iPlane,"RMS",RMS
         else:
             fact = factor
+        #print 'do plane',doPlane[0],'RMS',RMS, 'factor',fact
         # Interpolate image plane
         ImageUtil.PInterpolateImage(inImage, InterpWtImage, err, \
                                     inPlane=doPlane, XPix=XPixelImage, YPix=YPixelImage,

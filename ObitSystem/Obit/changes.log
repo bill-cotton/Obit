@@ -3367,3 +3367,9 @@ Obit/python/MosaicUtil.py:
   PWeightImage: set BLC, TRC on weighting image
 23 June 2016,svn 546
 
+BDFIn bug hack, disable failing doCode option
+Obit/tasks/BDFIn.c Obit/TDF/BDFIn.TDF:
+  disable doCode - logic too complex
+Obit/python/MosaicUtil.py:
+  PWeightImage: Add option to reject planes above a given RMS
+5 Jul 2016, svn 547
