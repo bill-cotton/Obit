@@ -2975,9 +2975,10 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   sel->doCalSelect = FALSE;
   ObitInfoListGetTest(info, "doCalSelect", &type, dim, &sel->doCalSelect);
 
-  /* Selection */
+  /* Selection - several variants */
   InfoReal.itg = 0; type = OBIT_oint;
-  ObitInfoListGetTest(info, "Subarray", &type, dim, &InfoReal);
+  if (!ObitInfoListGetTest(info, "Subarray", &type, dim, &InfoReal))
+    ObitInfoListGetTest(info, "subA", &type, dim, &InfoReal);
   if (type==OBIT_float) itemp = InfoReal.flt + 0.5;
   else itemp = InfoReal.itg;
   sel->SubA  = itemp;

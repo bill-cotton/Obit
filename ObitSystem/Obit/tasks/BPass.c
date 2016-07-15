@@ -1334,6 +1334,7 @@ void  BandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData,
   /* Create output BP table */
   if (inData->myDesc->jlocs>=0) numPol = inData->myDesc->inaxes[inData->myDesc->jlocs];
   else                          numPol = 1;
+  numPol = MIN (2, numPol);  /* No more than the two orthogonal */
   if (inData->myDesc->jlocif>=0) numIF = inData->myDesc->inaxes[inData->myDesc->jlocif];
   else                           numIF = 1;
   numChan = inData->myDesc->inaxes[inData->myDesc->jlocf];

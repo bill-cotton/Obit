@@ -1896,6 +1896,10 @@ void ObitImageMaxMin (ObitImage *in, ObitErr *err)
   ObitImageClose (in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
+  /* Message */
+  if (err->prtLv>1) Obit_log_error(err, OBIT_InfoErr, "New image Max/Min %12.3g %12.3g",
+				   maxval, minval);
+
 } /* end ObitImageMaxMin  */
 
 /*-------Private functions called by ObitData class ------*/

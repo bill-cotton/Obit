@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2015                                          */
+/*;  Copyright (C) 2007-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -960,7 +960,7 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
   };
   /* Source list - aliases */
   gchar *knosou[] = {
-    "3C286",   "1328+307", "1331+305", "J1331+3030", "3c286",
+    "3C286",   "1328+307", "1331+305", "J1331+3030", "3c286", "3C 286",
     "3C48",    "0134+329", "0137+331", "J0137+3309", "3c48",
     "3C147",   "0538+498", "0542+498", "J0542+4951", "3c147",
     "3C138",   "0518+165", "0521+166", "J0521+1638", "3c138",
@@ -971,13 +971,13 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
   };
   /* Number of characters to check */
   olong lenchk[] = {
-    5,8,8,10, 5,  4,8,8,10, 4, 5,8,8,10,5,
+    5,8,8,10,5,6,  4,8,8,10, 4, 5,8,8,10,5,
     5,8,8,10,5, 8,8,8,10,11, 5,8,8,10,5,
     5,8,8,10,5, 5,8,8,10,5
   };
   /* Source number in coef table */
   olong ksouno[] = {
-    1,1,1,1,1, 2,2,2,2,2, 3,3,3,3,3,
+    1,1,1,1,1,1, 2,2,2,2,2, 3,3,3,3,3,
     4,4,4,4,4, 5,5,5,5,5, 6,6,6,6,6,
     7,7,7,7,7, 8,8,8,8,8
   };

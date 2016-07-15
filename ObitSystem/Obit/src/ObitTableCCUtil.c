@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2015                                          */
+/*;  Copyright (C) 2004-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -3340,9 +3340,10 @@ ReWriteTable(ObitTableCC *out, ofloat *base, olong size, olong number,
   row = ObitTableCCRowUnref (row);
 
   /* Tell what you've done */
-  Obit_log_error(err, OBIT_InfoErr,
-		 "Merged %d CC components into %d for %s",
-		 number, irow, out->name);
+  if (err->prtLv>=2) 
+    Obit_log_error(err, OBIT_InfoErr,
+		   "Merged %d CC components into %d for %s",
+		   number, irow, out->name);
 
   return retCode;
 } /* end ReWriteTable */

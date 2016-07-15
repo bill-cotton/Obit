@@ -3705,7 +3705,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   olong curScan, curScanI, nextScanNo, bad=0, iMain, cnt;
   oint numIF, numPol;
   ofloat fblank = ObitMagicF();
-  gboolean want, ChkVis, found;
+  gboolean want, ChkVis, found=FALSE;
   ObitIOAccess access;
   gchar *routine = "GetSysPowerInfo";
 
@@ -3998,7 +3998,7 @@ void GetOTTInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   olong i, iRow, oRow, ver, maxAnt, SourNo, iMain;
   olong *antLookup=NULL, curScan, curScanI, nextScanNo;
   ObitIOAccess access;
-  gboolean found;
+  gboolean found=FALSE;
   gchar *routine = "GetOTTInfo";
 
   /* error checks */

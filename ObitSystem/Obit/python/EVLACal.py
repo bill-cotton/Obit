@@ -6078,52 +6078,52 @@ def EVLAStdModel(Cals, freq):
     # Standard models in FITS files
     stdModel = []
     # 3C286 Q
-    model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286"],
+    model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286","3C 286"],
              "freqRange":[40.0e9,50.0e9],
              "file":"3C286QModel.fits","disk":1}
     stdModel.append(model)
     # 3C286 Ka
-    model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286"],
+    model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286","3C 286"],
              "freqRange":[28.0e9,40.0e9],
              "file":"3C286KaModel.fits","disk":1}
     stdModel.append(model)
     # 3C286 K
-    model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286"],
+    model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286","3C 286"],
              "freqRange":[18.01e9,28.0e9],
              "file":"3C286KModel.fits","disk":1}
     stdModel.append(model)
     # 3C286 Ku
-    model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286"],
+    model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286","3C 286"],
              "freqRange":[12.0e9,18.0e9],
              "file":"3C286KuModel.fits","disk":1}
     stdModel.append(model)
     # 3C286 X
-    model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286"],
+    model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286","3C 286"],
              "freqRange":[8.0e9,12.0e9],
              "file":"3C286XModel.fits","disk":1}
     stdModel.append(model)
     # 3C286 Chi
-    model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286"],
+    model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286","3C 286"],
              "freqRange":[6.0e9,8.0e9],
              "file":"3C286ChiModel.fits","disk":1}
     stdModel.append(model)
     # 3C286 C
-    model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286"],
+    model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286","3C 286"],
              "freqRange":[3.9e9,8.1e9],
              "file":"3C286CModel.fits","disk":1}
     stdModel.append(model)
     # 3C286 S
-    model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286"],
+    model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286","3C 286"],
              "freqRange":[1.9e9,4.1e9],
              "file":"3C286SModel.fits","disk":1}
     stdModel.append(model)
     # 3C286 L
-    model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286"],
+    model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286","3C 286"],
              "freqRange":[0.9e9,2.1e9],
              "file":"3C286LModel.fits","disk":1}
     stdModel.append(model)
     # 3C286 P
-    model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286"],
+    model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286","3C 286"],
              "freqRange":[1.5e8,7.0e8],
              "file":"3C286PModel.fits","disk":1}
     stdModel.append(model)

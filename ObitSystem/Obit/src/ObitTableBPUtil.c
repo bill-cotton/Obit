@@ -45,7 +45,7 @@
 void ObitTableBPUtilAppend (ObitTableBP *in, ObitTableBP *out, ObitErr *err)
 {
   ObitTableBPRow *row = NULL;
-  olong irow, orow;
+  olong irow, orow, maxAnt;
   gchar *routine = "ObitTableBPUtilAppend";
 
   /* error checks */
@@ -64,6 +64,7 @@ void ObitTableBPUtilAppend (ObitTableBP *in, ObitTableBP *out, ObitErr *err)
   /* Will not be sorted */
   out->myDesc->sort[0] = 0;
   out->myDesc->sort[1] = 0;
+  maxAnt = 0;
 
   /* Open input */
   ObitTableBPOpen (in, OBIT_IO_ReadOnly, err);
@@ -75,12 +76,16 @@ void ObitTableBPUtilAppend (ObitTableBP *in, ObitTableBP *out, ObitErr *err)
     if (err->error) Obit_traceback_msg (err, routine, in->name);
     if (row->status<0) continue;  /* Skip deselected record */
 
+    maxAnt = MAX (maxAnt, row->antNo); /* Maximum Antenna number */
+
     /* Write row */
     orow = -1;
     ObitTableBPWriteRow (out, orow, row, err);
     if (err->error) Obit_traceback_msg (err, routine, out->name);
   } /* End loop over table */
     
+  out->numAnt = maxAnt; /* Maximum Antenna number */
+
   /* cleanup/close up */
   row = ObitTableBPRowUnref(row);
   ObitTableBPClose (in,  err);

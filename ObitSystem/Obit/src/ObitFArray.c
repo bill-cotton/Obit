@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2015                                          */
+/*;  Copyright (C) 2003-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -930,7 +930,7 @@ ofloat ObitFArrayRMS (ObitFArray* in)
   olong i1, i2, ic, infcount;
   ofloat amax, amin, omax, omin, tmax, sum, sum2, x, count, mean, arg, cellFact=1.0;
   ofloat half, *histo = NULL, *thist=NULL;
-  ofloat rawRMS, out = -1.0, fblank = ObitMagicF();
+  ofloat rawRMS, fiddle, out = -1.0, fblank = ObitMagicF();
   gboolean done = FALSE;
   olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
   gboolean OK;
@@ -997,10 +997,12 @@ ofloat ObitFArrayRMS (ObitFArray* in)
 
  /* Loop until a reasonable number of values in peak of histogram */
   infcount = 0;  /* Loop to check for endless loop */
+  fiddle  = 1.0;  /* Factor to fiddle the half width */
   while (!done) {
 
     /* Don't do this forever */
     infcount++;
+    fiddle *= 0.9;
     if (infcount>20) {
       KillFAFuncArgs(nThreads, threadArgs);
       return rawRMS;}  /* bag it */
@@ -1060,15 +1062,15 @@ ofloat ObitFArrayRMS (ObitFArray* in)
     if ((ipHalf-imHalf) < 10) {
       /* if peak completely unresolved */
       if ((ipHalf-imHalf)<=0) {  /* wild stab */
-	half = 0.5 / cellFact; /* ~ halfwidth? 1/2 cell */
+	half = fiddle*0.5 / cellFact; /* ~ halfwidth? 1/2 cell */
       } else { /* partly resolved */
-	half = (0.5 * (ipHalf-imHalf)) / cellFact; /* ~ halfwidth */
+	half = (fiddle*0.5 * (ipHalf-imHalf)) / cellFact; /* ~ halfwidth */
       }
       mean = amin + (modeCell-0.5) /  cellFact;
       /* don't spread over whole histogram - try for 25 cells*/
       half *= numCell / 25.0; 
       /* Don't go below rawRMS */
-      half = MAX(half,2*rawRMS);
+      half = MAX(half,fiddle*rawRMS);
       amax = mean + half;
       amin = mean - half;
       /* amin = MAX (amin, omin);
@@ -1076,7 +1078,7 @@ ofloat ObitFArrayRMS (ObitFArray* in)
       continue;  /* try it again */
     } else if ((ipHalf-imHalf) > 50) {  /* Spread too thinly? */
       mean = amin + (modeCell-0.5) /  cellFact;
-      half = (0.5 * (ipHalf-imHalf)) / cellFact; /* ~ halfwidth */
+      half = (0.5 * (ipHalf-imHalf)) / (fiddle*cellFact); /* ~ halfwidth */
       /* don't spread over whole histogram - try for 25 cells*/
       half *= numCell / 25.0;  
       /* Don't go below rawRMS */
