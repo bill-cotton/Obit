@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -283,9 +283,9 @@ ObitXML* ObitRPCCall (ObitRPC* client, gchar *serverURL, ObitXML* arg,
   if (client->envP.fault_occurred) {
     Obit_log_error(err, OBIT_StrongError, "XML-RPC Fault: %s (%d)",
 		   client->envP.fault_string, client->envP.fault_code);
-    xmlrpc_DECREF(returnP);
+    if (returnP) xmlrpc_DECREF(returnP);
   } else {
-    xmlrpc_DECREF(returnP);
+    if (returnP) xmlrpc_DECREF(returnP);
   }
   if (err->error) Obit_traceback_val (err, routine, "Get status", out);  
 

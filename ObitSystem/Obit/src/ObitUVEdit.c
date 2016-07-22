@@ -3539,7 +3539,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ofloat *times=NULL, *devs=NULL, *amps=NULL, *Buffer, fblank = ObitMagicF();
   ofloat *work=NULL;
   olong *Chan=NULL, *IFs=NULL, *Stoke=NULL, visNo=-1;
-  olong itime=0, ntime, numTime, nextTime, it, itDone, ndata, ndevs;
+  olong itime=0, ntime, numTime, nextTime, it=0, itDone, ndata, ndevs;
   ofloat startTime, endTime, curTime=0.0, tTime, scanTime=0.0;
   ofloat sec;
   /*gchar tString[25];*/

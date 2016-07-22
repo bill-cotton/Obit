@@ -31,6 +31,7 @@
 #include "imagedisp.h"
 #include "poslabel.h"
 #include "markpos.h"
+#include "blinkbox.h"
 #include "messagebox.h"
 #include "graph.h"
 #include "ObitSkyGeom.h"
@@ -55,6 +56,16 @@ typedef struct {
   odouble      ra, dec;
 } MarkPosStuff;
 MarkPosStuff mark;
+
+/**
+ * Init Mark Box
+ */
+void MarkPosInit (ImageDisplay *IDdata)
+{
+  mark.IDdata = IDdata;
+  mark.dialog = NULL;
+  PositionBoxActive = 0;
+} /* end MarkPosInit */
 
 /**
  * Read RA from text window
@@ -326,29 +337,13 @@ void PosFileButCB (Widget w, XtPointer clientData, XtPointer callData)
  * \param clientData  client data
  * \param callData    call data
  */
-void PosOKButCB (Widget w, XtPointer clientData, XtPointer callData)
+void PosMarkPix ()
 {
-  olong iRet, bOK=0, bDec=0, iX, iY, iScroll;
+  olong iRet, bOK=0, iX, iY, iScroll;
   ofloat xp, yp;
-  gchar ctype[5], szErrMess[120], *value=NULL;
-  /*Display *dpy = XtDisplay(w);*/
-  ImageDisplay *IDdata = (ImageDisplay*)clientData;
+  gchar ctype[5], szErrMess[120];
   ObitImageDesc *desc;
-  
-  /* read selected values  - is Dec given? */
-  value = XmTextGetString (mark.data2);
-  if (!value) /* error */
-    {MessageShow("Error reading Dec for Mark Position");
-    return;}
-  bDec = strlen(value)>2;
-  if (bDec) {  /* Read RA, Dec separately */
-  if (ReadPosRA(mark.data1)) return;
-  if (ReadPosDec(mark.data2)) return;
-  } else { /* Read RA, Dec from RA line */
-    if (ReadPosRADec(mark.data1)) return;
-  }
-  if (ReadPosSize(mark.data3)) return;
-  
+
   /* convert to pixel */
   if (mark.bPixel) { /* position pixel values */
     xp = mark.ra;
@@ -356,13 +351,13 @@ void PosOKButCB (Widget w, XtPointer clientData, XtPointer callData)
   } else { /* convert position to pixel */
     strncpy (ctype, &image[CurImag].myDesc->ctype[0][4], 4); 
     ctype[4] = 0;
-   desc = image[CurImag].myDesc;
-   iRet = ObitSkyGeomXYpix(mark.ra, mark.dec, 
-			   desc->crval[desc->jlocr], desc->crval[desc->jlocd],
-			   desc->crpix[desc->jlocr], desc->crpix[desc->jlocd],
-			   desc->cdelt[desc->jlocr], desc->cdelt[desc->jlocd],
-			   desc->crota[desc->jlocd], &desc->ctype[desc->jlocr][4],
-			   &xp, &yp);
+    desc = image[CurImag].myDesc;
+    iRet = ObitSkyGeomXYpix(mark.ra, mark.dec, 
+			    desc->crval[desc->jlocr], desc->crval[desc->jlocd],
+			    desc->crpix[desc->jlocr], desc->crpix[desc->jlocd],
+			    desc->cdelt[desc->jlocr], desc->cdelt[desc->jlocd],
+			    desc->crota[desc->jlocd], &desc->ctype[desc->jlocr][4],
+			    &xp, &yp);
     bOK = (iRet==0);
   }
 
@@ -392,27 +387,59 @@ void PosOKButCB (Widget w, XtPointer clientData, XtPointer callData)
   
   /* set scroll for last position */
   iScroll = image[CurImag].myDesc->inaxes[1] - iY;
-  if (IDdata->vscr_vis) 
+  if (mark.IDdata->vscr_vis) 
     {
-      IDdata->scrolly = iScroll;
-      iScroll -= IDdata->vscr_half;
-      iScroll = min (iScroll, IDdata->vscr_max);
-      iScroll = max (iScroll, IDdata->vscr_min);
+      mark.IDdata->scrolly = iScroll;
+      iScroll -= mark.IDdata->vscr_half;
+      iScroll = min (iScroll, mark.IDdata->vscr_max);
+      iScroll = max (iScroll, mark.IDdata->vscr_min);
       /* set scrollbar */ 
-      XtVaSetValues(IDdata->vscroll,  XmNvalue, iScroll, NULL);
+      XtVaSetValues(mark.IDdata->vscroll,  XmNvalue, iScroll, NULL);
     }
-  if (IDdata->hscr_vis) 
+  if (mark.IDdata->hscr_vis) 
     {
-      iScroll = iX - IDdata->hscr_half;
-      iScroll = min (iScroll, IDdata->hscr_max);
-      iScroll = max (iScroll, IDdata->hscr_min);
-      IDdata->scrollx = iX;
+      iScroll = iX - mark.IDdata->hscr_half;
+      iScroll = min (iScroll, mark.IDdata->hscr_max);
+      iScroll = max (iScroll, mark.IDdata->hscr_min);
+      mark.IDdata->scrollx = iX;
       /* set scroll bar */
-      XtVaSetValues(IDdata->hscroll,  XmNvalue, iScroll, NULL);
+      XtVaSetValues(mark.IDdata->hscroll,  XmNvalue, iScroll, NULL);
     }
   
   /* repaint image */
   PaintImage (mark.IDdata);
+  
+} /* end PosMarkPix */
+
+/**
+ * Callback for Mark button hit - get info and mark
+ * \param w           widget activated
+ * \param clientData  client data
+ * \param callData    call data
+ */
+void PosOKButCB (Widget w, XtPointer clientData, XtPointer callData)
+{
+  olong bDec=0;
+  gchar *value=NULL;
+  /*Display *dpy = XtDisplay(w);*/
+  /*ImageDisplay *IDdata = (ImageDisplay*)clientData;*/
+  
+  /* read selected values  - is Dec given? */
+  value = XmTextGetString (mark.data2);
+  if (!value) /* error */
+    {MessageShow("Error reading Dec for Mark Position");
+    return;}
+  bDec = strlen(value)>2;
+  if (bDec) {  /* Read RA, Dec separately */
+  if (ReadPosRA(mark.data1)) return;
+  if (ReadPosDec(mark.data2)) return;
+  } else { /* Read RA, Dec from RA line */
+    if (ReadPosRADec(mark.data1)) return;
+  }
+  if (ReadPosSize(mark.data3)) return;
+
+  /* Mark */
+  PosMarkPix ();
   
 } /* end PosOKButCB */
 
@@ -437,6 +464,44 @@ void ClearOKButCB (Widget w, XtPointer clientData, XtPointer callData)
 } /* end ClearOKButCB */
 
 /**
+ * Callback for Swap/Mark button hit - swap current and blink and mark
+ * \param w           widget activated
+ * \param clientData  client data
+ * \param callData    call data
+ */
+void SwapMarkOKButCB (Widget w, XtPointer clientData, XtPointer callData)
+{
+  olong bDec=0;
+  gchar *value=NULL;
+
+  /*Display *dpy = XtDisplay(w);*/
+  /*ImageDisplay *IDdata = (ImageDisplay*)clientData;*/
+
+  /* Swap */
+  BlinkSwapCB(w, clientData, callData);
+
+  /* Valid image? */
+  if (!image[CurImag].valid) return;
+
+  /* read selected values  - is Dec given? */
+  value = XmTextGetString (mark.data2);
+  if (!value) /* error */
+    {MessageShow("Error reading Dec for Mark Position");
+    return;}
+  bDec = strlen(value)>2;
+  if (bDec) {  /* Read RA, Dec separately */
+  if (ReadPosRA(mark.data1)) return;
+  if (ReadPosDec(mark.data2)) return;
+  } else { /* Read RA, Dec from RA line */
+    if (ReadPosRADec(mark.data1)) return;
+  }
+  if (ReadPosSize(mark.data3)) return;
+
+  /* Mark */
+  PosMarkPix ();
+} /* end SwapMarkOKButCB */
+
+/**
  * Callback for Cancel button hit
  * \param w           widget activated
  * \param clientData  client data
@@ -449,7 +514,7 @@ void PosCancelButCB (Widget w, XtPointer clientData, XtPointer callData)
 } /* end PosCancelButCB */
 
 /**
- * Callback for reate dialog box for specifying positions to mark
+ * Callback for create dialog box for specifying positions to mark
  * \param w           widget activated
  * \param clientData  client data
  * \param callData    call data
@@ -458,7 +523,7 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
 {
   Widget form, toplabel, label3;
   Widget sep1, sep2, sep3;
-  Widget FileButton, OKButton, CancelButton, ClearButton;
+  Widget FileButton, OKButton, CancelButton, ClearButton, SwapButton;
   XmString     RA=NULL, Dec=NULL,label=NULL, sizestr=NULL, equstr=NULL;
   XmString     wierdstring = NULL;
   Arg          wargs[5]; 
@@ -767,6 +832,18 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
 					 NULL);
   XtAddCallback (ClearButton, XmNactivateCallback, ClearOKButCB, (XtPointer)IDdata);
 
+  /* Swap/Mark position button */
+  SwapButton = XtVaCreateManagedWidget ("Swap/Mark", xmPushButtonWidgetClass, 
+					 form, 
+				  	 XmNtopAttachment,    XmATTACH_WIDGET,
+					 XmNtopWidget,        OKButton,
+					 XmNbottomAttachment, XmATTACH_FORM,
+					 XmNleftAttachment,   XmATTACH_WIDGET,
+					 XmNleftWidget     ,  ClearButton,
+					 XmNrightAttachment,  XmATTACH_FORM,
+					 NULL);
+  XtAddCallback (SwapButton, XmNactivateCallback, SwapMarkOKButCB, (XtPointer)IDdata);
+
   if (label) XmStringFree(label); label = NULL;
   if (equstr) XmStringFree(equstr); equstr = NULL;
   if (RA) XmStringFree(RA); RA = NULL;
@@ -787,6 +864,344 @@ void MarkPosCB (Widget parent, XtPointer clientData, XtPointer callData)
   XMoveWindow (XtDisplay(IDdata->shell), XtWindow(mark.dialog), 
 	       xpos, ypos);
 } /* end MarkPosCB */
+
+/**
+ * XML interface to Marking position Callback for create dialog box 
+ * for specifying positions to mark
+ * \param IDdata      display data
+ * \param pos         position string ("hh mm ss.s dd mm ss.s")
+ * \return 0 if OK,  else failed
+ */
+int MarkPosXML (char *pos)
+{
+  Widget form, toplabel, label3;
+  Widget sep1, sep2, sep3;
+  Widget FileButton, OKButton, CancelButton, ClearButton, SwapButton;
+  XmString     RA=NULL, Dec=NULL,label=NULL, sizestr=NULL, equstr=NULL;
+  XmString     wierdstring = NULL;
+  Arg          wargs[5]; 
+  gchar        valuestr[100], ctype[5];
+  olong         h, d, m, toHours;
+  gshort       xpos, ypos;
+  ofloat       s;
+  ImageDisplay *IDdata;
+  /*Display *dpy = XtDisplay(parent);*/
+  
+  
+  /* validity checks */
+  if (!mark.IDdata) return 1;
+  if (!image[CurImag].valid) return 1;
+  
+  /* register IDdata */
+  IDdata = mark.IDdata;
+  
+  /* don't make another one */
+  if (PositionBoxActive) {
+    if (XtIsRealized (mark.dialog))
+      XMapRaised (XtDisplay(IDdata->shell), XtWindow(mark.dialog));
+    
+    /* bring it back where we can see it */
+    XtPopup(mark.dialog, XtGrabNonexclusive);
+    
+    /* put it some place reasonable
+       where is parent? */
+    XtVaGetValues (IDdata->shell, XmNx, &xpos, XmNy, &ypos,  NULL);
+    ypos += 160;
+    if (xpos<0) xpos = 0;
+    /* leave it where it was
+    XMoveWindow (XtDisplay(IDdata->shell), XtWindow(mark.dialog), 
+		 xpos, ypos); */
+    
+    /* set values */
+    /* equinox - labels are difficult */
+    if ((usr_equinox>0.0) && (image[CurImag].myDesc->equinox>0.0))
+      sprintf(valuestr,"Equinox %7.1f", usr_equinox);
+    else if (image[CurImag].myDesc->equinox>0.0)
+      sprintf(valuestr,"Equinox %7.1f", image[CurImag].myDesc->equinox);
+    else
+      sprintf(valuestr,"Equinox unknown");
+    wierdstring = XmStringCreateSimple (valuestr);
+    XtSetArg (wargs[0], XmNlabelString, wierdstring);
+    XtSetValues (mark.equlab, wargs, 1);
+    if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+    
+    /* set RA, Dec labels from FITS file info */
+    strncpy (ctype, image[CurImag].myDesc->ctype[0], 4); ctype[4] = 0;
+    if (ctype[2]=='-') ctype[2]=' '; if (ctype[3]=='-') ctype[3]=' ';
+    wierdstring = XmStringCreateSimple (ctype);
+    XtSetArg (wargs[0], XmNlabelString, wierdstring);
+    XtSetValues (mark.label1, wargs, 1);
+    if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+    strncpy (ctype, image[CurImag].myDesc->ctype[1], 4); ctype[4] = 0;
+    if (ctype[2]=='-') ctype[2]=' '; if (ctype[3]=='-') ctype[3]=' ';
+    wierdstring = XmStringCreateSimple (ctype);
+    XtSetArg (wargs[0], XmNlabelString, wierdstring);
+    XtSetValues (mark.label2, wargs, 1);
+    if (wierdstring) XmStringFree(wierdstring); wierdstring = NULL;
+    
+    /* Position - write pos to RA text box, blanks to dec */
+    XmTextSetString (mark.data1, pos);
+    sprintf (valuestr, " ");
+    XmTextSetString (mark.data2, valuestr);
+
+    /* Read/mark position */
+    if (ReadPosRADec(mark.data1)) return 1;
+    if (ReadPosSize(mark.data3)) return 1;
+    PosMarkPix ();
+    return 0;
+  } /* end of update dialog */
+  
+  label = XmStringCreateSimple ("Position to mark on image");
+  sizestr = XmStringCreateSimple ("size");
+  /* mark as active */
+  PositionBoxActive = 1;
+  
+  mark.dialog = XtVaCreatePopupShell ("MarkPos", xmDialogShellWidgetClass, 
+				      IDdata->shell, 
+				      XmNautoUnmanage, False,
+				      XmNwidth,     150,
+				      XmNheight,    190,
+				      XmNdeleteResponse, XmDESTROY,
+				      NULL);
+  
+  /* make Form widget to stick things on */
+  form = XtVaCreateManagedWidget ("MarkForm", xmFormWidgetClass,
+				  mark.dialog,
+				  XmNautoUnmanage, False,
+				  XmNwidth,     150,
+				  XmNheight,    190,
+				  XmNx,           0,
+				  XmNy,           0,
+				  NULL);
+  
+  /* info label widgets */
+  toplabel = XtVaCreateManagedWidget ("Label", xmLabelWidgetClass, 
+				      form, 
+				      XmNwidth,           150,
+				      XmNlabelString,   label,
+				      XmNtopAttachment, XmATTACH_FORM,
+				      XmNleftAttachment,  XmATTACH_FORM,
+				      NULL);
+  
+  /* Equinox */
+  if ((usr_equinox>0.0) && (image[CurImag].myDesc->equinox>0.0))
+    sprintf(valuestr,"Equinox %7.1f", usr_equinox);
+  else if (image[CurImag].myDesc->equinox>0.0)
+    sprintf(valuestr,"Equinox %7.1f", image[CurImag].myDesc->equinox);
+  else
+    sprintf(valuestr,"Equinox unknown");
+  equstr = XmStringCreateSimple (valuestr);
+  mark.equlab = XtVaCreateManagedWidget ("EquLabel", xmLabelWidgetClass, 
+					 form, 
+					 XmNwidth,           150,
+					 XmNlabelString,   equstr,
+					 XmNtopAttachment, XmATTACH_WIDGET,
+					 XmNtopWidget,     toplabel,
+					 XmNleftAttachment,  XmATTACH_FORM,
+					 NULL);
+  
+  /* set labels from FITS file info */
+  strncpy (ctype, image[CurImag].myDesc->ctype[0], 4); ctype[4] = 0;
+  if (ctype[2]=='-') ctype[2]=' '; if (ctype[3]=='-') ctype[3]=' ';
+  RA = XmStringCreateSimple (ctype);
+  strncpy (ctype, image[CurImag].myDesc->ctype[1], 4); ctype[4] = 0;
+  if (ctype[2]=='-') ctype[2]=' '; if (ctype[3]=='-') ctype[3]=' ';
+  Dec = XmStringCreateSimple (ctype);
+  
+  /* RA */
+  mark.label1 = XtVaCreateManagedWidget ("RA", xmLabelWidgetClass,
+					 form,
+					 XmNheight,    30,
+					 XmNlabelString,   RA,
+					 XmNtopAttachment, XmATTACH_WIDGET,
+					 XmNtopWidget,     mark.equlab,
+					 XmNleftAttachment,  XmATTACH_FORM,
+					 NULL);
+  /*  first axis in hours or degrees? */
+  strncpy (ctype, image[CurImag].myDesc->ctype[0], 4);
+  toHours = (!strncmp(ctype, "RA", 2)) || (!strncmp(ctype, "LL", 2));
+  /* default is reference position */
+  mark.ra  = image[CurImag].myDesc->crval[0];
+  mark.dec = image[CurImag].myDesc->crval[1];
+  
+  /* precess if necessary */
+  if ((usr_equinox > 0.0) && 
+      (image[CurImag].usr_equinox !=
+       image[CurImag].myDesc->equinox))
+    {if (image[CurImag].myDesc->equinox==1950.0) 
+      ObitSkyGeomBtoJ (&mark.ra, &mark.dec);
+    if (image[CurImag].myDesc->equinox==2000.0) 
+      ObitSkyGeomJtoB (&mark.ra, &mark.dec);}
+  
+  if (toHours)
+    {rahms (mark.ra, &h, &m, &s);
+    sprintf (valuestr, "%2.2d %2.2d %5f", h, m, s);}
+  else
+    {decdms (mark.ra, &h, &m, &s);
+    sprintf (valuestr, "%3.2d %2.2d %5f", h, m, s);
+    }
+  mark.data1 = XtVaCreateManagedWidget ("RA data", xmTextFieldWidgetClass, 
+					form, 
+					XmNvalue,        valuestr,
+					XmNtopAttachment, XmATTACH_WIDGET,
+					XmNtopWidget,     mark.equlab,
+					XmNleftAttachment, XmATTACH_WIDGET,
+					XmNleftWidget,     mark.label1,
+					XmNrightAttachment,  XmATTACH_FORM,
+					NULL);
+  /* separator */
+  sep1 = XtVaCreateManagedWidget ("sep1", xmSeparatorWidgetClass,
+				  form, 
+				  XmNwidth,           150,
+				  XmNtopAttachment, XmATTACH_WIDGET,
+				  XmNtopWidget,     mark.data1,
+				  XmNleftAttachment,  XmATTACH_FORM,
+				  NULL);
+  /* Dec */
+  mark.label2 = XtVaCreateManagedWidget ("Dec", xmLabelWidgetClass,
+					 form,
+					 XmNheight,    30,
+					 XmNlabelString,   Dec,
+					 XmNtopAttachment, XmATTACH_WIDGET,
+					 XmNtopWidget,     sep1,
+					 XmNleftAttachment,  XmATTACH_FORM,
+					 NULL);
+  
+  decdms (mark.dec, &d, &m, &s);
+  if (d<0) d = -d;
+  sprintf (valuestr, "%3.2d %2.2d %5f", d, m, s);
+  if (mark.dec<0.0) valuestr[0]='-'; /* neg 0 dec. */
+  mark.data2 = XtVaCreateManagedWidget ("Dec data", xmTextFieldWidgetClass, 
+					form, 
+					XmNvalue,        valuestr,
+					XmNtopAttachment, XmATTACH_WIDGET,
+					XmNtopWidget,     sep1,
+					XmNleftAttachment, XmATTACH_WIDGET,
+					XmNleftWidget,     mark.label2,
+					XmNrightAttachment,  XmATTACH_FORM,
+					NULL);
+  
+  /* separator */
+  sep2 = XtVaCreateManagedWidget ("sep2", xmSeparatorWidgetClass,
+				  form, 
+				  XmNwidth,           150,
+				  XmNtopAttachment, XmATTACH_WIDGET,
+				  XmNtopWidget,     mark.data2,
+				  XmNleftAttachment,  XmATTACH_FORM,
+				  NULL);
+  /* size */
+  label3 = XtVaCreateManagedWidget ("pos size", xmLabelWidgetClass,
+				    form,
+				    XmNheight,    30,
+				    XmNlabelString,   sizestr,
+				    XmNtopAttachment, XmATTACH_WIDGET,
+				    XmNtopWidget,     sep2,
+				    XmNleftAttachment,  XmATTACH_FORM,
+				    NULL);
+  
+  mark.iInner = 6;  mark.iOuter = 15;
+  sprintf (valuestr, " %d %d", mark.iInner, mark.iOuter);
+  mark.data3 = XtVaCreateManagedWidget ("size data", xmTextFieldWidgetClass, 
+					form, 
+					XmNvalue,        valuestr,
+					XmNtopAttachment, XmATTACH_WIDGET,
+					XmNtopWidget,     sep2,
+					XmNleftAttachment, XmATTACH_WIDGET,
+					XmNleftWidget,     label3,
+					XmNrightAttachment,  XmATTACH_FORM,
+					NULL);
+  /* separator */
+  sep3 = XtVaCreateManagedWidget ("sep3", xmSeparatorWidgetClass,
+				  form, 
+				  XmNwidth,           150,
+				  XmNtopAttachment, XmATTACH_WIDGET,
+				  XmNtopWidget,     mark.data3,
+				  XmNleftAttachment,  XmATTACH_FORM,
+				  NULL);
+  /* File button */
+  FileButton = XtVaCreateManagedWidget ("File", xmPushButtonWidgetClass, 
+					form, 
+					XmNtopAttachment, XmATTACH_WIDGET,
+					XmNtopWidget,     sep3,
+					XmNleftAttachment,  XmATTACH_FORM,
+					NULL);
+  XtAddCallback (FileButton, XmNactivateCallback, PosFileButCB, 
+		 (XtPointer)IDdata);
+  
+  /* Cancel button */
+  CancelButton = XtVaCreateManagedWidget ("Cancel", xmPushButtonWidgetClass, 
+					  form, 
+					  XmNtopAttachment, XmATTACH_WIDGET,
+					  XmNtopWidget,     sep3,
+					  XmNleftAttachment, XmATTACH_WIDGET,
+					  XmNleftWidget,     FileButton,
+					  NULL);
+  XtAddCallback (CancelButton, XmNactivateCallback, PosCancelButCB, 
+		 (XtPointer)IDdata);
+  
+  /* Mark button */
+  OKButton = XtVaCreateManagedWidget ("Mark", xmPushButtonWidgetClass, 
+				      form, 
+				      XmNtopAttachment, XmATTACH_WIDGET,
+				      XmNtopWidget,     sep3,
+				      XmNleftAttachment, XmATTACH_WIDGET,
+				      XmNleftWidget,     CancelButton,
+				      XmNrightAttachment, XmATTACH_FORM,
+				      NULL);
+  XtAddCallback (OKButton, XmNactivateCallback, PosOKButCB, (XtPointer)IDdata);
+  
+  /* Clear position button */
+  ClearButton = XtVaCreateManagedWidget ("Clear", xmPushButtonWidgetClass, 
+					 form, 
+					 XmNtopAttachment, XmATTACH_WIDGET,
+					 XmNtopWidget,     FileButton,
+					 XmNbottomAttachment, XmATTACH_FORM,
+					 XmNleftAttachment, XmATTACH_FORM,
+					 NULL);
+  XtAddCallback (ClearButton, XmNactivateCallback, ClearOKButCB, (XtPointer)IDdata);
+
+  /* Swap/Mark position button */
+  SwapButton = XtVaCreateManagedWidget ("Swap/Mark", xmPushButtonWidgetClass, 
+					 form, 
+				  	 XmNtopAttachment,    XmATTACH_WIDGET,
+					 XmNtopWidget,        OKButton,
+					 XmNbottomAttachment, XmATTACH_FORM,
+					 XmNleftAttachment,   XmATTACH_WIDGET,
+					 XmNleftWidget     ,  ClearButton,
+					 XmNrightAttachment,  XmATTACH_FORM,
+					 NULL);
+  XtAddCallback (SwapButton, XmNactivateCallback, SwapMarkOKButCB, (XtPointer)IDdata);
+
+  if (label) XmStringFree(label); label = NULL;
+  if (equstr) XmStringFree(equstr); equstr = NULL;
+  if (RA) XmStringFree(RA); RA = NULL;
+  if (Dec) XmStringFree(Dec); Dec = NULL;
+  if (sizestr) XmStringFree(sizestr); sizestr = NULL;
+  
+  /* set it up */
+  XtManageChild (mark.dialog);
+  
+  /* put it some place reasonable */
+  /*  where is parent? */
+  XtVaGetValues (IDdata->shell,
+		 XmNx, &xpos,
+		 XmNy, &ypos,
+		 NULL);
+  ypos += 180;
+  if (xpos<0) xpos = 0;
+  XMoveWindow (XtDisplay(IDdata->shell), XtWindow(mark.dialog), 
+	       xpos, ypos);
+  /* Position - write pos to RA text box, blanks to dec */
+  XmTextSetString (mark.data1, pos);
+  sprintf (valuestr, " ");
+  XmTextSetString (mark.data2, valuestr);
+  
+  /* Read/mark position */
+  if (ReadPosRADec(mark.data1)) return 1;
+  if (ReadPosSize(mark.data3)) return 1;
+  PosMarkPix ();
+  return 0;
+} /* end MarkPosXML */
 
 /**
  * Routine to read next position from file and return pixel position and 

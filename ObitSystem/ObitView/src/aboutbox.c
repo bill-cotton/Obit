@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include "obitview.h"
 #include "scrolltext.h"
+#include <ObitVersion.h>
 
 /**
  *  \file aboutbox.c
@@ -52,6 +53,10 @@ void HelpAboutCB (Widget w, XtPointer clientData, XtPointer callData)
 void HelpAbout (ScrollTextPtr STextPtr)  
 {
   int loop, next, length;
+  char *ver = ObitVersion();
+  char label[80];
+  g_snprintf (label,79,"ObitView %s Viewer for images in FITS or AIPS format\n", ver);
+  g_free(ver);
   char *line[] = {
     "ObitView 1.3 Viewer for images in FITS or AIPS format ",
     "Copyright NRAO/AUI 2005-2016 ",
@@ -73,6 +78,7 @@ void HelpAbout (ScrollTextPtr STextPtr)
     "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. ",
     " ",
     "*** FINISHED ***" }; /* end of text */
+  line[0] = label;  /* version info */
   loop = 0;
   next = STextPtr->num_lines;
   while (1) { /* loop till done */

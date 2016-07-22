@@ -1,7 +1,7 @@
 /* $Id$  */
 /* XMLRPC server for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2005-2008
+*  Copyright (C) 2005-2016
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -46,7 +46,9 @@ enum xmlrpcFunc {
   /** Edit Clean window - argument = window */
   XMLRPC_EditWindow,
   /** Copy File - argument = binary blob and description */
-  XMLRPC_FileCopy
+  XMLRPC_FileCopy,
+  /** Mark position */
+  XMLRPC_MarkPos
 }; /* end enum xmlrpcFunc */
 /** typedef for enum for ObitIO object status. */
 typedef enum xmlrpcFunc XMLRPCFunc;

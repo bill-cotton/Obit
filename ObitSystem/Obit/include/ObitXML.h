@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -76,6 +76,8 @@ enum obitXMLType {
   OBIT_XML_LoadImage,
   /** EditWindow parameters */
   OBIT_XML_EditWindow,
+  /** EditWindow parameters */
+  OBIT_XML_MarkPos,
   /** Binary blob */
   OBIT_XML_BinBlob,
   /** RPC Call argument */
@@ -197,6 +199,10 @@ ObitXMLBlob2XML (gpointer blob, ObitInfoList *desc, ObitErr *err);
 /** Public: Convert to Binary blob. */
 gpointer 
 ObitXMLXML2Blob (ObitXML *xml, ObitInfoList **desc, ObitErr *err);
+
+/** Public: Constructor for MarkPos. */
+ObitXML* 
+ObitXMLMarkPos2XML (gchar *pos, ObitErr *err);
 
 /** Public: Constructor for return object */
 ObitXML* 

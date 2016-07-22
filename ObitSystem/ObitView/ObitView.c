@@ -3,7 +3,7 @@
 /* This program requires the Motif library */
 /* Cloned from ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2005-2013
+*  Copyright (C) 2005-2016
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -220,6 +220,9 @@ int main ( int argc, char **argv )
 
   /* initialize image, display file given as argument */
   InitImage (IDdata, argc, argv[1]);
+
+  /* initialize position marking */
+  MarkPosInit (IDdata);
   
   /*   set display */
   SetDisplay(IDdata);

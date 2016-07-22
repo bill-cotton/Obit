@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2015                                          */
+/*;  Copyright (C) 2005-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -83,6 +83,9 @@ static void DelTemp (char *filename, ObitErr *err);
 /** Private: Edit Window. */
 static gboolean EditWindow (ObitDisplay* display, ObitDConCleanWindow *window, 
 			    olong field, ObitInfoList **request, ObitErr *err);
+
+/** Private: mark position. */
+static gboolean MarkPos (ObitDisplay* display, gchar *pos, ObitErr *err);
 
 /**  Private: Turn Image info into an ObitXML */
 static ObitXML* getImageInfo (ObitImage *image, gchar *fitsFile, 
@@ -368,6 +371,49 @@ gboolean ObitDisplayShow (ObitDisplay* display, Obit *image,
 } /* end ObitDisplayShow */
 
 /**
+ * Mark a celestial position in an image
+ * \param display    ObitDisplay object
+ * \param pos        Positiin, RA, Dec as ("hhmm ss.s dd mm ss.s")
+ * \param err        Obit Error message
+ * \return TRUE if user wants to quit
+ */
+gboolean ObitDisplayMarkPos (ObitDisplay* display, gchar *pos,
+			     ObitErr *err)
+{
+  gboolean out = FALSE;
+  gchar *routine = "ObitDisplayMarkPos";
+
+  /* NOP if display not defined */
+  if (display==NULL) return out;
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return out;
+  g_assert (ObitDisplayIsA(display));
+
+  if (display->turnedOff) return out;  /* display turned off? */
+  /* Progress Report to show and clear pending messages */
+  ObitErrLog(err);
+
+ /* Check server availability (ping) */
+  if (!pingServer(display, err)) {
+    /* works but server temporarily unavailable */
+    Obit_log_error(err, OBIT_InfoWarn, "%s: Display unavailable",
+		   routine);
+    return out;
+  }
+  
+  if (!MarkPos (display, pos, err)) {
+    /* Failed */
+    Obit_log_error(err, OBIT_InfoWarn, "%s: Position marking failed",
+		   routine);
+    return out;
+  }
+
+  return TRUE;
+} /* end ObitDisplayMarkPos */
+
+/**
  * Enable display (default initial condition)
  * \param display    ObitDisplay object
  */
@@ -447,6 +493,8 @@ static void ObitDisplayClassInfoDefFn (gpointer inClass)
     (ObitDisplayCreateFP)ObitDisplayCreate;
   theClass->ObitDisplayShow = 
     (ObitDisplayShowFP)ObitDisplayShow;
+  theClass->ObitDisplayMarkPos = 
+    (ObitDisplayMarkPosFP)ObitDisplayMarkPos;
   theClass->ObitDisplayTurnOn = 
     (ObitDisplayTurnOnFP)ObitDisplayTurnOn;
   theClass->ObitDisplayTurnOff = 
@@ -569,7 +617,7 @@ static gboolean pingServer (ObitDisplay* display, ObitErr *err)
   /* Must be OK */
   out = TRUE;
 
-  /* Cleanup from load Image */
+  /* Cleanup  */
  cleanup:
   status  = ObitInfoListUnref(status);
   request = ObitInfoListUnref(request);
@@ -579,6 +627,72 @@ static gboolean pingServer (ObitDisplay* display, ObitErr *err)
 
   return out;
 } /* end pingServer */
+
+/**
+ * Cause position to be marked on image display
+ * Returns TRUE is the markPos was successful
+ * A communications failure will result in the display being "turned Off"
+ * and err set
+ * \param display   ObitDisplay object
+ * \param pos       Position as "hh mm ss.s dd mm ss.s"
+ * \param err       Obit Error message
+ * \return TRUE if available
+ */
+static gboolean MarkPos (ObitDisplay* display, gchar *pos, ObitErr *err)
+{
+  gboolean out = FALSE;
+  ObitXML *xml=NULL, *result=NULL;
+  ObitInfoList *status=NULL, *request=NULL;
+  gint32 dim[MAXINFOELEMDIM];
+  ObitInfoType infoType;
+  olong retCode;
+  gchar *reason=NULL;
+  gchar *routine = "ObitDisplay:MarkPos";
+
+  /* NOP if display not defined */
+  if (display==NULL) return out;
+
+  /* existing error? */
+  if (err->error) return out;
+
+  xml = ObitXMLMarkPos2XML(pos, err);
+  result = ObitRPCCall (display->client, display->ServerURL, xml, &status, &request, err);
+  /* If something goes wrong with communications, turn off */
+  if (err->error) {
+    /*ObitErrClearErr (err);  *//* ignore error */
+    goto cleanup;
+  }
+
+  /* Check Status */
+  retCode = -1;
+  if (status) {
+    ObitInfoListGet (status, "code", &infoType, dim, (gpointer)&retCode, err);
+    ObitInfoListGetP (status, "reason", &infoType, dim, (gpointer*)&reason);
+  }
+  if (err->error) {
+    goto cleanup;
+  }
+
+  /* Did it work? */
+  if (retCode!=0) {
+    Obit_log_error(err, OBIT_InfoWarn, "%s: Could not talk to Display, code %d",
+		   routine, retCode);
+    Obit_log_error(err, OBIT_InfoWarn, "   because: %s",reason);
+    goto cleanup;
+  }
+  /* Must be OK */
+  out = TRUE;
+
+  /* Cleanup  */
+ cleanup:
+  status  = ObitInfoListUnref(status);
+  request = ObitInfoListUnref(request);
+  xml     = ObitXMLUnref(xml);
+  result  = ObitXMLUnref(result);
+  if (err->error) Obit_traceback_val (err, routine, display->name, out);
+
+  return out;
+} /* end MarkPos */
 
 /**
  * Send request to display server to load an image

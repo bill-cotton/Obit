@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitDisplay type                       */
 /*                                                                    */
-/*;  Copyright (C) 2005                                               */
+/*;  Copyright (C) 2005-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -59,6 +59,10 @@ extern int ODisplayMosaicEdit  (ObitDisplay *display, ObitImageMosaic *mosaic, i
                                ObitDConCleanWindow *window, ObitErr *err) {
   return (int) ObitDisplayShow (display, (Obit*)mosaic, window, (olong)field, err);
 } // end ODisplayMosaicEdit
+
+extern int ODisplayMarkPos  (ObitDisplay *display, char *pos, ObitErr *err) {
+  return (int) ObitDisplayMarkPos (display, (gchar*)pos, err);
+} // end ODisplayMarkPos
 
 extern int ODisplayIsA (ObitDisplay* in) {
   return ObitDisplayIsA(in);

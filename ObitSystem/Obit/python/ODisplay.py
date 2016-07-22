@@ -5,7 +5,7 @@ ONLY ONE MAY EXIST
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2007
+#  Copyright (C) 2004-2016
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -145,6 +145,26 @@ def PMosaic (disp, mosaic, field, err, window=None) :
         ret = Obit.ODisplayMosaic(disp.me, mosaic.me, field, window.me, err.me)
     return ret
     # end PImage
+
+
+def PMarkPos (disp, pos, err) :
+    """
+    Display an image mosaic on the display server
+
+    * disp     = display server
+    * pos      = celestial ppositin as ("hh mm ss.s dd mm ss.s")
+    * err      = Python Obit Error/message stack
+
+    returns True if worked
+    """
+    ################################################################
+    # Checks
+    if not PIsA(disp):
+        print "Actually ",disp.__class__
+        raise TypeError,"disp MUST be a Python Obit Display"
+    ret = Obit.ODisplayMarkPos(disp.me, pos, err.me)
+    return ret
+    # end PMarkPos
 
 
 def PIsA (disp):

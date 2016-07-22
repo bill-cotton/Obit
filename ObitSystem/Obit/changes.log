@@ -3373,3 +3373,40 @@ Obit/tasks/BDFIn.c Obit/TDF/BDFIn.TDF:
 Obit/python/MosaicUtil.py:
   PWeightImage: Add option to reject planes above a given RMS
 5 Jul 2016, svn 547
+
+Bug fixes
+Obit/tasks/BDFIn.c:
+  uninitialized variables
+Obit/tasks/SetJy.c Obit/python/EVLACal.py:
+  Add "3C 286" to list of aliases
+Obit/src/ObitTableBPUtil.c:
+  Append: update maximum antenna number.
+Obit/src/ObitImage.c:
+  MaxMin: Tell new value
+Obit/src/ObitTableCCUtil.c:
+  ReWriteTable: Merged message if prtLv>=2
+Obit/src/ObitFArray.c:
+  FArrayRMS: Make more robust near very bright sources.
+Obit/tasks/BPass.c:
+ BandpassCal: No more than 2 poln in BP table.
+Obit/src/ObitUV.c:
+  GetSelect: Accept "subA" as spelling of subarray
+15 Jul 2016, svn ver 548
+
+Add position marking features to Obit/ObitView
+ObitView/include/markpos.h ObitView/src/markpos.c:
+ObitView/src/aboutbox.c ObitView/src/helpbox.c:
+ObitView/include/XMLRPCserver.h ObitView/src/XMLRPCserver.c:
+ObitView/ObitView.c:
+  ObitView  implementation of MarkPos
+Obit/python/ODisplay.inc Obit/python/ODisplay.py:
+Obit/python/Obit_wrap.c  ObitSD/python/Obit_wrap.c:
+  Client Python interface to MarkPos
+Obit/include/ObitDisplay.h  Obit/include/ObitDisplayClassDef.h:
+Obit/include/ObitXML.h:
+Obit/src/ObitDisplay.c Obit/src/ObitRPC.c Obit/src/ObitXML.c :
+  Client c interface to MarkPos
+Obit/src/ObitUVEdit.c:
+  ObitUVEditMedian: Uninitialized variable
+22 Jul 2016, svn ver 549
+

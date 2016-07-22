@@ -30,6 +30,7 @@
 #include <glib.h>
 #include <stdio.h>
 #include "helpbox.h"
+#include <ObitVersion.h>
 
 /**
  *  \file helpbox.c
@@ -381,8 +382,8 @@ void InitHelpText(void) {
     "     Click topic on left to display help.\n",
     "*** FINISHED ***"}; /* end of text */
   
-  static  char *intro_text[] = {
-    "                         ObitView 1.3\n",
+  static char *intro_text[] = {
+    "                     ObitView\n",
     "  \n",
     "Please relay comments and/or suggestions to Bill Cotton at NRAO \n ",
     "(bcotton@nrao.edu) \n",
@@ -396,7 +397,7 @@ void InitHelpText(void) {
     "the desired feature. \n",
     "  \n",
     "*** FINISHED ***"}; /* end of text */
-  
+
   /* overview of ObitView */
   static  char *over_text[] = {
     "     Overview \n",
@@ -834,6 +835,9 @@ void InitHelpText(void) {
     "     The 'Clear' button will blank the position text boxes.  If the 'DEC'  \n",
     "box is blank, then the full RA and Dec strings can be entered in the RA \n",
     "field. \n",
+    "   \n",
+    "     The 'Swap/Mark' button will swap the current and blink images and\n",
+    "mark the indicated position in that image.\n",
     "   \n",
     "     If many positions are to be marked, they can be entered in a \n",
     "text file prepared by a text editor (e.g. emacs).   Each line of this \n",

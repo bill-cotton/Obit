@@ -2,7 +2,7 @@
 /* XMLRPC server for ObitView */
 /* Much of this material directly adapted from xmlrpc-c-1.2/examples */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2005-2012
+*  Copyright (C) 2005-2016
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -36,6 +36,7 @@
 #include "obitview.h"
 #include "imagedisp.h"
 #include "drawbox.h"
+#include "markpos.h"
 #include "Image2Pix.h"
 #include "messagebox.h"
 #include "xml.h"
@@ -68,6 +69,11 @@ editWindow(xmlrpc_env *   const envP,
 
 static xmlrpc_value *
 copyFile(xmlrpc_env *   const envP, 
+	 xmlrpc_value * const paramArrayP,
+	 void *         const userData);
+
+static xmlrpc_value *
+markPos(xmlrpc_env *   const envP, 
 	 xmlrpc_value * const paramArrayP,
 	 void *         const userData);
 
@@ -149,6 +155,7 @@ static void server_loop(gint port)
   ObitRPCAddMethod (server, "loadImage",  &loadImage,  NULL, err);
   ObitRPCAddMethod (server, "editWindow", &editWindow, NULL, err);
   ObitRPCAddMethod (server, "copyFile",   &copyFile,   NULL, err);
+  ObitRPCAddMethod (server, "markPos",    &markPos,    NULL, err);
 
   /* Loop forever 'neath the streets of Boston */
   /*ObitRPCServerLoop(server, port, "/tmp/xmlrpc_log");*/
@@ -259,6 +266,15 @@ void* XMLRPCWatcher (XtPointer clientData)
      xmlrpcData = IAm;  /* In case anybody cares */
      return_flag=0;     /* clear return flag */
      break;
+    case XMLRPC_MarkPos:   /* Mark position passed as "hh mm ss.s dd mm ss" */
+      if (MarkPosXML ((char*)xmlrpcData)) {
+	  /* error */
+	  sprintf (szErrMess, "Error marking position");
+	  MessageShow (szErrMess);
+	  xmlrpcData = "Position marking failed";  /* return message */
+      }
+      return_flag=1; 
+      break;
     default:
       fprintf (stderr, "Unknown function %d\n", xmlrpcFunc);
     }
@@ -710,3 +726,56 @@ copyFile(xmlrpc_env *   const envP,
 
 } /* end copyFile */
 
+/**
+ * Handle markPos function call 
+ * \param envP          xmlrpc environment
+ * \param paramArrayP   call argument as xml
+ * \param userData      ignored
+ * \return xml return value for function
+ */
+static xmlrpc_value *
+markPos(xmlrpc_env *   const envP, 
+     xmlrpc_value *    const paramArrayP,
+     void *            const userData) 
+{  
+  char *pos;
+
+  /* Are we waiting on something? */
+  if (WeAreBusy)
+      return xmlrpc_build_value(envP, "{s:{s:i,s:s},s:s}", 
+				"Status","code", (xmlrpc_int32)1,"reason","Busy",
+				"Result", "Busy");
+  WeAreBusy = TRUE; /* busy now */
+  
+  /* Parse our argument array. */
+  xmlrpc_decompose_value(envP, paramArrayP, "(s)", &pos);
+  if (envP->fault_occurred) {
+    WeAreBusy = FALSE; /* no longer busy */
+    return NULL;
+  }
+  /* Pass request to X thread */
+  pthread_mutex_lock(&request_lock); /* lock mutex */
+  receive_flag = 1;          /* now have a request */
+  xmlrpcFunc = XMLRPC_MarkPos;  /* Function called */
+  xmlrpcData = pos;             /* pass position string */
+  pthread_mutex_unlock(&request_lock); /* unlock mutex */
+
+  /* Wait for results */
+  while(1) {
+    if (return_flag) {
+      pthread_mutex_lock(&request_lock); /* lock mutex */
+      return_flag = 0; /* clear flag */
+      pthread_mutex_unlock(&request_lock); /* unlock mutex */
+     
+      /* Return our result. */
+      WeAreBusy = FALSE; /* no longer busy */
+      xmlrpcFunc = XMLRPC_Inactive;
+      return xmlrpc_build_value(envP, "{s:{s:i,s:s},s:s}", 
+				"Status","code", (xmlrpc_int32)0,"reason","OK",
+				"Result", (char*)xmlrpcData);
+    }
+    /* Let's not burn too many cycles in this event loop */
+    usleep(250000); /* 250 msec */
+  }
+
+} /* end markPos */

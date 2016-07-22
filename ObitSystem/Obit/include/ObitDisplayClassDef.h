@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005                                               */
+/*;  Copyright (C) 2005-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -33,6 +33,8 @@
 ObitDisplayCreateFP ObitDisplayCreate;
 /** Function pointer to display/edit windows. */
 ObitDisplayShowFP ObitDisplayShow;
+/** Function pointer to Mark position. */
+ObitDisplayMarkPosFP ObitDisplayMarkPos;
 /** Function pointer to turn on. */
 ObitDisplayTurnOnFP ObitDisplayTurnOn;
 /** Function pointer to turn off. */

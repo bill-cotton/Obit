@@ -6361,6 +6361,10 @@ extern int ODisplayMosaicEdit  (ObitDisplay *display, ObitImageMosaic *mosaic, i
   return (int) ObitDisplayShow (display, (Obit*)mosaic, window, (olong)field, err);
 } // end ODisplayMosaicEdit
 
+extern int ODisplayMarkPos  (ObitDisplay *display, char *pos, ObitErr *err) {
+  return (int) ObitDisplayMarkPos (display, (gchar*)pos, err);
+} // end ODisplayMarkPos
+
 extern int ODisplayIsA (ObitDisplay* in) {
   return ObitDisplayIsA(in);
 } // end  ODisplayIsA 
@@ -6385,6 +6389,7 @@ extern int ODisplayImage(ObitDisplay *,ObitImage *,ObitErr *);
 extern int ODisplayMosaic(ObitDisplay *,ObitImageMosaic *,int ,ObitErr *);
 extern int ODisplayImageEdit(ObitDisplay *,ObitImage *,ObitDConCleanWindow *,ObitErr *);
 extern int ODisplayMosaicEdit(ObitDisplay *,ObitImageMosaic *,int ,ObitDConCleanWindow *,ObitErr *);
+extern int ODisplayMarkPos(ObitDisplay *,char *,ObitErr *);
 extern int ODisplayIsA(ObitDisplay *);
 extern char *ODisplayGetName(ObitDisplay *);
 
@@ -35102,6 +35107,57 @@ static PyObject *_wrap_ODisplayMosaicEdit(PyObject *self, PyObject *args) {
     }
     _result = (int )ODisplayMosaicEdit(_arg0,_arg1,_arg2,_arg3,_arg4);
     _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_ODisplayMarkPos(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitDisplay * _arg0;
+    char * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:ODisplayMarkPos",&_argo0,&_obj1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitDisplay_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ODisplayMarkPos. Expected _ObitDisplay_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyString_Check(_obj1)) {
+    int size = PyString_Size(_obj1);
+    char *str;
+    int i = 0;
+    _arg1 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj1);
+    for (i = 0; i < size; i++) {
+      _arg1[i] = str[i];
+    }
+    _arg1[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of ODisplayMarkPos. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (int )ODisplayMarkPos(_arg0,_arg1,_arg2);
+    _resultobj = Py_BuildValue("i",_result);
+{
+  free((char *) _arg1);
+}
     return _resultobj;
 }
 
@@ -65380,6 +65436,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "ODisplayUnref", _wrap_ODisplayUnref, METH_VARARGS },
 	 { "ODisplayRef", _wrap_ODisplayRef, METH_VARARGS },
 	 { "ODisplayIsA", _wrap_ODisplayIsA, METH_VARARGS },
+	 { "ODisplayMarkPos", _wrap_ODisplayMarkPos, METH_VARARGS },
 	 { "ODisplayMosaicEdit", _wrap_ODisplayMosaicEdit, METH_VARARGS },
 	 { "ODisplayImageEdit", _wrap_ODisplayImageEdit, METH_VARARGS },
 	 { "ODisplayMosaic", _wrap_ODisplayMosaic, METH_VARARGS },
