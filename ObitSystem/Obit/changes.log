@@ -3410,3 +3410,14 @@ Obit/src/ObitUVEdit.c:
   ObitUVEditMedian: Uninitialized variable
 22 Jul 2016, svn ver 549
 
+Beam for MeerKAT, Exponential disk sky model
+Obit/src/ObitBeamShape.c:
+  Add MeerKAT tabulated beam, force its use for MeerKAT
+Obit/python/ImageDesc.py:
+   PRA2HMS, PDec2DMS add leading zeroes
+Obit/include/ObitSkyModel.h Obit/src/ObitSkyModel.c Obit/src/ObitSkyModelMF.c
+Obit/include/ObitTableCCUtil.h Obit/src/ObitTableCCUtil.c:
+  Add exponential disk model
+Obit/tasks/UVSub.c Obit/TDF/UVSub.TDF:
+ Add exponential disk model
+19 Aug. 2016 svn ver 550

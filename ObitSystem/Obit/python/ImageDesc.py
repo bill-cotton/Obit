@@ -16,7 +16,7 @@ Member List (readonly)
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004,2005,2008
+#  Copyright (C) 2004-2016
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -481,7 +481,7 @@ def PRA2HMS (ra):
     p = (p - h) * 60.0
     m = int(p)
     s = (p - m) * 60.0
-    out = "  %2d %2d %8.5f" % (h,m,s)
+    out = "  %2.2d %2.2d %08.5f" % (h,m,s)
     return out
     # end PRA2HMS
 
@@ -501,7 +501,7 @@ def PDec2DMS (dec):
     p = (p - d) * 60.0
     m = int(p)
     s = (p - m) * 60.0
-    out = "%s%2.2d %2d %7.4f " % (sgn, d,m,s)
+    out = "%s%2.2d %2.2d %07.4f " % (sgn, d,m,s)
     return out
     # end PDec2DMS
 

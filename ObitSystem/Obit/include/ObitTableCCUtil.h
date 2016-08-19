@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2014                                          */
+/*;  Copyright (C) 2004-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -59,6 +59,8 @@ enum obitCCCompType {
   OBIT_CC_CGaussMod,  
   /** Uniform sphere */
   OBIT_CC_USphereMod, 
+  /** Face-on Exponential disk */
+  OBIT_CC_expDiskMod, 
   /** Unknown */
   OBIT_CC_Unknown, 
   /** Point + spectrum */
@@ -69,14 +71,18 @@ enum obitCCCompType {
   OBIT_CC_CGaussModSpec = OBIT_CC_CGaussMod+10,  
   /** Uniform sphere + spectrum */
   OBIT_CC_USphereModSpec = OBIT_CC_USphereMod+10,
-  /** Point + tabulated spectrum */
+   /** Face-on Exponential disk + spectrum */
+  OBIT_CC_expDiskModSpec = OBIT_CC_expDiskMod+10, 
+ /** Point + tabulated spectrum */
   OBIT_CC_PointModTSpec = OBIT_CC_PointMod+20,
   /** Gaussian on sky + tabulated spectrum */
   OBIT_CC_GaussModTSpec = OBIT_CC_GaussMod+20,  
   /** Convolved Gaussian + tabulated spectrum */
   OBIT_CC_CGaussModTSpec = OBIT_CC_CGaussMod+20,  
   /** Uniform sphere + tabulated spectrum */
-  OBIT_CC_USphereModTSpec = OBIT_CC_USphereMod+20 
+  OBIT_CC_USphereModTSpec = OBIT_CC_USphereMod+20,
+  /** Face-on Exponential disk + Tabulated spectrum */
+  OBIT_CC_expDiskModTSpec = OBIT_CC_expDiskMod+20
 }; /* end enum obitCCCompType */
 /** typedef for enum for ObitCCCompType. */
 typedef enum obitCCCompType ObitCCCompType;

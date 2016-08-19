@@ -64,6 +64,9 @@ static void ObitBeamShapeClassInfoDefFn (gpointer inClass);
 /** Private: Check/set tabulated beam. */
 static void FindTabBeam (ObitBeamShape *in);
 
+/** Private: Check/set MeerKat tabulated beam. */
+static void MeerKATTabBeam (ObitBeamShape *in);
+
 /** Private: Interpolate tabulated beam. */
 static ofloat GetTabBeam (ObitBeamShape *in, odouble Angle);
 /*----------------------Public functions---------------------------*/
@@ -189,6 +192,7 @@ void ObitBeamShapeClone  (ObitBeamShape *in, ObitBeamShape *out, ObitErr *err)
  * \param image   Image for which beam shape is desired
  *                Control on info member:
  * \li doTab      If TRUE use tabulated beam if available [def FALSE]
+ *                Traps MeerKAT case, uses Tabulated beam
  * \param pbmin   Minimum gain, lower values will be clipped at this value
  * \param antSize Size of Antenna in (m)
  * \param doGain  If true gain wanted, else gain set to 1.0
@@ -199,7 +203,7 @@ ObitBeamShape* ObitBeamShapeCreate (gchar* name, ObitImage *image,
 				    gboolean doGain)
 {
   ObitBeamShape* out;
-  gboolean doTab=FALSE;
+  gboolean doTab=FALSE, isMeerKAT=FALSE;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
 
@@ -218,7 +222,11 @@ ObitBeamShape* ObitBeamShapeCreate (gchar* name, ObitImage *image,
   out->decPnt *= DG2RAD;  /* to radians */
   /* tabulated beam? */
   ObitInfoListGetTest(image->info, "doTab", &type, dim, &doTab);
-  if (doTab) FindTabBeam(out);  /* Use if available */
+  isMeerKAT = !strncmp(image->myDesc->teles, "MeerKAT",7); /* MeerKAT */
+  if (doTab || isMeerKAT) {
+    if (isMeerKAT) MeerKATTabBeam(out); /* Always use */
+    else           FindTabBeam(out);    /* Use if available */
+  }
   return out;
 } /* end ObitBeamShapeCreate */
 
@@ -427,6 +435,7 @@ static void FindTabBeam (ObitBeamShape *in)
   odouble refFreq[] = {340.0e6, 3.0e9, };  /* Tabulated reference freq */
 
   /* Have a tabulated beam? */
+  in->doTab = FALSE;
   itab = -1;  /* Which beam */
   for (i=0; i<ntab; i++) {
     if ((in->refFreq>=minFreq[i]) && (in->refFreq<=maxFreq[i])) {
@@ -528,6 +537,70 @@ static void FindTabBeam (ObitBeamShape *in)
     in->myFI = newObitFInterpolateCreate ("Interp", tFA, in->myDesc, hwidth);
     tFA = ObitFArrayUnref(tFA);    /* Unreference temp FA */
    break;
+  default:    /* Doh */
+    return;
+  }; /* end switch */
+  in->doTab = TRUE;    /* Must be OK if it gets here */
+} /* end FindTabBeam */
+
+/**
+ * Set MeerKAT tabulated beam
+ * \param in     the BeamShape object
+ */
+static void MeerKATTabBeam (ObitBeamShape *in)
+{
+  olong i, j, itab, ndim=1, naxis[] = {1};
+  ObitFArray *tFA = NULL;
+  olong   ntab   = 1;            /* How many? */
+  olong   hwidth = 2;            /* Interpolation half width */
+  /*                    */
+  odouble minFreq[] = { 800.0e6};  /* Lower bound of bands */
+  odouble maxFreq[] = {2000.0e6};  /* Upper  bound of bands */
+  odouble refFreq[] = {1350.0e6};  /* Tabulated reference freq */
+
+  /* Have a tabulated beam? */
+  in->doTab = FALSE;
+  itab = -1;  /* Which beam */
+  for (i=0; i<ntab; i++) {
+    if ((in->refFreq>=minFreq[i]) && (in->refFreq<=maxFreq[i])) {
+      itab = i;
+      break;
+    }
+  }
+  /* Find one? */
+  if (itab<0) return; /* Nope */
+  /* Fill in details */
+  switch (itab) {
+  case 0:     /* 1.35 GHz beam */
+    in->itabRefFreq = 1.0/refFreq[itab]; /* 1/tabulated ref freq */
+    in->icellSize   = 3600.0/30.0;       /* 1/Tabulated cell spacing */
+    /* 26 Jul 16 S MeerKAT 1.3-1.4 GHz, cell 30.0/3600, refFreq  = 1.35e9 */
+    olong  MKncell  = 175;
+    ofloat MKbeam[] = {    /* Fitted to voltage beam */
+      1.000000,0.999920,0.999679,0.999278,0.998717,0.997996,0.997116,0.996075,0.994876,0.993518,
+      0.992002,0.990328,0.988497,0.986509,0.984365,0.982066,0.979612,0.977006,0.974246,0.971334,
+      0.968272,0.965059,0.961697,0.958187,0.954532,0.950731,0.946786,0.942698,0.938469,0.934100,
+      0.929591,0.924946,0.920166,0.915252,0.910205,0.905028,0.899722,0.894288,.888729, 0.883045,
+      0.877241,0.871318,0.865278,0.859118,0.852851,0.846466,0.839977,0.833374,0.826673,0.819866,
+      0.812954,0.805952,0.798846,0.791648,0.784367,0.776988,0.769525,0.761978,0.754352,0.746645,
+      0.738862,0.731004,0.723075,0.715081,0.707017,0.698888,0.690705,0.682462,0.674161,0.665812,
+      0.657410,0.648964,0.640473,0.631937,0.623368,0.614762,0.606119,0.597448,0.588752,0.580035, 
+      0.571291,0.562529,0.553751,0.544967,0.536166,0.527358,0.518550,0.509741,0.500926,0.492125,
+      0.483325,0.474535,0.465762,0.457003,0.448264,0.439542,0.430849,0.422179,0.413538,0.404930,
+      0.396351,0.387820,0.379324,0.370871,0.362465,0.354103,0.345796,0.337535,0.329336,0.321190,
+      0.313106,0.305086,0.297133,0.289241,0.281423,0.273674,0.265988,0.258370,0.250832,0.243372,
+      0.235992,0.228700,0.221495,0.214373,0.207335,0.200393,0.193529,0.186762,0.180058,0.173477,
+      0.166996,0.160628,0.154340,0.148136,0.142154,0.136344,0.130664,0.125113,0.119700,0.114493,
+      0.109589,0.105007,0.100781,0.096646,0.092559,0.088636,0.085108,0.081382,0.077876,0.073577,
+      0.069953,0.066347,0.062494,0.058545,0.055008,0.051969,0.047982,0.044959,0.042908,0.041673,
+      0.039321,0.038724,0.038647,0.039247,0.040620,0.042692,0.045443,0.048629,0.049098,0.052326,
+      0.056978,0.052184,0.054663,0.056593,0.059868};
+    naxis[0] = MKncell;   /* Create/fill FArray with beam shape for interpolator */
+    tFA = ObitFArrayCreate("TempFA", ndim, naxis);
+    for (j=0; j<MKncell; j++) tFA->array[j] = MKbeam[j]*MKbeam[j];  /*  Voltage to power */
+    in->myFI = newObitFInterpolateCreate ("Interp", tFA, in->myDesc, hwidth);
+    tFA = ObitFArrayUnref(tFA);    /* Unreference temp FA */
+    break;
   default:    /* Doh */
     return;
   }; /* end switch */

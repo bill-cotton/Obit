@@ -97,8 +97,8 @@ ReWriteTable(ObitTableCC *out, ofloat *base, olong size, olong number,
  * \param maxFlux    Maximum abs. value flux density to include (before factor)
  * \param desc       Descriptor for image from which components derived
  * \param grid       [out] filled in array, created, resized if necessary
- * \param gparm      [out] Gaussian parameters (major, minor, PA all in deg) if
- *                   the components in in are Gaussians, else, -1.
+ * \param gparm      [out] Gaussian/expDisk parameters (major, minor, PA all in deg)
+ *                   if the components in in are Gaussians or expDisk, else, -1.
  * \param ncomp      [out] number of components gridded.
  * \param err        ObitErr error stack.
  * \return I/O Code  OBIT_IO_OK = OK.
@@ -119,6 +119,7 @@ ObitIOCode ObitTableCCUtilGrid (ObitTableCC *in, olong OverSample,
   ofloat iCellX, iCellY, fNx, fNy;
   olong ndim, naxis[2], nx, ny, count = 0, badCnt = 0;
   ObitCCCompType mtype = OBIT_CC_Unknown;
+  gboolean isGauss=FALSE, isExpDisk=FALSE;
   gchar *routine = "ObitTableCCUtilGrid";
 
   /* error checks */
@@ -202,9 +203,10 @@ ObitIOCode ObitTableCCUtilGrid (ObitTableCC *in, olong OverSample,
 	  gparm[0] = CCRow->parms[0];
 	  gparm[1] = CCRow->parms[1];
 	  gparm[2] = CCRow->parms[2];
+	  isGauss = TRUE;
 	}
       }
-    } else if (gparm[0]>0.0) {
+    } else if (isGauss) {
       /* All Gaussians MUST be the same */
       if ((CCRow->parms[0]!=gparm[0]) || (CCRow->parms[1]!=gparm[1]) || 
 	  (CCRow->parms[2]!=gparm[2])) {
@@ -213,6 +215,28 @@ ObitIOCode ObitTableCCUtilGrid (ObitTableCC *in, olong OverSample,
 	return retCode ;
       }
     } /* end of Gaussian Check */
+
+    /* Get any Exponential disk parameters on first, else check */
+    if (j==*first) {
+      /* Is this a expDisk component? */
+      if ((in->parmsCol>=0) &&
+	  (in->myDesc->dim[in->parmsCol][0]>=4)) {
+	mtype = (ObitCCCompType)CCRow->parms[3]+0.5;
+	if ((mtype==OBIT_CC_expDiskMod) ||
+	    (mtype==OBIT_CC_expDiskModSpec) ||
+	    (mtype==OBIT_CC_expDiskModTSpec)) {
+	  gparm[0] = CCRow->parms[0];
+	  isExpDisk = TRUE;
+	}
+      }
+    } else if (isExpDisk) {
+      /* All expDisks MUST be the same */
+      if (CCRow->parms[0]!=gparm[0]) {
+	Obit_log_error(err, OBIT_Error,"%s: All exp. Disks MUST have same size",
+		       routine);
+	return retCode ;
+      }
+    } /* end of expDisk Check */
 
     /* Only to first negative? */
     if (noNeg && (CCRow->Flux<0.0)) break;
@@ -296,7 +320,7 @@ ObitIOCode ObitTableCCUtilGrid (ObitTableCC *in, olong OverSample,
  * \param maxFlux    Maximum abs. value flux density to include (before factor)
  * \param desc       Descriptor for image from which components derived
  * \param grid       [out] filled in array, created, resized if necessary
- * \param gparm      [out] Gaussian parameters (major, minor, PA all in deg) if
+ * \param gparm      [out] Gaussian/expDisk parameters (major, minor, PA all in deg) if
  *                   the components in in are Gaussians, else, -1.
  * \param ncomp      [out] number of components gridded.
  * \param err        ObitErr error stack.
@@ -317,7 +341,7 @@ ObitIOCode ObitTableCCUtilGridSpect (ObitTableCC *in, olong OverSample, olong it
   olong j, irow, xPix, yPix, iAddr;
   ofloat iCellX, iCellY, fNx, fNy, spectTerm;
   olong ndim, naxis[2], nx, ny, parmoff, count = 0, badCnt = 0;
-  gboolean doSpec=TRUE, doTSpec=FALSE;
+  gboolean doSpec=TRUE, doTSpec=FALSE, isGauss=FALSE, isExpDisk=FALSE;
   ObitCCCompType mtype = OBIT_CC_Unknown;
   gchar *routine = "ObitTableCCUtilGridSpect";
 
@@ -394,7 +418,6 @@ ObitIOCode ObitTableCCUtilGridSpect (ObitTableCC *in, olong OverSample, olong it
     Obit_retval_if_fail((CCRow->parms && (CCRow->parms[3]>=10.)), err, retCode, 
 			"%s: CCs do not contain spectra", routine);
     
-
     /* Get any Gaussian parameters on first, else check */
     if (j==*first) {
       /* Is this a Gaussian component? */
@@ -410,9 +433,10 @@ ObitIOCode ObitTableCCUtilGridSpect (ObitTableCC *in, olong OverSample, olong it
 	  gparm[0] = CCRow->parms[0];
 	  gparm[1] = CCRow->parms[1];
 	  gparm[2] = CCRow->parms[2];
+	  isGauss = TRUE;
 	}
       }
-    } else if (gparm[0]>0.0) {
+    } else if (isGauss) {
       /* All Gaussians MUST be the same */
       if ((CCRow->parms[0]!=gparm[0]) || (CCRow->parms[1]!=gparm[1]) || 
 	  (CCRow->parms[2]!=gparm[2])) {
@@ -422,7 +446,30 @@ ObitIOCode ObitTableCCUtilGridSpect (ObitTableCC *in, olong OverSample, olong it
       }
     } /* end of Gaussian Check */
 
-      /* Get spectrum type */
+    /* Get any Exponential disk parameters on first, else check */
+    if (j==*first) {
+      /* Is this a expDisk component? */
+      if ((in->parmsCol>=0) &&
+	  (in->myDesc->dim[in->parmsCol][0]>=4)) {
+	mtype = (ObitCCCompType)CCRow->parms[3]+0.5;
+	if ((mtype==OBIT_CC_expDiskMod) ||
+	    (mtype==OBIT_CC_expDiskModSpec) ||
+	    (mtype==OBIT_CC_expDiskModTSpec)) {
+	  gparm[0] = CCRow->parms[0];
+	  isExpDisk = TRUE;
+  
+	}
+      }
+    } else if (isExpDisk) {
+      /* All expDisks MUST be the same */
+      if (CCRow->parms[0]!=gparm[0]) {
+	Obit_log_error(err, OBIT_Error,"%s: All exp. Disks MUST have same size",
+		       routine);
+	return retCode ;
+      }
+    } /* end of expDisk Check */
+
+    /* Get spectrum type */
     doSpec  = (CCRow->parms[3]>=9.9)  && (CCRow->parms[3]<=19.0);
     doTSpec = (CCRow->parms[3]>=19.9) && (CCRow->parms[3]<=29.0);
     
@@ -1179,6 +1226,7 @@ ObitIOCode ObitTableCCUtilMerge (ObitTableCC *in, ObitTableCC *out,
  *                  1 = Sky Gaussian, [0:3]=maj, min, PA
  *                  2 = Convolved Gaussian, [0:3]=maj axis, min axis, PA (all deg)
  *                  3 = Uniform Sphere [0] = radius (deg)
+ *                  4 = Exponential disk [0] = scale length (deg)
  * \param err       ObitErr error stack.
  * \return FArray containing merged CC table contents; MUST be Unreffed.
  *                Will contain flux, X, Y, + any spectral terms

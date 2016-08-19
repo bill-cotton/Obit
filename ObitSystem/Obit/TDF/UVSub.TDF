@@ -4,7 +4,7 @@
 ;! Subtracts/divides a model from/into a uv data base
 ;# Task UV  Obit 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005-2014
+;;  Copyright (C) 2005-2016
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -164,9 +164,9 @@ noScrat                            AIPS disk numbers for which
 UVSub
 Task:  Subtracts/divides a model from/into a uv data base.  The model
        may be a specific model, a set of CLEAN components files, or a
-       set of images.  "CLEAN" models may be points, Gaussians or
-       uniform, optically thin spheres.  The task can also replace the 
-       data with the model values.
+       set of images.  "CLEAN" models may be points, Gaussians,
+       uniform, optically thin spheres or face on exponentiak disks.  
+       The task can also replace the data with the model values.
 Adverbs:
   DataType..'FITS' or 'AIPS'  type of input
   inFile.....FITS input uvdata if Type=='FITS'
@@ -329,6 +329,8 @@ Adverbs:
                position_angle (deg),
              modelParm[3] = 3; Uniform sphere:
                [0] =  radius (asec)
+             modelParm[3] = 4; Exponential disk:
+               [0] =  scale (1/e) size (asec)
              modelParm[4+] = spectral index, curvature...
              If giving spectral terms, add 10 to  modelParm[3]
   noNeg......If True, exclude negative CLEAN components from the 

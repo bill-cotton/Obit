@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2014                                          */
+/*;  Copyright (C) 2004-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -136,6 +136,8 @@ enum obitSkyModelCompType {
   OBIT_SkyModel_CGaussMod,  
   /** Uniform sphere */
   OBIT_SkyModel_USphereMod, 
+  /** Face-on Exponential disk */
+  OBIT_SkyModel_expDiskMod, 
   /** Unknown */
   OBIT_SkyModel_Unknown,
   /** Point + spectrum */
@@ -145,15 +147,19 @@ enum obitSkyModelCompType {
   /** Convolved Gaussian + spectrum */
   OBIT_SkyModel_CGaussModSpec = OBIT_SkyModel_CGaussMod+10,  
   /** Uniform sphere + spectrum */
-  OBIT_SkyModel_USphereModSpec = OBIT_SkyModel_USphereMod+10 ,
-  /** Point + Tabulated spectrum */
+  OBIT_SkyModel_USphereModSpec = OBIT_SkyModel_USphereMod+10,
+  /** Face-on Exponential disk + spectrum */
+  OBIT_SkyModel_expDiskModSpec = OBIT_SkyModel_expDiskMod+10, 
+   /** Point + Tabulated spectrum */
   OBIT_SkyModel_PointModTSpec = OBIT_SkyModel_PointMod+20,
   /** Gaussian on sky + Tabulated spectrum */
   OBIT_SkyModel_GaussModTSpec = OBIT_SkyModel_GaussMod+20,  
   /** Convolved Gaussian + sTabulated pectrum */
   OBIT_SkyModel_CGaussModTSpec = OBIT_SkyModel_CGaussMod+20,  
   /** Uniform sphere + Tabulated spectrum */
-  OBIT_SkyModel_USphereModTSpec = OBIT_SkyModel_USphereMod+20 
+  OBIT_SkyModel_USphereModTSpec = OBIT_SkyModel_USphereMod+20,
+  /** Face-on Exponential disk + Tabulated spectrum */
+  OBIT_SkyModel_expDiskModTSpec = OBIT_SkyModel_expDiskMod+20
 }; /* end enum obitSkyModelCompType */
 /** typedef for enum for ObitSkyModelCompType. */
 typedef enum obitSkyModelCompType ObitSkyModelCompType;
