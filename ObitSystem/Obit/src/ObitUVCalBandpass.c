@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2015                                          */
+/*;  Copyright (C) 2003-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -248,10 +248,7 @@ void ObitUVCalBandpass (ObitUVCal *in, float time, olong ant1, olong ant2,
   nIF   = (me->eIF - me->bIF + 1);
 
   /* Subarray number in data */
-  itemp = (olong)RP[desc->ilocb];
-  iSubA = 1 + (olong)(100.0*(RP[desc->ilocb] -(ofloat)itemp) + 0.1);
-  ia1 = ant1 - 1;
-  ia2 = ant2 - 1;
+  ObitUVDescGetAnts(desc, RP, &ia1, &ia2, &iSubA);
 
    /* Data Freq id */
   if (desc->ilocfq >= 0) FreqID = RP[desc->ilocfq] + 0.1;

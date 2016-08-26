@@ -995,7 +995,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   SWoff[0] = 0;
   for (iSW=0; iSW<in->SWArray->nwinds-1; iSW++) {
     SWoff[iSW+1] = SWoff[iSW] + /* Note use of boolean */
-      in->SWArray->winds[jSW]->selected*in->SWArray->winds[iSW]->numChan * in->aincf;
+      in->SWArray->winds[iSW]->selected*in->SWArray->winds[iSW]->numChan * in->aincf;
   }
 
   /* Which auto correlation IF/Spectral windows */

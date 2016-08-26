@@ -3421,3 +3421,10 @@ Obit/include/ObitTableCCUtil.h Obit/src/ObitTableCCUtil.c:
 Obit/tasks/UVSub.c Obit/TDF/UVSub.TDF:
  Add exponential disk model
 19 Aug. 2016 svn ver 550
+
+Bug fixes
+Obit/src/ObitUVCalBandpass.c:
+  ObitUVCalBandpass: Fix another residual bug from Eric's format change.
+Obit/src/ObitBDFData.c:
+  InitScan: Indexing bug for autocorrelation functions; affects BDFIn
+26 Aug 2016 svn ver 551
