@@ -3428,3 +3428,28 @@ Obit/src/ObitUVCalBandpass.c:
 Obit/src/ObitBDFData.c:
   InitScan: Indexing bug for autocorrelation functions; affects BDFIn
 26 Aug 2016 svn ver 551
+
+Allow 35 simultaneous tasks, BDFIn less picky, optional parameters to MFImage, bug fixes
+Obit/src/ObitDConCleanVis.c:
+  Deconvolve: Move create PxList to before no data test.
+Obit/share/scripts/BlankImage.py:
+  Script to interactively blank an image.
+Obit/src/ObitSDMData.c:
+  Create: Only parse EVLA pointing table, ALMA undocumented
+Obit/tasks/BDFIn.c:
+  GetHeader: Relax frequency matching, for ALMA
+Obit/src/ObitUVSoln.c:
+  StartUp: Fix problems with smoothing tables
+ObitTalk/python/Proxy/ObitTask.py:
+  Allow 36 POPS numbers for Obit
+  Fix added parameter bugs
+ObitTalk/python/ObitTask.py ObitTalk/python/AIPSTask.py:
+Obit/python/OTObit.py:
+  Fix added parameter bugs
+Obit/tasks/OTFFlag.c Obit/TDF/OTFFlag.TDF:
+  Add noScrat
+Obit/tasks/MFImage.c Obit/TDF/MFImage.TDF:
+  Add optional parameters NiterQU, minFluxQU
+Obit/include/ObitBeamShapeDef.h Obit/src/ObitBeamShape.c:
+  Add Wendy's VLITE beam
+30 Sep 2016 svn ver 552

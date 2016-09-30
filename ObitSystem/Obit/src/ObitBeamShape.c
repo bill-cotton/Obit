@@ -67,6 +67,9 @@ static void FindTabBeam (ObitBeamShape *in);
 /** Private: Check/set MeerKat tabulated beam. */
 static void MeerKATTabBeam (ObitBeamShape *in);
 
+/** Private: Check/set VLITE tabulated beam. */
+static void FindVLITEBeam (ObitBeamShape *in);
+ 
 /** Private: Interpolate tabulated beam. */
 static ofloat GetTabBeam (ObitBeamShape *in, odouble Angle);
 /*----------------------Public functions---------------------------*/
@@ -193,6 +196,7 @@ void ObitBeamShapeClone  (ObitBeamShape *in, ObitBeamShape *out, ObitErr *err)
  *                Control on info member:
  * \li doTab      If TRUE use tabulated beam if available [def FALSE]
  *                Traps MeerKAT case, uses Tabulated beam
+ *                Traps VLITE case, uses Tabulated beam
  * \param pbmin   Minimum gain, lower values will be clipped at this value
  * \param antSize Size of Antenna in (m)
  * \param doGain  If true gain wanted, else gain set to 1.0
@@ -203,7 +207,7 @@ ObitBeamShape* ObitBeamShapeCreate (gchar* name, ObitImage *image,
 				    gboolean doGain)
 {
   ObitBeamShape* out;
-  gboolean doTab=FALSE, isMeerKAT=FALSE;
+  gboolean doTab=FALSE, isMeerKAT=FALSE, doVLITE=FALSE;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
 
@@ -223,10 +227,10 @@ ObitBeamShape* ObitBeamShapeCreate (gchar* name, ObitImage *image,
   /* tabulated beam? */
   ObitInfoListGetTest(image->info, "doTab", &type, dim, &doTab);
   isMeerKAT = !strncmp(image->myDesc->teles, "MeerKAT",7); /* MeerKAT */
-  if (doTab || isMeerKAT) {
-    if (isMeerKAT) MeerKATTabBeam(out); /* Always use */
-    else           FindTabBeam(out);    /* Use if available */
-  }
+  ObitInfoListGetTest(image->info, "doVLITE", &type, dim, &doVLITE); /* VLITE */
+  if (isMeerKAT)    MeerKATTabBeam(out);  /* Always use for MeerKAT */
+  else if (doVLITE) FindVLITEBeam(out);   /* Use VLITE beam  */
+  else if (doTab)   FindTabBeam(out);     /* Use standard if available */
   return out;
 } /* end ObitBeamShapeCreate */
 
@@ -278,6 +282,7 @@ ofloat ObitBeamShapeGainSym (ObitBeamShape *in, odouble Angle)
 
   /* Compute */
   if (in->doTab)       gain = GetTabBeam (in, Angle);
+  else if (in->doVLITE) gain = GetTabBeam (in, Angle);
   else if (in->doJinc) gain = ObitPBUtilJinc(Angle, in->refFreq, in->antSize, in->pbmin);
   else                 gain = ObitPBUtilPoly(Angle, in->refFreq, in->pbmin);
   return gain;
@@ -605,11 +610,81 @@ static void MeerKATTabBeam (ObitBeamShape *in)
     return;
   }; /* end switch */
   in->doTab = TRUE;    /* Must be OK if it gets here */
-} /* end FindTabBeam */
+} /* end MeerKATabBeam */
+
+/**
+ * Set MeerKAT tabulated beam
+ * Add Tabulated Power Beam for VLITE use on PBCorr only
+ *  Might be valid for eVLA Pband PBCorr as well
+ *  Should not be used for normalizing asymmetric beam correctiosn
+ *  \param in   the BeamShape object
+ */
+static void FindVLITEBeam (ObitBeamShape *in)
+{
+   olong j, ndim=1, naxis[] = {1};
+   ObitFArray *tFA = NULL;
+   /* olong   ntab   = 1;            How many? */
+   olong   hwidth = 2;            /* Interpolation half width */
+  /*                    P       */
+  /*odouble minFreq[] = {320.0e6};   Lower bound of bands */
+  /*odouble maxFreq[] = {364.0e6};   Upper  bound of bands */
+  odouble refFreq[] = {340.85e6};  /* Tabulated reference freq */
+  in->itabRefFreq = 1.0/refFreq[0]; /* 1/tabulated ref freq */
+  in->icellSize   = 3600.0/60.0;     /* 1/Tabulated cell spacing */
+  olong  Pncell   = 305;
+  /* 6 June 2016  tabulated entries at 60 arcsec from fits to VLITE Data  */
+  ofloat Pbeam[]  = {     /* extrapolated beyond 4 degrees */
+    1.000000, 0.999878, 0.999510, 0.998898, 0.998042, 0.996943, 0.995600, 0.994017, 
+    0.992192, 0.990128, 0.987827, 0.985289, 0.982518, 0.979514, 0.976280, 0.972819, 
+    0.969132, 0.965223, 0.961094, 0.956748, 0.952189, 0.947420, 0.942443, 0.937263, 
+    0.931883, 0.926307, 0.920539, 0.914583, 0.908443, 0.902123, 0.895627, 0.888961,
+    0.882128, 0.875133, 0.867981, 0.860677, 0.853225, 0.845630, 0.837898, 0.830033, 
+    0.822040, 0.813925, 0.805693, 0.797349, 0.788898, 0.780345, 0.771696, 0.762956, 
+    0.754130, 0.745223, 0.736242, 0.727190, 0.718074, 0.708899, 0.699669, 0.690391, 
+    0.681068, 0.671707, 0.662312, 0.652889, 0.643442, 0.633977, 0.624498, 0.615009, 
+    0.605517, 0.596025, 0.586539, 0.577061, 0.567598, 0.558154, 0.548732, 0.539337, 
+    0.529973, 0.520216, 0.511762, 0.503513, 0.495461, 0.487594, 0.479860, 0.472211, 
+    0.464602, 0.457008, 0.449412, 0.441815, 0.434249, 0.426702, 0.419148, 0.411588, 
+    0.404046, 0.396562, 0.389173, 0.381904, 0.374788, 0.367862, 0.361166, 0.354740, 
+    0.348596, 0.342691, 0.336999, 0.331508, 0.326200, 0.321041, 0.315993, 0.310997, 
+    0.306006, 0.301010, 0.296015, 0.291027, 0.286066, 0.281138, 0.276259, 0.271462, 
+    0.266785, 0.262279, 0.257999, 0.253991, 0.250247, 0.246743, 0.243471, 0.240415, 
+    0.237547, 0.234840, 0.232247, 0.229724, 0.227250, 0.224829, 0.222460, 0.220124, 
+    0.217801, 0.215473, 0.213142, 0.210840, 0.208615, 0.206543, 0.204695, 0.203071, 
+    0.201650, 0.200431, 0.199443, 0.198684, 0.198089, 0.197593, 0.197155, 0.196772, 
+    0.196469, 0.196265, 0.196165, 0.196158, 0.196211, 0.196283, 0.196370, 0.196456, 
+    0.196508, 0.196493, 0.196381, 0.196145, 0.195762, 0.195209, 0.194474, 0.193558, 
+    0.192453, 0.191135, 0.189614, 0.187899, 0.186036, 0.184078, 0.182076, 0.180053, 
+    0.178012, 0.175960, 0.173921, 0.171933, 0.170017, 0.168171, 0.166373, 0.164585, 
+    0.162761, 0.160912, 0.159070, 0.157270, 0.155546, 0.153908, 0.152345, 0.150844, 
+    0.149398, 0.147996, 0.146621, 0.145267, 0.143926, 0.142593, 0.141266, 0.139946, 
+    0.138640, 0.137347, 0.136058, 0.134761, 0.133446, 0.132103, 0.130722, 0.129305, 
+    0.127858, 0.126383, 0.124879, 0.123340, 0.121757, 0.120120, 0.118419, 0.116645, 
+    0.114804, 0.112903, 0.110950, 0.108962, 0.106957, 0.104948, 0.102953, 0.100984, 
+    0.099052, 0.097169, 0.095345, 0.093592, 0.091916, 0.090322, 0.088818, 0.087409, 
+    0.086097, 0.084879, 0.083751, 0.082710, 0.081753, 0.080875, 0.080070, 0.079334, 
+    0.078660, 0.078042, 0.077474, 0.076950, 0.076461, 0.075996, 0.075544, 0.075095, 
+    0.074642, 0.074184, 0.073720, 0.073249, 0.072772, 0.072287, 0.071795, 0.071295, 
+    0.070788, 0.070276, 0.069758, 0.069235, 0.068709, 0.068179, 0.067645, 0.067108, 
+    0.066569, 0.066028, 0.065484, 0.064940, 0.064394, 0.063847, 0.063301, 0.062754, 
+    0.062207, 0.061660, 0.061113, 0.060566, 0.060020, 0.059473, 0.058926, 0.057779,
+    0.057232, 0.056685, 0.056138, 0.055591, 0.055044, 0.054497, 0.053950, 0.053403, 
+    0.052856, 0.052309, 0.051762, 0.051215, 0.050668, 0.050121, 0.049574, 0.049027,
+    0.048480, 0.047933, 0.047386, 0.046839, 0.046292, 0.045745, 0.045198, 0.044651,
+    0.044104, 0.043557, 0.043010, 0.042463, 0.041916, 0.041369, 0.040822, 0.040275,
+    0.039728};
+  naxis[0] = Pncell;   /* Create/fill FArray with beam shape for interpolator */
+  tFA = ObitFArrayCreate("TempFA", ndim, naxis);
+  for (j=0; j<Pncell; j++) tFA->array[j] = Pbeam[j];  
+  in->myFI = newObitFInterpolateCreate ("Interp", tFA, in->myDesc, hwidth);
+  tFA = ObitFArrayUnref(tFA);    /* Unreference temp FA */
+    
+  in->doVLITE = TRUE;    /* Must be OK if it gets here */
+} /* end FindVLITEBeam */
 
 /**
  * Check if a tabulated beam is available and if so enable it
- * Currently implemented: VLA S Band
+ * Currently implemented: VLA S Band, P Band
  * Returns pbmin if out of tabulated beam shape
  * \param in  the BeamShape object
  * \param in  Angle from pointing in degrees

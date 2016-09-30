@@ -199,7 +199,7 @@ void ObitUVSolnStartUp (ObitUVSoln *in, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM];
   olong size, i, iif, iant, SNver, highVer;
   olong itemp;
-  gchar interMode[9];
+  gchar interMode[9], smoType[5];
   gchar *routine="ObitUVSolnStartUp";
 
   /* error checks */
@@ -334,7 +334,13 @@ void ObitUVSolnStartUp (ObitUVSoln *in, ObitErr *err)
 
     /* Smooth table */
     dim[0] = 4; dim[1] = 1;
-    ObitInfoListAlwaysPut(in->SNTable->info, "smoType", OBIT_string, dim, interMode);
+    ObitInfoListAlwaysPut(in->SNTable->info, "smoFunc", OBIT_string, dim, interMode);
+    if (in->interParm[0]>0.0) strcpy(smoType,"AMPL");
+    if (in->interParm[1]>0.0) strcpy(smoType,"PHAS");
+    if ((in->interParm[0]>0.0) && (in->interParm[1]>0.0)) strcpy(smoType,"BOTH");
+    ObitInfoListAlwaysPut(in->SNTable->info, "smoType", OBIT_string, dim, smoType);
+    dim[0] = 2; dim[1] = 1;
+    ObitInfoListAlwaysPut(in->SNTable->info, "smoParm", OBIT_float, dim, &in->interParm[0]);
     dim[0] = 1; dim[1] = 1;
     ObitInfoListAlwaysPut(in->SNTable->info, "smoAmp",   OBIT_float, dim, &in->interParm[0]);
     ObitInfoListAlwaysPut(in->SNTable->info, "smoPhase", OBIT_float, dim, &in->interParm[1]);

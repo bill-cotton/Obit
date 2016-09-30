@@ -266,7 +266,7 @@ Note: these dict are independent of the underlying data structures.
 # Interactive routines to Obit use from ObitTalk
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2005-2009
+#  Copyright (C) 2005-2016
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -782,7 +782,32 @@ def addParam (inTask, param,
     inTask._hlp_dict[param] = [shortHelp]
     inTask._help_string     = inTask._help_string + longHelp
     inTask._explain_string  = inTask._explain_string + explain
-    # end addParam
+    if type(paramVal)==type(0.0):
+        inTask._type_dict[param] = 'Flt'
+        inTask._dim_dict[param]  = [1]
+    elif type(paramVal)==type(1):
+        inTask._type_dict[param] = 'Int'
+        inTask._dim_dict[param]  = [1]
+    elif type(paramVal)==type(True):
+        inTask._type_dict[param] = 'Boo'
+        inTask._dim_dict[param]  = [1]
+    elif type(paramVal)==type(' '):
+        inTask._type_dict[param] = 'Str'
+        inTask._dim_dict[param]  = [len(paramVal)]
+    elif type(paramVal)==type([]):
+        if type(paramVal[0])==type(0.0):
+            inTask._type_dict[param] = 'Flt'
+            inTask._dim_dict[param]  = [len(paramVal)]
+        elif type(paramVal[0])==type(1):
+            inTask._type_dict[param] = 'Int'
+            inTask._dim_dict[param]  = [len(paramVal)]
+        elif type(paramVal[0])==type(True):
+            inTask._type_dict[param] = 'Boo'
+            inTask._dim_dict[param]  = [len(paramVal)]
+        elif type(paramVal[0])==type(' '):
+            inTask._type_dict[param] = 'Str'
+            inTask._dim_dict[param]  = [len(paramVal[0])]
+   # end addParam
 
 def imhead (ObitObj):
     """

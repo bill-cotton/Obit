@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2015                                          */
+/*;  Copyright (C) 2005-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -546,6 +546,10 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   if (in->doRecenter) ObitDConCleanVisRecenter (in, in->imager->uvdata, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
+  /* Create Pixel List if needed - has size changed? */
+  inClass->NewPxList (in, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
   /* Visibility selection and weighting */
   if (in->doWeight) imagerClass->ObitUVImagerWeight (in->imager, err);
   /* Trap no data and return */
@@ -579,10 +583,6 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
       
     }
   }
-
-  /* Create Pixel List if needed - has size changed? */
-  inClass->NewPxList (in, err);
-  if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* No more fields than in mosaic */
   Obit_return_if_fail ((in->nfield == in->mosaic->numberImages),

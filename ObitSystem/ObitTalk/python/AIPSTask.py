@@ -55,7 +55,7 @@ It should also work for strings:
 [None, 'foo', 'bar']
 """
 # Copyright (C) 2005 Joint Institute for VLBI in Europe
-# Copyright (C) 2007,2011 Associated Universities, Inc. Washington DC, USA.
+# Copyright (C) 2007,2011,2016 Associated Universities, Inc. Washington DC, USA.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -197,6 +197,8 @@ class AIPSTask(Task):
         _message_list   = list of execution messages
         Current parameter values are given as class members.
         """
+        if not self._task_type:
+            self._task_type = 'AIPS'
         Task.__init__(self)
         self._name = name
         self._input_list = []
@@ -243,6 +245,9 @@ class AIPSTask(Task):
         self._help_string = params['help_string']
         self._explain_string = params['explain_string']
         self._short_help = params['short_help']
+        if self._task_type=='OBIT':
+            self._type_dict = params['type_dict']
+            self._dim_dict  = params['dim_dict']
         for adverb in self._default_dict:
             if type(self._default_dict[adverb]) == list:
                 value = self._default_dict[adverb]

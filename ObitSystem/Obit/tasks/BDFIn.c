@@ -826,7 +826,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   ofloat epoch=2000.0, equinox=2000.0, selChBW;
   olong nchan=1, npoln=1, nIF=1;
   odouble refFreq, startFreq=1.0;
-  ofloat refChan=1.0, freqStep=1.0;
+  ofloat refChan=1.0, freqStep=1.0, chanWidth=1.0;
   ASDMSpectralWindowArray* SpWinArray=NULL;
   ASDMAntennaArray*  AntArray;
   ObitInfoType type;
@@ -1004,6 +1004,8 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
       refFreq   = SpWinArray->winds[jSW]->refFreq;
       startFreq = SpWinArray->winds[jSW]->chanFreqStart;
       freqStep  = fabs((ofloat)SpWinArray->winds[jSW]->chanFreqStep);
+      chanWidth = fabs((ofloat)SpWinArray->winds[jSW]->chanWidth);
+      freqStep = MIN(freqStep, chanWidth); /* ALMA screwup */
       break;
     }
   } /* end loop over spectral windows */
@@ -1124,7 +1126,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
     /* Dimension 3 = FREQ */
     strncpy (desc->ctype[ncol], "FREQ    ", lim);
     desc->inaxes[ncol] = nchan;
-    desc->cdelt[ncol]  = freqStep;
+    desc->cdelt[ncol]  = MIN(freqStep, chanWidth);
     desc->crpix[ncol]  = refChan;
     desc->crval[ncol]  = startFreq;
     desc->crota[ncol]  = 0.0;
@@ -1203,7 +1205,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
     Obit_return_if_fail((desc->inaxes[2] == nchan), err,
 			"%s: Incompatible number of Channels %d != %d", 
 			routine ,desc->inaxes[2], nchan);
-    Obit_return_if_fail((fabs(desc->crval[2]-startFreq)<0.000001*startFreq), err,
+    Obit_return_if_fail((fabs(desc->crval[2]-startFreq)<0.3*chanWidth), err,
 			"%s: Incompatible reference frequency %lf != %lf", 
 			routine ,desc->crval[2], startFreq);
     Obit_return_if_fail((fabs(desc->cdelt[2]-freqStep)<0.000001*freqStep), err,

@@ -440,11 +440,15 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
 {
   /*ObitInfoType type;*/
   /*gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};*/
-  /*gchar *routine = "digestInputs";*/
+  gchar *routine = "digestInputs";
 
   /* error checks */
   if (err->error) return;
   g_assert (ObitInfoListIsA(myInput));
+
+  /* noScrat - no scratch files for AIPS disks */
+  ObitAIPSSetnoScrat(myInput, err);
+  if (err->error) Obit_traceback_msg (err, routine, "task Input");
 
   /* Initialize Threading */
   ObitThreadInit (myInput);

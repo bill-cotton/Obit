@@ -34,7 +34,7 @@ UVDATA
 
 """
 # Copyright (C) 2005 Joint Institute for VLBI in Europe
-# Copyright (C) 2005,2007 Associated Universities, Inc. Washington DC, USA.
+# Copyright (C) 2005,2007,2016 Associated Universities, Inc. Washington DC, USA.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -132,6 +132,7 @@ class ObitTask(AIPSTask):
         doWait          = True if synchronous  operation wished
         Current parameter values are given as class members.
         """
+        self._task_type = 'OBIT'
         AIPSTask.__init__(self, name)
         self._remainder = ""   # Partial message buffer
         if self.userno == 0:
@@ -245,8 +246,12 @@ class ObitTask(AIPSTask):
         self.__dict__["retCode"] = -1  # init return code
         
         input_dict = {}
+        type_dict  = {}
+        dim_dict   = {}
         for adverb in self._input_list:
             input_dict[adverb] = self._retype(self.__dict__[adverb])
+            type_dict[adverb]  = self._type_dict[adverb]
+            dim_dict[adverb]   = self._dim_dict[adverb]
 
         # Debugging?
         input_dict["DEBUG"] = self.debug
@@ -319,7 +324,8 @@ class ObitTask(AIPSTask):
 
         inst = getattr(proxy, self.__class__.__name__)
         tid = inst.spawn(self._name, self.version, self.userno,
-                         self.msgkill, self.isbatch, input_dict)
+                         self.msgkill, self.isbatch,
+                         self._input_list, input_dict, type_dict, dim_dict)
 
         self._message_list = []
         return (proxy, tid)

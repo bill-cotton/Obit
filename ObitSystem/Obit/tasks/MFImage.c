@@ -1741,7 +1741,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       /* Get input parameters from myInput, copy to myClean */
       ObitInfoListCopyList (myInput, myClean->info, CLEANParms);
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
-      
+
       /* Save imaging parms for weighting - from defaults in mosaic creation */	
       ObitInfoListCopyList (outData->info, saveParmList, saveParms);
  
@@ -1889,9 +1889,9 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   ObitImageMF  *fitImage=NULL;
   ObitInfoType type;
   oint         otemp;
-  olong        nfield, *ncomp=NULL, maxPSCLoop, maxASCLoop, SCLoop, jtemp, Niter;
+  olong        nfield, *ncomp=NULL, maxPSCLoop, maxASCLoop, SCLoop, jtemp, Niter, NiterQU;
   ofloat       minFluxPSC, minFluxASC, modelFlux, maxResid, reuse, ftemp, autoCen;
-  ofloat       alpha, noalpha, minFlux=0.0;
+  ofloat       alpha, noalpha, minFlux=0.0, minFluxQU=0.0;
   ofloat       antSize, solInt, PeelFlux, FractOK, CCFilter[2]={0.0,0.0};
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean     Fl = FALSE, Tr = TRUE, init=TRUE, doRestore, doFlatten, doFit, doSC, doBeam;
@@ -1951,6 +1951,16 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   /* Get input parameters from myInput, copy to myClean */
   ObitInfoListCopyList (myInput, myClean->info, CLEANParms);
   if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+  
+  /* Special Stokes Parameters? */
+  if (((Stokes[0]!='I') && (Stokes[0]!='F') && ((Stokes[0]!=' '))) && 
+      ObitInfoListGetTest(myInput, "NiterQU", &type, dim, &NiterQU)) {
+    ObitInfoListAlwaysPut(myClean->info,  "Niter", type, dim, &NiterQU);
+  }
+  if (((Stokes[0]!='I') && (Stokes[0]!='F') && ((Stokes[0]!=' '))) && 
+      ObitInfoListGetTest(myInput, "minFluxQU", &type, dim, &minFluxQU)) {
+    ObitInfoListAlwaysPut(myClean->info,  "minFlux", type, dim, &minFluxQU);
+  }
   
   /* Only do self cal for Stokes I (or F) */
   if ((Stokes[0]!='I') && (Stokes[0]!='F') && ((Stokes[0]!=' '))) {
@@ -2441,8 +2451,9 @@ void MFImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "doPol",  "PDVer", "doFull", "doComRes", "do3D", "Catalog", "CatDisk",
     "OutlierDist",  "OutlierFlux", "OutlierSI",
     "FOV", "xCells", "yCells", "nx", "ny", "RAShift", "DecShift", "doRestore", "doFit",
-    "OutlierSize",  "CLEANBox", "CLEANFile", "Gain", "minFlux",  "Niter", "minPatch",
-    "ccfLim", "SDIGain", "BLFact", "BLFOV",  "BLchAvg", "norder", 
+    "OutlierSize",  "CLEANBox", "CLEANFile", "Gain", "minFlux", "minFluxIQU", 
+    "Niter", "NiterIQU",  "minPatch", "ccfLim", "SDIGain", 
+    "BLFact", "BLFOV",  "BLchAvg", "norder", 
     "Reuse", "autoCen", "targBeam", "Beam", "Cmethod", "CCFilter", "maxPixel", 
     "maxPSCLoop", "minFluxPSC", "solPInt", "solPType", "solPMode", 
     "maxASCLoop", "minFluxASC", "solAInt", "solAType", "solAMode", 

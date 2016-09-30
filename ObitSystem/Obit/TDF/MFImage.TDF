@@ -882,6 +882,18 @@ Multi resolution CLEAN:
 The MR Clean attempts to avoid the corrugation and S/N issues by using
 more than one component diameter in the modeling.  
 
+Polarization dependent CLEAN
+----------------------------
+   Optional CLEANing parameters, NiterQU, minFluxQU may be given
+to control the CLEANing of Stokes Q, U or V.
+e.g. to add NiterQU=50; minFluxQU=0.001 to task object mf
+addParam(mf,"NiterQU", paramVal=NiterQU, shortHelp="Niter for Q,U,V", \
+	longHelp="  NiterQU.....Niter for Q,U,V\n")
+addParam(mf,"minFluxQU", paramVal=minFluxQU, \
+        shortHelp="minFlux for Q,U,V", \
+	longHelp="  minFluxQU...minFlux for Q,U,V\n")
+
+
 Frequency Dependent Resolution
 ------------------------------
    The natural resolution of an interferometer is inversely

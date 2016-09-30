@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008,2015                                          */
+/*;  Copyright (C) 2008-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -39,6 +39,8 @@ gboolean doGain;
 gboolean doJinc;
 /** Use Tabulated beam */
 gboolean doTab;
+/** Use VLITE beam */
+gboolean doVLITE;
 /** Minimum desired gain */
 ofloat pbmin;
 /** Antenna diameter (m) */

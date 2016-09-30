@@ -364,10 +364,8 @@ class ObitTask(Task):
         """Return parameter set for version VERSION of task NAME."""
         return _ObitTaskParams(name, version)
 
-    def __write_adverb(self, params, file, adverb, value, dtype):
+    def __write_adverb(self, params, file, adverb, value, dtype, dim):
         """Write Obit input text file."""
-
-        assert(adverb in params.input_list)
 
         # Get type, may be scalar or list
         #dtype = type(value)
@@ -380,7 +378,6 @@ class ObitTask(Task):
         else:
             data = str(value)
 
-        dim = params.dim_dict[adverb]   # Dimensionality array
         dimStr = "(" + str(dim[0]) + ")"
         if (len(dim) > 1):
             if (dim[1] > 1):
@@ -433,6 +430,7 @@ class ObitTask(Task):
         value = []       # to accept
         for line in file:
             # DEBUG
+            #print line
             # Look for header for parameter
             if line.startswith("$Key = " + adverb):
                 # remove unwanted symbols
@@ -444,6 +442,7 @@ class ObitTask(Task):
                 parts = string.split(line)
                 # How many values
                 total = 1
+                # DEBUG print parts  
                 for x in parts[3:]:
                     total *= int(x)
                 dtype  = parts[2]
@@ -478,7 +477,7 @@ class ObitTask(Task):
         # DEBUG print "fetch adverb", adverb, value
         return value
 
-    def spawn(self, name, version, userno, msgkill, isbatch, input_dict):
+    def spawn(self, name, version, userno, msgkill, isbatch, input_list, input_dict, type_dict, dim_dict):
         """Start the task.
         
         Writes task input parameters, data directories and other
@@ -492,7 +491,10 @@ class ObitTask(Task):
         userno      AIPS user number
         msgkill     AIPS msgkill level, not used in Obit tasks
         isbatch     True if this is a batch process , not used in Obit tasks
+        input_list  Input parameters list in order
         input_dict  Input parameters as dictionary
+        type_dict   Input parameter types as dictionary
+        dim_dict    Input parameter dimensions as dictionary
         Returns task id
         """
 
@@ -540,10 +542,11 @@ class ObitTask(Task):
             for x in FITSdirs:
                 in_file.write(x+"\n")
 
-        for adverb in params.input_list:
-            self.__write_adverb(params, in_file, adverb, input_dict[adverb], \
-                                params.type_dict[adverb])
-
+        for adverb in input_list:
+            if adverb in type_dict:
+                self.__write_adverb(self, in_file, adverb, \
+                                        input_dict[adverb], type_dict[adverb], dim_dict[adverb])
+        
         in_file.close()
 
         # If debugging add a link to the input file to preserve it.
@@ -619,13 +622,13 @@ class ObitTask(Task):
             val = self.__read_adverb(params, out_file, adverb)
             output_dict[adverb] = val
             out_file.close()
+
+        _free_popsno(popsno)  # Release Pops number
         
         if os.access(tmpInput, os.F_OK):
             os.unlink(tmpInput)         # Remove input file.
         if os.access(tmpOutput, os.F_OK):
             os.unlink(tmpOutput)        # Remove output file.
-
-        _free_popsno(popsno)  # Releast Pops number
 
         # Check if terminated normally
         retCode = output_dict["retCode"]
@@ -650,8 +653,9 @@ def _allocate_popsno():
     hex) and yyy is the process ID of the Obit instance.
     Creates a file /tmp/Obit_pops.pid to indicate this pops number is
     in use.
+    Allow 35
     """
-    for popsno in range(1,16):
+    for popsno in range(1,36):
         # In order to prevent a race, first create a lock file for
         # POPSNO.
         try:

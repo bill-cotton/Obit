@@ -798,11 +798,14 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
-  /* Pointing table from either xml or binary */
-  fullname = g_strconcat (DataRoot,"/Pointing", NULL);
-  out->PointingTab = ParseASDMPointingTable(out, fullname, err);
-  if (err->error) Obit_traceback_val (err, routine, fullname, out);
-  g_free(fullname);
+  /* EVLA Pointing table from either xml or binary -
+     ALMA different,undocumented format */
+  if (out->isEVLA) {
+    fullname = g_strconcat (DataRoot,"/Pointing", NULL);
+    out->PointingTab = ParseASDMPointingTable(out, fullname, err);
+    if (err->error) Obit_traceback_val (err, routine, fullname, out);
+    g_free(fullname);
+  }
 
   /* PointingModel table */
   fullname = g_strconcat (DataRoot,"/PointingModel.xml", NULL);
