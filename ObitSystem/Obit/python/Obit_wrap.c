@@ -6556,6 +6556,12 @@ extern void  PlotDrawSymbol (ObitPlot* in, float x, float y, int symbol,
    ObitPlotDrawSymbol (in, (ofloat)x, (ofloat)y, (olong)symbol, err);
 } // end PlotDrawSymbol
 
+/**  Public: Draw a Polygon.*/
+extern void  PlotDrawPoly (ObitPlot* in, int n, float *x, float *y, int fill, 
+                           float scale, ObitErr *err) { 
+   ObitPlotDrawPoly (in, (olong)n, (ofloat*)x, (ofloat*)y, (olong)fill, (ofloat)scale, err);
+} // end PlotDrawPoly
+
 extern int OPlotIsA (ObitPlot* in) {
   return ObitPlotIsA(in);
 } // end  OPlotIsA 
@@ -6603,6 +6609,7 @@ extern void PlotDrawLine(ObitPlot *,float ,float ,float ,float ,ObitErr *);
 extern void PlotDrawCurve(ObitPlot *,int ,float *,float *,ObitErr *);
 extern void PlotDrawCircle(ObitPlot *,float ,float ,float ,ObitErr *);
 extern void PlotDrawSymbol(ObitPlot *,float ,float ,int ,ObitErr *);
+extern void PlotDrawPoly(ObitPlot *,int ,float *,float *,int ,float ,ObitErr *);
 extern int OPlotIsA(ObitPlot *);
 extern ObitPlot *OPlotRef(ObitPlot *);
 extern ObitPlot *OPlotUnref(ObitPlot *);
@@ -36585,6 +36592,89 @@ static PyObject *_wrap_PlotDrawSymbol(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_PlotDrawPoly(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitPlot * _arg0;
+    int  _arg1;
+    float * _arg2;
+    float * _arg3;
+    int  _arg4;
+    float  _arg5;
+    ObitErr * _arg6;
+    PyObject * _argo0 = 0;
+    PyObject * _obj2 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo6 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OiOOifO:PlotDrawPoly",&_argo0,&_arg1,&_obj2,&_obj3,&_arg4,&_arg5,&_argo6)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPlot_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PlotDrawPoly. Expected _ObitPlot_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj2)) {
+    int size = PyList_Size(_obj2);
+    int i = 0;
+    _arg2 = (float*) malloc((size+1)*sizeof(float));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj2,i);
+      if (PyFloat_Check(o))
+         _arg2[i] = (float)((PyFloatObject*)o)->ob_fval;
+      else {
+         PyErr_SetString(PyExc_TypeError,"list must contain floats");
+         free(_arg2);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyList_Check(_obj3)) {
+    int size = PyList_Size(_obj3);
+    int i = 0;
+    _arg3 = (float*) malloc((size+1)*sizeof(float));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj3,i);
+      if (PyFloat_Check(o))
+         _arg3[i] = (float)((PyFloatObject*)o)->ob_fval;
+      else {
+         PyErr_SetString(PyExc_TypeError,"list must contain floats");
+         free(_arg3);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+    if (_argo6) {
+        if (_argo6 == Py_None) { _arg6 = NULL; }
+        else if (SWIG_GetPtrObj(_argo6,(void **) &_arg6,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 7 of PlotDrawPoly. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    PlotDrawPoly(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  free((float *) _arg2);
+}
+{
+  free((float *) _arg3);
+}
+    return _resultobj;
+}
+
 static PyObject *_wrap_OPlotIsA(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     int  _result;
@@ -65408,6 +65498,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "OPlotUnref", _wrap_OPlotUnref, METH_VARARGS },
 	 { "OPlotRef", _wrap_OPlotRef, METH_VARARGS },
 	 { "OPlotIsA", _wrap_OPlotIsA, METH_VARARGS },
+	 { "PlotDrawPoly", _wrap_PlotDrawPoly, METH_VARARGS },
 	 { "PlotDrawSymbol", _wrap_PlotDrawSymbol, METH_VARARGS },
 	 { "PlotDrawCircle", _wrap_PlotDrawCircle, METH_VARARGS },
 	 { "PlotDrawCurve", _wrap_PlotDrawCurve, METH_VARARGS },

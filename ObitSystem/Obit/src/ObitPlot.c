@@ -3247,6 +3247,87 @@ void  ObitPlotDrawSymbol (ObitPlot* in, ofloat x, ofloat y,
 } /* end ObitPlotDrawSymbol */
 
 /** 
+ * Primitive routine draw a polygon, possibly with filling
+ * Polygon closed between last and first vertices
+ * \param in      Pointer to Plot object.
+ * \param n       number of vertices
+ * \param x       array of world x-coordinates of the vertices
+ * \param y       array of world y-coordinates of the vertices
+ * \param fill    Fill pattern, plot package dependent
+ *                values in the range [0,8] are usable 
+ * \li 0 =  no fill
+ * \li 1 = hatched
+ * \li 2 = crosshatched
+ * \li 3 = plplot:lines 45 deg downwards
+ * \li 4 = plplot:lines 30 deg upwards
+ * \li 5 = plplot:lines 30 deg downwards
+ * \li 6 = plplot:horizontal/vertical lines crossed
+ * \li 7 = plplot:horizontal lines
+ * \li 8 = plplot:vertical lines
+ * \param scale   scaling factor for spacing
+ * \param err     ObitErr error stack
+ */
+void  ObitPlotDrawPoly (ObitPlot* in, olong n, ofloat *x, ofloat *y, 
+			olong fill, ofloat scale, ObitErr *err)
+{
+  gboolean OK=FALSE;  /* Have an implementation? */
+
+/****************** plplot implementation *************************/
+#ifdef HAVE_PLPLOT  /* Only if plplot available */ 
+  /*PLINT nlin, inc[2], del[2], space;*/
+  PLINT sty;
+  /* error checks */
+  if (err->error) return;
+
+  OK = TRUE;  /* Have a plotting package */
+  /*plcol1(0.5);   Huh? */
+  if (fill>0) {
+    /* plpat doesn't work as advertized 
+       space = (PLINT)(2000*scale);
+       if (fill==1) {nlin=1; inc[0]= 450; del[0]=space;}
+       if (fill==2) {nlin=2; inc[0]= 450; del[0]=space; inc[1]=-450; del[1]=space;}
+       if (fill==3) {nlin=1; inc[0]=-450; del[0]=space;}
+       if (fill==4) {nlin=1; inc[0]= 300; del[0]=space;}
+       if (fill==5) {nlin=1; inc[0]=-300; del[0]=space;}
+       if (fill==6) {nlin=2; inc[0]=   0; del[0]=space; inc[1]= 900; del[1]=space;}
+       if (fill==7) {nlin=1; inc[0]=   0; del[0]=space;}
+       if (fill==8) {nlin=1; inc[0]= 900; del[0]=space;}
+       plpat(nlin, inc, del);*/
+    sty = MIN (8, MAX(1, fill+1));
+    if (fill==1) sty = 3;
+    if (fill==2) sty = 8;
+    if (fill==7) sty = 1;
+    if (fill==8) sty = 3;
+    plpsty(sty);
+  plfill((PLINT)n, (PLFLT*)x, (PLFLT*)y);
+  } 
+  /* Draw polygon */
+  ObitPlotDrawCurve(in, n, x, y, err);
+  ObitPlotDrawLine (in, x[n-1], y[n-1], x[0], y[0], err);
+#endif /* HAVE_PLPLOT */
+
+/****************** pgplot implementation *************************/
+#ifdef HAVE_PGPLOT  /* Only if pgplot available */
+  int fs;
+  /* error checks */
+  if (err->error) return;
+
+  OK = TRUE;  /* Have a plotting package */
+  if (fill>0) {
+    fs = 2;                     /* no fill */
+    if (fill==1) fs = 3;        /* hatched */
+    if (fill==2) fs = 4;        /* crosshatched */
+    cpgsfs(fs);                 /* Set fill */
+  }
+  cpgpoly((int)n, (float*)x, (float*)y);
+  cpgsfs(2);                    /* reset fill */
+#endif /* HAVE_PGPLOT */
+
+  /* Complain if plotting not available */
+  if (!OK) Obit_log_error(err, OBIT_Error, "No plotting package available for polygon");
+} /* end ObitPlotDrawPoly */
+
+/** 
  * Primitive routine draw a curve consisting of lines between a sequence of
  * points.
  * \param in      Pointer to Plot object.

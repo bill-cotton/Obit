@@ -1685,7 +1685,7 @@ ASDMSourceArray* ObitSDMDataGetSourceArray (ObitSDMData *in)
   olong numr, i, ig, iOut=0, iSource, iField, sourceId, iSW, SWId, kSW;
   olong nSelSW=0, fieldId, iMain, occur;
   gchar *ignore[]={"OTFDUMMY","DUMMY",NULL};  /* Names to ignore */
-  gboolean want, chkSelCode;
+  gboolean want, chkSelCode, nameMatch;
   gchar code[12];
 
   out = g_malloc0(sizeof(ASDMSourceArray));
@@ -1727,8 +1727,12 @@ ASDMSourceArray* ObitSDMDataGetSourceArray (ObitSDMData *in)
 	strcpy(code,in->FieldTab->rows[iField]->code); 
 	ObitSDMDataDefaultCalCode(in, iMain, code);
 	/* Find SourceTab with entry sourceId and selected SW */
+	/* Check Id (may change) or name (better not) */
 	for (iSource=0; iSource<in->SourceTab->nrows; iSource++) {
-	  if (in->SourceTab->rows[iSource]->sourceId==sourceId) {
+	  nameMatch = !strcmp(in->SourceTab->rows[iSource]->sourceName,
+			      in->FieldTab->rows[iField]->fieldName);
+	  if (((in->SourceTab->rows[iSource]->sourceId==sourceId) && nameMatch) || 
+	      (nameMatch)) {
 	    SWId = in->SourceTab->rows[iSource]->spectralWindowId;
 	    for (iSW=0; iSW<SpWinArray->nwinds; iSW++) 
 	      if (SpWinArray->winds[iSW]->spectralWindowId==SWId) break;

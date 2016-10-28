@@ -228,6 +228,7 @@ ObitBeamShape* ObitBeamShapeCreate (gchar* name, ObitImage *image,
   ObitInfoListGetTest(image->info, "doTab", &type, dim, &doTab);
   isMeerKAT = !strncmp(image->myDesc->teles, "MeerKAT",7); /* MeerKAT */
   ObitInfoListGetTest(image->info, "doVLITE", &type, dim, &doVLITE); /* VLITE */
+  doVLITE = doVLITE || !strncmp(image->myDesc->instrument, "VLITE",5);
   if (isMeerKAT)    MeerKATTabBeam(out);  /* Always use for MeerKAT */
   else if (doVLITE) FindVLITEBeam(out);   /* Use VLITE beam  */
   else if (doTab)   FindTabBeam(out);     /* Use standard if available */

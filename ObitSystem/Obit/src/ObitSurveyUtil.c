@@ -442,9 +442,9 @@ gboolean ObitSurveyNVSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
     decbeg = decc - MAX (box[1], sildeg);
     decend = decc + MAX (box[1], sildeg);
     decx = MIN (89.0e0, decc);
-    rab = rac - MAX (MAX(radius, box[0]), sildeg) / cos (decx * DG2RAD);
+    rab = rac - MAX (MAX(radius, box[0]*15), sildeg) / cos (decx * DG2RAD);
     if (rab < 0.0) rab = rab + 360.0;
-    rae = rac + MAX (MAX(radius, box[0]), sildeg) / cos (decx * DG2RAD);
+    rae = rac + MAX (MAX(radius, box[0]*15), sildeg) / cos (decx * DG2RAD);
     if (rae > 360.0) rae = rae - 360.0;
     irab = rab / 15.0;
     irae = rae / 15.0;
@@ -468,10 +468,12 @@ gboolean ObitSurveyNVSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
       end[0] = VLnrow;
       beg[1] = 1;
       end[1] = ecindx;
+      if (end[1]<=0) end[1] = VLnrow;
     } else {
       npass = 1;
       beg[0] = bcindx;
       end[0] = ecindx;
+      if (end[0]<=0) end[0] = VLnrow;
     } 
   }
  
@@ -566,6 +568,7 @@ gboolean ObitSurveyNVSSPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
     ObitPosLabelUtilRAHMS  (rac,  &rahm[0],  &rahm[1],  &ras);
     ObitPosLabelUtilDecDMS (decc, &decdm[0], &decdm[1], &decs);
     /* Deal with sign of -0 */
+    dsig[0] = ' ';
     if (decc > 0.0) dsig[0] = '+';
     if (decc < 0.0) dsig[0] = '-';
     dsig[1] = 0;
@@ -1289,9 +1292,9 @@ gboolean ObitSurveyGenPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
     decbeg = decc - MAX (box[1], sildeg);
     decend = decc + MAX (box[1], sildeg);
     decx = MIN (89.0e0, decc);
-    rab = rac - MAX (MAX(radius, box[0]), sildeg) / cos (decx * DG2RAD);
+    rab = rac - MAX (MAX(radius, box[0]*15), sildeg) / cos (decx * DG2RAD);
     if (rab < 0.0) rab = rab + 360.0;
-    rae = rac + MAX (MAX(radius, box[0]), sildeg) / cos (decx * DG2RAD);
+    rae = rac + MAX (MAX(radius, box[0]*15), sildeg) / cos (decx * DG2RAD);
     if (rae > 360.0) rae = rae - 360.0;
     irab = rab / 15.0;
     irae = rae / 15.0;
@@ -1315,10 +1318,12 @@ gboolean ObitSurveyGenPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
       end[0] = VLnrow;
       beg[1] = 1;
       end[1] = ecindx;
+      if (end[1]<=0) end[1] = VLnrow;
     } else {
       npass = 1;
       beg[0] = bcindx;
       end[0] = ecindx;
+      if (end[0]<=0) end[0] = VLnrow;
     } 
   }
  
@@ -1413,6 +1418,7 @@ gboolean ObitSurveyGenPrint (ObitPrinter *printer, ObitData *data, olong VLVer,
     ObitPosLabelUtilRAHMS  (rac,  &rahm[0],  &rahm[1],  &ras);
     ObitPosLabelUtilDecDMS (decc, &decdm[0], &decdm[1], &decs);
     /* Deal with sign of -0 */
+    dsig[0] = ' ';
     if (decc > 0.0) dsig[0] = '+';
     if (decc < 0.0) dsig[0] = '-';
     dsig[1] = 0;

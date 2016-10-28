@@ -3453,3 +3453,18 @@ Obit/tasks/MFImage.c Obit/TDF/MFImage.TDF:
 Obit/include/ObitBeamShapeDef.h Obit/src/ObitBeamShape.c:
   Add Wendy's VLITE beam
 30 Sep 2016 svn ver 552
+
+plotting enhancements, bug fixes
+Obit/src/ObitBeamShape.c \
+  Create: Check for "VLITE" instrument in image header
+Obit/src/ObitSDMData.c \
+  Trap ALMA ASDM screwup with changing Source/Field Ids
+Obit/src/ObitSurveyUtil.c \
+  Print routines, fix logic bugs.
+Obit/share/scripts/PangleOTF.py \
+  Example pixel RM fitting/plotting
+Obit/include/ObitPlot.h Obit/src/ObitPlot.c \
+Obit/python/OPlot.inc Obit/python/OPlot.py \
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c \
+  Add plotting of (filled) polygons
+28 Oct 2016 svn ver 553

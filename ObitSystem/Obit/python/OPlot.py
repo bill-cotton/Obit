@@ -809,6 +809,38 @@ def PDrawSymbol (plot, x, y, symbol, err):
     Obit.PlotDrawSymbol(plot.me, x, y, symbol, err.me)
     # end  PDrawSymbol
 
+def PDrawPoly (plot, x, y, fill, err):
+    """
+    Draw a Polygon, possibly filled
+
+    * plot   = Python Plot object
+    *  n     = number of vertices
+    *  x     = array of world x-coordinates of the vertices
+    *  y     = array of world y-coordinates of the vertices
+    *  fill  = Fill pattern, plot package dependent
+    *          values in the range [0,8] are usable 
+      ==  ===============        
+      0   no fill
+      1   hatched
+      2   crosshatched
+      3   plplot:lines 45 deg downwards
+      4   plplot:lines 30 deg upwards
+      5   plplot:lines 30 deg downwards
+      6   plplot:horizontal/vertical lines crossed
+      7   plplot:horizontal lines
+      8   plplot:vertical lines
+      ==  ===============        
+    * err =    ObitErr error stack
+    """
+    ################################################################
+     # Checks
+    if not PIsA(plot):
+        raise TypeError,"plot MUST be a Python Obit plot"
+    #
+    scale = 1.0
+    Obit.PlotDrawPoly(plot.me, len(x), x, y, fill, scale, err.me)
+    # end  PDrawPoly
+
 def PGetList (plot):
     """
     Return the member InfoList

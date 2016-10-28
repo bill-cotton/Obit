@@ -200,6 +200,10 @@ void  ObitPlotDrawCircle (ObitPlot* in,  ofloat x, ofloat y, ofloat radius,
 void  ObitPlotDrawSymbol (ObitPlot* in,  ofloat x, ofloat y, 
 			  olong symbol, ObitErr *err);
 
+/**  Public: Draw a polygon.*/
+void  ObitPlotDrawPoly (ObitPlot* in,  olong n, ofloat *x, ofloat *y, 
+			olong fill, ofloat scale, ObitErr *err);
+
 /*-------------------Class Info--------------------------*/
 /**
  * ClassInfo Structure.

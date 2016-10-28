@@ -191,6 +191,12 @@ extern void  PlotDrawSymbol (ObitPlot* in, float x, float y, int symbol,
    ObitPlotDrawSymbol (in, (ofloat)x, (ofloat)y, (olong)symbol, err);
 } // end PlotDrawSymbol
 
+/**  Public: Draw a Polygon.*/
+extern void  PlotDrawPoly (ObitPlot* in, int n, float *x, float *y, int fill, 
+                           float scale, ObitErr *err) { 
+   ObitPlotDrawPoly (in, (olong)n, (ofloat*)x, (ofloat*)y, (olong)fill, (ofloat)scale, err);
+} // end PlotDrawPoly
+
 extern int OPlotIsA (ObitPlot* in) {
   return ObitPlotIsA(in);
 } // end  OPlotIsA 
