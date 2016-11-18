@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2015                                          */
+/*;  Copyright (C) 2003-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -442,8 +442,8 @@ gboolean  ObitUVCalApply (ObitUVCal *in, ofloat *recIn,
   if (in->doSmo)  ObitUVCalSmooth (in, time, ant1, ant2, recIn, visIn, err);
   if (in->doBL)   ObitUVCalBaseline(in, time, ant1, ant2, recIn, visIn, err);
   if (in->doCal)  ObitUVCalCalibrate(in, time, ant1, ant2, recIn, visIn, err);
-  if (in->doBP)   ObitUVCalBandpass(in, time, ant1, ant2, recIn, visIn, err);
   if (in->doPol)  ObitUVCalPolarization(in, time, ant1, ant2, recIn, visIn, err);
+  if (in->doBP)   ObitUVCalBandpass(in, time, ant1, ant2, recIn, visIn, err);
   if (in->SpecIndxWork!=NULL) ApplySpecIndex(in, visIn); /* Spectral index? */
   OK = ObitUVCalSelect(in, recIn, visIn, visOut,err);
 

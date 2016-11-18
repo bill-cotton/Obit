@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2015                                          */
+/*;  Copyright (C) 2003-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -199,7 +199,7 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
   olong i, iif, ifreq, nch, ipol, ioff, joff, koff, jrl, jlr, ia1, ia2, ifoff;
   olong j, voff[4], choff, chdelta, it1, it2;
   gboolean wflag, someOK;
-  ofloat xtemp[8], ytemp[8], dtemp[8], Lambda2, fblank = ObitMagicF();
+  ofloat ytemp[8], dtemp[8], Lambda2, fblank = ObitMagicF();
   ofloat gr, gi, gr1, gi1, tr, ti;
   ObitUVCalPolarizationS *me;
   ObitUVCalCalibrateS   *cal;
@@ -219,9 +219,6 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
   someOK = FALSE;
   for (i=0; i<desc->ncorr; i++) someOK = someOK || (visIn[i*3+2]>0.0);
   if (!someOK) return;
-
-  /* DEBUG unit poln vis */
-  for (j=0; j<8; j++) xtemp[j] = 0.0;  xtemp[0] =  xtemp[6] = 1.0;
 
   /* Subarray number in data */
   ObitUVDescGetAnts(desc, RP, &it1, &it2, &SubA);
@@ -290,6 +287,7 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
     choff = 0; /* Offset to beginning of channel matrix in PolCal for perChan */
     for (ifreq=me->bChan; ifreq<=me->eChan; ifreq++) {  /* loop 300 */
       joff = ((ifreq-1) * desc->incf + ioff); /* Offset of RR (or XX) */
+
 
       /* deal with case of missing  parallel poln; use one present for correction.
 	 The "faked" data will still be flagged in the output data and is merely used
@@ -362,10 +360,17 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
       
       /* Save in reordered array */
       dtemp[0] = visIn[joff+0]; dtemp[1] = visIn[joff+1]; 
-      dtemp[2] = visIn[joff+6]; dtemp[3] = visIn[joff+7]; 
-      dtemp[4] = visIn[joff+9]; dtemp[5] = visIn[joff+10]; 
       dtemp[6] = visIn[joff+3]; dtemp[7] = visIn[joff+4]; 
-      
+      /* Special hack for circular feeds with elp/ori solutions
+	 zero cross pols and calculate model and correct vis.
+	 Don't know why this is necessary */
+      if ((me->polType==OBIT_UVPoln_ELORI) && me->circFeed) {
+	dtemp[2] = 0.0; dtemp[3] = 0.0;
+	dtemp[4] = 0.0; dtemp[5] = 0.0; 
+      } else {
+	dtemp[2] = visIn[joff+6]; dtemp[3] = visIn[joff+7];
+	dtemp[4] = visIn[joff+9]; dtemp[5] = visIn[joff+10];
+     }
       /* Now apply calibration by multiplying the inverse Mueller matrix by 
 	 the data vector. */
       j = 0;
@@ -375,16 +380,22 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
       if (me->PolCal[jndex]!=fblank) { /* OK */
 
 	/* Now apply calibration by multiplying the inverse Mueller matrix by 
-	   the data vector. */
-	MatxVec4Mult(&me->PolCal[jndex], dtemp, ytemp);
+	   the data vector.*/
+	MatxVec4Mult(&me->PolCal[jndex], dtemp, ytemp); 
 	
 	index = 0;
 	j = 0;
-	/* Reorder */
-	visIn[joff+0] = ytemp[0];  visIn[joff+1]  = ytemp[1]; 
-	visIn[joff+3] = ytemp[6];  visIn[joff+4]  = ytemp[7]; 
-	visIn[joff+6] = ytemp[2];  visIn[joff+7]  = ytemp[3]; 
-	visIn[joff+9] = ytemp[4];  visIn[joff+10] = ytemp[5]; 
+	/* Reorder - make corrections for cross hand */
+	visIn[joff+0]  = ytemp[0];  visIn[joff+1]   = ytemp[1]; 
+	visIn[joff+3]  = ytemp[6];  visIn[joff+4]   = ytemp[7]; 
+	/* Special hack for circular feeds with elp/ori solutions*/
+	if ((me->polType==OBIT_UVPoln_ELORI) && me->circFeed) {
+	  visIn[joff+6] += ytemp[2];  visIn[joff+7]  += ytemp[3]; 
+	  visIn[joff+9] += ytemp[4];  visIn[joff+10] += ytemp[5];
+	} else {
+	  visIn[joff+6]  = ytemp[2];  visIn[joff+7]   = ytemp[3]; 
+	  visIn[joff+9]  = ytemp[4];  visIn[joff+10]  = ytemp[5];
+	}
       } else { /* Bad - flag crosspol */
  	visIn[joff+6] = visIn[joff+7]  = visIn[joff+8]  = 0.0;
  	visIn[joff+9] = visIn[joff+10] = visIn[joff+11] = 0.0;
@@ -1086,7 +1097,7 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
   ofloat elp_r, elp_l, ori_r, ori_l, PD=0.0, angle[6], sina[6], cosa[6];
   ofloat root2, fblank = ObitMagicF();
   ofloat rotate=0.0, chi=0.0, crot, srot, temp[8];
-  olong iif, jndx, loff, refAnt, i, SubA, ich, nch, nchAll, kndx, ia;
+  olong iif, jndx, loff, refAnt, i, SubA, ich, nch, nchAll, kndx, lndx, ia;
   gboolean doJones=TRUE;
   ObitPolCalList *PCal = in->PCal;
   ocomplex RS, RD, LS, LD, PA, PAc, PRref, PLref, ct;
@@ -1124,6 +1135,7 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
     /* Loop over channel */
     for (ich=0; ich<nch; ich++) {
       kndx = 4*(iif*nchAll + ich + (in->bChan-1));
+      lndx = iif*nchAll + ich + (in->bChan-1);
       
       /* Set Jones matrix by type. */
       doJones = TRUE; 
@@ -1137,6 +1149,7 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
 	ori_r = PCal->ANlist[ia][kndx+1];
 	elp_l = PCal->ANlist[ia][kndx+2];
 	ori_l = PCal->ANlist[ia][kndx+3];
+	PD    = PCal->RLPhaseDiff[lndx]*DG2RAD;  /* R-L phase difference */
 
 	if ((elp_r!=fblank) && (elp_l!=fblank)) {
 	  /* OK */
@@ -1148,7 +1161,7 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
 	    if (PCal->polRefAnt>0) angle[4] =  PCal->ANlist[PCal->polRefAnt-1][kndx+1];
 	    else                   angle[4] = 0.0;
 	    if (PCal->polRefAnt>0) angle[5] = -PCal->ANlist[PCal->polRefAnt-1][kndx+3] + PD;
-	    else                   angle[5] = 0.0;
+	    else                   angle[5] = PD;
 	    ObitSinCosVec(6, angle, sina, cosa);
 	    
 	    /* Complex terms */

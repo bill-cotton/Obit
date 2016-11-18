@@ -8,7 +8,7 @@ VSAD or SAD.  FS Tables also contain spectra.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2006-2014
+#  Copyright (C) 2006-2016
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -514,6 +514,83 @@ def PVZSel(VZTable, image, err):
     outVZ.me = Obit.TableVZSel (VZTable.me, id, err.me);
     return outVZ
     # end PVZSel
+
+import FArray, FInterpolate
+def PGetPoln (VLtab, imQ, imU, err, RMSsize=100):
+    """
+    Get polarization info for VL table
+    
+    VLtab   input VL table
+    imQ     Q pol Image
+    imU     U pol Image, same geometry as Q
+    err     Obit Err/message object        
+    RMSsize halfwidth in pixels of RMS box                                     
+    """
+    dQ = imQ.Desc
+    dU = imU.Desc
+    if not ImageDesc.PCheckCompat(dQ, dU):
+        OErr.printErrMsg(err, "Error: Q,U images are incompatible")
+    nx = dQ.Dict['inaxes'][0]; ny = dQ.Dict['inaxes'][1]
+    size = min(RMSsize, nx/2, ny/2) # Actual RMS box size
+    fblank = FArray.fblank
+    # Get Q, U images
+    pixQ =  Image.PReadPlane(imQ, err)
+    pixU =  Image.PReadPlane(imU, err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error Reading Q,U images")
+    # Make interpolators
+    fiQ = FInterpolate.FInterpolate('Q', pixQ, dQ, 2)
+    fiU = FInterpolate.FInterpolate('U', pixU, dU, 2)
+    # Open table
+    VLtab.Open(Table.READWRITE,err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error Opening table")
+    nrow = VLtab.Desc.Dict['nrow']
+    for irow in range(1,nrow+1):
+        row = VLtab.ReadRow(irow,err)
+        pos = [row['RA(2000)'][0], row['DEC(2000)'][0]]
+        # pixel
+        pixel = ImageDesc.PGetPixel(dQ, pos, err)
+        # In image?
+        if (pixel[0]<2.0) or (pixel[1]<2.0) or (pixel[0]>nx-2) or (pixel[1]>ny-2):
+            continue
+        # Fluxes
+        qval = FInterpolate.PPosition(fiQ, pos, err)
+        uval = FInterpolate.PPosition(fiU, pos, err)
+        # Valid?
+        if (qval==fblank) or (uval==fblank):
+            continue
+        row['Q CENTER'][0] = qval
+        row['U CENTER'][0] = uval
+        row['P FLUX'][0] = (qval*qval+uval*uval)**0.5
+        if err.isErr:
+            OErr.printErrMsg(err, "Error Interpolating")
+        # RMS box
+        blc = [int(pixel[0])-RMSsize, int(pixel[1])-RMSsize]
+        trc = [int(pixel[0])+RMSsize, int(pixel[1])+RMSsize]
+        if blc[0]<0:
+            blc[0] = 0; trc[0] = min(2*size, nx-1);
+        if blc[1]<0:
+            blc[1] = 0; trc[1] = min(2*size, ny-1);
+        if trc[0]>nx-1:
+            d = trc[0]-nx
+            blc[0] = max(1, blc[0]-d); trc[0] = nx-1
+        if trc[1]>ny-1:
+            d = trc[1]-ny
+            blc[1] = max(1, blc[1]-d); trc[1] = ny-1
+        # RMSes
+        box = FArray. PSubArr(pixQ, blc, trc, err)
+        rmsQ = box.RMS; del box
+        box = FArray. PSubArr(pixU, blc, trc, err)
+        rmsU = box.RMS; del box
+        row['POL RMS'][0] = 0.5 * (rmsQ+rmsU)
+        VLtab.WriteRow(irow, row, err)
+        if err.isErr:
+            OErr.printErrMsg(err, "Error Writing table")
+    # end loop over table
+    VLtab.Close(err)
+    del pixQ, pixU, fiQ, fiU
+# end PGetPoln
 
 def PVL2FS(VLTable, image, FSver, err):
     """

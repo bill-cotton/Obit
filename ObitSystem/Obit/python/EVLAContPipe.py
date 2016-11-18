@@ -543,7 +543,7 @@ def pipeline( aipsSetup, parmFile):
     
     # Polarization calibration
     if parms["doPolCal"]:
-        if parms["PCRefAnt"]<0:
+        if parms["PCRefAnt"]<-1:
             parms["PCRefAnt"] =  parms["refAnt"]
         retCode = EVLAPolCal(uv, parms["PCInsCals"], err, InsCalPoln=parms["PCCalPoln"], \
                              doCalib=2, gainUse=0, doBand=-1, flagVer=0, \
@@ -572,22 +572,6 @@ def pipeline( aipsSetup, parmFile):
                             timerange=parms["rltimerange"], FOV=parms["rlFOV"], \
                             doBand=1, BPVer=1, flagVer=parms["rlflagVer"], \
                             refAnt=parms["rlrefAnt"], doPol=parms["doPol"], PDVer=parms["PDVer"],  \
-                            nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
-                            check=check, debug=debug)
-        if retCode!=0:
-            raise RuntimeError,"Error in RL phase spectrum calibration"
-        # BP cal and pol cal don't commute, do RLCal again for good measure updating BP 2
-        retCode = EVLARLCal(uv, err,\
-                            RLDCal=parms["RLDCal"], BChan=parms["rlBChan"],
-                            EChan=parms["rlEChan"], UVRange=parms["rlUVRange"], \
-                            ChWid2=parms["rlChWid"], solInt1=parms["rlsolint1"], solInt2=parms["rlsolint2"], \
-                            RLPCal=parms["RLPCal"], RLPhase=parms["RLPhase"], \
-                            RM=parms["RLRM"], CleanRad=parms["rlCleanRad"], \
-                            calcode=parms["rlCalCode"], doCalib=parms["rlDoCal"], gainUse=parms["rlgainUse"], \
-                            timerange=parms["rltimerange"], FOV=parms["rlFOV"], \
-                            doBand=1, BPVer=2, flagVer=parms["rlflagVer"], \
-                            refAnt=parms["rlrefAnt"], doPol=parms["doPol"], PDVer=parms["PDVer"],  \
-                            doPlot=parms["doSpecPlot"], plotFile=plotFile, \
                             nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
                             check=check, debug=debug)
         if retCode!=0:

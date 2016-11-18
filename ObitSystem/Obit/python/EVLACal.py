@@ -196,14 +196,14 @@ def EVLAInitContParms():
                                      # order given in PCInsCals, PPol<0 => fit
     parms["PCAvgIF"]   = False       # if True, average IFs in ins. cal.
     parms["PCSolInt"]  = 2.          # instrumental solution interval (min), 0=> scan average(?)
-    parms["PCRefAnt"]  = 0           # Reference antenna, defaults to refAnt
+    parms["PCRefAnt"]  = -2          # Reference antenna, defaults to refAnt
     parms["PCSolType"] = "    "      # solution type, "    ", "LM  "
     parms["doPol"]     = False       # Apply polarization cal in subsequent calibration?
     parms["PDVer"]     = 1           # Apply PD table in subsequent polarization cal?
-    parms["PCChInc"] = 5             # Channel increment in instrumental polarization
-    parms["PCChWid"] = 5             # Channel averaging in instrumental polarization
-    parms['doFitRL'] = False         # Fit R-L (or X-Y) gain phase
-    parms['doFitOri']= True          # Fit (linear feed) orientations?
+    parms["PCChInc"]   = 5           # Channel increment in instrumental polarization
+    parms["PCChWid"]   = 5           # Channel averaging in instrumental polarization
+    parms['doFitRL']   = False       # Fit R-L (or X-Y) gain phase
+    parms['doFitOri']  = True        # Fit (linear feed) orientations?
     
     # Right-Left phase (EVPA) calibration, uses same  values as Right-Left delay calibration
     parms["doRLCal"]    = False    # Set RL phases from RLCal - RLDCal or RLPCal
@@ -3213,7 +3213,7 @@ def EVLARLDelay(uv, err, \
                 UVRange=[0.0,0.0], timerange = [0.0,1000.0], \
                 soucode="    ", doCalib=-1, gainUse=0, \
                 doBand=0, BPVer=0, flagVer=-1,  \
-                refAnt=0, Antennas=[0], doPol=-1,  numIFs=1, \
+                refAnt=0, Antennas=[0], doPol=-1,  PDVer=1,  numIFs=1, \
                 nThreads=1, noScrat=[], logfile = "",check=False, debug = False):
     """
     Determine R-L delay 
@@ -3241,6 +3241,7 @@ def EVLARLDelay(uv, err, \
     * numIFs   = number of IFs to use per solution
     * Antennas = List of antennas to include
     * doPol    = Apply polarization cal?
+    * PDVer    = PD polarization table to apply.
     * noScrat  = list of AIPS disks to avoid for scratch files
     * nThreads = Number of threads to use in imaging
     * logfile  = Log file for task
@@ -3281,6 +3282,8 @@ def EVLARLDelay(uv, err, \
     if ("numIFs" in rldly.__dict__):
        rldly.numIFs = numIFs
     rldly.doPol   = doPol
+    if ("PDVer" in rldly.__dict__):
+        rldly.PDVer   = PDVer
     rldly.doBand  = doBand
     rldly.BPVer   = BPVer
     rldly.refAnt  = refAnt

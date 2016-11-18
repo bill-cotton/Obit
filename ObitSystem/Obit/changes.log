@@ -2925,7 +2925,7 @@ Obit/src/ObitUVUtil.c:
   VisDivide: fix bug from Eric Format change.
 Obit/python/FInterpolate.py:
   fix numerous bugs
-22 Sep. 2015, svn ver 218.
+22 Sep. 2015, svn ver 518.
 
 Work on primary beam corrections, bug fixes
 Obit/include/ObitSkyModelVMBeamDef.h Obit/include/ObitSkyModelVMBeam.h
@@ -3468,3 +3468,23 @@ Obit/python/OPlot.inc Obit/python/OPlot.py \
 Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c \
   Add plotting of (filled) polygons
 28 Oct 2016 svn ver 553
+
+Polarization fixes
+Obit/python/Catalog.py:
+  Added routine, PGetPoln, to get Polarization values to VL table
+Obit/tasks/BPass.c:
+  DummyBPTable, AutoCorrBP: set proper output BP Table
+Obit/TDF/RLDly.TDF:
+  Add PDVer (already implemented in c)
+Obit/src/ObitUVCal.c:
+  Apply: Apply BP calibration after poln calibration.
+Obit/src/ObitUVCalPolarization.c:
+  Polarization: Hack for circular feeds w/ eli/ori soln,
+  calculate model and use to correct Observation
+Obit/python/EVLAContPipe.py Obit/python/EVLACal.py:
+  Only one pass at EVLARLCal
+  Better handling of parms["PCRefAnt"]
+  EVLARLDelay: Add PDVer parameter.
+Obit/src/ObitAIPSCat.c:
+  UVGetDesc: (from M. Kettenis), NULL terminate ptype rather than ctype
+18 Nov 2016 svn ver 554

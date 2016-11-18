@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -641,7 +641,7 @@ void ObitAIPSCatUVGetDesc (ObitUVDesc *desc, gchar *buffer,
   /* WCS labels for random parameters. */
   for (i=0; i<desc->nrparm; i++) {
     g_memmove (desc->ptype[i],  &header[myDHDR.KHPTP+i*2], 8);
-    desc->ctype[i][9] = 0; /* null terminate */
+    desc->ptype[i][9] = 0; /* null terminate */
   }
 
   /*  Sort order */

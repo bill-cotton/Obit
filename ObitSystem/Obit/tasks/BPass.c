@@ -1373,7 +1373,7 @@ ObitTableBP* DummyBPTable (ObitUV* inData, ObitTableSN *SNTmpl, ObitErr *err)
   ObitTableSNRow *SNRow=NULL;
   ObitTableBPRow *BPRow=NULL;
   ObitUVDesc *desc;
-  olong i, irow, orow, nchan, nif, npol, ver;
+  olong i, irow, orow, nchan, nif, npol, ver, highVer;
   ofloat fblank = ObitMagicF();
   ObitInfoType type;
   gint32   dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -1408,6 +1408,8 @@ ObitTableBP* DummyBPTable (ObitUV* inData, ObitTableSN *SNTmpl, ObitErr *err)
   /* Create output BP table */
   ver = 0;
   ObitInfoListGetTest(myInput, "BPSoln",  &type, dim, &ver);
+  highVer = ObitTableListGetHigh (inData->tableList, "AIPS BP");
+  if (ver<=0) ver = highVer;
   BPOut = newObitTableBPValue ("Temp BP", (ObitData*)inData, &ver,
 			       OBIT_IO_WriteOnly, npol, nif, nchan, err);
   if (err->error) Obit_traceback_val (err, routine,inData->name, BPOut);
@@ -1724,6 +1726,7 @@ void AutoCorrBP (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
   ver = 0;
   ObitInfoListGetTest(myInput, "BPSoln", &type, dim, &ver);
   highVer = ObitTableListGetHigh (outData->tableList, "AIPS BP");
+  if (ver<=0) ver = highVer;
   /* Tell which BP version */ 
   Obit_log_error(err, OBIT_InfoErr, "Writing autocorrelation BP Table %d", ver);
 
