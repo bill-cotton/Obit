@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -66,7 +66,7 @@ ObitIOCode ObitTableSULookup (ObitTableSU *in, gint32 *dim, gchar *inlist,
   ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitTableSURow *row;
   olong i, j, l, maxNum, ncheck, *cross, size;
-  gboolean select, gotSome, want, match;
+  gboolean select, gotSome, want, match, noCal;
   gchar tempName[101], temp2Name[101]; /* should always be big enough */
   gchar *routine = "ObitTableSULookup";
 
@@ -178,28 +178,30 @@ ObitIOCode ObitTableSULookup (ObitTableSU *in, gint32 *dim, gchar *inlist,
     Obit_traceback_val (err, routine,in->name, retCode);
   }
 
-  /* Be sure all nonblank entries found else issue warning */
-  gotSome = FALSE;  /* Any matches */
-  for (i=0; i<dim[1]; i++) {
-    gotSome = gotSome || (outlist[i]>=0);
-    if (cross[i]<0) {/* Not found */
-      /* get name from list */
-      for (j=0; j<dim[0]; j++) tempName[j] = inlist[i*dim[0]+j]; tempName[j] = 0;
-      /* Have an initial '-'? */
-      if (tempName[0]=='-') for (j=0; j<dim[0]; j++) tempName[j]= tempName[j+1]; /* remove '-' */
-
-      /* all blank is OK */
-      if (strncmp(tempName, "                ", dim[0])) {
-	ObitTrimTrail(tempName);
-	Obit_log_error(err, OBIT_InfoWarn, 
-		       "Source %s :%4.4d code %s not found in source table or dup in list", 
-		       tempName, Qual, souCode);
+  /* Be sure all nonblank entries found else issue warning - unless noCal */
+  noCal = !strncmp(souCode, "-CAL", 4); /* Non calibrators? */
+  if (!noCal) {
+    gotSome = FALSE;  /* Any matches */
+    for (i=0; i<dim[1]; i++) {
+      gotSome = gotSome || (outlist[i]>=0);
+      if (cross[i]<0) {/* Not found */
+	/* get name from list */
+	for (j=0; j<dim[0]; j++) tempName[j] = inlist[i*dim[0]+j]; tempName[j] = 0;
+	/* Have an initial '-'? */
+	if (tempName[0]=='-') for (j=0; j<dim[0]; j++) tempName[j]= tempName[j+1]; /* remove '-' */
+	
+	/* all blank is OK */
+	if (strncmp(tempName, "                ", dim[0])) {
+	  ObitTrimTrail(tempName);
+	  Obit_log_error(err, OBIT_InfoWarn, 
+			 "Source %s :%4.4d code %s not found in source table or dup in list", 
+			 tempName, Qual, souCode);
+	}
       }
     }
-  }
-
+  } /* end if not no cal */
   /* Anything selected? */
-  if (!gotSome) *xselect = FALSE;
+  if ((!gotSome) && !noCal) *xselect = FALSE;
   g_free(cross);  /* Free */
 
   return retCode;

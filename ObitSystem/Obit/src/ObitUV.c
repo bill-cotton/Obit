@@ -2912,7 +2912,7 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   ObitTableSU *SUTable=NULL;
   union ObitInfoListEquiv InfoReal; 
   gchar tempStr[5], souCode[5], *sptr;
-  gboolean badChar, match;
+  gboolean badChar, match, noCal;
   ObitUVDesc *desc;
   gchar *routine = "ObitUVGetSelect";
 
@@ -3224,6 +3224,7 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   /* Cal code */
   souCode[0] =  souCode[1] =  souCode[2] =  souCode[3] =  ' '; souCode[4] = 0; 
   ObitInfoListGetTest(info, "souCode", &type, dim, souCode);
+  noCal = !strncmp(souCode, "-CAL", 4); /* Non calibrators? */
   if (ObitInfoListGetP(info, "Sources", &type, dim, (gpointer)&sptr)) {
     sel->numberSourcesList = count;
     /* Count actual entries in source list */
@@ -3233,7 +3234,7 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
       j += dim[0];
     }
     sel->numberSourcesList = count;
-    if (count>0) {  /* Anything actually specified? */
+    if ((count>0) || noCal) {  /* Anything actually specified? */
       /* have to lookup sources - need SU table for this. */
       iver = 1;
       SUTable = newObitTableSUValue (in->name, (ObitData*)in, &iver, OBIT_IO_ReadOnly, 0, err);
@@ -3253,7 +3254,8 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
 	  sel->sources = g_malloc0(sel->numberSourcesList*sizeof(olong));
 	
 	/* Do lookup */
-	dim[1] = count;
+	if (count>0) dim[1] = count;
+	else         dim[1] = sel->numberSourcesList;
 	ObitTableSULookup (SUTable, dim, sptr, Qual, souCode, 
 			   sel->sources, &sel->selectSources, 
 			   &sel->numberSourcesList, err); 

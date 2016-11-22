@@ -3488,3 +3488,12 @@ Obit/python/EVLAContPipe.py Obit/python/EVLACal.py:
 Obit/src/ObitAIPSCat.c:
   UVGetDesc: (from M. Kettenis), NULL terminate ptype rather than ctype
 18 Nov 2016 svn ver 554
+
+Calibration fixes
+Obit/src/Obit.c:
+  StrCmp: Check ALL characters
+Obit/python/EVLACal.py:
+  EVLACalAP: Fix bugs in handling large numbers of Sources in CLCal
+Obit/src/ObitUV.c Obit/src/ObitTableSUUtil.c:
+  GetSelect: proper handling of souCode='-CAL'
+22 Nov 2016 svn ver 555

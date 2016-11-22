@@ -2568,16 +2568,13 @@ def EVLACalAP(uv, target, ACals, err, \
     for c in PCal:
         clist.append(PCal["Source"])
     if type(target)==list:
+        # Use souCode='-CAL' to get all non calibrators
+        clcal.souCode = '_CAL'
         tlist = []   # List of targets not in calibrator list
-        for t in target:
-            if t not in clist:
-                tlist.append(t)
     else:
         tlist=[target]
     itarg = 0
-    # Expand clcal.Sources if needed
-    if len(clcal.Sources)<len(tlist):
-        clcal.__dict__["Sources"] = len(tlist)*['                ']
+    maxCal = len(clcal.Sources)  # Maximum number of entries in clcal.Sources
     for t in tlist:
         clcal.Sources[itarg] = t
         if itarg>=maxCal:
@@ -2588,12 +2585,11 @@ def EVLACalAP(uv, target, ACals, err, \
     if PCals:
         for PCal in PCals:
             clcal.calSour[ical] = PCal["Source"]
-            clcal.Sources[ical] = PCal["Source"]
             if ical>=maxCal:
                 break
             ical += 1
     # Apply to targets
-    mess = "Apply calibration for "+str(tlist)
+    mess = "Apply calibration for targets"
     printMess(mess, logfile)
     mess = "Update CL "+str(clcal.calIn)+" with SN "+str(clcal.solnVer)+" to CL "+str(clcal.calOut)
     printMess(mess, logfile)

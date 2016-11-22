@@ -1,6 +1,6 @@
 /* $Id$            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2008                                          */
+/*;  Copyright (C) 2002-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -330,7 +330,7 @@ gboolean ObitStrCmp (gchar *str1, gchar *str2, olong maxlen)
   
   /* Compare */
   if (last1!=last2) return FALSE;
-  for (i=0; i<last1; i++)
+  for (i=0; i<=last1; i++)
     if (str1[i]!=str2[i]) { out=FALSE; break;}
   return out;
 } /* end ObitStrCmp */
