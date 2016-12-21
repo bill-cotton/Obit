@@ -1,7 +1,7 @@
 /* $Id$  */
 /* R-L phase bandpass calibration                                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2015                                          */
+/*;  Copyright (C) 2010-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1542,7 +1542,7 @@ ObitTableBP* MakeBPTable (ObitUV* inData, ofloat time,
   for (iif=0; iif<nif; iif++) {
     for (ichan=bchan; ichan<=echan; ichan++) {
       /* channel wavelength */
-      freq   = reffreq + desc->freqIF[iif] + 
+      freq   = desc->freqIF[iif] + 
 	(ichan-desc->crpix[desc->jlocf]+1) * desc->cdelt[desc->jlocf];
       lambda = VELIGHT/freq;
       /* Target phase difference */
@@ -1700,7 +1700,7 @@ ObitTableBP* UpdateBPTable (ObitUV* inData, olong BPver, ObitUV* outData,
     for (iif=0; iif<nif; iif++) {
       for (ichan=bchan; ichan<=echan; ichan++) {
 	/* channel wavelength */
-	freq   = reffreq + desc->freqIF[iif] + 
+	freq   = desc->freqIF[iif] + 
 	  (ichan-desc->crpix[desc->jlocf]+1) * desc->cdelt[desc->jlocf];
 	lambda = VELIGHT/freq;
 	/* Target phase difference */

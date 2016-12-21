@@ -1951,6 +1951,18 @@ extern ObitFArray* FArrayHisto  (ObitFArray *in, long n, float min, float max) {
   return ObitFArrayHisto (in, (olong)n, (ofloat)min, (ofloat)max);
 } // end FArrayHisto
 
+extern void FArrayExp (ObitFArray* in, ObitFArray* out) {
+   ObitFArrayExp (in, out);
+}
+
+extern void FArrayLog (ObitFArray* in, ObitFArray* out) {
+   ObitFArrayLog (in, out);
+}
+
+extern void FArrayPow (ObitFArray* in1, ObitFArray* in2, ObitFArray* out) {
+   ObitFArrayPow (in1, in2, out);
+}
+
 extern ObitInfoList* FArrayGetList (ObitFArray* in) {
   return ObitInfoListRef(in->info);
 }
@@ -2042,6 +2054,9 @@ extern void FArrayShiftAdd(ObitFArray *,long *,ObitFArray *,long *,float ,ObitFA
 extern void FArrayPad(ObitFArray *,ObitFArray *,float );
 extern void FArraySelInc(ObitFArray *,ObitFArray *,long *,long *,long *,ObitErr *);
 extern ObitFArray *FArrayHisto(ObitFArray *,long ,float ,float );
+extern void FArrayExp(ObitFArray *,ObitFArray *);
+extern void FArrayLog(ObitFArray *,ObitFArray *);
+extern void FArrayPow(ObitFArray *,ObitFArray *,ObitFArray *);
 extern ObitInfoList *FArrayGetList(ObitFArray *);
 extern char *FArrayGetName(ObitFArray *);
 extern long FArrayGetNdim(ObitFArray *);
@@ -23491,6 +23506,105 @@ static PyObject *_wrap_FArrayHisto(PyObject *self, PyObject *args) {
         Py_INCREF(Py_None);
         _resultobj = Py_None;
     }
+    return _resultobj;
+}
+
+static PyObject *_wrap_FArrayExp(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitFArray * _arg0;
+    ObitFArray * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:FArrayExp",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of FArrayExp. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of FArrayExp. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    FArrayExp(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_FArrayLog(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitFArray * _arg0;
+    ObitFArray * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:FArrayLog",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of FArrayLog. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of FArrayLog. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    FArrayLog(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_FArrayPow(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitFArray * _arg0;
+    ObitFArray * _arg1;
+    ObitFArray * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:FArrayPow",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of FArrayPow. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of FArrayPow. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of FArrayPow. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    FArrayPow(_arg0,_arg1,_arg2);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
     return _resultobj;
 }
 
@@ -79676,6 +79790,9 @@ static PyMethodDef ObitMethods[] = {
 	 { "FArrayGetNdim", _wrap_FArrayGetNdim, METH_VARARGS },
 	 { "FArrayGetName", _wrap_FArrayGetName, METH_VARARGS },
 	 { "FArrayGetList", _wrap_FArrayGetList, METH_VARARGS },
+	 { "FArrayPow", _wrap_FArrayPow, METH_VARARGS },
+	 { "FArrayLog", _wrap_FArrayLog, METH_VARARGS },
+	 { "FArrayExp", _wrap_FArrayExp, METH_VARARGS },
 	 { "FArrayHisto", _wrap_FArrayHisto, METH_VARARGS },
 	 { "FArraySelInc", _wrap_FArraySelInc, METH_VARARGS },
 	 { "FArrayPad", _wrap_FArrayPad, METH_VARARGS },

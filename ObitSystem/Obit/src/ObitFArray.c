@@ -3180,6 +3180,77 @@ ObitFArray*  ObitFArrayHisto (ObitFArray* in, olong n, ofloat min, ofloat max)
   
   return out;
 } /* end ObitFArrayHisto  */
+
+/**
+ * Exponentiate each element of the array.
+ * out = exp(in).
+ * \param in  Input object with data
+ * \param out Output object with data
+ */
+void ObitFArrayExp (ObitFArray* in, ObitFArray* out)
+{
+  olong i;
+  ofloat fblank = ObitMagicF();
+
+   /* error checks */
+  g_assert (ObitIsA(in, &myClassInfo));
+  g_assert (in->array != NULL);
+  g_assert (ObitFArrayIsCompatable(in, out));
+
+  for (i=0; i<in->arraySize; i++) {
+    if (in->array[i]!=fblank) out->array[i] = expf(in->array[i]);
+    else                      out->array[i] = fblank;
+  }
+} /* end  ObitFArrayExp */
+
+/**
+ * Natural log of each element of the array.
+ * out = ln(in). out blank where in==0
+ * \param in  Input object with data
+ * \param out Output object with data
+ */
+void ObitFArrayLog (ObitFArray* in, ObitFArray* out)
+{
+  olong i;
+  ofloat fblank = ObitMagicF();
+
+   /* error checks */
+  g_assert (ObitIsA(in, &myClassInfo));
+  g_assert (in->array != NULL);
+  g_assert (ObitFArrayIsCompatable(in, out));
+
+  for (i=0; i<in->arraySize; i++) {
+    if ((in->array[i]!=fblank) && (in->array[i]!=0.0)) 
+      out->array[i] = logf(in->array[i]);
+    else out->array[i] = fblank;
+  }
+} /* end  ObitFArrayLog */
+
+/**
+ * Raise in1 to the in2 power for each element of the array.
+ * out = pow (in1, in2) = in1^in2. if in1<0 out is blanked
+ * \param in1  1st input object with data, 
+ * \param in2  2nd input object with data
+ * \param out Output object with data
+ */
+void ObitFArrayPow (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
+{
+  olong i;
+  ofloat fblank = ObitMagicF();
+
+   /* error checks */
+  g_assert (ObitIsA(in1, &myClassInfo));
+  g_assert (in1->array != NULL);
+  g_assert (ObitFArrayIsCompatable(in1, in2));
+  g_assert (ObitFArrayIsCompatable(in1, out));
+
+  for (i=0; i<in1->arraySize; i++) {
+    if ((in1->array[i]!=fblank) && (in2->array[i]!=fblank) && (in1->array[i]>0.))
+      out->array[i] = powf(in1->array[i], in2->array[i]);
+    else out->array[i] = fblank;
+  }
+} /* end  ObitFArrayPow */
+
 /**
  * Initialize global ClassInfo Structure.
  */
@@ -3288,6 +3359,12 @@ static void ObitFArrayClassInfoDefFn (gpointer inClass)
     (ObitFArraySelIncFP)ObitFArraySelInc;
   theClass->ObitFArrayHisto = 
     (ObitFArrayHistoFP)ObitFArrayHisto;
+  theClass->ObitFArrayExp = 
+    (ObitFArrayExpFP)ObitFArrayExp;
+  theClass->ObitFArrayLog = 
+    (ObitFArrayLogFP)ObitFArrayLog;
+  theClass->ObitFArrayPow = 
+    (ObitFArrayPowFP)ObitFArrayPow;
 
 } /* end ObitFArrayClassDefFn */
 

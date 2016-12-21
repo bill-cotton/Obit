@@ -3497,3 +3497,21 @@ Obit/python/EVLACal.py:
 Obit/src/ObitUV.c Obit/src/ObitTableSUUtil.c:
   GetSelect: proper handling of souCode='-CAL'
 22 Nov 2016 svn ver 555
+
+Obit/src/ObitDConCleanVisMF.c:
+  XRestore: Correct convolution kernal for multiresolution.
+Obit/python/MosaicUtil.py:
+  PWeightImage: interpolate inWtImage to WtImage
+Obit/TDF/Convol.TDF Obit/tasks/Convol.c :
+  Increased FITS file name to 128 char, allow mixed AIPS/FITS
+Obit/TDF/SubImage.TDF Obit/tasks/SubImage.c
+Obit/TDF/UVCopy.TDF Obit/tasks/UVCopy.c:
+  Increased FITS file name to 128 char
+Obit/include/ObitFArray.h  Obit/include/ObitFArrayClassDef.h:
+Obit/src/ObitFArray.c
+Obit/python/FArray.inc  Obit/python/FArray.py 
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  Add Exp, Log, Pow functions
+Obit/tasks/RLPass.c:
+  Fix bugs in calculation correction for RM.
+21 Dec 2016 svn ver 556

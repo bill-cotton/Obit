@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task to copy uv data                        .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2015                                          */
+/*;  Copyright (C) 2005-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -635,6 +635,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     } else { 
       strncpy (inFile, "No_Filename_Given", 128);
     }
+    inFile[128] = 0;
     ObitTrimTrail(inFile);  /* remove trailing blanks */
     
     /* input FITS disk */
@@ -773,6 +774,7 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
       ObitInfoListGetP (myInput, "inFile", &type, dim, (gpointer)&strTemp);
     n = MIN (128, dim[0]);
     for (i=0; i<n; i++) outFile[i] = strTemp[i]; outFile[i] = 0;
+    outFile[128] = 0;
     ObitTrimTrail(outFile);  /* remove trailing blanks */
 
     /* Save any defaulting on myInput */

@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -365,6 +365,18 @@ typedef void (*ObitFArraySelIncFP) (ObitFArray* in, ObitFArray* out,
 /** Public: return histogram of elements in an FArray */
 ObitFArray*  ObitFArrayHisto (ObitFArray* in, olong n, ofloat min, ofloat max);
 typedef ObitFArray*  (*ObitFArrayHistoFP) (ObitFArray* in, olong n, ofloat min, ofloat max);
+
+/** Public: exponentiate elements in an FArray */
+void ObitFArrayExp (ObitFArray* in, ObitFArray* out);
+typedef void  (*ObitFArrayExpFP) (ObitFArray* in, ObitFArray* out);
+
+/** Public: natural log of elements in an FArray */
+void ObitFArrayLog (ObitFArray* in, ObitFArray* out);
+typedef void  (*ObitFArrayLogFP) (ObitFArray* in, ObitFArray* out);
+
+/** Public: natural log of elements in an FArray */
+void ObitFArrayPow (ObitFArray* in1, ObitFArray* in2, ObitFArray* out);
+typedef void  (*ObitFArrayPowFP) (ObitFArray* in1, ObitFArray* in2, ObitFArray* out);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2013                                          */
+/*;  Copyright (C) 2010-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -676,19 +676,19 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
 	    /* Scaling factor  */
 	    factor = ObitDConCleanGetXRestoreBeam(image2->myDesc, image1->myDesc, 
 						  gparm, &bmaj, &bmin, &bpa);
-	    /* Get additional beam taper - use for convolution */
+	    /* Get additional beam taper - use for convolution 
+	     Don't know what this was supposed to do but it's not right */
 	    ObitInfoListGetTest(image2->myDesc->info, "BeamTapr", &itype, dim, &BeamTaper2);
-	    bmaj = bmin = BeamTaper2;
-	    bpa   = 0.0;
+	    /*??? bmaj = bmin = BeamTaper2; bpa   = 0.0;*/
 	    convl = ConvlCC (image1, outCC->tabVer, iplane, factor, bmaj, bmin, bpa, err);
 	    if (err->error) Obit_traceback_msg (err, routine, in->name);
 	    /* Sum */
 	    ObitFArrayAdd (accum, convl, accum);
 	    /* DEBUG save convl for 1=>5, 3=>5
-	    if ((jfield==4) && (ifield==0) && (iplane==0))
-	      ObitImageUtilArray2Image ("Dbug1to5.fits", 0, convl, err); 
-	    if ((jfield==4) && (ifield==2) && (iplane==0))
-	      ObitImageUtilArray2Image ("Dbug3to5.fits", 0, convl, err);  */
+	    if ((jfield==5) && (ifield==15) && (iplane==0))
+	      ObitImageUtilArray2Image ("Dbug16to6.fits", 0, convl, err); 
+	      if ((jfield==3) && (ifield==13) && (iplane==0))
+	      ObitImageUtilArray2Image ("Dbug14to4.fits", 0, convl, err);  */
 
 	    convl = ObitFArrayUnref(convl);
 	  }

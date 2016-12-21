@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2013                                          */
+/*;  Copyright (C) 2002-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -137,3 +137,9 @@ ObitFArrayConvGausFP ObitFArrayConvGaus;
 ObitFArraySelIncFP ObitFArraySelInc;
 /** Function pointer to return histogram of elements in an FArray */
 ObitFArrayHistoFP ObitFArrayHisto;
+/** Function pointer to exponentiate an FArray */
+ObitFArrayExpFP ObitFArrayExp;
+/** Function pointer to natural logrithm of an FArray */
+ObitFArrayLogFP ObitFArrayLog;
+/** Function pointer to x^y of FArrays */
+ObitFArrayPowFP ObitFArrayPow;

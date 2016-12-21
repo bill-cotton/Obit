@@ -170,7 +170,9 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     #
     haveWtImage = inWtImage != None   # Weight image given
     # Open accumulation files
-    #Image.POpen(inImage, 1, err)
+    Image.POpen(inImage, 1, err)  # pythpn gets confused
+    inArr = inImage.FArray
+    Image.PClose(inImage,err)
     Image.POpen(SumWtImage, 3, err)
     Image.POpen(SumWt2, 3, err)
     #  Get output descriptor to see how many planes
@@ -217,12 +219,12 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         # Make weight image if needed, first pass or planeWt
         if WtImage == None:
             # Get image 
-            Image.PGetPlane (inImage, None, doPlane, err)
-            OErr.printErrMsg(err, "Error reading image for "+Image.PGetName(inImage))
+            Image.PGetPlane (inImage, inArr, doPlane, err)
+            OErr.printErrMsg(err, "Error reading image "+str(iPlane)+" for "+Image.PGetName(inImage))
             #
             # Special weighting?
             if factor<0.0:
-                RMS = inImage.FArray.RMS
+                RMS = inArr.RMS
                 fact = abs(factor)/RMS
             else:
                 fact = factor
@@ -234,7 +236,14 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
                 pln = [max(1,inNaxis[2]/2),1,1,1,1]
             if haveWtImage:
                 # Beam provided, extract relevant plane to a memory resident WtImage
-                Image.PGetPlane (inWtImage, WtImage.FArray, doPlane, err)
+                Image.PGetPlane (inWtImage, None, doPlane, err)
+                OErr.printErrMsg(err, "Error reading wt image "+str(iPlane)+" for "+
+                                 Image.PGetName(inWtImage))
+                # Interpolate to WtImage
+                ImageUtil.PInterpolateImage(inWtImage, WtImage, err, \
+                                            inPlane=doPlane, hwidth=hwidth, finterp=finterp)
+                OErr.printErrMsg(err, "Error interpolating wt plane "+str(doPlane))
+                
             else:
                 # Normal or OTF Beam?
                 if (OTFRA==None):
@@ -291,9 +300,9 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         # Special weighting or editing?
         if (factor<0.0) or maxRMS:
             # Get image 
-            Image.PGetPlane (inImage, None, doPlane, err)
-            OErr.printErrMsg(err, "Error reading image for "+Image.PGetName(inImage))
-            RMS = inImage.FArray.RMS
+            Image.PGetPlane (inImage, inArr, doPlane, err)
+            OErr.printErrMsg(err, "Error reading image "+str(iPlane)+" for "+Image.PGetName(inImage))
+            RMS = inArr.RMS
             # This plane acceptable?
             if maxRMS and ((RMS>maxRMS) or (RMS<=0.0)):
                 #print 'drop plane',doPlane[0],'RMS',RMS

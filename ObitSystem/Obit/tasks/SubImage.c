@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task - SubImage copy a subregion of an image                  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2011                                          */
+/*;  Copyright (C) 2005-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -582,6 +582,8 @@ ObitImage* getInputImage (ObitInfoList *myInput, ObitErr *err)
     } else { 
       strncpy (inFile, "No_Filename_Given", 128);
     }
+    inFile[128] = 0;
+    ObitTrimTrail(inFile);  /* remove trailing blanks */
     
     /* input FITS disk */
     ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
@@ -722,6 +724,7 @@ ObitImage* getOutputImage (ObitInfoList *myInput, ObitErr *err)
       g_snprintf (outFile, 129, "SubImage%s", strTemp2);
     }
     
+    outFile[128] = 0;
     ObitTrimTrail(outFile);  /* remove trailing blanks */
 
     /* output FITS disk default = inDisk */

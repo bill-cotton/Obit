@@ -23,7 +23,7 @@ Naxis   list of axis dimensions (by storage order)
 ======  ==============================================
 """
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2011
+#  Copyright (C) 2004-2016
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -1136,6 +1136,59 @@ Return FArray with info elements
     outFA.me = Obit.FArrayHisto (inFA.me, n, min, max)
     return outFA
     # end PHisto
+
+def PExp (inFA, outFA):
+    """  
+    Exponentiate each element of the array.
+
+    out = exp(in).
+    * inFA  = input Python FArray
+    * outFA = output Python FArray
+    """
+    ################################################################
+    # Checks
+    if not PIsCompatable  (inFA, outFA):
+        raise RuntimeError,"inFA and outFA have incompatable geometry"
+    Obit.FArrayExp (inFA.me, outFA.me)
+
+# end PExp
+
+
+def PLog (inFA, outFA):
+    """  
+    Natural log of each element of the array.
+
+    out = ln(in). out blank where in==0
+    * inFA  = input Python FArray
+    * outFA = output Python FArray
+    """
+    ################################################################
+    # Checks
+    if not PIsCompatable  (inFA, outFA):
+        raise RuntimeError,"inFA and outFA have incompatable geometry"
+    Obit.FArrayLog (inFA.me, ouFAt.me)
+
+# end PLog
+
+
+def PPow (in1FA, in2FA, outFA):
+    """  
+    Raise in1 to the in2 power for each element of the array.
+
+    out = pow (in1, in2) = in1^in2. if in1<0 out is blanked
+    * in1FA = first input Python FArray
+    * inFA2 = second input Python FArray with blanking
+    * outFA = output Python FArray
+    """
+    ################################################################
+    # Checks
+    if not PIsCompatable  (in1FA, in2FA):
+        raise RuntimeError,"in1FA and in2FA have incompatable geometry"
+    if not PIsCompatable  (in1FA, outFA):
+        raise RuntimeError,"in1FA and outFA have incompatable geometry"
+    Obit.FArrayPow (in1FA.me, in2FA.me, outFA.me)
+
+# end PPow
 
 def PIsA (inFA):
     """ 

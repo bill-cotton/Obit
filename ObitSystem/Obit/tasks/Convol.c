@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Convol Obit task convolve an image with another image or a model   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2010                                          */
+/*;  Copyright (C) 2006-2016                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -533,13 +533,14 @@ void convolGetImage(ObitInfoList *myInput, ObitErr *err)
   olong         trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   olong         j, k, Aseq, disk, cno;
   gboolean     exist;
-  gchar        *strTemp=NULL, inFile[128];
+  gchar        *outType, *strTemp=NULL, inFile[129];
   gchar        iAname[16], iAclass[8];
   gchar        Aname[16], Aclass[8], *Atype = "MA";
   gchar        tname[101];
   gchar *routine = "convolGetImage";
 
   if (err->error) return;  /* existing error? */
+  strcpy(iAname,"Default name");  /* Default for FITS in/AIPS out */
 
   /* Get region from myInput */
   ObitInfoListGetTest(myInput, "BLC", &type, dim, blc); /* BLC */
@@ -548,6 +549,12 @@ void convolGetImage(ObitInfoList *myInput, ObitErr *err)
   /* File type - could be either AIPS or FITS */
   ObitInfoListGet (myInput, "DataType", &type, dim, tname, err);
   if (err->error) Obit_traceback_msg (err, routine, routine);
+  /* output File type - could be either AIPS or FITS */
+  ObitInfoListGetP (myInput, "outDType", &type, dim, (gpointer)&outType);
+  /* Defaults to DataType */
+  if ((outType==NULL) || (!strncmp(outType,"    ",4)))
+    ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&outType);
+
   if (!strncmp (tname, "AIPS", 4)) { /* AIPS input */
 
     /* input AIPS disk */
@@ -590,6 +597,38 @@ void convolGetImage(ObitInfoList *myInput, ObitErr *err)
     ObitImageFullInstantiate (inImage, TRUE, err);
     if (err->error) Obit_traceback_msg (err, routine, routine);
     
+  } else if (!strncmp (tname, "FITS", 4)) {  /* FITS input */
+
+    /* input FITS file name */
+    for (j=0; j<128; j++) inFile[j] = 0;
+    ObitInfoListGet(myInput, "inFile", &type, dim, inFile, err);
+    if (err->error) Obit_traceback_msg (err, routine, routine);
+    inFile[128] = 0;
+    ObitTrimTrail(inFile);  /* remove trailing blanks */
+    
+    /* input FITS disk */
+    ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
+    if (err->error) Obit_traceback_msg (err, routine, routine);
+    
+    /*  Object name from FITS name */
+    inImage = newObitImage(inFile);
+    
+    /* define image */
+    ObitImageSetFITS (inImage, OBIT_IO_byPlane, disk, inFile, blc, trc, err);
+    if (err->error) Obit_traceback_msg (err, routine, routine);
+    
+    /* Make sure it's OK */
+    ObitImageFullInstantiate (inImage, TRUE, err);
+    if (err->error) Obit_traceback_msg (err, routine, routine);
+  
+  } else { /* Unknown type - barf and bail */
+    Obit_log_error(err, OBIT_Error, "%s: Unknown Image type %s", 
+                   pgmName, strTemp);
+  }
+  if (err->error) Obit_traceback_msg (err, routine, routine);
+
+  /* Output */
+  if (!strncmp (outType, "AIPS", 4)) { /* AIPS output */
     /* Output image */
     /* AIPS disk */
     ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
@@ -605,7 +644,7 @@ void convolGetImage(ObitInfoList *myInput, ObitErr *err)
     ObitInfoListGet(myInput, "outClass", &type, dim, Aclass, err);
     Aclass[dim[0]] = 0;
     /* Default */
-    if (!strncmp(Aclass,"      ",6)) strcpy (Aclass, iAclass);
+    if (!strncmp(Aclass,"      ",6)) strcpy (Aclass, "Convol");
 
     /* AIPS sequence */
     ObitInfoListGet(myInput, "outSeq", &type, dim, &Aseq, err);
@@ -637,33 +676,15 @@ void convolGetImage(ObitInfoList *myInput, ObitErr *err)
 		      blc, trc, err);
     if (err->error) Obit_traceback_msg (err, routine, routine);
     
-  } else if (!strncmp (tname, "FITS", 4)) {  /* FITS input */
 
-    /* input FITS file name */
-    for (j=0; j<128; j++) inFile[j] = 0;
-    ObitInfoListGet(myInput, "inFile", &type, dim, inFile, err);
-    if (err->error) Obit_traceback_msg (err, routine, routine);
-    
-    /* input FITS disk */
-    ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
-    if (err->error) Obit_traceback_msg (err, routine, routine);
-    
-    /*  Object name from FITS name */
-    inImage = newObitImage(inFile);
-    
-    /* define image */
-    ObitImageSetFITS (inImage, OBIT_IO_byPlane, disk, inFile, blc, trc, err);
-    if (err->error) Obit_traceback_msg (err, routine, routine);
-    
-    /* Make sure it's OK */
-    ObitImageFullInstantiate (inImage, TRUE, err);
-    if (err->error) Obit_traceback_msg (err, routine, routine);
-  
+  } else if (!strncmp (outType, "FITS", 4)) {  /* FITS output */
     /* Output image */ 
     /* FITS file name */
     for (j=0; j<128; j++) inFile[j] = 0;
     ObitInfoListGet(myInput, "outFile", &type, dim, inFile, err);
     if (err->error) Obit_traceback_msg (err, routine, routine);
+    inFile[128] = 0;
+    ObitTrimTrail(inFile);  /* remove trailing blanks */
     
     /*  FITS disk */
     ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
@@ -684,7 +705,7 @@ void convolGetImage(ObitInfoList *myInput, ObitErr *err)
                    pgmName, strTemp);
   }
   if (err->error) Obit_traceback_msg (err, routine, routine);
-
+ 
 } /* end convolGetImage */
 
 /*----------------------------------------------------------------------- */
@@ -706,7 +727,7 @@ ObitFArray* convolGetConvFn(ObitInfoList *myInput, ObitErr *err)
   olong        ndim=2, naxis[2];
   ofloat       useBeam[3];
   gboolean     found;
-  gchar        *strTemp=NULL, Opcode[5], inFile[128];
+  gchar        *strTemp=NULL, Opcode[5], inFile[129];
   gchar        Aname[13], Aclass[7], *Atype = "MA";
   gchar        tname[101];
   gchar *routine = "convolGetConvFn";
