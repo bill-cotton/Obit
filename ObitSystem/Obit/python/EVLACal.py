@@ -185,7 +185,7 @@ def EVLAInitContParms():
     parms["rlDoBand"]  = 1                  # If > 0 apply bandpass calibration
     parms["rlBPVer"]   = 0                  # BP table to apply, 0=>highest
     parms["rlflagVer"] = 2                  # FG table version to apply
-    parms["rlrefAnt"]  = 0                  # Reference antenna, defaults to refAnt
+    parms["rlrefAnt"]  = 0                  # R-L, delay calibrator , defaults to refAnt
     parms["rlnumIFs"]  = 1                  # Number of IFs per solution
     
     # Instrumental polarization cal?
@@ -196,7 +196,7 @@ def EVLAInitContParms():
                                      # order given in PCInsCals, PPol<0 => fit
     parms["PCAvgIF"]   = False       # if True, average IFs in ins. cal.
     parms["PCSolInt"]  = 2.          # instrumental solution interval (min), 0=> scan average(?)
-    parms["PCRefAnt"]  = -2          # Reference antenna, defaults to refAnt
+    parms["PCRefAnt"]  = -1          # Pol cal Reference antenna, -1=> absolute
     parms["PCSolType"] = "    "      # solution type, "    ", "LM  "
     parms["doPol"]     = False       # Apply polarization cal in subsequent calibration?
     parms["PDVer"]     = 1           # Apply PD table in subsequent polarization cal?

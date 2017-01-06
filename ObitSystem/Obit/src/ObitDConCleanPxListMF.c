@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2014                                          */
+/*;  Copyright (C) 2010-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -679,7 +679,7 @@ void ObitDConCleanPxListMFUpdate (ObitDConCleanPxList *inn,
   if (inFArrays) g_free(inFArrays);
   if (sdata)     g_free(sdata);
   /* Free image buffer */
-  image->image = ObitFArrayUnref(((ObitImage*)image)->image);
+  if (image) image->image = ObitFArrayUnref(((ObitImage*)image)->image);
 
   /* Give warning if blew arrays */
   if (blewIt) 

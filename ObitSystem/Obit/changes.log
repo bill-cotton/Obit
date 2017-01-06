@@ -3515,3 +3515,15 @@ Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
 Obit/tasks/RLPass.c:
   Fix bugs in calculation correction for RM.
 21 Dec 2016 svn ver 556
+
+Speedup multi-resolution CLEAN, big fixes
+Obit/python/EVLACal.py:
+  Change default instrumental polarization calibration to absolute.
+Obit/src/ObitDConCleanVis.c \
+  PickNext2D: Don't make residuals for resolutions not being processed.
+Obit/src/ObitDConCleanPxListMF.c \
+  Update: check the image exists before freeing buffer.
+Obit/src/ObitDConClean.c \
+  Select: Check if in->currentFields is empty, if so them done
+6 Jan 2017 svn ver 557
+

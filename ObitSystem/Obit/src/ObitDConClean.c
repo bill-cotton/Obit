@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2016                                          */
+/*;  Copyright (C) 2004-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1111,6 +1111,9 @@ gboolean ObitDConCleanSelect(ObitDConClean *in, ObitFArray **pixarray,
   /* error checks */
   if (err->error) return done;
   g_assert (ObitDConCleanIsA(in));
+
+  /* Anything to do? */
+  if (in->currentFields[0]==0) return done;
 
   /* Read beam Patch(es) */
   inClass = (ObitDConCleanClassInfo*)in->ClassInfo; /* class structure */

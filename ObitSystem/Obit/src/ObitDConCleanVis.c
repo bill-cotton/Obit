@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2016                                          */
+/*;  Copyright (C) 2005-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1171,8 +1171,8 @@ void ObitDConCleanVisSub(ObitDConCleanVis *in, ObitErr *err)
  */
 static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
 {
-  olong i, best, lastBest=-1, loopCheck, indx, NumPar;
-  olong *fldList=NULL;
+  olong i, j, best, lastBest=-1, loopCheck, indx, NumPar;
+  olong *fldList=NULL,*fldList2=NULL;
   gboolean doBeam=FALSE, done=TRUE, found, OK;
   ofloat sumwts, autoCenFlux=0.0;
   ObitImage *theBeam=NULL;
@@ -1226,6 +1226,7 @@ static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
   }
   
   fldList = ObitMemAlloc0((in->nfield+3)*sizeof(olong));
+  fldList2 = ObitMemAlloc0((in->nfield+3)*sizeof(olong));
   
   /* First time? */
   if (in->Pixels->currentIter > 0) {
@@ -1275,7 +1276,7 @@ static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
     } /* end loop over fields */
     
     /* anything left? */
-    if (done) {ObitMemFree(fldList); return done;} 
+    if (done) {ObitMemFree(fldList); ObitMemFree(fldList2); return done;} 
     
   } else {
     /* Select taper for next CLEAN */
@@ -1300,7 +1301,24 @@ static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
   while (!done) {
     
     /* Get ordered list */
-    inClass->OrderImage (in, in->fresh, autoCenFlux, fldList); 
+    if (in->mosaic->numBeamTapes<=1) 
+      inClass->OrderImage (in, in->fresh, autoCenFlux, fldList); 
+    else {
+      inClass->OrderImage (in, in->fresh, autoCenFlux, fldList2); 
+      /* Only ones with current selected taper */
+      i = j = 0;
+      while (fldList2[i]>0) {
+	if ((in->mosaic->BeamTaper[fldList2[i]-1]>=in->minBeamTaper) &&
+	    (in->mosaic->BeamTaper[fldList2[i]-1]<=in->maxBeamTaper)) {
+	  /*Obit_log_error(err, OBIT_InfoErr, "Current Taper f %d j %d tap %f min %f max %f",
+			 fldList2[i], j, in->mosaic->BeamTaper[fldList2[i]-1], 
+			 in->minBeamTaper,in->maxBeamTaper);*/
+	  fldList[j++] = fldList2[i];
+	}
+	i++;
+      }
+      fldList[j] = 0;
+    }
     
     /* No more than NumPar */
     fldList[NumPar] = 0;
@@ -1337,7 +1355,7 @@ static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
     }
     /* Tell if stopping */
     if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium");
-    if (done) {ObitMemFree(fldList); return done;} 
+    if (done) {ObitMemFree(fldList); ObitMemFree(fldList2); return done;} 
 
     /* Which fields ready to CLEAN? 
      if the best one is an autoCenter field only it is done */
@@ -1394,8 +1412,9 @@ static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
   /* Make sure ther is a list of fields */
   if (fldList[0]<=0) inClass->OrderClean (in, in->fresh, autoCenFlux, fldList);
 
-  /* We're done if best field has maxAbsRes<minFlux */
-  done = in->maxAbsRes[fldList[0]-1] <= in->minFlux[fldList[0]-1];
+  /* We're done if best single resolution field has maxAbsRes<minFlux */
+  done = (in->mosaic->numBeamTapes<=1) && 
+    (in->maxAbsRes[fldList[0]-1] <= in->minFlux[fldList[0]-1]);
 
   /* Save list to clean, count */
   in->numCurrentField = 0;
@@ -1410,6 +1429,7 @@ static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
  
   /* cleanup */
   fldList = ObitMemFree(fldList);
+  fldList2 = ObitMemFree(fldList2);
 
   /* Tell if stopping */
   if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium");
