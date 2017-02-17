@@ -3527,3 +3527,15 @@ Obit/src/ObitDConClean.c \
   Select: Check if in->currentFields is empty, if so them done
 6 Jan 2017 svn ver 557
 
+VLA C band tabulated beam, bug fixes
+Obit/python/MosaicUtil.py:
+  PWeightImage: correct default iblc, itrc
+Obit/python/Table.inc Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  WriteRow: Fix problem in checking row dict
+Obit/share/scripts/CombineBeam.py:
+  Script to combine Holography beam images
+Obit/src/ObitBeamShape.c:
+  Add tabulated C band beam from holography
+Obit/src/ObitSkyModelVMBeamMF.c:
+  getPBCCTab: remove extra call to ObitBeamShapeCreate
+17 Feb 2017 svn ver 588

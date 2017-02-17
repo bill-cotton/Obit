@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2016                                          */
+/*;  Copyright (C) 2011-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -4916,7 +4916,6 @@ static ObitTableCC* getPBCCTab (ObitSkyModelVMBeamMF* in, ObitUV* uvdata,
     sigma      = g_malloc0(nSpec*sizeof(ofloat));
     sigmaField = g_malloc0(nSpec*sizeof(ofloat));
     PBCorr     = g_malloc0(nSpec*sizeof(ofloat));
-    BeamShape  = ObitBeamShapeCreate ("BS", (ObitImage*)image, pbmin, in->antSize, TRUE);
     BeamShape  = ObitBeamShapeCreate ("BS", (ObitImage*)image, pbmin, in->antSize, TRUE);
     BSClass    = (ObitBeamShapeClassInfo*)(BeamShape->ClassInfo);
     fitArg     = ObitSpectrumFitMakeArg (nSpec, nterm, refFreq, Freq, FALSE, 

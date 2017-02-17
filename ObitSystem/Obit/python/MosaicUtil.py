@@ -122,7 +122,7 @@ def PMakeMaster(template, size, SumWtImage, SumWt2, err):
     # end PMakeMaster
 
 def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
-                 iblc=[1,1], itrc=[0,0], restart=0, hwidth=2, doGPU=False,
+                 iblc=[1,1,1], itrc=[0,0,1], restart=0, hwidth=2, doGPU=False,
                  planeWt=False, OTFRA=None, OTFDec=None, inWtImage=None,
                  maxRMS=None):
     """

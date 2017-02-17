@@ -557,7 +557,8 @@ extern int TableWriteRow (ObitTable *in, int rowno, PyObject *inDict,
       }
       break;
     case OBIT_string:
-      bad = (desc->repeat[i]/MAX (1,desc->dim[i][0])) != PyList_Size(list);
+    if (i==0)  /* Only check first dimension */
+        bad = (desc->repeat[i]/MAX (1,desc->dim[i][0])) != PyList_Size(list);
       if (bad) break;
       cdata = ((gchar*)row->myRowData)+desc->offset[i];
       /* null terminate string */
