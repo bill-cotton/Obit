@@ -1,7 +1,0 @@
-Makefile
-.nfs*
-*.o
-*.old
-save
-work
-*.fits
