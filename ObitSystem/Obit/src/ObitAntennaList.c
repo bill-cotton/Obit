@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -341,18 +341,23 @@ ofloat ObitAntennaListParAng (ObitAntennaList *inAList, olong ant,
 			      ofloat time, ObitSource *Source)
 {
   ofloat parAng = 0.0;
-  ofloat decr, gst, lst, ha, along, alat;
+  ofloat decr, gst, lst, ha, along, alat, arg;
   olong i, iant;
-
-  /* Find antenna in list */
-  iant = 0;
-  for (i=0; i<inAList->number; i++) {
-    if (inAList->ANlist[i]->AntID==ant) {iant = i; break;}
-  }
-
-  /* antenna location */
-  alat  = inAList->ANlist[iant]->AntLat;
-  along = inAList->ANlist[iant]->AntLong;
+  /* If EVLA - all should have ~ same PA */
+  if (inAList->isVLA) {
+    alat  =   34.0787492*DG2RAD; /* VLA Latitude */
+    along = -107.618283*DG2RAD;  /* VLA Longitude */
+  } else { /* Not EVLA */
+    /* Find antenna in list */
+    iant = 0;
+    for (i=0; i<inAList->number; i++) {
+      if (inAList->ANlist[i]->AntID==ant) {iant = i; break;}
+    }
+    
+    /* antenna location */
+    alat  = inAList->ANlist[iant]->AntLat;
+    along = inAList->ANlist[iant]->AntLong;
+  } /* end not EVLA */
 
   /* declination in radians */
   decr = Source->DecApp * DG2RAD;
@@ -366,8 +371,12 @@ ofloat ObitAntennaListParAng (ObitAntennaList *inAList, olong ant,
   /* Hour angle in radians */
   ha = lst - Source->RAApp * DG2RAD;
 
-  parAng = atan2 (cos(alat) * sin(ha), 
-		  (sin(alat)*cos(decr) - cos(alat)*sin(decr)*cos(ha)));
+  /* old (wrong?)  parAng = atan2 (cos(alat) * sin(ha), 
+     (sin(alat)*cos(decr) - cos(alat)*sin(decr)*cos(ha)));*/
+  arg = cos(alat)*sin(ha) / (sin(alat)*cos(decr)-cos(alat)*sin(decr)*cos(ha));
+  parAng = atan(arg);
+  if ((decr>alat) && (ha<0.0) && (arg<0.0)) parAng += G_PI;
+  if ((decr>alat) && (ha>0.0) && (arg>0.0)) parAng -= G_PI;
   return parAng;
 } /* end ObitAntennaListParAng */
 

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2015                                          */
+/*;  Copyright (C) 2009-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -116,6 +116,7 @@
  * \li  "EComp" OBIT_int (?,1,1) Highest CC to use per table, 1-rel [def to end ]
  * \li  "UpdateInt" OBIT_float (1,1,1) Model update interval (min)  [def 1 min]
  * \li  "Threshold" OBIT_float (1,1,1) Threshold for high accuracy model [1.0e20]
+ * \li  "BeamCorClean" OBIT_bool (1,1,1) Is this part of a CLEAN?
  * \li  "maxResid"  OBIT_float (1,1,1) Current maximum abs residual flux density
  *       if maxResid==0.0 then use accurate model for merged CC abs flux > Threshold and
  *       the gridded method for weaker summed components.

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2015                                          */
+/*;  Copyright (C) 2009-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -722,10 +722,11 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
   olong npos[2], lcomp, ncomp, i, ifield, lithread, plane=0, kincif, kincf;
   ofloat *Rgain=NULL,  *Lgain=NULL,  *RLgain=NULL,  *LRgain=NULL, *ccData=NULL;
   ofloat *Rgaini=NULL, *Lgaini=NULL, *RLgaini=NULL, *LRgaini=NULL;
-  ofloat curPA, tPA, tTime, bTime, fscale, PBCor, iPBCor, iPBCorr, xx, yy;
+  ofloat curPA, tPA, tTime, bTime, fscale, PBCor, iPBCor, iPBCorr, rPBCor, xx, yy;
   ofloat xr, xi, tr, ti, cph, sph;
   ofloat RXpol, LYpol, RXpolPh=0.0, LYpolPh=0.0, RLpolPh=0.0, LRpolPh=0.0;
-  ofloat minPBCor=0.01, fblank = ObitMagicF();
+  ofloat minPBCor=0.0, bmNorm, fblank = ObitMagicF();
+  gboolean isCirc=TRUE;
   odouble x, y;
   VMBeamFTFuncArg *args;
   gchar *routine = "ObitSkyModelVMBeamUpdateModel";
@@ -775,7 +776,6 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
   xr  = cos (curPA);
   xi  = sin (curPA);
   curPA *= RAD2DG;  /* To deg */
-  
 
   /* Which antennas are EVLA ? */
   if (in->isEVLA==NULL) {
@@ -825,10 +825,17 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
     kincif = 1;
     kincf  = 1;
   }
+
+  /* Does this have circular polarization feeds? */
+  isCirc =  uvdata->myDesc->crval[uvdata->myDesc->jlocs]==-1.0;
   
   /* Scale by ratio of frequency to beam image ref. frequency */
   plane = in->FreqPlane[MIN(args->channel, in->numUVChann-1)];
   fscale = args->BeamFreq / in->RXBeam->freqs[plane];
+
+  /* Beam normalization (center defined to be 1.0)*/
+  bmNorm = 1.0 / (0.5*(ObitImageInterpValueInt (in->RXBeam, args->BeamRXInterp, 0.0, 0.0, curPA, plane, err) +
+		       ObitImageInterpValueInt (in->LYBeam, args->BeamLYInterp, 0.0, 0.0, curPA, plane, err)));
 
   /* Compute antenna gains and put into Rgain, Lgain, RLgain, LRgain */
   for (i=0; i<ncomp; i++) {
@@ -856,36 +863,58 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
 		      args->BeamFreq, minPBCor); 
     iPBCor  = 1.0 / PBCor;  
     iPBCorr = 1.0 / sqrt(PBCor);
+    rPBCor = sqrt(PBCor);
 
     /* Interpolate gains - RR and LL (XX, YY) as power gains, images voltage */
-    RXpol = ObitImageInterpValueInt (in->RXBeam, args->BeamRXInterp, x, y, curPA, plane, err);
-    if ((RXpol==fblank) || (fabs(RXpol)<0.001) || (fabs(RXpol)>1.1)) RXpol = minPBCor;
+    RXpol = bmNorm*ObitImageInterpValueInt (in->RXBeam, args->BeamRXInterp, x, y, curPA+180., plane, err);
+    if ((RXpol==fblank) || (fabs(RXpol)<0.001) || (fabs(RXpol)>1.1)) RXpol = 1.0;
     if (in->RXBeamPh)
-      RXpolPh = DG2RAD*ObitImageInterpValueInt (in->RXBeamPh, args->BeamRXPhInterp, x, y, curPA, plane, err);
-    LYpol = ObitImageInterpValueInt (in->LYBeam, args->BeamLYInterp, x, y, curPA, plane, err);
-    if ((LYpol==fblank) || (fabs(LYpol)<0.001) || (fabs(LYpol)>01.1)) LYpol = minPBCor;
+      RXpolPh = DG2RAD*ObitImageInterpValueInt (in->RXBeamPh, args->BeamRXPhInterp, x, y, curPA+180., plane, err);
+    LYpol = bmNorm*ObitImageInterpValueInt (in->LYBeam, args->BeamLYInterp, x, y, curPA+180., plane, err);
+    if ((LYpol==fblank) || (fabs(LYpol)<0.001) || (fabs(LYpol)>01.1)) LYpol = 1.0;
     if (in->LYBeamPh)
-      LYpolPh = DG2RAD*ObitImageInterpValueInt (in->LYBeamPh, args->BeamLYPhInterp, x, y, curPA, plane, err);
+      LYpolPh = DG2RAD*ObitImageInterpValueInt (in->LYBeamPh, args->BeamLYPhInterp, x, y, curPA+180., plane, err);
     /* Multiply by complex conjugate to get power gain 
-       Phases given? */
+       Phases given? - can't have an effect */
     if (in->RXBeamPh && in->LYBeamPh) {
-      tr = RXpol*cos(RXpolPh); ti = RXpol*sin(RXpolPh);
-      Rgain[i]  =(tr*tr - ti*ti)* iPBCor;
-      Rgaini[i] = 0.0;  /*  tr*ti - tr*ti */
-      tr = LYpol*cos(LYpolPh); ti = LYpol*sin(LYpolPh);
-      Lgain[i]  = (tr*tr - ti*ti)* iPBCor ;
-      Lgaini[i] = 0.0;  /*  tr*ti - tr*ti */
+      tr = (PBCor/(RXpol * RXpol))*cos(RXpolPh); ti = (PBCor/(RXpol * RXpol))*sin(RXpolPh);
+      /* Note swap */
+      Lgain[i]  = (tr*tr - ti*ti);
+      Lgaini[i] =  tr*ti - tr*ti;  /* Doh! */
+      tr = (PBCor/(LYpol * LYpol))*cos(LYpolPh); ti = (PBCor/(LYpol * LYpol))*sin(LYpolPh);
+      Rgain[i]  = (tr*tr - ti*ti);
+      Lgaini[i] =  tr*ti - tr*ti;
     } else { /* no phase */
-      Rgain[i]  = (RXpol*RXpol) * iPBCor;
+      /* This seems to work for circular feeds (note swap) */
+      Lgain[i]  = PBCor/(RXpol * RXpol);
+      Rgain[i]  = PBCor/(LYpol * LYpol);
       Rgaini[i] = 0.0;
-      Lgain[i]  = (LYpol*LYpol) * iPBCor;
       Lgaini[i] = 0.0;
     }
-    /* NO Force V pol, otherwise PBCor correction will blow it up 
-    ti = 0.5*(Rgain[i] + Lgain[i]);
-    tr =  0.5*((RXpol*RXpol)-(LYpol*LYpol))*iPBCorr;
-    Rgain[i]  = ti + tr;
-    Lgain[i]  = ti - tr; */
+    if (fabs(PBCor)<0.01) {
+      Rgain[i] = 1.0; Rgaini[i] = 0.0;
+      Lgain[i] = 1.0; Lgaini[i] = 0.0;
+    }
+    /* If this is CLEANing use appropriate gains */
+    if (in->doBeamCorClean && isCirc && (fabs(PBCor)>0.01)) {
+      if (in->RXBeamPh && in->LYBeamPh) {
+	/* Using phase beam- really doesn't matter */
+	Rgain[i]  = PBCor/(RXpol * RXpol);
+	Lgain[i]  = PBCor/(LYpol * LYpol);
+	ti = 0.5*(Rgain[i] + Lgain[i]);  /* Stokes I correction */
+	tr = 0.5*(Rgain[i] - Lgain[i]);  /* Stokes V correction */
+	Rgain[i]  = ti + tr;
+	Lgain[i]  = ti - tr; 
+      } else { /* no phase */
+	Rgain[i]  = PBCor/(RXpol * RXpol);
+	Lgain[i]  = PBCor/(LYpol * LYpol);
+	ti = 0.5*(Rgain[i] + Lgain[i]);     /* Stokes I correction */
+	/* tr =  0.5*(Rgain[i] - Lgain[i]);    Stokes V correction */
+	tr =  0.5*(Lgain[i] - Rgain[i]);    /* Stokes V correction */
+	Rgain[i]  = ti + tr;
+	Lgain[i]  = ti - tr; 
+     }
+    } /* End force Stokes V for circular feeds */
 
     /* Cross pol corrections wanted? */
    if (in->doCrossPol) {
@@ -918,8 +947,6 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
       tr = LRgain[i]; ti = LRgaini[i];
       LRgain[i]  =  tr*xr + xi*ti;
       LRgaini[i] = -tr*xi + xr*ti;
-      /*RLgain[i]  = LRgain[i]  = 0.0;   DEBUG no correction*/
-      /*RLgaini[i] = LRgaini[i] = 0.0;   DEBUG */
   } /* end if crosspol */
     
   } /* end loop over components */
@@ -1069,6 +1096,7 @@ void ObitSkyModelVMBeamInit  (gpointer inn)
   in->numAntList   = 0;
   in->Threshold    = 0.0;
   in->maxResid     = 0.0;
+  in->doBeamCorClean = FALSE;
 } /* end ObitSkyModelVMBeamInit */
 
 
@@ -1179,8 +1207,12 @@ void  ObitSkyModelVMBeamGetInput (ObitSkyModel* inn, ObitErr *err)
 
   /* Threshold for high accuracy model */
   InfoReal.flt = in->Threshold; type = OBIT_float;
-  ObitInfoListGetTest(in->info, "Threshold", &type, (gint32*)dim, &InfoReal);
+  ObitInfoListGetTest(in->info, "Threshold", &type, dim, &InfoReal);
   in->Threshold = InfoReal.flt;
+
+  /* Is this part of a CLEAN? */
+  in->doBeamCorClean = FALSE;
+  ObitInfoListGetTest(in->info, "BeamCorClean", &type, dim,  &in->doBeamCorClean);
 
   /* Current maximum abs residual flux density */
   InfoReal.flt = -1.0; type = OBIT_float;

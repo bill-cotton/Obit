@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2015                                          */
+/*;  Copyright (C) 2003-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -128,7 +128,8 @@ ObitFInterpolate* newObitFInterpolateCreate (gchar* name, ObitFArray *array,
   /* Get array info */
   out->array  = array->array;
   out->nx     = array->naxis[0];
-  out->ny     = array->naxis[1];
+  if (array->ndim>1) out->ny = array->naxis[1];
+  else               out->ny = 1;
 
   /* Use same thread object */
   out->thread = ObitThreadUnref(out->thread);
@@ -202,7 +203,8 @@ ObitFInterpolate* ObitFInterpolateCopy (ObitFInterpolate *in, ObitFInterpolate *
   out->myDesc  = ObitImageDescCopy(in->myDesc, out->myDesc, err);
   out->array   = out->myArray->array;
   out->nx      = out->myArray->naxis[0];
-  out->ny      = out->myArray->naxis[1];
+  if (out->myArray->ndim>1) out->ny = out->myArray->naxis[1];
+  else               out->ny = 1;
   out->hwidth  = in->hwidth;
   for (i=0; i<10; i++) out->denom[i] = in->denom[i];
   
@@ -282,7 +284,8 @@ void ObitFInterpolateReplace  (ObitFInterpolate *in, ObitFArray *newArray)
 
   /* update other data */
   in->nx = newArray->naxis[0];
-  in->ny = newArray->naxis[1];
+  if (newArray->ndim>1) in->ny = newArray->naxis[1];
+  else                  in->ny = 1;
   in->xPixel = -1.0;
   in->yPixel = -1.0;
   in->xStart = -1;

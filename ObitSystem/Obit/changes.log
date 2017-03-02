@@ -3539,3 +3539,16 @@ Obit/src/ObitBeamShape.c:
 Obit/src/ObitSkyModelVMBeamMF.c:
   getPBCCTab: remove extra call to ObitBeamShapeCreate
 17 Feb 2017 svn ver 588
+
+VLA beam correction, bug fixes
+Obit/src/ObitAntennaList.c:
+  Fix bugs in calculating parallactic angle
+Obit/src/ObitSkyModelVMBeam.c Obit/src/ObitSkyModelVMBeamMF.c:
+Obit/tasks/MFBeam.c \
+Obit/include/ObitSkyModelVMBeamDef.h  Obit/include/ObitSkyModelVMBeam.h:
+  UpdateModel: Fix bugs in applying beam model
+Obit/share/scripts/EVLAContTemplateParm.py:
+  Fix bug if no polarization angle calibrator.
+Obit/src/ObitFInterpolate.c:
+  Create et al.: Trap 1-D arrays
+2 Mar 2017 svn ver 589

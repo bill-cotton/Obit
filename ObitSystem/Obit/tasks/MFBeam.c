@@ -1,7 +1,7 @@
 /* $Id$ */
 /*  Imaging software correcting for tabulated beamshape               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2015                                          */
+/*;  Copyright (C) 2011-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1946,7 +1946,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean     Fl = FALSE, Tr = TRUE, init=TRUE, doRestore, doFlatten, doFit, doSC;
   gboolean     noSCNeed, reimage, didSC=FALSE, imgOK, doBeam, converged = FALSE;
-  gboolean     btemp, noNeg, doneRecenter=FALSE;
+  gboolean     btemp, noNeg, doneRecenter=FALSE, isSkyModelVMBeam=FALSE;
   const        ObitDConCleanVisClassInfo *clnClass=NULL;
   gchar        Stokes[5], soltyp[5], solmod[5], stemp[5];
   gchar        *include[] = {"AIPS FG", NULL};
@@ -2026,6 +2026,8 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   /* Allow recentering */
   ObitInfoListAlwaysPut(myClean->info, "doRecenter", OBIT_bool, dim, &Tr);
   
+  isSkyModelVMBeam = ObitSkyModelVMBeamIsA(myClean->skyModel);  /* Correction with beam model? */
+
   /* Create selfCal if needed */
   doSC = ((maxPSCLoop>0) || (maxASCLoop>0));
   if (doSC>0) {
@@ -2087,10 +2089,19 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
       ObitInfoListAlwaysPut (inUV->info, "Stokes", OBIT_string, dim, Stokes);
       
       /* Image/Clean */
+      dim[0] = dim[1] = dim[2] = 1;
+      if (isSkyModelVMBeam) {
+	ObitInfoListAlwaysPut (myClean->skyModel->info, "BeamCorClean", OBIT_bool, dim, &Tr);
+	((ObitSkyModelVMBeam*)(myClean->skyModel))->doBeamCorClean = Tr;
+      }
       myClean->peakFlux = 0.0;
       ObitDConCleanVisDeconvolve ((ObitDCon*)myClean, err);
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
       imgOK = TRUE; 
+      if (isSkyModelVMBeam) {
+	ObitInfoListAlwaysPut (myClean->skyModel->info, "BeamCorClean", OBIT_bool, dim, &Fl);
+	((ObitSkyModelVMBeam*)(myClean->skyModel))->doBeamCorClean = Fl;
+      }
      
       /* Make sure image Cleaned if Self cal wanted, else complain and skip SC */
       if (doSC && (myClean->peakFlux==0.0)) {
@@ -2137,9 +2148,18 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	  ObitInfoListAlwaysPut(myClean->skyModel->info, "maxResid", OBIT_float, dim, &maxResid);
 	}
 
+	dim[0] = dim[1] = dim[2] = 1;
+	if (isSkyModelVMBeam) {
+	  ObitInfoListAlwaysPut (myClean->skyModel->info, "BeamCorClean", OBIT_bool, dim, &Tr);
+	  ((ObitSkyModelVMBeam*)(myClean->skyModel))->doBeamCorClean = Tr;
+	}
 	ObitDConCleanVisDeconvolve ((ObitDCon*)myClean, err);
 	if (err->error) Obit_traceback_msg (err, routine, myClean->name);
-    
+	if (isSkyModelVMBeam) {
+	  ObitInfoListAlwaysPut (myClean->skyModel->info, "BeamCorClean", OBIT_bool, dim, &Fl);
+	  ((ObitSkyModelVMBeam*)(myClean->skyModel))->doBeamCorClean = Fl;
+	}
+   
 	autoCen = 1.0e20;  /* only once */
  	doneRecenter = TRUE;
      }/* End auto center */
@@ -2292,10 +2312,19 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
       ObitInfoListAlwaysPut (inUV->info, "Stokes", OBIT_string, dim, Stokes);
       
       /* Image/Clean */
+      dim[0] = dim[1] = dim[2] = 1;
+      if (isSkyModelVMBeam) {
+	ObitInfoListAlwaysPut (myClean->skyModel->info, "BeamCorClean", OBIT_bool, dim, &Tr);
+	((ObitSkyModelVMBeam*)(myClean->skyModel))->doBeamCorClean = Tr;
+      }
       if (!imgOK) ObitDConCleanVisDeconvolve ((ObitDCon*)myClean, err);
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
       imgOK = TRUE;
-    
+      if (isSkyModelVMBeam) {
+	ObitInfoListAlwaysPut (myClean->skyModel->info, "BeamCorClean", OBIT_bool, dim, &Fl);
+	((ObitSkyModelVMBeam*)(myClean->skyModel))->doBeamCorClean = Fl;
+      }
+  
       /* Only recenter once */
       ftemp = 1.0e20;
       dim[0] = 1;
@@ -2318,12 +2347,20 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	  /* Don't need to remake beams  */
 	  dim[0] = 1;dim[1] = 1;
 	  ObitInfoListAlwaysPut(myClean->info, "doBeam", OBIT_bool, dim, &Fl);
+	  if (isSkyModelVMBeam) {
+	    ObitInfoListAlwaysPut (myClean->skyModel->info, "BeamCorClean", OBIT_bool, dim, &Tr);
+	    ((ObitSkyModelVMBeam*)(myClean->skyModel))->doBeamCorClean = Tr;
+	  }
 	  Obit_log_error(err, OBIT_InfoErr, 
 			 "Redoing image/deconvolution to center strong source on pixel");
 	  ObitDConCleanVisDeconvolve ((ObitDCon*)myClean, err);
 	  if (err->error) Obit_traceback_msg (err, routine, myClean->name);
 	  imgOK = TRUE;  /* Image OK */
-	}
+	  if (isSkyModelVMBeam) {
+	    ObitInfoListAlwaysPut (myClean->skyModel->info, "BeamCorClean", OBIT_bool, dim, &Fl);
+	    ((ObitSkyModelVMBeam*)(myClean->skyModel))->doBeamCorClean = Fl;
+	  }
+ 	}
 	
 	autoCen = 1.0e20;  /* only once */
       }
@@ -2431,9 +2468,17 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
       ftemp = 1.0e-20;
       dim[0] = 1;dim[1] = 1;
       ObitInfoListAlwaysPut (myClean->info, "reuseFlux", OBIT_float, dim, &ftemp);
+      if (isSkyModelVMBeam) {
+	ObitInfoListAlwaysPut (myClean->skyModel->info, "BeamCorClean", OBIT_bool, dim, &Tr);
+	((ObitSkyModelVMBeam*)(myClean->skyModel))->doBeamCorClean = Tr;
+      }
       /* Remake residuals */
       ObitDConCleanVisDeconvolve ((ObitDCon*)myClean, err);
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+      if (isSkyModelVMBeam) {
+	ObitInfoListAlwaysPut (myClean->skyModel->info, "BeamCorClean", OBIT_bool, dim, &Fl);
+	((ObitSkyModelVMBeam*)(myClean->skyModel))->doBeamCorClean = Fl;
+      }
     }  /* end reimage */
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
   } /* end final filtering */
@@ -2975,6 +3020,7 @@ void getBeam (ObitInfoList *myInput, gboolean doPhase, ofloat Stokes0,
   ObitInfoListAlwaysPut (myInput, "in3File", OBIT_string, dim, inFile);
   if (doRRLL) {Aclass[0]='R';Aclass[1]='R';}
   else        {Aclass[0]='X';Aclass[1]='X';}
+  Aclass[6] = 0;
   dim[0] = 6; dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (myInput, "in3Class", OBIT_string, dim, Aclass);
   *RXpol = ObitImageFromFileInfo ("in3", myInput, err);

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009,2015                                          */
+/*;  Copyright (C) 2009-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -88,3 +88,5 @@ gchar saveStokes[8];
 gboolean saveDoCalSelect;
 /** Save doCalib */
 olong saveDoCalib;
+/** Is this model calculation in a CLEAN? */
+gboolean doBeamCorClean;

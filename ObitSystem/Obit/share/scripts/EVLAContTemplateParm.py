@@ -136,8 +136,8 @@ parms["PCRLPhase"] = None         # R-L phase difference for RLPCal, IF based
 parms["RM"]        = None         # rotation measure (rad/m^2) for RLPCal, IF based
 parms["RLDCal"]    = @PRLDCAL@    #  R-L delay calibrator list, R-L phase, RM
 parms["rlrefAnt"]  = @REFANT@     # Reference antenna for R-L cal, defaults to refAnt
-parms["doRLDelay"] = parms["RLDCal"][0][0]!=None  # Determine R-L delay? If calibrator given
-parms["doRLCal"]   = parms["RLDCal"][0][0]!=None  # Determine  R-L bandpass? If calibrator given
+parms["doRLDelay"] = len(parms["RLDCal"])>0 and parms["RLDCal"][0][0]!=None  # Determine R-L delay? If calibrator given
+parms["doRLCal"]   = len(parms["RLDCal"])>0 and parms["RLDCal"][0][0]!=None  # Determine  R-L bandpass? If calibrator given
 
 # Imaging
 parms["targets"] = @TARGET@     # targets, empty = all

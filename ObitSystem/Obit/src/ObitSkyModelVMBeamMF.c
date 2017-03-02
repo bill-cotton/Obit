@@ -5003,7 +5003,7 @@ static ObitTableCC* getPBCCTab (ObitSkyModelVMBeamMF* in, ObitUV* uvdata,
 /**
  * Determines if a new beam correction is needed based on channel/IF and the 
  * general model of the beam (Jinc).
- * A change of 1 percent is deemed necessary for an update.
+ * A change of 0.2 percent is deemed necessary for an update.
  * \param in       SkyModel
  * \param uvdata   UV data
  * \param iIF      IF number (0-rel)
@@ -5069,7 +5069,7 @@ static gboolean needNewPB(ObitSkyModelVMBeamMF* in, ObitUV* uvdata,
   else        PBFact = ObitPBUtilPoly(Angle, uvDesc->freqArr[ifreq], 0.01);
   
   /* Need update? */
-  if (fabs(PBFact-oldPB)>0.01) {
+  if (fabs(PBFact-oldPB)>0.002) {
     /* Yes */
     update = TRUE;
     *newPB = PBFact;
