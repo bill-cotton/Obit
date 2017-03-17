@@ -2,7 +2,7 @@
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2016
+#  Copyright (C) 2004-2017
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -252,7 +252,7 @@ def PPBImage (pntImage, outImage, err,
     if len(outPlane) != 5:
         raise TypeError,"outPlane must have 5 elements"
     #
-    Obit.ImageUtilPBImage(outImage.me, outImage.me,
+    Obit.ImageUtilPBImage(pntImage.me, outImage.me,
                           outPlane, antSize, minGain, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error with primary beam image")

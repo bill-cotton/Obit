@@ -494,12 +494,11 @@ class Image(OData.OData):
         The initial model is defined by x,y,flux, gparm, all lists of the same dimension
         giving the location, fluxes and sizes of the initial models.
         Defaults OK for single source at reference pixel in image.
-        Only uses first plane
         Returns FitModel object after fitting
 
         * self      = Python Image object
         * err       = Python Obit Error/message stack
-        * plane     = 1-rel plane
+        * plane     = 1-rel plane, if a list, use higher order planes
         * cen       = If given the 1-rel center pixel of the region to be fit
           If not given, the reference pixel of the image is used
         * dim       = dimension in pixels of the region to be fit
@@ -509,8 +508,12 @@ class Image(OData.OData):
         * gparm     = Initial Gaussian size [major, minor, PA] (pixel,pixel,deg)
         * file      = If given, the file to write the results to, else terminal
         """
-        self.List.set("BLC",[1,1,plane])
-        self.List.set("TRC",[0,0,plane])
+        if type(plane)==list:
+            self.List.set("BLC",[1,1]+plane)  # Higher dimensionality
+            self.List.set("TRC",[0,0]+plane)
+        else:
+            self.List.set("BLC",[1,1,plane])
+            self.List.set("TRC",[0,0,plane])
         self.Open(1,err)
         self.Read(err)
         self.Close(err)

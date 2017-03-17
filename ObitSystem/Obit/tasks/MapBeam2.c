@@ -1538,35 +1538,39 @@ void doImage (gchar *Source, gboolean ldoRMS, gboolean ldoPhase,
 		  if (value!=0.0) value = 1.0 / value;
 		  ObitFArraySMul (work[2], value);
 		  ObitFArraySMul (work[3], value);
-		}
+		} 
 	      } /* End normalize x pol by center */
 	      fatemp = ObitFArrayUnref (fatemp);  /* Work array */
 	    } /* end if xpol */
 	    
-	    /* Normalize parallel hand correlations by center */
+	    /* Normalize parallel hand correlations by center I */
 	    if (tloop==0) {  /* Only amplitude */
 	      ipos[0] = nx/2; ipos[1] = ny/2;
+	      qqCenter = ObitFArrayIndex (work[1],  ipos);
 	      ppCenter = ObitFArrayIndex (work[0],  ipos);
-	      val1 = *ppCenter;
-	      if (val1!=fblank) {
-		if (val1!=0.0) val1 = 1.0 / val1;
+	      val1 = *ppCenter; val2 = *qqCenter;
+	      if ((val1!=fblank) && (val2!=fblank)) value = 0.5*(val1+val2);
+	      else if (val2==fblank) value = val1;
+	      else value = val2;
+	      if (value!=fblank) {
+		if (value!=0.0) val1 = 1.0 / value;
+		else val1 = 1.0;
 		ObitFArraySMul (work[0], val1);
 	      }
 	      if (*npoln>=2) {
-		qqCenter = ObitFArrayIndex (work[1],  ipos);
-		val2 = *qqCenter;
-		if (val2!=fblank) {
-		  if (val2!=0.0) val2 = 1.0 / val2;
-		  ObitFArraySMul (work[1], val2);
+		if (value!=fblank) {
+		  if (value!=0.0) val1 = 1.0 / value;
+		  else val1 = 1.0;
+		  ObitFArraySMul (work[1], val1);
 		}
 	      }
 	      /* DEBUG IF 12 chan 2  pixel 31,33
-	      if ((iIF==11) && (ichan==1)) {
-		fprintf (stderr,"write pp norm %9.6f 31,33 value %9.5f\n",
-			 val1, work[0]->array[32*nx+30] );
-		fprintf (stderr,"write qq norm %9.5f 31,33 value %9.5f\n",
-			 val2, work[1]->array[32*nx+30] );
-	      } */
+		 if ((iIF==11) && (ichan==1)) {
+		 fprintf (stderr,"write pp norm %9.6f 31,33 value %9.5f\n",
+		 val1, work[0]->array[32*nx+30] );
+		 fprintf (stderr,"write qq norm %9.5f 31,33 value %9.5f\n",
+		 val2, work[1]->array[32*nx+30] );
+		 } */
 	    } /* end if amp */
 	    
 	    /* Write images */
@@ -1686,6 +1690,7 @@ void MapBeamHistory (gchar *Source, gchar* Stoke, ObitInfoList* myInput,
   /* If FITS copy header */
   if (inHistory->FileType==OBIT_IO_FITS) {
     ObitHistoryCopyHeader (inHistory, outHistory, err);
+    ObitHistoryCopy (inHistory, outHistory, err);
   } else { /* simply copy history */
     ObitHistoryCopy (inHistory, outHistory, err);
   }

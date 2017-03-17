@@ -22,7 +22,7 @@ Additional  Functions are available in ImageUtil.
 # Python/Obit Astronomical ImageMF class
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2010-2016
+#  Copyright (C) 2010-2017
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -434,7 +434,7 @@ def PHeader (inImage, err):
         raise TypeError,"inImage MUST be a Python Obit Image"
     #
     # Fully instantiate
-    PFullInstantiate (inImage, READONLY, err)
+    #DAMN PFullInstantiate (inImage, READONLY, err)
     # File info
     if inImage.FileType=="AIPS":
         print "AIPS Image Name: %12s Class: %6s seq: %8d disk: %4d" % \
@@ -482,14 +482,14 @@ def PFitSpec (inImage, err, antSize=0.0, nOrder=1, corAlpha=0.0):
 def PFitSpec2 (inImage, outImage, err, nterm=2, \
                refFreq=None, maxChi2=2.0, doError=False, doBrokePow=False, \
                calFract=None, doPBCor=False, PBmin=None, antSize=None, \
-               corAlpha=0.0):
+               corAlpha=0.0, doTab=False):
     """
     Fit spectrum to each pixel of an ImageMF writing a new cube
 
     Fitted spectral polynomials returned in outImage
     Can run with multiple threads if enabled:
     OSystem.PAllowThreads(2)  # 2 threads
-     * inImage   = Python Image object; parameters on List:
+     * inImage   = Python Image object; 
      * outImage  = Image cube with fitted spectra.
                    Should be defined but not created.
                    Planes 1->nterm are coefficients per pixel
@@ -510,6 +510,7 @@ def PFitSpec2 (inImage, outImage, err, nterm=2, \
     * antSize   = Antenna diameter (m) for PB gain corr, 
                   One per frequency or one for all, def 25.0
     * corAlpha  = Spectral index correction to apply before fitting
+    * doTab     = Use tabulated beam if available
     """
     ################################################################
     inImage.List.set("nterm",      nterm,      ttype='long')
@@ -518,6 +519,7 @@ def PFitSpec2 (inImage, outImage, err, nterm=2, \
     inImage.List.set("doBrokePow", doBrokePow, ttype='boolean')
     inImage.List.set("doPBCor",    doPBCor,    ttype='boolean')
     inImage.List.set("corAlpha" ,  corAlpha,   ttype='float')
+    inImage.List.set("doTab"  ,    doTab,    ttype='boolean')
     if refFreq:
         inImage.List.set("refFreq",  refFreq,  ttype='double')
     if calFract:
@@ -529,6 +531,43 @@ def PFitSpec2 (inImage, outImage, err, nterm=2, \
 
     Obit.ImageMFFitSpec2(inImage.me, outImage.me, err.me)
     # end PFitSpec2
+
+def PEffFqCorr (fitImage, rawImage, err, corAlpha=-0.7, \
+                doPBCor=False, PBmin=None, antSize=None, doTab=False):
+    """
+    Correct flux density plane for effective frequency
+
+    Calculate the effective frequency in each pixel using  (optional) 
+    primary beam correction and RMS weighting and correct the flux 
+    density in each pixel to the reference frequency using alpha=corAlpha.
+    Multiply flux density plane by 
+    exp(alpha*ln(nu/nu_0) where nu is determined for each pixel by a weighted average
+    weighted by (1/RMS^2)*(PB^2)
+    Can run with multiple threads if enabled:
+    OSystem.PAllowThreads(2)  # 2 threads
+    * fitImage  = Python Image with fitted spectrum to be modified
+    * rawImage  = Raw ImageMF
+    * err       = Python Obit Error/message stack
+    * corAlpha  = Spectral index correction to apply before fitting
+    * doPBCor   = If true do primary beam correction. [def False]
+    * PBmin     = Minimum beam gain correction
+                  One per frequency or one for all, def 0.05,
+                  1.0 => no gain corrections
+    * antSize   = Antenna diameter (m) for PB gain corr, 
+                  One per frequency or one for all, def 25.0
+    * doTab     = Use tabulated beam if available
+     """
+    ################################################################
+    fitImage.List.set("doPBCor",    doPBCor,    ttype='boolean')
+    fitImage.List.set("corAlpha" ,  corAlpha,   ttype='float')
+    fitImage.List.set("doTab"  ,    doTab,    ttype='boolean')
+    if PBmin:
+        fitImage.List.set("PBmin",    PBmin,    ttype='float')
+    if antSize:
+        fitImage.List.set("antSize",   antSize, ttype='float')
+
+    Obit.ImageMFEffFqCorr(fitImage.me, rawImage.me, err.me)
+    # end PEffFqCorr
 
 def PIsA (inImage):
     """

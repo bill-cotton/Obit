@@ -3655,8 +3655,10 @@ extern int ImagefullInstantiate (ObitImage* in, int access, ObitErr *err) {
   laccess = OBIT_IO_ReadOnly;
   if (access==2) laccess = OBIT_IO_WriteOnly;
   else if (access==3) laccess = OBIT_IO_ReadWrite;
+  in->extBuffer = TRUE;  /* Don't need to assign buffer here */
   ret = ObitImageOpen (in, laccess, err);
   ret = ObitImageClose (in, err);
+  in->extBuffer = FALSE;  /* May need buffer later */
   if ((err->error) || (ret!=OBIT_IO_OK)) return 1;
   else return 0;
 } // end ImagefullInstantiate
@@ -4006,6 +4008,10 @@ extern void ImageMFFitSpec2 (ObitImageMF* in, ObitImageMF* out, ObitErr* err) {
   ObitImageMFFitSpec2 (in, out, err);
 }
 
+extern void ImageMFEffFqCorr (ObitImageMF* in, ObitImageMF* in2, ObitErr* err) {
+  ObitImageMFEffFqCorr (in, in2, err);
+}
+
 extern void ImageMFSetFITS(ObitImageMF *,int ,int ,char *,int [7],int [7],ObitErr *);
 extern void ImageMFSetAIPS(ObitImageMF *,int ,int ,int ,int ,int [7],int [7],ObitErr *);
 extern ObitData *ImageMFCastData(ObitImageMF *);
@@ -4031,6 +4037,7 @@ extern int ImageMFIsA(ObitImageMF *);
 extern char *ImageMFGetName(ObitImageMF *);
 extern void ImageMFFitSpec(ObitImageMF *,float ,ObitErr *);
 extern void ImageMFFitSpec2(ObitImageMF *,ObitImageMF *,ObitErr *);
+extern void ImageMFEffFqCorr(ObitImageMF *,ObitImageMF *,ObitErr *);
 
 typedef struct {
   ObitImageMF *me;
@@ -28915,6 +28922,45 @@ static PyObject *_wrap_ImageMFFitSpec2(PyObject *self, PyObject *args) {
         }
     }
     ImageMFFitSpec2(_arg0,_arg1,_arg2);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFEffFqCorr(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageMF * _arg0;
+    ObitImageMF * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:ImageMFEffFqCorr",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFEffFqCorr. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ImageMFEffFqCorr. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of ImageMFEffFqCorr. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    ImageMFEffFqCorr(_arg0,_arg1,_arg2);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
     return _resultobj;
@@ -65787,6 +65833,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "ImageMosaicUnref", _wrap_ImageMosaicUnref, METH_VARARGS },
 	 { "ImageMosaicCopy", _wrap_ImageMosaicCopy, METH_VARARGS },
 	 { "newImageMosaic", _wrap_newImageMosaic, METH_VARARGS },
+	 { "ImageMFEffFqCorr", _wrap_ImageMFEffFqCorr, METH_VARARGS },
 	 { "ImageMFFitSpec2", _wrap_ImageMFFitSpec2, METH_VARARGS },
 	 { "ImageMFFitSpec", _wrap_ImageMFFitSpec, METH_VARARGS },
 	 { "ImageMFGetName", _wrap_ImageMFGetName, METH_VARARGS },

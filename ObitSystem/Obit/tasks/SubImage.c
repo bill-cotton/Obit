@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task - SubImage copy a subregion of an image                  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2016                                          */
+/*;  Copyright (C) 2005-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -784,6 +784,7 @@ void SubImageHistory (ObitInfoList* myInput, ObitImage* inImage,
   /* If FITS copy header */
   if (inHistory->FileType==OBIT_IO_FITS) {
     ObitHistoryCopyHeader (inHistory, outHistory, err);
+    ObitHistoryCopy (inHistory, outHistory, err);
   } else { /* simply copy history */
      ObitHistoryCopy (inHistory, outHistory, err);
   }

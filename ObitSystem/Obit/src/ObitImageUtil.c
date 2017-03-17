@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2016                                          */
+/*;  Copyright (C) 2003-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -49,6 +49,7 @@
 #include "ObitFFT.h"
 #include "ObitTableCCUtil.h"
 #include "ObitImageFit.h"
+#include "ObitBeamShape.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -95,6 +96,27 @@ typedef struct {
   ObitFInterpolate *Interp;
 } InterpFuncArg;
 
+/* Image primary beam  threaded function Argument */
+typedef struct {
+  /** First (1-rel) value in y to process this thread */
+  olong         first;
+  /** Highest (1-rel) value in y to process this thread  */
+  olong         last;
+  /** thread number, >0 -> no threading   */
+  olong         ithread;
+  /** Output descriptor */
+  ObitImageDesc *outDesc;
+  /** Output beam image data */
+  ObitFArray    *outArr;
+  /** Beam Shape */
+  ObitBeamShape *bs;
+  /** Invert? */
+  gboolean      doInvert;
+  /** Obit Thread object */
+  ObitThread  *thread;
+  /* Obit error stack object */
+  ObitErr    *err;
+} PBCorFuncArg;
 /*---------------Private function prototypes----------------*/
 /** Private: Get Date string for current date */
 static void ObitImageUtilCurDate (gchar *date, olong len);
@@ -114,6 +136,18 @@ static olong MakeInterpFuncArgs (ObitThread *thread, olong radius,
 
 /** Private: Delete Threaded Image interpolator args */
 static void KillInterpFuncArgs (olong nargs, InterpFuncArg **ThreadArgs);
+
+/** Private: Threaded Image interpolator */
+static gpointer ThreadImagePBCor (gpointer arg);
+
+/** Private: Make Threaded Image interpolator args */
+static olong MakePBCorFuncArgs (ObitThread *thread,
+				ObitBeamShape *bs, ObitImageDesc *outDesc, 
+				ObitFArray *outArr, gboolean doInvert,
+				ObitErr *err, PBCorFuncArg ***ThreadArgs);
+
+/** Private: Delete Threaded Image PBCor args */
+static void KillPBCorFuncArgs (olong nargs, PBCorFuncArg **ThreadArgs);
 
 /** Private: Set convolution kernal for 3rd axis */
 static void SetConvKernal3 (ofloat Target, olong npln, olong hwidth, 
@@ -2378,6 +2412,8 @@ ObitImageUtilInterp3 (ObitImage *inImage, ofloat inPlane,
  * For frequencies < 1 GHz uses the VLA polynomial gain curves,
  * for higher frequencies, it uses a jinc function based on the antenna size.
  * \param inImage  Image to be corrected
+ *     List items:
+ * \li doTab OBIT_bool If True and a tabulated beam available, use it
  * \param pntImage Image with pointing position
  * \param outImage Image to be written.  Must be previously instantiated.
  * \param inPlane   Desired plane in inImage, 1-rel pixel numbers on planes 3-7; 
@@ -2393,12 +2429,12 @@ ObitImageUtilPBCorr (ObitImage *inImage, ObitImage *pntImage, ObitImage *outImag
   ObitIOSize IOBy;
   olong blc[IM_MAXDIM], trc[IM_MAXDIM];
   gint32 i, dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong ix, iy, indx, pos[2];
-  ofloat inPixel[2], *in, *out;
-  odouble RAPnt, DecPnt, Freq, ra, dec, xx, yy, zz, dist;
-  ofloat pbf, equinox, fblank = ObitMagicF();
-  gboolean doJinc, bad, doKAT;
+  odouble Freq;
+  gboolean OK, isMeerKAT;
+  ObitBeamShape *bs=NULL;
   ObitImageDesc *inDesc;
+  olong nThreads, nTh, nrow, nrowPerThread, lorow, hirow;
+  PBCorFuncArg **threadArgs;
   gchar *routine = "ObitImageUtilPBCorr";
 
   /* error checks */
@@ -2413,36 +2449,16 @@ ObitImageUtilPBCorr (ObitImage *inImage, ObitImage *pntImage, ObitImage *outImag
 
   if (antSize<0.01) antSize = 25.0; /* default antenna size */
 
-  /* Get pointing position */
-  pntImage->extBuffer = TRUE;  /* Don't need buffer */
-  if ((ObitImageOpen (pntImage, OBIT_IO_ReadOnly, err) 
-       != OBIT_IO_OK) || (err->error>0)) { /* error test */
-    Obit_log_error(err, OBIT_Error, "%s: ERROR opening image %s", 
-		   routine, pntImage->name);
-    return;
+  /* Beam shape */
+  bs = ObitBeamShapeCreate ("BS", (ObitImage*)pntImage, 0.0, antSize, TRUE);
+  /* Diagnostics */
+  if (err->prtLv>=2) {
+    if (bs->doTab) Obit_log_error(err, OBIT_InfoErr, "Using Tabulated Beam");
+    if (bs->doVLITE) Obit_log_error(err, OBIT_InfoErr, "Using VLITE Beam");
+    isMeerKAT = !strncmp(pntImage->myDesc->teles, "MeerKAT",7); /* MeerKAT? */
+    if (isMeerKAT) Obit_log_error(err, OBIT_InfoErr, "Using MeerKAT Beam");
   }
-  /* Use "Observed" position if given */
-  RAPnt   = pntImage->myDesc->obsra;
-  DecPnt  = pntImage->myDesc->obsdec;
-  equinox = pntImage->myDesc->equinox ;
-  if ((abs(RAPnt)<1.0e-5) && (abs(DecPnt)<1.0e-5)) {
-    /* if zeroes - use reference position */
-    RAPnt  = pntImage->myDesc->crval[pntImage->myDesc->jlocr];
-    DecPnt = pntImage->myDesc->crval[pntImage->myDesc->jlocd];
-  }
-  RAPnt  *= DG2RAD;
-  DecPnt *= DG2RAD;
-  if ((ObitImageClose (pntImage, err) 
-       != OBIT_IO_OK) || (err->error>0)) { /* error test */
-    Obit_log_error(err, OBIT_Error, "%s: ERROR closing image %s", 
-		   routine, pntImage->name);
-    return;
-  }
-  pntImage->extBuffer = FALSE;  /* May need buffer later */
 
-  /* Trap telescope, default = VLA */
-  doKAT = !strncmp(pntImage->myDesc->teles, "KAT-7",5); /* Kat-7 */
-  
   /* Do I/O by plane and all of plane */
   IOBy = OBIT_IO_byPlane;
   dim[0] = 1;
@@ -2494,76 +2510,58 @@ ObitImageUtilPBCorr (ObitImage *inImage, ObitImage *pntImage, ObitImage *outImag
     return;
   }
 
-  /* Precess pointing position is needed */
-  if ((abs(equinox-1950.0)<0.01) && 
-      (abs(inImage->myDesc->equinox-2000.0)<0.01))
-    ObitSkyGeomBtoJ (&RAPnt, &DecPnt);
-  else if ((abs(equinox-2000.0)<0.01) && 
-      (abs(inImage->myDesc->equinox-1950.0)<0.01))
-    ObitSkyGeomJtoB (&RAPnt, &DecPnt);
-
-  /* Get output aray pointer */
-  pos[0] = pos[1] = 0;
-  in  = ObitFArrayIndex (inImage->image, pos);
-  out = ObitFArrayIndex (outImage->image, pos);
-
   /* Set up - get frequency, default 1 GHz*/
   Freq = ObitImageMFGetPlaneFreq(inImage);
   if (Freq<=0.0) Freq = 1.0e9;
-
+  ObitBeamShapeSetFreq(bs, Freq);  /* Set frequency */
   /* which beam model to use */
-  doJinc = (Freq >= 1.0e9);
   inDesc = inImage->myDesc; /* Input descriptor */
 
-  /* Loop over image  */
-  for (iy = 1; iy<=inDesc->inaxes[1]; iy++) { /* loop in y */
-    inPixel[1] = (ofloat)iy;
-    for (ix = 1; ix<=inDesc->inaxes[0]; ix++) {/* loop in x */
-      inPixel[0] = (ofloat)ix;
+  /* Initialize Threading */
+  nThreads = MakePBCorFuncArgs (outImage->thread, bs, inDesc, 
+				outImage->image, TRUE, 
+				err, &threadArgs);
 
-      /* array index in in and out for this pixel */
-      indx = (iy-1) * inDesc->inaxes[0] + (ix-1);
+  /* Divide up work */
+  nrow = outImage->myDesc->inaxes[1];
+  nrowPerThread = nrow/nThreads;
+  nTh = nThreads;
+  if (nrow<64) {nrowPerThread = nrow; nTh = 1;}
+  /* No fewer than 64 rows per thread */
+  if ((nrowPerThread)<64) {
+    nTh = (olong)(0.5 + nrow/64.0);
+   if (nTh>0)  nrowPerThread = nrow/nTh;
+  }
+  if (nTh<=0) {nrowPerThread = nrow; nTh = 1;}
+  lorow = 1;   hirow = nrowPerThread;  hirow = MIN (hirow, nrow);
 
-      /* Is this pixel valid? */
-      if (in[indx] != fblank) {
-	/* Convert input pixel to position */
-	bad = 
-	  ObitSkyGeomWorldPos(inPixel[0], inPixel[1],
-			      inDesc->crval[inDesc->jlocr], inDesc->crval[inDesc->jlocd],
-			      inDesc->crpix[inDesc->jlocr], inDesc->crpix[inDesc->jlocd],
-			      inDesc->cdelt[inDesc->jlocr], inDesc->cdelt[inDesc->jlocd],
-			      inDesc->crota[inDesc->jlocd], &inDesc->ctype[inDesc->jlocr][4],
-			      &ra, &dec);
-	if (bad!=0) {
-	  Obit_log_error(err, OBIT_Error, 
-			 "%s: Error %d determining location of pixel in %s", 
-			 routine, bad, inImage->name);
-	  return;
-	}
-	
-	/* Separation from pointing center */
-	xx = DG2RAD * ra;
-	yy = DG2RAD * dec;
-	zz = sin (yy) * sin (DecPnt) + cos (yy) * cos (DecPnt) * cos (xx-RAPnt);
-	zz = MIN (zz, 1.000);
-	dist = acos (zz) * RAD2DG;
-	
-	/* primary beam correction */
-	if (doKAT) {  /* KAT-7 */
-	  pbf = ObitPBUtilKAT7 (dist, Freq, 0.0);
-	} else if (doJinc) {
-	  pbf = ObitPBUtilJinc (dist, Freq, antSize, 0.0);
-	} else {
-	  pbf = ObitPBUtilPoly (dist, Freq, 0.0);
-	} 
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hirow = nrow;  /* Make sure do all */
+    threadArgs[i]->first   = lorow;
+    threadArgs[i]->last    = hirow;
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which row */
+    lorow += nrowPerThread;
+    hirow += nrowPerThread;
+    hirow = MIN (hirow, nrow);
+  }
 
-	/* Make correction */
-	out[indx] = in[indx] / pbf;
-      } else out[indx] = fblank; /* Don't correct if invalid */
+  /* Do operation */
+  OK = ObitThreadIterator (inImage->thread, nTh, 
+			   (ObitThreadFunc)ThreadImagePBCor,
+			   (gpointer**)threadArgs);
 
-    } /* end loop over x */
-  } /* end loop over y */
-  
+  /* Check for problems */
+  if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+  /* */
+
+  /* Free local objects */
+  KillPBCorFuncArgs(nThreads, threadArgs);
+
+  /* Multiply by input - NB Beam inverted */
+  ObitFArrayMul(outImage->image, inImage->image, outImage->image);
 
   /* Write output */
   if ((ObitImageWrite (outImage, NULL, err) 
@@ -2592,6 +2590,8 @@ ObitImageUtilPBCorr (ObitImage *inImage, ObitImage *pntImage, ObitImage *outImag
   /* Free image buffer  if not memory resident*/
   if (outImage->mySel->FileType!=OBIT_IO_MEM) 
     outImage->image = ObitFArrayUnref(outImage->image);
+  /* Cleanup */
+  bs = ObitBeamShapeUnref(bs);
 
 } /* end  ObitImageUtilPBCorr */
 
@@ -2601,6 +2601,8 @@ ObitImageUtilPBCorr (ObitImage *inImage, ObitImage *pntImage, ObitImage *outImag
  * For frequencies < 1 GHz uses the VLA polynomial gain curves,
  * for higher frequencies, it uses a jinc function based on the antenna size.
  * \param inImage  Image to be corrected
+ *     List items:
+ * \li doTab OBIT_bool If True and a tabulated beam available, use it
  * \param pntImage Image with pointing position
  * \param outImage Image to be written.  Must be previously instantiated.
  * \param inPlane   Desired plane in inImage, 1-rel pixel numbers on planes 3-7; 
@@ -2616,12 +2618,12 @@ ObitImageUtilPBApply (ObitImage *inImage, ObitImage *pntImage, ObitImage *outIma
   ObitIOSize IOBy;
   olong blc[IM_MAXDIM], trc[IM_MAXDIM];
   gint32 i, dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong ix, iy, indx, pos[2];
-  ofloat inPixel[2], *in, *out;
-  odouble RAPnt, DecPnt, Freq, ra, dec, xx, yy, zz, dist ;
-  ofloat pbf, equinox, fblank = ObitMagicF();
-  gboolean doJinc, bad, doKAT;
+  odouble Freq;
+  olong nThreads, nTh, nrow, nrowPerThread, lorow, hirow;
+  gboolean  OK, isMeerKAT;
+  ObitBeamShape *bs=NULL;
   ObitImageDesc *inDesc;
+  PBCorFuncArg **threadArgs;
   gchar *routine = "ObitImageUtilPBApply";
 
   /* error checks */
@@ -2636,37 +2638,16 @@ ObitImageUtilPBApply (ObitImage *inImage, ObitImage *pntImage, ObitImage *outIma
 
   if (antSize<0.01) antSize = 25.0; /* default antenna size */
 
-  /* Get pointing position */
-  pntImage->extBuffer = TRUE;  /* Don't need buffer */
-  if ((ObitImageOpen (pntImage, OBIT_IO_ReadOnly, err) 
-       != OBIT_IO_OK) || (err->error>0)) { /* error test */
-    Obit_log_error(err, OBIT_Error, "%s: ERROR opening image %s", 
-		   routine, pntImage->name);
-    return;
+  /* Beam shape */
+  bs = ObitBeamShapeCreate ("BS", (ObitImage*)pntImage, 0.0, antSize, TRUE);
+  /* Diagnostics */
+  if (err->prtLv>=2) {
+    if (bs->doTab) Obit_log_error(err, OBIT_InfoErr, "Using Tabulated Beam");
+    if (bs->doVLITE) Obit_log_error(err, OBIT_InfoErr, "Using VLITE Beam");
+    isMeerKAT = !strncmp(pntImage->myDesc->teles, "MeerKAT",7); /* MeerKAT? */
+    if (isMeerKAT) Obit_log_error(err, OBIT_InfoErr, "Using MeerKAT Beam");
   }
 
-  /* Use  "Observed" position if given */
-  RAPnt   = pntImage->myDesc->obsra;
-  DecPnt  = pntImage->myDesc->obsdec;
-  equinox = pntImage->myDesc->equinox ;
-  if ((abs(RAPnt)<1.0e-5) && (abs(DecPnt)<1.0e-5)) {
-    /* if zeroes - use reference position */
-    RAPnt  = pntImage->myDesc->crval[pntImage->myDesc->jlocr];
-    DecPnt = pntImage->myDesc->crval[pntImage->myDesc->jlocd];
-  }
-  RAPnt  *= DG2RAD;
-  DecPnt *= DG2RAD;
-  if ((ObitImageClose (pntImage, err) 
-       != OBIT_IO_OK) || (err->error>0)) { /* error test */
-    Obit_log_error(err, OBIT_Error, "%s: ERROR closing image %s", 
-		   routine, pntImage->name);
-    return;
-  }
-  pntImage->extBuffer = FALSE;  /* May need buffer later */
-  
-  /* Trap telescope, default = VLA */
-  doKAT = !strncmp(pntImage->myDesc->teles, "KAT-7",5); /* Kat-7 */
-  
   /* Do I/O by plane and all of plane */
   IOBy = OBIT_IO_byPlane;
   dim[0] = 1;
@@ -2718,80 +2699,58 @@ ObitImageUtilPBApply (ObitImage *inImage, ObitImage *pntImage, ObitImage *outIma
     return;
   }
 
-  /* Precess pointing position is needed */
-  if ((abs(equinox-1950.0)<0.01) && 
-      (abs(inImage->myDesc->equinox-2000.0)<0.01))
-    ObitSkyGeomBtoJ (&RAPnt, &DecPnt);
-  else if ((abs(equinox-2000.0)<0.01) && 
-      (abs(inImage->myDesc->equinox-1950.0)<0.01))
-    ObitSkyGeomJtoB (&RAPnt, &DecPnt);
-
-  /* Get output aray pointer */
-  pos[0] = pos[1] = 0;
-  in  = ObitFArrayIndex (inImage->image, pos);
-  out = ObitFArrayIndex (outImage->image, pos);
-
   /* Set up - get frequency, default 1 GHz*/
   Freq = ObitImageMFGetPlaneFreq(inImage);
   if (Freq<=0.0) Freq = 1.0e9;
+  ObitBeamShapeSetFreq(bs, Freq);  /* Set frequency */
 
-  doJinc = (Freq >= 1.0e9);
   inDesc = inImage->myDesc; /* Input descriptor */
 
-  /* Loop over image  */
-  for (iy = 1; iy<=inDesc->inaxes[1]; iy++) { /* loop in y */
-    inPixel[1] = (ofloat)iy;
-    for (ix = 1; ix<=inDesc->inaxes[0]; ix++) {/* loop in x */
-      inPixel[0] = (ofloat)ix;
+  /* Initialize Threading */
+  nThreads = MakePBCorFuncArgs (outImage->thread, bs, inDesc, 
+				outImage->image, FALSE, 
+				err, &threadArgs);
 
-      /* array index in in and out for this pixel */
-      indx = (iy-1) * inDesc->inaxes[0] + (ix-1);
+  /* Divide up work */
+  nrow = outImage->myDesc->inaxes[1];
+  nrowPerThread = nrow/nThreads;
+  nTh = nThreads;
+  if (nrow<64) {nrowPerThread = nrow; nTh = 1;}
+  /* No fewer than 64 rows per thread */
+  if ((nrowPerThread)<64) {
+    nTh = (olong)(0.5 + nrow/64.0);
+   if (nTh>0)  nrowPerThread = nrow/nTh;
+  }
+  if (nTh<=0) {nrowPerThread = nrow; nTh = 1;}
+  lorow = 1;   hirow = nrowPerThread;  hirow = MIN (hirow, nrow);
 
-      /* Is this pixel valid? */
-      if (in[indx] != fblank) {
-	/* Convert input pixel to position */
-	bad = 
-	  ObitSkyGeomWorldPos(inPixel[0], inPixel[1],
-			      inDesc->crval[inDesc->jlocr], inDesc->crval[inDesc->jlocd],
-			      inDesc->crpix[inDesc->jlocr], inDesc->crpix[inDesc->jlocd],
-			      inDesc->cdelt[inDesc->jlocr], inDesc->cdelt[inDesc->jlocd],
-			      inDesc->crota[inDesc->jlocd], &inDesc->ctype[inDesc->jlocr][4],
-			      &ra, &dec);
-	if (bad!=0) {
-	  Obit_log_error(err, OBIT_Error, 
-			 "%s: Error %d determining location of pixel in %s", 
-			 routine, bad, inImage->name);
-	  return;
-	}
-	
-	/* Separation from pointing center */
-	xx = DG2RAD * ra;
-	yy = DG2RAD * dec;
-	zz = sin (yy) * sin (DecPnt) + cos (yy) * cos (DecPnt) * cos (xx-RAPnt);
-	zz = MIN (zz, 1.000);
-	dist = acos (zz) * RAD2DG;
-	
-	/* primary beam correction */
-	if (doKAT) {  /* KAT-7 */
-	  pbf = ObitPBUtilKAT7 (dist, Freq, 0.0);
-	} else if (doJinc) {
-	  pbf = ObitPBUtilJinc (dist, Freq, antSize, 0.0);
-	} else {
-	  pbf = ObitPBUtilPoly (dist, Freq, 0.0);
-	} 
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hirow = nrow;  /* Make sure do all */
+    threadArgs[i]->first   = lorow;
+    threadArgs[i]->last    = hirow;
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which row */
+    lorow += nrowPerThread;
+    hirow += nrowPerThread;
+    hirow = MIN (hirow, nrow);
+  }
 
-	/* debug
-	if (pbf>0.9) {
-	  fprintf (stderr,"pdf %f @ %d  %d %lf\n",pbf,ix,iy,dist* RAD2DG*3600.0);
-	} */
- 
-	/* Make correction */
-	out[indx] = in[indx] * pbf;
-      } else out[indx] = fblank; /* Don't correct if invalid */
+  /* Do operation */
+  OK = ObitThreadIterator (inImage->thread, nTh, 
+			   (ObitThreadFunc)ThreadImagePBCor,
+			   (gpointer**)threadArgs);
 
-    } /* end loop over x */
-  } /* end loop over y */
-  
+  /* Check for problems */
+  if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+  /* */
+
+  /* Free local objects */
+  KillPBCorFuncArgs(nThreads, threadArgs);
+
+  /* Multiply by input */
+  ObitFArrayMul(outImage->image, inImage->image, outImage->image);
 
   /* Write output */
   if ((ObitImageWrite (outImage, NULL, err) 
@@ -2822,6 +2781,9 @@ ObitImageUtilPBApply (ObitImage *inImage, ObitImage *pntImage, ObitImage *outIma
   if (outImage->mySel->FileType!=OBIT_IO_MEM) 
     outImage->image = ObitFArrayUnref(outImage->image);
 
+  /* Cleanup */
+  bs = ObitBeamShapeUnref(bs);
+
 } /* end  ObitImageUtilPBApply */
 
 /**
@@ -2830,6 +2792,9 @@ ObitImageUtilPBApply (ObitImage *inImage, ObitImage *pntImage, ObitImage *outIma
  * For frequencies < 1 GHz uses the VLA polynomial gain curves,
  * for higher frequencies, it uses a jinc function based on the antenna size.
  * \param pntImage Image with pointing position
+ *     List items:
+ * \li doTab    OBIT_bool If True and a tabulated beam available, use it
+ * \li doInvert OBIT_bool If True invert beam gain (== correction)
  * \param outImage Image to be written.  Must be previously instantiated.
  * \param outPlane  Desired plane in outImage on planes 3-5; ignored if memOnly
  * \param antSize  Antenna size
@@ -2843,12 +2808,14 @@ ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
   ObitIOSize IOBy;
   olong blc[IM_MAXDIM], trc[IM_MAXDIM];
   gint32 i, dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong ix, iy, indx, pos[2];
-  ofloat inPixel[2], *out, fblank = ObitMagicF();
-  odouble RAPnt, DecPnt, Freq, ra, dec, xx, yy, zz, dist ;
-  ofloat pbf, equinox;
-  gboolean doJinc, bad, doKAT;
+  ofloat ftemp, fblank = ObitMagicF();
+  odouble Freq;
+  olong nThreads, nTh, nrow, nrowPerThread, lorow, hirow;
+  gboolean OK, isMeerKAT, doTab=FALSE, doInvert=FALSE;
+  ObitInfoType type;
   ObitImageDesc *outDesc;
+  ObitBeamShape *bs=NULL;
+  PBCorFuncArg **threadArgs;
   gchar *routine = "ObitImageUtilPBImage";
 
   /* error checks */
@@ -2859,8 +2826,14 @@ ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
 
   for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
   for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
+  dim[0] = 7;
+  ObitInfoListPut (pntImage->info, "BLC", OBIT_long, dim, blc, err); 
+  ObitInfoListPut (pntImage->info, "TRC", OBIT_long, dim, trc, err);
+  pntImage->extBuffer = FALSE;
 
   if (antSize<0.01) antSize = 25.0; /* default antenna size */
+  ObitInfoListGetTest(pntImage->info, "doInvers", &type, dim, &doInvert); /* Invert? */
+  ObitInfoListGetTest(pntImage->info, "doTab", &type, dim, &doTab); 
 
   /* Get pointing position */
   pntImage->extBuffer = TRUE;  /* Don't need buffer */
@@ -2870,26 +2843,24 @@ ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
 		   routine, pntImage->name);
     return;
   }
-
-  /* Use  "Observed" position if given */
-  RAPnt   = pntImage->myDesc->obsra;
-  DecPnt  = pntImage->myDesc->obsdec;
-  equinox = pntImage->myDesc->equinox ;
-  if ((abs(RAPnt)<1.0e-5) && (abs(DecPnt)<1.0e-5)) {
-    /* if zeroes - use reference position */
-    RAPnt  = pntImage->myDesc->crval[pntImage->myDesc->jlocr];
-    DecPnt = pntImage->myDesc->crval[pntImage->myDesc->jlocd];
-  }
-  if ((ObitImageClose (pntImage, err) 
+ if ((ObitImageClose (pntImage, err) 
        != OBIT_IO_OK) || (err->error>0)) { /* error test */
     Obit_log_error(err, OBIT_Error, "%s: ERROR closing image %s", 
 		   routine, pntImage->name);
     return;
   }
-  pntImage->extBuffer = FALSE;  /* May need buffer later */
+  pntImage->extBuffer = FALSE;
 
-  /* Trap telescope, default = VLA */
-  doKAT = !strncmp(pntImage->myDesc->teles, "KAT-7",5); /* Kat-7 */
+  /* Beam shape */
+  bs = ObitBeamShapeCreate ("BS", (ObitImage*)pntImage, minGain, antSize, TRUE);
+  /* Diagnostics */
+  if (err->prtLv>=2) {
+    if (bs->doTab) Obit_log_error(err, OBIT_InfoErr, "Using Tabulated Beam");
+    if (bs->doVLITE) Obit_log_error(err, OBIT_InfoErr, "Using VLITE Beam");
+    isMeerKAT = !strncmp(pntImage->myDesc->teles, "MeerKAT",7); /* MeerKAT? */
+    if (isMeerKAT) Obit_log_error(err, OBIT_InfoErr, "Using MeerKAT Beam");
+    ObitErrLog(err); 
+  }
 
   /* Do I/O by plane and all of plane */
   IOBy = OBIT_IO_byPlane;
@@ -2899,6 +2870,8 @@ ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
   for (i=0; i<5; i++) blc[i+2] = trc[i+2] = outPlane[i];
   ObitInfoListPut (outImage->info, "BLC", OBIT_long, dim, blc, err); 
   ObitInfoListPut (outImage->info, "TRC", OBIT_long, dim, trc, err);
+  outImage->extBuffer = FALSE;
+
 
   /* Open image */
   if ((ObitImageOpen (outImage, OBIT_IO_ReadWrite, err) 
@@ -2907,92 +2880,76 @@ ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
 		   routine, outImage->name);
     return;
   }
-  
-  /* check coordinate types */
-  if (outImage->myDesc->coordType != pntImage->myDesc->coordType) {
+   /* check coordinate types */
+   if (outImage->myDesc->coordType != pntImage->myDesc->coordType) {
     Obit_log_error(err, OBIT_Error, 
 		   "%s: Output (%s) and pointing (%s) images have different coordinate types ", 
 		   routine, outImage->name, pntImage->name);
     return;
   }
 
-  /* Precess pointing position is needed */
-  if ((abs(equinox-1950.0)<0.01) && 
-      (abs(outImage->myDesc->equinox-2000.0)<0.01))
-    ObitSkyGeomBtoJ (&RAPnt, &DecPnt);
-  else if ((abs(equinox-2000.0)<0.01) && 
-      (abs(outImage->myDesc->equinox-1950.0)<0.01))
-    ObitSkyGeomJtoB (&RAPnt, &DecPnt);
-  RAPnt  *= DG2RAD;
-  DecPnt *= DG2RAD;
-
-  /* Get output aray pointer */
-  pos[0] = pos[1] = 0;
-  out = ObitFArrayIndex (outImage->image, pos);
-
   /* Set up - get frequency, default 1 GHz*/
   Freq = ObitImageMFGetPlaneFreq(outImage);
   if (Freq<=0.0) Freq = 1.0e9;
+  ObitBeamShapeSetFreq(bs, Freq);  /* Set frequency */
+  /* Diagnostics */
+  if (err->prtLv>=2) 
+    Obit_log_error(err, OBIT_InfoErr, "Using Frequency %lg plane %d",
+		   Freq,outPlane[0]);
 
   /* which beam model to use */
-  doJinc = (Freq >= 1.0e9);
   outDesc = outImage->myDesc; /* output descriptor */
 
-  /* Loop over image  */
-  for (iy = 1; iy<=outDesc->inaxes[1]; iy++) { /* loop in y */
-    inPixel[1] = (ofloat)iy;
-    for (ix = 1; ix<=outDesc->inaxes[0]; ix++) {/* loop in x */
-      inPixel[0] = (ofloat)ix;
+  /* Initialize Threading */
+  nThreads = MakePBCorFuncArgs (outImage->thread, bs, outDesc, 
+				outImage->image, doInvert, 
+				err, &threadArgs);
 
-      /* array index in in and out for this pixel */
-      indx = (iy-1) * outDesc->inaxes[0] + (ix-1);
+  /* Divide up work */
+  nrow = outImage->myDesc->inaxes[1];
+  nrowPerThread = nrow/nThreads;
+  nTh = nThreads;
+  if (nrow<64) {nrowPerThread = nrow; nTh = 1;}
+  /* No fewer than 64 rows per thread */
+  if ((nrowPerThread)<64) {
+    nTh = (olong)(0.5 + nrow/64.0);
+   if (nTh>0)  nrowPerThread = nrow/nTh;
+  }
+  if (nTh<=0) {nrowPerThread = nrow; nTh = 1;}
+  lorow = 1;   hirow = nrowPerThread;  hirow = MIN (hirow, nrow);
 
-      /* Convert pixel to position */
-      bad = 
-	ObitSkyGeomWorldPos(inPixel[0], inPixel[1],
-			    outDesc->crval[outDesc->jlocr], outDesc->crval[outDesc->jlocd],
-			    outDesc->crpix[outDesc->jlocr], outDesc->crpix[outDesc->jlocd],
-			    outDesc->cdelt[outDesc->jlocr], outDesc->cdelt[outDesc->jlocd],
-			    outDesc->crota[outDesc->jlocd], &outDesc->ctype[outDesc->jlocr][4],
-			    &ra, &dec);
-      if (bad!=0) {
-	Obit_log_error(err, OBIT_Error, 
-		       "%s: Error %d determining location of pixel in %s", 
-		       routine, bad, outImage->name);
-	return;
-      }
-      
-      /* Separation from pointing center */
-      xx = DG2RAD * ra;
-      yy = DG2RAD * dec;
-      zz = sin (yy) * sin (DecPnt) + cos (yy) * cos (DecPnt) * cos (xx-RAPnt);
-      zz = MIN (zz, 1.000);
-      dist = acos (zz) * RAD2DG;
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hirow = nrow;  /* Make sure do all */
+    threadArgs[i]->first   = lorow;
+    threadArgs[i]->last    = hirow;
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which row */
+    lorow += nrowPerThread;
+    hirow += nrowPerThread;
+    hirow = MIN (hirow, nrow);
+  }
 
-      /*doKAT = doJinc = FALSE;*/
-      /* primary beam correction */
-      if (doKAT) {  /* KAT-7 */
-	pbf = ObitPBUtilKAT7 (dist, Freq, 0.0);
-      } else if (doJinc) {
-	pbf = ObitPBUtilJinc (dist, Freq, antSize, 0.0);
-      } else {
-	pbf = ObitPBUtilPoly (dist, Freq, 0.0);
-      } 
-      
-      /* debug
-	 if (pbf>0.9) {
-	 fprintf (stderr,"pdf %f @ %d  %d %lf\n",pbf,ix,iy,dist* RAD2DG*3600.0);
-	 } */
+  /* Do operation */
+  OK = ObitThreadIterator (outImage->thread, nTh, 
+			   (ObitThreadFunc)ThreadImagePBCor,
+			   (gpointer**)threadArgs);
 
-      /* Clip by minGain */
-      if (pbf<minGain) pbf = fblank;
-      
-      /* Save beam image */
-      out[indx] = pbf;
+  /* Check for problems */
+  if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+  /* */
 
-    } /* end loop over x */
-  } /* end loop over y */
-  
+  /* Free local objects */
+  KillPBCorFuncArgs(nThreads, threadArgs);
+
+  /* Clip - check invert */
+  if (doInvert && (minGain>1.0e-5)) {
+    ftemp = 1.0 / minGain;
+    ObitFArrayClip(outImage->image, -ftemp, ftemp, fblank);
+  } else if (minGain>1.0e-5) {  /* No invert */
+    ObitFArrayInClip(outImage->image, -minGain, minGain, fblank);
+  }
 
   /* Write output */
   if ((ObitImageWrite (outImage, NULL, err) 
@@ -3012,6 +2969,8 @@ ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
   /* Free image buffer  if not memory resident */
   if (outImage->mySel->FileType!=OBIT_IO_MEM) 
     outImage->image = ObitFArrayUnref(outImage->image);
+  /* Cleanup */
+  bs = ObitBeamShapeUnref(bs);
 
 } /* end  ObitImageUtilPBImage */
 
@@ -3021,6 +2980,8 @@ ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
  * For frequencies < 1 GHz uses the VLA polynomial gain curves,
  * for higher frequencies, it uses a jinc function based on the antenna size.
  * \param pntImage Image with pointing position
+ *     List items:
+ * \li doTab OBIT_bool If True and a tabulated beam available, use it
  * \param outImage Image to be written.  Must be previously instantiated.
  *     List items:
  * \li noff OBIT_long number of offsets
@@ -3041,11 +3002,12 @@ ObitImageUtilOTFBeam (ObitImage *pntImage, ObitImage *outImage,
   ObitInfoType type;
   olong ix, iy, ip, indx, pos[2],noff;
   ofloat inPixel[2], *out, *norma, *RAoff, *Decoff, normc, fblank = ObitMagicF();
-  odouble RAPnt, DecPnt, Freq, ra, dec, xx, yy, zz, dist;
+  odouble RAPnt, DecPnt, Freq, ra, dec, dist;
   odouble offRA, offDec;
   ofloat pbf, equinox;
-  gboolean doJinc, bad, doKAT;
+  gboolean bad, isMeerKAT;
   ObitImageDesc *outDesc;
+  ObitBeamShape *bs=NULL;
   ObitFArray *norm=NULL;
   gchar *routine = "ObitImageUtilOTFBeam";
 
@@ -3094,8 +3056,15 @@ ObitImageUtilOTFBeam (ObitImage *pntImage, ObitImage *outImage,
   }
   pntImage->extBuffer = FALSE;  /* May need buffer later */
 
-  /* Trap telescope, default = VLA */
-  doKAT = !strncmp(pntImage->myDesc->teles, "KAT-7",5); /* Kat-7 */
+   /* Beam shape */
+  bs = ObitBeamShapeCreate ("BS", (ObitImage*)pntImage, minGain, antSize, TRUE);
+  /* Diagnostics */
+  if (err->prtLv>=2) {
+    if (bs->doTab) Obit_log_error(err, OBIT_InfoErr, "Using Tabulated Beam");
+    if (bs->doVLITE) Obit_log_error(err, OBIT_InfoErr, "Using VLITE Beam");
+    isMeerKAT = !strncmp(pntImage->myDesc->teles, "MeerKAT",7); /* MeerKAT? */
+    if (isMeerKAT) Obit_log_error(err, OBIT_InfoErr, "Using MeerKAT Beam");
+  }
 
   /* Do I/O by plane and all of plane */
   IOBy = OBIT_IO_byPlane;
@@ -3148,8 +3117,7 @@ ObitImageUtilOTFBeam (ObitImage *pntImage, ObitImage *outImage,
   outDesc->plane = outPlane[0];
   Freq = ObitImageMFGetPlaneFreq(outImage);
   if (Freq<=0.0) Freq = 1.0e9;
-   /* which beam model to use */
-  doJinc = (Freq >= 1.0e9);
+  ObitBeamShapeSetFreq(bs, Freq);  /* Set frequency */
 
  /* Loop over pointings */
   for (ip=0; ip<noff; ip++) {
@@ -3182,30 +3150,13 @@ ObitImageUtilOTFBeam (ObitImage *pntImage, ObitImage *outImage,
 	}
 	
 	/* Separation from pointing center */
-	xx = DG2RAD * ra;
-	yy = DG2RAD * dec;
-	zz = sin (yy) * sin (offDec) + cos (yy) * cos (offDec) * cos (xx-offRA);
-	zz = MIN (zz, 1.000);
-	dist = acos (zz) * RAD2DG;
+	dist = ObitBeamShapeAngle(bs, ra, dec, 0.0);
 	
-	/*doKAT = doJinc = FALSE;*/
 	/* primary beam correction */
-	if (doKAT) {  /* KAT-7 */
-	  pbf = ObitPBUtilKAT7 (dist, Freq, 0.0);
-	} else if (doJinc) {
-	  pbf = ObitPBUtilJinc (dist, Freq, antSize, 0.0);
-	} else {
-	  pbf = ObitPBUtilPoly (dist, Freq, 0.0);
-	} 
-	
-	/* debug
-	   if (pbf>0.9) {
-	   fprintf (stderr,"pdf %f @ %d  %d %lf\n",pbf,ix,iy,dist* RAD2DG*3600.0);
-	   } */
-	
+	pbf = ObitBeamShapeGainSym (bs, dist);
 	/* Clip by minGain */
 	if (pbf<minGain) pbf = fblank;
-	
+      
 	/* Save beam image */
 	if (pbf!=fblank)  {out[indx] += pbf; norma[indx] += 1.0;}
 	
@@ -3237,6 +3188,9 @@ ObitImageUtilOTFBeam (ObitImage *pntImage, ObitImage *outImage,
   /* Free image buffer  if not memory resident */
   if (outImage->mySel->FileType!=OBIT_IO_MEM) 
     outImage->image = ObitFArrayUnref(outImage->image);
+
+  /* Cleanup */
+  bs = ObitBeamShapeUnref(bs);
 
   } /* end  ObitImageUtilOTFBeam */
 
@@ -3276,11 +3230,9 @@ void ObitImageUtilImagParm (ofloat MaxBL, ofloat MaxW,
     /* Maximum field size in radians */
     maxfr = 0.33 * sqrt (hpbw);
     /* Correct by sqrt ratio of MaxBL to  MaxW */
-    /*DEBUGmaxfr = maxfr * MaxBL / MaxW; */
     maxfr = maxfr * sqrt(MaxBL / MaxW);
     /*  Assume circular clean beam - Undisturbed field size */
     *Radius =  maxfr*RAD2AS / (*Cells) + 0.5;
-    /*DEBUG *Radius =  (0.5 * maxfr*RAD2AS) / (*Cells) + 0.5;*/
   }
 
 } /* end ObitImageUtilImagParm */
@@ -3418,9 +3370,6 @@ ObitImage* ObitImageUtilQuanFITS (ObitImage *inImage, gchar *fileName,
   quant = -1.0;
   ObitInfoListGetTest(inImage->info, "quant", &type, dim, &quant);
 
-  /* DEBUG
-     fprintf (stderr, "DEBUG %s factor %f quant %f\n",routine, factor, quant); */
-
   /* Do I/O by plane (but keep any blc, trc) */
   IOBy = OBIT_IO_byPlane;
   dim[0] = 1;
@@ -3429,8 +3378,6 @@ ObitImage* ObitImageUtilQuanFITS (ObitImage *inImage, gchar *fileName,
 
   /* Need statistics? */
   if (quant<=0.0) {
-    /* DEBUG 
-    fprintf (stderr, "DEBUG %s getting statistics\n",routine);*/
 
     /* Open input image */
     iretCode = ObitImageOpen (inImage, OBIT_IO_ReadOnly, err);
@@ -3474,8 +3421,6 @@ ObitImage* ObitImageUtilQuanFITS (ObitImage *inImage, gchar *fileName,
 
   /* Set bitpix based on the dynamic range needed */
   dr = MAX (fabs(maxMax), fabs(minMin)) / quant;
-  /* DEBUG 
-     fprintf (stderr, "DEBUG %s dynamic range %f range %f %f\n",routine, dr,maxMax, minMin );*/
   if (dr < 32760.0)  bitpix = 16;
   else if (dr < 2147483600.0) bitpix = 32;
   else { /* Can't write as integer */
@@ -5947,4 +5892,156 @@ static void SetConvKernal3 (ofloat Target, olong npln, olong hwidth,
      for (i=0; i<iwid; i++) Kernal[i] *= prod;
   }
 } /* end SetConvKernal3 */
+
+/**
+ * Fill Primary beam array
+ * Callable as thread
+ * \param arg Pointer to InterpFuncArg argument with elements:
+ * \li thread   ObitThread object to be used for interpolator
+ * \li ithread  thread number, <0 -> no threading
+ * \li bs       Beam Shape object to use
+ * \li outDesc  output image descriptor
+ * \li outArr   Array to fill
+ * \li doInvert Invert beam factor?
+ * \li err      Obit error stack object.
+ * \li first    First (1-rel) row in image to process this thread
+ * \li last     Highest (1-rel) row in image to process this thread
+ * \li thread   thread Object
+ * \return NULL
+ */
+static gpointer ThreadImagePBCor (gpointer args)
+{
+  /* Get arguments from structure */
+  PBCorFuncArg *largs = (PBCorFuncArg*)args;
+  ObitFArray *outArr    = largs->outArr;
+  ObitImageDesc *outDesc= largs->outDesc;
+  ObitBeamShape *bs     = largs->bs;
+  gboolean   doInvert   = largs->doInvert;
+  olong      loRow      = largs->first-1;
+  olong      hiRow      = largs->last-1;
+  ObitErr    *err       = largs->err;
+  ObitThread *thread    = largs->thread;
+  /* local */
+  olong ix, iy, indx, pos[2];
+  ofloat *out, fblank =  ObitMagicF();
+  odouble ra, dec, dist;
+  ofloat pbf, inPixel[2];
+  gboolean bad=FALSE;
+  gchar *routine = "ThreadImagePBCor";
+
+  /* Previous error? */
+  if (err->error) goto finish;
+
+
+  /* Loop over image  */
+  for (iy = loRow; iy<=hiRow; iy++) { /* loop in y */
+    inPixel[1] = (ofloat)iy;
+    /* Get output aray pointer */
+    pos[0] = 0; pos[1] = iy;
+    out = ObitFArrayIndex (outArr, pos);
+    for (ix = 0; ix<=outArr->naxis[0]; ix++) {/* loop in x */
+      inPixel[0] = (ofloat)ix;
+      /* array index in in and out for this pixel */
+      indx = (ix-1);
+
+      /* Convert pixel to position */
+      bad = 
+	ObitSkyGeomWorldPos(inPixel[0], inPixel[1],
+			    outDesc->crval[outDesc->jlocr], outDesc->crval[outDesc->jlocd],
+			    outDesc->crpix[outDesc->jlocr], outDesc->crpix[outDesc->jlocd],
+			    outDesc->cdelt[outDesc->jlocr], outDesc->cdelt[outDesc->jlocd],
+			    outDesc->crota[outDesc->jlocd], &outDesc->ctype[outDesc->jlocr][4],
+			    &ra, &dec);
+      if (bad!=0) {  /* Oh bother! */
+	ObitThreadLock(thread);  /* Lock against other threads */
+	Obit_log_error(err, OBIT_Error, 
+		       "%s: Error %d determining location of pixel", routine, bad);
+	ObitThreadUnlock(thread); 
+	goto finish;
+      }
+      
+      /* Separation from pointing center */
+      dist = ObitBeamShapeAngle(bs, ra, dec, 0.0);
+
+      /* primary beam correction */
+      pbf = ObitBeamShapeGainSym (bs, dist);
+      if (doInvert && (fabs(pbf)>1.0e-3) && (pbf!=fblank)) pbf = 1.0/pbf;  /* Invert? */
+      
+      /* Save beam image */
+      out[indx] = pbf;
+
+    } /* end loop over x */
+  } /* end loop over y */
+  
+
+  /* Indicate completion */
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+} /* ThreadImagePBCor */
+
+/**
+ * Make arguments for Threaded ThreadImagePBCor
+ * \param thread     ObitThread object to be used for interpolator
+ * \param bs         Beam Shape object to use
+ * \param outDesc    output image descriptor
+ * \param outArr     Array to fill
+ * \param doInvert   Invert beam factor?
+ * \param outDesc    output image descriptor
+ * \param err        Obit error stack object.
+ * \param ThreadArgs[out] Created array of PBCorFuncArg, 
+ *                   delete with KillPBCorFuncArgs
+ * \return number of elements in args (number of allowed threads).
+ */
+static olong MakePBCorFuncArgs (ObitThread *thread, 
+				ObitBeamShape *bs, ObitImageDesc *outDesc, 
+				ObitFArray *outArr, gboolean doInvert,
+				ObitErr *err, PBCorFuncArg ***ThreadArgs)
+{
+  olong i, nThreads;
+
+  /* Setup for threading */
+  /* How many threads? */
+  nThreads = MAX (1, ObitThreadNumProc(thread));
+
+  /* Initialize threadArg array */
+  *ThreadArgs = g_malloc0(nThreads*sizeof(PBCorFuncArg*));
+  for (i=0; i<nThreads; i++) 
+    (*ThreadArgs)[i] = g_malloc0(sizeof(PBCorFuncArg)); 
+  for (i=0; i<nThreads; i++) {
+    (*ThreadArgs)[i]->outDesc  = ObitImageDescRef(outDesc);
+    (*ThreadArgs)[i]->outArr   = ObitFArrayRef(outArr);
+    (*ThreadArgs)[i]->bs       = ObitBeamShapeCopy(bs, NULL, err);
+    (*ThreadArgs)[i]->ithread  = i;
+    (*ThreadArgs)[i]->thread   = thread;
+    (*ThreadArgs)[i]->err      = err;
+    (*ThreadArgs)[i]->first    = 1;
+    (*ThreadArgs)[i]->last     = outDesc->inaxes[1];
+  }
+
+  return nThreads;
+} /*  end MakePBCorImageArgs */
+
+/**
+ * Delete arguments for ThreadImagePBCor
+ * \param nargs      number of elements in args.
+ * \param ThreadArgs Array of PBCorFuncArg
+ */
+static void KillPBCorFuncArgs (olong nargs, PBCorFuncArg **ThreadArgs)
+{
+  olong i;
+
+  if (ThreadArgs==NULL) return;
+  for (i=0; i<nargs; i++) {
+    if (ThreadArgs[i]) {
+      if (ThreadArgs[i]->outDesc)  ObitImageDescUnref(ThreadArgs[i]->outDesc);
+      if (ThreadArgs[i]->outArr)   ObitFArrayUnref(ThreadArgs[i]->outArr);
+      if (ThreadArgs[i]->bs)       ObitBeamShapeUnref(ThreadArgs[i]->bs);
+      g_free(ThreadArgs[i]);
+    }
+  }
+  g_free(ThreadArgs);
+} /*  end KillPBCorFuncArgs */
 

@@ -30,7 +30,7 @@ possibly as a side effect of setting $LD_LIBRARY_PATH or $PATH).
    The first step of installation is obtain a version of the software
 from the subversion server, e.g.:
 
- > svn checkout https://svn.cv.nrao.edu/svn/ObitInstall/
+ > svn checkout https://github.com/bill-cotton/Obit
 
 This will leave the installation under subdirectory ObitInstall
 The installation scripts are in, and should be run from subdirectory 

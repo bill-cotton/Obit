@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageMF type                           */
 /*                                                                    */
-/*;  Copyright (C) 2010-2016                                          */
+/*;  Copyright (C) 2010-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -192,6 +192,10 @@ extern void ImageMFFitSpec (ObitImageMF* in, float antSize, ObitErr* err) {
 
 extern void ImageMFFitSpec2 (ObitImageMF* in, ObitImageMF* out, ObitErr* err) {
   ObitImageMFFitSpec2 (in, out, err);
+}
+
+extern void ImageMFEffFqCorr (ObitImageMF* in, ObitImageMF* in2, ObitErr* err) {
+  ObitImageMFEffFqCorr (in, in2, err);
 }
 
 %}

@@ -1,0 +1,102 @@
+Instructions for migrating a working Obit from source
+
+   The principal Obit repository has been moved from an NRAO
+subversion server to GitHub.  The Obit on the NRAO server has been
+frozen and the new server is at URL
+https://github.com/bill-cotton/Obit. 
+The GitHub server is intrinsically a git repository but has a really
+credible subversion emulation; also git updates require a password and
+svn doesn't.  The following describes how to migrate from the NRAO
+server to GitHub after which the previous subversion comands should
+still work.
+
+   If your current installation of Obit works, you have a choice of
+installing the new version and 1) going through the configure/build
+process, or 2) copying the relevant Makefiles, scripts, third party
+software, etc and changing path names.  The following describes the
+latter.  Examples in the following are given in tcsh and can be cut
+and pasted into a tcsh unix shell.
+
+First you need to checkout a version of Obit from GitHub, cd to where
+you want it installed.  Note: DO NOT delete your old version before
+finishing the migration.  Subversion checkout is by:
+> svn co https://github.com/bill-cotton/Obit
+This will create an Obit directory tree starting with Obit/trunk
+In the following $OBITOLD points to your old version of Obit, e.g.
+> setenv OBITOLD /export/ssd/bcotton/SVN/ObitInstall/
+and $OBITNEW to the trunk directory, e.g.
+> setenv OBITNEW /export/raid_2/bcotton/GitObit/Obit/trunk/
+
+In the top directory are the scripts and the "other" directory with
+third party software.  If your current build uses software from the
+other directory tree, copy the relevant directories:
+
+cp -p -r $OBITOLD/other/include $OBITNEW/other/include 
+cp -p -r $OBITOLD/other/lib $OBITNEW/other/lib
+cp -p -r $OBITOLD/other/bin $OBITNEW/other/bin
+cp -p -r $OBITOLD/other/man $OBITNEW/other/man
+cp -p -r $OBITOLD/other/share $OBITNEW/other/share
+
+The first two are the most critical.  If none exist then you're
+unlikely to be using them.
+
+The following steps need a macro that uses sed to change directory
+names in files,  the following changes the string in $OBITOLD to the
+one in $OBITNEW, create one for your case
+
+setenv rename "sed s#$OBITOLD#$OBITNEW#g"
+
+Then
+
+cp -p -r $OBITOLD/opt $OBITNEW/opt
+cp -p -r $OBITOLD/bin $OBITNEW/bin
+
+several of the scripts in the bin directory (ObitTalk, ObitTalkServer)
+need  internal changes to point to the new directories.  You can use
+this macro to modify any of your setup scripts.
+
+$rename $OBITOLD/bin/ObitTalk > $OBITNEW/bin/ObitTalk
+$rename $OBITOLD/bin/ObitTalkServer > $OBITNEW/bin/ObitTalkServer
+
+Then work on the ObitSystem directory.
+
+cp -p -r $OBITOLD/ObitSystem/doc $OBITNEW/ObitSystem/doc 
+
+It's not critical that this exists.
+
+# ObitSystem/ObitView
+$rename $OBITOLD/ObitSystem/ObitView/Makefile > $OBITNEW/ObitSystem/ObitView/Makefile
+$rename $OBITOLD/ObitSystem/ObitView/src/Makefile > $OBITNEW/ObitSystem/ObitView/src/Makefile
+
+# ObitSystem/ObitTalk
+$rename  $OBITOLD/ObitSystem/ObitTalk/Makefile > $OBITNEW/ObitSystem/ObitTalk/Makefile
+$rename  $OBITOLD/ObitSystem/ObitTalk/bin/Makefile > $OBITNEW/ObitSystem/ObitTalk/bin/Makefile
+$rename  $OBITOLD/ObitSystem/ObitTalk/doc/Makefile > $OBITNEW/ObitSystem/ObitTalk/doc/Makefile
+$rename  $OBITOLD/ObitSystem/ObitTalk/config.status > $OBITNEW/ObitSystem/ObitTalk/config.status
+
+# ObitSystem/Obit
+$rename $OBITOLD/ObitSystem/Obit/Makefile > $OBITNEW/ObitSystem/Obit/Makefile
+$rename $OBITOLD/ObitSystem/Obit/src/Makefile > $OBITNEW/ObitSystem/Obit/src/Makefile
+$rename $OBITOLD/ObitSystem/Obit/tasks/Makefile > $OBITNEW/ObitSystem/Obit/tasks/Makefile
+$rename $OBITOLD/ObitSystem/Obit/python/Makefile > $OBITNEW/ObitSystem/Obit/python/Makefile
+$rename $OBITOLD/ObitSystem/Obit/dummy_cfitsio/Makefile > $OBITNEW/ObitSystem/Obit/dummy_cfitsio/Makefile
+$rename $OBITOLD/ObitSystem/Obit/dummy_xmlrpc/Makefile > $OBITNEW/ObitSystem/Obit/dummy_xmlrpc/Makefile
+cp -p -r $OBITOLD/ObitSystem/Obit/python/python.swg $OBITNEW/ObitSystem/Obit/python/python.swg
+
+# Any special Makefiles needed for AVX, GPUs etc also should be copied
+
+# ObitSystem/ObitSD
+$rename $OBITOLD/ObitSystem/ObitSD/Makefile > $OBITNEW/ObitSystem/ObitSD/Makefile
+$rename $OBITOLD/ObitSystem/ObitSD/src/Makefile > $OBITNEW/ObitSystem/ObitSD/src/Makefile 
+$rename $OBITOLD/ObitSystem/ObitSD/tasks/Makefile > $OBITNEW/ObitSystem/ObitSD/tasks/Makefile
+$rename $OBITOLD/ObitSystem/ObitSD/python/Makefile > $OBITNEW/ObitSystem/ObitSD/python/Makefile
+$rename $OBITOLD/ObitSystem/ObitSD/test/Makefile > $OBITNEW/ObitSystem/ObitSD/test/Makefile
+cp -p -r $OBITOLD/ObitSystem/ObitSD/python/python.swg $OBITNEW/ObitSystem/ObitSD/python/python.swg
+
+Any special Makefiles needed for AVX, GPUs etc also should be copied
+
+After these steps a "make clean all" should rebuild the system and
+"svn update" can be used for subsequent updates.
+
+Bill Cotton
+March 2017

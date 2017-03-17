@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2016                                          */
+/*;  Copyright (C) 2003-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -472,13 +472,14 @@ ObitIOCode ObitIOImageAIPSClose (ObitIOImageAIPS *in, ObitErr *err)
 ObitIOCode ObitIOImageAIPSSet (ObitIOImageAIPS *in, ObitInfoList *info, 
 			       ObitErr *err)
 {
+  ObitImageSel* sel=(ObitImageSel*)in->mySel;
   /* Reset values in descriptor */
-  ((ObitImageDesc*)in->myDesc)->plane  = 0;
-  ((ObitImageDesc*)in->myDesc)->plane4 = 0;
-  ((ObitImageDesc*)in->myDesc)->plane5 = 0;
-  ((ObitImageDesc*)in->myDesc)->plane6 = 0;
-  ((ObitImageDesc*)in->myDesc)->plane7 = 0;
-  ((ObitImageDesc*)in->myDesc)->row    = 0;
+  ((ObitImageDesc*)in->myDesc)->plane  = sel->blc[2]-1;
+  ((ObitImageDesc*)in->myDesc)->plane4 = sel->blc[3]-1;
+  ((ObitImageDesc*)in->myDesc)->plane5 = sel->blc[4]-1;
+  ((ObitImageDesc*)in->myDesc)->plane6 = sel->blc[5]-1;
+  ((ObitImageDesc*)in->myDesc)->plane7 = sel->blc[6]-1;
+  ((ObitImageDesc*)in->myDesc)->row    = sel->blc[1]-1;
 
   return OBIT_IO_OK;
 } /* end ObitIOImageAIPSSet */

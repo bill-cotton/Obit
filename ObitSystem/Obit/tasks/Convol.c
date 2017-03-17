@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Convol Obit task convolve an image with another image or a model   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2016                                          */
+/*;  Copyright (C) 2006-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -944,6 +944,7 @@ void doHistory (ObitInfoList *myInput, ObitImage *inImage,
   inHistory  = newObitDataHistory ((ObitData*)inImage, OBIT_IO_ReadOnly, err);
   outHistory = newObitDataHistory ((ObitData*)outImage, OBIT_IO_WriteOnly, err);
   ObitHistoryCopyHeader (inHistory, outHistory, err);
+  ObitHistoryCopy (inHistory, outHistory, err);
   if (err->error) Obit_traceback_msg (err, routine, inImage->name);
   
   /* Add this programs history */
