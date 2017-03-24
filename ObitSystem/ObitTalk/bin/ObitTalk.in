@@ -38,4 +38,9 @@ fi
 PYTHONSTARTUP=@datadir@/python/ObitTalk.py
 export PYTHONPATH PYTHONSTARTUP
 
-exec @PYTHON@ "$@"
+# Use distributed or installed python if available, else hope for the best
+if test -f @PYTHON@; then
+    exec @PYTHON@ "$@"
+else
+    exec `/usr/bin/env python $@`
+fi

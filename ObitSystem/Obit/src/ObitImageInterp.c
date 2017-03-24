@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009,2015                                          */
+/*;  Copyright (C) 2009,2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -210,6 +210,8 @@ ObitImageInterp* ObitImageInterpCreate (gchar* name, ObitImage *image,
 					olong hwidth, ObitErr *err)
 {
   ObitImageInterp* out=NULL;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  olong blc[7] = {1,1,1,1,1,1,1}, trc[7] = {0,0,0,0,0,0,0};
   olong nImgFreq, nImgIF, nChIF, naxis[5], nx, ny;
   olong iplane, iFreq, iIF;
   gchar *tname;
@@ -266,6 +268,13 @@ ObitImageInterp* ObitImageInterpCreate (gchar* name, ObitImage *image,
     } /* end loop over channel */
   } /* end loop over IF */
 
+  /* Reset image */
+  dim[0] = 7;
+  ObitInfoListAlwaysPut (image->info, "BLC", OBIT_long, dim, blc); 
+  ObitInfoListAlwaysPut (image->info, "TRC", OBIT_long, dim, trc);
+  ObitImageOpen(image, OBIT_IO_ReadOnly, err);
+  ObitImageClose(image, err);
+  if (err->error) Obit_traceback_val (err, routine, image->name, out);
  return out;
 } /* end ObitImageInterpCreate */
 

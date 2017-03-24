@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Feather Obit task - Feathers together images            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2015                                          */
+/*;  Copyright (C) 2005-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -916,6 +916,7 @@ void doHistory (olong numImage, ObitImage *inImage[], ObitImage *outImage,
   inHistory  = newObitDataHistory ((ObitData*)inImage[0], OBIT_IO_ReadOnly, err);
   outHistory = newObitDataHistory ((ObitData*)outImage, OBIT_IO_WriteOnly, err);
   ObitHistoryCopyHeader (inHistory, outHistory, err);
+  ObitHistoryCopy (inHistory, outHistory, err);
   if (err->error) Obit_traceback_msg (err, routine, inImage[0]->name);
   
   /* Add this programs history */

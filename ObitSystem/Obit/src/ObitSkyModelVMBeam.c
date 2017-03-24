@@ -776,6 +776,7 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
   xr  = cos (curPA);
   xi  = sin (curPA);
   curPA *= RAD2DG;  /* To deg */
+  /* curPA += 180.0;   Not sure why */
 
   /* Which antennas are EVLA ? */
   if (in->isEVLA==NULL) {
@@ -851,6 +852,7 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
     }
     /* Where in the beam? Offsets are from pointing position */
     xx = -ccData[i*lcomp+1];  /* AZ opposite of RA; offsets in beam images are of source */
+    /* ?? xx = ccData[i*lcomp+1];  AZ opposite of RA; offsets in beam images are of source */
     yy =  ccData[i*lcomp+2];
     /* Scale by ratio of frequency to beam image ref. frequency */
     x = (odouble)xx * fscale;
@@ -866,30 +868,45 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
     rPBCor = sqrt(PBCor);
 
     /* Interpolate gains - RR and LL (XX, YY) as power gains, images voltage */
-    RXpol = bmNorm*ObitImageInterpValueInt (in->RXBeam, args->BeamRXInterp, x, y, curPA+180., plane, err);
+    RXpol = bmNorm*ObitImageInterpValueInt (in->RXBeam, args->BeamRXInterp, x, y, curPA, plane, err);
     if ((RXpol==fblank) || (fabs(RXpol)<0.001) || (fabs(RXpol)>1.1)) RXpol = 1.0;
     if (in->RXBeamPh)
-      RXpolPh = DG2RAD*ObitImageInterpValueInt (in->RXBeamPh, args->BeamRXPhInterp, x, y, curPA+180., plane, err);
-    LYpol = bmNorm*ObitImageInterpValueInt (in->LYBeam, args->BeamLYInterp, x, y, curPA+180., plane, err);
+      RXpolPh = DG2RAD*ObitImageInterpValueInt (in->RXBeamPh, args->BeamRXPhInterp, x, y, curPA, plane, err);
+    LYpol = bmNorm*ObitImageInterpValueInt (in->LYBeam, args->BeamLYInterp, x, y, curPA, plane, err);
     if ((LYpol==fblank) || (fabs(LYpol)<0.001) || (fabs(LYpol)>01.1)) LYpol = 1.0;
     if (in->LYBeamPh)
-      LYpolPh = DG2RAD*ObitImageInterpValueInt (in->LYBeamPh, args->BeamLYPhInterp, x, y, curPA+180., plane, err);
+      LYpolPh = DG2RAD*ObitImageInterpValueInt (in->LYBeamPh, args->BeamLYPhInterp, x, y, curPA, plane, err);
     /* Multiply by complex conjugate to get power gain 
        Phases given? - can't have an effect */
     if (in->RXBeamPh && in->LYBeamPh) {
       tr = (PBCor/(RXpol * RXpol))*cos(RXpolPh); ti = (PBCor/(RXpol * RXpol))*sin(RXpolPh);
-      /* Note swap */
-      Lgain[i]  = (tr*tr - ti*ti);
-      Lgaini[i] =  tr*ti - tr*ti;  /* Doh! */
-      tr = (PBCor/(LYpol * LYpol))*cos(LYpolPh); ti = (PBCor/(LYpol * LYpol))*sin(LYpolPh);
+      /* DEBUG tr = (iPBCor*(LYpol * LYpol))*cos(LYpolPh); ti = (iPBCor * (LYpol * LYpol))*sin(LYpolPh);*/
       Rgain[i]  = (tr*tr - ti*ti);
+      Rgaini[i] =  tr*ti - tr*ti;  /* Doh! */
+      tr = (PBCor/(LYpol * LYpol))*cos(LYpolPh); ti = (PBCor/(LYpol * LYpol))*sin(LYpolPh);
+      /* DEBUG tr = (iPBCor * (RXpol * RXpol))*cos(RXpolPh); ti = (iPBCor * (RXpol * RXpol))*sin(RXpolPh);*/
+      Lgain[i]  = (tr*tr - ti*ti);
       Lgaini[i] =  tr*ti - tr*ti;
+      /* Don't know about this - assumes R/L */
+      ti = 0.5*(Rgain[i] + Lgain[i]);     /* Stokes I correction */
+      tr = 0.5*(Rgain[i] - Lgain[i]);         /* Stokes V correction */
+      /* tr =  0.5*(Lgain[i] - Rgain[i]);   Stokes V correction (note swap, not sure why) */
+      Rgain[i]  = ti + tr;
+      Lgain[i]  = ti - tr; 
     } else { /* no phase */
-      /* This seems to work for circular feeds (note swap) */
-      Lgain[i]  = PBCor/(RXpol * RXpol);
-      Rgain[i]  = PBCor/(LYpol * LYpol);
+      /* This seems to work for circular feeds (note swap, not sure why) */
+      Rgain[i]  = PBCor/(RXpol * RXpol);
+      Lgain[i]  = PBCor/(LYpol * LYpol);
+      /*???Rgain[i]  = RXpol * RXpol * iPBCor;
+	Lgain[i]  = LYpol * LYpol * iPBCor;*/
       Rgaini[i] = 0.0;
       Lgaini[i] = 0.0;
+      /* Don't know about this - assumes R/L */
+      ti = 0.5*(Rgain[i] + Lgain[i]);     /* Stokes I correction */
+      /* ti = 1.0; ???*/
+      tr = 0.5*(Rgain[i] - Lgain[i]);     /* Stokes V correction */
+      Rgain[i]  = ti + tr;
+      Lgain[i]  = ti - tr; 
     }
     if (fabs(PBCor)<0.01) {
       Rgain[i] = 1.0; Rgaini[i] = 0.0;
@@ -901,16 +918,19 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
 	/* Using phase beam- really doesn't matter */
 	Rgain[i]  = PBCor/(RXpol * RXpol);
 	Lgain[i]  = PBCor/(LYpol * LYpol);
+	/* DEBUG Rgain[i]  = RXpol * RXpol * iPBCor;
+	   Lgain[i]  = LYpol * LYpol * iPBCor;*/
 	ti = 0.5*(Rgain[i] + Lgain[i]);  /* Stokes I correction */
-	tr = 0.5*(Rgain[i] - Lgain[i]);  /* Stokes V correction */
+	tr = 0.5*(Rgain[i] - Lgain[i]);      /* Stokes V correction */
 	Rgain[i]  = ti + tr;
 	Lgain[i]  = ti - tr; 
       } else { /* no phase */
+	/* DEBUG Rgain[i]  = iPBCor*(RXpol * RXpol);
+	   Lgain[i]  = iPBCor*(LYpol * LYpol);*/
 	Rgain[i]  = PBCor/(RXpol * RXpol);
 	Lgain[i]  = PBCor/(LYpol * LYpol);
 	ti = 0.5*(Rgain[i] + Lgain[i]);     /* Stokes I correction */
-	/* tr =  0.5*(Rgain[i] - Lgain[i]);    Stokes V correction */
-	tr =  0.5*(Lgain[i] - Rgain[i]);    /* Stokes V correction */
+	tr = 0.5*(Rgain[i] - Lgain[i]);     /* Stokes V correction */
 	Rgain[i]  = ti + tr;
 	Lgain[i]  = ti - tr; 
      }

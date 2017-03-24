@@ -1,6 +1,6 @@
 # $Id: Makefile 2 2008-06-10 15:32:27Z bill.cotton $
 #-----------------------------------------------------------------------
-#;  Copyright (C) 2002-2008
+#;  Copyright (C) 2002-2017
 #;  Associated Universities, Inc. Washington DC, USA.
 #;
 #;  This program is free software; you can redistribute it and/or
@@ -35,16 +35,23 @@
 #------------------------------------------------------------------------
 # targets to build
 TARGETS =  libObitSD.a
+SHTARGETS = libObitSD.so
 
 # list of object modules
 OBJECTS := $(wildcard *.o)
 
 all:  $(TARGETS)
+share: $(SHTARGETS)
 
 #  build Obit library
 libObitSD.a: ${OBJECTS}
 	ar rv libObitSD.a ${OBJECTS}
 	${RANLIB} libObitSD.a
+
+#  build shared Obit library, put in dependencies library
+libObitSD.so: ${OBJECTS}
+	gcc -shared -o libObitSD.so  ${OBJECTS}
+	cp libObitSD.so ../../../deps/lib
 
 clean:
 	rm -f $(TARGETS)
