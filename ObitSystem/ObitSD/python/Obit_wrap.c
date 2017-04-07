@@ -13418,8 +13418,8 @@ extern PyObject* UVVisGet (ObitUV* inUV, ObitErr *err) {
   gint32 dim[MAXINFOELEMDIM];
   gboolean doCalSelect, readMore=TRUE;
   ObitIOCode iretCode;
-  ofloat cbase, *visp=NULL;
-  olong ant1, ant2, suid, fqid, icorr;
+  ofloat *visp=NULL;
+  olong ant1, ant2, suba, suid, fqid, icorr;
   PyObject *vis;
   PyObject *vList, *Cvis, *cx, *tup;
 
@@ -13442,11 +13442,10 @@ extern PyObject* UVVisGet (ObitUV* inUV, ObitErr *err) {
     if (iretCode!=OBIT_IO_OK) return vis;
 
     PyDict_SetItemString(vis, "visNo",  PyInt_FromLong((long)inUV->myDesc->firstVis));
-    cbase = inUV->buffer[inUV->myDesc->ilocb]; /* Baseline */
-    ant1 = (cbase / 256.0) + 0.001;
-    ant2 = (cbase - ant1 * 256) + 0.001;
+    ObitUVDescGetAnts(inUV->myDesc, inUV->buffer, &ant1, &ant2, &suba);
     PyDict_SetItemString(vis, "ant1",    PyInt_FromLong((long)ant1));
     PyDict_SetItemString(vis, "ant2",    PyInt_FromLong((long)ant2));
+    PyDict_SetItemString(vis, "suba",    PyInt_FromLong((long)suba));
     PyDict_SetItemString(vis, "u", PyFloat_FromDouble((double)inUV->buffer[inUV->myDesc->ilocu]));
     PyDict_SetItemString(vis, "v", PyFloat_FromDouble((double)inUV->buffer[inUV->myDesc->ilocv]));
     PyDict_SetItemString(vis, "w", PyFloat_FromDouble((double)inUV->buffer[inUV->myDesc->ilocw]));
@@ -13480,13 +13479,14 @@ extern PyObject* UVVisGet (ObitUV* inUV, ObitErr *err) {
 extern void UVVisSet (PyObject* vis, ObitUV* outUV, ObitErr *err) {
   ObitIOCode oretCode;
   ofloat *visp=NULL;
-  olong ant1, ant2, icorr, len;
+  olong ant1, ant2, suba, icorr, len;
   PyObject *vList, *cx, *tup;
 
 
     ant1 = (olong)PyInt_AsLong(PyDict_GetItemString(vis, "ant1"));
     ant2 = (olong)PyInt_AsLong(PyDict_GetItemString(vis, "ant2"));
-    outUV->buffer[outUV->myDesc->ilocb] = (ofloat)(ant1*256 + ant2);
+    suba = (olong)PyInt_AsLong(PyDict_GetItemString(vis, "suba"));
+    ObitUVDescSetAnts(outUV->myDesc,  outUV->buffer, ant1, ant2, suba);
     outUV->buffer[outUV->myDesc->ilocu] = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(vis, "u"));
     outUV->buffer[outUV->myDesc->ilocv] = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(vis, "v"));
     outUV->buffer[outUV->myDesc->ilocw] = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(vis, "w"));

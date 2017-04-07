@@ -2080,6 +2080,73 @@ of powers of $ln(\nu/\nu_0)$
 \end{history}
 
 \clearpage
+%%%%%%%%%%%%%%% ObitTableCD Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableCD}]
+ObitTableCD Class
+\tabletitle{ ASDM CalDevice table for uv data}
+% table name
+\tablename{CD}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS CD" contains EVLA switched power measurements.TCal measurements
+An ObitTableTY is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"NO\_IF"}{J}{nIF}{}{()}
+{The number of IFs}
+]
+% Must be position 2 to index
+\tablekey[{"NO\_POL "}{J}{nPol}{}{(1,2)}
+{The number of polarizations.}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
+{Reference date as "YYYYMMDD"}
+]
+\tablekey[{"REVISION"}{J}{revision}{1}{}
+{Revision number of the table definition.}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"ANTENNA NO."}{"        " }{J}{(1)}{antennaNo}
+{Antenna number}
+]
+\tablecol[{"SUBARRAY   "}{"        " }{J}{(1)}{SubA}
+{Subarray number}
+] 
+\tablecol[{"FREQ ID  "}{"        " }{J}{(1)}{FreqID}
+{Frequency id of scan}
+] 
+\tablecol[{"TCAL\#NO\_POL"}{"KELVIN  " }{E}{(nIF)}{TCal}
+{Cal. equivalent temp  Poln \# NPOL, invalid data fblanked}
+]
+\tablecol[{"SOLCAL\#NO\_POL"}{"KELVIN  " }{E}{(nIF)}{SolCal}
+{Solar Cal. equivalent temp  Poln \# NPOL, invalid data fblanked}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{09/07/2010}{Revision 1: From EVLA memo}]
+\modhistory[{W. D. Cotton}{04/03/2017}{Add SOLCAL1, SOLCAL2}]
+\end{history}
+%
+\clearpage
 %%%%%%%%%%%%%%% ObitTableCL Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 \ClassName[{ObitTableCL}]

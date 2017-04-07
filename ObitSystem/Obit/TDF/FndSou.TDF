@@ -4,7 +4,7 @@
 ;! fits Gaussians to portions of an image
 ;# Obit Task 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006-2014
+;;  Copyright (C) 2006-2017
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -96,6 +96,7 @@ Parms                              Components constraints
                                    smaller than CLEAN beam
                                    [4] min width of island in pixels
                                    [5] max. false detection rate
+				   [6] Allowed fraction blanked (def 0.1)
 **PARAM** int   1
 RMSsize                            Size of region to determine RMS
 **PARAM** int   1
@@ -211,6 +212,8 @@ Adverbs:
               [5] Target max. fractional false detection rate.
                   If <=0, then the Parms[1] test used instead.
                   See FndSou explain.
+	      [6] if > 0.0, reject components with islands with more 
+                  than a fraction blanked of Parms[6], def = 0.1
   RMSsize.....If > 1, then the half width of a square box centered
               on each source within which to determine the local 
               noise.  This is used when an MF table is converted

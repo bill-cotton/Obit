@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2015                                          */
+/*;  Copyright (C) 2004-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -300,6 +300,8 @@ ObitHistory* ObitHistoryCopy (ObitHistory *in, ObitHistory *out,
   while ((iretCode==OBIT_IO_OK) && (oretCode==OBIT_IO_OK)) {
     iretCode = inClass->ObitIOHistoryReadRec (in->myIO, -1, hiCard, err);
     if (iretCode!=OBIT_IO_OK) break;
+    /* Drop SNPLT records */
+    if (!strncmp(hiCard, "SNPLT", 5)) continue;
     oretCode = outClass->ObitIOHistoryWriteRec (out->myIO, -1, hiCard, err);
   }
   
@@ -375,6 +377,8 @@ ObitIOCode ObitHistoryCopyHeader (ObitHistory *in, ObitHistory *out,
   while ((iretCode==OBIT_IO_OK) && (oretCode==OBIT_IO_OK)) {
     iretCode = ObitFileFITSReadHistory (inFITS, hiCardIn, err);
     if (iretCode!=OBIT_IO_OK) break;
+    /* Drop SNPLT records */
+    if (!strncmp(hiCardIn, "SNPLT", 5)) continue;
     for (i=0; i<80; i++) hiCardOut[i] = ' '; hiCardOut[i] = 0;
     strncpy (hiCardOut, &hiCardIn[8], 70); hiCardOut[71] = 0;
     oretCode = outClass->ObitIOHistoryWriteRec (out->myIO, -1, hiCardOut, err);

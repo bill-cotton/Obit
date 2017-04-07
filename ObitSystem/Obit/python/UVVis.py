@@ -9,12 +9,13 @@
     time = Visibility time in days since 0 h on reference day
     ant1 = antenna 1 of baseline
     ant2 = antenna 2 of baseline
+    suba = subarray number
     suid = Source ID number
     vis  = visibilities as list of (complex, float) (vis, wt)
 """
-# $Id$
+# $Id: UVVis.py 452 2013-06-03 14:40:12Z bill.cotton $
 #-----------------------------------------------------------------------
-#  Copyright (C) 2007,2013
+#  Copyright (C) 2007,2017
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or

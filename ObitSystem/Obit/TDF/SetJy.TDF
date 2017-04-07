@@ -3,7 +3,7 @@
 ;! Task to enter source info into the source (AIPS SU) table.
 ;# TASK CALIBRATION
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007-2015
+;;  Copyright (C) 2007-2017
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -101,9 +101,10 @@ Parms                              [0]: Pixel to which SysVel
                                          values (1990) or,
                                          for 1934-638, the
                                          ATCA value of 30Jul94.
-                                     >= 4 => Perley & Butler 2012
+                                      = 4 => Perley & Butler 2012
                                          3C123, 3C196, 3C286, 
                                          3C295
+                                      >=5 Perley & Butler 2017
                                    [2]: Only for 'CALC' option:
                                         multiply the calculated
                                         fluxes by Parms[2] with
@@ -196,10 +197,32 @@ Adverbs:
                      3 => use oldest VLA determined values
                           (1990) or, for 1934-638, the ATCA
                           value of 30Jul94.
-                   >=4 => Use Perley & Butler 2012 values for
+                     4 => Use Perley & Butler 2012 values for
                           3C123, 3C196, 3C286 and 3C295
                           NB: there are always used for 
 			  3C123, 3C196
+                   >=5 => Use Perley & Butler 2017 
+                          Source       Freq range (GHz)
+                          J0133-3629    0.2-4
+                          3C48         0.05 - 50
+                          Fornax A     0.2 - 0.5
+                          3C123        0.05 - 50
+                          J0444+2809   0.2 - 2.0
+                          3C138        0.2 - 50
+                          Pictor A     0.2 - 4.0
+                          Taurus A     0.05 - 4.0
+                          3C147        0.05 - 50
+                          3C196        0.05 - 50
+                          Hydra A      0.05 - 12
+                          Virgo A      0.05 - 50
+                          3C286        0.05 - 50
+                          3C295        0.05 - 50
+                          Hercules A   0.2 - 12
+                          3C353        0.2 - 4
+                          3C380        0.05 - 50
+                          Cygnus A     0.05 - 12
+                          3C444        0.2 - 12
+                          Cassiopeia A 0.2 -4.
              [2]: Only for 'CALC' option:
                   You may wish to reduce the "official" flux computed
                   from the VLA measurements to account for resolution

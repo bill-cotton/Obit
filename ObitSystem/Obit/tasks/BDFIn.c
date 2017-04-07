@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Read BDF format data, convert to Obit UV                           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2016                                          */
+/*;  Copyright (C) 2010-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2972,7 +2972,7 @@ void HoloUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
   /* Array number (0-rel)*/
   iarr = 0;
 
-  /* Create/ init isHoloRef is necessary */
+  /* Create/ init isHoloRef if necessary */
   if (isHolRef==NULL) {
     isHolRef = g_malloc0((antennaLists[iarr]->number+5)*sizeof(gboolean));
     for (i=0; i<antennaLists[0]->number+5; i++) isHolRef[i] = FALSE;
@@ -3367,7 +3367,7 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ASDMSpectralWindowArray* SpWinArray;
   olong i, j, iRow, oRow, ver, maxAnt, iAnt, jAnt, IFno, cnt;
   olong *antLookup, *SpWinLookup=NULL, *SpWinLookup2=NULL;
-  oint numIF, numPol;
+  oint numIF, numPol, nCal;
   ofloat fblank = ObitMagicF();
   gboolean want;
   ObitIOAccess access;
@@ -3461,9 +3461,11 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 
     /* Blank data in case missing */
     for (i=0; i<numIF; i++) {
-      outRow->TCal1[i] = fblank;
+      outRow->TCal1[i]   = fblank;
+      outRow->SolCal1[i] = fblank;
       if (numPol>1) 
-	outRow->TCal2[i] = fblank;
+	outRow->TCal2[i]   = fblank;
+	outRow->SolCal2[i] = fblank;
   }
     
     /* loop through input table */
@@ -3492,20 +3494,30 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       } else continue;
       
       /* Save to CD table row */
+      nCal = inTab->rows[iRow]->numCalLoad; /* How many sets of cal values */
       /* Both cal values? */
       if (inTab->rows[iRow]->coupledNoiseCal) {
  	outRow->TCal1[IFno] = (ofloat)(inTab->rows[iRow]->coupledNoiseCal[0]);
-	if (numPol>1) 
-	  outRow->TCal2[IFno] = (ofloat)(inTab->rows[iRow]->coupledNoiseCal[1]);
+	if (nCal>1) outRow->SolCal1[IFno] = (ofloat)(inTab->rows[iRow]->coupledNoiseCal[1]);
+	if (numPol>1) {
+	  outRow->TCal2[IFno] = (ofloat)(inTab->rows[iRow]->coupledNoiseCal[1*nCal]);
+	if (nCal>1) outRow->SolCal2[IFno] = (ofloat)(inTab->rows[iRow]->coupledNoiseCal[1+nCal]);
+	}
       } else if (inTab->rows[iRow]->calEff) {
 	/* Apply efficiencies to cal temp? */
 	outRow->TCal1[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[0]*inTab->rows[iRow]->calEff[0]);
-	if (numPol>1) 
-	  outRow->TCal2[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[0]*inTab->rows[iRow]->calEff[1]);
+	if (nCal>1) outRow->SolCal1[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[1]*inTab->rows[iRow]->calEff[0]);
+	if (numPol>1) {
+	  outRow->TCal2[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[1]*inTab->rows[iRow]->calEff[1]);
+	  if (nCal>1) outRow->SolCal2[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[1]*inTab->rows[iRow]->calEff[1]);
+      }
       } else { /* - No efficiency - just single cal */
  	outRow->TCal1[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[0]);
-	if (numPol>1) 
-	  outRow->TCal2[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[0]);
+	if (nCal>1) outRow->SolCal1[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[1]);
+	if (numPol>1) {
+	  outRow->TCal2[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[1]);
+	  if (nCal>1) outRow->SolCal2[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[1]);
+	}
       }
     } /* end loop over input table */
 
@@ -4008,7 +4020,7 @@ void GetOTTInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   g_assert (ObitUVIsA(outData));
 
   /* Any entries? */
-  if (inTab->nrows<=0) return;
+  if ((inTab==NULL) || (inTab->nrows<=0)) return;
 
   /* Print any prior messages */
   ObitErrLog(err);

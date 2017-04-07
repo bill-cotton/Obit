@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2016                                          */
+/*;  Copyright (C) 2007-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -63,6 +63,10 @@ void SetJyHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err);
 /* Calculate source flux density */
 void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
 	       ofloat Flux[4], ObitErr* err);
+/* Calculate source flux density for Perley & Butler 2017 */
+void CalcFluxPB17 (ObitTableSURow* row, ofloat *Parms, odouble Freq,
+		   ofloat Flux[4], ObitErr* err);
+
 
 /* Program globals */
 gchar *pgmName = "SetJy";       /* Program name */
@@ -71,9 +75,9 @@ gchar *outfile = "SetJy.out";   /* File to contain program outputs */
 olong  pgmNumber;       /* Program number (like POPS no.) */
 olong  AIPSuser;        /* AIPS user number number (like POPS no.) */
 olong  nAIPS=0;         /* Number of AIPS directories */
-gchar **AIPSdirs=NULL; /* List of AIPS data directories */
+gchar **AIPSdirs=NULL;  /* List of AIPS data directories */
 olong  nFITS=0;         /* Number of FITS directories */
-gchar **FITSdirs=NULL; /* List of FITS data directories */
+gchar **FITSdirs=NULL;  /* List of FITS data directories */
 ObitInfoList *myInput  = NULL; /* Input parameter list */
 ObitInfoList *myOutput = NULL; /* Output parameter list */
 
@@ -858,7 +862,7 @@ ObitTableSU* SetJyUpdate (ObitUV* inData, ObitErr* err)
 /* so,                                                                    */
 /*   E   = S Log (10) * E                                                 */
 /*    S         e        F                                                */
-/* Last Documented by Glen Langston on 93 March 23                        */
+/* Last Documented by Glen Langston on 93 March 2003                      */
 /*  Adopted from the AIPSish SETJY/GETFLX                                 */
 /*   Input:                                                               */
 /*      row     SU table row describing source                            */
@@ -869,8 +873,10 @@ ObitTableSU* SetJyUpdate (ObitUV* inData, ObitErr* err)
 /*            1 => use Baars values or old ATCA/PKS values for 1934-638   */
 /*            2 => use VLA 1995.2 values or for 1934-638 the ATCA value of*/
 /*                 30Jul94.                                               */
-/*            >= 3 => use oldest VLA values (1990) or,for 1934-638, the   */
+/*            3 => use oldest VLA values (1990) or,for 1934-638, the      */
 /*                 ATCA value of 30Jul94.                                 */
+/*            4 => Perley & Butler 2012 3C123, 3C196, 3C286, 3C295        */
+/*          >=5 => Perley & Butler 2017                                   */
 /*        [2]: Only for 'CALC' option:                                    */
 /*             multiply the calculated fluxes by Parms[2]                 */
 /*      Freq    Frequency                                                 */
@@ -988,6 +994,12 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
   olong j;
   gchar tempName[101];
 
+  /* Perley & Butler 2017 has more coefficients */
+  if (Parms[1]>=4.9) {
+    CalcFluxPB17 (row, Parms, Freq, Flux, err);
+    return;
+  }
+
   /* Name */
   for (j=0; j<16; j++) tempName[j] = row->Source[j]; tempName[j] = 0;
   if (strlen(tempName)<16) {
@@ -1073,3 +1085,272 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
   
 Flux[0] *= Parms[2];  /* Apply fudge factor */
 } /* end CalcFlux */
+
+/*----------------------------------------------------------------------- */
+/*  Calculate calibrator flux density from Perley & Butler 2017           */
+/*  Flux density, S, at frequency, nu, is calculated assuming             */
+/*                                                                        */
+/*   Log  (S) = F  and Log  (nu) = x, and                                 */
+/*      10                10                                              */
+/*                                                                        */
+/*   F  = [ a + b * x + c * x**2 + d * x**3 + e * x**4 + f * x**5         */
+/*                                                                        */
+/*  where  a, b, c, d, e, f are observed parameters.                      */
+/* The error in F as a function of errors in a,b,c and d are              */
+/*                                                                        */
+/*    2      dF 2  2     dF 2  2     dF 2  2     dF 2  2                  */
+/*   E   =  (--)  E   + (--)  E  +  (--)  E  +  (--)  E                   */
+/*    F      da    a     db    b     dc    c     dd    d                  */
+/*                                                                        */
+/* where the dF/da are partial derivatives.  So                           */
+/*                                                                        */
+/*    2       2     2  2     4  2     6  2                                */
+/*   E   =   E   + x  E  +  x  E  +  x  E                                 */
+/*    F       a        b        c        d                                */
+/*                                                                        */
+/* The error in S is                                                      */
+/*                                    F                                   */
+/*           dS             dS      10                F dF                */
+/*   E   =  (--)  E   and  (--) = d --  =  Log (10) 10  -- = S Log (10)   */
+/*    S      dF    F        dF      dF        e         dF        e       */
+/* so,                                                                    */
+/*   E   = S Log (10) * E                                                 */
+/*    S         e        F                                                */
+/* Last Documented by Glen Langston on 93 March 2003                      */
+/*  Adopted from the AIPSish SETJY/GETFLX                                 */
+/*   Input:                                                               */
+/*      row     SU table row describing source                            */
+/*      Parms   User supplied parameters                                  */
+/*       [1]: Only for 'CALC' option:                                     */
+/*            <= 0 => use latest VLA values (1999.2) or, for 1934-638, the*/
+/*               ATCA value of 30Jul94.                                   */
+/*            1 => use Baars values or old ATCA/PKS values for 1934-638   */
+/*            2 => use VLA 1995.2 values or for 1934-638 the ATCA value of*/
+/*                 30Jul94.                                               */
+/*            >= 3 => use oldest VLA values (1990) or,for 1934-638, the   */
+/*                 ATCA value of 30Jul94.                                 */
+/*        [2]: Only for 'CALC' option:                                    */
+/*             multiply the calculated fluxes by Parms[2]                 */
+/*      Freq    Frequency                                                 */
+/*   Output:                                                              */
+/*      Flux[0] Flux density for source at Freq                           */
+/*      err     Obit Error/message stack                                  */
+/*
+  source       alp_0     alp_1    alp_2     alp_3   alp_4   alp_5 chi^2   Freq range (GHz)
+  J0133-3629  1.0440   -0.6619   -0.2252                            267     0.2-4
+  3C48        1.3253   -0.7553   -0.1914   0.0498                   3.1    0.05 - 50
+  Fornax A    2.2175   -0.6606                                       17    0.2 - 0.5
+  3C123       1.8017   -0.7884   -0.1035  -0.0248   0.0090          1.9    0.05 - 50
+  J0444+2809  0.9710   -0.8938   -0.1176                            3.3    0.2 - 2.0
+  3C138       1.0088   -0.4981   -0.1552  -0.0102   0.0223          1.5    0.2 - 50
+  Pictor A    1.9380   -0.7470   -0.0739  -0.0739                   8.1    0.2 - 4.0
+  Taurus A    2.9516   -0.2173   -0.0473  -0.0074                   1.9    0.05 - 4.0
+  3C147       1.4516   -0.6961   -0.2007   0.0640  -0.0464  0.0289  2.2    0.05 - 50
+  3C196       1.2872   -0.8530   -0.1534  -0.0200   0.0201          1.6    0.05 - 50
+  Hydra A     1.7795   -0.9176   -0.0843  -0.0139   0.0295          3.6    0.05 - 12
+  Virgo A     2.4466   -0.8116   -0.0483                            2.0    0.05 - 50
+  3C286       1.2482   -0.4507   -0.1798   0.0357                   1.9    0.05 - 50
+  3C295       1.4701   -0.7658   -0.2780  -0.0347   0.0399          1.6    0.05 - 50
+  Hercules A  1.8298   -1.0247   -0.0951                            2.3    0.2 - 12
+  3C353       1.8627   -0.6938   -0.0998  -0.0732                   2.2    0.2 - 4
+  3C380       1.2320   -0.7909    0.0947   0.0976  -0.1794  -0.1566 2.9    0.05 - 50
+  Cygnus A    3.3498   -1.0022   -0.2246   0.0227   0.0425          1.9    0.05 - 12
+  3C444       1.1064   -1.0052   -0.0750  -0.0767                   5.7    0.2 - 12
+  Cassiopeia A 3.3584  -0.7518   -0.0347  -0.0705                   2.1    0.2 -4.
+Errors
+source         0       1      2       3      4       5
+J0133-3629  0.0010  0.0018  0.0063
+3C48        0.0005  0.0009  0.0011  0.0009
+Fornax A    0.0030  0.0063
+3C123       0.0007  0.0012  0.0023  0.0013  0.0013
+J0444+2809  0.0011  0.0040  0.0096
+3C138       0.0009  0.0022  0.0030  0.0065  0.0031
+Pictor A    0.0010  0.0013  0.0055
+Taurus A    0.0010  0.0032  0.0052  0.0132
+3C147       0.0010  0.0017  0.0050  0.0044  0.0035  0.0025
+3C196       0.0007  0.0012  0.0023  0.0013  0.0013
+Hydra A     0.0009  0.0012  0.0041  0.0014  0.0028
+Virgo A     0.0007  0.0020  0.0027
+3C286       0.0005  0.0009  0.0011  0.0009
+3C295       0.0007  0.0012  0.0023  0.0013  0.0013
+Hercules A  0.0007  0.0012  0.0020
+3C353       0.0010  0.0014  0.0052  0.0047
+3C380       0.0016  0.0037  0.0218  0.0218  0.0597  0.0499
+Cygnus A    0.0010  0.0014  0.0055  0.0021  0.0045
+3C444       0.0009  0.0020  0.0039  0.0051
+CassiopeiaA 0.0010  0.0014  0.0052  0.0047
+*/
+/*----------------------------------------------------------------------- */
+void CalcFluxPB17 (ObitTableSURow* row, ofloat *Parms, odouble Freq,
+		   ofloat Flux[4], ObitErr* err)
+{
+  olong isrc, i;
+  odouble temp2=0.0, dt, ferror, freqg;
+  ofloat ferr;
+
+  /* Source lists */
+ ofloat coeff[20][6] = { 
+   {1.0440,  -0.6619,  -0.2252,  0.0   ,  0.0   , 0.0}, /*   J0133-3629  */
+   {1.3253,  -0.7553,  -0.1914,  0.0498,  0.0   , 0.0}, /*   3C48        */
+   {2.2175,  -0.6606,    0.0  ,  0.0   ,  0.0   , 0.0}, /*   Fornax A    */
+   {1.8017,  -0.7884,  -0.1035, -0.0248,  0.0090, 0.0}, /*   3C123       */
+   {0.9710,  -0.8938,  -0.1176,  0.0   ,  0.0   , 0.0}, /*   J0444+2809  */
+   {1.0088,  -0.4981,  -0.1552, -0.0102,  0.0223, 0.0}, /*   3C138       */
+   {1.9380,  -0.7470,  -0.0739, -0.0739,  0.0   , 0.0}, /*   Pictor A    */
+   {2.9516,  -0.2173,  -0.0473, -0.0074,  0.0   , 0.0}, /*   Taurus A    */
+   {1.4516,  -0.6961,  -0.2007,  0.0640, -0.0464, 0.0}, /*   3C147       */
+   {1.2872,  -0.8530,  -0.1534, -0.0200,  0.0201, 0.0}, /*   3C196       */
+   {1.7795,  -0.9176,  -0.0843, -0.0139,  0.0295, 0.0}, /*   Hydra A     */
+   {2.4466,  -0.8116,  -0.0483,  0.0   ,  0.0   , 0.0}, /*   Virgo A     */
+   {1.2482,  -0.4507,  -0.1798,  0.0357,  0.0   , 0.0}, /*   3C286       */
+   {1.4701,  -0.7658,  -0.2780, -0.0347,  0.0399, 0.0}, /*   3C295       */
+   {1.8298,  -1.0247,  -0.0951,  0.0   ,  0.0   , 0.0}, /*   Hercules A  */
+   {1.8627,  -0.6938,  -0.0998, -0.0732,  0.0   , 0.0}, /*   3C353       */
+   {1.2320,  -0.7909,   0.0947,  0.0976, -0.1794,-0.1}, /*   3C380       */
+   {3.3498,  -1.0022,  -0.2246,  0.0227,  0.0425, 0.0}, /*   Cygnus A    */
+   {1.1064,  -1.0052,  -0.0750, -0.0767,  0.0   , 0.0}, /*   3C444       */
+   {3.3584,  -0.7518,  -0.0347  -0.0705,  0.0   , 0.0}  /*   Cassiopeia A*/
+ };
+
+  /* errors */
+  ofloat coerr[20][6] = {
+    {0.0010, 0.0018, 0.0063, 0.0   , 0.0   , 0.0},    /*  J0133-3629 */
+    {0.0005, 0.0009, 0.0011, 0.0009, 0.0   , 0.0},    /*  3C48       */
+    {0.0030, 0.0063, 0.0   , 0.0   , 0.0   , 0.0},    /*  Fornax A   */
+    {0.0007, 0.0012, 0.0023, 0.0013, 0.0013, 0.0},    /*  3C123      */
+    {0.0011, 0.0040, 0.0096, 0.0   , 0.0   , 0.0},    /*  J0444+2809 */
+    {0.0009, 0.0022, 0.0030, 0.0065, 0.0031, 0.0},    /*  3C138      */
+    {0.0010, 0.0013, 0.0055, 0.0   , 0.0   , 0.0},    /*  Pictor A   */
+    {0.0010, 0.0032, 0.0052, 0.0132, 0.0   , 0.0},    /*  Taurus A   */
+    {0.0010, 0.0017, 0.0050, 0.0044, 0.0035, 0.0025}, /*  3C147      */
+    {0.0007, 0.0012, 0.0023, 0.0013, 0.0013, 0.0},    /*  3C196      */
+    {0.0009, 0.0012, 0.0041, 0.0014, 0.0028, 0.0},    /*  Hydra A    */
+    {0.0007, 0.0020, 0.0027, 0.0   , 0.0   , 0.0},    /*  Virgo A    */
+    {0.0005, 0.0009, 0.0011, 0.0009, 0.0   , 0.0},    /*  3C286      */
+    {0.0007, 0.0012, 0.0023, 0.0013, 0.0013},         /*  3C295      */
+    {0.0007, 0.0012, 0.0020, 0.0   , 0.0},            /*  Hercules A */
+    {0.0010, 0.0014, 0.0052, 0.0047, 0.0   , 0.0},    /*  3C353      */
+    {0.0016, 0.0037, 0.0218, 0.0218, 0.0597, 0.0499}, /*  3C380      */
+    {0.0010, 0.0014, 0.0055, 0.0021, 0.0045, 0.0},    /*  Cygnus A   */
+    {0.0009, 0.0020, 0.0039, 0.0051, 0.0   , 0.0},    /*  3C444      */
+    {0.0010, 0.0014, 0.0052, 0.0047, 0.0   , 0.0}     /*  Cassiopeia A */
+  };
+
+  /* Validity Frequency range */
+  ofloat range[20][2] = { 
+    {0.2,   4.0}, /*   J0133-3629    */
+    {0.05, 50.0}, /*   3C48          */
+    {0.2,   0.5}, /*   Fornax A      */
+    {0.05, 50.0}, /*   3C123         */
+    {0.2,   2.0}, /*   J0444+2809    */
+    {0.2,  50.0}, /*   3C138         */
+    {0.2,   4.0}, /*   Pictor A      */
+    {0.05,  4.0}, /*   Taurus A      */
+    {0.05, 50.0}, /*   3C147         */
+    {0.05, 50.0}, /*   3C196         */
+    {0.05, 12.0}, /*   Hydra A       */
+    {0.05, 50.0}, /*   Virgo A       */
+    {0.05, 50.0}, /*   3C286         */
+    {0.05, 50.0}, /*   3C295         */
+    {0.2,  12.0}, /*   Hercules A    */
+    {0.2,   4.0}, /*   3C353         */
+    {0.05, 50.0}, /*   3C380         */
+    {0.05, 12.0}, /*   Cygnus A      */
+    {0.2,  12.0}, /*   3C444         */
+    {0.2,  4.0}   /*   Cassiopeia A  */
+  };
+
+  /* Source list - aliases */
+  gchar *knosou[] = {
+    "J0133-3629",                                               /* 0 */
+    "3C48",       "0134+329", "0137+331", "J0137+3309", "3c48", /* 1 */
+    "Fornax A",                                                 /* 2 */
+    "3C123",      "0433+295", "0437+296", "J0437+2940", "3c123",/* 3 */
+    "J0444+2809",                                               /* 4 */
+    "3C138",      "0518+165", "0521+166", "J0521+1638", "3c138",/* 5 */
+    "Pictor A",                                                 /* 6 */
+    "Taurus A",                                                 /* 7 */
+    "3C147",      "0538+498", "0542+498", "J0542+4951", "3c147",/* 8 */
+    "3C196",      "0809+483", "0813+482", "J0813+4822", "3c196",/* 9 */
+    "Hydra A",                                                  /* 10 */
+    "Virgo A",    "M87", "3C274", "3c274",                      /* 11 */
+    "3C286",      "1328+307", "1331+305", "J1331+3030", "3c286", "3C 286",/* 12 */
+    "3C295",      "1409+524", "1411+522", "J1411+5212", "3c295",/* 13 */
+    "Hercules A",                                               /* 14 */
+    "3C353  ",    "3c353",                                      /* 15 */
+    "3C380",      "3c380",                                      /* 16 */
+    "Cygnus A",                                                 /* 17 */
+    "3C444",      "3c444",                                      /* 18 */
+    "Cassiopeia A",                                             /* 19 */ 
+    NULL
+  };
+  
+  /* Number of characters to check */
+  olong lenchk[] = {
+  /* 0      1       2        3       4      5      */
+    10,  4,8,8,10,4, 8,  5,8,8,10,5, 10,  5,8,8,10,5,
+  /* 6  7     8           9       10    11           12  */
+    8,  8, 5,8,8,10,5, 5,8,8,10,5, 8,  8,3,5,5,  5,8,8,10,5,5, 
+  /*   13       14  15    16   17 18   19 */
+    5,8,8,10,5, 10, 5,5, 5,5,  8, 5,5,  12
+  };
+  
+  /* Source number 0-rel in coef table */
+  olong ksouno[] = {
+    0,  1,1,1,1,1,  2,  3,3,3,3,3, 4,  5,5,5,5,5,
+    6,  7,  8,8,8,8,8,  9,9,9,9,9, 10, 11,11,11,11, 12,12,12,12,12,12,
+    13,13,13,13,13,  14, 15,15,  16,16,  17,  18,18, 19
+  };
+  
+  olong j;
+  gchar tempName[101];
+  
+  /* Name */
+  for (j=0; j<16; j++) tempName[j] = row->Source[j]; tempName[j] = 0;
+  if (strlen(tempName)<16) {
+    for (j=strlen(tempName); j<16; j++) tempName[j] = ' '; 
+    tempName[j] = 0;
+  }
+  
+  freqg = Freq*1.0e-9;  /* Frequency in GHz */
+  
+  /* Lookup source NULL terminated list */
+  isrc = -1; i = 0;
+  while (knosou[i]) {
+    if (!strncmp(tempName, knosou[i], lenchk[i])) isrc = ksouno[i];
+    i++;
+  }
+  
+  /* Complain if not found */
+  if (isrc<0) {
+    Obit_log_error(err, OBIT_Error, "Unknown Flux calibrator %s", tempName);
+    return;
+  }
+  /* Warn if out of range */
+  if ((freqg<range[isrc][0]) || (freqg>range[isrc][1]))
+     Obit_log_error(err, OBIT_InfoWarn, "Frequency %lf out of range [%f,%f] GHz for %s", 
+		    freqg, range[isrc][0], range[isrc][1], tempName);
+
+  /*  Compute flux */
+  dt = log10 (freqg);
+  temp2 = coeff[isrc][0] + dt * (coeff[isrc][1] + dt * (coeff[isrc][2] + 
+	    dt * (coeff[isrc][3] + dt * (coeff[isrc][4] + dt * (coeff[isrc][5])))));
+  Flux[0] = pow (10.0, temp2);
+
+  /* Error - sum of squares */
+  ferror =  (coerr[isrc][0]*coerr[isrc][0]) +
+    ((coerr[isrc][1]*dt)*(coerr[isrc][1]*dt)) +
+    ((coerr[isrc][2]*dt*dt)*(coerr[isrc][2]*dt*dt)) +
+    ((coerr[isrc][3]*dt*dt*dt)*(coerr[isrc][3]*dt*dt*dt)) +
+    ((coerr[isrc][4]*dt*dt*dt*dt)*(coerr[isrc][4]*dt*dt*dt*dt)) +
+    ((coerr[isrc][5]*dt*dt*dt*dt*dt)*(coerr[isrc][5]*dt*dt*dt*dt*dt));
+  /*  If non-zero error exponent */
+  if (ferror>0.0) {
+    /* sqrt sum of squares * factor */
+    ferror = log(10.) * Flux[0] * sqrt(ferror);
+  }
+  
+  ferr = ferror;/* Convert back to float */
+  
+  Flux[0] *= Parms[2];  /* Apply fudge factor */
+} /* end CalcFluxPB17 */

@@ -3552,3 +3552,80 @@ Obit/share/scripts/EVLAContTemplateParm.py:
 Obit/src/ObitFInterpolate.c:
   Create et al.: Trap 1-D arrays
 2 Mar 2017 svn ver 589
+
+Mostly beam shape bug fixes, move to GitHub
+Obit/src/ObitImageUtil.c:
+  Various, use BeamShape class rather than direct calls
+Obit/src/ObitBeamShape.c:
+  GainSym: include trap for KAT-7
+  Copy/Clone: Add doTab options.
+  Update EVLA C band tabulated beam
+Obit/src/ObitImageMF.c:
+  FitSpec2:  use BeamShape class rather than direct calls
+  MFEffFqCorr: Correct flux density plane for effective frequency 
+Obit/python/ImageUtil.py:
+  PPBImage: fix arguments to ImageUtilPBImage
+Obit/python/ImageMF.py Obit/python/ImageMF.inc:
+Obit/include/ObitImageMF.h:
+  Add PEffFqCorr for effective frequency correction
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  Update python interface
+Obit/src/ObitIOImageFITS.c Obit/src/ObitIOImageAIPS.c:
+  Set: initialize rows, planes to sel BLC values
+Obit/tasks/Convol.c Obit/tasks/SubImage.c:
+  History: Copy input history
+Obit/python/Image.py:
+  GaussFit: Allow higher dimensionality
+Obit/tasks/MapBeam2.c
+  Fix normalization issues
+17 Mar 2017 svn (git) ver 561
+
+Beam shape and other bug fixes
+Obit/changes.log:
+  Update
+Obit/tasks/Feather.c:
+  History: Copy input history
+Obit/src/ObitSkyModelVMBeam.c:
+  Correct interpretation of beam image.
+Obit/src/ObitImageInterp.c:
+  Create: reset input image info
+Obit/../ObitTalk/bin/ObitTalk.in:
+  Better test for python executable
+Obit/lib/Makefile ObitSD/lib/Makefile:
+  Allow shared libraries in binary distro build
+Obit/../ObitVersion:
+  Trigger NRAO update
+24 Mar 2017 svn (git) ver 562
+
+BDFIn, Beam shape and other bug fixes
+Obit/changes.log:
+  Update
+Obit/src/ObitBeamShape.c:
+  Update S & C add X Band beams.
+Obit/src/ObitHistory.c:
+  Don't copy SNPLT records.
+Obit/../ObitVersion:
+  Trigger NRAO update
+Obit/python/UVVis.inc Obit/python/UVVis.py:
+   Fix for Eric's new UV format.
+Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  Update python interface
+Obit/TDF/FndSou.TDF Obit/tasks/FndSou.c
+  Enable setting maximum allowable fraction of island blanked
+Obit/tasks/BDFIn.c:
+  Read Solar Cals if present
+  Holography fixes for bin Pointing table 
+Obit/bin/ObitTables.pl:
+  Update copyright
+Obit/doc/OBITdoc.tex:
+  Add SOLCAL to AIPS CD table
+Obit/src/ObitTableCD.c
+Obit/include/ObitTableCDDef.h Obit/include/ObitTableCDRowDef.h:
+  Add SOLCAL
+Obit/TDF/MFBeam.TDF Obit/tasks/MFBeam.c:
+  Add CLEANFile parameter
+Obit/TDF/SetJy.TDF Obit/tasks/SetJy.c:
+  Implement Perley & Butler 2017
+Obit/src/ObitPointing.c:
+  Better handling of remaining data in buffer reading binary table.
+7 Apr 2017 svn(git) ver 564

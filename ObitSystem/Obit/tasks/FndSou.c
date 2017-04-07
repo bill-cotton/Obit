@@ -1,7 +1,7 @@
 /* $Id$  */
 /* FndSou Obit task - generate source list from image                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2016                                          */
+/*;  Copyright (C) 2006-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1236,6 +1236,7 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
   ObitInfoListGetTest(myInput, "Parms", &type, dim, &Parms);
   minIsland = (olong)(Parms[4]+0.5);
   minIsland = MAX (2, minIsland) - 1;
+  if (Parms[6]<=0.0) Parms[6] = 0.1;  /* Use passed value as blanking limit */
 
    /* Not fitting size? */
   doPoint = TRUE;
@@ -1281,7 +1282,9 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
     if (err->error) Obit_traceback_val (err, routine, image->name, out);
 
     /* Limit blanking allowed */
-    isBlanked = fracBlank>0.1;
+    isBlanked = fracBlank>Parms[6];
+    /* DEBUG
+    if (isBlanked) fprintf (stderr, "fracBlank=%f\n", fracBlank); */
     if (isBlanked) {rejectBlank++; goto doneIsland;}
     
     /* Find anything? */
