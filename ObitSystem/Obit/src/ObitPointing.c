@@ -517,8 +517,9 @@ ObitIOCode ObitPointingFillBuffer (ObitPointing *in, ObitErr *err)
 
   /* error checks */
   if (err->error) return retCode;
-
-  if ((in->fileSize-in->file->filePos) <= 0) return OBIT_IO_EOF;
+  /* There may still be data in buffer 
+     if ((in->fileSize-in->file->filePos) <= 0) return OBIT_IO_EOF;*/
+  if ((in->fileSize-in->file->filePos) <= 0) return retCode;
 
    /* Is it already full? */
   if (in->nBytesInBuffer>=POINTINGBUFFERSIZE*POINTINGBUFFERFRAMES) { /* Yes - shift */

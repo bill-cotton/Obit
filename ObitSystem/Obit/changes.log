@@ -3629,3 +3629,21 @@ Obit/TDF/SetJy.TDF Obit/tasks/SetJy.c:
 Obit/src/ObitPointing.c:
   Better handling of remaining data in buffer reading binary table.
 7 Apr 2017 svn(git) ver 564
+
+Summary: Bug fixes, esp. to BDFIn holography
+Obit/changes.log:
+  Update
+Obit/../ObitVersion:
+  Trigger NRAO update
+Obit/src/ObitPointing.c:
+  Better handling of remaining data in buffer reading binary table.
+  for real this time
+Obit/TDF/Imager.TDF:
+  Change default do3D to False
+Obit/TDF/Squint.TDF Obit/tasks/Squint.c:
+  Add CLEANFile
+Obit/src/ObitSkyModelVMSquint.c:
+  Possible fix to squint angle.
+Obit/tasks/UVSub.c:
+  Fix bugs in input FITS CLEAN model file names
+17 Apr 2017 svn(git) ver 565

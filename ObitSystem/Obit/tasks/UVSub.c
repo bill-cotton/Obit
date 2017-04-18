@@ -1041,6 +1041,7 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitUV *uvdata,
 	/* input FITS file name */
 	if (ObitInfoListGetP(myInput, "in2File", &type, dim, (gpointer)&strTemp)) {
 	  strncpy (inRoot, strTemp, 128);
+	  ObitTrimTrail(inRoot);  /* remove trailing blanks */
 	} else { /* No in2File given */
 	  strncpy (inRoot, "No_Filename_Given", 128);
 	}
@@ -1052,7 +1053,7 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitUV *uvdata,
 	/* Loop over fields */
 	for (i=0; i<nfield; i++) {
 	  /* Set file name */
-	  if (nfield>1) g_snprintf (inFile, 128, "%s%4.4d",inRoot,i);
+	  if (nfield>1) g_snprintf (inFile, 128, "%s%4.4d",inRoot,i+1);
 	  else g_snprintf (inFile, 128, "%s",inRoot);
 	  
 	  /* define object */

@@ -583,7 +583,7 @@ void ObitSkyModelVMSquintUpdateModel (ObitSkyModelVM *inn,
   /* feedPA -= 2.0*curPA; Correct to on sky */
   /* The sign of this angle is not well tested as it only matters to x
      and the source in the test data is due south (y only).*/
-  feedPA = -feedPA; /* Correct to on sky */
+  feedPA = -feedPA;  /*Correct to on sky */
 
   /* Offsets due to beam squint - for LL + for RR */
   dx = squint * sin(feedPA);
@@ -634,7 +634,8 @@ void ObitSkyModelVMSquintUpdateModel (ObitSkyModelVM *inn,
   /* Compute EVLA corrections */
   /* What azimuth is the feed at? */
   feedPA = DG2RAD*FeedAzE (in, uvdata, &squint);
-  feedPA -= curPA; /* Correct to on sky */
+   /*feedPA -= curPA; Correct to on sky */
+  feedPA -= 2.0*curPA; /* Correct to on sky */
 
   /* DEBUG
   squint = 0.0;
@@ -642,7 +643,7 @@ void ObitSkyModelVMSquintUpdateModel (ObitSkyModelVM *inn,
   /* feedPA -= 2.0*curPA; Correct to on sky */
   /* The sign of this angle is not well tested as it only matters to x
      and the source in the test data is due south (y only).*/
-  feedPA = -feedPA; /* Correct to on sky */
+  /* feedPA = -feedPA; Correct to on sky */
 
   /* Offsets due to beam squint - for LL + for RR */
   dx = squint * sin(feedPA);
