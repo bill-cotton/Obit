@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2015                                          */
+/*;  Copyright (C) 2006-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -583,11 +583,11 @@ void ObitSkyModelVMSquintUpdateModel (ObitSkyModelVM *inn,
   /* feedPA -= 2.0*curPA; Correct to on sky */
   /* The sign of this angle is not well tested as it only matters to x
      and the source in the test data is due south (y only).*/
-  feedPA = -feedPA;  /*Correct to on sky */
+  /*feedPA = -feedPA;  Correct to on sky */
 
   /* Offsets due to beam squint - for LL + for RR */
-  dx = squint * sin(feedPA);
-  dy = squint * cos(feedPA);
+  dx = squint * sin(2.0*G_PI-feedPA);
+  dy = squint * cos(2.0*G_PI-feedPA);
 
   npos[0] = 0; npos[1] = 0; 
   ccData = ObitFArrayIndex(in->comps, npos);
@@ -635,19 +635,21 @@ void ObitSkyModelVMSquintUpdateModel (ObitSkyModelVM *inn,
   /* What azimuth is the feed at? */
   feedPA = DG2RAD*FeedAzE (in, uvdata, &squint);
    /*feedPA -= curPA; Correct to on sky */
-  feedPA -= 2.0*curPA; /* Correct to on sky */
+   feedPA -= curPA; /*Correct to on sky */
 
   /* DEBUG
-  squint = 0.0;
-  squint = -squint; *//* ?? */
+  squint = 0.0;*//* ?? */
+  /*squint = -squint;  ?? */
   /* feedPA -= 2.0*curPA; Correct to on sky */
   /* The sign of this angle is not well tested as it only matters to x
      and the source in the test data is due south (y only).*/
   /* feedPA = -feedPA; Correct to on sky */
 
   /* Offsets due to beam squint - for LL + for RR */
-  dx = squint * sin(feedPA);
-  dy = squint * cos(feedPA);
+   dx = squint * sin(2.0*G_PI-feedPA);
+   dy = squint * cos(2.0*G_PI-feedPA);
+   /* DEBUG dx = squint * sin(feedPA);
+      dy = squint * cos(feedPA);*/
 
   npos[0] = 0; npos[1] = 0; 
   ccData = ObitFArrayIndex(in->comps, npos);
@@ -672,13 +674,15 @@ void ObitSkyModelVMSquintUpdateModel (ObitSkyModelVM *inn,
     /* Angle with squint LL */
     /*AngleLL = ObitImageDescAngle(in->mosaic->images[ifield]->myDesc, 
       y-dy, x-dx);*/
-    AngleLL = BeamAngle(in->mosaic->images[ifield]->myDesc, x, y, -dx, -dy);
+    /* DEBUG AngleLL = BeamAngle(in->mosaic->images[ifield]->myDesc, x, y, -dx, -dy);*/
+    AngleLL = BeamAngle(in->mosaic->images[ifield]->myDesc, x, y, dx, dy);
     Lgain[i] = sqrt(ObitPBUtilPntErr (Angle, AngleLL, antsize, pbmin, Freq));
 
     /* Angle with squint RR */
     /* AngleRR = ObitImageDescAngle(in->mosaic->images[ifield]->myDesc, 
        y+dy, x+dx);*/
-    AngleRR = BeamAngle(in->mosaic->images[ifield]->myDesc, x, y, dx, dy);
+    /* DEBUG AngleRR = BeamAngle(in->mosaic->images[ifield]->myDesc, x, y, dx, dy);*/
+    AngleRR = BeamAngle(in->mosaic->images[ifield]->myDesc, x, y, -dx, -dy);
     Rgain[i] = sqrt(ObitPBUtilPntErr (Angle, AngleRR, antsize, pbmin, Freq));
 
     /* DEBUG 
@@ -1542,11 +1546,11 @@ static ofloat FeedAzE (ObitSkyModelVMSquint* in, ObitUV *uvdata,
   /* Get angle by reference frequency */
   if ((Freq>1.0e9) && (Freq<2.0e9)) {
     out = -84.1;   /* EVLA L band measured */
-  } else if ((Freq>2.0e9) && (Freq<3.0e9)) {
+  } else if ((Freq>2.0e9) && (Freq<3.9e9)) {
     out = 101.6;   /* EVLA S band  nominal*/
-  } else if ((Freq>3.0e9) && (Freq<7.0e9)) {
+  } else if ((Freq>3.95e9) && (Freq<7.9e9)) {
     out = 165.6;   /* EVLA C band measured*/
-  } else if ((Freq>7.0e9) && (Freq<12.0e9)) {
+  } else if ((Freq>7.95e9) && (Freq<12.0e9)) {
     out = -156.3;   /* EVLA X band, ant 6,14,22 = 9.7 */
   } else if ((Freq>12.0e9) && (Freq<20.0e9)) {
     out = 47.6;   /* EVLA Ku nominal */

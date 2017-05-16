@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2016                                          */
+/*;  Copyright (C) 2003-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -156,6 +156,7 @@ ObitImage* ObitImageFromFileInfo (gchar *prefix, ObitInfoList *inList,
   olong        trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   gboolean     exist;
   gchar        *keyword=NULL, *DataTypeKey = "DataType", *DataType=NULL;
+  gchar        *DTypeKey="DType";
   gchar        *routine = "ObitImageFromFileInfo";
 
   if (err->error) return out;  /* Previous error? */
@@ -183,7 +184,8 @@ ObitImage* ObitImageFromFileInfo (gchar *prefix, ObitInfoList *inList,
   g_free(keyword);
 
   /* File type - could be either AIPS or FITS */
-  if (prefix) keyword =  g_strconcat (prefix, DataTypeKey, NULL);
+  if (prefix && !strncmp(prefix,"out",3)) keyword =  g_strconcat (prefix, DTypeKey, NULL);
+  else if (prefix) keyword =  g_strconcat (prefix, DataTypeKey, NULL);
   else keyword =  g_strconcat (DataTypeKey, NULL);
   if (!ObitInfoListGetP (inList, keyword, &type, dim, (gpointer)&DataType)) {
     /* Try "DataType" */

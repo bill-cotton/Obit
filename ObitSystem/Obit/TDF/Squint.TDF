@@ -153,7 +153,7 @@ Robust                             Robustness power: -5 -> pure
 doFull                             Make full field (flattened) image?
 **PARAM** boo 1  **DEF** T
 doRestore                          Restore CCs to images?
-**PARAM** boo 1 **DEF** T
+**PARAM** boo 1 **DEF** F
 do3D                               3D imaging, else 2D
 **PARAM** str 48  **DEF** NVSSVZ.FIT
 Catalog                            Outlier catalog name (NVSSVZ.FIT)

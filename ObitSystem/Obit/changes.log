@@ -3647,3 +3647,20 @@ Obit/src/ObitSkyModelVMSquint.c:
 Obit/tasks/UVSub.c:
   Fix bugs in input FITS CLEAN model file names
 17 Apr 2017 svn(git) ver 565
+
+Summary: MeerKAT improvements, Squint and other bug fixes
+Obit/TDF/Squint.TDF Obit/tasks/Squint.c:
+  Change default do3D to False
+Obit/src/ObitSkyModelVMSquint.c:
+  FeedAzE: fix bug in determining band
+Obit/src/ObitImage.c:
+  FromFileInfo: Trap outDType
+Obit/tasks/Faces.c:
+  Make image no bigger than 1024 pixels
+Obit/python/MakeIFs.py
+  Added in place mofification routines
+Obit/python/MeerKATH5toAIPS.py
+  Translate MeerKAT data to AIPS
+Obit/share/data/MKATTemplate.uvtab.gz
+  Template MeerKAT data
+16 May 2017 svn 566

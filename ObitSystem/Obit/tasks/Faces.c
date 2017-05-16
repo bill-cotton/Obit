@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Makes images of catalog sources for initial calibration            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014                                               */
+/*;  Copyright (C) 2014-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -751,6 +751,10 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
 
     /* Get source List for outImage */
     slist =  ParseCat (myInput, outImage, err);
+    /* Check source list */
+    Obit_return_if_fail((slist!=NULL), err,
+			"%s: No entries for %s", routine, 
+			doList->SUlist[isource]->SourceName);
 
     /* Attach to output */
     SouList2TableCC (slist, outImage, CCVer, err);
@@ -901,9 +905,13 @@ ObitImage* getOutputImage (ObitInfoList *myInput, ObitUV* inData,
   ObitInfoListGet(myInput, "CCVer",   &type, dim, &CCVer,   err);
   if (err->error) Obit_traceback_val (err, routine, inData->name, outImage);
   outImage->myDesc->inaxes[outImage->myDesc->jlocr] = 
-    (olong)(0.5 + 2. * FOV / (fabs(xCells)/3600.));
+     (olong)(0.5 + 2. * FOV / (fabs(xCells)/3600.));
+  if (outImage->myDesc->inaxes[outImage->myDesc->jlocr]>1024)
+      outImage->myDesc->inaxes[outImage->myDesc->jlocr] = 1024;
   outImage->myDesc->inaxes[outImage->myDesc->jlocd] = 
     (olong)(0.5 + 2. * FOV / (fabs(yCells)/3600.));
+  if (outImage->myDesc->inaxes[outImage->myDesc->jlocd]>1024)
+      outImage->myDesc->inaxes[outImage->myDesc->jlocd] = 1024;
   outImage->myDesc->crpix[outImage->myDesc->jlocr] = 
     outImage->myDesc->inaxes[outImage->myDesc->jlocr]/2;
   outImage->myDesc->crpix[outImage->myDesc->jlocd] = 

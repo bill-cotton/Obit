@@ -2,7 +2,7 @@
 """
 # $Id: 
 #-----------------------------------------------------------------------
-#  Copyright (C) 2012
+#  Copyright (C) 2012-2017
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -76,157 +76,57 @@ def UVAddIF (inUV, outUV, nIF, err):
     # Update
     outUV.UpdateDesc(err)
     OErr.printErrMsg(err,"Error updating output")
-     # end UVAddIF 
+    print "Any CL tables need to be regenerated"
+    # end UVAddIF 
     
-def DescAddIF (inUV, outUV, nIF, err):
+def UVMakeIF (outUV, nIF, err):
     """ 
-    Update outUV descriptor like inUV but divided into nIF IFs
+    Change number of IFs from 1 to nIF
     
-    
-    * inUV        = input Obit UV object
-    * outUV       = output Obit UV object, defined but not instantiated
+    Operation done in place
+    * outUV       = output Obit UV object
+                    Only really works for AIPS
     * nIF         = number of desired output IFs
                     MUST be the same number of channels per IF
     * err         = Obit error/message stack
     """
     ################################################################
-    inUV.Clone(outUV, err)
-    d = inUV.Desc.Dict
-    # Have IF axis?
-    if d["jlocif"]>=0:
-        jlocif = d["jlocif"]
-    else:  # create one
-        jlocif = d['naxis']
-        d['naxis'] += 1
-        d['ctype'][jlocif] = "IF"
-        d['crval'][jlocif] = 1.0
-        d['crpix'][jlocif] = 1.0
-        d['cdelt'][jlocif] = 1.0
-        d['crota'][jlocif] = 0.0
-        
-    jlocf = d["jlocf"]
-    nchan = d["inaxes"][jlocf]/nIF
-    d["inaxes"][jlocif] = nIF
-    d["inaxes"][jlocf]  = nchan
-    outUV.Desc.Dict = d
-    UV. PGetIODesc(outUV).Dict = d  # And your little dog too
-    # Update
-    outUV.UpdateDesc(err)
-    outUV.Open(UV.WRITEONLY,err)
-    outUV.Close(err)
-    #outUV.Header(err)
-    OErr.printErrMsg(err,"Error converting Descriptor")
-    # end DescAddIF
-    
-def UpdateFQ (inUV, outUV, nIF, err):
-    """ 
-    Convert FQ table in inUV (1 fqid)
-    
-    * inUV        = input Obit UV object
-    * outUV       = output Obit UV object, defined but not instantiated
-    * nIF         = number of desired output IFs
-                    MUST be the same number of channels per IF
-    * err         = Obit error/message stack
-    """
-    ################################################################
-    iFQTab = inUV.NewTable(Table.READONLY, "AIPS FQ",1,err)
-    # zap FQ old
-    outUV.ZapTable("AIPS FQ",1,err)
-    oFQTab = outUV.NewTable(Table.WRITEONLY, "AIPS FQ",1,err,numIF=nIF)
-    # Input info
-    d = inUV.Desc.Dict
-    jlocf = d["jlocf"]
-    reffreq = d["crval"][jlocf]
-    delfreq = d["cdelt"][jlocf]
-    freqpix = d["crpix"][jlocf]
-    nchan   = d["inaxes"][jlocf]/nIF
-    # Can use row from input table
-    iFQTab.Open(Table.READONLY, err)
-    oFQTab.Open(Table.WRITEONLY, err)
-    row = iFQTab.ReadRow(1,err)
-    iFQTab.Close(err)
-    
-    # Update row for nif IFs
-    freqarr = []
-    chw = row['CH WIDTH'][0]
-    chwarr = []
-    tbw = row['TOTAL BANDWIDTH'][0] / nIF
-    tbwarr = []
-    sideband = row['SIDEBAND'][0]
-    sbarr = []
-    rxc = row['RXCODE'][0]
-    rxcarr = ""
-    for iIF in range(1,nIF+1):
-        freqarr.append((iIF-freqpix)*delfreq*nchan )
-        chwarr.append(chw)
-        tbwarr.append(tbw)
-        sbarr.append(sideband)
-        rxcarr += rxc
-    row['IF FREQ']         = freqarr
-    row['CH WIDTH']        = chwarr
-    row['TOTAL BANDWIDTH'] = tbwarr
-    row['SIDEBAND']        = sbarr
-    row['RXCODE']          = [rxcarr]
-        
-    # Write output
-    oFQTab.WriteRow(1,row,err)
-    oFQTab.Close(err)
-    # Update
-    outUV.UpdateDesc(err)
-    OErr.printErrMsg(err,"Error converting FQ Table")
-    # end UpdateFQ 
-    
-def UpdateAN (inUV, outUV, nIF, err):
-    """ 
-    Convert AN table in inUV to outUV with nIF IFs
-    
-    * inUV        = input Obit UV object
-    * outUV       = output Obit UV object, defined but not instantiated
-    * nIF         = number of desired output IFs
-    * err         = Obit error/message stack
-    """
-    ################################################################
-    iANTab = inUV.NewTable(Table.READONLY, "AIPS AN",1,err)
-    # zap AN old
-    outUV.ZapTable("AIPS AN",1,err)
-    oANTab = outUV.NewTable(Table.WRITEONLY, "AIPS AN",1,err,numIF=nIF)
-    
-    iANTab.Open(Table.READONLY, err)
-    oANTab.Open(Table.WRITEONLY, err)
+    # Checks
+    if not UV.PIsA(outUV):
+        raise TypeError,"outUV MUST be a defined Python Obit UV"
+    # Input can have 1 or no IFs defined
+    jlocif = outUV.Desc.Dict["jlocif"]
+    if jlocif>=0 and outUV.Desc.Dict["inaxes"][jlocif]>1:
+        raise RuntimeError,"Input UV has excessive IFs already:" \
+              +str(outUV.Desc.Dict["inaxes"][jlocif])
+    # Check number of requested IFs
+    if nIF<2:
+        raise RuntimeError,"Too few output IFs requested: " + str(nIF)
+    # Must be an even number of channels per output IF
+    jlocf = outUV.Desc.Dict["jlocf"]
+    nchan = outUV.Desc.Dict["inaxes"][jlocf]
+    if (nchan%nIF) != 0:
+        raise RuntimeError,"Unequal numbers of channels per "+str(nIF)+" IFs"
 
-    nrow = iANTab.Desc.Dict['nrow']  # How many rows?
-    for irow in range(1,nrow+1):
-        row = iANTab.ReadRow(irow,err)  # Read input row
-        
-        # Update  row
-        pca0 = row['POLCALA'][0]
-        pca1 = row['POLCALA'][1]
-        pcb0 = row['POLCALB'][0]
-        pcb1 = row['POLCALB'][1]
-        bm   = row['BEAMFWHM'][0]
-        Beama    = []
-        PolcalAa = []
-        PolcalBa = []
-        for i in range (0,nIF):
-            Beama.append(bm)
-            PolcalAa.append(pca0)
-            PolcalAa.append(pca1)
-            PolcalBa.append(pcb0)
-            PolcalBa.append(pcb1)
-        
-        row['BEAMFWHM'] = Beama
-        row['POLCALA']  = PolcalAa
-        row['POLCALB']  = PolcalBa
-        
-        # Write output
-        oANTab.WriteRow(irow,row,err)
-        # End loop over rows
-    iANTab.Close(err)
-    oANTab.Close(err)
+    # Patch UV Descriptor
+    DescMakeIF (outUV, nIF, err)
+    # Convert FQ Table
+    UpdateFQ2 (outUV, nIF, err)
+    # Convert AN Table
+    UpdateAN2 (outUV, nIF, err)
+    # Convert SU Table
+    UpdateSU2 (outUV, nIF, err)
+    # Regenerate CL table 1 - delete any old
+    outUV.ZapTable("AIPS CL",-1,err)
+    print '(Re) generate CL table'
+    UV.PTableCLGetDummy (outUV, outUV, 1, err, solInt=10.)
+    # dummy FG 1
+    print 'Dummy entry in Flag table 1'
+    UV.PFlag(outUV, err, timeRange=[-10.,-9.], Ants=[200,200], Stokes='0000',Reason='Dummy')
     # Update
     outUV.UpdateDesc(err)
-    OErr.printErrMsg(err,"Error converting AN Table")
-    # end UpdateAN 
+    OErr.printErrMsg(err,"Error updating output")
+     # end UVAddIF 
     
 def UpdateSU (inUV, outUV, nIF, err):
     """ 
@@ -347,3 +247,387 @@ def CopyData (inUV, outUV, err):
     if err.isErr:
         OErr.printErrMsg(err, "Error closing data")
  
+def DescAddIF (inUV, outUV, nIF, err):
+    """ 
+    Update outUV descriptor like inUV but divided into nIF IFs
+    
+    
+    * inUV        = input Obit UV object
+    * outUV       = output Obit UV object, defined but not instantiated
+    * nIF         = number of desired output IFs
+                    MUST be the same number of channels per IF
+    * err         = Obit error/message stack
+    """
+    ################################################################
+    inUV.Clone(outUV, err)
+    d = inUV.Desc.Dict
+    # Have IF axis?
+    if d["jlocif"]>=0:
+        jlocif = d["jlocif"]
+    else:  # create one
+        jlocif = d['naxis']
+        d['naxis'] += 1
+        d['ctype'][jlocif] = "IF"
+        d['crval'][jlocif] = 1.0
+        d['crpix'][jlocif] = 1.0
+        d['cdelt'][jlocif] = 1.0
+        d['crota'][jlocif] = 0.0
+        
+    jlocf = d["jlocf"]
+    nchan = d["inaxes"][jlocf]/nIF
+    d["inaxes"][jlocif] = nIF
+    d["inaxes"][jlocf]  = nchan
+    outUV.Desc.Dict = d
+    UV. PGetIODesc(outUV).Dict = d  # And your little dog too
+    # Update
+    outUV.UpdateDesc(err)
+    outUV.Open(UV.WRITEONLY,err)
+    outUV.Close(err)
+    #outUV.Header(err)
+    OErr.printErrMsg(err,"Error converting Descriptor")
+    # end DescAddIF
+    
+def UpdateFQ (inUV, outUV, nIF, err):
+    """ 
+    Convert FQ table in inUV (1 fqid)
+    
+    * inUV        = input Obit UV object
+    * outUV       = output Obit UV object, defined but not instantiated
+    * nIF         = number of desired output IFs
+                    MUST be the same number of channels per IF
+    * err         = Obit error/message stack
+    """
+    ################################################################
+    iFQTab = inUV.NewTable(Table.READONLY, "AIPS FQ",1,err)
+    # zap FQ old
+    outUV.ZapTable("AIPS FQ",1,err)
+    oFQTab = outUV.NewTable(Table.WRITEONLY, "AIPS FQ",1,err,numIF=nIF)
+    # Input info
+    d = inUV.Desc.Dict
+    jlocf = d["jlocf"]
+    reffreq = d["crval"][jlocf]
+    delfreq = d["cdelt"][jlocf]
+    freqpix = d["crpix"][jlocf]
+    nchan   = d["inaxes"][jlocf]
+    # Can use row from input table
+    iFQTab.Open(Table.READONLY, err)
+    oFQTab.Open(Table.WRITEONLY, err)
+    row = iFQTab.ReadRow(1,err)
+    iFQTab.Close(err)
+    
+    # Update row for nif IFs
+    freqarr = []
+    chw = row['CH WIDTH'][0]
+    chwarr = []
+    tbw = row['TOTAL BANDWIDTH'][0] / nIF
+    tbwarr = []
+    sideband = row['SIDEBAND'][0]
+    sbarr = []
+    rxc = row['RXCODE'][0]
+    rxcarr = ""
+    for iIF in range(1,nIF+1):
+        freqarr.append((iIF-freqpix)*delfreq*nchan )
+        chwarr.append(chw)
+        tbwarr.append(tbw)
+        sbarr.append(sideband)
+        rxcarr += rxc
+    row['IF FREQ']         = freqarr
+    row['CH WIDTH']        = chwarr
+    row['TOTAL BANDWIDTH'] = tbwarr
+    row['SIDEBAND']        = sbarr
+    row['RXCODE']          = [rxcarr]
+        
+    # Write output
+    oFQTab.WriteRow(1,row,err)
+    oFQTab.Close(err)
+    # Update
+    outUV.UpdateDesc(err)
+    OErr.printErrMsg(err,"Error converting FQ Table")
+    # end UpdateFQ 
+    
+def UpdateAN (inUV, outUV, nIF, err):
+    """ 
+    Convert AN table in inUV to outUV with nIF IFs
+    
+    * inUV        = input Obit UV object
+    * outUV       = output Obit UV object, defined but not instantiated
+    * nIF         = number of desired output IFs
+    * err         = Obit error/message stack
+    """
+    ################################################################
+    iANTab = inUV.NewTable(Table.READONLY, "AIPS AN",1,err)
+    # zap AN old
+    outUV.ZapTable("AIPS AN",1,err)
+    oANTab = outUV.NewTable(Table.WRITEONLY, "AIPS AN",1,err,numIF=nIF)
+    
+    iANTab.Open(Table.READONLY, err)
+    oANTab.Open(Table.WRITEONLY, err)
+
+    # copy keys
+    for k in iANTab.keys:
+        oANTab.keys[k] = iANTab.keys[k]
+        
+    nrow = iANTab.Desc.Dict['nrow']  # How many rows?
+    for irow in range(1,nrow+1):
+        row = iANTab.ReadRow(irow,err)  # Read input row
+        
+        # Update  row
+        pca0 = row['POLCALA'][0]
+        pca1 = row['POLCALA'][1]
+        pcb0 = row['POLCALB'][0]
+        pcb1 = row['POLCALB'][1]
+        bm   = row['BEAMFWHM'][0]
+        Beama    = []
+        PolcalAa = []
+        PolcalBa = []
+        for i in range (0,nIF):
+            Beama.append(bm)
+            PolcalAa.append(pca0)
+            PolcalAa.append(pca1)
+            PolcalBa.append(pcb0)
+            PolcalBa.append(pcb1)
+        
+        row['BEAMFWHM'] = Beama
+        row['POLCALA']  = PolcalAa
+        row['POLCALB']  = PolcalBa
+        
+        # Write output
+        oANTab.WriteRow(irow,row,err)
+        # End loop over rows
+    iANTab.Close(err)
+    oANTab.Close(err)
+    # Update
+    outUV.UpdateDesc(err)
+    OErr.printErrMsg(err,"Error converting AN Table")
+    # end UpdateAN 
+    
+def DescMakeIF (outUV, nIF, err):
+    """ 
+    Convert outUV descriptor divided into nIF IFs
+    
+    * outUV       = output Obit UV object
+    * nIF         = number of desired output IFs
+                    MUST be the same number of channels per IF
+    * err         = Obit error/message stack
+    """
+    ################################################################
+    d = outUV.Desc.Dict
+    # Have IF axis?
+    if d["jlocif"]>=0:
+        jlocif = d["jlocif"]
+    else:  # create one
+        jlocif = d['naxis']
+        d['naxis'] += 1
+        d['ctype'][jlocif] = "IF"
+        d['crval'][jlocif] = 1.0
+        d['crpix'][jlocif] = 1.0
+        d['cdelt'][jlocif] = 1.0
+        d['crota'][jlocif] = 0.0
+        
+    jlocf = d["jlocf"]
+    nchan = d["inaxes"][jlocf]/nIF
+    d["inaxes"][jlocif] = nIF
+    d["inaxes"][jlocf]  = nchan
+    outUV.Desc.Dict = d
+    UV. PGetIODesc(outUV).Dict = d  # And your little dog too
+    # Update
+    outUV.UpdateDesc(err)
+    outUV.Open(UV.WRITEONLY,err)
+    outUV.Close(err)
+    #outUV.Header(err)
+    OErr.printErrMsg(err,"Error converting Descriptor")
+    # end DescMakeIF
+    
+def UpdateFQ2 (outUV, nIF, err):
+    """ 
+    Convert FQ table in outUV to nIF IFs
+    
+    * outUV       = output Obit UV object, defined but not instantiated
+    * nIF         = number of desired output IFs
+                    MUST be the same number of channels per IF
+    * err         = Obit error/message stack
+    """
+    ################################################################
+    iFQTab = outUV.NewTable(Table.READONLY, "AIPS FQ",1,err)
+    oFQTab = outUV.NewTable(Table.WRITEONLY, "AIPS FQ",2,err,numIF=nIF)
+    # Input info
+    d = outUV.Desc.Dict
+    jlocf = d["jlocf"]
+    reffreq = d["crval"][jlocf]
+    delfreq = d["cdelt"][jlocf]
+    freqpix = d["crpix"][jlocf]
+    nchan   = d["inaxes"][jlocf]
+    # Can use row from input table
+    iFQTab.Open(Table.READONLY, err)
+    oFQTab.Open(Table.WRITEONLY, err)
+    row = iFQTab.ReadRow(1,err)
+    iFQTab.Close(err)
+    
+    # Update row for nif IFs
+    freqarr = []
+    chw = row['CH WIDTH'][0]
+    chwarr = []
+    tbw = row['TOTAL BANDWIDTH'][0] / nIF
+    tbwarr = []
+    sideband = row['SIDEBAND'][0]
+    sbarr = []
+    rxc = row['RXCODE'][0]
+    rxcarr = ""
+    for iIF in range(1,nIF+1):
+        freqarr.append((iIF-freqpix)*delfreq*nchan )
+        chwarr.append(chw)
+        tbwarr.append(tbw)
+        sbarr.append(sideband)
+        rxcarr += rxc
+    row['IF FREQ']         = freqarr
+    row['CH WIDTH']        = chwarr
+    row['TOTAL BANDWIDTH'] = tbwarr
+    row['SIDEBAND']        = sbarr
+    row['RXCODE']          = [rxcarr]
+        
+    # Write output
+    oFQTab.WriteRow(1,row,err)
+    oFQTab.Close(err)
+    # zap FQ old
+    outUV.ZapTable("AIPS FQ",1,err)
+    # Copy
+    iFQTab = outUV.NewTable(Table.READONLY, "AIPS FQ",2,err)
+    oFQTab = outUV.NewTable(Table.WRITEONLY, "AIPS FQ",1,err)
+    Table.PCopy(iFQTab, oFQTab, err)
+    # zap FQ old
+    outUV.ZapTable("AIPS FQ",2,err)
+    # Update
+    outUV.UpdateDesc(err)
+    OErr.printErrMsg(err,"Error converting FQ Table")
+    # end UpdateFQ2
+    
+def UpdateAN2 (outUV, nIF, err):
+    """ 
+    Convert AN table in outUV to nIF IFs
+    
+    * outUV       = output Obit UV object, defined but not instantiated
+    * nIF         = number of desired output IFs
+    * err         = Obit error/message stack
+    """
+    ################################################################
+    iANTab = outUV.NewTable(Table.READONLY, "AIPS AN",1,err)
+    oANTab = outUV.NewTable(Table.WRITEONLY, "AIPS AN",2,err,numIF=nIF)
+    
+    iANTab.Open(Table.READONLY, err)
+    oANTab.Open(Table.WRITEONLY, err)
+
+    # copy keys
+    for k in iANTab.keys:
+        oANTab.keys[k] = iANTab.keys[k]
+    
+    nrow = iANTab.Desc.Dict['nrow']  # How many rows?
+    for irow in range(1,nrow+1):
+        row = iANTab.ReadRow(irow,err)  # Read input row
+        
+        # Update  row
+        pca0 = row['POLCALA'][0]
+        pca1 = row['POLCALA'][1]
+        pcb0 = row['POLCALB'][0]
+        pcb1 = row['POLCALB'][1]
+        bm   = row['BEAMFWHM'][0]
+        Beama    = []
+        PolcalAa = []
+        PolcalBa = []
+        for i in range (0,nIF):
+            Beama.append(bm)
+            PolcalAa.append(pca0)
+            PolcalAa.append(pca1)
+            PolcalBa.append(pcb0)
+            PolcalBa.append(pcb1)
+        
+        row['BEAMFWHM'] = Beama
+        row['POLCALA']  = PolcalAa
+        row['POLCALB']  = PolcalBa
+        
+        # Write output
+        oANTab.WriteRow(irow,row,err)
+        # End loop over rows
+    iANTab.Close(err)
+    oANTab.Close(err)
+    # zap AN old
+    outUV.ZapTable("AIPS AN",1,err)
+    # Copy
+    iANTab = outUV.NewTable(Table.READONLY, "AIPS AN",2,err)
+    oANTab = outUV.NewTable(Table.WRITEONLY, "AIPS AN",1,err)
+    Table.PCopy(iANTab, oANTab, err)
+    # zap AN old
+    outUV.ZapTable("AIPS AN",2,err)
+    # Update
+    outUV.UpdateDesc(err)
+    OErr.printErrMsg(err,"Error converting AN Table")
+    # end UpdateAN2
+    
+def UpdateSU2 (outUV, nIF, err):
+    """ 
+    Convert SU table in outUV to nIF IFs
+    
+    * outUV       = output Obit UV object, defined but not instantiated
+    * nIF         = number of desired output IFs
+    * err         = Obit error/message stack
+    """
+    ################################################################
+    # Is there an SU table?
+    try:
+        iSUTab = outUV.NewTable(Table.READONLY, "AIPS SU",1,err)
+        oSUTab = outUV.NewTable(Table.WRITEONLY, "AIPS SU",2,err,numIF=nIF)
+    except:
+        return
+
+    iSUTab.Open(Table.READONLY, err)
+    oSUTab.Open(Table.WRITEONLY, err)
+    nrow = iSUTab.Desc.Dict['nrow']  # How many rows?
+
+    for irow in range(1,nrow+1):
+        row = iSUTab.ReadRow(irow,err)  # Read input row
+        
+        # Update row
+        fo   = row['FREQOFF'][0]
+        bw   = row['BANDWIDTH'][0]
+        iflx = row['IFLUX'][0]
+        qflx = row['QFLUX'][0]
+        uflx = row['UFLUX'][0]
+        vflx = row['VFLUX'][0]
+        lsr  = row['LSRVEL'][0]
+        rest = row['RESTFREQ'][0]
+        iflxa = []; qflxa = []; uflxa = []; vflxa = [];
+        foa = []; lsra = []; rfa = []
+        for i in range (0,nIF):
+            iflxa.append(iflx)
+            qflxa.append(qflx)
+            uflxa.append(uflx)
+            vflxa.append(vflx)
+            foa.append(fo)
+            lsra.append(lsr)
+            rfa.append(rest)
+         
+        row['IFLUX']     = iflxa
+        row['QFLUX']     = qflxa
+        row['UFLUX']     = uflxa
+        row['VFLUX']     = vflxa
+        row['FREQOFF']   = foa
+        row['LSRVEL']    = lsra
+        row['RESTFREQ']  = rfa
+        
+        # Write output
+        oSUTab.WriteRow(irow,row,err)
+        # end loop over rows
+    iSUTab.Close(err)
+    oSUTab.Close(err)
+    # zap SU old
+    outUV.ZapTable("AIPS SU",1,err)
+    # Copy
+    iSUTab = outUV.NewTable(Table.READONLY, "AIPS SU",2,err)
+    oSUTab = outUV.NewTable(Table.WRITEONLY, "AIPS SU",1,err)
+    Table.PCopy(iSUTab, oSUTab, err)
+    # zap SU old
+    outUV.ZapTable("AIPS SU",2,err)
+    # Update
+    outUV.UpdateDesc(err)
+    OErr.printErrMsg(err,"Error converting SU Table")
+    # end UpdateSU2
+    
