@@ -3664,3 +3664,23 @@ Obit/python/MeerKATH5toAIPS.py
 Obit/share/data/MKATTemplate.uvtab.gz
   Template MeerKAT data
 16 May 2017 svn 566
+
+Summary: EVLA solar BDFIn and planetary bug fixes
+Obit/changes.log:
+  Update
+Obit/../ObitVersion:
+  Trigger NRAO update
+Obit/src/ObitVersion.c:
+  Get subversion number for binary distribution
+Obit/doc/Obitdoc.tex Obit/src/ObitTableSY.c Obit/include/ObitTableSY.h
+Obit/include/ObitTableSYDef.h Obit/include/ObitTableSYClassDef.h 
+Obit/include/ObitTableSYRowDef.h Obit/include/ObitTableSYRowClassDef.h
+Obit/tasks/BDFIn.c:
+  Add CAL TYPE column to AIPS SY Table
+Obit/src/ObitSDMData.c:
+  Correctly intreprete <timeInterval> in ASDM
+  Get line rest frequency, velocity
+Obit/tasks/BASMangle.c Obit/TDF/BASMangle.TDF:
+  New task for survey processing
+9 Jun 2017 svn ver. 567
+

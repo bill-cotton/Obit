@@ -4,7 +4,7 @@
 
 #include <ObitVersion.h>
 
-const char *const version = "377M";
+const char *const version = "566M";
 
 char *ObitVersion (void)
 {

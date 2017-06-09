@@ -1,0 +1,83 @@
+; BASMangle
+;---------------------------------------------------------------
+;! BASMangle munge images for Big Ass Survey
+;# Task 
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2016
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: Bill Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+BASMangle  LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+BASMangle:  Munge OTF images for Big Ass Survey
+**PARAM** str 4
+DataType                               "FITS" or "AIPS" type of input
+**PARAM** str 12
+inName                             Image name (name)
+**PARAM** str 6
+inClass                            Image name (class)
+**PARAM** int 1
+inSeq            0.0       9999.0  Image name (seq. #)
+**PARAM** int 1
+inDisk           0.0               Disk drive #
+**PARAM** str 48
+inFile                             Filename if FITS image
+**PARAM** int 1  **DEF** 1
+nStokes           0.0              Number of Stokes images
+**PARAM** int 1  **DEF** 20
+nSigma            0.0              Number plane 1 sigma for blanking
+**PARAM** int 1 **DEF** 1
+nThreads            0              Number of threads to use
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
+----------------------------------------------------------------
+BASMangle
+Type: Task
+Use:  BASMangle mangle OTF images from Big Ass survey
+      - Blank plane 2 (SI)
+      - BLank planes with RMS > 20X that in plane 1
+      - Recompute image Max/Min
+
+Adverbs:
+  Userid......User ID of owner of image.  0=>current user 32000=>all
+              users
+  DataType...."FITS" or "AIPS"
+  inName......Image name(name).         Standard defaults.
+  inClass.....Image name(class).        Standard defaults.
+  inSeq.......Image name(seq. #).       0 => highest.
+  inDisk......Disk drive # of image.    0 => any.
+  Filename....Input File name if a FITS file
+  nStokes.....Number of Stokes, first character in inClass in 'IQU'
+  nSigme......How many times plane 1 RMS to blank higher planes?
+  nThreads....If The Obit libraries are compiled with multiple
+              thread operation enabled, this parameter sets the 
+              number of threads that can be used for parallel 
+              operations. 
+              NB: This only improves performance if there are 
+              multiple processors and/or cores in the host.
+  taskLog.....Log file to write messages to INSTEAD of the terminal
+              This is useful in long runs or batch files where
+              a bug in the ObitTalk message handling may cause
+              tasks to hang.  Path is absolute or relative to where
+              the task executes.
+----------------------------------------------------------------

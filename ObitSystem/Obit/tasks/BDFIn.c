@@ -3717,6 +3717,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   olong i, j, iRow, jRow, oRow, ver, maxAnt, IFno, SourNo;
   olong *antLookup=NULL, *SpWinLookup=NULL, *SpWinLookup2=NULL;
   olong curScan, curScanI, nextScanNo, bad=0, iMain, cnt;
+  olong nState, *States=NULL;
   oint numIF, numPol;
   ofloat fblank = ObitMagicF();
   gboolean want, ChkVis, found=FALSE;
@@ -3793,6 +3794,18 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     }
     }*/
 
+  /* State info from StateTab 0=Noise tube, 1=Solar, 2=Other*/
+  nState = SDMData->StateTab->nrows;
+  States = g_malloc0((nState+1)*sizeof(olong));
+  for (i=0; i<nState; i++) {
+    if (!strncmp(SDMData->StateTab->rows[i]->calDeviceName,"NOISE_TUBE_LOAD",15))
+      States[i] = 0;
+    else if (!strncmp(SDMData->StateTab->rows[i]->calDeviceName,"SOLAR_FILTER",12))
+       States[i] = 1;
+    else States[i] = 2;
+  }
+  States[nState] = 2;
+  
   /* Create output SY table object */
   ver      = 1;
   access   = OBIT_IO_ReadWrite;
@@ -3823,6 +3836,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   outRow->status      = 0;
   outRow->SubA        = 1;
   outRow->FreqID      = 1;
+  outRow->CalType     = 2;
   /* Blank data in case missing */
   for (i=0; i<numIF; i++) {
     outRow->PwrDif1[i] = fblank;
@@ -3878,6 +3892,11 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 	if ((AntArray->ants[i]->antennaId>=0) && (AntArray->ants[i]->antennaId<maxAnt))
 	  antLookup[AntArray->ants[i]->antennaId] = AntArray->ants[i]->antennaNo;
       }
+
+     /* Cal state */
+      j = MIN(MAX(0,SDMData->MainTab->rows[iMain]->stateId[0]),nState);
+      outRow->CalType = States[j];
+      
     } /* End new scan */
       
     if (!found) continue;  /* Source in SourceArray? */
@@ -3992,6 +4011,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   if (antLookup)    g_free(antLookup);
   if (SpWinLookup)  g_free(SpWinLookup);
   if (SpWinLookup2) g_free(SpWinLookup2);
+  if (States)       g_free(States);
 
 } /* end  GetSysPowerInfo */
 

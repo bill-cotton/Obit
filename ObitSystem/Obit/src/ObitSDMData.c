@@ -39,7 +39,7 @@ X    SysPower.xml
 X    Weather.xml
  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2016                                          */
+/*;  Copyright (C) 2010-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -3404,7 +3404,7 @@ static odouble ASDMparse_time(gchar *string, olong maxChar,
 static odouble* ASDMparse_timeRange(gchar *string, olong maxChar, 
 				   gchar *prior, gchar **next)
 {
-  odouble *out;
+  odouble *out, dtemp;
   long long temp, temp2;
   gchar *b;
   odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
@@ -3417,7 +3417,8 @@ static odouble* ASDMparse_timeRange(gchar *string, olong maxChar,
   if (b==NULL) return out;  /* Found? */
   b += strlen(prior);
   temp = strtoll(b, next, 10);
-  out[0] = (odouble)((temp*1.0e-9)/86400.0) + mjdJD0;
+  dtemp = (temp*1.0e-9);
+  out[0] = (odouble)(dtemp/86400.0) + mjdJD0;
   b = *next;
   temp2 = strtoll(b, next, 10);
   if (temp2>temp) out[1] = (odouble)((temp2*1.0e-9)/86400.0) + mjdJD0;
@@ -4999,10 +5000,12 @@ ParseASDMcalDeviceTable(ObitSDMData *me,
     prior = "<timeInterval>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->timeInterval = ASDMparse_timeRange(line, maxLine, prior, &next);
-      /* Remove offset from second */
+      /* If start and end time convert end time to duration */
       if ((out->rows[irow]->timeInterval[1]<out->rows[irow]->timeInterval[0]) &&
 	  (out->rows[irow]->timeInterval[1]>mjdJD0))
-	out->rows[irow]->timeInterval[1] -= mjdJD0;
+	out->rows[irow]->timeInterval[1] -= out->rows[irow]->timeInterval[0];
+      else /* Center time and duration, convert to start and duration */
+	out->rows[irow]->timeInterval[0] -= out->rows[irow]->timeInterval[1]*0.5;
       continue;
     }
     prior = "<numCalload>";
@@ -6643,10 +6646,12 @@ static ASDMEphemerisTable* ParseASDMEphemerisTable(ObitSDMData *me,
     prior = "<timeInterval>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->timeInterval = ASDMparse_timeRange(line, maxLine, prior, &next);
-      /* Remove offset from second */
+      /* If start and end time convert end time to duration */
       if ((out->rows[irow]->timeInterval[1]<out->rows[irow]->timeInterval[0]) &&
 	  (out->rows[irow]->timeInterval[1]>mjdJD0))
-	out->rows[irow]->timeInterval[1] -= mjdJD0;
+	out->rows[irow]->timeInterval[1] -= out->rows[irow]->timeInterval[0];
+      else /* Center time and duration, convert to start and duration */
+	out->rows[irow]->timeInterval[0] -= out->rows[irow]->timeInterval[1]*0.5;
       continue;
     }
 
@@ -7028,6 +7033,7 @@ static ASDMFeedTable* ParseASDMFeedTable(ObitSDMData *me,
   gchar *endrow = "</row>";
   gchar *prior, *next, *b;
   gboolean OK = FALSE;
+  odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
   gchar *routine = " ParseASDMFeedTable";
 
   /* error checks */
@@ -7066,6 +7072,12 @@ static ASDMFeedTable* ParseASDMFeedTable(ObitSDMData *me,
     prior = "<timeInterval>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->timeInterval = ASDMparse_timeRange(line, maxLine, prior, &next);
+      /* If start and end time convert end time to duration */
+      if ((out->rows[irow]->timeInterval[1]<out->rows[irow]->timeInterval[0]) &&
+	  (out->rows[irow]->timeInterval[1]>mjdJD0))
+	out->rows[irow]->timeInterval[1] -= out->rows[irow]->timeInterval[0];
+      else /* Center time and duration, convert to start and duration */
+	out->rows[irow]->timeInterval[0] -= out->rows[irow]->timeInterval[1]*0.5;
       continue;
     }
     prior = "<numReceptor>";
@@ -7663,10 +7675,12 @@ static ASDMPointingTable* ParseASDMPointingTableXML(ObitSDMData *me,
     prior = "<timeInterval>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->timeInterval = ASDMparse_timeRange(line, maxLine, prior, &next);
-      /* Remove offset from second */
+      /* If start and end time convert end time to duration */
       if ((out->rows[irow]->timeInterval[1]<out->rows[irow]->timeInterval[0]) &&
 	  (out->rows[irow]->timeInterval[1]>mjdJD0))
-	out->rows[irow]->timeInterval[1] -= mjdJD0;
+	out->rows[irow]->timeInterval[1] -= out->rows[irow]->timeInterval[0];
+      else /* Center time and duration, convert to start and duration */
+	out->rows[irow]->timeInterval[0] -= out->rows[irow]->timeInterval[1]*0.5;
       continue;
     }
     prior = "<numSample>";
@@ -8331,10 +8345,12 @@ ParseASDMReceiverTable(ObitSDMData *me,
     prior = "<timeInterval>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->timeInterval = ASDMparse_timeRange(line, maxLine, prior, &next);
-      /* Remove offset from second */
+      /* If start and end time convert end time to duration */
       if ((out->rows[irow]->timeInterval[1]<out->rows[irow]->timeInterval[0]) &&
 	  (out->rows[irow]->timeInterval[1]>mjdJD0))
-	out->rows[irow]->timeInterval[1] -= mjdJD0;
+	out->rows[irow]->timeInterval[1] -= out->rows[irow]->timeInterval[0];
+      else /* Center time and duration, convert to start and duration */
+	out->rows[irow]->timeInterval[0] -= out->rows[irow]->timeInterval[1]*0.5;
       continue;
     }
 
@@ -8732,6 +8748,7 @@ static ASDMSourceTable* ParseASDMSourceTable(ObitSDMData *me,
   gchar *endrow = "</row>";
   gchar *prior, *next;
   gboolean OK = FALSE;
+  odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
   gchar *routine = " ParseASDMSourceTable";
 
   /* error checks */
@@ -8772,6 +8789,12 @@ static ASDMSourceTable* ParseASDMSourceTable(ObitSDMData *me,
     prior = "<timeInterval>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->timeInterval = ASDMparse_timeRange(line, maxLine, prior, &next);
+      /* If start and end time convert end time to duration */
+      if ((out->rows[irow]->timeInterval[1]<out->rows[irow]->timeInterval[0]) &&
+	  (out->rows[irow]->timeInterval[1]>mjdJD0))
+	out->rows[irow]->timeInterval[1] -= out->rows[irow]->timeInterval[0];
+      else /* Center time and duration, convert to start and duration */
+	out->rows[irow]->timeInterval[0] -= out->rows[irow]->timeInterval[1]*0.5;
       continue;
     }
     prior = "<code>";
@@ -9925,10 +9948,12 @@ ParseASDMSysPowerTableXML(ObitSDMData *me,
     prior = "<timeInterval>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->timeInterval = ASDMparse_timeRange(line, maxLine, prior, &next);
-      /* Remove offset from second */
+      /* If start and end time convert end time to duration */
       if ((out->rows[irow]->timeInterval[1]<out->rows[irow]->timeInterval[0]) &&
 	  (out->rows[irow]->timeInterval[1]>mjdJD0))
-	out->rows[irow]->timeInterval[1] -= mjdJD0;
+	out->rows[irow]->timeInterval[1] -= out->rows[irow]->timeInterval[0];
+      else /* Center time and duration, convert to start and duration */
+	out->rows[irow]->timeInterval[0] -= out->rows[irow]->timeInterval[1]*0.5;
       continue;
     }
     prior = "<switchedPowerDifference>";
@@ -10086,6 +10111,7 @@ static ASDMWeatherTable* ParseASDMWeatherTable(ObitSDMData *me,
   gchar *endrow = "</row>";
   gchar *prior, *next;
   gboolean OK = FALSE;
+  odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
   gchar *routine = " ParseASDMWeatherTable";
 
   /* error checks */
@@ -10123,6 +10149,12 @@ static ASDMWeatherTable* ParseASDMWeatherTable(ObitSDMData *me,
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->timeInterval = ASDMparse_timeRange(line, maxLine, prior, &next);
       continue;
+      /* If start and end time convert end time to duration */
+      if ((out->rows[irow]->timeInterval[1]<out->rows[irow]->timeInterval[0]) &&
+	  (out->rows[irow]->timeInterval[1]>mjdJD0))
+	out->rows[irow]->timeInterval[1] -= out->rows[irow]->timeInterval[0];
+      else /* Center time and duration, convert to start and duration */
+	out->rows[irow]->timeInterval[0] -= out->rows[irow]->timeInterval[1]*0.5;
     }
 
     prior = "<pressure>";
@@ -10580,7 +10612,7 @@ static void AddSourceArrayEntry(ASDMSourceArray *in, gchar *code, olong qual,
 				olong nSW, ASDMSourceRow *sourceRow, 
 				ASDMFieldRow *fieldRow)
 {
-  olong iOut;
+  olong iOut, i;
   gchar *blank = "  ";
 
   iOut = in->nsou;
@@ -10608,8 +10640,11 @@ static void AddSourceArrayEntry(ASDMSourceArray *in, gchar *code, olong qual,
   in->sou[iOut]->timeInterval[1] = sourceRow->timeInterval[1];
   in->sou[iOut]->properMotion[0] = sourceRow->properMotion[0];
   in->sou[iOut]->properMotion[1] = sourceRow->properMotion[1];
-  if (sourceRow->restFrequency) in->sou[iOut]->restFrequency[0]= sourceRow->restFrequency[0];
-  if (sourceRow->sysVel) in->sou[iOut]->sysVel[0]       = sourceRow->sysVel[0];
+  if (sourceRow->restFrequency) 
+    for (i=0; i<sourceRow->numLines; i++) in->sou[iOut]->restFrequency[i]= sourceRow->restFrequency[i];
+  if (sourceRow->sysVel) 
+    for (i=0; i<sourceRow->numLines; i++) in->sou[iOut]->sysVel[i] = sourceRow->sysVel[i];
+  in->sou[iOut]->numLines        = sourceRow->numLines;
   in->sou[iOut]->spectralWindowId= sourceRow->spectralWindowId;
   in->sou[iOut]->repeat          = FALSE;
 } /* end AddSourceArrayEntry */

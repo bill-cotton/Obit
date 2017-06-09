@@ -4216,6 +4216,9 @@ ObitTableDesc.
 \tablecol[{"TIME INTERVAL "}{"DAYS   " }{E}{(1)}{TimeI}
 {Time interval of record }
 ] 
+\tablecol[{"CAL TYPE "}{"        " }{J}{(1)}{CalType}
+{[OPTIONAL] Calibration type 0=NOISE\_TUBE, 1=SOLAR\_FILTER, 2=Other}
+]
 \tablecol[{"SOURCE ID  "}{"        " }{J}{(1)}{SourID}
 {Source ID number}
 ] 
@@ -4228,13 +4231,13 @@ ObitTableDesc.
 \tablecol[{"FREQ ID  "}{"        " }{J}{(1)}{FreqID}
 {Frequency id of scan}
 ] 
-\tablecol[{"POWER DIF\#NPOL"}{"    " }{E}{(nIF)}{PwrDif}
+\tablecol[{"POWER DIF\#NO\_POL"}{"    " }{E}{(nIF)}{PwrDif}
 { (P\_on-P\_off)*G  Poln \# NPOL ), invalid data fblanked}
 ] 
-\tablecol[{"POWER SUM\#NPOL"}{"    " }{E}{(nIF)}{PwrSum}
+\tablecol[{"POWER SUM\#NO\_POL"}{"    " }{E}{(nIF)}{PwrSum}
 {(P\_on+P\_off)*G  Poln \# NPOL ), invalid data fblanked}
 ] 
-\tablecol[{"POST GAIN\#NPOL"}{"     "}{E}{(nIF)}{Gain}
+\tablecol[{"POST GAIN\#NO\_POL"}{"     "}{E}{(nIF)}{Gain}
 {Post switched power gain Poln \# NPOL), invalid data fblanked}
 ] 
 \end{columns}
@@ -4242,6 +4245,7 @@ ObitTableDesc.
 % Table modification history
 \begin{history}
 \modhistory[{W. D. Cotton}{09/07/2010}{Revision 1: From EVLA memo}]
+\modhistory[{W. D. Cotton}{06/01/2017}{Add optional column ``CAL TYPE''}]
 \end{history}
 %
 \clearpage
