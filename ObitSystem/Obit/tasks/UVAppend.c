@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task to append/concatenate uv data           .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2015                                          */
+/*;  Copyright (C) 2012-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -995,8 +995,8 @@ void ObitUVAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   gboolean incompatible;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitUVDesc *inDesc, *outDesc;
-  olong inNPIO, outNPIO, NPIO, indx, i, count, newSubA=0;
-  ofloat timeAdd, blAdd, uvwScale;
+  olong inNPIO, outNPIO, NPIO, indx, ondx, i, count, ant1, ant2, suba, newSubA=0;
+  ofloat timeAdd, uvwScale;
   gchar *routine = "ObitUVAppend";
 
   /* error checks */
@@ -1009,8 +1009,6 @@ void ObitUVAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   newSubA = MAX (1, newSubA);
   /* 5 day offset for each subarray */
   timeAdd = 5.0 * (newSubA-1);
-  /* 0.01 offset per subarray to baseline */
-  blAdd = 0.01 * (newSubA-1);
 
   /* Get input descriptors */
   inDesc  = inUV->myDesc;
@@ -1068,12 +1066,6 @@ void ObitUVAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   if ((retCode != OBIT_IO_OK) || (err->error>0)) 
     Obit_traceback_msg (err, routine, inUV->name);
   
-  /* use same data buffer on input and output 
-     so don't assign buffer for output */
-  if (outUV->buffer) ObitIOFreeBuffer(outUV->buffer); /* free existing */
-  outUV->buffer     = inUV->buffer;
-  outUV->bufferSize = inUV->bufferSize;
-
   /* Open Output Data */
   retCode = ObitUVOpen (outUV, OBIT_IO_ReadWrite, err) ;
   if ((retCode != OBIT_IO_OK) || (err->error>0)) {
@@ -1105,26 +1097,32 @@ void ObitUVAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
     /* Modify input time and baseline */
     for (i=0; i<inDesc->numVisBuff; i++) { /* loop over visibilities */
       indx = i*inDesc->lrec;
-      inUV->buffer[indx+inDesc->iloct] += timeAdd;
-      if (inDesc->ilocb>=0) inUV->buffer[indx+inDesc->ilocb]  += blAdd; 
-      else                  inUV->buffer[indx+inDesc->ilocsa] = (ofloat)(newSubA);
-      inUV->buffer[indx+inDesc->ilocu] *= uvwScale;
-      inUV->buffer[indx+inDesc->ilocv] *= uvwScale;
-      inUV->buffer[indx+inDesc->ilocw] *= uvwScale;
+      ondx = i*outDesc->lrec;
+      /* Copy to output - buffers should not overlap 
+       Also need to deal with possiility of Eric's new format */
+      outUV->buffer[ondx+outDesc->iloct] = inUV->buffer[indx+inDesc->iloct] + timeAdd;
+      outUV->buffer[ondx+outDesc->ilocu] = inUV->buffer[indx+inDesc->ilocu] * uvwScale;
+      outUV->buffer[ondx+outDesc->ilocv] = inUV->buffer[indx+inDesc->ilocv] * uvwScale;
+      outUV->buffer[ondx+outDesc->ilocw] = inUV->buffer[indx+inDesc->ilocw] * uvwScale;
+      if ((inDesc->ilocsu>=0) & (outDesc->ilocsu>=0))
+	outUV->buffer[ondx+outDesc->ilocsu] = inUV->buffer[indx+inDesc->ilocsu];
+      if ((inDesc->ilocit>=0) & (outDesc->ilocit>=0))
+	outUV->buffer[ondx+outDesc->ilocit] = inUV->buffer[indx+inDesc->ilocit];
+      if ((inDesc->ilocid>=0) & (outDesc->ilocid>=0))
+	outUV->buffer[ondx+outDesc->ilocid] = inUV->buffer[indx+inDesc->ilocid];
+      ObitUVDescGetAnts(inDesc, &inUV->buffer[indx], &ant1, &ant2, &suba);
+      ObitUVDescSetAnts(outDesc, &outUV->buffer[ondx], ant1, ant2, newSubA);
+      memcpy (&outUV->buffer[ondx+outDesc->nrparm], &inUV->buffer[indx+inDesc->nrparm], 
+	      inDesc->ncorr*3*sizeof(ofloat));
     } /* end visibility loop */
 
     /* Write buffer */
     retCode = ObitUVWrite (outUV, NULL, err);
     count += inDesc->numVisBuff;
     if (err->error) {
-      outUV->buffer = NULL; outUV->bufferSize = 0;
       Obit_traceback_msg (err, routine, outUV->name);
     }
   } /* end loop over data */
-  
-  /* unset output buffer (may be multiply deallocated ;'{ ) */
-  outUV->buffer = NULL;
-  outUV->bufferSize = 0;
   
   /* Close input */
   retCode = ObitUVClose (inUV, err);

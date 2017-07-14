@@ -2081,10 +2081,12 @@ static void NLFit (NLFitArg *arg)
   } /* end loop over adding terms */
 #endif /* HAVE_GSL */ 
  done:
+  if (best==1) arg->coef[0] = avg;  /* Only fitted one term? */
   /* sanity check, if flux < sigma, don't include higher order terms */
-  if (fabs(arg->coef[0])<sigma)  
+  if (fabs(arg->coef[0])<sigma)  {
+    arg->coef[0] = avg;
     for (i=1; i<arg->nterm; i++) arg->coef[i] = 0.0; 
-
+  }
   /*  Gonzo higher order fit */
   if ((fabs(arg->coef[1])>3.0) || ((nterm>2) && (fabs(arg->coef[2])>2.0))) {
     arg->coef[0] = avg;

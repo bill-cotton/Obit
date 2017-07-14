@@ -1,0 +1,129 @@
+;VLPoln
+;---------------------------------------------------------------
+;! Extract polarization info for VL table
+;# Task Obit Table 
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2017
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+VLPoln    LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+VLPoln    Extracts polarization info for a VL table from Images
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of input
+**PARAM** str 128
+inFile                              FITS input image if Type=='FITS'
+**PARAM** str 12
+inName                             Input image file name (name)
+**PARAM** str 6
+inClass                            Input image file name (class)
+**PARAM** int 1
+inSeq             0.0     9999.0   Input image file name (seq. #)
+**PARAM** int 1
+inDisk            0.0        9.0   Input image file disk unit #
+**PARAM** int 1  **DEF** 1
+inVL                               Input VL table; 0=>highest
+**PARAM** str 128
+QFile                              FITS Q Pol image if Type=='FITS'
+**PARAM** str 12
+QName                              Input Q Pol file name (name)
+**PARAM** str 6
+QClass                             Input Q Pol file name (class)
+**PARAM** int 1
+QSeq              0.0     9999.0   Input Q Pol file name (seq. #)
+**PARAM** int 1
+QDisk             0.0        9.0   Input Q Pol file disk unit #
+**PARAM** str 128
+UFile                              FITS U Pol image if Type=='FITS'
+**PARAM** str 12
+UName                              Input U Pol file name (name)
+**PARAM** str 6
+UClass                             Input U Pol file name (class)
+**PARAM** int 1
+USeq              0.0     9999.0   Input U Pol file name (seq. #)
+**PARAM** int 1
+UDisk             0.0        9.0   Input U Pol file disk unit #
+**PARAM** str 128
+RMFile                             FITS RM Pol image if Type=='FITS'
+**PARAM** str 12
+RMName                             Input RM Pol file name (name)
+**PARAM** str 6
+RMClass                            Input RM Pol file name (class)
+**PARAM** int 1
+RMSeq             0.0     9999.0   Input RM Pol file name (seq. #)
+**PARAM** int 1
+RMDisk            0.0        9.0   Input RM Pol file disk unit #
+**PARAM** int 1  **DEF** 50
+RMSsize                            Size of region to determine RMS
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
+----------------------------------------------------------------
+VLPoln
+Task:  This task extracts values from polarization images and add 
+to VL a table
+A Rotation measure (RM) cube can be includes as well as Q and U 
+images.
+For Q and U images the first plane is interpolated at the positions
+of the VL Table entries and the information added to the table as 
+'Q CENTER' and 'U CENTER' and the appropriate values of 'P FLUX'
+and 'POL RMS' added
+For RM cubes from (function RMFit) the RM and err (if included) are
+added to the table as 'RM' and 'RM_ERR'.
+Adverbs:
+  inFile.....Input FITS image with VL table
+  inName.....Input image file name.
+  inClass....Input image file class.
+  inSeq......Input image file seq. #. 
+  inDisk.....Disk drive # of input image file.
+  inVL.......Input VL table version number to process.
+             0 => highest number
+             Polarization images
+  QFile......Q Pol FITS input
+  QName......Q Pol image name.
+  QClass.....Q Pol image class. 
+  QSeq.......Q Pol image seq. #.
+  QDisk......Disk drive # of Qput image file.
+  UFile......U Pol FITS input
+  UName......U Pol image name
+  UClass.....U Pol image class
+  USeq.......U Pol image seq. #.
+  UDisk......Disk drive # of U Pol image file.
+             Rotation measure cube if defined
+  RMFile.....RM FITS cube
+  RMName.....RM image cube name
+  RMClass....RM image cube class
+  RMSeq......RM image cube seq. #. 
+  RMDisk.....Disk drive # of RM cube
+  RMSsize.....If > 1, then the half width of a square box centered
+              on each source within which to determine the local 
+              noise.  <=0 => use whole image plane.
+              The RMS is determined using a histogram analysis
+              which should be relatively insensitive to sources.
+              Values less than 10 are probably a bad idea.
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files where
+             a bug in the ObitTalk message handling may cause
+             tasks to hang.  Path is absolute or relative to where
+             the task executes.
+----------------------------------------------------------------

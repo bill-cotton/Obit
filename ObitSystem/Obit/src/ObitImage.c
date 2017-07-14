@@ -199,6 +199,10 @@ ObitImage* ObitImageFromFileInfo (gchar *prefix, ObitInfoList *inList,
   }
   g_free(keyword);
 
+  /* If blank try DataType */
+  if (!strncmp (DataType, "    ", 4)) 
+    ObitInfoListGetP (inList, "DataType", &type, dim, (gpointer)&DataType);
+
   if (!strncmp (DataType, "AIPS", 4)) { /* AIPS */
     /* AIPS disk */
     if (prefix) keyword = g_strconcat (prefix, "Disk", NULL);

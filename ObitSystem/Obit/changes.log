@@ -3684,3 +3684,29 @@ Obit/tasks/BASMangle.c Obit/TDF/BASMangle.TDF:
   New task for survey processing
 9 Jun 2017 svn ver. 567
 
+Summary: Extract poln info for VL table, bug fixes
+Obit/changes.log:
+  Update
+Obit/../ObitVersion:
+  Trigger NRAO update
+Obit/src/ObitVersion.c:
+  Get subversion number for binary distribution
+Obit/src/ObitImageUtil.c:
+  ThreadImagePBCor: Fix indexing bug
+  MakeCube: Modify alt ref pixel for channel averaging.
+Obit/tasks/UVAppend.c:
+  Deal with another EWG format surprise
+Obit/doc/OBITdoc.tex Obit/src/ObitTableVL.c \
+Obit/include/ObitTableVL*.h \
+  Add RM and RM ERR columns for rotation measure to VL Table
+Obit/tasks/VLPoln.c Obit/TDF/VLPoln.TDF
+  Task to extract polarization information and add to VL table
+Obit/src/ObitImage.c Obit/tasks/Faces.c:
+  FromFileInfo: correct default for outDType
+Obit/tasks/BDFIn.c:
+  Better cleanup
+Obit/include/ObitPolnCalFit.h:
+  ReadData, another EWG format surprise.
+Obit/src/ObitSpectrumFit.c:
+  NLFit: Use avg if only one term used
+14 Jul 2017 svn 568

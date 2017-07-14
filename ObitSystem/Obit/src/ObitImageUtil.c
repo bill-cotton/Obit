@@ -2968,7 +2968,7 @@ ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
   }
   /* Free image buffer  if not memory resident */
   if (outImage->mySel->FileType!=OBIT_IO_MEM) 
-    outImage->image = ObitFArrayUnref(outImage->image);
+    outImage->image = ObitFArrayUnref(outImage->image); 
   /* Cleanup */
   bs = ObitBeamShapeUnref(bs);
 
@@ -3576,6 +3576,7 @@ ObitImageUtilMakeCube (ObitImageDesc *inDesc, ObitUVDesc *UVDesc,
   numberChann = MIN (echan, UVDesc->inaxes[UVDesc->jlocf]) - MAX (1, bchan) + 1;
   numberChann = (olong)((((ofloat)numberChann) / MAX (1, incr)) + 0.999);
   outDesc->inaxes[outDesc->jlocf] = MAX (1, numberChann);
+  outDesc->altCrpix = inDesc->altCrpix/incr;  /* Alt (vel) reference pixel */
 
   /* Stokes parameter */
   if ((Stokes[0]=='I') || (Stokes[0]==' ')) outDesc->crval[outDesc->jlocs] = 1.0;
@@ -3935,7 +3936,7 @@ ObitImageUtilUV2ImageDesc(ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
     sum = 0.0;
     for (i=0; i<nchavg; i++) sum += UVDesc->freqArr[i];
     imageDesc->crval[iaxis] = sum / (nchavg);
-} /* end update for spectral line */
+  } /* end update for spectral line */
 
   /* Stokes Axis */
   iaxis++;
@@ -5933,13 +5934,13 @@ static gpointer ThreadImagePBCor (gpointer args)
   if (err->error) goto finish;
 
 
-  /* Loop over image  */
+ /* Loop over image  */
   for (iy = loRow; iy<=hiRow; iy++) { /* loop in y */
     inPixel[1] = (ofloat)iy;
     /* Get output aray pointer */
     pos[0] = 0; pos[1] = iy;
     out = ObitFArrayIndex (outArr, pos);
-    for (ix = 0; ix<=outArr->naxis[0]; ix++) {/* loop in x */
+    for (ix = 1; ix<=outArr->naxis[0]; ix++) {/* loop in x */
       inPixel[0] = (ofloat)ix;
       /* array index in in and out for this pixel */
       indx = (ix-1);
