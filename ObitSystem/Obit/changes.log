@@ -3710,3 +3710,21 @@ Obit/include/ObitPolnCalFit.h:
 Obit/src/ObitSpectrumFit.c:
   NLFit: Use avg if only one term used
 14 Jul 2017 svn 568
+
+Summary: Extract poln info for VL table, inner UV Taper, BDFIn bug fixes
+Obit/changes.log:
+  Update
+Obit/../ObitVersion:
+  Trigger NRAO update
+Obit/src/ObitDConClean.c:
+  AddCleanFileWindow: Change error parsing CLEANfile to a warning
+Obit/python/MosaicUtil.py:
+  PWeightImage: improve logic
+Obit/python/UVDesc.inc  Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c 
+Obit/include/ObitUVWeightDef.h Obit/src/ObitUVWeight.c Obit/src/ObitUVImagerMF.c:
+  Implement inner UV Taper
+Obit/tasks/MFImage.c Obit/TDF/MFImage.TDF:
+  Inner UV Weight
+Obit/src/ObitSourceEphemerus.c:
+  Setup: fix loop count bug, caused BDFIn to crash
+18 Aug 2017 svn 569

@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003,2012                                          */
+/*;  Copyright (C) 2003-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -57,6 +57,10 @@ ofloat WtPower;
 ofloat UScale, VScale;
 /** -sigma,uu,vv,uv for taper (in cells) array per IF */
 ofloat *sigma1, *sigma2, *sigma3;
+/** Minimum weight for inner taper */
+ofloat minInnerWt;
+/** -sigma,uu,vv,uv for inverse taper (in cells) array per IF */
+ofloat *isigma1, *isigma2, *isigma3;
 /** max, min baseline lengths (wavelengths) */
 ofloat blmax, blmin;
 /** Robust temperance value array */

@@ -2544,8 +2544,8 @@ static void AddCleanFileWindow(ObitDConClean *in, gchar *Cfile, ObitErr *err)
     bad = bad || !dmsdec(d, dm, ds, &pos[1]);
     bad = bad || (abs(iRad>50));
     if (bad) {
-      Obit_log_error(err, OBIT_Error,"%s: BAD CLEAN File entry %s",routine, line);
-      return;
+      Obit_log_error(err, OBIT_InfoWarn,"%s: BAD CLEAN File entry %s",routine, line);
+      continue;
     }
     /* Look for negative dec sign */
     negDec = FALSE;

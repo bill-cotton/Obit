@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN/selfcalibrate a uv data set               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2016                                          */
+/*;  Copyright (C) 2010-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -684,6 +684,7 @@ ObitInfoList* defaultInputs(ObitErr *err)
   dim[0] = 2;dim[1] = 1;
   farray[0] = 0.0; farray[1] = 0.0;
   ObitInfoListPut (out, "UVTaper", OBIT_float, dim, farray, err);
+  ObitInfoListPut (out, "UVITaper", OBIT_float, dim, farray, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /*  Apply calibration/selection?, def=False */
@@ -1536,7 +1537,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   gchar        *tmpParms[] = {  /* Imaging, weighting parameters */
     "doFull", "do3D", "FOV", "PBCor", "antSize", 
     "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
-    "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "WtPower",
+    "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "UVITaper", "WtPower",
     "MFTaper", "RobustIF", "TaperIF",
     "MaxBaseline", "MinBaseline", "rotate", "targBeam", "Beam", "minFlux",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
@@ -2446,7 +2447,7 @@ void MFImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq",
     "outFile",  "outDisk", "outName", "outClass", "outSeq",
     "BIF", "EIF", "BChan", "EChan",  "maxFBW", 
-    "UVRange",  "timeRange",  "Robust", "UVTaper", "MFTaper", "RobustIF", "TaperIF",
+    "UVRange",  "timeRange",  "Robust", "UVTaper", "UVITaper", "MFTaper", "RobustIF", "TaperIF",
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", "BLVer",
     "doPol",  "PDVer", "doFull", "doComRes", "do3D", "Catalog", "CatDisk",
     "OutlierDist",  "OutlierFlux", "OutlierSI",
@@ -2764,7 +2765,7 @@ void BeamOne (ObitInfoList* myInput, ObitUV* inData,
   gchar        *tmpParms[] = {  /* Imaging, weighting parameters */
     "doFull", "do3D", "FOV", "PBCor", "antSize", 
     "Catalog", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
-    "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "WtPower",
+    "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "UVITaper", "WtPower",
     "MaxBaseline", "MinBaseline", "rotate", "Beam",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
     "nxBeam", "nyBeam", "Alpha", "doCalSelect",

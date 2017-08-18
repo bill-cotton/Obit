@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -333,6 +333,9 @@ void ObitUVWeightInit  (gpointer inn)
   in->sigma1     = NULL;
   in->sigma2     = NULL;
   in->sigma3     = NULL;
+  in->isigma1    = NULL;
+  in->isigma2    = NULL;
+  in->isigma3    = NULL;
   in->temperance = NULL;
   in->wtScale    = NULL;
 
@@ -368,6 +371,9 @@ void ObitUVWeightClear (gpointer inn)
   if (in->sigma1)      g_free(in->sigma1);
   if (in->sigma2)      g_free(in->sigma2);
   if (in->sigma3)      g_free(in->sigma3);
+  if (in->isigma1)     g_free(in->isigma1);
+  if (in->isigma2)     g_free(in->isigma2);
+  if (in->isigma3)     g_free(in->isigma3);
   if (in->temperance)  g_free(in->temperance);
   if (in->wtScale)     g_free(in->wtScale);
   
@@ -407,6 +413,9 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
   if (in->sigma1)      g_free(in->sigma1);
   if (in->sigma2)      g_free(in->sigma2);
   if (in->sigma3)      g_free(in->sigma3);
+  if (in->isigma1)     g_free(in->isigma1);
+  if (in->isigma2)     g_free(in->isigma2);
+  if (in->isigma3)     g_free(in->isigma3);
   if (in->temperance)  g_free(in->temperance);
   if (in->wtScale)     g_free(in->wtScale);
   nif = 1;
@@ -416,6 +425,9 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
   in->sigma1     = g_malloc0(nif*sizeof(ofloat));
   in->sigma2     = g_malloc0(nif*sizeof(ofloat));
   in->sigma3     = g_malloc0(nif*sizeof(ofloat));
+  in->isigma1    = g_malloc0(nif*sizeof(ofloat));
+  in->isigma2    = g_malloc0(nif*sizeof(ofloat));
+  in->isigma3    = g_malloc0(nif*sizeof(ofloat));
   in->temperance = g_malloc0(nif*sizeof(ofloat));
   in->wtScale    = g_malloc0(nif*sizeof(ofloat));
 
@@ -518,6 +530,29 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
     for (i=0; i<nif; i++) in->sigma1[i] = 0.0;
     for (i=0; i<nif; i++) in->sigma2[i] = 0.0;
     for (i=0; i<nif; i++) in->sigma3[i] = 0.0;
+  }
+
+  /* Inverse Taper [default none] */
+  farr[0] = farr[1] = farr[2] = farr[3] = 0.0;
+  ObitInfoListGetTest(uvdata->info, "UVITaper", &type, dim, farr);
+  if ((farr[1]>0.0) || (farr[2]>0.0)) {
+    /*in->minInnerWt = MAX(0.0, MIN(1.0,farr[0]));*/
+    farr[0] = MIN(1.0,farr[0]);
+    farr[0] = MAX(0.0, farr[0]);
+    in->minInnerWt = farr[0];
+    farr[1] *= 1.0e3;  /* To lambdas */
+    farr[2] *= 1.0e3;  /* To lambdas */
+    sigma2u = log(0.3)/(farr[1]*farr[1]);
+    sigma2v = log(0.3)/(farr[2]*farr[2]);
+    cpa = cos(farr[3]*DG2RAD);
+    spa = sin(farr[3]*DG2RAD);
+    for (i=0; i<nif; i++) in->isigma1[i] = (cpa*cpa*sigma2v + spa*spa*sigma2u);
+    for (i=0; i<nif; i++) in->isigma2[i] = (spa*spa*sigma2v + cpa*cpa*sigma2u);
+    for (i=0; i<nif; i++) in->isigma3[i] = 2.0*cpa*spa*(sigma2v - sigma2u);
+  } else {
+    for (i=0; i<nif; i++) in->isigma1[i] = 0.0;
+    for (i=0; i<nif; i++) in->isigma2[i] = 0.0;
+    for (i=0; i<nif; i++) in->isigma3[i] = 0.0;
   }
 
   /* Is array of taper given? */
@@ -1076,11 +1111,11 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
   olong ifq, iif, nif, loFreq, hiFreq;
   ofloat *grid=NULL, *u, *v, *w, *vis, *vvis, *fvis, *ifvis, *wt;
   ofloat tape, tfact, inWt, outWt, guardu, guardv, uf, vf, minWt;
-  ofloat ucell, vcell, uucell, vvcell, temperance=0.0;
+  ofloat ucell, vcell, uucell, vvcell, temperance=0.0, innerWt;
   olong pos[] = {0,0,0,0,0};
   olong fincf, fincif;
   ObitUVDesc *desc;
-  gboolean doPower, doOne, doTaper, doUnifWt, doFlag;
+  gboolean doPower, doOne, doTaper, doITaper, doUnifWt, doFlag;
   odouble sumInWt, sumOutWt, sumO2IWt,numberBad ;
 
   /* error checks */
@@ -1132,6 +1167,9 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
   /* what needed */
   /* Need taper? */
   doTaper = (in->sigma1[0]!=0.0) || (in->sigma2[0]!=0.0);
+  /* Need inner taper? */
+  doITaper = (in->isigma1[0]!=0.0) || (in->isigma2[0]!=0.0);
+  innerWt = in->minInnerWt;  /* For minimum inner weight */
   /* Raising weight to a power? */
   doPower = (fabs (in->WtPower-1.0) > 0.01) && (in->WtPower > 0.01);
   /* Replacing weights with 1.0? */
@@ -1234,6 +1272,18 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
 	      tape = ((uf)*(uf)*in->sigma2[iif] + (vf)*(vf)*in->sigma1[iif] + (uf)*(vf)*in->sigma3[iif]);
 	      if (tape<-14.0) tfact = 0.0; /* underflow */
 	      else tfact = exp(tape);
+	      *wt *= tfact;
+	    }
+	    
+	    /* apply any innner taper to the weight subject to minimum. */
+	    if (doITaper) {
+	      /* Scale u,v (wavelengths) for frequency (w not used) */
+	      uf = *u * desc->fscale[ifq];
+	      vf = *v * desc->fscale[ifq];
+	      
+	      tape = ((uf)*(uf)*in->isigma2[iif] + (vf)*(vf)*in->isigma1[iif] + (uf)*(vf)*in->isigma3[iif]);
+	      if (tape<-14.0) tfact = 1.0; /* underflow */
+	      else tfact = MAX(innerWt, (1.0 - exp(tape)));
 	      *wt *= tfact;
 	    }
 	    

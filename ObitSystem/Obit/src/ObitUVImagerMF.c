@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2016                                          */
+/*;  Copyright (C) 2010-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -365,7 +365,7 @@ void ObitUVImagerMFWeight (ObitUVImager *in, ObitErr *err)
     {"FOV", "doFull", "NField", "xCells", "yCells", "nx", "ny", 
      "RAShift", "DecShift", "Sources", "Beam", "targBeam", 
      "Catalog",  "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
-     "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
+     "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "UVITaper", "Robust", "WtPower",
      "RobustIF", "TaperIF", "MFTaper",
      NULL};
   gchar *routine = "ObitUVImagerWeight";

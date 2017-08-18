@@ -4,7 +4,7 @@
 ;! Obit wideband imaging
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2010-2016
+;;  Copyright (C) 2010-2017
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -931,6 +931,21 @@ which when convolved with the fitted psf will give the restoring beam.
 restoring beam are replaces by zero size).  The intent of this is that
 the residuals have the same resolution as the CLEANed portion of the
 image. 
+
+Inverse taper
+------------
+To downweight short baselines it is possible to use an "inverse 
+taper", UVITaper.  This is less harsh alternative to UVRange.
+  UVITaper...(U,V) Inverse Gaussian taper (kilo-lambda) at 70% level
+             as (min wt., major, minor axis, position angle)
+This multiplies the data weight by 
+1-UVITaper[0]-exp(UVITaper[1:3] dot baseline)
+# To implement in ObitTalk:
+UVITaper = [0.1, 0.2, 0.2, 0.] 
+addParam(mf,"UVITaper", paramVal=UVITaper, shortHelp="Inverse Taper", \
+	longHelp="  UVITaper....Inverse Taper\n"+ \
+	"              Taper inner portion of uv space\n"+ \
+	"              multiplies weight by 1-taper[0]-exp(taper(13) dot BL)\n")
 
 PS Table
 --------

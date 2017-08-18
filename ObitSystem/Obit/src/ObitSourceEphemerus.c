@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2015                                          */
+/*;  Copyright (C) 2012-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -377,7 +377,7 @@ void ObitSourceEphemerusSetup (ObitSourceEphemerus *in, ObitSDMData *SDM,
 	in->distRef[count]      = EpTab->rows[i]->distance[0];
 	in->numDistDeriv[count] = m;
 	in->DistDeriv[count]    = g_malloc0(m*sizeof(odouble));
-	for (j=1; j<n; j++) in->DistDeriv[count][j] = EpTab->rows[i]->distance[j];
+	for (j=1; j<m; j++) in->DistDeriv[count][j] = EpTab->rows[i]->distance[j];
 	count++;
       }
     }
