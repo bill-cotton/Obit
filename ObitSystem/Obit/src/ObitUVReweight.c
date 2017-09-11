@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2015                                          */
+/*;  Copyright (C) 2005-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -59,8 +59,7 @@ void ObitUVReweightDo (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 {
   ObitIOCode iretCode, oretCode;
   gboolean doCalSelect;
-  olong i, j, k, iwt, jwt, firstVis=1, startVis=1, endVis=1, suba;
-  olong countAll;
+  olong iwt, jwt, firstVis=1, startVis=1, endVis=1, suba;
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
@@ -68,9 +67,11 @@ void ObitUVReweightDo (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitUVDesc *inDesc, *outDesc, *scrDesc;
   ObitUV *scrUV=NULL;
   ofloat timeAvg, lastTime=-1.0, timeOff, subAOff;
-  olong *blLookup=NULL, BIF, BChan;
-  olong indx, jndx, nVisPIO, itemp, ant1, ant2;
-  olong ncorr, numAnt, numBL, blindx;
+  olong BIF, BChan;
+  olong nVisPIO, ant1, ant2;
+  olong ncorr, numAnt, itemp; 
+  ollong lltmp, numBL, blindx, indx, jndx, i, j, k, countAll;
+  ollong *blLookup=NULL;
   gboolean gotOne, done, incompatible;
   ofloat *acc=NULL, *sortWt=NULL, maxWt, mednWt, *Buffer;
   ofloat startTime, endTime, curTime, rms2, ampl2, uvwScale;
@@ -188,14 +189,16 @@ void ObitUVReweightDo (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   /* Allocate arrays */
   suba    = 1;
   numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
-  numBL   = (numAnt*(numAnt-1))/2;
+  numBL   = (((ollong)numAnt)*(numAnt-1))/2;
   ncorr   = inUV->myDesc->ncorr;
   /* acc index = type + corr * (6) + BL * (3*ncorr)  where BL = 0-rel baseline index */
-  acc      = g_malloc0 (ncorr * 3 * numBL * sizeof(ofloat));
-  sortWt   = g_malloc0 (ncorr * numBL * sizeof(ofloat));
+  lltmp   = ncorr * 3 * numBL * sizeof(ofloat);
+  acc     = g_malloc0 (lltmp);
+  lltmp   = ncorr * numBL * sizeof(ofloat);
+  sortWt  = g_malloc0 (lltmp);
 
   /* Baseline tables */
-  blLookup = g_malloc0 (numAnt*sizeof(olong));
+  blLookup = g_malloc0 (numAnt*sizeof(ollong));
   blLookup[0] = 0;
   k = 0;
   for (i=1; i<numAnt; i++) {
@@ -384,7 +387,7 @@ void ObitUVReweightDo (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitInfoListAlwaysPut(outUV->info, "nVisPIO", OBIT_long, dim, &nVisPIO);
 
   /* Inform user */
-  Obit_log_error(err, OBIT_InfoErr, "Appended %d reweighted entries", countAll);
+  Obit_log_error(err, OBIT_InfoErr, "Appended %ld reweighted entries", countAll);
 
   /* Cleanup */
  cleanup:  

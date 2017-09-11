@@ -40,6 +40,7 @@
 #include "ObitTableVL.h"
 #include "ObitTableCC.h"
 #include "ObitPBUtil.h"
+#include "ObitSkyModel.h"
 
 /* Source list (GSList) stuff */
 /* Catalog list management */
@@ -49,8 +50,8 @@ typedef struct {
   odouble ra, dec;
   /** shift from reference position */
   ofloat shift[3];
-  /** deconvolved gaussian parameters (maj, min, PA) (FWHM, deg) */
-  ofloat gparm[3];
+  /** deconvolved gaussian parameters (maj, min, PA) (FWHM, deg), SI */
+  ofloat gparm[4];
   /** Estimated catalog flux density */
   ofloat flux;
 }  SouListElem; 
@@ -113,12 +114,12 @@ ObitInfoList *myOutput = NULL; /* Output parameter list */
 /** Private: SouListElem Constructor  */ 
  SouListElem* 
 newSouListElem (odouble ra, odouble dec, ofloat shift[3],
-		ofloat gparm[3], ofloat flux); 
+		ofloat gparm[4], ofloat flux); 
 
 /**  Private: Update contents of an SouListElem */
 void
 SouListElemUpdate (SouListElem *elem, odouble ra, odouble dec, 
-		   ofloat shift[3], ofloat gparm[3], ofloat flux);
+		   ofloat shift[3], ofloat gparm[4], ofloat flux);
 
 /**  Private: Print contents of an SouListElem */
 void
@@ -794,7 +795,7 @@ void FacesHistory (gchar *Source, ObitInfoList* myInput,
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq",
     "outDType", "outFile",  "outDisk", "outName", "outClass", "outSeq",
     "Catalog", "CatDisk", "maxDist",  "minFlux", "SI", "CCVer", 
-    "FOV", "xCells", "yCells", "antSize", "usegauss",
+    "FOV", "xCells", "yCells", "antSize", "usegauss", "useSI", "Factor",
     NULL};
   gchar *routine = "FacesHistory";
 
@@ -857,9 +858,9 @@ ObitImage* getOutputImage (ObitInfoList *myInput, ObitUV* inData,
   ObitTableCC *outCC=NULL;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  ofloat FOV, xCells, yCells;
-  olong CCVer, highVer;
-  gboolean exist=FALSE;
+  ofloat FOV, xCells, yCells, useSI=0.0;
+  olong CCVer, highVer, noParms, nterm=1;
+  gboolean doSI, exist=FALSE;
   gchar oldName[32], tname[129];
   gchar *routine = "getOutputImage";
 
@@ -869,6 +870,10 @@ ObitImage* getOutputImage (ObitInfoList *myInput, ObitUV* inData,
   /* Get old output name */
   ObitInfoListGet(myInput, "outName", &type, dim, oldName, err);
   if (err->error) Obit_traceback_val (err, routine, inData->name, outImage);
+
+  /* Adding spectral index */
+  ObitInfoListGetTest(myInput, "useSI", &type, dim, &useSI);
+  doSI = useSI != 0.0;
 
   /* Add source name */
   g_snprintf (tname, 100, "%s%s", Source, oldName);
@@ -918,6 +923,12 @@ ObitImage* getOutputImage (ObitInfoList *myInput, ObitUV* inData,
     outImage->myDesc->inaxes[outImage->myDesc->jlocd]/2;
   outImage->myDesc->cdelt[outImage->myDesc->jlocr]  = -fabs(xCells)/3600.;
   outImage->myDesc->cdelt[outImage->myDesc->jlocd]  =  fabs(yCells)/3600.;
+  /* Adding SI? */
+  if (doSI) {
+    strncpy (outImage->myDesc->ctype[outImage->myDesc->jlocf], "SPECLOGF", 8);
+    dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    ObitInfoListAlwaysPut(outImage->myDesc->info, "NTERM", OBIT_long, dim, &nterm);
+  }
   ObitImageFullInstantiate (outImage, FALSE, err);
   if (err->error) Obit_traceback_val (err, routine, inData->name, outImage);
 
@@ -936,8 +947,10 @@ ObitImage* getOutputImage (ObitInfoList *myInput, ObitUV* inData,
   if (err->error) Obit_traceback_val (err, routine, outImage->name, outImage);
 
  /* Make CC Table */
+  if (doSI) noParms = 5;
+  else      noParms = 4;
   outCC = newObitTableCCValue ("CC", (ObitData*)outImage,
-			       &CCVer, OBIT_IO_WriteOnly, 4, err);
+			       &CCVer, OBIT_IO_WriteOnly, noParms, err);
   /* Open/close to generate */
   ObitTableCCOpen (outCC, OBIT_IO_WriteOnly, err);
   ObitTableCCClose (outCC, err);
@@ -964,9 +977,9 @@ SouList* ParseCat (ObitInfoList* myInput, ObitImage* outImage,
   olong count;
   odouble ra0, dec0, Freq, ra, dec, ra2000, dc2000, dra;
   odouble xx, yy, zz, dist, refreq;
-  ofloat radius, minflux, diam, alpha, pbf, sumFlux=0.0;
-  ofloat flux, scale, xsh[3], gparm[3], fparm[3], beam[3];
-  gfloat rotate=0.0, dxyzc[3];
+  ofloat radius, minflux, diam, alpha, pbf, Factor=1.0, sumFlux=0.0;
+  ofloat flux, scale, xsh[3], gparm[10], fparm[3], beam[3];
+  gfloat rotate=0.0, useSI=0.0, dxyzc[3];
   gboolean wanted, doJinc, useGauss=FALSE;
   olong blc[IM_MAXDIM] = {1,1,1,1,1};
   olong trc[IM_MAXDIM] = {0,0,0,0,0};
@@ -992,6 +1005,9 @@ SouList* ParseCat (ObitInfoList* myInput, ObitImage* outImage,
   ObitInfoListGet(myInput, "antSize",  &type, dim, &diam,    err);
   ObitInfoListGet(myInput, "useGauss", &type, dim, &useGauss, err);
   if (err->error) Obit_traceback_val (err, routine, outImage->name, outList);
+  ObitInfoListGetTest(myInput, "useSI", &type, dim, &useSI);
+  ObitInfoListGetTest(myInput, "Factor", &type, dim, &Factor);
+  if (Factor==0.0) Factor = 1.0;
 
   /* Really needed? */
   if (radius<=1.0e-10) return outList;
@@ -1054,7 +1070,7 @@ SouList* ParseCat (ObitInfoList* myInput, ObitImage* outImage,
     if (err->error) Obit_traceback_val (err, routine, VLTable->name, outList);
    
     /* spectral scaling of flux density */
-    flux = VLRow->PeakInt * scale;
+    flux = VLRow->PeakInt * scale * Factor;
 
     /* position, etc */
     ra   = VLRow->Ra2000;
@@ -1107,6 +1123,7 @@ SouList* ParseCat (ObitInfoList* myInput, ObitImage* outImage,
 	fparm[0] = VLRow->MajorAxis;
 	fparm[1] = VLRow->MinorAxis;
 	fparm[2] = VLRow->PosAngle;
+	gparm[3] = useSI;  /* Spectral index */
 	if (useGauss) {
 	  /* Deconvolve */
 	  deconv (fparm[0], fparm[1], fparm[2], beam[0], beam[1], beam[2], 
@@ -1156,19 +1173,31 @@ void SouList2TableCC (SouList* slist, ObitImage* outImage, olong CCVer,
   ObitTableCC *CCTable=NULL;
   ObitTableCCRow *CCRow=NULL;
   olong orow, noParms;
+  gboolean doSI=FALSE;
+  ofloat useSI;
   gchar *routine = "SouList2TableCC";
   
   /* error checks */
   g_assert(ObitErrIsA(err));
   if (err->error) return;
+  /* Need spectral index? */
+  tmp = slist->list;
+  elem =  (SouListElem*)slist->list->data;
+  useSI = elem->gparm[3];
+  doSI = useSI != 0.0;
 
   /* Now get CC table */
   noParms = 4;
+  if (doSI) noParms += 1;
   CCTable =  newObitTableCCValue("Catalog table", (ObitData*)outImage, &CCVer, 
 				 OBIT_IO_ReadWrite, noParms, err);
   ObitTableCCOpen(CCTable, OBIT_IO_ReadWrite, err);
   CCRow =  newObitTableCCRow (CCTable);  /* Table row */
   if (err->error) Obit_traceback_msg (err, routine, CCTable->name);
+  if (doSI) {
+    CCRow->parms[3]      = (ofloat)OBIT_SkyModel_GaussModSpec;
+    CCRow->parms[4]      = useSI;
+  } else CCRow->parms[3] = (ofloat)OBIT_SkyModel_GaussMod;
 
   /* loop through source list processing elements */
   tmp = slist->list;
@@ -1183,7 +1212,6 @@ void SouList2TableCC (SouList* slist, ObitImage* outImage, olong CCVer,
       CCRow->parms[0] = elem->gparm[0];
       CCRow->parms[1] = elem->gparm[1];
       CCRow->parms[2] = elem->gparm[2];
-      CCRow->parms[3] = 1.0;
       /* Write row */
       orow = -1;
       ObitTableCCWriteRow (CCTable, orow, CCRow, err);
@@ -1307,14 +1335,14 @@ void SouList2Image (SouList* slist, ObitImage* outImage, ObitErr *err)
  * \param ra      Catalog celestial position RA (deg)
  * \param dec     Catalog celestial position RA (deg)
  * \param shift   Shift from reference position
- * \param gparm   Gaussian parameters
+ * \param gparm   Gaussian parameters, SI
  * \param flux    Estimated catalog flux density
  * \param epoch   Epoch number
  * \return the new  object.
  */
  SouListElem* 
 newSouListElem (odouble ra, odouble dec, ofloat shift[3],
-		ofloat gparm[3], ofloat flux)
+		ofloat gparm[4], ofloat flux)
 {
   SouListElem *out=NULL;
 
@@ -1327,6 +1355,7 @@ newSouListElem (odouble ra, odouble dec, ofloat shift[3],
   out->gparm[0]  = gparm[0];
   out->gparm[1]  = gparm[1];
   out->gparm[2]  = gparm[2];
+  out->gparm[3]  = gparm[3];
   out->flux      = flux;
   return out;
 } /* end newSouListElem */
@@ -1337,13 +1366,13 @@ newSouListElem (odouble ra, odouble dec, ofloat shift[3],
  * \param ra      Catalog celestial position RA (deg)
  * \param dec     Catalog celestial position Dec (deg)
  * \param shift   Shift from reference position
- * \param gparm   Expected gparm in reference image
+ * \param gparm   Expected gparm in reference image, SI
  * \param flux    Estimated catalog flux density
  * \return the new  object.
  */
  void
 SouListElemUpdate (SouListElem *elem, odouble ra, odouble dec, 
-		   ofloat shift[3], ofloat gparm[3], ofloat flux)
+		   ofloat shift[3], ofloat gparm[4], ofloat flux)
 {
   elem->ra        = ra;
   elem->dec       = dec;
@@ -1353,6 +1382,7 @@ SouListElemUpdate (SouListElem *elem, odouble ra, odouble dec,
   elem->gparm[0]  = gparm[0];
   elem->gparm[1]  = gparm[1];
   elem->gparm[2]  = gparm[2];
+  elem->gparm[3]  = gparm[3];
   elem->flux      = flux;
 } /* end SouListElemUpdate */
 

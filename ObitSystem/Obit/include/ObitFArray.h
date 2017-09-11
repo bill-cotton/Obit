@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2016                                          */
+/*;  Copyright (C) 2003-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,6 +32,9 @@
 #include "ObitErr.h"
 #include "ObitInfoList.h"
 #include "ObitThread.h"
+#if HAVE_GSL==1  /* GSL stuff */
+#include <gsl/gsl_randist.h>
+#endif /* HAVE_GSL */
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -377,6 +380,14 @@ typedef void  (*ObitFArrayLogFP) (ObitFArray* in, ObitFArray* out);
 /** Public: natural log of elements in an FArray */
 void ObitFArrayPow (ObitFArray* in1, ObitFArray* in2, ObitFArray* out);
 typedef void  (*ObitFArrayPowFP) (ObitFArray* in1, ObitFArray* in2, ObitFArray* out);
+
+/** Public: Gaussian distributed random numbers */
+ofloat ObitFArrayRandom (ofloat mean, ofloat sigma);
+typedef ofloat  (*ObitFArrayRandomFP) (ofloat mean, ofloat sigma);
+
+/** Public: Fill with Gaussian distributed random numbers */
+void ObitFArrayRandomFill (ObitFArray* in, ofloat mean, ofloat sigma);
+typedef void  (*ObitFArrayRandomFillFP) (ObitFArray* in, ofloat mean, ofloat sigma);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

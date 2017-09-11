@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2015                                          */
+/*;  Copyright (C) 2009-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -142,7 +142,7 @@ ObitUVRFIXize* ObitUVRFIXizeCreate (gchar* name, ObitUV *inUV,
 
   /* Info */
   out->numAnt = inUV->myDesc->numAnt[0];
-  out->numBL  = out->numAnt*out->numAnt/2;
+  out->numBL  = ((ollong)out->numAnt)*out->numAnt/2;
   if (inUV->myDesc->jlocif>=0)
     out->numIF = inUV->myDesc->inaxes[inUV->myDesc->jlocif];
   else
@@ -582,7 +582,8 @@ void ObitUVRFIXizeFetchStartUp (ObitUVRFIXize *in, ObitErr *err)
 {
   ObitUVDesc *desc = in->RFIUV->myDesc;
   ofloat fblank = ObitMagicF();
-  olong i, j, jndx, ant1, ant2;
+  olong ant1, ant2;
+  ollong lltmp, i, j, jndx; 
   gint32 dim[MAXINFOELEMDIM]={1,1,1,1,1};
   gchar *interMode="AMBG";
   gchar *routine="ObitUVRFIXizeFetchStartUp";
@@ -597,7 +598,7 @@ void ObitUVRFIXizeFetchStartUp (ObitUVRFIXize *in, ObitErr *err)
 
   /* Copy descriptor information */
   in->numAnt    = desc->maxAnt;
-  in->numBL     = in->numAnt*in->numAnt/2;
+  in->numBL     = ((ollong)in->numAnt)*in->numAnt/2;
   in->numVis    = desc->nvis;
 
   /* Create baseline index lookup */
@@ -628,15 +629,18 @@ void ObitUVRFIXizeFetchStartUp (ObitUVRFIXize *in, ObitErr *err)
 
   /* Allocate arrays */
   in->lenVisArrayEntry = desc->lrec; /* length of vis array entry */
-  in->VisApply     = g_malloc(desc->lrec*in->numBL*sizeof(ofloat));
-  in->VisPrior     = g_malloc(desc->lrec*in->numBL*sizeof(ofloat));
-  in->VisFollow    = g_malloc(desc->lrec*in->numBL*sizeof(ofloat));
-  in->PriorVisTime = g_malloc(in->numBL*sizeof(ofloat));
-  in->FollowVisTime= g_malloc(in->numBL*sizeof(ofloat));
-  in->ApplyVisTime = g_malloc(in->numBL*sizeof(ofloat));
-  in->PriorVisNum  = g_malloc(in->numBL*sizeof(olong));
-  in->FollowVisNum = g_malloc(in->numBL*sizeof(olong));
-  in->ApplyVisNum  = g_malloc(in->numBL*sizeof(olong));
+  lltmp            = desc->lrec*in->numBL*sizeof(ofloat);
+  in->VisApply     = g_malloc(lltmp);
+  in->VisPrior     = g_malloc(lltmp);
+  in->VisFollow    = g_malloc(lltmp);
+  lltmp            = in->numBL*sizeof(ofloat);
+  in->PriorVisTime = g_malloc(lltmp);
+  in->FollowVisTime= g_malloc(lltmp);
+  in->ApplyVisTime = g_malloc(lltmp);
+  lltmp            = in->numBL*sizeof(olong);
+  in->PriorVisNum  = g_malloc(lltmp);
+  in->FollowVisNum = g_malloc(lltmp);
+  in->ApplyVisNum  = g_malloc(lltmp);
   in->AntReal      = g_malloc(in->numAnt*in->numIF*sizeof(ofloat));
   in->AntImag      = g_malloc(in->numAnt*in->numIF*sizeof(ofloat));
   in->AntDelay     = g_malloc(in->numAnt*sizeof(ofloat));

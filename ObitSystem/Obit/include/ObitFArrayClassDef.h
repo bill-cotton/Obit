@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2016                                          */
+/*;  Copyright (C) 2002-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -143,3 +143,7 @@ ObitFArrayExpFP ObitFArrayExp;
 ObitFArrayLogFP ObitFArrayLog;
 /** Function pointer to x^y of FArrays */
 ObitFArrayPowFP ObitFArrayPow;
+/** Function pointer to Gaussian distributed random number */
+ObitFArrayRandomFP ObitFArrayRandom;
+/** Function pointer to fill with Gaussian distributed random numbers */
+ObitFArrayRandomFillFP ObitFArrayRandomFill;

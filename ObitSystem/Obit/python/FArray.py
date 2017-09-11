@@ -1190,6 +1190,32 @@ def PPow (in1FA, in2FA, outFA):
 
 # end PPow
 
+def PRandom (mean, sigma):
+    """  
+    Generate Gaussian distributed random number
+
+    * Returns value
+    * mean of distribution
+    * sigma of distribution
+    """
+    ################################################################
+    return Obit.FArrayRandom (mean, sigma)
+
+# end PRandom
+
+def PRandomFill (inFA, mean, sigma):
+    """  
+    Fill FArray with Gaussian distributed random numbers
+
+    * inFA FArray to fill
+    * mean of distribution
+    * sigma of distribution
+    """
+    ################################################################
+    return Obit.FArrayRandomFill (inFA.me, mean, sigma)
+
+# end PRandomFill
+
 def PIsA (inFA):
     """ 
 Tells if the input is a Python ObitFArray

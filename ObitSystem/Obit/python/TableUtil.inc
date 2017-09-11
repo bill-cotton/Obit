@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for Obit Table Utilities                   */
 /*                                                                    */
-/*;  Copyright (C) 2006,2011                                          */
+/*;  Copyright (C) 2006-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -73,6 +73,26 @@ TableCCUtilFixTSpec (ObitImage *inImage,  int inCCVer,
 	          (odouble)refFreq, (olong)nterm, lterms,
 	          (olong)startComp, (olong)endComp, err);
 } // end TableCCUtilFixTSpec
+void 
+TableCCUtilAppendShift (ObitImage *inImage,  int inCCVer, 
+		        ObitImage *outImage, int outCCVer,
+			ObitUV *uvdata,
+			int startComp, int endComp, ObitErr *err) 
+{
+  olong linCCVer=(olong)inCCVer, loutCCVer=(olong)outCCVer;
+  oint noParms=0;
+  ObitTableCC *inCC=NULL, *outCC=NULL;
+  inCC  =  newObitTableCCValue ("inCC", (ObitData*)inImage, &linCCVer, 
+                               OBIT_IO_ReadOnly, noParms, err);
+  ObitTableCCOpen(inCC, OBIT_IO_ReadOnly, err);
+  if (inCC->parmsOff>=0) noParms = inCC->myDesc->dim[inCC->parmsOff][0];
+  ObitTableCCClose(inCC, err);
+  outCC =  newObitTableCCValue ("outCC", (ObitData*)outImage, &loutCCVer, 
+                               OBIT_IO_ReadWrite, noParms, err);
+  ObitTableCCUtilAppendShift (inCC,  outCC, uvdata->myDesc, inImage->myDesc,
+                             (olong)startComp, (olong)endComp, err);
+  ObitTableCCUnref(inCC); ObitTableCCUnref(outCC);
+} // end TableCCUtilAppendShift
 %}
 
 

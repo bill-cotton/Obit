@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2015                                          */
+/*;  Copyright (C) 2005-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -55,9 +55,9 @@ typedef struct {
   /* thread number, <0 -> no threading   */
   olong        ithread;
   /* First (1-rel) baseline to process this thread */
-  olong        first;
+  ollong       first;
   /* Highest (1-rel) baseline to process this thread  */
-  olong        last;
+  ollong       last;
   /* Circular amplitude storage (baseline,correlator,time) */
   ofloat *amps;
   /*  time slice of interest */
@@ -65,7 +65,7 @@ typedef struct {
   /* times of data samples, <-1000 => ignore */
   ofloat* times;   
   /*  Number of baselines */
-  olong numBL;
+  ollong numBL;
   /* Number of correlations */
   olong numCorr; 
   /* Number of allocated time slices in amps */
@@ -92,11 +92,11 @@ typedef struct {
   /* thread number, <0 -> no threading   */
   olong        ithread;
   /*  Number of baselines */
-  olong numBL;
+  ollong numBL;
   /* First (1-rel) baseline to process this thread */
-  olong        first;
+  ollong       first;
   /* Highest (1-rel) baseline to process this thread  */
-  olong        last;
+  ollong       last;
   /* Number of polarizations */
   olong numPol; 
   /* Number of Channels */
@@ -154,12 +154,12 @@ static void editHist (olong ncorr, olong numCell, ofloat hisinc, olong *hissig,
 
 /** Digest correlator information for TD */
 static void digestCorr (ObitUVDesc *inDesc, ofloat *maxRMS, ofloat *maxRMS2, 
-			olong *crossBL1, olong *crossBL2, 
+			ollong *crossBL1, ollong *crossBL2, 
 			olong *corChan, olong *corIF, olong *corStok);
 
 /** Digest correlator information for TDRMSAvg */
 static void digestCorrTDRMSAvg (ObitUVDesc *inDesc, ofloat maxRMSAvg, ofloat *maxRMS2, 
-				olong *crossBL1, olong *crossBL2, 
+				ollong *crossBL1, ollong *crossBL2, 
 				olong *corChan, olong *corIF, olong *corStok);
 
 /**Private:  Digest  some correlator information for FD */
@@ -185,7 +185,7 @@ static void EditFDBLFit (ofloat* x, ofloat* y, gboolean *m, olong ndata,
 
 /** Private: Determine deviations from Median */
 static ollong MedianDev (ofloat *amps, olong itime, ofloat *times,
-			 olong numBL, olong ncorr, olong numTime, olong ntime,
+			 ollong numBL, olong ncorr, olong numTime, olong ntime,
 			 ofloat alpha, ofloat *devs, 
 			 ofloat *work, olong nThread, UVMednEditFuncArg** args,
 			 ObitErr *err);
@@ -204,7 +204,7 @@ static ofloat MedianSigma (olong n, ofloat *value, ofloat mean, ofloat alpha);
 
 /** Private: Median flagging */
 static ollong MedianFlag (ofloat *devs, ofloat flagSig, 
-			  olong numBL, olong numCorr, 
+			  ollong numBL, olong numCorr, 
 			  gboolean allFlag, gboolean killAll,
 			  ofloat time, ofloat timeInt,
 			  olong *BLAnt1, olong *BLAnt2, 
@@ -272,7 +272,7 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitTableFG *outFlag=NULL;
   ObitTableFGRow *row=NULL;
   gboolean doCalSelect, doHiEdit, killAll;
-  olong i, j, k, jj, kk, firstVis, startVis, suba, iFGRow, ver;
+  olong firstVis, startVis, suba, iFGRow, ver;
   ollong countAll, countBad;
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
   ObitInfoType type;
@@ -280,11 +280,13 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitIOAccess access;
   ObitUVDesc *inDesc;
   ofloat timeAvg, lastTime=-1.0, maxRMS[2], *maxRMS2=NULL, maxBad, hisicc;
-  olong *hissig=NULL, *blLookup=NULL, *crossBL1=NULL, *crossBL2=NULL;
+  olong *hissig=NULL;
+  ollong *crossBL1=NULL, *crossBL2=NULL, *blLookup=NULL;
   olong *corChan=NULL, *corIF=NULL, *corStok=NULL;
   olong *BLAnt1=NULL, *BLAnt2=NULL, BIF, BChan;
-  olong flagTab, indx, jndx, kndx, nVisPIO, itemp, ant1, ant2;
-  olong numCell, ncorr, numAnt, numBL, blindx, hicell;
+  olong flagTab, nVisPIO, itemp, ant1, ant2;
+  olong numCell, ncorr, numAnt, hicell;
+  ollong numBL, indx, jndx, kndx, lltmp, i, j, k, jj, kk, blindx;
   gboolean gotOne, done, isbad, *badCor=NULL;
   ofloat *acc=NULL, *corCnt=NULL, *corBad=NULL, *hiClip=NULL, *Buffer;
   ofloat startTime, endTime, curTime, sigma, hisinc, rms2, rms3, ampl2;
@@ -366,12 +368,14 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   numCell = 800;  /* number of cells in histogram */
   suba    = 1;
   numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
-  numBL   = (numAnt*(numAnt-1))/2;
+  numBL   = (((ollong)numAnt)*(numAnt-1))/2;
   ncorr   = inUV->myDesc->ncorr;
   /* acc index = type + corr * (6) + BL * (6*ncorr)  where BL = 0-rel baseline index */
-  acc    = g_malloc0 (ncorr * 6 * numBL * sizeof(ofloat));
+  lltmp = ncorr * 6 * numBL * sizeof(ofloat);
+  acc    = g_malloc0 (lltmp);
   /* hissig index  = cell + numCell*corr */
-  hissig = g_malloc0 (ncorr * numCell * sizeof(olong));
+  lltmp = ncorr * numCell * sizeof(olong);
+  hissig = g_malloc0 (lltmp);
   hisicc = 0.005;  /* Histogram resolution ??? This seems critical */
   hisinc = hisicc*maxRMS[0]; /* Histogram increment */
   hiClip = g_malloc0 (ncorr * sizeof(ofloat));
@@ -379,16 +383,17 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   corBad = g_malloc0 (ncorr * sizeof(ofloat));
   badCor = g_malloc0 (ncorr * sizeof(gboolean));
   maxRMS2  = g_malloc0 (ncorr * sizeof(ofloat)); /* Maximum variance per correlator */
-  crossBL1 = g_malloc0 (ncorr * sizeof(olong));   /* associated cross baseline 1 */
-  crossBL2 = g_malloc0 (ncorr * sizeof(olong));   /* associated cross baseline 2 */
+  crossBL1 = g_malloc0 (ncorr * sizeof(ollong));  /* associated cross baseline 1 */
+  crossBL2 = g_malloc0 (ncorr * sizeof(ollong));  /* associated cross baseline 2 */
   corChan  = g_malloc0 (ncorr * sizeof(olong));   /* Correlator Channel */
   corIF    = g_malloc0 (ncorr * sizeof(olong));   /* Correlator IF */
   corStok  = g_malloc0 (ncorr * sizeof(olong));   /* Correlator Stokes */
 
   /* Baseline tables */
-  blLookup = g_malloc0(numAnt*sizeof(olong));
-  BLAnt1   = g_malloc0 (numBL * sizeof(olong));    /* First antenna of baseline */
-  BLAnt2   = g_malloc0 (numBL * sizeof(olong));    /* Second antenna of baseline */
+  blLookup = g_malloc0(numAnt*sizeof(ollong));
+  lltmp = numBL * sizeof(olong);
+  BLAnt1   = g_malloc0 (lltmp);    /* First antenna of baseline */
+  BLAnt2   = g_malloc0 (lltmp);    /* Second antenna of baseline */
   blLookup[0] = 0;
   k = 0;
   for (j=2; j<=numAnt; j++) {BLAnt1[k]=1; BLAnt2[k]=j; k++;}
@@ -407,7 +412,7 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   lastSubA     = 0;
   countAll     = 0;
   countBad     = 0;
-  for (i=0; i<6*ncorr*numBL; i++) acc[i] = 0.0;
+  for (lltmp=0; lltmp<6*ncorr*numBL; lltmp++) acc[lltmp] = 0.0;
 
   Buffer = inUV->buffer;
 
@@ -809,19 +814,20 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitTableFG *outFlag=NULL;
   ObitTableFGRow *row=NULL;
   gboolean doCalSelect;
-  olong i, j, k, jj, kk, firstVis, startVis, suba, iFGRow, ver;
-  ollong countAll, countBad;
+  olong  firstVis, startVis, suba, iFGRow, ver;
+  ollong lltmp, i, j, k, jj, kk, countAll, countBad;
+  ollong indx, jndx, kndx, numBL, blindx;
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   ObitIOAccess access;
   ObitUVDesc *inDesc;
   ofloat timeAvg, lastTime=-1.0, maxRMSAvg, *maxRMS2=NULL, maxBad;
-  olong *blLookup=NULL, *crossBL1=NULL, *crossBL2=NULL;
+  ollong *crossBL1=NULL, *crossBL2=NULL, *blLookup=NULL;
   olong *corChan=NULL, *corIF=NULL, *corStok=NULL;
   olong *BLAnt1=NULL, *BLAnt2=NULL, BIF, BChan;
-  olong flagTab, indx, jndx, kndx, nVisPIO, itemp, ant1, ant2;
-  olong ncorr, numAnt, numBL, blindx;
+  olong flagTab, nVisPIO, itemp, ant1, ant2;
+  olong ncorr, numAnt;
   gboolean gotOne, done, isbad, killAll, *badCor=NULL;
   ofloat *acc=NULL, *corCnt=NULL, *corBad=NULL, *Buffer;
   ofloat startTime, endTime, curTime, rms2, ampl2;
@@ -900,24 +906,26 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   /* Allocate arrays */
   suba    = 1;
   numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
-  numBL   = (numAnt*(numAnt-1))/2;
+  numBL   = (((ollong)numAnt)*(numAnt-1))/2;
   ncorr   = inUV->myDesc->ncorr;
   /* acc index = type + corr * (6) + BL * (3*ncorr)  where BL = 0-rel baseline index */
-  acc    = g_malloc0 (ncorr * 3 * numBL * sizeof(ofloat));
+  lltmp = ncorr * 3 * numBL * sizeof(ofloat);
+  acc    = g_malloc0 (lltmp);
   corCnt = g_malloc0 (ncorr * sizeof(ofloat));
   corBad = g_malloc0 (ncorr * sizeof(ofloat));
   badCor = g_malloc0 (ncorr * sizeof(gboolean));
-  maxRMS2  = g_malloc0 (ncorr * sizeof(ofloat)); /* Maximum variance per correlator */
-  crossBL1 = g_malloc0 (ncorr * sizeof(olong));   /* associated cross baseline 1 */
-  crossBL2 = g_malloc0 (ncorr * sizeof(olong));   /* associated cross baseline 2 */
+  maxRMS2  = g_malloc0 (ncorr * sizeof(ofloat));  /* Maximum variance per correlator */
+  crossBL1 = g_malloc0 (ncorr * sizeof(ollong));  /* associated cross baseline 1 */
+  crossBL2 = g_malloc0 (ncorr * sizeof(ollong));  /* associated cross baseline 2 */
   corChan  = g_malloc0 (ncorr * sizeof(olong));   /* Correlator Channel */
   corIF    = g_malloc0 (ncorr * sizeof(olong));   /* Correlator IF */
   corStok  = g_malloc0 (ncorr * sizeof(olong));   /* Correlator Stokes */
 
   /* Baseline tables */
-  blLookup = g_malloc0(numAnt*sizeof(olong));
-  BLAnt1   = g_malloc0 (numBL * sizeof(olong));    /* First antenna of baseline */
-  BLAnt2   = g_malloc0 (numBL * sizeof(olong));    /* Second antenna of baseline */
+  blLookup = g_malloc0(numAnt*sizeof(ollong));
+  lltmp = numBL * sizeof(olong);
+  BLAnt1   = g_malloc0 (lltmp);    /* First antenna of baseline */
+  BLAnt2   = g_malloc0 (lltmp);    /* Second antenna of baseline */
   blLookup[0] = 0;
   k = 0;
   for (j=2; j<=numAnt; j++) {BLAnt1[k]=1; BLAnt2[k]=j; k++;}
@@ -1311,19 +1319,19 @@ void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitTableFG *outFlag=NULL;
   ObitTableFGRow *row=NULL;
   gboolean doCalSelect;
-  olong i, j, k, jj, kk, firstVis, startVis, suba, iFGRow, ver;
-  ollong countAll, countBad;
+  olong firstVis, startVis, suba, iFGRow, ver;
+  ollong i, j, k, jj, kk, countAll, countBad;
+  ollong lltmp, indx, jndx, kndx, numBL, blindx;
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   ObitIOAccess access;
   ObitUVDesc *inDesc;
   ofloat timeAvg, lastTime=-1.0, maxRMSAvg, *maxRMS2=NULL, maxBad;
-  olong *blLookup=NULL, *crossBL1=NULL, *crossBL2=NULL;
+  ollong *crossBL1=NULL, *crossBL2=NULL, *blLookup=NULL;
   olong *corChan=NULL, *corIF=NULL, *corStok=NULL;
   olong *BLAnt1=NULL, *BLAnt2=NULL, BIF, BChan;
-  olong flagTab, indx, jndx, kndx, nVisPIO, itemp, ant1, ant2;
-  olong ncorr, numAnt, numBL, blindx;
+  olong flagTab, nVisPIO, itemp, ant1, ant2, ncorr, numAnt;
   gboolean gotOne, done, isbad, killAll, *badCor=NULL;
   ofloat *acc=NULL, *corCnt=NULL, *corBad=NULL, *Buffer;
   ofloat startTime, endTime, curTime, rms2, rms3, ampl2;
@@ -1402,24 +1410,26 @@ void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   /* Allocate arrays */
   suba    = 1;
   numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
-  numBL   = (numAnt*(numAnt-1))/2;
+  numBL   = (((olong)numAnt)*(numAnt-1))/2;
   ncorr   = inUV->myDesc->ncorr;
   /* acc index = type + corr * (6) + BL * (5*ncorr)  where BL = 0-rel baseline index */
-  acc    = g_malloc0 (ncorr * 5 * numBL * sizeof(ofloat));
+  lltmp = ncorr * 5 * numBL * sizeof(ofloat);
+  acc    = g_malloc0 (lltmp);
   corCnt = g_malloc0 (ncorr * sizeof(ofloat));
   corBad = g_malloc0 (ncorr * sizeof(ofloat));
   badCor = g_malloc0 (ncorr * sizeof(gboolean));
-  maxRMS2  = g_malloc0 (ncorr * sizeof(ofloat)); /* Maximum variance per correlator */
-  crossBL1 = g_malloc0 (ncorr * sizeof(olong));   /* associated cross baseline 1 */
-  crossBL2 = g_malloc0 (ncorr * sizeof(olong));   /* associated cross baseline 2 */
+  maxRMS2  = g_malloc0 (ncorr * sizeof(ofloat));  /* Maximum variance per correlator */
+  crossBL1 = g_malloc0 (ncorr * sizeof(ollong));  /* associated cross baseline 1 */
+  crossBL2 = g_malloc0 (ncorr * sizeof(ollong));  /* associated cross baseline 2 */
   corChan  = g_malloc0 (ncorr * sizeof(olong));   /* Correlator Channel */
   corIF    = g_malloc0 (ncorr * sizeof(olong));   /* Correlator IF */
   corStok  = g_malloc0 (ncorr * sizeof(olong));   /* Correlator Stokes */
 
   /* Baseline tables */
-  blLookup = g_malloc0(numAnt*sizeof(olong));
-  BLAnt1   = g_malloc0 (numBL * sizeof(olong));    /* First antenna of baseline */
-  BLAnt2   = g_malloc0 (numBL * sizeof(olong));    /* Second antenna of baseline */
+  blLookup = g_malloc0(numAnt*sizeof(ollong));
+  lltmp = numBL * sizeof(olong);
+  BLAnt1   = g_malloc0 (lltmp);    /* First antenna of baseline */
+  BLAnt2   = g_malloc0 (lltmp);    /* Second antenna of baseline */
   blLookup[0] = 0;
   k = 0;
   for (j=2; j<=numAnt; j++) {BLAnt1[k]=1; BLAnt2[k]=j; k++;}
@@ -1852,19 +1862,21 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   ObitThread *myThread=NULL;
   olong flagTab, iFGRow, nThread, nBLpTh;
   ofloat timeAvg, maxAmp, maxV, maxResBL, maxRes, maxRMS[2], minGood;
-  olong  ncorr, numChan, numPol, numIF, numAnt, numBL, widMW, *chanSel;
-  olong js, jf, jif, jbl, jndx, indx, kndx, jj,BIF, BChan;
-  olong i, j, k, kk, itemp, lastSourceID, curSourceID, lastSubA;
+  olong  ncorr, numChan, numPol, numIF, numAnt, widMW, *chanSel;
+  olong BIF, BChan;
+  olong lastSourceID, curSourceID, lastSubA;
   olong ant1, ant2, blindx, lastFQID=-1;
-  ollong  countAll, countBad, *count=NULL;
-  olong nVisPIO, ver, firstVis, startVis, suba, kstoke0;
+  ollong numBL, countAll, countBad, *count=NULL;
+  ollong lltmp, i, j, k, kk, js, jf, jif, jbl, jndx, indx, kndx, jj;
+  olong nVisPIO, ver, firstVis, startVis, suba, kstoke0, itemp;
   ofloat startTime, endTime, curTime, amp2, *Buffer;
   ofloat lastTime=-1.0;
   olong *corChan=NULL, *corIF=NULL, *corStok=NULL, *corV=NULL;
   gboolean *chanMask=NULL, done, gotOne, killAll;
   /* Accumulators per spectral channel/IF/poln/baseline */
   ofloat *sumA=NULL, *sumA2=NULL, *sigma=NULL;
-  olong *blLookup=NULL, *BLAnt1=NULL, *BLAnt2=NULL;
+  olong *BLAnt1=NULL, *BLAnt2=NULL;
+  ollong *blLookup=NULL;
   olong defSel[] = {2,-10,1,0, 0,0,0,0};
   ofloat sec;
   gchar *tname, reason[25];
@@ -1971,7 +1983,7 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   suba    = 1;
   ncorr   = inUV->myDesc->ncorr;
   numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
-  numBL   = (numAnt*(numAnt-1))/2;
+  numBL   = (((ollong)numAnt)*(numAnt-1))/2;
   if (inUV->myDesc->jlocs>=0) numPol  = inUV->myDesc->inaxes[inUV->myDesc->jlocs];
   else numPol = 1;
   if (inUV->myDesc->jlocif>=0) numIF  = inUV->myDesc->inaxes[inUV->myDesc->jlocif];
@@ -1995,10 +2007,11 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   if (chanSel == defSel) defSel[1] = numChan-1;
  
   /* index in order */
-  sumA     = g_malloc0 (numChan*numPol*numIF*numBL*sizeof(ofloat));
-  sumA2    = g_malloc0 (numChan*numPol*numIF*numBL*sizeof(ofloat));
-  sigma    = g_malloc0 (numChan*numPol*numIF*numBL*sizeof(ofloat));
-  count    = g_malloc0 (numChan*numPol*numIF*numBL*sizeof(ollong));
+  lltmp = numChan*numPol*numIF*numBL*sizeof(ofloat);
+  sumA     = g_malloc0 (lltmp);
+  sumA2    = g_malloc0 (lltmp);
+  sigma    = g_malloc0 (lltmp);
+  count    = g_malloc0 (lltmp);
   corChan  = g_malloc0 (ncorr * sizeof(olong));     /* Correlator Channel */
   corIF    = g_malloc0 (ncorr * sizeof(olong));     /* Correlator IF */
   corStok  = g_malloc0 (ncorr * sizeof(olong));     /* Correlator Stokes */
@@ -2006,9 +2019,10 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   chanMask = g_malloc0 (ncorr * sizeof(gboolean)); /* True if channel in baseline region */
 
   /* Baseline tables */
-  blLookup = g_malloc0 (numAnt*sizeof(olong));     /* baseline lookup table */
-  BLAnt1   = g_malloc0 (numBL * sizeof(olong));    /* First antenna of baseline */
-  BLAnt2   = g_malloc0 (numBL * sizeof(olong));    /* Second antenna of baseline */
+  blLookup = g_malloc0 (numAnt*sizeof(ollong));     /* baseline lookup table */
+  lltmp = (numBL * sizeof(olong));
+  BLAnt1   = g_malloc0 (lltmp);    /* First antenna of baseline */
+  BLAnt2   = g_malloc0 (lltmp);    /* Second antenna of baseline */
   blLookup[0] = 0;
   k = 0;
   for (j=2; j<=numAnt; j++) {BLAnt1[k]=1; BLAnt2[k]=j; k++;}
@@ -2368,7 +2382,7 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitIOCode iretCode, oretCode;
   ObitTableFG *outFlag=NULL;
   ObitTableFGRow *row=NULL;
-  olong i, j, k, jj, kk, firstVis, startVis, suba, iFGRow, ver;
+  olong firstVis, startVis, suba, iFGRow, ver;
   ollong countAll, countBad;
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
   ObitInfoType type;
@@ -2377,11 +2391,13 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitIOAccess access;
   ObitUVDesc *inDesc;
   ofloat timeAvg, lastTime=-1.0, temp[2], maxAmp, maxBad, hisicc;
-  olong *hissig=NULL, *blLookup=NULL;
+  olong *hissig=NULL;
+  olong *blLookup=NULL;
   olong *corChan=NULL, *corIF=NULL, *corStok=NULL;
   olong *BLAnt1=NULL, *BLAnt2=NULL, BIF, BChan;
-  olong flagTab, indx, jndx, kndx,  kndx2, nVisPIO, itemp, ant1, ant2;
-  olong numCell, ncorr, numAnt, numBL, blindx, hicell;
+  olong flagTab, nVisPIO, ant1, ant2;
+  olong numCell, ncorr, numAnt, hicell, itemp;
+  ollong lltmp, indx, jndx, kndx,  kndx2, numBL, blindx, i, j, k, jj, kk;
   gboolean doStat, done, isbad, *badAnt=NULL;
   ofloat *acc=NULL, *corCnt=NULL, *corBad=NULL, *hiClip=NULL, *Buffer;
   ofloat startTime, endTime, curTime, avg, avg2, hisinc;
@@ -2471,10 +2487,11 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   numCell = 800;  /* number of cells in histogram */
   suba    = 1;
   numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
-  numBL   = (numAnt*(numAnt-1))/2;
+  numBL   = (((ollong)numAnt)*(numAnt-1))/2;
   ncorr   = inUV->myDesc->ncorr;
   /* acc index = type + corr * (3) + BL * (3*ncorr)  where BL = 0-rel baseline index */
-  acc    = g_malloc (ncorr * 3 * numBL * sizeof(ofloat));
+  lltmp = ncorr * 3 * numBL * sizeof(ofloat);
+  acc    = g_malloc (lltmp);
   /* hissig index  = cell + numCell*corr */
   hissig = g_malloc (ncorr * numCell * sizeof(olong));
   hisicc = 0.005;  /* Histogram resolution ??? This seems critical */
@@ -2491,9 +2508,10 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   corStok  = g_malloc (ncorr * sizeof(olong));    /* Correlator Stokes */
 
   /* Baseline tables */
-  blLookup = g_malloc0(numAnt*sizeof(olong));
-  BLAnt1   = g_malloc (numBL * sizeof(olong));    /* First antenna of baseline */
-  BLAnt2   = g_malloc (numBL * sizeof(olong));    /* Second antenna of baseline */
+  blLookup = g_malloc0(numAnt*sizeof(ollong));
+  lltmp = numBL * sizeof(olong);
+  BLAnt1   = g_malloc (lltmp);    /* First antenna of baseline */
+  BLAnt2   = g_malloc (lltmp);    /* Second antenna of baseline */
   blLookup[0] = 0;
   k = 0;
   for (j=2; j<=numAnt; j++) {BLAnt1[k]=1; BLAnt2[k]=j; k++;}
@@ -3521,7 +3539,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ofloat  flagSig, alpha, timeWind, timeAvg;
   olong flagTab, begIF, begChan; 
   gboolean doCalSelect, killAll;
-  olong i, j, k, firstVis, startVis, suba, ver;
+  olong firstVis, startVis, suba, ver;
   ollong checked, countAll, countBad;
   olong nThread;
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
@@ -3530,16 +3548,16 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitIOAccess access;
   ObitUVDesc *inDesc;
   ofloat lastTime=-1.0, tInt, tWind=0.0;
-  olong *blLookup=NULL;
+  ollong *blLookup=NULL;
   olong *BLAnt1=NULL, *BLAnt2=NULL;
-  olong indx, jndx;
-  olong numCell, ncorr, numAnt, numBL, blindx, ant1, ant2;
+  olong numCell, ncorr, numAnt, ant1, ant2;
   gboolean gotOne, done, scanDone, scanStartDone, newTime, bufferFull, btemp;
+  ollong lltmp, numBL, blindx, i, j, k, indx, jndx, ndata, ndevs;
   gboolean allChan = FALSE;
   ofloat *times=NULL, *devs=NULL, *amps=NULL, *Buffer, fblank = ObitMagicF();
   ofloat *work=NULL;
   olong *Chan=NULL, *IFs=NULL, *Stoke=NULL, visNo=-1;
-  olong itime=0, ntime, numTime, nextTime, it=0, itDone, ndata, ndevs;
+  olong itime=0, ntime, numTime, nextTime, it=0, itDone;
   ofloat startTime, endTime, curTime=0.0, tTime, scanTime=0.0;
   ofloat sec;
   /*gchar tString[25];*/
@@ -3637,23 +3655,27 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   numCell = 800;  /* number of cells in histogram */
   suba    = 1;
   numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
-  numBL   = (numAnt*(numAnt-1))/2;
+  numBL   = (((olong)numAnt)*(numAnt-1))/2;
   ncorr   = inUV->myDesc->ncorr;
   /* Circular amplitude storage (baseline,correlator,time) */
   ndata   = ncorr * numBL * numTime;
-  amps    = g_malloc0 (ndata * sizeof(ofloat));
+  lltmp = ndata * sizeof(ofloat);
+  amps    = g_malloc0 (lltmp);
   /* Time of each time slice */
   times   = g_malloc0 (numTime * sizeof(ofloat));
   /* Maximum deviation in sigma per baseline/correlator */
   ndevs   = ncorr * numBL;
-  devs    = g_malloc0 (ndevs * sizeof(ofloat));
+  lltmp = ndevs * sizeof(ofloat);
+  devs    = g_malloc0 (lltmp);
   /* Work array for median filtering */
-  work    = g_malloc0 (nThread*(numTime+3)*sizeof(ofloat));
+  lltmp = nThread*(numTime+3)*sizeof(ofloat);
+  work    = g_malloc0 (lltmp);
 
   /* Baseline tables */
-  blLookup = g_malloc0(numAnt*sizeof(olong));
-  BLAnt1   = g_malloc0 (numBL * sizeof(olong));    /* First antenna of baseline */
-  BLAnt2   = g_malloc0 (numBL * sizeof(olong));    /* Second antenna of baseline */
+  blLookup = g_malloc0(numAnt*sizeof(ollong));
+  lltmp = numBL * sizeof(olong);
+  BLAnt1   = g_malloc0 (lltmp);    /* First antenna of baseline */
+  BLAnt2   = g_malloc0 (lltmp);    /* Second antenna of baseline */
   blLookup[0] = 0;
   k = 0;
   for (j=2; j<=numAnt; j++) {BLAnt1[k]=1; BLAnt2[k]=j; k++;}
@@ -4686,11 +4708,12 @@ static void editHist (olong ncorr, olong numCell, ofloat hisinc, olong *hissig,
  *                        1=I, 2=Q, 2=U, 4=V
  */
 static void digestCorr (ObitUVDesc *inDesc, ofloat *maxRMS, ofloat *maxRMS2, 
-			olong *crossBL1, olong *crossBL2, 
+			ollong *crossBL1, ollong *crossBL2, 
 			olong *corChan, olong *corIF, olong *corStok) 
 {
   olong ichan, iif, istok, nchan, nif, nstok, kstoke0;
-  olong incs, incf, incif, jstok, ioff, lfoff, soff;
+  olong incs, incf, incif, jstok, ioff, lfoff;
+  ollong soff;
 
   /* Set up for parsing data */
   nchan = inDesc->inaxes[inDesc->jlocf];
@@ -4787,11 +4810,12 @@ static void digestCorr (ObitUVDesc *inDesc, ofloat *maxRMS, ofloat *maxRMS2,
  *                        1=I, 2=Q, 2=U, 4=V
  */
 static void digestCorrTDRMSAvg (ObitUVDesc *inDesc, ofloat maxRMSAvg, ofloat *maxRMS2, 
-				olong *crossBL1, olong *crossBL2, 
+				ollong *crossBL1, ollong *crossBL2, 
 				olong *corChan, olong *corIF, olong *corStok) 
 {
   olong ichan, iif, istok, nchan, nif, nstok, kstoke0;
-  olong incs, incf, incif, jstok, ioff, lfoff, soff;
+  olong incs, incf, incif, jstok, ioff, lfoff;
+  ollong soff;
 
   /* Set up for parsing data */
   nchan = inDesc->inaxes[inDesc->jlocf];
@@ -5191,14 +5215,14 @@ static ofloat MedianUVInt (ObitUV *inUV, ObitErr *err)
  * \return number of baselines/correlations with valid data
  */
 static ollong MedianDev (ofloat *amps, olong itime, ofloat *times,
-			 olong numBL, olong numCorr, olong numTime, olong ntime,
+			 ollong numBL, olong numCorr, olong numTime, olong ntime,
 			 ofloat alpha, ofloat *devs, 
 			 ofloat *work, olong nThread, UVMednEditFuncArg** args,
 			 ObitErr *err)
 {
   ollong out = 0;
   ObitThreadFunc func=(ObitThreadFunc)ThreadMedianDev;
-  olong  i, nBLPerThread, loBL, hiBL;
+  ollong  i, nBLPerThread, loBL, hiBL;
   gboolean OK;
   gchar *routine = "MedianDev";
 
@@ -5404,7 +5428,7 @@ static ofloat MedianSigma (olong n, ofloat *value, ofloat mean, ofloat alpha)
  * \return number of baselines/correlations flagged
  */
 static ollong MedianFlag (ofloat *devs, ofloat flagSig, 
-			  olong numBL, olong numCorr, 
+			  ollong numBL, olong numCorr, 
 			  gboolean allChan, gboolean killAll,
 			  ofloat time, ofloat timeInt,
 			  olong *BLAnt1, olong *BLAnt2, 
@@ -5413,7 +5437,7 @@ static ollong MedianFlag (ofloat *devs, ofloat flagSig,
 			  ObitErr *err)
 {
   ollong out = 0;
-  olong  iBL, icorr, indx, jndx, kndx;
+  ollong  iBL, icorr, indx, jndx, kndx;
   olong iFGRow;
   ofloat fblank = ObitMagicF();
 
@@ -5675,8 +5699,8 @@ static gpointer ThreadMedianDev (gpointer arg)
 {
   /* Get arguments from structure */
   UVMednEditFuncArg *largs = (UVMednEditFuncArg*)arg;
-  olong loBL      = largs->first-1;
-  olong hiBL      = largs->last;
+  ollong loBL     = largs->first-1;
+  ollong hiBL     = largs->last;
   ofloat *amps    = largs->amps;
   olong itime     = largs->itime;  
   ofloat* times   = largs->times;   
@@ -5688,7 +5712,7 @@ static gpointer ThreadMedianDev (gpointer arg)
   ofloat* work    = largs->work;
 
   ollong out = 0;
-  olong  iBL, icorr, it, count, jndx, indx;
+  ollong  iBL, icorr, it, count, jndx, indx;
   ofloat delta, sigma, level, fblank = ObitMagicF();
 
   /* Loop over baselines */
@@ -5770,8 +5794,8 @@ static gpointer ThreadEditFDProcess(gpointer arg)
 {
   /* Get arguments from structure */
   UVMednFuncArg *largs = (UVMednFuncArg*)arg;
-  olong loBL         = largs->first-1;
-  olong hiBL         = largs->last;
+  ollong loBL        = largs->first-1;
+  ollong hiBL        = largs->last;
   ofloat *sumA       = largs->avg;
   ofloat *avg        = largs->avg;
   ofloat *sumA2      = largs->RMS;
@@ -5792,7 +5816,7 @@ static gpointer ThreadEditFDProcess(gpointer arg)
   ofloat minGood     = largs->minGood;
   gboolean doMW      = largs->doMW;
 
-  olong js, jf, jif, jbl, indx, jndx, vindx, jj, jjj, cnt, half;
+  ollong js, jf, jif, jbl, indx, jndx, vindx, jj, jjj, cnt, half;
   ollong maxCount, flagCount;
   gboolean haveBL;
   ofloat vpol, a, b, aaa, *temp, *temp2;

@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2016                                          */
+/*;  Copyright (C) 2009-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -81,7 +81,7 @@ ObitUV* InitialCal (ObitInfoList* myInput, ObitUV* scrData, ObitErr* err);
 ObitTableBP* DummyBPTable (ObitUV* inData, ObitTableSN *SNTab, ObitErr *err);
 /* Copy SN info to BP table */
 void SN2BPTable (ObitTableSN *SNTab, ObitTableBP *BPTab, olong chan,
-		 ObitErr *err);
+		 ofloat solInt, ObitErr *err);
 /* Bandpass from AutoCorrelations */
 void AutoCorrBP (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData, 
 		 ObitErr* err);
@@ -1249,7 +1249,7 @@ void  BandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData,
   oint numPol, numIF, numChan;
   olong nif, itemp, highVer, ver;
   gboolean btemp;
-  ofloat ftemp;
+  ofloat ftemp, solInt;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   gchar        *solverParms[] = {  /* Calibration parameters */
@@ -1290,6 +1290,7 @@ void  BandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData,
   ObitInfoListCopyList (myInput, solver->info, solverParms);
   ObitInfoListGet(myInput, "solInt2", &type, dim, &ftemp, err);
   ObitInfoListAlwaysPut(solver->info, "solInt", type, dim, &ftemp);
+  solInt = ftemp;
 
   /* Don't need to apply calibration */
   btemp = TRUE;
@@ -1317,7 +1318,7 @@ void  BandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData,
     if ((inBPTab==NULL) && (SNTable->myDesc->nrow>2))
       inBPTab = DummyBPTable (avgData, SNTable, err);
     /* Copy results to BP Table */
-    if (inBPTab) SN2BPTable (SNTable, inBPTab, ichan-1, err);
+    if (inBPTab) SN2BPTable (SNTable, inBPTab, ichan-1, solInt, err);
     if (err->error) Obit_traceback_msg (err, routine, avgData->name);
     ObitUVZapTable (avgData, "AIPS SN", -1, err);
     if (err->error) Obit_traceback_msg (err, routine, avgData->name);
@@ -1510,13 +1511,13 @@ ObitTableBP* DummyBPTable (ObitUV* inData, ObitTableSN *SNTmpl, ObitErr *err)
  * \param err    ObitErr stack for reporting problems.
  */
 void SN2BPTable (ObitTableSN *SNTab, ObitTableBP *BPTab, olong chan,
-		 ObitErr *err)
+		 ofloat solInt, ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_OK;
   ObitTableSNRow *SNRow=NULL;
   ObitTableBPRow *BPRow=NULL;
   olong irow, orow, nchan, nif, npol, count, i, indx;
-  ofloat amp, fblank = ObitMagicF();
+  ofloat amp, timei, fblank = ObitMagicF();
   gboolean found = FALSE;
   gchar *routine = "SN2BPTable";
 
@@ -1568,30 +1569,32 @@ void SN2BPTable (ObitTableSN *SNTab, ObitTableBP *BPTab, olong chan,
     count = 0;
     retCode = ObitTableBPReadRow (BPTab, orow, BPRow, err);
     if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+    timei = MAX(BPRow->TimeI,SNRow->TimeI); /* Make sure nonzero interval */
+    if (timei<=0.0) timei = 0.4*solInt;
     /*found = (BPRow->Time==SNRow->Time) && (BPRow->antNo==SNRow->antNo);*/
-    found = (fabs(BPRow->Time-SNRow->Time)<=MAX(BPRow->TimeI,SNRow->TimeI)) 
+    found = (fabs(BPRow->Time-SNRow->Time)<=timei) 
       && (BPRow->antNo==SNRow->antNo);
     while (!found) {
       /* Forward?? */
       if ((BPRow->Time<SNRow->Time) || 
-	  ((fabs(BPRow->Time-SNRow->Time)<=MAX(BPRow->TimeI,SNRow->TimeI)) 
+	  ((fabs(BPRow->Time-SNRow->Time)<=timei) 
 	   && (BPRow->antNo<SNRow->antNo))) {
 	orow++;
 	retCode = ObitTableBPReadRow (BPTab, orow, BPRow, err);
 	if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
-	found = (fabs(BPRow->Time-SNRow->Time)<=MAX(BPRow->TimeI,SNRow->TimeI)) 
+	found = (fabs(BPRow->Time-SNRow->Time)<=timei) 
 	  && (BPRow->antNo==SNRow->antNo);
 	/* Reverse? */
       } else if ((BPRow->Time>SNRow->Time) || 
-		 ((fabs(BPRow->Time-SNRow->Time)<=MAX(BPRow->TimeI,SNRow->TimeI)) 
+		 ((fabs(BPRow->Time-SNRow->Time)<=timei) 
 		 && (BPRow->antNo>SNRow->antNo))) {
 	orow--;
 	retCode = ObitTableBPReadRow (BPTab, orow, BPRow, err);
 	if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
-	found = (fabs(BPRow->Time-SNRow->Time)<MAX(BPRow->TimeI,SNRow->TimeI)) 
+	found = (fabs(BPRow->Time-SNRow->Time)<timei) 
 	  && (BPRow->antNo==SNRow->antNo);
       }
-      found = (fabs(BPRow->Time-SNRow->Time)<=MAX(BPRow->TimeI,SNRow->TimeI)) 
+      found = (fabs(BPRow->Time-SNRow->Time)<=timei) 
 	&& (BPRow->antNo==SNRow->antNo);
       /* Not forever */
       count++;

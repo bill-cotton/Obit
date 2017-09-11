@@ -3728,3 +3728,31 @@ Obit/tasks/MFImage.c Obit/TDF/MFImage.TDF:
 Obit/src/ObitSourceEphemerus.c:
   Setup: fix loop count bug, caused BDFIn to crash
 18 Aug 2017 svn 569
+
+-------------------------------------------------------------------------
+Summary: ngVLA, Random numbers, bug fixes
+Obit/TDF/MFImage.TDF:
+  Fix description of UVITaper
+Obit/src/ObitUV.c:
+  GetSelect: if UVRange[1]<=0 set it to very large
+Obit/src/ObitParser.c:
+  Increase size of buffer reading Input file
+Obit/tasks/UVSim.c Obit/TDF/UVSim.TDF:
+  Increase max number of antennas to 240, add Name, UVRange
+Obit/tasks/BPass.c:
+  SN2BPTable: In search for BP row corresponding to SN row trap zero TimeI
+Obit/tasks/Faces.c Obit/TDF/Faces.TDF:
+  Add parameter addSI for spectral index to add
+Obit/src/ObitUVEdit.c Obit/src/ObitUVGSolve.c Obit/src/ObitUVReweight.c:
+Obit/src/ObitUVRFIXize.c Obit/src/ObitUVUtil.c:
+Obit/include/ObitUVRFIXizeDef.h:
+   Allow for >2^31 baseline/vis values
+Obit/src/ObitTableCCUtil.c Obit/python/TableUtil.inc Obit/python/TableUtil.py:
+Obit/python/Obit_wrap.c  ObitSD/python/Obit_wrap.c:
+   Improve position shift in AppendShift, pyton interface
+Obit/src/ObitFArray.c Obit/include/ObitFArray.h  Obit/include/ObitFArrayClassDef.h:
+Obit/python/FArray.inc Obit/python/FArray.py:
+   Gaussian random number generator
+Obit/tasks/BDFIn.c:
+   Get position for ephemeris objects.
+11 Sept. 2017 svn 571

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009                                               */
+/*;  Copyright (C) 2009-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -54,7 +54,7 @@ ObitTableSNRow *SNTableRow;
 /** Number of antennas */
 olong numAnt;
 /** Number of baselines */
-olong numBL;
+ollong numBL;
 /** Number of IFs */
 olong numIF;
 /** Number of vis in RFIUV */
@@ -108,5 +108,5 @@ ofloat *AntDelay;
 /** Antenna fringe rates (sec/sec) */
 ofloat *AntRate;
 /* Baseline index array */
-olong *blLookup;
+ollong *blLookup;
 

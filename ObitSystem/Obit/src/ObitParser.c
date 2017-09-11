@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -117,7 +117,7 @@ ObitIOCode ObitParserParse(gchar *infile, ObitInfoList *list, ObitErr *err)
 static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *type, 
 				  gint32 *dim, gpointer *data, ObitErr *err)
 {
-  gchar line[2049], typeStr[20], temp[60];
+  gchar line[20484], typeStr[20], temp[60];
   olong size, i, j, i1, i2, iStart, iEnd, nread, idim, iout,  nvalue;
   ObitIOCode retCode = OBIT_IO_OK;
   gboolean done, areMore;
@@ -141,7 +141,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
   /* Read header line - look for next as there may be comments */
   done = FALSE;
   while (!done) {
-    retCode = ObitFileReadLine (myFile, line, 2048, err);
+    retCode = ObitFileReadLine (myFile, line, 20480, err);
     if (err->error) Obit_traceback_val (err, routine, "Input parser", retCode);
     if (retCode==OBIT_IO_EOF) return retCode; /* done? */
     done = !strncmp (line, "$Key = ", 7);
@@ -247,7 +247,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
     nvalue /= dim[0];
     while (!done) {
       /* read line */
-      retCode = ObitFileReadLine (myFile, line, 2048, err);
+      retCode = ObitFileReadLine (myFile, line, 20480, err);
       if (err->error) Obit_traceback_val (err, routine, "Input parser", retCode);
       if (retCode==OBIT_IO_EOF) return retCode; /* done? */
 
@@ -295,7 +295,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
     idata = (oint*)*data;
     while (!done) {
       /* read line */
-      retCode = ObitFileReadLine (myFile, line, 2048, err);
+      retCode = ObitFileReadLine (myFile, line, 20480, err);
       if (err->error) Obit_traceback_val (err, routine, "Input parser", retCode);
       if (retCode==OBIT_IO_EOF) return retCode; /* done? */
 
@@ -345,7 +345,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
     bdata = (gboolean*)*data;
     while (!done) {
       /* read line */
-      retCode = ObitFileReadLine (myFile, line, 2048, err);
+      retCode = ObitFileReadLine (myFile, line, 20480, err);
       if (err->error) Obit_traceback_val (err, routine, "Input parser", retCode);
       if (retCode==OBIT_IO_EOF) return retCode; /* done? */
 
@@ -376,7 +376,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
     fdata = (ofloat*)*data;
     while (!done) {
       /* read line */
-      retCode = ObitFileReadLine (myFile, line, 2048, err);
+      retCode = ObitFileReadLine (myFile, line, 20480, err);
       if (err->error) Obit_traceback_val (err, routine, "Input parser", retCode);
       if (retCode==OBIT_IO_EOF) return retCode; /* done? */
       
@@ -426,7 +426,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
     ddata = (odouble*)*data;
     while (!done) {
       /* read line */
-      retCode = ObitFileReadLine (myFile, line, 2048, err);
+      retCode = ObitFileReadLine (myFile, line, 20480, err);
       if (err->error) Obit_traceback_val (err, routine, "Input parser", retCode);
       if (retCode==OBIT_IO_EOF) return retCode; /* done? */
       

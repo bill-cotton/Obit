@@ -1026,7 +1026,14 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   Obit_log_error(err, OBIT_InfoErr, "Selecting %d spectral windows (IFs)", nIF);
   ObitErrLog(err);
   
-  /* Creating file? */
+  /* Need source ephemerus for moving targets? */
+  if (srcEphem==NULL) {
+    srcEphem = ObitSourceEphemerusCreate("Ephemeris");
+    ObitSourceEphemerusSetup (srcEphem, SDMData, 10.0/86400.0, desc, err);
+    if (err->error) Obit_traceback_msg (err, routine, (*outData)->name);
+  }
+
+ /* Creating file? */
   if (newOutput) {
     /* Define header */
     desc->nvis = 0;
@@ -1883,8 +1890,10 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
   ObitTableSU*       outTable=NULL;
   ObitTableSURow*    outRow=NULL;
   ObitSource *source=NULL;
-  olong i, lim, iRow, oRow, ver, nlines, lastSID=-1;
+  olong i, j, ephId, lim, iRow, oRow, ver, nlines, lastSID=-1;
   oint numIF;
+  ofloat time, tuvrot;
+  odouble dist;
   ObitIOAccess access;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -1974,27 +1983,50 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
     /* Ignore repeats */
     if (SourceArray->sou[iRow]->repeat) continue;
 
+    /* Is this source in the ephemeris? */
+    ephId = -1;
+    for (j=0; j<srcEphem->nentry; j++) 
+      if (SourceArray->sou[iRow]->sourceNo==srcEphem->SID[j]) {ephId=j; break;}
+
+    if (ephId>=0) { /* In ephemeris - use mean position */
+	time   = (srcEphem->endTime[ephId] - srcEphem->startTime[ephId])/2.;
+	if (ObitSourceEphemerusCheckSource(srcEphem, SourceArray->sou[iRow]->sourceNo, time, 
+					   &outRow->RAMean, &outRow->DecMean, &dist, &tuvrot)) {
+	  outRow->RAMean    *= RAD2DG;
+	  outRow->DecMean   *= RAD2DG;
+	  outRow->RAApp     = outRow->RAMean;
+	  outRow->DecApp    = outRow->DecMean;
+	  outRow->RAObs     = outRow->RAMean;
+	  outRow->DecObs    = outRow->DecMean;
+	  outRow->PMRa      = 0.0;  /* Not really appropriate */
+	  outRow->PMDec     = 0.0;
+	} 
+    } else { /* Non moving source */
+      outRow->RAMean    = SourceArray->sou[iRow]->direction[0]*RAD2DG;
+      outRow->DecMean   = SourceArray->sou[iRow]->direction[1]*RAD2DG;
+      outRow->PMRa      = SourceArray->sou[iRow]->properMotion[0]*RAD2DG*365.25;
+      outRow->PMDec     = SourceArray->sou[iRow]->properMotion[1]*RAD2DG*365.25;
+    }
+
     /* Set output row  */
     outRow->SourID    = SourceArray->sou[iRow]->sourceNo;
     outRow->Qual      = SourceArray->sou[iRow]->sourceQual;
-    outRow->RAMean    = SourceArray->sou[iRow]->direction[0]*RAD2DG;
-    outRow->DecMean   = SourceArray->sou[iRow]->direction[1]*RAD2DG;
-    outRow->PMRa      = SourceArray->sou[iRow]->properMotion[0]*RAD2DG*365.25;
-    outRow->PMDec     = SourceArray->sou[iRow]->properMotion[1]*RAD2DG*365.25;
     outRow->Epoch     = 2000.0;   /* ASDM Lacking - AIPS naming is wrong */
     lastSID           = SourceArray->sou[iRow]->sourceNo;
-    /* Precess */
-    source = newObitSource("Temp");
-    source->equinox = outRow->Epoch;
-    source->RAMean  = outRow->RAMean;
-    source->DecMean = outRow->DecMean;
-    /* Compute apparent position */
-    ObitPrecessUVJPrecessApp (outData->myDesc, source);
-    outRow->RAApp  = source->RAApp;
-    outRow->DecApp = source->DecApp;
-    outRow->RAObs  = source->RAMean;
-    outRow->DecObs = source->DecMean;
-    source = ObitSourceUnref(source);
+    /* Precess if non moving */
+    if (ephId<0) {
+      source = newObitSource("Temp");
+      source->equinox = outRow->Epoch;
+      source->RAMean  = outRow->RAMean;
+      source->DecMean = outRow->DecMean;
+      /* Compute apparent position */
+      ObitPrecessUVJPrecessApp (outData->myDesc, source);
+      outRow->RAApp  = source->RAApp;
+      outRow->DecApp = source->DecApp;
+      outRow->RAObs  = source->RAMean;
+      outRow->DecObs = source->DecMean;
+      source = ObitSourceUnref(source);
+    }
 
     /* blank fill source name */
     lim = outTable->myDesc->repeat[outTable->SourceCol];
@@ -2063,9 +2095,11 @@ void UpdateSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
   ObitTableSURow*    outRow=NULL;
   ObitSource *source=NULL;
   ObitSourceList *sourceList=NULL;
-  olong i, lim, iRow, oRow, ver, lastSID=-1;
+  olong i, j, ephId, lim, iRow, oRow, ver, lastSID=-1;
   olong nlines;
   oint numIF;
+  ofloat time, tuvrot;
+  odouble dist;
   ObitIOAccess access;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -2162,28 +2196,50 @@ void UpdateSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
     /* Done this one? */
     if (isDone[iRow]) continue;
 
-    /* Set output row  */
+    /* Is this source in the ephemeris? */
+    ephId = -1;
+    for (j=0; j<srcEphem->nentry; j++) 
+      if (SourceArray->sou[iRow]->sourceNo==srcEphem->SID[j]) {ephId=j; break;}
+
+    if (ephId>=0) { /* In ephemeris - use mean position */
+	time   = (srcEphem->endTime[ephId] - srcEphem->startTime[ephId])/2.;
+	if (ObitSourceEphemerusCheckSource(srcEphem, SourceArray->sou[iRow]->sourceNo, time, 
+					   &outRow->RAMean, &outRow->DecMean, &dist, &tuvrot)) {
+	  outRow->RAMean    *= RAD2DG;
+	  outRow->DecMean   *= RAD2DG;
+	  outRow->RAApp     = outRow->RAMean;
+	  outRow->DecApp    = outRow->DecMean;
+	  outRow->RAObs     = outRow->RAMean;
+	  outRow->DecObs    = outRow->DecMean;
+	  outRow->PMRa      = 0.0;  /* Not really appropriate */
+	  outRow->PMDec     = 0.0;
+	} 
+    } else { /* Non moving source */
+      outRow->RAMean    = SourceArray->sou[iRow]->direction[0]*RAD2DG;
+      outRow->DecMean   = SourceArray->sou[iRow]->direction[1]*RAD2DG;
+      outRow->PMRa      = SourceArray->sou[iRow]->properMotion[0]*RAD2DG*365.25;
+      outRow->PMDec     = SourceArray->sou[iRow]->properMotion[1]*RAD2DG*365.25;
+    }
+
+   /* Set output row  */
     outRow->SourID    = SourceArray->sou[iRow]->sourceNo;
     outRow->Qual      = SourceArray->sou[iRow]->sourceQual;
-    outRow->RAMean    = SourceArray->sou[iRow]->direction[0]*RAD2DG;
-    outRow->DecMean   = SourceArray->sou[iRow]->direction[1]*RAD2DG;
-    outRow->PMRa      = SourceArray->sou[iRow]->properMotion[0]*RAD2DG*365.25;
-    outRow->PMDec     = SourceArray->sou[iRow]->properMotion[1]*RAD2DG*365.25;
     outRow->Epoch     = 2000.0;   /* ASDM Lacking - AIPS naming is wrong */
     lastSID           = SourceArray->sou[iRow]->sourceNo;
-    /* Precess */
-    source = newObitSource("Temp");
-    source->equinox = outRow->Epoch;
-    source->RAMean  = outRow->RAMean;
-    source->DecMean = outRow->DecMean;
-    /* Compute apparent position */
-    ObitPrecessUVJPrecessApp (outData->myDesc, source);
-    outRow->RAApp  = source->RAApp;
-    outRow->DecApp = source->DecApp;
-    outRow->RAObs  = source->RAMean;
-    outRow->DecObs = source->DecMean;
-    source = ObitSourceUnref(source);
-
+    /* Precess if non moving */
+    if (ephId<0) {
+      source = newObitSource("Temp");
+      source->equinox = outRow->Epoch;
+      source->RAMean  = outRow->RAMean;
+      source->DecMean = outRow->DecMean;
+      /* Compute apparent position */
+      ObitPrecessUVJPrecessApp (outData->myDesc, source);
+      outRow->RAApp  = source->RAApp;
+      outRow->DecApp = source->DecApp;
+      outRow->RAObs  = source->RAMean;
+      outRow->DecObs = source->DecMean;
+      source = ObitSourceUnref(source);
+    }
     /* blank fill source name */
     lim = outTable->myDesc->repeat[outTable->SourceCol];
     for (i=0; i<lim; i++) outRow->Source[i] = ' ';
@@ -4607,6 +4663,7 @@ void UpdateEphemSource (ObitUV *outData, ObitSourceEphemerus *srcEphem,
 			ObitErr *err)
 /*----------------------------------------------------------------------- */
 /*  Update Source table positions from ephemeris                          */
+/* This shouodn't be necessary                                            */
 /*   Input:                                                               */
 /*      outData  Output UV object                                         */
 /*      srcEphem Source Ephemeris, no op if NULL                          */
@@ -4616,7 +4673,7 @@ void UpdateEphemSource (ObitUV *outData, ObitSourceEphemerus *srcEphem,
 {
   ObitTableSU*       outTable=NULL;
   ObitTableSURow*    outRow=NULL;
-  olong              ver, iRow;
+  olong              ver, iRow, ephId, j;
   ofloat             time, tuvrot;
   odouble            dist;
   oint numIF;
@@ -4662,23 +4719,29 @@ void UpdateEphemSource (ObitUV *outData, ObitSourceEphemerus *srcEphem,
       return;
     }
     /* Position given? */
-    if (outRow->RAMean==0.0 && outRow->DecMean==0.0) {
-      time   = srcEphem->startTime[srcEphem->nentry/2];
-      if (ObitSourceEphemerusCheckSource(srcEphem, outRow->SourID, time, 
-					 &outRow->RAMean, &outRow->DecMean, &dist, &tuvrot)) {
-	outRow->RAMean  *= RAD2DG;
-	outRow->DecMean *= RAD2DG;
-	outRow->RAApp  = outRow->RAMean;
-	outRow->DecApp = outRow->DecApp;
-	outRow->RAObs  = outRow->RAMean;
-	outRow->DecObs = outRow->DecMean;
- 	outRow->Epoch  = 2000.0;
-      } else {  /* See if RAApp OK */
- 	outRow->RAMean = outRow->RAApp;
-	outRow->DecApp = outRow->DecApp;
-	outRow->RAObs  = outRow->RAMean;
-	outRow->DecObs = outRow->DecMean;
-     }
+    if ((outRow->RAMean==0.0 && outRow->DecMean==0.0) || (outRow->RAApp==0.0 && outRow->DecApp==0.0)) {
+      /* Is this source in the ephemeris? */
+      ephId = -1;
+      for (j=0; j<srcEphem->nentry; j++) 
+	if (outRow->SourID==srcEphem->SID[j]) {ephId=j; break;}
+      if (ephId>=0) {
+	time   = (srcEphem->startTime[ephId] - srcEphem->endTime[ephId])/2.;
+	if (ObitSourceEphemerusCheckSource(srcEphem, outRow->SourID, time, 
+					   &outRow->RAMean, &outRow->DecMean, &dist, &tuvrot)) {
+	  outRow->RAMean  *= RAD2DG;
+	  outRow->DecMean *= RAD2DG;
+	  outRow->RAApp  = outRow->RAMean;
+	  outRow->DecApp = outRow->DecApp;
+	  outRow->RAObs  = outRow->RAMean;
+	  outRow->DecObs = outRow->DecMean;
+	  outRow->Epoch  = 2000.0;
+	} else {  /* See if RAApp OK */
+	  outRow->RAMean  = outRow->RAApp;
+	  outRow->DecMean = outRow->DecApp;
+	  outRow->RAObs   = outRow->RAMean;
+	  outRow->DecObs  = outRow->DecMean;
+	}
+      } /* end if in ephemeris */
       if ((ObitTableSUWriteRow (outTable, iRow, outRow, err)
 	   != OBIT_IO_OK) || (err->error>0)) { 
 	Obit_log_error(err, OBIT_Error, "ERROR updating Source Table");

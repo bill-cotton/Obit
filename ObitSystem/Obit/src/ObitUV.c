@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2016                                          */
+/*;  Copyright (C) 2003-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -3195,7 +3195,7 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   /* UV Range */
   ftempArr[0] = 0.0; ftempArr[1] = 1.0e20; 
   ObitInfoListGetTest(info, "UVRange", &type, (gint32*)dim, &ftempArr);
-  if ((ftempArr[0]<=0.0) && (ftempArr[1]<=0.0)) ftempArr[1] = 1.0e17;
+  if (ftempArr[1]<=0.0) ftempArr[1] = 1.0e17;
   for (i=0; i<2; i++) sel->UVRange[i] = ftempArr[i]*1.0e3;
 
   /* Selected antennas */

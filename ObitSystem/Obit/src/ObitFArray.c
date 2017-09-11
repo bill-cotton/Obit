@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2016                                          */
+/*;  Copyright (C) 2003-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -49,6 +49,15 @@ static ObitGetClassFP ObitParentGetClass = ObitGetClass;
  * This structure is used by class objects to access class functions.
  */
 static ObitFArrayClassInfo myClassInfo = {FALSE};
+
+/**
+ * Init GSL random number generator
+ */
+#if HAVE_GSL==1  /* GSL stuff */
+static gsl_rng *GSLran_gen=NULL;
+#else
+#include <stdlib.h>
+#endif /* HAVE_GSL */
 
 /*--------------- File Global Variables  ----------------*/
 
@@ -3252,6 +3261,48 @@ void ObitFArrayPow (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 } /* end  ObitFArrayPow */
 
 /**
+ * Generate Gaussian distributed random number
+ * NB: this is stateful, DO NOT MULTITHREAD!
+ * \param mean of distribution
+ * \param sigma of distribution
+ * \return random number
+ */
+ofloat ObitFArrayRandom (ofloat mean, ofloat sigma)
+{
+  ofloat val = mean;
+#if HAVE_GSL==1  /* GSL stuff */
+  odouble dsigma = sigma;
+  if (GSLran_gen==NULL) GSLran_gen=gsl_rng_alloc(gsl_rng_default);
+  val = mean + (ofloat)gsl_ran_gaussian (GSLran_gen, dsigma);
+#else /* more primitive */
+  int i, ival;
+  ofloat sum, val, norm;
+  sum = 0.0;
+  norm = 1.0 / RAND_MAX;
+  for (i=0; i<12; i++) sum += (norm*rand());
+  val = sigma * (sum - 6.0) + mean;
+#endif /* HAVE_GSL */
+  return val;
+} /* end ObitFArrayRandom */
+
+/**
+ * Replace each element of the array with Gaussian random numbers.
+ * \param in Input object 
+ * \param mean of distribution
+ * \param sigma of distribution
+ */
+void ObitFArrayRandomFill (ObitFArray* in, ofloat mean, ofloat sigma)
+{
+  olong i;
+
+   /* error checks */
+  g_assert (ObitIsA(in, &myClassInfo));
+  g_assert (in->array != NULL);
+
+  for (i=0; i<in->arraySize; i++) in->array[i] = ObitFArrayRandom(mean, sigma);
+} /* end  ObitFArrayRandomFill */
+
+/**
  * Initialize global ClassInfo Structure.
  */
 void ObitFArrayClassInit (void)
@@ -3365,6 +3416,10 @@ static void ObitFArrayClassInfoDefFn (gpointer inClass)
     (ObitFArrayLogFP)ObitFArrayLog;
   theClass->ObitFArrayPow = 
     (ObitFArrayPowFP)ObitFArrayPow;
+  theClass->ObitFArrayRandom = 
+    (ObitFArrayRandomFP)ObitFArrayRandom;
+  theClass->ObitFArrayRandomFill = 
+    (ObitFArrayRandomFillFP)ObitFArrayRandomFill;
 
 } /* end ObitFArrayClassDefFn */
 

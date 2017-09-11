@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2016                                          */
+/*;  Copyright (C) 2004-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2165,7 +2165,9 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
-  olong ncorr, nrparm, numAnt, numBL;
+  olong ncorr, nrparm, numAnt, jtemp;
+  ollong lltmp, i, j, numBL, jndx, indx, blindx, iindx=0, nvis;
+  ollong *blLookup=NULL;
   ObitIOAccess access;
   ObitUVDesc *inDesc, *outDesc;
   ObitUVSortBuffer *outBuffer=NULL;
@@ -2174,8 +2176,8 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   ofloat timeAvg, curTime, startTime, endTime, lastTime=-1.0;
   ofloat *accVis=NULL, *accRP=NULL, *ttVis=NULL;
   ofloat *inBuffer;
-  olong ant1, ant2, blindx, *blLookup=NULL;
-  olong i, j, ivis=0, iindx=0, jndx, indx, NPIO, itemp, nvis;
+  olong ant1, ant2;
+  olong ivis=0, NPIO;
   gboolean done, gotOne;
   gchar *routine = "ObitUVUtilAvgT";
  
@@ -2230,12 +2232,12 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   Obit_retval_if_fail ((numAnt>1), err, outUV,
 		       "%s Number of antennas NOT in descriptor",  
 		       routine);  
-  numBL   = (numAnt*(numAnt+1))/2;  /* Include auto correlations */
+  numBL   = (((ollong)numAnt)*(numAnt+1))/2;  /* Include auto correlations */
   NPIO = 1;
   ObitInfoListGetTest(inUV->info, "nVisPIO", &type, dim, &NPIO);
-  itemp = 2 * numBL;
+  jtemp = (olong)(2 * numBL);  /* Might cause trouble if numBL VERY large */
   dim[0] = dim[1] = dim[2] = 1;
-  ObitInfoListAlwaysPut(outUV->info, "nVisPIO", OBIT_long, dim, &itemp);
+  ObitInfoListAlwaysPut(outUV->info, "nVisPIO", OBIT_long, dim, &jtemp);
 
   /* test open output */
   oretCode = ObitUVOpen (outUV, OBIT_IO_WriteOnly, err);
@@ -2254,12 +2256,14 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   /* Create work arrays for averaging */
   ncorr   = inUV->myDesc->ncorr;
   nrparm  = inUV->myDesc->nrparm;
-  accVis  = g_malloc0(4*numBL*ncorr*sizeof(ofloat));     /* Vis */
-  accRP   = g_malloc0(numBL*(nrparm+1)*sizeof(ofloat));  /* Rand. parm */
+  lltmp   = 4*numBL*ncorr*sizeof(ofloat);
+  accVis  = g_malloc0(lltmp);     /* Vis */
+  lltmp   = numBL*(nrparm+1)*sizeof(ofloat);
+  accRP   = g_malloc0(lltmp);  /* Rand. parm */
   ttVis   = g_malloc0(( inUV->myDesc->lrec+5)*sizeof(ofloat)); /* Temp Vis */
 
   /* Baseline lookup table */
-  blLookup = g_malloc0 (numAnt* sizeof(olong));
+  blLookup = g_malloc0 (numAnt* sizeof(ollong));
   blLookup[0] = 0;
   /* Include autocorr */
   for (i=1; i<numAnt; i++) blLookup[i] = blLookup[i-1] + numAnt-i+1; 
@@ -2560,7 +2564,9 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
-  olong ncorr, nrparm, numAnt, numBL;
+  olong ncorr, nrparm, numAnt;
+  ollong lltmp, numBL, i, j, jndx, indx, blLo, blHi, nvis, ivis=0, iindx=0;
+  ollong blindx=0, *blLookup=NULL;
   ObitIOAccess access;
   ObitUVDesc *inDesc, *outDesc;
   olong suba, lastSourceID, curSourceID, lastSubA, lastFQID=-1;
@@ -2571,8 +2577,8 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   ofloat *inBuffer;
   ObitUVSortBuffer *outBuffer=NULL;
   ofloat FOV, maxTime, maxInt, maxFact, UVDist2, maxUVDist2;
-  olong ant1=1, ant2=2, blindx=0, *blLookup=NULL;
-  olong i, j, nvis, ivis=0, iindx=0, jndx, indx, NPIO, itemp, blLo, blHi, count=0;
+  olong ant1=1, ant2=2;
+  olong NPIO, itemp, count=0;
   gboolean done, gotOne, doAllBl, sameInteg;
   ofloat *work=NULL, scale=1.0;
   olong NumChAvg, *ChanSel=NULL;
@@ -2731,20 +2737,23 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   Obit_retval_if_fail ((numAnt>1), err, outUV,
 		       "%s Number of antennas NOT in descriptor",  
 		       routine);  
-  numBL   = (numAnt*(numAnt+1))/2;  /* Include auto correlations */
+  numBL   = (((ollong)numAnt)*(numAnt+1))/2;  /* Include auto correlations */
   ncorr   = inDesc->ncorr;
   nrparm  = inDesc->nrparm;
-  accVis  = g_malloc0(4*numBL*ncorr*sizeof(ofloat));    /* Vis accumulator */
+  lltmp = 4*numBL*ncorr*sizeof(ofloat);
+  accVis  = g_malloc0(lltmp);                           /* Vis accumulator */
   tVis    = g_malloc0((inDesc->lrec+5)*sizeof(ofloat)); /* Temp Vis */
   ttVis   = g_malloc0((inDesc->lrec+5)*sizeof(ofloat)); /* Temp Vis */
-  accRP   = g_malloc0(numBL*(nrparm+1)*sizeof(ofloat)); /* Rand. parm */
-  stBlTime= g_malloc0(numBL*sizeof(ofloat));   /* Baseline start time */
-  lsBlTime= g_malloc0(numBL*sizeof(ofloat));   /* Baseline last time */
-  stBlU   = g_malloc0(numBL*sizeof(ofloat));   /* Baseline start U */
-  stBlV   = g_malloc0(numBL*sizeof(ofloat));   /* Baseline start V */
+  lltmp   = numBL*(nrparm+1)*sizeof(ofloat);
+  accRP   = g_malloc0(lltmp);   /* Rand. parm */
+  lltmp   = numBL*sizeof(ofloat);
+  stBlTime= g_malloc0(lltmp);   /* Baseline start time */
+  lsBlTime= g_malloc0(lltmp);   /* Baseline last time */
+  stBlU   = g_malloc0(lltmp);   /* Baseline start U */
+  stBlV   = g_malloc0(lltmp);   /* Baseline start V */
 
   /* Baseline lookup table */
-  blLookup = g_malloc0 (numAnt* sizeof(olong));
+  blLookup = g_malloc0 (numAnt* sizeof(ollong));
   blLookup[0] = 0;
   /* Include autocorr */
   for (i=1; i<numAnt; i++) blLookup[i] = blLookup[i-1] + numAnt-i+1; 

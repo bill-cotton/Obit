@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2006,2011
+#  Copyright (C) 2006-2017
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -130,4 +130,30 @@ def PTableCCFixTSpec (inImage, inCCVer, refFreq, nTerm, terms, \
     if err.isErr:
         OErr.printErrMsg(err, "Error Modifying CC Table")
 # end PTableCCFixTSpec
+
+def PTableCCAppendShift (inImage, inCCVer, outImage, outCCVer, \
+                         uvData, err, startCC=1, endCC=0):
+    """ Append one CC table to another correcting for position shift
+
+    inImage   input Obit Python Image
+    inCCVer   CCTable to read, 0=> highest
+    outImage  output Obit Python Image
+    outCCVer  CCTable to modify, 0=> highest
+    uvData    uv data used to generate inImage
+    err       Python Obit Error/message stack
+    startCC   First 1-rel component to consider
+    endCC     Last 1-rel component to consider, 0=> all
+    """
+    ################################################################
+    # Checks
+    if not Image.PIsA(inImage):
+        raise TypeError,"inImage MUST be a Python Obit Image"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    Obit.TableCCUtilAppendShift(inImage.me, inCCVer, outImage.me, outCCVer, \
+                                uvData.me, startCC, endCC, err.me)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error Modifying CC Table")
+# end PTableCCAppendShift
 

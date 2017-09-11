@@ -939,13 +939,14 @@ taper", UVITaper.  This is less harsh alternative to UVRange.
   UVITaper...(U,V) Inverse Gaussian taper (kilo-lambda) at 70% level
              as (min wt., major, minor axis, position angle)
 This multiplies the data weight by 
-1-UVITaper[0]-exp(UVITaper[1:3] dot baseline)
+max(UVITaper[0], 1-exp(UVITaper[1:3] dot baseline))
 # To implement in ObitTalk:
 UVITaper = [0.1, 0.2, 0.2, 0.] 
 addParam(mf,"UVITaper", paramVal=UVITaper, shortHelp="Inverse Taper", \
 	longHelp="  UVITaper....Inverse Taper\n"+ \
 	"              Taper inner portion of uv space\n"+ \
-	"              multiplies weight by 1-taper[0]-exp(taper(13) dot BL)\n")
+	"              multiplies weight by "+ \
+	"              max(taper[0],1-exp(taper(13) dot BL))\n")
 
 PS Table
 --------

@@ -1945,6 +1945,14 @@ extern void FArrayPow (ObitFArray* in1, ObitFArray* in2, ObitFArray* out) {
    ObitFArrayPow (in1, in2, out);
 }
 
+extern float FArrayRandom (float mean, float sigma) {
+   return (float)ObitFArrayRandom ((ofloat)mean, (ofloat)sigma);
+}
+
+extern void FArrayRandomFill (ObitFArray* in1, float mean, float sigma) {
+   ObitFArrayRandomFill (in1, (ofloat)mean, (ofloat)sigma);
+}
+
 extern ObitInfoList* FArrayGetList (ObitFArray* in) {
   return ObitInfoListRef(in->info);
 }
@@ -2039,6 +2047,8 @@ extern ObitFArray *FArrayHisto(ObitFArray *,long ,float ,float );
 extern void FArrayExp(ObitFArray *,ObitFArray *);
 extern void FArrayLog(ObitFArray *,ObitFArray *);
 extern void FArrayPow(ObitFArray *,ObitFArray *,ObitFArray *);
+extern float FArrayRandom(float ,float );
+extern void FArrayRandomFill(ObitFArray *,float ,float );
 extern ObitInfoList *FArrayGetList(ObitFArray *);
 extern char *FArrayGetName(ObitFArray *);
 extern long FArrayGetNdim(ObitFArray *);
@@ -11875,6 +11885,26 @@ TableCCUtilFixTSpec (ObitImage *inImage,  int inCCVer,
 	          (odouble)refFreq, (olong)nterm, lterms,
 	          (olong)startComp, (olong)endComp, err);
 } // end TableCCUtilFixTSpec
+void 
+TableCCUtilAppendShift (ObitImage *inImage,  int inCCVer, 
+		        ObitImage *outImage, int outCCVer,
+			ObitUV *uvdata,
+			int startComp, int endComp, ObitErr *err) 
+{
+  olong linCCVer=(olong)inCCVer, loutCCVer=(olong)outCCVer;
+  oint noParms=0;
+  ObitTableCC *inCC=NULL, *outCC=NULL;
+  inCC  =  newObitTableCCValue ("inCC", (ObitData*)inImage, &linCCVer, 
+                               OBIT_IO_ReadOnly, noParms, err);
+  ObitTableCCOpen(inCC, OBIT_IO_ReadOnly, err);
+  if (inCC->parmsOff>=0) noParms = inCC->myDesc->dim[inCC->parmsOff][0];
+  ObitTableCCClose(inCC, err);
+  outCC =  newObitTableCCValue ("outCC", (ObitData*)outImage, &loutCCVer, 
+                               OBIT_IO_ReadWrite, noParms, err);
+  ObitTableCCUtilAppendShift (inCC,  outCC, uvdata->myDesc, inImage->myDesc,
+                             (olong)startComp, (olong)endComp, err);
+  ObitTableCCUnref(inCC); ObitTableCCUnref(outCC);
+} // end TableCCUtilAppendShift
 
 #include "Obit.h"
 #include "ObitData.h"
@@ -20626,6 +20656,43 @@ static PyObject *_wrap_FArrayPow(PyObject *self, PyObject *args) {
         }
     }
     FArrayPow(_arg0,_arg1,_arg2);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_FArrayRandom(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    float  _result;
+    float  _arg0;
+    float  _arg1;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ff:FArrayRandom",&_arg0,&_arg1)) 
+        return NULL;
+    _result = (float )FArrayRandom(_arg0,_arg1);
+    _resultobj = Py_BuildValue("f",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_FArrayRandomFill(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitFArray * _arg0;
+    float  _arg1;
+    float  _arg2;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Off:FArrayRandomFill",&_argo0,&_arg1,&_arg2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of FArrayRandomFill. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    FArrayRandomFill(_arg0,_arg1,_arg2);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
     return _resultobj;
@@ -51837,6 +51904,58 @@ static PyObject *_wrap_TableCCUtilFixTSpec(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_TableCCUtilAppendShift(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImage * _arg0;
+    int  _arg1;
+    ObitImage * _arg2;
+    int  _arg3;
+    ObitUV * _arg4;
+    int  _arg5;
+    int  _arg6;
+    ObitErr * _arg7;
+    PyObject * _argo0 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo4 = 0;
+    PyObject * _argo7 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OiOiOiiO:TableCCUtilAppendShift",&_argo0,&_arg1,&_argo2,&_arg3,&_argo4,&_arg5,&_arg6,&_argo7)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableCCUtilAppendShift. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of TableCCUtilAppendShift. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of TableCCUtilAppendShift. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo7) {
+        if (_argo7 == Py_None) { _arg7 = NULL; }
+        else if (SWIG_GetPtrObj(_argo7,(void **) &_arg7,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 8 of TableCCUtilAppendShift. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    TableCCUtilAppendShift(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_TableVL(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitTable * _result;
@@ -65339,6 +65458,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "TableVLSetHeadKeys", _wrap_TableVLSetHeadKeys, METH_VARARGS },
 	 { "TableVLGetHeadKeys", _wrap_TableVLGetHeadKeys, METH_VARARGS },
 	 { "TableVL", _wrap_TableVL, METH_VARARGS },
+	 { "TableCCUtilAppendShift", _wrap_TableCCUtilAppendShift, METH_VARARGS },
 	 { "TableCCUtilFixTSpec", _wrap_TableCCUtilFixTSpec, METH_VARARGS },
 	 { "TableCCUtilT2Spec", _wrap_TableCCUtilT2Spec, METH_VARARGS },
 	 { "TableCCUtilMerge", _wrap_TableCCUtilMerge, METH_VARARGS },
@@ -66073,6 +66193,8 @@ static PyMethodDef ObitMethods[] = {
 	 { "FArrayGetNdim", _wrap_FArrayGetNdim, METH_VARARGS },
 	 { "FArrayGetName", _wrap_FArrayGetName, METH_VARARGS },
 	 { "FArrayGetList", _wrap_FArrayGetList, METH_VARARGS },
+	 { "FArrayRandomFill", _wrap_FArrayRandomFill, METH_VARARGS },
+	 { "FArrayRandom", _wrap_FArrayRandom, METH_VARARGS },
 	 { "FArrayPow", _wrap_FArrayPow, METH_VARARGS },
 	 { "FArrayLog", _wrap_FArrayLog, METH_VARARGS },
 	 { "FArrayExp", _wrap_FArrayExp, METH_VARARGS },

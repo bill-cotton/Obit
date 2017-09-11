@@ -3,7 +3,7 @@
 ;! makes images of catalog sources for initial calibration
 ;# Task Imaging Modeling Calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2014
+;;  Copyright (C) 2014,2017
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -76,8 +76,12 @@ minFlux                            Minimum estimated flux density (Jy)
 SI                                 Spectral index to estimate flux density
 **PARAM** float 1  **DEF** 24.5
 antSize                            Diameter of ant. for beam corr.
+**PARAM** float 1 **DEF** 1.0
+Factor                             Factor times component fluxes.
 **PARAM** boo 1 
 useGauss                           Use Gaussians in Catalog
+**PARAM** float 1
+useSI                              Spectral index for output CC Table
 **PARAM** int 1 
 prtLv             0                Print level in selfcal
 **PARAM** str 128
@@ -130,10 +134,15 @@ Adverbs:
                default = 0.01
   SI.........Spectral index to use,   default = -0.75
   antSize....Diameter of antenna for PBCor (m), default = 24.5
+  Factor.....This value will be multiplied times the model component
+             flux densities.
   prtLv......Print level in selfcal, 0=>none
   useGauss...If True, use deconvolved Gaussian sizes from catalog.
              If the Gaussian size is deemed inadequate then it
              is set to zero.
+	     This is a bad idea for UVSub, Calib etc use as the 
+             Gaussian of the first entry is used for all.
+  useSI......Spectral index to add for all output CCs. 0=>ignore.
   taskLog....Log file to write messages to INSTEAD of the terminal
              This is useful in long runs or batch files where
              a bug in the ObitTalk message handling may lose
