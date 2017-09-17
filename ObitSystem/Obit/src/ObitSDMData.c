@@ -1327,8 +1327,8 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
     }
     if (jPoln>=in->PolarizationTab->nrows) return NULL;
 
-    out->winds[iSW]->nCPoln = in->PolarizationTab->rows[jPoln]->numCorr;
-    out->winds[iSW]->nAPoln = MIN (3,in->PolarizationTab->rows[jPoln]->numCorr);
+    out->winds[iSW]->nCPoln = MAX (1,in->PolarizationTab->rows[jPoln]->numCorr);
+    out->winds[iSW]->nAPoln = MIN (3,MAX (1,in->PolarizationTab->rows[jPoln]->numCorr));
     /* Hack for screwy way autocorr x pol is kept */
     if (out->winds[iSW]->nAPoln==3) out->winds[iSW]->nAPoln = 4;
 
@@ -1590,9 +1590,11 @@ ASDMAntennaArray* ObitSDMDataGetAntArray (ObitSDMData *in, olong mainRow)
     /* PolarizationTab entry jPL */
     out->ants[iAnt]->numPoln     = MIN(2, in->PolarizationTab->rows[jPL]->numCorr);
     out->ants[iAnt]->numPolnCorr = in->PolarizationTab->rows[jPL]->numCorr;
-    out->ants[iAnt]->polnType[0] = in->PolarizationTab->rows[jPL]->corrType[0][0];
-    if (out->ants[iAnt]->numPolnCorr>1) 
-      out->ants[iAnt]->polnType[1] = in->PolarizationTab->rows[jPL]->corrType[1][1];
+    if (in->PolarizationTab->rows[jPL]->numCorr>0) {  /* Poln info? */
+      out->ants[iAnt]->polnType[0] = in->PolarizationTab->rows[jPL]->corrType[0][0];
+      if (out->ants[iAnt]->numPolnCorr>1) 
+	out->ants[iAnt]->polnType[1] = in->PolarizationTab->rows[jPL]->corrType[1][1];
+    }
 
     /* If an antPosition is given (ALMA), rotate to station frame and add to station position */
     if (fabs(out->ants[iAnt]->antPosition[2])>0.001) {

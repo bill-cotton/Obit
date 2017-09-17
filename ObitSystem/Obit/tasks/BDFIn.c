@@ -3519,10 +3519,11 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     for (i=0; i<numIF; i++) {
       outRow->TCal1[i]   = fblank;
       outRow->SolCal1[i] = fblank;
-      if (numPol>1) 
+      if (numPol>1) {
 	outRow->TCal2[i]   = fblank;
 	outRow->SolCal2[i] = fblank;
-  }
+      }
+    }
     
     /* loop through input table */
     for (iRow=0; iRow<inTab->nrows; iRow++) {

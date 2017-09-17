@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Task to print the contents of various data files                   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2016                                          */
+/*;  Copyright (C) 2009-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1832,6 +1832,9 @@ ofloat getSNValue (ObitTableSNRow *SNRow, gboolean firstPol,
 
   value = fblank;  /* Initial value */
 
+  /* Trap bad antenna number */
+  if ((iant<0) || (!AntList) || (iant>=AntList->number)) return value;
+
   /* is VLA Antenna in array? (X==0) */
   if (AntList && AntList->isVLA && fabs(AntList->ANlist[iant]->AntXYZ[0])<0.1) return value;
 
@@ -1929,6 +1932,9 @@ ofloat getCLValue (ObitTableCLRow *CLRow, gboolean firstPol,
   olong        iant=CLRow->antNo-1;
 
   value = fblank;  /* Initial value */
+
+  /* Trap bad antenna number */
+  if ((iant<0) || (!AntList) || (iant>=AntList->number)) return value;
 
   /* is Antenna in array? (X==0) */
   if (AntList && fabs(AntList->ANlist[iant]->AntXYZ[0])<0.1) return value;

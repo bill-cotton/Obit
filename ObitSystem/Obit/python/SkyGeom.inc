@@ -1,8 +1,8 @@
 /* $Id$  */  
 /*--------------------------------------------------------------------*/
-/* Swig module description for Image utilities                        */
+/* Swig module description celestial geometry utilities               */
 /*                                                                    */
-/*;  Copyright (C) 2007,2014                                          */
+/*;  Copyright (C) 2007-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -53,6 +53,38 @@ void SkyGeomXYShift (double ra, double dec,
   ObitSkyGeomXYShift ((odouble)ra, (odouble)dec, 
 		     (ofloat)xShift, (ofloat)yShift, (ofloat)rotate,
                       outDbl1, outDbl2);
+}
+
+/** Public: Determine coefficients of a 3D SIN projection shift, return list of floats */
+extern PyObject* SkyGeomShiftSIN (double ra, double dec, float rotate, double xra, double xdec) {
+  ofloat dxyzc[3];
+  PyObject *outList, *o;
+  ObitSkyGeomShiftSIN ((odouble)ra, (odouble)dec, (ofloat)rotate, (odouble)xra, (odouble)xdec, 
+		     dxyzc);
+  outList = PyList_New(3);
+  o = PyFloat_FromDouble((double)dxyzc[0]);
+  PyList_SetItem(outList, 0, o);
+  o = PyFloat_FromDouble((double)dxyzc[1]);
+  PyList_SetItem(outList, 1, o);
+  o = PyFloat_FromDouble((double)dxyzc[2]);
+  PyList_SetItem(outList, 2, o);
+  return outList;
+}
+
+/** Public: Determine coefficients of a 3D NCP projection shift, return list of floats */
+extern PyObject* SkyGeomShiftNCP (double ra, double dec, float rotate, double xra, double xdec) {
+  ofloat dxyzc[3];
+  PyObject *outList, *o;
+  ObitSkyGeomShiftNCP ((odouble)ra, (odouble)dec, (ofloat)rotate, (odouble)xra, (odouble)xdec, 
+		     dxyzc);
+  outList = PyList_New(3);
+  o = PyFloat_FromDouble((double)dxyzc[0]);
+  PyList_SetItem(outList, 0, o);
+  o = PyFloat_FromDouble((double)dxyzc[1]);
+  PyList_SetItem(outList, 1, o);
+  o = PyFloat_FromDouble((double)dxyzc[2]);
+  PyList_SetItem(outList, 2, o);
+  return outList;
 }
 
 /** Public: Returns astronomical coordinates given direction cosines, projection */

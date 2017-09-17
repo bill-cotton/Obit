@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2016                                          */
+/*;  Copyright (C) 2006-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -309,6 +309,9 @@ void ObitUVSolnStartUp (ObitUVSoln *in, ObitErr *err)
     Obit_traceback_msg (err, routine, in->name);
   in->numPol = in->SNTable->numPol;
   in->numRow = in->SNTable->myDesc->nrow;
+
+  /* Make sure antenna arrays large enough */
+  in->numAnt = MAX(in->numAnt, in->SNTable->numAnt);
 
   /* Smoothing needed? */
   in->isSNSmoo = FALSE;

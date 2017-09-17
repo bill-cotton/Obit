@@ -5,7 +5,7 @@ Also primary beam calculations
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2007,2014
+#  Copyright (C) 2007-2017
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -69,6 +69,38 @@ def PXYShift (ra, dec, xShift, yShift, rotate):
     ################################################################
     return Obit.SkyGeomXYShift (ra, dec, xShift, yShift, rotate, [0.0], [0.0])
     # end PXYShift
+
+def PShiftSIN (ra, dec, rotate, xra, xdec):
+    """ 
+
+    Determine coefficients of a 3D SIN projection shift
+     ra       Initial Right Ascension in deg.
+     dec      Initial declination in deg.
+     rotate   Rotation of field, to E from N, deg.
+     xra      Shifted RA (deg)
+     xdec     Shifted dec (deg)
+     rotate   Rotation of field, to E from N, deg.
+     return [shiftx, shifty, shiftz] u,v,w coefficients.
+    """
+    ################################################################
+    return Obit.SkyGeomShiftSIN (ra, dec, rotate, xra, xdec)
+    # end PShiftSIN
+
+def PShiftNCP (ra, dec, rotate, xra, xdec):
+    """ 
+
+    Determine coefficients of a 3D NCP projection shift
+     ra       Initial Right Ascension in deg.
+     dec      Initial declination in deg.
+     rotate   Rotation of field, to E from N, deg.
+     xra      Shifted RA (deg)
+     xdec     Shifted dec (deg)
+     rotate   Rotation of field, to E from N, deg.
+     return [shiftx, shifty, shiftz] u,v,w coefficients.
+    """
+    ################################################################
+    return Obit.SkyGeomShiftNCP (ra, dec, rotate, xra, xdec)
+    # end PShiftNCP
 
     
 

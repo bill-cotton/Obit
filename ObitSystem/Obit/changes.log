@@ -3756,3 +3756,17 @@ Obit/python/FArray.inc Obit/python/FArray.py:
 Obit/tasks/BDFIn.c:
    Get position for ephemeris objects.
 11 Sept. 2017 svn 571
+
+Summary: bug fixes
+Obit/changes.log:
+  Update
+Obit/../ObitVersion:
+  Trigger NRAO update
+Obit/tasks/Lister.c Obit/src/ObitUVSoln.c:
+  Trap too many antennas in calibration tables
+Obit/python/SkyGeom.inc Obit/python/SkyGeom.py Obit/python/Obit_wrap.c:
+ObitSD/python/Obit_wrap.c:
+   python interface to position shift parameters.
+Obit/src/ObitSDMData.c Obit/tasks/BDFIn.c:
+   Fix bugs in one polarization mode.
+17 Sept. 2017 svn 572

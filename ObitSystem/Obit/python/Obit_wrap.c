@@ -7272,6 +7272,38 @@ void SkyGeomXYShift (double ra, double dec,
                       outDbl1, outDbl2);
 }
 
+/** Public: Determine coefficients of a 3D SIN projection shift, return list of floats */
+extern PyObject* SkyGeomShiftSIN (double ra, double dec, float rotate, double xra, double xdec) {
+  ofloat dxyzc[3];
+  PyObject *outList, *o;
+  ObitSkyGeomShiftSIN ((odouble)ra, (odouble)dec, (ofloat)rotate, (odouble)xra, (odouble)xdec, 
+		     dxyzc);
+  outList = PyList_New(3);
+  o = PyFloat_FromDouble((double)dxyzc[0]);
+  PyList_SetItem(outList, 0, o);
+  o = PyFloat_FromDouble((double)dxyzc[1]);
+  PyList_SetItem(outList, 1, o);
+  o = PyFloat_FromDouble((double)dxyzc[2]);
+  PyList_SetItem(outList, 2, o);
+  return outList;
+}
+
+/** Public: Determine coefficients of a 3D NCP projection shift, return list of floats */
+extern PyObject* SkyGeomShiftNCP (double ra, double dec, float rotate, double xra, double xdec) {
+  ofloat dxyzc[3];
+  PyObject *outList, *o;
+  ObitSkyGeomShiftNCP ((odouble)ra, (odouble)dec, (ofloat)rotate, (odouble)xra, (odouble)xdec, 
+		     dxyzc);
+  outList = PyList_New(3);
+  o = PyFloat_FromDouble((double)dxyzc[0]);
+  PyList_SetItem(outList, 0, o);
+  o = PyFloat_FromDouble((double)dxyzc[1]);
+  PyList_SetItem(outList, 1, o);
+  o = PyFloat_FromDouble((double)dxyzc[2]);
+  PyList_SetItem(outList, 2, o);
+  return outList;
+}
+
 /** Public: Returns astronomical coordinates given direction cosines, projection */
 void 
 SkyGeomNewPos (char *type, double ra0, double dec0, double l, double m, 
@@ -7429,6 +7461,8 @@ float PBUtilRelPB (double Angle, int nfreq, double *Freq, float antSize,
   return (float)out;
 }
 
+extern PyObject *SkyGeomShiftSIN(double ,double ,float ,double ,double );
+extern PyObject *SkyGeomShiftNCP(double ,double ,float ,double ,double );
 
 #include "ObitSkyModel.h"
 
@@ -39573,6 +39607,56 @@ static PyObject *_wrap_SkyGeomXYShift(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_SkyGeomShiftSIN(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    double  _arg0;
+    double  _arg1;
+    float  _arg2;
+    double  _arg3;
+    double  _arg4;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ddfdd:SkyGeomShiftSIN",&_arg0,&_arg1,&_arg2,&_arg3,&_arg4)) 
+        return NULL;
+    _result = (PyObject *)SkyGeomShiftSIN(_arg0,_arg1,_arg2,_arg3,_arg4);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_SkyGeomShiftNCP(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    double  _arg0;
+    double  _arg1;
+    float  _arg2;
+    double  _arg3;
+    double  _arg4;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ddfdd:SkyGeomShiftNCP",&_arg0,&_arg1,&_arg2,&_arg3,&_arg4)) 
+        return NULL;
+    _result = (PyObject *)SkyGeomShiftNCP(_arg0,_arg1,_arg2,_arg3,_arg4);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
 static PyObject *_wrap_SkyGeomNewPos(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     char * _arg0;
@@ -65718,6 +65802,8 @@ static PyMethodDef ObitMethods[] = {
 	 { "SkyGeomCDpos", _wrap_SkyGeomCDpos, METH_VARARGS },
 	 { "SkyGeomWorldPos", _wrap_SkyGeomWorldPos, METH_VARARGS },
 	 { "SkyGeomNewPos", _wrap_SkyGeomNewPos, METH_VARARGS },
+	 { "SkyGeomShiftNCP", _wrap_SkyGeomShiftNCP, METH_VARARGS },
+	 { "SkyGeomShiftSIN", _wrap_SkyGeomShiftSIN, METH_VARARGS },
 	 { "SkyGeomXYShift", _wrap_SkyGeomXYShift, METH_VARARGS },
 	 { "SkyGeomShiftXY", _wrap_SkyGeomShiftXY, METH_VARARGS },
 	 { "RMFitSingle", _wrap_RMFitSingle, METH_VARARGS },
