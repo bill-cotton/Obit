@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -129,6 +129,18 @@ olong ObitSystemGetAIPSuser (void);
 
 /** Public: Reset AIPS user ID */
 void ObitSystemSetAIPSuser (olong AIPSuser);
+
+/** Public: Am I running out of time */
+gboolean ObitSystemOutOfTime (ofloat fract, ObitErr *err);
+
+/** Public: Get Max run time */
+ofloat ObitSystemGetMaxRuntime (void);
+
+/** Public: Set Max run time  */
+void ObitSystemSetMaxRuntime  (ofloat maxRealTime);
+
+/** Public: Get current run time */
+ofloat ObitSystemGetCurrRuntime (void);
 
 /*-------------------Class Info--------------------------*/
 /**
