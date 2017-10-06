@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2013                                          */
+/*;  Copyright (C) 2005-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -71,3 +71,5 @@ ofloat maxBeamTaper;
 ofloat minBeamTaper;
 /** Resolution selection controls */
 ofloat MResKnob[10];
+/** Stopped because it's out of time? */
+gboolean outaTime;

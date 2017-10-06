@@ -3770,3 +3770,26 @@ ObitSD/python/Obit_wrap.c:
 Obit/src/ObitSDMData.c Obit/tasks/BDFIn.c:
    Fix bugs in one polarization mode.
 17 Sept. 2017 svn 572
+
+Summary: Allow larger number of antennas, limit MFImage run time, bug fixes
+Obit/src/ObitUVWeight.c:
+  Input: Fix bug in intrepreting UVITaper
+Obit/src/ObitUVEdit.c:
+  FD: Fix bug introduced in ngVLA upgrade
+Obit/src/ObitImageMF.c:
+  FitSpec2: Fix indexing bug in selecting plane in image.
+Obit/tasks/Lister.c:
+  getSNValue: Fix test for bad antenna
+Obit/src/ObitSurveyUtil.c:
+  GenCorErr: Add missing factor of 2 in flux error
+Obit/src/ObitImageUtil.c:
+  PBImage: fix problem with plane number
+Obit/include/ObitSystemDef.h Obit/include/ObitSystemDef.h Obit/src/ObitSystem.c:
+  Add facility to limit run time.
+Obit/tasks/MFImage.c Obit/TDF/MFImage.TDF
+Obit/src/ObitDConCleanVis.c Obit/include/ObitDConCleanVisDef.h
+Obit/src/ObitUVSelfCal.c Obit/include/ObitUVSelfCalDef.h
+  Enable maximum run time.
+Obit/python/EVLACal.py:
+  Various, tolerate failure of AIPS plotting
+6 Oct. 2017 svn 573

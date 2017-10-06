@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -55,3 +55,5 @@ GSList* scratchList;
 ObitErr *err;
 /** Start clock time */
 time_t startTime;
+/** maximum Real Time in sec, <=0 => infinite */
+ofloat maxRealTime;

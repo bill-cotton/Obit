@@ -1918,26 +1918,22 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
         return 1
     SNver = uv.GetHighVer("AIPS SN")
 
-    # Plot fits?
-    if doPlot:
-        retCode = EVLAPlotTab(uv, "SN", SNver, err, nplots=6, optype="DELA", \
-                                  logfile=logfile, check=check, debug=debug)
-        if retCode!=0:
-            return retCode
-  
-        retCode = EVLAWritePlots (uv, 1, 0, plotFile, err, \
-                                  plotDesc="Group delay plots", \
-                                  logfile=logfile, check=check, debug=debug)
-        if retCode!=0:
-            return retCode
-        
-    # end SN table plot
     # Apply to CL table
     retCode = EVLAApplyCal(uv, err, maxInter=1440.0, logfile=logfile, check=check,debug=debug)
     if retCode!=0:
         return retCode
     
-    # Open and close image to sync with disk 
+     # Plot fits? Tolerate failure.
+    if doPlot:
+        xretCode = EVLAPlotTab(uv, "SN", SNver, err, nplots=6, optype="DELA", \
+                                  logfile=logfile, check=check, debug=debug)
+        if xretCode==0:
+            xretCode = EVLAWritePlots (uv, 1, 0, plotFile, err, \
+                                          plotDesc="Group delay plots", \
+                                          logfile=logfile, check=check, debug=debug)
+        
+   # end SN table plot
+   # Open and close image to sync with disk 
     uv.Open(UV.READONLY, err)
     uv.Close(err)
     return 0
@@ -2055,25 +2051,21 @@ def EVLASYCal(uv, err, SYVer=1,  SYOut=0, calInt=0.1, applyOnly=False, \
         OErr.printErrMsg(err, "Error clip/flag bad amplitudes")
     # end edit
     
-    # Plot fits?
-    if doPlot:
-        retCode = EVLAPlotTab(uv, "SN", SNver, err, nplots=6, optype="AMP ", \
-                                  logfile=logfile, check=check, debug=debug)
-        if retCode!=0:
-            return retCode
-  
-        retCode = EVLAWritePlots (uv, 1, 0, plotFile, err, \
-                                  plotDesc="SysPower gain plots", \
-                                  logfile=logfile, check=check, debug=debug)
-        if retCode!=0:
-            return retCode
-        
-    # end SN table plot
     # Apply to CL table
     retCode = EVLAApplyCal(uv, err, maxInter=1440.0, logfile=logfile, check=check,debug=debug)
     if retCode!=0:
         return retCode
     
+    # Plot fits? Tolerate failure.
+    if doPlot:
+        xretCode = EVLAPlotTab(uv, "SN", SNver, err, nplots=6, optype="AMP ", \
+                                  logfile=logfile, check=check, debug=debug)
+        if xretCode==0:
+            retCode = EVLAWritePlots (uv, 1, 0, plotFile, err, \
+                                          plotDesc="SysPower gain plots", \
+                                          logfile=logfile, check=check, debug=debug)
+        
+    # end SN table plot
     # Open and close image to sync with disk 
     uv.Open(UV.READONLY, err)
     uv.Close(err)
@@ -2490,25 +2482,20 @@ def EVLACalAP(uv, target, ACals, err, \
     # Plot gain corrections?
     if solnVer2==None:
         solnVer2 = solnVer
-    if doPlot:
+    if doPlot:   # Tolerate failure
         # Amplitude corrections
-        retCode = EVLAPlotTab(uv, "SN", solnVer2, err, nplots=6, optype="AMP ", \
+        yretCode = EVLAPlotTab(uv, "SN", solnVer2, err, nplots=6, optype="AMP ", \
                               logfile=logfile, check=check, debug=debug)
         # Phase corrections
-        retCode = EVLAPlotTab(uv, "SN", solnVer2, err, nplots=6, optype="PHAS", \
+        xretCode = EVLAPlotTab(uv, "SN", solnVer2, err, nplots=6, optype="PHAS", \
                               logfile=logfile, check=check, debug=debug)
-        if retCode!=0:
-            return retCode
         # R-L phase corrections
-        retCode = EVLAPlotTab(uv, "SN", solnVer2, err, nplots=6, optype="PHAS", stokes="DIFF", \
+        zretCode = EVLAPlotTab(uv, "SN", solnVer2, err, nplots=6, optype="PHAS", stokes="DIFF", \
                               logfile=logfile, check=check, debug=debug)
-        if retCode!=0:
-            return retCode
-        retCode = EVLAWritePlots (uv, 1, 0, plotFile, err, \
-                                  plotDesc="Amplitude and phase calibration plots", \
-                                  logfile=logfile, check=check, debug=debug)
-        if retCode!=0:
-            return retCode
+        if (xretCode==0) and (yretCode==0) and (zretCode==0):
+            retCode = EVLAWritePlots (uv, 1, 0, plotFile, err, \
+                                          plotDesc="Amplitude and phase calibration plots", \
+                                          logfile=logfile, check=check, debug=debug)
     # end SN table plot
 
     # Set up for CLCal calibrators only - use phase & amp calibrators

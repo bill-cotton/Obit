@@ -1644,7 +1644,7 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
 
   /* Loop reading planes */
   for (iplane=0; iplane<fitter->nfreq; iplane++) {
-    plane[0] = iplane+in->maxOrder+1; 
+    plane[0] = iplane+in->maxOrder+2; 
     ObitImageGetPlane ((ObitImage*)in, fitter->inFArrays[iplane]->array, plane, err);
     if (err->error) goto cleanup;
 

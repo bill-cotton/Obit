@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -69,3 +69,5 @@ olong numLast;
 ofloat lastQual[5];
 /** SN table version of last up to 5 passes */
 ofloat lastSNVer[5];
+/** Stopped because it's out of time? */
+gboolean outaTime;

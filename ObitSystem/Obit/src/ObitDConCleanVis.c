@@ -37,6 +37,7 @@
 #include "ObitSkyGeom.h"
 #include "ObitImageWB.h"
 #include "ObitSkyModelVMBeam.h"
+#include "ObitSystem.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -655,6 +656,10 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
     if (err->prtLv>1) ObitErrLog(err);  /* Progress Report */
     else ObitErrClear(err);
     if (done) break;
+ 
+    /* Running out of time? (80% of allowed time) */
+    quit = ObitSystemOutOfTime (0.80, err);
+    if (quit) {done=TRUE; in->outaTime=TRUE; break;}
 
     /* Display/edit windows if enabled */
     if (in->display) {
@@ -3061,6 +3066,7 @@ void ObitDConCleanVisInit  (gpointer inn)
   in->maxBeamTaper = 0.0;
   in->minBeamTaper = 0.0;
   for (i=0; i<10; i++) in->MResKnob[i] = 0.0;
+  in->outaTime     = FALSE;
 } /* end ObitDConCleanVisInit */
 
 /**

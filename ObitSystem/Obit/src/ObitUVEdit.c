@@ -200,7 +200,7 @@ static ofloat MedianUVInt (ObitUV *inUV, ObitErr *err);
 static ofloat MedianLevel (olong n, ofloat *value, ofloat alpha);
 
 /** Private: Determine sigma for Median */
-static ofloat MedianSigma (olong n, ofloat *value, ofloat mean, ofloat alpha);
+static ofloat MedianSigma (ollong n, ofloat *value, ofloat mean, ofloat alpha);
 
 /** Private: Median flagging */
 static ollong MedianFlag (ofloat *devs, ofloat flagSig, 
@@ -2007,10 +2007,11 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   if (chanSel == defSel) defSel[1] = numChan-1;
  
   /* index in order */
-  lltmp = numChan*numPol*numIF*numBL*sizeof(ofloat);
+  lltmp    = numChan*numPol*numIF*numBL*sizeof(ofloat);
   sumA     = g_malloc0 (lltmp);
   sumA2    = g_malloc0 (lltmp);
   sigma    = g_malloc0 (lltmp);
+  lltmp    = numChan*numPol*numIF*numBL*sizeof(ollong);
   count    = g_malloc0 (lltmp);
   corChan  = g_malloc0 (ncorr * sizeof(olong));     /* Correlator Channel */
   corIF    = g_malloc0 (ncorr * sizeof(olong));     /* Correlator IF */
@@ -5370,7 +5371,7 @@ static ofloat MedianLevel (olong n, ofloat *value, ofloat alpha)
  *                data samples are discarded and the rest averaged). 
  * \return RMS value, fblank if cannot determine
  */
-static ofloat MedianSigma (olong n, ofloat *value, ofloat mean, ofloat alpha)
+static ofloat MedianSigma (ollong n, ofloat *value, ofloat mean, ofloat alpha)
 {
   ofloat fblank = ObitMagicF();
   ofloat out;

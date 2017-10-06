@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2016                                          */
+/*;  Copyright (C) 2012-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2848,7 +2848,7 @@ void ObitSurveyGenCorErr (ObitSurveyGenCalParms *calParms, odouble *ra, odouble 
     /* Correct if unresolved */
     *flux  = peakx * sqrt (bemrat);
     *eflux = sqrt (((calParms->calAmpEr * (*flux))*(calParms->calAmpEr * (*flux))) + 
-		   ((*flux)*(*flux)/snramp) + calParms->ClnBiasEr*calParms->ClnBiasEr);
+		   (2.0*(*flux)*(*flux)/snramp) + calParms->ClnBiasEr*calParms->ClnBiasEr);
   } 
 
   /* Convert units for output */
@@ -3078,7 +3078,7 @@ static void GenCorErr (ObitSurveyGenCalParms *calParms, odouble *ra, odouble *de
       /* Correct if unresolved */
       *flux  = peakx * sqrt (bemrat);
       *eflux = sqrt (((calParms->calAmpEr * (*flux))*(calParms->calAmpEr * (*flux))) + 
-		     ((*flux)*(*flux)/snramp) +calParms->ClnBiasEr*calParms->ClnBiasEr);
+		     (2.0*(*flux)*(*flux)/snramp) +calParms->ClnBiasEr*calParms->ClnBiasEr);
     } 
   } else {
     /* Total flux density,  Trap resolved on one axis */
@@ -3113,7 +3113,7 @@ static void GenCorErr (ObitSurveyGenCalParms *calParms, odouble *ra, odouble *de
       /* Correct if unresolved */
       *flux  = peakx * sqrt (bemrat);
       *eflux = sqrt (((calParms->calAmpEr * (*flux))*(calParms->calAmpEr * (*flux))) + 
-		     ((*flux)*(*flux)/snramp) + calParms->ClnBiasEr*calParms->ClnBiasEr);
+		     (2.0*(*flux)*(*flux)/snramp) + calParms->ClnBiasEr*calParms->ClnBiasEr);
     } 
   } 
   /* Convert units for output */
@@ -3371,7 +3371,7 @@ static void NVSSCorErr (odouble *ra, odouble *dec,
       /* Correct if unresolved */
       *flux  = peakx * sqrt (bemrat);
       *eflux = sqrt (((calaer * (*flux))*(calaer * (*flux))) + 
-		     ((*flux)*(*flux)/snramp) + biaser*biaser);
+		     (2.0*(*flux)*(*flux)/snramp) + biaser*biaser);
     } 
   } else {
     /* Total flux density,  Trap resolved on one axis */
@@ -3406,7 +3406,7 @@ static void NVSSCorErr (odouble *ra, odouble *dec,
       /* Correct if unresolved */
       *flux  = peakx * sqrt (bemrat);
       *eflux = sqrt (((calaer * (*flux))*(calaer * (*flux))) + 
-		     ((*flux)*(*flux)/snramp) + biaser*biaser);
+		     (2.0*(*flux)*(*flux)/snramp) + biaser*biaser);
     } 
   } 
   /* Convert units for output */
@@ -3586,7 +3586,7 @@ static void VLSSCorErr (odouble *ra, odouble *dec, ofloat *peak,
 	 use of biaserr may not be right(?) */
       *flux  = peakx * sqrt (bemrat);
       *eflux = sqrt (((calaer * (*flux))*(calaer * (*flux))) + 
-		     ((*flux)*(*flux)/snramp) + 
+		     (2.0*(*flux)*(*flux)/snramp) + 
 		     (biaser*irms)*(biaser*irms));
     } 
   } else {
@@ -3623,7 +3623,7 @@ static void VLSSCorErr (odouble *ra, odouble *dec, ofloat *peak,
       /* Correct if unresolved */
       *flux  = peakx * sqrt (bemrat);
       *eflux = sqrt (((calaer * (*flux))*(calaer * (*flux))) + 
-		     ((*flux)*(*flux)/snramp) + (biaser*irms)*(biaser*irms));
+		     (2.0*(*flux)*(*flux)/snramp) + (biaser*irms)*(biaser*irms));
     } 
   } 
 

@@ -2817,7 +2817,7 @@ ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
   ObitBeamShape *bs=NULL;
   PBCorFuncArg **threadArgs;
   gchar *routine = "ObitImageUtilPBImage";
-
+ 
   /* error checks */
   g_assert (ObitErrIsA(err));
   if (err->error) return;
@@ -2870,6 +2870,7 @@ ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
   for (i=0; i<5; i++) blc[i+2] = trc[i+2] = outPlane[i];
   ObitInfoListPut (outImage->info, "BLC", OBIT_long, dim, blc, err); 
   ObitInfoListPut (outImage->info, "TRC", OBIT_long, dim, trc, err);
+  outImage->myDesc->plane = outPlane[0];
   outImage->extBuffer = FALSE;
 
 

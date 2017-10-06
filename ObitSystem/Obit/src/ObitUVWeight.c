@@ -535,7 +535,7 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
   /* Inverse Taper [default none] */
   farr[0] = farr[1] = farr[2] = farr[3] = 0.0;
   ObitInfoListGetTest(uvdata->info, "UVITaper", &type, dim, farr);
-  if ((farr[1]>0.0) || (farr[2]>0.0)) {
+  if ((farr[1]>0.0) && (farr[2]>0.0)) {
     /*in->minInnerWt = MAX(0.0, MIN(1.0,farr[0]));*/
     farr[0] = MIN(1.0,farr[0]);
     farr[0] = MAX(0.0, farr[0]);

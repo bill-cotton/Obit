@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2003-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -518,7 +518,7 @@ void ObitSystemSetPgmNumber (olong pgmNumber)
 
 /**
  * Tell AIPS user number
- * \return AIPS user number
+ * \return AIPS user number (sec)
  */
 olong ObitSystemGetAIPSuser (void)
 {
@@ -526,7 +526,8 @@ olong ObitSystemGetAIPSuser (void)
     g_warning ("Obit not initialized");
     return 0;
   }
-  return mySystemInfo->AIPSuser;
+  return mySystemInfo->AIPSuser;  
+
 } /* end ObitSystemGetAIPSuser */
 
 /**
@@ -539,8 +540,77 @@ void ObitSystemSetAIPSuser (olong AIPSuser)
     g_warning ("Obit not initialized");
     return;
   }
-   mySystemInfo->AIPSuser  = AIPSuser;
+  mySystemInfo->AIPSuser  = AIPSuser;
 } /* end ObitSystemSetAIPSuser */
+
+/**
+ * Am I running out of time
+ * \param fract Fraction of allowed time (maxRealTime)
+ * \param err   Obit message/error object for shutdown essage
+ * \return True if time to start shutting down
+ */
+gboolean ObitSystemOutOfTime (ofloat fract, ObitErr *err)
+{
+  gboolean doShutdown=FALSE;
+  ofloat curtime;
+  if (err->error) return;  /* previous error? */
+  if (mySystemInfo==NULL) {
+    g_warning ("Obit not initialized");
+    return doShutdown;
+  }
+  /* Max time set? */
+  if (mySystemInfo->maxRealTime<=0.0) return FALSE;
+  curtime = ObitSystemGetCurrRuntime();
+  doShutdown = (curtime>=(fract*mySystemInfo->maxRealTime));
+  if (doShutdown)
+      Obit_log_error(err, OBIT_InfoErr, 
+		     "Running out of allowed time, shutting down.");
+
+  return doShutdown;
+} /* end ObitSystemOutOfTime */
+
+/**
+ * Get current run time 
+ * \return Current elapsed wall clock time
+ */
+ofloat ObitSystemGetCurrRuntime (void)
+{
+  time_t currTime;
+  ofloat realtim;
+  if (mySystemInfo==NULL) {
+    g_warning ("Obit not initialized");
+    return 0;
+  }
+  time(&currTime);
+  realtim = (ofloat)(currTime - mySystemInfo->startTime);
+  return realtim;
+}  /* end ObitSystemGetCurrRuntime */
+
+/**
+ * Get maximum run time 
+ * \return maximum wall clock time
+ */
+ofloat ObitSystemGetMaxRuntime (void)
+{
+  if (mySystemInfo==NULL) {
+    g_warning ("Obit not initialized");
+    return 0;
+  }
+  return mySystemInfo->maxRealTime;  
+}  /* end ObitSystemGetMaxRuntime */
+
+/**
+ * Set maximum run time 
+ * \param maxRealTime)  Maximum allowed wall clock time
+ */
+void ObitSystemSetMaxRuntime  (ofloat  maxRealTime)
+{
+  if (mySystemInfo==NULL) {
+    g_warning ("Obit not initialized");
+    return;
+  }
+  mySystemInfo->maxRealTime = maxRealTime;  
+}  /* end ObitSystemGetMaxRuntime */
 
 /**
  * Initialize global ClassInfo Structure.
@@ -627,6 +697,7 @@ void ObitSystemInit  (gpointer inn)
   in->numberScratch = 0;
   in->lastDisk      = 0;
   in->number        = 0;
+  in->maxRealTime   = -1.0;
   in->scratchList   = NULL;
   in->err           = NULL;
 

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2016                                          */
+/*;  Copyright (C) 2005-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,6 +32,7 @@
 #include "ObitUVUtil.h"
 #include "ObitUVSoln.h"
 #include "ObitUVGSolveWB.h"
+#include "ObitSystem.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -423,8 +424,12 @@ gboolean ObitUVSelfCalSelfCal (ObitUVSelfCal *in, ObitUV *inUV, gboolean init,
   else if (converged) Obit_log_error(err, OBIT_InfoErr, "Solution converged");
   ObitErrLog(err);
  
+  /* Running out of time? (90% of allowed time) */
+  quit = ObitSystemOutOfTime (0.90, err);
+  if (quit) {converged=TRUE;in->outaTime=TRUE;}
+
   /* Show user and allow judgement */
-  if (in->display) {
+  if (in->display && (!quit)) {
     Obit_log_error(err, OBIT_InfoErr, 
 		   "Display residual from CLEAN, continue with self-cal?");
     ObitErrLog(err);
@@ -994,6 +999,7 @@ void ObitUVSelfCalInit  (gpointer inn)
   in->histRMS   = NULL;
   in->UVFullRange[0] = 0.0;
   in->UVFullRange[1] = 0.0;
+  in->outaTime       = FALSE;
 
 } /* end ObitUVSelfCalInit */
 
