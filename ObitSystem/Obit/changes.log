@@ -3793,3 +3793,25 @@ Obit/src/ObitUVSelfCal.c Obit/include/ObitUVSelfCalDef.h
 Obit/python/EVLACal.py:
   Various, tolerate failure of AIPS plotting
 6 Oct. 2017 svn 573
+
+Summary: Add missing change
+Obit/include/ObitSystem.h:
+  Add facility to limit run time.
+6 Oct. 2017 svn 574
+
+Summary: Limit MFImage run time, bug fixes
+Obit/changes.log:
+  Update
+Obit/../ObitVersion:
+  Trigger NRAO update
+Obit/TDF/MFImage.TDF Obit/tasks/MFImage.c:
+  Implement time limit for run time
+Obit/src/ObitSystem.c:
+  OutOfTime: Add return value to error return
+Obit/tasks/UVSim.c Obit/tasks/UVSub.c Obit/tasks/Calib.c Obit/tasks/BPass.c:
+  getInputSkyModel: Fix bug disabling using an image as a model
+Obit/src/ObitUVUtil.c:
+  BlAvgTF: Double 64 bit buffer to 4 GByte
+ObitTalk/python/ObitTalkUtil.py:
+   SetEnviron: change default AIPS to LNX64
+20 Oct. 2017 svn 575

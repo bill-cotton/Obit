@@ -948,6 +948,16 @@ addParam(mf,"UVITaper", paramVal=UVITaper, shortHelp="Inverse Taper", \
 	"              multiplies weight by "+ \
 	"              max(taper[0],1-exp(taper(13) dot BL))\n")
 
+Maximum Run time
+----------------
+An approximate upper limit (in sec) to the run (wall clock) time can be set,
+maxRealtime = 1000.
+addParam(mf,"maxRealtime", paramVal=maxRealtime, shortHelp="Max. run time (sec)", \
+	longHelp="  maxRealtime....Max. run time (sec)\n"+ \
+	"              Time after which task will begin to shut down, CLEAN\n"+
+	"              and Self cal will be declared done after this time.\n")
+
+
 PS Table
 --------
    The PS table giving the processing record has the following 

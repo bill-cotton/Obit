@@ -201,6 +201,8 @@ int main ( int argc, char **argv )
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Append scratch file to output */
+  Obit_log_error(err, OBIT_InfoErr, "Appending to output");
+  ObitErrLog(err);
   ObitUVUtilAppend (scrData, outData, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
@@ -847,7 +849,8 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
     /* Create Sky Model for appropriate type */
     ver = 0;
     ObitInfoListGetTest(myInput, "CCVer", &type, dim, &ver);
-    CCType   = ObitTableCCUtilGetType ((ObitData*)mosaic->images[0], ver, err);
+    if (ver>0) CCType = ObitTableCCUtilGetType ((ObitData*)mosaic->images[0], ver, err);
+    else       CCType = OBIT_CC_Unknown;
     if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
     if ((CCType==OBIT_CC_PointModTSpec)|| (CCType==OBIT_CC_GaussModTSpec) ||
 	(CCType==OBIT_CC_CGaussModTSpec) || (CCType==OBIT_CC_USphereModTSpec)) {

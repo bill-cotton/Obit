@@ -2,7 +2,7 @@
 This module provides some utility functions for dealing with ObitTalk.
 
 """
-# Copyright (C) 2008 Associated Universities, Inc.
+# Copyright (C) 2008,2017 Associated Universities, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ import OErr
 err = OErr.OErr()
 
 def SetEnviron(AIPS_ROOT=None, AIPS_VERSION=None, OBIT_EXEC=None, \
-               DA00=None, ARCH="LINUX", aipsdirs=None, fitsdirs=None):
+               DA00=None, ARCH="LNX64", aipsdirs=None, fitsdirs=None):
     """ Set environment variables for AIPS, Obit and data access
 
     AIPS_ROOT    = name of the directory at the root of the AIPS directories

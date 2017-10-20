@@ -553,7 +553,7 @@ gboolean ObitSystemOutOfTime (ofloat fract, ObitErr *err)
 {
   gboolean doShutdown=FALSE;
   ofloat curtime;
-  if (err->error) return;  /* previous error? */
+  if (err->error) return doShutdown;  /* previous error? */
   if (mySystemInfo==NULL) {
     g_warning ("Obit not initialized");
     return doShutdown;
@@ -579,7 +579,7 @@ ofloat ObitSystemGetCurrRuntime (void)
   ofloat realtim;
   if (mySystemInfo==NULL) {
     g_warning ("Obit not initialized");
-    return 0;
+    return 0.0;
   }
   time(&currTime);
   realtim = (ofloat)(currTime - mySystemInfo->startTime);
@@ -594,7 +594,7 @@ ofloat ObitSystemGetMaxRuntime (void)
 {
   if (mySystemInfo==NULL) {
     g_warning ("Obit not initialized");
-    return 0;
+    return 0.0;
   }
   return mySystemInfo->maxRealTime;  
 }  /* end ObitSystemGetMaxRuntime */

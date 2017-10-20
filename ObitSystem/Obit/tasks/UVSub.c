@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task to subtract CLEAN components from uvdata.                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2016                                          */
+/*;  Copyright (C) 2005-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1084,7 +1084,8 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitUV *uvdata,
     } else {  /* Single Stokes model */
       ver = 0;
       ObitInfoListGetTest(myInput, "CCVer", &type, dim, &ver);
-      CCType   = ObitTableCCUtilGetType ((ObitData*)mosaic[0]->images[0], ver, err);
+      if (ver>0) CCType = ObitTableCCUtilGetType ((ObitData*)mosaic[0]->images[0], ver, err);
+      else       CCType = OBIT_CC_Unknown;
       if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
       if ((CCType==OBIT_CC_PointModTSpec)|| (CCType==OBIT_CC_GaussModTSpec) ||
 	  (CCType==OBIT_CC_CGaussModTSpec) || (CCType==OBIT_CC_USphereModTSpec) ||

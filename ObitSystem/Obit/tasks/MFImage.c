@@ -981,6 +981,11 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   /* Initialize Threading */
   ObitThreadInit (myInput);
 
+  /* Maximum runtime set? */
+  if (ObitInfoListGetTest(myInput, "maxRealtime", &type, dim, &ftemp)) {
+    ObitSystemSetMaxRuntime (ftemp);
+  }
+
 } /* end digestInputs */
 
 /*----------------------------------------------------------------------- */
@@ -2056,6 +2061,8 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
       ObitDConCleanVisDeconvolve ((ObitDCon*)myClean, err);
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
       imgOK = TRUE; 
+      /* Did it run out of time - no self cal - just restore, flatten */
+      if (myClean->outaTime) goto bail;
      
       /* Make sure image Cleaned if Self cal wanted, else complain and skip SC */
       if (doSC && (myClean->peakFlux==0.0)) {
@@ -2079,6 +2086,8 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 			      OBIT_float, dim, &autoCen);
 	reimage = ObitDConCleanVisReimage (myClean, inUV, err);
 	if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+	/* Did it run out of time - no self cal - just restore, flatten */
+	if (myClean->outaTime) goto bail;
 	
 	/* Always reImage/Clean if you get here */
 	/* Don't need to remake beams  */
@@ -2098,6 +2107,8 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 	}
 	ObitDConCleanVisDeconvolve ((ObitDCon*)myClean, err);
 	if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+	/* Did it run out of time - no self cal - just restore, flatten */
+	if (myClean->outaTime) goto bail;
 	
 	autoCen = 1.0e20;  /* only once */
  	doneRecenter = TRUE;
@@ -2132,6 +2143,8 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 	if (converged || noSCNeed)  break;
 	init = FALSE;
 	imgOK = FALSE;  /* Need new image */
+	/* Did it run out of time - no self cal - just restore, flatten */
+	if (selfCal->outaTime) goto bail;
 
 	/* May need to remake beams - depends on success of selfcal */
 	FractOK = 1.0;
@@ -2242,6 +2255,8 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
       if (!imgOK) ObitDConCleanVisDeconvolve ((ObitDCon*)myClean, err);
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
       imgOK = TRUE;
+      /* Did it run out of time - no self cal - just restore, flatten */
+      if (myClean->outaTime) goto bail;
     
       /* Only recenter once */
       ftemp = 1.0e20;
@@ -2269,6 +2284,8 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 			 "Redoing image/deconvolution to center strong source on pixel");
 	  ObitDConCleanVisDeconvolve ((ObitDCon*)myClean, err);
 	  if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+	  /* Did it run out of time - no self cal - just restore, flatten */
+	  if (myClean->outaTime) goto bail;
 	}
 	
 	autoCen = 1.0e20;  /* only once */
@@ -2306,6 +2323,8 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 	if (converged || noSCNeed)  break;
 	imgOK = FALSE;  /* Need new image */
 	init = FALSE;
+	/* Did it run out of time - no self cal - just restore, flatten */
+	if (selfCal->outaTime) goto bail;
 
 	/* No alpha correction in model for Clean */
 	btemp = FALSE; dim[0] = dim[1] = dim[2] = 1;
@@ -2374,6 +2393,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   } /* end final filtering */
 
   /* Restore if requested */
+ bail:
   clnClass = (ObitDConCleanVisClassInfo*)myClean->ClassInfo; /* class structure */
   doRestore = TRUE;
   ObitInfoListGetTest(myInput, "doRestore", &type, dim, &doRestore);
@@ -2464,7 +2484,7 @@ void MFImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "PeelMinFlux", "PeelAvgPol", "PeelAvgIF",
     "doMGM", "minSNR", "minNo", "PBCor", "antSize", "Alpha",
     "nTaper", "Tapers", "MResKnob",
-    "nThreads", "doGPU",
+    "nThreads", "doGPU","maxRealtime",
     NULL};
   gchar *routine = "MFImageHistory";
 
