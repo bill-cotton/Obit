@@ -3125,6 +3125,7 @@ ObitImageUtilOTFBeam (ObitImage *pntImage, ObitImage *outImage,
     /* offset pointing */
     offRA  = RAPnt + RAoff[ip]*DG2RAD/cos(outDesc->crval[outDesc->jlocr]*DG2RAD);
     offDec = DecPnt + Decoff[ip]*DG2RAD;
+    offRA *= RAD2DG; offDec *= RAD2DG;
 
     /* Loop over image  */
     for (iy = 1; iy<=outDesc->inaxes[1]; iy++) { /* loop in y */
@@ -3138,7 +3139,7 @@ ObitImageUtilOTFBeam (ObitImage *pntImage, ObitImage *outImage,
 	/* Convert pixel to position */
 	bad = 
 	  ObitSkyGeomWorldPos(inPixel[0], inPixel[1],
-			      outDesc->crval[outDesc->jlocr], outDesc->crval[outDesc->jlocd],
+			      offRA, offDec,
 			      outDesc->crpix[outDesc->jlocr], outDesc->crpix[outDesc->jlocd],
 			      outDesc->cdelt[outDesc->jlocr], outDesc->cdelt[outDesc->jlocd],
 			      outDesc->crota[outDesc->jlocd], &outDesc->ctype[outDesc->jlocr][4],

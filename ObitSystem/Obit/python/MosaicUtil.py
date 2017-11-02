@@ -364,7 +364,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     Image.PClose(SumWt2, err)
     del XPixelImage, YPixelImage, InterpWtImage, InterpWtWt, 
     if WtImage:
-        Zap(WtImage); del WtImage
+        del WtImage; WtImage = None
     if finterp!=None:
         del finterp
 
@@ -485,7 +485,7 @@ def PAccumIxWt(im, wt, factor, accum, accumwt, err):
         Image.PPutPlane(accumwt, None, doPlane, err)
         #OErr.printErrMsg(err, "Error writing accumulation image ")
         # Cleanup, 
-        del accumArray, accumwtArray, InterpWtArray, accumArray, ImageWtArray, WtArray, imArray 
+        del accumArray, accumwtArray, InterpWtArray, InterpWtWtArray, ImageWtArray, WtArray, imArray 
         # end loop over planes
     # close output
     #Image.PClose(im, err)

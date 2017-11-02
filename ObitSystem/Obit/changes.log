@@ -3815,3 +3815,18 @@ Obit/src/ObitUVUtil.c:
 ObitTalk/python/ObitTalkUtil.py:
    SetEnviron: change default AIPS to LNX64
 20 Oct. 2017 svn 575
+
+Summary: Bug fixes
+Obit/changes.log:
+  Update
+Obit/../ObitVersion:
+  Trigger NRAO update
+Obit/src/ObitUVUtil.c :
+  BlAvgTF: Double 64 bit buffer to 4 GByte
+Obit/python/EVLACal.py:
+  EVLAStdModel: Always use full CBand model.
+Obit/python/MosaicUtil.py:
+  PWeightImage: Fix bug zapping WtImage
+Obit/src/ObitImageUtil.c:
+  OTFBeam: Actually use array of position offsets
+2 Nov 2017 svn 576

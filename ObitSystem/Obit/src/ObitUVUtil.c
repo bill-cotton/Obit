@@ -2719,8 +2719,8 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
     /* Make sort buffer big  ~ 0.5 Gbyte */
     nvis = 500000000 / (outUV->myDesc->lrec*sizeof(ofloat));  
   } else if (sizeof(olong*)==8) {  /* 64 bit OS */
-    /* Make sort buffer big  ~ 2 Gbyte */
-    nvis = 2000000000 / (outUV->myDesc->lrec*sizeof(ofloat));  
+    /* Make sort buffer big  ~ 4 Gbyte */
+    nvis = 4000000000 / (outUV->myDesc->lrec*sizeof(ofloat));  
   } else nvis = 2000000000 / (outUV->myDesc->lrec*sizeof(ofloat)); 
   nvis = MIN (nvis, inUV->myDesc->nvis);
   outBuffer = ObitUVSortBufferCreate ("Buffer", outUV, nvis, err);

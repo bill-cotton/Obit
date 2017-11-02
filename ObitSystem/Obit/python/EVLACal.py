@@ -6091,7 +6091,8 @@ def EVLAStdModel(Cals, freq):
     # 3C286 Chi
     model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286","3C 286"],
              "freqRange":[6.0e9,8.0e9],
-             "file":"3C286ChiModel.fits","disk":1}
+             "file":"3C286CModel.fits","disk":1}
+            #"file":"3C286ChiModel.fits","disk":1}
     stdModel.append(model)
     # 3C286 C
     model = {"Source":["3C286","3c286","J1331+3030","1331+305=3C286","3C 286"],
