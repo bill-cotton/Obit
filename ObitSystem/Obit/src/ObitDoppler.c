@@ -372,7 +372,6 @@ ObitUV* ObitDopplerCVel (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD",
 		    NULL};
   ObitDoppler *doppler=NULL;
-  gchar *sourceInclude[] = {"AIPS SU", NULL};
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   union ObitInfoListEquiv InfoReal; 
@@ -471,7 +470,7 @@ ObitUV* ObitDopplerCVel (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   /* If multisource out then copy SU table, multiple sources selected or
    sources deselected suggest MS out */
   if ((inUV->mySel->numberSourcesList>1) || (!inUV->mySel->selectSources))
-  iretCode = ObitUVCopyTables (inUV, outUV, NULL, sourceInclude, err);
+    iretCode = ObitTableSUSelect (inUV, outUV, err);
   if (err->error) goto cleanup;
 
   /* reset to beginning of uv data */

@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2016                                          */
+/*;  Copyright (C) 2010-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1146,7 +1146,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
   ofloat konst, konst2, xyz[3], xp[3], umat[3][3], pmat[3][3];
   ofloat ccrot, ssrot, xpoff, ypoff, maprot, uvrot;
   ofloat dxyzc[3], cpa, spa, xmaj, xmin, range[2], gp1=0., gp2=0., gp3=0.;
-  gboolean doCheck=FALSE, want, do3Dmul, noNeg;
+  gboolean doCheck=FALSE, want, do3Dmul, noNeg, doZ;
   gpointer fitArg=NULL;
   ofloat *fitSigma=NULL, *fitParms=NULL;
   gchar *tabType = "AIPS CC";
@@ -1414,8 +1414,9 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
     }
 
     /* Does the CC table have a DeltaZ column? */
-    if (CCTable->DeltaZCol>=0) toff = 4;
-    else                       toff = 3;
+    doZ = CCTable->DeltaZCol>=0;
+    if (doZ) toff = 4;
+    else     toff = 3;
 
     /* loop over CCs */
     for (j=0; j<larray; j++) {
@@ -1440,23 +1441,28 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 
 	/* Point */
 	table[0] = array[0] * in->factor;
-	xp[0] = (array[1] + xpoff) * konst;
-	xp[1] = (array[2] + ypoff) * konst;
-	if (CCTable->DeltaZCol>=0) xp[2] = array[3] * konst;
-	else                       xp[2] = 0.0;
-	if (do3Dmul) {
-	  xyz[0] = xp[0]*umat[0][0] + xp[1]*umat[1][0];
-	  xyz[1] = xp[0]*umat[0][1] + xp[1]*umat[1][1];
-	  xyz[2] = xp[0]*umat[0][2] + xp[1]*umat[1][2];
-	  /* PRJMUL (2, XP, UMAT, XYZ); */
-	} else {  /* no rotn matrix */
-	  xyz[0] = ccrot * xp[0] + ssrot * xp[1];
-	  xyz[1] = ccrot * xp[1] - ssrot * xp[0];
-	  xyz[2] = xp[2];
- 	}
-	table[1] = xyz[0] + xxoff;
-	table[2] = xyz[1] + yyoff;
-	table[3] = xyz[2] + zzoff;
+	if (doZ && (array[3]!=0.0)) {   /* Already have shift stuff */
+	  table[1] = array[1] * konst;
+	  table[2] = array[2] * konst;
+	  table[3] = array[3] * konst;
+	} else {  /* add shift for facet */
+	  xp[0] = (array[1] + xpoff) * konst;
+	  xp[1] = (array[2] + ypoff) * konst;
+	  xp[2] = 0.0;
+	  if (do3Dmul) {
+	    xyz[0] = xp[0]*umat[0][0] + xp[1]*umat[1][0];
+	    xyz[1] = xp[0]*umat[0][1] + xp[1]*umat[1][1];
+	    xyz[2] = xp[0]*umat[0][2] + xp[1]*umat[1][2];
+	    /* PRJMUL (2, XP, UMAT, XYZ); */
+	  } else {  /* no rotn matrix */
+	    xyz[0] = ccrot * xp[0] + ssrot * xp[1];
+	    xyz[1] = ccrot * xp[1] - ssrot * xp[0];
+	    xyz[2] = xp[2];
+	  }
+	  table[1] = xyz[0] + xxoff;
+	  table[2] = xyz[1] + yyoff;
+	  table[3] = xyz[2] + zzoff;
+	} /* end add shift */
 
 	/* Zero rest in case */
 	for (iterm=4; iterm<lenEntry; iterm++) table[iterm] = 0.0;

@@ -480,6 +480,56 @@ ObitDConCleanVisCreate2 (gchar* name, ObitUV *uvdata,
 } /* end ObitDConCleanVisCreate2 */
 
 /**
+ * Determine the maximum number of auto window middle loops
+ * This is determined from the ratio of teh data volume of the mosaic to uv data.
+ * \param in   The CLEAN object
+ * \param err Obit error stack object.
+ */
+olong autoWinLoopCount (ObitDConCleanVis *in, ObitErr *err)
+{
+  olong i, maxLoop = 1;
+  odouble ratio;
+  ollong uvcnt, imcnt, ll;
+  ObitUVDesc *uvdesc = in->imager->uvdata->myDesc;
+  ObitImageDesc *imdesc=NULL;
+  ObitImageMosaic *mosaic = in->mosaic;
+
+  if (err->error) return maxLoop;      /* Existing error? */
+  if (!in->autoWindow) return maxLoop;  /* No auto windowing? */
+
+  /* How big is the visibility data */
+  uvcnt = uvdesc->nvis;
+  uvcnt *= (uvdesc->nrparm + 
+	    uvdesc->inaxes[0]*uvdesc->inaxes[1]*uvdesc->inaxes[2]*uvdesc->inaxes[3]);
+
+  /* How big are all the images in the mosaic? */
+  imcnt = 0;
+  for (i=0; i<mosaic->numberImages; i++) {
+    imdesc = (ObitImageDesc*)mosaic->images[i]->myIO->myDesc;
+    ll = imdesc->inaxes[0];
+    ll *= imdesc->inaxes[1] * imdesc->inaxes[2];
+    imcnt += ll;
+  }
+
+  /* Ratio */
+  ratio = (odouble)uvcnt / (odouble)imcnt;
+  if (ratio<0.5) maxLoop = 1;
+  if (ratio>1.0) maxLoop = 2;
+  if (ratio>2.0) maxLoop = 3;
+  if (ratio>3.0) maxLoop = 4;
+  if (ratio>4.0) maxLoop = 5;
+
+  /* diagnostics */
+  if (err->prtLv>=2) {
+    Obit_log_error(err, OBIT_InfoErr,"UV/im size ratio=%lf, max autoWin loop = %d",
+		   ratio, maxLoop);
+    ObitErrLog(err);
+  }
+
+  return maxLoop;
+} /* end autoWinLoopCount */
+
+/**
  * Do deconvolution, uses function on class pointer
  * Does final flatten if FullField member of mosaic member is defined.
  * CLEAN control parameters are in the ObitInfoList member:
@@ -509,7 +559,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   ObitFArray **pixarray=NULL;
   gboolean done, fin=TRUE, quit=FALSE, doSub, bail, doMore, moreClean, notDone;
   gboolean redo, isBeamCor;
-  olong jtemp, i, *startCC=NULL, *newCC=NULL, count, ifld;
+  olong jtemp, i, *startCC=NULL, *newCC=NULL, count, maxAutoWinLoop, ifld;
   olong redoCnt=0, damnCnt=0, lastIter, lastFld, NoPixelCnt;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
@@ -691,6 +741,8 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
     /*fprintf (stderr,"DEBUG doMore %d done %d\n", doMore, done);*/
 
     count = 0;
+    maxAutoWinLoop = 1;  /* How many middle auto window loops to allow */
+    maxAutoWinLoop = autoWinLoopCount(in, err);
     moreClean = TRUE;
     /* Middle CLEAN loop */
     while (moreClean) {
@@ -722,8 +774,8 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
       /* Did it just  stop because of autoWindow? */
       moreClean = (in->Pixels->complCode==OBIT_CompReasonAutoWin);
       /* Don't do this forever */
-      if ((count>0) && !doMore) moreClean = FALSE;
-      if (count>5) moreClean = FALSE;
+      if ((count>0) && !doMore)      moreClean = FALSE;
+      if ((count+1)>=maxAutoWinLoop) moreClean = FALSE;
       /*fprintf (stderr,"DEBUG doMore %d count %d moreClean %d Peak/RMS %g\n", 
 	doMore, count, moreClean, in->imgPeakRMS[31]);*/
       if (!moreClean) break;
