@@ -458,35 +458,30 @@ Adverbs:
   outFile....Ending of output FITS image file name
              filename = source_name+Stokes+outFile
   outName....Ending of output AIPS Image Name, 
-             Name = source_name+Stokes+outName
-  outClass...Output image class.  Default = 'ICLEAN'
+             Name = source_name+outName
+  outClass...Output image class.  Default = 'I'
              Only the last 5 characters given are used and the
              first is replaced with the Stokes.
-             Output image name = pointing name (SOURCES)
+             Output image name = pointing name (Sources)
              The output CLEAN image will be used during
              execution as the residual image.
-  outSeq.....Output image sequence number.
-  outDisk....The disk drive # of output images.  0 => highest
-             with space (note: map and Beam go on same disk.
+  outSeq.....Output image sequence number. def new.
+  outDisk....The disk drive # of output images. no default
+             note: maps and beams go on same disk.
   saveBeam...If True then save all dirty beam spectral cubes.
-  outSeq.....Output sequence number.
+  outSeq.....Output sequence number. def new.
   CCVer......CC table version number for continuum data only.  
-             For line data the channel number is used for the 
-             version number.
   out2File...Ending of output FITS UV data file name
              filename = source_name+Stokes+out2File
-             Defaults to 'UV'
              This file will contain the last selected data 
              with any calibration tables.
   out2Name...Ending of output AIPS UV data Name, 
-             Name = source_name+Stokes+out2Name
-             Defaults to 'UV'
-             This file will contain the last selected data 
+             Name = source_name+out2Name
+             This file will contain the selected data 
              with any calibration tables.
-  out2Class..Output uv data class.  Default = 'IMAGER'
-  out2Seq....Output AIPS uv data sequence number.
-  out2Disk...The disk drive # of output uv date.  0 => highest
-             with space. default  = outDisk
+  out2Class..Output uv data class.  Default = 'MFImag'
+  out2Seq....Output AIPS uv data sequence number. def new.
+  out2Disk...The disk drive # of output uv date. no default
 
    The following control imaging:
   maxFBW.....Maximum allowed IF center fractional bandwidth.

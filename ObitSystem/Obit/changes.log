@@ -3830,3 +3830,27 @@ Obit/python/MosaicUtil.py:
 Obit/src/ObitImageUtil.c:
   OTFBeam: Actually use array of position offsets
 2 Nov 2017 svn 576
+
+Summary: Peeling scripts, Bug fixes
+Obit/src/ObitSourceEphemerus.c:
+  Setup: Trap no ephemerisId in Field.xml table
+Obit/src/ObitSkyModelMF.c:
+  LoadComps: properly handle components with delta Z.
+Obit/src/ObitDConCleanVis.c:
+  Determine maximum number of autoWindow loops from ratio of
+  image volume to data volume.
+Obit/python/UV.py:
+  PTableCLfromNX: fix bug with 1 poln.
+Obit/share/data/NVSS_SUMMS_VZ.FIT.gz:
+  Combined NVSS/SUMMS VZ table
+Obit/src/ObitDoppler.c:
+  ObitDopplerCVel: CopySelect SoUrce Table
+Obit/tasks/SNCor.c Obit/TDF/SNCor.TDF:
+  Add mode UNBK to replace blanked entries with (1,0)
+Obit/TDF/TabCopy.TDF:
+  Allow larger inFile and outFile strings
+Obit/python/PeelScripts.py:
+  New module for manual peeling
+Obit/TDF/MFImage.TDF Obit/TDF/Imager.TDF:
+  Correct documentation
+12 Dec 2017 svn 577

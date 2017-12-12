@@ -4,7 +4,7 @@
 ;! applies user-selected corrections to the calibration SN table
 ;# Task Calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006-2010
+;;  Copyright (C) 2006-2017
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ SNCor     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 SNCor     Task which applies various corrections to SN tables.
 **PARAM** str 4
 DataType                           "FITS" or "AIPS" type of input
-**PARAM** str 48
+**PARAM** str 128
 inFile                              FITS input uvdata if Type=='FITS'
 **PARAM** str 12
 inName                             Input UV file name (name)
@@ -155,6 +155,7 @@ Adverbs:
                        all selected solutions.
              'NORM' => Normalize amplitudes to 1
              'RSET' => Reset gains to (1,0), unblanks
+             'UNBK' => Replace blanks with (1,0)
   SNCParm...Parameters: see above and below.
   PhasParm....More parameters: see above and below
              be placed.  This will not affect the output file.
@@ -271,6 +272,10 @@ corMode='NORM'
 corMode='RSET'
     This option resets gains to (1,0) zero delay, rate
     and weight = 1.0; even if previously blanked
+
+ corMode='UNBK'
+    This option sets blanked gains to (1,0) zero delay, 
+    rate and weight = 1.0;
 
 
 

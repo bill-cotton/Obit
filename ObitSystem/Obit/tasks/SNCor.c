@@ -2,7 +2,7 @@
 /* Obit Radio interferometry calibration software                     */
 /* applies user-selected corrections to the calibration SN table      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2016                                          */
+/*;  Copyright (C) 2006-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -101,6 +101,7 @@ void doPCOP (ControlInfo *control, ObitTableSNRow *row, ObitErr *err);
 void doPNEG (ControlInfo *control, ObitTableSNRow *row, ObitErr *err);
 void doNORM (ControlInfo *control, ObitTableSNRow *row, ObitErr *err);
 void doRSET (ControlInfo *control, ObitTableSNRow *row, ObitErr *err);
+void doUNBK (ControlInfo *control, ObitTableSNRow *row, ObitErr *err);
 
 
 /* Program globals */
@@ -853,6 +854,8 @@ void SNCorDoCor (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
       doNORM (&control, inRow, err);
     } else if (!strncmp (corMode, "RSET", 4)) {
       doRSET (&control, inRow, err);
+    } else if (!strncmp (corMode, "UNBK", 4)) {
+      doUNBK (&control, inRow, err);
     } else {  /* Unknown */
       Obit_log_error(err, OBIT_Error,
 		     "%s: Unknown corMode: %s", routine, corMode);
@@ -1791,4 +1794,50 @@ void doRSET (ControlInfo *control, ObitTableSNRow *row, ObitErr *err)
   } /* end loop over IF */
  
 } /* end doRSET */
+
+/*----------------------------------------------------------------------- */
+/*  ApplyUNBK corrections to SN table                                    */
+/*  Resets blanked gains to (1,0) zero delay, rate and weight = 1.0;     */
+/*   Input:                                                               */
+/*      control   Contol information                                      */
+/*      row       SN table row to modify                                  */
+/*   Output:                                                              */
+/*      err    Obit Error stack                                           */
+/*----------------------------------------------------------------------- */
+void doUNBK (ControlInfo *control, ObitTableSNRow *row, ObitErr *err)
+{
+  olong iif, istoke, jif;
+  ofloat fblank = control->fblank;
+  if (err->error) return;
+
+  /* Loop over IF */
+  for (iif=control->BIF; iif<=control->EIF; iif++) {
+    jif = iif - 1;
+    for (istoke=control->bStoke; istoke<=control->eStoke; istoke++) {
+	if (istoke==1) {  /* First pol */
+	  if ((row->Real1[jif]==fblank) || (row->Imag1[jif]==fblank) || (row->Weight1[jif]<0.0)) {
+	    row->IFR = 0.0;
+	    row->MBDelay1     = 0.0;
+	    row->Real1[jif]   = 1.0;
+	    row->Imag1[jif]   = 0.0;
+	    row->Delay1[jif]  = 0.0;
+	    row->Rate1[jif]   = 0.0;
+	    row->Weight1[jif] = 1.0;
+	    row->RefAnt1[jif] = 1;
+	  }
+	} else {       /* second pol */
+	  if ((row->Real2[jif]==fblank) || (row->Imag2[jif]==fblank) || (row->Weight2[jif]<0.0)) {
+	    row->MBDelay2     = 0.0;
+	    row->Real2[jif]   = 1.0;
+	    row->Imag2[jif]   = 0.0;
+	    row->Delay2[jif]  = 0.0;
+	    row->Rate2[jif]   = 0.0;
+	    row->Weight2[jif] = 1.0;
+	    row->RefAnt2[jif] = 1;
+	  }
+	}
+    } /* end loop over Stokes */
+  } /* end loop over IF */
+ 
+} /* end doUNBK */
 
