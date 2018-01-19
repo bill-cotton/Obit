@@ -1,6 +1,7 @@
 /* $Id$  */
+/* Obit Task to Plot average uv data v time          .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2014                                          */
+/*;  Copyright (C) 2018                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -18,7 +19,7 @@
 /*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
 /*;  MA 02139, USA.                                                   */
 /*;                                                                   */
-/*;Correspondence about this software should be addressed as follows: */
+/*; Correspondence about this software should be addressed as follows:*/
 /*;         Internet email: bcotton@nrao.edu.                         */
 /*;         Postal address: William Cotton                            */
 /*;                         National Radio Astronomy Observatory      */
@@ -27,19 +28,18 @@
 /*--------------------------------------------------------------------*/
 
 #include "ObitSystem.h"
+#include "ObitMem.h"
 #include "ObitParser.h"
 #include "ObitReturn.h"
+#include "ObitUV.h"
+#include "ObitPlot.h"
 #include "ObitAIPSDir.h"
-#include "ObitHistory.h"
-#include "ObitData.h"
-#include "ObitTable.h"
-#include "ObitTableList.h"
 
 /* internal prototypes */
 /* Get inputs */
-ObitInfoList* TabCopyIn (int argc, char **argv, ObitErr *err);
+ObitInfoList* DftPlIn (int argc, char **argv, ObitErr *err);
 /* Set outputs */
-void TabCopyOut (ObitInfoList* outList, ObitErr *err);
+void DftPlOut (ObitInfoList* outList, ObitErr *err);
 /* Give basic usage on error */
 void Usage(void);
 /* Set default inputs */
@@ -49,27 +49,22 @@ ObitInfoList* defaultOutputs(ObitErr *err);
 /* Digest inputs */
 void digestInputs(ObitInfoList *myInput, ObitErr *err);
 /* Get input data */
-ObitData* getInputData (ObitInfoList *myInput, ObitErr *err);
-/* Get output data */
-ObitData* getOutputData (ObitInfoList *myInput, ObitErr *err);
-/* Write history */
-void TabCopyHistory (ObitInfoList* myInput, ObitData* inData, 
-		     ObitData* outData, ObitErr* err);
-/* Copy selected tables */
-void TabCopyCopy (ObitInfoList* myInput, ObitData* inData,  
-		  ObitData* outData, ObitErr* err);
-/* Is table wanted? */
-gboolean WantTable (ObitTable *inTab, gchar *KeyWord, ofloat KeyRange[2], 
-		    gchar *KeyString, ObitErr* err);
+ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err);
+/* Average data */
+void AvgData (ObitUV* inData, olong *nplot, ofloat* plotS, ofloat* plotSerr, 
+	      ofloat* plotTime, ObitErr *err);
+/* Plot data */
+void PlotData (ObitUV* inData, olong nplot, ofloat* plotS, ofloat* plotSerr, 
+	       ofloat* plotTime, ObitErr *err);
 
 /* Program globals */
-gchar *pgmName = "TabCopy";       /* Program name */
-gchar *infile  = "TabCopy.in" ;   /* File with program inputs */
-gchar *outfile = "TabCopy.out";   /* File to contain program outputs */
+gchar *pgmName = "DftPl";       /* Program name */
+gchar *infile  = "DftPl.in" ;   /* File with program inputs */
+gchar *outfile = "DftPl.out";   /* File to contain program outputs */
 olong  pgmNumber;       /* Program number (like POPS no.) */
 olong  AIPSuser;        /* AIPS user number number (like POPS no.) */
 olong  nAIPS=0;         /* Number of AIPS directories */
-gchar **AIPSdirs=NULL; /* List of AIPS data directories */
+gchar **AIPSdirs=NULL;  /* List of AIPS data directories */
 olong  nFITS=0;         /* Number of FITS directories */
 gchar **FITSdirs=NULL; /* List of FITS data directories */
 ObitInfoList *myInput  = NULL; /* Input parameter list */
@@ -77,17 +72,21 @@ ObitInfoList *myOutput = NULL; /* Output parameter list */
 
 int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
-/*   Obit task to copy tables arrached to ObitData objects                */
+/*   Obit test uv data rutines                                            */
 /*----------------------------------------------------------------------- */
 {
   oint         ierr = 0;
-  ObitSystem   *mySystem= NULL;
-  ObitData     *inData = NULL, *outData = NULL;
+  ObitSystem   *mySystem=NULL;
+  ObitUV       *inData=NULL;
   ObitErr      *err= NULL;
+#define MAXPLOT  10000 /* Maximum number of samples to plot */
+  ofloat plotS[MAXPLOT], plotSerr[MAXPLOT], plotTime[MAXPLOT]; 
+  olong        nplot=MAXPLOT;
 
-  /* Startup - parse command line */
+  /* Startup - parse command line, read inputs */
   err = newObitErr();
-  myInput = TabCopyIn (argc, argv, err);
+
+  myInput = DftPlIn (argc, argv, err);
   if (err->error) {ierr = 1;  ObitErrLog(err);  goto exit;}
 
   /* Initialize logging */
@@ -101,44 +100,36 @@ int main ( int argc, char **argv )
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
-  /* Digest input */
+  /* Digest inputs */
   digestInputs(myInput, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
-  /* Get input data */
+  /* Get input uvdata */
   inData = getInputData (myInput, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
-  
-  /* Get output data */
-  outData = getOutputData (myInput, err);
+
+  /* Average data */
+  AvgData(inData, &nplot, plotS, plotSerr, plotTime, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
-  /* Copy selected tables */
-  TabCopyCopy (myInput, inData, outData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
-
-  /* Write history */
-  TabCopyHistory (myInput, inData, outData, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
-
-  /* show any messages and errors */
+  /* Plot data */
+  PlotData(inData, nplot, plotS, plotSerr, plotTime, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
   
   /* cleanup */
-  myInput   = ObitInfoListUnref(myInput); 
+  myInput   = ObitInfoListUnref(myInput);    /* delete input list */
   inData    = ObitUnref(inData);
-  outData   = ObitUnref(outData);
-  
+ 
   /* Shutdown Obit */
  exit: 
   ObitReturnDumpRetCode (ierr, outfile, myOutput, err);  /* Final output */
-  myOutput = ObitInfoListUnref(myOutput);
+  myOutput = ObitInfoListUnref(myOutput);   /* delete output list */
   mySystem = ObitSystemShutdown (mySystem);
   
   return ierr;
 } /* end of main */
 
-ObitInfoList* TabCopyIn (int argc, char **argv, ObitErr *err)
+ObitInfoList* DftPlIn (int argc, char **argv, ObitErr *err)
 /*----------------------------------------------------------------------- */
 /*  Parse control info from command line                                  */
 /*   Input:                                                               */
@@ -157,7 +148,7 @@ ObitInfoList* TabCopyIn (int argc, char **argv, ObitErr *err)
   gchar *strTemp;
   oint    itemp, i, j, k;
   ObitInfoList* list=NULL;
-  gchar *routine = "TabCopyIn";
+  gchar *routine = "DftPlIn";
 
   /* error checks */
   g_assert(ObitErrIsA(err));
@@ -165,6 +156,7 @@ ObitInfoList* TabCopyIn (int argc, char **argv, ObitErr *err)
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
+  myOutput = defaultOutputs(err);
 
   /* command line arguments */
   /* fprintf (stderr,"DEBUG arg %d %s\n",argc,argv[0]); DEBUG */
@@ -203,7 +195,7 @@ ObitInfoList* TabCopyIn (int argc, char **argv, ObitErr *err)
       itemp = strtol(argv[++ax], NULL, 0);
       ObitInfoListPut (list, "inDisk", OBIT_oint, dim, &itemp, err);
       
-     } else if (strcmp(arg, "-DataType") == 0) { /* File type AIPS or FITS */
+     } else if (strcmp(arg, "-DataType") == 0) { /* Data type AIPS or FITS */
       strTemp = argv[++ax];
       dim[0] = strlen (strTemp);
       ObitInfoListAlwaysPut (list, "DataType", OBIT_string, dim, strTemp);
@@ -222,6 +214,26 @@ ObitInfoList* TabCopyIn (int argc, char **argv, ObitErr *err)
       strTemp = argv[++ax];
       dim[0] = strlen (strTemp);
       ObitInfoListAlwaysPut (list, "inFile", OBIT_string, dim, strTemp);
+
+    } else if (strcmp(arg, "-BChan") == 0) { /* BChan */
+      dim[0] = 1;
+      itemp = strtol(argv[++ax], NULL, 0);
+      ObitInfoListPut (list, "BChan", OBIT_oint, dim, &itemp, err);
+      
+    } else if (strcmp(arg, "-EChan") == 0) { /* EChan */
+      dim[0] = 1;
+      itemp = strtol(argv[++ax], NULL, 0);
+      ObitInfoListPut (list, "EChan", OBIT_oint, dim, &itemp, err);
+      
+    } else if (strcmp(arg, "-BIF") == 0) { /* BIF */
+      dim[0] = 1;
+      itemp = strtol(argv[++ax], NULL, 0);
+      ObitInfoListPut (list, "BIF", OBIT_oint, dim, &itemp, err);
+      
+    } else if (strcmp(arg, "-EIF") == 0) { /* EIF */
+      dim[0] = 1;
+      itemp = strtol(argv[++ax], NULL, 0);
+      ObitInfoListPut (list, "EIF", OBIT_oint, dim, &itemp, err);
       
    } else { /* unknown argument */
       Usage();
@@ -269,31 +281,34 @@ ObitInfoList* TabCopyIn (int argc, char **argv, ObitErr *err)
   }
 
   /* Initialize output */
-  myOutput = defaultOutputs(err);
   ObitReturnDumpRetCode (-999, outfile, myOutput, err);
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
   return list;
-} /* end TabCopyIn */
+} /* end DftPlIn */
 
 void Usage(void)
 /*----------------------------------------------------------------------- */
 /*   Tells about usage of program and bails out                           */
 /*----------------------------------------------------------------------- */
 {
-    fprintf(stderr, "Usage: TabCopy -input file -output ofile [args]\n");
-    fprintf(stderr, "Clip and smooth an SN table \n");
+    fprintf(stderr, "Usage: DftPl -input file -output ofile [args]\n");
+    fprintf(stderr, "DftPl - plots average data v time\n");
     fprintf(stderr, "Arguments:\n");
-    fprintf(stderr, "  -input input parameter file, def TabCopy.in\n");
-    fprintf(stderr, "  -output parameters (none) def TabCopy.out\n");
+    fprintf(stderr, "  -input input parameter file, def DftPl.in\n");
+    fprintf(stderr, "  -output output result file, def DftPl.out\n");
     fprintf(stderr, "  -pgmNumber Program (POPS) number, def 1 \n");
     fprintf(stderr, "  -DataType AIPS or FITS type for input image\n");
-    fprintf(stderr, "  -AIPSuser User AIPS number, def 2\n");
-    fprintf(stderr, "  -inFile input FITS uvdata file\n");
-    fprintf(stderr, "  -inName input AIPS uvdata file name\n");
+    fprintf(stderr, "  -inFile input FITS UV file\n");
+    fprintf(stderr, "  -AIPSuser User AIPS number, def 2 \n");
+    fprintf(stderr, "  -inName input AIPS file name\n");
     fprintf(stderr, "  -inClass input AIPS file class\n");
     fprintf(stderr, "  -inSeq input AIPS file sequence\n");
-    fprintf(stderr, "  -inDisk input (AIPS or FITS) disk number (1-rel) \n");
+    fprintf(stderr, "  -inDisk input image (AIPS or FITS) disk number (1-rel) \n");
+    fprintf(stderr, "  -BChan first channel to copy\n");
+    fprintf(stderr, "  -EChan highest channel to copy\n");
+    fprintf(stderr, "  -BIF first IF to copy\n");
+    fprintf(stderr, "  -EIF highest IF to copy\n");
     /*/exit(1);  bail out */
   }/* end Usage */
 
@@ -310,20 +325,21 @@ void Usage(void)
 /*     nAIPS     Int        Number of AIPS directories [def. 1]           */
 /*     AIPSdirs  Str [?,?]  AIPS directories [def {"AIPSdata/"}]          */
 /*     DataType  Str [4]    "AIPS" or "FITS" [def {"FITS"}]               */
-/*     inFile    Str [?]    input FITS image file name [def "TabCopy.fits"] */
-/*     inName    Str [12]   input AIPS image name  [no def]               */
-/*     inClass   Str [6]    input AIPS image class  [no def]              */
-/*     inSeq     Int        input AIPS image sequence no  [no def]        */
-/*     KeyWord   Str [?]    Keyword to test [blank = none'                */
-/*     KeyRange  Flt (2)    Keyword value range, def=all                  */
-/*     KeyString Str [?]    Keyword string to test, def=blank             */
+/*     inFile    Str [?]    input FITS uv file name [no def]              */
+/*     inDisk    Int        input AIPS or FITS uv disk no  [def 1]        */
+/*     inName    Str [12]   input AIPS uv name  [no def]                  */
+/*     inClass   Str [6]    input AIPS uv class  [no def]                 */
+/*     inSeq     Int        input AIPS uv sequence no  [no def]           */
+/*     BChan     Int [1]    channel number, 0=>all                        */
+/*     EChan     Int [1]    channel number, 0=>all                        */
+/*     BIF       Int [1]    first IF to process, 0=>1                     */
+/*     EIF       Int [1]    highest IF to process, 0=>all                 */
 /*----------------------------------------------------------------------- */
 ObitInfoList* defaultInputs(ObitErr *err)
 {
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *strTemp;
   oint   itemp;
-  ofloat farray[3];
   ObitInfoList *out = newObitInfoList();
   gchar *routine = "defaultInputs";
 
@@ -358,54 +374,65 @@ ObitInfoList* defaultInputs(ObitErr *err)
   strTemp = "FITS";
   dim[0] = strlen (strTemp); dim[1] = 1;
   ObitInfoListPut (out, "DataType", OBIT_string, dim, strTemp, err);
+  ObitInfoListPut (out, "outDType", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* input FITS file name */
-  strTemp = "TabCopy.uvtab";
+  strTemp = "DftPl.intab";
   dim[0] = strlen (strTemp); dim[1] = 1;
   ObitInfoListPut (out, "inFile", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
-  /* input AIPS file name */
-  strTemp = "TabCopyName";
+  /* input AIPS input uv file name */
+  strTemp = "DftPlName";
   dim[0] = strlen (strTemp); dim[1] = 1;
   ObitInfoListPut (out, "inName", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
-  /* input AIPS file class */
+  /* input AIPS input uv file class */
   strTemp = "Class ";
   dim[0] = strlen (strTemp); dim[1] = 1;
   ObitInfoListPut (out, "inClass", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
-  /* AIPS sequence */
+  /* AIPS input uv sequence */
   dim[0] = 1;dim[1] = 1;
   itemp = 1; 
   ObitInfoListPut (out, "inSeq", OBIT_oint, dim, &itemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
-  /* AIPS or FITS disk number */
+  /* AIPS or FITS input uv disk number */
   dim[0] = 1;dim[1] = 1;
   itemp = 1; 
   ObitInfoListPut (out, "inDisk", OBIT_oint, dim, &itemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
-  /* Keyword to test */
-  strTemp = "        ";
-  dim[0] = strlen (strTemp); dim[1] = 1;
-  ObitInfoListPut (out, "KeyWord", OBIT_string, dim, strTemp, err);
+  /* channels  */
+  dim[0] = 1;dim[1] = 1;
+  itemp = 1; 
+  ObitInfoListPut (out, "BChan", OBIT_oint, dim, &itemp, err);
+  itemp = 0; 
+  ObitInfoListPut (out, "EChan", OBIT_oint, dim, &itemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
-  /* Key range  */
-  dim[0] = 2;dim[1] = 1;
-  farray[0] = -1.0e20; farray[1] = 1.0e20;
-  ObitInfoListPut (out, "keyRange", OBIT_float, dim, farray, err);
+  /* IFs  */
+  dim[0] = 1;dim[1] = 1;
+  itemp = 1; 
+  ObitInfoListPut (out, "BIF", OBIT_oint, dim, &itemp, err);
+  itemp = 0; 
+  ObitInfoListPut (out, "EIF", OBIT_oint, dim, &itemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
-   /* Key string to test */
-  strTemp = "        ";
+  /* Only want cross correlations */
+  dim[0] = 1;dim[1] = 1;
+  itemp = 1; 
+  ObitInfoListPut (out, "corrType", OBIT_string, dim, &itemp, err);
+  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+
+   /* Stokes always "   " */
+  strTemp = "    ";
   dim[0] = strlen (strTemp); dim[1] = 1;
-  ObitInfoListPut (out, "KeyString", OBIT_string, dim, strTemp, err);
+  ObitInfoListPut (out, "Stokes", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   return out;
@@ -443,41 +470,49 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
 {
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gboolean     doCalSelect;
-  oint         doTabCopy;
-  /*gchar *routine = "digestInputs";*/
+  gchar Stokes[4]; 
+  gchar *routine = "digestInputs";
 
   /* error checks */
-  g_assert(ObitErrIsA(err));
   if (err->error) return;
   g_assert (ObitInfoListIsA(myInput));
-  /* Make sure doCalSelect set properly */
-  doCalSelect = FALSE;
-  ObitInfoListGetTest(myInput, "doCalSelect",  &type, dim, &doCalSelect);
-  doTabCopy = -1;
-  ObitInfoListGetTest(myInput, "doTabCopy",  &type, dim, &doTabCopy);
-  doCalSelect = doCalSelect || (doTabCopy>0);
-  ObitInfoListAlwaysPut (myInput, "doCalSelect", OBIT_bool, dim, &doCalSelect);
+
+  ObitInfoListGetTest(myInput, "Stokes",  &type, dim, Stokes);
+  if (Stokes[0]==' ') Stokes[0] = 'I';
+  ObitInfoListAlwaysPut (myInput, "Stokes", type, dim, Stokes);
+
+  /* noScrat - no scratch files for AIPS disks */
+  ObitAIPSSetnoScrat(myInput, err);
+  if (err->error) Obit_traceback_msg (err, routine, "task Input");
 
 } /* end digestInputs */
 
 /*----------------------------------------------------------------------- */
-/*  Get input data, builds selector                                       */
+/*  Get input data                                                        */
 /*   Input:                                                               */
 /*      myInput   Input parameters on InfoList                            */
 /*   Output:                                                              */
 /*      err    Obit Error stack                                           */
 /*   Return                                                               */
-/*       ObitData with input data                                         */
+/*       ObitUV with input data                                           */
 /*----------------------------------------------------------------------- */
-ObitData* getInputData (ObitInfoList *myInput, ObitErr *err)
+ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
 {
-  ObitData       *inData = NULL;
+  ObitUV       *inData = NULL;
   ObitInfoType type;
+  olong         Aseq, disk, cno, nvis=1000;
+  gchar        *Type, *strTemp, inFile[129];
+  oint         doCalib;
+  gchar        Aname[13], Aclass[7], *Atype = "UV";
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong         Aseq, disk, cno;
-  gchar        *Type, *strTemp, inFile[150];
-  gchar        Aname[13], Aclass[7], *Atype = "  ";
+  gboolean     doCalSelect;
+  gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
+    "Sources", "souCode", "Qual", "Stokes", "timeRange", "UVRange",
+    "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "FreqID", "corrType", 
+    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
+    "doPol", "PDVer", "Smooth", "Antennas",  "subA", "Sources", "souCode", "Qual",
+    "timeAvg", "Shift", "title", "Range", "nplot",
+     NULL};
   gchar *routine = "getInputData";
 
   /* error checks */
@@ -485,8 +520,8 @@ ObitData* getInputData (ObitInfoList *myInput, ObitErr *err)
   if (err->error) return inData;
   g_assert (ObitInfoListIsA(myInput));
 
-  /* Create basic input data Object */
-  inData = newObitData("input data");
+  /* Create basic input UV data Object */
+  inData = newObitUV("input UV data");
   
   /* File type - could be either AIPS or FITS */
   ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
@@ -524,23 +559,24 @@ ObitData* getInputData (ObitInfoList *myInput, ObitErr *err)
     if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
     
     /* define object */
-    ObitDataSetAIPS (inData, disk, cno, AIPSuser, err);
+    ObitUVSetAIPS (inData, nvis, disk, cno, AIPSuser, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
     
   } else if (!strncmp (Type, "FITS", 4)) {  /* FITS input */
     /* input FITS file name */
     if (ObitInfoListGetP(myInput, "inFile", &type, dim, (gpointer)&strTemp)) {
-      strncpy (inFile, strTemp, 149);
-      ObitTrimTrail(inFile);
+      strncpy (inFile, strTemp, 128);
     } else { 
       strncpy (inFile, "No_Filename_Given", 128);
     }
+    inFile[128] = 0;
+    ObitTrimTrail(inFile);  /* remove trailing blanks */
     
     /* input FITS disk */
     ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
 
     /* define object */
-    ObitDataSetFITS (inData, disk, inFile,  err); 
+    ObitUVSetFITS (inData, nvis, disk, inFile,  err); 
     if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
     
   } else { /* Unknown type - barf and bail */
@@ -549,370 +585,286 @@ ObitData* getInputData (ObitInfoList *myInput, ObitErr *err)
     return inData;
   }
 
-  /* Full instantiation - needed to initialize tableList */
-  ObitDataOpen (inData, OBIT_IO_ReadOnly, err);
-  ObitDataClose (inData, err);
+  /* Make sure doCalSelect set properly */
+  doCalSelect = TRUE;
+  ObitInfoListGetTest(myInput, "doCalSelect",  &type, dim, &doCalSelect);
+  doCalib = -1;
+  ObitInfoListGetTest(myInput, "doCalib",  &type, dim, &doCalib);
+  doCalSelect = doCalSelect || (doCalib>0);
+  /* Always */
+  doCalSelect = TRUE;
+  ObitInfoListAlwaysPut (myInput, "doCalSelect", OBIT_bool, dim, &doCalSelect);
+ 
+
+  /* Ensure inData fully instantiated and OK */
+  ObitUVFullInstantiate (inData, TRUE, err);
+  if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
+
+  /* Get input parameters from myInput, copy to inData */
+  ObitInfoListCopyList (myInput, inData->info, dataParms);
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
 
   return inData;
 } /* end getInputData */
 
-/*----------------------------------------------------------------------- */
-/*  Define output data object, output must exist                         */
-/*   Input:                                                               */
-/*      myInput   Input parameters on InfoList                            */
-/*   Output:                                                              */
-/*      err    Obit Error stack                                           */
-/*   Return                                                               */
-/*       ObitData for output image                                        */
-/*----------------------------------------------------------------------- */
-ObitData* getOutputData (ObitInfoList *myInput, ObitErr *err)
-{
-  ObitData    *outData = NULL;
-  ObitInfoType type;
-  olong         Aseq, disk, idisk, cno;
-  gchar        *Type, *strTemp, *strTemp2, outFile[1150];
-  gchar        Aname[13], Aclass[7], *Atype = "  ";
-  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gchar *routine = "getOutputData";
-
-  /* error checks */
-  g_assert(ObitErrIsA(err));
-  if (err->error) return outData;
-  g_assert (ObitInfoListIsA(myInput));
-
-  /* Create basic input data Object */
-  outData = newObitData("output Data");
-  
-  /* File type - could be either AIPS or FITS */
-  ObitInfoListGetP (myInput, "outDType", &type, dim, (gpointer)&Type);
-  if ((Type==NULL) || (!strncmp(Type,"    ",4)))
-    ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
-  if (!strncmp (Type, "AIPS", 4)) { /* AIPS input */
-    /* output AIPS disk default = inDisk*/
-    ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
-    ObitInfoListGetTest(myInput, "outDisk", &type, dim, &disk);
-    /* output AIPS name - default = input */
-    ObitInfoListGetP(myInput, "inName", &type, dim, (gpointer)&strTemp2);
-    if (ObitInfoListGetP(myInput, "outName", &type, dim, (gpointer)&strTemp)) {
-      strncpy (Aname, strTemp, 13);
-    } else { /* Didn't find - use inName */
-      strncpy (Aname, strTemp, 13);
-    } 
-    if (!strncmp (Aname, "    ", 4)) strncpy (Aname, strTemp2, 13);
-    Aname[12] = 0;
-
-    /* output AIPS class */
-    ObitInfoListGetP(myInput, "inClass", &type, dim, (gpointer)&strTemp2);
-    if  (ObitInfoListGetP(myInput, "outClass", &type, dim, (gpointer)&strTemp)) {
-      strncpy (Aclass, strTemp, 7);
-    } else { /* Didn't find - use default */
-      strncpy (Aclass, "noClas", 7);
-      Aclass[0] = strTemp2[0];
-    }
-    /* If blank use noClas */
-    if (!strncmp (Aclass, "    ", 4)) {
-      strncpy (Aclass, "noClas", 7);
-      Aclass[0] = strTemp2[0];
-    }
-    Aclass[6] = 0;
-
-    /* output AIPS sequence */
-    Aseq = 1;
-    ObitInfoListGetTest(myInput, "outSeq", &type, dim, &Aseq);
-
-    /* Find catalog number */
-    cno = ObitAIPSDirFindCNO(disk, AIPSuser, Aname, Aclass, Atype, Aseq, err);
-    if (err->error) Obit_traceback_val (err, routine, "myInput", outData);
-    
-    /* define object */
-    ObitDataSetAIPS (outData, disk, cno, AIPSuser, err);
-    if (err->error) Obit_traceback_val (err, routine, "myInput", outData);
-    
-  } else if (!strncmp (Type, "FITS", 4)) {  /* FITS output */
-    /* output FITS file name */
-    ObitInfoListGetP(myInput, "inFile", &type, dim, (gpointer)&strTemp2);
-    if (ObitInfoListGetP(myInput, "outFile", &type, dim, (gpointer)&strTemp)) {
-      strncpy (outFile, strTemp, 149);
-      ObitTrimTrail(outFile);
-   } else { 
-      g_snprintf (outFile, 149, "TabCop%s", strTemp2);
-    }
-    /* If blank use TabCop+inFile */
-    if (!strncmp (outFile, "    ", 4)) {
-      g_snprintf (outFile, 149, "TabCop%s", strTemp2);
-    }
-    
-    /* output FITS disk default = inDisk */
-    ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
-    idisk = disk;
-    ObitInfoListGetTest(myInput, "outDisk", &type, dim, &disk);
-    /* NO if (disk<=0) disk = idisk; */
-
-    /* Tell about it */
-    Obit_log_error(err, OBIT_InfoErr, "Making FITS image %s on disk %d",
-		   outFile, disk);
-
-    /* define object */
-    ObitDataSetFITS (outData, disk, outFile, err);
-    if (err->error) Obit_traceback_val (err, routine, "myInput", outData);
-    
-  } else { /* Unknown type - barf and bail */
-    Obit_log_error(err, OBIT_Error, "%s: Unknown Data type %s", 
-                   pgmName, Type);
-    return outData;
-  }
-
-  /* Full instantiation - needed to initialize tableList */
-  ObitDataOpen (outData, OBIT_IO_ReadWrite, err);
-  ObitDataClose (outData, err);
-  if (err->error) Obit_traceback_val (err, routine, "myInput", outData);
-
-  return outData;
-} /* end getOutputData */
-
-/*----------------------------------------------------------------------- */
-/*  Write History for TabCopy                                               */
-/*   Input:                                                               */
-/*      myInput   Input parameters on InfoList                            */
-/*      inData    ObitData to write history to                              */
-/*   Output:                                                              */
-/*      err    Obit Error stack                                           */
-/*----------------------------------------------------------------------- */
-void TabCopyHistory (ObitInfoList* myInput, ObitData* inData, ObitData* outData,
-		     ObitErr* err)
-{
-  ObitHistory *outHistory=NULL;
-  gchar        hicard[81];
-  gchar        *hiEntries[] = {
-    "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq", 
-    "inTab", "inVer",  "nCopy", 
-    "outFile",  "outDisk", "outName", "outClass", "outSeq", "outVer",  
-    "KeyWord",  "KeyRange", "KeyString", 
-    NULL};
-  gchar *routine = "TabCopyHistory";
-
-  /* error checks */
-  g_assert(ObitErrIsA(err));
-  if (err->error) return;
-  g_assert (ObitInfoListIsA(myInput));
-  g_assert (ObitDataIsA(inData));
-  g_assert (ObitDataIsA(outData));
-
-   /* Do history */
-  outHistory = newObitDataHistory ((ObitData*)outData, OBIT_IO_ReadWrite, err);
-
-  /* Add this programs history */
-  ObitHistoryOpen (outHistory, OBIT_IO_ReadWrite, err);
-  g_snprintf (hicard, 80, " Start Obit task %s ",pgmName);
-  ObitHistoryTimeStamp (outHistory, hicard, err);
-  if (err->error) Obit_traceback_msg (err, routine, outData->name);
-
-  /* Copy selected values from myInput */
-  ObitHistoryCopyInfoList (outHistory, pgmName, hiEntries, myInput, err);
-  if (err->error) Obit_traceback_msg (err, routine, outData->name);
-  ObitHistoryClose (outHistory, err);
-  if (err->error) Obit_traceback_msg (err, routine, outData->name);
-
-  outHistory = ObitHistoryUnref(outHistory); /* cleanup */
- 
-} /* end TabCopyHistory  */
-
-
 /**
- * Routine Copy selected Tables from inData to outData
- * \param inData     Input Data object
- * \param outData    Output Data object
- * \param err        Error/message stack, returns if error.
+ * Time Average data for plotting
+ * \param inData   Input uv data to average, 
+ *                 Any request for calibration, editing and selection honored
+ * \param nplot    [in] maximum number of points to plot
+ *                 [out] Number of points actually plotted.
+ * \param plotS    Average flux density per time bin
+ * \param plotSerr RMS error of points in plotS
+ * \param plotTime Time(hours) of points in plotS
+ * \param err      Error stack, returns if not empty.
  */
-void TabCopyCopy (ObitInfoList* myInput, ObitData* inData,  ObitData* outData,  
-		  ObitErr* err)
+void AvgData (ObitUV* inData, olong *nplot, ofloat* plotS, ofloat* plotSerr, 
+	      ofloat* plotTime, ObitErr *err)
 {
-  ObitTable *inTab=NULL, *outTab=NULL;
-  olong i, inVer, outVer, nCopy;
-  gchar *TabType=NULL, *KeyWord=NULL, *KeyString=NULL;
-  ofloat KeyRange[3];
-  olong inHigh, outHigh, iV, oV;
-  ObitInfoType type;
-  gint32   dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  ObitTableList *inTL, *outTL;
-  gboolean want=TRUE;
-  gchar  *routine = "TabCopyCopy";
-  
-  /* Error checks */
-  g_assert(ObitErrIsA(err));
-  if (err->error) return;  /* previous error? */
-  g_assert(ObitDataIsA(inData));
-  g_assert(ObitDataIsA(outData));
-
-  /* Parameters used locally */
-  inVer = 0;
-  ObitInfoListGetTest(myInput, "inVer",      &type, dim, &inVer);
-  nCopy = 1;
-  ObitInfoListGetTest(myInput, "nCopy",      &type, dim, &nCopy);
-  outVer = 0;
-  ObitInfoListGetTest(myInput, "outVer",     &type, dim, &outVer);
-  KeyRange[0]=-1.0e20; KeyRange[1]=1.0e20; 
-  ObitInfoListGetTest(myInput, "KeyRange",   &type, dim, KeyRange);
-  ObitInfoListGetP(myInput, "inTab",      &type, dim, (gpointer)&TabType);
-  ObitInfoListGetP(myInput, "KeyWord",    &type, dim, (gpointer)&KeyWord);
-  ObitInfoListGetP(myInput, "KeyString",  &type, dim, (gpointer)&KeyString);
-  ObitTrimTrail (TabType);  /* No trailing blanks */
-
-  /* Check */
-  Obit_return_if_fail((TabType!=NULL), err, "%s: no table type specified ", routine);
-
-  /* Table lists for source and destination */
-  inTL    = inData->tableList;
-  outTL   = outData->tableList;
-  inHigh  = ObitTableListGetHigh (inTL, TabType);
-  outHigh = ObitTableListGetHigh (outTL, TabType);
-  /* Check */
-  Obit_return_if_fail((inHigh>0), err, "%s: no tables of  type %s found in %s ", 
-		      routine, TabType, inData->name);
-
-  if (inVer>0) iV = inVer;
-  else iV = inHigh;
-  if (outVer>0) oV = outVer;
-  else oV = outHigh+1;
-
-  /* Loop over tables */
-  for (i=0; i<nCopy; i++) {
-
-    /* Want this input table? */
-    if (!ObitTableListGet(inTL, TabType, &iV, &inTab, err)) {
-      Obit_log_error(err, OBIT_Error, 
-		     "%s: Table %s %d not found on on %s", 
-		     routine, TabType, iV, inData->name);
-    } else {
-
-      /* May have to instantiate table */
-      if (inTab==NULL) {
-	inTab = newObitDataTable (inData, OBIT_IO_ReadOnly,  TabType, &iV, err);
-	if (err->error) Obit_traceback_msg (err, routine, inData->name);
-      }
-      want  = WantTable(inTab, KeyWord, KeyRange, KeyString, err);
-      inTab = ObitTableUnref(inTab);  /* Unreference table */
-    }
-    if (err->error) Obit_traceback_msg (err, routine, inData->name);
-
-    if (!want) continue;
-
-    /* Output Table must not exist */
-    if (ObitTableListGet(outTL, TabType, &oV, &outTab, err)) {
-      Obit_log_error(err, OBIT_Error, 
-		     "%s: Table %s %d already exists on %s", 
-		     routine, TabType, oV, outData->name);
-    } else {
-      outTab = ObitTableUnref(outTab);  /* Unreference table */
-    }
-    if (err->error) Obit_traceback_msg (err, routine, inData->name);
-
-    /* Copy table */
-    ObitDataCopyTable (inData, outData, TabType, &iV, &oV, err);
-    if (err->error) Obit_traceback_msg (err, routine, inData->name);
-
-    /* Tell about it */
-    Obit_log_error(err, OBIT_InfoErr, "Copied table %s version %d to output  %d",
-		   TabType, iV, oV);
-    ObitErrLog(err);
-
-    /* Update next tables */
-    iV++;
-    oV++;
-  } /* End loop over tables */
-
-} /* end TabCopyCopy */
-
-/**
- * Determine if table wanted
- * \param inTab      Input Table
- * \param KeyWord    Header keyword to check, blank or NULL -> OK
- * \param KeyRange   Range of allowed values if keyword is numeric
- *                   if KeyRange[1]<KeyRange[0] then only values OUTSIDE
- *                   [KeyRange[0],KeyRange[1] are allowed.
- * \param KeyString  String to match if KeyWord String
- * \param err        Error/message stack, returns if error.
- * \return TRUE is table wanted, else FALSE
- */
-/* Is table wanted? */
-gboolean WantTable (ObitTable *inTab, gchar *KeyWord, ofloat KeyRange[2], 
-		    gchar *KeyString, ObitErr* err)
-{
-  gboolean want = TRUE;
-  gpointer P=NULL;
-  gshort *shortP;
-  olong   *intP;
-  olong  *longP;
-  oint   *ointP;
-  ofloat *floatP;
-  odouble *doubleP, test;
-  gchar *tstring;
+  ObitIOCode iretCode;
+  gboolean doCalSelect;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
-  gchar *routine = "WantTable";
+  olong ncorr, nrparm;
+  ollong i, indx, iindx=0;
+  ObitIOAccess access;
+  ObitUVDesc *inDesc;
+  olong lastSourceID, curSourceID;
+  olong ilocu, ilocv;
+  ofloat u, v, curTime, startTime, endTime;
+  ofloat *inBuffer;
+  odouble irefFreq;
+  olong ivis=0, cnt, iplot,maxPlot=*nplot;
+  gboolean done, gotOne, doShift;
+  ofloat timeAvg, shift[2], sumWt, sumTime, sumRe, sumRe2, phase;
+  gchar *routine = "AvgData";
 
-  if (err->error) return want;  /* previous error? */
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitUVIsA(inData));
 
-  /* Anything to test? */
-  if ((KeyWord==NULL) || !strncmp(KeyWord, "        ", 8)) return want;
+  /* Selection/calibration/editing of input? */
+  doCalSelect = FALSE;
+  ObitInfoListGetTest(inData->info, "doCalSelect", &type, dim, &doCalSelect);
+  if (doCalSelect) access = OBIT_IO_ReadCal;
+  else access = OBIT_IO_ReadOnly;
 
-  /* Instantiate */
-  ObitTableFullInstantiate (inTab, TRUE, err);
-  if (err->error) Obit_traceback_val (err, routine, inTab->name, FALSE);
-
-  /* Look up KeyWord */
-  if (ObitInfoListGetP(inTab->myDesc->info, KeyWord, &type, dim, &P)) {
-    switch (type) { 
-    case OBIT_short:
-      shortP = (gshort*)P;
-      test = *shortP;
-      break;
-    case OBIT_int:
-      intP = (olong*)P;
-      test = *intP;
-      break;
-    case OBIT_oint:
-      ointP = (oint*)P;
-      test = *ointP;
-      break;
-    case OBIT_long:
-      longP = (olong*)P;
-      test = *longP;
-      break;
-    case OBIT_float:
-      floatP = (ofloat*)P;
-      test = *floatP;
-      break;
-    case OBIT_double:
-      doubleP = (odouble*)P;
-      test = *doubleP;
-      break;
-    case OBIT_string:
-      /* Do string comparison here */
-      if (KeyString==NULL) return FALSE;
-      ObitTrimTrail (KeyString);
-      tstring = g_strndup (P, dim[0]);
-      ObitTrimTrail (tstring);
-      want = !strcmp(tstring, KeyString);
-      g_free(tstring);
-      return want;
-    default:
-      /* No test */
-      return TRUE;
-    }; /* end switch  */
-  } else { /* not found */
-    Obit_log_error(err, OBIT_Error, "%s: Keyword %s not found in %s", 
-                   routine, KeyWord, inTab->name);
-    return FALSE;
-  }
+  /* Other control */
+  timeAvg = 0.25;
+  ObitInfoListGetTest(inData->info, "timeAvg", &type, dim, &timeAvg);
+  if (timeAvg<=0.0) timeAvg = 0.25;
+  timeAvg /= 60.*24.;  /* to days */
+  shift[0] = shift[1] = 0.0;
+  ObitInfoListGetTest(inData->info, "Shift", &type, dim, shift);
+  /* to radians * 2 pi */
+  shift[0] *= AS2RAD * 2.0 * G_PI;
+  shift[1] *= AS2RAD * 2.0 * G_PI;
+  doShift = ((shift[0]!=0.0) || (shift[1]!=0.0));
   
-  /* Numeric test */
-  if (KeyRange[0]<KeyRange[1]) {  /* in range wanted **/
-    want = (test>=KeyRange[0]) && (test<=KeyRange[1]);
-  } else { /* out of range wanted */
-    want = (test<=KeyRange[0]) || (test>=KeyRange[1]);
+  /* test open to fully instantiate input and see if it's OK */
+  iretCode = ObitUVOpen (inData, access, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
+    Obit_traceback_msg (err, routine, inData->name);
+  /* Get descriptors */
+  inDesc  = inData->myDesc;
+  ilocu = inDesc->ilocu; ilocv = inDesc->ilocv;
+  irefFreq = 1.0 / inDesc->freq;
+  /* data info */
+  ncorr   = inData->myDesc->ncorr;
+  nrparm  = inData->myDesc->nrparm;
+
+  /* Initialize things */
+  startTime = -1.0e20;
+  endTime   =  1.0e20;
+  lastSourceID = -1;
+  curSourceID  = 0;
+  inBuffer  = inData->buffer;
+  done   = FALSE;
+  gotOne = FALSE;
+  cnt = 0; sumWt = sumTime = sumRe = sumRe2 = 0.0;
+
+  /* we're in business, average data */
+  iplot = 0;
+  while (iretCode==OBIT_IO_OK) {
+    if ((!gotOne) || (inData->myDesc->numVisBuff<=0)) { /* need to read new record? */
+      if (doCalSelect) iretCode = ObitUVReadSelect (inData, inData->buffer, err);
+      else iretCode = ObitUVRead (inData, inData->buffer, err);
+    }
+
+    /* Are we there yet??? */
+    done = (inDesc->firstVis >= inDesc->nvis) || (iretCode==OBIT_IO_EOF);
+    if (done && (startTime>0.0)) goto process; /* Final? */
+
+    /* Make sure valid data found */
+    if (inData->myDesc->numVisBuff<=0) continue;
+
+    /* loop over visibilities */
+    for (ivis=0; ivis<inDesc->numVisBuff; ivis++) { 
+      iindx = ivis*inDesc->lrec;
+      gotOne = FALSE;
+      
+      curTime = inBuffer[iindx+inDesc->iloct]; /* Time */
+      if (inDesc->ilocsu>=0) curSourceID = inBuffer[iindx+inDesc->ilocsu];
+      if (startTime < -1000.0) {  /* Set time window etc. if needed */
+	startTime = curTime;
+	endTime   = startTime + timeAvg;
+	lastSourceID = curSourceID;
+      }
+
+      /* Still in current interval/source? */
+      if ((curTime<endTime) && (curSourceID == lastSourceID) && 
+	  (inDesc->firstVis<=inDesc->nvis) && (iretCode==OBIT_IO_OK)) {
+	
+	/* Accumulate*/
+	indx = iindx+nrparm; /* offset of start of vis data */
+	for (i=0; i<ncorr; i++) {
+	  if (inBuffer[indx+2] > 0.0) {
+	    cnt ++;
+	    sumWt   += inBuffer[indx+2];
+	    sumTime += curTime;
+	    /* Shift? */
+	    if (doShift) {
+	      u = (ofloat)inBuffer[ilocu]*inDesc->freqArr[i]*irefFreq;  /* Scale to freq */
+	      v = (ofloat)inBuffer[ilocv]*inDesc->freqArr[i]*irefFreq;
+	      phase = shift[0]*u + shift[1]*v;
+	      inBuffer[indx] = inBuffer[indx]*cos(phase) - inBuffer[indx+1]*sin(phase);
+	    }
+	    sumRe   += inBuffer[indx]*inBuffer[indx+2];
+	    sumRe2  += inBuffer[indx]*inBuffer[indx]*inBuffer[indx+2];
+	  } 
+	  indx += 3;
+	} /* end loop over correlations */;
+      } else {  /* process interval */
+	
+      process:
+	/* Time bin statistics */
+	/* Check that there is room */
+	if (iplot>=maxPlot) {
+	  Obit_log_error(err, OBIT_InfoWarn,"%s plot length truncated at %d",
+			 routine, maxPlot);
+	  goto done;
+	}
+	if ((cnt>1) && (sumWt>0.0)) {
+	  plotTime[iplot] = 24.0 * sumTime / cnt;  /* hours */
+	  plotS[iplot]    = sumRe/sumWt;
+	  plotSerr[iplot] = sqrtf(MAX(0.0, sumRe2/sumWt -plotS[iplot]*plotS[iplot])) ;
+	  plotSerr[iplot] /= sqrtf((ofloat)(cnt-1));  /* of mean */
+	  iplot++;
+	} /* End any data this baseline */
+	/* Reinitialize things */
+	cnt = 0; sumWt = sumTime = sumRe = sumRe2 = 0.0;
+	startTime = -1.0e20;
+	endTime   =  1.0e20;
+      } /* end process interval */
+    } /* end loop over buffer */
+    if (done) goto done;
+  } /* End loop over input file */
+  
+  /* End of processing */
+ done:
+  /* In case anything left
+     Check that there is room */
+  if ((cnt>0) && (iplot>=maxPlot)) {
+    Obit_log_error(err, OBIT_InfoWarn,"%s plot length truncated at %d",
+		   routine, maxPlot);
+    cnt = 0;
+  }
+  if ((cnt>1) && (sumWt>0.0)) {
+    plotTime[iplot] = 24.0 * sumTime / cnt;  /* hours */
+    plotS[iplot]    = sumRe/sumWt;
+    plotSerr[iplot] = sqrtf(MAX(0.0, sumRe2/sumWt -plotS[iplot]*plotS[iplot]));
+    plotSerr[iplot] /= sqrtf((ofloat)(cnt-1));  /* of mean */
+    iplot++;
+  } /* End any data left */
+  *nplot = iplot;   /* size of plot */
+  iretCode = ObitUVClose (inData, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error))
+    Obit_traceback_msg (err, routine, inData->name);
+
+} /* end AvgData */
+
+/**
+ * Plot time series of measurements
+ * \param inData   Input uv data to plot - used for labeling 
+ * \param nplot    Number of points to plot
+ * \param plotS    Average flux density per time bin
+ * \param plotSerr RMS error of points in plotS
+ * \param plotTime Time(hours) of points in plotS
+ * \param err      Error stack, returns if not empty.
+ */
+void PlotData (ObitUV* inData, olong nplot, ofloat* plotS, ofloat* plotSerr, 
+	       ofloat* plotTime, ObitErr *err)
+{
+  ObitPlot *plot=NULL;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *defPlotFile="Plot.png", *defFormat="png", *defTitle="   ";
+  gchar *outputfile=NULL, *plotFile=NULL, *format=NULL, label[500], *title=NULL;
+  ofloat dmin, dmax, sum1, sum2, sig, ymin, ymax, Range[2];
+  olong i, nplotpp=1;
+  gchar *routine = "PlotData";
+
+  if (err->error) return; /* previous error? */
+  
+  /* Better be some */
+  Obit_return_if_fail ((nplot>=3), err, "%s: Only %d point(s) in plot", routine, nplot); 
+
+  if (!ObitInfoListGetP(myInput, "format", &type, dim, (gpointer)&format)) {
+    format = defFormat;
+  }
+  ObitTrimTrail (format);
+  if (!ObitInfoListGetP(myInput, "plotFile", &type, dim, (gpointer)&plotFile)) {
+    plotFile = defPlotFile;
+  }
+  ObitTrimTrail (plotFile);
+  if (!ObitInfoListGetP(myInput, "title", &type, dim, (gpointer)&title)) {
+    title = defTitle;
+  } 
+  if (title[0]!=' ') ObitTrimTrail (title);
+
+  Range[0] = Range[1] = 0.0;
+  ObitInfoListGetTest(myInput, "Range", &type, dim, Range);
+  if ((Range[0]!=0.0) || (Range[1]!=0.0)) {
+    ymin = Range[0]; ymax = Range[1];
+  } else {
+    /* PLot statistics for range */
+    sum1 = sum2 = 0.0; dmin=1.0e10; dmax = -1.0e10;
+    for (i=0; i<nplot; i++) {
+      sum1 += plotS[i];    sum2 += plotSerr[i];
+      sig = sum2 / nplot;
+      dmin = MIN(plotS[i], dmin);
+      dmax = MAX(plotS[i], dmax);
+    }
+    ymin = dmin-3*sig;
+    ymax = dmax+3*sig;
   }
 
-  return want;
-} /* end WantTable */
+  ObitInfoListGetTest(myInput, "nplot", &type, dim, &nplotpp);
+
+  /* Output file name */
+  outputfile = g_strconcat (plotFile, "/", format, NULL);
+
+  /* Make plot White background */
+  plot = newObitPlot ("Plot");
+  ObitPlotInitPlot (plot, outputfile, 15, 1, nplotpp, err);
+  /* Labeling */
+  dim[0] = strlen(title); dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  ObitInfoListAlwaysPut(plot->info,"TITLE", OBIT_string, dim, title);
+  strcpy (label, "Time (hours)");
+  dim[0] = strlen(label); dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  ObitInfoListAlwaysPut(plot->info,"XLABEL", OBIT_string, dim, label);
+  strcpy (label, "Flux density (Jy)");
+  dim[0] = strlen(label); dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  ObitInfoListAlwaysPut(plot->info,"YLABEL", OBIT_string, dim, label);
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  ObitInfoListAlwaysPut(plot->info,"YMIN", OBIT_float, dim, &ymin);
+  ObitInfoListAlwaysPut(plot->info,"YMAX", OBIT_float, dim, &ymax);
+  /* Plot */
+  ObitPlotXYErr (plot, 2, nplot, plotTime, plotS, plotSerr, err);
+  /* finalize plot */
+  ObitPlotFinishPlot (plot, err);
+  if (err->error) Obit_traceback_msg (err, routine, inData->name);
+  /* Cleanup */
+  if (outputfile) g_free(outputfile);
+  ObitPlotUnref(plot);
+} /* end PlotData */

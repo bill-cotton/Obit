@@ -115,7 +115,7 @@ Data selection, calibration and editing parameters on List member:
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2016
+#  Copyright (C) 2004-2018
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -2093,4 +2093,99 @@ def PTableSNGetZeroFR (inUV, outUV, ver, err, solInt=10., timeInt = 1.0):
     outTable.me = Obit.TableSNGetZeroFR(inUV.me, outUV.me, ver, err.me)
     return outTable
     # end PTableSNGetZeroFR
+
+def PUVAvg2One (inUV, scratch, outUV, err):
+    """ Average all data in a visibility dataset to one vis.
+
+    For single source data single vis, for multisource data, one vis per scan.
+    Data labeled as baseline 1-2
+    returns UV data object
+    inUV   = Python UV object to average
+    scratch= True if this is to be a scratch file (same type as inUV)
+    outUV  = Predefined UV data if scratch is False
+             ignored if scratch True.
+    err    = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not inUV.UVIsA():
+        raise TypeError,"inUV MUST be a Python Obit UV"
+    if ((not scratch) and (not outUV.UVIsA())):
+        raise TypeError,"outUV MUST be a Python Obit UV"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    # Create output for scratch
+    if scratch:
+        outUV = UV("None")
+    outUV.me = Obit.UVAvg2One(inUV.me, scratch, outUV.me, err.me)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error in averaging all vis")
+    # Get scratch file info
+    if scratch:
+        PUVInfo (outUV, err)
+    return outUV
+    # end PUVAvg2One
+
+def PUVVisSub1 (inUV1, inUV2, outUV, err):
+    """ Subtract the 1st visibility in one ObitUV from those in another.
+
+    outUV = inUV1[*] - inUV2[0]
+    returns UV data object
+    inUV1   = Python UV to subtract from, no calibration/selection
+    inUV2   = Python UV to subtract , calibration/selection allowed
+              inUV2 should have the same structure, only the 1st
+              visibility used and subtracted from all in inUV1
+    outUV  = Predefined UV data.
+    err    = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not inUV.UVIsA():
+        raise TypeError,"inUV MUST be a Python Obit UV"
+    if outUV.UVIsA():
+        raise TypeError,"outUV MUST be a Python Obit UV"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    Obit.UVVisSub1(inUV1.me, inUV2.me, outUV.me, err.me)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error in subtracting vis")
+    # end PUVVisSub1
+
+def PUVSmoF (inUV, scratch, outUV, err):
+    """ Spectrally smooth the data in ObitUV
+
+    For single source data single vis, for multisource data, one vis per scan.
+    Data labeled as baseline 1-2
+    returns UV data object
+    inUV   = Python UV to smooth, calibration, editing and selection honored
+    Control parameters are on the inUV info member:
+      "NumChSmo" long (1,1,1) Number of channels to average
+                  default = 3
+    scratch= True if this is to be a scratch file (same type as inUV)
+    outUV  = Predefined UV data if scratch is False
+             ignored if scratch True.
+    err    = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not inUV.UVIsA():
+        raise TypeError,"inUV MUST be a Python Obit UV"
+    if ((not scratch) and (not outUV.UVIsA())):
+        raise TypeError,"outUV MUST be a Python Obit UV"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    # Create output for scratch
+    if scratch:
+        outUV = UV("None")
+    outUV.me = Obit.UVSmoF(inUV.me, scratch, outUV.me, err.me)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error in smoothing vis")
+    # Get scratch file info
+    if scratch:
+        PUVInfo (outUV, err)
+    return outUV
+    # end PUVSmoF
 

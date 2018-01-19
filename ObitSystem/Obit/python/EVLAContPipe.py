@@ -293,7 +293,7 @@ def pipeline( aipsSetup, parmFile):
         retCode = EVLADelayCal(uv, parms["DCals"], err,  \
                                BChan=parms["delayBChan"], EChan=parms["delayEChan"], \
                                doCalib=2, flagVer=2, doBand=-1, UVRange=parms["gainUVRange"], \
-                               solInt=parms["delaySolInt"], smoTime=1.0/60.0,  \
+                               solInt=parms["delaySolInt"], smoTime=5.0/60.0,  \
                                refAnts=[parms["refAnt"]], doTwo=parms["doTwo"], 
                                doZeroPhs=parms["delayZeroPhs"], \
                                doPlot=parms["doSNPlot"], plotFile=plotFile, \
@@ -414,7 +414,7 @@ def pipeline( aipsSetup, parmFile):
             retCode = EVLADelayCal(uv, parms["DCals"], err, \
                                    BChan=parms["delayBChan"], EChan=parms["delayEChan"], \
                                    doCalib=2, flagVer=2, doBand=-1, UVRange=parms["gainUVRange"], \
-                                   solInt=parms["delaySolInt"], smoTime=1.0/60.0,  \
+                                   solInt=parms["delaySolInt"], smoTime=5.0/60.0,  \
                                    refAnts=[parms["refAnt"]], doTwo=parms["doTwo"], \
                                    doZeroPhs=parms["delayZeroPhs"], \
                                    doPlot=parms["doSNPlot"], plotFile=plotFile, \

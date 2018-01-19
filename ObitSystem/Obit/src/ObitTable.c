@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -266,6 +266,7 @@ ObitTable* ObitTableZap (ObitTable *in, ObitErr *err)
 
   in->myIO = ObitIOUnref(in->myIO);       /*  delete IO */
   in->info = ObitInfoListUnref(in->info);  /* delete infoList */
+  if (in->buffer) ObitIOFreeBuffer(in->buffer); in->buffer = NULL;  /* Delete Buffer*/
 
   /* Get memory resident bits as well - loop until truely deleted
   Bad Idea while (in->ReferenceCount>1) ObitTableUnref(in);*/

@@ -13188,6 +13188,22 @@ extern int UVUtilFlag (ObitUV *inUV, ObitErr *err) {
   else return 1;
 }  // end UVUtilFlag
 
+extern ObitUV* UVAvg2One(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
+  gboolean lscratch;
+  lscratch = scratch!=0;
+  return ObitUVUtilAvg2One (in, lscratch, out, err);
+} // end UVAvg2One
+
+extern ObitUV* UVSmoF(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
+  gboolean lscratch;
+  lscratch = scratch!=0;
+  return ObitUVUtilSmoF (in, lscratch, out, err);
+} // end UVSmoF
+
+extern void UVVisSub1(ObitUV* in1, ObitUV *in2, ObitUV *out, ObitErr *err) {
+  ObitUVUtilVisSub1 (in1, in2, out, err);
+} // end UVUtilVisSub1
+
 /* Cal table Utility functions */
 
 extern ObitTable* TableCLGetDummy (ObitUV *inUV,  ObitUV *outUV, long ver, ObitErr *err) {
@@ -13256,6 +13272,9 @@ extern void UVEditStokes(ObitUV *,ObitUV *,ObitErr *);
 extern ObitUV *UVEditClip(ObitUV *,int ,ObitUV *,ObitErr *);
 extern ObitUV *UVEditClipStokes(ObitUV *,int ,ObitUV *,ObitErr *);
 extern int UVUtilFlag(ObitUV *,ObitErr *);
+extern ObitUV *UVAvg2One(ObitUV *,int ,ObitUV *,ObitErr *);
+extern ObitUV *UVSmoF(ObitUV *,int ,ObitUV *,ObitErr *);
+extern void UVVisSub1(ObitUV *,ObitUV *,ObitUV *,ObitErr *);
 extern ObitTable *TableCLGetDummy(ObitUV *,ObitUV *,long ,ObitErr *);
 extern ObitTable *TableSNGetZeroFR(ObitUV *,ObitUV *,long ,ObitErr *);
 
@@ -59519,6 +59538,148 @@ static PyObject *_wrap_UVUtilFlag(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_UVAvg2One(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUV * _result;
+    ObitUV * _arg0;
+    int  _arg1;
+    ObitUV * _arg2;
+    ObitErr * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo3 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OiOO:UVAvg2One",&_argo0,&_arg1,&_argo2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVAvg2One. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of UVAvg2One. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of UVAvg2One. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitUV *)UVAvg2One(_arg0,_arg1,_arg2,_arg3);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitUV_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVSmoF(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUV * _result;
+    ObitUV * _arg0;
+    int  _arg1;
+    ObitUV * _arg2;
+    ObitErr * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo3 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OiOO:UVSmoF",&_argo0,&_arg1,&_argo2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVSmoF. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of UVSmoF. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of UVSmoF. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitUV *)UVSmoF(_arg0,_arg1,_arg2,_arg3);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitUV_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVVisSub1(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUV * _arg0;
+    ObitUV * _arg1;
+    ObitUV * _arg2;
+    ObitErr * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo3 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOOO:UVVisSub1",&_argo0,&_argo1,&_argo2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVVisSub1. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of UVVisSub1. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of UVVisSub1. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of UVVisSub1. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    UVVisSub1(_arg0,_arg1,_arg2,_arg3);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_TableCLGetDummy(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitTable * _result;
@@ -79189,6 +79350,9 @@ static PyMethodDef ObitMethods[] = {
 	 { "newUVRFIXize", _wrap_newUVRFIXize, METH_VARARGS },
 	 { "TableSNGetZeroFR", _wrap_TableSNGetZeroFR, METH_VARARGS },
 	 { "TableCLGetDummy", _wrap_TableCLGetDummy, METH_VARARGS },
+	 { "UVVisSub1", _wrap_UVVisSub1, METH_VARARGS },
+	 { "UVSmoF", _wrap_UVSmoF, METH_VARARGS },
+	 { "UVAvg2One", _wrap_UVAvg2One, METH_VARARGS },
 	 { "UVUtilFlag", _wrap_UVUtilFlag, METH_VARARGS },
 	 { "UVEditClipStokes", _wrap_UVEditClipStokes, METH_VARARGS },
 	 { "UVEditClip", _wrap_UVEditClip, METH_VARARGS },

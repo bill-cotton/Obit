@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2016                                          */
+/*;  Copyright (C) 2010-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -696,6 +696,7 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
 	  if (outCC!=NULL) {
 	    ObitImageZapTable (image1, "AIPS CC", outCC->tabVer, err);
 	    if (err->error) Obit_traceback_msg (err, routine, in->name);
+	    outCC = ObitTableCCUnref(outCC);  /* Be sure to free memory */
 	  }
 	} else { /* direct convolution */
 	  /* DEBUG 

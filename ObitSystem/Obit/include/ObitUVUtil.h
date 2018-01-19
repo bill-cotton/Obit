@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2016                                          */
+/*;  Copyright (C) 2004-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -58,9 +58,14 @@ void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
 void ObitUVUtilXPolDivide (ObitUV *inUV, ObitUV *outUV, ObitErr *err);
 
 /** Public: Subtract the visibilities in one ObitUVData from another 
- * \relates ObitUV */
+ * related ObitUV */
 void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV, 
 		       ObitErr *err);
+
+/** Public: Subtract the 1st visibility in one ObitUVData from another 
+ * related ObitUV */
+void ObitUVUtilVisSub1 (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV, 
+		        ObitErr *err);
 
 /** Public: Compare the visibilities in one ObitUVData with another */
 ofloat ObitUVUtilVisCompare (ObitUV *inUV1, ObitUV *inUV2, ObitErr *err);
@@ -85,6 +90,14 @@ ObitUV* ObitUVUtilAvgF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 
 /** Public: Average a data set in time */
 ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
+			ObitErr *err);
+
+/** Public: Average all in a data set to 1 vis */
+ObitUV* ObitUVUtilAvg2One (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
+			   ObitErr *err);
+
+/** Public: Smooth visibility spectra in Frequency */
+ObitUV* ObitUVUtilSmoF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 			ObitErr *err);
 
 /** Public: Average a data set in time and/or frequency */

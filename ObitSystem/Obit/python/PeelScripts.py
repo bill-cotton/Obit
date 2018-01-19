@@ -5,7 +5,7 @@ execfile('PeelScripts.py')
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2017
+#  Copyright (C) 2017,2018
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -110,6 +110,81 @@ def SelectCC(im, inCC, outCC, radius, peelPos, err):
         OErr.printErrMsg(err, "Error copying CC Table")
         return
     # end SelectCC
+
+def inSelectCC(im, inCC, outCC, radius, peelPos, err):
+    """
+    Select/copy CCs within radius from  peelPos
+    
+    This generates a CC table which can be subtracted from the uv data
+    and remove all sources from the peel source area.
+    * im     = Python Image with CC Tables
+    * inCC   = input CC version
+    * outCC  = output CC version
+    * radius = radius (deg) of zone of inclusion
+    * peelPos= [RA, Dec] in deg.
+    * err    = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not Image.PIsA(im):
+        raise TypeError,"im MUST be a Python Obit Image"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    # Geometry
+    xref = im.Desc.Dict['crval'][0]
+    yref = im.Desc.Dict['crval'][1]
+    xrefpix = im.Desc.Dict['crpix'][0]
+    yrefpix = im.Desc.Dict['crpix'][1]
+    xinc = abs(im.Desc.Dict['cdelt'][0])
+    yinc = im.Desc.Dict['cdelt'][1] 
+    rot  = im.Desc.Dict['crota'][1] 
+    imtype = im.Desc.Dict['ctype'][0][4:]
+    # Input CC
+    inTab = im.NewTable(Table.READONLY, "AIPS CC", inCC, err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error finding input CC Table")
+        return
+    # Output CC
+    nrow = inTab.Desc.Dict['nrow']
+    noParms = inTab.Desc.List.Dict['NO_PARMS'][2][0]
+    outTab = im.NewTable(Table.WRITEONLY, "AIPS CC", outCC, err, \
+                             noParms = noParms)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error creating output CC Table")
+        return
+    # Open
+    inTab.Open(Table.READONLY, err)
+    outTab.Open(Table.WRITEONLY, err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error opening CC Tables")
+        return
+    orow = 1; count = 0; sumf = 0.0
+    OErr.PLog(err, OErr.Info, "Excluding:")
+    for irow in range(1,nrow+1):
+        row = inTab.ReadRow(irow, err)
+        # Want this one?
+        dx = row['DELTAX'][0]; dy = row['DELTAY'][0]; 
+        [ierr,xpos,ypos] = SkyGeom.PWorldPosLM(dx, dy, xref, yref, xinc, yinc, rot, imtype)
+        # Small angle approximation
+        dra = (xpos-peelPos[0])*cos(radians(xpos))
+        delta = ((dra)**2+(ypos-peelPos[1])**2)**0.5
+        if delta<=radius:
+            outTab.WriteRow(orow, row, err); orow += 1
+            count += 1; sumf += row['FLUX'][0]
+            ras = ImageDesc.PRA2HMS(xpos); decs = ImageDesc.PDec2DMS(ypos)
+            OErr.PLog(err, OErr.Info, "%6d %s %s flux= %f"%(irow,ras, decs, row['FLUX'][0]))
+        else:
+            pass
+            #print irow,xpos,ypos
+    # End loop
+    OErr.PLog(err, OErr.Info, "Include %6d CCs, sum flux= %f"%(count,sumf))
+    OErr.printErr(err)
+    inTab.Close(err); outTab.Close(err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error copying CC Table")
+        return
+    # end inSelectCC
 
 def UVSub4Peel(uv, source, im, inCC, err, \
                    nfield=1, doGPU=False, gainUse=1, flagVer=-1, \

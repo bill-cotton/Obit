@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014-2015                                          */
+/*;  Copyright (C) 2014-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1229,10 +1229,11 @@ void ObitThreadGridClear (gpointer inn)
 	  if (funcarg[i]->ivarr)  g_free(funcarg[i]->ivarr);
 	  if (funcarg[i]->grid)   g_free(funcarg[i]->grid);
 	  ObitCArrayUnref(funcarg[i]->outGrid);
+	  g_free(funcarg[i]);
 	}
-	/*g_free(funcarg);??*/
       }
     }
+    if (in->GridInfo->thArgs) g_free(in->GridInfo->thArgs);
     g_free(in->GridInfo);
   } /* end if in->GridInfo */
   

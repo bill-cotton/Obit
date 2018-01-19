@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2016                                          */
+/*;  Copyright (C) 2004-2017                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1307,10 +1307,17 @@ ObitIOCode ObitSkyModelDivUV (ObitSkyModel *in, ObitUV *indata, ObitUV *outdata,
   if (err->error) goto cleanup;
 
   /* First unset output buffer (may be multiply deallocated ;'{ ) */
+  if (!doScratch && !same && workUV->buffer) ObitIOFreeBuffer(workUV->buffer); /* free existing */
   workUV->buffer     =  Buffer;
   workUV->bufferSize = bufSize;
   retCode = ObitUVClose (workUV, err);
   if (err->error) goto cleanup;
+  /* Make sure buffer deallocated */
+  if (workUV->buffer) {
+    ObitIOFreeBuffer(workUV->buffer);
+    workUV->buffer = NULL;
+    workUV->bufferSize = 0;
+  }
   
   /* If model was accumulated in scratch file, do division */
   if (doScratch) {

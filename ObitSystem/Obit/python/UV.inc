@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for UV  type                               */
 /*                                                                    */
-/*;  Copyright (C) 2004-2016                                          */
+/*;  Copyright (C) 2004-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -439,6 +439,22 @@ extern int UVUtilFlag (ObitUV *inUV, ObitErr *err) {
   if (ret==OBIT_IO_OK) return 0;
   else return 1;
 }  // end UVUtilFlag
+
+extern ObitUV* UVAvg2One(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
+  gboolean lscratch;
+  lscratch = scratch!=0;
+  return ObitUVUtilAvg2One (in, lscratch, out, err);
+} // end UVAvg2One
+
+extern ObitUV* UVSmoF(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
+  gboolean lscratch;
+  lscratch = scratch!=0;
+  return ObitUVUtilSmoF (in, lscratch, out, err);
+} // end UVSmoF
+
+extern void UVVisSub1(ObitUV* in1, ObitUV *in2, ObitUV *out, ObitErr *err) {
+  ObitUVUtilVisSub1 (in1, in2, out, err);
+} // end UVUtilVisSub1
 
 /* Cal table Utility functions */
 

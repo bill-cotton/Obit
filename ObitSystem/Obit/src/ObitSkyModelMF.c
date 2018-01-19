@@ -1148,7 +1148,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
   ofloat dxyzc[3], cpa, spa, xmaj, xmin, range[2], gp1=0., gp2=0., gp3=0.;
   gboolean doCheck=FALSE, want, do3Dmul, noNeg, doZ;
   gpointer fitArg=NULL;
-  ofloat *fitSigma=NULL, *fitParms=NULL;
+  ofloat *fitSigma=NULL, *fitParms=NULL, *Sigma=NULL;
   gchar *tabType = "AIPS CC";
   gchar *routine = "ObitSkyModelMFLoadComps";
   
@@ -1285,6 +1285,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
   /* Fitting component spectra? */
   if (in->nSpec>1) {
     fitSigma = g_malloc0(in->nSpec*sizeof(ofloat));
+    Sigma    = g_malloc0(in->nSpec*sizeof(ofloat));
     for (i=0; i<in->nSpec; i++) fitSigma[i] = 0.0001;  /* Comp spectrum fitting sigmas (Jy/bm) */
     fitArg = ObitSpectrumFitMakeArg (in->nSpec, 2, in->specFreq[0], in->specFreq, 
 				     FALSE, &fitParms, err);
@@ -1433,7 +1434,12 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 	/* Fitting component spectra? */
 	if (in->nSpec>1) {
 	  for (iterm=0; iterm<in->nSpec; iterm++) table[iterm] = array[iterm+toff]*specCorr[iterm];
-	  ObitSpectrumFitSingleArg (fitArg, table, fitSigma, fitParms);
+	  /* Don't trust values exactly zero */
+	  for (iterm=0; iterm<in->nSpec; iterm++) {
+	    if (array[iterm+toff]==0.0) fitSigma[iterm]=1.0e10;
+	    else Sigma[iterm] = fitSigma[iterm];
+	  }
+	  ObitSpectrumFitSingleArg (fitArg, table, Sigma, fitParms);
 	  /* Sanity check */
 	  if (fitParms[1]<-2.0) fitParms[1] = 0.0;
 	  if (fitParms[1]> 2.0) fitParms[1] = 0.0;
@@ -1608,6 +1614,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 
   if (specCorr) g_free(specCorr); /* Cleanup */
   if (fitSigma) g_free(fitSigma);
+  if (Sigma)    g_free(Sigma);
   if (fitParms) g_free(fitParms);
   if (fitArg)   ObitSpectrumFitKillArg (fitArg);
 
@@ -3900,7 +3907,9 @@ ObitTableCC* ObitSkyModelMFgetPBCCTab (ObitSkyModelMF* in, ObitUV* uvdata,
 	BeamShape->refFreq = Freq[i];  /* Set frequency */
 	PBCorr[i] = BSClass->ObitBeamShapeGainSym(BeamShape, Angle);
 	flux[i]   = CCRow->parms[offset+i] / PBCorr[i];
-	sigma[i]  = sigmaField[i] / (PBCorr[i]*PBCorr[i]);
+	/* Exactly zero is probably bad */
+	if (CCRow->parms[offset+i]==0.0) sigma[i]  = 1.0e10;
+	else sigma[i] = sigmaField[i] / (PBCorr[i]*PBCorr[i]);
       }
  
       /* Fit spectrum */

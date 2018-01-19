@@ -1879,7 +1879,7 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
             setname(uv, snsmo)
         snsmo.solnIn     = SNver
         snsmo.solnOut    = SNver+1
-        snsmo.smoType    = 'VLBI'
+        snsmo.smoType    = 'DELA'
         snsmo.smoFunc    = 'MWF '
         snsmo.smoParm    = [smoTime,smoTime,smoTime,smoTime,smoTime]
         # Clip ay 0.5 nsec from median

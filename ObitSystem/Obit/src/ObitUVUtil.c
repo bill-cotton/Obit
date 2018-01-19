@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2017                                          */
+/*;  Copyright (C) 2004-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -63,6 +63,12 @@ static void AvgFAver (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
 		      olong *corChan, olong *corIF, olong *corStok, gboolean *corMask,
 		      ofloat *inBuffer, ofloat *outBuffer, ofloat *work, 
 		      ObitErr *err);
+
+/** Smooth visibility in frequency */
+static void SmooF (ObitUVDesc *inDesc, ObitUVDesc *outDesc, olong NumChSmo, 
+		   olong *corChan, olong *corIF, olong *corStok, gboolean *corMask,
+		   ofloat *inBuffer, ofloat *outBuffer, ofloat *work, 
+		   ObitErr *err);
 
 /** Hann visibility in frequency */
 static void Hann (ObitUVDesc *inDesc, ObitUVDesc *outDesc, gboolean doDescm,
@@ -1015,6 +1021,234 @@ void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
   if (err->error) Obit_traceback_msg (err, routine, outUV->name);
   
 } /* end ObitUVUtilVisSub */
+
+/**
+ * Subtract the 1st visibility in one ObitUV from those in another
+ * outUV = inUV1[*] - inUV2[0]
+ * \param inUV1    First input uv data, no calibration/selection
+ * \param inUV2    Second input uv data, calibration/selection allowed
+ *                 inUV2 should have the same structure, only the 1st
+ *                 visibility used and subtracted from all in inUV1
+ * \param outUV    Previously defined output, may be the same as inUV1
+ * \param err      Error stack, returns on error
+ */
+void ObitUVUtilVisSub1 (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV, 
+		        ObitErr *err)
+{
+  ObitIOCode iretCode, oretCode;
+  gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
+		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
+		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
+		    "AIPS PL", "AIPS NI", "AIPS SY", "AIPS PT",
+		    NULL};
+  gchar *sourceInclude[] = {"AIPS SU", NULL};
+  olong i, j, indx, kndx, firstVis;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  olong NPIO;
+  gboolean incompatible, same, doCalSelect, btemp;
+  ObitUVDesc *in1Desc, *in2Desc, *outDesc;
+  ObitIOAccess access;
+  gchar *today=NULL;
+  gchar *routine = "ObitUVUtilVisSub1";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return;
+  g_assert (ObitUVIsA(inUV1));
+  g_assert (ObitUVIsA(inUV2));
+  g_assert (ObitUVIsA(outUV));
+
+  /* Are input1 and output the same file? */
+  same = ObitUVSame(inUV1, outUV, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV1->name);
+
+  /* test open to fully instantiate input and see if it's OK */
+  iretCode = ObitUVOpen (inUV1, OBIT_IO_ReadWrite, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
+    Obit_traceback_msg (err, routine,inUV1->name);
+
+  /* copy Descriptor */
+  outUV->myDesc = ObitUVDescCopy(inUV1->myDesc, outUV->myDesc, err);
+
+  /* Creation date today */
+  today = ObitToday();
+  strncpy (outUV->myDesc->date, today, UVLEN_VALUE-1);
+  if (today) g_free(today);
+ 
+  /* use same data buffer on input and output.
+     If multiple passes are made the input files will be closed
+     which deallocates the buffer, use output buffer.
+     so free input buffer */
+  if (!same) {
+    /* use same data buffer on input 1 and output 
+       so don't assign buffer for output */
+    if (outUV->buffer) ObitIOFreeBuffer(outUV->buffer); /* free existing */
+    outUV->buffer = NULL;
+    outUV->bufferSize = -1;
+  }
+
+   /* Copy number of records per IO to second input */
+  ObitInfoListGet (inUV1->info, "nVisPIO", &type, dim,  (gpointer)&NPIO, err);
+  ObitInfoListPut (inUV2->info, "nVisPIO",  type, dim,  (gpointer)&NPIO, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV1->name);
+
+  /* Selection of second input? */
+  doCalSelect = FALSE;
+  ObitInfoListGetTest(inUV2->info, "doCalSelect", &type, dim, &doCalSelect);
+  if (doCalSelect) access = OBIT_IO_ReadCal;
+  else access = OBIT_IO_ReadOnly;
+
+  /* Open second input */
+  iretCode = ObitUVOpen (inUV2, access, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) 
+    Obit_traceback_msg (err, routine,inUV2->name);
+
+  /* Get input descriptors */
+  in1Desc = inUV1->myDesc;
+  in2Desc = inUV2->myDesc;
+
+  /* Check compatability between inUV1, inUV2 */
+  incompatible = (in1Desc->ncorr!=in2Desc->ncorr);
+  incompatible = incompatible || (in1Desc->jlocs!=in2Desc->jlocs);
+  incompatible = incompatible || (in1Desc->jlocf!=in2Desc->jlocf);
+  incompatible = incompatible || (in1Desc->jlocif!=in2Desc->jlocif);
+  incompatible = incompatible || (in1Desc->ilocb!=in2Desc->ilocb);
+  if (incompatible) {
+     Obit_log_error(err, OBIT_Error,"%s inUV1 and inUV2 have incompatible structures",
+		   routine);
+      return ;
+  }
+
+  /* Look at all data */
+  btemp = TRUE;
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut(inUV1->info, "passAll", OBIT_bool, dim, &btemp);
+  ObitInfoListAlwaysPut(inUV2->info, "passAll", OBIT_bool, dim, &btemp);
+  
+  /* test open output */
+  oretCode = ObitUVOpen (outUV, OBIT_IO_WriteOnly, err);
+  /* If this didn't work try OBIT_IO_ReadWrite */
+  if ((oretCode!=OBIT_IO_OK) || (err->error)) {
+    ObitErrClear(err);
+    oretCode = ObitUVOpen (outUV, OBIT_IO_ReadWrite, err);
+  }
+  /* if it didn't work bail out */
+  if ((oretCode!=OBIT_IO_OK) || (err->error)) {
+    /* unset output buffer (may be multiply deallocated) */
+    outUV->buffer = NULL;
+    outUV->bufferSize = 0;
+    Obit_traceback_msg (err, routine, outUV->name);
+  }
+
+  /* Copy tables before data if in1 and out are not the same */
+  if (!ObitUVSame (inUV1, outUV, err)) {
+    iretCode = ObitUVCopyTables (inUV1, outUV, exclude, NULL, err);
+    /* If multisource out then copy SU table, multiple sources selected or
+       sources deselected suggest MS out */
+    if ((inUV1->mySel->numberSourcesList>1) || (!inUV1->mySel->selectSources))
+      iretCode = ObitUVCopyTables (inUV1, outUV, NULL, sourceInclude, err);
+    if (err->error) {
+      outUV->buffer = NULL;
+      outUV->bufferSize = 0;
+      Obit_traceback_msg (err, routine, inUV1->name);
+    }
+  }
+  if (err->error) Obit_traceback_msg (err, routine, inUV1->name);
+
+  /* reset to beginning of uv data */
+  iretCode = ObitUVIOSet (inUV1, err);
+  oretCode = ObitUVIOSet (outUV, err);
+  if (err->error) Obit_traceback_msg (err, routine,inUV1->name);
+
+  /* Close and reopen input to init calibration which will have been disturbed 
+     by the table copy */
+  iretCode = ObitUVClose (inUV1, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error))
+    Obit_traceback_msg (err, routine,inUV1->name);
+  iretCode = ObitUVOpen (inUV1, OBIT_IO_ReadWrite, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error))
+    Obit_traceback_msg (err, routine,inUV1->name);
+  outUV->buffer = inUV1->buffer;
+
+  outDesc = outUV->myDesc;   /* Get output descriptor */
+
+  /* Read vis from second input */
+  if (doCalSelect) iretCode = ObitUVReadSelect (inUV2, inUV2->buffer, err);
+  else iretCode = ObitUVRead (inUV2, inUV2->buffer, err);
+  if (err->error) Obit_traceback_msg (err, routine,inUV2->name);
+
+  /* we're in business, subtract */
+  while ((iretCode==OBIT_IO_OK) && (oretCode==OBIT_IO_OK)) {
+    /* Read first input */
+    iretCode = ObitUVRead (inUV1, inUV1->buffer, err);
+    if (iretCode!=OBIT_IO_OK) break;
+    /* How many */
+    outDesc->numVisBuff = in1Desc->numVisBuff;
+    firstVis = in1Desc->firstVis;
+
+    /* Modify data */
+    for (i=0; i<in1Desc->numVisBuff; i++) { /* loop over visibilities */
+      indx = i*in1Desc->lrec+ in1Desc->nrparm;
+      kndx = in2Desc->nrparm;
+      for (j=0; j<in1Desc->ncorr; j++) { /* loop over correlations */
+	/* subtract */
+	if ((inUV1->buffer[indx+2]>0.0) && (inUV2->buffer[kndx+2]>0.0)) {
+	  inUV1->buffer[indx]   -= inUV2->buffer[kndx];
+	  inUV1->buffer[indx+1] -= inUV2->buffer[kndx+1];
+	  /* this blanks poln data } else {
+	    inUV1->buffer[indx]   = 0.0;
+	    inUV1->buffer[indx+1] = 0.0;
+	    inUV1->buffer[indx+2] = 0.0;*/
+	}
+	indx += in1Desc->inaxes[0];
+	kndx += in2Desc->inaxes[0];
+      } /* end loop over correlations */
+      if (incompatible) break;
+    } /* end loop over visibilities */
+    
+    /* Write */
+    oretCode = ObitUVWrite (outUV, inUV1->buffer, err);
+    /* suppress vis number update if rewriting the same file */
+    if (same) {
+      outUV->myDesc->firstVis = firstVis;
+      ((ObitUVDesc*)(outUV->myIO->myDesc))->firstVis = firstVis;
+    }
+ } /* end loop processing data */
+  
+  /* Check for incompatibility */
+  if (incompatible) {
+    Obit_log_error(err, OBIT_Error,"%s inUV1 and inUV2 have incompatible contents",
+		   routine);
+    return;
+  }
+    
+  /* check for errors */
+  if ((iretCode > OBIT_IO_EOF) || (oretCode > OBIT_IO_EOF) ||
+      (err->error)) /* add traceback,return */
+    Obit_traceback_msg (err, routine,inUV1->name);
+    
+  /* unset output buffer (may be multiply deallocated ;'{ ) */
+  outUV->buffer = NULL;
+  outUV->bufferSize = 0;
+  
+  /* Reset passAll */
+  btemp = FALSE;
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut(inUV1->info, "passAll", OBIT_bool, dim, &btemp);
+  ObitInfoListAlwaysPut(inUV2->info, "passAll", OBIT_bool, dim, &btemp);
+  
+  /* close files */
+  iretCode = ObitUVClose (inUV1, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV1->name);
+  
+  iretCode = ObitUVClose (inUV2, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV2->name);
+  
+  oretCode = ObitUVClose (outUV, err);
+  if (err->error) Obit_traceback_msg (err, routine, outUV->name);
+  
+} /* end ObitUVUtilVisSub1 */
 
 /**
  * Compare the visibilities in one ObitUV with those in another.
@@ -2515,6 +2749,531 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   
   return outUV;
 } /* end ObitUVUtilAvgT */
+
+/**
+ * Average all visibilities in inUV, write single vis to outUV.
+ * For single source data single vis, for multisource data, one vis per scan.
+ * Data labeled as baseline 1-2
+ * \param inUV     Input uv data to average, 
+ *                 Any request for calibration, editing and selection honored
+ * \param scratch  True if scratch file desired, will be same type as inUV.
+ * \param outUV    If not scratch, then the previously defined output file
+ *                 May be NULL for scratch only
+ *                 If it exists and scratch, it will be Unrefed
+ * \param err      Error stack, returns if not empty.
+ * \return the frequency averaged ObitUV.
+ */
+ObitUV* ObitUVUtilAvg2One (ObitUV *inUV, gboolean scratch, ObitUV *outUV, 
+		  	   ObitErr *err)
+{
+  ObitIOCode iretCode, oretCode;
+  gboolean doCalSelect;
+  gchar *exclude[]={"AIPS CL", "AIPS SN", "AIPS FG", "AIPS CQ", "AIPS WX",
+		    "AIPS AT", "AIPS CT", "AIPS OB", "AIPS IM", "AIPS MC",
+		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
+		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
+		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD", "AIPS SY",
+		    "AIPS PT",
+		    NULL};
+  gchar *sourceInclude[] = {"AIPS SU", NULL};
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM];
+  olong ncorr, nrparm, numAnt, jtemp;
+  ollong lltmp, i, j, numBL, jndx, indx, blindx, iindx=0;
+  ObitIOAccess access;
+  ObitUVDesc *inDesc, *outDesc;
+  olong suba, lastSourceID, curSourceID, lastFQID=-1;
+  gchar *today=NULL;
+  ofloat curTime, startTime, endTime, lastTime=-1.0;
+  ofloat *accVis=NULL, *accRP=NULL, *ttVis=NULL;
+  ofloat *inBuffer;
+  olong ivis=0, NPIO;
+  gboolean done, gotOne;
+  gchar *routine = "ObitUVUtilAvgT";
+ 
+  /* error checks */
+  if (err->error) return outUV;
+  g_assert (ObitUVIsA(inUV));
+  if (!scratch && (outUV==NULL)) {
+    Obit_log_error(err, OBIT_Error,"%s Output MUST be defined for non scratch files",
+		   routine);
+      return outUV;
+  }
+
+  /* Selection/calibration/editing of input? */
+  doCalSelect = FALSE;
+  ObitInfoListGetTest(inUV->info, "doCalSelect", &type, dim, &doCalSelect);
+  if (doCalSelect) access = OBIT_IO_ReadCal;
+  else access = OBIT_IO_ReadOnly;
+
+  /* test open to fully instantiate input and see if it's OK */
+  iretCode = ObitUVOpen (inUV, access, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
+    Obit_traceback_val (err, routine, inUV->name, outUV);
+
+  /* Create scratch? */
+  if (scratch) {
+    if (outUV) outUV = ObitUVUnref(outUV);
+    outUV = newObitUVScratch (inUV, err);
+  } else { /* non scratch output must exist - clone from inUV */
+    ObitUVClone (inUV, outUV, err);
+  }
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, inUV);
+
+  /* copy Descriptor */
+  outUV->myDesc = ObitUVDescCopy(inUV->myDesc, outUV->myDesc, err);
+  inBuffer = inUV->buffer;  /* Local copy of buffer pointer */
+ 
+  /* Output creation date today */
+  today = ObitToday();
+  strncpy (outUV->myDesc->date, today, UVLEN_VALUE-1);
+  if (today) g_free(today);
+  
+  /* Set number of output vis per read to twice number of baselines */
+  suba    = 1;
+  numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
+  /* Better be some */
+  Obit_retval_if_fail ((numAnt>1), err, outUV,
+		       "%s Number of antennas NOT in descriptor",  
+		       routine);  
+  numBL   = 1;  /* Single output visibility */
+  NPIO = 1;
+  ObitInfoListGetTest(inUV->info, "nVisPIO", &type, dim, &NPIO);
+  jtemp = (olong)(numBL); 
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut(outUV->info, "nVisPIO", OBIT_long, dim, &jtemp);
+
+  /* test open output */
+  oretCode = ObitUVOpen (outUV, OBIT_IO_WriteOnly, err);
+  /* If this didn't work try OBIT_IO_ReadWrite */
+  if ((oretCode!=OBIT_IO_OK) || (err->error)) {
+    ObitErrClear(err);
+    oretCode = ObitUVOpen (outUV, OBIT_IO_ReadWrite, err);
+  }
+  /* if it didn't work bail out */
+  if ((oretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
+
+  /* Get descriptors */
+  inDesc  = inUV->myDesc;
+  outDesc = outUV->myDesc;
+
+  /* Create work arrays for averaging */
+  ncorr   = inUV->myDesc->ncorr;
+  nrparm  = inUV->myDesc->nrparm;
+  lltmp   = 4*numBL*ncorr*sizeof(ofloat);
+  accVis  = g_malloc0(lltmp);     /* Vis */
+  lltmp   = numBL*(nrparm+1)*sizeof(ofloat);
+  accRP   = g_malloc0(lltmp);  /* Rand. parm */
+  ttVis   = g_malloc0(( inUV->myDesc->lrec+5)*sizeof(ofloat)); /* Temp Vis */
+
+  /* Copy tables before data */
+  iretCode = ObitUVCopyTables (inUV, outUV, exclude, NULL, err);
+  /* If multisource out then copy SU table, multiple sources selected or
+   sources deselected suggest MS out */
+  if ((inUV->mySel->numberSourcesList>1) || (!inUV->mySel->selectSources))
+  iretCode = ObitUVCopyTables (inUV, outUV, NULL, sourceInclude, err);
+  if (err->error) goto cleanup;
+
+  /* reset to beginning of uv data */
+  iretCode = ObitIOSet (inUV->myIO,  inUV->info, err);
+  oretCode = ObitIOSet (outUV->myIO, outUV->info, err);
+  if (err->error) goto cleanup;
+
+  /* Close and reopen input to init calibration which will have been disturbed 
+     by the table copy */
+  iretCode = ObitUVClose (inUV, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
+
+  iretCode = ObitUVOpen (inUV, access, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
+
+  /* Initialize things */
+  startTime = -1.0e20;
+  endTime   =  1.0e20;
+  lastSourceID = -1;
+  curSourceID  = 0;
+  outDesc->numVisBuff = 0;
+  inBuffer  = inUV->buffer;   /* Local copy of buffer pointer */
+
+  /* Loop over intervals */
+  done   = FALSE;
+  gotOne = FALSE;
+
+  /* we're in business, average data */
+  while ((iretCode==OBIT_IO_OK) && (oretCode==OBIT_IO_OK)) {
+    if ((!gotOne) || (inUV->myDesc->numVisBuff<=0)) { /* need to read new record? */
+      if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
+      else iretCode = ObitUVRead (inUV, inUV->buffer, err);
+    }
+
+    /* Are we there yet??? */
+    done = (inDesc->firstVis >= inDesc->nvis) || (iretCode==OBIT_IO_EOF);
+    if (done && (startTime>0.0)) goto process; /* Final? */
+
+    /* Make sure valid data found */
+    if (inUV->myDesc->numVisBuff<=0) continue;
+
+    /* loop over visibilities */
+    for (ivis=0; ivis<inDesc->numVisBuff; ivis++) { 
+      /* Copy random parameters */
+      iindx = ivis*inDesc->lrec;
+
+      gotOne = FALSE;
+      
+      curTime = inBuffer[iindx+inDesc->iloct]; /* Time */
+      if (inDesc->ilocsu>=0) curSourceID = inBuffer[iindx+inDesc->ilocsu];
+      if (startTime < -1000.0) {  /* Set time window etc. if needed */
+	startTime = curTime;
+	lastTime  = curTime;
+	endTime   = startTime + 1000.0;
+	lastSourceID = curSourceID;
+      }
+
+      /* Still in current interval/source? */
+      if ((curTime<endTime) && (curSourceID == lastSourceID) && 
+	  (inDesc->firstVis<=inDesc->nvis) && (iretCode==OBIT_IO_OK)) {
+	/* accumulate all to one vis */
+	blindx =  0;
+	if (inDesc->ilocfq>=0) lastFQID = (olong)(inBuffer[iindx+inDesc->ilocfq]+0.5);
+	else lastFQID = 0;
+	lastTime = curTime;
+	
+	/* Accumulate RP
+	   (1,*) =  count 
+	   (2...,*) =  Random parameters, sum u, v, w, time, int. */
+	jndx = blindx*(1+nrparm);
+	accRP[jndx]++;
+	for (i=0; i<nrparm; i++) { 
+	  /* zero u,v,w */
+	  if ((i==inDesc->ilocu) || (i==inDesc->ilocv) || (i==inDesc->ilocw))
+	      inBuffer[iindx+i] = 0.0;
+	  /* Sum known parameters to average */
+	  if ((i==inDesc->iloct) || (i==inDesc->ilocit)) {
+	    accRP[jndx+i+1] += inBuffer[iindx+i];
+	  } else { /* merely keep the rest */
+	    accRP[jndx+i+1]  = inBuffer[iindx+i];
+	  }
+	} /* end loop over parameters */
+	/* Accumulate Vis
+	   (1,*) =  count 
+	   (2,*) =  sum Real*wt
+	   (3,*) =  sum Imag*wt
+	   (4,*) =  Sum Wt     */
+	indx = iindx+inDesc->nrparm; /* offset of start of vis data */
+	for (i=0; i<ncorr; i++) {
+	  if (inBuffer[indx+2] > 0.0) {
+	    jndx = i*4 + blindx*4*ncorr;
+	    accVis[jndx]   += 1.0;
+	    accVis[jndx+1] += inBuffer[indx]*inBuffer[indx+2];
+	    accVis[jndx+2] += inBuffer[indx+1]*inBuffer[indx+2];
+	    accVis[jndx+3] += inBuffer[indx+2];
+	  } 
+	  indx += 3;
+	} /* end loop over correlations */;
+      } else {  /* process interval */
+	
+      process:
+	/* Now may have the next record in the IO Buffer */
+	if ((iretCode==OBIT_IO_OK) && (ivis<(inDesc->numVisBuff-1))) gotOne = TRUE;
+	    
+	/* Loop over baselines writing average */
+	for (blindx=0; blindx<numBL; blindx++) {
+
+	  /* Anything this baseline? */
+	  jndx = blindx*(1+nrparm);
+	  if (accRP[jndx]>0.0) {
+	    /* Average u, v, w, time random parameters */
+	    indx = 0;
+	    for (i=0; i<nrparm; i++) { 
+	      /* Average known parameters */
+	      if ((i==inDesc->ilocu) || (i==inDesc->ilocv) || (i==inDesc->ilocw) ||
+		  (i==inDesc->iloct)) 
+		accRP[jndx+i+1] /= accRP[jndx];
+	      /* Copy to output buffer */
+	      ttVis[indx++] = accRP[jndx+i+1];
+	    } /* End random parameter loop */
+	    /* Set baseline to 1-2 */
+	    ObitUVDescSetAnts(outDesc, ttVis, 1, 2, 1);
+
+	    /* Average vis data */
+	    for (j=0; j<ncorr; j++) {
+	      jndx = j*4 + blindx*4*ncorr;
+	      if (accVis[jndx]>0.0) {
+		accVis[jndx+1] /= accVis[jndx+3];
+		accVis[jndx+2] /= accVis[jndx+3];
+	      }
+	      /* Copy to output buffer */
+	      ttVis[indx++] = accVis[jndx+1];
+	      ttVis[indx++] = accVis[jndx+2];
+	      ttVis[indx++] = accVis[jndx+3];
+	    } /* end loop over correlators */
+
+	    /* Write output one vis at a time */
+	    outDesc->numVisBuff = 1;
+	    oretCode = ObitUVWrite (outUV, ttVis, err);
+	    if (err->error) goto cleanup;
+	  } /* End any data this baseline */
+	} /* end loop over baselines */
+	
+	/* Are we there yet??? */
+	done = (inDesc->firstVis >= inDesc->nvis) || 
+	  (iretCode==OBIT_IO_EOF);
+	if (done) goto done;
+
+	/* Reinitialize things */
+	startTime = -1.0e20;
+	endTime   =  1.0e20;
+	for (i=0; i<4*ncorr*numBL; i++)    accVis[i] = 0.0;
+	for (i=0; i<(nrparm+1)*numBL; i++) accRP[i] = 0.0;
+
+	/* Now accumulate this visibility */
+	blindx = 0;
+	if (inDesc->ilocfq>=0) lastFQID = (olong)(inBuffer[iindx+inDesc->ilocfq]+0.5);
+	else lastFQID = 0;
+	lastTime = curTime;
+	
+	/* Accumulate RP
+	   (1,*) =  count 
+	   (2...,*) =  Random parameters, sum u, v, w, time, int. */
+	jndx = blindx*(1+nrparm);
+	accRP[jndx]++;
+	for (i=0; i<nrparm; i++) { 
+	  /* Sum known parameters to average */
+	  if ((i==inDesc->ilocu) || (i==inDesc->ilocv) || (i==inDesc->ilocw) ||
+	      (i==inDesc->iloct) || (i==inDesc->ilocit)) {
+	    accRP[jndx+i+1] += inBuffer[iindx+i];
+	  } else { /* merely keep the rest */
+	    accRP[jndx+i+1]  = inBuffer[iindx+i];
+	  }
+	} /* end loop over parameters */
+	/* Accumulate Vis
+	   (1,*) =  count 
+	   (2,*) =  sum Real
+	   (3,*) =  sum Imag
+	   (4,*) =  Sum Wt     */
+	indx = iindx+inDesc->nrparm; /* offset of start of vis data */
+	for (i=0; i<ncorr; i++) {
+	  if (inBuffer[indx+2] > 0.0) {
+	    jndx = i*4 + blindx*4*ncorr;
+	    accVis[jndx]   += 1.0;
+	    accVis[jndx+1] += inBuffer[indx]*inBuffer[indx+2];
+	    accVis[jndx+2] += inBuffer[indx+1]*inBuffer[indx+2];
+	    accVis[jndx+3] += inBuffer[indx+2];
+	  } 
+	  indx += 3;
+	} /* end loop over correlations */;
+      } /* end process interval */
+      
+    } /* end loop processing buffer of input data */
+  } /* End loop over input file */
+  
+  /* End of processing */
+ done:
+  /* check for errors */
+  if ((iretCode > OBIT_IO_EOF) || (oretCode > OBIT_IO_EOF) ||
+      (err->error)) goto cleanup;
+  
+  /* Restore no vis per read in output */
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (outUV->info, "nVisPIO", OBIT_long, dim, &NPIO);
+
+  /* Cleanup */
+ cleanup:
+  if (accVis)   g_free(accVis);   accVis   = NULL;
+  if (ttVis)    g_free(ttVis);    ttVis    = NULL;
+  if (accRP)    g_free(accRP);    accRP    = NULL;
+
+  /* close files */
+  iretCode = ObitUVClose (inUV, err);
+  oretCode = ObitUVClose (outUV, err);
+  if ((oretCode!=OBIT_IO_OK) || (iretCode!=OBIT_IO_OK) || (err->error))
+    Obit_traceback_val (err, routine, outUV->name, outUV);
+  
+  return outUV;
+} /* end ObitUVUtilAvg2One */
+
+/**
+ * Spectrally smooth the data in ObitUV.
+ * \param inUV     Input uv data to average, 
+ *                 Any request for calibration, editing and selection honored
+ * Control parameters on info element of inUV:
+ * \li "NumChSmo" OBIT_long scalar Number of channels to average, [def. = 3]
+ * \param scratch  True if scratch file desired, will be same type as inUV.
+ * \param outUV    If not scratch, then the previously defined output file
+ *                 May be NULL for scratch only
+ *                 If it exists and scratch, it will be Unrefed
+ * \param err      Error stack, returns if not empty.
+ * \return the frequency averaged ObitUV.
+ */
+ObitUV* ObitUVUtilSmoF (ObitUV *inUV, gboolean scratch, ObitUV *outUV, 
+			ObitErr *err)
+{
+  ObitIOCode iretCode, oretCode;
+  gboolean doCalSelect;
+  gchar *exclude[]={"AIPS CL", "AIPS SN", "AIPS FG", "AIPS CQ", "AIPS WX",
+		    "AIPS AT", "AIPS CT", "AIPS OB", "AIPS IM", "AIPS MC",
+		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
+		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
+		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD", "AIPS SY",
+		    "AIPS PT",
+		    NULL};
+  gchar *sourceInclude[] = {"AIPS SU", NULL};
+  olong i, j, indx, jndx;
+  olong *corChan=NULL, *corIF=NULL, *corStok=NULL;
+  gboolean *corMask=NULL;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM];
+  ObitIOAccess access;
+  ObitUVDesc *inDesc, *outDesc;
+  gchar *today=NULL;
+  ofloat *work=NULL;
+  olong NumChSmo;
+  gchar *routine = "ObitUVUtilSmoF";
+ 
+  /* error checks */
+  if (err->error) return outUV;
+  g_assert (ObitUVIsA(inUV));
+  if (!scratch && (outUV==NULL)) {
+    Obit_log_error(err, OBIT_Error,"%s Output MUST be defined for non scratch files",
+		   routine);
+      return outUV;
+  }
+
+  /* Get Parameters */
+  NumChSmo = 3;
+  ObitInfoListGetTest(inUV->info, "NumChSmo", &type, dim, &NumChSmo);
+  /* Make sure odd */
+  Obit_retval_if_fail (((1+2*(NumChSmo/2))==NumChSmo), err, outUV,
+		       "%s NumChSmo MUST be odd not %d",  
+		       routine,NumChSmo);  
+
+  /* Selection/calibration/editing of input? */
+  doCalSelect = FALSE;
+  ObitInfoListGetTest(inUV->info, "doCalSelect", &type, (gint32*)dim, &doCalSelect);
+  if (doCalSelect) access = OBIT_IO_ReadCal;
+  else access = OBIT_IO_ReadOnly;
+
+  /* test open to fully instantiate input and see if it's OK */
+  iretCode = ObitUVOpen (inUV, access, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
+    Obit_traceback_val (err, routine, inUV->name, outUV);
+
+  /* Create scratch? */
+  if (scratch) {
+    if (outUV) outUV = ObitUVUnref(outUV);
+    outUV = newObitUVScratch (inUV, err);
+  } else { /* non scratch output must exist - clone from inUV */
+    outUV->myDesc = ObitUVDescCopy (inUV->myDesc, outUV->myDesc, err);
+    /*ObitUVClone (inUV, outUV, err);*/
+  }
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, inUV);
+
+  /* copy Descriptor */
+  outUV->myDesc = ObitUVDescCopy(inUV->myDesc, outUV->myDesc, err);
+ 
+  /* Don't smooth more channels than exist */
+  NumChSmo = MIN (NumChSmo, inUV->myDesc->inaxes[inUV->myDesc->jlocf]);
+ 
+  /* Creation date today */
+  today = ObitToday();
+  strncpy (outUV->myDesc->date, today, UVLEN_VALUE-1);
+  if (today) g_free(today);
+  
+  /* Get descriptors */
+  inDesc  = inUV->myDesc;
+  outDesc = outUV->myDesc;
+
+  /* Create work array for smoothing */
+  work = g_malloc(2*inDesc->lrec*sizeof(ofloat));
+  /* Work arrays defining data */
+  corChan = g_malloc(inDesc->ncorr*sizeof(olong));
+  corIF   = g_malloc(inDesc->ncorr*sizeof(olong));
+  corStok = g_malloc(inDesc->ncorr*sizeof(olong));
+  corMask = g_malloc(inDesc->ncorr*sizeof(gboolean));
+
+  /* test open output */
+  oretCode = ObitUVOpen (outUV, OBIT_IO_WriteOnly, err);
+  /* If this didn't work try OBIT_IO_ReadWrite */
+  if ((oretCode!=OBIT_IO_OK) || (err->error)) {
+    ObitErrClear(err);
+    oretCode = ObitUVOpen (outUV, OBIT_IO_ReadWrite, err);
+  }
+  /* if it didn't work bail out */
+  if ((oretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
+
+  /* Copy tables before data */
+  iretCode = ObitUVCopyTables (inUV, outUV, exclude, NULL, err);
+  /* If multisource out then copy SU table, multiple sources selected or
+   sources deselected suggest MS out */
+  if ((inUV->mySel->numberSourcesList>1) || (!inUV->mySel->selectSources))
+  iretCode = ObitUVCopyTables (inUV, outUV, NULL, sourceInclude, err);
+  /* FQ table selection */
+  iretCode = ObitTableFQSelect (inUV, outUV, NULL, 0.0, err);
+  if (err->error) goto cleanup;
+
+  /* reset to beginning of uv data */
+  iretCode = ObitIOSet (inUV->myIO,  inUV->info, err);
+  oretCode = ObitIOSet (outUV->myIO, outUV->info, err);
+  if (err->error) goto cleanup;
+
+  /* Close and reopen input to init calibration which will have been disturbed 
+     by the table copy */
+  iretCode = ObitUVClose (inUV, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
+
+  iretCode = ObitUVOpen (inUV, access, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
+
+  /* we're in business, average data */
+  while ((iretCode==OBIT_IO_OK) && (oretCode==OBIT_IO_OK)) {
+    if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
+    else iretCode = ObitUVRead (inUV, inUV->buffer, err);
+    if (iretCode!=OBIT_IO_OK) break;
+    /* How many */
+    outDesc->numVisBuff = inDesc->numVisBuff;
+
+    /* Modify data */
+    for (i=0; i<inDesc->numVisBuff; i++) { /* loop over visibilities */
+      /* Copy random parameters */
+      indx = i*inDesc->lrec;
+      jndx = i*outDesc->lrec;
+      for (j=0; j<inDesc->nrparm; j++) 
+	outUV->buffer[jndx+j] =  inUV->buffer[indx+j];
+
+      /* Average data */
+      indx += inDesc->nrparm;
+      jndx += outDesc->nrparm;
+      /* Average data */
+      SmooF (inDesc, outDesc, NumChSmo, corChan, corIF, corStok, corMask,
+	     &inUV->buffer[indx], &outUV->buffer[jndx], work, err);
+      if (err->error) goto cleanup;
+    } /* end loop over visibilities */
+
+    /* Write */
+    oretCode = ObitUVWrite (outUV, outUV->buffer, err);
+    if (err->error) goto cleanup;
+  } /* end loop processing data */
+  
+  /* check for errors */
+  if ((iretCode > OBIT_IO_EOF) || (oretCode > OBIT_IO_EOF) ||
+      (err->error)) goto cleanup;
+
+  /* Cleanup */
+ cleanup:
+  if (work) g_free(work);       work    = NULL;
+  if (corChan) g_free(corChan); corChan = NULL;
+  if (corIF) g_free(corIF);     corIF   = NULL;
+  if (corStok) g_free(corStok); corStok = NULL;
+  if (corMask) g_free(corMask); corMask = NULL;
+  
+  /* close files */
+  iretCode = ObitUVClose (inUV, err);
+  oretCode = ObitUVClose (outUV, err);
+  if ((iretCode!=OBIT_IO_OK) || (oretCode!=OBIT_IO_OK) || (err->error))
+    Obit_traceback_val (err, routine, outUV->name, outUV);
+  
+  return outUV;
+} /* end ObitUVUtilSmoF */
 
 /**
  * Temporally average in a baseline dependent fashion the data in a ObitUV.
@@ -4567,6 +5326,113 @@ static void AvgFAver (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
   } /* end Stokes loop */
 
 } /* end AvgFAver */
+
+/**
+ * Frequency boxcar smooth a visibility
+ * \param inDesc   Input UV descriptor
+ * \param outDesc  Output UV descriptor to be modified
+ * \param NumChSMO Number of channels to smooth, should be odd
+ * \param corChan  0-rel output channel numbers
+ * \param corIF    0-rel output IF numbers
+ * \param corStok  0-rel output Stokes parameter code.
+ * \param corMask  Array of masks per correlator for selected channels/IFs
+ *                 TRUE => select
+ * \param inBuffer  Input buffer (data matrix)
+ * \param outBuffer Output buffer (data matrix)
+ * \param work      Work array twice the size of the output visibility
+ * \param err       Error stack, returns if not empty.
+ */
+static void SmooF (ObitUVDesc *inDesc, ObitUVDesc *outDesc, olong NumChSmo,
+		   olong *corChan, olong *corIF, olong *corStok, gboolean *corMask,
+		   ofloat *inBuffer, ofloat *outBuffer, ofloat *work, 
+		   ObitErr *err)
+{
+  olong i, j, half, n, indx, jndx, kndx, jf, jif, js, nochan, noif, off;
+  olong nchan, nif, nstok, iincs, iincf, iincif, incs, incf, incif;
+
+  /* error checks */
+  if (err->error) return;
+
+  half   = NumChSmo/2;
+  iincs  = inDesc->incs;
+  iincf  = inDesc->incf;
+  iincif = inDesc->incif;
+  nchan = inDesc->inaxes[inDesc->jlocf];
+  if (inDesc->jlocif>=0) nif = inDesc->inaxes[inDesc->jlocif];
+  else nif = 1;
+  if (inDesc->jlocs>=0) nstok = inDesc->inaxes[inDesc->jlocs];
+  else nstok = 1;
+  incs  = outDesc->incs;
+  incf  = outDesc->incf;
+  incif = outDesc->incif;
+  nochan = outDesc->inaxes[outDesc->jlocf];
+  if (outDesc->jlocif>=0) noif = outDesc->inaxes[outDesc->jlocif];
+  else noif = 1;
+
+  /* Zero work accumulator */
+  n = 4 * inDesc->ncorr;
+  for (i=0; i<n; i++) work[i] = 0.0;
+
+  /* Accumulate order, channel, IF, poln */
+  for (js=0; js<nstok; js++) {  /* Stokes loop */
+    for (jif=0; jif<nif; jif++) {  /* IF loop */
+      for (jf=half; jf<nchan-half+1; jf++) {  /* Frequency loop */
+	indx = js*iincs + jif*iincif + jf*iincf;
+	jndx = 4*(jf + jif*nchan + js*nchan*nif);
+	off = -half*iincf;
+	/* Sums for smoothing */
+	for (j=0; j<NumChSmo; j++) {
+	  if (inBuffer[indx+off+2]>0.0) {  /* Valid? */
+	    work[jndx]   += inBuffer[indx+off];
+	    work[jndx+1] += inBuffer[indx+off+1];
+	    work[jndx+2] += inBuffer[indx+off+2];
+	    work[jndx+3] += 1.0;
+	    off += iincf;
+	  } /* end data valid */
+	} /* end smoothing loop */
+      } /* end freq loop */
+      /* Copy end channels */
+      jndx = 4*(half + jif*nchan + js*nchan*nif);
+      for (jf=0; jf<half; jf++) {
+	kndx = 4*(jf + jif*nchan + js*nchan*nif);
+	work[kndx]   = work[jndx];
+	work[kndx+1] = work[jndx+1];
+	work[kndx+2] = work[jndx+2];
+	work[kndx+3] = work[jndx+3];
+      }
+      jndx = 4*(nchan-half-1 + jif*nchan + js*nchan*nif);
+      for (jf=half; jf>0; jf--) {
+	kndx = 4*(nchan-jf + jif*nchan + js*nchan*nif);
+	work[kndx]   = work[jndx];
+	work[kndx+1] = work[jndx+1];
+	work[kndx+2] = work[jndx+2];
+	work[kndx+3] = work[jndx+3];
+      }
+    } /* end IF loop */
+  } /* end stokes loop */
+
+  /* Normalize to output */
+  /* Loop over Stokes */
+  for (js=0; js<nstok; js++) {  /* Stokes loop */
+    for (jif=0; jif<noif; jif++) {  /* IF loop */
+      for (jf=0; jf<nochan; jf++) {  /* Frequency loop */
+	jndx = 4*(jf + jif*nchan + js*nchan*nif);
+	indx = js*incs + jif*incif + jf*incf;
+	/* Check for zero data */
+	if ((work[jndx+3]>0.0) && !(( work[jndx]==0.0) && (work[jndx+1]==0.0))) {
+	  outBuffer[indx]   = work[jndx]   / work[jndx+3];
+	  outBuffer[indx+1] = work[jndx+1] / work[jndx+3];
+	  outBuffer[indx+2] = work[jndx+2];
+	} else {
+	  outBuffer[indx]   = 0.0;
+	  outBuffer[indx+1] = 0.0;
+	  outBuffer[indx+2] = 0.0;
+	}
+      } /* end Frequency loop */
+    } /* end IF loop */
+  } /* end Stokes loop */
+
+} /* end SmooF */
 
 /**
  * Hanning smooth a visibility
