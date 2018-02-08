@@ -213,7 +213,7 @@ antSize                            Diameter of ant. for PBCor (m)
 CCFilter                           Clean component filter
                                     [0] min. sum flux.
                                     [1] radius of search
-**PARAM** int 1  **DEF** 50000
+**PARAM** int 1  **DEF** 200000
 maxPixel           0.0   5000000   Maximum pixels searched
 
                                        Selfcal info

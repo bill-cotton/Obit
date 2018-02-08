@@ -3894,3 +3894,36 @@ Obit/python/PeelScripts.py:
 Obit/TDF/MFImage.TDF Obit/TDF/Imager.TDF:
   Correct documentation
 19 Jan 2018 svn 579
+
+Summary: new S, C, XBand cal images, bug fixes
+Obit/changes.log:
+  Update
+Obit/../ObitVersion:
+  Trigger NRAO update
+Obit/share/data/3C138XModel.fits.gz Obit/share/data/3C147XModel.fits.gz 
+Obit/share/data/3C196XModel.fits.gz Obit/share/data/3C286XModel.fits.gz 
+Obit/share/data/3C295XModel.fits.gz Obit/share/data/3C380XModel.fits.gz 
+Obit/share/data/3C48XModel.fits.gz:
+Obit/share/data/3C138CModel.fits.gz Obit/share/data/3C147CModel.fits.gz 
+Obit/share/data/3C196CModel.fits.gz Obit/share/data/3C286CModel.fits.gz 
+Obit/share/data/3C295CModel.fits.gz Obit/share/data/3C380CModel.fits.gz 
+Obit/share/data/3C48CModel.fits.gz:
+Obit/share/data/3C138SModel.fits.gz Obit/share/data/3C147SModel.fits.gz 
+Obit/share/data/3C196SModel.fits.gz Obit/share/data/3C286SModel.fits.gz 
+Obit/share/data/3C295SModel.fits.gz Obit/share/data/3C380SModel.fits.gz 
+Obit/share/data/3C48SModel.fits.gz:
+  new S and C band and X band calibration images
+Obit/TDF/MFImage.TDF Obit/TDF/Imager.TDF:
+  Increase default maxpixel to 200,000
+Obit/src/ObitImageUtil.c:
+  GetXYPixels: check that outImage and XPix&YPix compatable
+Obit/bin/ObitTables.pl:
+  change copyright data to 2018
+Obit/doc/OBITdoc.tex
+Obit/src/ObitTableCT.c Obit/include/ObitTableCT.h  Obit/include/ObitTableCTDef.h
+Obit/include/ObitTableCTClassDef.h  Obit/include/ObitTableCTRowClassDef.h 
+Obit/include/ObitTableCTRowDef.h:
+  Add "TIME INT" column
+Obit/tasks/BDFIn.c:
+   TIME INT to 1 day in CT table, fix swapped NO_BAND, NO_CHAN
+8 Feb 2018 svn 580

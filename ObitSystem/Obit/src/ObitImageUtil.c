@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2017                                          */
+/*;  Copyright (C) 2003-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -909,8 +909,6 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
 {
   ObitImage *theBeam=NULL;
   ObitImageDesc *IODesc;
-  ObitIOCode retCode;
-  ObitIOSize IOBy;
   ofloat sumwts, imMax, imMin, BeamTaper=0.0, Beam[3]={0.0,0.0,0.0};
   gchar outName[120];
   olong i, j, ip, pln, nImage, nGain=0, *gainUse=NULL, gain;
@@ -1148,7 +1146,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   
   /*  Open uv data for first if needed */
   if ((inUV->myStatus!=OBIT_Active) && (inUV->myStatus!=OBIT_Modified)) {
-    retCode = ObitUVOpen (inUV, access, err);
+    ObitUVOpen (inUV, access, err);
     if (err->error) goto cleanup;
   }
   
@@ -1178,7 +1176,6 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   ObitInfoListGetTest(inUV->info, "Beam", &type, dim, Beam);
 
   /* Loop over images finishing */
-  IOBy = OBIT_IO_byPlane;
   ip = 0;
   for (j=0; j<nPar; j++) {
     
@@ -1775,6 +1772,12 @@ ObitImageUtilGetXYPixels (ObitImage *inImage, ObitImage *outImage,
   if (err->error) return;
   g_assert (ObitImageIsA(inImage));
   g_assert (ObitImageIsA(outImage));
+  /* Are outImage and  ?Pix are compatable */
+  Obit_return_if_fail((ObitFArrayIsCompatable(outImage->image, XPix->image)), err, 
+		      "%s: output and XPix images incompatable", routine);
+  Obit_return_if_fail((ObitFArrayIsCompatable(outImage->image, YPix->image)), err, 
+		      "%s: output and YPix images incompatable", routine);
+
  
   /* Open images */
   if ((ObitImageOpen (XPix, OBIT_IO_ReadWrite, err) 
@@ -4016,7 +4019,7 @@ ObitImageUtilUV2ImageDesc(ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
 void 
 ObitImageUtilVel (ObitImage *inImage, ObitImage *outImage, ObitErr *err)
 {
-  ObitIOCode   iretCode, oretCode;
+  ObitIOCode   iretCode;
   ofloat       RMS, maxF, newVal, *Parms=NULL, fblank =  ObitMagicF();
   ofloat       vel, minAllow, FWHM;
   olong         iplane;
@@ -4198,12 +4201,12 @@ ObitImageUtilVel (ObitImage *inImage, ObitImage *outImage, ObitErr *err)
   /* Open output image */
   /* Use external buffer for writing output */
   outImage->extBuffer = TRUE;
-  oretCode = ObitImageOpen (outImage, OBIT_IO_WriteOnly, err);
+  ObitImageOpen (outImage, OBIT_IO_WriteOnly, err);
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
   /* Write plane */
-  oretCode = ObitImageWrite(outImage, accum->array, err);
+  ObitImageWrite(outImage, accum->array, err);
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
-  oretCode = ObitImageClose (outImage, err);
+  ObitImageClose (outImage, err);
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
   /* Unset external buffer for writing */
   outImage->extBuffer = FALSE;
@@ -4226,9 +4229,9 @@ ObitImageUtilVel (ObitImage *inImage, ObitImage *outImage, ObitErr *err)
 void 
 ObitImageUtilSelCopy (ObitImage *inImage, ObitImage *outImage, ObitErr *err)
 {
-  ObitIOCode   iretCode, oretCode;
+  ObitIOCode   iretCode;
   ofloat       tmp;
-  olong         iplane,itemp,  plane[IM_MAXDIM-2] = {0,1,1,1,1};
+  olong        itemp,  plane[IM_MAXDIM-2] = {0,1,1,1,1};
   olong        lblc[MAXFARRAYDIM], ltrc[MAXFARRAYDIM], linc[MAXFARRAYDIM];
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -4305,11 +4308,10 @@ ObitImageUtilSelCopy (ObitImage *inImage, ObitImage *outImage, ObitErr *err)
   outImage->myDesc->bitpix=-32;
 
   /* Open/create output image */
-  oretCode = ObitImageOpen (outImage, OBIT_IO_WriteOnly, err);
+  ObitImageOpen (outImage, OBIT_IO_WriteOnly, err);
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
 
   /* Loop over planes until hitting EOF */
-  iplane = 0;
   while (iretCode!= OBIT_IO_EOF) {
     /* Which plane */
     plane[0]++;
@@ -4337,14 +4339,14 @@ ObitImageUtilSelCopy (ObitImage *inImage, ObitImage *outImage, ObitErr *err)
     if (err->error) Obit_traceback_msg (err, routine, outImage->name);
 
     /* Write plane */
-    oretCode = ObitImageWrite(outImage, NULL, err);
+    ObitImageWrite(outImage, NULL, err);
     if (err->error) Obit_traceback_msg (err, routine, outImage->name);
     
   } /* End loop over input image */
 
   /* Close files */
   iretCode = ObitImageClose (inImage, err);
-  oretCode = ObitImageClose (outImage, err);
+  ObitImageClose (outImage, err);
   if (err->error) Obit_traceback_msg (err, routine, inImage->name);
   /* Free image buffers */
   inImage->image  = ObitFArrayUnref(inImage->image);

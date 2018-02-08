@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Read BDF format data, convert to Obit UV                           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2017                                          */
+/*;  Copyright (C) 2010-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -3643,8 +3643,8 @@ void GetEOPInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ObitErrLog(err);
   
   /* Create output CT table object */
-  numIF   = outData->myDesc->inaxes[outData->myDesc->jlocf];
-  numChan = outData->myDesc->inaxes[outData->myDesc->jlocif];
+  numIF   = outData->myDesc->inaxes[outData->myDesc->jlocif];
+  numChan = outData->myDesc->inaxes[outData->myDesc->jlocf];
   numPol  = MIN (2, outData->myDesc->inaxes[outData->myDesc->jlocs]);
   ver      = 1;
   access   = OBIT_IO_ReadWrite;
@@ -3703,7 +3703,8 @@ void GetEOPInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
   
   /* Initialize output row */
-  outRow->status      = 0;
+  outRow->status    = 0;
+  outRow->TimeI     = 1.0;
 
   /* Loop over entries */
   for (iRow=0; iRow<inTabV->nrows; iRow++) {
