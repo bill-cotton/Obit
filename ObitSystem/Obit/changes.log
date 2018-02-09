@@ -3927,3 +3927,13 @@ Obit/include/ObitTableCTRowDef.h:
 Obit/tasks/BDFIn.c:
    TIME INT to 1 day in CT table, fix swapped NO_BAND, NO_CHAN
 8 Feb 2018 svn 580
+
+Summary: fix error in last update
+Obit/doc/OBITdoc.tex
+Obit/src/ObitTableCT.c Obit/include/ObitTableCT.h  Obit/include/ObitTableCTDef.h
+Obit/include/ObitTableCTClassDef.h  Obit/include/ObitTableCTRowClassDef.h 
+Obit/include/ObitTableCTRowDef.h:
+  Add "TIME INT" column
+Obit/tasks/BDFIn.c:
+   TIME INT to start and end time +/- 0.5 day in CT table
+9 Feb 2018 svn 581

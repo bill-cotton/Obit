@@ -139,6 +139,7 @@ ObitTableCTRow* newObitTableCTRow (ObitTableCT *table)
     bRow  = (guint8*)table->buffer;
   
     /* Set row pointers to buffer */
+    out->TimeI = dRow + table->TimeIOff;
     out->wobXY = dRow + table->wobXYOff;
   } /* end attaching row to table buffer */
 
@@ -329,11 +330,15 @@ ObitTableCT* newObitTableCTValue (gchar* name, ObitData *file, olong *ver,
   desc->type[colNo] = OBIT_double;
   for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
   colNo++;
-  desc->FieldName[colNo] = g_strdup("TIME INT");
-  desc->FieldUnit[colNo] = g_strdup("DAYS");
-  desc->type[colNo] = OBIT_float;
-  for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
-  colNo++;
+  optional = FALSE;
+  if ((2 > 0) || (!optional)) {
+    desc->FieldName[colNo] = g_strdup("TIME INT");
+    desc->FieldUnit[colNo] = g_strdup("DAYS");
+    desc->type[colNo] = OBIT_double;
+    for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
+    desc->dim[colNo][0] = 2;
+    colNo++;
+  }
   desc->FieldName[colNo] = g_strdup("UT1-UTC");
   desc->FieldUnit[colNo] = g_strdup("SECONDS");
   desc->type[colNo] = OBIT_double;
@@ -641,7 +646,6 @@ ObitTableCTReadRow  (ObitTableCT *in, olong iCTRow, ObitTableCTRow *row,
   
   /* Copy scalar fields, for arrays only set pointer*/
   row->Time = dRow[in->TimeOff];
-  row->TimeI = fRow[in->TimeIOff];
   row->ut1utc = dRow[in->ut1utcOff];
   row->iatutc = dRow[in->iatutcOff];
   row->a1utc = dRow[in->a1utcOff];
@@ -651,6 +655,7 @@ ObitTableCTReadRow  (ObitTableCT *in, olong iCTRow, ObitTableCTRow *row,
   row->ddpsi = dRow[in->ddpsiOff];
   row->deps = dRow[in->depsOff];
   row->ddeps = dRow[in->ddepsOff];
+  row->TimeI = dRow + in->TimeIOff;
   row->wobXY = dRow + in->wobXYOff;
   row->status = iRow[in->myDesc->statusOff];
 
@@ -702,6 +707,7 @@ ObitTableCTSetRow  (ObitTableCT *in, ObitTableCTRow *row,
   bRow  = (guint8*)in->buffer;
   
   /* Set row pointers to buffer */
+  row->TimeI = dRow + in->TimeIOff;
   row->wobXY = dRow + in->wobXYOff;
 
 } /*  end ObitTableCTSetRow */
@@ -755,7 +761,6 @@ ObitTableCTWriteRow  (ObitTableCT *in, olong iCTRow, ObitTableCTRow *row,
   
   /* Make full copy of all data */
   dRow[in->TimeOff] = row->Time;
-  fRow[in->TimeIOff] = row->TimeI;
   dRow[in->ut1utcOff] = row->ut1utc;
   dRow[in->iatutcOff] = row->iatutc;
   dRow[in->a1utcOff] = row->a1utc;
@@ -765,6 +770,10 @@ ObitTableCTWriteRow  (ObitTableCT *in, olong iCTRow, ObitTableCTRow *row,
   dRow[in->ddpsiOff] = row->ddpsi;
   dRow[in->depsOff] = row->deps;
   dRow[in->ddepsOff] = row->ddeps;
+  if (in->TimeICol >= 0) { 
+    for (i=0; i<in->myDesc->repeat[in->TimeICol]; i++) 
+      dRow[in->TimeIOff+i] = row->TimeI[i];
+  } 
   if (in->wobXYCol >= 0) { 
     for (i=0; i<in->myDesc->repeat[in->wobXYCol]; i++) 
       dRow[in->wobXYOff+i] = row->wobXY[i];
@@ -838,6 +847,7 @@ void ObitTableCTRowInit  (gpointer inn)
 
   /* set members in this class */
   /* Set array members to NULL */
+  in->TimeI = NULL;
   in->wobXY = NULL;
 
 } /* end ObitTableCTRowInit */

@@ -35,8 +35,6 @@
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** The center time. */
 odouble  Time;
-/** Duration of scan */
-ofloat  TimeI;
 /** UT1-UTC */
 odouble  ut1utc;
 /** IAT-UTC */
@@ -55,6 +53,8 @@ odouble  ddpsi;
 odouble  deps;
 /** DDEPS */
 odouble  ddeps;
+/** Start and end of validity */
+odouble*  TimeI;
 /** Earth pole wobble */
 odouble*  wobXY;
 /** status 0=normal, 1=modified, -1=flagged */

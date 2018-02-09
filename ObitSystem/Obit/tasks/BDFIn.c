@@ -3704,11 +3704,12 @@ void GetEOPInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   
   /* Initialize output row */
   outRow->status    = 0;
-  outRow->TimeI     = 1.0;
 
   /* Loop over entries */
   for (iRow=0; iRow<inTabV->nrows; iRow++) {
     outRow->Time     = inTabV->rows[iRow]->time - refJD;
+    outRow->TimeI[0] = outRow->Time - 0.5;
+    outRow->TimeI[1] = outRow->Time + 0.5;
     outRow->ut1utc   = inTabV->rows[iRow]->ut1_utc;
     outRow->iatutc   = inTabV->rows[iRow]->iat_utc;
     outRow->ut1Type  = inTabV->rows[iRow]->timeType[0];

@@ -101,10 +101,6 @@ oint  vlight;
 olong  TimeOff;
 /** Physical column number for The center time. in table record */
 olong  TimeCol;
-/** Column offset for Duration of scan in table record */
-olong  TimeIOff;
-/** Physical column number for Duration of scan in table record */
-olong  TimeICol;
 /** Column offset for UT1-UTC in table record */
 olong  ut1utcOff;
 /** Physical column number for UT1-UTC in table record */
@@ -141,6 +137,10 @@ olong  depsCol;
 olong  ddepsOff;
 /** Physical column number for DDEPS in table record */
 olong  ddepsCol;
+/** Column offset for Duration of validity in table record */
+olong  TimeIOff;
+/** Physical column number for Duration of validity in table record */
+olong  TimeICol;
 /** Column offset for Earth pole wobble in table record */
 olong  wobXYOff;
 /** Physical column number for Earth pole wobble in table record */
