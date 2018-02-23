@@ -3937,3 +3937,13 @@ Obit/include/ObitTableCTRowDef.h:
 Obit/tasks/BDFIn.c:
    TIME INT to start and end time +/- 0.5 day in CT table
 9 Feb 2018 svn 581
+
+
+Summary: bug fixes, cleanup
+Obit/src/ObitPolnCalFit.c:
+  rearrange resetting. cleanup.
+Obit/share/data/3C286XModel.fits.gz 
+   Fix bad reference pixel
+Obit/python/EVLACal.py:
+  EVLAInitContParms: Set correct rlflagVer (1)
+23 Feb 2018 svn 582

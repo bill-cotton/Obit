@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2016                                          */
+/*;  Copyright (C) 2012-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -113,6 +113,10 @@ static odouble GetChi2 (olong nThreads, ObitPolnCalFit *in,
 			odouble *dChi2, odouble *d2Chi2,
 			ObitErr *err);
 
+/** Private: Determine RMS residuals of current model on selected data */
+static void GetRMSes (olong nThreads, ObitPolnCalFit *in, olong antNumber, 
+		      ofloat *ParRMS, ofloat *XRMS, ObitErr *err);
+
 /** Private: Fit R/L Phase difference */
 ofloat FitRLPhase (ObitPolnCalFit *in, ObitErr *err);
 
@@ -133,6 +137,9 @@ static gboolean CheckCrazy(ObitPolnCalFit *in, ObitErr *err);
 
 /** Private: Check for one crazy antenna, flag */
 static gboolean CheckCrazyOne(ObitPolnCalFit *in, ObitErr *err);
+
+/** Private: Reset solutions */
+static void ResetAllSoln(ObitPolnCalFit *in);
 
 /** Private: Reset blanked solutions */
 static void resetSoln(ObitPolnCalFit *in);
@@ -485,18 +492,16 @@ static void calcmodelXY (ObitPolnCalFit *args, ofloat Rarray[8], olong idata)
   odouble ipol=0.0, qpol=0.0, upol=0.0, vpol=0.0;
   olong i, ia1, ia2, isou;
 
-  dcomplex Jp, Jm, SPA, DPA, SPAc, DPAc, ct1, ct2, ct3;
+  dcomplex SPA, DPA, SPAc, DPAc, ct1, ct2, ct3;
   dcomplex S[4], S0[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4;
   dcomplex SM1, SM2, SM3, SM4, ggPD;
-  ofloat root2, chi1, chi2, PD;
+  ofloat chi1, chi2, PD;
 
   /* Init working variables */
   COMPLEX_SET (MC1, 0.0, 0.0);  /* Muller matrix */
   COMPLEX_SET (MC2, 0.0, 0.0);
   COMPLEX_SET (MC3, 0.0, 0.0);
   COMPLEX_SET (MC4, 0.0, 0.0);
-  COMPLEX_SET (Jp,  0.0, 1.0);
-  COMPLEX_SET (Jm,  0.0,-1.0);
   chi1  = data[idata*10+0];   /* parallactic angle ant 1 */
   chi2  = data[idata*10+1];   /* parallactic angle ant 2 */
   COMPLEX_EXP (SPA,(chi1+chi2));
@@ -528,7 +533,6 @@ static void calcmodelXY (ObitPolnCalFit *args, ofloat Rarray[8], olong idata)
 
    /* Injest model factorize into antenna components - 
      data in order 0: Orientation X, 1: Elipticity X, 2: Orientation Y, 3: Elipticity Y */
-  root2 = 1.0 / sqrt(2.0);
   /* Elipticity, Orientation terms */
   for (i=0; i<args->nant; i++) {
     COMPLEX_EXP (ct1, -antParm[i*4+0]);
@@ -682,8 +686,8 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
   ObitInfoType type;
   ObitTableAN    *ANTable = NULL;
   ObitTableSU    *SUTable = NULL;
-  olong i, j, k, iant, isou, numAnt, BChan, EChan, iChan, BIF, EIF, iIF;
-  olong nchleft, first, highANver, iANver, ver, numIF, Qual, suba=1, nvis;
+  olong i, j, k, iant, isou, numAnt, BChan, EChan, iChan, EIF, iIF;
+  olong first, highANver, iANver, ver, numIF, Qual, suba=1, nvis;
   olong highSUver, size, oldNparam, oldNdata, iarr[5]={0,0,0,0,0};
   ofloat *farr;
   olong number, maxSUId=-1;
@@ -958,8 +962,6 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
   BChan   = 1;
   EChan   = in->inDesc->inaxes[in->inDesc->jlocf];
   iChan   = 1 + in->ChInc/2;
-  nchleft = EChan;
-  BIF     = 1;
   if (in->inDesc->jlocif>=0) EIF = in->inDesc->inaxes[in->inDesc->jlocif];
   else                      EIF = 1;
   iIF     = 1;
@@ -1111,7 +1113,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     done = iIF > EIF;
     /* Diagnostics */
     if (isOK && (err->prtLv>=4)) {
-      /* BL 10-19 sou 1 */
+      /* BL 1-2 sou 1 */
       refAnt = in->refAnt-1;
       fprintf (stderr, "Source 0 IF %d Chan %d\n", in->IFno, in->Chan);
       /* Header by feed type  */
@@ -1127,7 +1129,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
 	ia1    = in->antNo[i*2+0];
 	ia2    = in->antNo[i*2+1]; 
 	/* Diagnostics */
-	if ((isou==0) && (ia1==2) && (ia2==26)) {  /* first source 3-27 */
+	if ((isou==0) && (ia1==1) && (ia2==2)) {  /* first source 2-3 */
 	  /* Function by feed type  */
 	  if (in->isCircFeed ) {
 	    /* Circular feeds */
@@ -1527,7 +1529,7 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
   olong ivis, ant1, ant2, isou, jsou, lastSou=-999, jvis, istok, suba;
   olong nChan, bch, ech, cnt, i, j, indx, indx1, indx2, indx3, indx4;
   olong ChInc=in->ChInc, jChan, jIF;
-  ofloat *buffer, cbase, curPA1=0.0, curPA2=0.0, curTime=0.0, lastTime=-1.0e20;
+  ofloat *buffer, curPA1=0.0, curPA2=0.0, curTime=0.0, lastTime=-1.0e20;
   ofloat sumRe, sumIm, sumWt, PPol; 
   odouble lambdaRef, lambda, ll, sum;
   gboolean OK, allBad;
@@ -1628,11 +1630,8 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
       else isou = in->souIDs[0];
       jsou = in->isouIDs[isou-1];  /* Calibrator number */
       /* Antennas */
-      cbase = buffer[inUV->myDesc->ilocb]; 
-      ant1 = (cbase / 256.0) + 0.001;
-      ant2 = (cbase - ant1 * 256) + 0.001;
-      suba = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 1.5);
-      
+      ObitUVDescGetAnts(inUV->myDesc, buffer, &ant1, &ant2, &suba);
+
       /* Source change? */
       if (isou!=lastSou) {
 	lastSou = isou;
@@ -1840,7 +1839,7 @@ static void InitSourceTab(ObitPolnCalFit* in, ObitErr *err)
  */
 static void InitInstrumentalTab(ObitPolnCalFit* in, ObitErr *err) 
 {
-  olong i, irow, iant, npol, nif, nchan, nant;
+  olong i, irow, iant, npol, nif, nchan;
   ObitTablePDRow *row=NULL;
   gchar *routine = "ObitPolnCalFit:InitInstrumentalTab";
   
@@ -1861,7 +1860,6 @@ static void InitInstrumentalTab(ObitPolnCalFit* in, ObitErr *err)
   /* Mark soln type */
   strncpy (in->PDTable->polType, "ORI-ELP", MAXKEYCHARTABLEPD);
 
-  nant  = in->nant;
   if (in->outDesc->jlocif>=0) nif = in->outDesc->inaxes[in->outDesc->jlocif];
   else                        nif = 1;
   nchan = in->outDesc->inaxes[in->outDesc->jlocf];
@@ -1990,7 +1988,7 @@ static void InitBandpassTab(ObitPolnCalFit* in, ObitErr *err)
  */
 static void UpdateSourceTab(ObitPolnCalFit* in, ObitErr *err) 
 {
-  olong irow, nif, nchan, indx, ich, iif, isou, jsou;
+  olong irow, nchan, indx, ich, iif, isou, jsou;
   olong chanOff=in->BChan-1, ifOff=in->BIF-1, chans[2];
   ObitTableCPRow *row=NULL;
   gchar *routine = "ObitPolnCalFit:UpdateSourceTab";
@@ -2004,8 +2002,6 @@ static void UpdateSourceTab(ObitPolnCalFit* in, ObitErr *err)
   ObitTableCPSetRow (in->CPTable, row, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
  
-  if (in->outDesc->jlocif>=0) nif = in->outDesc->inaxes[in->outDesc->jlocif];
-  else                       nif = 1;
   nchan = in->outDesc->inaxes[in->outDesc->jlocf];
 
   /* 0-rel Channels covered in ChInc */
@@ -2056,7 +2052,7 @@ static void UpdateSourceTab(ObitPolnCalFit* in, ObitErr *err)
 static void UpdateInstrumentalTab(ObitPolnCalFit* in, gboolean isOK, 
 				  ObitErr *err) 
 {
-  olong irow, npol, nif, nchan, indx, ich, iif, iant;
+  olong irow, npol, nchan, indx, ich, iif, iant;
   ofloat fblank = ObitMagicF();
   olong chanOff=in->BChan-1, ifOff=in->BIF-1, chans[2];
   ObitTablePDRow *row=NULL;
@@ -2074,8 +2070,6 @@ static void UpdateInstrumentalTab(ObitPolnCalFit* in, gboolean isOK,
   ObitTablePDSetRow (in->PDTable, row, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
  
-  if (in->outDesc->jlocif>=0) nif = in->outDesc->inaxes[in->outDesc->jlocif];
-  else                       nif = 1;
   nchan = in->outDesc->inaxes[in->outDesc->jlocf];
   npol  = MIN (2,in->outDesc->inaxes[in->outDesc->jlocs]);
 
@@ -2140,7 +2134,7 @@ static void UpdateInstrumentalTab(ObitPolnCalFit* in, gboolean isOK,
  */
 static void UpdateBandpassTab(ObitPolnCalFit* in, gboolean isOK, ObitErr *err) 
 {
-  olong irow, npol, nif, nchan, indx, ich, iif, iant;
+  olong irow, npol, nchan, indx, ich, iif, iant;
   ofloat amp1, amp2, phase, fblank = ObitMagicF();
   ObitTableBPRow *row=NULL;
   olong chanOff=in->BChan-1, ifOff=in->BIF-1, chans[2];
@@ -2158,8 +2152,6 @@ static void UpdateBandpassTab(ObitPolnCalFit* in, gboolean isOK, ObitErr *err)
   ObitTableBPSetRow (in->BPTable, row, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
  
-  if (in->outDesc->jlocif>=0) nif = in->outDesc->inaxes[in->outDesc->jlocif];
-  else                       nif = 1;
   nchan = in->outDesc->inaxes[in->outDesc->jlocf];
   npol  = MIN (2,in->outDesc->inaxes[in->outDesc->jlocs]);
 
@@ -2858,13 +2850,19 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
 		       isou+1, in->souParm[isou*4+0], in->souParm[isou*4+1], 
 		       in->souParm[isou*4+2], in->souParm[isou*4+3], fpol, "@", fpa);
       }
-		       
-      for (iant=0; iant<in->nant; iant++)
-	if (in->gotAnt[iant]) 
+      if (in->isCircFeed) Obit_log_error(err, OBIT_InfoErr, 
+					 "ant    Ori_R    Elp_R    Ori_L    Elp_L    Par RMS    X RMS");
+      else                Obit_log_error(err, OBIT_InfoErr, 
+					 "ant    Ori_X    Elp_X    Ori_Y    Elp_Y    Par RMS    X RMS");
+    for (iant=0; iant<in->nant; iant++)
+	if (in->gotAnt[iant]) {
+	  /* Get RMSes */
+	  GetRMSes (in->nThread, in, iant, &ParRMS, &XRMS, err);
 	  Obit_log_error(err, OBIT_InfoErr, 
-			 "ant %3d %8.2f %8.2f %8.2f %8.2f", 
+			 "%3d %8.2f %8.2f %8.2f %8.2f  %10.7f %10.7f", 
 			 iant+1, in->antParm[iant*4+0]*57.296, in->antParm[iant*4+1]*57.296, 
-			 in->antParm[iant*4+2]*57.296, in->antParm[iant*4+3]*57.296);
+			 in->antParm[iant*4+2]*57.296, in->antParm[iant*4+3]*57.296, ParRMS, XRMS);
+	}
       /* Antenna gain if fitted */
       if (!in->isCircFeed && in->doFitGain) {
 	for (iant=0; iant<in->nant; iant++) {
@@ -2986,6 +2984,96 @@ static odouble GetChi2 (olong nThreads, ObitPolnCalFit *in,
 
   return Chi2;
  } /* end GetChi2 */
+/**
+ * Determine  RMS residuals of current model on selected data
+ * \param nThreads Number of threads to use
+ * \param in           Fitting object
+ * \parma antNumber    0-rel antenna number
+ * \param ParRMS       [out] Parallel hand RMS
+ * \param XRMS         [out] Cross hand RMS
+ * \param err          Obit error stack object.
+ */
+static void GetRMSes (olong nThreads, ObitPolnCalFit *in, olong antNumber, 
+		      ofloat *ParRMS, ofloat *XRMS, 
+		      ObitErr *err)
+{
+  ObitThreadFunc func=NULL;
+  odouble sumParResid, sumXResid;
+  olong iTh, nPobs, nXobs, nVisPerThread;
+  gboolean OK;
+  gchar *routine="ObitPolnCalFit:GetRMSes";
+
+  *ParRMS = 0.0;
+  *XRMS   = 0.0;
+ if (err->error) return;  /* Error exists? */
+
+  /* Feed polarization type? */
+  if (in->isCircFeed) {
+    /* Circular feeds */
+    func = (ObitThreadFunc)ThreadPolnFitRLChi2;
+  } else {
+    /* Linear feeds  */
+    func = (ObitThreadFunc)ThreadPolnFitXYChi2;
+  }
+
+  /* Init threads */
+  nVisPerThread = in->nvis / in->nThread;
+  for (iTh=0; iTh<nThreads; iTh++) {
+    in->thArgs[iTh]->selSou = -1;
+    in->thArgs[iTh]->selAnt = antNumber;
+    in->thArgs[iTh]->inData = in->inData;
+    in->thArgs[iTh]->inWt   = in->inWt;
+    in->thArgs[iTh]->antNo  = in->antNo;
+    in->thArgs[iTh]->souNo  = in->souNo;
+    in->thArgs[iTh]->PD     = in->PD;
+    in->thArgs[iTh]->curFreq= in->freq;
+    in->thArgs[iTh]->nvis   = in->nvis;
+    in->thArgs[iTh]->paramType   = polnParmAnt;
+    in->thArgs[iTh]->paramNumber = 0;                     /* Ori R/X */
+    in->thArgs[iTh]->lo          = iTh*nVisPerThread;     /* Zero rel first */
+    in->thArgs[iTh]->hi          = (iTh+1)*nVisPerThread; /* Zero rel last */
+  }
+  /* Make sure do all data */
+  iTh = in->nThread-1;
+  in->thArgs[iTh]->hi = MAX (in->thArgs[iTh]->hi, in->nvis);
+
+  OK = ObitThreadIterator (in->thread, nThreads, func, (gpointer)in->thArgs);
+  if (!OK) {
+    Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+    return;
+  }
+
+  /* Sum over threads */
+  sumParResid = sumXResid = 0.0;
+  nPobs = nXobs = 0;
+  for (iTh=0; iTh<nThreads; iTh++) {
+    sumParResid += in->thArgs[iTh]->sumParResid;
+    sumXResid   += in->thArgs[iTh]->sumXResid;
+    nPobs       += in->thArgs[iTh]->nPobs;
+    nXobs       += in->thArgs[iTh]->nXobs;
+  }
+
+  /* Now do orthogonal poln */
+  for (iTh=0; iTh<nThreads; iTh++)  in->thArgs[iTh]->paramNumber = 2;   /* Ori L/Y */
+ OK = ObitThreadIterator (in->thread, nThreads, func, (gpointer)in->thArgs);
+  if (!OK) {
+    Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+    return;
+  }
+
+  /* Sum over threads */
+  for (iTh=0; iTh<nThreads; iTh++) {
+    sumParResid += in->thArgs[iTh]->sumParResid;
+    sumXResid   += in->thArgs[iTh]->sumXResid;
+    nPobs       += in->thArgs[iTh]->nPobs;
+    nXobs       += in->thArgs[iTh]->nXobs;
+  }
+ 
+  /* output RMSes */
+  *ParRMS = sqrt (sumParResid / MAX(1, nPobs));
+  *XRMS   = sqrt (sumXResid / MAX(1, nXobs));
+ } /* end GetRMSes */
+
 
 /**
  * Determine average R-L phase difference
@@ -4038,7 +4126,7 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
   odouble sum=0.0, sumwt=0.0, sumd, sumd2;
 
   dcomplex  SPA, DPA, SPAc, DPAc, ggPD;
-  dcomplex ct1, ct2, ct3, ct4, ct5, dt1, dt2, Jm, Jp;
+  dcomplex ct1, ct2, ct3, ct4, ct5, Jm, Jp;
   dcomplex S0[4], S[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4, DFDP, DFDP2;
   dcomplex SM1, SM2, SM3, SM4;
 
@@ -4060,8 +4148,6 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
   COMPLEX_SET (VXY, 0.0, 0.0);
   COMPLEX_SET (DFDP,  0.0, 0.0);
   COMPLEX_SET (DFDP2, 0.0, 0.0);
-  COMPLEX_SET (dt1, 0.0, 0.0);
-  COMPLEX_SET (dt2, 0.0, 0.0);
   COMPLEX_SET (Jm,  0.0,-1.0);
   COMPLEX_SET (Jp,  0.0, 1.0);
  
@@ -5038,7 +5124,7 @@ static gboolean CheckCrazyOne(ObitPolnCalFit *in, ObitErr *err)
   gboolean crazyOne = FALSE;
   odouble sum, RMS, test, maxDif;
   ofloat fblank = ObitMagicF();
-  olong i, j, k, imax, idata;
+  olong i, k, imax, idata;
 
   if (err->error) return crazyOne;  /* Error detected? */
 
@@ -5117,37 +5203,7 @@ static gboolean CheckCrazyOne(ObitPolnCalFit *in, ObitErr *err)
   /* Reset solutions */
  reset:
   Obit_log_error(err, OBIT_InfoWarn, "Questionable solution, reset, retry");
-  for (i=0; i<in->nant; i++) {
-    for (j=0; j<4; j++) in->antParm[i*4+j] = 0.0;
-    if (in->isCircFeed) {
-      /* Circular feeds ori_r, elip_r, ori_l, elip_l */
-      in->antParm[i*4+0] =  0.0;
-      in->antParm[i*4+1] =  G_PI/4.0;
-      in->antParm[i*4+2] =  0.0;
-      in->antParm[i*4+3] = -G_PI/4.0;
-    } else {
-      /* Linear feeds, if the antenna angles on sky are given in the AntennaList[0] use then, 
-	 otherwise assume Feeds are X, Y
-	 ori_x, elip_x, ori_y, elip_y,  */
-      if (fabs (in->AntLists[0]->ANlist[i]->FeedAPA-in->AntLists[0]->ANlist[i]->FeedBPA)<1.0) {
-	/* Assume X, Y */
-	in->antParm[i*4+0] = 0.0;
-	in->antParm[i*4+2] = +G_PI/2.0;
-      } else {  /* Use what's in the AN table as initial convert to radians */
-	in->antParm[i*4+0] = in->AntLists[0]->ANlist[i]->FeedAPA*DG2RAD;
-	in->antParm[i*4+2] = in->AntLists[0]->ANlist[i]->FeedBPA*DG2RAD;
-      } /* end if antenna angle given */
-    }
-  } /* end loop over antennas */
-  
-  /* Reset source parameters */
-  for (i=0; i<in->nsou; i++) {
-    for (j=0; j<4; j++) {
-      if (in->lastSouParm[i*4+j]>0.0) 
-	in->souParm[i*4+j] = in->lastSouParm[i*4+j];
-      else 	in->souParm[i*4+j] = 0.0;
-    } 
-  }
+  ResetAllSoln (in);
   return TRUE;
 } /* end CheckCrazyOne */
 
@@ -5193,37 +5249,7 @@ static gboolean CheckCrazy(ObitPolnCalFit *in, ObitErr *err)
   /* Crazy? -> reset */
   if (crazy) {
     Obit_log_error(err, OBIT_InfoWarn, "Antenna solution crazy, RMS %lf, reseting defaults", RMS);
-    for (i=0; i<in->nant; i++) {
-      for (j=0; j<4; j++) in->antParm[i*4+j] = 0.0;
-      if (in->isCircFeed) {
-	/* Circular feeds ori_r, elip_r, ori_l, elip_l */
-	in->antParm[i*4+0] = 0.0;
-	in->antParm[i*4+1] = G_PI/4.0;
-	in->antParm[i*4+2] =  0.0;
-	in->antParm[i*4+3] =  -G_PI/4.0;
-       } else {
-	/* Linear feeds, if the antenna angles on sky are given in the AntennaList[0] use then, 
-           otherwise assume Feeds are X, Y
-	   ori_x, elip_x, ori_y, elip_y,  */
-	if (fabs (in->AntLists[0]->ANlist[i]->FeedAPA-in->AntLists[0]->ANlist[i]->FeedBPA)<1.0) {
-	  /* Assume X, Y */
-	  in->antParm[i*4+0] = 0.0;
-	  in->antParm[i*4+2] = +G_PI/2.0;
-	} else {  /* Use what's in the AN table as initial convert to radians */
-	  in->antParm[i*4+0] = in->AntLists[0]->ANlist[i]->FeedAPA*DG2RAD;
-	  in->antParm[i*4+2] = in->AntLists[0]->ANlist[i]->FeedBPA*DG2RAD;
-	} /* end if antenna angle given */
-      }
-    } /* end loop over antennas */
-
-    /* Reset source parameters */
-    for (i=0; i<in->nsou; i++) {
-      for (j=0; j<4; j++) {
-	if (in->lastSouParm[i*4+j]>0.0) 
-	  in->souParm[i*4+j] = in->lastSouParm[i*4+j];
-	else 	in->souParm[i*4+j] = 0.0;
-      } 
-    }
+    ResetAllSoln (in);
   } /* end reset */
   else {  /* OK - save source parameters */
     for (i=0; i<in->nsou; i++) {
@@ -5233,6 +5259,47 @@ static gboolean CheckCrazy(ObitPolnCalFit *in, ObitErr *err)
   
   return crazy;
 } /* end CheckCrazy */
+
+/**
+ * Resets all solutions to the default
+ * \param in           Fitting object
+ */
+static void ResetAllSoln(ObitPolnCalFit *in)
+{
+  olong i, j;
+
+  for (i=0; i<in->nant; i++) {
+    for (j=0; j<4; j++) in->antParm[i*4+j] = 0.0;
+    if (in->isCircFeed) {
+      /* Circular feeds ori_r, elip_r, ori_l, elip_l */
+      in->antParm[i*4+0] = 0.0;
+      in->antParm[i*4+1] = G_PI/4.0;
+      in->antParm[i*4+2] =  0.0;
+      in->antParm[i*4+3] =  -G_PI/4.0;
+    } else {
+      /* Linear feeds, if the antenna angles on sky are given in the AntennaList[0] use then, 
+	 otherwise assume Feeds are X, Y
+	 ori_x, elip_x, ori_y, elip_y,  */
+      if (fabs (in->AntLists[0]->ANlist[i]->FeedAPA-in->AntLists[0]->ANlist[i]->FeedBPA)<1.0) {
+	/* Assume X, Y */
+	in->antParm[i*4+0] = 0.0;
+	in->antParm[i*4+2] = +G_PI/2.0;
+      } else {  /* Use what's in the AN table as initial convert to radians */
+	in->antParm[i*4+0] = in->AntLists[0]->ANlist[i]->FeedAPA*DG2RAD;
+	in->antParm[i*4+2] = in->AntLists[0]->ANlist[i]->FeedBPA*DG2RAD;
+      } /* end if antenna angle given */
+    }
+  } /* end loop over antennas */
+  
+    /* Reset source parameters */
+  for (i=0; i<in->nsou; i++) {
+    for (j=0; j<4; j++) {
+      if (in->lastSouParm[i*4+j]>0.0) 
+	in->souParm[i*4+j] = in->lastSouParm[i*4+j];
+      else 	in->souParm[i*4+j] = 0.0;
+    } 
+  }
+} /* end ResetAllSoln */
 
 /**
  * Reset blanked antenna solutions
@@ -5348,7 +5415,7 @@ static int PolnFitFuncOERL (const gsl_vector *x, void *params,
   double val;
   odouble ipol=0.0, qpol=0.0, upol=0.0, vpol=0.0;
   odouble residR=0.0, residI=0.0, isigma=0.0;
-  olong k, iant, ia1, ia2, isou, idata, refAnt;
+  olong k, iant, ia1, ia2, isou, idata;
   olong isouLast=-999;
   dcomplex PRref, PLref, PPRL, PPLR, PA1, PA2, PA1c, PA2c, ct1, ct2;
   dcomplex S[4], VRR, VRL, VLR, VLL;
@@ -5381,9 +5448,6 @@ static int PolnFitFuncOERL (const gsl_vector *x, void *params,
       }
     } /* end loop over parameters */
   } /* end loop over antennas */
-
-  /* Ref antenna - 0 rel */
-  refAnt = MAX(-1, args->refAnt-1);
 
   /* now source */
   for (isou=0; isou<args->nsou; isou++) {
@@ -5635,7 +5699,7 @@ static int PolnFitJacOERL (const gsl_vector *x, void *params,
   odouble modelR, modelI, residR, residI, gradR, gradI, isigma;
   olong k, kk, iant, ia1, ia2, isou, idata, refAnt;
   olong isouLast=-999;
-  dcomplex PRref, PLref, PPRL, PPLR, mPPRL, mPPLR, PA1, PA2, PA1c, PA2c;
+  dcomplex PRref, PLref, PPRL, PPLR, PA1, PA2, PA1c, PA2c;
   dcomplex ct1, ct2, ct3, ct4, ct5, ct6;
   dcomplex S[4], VRR, VRL, VLR, VLL, DFDP, MC1, MC2, MC3, MC4;
   ofloat root2, maxElp=G_PI/4;
@@ -5734,8 +5798,6 @@ static int PolnFitJacOERL (const gsl_vector *x, void *params,
   COMPLEX_MUL2 (PPRL, PRref, ct1);
   COMPLEX_CONJUGATE (ct1, PRref);
   COMPLEX_MUL2 (PPLR, PLref, ct1);
-  COMPLEX_NEGATE(mPPRL, PPRL);
-  COMPLEX_NEGATE(mPPLR, PPLR);
 
   /* Loop over data */
   i = 0;
@@ -6886,7 +6948,7 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
   odouble residR, residI, gradR, gradI, modelR, modelI, isigma;
   olong k, kk, iant, ia1, ia2, isou, idata, refAnt;
   olong isouLast=-999;
-  dcomplex PRref, PLref, PPRL, PPLR, mPPRL, mPPLR, PA1, PA2, PA1c, PA2c;
+  dcomplex PRref, PLref, PPRL, PPLR, PA1, PA2, PA1c, PA2c;
   dcomplex ct1, ct2, ct3, ct4, ct5, ct6;
   dcomplex S[4], VRR, VRL, VLR, VLL, DFDP, MC1, MC2, MC3, MC4;
   ofloat root2, maxElp=G_PI/4;
@@ -6986,8 +7048,6 @@ static int PolnFitFuncJacOERL (const gsl_vector *x, void *params,
   COMPLEX_MUL2 (PPRL, PRref, ct1);
   COMPLEX_CONJUGATE (ct1, PRref);
   COMPLEX_MUL2 (PPLR, PLref, ct1);
-  COMPLEX_NEGATE(mPPRL, PPRL);
-  COMPLEX_NEGATE(mPPLR, PPLR);
 
   /* Loop over data */
   i = 0;
@@ -8140,10 +8200,10 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
   double val;
   odouble ipol=0.0, qpol=0.0, upol=0.0, vpol=0.0;
   odouble residR, residI, modelR, modelI, isigma;
-  olong k, kk, iant, ia1, ia2, isou, idata, refAnt;
+  olong k, kk, iant, ia1, ia2, isou, idata;
   olong isouLast=-999;
   dcomplex  SPA, DPA, SPAc, DPAc, ggPD;
-  dcomplex ct1, ct2, ct5, Jm, Jp;
+  dcomplex ct1, ct2, ct5;
   dcomplex S0[4], S[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4;
   dcomplex SM1, SM2, SM3, SM4;
   size_t i, j;
@@ -8170,8 +8230,6 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
   COMPLEX_SET (VYY, 0.0, 0.0);
   COMPLEX_SET (VYX, 0.0, 0.0);
   COMPLEX_SET (VXY, 0.0, 0.0);
-  COMPLEX_SET (Jm,  0.0,-1.0);
-  COMPLEX_SET (Jp,  0.0, 1.0);
   
   /* R-L phase difference  at reference antenna */
   if (args->doFitRL) {
@@ -8204,9 +8262,6 @@ static int PolnFitFuncOEXY (const gsl_vector *x, void *params,
     /* Default X gain = 1.0/Y gain
     if (!antGainFit[iant][0]) antGain[iant*2+0] = 1.0 / antGain[iant*2+1]; */
    } /* end loop over antennas */
-  
-  /* Ref antenna - 0 rel */
-  refAnt = MAX(-1, args->refAnt-1);
   
   /* now source */
   for (isou=0; isou<args->nsou; isou++) {
@@ -8461,8 +8516,8 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
   ofloat PD, chi1, chi2, PPol;
   double val;
   odouble ipol=0.0, qpol=0.0, upol=0.0, vpol=0.0;
-  odouble residR=0.0, residI=0.0, gradR=0.0, gradI=0.0, modelR=0.0, modelI=0.0, isigma=0.0;
-  olong k, kk, iant, ia1, ia2, isou, idata, refAnt;
+  odouble gradR=0.0, gradI=0.0, isigma=0.0;
+  olong k, kk, iant, ia1, ia2, isou, idata;
   olong isouLast=-999;
   dcomplex  SPA, DPA, SPAc, DPAc, ggPD;
   dcomplex ct1, ct2, ct3, ct4, ct5, Jm, Jp;
@@ -8531,9 +8586,6 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
     /* Default X gain = 1.0/Y gain
     if (!antGainFit[iant][0]) antGain[iant*2+0] = 1.0 / antGain[iant*2+1]; */
   } /* end loop over antennas */
-  
-  /* Ref antenna - 0 rel */
-  refAnt = MAX(-1, args->refAnt-1);
   
   /* now source */
   for (isou=0; isou<args->nsou; isou++) {
@@ -8644,10 +8696,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	  COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
 	  COMPLEX_SET (ggPD,  antGain[ia1*2+0]*antGain[ia2*2+0], 0);
 	  COMPLEX_MUL2 (VXX, ct5, ggPD);
-	  modelR = VXX.real; modelI = VXX.imag;
-	  residR = modelR - data[idata*10+(kk+1)*2];
-	  residI = modelI - data[idata*10+(kk+1)*2+1];
-	} else  residR = residI = 0.0; /* Invalid data */
+	}
 	
 	/* Loop over first antenna parameters */
 	for (k=0; k<4; k++) {
@@ -8942,10 +8991,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	  COMPLEX_ADD4 (ct5, SM1, SM2, SM3, SM4);
 	  COMPLEX_SET (ggPD,  antGain[ia1*2+1]*antGain[ia2*2+1], 0);
 	  COMPLEX_MUL2 (VYY, ct5, ggPD);
-	  modelR = VYY.real; modelI = VYY.imag;
-	  residR = modelR - data[idata*10+(kk+1)*2];
-	  residI = modelI - data[idata*10+(kk+1)*2+1];
-	} else  residR = residI = 0.0; /* Invalid data */
+	} 
 	  
 	/* Loop over first antenna parameters */
 	for (k=0; k<4; k++) {
@@ -9243,10 +9289,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	  COMPLEX_EXP (ct2, PD);
 	  COMPLEX_MUL2 (ggPD, ct1, ct2);
 	  COMPLEX_MUL2 (VXY, ct5, ggPD);
-	  modelR = VXY.real; modelI = VXY.imag;
-	  residR = modelR - data[idata*10+(kk+1)*2];
-	  residI = modelI - data[idata*10+(kk+1)*2+1];
-	} else  residR = residI = 0.0; /* Invalid data */
+	} 
 	
 	/* Loop over first antenna parameters */
 	for (k=0; k<4; k++) {
@@ -9558,8 +9601,7 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
 	  COMPLEX_EXP (ct2, -PD);
 	  COMPLEX_MUL2 (ggPD, ct1, ct2);
 	  COMPLEX_MUL2 (VYX, ct5, ggPD);
-	  modelR = VYX.real; modelI = VYX.imag;
-	} else  residR = residI = 0.0; /* Invalid data */
+	} 
 	
 	/* Loop over first antenna parameters */
 	for (k=0; k<4; k++) {
@@ -9896,7 +9938,7 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
   double val;
   odouble ipol=0.0, qpol=0.0, upol=0.0, vpol=0.0;
   odouble residR=0.0, residI=0.0, gradR=0.0, gradI=0.0, modelR=0.0, modelI=0.0, isigma=0.0;
-  olong k, kk, iant, ia1, ia2, isou, idata, refAnt;
+  olong k, kk, iant, ia1, ia2, isou, idata;
   olong isouLast=-999;
   dcomplex  SPA, DPA, SPAc, DPAc, ggPD;
   dcomplex ct1, ct2, ct3, ct4, ct5, Jm, Jp;
@@ -9967,9 +10009,6 @@ static int PolnFitFuncJacOEXY (const gsl_vector *x, void *params,
      /* Default X gain = 1.0/Y gain
     if (!antGainFit[iant][0]) antGain[iant*2+0] = 1.0 / antGain[iant*2+1]; */
  } /* end loop over antennas */
-  
-  /* Ref antenna - 0 rel */
-  refAnt = MAX(-1, args->refAnt-1);
   
   /* now source */
   for (isou=0; isou<args->nsou; isou++) {

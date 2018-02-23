@@ -184,7 +184,7 @@ def EVLAInitContParms():
     parms["rltimerange"]= [0.0,1000.0]      # time range of data (days)
     parms["rlDoBand"]  = 1                  # If > 0 apply bandpass calibration
     parms["rlBPVer"]   = 0                  # BP table to apply, 0=>highest
-    parms["rlflagVer"] = 2                  # FG table version to apply
+    parms["rlflagVer"] = 1                  # FG table version to apply
     parms["rlrefAnt"]  = 0                  # R-L, delay calibrator , defaults to refAnt
     parms["rlnumIFs"]  = 1                  # Number of IFs per solution
     
