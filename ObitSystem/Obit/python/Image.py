@@ -23,7 +23,7 @@ Additional  Functions are available in ImageUtil.
 # Python/Obit Astronomical Image class
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2015
+#  Copyright (C) 2004-2018
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -487,7 +487,7 @@ class Image(OData.OData):
 
     def GaussFit (self, err, \
                   plane=1, cen=None, dim=[20,20], x=[0.0], y=[0.0], flux=[100.0], \
-                  gparm=[[3.,3.,0.]], file=None):
+                  gparm=[[3.,3.,0.]], FluxLow=0.0,  PosGuard=1., FixFlux =False, FixPos=False, file=None):
         """
         Fit Gaussian models, setting initial model from parameters
         
@@ -506,6 +506,10 @@ class Image(OData.OData):
         * y         = offset in y (pixels) of initial Gaussians from cen
         * flux      = fluxes of initial Gaussians
         * gparm     = Initial Gaussian size [major, minor, PA] (pixel,pixel,deg)
+        * FluxLow   = Minimum value for peak
+        * PosGuard  = Min distance in pixels for peak from edge of fitting area
+        * FixFlux   = Fix fluxes to input [False]
+        * FixPos    = Fix positions to input [False]
         * file      = If given, the file to write the results to, else terminal
         """
         if type(plane)==list:
@@ -538,7 +542,12 @@ class Image(OData.OData):
         input["fitRegion"] = fr
         input["MaxIter"]   = 100
         input["prtLv"]     = 0
-        input["PosGuard"]  = 1.
+        input["PosGuard"]  = PosGuard
+        input["FluxLow"]   = FluxLow
+        if FixFlux:
+            input["FixFlux"] = FixFlux
+        if FixPos:
+            input["FixPos"] = FixPos
         # Fit
         imf.Fit(err,input)
         # Show results

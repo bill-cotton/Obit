@@ -1,7 +1,7 @@
 /* $Id:  */
 /* Extract polarization info for VL table                             */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2017                                               */
+/*;  Copyright (C) 2017,2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -888,6 +888,7 @@ void ExtractPoln (ObitImage* inData, ObitImage* QData, ObitImage* UData, ObitErr
   ObitFInterpolate *Qinterp=NULL, *Uinterp=NULL;
   ObitInfoType type;
   ofloat pflux, RMS, QRMS, URMS, lQRMS, lURMS, Qval, Uval, Qpixel[2], Upixel[2];
+  ofloat fblank = ObitMagicF();
   odouble coord[2];
   olong irow, RMSsize, iPlane, blc[2], trc[2], Plane[5]={1,1,1,1,1};
   olong  nx, ny, hwidth, iVer, count = 0;
@@ -1048,9 +1049,11 @@ void ExtractPoln (ObitImage* inData, ObitImage* QData, ObitImage* UData, ObitErr
     VLrow->PolRMS  = RMS;
     VLrow->QCenter = Qval;
     VLrow->UCenter = Uval;
-    pflux = sqrt(Qval*Qval+Uval*Uval);
-    /* Debias */
-    PolnDeBias(&pflux, RMS);
+    if ((Qval!=fblank) && (Qval!=fblank)) {
+      pflux = sqrt(Qval*Qval+Uval*Uval);
+      /* Debias */
+      PolnDeBias(&pflux, RMS);
+    } else pflux = fblank;
     VLrow->PFlux   = pflux;
     
     /* reWrite row */
@@ -1094,15 +1097,23 @@ void ExtractRM (ObitImage* inData, ObitImage* RMData, ObitErr *err)
   ObitFInterpolate *Interp=NULL;
   ObitInfoType type;
   ofloat val, pixel[2];
+  ofloat fblank = ObitMagicF();
   odouble coord[2];
   olong irow, iPlane, Plane[5]={1,1,1,1,1};
   olong nx, ny, hwidth, iVer, nPlane, count=0;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gboolean toGal;
+  gboolean toGal, doRMSyn;
   gchar *routine = "ObitTableFSGetSpectrum";
 
   /* error checks */
   if (err->error) return;
+
+  /* Use RM synthesis or least squares cubes? */
+  if (!strncmp(RMData->myDesc->ctype[2],"MaxRMSyn",8))
+    doRMSyn = TRUE;
+  else doRMSyn = FALSE;
+  if (doRMSyn) Obit_log_error(err, OBIT_InfoErr, "Using RM Synthesis cube.");
+  ObitErrLog(err); /* show any error messages on err */
 
   /* Get parameters */
   /* VL table */
@@ -1150,7 +1161,7 @@ void ExtractRM (ObitImage* inData, ObitImage* RMData, ObitErr *err)
     !(inData->myDesc->ctype[0][0]=='G' && inData->myDesc->ctype[0][1]=='L');
 
   /* Make interpolator */
-  hwidth = 2;
+  hwidth = 3;
   Interp = newObitFInterpolateCreate ("Interpolator", RMData->image, 
 				      RMData->myDesc, hwidth);
   /* Loop over planes */
@@ -1197,10 +1208,20 @@ void ExtractRM (ObitImage* inData, ObitImage* RMData, ObitErr *err)
     if (err->error) goto cleanup;
     
     /* Update */
-    if (iPlane==1) VLrow->RM     = val;
-    if (iPlane==2) VLrow->RMerr   = val;
-    if (iPlane==3) VLrow->EVPA    = val*RAD2DG;   /* In deg */
-    if (iPlane==4) VLrow->EVPAerr = val*RAD2DG;
+    if (doRMSyn) {  /* RM Synthesis -> get pamp from plane 3, no errors */
+      if (iPlane==1) VLrow->RM      = val; VLrow->RMerr   = -1.0;
+      if (iPlane==3) {
+	if (VLrow->RM==fblank) val = fblank;
+	if (val!=fblank) PolnDeBias(&val, VLrow->PolRMS); 	
+	VLrow->PFlux = val;}
+      if (iPlane==2) VLrow->EVPA    = val*RAD2DG;   /* In deg */
+      if (iPlane==4) VLrow->EVPAerr = -1.0;
+    } else {       /* Least squares RM with errors */
+      if (iPlane==1) VLrow->RM      = val;
+      if (iPlane==3) VLrow->RMerr   = val;
+      if (iPlane==2) VLrow->EVPA    = val*RAD2DG;   /* In deg */
+      if (iPlane==4) VLrow->EVPAerr = val*RAD2DG;
+    }
     
     /* reWrite row */
     count++;

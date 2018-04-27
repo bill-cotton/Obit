@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2017
+#  Copyright (C) 2004-2018
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -370,6 +370,265 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
 
     # end PWeightImage
     
+def PWeightImageEq(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
+                   iblc=[1,1,1], itrc=[0,0,1], restart=0, hwidth=2, doGPU=False,
+                   planeWt=False, OTFRA=None, OTFDec=None, inWtImage=None,
+                   maxRMS=None, minAccWt=0.15):
+    """
+    Sum an image onto Weighting accumulators using PB corrections
+    
+    Version for equatorial in/output and no relative rotation
+    Calculate the weights for an image from the primary beam pattern
+    And accumulate into the correct locations in the accumulation images.
+
+    * inImage    = Image to be accumulated
+    * factor     = Additional multiplication factor, normally 1.0
+                   >0 => use the factor/RMS of each image plane
+    * SumWtImage = First output image, must be defined (i.e. files named)
+                   but not fully created.
+    * SumWt2     = Second output image, like SumWtImage
+    * err        = Python Obit Error/message stack
+    * minGain    = minimum allowed gain (lower values blanked).
+    * iblc       = BLC in plane to start selection
+    * itrc       = TRC in plane to end selection
+    * restart    = restart channel no. 0-rel
+    * hwidth     = half width of interpolation kernal [1-4] default 2
+    * doGPU      = If true and GPU enables, use a GPU for the interpolation.
+    *              NB: routine will fail if GPU is not enabled.
+    * planeWt    = if True generate weight image per input plane
+    * OTFoffsets = if >1 then make beam using multiple pointing offsets
+                   "Aussie mode" OTF. must also go=ive OTFRA, OTFDec
+    * OTFRA      = Array of RA offsets in deg not corrected for Declination
+    * OTFDec     = Array of Declinations offsets in deg, same size as OTFRA
+    * inWtImage  = Beam (weight) image to use if not None
+                   MUST have the same size as inImage 
+    * maxRMS     = if given, the maximum RMS allowed
+    * minAccWt   =  min. acceptable max. weight, otherwise ignore
+    """
+    ################################################################
+    # Checks
+    if not Image.PIsA(inImage):
+        print "Actually ",inImage.__class__
+        raise TypeError,"inImage MUST be a Python Obit Image"
+    if not Image.PIsA(SumWtImage):
+        print "Actually ",SumWtImage.__class__
+        raise TypeError,"SumWtImage MUST be a Python Obit Image"
+    if not Image.PIsA(SumWt2):
+        print "Actually ",SumWt2.__class__
+        raise TypeError,"SumWt2 MUST be a Python Obit Image"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    t0 = os.times()[4]    # Initial time
+    haveWtImage = inWtImage != None   # Weight image given
+    # Set BLC,TRC 
+    inImage.List.set("BLC",[iblc[0], iblc[1],1,1,1,1,1])
+    inImage.List.set("TRC",[itrc[0], itrc[1],0,0,0,0,0])
+    # Open accumulation files
+    Image.POpen(inImage, Image.READONLY, err)  # pythpn gets confused
+    Image.POpen(SumWtImage, Image.READWRITE, err)
+    Image.POpen(SumWt2, Image.READWRITE, err)
+    #  Get output descriptor to see how many planes
+    outDesc     = Image.PGetDesc(SumWtImage)
+    outDescDict = ImageDesc.PGetDict(outDesc)
+    outNaxis    = outDescDict["inaxes"]
+    print "Accumulation naxis",outNaxis
+    #  Get input descriptor to see how many planes
+    inDesc     = Image.PGetDesc(inImage)
+    inDescDict = ImageDesc.PGetDict(inDesc)
+    ndim       = inDescDict["naxis"]
+    inNaxis    = inDescDict["inaxes"]
+    finterp    = None  # GPU not yet enabled
+    # Range of planes
+    bpln = max (1,iblc[2]); 
+    epln = min (inNaxis[2], itrc[2])
+    if epln<bpln:
+        epln = inNaxis[2]
+    npln = epln-bpln+1
+    # Test if compatible
+    if npln < outNaxis[2]:
+        print "input has",npln,"planes selected and output has",outNaxis[2]
+        raise RuntimeError,"input image has too few planes "
+    if (ndim>0) and (inNaxis[2]>1):  # list of 0-rel planes to loop over
+        planes = range(bpln+restart-1,bpln+npln-1)
+    else:
+        planes = [0]
+    #
+    if inWtImage:
+        inWtImage.List.set("BLC",[iblc[0], iblc[1],1,1,1,1,1])
+        inWtImage.List.set("TRC",[itrc[0], itrc[1],0,0,0,0,0])
+        inWtImage.Open(Image.READONLY,err)     # Open/close to update
+        inWtImage.Close(err)
+    XPixelImage = None; YPixelImage = None; InterpWtImage = None;InterpWt = None
+    InterpWtWt = None; WtImage = None
+    # Loop over planes
+    for iPlane in planes:
+        doPlane  = [iPlane+1,1,1,1,1]        # Input plane
+        outPlane = [iPlane+2-bpln,1,1,1,1]   # output plane
+        if not (iPlane%20):
+            print "At plane", iPlane+1,'t=%6.1f sec'%(os.times()[4]-t0)
+        # Get image 
+        inImage.List.set("BLC",[iblc[0], iblc[1],1,1,1,1,1])
+        inImage.List.set("TRC",[itrc[0], itrc[1],0,0,0,0,0])
+        Image.PGetPlane (inImage, None, doPlane, err)
+        OErr.printErrMsg(err, "Error reading image "+str(iPlane)+" for "+Image.PGetName(inImage))
+        #
+        # Make weight image if needed, first pass or planeWt
+        if WtImage == None:
+            WtImage = Image.Image("WeightImage")
+            Image.PCloneMem(inImage, WtImage, err)
+        # The interpolated versions
+        if not InterpWtImage:
+            InterpWtImage = Image.Image("InterpWtImage")
+            Image.PClone2(inImage, SumWtImage, InterpWtImage, err)
+        # input x, y pixels for output
+        if  (not XPixelImage) or (not YPixelImage):
+            XPixelImage = Image.Image("XPixelImage")
+            YPixelImage = Image.Image("YPixelImage")
+            Image.PClone2(inImage, SumWtImage, XPixelImage, err)
+            Image.PClone2(inImage, SumWtImage, YPixelImage, err)
+            ImageUtil.PGetXYPixels(WtImage, InterpWtImage, XPixelImage, YPixelImage, err)
+        
+        # Special weighting?
+        if factor<0.0:
+            RMS = inImage.FArray.RMS
+            fact = abs(factor)/RMS
+        else:
+            fact = factor
+        if planeWt:
+            pln = [iPlane+1,1,1,1,1]
+        else:
+            pln = [max(1,inNaxis[2]/2),1,1,1,1]
+        if haveWtImage:
+            # Beam provided, extract relevant plane to a memory resident WtImage
+            OErr.printErrMsg(err, "Error reading wt image "+str(iPlane)+" for "+
+                             Image.PGetName(inWtImage))
+            # Interpolate to WtImage
+            ImageUtil.PInterpolateImage(inWtImage, WtImage, err, \
+                                        inPlane=doPlane, hwidth=hwidth, finterp=finterp)
+            OErr.printErrMsg(err, "Error interpolating wt plane "+str(doPlane))
+            
+        elif planeWt or (iPlane==0):
+            # Normal or OTF Beam?
+            if (OTFRA==None):
+                ImageUtil.PPBImage(inImage, WtImage, err, minGain, outPlane=pln)
+                pass
+            else:
+                ImageUtil.POTFBeam (inImage, WtImage, OTFRA, OTFDec, err, minGain, outPlane=pln)
+            OErr.printErrMsg(err, "Error making weight image for "+Image.PGetName(inImage))
+        
+        # Check maximum weight for first plane
+        if iPlane==0:
+            pos = [0,0]
+            maxWt = FArray.PMax(WtImage.FArray,pos)
+            print "Maximum weight",maxWt
+            if maxWt<minAccWt:
+                print "Less than minAccWt",minAccWt,"skipping"
+                break
+            
+        # Interpolated weight image
+        if  not InterpWt:
+            InterpWt = Image.Image("InterpWt")
+            Image.PClone2(inImage, SumWtImage, InterpWt, err)
+            # Is GPU interpolation requested?
+            if doGPU:
+                finterp = GPUFInterpolate.PCreate("GPUinterp", WtImage.FArray, 
+                                                  XPixelImage.FArray, YPixelImage.FArray, 
+                                                  hwidth, err)
+                OErr.printErrMsg(err, "Creating GPU FInterpolator")
+                InterpWt.Desc.Dict['inaxes'], WtImage.Desc.Dict['inaxes']
+            ImageUtil.PInterpolateImage(WtImage, InterpWt, err, \
+                                        XPix=XPixelImage, YPix=YPixelImage,
+                                        hwidth=hwidth, finterp=finterp)
+            OErr.printErrMsg(err, "Error interpolating wt*wt "+Image.PGetName(inImage))
+        # Interpolated weight image Squared
+        if not InterpWtWt:
+            InterpWtWt = Image.Image("InterpWtWt")
+            Image.PClone2(inImage, SumWtImage, InterpWtWt, err)
+            # Determine alignment
+            inDesc = Image.PGetDesc(InterpWtImage)       # get descriptors
+            inDescDict = ImageDesc.PGetDict(inDesc)
+            outDesc = Image.PGetDesc(SumWtImage)
+            outDescDict = ImageDesc.PGetDict(outDesc)
+            naxis = inDescDict["inaxes"]                # find input center pixel in output
+            pos1 = [int(naxis[0]*0.5+0.5), int(naxis[1]*0.5+0.5)]
+            xpos1 = [float(pos1[0]),float(pos1[1])]
+            xpos2 = ImageDesc.PCvtPixel (inDesc, xpos1, outDesc, err)
+            pos2 = [int(xpos2[0]+0.5), int(xpos2[1]+0.5)]
+            # Is GPU interpolation requested?
+            if doGPU:
+                del finterp
+                finterp = GPUFInterpolate.PCreate("GPUinterp", inImage.FArray, 
+                                                  XPixelImage.FArray, YPixelImage.FArray, 
+                                                  hwidth, err)
+                OErr.printErrMsg(err, "Creating GPU FInterpolator")
+        # End init wt image
+        # Special weighting or editing?
+        if (factor<0.0) or maxRMS:
+            # Get image 
+            Image.PGetPlane (inImage, None, doPlane, err)
+            OErr.printErrMsg(err, "Error reading image "+str(iPlane)+" for "+Image.PGetName(inImage))
+            RMS = inImage.FArray.RMS
+            # This plane acceptable?
+            if maxRMS and ((RMS>maxRMS) or (RMS<=0.0)):
+                #print 'drop plane',doPlane[0],'RMS',RMS
+                continue
+            if (factor<0.0):
+                fact = abs(factor)/RMS
+            else:
+                fact = factor
+            if not (iPlane%20):
+                print "Factor",fact, "plane",iPlane,"RMS",RMS
+        else:
+            fact = factor
+        # Interpolate image plane
+        ImageUtil.PInterpolateImage(inImage, InterpWtImage, err, \
+                                    inPlane=doPlane, XPix=XPixelImage, YPix=YPixelImage,
+                                    hwidth=hwidth, finterp=finterp)
+        OErr.printErrMsg(err, "Error interpolating plane "+str(doPlane))
+        # Interpolated image times beam
+        FArray.PMul(InterpWtImage.FArray, InterpWt.FArray, InterpWtImage.FArray)
+        #
+        # Read accumulation image planes
+        Image.PGetPlane(SumWtImage, None, outPlane, err)
+        OErr.printErrMsg(err, "Error reading accumulation image ")
+        #
+        # Accumulate
+        FArray.PShiftAdd (SumWtImage.FArray, pos2, InterpWtImage.FArray, pos1, fact, SumWtImage.FArray)
+        Image.PPutPlane(SumWtImage, None, outPlane, err)
+        OErr.printErrMsg(err, "Error writing accumulation image ")
+
+        # Square weight image
+        Image.PGetPlane(SumWt2,  None, outPlane, err)
+        FArray.PMul(InterpWt.FArray, InterpWt.FArray, InterpWtWt.FArray)
+        
+        # Blank weight whereever image is blank or zero
+        FArray.PInClip(InterpWt.FArray, -1.0e-20, 1.0e-20, FArray.PGetBlank())
+        # Blank weight squared where image * Wt is blanked
+        FArray.PBlank (InterpWtWt.FArray, InterpWt.FArray, InterpWtWt.FArray);
+        # Accumulate Wt*Wt
+        FArray.PShiftAdd (SumWt2.FArray, pos2, InterpWtWt.FArray,pos1, fact, SumWt2.FArray)
+        #
+        # Write output
+        Image.PPutPlane(SumWt2, None, outPlane, err)
+        OErr.printErrMsg(err, "Error writing accumulation image ")
+        # Cleanup if doing a weight image per plane (continuum)
+        if planeWt:
+            del WtImage, XPixelImage, YPixelImage;
+            WtImage = None;XPixelImage=None; YPixelImage=None;
+       # end loop over planes
+    # close output
+    Image.PClose(inImage, err)
+    Image.PClose(SumWtImage, err)
+    Image.PClose(SumWt2, err)
+    del XPixelImage, YPixelImage, InterpWtImage, InterpWtWt, 
+    if WtImage:
+        del WtImage; WtImage = None
+    if finterp!=None:
+        del finterp
+
+    # end PWeightImageEq
+    
 def PAccumIxWt(im, wt, factor, accum, accumwt, err):
     """
     Accumulate im * wt into accum
@@ -699,13 +958,13 @@ def PGetOverlap(in1Image, in2Image, err):
             return (blc, trc)
        # Likely no overlap
         print "Confused, probably no overlap"
-        print "corn1", corn1
-        print "corn2", corn2
-        return ([1,1,1,1,1,1,1], [1,1,1,1,1,1,1])
+        print "corn1", corn1, nx1, ny1
+        print "corn2", corn2, nx2, ny2
+        return ([1,1,1,1,1,1,1], [1,1,0,0,0,0,0])
     else:
         # Default is no overlap
         print "no overlap"
-        return ([1,1,1,1,1,1,1], [1,1,1,1,1,1,1])
+        return ([1,1,1,1,1,1,1], [1,1,0,0,0,0,0])
     # end PGetOverlap
 
 def PMaskCube(inImage, Mask, outImage, err):

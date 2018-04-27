@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2013                                               */
+/*;  Copyright (C) 2013-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -40,8 +40,18 @@ olong nlamb2;
 olong nterm;
 /** Do Error analysis: */
 gboolean doError;
+/** Do max RM Synthesis */
+gboolean doRMSyn;
 /** Size of planes in pixels */
 olong nx, ny;
+/** min RM for RM syn search */
+ofloat minRMSyn;
+/** max RM for RM syn search */
+ofloat maxRMSyn;
+/** delta RM for RM syn search */
+ofloat delRMSyn;
+/** max Chi^2 for RM syn search */
+ofloat maxChi2;
 /** min Q/U SNR */
 ofloat minQUSNR;
 /** min fraction of planes included */

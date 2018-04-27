@@ -11,7 +11,7 @@ and the Chi Squared is also returned.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2013
+#  Copyright (C) 2013-2018
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -105,6 +105,10 @@ class RMFit(RMFitPtr):
         """ Fit RMs to an image cube
         
         Fitted rotation measure parameters returned in outImage
+        There are two options, if doRMSyn then a straight RM synthesis is done
+        resulting in the maximum value.  Better for low SNR data.
+        Otherwise a coarse RM synthesis is done followed by a nonlinear least
+        squares fit.  Best for high SNR data.
         Can run with multiple threads if enabled:
         OSystem.PAllowThreads(2)  # 2 threads
         self     = RMFit object, parameters on List:
@@ -112,10 +116,18 @@ class RMFit(RMFitPtr):
             minQUSNR  float min. SNR for Q and U pixels [def 3.0]
             minFrac   float min fraction of samples included  [def 0.5]
             doError   boolean scalar If true do error analysis [def False]
+            doRMSyn   boolean scalar If true do max RM synthesis [def False]
+            maxRMSyn  float scalar max RM to search (rad/m^2) [def ambiguity]
+            minRMSyn  float scalar min RM to search (rad/m^2)[def -ambiguity]
+                      values outside of [minRMSyn,maxRMSyn] ignored
+            delRMSyn  float scalar RM increment for search (rad/m^2)[def 1.0]
+            maxChi2   float scalar Max. chi^2 for doRMSyn [def 10]
         inQImage = Q Image cube to be fitted
         inUImage = U Image cube to be fitted, must have same geometry as inQImage
         outImage = Image cube to accept fitted RM, EVPA0.
                    Should be defined but not created.
+                   If doRMSyn: plane 1=RM (rad/m^2), 2=EVPA(rad), 3=amp (Jy), 4=Chi^2
+                   else
                    Planes 1->nterm are coefficients per pixel (rad m^2, rad)
                    Planes nterm+1->2*nterm are uncertainties in coefficients
                    Plane 2*nterm+1 = Chi squared of fit

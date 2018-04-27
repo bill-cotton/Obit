@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2016                                          */
+/*;  Copyright (C) 2003-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -66,7 +66,7 @@ ObitIOCode ObitTableSULookup (ObitTableSU *in, gint32 *dim, gchar *inlist,
   ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitTableSURow *row;
   olong i, j, l, maxNum, ncheck, *cross, size;
-  gboolean select, gotSome, want, match, noCal;
+  gboolean select, gotSome=FALSE, someBad=FALSE, want, match, noCal;
   gchar tempName[101], temp2Name[101]; /* should always be big enough */
   gchar *routine = "ObitTableSULookup";
 
@@ -193,9 +193,10 @@ ObitIOCode ObitTableSULookup (ObitTableSU *in, gint32 *dim, gchar *inlist,
 	/* all blank is OK */
 	if (strncmp(tempName, "                ", dim[0])) {
 	  ObitTrimTrail(tempName);
-	  Obit_log_error(err, OBIT_InfoWarn, 
+	  Obit_log_error(err, OBIT_Error, 
 			 "Source %s :%4.4d code %s not found in source table or dup in list", 
 			 tempName, Qual, souCode);
+	  someBad = TRUE;
 	}
       }
     }
@@ -203,6 +204,8 @@ ObitIOCode ObitTableSULookup (ObitTableSU *in, gint32 *dim, gchar *inlist,
   /* Anything selected? */
   if ((!gotSome) && !noCal) *xselect = FALSE;
   g_free(cross);  /* Free */
+	
+  if (someBad) retCode = OBIT_IO_SpecErr;  /* Bad specification? */
 
   return retCode;
 } /* end ObitTableSULookup */

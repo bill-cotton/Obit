@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2011                                          */
+/*;  Copyright (C) 2006-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -210,6 +210,8 @@ ObitImageFit* ObitImageFitCreate (gchar* name)
  * \li "PosGuard" OBIT_double (1,1,1) Distance from edge to allow center
  *                [def no bound]
  * \li "FluxLow"  OBIT_double (1,1,1) Lower bounds on Flux density [no bound]
+ * \li "FixFlux"  OBIT_bool   (1,1,1) Fix fluxes to input [FALSE]
+ * \li "FixPos"   OBIT_bool   (1,1,1) Fix positions to input [FALSE]
  * \li "GMajUp"   OBIT_double (1,1,1) Major axis upper bound [no bound]
  * \li "GMajLow"  OBIT_double (1,1,1) Major axis lower bound [no bound]
  * \li "GMinUp"   OBIT_double (1,1,1) Minor axis upper bound [no bound]

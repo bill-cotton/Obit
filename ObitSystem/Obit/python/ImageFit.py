@@ -108,6 +108,8 @@ class ImageFit(ImageFitPtr):
         ('prtLv',     'Message level, 0=>none [def 0]'),
         ('PosGuard',  'Distance (cells) from edge to allow center  [def no bound]'),
         ('FluxLow',   'Lower bounds on Flux density [def no bound]'),
+        ('FixFlux',   'Fix fluxes to input values [def False]'),
+        ('FixPos',    'Fix Positions to input values [def False]'),
         ('GMajUp',    'Major axis upper bound (cells) [def no bound]'),
         ('GMajLow',   'Major axis lower bound (cells) [def no bound]'),
         ('GMinUp',    'Minor axis upper bound (cells) [def no bound]'),
@@ -119,6 +121,8 @@ class ImageFit(ImageFitPtr):
                'prtLv':0,
                'PosGuard':0.0,
                'FluxLow':0.0,
+               'FixFlux':False,
+               'FixPos':False,
                'GMajUp':1.0e20,
                'GMajLow':0.0,
                'GMinUp':1.0e20,
@@ -145,6 +149,8 @@ class ImageFit(ImageFitPtr):
         prtLv     int Message level, 0=>none [def 0]
         PosGuard  float Distance (cells) from edge to allow center  [def no bound]
         FluxLow   float Lower bounds on Flux density [def no bound]
+        FixFlux   bool  Fix flux densities? [def False]
+        FixPos    bool  Fix Positions? [def False]
         GMajUp    float Major axis upper bound (cells) [def no bound]
         GMajLow   float Major axis lower bound (cells) [def no bound]
         GMinUp    float Minor axis upper bound (cells) [def no bound]
@@ -272,6 +278,8 @@ def PFit (inImageFit, err, input=FitInput):
     prtLv     int Message level, 0=>none [def 0]
     PosGuard  float Distance (cells) from edge to allow center  [def no bound]
     FluxLow   float Lower bounds on Flux density [def no bound]
+    FixFlux   bool  Fix flux densities? [def False]
+    FixPos    bool  Fix Positions? [def False]
     GMajUp    float Major axis upper bound (cells) [def no bound]
     GMajLow   float Major axis lower bound (cells) [def no bound]
     GMinUp    float Minor axis upper bound (cells) [def no bound]
@@ -296,6 +304,8 @@ def PFit (inImageFit, err, input=FitInput):
     inInfo = PGetList(inImageFit)    # 
     InfoList.PAlwaysPutInt    (inInfo, "MaxIter",  dim, [input["MaxIter"]])
     InfoList.PAlwaysPutInt    (inInfo, "prtLv",    dim, [input["prtLv"]])
+    InfoList.PAlwaysPutBoolean (inInfo, "FixPos",  dim, [input["FixPos"]])
+    InfoList.PAlwaysPutBoolean (inInfo, "FixFlux", dim, [input["FixFlux"]])
     InfoList.PAlwaysPutDouble (inInfo, "PosGuard", dim, [input["PosGuard"]])
     InfoList.PAlwaysPutDouble (inInfo, "FluxLow",  dim, [input["FluxLow"]])
     InfoList.PAlwaysPutDouble (inInfo, "GMajUp",   dim, [input["GMajUp"]])

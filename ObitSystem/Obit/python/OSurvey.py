@@ -290,7 +290,7 @@ def PWebFetch (url, args, outfile, err):
     Sends a http post request to url and sames response to outfile
     Throws exception on error
     * url     = where the request to be sent,
-                e.g."http://www.cv.nrao.edu/cgi-bin/postage.pl"
+                e.g."https://www.cv.nrao.edu/cgi-bin/postage.pl"
     * args    = dict or arguments, e.g. {"arg1":"arg1"}
     * outfile = Name of the output file, absolute path or relative to CWD
                 None => use name from server
@@ -299,7 +299,7 @@ def PWebFetch (url, args, outfile, err):
     ################################################################
     # Package parameters
     encoded_args = urllib.urlencode(args)
-    NVSShost    = "http://www.cv.nrao.edu/cgi-bin/postage.pl"
+    NVSShost    = "https://www.cv.nrao.edu/cgi-bin/postage.pl"
     # fetch
     try:
         request      = urllib2.Request(url)
@@ -364,7 +364,7 @@ def PNVSSFetch (RA, Dec, outfile, err, \
                   'MAPROJ' :MAPROJ,
                   'rotate' :str(rotate),
                   'Cells'  :str(Cells[0])+' '+str(Cells[1])}
-    NVSSURL    = "http://www.cv.nrao.edu/cgi-bin/postage.pl"
+    NVSSURL    = "https://www.cv.nrao.edu/cgi-bin/postage.pl"
     # fetch
     PWebFetch (NVSSURL, query_args, outfile, err)
     # Get fits image if requested
@@ -419,7 +419,7 @@ def PVLSSFetch (RA, Dec, outfile, err, \
                   'MAPROJ' :MAPROJ,
                   'rotate' :str(rotate),
                   'Cells'  :str(Cells[0])+' '+str(Cells[1])}
-    VLSSURL    = "http://www.cv.nrao.edu/cgi-bin/VLSSpostage.pl"
+    VLSSURL    = "https://www.cv.nrao.edu/cgi-bin/VLSSpostage.pl"
     # fetch
     PWebFetch (VLSSURL, query_args, outfile, err)
     # Get fits image if requested

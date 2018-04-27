@@ -2791,7 +2791,7 @@ ObitImageUtilPBApply (ObitImage *inImage, ObitImage *pntImage, ObitImage *outIma
 
 /**
  * Make an image of the antenna primary beam pattern based on the pointing
- * position in an image.
+ * position in an image.  Honors existing blc,trc.
  * For frequencies < 1 GHz uses the VLA polynomial gain curves,
  * for higher frequencies, it uses a jinc function based on the antenna size.
  * \param pntImage Image with pointing position
@@ -2830,8 +2830,6 @@ ObitImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage,
   for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
   for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
   dim[0] = 7;
-  ObitInfoListPut (pntImage->info, "BLC", OBIT_long, dim, blc, err); 
-  ObitInfoListPut (pntImage->info, "TRC", OBIT_long, dim, trc, err);
   pntImage->extBuffer = FALSE;
 
   if (antSize<0.01) antSize = 25.0; /* default antenna size */
@@ -5964,14 +5962,13 @@ static gpointer ThreadImagePBCor (gpointer args)
 	ObitThreadUnlock(thread); 
 	goto finish;
       }
-      
       /* Separation from pointing center */
       dist = ObitBeamShapeAngle(bs, ra, dec, 0.0);
 
       /* primary beam correction */
       pbf = ObitBeamShapeGainSym (bs, dist);
       if (doInvert && (fabs(pbf)>1.0e-3) && (pbf!=fblank)) pbf = 1.0/pbf;  /* Invert? */
-      
+
       /* Save beam image */
       out[indx] = pbf;
 

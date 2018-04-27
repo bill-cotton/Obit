@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2013                                               */
+/*;  Copyright (C) 2013-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -92,6 +92,9 @@ static int RMFitFuncJac (const gsl_vector *x, void *params,
 
 /** Private: Threaded fitting */
 static gpointer ThreadNLRMFit (gpointer arg);
+
+/** Private: Threaded RM synthesis fitting */
+static gpointer ThreadRMSynFit (gpointer arg);
 
 /*---------------Private structures----------------*/
 /* FT threaded function argument */
@@ -374,6 +377,11 @@ ObitRMFit* ObitRMFitCreate (gchar* name, olong nterm)
  * \li "minQUSNR" OBIT_float  scalar min. SNR for Q and U pixels [def 3.0]
  * \li "minFrac"  OBIT_float  scalar min. fraction of planes included [def 0.5]
  * \li "doError"  OBIT_boolean scalar If true do error analysis [def False]
+ * \li "doRMSyn"  OBIT_boolean scalar If true do max RM synthesis [def False]
+ * \li "maxRMSyn" OBIT_float scalar max RM to search (rad/m^2) [def ambiguity]
+ * \li "minRMSyn" OBIT_float scalar min RM to search (rad/m^2)[def -ambiguity]
+ * \li "delRMSyn" OBIT_float scalar RM increment for search (rad/m^2)[def 1.0]
+ * \li "maxChi2"  OBIT_float scalar max Chi^2 for search [def 10.0]
  *
  * \param inQImage Q Image cube to be fitted
  * \param inUImage U Image cube to be fitted
@@ -383,6 +391,7 @@ ObitRMFit* ObitRMFitCreate (gchar* name, olong nterm)
  *                 if doError:
  *                 Planes nterm+1->2*nterm are uncertainties in coefficients
  *                 Plane 2*nterm+1 = Chi squared of fit
+ *                 if do RMsyn, planes are 1=RM, 2=EVPA@0 lambda, 3=amp@0 lambda, 4=sum wt.
  * \param err      Obit error stack object.
  */
 void ObitRMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage, 
@@ -396,7 +405,7 @@ void ObitRMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage,
   union ObitInfoListEquiv InfoReal; 
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   odouble freq;
-  gchar *today=NULL, *SPECRM   = "SPECRM  ", keyword[9];
+  gchar *today=NULL, *SPECRM   = "SPECRM  ", *MaxRMSyn   = "MaxRMSyn", keyword[9];
   gchar *routine = "ObitRMFitCube";
 
   /* error checks */
@@ -430,6 +439,40 @@ void ObitRMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage,
   InfoReal.itg = (olong)FALSE; type = OBIT_bool;
   ObitInfoListGetTest(in->info, "doError", &type, dim, &InfoReal);
   in->doError = InfoReal.itg;
+
+  /* Want max RM Synthesis? */
+  InfoReal.itg = (olong)FALSE; type = OBIT_bool;
+  ObitInfoListGetTest(in->info, "doRMSyn", &type, dim, &InfoReal);
+  in->doRMSyn = InfoReal.itg;
+  if (in->doRMSyn) Obit_log_error(err, OBIT_InfoErr, "Using Max RM Synthesis");
+
+  /*  Max RM for RM syn search */
+  InfoReal.flt = 0.0; type = OBIT_float;
+  in->maxRMSyn  = 0.0;
+  ObitInfoListGetTest(in->info, "maxRMSyn", &type, dim, &InfoReal);
+  if (type==OBIT_float)       in->maxRMSyn = InfoReal.flt;
+  else if (type==OBIT_double) in->maxRMSyn = (ofloat)InfoReal.dbl;
+
+  /*  Min RM for RM syn search */
+  InfoReal.flt = 1.0; type = OBIT_float;
+  in->minRMSyn = 1.0;
+  ObitInfoListGetTest(in->info, "minRMSyn", &type, dim, &InfoReal);
+  if (type==OBIT_float)       in->minRMSyn = InfoReal.flt;
+  else if (type==OBIT_double) in->minRMSyn = (ofloat)InfoReal.dbl;
+
+  /* Delta RM for RM syn search */
+  InfoReal.flt = 1.0; type = OBIT_float;
+  in->delRMSyn = 1.0;
+  ObitInfoListGetTest(in->info, "delRMSyn", &type, dim, &InfoReal);
+  if (type==OBIT_float)       in->delRMSyn = InfoReal.flt;
+  else if (type==OBIT_double) in->delRMSyn = (ofloat)InfoReal.dbl;
+
+  /* maxChi2 for RM syn search */
+  InfoReal.flt = 10.0; type = OBIT_float;
+  in->maxChi2  = 10.0;
+  ObitInfoListGetTest(in->info, "maxChi2", &type, dim, &InfoReal);
+  if (type==OBIT_float)       in->maxChi2 = InfoReal.flt;
+  else if (type==OBIT_double) in->maxChi2 = (ofloat)InfoReal.dbl;
 
   /* Open input images to get info */
   IOBy = OBIT_IO_byPlane;
@@ -479,6 +522,8 @@ void ObitRMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage,
   /* How many output planes? */
   if (in->doError) nOut = 1+in->nterm*2;
   else nOut = in->nterm;
+  /* always 4 for doRMSyn */
+  if (in->doRMSyn) nOut = 4;
 
    /* Define term arrays */
   in->outFArrays = g_malloc0((nOut)*sizeof(ObitFArray*));
@@ -502,7 +547,8 @@ void ObitRMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage,
   outImage->myDesc->crval[outImage->myDesc->jlocf]  =  VELIGHT/sqrt(in->refLamb2);
   outImage->myDesc->crpix[outImage->myDesc->jlocf]  =  1.0;
   outImage->myDesc->cdelt[outImage->myDesc->jlocf]  =  1.0;
-  strncpy (outImage->myDesc->ctype[outImage->myDesc->jlocf], SPECRM , IMLEN_KEYWORD);
+  if (in->doRMSyn) strncpy (outImage->myDesc->ctype[outImage->myDesc->jlocf], MaxRMSyn, IMLEN_KEYWORD);
+  else             strncpy (outImage->myDesc->ctype[outImage->myDesc->jlocf], SPECRM ,  IMLEN_KEYWORD);
   outImage->myDesc->bitpix = -32;  /* Float it */
 
   /* Creation date today */
@@ -1244,7 +1290,13 @@ void ObitRMFitClear (gpointer inn)
  * Work divided up amoung 1 or more threads
  * In each pixel an RM is fitted if the number of valid data points 
  * exceeds in->nterm, otherwise the pixel is blanked.
+ * If in->doRMSyn then the max value of an RM synthesis is used
  * The results are stored in outFArrays:
+ * \li first entry is the RM at the reference lambda^2
+ * \li second is the EVLA (rad) at 0 lambda^2
+ * \li third is the polarized amplitude at 0 lambda^2
+ * \li fouurth is the sum of the statistical weights
+ * Otherwise, the results are stored in outFArrays:
  * \li first entry is the RM at the reference lambda^2
  * \li second is the EVLA (rad) at the reference lambda^2
  * \li entries nterm+1->nterm*2 RMS uncertainties on coefficients
@@ -1358,6 +1410,8 @@ static void Fitter (ObitRMFit* in, ObitErr *err)
   }
   
   /* Do operation possibly with threads */
+  if (in->doRMSyn) func = (ObitThreadFunc)ThreadRMSynFit;
+  else             func = (ObitThreadFunc)ThreadNLRMFit;
   OK = ObitThreadIterator (in->thread, nThreads, func, (gpointer)threadArgs);
   
   /* Check for problems */
@@ -1445,6 +1499,8 @@ static void WriteOutput (ObitRMFit* in, ObitImage *outImage,
   /* How many output planes? */
   if (in->doError) nOut = 1+in->nterm*2;
   else nOut = in->nterm;
+  /* always 4 for doRMSyn */
+  if (in->doRMSyn) nOut = 4;
 
   /* Loop writing planes */
   for (iplane=0; iplane<nOut; iplane++) {
@@ -1579,7 +1635,7 @@ static void NLRMFit (NLRMFitArg *arg)
   olong iter=0, i, nterm=2, nvalid;
   ofloat sumwt, fblank = ObitMagicF();
   double chi2;
-  int status, numb;
+  int status;
  
   /* Initialize output */
   if (arg->doError) 
@@ -1592,7 +1648,6 @@ static void NLRMFit (NLRMFitArg *arg)
   /* try to unwrap EVPA, get data to be fitted, returns number of valid data 
      and crude fits */
   nvalid = RMcoarse (arg);
-  numb   = nvalid;
 
   if (nvalid<=MAX(2,nterm)) return;  /* enough good data for fit? */
   /* High enough fraction of valid pixels? */
@@ -2026,3 +2081,203 @@ static int RMFitFuncJac (const gsl_vector *x, void *params,
   return GSL_SUCCESS;
 } /*  end RMFitFuncJac */
 #endif /* HAVE_GSL */ 
+
+/* RM Synthesis max routines */
+/**
+ * Thread function to RM Synthesis Max fit a portion of the image set
+ * \param arg      NLRMFitArg structure
+ * \li             coef[0]=RM, coef[1]=amp, coef[2]=phase, coef[3]=RMS Q,U
+ */
+static gpointer ThreadRMSynFit (gpointer arg)
+{
+  NLRMFitArg *larg    = (NLRMFitArg*)arg;
+  ObitRMFit* in       = (ObitRMFit*)larg->in;
+  olong lo            = larg->first-1;  /* First in y range */
+  olong hi            = larg->last;     /* Highest in y range */
+  ObitErr *err        = larg->err;
+
+  olong ix, iy, indx, i, besti;
+  ofloat fblank = ObitMagicF();
+  olong j, ntest, nvalid, numb;
+  ofloat minDL, maxDL, dRM, tRM, bestRM=0.0;
+  ofloat bestQ, bestU, sumrQ, sumrU, sumW=0.0, EVPA, amp;
+  double aarg, varaarg;
+  odouble amb, res, best, test;
+ /*gchar *routine = "ThreadRMSynFit";*/
+
+  /* error checks */
+  if (err->error) return NULL;
+  g_assert (ObitIsA(in, &myClassInfo));
+
+  /* Set up frequency info if in given */
+  if (in) {
+    larg->refLamb2 = in->refLamb2;
+    for (i=0; i<in->nlamb2; i++) {
+      larg->lamb2[i] = in->lamb2[i];
+    }
+  }
+
+  /* Loop over pixels in Y */
+  indx = lo*in->nx  -1;  /* Offset in pixel arrays */
+  for (iy=lo; iy<hi; iy++) {
+    /* Loop over pixels in X */
+    for (ix=0; ix<in->nx; ix++) {
+      indx ++;
+
+      /* Collect values;  */
+      for (i=0; i<in->nlamb2; i++) {
+	larg->Qobs[i] = in->inQFArrays[i]->array[indx];
+	larg->Uobs[i] = in->inUFArrays[i]->array[indx];
+	/* Data valid? */
+	if ((larg->Qobs[i]!=fblank) && 
+	    (larg->Uobs[i]!=fblank) && 
+	    ((fabs(larg->Qobs[i])>in->minQUSNR*in->QRMS[i]) ||
+	     (fabs(larg->Uobs[i])>in->minQUSNR*in->URMS[i]))) {
+	  /* Statistical weight */
+	  larg->Qvar[i] = (in->QRMS[i]*in->QRMS[i]);
+	  larg->Uvar[i] = (in->URMS[i]*in->URMS[i]);
+	  larg->Qweight[i] = 1.0 / in->QRMS[i];
+	  larg->Uweight[i] = 1.0 / in->URMS[i];
+	  /* End if datum valid */
+	} else { /* invalid pixel */
+	  larg->Qweight[i] = 0.0;
+	  larg->Uweight[i] = 0.0;
+	}
+	/* DEBUG
+	if ((ix==669) && (iy==449)) { 
+	  fprintf (stderr,"%3d q=%g u=%g qs=%g us=%g wt=%f\n",
+		   i, larg->Qobs[i], larg->Uobs[i], in->QRMS[i], in->URMS[i], larg->Qweight[i]);
+	} */
+      } /* end loop over frequencies */
+      
+      /* Fit coef[0]=RM, coef[1]=amp, coef[2]=phase, coef[3]=RMS Q,U */
+      /* get  values count valid data*/
+      numb   = 0; sumW = 0.0;
+      for (i=0; i<larg->nlamb2; i++) {
+	if ((larg->Qweight[i]>0.0) && (larg->Uweight[i]>0.0)) {
+	  larg->x[numb] = larg->lamb2[i] - larg->refLamb2;
+	  /* Weight of polarized amplitude */
+	  aarg    = fabs(larg->Uobs[i]/larg->Qobs[i]);
+	  varaarg = aarg*aarg*(larg->Qvar[i]/(larg->Qobs[i]*larg->Qobs[i]) + 
+			       larg->Uvar[i]/(larg->Uobs[i]*larg->Uobs[i]));
+	  larg->w[numb] = (1.0+aarg*aarg)/varaarg;
+	  larg->q[numb] = larg->Qobs[i];
+	  larg->u[numb] = larg->Uobs[i];
+	  sumW  += larg->w[numb];
+	  /* DEBUG
+	     fprintf (stderr, "%3d x=%8.5f q=%8.5f u=%8.5f w=%8.5g \n ",
+	     numb,larg->x[numb], larg->q[numb],larg->u[numb],larg->w[numb]);
+	     larg->Qweight[i] = larg->Uweight[i] = 1.0/20.0e-6;
+	     fprintf (stderr,"%3d l2=%g q=%g u=%g p=%f qwt=%g uwt=%g\n",
+	     i,larg->lamb2[i]-larg->refLamb2, larg->Qobs[i], larg->Uobs[i],larg->Pobs[i], 
+	     larg->Qweight[i], larg->Uweight[i]);*/
+	  numb++;
+	}
+      }
+      nvalid = numb;
+      /* enough data? */
+      if ((nvalid<=2) || ((((ofloat)nvalid)/((ofloat)larg->nlamb2)) < larg->minFrac)) {
+	bestRM = EVPA = fblank;  amp = 0.0; sumrQ = sumrU = 1000.0;
+	goto doneFit;
+      }
+      
+      /* max and min delta lamb2 - assume lamb2 ordered */
+      maxDL = fabs(larg->x[0]-larg->x[numb-1]);   /* range of actual delta lamb2 */
+      minDL  = 1.0e20; 
+      for (i=1; i<numb; i++) minDL = MIN (minDL, fabs(larg->x[i]-larg->x[i-1]));
+      /* 
+	 ambiguity  = pi/min_dlamb2
+	 resolution = pi/max_dlamb2 = RM which gives 1 turn over  lamb2 range
+      */
+      if (in->maxRMSyn>in->minRMSyn) {
+	dRM = MAX (1.0,in->delRMSyn);
+	ntest = 1+(in->maxRMSyn - in->minRMSyn)/dRM;
+      } else {
+	amb = G_PI / fabs(minDL);
+	res = G_PI / maxDL;
+	dRM = 0.05 * res;   /* test RM interval */
+	/* Test +/- 0.05 ambiguity every dRM */
+	ntest = 1 + amb/(0.05*dRM);
+	dRM *= 0.05;
+ 	in->minRMSyn = -(ntest/2) * dRM;
+     }
+      ntest =  MIN (ntest, 10001);   /* Some bounds */
+     
+      /* DEBUG
+	 fprintf (stderr,"amb = %f res= %f dRM=%f\n", amb, res, dRM); */
+      /* end DEBUG */
+      best = -1.0e20; besti = 0;
+      for (i=0; i<ntest; i++) {
+	tRM = in->minRMSyn + i * dRM;
+	/* Loop over data samples - first phases to convert to ref Lamb2 */
+	for (j=0; j<numb; j++) larg->wrk1[j]= -2*tRM * larg->x[j];
+	/* sines/cosine */
+	ObitSinCosVec (numb, larg->wrk1, larg->wrk3, larg->wrk2);
+	/* Find best sum of weighted amplitudes^2 converted to ref lambda^2 */
+	test = 0.0; sumrQ = sumrU = 0.0;
+	for (j=0; j<numb; j++) {
+	  sumrQ += larg->w[j]*(larg->q[j]*larg->wrk2[j] - larg->u[j]*larg->wrk3[j]); 
+	  sumrU += larg->w[j]*(larg->q[j]*larg->wrk3[j] + larg->u[j]*larg->wrk2[j]);
+	} 
+	test = sumrQ*sumrQ + sumrU*sumrU;
+	/* DEBUG 
+	   fprintf (stderr," i=%d test=%g  tRM %f sum Q=%f sum U=%f pen %f\n",
+	   i, test, tRM, sumrQ, sumrU,  penFact*abs(i-ntest/2));*/
+	/* end DEBUG */
+	if (test>best) {
+	  besti = i;
+	  best = test;
+	  bestRM = tRM;
+	  bestQ = sumrQ;
+	  bestU = sumrU;
+	}
+      }
+      /* Get chi sq for fit */
+      EVPA = 0.5 * atan2(bestU, bestQ);
+      amp = sqrtf(bestU*bestU + bestQ*bestQ)/sumW;
+      tRM = bestRM;
+      /* Loop over data samples - first phases to convert to ref Lamb2 */
+      for (j=0; j<larg->nlamb2; j++) 
+	larg->wrk1[j]= 2*tRM * (larg->lamb2[j]-larg->refLamb2) + 2.0*EVPA;
+      /* sines/cosine */
+      ObitSinCosVec (larg->nlamb2, larg->wrk1, larg->wrk3, larg->wrk2);
+      sumrQ = sumrU = 0.0; numb = 0;
+      for (j=0; j<larg->nlamb2; j++) {
+	if ((larg->Qweight[j]>0.0) && (larg->Uweight[j]>0.0)) {
+	  numb += 2;
+	  sumrQ += (larg->Qobs[j]-amp*larg->wrk2[j])*(larg->Qobs[j]-amp*larg->wrk2[j])/larg->Qvar[j]; 
+	  sumrU += (larg->Uobs[j]-amp*larg->wrk3[j])*(larg->Uobs[j]-amp*larg->wrk3[j])/larg->Uvar[j];
+	}
+      } 
+      sumrQ /= numb; sumrU /= numb; 
+      /* Save */
+    doneFit:
+      larg->coef[0] = bestRM;
+      larg->coef[1] = EVPA;
+      larg->coef[2] = amp;
+      larg->coef[3] = (sumrQ+sumrU);
+      /* Edit */
+      if ((larg->coef[3]>in->maxChi2) || (besti<=0) || (besti>=(ntest-1))) {
+	larg->coef[0] = larg->coef[1] = fblank;
+      }
+  
+      /* DEBUG
+      if ((ix==669) && (iy==449)) { 
+	 fprintf (stderr,"ix=%4d iy=%4d\n",ix+1,iy+1);
+	 fprintf (stderr,"RM=%f EVPA=%f chi2=%f\n",
+		  larg->coef[0], larg->coef[1],larg->coef[4]);
+      } */
+      
+      /* Save to output */
+      for (i=0; i<4; i++) 
+	in->outFArrays[i]->array[indx] = larg->coef[i];
+    } /* end x loop */
+  } /* end y loop */
+
+  /* Indicate completion */
+  if (larg->ithread>=0)
+    ObitThreadPoolDone (in->thread, (gpointer)&larg->ithread);
+
+  return NULL;
+} /* end ThreadRMSynFit */
+

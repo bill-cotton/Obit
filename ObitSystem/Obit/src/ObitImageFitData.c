@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -112,6 +112,8 @@ gconstpointer ObitImageFitDataGetClass (void)
  * \li "PosGuard" OBIT_double (1,1,1) Distance from edge to allow center
  *                [def no bound]
  * \li "FluxLow"  OBIT_double (1,1,1) Lower bounds on Flux density [no bound]
+ * \li "FixFlux"  OBIT_bool   (1,1,1) Fix fluxes to input [FALSE]
+ * \li "FixPos"   OBIT_bool   (1,1,1) Fix positions to input [FALSE]
  * \li "GMajUp"   OBIT_double (1,1,1) Major axis upper bound [no bound]
  * \li "GMajLow"  OBIT_double (1,1,1) Major axis lower bound [no bound]
  * \li "GMinUp"   OBIT_double (1,1,1) Minor axis upper bound [no bound]
@@ -131,6 +133,7 @@ ObitImageFitDataCreate (gchar* name, ObitFitRegion *reg,
   ofloat cells, rmax, rmin, rms, fblank=ObitMagicF();
   odouble dblank;
   gboolean doPosGuard, doFluxLow, doGMajUp, doGMajLow, doGMinUp, doGMinLow;
+  gboolean FixFlux=FALSE, FixPos=FALSE, doFixFlux, doFixPos;
   odouble PosGuard=0.0, FluxLow=0.0, GMajUp=0.0, GMajLow=0.0, GMinUp=0.0, GMinLow=0.0;
   olong i, j, k, nparm, nvar;
   gchar *routine = "ObitImageFitDataCreate";
@@ -143,10 +146,15 @@ ObitImageFitDataCreate (gchar* name, ObitFitRegion *reg,
   /* Bounds info */
   doPosGuard = ObitInfoListGetTest(bounds, "PosGuard", &type, dim, &PosGuard);
   doFluxLow  = ObitInfoListGetTest(bounds, "FluxLow",  &type, dim, &FluxLow);
+  doFluxLow  = doFluxLow && (FluxLow>0.0);
   doGMajUp   = ObitInfoListGetTest(bounds, "GMajUp",   &type, dim, &GMajUp); 
   doGMajLow  = ObitInfoListGetTest(bounds, "GMajLow",  &type, dim, &GMajLow);
   doGMinUp   = ObitInfoListGetTest(bounds, "GMinUp",   &type, dim, &GMinUp);
   doGMinLow  = ObitInfoListGetTest(bounds, "GMinLow",  &type, dim, &GMinLow);
+  doFixFlux  = ObitInfoListGetTest(bounds, "FixFlux",  &type, dim, &FixFlux);
+  doFixFlux  = doFixFlux && FixFlux;
+  doFixPos   = ObitInfoListGetTest(bounds, "FixPos",   &type, dim, &FixPos);
+  doFixPos   = doFixPos && FixPos;
 
   /* Avoid crazy values */
   GMajLow = MAX(0.5, GMajLow); doGMajLow = TRUE;
@@ -209,6 +217,7 @@ ObitImageFitDataCreate (gchar* name, ObitFitRegion *reg,
   rmin = ObitFArrayMin (out->pixels, pos);
   out->rscale = 5.0 / rmax;
   if (out->rscale==0.0) out->rscale = 1.0;
+  if (doFixFlux||doFluxLow) out->rscale = 1.0;  /* Causes trouble */
   ObitFArraySMul(out->pixels, out->rscale);
 
   /* count things in reg - for now fit all - only do Gaussians */
@@ -289,13 +298,24 @@ ObitImageFitDataCreate (gchar* name, ObitFitRegion *reg,
       /* solution bounds */
       if (doFluxLow) {
 	out->pl[i][0] = out->rscale * FluxLow;
+	out->pu[i][0] = out->rscale * FluxLow;  /* DEBUG */
 	out->p[i][0]  = MAX (out->p[i][0], out->pl[i][0]+out->dp[i][0]);
+      }
+      if (doFixFlux) {
+	out->pl[i][0] = out->p[i][0];
+	out->pu[i][0] = out->p[i][0];
       }
       if (doPosGuard) {
 	out->pl[i][1]  = PosGuard;
 	out->pl[i][2]  = PosGuard;
 	out->pu[i][1]  = reg->dim[0] - 1 - PosGuard;
 	out->pu[i][2]  = reg->dim[1] - 1 - PosGuard;
+      }
+      if (doFixPos) {
+	out->pl[i][1]  = out->p[i][1];
+	out->pl[i][2]  = out->p[i][2];
+	out->pu[i][1]  = out->p[i][1];
+	out->pu[i][2]  = out->p[i][1];
       }
       if (doGMajUp)  out->pu[i][3] = GMajUp;
       if (doGMajLow) {
