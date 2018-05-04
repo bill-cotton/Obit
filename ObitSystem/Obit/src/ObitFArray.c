@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2017                                          */
+/*;  Copyright (C) 2003-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -25,6 +25,24 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
+#if HAVE_AVX==1
+#include <immintrin.h>
+# define ALIGN32_BEG
+# define ALIGN32_END __attribute__((aligned(32)))
+/* Union allowing c interface */
+typedef __m256  V8SF; // vector of 8 float (avx)
+typedef __m256i V8SI; // vector of 8 int   (avx)
+typedef ALIGN32_BEG union {
+  float f[8];
+  int   i[8];
+  V8SF   v;
+} ALIGN32_END CV8SF;
+typedef ALIGN32_BEG union {
+  float f[8];
+  int   i[8];
+  V8SI   v;
+} ALIGN32_END IV8SF;
+#endif
 
 #include "ObitThread.h"
 #include "ObitFArray.h"
@@ -155,6 +173,8 @@ static olong MakeFAFuncArgs (ObitThread *thread, ObitFArray *in,
 
 /** Private: Delete Threaded args */
 static void KillFAFuncArgs (olong nargs, FAFuncArg **ThreadArgs);
+
+
 /*----------------------Public functions---------------------------*/
 /**
  * Constructor.
@@ -913,14 +933,31 @@ ofloat ObitFArrayMin (ObitFArray *in, olong *pos)
  */
 void ObitFArrayDeblank (ObitFArray *in, ofloat scalar)
 {
-  olong i;
+  olong i, ilast;
   ofloat fblank = ObitMagicF();
+#if HAVE_AVX==1
+  CV8SF v, vb, vm, vs;
+#endif
 
   /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* Loop over array */
-  for (i=0; i<in->arraySize; i++) 
+#if HAVE_AVX==1  /* Vector */
+  vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
+  vs.v  = _mm256_broadcast_ss(&scalar);   /* vector of values to replace blank */
+  /* Do blocks of 8 as vector */
+  for (i=0; i<in->arraySize-8; i+=8) {
+    v.v  = _mm256_loadu_ps(&in->array[i]);
+    vm.v = _mm256_cmp_ps(v.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v.v  = _mm256_blendv_ps(v.v,vs.v, vm.v);     /* replace blanks with scalar */
+    _mm256_storeu_ps(&in->array[i], v.v);
+  }
+  ilast = i;  /* How far did I get? */
+#else /* Scalar */
+  ilast = 0;  /* Do all */
+#endif
+  for (i=ilast; i<in->arraySize; i++) 
       if (in->array[i]==fblank)in->array[i] = scalar;
 
 } /* end  ObitFArrayDeblank */
@@ -941,10 +978,14 @@ ofloat ObitFArrayRMS (ObitFArray* in)
   ofloat half, *histo = NULL, *thist=NULL;
   ofloat rawRMS, fiddle, out = -1.0, fblank = ObitMagicF();
   gboolean done = FALSE;
-  olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
+  olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads, ilast;
   gboolean OK;
   FAFuncArg **threadArgs;
-
+#if HAVE_AVX==1
+  CV8SF v, vb, vm, vzero, vone, vcnt, vsum, vsum2, vt;
+  ofloat tmp;
+#endif
+ 
    /* error checks */
   g_assert (ObitFArrayIsA(in));
   g_assert (in->array != NULL);
@@ -957,7 +998,37 @@ ofloat ObitFArrayRMS (ObitFArray* in)
 
   /* How many valid values? */
   count = 0; sum = sum2 = 0.0; 
-  for (i=0; i<in->arraySize; i++) if (in->array[i]!=fblank) {
+#if HAVE_AVX==1  /* Vector */
+  vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
+  tmp = 0.0;
+  vzero.v  = _mm256_broadcast_ss(&tmp);  /* vector of zeroes */
+  vcnt.v   = _mm256_broadcast_ss(&tmp);  /* initialize counts */
+  vsum.v   = _mm256_broadcast_ss(&tmp);  /* initialize sum */
+  vsum2.v  = _mm256_broadcast_ss(&tmp);  /* initialize sum**2 */
+  tmp = 1.0;
+  vone.v   = _mm256_broadcast_ss(&tmp);  /* vector of ones */
+  /* Do blocks of 8 as vector */
+  for (i=0; i<in->arraySize-8; i+=8) {
+    v.v  = _mm256_loadu_ps(&in->array[i]);
+    vm.v = _mm256_cmp_ps(v.v, vb.v, _CMP_EQ_OQ);    /* find blanks */
+    v.v  = _mm256_blendv_ps(v.v,vzero.v, vm.v);     /* replace blanks with zeroes */
+    vt.v = _mm256_blendv_ps(vone.v, vzero.v, vm.v); /* 1/0 for count */
+    vcnt.v = _mm256_add_ps(vcnt.v,vt.v);  /* sum counts */
+    vsum.v = _mm256_add_ps(vsum.v,v.v);   /* sum data */
+    v.v    = _mm256_mul_ps(v.v, v.v);     /* square */
+    vsum2.v = _mm256_add_ps(vsum2.v,v.v); /* sum data squared */
+  }
+  ilast = i;  /* How far did I get? */
+  vcnt.v = _mm256_round_ps(vcnt.v,_MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);  /* round */
+  for (i=0; i<8; i++) {
+    count += (olong)vcnt.f[i];
+    sum   += vsum.f[i];
+    sum2  += vsum2.f[i];
+  }
+#else /* Scalar */
+  ilast = 0;  /* Do all */
+#endif
+  for (i=ilast; i<in->arraySize; i++) if (in->array[i]!=fblank) {
     count++;
     sum  += in->array[i];
     sum2 += in->array[i] * in->array[i];
@@ -1305,12 +1376,18 @@ ofloat ObitFArrayRMS0 (ObitFArray* in)
 ofloat ObitFArrayRMSQuant (ObitFArray* in)
 {
   ofloat out = -1.0;
-  olong i;
+  olong i, ilast;
   ofloat quant, zero, center, rawRMS, mode, rangeFact, fblank = ObitMagicF();
   olong icell, modeCell=0, imHalf=0, ipHalf=0, numCell;
   olong i1, i2, ic, it;
-  ofloat amax, amin, tmax, sum, sum2, x, count, mean, arg, cellFact=1.0;
+  ofloat amin, tmax, sum, sum2, x, count, mean, arg, cellFact=1.0;
   ofloat *histo = NULL;
+#if HAVE_AVX==1
+  CV8SF v, vb, vm, vflag, vmin, vfac;
+  IV8SF vcell;
+  ofloat tmp;
+  olong j;
+#endif
 
    /* error checks */
   g_assert (ObitFArrayIsA(in));
@@ -1340,7 +1417,7 @@ ofloat ObitFArrayRMSQuant (ObitFArray* in)
   histo = ObitMemAllocName(numCell*sizeof(ofloat), "FArray histo");
   
   /* value range */
-  amax = center + rangeFact*rawRMS;
+  /*amax = center + rangeFact*rawRMS;*/
   /* amin should be a quantization level */
   it = 0.5 + rangeFact*rawRMS/MAX(1.0e-20,quant);
   amin = center - it*quant;
@@ -1348,7 +1425,35 @@ ofloat ObitFArrayRMSQuant (ObitFArray* in)
   /* form histogram */
   cellFact =  1.0/quant;
   for (i=0; i<numCell; i++) histo[i] = 0.0;
-  for (i=0; i<in->arraySize; i++) {
+#if HAVE_AVX==1  /* Vector */
+  vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
+  tmp = -cellFact*amin;
+  vflag.v  = _mm256_broadcast_ss(&tmp);  /* flagged values */
+  tmp = amin;
+  vmin.v  = _mm256_broadcast_ss(&tmp);  /* amin */
+  tmp = cellFact;
+  vfac.v = _mm256_broadcast_ss(&tmp);  /* fact */
+  /* Do blocks of 8 as vector */
+  for (i=0; i<in->arraySize-8; i+=8) {
+    v.v    = _mm256_loadu_ps(&in->array[i]);         /* Data */
+    vm.v   = _mm256_cmp_ps(v.v, vb.v, _CMP_EQ_OQ);  /* find blanks */
+    v.v    = _mm256_blendv_ps(v.v,vflag.v,vm.v);    /* replace blanks */
+    v.v    = _mm256_sub_ps(v.v,vmin.v);        /* -amin */
+    v.v    = _mm256_mul_ps(v.v,vfac.v);        /* * fact */
+    v.v    = _mm256_round_ps(v.v,_MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);  /* round */
+    vcell.v = _mm256_cvtps_epi32(v.v);
+    for (j=0; j<8; j++) {
+      if (vcell.i[j]<0.0) continue;
+      icell = vcell.i[j];
+      icell = MIN (numCell-1, MAX(0, icell));
+      histo[icell]++;
+    }
+  }
+  ilast = i;  /* How far did I get? */
+#else /* Scalar and rest */
+  ilast = 0;
+#endif
+  for (i=ilast; i<in->arraySize; i++) {
     if (in->array[i]!=fblank){
       icell = 0.5 + cellFact * (in->array[i]-amin);
       icell = MIN (numCell-1, MAX(0, icell));
@@ -1431,19 +1536,68 @@ ofloat ObitFArrayRMSQuant (ObitFArray* in)
  */
 void ObitFArrayQuant (ObitFArray* in, ofloat *quant, ofloat *zero)
 {
-  olong i;
   ofloat delta, small, fblank = ObitMagicF();
-
+  olong i;
+#if HAVE_AVX==1
+  CV8SF v[2], vbig[2], vzero, vt, vneg, vb, vm, vacc, vsm;
+  glong iv, io, is;
+  ofloat big;
+#endif
    /* error checks */
   g_assert (ObitFArrayIsA(in));
   g_assert (in->array != NULL);
 
-  delta = 1.0e20; small = 1.0e20;
+  delta = 1.0e10; small = 1.0e10;
+#if HAVE_AVX==1  /* Vector */
+  vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
+  vacc.v = _mm256_broadcast_ss(&small);   /* min diff accumulator */
+  vsm.v  = _mm256_broadcast_ss(&small);   /* min accumulator */
+  big = small;
+  vbig[0].v = _mm256_broadcast_ss(&big);   /* big values */
+  big *= 1.05;
+  vbig[1].v = _mm256_broadcast_ss(&big);   /* bigger values */
+  big = -small;
+  vneg.v = _mm256_broadcast_ss(&big);     /* big negative values */
+  big = 0.0;
+  vzero.v = _mm256_broadcast_ss(&big);    /* zeroes */
+  /* First vector load */
+  iv = 0; is = 0;
+  v[iv].v = _mm256_loadu_ps(&in->array[is]); is++;
+  vm .v   = _mm256_cmp_ps(v[iv].v, vb.v, _CMP_EQ_OQ);
+  v[iv].v = _mm256_blendv_ps(v[iv].v,vbig[iv].v,vm.v); /* replace blanks */
+  /* Loop over array differencing sliding blocks of 8 */
+  while (is<in->arraySize-9) {
+    iv = 1-iv; /* Swap */
+    v[iv].v = _mm256_loadu_ps(&in->array[is]); is += 8;
+    vm.v    = _mm256_cmp_ps(v[iv].v, vb.v, _CMP_EQ_OQ);
+    v[iv].v = _mm256_blendv_ps(v[iv].v,vbig[iv].v,vm.v); /* replace blanks */
+    /* Max negative */
+    vm.v    = _mm256_cmp_ps(v[iv].v, vzero.v, _CMP_GT_OS);  /* mask of positives*/
+    vt.v    = _mm256_blendv_ps(v[iv].v, vneg.v, vm.v); /* set to large negative */
+    vsm.v  = _mm256_max_ps(vsm.v, vt.v);            /* min accumulator */   
+    /* Min positive */
+    vm.v    = _mm256_cmp_ps(v[iv].v, vzero.v, _CMP_LT_OS); /* mask of negatives */
+    vt.v    = _mm256_blendv_ps(v[iv].v, vbig[0].v, vm.v);/* set to large positives */
+    vsm.v   = _mm256_min_ps(vsm.v, vt.v);           /* min accumulator */   
+    /* Difference */
+    io = 1-iv;  /* other */
+    vt.v    = _mm256_sub_ps(v[iv].v,v[io].v);  /* Difference adjacent */
+    vt.v    = _mm256_mul_ps(vt.v,vt.v);        /* No abs fn so square */
+    vacc.v  = _mm256_min_ps(vacc.v, vt.v);     /* accumulate min */
+  }
+  /* parse results */
+  delta = vacc.f[0]; 
+  for (i=1; i<8; i++) if (vacc.f[i]<delta) delta = vacc.f[i];
+  delta = sqrt(delta);  /* differences were squared */
+  small = vsm.f[0];
+  for (i=1; i<8; i++) if (fabs(vsm.f[i])<fabs(small)) small = vsm.f[i];
+# else /* scalar*/
   for (i=1; i<in->arraySize; i++) if (in->array[i]!=fblank) {
     if (in->array[i]!=in->array[i-1])
       delta = MIN (fabs(in->array[i]-in->array[i-1]), delta);
     if (fabs(in->array[i]) < fabs(small)) small = in->array[i];
   }
+#endif
 
   /* Set output */
   *quant = delta;
@@ -1460,9 +1614,15 @@ void ObitFArrayQuant (ObitFArray* in, ofloat *quant, ofloat *zero)
  */
 ofloat ObitFArrayMode (ObitFArray* in)
 {
-  olong i, icell, modeCell, numCell, count, pos[MAXFARRAYDIM];
+  olong i, ilast, icell, modeCell, numCell, count, pos[MAXFARRAYDIM];
   ofloat amax, amin, tmax, cellFact, *histo;
   ofloat out = 0.0, fblank = ObitMagicF();
+#if HAVE_AVX==1
+  CV8SF v, vb, vm, vflag, vmin, vfac;
+  IV8SF vcell;
+  ofloat tmp;
+  olong j;
+#endif
 
    /* error checks */
   g_assert (ObitFArrayIsA(in));
@@ -1485,7 +1645,35 @@ ofloat ObitFArrayMode (ObitFArray* in)
   /* form histogram */
   cellFact =  numCell / (amax - amin + 1.0e-20);
   for (i=0; i<numCell; i++) histo[i] = 0.0;
-  for (i=0; i<in->arraySize; i++) {
+#if HAVE_AVX==1  /* Vector */
+  vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
+  tmp = -cellFact*amin;
+  vflag.v  = _mm256_broadcast_ss(&tmp);  /* flagged values */
+  tmp = amin;
+  vmin.v  = _mm256_broadcast_ss(&tmp);  /* amin */
+  tmp = cellFact;
+  vfac.v = _mm256_broadcast_ss(&tmp);  /* fact */
+  /* Do blocks of 8 as vector */
+  for (i=0; i<in->arraySize-8; i+=8) {
+    v.v    = _mm256_loadu_ps(&in->array[i]);         /* Data */
+    vm.v   = _mm256_cmp_ps(v.v, vb.v, _CMP_EQ_OQ);  /* find blanks */
+    v.v    = _mm256_blendv_ps(v.v,vflag.v,vm.v);    /* replace blanks */
+    v.v    = _mm256_sub_ps(v.v,vmin.v);        /* -amin */
+    v.v    = _mm256_mul_ps(v.v,vfac.v);        /* * fact */
+    v.v    = _mm256_round_ps(v.v,_MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);  /* round */
+    vcell.v = _mm256_cvtps_epi32(v.v);
+    for (j=0; j<8; j++) {
+      if (vcell.i[j]<0.0) continue;
+      icell = vcell.i[j];
+      icell = MIN (numCell-1, MAX(0, icell));
+      histo[icell]++;
+    }
+  }
+  ilast = i;  /* How far did I get? */
+#else /* Scalar and rest */
+  ilast = 0;
+#endif
+  for (i=ilast; i<in->arraySize; i++) {
     if (in->array[i]!=fblank){
       icell = 0.5 + cellFact * (in->array[i]-amin);
       icell = MIN (numCell-1, MAX(0, icell));
@@ -1520,8 +1708,12 @@ ofloat ObitFArrayMode (ObitFArray* in)
  */
 ofloat ObitFArrayMean (ObitFArray* in)
 {
-  olong i, count;
+  olong i, count, ilast;
   ofloat out = 0.0, fblank = ObitMagicF();
+#if HAVE_AVX==1
+  CV8SF v, vb, vm, vcnt,  vone, vzero, vt, vsum;
+  ofloat tmp;
+#endif
 
    /* error checks */
   g_assert (ObitFArrayIsA(in));
@@ -1529,7 +1721,33 @@ ofloat ObitFArrayMean (ObitFArray* in)
 
   out = 0.0;
   count = 0;
-  for (i=0; i<in->arraySize; i++) {
+#if HAVE_AVX==1  /* Vector */
+  vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
+  tmp = 1.0;
+  vone.v  = _mm256_broadcast_ss(&tmp);   /* vector of ones */
+  tmp = 0.0;
+  vzero.v  = _mm256_broadcast_ss(&tmp);  /* vector of zeroes */
+  vcnt.v   = _mm256_broadcast_ss(&tmp);  /* initialize counts */
+  vsum.v   = _mm256_broadcast_ss(&tmp);  /* initialize sum */
+  /* Do blocks of 8 as vector */
+  for (i=0; i<in->arraySize-8; i+=8) {
+    v.v  = _mm256_loadu_ps(&in->array[i]);          /* load */
+    vm.v = _mm256_cmp_ps(v.v, vb.v, _CMP_EQ_OQ);    /* find blanks */
+    v.v  = _mm256_blendv_ps(v.v,vzero.v,vm.v);      /* replace blanks with zeroes */
+    vt.v = _mm256_blendv_ps(vone.v, vzero.v, vm.v); /* zero blank for counts */
+    vcnt.v = _mm256_add_ps(vcnt.v,vt.v);  /* sum counts */
+    vsum.v = _mm256_add_ps(vsum.v,v.v);   /* sum data */
+  }
+  ilast = i;  /* How far did I get? */
+  vcnt.v = _mm256_round_ps(vcnt.v,_MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);  /* round */
+  for (i=0; i<8; i++) {
+    count += (olong)vcnt.f[i];
+    out   += vsum.f[i];
+  }
+ #else /* Scalar */
+  ilast = 0;  /* Do all */
+#endif
+  for (i=ilast; i<in->arraySize; i++) {
     if (in->array[i]!=fblank) {
       out += in->array[i];
       count++;
@@ -1550,13 +1768,25 @@ ofloat ObitFArrayMean (ObitFArray* in)
  */
 void ObitFArrayFill (ObitFArray* in, ofloat scalar)
 {
-  olong i;
+  olong i, ilast;
+#if HAVE_AVX==1
+  CV8SF vs;
+#endif
 
    /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));
   g_assert (in->array != NULL);
 
-  for (i=0; i<in->arraySize; i++) in->array[i] = scalar;
+#if HAVE_AVX==1  /* Vector */
+  vs.v   = _mm256_broadcast_ss(&scalar);  /* vector of scalar */
+  for (i=0; i<in->arraySize-8; i+=8) {
+    _mm256_storeu_ps(&in->array[i], vs.v); /* Save */
+ }
+  ilast = i;  /* How far did I get? */
+#else /* Scalar */
+  ilast = 0;  /* Do all */
+#endif
+  for (i=ilast; i<in->arraySize; i++) in->array[i] = scalar;
 } /* end  ObitFArrayFill */
 
 /**
@@ -1578,7 +1808,7 @@ void ObitFArrayNeg (ObitFArray* in)
 } /* end  ObitFArrayNeg */
 
 /**
- *  Taks abs value of each element of the array.
+ *  Takes abs value of each element of the array.
  * in = |in|.
  * \param in Input object with data
  */
@@ -1679,16 +1909,44 @@ ofloat ObitFArraySum (ObitFArray* in)
  */
 olong ObitFArrayCount (ObitFArray* in)
 {
-  olong i, out = 0;
+  olong i, ilast, out = 0;
   ofloat fblank = ObitMagicF();
+  olong count=0;
 
+#if HAVE_AVX==1
+  CV8SF v, vb, vm, vzero, vone, vcnt, vt;
+  ofloat tmp;
+#endif
    /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));
   g_assert (in->array != NULL);
 
-  for (i=0; i<in->arraySize; i++) 
-    if (in->array[i]!=fblank) out++;
+  count = 0;
+#if HAVE_AVX==1  /* Vector */
+  vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
+  tmp = 0.0;
+  vzero.v  = _mm256_broadcast_ss(&tmp);  /* vector of zeroes */
+  vcnt.v   = _mm256_broadcast_ss(&tmp);  /* initialize counts */
+  tmp = 1.0;
+  vone.v   = _mm256_broadcast_ss(&tmp);  /* vector of ones */
+  /* Do blocks of 8 as vector */
+  for (i=0; i<in->arraySize-8; i+=8) {
+    v.v  = _mm256_loadu_ps(&in->array[i]);
+    vm.v = _mm256_cmp_ps(v.v, vb.v, _CMP_EQ_OQ);     /* find blanks */
+    v.v  = _mm256_blendv_ps(v.v,vzero.v,vm.v); /* replace blanks with zeroes */
+    vt.v = _mm256_blendv_ps(vone.v, vzero.v, vm.v);
+    vcnt.v = _mm256_add_ps(vcnt.v,vt.v);  /* sum counts */
+  }
+  ilast = i;  /* How far did I get? */
+  vcnt.v = _mm256_round_ps(vcnt.v,_MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);  /* round */
+  for (i=0; i<8; i++) count += (olong)vcnt.f[i];
+#else /* Scalar */
+  ilast = 0;  /* Do all */
+#endif
+  for (i=ilast; i<in->arraySize; i++) 
+    if (in->array[i]!=fblank) count++;
 
+  out = count;
   return out;
 } /* end  ObitFArrayCount */
 
@@ -1700,14 +1958,36 @@ olong ObitFArrayCount (ObitFArray* in)
  */
 void ObitFArraySAdd (ObitFArray* in, ofloat scalar)
 {
-  olong i;
+  olong i, ilast;
   ofloat fblank = ObitMagicF();
+#if HAVE_AVX==1
+  CV8SF v, vb, vm, vs, vzero;
+  ofloat tmp;
+#endif
 
    /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));
   g_assert (in->array != NULL);
 
-  for (i=0; i<in->arraySize; i++) 
+#if HAVE_AVX==1  /* Vector */
+  vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
+  vs.v   = _mm256_broadcast_ss(&scalar);  /* vector of scalar */
+  tmp = 0.0;
+  vzero.v  = _mm256_broadcast_ss(&tmp);  /* vector of zeroes */
+  /* Do blocks of 8 as vector */
+  for (i=0; i<in->arraySize-8; i+=8) {
+    v.v  = _mm256_loadu_ps(&in->array[i]);       /* fetch */
+    vm.v = _mm256_cmp_ps(v.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v.v  = _mm256_blendv_ps(v.v,vzero.v,vm.v);   /* replace blanks with zeroes */
+    v.v  = _mm256_add_ps(v.v,vs.v);              /* do operation */
+    v.v  = _mm256_blendv_ps(v.v, vb.v, vm.v);    /* reblank */
+    _mm256_storeu_ps(&in->array[i], v.v);        /* Save */
+ }
+  ilast = i;  /* How far did I get? */
+#else /* Scalar */
+  ilast = 0;  /* Do all */
+#endif
+  for (i=ilast; i<in->arraySize; i++) 
     if (in->array[i]!=fblank) in->array[i] += scalar;
 } /* end ObitFArraySAdd */
 
@@ -1719,14 +1999,36 @@ void ObitFArraySAdd (ObitFArray* in, ofloat scalar)
  */
 void ObitFArraySMul (ObitFArray* in, ofloat scalar)
 {
-  olong i;
+  olong i, ilast;
   ofloat fblank = ObitMagicF();
+#if HAVE_AVX==1
+  CV8SF v, vb, vm, vs, vone;
+  ofloat tmp;
+#endif
 
    /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));
   g_assert (in->array != NULL);
 
-  for (i=0; i<in->arraySize; i++) 
+#if HAVE_AVX==1  /* Vector */
+  vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
+  vs.v   = _mm256_broadcast_ss(&scalar);  /* vector of scalar */
+  tmp = 1.0;
+  vone.v  = _mm256_broadcast_ss(&tmp);  /* vector of ones */
+  /* Do blocks of 8 as vector */
+  for (i=0; i<in->arraySize-8; i+=8) {
+    v.v  = _mm256_loadu_ps(&in->array[i]);       /* fetch */
+    vm.v = _mm256_cmp_ps(v.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v.v  = _mm256_blendv_ps(v.v,vone.v,vm.v);    /* replace blanks with ones */
+    v.v  = _mm256_mul_ps(v.v,vs.v);              /* do operation */
+    v.v  = _mm256_blendv_ps(v.v, vb.v, vm.v);    /* reblank */
+    _mm256_storeu_ps(&in->array[i], v.v);        /* Save */
+ }
+  ilast = i;  /* How far did I get? */
+#else /* Scalar */
+  ilast = 0;  /* Do all */
+#endif
+  for (i=ilast; i<in->arraySize; i++) 
     if (in->array[i]!=fblank) in->array[i]  *= scalar;
 } /* end ObitFArraySMul */
 
@@ -1805,8 +2107,11 @@ void ObitFArrayInClip (ObitFArray* in, ofloat minVal, ofloat maxVal,
  */
 void ObitFArrayBlank (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 {
-  olong i;
+  olong i, ilast;
   ofloat fblank = ObitMagicF();
+#if HAVE_AVX==1
+  CV8SF v, v2, vb, vm;
+#endif
 
    /* error checks */
   g_assert (ObitIsA(in1, &myClassInfo));
@@ -1814,6 +2119,21 @@ void ObitFArrayBlank (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   g_assert (ObitFArrayIsCompatable(in1, in2));
   g_assert (ObitFArrayIsCompatable(in1, out));
 
+#if HAVE_AVX==1  /* Vector */
+  vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
+  /* Do blocks of 8 as vector */
+  for (i=0; i<in1->arraySize-8; i+=8) {
+    v.v  = _mm256_loadu_ps(&in1->array[i]);       /* fetch 1 */
+    v2.v = _mm256_loadu_ps(&in2->array[i]);       /* fetch 2 */
+    vm.v = _mm256_cmp_ps(v2.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v.v  = _mm256_blendv_ps(v.v, vb.v, vm.v);     /* blank 1 */
+    _mm256_storeu_ps(&out->array[i], v.v);        /* Save */
+ }
+  ilast = i;  /* How far did I get? */
+#else /* Scalar */
+  ilast = 0;  /* Do all */
+#endif
+  for (i=ilast; i<in1->arraySize; i++) 
   for (i=0; i<in1->arraySize; i++) {
     if (in2->array[i]!=fblank)
       out->array[i] = in1->array[i];
@@ -1832,7 +2152,6 @@ void ObitFArrayMaxArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 {
   olong i;
   olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
-  gboolean OK;
   FAFuncArg **threadArgs;
 
    /* error checks */
@@ -1868,10 +2187,10 @@ void ObitFArrayMaxArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   }
 
   /* Do operation */
-  OK = ObitThreadIterator (in1->thread, nTh, 
-			   (ObitThreadFunc)ThreadFAMaxArr,
-			   (gpointer**)threadArgs);
-
+   ObitThreadIterator (in1->thread, nTh, 
+		       (ObitThreadFunc)ThreadFAMaxArr,
+		       (gpointer**)threadArgs);
+   
   /* Free local objects */
   KillFAFuncArgs(nThreads, threadArgs);
   
@@ -1888,7 +2207,6 @@ void ObitFArrayMinArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 {
   olong i;
   olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
-  gboolean OK;
   FAFuncArg **threadArgs;
 
    /* error checks */
@@ -1924,9 +2242,9 @@ void ObitFArrayMinArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   }
 
   /* Do operation */
-  OK = ObitThreadIterator (in1->thread, nTh, 
-			   (ObitThreadFunc)ThreadFAMinArr,
-			   (gpointer**)threadArgs);
+  ObitThreadIterator (in1->thread, nTh, 
+		      (ObitThreadFunc)ThreadFAMinArr,
+		      (gpointer**)threadArgs);
 
   /* Free local objects */
   KillFAFuncArgs(nThreads, threadArgs);
@@ -1943,7 +2261,6 @@ void ObitFArrayExtArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 {
   olong i;
   olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
-  gboolean OK;
   FAFuncArg **threadArgs;
 
    /* error checks */
@@ -1979,9 +2296,9 @@ void ObitFArrayExtArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   }
 
   /* Do operation */
-  OK = ObitThreadIterator (in1->thread, nTh, 
-			   (ObitThreadFunc)ThreadFAExtArr,
-			   (gpointer**)threadArgs);
+  ObitThreadIterator (in1->thread, nTh, 
+		      (ObitThreadFunc)ThreadFAExtArr,
+		      (gpointer**)threadArgs);
 
   /* Free local objects */
   KillFAFuncArgs(nThreads, threadArgs);
@@ -1998,7 +2315,6 @@ void ObitFArraySumArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 {
   olong i;
   olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
-  gboolean OK;
   FAFuncArg **threadArgs;
 
    /* error checks */
@@ -2034,9 +2350,9 @@ void ObitFArraySumArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   }
 
   /* Do operation */
-  OK = ObitThreadIterator (in1->thread, nTh, 
-			   (ObitThreadFunc)ThreadFASumArr,
-			   (gpointer**)threadArgs);
+  ObitThreadIterator (in1->thread, nTh, 
+		      (ObitThreadFunc)ThreadFASumArr,
+		      (gpointer**)threadArgs);
 
   /* Free local objects */
   KillFAFuncArgs(nThreads, threadArgs);
@@ -2054,7 +2370,6 @@ void ObitFArrayAvgArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 {
   olong i;
   olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
-  gboolean OK;
   FAFuncArg **threadArgs;
 
    /* error checks */
@@ -2090,9 +2405,9 @@ void ObitFArrayAvgArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   }
 
   /* Do operation */
-  OK = ObitThreadIterator (in1->thread, nTh, 
-			   (ObitThreadFunc)ThreadFAAvgArr,
-			   (gpointer**)threadArgs);
+  ObitThreadIterator (in1->thread, nTh, 
+		      (ObitThreadFunc)ThreadFAAvgArr,
+		      (gpointer**)threadArgs);
 
   /* Free local objects */
   KillFAFuncArgs(nThreads, threadArgs);
@@ -2110,7 +2425,6 @@ void ObitFArrayAdd (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 {
   olong i;
   olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
-  gboolean OK;
   FAFuncArg **threadArgs;
 
    /* error checks */
@@ -2146,10 +2460,10 @@ void ObitFArrayAdd (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   }
 
   /* Do operation */
-  OK = ObitThreadIterator (in1->thread, nTh, 
-			   (ObitThreadFunc)ThreadFAAdd,
-			   (gpointer**)threadArgs);
-
+  ObitThreadIterator (in1->thread, nTh, 
+		      (ObitThreadFunc)ThreadFAAdd,
+		      (gpointer**)threadArgs);
+  
   /* Free local objects */
   KillFAFuncArgs(nThreads, threadArgs);
   
@@ -2194,7 +2508,6 @@ void ObitFArraySub (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 {
   olong i;
   olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
-  gboolean OK;
   FAFuncArg **threadArgs;
 
    /* error checks */
@@ -2230,9 +2543,9 @@ void ObitFArraySub (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   }
 
   /* Do operation */
-  OK = ObitThreadIterator (in1->thread, nTh, 
-			   (ObitThreadFunc)ThreadFASub,
-			   (gpointer**)threadArgs);
+  ObitThreadIterator (in1->thread, nTh, 
+		      (ObitThreadFunc)ThreadFASub,
+		      (gpointer**)threadArgs);
 
   /* Free local objects */
   KillFAFuncArgs(nThreads, threadArgs);
@@ -2276,7 +2589,6 @@ void ObitFArrayMul (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 {
   olong i;
   olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
-  gboolean OK;
   FAFuncArg **threadArgs;
 
    /* error checks */
@@ -2312,10 +2624,10 @@ void ObitFArrayMul (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   }
 
   /* Do operation */
-  OK = ObitThreadIterator (in1->thread, nTh, 
-			   (ObitThreadFunc)ThreadFAMul,
-			   (gpointer**)threadArgs);
-
+  ObitThreadIterator (in1->thread, nTh, 
+		      (ObitThreadFunc)ThreadFAMul,
+		      (gpointer**)threadArgs);
+  
   /* Free local objects */
   KillFAFuncArgs(nThreads, threadArgs);
   
@@ -2332,7 +2644,6 @@ void ObitFArrayDiv (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 {
   olong i;
   olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
-  gboolean OK;
   FAFuncArg **threadArgs;
 
    /* error checks */
@@ -2368,9 +2679,9 @@ void ObitFArrayDiv (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   }
 
   /* Do operation */
-  OK = ObitThreadIterator (in1->thread, nTh, 
-			   (ObitThreadFunc)ThreadFADiv,
-			   (gpointer**)threadArgs);
+  ObitThreadIterator (in1->thread, nTh, 
+		      (ObitThreadFunc)ThreadFADiv,
+		      (gpointer**)threadArgs);
 
   /* Free local objects */
   KillFAFuncArgs(nThreads, threadArgs);
@@ -2707,7 +3018,7 @@ void ObitFArray2DCGauss (ObitFArray *array, olong Cen[2], ofloat FWHM)
 
 /**
  * Make 2-D elliptical Gaussian in an FArray
- * Model is added to previoius contents of the FArray
+ * Model is added to previous contents of the FArray
  * \param array   Array to fill in
  * \param amp     Peak value of Gaussian
  * \param Cen     0-rel center pixel
@@ -2777,7 +3088,7 @@ void ObitFArrayShiftAdd (ObitFArray* in1, olong *pos1,
 			 ObitFArray* in2, olong *pos2, 
 			 ofloat scalar, ObitFArray* out)
 {
-  olong ip, np, hiy, loy, nx1, ny1, nx2, ny2, offy;
+  olong ip, np, hiy, loy, ny1, ny2, offy;
   olong i, nTh, nRow, loRow, hiRow, nRowPerThread, nThreads;
   gboolean OK;
   FAFuncArg **threadArgs;
@@ -2799,9 +3110,7 @@ void ObitFArrayShiftAdd (ObitFArray* in1, olong *pos1,
 
   /* determine regions of overlap in in1/out of in2 */
   offy = pos2[1] - pos1[1];
-  nx1 = in1->naxis[0];
   ny1 = in1->naxis[1];
-  nx2 = in2->naxis[0];
   ny2 = in2->naxis[1];
   loy = MAX (0, pos1[1] - in2->naxis[1]/2);
   hiy = MIN (ny1-1, pos1[1] + in2->naxis[1]/2);
@@ -3275,8 +3584,8 @@ ofloat ObitFArrayRandom (ofloat mean, ofloat sigma)
   if (GSLran_gen==NULL) GSLran_gen=gsl_rng_alloc(gsl_rng_default);
   val = mean + (ofloat)gsl_ran_gaussian (GSLran_gen, dsigma);
 #else /* more primitive */
-  int i, ival;
-  ofloat sum, val, norm;
+  int i;
+  ofloat sum, norm;
   sum = 0.0;
   norm = 1.0 / RAND_MAX;
   for (i=0; i<12; i++) sum += (norm*rand());
@@ -3622,15 +3931,35 @@ static gpointer ThreadFAAdd (gpointer arg)
   olong      loElem     = largs->first-1;
   olong      hiElem     = largs->last;
 
-
   /* local */
-  olong   i;
+  olong   i, ilast;
   ofloat  fblank = ObitMagicF();
+#if HAVE_AVX==1
+  CV8SF v1, v2, vb, vm1, vm2;
+#endif
+
 
   if (hiElem<loElem) goto finish;
 
   /* Loop over array */
-  for (i=loElem; i<hiElem; i++) {
+#if HAVE_AVX==1  /* Vector */
+  vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
+  /* Do blocks of 8 as vector */
+  for (i=loElem; i<hiElem-8; i+=8) {
+    v1.v  = _mm256_loadu_ps(&in1->array[i]);
+    vm1.v = _mm256_cmp_ps(v1.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v2.v  = _mm256_loadu_ps(&in2->array[i]);
+    vm2.v = _mm256_cmp_ps(v2.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v2.v  = _mm256_add_ps(v1.v, v2.v);             /* do operation */
+    v2.v  = _mm256_blendv_ps(v2.v,vb.v, vm1.v);    /* replace blanks 1 */
+    v2.v  = _mm256_blendv_ps(v2.v,vb.v, vm2.v);    /* replace blanks 2 */
+    _mm256_storeu_ps(&out->array[i], v2.v);        /* Save */
+  }
+  ilast = i;  /* How far did I get? */
+#else /* Scalar */
+  ilast = 0;  /* Do all */
+#endif
+  for (i=ilast; i<hiElem; i++) {
     if ((in1->array[i]!=fblank) && (in2->array[i]!=fblank)) 
       out->array[i] = in1->array[i] + in2->array[i];
     else out->array[i] = fblank;
@@ -3646,7 +3975,7 @@ static gpointer ThreadFAAdd (gpointer arg)
 } /*  end ThreadFAAdd */
 
 /**
- * Subtract portions of two FArrays, out = in - in2
+ * Subtract portions of two FArrays, out = in1 - in2
  * Magic value blanking supported.
  * Callable as thread
  * \param arg Pointer to FAFuncArg argument with elements:
@@ -3669,13 +3998,33 @@ static gpointer ThreadFASub (gpointer arg)
   olong      hiElem     = largs->last;
 
   /* local */
-  olong   i;
+  olong   i, ilast;
   ofloat  fblank = ObitMagicF();
+#if HAVE_AVX==1
+  CV8SF v1, v2, vb, vm1, vm2;
+#endif
 
   if (hiElem<loElem) goto finish;
 
   /* Loop over array */
-  for (i=loElem; i<hiElem; i++) {
+#if HAVE_AVX==1  /* Vector */
+  vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
+  /* Do blocks of 8 as vector */
+  for (i=loElem; i<hiElem-8; i+=8) {
+    v1.v  = _mm256_loadu_ps(&in1->array[i]);
+    vm1.v = _mm256_cmp_ps(v1.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v2.v  = _mm256_loadu_ps(&in2->array[i]);
+    vm2.v = _mm256_cmp_ps(v2.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v2.v  = _mm256_sub_ps(v1.v, v2.v);             /* do operation */
+    v2.v  = _mm256_blendv_ps(v2.v,vb.v, vm1.v);    /* replace blanks 1 */
+    v2.v  = _mm256_blendv_ps(v2.v,vb.v, vm2.v);    /* replace blanks 2 */
+    _mm256_storeu_ps(&out->array[i], v2.v);
+  }
+  ilast = i;  /* How far did I get? */
+#else /* Scalar */
+  ilast = 0;  /* Do all */
+#endif
+  for (i=ilast; i<hiElem; i++) {
     if ((in1->array[i]!=fblank) && (in2->array[i]!=fblank)) 
       out->array[i] = in1->array[i] - in2->array[i];
     else out->array[i] = fblank;
@@ -3714,13 +4063,33 @@ static gpointer ThreadFAMul (gpointer arg)
   olong      hiElem     = largs->last;
 
   /* local */
-  olong   i;
+  olong   i, ilast;
   ofloat  fblank = ObitMagicF();
+#if HAVE_AVX==1
+  CV8SF v1, v2, vb, vm1, vm2;
+#endif
 
   if (hiElem<loElem) goto finish;
 
   /* Loop over array */
-  for (i=loElem; i<hiElem; i++) {
+#if HAVE_AVX==1  /* Vector */
+  vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
+  /* Do blocks of 8 as vector */
+  for (i=loElem; i<hiElem-8; i+=8) {
+    v1.v  = _mm256_loadu_ps(&in1->array[i]);
+    vm1.v = _mm256_cmp_ps(v1.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v2.v  = _mm256_loadu_ps(&in2->array[i]);
+    vm2.v = _mm256_cmp_ps(v2.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v2.v  = _mm256_mul_ps(v1.v, v2.v);             /* do operation */
+    v2.v  = _mm256_blendv_ps(v2.v,vb.v, vm1.v);    /* replace blanks 1 */
+    v2.v  = _mm256_blendv_ps(v2.v,vb.v, vm2.v);    /* replace blanks 2 */
+    _mm256_storeu_ps(&out->array[i], v2.v);        /* Save */
+  }
+  ilast = i;  /* How far did I get? */
+#else /* Scalar */
+  ilast = 0;  /* Do all */
+#endif
+  for (i=ilast; i<hiElem; i++) {
     if ((in1->array[i]!=fblank) && (in2->array[i]!=fblank)) 
       out->array[i] = in1->array[i] * in2->array[i];
     else out->array[i] = fblank;
@@ -3806,13 +4175,38 @@ static gpointer ThreadFASumArr (gpointer arg)
   olong      hiElem     = largs->last;
 
   /* local */
-  olong   i;
+  olong   i, ilast;
   ofloat  fblank = ObitMagicF();
+#if HAVE_AVX==1
+  CV8SF v1, v2, vb, vm1, vm2, vzero;
+  ofloat tmp;
+#endif
 
   if (hiElem<loElem) goto finish;
 
   /* Loop over array */
-  for (i=loElem; i<hiElem; i++) {
+ #if HAVE_AVX==1  /* Vector */
+  vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
+  tmp = 0.0;
+  vzero.v  = _mm256_broadcast_ss(&tmp);  /* vector of zeroes */
+  /* Do blocks of 8 as vector */
+  for (i=loElem; i<hiElem-8; i+=8) {
+    v1.v  = _mm256_loadu_ps(&in1->array[i]);
+    vm1.v = _mm256_cmp_ps(v1.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v1.v  = _mm256_blendv_ps(v1.v,vzero.v,vm1.v);  /* replace blanks with zeroes */
+    v2.v  = _mm256_loadu_ps(&in2->array[i]);
+    vm2.v = _mm256_cmp_ps(v2.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v2.v  = _mm256_blendv_ps(v2.v,vzero.v,vm2.v);  /* replace blanks with zeroes */
+    v2.v  = _mm256_add_ps(v1.v, v2.v);             /* do operation */
+    vm2.v = _mm256_and_ps(vm1.v, vm2.v);           /* both blanked */
+    v2.v  = _mm256_blendv_ps(v2.v,vb.v, vm2.v);    /* replace blanks 1 */
+    _mm256_storeu_ps(&out->array[i], v2.v);        /* Save */
+  }
+  ilast = i;  /* How far did I get? */
+#else /* Scalar */
+  ilast = 0;  /* Do all */
+#endif
+  for (i=ilast; i<hiElem; i++) {
     if ((in1->array[i]!=fblank) && (in2->array[i]!=fblank)) 
       out->array[i] = (in1->array[i] + in2->array[i]);
     else if (in1->array[i]==fblank)  /* 1 blanked */
@@ -4213,14 +4607,48 @@ static gpointer ThreadFARMSSum (gpointer arg)
   olong      hiElem     = largs->last;
 
   /* local */
-  olong i, count;
+  olong i, count, ilast;
   ofloat sum, sum2, fblank = ObitMagicF();
+#if HAVE_AVX==1
+  CV8SF v, vb, vm, vzero, vone, vcnt, vsum, vsum2, vt;
+  ofloat tmp;
+#endif
 
   if (hiElem<loElem) goto finish;
 
   /* Loop over array */
   count = 0; sum = sum2 = 0.0; 
-  for (i=loElem; i<hiElem; i++) 
+#if HAVE_AVX==1  /* Vector */
+  vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
+  tmp = 0.0;
+  vzero.v  = _mm256_broadcast_ss(&tmp);  /* vector of zeroes */
+  vcnt.v   = _mm256_broadcast_ss(&tmp);  /* initialize counts */
+  vsum.v   = _mm256_broadcast_ss(&tmp);  /* initialize sum */
+  vsum2.v  = _mm256_broadcast_ss(&tmp);  /* initialize sum**2 */
+  tmp = 1.0;
+  vone.v   = _mm256_broadcast_ss(&tmp);  /* vector of ones */
+  /* Do blocks of 8 as vector */
+  for (i=loElem; i<hiElem-8; i+=8) {
+    v.v  = _mm256_loadu_ps(&in->array[i]);
+    vm.v = _mm256_cmp_ps(v.v, vb.v, _CMP_EQ_OQ);     /* find blanks */
+    v.v  = _mm256_blendv_ps(v.v,vzero.v,vm.v); /* replace blanks with zeroes */
+    vt.v = _mm256_blendv_ps(vone.v, vzero.v, vm.v);
+    vcnt.v = _mm256_add_ps(vcnt.v,vt.v);  /* sum counts */
+    vsum.v = _mm256_add_ps(vsum.v,v.v);   /* sum data */
+    v.v    = _mm256_mul_ps(v.v, v.v);     /* square */
+    vsum2.v = _mm256_add_ps(vsum2.v,v.v); /* sum data squared */
+  }
+  ilast = i;  /* How far did I get? */
+  vcnt.v = _mm256_round_ps(vcnt.v,_MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);  /* round */
+  for (i=0; i<8; i++) {
+    count += (olong)vcnt.f[i];
+    sum   += vsum.f[i];
+    sum2  += vsum2.f[i];
+  }
+#else /* Scalar */
+  ilast = loElem;  /* Do all */
+#endif
+  for (i=ilast; i<hiElem; i++) 
     {
       if (in->array[i]!=fblank) {
 	count++;
@@ -4276,8 +4704,14 @@ static gpointer ThreadFAHisto (gpointer arg)
   ollong     over       = *(ollong*)largs->arg7;
 
   /* local */
-  olong  i, icell;
+  olong  i, icell, ilast;
   ofloat cellFact, fblank = ObitMagicF();
+#if HAVE_AVX==1
+  CV8SF v, vb, vm, vflag, vmin, vfac;
+  IV8SF vcell;
+  ofloat tmp;
+  olong j;
+#endif
 
   if (hiElem<loElem) goto finish;
 
@@ -4285,7 +4719,36 @@ static gpointer ThreadFAHisto (gpointer arg)
   cellFact =  numCell / (amax - amin + 1.0e-20);
   count = 0; under = 0; over = 0;
   for (i=0; i<numCell; i++) histo[i] = 0.0;
-  for (i=loElem; i<hiElem; i++) {
+#if HAVE_AVX==1  /* Vector */
+  vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
+  tmp = -cellFact*amin;
+  vflag.v  = _mm256_broadcast_ss(&tmp);  /* flagged values */
+  tmp = amin;
+  vmin.v  = _mm256_broadcast_ss(&tmp);  /* amin */
+  tmp = cellFact;
+  vfac.v = _mm256_broadcast_ss(&tmp);  /* fact */
+  /* Do blocks of 8 as vector */
+  for (i=loElem; i<hiElem-8; i+=8) {
+    v.v    = _mm256_loadu_ps(&in->array[i]);         /* Data */
+    vm.v   = _mm256_cmp_ps(v.v, vb.v, _CMP_EQ_OQ);  /* find blanks */
+    v.v    = _mm256_blendv_ps(v.v,vflag.v,vm.v);    /* replace blanks */
+    v.v    = _mm256_sub_ps(v.v,vmin.v);        /* -amin */
+    v.v    = _mm256_mul_ps(v.v,vfac.v);        /* * fact */
+    v.v    = _mm256_round_ps(v.v,_MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);  /* round */
+    vcell.v = _mm256_cvtps_epi32(v.v);
+    for (j=0; j<8; j++) {
+      icell = vcell.i[j];
+      if (icell<0) under++;
+      else if (icell>=numCell) over++;
+      else histo[icell]++;
+      count ++;
+    }
+  }
+  ilast = i;  /* How far did I get? */
+#else /* Scalar and rest */
+  ilast = loElem;
+#endif
+  for (i=ilast; i<hiElem; i++) {
     if (in->array[i]!=fblank){
       icell = 0.5 + cellFact * (in->array[i]-amin);
       if (icell<0) under++;

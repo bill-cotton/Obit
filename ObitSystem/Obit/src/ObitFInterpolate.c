@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2017                                          */
+/*;  Copyright (C) 2003-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -750,14 +750,40 @@ static void SetConvKernal (ofloat Pixel, olong naxis, olong hwidth,
 
   /* set "x" at first pixel to 1.0 */
   xx = Pixel - cen;
-
+  
   /* compute interpolating kernal */
-  for (j= 0; j<iwid; j++) { /* loop 50 */
-    prod = denom[j];
-    for (i= 0; i<iwid; i++) { /* loop 30 */
-      if (i != j) prod = prod * (xx - (i+1));
-    } /* end loop  L30:  */;
-    Kernal[j] = prod;
-  } /* end loop  L50:  */;
-} /* end SetConvKernal */
+  switch (iwid) {
+  case 3:
+    Kernal[0] = denom[0]*(xx-2.)*(xx-3.);
+    Kernal[1] = denom[1]*(xx-1.)*(xx-3.);
+    Kernal[2] = denom[2]*(xx-1.)*(xx-2.);
+    break;
+  case 5:
+    Kernal[0] = denom[0]*(xx-2.)*(xx-3.)*(xx-4.)*(xx-5.);
+    Kernal[1] = denom[1]*(xx-1.)*(xx-3.)*(xx-4.)*(xx-5.);
+    Kernal[2] = denom[2]*(xx-1.)*(xx-2.)*(xx-4.)*(xx-5.);
+    Kernal[3] = denom[3]*(xx-1.)*(xx-2.)*(xx-3.)*(xx-5.);
+    Kernal[4] = denom[4]*(xx-1.)*(xx-2.)*(xx-3.)*(xx-4.);
+    break;
+  case 7:
+    Kernal[0] = denom[0]*(xx-2.)*(xx-3.)*(xx-4.)*(xx-5.)*(xx-6.)*(xx-7.);
+    Kernal[1] = denom[1]*(xx-1.)*(xx-3.)*(xx-4.)*(xx-5.)*(xx-6.)*(xx-7.);
+    Kernal[2] = denom[2]*(xx-1.)*(xx-2.)*(xx-4.)*(xx-5.)*(xx-6.)*(xx-7.);
+    Kernal[3] = denom[3]*(xx-1.)*(xx-2.)*(xx-3.)*(xx-5.)*(xx-6.)*(xx-7.);
+    Kernal[4] = denom[4]*(xx-1.)*(xx-2.)*(xx-3.)*(xx-4.)*(xx-6.)*(xx-7.);
+    Kernal[5] = denom[5]*(xx-1.)*(xx-2.)*(xx-3.)*(xx-4.)*(xx-5.)*(xx-7.);
+    Kernal[6] = denom[6]*(xx-1.)*(xx-2.)*(xx-3.)*(xx-4.)*(xx-5.)*(xx-6.);
+    break;
+  default:
+    /* Anything else here */
+    for (j= 0; j<iwid; j++) { /* loop 50 */
+      prod = denom[j];
+      for (i= 0; i<iwid; i++) { /* loop 30 */
+	if (i != j) prod = prod * (xx - (i+1));
+      } /* end loop  L30:  */;
+      Kernal[j] = prod;
+    }
+  }; /* end switch */
+  return;
+}  /* end SetConvKernal */
 

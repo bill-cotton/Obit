@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2016                                          */
+/*;  Copyright (C) 2003-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -1147,7 +1147,7 @@ ObitAIPSCatTableGetDesc (ObitTableDesc *desc,
 			 AIPSint controlBlock[256],
 			 AIPSint record[256], ObitErr *err)
 {
-  olong i, j, itemp, atype, alen, physical, off;
+  olong i, j, itemp, atype, alen, off; /* physical, */
   ObitInfoType otype;
 
   /* error tests */
@@ -1238,7 +1238,7 @@ ObitAIPSCatTableGetDesc (ObitTableDesc *desc,
   /* sanity check to be sure AIPS notion of structure is the same as Obit's */
   /* Check correspondance between logical and physical */
   for (i=0; i<desc->nfield; i++) {
-    physical = controlBlock[128+i];
+    /* physical = controlBlock[128+i];*/
     /* test Obit Offset against AIPS */
     if (desc->order[i] != controlBlock[128+i]) {
       Obit_log_error(err, OBIT_Error, 
@@ -1434,7 +1434,7 @@ void ObitAIPSCatTableSetDesc (ObitTableDesc *desc, gboolean init,
   controlBlock[7] = desc->lrowIO / sizeof(AIPSint);
 
   /* Rows per sector or sectors per row */
-  if (desc->lrow<AIPS_NBPS) 
+  if (desc->lrow<=AIPS_NBPS) 
     controlBlock[8] = nrps;
   else /* sectors per row */
     controlBlock[8] = -nspr;
