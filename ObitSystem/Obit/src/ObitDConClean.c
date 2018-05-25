@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2017                                          */
+/*;  Copyright (C) 2004-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -882,6 +882,11 @@ gboolean ObitDConCleanPixelStats(ObitDConClean *in, ObitFArray **pixarray,
   if (err->error) Obit_traceback_val (err, routine, in->name, newWin);
 
   /* Get Beam histogram from first field */
+  if (in->mosaic->FullField && in->mosaic->FullField->myBeam) 
+    Beam = in->mosaic->FullField->myBeam;
+  if (Beam==NULL) Beam = in->mosaic->images[0]->myBeam;
+  Obit_retval_if_fail(ObitImageIsA(Beam), err,
+		      "%s: No Beam available", routine, newWin);
   if (in->BeamHist->field != in->currentFields[0])
     ObitDConCleanBmHistUpdate(in->BeamHist, Beam, in->plane, err);
   in->BeamHist->field = in->currentFields[0];

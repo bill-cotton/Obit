@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012,2016                                          */
+/*;  Copyright (C) 2012,2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -34,6 +34,8 @@
 ObitThread *thread;
 /** Linked list of arrays of data.  */
 ObitInfoList *info;
+/** Have I been initialized? */
+gboolean isInitialized;
 /** Do Error analysis: */
 gboolean doError;
 /** Fit global R-L phase: */
@@ -159,6 +161,8 @@ ofloat *inData;
 /** Array of input data weights (~ 1/var), [4 x nvis]
     each row: RR, LL, RL,  LR   */
 ofloat *inWt;
+/** Average input flux density per calibrator */
+ofloat *souFlux;
 /** Source no per visibility, in range [0,nsou-1] */
 olong *souNo;
 /** Antenna numbers (pair) per visibility, in range [0,nant-1] */

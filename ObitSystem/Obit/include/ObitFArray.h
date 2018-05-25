@@ -210,6 +210,10 @@ typedef void (*ObitFArraySinFP) (ObitFArray* in);
 void ObitFArrayCos (ObitFArray* in);
 typedef void (*ObitFArrayCosFP) (ObitFArray* in);
 
+/** Public: sine/cosine of  elements of an FArray */
+void ObitFArraySinCos (ObitFArray* in, ObitFArray* outS, ObitFArray* outC);
+typedef void (*ObitFArraySinCosFP) (ObitFArray* in, ObitFArray* outS, ObitFArray* outC);
+
 /** Public: square root of  elements of an FArray */
 void ObitFArraySqrt (ObitFArray* in);
 typedef void (*ObitFArraySqrtFP) (ObitFArray* in);
@@ -288,6 +292,9 @@ typedef void (*ObitFArrayAddAbsFP) (ObitFArray* in1, ObitFArray* in2,
 void ObitFArraySub (ObitFArray* in1, ObitFArray* in2, ObitFArray* out);
 typedef void (*ObitFArraySubFP) (ObitFArray* in1, ObitFArray* in2, 
 				  ObitFArray* out);
+/** Public: copy elements from one FArray to another */
+void ObitFArrayCopyData (ObitFArray* in, ObitFArray* out);
+typedef void (*ObitFArrayCopyDataFP) (ObitFArray* in1, ObitFArray* out);
 
 /** Public: Give the elements of one array the sign of the other */
 void ObitFArraySign (ObitFArray* in1, ObitFArray* in2);

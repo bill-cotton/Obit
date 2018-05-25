@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2017                                          */
+/*;  Copyright (C) 2002-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -69,6 +69,8 @@ ObitFArrayAbsFP ObitFArrayAbs;
 ObitFArraySinFP ObitFArraySin;
 /** Function pointer to cosine of elements of an FArray */
 ObitFArrayCosFP ObitFArrayCos;
+/** Function pointer to sine/cosine of elements of an FArray */
+ObitFArraySinCosFP ObitFArraySinCos;
 /** Function pointer to square root of elements of an FArray */
 ObitFArrayCosFP ObitFArraySqrt;
 /** Function pointer to sum elements of an FArray */
@@ -101,6 +103,8 @@ ObitFArrayAvgArrFP ObitFArrayAvgArr;
 ObitFArrayAddFP ObitFArrayAdd;
 /** Function pointer to Abs Add elements of two FArrays */
 ObitFArrayAddAbsFP ObitFArrayAddAbs;
+/** Function pointer to Copy elements from one FArray to another */
+ObitFArrayCopyDataFP ObitFArrayCopyData;
 /** Function pointer to Subtract elements of two FArrays */
 ObitFArraySubFP ObitFArraySub;
 /** Function pointer to Give the elements of one array the sign of the other  */

@@ -1,0 +1,245 @@
+; $Id$
+; DFTIm 
+;---------------------------------------------------------------
+;! Make a DFT dirty image or beam from a uv dataset
+;# Task Obit Imaging
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2018
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;---------------------------------------------------------------
+DFTIm      LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+DFTIm:   Make a DFT dirty image or beam from a uv dataset
+**PARAM** str 4
+DataType                            "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                              FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                              Input multisource UV data AIPS
+**PARAM** str 6
+inClass                             Input UV data (class)
+**PARAM** int 1
+inSeq                               Input UV data (seq. #)
+**PARAM** int 1
+inDisk                              Input UV data disk drive #
+**PARAM** str 16 30
+Sources                             Source (pointings) list
+**PARAM** int 1 **DEF** -1
+Qual            -10.0               Source qualifier -1=>any
+**PARAM** str 4
+souCode                             Calibrator code '    '=>any
+**PARAM** float 2
+timeRange                           Time range to process.
+**PARAM** str 4
+Stokes                              Stokes to process
+**PARAM** int 1
+FreqID                              Freq. ID to select.
+**PARAM** int 1
+BChan            0.0    65536.0     Low freq. channel 0 for cont.
+**PARAM** int 1
+EChan            0.0    65536.0     Highest freq channel
+**PARAM** int 1
+BIF                                 First IF in average.
+**PARAM** int 1
+EIF                                 Last IF in average.
+**PARAM** float 2
+UVRange         0.                 Min & max baseline (klambda)
+**PARAM** int 1
+subA                                Subarray
+**PARAM** int 1
+doCalib          -1         10      Apply calibration table
+**PARAM** int 1
+gainUse                             CL/SN table to apply
+**PARAM** int 1
+doBand           -1.0       10.0    If >0.5 apply bandpass cal.
+**PARAM** int 1
+BPVer                               Bandpass table version
+**PARAM** int 1
+flagVer                             Flag table version
+**PARAM** boo 1 **DEF** F
+doPol                               Apply polarization cal?
+**PARAM** int 1 **DEF** 1
+PDVer                              PD table to apply
+                                   If >=0, per channel corrections
+**PARAM** str 4
+outDType                            "FITS" or "AIPS" type of output
+**PARAM** str 128 **DEF** .fits
+outFile                             Output FITS image file ending
+**PARAM** str 12
+outName                             Output AIPS image name
+**PARAM** str 6
+outClass                            Output AIPS image class
+**PARAM** int 1
+outSeq          -1.0     9999.0     Output AIPS image seq. no.
+**PARAM** int 1
+outDisk                             Output image disk drive #
+**PARAM** float 1
+xCells                             Image cell spacing in X in asec.
+**PARAM** float 1
+yCells                             Image cell spacing in Y in asec.
+**PARAM** int 1 
+nx                                 Number of "X" (RA) pixels in image 
+                                   (per field)
+**PARAM** int 1 
+ny                                 Number of "Y" (Dec) pixels in image. 
+                                   (per field)
+**PARAM** float 1
+RAShift                            Right ascension shift (AIPS convention) 
+                                   (asec) (per field)   NYI
+**PARAM** float 1
+DecShift                           Declination shift (AIPS convention)  
+                                   (asec) (per field)    NYI
+**PARAM** boo 1 **DEF** F
+doBeam                             Make dirty beam else dirty image
+**PARAM** int 1 **DEF** 1
+nThreads            0              Number of threads to use
+**PARAM** int 1 
+prtLv             0                Print level in selfcal
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
+**PARAM** int 10
+noScrat                            AIPS disk numbers for which
+                                   scratch files are disallowed
+----------------------------------------------------------------
+DFTIm DFT imaging task for  interferometry data
+Type:  Task
+ Use:  DFT imager
+
+   This tasks used the "direct Fourier transform" (dft) method 
+to make a dirty image and beam.  This is most useful for very 
+small datasets and small images.  Only continuum (average of 
+channel/IF) imaging.
+   Separate runs must be made to generate dirty beams and images.
+Deconvolution can be done using Obit python class CleanImage.
+AIPS task APCLN can be used but images must be a power of 2 in 
+each dimension.
+
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input multisource UV data file
+  inClass....Input UV data file (class).      Standard defaults.
+  inSeq......Input UV data file (seq. #).     0 => highest.
+  inDisk.....Input UV data file disk drive #. 0 => any.
+
+       Data selection
+  Sources....List of sources (pointings) to be processed.
+             '*' or blank = all; a "-" before a source name
+             means all except ANY source named. 
+  Qual.......Only sources with a source qualifier number in the
+             SU table matching Qual will be used if Qual is not
+             -1.  Qual affects the selection of both the list of
+             sources and the list of calibrators.
+  souCode....Calibrators may be selected on the basis of the
+             calibrator code given in the SU table.
+                  '    ' => any calibrator code selected
+                  '*   ' => any non blank code (cal. only)
+                  '-CAL' => blank codes only (no calibrators)
+                  anything else = calibrator code to select.
+             NB: The souCode test is applied in addition to the
+             other tests, i.e. Sources and Qual, in the
+             selection of sources to process.
+  timeRange..Time range of the data to be processed. In order:
+             Start and end times in days relative to ref. date.  
+             Use  dhms2day to convert from human readable form
+  Stokes.....Stokes parameters to process. ' '=>'I'
+             'F'=> formal I (both orthogonal Stokes needed)
+  FreqID.....Frequency identifier to select , <=0=>any
+  BChan......First channel number to image, 0=>1.  Channel numbers are 1
+             relative as defined in the input data file.
+  EChan......Highest channel number to to include in image,
+             0 => max 
+  BIF........First IF to process. 0=>1
+  EIF........Highest IF to process 0=> do BIF to highest.
+             Note: not all data sets will have IFs.
+  subA.......Sub-array number to use. 0=>all.
+  UVRange....(Minimum,Maximum) baseline (kilo-lambda) to
+             process. 
+  doCalib....If >0, apply SN or CL table
+  gainUse....CL/SN table version number to apply. 0=> highest.
+  doBand.....If >0 then correct the data for the shape of the
+             antenna bandpasses using the BP table specified by BPVer.
+             The correction has five modes:
+             (a) if doBand=1 all entries for an antenna in the table
+             are averaged together before correcting the data.
+             (b) if doBand=2 the entry nearest in time (including
+             solution weights) is used to correct the data.
+             (c) if doBand=3 the table entries are interpolated in
+             time (using solution weights) and the data are then
+             corrected.
+             (d) if doBand=4 the entry nearest in time (ignoring
+             solution weights) is used to correct the data.
+             (e) if doBand=5 the table entries are interpolated in
+             time (ignoring solution weights) and the data are then
+             corrected.
+             DFTIm uses doBand as the nearest integer; 0.1 is therefore
+             no correction.
+  BPVer......Specifies the version of the AIPS BP table to be applied
+                0 => highest numbered table.
+               <0 => no bandpass correction to be applied.
+  flagVer....AIPS FG table to use for editing. 0 => highest.
+  doPol......If True, apply polarization calibration
+  PDVer......AIPS PD table to use for per channel instrumental
+             polarization corrections if doPol=True. 0=> highest
+             -1 => use IF corrections from AIPS AN table.
+      Output files
+  outDType..'FITS' or 'AIPS'  type of output
+             Defaults to DataType.
+  outFile....Ending of output FITS image file name
+             filename = source_name+Stokes+outFile
+  outName....Ending of output AIPS Image Name, 
+             Name = source_name+outName
+  outClass...Output image class.  Default = 'IClean'
+             Only the last 5 characters given are used and the
+             first is replaced with the Stokes.
+             Output image name = pointing name (Sources)
+             The output CLEAN image will be used during
+             execution as the residual image.
+  outSeq.....Output image sequence number.
+  outDisk....The disk drive # of output images.  no default
+             note: maps and beams go on same disk.
+  outSeq.....Output sequence number.  def new.
+
+   The following control imaging:
+  xCells     Image cell spacing in X in asec.  
+  yCells     Image cell spacing in Y in asec. 
+  nx.........Number of x pixels
+  ny.........Number of y pixels
+  RAShift....RA shift (asec)  NYI
+  DecShift...Dec shift (asec)  NYI
+  doBeam.....If True make a dirth beam otherwise a dirty image.
+  nThreads....If The Obit libraries are compiled with multiple
+              thread operation enabled, this parameter sets the 
+              number of threads that can be used for parallel 
+              operations. 
+              NB: This only improves performance if there are 
+              multiple processors and/or cores in the host.
+  taskLog.....Log file to write messages to INSTEAD of the terminal
+              This is useful in long runs or batch files where
+              a bug in the ObitTalk message handling may lose
+              messages.  Path is absolute or relative to where
+              the task executes.
+  noScrat.....A list of AIPS disk numbers on which you do not 
+              wish scratch files
+----------------------------------------------------------------

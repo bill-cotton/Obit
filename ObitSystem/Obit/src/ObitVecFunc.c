@@ -1,6 +1,6 @@
 /* $Id: ObitExp.c 481 2014-05-28 19:40:41Z bill.cotton $ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2014                                          */
+/*;  Copyright (C) 2011-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -31,7 +31,7 @@
 
 /** AVX implementation 8 floats in parallel */
 #if HAVE_AVX==1
-#include "avx_mathfun.h"
+#include "avx_mathfun_May18.h"
 /** Natural log of array of 8 floats */
 V8SF avx_log_ps(V8SF x) {
   return (V8SF) log256_ps((v8sf) x);
@@ -56,7 +56,7 @@ void avx_sincos_ps(V8SF x, V8SF *s, V8SF *c) {
 
 /** SSE implementation 4 floats in parallel */
 #elif HAVE_SSE==1
-#include  "sse_mathfun.h"
+#include "sse_mathfun.h"
 /** Natural log of array of 4 floats */
 V4SF sse_log_ps(V4SF x) {
   return (V4SF) log_ps((v4sf) x);

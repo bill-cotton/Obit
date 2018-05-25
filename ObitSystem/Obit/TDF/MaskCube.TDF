@@ -1,0 +1,121 @@
+; $Id$
+; MaskCube
+;---------------------------------------------------------------
+;! Mask a cube by blanks in another image
+;# Task Obit
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2018
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: Bill Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+MaskCube  LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+MaskCube  Task to mask a cube by blanks in another image
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of file
+**PARAM** str 48
+inFile                             input Filename if FITS cube
+**PARAM** str 12
+inName                             input AIPS Cube name
+**PARAM** str 6
+inClass                            input AIPS Cube class
+**PARAM** int 1
+inSeq            0         9999    input AIPS Cube seq. #
+**PARAM** int 1
+inDisk           0            9    input Disk drive #
+**PARAM** int 7
+BLC              0         4096    Bottom left corner of image
+                                     0=>entire image
+**PARAM** int 7
+TRC              0         4096    Top right corner of image
+                                     0=>entire image
+**PARAM** str 48
+in2File                            mask Filename if FITS image
+**PARAM** str 12
+in2Name                            mask AIPS Image name
+**PARAM** str 6
+in2Class                           mask AIPS Image class
+**PARAM** int 1
+in2Seq           0         9999    mask AIPS Image seq. #
+**PARAM** int 1
+in2Disk          0            9    mask Disk drive #
+**PARAM** str 48
+outFile                            output Filename if FITS image
+**PARAM** str 12
+outName                            output AIPS Cube name
+**PARAM** str 6
+outClass                           output AIPS Cube class
+**PARAM** int 1
+outSeq            0.0       9999.0 output AIPS Cube seq. #
+**PARAM** int 1
+outDisk           0          9     output Disk drive #
+**PARAM** int 1 **DEF** 1
+nThreads          0                Number of threads to use
+**PARAM** float 1 **DEF** 0.0
+quant             0                Quantization level for FITS output
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
+----------------------------------------------------------------
+MaskCube
+Type: Task
+Use:  MaskCube will blank pixel in the input cube corresponding
+      to blanked pixels in the (2D) mask image
+Adverbs:
+  DataType....."FITS" or "AIPS" data for all input and output
+  inFile.......Input File name if a FITS file
+  inname.......Input map name.            AIPS name
+  inclass......Input map class.           AIPS class
+  inseq........Input map seq no.          0 => highest.
+  indisk.......Input map disk:            MUST specify
+  in2file......Input mask File name if a FITS file
+  in2name......Input mask name.   AIPS name
+  in2class.....Input mask class.  AIPS class
+  in2seq.......Input mask seq no. 0 => highest.
+  in2disk......Input mask disk:   MUST specify
+  outFile......Output File name if a FITS file
+  outname......Output map name.           AIPS name
+  outclass.....Output map class.          AIPS class
+  outseq.......Output map seq no.       0 => highest unique.
+  outdisk......Output map disk.      MUST specify
+  BLC..........The bottom left-hand pixel of the input image
+               which becomes the bottom left corner of the
+               input subimage.  The value (0,0) means (1,1).
+  TRC..........The top right-hand pixel of the input image
+               which becomes the top right corner of the
+               subimage.  The value (0,0) means take the top
+               right hand corner of the image.
+  nThreads.....If the Obit libraries are compiled with multiple
+               thread operation enabled, this parameter sets the 
+               number of threads that can be used for parallel 
+               operations. 
+               NB: This only improves performance if there are 
+               multiple processors and/or cores in the host.
+  quant........If the output is in FITS format, the file may be 
+               quatized at level quant and written as scaled 
+               integers.
+  taskLog......Log file to write messages to INSTEAD of the terminal
+               This is useful in long runs or batch files where
+               a bug in the ObitTalk message handling may cause
+               tasks to hang.  Path is absolute or relative to where
+               the task executes.
+----------------------------------------------------------------

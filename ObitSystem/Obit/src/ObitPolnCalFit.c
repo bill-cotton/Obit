@@ -895,6 +895,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
   in->souParm     = g_malloc0(in->nsou*4*sizeof(odouble));
   in->souErr      = g_malloc0(in->nsou*4*sizeof(odouble));
   in->lastSouParm = g_malloc0(in->nsou*4*sizeof(odouble));
+  in->souFlux     = g_malloc0(in->nsou*4*sizeof(ofloat));
 
   /* Antenna gains for linear feeds? */
   if (!in->isCircFeed ) {
@@ -952,7 +953,8 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     else                 {in->souFit[i][1] = FALSE; in->souFit[i][2] = FALSE;}
     if (in->doFitV[i])    in->souFit[i][3] = TRUE;
     else                  in->souFit[i][3] = FALSE;
-    in->souParm[i*4+0] = in->souParm[i*4+1] = in->souParm[i*4+2] = in->souParm[i*4+3] = 0.0;
+    in->souParm[i*4+0] = in->souFlux[i];  /* average of input data */
+    in->souParm[i*4+1] = in->souParm[i*4+2] = in->souParm[i*4+3] = 0.0;
     /* Last valid source parameters, I<-1000 =>none */
     in->lastSouParm[i*4+0] = -1000.0;
     in->lastSouParm[i*4+1] = in->lastSouParm[i*4+2] = in->lastSouParm[i*4+3] = 0.0;
@@ -984,6 +986,11 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     first = (iIF!=in->IFno) || (iChan==BChan);   /* First of an IF */
     ReadData (in, inUV, &iChan, EChan, &iIF, EIF, first, err);
     if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+
+    /* average flux densities of input data */
+    for (i=0; i<in->nsou; i++) {
+      if (in->souFit[i][0]) in->souParm[i*4+0] = in->souFlux[i];
+    } /* End initializing source flux densities */
 
     if (in->prtLv>=2) {
       Obit_log_error(err, OBIT_InfoErr, "Process IF %d Channel %d no chan %d",
@@ -1247,6 +1254,7 @@ ObitPolnCalFit *in = inn;
   in->nsou       = 0;
   in->souNo      = NULL;
   in->souParm    = NULL;
+  in->souFlux    = NULL;
   in->souErr     = NULL;
   in->lastSouParm= NULL;
   in->souFit     = NULL;
@@ -1286,6 +1294,7 @@ ObitPolnCalFit *in = inn;
   in->doError    = TRUE;
   in->isCircFeed = TRUE;
   in->maxAnt   = 100;
+  in->isInitialized = FALSE;
 } /* end ObitPolnCalFitInit */
 
 /**
@@ -1342,6 +1351,7 @@ void ObitPolnCalFitClear (gpointer inn)
   if (in->antGainErr) g_free(in->antGainErr);
   if (in->souNo)    g_free(in->souNo);
   if (in->souParm)  g_free(in->souParm);
+  if (in->souFlux)  g_free(in->souFlux);
   if (in->souErr)   g_free(in->souErr);
   if (in->lastSouParm) g_free(in->lastSouParm);
   if (in->souIDs)   g_free(in->souIDs);
@@ -1406,9 +1416,12 @@ static void WriteOutput (ObitPolnCalFit* in, ObitUV *outUV,
   if (err->error) return;
 
 
-  /* Need to initialize? First channel and IF */
-  if (((in->Chan+in->BChan-1-in->ChInc/2)==1) && 
-      ((in->IFno+in->BIF-1)==1)) {
+  /* Need to initialize? */
+  if (!in->isInitialized) {
+     /* First channel and IF 
+	if (((in->Chan+in->BChan-1-in->ChInc/2)==1) && 
+	((in->IFno+in->BIF-1)==1)) {*/
+    in->isInitialized = TRUE;  /* This will initialize it */
     /* Open output */
     retCode = ObitUVOpen (outUV, OBIT_IO_ReadWrite, err);
     /* if it didn't work bail out */
@@ -1527,18 +1540,29 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
   ObitIOCode retCode = OBIT_IO_OK;
   ObitSource *curSource=NULL;
   olong ivis, ant1, ant2, isou, jsou, lastSou=-999, jvis, istok, suba;
-  olong nChan, bch, ech, cnt, i, j, indx, indx1, indx2, indx3, indx4;
+  olong nChan, bch, ech, cnt, i, j, indx, indx1, indx2, indx3, indx4, *cntFlux=NULL;
   olong ChInc=in->ChInc, jChan, jIF;
   ofloat *buffer, curPA1=0.0, curPA2=0.0, curTime=0.0, lastTime=-1.0e20;
-  ofloat sumRe, sumIm, sumWt, PPol; 
+  ofloat sumRe, sumIm, sumWt, PPol, *sumFlux=NULL; 
   odouble lambdaRef, lambda, ll, sum;
   gboolean OK, allBad;
   gchar *routine = "ObitPolnCalFit:ReadData";
+  /* DEBUG */
+#ifdef DEBUG
+  olong dbgCnt1, dbgCnt2;
+  ofloat dbgSum1, dbgSum2, dbgISum1, dbgISum2;
+#endif
+  /* end DEBUG */
 
   /* Previous error? */
   if (err->error) return;
 
   lambdaRef = VELIGHT/in->inDesc->freq;  /* Wavelength at reference freq */
+
+  /* Sums for flux density */
+  sumFlux = g_malloc0(in->nsou*sizeof(ofloat));
+  cntFlux = g_malloc0(in->nsou*sizeof(olong));
+  for (i=0; i<in->nsou; i++) {sumFlux[i] = 0.0; cntFlux[i] = 0;}
 
   /* initial center channel/IF */
   jChan = *iChan;
@@ -1586,7 +1610,7 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
   retCode = ObitUVOpen (inUV, OBIT_IO_ReadOnly, err);
   if (err->error) goto cleanup;
 
-  /* loop loading data */
+ /* loop loading data */
   jvis = 0;
   while (retCode == OBIT_IO_OK) {
     
@@ -1688,8 +1712,11 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
 	  /* Data */
 	in->inData[jvis*10+(istok+1)*2]   = sumRe;
 	in->inData[jvis*10+(istok+1)*2+1] = sumIm;
-      } /* end Stokes loop */
+	/* Sums for Stokes */
+	if (istok<=1) {cntFlux[jsou]++; sumFlux[jsou]+=sumRe; }
+    } /* end Stokes loop */
       
+
       /* Diagnostic - sample data */
       if ((err->prtLv>=5) && (ant1==2) && (ant2==4)) {
 	fprintf (stderr,"vis %d bl %d %d sou %d time %f PA %f Data %8.5f %8.5f  %8.5f %8.5f  %8.5f %8.5f  %8.5f %8.5f\n",
@@ -1705,6 +1732,7 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
       buffer += inUV->myDesc->lrec;
     } /* end loop over vis */
   } /* end loop reading data */
+
 
   in->nvis = jvis;  /* How many good data? */
   /* Initialize solutions if init */
@@ -1773,6 +1801,14 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
     (*iChan) = 1;
     (*iIF)++;
   }
+
+  /* Average Ipol flux densities */
+  for (i=0; i<in->nsou; i++) {
+    if (cntFlux[i]>0) in->souFlux[i] = sumFlux[i]/cntFlux[i];
+    else              in->souFlux[i] = 0.0;
+  }
+  if (cntFlux) g_free(cntFlux); cntFlux = NULL;
+  if (sumFlux) g_free(sumFlux); sumFlux = NULL;
 
   return; 
 } /* end ReadData */
@@ -3260,7 +3296,12 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
   COMPLEX_SET (DFDP2, 0.0, 0.0);
   COMPLEX_SET (dt1, 0.0, 0.0);
   COMPLEX_SET (dt2, 0.0, 0.0);
- 
+  /* Init others */
+  isouLast=-999;
+  sum = sumwt = 0.0;
+  ipol = qpol = upol = vpol = 0.0;
+  residR = residI = isigma = 0.0;
+
   /* RMS sums and counts */
   sumParResid = sumXResid = 0.0;
   sumd = sumd2 = 0.0;
@@ -3309,6 +3350,22 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
   /* Loop over data */
   i = 0;
   for (idata=args->lo; idata<args->hi; idata++) {
+    isou  = MAX (0, args->souNo[idata]);    /* Source number */
+    /* Selected source? */
+    if ((selSou>=0) && (selSou!=isou)) continue;
+
+    /* Antenna parameters (0 ref) */
+    ia1    = args->antNo[idata*2+0];
+    ia2    = args->antNo[idata*2+1]; 
+    /* Selected source? */
+    if ((selAnt>=0) && 
+	((selAnt!=ia1) && (ia1!=args->refAnt)) && 
+	 (selAnt!=ia2) && (ia2!=args->refAnt)) continue;
+    /* Which antenna is the selected one in the baseline? */
+    if (selAnt==ia1) {isAnt1 = TRUE; isAnt2 = FALSE;}
+    else if (selAnt==ia2) {isAnt2 = TRUE; isAnt1 = FALSE;}
+    else {isAnt1 = FALSE; isAnt2 = FALSE;}  /* Only refant */
+    
     /* Parallactic angle terms */
     chi1  = data[idata*10+0];   /* parallactic angle ant 1 */
     chi2  = data[idata*10+1];   /* parallactic angle ant 2 */
@@ -3316,10 +3373,6 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
     COMPLEX_EXP (PA2,2*chi2);
     COMPLEX_CONJUGATE (PA1c, PA1);
     COMPLEX_CONJUGATE (PA2c, PA2);
-
-    isou  = MAX (0, args->souNo[idata]);    /* Source number */
-    /* Selected source? */
-    if ((selSou>=0) && (selSou!=isou)) continue;
 
     /* New source? get parameters */
     if (isou!=isouLast) {
@@ -3343,18 +3396,6 @@ static gpointer ThreadPolnFitRLChi2 (gpointer arg)
       COMPLEX_SET (S[2], qpol, -upol);
       COMPLEX_SET (S[3], ipol-vpol, 0.0);
     }
-
-    /* Antenna parameters (0 ref) */
-    ia1    = args->antNo[idata*2+0];
-    ia2    = args->antNo[idata*2+1]; 
-    /* Selected source? */
-    if ((selAnt>=0) && 
-	((selAnt!=ia1) && (ia1!=args->refAnt)) && 
-	 (selAnt!=ia2) && (ia2!=args->refAnt)) continue;
-  /* Which antenna is the selected one in the baseline? */
-  if (selAnt==ia1) {isAnt1 = TRUE; isAnt2 = FALSE;}
-  else if (selAnt==ia2) {isAnt2 = TRUE; isAnt1 = FALSE;}
-  else {isAnt1 = FALSE; isAnt2 = FALSE;}  /* Only refant */
 
   /* Calculate residals - Note different order for LL */
   /*      RR */
@@ -4130,6 +4171,12 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
   dcomplex S0[4], S[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4, DFDP, DFDP2;
   dcomplex SM1, SM2, SM3, SM4;
 
+  /* DEBUG */
+#ifdef DEBUG
+  olong dbgCnt1, dbgCnt2;
+  ofloat dbgSum1, dbgSum2, dbgISum1, dbgISum2;
+#endif
+
   COMPLEX_SET (S[0], 0.0, 0.0);  /* Initialize poln vector */
   COMPLEX_SET (S[1], 0.0, 0.0);
   COMPLEX_SET (S[2], 0.0, 0.0);
@@ -4150,7 +4197,13 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
   COMPLEX_SET (DFDP2, 0.0, 0.0);
   COMPLEX_SET (Jm,  0.0,-1.0);
   COMPLEX_SET (Jp,  0.0, 1.0);
- 
+  /* Init others */
+  isouLast=-999;
+  sum = sumwt = 0.0;
+  ipol = qpol = upol = vpol = 0.0;
+  residR = residI = isigma = 0.0;
+  isAnt1 = isAnt2 = TRUE;
+
   /* RMS sums and counts */
   sumParResid = sumXResid = 0.0;
   sumd = sumd2 = 0.0;
@@ -4187,6 +4240,19 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
   /* Loop over data */
   i = 0;
   for (idata=args->lo; idata<args->hi; idata++) {
+     isou  = MAX (0, args->souNo[idata]);    /* Source number */
+    /* Selected source? */
+    if ((selSou>=0) && (selSou!=isou)) continue;
+
+    /* Antenna parameters (0 ref) */
+    ia1    = args->antNo[idata*2+0];
+    ia2    = args->antNo[idata*2+1]; 
+    /* Selected source? */
+    if ((selAnt>=0) && (selAnt!=ia1) && (selAnt!=ia2)) continue;
+    /* Which antenna is the selected one in the baseline? */
+    if (selAnt==ia1) {isAnt1 = TRUE; isAnt2 = FALSE;}
+    else if (selAnt==ia2) {isAnt2 = TRUE; isAnt1 = FALSE;}
+    
     /* Parallactic angle terms */
     chi1  = data[idata*10+0];   /* parallactic angle ant 1 */
     chi2  = data[idata*10+1];   /* parallactic angle ant 2 */
@@ -4194,10 +4260,6 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
     COMPLEX_EXP (DPA,chi1-chi2);
     COMPLEX_CONJUGATE (SPAc, SPA);
     COMPLEX_CONJUGATE (DPAc, DPA);
-
-    isou  = MAX (0, args->souNo[idata]);    /* Source number */
-    /* Selected source? */
-    if ((selSou>=0) && (selSou!=isou)) continue;
 
     /* New source? get parameters */
     if (isou!=isouLast) {
@@ -4228,15 +4290,6 @@ static gpointer ThreadPolnFitXYChi2 (gpointer arg)
     COMPLEX_MUL2(S[1], SPAc, S0[1]);
     COMPLEX_MUL2(S[2], SPA,  S0[2]);
     COMPLEX_MUL2(S[3], DPA,  S0[3]);
-    
-    /* Antenna parameters (0 ref) */
-    ia1    = args->antNo[idata*2+0];
-    ia2    = args->antNo[idata*2+1]; 
-    /* Selected source? */
-    if ((selAnt>=0) && (selAnt!=ia1) && (selAnt!=ia2)) continue;
-    /* Which antenna is the selected one in the baseline? */
-    if (selAnt==ia1) {isAnt1 = TRUE; isAnt2 = FALSE;}
-    else if (selAnt==ia2) {isAnt2 = TRUE; isAnt1 = FALSE;}
     
     /* Calculate residals -  XX */
   if (wt[idata*4]>0.0) {

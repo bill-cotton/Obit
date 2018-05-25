@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2014                                          */
+/*;  Copyright (C) 2009-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -104,20 +104,20 @@ void ObitSinCosCalc(ofloat angle, ofloat *sin, ofloat *cos)
 */
 void ObitSinCosVec(olong n, ofloat *angle, ofloat *sin, ofloat *cos)
 {
-  olong i, nleft;
+  olong i;
   /** SSE implementation */
 #if   HAVE_AVX==1
-  olong ndo;
+  olong ndo, nleft;
   CV8SF vanglet, vss, vcc;
 #elif HAVE_SSE==1
-  olong ndo;
+  olong ndo, nleft;
   CV4SF vanglet, vss, vcc;
 #endif /* HAVE_SSE */
 
   if (n<=0) return;
-  nleft = n;
  /** AVX implementation */
 #if HAVE_AVX==1
+  nleft = n;
   /* Loop in groups of 8 */
   ndo = nleft - nleft%8;  /* Only full groups of 8 */
   for (i=0; i<ndo; i+=8) {
@@ -135,6 +135,7 @@ void ObitSinCosVec(olong n, ofloat *angle, ofloat *sin, ofloat *cos)
     {*sin++ = vss.f[i]; *cos++ = vcc.f[i]; }
  /** SSE implementation */
 #elif HAVE_SSE==1
+  nleft = n;
   /* Loop in groups of 4 */
   ndo = nleft - nleft%4;  /* Only full groups of 4 */
   for (i=0; i<ndo; i+=4) {
@@ -188,3 +189,180 @@ void ObitSinCosVec(olong n, ofloat *angle, ofloat *sin, ofloat *cos)
   } /* end loop over vector */
 #endif
 } /* end ObitSinCosVec */
+
+/** 
+ * Calculate cosine of vector of angles, uses AVX or SSE implementation if available
+ * \param n      Number of elements to process
+ * \param angle  array of angles in radians
+ * \param cos    [out] cosine(angle)
+*/
+void ObitCosVec(olong n, ofloat *angle, ofloat *cos)
+{
+  olong i;
+  /** SSE implementation */
+#if   HAVE_AVX==1
+  olong ndo, nleft;
+  CV8SF vanglet;
+#elif HAVE_SSE==1
+  olong ndo, nleft;
+  CV4SF vanglet;
+#endif /* HAVE_SSE */
+
+  if (n<=0) return;
+ /** AVX implementation */
+#if HAVE_AVX==1
+  nleft = n;
+  /* Loop in groups of 8 */
+  ndo = nleft - nleft%8;  /* Only full groups of 8 */
+  for (i=0; i<ndo; i+=8) {
+    vanglet.v = _mm256_loadu_ps(angle); angle += 8;     
+    avx_cos_ps(vanglet.v);
+    _mm256_storeu_ps(cos, vanglet.v); cos += 8;
+ } /* end AVX loop */
+  /* Remainders, zero fill */
+  nleft = n-i;  /* How many left? */
+  for (i=0; i<nleft; i++) vanglet.f[i] = *angle++;
+  for (i=nleft; i<8; i++) vanglet.f[i] = 0.0;
+  avx_cos_ps(vanglet.v);
+  for (i=0; i<nleft; i++) 
+    {*cos++ = vanglet.f[i]; }
+ /** SSE implementation */
+#elif HAVE_SSE==1
+  nleft = n;
+  /* Loop in groups of 4 */
+  ndo = nleft - nleft%4;  /* Only full groups of 4 */
+  for (i=0; i<ndo; i+=4) {
+    vanglet.f[0] = *angle++;
+    vanglet.f[1] = *angle++;
+    vanglet.f[2] = *angle++;
+    vanglet.f[3] = *angle++;    
+    sse_cos_ps(vanglet.v);
+    *cos++ = vanglet.f[0];
+    *cos++ = vanglet.f[1];
+    *cos++ = vanglet.f[2];
+    *cos++ = vanglet.f[3]; 
+  } /* end SSE loop */
+  /* Remainders, zero fill */
+  nleft = n-i;  /* How many left? */
+  for (i=0; i<nleft; i++) vanglet.f[i] = *angle++;
+  for (i=nleft; i<4; i++) vanglet.f[i] = 0.0;
+  sse_cos_ps(vanglet.v);
+  for (i=0; i<nleft; i++) 
+    {*cos++ = vanglet.f[i];  }
+   /* end HAVE_SSE */
+#else   /* Use table lookup if no SSE/AVX*/
+  olong it, itt;
+  ofloat anglet, ss, cc, d;
+  /* Initialize? */
+  if (!isInit) ObitSinCosInit();
+  
+  /* Loop using table lookup */
+  for (i=0; i<n; i++) {
+    /* angle in turns */
+    anglet = (*angle++)*itwopi;
+    
+    /* truncate to [0,1] turns */
+    it = (olong)anglet;     
+    if (anglet<0.0) it--;   /* fold to positive */
+    anglet -= it;
+    
+    /* Lookup, cos(phase) = sin(phase + 1/4 turn) */
+    itt = (olong)(0.5 + anglet*OBITSINCOSNTAB);
+    ss  = sincostab[itt];
+    cc  = sincostab[itt+OBITSINCOSNTAB4];
+    
+    /* One term Taylor series  */
+    d = anglet*twopi - delta*itt;
+    *cos++ = cc - ss * d;
+  } /* end loop over vector */
+#endif
+} /* end ObitCosVec */
+
+/** 
+ * Calculate sine of vector of angles, uses AVX or SSE implementation if available
+ * \param n      Number of elements to process
+ * \param angle  array of angles in radians
+ * \param cos    [out] sine(angle)
+*/
+void ObitSinVec(olong n, ofloat *angle, ofloat *sin)
+{
+  olong i;
+ /** SSE implementation */
+#if   HAVE_AVX==1
+  olong ndo, nleft;
+  CV8SF vanglet;
+#elif HAVE_SSE==1
+  olong ndo, nleft;
+  CV4SF vanglet;
+#endif /* HAVE_SSE */
+
+  if (n<=0) return;
+ /** AVX implementation */
+#if HAVE_AVX==1
+  nleft = n;
+  /* Loop in groups of 8 */
+  ndo = nleft - nleft%8;  /* Only full groups of 8 */
+  for (i=0; i<ndo; i+=8) {
+    vanglet.v = _mm256_loadu_ps(angle); angle += 8;     
+    avx_sin_ps(vanglet.v);
+    _mm256_storeu_ps(sin, vanglet.v); sin += 8;
+ } /* end AVX loop */
+  /* Remainders, zero fill */
+  nleft = n-i;  /* How many left? */
+  for (i=0; i<nleft; i++) vanglet.f[i] = *angle++;
+  for (i=nleft; i<8; i++) vanglet.f[i] = 0.0;
+  avx_sin_ps(vanglet.v);
+  for (i=0; i<nleft; i++) 
+    {*sin++ = vanglet.f[i]; }
+ /** SSE implementation */
+#elif HAVE_SSE==1
+  nleft = n;
+  /* Loop in groups of 4 */
+  ndo = nleft - nleft%4;  /* Only full groups of 4 */
+  for (i=0; i<ndo; i+=4) {
+    vanglet.f[0] = *angle++;
+    vanglet.f[1] = *angle++;
+    vanglet.f[2] = *angle++;
+    vanglet.f[3] = *angle++;    
+    sse_sin_ps(vanglet.v);
+    *sin++ = vanglet.f[0];
+    *sin++ = vanglet.f[1];
+    *sin++ = vanglet.f[2];
+    *sin++ = vanglet.f[3];
+  } /* end SSE loop */
+  /* Remainders, zero fill */
+  nleft = n-i;  /* How many left? */
+  for (i=0; i<nleft; i++) vanglet.f[i] = *angle++;
+  for (i=nleft; i<4; i++) vanglet.f[i] = 0.0;
+  sse_sin_ps(vanglet.v);
+  for (i=0; i<nleft; i++) 
+    {*sin++ = vanglet.f[i];}
+   /* end HAVE_SSE */
+#else   /* Use table lookup if no SSE/AVX*/
+  olong it, itt;
+  ofloat anglet, ss, cc, d;
+  /* Initialize? */
+  if (!isInit) ObitSinCosInit();
+  
+  /* Loop using table lookup */
+  for (i=0; i<n; i++) {
+    /* angle in turns */
+    anglet = (*angle++)*itwopi;
+    
+    /* truncate to [0,1] turns */
+    it = (olong)anglet;     
+    if (anglet<0.0) it--;   /* fold to positive */
+    anglet -= it;
+    
+    /* Lookup, cos(phase) = sin(phase + 1/4 turn) */
+    itt = (olong)(0.5 + anglet*OBITSINCOSNTAB);
+    ss  = sincostab[itt];
+    cc  = sincostab[itt+OBITSINCOSNTAB4];
+    
+    /* One term Taylor series  */
+    d = anglet*twopi - delta*itt;
+    *sin++ = ss + cc * d;
+  } /* end loop over vector */
+#endif
+} /* end ObitSinVec */
+
