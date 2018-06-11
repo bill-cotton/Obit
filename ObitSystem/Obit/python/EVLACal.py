@@ -134,6 +134,7 @@ def EVLAInitContParms():
     parms["delayZeroPhs"] =  False      # Zero phase in Delay solutions?
     parms["delayBChan"]   =  None       # first channel to use in delay solutions
     parms["delayEChan"]   =  None       # highest channel to use in delay solutions
+    parms["delayDoSelf"]  =  False      # If True only apply solutions to the same source
     
     # Bandpass Calibration?
     parms["doBPCal"] =       True       # Determine Bandpass calibration
@@ -1709,7 +1710,7 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
                      BChan=1, EChan=0, UVRange=[0.,0.], \
                      timeRange=[0.,0.], FreqID=1, doCalib=-1, gainUse=0, minSNR=5.0, \
                      refAnts=[0], doBand=-1, BPVer=0, flagVer=-1, doTwo=True, doZeroPhs=False, \
-                     doPlot=False, plotFile="./DelayCal.ps", \
+                     doSelf=False, doPlot=False, plotFile="./DelayCal.ps", \
                      nThreads=1, noScrat=[], logfile='', check=False, debug=False):
     """
     Group delay calibration
@@ -1738,6 +1739,7 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
     * flagVer    = Input Flagging table version
     * doTwo      = If True, use one and two baseline combinations
       for delay calibration, else only one baseline
+    * doSelf     = If True only apply solutions to the same source
     * doPlot     = If True make plots of SN gains
     * plotFile   = Name of postscript file for plots
     * nThreads   = Max. number of threads to use
@@ -1919,7 +1921,8 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
     SNver = uv.GetHighVer("AIPS SN")
 
     # Apply to CL table
-    retCode = EVLAApplyCal(uv, err, maxInter=1440.0, logfile=logfile, check=check,debug=debug)
+    retCode = EVLAApplyCal(uv, err, maxInter=1440.0, doSelf=doSelf, \
+                           logfile=logfile, check=check,debug=debug)
     if retCode!=0:
         return retCode
     
@@ -5280,7 +5283,8 @@ def EVLASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["RR","LL"], \
 # end EVLASpecPlot
 
 def EVLAApplyCal(uv, err, SNver=0, CLin=0, CLout=0, maxInter=240.0, \
-                     logfile=None, check=False, debug=False):
+                 doSelf=False,
+                 logfile=None, check=False, debug=False):
     """
     Applies an SN table to a CL table and writes another
     
@@ -5292,6 +5296,7 @@ def EVLAApplyCal(uv, err, SNver=0, CLin=0, CLout=0, maxInter=240.0, \
     * CLin     = input CL table, 0=>highest
     * CLout    = output CL table, 0=>create new
     * maxInter = Max time (min) over which to interpolate
+    * doSelf   = If true only apply calibrations to same source
     * logfile  = logfile for messages
     * check    = Only check script, don't execute tasks
     * debug    = show input, ObitTasks debug
@@ -5333,6 +5338,8 @@ def EVLAApplyCal(uv, err, SNver=0, CLin=0, CLout=0, maxInter=240.0, \
     clcal.calIn    = CLin
     clcal.calOut   = CLout
     clcal.maxInter = maxInter
+    if doSelf:
+        clcal.interMode = "SELF"
     clcal.taskLog  = logfile
     clcal.debug    = debug
     if debug:

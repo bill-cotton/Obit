@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN/selfcalibrate a uv data set               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2017                                          */
+/*;  Copyright (C) 2010-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -916,13 +916,19 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   gchar *strTemp;
   ofloat ftemp, tapes[20];
   gboolean *booTemp, btemp;
-  olong itemp;
+  olong itemp, maxP=0, maxA=0;
   ObitSkyModelMode modelMode;
   gchar *routine = "digestInputs";
 
   /* error checks */
   if (err->error) return;
   g_assert (ObitInfoListIsA(myInput));
+  /* Check that maxPSCLoop>0 if maxPSCLoop>0 */
+  ObitInfoListGetTest(myInput, "maxPSCLoop",  &type, dim, &maxP);
+  ObitInfoListGetTest(myInput, "maxASCLoop",  &type, dim, &maxA);
+  Obit_return_if_fail(((maxP>0) || (maxA<=0)), err, 
+		      "%s:maxPSCLoop(%d) must be >0 if maxASCLoop(%d)>0", 
+		      routine, maxP, maxA);
 
   /* noScrat - no scratch files for AIPS disks */
   ObitAIPSSetnoScrat(myInput, err);
@@ -1117,7 +1123,6 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
 {
   ObitUV    *outUV = NULL;
   ObitInfoType type;
-  ObitIOType IOType;
   olong      i, n, Aseq, disk, cno;
   gchar     *Type, *strTemp, out2File[129], *out2Name, *out2F;
   gchar     Aname[13], Aclass[7], *Atype = "UV";
@@ -1154,7 +1159,6 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
       g_snprintf (tname, 128, "%s", strTemp);
     }
       
-    IOType = OBIT_IO_AIPS;  /* Save file type */
     /* input AIPS disk - default is outDisk */
     ObitInfoListGet(myInput, "out2Disk", &type, dim, &disk, err);
     if (disk<=0)
@@ -1206,8 +1210,6 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
     else g_snprintf (out2File, 128, "%s%s", Source, tname);
     ObitTrimTrail(out2File);  /* remove trailing blanks */
 	   
-    IOType = OBIT_IO_FITS;  /* Save file type */
-
     /* output FITS disk */
     ObitInfoListGet(myInput, "out2Disk", &type, dim, &disk, err);
     if (disk<=0) /* defaults to outDisk */
@@ -1900,7 +1902,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   ofloat       alpha, noalpha, minFlux=0.0, minFluxQU=0.0;
   ofloat       antSize, solInt, PeelFlux, FractOK, CCFilter[2]={0.0,0.0};
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gboolean     Fl = FALSE, Tr = TRUE, init=TRUE, doRestore, doFlatten, doFit, doSC, doBeam;
+  gboolean     Fl = FALSE, Tr = TRUE, init=TRUE, doRestore, doFlatten, doFit, doSC, doBeam, doLast;
   gboolean     noSCNeed, reimage, didSC=FALSE, imgOK=FALSE, converged = FALSE; 
   gboolean     btemp, noNeg, doneRecenter=FALSE;
   const        ObitDConCleanVisClassInfo *clnClass=NULL;
@@ -1941,6 +1943,8 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   ObitInfoListGetTest(myInput, "PeelFlux", &type, dim, &PeelFlux); 
   doFit = TRUE;
   ObitInfoListGetTest(myInput, "doFit",&type, dim, &doFit);
+  doLast = TRUE;
+  ObitInfoListGetTest(myInput, "doLast",&type, dim, &doLast);
   antSize = 0.0;
   ObitInfoListGetTest(myInput, "antSize",&type, dim, &antSize);
   minFlux = 0.0;
@@ -2169,6 +2173,12 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 	
       } /* end if self cal */
       if (noSCNeed) break;
+      /* Need to do last CLEAN? */
+      if (!doLast && (converged || (SCLoop>=(maxPSCLoop-1)))) {
+	Obit_log_error(err, OBIT_InfoErr, "Skipping last CLEAN");
+	ObitErrLog(err); 
+	break;
+      }
     
     }  /* End Self cal loop */
   } /* End Phase self cal */
@@ -2352,6 +2362,12 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 	
       } /* end if self cal */
       if (noSCNeed) break;
+      /* Need to do last CLEAN? */
+      if (!doLast && (converged || (SCLoop>=(maxPSCLoop-1)))) {
+	Obit_log_error(err, OBIT_InfoErr, "Skipping last CLEAN");
+	ObitErrLog(err); 
+	break;
+      }
     
     }  /* End Self cal loop **/
   } /* End Amp&Phase self cal */
@@ -2469,7 +2485,7 @@ void MFImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "BIF", "EIF", "BChan", "EChan",  "maxFBW", 
     "UVRange",  "timeRange",  "Robust", "UVTaper", "UVITaper", "MFTaper", "RobustIF", "TaperIF",
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", "BLVer",
-    "doPol",  "PDVer", "doFull", "doComRes", "do3D", "Catalog", "CatDisk",
+    "doPol",  "PDVer", "doLast", "doFull", "doComRes", "do3D", "Catalog", "CatDisk",
     "OutlierDist",  "OutlierFlux", "OutlierSI",
     "FOV", "xCells", "yCells", "nx", "ny", "RAShift", "DecShift", "doRestore", "doFit",
     "OutlierSize",  "CLEANBox", "CLEANFile", "Gain", "minFlux", "minFluxIQU", 
@@ -2775,7 +2791,6 @@ void BeamOne (ObitInfoList* myInput, ObitUV* inData,
   olong  trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   ObitImage *scrImage=NULL, *scrBeam;
   ObitUV    *scrUV=NULL;
-  ObitIOType IOType;
   olong *ipnt, BIF=1, EIF=0, saveEIF, seq=0, disk=1, user=1, cno;
   ofloat xyCells, Beam[3] = {0.0,0.0,0.0};
   gboolean exist, btemp=TRUE, saveCalSelect=FALSE;
@@ -2860,7 +2875,6 @@ void BeamOne (ObitInfoList* myInput, ObitUV* inData,
     ObitImageSetAIPS (scrBeam, OBIT_IO_byPlane, disk, cno, 
 		      user, blc, trc, err);
   } else if (!strncmp (Type, "FITS", 4)) {
-    IOType = OBIT_IO_FITS;
     ObitInfoListGetTest(myInput, "outDisk", &type, dim, &disk);
     ObitImageSetFITS (scrImage, OBIT_IO_byPlane, disk, scrFile, blc, trc, err);
     scrBeam = (ObitImage*)scrImage->myBeam;

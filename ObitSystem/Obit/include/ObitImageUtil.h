@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2016                                          */
+/*;  Copyright (C) 2003-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -129,6 +129,13 @@ ObitImageUtilUV2ImageDesc(ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
 void ObitImageUtilInterpolateImage (ObitImage *inImage, ObitImage *outImage, 
 				    olong *inPlane, olong *outPlane,
 				    olong hwidth, ObitErr *err);
+
+/** Public: Copy pixels in one image to another.with weight  */
+gboolean 
+ObitImageUtilNoInterWeight (ObitImage *inImage, ObitImage *outImage, 
+			    ObitImage *outWeight, gboolean memOnly,
+			    olong radius, olong *inPlane, olong *outPlane,
+			    ObitErr *err);
 
 /** Public: Interpolate pixels in one image to another given pixels. */
 void ObitImageUtilInterpolateImageXY (ObitImage *inImage, ObitImage *outImage,
