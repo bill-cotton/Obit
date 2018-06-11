@@ -2083,7 +2083,7 @@ void ObitFArrayInClip (ObitFArray* in, ofloat minVal, ofloat maxVal,
     v.v  = _mm256_loadu_ps(&in->array[i]);         /* fetch */
     vm1.v = _mm256_cmp_ps(v.v, vmn.v, _CMP_GE_OS); /* find minVal */
     vm2.v = _mm256_cmp_ps(vmx.v, v.v, _CMP_GE_OS); /* find maxVal */
-    vm2.v = _mm256_or_ps(vm1.v, vm1.v);            /* Out of range */
+    vm2.v = _mm256_and_ps(vm1.v, vm2.v);           /* Out of range */
     vm1.v = _mm256_cmp_ps(v.v, vb.v,  _CMP_EQ_OQ); /* find blanks */
     v.v   = _mm256_blendv_ps(v.v, vn.v ,vm2.v);    /* replace out of range with newVal */
     v.v   = _mm256_blendv_ps(v.v, vb.v, vm1.v);    /* reblank */

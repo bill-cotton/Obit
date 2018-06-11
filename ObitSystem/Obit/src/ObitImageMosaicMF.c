@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2016                                          */
+/*;  Copyright (C) 2010-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1406,14 +1406,17 @@ void ObitImageMosaicMFFlatten (ObitImageMosaic *inn, ObitErr *err)
 	
 	naxis = tout1->myDesc->inaxes; /* How big is output */
 	
-	/* Interpolate and weight image */
+
 	/* reopen with windowing */
 	ObitImageOpen (in->images[i], OBIT_IO_ReadOnly, err);
 	ObitImageRead (in->images[i], NULL, err); /* Read plane */
 	if (err->error) Obit_traceback_msg (err, routine, in->name);
 	
-	ObitImageUtilInterpolateWeight (in->images[i], tout1, tout2, TRUE, rad, 
-					plane, plane, hwidth, err);
+	/* Interpolate or copy and weight image */
+	if (ObitImageUtilNoInterWeight (in->images[i], tout1, tout2, TRUE, rad, 
+					plane, plane, err))
+	  ObitImageUtilInterpolateWeight (in->images[i], tout1, tout2, TRUE, rad, 
+					  plane, plane, hwidth, err);
 	if (err->error) Obit_traceback_msg (err, routine, in->name);
 	
 	/* DEBUG 

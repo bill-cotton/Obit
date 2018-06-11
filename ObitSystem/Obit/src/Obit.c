@@ -1,6 +1,6 @@
 /* $Id$            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2016                                          */
+/*;  Copyright (C) 2002-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -271,24 +271,6 @@ gboolean ObitIsA (gpointer in, gconstpointer class)
   return FALSE; /* if it got here it must not match */
 } /* end ObitIsA  */
 
-/**
- * Returns Obit magic blanking float value
- * This is adopted from AIPS and correcponds to the string 'INDE'
- * \return float magic value
- */
-ofloat ObitMagicF (void)
-{
-  static union FBLANKequiv {
-    gchar string[4];
-    ofloat fblank;
-  } FBLANK;
-  FBLANK.string[0] = 'I'; 
-  FBLANK.string[1] = 'N'; 
-  FBLANK.string[2] = 'D'; 
-  FBLANK.string[3] = 'E'; 
-  
-  return FBLANK.fblank;
-} /* end ObitMagicF */
 
 /**
  * Trims trailing blanks from string

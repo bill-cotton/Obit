@@ -2292,6 +2292,222 @@ ObitImageUtilInterpolateWeight (ObitImage *inImage, ObitImage *outImage,
 } /* end  ObitImageUtilInterpolateWeight */
 
 /**
+ * Fill the pixels in outImage by corresponding values in inImage.
+ * Like ObitImageUtilInterpolateWeight but without the interpolation.
+ * Also calculates a weight based on a circle defined by radius from the center; 
+ * this is 1.0 in the center and tapers with distance^2 to 0.0 outside.
+ * If memOnly then the input image plane is assumed in inImage and only memory
+ * resident parts of outImage and outWeight are modified.
+ * \param inImage   Image to be copied
+ * \param outImage  Image (*weight) to be written.  Must be previously instantiated.
+ * \param outWeight Weight image to be written.  Must be previously instantiated and
+ *                  have same geometry as outImage.
+ * \param memOnly   if TRUE then work only in memory
+ * \param radius    Radius in pixels of weighting circle
+ * \param inPlane   Desired plane in inImage, 1-rel pixel numbers on planes 3-7; 
+ *                  ignored if memOnly
+ * \param outPlane  Desired plane in outImage; ignored if memOnly
+ * \param err       Error stack, returns if not empty.
+ * \return     TRUE if image needs to be interpolated, else FALSE.
+ */
+gboolean 
+ObitImageUtilNoInterWeight (ObitImage *inImage, ObitImage *outImage, 
+			    ObitImage *outWeight, gboolean memOnly,
+			    olong radius, olong *inPlane, olong *outPlane,
+			    ObitErr *err)
+{
+  gboolean doInter=TRUE;
+  ObitIOSize IOBy;
+  olong nx, ny, ix, iy, indx, pos1[2], pos2[2], blc[IM_MAXDIM], trc[IM_MAXDIM];
+  gint32 i, dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ofloat inPixel[2], offPixel[2], xpos1[2], xpos2[2];
+  ofloat *wtArr, dist2, rad2, irad2, xcen, ycen, wt;
+  ofloat fblank = ObitMagicF();
+  gboolean sameGrid;
+  gchar *routine = "ObitImageUtilNoInterImage";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return doInter;
+  g_assert (ObitImageIsA(inImage));
+  g_assert (ObitImageIsA(outImage));
+
+  /* Is interpolation needed? */
+  if (!ObitImageDescAligned(inImage->myDesc, outImage->myDesc, err)) 
+    return doInter;;
+  if (err->error) Obit_traceback_val (err, routine, inImage->name, doInter);
+  /* further sanity check, alignment pixel must be must be integer */
+  inPixel[0] = outImage->image->naxis[0]/2; /* Use center of output */
+  inPixel[1] = outImage->image->naxis[1]/2;
+  ObitImageDescCvtPixel (outImage->myDesc, inImage->myDesc, inPixel, offPixel, err);
+  if (err->error) Obit_traceback_val (err, routine, inImage->name, doInter);
+  if (offPixel[0]>0.0) ix = (olong)(offPixel[0]+0.5);
+  else                 ix = (olong)(offPixel[0]-0.5);
+  sameGrid = fabs(offPixel[0]-ix)<0.001;
+  if (offPixel[1]>0.0) iy = (olong)(offPixel[1]+0.5);
+  else                 iy = (olong)(offPixel[1]-0.5);
+  sameGrid = sameGrid && (fabs(offPixel[1]-iy)<0.001);
+  if (!sameGrid) return doInter;
+  
+  /* Check outImage and outWeight */
+  if (!ObitFArrayIsCompatable(outImage->image, outWeight->image)) {
+      Obit_log_error(err, OBIT_Error, "%s: Incompatable sizes for %s %s", 
+		     routine, outImage->name, outWeight->name);
+      return doInter;
+  }
+
+  g_assert (ObitImageIsA(outWeight));
+  g_assert (inPlane!=NULL);
+  g_assert (outPlane!=NULL);
+ 
+  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
+  for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
+
+  /* Do I/O by plane and all of plane */
+  if (!memOnly) {
+    IOBy = OBIT_IO_byPlane;
+    dim[0] = 1;
+    ObitInfoListPut (inImage->info, "IOBy", OBIT_long, dim, (gpointer)&IOBy, err);
+    ObitInfoListPut (outImage->info, "IOBy", OBIT_long, dim, (gpointer)&IOBy, err);
+    ObitInfoListPut (outWeight->info, "IOBy", OBIT_long, dim, (gpointer)&IOBy, err);
+    dim[0] = IM_MAXDIM;
+    for (i=0; i<IM_MAXDIM-2; i++) blc[i+2] = trc[i+2] = inPlane[i];
+    ObitInfoListPut (inImage->info, "BLC", OBIT_long, dim, blc, err); 
+    ObitInfoListPut (inImage->info, "TRC", OBIT_long, dim, trc, err);
+    for (i=0; i<IM_MAXDIM-2; i++) blc[i+2] = trc[i+2] = outPlane[i];
+    ObitInfoListPut (outImage->info, "BLC", OBIT_long, dim, blc, err); 
+    ObitInfoListPut (outImage->info, "TRC", OBIT_long, dim, trc, err);
+    ObitInfoListPut (outWeight->info, "BLC", OBIT_long, dim, blc, err); 
+    ObitInfoListPut (outWeight->info, "TRC", OBIT_long, dim, trc, err);
+
+    /* Open images */
+    if ((ObitImageOpen (inImage, OBIT_IO_ReadOnly, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "%s: ERROR opening image %s", 
+		     routine, inImage->name);
+      return doInter;
+    }
+    if ((ObitImageOpen (outImage, OBIT_IO_ReadWrite, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "%s: ERROR opening image %s", 
+		     routine, outImage->name);
+      return doInter;
+    }
+    
+    if ((ObitImageOpen (outWeight, OBIT_IO_ReadWrite, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "%s: ERROR opening image %s", 
+		     routine, outWeight->name);
+      return doInter;
+    }
+    /* Read input plane */
+    if ((ObitImageRead (inImage,NULL , err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "%s: ERROR reading image %s", 
+		     routine, inImage->name);
+      return doInter;
+    }
+  } /* end of not memory only */
+
+  /* Do it -  init arrays */
+  ObitFArrayFill(outImage->image,  0.0);
+  ObitFArrayFill(outWeight->image, 0.0);
+
+  /* Paste input into output array - need pixel alignment */
+  pos1[0] = inImage->image->naxis[0]/2; /* Use center of input */
+  pos1[1] = inImage->image->naxis[1]/2;
+  xpos1[0] = pos1[0];  xpos1[1] = pos1[1];
+  /* Find corresponding pixel in input */
+  ObitImageDescCvtPixel (inImage->myDesc, outImage->myDesc, xpos1, xpos2, err);
+  if (err->error) Obit_traceback_val (err, routine, inImage->name, doInter);
+  pos2[0] = (olong)(xpos2[0]+0.5);  pos2[1] = (olong)(xpos2[1]+0.5);
+ 
+  /* Copy image pixels */
+  ObitFArrayShiftAdd (outImage->image, pos2, inImage->image, 
+		      pos1, 1.0, outImage->image);
+  /* Blank zeroes where there is no data*/
+  ObitFArrayInClip(outImage->image, -1.0e-10, 1.0e-10, fblank); 
+
+  /* Make Weight */
+  /* Working version of radius */
+  rad2 = radius * radius;
+  irad2 = 1.0 / rad2;
+  nx   = outWeight->myDesc->inaxes[0]; ny = outWeight->myDesc->inaxes[1];
+  xcen = nx/2;  ycen = ny/2;
+
+  /* Loop over image calculating weights */
+  pos1[0] = pos1[1] = 0;
+  wtArr = ObitFArrayIndex (outWeight->image, pos1);
+  for (iy = 0; iy<ny; iy++) { /* loop in y */
+    for (ix = 0; ix<nx; ix++) {/* loop in x */
+      /* array index in out for this pixel */
+      indx =  iy*nx + ix;
+      /* weight based on distance from center */
+      dist2 = (ix-xcen)*(ix-xcen) + (iy-ycen)*(iy-ycen);
+      if (dist2 <= rad2) {
+	wt = 1.0 - dist2 * irad2;
+	wt = MAX (0.001, wt);
+      } else wt = fblank;
+      wtArr[indx] = wt;
+    } /* end x array loop */
+  } /* end y array loop */
+ 
+  /* Multiply image by weight */
+  ObitFArrayMul(outImage->image, outWeight->image, outImage->image);
+  doInter = FALSE;  /* Not needed now */
+
+  if (!memOnly) {
+    /* Write image (*weight) output */
+    if ((ObitImageWrite (outImage, NULL, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "%s: ERROR writing image %s", 
+		     routine, outImage->name);
+      return doInter;
+    }
+    
+    /* Close */
+    /* Write weight */
+    if ((ObitImageWrite (outWeight, NULL, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "%s: ERROR writing image %s", 
+		     routine, outWeight->name);
+      return doInter;
+    }
+    
+    if ((ObitImageClose (inImage, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "%s: ERROR closing image %s", 
+		     routine, inImage->name);
+      return doInter;
+    }
+    /* Free image buffer  if not memory resident */
+    if (inImage->mySel->FileType!=OBIT_IO_MEM) 
+      inImage->image = ObitFArrayUnref(inImage->image);
+    if ((ObitImageClose (outImage, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "%s: ERROR closing image %s", 
+		     routine, outImage->name);
+      return doInter;
+    }
+    /* Free image buffer if not memory resident */
+    if (outImage->mySel->FileType!=OBIT_IO_MEM) 
+      outImage->image = ObitFArrayUnref(outImage->image);
+    if ((ObitImageClose (outWeight, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "%s: ERROR closing image %s", 
+		     routine, outImage->name);
+      return doInter;
+    }
+    /* Free image buffer if not memory resident */
+    if (outWeight->mySel->FileType!=OBIT_IO_MEM) 
+      outWeight->image = ObitFArrayUnref(outWeight->image);
+    
+  } /* end of not memory only */
+
+  return doInter;
+} /* end ObitImageUtilNoInterWeight */
+
+/**
  * Interpolate 3rd axis in inImage to inPlane and write to outImage outPlane
  * Input planes<1 or > nplanes will be blank filled.
  * \param inImage   Image to be interpolated. Honors BLC, TRC set

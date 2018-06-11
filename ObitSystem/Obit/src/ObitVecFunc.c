@@ -29,8 +29,33 @@
 #include "ObitVecFunc.h"
 #include <math.h>
 
+/** AVX implementation 8 floats in parallel, AVX2 a bit better */
+#if HAVE_AVX2==1
+#include "avx_mathfun_May18.h"
+/** Natural log of array of 8 floats */
+V8SF avx_log_ps(V8SF x) {
+  return (V8SF) log256_ps((v8sf) x);
+}
+/** Exponential of array of 8 floats  */
+V8SF avx_exp_ps(V8SF x) {
+  return (V8SF) exp256_ps((v8sf) x);
+}
+/** Sine of array of 8 floats  */
+V8SF avx_sin_ps(V8SF x) {
+  return (V8SF) sin256_ps((v8sf) x);
+}
+/** Cosine of array of 8 floats  */
+V8SF avx_cos_ps(V8SF x) {
+  return (V8SF) cos256_ps((v8sf) x);
+}
+/** Sine and Cosine of array of 8 floats  */
+void avx_sincos_ps(V8SF x, V8SF *s, V8SF *c) {
+  sincos256_ps((v8sf) x, (v8sf*) s, (v8sf*) c);
+}
+/* end HAVE_AVX */
+
 /** AVX implementation 8 floats in parallel */
-#if HAVE_AVX==1
+#elif HAVE_AVX==1
 #include "avx_mathfun_May18.h"
 /** Natural log of array of 8 floats */
 V8SF avx_log_ps(V8SF x) {

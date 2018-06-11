@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2016                                          */
+/*;  Copyright (C) 2004-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1476,7 +1476,11 @@ void ObitImageMosaicFlatten (ObitImageMosaic *in, ObitErr *err)
   ofloat xpos1[IM_MAXDIM], xpos2[IM_MAXDIM];
   gboolean overlap;
   gchar *routine = "ObitImageMosaicFlatten";
-
+       /* DEBUG */
+#ifdef DEBUG
+  gchar fname[257];  /* DEBUG */
+#endif
+      /* end DEBUG */
   /* error checks */
   if (err->error) return;
   g_assert (ObitIsA(in, &myClassInfo));
@@ -1596,19 +1600,27 @@ void ObitImageMosaicFlatten (ObitImageMosaic *in, ObitErr *err)
 	
       naxis = tout1->myDesc->inaxes; /* How big is output */
   
-      /* Interpolate and weight image */
+      /* Interpolate or copy and weight image */
       /* reopen with windowing */
       ObitImageOpen (in->images[i], OBIT_IO_ReadOnly, err);
       ObitImageRead (in->images[i], NULL, err); /* Read plane */
       if (err->error) Obit_traceback_msg (err, routine, in->name);
-
-      ObitImageUtilInterpolateWeight (in->images[i], tout1, tout2, TRUE, rad, 
-				      plane, plane, hwidth, err);
+      if (ObitImageUtilNoInterWeight (in->images[i], tout1, tout2, TRUE, rad, 
+				      plane, plane, err))
+	ObitImageUtilInterpolateWeight (in->images[i], tout1, tout2, TRUE, rad, 
+					plane, plane, hwidth, err);
       if (err->error) Obit_traceback_msg (err, routine, in->name);
 
-      /* DEBUG 
-	 ObitImageUtilArray2Image ("DbugInterp.fits", 1, tout1->image, err);
-	 ObitImageUtilArray2Image ("DbugInput.fits", 1, in->images[i]->image, err);*/
+      /* DEBUG */
+#ifdef DEBUG
+      sprintf (fname, "DbugNoInput%d.fits",i);
+      ObitImageUtilFArray2FITS (in->images[i]->image, fname, 0, in->images[i]->myDesc, err);
+      sprintf (fname, "DbugNoInterp%d.fits",i);
+      ObitImageUtilFArray2FITS (tout1->image, fname, 0, tout1->myDesc, err);
+      sprintf (fname, "DbugNoWeight%d.fits",i);
+      ObitImageUtilFArray2FITS (tout2->image, fname, 0, tout2->myDesc, err);
+#endif
+      /* end DEBUG */
 
       /* Close, deallocate buffer */
       ObitImageClose(in->images[i], err);
@@ -1991,7 +2003,7 @@ ObitTableCC* ObitImageMosaicCombineCC (ObitImageMosaic *mosaic, olong field,
   ObitTableCC *inCC=NULL, *outCC=NULL;
   ObitTableCCRow *CCRow = NULL;
   ObitImageDesc *imDesc1=NULL, *imDesc2=NULL;
-  olong   irow, orow, nrow, noParms, ifield, jfield, nx, ny, ver, hiVer;
+  olong   irow, orow, nrow, noParms, ifield, jfield, ver, hiVer;
   ofloat pixel1[2], pixel2[2];
   gboolean overlap;
   gchar *routine = "ObitImageMosaicCombineCC";
@@ -2027,8 +2039,7 @@ ObitTableCC* ObitImageMosaicCombineCC (ObitImageMosaic *mosaic, olong field,
 
   /* Loop over other fields */
   imDesc2 = (mosaic->images[ifield])->myDesc;
-  nx = imDesc2->inaxes[0];  ny = imDesc2->inaxes[1]; 
-  for (jfield = 0; jfield<mosaic->numberImages; jfield++) {
+    for (jfield = 0; jfield<mosaic->numberImages; jfield++) {
     if (jfield==ifield) continue;
     imDesc1 = (mosaic->images[jfield])->myDesc;
  
@@ -2978,7 +2989,7 @@ FlyEye (ofloat radius, olong imsize, ofloat cells[2], olong overlap,
     drad, xra, xdec, xd,  xsh[2], ll, mm, maxrad, ra0r, dec0r, dradd;
   ofloat      dist[MAXFLD], mrotat, rxsh[2];
   gboolean   this1, warn;
-  olong   ifield, mfield, ii, jj, indx[MAXFLD], i1, i2, j1, j2, jerr, nfini, mxfld;
+  olong   ifield, mfield, ii, jj, indx[MAXFLD], i1, i2, jerr, nfini, mxfld;
   gchar *routine = "FlyEye";
 
   /* error checks */
@@ -3022,8 +3033,6 @@ FlyEye (ofloat radius, olong imsize, ofloat cells[2], olong overlap,
   mfield = MIN (mfield, mxfld);
   i2 = mfield;
   i1 = -i2;
-  j2 = mfield/2 + 1;
-  j1 = -j2;
   this1 = FALSE;
 
   /* See if one field is enough? */
@@ -3295,7 +3304,6 @@ AddOutlier (gchar *Catalog, olong catDisk, ofloat minRad, ofloat cells[2],
   olong blc[IM_MAXDIM] = {1,1,1,1,1};
   olong trc[IM_MAXDIM] = {0,0,0,0,0};
   olong ver, nrows, irow;
-  ObitIOCode retCode;
   ObitImage *VZImage=NULL;
   ObitTableVZ *VZTable=NULL;
   ObitTableVZRow *VZRow=NULL;
@@ -3361,7 +3369,7 @@ AddOutlier (gchar *Catalog, olong catDisk, ofloat minRad, ofloat cells[2],
   warn = FALSE;
   for (irow= 1; irow<=nrows; irow++) { /* loop 500 */
     /* read */
-    retCode = ObitTableVZReadRow (VZTable, irow, VZRow, err);
+    ObitTableVZReadRow (VZTable, irow, VZRow, err);
     if (err->error) Obit_traceback_msg (err, routine, VZTable->name);
    
     /* spectral scaling of flux density */
@@ -3424,7 +3432,7 @@ AddOutlier (gchar *Catalog, olong catDisk, ofloat minRad, ofloat cells[2],
 					routine);
   /* Close up */
   ObitImageClose(VZImage, err);
-  retCode = ObitTableVZClose(VZTable, err);
+  ObitTableVZClose(VZTable, err);
   if (err->error) Obit_traceback_msg (err, routine, VZTable->name);
   
   /* clean up */
