@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2016                                          */
+/*;  Copyright (C) 2004-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2199,6 +2199,7 @@ ObitCCCompType ObitTableCCUtilGetType (ObitData *file, olong ver, ObitErr* err)
  *                 Must have freq axis type = "SPECLNMF"
  *                 possible control parameter:
  * \li "dropNeg" OBIT_boolean if True, drop negative components [True] 
+ * \li "doPBCor" OBIT_boolean if True, Primary beam corr [False] 
  * \param outImage Output ObitImageWB with attached CC table
  * \param nTerm    Number of output Spectral terms, 2=SI, 3=also curve.
  * \param inCCVer  input CC table version
@@ -2233,7 +2234,7 @@ void ObitTableCCUtilT2Spec  (ObitImage *image, ObitImageWB *outImage,
   olong irow, orow, ver, i, j, offset, nSpec, sCC, eCC, noParms, nterm;
   olong planeNo[5] = {1,1,1,1,1};
   gchar keyword[12];
-  gboolean doZ, dropNeg;
+  gboolean doZ, dropNeg, doPBCor;
   gchar *tabType = "AIPS CC";
   gchar *routine = "ObitTableCCUtilT2Spec";
 
@@ -2254,6 +2255,10 @@ void ObitTableCCUtilT2Spec  (ObitImage *image, ObitImageWB *outImage,
   /* Drop negatives? */
   dropNeg = TRUE;
   ObitInfoListGetTest(image->info, "dropNeg", &type, dim, &dropNeg);
+  
+  /* Primary Beam correction? */
+  doPBCor = FALSE;
+  ObitInfoListGetTest(image->info, "doPBCor", &type, dim, &doPBCor);
   
   /* Create spectrum info arrays */
   nSpec = 1;
@@ -2388,14 +2393,22 @@ void ObitTableCCUtilT2Spec  (ObitImage *image, ObitImageWB *outImage,
     
     /* Loop over spectral channels get corrected flux, sigma */
     for (i=0; i<nSpec; i++) {
-      BeamShape->refFreq = Freq[i];  /* Set frequency */
-      PBCorr[i] = BSClass->ObitBeamShapeGainSym(BeamShape, Angle);
-      flux[i]   = inCCRow->parms[offset+i] / PBCorr[i];
-      if ((RMS[i]>0.0) && (RMS[i]!=fblank))
-	sigma[i]  = sigmaField[i] / (PBCorr[i]*PBCorr[i]);
-      else
-	sigma[i] = -1;   /* Bad plane */
-    }
+      if (doPBCor) {
+	BeamShape->refFreq = Freq[i];  /* Set frequency */
+	PBCorr[i] = BSClass->ObitBeamShapeGainSym(BeamShape, Angle);
+	flux[i]   = inCCRow->parms[offset+i] / PBCorr[i];
+	if ((RMS[i]>0.0) && (RMS[i]!=fblank))
+	  sigma[i]  = sigmaField[i] / (PBCorr[i]*PBCorr[i]);
+	else
+	  sigma[i] = -1;   /* Bad plane */
+      } else {  /* No PB Corr */
+	flux[i]   = inCCRow->parms[offset+i];
+	if ((RMS[i]>0.0) && (RMS[i]!=fblank))
+	  sigma[i]  = sigmaField[i];
+	else
+	  sigma[i] = -1;   /* Bad plane */
+      }
+    } /* End channel loop */
     
     /* Fit spectrum */
     ObitSpectrumFitSingleArg (fitArg, flux, sigma, fitResult);

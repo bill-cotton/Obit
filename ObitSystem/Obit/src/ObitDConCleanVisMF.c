@@ -996,7 +996,6 @@ static void SubNewCCs (ObitDConCleanVis *inn, olong *newCC, ObitFArray **pixarra
   ObitTable *tempTable = NULL;
   ObitTableCC *CCTable = NULL;
   ObitImageMF *image=NULL;
-  ObitImage *theBeam=NULL;
   ImSubFuncArg **threadArgs;
   ObitFArray **comps=NULL;
   ObitFArray **inFArrays, **bmFArrays;
@@ -1007,7 +1006,6 @@ static void SubNewCCs (ObitDConCleanVis *inn, olong *newCC, ObitFArray **pixarra
   gboolean doAbs, OK;
   gchar *tabType = "AIPS CC";
   ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
-  ObitImageClassInfo *imgClass;
   gchar *routine = "SubNewCCs";
 
   /* error checks */
@@ -1076,10 +1074,6 @@ static void SubNewCCs (ObitDConCleanVis *inn, olong *newCC, ObitFArray **pixarra
 
     /* Which image? */
     image = (ObitImageMF*)in->mosaic->images[ifield-1];
-    /* Which Beam? */
-    imgClass  = (ObitImageClassInfo*)image->ClassInfo;    /* Image class */
-    theBeam   = imgClass->ObitImageGetBeam((ObitImage*)image, 0, plane, err);
-    if (err->error) Obit_traceback_msg (err, routine, in->name);
     
     nTh = MIN (nThreads, image->nSpec);
     nLeft = image->nSpec;
@@ -1121,7 +1115,13 @@ static void SubNewCCs (ObitDConCleanVis *inn, olong *newCC, ObitFArray **pixarra
 	threadArgs[j]->inBeam = NULL;
 	jp++;
       }
-      
+#ifdef DEBUG
+      /* DEBUG write plane 1 of first before subtract */
+      j = 0;
+      if (ispec==0) 
+	ObitImageUtilArray2Image ("DbugBefore.fits", 0, inFArrays[j], err); 
+      /* end DEBUG */
+#endif
       /* Do operation - need to stub remainder of nTh (don't know why) */
       OK = ObitThreadIterator (in->thread, nDo, 
 			       (ObitThreadFunc)ThreadImSub,
@@ -1131,6 +1131,13 @@ static void SubNewCCs (ObitDConCleanVis *inn, olong *newCC, ObitFArray **pixarra
       if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
       if (err->error) goto cleanup;
 
+#ifdef DEBUG
+      /* DEBUG write plane 1 of first after subtract */
+      j = 0;
+      if (ispec==0) 
+	ObitImageUtilArray2Image ("DbugAfter.fits", 0, inFArrays[j], err); 
+      /* end DEBUG */
+#endif
       /* Rewrite planes, delete spectral beam patches  */
       jp = 0;
       for (j=0; j<nDo; j++) {
@@ -1225,7 +1232,7 @@ static gpointer ThreadImSub (gpointer args)
   ObitThread *thread    = largs->thread;
 
   /* local */
-  olong i, j, ifield, len, pos1[2], pos2[2];
+  olong i, j, ifield, len, pos1[2], pos2[2], foff;
   ofloat idx, idy, ftemp, flux, offset[2];
   ObitFArray *comps;
   ObitImageDesc *inDesc, *outDesc;
@@ -1234,6 +1241,8 @@ static gpointer ThreadImSub (gpointer args)
   if (pixarray==NULL) goto finish;
   if (ofield<=0)      goto finish;
 
+  foff = 0;   /* Flux offset in comps */
+  if (iSpec>0) foff = 3+iSpec;
 
   /* Loop over fields with components */
   for (i=0; i<nfield; i++) {
@@ -1263,8 +1272,9 @@ static gpointer ThreadImSub (gpointer args)
       if (ftemp>0.0) ftemp += 0.5;
       else           ftemp -= 0.5;
       pos1[1] = (olong)(ftemp); 
-      flux = comps->array[j*len+3+iSpec];
-      ObitFArrayShiftAdd(pixarray, pos1, BeamPatch, pos2, -flux, pixarray);
+      flux = comps->array[j*len+foff];
+      /* Non threaded version */
+      ObitFArrayShiftAddNT(pixarray, pos1, BeamPatch, pos2, -flux, pixarray);
     } /* End loop over components */
   } /* end loop over fields */
  
@@ -1641,7 +1651,7 @@ static void GaussTaper (ObitCArray* uvGrid, ObitImageDesc *imDesc,
   ofloat dU, dV, UU, VV, texp;
   ofloat konst, xmaj, xmin, cpa, spa, b1, b2, b3, bb2, bb3;
   ofloat taper, norm, *grid, tx, ty;
-  olong i, j, nx, ny, ndim, naxis[2];
+  olong i, j, nx, ny, naxis[2];
 
   /* Image info - descriptor should still be valid */
   nx = imDesc->inaxes[imDesc->jlocr];
@@ -1668,7 +1678,7 @@ static void GaussTaper (ObitCArray* uvGrid, ObitImageDesc *imDesc,
   b3 = - 2.0 * spa * cpa * (xmaj*xmaj - xmin*xmin);
   
   /* pointer to complex grid */
-  ndim = 2; naxis[0] = 0; naxis[1] = 0; 
+  naxis[0] = 0; naxis[1] = 0; 
   grid = ObitCArrayIndex(uvGrid, naxis);
   
   /* loop over uv array */  
@@ -1872,9 +1882,9 @@ void ConvGauss (ObitImage *inImage, olong *plane,
 		ofloat Gaumaj, ofloat Gaumin, ofloat GauPA, ofloat rescale,
 		ObitErr *err)
 {
-  ObitIOCode   iretCode, oretCode;
+  ObitIOCode   iretCode;
   olong      ndim=2, naxis[2], blc[2], trc[2], cen[2];
-  ofloat Beam[3], cells[2], maprot;
+  ofloat     cells[2], maprot;
   ObitFFT    *FFTfor=NULL, *FFTrev=NULL;
   ObitFArray *xferFn=NULL, *subXferFn=NULL, *zeroArray=NULL;
   ObitFArray *padImage=NULL, *tmpArray=NULL;
@@ -1883,11 +1893,6 @@ void ConvGauss (ObitImage *inImage, olong *plane,
   gchar *routine = "ConvGauss";
 
   if (err->error) return;  /* existing error? */
-
-  /* Save output resolution */
-  Beam[0] = inImage->myDesc->beamMaj;
-  Beam[1] = inImage->myDesc->beamMin;
-  Beam[2] = inImage->myDesc->beamPA;
 
   /* Input beam not less than zero */
   if ((inImage->myDesc->beamMaj<0.0) || (inImage->myDesc->beamMin<0.0)) {
@@ -1988,7 +1993,7 @@ void ConvGauss (ObitImage *inImage, olong *plane,
      ObitImageUtilArray2Image ("ConvolDebug1.fits",1,tmpArray, err); */
   
   /* Write plane */
-  oretCode = ObitImagePutPlane(inImage, tmpArray->array, plane, err);
+  ObitImagePutPlane(inImage, tmpArray->array, plane, err);
   if (err->error) goto cleanup;
   tmpArray  = ObitFArrayUnref(tmpArray);
   

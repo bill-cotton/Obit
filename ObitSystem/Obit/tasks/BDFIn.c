@@ -57,6 +57,7 @@
 #include "ObitTablePO.h"
 #include "ObitTablePT.h"
 #include "ObitTableCT.h"
+#include "ObitTableCQ.h"
 #include "ObitSDMData.h"
 #include "ObitBDFData.h"
 #include "ObitHistory.h"
@@ -84,8 +85,8 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err);
 void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput, 
 		ObitErr *err);
 /* Get data */
-void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData, 
-	      ObitErr *err);
+ObitBDFData* GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData, 
+		      ObitErr *err);
 
 /* Get Antenna info */
 void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err);
@@ -123,6 +124,8 @@ void GetInterferometerModelInfo (ObitData *inData, ObitUV *outData,
 				 ObitErr *err);
 /* Copy any WEATHER tables */
 void GetWeatherInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err);
+/* Copy any frequency averaging to a CQ Table */
+void GetFreqAvgInfo (ObitBDFData *BDFData, ObitUV *outData, ObitErr *err);
 /* Write history */
 void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData, ObitUV* outData, 
 		   ObitErr* err);
@@ -282,7 +285,7 @@ int main ( int argc, char **argv )
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
   
   /* convert data  */
-  GetData (SDMData, myInput, outData, err); 
+  BDFData = GetData (SDMData, myInput, outData, err); 
   /*if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit; tolerate failure */
   ObitErrLog(err);  ObitErrClear(err);  
 
@@ -307,6 +310,7 @@ int main ( int argc, char **argv )
   GetPointingInfo (SDMData, outData, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
+  GetFreqAvgInfo (BDFData, outData, err);     /* CQ tables */
   /* Copy EVLA tables */
   if (SDMData->isEVLA) {
     /* GetCalibrationInfo (inData, outData, err);   CALIBRATION tables */
@@ -384,6 +388,7 @@ int main ( int argc, char **argv )
   myInput  = ObitInfoListUnref(myInput);   /* delete input list */
   myOutput = ObitInfoListUnref(myOutput);  /* delete output list */
   SDMData  = ObitSDMDataUnref (SDMData);
+  if (BDFData->SWArray) BDFData->SWArray  = ObitSDMDataKillSWArray (BDFData->SWArray);
   BDFData  = ObitBDFDataUnref (BDFData);
   outData  = ObitUnref(outData);
   CalTab   = ObitTableUnref(CalTab);
@@ -2289,7 +2294,7 @@ void UpdateSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
   if (isDone)    g_free(isDone);
 } /* end  UpdateSourceInfo */
 
-void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData, 
+ObitBDFData* GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData, 
 	      ObitErr *err)
 /*----------------------------------------------------------------------- */
 /*  Read data from BDF file, write outData                                */
@@ -2323,7 +2328,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   gchar *routine = "GetData";
 
   /* error checks */
-  if (err->error) return;
+  if (err->error) return BDFData;
   g_assert(myInput!=NULL);
   g_assert(ObitUVIsA(outData));
 
@@ -2344,7 +2349,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   
   /* Create BDF Structure  */
   BDFData = ObitBDFDataCreate ("BDF", outData->myDesc, SDMData, err);
-  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  if (err->error) Obit_traceback_val (err, routine, outData->name, BDFData);
 
   /* Channel/IF/config selection - should have been completely specified in GetHeader */
   selChan = 0;
@@ -2385,11 +2390,11 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   ver = 1;
   NXtable = newObitTableNXValue ("Index table", (ObitData*)outData, &ver, 
 				 OBIT_IO_ReadWrite, err);
-  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  if (err->error) Obit_traceback_val (err, routine, outData->name, BDFData);
   
   /* Clear existing rows for new file */
   if (newOutput) ObitTableClearRows ((ObitTable*)NXtable, err);
-  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  if (err->error) Obit_traceback_val (err, routine, outData->name, BDFData);
 
   /* Open Index table */
   if ((ObitTableNXOpen (NXtable, OBIT_IO_ReadWrite, err)
@@ -2423,7 +2428,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     if (SpWinArray) SpWinArray  = ObitSDMDataKillSWArray (SpWinArray);
     SpWinArray  = 
       ObitSDMDataGetSWArray (SDMData, iMain, SWOrder);
-    Obit_return_if_fail((SpWinArray), err,
+    Obit_retval_if_fail((SpWinArray), err, BDFData,
 			"%s: Could not extract Spectral Windows from ASDM", 
 			routine);
     /* Selection here mostly by ConfigID */
@@ -2474,11 +2479,11 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     /* File initialization */
     ObitBDFDataInitFile (BDFData, filename, err);
     g_free(filename);
-    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    if (err->error) Obit_traceback_val (err, routine, outData->name, BDFData);
     
     /* Init Scan/subscan */
     ObitBDFDataInitScan (BDFData, iMain, SWOrder, selChan, selIF, err);
-    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    if (err->error) Obit_traceback_val (err, routine, outData->name, BDFData);
     
     /* Consistency check - loop over selected Spectral windows */
     nIFsel = 0;   /* Number of selected IFs */
@@ -2490,10 +2495,10 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
       /* Get from ordered list */
       jSW = BDFData->SWArray->order[iSW];
       if (BDFData->SWArray->winds[jSW]->selected) {
-	Obit_return_if_fail((nchan==BDFData->SWArray->winds[jSW]->numChan), err,
+	Obit_retval_if_fail((nchan==BDFData->SWArray->winds[jSW]->numChan),err, BDFData, 
 			    "%s: Input number freq. incompatible %d != %d", 
 			    routine, nchan, BDFData->SWArray->winds[jSW]->numChan);
-	Obit_return_if_fail((nstok==BDFData->SWArray->winds[jSW]->nCPoln), err,
+	Obit_retval_if_fail((nstok==BDFData->SWArray->winds[jSW]->nCPoln), err, BDFData, 
 			    "%s: Input number Poln incompatible %d != %d", 
 			    routine, nstok, BDFData->SWArray->winds[jSW]->nCPoln);
 	/* Baseband - assume name starts with "BB_" and ends in number 
@@ -2516,7 +2521,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
       if (iBB>=BDFData->ScanInfo->BBinfo[kBB]->numSpectralWindow) {kBB++; iBB=0;} /* Next baseband */
     } /* End loop over basebands/spectral windows */
     /* Same number of IFs? */
-    Obit_return_if_fail((nIF==nIFsel), err,
+    Obit_retval_if_fail((nIF==nIFsel), err, BDFData,
 			"%s: Input number Bands (IFs) incompatible %d != %d", 
 			routine, nIF, nIFsel);
     
@@ -2580,7 +2585,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
       /* Read integration */
       retCode =  ObitBDFDataReadInteg(BDFData, err);
       if (retCode == OBIT_IO_EOF) break;
-      if (err->error) Obit_traceback_msg (err, routine, outData->name);
+      if (err->error) Obit_traceback_val (err, routine, outData->name, BDFData);
       
       /* Loop over data */
       while (1) {
@@ -2588,14 +2593,14 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	retCode =  ObitBDFDataGetVis (BDFData, Buffer, err);
 	/* Done? */
 	if (retCode == OBIT_IO_EOF) break;
-	if (err->error) Obit_traceback_msg (err, routine, outData->name);
+	if (err->error) Obit_traceback_val (err, routine, outData->name, BDFData);
 	
 	/* Update time if appending */
 	if (!newOutput) Buffer[desc->iloct] += dayOff;
 	
 	/* Calculate uvw */
 	CalcUVW (outData, BDFData, Buffer, err);
-	if (err->error) Obit_traceback_msg (err, routine, outData->name);
+	if (err->error) Obit_traceback_val (err, routine, outData->name, BDFData);
 	
 	/* Check sort order */
 	if (Buffer[desc->iloct]<tlast) {
@@ -2620,7 +2625,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	if (Buffer[desc->iloct]>tlast) {
 	  UpdateEphemerisInfo(outData, srcEphem, Buffer[desc->iloct], 
 			      Buffer[desc->ilocsu], err);
-	  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+	  if (err->error) Obit_traceback_val (err, routine, outData->name, BDFData);
 	}
 	
 	tlast = Buffer[desc->iloct];
@@ -2634,7 +2639,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	endTime = Buffer[desc->iloct];
 	if ((ObitUVWrite (outData, NULL, err) != OBIT_IO_OK) || (err->error))
 	  Obit_log_error(err, OBIT_Error, "ERROR writing output UV data"); 
-	if (err->error) Obit_traceback_msg (err, routine, outData->name);
+	if (err->error) Obit_traceback_val (err, routine, outData->name, BDFData);
       } /* End loop over data in integration */
     } /* end loop over integrations */
     
@@ -2670,13 +2675,12 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 
   /* Cleanup */
   if ((ObitTableNXClose (NXtable, err) != OBIT_IO_OK) || (err->error>0)) 
-    Obit_traceback_msg (err, routine, NXtable->name);
+    Obit_traceback_val (err, routine, NXtable->name, BDFData);
 
-  BDFData  = ObitBDFDataUnref (BDFData);
-  if (SpWinArray) SpWinArray  = ObitSDMDataKillSWArray (SpWinArray);
+  BDFData->SWArray = SpWinArray;
   NXrow    = ObitTableNXRowUnref(NXrow);
   NXtable  = ObitTableNXUnref(NXtable);
-
+  return BDFData;
 } /* end GetData  */
 
 void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer, 
@@ -4234,6 +4238,134 @@ void GetOTTInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   if (antLookup)   g_free(antLookup);
 
 } /* end  GetOTTInfo */
+
+void GetFreqAvgInfo (ObitBDFData *BDFData, ObitUV *outData, ObitErr *err)
+/*----------------------------------------------------------------------- */
+/*  Write AIPS CQ on outData from  SpectralWindow                         */
+/*   Input:                                                               */
+/*      BDFData  BDF structure                                            */
+/*      outData  Output UV object                                         */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+{
+  ObitTableCQ*          outTable=NULL;
+  ObitTableCQRow*       outRow=NULL;
+  ObitSDMData           *SDMData=BDFData->SDMData;
+  ASDMSpectralWindowTable*  inTab=SDMData->SpectralWindowTab;
+  olong i, iRow, oRow, ver, ichRatio, nchar, iSW, jSW, numIF;
+  ofloat chRatio;
+  ObitIOAccess access;
+  gboolean found=FALSE;
+  gchar *routine = "GetFreqAvgInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitUVIsA(outData));
+
+  /* Any entries? */
+  if ((inTab==NULL) || (inTab->nrows<=0)) return;
+
+  /* Print any prior messages */
+  ObitErrLog(err);
+  
+  /* Create output CQ table object */
+  ver      = 1;
+  access   = OBIT_IO_ReadWrite;
+  numIF    = outData->myDesc->inaxes[outData->myDesc->jlocif];
+  outTable = newObitTableCQValue ("Output table", (ObitData*)outData, 
+				  &ver, access, numIF, err);
+  if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with CQ table");
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  
+  /* Open table */
+  if ((ObitTableCQOpen (outTable, access, err) 
+       != OBIT_IO_OK) || (err->error))  { /* error test */
+    Obit_log_error(err, OBIT_Error, "ERROR opening output CQ table");
+    return;
+  }
+  nchar = outTable->myDesc->repeat[outTable->TaperFnCol]; /* Number of characters in TaperFn */
+
+  /* Create output Row */
+  outRow = newObitTableCQRow (outTable);
+  /* attach to table buffer */
+  ObitTableCQSetRow (outTable, outRow, err);
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+
+  /* Initialize output row */
+  outRow->FrqSel   =  1;
+  outRow->SubA     =  1;
+  for (i=0; i<numIF; i++) {
+    outRow->OverSamp[i] =  1;     /* Oversampling factor NYI */
+    outRow->ZeroPad[i]  =  1;     /* Zero-padding factor NYI */
+    outRow->TimeAvg[1] = 0.0;  /* Time averaging interval (? units) NYI */
+    outRow->numBits[i]  =  4;     /* Quantization (no. of bits per recorded sample) NYI */
+    outRow->FFTOverlap[i] =  1.0; /* FFT overlap factor NYI */
+    outRow->Filter[i] = 0; /* Filter enum, NYI */
+  }
+  outRow->status   = 0;
+    
+  /* Find Selected Spectral window */
+  /* loop through input table */
+  for (iRow=0; iRow<inTab->nrows; iRow++) {
+    iSW = inTab->rows[iRow]->spectralWindowId; jSW = 0;
+    found = FALSE;
+    while (jSW<BDFData->SWArray->nwinds) {
+      found = (iSW==BDFData->SWArray->winds[jSW]->spectralWindowId) &&
+	BDFData->SWArray->winds[jSW]->selected;
+      if (found) break;
+      jSW++;
+    }
+    if (!found) continue;  /* Desired SW? */
+
+    /* Set CQ Row */
+    chRatio = inTab->rows[iRow]->chanFreqStep/inTab->rows[iRow]->chanWidth; /* Averaged? */
+    ichRatio = (olong)(chRatio+0.5);
+    for (i=0; i<numIF; i++) {
+      outRow->numChan[i] = inTab->rows[iRow]->numChan; /* No. of channels in correlator */
+      outRow->SpecAvg[i] = chRatio; /*Spectral averaging factor */
+      /* Averaged? */
+      if (ichRatio>1) { /* averaged */
+	outRow->FFTSize[i] = outRow->numChan[i]*ichRatio; /* Size of FFT in correlator (not sure about this) */
+      } else {
+	outRow->FFTSize[i] = outRow->numChan[i]; /* Size of FFT in correlator (not sure about this) */
+      } /* no averaging */
+      if (inTab->rows[iRow]->chanFreqArray) {
+	outRow->EdgeFreq[i] = inTab->rows[iRow]->chanFreqArray[0]; /* Edge frequency (Hz) */
+      } else {
+	outRow->EdgeFreq[i] = inTab->rows[iRow]->chanFreqStart; /* Edge frequency (Hz) */
+      }
+      if (inTab->rows[iRow]->chanWidthArray) {
+	outRow->ChanBW[i] =  inTab->rows[iRow]->chanWidthArray[0]; /* Channel bandwidth {Hz) */
+      } else {
+	outRow->ChanBW[i] =  inTab->rows[iRow]->chanWidth; /* Channel bandwidth {Hz) */
+      }
+    } /* end IF loop */
+    strncpy(outRow->TaperFn, "UNIFORM",nchar);/* Taper function character (?) */
+    /* Write */
+    oRow = -1;
+    if ((ObitTableCQWriteRow (outTable, oRow, outRow, err)
+	 != OBIT_IO_OK) || (err->error>0)) { 
+      Obit_log_error(err, OBIT_Error, "ERROR updating CQ Table");
+      return;
+    }
+    break; /* Only need one row */
+    } /* end loop over input table */
+  
+  /* Close  table */
+  if ((ObitTableCQClose (outTable, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "ERROR closing output CQ Table file");
+    return;
+  }
+  
+  /* Tell about it */
+  Obit_log_error(err, OBIT_InfoErr, "Wrote CQ table");
+  
+  /* Cleanup */
+  outRow   = ObitTableCQRowUnref(outRow);
+  outTable = ObitTableCQUnref(outTable);
+} /* end  GetFreqAvgInfo */
 
 void GetGainCurveInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 /*----------------------------------------------------------------------- */

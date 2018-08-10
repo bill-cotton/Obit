@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2015                                          */
+/*;  Copyright (C) 2003-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -747,8 +747,14 @@ void ObitUVDescShiftPhase (ObitUVDesc* uvDesc,
     imra  = imDesc->crval[imDesc->jlocr];
     imdec = imDesc->crval[imDesc->jlocd];
   } else { /* 2D reference is tangent - calculate position of center */
-    inPixel[0] = 1.0 + imDesc->inaxes[imDesc->jlocr]*0.5;
-    inPixel[1] = 1.0 + imDesc->inaxes[imDesc->jlocd]*0.5;
+    if ((imDesc->xshift!=0.0) || (imDesc->yshift!=0.0)) {
+      /* Shifted image */
+      inPixel[0] = 1.0 + imDesc->inaxes[imDesc->jlocr]*0.5;
+      inPixel[1] = 1.0 + imDesc->inaxes[imDesc->jlocd]*0.5;
+    } else {
+      /* Unshifted image */
+      inPixel[0] = imDesc->crpix[0]; inPixel[1] = imDesc->crpix[1]; 
+    }
     ObitImageDescGetPos (imDesc, inPixel, pos, err);
     imra  = pos[0];
     imdec = pos[1];

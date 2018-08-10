@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2016                                          */
+/*;  Copyright (C) 2003-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -127,7 +127,7 @@ void ObitUVCalSelectInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
 			  ObitUVDesc *outDesc, ObitErr *err)
 {
   olong   i, ifb, ife, icb, ice, nmode=21;
-  olong   ierr, pmode, nchan, nif, nstok, ivpnt, kstoke0;
+  olong   pmode, nchan, nif, nstok, ivpnt, kstoke0;
   olong   knpoln, knchan, knif;
   ofloat crpixpoln=0.0, crpixchan=0.0, crpixif=0.0, crotapoln=0.0, crotachan=0.0, crotaif=0.0;
   ofloat cdeltpoln=0.0, cdeltchan=0.0, cdeltif=0.0;
@@ -277,7 +277,6 @@ void ObitUVCalSelectInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
   if (inDesc->jlocs>=0) nstok = inDesc->inaxes[inDesc->jlocs];
   else nstok = 1;
 
-  ierr = 1;
   /* check channel; default = all */
   if (icb <= 0)  ice = nchan;
   icb = MAX (icb, 1);
@@ -363,7 +362,7 @@ void ObitUVCalSelectInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
   case 16: /* FV   */
     ObitUVCalSelectIInit (in, kstoke0, nstok, ivpnt, formalI, err);
     crval = 1.0; /* Stokes index */
-    cdelt = 4.0; /* stokes increment */
+    cdelt = -4.0; /* stokes increment */
     ivpnt++;
     ObitUVCalSelectVInit (in, kstoke0, nstok, ivpnt, err);
     ivpnt++;
@@ -372,44 +371,53 @@ void ObitUVCalSelectInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
   case 7: /* RR   */
     ObitUVCalSelectRRInit (in, kstoke0, nstok, ivpnt, err);
     crval = -1.0; /* Stokes index */
-    cdelt =  1.0; /* stokes increment */
+    cdelt = 11.0; /* stokes increment */
     ivpnt++;
     break;
 
   case 8: /* LL   */
     ObitUVCalSelectLLInit (in, kstoke0, nstok, ivpnt, err);
     crval = -2.0; /* Stokes index */
-    cdelt =  1.0; /* stokes increment */
+    cdelt = -1.0; /* stokes increment */
     ivpnt++;
     break;
 
   case 9: /* RL   */
     ObitUVCalSelectRLInit (in, kstoke0, nstok, ivpnt, err);
     crval = -3.0; /* Stokes index */
-    cdelt =  1.0; /* stokes increment */
+    cdelt = -1.0; /* stokes increment */
     ivpnt++;
     break;
 
   case 10: /* LR  */
     ObitUVCalSelectLRInit (in, kstoke0, nstok, ivpnt, err);
     crval = -4.0; /* Stokes index */
-    cdelt =  1.0; /* stokes increment */
+    cdelt = -1.0; /* stokes increment */
     ivpnt++;
     break;
 
-  case 11: /* HALF = RR,LL  */
-    ObitUVCalSelectRRInit (in, kstoke0, nstok, ivpnt, err);
-    crval = -1.0; /* Stokes index */
-    cdelt =  1.0; /* stokes increment */
-    ivpnt++;
-    ObitUVCalSelectLLInit (in, kstoke0, nstok, ivpnt, err);
-    ivpnt++;
-    break;
+  case 11: /* HALF = RR,LL or XX,YY */
+    if (kstoke0 <= -5) { /* Linear */
+      ObitUVCalSelectXXInit (in, kstoke0, nstok, ivpnt, err);
+      crval = -5.0; /* Stokes index */
+      cdelt = -1.0; /* stokes increment */
+      ivpnt++;
+      ObitUVCalSelectYYInit (in, kstoke0, nstok, ivpnt, err);
+      ivpnt++;
+    } else { /* Circular */
+      ObitUVCalSelectRRInit (in, kstoke0, nstok, ivpnt, err);
+      crval = -1.0; /* Stokes index */
+      cdelt = -1.0; /* stokes increment */
+      ivpnt++;
+      ObitUVCalSelectLLInit (in, kstoke0, nstok, ivpnt, err);
+      ivpnt++;
+    }
+      break;
 
   case 12: /* FULL */
     ObitUVCalSelectRRInit (in, kstoke0, nstok, ivpnt, err);
     crval = -1.0; /* Stokes index */
-    cdelt =  1.0; /* stokes increment */
+    cdelt = -1.0; /* stokes increment */
     ivpnt++;
     ObitUVCalSelectLLInit (in, kstoke0, nstok, ivpnt, err);
     ivpnt++;
@@ -422,28 +430,28 @@ void ObitUVCalSelectInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
   case 17: /* XX */
     ObitUVCalSelectXXInit (in, kstoke0, nstok, ivpnt, err);
     crval = -5.0; /* Stokes index */
-    cdelt =  1.0; /* stokes increment */
+    cdelt = -1.0; /* stokes increment */
     ivpnt++;
     break;
 
   case 18: /* YY */
     ObitUVCalSelectYYInit (in, kstoke0, nstok, ivpnt, err);
     crval = -6.0; /* Stokes index */
-    cdelt =  1.0; /* stokes increment */
+    cdelt = -1.0; /* stokes increment */
     ivpnt++;
     break;
 
   case 19: /* XY */
     ObitUVCalSelectXYInit (in, kstoke0, nstok, ivpnt, err);
     crval = -7.0; /* Stokes index */
-    cdelt =  1.0; /* stokes increment */
+    cdelt = -1.0; /* stokes increment */
     ivpnt++;
     break;
 
   case 20: /* YX */
     ObitUVCalSelectYXInit (in, kstoke0, nstok, ivpnt, err);
     crval = -8.0; /* Stokes index */
-    cdelt =  1.0; /* stokes increment */
+    cdelt = -1.0; /* stokes increment */
     ivpnt++;
     break;
 
@@ -499,7 +507,7 @@ gboolean ObitUVCalSelect (ObitUVCal *in, ofloat *RP, ofloat *visIn, ofloat *visO
 			  ObitErr *err)
 {
   olong   i, ip1, ip2, op, lf, lc, lp, lfoff, ioff, incf, incif, incs;
-  olong channInc, IFInc, maxChan, maxIF;
+  olong channInc, maxChan, maxIF;
   gboolean   good;
   ofloat wt1, wt2, temp, xfact1, xfact2;
   ObitUVSel *sel = in->mySel;
@@ -521,7 +529,6 @@ gboolean ObitUVCalSelect (ObitUVCal *in, ofloat *RP, ofloat *visIn, ofloat *visO
   incif = 3 * desc->incif / desc->inaxes[0];
   channInc = MAX (1, sel->channInc);
   maxChan  = MIN (sel->numberChann*channInc, desc->inaxes[desc->jlocf]);
-  IFInc    = MAX (1, sel->IFInc);
   if (desc->jlocif>=0) maxIF =  desc->inaxes[desc->jlocif];
   else                 maxIF = 1;
 

@@ -3,7 +3,7 @@
 ;! Task to enter source info into the source (AIPS SU) table.
 ;# TASK CALIBRATION
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007-2017
+;;  Copyright (C) 2007-2018
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -89,10 +89,11 @@ Parms                              [0]: Pixel to which SysVel
                                      <= 0 => use latest VLA
                                          values (1999.2) or,
                                          for 1934-638, the
-                                         ATCA value of 30Jul94.
-                                        1 => use Baars values
+					 ATCA value of 30Jul94.
+                                         or MeerKAT 0408-658
+                                       1 => use Baars values
                                          or old ATCA/PKS values
-                                         for 1934-638
+                                         for 1934-638, 0408-65
                                         2 => use VLA 1995.2
                                          values or for 1934-638
                                          the ATCA value of
@@ -162,6 +163,7 @@ Adverbs:
                   Australia Telescope source 1934-638 is also
                   recognized (J2000 only but can start with P).
                   (see Parms[1] for polynomial selection).
+                  0408-658 MeerKAT value from Mauch/Hugo.
              'REJY' => reset source flux densities to zero
                   for source(s) specified.
              'REVL' => reset velocity to zero for source(s)
@@ -186,17 +188,13 @@ Adverbs:
                  The velocity stored in the 'SU' table will be
                  recalculated to refer to the reference pixel.
              [1]: Only for 'CALC' option:
-                  <= 0 => use latest VLA values (1999.2) or,
-                          for 1934-638, the ATCA value of
-                          30Jul94.
-                     1 => use Baars values or old ATCA/PKS
-                          values for 1934-638
+                  All provide 1934-638 and 9498-658.
+                  <= 0 => use latest VLA values (1999.2)
+                     1 => use Baars values
                      2 => use mid-1990s VLA determined values
-                          (1995.2) or, for 1934-638, the ATCA
-                          value of 30Jul94.
+                          (1995.2)
                      3 => use oldest VLA determined values
-                          (1990) or, for 1934-638, the ATCA
-                          value of 30Jul94.
+                          (1990)
                      4 => Use Perley & Butler 2012 values for
                           3C123, 3C196, 3C286 and 3C295
                           NB: there are always used for 
@@ -293,6 +291,7 @@ re-determined by John Reynolds (jreynold@atnf.csiro.au, 30/jul/94) and
 implemented in SetJy as the default on 30 August 1994.  Changes in the
 flux density scale are significant at all frequencies.  The old scale
 can be obtained with OPType='CALC' by setting Parms[1]=1
+0408-658 and 1934-638 are primary calibrators for MeerKAT.
 
 
 Frequency          New - Old
@@ -318,31 +317,6 @@ Frequency          New - Old
  The SetJy output in the SU table can be viewed with AIPS tasks
 LISTR or PRTAB.
 
- There are now models of some calibrator sources shipped with AIPS.
-These models are read in with the AIPS task CALRD.  
-Available models are
-       OBJECT           BAND
-        3C48             K
-        3C48             Q
-        3C48             U
-        3C138            K
-        3C138            Q
-        3C138            U
-        3C147            K
-        3C147            Q
-        3C147            U
-        3C286            K
-        3C286            Q
-        3C286            U
-The above were all taken from Claire Chandler's web site although the
-history files have been removed and the images cropped.
-
-Note, to use these as calibrators, you must enter a total flux in the
-source table with SetJy or GetJy which is correct for your observing
-frequency.  Then Calib will scale the flux in these models to that
-total flux.
-
-These models are in J2000 coordinates.  If your data are in B1950,
-either change the uv data to J2000 with AIPS UVFIX or change the 
-images to B1950 with POPS EPOSWTCH.
+A number of the standard calibrators/bands are provided in 
+share/data/.
 ----------------------------------------------------------------

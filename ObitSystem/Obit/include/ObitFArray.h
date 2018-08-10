@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2017                                          */
+/*;  Copyright (C) 2003-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -355,6 +355,10 @@ typedef void
 			 ObitFArray* in2, olong *pos2, 
 			 ofloat scalar, ObitFArray* out);
 
+/** Public: Shift and Add scaled array, no threading */
+void ObitFArrayShiftAddNT (ObitFArray* in1, olong *pos1, 
+			   ObitFArray* in2, olong *pos2, 
+			   ofloat scalar, ObitFArray* out);
 /** Public: Zero pad an array */
 void  ObitFArrayPad (ObitFArray* in, ObitFArray* out, ofloat factor);
 typedef void (*ObitFArrayPadFP) (ObitFArray* in, ObitFArray* out, 

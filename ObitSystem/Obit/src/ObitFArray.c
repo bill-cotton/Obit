@@ -3394,6 +3394,92 @@ void ObitFArrayShiftAdd (ObitFArray* in1, olong *pos1,
 } /* end ObitFArrayShiftAdd */
 
 /**
+ *  Shift and Add scaled arrays without threading (allow threading at higher level)
+ *  Two FArrays are aligned at specified pixels and the 
+ *  corresponding pixels are added with a scalar multiplied 
+ *  times the second.
+ *  Only handles to 3 dimensions.
+ *  If in1/out are 3D and in2 is 2D then the same plane in in2
+ *  is used for all planes in in1/out.
+ * NB: this works better if the alignment point is near the center of in2
+ *  out = in1 + scalar x in2 in overlap, else in1
+ * \param in1     First input object with data, may be blanked
+ * \param pos1    Alignment pixel in in1 (0-rel)
+ * \param in2     Second input object with data, blanked pixels ignored
+ * \param pos2    Alignment pixel in in2  (0-rel)
+ * \param scalar  factor to be multiplied times in2
+ * \param out     Output array, may be an input array and MUST 
+ *                have the same the same geometry.
+ */
+void ObitFArrayShiftAddNT (ObitFArray* in1, olong *pos1, 
+			   ObitFArray* in2, olong *pos2, 
+			   ofloat scalar, ObitFArray* out)
+{
+  olong ip, np, hiy, loy, ny1, ny2, offy;
+  olong loRow, hiRow;
+  FAFuncArg threadArgs[1];
+
+  /* error checks */
+  g_assert (ObitIsA(in1, &myClassInfo));
+  g_assert (ObitIsA(in2, &myClassInfo));
+  g_assert (ObitIsA(out, &myClassInfo));
+  g_assert(pos1!=NULL);
+  g_assert(pos2!=NULL);
+  /* Check dimensionality */
+  g_assert (in1->ndim==in2->ndim);
+  g_assert (in1->ndim==out->ndim);
+  g_assert (in1->naxis[0]==out->naxis[0]);
+  g_assert (in1->naxis[1]==out->naxis[1]);
+
+  if (in1->ndim>2) np = in1->naxis[2];  /* Number of planes */
+  else np = 1;
+
+  /* determine regions of overlap in in1/out of in2 */
+  offy = pos2[1] - pos1[1];
+  ny1 = in1->naxis[1];
+  ny2 = in2->naxis[1];
+  loy = MAX (0, pos1[1] - in2->naxis[1]/2);
+  hiy = MIN (ny1-1, pos1[1] + in2->naxis[1]/2);
+  /* In case in2 not centered */
+  if (loy+offy<0) loy -= loy+offy;
+  if (hiy+offy>=ny2) hiy -= hiy+offy-ny2+1;
+  /* Keep in range */
+  loy = MAX (0, loy);
+  hiy = MIN (hiy, ny1-1);
+  /* In case in2 not centered */
+  if (loy+offy<0) loy -= loy+offy;
+  if (hiy+offy>=ny2) hiy -= hiy+offy-ny2+1;
+  /* Keep in range */
+  loy = MAX (0, loy);
+  hiy = MIN (hiy, ny1-1);
+  loRow = loy;
+  hiRow  = hiy;
+
+  /* Use threading mechanism */
+  threadArgs[0].thread = in1->thread; /* Thread */
+  threadArgs[0].ithread = -1;         /* Thread Number */
+  threadArgs[0].value = scalar; /* Scaling factor */
+  threadArgs[0].in  = in1;
+  threadArgs[0].in2 = in2;
+  threadArgs[0].out = out;
+  threadArgs[0].pos[0] = 0;     /* Plane */
+  threadArgs[0].pos[1] = pos1[0]; threadArgs[0].pos[2] = pos1[1];   /* Alignment */
+  threadArgs[0].pos[3] = pos2[0]; threadArgs[0].pos[4] = pos2[1];   /* Alignment */
+  threadArgs[0].first   = loRow;
+  threadArgs[0].last    = hiRow;
+
+  /* Loop over planes */
+  for (ip = 0; ip<np; ip++) {
+
+    threadArgs[0].pos[0] = ip;    /* Plane */
+
+    /* Do operation */
+    ThreadFAShAdd((gpointer)threadArgs);
+  } /* end loop over planes */
+
+} /* end ObitFArrayShiftAddNT */
+
+/**
  * Zero fills out and inserts in, centered and multiplied by factor.
  * Any blanks in in are replaced with zero.
  * This routine is intended for zero padding images before an FFT

@@ -79,6 +79,9 @@ def PTableCCT2Spec (inImage, outImage, nTerm,
     Tabulated spectrum fitted with spectrum weighting by primary beam
     inImage   input Obit Python Image 1
               Must have freq axis type = "SPECLNMF"
+              Optional parameters on List member:
+                 "dropNeg" boolean if True drop negative components [True] 
+                 "doPBCor" boolean if True Primary beam correct [False] 
     outImage  output Obit Python image must be type ObitImageWB
               This can be created by ImageUtil.PImageT2Spec
     nTerm     Number of output Spectral terms, 2=SI, 3=also curve.
@@ -92,7 +95,7 @@ def PTableCCT2Spec (inImage, outImage, nTerm,
     # Checks
     if not Image.PIsA(inImage):
         raise TypeError,"inImage MUST be a Python Obit Image"
-    if not Image.PIsA(ouyImage):
+    if not Image.PIsA(outImage):
         raise TypeError,"outImage MUST be a Python Obit Image"
     if not OErr.OErrIsA(err):
         raise TypeError,"err MUST be an OErr"

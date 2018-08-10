@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2017                                          */
+/*;  Copyright (C) 2007-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -834,6 +834,7 @@ ObitTableSU* SetJyUpdate (ObitUV* inData, ObitErr* err)
 /*----------------------------------------------------------------------- */
 /*  Calculate calibrator flux density                                     */
 /*  Recognizes 3C48,3C138,3C147,3C295,3C286 and 1934-638 (from R. Duncan) */
+/*  0408-65 (From T.Mauch/Ben Hugo                                        */
 /*  Flux density, S, at frequency, nu, is calculated assuming             */
 /*                                                                        */
 /*   Log  (S) = F  and Log  (nu) = x, and                                 */
@@ -891,10 +892,10 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
   odouble temp2=0.0, dt, ferror, freqm;
   ofloat ferr;
   /* number of recognized source names */
-  olong xnsou = 32;
+  olong xnsou = 45;
 
   /* Source lists, Baars et al. */
-  ofloat coeff[8][4] = { 
+  ofloat coeff[9][4] = { 
     {1.480, 0.292, -0.124, 0.000},       /* 3C286 */
     {2.345, 0.071, -0.138, 0.000},       /* 3C48 */
     {1.766, 0.447, -0.184, 0.000},       /* 3C147 */
@@ -902,11 +903,12 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
     {-23.839, 19.569, -4.8168, 0.35836}, /* 1934-638 */
     {1.485, 0.759, -0.255, 0.000},        /* 3C295 */
     {1.8077,   -0.8018, -0.1157,   0.000},     /* 3C123 P&B 2012*/
-    {1.2969,   -0.8690, -0.1788,   0.0305}     /* 3C196 P&B 2012*/
+    {1.2969,   -0.8690, -0.1788,   0.0305},     /* 3C196 P&B 2012*/
+    {-113.51820049,  110.7808751,   -35.26819126,    3.70123262} /*0408-65 Mauch/Hugo */
   };
 
   /* Baars et al errors */
-  ofloat coerr[8][4] = {
+  ofloat coerr[9][4] = {
     {0.018, 0.006, 0.001, 0.000},  /* 3C286 */
     {0.030, 0.001, 0.001, 0.000},  /* 3C48 */
     {0.017, 0.006, 0.001, 0.000},  /* 3C147 */
@@ -914,14 +916,15 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
     {0.000, 0.000, 0.000, 0.000},  /* 1934-638 */
     {0.013, 0.009, 0.001, 0.000},  /* 3C295 */
     {0.000, 0.000, 0.000, 0.000},  /* 3C123 P&B 2012*/
-    {0.000, 0.000, 0.000, 0.000}   /* 3C196 P&B 2012*/
+    {0.000, 0.000, 0.000, 0.000},  /* 3C196 P&B 2012*/
+    {0.000, 0.000, 0.000, 0.000}   /* 0408-65 Mauch/Hugo  */
   };
 
   /* Source lists, Taylor 1999.2
      Note that the VLA coefficients are for freq. in GHz, not MHz,
      not true of 1934-638.  This requires some modifications in
      the calculation loop for rcoeff */
-  ofloat rcoeff[8][4] = {
+  ofloat rcoeff[9][4] = {
     {1.23734, -0.43276, -0.14223,  0.00345},   /* 3C286 */
     {1.31752, -0.74090, -0.16708,  0.01525},   /* 3C48 */
     {1.44856, -0.67252, -0.21124,  0.04077},   /* 3C147 */
@@ -929,10 +932,11 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
     {-30.7667,  26.4908,  -7.0977, 0.605334},  /* 1934-638 (Reynolds, 02/Jul/94) */
     {1.46744, -0.77350, -0.25912,  0.00752},   /* 3C295 */
     {1.8077,   -0.8018, -0.1157,   0.000},     /* 3C123 P&B 2012*/
-    {1.2969,   -0.8690, -0.1788,   0.0305}     /* 3C196 P&B 2012*/
+    {1.2969,   -0.8690, -0.1788,   0.0305},    /* 3C196 P&B 2012*/
+    {-113.51820049,  110.7808751,   -35.26819126,    3.70123262} /*0408-65 Mauch/Hugo */
   };
   /* Source lists, Perley 1990 */
-  ofloat ncoeff[8][4] = {
+  ofloat ncoeff[9][4] = {
     {1.35899, 0.35990, -0.13338, 0.000},     /* 3C286, */
     {2.0868, 0.20889, -0.15498, 0.000},      /* 3C48 */
     {1.92641, 0.36072, -0.17389, 0.000},     /* 3C147 */
@@ -940,10 +944,11 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
     {-30.7667, 26.4908, -7.0977, 0.605334},  /* 1934-638 (Reynolds, 02/Jul/94) */
     {1.485, 0.759, -0.255, 0.000},           /* 3C295 (Baars again) */
     {1.8077,   -0.8018, -0.1157,   0.000},   /* 3C123 P&B 2012*/
-    {1.2969,   -0.8690, -0.1788,   0.0305}   /* 3C196 P&B 2012*/
+    {1.2969,   -0.8690, -0.1788,   0.0305},   /* 3C196 P&B 2012*/
+    {-113.51820049,  110.7808751,   -35.26819126,    3.70123262} /*0408-65 Mauch/Hugo */
   };
   /* Source lists, Perley 1995.2 */
-  ofloat pcoeff[8][4] = {  /*  */
+  ofloat pcoeff[9][4] = {  /*  */
     {0.50344,  1.05026, -0.31666,  0.01602},   /* 3C286 */
     {1.16801,  1.07526, -0.42254,  0.02699},   /* 3C48 */
     {0.05702,  2.09340, -0.70760,  0.05477},   /* 3C147 */
@@ -951,10 +956,11 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
     {-30.7667, 26.4908, -7.0977,   0.605334},  /* 1934-638 (Reynolds, 02/Jul/94) */
     {1.28872,  0.94172, -0.31113,  0.00569},   /* 3C295  */
     {1.8077,   -0.8018, -0.1157,   0.000},     /* 3C123 P&B 2012*/
-    {1.2969,   -0.8690, -0.1788,   0.0305}     /* 3C196 P&B 2012*/
+    {1.2969,   -0.8690, -0.1788,   0.0305},     /* 3C196 P&B 2012*/
+    {0.42884, 1.9395659, -0.66243187, 0.03926736} /*0408-65 Mauch/Hugo */
  };
   /* Source lists, Perley & Butler 2012 */
-  ofloat pbcoeff[8][4] = {  /*  */
+  ofloat pbcoeff[9][4] = {  /*  */
     {1.2515,  -0.4605,  -0.1715,   0.0336},    /* 3C286 P&B 2012 */
     {1.16801,  1.07526, -0.42254,  0.02699},   /* 3C48 Perley 1995.2 */
     {0.05702,  2.09340, -0.70760,  0.05477},   /* 3C147  Perley 1995.2 */
@@ -962,7 +968,8 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
     {-30.7667,  26.4908,  -7.0977, 0.605334},  /* 1934-638 (Reynolds, 02/Jul/94) */
     {1.4866,   -0.7871, -0.3440,   0.0749},    /* 3C295 P&B 2012 */
     {1.8077,   -0.8018, -0.1157,   0.000},     /* 3C123 P&B 2012 */
-    {1.2969,   -0.8690, -0.1788,   0.0305}     /* 3C196 P&B 2012 */
+    {1.2969,   -0.8690, -0.1788,   0.0305},    /* 3C196 P&B 2012 */
+    {-113.51820049,  110.7808751,   -35.26819126,    3.70123262} /*0408-65 Mauch/Hugo */
   };
   /* Source list - aliases */
   gchar *knosou[] = {
@@ -973,19 +980,20 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
     "1934-638","1934-638", "1934-638", "J1939-6342", "PKS1934-638",
     "3C295",   "1409+524", "1411+522", "J1411+5212", "3c295",
     "3C123",   "0433+295", "0437+296", "J0437+2940", "3c123",
-    "3C196",   "0809+483", "0813+482", "J0813+4822", "3c196"
+    "3C196",   "0809+483", "0813+482", "J0813+4822", "3c196",
+    "0408-65" , "0408-65", "0408-65",  "0407-658" ,  "J0407-658",
   };
   /* Number of characters to check */
   olong lenchk[] = {
     5,8,8,10,5,6,  4,8,8,10, 4, 5,8,8,10,5,
     5,8,8,10,5, 8,8,8,10,11, 5,8,8,10,5,
-    5,8,8,10,5, 5,8,8,10,5
+    5,8,8,10,5, 5,8,8,10,5, 7,7,7,8,8,
   };
   /* Source number in coef table */
   olong ksouno[] = {
     1,1,1,1,1,1, 2,2,2,2,2, 3,3,3,3,3,
     4,4,4,4,4, 5,5,5,5,5, 6,6,6,6,6,
-    7,7,7,7,7, 8,8,8,8,8
+    7,7,7,7,7, 8,8,8,8,8, 9,9,9,9,9,
   };
   /*  Frequency break points for bands */
   ofloat fband[] = {
@@ -1038,11 +1046,11 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
   /* Assume no error */
   ferror = 0.0;
   /* Taylor 1999.2 &Reynolds (1934-638) */
-  if ((ictype<=0) && (isrc!=4)) {
+  if ((ictype<=0) && (isrc!=4) && (isrc!=8)) {
     dt -= 3.0e0;
     temp2 = rcoeff[isrc][0] + dt * (rcoeff[isrc][1] + dt * (rcoeff[isrc][2] + dt * rcoeff[isrc][3]));
   }  
-  if ((ictype<=0) && (isrc==4)) {
+  if ((ictype<=0) && ((isrc==4)||(isrc==8))) {
     temp2 = rcoeff[isrc][0] + dt * (rcoeff[isrc][1] + dt * (rcoeff[isrc][2] + dt * rcoeff[isrc][3]));
   }
 
@@ -1189,7 +1197,7 @@ void CalcFluxPB17 (ObitTableSURow* row, ofloat *Parms, odouble Freq,
   ofloat ferr;
 
   /* Source lists */
- ofloat coeff[20][6] = { 
+ ofloat coeff[21][6] = { 
    {1.0440,  -0.6619,  -0.2252,  0.0   ,  0.0   , 0.0}, /*   J0133-3629  */
    {1.3253,  -0.7553,  -0.1914,  0.0498,  0.0   , 0.0}, /*   3C48        */
    {2.2175,  -0.6606,    0.0  ,  0.0   ,  0.0   , 0.0}, /*   Fornax A    */
@@ -1209,11 +1217,12 @@ void CalcFluxPB17 (ObitTableSURow* row, ofloat *Parms, odouble Freq,
    {1.2320,  -0.7909,   0.0947,  0.0976, -0.1794,-0.1}, /*   3C380       */
    {3.3498,  -1.0022,  -0.2246,  0.0227,  0.0425, 0.0}, /*   Cygnus A    */
    {1.1064,  -1.0052,  -0.0750, -0.0767,  0.0   , 0.0}, /*   3C444       */
-   {3.3584,  -0.7518,  -0.0347  -0.0705,  0.0   , 0.0}  /*   Cassiopeia A*/
+   {3.3584,  -0.7518,  -0.0347  -0.0705,  0.0   , 0.0}, /*   Cassiopeia A*/
+   {0.42884, 1.9395659, -0.66243187, 0.03926736} /* 0408-65 Mauch/Hugo */
  };
 
   /* errors */
-  ofloat coerr[20][6] = {
+  ofloat coerr[21][6] = {
     {0.0010, 0.0018, 0.0063, 0.0   , 0.0   , 0.0},    /*  J0133-3629 */
     {0.0005, 0.0009, 0.0011, 0.0009, 0.0   , 0.0},    /*  3C48       */
     {0.0030, 0.0063, 0.0   , 0.0   , 0.0   , 0.0},    /*  Fornax A   */
@@ -1233,11 +1242,12 @@ void CalcFluxPB17 (ObitTableSURow* row, ofloat *Parms, odouble Freq,
     {0.0016, 0.0037, 0.0218, 0.0218, 0.0597, 0.0499}, /*  3C380      */
     {0.0010, 0.0014, 0.0055, 0.0021, 0.0045, 0.0},    /*  Cygnus A   */
     {0.0009, 0.0020, 0.0039, 0.0051, 0.0   , 0.0},    /*  3C444      */
-    {0.0010, 0.0014, 0.0052, 0.0047, 0.0   , 0.0}     /*  Cassiopeia A */
-  };
+    {0.0010, 0.0014, 0.0052, 0.0047, 0.0   , 0.0},    /*  Cassiopeia A */
+    {0.000,  0.000,  0.000,  0.000,  0.0,    0.0}     /* 0408-65 Mauch/Hugo  */
+ };
 
   /* Validity Frequency range */
-  ofloat range[20][2] = { 
+  ofloat range[21][2] = { 
     {0.2,   4.0}, /*   J0133-3629    */
     {0.05, 50.0}, /*   3C48          */
     {0.2,   0.5}, /*   Fornax A      */
@@ -1257,7 +1267,8 @@ void CalcFluxPB17 (ObitTableSURow* row, ofloat *Parms, odouble Freq,
     {0.05, 50.0}, /*   3C380         */
     {0.05, 12.0}, /*   Cygnus A      */
     {0.2,  12.0}, /*   3C444         */
-    {0.2,  4.0}   /*   Cassiopeia A  */
+    {0.2,  4.0},  /*   Cassiopeia A  */
+    {0.7,  2.0}   /*   0408-65 Mauch/Hugo  */
   };
 
   /* Source list - aliases */
@@ -1282,6 +1293,7 @@ void CalcFluxPB17 (ObitTableSURow* row, ofloat *Parms, odouble Freq,
     "Cygnus A",                                                 /* 17 */
     "3C444",      "3c444",                                      /* 18 */
     "Cassiopeia A",                                             /* 19 */ 
+    " 0408-65",   "0408-658", "J0407-658",                      /* 20 */ 
     NULL
   };
   
@@ -1291,15 +1303,15 @@ void CalcFluxPB17 (ObitTableSURow* row, ofloat *Parms, odouble Freq,
     10,  4,8,8,10,4, 8,  5,8,8,10,5, 10,  5,8,8,10,5,
   /* 6  7     8           9       10    11           12  */
     8,  8, 5,8,8,10,5, 5,8,8,10,5, 8,  8,3,5,5,  5,8,8,10,5,5, 
-  /*   13       14  15    16   17 18   19 */
-    5,8,8,10,5, 10, 5,5, 5,5,  8, 5,5,  12
+  /*   13       14  15    16   17 18   19     20*/
+    5,8,8,10,5, 10, 5,5, 5,5,  8, 5,5,  12,  7,8,9
   };
   
   /* Source number 0-rel in coef table */
   olong ksouno[] = {
     0,  1,1,1,1,1,  2,  3,3,3,3,3, 4,  5,5,5,5,5,
     6,  7,  8,8,8,8,8,  9,9,9,9,9, 10, 11,11,11,11, 12,12,12,12,12,12,
-    13,13,13,13,13,  14, 15,15,  16,16,  17,  18,18, 19
+    13,13,13,13,13,  14, 15,15,  16,16,  17,  18,18, 19, 20,20,20
   };
   
   olong j;
