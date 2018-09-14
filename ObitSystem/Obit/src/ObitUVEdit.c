@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2017                                          */
+/*;  Copyright (C) 2005-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -272,7 +272,7 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitTableFG *outFlag=NULL;
   ObitTableFGRow *row=NULL;
   gboolean doCalSelect, doHiEdit, killAll;
-  olong firstVis, startVis, suba, iFGRow, ver;
+  olong iFGRow, ver;
   ollong countAll, countBad;
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
   ObitInfoType type;
@@ -366,8 +366,8 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
  
   /* Allocate arrays */
   numCell = 800;  /* number of cells in histogram */
-  suba    = 1;
-  numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
+  if (inUV->myDesc->maxAnt<=0) ObitUVGetSubA (inUV,err);
+  numAnt  = inUV->myDesc->maxAnt;/* actually highest antenna number */
   numBL   = (((ollong)numAnt)*(numAnt-1))/2;
   ncorr   = inUV->myDesc->ncorr;
   /* acc index = type + corr * (6) + BL * (6*ncorr)  where BL = 0-rel baseline index */
@@ -476,7 +476,6 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	else iretCode = ObitUVRead (inUV, inUV->buffer, err);
 	if (err->error) goto cleanup;
 	/*if (iretCode!=OBIT_IO_OK) break;*/
-	firstVis = inDesc->firstVis;
       }
       
       /* Are we there yet??? */
@@ -496,7 +495,6 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	startTime = curTime;
 	lastTime = curTime;
 	endTime   = startTime +  timeAvg;
-	startVis  = firstVis;
 	lastSourceID = curSourceID;
       }
 
@@ -814,7 +812,7 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitTableFG *outFlag=NULL;
   ObitTableFGRow *row=NULL;
   gboolean doCalSelect;
-  olong  firstVis, startVis, suba, iFGRow, ver;
+  olong  iFGRow, ver;
   ollong lltmp, i, j, k, jj, kk, countAll, countBad;
   ollong indx, jndx, kndx, numBL, blindx;
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
@@ -904,8 +902,8 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, inUV->name);
  
   /* Allocate arrays */
-  suba    = 1;
-  numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
+  if (inUV->myDesc->maxAnt<=0) ObitUVGetSubA (inUV,err);
+  numAnt  = inUV->myDesc->maxAnt;/* actually highest antenna number */
   numBL   = (((ollong)numAnt)*(numAnt-1))/2;
   ncorr   = inUV->myDesc->ncorr;
   /* acc index = type + corr * (6) + BL * (3*ncorr)  where BL = 0-rel baseline index */
@@ -1008,7 +1006,6 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	else iretCode = ObitUVRead (inUV, inUV->buffer, err);
 	if (err->error) goto cleanup;
 	/*if (iretCode!=OBIT_IO_OK) break;*/
-	firstVis = inDesc->firstVis;
       }
       
       /* Are we there yet??? */
@@ -1028,7 +1025,6 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	startTime = curTime;
 	lastTime = curTime;
 	endTime   = startTime +  timeAvg;
-	startVis  = firstVis;
 	lastSourceID = curSourceID;
       }
 
@@ -1319,7 +1315,7 @@ void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitTableFG *outFlag=NULL;
   ObitTableFGRow *row=NULL;
   gboolean doCalSelect;
-  olong firstVis, startVis, suba, iFGRow, ver;
+  olong iFGRow, ver;
   ollong i, j, k, jj, kk, countAll, countBad;
   ollong lltmp, indx, jndx, kndx, numBL, blindx;
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
@@ -1408,8 +1404,8 @@ void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, inUV->name);
  
   /* Allocate arrays */
-  suba    = 1;
-  numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
+  if (inUV->myDesc->maxAnt<=0) ObitUVGetSubA (inUV,err);
+  numAnt  = inUV->myDesc->maxAnt;/* actually highest antenna number */
   numBL   = (((olong)numAnt)*(numAnt-1))/2;
   ncorr   = inUV->myDesc->ncorr;
   /* acc index = type + corr * (6) + BL * (5*ncorr)  where BL = 0-rel baseline index */
@@ -1512,7 +1508,6 @@ void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	else iretCode = ObitUVRead (inUV, inUV->buffer, err);
 	if (err->error) goto cleanup;
 	/*if (iretCode!=OBIT_IO_OK) break;*/
-	firstVis = inDesc->firstVis;
       }
       
       /* Are we there yet??? */
@@ -1532,7 +1527,6 @@ void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	startTime = curTime;
 	lastTime = curTime;
 	endTime   = startTime +  timeAvg;
-	startVis  = firstVis;
 	lastSourceID = curSourceID;
       }
 
@@ -1868,7 +1862,7 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   olong ant1, ant2, blindx, lastFQID=-1;
   ollong numBL, countAll, countBad, *count=NULL;
   ollong lltmp, i, j, k, kk, js, jf, jif, jbl, jndx, indx, kndx, jj;
-  olong nVisPIO, ver, firstVis, startVis, suba, kstoke0, itemp;
+  olong nVisPIO, ver, kstoke0, itemp;
   ofloat startTime, endTime, curTime, amp2, *Buffer;
   ofloat lastTime=-1.0;
   olong *corChan=NULL, *corIF=NULL, *corStok=NULL, *corV=NULL;
@@ -1980,9 +1974,9 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   if (err->error) Obit_traceback_msg (err, routine, inUV->name);
  
   /* Allocate arrays */
-  suba    = 1;
   ncorr   = inUV->myDesc->ncorr;
-  numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
+  if (inUV->myDesc->maxAnt<=0) ObitUVGetSubA (inUV,err);
+  numAnt  = inUV->myDesc->maxAnt;/* actually highest antenna number */
   numBL   = (((ollong)numAnt)*(numAnt-1))/2;
   if (inUV->myDesc->jlocs>=0) numPol  = inUV->myDesc->inaxes[inUV->myDesc->jlocs];
   else numPol = 1;
@@ -2146,7 +2140,6 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
 	else iretCode = ObitUVRead (inUV, inUV->buffer, err);
 	if (err->error) goto cleanup;
 	/*if (iretCode!=OBIT_IO_OK) break;*/
-	firstVis = inDesc->firstVis;
       }
       
       /* Are we there yet??? */
@@ -2165,7 +2158,6 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
 	startTime = curTime;
 	lastTime = curTime;
 	endTime   = startTime +  timeAvg;
-	startVis  = firstVis;
 	lastSourceID = curSourceID;
       }
 
@@ -2383,7 +2375,7 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitIOCode iretCode, oretCode;
   ObitTableFG *outFlag=NULL;
   ObitTableFGRow *row=NULL;
-  olong firstVis, startVis, suba, iFGRow, ver;
+  olong iFGRow, ver;
   ollong countAll, countBad;
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
   ObitInfoType type;
@@ -2486,8 +2478,8 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
  
   /* Allocate arrays */
   numCell = 800;  /* number of cells in histogram */
-  suba    = 1;
-  numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
+  if (inUV->myDesc->maxAnt<=0) ObitUVGetSubA (inUV,err);
+  numAnt  = inUV->myDesc->maxAnt;/* actually highest antenna number */
   numBL   = (((ollong)numAnt)*(numAnt-1))/2;
   ncorr   = inUV->myDesc->ncorr;
   /* acc index = type + corr * (3) + BL * (3*ncorr)  where BL = 0-rel baseline index */
@@ -2610,7 +2602,6 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
 	if (err->error) goto cleanup;
 	/*if (iretCode!=OBIT_IO_OK) break;*/
-	firstVis = inDesc->firstVis;
       }
 
       /* Are we there yet??? */
@@ -2629,7 +2620,6 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	startTime = curTime;
 	lastTime = curTime;
 	endTime   = startTime +  timeAvg;
-	startVis  = firstVis;
 	lastSourceID = curSourceID;
       }
 
@@ -3151,7 +3141,7 @@ ObitUV* ObitUVEditClipStokes (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   gint32 dim[MAXINFOELEMDIM];
   ofloat temp[2], maxAmp, maxAmp2, amp2, selFact[2], vis[2], sf1, sf2;
   ofloat wt1, wt2, *Buffer;
-  gboolean same, flagAll, flagIt, bothCorr, doConjg;
+  gboolean same, flagAll, flagIt, bothCorr;
   olong ichan, iif, istok, nchan, nif, nstok, kstoke0;
   olong incs, incf, incif, jadr[2], ioff, lfoff, ivoff, ip1, ip2;
   ObitIOAccess access;
@@ -3294,7 +3284,6 @@ ObitUV* ObitUVEditClipStokes (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   incf  = 3 * inDesc->incf  / inDesc->inaxes[0];
   incif = 3 * inDesc->incif / inDesc->inaxes[0];
   bothCorr = FALSE;
-  doConjg  = FALSE;
   
   /* Offsets and stuff by desirec Stokes */
   switch (stok[0]) {
@@ -3336,7 +3325,6 @@ ObitUV* ObitUVEditClipStokes (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
       selFact[1] = 0.0;
     } else { /* data correlation based */
       bothCorr = TRUE;    /* Need both correlations for this */
-      doConjg  = TRUE;   /* Need to conjugate result */
       jadr[0] = (3+kstoke0) * incs;
       jadr[1] = jadr[0] + incs;
       selFact[0] = -0.5;
@@ -3540,7 +3528,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ofloat  flagSig, alpha, timeWind, timeAvg;
   olong flagTab, begIF, begChan; 
   gboolean doCalSelect, killAll;
-  olong firstVis, startVis, suba, ver;
+  olong ver;
   ollong checked, countAll, countBad;
   olong nThread;
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
@@ -3551,7 +3539,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ofloat lastTime=-1.0, tInt, tWind=0.0;
   ollong *blLookup=NULL;
   olong *BLAnt1=NULL, *BLAnt2=NULL;
-  olong numCell, ncorr, numAnt, ant1, ant2;
+  olong ncorr, numAnt, ant1, ant2;
   gboolean gotOne, done, scanDone, scanStartDone, newTime, bufferFull, btemp;
   ollong lltmp, numBL, blindx, i, j, k, indx, jndx, ndata, ndevs;
   gboolean allChan = FALSE;
@@ -3559,7 +3547,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ofloat *work=NULL;
   olong *Chan=NULL, *IFs=NULL, *Stoke=NULL, visNo=-1;
   olong itime=0, ntime, numTime, nextTime, it=0, itDone;
-  ofloat startTime, endTime, curTime=0.0, tTime, scanTime=0.0;
+  ofloat startTime, curTime=0.0, tTime, scanTime=0.0;
   ofloat sec;
   /*gchar tString[25];*/
   gchar *tname, reason[25];
@@ -3653,9 +3641,8 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, outUV->name);
 
   /* Allocate arrays */
-  numCell = 800;  /* number of cells in histogram */
-  suba    = 1;
-  numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
+  if (inUV->myDesc->maxAnt<=0) ObitUVGetSubA (inUV,err);
+  numAnt  = inUV->myDesc->maxAnt;/* actually highest antenna number */
   numBL   = (((olong)numAnt)*(numAnt-1))/2;
   ncorr   = inUV->myDesc->ncorr;
   /* Circular amplitude storage (baseline,correlator,time) */
@@ -3693,7 +3680,6 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 
   /* Initialize things */
   startTime    = -1.0e20;
-  endTime      =  1.0e20;
   newTime      = FALSE;
   itDone       = 0;
   lastSourceID = -1;
@@ -3770,7 +3756,6 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	iretCode = ReadOne (inUV, doCalSelect, &Buffer, &visNo, err);
 	if (err->error) goto cleanup;
 	/*if (iretCode!=OBIT_IO_OK) break;*/
-	firstVis = inDesc->firstVis;
       }
       
       /* Are we there yet??? */
@@ -3790,8 +3775,6 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	scanTime  = curTime;
 	lastTime  = curTime;
 	tWind     = curTime;
-	endTime   = startTime + timeWind;
-	startVis  = firstVis;
 	lastSourceID = curSourceID;
 	itime     = 0;
 	times[0]  = curTime;
@@ -4029,7 +4012,6 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
  */
 void ObitUVEditAppendFG (ObitUV *inUV, olong flagTab, ObitErr *err)
 {
-  ObitIOCode iretCode, oretCode;
   ObitTableFG *inFlag=NULL, *outFlag=NULL;
   ObitTableFGRow *row=NULL;
   olong hiTab, iRow, oRow; 
@@ -4059,7 +4041,7 @@ void ObitUVEditAppendFG (ObitUV *inUV, olong flagTab, ObitErr *err)
   /* input table */
   inFlag = newObitTableFGValue("InFG", (ObitData*)inUV, &hiTab, OBIT_IO_ReadWrite, 
 			       err);
-  oretCode = ObitTableFGOpen (inFlag, OBIT_IO_ReadWrite, err);
+  ObitTableFGOpen (inFlag, OBIT_IO_ReadWrite, err);
   if (err->error) goto cleanup;
 
   /* Anything in input? */
@@ -4069,7 +4051,7 @@ void ObitUVEditAppendFG (ObitUV *inUV, olong flagTab, ObitErr *err)
   outFlag = newObitTableFGValue("OutFG", (ObitData*)inUV, &flagTab, OBIT_IO_ReadWrite, 
 				err);
   /* Open output table */
-  oretCode = ObitTableFGOpen (outFlag, OBIT_IO_ReadWrite, err);
+  ObitTableFGOpen (outFlag, OBIT_IO_ReadWrite, err);
   if (err->error) goto cleanup;
   
   /* Create Row */
@@ -4085,15 +4067,15 @@ void ObitUVEditAppendFG (ObitUV *inUV, olong flagTab, ObitErr *err)
 
   /* Loop over input copying */
   for (iRow=1; iRow<=inFlag->myDesc->nrow; iRow++) {
-    iretCode = ObitTableFGReadRow  (inFlag,  iRow, row, err);
+    ObitTableFGReadRow  (inFlag,  iRow, row, err);
     oRow = -1;
-    oretCode = ObitTableFGWriteRow (outFlag, oRow, row, err);
+    ObitTableFGWriteRow (outFlag, oRow, row, err);
     if (err->error) goto cleanup;
   } /* end loop copying */
   
   /* Close tables */
-  oretCode = ObitTableFGClose (outFlag, err);
-  iretCode = ObitTableFGClose (inFlag, err);
+  ObitTableFGClose (outFlag, err);
+  ObitTableFGClose (inFlag, err);
 
   /* Give report */
   Obit_log_error(err, OBIT_InfoErr, "Copied %d flags from temp table %d to %d",
@@ -4101,7 +4083,7 @@ void ObitUVEditAppendFG (ObitUV *inUV, olong flagTab, ObitErr *err)
   /* Cleanup */
  cleanup:
   /* Delete input table */
-  iretCode = ObitDataZapTable ((ObitData*)inUV, "AIPS FG", hiTab, err);
+  ObitDataZapTable ((ObitData*)inUV, "AIPS FG", hiTab, err);
   inFlag   = ObitTableFGUnref(inFlag);
   row      = ObitTableFGRowUnref(row);
   outFlag  = ObitTableFGUnref(outFlag);

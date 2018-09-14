@@ -2645,10 +2645,11 @@ ObitBDFData* GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outDa
     
     /* Write Index table */
     if (startTime>-1.0e10) {
-      /* May have subscans  */
+      /* May have subscans -make sure to do first */
       if ((SDMData->MainTab->rows[iMain]->subscanNumber>=
 	   SDMData->ScanTab->rows[ScanTabRow]->numSubscan) ||
-	  ((lastSourId>0) && (lastSourId!=sourId))) {
+	  ((lastSourId>0) && (lastSourId!=sourId)) ||
+	  (SDMData->MainTab->rows[iMain]->subscanNumber==1)) {
 	NXrow->Time     = 0.5 * (startTime + endTime);
 	NXrow->TimeI    = (endTime - startTime);
 	NXrow->EndVis   = desc->nvis;
@@ -4285,6 +4286,7 @@ void GetFreqAvgInfo (ObitBDFData *BDFData, ObitUV *outData, ObitErr *err)
     return;
   }
   nchar = outTable->myDesc->repeat[outTable->TaperFnCol]; /* Number of characters in TaperFn */
+  nchar = 8;  /* Just kidding */
 
   /* Create output Row */
   outRow = newObitTableCQRow (outTable);
@@ -4298,10 +4300,10 @@ void GetFreqAvgInfo (ObitBDFData *BDFData, ObitUV *outData, ObitErr *err)
   for (i=0; i<numIF; i++) {
     outRow->OverSamp[i] =  1;     /* Oversampling factor NYI */
     outRow->ZeroPad[i]  =  1;     /* Zero-padding factor NYI */
-    outRow->TimeAvg[1] = 0.0;  /* Time averaging interval (? units) NYI */
+    outRow->TimeAvg[1]  = 0.0;    /* Time averaging interval (? units) NYI */
     outRow->numBits[i]  =  4;     /* Quantization (no. of bits per recorded sample) NYI */
     outRow->FFTOverlap[i] =  1.0; /* FFT overlap factor NYI */
-    outRow->Filter[i] = 0; /* Filter enum, NYI */
+    outRow->Filter[i]   = 0;      /* Filter enum, NYI */
   }
   outRow->status   = 0;
     
@@ -4324,6 +4326,7 @@ void GetFreqAvgInfo (ObitBDFData *BDFData, ObitUV *outData, ObitErr *err)
     for (i=0; i<numIF; i++) {
       outRow->numChan[i] = inTab->rows[iRow]->numChan; /* No. of channels in correlator */
       outRow->SpecAvg[i] = chRatio; /*Spectral averaging factor */
+      strncpy(&outRow->TaperFn[i*8], "UNIFORM ",nchar);/* Taper function character (?) */
       /* Averaged? */
       if (ichRatio>1) { /* averaged */
 	outRow->FFTSize[i] = outRow->numChan[i]*ichRatio; /* Size of FFT in correlator (not sure about this) */
@@ -4341,7 +4344,6 @@ void GetFreqAvgInfo (ObitBDFData *BDFData, ObitUV *outData, ObitErr *err)
 	outRow->ChanBW[i] =  inTab->rows[iRow]->chanWidth; /* Channel bandwidth {Hz) */
       }
     } /* end IF loop */
-    strncpy(outRow->TaperFn, "UNIFORM",nchar);/* Taper function character (?) */
     /* Write */
     oRow = -1;
     if ((ObitTableCQWriteRow (outTable, oRow, outRow, err)

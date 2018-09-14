@@ -1687,7 +1687,7 @@ ASDMSourceArray* ObitSDMDataGetSourceArray (ObitSDMData *in)
   olong numr, i, ig, iOut=0, iSource, iField, sourceId, iSW, SWId, kSW;
   olong nSelSW=0, fieldId, iMain, occur;
   gchar *ignore[]={"OTFDUMMY","DUMMY",NULL};  /* Names to ignore */
-  gboolean want, chkSelCode, nameMatch;
+  gboolean want, isOTF=FALSE, chkSelCode, nameMatch;
   gchar code[12];
 
   out = g_malloc0(sizeof(ASDMSourceArray));
@@ -1704,6 +1704,14 @@ ASDMSourceArray* ObitSDMDataGetSourceArray (ObitSDMData *in)
   out->sou   = g_malloc0(numr*sizeof(ASDMSourceArrayEntry));
   out->nsou  = 0;
   chkSelCode = in->selCode && (in->selCode[0]!=' '); /* Selecting by code? */
+
+  /* Is this VLA/OFT DATA? */
+  if (in->isEVLA) {
+    for (iField=0; iField<in->FieldTab->nrows; iField++) {
+      isOTF = !strncmp(in->FieldTab->rows[iField]->fieldName, "OTF", 3);
+      if (isOTF) break;
+    }
+  } /* End check for EVLA OTF */
 
   /* Loop over Fields */
   for (iField=0; iField<in->FieldTab->nrows; iField++) {
@@ -1733,6 +1741,7 @@ ASDMSourceArray* ObitSDMDataGetSourceArray (ObitSDMData *in)
 	for (iSource=0; iSource<in->SourceTab->nrows; iSource++) {
 	  nameMatch = !strcmp(in->SourceTab->rows[iSource]->sourceName,
 			      in->FieldTab->rows[iField]->fieldName);
+	  nameMatch = in->isEVLA && isOTF;   /* New VLA OTF format */
 	  if (((in->SourceTab->rows[iSource]->sourceId==sourceId) && nameMatch) || 
 	      (nameMatch)) {
 	    SWId = in->SourceTab->rows[iSource]->spectralWindowId;
@@ -3032,7 +3041,7 @@ static odouble* ASDMparse_dblarray(gchar *string, olong maxChar,
 {
   odouble *out = NULL;
   gchar *b;
-  olong charLeft, ndim, naxis1=1, naxis2=1, naxis3=1, num;
+  olong ndim, naxis1=1, naxis2=1, naxis3=1, num;
   olong i;
 
   *next = string;  /* if not found */
@@ -3063,7 +3072,6 @@ static odouble* ASDMparse_dblarray(gchar *string, olong maxChar,
 
   /* Loop parsing */
   for (i=0; i<num; i++) {
-    charLeft = maxChar - (b-string);
     out[i] = (odouble)strtod(b, next);
     b = *next;
   } /* end loop parsing values */
@@ -3083,7 +3091,7 @@ static ofloat* ASDMparse_fltarray(gchar *string, olong maxChar,
 {
   ofloat *out = NULL;
   gchar *b;
-  olong charLeft, ndim, naxis1=1, naxis2=1, num;
+  olong ndim, naxis1=1, naxis2=1, num;
   olong i;
 
   *next = string;  /* if not found */
@@ -3107,7 +3115,6 @@ static ofloat* ASDMparse_fltarray(gchar *string, olong maxChar,
 
   /* Loop parsing */
   for (i=0; i<num; i++) {
-    charLeft = maxChar - (b-string);
     out[i] = (ofloat)strtod(b, next);
     b = *next;
   } /* end loop parsing values */
@@ -3127,7 +3134,7 @@ static olong* ASDMparse_intarray(gchar *string, olong maxChar,
 {
   olong *out = NULL;
   gchar *b;
-  olong charLeft, ndim, naxis1=1, naxis2=1, num;
+  olong ndim, naxis1=1, naxis2=1, num;
   olong i;
 
   *next = string;  /* if not found */
@@ -3151,7 +3158,6 @@ static olong* ASDMparse_intarray(gchar *string, olong maxChar,
 
   /* Loop parsing */
   for (i=0; i<num; i++) {
-    charLeft = maxChar - (b-string);
     out[i] = (olong)strtol(b, next, 10);
     b = *next;
   } /* end loop parsing values */

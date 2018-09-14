@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2017                                          */
+/*;  Copyright (C) 2005-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -517,7 +517,7 @@ olong autoWinLoopCount (ObitDConCleanVis *in, ObitErr *err)
   if (ratio>1.0) maxLoop = 2;
   if (ratio>2.0) maxLoop = 3;
   if (ratio>3.0) maxLoop = 4;
-  if (ratio>4.0) maxLoop = 5;
+  /*if (ratio>4.0) maxLoop = 5;*/
 
   /* diagnostics */
   if (err->prtLv>=2) {

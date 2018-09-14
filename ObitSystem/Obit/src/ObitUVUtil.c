@@ -72,7 +72,6 @@ static void SmooF (ObitUVDesc *inDesc, ObitUVDesc *outDesc, olong NumChSmo,
 
 /** Hann visibility in frequency */
 static void Hann (ObitUVDesc *inDesc, ObitUVDesc *outDesc, gboolean doDescm,
-		  olong *corChan, olong *corIF, olong *corStok, gboolean *corMask,
 		  ofloat *inBuffer, ofloat *outBuffer, ofloat *work, 
 		  ObitErr *err);
 
@@ -1441,7 +1440,7 @@ void ObitUVUtilIndex (ObitUV *inUV, ObitErr *err)
   ObitTableNXRow* row=NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  olong num, i, lrec, iRow, ver, startVis=1, curVis, itemp, jtemp;
+  olong num, i, iRow, ver, startVis=1, curVis, itemp, jtemp;
   olong suba, lastSubA=0, source, lastSource=0, fqid, lastFQID=0;
   ofloat maxScan, maxGap, *vis;
   odouble startTime=0.0, endTime=0.0, lastTime = -1.0e20; 
@@ -1467,7 +1466,6 @@ void ObitUVUtilIndex (ObitUV *inUV, ObitErr *err)
   retCode = ObitUVOpen (inUV, OBIT_IO_ReadWrite, err);
   if ((retCode != OBIT_IO_OK) || (err->error>0)) 
     Obit_traceback_msg (err, routine, inUV->name);
-  lrec = inUV->myDesc->lrec;  /* Size of visibility */
   lastSubA   = -1000; /* initialize subarray number */
   lastFQID   = -1000; /* initialize FQ Id */
   lastSource = -1000; /* initialize source number */
@@ -1790,16 +1788,12 @@ ObitUV* ObitUVUtilHann (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
-  olong i, j, indx, jndx;
-  olong *corChan=NULL, *corIF=NULL, *corStok=NULL;
-  gboolean *corMask=NULL;
+  olong NumChAvg, i, j, indx, jndx;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   ObitIOAccess access;
   ObitUVDesc *inDesc, *outDesc;
   gchar *today=NULL;
-  olong NumChAvg, defSel[] = {1,100000000,1,0, 0,0,0,0};
-  gboolean doAvgAll=FALSE;
   ofloat *work=NULL, scale;
   gchar *routine = "ObitUVUtilHann";
  
@@ -1857,18 +1851,20 @@ ObitUV* ObitUVUtilHann (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 
   /* Create work array for averaging */
   work = g_malloc(2*inDesc->lrec*sizeof(ofloat));
-  /* Work arrays defining data */
-  corChan = g_malloc(inDesc->ncorr*sizeof(olong));
-  corIF   = g_malloc(inDesc->ncorr*sizeof(olong));
-  corStok = g_malloc(inDesc->ncorr*sizeof(olong));
-  corMask = g_malloc(inDesc->ncorr*sizeof(gboolean));
 
   /* Modify descriptor for affects of averaging, get u,v,w scaling */
   ObitUVGetFreq (inUV, err);   /* Make sure frequencies updated */
-  scale = AvgFSetDesc (inDesc, outDesc, NumChAvg, defSel, doAvgAll, 
-		       corChan, corIF, corStok, corMask, err);
   if (err->error) goto cleanup;
-
+  /* Update output Descriptor */
+  if (doDescm) {/* No descimate - basically moving up one (input) channel */
+    outDesc->crpix[outDesc->jlocf]  = inDesc->crpix[inDesc->jlocf];
+    outDesc->cdelt[outDesc->jlocf]  = inDesc->cdelt[inDesc->jlocf]*2;
+    outDesc->inaxes[outDesc->jlocf] = inDesc->inaxes[inDesc->jlocf]/2;
+  } else {  /* No descimate */
+    outDesc->crpix[outDesc->jlocf]  = inDesc->crpix[inDesc->jlocf];
+  }
+  scale = 1.0;  /* Haven't really changed the frequency */
+ 
   /* If descimating, last channel incomplete - drop */
   if (doDescm) outDesc->inaxes[outDesc->jlocf]--;
 
@@ -1933,7 +1929,6 @@ ObitUV* ObitUVUtilHann (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
       jndx += outDesc->nrparm;
       /* Average data */
       Hann (inUV->myDesc, outUV->myDesc, doDescm, 
-	    corChan, corIF, corStok, corMask,
 	    &inUV->buffer[indx], &outUV->buffer[jndx], work, err);
       if (err->error) goto cleanup;
     } /* end loop over visibilities */
@@ -1950,10 +1945,6 @@ ObitUV* ObitUVUtilHann (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   /* Cleanup */
  cleanup:
   if (work)    g_free(work);    work    = NULL;
-  if (corChan) g_free(corChan); corChan = NULL;
-  if (corIF)   g_free(corIF);   corIF   = NULL;
-  if (corStok) g_free(corStok); corStok = NULL;
-  if (corMask) g_free(corMask); corMask = NULL;
   
   /* close files */
   iretCode = ObitUVClose (inUV, err);
@@ -2405,9 +2396,9 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   ObitIOAccess access;
   ObitUVDesc *inDesc, *outDesc;
   ObitUVSortBuffer *outBuffer=NULL;
-  olong suba, lastSourceID, curSourceID, lastSubA, lastFQID=-1;
+  olong suba, lastSourceID, curSourceID, lastSubA;
   gchar *today=NULL;
-  ofloat timeAvg, curTime, startTime, endTime, lastTime=-1.0;
+  ofloat timeAvg, curTime, startTime, endTime;
   ofloat *accVis=NULL, *accRP=NULL, *ttVis=NULL;
   ofloat *inBuffer;
   olong ant1, ant2;
@@ -2567,7 +2558,6 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
       if (inDesc->ilocsu>=0) curSourceID = inBuffer[iindx+inDesc->ilocsu];
       if (startTime < -1000.0) {  /* Set time window etc. if needed */
 	startTime = curTime;
-	lastTime  = curTime;
 	endTime   = startTime + timeAvg;
 	lastSourceID = curSourceID;
       }
@@ -2582,9 +2572,6 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 			     "%s Antenna 2=%d > max %d", routine, ant2, numAnt);  
 	/* Baseline index this assumes a1<=a2 always */
 	blindx =  blLookup[ant1-1] + ant2-ant1;
-	if (inDesc->ilocfq>=0) lastFQID = (olong)(inBuffer[iindx+inDesc->ilocfq]+0.5);
-	else lastFQID = 0;
-	lastTime = curTime;
 	
 	/* Accumulate RP
 	   (1,*) =  count 
@@ -2684,9 +2671,6 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 	Obit_retval_if_fail ((ant2<=numAnt), err, outUV, 
 			     "%s Antenna 2=%d > max %d", routine, ant2, numAnt);  
 	blindx =  blLookup[ant1-1] + ant2-ant1;
-	if (inDesc->ilocfq>=0) lastFQID = (olong)(inBuffer[iindx+inDesc->ilocfq]+0.5);
-	else lastFQID = 0;
-	lastTime = curTime;
 	
 	/* Accumulate RP
 	   (1,*) =  count 
@@ -2782,9 +2766,9 @@ ObitUV* ObitUVUtilAvg2One (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   ollong lltmp, i, j, numBL, jndx, indx, blindx, iindx=0;
   ObitIOAccess access;
   ObitUVDesc *inDesc, *outDesc;
-  olong suba, lastSourceID, curSourceID, lastFQID=-1;
+  olong suba, lastSourceID, curSourceID;
   gchar *today=NULL;
-  ofloat curTime, startTime, endTime, lastTime=-1.0;
+  ofloat curTime, startTime, endTime;
   ofloat *accVis=NULL, *accRP=NULL, *ttVis=NULL;
   ofloat *inBuffer;
   olong ivis=0, NPIO;
@@ -2924,7 +2908,6 @@ ObitUV* ObitUVUtilAvg2One (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
       if (inDesc->ilocsu>=0) curSourceID = inBuffer[iindx+inDesc->ilocsu];
       if (startTime < -1000.0) {  /* Set time window etc. if needed */
 	startTime = curTime;
-	lastTime  = curTime;
 	endTime   = startTime + 1000.0;
 	lastSourceID = curSourceID;
       }
@@ -2934,9 +2917,6 @@ ObitUV* ObitUVUtilAvg2One (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 	  (inDesc->firstVis<=inDesc->nvis) && (iretCode==OBIT_IO_OK)) {
 	/* accumulate all to one vis */
 	blindx =  0;
-	if (inDesc->ilocfq>=0) lastFQID = (olong)(inBuffer[iindx+inDesc->ilocfq]+0.5);
-	else lastFQID = 0;
-	lastTime = curTime;
 	
 	/* Accumulate RP
 	   (1,*) =  count 
@@ -3028,9 +3008,6 @@ ObitUV* ObitUVUtilAvg2One (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 
 	/* Now accumulate this visibility */
 	blindx = 0;
-	if (inDesc->ilocfq>=0) lastFQID = (olong)(inBuffer[iindx+inDesc->ilocfq]+0.5);
-	else lastFQID = 0;
-	lastTime = curTime;
 	
 	/* Accumulate RP
 	   (1,*) =  count 
@@ -3328,7 +3305,7 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   ollong blindx=0, *blLookup=NULL;
   ObitIOAccess access;
   ObitUVDesc *inDesc, *outDesc;
-  olong suba, lastSourceID, curSourceID, lastSubA, lastFQID=-1;
+  olong suba, lastSourceID, curSourceID, lastSubA;
   gchar *today=NULL;
   ofloat curTime=-1.0e20, startTime;
   ofloat *accVis=NULL, *accRP=NULL, *lsBlTime=NULL, *stBlTime=NULL, *stBlU=NULL, *stBlV=NULL;
@@ -3577,8 +3554,6 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
       /* Baseline index this assumes a1<=a2 always */
       blindx =  blLookup[ant1-1] + ant2-ant1;
       blindx = MAX (0, MIN (blindx, numBL-1));
-      if (inDesc->ilocfq>=0) lastFQID = (olong)(inBuffer[iindx+inDesc->ilocfq]+0.5);
-      else lastFQID = 0;
       curTime = inBuffer[iindx+inDesc->iloct]; /* Time */
       if (inDesc->ilocsu>=0) curSourceID = inBuffer[iindx+inDesc->ilocsu];
 
@@ -3818,10 +3793,10 @@ ObitInfoList* ObitUVUtilCount (ObitUV *inUV, ofloat timeInt, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitIOAccess access;
   ObitUVDesc *inDesc;
-  ofloat lastTime=-1.0, *inBuffer;
+  ofloat *inBuffer;
   olong numTime, ncorr, indx, iindx, lastSourceID, curSourceID;
   gboolean gotOne, done, isVLA;
-  odouble GSTiat0, DegDay, ArrayX, ArrayY, ArrayZ;
+  odouble GSTiat0, DegDay, ArrayX, ArrayY;
   ofloat dataIat, ArrLong;
   ofloat startTime, endTime, curTime;
   ollong visCnt[500], goodCnt[500], badCnt[500], timeCnt[500], timeSou[500];
@@ -3891,7 +3866,6 @@ ObitInfoList* ObitUVUtilCount (ObitUV *inUV, ofloat timeInt, ObitErr *err)
       if (inDesc->ilocsu>=0) curSourceID = inBuffer[iindx+inDesc->ilocsu];
       if (startTime < -1000.0) {  /* Set time window etc. if needed */
 	startTime = curTime;
-	lastTime  = curTime;
 	endTime   = startTime + timeInt;
 	lastSourceID = curSourceID;
       }
@@ -3899,7 +3873,6 @@ ObitInfoList* ObitUVUtilCount (ObitUV *inUV, ofloat timeInt, ObitErr *err)
       /* Still in current interval */
       if ((curTime<endTime) && (curSourceID == lastSourceID) && 
 	  (inDesc->firstVis<=inDesc->nvis) && (iretCode==OBIT_IO_OK)) {
-	lastTime = curTime;
 
 	/* sums */
 	timeSou[numTime] = curSourceID;
@@ -3936,7 +3909,6 @@ ObitInfoList* ObitUVUtilCount (ObitUV *inUV, ofloat timeInt, ObitErr *err)
   DegDay  = ANTable->DegDay;
   ArrayX  = ANTable->ArrayX;
   ArrayY  = ANTable->ArrayY;
-  ArrayZ  = ANTable->ArrayZ;
   if (!strncmp (ANTable->TimeSys, "IAT", 3)) {
     dataIat = 0.0;  /* in IAT */
   } else {  /* Assume UTC */
@@ -4011,7 +3983,7 @@ void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV,
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong *BChan=NULL, *numChan=NULL, *BIF=NULL, *numIF=NULL;
-  olong chinc=1, nchan, nif, nstok, nchOut, NPIO;
+  olong chinc=1, nchan, nif, nchOut, NPIO;
   olong i, j, indx, jndx, ivis, nIFperOut, oldNumberIF, oldStartIF;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM]={1,1,1,1,1};
@@ -4059,8 +4031,6 @@ void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV,
   nchan = inDesc->inaxes[inDesc->jlocf];
   if (inDesc->jlocif>=0) nif = inDesc->inaxes[inDesc->jlocif];
   else                   nif = 1;
-  if (inDesc->jlocs>=0) nstok = inDesc->inaxes[inDesc->jlocs];
-  else                  nstok= 1;
   nIFperOut = (glong) (0.9999 + (nif / (ofloat)nOut));
   if ((fabs(((ofloat)nIFperOut)-(nif / (ofloat)nOut))>0.001) && (nif>1)) {
     Obit_log_error(err, OBIT_Error,"%s Not an equal number of IFs per output",
@@ -4917,7 +4887,6 @@ olong ObitUVUtilNchAvg(ObitUV *inUV, ofloat maxFact, ofloat FOV, ObitErr *err)
   ObitAntennaList **AntList=NULL;
   olong i, j, numSubA, iANver, numIF, numOrb, numPCal;
   ofloat chBW, maxBL, BL, fact, beta, tau;
-  odouble lowFreq;
   gchar *routine = "ObitUVUtilNchAv";
 
   /* error checks */
@@ -4935,9 +4904,6 @@ olong ObitUVUtilNchAvg(ObitUV *inUV, ofloat maxFact, ofloat FOV, ObitErr *err)
 
   /* Channel bandwidth */
   chBW = inDesc->cdelt[inDesc->jlocf];
-
-  /* Min (ref) frequency */
-  lowFreq = inDesc->freq;
 
   /* Antenna List 
      How many AN tables (no. subarrays)?  */
@@ -5439,18 +5405,12 @@ static void SmooF (ObitUVDesc *inDesc, ObitUVDesc *outDesc, olong NumChSmo,
  * \param inDesc   Input UV descriptor
  * \param outDesc  Output UV descriptor to be modified
  * \param doDescm  If TRUE drop every other channel
- * \param corChan  0-rel output channel numbers
- * \param corIF    0-rel output IF numbers
- * \param corStok  0-rel output Stokes parameter code.
- * \param corMask  Array of masks per correlator for selected channels/IFs
- *                 TRUE => select
  * \param inBuffer  Input buffer (data matrix)
  * \param outBuffer Output buffer (data matrix)
  * \param work      Work array twice the size of the output visibility
  * \param err       Error stack, returns if not empty.
  */
 static void Hann (ObitUVDesc *inDesc, ObitUVDesc *outDesc, gboolean doDescm,
-		  olong *corChan, olong *corIF, olong *corStok, gboolean *corMask,
 		  ofloat *inBuffer, ofloat *outBuffer, ofloat *work, 
 		  ObitErr *err)
 {
@@ -5658,7 +5618,7 @@ static void FQSel (ObitUV *inUV, olong chAvg, olong fqid, ObitErr *err)
   ObitTableFQ    *inTab=NULL;
   olong iFQver, highFQver;
   oint numIF;
-  olong i, nif, nchan;
+  olong i, nif;
   odouble *freqOff=NULL;
   ofloat *chBandw=NULL;
   oint *sideBand=NULL;
@@ -5677,7 +5637,6 @@ static void FQSel (ObitUV *inUV, olong chAvg, olong fqid, ObitErr *err)
 
   /* Should only be one FQ table */
   iFQver = 1;
-  nchan = inUV->myDesc->inaxes[inUV->myDesc->jlocf];
   if (inUV->myDesc->jlocif>=0) 
     nif = inUV->myDesc->inaxes[inUV->myDesc->jlocif];
   else

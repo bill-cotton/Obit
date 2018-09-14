@@ -1,7 +1,7 @@
 /* $Id$  */
-/* Obit Task apply calibration snd write single source files */
+/* Obit Task apply calibration and write single source files */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2015                                          */
+/*;  Copyright (C) 2007-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -715,8 +715,7 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
 {
   ObitUV    *outUV = NULL;
   ObitInfoType type;
-  ObitIOType IOType;
-  olong      i, n, Aseq, disk, cno, lType;
+  olong      i, n, Aseq, disk, cno;
   gchar     *Type, *strTemp, outFile[129], *outName, *outF;
   gchar     Aname[13], Aclass[7], *Atype = "UV";
   olong      nvis;
@@ -737,7 +736,6 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
     
   /* File type - could be either AIPS or FITS */
   ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
-  lType = dim[0];
   if (!strncmp (Type, "AIPS", 4)) { /* AIPS input */
     /* Generate output name from Source, outName */
     ObitInfoListGetP (myInput, "outName", &type, dim, (gpointer)&outName);
@@ -750,7 +748,6 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
       g_snprintf (tname, 128, "%s", strTemp);
     }
       
-    IOType = OBIT_IO_AIPS;  /* Save file type */
     ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
     /* output AIPS sequence */
     ObitInfoListGet(myInput, "outSeq", &type, dim, &Aseq, err);
@@ -798,8 +795,6 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
     else g_snprintf (outFile, 128, "%s%s", Source, tname);
     ObitTrimTrail(outFile);  /* remove trailing blanks */
 	   
-    IOType = OBIT_IO_FITS;  /* Save file type */
-
     /* output FITS disk */
     ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
     
@@ -852,6 +847,7 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   
   /* Get source list to do */
   doList = ObitUVUtilWhichSources (inData, err);
+  if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
   /* Loop over list of sources */
   for (isource = 0; isource<doList->number; isource++) {
