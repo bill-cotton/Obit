@@ -1674,7 +1674,7 @@ ASDMAntennaArray* ObitSDMDataKillAntArray (ASDMAntennaArray *in)
 
 /**
  * Creates and fills a Source array
- * There is one entry per FieldTab entry unledd doCode=True then
+ * There is one entry per FieldTab entry unless doCode=True then
  * There may be an entry for each fieldTab+code combination.
  * \param in   ASDM object to use
  * \return the new structure, NULL on error, 
@@ -1741,7 +1741,7 @@ ASDMSourceArray* ObitSDMDataGetSourceArray (ObitSDMData *in)
 	for (iSource=0; iSource<in->SourceTab->nrows; iSource++) {
 	  nameMatch = !strcmp(in->SourceTab->rows[iSource]->sourceName,
 			      in->FieldTab->rows[iField]->fieldName);
-	  nameMatch = in->isEVLA && isOTF;   /* New VLA OTF format */
+	  if (in->isEVLA && isOTF) nameMatch = TRUE;  /* New VLA OTF format? */
 	  if (((in->SourceTab->rows[iSource]->sourceId==sourceId) && nameMatch) || 
 	      (nameMatch)) {
 	    SWId = in->SourceTab->rows[iSource]->spectralWindowId;
