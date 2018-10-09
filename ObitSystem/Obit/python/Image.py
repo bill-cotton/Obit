@@ -500,7 +500,7 @@ class Image(OData.OData):
         * err       = Python Obit Error/message stack
         * plane     = 1-rel plane, if a list, use higher order planes
         * cen       = If given the 1-rel center pixel of the region to be fit
-          If not given, the reference pixel of the image is used
+          If not given, the NX/2,NY/2 pixel of the image is used
         * dim       = dimension in pixels of the region to be fit
         * x         = offset in x (pixels) of initial Gaussians from cen
         * y         = offset in y (pixels) of initial Gaussians from cen
@@ -521,16 +521,19 @@ class Image(OData.OData):
         self.Open(1,err)
         self.Read(err)
         self.Close(err)
+        FArray.PInClip(self.FArray,-1.0e-3,1.0e-3,FArray.fblank)  # replace pure zeros with blank
         # Fitting region
         d = self.Desc.Dict
         if cen==None:
-            cen = [d["crpix"][0], d["crpix"][1]]
+            cen = [d["inaxes"][0]/2, d["inaxes"][1]/2]
         corner = [int(cen[0]-dim[0]/2), int(cen[1]-dim[1]/2)]
         # set initial model
         i=0
         fm = []
         for i in range(0,len(x)):
             flx = min(flux[i],d["maxval"])
+            if flx<1.0e-10:  # Trap missing maxval
+                flx = flux[i]
             fm.append(FitModel.FitModel(type=FitModel.GaussMod, Peak=flx, \
                                         parms=gparm[i], \
                                         DeltaX=x[i]+dim[0]/2, DeltaY=y[i]+dim[1]/2));

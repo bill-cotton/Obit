@@ -914,14 +914,14 @@ ObitTableCCUtilCrossListSpec (ObitTableCC *inCC, ObitImageDesc *inDesc,
       spectTerm = CCRow->parms[iterm+parmoff];
     } else  spectTerm = 0.0;  /* Something went wrong */
 
-      /* add to structure */
-      entry = (ofloat*)(SortStruct + count * fsize);  /* set pointer to entry */
-      entry[0] = outPixel[0] - 1.0;  /* Make zero rel. pixels */
-      entry[1] = outPixel[1] - 1.0;
-      entry[2] = CCRow->Flux;
-      if (doZ) entry[3] = CCRow->DeltaZ;
-      entry[toff] = spectTerm;
-      count++; /* How many? */
+    /* add to structure */
+    entry = (ofloat*)(SortStruct + count * fsize);  /* set pointer to entry */
+    entry[0] = outPixel[0] - 1.0;  /* Make zero rel. pixels */
+    entry[1] = outPixel[1] - 1.0;
+    entry[2] = CCRow->Flux;
+    if (doZ) entry[3] = CCRow->DeltaZ;
+    entry[toff] = spectTerm;
+    count++; /* How many? */
     }
   } /* end loop over TableCC */
 
@@ -985,7 +985,8 @@ ObitTableCCUtilCrossListSpec (ObitTableCC *inCC, ObitImageDesc *inDesc,
       /* copy to out */
       table[0] = entry[0];
       table[1] = entry[1];
-      table[2] = entry[2];
+      if (doSpec || doTSpec) table[2] = entry[toff];
+      else                   table[2] = entry[2];
       table[3] = entry[3];
       if (doZ) table[4] = entry[4];
       table += lrec;
