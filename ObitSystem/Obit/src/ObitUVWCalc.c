@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2013-2015                                          */
+/*;  Copyright (C) 2013-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -305,7 +305,7 @@ void ObitUVWCalcUVW (ObitUVWCalc *in, ofloat time, olong SId,
   if (tt>in->curTime) {
     in->curTime = tt;
     /* Current UTC Julian Date corrected to UT1*/
-    t      =  tt + in->AntList->ut1Utc + in->AntList->dataUtc;
+    t      =  tt + (in->AntList->ut1Utc + in->AntList->dataUtc)/(2.0*G_PI);
     in->JD = in->AntList->JD + t; 
     /* Rotation angle for antennas to celestial */
     GSTRA  = (in->GSTUTC0 + 24*in->Rate*t) * 15 * DG2RAD;
@@ -362,7 +362,7 @@ void ObitUVWCalcUVW (ObitUVWCalc *in, ofloat time, olong SId,
  
     /* Precess this source for now 
        Current UTC Julian Date corrected to UT1 */
-    t      =  tt + in->AntList->ut1Utc + in->AntList->dataUtc;
+    t      =  tt + (in->AntList->ut1Utc + in->AntList->dataUtc)/(2.0*G_PI);
     in->JD = in->AntList->JD + t; 
     /* Equinox */
     if (in->myData->myDesc->equinox>0.0) equin = in->myData->myDesc->equinox;

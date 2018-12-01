@@ -5534,7 +5534,7 @@ void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err)
   DeltaX = 11.0;
   DeltaY = 11.0;
   nparm  = 3;
-  parms[0]  = parms[1] = 3.0; parms[2] = 0.0;
+  parms[0]  = parms[1] = 6.0; parms[2] = 0.0;
   nmodel = 1;
   models = g_malloc0(sizeof(ObitFitModel*));
   models[0] = ObitFitModelCreate ("model", OBIT_FitModel_GaussMod, 

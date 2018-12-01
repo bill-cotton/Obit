@@ -3947,3 +3947,168 @@ Obit/share/data/3C286XModel.fits.gz
 Obit/python/EVLACal.py:
   EVLAInitContParms: Set correct rlflagVer (1)
 23 Feb 2018 svn 582
+
+Summary: RM fitting, Mosaicing, bug fixes
+Obit/changes.log:
+  Update
+Obit/../ObitVersion:
+  Trigger NRAO update
+Obit/src/ObitRMFit.c Obit/include/ObitRMFitDef.h Obit/python/RMFit.py:
+  Add "doRMSyn" options for pure RM synthesis returning max value.
+Obit/tasks/VLPoln.c Obit/TDF/VLPoln.TDF:
+  Fix error handling blanked values; handle doRMSyn images.
+Obit/src/ObitImageFit.c Obit/src/ObitImageFitData.c
+Obit/python/Image.py Obit/python/ImageFit.py:
+   Add flux, position constraints for Gaussian fitting
+Obit/share/scripts/CopyHistory.py:
+   Script to copy beam and history from image to (beam) image.
+Obit/src/ObitTableSUUtil.c:
+   Treat duplicate or missing input source name as an error
+Obit/src/ObitImageUtil.c:
+  PBImage: don't reset BLC,TRC
+Obit/python/MosaicUtil.py:
+  Added PWeightImageEq optimized for case of no rotation (e.g. gal coord)
+Obit/python/OSurvey.py:
+  Change NRAOserver names from http: to https:
+27 Apr 2018 svn 583
+
+=========================================================================================
+Summary: Speedup, BDFIn bug fix
+Obit/changes.log:
+  Update
+Obit/ObitVersion:
+  Trigger NRAO update
+Obit/src/ObitFArray.c:
+   Added AVX intrinsics versions numerous places
+Obit/src/ObitFInterpolate.c:
+   Faster kernal calculation
+Obit/src/ObitAIPSCat.c:
+   Fix logic bug when lrec==1024
+4 May 2018 svn 584
+
+=========================================================================================
+Summary: bug fix, speedup, new tasks: MaskCube, Lin2Cir, DFTIm
+Obit/changes.log:
+  Update
+Obit/ObitVersion:
+  Trigger NRAO update
+Obit/src/ObitFArray.c:
+   Added AVX intrinsics versions in Blank
+Obit/tasks/MaskCube.c Obit/TDF/MaskCube.TDF:
+   New take to mask cube with and image and quantize output
+Obit/include/avx2_mathfun.h:
+   Updated version to compile with gcc >4.9
+Obit/tasks/Lin2Cir.c Obit/TDF/Lin2Cir.TDF:
+   New task to convert XX,YY,XY,YX data to RR,LL,RL,LR
+Obit/src/ObitPolnCalFit.c Obit/include/ObitPolnCalFitDef.h:
+   Make initialization more robust, average input Stokes I as starting value
+Obit/src/ObitUVWeight.c:
+   Fiddle weighting of super uniform weighting to reduce weighting errors near u=0.
+Obit/include/avx_mathfun_May18.h:
+   New version of avx function library
+Obit/src/ObitFArray.c Obit/include/ObitFArrayClassDef.h Obit/include/ObitFArray.h:
+   New SinCos and copy features
+Obit/src/ObitSinCos.c Obit/include/ObitSinCos.h:
+   New sin and cos features (avx and sse may be broken)
+Obit/src/ObitVecFunc.c Obit/include/ObitVecFunc.h:
+   Upgrade avx math library 
+Obit/tasks/DFTIm.c Obit/TDF/DFTIm.TDF:
+   New DFT imaging task
+Obit/src/ObitDConClean.c:
+   PixelStats: set Beam before use.
+25 May 2018 svn 585
+
+Summary: bug fix, speedup, doLast option in MFImage
+Obit/src/ObitVecFunc.c:
+   Explicit AVX2 support
+Obit/src/Obit.c Obit/include/Obit.h:
+   inline ObitMagicF
+Obit/include/ObitImageUtil.h Obit/src/ObitImageUtil.c:
+   New Routine NoInterWeight to copy pixels when interpolation 
+   not needed in flatten
+Obit/src/ObitFArray.c:
+    inClip: fix logic in AVX version
+Obit/src/ObitImageMosaic.c Obit/src/ObitImageMosaicMF.c:
+    Flatten: implement NoInterWeight
+Obit/share/data/3C*SModel.fits.gz:
+    fix bad reference pixel
+Obit/python/EVLACal.py:
+    Enable "SELF" interMode in EVLAApply
+Obit/python/EVLAContPipe.py:
+    Enable "SELF" interMode in Delay calibration
+Obit/tasks/MFImage.c Obit/TDF/MFImage.TDF:
+    Add doLast option to control if last CLEAN after SC is done
+11 June 2018 svn 586
+
+Summary: Add CQ table to BDFIn, new all  MeerKAT updates, sky VZ file, bug fixes
+Obit/src/ObitUVDesc.c:
+    ObitUVDescShiftPhase: make phase shift more robust for unshifted images.
+Obit/python/TableUtil.py:
+    Fix typo (from T. Mauch)
+Obit/src/ObitTableCCUtil.c:
+    T2Spec: Add doPBCor option with default False
+Obit/share/scripts/scriptFetchNVSS.py:
+    Script for fetch NVSS postage stamps from command line
+Obit/tasks/SetJy.c Obit/TDF/SetJy.TDF:
+    Add spectrum from T. Mauch & Ben Hugo for 0406-65
+Obit/src/ObitUVCalSelect.c:
+    Allow 'HALF' for XX,YY
+    Set poln increment to -1 for RR,LL,XX,YY etc
+Obit/TDF/UVBlAvg.TDF:
+    Longer file names
+Obit/share/data/AllSkyVZ.FIT.gz
+    All Sky (NVSS,SUMMS, MGPS) VZ table, replace NVSS_SUMMS_VZ.fit.gz
+Obit/tasks/BDFIn.c:
+    Write CQ Table to record VLA online frequency averaging.
+Obit/include/ObitFArray.h  Obit/src/ObitFArray.c:
+    Add fn ObitFArrayShiftAddNT without threads to use in threaded routine
+Obit/src/ObitDConCleanVisMF.c:
+    ThreadImSub: use ObitFArrayShiftAddNT, other bug
+10 August 2018 svn 588
+
+Summary: bug fixes
+Obit/changes.log:
+  Update
+Obit/ObitVersion:
+  Trigger NRAO update
+ObitFArray.c:
+  fix bugs introduced in snv 584
+Obit/tasks/Split.c:
+  Cleanup
+Obit/src/ObitUVEdit.c Obit/src/ObitUVGSolve.c
+  Use maxAnt from the uv decriptor for maximum antenna number or all subarrays
+Obit/src/ObitDConCleanVis.c:
+  Max 4 middle clean loops
+Obit/src/ObitDConCleanVisMF.c:
+  Another attempt to deal with middle loop threading bug
+Obit/src/ObitSDMData.c:
+  Trap and implement ever more baroque EVLA ASDM OTF variant
+Obit/tasks/BDFIn.c:
+  Write NX table entry for first subscan
+Obit/src/ObitUVUtil.c:
+   Hann - fix errors in frequency labeling
+14 Sept 2018 svn 589
+
+Summary: bug fixes
+Obit/src/ObitSDMData.c:
+   Fix bug introduced in last fix -doh!
+18 Sept 2018 svn 590
+
+Summary: bug fixes
+Obit/python/Image.py:
+  GaussFit: More sensible default for cen, trap no max in header, zero blanking
+Obit/src/ObitTableCCUtil.c:
+  ObitTableCCUtilCrossListSpec: Fix bug for CCs with spectra
+9 Oct 2018 svn 591
+
+Summary: bug fixes
+Obit/src/ObitFArray.c:
+  Fixes back into system
+1 Nov 2018 svn 592
+
+Summary: bug fixes
+Obit/src/ObitUVWCalc.c
+  ObitUVWCalcUVW: Correct usage of dataUtc, ut1Utc in AntList (use in UVFix)
+Obit/src/ObitImageUtil.c
+  FitBeam: default size changed from 3 to 6 pixels
+1 Dec 2018 svn ver 593
