@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006                                               */
+/*;  Copyright (C) 2006-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -194,6 +194,32 @@ ObitFitRegion* ObitFitRegionListFind (ObitFitRegionList *in, gchar *name)
   }
   return NULL; /* didn't find */
 } /* end ObitFitRegionFind */
+
+/**
+ * Return next region in list in
+ * \param in    Object with table to search
+ * \param last Pointer to last entry, NULL to start list
+ * \return pointer to Region containing item, NULL if not found.
+ */
+ObitFitRegion* ObitFitRegionListNext (ObitFitRegionList *in, gpointer *last)
+{
+  GSList *tmp;
+  ObitFitRegion *reg;
+
+  /* error checks */
+  g_assert (ObitFitRegionListIsA(in));
+
+  /* First? */
+  if (*last==NULL) {
+    tmp = in->list;
+  } else {  /* Get next item */
+    tmp = ((GSList*)*last);
+    tmp = g_slist_next(tmp);
+  }
+  reg = (ObitFitRegion*)tmp->data;
+  *last = tmp;  /* Update pointer */
+  return reg;
+} /* end ObitFitRegionNext */
 
 /**
  * Initialize global ClassInfo Structure.

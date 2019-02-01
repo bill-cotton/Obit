@@ -1,7 +1,7 @@
 /* $Id$  */
 /* FndSou Obit task - generate source list from image                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2017                                          */
+/*;  Copyright (C) 2006-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -100,16 +100,17 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
  ofloat GetInitialModel (IslandElem* isElem,  ObitImage *image, gboolean doMulti,
 			 ofloat cutt, gboolean doPoint, gboolean doPA, 
 			 olong *nmodel, ObitFitModel *models[], 
+			 gboolean doBlank, ofloat Blank,
 			 ObitErr *err);
 /* Initial single model using moments */
-void snglDef (ObitFArray *pixels, gboolean doPoint, gboolean doPA,
+void snglDef (ObitFArray *pixels, gboolean doPoint, gboolean doPA, 
 	      ofloat dmax, olong ixmax, olong iymax, 
 	      ofloat cb[3], ObitFitModel **model) ;
 /* Convert moments to Gaussian */
 void scdmom (ofloat dmax, ofloat* sum2, ofloat* sumd2, ofloat* sum4, 
 	     ofloat* a, ofloat* b, ofloat* theta, gboolean* singul) ;
 /* Initial multiple component model */
-void multDef (olong peakNo, gboolean doPA, olong* xpk, olong* ypk, 
+void multDef (olong peakNo, gboolean doPoint, gboolean doPA, olong* xpk, olong* ypk, 
 	      ofloat* spk, ofloat cb[3], ObitFitModel *models[]);
 /* Split island in two */
 void fitTwo (ObitFArray *pixels, ObitFitRegion *reg, ObitFitRegion *oldreg, 
@@ -777,8 +778,8 @@ void doHistory (ObitInfoList *myInput, ObitImage *inImage,
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq", "inFile",
     "BLC", "TRC", "doVL", "doResid", "NGauss", "CutOff", "NPass",
-    "Retry", "Sort", "doMult", "doWidth", "Gain", "Parms", "RMSsize", "FDRsize",
-    "doPBCor", "asize",
+    "Retry", "Blank", "Sort", "doMult", "doWidth", "Gain", "Parms", 
+    "RMSsize", "FDRsize", "doPBCor", "asize",
     NULL};
   gchar *routine = "doHistory";
 
@@ -850,7 +851,7 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
   ObitFArray *data=NULL;
   olong  i, plane[5] = {1,1,1,1,1};
   olong ipass, npass;
-  ofloat cutt, rms, parms[20];
+  ofloat cutt, rms, Blank=0.0, parms[20];
   gboolean doVL, doFDR;
   IslandList* islands=NULL;
   ObitFitRegionList *regList=NULL;
@@ -885,9 +886,14 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
     if (err->error) goto cleanup;
   }
 
+  /* Blanking value if non zero - copy to inImage info */
+  if (ObitInfoListGetTest(myInput, "Blank", &type, dim, &Blank)) 
+    ObitInfoListAlwaysPut(inImage->info, "Blank", OBIT_float, dim, &Blank);
+
   /* If doing False Detection Rate filtering, init histogram object */
   for (i=0; i<20; i++) parms[i] = 0;
   ObitInfoListGetTest(myInput, "Parms", &type, dim, parms);
+  if (parms[6]<=0.0) parms[6] = 0.1;  /* Use passed value as blanking limit */
   doFDR   = (parms[5]>0.0) && (parms[5]<1.0);
 
   /* If doing FDR setup histogram if needed - 
@@ -1122,7 +1128,7 @@ IslandList* Islands(ObitFArray *data, ofloat cutt)
     /* Loop over row */
     for (i=0; i<nx; i++) {
       /* check if even close to fblank - rounding can screw up 32 bit integers */
-      if (fabs(row[i]-fblank)<0.00001*fblank) continue;
+      if (fabs(row[i]-fblank)<0.00001*fblank) row[i] = fblank;
 
       /* Is point above cutoff? */
       if ((row[i] < lcut)  ||  (row[i] == fblank)) {
@@ -1203,12 +1209,12 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
   ObitFitRegion* reg=NULL;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  ofloat cutt, peakResid=0.0, RMSResid=0.0, fluxResid=0.0, Parms[10], fracBlank;
-  gboolean doPoint, doPA, doMult, isBlanked;
+  ofloat cutt, Blank=0.0, peakResid=0.0, RMSResid=0.0, fluxResid=0.0, Parms[10], fracBlank;
+  gboolean doPoint, doPA, doMult, isBlanked, doBlank;
   olong nisland, corner[2], adim[2], k, nx, ny, i, bsize, d[2], nmodel=1;
   olong minIsland;
   gchar *regname=NULL;
-  ObitFitModel *models[10];
+  ObitFitModel *models[1000];
   gchar *routine = "Island2Region";
 
   if (err->error) return out;
@@ -1223,13 +1229,17 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
   doMult = FALSE;
   ObitInfoListGetTest(myInput, "doMult", &type, dim, &doMult);
 
-  /* Maximum numper of islands? */
+  /* Maximum number of islands? */
   nisland = 100;
   ObitInfoListGetTest(myInput, "NGauss", &type, dim, &nisland);
 
   /* Get minimum for defining islands */
   cutt = 0.0;
   ObitInfoListGetTest(myInput, "CutOff", &type, dim, &cutt);
+
+  /* Blanking level */
+  ObitInfoListGetTest(myInput, "Blank", &type, dim, &Blank);
+  doBlank = Blank!=0.0;
 
   /* Minimum size of island */
   Parms[4] = 2;
@@ -1247,7 +1257,7 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
   doPA = doPoint;
 
   /* Beam size in pixels */
-  bsize = (olong)((image->myDesc->beamMaj / 
+  bsize = (olong)((0.35*image->myDesc->beamMaj / 
 		  fabs (image->myDesc->cdelt[0]))+0.5);
   bsize = MAX (bsize, 3);
 
@@ -1255,15 +1265,23 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
   k = 0;
   isElem = IslandListFindHi (island);
   while (isElem) {
-
+    
     k++;  /* region number */
 
+    if (err->prtLv>=2) {  /* Diagnostic labeling */
+      Obit_log_error(err, OBIT_InfoErr, "Island %d blc=(%d,%d), trc=(%d,%d), peak=%f", 
+		     isElem->index, isElem->blc[0], isElem->blc[1], 
+		     isElem->trc[0], isElem->trc[1], isElem->peak);
+    }
     /* Done enough? */
     if (k>nisland) break;
 
     /* Must be at least minIsland+1 pixels in each dimension */
     if (((isElem->trc[0]-isElem->blc[0])<minIsland) || 
-	((isElem->trc[1]-isElem->blc[1])<minIsland)) {rejectSmall++; goto doneIsland;}
+	((isElem->trc[1]-isElem->blc[1])<minIsland)) 
+      {
+	if (err->prtLv>=2) Obit_log_error(err, OBIT_InfoErr, "Island too small");
+	rejectSmall++; goto doneIsland;}
 
     /* Expand window */
     for (i=0; i<2; i++) {
@@ -1276,16 +1294,18 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
     adim[1] = isElem->trc[1]-isElem->blc[1]+1; 
 
     /* Get initial model */
-    nmodel = 10;
+    nmodel = 1000;  /* Must match dimension of models */
     fracBlank = GetInitialModel (isElem, image, doMult, cutt, doPoint, doPA, 
-				 &nmodel, models, err);
+				 &nmodel, models, doBlank, Blank, err);
     if (err->error) Obit_traceback_val (err, routine, image->name, out);
 
     /* Limit blanking allowed */
     isBlanked = fracBlank>Parms[6];
     /* DEBUG
     if (isBlanked) fprintf (stderr, "fracBlank=%f\n", fracBlank); */
-    if (isBlanked) {rejectBlank++; goto doneIsland;}
+    if (isBlanked) 
+      {if (err->prtLv>=2) Obit_log_error(err, OBIT_InfoErr, "Excessive blanking");
+      rejectBlank++; goto doneIsland;}
     
     /* Find anything? */
     if (models[0]->Peak!=0.0) {
@@ -1297,6 +1317,11 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
       if (regname) g_free(regname);
       
       /* Fit */
+      if (err->prtLv>=2) {  /* Diagnostic labeling */
+	 Obit_log_error(err, OBIT_InfoErr, "Island %s corner=(%d,%d), dim=(%d,%d), nmodel=%d", 
+			reg->name, reg->corner[0], reg->corner[1], 
+			reg->dim[0], reg->dim[1], reg->nmodel);
+      }
       FitRegion (myInput, reg, image, isElem->index, err);
       if (err->error) Obit_traceback_val (err, routine, image->name, out);
       
@@ -1332,12 +1357,15 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
  *                on output, the actual,
  * \param models  Array of ObitFitModels
  *                If peak flux density==0 then nothing found.
+ * \param doBlank Blank pixels with vlues <Blank"
+ * \param Blank   Blanking level
  * \param err    Obit error/message stack object.
  * \return fraction of pixels with blanks
  */
  ofloat GetInitialModel (IslandElem* isElem,  ObitImage *image, gboolean doMult,
 			ofloat cutt, gboolean doPoint, gboolean doPA, 
 			olong *nmodel, ObitFitModel *models[], 
+			gboolean doBlank, ofloat Blank,
 			ObitErr *err)
 {
   ofloat fracBlank=0.0;
@@ -1364,10 +1392,12 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
   nx = pixels->naxis[0]; 
   ny = pixels->naxis[1]; 
 
-  /* Count blanked pixels */
+  /* Count previously blanked pixels */
   cntBlank = 0;
-  for (i=0; i<pixels->arraySize; i++) 
+  for (i=0; i<pixels->arraySize; i++) {
     if (pixData[i] == fblank) cntBlank++;
+    /*else if (doBlank && (pixData[ipts]<Blank)) cntBlank++;*/
+  }
   fracBlank = (ofloat)cntBlank / MAX(1, pixels->arraySize);
     
   /* Allocate work arrays */
@@ -1392,8 +1422,8 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
   /* Multiple peaks allowed */
   if (doMult) {
 
-    /* Don't get carried away, don't go below 1% of peak */
-    lcut = MAX (cutt, 0.01*lpeak);
+    /* Don't get carried away, don't go below 0.5% of peak */
+    lcut = MAX (cutt, 0.005*lpeak);
     
     /*  Loop over pixels excluding edges */
     for (iy= 2; iy<= ny-1; iy++) { /* loop 80 */
@@ -1405,6 +1435,8 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
 	  /* Only count points above cutt */
 	  if (pixData[ipts] <  lcut)   continue;
 	  if (pixData[ipts] == fblank) continue;
+	  /* ... and not blanked by Blank */
+	  if (doBlank && (pixData[ipts]<Blank)) continue;
 		  
 	  /*  Bigger than surrounding points? */
 	  noGo = FALSE;
@@ -1427,7 +1459,7 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
 	/* This is an acceptable maximum but check that there's no adjacent 
 	   point (can happen with 2 equal points) */
 	for (kmpk=0; kmpk<peakNo; kmpk++) { /* loop 65 */
-	  if ((abs(xxPk[kmpk]-ix) <= 1)  ||  (abs(yyPk[kmpk]-iy) <= 1)) 
+	  if ((abs(xxPk[kmpk]-ix) <= 1) && (abs(yyPk[kmpk]-iy) <= 1)) 
 	    noGo = TRUE; /*goto L68;*/
 	} /* end loop  L65:  */
 	if (noGo) continue;  /* This one OK? */
@@ -1483,7 +1515,7 @@ foundEnough:  /* L90 */
     /* For mutiple peaks use several points */
   } else {
     *nmodel = peakNo;
-    multDef (peakNo, doPA, xPk, yPk, sPk, cbeam, models);
+    multDef (peakNo, doPoint, doPA, xPk, yPk, sPk, cbeam, models);
   } 
 
   pixels = ObitFArrayUnref(pixels); /* Don't need further */
@@ -1523,8 +1555,9 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
   gboolean doMult, doPoint, revert, doFDR;
   odouble dtemp;
   ofloat gain, parms[20], icut, tcut, rcut, xcut, cbeam[3], oldRMS, oldPeak;
-  ofloat maxFDR, minFlux, major, minor;
-  olong blc[2], trc[2], FDRsize=0;
+  ofloat maxFDR, minFlux, major, minor, *centPix;
+  ofloat fblank = ObitMagicF();
+  olong blc[2], trc[2], pos[2], FDRsize=0;
   ObitFArray *pixels=NULL;
   gchar *FitParms[] = {  
     "BLC", "TRC",         /* Portion of image */
@@ -1598,6 +1631,13 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
   ier = ObitImageFitFit (fitter, image, reg, err);
   if (ier==1) iterLimit++;  /* Hit iteration limit? */
   
+  /* Get pixels data */
+  blc[0] = reg->corner[0]; blc[1] = reg->corner[1];
+  trc[0] = reg->corner[0] + reg->dim[0] - 1; 
+  trc[1] = reg->corner[1] + reg->dim[1] - 1; 
+  pixels = ObitFArraySubArr (image->image, blc, trc, err);
+  if (err->error) Obit_traceback_msg (err, routine, image->name);
+    
   /* Are residuals acceptable? If only 1 and not, then try 2 */
   tcut = gain*reg->models[0]->Peak;
   tcut = sqrt (icut*icut + tcut*tcut);
@@ -1610,18 +1650,9 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
     oldRMS  = reg->RMSResid;
     oldPeak = fabs(reg->peakResid);
     
-    /* Get pixels data */
-    blc[0] = reg->corner[0]; blc[1] = reg->corner[1];
-    trc[0] = reg->corner[0] + reg->dim[0] - 1; 
-    trc[1] = reg->corner[1] + reg->dim[1] - 1; 
-    pixels = ObitFArraySubArr (image->image, blc, trc, err);
-    if (err->error) Obit_traceback_msg (err, routine, image->name);
-    
     /* reset region */
     fitTwo (pixels, reg, oldReg, cbeam, doPoint, err);
     if (err->error) Obit_traceback_msg (err, routine, image->name);
-    
-    pixels = ObitFArrayUnref(pixels); /* Don't need further */
     
     /* Refit */
     ObitImageFitFit (fitter, image, reg, err);
@@ -1678,8 +1709,20 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
       rejectLoFlux++; /* count */
     } else nGood++;
   }
+  /* Toss those with blanked pixel closest to the peak */
+  for (j=0; j<reg->nmodel; j++) {
+    pos[0] = (olong)(0.5+reg->models[j]->DeltaX);
+    pos[1] = (olong)(0.5+reg->models[j]->DeltaY);
+    centPix = ObitFArrayIndex (pixels, pos);
+    if (*centPix==fblank) {
+      reg->models[j]->Peak = 0.0;
+      rejectBlank++; /* count */
+    } 
+  }
   /* End funky fits */
 
+  pixels = ObitFArrayUnref(pixels); /* Don't need further */
+    
   /* enforce minimum beam size */
   if (parms[3]>0.0) {
     for (j=0; j<reg->nmodel; j++) {
@@ -1800,8 +1843,13 @@ void snglDef (ObitFArray *pixels, gboolean doPoint, gboolean doPA,
 
   if (!doPA) g[5] = 0.0;
 
-  *model = ObitFitModelCreate("single", OBIT_FitModel_GaussMod, 
-			      g[0], g[1], g[2], 3, &g[3]);
+    if (doPoint) {
+      *model = ObitFitModelCreate("single", OBIT_FitModel_PointMod, 
+				  g[0], g[1], g[2], 3, &g[3]);
+    } else { /* Gaussian */
+      *model = ObitFitModelCreate("single", OBIT_FitModel_GaussMod, 
+				  g[0], g[1], g[2], 3, &g[3]);
+    }
 } /* end of routine snglDef */ 
 
 /**
@@ -1908,6 +1956,7 @@ void scdmom (ofloat dmax, ofloat* sum2, ofloat* sumd2, ofloat* sum4,
  * points at each peak.  
  * Routine translated from the AIPSish VSAD.FOR/MULDEF  
  * \param peakNo  Number of peaks 
+ * \param doPoint True if not fitting size
  * \param doPA    True if fitting position angle
  * \param xpk     X-coord of peaks relative to window 
  * \param ypk     Y-coord of peaks relative to window 
@@ -1915,7 +1964,8 @@ void scdmom (ofloat dmax, ofloat* sum2, ofloat* sumd2, ofloat* sum4,
  * \param cb      Clean beam parameters (pix, pix, rad)
  * \param model   Array of model parameters, entries created
  */
-void multDef (olong peakNo, gboolean doPA, olong* xpk, olong* ypk, ofloat* spk, ofloat cb[3], 
+void multDef (olong peakNo,  gboolean doPoint, gboolean doPA, 
+	      olong* xpk, olong* ypk, ofloat* spk, ofloat cb[3], 
 	      ObitFitModel *models[]) 
 {
   olong i;
@@ -1931,8 +1981,13 @@ void multDef (olong peakNo, gboolean doPA, olong* xpk, olong* ypk, ofloat* spk, 
     g[5] = cb[2];
     if (!doPA) g[5] = 0.0;
     sprintf (label, "comp%d", i);
-    models[i] = ObitFitModelCreate(label, OBIT_FitModel_GaussMod, 
-				  g[0], g[1], g[2], 3, &g[3]);
+    if (doPoint) {
+      models[i] = ObitFitModelCreate(label, OBIT_FitModel_PointMod, 
+				     g[0], g[1], g[2], 3, &g[3]);
+    } else { /* Gaussian */
+      models[i] = ObitFitModelCreate(label, OBIT_FitModel_GaussMod, 
+				     g[0], g[1], g[2], 3, &g[3]);
+     }
   } /* end loop  L100: */
 } /* end of routine multDef */ 
 

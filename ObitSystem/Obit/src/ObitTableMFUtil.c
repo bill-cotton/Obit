@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2011                                          */
+/*;  Copyright (C) 2006-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -73,7 +73,7 @@ void ObitTableMFRegions2MF (ObitTableMF *MFTable, ObitFitRegionList *regList,
   ofloat beamarea, cells;
   ofloat bmaj, bmin, bpa, ebmaj, ebmin, ebpa, cbmaj, cbmin, cbpa, dgau[3][3];
   gboolean bad;
-  gchar *regname=NULL;
+  gpointer *last=NULL;
   gchar *routine = "ObitTableMFRegions2MF";
 
   /* error checks */
@@ -102,11 +102,10 @@ void ObitTableMFRegions2MF (ObitTableMF *MFTable, ObitFitRegionList *regList,
   row  = newObitTableMFRow (MFTable);
 
   /* Loop over regions */
+  last = NULL;
   for (i=1; i<=regList->number; i++) {
     /* Get region */
-    regname   = ObitFitRegionName(i);
-    reg = ObitFitRegionListFind (regList, regname);
-    if (regname) g_free(regname);
+    reg = ObitFitRegionListNext (regList, &last);
     if (!reg) continue;
 
     /* region information */
@@ -313,9 +312,12 @@ void ObitTableMF2VL (ObitTableMF *MFTable, ObitTableVL *VLTable,
     QRMS = URMS = fblank;
   } else { /* Whole image */
     IRMS = ObitFArrayRMSQuant(IData);
+    if (IRMS==fblank) IRMS = ObitFArrayRMS(IData);
     if (GetQU) {
       QRMS = ObitFArrayRMSQuant(QData);
+      if (QRMS==fblank) QRMS = ObitFArrayRMS(QData);
       URMS = ObitFArrayRMSQuant(UData);
+      if (URMS==fblank) URMS = ObitFArrayRMS(UData);
       QRMS = 0.5 * (QRMS + URMS);
     } else {
       QRMS = fblank;
@@ -467,7 +469,7 @@ void ObitTableMFPrint (ObitTableMF *in, ObitImage *image, FILE  *prtFile,
   olong i, imBLC[7];
   olong irow;
   odouble pos[2], ra, dec;
-  ofloat cells, maj, min, pa, pixel[2];
+  ofloat maj, min, pa, pixel[2];
   gchar rast[19], decst[19];
   gchar *routine = "ObitTableMFPrint";
 
@@ -479,7 +481,6 @@ void ObitTableMFPrint (ObitTableMF *in, ObitImage *image, FILE  *prtFile,
 		       "%s image %s not an image", routine, image->name);
 
   /* Image information */
-  cells = sqrt (fabs(image->myDesc->cdelt[0]*image->myDesc->cdelt[1]));
   /* Subimage in image? */
   for (i=0; i<7; i++) imBLC[i] = 1;
   ObitInfoListGetTest(image->info, "BLC", &type, dim, imBLC);
@@ -734,6 +735,7 @@ static ofloat RMSbox (ObitFArray *Data, ofloat pixel[2], olong RMSsize,
 		      ObitErr *err)
 {
   ofloat out = -1.0;
+  ofloat fblank = ObitMagicF();
   olong blc[MAXFARRAYDIM] = {1,1,1,1,1,1,1};
   olong trc[MAXFARRAYDIM] = {0,0,0,0,0,0,0};
   ObitFArray *Box=NULL;
@@ -761,6 +763,7 @@ static ofloat RMSbox (ObitFArray *Data, ofloat pixel[2], olong RMSsize,
     Obit_traceback_val (err, routine, Data->name, out);
   }
   out = ObitFArrayRMSQuant (Box);
+  if (out==fblank) out = ObitFArrayRMS (Box);
   Box = ObitFArrayUnref(Box);  /* Cleanup */
   return out;
 } /* end RMSbox */

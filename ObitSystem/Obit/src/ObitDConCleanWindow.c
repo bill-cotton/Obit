@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2014                                          */
+/*;  Copyright (C) 2004-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1911,6 +1911,12 @@ void ObitDConCleanWindowStats (ObitDConCleanWindow *in,
       data = ObitFArrayIndex(tmpImage, pos);
       /* Get, invert, and apply window mask */
       if (ObitDConCleanWindowInnerRow(in, field, iy+1, &mask, err)) {
+	for (ix=0; ix<nx; ix++) 
+	  if (mask[ix]) 
+	    data[ix] = fblank;
+      }
+      /* Get, invert and apply unboxes */
+      if (ObitDConCleanWindowUnrow(in, field, iy+1, &mask, err)) {
 	for (ix=0; ix<nx; ix++) 
 	  if (mask[ix]) 
 	    data[ix] = fblank;

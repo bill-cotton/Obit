@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2018                                          */
+/*;  Copyright (C) 2006-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -218,18 +218,20 @@ ObitImageFit* ObitImageFitCreate (gchar* name)
  * \li "GMinLow"  OBIT_double (1,1,1) Minor axis lower bound [no bound]
  * \param image Image to fit, should have pixel array attached and
  *              opened as described in reg (BLC, TRC).
+ *       on info
+ * \li "Blank"  OBIT_float (1,1,1) Blanking level, default=0=no blank
  * \param reg   Region in image to fit, on input the initial guess
  *              on output, the fitted result
  * \param err   Obit error/message stack.
- * \return a completion code: 0=> converged, 1=> max. iterations.
+ * \return a completion code: 0=> converged, 1=> max. iterations.; 2=>failed
  */
 olong ObitImageFitFit (ObitImageFit* in,  ObitImage *image, 
 		      ObitFitRegion* reg, ObitErr *err)
 {
-  olong i, j, itmax, npr, nvar, fst, ier = -1;
+  olong i, j, itmax, npr, nvar, fst, pos[2], ier = -1;
   olong blc[10]={1,1,1,1,1,1,1,1,1,1};
   olong trc[10]={0,0,0,0,0,0,0,0,0,0};
-  odouble eps, fopt, gnopt, *xi=NULL, *xerr=NULL;
+  odouble eps, fopt,rpeak,  gnopt, *xi=NULL, *xerr=NULL;
   odouble dblank;
   ofloat fblank=ObitMagicF();
   gint32       dim[MAXINFOELEMDIM];
@@ -250,9 +252,15 @@ olong ObitImageFitFit (ObitImageFit* in,  ObitImage *image,
 
   /* Create ObitImageFitData (delete old) 
    this copies info */
+  ObitErrLog  (err);  /* Print pending messages to log */
   in->data = ObitImageFitDataUnref(in->data);
   in->data = ObitImageFitDataCreate ("data", reg, in->info, image, err);
-  if (err->error) goto cleanup;
+  /* Tolerate errors */
+  if (err->error) {
+    for (j=0; j<reg->nmodel; j++) reg->models[j]->Peak = 0.0;
+    ObitErrClearErr(err);
+    return 2;
+  }
 
   /* Setup for fitting */
   dblank = (odouble)fblank;
@@ -264,7 +272,7 @@ olong ObitImageFitFit (ObitImageFit* in,  ObitImage *image,
     if (in->data->type[i] == OBIT_FitModel_GaussMod) {
       fst = nvar;
       for (j=0; j<in->data->np[i]; j++) {
-	if (in->data->pf[i][j]) {  /* Fitting this one? */
+	 if (in->data->pf[i][j]) {  /*Fitting this one? */
 	  xi[nvar]   = in->data->p[i][j];
 	  /* Make sure in range */
 	  if (in->data->pl[i][j]!=dblank) 
@@ -291,7 +299,6 @@ olong ObitImageFitFit (ObitImageFit* in,  ObitImage *image,
 	  eps, itmax, &fopt, &gnopt, &ier, npr, err);
   if (err->error) goto cleanup;
 
-
   /* Save errors */
   nvar = 0;
   for (i=0; i<in->data->ncomp; i++) {
@@ -312,7 +319,9 @@ olong ObitImageFitFit (ObitImageFit* in,  ObitImage *image,
   if (err->prtLv>1) {
     fopt = ObitFArrayRMS0(in->data->resids);
     fopt /= in->data->rscale;
-    Obit_log_error(err, OBIT_InfoErr, "RMS residual = %g", fopt);
+    rpeak = ObitFArrayMaxAbs(in->data->resids, pos);
+    rpeak /= in->data->rscale;
+    Obit_log_error(err, OBIT_InfoErr, "RMS residual=%g, max abs Resid=%g", fopt, rpeak);
     ObitErrLog(err); 
  }
   /* Full diagnostics if requested */
@@ -602,7 +611,8 @@ dvdmin (ObitImageFitDataFuncFP fx, gpointer data,  odouble *xi, odouble *xerr,
   /* evaluate */
   iflag = 2;
   fx (data, x, &f, gg, iflag);
-  f0 = f;
+
+   f0 = f;
   for (i=0; i<n; i++) { /* loop 40 */
     for (j=0; j<n; j++) { /* loop 30 */
       ax[j] = xj[i][j];

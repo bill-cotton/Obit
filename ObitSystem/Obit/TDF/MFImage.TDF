@@ -955,6 +955,19 @@ addParam(mf,"maxRealtime", paramVal=maxRealtime, shortHelp="Max. run time (sec)"
 	"              Time after which task will begin to shut down, CLEAN\n"+
 	"              and Self cal will be declared done after this time.\n")
 
+Maximum middle CLEAN Loop 
+-------------------------
+When autoWindowing is being used, there is a middle CLEAN loop in which an image 
+plane model subtraction is done allowing more cycles in which a new CLEAN box 
+can be added to each facet.  This is intended as an efficiency measure but if there
+there is a large number of components subtracted this way (>50,000 per cycle) it 
+may become very slow and a value of maxAWLoop = 1 (no middle loop) may be needed. 
+Values larger than 5 are not recommended.
+maxAWLoop = 0
+addParam(mf,"maxAWLoop", paramVal=maxAWLoop, shortHelp="Max. middle CLEAN loop", \
+	longHelp="  maxAWLoop....Max. middle CLEAN Loop count\n"+ \
+	"              Override the default behavior for the autoWin middle loop\n"+
+	"              if > 0.\n")
 
 PS Table
 --------

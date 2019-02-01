@@ -481,13 +481,16 @@ ObitDConCleanVisCreate2 (gchar* name, ObitUV *uvdata,
 
 /**
  * Determine the maximum number of auto window middle loops
- * This is determined from the ratio of teh data volume of the mosaic to uv data.
- * \param in   The CLEAN object
+ * This is determined from the ratio of the data volume of the mosaic to uv data.
+ * \param in   The CLEAN object, ObitInfoList member:
+ * \li "maxAWLoop" OBIT_long scalar = Override for default max middle CLEAN loop
  * \param err Obit error stack object.
  */
 olong autoWinLoopCount (ObitDConCleanVis *in, ObitErr *err)
 {
-  olong i, maxLoop = 1;
+  olong i, maxLoop=1, maxReq=0;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
   odouble ratio;
   ollong uvcnt, imcnt, ll;
   ObitUVDesc *uvdesc = in->imager->uvdata->myDesc;
@@ -496,6 +499,17 @@ olong autoWinLoopCount (ObitDConCleanVis *in, ObitErr *err)
 
   if (err->error) return maxLoop;      /* Existing error? */
   if (!in->autoWindow) return maxLoop;  /* No auto windowing? */
+
+  /* Check for user request */
+  ObitInfoListGetTest(in->info, "maxAWLoop", &type, dim, &maxReq);
+  if (maxReq>0) {
+    if (err->prtLv>=2) {
+      Obit_log_error(err, OBIT_InfoErr,"User request max autoWin loop = %d",
+		     maxReq);
+      ObitErrLog(err);
+    }
+    return maxReq;  
+  }
 
   /* How big is the visibility data */
   uvcnt = uvdesc->nvis;
@@ -536,6 +550,7 @@ olong autoWinLoopCount (ObitDConCleanVis *in, ObitErr *err)
  * \li "Niter"   OBIT_long scalar   = Maximum number of CLEAN iterations
  * \li "maxPixel" OBIT_long scalar  = Maximum number of residuals [def 20000]
  * \li "minPatch" OBIT_long scalar  = Minimum beam patch in pixels [def 50]
+ * \li "maxAWLoop" OBIT_long scalar = Override for default max middle CLEAN loop
  * \li "BMAJ"    OBIT_float scalar = Restoring beam major axis (deg)
  * \li "BMIN"    OBIT_float scalar = Restoring beam minor axis (deg)
  * \li "BPA"     OBIT_float scalar = Restoring beam position angle (deg)
@@ -2286,7 +2301,7 @@ gboolean ObitDConCleanVisRecenter (ObitDConCleanVis *in, ObitUV* uvdata,
   ofloat tol, autoCenFlux;
   gint32 dim[MAXINFOELEMDIM];
   ObitInfoType type;
-  olong   nfield, ifield, itemp, nccpos, nprior;
+  olong   nfield, ifield, itemp, nccpos;
   olong  CCVer, highVer;
   ofloat tmax, xcenter, ycenter, xoff, yoff, radius, cells[2], pixel[2];
   ofloat RAShift, DecShift, *farray, dx, dy;
@@ -2300,7 +2315,6 @@ gboolean ObitDConCleanVisRecenter (ObitDConCleanVis *in, ObitUV* uvdata,
 
   /* Number of fields */
   nfield = mosaic->numberImages;
-  nprior = nfield;
 
    /* Get cellsize */
   cells[0] =  fabs(mosaic->xCells); cells[1] = fabs(mosaic->yCells);

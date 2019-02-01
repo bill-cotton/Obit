@@ -6237,6 +6237,7 @@ static olong MakePBCorFuncArgs (ObitThread *thread,
     (*ThreadArgs)[i]->err      = err;
     (*ThreadArgs)[i]->first    = 1;
     (*ThreadArgs)[i]->last     = outDesc->inaxes[1];
+    (*ThreadArgs)[i]->doInvert = doInvert;
   }
 
   return nThreads;

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -105,6 +105,9 @@ void ObitFitRegionListRemove (ObitFitRegionList *in, ObitFitRegion *reg);
 
 /** Public: Find item in a list */
 ObitFitRegion*  ObitFitRegionListFind(ObitFitRegionList *in, gchar *name);
+
+/** Public: Return next item in a list */
+ObitFitRegion*  ObitFitRegionListNext(ObitFitRegionList *in, gpointer *last);
 
 /** Public: Subtract regions from image. */
 void ObitFitRegionListSubtract (ObitFitRegionList *in, ObitImage *outImage,

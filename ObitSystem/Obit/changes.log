@@ -4112,3 +4112,50 @@ Obit/src/ObitUVWCalc.c
 Obit/src/ObitImageUtil.c
   FitBeam: default size changed from 3 to 6 pixels
 1 Dec 2018 svn ver 593
+
+Summary: bug fixes in MFImage, FndSou
+Obit/changes.log:
+  Update
+Obit/ObitVersion:
+  Trigger NRAO update
+Obit/src/ObitImageUtil.c:
+  MakePBCorImageArgs: add doInvert to output structure
+Obit/share/data/AllSkyVZ.FIT.gz
+  Fix reference frequency
+Obit/src/ObitDConCleanVis.c:
+  Implement optional parameter maxAWLoop
+Obit/TDF/MFImage.TDF Obit/tasks/MFImage.c:
+  Implement optional parameter maxAWLoop, user override for 
+  number of middle CLEAN loops.
+Obit/src/ObitDConCleanWindow.c:
+    WindowStats: also ignore pixels in unboxes
+Obit/tasks/FndSou.c:
+  - Add "Blank" parameter to enable blanking in image before fit.
+  - Fix doWidth=False option
+  - allow up to 1000 sources per island
+  - better default for fraction blanked
+  - fix bug determining if an island were new ||->&&
+  - smaller guardband around islands
+  - ignore components blanked at center
+Obit/TDF/FndSou.TDF:
+  Add "Blank" parameter to enable blanking in image before fit.
+  Allow more islands
+  improve documentation
+Obit/src/ObitImageFit.c
+  FitFit: tolerate fitting failures
+  Document call to FitFit
+  Print residual peak (optional)
+Obit/src/ObitImageFitData.c
+  Allow fitting both Gaussians and points
+  Create blank pixels in the fitting array.
+  Better test for no data.
+Obit/src/ObitFitRegionList.c Obit/include/ObitFitRegionList.h:
+  Add function ObitFitRegionListNext
+Obit/src/ObitTableMFUtil.c:
+  Regions2MF: implement ObitFitRegionListNext to get all regions
+Obit/src/ObitImageUtil.c:
+   Add doInvert value to thread arg
+Obit/python/FArray.py
+   Fix bug in Log.
+1 Feb 2019 svn ver 594
+
