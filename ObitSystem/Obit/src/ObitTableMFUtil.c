@@ -73,7 +73,7 @@ void ObitTableMFRegions2MF (ObitTableMF *MFTable, ObitFitRegionList *regList,
   ofloat beamarea, cells;
   ofloat bmaj, bmin, bpa, ebmaj, ebmin, ebpa, cbmaj, cbmin, cbpa, dgau[3][3];
   gboolean bad;
-  gpointer *last=NULL;
+  gpointer last=NULL;
   gchar *routine = "ObitTableMFRegions2MF";
 
   /* error checks */

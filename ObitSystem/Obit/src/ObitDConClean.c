@@ -680,9 +680,9 @@ void ObitDConCleanDefWindow(ObitDConClean *in, ObitErr *err)
   /* Set on window object */
   in->window->autoWindow = in->autoWindow;
 
-  /* See if CLEANFile given */
+  /* See if CLEANFile given and exists */
   ObitInfoListGetP (in->info, "CLEANFile", &itype, dim, (gpointer)&CLEANFile);
-  doFile =  (CLEANFile && strncmp (CLEANFile,  "     ", 5));
+  doFile =  (CLEANFile && strncmp (CLEANFile,  "     ", 5) && ObitFileExist(CLEANFile, err));
 
   /* See if CLEANBox given */
   if (ObitInfoListGetP (in->info, "CLEANBox", &itype, dim, (gpointer)&winArray)) {

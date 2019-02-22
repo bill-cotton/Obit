@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Read BDF format data, convert to Obit UV                           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2018                                          */
+/*;  Copyright (C) 2010-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1994,7 +1994,7 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
       if (SourceArray->sou[iRow]->sourceNo==srcEphem->SID[j]) {ephId=j; break;}
 
     if (ephId>=0) { /* In ephemeris - use mean position */
-	time   = (srcEphem->endTime[ephId] - srcEphem->startTime[ephId])/2.;
+	time   = (srcEphem->endTime[ephId] + srcEphem->startTime[ephId])/2.;
 	if (ObitSourceEphemerusCheckSource(srcEphem, SourceArray->sou[iRow]->sourceNo, time, 
 					   &outRow->RAMean, &outRow->DecMean, &dist, &tuvrot)) {
 	  outRow->RAMean    *= RAD2DG;
@@ -2207,7 +2207,7 @@ void UpdateSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
       if (SourceArray->sou[iRow]->sourceNo==srcEphem->SID[j]) {ephId=j; break;}
 
     if (ephId>=0) { /* In ephemeris - use mean position */
-	time   = (srcEphem->endTime[ephId] - srcEphem->startTime[ephId])/2.;
+	time   = (srcEphem->endTime[ephId] + srcEphem->startTime[ephId])/2.;
 	if (ObitSourceEphemerusCheckSource(srcEphem, SourceArray->sou[iRow]->sourceNo, time, 
 					   &outRow->RAMean, &outRow->DecMean, &dist, &tuvrot)) {
 	  outRow->RAMean    *= RAD2DG;

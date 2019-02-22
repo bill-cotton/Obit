@@ -5,7 +5,7 @@ ONLY ONE MAY EXIST
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2016
+#  Copyright (C) 2004-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -140,9 +140,9 @@ def PMosaic (disp, mosaic, field, err, window=None) :
         print "Actually ",disp.__class__
         raise TypeError,"disp MUST be a Python Obit Display"
     if OWindow.PIsA(window):
-        ret = Obit.ODisplayMosaicEdit(disp.me, mosaic.me, field, err.me)
-    else:
         ret = Obit.ODisplayMosaic(disp.me, mosaic.me, field, window.me, err.me)
+    else:
+        ret = Obit.ODisplayMosaicEdit(disp.me, mosaic.me, field, err.me)
     return ret
     # end PImage
 

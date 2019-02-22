@@ -1711,10 +1711,12 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
   }
   /* Toss those with blanked pixel closest to the peak */
   for (j=0; j<reg->nmodel; j++) {
-    pos[0] = (olong)(0.5+reg->models[j]->DeltaX);
-    pos[1] = (olong)(0.5+reg->models[j]->DeltaY);
+    pos[0] = (olong)(-0.5+reg->models[j]->DeltaX);
+    pos[0] = MAX(0,MIN(pos[0],pixels->naxis[0]-1));
+    pos[1] = (olong)(-0.5+reg->models[j]->DeltaY);
+    pos[1] = MAX(0,MIN(pos[1],pixels->naxis[1]-1));
     centPix = ObitFArrayIndex (pixels, pos);
-    if (*centPix==fblank) {
+    if ((centPix==NULL) || (*centPix==fblank)) {
       reg->models[j]->Peak = 0.0;
       rejectBlank++; /* count */
     } 

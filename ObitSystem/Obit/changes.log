@@ -4159,3 +4159,21 @@ Obit/python/FArray.py
    Fix bug in Log.
 1 Feb 2019 svn ver 594
 
+Summary: improvements in source finding, bug fixes
+Obit/changes.log:
+  Update
+Obit/ObitVersion:
+  Trigger NRAO update
+Obit/tasks/FndSou.c:
+   Get it right this time.
+Obit/src/ObitTableMFUtil.c:
+  Regions2MF: Get it right this time.
+Obit/share/scripts/CLEANMask.py
+  MakeMask: Function to make an MFImage CLEANFile from VL table.
+Obit/python/ODisplay.py
+  PMosaic: Fix logic in displaying window
+Obit/src/ObitDConClean.c:
+  DefWindow: Make sure CLEANFile exists before assuming it's there.
+Obit/tasks/BDFIn.c:
+  GetSourceInfo,UpdateSourceInfo: fix bug in calculating center time
+22 Feb 2019 svn ver 595
