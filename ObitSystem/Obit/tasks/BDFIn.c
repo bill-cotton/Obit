@@ -1034,7 +1034,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   /* Need source ephemerus for moving targets? */
   if (srcEphem==NULL) {
     srcEphem = ObitSourceEphemerusCreate("Ephemeris");
-    ObitSourceEphemerusSetup (srcEphem, SDMData, 10.0/86400.0, desc, err);
+    ObitSourceEphemerusSetup (srcEphem, SDMData, 1.0/86400.0, desc, err);
     if (err->error) Obit_traceback_msg (err, routine, (*outData)->name);
   }
 

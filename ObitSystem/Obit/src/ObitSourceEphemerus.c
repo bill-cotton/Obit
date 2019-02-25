@@ -465,6 +465,9 @@ ObitSourceEphemerusCheckSource(ObitSourceEphemerus *in, olong srcID,
     in->lastEntry = ientry;
   }
 
+  /* If valid time too far in the future reset */
+  if ((in->validTime-time)>=2*in->updtime) in->validTime = -1.0e10;
+
   /* Current position still valid? */
   if (time<in->validTime) {
     *RA    = in->lastRA;

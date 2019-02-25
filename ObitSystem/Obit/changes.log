@@ -4177,3 +4177,11 @@ Obit/src/ObitDConClean.c:
 Obit/tasks/BDFIn.c:
   GetSourceInfo,UpdateSourceInfo: fix bug in calculating center time
 22 Feb 2019 svn ver 595
+
+
+Summary: Fixes to BDFIn
+Obit/tasks/BDFIn.c:
+  Change planetary position update interval from 10 to 1 sec
+Obit/src/ObitSourceEphemerus.c:
+  Reset validity time if it is too far in the future.
+25 Feb 2019 svn ver 596
