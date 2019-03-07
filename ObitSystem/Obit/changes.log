@@ -4185,3 +4185,33 @@ Obit/tasks/BDFIn.c:
 Obit/src/ObitSourceEphemerus.c:
   Reset validity time if it is too far in the future.
 25 Feb 2019 svn ver 596
+
+Summary:  Enhancements to source fitting bug fixes
+Obit/changes.log:
+  Update
+Obit/ObitVersion:
+  Trigger NRAO update
+Obit/src/ObitImageMF.c:
+  Trap problems in creating scratch file for EffFqCorr
+  Add maxSNR option to pixel fitting routines.
+Obit/tasks/FndSou.c Obit/TDF/FndSou.TDF
+  Add "Blank" parameter to enable blanking in image before fit.
+  Fix doWidth=False option
+  Add parameter sizeLim for piecewise linear max size. v. flux
+  Implement maximum size per component
+Obit/src/ObitImageFit.c
+  Document call to FitFit
+Obit/src/ObitImageFitData.c
+  Create blank pixels in the fitting array.
+  Implement max size per model component.
+Obit/src/ObitFitRegion.c  Obit/include/ObitFitRegion.h
+  Add blanking to Subtract
+Obit/src/ObitFitRegionList.c Obit/include/ObitFitRegionList.h:
+  Add function ObitFitRegionListNext
+Obit/src/ObitTableMFUtil.c:
+  Regions2MF: implement ObitFitRegionListNext to get all regions
+Obit/src/ObitFitModel.c Obit/include/ObitFitModelDef.h:
+  Add maxSize to give the maximum size per component. 
+Obit/src/ObitImageUtil.c:
+  FitBeam: fix beam peak at 1.0
+7 Mar 2019 svn 597

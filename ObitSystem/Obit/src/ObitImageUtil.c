@@ -5473,6 +5473,7 @@ void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err)
   ObitFitRegion *reg=NULL;
   ObitFitModel **models = {NULL};
   ObitInfoType type;
+  gboolean True=TRUE;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *routine = "ObitImageUtilFitBeam";
 
@@ -5549,6 +5550,10 @@ void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err)
 
   /* Fit in pixels/deg */
   imFit  = ObitImageFitCreate ("Fitter");
+  /* Fix Peak */
+  dim[0] = dim[1] = dim[2] = dim[3] = 1;
+  ObitInfoListAlwaysPut(imFit->info, "FixFlux",  OBIT_bool, dim, &True);
+
   /* Turn off messages */
   prtLv = err->prtLv;
   err->prtLv = 0;

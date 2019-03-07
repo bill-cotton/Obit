@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006                                               */
+/*;  Copyright (C) 2006,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -49,5 +49,7 @@ ofloat ePeak;
 ofloat eDeltaX;
 /** Error in Component Y position. */
 ofloat eDeltaY;
+/** Maximum size for component if >= 0.0 (pixels) */
+ofloat maxSize;
 /** Error in Model parameters, type dependent */
 ofloat *eparms;

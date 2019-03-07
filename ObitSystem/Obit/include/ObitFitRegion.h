@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-20                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -115,7 +115,8 @@ void ObitFitRegionClone (ObitFitRegion *in, ObitFitRegion *out, ObitErr *err);
 void ObitFitRegionResize  (ObitFitRegion *in, olong nmodel);
 
 /** Public: Subtract from image. */
-void ObitFitRegionSubtract (ObitFitRegion* reg, ObitImage *image, ObitErr *err);
+void ObitFitRegionSubtract (ObitFitRegion* reg, ObitImage *image, 
+			    ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

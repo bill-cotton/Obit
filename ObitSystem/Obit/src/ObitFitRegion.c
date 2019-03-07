@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006,2013                                          */
+/*;  Copyright (C) 2006,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -293,6 +293,7 @@ void ObitFitRegionSubtract (ObitFitRegion* reg, ObitImage *image, ObitErr *err)
   pos1[0] = reg->dim[0]; pos1[1] = reg->dim[1];
   work =  ObitFArrayCreate ("Subtract", ndim, pos1);
 
+  /* compute residuals */
   /* Loop adding (neg)  model to work */
   for (i=0; i<reg->nmodel; i++) {
     Cen[0] = reg->models[i]->DeltaX;
@@ -303,7 +304,6 @@ void ObitFitRegionSubtract (ObitFitRegion* reg, ObitImage *image, ObitErr *err)
     GauMod[2] = 90.0+reg->models[i]->parms[2]*RAD2DG;  /* Fooey! */
     ObitFArray2DEGauss (work, reg->models[i]->Peak, Cen, GauMod);
   }
-
   /* Subtract */
   pos1[0] = reg->corner[0] + reg->dim[0]/2; 
   pos1[1] = reg->corner[1] + reg->dim[1]/2; ;

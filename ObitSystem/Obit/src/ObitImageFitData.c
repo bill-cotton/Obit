@@ -134,7 +134,7 @@ ObitImageFitDataCreate (gchar* name, ObitFitRegion *reg,
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   olong blc[2], trc[2],pos[2], tcount ;
-  ofloat cells, rmax, rmin, rms, Blank=0.0, fblank=ObitMagicF();
+  ofloat cells, rmax, rms, Blank=0.0, fblank=ObitMagicF();
   odouble dblank;
   gboolean doPosGuard, doFluxLow, doGMajUp, doGMajLow, doGMinUp, doGMinLow;
   gboolean FixFlux=FALSE, FixPos=FALSE, FixSize=FALSE,  doFixFlux, doFixPos,doFixSize ;
@@ -225,7 +225,6 @@ ObitImageFitDataCreate (gchar* name, ObitFitRegion *reg,
   /* Fiddling to get fitting to work better
      first scale such that peak value is 5.0 */
   rmax = ObitFArrayMax (out->pixels, pos);
-  rmin = ObitFArrayMin (out->pixels, pos);
   out->rscale = 5.0 / rmax;
   if (out->rscale==0.0) out->rscale = 1.0;
   if (doFixFlux||doFluxLow) out->rscale = 1.0;  /* Causes trouble */
@@ -326,7 +325,6 @@ ObitImageFitDataCreate (gchar* name, ObitFitRegion *reg,
       /* solution bounds */
       if (doFluxLow) {
 	out->pl[i][0] = out->rscale * FluxLow;
-	out->pu[i][0] = 1.0e20; 	/*  DEBUG */
 	out->p[i][0]  = MAX (out->p[i][0], out->pl[i][0]+out->dp[i][0]);
       }
       if (doFixFlux) {
@@ -345,12 +343,26 @@ ObitImageFitDataCreate (gchar* name, ObitFitRegion *reg,
 	out->pu[i][1]  = out->p[i][1];
 	out->pu[i][2]  = out->p[i][1];
       }
-      if (doGMajUp)  out->pu[i][3] = GMajUp;
+      /* Upper limit on size - value on fit model overrides */
+      if (doGMajUp) {
+	if (reg->models[i]->maxSize>=0.0) {
+	  out->pu[i][3] = reg->models[i]->maxSize;
+	  out->pu[i][4] = reg->models[i]->maxSize;
+	} else {
+	  out->pu[i][3] = GMajUp;
+	}
+      }
       if (doGMajLow) {
 	out->pl[i][3] = GMajLow;
 	out->p[i][3]  = MAX (out->p[i][3], out->pl[i][3]+out->dp[i][3]);
       }
-      if (doGMinUp)  out->pu[i][4] = GMinUp;
+      if (doGMinUp)  {
+	if (reg->models[i]->maxSize>=0.0) {
+	  out->pu[i][4] = reg->models[i]->maxSize;
+	} else {
+	  out->pu[i][4] = GMinUp;
+	}
+      }
       if (doGMinLow) {
 	out->pl[i][4] = GMinLow;
  	out->p[i][4]  = MAX (out->p[i][4], out->pl[i][4]+out->dp[i][4]);
@@ -668,7 +680,7 @@ void ObitImageFitDataClear (gpointer inn)
  */
 static void fxdvd (gpointer ddata, odouble *p, odouble *f, odouble* grad, olong iflag) 
 {
-  olong   nk=0, npts, i, j, k, ix1, iy1, ntot, l;
+  olong   npts, i, j, k, ix1, iy1, l;
   ofloat sth2, cth2, s2th, c2th, mj, mn, va, vb, vc, vd, x, y, 
     x2, y2, xy, tworfv, twocon, fv, g4c, g5c, tmp, ex;
   olong pos[2];
@@ -705,7 +717,6 @@ static void fxdvd (gpointer ddata, odouble *p, odouble *f, odouble* grad, olong 
     else pixels[k] = fblank;
   } /* end loop  L10:  */
 
-  ntot = nk;
   for (i=0; i<nvar; i++) { /* loop 20 */
     /* Enforce hard limits */
     if (data->pl[data->ivar[i]][data->jvar[i]]!=dblank)

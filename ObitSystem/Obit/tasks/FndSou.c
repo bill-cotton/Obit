@@ -162,7 +162,7 @@ static void IslandListMerge(IslandList *in, olong in1, olong in2,
 static void IslandListExpand(IslandList *in, olong in1, 
 			     ofloat val, olong i, olong j);
 /** Private: Merge overlapping Islands */
-static void IslandOverlapMerge(IslandList *in);
+static gboolean IslandOverlapMerge(IslandList *in);
 
 /* Program globals */
 gchar *pgmName = "FndSou";       /* Program name */
@@ -779,7 +779,7 @@ void doHistory (ObitInfoList *myInput, ObitImage *inImage,
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq", "inFile",
     "BLC", "TRC", "doVL", "doResid", "NGauss", "CutOff", "NPass",
     "Retry", "Blank", "Sort", "doMult", "doWidth", "Gain", "Parms", 
-    "RMSsize", "FDRsize", "doPBCor", "asize",
+    "sizeLim", "RMSsize", "FDRsize", "doPBCor", "asize",
     NULL};
   gchar *routine = "doHistory";
 
@@ -893,7 +893,7 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
   /* If doing False Detection Rate filtering, init histogram object */
   for (i=0; i<20; i++) parms[i] = 0;
   ObitInfoListGetTest(myInput, "Parms", &type, dim, parms);
-  if (parms[6]<=0.0) parms[6] = 0.1;  /* Use passed value as blanking limit */
+  if (parms[6]<=0.0) parms[6] = 0.5;  /* Use passed value as blanking limit */
   doFDR   = (parms[5]>0.0) && (parms[5]<1.0);
 
   /* If doing FDR setup histogram if needed - 
@@ -927,7 +927,9 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
   ObitInfoListGetTest(myInput, "NPass", &type, dim, &npass);
   npass = MAX (1, npass);
   for (ipass = 1; ipass<=npass; ipass++) {
-    /* Locate islands */
+    dim[0] = dim[1] = dim[2] = 1;  /* Save which pass */
+    ObitInfoListAlwaysPut(myInput, "IPass", OBIT_long, dim, &ipass);
+   /* Locate islands */
     islands = Islands(data, cutt);
     Obit_log_error(err, OBIT_InfoErr, "Found %d islands pass %d", 
 		   (olong)islands->number, ipass);
@@ -1099,7 +1101,8 @@ IslandList* Islands(ObitFArray *data, ofloat cutt)
   IslandElem* elem=NULL;
   olong i, j, k, nx, ny, *prev=NULL, *curr=NULL;
   olong blc[2], trc[2];
-  ofloat *row, lcut, lpeak, fblank = ObitMagicF();
+  ofloat *row, lcut, fblank = ObitMagicF();
+  gboolean more;
   olong pos[2];
 
   /* Create output */
@@ -1111,8 +1114,8 @@ IslandList* Islands(ObitFArray *data, ofloat cutt)
   prev = g_malloc0 (nx*sizeof(olong));
   curr = g_malloc0 (nx*sizeof(olong));
 
-  /* find peak value */
-  lpeak = ObitFArrayMax (data, pos);
+  /* find peak value
+  lpeak = ObitFArrayMax (data, pos); */
   /* Don't get carried away, don't go below 0.1% of peak 
   lcut = MAX (cutt, 0.001*lpeak); NO */
   lcut = cutt;
@@ -1175,9 +1178,11 @@ IslandList* Islands(ObitFArray *data, ofloat cutt)
   
   } /* end loop over array */
 
-  /* Merge overlapping islands */
-  IslandOverlapMerge(islands);
-  IslandOverlapMerge(islands);  /* Again for good measure */
+  /* Merge overlapping islands - do until done */
+  more = FALSE; /* Not needed with blanking non island pixels */
+  while (more) {
+    more = IslandOverlapMerge(islands);
+  }
 
   /* cleanup:*/
   if (prev) g_free(prev);
@@ -1211,7 +1216,7 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
   ObitInfoType type;
   ofloat cutt, Blank=0.0, peakResid=0.0, RMSResid=0.0, fluxResid=0.0, Parms[10], fracBlank;
   gboolean doPoint, doPA, doMult, isBlanked, doBlank;
-  olong nisland, corner[2], adim[2], k, nx, ny, i, bsize, d[2], nmodel=1;
+  olong i, nisland, corner[2], adim[2], k, bsize, d[2], nx, ny, nmodel=1;
   olong minIsland;
   gchar *regname=NULL;
   ObitFitModel *models[1000];
@@ -1286,7 +1291,7 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
     /* Expand window */
     for (i=0; i<2; i++) {
       isElem->blc[i] = MAX (0, isElem->blc[i]-bsize);
-      isElem->trc[i] = MIN (d[i],  isElem->trc[i]+bsize);
+      isElem->trc[i] = MIN (d[i], isElem->trc[i]+bsize);
    }
     
     corner[0] = isElem->blc[0]; corner[1] = isElem->blc[1];
@@ -1296,13 +1301,11 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
     /* Get initial model */
     nmodel = 1000;  /* Must match dimension of models */
     fracBlank = GetInitialModel (isElem, image, doMult, cutt, doPoint, doPA, 
-				 &nmodel, models, doBlank, Blank, err);
+				 &nmodel, models,  doBlank, Blank, err);
     if (err->error) Obit_traceback_val (err, routine, image->name, out);
 
     /* Limit blanking allowed */
     isBlanked = fracBlank>Parms[6];
-    /* DEBUG
-    if (isBlanked) fprintf (stderr, "fracBlank=%f\n", fracBlank); */
     if (isBlanked) 
       {if (err->prtLv>=2) Obit_log_error(err, OBIT_InfoErr, "Excessive blanking");
       rejectBlank++; goto doneIsland;}
@@ -1357,8 +1360,6 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
  *                on output, the actual,
  * \param models  Array of ObitFitModels
  *                If peak flux density==0 then nothing found.
- * \param doBlank Blank pixels with vlues <Blank"
- * \param Blank   Blanking level
  * \param err    Obit error/message stack object.
  * \return fraction of pixels with blanks
  */
@@ -1396,7 +1397,6 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
   cntBlank = 0;
   for (i=0; i<pixels->arraySize; i++) {
     if (pixData[i] == fblank) cntBlank++;
-    /*else if (doBlank && (pixData[ipts]<Blank)) cntBlank++;*/
   }
   fracBlank = (ofloat)cntBlank / MAX(1, pixels->arraySize);
     
@@ -1538,6 +1538,7 @@ foundEnough:  /* L90 */
  *  are too high (>RESMAX) then attempt to break in two and refit.
  *  Take the better of the original or second fit.
  *  Then finally subtract region fit from the image attached to inImage
+ * On the last pass through the fitting residuals are blanked unless doResid
  * \param myInput Inputs object
  * \param reg     Region to fit
  * \param image   ObitImage being described
@@ -1548,17 +1549,17 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
 		 ObitImage *image, olong indx, ObitErr *err)
 {
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong i, j, ier;
+  olong i, j, npass, ipass, ier;
   ObitInfoType type;
   ObitFitRegion *oldReg=NULL;
   ObitImageFit* fitter = NULL;
-  gboolean doMult, doPoint, revert, doFDR;
+  gboolean doMult, doPoint, revert, doFDR, doResid, maskIsland;
   odouble dtemp;
-  ofloat gain, parms[20], icut, tcut, rcut, xcut, cbeam[3], oldRMS, oldPeak;
-  ofloat maxFDR, minFlux, major, minor, *centPix;
-  ofloat fblank = ObitMagicF();
-  olong blc[2], trc[2], pos[2], FDRsize=0;
-  ObitFArray *pixels=NULL;
+  ofloat gain, parms[20], sizeLim[10], icut, tcut, rcut, xcut, cbeam[3], oldRMS, oldPeak;
+  ofloat maxFDR, minFlux, major, minor, *centPix, dist, dx, dy, peak;
+  ofloat Blank, Thresh, cellas, bmSize, fblank = ObitMagicF();
+  olong pos[2], FDRsize=0;
+  ObitFArray *pixels=NULL, *residuals=NULL;
   gchar *FitParms[] = {  
     "BLC", "TRC",         /* Portion of image */
     NULL};
@@ -1566,7 +1567,17 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
 
   if (err->error) return;
 
-  /* Allow multiple components? */
+  /* Saving residuals? */
+  doResid = FALSE;
+  ObitInfoListGetTest(myInput, "doResid", &type, dim, &doResid);
+  /* Which pass? */
+  ipass = 1;
+  ObitInfoListGetTest(myInput, "IPass", &type, dim, &ipass);
+  /* ... of how many? */
+  npass = 1;
+  ObitInfoListGetTest(myInput, "NPass", &type, dim, &npass);
+
+   /* Allow multiple components? */
   doMult = FALSE;
   ObitInfoListGetTest(myInput, "doMult", &type, dim, &doMult);
 
@@ -1580,9 +1591,14 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
   ObitInfoListGetTest(myInput, "CutOff", &type, dim, &xcut);
   icut = xcut;
   ObitInfoListGetTest(myInput, "Retry", &type, dim, &icut);
-  if (icut==0) icut = xcut;
+  if (icut==0.0) icut = xcut;
   for (i=0; i<20; i++) parms[i] = 0;
   ObitInfoListGetTest(myInput, "Parms", &type, dim, parms);
+  for (i=0; i<10; i++) sizeLim[i] = 0;
+  ObitInfoListGetTest(myInput, "sizeLim", &type, dim, sizeLim);
+  /* Convert size to cells */
+  cellas = fabs(image->myDesc->cdelt[0])*3600.; 
+  sizeLim[0] /= cellas; sizeLim[1] /= cellas; 
   rcut = parms[0];
   gain = 0.05;
   ObitInfoListGetTest(myInput, "Gain", &type, dim, &gain);
@@ -1593,6 +1609,9 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
   ObitInfoListGetTest(myInput, "FDRsize", &type, dim, &FDRsize);
   if (FDRsize<10) FDRsize = 500;
 
+  /* Blanking level */
+  ObitInfoListGetTest(myInput, "Blank", &type, dim, &Blank);
+
   /* Create fitter */
   fitter = ObitImageFitCreate ("my Fitter");
 
@@ -1601,15 +1620,48 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
 
   /* Print level */
   i = prtLv-2;
+  dim[0] = dim[1] = dim[2] = dim[3] = 1;
   ObitInfoListAlwaysPut (fitter->info, "prtLv",  OBIT_long, dim, &i);
+
+  /* Mask non island pixels */
+  maskIsland = TRUE;
+  ObitInfoListAlwaysPut (fitter->info, "MaskIsln",  OBIT_bool, dim, &maskIsland);
+  if (Blank>0.0) Thresh = Blank;
+  else           Thresh = xcut;
+  ObitInfoListAlwaysPut (fitter->info, "Thresh",  OBIT_float, dim, &Thresh);
 
   /* Add bounds */
   if (parms[0]>0.0) {
     dtemp = 0.0;
     ObitInfoListAlwaysPut (fitter->info, "FluxLow",  OBIT_double, dim, &dtemp);
   }
-  if (parms[1]>0.0) {
-    dtemp = parms[1];
+  /* Upper bounds on size may use constant value (parms[1],) or
+   linear ramp (sizeLim) */
+  if (sizeLim[0]>0.0) {  /* piecewise Linear ramp */
+    peak = reg->peak;
+    if (peak<sizeLim[2]) dtemp = sizeLim[0];
+    else if (peak>sizeLim[3]) dtemp = sizeLim[1];
+    else {
+      if ((sizeLim[3]-sizeLim[2])<1.0e-9) sizeLim[3] = sizeLim[2]+1.0e-9; /* sanity */
+      dtemp = sizeLim[0] + 
+	(sizeLim[1]-sizeLim[0])*((peak-sizeLim[2])/((sizeLim[3]-sizeLim[2])));
+    }
+    ObitInfoListAlwaysPut (fitter->info, "GMajUp",   OBIT_double, dim, &dtemp);
+    ObitInfoListAlwaysPut (fitter->info, "GMinUp",   OBIT_double, dim, &dtemp);
+    /* Set limit on model components */
+    for (j=0; j<reg->nmodel; j++) {
+      peak = reg->models[j]->Peak;
+      if (peak<sizeLim[2]) dtemp = sizeLim[0];
+      else if (peak>sizeLim[3]) dtemp = sizeLim[1];
+      else {
+	if ((sizeLim[3]-sizeLim[2])<1.0e-9) sizeLim[3] = sizeLim[2]+1.0e-9; /* sanity */
+	dtemp = sizeLim[0] + 
+	  (sizeLim[1]-sizeLim[0])*((peak-sizeLim[2])/((sizeLim[3]-sizeLim[2])));
+      }
+      reg->models[j]->maxSize = (ofloat)dtemp;
+    } /* End model loop */
+ } else if (parms[1]>0.0) { /* constant */
+    dtemp = parms[1]/cellas;
     ObitInfoListAlwaysPut (fitter->info, "GMajUp",   OBIT_double, dim, &dtemp);
     ObitInfoListAlwaysPut (fitter->info, "GMinUp",   OBIT_double, dim, &dtemp);
   }
@@ -1626,17 +1678,15 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
   cbeam[0] = image->myDesc->beamMaj / fabs (image->myDesc->cdelt[0]);
   cbeam[1] = image->myDesc->beamMin / fabs (image->myDesc->cdelt[0]);
   cbeam[2] = image->myDesc->beamPA * DG2RAD;
+  bmSize = sqrt(cbeam[0]*cbeam[1]); /* effective beam size */
 
   /* Fit */
   ier = ObitImageFitFit (fitter, image, reg, err);
   if (ier==1) iterLimit++;  /* Hit iteration limit? */
   
   /* Get pixels data */
-  blc[0] = reg->corner[0]; blc[1] = reg->corner[1];
-  trc[0] = reg->corner[0] + reg->dim[0] - 1; 
-  trc[1] = reg->corner[1] + reg->dim[1] - 1; 
-  pixels = ObitFArraySubArr (image->image, blc, trc, err);
-  if (err->error) Obit_traceback_msg (err, routine, image->name);
+  pixels    = ObitFArrayRef(fitter->data->pixels);
+  residuals = ObitFArrayRef(fitter->data->resids);
     
   /* Are residuals acceptable? If only 1 and not, then try 2 */
   tcut = gain*reg->models[0]->Peak;
@@ -1669,9 +1719,17 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
        (fabs((reg->models[0]->parms[0]/oldReg->models[0]->parms[0])-1.0)<0.1) &&
        (fabs((reg->models[0]->parms[1]/oldReg->models[0]->parms[1])-1.0)<0.1));
 
-    /* Both must be above threshold */
+    /* Both must be above threshold ... */
     revert = revert || 
       ((reg->models[0]->Peak<rcut) || (oldReg->models[0]->Peak<rcut));
+
+    /* ... And more separated than 3/4 beam */
+    dx = reg->models[0]->DeltaX - reg->models[1]->DeltaX;
+    dy = reg->models[0]->DeltaY - reg->models[1]->DeltaY;
+    dist = sqrt(dx*dx+dy*dy);
+    revert = revert || 
+      (dist<0.75*bmSize);
+      
 
     /* revert to previous model? */
     if (revert) {
@@ -1712,10 +1770,10 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
   /* Toss those with blanked pixel closest to the peak */
   for (j=0; j<reg->nmodel; j++) {
     pos[0] = (olong)(-0.5+reg->models[j]->DeltaX);
-    pos[0] = MAX(0,MIN(pos[0],pixels->naxis[0]-1));
+    pos[0] = MAX(0,MIN(pos[0],residuals->naxis[0]-1));
     pos[1] = (olong)(-0.5+reg->models[j]->DeltaY);
-    pos[1] = MAX(0,MIN(pos[1],pixels->naxis[1]-1));
-    centPix = ObitFArrayIndex (pixels, pos);
+    pos[1] = MAX(0,MIN(pos[1],residuals->naxis[1]-1));
+    centPix = ObitFArrayIndex (residuals, pos);
     if ((centPix==NULL) || (*centPix==fblank)) {
       reg->models[j]->Peak = 0.0;
       rejectBlank++; /* count */
@@ -1723,7 +1781,8 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
   }
   /* End funky fits */
 
-  pixels = ObitFArrayUnref(pixels); /* Don't need further */
+  pixels    = ObitFArrayUnref(pixels); /* Don't need further */
+  residuals = ObitFArrayUnref(residuals); 
     
   /* enforce minimum beam size */
   if (parms[3]>0.0) {
@@ -1737,7 +1796,6 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
       }
     }
   }
-
   /* Subtract fitted model from residual */
   ObitFitRegionSubtract (reg, image, err);
   if (err->error) Obit_traceback_msg (err, routine, image->name);
@@ -2007,20 +2065,13 @@ void multDef (olong peakNo,  gboolean doPoint, gboolean doPA,
 void fitTwo (ObitFArray *pixels, ObitFitRegion *reg, ObitFitRegion *oldReg, 
 	     ofloat cb[3], gboolean doPoint, ObitErr* err) 
 {
-  olong   i, nx, ny, ngauss;
-  olong pos[2];
-  ofloat datmax, *pixData, g[3][6];
+  olong   i, ngauss, pos[2];
+  ofloat datmax, g[3][6];
   /*gchar *routine = "fitTwo";*/
 
   /* Error checks */
   g_assert(ObitErrIsA(err));
   if (err->error) return ;  /* previous error? */
-
-  /* Pointer to data */
-  pos[0] = pos[1] = 0;
-  pixData = ObitFArrayIndex (pixels, pos);
-  nx = pixels->naxis[0]; 
-  ny = pixels->naxis[1]; 
 
   /* Resize output */
   ngauss = 2;
@@ -2418,21 +2469,26 @@ static void IslandListExpand (IslandList *in, olong in1,
 
 /**
  * Merge overlapping islands
+ * Not a good idea for crowded fields
  * \param islands    Island list 
  * \param nx         length of row
+ * \return TRUE if islands were merged
  */
-static void IslandOverlapMerge(IslandList *islands)
+static gboolean IslandOverlapMerge(IslandList *islands)
 {
   olong is1, is2, xb1, yb1, xb2, yb2, xt1, yt1, xt2, yt2;
   GSList *tmp1, *tmp2;
   IslandElem *elem1, *elem2;
+  gboolean out;
 
+  out = FALSE;
   tmp1 = islands->list;
   while (tmp1!=NULL) {
     elem1 = (IslandElem*)tmp1->data;
     is1 = elem1->index;
     xb1 = elem1->blc[0]; yb1 = elem1->blc[1];
     xt1 = elem1->trc[0]; yt1 = elem1->trc[1];
+    tmp1 = g_slist_next(tmp1);/* next in case this one is deleted */
     /* Search remainder of list for overlap */
     tmp2 = g_slist_next(tmp1);
     while (tmp2!=NULL) {
@@ -2440,15 +2496,25 @@ static void IslandOverlapMerge(IslandList *islands)
       is2 = elem2->index;
       xb2 = elem2->blc[0]; yb2 = elem2->blc[1];
       xt2 = elem2->trc[0]; yt2 = elem2->trc[1];
-      /* Overlap? Any corner of 1 in 2 */
-      if (((xb1>=xb2) && (xb1<=xt2) && (yb1>=yb2) && (yb1<=yt2)) ||
-	  ((xb1>=xb2) && (xb1<=xt2) && (yt1>=yb2) && (yt1<=yt2)) ||
-	  ((xt1>=xb2) && (xt1<=xt2) && (yt1>=yb2) && (yt1<=yt2)) ||
-	  ((xt1>=xb2) && (xt1<=xt2) && (yb1>=yb2) && (yb1<=yt2)))
+      tmp2  = g_slist_next(tmp2); /* next in case this one is deleted */
+     /* Overlap? Any corner of 1 in 2 */
+      if ((is1!=is2) &&
+	  (((xb1>xb2) && (xb1<xt2) && (yb1>yb2) && (yb1<yt2)) ||
+	   ((xb1>xb2) && (xb1<xt2) && (yt1>yb2) && (yt1<yt2)) ||
+	   ((xt1>xb2) && (xt1<xt2) && (yt1>yb2) && (yt1<yt2)) ||
+	   ((xt1>xb2) && (xt1<xt2) && (yb1>yb2) && (yb1<yt2)) ||
+	   /* Any corner of 2 in 1  */
+	   ((xb2>xb1) && (xb2<xt1) && (yb2>yb1) && (yb2<yt1)) ||
+	   ((xb2>xb1) && (xb2<xt1) && (yt2>yb1) && (yt2<yt1)) ||
+	   ((xt2>xb1) && (xt2<xt1) && (yt2>yb1) && (yt2<yt1)) ||
+	   ((xt2>xb1) && (xt2<xt1) && (yb2>yb1) && (yb2<yt1)))) {
+	out = TRUE;
 	IslandListMerge (islands, is1, is2, 0, NULL, NULL);
-      tmp2  = g_slist_next(tmp2);
+	/*return out;*/
+	break;
+      }
     }
-    tmp1 = g_slist_next(tmp1);
   } /* end loop over list */
+  return out;
 } /* end  IslandOverlapMerge */
 

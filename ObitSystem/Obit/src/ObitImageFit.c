@@ -27,6 +27,7 @@
 /*--------------------------------------------------------------------*/
 #include "gsl/gsl_cblas.h"
 #include "ObitImageFit.h"
+#include "ObitImageUtil.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -67,6 +68,9 @@ dvdmin (ObitImageFitDataFuncFP fx, gpointer data,  odouble* xi, odouble *xerr,
 	olong *ier, olong npr, ObitErr *err);
 static odouble dmachx(olong job);
 
+/** Private: Blank non island pixels */
+static gboolean inIsland (gboolean *island, olong nx, olong ny, olong ix, olong iy);
+static void BlankNonIsland (ObitImageFit* in, ObitErr *err);
 /*----------------------Public functions---------------------------*/
 /**
  * Constructor.
@@ -203,6 +207,8 @@ ObitImageFit* ObitImageFitCreate (gchar* name)
 
 /**
  * Does fit
+ * Has One Island option(MaskIsln) to blank pixels not in island containing
+ * the initial model central pixels.
  * \param in    Fitter to use, control info in info:
  * \li "MaxIter"  OBIT_int (1,1,1) Maximum number of iterations
  *                defaults to 10 per fitted parameter
@@ -216,6 +222,9 @@ ObitImageFit* ObitImageFitCreate (gchar* name)
  * \li "GMajLow"  OBIT_double (1,1,1) Major axis lower bound [no bound]
  * \li "GMinUp"   OBIT_double (1,1,1) Minor axis upper bound [no bound]
  * \li "GMinLow"  OBIT_double (1,1,1) Minor axis lower bound [no bound]
+ * \li "MaskIsln" OBIT_bool   (1,1,1) Mask island option[FALSE]
+ *                Blank pixels not in island containing model centers
+ * \li "Thresh"   OBIT_float (1,1,1) Threshold for MaskIsln [0.0]
  * \param image Image to fit, should have pixel array attached and
  *              opened as described in reg (BLC, TRC).
  *       on info
@@ -228,12 +237,13 @@ ObitImageFit* ObitImageFitCreate (gchar* name)
 olong ObitImageFitFit (ObitImageFit* in,  ObitImage *image, 
 		      ObitFitRegion* reg, ObitErr *err)
 {
-  olong i, j, itmax, npr, nvar, fst, pos[2], ier = -1;
+  olong i, j, itmax, npr, nvar, pos[2], ier = -1;
   olong blc[10]={1,1,1,1,1,1,1,1,1,1};
   olong trc[10]={0,0,0,0,0,0,0,0,0,0};
   odouble eps, fopt,rpeak,  gnopt, *xi=NULL, *xerr=NULL;
   odouble dblank;
-  ofloat fblank=ObitMagicF();
+  gboolean MaskIsln;
+  ofloat   fblank=ObitMagicF();
   gint32       dim[MAXINFOELEMDIM];
   ObitInfoType type;
   gchar *routine = "ObitImageFitFit";
@@ -243,6 +253,10 @@ olong ObitImageFitFit (ObitImageFit* in,  ObitImage *image,
   g_assert (ObitImageFitIsA(in));
   g_assert (ObitImageIsA(image));
   g_assert (ObitFitRegionIsA(reg));
+
+  /* Mask non-island option? */
+  MaskIsln = FALSE;
+  ObitInfoListGetTest(in->info, "MaskIsln", &type, dim, &MaskIsln);
 
   /* Save input */
   in->image = ObitImageUnref(in->image);
@@ -262,6 +276,9 @@ olong ObitImageFitFit (ObitImageFit* in,  ObitImage *image,
     return 2;
   }
 
+  /* Blank non island pixels? */
+  if (MaskIsln) BlankNonIsland(in, err);
+
   /* Setup for fitting */
   dblank = (odouble)fblank;
   eps  = 1.0e-8;
@@ -270,7 +287,6 @@ olong ObitImageFitFit (ObitImageFit* in,  ObitImage *image,
   nvar = 0;
   for (i=0; i<in->data->ncomp; i++) {
     if (in->data->type[i] == OBIT_FitModel_GaussMod) {
-      fst = nvar;
       for (j=0; j<in->data->np[i]; j++) {
 	 if (in->data->pf[i][j]) {  /*Fitting this one? */
 	  xi[nvar]   = in->data->p[i][j];
@@ -338,6 +354,9 @@ olong ObitImageFitFit (ObitImageFit* in,  ObitImage *image,
       Obit_log_error(err, OBIT_InfoErr,   "      Y (pixel) = %8.3f +/- %8.3f", 
 		     reg->models[i]->DeltaY+blc[1]+reg->corner[1]-1.0, 
 		     reg->models[i]->eDeltaY);
+      Obit_log_error(err, OBIT_InfoErr,   "      Maj=%8.3f, Min=%8.3f, max= %8.3f", 
+		     reg->models[i]->parms[0], reg->models[i]->parms[1],
+		     reg->models[i]->maxSize);
    }
     ObitErrLog(err); 
   }
@@ -661,15 +680,12 @@ dvdmin (ObitImageFitDataFuncFP fx, gpointer data,  odouble *xi, odouble *xerr,
   if (lcount > itmax) {*ier = 1; goto L900;}
   lcount++;
   /* Update solution */  
-   /* fprintf (stdout, " delta ");DEBUG */
   for (i=0; i<n; i++) { /* loop 220 */
     for (j=0; j<n; j++) { /* loop 210 */
       ax[j] = xj[j][i];
     } /* end loop  L210: */
     x[i] = x0[i] + cblas_ddot (n, ax, 1, s, 1);
-  /* fprintf (stdout, " %g ",x[i]-x0[i]); DEBUG */
   } /* end loop  L220: */
-  /* fprintf (stdout, " \n"); DEBUG */
 
   /* Converged? */
   if (-f0p < eps) {*ier = 0;  goto L900;}
@@ -893,3 +909,153 @@ static odouble dmachx (olong job)
   if (job == 2) return tiny;
   return huge;
 } /* end of routine dmachx */ 
+
+/**
+ * Is any pixel within one pixel of (ix,iy) in the island?
+ * \param island array of in island flags
+ * \param nx     dimension in x
+ * \param ny     dimension in y
+ * \param ix     x pixel
+ * \param iy     y pixel
+ * \return TRUE if any adjacent pixel is TRUE in island, else FALSE
+ */ 
+static gboolean inIsland (gboolean *island, olong nx, olong ny, olong ix, olong iy)
+{
+  olong indx;
+
+  /* Already in island? */
+  indx = ix + iy*nx;
+  if (island[indx]) {
+    return TRUE;
+  } 
+  if (ix>0) {  /* left */
+    indx = ix-1 + iy*nx;
+    if (island[indx]) return TRUE;
+  } 
+  if (iy>0) {  /* below */
+    indx = ix + (iy-1)*nx;
+    if (island[indx]) return TRUE;
+  } 
+  if (ix<nx-1) {  /* right */
+    indx = ix+1 + iy*nx;
+    if (island[indx]) return TRUE;
+  } 
+  if (iy<ny-1) {  /* above */
+    indx = ix + (iy+1)*nx;
+    if (island[indx]) return TRUE;
+  } 
+  if ((ix>0) &&(iy>0)) {  /* lower left */
+    indx = (ix-1) + (iy-1)*nx;
+    if (island[indx]) return TRUE;
+  } 
+  if ((ix<nx-1) &&(iy>0)) {  /* lower right */
+    indx = (ix+1) + (iy-1)*nx;
+    if (island[indx]) return TRUE;
+  } 
+  if ((ix>0) &&(iy<ny-1)) {  /* upper left */
+    indx = (ix-1) + (iy+1)*nx;
+    if (island[indx]) return TRUE;
+  } 
+  if ((ix<nx-1) &&(iy<ny-1)) {  /* upper right */
+    indx = (ix+1) + (iy+1)*nx;
+    if (island[indx]) return TRUE;
+  }
+
+  return FALSE;  /* Apparently not */
+} /* end inIsland */
+
+/**
+ * Blank pixels pixels as the initial model component in in->reg
+ * blanking in in->data->pixels
+ * Nothing done is either dimension less than 3 pixels.
+ * \param in    Fitter to use, control info in info:
+ * \li "Thresh"  OBIT_float (1,1,1) Threshold defining island [0.0]
+ */ 
+static void BlankNonIsland (ObitImageFit* in, ObitErr *err)
+{
+  ofloat       Thresh, *data=NULL, fblank=ObitMagicF();
+  gint32       dim[MAXINFOELEMDIM];
+  ObitInfoType type;
+  ObitFArray   *pixels = in->data->pixels;
+  olong        nx, ny, imod, ix, iy, indx, ixp, iyp, maxd, id, pos[2];
+  olong        ixlo, ixhi, iylo, iyhi;
+  gboolean     *island=NULL;
+ 
+  if (err->error) return;
+  
+  /* pixels must be at least 3 pixels in each dimension */
+  nx = pixels->naxis[0]; ny = pixels->naxis[1];
+  if ((nx<3) || (ny<3)) return;
+
+  /* Island Threshold */
+  Thresh = 0.0;
+  ObitInfoListGetTest(in->info, "Thresh", &type, dim, &Thresh);
+  Thresh *= in->data->rscale;  /* scale to fitting units */
+
+  /* Work arrays */
+  island = g_malloc0(nx*ny*sizeof(gboolean));
+
+ /* pixel pointer*/
+  pos[0] = pos[1] = 0;
+  data = ObitFArrayIndex(pixels, pos);
+
+  /* Loop over models */
+  for (imod=0; imod<in->reg->nmodel; imod++) {
+
+    /* Set center pixel */
+    ixp = in->reg->models[imod]->DeltaX-1; /* to 0 rel*/
+    iyp = in->reg->models[imod]->DeltaY-1;
+
+    /* In box? */
+    if ((ixp<0) || (ixp>=nx) || (iyp<0) || (iyp>=ny)) continue;
+  
+    /* Initialize island mask */
+    indx = ixp + iyp*nx;
+    island[indx] = TRUE;
+
+    /* Maximum distance to search */
+    maxd = MAX(ixp, MAX(iyp, MAX(nx-ixp-1,ny-iyp-1)));
+    
+    /* Search in increasing distance */
+    for (id=1; id<=maxd; id++) {
+      /* range of search */
+      ixlo = MAX(0, ixp-id); ixhi = MIN(nx-1, ixp+id);
+      iylo = MAX(0, iyp-id); iyhi = MIN(ny-1, iyp+id);
+      /* One way around ... */
+      for (iy=iylo; iy<=iyhi; iy++) {
+	for (ix=ixlo; ix<=ixhi; ix++) {
+	  indx = ix + iy*nx;
+	  if (data[indx]==fblank) continue;
+	  /* pixel above threshold? */
+	  if (data[indx]<Thresh) data[indx] = fblank; /* No */
+	  /* Any adjacent pixels in island */
+	  else if (inIsland(island, nx, ny, ix, iy)) 
+	    island[indx] = TRUE;
+	} /* end x loop */
+      } /* end y loop */
+      /* ... and then the other */
+      for (iy=iyhi; iy<=iylo; iy--) {
+	for (ix=ixhi; ix<=ixlo; ix--) {
+	  indx = ix + iy*nx;
+	  if (data[indx]==fblank) continue;
+	  /* pixel above threshold? */
+	  if (data[indx]<Thresh) data[indx] = fblank; /* No */
+	  /* Any adjacent pixels in island */
+	  else if (inIsland(island, nx, ny, ix, iy)) 
+	    island[indx] = TRUE;
+	} /* end x loop */
+      } /* end y loop */
+    } /* end loop over distance */
+  } /* end loop over models */
+
+  /* Blank non island pixels */
+  for (iy=0; iy<ny; iy++) {
+    for (ix=0; ix<nx; ix++) {
+      indx = ix + iy*nx;
+      if (!island[indx]) data[indx] = fblank;
+    } /* end x loop */
+  } /* end y loop */
+
+  /* Cleanup */
+  if (island) g_free(island);
+} /* end BlankNonIsland */ 

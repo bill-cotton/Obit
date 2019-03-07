@@ -91,14 +91,20 @@ Gain            0.0         1.0    Amp-dependent part of retry
 **PARAM** float 10
 Parms                              Components constraints
                                    [0] ignore those w/ flux < Parms[0]
-                                   [1] constrain widths>Parms[1] cells
+                                   [1] constrain widths<=Parms[1] asec
                                    [2] constrain peaks>Parms[2] cells
                                    outside fitting region
                                    [3] if >0 don't allow Gauss 
                                    smaller than CLEAN beam
                                    [4] min width of island in pixels
                                    [5] max. false detection rate
-				   [6] Allowed fraction blanked (def 0.1)
+				   [6] Allowed fraction blanked (def 0.5)
+**PARAM** float 4
+sizeLim                            Component size limits
+				   [0] if > 0, max size w/ flux<sizeLim[2]
+				   [1] max. size w/ flux>sizeLim[3]
+				   [2] lower flux for linear ramp
+				   [2] upper flux for linear ramp
 **PARAM** int   1
 RMSsize                            Size of region to determine RMS
 **PARAM** int   1
@@ -174,7 +180,8 @@ Adverbs:
               0 => CutOff.
   Blank.......Blank pixel values less than Blank.  0=>no blanking
               Blanked pixels are not used in the fitting but are
-              used in noise estimation.
+              used in noise estimation.  Also used in the 
+	      redefinition of islands just prior to fitting.
   Sort........Sort order of output.
               ' ' -> 'X'-> RA (Default)
               'Y' -> DEC
@@ -199,7 +206,7 @@ Adverbs:
               [0] peak > Parms[0].  No default; 0 or CutOff ok.
                   Not enforced in fitting but component will be
                   dropped.  Not used if Parms[5]>0.
-              [1] widths < Parms[1] cells
+              [1] widths < Parms[1] in arcsec
                   This will be applied as a constraint on the
                   solution. Default no constraint.
               [2] peaks > Parms[2] cells outside the fitting
@@ -218,7 +225,20 @@ Adverbs:
                   If <=0, then the Parms[1] test used instead.
                   See FndSou explain.
 	      [6] if > 0.0, reject components with islands with more 
-                  than a fraction blanked of Parms[6], def = 0.1
+                  than a fraction blanked of Parms[6], def = 0.5
+		  NB: this is determined after blanking out of 
+		  island pixels.
+  sizeLim.....Peak flux density limits on maximum size, 
+              If sizeLim[0]>0 these override Parms[1].
+              These specify a constant maximum size below a 
+	      given peak flux level and above anotherand a 
+	      linear ramp between the two.
+	      [0] if > 0, max. size (") for sources with peak
+	          brightness <sizeLim[2].
+	      [1] Maximum size (") for sources with peak
+	          brightness <sizeLim[3].
+              [2] Lower flux limit for linear ramp.
+              [3] Upper flux limit for linear ramp.
   RMSsize.....If > 1, then the half width of a square box centered
               on each source within which to determine the local 
               noise.  This is used when an MF table is converted
@@ -259,23 +279,25 @@ RELATED PROGRAMS :
                       PURPOSE
 
 FndSou attempts to find all sources in a subimage whose peak is
-brighter than a given level.  It searches the subimage specified
-by BLC and TRC for all points above this level and merges such
-points in contiguous "islands".  For each island, initial
-estimates of the strength and size are generated.  Then a
-gaussian fitting algorithm is called to determine
-the least square Gaussian fit.  If doMult is < 0., only one
-Gaussian is fit per island, with initial estimates generated
-from 2nd moments.  If doMult is True and multiple peaks (above
-CutOff) are found within the island, then up to 4 Gaussians are
-fit.  If the peak residual of a single Gaussian fit exceeds Retry
-then a more complex 2-Gaussian fit is attempted.  The results of
-the fit are printed on the screen or the line printer and
-written into a ModelFit (MF) extension table.  If doResid is
-True, the Gaussians are subtracted from the input subimage, and
-a residual image is cataloged, using outDisk, outName etc.  If
-doWidth(1) is negative, a Gaussian with fixed size = CLEAN beam
-will be fit.
+brighter than a given level.  It searches the subimage specified by
+BLC and TRC for all points above this level and merges such points in
+contiguous "islands".  For each island, initial estimates of the
+strength and size are generated.  Then a Gaussian fitting algorithm is
+called to determine the least square Gaussian fit.  If doMult is < 0.,
+only one Gaussian is fit per island, with initial estimates generated
+from 2nd moments.  If doMult is True and multiple peaks (above CutOff)
+are found within the island, then up to 4 Gaussians are fit.  If the
+peak residual of a single Gaussian fit exceeds Retry then a more
+complex 2-Gaussian fit is attempted.  The results of the fit may be
+given in the log and written into a ModelFit (MF) table.  
+If doResid is True, the Gaussians are subtracted from the input 
+subimage, and a residual image is cataloged, using outDisk, outName etc.  
+If doWidth==False, a Gaussian with fixed size = CLEAN beam will be fit. 
+If doVL is True, the MF table is converted to a VL table.
+   Before fitting, islands are redetermined containing all of the 
+sources to be fitted in a given rectangle. Pixels not in an island are 
+blanked.  In this case, the borders of islande are set by the value of\
+Blank unless it is <= 0 in which case Cutoff is used.
 
                 WARNING!!!
 
@@ -416,7 +438,7 @@ of the best fit major axis, minor axis and position angle.
 (arcsec, arcsec, degrees), followed by the one-sigma lower
 limits on these quantities and the one sigma upper limits.
 
-ON THE MEANING OF BMAX, BMIN, AND BPA
+ON THE MEANING OF BMAJ, BMIN, AND BPA
 
      Formally the position angle of anything, such as the major
 axis of a gaussian source, is defined as the angle of the thing

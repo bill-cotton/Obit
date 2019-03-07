@@ -217,7 +217,7 @@ ObitFitRegion* ObitFitRegionListNext (ObitFitRegionList *in, gpointer *last)
     tmp = g_slist_next(tmp);
   }
   reg = (ObitFitRegion*)tmp->data;
-  *last = tmp;  /* Update pointer */
+  *last = (gpointer*)tmp;  /* Update pointer */
   return reg;
 } /* end ObitFitRegionNext */
 
