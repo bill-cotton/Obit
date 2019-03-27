@@ -1,0 +1,160 @@
+; $Id$
+; MKXPhase
+;---------------------------------------------------------------
+;! MeerKAT X/Y phase bandpass calibration from noise diode
+;# Task Obit Imaging calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2019
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+MKXPhase   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+MKXPhase:  MeerKAT X/Y phase bandpass calibration from noise diode
+**PARAM** str 4
+DataType                            "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                              FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                              Input multisource UV data AIPS
+**PARAM** str 6
+inClass                             Input UV data (class)
+**PARAM** int 1
+inSeq                               Input UV data (seq. #)
+**PARAM** int 1
+inDisk                              Input UV data disk drive #
+**PARAM** str 16 30
+Sources                             Calibrator sources (pointings) list
+**PARAM** float 2
+timeRange                           Time range to process.
+**PARAM** int 1 **DEF** 1
+ChWid            0.0                Number of chan to avg in BP soln
+**PARAM** int 1
+Antennas         0.0     1000.0     List of antennas to calibrate
+**PARAM** int 1
+doCalib          -1         10      Apply calibration table
+**PARAM** int 1
+gainUse                             CL/SN table to apply
+**PARAM** int 1
+doBand           -1.0       10.0    If >0.5 apply bandpass cal.
+**PARAM** int 1
+BPVer                               Bandpass table version
+**PARAM** int 1 **DEF** -1
+flagVer                             Flag table version
+**PARAM** str 48
+outFile                             FITS uvdata for output FG table
+**PARAM** str 12
+outName                             AIPS name for output FG table
+**PARAM** str 6
+outClass                            AIPS class for output FG table
+**PARAM** int 1   
+outSeq          -1.0     9999.0     AIPS seq for output FG table
+**PARAM** int 1
+outDisk                             Disk for output FG table
+**PARAM** int 1
+BPSoln                              BP table to write
+**PARAM** int 1
+refAnt            0                 Reference antenna
+**PARAM** float 1
+solInt           0.0                Soln interval (min)
+**PARAM** int 1
+prtLv             0.0               Print level in cal
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
+**PARAM** int 10
+noScrat                             AIPS disk numbers for which
+                                    scratch files are disallowed
+----------------------------------------------------------------
+MKXPhase Determine RX-Y bandpasses from noise diode
+Type:  Task
+ Use:  MeerKAT X/Y phase bandpass calibration from noise diode
+
+This program determines the MeerKAT phase bandpass from cross hand
+auto-correlations.  Results are written as Y corrections in a BP table.
+NB: any input BP table is applied to the data but is NOT incorporated
+into the output BP table.
+   The noise diode data is in a "delaycal" data block at the start of
+an observing session, possibly several days long.  There are two scans
+the second of which ONLY is useful.  It may also help to do a 
+parallel-hand delay calibration on this data before MKXPhase and also
+apply this delay calibration to the data being corrected.
+
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input multisource UV data file
+  inClass....Input UV data file (class).      Standard defaults.
+  inSeq......Input UV data file (seq. #).     0 => highest.
+  inDisk.....Input UV data file disk drive #.
+
+       Data selection
+  Sources....List of sources (pointings) to be processed.
+             '*' or blank = all; a "-" before a source name
+             means all except ANY source named. 
+  timeRange..Start and end times (day)
+             Use  dhms2day to convert from human readable form
+  ChWid......If >0, The bandpass calibration will use ChWid channels 
+             centered on each channel, should be odd.
+  Antennas...A list of the antennas to  have solutions
+             determined. If any number is negative then all
+             antennas listed  are NOT to be used to determine
+             solutions and all others are. All 0 => use all.
+  doCalib....If true, apply SN or CL table
+  gainUse....CL/SN table version number to apply. 0=> highest.
+  doBand.....If > 0 then correct the data for the shape of the
+             antenna bandpasses using the (prior) BP table specified 
+             by BPVer.  The correction has five modes:
+             (a) if DOBAND=1 all entries for an antenna in the table
+             are averaged together before correcting the data.
+             (b) if DOBAND=2 the entry nearest in time (including
+             solution weights) is used to correct the data.
+             (c) if DOBAND=3 the table entries are interpolated in
+             time (using solution weights) and the data are then
+             corrected.
+             (d) if DOBAND=4 the entry nearest in time (ignoring
+             solution weights) is used to correct the data.
+             (e) if DOBAND=5 the table entries are interpolated in
+             time (ignoring solution weights) and the data are then
+             corrected.
+  BPVer......Specifies the version of the BP table to be applied
+                0 => highest numbered table.
+               <0 => no prior bandpass correction to be applied.
+  flagVer....FG table to use for editing. 0 => highest.
+      Output BP file - defaults to input
+  outFile....Output FITS uvdata for BP table file name
+  outName....Output AIPS uvdata for BP table Name, 
+  outClass...Output uvdata class.
+  outSeq.....Output uvdata sequence number.
+  outDisk....The disk drive # of output uvdata. No default
+  BSoln......Output version of the BP table.
+      Control
+  refAnt.....Reference antenna number
+  solInt.....Solution interval (min) BP table entries.
+  prtLv......Print level in solution, 0=>none 
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files.
+             Path is absolute or relative to where the task 
+             executes.
+  noScrat....A list of AIPS disk numbers on which you do not 
+             wish scratch files
+----------------------------------------------------------------

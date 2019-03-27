@@ -4215,3 +4215,15 @@ Obit/src/ObitFitModel.c Obit/include/ObitFitModelDef.h:
 Obit/src/ObitImageUtil.c:
   FitBeam: fix beam peak at 1.0
 7 Mar 2019 svn 597
+
+Summary: MeerKAT polarization, multilevel minFLux in MFImage, bug fixes
+Obit/src/ObitCUDASkyModel.cu
+ DFTprocessWithStreams: more care in only transfering valid data to GPU
+Obit/TDF/MFImage.TDF Obit/tasks/MFImage.c
+  Add optional multilevel minFlux with phase selfcal
+  Add optional niter, minFlux for Stokes V
+Obit/src/ObitUVGSolveWB.c:
+  finalSolve: fix frequency bug in correcting IF phases.
+Obit/tasks/MKXPhase.c Obit/TDF/MKXPhase.TDF:
+  New task to get MeerKAT cross hand phase spectra from the noise diode
+27 Mar 2019 svn 598

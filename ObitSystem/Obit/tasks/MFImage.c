@@ -1897,11 +1897,11 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   ObitImageMF  *fitImage=NULL;
   ObitInfoType type;
   oint         otemp;
-  olong        nfield, *ncomp=NULL, maxPSCLoop, maxASCLoop, SCLoop, jtemp, Niter, NiterQU;
-  ofloat       minFluxPSC, minFluxASC, modelFlux, maxResid, reuse, ftemp, autoCen;
-  ofloat       alpha, noalpha, minFlux=0.0, minFluxQU=0.0;
-  ofloat       antSize, solInt, PeelFlux, FractOK, CCFilter[2]={0.0,0.0};
-  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  olong        nfield, *ncomp=NULL, maxPSCLoop, maxASCLoop, SCLoop, jtemp, Niter, NiterQU, NiterV;
+  ofloat       minFluxPSC, minFluxASC, modelFlux, maxResid, reuse, ftemp, autoCen, useMinFlux=0.0;
+  ofloat       alpha, noalpha, minFlux=0.0, minFluxQU=0.0,  minFluxV=0.0;
+  ofloat       *minFList=NULL, antSize, solInt, PeelFlux, FractOK, CCFilter[2]={0.0,0.0};
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1},  FLdim[MAXINFOELEMDIM];
   gboolean     Fl = FALSE, Tr = TRUE, init=TRUE, doRestore, doFlatten, doFit, doSC, doBeam, doLast;
   gboolean     noSCNeed, reimage, didSC=FALSE, imgOK=FALSE, converged = FALSE; 
   gboolean     btemp, noNeg, doneRecenter=FALSE;
@@ -1958,20 +1958,31 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
       "%s: MUST have P Self-cal before A&P", routine);
   }
  
+  /* List of minimum flux densities after selfcals */
+  ObitInfoListGetP(myInput, "minFList",  &type, FLdim, (gpointer)&minFList);
+
   /* Get input parameters from myInput, copy to myClean */
   ObitInfoListCopyList (myInput, myClean->info, CLEANParms);
   if (err->error) Obit_traceback_msg (err, routine, myClean->name);
   
   /* Special Stokes Parameters? */
-  if (((Stokes[0]!='I') && (Stokes[0]!='F') && ((Stokes[0]!=' '))) && 
+  if ((((Stokes[0]=='Q') || (Stokes[0]=='U')) && ((Stokes[0]!=' '))) && 
       ObitInfoListGetTest(myInput, "NiterQU", &type, dim, &NiterQU)) {
     ObitInfoListAlwaysPut(myClean->info,  "Niter", type, dim, &NiterQU);
   }
-  if (((Stokes[0]!='I') && (Stokes[0]!='F') && ((Stokes[0]!=' '))) && 
+  if (((Stokes[0]=='V') && ((Stokes[0]!=' '))) && 
+      ObitInfoListGetTest(myInput, "NiterV", &type, dim, &NiterV)) {
+    ObitInfoListAlwaysPut(myClean->info,  "Niter", type, dim, &NiterV);
+  }
+  if ((((Stokes[0]=='Q') || (Stokes[0]!='U')) && ((Stokes[0]!=' '))) && 
       ObitInfoListGetTest(myInput, "minFluxQU", &type, dim, &minFluxQU)) {
     ObitInfoListAlwaysPut(myClean->info,  "minFlux", type, dim, &minFluxQU);
   }
-  
+  if (((Stokes[0]=='V') && ((Stokes[0]!=' '))) && 
+      ObitInfoListGetTest(myInput, "minFluxV", &type, dim, &minFluxV)) {
+    ObitInfoListAlwaysPut(myClean->info,  "minFlux", type, dim, &minFluxV);
+  }
+   
   /* Only do self cal for Stokes I (or F) */
   if ((Stokes[0]!='I') && (Stokes[0]!='F') && ((Stokes[0]!=' '))) {
     maxPSCLoop  = 0;
@@ -2158,9 +2169,16 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 	dim[0] = 1;dim[1] = 1;
 	ObitInfoListAlwaysPut(myClean->info, "doBeam", OBIT_bool, dim, &doBeam);
 	
-	/* reset flux limit for next Clean to 1 sigma */
+	/* reset flux limit for next Clean to 1 sigma - minFList overrides */
 	dim[0] = 1;dim[1] = 1;
-	ObitInfoListAlwaysPut (myClean->info, "minFlux", OBIT_float, dim, &selfCal->RMSFld1);
+	if (minFList) {
+	  useMinFlux = minFList[MIN(SCLoop, (FLdim[0]-1))];
+	} else { /* minFList not given - use RMS */
+	  useMinFlux = selfCal->RMSFld1;
+	}
+	ObitInfoListAlwaysPut (myClean->info, "minFlux", OBIT_float, dim, &useMinFlux);
+	if (err->prtLv>=3)
+	  Obit_log_error(err, OBIT_InfoErr,"MinFlux now %g", useMinFlux);
 	btemp = FALSE;
 	ObitInfoListAlwaysPut(selfCal->skyModel->info, "noNeg", OBIT_bool, dim, &btemp);
 	

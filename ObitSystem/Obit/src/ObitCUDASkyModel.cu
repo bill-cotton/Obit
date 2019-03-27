@@ -806,12 +806,12 @@ static void DFTprocessWithStreams(int streams_used, int nvis,
             float *d_data[], int prtLv)
 {
 
-    int  last_stream, current_stream = 0;
+    int last_stream, current_stream = 0;
     int npass = streams_used;
     int nvisPass = (nvis+npass-1)/npass;  // nearly round up
     int lenvis = h_visInfo->lenvis;
-    int off, nprod, dovis;
-    int memsize = (lenvis*nvisPass)*sizeof(float);
+    int off, nprod, dovis, nleft;
+    int lmemsize, memsize = (lenvis*nvisPass)*sizeof(float);
     dim3 numBlocks, thPerBlock;
 
     // DEBUG  create debug arrays
@@ -826,7 +826,8 @@ static void DFTprocessWithStreams(int streams_used, int nvis,
     nprod = h_visInfo->nchan * h_visInfo->nIF * h_visInfo->nstok;
 
     if (prtLv>=5) printf ("Start\n");
- 
+    if (prtLv>=5) printf ("nvis %d nvisPass %d lenvis %d memsize %d npass %d\n",nvis, nvisPass, lenvis, memsize, npass);
+     
     // Do processing in a loop
     //
     // Note: All memory commands are processed in the order  they are issued,
@@ -843,7 +844,7 @@ static void DFTprocessWithStreams(int streams_used, int nvis,
 				   cudaMemcpyHostToDevice,
 				   stream[0]));
     //?cudaEventSynchronize(cycleDone[0]);
-
+    nleft = nvis - nvisPass;  // How many left to copy?
     for (int i=0; i<npass; ++i) {
         int next_stream = (current_stream + 1) % streams_used;
 	int prev_stream = current_stream - 1;
@@ -851,13 +852,16 @@ static void DFTprocessWithStreams(int streams_used, int nvis,
 	off = next_stream*lenvis*nvisPass;  /* Offset in data buffers */
   	if (prtLv>=5) printf ("\n\nLoop %d prev %d current %d next %d\n",i, prev_stream,current_stream,next_stream );
 
-	// Upload next frame
-	if (prtLv>=5) printf ("upload next_stream %d off %d\n",next_stream,off);
-	checkCudaErrors(cudaMemcpyAsync(d_data[next_stream],
-			    &h_data_source[off],
-                            memsize,
-                            cudaMemcpyHostToDevice,
-                            stream[next_stream]));
+	// Upload next frame - last may be less
+	if (nleft<nvisPass) lmemsize = (lenvis*nleft)*sizeof(float);
+	else                lmemsize = memsize;
+	if (prtLv>=5) printf ("upload next_stream %d off %d memsize %d nleft %d\n",next_stream,off,lmemsize,nleft);
+	if (nleft>0)
+	  checkCudaErrors(cudaMemcpyAsync(d_data[next_stream],
+	  		      &h_data_source[off],
+                              lmemsize,
+                              cudaMemcpyHostToDevice,
+                              stream[next_stream]));
 
 	// Ensure that processing and copying of the previous cycle has finished
 	if (i>0) {
@@ -919,7 +923,7 @@ static void DFTprocessWithStreams(int streams_used, int nvis,
               d_modelInfo, d_visInfo);
           break;
           default:
-              printf("Model type not supported in GPU",d_modelInfo->type);
+              printf("Model type %d not supported in GPU",d_modelInfo->type);
           };  // End switch by model type 
 
 	// make sure previous frame done
@@ -927,6 +931,7 @@ static void DFTprocessWithStreams(int streams_used, int nvis,
 
 	last_stream = current_stream;
         current_stream = next_stream;
+	nleft -= nvisPass;
     } /* end loop */
 
     /* Data from last pass */
