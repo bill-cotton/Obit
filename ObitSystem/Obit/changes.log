@@ -4227,3 +4227,33 @@ Obit/src/ObitUVGSolveWB.c:
 Obit/tasks/MKXPhase.c Obit/TDF/MKXPhase.TDF:
   New task to get MeerKAT cross hand phase spectra from the noise diode
 27 Mar 2019 svn 598
+
+Summary:  vain attempts on MeerKAT polarimetry, beam correction, bug fixes
+Obit/changes.log:
+  Update
+Obit/ObitVersion:
+  Trigger NRAO update
+Obit/python/OTObit.py
+  Add unpickle function to read pickle jar
+Obit/src/ObitImageUtil.c:
+  T2Spec: DON'T relable frequency axis 'FREQ"
+Obit/tasks/MFImage.c:
+  History: Add all optional parameters
+Obit/src/ObitUVCalPolarization.c Obit/include/ObitUVCalPolarizationDef.h :
+  Testing in attempt to use MeerKAT polarimetry
+Obit/src/ObitAntennaList.c:
+  Flip sign of Parallactic angle for MeerKAT
+   Fix sign error in Az:
+Obit/tasks/Lin2Cir.c:
+  Fix bugs, MeerKAT debugging
+Obit/tasks/SwaPol.c Obit/TDF/SwaPol.TDF:
+  New task to swap polarizations in all visibilities.
+Obit/python/Table.inc Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c:
+  Patch bug in FQ table with 1 IF, copying BandCode
+Obit/src/ObitSkyModelVMBeam.c:
+  Update: Better trapping of blanked beam pixels.
+Obit/tasks/BeamCor.c Obit/TDF/BeamCor.TDF Obit/tasks/MFBeam.c Obit/TDF/MFBeam.TDF 
+  Add parameters
+Obit/tasks/MFImage.c
+  Add recent parameters to history.
+3 May 2019 svn 599

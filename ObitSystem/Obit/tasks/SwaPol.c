@@ -1,7 +1,7 @@
 /* $Id$  */
-/*  Convert linear feed basis to circular .                */
+/* Obit Task to copy uv data swapping the Stokes correlation products */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2018,2019                                          */
+/*;  Copyright (C) 2019                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -27,7 +27,6 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
-#include "ObitUVDesc.h"
 #include "ObitSystem.h"
 #include "ObitMem.h"
 #include "ObitParser.h"
@@ -35,20 +34,13 @@
 #include "ObitHistory.h"
 #include "ObitData.h"
 #include "ObitUV.h"
-#include "ObitUVUtil.h"
-#include "ObitTableANUtil.h"
-#include "ObitTableSU.h"
-#include "ObitTableSUUtil.h"
 #include "ObitAIPSDir.h"
-#include "ObitSinCos.h"
-#include "ObitPrecess.h"
-#include "ObitAntennaList.h"
-#include "ObitSourceList.h"
+
 /* internal prototypes */
 /* Get inputs */
-ObitInfoList* Lin2CirIn (int argc, char **argv, ObitErr *err);
+ObitInfoList* SwaPolIn (int argc, char **argv, ObitErr *err);
 /* Set outputs */
-void Lin2CirOut (ObitInfoList* outList, ObitErr *err);
+void SwaPolOut (ObitInfoList* outList, ObitErr *err);
 /* Give basic usage on error */
 void Usage(void);
 /* Set default inputs */
@@ -62,27 +54,27 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err);
 /* Create output uvdata */
 ObitUV* setOutputData (ObitInfoList *myInput, ObitUV* inData, ObitErr *err);
 /* Write history */
-void Lin2CirHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData, 
+void SwaPolHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData, 
 		   ObitErr* err);
-/* Convert data */
-ObitUV* ObitUVLin2Cir (ObitUV *inUV, ObitUV *outUV, ObitErr *err);
+/* Copy/swap */
+ObitUV* ObitSwaPol (ObitUV *in, ObitUV *out, ObitErr *err);
 
 /* Program globals */
-gchar *pgmName = "Lin2Cir";       /* Program name */
-gchar *infile  = "Lin2Cir.in" ;   /* File with program inputs */
-gchar *outfile = "Lin2Cir.out";   /* File to contain program outputs */
-olong  pgmNumber;               /* Program number (like POPS no.) */
-olong  AIPSuser;                /* AIPS user number number (like POPS no.) */
-olong  nAIPS=0;                 /* Number of AIPS directories */
-gchar **AIPSdirs=NULL;          /* List of AIPS data directories */
-olong  nFITS=0;                 /* Number of FITS directories */
-gchar **FITSdirs=NULL;          /* List of FITS data directories */
-ObitInfoList *myInput  = NULL;  /* Input parameter list */
-ObitInfoList *myOutput = NULL;  /* Output parameter list */
+gchar *pgmName = "SwaPol";       /* Program name */
+gchar *infile  = "SwaPol.in" ;   /* File with program inputs */
+gchar *outfile = "SwaPol.out";   /* File to contain program outputs */
+olong  pgmNumber;       /* Program number (like POPS no.) */
+olong  AIPSuser;        /* AIPS user number number (like POPS no.) */
+olong  nAIPS=0;         /* Number of AIPS directories */
+gchar **AIPSdirs=NULL;  /* List of AIPS data directories */
+olong  nFITS=0;         /* Number of FITS directories */
+gchar **FITSdirs=NULL;  /* List of FITS data directories */
+ObitInfoList *myInput  = NULL; /* Input parameter list */
+ObitInfoList *myOutput = NULL; /* Output parameter list */
 
 int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
-/*  Convert linear feed basis to circular .                               */
+/*   Obit Task to copy uv data swapping polarizations                     */
 /*----------------------------------------------------------------------- */
 {
   oint         ierr = 0;
@@ -93,7 +85,7 @@ int main ( int argc, char **argv )
    /* Startup - parse command line, read inputs */
   err = newObitErr();
 
-  myInput = Lin2CirIn (argc, argv, err);
+  myInput = SwaPolIn (argc, argv, err);
   if (err->error) {ierr = 1;  ObitErrLog(err);  goto exit;}
 
   /* Initialize logging */
@@ -119,12 +111,12 @@ int main ( int argc, char **argv )
   outData = setOutputData (myInput, inData, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
-  /* Convert */
-  ObitUVLin2Cir(inData, outData, err);
+  /* Copy */
+  outData = ObitSwaPol(inData, outData, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
   /* History */
-  Lin2CirHistory (myInput, inData, outData, err);
+  SwaPolHistory (myInput, inData, outData, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
   
   /* show any messages and errors */
@@ -144,7 +136,7 @@ int main ( int argc, char **argv )
   return ierr;
 } /* end of main */
 
-ObitInfoList* Lin2CirIn (int argc, char **argv, ObitErr *err)
+ObitInfoList* SwaPolIn (int argc, char **argv, ObitErr *err)
 /*----------------------------------------------------------------------- */
 /*  Parse control info from command line                                  */
 /*   Input:                                                               */
@@ -163,7 +155,7 @@ ObitInfoList* Lin2CirIn (int argc, char **argv, ObitErr *err)
   gchar *strTemp;
   oint    itemp, i, j, k;
   ObitInfoList* list=NULL;
-  gchar *routine = "Lin2CirIn";
+  gchar *routine = "SwaPolIn";
 
   /* error checks */
   g_assert(ObitErrIsA(err));
@@ -325,18 +317,18 @@ ObitInfoList* Lin2CirIn (int argc, char **argv, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
   return list;
-} /* end Lin2CirIn */
+} /* end SwaPolIn */
 
 void Usage(void)
 /*----------------------------------------------------------------------- */
 /*   Tells about usage of program and bails out                           */
 /*----------------------------------------------------------------------- */
 {
-    fprintf(stderr, "Usage: Lin2Cir -input file -output ofile [args]\n");
-    fprintf(stderr, "Lin2Cir Convert XX,YY... to RR,LL...\n");
+    fprintf(stderr, "Usage: SwaPol -input file -output ofile [args]\n");
+    fprintf(stderr, "SwaPol Obit task copy uv data swapping polarizations\n");
     fprintf(stderr, "Arguments:\n");
-    fprintf(stderr, "  -input input parameter file, def Lin2Cir.in\n");
-    fprintf(stderr, "  -output output result file, def Lin2Cir.out\n");
+    fprintf(stderr, "  -input input parameter file, def SwaPol.in\n");
+    fprintf(stderr, "  -output output result file, def SwaPol.out\n");
     fprintf(stderr, "  -pgmNumber Program (POPS) number, def 1 \n");
     fprintf(stderr, "  -DataType AIPS or FITS type for input image\n");
     fprintf(stderr, "  -inFile input FITS UV file\n");
@@ -429,13 +421,13 @@ ObitInfoList* defaultInputs(ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* input FITS file name */
-  strTemp = "Lin2Cir.intab";
+  strTemp = "SwaPol.intab";
   dim[0] = strlen (strTemp); dim[1] = 1;
   ObitInfoListPut (out, "inFile", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* input AIPS input uv file name */
-  strTemp = "Lin2CirName";
+  strTemp = "SwaPolName";
   dim[0] = strlen (strTemp); dim[1] = 1;
   ObitInfoListPut (out, "inName", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
@@ -475,15 +467,15 @@ ObitInfoList* defaultInputs(ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* output FITS UV file name */
-  strTemp = "Lin2CirOut.uvtab";
+  strTemp = "SwaPolOut.uvtab";
   dim[0] = strlen (strTemp); dim[1] = 1;
   ObitInfoListPut (out, "outFile", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
- /* correlation type */
-  dim[0] = 1;dim[1] = 1;
-  itemp = 0; 
-  ObitInfoListAlwaysPut (out, "corrType", OBIT_oint, dim, &itemp);
+  /* Output AIPS UV file name */
+  strTemp = "SwaPolOut";
+  dim[0] = strlen (strTemp); dim[1] = 1;
+  ObitInfoListPut (out, "outName", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* Output AIPS UV file class */
@@ -549,31 +541,14 @@ ObitInfoList* defaultOutputs(ObitErr *err)
 /*----------------------------------------------------------------------- */
 void digestInputs(ObitInfoList *myInput, ObitErr *err)
 {
-  ObitInfoType type;
-  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gchar strTemp[8], nameStr[13], inName[13];
+  /*  ObitInfoType type;
+      gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+      gchar *strTemp, *opcode=NULL; */
   gchar *routine = "digestInputs";
 
   /* error checks */
   if (err->error) return;
   g_assert (ObitInfoListIsA(myInput));
-
-  /* Output AIPS UV file class */
-  strncpy(strTemp, "Ln2Cr", 5);
-  ObitInfoListGetTest(myInput, "outClass", &type, dim, strTemp);
-  if (!strncmp(strTemp, "     ", 5)) {
-      strncpy(strTemp, "Ln2Cr", 5);
-      dim[0] = strlen (strTemp); dim[1] = 1;
-      ObitInfoListAlwaysPut (myInput, "outClass", OBIT_string, dim, strTemp);
-  }
-
-  /* Output name, default inName */
-  ObitInfoListGetTest(myInput, "outName", &type, dim, nameStr);
-  if (!strncmp(nameStr, "     ", 5)) {
-    ObitInfoListGetTest(myInput, "inName", &type, dim, inName);
-    dim[0] = 12; dim[1] = 1;
-    ObitInfoListAlwaysPut (myInput, "outName", OBIT_string, dim, inName);
-  }
 
   /* noScrat - no scratch files for AIPS disks */
   ObitAIPSSetnoScrat(myInput, err);
@@ -593,9 +568,13 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
 ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
 {
   ObitUV       *inData = NULL;
-  olong        nvis=1000;
-  gboolean     doCalSelect;
+  ObitInfoType type;
+  olong         Aseq, disk, cno, nvis=1000;
+  gchar        *Type, *strTemp, inFile[129];
+  oint         doCalib;
+  gchar        Aname[13], Aclass[7], *Atype = "UV";
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gboolean     doCalSelect;
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "souCode", "Qual", "Stokes", "timeRange", "UVRange",
     "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "FreqID", "corrType", 
@@ -610,30 +589,84 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   g_assert (ObitInfoListIsA(myInput));
 
   /* Create basic input UV data Object */
-  inData = ObitUVFromFileInfo ("in", myInput, err);
-  if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
- 
+  inData = newObitUV("input UV data");
+  
+  /* File type - could be either AIPS or FITS */
+  ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
+  if (!strncmp (Type, "AIPS", 4)) { /* AIPS input */
+    /* input AIPS disk */
+    ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
+    /* input AIPS name */
+    if (ObitInfoListGetP(myInput, "inName", &type, dim, (gpointer)&strTemp)) {
+      strncpy (Aname, strTemp, 13);
+    } else { /* Didn't find */
+      strncpy (Aname, "No Name ", 13);
+    } 
+    Aname[12] = 0;
+    /* input AIPS class */
+    if  (ObitInfoListGetP(myInput, "inClass", &type, dim, (gpointer)&strTemp)) {
+      strncpy (Aclass, strTemp, 7);
+    } else { /* Didn't find */
+      strncpy (Aclass, "NoClas", 7);
+    }
+    Aclass[6] = 0;
+    /* input AIPS sequence */
+    ObitInfoListGet(myInput, "inSeq", &type, dim, &Aseq, err);
+
+    /* if ASeq==0 want highest existing sequence */
+    if (Aseq<=0) {
+      Aseq = ObitAIPSDirHiSeq(disk, AIPSuser, Aname, Aclass, Atype, TRUE, err);
+      if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
+      /* Save on myInput*/
+      dim[0] = dim[1] = 1;
+      ObitInfoListAlwaysPut(myInput, "inSeq", OBIT_oint, dim, &Aseq);
+    }
+
+    /* Find catalog number */
+    cno = ObitAIPSDirFindCNO(disk, AIPSuser, Aname, Aclass, Atype, Aseq, err);
+    if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
+    
+    /* define object */
+    ObitUVSetAIPS (inData, nvis, disk, cno, AIPSuser, err);
+    if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
+    
+  } else if (!strncmp (Type, "FITS", 4)) {  /* FITS input */
+    /* input FITS file name */
+    if (ObitInfoListGetP(myInput, "inFile", &type, dim, (gpointer)&strTemp)) {
+      strncpy (inFile, strTemp, 128);
+    } else { 
+      strncpy (inFile, "No_Filename_Given", 128);
+    }
+    inFile[128] = 0;
+    ObitTrimTrail(inFile);  /* remove trailing blanks */
+    
+    /* input FITS disk */
+    ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
+
+    /* define object */
+    ObitUVSetFITS (inData, nvis, disk, inFile,  err); 
+    if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
+    
+  } else { /* Unknown type - barf and bail */
+    Obit_log_error(err, OBIT_Error, "%s: Unknown Data type %s", 
+                   pgmName, Type);
+    return inData;
+  }
+
   /* Make sure doCalSelect set properly */
+  doCalSelect = TRUE;
+  ObitInfoListGetTest(myInput, "doCalSelect",  &type, dim, &doCalSelect);
+  doCalib = -1;
+  ObitInfoListGetTest(myInput, "doCalib",  &type, dim, &doCalib);
+  doCalSelect = doCalSelect || (doCalib>0);
+  /* Always */
   doCalSelect = TRUE;
   ObitInfoListAlwaysPut (myInput, "doCalSelect", OBIT_bool, dim, &doCalSelect);
  
+
   /* Ensure inData fully instantiated and OK */
   ObitUVFullInstantiate (inData, TRUE, err);
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
-
-  /* MUST be Linear with 4 corelations */
-  Obit_retval_if_fail ((inData->myDesc->crval[inData->myDesc->jlocs]==-5.0), err,inData,
-		       "%s: input MUST be linear basis data", routine);  
-  Obit_retval_if_fail ((inData->myDesc->inaxes[inData->myDesc->jlocs]>=4), err,inData,
-		       "%s: input MUST have at least 4 Stokes, have  %d",  
-		       routine, inData->myDesc->inaxes[inData->myDesc->jlocs]);  
-
- 
-  /* Set number of vis per IO */
-  nvis = 1000;  /* How many vis per I/O? */
-  nvis =  ObitUVDescSetNVis (inData->myDesc, myInput, nvis);
-  dim[0] = dim[1] = dim[2] = dim[3] = 1;
-  ObitInfoListAlwaysPut (inData->info, "nVisPIO", OBIT_long, dim,  &nvis);
 
   /* Get input parameters from myInput, copy to inData */
   ObitInfoListCopyList (myInput, inData->info, dataParms);
@@ -656,9 +689,14 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 {
   ObitUV    *outUV = NULL;
   ObitInfoType type;
+  olong      i, n, Aseq, disk, cno;
+  gchar     *Type, *strTemp, outFile[129];
+  gchar     Aname[13], Aclass[7], *Atype = "UV";
   olong      nvis;
-  gboolean  btemp;
   gint32    dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gboolean  exist;
+  gchar     tname[129];
+  gchar     *FITS = "FITS";
   gchar     *outParms[] = {  /* Parameters for output data */
     "Compress", NULL};
   gchar     *routine = "setOutputData";
@@ -669,31 +707,98 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   g_assert (ObitInfoListIsA(myInput));
   g_assert (ObitUVIsA(inData));
 
-  /*  Output file not expected to exist */
-  dim[0] = 1; dim[1] = 1;
-  btemp = FALSE;
-  ObitInfoListAlwaysPut (myInput, "outExist", OBIT_bool, dim, &btemp);
-
-  /* Defaults set in digestInputs */
   /* Create basic output UV Object */
-  outUV = ObitUVFromFileInfo ("out", myInput, err);
+  g_snprintf (tname, 100, "output UV data");
+  outUV = newObitUV(tname);
     
-  /* Set buffer size */
-  nvis = 1000; type = OBIT_long;
-  ObitInfoListGetTest(inData->info, "nVisPIO", &type, dim, &nvis);
-  ObitInfoListAlwaysPut (outUV->info, "nVisPIO",  type, dim,  &nvis);
-    
-  /* Clone from input */
-  ObitUVClone (inData, outUV, err);
-  if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
+  /* Output File type - could be either AIPS or FITS */
+  ObitInfoListGetP (myInput, "outDType", &type, dim, (gpointer)&Type);
+  if ((Type==NULL) || (!strncmp(Type,"    ",4)))
+    ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
+  if ((Type==NULL) || (!strncmp(Type,"    ",4))) Type = FITS;
+  if (!strncmp (Type, "AIPS", 4)) { /* AIPS input */
 
-  /* Change to circular basis (RR, LL,RL,LR) */
-  outUV->myDesc->crval[outUV->myDesc->jlocs] = -1.0;
+    /* outName given? */
+    ObitInfoListGetP (myInput, "outName", &type, dim, (gpointer)&strTemp);
+    /* if not use inName */
+    if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12)))
+      ObitInfoListGetP (myInput, "inName", &type, dim, (gpointer)&strTemp);
+    for (i=0; i<12; i++) Aname[i] = ' ';  Aname[i] = 0;
+    for (i=0; i<MIN(12,dim[0]); i++) Aname[i] = strTemp[i];
+    /* Save any defaulting on myInput */
+    dim[0] = 12;
+    ObitInfoListAlwaysPut (myInput, "outName", OBIT_string, dim, Aname);
+
+      
+    /* output AIPS class */
+    if (ObitInfoListGetP(myInput, "outClass", &type, dim, (gpointer)&strTemp)) {
+      strncpy (Aclass, strTemp, 7);
+    } else { /* Didn't find */
+      strncpy (Aclass, "NoClas", 7);
+    }
+    /* Default out class is "SwPol" */
+    if (!strncmp(Aclass, "      ", 6)) strncpy (Aclass, "SwPol", 7);
+
+    /* input AIPS disk - default is outDisk */
+    ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
+    if (disk<=0)
+       ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
+    /* output AIPS sequence */
+    ObitInfoListGet(myInput, "outSeq", &type, dim, &Aseq, err);
+
+    /* if ASeq==0 create new, high+1 */
+    if (Aseq<=0) {
+      Aseq = ObitAIPSDirHiSeq(disk, AIPSuser, Aname, Aclass, Atype, FALSE, err);
+      if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
+      /* Save on myInput*/
+      dim[0] = dim[1] = 1;
+      ObitInfoListAlwaysPut(myInput, "outSeq", OBIT_oint, dim, &Aseq);
+    } 
+
+    /* Allocate catalog number */
+    cno = ObitAIPSDirAlloc(disk, AIPSuser, Aname, Aclass, Atype, Aseq, &exist, err);
+    if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
+    
+    /* define object */
+    nvis = 1000;
+    ObitUVSetAIPS (outUV, nvis, disk, cno, AIPSuser, err);
+    if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
+    Obit_log_error(err, OBIT_InfoErr, 
+		   "Making output AIPS UV data %s %s %d on disk %d cno %d",
+		   Aname, Aclass, Aseq, disk, cno);
+    
+  } else if (!strncmp (Type, "FITS", 4)) {  /* FITS output */
+
+    /* outFile given? */
+    ObitInfoListGetP (myInput, "outFile", &type, dim, (gpointer)&strTemp);
+    /* if not use inName */
+    if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12)))
+      ObitInfoListGetP (myInput, "inFile", &type, dim, (gpointer)&strTemp);
+    n = MIN (128, dim[0]);
+    for (i=0; i<n; i++) outFile[i] = strTemp[i]; outFile[i] = 0;
+    outFile[128] = 0;
+    ObitTrimTrail(outFile);  /* remove trailing blanks */
+
+    /* Save any defaulting on myInput */
+    dim[0] = strlen(outFile);
+    ObitInfoListAlwaysPut (myInput, "outFile", OBIT_string, dim, outFile);
+
+    /* output FITS disk */
+    ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
+    
+    /* define object */
+    nvis = 1000;
+    ObitUVSetFITS (outUV, nvis, disk, outFile, err);
+    if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
+    Obit_log_error(err, OBIT_InfoErr, 
+		   "Making output FITS UV data %s on disk %d", outFile, disk);
+    
+  } else { /* Unknown type - barf and bail */
+    Obit_log_error(err, OBIT_Error, "%s: Unknown Data type %s", 
+		   pgmName, Type);
+    return outUV;
+  }
   
-  /* Ensure outUV fully instantiated and OK */
-  ObitUVFullInstantiate (outUV, FALSE, err);
-  if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
-
   /* Get input parameters from myInput, copy to outUV */
   ObitInfoListCopyList (myInput, outUV->info, outParms);
   if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
@@ -703,7 +808,7 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 } /* end setOutputData */
 
 /*----------------------------------------------------------------------- */
-/*  Write History for Lin2Cir                                             */
+/*  Write History for SwaPol                                              */
 /*   Input:                                                               */
 /*      myInput   Input parameters on InfoList                            */
 /*      inData    ObitUV to copy history from                             */
@@ -711,21 +816,21 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 /*   Output:                                                              */
 /*      err    Obit Error stack                                           */
 /*----------------------------------------------------------------------- */
-void Lin2CirHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData, 
+void SwaPolHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData, 
 		   ObitErr* err)
 {
   ObitHistory *inHistory=NULL, *outHistory=NULL;
   gchar        hicard[81];
   gchar        *hiEntries[] = {
     "DataType", 
-    "inFile",  "inDisk", "inName", "inClass", "inSeq",
-    "FreqID", "BChan", "EChan", "BIF", "EIF", 
+    "inFile",  "inDisk", "inName", "inClass", "inSeq","timeRange","UVRange",
+    "FreqID", "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "Stokes", 
     "Sources",  "Qual", "souCode", "subA", "Antennas", 
     "doCalSelect", "doCalib", "gainUse", "doPol", "PDVer", "flagVer", 
     "doBand", "BPVer", "Smooth",  "corrType", 
     "outFile",  "outDisk",  "outName", "outClass", "outSeq", "Compress",
     NULL};
-  gchar *routine = "Lin2CirHistory";
+  gchar *routine = "SwaPolHistory";
 
   /* error checks */
   g_assert(ObitErrIsA(err));
@@ -761,330 +866,236 @@ void Lin2CirHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
   inHistory  = ObitHistoryUnref(inHistory);  /* cleanup */
   outHistory = ObitHistoryUnref(outHistory);
  
-} /* end Lin2CirHistory  */
-
-  /** Private: 4x4 complex matrix * 4x1 complex vector multiply */
-  static void MatxVec4Mult(ofloat in1[32], ofloat in2[8], ofloat out[8])
-{
-  olong ic, ii, n=4;
-  ofloat sumr, sumi;
-  for (ic=0; ic<4; ic++) {
-    sumr = sumi = 0.0;
-    for (ii=0; ii<4; ii++) {
-      sumr += in1[(ic*n+ii)*2]*in2[ii*2]   - in1[(ic*n+ii)*2+1]*in2[ii*2+1];
-      sumi += in1[(ic*n+ii)*2]*in2[ii*2+1] + in1[(ic*n+ii)*2+1]*in2[ii*2];
-    }
-    out[ic*2]   = sumr;
-    out[ic*2+1] = sumi;
-  }
-} /* end MatxVec4Mult */
-
-/** Private: Muller matrix from outer product of Jones matrices 
-   Supports blanking */
-static void MatxOuter(ofloat in1[8], ofloat in2[8], ofloat out[32])
-{
-  /* out = in1 (outer product) conjg(in2) */
-  out[0]  =  in1[0] * in2[0] + in1[1] * in2[1];  out[1]  =  in1[1] * in2[0] - in1[0] * in2[1];
-  out[2]  =  in1[0] * in2[2] + in1[1] * in2[3];  out[3]  =  in1[1] * in2[2] - in1[0] * in2[3];
-  out[4]  =  in1[2] * in2[0] + in1[3] * in2[1];  out[5]  =  in1[3] * in2[0] - in1[2] * in2[1];
-  out[6]  =  in1[2] * in2[2] + in1[3] * in2[3];  out[7]  =  in1[3] * in2[2] - in1[2] * in2[3];
-  
-  out[8]  =  in1[0] * in2[4] + in1[1] * in2[5];  out[9]  =  in1[1] * in2[4] - in1[0] * in2[5];
-  out[10] =  in1[0] * in2[6] + in1[1] * in2[7];  out[11] =  in1[1] * in2[6] - in1[0] * in2[7];
-  out[12] =  in1[2] * in2[4] + in1[3] * in2[5];  out[13] =  in1[3] * in2[4] - in1[2] * in2[5];
-  out[14] =  in1[2] * in2[6] + in1[3] * in2[7];  out[15] =  in1[3] * in2[6] - in1[2] * in2[7];
-  
-  out[16] =  in1[4] * in2[0] + in1[5] * in2[1];  out[17] =  in1[5] * in2[0] - in1[4] * in2[1];
-  out[18] =  in1[4] * in2[2] + in1[5] * in2[3];  out[19] =  in1[5] * in2[2] - in1[4] * in2[3];
-  out[20] =  in1[6] * in2[0] + in1[7] * in2[1];  out[21] =  in1[7] * in2[0] - in1[6] * in2[1];
-  out[22] =  in1[6] * in2[2] + in1[7] * in2[3];  out[23] =  in1[7] * in2[2] - in1[6] * in2[3];
-  
-  out[24] =  in1[4] * in2[4] + in1[5] * in2[5];  out[25] =  in1[5] * in2[4] - in1[4] * in2[5];
-  out[26] =  in1[4] * in2[6] + in1[5] * in2[7];  out[27] =  in1[5] * in2[6] - in1[4] * in2[7];
-  out[28] =  in1[6] * in2[4] + in1[7] * in2[5];  out[29] =  in1[7] * in2[4] - in1[6] * in2[5];
-  out[30] =  in1[6] * in2[6] + in1[7] * in2[7];  out[31] =  in1[7] * in2[6] - in1[6] * in2[7];
-  } /* end  MatxOuter */
+} /* end SwaPolHistory  */
 
 /**
- * Convert linear feed basis data to circular for vis record
- * \param Muller  Inverse Muller matrix
- * \param inData  input array of r, i, w for XX,YY,XY,YX for ncorr vis
- * \param outData output array of r, i, w for XX,YY,XY,YX for ncorr vis
- * \param ncorr   Number of correlations
+ * Copy a UV data object swapping Stokes correlations, conjugate cross hands.
+ * Data selection and calibration/editing are honored.
+ * NB: Tables are not swapped.
+ * The file etc. info should have been stored in the ObitInfoList:
+ * \li "doCalSelect" OBIT_boolean scalar if TRUE, calibrate/select/edit input data.
+ * \param in  Input UV data object
+ * \param out An existing Output UV data object.
+ * \param err Error stack, returns if not empty. err->error = 10 => No data
+ * \return pointer to the new object.
  */
-void ConvertL2C(ofloat Muller[32], ofloat *inData, ofloat *outData, olong ncorr)
-{
-  olong i, j;
-  ofloat *in=inData, *out=outData;
-  ofloat iV[8], oV[8],sum;
-  gboolean flag;
-
-  /* Loop over correlations */
-  for (i=0; i<ncorr-1; i++) {
-    /* anything flagged? -> zero all */
-    flag = FALSE;  for (j=0; j<12; j+=3) if (in[j+2]<=0.0) {flag = TRUE; break;}
-    if (flag) {
-      for (j=0; j<12; j++) out[j] = 0.0;
-      in += 12; out += 12;  /* update pointers */
-      continue;
-    }
-    /* Load input vector [XX,XY,YX,YY]*/
-    sum = 0.0;
-    for (j=0; j<4; j++) sum += in[j*3+2];
-    iV[0] = in[0]; iV[1] = in[1];
-    iV[2] = in[6]; iV[3] = in[7];
-    iV[4] = in[9]; iV[5] = in[10];
-    iV[6] = in[3]; iV[7] = in[4];
-
-    /* Multiply by inverse Muller matrix */
-    MatxVec4Mult(Muller, iV, oV);
-
-    /* unload output vector from [RR,RL,LR,LL] */
-    sum *= 0.25;
-    out[0] = oV[0]; out[1]  = oV[1]; out[2]  = sum;
-    out[3] = oV[6]; out[4]  = oV[7]; out[5]  = sum;
-    out[6] = oV[2]; out[7]  = oV[3]; out[8]  = sum;
-    out[9] = oV[4]; out[10] = oV[5]; out[11] = sum;
-    in += 12; out += 12;  /* update pointers */
-  } /* end loop over correlations */
-} /* end ConvertL2C */
-
-/* Nominal inverse of Jones matrix for perfect inear feed */
-void IJones(ofloat J[8])
-{
-  ofloat elp_x=0.0, elp_y=0.0, ori_x=0.0, ori_y=G_PI*0.5;
-  ofloat angle[4], sina[4], cosa[4], Jones[8] ,Det[2], d;
-
-  angle[0] = G_PI*0.25+elp_x; angle[1] = G_PI*0.25-elp_y;
-  angle[2] = ori_x;           angle[3] = ori_y;
-  ObitSinCosVec(4, angle, sina, cosa);
-  Jones[0] =  cosa[0]*cosa[2]; Jones[1] = -cosa[0]*sina[2];
-  Jones[2] =  sina[0]*cosa[2]; Jones[3] =  sina[0]*sina[2];
-  Jones[4] =  sina[1]*cosa[3]; Jones[5] = -sina[1]*sina[3];
-  Jones[6] =  cosa[1]*cosa[3]; Jones[7] =  cosa[1]*sina[3];
-  /* inverse of determinant */
-  Det[0] = (Jones[0]*Jones[6] - Jones[1]*Jones[7]) - (Jones[2]*Jones[4] - Jones[3]*Jones[5]);
-  Det[1] = (Jones[0]*Jones[7] + Jones[1]*Jones[6]) - (Jones[2]*Jones[5] + Jones[3]*Jones[4]);
-  /* Inverse of determinant */
-  d = Det[0]*Det[0] + Det[1]*Det[1];
-  if (d!=0.0) d = 1.0 / d;
-  else d = 1.0;
-  Det[0] *=  d;
-  Det[1] *= -d;
-  /* Inverse matrix out */
-  J[6] =   Jones[0] * Det[0] - Jones[1] * Det[1];
-  J[7] =   Jones[0] * Det[1] + Jones[1] * Det[0];
-  J[2] = -(Jones[2] * Det[0] - Jones[3] * Det[1]);
-  J[3] = -(Jones[2] * Det[1] + Jones[3] * Det[0]);
-  J[4] = -(Jones[4] * Det[0] - Jones[5] * Det[1]);
-  J[5] = -(Jones[4] * Det[1] + Jones[5] * Det[0]);
-  J[0] =   Jones[6] * Det[0] - Jones[7] * Det[1];
-  J[1] =   Jones[6] * Det[1] + Jones[7] * Det[0];
-} /* end IJones */
-
-/**
- *  Get Source List
- * \param   inUV       ObitUV with SU Table
- * \param   err        Obit Error stack
- * \return SourceList, should be Unrefed when done
- */
-ObitSourceList* GetSourceList (ObitUV* inUV, ObitErr* err)
-{
-  olong iver = 1;
-  ObitTableSU *SUTable=NULL;
-  ObitSourceList  *SList=NULL;
-  gchar *routine = "GetSourceList";
-
-  if (err->error) return SList;
-
-  SUTable = newObitTableSUValue ("SUTable", (ObitData*)inUV, &iver, 
-			       OBIT_IO_ReadOnly, 0, err);
-  if (SUTable) {
-    SList = ObitTableSUGetList (SUTable, err);
-    if (err->error) Obit_traceback_val (err, routine, SUTable->name, SList);
-    SUTable = ObitTableSUUnref(SUTable);   /* Done with table */
-  } else {  /* Use position from header */
-    SList = ObitSourceListCreate ("SList", 1);
-    SList->SUlist[0]->equinox = inUV->myDesc->equinox;
-    SList->SUlist[0]->RAMean  = inUV->myDesc->crval[inUV->myDesc->jlocr];
-    SList->SUlist[0]->DecMean = inUV->myDesc->crval[inUV->myDesc->jlocd];
-    /* Compute apparent position */
-    ObitPrecessUVJPrecessApp (inUV->myDesc, SList->SUlist[0]);
-  }
-  return SList;
-} /* end GetSourceList */
-
-/**
- * Convert linear feed basis data to circular for data file
- * \param inUV     Input uv data to convery
- *  Control parameter on info
- * \param outUV    Output uv dat
- * \param err      Error stack, returns if not empty.
- * \return the modified ObitUV.
- */
-ObitUV* ObitUVLin2Cir (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
+ObitUV* ObitSwaPol (ObitUV *in, ObitUV *out, ObitErr *err)
 {
   ObitIOCode iretCode, oretCode;
   gboolean doCalSelect;
-  olong i, j, indx, incs, icor, jndx;
   ObitInfoType type;
+  olong NPIO;
   gint32 dim[MAXINFOELEMDIM];
+  ObitHistory *inHist=NULL, *outHist=NULL;
+  olong count;
   ObitIOAccess access;
-  ObitUVDesc *inDesc, *outDesc;
-  ofloat J[8], Muller[32], tr, ti, gr=1.0, gi=0.0, PA, cosPA, sinPA;
-  ObitTableAN *ANTable=NULL;
-  olong ver, numIF=1, numOrb,  numPCal, ncorr;
-  olong suId=-1, lastSu=0;
-  ofloat lastTime=-1.0e-20, time;
-  ObitAntennaList *AntList=NULL;   /* Antenna list*/
-  ObitSourceList *SList=NULL;
-  gchar *routine = "ObitUVLin2Cir";
-  /* DEBUG 
-  ofloat ipol=1.234,qpol=0.01,upol=-0.2,vpol=0.05;*/
+  olong i, indx, jndx, nstok, nif, iif, nchan, ichan, incs, incf, incif;
+  ofloat bl, maxbl, maxw, *u, *v, *w, tr, ti, tw;
+  gchar *today=NULL;
+  gchar *routine = "ObitSwaPol";
  
   /* error checks */
-  g_assert (ObitErrIsA(err));
-  if (err->error) return outUV;
-  g_assert (ObitUVIsA(inUV));
-
-  /* Generate inverse Muller Matrix for conversion */
-  /* First, nominal inverse Jones */
-  IJones (J);
-  MatxOuter (J, J, Muller);
-
+  g_assert(ObitErrIsA(err));
+  if (err->error) return NULL;
+  g_assert (ObitUVIsA(in));
+  if (out) g_assert (ObitUVIsA(out));
+  Obit_retval_if_fail((in!=out), err, out,
+ 		      "%s: input and output are the same", routine);
+  
   /* Clone output from input */
-  ObitUVClone (inUV, outUV, err);
-  if (err->error) Obit_traceback_val (err, routine, inUV->name, inUV);
+  ObitUVClone (in, out, err);
+  if (err->error) Obit_traceback_val (err, routine, in->name, out);
 
-  /* Selection of input? */
   doCalSelect = FALSE;
-  ObitInfoListGetTest(inUV->info, "doCalSelect", &type, (gint32*)dim, &doCalSelect);
+  ObitInfoListGetTest(in->info, "doCalSelect", &type, (gint32*)dim, &doCalSelect);
   if (doCalSelect) access = OBIT_IO_ReadCal;
   else access = OBIT_IO_ReadOnly;
 
-  /* Open Files  */
-  iretCode = ObitUVOpen (inUV, access, err);
-  oretCode = ObitUVOpen (outUV, OBIT_IO_WriteOnly, err);
+  /* if output has file designated, copy data */
+  /* test open to fully instantiate input and see if it's OK */
+  in->bufferSize = MAX (0, in->bufferSize); /* need buffer */
+  iretCode = ObitUVOpen (in, access, err);
   if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
-    Obit_traceback_val (err, routine,inUV->name, outUV);
-  /* Change to circular basis (RR, LL,RL,LR) */
-  outUV->myDesc->crval[outUV->myDesc->jlocs] = -1.0;
-  
+    Obit_traceback_val (err, routine,in->name, out);
+
+  /* copy Descriptor - this time with full information */
+  out->myDesc = ObitUVDescCopy(in->myDesc, out->myDesc, err);
+  /* Creation date today */
+  today = ObitToday();
+  strncpy (out->myDesc->date, today, UVLEN_VALUE-1);
+  if (today) g_free(today);
  
-  /* Get descriptors */
-  inDesc  = inUV->myDesc;
-  incs    = inDesc->incs;
-  ncorr   = inDesc->ncorr/inDesc->inaxes[inDesc->jlocs];
-  outDesc = outUV->myDesc;
+  /* Copy number of records per IO to output */
+  NPIO = 1000;
+  type = OBIT_long;
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  ObitInfoListGetTest   (in->info,  "nVisPIO", &type,      dim,  &NPIO);
+  ObitInfoListAlwaysPut (out->info, "nVisPIO",  type, dim,  &NPIO);
 
-  /* Get antenna list */
-  /* Create output Antenna table object */
-  ver      = 1;   numOrb   = 0;   numPCal  = 0;
-  ANTable = newObitTableANValue ("AN table", (ObitData*)outUV, 
-				 &ver, OBIT_IO_ReadOnly, numIF, numOrb, numPCal, err);
-  if (ANTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with AN table");
-  AntList = ObitTableANGetList (ANTable, err);
-  if (err->error) Obit_traceback_val (err, routine, outUV->name, outUV);
+  /* use same data buffer on input and output 
+     so don't assign buffer for output */
+  if (out->buffer) ObitIOFreeBuffer(out->buffer); /* free existing */
+  out->buffer = NULL;
+  out->bufferSize = -1;
 
-  /* Get Source List */
-  SList = GetSourceList (inUV, err);
-  if (err->error) Obit_traceback_val (err, routine, outUV->name, outUV);
-  if (inDesc->ilocsu<0) {
-    /* May have selected one source */
-    if (inUV->mySel->selectSources && (inUV->mySel->numberSourcesList==1)) 
-         suId = inUV->mySel->sources[0];
-    else suId = 1;
+  /* test open output */
+  oretCode = ObitUVOpen (out, OBIT_IO_WriteOnly, err);
+  /* If this didn't work try OBIT_IO_ReadWrite */
+  if ((oretCode!=OBIT_IO_OK) || (err->error)) {
+    ObitErrClear(err);
+    oretCode = ObitUVOpen (out, OBIT_IO_ReadWrite, err);
   }
- 
-  /* we're in business, convert */
+  /* if it didn't work bail out */
+  if ((oretCode!=OBIT_IO_OK) || (err->error)) {
+    /* unset output buffer (may be multiply deallocated) */
+    out->buffer = NULL;
+    out->bufferSize = 0;
+    return out;
+  }
+
+   /* Set up for parsing data */
+  nchan = in->myDesc->inaxes[in->myDesc->jlocf];
+  if (in->myDesc->jlocif>=0) nif = in->myDesc->inaxes[in->myDesc->jlocif];
+  else nif = 1;
+  if (in->myDesc->jlocs>=0) nstok = in->myDesc->inaxes[in->myDesc->jlocs];
+  else nstok = 1;
+  /* get increments */
+  incs  = in->myDesc->incs;
+  incf  = in->myDesc->incf;
+  incif = in->myDesc->incif;
+  /* Make sure at least 2 Stokes correlations */
+  Obit_retval_if_fail ((nstok>=2), err, out,
+		       "%s: MUST have at least 2 Stokes, have  %d",  
+		       routine, nstok);  
+
+
+  /* reset to beginning of uv data */
+  iretCode = ObitIOSet (in->myIO, in->info, err);
+  oretCode = ObitIOSet (out->myIO, in->info, err);
+  if (err->error) Obit_traceback_val (err, routine, in->name, out);
+
+  /* No data in output yet */
+  ((ObitUVDesc*)out->myIO->myDesc)->nvis = 0;
+  out->myDesc->nvis = 0;
+
+  /* Close and reopen input to init calibration which will have been disturbed 
+     by the table copy */
+  iretCode = ObitUVClose (in, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
+    Obit_traceback_val (err, routine,in->name, out);
+
+  iretCode = ObitUVOpen (in, access, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
+    Obit_traceback_val (err, routine,in->name, out);
+
+  /* Make sure out frequencies up to date */
+  ObitUVGetFreq (out, err);
+  if (err->error) Obit_traceback_val (err, routine,in->name, out);
+
+  /* we're in business, copy */
+  count = 0;
+  maxbl = -1.0;
+  maxw  = -1.0;
   while ((iretCode==OBIT_IO_OK) && (oretCode==OBIT_IO_OK)) {
-    if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
-    else iretCode = ObitUVRead (inUV, inUV->buffer, err);
+    if (doCalSelect) iretCode = ObitUVReadSelect (in, in->buffer, err);
+    else iretCode = ObitUVRead (in, in->buffer, err);
     if (iretCode!=OBIT_IO_OK) break;
 
-    /* Loop over buffer */
-    outDesc->numVisBuff = 0 /* no. vis in buffer */;
-    for (i=0; i<inDesc->numVisBuff; i++) { /* loop over buffer */
-      indx = i*inDesc->lrec;  /* Data offset */
-      /* Copy random parameters */
-      for (j=0; j<inDesc->nrparm; j++) outUV->buffer[indx+j] = inUV->buffer[indx+j];
-
-      /* source/time */
-      if (inDesc->ilocsu>0) suId = (olong)(0.5 + inUV->buffer[indx+inDesc->ilocsu]);
-      time = inUV->buffer[indx+inDesc->iloct];
-      indx += inDesc->nrparm;
-
-      /* New source/time? */
-      if ((time>lastTime) || (suId!=lastSu)) {
-	/* Parallactic angle  - assume EVLA */
-	PA = ObitAntennaListParAng (AntList, 1, time, SList->SUlist[suId-1]);
-	lastTime = time; lastSu = suId;
-	cosPA = cos(PA); sinPA = sin(PA);
-	/* cos(2PA), sin(2PA) */
-	gr = cosPA * cosPA - sinPA * sinPA;
-	gi = cosPA * sinPA + sinPA * cosPA; 
-	/* DEBUG - place to put break point */
-	if (time>(2.5/24.)) {
-	  PA = 0.0;
-	} /* End DEBUG */
-	/* DEBUG 
-	gr = 1.0;
-	gi = 0.0;*/
-     }
-      /* DEBUG
-      inUV->buffer[indx+0] = ipol + qpol*cos(2*PA) + upol*sin(2*PA);
-      inUV->buffer[indx+1] = 0.0;
-      inUV->buffer[indx+3] = ipol - qpol*cos(2*PA) - upol*sin(2*PA);
-      inUV->buffer[indx+4] = 0.0;
-      inUV->buffer[indx+6] = -qpol*sin(2*PA) + upol*cos(2*PA);
-      inUV->buffer[indx+7] = vpol;
-      inUV->buffer[indx+9]  = -qpol*sin(2*PA) + upol*cos(2*PA);
-      inUV->buffer[indx+10] = -vpol; */
-      /* end DEBUG */
-      /* Convert vis to circular */
-      ConvertL2C(Muller, &inUV->buffer[indx], &outUV->buffer[indx], ncorr);
+    /* Baseline statistics */
+    u   = in->buffer+in->myDesc->ilocu;
+    v   = in->buffer+in->myDesc->ilocv;
+    w   = in->buffer+in->myDesc->ilocw;
+    for (i=0; i<in->myDesc->numVisBuff; i++) { /* loop over buffer */
+      indx = in->myDesc->nrparm + i*in->myDesc->lrec;
+       /* Get statistics */
+      bl = ((*u)*(*u) + (*v)*(*v));
+      maxbl = MAX (maxbl, bl);
+      maxw = MAX (fabs(*w), maxw);
       
-      /* Parallactic angle correction */
-      jndx = indx;
-      for (icor=0; icor<ncorr; icor++) {
-	/* Correct RL */
-	tr = outUV->buffer[jndx+2*incs];  
-	ti = outUV->buffer[jndx+2*incs+1];
-	outUV->buffer[jndx+2*incs]   = tr * gr - ti * gi;
-	outUV->buffer[jndx+2*incs+1] = ti * gr + tr * gi;
-	
-	/* Correct LR */
-	tr = outUV->buffer[jndx+3*incs];
-	ti = outUV->buffer[jndx+3*incs+1];
-	outUV->buffer[jndx+3*incs]   = tr * gr + ti * gi;
-	outUV->buffer[jndx+3*incs+1] = ti * gr - tr * gi;
-	jndx += 12;
-      } /* end loop over correlation */
-      outDesc->numVisBuff += 1;  /* count in buffer */
+      /* loop over IF */
+      for (iif=0; iif<nif; iif++) {
+	/* Loop over frequency channel */
+	for (ichan=0; ichan<nchan; ichan++) { 
+	  jndx = indx + iif*incif + ichan*incf;
+	  /* Swap parallel hands */
+	  tr = in->buffer[jndx+0];
+	  ti = in->buffer[jndx+1];
+	  tw = in->buffer[jndx+2];
+	  in->buffer[jndx+0] = in->buffer[jndx+incs+0];
+	  in->buffer[jndx+1] = in->buffer[jndx+incs+1];
+	  in->buffer[jndx+2] = in->buffer[jndx+incs+2];
+	  in->buffer[jndx+incs+0] = tr;
+	  in->buffer[jndx+incs+1] = ti;
+	  in->buffer[jndx+incs+2] = tw;
+	  /* Swap/conjugate cross hands */
+	  if (nstok==4) {
+	    tr = in->buffer[jndx+2*incs+0];
+	    ti = in->buffer[jndx+2*incs+01];
+	    tw = in->buffer[jndx+2*incs+02];
+	    in->buffer[jndx+2*incs+0] =  in->buffer[jndx+3*incs+0];
+	    in->buffer[jndx+2*incs+1] = -in->buffer[jndx+3*incs+1];
+	    in->buffer[jndx+2*incs+2] =  in->buffer[jndx+3*incs+2];
+	    in->buffer[jndx+3*incs+0] =  tr;
+	    in->buffer[jndx+3*incs+1] = -ti;
+	    in->buffer[jndx+3*incs+2] =  tw;
+	  }
+	} /* end loop over channels */
+      } /* end loop over IFs */
+      /* update u,v,w pointers */
+      u += in->myDesc->lrec;
+      v += in->myDesc->lrec;
+      w += in->myDesc->lrec;
+      /* Loop over correlations */
     } /* end loop over buffer */
-    /* Write */
-    oretCode = ObitUVWrite (outUV, outUV->buffer, err);
-    if (err->error) goto cleanup;
-  } /* end loop over file */
-  ObitErrLog(err); 
- cleanup:
-  /* Cleanup */
-  AntList  = ObitAntennaListUnref(AntList);
-  ANTable = ObitTableANUnref(ANTable);  
-   
+
+   /* How many */
+    out->myDesc->numVisBuff = in->myDesc->numVisBuff;
+    count += out->myDesc->numVisBuff;
+    oretCode = ObitUVWrite (out, in->buffer, err);
+  }
+  
+  /* Save baseline statistics in the descriptor */
+  in->myDesc->maxBL  = sqrt(fabs(maxbl));
+  in->myDesc->maxW   = maxw;
+  out->myDesc->maxBL = sqrt(fabs(maxbl));
+  out->myDesc->maxW  = maxw;
+
   /* check for errors */
   if ((iretCode > OBIT_IO_EOF) || (oretCode > OBIT_IO_EOF) ||
       (err->error)) /* add traceback,return */
-    Obit_traceback_val (err, routine,inUV->name, outUV);
+    Obit_traceback_val (err, routine,in->name, out);
   
-   /* close files */
-  iretCode = ObitUVClose (inUV, err);
-  if ((iretCode!=OBIT_IO_OK) || (err->error)) 
-    Obit_traceback_val (err, routine, inUV->name, outUV);
-  
-  oretCode = ObitUVClose (outUV, err);
-  if ((oretCode!=OBIT_IO_OK) || (err->error))
-    Obit_traceback_val (err, routine, outUV->name, outUV);
+  /* Copy any history  unless Scratch */
+  if (!in->isScratch && !out->isScratch) {
+    inHist  = newObitDataHistory((ObitData*)in, OBIT_IO_ReadOnly, err);
+    outHist = newObitDataHistory((ObitData*)out, OBIT_IO_WriteOnly, err);
+    outHist = ObitHistoryCopy (inHist, outHist, err);
+    if (err->error) Obit_traceback_val (err, routine, in->name, out);
+    inHist  = ObitHistoryUnref(inHist);
+    outHist = ObitHistoryUnref(outHist);
+  }
 
- return outUV;
-  } /* end ObitUVLin2Cir */
+  /* unset input buffer (may be multiply deallocated ;'{ ) */
+  out->buffer = NULL;
+  out->bufferSize = 0;
+
+  /* close files */
+  oretCode = ObitUVClose (out, err);
+  if ((oretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
+    Obit_traceback_val (err, routine,out->name, out);
+
+  /* close input */
+  iretCode = ObitUVClose (in, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
+    Obit_traceback_val (err, routine,in->name, out);
+  
+  /* Make sure something copied - if there is anything to copy - err->error = 10 */
+  if (!((count>0) || (in->myDesc->nvis<=0))) {
+    Obit_log_error(err, OBIT_Error, "%s: NO Data copied for %s", routine, in->name);
+    err->error = 10;
+    return out;
+  }
+  
+  return out;
+} /* end ObitSwaPol */
+

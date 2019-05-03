@@ -3683,10 +3683,8 @@ extern int ImagefullInstantiate (ObitImage* in, int access, ObitErr *err) {
   laccess = OBIT_IO_ReadOnly;
   if (access==2) laccess = OBIT_IO_WriteOnly;
   else if (access==3) laccess = OBIT_IO_ReadWrite;
-  in->extBuffer = TRUE;  /* Don't need to assign buffer here */
   ret = ObitImageOpen (in, laccess, err);
   ret = ObitImageClose (in, err);
-  in->extBuffer = FALSE;  /* May need buffer later */
   if ((err->error) || (ret!=OBIT_IO_OK)) return 1;
   else return 0;
 } // end ImagefullInstantiate
@@ -10659,7 +10657,7 @@ extern  PyObject *TableReadRow (ObitTable *in, int rowno,
       cdata = ((gchar*)row->myRowData)+desc->offset[i];
        /* null terminate string */
       ctemp = g_malloc0(desc->dim[i][0]+1);
-      for (j=0; j<desc->repeat[i]/MAX (1,desc->dim[i][0]); j++) {
+      for (j=0; j<desc->repeat[i]/MAX (1,MAX(desc->dim[i][0],desc->dim[i][1])); j++) {
         for (k=0; k<desc->dim[i][0]; k++) ctemp[k] = cdata[k];  ctemp[k] = 0;
         PyList_SetItem(list, j, PyString_InternFromString(ctemp));
 	cdata += desc->dim[i][0];
@@ -10828,7 +10826,7 @@ extern int TableWriteRow (ObitTable *in, int rowno, PyObject *inDict,
       if (bad) break;
       cdata = ((gchar*)row->myRowData)+desc->offset[i];
       /* null terminate string */
-      for (j=0; j<desc->repeat[i]/MAX (1,desc->dim[i][0]); j++) {
+      for (j=0; j<desc->repeat[i]/MAX (1,MAX(desc->dim[i][0],desc->dim[i][1])); j++) {
         ctemp = PyString_AsString(PyList_GetItem(list, j));
         for (k=0; k<strlen(ctemp); k++) cdata[k] = ctemp[k];
 	cdata += desc->dim[i][0];

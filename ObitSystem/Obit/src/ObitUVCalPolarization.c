@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2016                                          */
+/*;  Copyright (C) 2003-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -163,6 +163,9 @@ void ObitUVCalPolarizationInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
   /* Are the data from circular or linear feeds */
   me->circFeed = desc->crval[desc->jlocs] > -4.0;
 
+  /* Is this MeerKAT data? */
+  me->isMeerKAT = !strncmp(in->antennaLists[0]->ArrName, "MeerKAT", 7);
+
 } /*  end ObitUVCalPolarizationInit */
 
 /**
@@ -244,6 +247,24 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
     ObitUVCalPolarizationUpdate(me, in, cal, time, SourID, SubA, FreqID, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
+  /* parallactic angle  - not for circular 'ori-eli' and 'vlbi' */
+  if ((me->polType==OBIT_UVPoln_ELORI && me->circFeed) || 
+      (me->polType==OBIT_UVPoln_VLBI)) {
+    gr = 1.0;
+    gi = 0.0;
+  } else if (me->polType==OBIT_UVPoln_ELORI && !me->circFeed) { /* Linear feeds */
+    /* Correct for parallactic angle */
+    gr = me->curCosPA[ia1] * me->curCosPA[ia2] - me->curSinPA[ia1] * me->curSinPA[ia2];
+    gi = me->curCosPA[ia1] * me->curSinPA[ia2] + me->curSinPA[ia1] * me->curCosPA[ia2]; 
+  } else { /* others - need parallactic angle correction */
+    gr = me->curCosPA[ia1] * me->curCosPA[ia2] - me->curSinPA[ia1] * me->curSinPA[ia2];
+    gi = me->curCosPA[ia1] * me->curSinPA[ia2] + me->curSinPA[ia1] * me->curCosPA[ia2];
+  }
+  /* DEBUG - place to put break point */
+  if (time>(2.5/24.)) {
+    gr1 = gr; gi1 = gi;
+  } /* End DEBUG */
+      
   /* Use central frequency channel, each IF */
   iChan = 0.5 * (in->bChan + in->eChan);
 
@@ -404,20 +425,6 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
       /* Done if in->numStok < 4) */
       if (in->numStok < 4) {choff += 32; continue;}
       
-      /* parallactic angle  - not for circular 'ori-eli' and 'vlbi' */
-      if ((me->polType==OBIT_UVPoln_ELORI && me->circFeed) || 
-	  (me->polType==OBIT_UVPoln_VLBI)) {
-	gr = 1.0;
-	gi = 0.0;
-      } else if (me->polType==OBIT_UVPoln_ELORI && !me->circFeed) { /* Linear feeds */
-	/* Correct for parallactic angle */
-	gr = me->curCosPA[ia1] * me->curCosPA[ia2] - me->curSinPA[ia1] * me->curSinPA[ia2];
-	gi = me->curCosPA[ia1] * me->curSinPA[ia2] + me->curSinPA[ia1] * me->curCosPA[ia2]; 
-      } else { /* others - need parallactic angle correction */
-	gr = me->curCosPA[ia1] * me->curCosPA[ia2] - me->curSinPA[ia1] * me->curSinPA[ia2];
-	gi = me->curCosPA[ia1] * me->curSinPA[ia2] + me->curSinPA[ia1] * me->curCosPA[ia2];
-      }
-      
       /* correct RL,LR for parallactic angle and ionospheric Faraday rotation: */
       if (cal!=NULL) {
 	loff = (iif - 1) * cal->numLambda + ifreq - 1;
@@ -429,6 +436,9 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
       } else {
 	gr1 = gr;
 	gi1 = gi;
+	/* DEBUG 
+	gr = 1.0;
+	gi = 0.0;*/
       }
       
       /* Correct RL */
@@ -539,8 +549,8 @@ static void ObitUVCalPolarizationUpdate (ObitUVCalPolarizationS *in, ObitUVCal *
 					 ObitErr *err)
 {
   olong sid, ichan, i;
-  odouble Dec, ArrLong, ArrLat, AntLst, HrAng;
   ofloat PA;
+  odouble Dec;
   ObitAntennaList *Ant;
   gchar *routine="ObitUVCalPolarizationUpdate";
 
@@ -570,39 +580,13 @@ static void ObitUVCalPolarizationUpdate (ObitUVCalPolarizationS *in, ObitUVCal *
 
   /* Parallactic angles */
   Ant = UVCal->antennaLists[SubA-1];
-  /* VLA all the same */
-  if (Ant->isVLA ) {
-    ArrLong = Ant->ANlist[0]->AntLong;
-    ArrLat  = Ant->ANlist[0]->AntLat;
-    AntLst = Ant->GSTIAT0 + ArrLong + time*Ant->RotRate;
-    HrAng = AntLst - in->curRA;
-    PA = atan2 (cos (ArrLat) * sin (HrAng), 
-		(sin (ArrLat) * in->curCosDec - cos (ArrLat) * in->curSinDec * cos(HrAng)));
-    for (i=0; i<Ant->number; i++) {
-      in->curPA[i]    = PA;
-      in->curCosPA[i] = cos(PA);
-      in->curSinPA[i] = sin(PA);
-    }
-  } else { /* Not VLA - calculate each */
-    for (i=0; i<Ant->number; i++) {
-      /* Alt-Az mount and Valid data? */
-      if ((Ant->ANlist[i]->AntID>0) && (Ant->ANlist[i]->AntMount==0)) {
-	ArrLong = Ant->ANlist[i]->AntLong;
-	ArrLat  = Ant->ANlist[i]->AntLat;
-	AntLst  = Ant->GSTIAT0 + ArrLong + time*Ant->RotRate;
-	HrAng   = AntLst - in->curRA;
-	PA = atan2 (cos (ArrLat) * sin (HrAng), 
-		    (sin (ArrLat) * in->curCosDec - cos (ArrLat) * in->curSinDec * cos(HrAng)));
-	in->curPA[i]    = PA; 
-	in->curCosPA[i] = cos(PA);
-	in->curSinPA[i] = sin(PA);
-      } else { /* Not alt-az or no data */
-	in->curPA[i]    = 0.0;
-	in->curCosPA[i] = 1.0;
-	in->curSinPA[i] = 0.0;
-      }
-    }
-  } /* end non-VLA */
+  for (i=0; i<Ant->number; i++) {
+    sid = MAX (1, SourID) - 1;
+    PA = ObitAntennaListParAng(Ant, i, time, UVCal->sourceList->SUlist[sid]);
+    in->curPA[i]    = PA;
+    in->curCosPA[i] = cos(PA);
+    in->curSinPA[i] = sin(PA);
+  }
 
   /* Set inverse Jones matrices if needed */
   /* Do if first time, new subarray or not simple VLA style linear approximation. */
@@ -710,7 +694,7 @@ static void LinPolCh(ObitUVCalPolarizationS *in, ObitUVCal *UVCal,
   ia2   = iant2 - 1;
   nch   = in->eChan - in->bChan + 1;
   PCal  = in->PCal;
-  for (iif= in->bIF; iif<=in->eIF; iif++) { /* loop 400 */
+   for (iif= in->bIF; iif<=in->eIF; iif++) { /* loop 400 */
     /* Loop over channel */
     for (ich=in->bChan; ich<=in->eChan; ich++) {
       kndx = 4*((iif-1)*nch + (ich-1));
@@ -1209,6 +1193,15 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
 	    if (in->Jones[ia][jndx]!=0.0) return;  /* Already done? */
 	    angle[0] = G_PI*0.25+elp_r; angle[1] = G_PI*0.25-elp_l;
 	    angle[2] = ori_r;           angle[3] = ori_l;
+	    /* Seems to be needed for MeerKAT */
+	    if (in->isMeerKAT) {
+	      angle[0] = G_PI*0.25-elp_l; angle[1] = G_PI*0.25+elp_r; 
+	      angle[2] = ori_l;           angle[3] = ori_r;
+	      /* DEBUG
+	      angle[0] = G_PI*0.25+0.0; angle[1] = G_PI*0.25-0.0;
+	      angle[2] = 0.0;           angle[3] = G_PI*0.5; */
+	      
+	    }
 	    ObitSinCosVec(4, angle, sina, cosa);
 	    Jones[0] =  cosa[0]*cosa[2]; Jones[1] = -cosa[0]*sina[2];
 	    Jones[2] =  sina[0]*cosa[2]; Jones[3] =  sina[0]*sina[2];
@@ -1330,14 +1323,35 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
      } /* end doJones */
       /* invert matrix if valid */
       if (Jones[0]!=fblank) {
-	in->Jones[ia][jndx+6] =   Jones[0] * Det[0] - Jones[1] * Det[1];
-	in->Jones[ia][jndx+7] =   Jones[0] * Det[1] + Jones[1] * Det[0];
-	in->Jones[ia][jndx+2] = -(Jones[2] * Det[0] - Jones[3] * Det[1]);
-	in->Jones[ia][jndx+3] = -(Jones[2] * Det[1] + Jones[3] * Det[0]);
-	in->Jones[ia][jndx+4] = -(Jones[4] * Det[0] - Jones[5] * Det[1]);
-	in->Jones[ia][jndx+5] = -(Jones[4] * Det[1] + Jones[5] * Det[0]);
-	in->Jones[ia][jndx+0] =   Jones[6] * Det[0] - Jones[7] * Det[1];
-	in->Jones[ia][jndx+1] =   Jones[6] * Det[1] + Jones[7] * Det[0];
+	/* Seems to be needed for MeerKAT */
+	if (in->isMeerKAT) {
+	  /* Actually the same */
+	  in->Jones[ia][jndx+6] =   Jones[0] * Det[0] - Jones[1] * Det[1];
+	  in->Jones[ia][jndx+7] =   Jones[0] * Det[1] + Jones[1] * Det[0];
+	  in->Jones[ia][jndx+2] = -(Jones[2] * Det[0] - Jones[3] * Det[1]);
+	  in->Jones[ia][jndx+3] = -(Jones[2] * Det[1] + Jones[3] * Det[0]);
+	  in->Jones[ia][jndx+4] = -(Jones[4] * Det[0] - Jones[5] * Det[1]);
+	  in->Jones[ia][jndx+5] = -(Jones[4] * Det[1] + Jones[5] * Det[0]);
+	  in->Jones[ia][jndx+0] =   Jones[6] * Det[0] - Jones[7] * Det[1];
+	  in->Jones[ia][jndx+1] =   Jones[6] * Det[1] + Jones[7] * Det[0];
+	  /*in->Jones[ia][jndx+0] = -(Jones[2] * Det[0] - Jones[3] * Det[1]);
+	    in->Jones[ia][jndx+1] = -(Jones[2] * Det[1] + Jones[3] * Det[0]);
+	    in->Jones[ia][jndx+2] =   Jones[6] * Det[0] - Jones[7] * Det[1];
+	    in->Jones[ia][jndx+3] =   Jones[6] * Det[1] + Jones[7] * Det[0];
+	    in->Jones[ia][jndx+4] =   Jones[0] * Det[0] - Jones[1] * Det[1];
+	    in->Jones[ia][jndx+5] =   Jones[0] * Det[1] + Jones[1] * Det[0];
+	    in->Jones[ia][jndx+6] = -(Jones[4] * Det[0] - Jones[5] * Det[1]);
+	    in->Jones[ia][jndx+7] = -(Jones[4] * Det[1] + Jones[5] * Det[0]);*/
+	} else { /* Not MeerKAT */
+	  in->Jones[ia][jndx+6] =   Jones[0] * Det[0] - Jones[1] * Det[1];
+	  in->Jones[ia][jndx+7] =   Jones[0] * Det[1] + Jones[1] * Det[0];
+	  in->Jones[ia][jndx+2] = -(Jones[2] * Det[0] - Jones[3] * Det[1]);
+	  in->Jones[ia][jndx+3] = -(Jones[2] * Det[1] + Jones[3] * Det[0]);
+	  in->Jones[ia][jndx+4] = -(Jones[4] * Det[0] - Jones[5] * Det[1]);
+	  in->Jones[ia][jndx+5] = -(Jones[4] * Det[1] + Jones[5] * Det[0]);
+	  in->Jones[ia][jndx+0] =   Jones[6] * Det[0] - Jones[7] * Det[1];
+	  in->Jones[ia][jndx+1] =   Jones[6] * Det[1] + Jones[7] * Det[0];
+	}
       } else { /* bad */
         for (i=0; i<8; i++) in->Jones[ia][jndx+i] = fblank;
       }
@@ -1363,6 +1377,7 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
 } /* end MatxVec4Mult */
 
 /** Private: Muller matrix from outer product of Jones matrices 
+    conjugate the second argument 
    Supports blanking */
 static void MatxOuter(ofloat* in1, ofloat* in2, ofloat* out)
 {

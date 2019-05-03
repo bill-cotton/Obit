@@ -5426,8 +5426,8 @@ void ObitImageUtilT2Spec  (ObitImage *inImage, ObitImage **outImage,
 		   routine, (*outImage)->name);
     return;
   }
-  /* Relabel output frequency axis */
-  strncpy((*outImage)->myDesc->ctype[(*outImage)->myDesc->jlocf], "FREQ    ", 8);
+  /* Relabel output frequency axis NO!
+     strncpy((*outImage)->myDesc->ctype[(*outImage)->myDesc->jlocf], "FREQ    ", 8); */
 
   /* Cleanup output Descriptor list */
   (*outImage)->myDesc->info = ObitInfoListUnref((*outImage)->myDesc->info);

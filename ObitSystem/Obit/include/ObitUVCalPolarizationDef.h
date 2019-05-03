@@ -73,6 +73,8 @@ typedef struct {
   gboolean allStokes;
   /** Are array feeds circularly polarized (else linear) */
   gboolean circFeed;
+  /** Is this MeerKAT data? */
+  gboolean isMeerKAT;
   /** Current source ID, -1 => single source */
   olong curSourID;
   /** Current Subarray */

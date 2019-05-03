@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2017                                          */
+/*;  Copyright (C) 2003-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -320,8 +320,8 @@ ofloat ObitAntennaListAz (ObitAntennaList *inAList, olong ant,
 
   /* Compute azimuth */
   darg  = sin(decr)*cos(alat) - cos(decr)*sin(alat)*cos(ha);
-  darg2 = cos(decr) * sin(ha);
-  daz = atan2 (darg, darg2);
+  darg2 = -cos(decr) * sin(ha);
+  daz = atan2 (darg2, darg);
   daz = fmod (daz, (2.0*G_PI));
   if (daz<0.0) daz += 2.0*G_PI;
   az = (ofloat)daz;
@@ -341,22 +341,29 @@ ofloat ObitAntennaListParAng (ObitAntennaList *inAList, olong ant,
 			      ofloat time, ObitSource *Source)
 {
   ofloat parAng = 0.0;
-  ofloat decr, gst, lst, ha, along, alat, arg;
+  ofloat decr, gst, lst, ha, along, alat, arg, t1, t2;
   olong i, iant;
+  gboolean isMeerKAT=FALSE;
+
   /* If EVLA - all should have ~ same PA */
   if (inAList->isVLA) {
     alat  =   34.0787492*DG2RAD; /* VLA Latitude */
     along = -107.618283*DG2RAD;  /* VLA Longitude */
   } else { /* Not EVLA */
+    /* Trap MeerKAT */
+    isMeerKAT = !strncmp(inAList->ArrName, "MeerKAT", 7);
     /* Find antenna in list */
     iant = 0;
     for (i=0; i<inAList->number; i++) {
       if (inAList->ANlist[i]->AntID==ant) {iant = i; break;}
     }
     
-    /* antenna location */
-    alat  = inAList->ANlist[iant]->AntLat;
-    along = inAList->ANlist[iant]->AntLong;
+    /* Alt-Az mount and Valid data? */
+    if ((inAList->ANlist[iant]->AntID>0) && (inAList->ANlist[iant]->AntMount==0)) {
+      /* antenna location */
+      alat  = inAList->ANlist[iant]->AntLat;
+      along = inAList->ANlist[iant]->AntLong;
+    } else return 0.0; /* Not alt-az or no data */
   } /* end not EVLA */
 
   /* declination in radians */
@@ -373,10 +380,13 @@ ofloat ObitAntennaListParAng (ObitAntennaList *inAList, olong ant,
 
   /* old (wrong?)  parAng = atan2 (cos(alat) * sin(ha), 
      (sin(alat)*cos(decr) - cos(alat)*sin(decr)*cos(ha)));*/
-  arg = cos(alat)*sin(ha) / (sin(alat)*cos(decr)-cos(alat)*sin(decr)*cos(ha));
+  t1 = cos(alat) * sin(ha); t2 = (sin(alat)*cos(decr) - cos(alat)*sin(decr)*cos(ha));
+  /*parAng = atan2 (t1, t2);*/
+  arg = t1/t2;
   parAng = atan(arg);
   if ((decr>alat) && (ha<0.0) && (arg<0.0)) parAng += G_PI;
   if ((decr>alat) && (ha>0.0) && (arg>0.0)) parAng -= G_PI;
+  if (isMeerKAT) parAng = -parAng; 
   return parAng;
 } /* end ObitAntennaListParAng */
 

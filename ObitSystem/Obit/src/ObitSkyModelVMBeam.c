@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2017                                          */
+/*;  Copyright (C) 2009-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -454,8 +454,7 @@ void ObitSkyModelVMBeamInitMod (ObitSkyModel* inn, ObitUV *uvdata,
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   olong iver;
-  gboolean btemp;
-  olong itemp, numAntList;
+  olong numAntList;
   ObitTableList *list=NULL;
   ObitTableAN *TableAN=NULL;
   ObitUVDesc *uvDesc;
@@ -472,13 +471,13 @@ void ObitSkyModelVMBeamInitMod (ObitSkyModel* inn, ObitUV *uvdata,
   in->saveDoCalSelect = FALSE;
   ObitInfoListGetTest(uvdata->info, "doCalSelect", &type, dim, &in->saveDoCalSelect);
   dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
-  btemp = FALSE;
-  /*ObitInfoListAlwaysPut (uvdata->info, "doCalSelect", OBIT_bool, dim, &btemp);*/
+  /*btemp = FALSE;
+    ObitInfoListAlwaysPut (uvdata->info, "doCalSelect", OBIT_bool, dim, &btemp);*/
   in->saveDoCalib = 0;
   ObitInfoListGetTest(uvdata->info, "doCalib", &type, dim, &in->saveDoCalib);
   dim[0] = dim[1] = dim[2] = 1;
-  itemp = -1;
-  /*ObitInfoListAlwaysPut (uvdata->info, "doCalib", OBIT_long, dim, &itemp);*/
+  /*itemp = -1;
+    ObitInfoListAlwaysPut (uvdata->info, "doCalib", OBIT_long, dim, &itemp);*/
   strncpy (in->saveStokes, "    ", 4);
   ObitInfoListGetTest(uvdata->info, "Stokes", &type, dim, in->saveStokes);
   dim[0] = 4; dim[1] = dim[2] = 1;
@@ -544,9 +543,10 @@ void ObitSkyModelVMBeamInitMod (ObitSkyModel* inn, ObitUV *uvdata,
   Obit_return_if_fail((!strncmp(in->stokes,"    ",4)), err,
 		      "%s: Unsupported Stokes %s", routine, in->stokes); */
 
-  /* Check that data contains RR, LL */
+  /* Check that data contains RR, LL or (XX,YY)*/
   uvDesc = uvdata->myDesc;
-  Obit_return_if_fail(((uvDesc->crval[uvDesc->jlocs]==-1.0) && 
+  Obit_return_if_fail((((uvDesc->crval[uvDesc->jlocs]==-1.0) || 
+			(uvDesc->crval[uvDesc->jlocs]==-5.0)) && 
 		       (uvDesc->inaxes[uvDesc->jlocs]>=2)), err,
 		      "%s: RR, LL not in UV data", routine);
 
@@ -719,14 +719,15 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
 				    ObitErr *err)
 {
   ObitSkyModelVMBeam *in = (ObitSkyModelVMBeam*)inn;
-  olong npos[2], lcomp, ncomp, i, ifield, lithread, plane=0, kincif, kincf;
+  olong npos[2], lcomp, ncomp, i, ifield, lithread, plane=0;
   ofloat *Rgain=NULL,  *Lgain=NULL,  *RLgain=NULL,  *LRgain=NULL, *ccData=NULL;
   ofloat *Rgaini=NULL, *Lgaini=NULL, *RLgaini=NULL, *LRgaini=NULL;
-  ofloat curPA, tPA, tTime, bTime, fscale, PBCor, iPBCor, iPBCorr, rPBCor, xx, yy;
-  ofloat xr, xi, tr, ti, cph, sph;
+  ofloat curPA, tPA, tTime, bTime, fscale, PBCor, xx, yy;
+  /* ofloat iPBCor, */
+  ofloat xr, xi, tr, ti, cph, sph, v, v1, v2;
   ofloat RXpol, LYpol, RXpolPh=0.0, LYpolPh=0.0, RLpolPh=0.0, LRpolPh=0.0;
   ofloat minPBCor=0.0, bmNorm, fblank = ObitMagicF();
-  gboolean isCirc=TRUE;
+  gboolean isCirc=TRUE, badBm=FALSE;
   odouble x, y;
   VMBeamFTFuncArg *args;
   gchar *routine = "ObitSkyModelVMBeamUpdateModel";
@@ -813,20 +814,6 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
   lcomp = in->comps->naxis[0];  /* Length of row in comp table */
   ncomp = in->numComp;          /* number of components */
 
-  /* Increments in frequency tables */
-  if (uvdata->myDesc->jlocif>=0) {
-    if (uvdata->myDesc->jlocf<uvdata->myDesc->jlocif) { /* freq before IF */
-      kincf = 1;
-      kincif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
-    } else { /* IF before freq  */
-      kincif = 1;
-      kincf = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
-    }
-  } else {  /* NO IF axis */
-    kincif = 1;
-    kincf  = 1;
-  }
-
   /* Does this have circular polarization feeds? */
   isCirc =  uvdata->myDesc->crval[uvdata->myDesc->jlocs]==-1.0;
   
@@ -834,9 +821,12 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
   plane = in->FreqPlane[MIN(args->channel, in->numUVChann-1)];
   fscale = args->BeamFreq / in->RXBeam->freqs[plane];
 
-  /* Beam normalization (center defined to be 1.0)*/
-  bmNorm = 1.0 / (0.5*(ObitImageInterpValueInt (in->RXBeam, args->BeamRXInterp, 0.0, 0.0, curPA, plane, err) +
-		       ObitImageInterpValueInt (in->LYBeam, args->BeamLYInterp, 0.0, 0.0, curPA, plane, err)));
+  /* Beam normalization (center (power) defined to be 0.5 per parallel hand)*/
+  v1 = ObitImageInterpValueInt (in->RXBeam, args->BeamRXInterp, 0.0, 0.0, curPA, plane, err);
+  v2 = ObitImageInterpValueInt (in->LYBeam, args->BeamLYInterp, 0.0, 0.0, curPA, plane, err);
+  badBm = (v1==fblank) || (v2==fblank);
+  if (badBm) bmNorm = 0.5;
+  else       bmNorm = 0.5 / (0.5*(v1 + v2));
 
   /* Compute antenna gains and put into Rgain, Lgain, RLgain, LRgain */
   for (i=0; i<ncomp; i++) {
@@ -861,21 +851,27 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
     if (ifield<0) continue;
 
     /* Get symmetric primary (Power) beam correction for component */
-    PBCor = getPBBeam(in->BeamShape, in->mosaic->images[ifield]->myDesc, xx, yy, in->antSize,  
-		      args->BeamFreq, minPBCor); 
-    iPBCor  = 1.0 / PBCor;  
-    iPBCorr = 1.0 / sqrt(PBCor);
-    rPBCor = sqrt(PBCor);
+    PBCor = 0.5*getPBBeam(in->BeamShape, in->mosaic->images[ifield]->myDesc, xx, yy, in->antSize,  
+			  args->BeamFreq, minPBCor); 
+    /*iPBCor  = 1.0 / PBCor;  */
 
     /* Interpolate gains - RR and LL (XX, YY) as power gains, images voltage */
-    RXpol = bmNorm*ObitImageInterpValueInt (in->RXBeam, args->BeamRXInterp, x, y, curPA, plane, err);
-    if ((RXpol==fblank) || (fabs(RXpol)<0.001) || (fabs(RXpol)>1.1)) RXpol = 1.0;
-    if (in->RXBeamPh)
-      RXpolPh = DG2RAD*ObitImageInterpValueInt (in->RXBeamPh, args->BeamRXPhInterp, x, y, curPA, plane, err);
-    LYpol = bmNorm*ObitImageInterpValueInt (in->LYBeam, args->BeamLYInterp, x, y, curPA, plane, err);
-    if ((LYpol==fblank) || (fabs(LYpol)<0.001) || (fabs(LYpol)>01.1)) LYpol = 1.0;
-    if (in->LYBeamPh)
-      LYpolPh = DG2RAD*ObitImageInterpValueInt (in->LYBeamPh, args->BeamLYPhInterp, x, y, curPA, plane, err);
+    v = ObitImageInterpValueInt (in->RXBeam, args->BeamRXInterp, x, y, curPA, plane, err);
+    RXpol = bmNorm*v;
+    if (badBm || (v==fblank) || (fabs(v)<0.001) || (fabs(v)>1.1)) RXpol = 1.0;
+    if (in->RXBeamPh) {
+      v = ObitImageInterpValueInt (in->RXBeamPh, args->BeamRXPhInterp, x, y, curPA, plane, err);
+      if (v!=fblank) RXpolPh = DG2RAD*v;
+      else            RXpolPh = 0.0;
+    }
+    v = ObitImageInterpValueInt (in->LYBeam, args->BeamLYInterp, x, y, curPA, plane, err);
+    LYpol = bmNorm*v;
+    if (badBm || (v==fblank) || (fabs(v)<0.001) || (fabs(v)>01.1)) LYpol = 1.0;
+    if (in->LYBeamPh) {
+      v = ObitImageInterpValueInt (in->LYBeamPh, args->BeamLYPhInterp, x, y, curPA, plane, err);
+      if (v!=fblank) LYpolPh = DG2RAD*v;
+      else           LYpolPh = 0.0;
+    }
     /* Multiply by complex conjugate to get power gain 
        Phases given? - can't have an effect */
     if (in->RXBeamPh && in->LYBeamPh) {
@@ -939,10 +935,13 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
     /* Cross pol corrections wanted? */
    if (in->doCrossPol) {
       /*  RL or XY */
-      RLgain[i] = ObitImageInterpValueInt (in->RLBeam, args->BeamRLInterp, x, y, curPA, plane, err);
-      if (RLgain[i]==fblank) RLgain[i] = 0.0;
-      if (in->RLBeamPh) {
-	RLpolPh = DG2RAD*ObitImageInterpValueInt (in->RLBeamPh, args->BeamRLPhInterp, x, y, curPA, plane, err);
+     v =  ObitImageInterpValueInt (in->RLBeam, args->BeamRLInterp, x, y, curPA, plane, err);
+     if (v==fblank) RLgain[i] = 0.0;
+     else            RLgain[i] = v;
+     if (in->RLBeamPh) {
+       v = ObitImageInterpValueInt (in->RLBeamPh, args->BeamRLPhInterp, x, y, curPA, plane, err);
+       if (v==fblank) RLpolPh = 0.0;
+       else           RLpolPh = DG2RAD*v;
 	cph = cos(RLpolPh); sph = sin(RLpolPh);
       } else {cph = 1.0; sph = 0.0;}
       /* Multiply by 2 for the effects of the two beams */
@@ -954,10 +953,13 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
       RLgaini[i] = -tr*xi + xr*ti;
     
       /*  LR or YX */
-      LRgain[i] = ObitImageInterpValueInt (in->LRBeam, args->BeamLRInterp, x, y, curPA, plane, err);
+      v = ObitImageInterpValueInt (in->LRBeam, args->BeamLRInterp, x, y, curPA, plane, err);
       if (LRgain[i]==fblank) LRgain[i] = 0.0;
+      else                   LRgain[i] = v;
       if (in->LRBeamPh) {
-	LRpolPh = DG2RAD*ObitImageInterpValueInt (in->LRBeamPh, args->BeamLRPhInterp, x, y, curPA, plane, err);
+	v  = ObitImageInterpValueInt (in->LRBeamPh, args->BeamLRPhInterp, x, y, curPA, plane, err);
+	if (v==fblank) LRpolPh = 0.0;
+	else           LRpolPh = DG2RAD*v;
 	cph = cos(LRpolPh); sph = sin(LRpolPh);
       } else {cph = 1.0; sph = 0.0;}
       /* Multiply by 2 for the effects of the two beams */
@@ -971,6 +973,13 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
     
   } /* end loop over components */
 
+  /* DEBUG 
+  for (i=0; i<ncomp; i++) {
+    Lgain[i]  = 0.5;
+    Rgain[i]  = 0.5;
+    Lgaini[i] = 0.0;
+    Rgaini[i] = 0.0;
+  }  end  DEBUG */
 } /* end ObitSkyModelVMBeamUpdateModel */
 
 /**
@@ -1449,9 +1458,9 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
   ofloat *RLgaini  = largs->RLgaini;
   ofloat *LRgaini  = largs->LRgaini;
 
-  olong iVis, iIF, iChannel, iStoke, iComp, lcomp, ncomp;
+  olong iVis, iIF, iChannel, iStoke, iComp, lcomp;
   olong lrec, nrparm, naxis[2], channel, plane;
-  olong startPoln, numberPoln, jincs, startChannel, numberChannel;
+  olong jincs, startChannel, numberChannel;
   olong lstartChannel, lstartIF, lim;
   olong jincf, startIF, numberIF, jincif, kincf, kincif;
   olong offset, offsetChannel, offsetIF, iterm, nterm=0, nUVchan, nUVpoln;
@@ -1461,9 +1470,9 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
   ofloat sumRealLL, sumImagLL, modRealLL=0.0, modImagLL=0.0;
   ofloat sumRealRL, sumImagRL, modRealRL=0.0, modImagRL=0.0;
   ofloat sumRealLR, sumImagLR, modRealLR=0.0, modImagLR=0.0;
-  ofloat *rgain1, *lgain1, *rgain2, *lgain2, tx, ty, tz, ll, lll;
-  ofloat *rlgain1, *lrgain1, *rlgain2, *lrgain2, re, im, specFact;
-  ofloat *rlgain1i, *lrgain1i, *rlgain2i, *lrgain2i;
+  ofloat *rgain1, *lgain1, tx, ty, tz, ll, lll;
+  ofloat *rlgain1, *lrgain1, re, im, specFact;
+  ofloat *rlgain1i, *lrgain1i;
   ofloat amp, ampr, ampl, arg, freq2=0.0, freqFact, wtRR=0.0, wtLL=0.0, temp;
 #define FazArrSize 100  /* Size of the amp/phase/sine/cosine arrays */
   ofloat AmpArrR[FazArrSize], AmpArrL[FazArrSize];
@@ -1493,8 +1502,6 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
   numberChannel = MAX (1, in->numberChannelPB);
   nUVchan       = uvdata->myDesc->inaxes[ uvdata->myDesc->jlocf];
   jincf         = uvdata->myDesc->incf;
-  startPoln     = in->startPoln-1;
-  numberPoln    = in->numberPoln;
   nUVpoln       = uvdata->myDesc->inaxes[ uvdata->myDesc->jlocs];
   jincs         = uvdata->myDesc->incs;  /* increment in real array */
   /* Increments in frequency tables */
@@ -1520,7 +1527,6 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
   naxis[0] = 0; naxis[1] = 0; 
   Data = ObitFArrayIndex(in->comps, naxis);
   lcomp = in->comps->naxis[0];   /* Length of row in comp table */
-  ncomp = in->comps->naxis[1];   /* Number of components */
   mcomp = in->numComp;           /* Actual number */
 
   /* Get pointer for frequency correction tables */
@@ -1548,7 +1554,7 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
       if ((visData[iloct] > largs->endVMModelTime) || (visData[iloct] < largs->begVMModelTime)) {
 	/* Current channel - which plane in correction to apply? */
 	largs->channel  = channel;
-	largs->BeamFreq = uvdata->myDesc->freqArr[channel];
+	largs->BeamFreq = freqArr[channel];
 	/* Subarray 0-rel */
 	ObitUVDescGetAnts(uvdata->myDesc, visData, &it1, &it2, &suba);
 	/* Update */
@@ -1585,18 +1591,12 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 	  /* Set component gain lists by antenna and type */
 	  ddata   = Data;
 	  rgain1  = Rgain;
-	  rgain2  = Rgain;
 	  lgain1  = Lgain;
-	  lgain2  = Lgain;
 	  rlgain1 = RLgain;
-	  rlgain2 = RLgain;
 	  lrgain1 = LRgain;
-	  lrgain2 = LRgain;
 	  /* Imaginary parts - needed for X pol */
 	  rlgain1i = RLgaini;
-	  rlgain2i = RLgaini;
 	  lrgain1i = LRgaini;
-	  lrgain2i = LRgaini;
 	  
 	  /* Sum by model type - assume phase same for RR, LL */
 	  kt = 0;
@@ -2093,9 +2093,9 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
   ofloat *RLgaini   = largs->RLgaini;
   ofloat *LRgaini   = largs->LRgaini;
 
-  olong iVis, iIF, iChannel, iStoke, iComp, lcomp, ncomp;
+  olong iVis, iIF, iChannel, iStoke, iComp, lcomp;
   olong lrec, nrparm, naxis[2], channel, plane;
-  olong startPoln, numberPoln, jincs, startChannel, numberChannel;
+  olong jincs, startChannel, numberChannel;
   olong lstartChannel, lstartIF, lim;
   olong jincf, startIF, numberIF, jincif, kincf, kincif;
   olong offset, offsetChannel, offsetIF, iterm, nterm=0, nUVchan, nUVpoln;
@@ -2107,8 +2107,8 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
   ofloat sumRealLR,  sumImagLR,  modRealLR=0.0,  modImagLR=0.0;
   ofloat tx, ty, tz, ll, lll;
   ofloat re, im, specFact;
-  ofloat *rgain1, *lgain1, *rgain2, *lgain2, *rgain1i, *lgain1i, *rgain2i, *lgain2i;
-  ofloat *rlgain1, *lrgain1, *rlgain2, *lrgain2, *rlgain1i, *lrgain1i, *rlgain2i, *lrgain2i;
+  ofloat *rgain1, *lgain1, *rgain1i, *lgain1i;
+  ofloat *rlgain1, *lrgain1, *rlgain1i, *lrgain1i;
   ofloat amp, ampr, ampl, arg, freq2=0.0, freqFact, wtRR=0.0, wtLL=0.0, temp;
 #define FazArrSize 100  /* Size of the amp/phase/sine/cosine arrays */
   ofloat AmpArrRr[FazArrSize], AmpArrLr[FazArrSize], AmpArrRi[FazArrSize], AmpArrLi[FazArrSize];
@@ -2116,7 +2116,6 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
   ofloat CosArr[FazArrSize], SinArr[FazArrSize];
   olong it, jt, kt, itcnt, nextCh, ch1;
   gboolean doCrossPol;
-  odouble *freqArr;
   const ObitSkyModelVMClassInfo 
     *myClass=(const ObitSkyModelVMClassInfo*)in->ClassInfo;
   gchar *routine = "ObitSkyModelVMBeamFTDFTPh";
@@ -2138,8 +2137,6 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
   numberChannel = MAX (1, in->numberChannelPB);
   nUVchan       = uvdata->myDesc->inaxes[ uvdata->myDesc->jlocf];
   jincf         = uvdata->myDesc->incf;
-  startPoln     = in->startPoln-1;
-  numberPoln    = in->numberPoln;
   nUVpoln       = uvdata->myDesc->inaxes[ uvdata->myDesc->jlocs];
   jincs         = uvdata->myDesc->incs;  /* increment in real array */
   /* Increments in frequency tables */
@@ -2165,12 +2162,10 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
   naxis[0] = 0; naxis[1] = 0; 
   Data = ObitFArrayIndex(in->comps, naxis);
   lcomp = in->comps->naxis[0];   /* Length of row in comp table */
-  ncomp = in->comps->naxis[1];   /* Number of components */
   mcomp = in->numComp;           /* Actual number */
 
   /* Get pointer for frequency correction tables */
   fscale  = uvdata->myDesc->fscale;
-  freqArr = uvdata->myDesc->freqArr;
 
   /* Current channel (0-rel) */
   channel = nextCh = 0;
@@ -2229,22 +2224,14 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
 	  /* Set component gain lists by antenna and type */
 	  ddata   = Data;
 	  rgain1  = Rgain;
-	  rgain2  = Rgain;
 	  lgain1  = Lgain;
-	  lgain2  = Lgain;
 	  rlgain1 = RLgain;
-	  rlgain2 = RLgain;
 	  lrgain1 = LRgain;
-	  lrgain2 = LRgain;
 	  /* Imaginary parts */
 	  rgain1i = Rgaini;
-	  rgain2i = Rgaini;
 	  lgain1i = Lgaini;
-	  lgain2i = Lgaini;
 	  rlgain1i = RLgaini;
-	  rlgain2i = RLgaini;
 	  lrgain1i = LRgaini;
-	  lrgain2i = LRgaini;
 
 	  /* Sum by model type - assume phase same for RR, LL */
 	  kt = 0;

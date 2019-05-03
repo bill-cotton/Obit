@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for Table type                             */
 /*                                                                    */
-/*;  Copyright (C) 2004-2014                                          */
+/*;  Copyright (C) 2004-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -393,7 +393,7 @@ extern  PyObject *TableReadRow (ObitTable *in, int rowno,
       cdata = ((gchar*)row->myRowData)+desc->offset[i];
        /* null terminate string */
       ctemp = g_malloc0(desc->dim[i][0]+1);
-      for (j=0; j<desc->repeat[i]/MAX (1,desc->dim[i][0]); j++) {
+      for (j=0; j<desc->repeat[i]/MAX (1,MAX(desc->dim[i][0],desc->dim[i][1])); j++) {
         for (k=0; k<desc->dim[i][0]; k++) ctemp[k] = cdata[k];  ctemp[k] = 0;
         PyList_SetItem(list, j, PyString_InternFromString(ctemp));
 	cdata += desc->dim[i][0];
@@ -562,7 +562,7 @@ extern int TableWriteRow (ObitTable *in, int rowno, PyObject *inDict,
       if (bad) break;
       cdata = ((gchar*)row->myRowData)+desc->offset[i];
       /* null terminate string */
-      for (j=0; j<desc->repeat[i]/MAX (1,desc->dim[i][0]); j++) {
+      for (j=0; j<desc->repeat[i]/MAX (1,MAX(desc->dim[i][0],desc->dim[i][1])); j++) {
         ctemp = PyString_AsString(PyList_GetItem(list, j));
         for (k=0; k<strlen(ctemp); k++) cdata[k] = ctemp[k];
 	cdata += desc->dim[i][0];

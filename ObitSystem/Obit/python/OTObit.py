@@ -1883,3 +1883,18 @@ def day2dhms(tim):
 
 def ObitTaskList():
     ObitTasks.obitTaskList()
+
+def unpickle(pfile):
+    """
+    Return object stored in a pickle jar
+
+    * pfile  = name of pickle jar
+    """
+    ################################################################
+    # unpickle file
+    tfile = pfile
+    fd = open(tfile, "r")
+    getit = pickle.load(fd)
+    fd.close()
+    return getit
+# end unpickle

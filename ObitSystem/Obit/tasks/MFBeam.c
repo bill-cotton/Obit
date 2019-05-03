@@ -1,7 +1,7 @@
 /* $Id$ */
 /*  Imaging software correcting for tabulated beamshape               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2017                                          */
+/*;  Copyright (C) 2011-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -649,6 +649,7 @@ ObitInfoList* defaultInputs(ObitErr *err)
   dim[0] = 2;dim[1] = 1;
   farray[0] = 0.0; farray[1] = 0.0;
   ObitInfoListPut (out, "UVTaper", OBIT_float, dim, farray, err);
+  ObitInfoListPut (out, "UVITaper", OBIT_float, dim, farray, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /*  Apply calibration/selection?, def=False */
@@ -1089,8 +1090,7 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
 {
   ObitUV    *outUV = NULL;
   ObitInfoType type;
-  ObitIOType IOType;
-  olong      i, n, Aseq, disk, cno, lType;
+  olong      i, n, Aseq, disk, cno;
   gchar     *Type, *strTemp, out2File[129], *out2Name, *out2F;
   gchar     Aname[37], Aclass[17], *Atype = "UV";
   olong      nvis;
@@ -1110,7 +1110,6 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
     
   /* File type - could be either AIPS or FITS */
   ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
-  lType = dim[0];
   if (!strncmp (Type, "AIPS", 4)) { /* AIPS input */
     /* Generate output name from Source, out2Name */
     ObitInfoListGetP (myInput, "out2Name", &type, dim, (gpointer)&out2Name);
@@ -1123,7 +1122,6 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
       g_snprintf (tname, 120, "%s", strTemp);
     }
       
-    IOType = OBIT_IO_AIPS;  /* Save file type */
     /* input AIPS disk - default is outDisk */
     ObitInfoListGet(myInput, "out2Disk", &type, dim, &disk, err);
     if (disk<=0)
@@ -1175,8 +1173,6 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
     else g_snprintf (out2File, 120, "%s%s", Source, tname);
     ObitTrimTrail(out2File);  /* remove trailing blanks */
 	   
-    IOType = OBIT_IO_FITS;  /* Save file type */
-
     /* output FITS disk */
     ObitInfoListGet(myInput, "out2Disk", &type, dim, &disk, err);
     if (disk<=0) /* defaults to outDisk */
@@ -1225,7 +1221,7 @@ void setOutputData (gchar *Source, olong iStoke, ObitInfoList *myInput,
 {
   ObitInfoType type;
   ObitIOType IOType;
-  olong      i, n, Aseq, disk, cno, lType;
+  olong      i, n, Aseq, disk, cno;
   gchar     *Type, *strTemp, outFile[129], *outName, *outF;
   gchar     Aname[37], Aclass[17], *Atype = "MA";
   gint32    dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -1249,7 +1245,6 @@ void setOutputData (gchar *Source, olong iStoke, ObitInfoList *myInput,
 
   /* File type - could be either AIPS or FITS */
   ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
-  lType = dim[0];
   if (!strncmp (Type, "AIPS", 4)) { /* AIPS output */
     /* Generate output name from Source, outName */
     ObitInfoListGetP (myInput, "outName", &type, dim, (gpointer)&outName);
@@ -1503,7 +1498,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   gchar        *tmpParms[] = {  /* Imaging, weighting parameters */
     "doFull", "do3D", "FOV", "PBCor", "antSize", "PBmin",
     "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
-    "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "WtPower",
+    "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "UVITaper", "WtPower",
     "MFTaper", "RobustIF", "TaperIF",
     "MaxBaseline", "MinBaseline", "rotate", "targBeam", "Beam", "minFlux",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
@@ -1527,7 +1522,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   gchar        *CLEANParms[] = {  /* Clean parameters */
     "CLEANBox", "CLEANFile", "autoWindow", "Gain", "minFlux", "Niter", "minPatch", 
     "Beam", "targBeam", "Mode", "CCFilter", "maxPixel", "dispURL", "Threshold", "ccfLim", "SDIGain",
-    "doCalSelect",
+    "doCalSelect", "maxAWLoop",
     NULL
   };
   gchar        *SkyParms[] = {  /* SkyModel parameters */
@@ -1939,11 +1934,12 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   ObitImageMF  *fitImage=NULL;
   ObitInfoType type;
   oint         otemp;
-  olong        nfield, *ncomp=NULL, maxPSCLoop, maxASCLoop, SCLoop, jtemp;
-  ofloat       minFluxPSC, minFluxASC, modelFlux, maxResid, reuse, ftemp, autoCen;
-  ofloat       alpha, noalpha, minFlux=0.0;
+  olong        nfield, *ncomp=NULL, maxPSCLoop, maxASCLoop, SCLoop, jtemp, Niter, NiterQU, NiterV;
+  ofloat       *minFList=NULL;
+  ofloat       minFluxPSC, minFluxASC, modelFlux, maxResid, reuse, ftemp, autoCen, useMinFlux=0.0;
+  ofloat       alpha, noalpha, minFlux=0.0, minFluxQU=0.0,  minFluxV=0.0;
   ofloat       antSize, solInt, PeelFlux, FractOK, CCFilter[2]={0.0,0.0};
-  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1},  FLdim[MAXINFOELEMDIM];
   gboolean     Fl = FALSE, Tr = TRUE, init=TRUE, doRestore, doFlatten, doFit, doSC;
   gboolean     noSCNeed, reimage, didSC=FALSE, imgOK, doBeam, converged = FALSE;
   gboolean     btemp, noNeg, doneRecenter=FALSE, isSkyModelVMBeam=FALSE;
@@ -1973,6 +1969,9 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   ObitInfoListGet(myInput, "maxASCLoop",  &type, dim, &maxASCLoop,  err);
   ObitInfoListGet(myInput, "minFluxPSC", &type, dim, &minFluxPSC, err);
   ObitInfoListGet(myInput, "minFluxASC", &type, dim, &minFluxASC, err);
+  ObitInfoListGet(myInput, "Niter", &type, dim, &Niter, err);
+  /* If no clean - no selfcal */
+  if (Niter<=0) maxPSCLoop = minFluxASC = 0;
   if (err->error) Obit_traceback_msg (err, routine, inUV->name);
   reuse = 10.0;
   ObitInfoListGetTest(myInput, "Reuse",&type, dim, &reuse);
@@ -1983,6 +1982,24 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   noNeg = TRUE;
   ObitInfoListGetTest(myInput, "noNeg", &type, dim, &noNeg);
 
+   /* Special Stokes Parameters? */
+  if ((((Stokes[0]=='Q') || (Stokes[0]=='U')) && ((Stokes[0]!=' '))) && 
+      ObitInfoListGetTest(myInput, "NiterQU", &type, dim, &NiterQU)) {
+    ObitInfoListAlwaysPut(myClean->info,  "Niter", type, dim, &NiterQU);
+  }
+  if (((Stokes[0]=='V') && ((Stokes[0]!=' '))) && 
+      ObitInfoListGetTest(myInput, "NiterV", &type, dim, &NiterV)) {
+    ObitInfoListAlwaysPut(myClean->info,  "Niter", type, dim, &NiterV);
+  }
+  if ((((Stokes[0]=='Q') || (Stokes[0]!='U')) && ((Stokes[0]!=' '))) && 
+      ObitInfoListGetTest(myInput, "minFluxQU", &type, dim, &minFluxQU)) {
+    ObitInfoListAlwaysPut(myClean->info,  "minFlux", type, dim, &minFluxQU);
+  }
+  if (((Stokes[0]=='V') && ((Stokes[0]!=' '))) && 
+      ObitInfoListGetTest(myInput, "minFluxV", &type, dim, &minFluxV)) {
+    ObitInfoListAlwaysPut(myClean->info,  "minFlux", type, dim, &minFluxV);
+  }
+   
   /* Peeling trip level */
   PeelFlux = 1.0e20;
   ObitInfoListGetTest(myInput, "PeelFlux", &type, dim, &PeelFlux); 
@@ -1992,6 +2009,9 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   ObitInfoListGetTest(myInput, "doFit",&type, dim, &doFit);
   antSize = 0.0;
   ObitInfoListGetTest(myInput, "antSize",&type, dim, &antSize);
+
+  /* List of minimum flux densities after selfcals */
+  ObitInfoListGetP(myInput, "minFList",  &type, FLdim, (gpointer)&minFList);
 
   /* Get input parameters from myInput, copy to myClean */
   ObitInfoListCopyList (myInput, myClean->info, CLEANParms);
@@ -2180,7 +2200,6 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	
 	/* Reset minFlux disturbed by Clean */
 	dim[0] = dim[1] = dim[2] = 1;
-	ObitInfoListAlwaysPut(selfCal->skyModel->info, "minFlux", OBIT_float, dim, &minFlux);
 	ftemp = 0.0;
 	ObitInfoListAlwaysPut(selfCal->skyModel->info, "minFlux", OBIT_float, dim, &ftemp);
 	ObitInfoListAlwaysPut(selfCal->skyModel->info, "noNeg", OBIT_bool, dim, &noNeg);
@@ -2380,10 +2399,15 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	dim[0] = dim[1] = dim[2] = 1;
 	ObitInfoListAlwaysPut(myClean->skyModel->info, "maxResid", OBIT_float, dim, &maxResid);
 	
-	/* Reset minFlux disturbed by Clean */
+	/* reset flux limit for next Clean to 1 sigma - minFList overrides */
+	dim[0] = 1;dim[1] = 1;
+	if (minFList) {
+	  useMinFlux = minFList[MIN(SCLoop, (FLdim[0]-1))];
+	} else { /* minFList not given - use RMS */
+	  useMinFlux = selfCal->RMSFld1;
+	}
 	dim[0] = dim[1] = dim[2] = 1;
-	ftemp = 0.0;
-	ObitInfoListAlwaysPut(selfCal->skyModel->info, "minFlux", OBIT_float, dim, &ftemp);
+	ObitInfoListAlwaysPut(selfCal->skyModel->info, "minFlux", OBIT_float, dim, &useMinFlux);
 	ObitInfoListAlwaysPut(selfCal->skyModel->info, "noNeg", OBIT_bool, dim, &noNeg);
 	
 	/* alpha correction in model  for Amp self cal */
@@ -2410,9 +2434,14 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	dim[0] = 1;dim[1] = 1;
 	ObitInfoListAlwaysPut(myClean->info, "doBeam", OBIT_bool, dim, &doBeam);
 	
-	/* reset flux limit for next Clean to 1 sigma */
+	/* reset flux limit for next Clean to 1 sigma - minFList overrides */
 	dim[0] = 1;dim[1] = 1;
-	ObitInfoListAlwaysPut (myClean->info, "minFlux", OBIT_float, dim, &selfCal->RMSFld1);
+	if (minFList) {
+	  useMinFlux = minFList[MIN(SCLoop, (FLdim[0]-1))];
+	} else { /* minFList not given - use RMS */
+	  useMinFlux = selfCal->RMSFld1;
+	}
+	ObitInfoListAlwaysPut (myClean->info, "minFlux", OBIT_float, dim, &useMinFlux);
 	btemp = FALSE;
 	ObitInfoListAlwaysPut(selfCal->skyModel->info, "noNeg", OBIT_bool, dim, &btemp);
 	
@@ -2681,11 +2710,12 @@ void MFBeamHistory (gchar *Source, ObitInfoList* myInput,
     "outFile",  "outDisk", "outName", "outClass", "outSeq",
     "BChan", "EChan", "BIF", "EIF", "maxFBW", "IChanSel", "Threshold", "CCVer",
     "FOV",  "UVRange",  "timeRange",  "Robust",  "UVTaper",  
-    "MFTaper", "RobustIF", "TaperIF",
+    "MFTaper", "RobustIF", "TaperIF","UVITaper", 
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
     "doPol", "PDVer", "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI",
     "OutlierSize",  "CLEANBox",  "CLEANFile", "Gain",  "minFlux",  "Niter",  "minPatch",
     "ccfLim", "SDIGain", "BLFact", "BLFOV", "BLchAvg",
+    "maxAWLoop", "minFluxIQU", "NiterIQU",  "minFluxQU", "NiterQU", "minFluxV", "NiterV",
     "Reuse", "autoCen", "targBeam", "Beam",  "Cmethod",  "CCFilter",  "maxPixel", 
     "PBCor", "antSize", "doRestore", "doFit", "doFull", "doComRes", "do3D", 
     "autoWindow", "subA",  "Alpha",
@@ -3205,7 +3235,6 @@ void BeamOne (ObitInfoList* myInput, ObitUV* inData,
   olong  trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   ObitImage *scrImage=NULL, *scrBeam;
   ObitUV    *scrUV=NULL;
-  ObitIOType IOType;
   olong *ipnt, BIF=1, EIF=0, saveEIF, seq=0, disk=1, user=1, cno;
   ofloat xyCells, Beam[3] = {0.0,0.0,0.0};
   gboolean exist, btemp=TRUE, saveCalSelect=FALSE;
@@ -3219,6 +3248,7 @@ void BeamOne (ObitInfoList* myInput, ObitUV* inData,
     "MaxBaseline", "MinBaseline", "rotate", "targBeam", "Beam",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
     "nxBeam", "nyBeam", "Alpha", "doCalSelect",
+    "numBeamTapes", "BeamTapes", "MResKnob", "doGPU",
     NULL
   };
   gchar *routine = "BeamOne";
@@ -3290,7 +3320,6 @@ void BeamOne (ObitInfoList* myInput, ObitUV* inData,
     ObitImageSetAIPS (scrBeam, OBIT_IO_byPlane, disk, cno, 
 		      user, blc, trc, err);
   } else if (!strncmp (Type, "FITS", 4)) {
-    IOType = OBIT_IO_FITS;
     ObitInfoListGetTest(myInput, "outDisk", &type, dim, &disk);
     ObitImageSetFITS (scrImage, OBIT_IO_byPlane, disk, scrFile, blc, trc, err);
     scrBeam = (ObitImage*)scrImage->myBeam;
