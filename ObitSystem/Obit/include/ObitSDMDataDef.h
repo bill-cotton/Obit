@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2016                                          */
+/*;  Copyright (C) 2010-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -52,6 +52,8 @@ olong iMain;
 ObitASDMBand selBand;
 /** Selected number of channels, <=0 => any */
 olong selChan;
+/** Selected number of stokes correlations, <=0 => first found */
+olong selStok;
 /** Selected Bandwidth (kHz), <=0.0 => any */
 ofloat selChBW;
 /** Actual Bandwidth (Hz) */

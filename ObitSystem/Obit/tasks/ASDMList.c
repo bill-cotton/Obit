@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Summarize contents of ASDM                                        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2014                                          */
+/*;  Copyright (C) 2010-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -369,12 +369,13 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
   ASDMScanTable *ScanTab;
   ASDMDataDescriptionTable *DataDescTab;
   ASDMConfigDescriptionTable *ConfigTab;
+  ASDMPolarizationTable   *PolarizationTab;
   ASDMSpectralWindowTable *SpectralWindowTab;
   ASDMAntennaArray*  AntArray;
   ASDMSourceArray*   SourceArray;
   olong        pLimit=1000000;  /* Page limit */
-  olong        iScan, iIntent, iConfig, configID, dataDescriptionId;
-  olong        i, ii, doCrt, LinesPerPage=0, iDD, jDD, jSW;
+  olong        iScan, iIntent, iConfig, configID, dataDescriptionId, polOrHoloId;
+  olong        i, ii, doCrt, LinesPerPage=0, iDD, jDD, jSW, jPP;
   olong        spectralWindowId, ScanID, iMain, iSource;
   gchar        bcode[10];
   gchar        *routine = "Summary";
@@ -455,11 +456,11 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
   ObitPrinterWrite (myPrint, line, &quit, err);
   if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
 
-  /* Loop over configurations */
+   /* Loop over configurations */
   ConfigTab         = SDMData->ConfigDescriptionTab;
   DataDescTab       = SDMData->DataDescriptionTab;
   SpectralWindowTab = SDMData->SpectralWindowTab;
-  
+  PolarizationTab   = SDMData->PolarizationTab;
   for (iConfig=0; iConfig<ConfigTab->nrows; iConfig++) {
     sprintf(line,"  Configuration  %d, no. SpWin = %d  ", 
 	    iConfig, ConfigTab->rows[iConfig]->numDataDescription);
@@ -482,18 +483,27 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
 	if (SpectralWindowTab->rows[jSW]->spectralWindowId==spectralWindowId) break;
       }
       if (jSW>=SpectralWindowTab->nrows) return;  /* Shouldn't need this */
+
+      /* Find polarization info */
+      polOrHoloId = DataDescTab->rows[jDD]->polOrHoloId;
+      for (jPP=0; jPP<PolarizationTab->nrows; jPP++) {
+	if (PolarizationTab->rows[jPP]->polarizationId==polOrHoloId) break;
+      }
+      if (jPP>=PolarizationTab->nrows) return; /* Shouldn't need this */
+      SpectralWindowTab->rows[jSW]->numPoln = PolarizationTab->rows[jPP]->numCorr;
       
       /* Finally give spectral window info */
       if (SpectralWindowTab->rows[jSW]->bandcode) 
 	strncpy (bcode, SpectralWindowTab->rows[jSW]->bandcode,9);
       else
 	strcpy (bcode, "Unknown");
-      sprintf(line,"     SpWin= %2d Freq= %7.3lf GHz, %d chan of BW=%9.3lf kHz, tot BW=%8.3lf MHz, %s Band=%s", 
+      sprintf(line,"     SpWin= %2d Freq= %7.3lf GHz, %4d chan of BW=%9.3lf kHz, tot BW=%8.3lf MHz, nStoke=%d, %s Band=%s", 
 	      SpectralWindowTab->rows[jSW]->spectralWindowId, 
 	      SpectralWindowTab->rows[jSW]->refFreq*1.0e-9,
 	      SpectralWindowTab->rows[jSW]->numChan,
 	      SpectralWindowTab->rows[jSW]->chanWidth*1.0e-3,
 	      SpectralWindowTab->rows[jSW]->totBandwidth*1.0e-6,
+	      SpectralWindowTab->rows[jSW]->numPoln,
 	      SpectralWindowTab->rows[jSW]->netSideband,
 	      bcode);
       ObitPrinterWrite (myPrint, line, &quit, err);

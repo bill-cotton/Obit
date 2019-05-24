@@ -202,6 +202,7 @@ ofloat **antLats=NULL;                /* Array of Antenna latitudes per subarray
 olong selMain=-1;                     /* First selected SDM Main row number */
 olong selChan=-1;                     /* Selected number of channels */
 olong selIF=-1;                       /* Selected number of IFs (SpWin) */
+olong selStok=-1;                     /* Selected number of Stokes */
 gboolean isEVLA;                      /* Is this EVLA data? */
 gboolean isALMA;                      /* Is this ALMA data? */
 gboolean SWOrder=FALSE;               /* Leave in SW Order? */
@@ -388,7 +389,8 @@ int main ( int argc, char **argv )
   myInput  = ObitInfoListUnref(myInput);   /* delete input list */
   myOutput = ObitInfoListUnref(myOutput);  /* delete output list */
   SDMData  = ObitSDMDataUnref (SDMData);
-  if (BDFData->SWArray) BDFData->SWArray  = ObitSDMDataKillSWArray (BDFData->SWArray);
+  if (BDFData && BDFData->SWArray) 
+    BDFData->SWArray  = ObitSDMDataKillSWArray (BDFData->SWArray);
   BDFData  = ObitBDFDataUnref (BDFData);
   outData  = ObitUnref(outData);
   CalTab   = ObitTableUnref(CalTab);
@@ -674,7 +676,7 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
 {
   ObitUV    *outUV = NULL;
   ObitInfoType type;
-  olong      i, n, Aseq, disk, cno, lType;
+  olong      i, n, Aseq, disk, cno;
   gchar     *Type, *strTemp, outFile[129];
   gchar     Aname[13], Aclass[7], *Atype = "UV";
   olong      nvis, itemp;
@@ -697,7 +699,6 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
 
   /* File type - could be either AIPS or FITS */
   ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
-  lType = dim[0];
   if (!strncmp (Type, "AIPS", 4)) { /* AIPS input */
 
     /* outName given? */
@@ -830,7 +831,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   olong i, jSW, iWind, lim, selConfig, iMain;
   ofloat epoch=2000.0, equinox=2000.0, selChBW;
   olong nchan=1, npoln=1, nIF=1;
-  odouble refFreq, startFreq=1.0;
+  odouble startFreq=1.0;
   ofloat refChan=1.0, freqStep=1.0, chanWidth=1.0;
   ASDMSpectralWindowArray* SpWinArray=NULL;
   ASDMAntennaArray*  AntArray;
@@ -880,6 +881,10 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   selIF = 0;
   ObitInfoListGetTest(myInput, "selIF", &type, dim, &selIF);
 
+  /* Stokes selection */
+  selStok = 0;
+  ObitInfoListGetTest(myInput, "selStoke", &type, dim, &selStok);
+
   /* Cal code selection */
   sprintf (selCode, "        ");
   ObitInfoListGetTest(myInput, "selCode", &type, dim, selCode);
@@ -902,7 +907,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
 		   "Frequencies in Spectral Window Possibly NOT Frequency order");
 
   /* Find first selected scan */
-  iMain = ObitASDSelScan (SDMData, selChan, selIF, band, selConfig);
+  iMain = ObitASDSelScan (SDMData, selChan, selIF, selStok, band, selConfig);
   Obit_return_if_fail((iMain>=0), err,
 		      "%s: No scans found matching selection criteria", 
 		      routine);
@@ -911,6 +916,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   SDMData->selConfig = selConfig;
   SDMData->selBand   = band;
   SDMData->selChan   = selChan;
+  SDMData->selStok   = selStok;
   SDMData->selChBW   = selChBW;
   SDMData->SWOrder   = SWOrder;
   SDMData->iMain     = iMain;
@@ -931,9 +937,11 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
 
   /* selConfig overrides selBand, selIF */
   if (selConfig>=0) {
-    /* Set selIF, selBand, default selChan */
-    selIF = SpWinArray->nwinds;
-    band  = SpWinArray->band;
+    /* Set selIF, selBand, default selChan, selStok */
+    selIF   = SpWinArray->nwinds;
+    selStok = SDMData->selStok;
+    if (selStok<=0) selStok = SpWinArray->winds[0]->nCPoln;
+    band    = SpWinArray->band;
     /* Default selChans? use first Spectral window */
     if (selChan<=0) selChan = SpWinArray->winds[0]->numChan;
 
@@ -941,6 +949,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
     /* Default selChans? use first Spectral window */
     if (selChan<=0) selChan = SpWinArray->winds[0]->numChan;
     if (selIF<=0)   selIF   = SpWinArray->nwinds;
+    if (selStok<=0) selStok = SpWinArray->winds[0]->nCPoln;
     if (band==ASDMBand_Any)  band  = SpWinArray->band;
     /* Set default configID */
     if (selConfig<0) selConfig = SDMData->MainTab->rows[iMain]->configDescriptionId;
@@ -950,6 +959,7 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   SDMData->selConfig = selConfig;
   SDMData->selBand   = band;
   SDMData->selChan   = selChan;
+  SDMData->selStok   = selStok;
   /* Find first selected */
   for (iWind=0; iWind<SpWinArray->nwinds; iWind++) {
     if (SpWinArray->winds[iWind]->numChan==selChan){
@@ -977,6 +987,8 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
   ObitInfoListAlwaysPut(myInput, "selIF", OBIT_long, dim, &selIF);
   Obit_log_error(err, OBIT_InfoErr, "Selecting scans with %d Spectral Windows", selIF);
+  ObitInfoListAlwaysPut(myInput, "selStokes", OBIT_long, dim, &selStok);
+  Obit_log_error(err, OBIT_InfoErr, "Selecting scans with %d Stokes correlations", selStok);
   ObitInfoListAlwaysPut(myInput, "selChan", OBIT_long, dim, &selChan);
   Obit_log_error(err, OBIT_InfoErr, "Selecting spectral windows with %d channels", selChan);
   Obit_log_error(err, OBIT_InfoErr, "Selecting calCode '%s'", selCode);
@@ -1006,7 +1018,6 @@ void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput,
       nchan     = SpWinArray->winds[jSW]->numChan;
       refChan   = SpWinArray->winds[jSW]->refChan;
       npoln     = SpWinArray->winds[jSW]->nCPoln;
-      refFreq   = SpWinArray->winds[jSW]->refFreq;
       startFreq = SpWinArray->winds[jSW]->chanFreqStart;
       freqStep  = fabs((ofloat)SpWinArray->winds[jSW]->chanFreqStep);
       chanWidth = fabs((ofloat)SpWinArray->winds[jSW]->chanWidth);
@@ -1271,7 +1282,7 @@ void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData,
   olong          iScan, isubScan, iIntent, iAnt;
   gchar          hicard[81], begString[17], endString[17];
   gchar         *hiEntries[] = {
-    "DataRoot", "selChan", "selIF", "selBand", "selConfig", "selCode", 
+    "DataRoot", "selChan", "selIF", "selStokes", "selBand", "selConfig", "selCode", 
     "selChBW",
     "dropZero", "doCode", "defCode", "calInt", "doSwPwr", "doOnline", "SWOrder", 
     "doAtmCor", "doAppend", "binFlag", 
@@ -1895,7 +1906,7 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
   ObitTableSU*       outTable=NULL;
   ObitTableSURow*    outRow=NULL;
   ObitSource *source=NULL;
-  olong i, j, ephId, lim, iRow, oRow, ver, nlines, lastSID=-1;
+  olong i, j, ephId, lim, iRow, oRow, ver, nlines=-1;
   oint numIF;
   ofloat time, tuvrot;
   odouble dist;
@@ -2017,7 +2028,6 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
     outRow->SourID    = SourceArray->sou[iRow]->sourceNo;
     outRow->Qual      = SourceArray->sou[iRow]->sourceQual;
     outRow->Epoch     = 2000.0;   /* ASDM Lacking - AIPS naming is wrong */
-    lastSID           = SourceArray->sou[iRow]->sourceNo;
     /* Precess if non moving */
     if (ephId<0) {
       source = newObitSource("Temp");
@@ -2100,7 +2110,7 @@ void UpdateSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
   ObitTableSURow*    outRow=NULL;
   ObitSource *source=NULL;
   ObitSourceList *sourceList=NULL;
-  olong i, j, ephId, lim, iRow, oRow, ver, lastSID=-1;
+  olong i, j, ephId, lim, iRow, oRow, ver;
   olong nlines;
   oint numIF;
   ofloat time, tuvrot;
@@ -2230,7 +2240,6 @@ void UpdateSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
     outRow->SourID    = SourceArray->sou[iRow]->sourceNo;
     outRow->Qual      = SourceArray->sou[iRow]->sourceQual;
     outRow->Epoch     = 2000.0;   /* ASDM Lacking - AIPS naming is wrong */
-    lastSID           = SourceArray->sou[iRow]->sourceNo;
     /* Precess if non moving */
     if (ephId<0) {
       source = newObitSource("Temp");
@@ -2317,9 +2326,8 @@ ObitBDFData* GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outDa
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar selBand[12], begString[17], endString[17], selCode[24];
-  ObitASDMBand band;
   ASDMSpectralWindowArray* SpWinArray=NULL;
-  gboolean dropZero=TRUE, found=FALSE, doOnline=FALSE, drop, doAtmCor=FALSE;
+  gboolean dropZero=TRUE, doOnline=FALSE, drop, doAtmCor=FALSE;
   gboolean binFlag=FALSE, first=TRUE;
   gchar dataroot[132];
   gchar *filename;
@@ -2374,7 +2382,6 @@ ObitBDFData* GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outDa
   /* Band selection */
   for (i=0; i<12; i++) selBand[i] = 0;
   ObitInfoListGetTest(myInput, "selBand", &type, dim, selBand);
-  band = ObitSDMDataBand2Band (selBand);
 
   /* Want binary flagging? */
   ObitInfoListGetTest(myInput, "binFlag", &type, dim, &binFlag);
@@ -2635,7 +2642,6 @@ ObitBDFData* GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outDa
 	
 	/* Write output */
 	NXcnt++;   /* Count vis in scan */
-	found   = TRUE;
 	endTime = Buffer[desc->iloct];
 	if ((ObitUVWrite (outData, NULL, err) != OBIT_IO_OK) || (err->error))
 	  Obit_log_error(err, OBIT_Error, "ERROR writing output UV data"); 
@@ -2705,7 +2711,7 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
   ObitSource *source=NULL;
   ObitAntennaList *AntList;
   ofloat time, uvw[3], bl[3], u, v, tuvrot;
-  odouble arrJD, DecR, RAR, AntLst, HrAng=0.0, ArrLong, ArrLat, dRa;
+  odouble DecR, RAR, AntLst, HrAng=0.0, ArrLong, dRa;
   odouble sum, xx, yy, zz, lambda, DecOff, RAOff, dist;
   gchar *routine = "CalcUVW";
 
@@ -2834,12 +2840,10 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
     /* Array number (0-rel)*/
     iarr = 0;
     /* Array reference JD */
-    arrJD = arrayRefJDs[iarr];
     
     /* Array geometry  */
     AntList = antennaLists[iarr];
     ArrLong = 0.5*(antLongs[iarr][ant1-1] + antLongs[iarr][ant2-1]);
-    ArrLat  = 0.5*(antLats[iarr][ant1-1]  + antLats[iarr][ant2-1]);
     
     bl[0] =  AntList->ANlist[ant1-1]->AntXYZ[0] - AntList->ANlist[ant2-1]->AntXYZ[0];
     bl[1] =  AntList->ANlist[ant1-1]->AntXYZ[1] - AntList->ANlist[ant2-1]->AntXYZ[1];
@@ -3128,7 +3132,7 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ObitTableFG*       outTable=NULL;
   ObitTableFGRow*    outRow=NULL;
   ASDMSpectralWindowArray* SpWinArray;
-  olong              iRow, oRow, ver, iarr, antId, antNo, iAnt, i, ia;
+  olong              iRow, oRow, ver, antId, antNo, iAnt, i, ia;
   olong              numAnt, numSW, numPoln, IFno, *SpWinLookup2=NULL;
   olong              np, nsw, ip, isw, numIF;
   ObitIOAccess       access;
@@ -3197,9 +3201,6 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   outRow->chans[1]  = 0;
   outRow->status    = 0;
   
-  /* Array number 0-rel */
-  iarr = 0;
-
   /* loop through input table */
   for (iRow =0; iRow<SDMData->FlagTab->nrows; iRow++) {
 
@@ -4912,7 +4913,7 @@ void GetPointingInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 {
   ObitTablePT*       outTable=NULL;
   ObitTablePTRow*    outRow=NULL;
-  olong i, isamp, iRow, oRow, ver, maxAnt, SourNo, iMain, ncopy;
+  olong i, isamp, iRow, oRow, ver, maxAnt, SourNo, iMain;
   olong *antLookup=NULL, curScan, curScanI, nextScanNo;
   oint nterm, nsamp;
   odouble stime;
@@ -4978,10 +4979,6 @@ void GetPointingInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 		      "%s: nterm changed %d to %d in previous ", 
 		      routine, nterm, outTable->numTerm);
 
-  /* Number of array entries to copy - 
-     this is likely  different if using polynomials */
-  ncopy = outTable->myDesc->repeat[outTable->EncoderCol];
- 
   /* Get reference date */
   ObitUVDescJD2Date (SDMData->refJD, outTable->RefDate);
 

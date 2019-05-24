@@ -4,7 +4,7 @@
 ;! Obit Convert EVLA BDF data and append to a UV data file.
 ;# Task Obit BDF
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2010-2016
+;;  Copyright (C) 2010-2019
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -49,6 +49,8 @@ outDisk                             Output UV file disk unit #.
 selChan                             no. channels to select, 0=>first.
 **PARAM** int 1
 selIF                               no. IFs to select, 0=>first.
+**PARAM** int 1
+selStoke                            no. Stokes to select, 0=>first.
 **PARAM** int 1  **DEF** 0
 selConfig                           Config ID, -1 ->first.
 **PARAM** str 4
@@ -130,6 +132,8 @@ Data selection
              Note: not all of these spectral windows may be selected
              depending on selChan.
              0 -> use number of IFs in first scan.
+  selStoke...Number of Stokes correlations to select, generally
+             1,2 or 4.  0=> first defined.
   selBand....Band Code to select.  Only Spectral windows with 
              this freq. band are selected, others ignored.
              "  " -> use band in first spectral window.

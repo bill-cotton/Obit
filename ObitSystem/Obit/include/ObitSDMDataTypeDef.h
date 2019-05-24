@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2016                                          */
+/*;  Copyright (C) 2010-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -1079,6 +1079,8 @@ typedef struct {
   gchar *netSideband;
   /** numChan */
   olong numChan;
+  /** numPoln */
+  olong numPoln;
   /** refFreq */
   odouble refFreq;
   /** sideband Processing Mode enum */

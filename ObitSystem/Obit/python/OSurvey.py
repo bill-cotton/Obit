@@ -341,6 +341,7 @@ def PNVSSFetch (RA, Dec, outfile, err, \
     * Type    = Type = "type" of result;
                 'image/jpeg' = jpeg image,
                 'application/octet-stream' = fits file
+                'application/postscript' = contour plot (postscript)
                 'image/x-fits' = fits image
                 (default = /image/jpeg)
     * Equinox = coordinate equinox ('2000' or '1950')
@@ -398,6 +399,7 @@ def PVLSSFetch (RA, Dec, outfile, err, \
     * Type    = Type = "type" of result;
                 'image/jpeg' = jpeg image,
                 'application/octet-stream' = fits file
+                'application/postscript' = contour plot (postscript)
                 'image/x-fits' = fits image
                 (default = /image/jpeg)
     * Equinox = coordinate equinox ('2000' or '1950')

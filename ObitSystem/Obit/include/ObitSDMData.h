@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2016                                          */
+/*;  Copyright (C) 2010-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -385,7 +385,7 @@ ObitASDMBand ObitSDMDataBand2Band (gchar *code);
 ObitASDMBand ObitSDMDataFreq2Band (odouble freq);
 
 /** Find first Main table row matching selection */
-olong ObitASDSelScan(ObitSDMData *in, olong selChan, olong selIF, 
+olong ObitASDSelScan(ObitSDMData *in, olong selChan, olong selIF, olong selStok, 
 		     ObitASDMBand band, olong selConfig);
 
 /** Revise source numbers in an ASDMSourceTable to agree with a source list */

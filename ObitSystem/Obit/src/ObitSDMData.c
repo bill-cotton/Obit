@@ -1350,6 +1350,15 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
     if ((in->selChBW>0.0) && 
 	(fabs(in->selChBW-(out->winds[iSW]->chanWidth*1.0e-3))>1.0))
       out->winds[iSW]->selected = FALSE;
+    /* If selChan not specified, take first */
+    if ((in->selChan<=0) && out->winds[iSW]->selected) 
+      in->selChan = out->winds[iSW]->numChan;
+    /* Correct number of poln? */
+    if ((in->selStok>0) && (in->selStok!=out->winds[iSW]->nCPoln)) 
+      out->winds[iSW]->selected = FALSE;
+    /* If selStokes not specified, take first */
+    if ((in->selStok<=0) && out->winds[iSW]->selected) 
+      in->selStok = out->winds[iSW]->nCPoln;
     iSW++;
   } /* end loop over DataDescriptions */
 
@@ -1926,11 +1935,12 @@ ObitASDMBand ObitSDMDataFreq2Band (odouble freq)
  * \param  in      ASDM object
  * \param  selChan Number of selected channels [def 0]
  * \param  selIF   Number of selected IFs (spectral windows)[def 0]
+ * \param  selStok Number of selected Stokes [def 0]
  * \param  selBand   Selected band [def ASDMBand_Any]
  * \param  selConfig Selected configID, >=0 overrides selIF, selBand
  * \return 0-rel main row number, -1=> problem.
  */
-olong ObitASDSelScan(ObitSDMData *in, olong selChan, olong selIF, 
+olong ObitASDSelScan(ObitSDMData *in, olong selChan, olong selIF, olong selStok, 
 		     ObitASDMBand selBand, olong selConfig)
 {
   olong out = 1;
@@ -1982,11 +1992,13 @@ olong ObitASDSelScan(ObitSDMData *in, olong selChan, olong selIF,
 
       if (((SWband==selBand) || (selBand==ASDMBand_Any)) && 
 	  ((in->SpectralWindowTab->rows[jSW]->numChan==selChan) || (selChan<=0)) && 
+	  ((in->SpectralWindowTab->rows[jSW]->numPoln==selStok) || (selStok<=0)) && 
 	  ((numDD==selIF) || (selIF<=0))) return out;
 
       if (((ObitSDMDataFreq2Band (in->SpectralWindowTab->rows[jSW]->refFreq)==selBand) || 
 	   (selBand==ASDMBand_Any)) && 
 	  ((in->SpectralWindowTab->rows[jSW]->numChan==selChan) || (selChan<=0)) && 
+	  ((in->SpectralWindowTab->rows[jSW]->numPoln==selStok) || (selStok<=0)) && 
 	  ((numDD==selIF) || (selIF<=0))) return out;
     } /* End loop over data descriptions */
   } /* End loop over main table */

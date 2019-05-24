@@ -4229,10 +4229,6 @@ Obit/tasks/MKXPhase.c Obit/TDF/MKXPhase.TDF:
 27 Mar 2019 svn 598
 
 Summary:  vain attempts on MeerKAT polarimetry, beam correction, bug fixes
-Obit/changes.log:
-  Update
-Obit/ObitVersion:
-  Trigger NRAO update
 Obit/python/OTObit.py
   Add unpickle function to read pickle jar
 Obit/src/ObitImageUtil.c:
@@ -4257,3 +4253,17 @@ Obit/tasks/BeamCor.c Obit/TDF/BeamCor.TDF Obit/tasks/MFBeam.c Obit/TDF/MFBeam.TD
 Obit/tasks/MFImage.c
   Add recent parameters to history.
 3 May 2019 svn 599
+
+Summary:  Stokes selection to BDFIn, bug fixes
+Obit/python/OSurvey.py:
+  Document request for contour plot
+Obit/share/scripts/scriptFetchNVSS.py:
+  Enable different output types
+Obit/tasks/BDFIn.c ObitTDF/BDFIn.TDF:
+   Add parameter selStoke to select number of Stokes correlations
+Obit/include/ObitSDMData.h Obit/include/ObitSDMDataDef.h Obit/include/ObitSDMDataTypeDef.h:
+   Add selStoke to SDMData and Tables
+Obit/tasks/ASDMList.c:
+   In configuraton summary give number of Stokes correlations.
+24 May 2019 svn 600
+
