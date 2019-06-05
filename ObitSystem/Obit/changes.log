@@ -4267,3 +4267,11 @@ Obit/tasks/ASDMList.c:
    In configuraton summary give number of Stokes correlations.
 24 May 2019 svn 600
 
+Summary:  bug fixes
+Obit/tasks/MKXPhase.c:
+   Fix number of antennas in BP table, referencing bug
+Obit/src/ObitDConCleanVis.c Obit/src/ObitUVImager.c:
+   Fix bugs in handling autoCentering
+Obit/src/ObitBDFData.c:
+   Fix logic bugs in selecting autocorrelations
+5 Jun 2019 svn 601

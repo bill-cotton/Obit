@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2016                                          */
+/*;  Copyright (C) 2010-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -276,7 +276,6 @@ ObitBDFData* ObitBDFDataCreate (gchar* name,  ObitUVDesc *desc,
  */
 void ObitBDFDataInitFile  (ObitBDFData *in, gchar *DataFile, ObitErr *err)
 {
-  ObitIOCode retCode;
   gchar *routine = "ObitBDFDataInitFile";
 
   /* error checks */
@@ -297,7 +296,7 @@ void ObitBDFDataInitFile  (ObitBDFData *in, gchar *DataFile, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Fill Buffer */
-  retCode = ObitBDFDataFillBuffer (in, err);
+  ObitBDFDataFillBuffer (in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
 } /* end ObitBDFDataInitFile */
@@ -472,11 +471,14 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   in->ScanInfo->numAntenna  = BDFparse_int(startInfo, maxStr, prior, &next);
   
   /* Number of times */
-  prior = "<dimensionality axes=\"TIM\">";
-  in->ScanInfo->numTime  = BDFparse_int(startInfo, maxStr, prior, &next);
-  /* ALMA variant */
-  prior = "<numTime>";
-  in->ScanInfo->numTime  = BDFparse_int(startInfo, maxStr, prior, &next);
+  if (in->isEVLA) {
+    prior = "<dimensionality axes=\"TIM\">";
+    in->ScanInfo->numTime  = BDFparse_int(startInfo, maxStr, prior, &next);
+  } else if (in->isALMA) {
+    /* ALMA variant */
+    prior = "<numTime>";
+    in->ScanInfo->numTime  = BDFparse_int(startInfo, maxStr, prior, &next);
+  }
   in->numTime = in->ScanInfo->numTime;
   in->currTimeIndx = 0;
   
@@ -994,8 +996,8 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   SWoff    = g_malloc0((in->SWArray->nwinds+2)*sizeof(olong));
   SWoff[0] = 0;
   for (iSW=0; iSW<in->SWArray->nwinds-1; iSW++) {
-    SWoff[iSW+1] = SWoff[iSW] + /* Note use of boolean */
-      in->SWArray->winds[iSW]->selected*in->SWArray->winds[iSW]->numChan * in->aincf;
+    SWoff[iSW+1] = SWoff[iSW] + 
+      in->SWArray->winds[iSW]->numChan * in->SWArray->winds[iSW]->nAPoln;
   }
 
   /* Which auto correlation IF/Spectral windows */
@@ -2102,7 +2104,7 @@ static ObitIOCode CopyFloats (ObitBDFData *in,
 			      ObitBDFDataType Dtype, ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_OK;
-  olong i, nleft, ncopy, ncopyb, nhere, shit;
+  olong i, nleft, ncopy, ncopyb, nhere;
   ofloat *out;
   short *sdata;
   gint32 *ldata;
@@ -2153,7 +2155,6 @@ static ObitIOCode CopyFloats (ObitBDFData *in,
 	} /* end byte flip */
 	for (i=0; i<ncopy; i++) out[i] = (ofloat)sdata[i];
 	out += ncopy;
-	shit = (olong)(out-target);
 	in->current = lstart + ncopyb;
 	nleft -= ncopy;
 	if (nleft<=0) break;  /* Done? */
@@ -2216,7 +2217,6 @@ static ObitIOCode CopyFloats (ObitBDFData *in,
 	} /* end byte flip */
 	for (i=0; i<ncopy; i++) out[i] = (ofloat)ldata[i];
 	out += ncopy;
-	shit = (olong)(out-target);
 	in->current = lstart + ncopyb;
 	nleft -= ncopy;
 	if (nleft<=0) break;  /* Done? */
@@ -2259,7 +2259,6 @@ static ObitIOCode CopyFloats (ObitBDFData *in,
 	ncopyb = ncopy*sizeof(ofloat);  /* in bytes */
 	memmove (out, lstart, (size_t)ncopyb);
 	out += ncopy;
-	shit = (olong)(out-target);
 	in->current = lstart + ncopyb;
 	nleft -= ncopy;
 	if (nleft<=0) break;  /* Done? */
@@ -2328,7 +2327,7 @@ static ObitIOCode CopyLongs (ObitBDFData *in,
 			     ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_OK;
-  olong i, nleft, ncopy, ncopyb, nhere, shit;
+  olong i, nleft, ncopy, ncopyb, nhere;
   olong  *out;
   short *sdata;
   gint32 *ldata;
@@ -2379,7 +2378,6 @@ static ObitIOCode CopyLongs (ObitBDFData *in,
 	} /* end byte flip */
 	for (i=0; i<ncopy; i++) out[i] = (olong)sdata[i];
 	out += ncopy;
-	shit = (olong)(out-target);
 	in->current = lstart + ncopyb;
 	nleft -= ncopy;
 	if (nleft<=0) break;  /* Done? */
@@ -2442,7 +2440,6 @@ static ObitIOCode CopyLongs (ObitBDFData *in,
 	} /* end byte flip */
 	for (i=0; i<ncopy; i++) out[i] = (olong)ldata[i];
 	out += ncopy;
-	shit = (olong)(out-target);
 	in->current = lstart + ncopyb;
 	nleft -= ncopy;
 	if (nleft<=0) break;  /* Done? */
@@ -2484,7 +2481,6 @@ static ObitIOCode CopyLongs (ObitBDFData *in,
 	ncopyb = ncopy*4;  /* in bytes */
 	for (i=0; i<ncopy; i++) out[i] = (olong)lstart[i];
 	out += ncopy;
-	shit = (olong)(out-target);
 	in->current = lstart + ncopyb;
 	nleft -= ncopy;
 	if (nleft<=0) break;  /* Done? */
@@ -2546,9 +2542,9 @@ static ObitBDFMIMEType GetNextMIME(ObitBDFData *in,
   ObitIOCode retCode;
   gchar *prior, *tstr;
   olong maxStr;
-  gboolean isData, isHeader, warn;
-  gchar *dataType  = "\nContent-Type: application/octet-stream\n";
-  gchar *headerType = "\nContent-Type: text/xml; charset=utf-8\n";
+  gboolean warn;
+  /*gchar *dataType  = "\nContent-Type: application/octet-stream\n";
+    gchar *headerType = "\nContent-Type: text/xml; charset=utf-8\n";*/
   gchar *routine = "GetNextMIME";
 
   /* error checks */
@@ -2587,10 +2583,6 @@ static ObitBDFMIMEType GetNextMIME(ObitBDFData *in,
 
   /* if found - see what type */
   if (tstr!=NULL) {
-    /* Data? */
-    isData = !strncmp(*start, dataType, strlen(dataType));
-    /* Header? */
-    isHeader = !strncmp(*start, headerType, strlen(headerType));
     out = GetNextMIMEType (in, tstr, start, err);
     /* If it's incomplete, update buffer and try again */
     if (out==BDFMIMEType_Unknown) {
@@ -2624,7 +2616,7 @@ static ObitBDFMIMEType GetNextMIMEType(ObitBDFData *in,
 				     ObitErr *err)
 {
   ObitBDFMIMEType out = BDFMIMEType_Unknown;
-  gchar *s, *e, *slash, *dot, *Xpad, *prior, *tstr;
+  gchar *s, *e, *slash, *Xpad, *prior, *tstr;
   olong i, maxStr;
   /*gchar *routine = "GetNextMIMEType";*/
 
@@ -2654,7 +2646,6 @@ static ObitBDFMIMEType GetNextMIMEType(ObitBDFData *in,
   maxStr = (olong)(e-s);
   for (i=0; i<maxStr; i++) {
     if (s[i]=='/') slash = &s[i];
-    if (s[i]=='.') dot   = &s[i];
   }
 
   /* What type? */

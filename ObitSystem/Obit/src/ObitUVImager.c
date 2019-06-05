@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2016                                          */
+/*;  Copyright (C) 2005-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -455,11 +455,11 @@ void ObitUVImagerImage (ObitUVImager *in, olong *field, gboolean doWeight,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitUVDesc *UVDesc;
   ObitImageDesc *imageDesc;
-  olong i, n, fldCnt, ifield, channel=0, nDo, nLeft, nImage, prtLv, *fldNo=NULL;
-  olong NumPar;
+  olong i, j, n, fldCnt, ifield, channel=0, nDo, nLeft, nImage, prtLv, *fldNo=NULL;
+  olong NumPar, myAuto;
   ofloat sumwts[2];
   ObitImage *theBeam=NULL;
-  gboolean *forceBeam=NULL, needBeam, doall;
+  gboolean *forceBeam=NULL, needBeam, doall, found;
   ObitUVImagerClassInfo *imgClass = (ObitUVImagerClassInfo*)in->ClassInfo;
   gchar        *dataParms[] = {  /* Imaging info */
     "xShift", "yShift",
@@ -563,6 +563,16 @@ void ObitUVImagerImage (ObitUVImager *in, olong *field, gboolean doWeight,
     if (in->mosaic->isShift[ifield]<=0) {  /* Special handling for shifted imaged */
       imageList[fldCnt] = in->mosaic->images[ifield];
       fldNo[fldCnt++]   = ifield;                 /* Number (0-rel) in mosaic */
+    } else if (!doall) { /* Make autoCenter version instead */
+      myAuto = in->mosaic->isShift[ifield]-1;  /* Corresponding autoCenter */
+      /* See if already in list, if so ignore */
+      found = FALSE;
+      for (j=0; j<n; j++) found = found || ((myAuto+1)==field[j]);
+      if (!found) {
+	imageList[fldCnt] = in->mosaic->images[myAuto];
+	fldNo[fldCnt++]   = myAuto;
+	field[i] = myAuto+1;
+      }
     }
   }
 
@@ -614,7 +624,7 @@ void ObitUVImagerImage (ObitUVImager *in, olong *field, gboolean doWeight,
 	imageList[i]->myDesc->beamMin = in->mosaic->bmin;
 	imageList[i]->myDesc->beamPA  = in->mosaic->bpa;
 	/* Tell if field 1 */
-	if ((i==0) && (field[0]==1)) {
+	if ((i==0) && (fldNo[0]==1)) {
 	  Obit_log_error(err, OBIT_InfoErr, 
 			 "Using Beamsize %f x %f asec PA=%f",
 			 in->mosaic->bmaj*3600.0, in->mosaic->bmin*3600.0, 
@@ -841,7 +851,8 @@ olong ObitUVImagerGetNumPar (ObitUVImager *in, gboolean doBeam, ObitErr *err)
   olong out=8;
   odouble lenVis, numVis, imSize, bufSize, tSize, mSize;
   ObitImage *beam;
-  long int avphys_pages, phys_pages;
+  /* long int avphys_pages; */
+  long int phys_pages;
   int pagesize;
   gchar *routine="ObitUVImagerGetNumPar";
 
@@ -861,7 +872,7 @@ olong ObitUVImagerGetNumPar (ObitUVImager *in, gboolean doBeam, ObitErr *err)
   sysctl(mib, 2, &physical_memory, &length, NULL, 0);  
   mSize = physical_memory;
 #else
-  avphys_pages = get_avphys_pages();
+  /*avphys_pages = get_avphys_pages();*/
   phys_pages   = get_phys_pages();
   pagesize     = getpagesize();
   /* How much to ask for (64-bit) - up to 1/5 total */

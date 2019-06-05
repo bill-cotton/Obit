@@ -1090,6 +1090,7 @@ void DumpBP(ObitTableBP* BPTable, ofloat *phase, olong souId, ofloat time,
   if (err->error) Obit_traceback_msg (err, routine, BPTable->name);
 
   /* Intitial values */
+  BPTable->numAnt     = numAnt;
   BPRow->BW           = 0.0;
   BPRow->ChanShift[0] = 0.0;
   BPRow->ChanShift[1] = 0.0;
@@ -1104,9 +1105,9 @@ void DumpBP(ObitTableBP* BPTable, ofloat *phase, olong souId, ofloat time,
 	for (ichan=bchan; ichan<=echan; ichan++) {
 	  rndx = iif*nchan + ichan-bchan;
 	  indx = (iant-1)*nchanIF + iif*nchan + ichan-bchan;
-	  if ((phase[indx]!=fblank) && (phase[rndx]!=fblank)) {
+	  if ((phase[indx]!=fblank) && (refPhase[rndx]!=fblank)) {
 	    phase[indx] -= refPhase[rndx];
-	  }
+	  } else phase[indx] = fblank;
 	}
       }
     }
