@@ -75,7 +75,7 @@ outDisk                             Disk for output FG table
 BPSoln                              BP table to write
 **PARAM** int 1
 refAnt            0                 Reference antenna
-**PARAM** float 1
+**PARAM** float 1 **DEF** 600.0
 solInt           0.0                Soln interval (min)
 **PARAM** int 1
 prtLv             0.0               Print level in cal
@@ -150,6 +150,7 @@ Adverbs:
       Control
   refAnt.....Reference antenna number
   solInt.....Solution interval (min) BP table entries.
+             Default 600 sec.
   prtLv......Print level in solution, 0=>none 
   taskLog....Log file to write messages to INSTEAD of the terminal
              This is useful in long runs or batch files.

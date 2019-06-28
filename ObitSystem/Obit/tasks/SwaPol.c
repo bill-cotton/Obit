@@ -580,6 +580,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc", "FreqID", "corrType", 
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
     "doPol", "PDVer", "Smooth", "Antennas",  "subA", "Sources", "souCode", "Qual",
+    "swapHand",
      NULL};
   gchar *routine = "getInputData";
 
@@ -828,6 +829,7 @@ void SwaPolHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     "Sources",  "Qual", "souCode", "subA", "Antennas", 
     "doCalSelect", "doCalib", "gainUse", "doPol", "PDVer", "flagVer", 
     "doBand", "BPVer", "Smooth",  "corrType", 
+    "swapHand",
     "outFile",  "outDisk",  "outName", "outClass", "outSeq", "Compress",
     NULL};
   gchar *routine = "SwaPolHistory";
@@ -882,7 +884,7 @@ void SwaPolHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
 ObitUV* ObitSwaPol (ObitUV *in, ObitUV *out, ObitErr *err)
 {
   ObitIOCode iretCode, oretCode;
-  gboolean doCalSelect;
+  gboolean doCalSelect=FALSE, swapHand=FALSE;
   ObitInfoType type;
   olong NPIO;
   gint32 dim[MAXINFOELEMDIM];
@@ -906,10 +908,12 @@ ObitUV* ObitSwaPol (ObitUV *in, ObitUV *out, ObitErr *err)
   ObitUVClone (in, out, err);
   if (err->error) Obit_traceback_val (err, routine, in->name, out);
 
-  doCalSelect = FALSE;
   ObitInfoListGetTest(in->info, "doCalSelect", &type, (gint32*)dim, &doCalSelect);
   if (doCalSelect) access = OBIT_IO_ReadCal;
   else access = OBIT_IO_ReadOnly;
+
+  /* Swap parallel and cross hands? */
+  ObitInfoListGetTest(in->info, "swapHand", &type, (gint32*)dim, &swapHand);
 
   /* if output has file designated, copy data */
   /* test open to fully instantiate input and see if it's OK */
@@ -1017,28 +1021,51 @@ ObitUV* ObitSwaPol (ObitUV *in, ObitUV *out, ObitErr *err)
 	/* Loop over frequency channel */
 	for (ichan=0; ichan<nchan; ichan++) { 
 	  jndx = indx + iif*incif + ichan*incf;
-	  /* Swap parallel hands */
-	  tr = in->buffer[jndx+0];
-	  ti = in->buffer[jndx+1];
-	  tw = in->buffer[jndx+2];
-	  in->buffer[jndx+0] = in->buffer[jndx+incs+0];
-	  in->buffer[jndx+1] = in->buffer[jndx+incs+1];
-	  in->buffer[jndx+2] = in->buffer[jndx+incs+2];
-	  in->buffer[jndx+incs+0] = tr;
-	  in->buffer[jndx+incs+1] = ti;
-	  in->buffer[jndx+incs+2] = tw;
-	  /* Swap/conjugate cross hands */
-	  if (nstok==4) {
-	    tr = in->buffer[jndx+2*incs+0];
-	    ti = in->buffer[jndx+2*incs+01];
-	    tw = in->buffer[jndx+2*incs+02];
-	    in->buffer[jndx+2*incs+0] =  in->buffer[jndx+3*incs+0];
-	    in->buffer[jndx+2*incs+1] = -in->buffer[jndx+3*incs+1];
-	    in->buffer[jndx+2*incs+2] =  in->buffer[jndx+3*incs+2];
+	  if (swapHand) { /* swap parallel- and cross hand data */
+	    /* swap RR/XX with RL/XY */
+	    tr = in->buffer[jndx+0];
+	    ti = in->buffer[jndx+1];
+	    tw = in->buffer[jndx+2];
+	    in->buffer[jndx+0] = in->buffer[jndx+2*incs+0];
+	    in->buffer[jndx+1] = in->buffer[jndx+2*incs+1];
+	    in->buffer[jndx+2] = in->buffer[jndx+2*incs+2];
+	    in->buffer[jndx+2*incs+0] = tr;
+	    in->buffer[jndx+2*incs+1] = ti;
+	    in->buffer[jndx+2*incs+2] = tw;
+	    /* swap LL/YY with LR/YX */
+	    tr = in->buffer[jndx+1*incs+0];
+	    ti = in->buffer[jndx+1*incs+1];
+	    tw = in->buffer[jndx+1*incs+2];
+	    in->buffer[jndx+1*incs+0] =  in->buffer[jndx+3*incs+0];
+	    in->buffer[jndx+1*incs+1] =  in->buffer[jndx+3*incs+1];
+	    in->buffer[jndx+1*incs+2] =  in->buffer[jndx+3*incs+2];
 	    in->buffer[jndx+3*incs+0] =  tr;
-	    in->buffer[jndx+3*incs+1] = -ti;
+	    in->buffer[jndx+3*incs+1] =  ti;
 	    in->buffer[jndx+3*incs+2] =  tw;
-	  }
+	  } else {        /* swap R/X and L/Y */
+	    /* Swap parallel hands */
+	    tr = in->buffer[jndx+0];
+	    ti = in->buffer[jndx+1];
+	    tw = in->buffer[jndx+2];
+	    in->buffer[jndx+0] = in->buffer[jndx+incs+0];
+	    in->buffer[jndx+1] = in->buffer[jndx+incs+1];
+	    in->buffer[jndx+2] = in->buffer[jndx+incs+2];
+	    in->buffer[jndx+incs+0] = tr;
+	    in->buffer[jndx+incs+1] = ti;
+	    in->buffer[jndx+incs+2] = tw;
+	    /* Swap/conjugate cross hands */
+	    if (nstok==4) {
+	      tr = in->buffer[jndx+2*incs+0];
+	      ti = in->buffer[jndx+2*incs+1];
+	      tw = in->buffer[jndx+2*incs+2];
+	      in->buffer[jndx+2*incs+0] =  in->buffer[jndx+3*incs+0];
+	      in->buffer[jndx+2*incs+1] = -in->buffer[jndx+3*incs+1];
+	      in->buffer[jndx+2*incs+2] =  in->buffer[jndx+3*incs+2];
+	      in->buffer[jndx+3*incs+0] =  tr;
+	      in->buffer[jndx+3*incs+1] = -ti;
+	      in->buffer[jndx+3*incs+2] =  tw;
+	    }
+	  } /* end swap R/X and L/Y */
 	} /* end loop over channels */
       } /* end loop over IFs */
       /* update u,v,w pointers */

@@ -241,13 +241,13 @@ ObitUVPolCalType ObitAntennaListGetPolType (gchar* type)
  * \param ant      Antenna number (1-rel)
  * \param time     Time in Days
  * \param Source   Source structure
- * \return elevation in radians
+ * \return elevation in radians (fblank if antenna not present )
  */
 ofloat ObitAntennaListElev (ObitAntennaList *inAList, olong ant, 
 			    ofloat time, ObitSource *Source)
 {
   ofloat elev = 0.0;
-  ofloat decr, gst, lst, ha, along, alat;
+  ofloat decr, gst, lst, ha, along, alat, fblank = ObitMagicF();
   olong i, iant;
   odouble darg;
 
@@ -257,6 +257,9 @@ ofloat ObitAntennaListElev (ObitAntennaList *inAList, olong ant,
     if (inAList->ANlist[i]->AntID==ant) {iant = i; break;}
   }
 
+  /* Valid? */
+  if (inAList->ANlist[iant]->AntID<0) return fblank;
+    
   /* antenna location */
   alat  = inAList->ANlist[iant]->AntLat;
   along = inAList->ANlist[iant]->AntLong;
@@ -286,13 +289,13 @@ ofloat ObitAntennaListElev (ObitAntennaList *inAList, olong ant,
  * \param ant      Antenna number (1-rel)
  * \param time     Time in Days
  * \param Source   Source structure
- * \return azimuth in radians
+ * \return azimuth in radians (fblank if antenna not present )
  */
 ofloat ObitAntennaListAz (ObitAntennaList *inAList, olong ant, 
 			  ofloat time, ObitSource *Source)
 {
   ofloat az = 0.0;
-  ofloat decr, gst, lst, ha, along, alat;
+  ofloat decr, gst, lst, ha, along, alat, fblank = ObitMagicF();
   olong i, iant;
   odouble darg, darg2, daz;
 
@@ -302,6 +305,9 @@ ofloat ObitAntennaListAz (ObitAntennaList *inAList, olong ant,
     if (inAList->ANlist[i]->AntID==ant) {iant = i; break;}
   }
 
+  /* Valid? */
+  if (inAList->ANlist[iant]->AntID<0) return fblank;
+    
   /* antenna location */
   alat  = inAList->ANlist[iant]->AntLat;
   along = inAList->ANlist[iant]->AntLong;
@@ -335,35 +341,35 @@ ofloat ObitAntennaListAz (ObitAntennaList *inAList, olong ant,
  * \param ant      Antenna number (1-rel)
  * \param time     Time in Days
  * \param Source   Source structure
- * \return paralactic angle in radians
+ * \return paralactic angle in radians (fblank if antenna not present )
  */
 ofloat ObitAntennaListParAng (ObitAntennaList *inAList, olong ant, 
 			      ofloat time, ObitSource *Source)
 {
   ofloat parAng = 0.0;
-  ofloat decr, gst, lst, ha, along, alat, arg, t1, t2;
+  ofloat decr, gst, lst, ha, along, alat, t1, t2, fblank = ObitMagicF();
   olong i, iant;
-  gboolean isMeerKAT=FALSE;
 
   /* If EVLA - all should have ~ same PA */
   if (inAList->isVLA) {
     alat  =   34.0787492*DG2RAD; /* VLA Latitude */
     along = -107.618283*DG2RAD;  /* VLA Longitude */
   } else { /* Not EVLA */
-    /* Trap MeerKAT */
-    isMeerKAT = !strncmp(inAList->ArrName, "MeerKAT", 7);
     /* Find antenna in list */
     iant = 0;
     for (i=0; i<inAList->number; i++) {
       if (inAList->ANlist[i]->AntID==ant) {iant = i; break;}
     }
+
+    /* Not az-el mount? */
+    if (inAList->ANlist[iant]->AntMount!=0) return 0.0;
     
-    /* Alt-Az mount and Valid data? */
-    if ((inAList->ANlist[iant]->AntID>0) && (inAList->ANlist[iant]->AntMount==0)) {
-      /* antenna location */
-      alat  = inAList->ANlist[iant]->AntLat;
-      along = inAList->ANlist[iant]->AntLong;
-    } else return 0.0; /* Not alt-az or no data */
+    /* Valid? */
+    if (inAList->ANlist[iant]->AntID<0) return fblank;
+    
+    /* antenna location */
+    alat  = inAList->ANlist[iant]->AntLat;
+    along = inAList->ANlist[iant]->AntLong;
   } /* end not EVLA */
 
   /* declination in radians */
@@ -378,15 +384,12 @@ ofloat ObitAntennaListParAng (ObitAntennaList *inAList, olong ant,
   /* Hour angle in radians */
   ha = lst - Source->RAApp * DG2RAD;
 
-  /* old (wrong?)  parAng = atan2 (cos(alat) * sin(ha), 
-     (sin(alat)*cos(decr) - cos(alat)*sin(decr)*cos(ha)));*/
   t1 = cos(alat) * sin(ha); t2 = (sin(alat)*cos(decr) - cos(alat)*sin(decr)*cos(ha));
-  /*parAng = atan2 (t1, t2);*/
-  arg = t1/t2;
-  parAng = atan(arg);
-  if ((decr>alat) && (ha<0.0) && (arg<0.0)) parAng += G_PI;
-  if ((decr>alat) && (ha>0.0) && (arg>0.0)) parAng -= G_PI;
-  if (isMeerKAT) parAng = -parAng; 
+  parAng = fmod((atan2 (t1, t2)),(2*G_PI));
+  /*arg = t1/t2;
+    parAng = atan(arg);
+    if ((decr>alat) && (ha<0.0) && (arg<0.0)) parAng += G_PI;
+    if ((decr>alat) && (ha>0.0) && (arg>0.0)) parAng -= G_PI;*/
   return parAng;
 } /* end ObitAntennaListParAng */
 

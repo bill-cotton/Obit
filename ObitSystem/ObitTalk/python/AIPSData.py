@@ -1,5 +1,5 @@
 # Copyright (C) 2005 Joint Institute for VLBI in Europe
-# Copyright (C) 2007 Associated Universities, Inc.
+# Copyright (C) 2007,2019 Associated Universities, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -174,6 +174,8 @@ class _AIPSData:
 
     def zap(self):
         """Destroy this image or data set."""
+        if self.exists()==False:
+            return
         (thedisk,dirs) = adjust_disk(self.disk, self.url)
         self.desc.disk = thedisk
         self.desc.dirs = dirs
@@ -228,6 +230,8 @@ class AIPSImage(_AIPSData):
         self.Disk    = disk
         self.Atype   = "MA"
         self.Otype   = "Image"
+        self.name    = "noname"
+        self.exist   = self.exists()
         return
 
     def display(self, dispURL="http://localhost:8765/RPC2"):
@@ -261,6 +265,8 @@ class AIPSUVData(_AIPSData):
         self.Disk    = disk
         self.Atype   = "UV"
         self.Otype   = "UV"
+        self.name    = "noname"
+        self.exist   = self.exists()
         return
 
 

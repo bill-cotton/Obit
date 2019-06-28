@@ -266,7 +266,7 @@ Note: these dict are independent of the underlying data structures.
 # Interactive routines to Obit use from ObitTalk
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2005-2016
+#  Copyright (C) 2005-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -577,11 +577,14 @@ def getFITS(file, disk=None, Ftype='Image'):
     if disk==None:
         disk = Fdisk
     if Ftype == 'Image':
-        # ObitTalk (local) or AIPSData (remote)?
+        # ObitTalk (local) or FITSData (remote)?
         if (disk>0) and FITS.FITS.disks[disk].url:
             out = FITSData.FITSImage(file, disk)
         else:
-            out = Image.newPFImage("FITS image", file, disk, True, err)
+            try:
+                out = Image.newPFImage("FITS image", file, disk, True, err)
+            except: # Try UV data
+                out = UV.newPFUV("FITS UV data", file, disk, True, err)
     elif Ftype == 'UV':
         if (disk>0) and FITS.FITS.disks[disk].url:
             out = FITSData.FITSUVData(file, disk)
@@ -1106,8 +1109,8 @@ def alldest(Aname=".*", Aclass=".*", Atype=".?", Adisk=0, Aseq=0, test=False):
                 break
             obj = None
             if (line!=None):
-                tname  = line[0:12]
-                tclass = line[13:19]
+                tname  = line[0:12].strip()
+                tclass = line[13:19].strip()
                 tseq   = int(line[20:25])
                 ttype  = line[26:28]
                 # Check type
@@ -1120,10 +1123,14 @@ def alldest(Aname=".*", Aclass=".*", Atype=".?", Adisk=0, Aseq=0, test=False):
                 # Check Class
                 mat = mat and re.match(Aclass,tclass)
                 if mat:   # Found a match?
-                    print cno,tname, tclass, tseq, ttype # debug
+                    print cno,tname, tclass, tseq, ttype 
                     #obj = getname(cno, disk=idisk)
-                    obj = Image.newPAImage("zap", tname, tclass, idisk, tseq,
-                                           True, err, verbose=False)
+                    if ttype=="MA":
+                        obj = Image.newPAImage("zap", tname, tclass, idisk, tseq,
+                                               True, err, verbose=False)
+                    elif ttype=="UV":
+                        obj = UV.newPAUV("zap", tname, tclass, idisk, tseq,
+                                               True, err, verbose=False)
                     if not test:
                         obj.Atype = ttype
                         obj.Aseq  = tseq

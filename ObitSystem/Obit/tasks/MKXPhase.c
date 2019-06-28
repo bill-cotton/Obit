@@ -849,8 +849,8 @@ void  XYBandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* outUV,
   olong ichan, nchan, bchan=0, echan=0, numAnt, chWid, iant;
   olong ivis, nvis, ifreq, nfreq, iif, nstok, nif, indx, nc;
   olong itemp, nchanIF, doBand, BPVer, outVer, BPSoln, refAnt;
-  olong ia1, ia2, ver, suba, souId, hiLim, loLim;
-  gboolean btemp;
+  olong ia1, ia2, ver, suba, souId, hiLim, loLim, iVis, nVis;
+  gboolean btemp, haveSome=FALSE;
   ofloat solInt=0.0;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
@@ -888,7 +888,9 @@ void  XYBandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* outUV,
   chWid = MAX (0, chWid);
   
   /* Solution interval */
+  solInt = 600.0; /* default 600 sec */
   ObitInfoListGetTest (myInput, "solInt", &type, dim, &solInt); 
+  if (solInt<=0.0) solInt = 600.0; 
   solInt /= 86400.0; /* to days */
 
   /* Prior bandpass calibration */
@@ -950,6 +952,7 @@ void  XYBandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* outUV,
 		 "New BP table ver. %d", outVer);
 
   /* loop over blocks of data */
+  iVis = 0; nVis = avgData->myDesc->nvis;
   while (retCode == OBIT_IO_OK) {
     
     /* read buffer */
@@ -970,6 +973,8 @@ void  XYBandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* outUV,
       souId = (olong)(rec[desc->ilocsu]+0.5);
     }
     for (ivis=0; ivis<nvis; ivis++) {
+      iVis++; /* Count total */
+      if (iVis>nVis) goto done;
       /* Only autoCorrelations */
       ObitUVDescGetAnts(desc, rec, &ia1, &ia2, &suba);
       if (ia1!=ia2) continue;
@@ -977,12 +982,14 @@ void  XYBandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* outUV,
       time = rec[desc->iloct];
       /* Finished solution? */
       if ((time>etime) || (souId!=((olong)(rec[desc->ilocsu]+0.5)))) {
-	DumpBP(BPTable, phase, souId, time, bchan, echan, nif, numAnt, refAnt, err);
+	if (haveSome)
+	  DumpBP(BPTable, phase, souId, time, bchan, echan, nif, numAnt, refAnt, err);
 	if (err->error) goto cleanup;
 	etime = time+solInt-1.156e-5; /* new end time */
 	souId = (olong)(rec[desc->ilocsu]+0.5);
+	haveSome = FALSE;
       } /* end finished accumulation */
-	/* loop over IFs */
+      /* loop over IFs */
       ifvis = vis;
       for (iif=0; iif<nif; iif++) {
 	fvis = ifvis;
@@ -1003,6 +1010,7 @@ void  XYBandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* outUV,
 	  } /* end loop over freq averaging */
 	  if (sumwt>0.0) phase[indx] = atan2(sumi, sumr);
 	  else           phase[indx] = fblank;
+	  haveSome = TRUE;
 	  fvis += desc->incf; /* visibility pointer */
 	} /* end loop over frequencies */
 	ifvis += desc->incif; /* visibility pointer */
@@ -1014,11 +1022,13 @@ void  XYBandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* outUV,
   } /* end loop over file */
     
   /* Close data */
+ done:
   retCode = ObitUVClose (avgData, err);
   if (err->error) goto cleanup;
     
   /* Finished write remaining output */
-  DumpBP(BPTable, phase, souId, time, bchan, echan, nif, numAnt, refAnt, err);
+  if (haveSome)
+    DumpBP(BPTable, phase, souId, time, bchan, echan, nif, numAnt, refAnt, err);
   if (err->error) goto cleanup;
   
   /* Copy BP table to outUV */

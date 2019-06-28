@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009                                               */
+/*;  Copyright (C) 2009-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,6 +32,9 @@
 #include "ObitThread.h"
 #include "ObitImageUtil.h"
 #include "ObitPosition.h"
+#include "ObitTableFQ.h"
+#include "ObitTableFQUtil.h"
+#include "ObitData.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -215,9 +218,12 @@ ObitFullBeam* ObitFullBeamCreate (gchar* name, ObitInfoList *myInput,
 {
   ObitFullBeam* out=NULL;
   olong nImgFreq, nImgIF, nChIF, naxis[5], nx, ny;
-  olong iplane, iFreq, iIF;
+  olong iplane, iFreq, iIF, ver;
   gchar *dataParms[] = {"antSize","minGain",NULL};
   gchar *tname;
+  ObitTableFQ *FQTab = NULL;
+  oint fqid=1, nif, *sideBand=NULL;
+  ofloat *chBandw=NULL;
   gchar *routine = "ObitFullBeamCreate";
 
   /* Error tests */
@@ -261,11 +267,24 @@ ObitFullBeam* ObitFullBeamCreate (gchar* name, ObitInfoList *myInput,
   /* Frequency array - filled in in ReadBeam */
   out->freqs = g_malloc0(out->nplanes*sizeof(odouble));
 
+  /* IF frequency offsets if there is an IF axis */
+  if (image->myDesc->jlocif>1) {
+    tname = g_strdup("FQTab") ;
+    nif = nImgIF; ver = 1;
+    FQTab = newObitTableFQValue (tname, (ObitData*)image, &ver, OBIT_IO_ReadOnly, nif, err);
+    ObitTableFQGetInfo (FQTab, fqid, &nif, &out->IFfreq, &sideBand, &chBandw, err);
+    if (err->error) Obit_traceback_val (err, routine, image->name, out);
+    if (sideBand) g_free(sideBand);
+    if (chBandw)  g_free(chBandw);
+    if (FQTab) ObitTableFQUnref(FQTab);
+    if (tname) g_free(tname);
+  } 
+
   /* Create interpolator */
   out->myInterp = newObitFInterpolateCreate ("Interpolator", 
 					     out->BeamPixels, out->BeamDesc, 2);
 
-  /* Loop over planes in order they appear in the UV data */
+  /* Loop over planes in order they appear in the image */
   iplane = 0;
   for (iIF=0; iIF<nImgIF; iIF++) {
     for (iFreq=0; iFreq<nImgFreq; iFreq++) {
@@ -297,16 +316,17 @@ ofloat ObitFullBeamValue (ObitFullBeam* in,
   ofloat beamValue=0.0;
   ofloat pixel[3], fblank = ObitMagicF();
   odouble coord[2];
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *routine = "ObitFullBeamValue";
 
   if (err->error) return beamValue;  /* Previous error? */
 
-
   /* Lock ObitObjects against other threads */
   ObitThreadLock(in->thread);
 
-  /* Modify header for parallactic angle */
-  in->BeamDesc->crota[1] = PAngle; 
+  /* Modify header for parallactic angle, offset */
+  in->BeamDesc->crota[1] = -PAngle; 
 
   /* Convert position to pixels */
   coord[0] = dRA; coord[1] = dDec;
@@ -503,6 +523,7 @@ void ObitFullBeamInit  (gpointer inn)
   in->BeamPixels = NULL;
   in->myInterp   = NULL;
   in->freqs      = NULL;
+  in->IFfreq     = NULL;
   in->nplanes    = 0;
 
 } /* end ObitFullBeamInit */
@@ -527,7 +548,8 @@ void ObitFullBeamClear (gpointer inn)
   in->BeamDesc   = ObitImageDescUnref(in->BeamDesc);
   in->BeamPixels = ObitFArrayUnref(in->BeamPixels);
   in->myInterp   = ObitFInterpolateUnref(in->myInterp);
-  if (in->freqs) g_free(in->freqs);
+  if (in->freqs)  g_free(in->freqs);
+  if (in->IFfreq) g_free(in->IFfreq);
  
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
@@ -584,8 +606,16 @@ static void  ReadBeam  (ObitFullBeam *in, ObitImage *image,
   ObitImageClose (image,err);
   if (err->error) Obit_traceback_msg (err, routine, image->name);
 
-  /* Set plane frequency */
-  in->freqs[iplane] = image->myDesc->crval[image->myDesc->jlocf];
+  /* Set plane frequency, have IFs? */
+  if (image->myDesc->jlocif>1) { /* Yes, get FQ table info */
+    in->freqs[iplane] = image->myDesc->crval[image->myDesc->jlocf] + in->IFfreq[iIF] +
+      (iFreq+1-image->myDesc->crpix[image->myDesc->jlocf] *
+       image->myDesc->cdelt[image->myDesc->jlocf]); 
+    } else { /* no - get from header */
+    in->freqs[iplane] = image->myDesc->crval[image->myDesc->jlocf] +
+      (iplane+1-image->myDesc->crpix[image->myDesc->jlocf] *
+       image->myDesc->cdelt[image->myDesc->jlocf]); 
+  }
 
   /* If Stokes I Divide by symmetric beam */
   /* DISABLED (crval==10.0 test, I=1.0) */

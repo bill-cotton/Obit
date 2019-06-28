@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for FullBeam type                          */
 /*                                                                    */
-/*;  Copyright (C) 2009                                               */
+/*;  Copyright (C) 2009,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -31,6 +31,7 @@
 %{
 #include "ObitFullBeam.h"
 #include "ObitImage.h"
+#include "ObitImageDesc.h"
 %}
 
 
@@ -73,6 +74,14 @@ extern char* FullBeamGetName (ObitFullBeam* in) {
   } else {
     return NULL;
   }
+}
+
+extern ObitInfoList* FullBeamGetList (ObitFullBeam* in) {
+  return ObitInfoListRef(in->info);
+}
+
+extern ObitImageDesc* FullBeamGetDesc (ObitFullBeam* in) {
+  return ObitImageDescRef(in->BeamDesc);
 }
 
 extern int FullBeamIsA (ObitFullBeam* in) {

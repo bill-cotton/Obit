@@ -4275,3 +4275,37 @@ Obit/src/ObitDConCleanVis.c Obit/src/ObitUVImager.c:
 Obit/src/ObitBDFData.c:
    Fix logic bugs in selecting autocorrelations
 5 Jun 2019 svn 601
+
+Summary:  bug fixes
+Obit/include/ObitFullBeamDef.h Obit/src/ObitFullBeam.c:
+  Correctly fill in plane frequencies.
+Obit/src/ObitIO.c:
+  UpdateTables: don't openClose if inactive
+Obit/tasks/MKXPhase.c Obit/TDF/MKXPhase.TDF:
+   Better defaulting of solInt
+Obit/python/UV.inc Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c 
+  UVRead: trap ReadCal and call ObitUVReadSelect
+  Full Beam interface
+ObitTalk/python/AIPSData.py:
+  Add name to AIPS UV data, Image  objects
+Obit/python/OTObit.py:
+  getFITS: Trap if UV data but not specified.
+  alldest: fix bugs
+Obit/python/Image.py, Obit/python/UV.py:
+  Add functions to explicitly test the existance of AIPS or FITS files
+  trap AIPSUVData or AIPS Image when the function can't handle.
+Obit/src/ObitAntennaList.c Obit/python/AntennaList.py:
+  ParAng: Better parallactic angle calculation
+  several, trap missing antennas, throw exception
+Obit/src/ObitTableANUtil.c:
+  GetList: Correct longitude for MeerKAT
+Obit/python/FullBeam.inc Obit/python/FullBeam.py:
+  Implement GetDesc and GetList
+Obit/tasks/SwaPol.c Obit/TDF/SwaPol.TDF:
+   Add swapHand parameter to swap par with cross hand data
+Obit/TDF/MFBeam.TDF:
+   Save updates
+Obit/python/Source.py:
+  Trap failures
+28 Jun 2019 svn 602
+

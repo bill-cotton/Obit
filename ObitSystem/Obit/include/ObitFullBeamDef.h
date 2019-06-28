@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009                                               */
+/*;  Copyright (C) 2009,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -41,6 +41,8 @@ ObitImageDesc *BeamDesc;
 ObitFArray *BeamPixels;
 /** Interpolator */
 ObitFInterpolate *myInterp;
+/** IF Frequency offsets */
+odouble *IFfreq;
 /** List of frequencies corresponding to planes in BeamPixels */
 odouble *freqs;
 /** How many planes in BeamPixels? */

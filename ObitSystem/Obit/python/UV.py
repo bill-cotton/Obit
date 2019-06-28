@@ -115,7 +115,7 @@ Data selection, calibration and editing parameters on List member:
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2018
+#  Copyright (C) 2004-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -690,6 +690,8 @@ def PScratch (inUV, err):
     err       = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     return inUV.Scratch(err)
     # end PScratch
 
@@ -700,6 +702,9 @@ def PZap (inUV, err):
     err       = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        inUV.zap()
+        return
     inUV.Zap(err)
     # end PZap
 
@@ -719,6 +724,8 @@ def PRename (inUV, err, newFITSName=None, \
     newAIPSSeq   = New AIPS Sequence number, 0 => unique value
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     inUV.Rename(err,newFITSName=newFITSName, \
                 newAIPSName=newAIPSName, newAIPSClass=newAIPSClass,
                 newAIPSSeq=newAIPSSeq)
@@ -733,6 +740,8 @@ def PCopy (inUV, outUV, err):
     err    = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     inUV.Copy(outUV, err)
     # end PCopy
 
@@ -745,12 +754,16 @@ def PClone (inUV, outUV, err):
     err    = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     inUV.Clone(outUV, err)
     # end PClone
 
 def PNewUVTable (inUV, access, tabType, tabVer, err):
     """ Obsolete use PGetTable
     """
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     return  PGetTable (inUV, access, tabType, tabVer, err)
 # end  PNewUVTable
 
@@ -786,6 +799,8 @@ def PGetTable (inUV, access, tabType, tabVer, err, \
     maxis1-5  = Dimension of axes of IDI data matrix
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        return inUV.table(tabType,tabVer)
     return inUV.NewTable(access, tabType, tabVer, err,\
                          numOrb=numOrb, numPCal=numPCal, numIF=numIF, \
                          numPol=numPol, numTerm=numTerm, numChan=numChan,\
@@ -802,6 +817,8 @@ def POpen (inUV, access, err):
     err       = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     return inUV.Open(access, err)
     # end POpen
 
@@ -811,6 +828,8 @@ def PDirty (inUV):
     inUV     = Python UV object
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     inUV.Dirty()
     # end PDirty
 
@@ -821,6 +840,8 @@ def PClose (inUV, err):
     err       = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     return inUV.Close( err)
     # end PClose
 
@@ -834,11 +855,14 @@ def PZapTable (inUV, tabType, tabVer, err):
     err       = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        inUV.zap_table(tabType, tabVer)
+        return
     return inUV.ZapTable (tabType, tabVer, err)
     # end PZapTable
 
 def PCopyTables (inUV, outUV, exclude, include, err):
-    """ Copy Tabeles from one image to another
+    """ Copy Tables from one image to another
 
     inUV      = Python UV object
     outUV     = Output Python UV object, must be defined
@@ -848,6 +872,8 @@ def PCopyTables (inUV, outUV, exclude, include, err):
     err       = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     return inUV.CopyTables (outUV, exclude, include, err)
     # end PCopyTables
 
@@ -858,6 +884,8 @@ def PUpdateTables (inUV, err):
     err       = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     return inUV.UpdateTables (err)
     # end PUpdateTables
 
@@ -870,6 +898,8 @@ def PFullInstantiate (inUV, access, err):
     err       = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     return inUV.FullInstantiate (access, err)
     # end PfullInstantiate
 
@@ -880,6 +910,8 @@ def PGetList (inUV):
     inUV   = Python UV object
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     return inUV.List
     # end PGetList
 
@@ -890,6 +922,8 @@ def PGetTableList (inUV):
     inUV   = Python UV object
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     return inUV.TableList
     # end PGetTableList
 
@@ -977,6 +1011,8 @@ def PGetDesc (inUV):
     inUV   = Python UV object
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     return inUV.Desc
     # end PGetDesc
 
@@ -988,6 +1024,8 @@ def PGetIODesc (inUV):
     """
     ################################################################
      # Checks
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     if not PIsA(inUV):
         raise TypeError,"inUV MUST be a Python Obit UV"
     #
@@ -1004,6 +1042,8 @@ def PUpdateDesc (inUV, err, Desc=None):
              Contents can be accessed throuth the Dict member
    """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     inUV.UpdateDesc (err, Desc=Desc)
     # end PUpdateDesc
 
@@ -1015,6 +1055,8 @@ def PUVInfo (inUV, err):
     err    = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1046,6 +1088,8 @@ def PUVInfo (inUV, err):
     # end PUVInfo
 
 def PGetVisBuf (inUV):
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     return inUV.VisBuf
 
 def PGetHighVer (inUV, tabType):
@@ -1056,6 +1100,8 @@ def PGetHighVer (inUV, tabType):
     tabType   = Table type, e.g. "OTFSoln"
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     return  inUV.GetHighVer (tabType)
     # end PGetHighVer
 
@@ -1067,6 +1113,8 @@ def PGetSubA (inUV, err):
     err       = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1085,6 +1133,8 @@ def PGetFreq (inUV, err):
     err       = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1105,6 +1155,8 @@ def PIsScratch (inUV):
     inUV   = Python UV object
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     return inUV.IsScratch ()
     # end PIsScratch
 
@@ -1128,6 +1180,8 @@ def PGetName (inUV):
     inUV   = Python UV object
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     return inUV.GetName()
     # end PGetName
 
@@ -1141,6 +1195,8 @@ def PUtilUVWExtrema (inUV, err):
     err    = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1165,6 +1221,8 @@ def PUtilCopyZero (inUV, scratch, outUV, err):
     err    = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1198,6 +1256,8 @@ def PUtilVisDivide (in1UV, in2UV, outUV, err):
     err     = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not in1UV.UVIsA():
         raise TypeError,"in1UV MUST be a Python Obit UV"
@@ -1223,6 +1283,8 @@ def PUtilXPolDivide (inUV, outUV, err):
     err     = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1247,6 +1309,8 @@ def PUtilVisSub (in1UV, in2UV, outUV, err):
     err     = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not in1UV.UVIsA():
         raise TypeError,"in1UV MUST be a Python Obit UV"
@@ -1274,6 +1338,8 @@ Compares the visibilites in *in1UV* with those in *in2UV*.
 * err   = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not in1UV.UVIsA():
         raise TypeError,"in1UV MUST be a Python Obit UV"
@@ -1297,6 +1363,8 @@ def PUtilIndex (inUV, err, maxScan=None, maxGap=None):
     maxGap  = max. scan gap in min. [def. long]
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1332,6 +1400,8 @@ def PQuack (inUV, err, begDrop=0.0, endDrop=0.0, Reason="    ", flagVer=1):
     flagVer = AIPS FG table in which to put entries.
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1356,6 +1426,8 @@ def PUtilHann (inUV, outUV, err, scratch=False):
     scratch  = True if this is to be a scratch file (same type as inUV)
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1402,6 +1474,8 @@ def PUtilAvgF (inUV, outUV, err, scratch=False,
                 3 through 14 and 25 through 30 in each IF.
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1450,6 +1524,8 @@ def PUtilAvgT (inUV, outUV, err, scratch=False, timeAvg=1.0):
     timeAvg  = Averaging time in min
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1502,6 +1578,8 @@ def PUtilAvgTF (inUV, outUV, err, scratch=False, \
               The list of groups is terminated by a start <=0
               """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1552,6 +1630,8 @@ def PUtilCount (inUV, err, timeInt=1440.0):
     timeInt  = interval  in min (max 500 intervals)
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1610,6 +1690,8 @@ def PEditTD (inUV, outUV, err):
     err    = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1683,6 +1765,8 @@ def PEditFD (inUV, outUV, err):
     err    = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1732,6 +1816,8 @@ def PEditStokes (inUV, outUV, err):
     err    = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1769,6 +1855,8 @@ def PEditClip (inUV, scratch, outUV, err):
     err    = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1809,6 +1897,8 @@ def PEditClipStokes (inUV, scratch, outUV, err):
     err    = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1843,6 +1933,8 @@ out = in*scale + noise(sigma) for each real,imag
 * err     = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1865,6 +1957,8 @@ def PAppend(inUV, outUV, err):
     err     = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1904,6 +1998,8 @@ def PFlag (inUV, err,
     Reason    = reason string for flagging (max 24 char)
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not PIsA(inUV):
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1946,6 +2042,8 @@ def PTableCLGetDummy (inUV, outUV, ver, err, solInt=10.):
     solint  = time interval (sec) of table
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -1978,6 +2076,8 @@ def PTableCLfromNX(outUV, nant, err, outVer=1, calInt=1.0):
      * calInt   = calibration table interval in min
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # If an old table exists, delete it
     if outUV.GetHighVer("AIPS CL")>=outVer:
         zz = outUV.ZapTable("AIPS CL", outVer, err)
@@ -2069,6 +2169,8 @@ def PTableSNGetZeroFR (inUV, outUV, ver, err, solInt=10., timeInt = 1.0):
     timeInt = Integration time (sec) of data.
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -2107,6 +2209,8 @@ def PUVAvg2One (inUV, scratch, outUV, err):
     err    = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -2140,6 +2244,8 @@ def PUVVisSub1 (inUV1, inUV2, outUV, err):
     err    = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -2169,6 +2275,8 @@ def PUVSmoF (inUV, scratch, outUV, err):
     err    = Python Obit Error/message stack
     """
     ################################################################
+    if inUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV.myClass
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
@@ -2189,3 +2297,50 @@ def PUVSmoF (inUV, scratch, outUV, err):
     return outUV
     # end PUVSmoF
 
+def AExist(Aname, Aclass, disk, seq, err):
+    """
+    Test if AIPS file exists
+    
+    returns True or False
+    * Aname    = AIPS file name
+    * Aclass   = AIPS class name
+    * disk     = AIPS disk number
+    * seq      = AIPS sequence number
+    * err      = Python Obit Error/message stack, 
+    """
+    ################################################################
+    # Checks
+    if err.isErr:
+        return False
+    # Print message stack to clear
+    OErr.printErr(err)
+    user = OSystem.PGetAIPSuser()
+    ret = Obit.AIPSDirFindCNO(disk, user, Aname, Aclass, "UV", seq, err.me)
+    if err.isErr:
+        return rFalse
+    # Clear any couldn't find message
+    OErr.PClear(err)
+    return ret>0
+    # end AExist
+def FExist(filedisk, err):
+    """
+    Test if FITS file exists
+    
+    returns True or False
+    * file    = File name
+    * disk    = disk number, 0->CWD
+    * err      = Python Obit Error/message stack, 
+    """
+    ################################################################
+    # Checks
+    if err.isErr:
+        return False
+    # Print message stack to clear
+    OErr.printErr(err)
+    ret = FITSDir.PExist(file,disk,err)
+    if err.isErr:
+        return False
+    # Clear any couldn't find message
+    OErr.PClear(err)
+    return ret
+# end FExist

@@ -193,7 +193,10 @@ extern int UVOpen (ObitUV *in, int access, ObitErr *err) {
 
 extern int UVRead (ObitUV *in, ObitErr *err) {
   ObitIOCode ret;
-  ret = ObitUVRead (in, NULL, err);
+  if (in->myIO->access == OBIT_IO_ReadCal) 
+    ret = ObitUVReadSelect (in, NULL, err);
+  else 
+    ret = ObitUVRead (in, NULL, err);
   if (ret==OBIT_IO_OK) return 0;
   else return 1;
 } // end Read

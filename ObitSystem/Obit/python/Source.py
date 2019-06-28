@@ -4,7 +4,7 @@
     Source Members with python interfaces:
       Name    Source Name, first SU table entry matching Name returned.
       SourID  Source ID
-      Qual    Source qualifier
+      Qual    Source qualifier, almost always 0
       RAMean  Mean RA in deg
       DecMean Mean Dec in deg
       RAApp   Apparent RA in deg
@@ -14,7 +14,7 @@
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2013
+#  Copyright (C) 2013,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -111,7 +111,7 @@ def PIsA (inSou):
     return Obit.SourceIsA(inSou.me)
     # end  PIsA
 
-def PCreateByNumber (name, inUV, SouID, OErr):
+def PCreateByNumber (name, inUV, SouID,eErr):
     """ Create a Source from a UV for a specified Source ID
 
     If inUV has a SoUrce table the Source is extracted from it, otherwise
@@ -124,11 +124,14 @@ def PCreateByNumber (name, inUV, SouID, OErr):
     """
     ################################################################
     out    = Source(name)
-    out.me = Obit.SourceCreateByNumber(name, inUV.me, SouID, OErr.me)
+    out.me = Obit.SourceCreateByNumber(name, inUV.me, SouID, err.me)
+    if err.isErr:
+        OErr.printErr(err)
+        raise RuntimeError,"Failed"
     return out
     # end PCreateByNumber
 
-def PCreateByName (name, inUV, Sname, Qual, OErr):
+def PCreateByName (name, inUV, Sname, Qual, err):
     """ Create a Source from a UV for a specified Source name/qual
 
     If inUV has a SoUrce table the Source is extracted from it, otherwise
@@ -142,7 +145,10 @@ def PCreateByName (name, inUV, Sname, Qual, OErr):
     """
     ################################################################
     out    = Source(name)
-    out.me = Obit.SourceCreateByName(name, inUV.me, Sname, Qual, OErr.me)
+    out.me = Obit.SourceCreateByName(name, inUV.me, Sname, Qual, err.me)
+    if err.isErr:
+        OErr.printErr(err)
+        raise RuntimeError,"Failed"
     return out
     # end PCreateByName
 

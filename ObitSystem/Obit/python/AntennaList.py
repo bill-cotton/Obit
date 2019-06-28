@@ -11,7 +11,7 @@
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2013
+#  Copyright (C) 2013,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
 #-----------------------------------------------------------------------
  
 # Python shadow class to ObitAntennaList class
-import Obit, OErr, string, math
+import Obit, OErr, FArray, string, math
 
 class AntennaListPtr :
     def __init__(self,this):
@@ -76,7 +76,11 @@ class AntennaList(AntennaListPtr):
         * time    Time (days) wrt reference day
         * Source  Source in question
         """
-        return Obit.AntennaListGetElev (self.me, ant, time, Source.me)
+        val = Obit.AntennaListGetElev (self.me, ant, time, Source.me)
+        # Validity test
+        if val==FArray.fblank:
+            raise RuntimeError,"Invalid antenna"
+        return val
     # end Elev
 
     def Az(self, ant, time, Source):
@@ -87,7 +91,11 @@ class AntennaList(AntennaListPtr):
         * time    Time (days) wrt reference day
         * Source  Source in question
         """
-        return Obit.AntennaListGetAz (self.me, ant, time, Source.me)
+        val = Obit.AntennaListGetAz (self.me, ant, time, Source.me)
+        # Validity test
+        if val==FArray.fblank:
+            raise RuntimeError,"Invalid antenna"
+        return val
     # end Az
 
     def ParAng(self, ant, time, Source):
@@ -98,7 +106,11 @@ class AntennaList(AntennaListPtr):
         * time    Time (days) wrt reference day
         * Source  Source in question
         """
-        return Obit.AntennaListGetParAng (self.me, ant, time, Source.me)
+        val = Obit.AntennaListGetParAng (self.me, ant, time, Source.me)
+        # Validity test
+        if val==FArray.fblank:
+            raise RuntimeError,"Invalid antenna"
+        return val
     # end ParAng
 
 def PIsA (inSou):

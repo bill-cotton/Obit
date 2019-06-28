@@ -2766,6 +2766,7 @@ extern void FITSSetDir(char *,int ,ObitErr *);
 
 #include "ObitFullBeam.h"
 #include "ObitImage.h"
+#include "ObitImageDesc.h"
 
 extern ObitFullBeam* newFullBeam (char* name) {
   return newObitFullBeam (name);
@@ -2807,6 +2808,14 @@ extern char* FullBeamGetName (ObitFullBeam* in) {
   }
 }
 
+extern ObitInfoList* FullBeamGetList (ObitFullBeam* in) {
+  return ObitInfoListRef(in->info);
+}
+
+extern ObitImageDesc* FullBeamGetDesc (ObitFullBeam* in) {
+  return ObitImageDescRef(in->BeamDesc);
+}
+
 extern int FullBeamIsA (ObitFullBeam* in) {
   return ObitFullBeamIsA(in);
 }
@@ -2819,6 +2828,8 @@ extern ObitFullBeam *FullBeamCreate(char *,ObitImage *,ObitErr *);
 extern float FullBeamValue(ObitFullBeam *,double ,double ,float ,int ,ObitErr *);
 extern long FullBeamFindPlane(ObitFullBeam *,double );
 extern char *FullBeamGetName(ObitFullBeam *);
+extern ObitInfoList *FullBeamGetList(ObitFullBeam *);
+extern ObitImageDesc *FullBeamGetDesc(ObitFullBeam *);
 extern int FullBeamIsA(ObitFullBeam *);
 
 typedef struct {
@@ -12939,7 +12950,10 @@ extern int UVOpen (ObitUV *in, int access, ObitErr *err) {
 
 extern int UVRead (ObitUV *in, ObitErr *err) {
   ObitIOCode ret;
-  ret = ObitUVRead (in, NULL, err);
+  if (in->myIO->access == OBIT_IO_ReadCal) 
+    ret = ObitUVReadSelect (in, NULL, err);
+  else 
+    ret = ObitUVRead (in, NULL, err);
   if (ret==OBIT_IO_OK) return 0;
   else return 1;
 } // end Read
@@ -26949,6 +26963,62 @@ static PyObject *_wrap_FullBeamGetName(PyObject *self, PyObject *args) {
     }
     _result = (char *)FullBeamGetName(_arg0);
     _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_FullBeamGetList(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitInfoList * _result;
+    ObitFullBeam * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:FullBeamGetList",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitFullBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of FullBeamGetList. Expected _ObitFullBeam_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitInfoList *)FullBeamGetList(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitInfoList_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_FullBeamGetDesc(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageDesc * _result;
+    ObitFullBeam * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:FullBeamGetDesc",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitFullBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of FullBeamGetDesc. Expected _ObitFullBeam_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitImageDesc *)FullBeamGetDesc(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitImageDesc_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
     return _resultobj;
 }
 
@@ -80106,6 +80176,8 @@ static PyMethodDef ObitMethods[] = {
 	 { "GPUFArrayToData", _wrap_GPUFArrayToData, METH_VARARGS },
 	 { "GPUFArrayCreate", _wrap_GPUFArrayCreate, METH_VARARGS },
 	 { "FullBeamIsA", _wrap_FullBeamIsA, METH_VARARGS },
+	 { "FullBeamGetDesc", _wrap_FullBeamGetDesc, METH_VARARGS },
+	 { "FullBeamGetList", _wrap_FullBeamGetList, METH_VARARGS },
 	 { "FullBeamGetName", _wrap_FullBeamGetName, METH_VARARGS },
 	 { "FullBeamFindPlane", _wrap_FullBeamFindPlane, METH_VARARGS },
 	 { "FullBeamValue", _wrap_FullBeamValue, METH_VARARGS },

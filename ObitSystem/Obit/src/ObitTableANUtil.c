@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2013                                          */
+/*;  Copyright (C) 2003-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -123,7 +123,7 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
   olong irow;
   olong maxANid, i, iant, numPCal, countAnt;
   ObitInfoType type;
-  gboolean doVLA, doVLBI, doATCA, doEVLA, doALMA, doKAT;
+  gboolean doVLA, doVLBI, doATCA, doEVLA, doALMA, doKAT, doMeerKAT;
   odouble x, y, z, ArrLong, rho, dtemp;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar tempName[101]; /* should always be big enough */
@@ -231,6 +231,9 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
   /* KAT7? Earth centered, no flip */
   doKAT  = !strncmp(in->ArrName, "KAT-7   ", 8);
 
+  /* MeerKAT Earth centered, no flip */
+  doMeerKAT  = !strncmp(in->ArrName, "MeerKAT ", 8);
+
   /* Is this the ATCA? It uses earth center but without Y flip like VLBI */
   doATCA = !strncmp(in->ArrName, "ATCA    ", 8);
 
@@ -308,6 +311,9 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
     if(rho!=0.0) out->ANlist[iant]->AntLat  = asin(z/rho);
     else out->ANlist[iant]->AntLat  = 0.0;
     out->ANlist[iant]->AntRad  = rho;
+
+    /* Flip Long for MeerKAT */
+    if (doMeerKAT)  out->ANlist[iant]->AntLong = - out->ANlist[iant]->AntLong;
 
     /* Make sure first antenna filled in (used for polarization cal ) */
     if ((iant>0) && (out->ANlist[0]<=0)) {

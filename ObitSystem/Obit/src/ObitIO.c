@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -860,6 +860,7 @@ ObitIOCode ObitIOUpdateTables (ObitIO *in, ObitInfoList *info, ObitErr *err)
 
   /* Need to open and close? */
   openClose = !((in->myStatus==OBIT_Active) || (in->myStatus==OBIT_Modified));
+  openClose = openClose && !(in->myStatus==OBIT_Inactive);
 
   /* Open if needed */
   if (openClose) {
