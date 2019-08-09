@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2015                                          */
+/*;  Copyright (C) 2011-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -33,6 +33,7 @@
 #include "ObitTableANUtil.h"
 #include "ObitTableSUUtil.h"
 #include "ObitSinCos.h"
+#include "ObitAntennaList.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -85,22 +86,25 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 {
   ObitTableSN *outSoln=NULL;
   ObitTableSNRow *row=NULL;
+  ObitTableAN *ANTab=NULL;
+  ObitAntennaList *ANList=NULL;
+  ObitSource *Source=NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitIOAccess access;
   gboolean doCalSelect;
   ObitIOCode retCode;
   ObitInfoType type;
-  olong i, j, ii, iAnt, SNver, iAnt1, iAnt2, suba, refAnt, BChan, SNSoln;
-  olong iSNRow, numFreq, jndx, indx, numPol, numIF, numAnt, nIFs;
-  olong incs, incf, incif, js, jf, jif, kif, numVis;
+  olong i, j, ii, iAnt, SNver, suba, refAnt, BChan, SNSoln;
+  olong iSNRow, numFreq, jndx, indx, numPol, numIF, numPCal, numAnt, nIFs;
+  olong incs, incf, incif, js, jf, jif, kif, numVis, numOrb, iANver, suId;
   ofloat uvrang[2], wtuv, weight, wt, dFreq, snrmin, bl, solInt;
-  ofloat p1, p2, cp1, cp2, corr, cori, tr, ti, lambda0, lambda;
+  ofloat p1, p2, cp1, cp2, tr, ti, lambda0, lambda;
   ofloat *vis, *u, *v, *base, *time, *delay=NULL, *phase=NULL, *snr=NULL;
   ofloat startTime, endTime=0.0, lastTime=0.0;
-  ofloat RLPhase, RM, rlp;
+  ofloat RLPhase, RM, rlp, qpol, upol, chi, linP;
   ofloat *antwt=NULL;
   ofloat *xpol1=NULL, *xpol2=NULL;
-  gboolean empty, done, dump;
+  gboolean empty, done, dump, isCirc;
   gchar *tname;
   gchar *routine = "ObitUVRLDelayCal";
   olong ftype=0; 
@@ -143,7 +147,18 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
    /* open output UV data  */
   retCode = ObitUVOpen (outUV, OBIT_IO_ReadWrite, err);
   if (err->error) Obit_traceback_val (err, routine, outUV->name, outSoln);
-  
+
+  /* Circular or linear feeds? */
+  isCirc = inUV->myDesc->crval[inUV->myDesc->jlocs]>-4.0;
+
+  /* Antenna List for linear feeds */
+  numOrb  = 0;  numPCal = 0; numIF = 0; iANver=1;
+  ANTab = 
+    newObitTableANValue (inUV->name, (ObitData*)inUV, &iANver, OBIT_IO_ReadOnly, 
+			 numIF, numOrb, numPCal, err);
+  ANList = ObitTableANGetList (ANTab, err);
+  if (err->error) Obit_traceback_val (err, routine, outUV->name, outSoln);
+
   /* Get parameters from inUV */
   ftype = 0;
   ObitInfoListGetTest(inUV->info, "fitType", &type, dim, &ftype);
@@ -161,6 +176,7 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   RLPhase = 0.0;
   ObitInfoListGetTest(inUV->info, "RLPhase", &type, dim, &RLPhase);
   rlp = RLPhase/57.296;  /* R-L phase in radians */
+  qpol = cos(rlp); upol = sin(rlp);  /* Fake poln for lin. feeds */
   RM = 0.0;
   ObitInfoListGetTest(inUV->info, "RM", &type, dim, &RM);
   refAnt = 1;
@@ -312,6 +328,12 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
       dump = *time>endTime;
       dump =  dump || done;
       if (dump) {
+	/* Get source info for lin. feeds */
+	if (!isCirc) {
+	  if (inUV->myDesc->ilocsu>=0) suId = *inUV->buffer+inUV->myDesc->ilocsu;
+	  else                         suId = -1.0;
+	  Source= ObitUVGetSource (Source, inUV, suId, err);
+	}
 	/* Process  Fit delays in blocks of nIFs IFs */
 	for (jif=0; jif<numIF; jif+=nIFs) {   /* IF loop */
 	  FitDelay (numFreq*nIFs, BChan, dFreq, &xpol1[jif*numFreq*3], &xpol2[jif*numFreq*3], 
@@ -320,21 +342,32 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  phase[jif] -= 2.0*G_PI*(inUV->myDesc->freqIF[jif]-inUV->myDesc->freq) * delay[jif];*/
 	  /* R-L phase correction - apply RM */
 	  lambda = VELIGHT/inUV->myDesc->freqIF[jif];
-	  phase[jif] = rlp + RM * (lambda*lambda - lambda0*lambda0) - phase[jif];
+	  /* Circular or Linear poln? */
+	  if (isCirc) {
+	    phase[jif] = rlp + RM * (lambda*lambda - lambda0*lambda0) - phase[jif];
+	    for (kif=1; kif<nIFs; kif++) 
+	      phase[jif+kif] = phase[jif] + kif*dFreq*delay[jif]*numFreq*2.0*G_PI;
+	  } else {
+	    /* linear feeds - flip phase if linP (eff. Stokes u) fn positive */
+	    chi  = ObitAntennaListParAng(ANList, 1, *time, Source);  /* Parallactic angle */
+	    linP = -qpol*sin(2.*chi) + upol*cos(2.*chi);
+	    if (linP>0.0) phase[jif] = -phase[jif];
+	    else          phase[jif] = -G_PI-phase[jif];
+	    phase[jif] = fmod(phase[jif],2.0*G_PI);
+	    for (kif=1; kif<nIFs; kif++) phase[jif+kif] = phase[jif];
+	  }
 	  /* Fill IF values */
 	  for (kif=1; kif<nIFs; kif++) {
 	    delay[jif+kif] = delay[jif];
 	    snr[jif+kif]   = snr[jif];
-	    phase[jif+kif] = phase[jif] + kif*dFreq*delay[jif]*numFreq*2.0*G_PI;
 	  }
 	  
+
 	  /* Diagnostics */
 	  if (err->prtLv>=2) {
 	    for (ii=0; ii<numFreq*nIFs; ii++) {
 	      if ((xpol1[(jif*numFreq+ii)*3]==0.0) && 
 		  (xpol1[(jif*numFreq+ii)*3+1]==0.0)) continue;
-	      corr = cos(2.0*G_PI*(delay[jif]*dFreq)*(ii+BChan));
-	      cori = sin(2.0*G_PI*(delay[jif]*dFreq)*(ii+BChan));
 	      tr   = xpol1[(jif*numFreq+ii)*3];
 	      ti   = xpol1[(jif*numFreq+ii)*3+1];
 	      p1   = 57.295*atan2(ti, tr);
@@ -409,10 +442,6 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 
       lastTime  = *time;  /* last time in accumulation */
       
-      /* Antennas */
-      iAnt1 = (*base / 256.0) + 0.001;
-      iAnt2 = (*base - iAnt1 * 256) + 0.001;
-      
       /* Weighting */
       wt = 1.0;
       if ((bl<uvrang[0]) || (bl>uvrang[1])) wt = wtuv;
@@ -467,7 +496,11 @@ ObitTableSN* ObitUVRLDelayCal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   if (err->error) goto cleanup;
   
  cleanup: 
-  row = ObitTableSNUnref(row);
+  row    = ObitTableSNUnref(row);
+  ANTab  = ObitTableANUnref(ANTab);
+  ANList = ObitAntennaListUnref(ANList);
+  Source = ObitSourceUnref(Source);
+
   if (antwt)  g_free(antwt);
   if (xpol1)  g_free(xpol1);
   if (xpol2)  g_free(xpol2);

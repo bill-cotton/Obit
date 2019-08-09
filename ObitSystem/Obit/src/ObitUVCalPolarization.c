@@ -260,10 +260,6 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
     gr = me->curCosPA[ia1] * me->curCosPA[ia2] - me->curSinPA[ia1] * me->curSinPA[ia2];
     gi = me->curCosPA[ia1] * me->curSinPA[ia2] + me->curSinPA[ia1] * me->curCosPA[ia2];
   }
-  /* DEBUG - place to put break point */
-  if (time>(2.5/24.)) {
-    gr1 = gr; gi1 = gi;
-  } /* End DEBUG */
       
   /* Use central frequency channel, each IF */
   iChan = 0.5 * (in->bChan + in->eChan);
@@ -436,9 +432,6 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
       } else {
 	gr1 = gr;
 	gi1 = gi;
-	/* DEBUG 
-	gr = 1.0;
-	gi = 0.0;*/
       }
       
       /* Correct RL */
@@ -1193,15 +1186,14 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
 	    if (in->Jones[ia][jndx]!=0.0) return;  /* Already done? */
 	    angle[0] = G_PI*0.25+elp_r; angle[1] = G_PI*0.25-elp_l;
 	    angle[2] = ori_r;           angle[3] = ori_l;
-	    /* Seems to be needed for MeerKAT */
+	    /* DEBUG perfect feeds
+            angle[0] = G_PI*0.25+0.0; angle[1] = G_PI*0.25-0.0;
+            angle[2] = 0.0;           angle[3] = G_PI*0.5; 
 	    if (in->isMeerKAT) {
-	      angle[0] = G_PI*0.25-elp_l; angle[1] = G_PI*0.25+elp_r; 
-	      angle[2] = ori_l;           angle[3] = ori_r;
-	      /* DEBUG
 	      angle[0] = G_PI*0.25+0.0; angle[1] = G_PI*0.25-0.0;
-	      angle[2] = 0.0;           angle[3] = G_PI*0.5; */
-	      
-	    }
+	      angle[2] = 0.0;           angle[3] = G_PI*0.5; 
+	      } */
+	    /* end DEBUG */
 	    ObitSinCosVec(4, angle, sina, cosa);
 	    Jones[0] =  cosa[0]*cosa[2]; Jones[1] = -cosa[0]*sina[2];
 	    Jones[2] =  sina[0]*cosa[2]; Jones[3] =  sina[0]*sina[2];
@@ -1323,35 +1315,14 @@ static void SetInvJonesCh(ObitUVCalPolarizationS *in, ObitUVCalCalibrateS *cal,
      } /* end doJones */
       /* invert matrix if valid */
       if (Jones[0]!=fblank) {
-	/* Seems to be needed for MeerKAT */
-	if (in->isMeerKAT) {
-	  /* Actually the same */
-	  in->Jones[ia][jndx+6] =   Jones[0] * Det[0] - Jones[1] * Det[1];
-	  in->Jones[ia][jndx+7] =   Jones[0] * Det[1] + Jones[1] * Det[0];
-	  in->Jones[ia][jndx+2] = -(Jones[2] * Det[0] - Jones[3] * Det[1]);
-	  in->Jones[ia][jndx+3] = -(Jones[2] * Det[1] + Jones[3] * Det[0]);
-	  in->Jones[ia][jndx+4] = -(Jones[4] * Det[0] - Jones[5] * Det[1]);
-	  in->Jones[ia][jndx+5] = -(Jones[4] * Det[1] + Jones[5] * Det[0]);
-	  in->Jones[ia][jndx+0] =   Jones[6] * Det[0] - Jones[7] * Det[1];
-	  in->Jones[ia][jndx+1] =   Jones[6] * Det[1] + Jones[7] * Det[0];
-	  /*in->Jones[ia][jndx+0] = -(Jones[2] * Det[0] - Jones[3] * Det[1]);
-	    in->Jones[ia][jndx+1] = -(Jones[2] * Det[1] + Jones[3] * Det[0]);
-	    in->Jones[ia][jndx+2] =   Jones[6] * Det[0] - Jones[7] * Det[1];
-	    in->Jones[ia][jndx+3] =   Jones[6] * Det[1] + Jones[7] * Det[0];
-	    in->Jones[ia][jndx+4] =   Jones[0] * Det[0] - Jones[1] * Det[1];
-	    in->Jones[ia][jndx+5] =   Jones[0] * Det[1] + Jones[1] * Det[0];
-	    in->Jones[ia][jndx+6] = -(Jones[4] * Det[0] - Jones[5] * Det[1]);
-	    in->Jones[ia][jndx+7] = -(Jones[4] * Det[1] + Jones[5] * Det[0]);*/
-	} else { /* Not MeerKAT */
-	  in->Jones[ia][jndx+6] =   Jones[0] * Det[0] - Jones[1] * Det[1];
-	  in->Jones[ia][jndx+7] =   Jones[0] * Det[1] + Jones[1] * Det[0];
-	  in->Jones[ia][jndx+2] = -(Jones[2] * Det[0] - Jones[3] * Det[1]);
-	  in->Jones[ia][jndx+3] = -(Jones[2] * Det[1] + Jones[3] * Det[0]);
-	  in->Jones[ia][jndx+4] = -(Jones[4] * Det[0] - Jones[5] * Det[1]);
-	  in->Jones[ia][jndx+5] = -(Jones[4] * Det[1] + Jones[5] * Det[0]);
-	  in->Jones[ia][jndx+0] =   Jones[6] * Det[0] - Jones[7] * Det[1];
-	  in->Jones[ia][jndx+1] =   Jones[6] * Det[1] + Jones[7] * Det[0];
-	}
+	in->Jones[ia][jndx+6] =   Jones[0] * Det[0] - Jones[1] * Det[1];
+	in->Jones[ia][jndx+7] =   Jones[0] * Det[1] + Jones[1] * Det[0];
+	in->Jones[ia][jndx+2] = -(Jones[2] * Det[0] - Jones[3] * Det[1]);
+	in->Jones[ia][jndx+3] = -(Jones[2] * Det[1] + Jones[3] * Det[0]);
+	in->Jones[ia][jndx+4] = -(Jones[4] * Det[0] - Jones[5] * Det[1]);
+	in->Jones[ia][jndx+5] = -(Jones[4] * Det[1] + Jones[5] * Det[0]);
+	in->Jones[ia][jndx+0] =   Jones[6] * Det[0] - Jones[7] * Det[1];
+	in->Jones[ia][jndx+1] =   Jones[6] * Det[1] + Jones[7] * Det[0];
       } else { /* bad */
         for (i=0; i<8; i++) in->Jones[ia][jndx+i] = fblank;
       }

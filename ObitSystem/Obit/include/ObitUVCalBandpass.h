@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003                                               */
+/*;  Copyright (C) 2003,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -35,6 +35,7 @@
 #include <glib.h>
 #include "Obit.h"
 #include "ObitErr.h"
+#include "ObitTableBP.h"
 #include "ObitUVDesc.h"
 #include "ObitUVSel.h"
 #include "ObitUVCal.h"
@@ -58,9 +59,12 @@ void
 ObitUVCalBandpassInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc, 
 		     ObitErr *err);
 
-/** Public: Apply bandpass calibration */
+/** Public: Apply bandpass calibration to visibility */
 void ObitUVCalBandpass (ObitUVCal *in, float time, olong ant1, 
 			 olong ant2, ofloat *RP, ofloat *visIn, ObitErr *err);
+
+/** Public: Apply bandpass calibration to BP Record */
+void ObitUVCalBandpassBP (ObitUVCal *in, ObitTableBPRow *BPRow, ObitErr *err);
 
 /** Public: Shutdown Calibration */
 void  ObitUVCalBandpassShutdown (ObitUVCal *in, ObitErr *err);

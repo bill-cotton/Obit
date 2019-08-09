@@ -118,6 +118,7 @@ int main ( int argc, char **argv )
   /* Get input uvdata */
   inData = getInputData (myInput, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  circFeed = (inData->myDesc->crval[inData->myDesc->jlocs]>-3.0);  /* Circular feeds? */
 
   /* Get output uvdata (for AIPS FG table) */
   outData = setOutputUV (myInput, inData, err);
@@ -174,7 +175,6 @@ int main ( int argc, char **argv )
   ObitInfoListGetTest(myInput, "XClip",  &type, dim, XClip);
   if (XClip[0]>0.0) {
     doneIt = TRUE;  /* Done anything? */
-    circFeed = (inData->myDesc->crval[inData->myDesc->jlocs]>-3.0);  /* Circular feeds? */
 
     /* First RL or XY */
     if (circFeed) XStokes = RLStokes;
@@ -939,7 +939,7 @@ ObitUV* setOutputUV (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 {
   ObitUV    *outUV = NULL;
   ObitInfoType type;
-  olong      i, n, cno, lType;
+  olong      i, n, cno;
   oint      disk, Aseq;
   gchar     *Type, *strTemp=NULL;
   gchar     Aname[13], Aclass[7], *Atype = "UV";
@@ -960,7 +960,6 @@ ObitUV* setOutputUV (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     
   /* File type - could be either AIPS or FITS */
   ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
-  lType = dim[0];
   if (!strncmp (Type, "AIPS", 4)) { /* AIPS output */
 
     /* outName given? */

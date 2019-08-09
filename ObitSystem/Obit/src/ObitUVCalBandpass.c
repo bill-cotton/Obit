@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2016                                          */
+/*;  Copyright (C) 2003-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,11 +26,11 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitTableBP.h"
 #include "ObitUVCalBandpass.h"
 #include "ObitUVCalBandpassDef.h"
 #include "ObitUVDesc.h"
 #include "ObitUVSel.h"
-#include "ObitTableBP.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -150,7 +150,8 @@ void ObitUVCalBandpassInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
   /* table information */
   me->numPol = ((ObitTableBP*)me->BPTable)->numPol;
   me->numRow = ((ObitTableBP*)me->BPTable)->myDesc->nrow;
-
+  me->numAnt = MAX (me->numAnt, ((ObitTableBP*)me->BPTable)->numAnt);
+ 
   /* Allocate calibration arrays */
   /* Which subarrays are VLBA arrays? */
   me->isVLBA = g_malloc0(me->numSubA*sizeof(gboolean));
@@ -221,27 +222,18 @@ void ObitUVCalBandpassInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
 void ObitUVCalBandpass (ObitUVCal *in, float time, olong ant1, olong ant2, 
 			 ofloat *RP, ofloat *visIn, ObitErr *err)
 {
-  olong   iif, ipol, ifreq, ioff, joff, index, nstoke, iSubA, itemp, nIF;
-  olong   ia1, ia2, FreqID, SourID, numCh, numIF, asize, maxpol, jndxa1, jndxa2, indxa1, indxa2;
-  gboolean   sombad, somflg, allflg, smpflg, alpflg, allded, ccor;
+  olong   iif, ipol, ifreq, ioff, joff, index, iSubA, nIF;
+  olong   ia1, ia2, SourID, numCh, asize, maxpol, jndxa1, jndxa2, indxa1, indxa2;
+  gboolean somflg, allflg, smpflg, alpflg, allded;
   gboolean calBad;
   ofloat gwt, tvr, tvi, gr, gi, fblank = ObitMagicF();
   ObitUVCalBandpassS *me;
   ObitUVDesc *desc;
-  ObitUVSel *sel;
   gchar *routine="ObitUVCalBandpass";
 
   /* local pointers for structures */
   me   = in->bandpassCal;
   desc = in->myDesc;
-  sel  = in->mySel;
-
-  /* Number of stokes correlations */
-  nstoke = desc->inaxes[desc->jlocs];
-
-  /* number of IFs */
-  if (desc->jlocif>=0) numIF = desc->inaxes[desc->jlocif];
-  else numIF = 1;
 
   /* Number of selected channels/IF */
   numCh = (me->eChan - me->bChan + 1);
@@ -249,10 +241,6 @@ void ObitUVCalBandpass (ObitUVCal *in, float time, olong ant1, olong ant2,
 
   /* Subarray number in data */
   ObitUVDescGetAnts(desc, RP, &ia1, &ia2, &iSubA);
-
-   /* Data Freq id */
-  if (desc->ilocfq >= 0) FreqID = RP[desc->ilocfq] + 0.1;
-  else  FreqID = 0;
 
   /* Source ID */
   if (desc->ilocsu >= 0) SourID = RP[desc->ilocsu] + 0.1;
@@ -264,9 +252,6 @@ void ObitUVCalBandpass (ObitUVCal *in, float time, olong ant1, olong ant2,
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   }
 
-  /* check if cross correlation */
-  ccor = ant1 != ant2;
-  
   /* init. flagged flags */
   allflg = TRUE;
   allded = TRUE;
@@ -361,7 +346,7 @@ void ObitUVCalBandpass (ObitUVCal *in, float time, olong ant1, olong ant2,
   /* increment counts of the good, bad and the ugly. */
   somflg = somflg  &&  (!allflg);
   smpflg = smpflg  &&  (!alpflg);
-  sombad = (somflg || smpflg)  &&  (!allded);
+  /*sombad = (somflg || smpflg)  &&  (!allded);*/
   /*  if (smpflg) me->countRec[0][0]++; */
   /*  if (somflg) me->countRec[1][0]++; */
   /*  if (sombad) me->countRec[2][0]++; */
@@ -369,6 +354,120 @@ void ObitUVCalBandpass (ObitUVCal *in, float time, olong ant1, olong ant2,
   /*  if (allflg) me->countRec[1][1]++; */
   /*  if ((!allded)  &&  (!sombad))  me->countRec[2][1]++; */
 } /* end ObitUVCalBandpass */
+
+/**
+ * Bandpass calibrate a row of a BP Table
+ * Corresponds to the  AIPSish DATBND.FOR, but actually is largely reengineered.
+ * A calibration array entry consists of:
+ * Per Antenna:
+ *   Per IF selected
+ *     Per Polarization
+ *       Per channel selected:
+ *         \li real part of gain
+ *         \li imaginary of gain
+ * \param in    Bandpass Object.
+ * \param BPRow Row to calibrate
+ * \param err   ObitError stack.
+ */
+void ObitUVCalBandpassBP (ObitUVCal *in,  ObitTableBPRow *BPRow, ObitErr *err)
+{
+  olong   iif, ipol, ifreq, ioff, iSubA, nIF;
+  olong   iant, SourID, numCh, asize, maxpol, jndxa, indxa;
+  gboolean calBad;
+  ofloat time, tvr, tvi, gr, gi, amp2, fblank = ObitMagicF();
+  ObitUVCalBandpassS *me;
+  gchar *routine="ObitUVCalBandpassBP";
+
+  /* local pointers for structures */
+  me   = in->bandpassCal;
+
+  /* Number of selected channels/IF */
+  numCh = (me->eChan - me->bChan + 1);
+  nIF   = (me->eIF - me->bIF + 1);
+  maxpol = MAX (1, MIN(in->numStok, me->numPol*me->numPol));
+
+  /* Antenna & Subarray number in data */
+  iant  = BPRow->antNo;
+  iSubA = BPRow->SubA;
+  
+  SourID = BPRow->SourID;   /* Source ID */
+  time   = BPRow->Time;     /* Time */
+
+  /* see if new time - update cal. */
+  if ((time > me->BPTime) && (me->LastRowRead < me->numRow)) {
+    ObitUVCalBandpassUpdate (me, in, time, SourID, iSubA, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+  }
+
+  /* How big is an antenna entry in the calibration table. */
+  asize = me->numPol * numCh * nIF * me->lenBPArrayEntry;
+  /* Set beginning antenna index */
+  jndxa = (iant - 1) * asize;
+
+  /* loop over IF */
+  for (iif= me->bIF; iif<=me->eIF; iif++) { /* loop 300 */
+    ioff = (iif-1) * (me->eChan-me->bChan+1);
+    
+    /* loop over polarization */
+    for (ipol= 1; ipol<=MIN(2,in->numStok); ipol++) { /* loop 200 */
+
+      /* Initialize calibration */
+      indxa = jndxa + me->PolOff[0][MIN(ipol,maxpol)-1];
+      gr = 1.0;
+      gi = 0.0;
+ 
+      /* loop over channels calibrating. */
+      for (ifreq= me->bChan-1; ifreq<me->eChan; ifreq++) { /* loop 80 */
+
+	/* check if solution valid */
+	calBad = (me->BPApply[indxa] == fblank);
+
+	/* set calibration*/
+	if (!calBad) {
+	  gr = me->BPApply[indxa];
+	  gi = me->BPApply[indxa+1];
+	  /* Output is to a BP table which is stored as solutions - invert */
+	  amp2 = gr*gr+gi*gi;
+	  tvr = gr; tvi = gi;
+	  if (amp2>0.0) amp2 = 1.0 / amp2;
+	  gr = +amp2 * tvr;
+	  gi = -amp2 * tvi;
+	  
+	} else {
+	  /* bad calibration - flag data */
+	  gr = 0.0;
+	  gi = 0.0;
+	}
+	
+	/* By Stokes */
+	if (ipol==1) { /* first Poln */
+	  if (BPRow->Real1[ioff+ifreq]!=fblank) {
+	    /* apply calibration - need sign flip for uncorrection */
+	    tvr =  gr * BPRow->Real1[ioff+ifreq] - gi * BPRow->Imag1[ioff+ifreq];
+	    tvi =  gr * BPRow->Imag1[ioff+ifreq] + gi * BPRow->Real1[ioff+ifreq];
+	    /* save calibrated gain */
+	    BPRow->Real1[ioff+ifreq] = tvr;
+	    BPRow->Imag1[ioff+ifreq] = tvi;
+	  }
+	} else {  /* second poln */
+	  if (BPRow->Real2[ioff+ifreq]!=fblank) {
+	    /* apply calibration */
+	    tvr =  gr * BPRow->Real2[ioff+ifreq] - gi * BPRow->Imag2[ioff+ifreq];
+	    tvi =  gr * BPRow->Imag2[ioff+ifreq] + gi * BPRow->Real2[ioff+ifreq];
+	    /* save calibrated gain */
+	    BPRow->Real2[ioff+ifreq] = tvr;
+	    BPRow->Imag2[ioff+ifreq] = tvi;
+	  }
+	}
+	/* Update calibration pointer to next channel */
+	indxa += me->lenBPArrayEntry;
+      } /* end loop over channels  L80 */;
+    } /* end loop loop over Stokes  L200 */;
+    /* setup for next IF */
+    jndxa += me->lenBPArrayEntry * me->numPol * numCh;
+  } /* end loop  L300 - loop over IF */;
+
+} /* end ObitUVCalBandpassBP */
 
 /**
  * Shutdown bandpass calibration.
@@ -1039,7 +1138,7 @@ static ofloat  DopplerRate (ofloat time, ObitSourceList *sourceList, olong SourI
 			    ObitAntennaList *Ant, olong ant, odouble chFreq)
 {
   ofloat rate = 0.0;
-  odouble gst, sha, bha, cdec, sdec, csha, ssha, sx, sy, sz, u, v, omeg, twopi, x, y, z;
+  odouble gst, sha, cdec, csha, ssha, sx, sy, u, omeg, twopi, x, y;
 
   /* Greenwich Siderial time */
   twopi = 2.0 * G_PI;
@@ -1052,23 +1151,23 @@ static ofloat  DopplerRate (ofloat time, ObitSourceList *sourceList, olong SourI
   /* hour angle of vector from earth center to antenna wrt x axis */
   x = Ant->ANlist[ant-1]->AntXYZ[0];
   y = Ant->ANlist[ant-1]->AntXYZ[1];
-  z = Ant->ANlist[ant-1]->AntXYZ[2];
-  bha = atan2 (x, y);
+  /*z = Ant->ANlist[ant-1]->AntXYZ[2];*/
+  /*  bha = atan2 (x, y);*/
 
   /* calculate needed cos and sin  values */
   cdec = cos(sourceList->SUlist[SourID-1]->DecApp);
-  sdec = sin(sourceList->SUlist[SourID-1]->DecApp);
+  /*sdec = sin(sourceList->SUlist[SourID-1]->DecApp);*/
   csha = cos(sha);
   ssha = sin(sha);
 
   /* source vector coordinates */
-  sz = sdec;
+  /*sz = sdec;*/
   sx = cdec * csha;
   sy = cdec * ssha;
 
   /* calculate u and v */
   u = (x * sy - y * sx) / cdec;
-  v = z * cdec - (sx * x + sy * y) * sdec / cdec;
+  /*v = z * cdec - (sx * x + sy * y) * sdec / cdec;*/
 
   /* calculate delay and fringe rate */
   /* not needed del = (x*sx + y*sy + z*sz) / velite; */
@@ -1196,7 +1295,7 @@ static void BPACShift (ObitCArray  *Spectrum,  ObitCArray  *Work,
 		       olong sideband, olong nchan, ofloat shift, olong doSmo)
 {
   ofloat dela, rfact, arg, xre, xim, norm, *spectrum, *work;
-  olong   nfrq, nfrq2, i, n2, jf, jbin, ntrans, fftdir;
+  olong   nfrq, nfrq2, i, n2, jf, jbin, fftdir;
   olong pos[2] = {0, 0};
   
   nfrq = nchan;
@@ -1206,7 +1305,7 @@ static void BPACShift (ObitCArray  *Spectrum,  ObitCArray  *Work,
 
   /* reflect spectrum */
   nfrq2 = nfrq * 2;
-  ntrans = nfrq;
+  /*ntrans = nfrq;*/
   fftdir = -1;
   /*call fourg (Spectrum, ntrans, fftdir, work);*/
   ObitFFTC2C (FFTFor, Spectrum, Work);
@@ -1271,7 +1370,7 @@ static void BPCCShift (ObitCArray *Spectrum,  ObitCArray *Work,
 		       olong sideband, olong nchan, ofloat shift)
 {
   ofloat  del, del1, cd, sd, c, s, store, norm, temp1, temp2, *spectrum, *work;
-  olong   nfrq, nxcf, kstart, kstop, k, kk, ll, fftdir, i;
+  olong   nfrq, nxcf, kstart, kstop, k, kk, ll, i;
   olong pos[2] = {0, 0};
 
   nfrq = nchan;
@@ -1290,7 +1389,7 @@ static void BPCCShift (ObitCArray *Spectrum,  ObitCArray *Work,
   }
 
   /* transform to xcf */
-  fftdir = -sideband;
+  /*fftdir = -sideband;*/
   /* call fourg (Spectrum, nxcf, fftdir, work); */
   /* Direction depends on sideband */
   if (sideband>0) 
@@ -1348,7 +1447,7 @@ static void BPCCShift (ObitCArray *Spectrum,  ObitCArray *Work,
 
   /* fft back to spectrum */
   /* fftdir determines which sideband will end  up in first half of Spectrum */
-  fftdir = sideband;
+  /*fftdir = sideband;*/
   /* Direction depends on sideband */
   if (sideband>0) 
     ObitFFTC2C (FFTRev, Work, Spectrum);
@@ -1485,12 +1584,11 @@ static void BPinterpol (olong numCh, ofloat *spectrum, ofloat *weight,
 static void BPGetNext (ObitUVCalBandpassS *in, ObitTableBP *BPTable, olong  irow, 
 		       ObitTableBPRow *BPTableRow, ObitErr *err)
 {
-  ObitIOCode retCode;
   olong  iif, nchan, ktyp, indx, i;
   ofloat amp, phase, fblank = ObitMagicF();
   gchar *routine = "BPGetNext";
   
-  retCode = ObitTableBPReadRow (BPTable, irow, BPTableRow, err);
+  ObitTableBPReadRow (BPTable, irow, BPTableRow, err);
   if (err->error) Obit_traceback_msg (err, routine, "Cal(BP) table");
   /* If entry is flagged don't bother */
   if (BPTableRow->status < 0) return;
@@ -1588,12 +1686,10 @@ static void BPExpnPoly (ObitTableBP *BPTable, ObitTableBPRow *BPTableRow,
   ofloat  fblank = ObitMagicF();
   gboolean   wfnd1, wfnd2;
   odouble da, db, dxval, dsum1, dsum2, dtmp;
-  olong   n1=0, n2=0, i, k, i1, i2;
+  olong   n1=0, n2=0, i, k;
   gchar *routine = "BPExpnPoly";
   
   /* Determine maximum number of coeff. in array. */
-  i1 = 1;
-  i2 = 1;
   wfnd1 = FALSE;
   wfnd2 = FALSE;
   nchan = BPTable->numChan;

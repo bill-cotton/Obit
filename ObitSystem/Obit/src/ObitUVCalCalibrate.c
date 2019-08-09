@@ -87,7 +87,7 @@ void ObitUVCalCalibrateInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
 {
   ObitIOCode retCode;
   ObitUVCalCalibrateS *me;
-  olong size, i;
+  olong size, i, nant;
   gchar *colName="TIME    ";
   gchar *routine="ObitUVCalCalibrateInit";
 
@@ -134,10 +134,13 @@ void ObitUVCalCalibrateInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
     retCode = ObitTableUtilSort((ObitTable*)(me->SNTable), colName, FALSE, err);
     if ((retCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
       Obit_traceback_msg (err, routine, in->name);
+    nant = ((ObitTableSN*)me->SNTable)->numAnt;
     retCode = 
       ObitTableSNOpen ((ObitTableSN*)(me->SNTable), OBIT_IO_ReadOnly, err);
     if ((retCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
       Obit_traceback_msg (err, routine, in->name);
+    ((ObitTableSN*)me->SNTable)->numAnt = 
+      MAX(((ObitTableSN*)me->SNTable)->numAnt, nant);  /* Don't let it get smaller */
     me->SNTableRow = (Obit*)newObitTableSNRow((ObitTableSN*)(me->SNTable));
     me->numPol = ((ObitTableSN*)me->SNTable)->numPol;
     me->numRow = ((ObitTableSN*)me->SNTable)->myDesc->nrow;

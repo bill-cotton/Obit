@@ -28,6 +28,7 @@
 
 #include <math.h>
 #include "ObitTableANUtil.h"
+#include "ObitPrecess.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -124,7 +125,7 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
   olong maxANid, i, iant, numPCal, countAnt;
   ObitInfoType type;
   gboolean doVLA, doVLBI, doATCA, doEVLA, doALMA, doKAT, doMeerKAT;
-  odouble x, y, z, ArrLong, rho, dtemp;
+  odouble x, y, z, ArrLong, rho, dtemp, GSTUTC0, Rate;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar tempName[101]; /* should always be big enough */
   gchar *routine = "ObitTableANGetList";
@@ -188,8 +189,16 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
   out->ArrayXYZ[0] = in->ArrayX;
   out->ArrayXYZ[1] = in->ArrayY;
   out->ArrayXYZ[2] = in->ArrayZ;
-  out->GSTIAT0     = in->GSTiat0*DG2RAD;   /* Convert to radians */
-  out->RotRate     = in->DegDay*DG2RAD;    /* Convert to radians/day */
+  /* Check GSTiat0 - calculate and if within 0.01 deg use value from AN table */
+  ObitPrecessGST0 (out->JD, &GSTUTC0, &Rate);
+  GSTUTC0 *= 15.;    /* to degrees */
+  if (abs(GSTUTC0-in->GSTiat0)>0.01) {
+    out->GSTIAT0     = GSTUTC0*DG2RAD;      /* Convert to radians */
+    out->RotRate     = Rate*360.0*DG2RAD;   /* Convert to radians/day */
+ } else {
+    out->GSTIAT0     = in->GSTiat0*DG2RAD;   /* Convert to radians */
+    out->RotRate     = in->DegDay*DG2RAD;    /* Convert to radians/day */
+  }
   out->PolarXY[0]  = in->PolarX;
   out->PolarXY[1]  = in->PolarY;
   out->ut1Utc      = in->ut1Utc*DG2RAD*15./3600.0;  /* Convert to radians */

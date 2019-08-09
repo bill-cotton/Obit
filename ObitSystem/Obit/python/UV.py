@@ -36,7 +36,8 @@ Data selection, calibration and editing parameters on List member:
 "EIF"          int (1,1,1)    Highest "IF" selected. [def all]
 "IFInc"        int (1,1,1)    "IF" selected increment. [def 1]
 "IFDrop"       int (?,1,1)    List of deselected (1-rel) IFs [def none]
-"doPol"        int (1,1,1)    >0 -> calibrate polarization.
+"doPol"        bool (1,1,1)   True -> calibrate polarization.
+"PDVer"        int (1,1,1)    >0 -> use PD table version PDVer for poln cal.
 "doCalib"      int (1,1,1)    >0 -> calibrate, 2=> also calibrate Weights
 "gainUse"      int (1,1,1)    SN/CL table version number, 0-> use highest
 "flagVer"      int (1,1,1)    Flag table version, 0-> use highest, <0-> none
@@ -2076,8 +2077,8 @@ def PTableCLfromNX(outUV, nant, err, outVer=1, calInt=1.0):
      * calInt   = calibration table interval in min
     """
     ################################################################
-    if inUV.myClass=='AIPSUVData':
-        raise TypeError,"Function unavailable for "+inUV.myClass
+    if outUV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+outUV.myClass
     # If an old table exists, delete it
     if outUV.GetHighVer("AIPS CL")>=outVer:
         zz = outUV.ZapTable("AIPS CL", outVer, err)

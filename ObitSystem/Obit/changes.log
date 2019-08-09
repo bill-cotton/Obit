@@ -4309,3 +4309,46 @@ Obit/python/Source.py:
   Trap failures
 28 Jun 2019 svn 602
 
+Summary: Mostly bug fixes, esp. poln related
+Obit/src/ObitTableANUtil.c:
+  GetList: Check GST@iat0 and is not within 0.01 deg use calculated value
+Obit/TDF/MKXPhase.TDF
+  Fix documentation
+Obit/src/ObitUVSoln.c:
+  NewTime: wanted=TRUE if SN sourID<=0
+  refAnt: don't let Open reduce numAnt
+Obit/src/ObitPolnCalFit.c:
+  UpdateBandpassTab: Don't write PD into BP table, only in PD
+  UpdateBandpassTab, UpdateInstrumentalTab: Fill orphans at end of IF
+     Add phase difference to BP table entries.
+Obit/python/UV.py:
+  PTableCLfromNX (from Tom M.) change inUV to outUV.
+  Document PDVer.
+Obit/python/Image.py:
+   PClone2:Fix bug with inImage which should be inImage1.
+Obit/src/ObitUVCalBandpass.c Obit/include/ObitUVCalBandpass.h:
+   Add routine BP to calibrate a BP table row
+   Init: make sure tables at least as large as the BP table.
+Obit/TDF/BPCal.TDF Obit/tasks/BPCal.c:
+   New task to apply one BP table to another
+Obit/src/ObitUVRLDelay.c:
+   undo debugging, fix bugs with circular feeds.
+Obit/tasks/MFImage.c Obit/tasks/MFBeam.c:
+   Better test for minFluxQU, minFluxV
+Obit/tasks/RLDly.c:
+   Fix comments
+Obit/src/ObitUVCalPolarization.c:
+   Fix bugs in Lin pol.
+Obit/src/ObitUVCal.c:
+   Apply bandpass calibration before poln cal.
+Obit/src/ObitImageUtil.c:
+   Fix bug in UVFilter
+Obit/task/AutoFlag.c:
+   Fix bug in determining is data is from circular feeds.
+Obit/include/include/ObitUV.h Obit/src/ObitUV.c:
+   GetSource: New routine to return a Source object
+Obit/src/ObitTableDesc.c:
+	CopyDesc: Copy infoList
+Obit/src/ObitUVCalCalibrate.c
+  Init: Don't let Open reset the number of SN table antennas
+9 Aug 2019 svn 603

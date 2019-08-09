@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2017                                          */
+/*;  Copyright (C) 2006-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -904,8 +904,10 @@ void ObitUVSolnRefAnt (ObitTableSN *SNTab, olong isuba, olong* refant, ObitErr* 
   if (noReRef) return;
   
   /* Open table */
+  numant = SNTab->numAnt;
   retCode = ObitTableSNOpen (SNTab, OBIT_IO_ReadWrite, err);
   if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
+  SNTab->numAnt = MAX(SNTab->numAnt, numant);  /* Don't let it get smaller */
  
   /* Get descriptive info */
   numif  = SNTab->numIF;
@@ -2598,7 +2600,7 @@ static void ObitUVSolnNewTime (ObitUVSoln *in, ofloat time,
     if (SNTableRow->status < 0) continue; /* entry flagged? */
 
     /* Check calibrator selector */
-    want = ObitUVSelWantSour (in->CalSel, SNTableRow->SourID);
+    want = (SNTableRow->SourID<=0) || ObitUVSelWantSour (in->CalSel, SNTableRow->SourID);
     
     /* check subarray */
     want = want && 

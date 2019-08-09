@@ -226,6 +226,10 @@ void ObitTableDescCopyDesc (ObitTableDesc* in, ObitTableDesc* out,
   out->sort[0] = in->sort[0];
   out->sort[1] = in->sort[1];
  
+  /* List */  
+  if ((in->info)&&(out->info)) out->info = ObitInfoListUnref (out->info); 
+  if (in->info!=NULL) out->info = ObitInfoListCopy (in->info);
+ 
   /* index output */
   ObitTableDescIndex (out);
 

@@ -1,0 +1,175 @@
+; $Id$
+; BPCal
+;---------------------------------------------------------------
+;! Obit Radio interferometry calibration software
+;# Task Calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2019
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+BPCal     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+BPCal     Task to Apply one BP Table to another
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                              FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                             Input UV file name (name)
+**PARAM** str 6
+inClass                            Input UV file name (class)
+**PARAM** int 1
+inSeq             0.0     9999.0   Input UV file name (seq. #)
+**PARAM** int 1
+inDisk            0.0        9.0   Input UV file disk unit #
+**PARAM** str 16 30
+Sources                            Source list to calibrate
+**PARAM** str 4
+souCode                            Source "Cal codes"
+**PARAM** int 1 **DEF** -1
+Qual            -10.0              Source qualifier -1=>all
+**PARAM** float 2
+timeRange                          Time range to process.
+**PARAM** int 1
+subA                               Subarray
+**PARAM** int 50
+Antennas         0.0     1000.0    List of antennas to calibrate
+**PARAM** int 1
+FreqID                             Freq. ID to select.
+**PARAM** int 1
+doBand           -1.0       10.0   Type of bandpass cal.
+**PARAM** int 1 **DEF** 1
+BPVer1            1.0    9999.0    input BP table to apply
+**PARAM** int 1 **DEF** 2
+BPVer2            1.0    9999.0    2nd input BP table
+**PARAM** int 1 **DEF** 3
+BPOut              1.0    9999.0   Output BP table
+**PARAM** int 1
+refAnt                             Reference antenna 0=>pick.
+                                   <0 => don't rereference
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
+----------------------------------------------------------------
+BPCal
+Task:  Applies solutions from a BP table (BPVer1) to selected entries in
+       another (BPVer2) and writes them into another BP table (BPOut).
+
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input AIPS UV file name (name).      Standard defaults.
+  inClass....Input AIPS UV file name (class).     Standard defaults.
+  inSeq......Input AIPS UV file name (seq. #).    0 => highest.
+  inDisk.....Disk drive # of input UV file
+  Sources....List of sources whose BP table entries are to be
+             updated.  '*' or blank = all; a "-" before a source
+             name means all except ANY source named.
+  souCode....Sources may be selected on the basis of the
+             calibrator code given in the SU table.
+                  '    ' => any calibrator code selected
+                  '*   ' => any non blank code (cal. only)
+                  '-CAL' => blank codes only (no calibrators)
+                  anything else = calibrator code to select.
+             NB: The souCode test is applied in addition to the
+             other tests, i.e. Sources and Qual, in the
+             selection of sources to process.
+  calSour....List of calibrators to use for updating the BP
+             table.  '*' or blank = all; a "-" before a
+             calibrator name means all except ANY calibrator
+             named.
+  Qual.......Only sources with a source qualifier number in the
+             SU table matching Qual will be used if Qual is not
+             -1.  Qual affects the selection of both the list of
+             sources and the list of calibrators.
+  calCode....Calibrators may be selected on the basis of the
+             calibrator code given in the SU table.
+                  '    ' => any calibrator code selected
+                  '*   ' => any non blank code (cal. only)
+                  '-CAL' => blank codes only (no calibrators)
+                  anything else = calibrator code to select.
+             NB: The calCode test is applied in addition to the
+             other tests, i.e. calSour and Qual, in the
+             selection of sources to process.
+             calCode affects only the selection of calibrators.
+  timeRange..Start and end times (day)
+             Use  dhms2day to convert from human readable form
+  subA.......Subarray number to calibrate. 0=>all.
+             VLBI users may have a situation in which all subarrays
+             actually contain the same antennas.  BPCal may be used to
+             combines the separate SN gain tables, writing a single
+             output table for "subarray 0".  Later calibration routines
+             will understand that this applies to all subarrays.
+             Set subA = -32000 to request this operation; it will be
+             reset to 0 if the antennas files are not identical.
+  Antennas...A list of the antennas to be processed.  If any number is
+             negative then all antennas listed  are NOT to be included.
+             All 0 => use all.  Note: when processing subsets of
+             antennas separately it is very important always to use the
+             same reference antenna (refAnt).
+  selBand....Bandwidth of data to be selected. If more than one IF is
+             present selBand is the width of the first IF required.
+             Units = kHz. For data which contain multiple
+             bandwidths/frequencies the task will insist that some form
+             of selection be made by frequency or bandwidth.
+  selFreq....Frequency of data to be selected. If more than one IF is
+             present selFreq is the frequency of the first IF required.
+             Units = MHz.
+  FreqID.....Frequency identifier to select (you may determine which is
+             applicable from the OPTYPE='SCAN' listing produced by
+             LISTR). If either selBand or selFreq are set, their values
+             overide that of FreqID.  However, setting selBand and
+             selFreq may result in an ambiguity.  In that case, the task
+             will request that you use FreqID.  NOTE: BPCal should be
+             run once per FreqID.
+  doBand.....If true (>0) then correct the data for the shape of the
+             antenna bandpasses using the BP table specified by BPVer.
+             The correction has five modes:
+             (a) if doBand=1 all entries for an antenna in the table
+             are averaged together before applying.
+             (b) if doBand=2 the entry nearest in time (including
+             solution weights) is used to apply.
+             (c) if doBand=3 the table entries are interpolated in
+             time (using solution weights) and the BPVer2 is then
+             corrected.
+             (d) if doBand=4 the entry nearest in time (ignoring
+             solution weights) is used to correct BPVer2.
+             (e) if doBand=5 the table entries are interpolated in
+             time (ignoring solution weights) and the data are then
+             applied.
+  BPVer1.....BP SN table to apply
+  BPVer2.....BP Table o be applied to
+  BPOut......BP table to be written
+  refAnt.....Reference antenna to use.  All phase-like values in the
+             BP table will be referenced to this antenna. 
+             0 => use the one used in the most solutions.
+             <0 => do not rereference phases, this is needed
+             for applying R-L polarization corrections
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files where
+             a bug in the ObitTalk message handling may cause
+             tasks to hang.  Path is absolute or relative to where
+             the task executes.
+----------------------------------------------------------------
+
+

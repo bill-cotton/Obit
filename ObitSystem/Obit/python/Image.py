@@ -1065,8 +1065,8 @@ def PClone2 (inImage1, inImage2, outImage, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if inImage1.myClass=='AIPSImage':
+        raise TypeError,"Function unavailable for "+inImage1.myClass
     # Checks
     if not inImage1.ImageIsA():
         raise TypeError,"inImage1 MUST be a Python Obit Image"

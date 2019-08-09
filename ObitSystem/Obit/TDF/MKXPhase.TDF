@@ -62,15 +62,15 @@ BPVer                               Bandpass table version
 **PARAM** int 1 **DEF** -1
 flagVer                             Flag table version
 **PARAM** str 48
-outFile                             FITS uvdata for output FG table
+outFile                             FITS uvdata for output BP table
 **PARAM** str 12
-outName                             AIPS name for output FG table
+outName                             AIPS name for output BP table
 **PARAM** str 6
-outClass                            AIPS class for output FG table
+outClass                            AIPS class for output BP table
 **PARAM** int 1   
-outSeq          -1.0     9999.0     AIPS seq for output FG table
+outSeq          -1.0     9999.0     AIPS seq for output BP table
 **PARAM** int 1
-outDisk                             Disk for output FG table
+outDisk                             Disk for output BP table
 **PARAM** int 1
 BPSoln                              BP table to write
 **PARAM** int 1
@@ -146,7 +146,7 @@ Adverbs:
   outClass...Output uvdata class.
   outSeq.....Output uvdata sequence number.
   outDisk....The disk drive # of output uvdata. No default
-  BSoln......Output version of the BP table.
+  BPSoln.....Output version of the BP table.
       Control
   refAnt.....Reference antenna number
   solInt.....Solution interval (min) BP table entries.

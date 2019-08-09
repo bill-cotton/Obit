@@ -4586,7 +4586,7 @@ void ObitImageUtilUVFilter (ObitImage *inImage, ObitImage *outImage, ofloat radi
   ObitIOSize IOBy;
   gchar *today=NULL;
   ofloat Lambda, dx, dy, dist, xcenter, ycenter, val, radius2, arg;
-  olong i, FFTdim[2], cen[2], ix, iy;
+  olong i, FFTdim[2], cen[2], ix, iy, even;
   ObitFArray *inFArray=NULL, *outFArray=NULL, *inFArrayCopy=NULL, *maskArray=NULL;
   ObitCArray *inCArray=NULL, *outCArray=NULL;
   ObitFFT *FFTfor=NULL, *FFTrev=NULL;
@@ -4715,9 +4715,14 @@ void ObitImageUtilUVFilter (ObitImage *inImage, ObitImage *outImage, ofloat radi
   /* Extract output portion */
   cen[0] = FFTdim[0]/2; cen[1] = FFTdim[1]/2;
   blc[0] = cen[0] - inFArrayCopy->naxis[0] / 2; 
-  trc[0] = cen[0] - 1 + inFArrayCopy->naxis[0] / 2;
+  /* Even or odd */
+  if ((2*(inFArrayCopy->naxis[0]/2))==inFArrayCopy->naxis[0]) even = 1;
+  else                                                        even = 0;
+  trc[0] = cen[0] + even + inFArrayCopy->naxis[0] / 2;
   blc[1] = cen[1] - inFArrayCopy->naxis[1] / 2; 
-  trc[1] = cen[1] - 1 + inFArrayCopy->naxis[1] / 2;
+  if ((2*(inFArrayCopy->naxis[1]/2))==inFArrayCopy->naxis[1]) even = 1;
+  else                                                        even = 0;
+  trc[1] = cen[1] + even + inFArrayCopy->naxis[1] / 2;
   ObitImageUnref(outImage->image);
   outImage->image = ObitFArraySubArr(outFArray, blc, trc, err);
   if (err->error) Obit_traceback_msg (err, routine, inImage->name);

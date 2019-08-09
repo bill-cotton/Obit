@@ -1,7 +1,7 @@
 /* $Id$  */
 /* R-L delay/phase calibration                                        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2015                                          */
+/*;  Copyright (C) 2011-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -152,7 +152,7 @@ int main ( int argc, char **argv )
   ObitUVUtilIndex (scrData, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
   
-  /* Do channel solutions, convert to BP table */
+  /* Do solutions, convert to SN table */
   RLDelayCal(myInput, scrData, inData, err);
   if (err->error) ierr = 1;   ObitErrLog(err);  if (ierr!=0) goto exit;
 

@@ -1918,11 +1918,11 @@ static void InitInstrumentalTab(ObitPolnCalFit* in, ObitErr *err)
     }
   } else {
     /* Linear feeds  ori_x, elip_x, ori_y, elip_y,  */
-    for (i=0; i<nif*nchan; i++) row->Real1[i] = G_PI/4.0;
-    for (i=0; i<nif*nchan; i++) row->Imag1[i] = G_PI/2.0;
+    for (i=0; i<nif*nchan; i++) row->Real1[i] = 0.0;
+    for (i=0; i<nif*nchan; i++) row->Imag1[i] = G_PI/4.0;
     if (npol>1) {
       for (i=0; i<nif*nchan; i++) row->Real2[i] = 0.0;
-      for (i=0; i<nif*nchan; i++) row->Imag2[i] = -G_PI/2.0;
+      for (i=0; i<nif*nchan; i++) row->Imag2[i] = 0.0;
     }
   } 
 
@@ -2114,6 +2114,8 @@ static void UpdateInstrumentalTab(ObitPolnCalFit* in, gboolean isOK,
   chans[0] = MAX (0, chans[0]);
   chans[1] = in->Chan-1+chanOff + in->ChInc/2;
   chans[1] = MIN (nchan-1, chans[1]);
+  /* Fill orphans at end */
+  if ((nchan-chans[1]-1)>in->ChInc) chans[1] = nchan-1;
   
   /* Loop over row updating */
   for (irow=1; irow<=in->PDTable->myDesc->nrow; irow++) {
@@ -2131,7 +2133,7 @@ static void UpdateInstrumentalTab(ObitPolnCalFit* in, gboolean isOK,
       
          /* OK solution? */
       if (isOK && in->gotAnt[iant]) {
-	row->RLPhase[indx] = in->PD*RAD2DG;  /* R-L phase difference */
+	/* row->RLPhase[indx] = in->PD*RAD2DG;  R-L phase difference */
 	row->Real1[indx]   = in->antParm[iant*4+1];
 	row->Imag1[indx]   = in->antParm[iant*4+0];
 	if (npol>1) {
@@ -2171,7 +2173,7 @@ static void UpdateInstrumentalTab(ObitPolnCalFit* in, gboolean isOK,
 static void UpdateBandpassTab(ObitPolnCalFit* in, gboolean isOK, ObitErr *err) 
 {
   olong irow, npol, nchan, indx, ich, iif, iant;
-  ofloat amp1, amp2, phase, fblank = ObitMagicF();
+  ofloat amp1, amp2, pre, pim, fblank = ObitMagicF();
   ObitTableBPRow *row=NULL;
   olong chanOff=in->BChan-1, ifOff=in->BIF-1, chans[2];
   gchar *routine = "ObitPolnCalFit:UpdateBandpassTab";
@@ -2196,11 +2198,12 @@ static void UpdateBandpassTab(ObitPolnCalFit* in, gboolean isOK, ObitErr *err)
   chans[0] = MAX (0, chans[0]);
   chans[1] = in->Chan-1+chanOff + in->ChInc/2;
   chans[1] = MIN (nchan-1, chans[1]);
+  /* Fill orphans at end */
+  if ((nchan-chans[1]-1)>in->ChInc) chans[1] = nchan-1;
 
-  /* Fitted values - as correction */
-  if (in->doFitRL) phase = -in->PD;
-  else             phase = 0.0;
-  
+  /* Phase difference */
+  pre = cos(in->PD); pim = sin(-in->PD);
+
   /* Loop over row updating */
   for (irow=1; irow<=in->BPTable->myDesc->nrow; irow++) {
     /* Read previous */
@@ -2227,8 +2230,8 @@ static void UpdateBandpassTab(ObitPolnCalFit* in, gboolean isOK, ObitErr *err)
 	row->Real1[indx] = amp1;
 	row->Imag1[indx] = 0.0;
 	if (npol>1) {
-	  row->Real2[indx] = amp2 * cos(phase);
-	  row->Imag2[indx] = amp2 * sin(phase);
+	  row->Real2[indx] = amp2*pre;
+	  row->Imag2[indx] = pim;
 	}
       } else { /* failed solution */
 	row->Real1[indx] = fblank;

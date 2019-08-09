@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2017                                          */
+/*;  Copyright (C) 2003-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -51,6 +51,7 @@
 #include "ObitSystem.h"
 #include "ObitMem.h"
 #include "ObitHistory.h"
+#include "ObitPrecess.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -2264,6 +2265,80 @@ void  ObitUVGetRADec (ObitUV *uvdata, odouble *ra, odouble *dec,
     *dec = uvdata->myDesc->crval[uvdata->myDesc->jlocd];
   }
 } /* end ObitUVGetRADec */
+
+/**
+ * Get source object.  
+ * If single source file get from uvDesc, 
+ * if multisource read from SU table
+ * Checks that only one source selected.
+ * Also fill in position like information in the descriptor 
+ * for multi-source datasets
+ * \param  src     previously existing Source or NULL
+ * \param  uvdata  Data object from which position sought
+ * \param  suId    Source ID (-1 if no Source table)
+ * \param  err     Error stack, returns if not empty.
+ * \return pointer to newly created or refilled ObitSource
+ */
+ObitSource*  ObitUVGetSource (ObitSource* src, ObitUV *uvdata, ofloat suID,  
+			      ObitErr *err)
+{
+  ObitSourceList *sList=NULL;
+  ObitSource     *source=NULL;
+  ObitTable      *tmpTable;
+  ObitTableSU    *SUTable=NULL;
+  olong i, SourID, ver;
+  gboolean found;
+  gchar  *tabType = "AIPS SU";
+  gchar *routine = "ObitUVGetSource";
+
+  /* error checks */
+  g_assert(ObitUVIsA(uvdata));
+  g_assert(ObitErrIsA(err));
+  if (err->error) return source;
+
+  SourID = (olong)(suID+0.5);  /* Which Source? */
+
+  /* descriptor ilocsu > 0 indicates multisource */
+  if ((suID>0.0) && (uvdata->myDesc->ilocsu>=0)) { /* multisource */
+
+    /* Get SU table */
+    ver = 1;
+    tmpTable = newObitUVTable (uvdata, OBIT_IO_ReadWrite, tabType, &ver, err);
+    SUTable = ObitTableSUConvert(tmpTable);
+    tmpTable = ObitTableUnref(tmpTable);
+    if (err->error) Obit_traceback_val (err, routine, uvdata->name, source);
+
+    /* Get source list */
+    sList = ObitTableSUGetList (SUTable, err);
+    SUTable = ObitTableSUUnref(SUTable);   /* Done with table */
+    if (err->error) Obit_traceback_val (err, routine, SUTable->name, source);
+
+    /* Look up source in table */
+    found = FALSE;
+    for (i=0; i<sList->number; i++) {
+      source = ObitSourceRef(sList->SUlist[i]);
+      if (source->SourID == SourID) found = TRUE;
+    }
+    sList = ObitSourceListUnref(sList);  /* Done with list */
+
+    /* Check if found */
+    if (!found) {
+      Obit_log_error(err, OBIT_Error,"%s: Selected source %d not found in list %s",
+		   routine, SourID, uvdata->name);
+      return source;
+    }
+
+  } else { /* single source */
+    if (src==NULL) source = newObitSource("Source");
+    else           source = src;
+    strncpy (source->SourceName, uvdata->myDesc->object, MIN(20,UVLEN_VALUE));
+    source->equinox = uvdata->myDesc->equinox;
+    source->RAMean  = uvdata->myDesc->crval[uvdata->myDesc->jlocr];
+    source->DecMean = uvdata->myDesc->crval[uvdata->myDesc->jlocd];
+    ObitPrecessUVJPrecessApp (uvdata->myDesc, source);
+  }
+  return source;
+} /* end ObitUVGetSource */
 
 /**
  * Get source information, position, velocity, update uv descriptor

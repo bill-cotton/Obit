@@ -1978,7 +1978,15 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
       ObitInfoListGetTest(myInput, "minFluxQU", &type, dim, &minFluxQU)) {
     ObitInfoListAlwaysPut(myClean->info,  "minFlux", type, dim, &minFluxQU);
   }
+  if ((((Stokes[1]=='Q') || (Stokes[2]!='U')) && ((Stokes[0]!=' '))) && 
+      ObitInfoListGetTest(myInput, "minFluxQU", &type, dim, &minFluxQU)) {
+    ObitInfoListAlwaysPut(myClean->info,  "minFlux", type, dim, &minFluxQU);
+  }
   if (((Stokes[0]=='V') && ((Stokes[0]!=' '))) && 
+      ObitInfoListGetTest(myInput, "minFluxV", &type, dim, &minFluxV)) {
+    ObitInfoListAlwaysPut(myClean->info,  "minFlux", type, dim, &minFluxV);
+  }
+  if (((Stokes[3]=='V') && ((Stokes[0]!=' '))) && 
       ObitInfoListGetTest(myInput, "minFluxV", &type, dim, &minFluxV)) {
     ObitInfoListAlwaysPut(myClean->info,  "minFlux", type, dim, &minFluxV);
   }
