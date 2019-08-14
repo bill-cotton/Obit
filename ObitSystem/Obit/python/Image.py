@@ -913,8 +913,8 @@ def PWritePlane (Image, imageData, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if Image.myClass=='AIPSImage':
+        raise TypeError,"Function unavailable for "+Image.myClass
     # Checks
     if not Image.ImageIsA():
         raise TypeError,"Image MUST be a Python Obit Image"
@@ -941,8 +941,8 @@ def PMaxMin (im, err):
     * im     = Python Image object
     * err    = Python Obit Error/message stack
     """
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if im.myClass=='AIPSImage':
+        raise TypeError,"Function unavailable for "+im.myClass
     # Checks
     if not im.ImageIsA():
         raise TypeError,"Image MUST be a Python Obit Image"
@@ -1180,8 +1180,8 @@ def PCompare (in1Image, in2Image, err, plane=[1,1,1,1,1]):
     * plane     = plane to compare
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if in1Image.myClass=='AIPSImage':
+        raise TypeError,"Function unavailable for "+in1Image.myClass
     # Checks
     if not in1Image.ImageIsA():
         raise TypeError,"in1Image MUST be a Python Obit Image"
@@ -1758,8 +1758,6 @@ def PFArray2FITS (inArray, outFile, err, outDisk=1, oDesc=None ):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
     # Checks
     if not FArray.PIsA(inArray):
         raise TypeError,"inArray MUST be a Python Obit FArray"

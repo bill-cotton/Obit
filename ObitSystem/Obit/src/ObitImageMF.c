@@ -123,6 +123,9 @@ void  ObitImageMFClear (gpointer in);
 /** Private: Set Class function pointers. */
 static void ObitImageMFClassInfoDefFn (gpointer inClass);
 
+/* Private: Instantiate */
+void ObitImageMFFullInstantiate (ObitImageMF *in, gboolean exist, ObitErr *err);
+
 /** Private: Make arguments for Threaded CLEAN */
 static olong MakeFitSpecArgs (ObitImageMF *in, olong maxThread,
 			      ofloat antSize, olong nOrder,

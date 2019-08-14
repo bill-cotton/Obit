@@ -1257,8 +1257,8 @@ def PUtilVisDivide (in1UV, in2UV, outUV, err):
     err     = Python Obit Error/message stack
     """
     ################################################################
-    if inUV.myClass=='AIPSUVData':
-        raise TypeError,"Function unavailable for "+inUV.myClass
+    if in1UV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+in1UV.myClass
     # Checks
     if not in1UV.UVIsA():
         raise TypeError,"in1UV MUST be a Python Obit UV"
@@ -1310,8 +1310,8 @@ def PUtilVisSub (in1UV, in2UV, outUV, err):
     err     = Python Obit Error/message stack
     """
     ################################################################
-    if inUV.myClass=='AIPSUVData':
-        raise TypeError,"Function unavailable for "+inUV.myClass
+    if in1UV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+in1UV.myClass
     # Checks
     if not in1UV.UVIsA():
         raise TypeError,"in1UV MUST be a Python Obit UV"
@@ -1339,8 +1339,8 @@ Compares the visibilites in *in1UV* with those in *in2UV*.
 * err   = Python Obit Error/message stack
     """
     ################################################################
-    if inUV.myClass=='AIPSUVData':
-        raise TypeError,"Function unavailable for "+inUV.myClass
+    if in1UV.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+in1UV.myClass
     # Checks
     if not in1UV.UVIsA():
         raise TypeError,"in1UV MUST be a Python Obit UV"
@@ -2245,10 +2245,10 @@ def PUVVisSub1 (inUV1, inUV2, outUV, err):
     err    = Python Obit Error/message stack
     """
     ################################################################
-    if inUV.myClass=='AIPSUVData':
-        raise TypeError,"Function unavailable for "+inUV.myClass
+    if inUV1.myClass=='AIPSUVData':
+        raise TypeError,"Function unavailable for "+inUV1.myClass
     # Checks
-    if not inUV.UVIsA():
+    if not inUV1.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
     if outUV.UVIsA():
         raise TypeError,"outUV MUST be a Python Obit UV"

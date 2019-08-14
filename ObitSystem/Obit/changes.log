@@ -4352,3 +4352,16 @@ Obit/src/ObitTableDesc.c:
 Obit/src/ObitUVCalCalibrate.c
   Init: Don't let Open reset the number of SN table antennas
 9 Aug 2019 svn 603
+
+Summary: Bug fixes, including a baddie hitting BDFIn CL table
+Obit/src/ObitImageMF.c:
+   Add prototype for ObitImageMFFullInstantiate to keep MacCompiler happy
+Obit/python/Image.py, Obit/python/UV.py:
+   PCompare: Fix typo in test for AIPSImage
+Obit/bin/ObitTables.pl:
+   Change which InfoList DumpKey writes to
+Obit/src/ObitTableBL.c, Obit/src/ObitTableBP.c, Obit/src/ObitTableCL.c, 
+Obit/src/ObitTablePD.c, Obit/src/ObitTableSN.c, Obit/src/ObitTableSY.c:
+  DumpKey write to infolist on Desc rather than IO->myDesc
+
+14 Aug 2019 svn 604
