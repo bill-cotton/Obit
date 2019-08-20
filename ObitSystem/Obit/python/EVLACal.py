@@ -6176,14 +6176,17 @@ def EVLAStdModel(Cals, freq):
     model = {"Source":["3C48","3c48","J0137+3309","0137+331=3C48"],
              "freqRange":[40.0e9,50.0e9],
              "file":"3C48QModel.fits","disk":1}
+    stdModel.append(model)
     # 3C48 Ka
     model = {"Source":["3C48","3c48","J0137+3309","0137+331=3C48"],
              "freqRange":[28.0e9,40.0e9],
              "file":"3C48KaModel.fits","disk":1}
+    stdModel.append(model)
     # 3C48 K
     model = {"Source":["3C48","3c48","J0137+3309","0137+331=3C48"],
              "freqRange":[18.01e9,28.0e9],
              "file":"3C48KModel.fits","disk":1}
+    stdModel.append(model)
     # 3C48 C
     model = {"Source":["3C48","3c48","J0137+3309","0137+331=3C48"],
              "freqRange":[3.9e9,8.1e9],
@@ -6232,55 +6235,55 @@ def EVLAStdModel(Cals, freq):
     stdModel.append(model)
 
     # 3C138 Q
-    model = {"Source":["3C138","3c138","J0521+1638"],
+    model = {"Source":["3C138","3c138","J0521+1638","0521+166=3C138"],
              "freqRange":[40.0e9,50.0e9],
              "file":"3C138QModel.fits","disk":1}
     stdModel.append(model)
 
     # 3C138 Ka
-    model = {"Source":["3C138","3c138","J0521+1638"],
+    model = {"Source":["3C138","3c138","J0521+1638","0521+166=3C138"],
              "freqRange":[28.0e9,40.0e9],
              "file":"3C138KaModel.fits","disk":1}
     stdModel.append(model)
 
     # 3C138 K
-    model = {"Source":["3C138","3c138","J0521+1638"],
+    model = {"Source":["3C138","3c138","J0521+1638","0521+166=3C138"],
              "freqRange":[18.01e9,28.0e9],
              "file":"3C138KModel.fits","disk":1}
     stdModel.append(model)
 
     # 3C138 Ku
-    model = {"Source":["3C138","3c138","J0521+1638"],
+    model = {"Source":["3C138","3c138","J0521+1638","0521+166=3C138"],
              "freqRange":[12.0e9,18.0e9],
              "file":"3C138KuModel.fits","disk":1}
     stdModel.append(model)
 
     # 3C138 X
-    model = {"Source":["3C138","3c138","J0521+1638"],
+    model = {"Source":["3C138","3c138","J0521+1638","0521+166=3C138"],
              "freqRange":[8.0e9,12.0e9],
              "file":"3C138XModel.fits","disk":1}
     stdModel.append(model)
 
      # 3C138 C
-    model = {"Source":["3C138","3c138","J0521+1638"],
+    model = {"Source":["3C138","3c138","J0521+1638","0521+166=3C138"],
              "freqRange":[3.9e9,8.1e9],
              "file":"3C138CModel.fits","disk":1}
     stdModel.append(model)
 
    # 3C138 S
-    model = {"Source":["3C138","3c138","J0521+1638"],
+    model = {"Source":["3C138","3c138","J0521+1638","0521+166=3C138"],
              "freqRange":[1.9e9,4.1e9],
              "file":"3C138SModel.fits","disk":1}
     stdModel.append(model)
 
     # 3C138 L
-    model = {"Source":["3C138","3c138","J0521+1638"],
+    model = {"Source":["3C138","3c138","J0521+1638","0521+166=3C138"],
              "freqRange":[0.9e9,2.1e9],
              "file":"3C138LModel.fits","disk":1}
     stdModel.append(model)
 
     # 3C138 P
-    model = {"Source":["3C138","3c138","J0521+1638"],
+    model = {"Source":["3C138","3c138","J0521+1638","0521+166=3C138"],
              "freqRange":[1.5e8,7.0e8],
              "file":"3C138PModel.fits","disk":1}
     stdModel.append(model)

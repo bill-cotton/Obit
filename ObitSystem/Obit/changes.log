@@ -4365,3 +4365,24 @@ Obit/src/ObitTablePD.c, Obit/src/ObitTableSN.c, Obit/src/ObitTableSY.c:
   DumpKey write to infolist on Desc rather than IO->myDesc
 
 14 Aug 2019 svn 604
+
+Summary: Bug fixes, more calibrator models
+Obit/TDF/MFImage.TDF:
+   improve description of maxAWLoop
+Obit/python/EVLACal.py
+Obit/share/data:
+   3C138KaModel.fits.gz 3C138KModel.fits.gz 3C138QModel.fits.gz 3C48KaModel.fits.gz 3C48KModel.fits.gz 3C48QModel.fits.gz
+   More standard calibration models
+Obit/src/
+  ObitTableAN.c ObitTableFG.c                 ObitTableIDI_FREQUENCY.c            ObitTableMF.c ObitTableSN.c
+  ObitTableAT.c ObitTableFQ.c                 ObitTableIDI_GAIN_CURVE.c           ObitTableNI.c ObitTableSU.c
+  ObitTableBL.c ObitTableFS.c                 ObitTableIDI_INTERFEROMETER_MODEL.c ObitTableNX.c ObitTableSY.c
+  ObitTableBP.c ObitTableGC.c                 ObitTableIDI_PHASE_CAL.c            ObitTableOB.c ObitTableTY.c
+  ObitTableCC.c ObitTableHistory.c            ObitTableIDI_SOURCE.c               ObitTableOF.c ObitTableVL.c
+  ObitTableCD.c ObitTableIDI_ANTENNA.c        ObitTableIDI_SYSTEM_TEMPERATURE.c   ObitTablePC.c ObitTableVZ.c
+  ObitTableCL.c ObitTableIDI_ARRAY_GEOMETRY.c ObitTableIDI_UV_DATA.c              ObitTablePD.c ObitTableWX.c
+  ObitTableCP.c ObitTableIDI_BANDPASS.c       ObitTableIDI_WEATHER.c              ObitTablePO.c
+  ObitTableCQ.c ObitTableIDI_CALIBRATION.c    ObitTableIM.c                       ObitTablePS.c
+  ObitTableCT.c ObitTableIDI_FLAG.c           ObitTableMC.c                       ObitTablePT.c
+    DumpKey write to infolist on myDesc rather than IO->myDesc
+20 Aug 2019 svn 605

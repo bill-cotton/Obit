@@ -986,7 +986,7 @@ can be added to each facet.  This is intended as an efficiency measure but if th
 there is a large number of components subtracted this way (>50,000 per cycle) it 
 may become very slow and a value of maxAWLoop = 1 (no middle loop) may be needed. 
 Values larger than 5 are not recommended.
-maxAWLoop = 0
+maxAWLoop = 1
 addParam(mf,"maxAWLoop", paramVal=maxAWLoop, shortHelp="Max. middle CLEAN loop", \
 	longHelp="  maxAWLoop....Max. middle CLEAN Loop count\n"+ \
 	"              Override the default behavior for the autoWin middle loop\n"+
