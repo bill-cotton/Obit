@@ -4386,3 +4386,26 @@ Obit/src/
   ObitTableCT.c ObitTableIDI_FLAG.c           ObitTableMC.c                       ObitTablePT.c
     DumpKey write to infolist on myDesc rather than IO->myDesc
 20 Aug 2019 svn 605
+
+Summary: Bug fixes
+Obit/tasks/MFImage.c Obit/tasks/MFBeam.c Obit/tasks/BeamCor.c :
+   Better handling of Niter,NiterQU, NiterV, minFluxQU,minFluxV
+Obit/src/ObitFitRegion.c:
+   Subtract: Better subtracton of model from image.
+Obit/tasks/UVBlAvg.c:
+   Index output uvdata.
+Obit/include/ObitFITS.h  Obit/src/ObitFITS.c:
+    Added routine ObitFITSGetNumDisk 
+Obit/src/ObitImageFitData.c:
+    Create: trap bad region
+Obit/src/Obit.c:
+    Unref: don't return NULL if only decrement refCount
+Obit/src/ObitUV.c:
+    GetSubA: delete extra Unref of ANTable
+Obit/src/ObitUV.c:
+    Open: rebuild Table List member each call
+Obit/src/ObitDConCleanVis.c, bit/src/ObitDConClean.c:
+    various: better image buffer handling
+ObitTableList.c:
+   Put: make copy of structure rather than just referencing.
+23 Sep 2019 svn 606

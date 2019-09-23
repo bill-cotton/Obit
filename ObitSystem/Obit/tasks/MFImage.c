@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN/selfcalibrate a uv data set               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2018                                          */
+/*;  Copyright (C) 2010-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1897,7 +1897,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   ObitImageMF  *fitImage=NULL;
   ObitInfoType type;
   oint         otemp;
-  olong        nfield, *ncomp=NULL, maxPSCLoop, maxASCLoop, SCLoop, jtemp, Niter, NiterQU, NiterV;
+  olong        nfield, *ncomp=NULL, maxPSCLoop, maxASCLoop, SCLoop, jtemp, Niter=0, NiterQU, NiterV;
   ofloat       minFluxPSC, minFluxASC, modelFlux, maxResid, reuse, ftemp, autoCen, useMinFlux=0.0;
   ofloat       alpha, noalpha, minFlux=0.0, minFluxQU=0.0,  minFluxV=0.0;
   ofloat       *minFList=NULL, antSize, solInt, PeelFlux, FractOK, CCFilter[2]={0.0,0.0};
@@ -1966,30 +1966,27 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   if (err->error) Obit_traceback_msg (err, routine, myClean->name);
   
   /* Special Stokes Parameters? */
-  if ((((Stokes[0]=='Q') || (Stokes[0]=='U')) && ((Stokes[0]!=' '))) && 
-      ObitInfoListGetTest(myInput, "NiterQU", &type, dim, &NiterQU)) {
-    ObitInfoListAlwaysPut(myClean->info,  "Niter", type, dim, &NiterQU);
-  }
-  if (((Stokes[0]=='V') && ((Stokes[0]!=' '))) && 
-      ObitInfoListGetTest(myInput, "NiterV", &type, dim, &NiterV)) {
-    ObitInfoListAlwaysPut(myClean->info,  "Niter", type, dim, &NiterV);
-  }
-  if ((((Stokes[0]=='Q') || (Stokes[0]!='U')) && ((Stokes[0]!=' '))) && 
-      ObitInfoListGetTest(myInput, "minFluxQU", &type, dim, &minFluxQU)) {
-    ObitInfoListAlwaysPut(myClean->info,  "minFlux", type, dim, &minFluxQU);
-  }
-  if ((((Stokes[1]=='Q') || (Stokes[2]!='U')) && ((Stokes[0]!=' '))) && 
-      ObitInfoListGetTest(myInput, "minFluxQU", &type, dim, &minFluxQU)) {
-    ObitInfoListAlwaysPut(myClean->info,  "minFlux", type, dim, &minFluxQU);
-  }
-  if (((Stokes[0]=='V') && ((Stokes[0]!=' '))) && 
-      ObitInfoListGetTest(myInput, "minFluxV", &type, dim, &minFluxV)) {
-    ObitInfoListAlwaysPut(myClean->info,  "minFlux", type, dim, &minFluxV);
-  }
-  if (((Stokes[3]=='V') && ((Stokes[0]!=' '))) && 
-      ObitInfoListGetTest(myInput, "minFluxV", &type, dim, &minFluxV)) {
-    ObitInfoListAlwaysPut(myClean->info,  "minFlux", type, dim, &minFluxV);
-  }
+  ObitInfoListGetTest(myInput, "Niter", &type, dim, &Niter);
+  NiterQU = Niter;
+  ObitInfoListGetTest(myInput, "NiterQU", &type, dim, &NiterQU);
+  NiterV = NiterQU;
+  ObitInfoListGetTest(myInput, "NiterV", &type, dim, &NiterV);
+  ObitInfoListGetTest(myInput, "minFlux", &type, dim, &minFlux);
+  minFluxQU = minFlux;
+  ObitInfoListGetTest(myInput, "minFluxQU", &type, dim, &minFluxQU);
+  minFluxV = minFluxQU;
+  ObitInfoListGetTest(myInput, "minFluxV", &type, dim, &minFluxV);
+  dim[0] = dim[1] = dim[2] = dim[3] = 1;
+  if ((Stokes[0]=='I') || (Stokes[0]=='F') || (Stokes[0]==' ')) {
+    ObitInfoListAlwaysPut(myClean->info,  "Niter", OBIT_long, dim, &Niter);
+    ObitInfoListAlwaysPut(myClean->info, "minFlux", OBIT_float, dim, &minFlux);
+  }  else if ((Stokes[0]=='Q') || (Stokes[0]=='U')) {
+    ObitInfoListAlwaysPut(myClean->info,  "Niter", OBIT_long, dim, &NiterQU);
+    ObitInfoListAlwaysPut(myClean->info, "minFlux", OBIT_float, dim, &minFluxQU);
+  }  else if (Stokes[0]=='V') {
+    ObitInfoListAlwaysPut(myClean->info,  "Niter", OBIT_long, dim, &NiterV);
+    ObitInfoListAlwaysPut(myClean->info, "minFlux", OBIT_float, dim, &minFluxV);
+  }  
    
   /* Only do self cal for Stokes I (or F) */
   if ((Stokes[0]!='I') && (Stokes[0]!='F') && ((Stokes[0]!=' '))) {

@@ -1826,7 +1826,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   ObitImage    *outImage=NULL;
   ObitInfoType type;
   oint         otemp;
-  olong        nfield, *ncomp=NULL, maxPSCLoop, maxASCLoop, SCLoop, jtemp, Niter, NiterQU, NiterV;
+  olong        nfield, *ncomp=NULL, maxPSCLoop, maxASCLoop, SCLoop, jtemp, Niter=0, NiterQU, NiterV;
   ofloat       minFluxPSC, minFluxASC, modelFlux, maxResid, reuse, ftemp, autoCen, useMinFlux=0.0;
   ofloat       solInt, PeelFlux, FractOK, CCFilter[2]={0.0,0.0}, minFlux=0.0, minFluxQU=0.0, minFluxV=0.0;
   ofloat       *minFList=NULL;
@@ -1872,23 +1872,28 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   noNeg = TRUE;
   ObitInfoListGetTest(myInput, "noNeg", &type, dim, &noNeg);
 
-   /* Special Stokes Parameters? */
-  if ((((Stokes[0]=='Q') || (Stokes[0]=='U')) && ((Stokes[0]!=' '))) && 
-      ObitInfoListGetTest(myInput, "NiterQU", &type, dim, &NiterQU)) {
-    ObitInfoListAlwaysPut(myClean->info,  "Niter", type, dim, &NiterQU);
-  }
-  if (((Stokes[0]=='V') && ((Stokes[0]!=' '))) && 
-      ObitInfoListGetTest(myInput, "NiterV", &type, dim, &NiterV)) {
-    ObitInfoListAlwaysPut(myClean->info,  "Niter", type, dim, &NiterV);
-  }
-  if ((((Stokes[0]=='Q') || (Stokes[0]!='U')) && ((Stokes[0]!=' '))) && 
-      ObitInfoListGetTest(myInput, "minFluxQU", &type, dim, &minFluxQU)) {
-    ObitInfoListAlwaysPut(myClean->info,  "minFlux", type, dim, &minFluxQU);
-  }
-  if (((Stokes[0]=='V') && ((Stokes[0]!=' '))) && 
-      ObitInfoListGetTest(myInput, "minFluxV", &type, dim, &minFluxV)) {
-    ObitInfoListAlwaysPut(myClean->info,  "minFlux", type, dim, &minFluxV);
-  }
+  /* Special Stokes Parameters? */
+  ObitInfoListGetTest(myInput, "Niter", &type, dim, &Niter);
+  NiterQU = Niter;
+  ObitInfoListGetTest(myInput, "NiterQU", &type, dim, &NiterQU);
+  NiterV = NiterQU;
+  ObitInfoListGetTest(myInput, "NiterV", &type, dim, &NiterV);
+  ObitInfoListGetTest(myInput, "minFlux", &type, dim, &minFlux);
+  minFluxQU = minFlux;
+  ObitInfoListGetTest(myInput, "minFluxQU", &type, dim, &minFluxQU);
+  minFluxV = minFluxQU;
+  ObitInfoListGetTest(myInput, "minFluxV", &type, dim, &minFluxV);
+  dim[0] = dim[1] = dim[2] = dim[3] = 1;
+  if ((Stokes[0]=='I') || (Stokes[0]=='F') || (Stokes[0]==' ')) {
+    ObitInfoListAlwaysPut(myClean->info,  "Niter", OBIT_long, dim, &Niter);
+    ObitInfoListAlwaysPut(myClean->info, "minFlux", OBIT_float, dim, &minFlux);
+  }  else if ((Stokes[0]=='Q') || (Stokes[0]=='U')) {
+    ObitInfoListAlwaysPut(myClean->info,  "Niter", OBIT_long, dim, &NiterQU);
+    ObitInfoListAlwaysPut(myClean->info, "minFlux", OBIT_float, dim, &minFluxQU);
+  }  else if (Stokes[0]=='V') {
+    ObitInfoListAlwaysPut(myClean->info,  "Niter", OBIT_long, dim, &NiterV);
+    ObitInfoListAlwaysPut(myClean->info, "minFlux", OBIT_float, dim, &minFluxV);
+  }  
    
  /* Peeling trip level */
   PeelFlux = 1.0e20;

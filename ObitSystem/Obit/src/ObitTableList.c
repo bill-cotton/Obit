@@ -199,6 +199,7 @@ ObitTableListPut(ObitTableList *in,
 		 gchar* name, olong *version, ObitTable *table, ObitErr *err)
 {
   ObitTableListElem *elem;
+  ObitTable *TabClone=NULL;
   gboolean newEntry;
   
   /* error checks */
@@ -223,15 +224,20 @@ ObitTableListPut(ObitTableList *in,
     /* Relink table */
     if (table!=NULL) {
       elem->table = ObitTableUnref(elem->table);
-      elem->table = ObitTableRef(table);
-    }
+      if (table!=NULL) TabClone = ObitTableClone(table, TabClone);
+      TabClone = ObitTableClone(table, TabClone);
+      elem->table = ObitTableRef(TabClone);
+      TabClone = ObitTableUnref(TabClone);
+   }
     return; /* done */
   } /* end of mismatch */
     
-  /* add new one */
-  elem =  newObitTableListElem(name, *version, table);
+  /* add new one - use clone of input */
+  if (table!=NULL) TabClone = ObitTableClone(table, TabClone);
+  elem =  newObitTableListElem(name, *version, TabClone);
   in->list = g_slist_append (in->list, elem); /* add to list */
   in->number++; /* keep count */
+  TabClone = ObitTableUnref(TabClone);
 
 } /* end ObitTableListPut */
 

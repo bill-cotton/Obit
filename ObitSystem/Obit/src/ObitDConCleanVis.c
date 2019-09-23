@@ -1864,6 +1864,8 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
   for (ifield=0; ifield<nfield; ifield++) { /* loop 500 */
 
     /* Open image in case header needs update */
+    mosaic->images[ifield]->extBuffer = TRUE;  /* Don't need buffer here */
+    mosaic->images[ifield]->image = ObitFArrayUnref(mosaic->images[ifield]->image);
     ObitImageOpen (mosaic->images[ifield], OBIT_IO_ReadWrite, err);
     if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
 
@@ -2084,7 +2086,9 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
     
     /* Close/update image */
     ObitImageClose(mosaic->images[ifield], err);
-    if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
+    mosaic->images[ifield]->extBuffer = FALSE;  /* May need buffer later */
+    mosaic->images[ifield]->image = ObitFArrayUnref(mosaic->images[ifield]->image);
+   if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
   } /* end loop  L500: */
 
   /* Loop over autoCen position adding unboxes */
@@ -2347,6 +2351,8 @@ gboolean ObitDConCleanVisRecenter (ObitDConCleanVis *in, ObitUV* uvdata,
     if (!autoCen) continue;
 
     /* Open image in case header needs update */
+    mosaic->images[ifield]->extBuffer = TRUE;  /* Don't need buffer here */
+    mosaic->images[ifield]->image = ObitFArrayUnref(mosaic->images[ifield]->image);
     ObitImageOpen (mosaic->images[ifield], OBIT_IO_ReadWrite, err);
     if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
 
@@ -2433,6 +2439,7 @@ gboolean ObitDConCleanVisRecenter (ObitDConCleanVis *in, ObitUV* uvdata,
     /* Close/update image */
   closeit:
     ObitImageClose(mosaic->images[ifield], err);
+    mosaic->images[ifield]->extBuffer = FALSE;  /* May need buffer later */
     if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
   } /* end loop  L500: */
   
@@ -2491,6 +2498,8 @@ gboolean ObitDConCleanVisFilter (ObitDConCleanVis *in, ofloat filter[2],
   for (ifield=0; ifield<nfield; ifield++) { /* loop over fields */
 
     /* Open image in case header needs update */
+    mosaic->images[ifield]->extBuffer = TRUE;  /* Don't need buffer here */
+    mosaic->images[ifield]->image = ObitFArrayUnref(mosaic->images[ifield]->image);
     ObitImageOpen (mosaic->images[ifield], OBIT_IO_ReadWrite, err);
     if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
 
@@ -2524,6 +2533,7 @@ gboolean ObitDConCleanVisFilter (ObitDConCleanVis *in, ofloat filter[2],
     /* Close/update image */
   closeit:
     ObitImageClose(mosaic->images[ifield], err);
+    mosaic->images[ifield]->extBuffer = FALSE;  /* May need buffer later */
     if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
   } /* end loop over fields */
   
@@ -3388,6 +3398,8 @@ static void  ClearAllResiduals (ObitDConCleanVis *in, ObitErr *err)
       if (err->error) Obit_traceback_msg (err, routine, image->name);
     }
     ObitImageClose (image, err);
+    /* Free Image array */
+    image->image = ObitFArrayUnref(image->image);
     if (err->error) Obit_traceback_msg (err, routine, image->name);
   } /* end loop over field */
 

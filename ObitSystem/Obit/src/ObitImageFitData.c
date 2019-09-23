@@ -188,6 +188,7 @@ ObitImageFitDataCreate (gchar* name, ObitFitRegion *reg,
   trc[1] = reg->corner[1] + reg->dim[1] - 1;
   out->pixels = ObitFArraySubArr (image->image, blc, trc, err);
   out->resids = ObitFArraySubArr (image->image, blc, trc, err);
+  if (err->error) Obit_traceback_val (err, routine, image->name, out);
   /* Blanking? */
   if (Blank!=0.0) ObitFArrayClip(out->pixels, Blank, 1.0e30, fblank);
   /* Get RMS if saved, else calculate */

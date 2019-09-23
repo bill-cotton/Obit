@@ -129,6 +129,18 @@ void ObitFITSShutdown (void)
 } /*  end ObitFITSShutdown */
 
 /**
+ * Returns number of defined FITS disks
+ * \param err  Error stack for any error messages.
+ * \return number of disks
+ */
+olong ObitFITSGetNumDisk (ObitErr *err)
+{
+  /* error checks */
+  if (err->error) return 0;
+  return myFITSInfo->NumberDisks;
+} /* ObitFITSGetNumDisk  */
+
+/**
  * Add a directory to the list of directories for FITS files
  * Limit of MAXFITSDISK (20) total disks 
  * #ObitFITSClassInit must have been used to initialize.

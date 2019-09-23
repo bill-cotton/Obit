@@ -1048,7 +1048,9 @@ ObitIOCode ObitUVOpen (ObitUV *in, ObitIOAccess access, ObitErr *err)
   ObitUVSetupIO (in, err);
   if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
 
-  /* Add reference to tableList */
+  /* Add reference to tableList rebuilding if necessary*/
+  in->tableList = ObitUnref(in->tableList);
+  in->tableList = ObitRef(newObitTableList(in->name));
   in->myIO->tableList = (Obit*)ObitUnref(in->myIO->tableList);
   in->myIO->tableList = (Obit*)ObitRef(in->tableList);
 
@@ -2059,7 +2061,7 @@ ObitIOCode ObitUVGetSubA (ObitUV *in, ObitErr *err)
   /* save to I/O descriptor */
   IOdesc->maxAnt = desc->maxAnt;
 
- cleanup:ANTable = ObitTableANUnref(ANTable);
+ cleanup:
   if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
 
   return retCode;

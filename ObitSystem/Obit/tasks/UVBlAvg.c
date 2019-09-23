@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Baseline dependent averaging of  UV data          .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2014                                          */
+/*;  Copyright (C) 2009-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -112,6 +112,11 @@ int main ( int argc, char **argv )
 
   /* Average */
   outData = ObitUVUtilBlAvgTF(inData, FALSE, outData, err);
+  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+
+  /* Index output */
+  Obit_log_error(err, OBIT_InfoErr, "iNdeXing output UV data");
+  ObitUVUtilIndex (outData, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
   /* History */

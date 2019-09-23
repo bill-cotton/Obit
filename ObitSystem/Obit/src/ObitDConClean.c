@@ -428,7 +428,7 @@ ObitDConClean* ObitDConCleanCreate (gchar* name, ObitImageMosaic *mosaic,
 void ObitDConCleanDeconvolve (ObitDCon *inn, ObitErr *err)
 {
   ObitDConClean *in;
-  gboolean done, newWin;
+  gboolean done;
   olong jtemp;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   const ObitDConCleanClassInfo *inClass;
@@ -476,7 +476,7 @@ void ObitDConCleanDeconvolve (ObitDCon *inn, ObitErr *err)
   done = FALSE;
   while (!done) {
     /* Get image/beam statistics needed for this cycle, decide CLEAN type */
-    newWin = inClass->ObitDConCleanPixelStats(in, NULL, err);
+    inClass->ObitDConCleanPixelStats(in, NULL, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
     /* Pick components for this major cycle, tells if finished CLEAN */
@@ -883,10 +883,10 @@ gboolean ObitDConCleanPixelStats(ObitDConClean *in, ObitFArray **pixarray,
 
   /* Get Beam histogram from first field */
   if (in->mosaic->FullField && in->mosaic->FullField->myBeam) 
-    Beam = in->mosaic->FullField->myBeam;
-  if (Beam==NULL) Beam = in->mosaic->images[0]->myBeam;
-  Obit_retval_if_fail(ObitImageIsA(Beam), err,
-		      "%s: No Beam available", routine, newWin);
+    Beam = (ObitImage*)in->mosaic->FullField->myBeam;
+  if (Beam==NULL) Beam = (ObitImage*)in->mosaic->images[0]->myBeam;
+  Obit_retval_if_fail(ObitImageIsA(Beam), err, newWin,
+		      "%s: No Beam available", routine);
   if (in->BeamHist->field != in->currentFields[0])
     ObitDConCleanBmHistUpdate(in->BeamHist, Beam, in->plane, err);
   in->BeamHist->field = in->currentFields[0];
@@ -932,7 +932,6 @@ gboolean ObitDConCleanPixelStats(ObitDConClean *in, ObitFArray **pixarray,
 void ObitDConCleanImageStats(ObitDConClean *in, olong field, gboolean doBeam, 
 			     ObitErr *err)
 {
-  ObitIOCode retCode;
   ObitImage *image=NULL;
   ObitDConCleanWindow *theWindow=NULL;
   ObitIOSize IOsize = OBIT_IO_byPlane;
@@ -997,10 +996,10 @@ void ObitDConCleanImageStats(ObitDConClean *in, olong field, gboolean doBeam,
     dim[0] = 1;
     ObitInfoListPut (image->info, "IOBy", OBIT_long, dim, &IOsize, err);
  
-    retCode = ObitImageOpen (image, OBIT_IO_ReadOnly, err);
+    ObitImageOpen (image, OBIT_IO_ReadOnly, err);
     if (err->error) Obit_traceback_msg (err, routine, image->name);
 
-    retCode = ObitImageRead (image, image->image->array, err);
+    ObitImageRead (image, image->image->array, err);
     if (err->error) Obit_traceback_msg (err, routine, image->name);
 
     /* Divide up work */
@@ -1074,19 +1073,20 @@ void ObitDConCleanImageStats(ObitDConClean *in, olong field, gboolean doBeam,
     dim[0] = 1;
     ObitInfoListPut (image->info, "maxAbsResid", OBIT_float, dim, &tmax, err); 
 
-    retCode = ObitImageClose (image, err);
+    ObitImageClose (image, err);
     if (err->error) Obit_traceback_msg (err, routine, image->name);
 
     /* Restore BLC, TRC */    
     dim[0] = IM_MAXDIM;    
     ObitInfoListPut (image->info, "BLC", OBIT_long, dim, oblc, err); 
     ObitInfoListPut (image->info, "TRC", OBIT_long, dim, otrc, err); 
-    retCode = ObitImageOpen (image, OBIT_IO_ReadOnly, err);
-    retCode = ObitImageClose (image, err);
+    ObitImageOpen (image, OBIT_IO_ReadOnly, err);
+    ObitImageClose (image, err);
     if (err->error) Obit_traceback_msg (err, routine, image->name);
 
-
-    /* Free Image array? */
+    /* Free Image array and work references */
+    for (it=0; it<nTh; it++) 
+      if (threadArgs[it]->inData)  ObitFArrayUnref(threadArgs[it]->inData);
     image->image = ObitFArrayUnref(image->image);
     
   } /* end loop over fields */
@@ -1630,7 +1630,6 @@ gboolean ObitDConCleanAutoWindow(ObitDConClean *in, olong *fields, ObitFArray **
   gboolean newWin = FALSE;
   ObitImage *image=NULL;
   ObitFArray *usePixels;
-  ObitIOCode retCode;
   ObitIOSize IOsize = OBIT_IO_byPlane;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong  i, j, field, best, blc[IM_MAXDIM], trc[IM_MAXDIM];
@@ -1669,9 +1668,9 @@ gboolean ObitDConCleanAutoWindow(ObitDConClean *in, olong *fields, ObitFArray **
       dim[0] = 1;
       ObitInfoListAlwaysPut (image->info, "IOBy", OBIT_long, dim, &IOsize);
       
-      retCode = ObitImageOpen (image, OBIT_IO_ReadOnly, err);
-      retCode = ObitImageRead (image, image->image->array, err);
-      retCode = ObitImageClose (image, err);
+      ObitImageOpen (image, OBIT_IO_ReadOnly, err);
+      ObitImageRead (image, image->image->array, err);
+      ObitImageClose (image, err);
       if (err->error) Obit_traceback_val (err, routine, image->name, newWin);
       usePixels = image->image;  /* Pointer to image buffer */
       
@@ -1717,9 +1716,9 @@ gboolean ObitDConCleanAutoWindow(ObitDConClean *in, olong *fields, ObitFArray **
       dim[0] = 1;
       ObitInfoListAlwaysPut (image->info, "IOBy", OBIT_long, dim, &IOsize);
       
-      retCode = ObitImageOpen (image, OBIT_IO_ReadOnly, err);
-      retCode = ObitImageRead (image, image->image->array, err);
-      retCode = ObitImageClose (image, err);
+      ObitImageOpen (image, OBIT_IO_ReadOnly, err);
+      ObitImageRead (image, image->image->array, err);
+      ObitImageClose (image, err);
       if (err->error) Obit_traceback_val (err, routine, image->name, newWin);
       usePixels = image->image;  /* Pointer to image buffer */
       
@@ -2133,7 +2132,6 @@ void ObitDConCleanDecide (ObitDConClean* in, ObitErr *err)
  */
 void ReadBP (ObitDConClean* in, ObitErr *err)
 {
-  ObitIOCode retCode;
   ObitIOSize IOsize = OBIT_IO_byPlane;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong  blc[IM_MAXDIM], trc[IM_MAXDIM];
@@ -2181,13 +2179,12 @@ void ReadBP (ObitDConClean* in, ObitErr *err)
     dim[0] = 1;
     ObitInfoListPut (Beam->info, "IOBy", OBIT_long, dim, &IOsize, err);
     
-    retCode = ObitImageOpen (Beam, OBIT_IO_ReadOnly, err);
+    ObitImageOpen (Beam, OBIT_IO_ReadOnly, err);
     if (err->error) Obit_traceback_msg (err, routine, Beam->name);
     
-    retCode = ObitImageRead (Beam, Beam->image->array, err);
+    ObitImageRead (Beam, Beam->image->array, err);
     if (err->error) Obit_traceback_msg (err, routine, Beam->name);
-    
-    /* Compute region of image to take */
+        /* Compute region of image to take */
     /* Center pixel - make 0-rel */
     nx = Beam->myDesc->inaxes[0];
     ny = Beam->myDesc->inaxes[1];
@@ -2231,7 +2228,7 @@ void ReadBP (ObitDConClean* in, ObitErr *err)
     in->BeamPatches[field-1] = ObitFArraySubArr(Beam->image, ablc, atrc, err);
     if (err->error) Obit_traceback_msg (err, routine, Beam->name);
     
-    retCode = ObitImageClose (Beam, err);
+    ObitImageClose (Beam, err);
     if (err->error) Obit_traceback_msg (err, routine, Beam->name);
     
     /* Free Image array? */
@@ -2253,7 +2250,7 @@ static void GaussTaper (ObitCArray* uvGrid, ObitImageDesc *imDesc,
   ofloat dU, dV, UU, VV, texp;
   ofloat konst, xmaj, xmin, cpa, spa, b1, b2, b3, bb2, bb3;
   ofloat taper, norm, *grid, tx, ty;
-  olong i, j, nx, ny, ndim, naxis[2];
+  olong i, j, nx, ny, naxis[2];
 
   /* Image info - descriptor should still be valid */
   nx = imDesc->inaxes[imDesc->jlocr];
@@ -2280,7 +2277,7 @@ static void GaussTaper (ObitCArray* uvGrid, ObitImageDesc *imDesc,
   b3 = - 2.0 * spa * cpa * (xmaj*xmaj - xmin*xmin);
   
   /* pointer to complex grid */
-  ndim = 2; naxis[0] = 0; naxis[1] = 0; 
+  naxis[0] = 0; naxis[1] = 0; 
   grid = ObitCArrayIndex(uvGrid, naxis);
   
   /* loop over uv array */  
@@ -2329,7 +2326,7 @@ static gpointer ThreadImageStats (gpointer args)
   ObitErr    *err       = largs->err;
   ObitThread *thread    = largs->thread;
   /* local */
-  olong ix, iy, nx, ny, count, pos[2];
+  olong ix, iy, nx, count, pos[2];
   ofloat *data, tmax, tmax2, sum, sum2, fblank = ObitMagicF();
   gboolean *umask=NULL, *mask=NULL, *innerMask=NULL, isUnbox;
   /*gchar *routine = "ThreadImageStats";*/
@@ -2340,7 +2337,6 @@ static gpointer ThreadImageStats (gpointer args)
 
   /* init */
   nx = inData->naxis[0];
-  ny = inData->naxis[1];
   count = 0;
   sum   = 0.0;
   sum2  = 0.0;

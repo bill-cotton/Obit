@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -86,6 +86,9 @@ olong ObitFITSFindDir (gchar* dir, ObitErr *err);
 /** Public: Generate name of FITS file */
 gchar* 
 ObitFITSFilename (olong disk, gchar* fileName, ObitErr *err);
+
+/** Public: Get number of FITS disks */
+olong ObitFITSGetNumDisk (ObitErr *err);
 
 /** Public: Get directory string */
 gchar* ObitFITSDirname (olong disk, ObitErr *err);
