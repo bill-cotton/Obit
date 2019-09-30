@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2018                                          */
+/*;  Copyright (C) 2004-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -183,7 +183,7 @@ ObitUV* ObitUVUtilCopyZero (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
 		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL", "AIPS NI", "AIPS SY", "AIPS PT",
+		    "AIPS PL","AIPS NI","AIPS SY","AIPS PT","AIPS OT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx;
@@ -348,7 +348,7 @@ void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
   gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
 		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL", "AIPS NI", "AIPS SY", "AIPS PT",
+		    "AIPS PL","AIPS NI","AIPS SY","AIPS PT","AIPS OT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx, firstVis;
@@ -578,7 +578,7 @@ void ObitUVUtilXPolDivide (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
 		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL", "AIPS NI", "AIPS SY", "AIPS PT",
+		    "AIPS PL","AIPS NI","AIPS SY","AIPS PT","AIPS OT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, indx, jndx, firstVis;
@@ -793,7 +793,7 @@ void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
   gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
 		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL", "AIPS NI", "AIPS SY", "AIPS PT",
+		    "AIPS PL","AIPS NI","AIPS SY","AIPS PT","AIPS OT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx, firstVis;
@@ -1038,7 +1038,7 @@ void ObitUVUtilVisSub1 (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
   gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
 		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL", "AIPS NI", "AIPS SY", "AIPS PT",
+		    "AIPS PL","AIPS NI","AIPS SY","AIPS PT","AIPS OT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx, kndx, firstVis;
@@ -1785,7 +1785,7 @@ ObitUV* ObitUVUtilHann (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS AT", "AIPS CT", "AIPS OB", "AIPS IM", "AIPS MC",
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
-		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD",
+		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD", "AIPS OT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong NumChAvg, i, j, indx, jndx;
@@ -1980,7 +1980,7 @@ ObitUV* ObitUVUtilBloat (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
 		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD", "AIPS SY",
-		    "AIPS PT",
+		    "AIPS PT", "AIPS OT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx, jndx;
@@ -2169,7 +2169,7 @@ ObitUV* ObitUVUtilAvgF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
 		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD", "AIPS SY",
-		    "AIPS PT",
+		    "AIPS PT", "AIPS OT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx, jndx;
@@ -2385,7 +2385,7 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
 		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD", "AIPS SY",
-		    "AIPS PT",
+		    "AIPS PT", "AIPS OT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   ObitInfoType type;
@@ -2538,6 +2538,7 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
     if ((!gotOne) || (inUV->myDesc->numVisBuff<=0)) { /* need to read new record? */
       if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
       else iretCode = ObitUVRead (inUV, inUV->buffer, err);
+      if (err->error) goto cleanup;
     }
 
     /* Are we there yet??? */
@@ -2757,7 +2758,7 @@ ObitUV* ObitUVUtilAvg2One (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
 		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD", "AIPS SY",
-		    "AIPS PT",
+		    "AIPS PT", "AIPS OT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   ObitInfoType type;
@@ -3092,7 +3093,7 @@ ObitUV* ObitUVUtilSmoF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
 		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD", "AIPS SY",
-		    "AIPS PT",
+		    "AIPS PT", "AIPS OT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx, jndx;
@@ -3295,7 +3296,7 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
 		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD", "AIPS SY",
-		    "AIPS PT",
+		    "AIPS PT", "AIPS OT", 
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   ObitInfoType type;
@@ -3337,6 +3338,88 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   Obit_log_error(err, OBIT_InfoErr, 
 		 "Doing baseline dependent time averaging");
   ObitErrLog(err); 
+
+  /* Get Parameters - radius of field of view */
+  FOV = 20.0/60.0;  /* default 20 amin */
+  ObitInfoListGetTest(inUV->info, "FOV", &type, dim, &FOV);
+  /* to radians */
+  FOV = MAX(FOV,1.0e-4) * DG2RAD;
+
+  /* max. integration default 1 min */
+  maxInt = 1.0;  
+  ObitInfoListGetTest(inUV->info, "maxInt", &type, dim, &maxInt);
+  if (maxInt<=(1.0e-2/60.0)) maxInt = 1.0;
+  maxInt /= 1440.0;  /* convert to days */
+
+  /* max amplitude loss default 1.01 */
+  maxFact = 1.01;
+  ObitInfoListGetTest(inUV->info, "maxFact", &type, dim, &maxFact);
+  if (maxFact<0.99)  maxFact = 1.01;
+  maxFact = MIN(MAX(maxFact,1.0), 10.0);
+
+  /* Maximum UV distance squared to allow */
+  maxUVDist2 = (InvSinc(1.0/maxFact) / FOV);
+  maxUVDist2 = maxUVDist2*maxUVDist2; /* Square */
+
+  /* Get Frequency Parameters */
+  NumChAvg = 0;
+  ObitInfoListGetTest(inUV->info, "NumChAvg", &type, dim, &NumChAvg);
+  NumChAvg = MAX(1, NumChAvg);
+  doAvgAll = FALSE;
+  ObitInfoListGetTest(inUV->info, "doAvgAll", &type, dim, &doAvgAll);
+  ChanSel = NULL;
+  if (!ObitInfoListGetP(inUV->info, "ChanSel", &type, dim, (gpointer)&ChanSel)) {
+    ChanSel = defSel;  /* Use default = channels 1 => n */
+  }
+  /* ChanSel all zero? => default */
+  if ((ChanSel[0]<=0) && (ChanSel[1]<=0) && (ChanSel[2]<=0) && (ChanSel[3]<=0)) {
+    ChanSel = defSel;  /* Use default = channels 1 => n */
+  }
+
+  /* Averaging in frequency? */
+  doAvgFreq = (NumChAvg>1) || doAvgAll;
+
+  /* Selection/calibration/editing of input? */
+  doCalSelect = FALSE;
+  ObitInfoListGetTest(inUV->info, "doCalSelect", &type, dim, &doCalSelect);
+  if (doCalSelect) access = OBIT_IO_ReadCal;
+  else             access = OBIT_IO_ReadOnly;
+
+  /* test open to fully instantiate input and see if it's OK */
+  iretCode = ObitUVOpen (inUV, access, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
+    Obit_traceback_val (err, routine, inUV->name, outUV);
+
+  /* Is scratch? */
+  if (scratch) {
+    if (outUV) outUV = ObitUVUnref(outUV);
+    outUV = newObitUVScratch (inUV, err);
+  } else { /* non scratch output must exist - clone from inUV */
+    outUV->myDesc = ObitUVDescCopy (inUV->myDesc, outUV->myDesc, err);
+    ObitUVClone (inUV, outUV, err);
+  }
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, outUV);
+
+  inDesc  = inUV->myDesc;
+  /* Create work array for frequency averaging */
+  if (doAvgFreq) {
+    work = g_malloc(2*inDesc->lrec*sizeof(ofloat));
+    /* Work arrays defining data */
+    corChan = g_malloc(inDesc->ncorr*sizeof(olong));
+    corIF   = g_malloc(inDesc->ncorr*sizeof(olong));
+    corStok = g_malloc(inDesc->ncorr*sizeof(olong));
+    corMask = g_malloc(inDesc->ncorr*sizeof(gboolean));
+
+    /* Modify descriptor for affects of frequency averaging, get u,v,w scaling */
+    ObitUVGetFreq (inUV, err);   /* Make sure frequencies updated */
+    scale = AvgFSetDesc (inUV->myDesc, outUV->myDesc, NumChAvg, ChanSel, doAvgAll, 
+			 corChan, corIF, corStok, corMask, err);
+    if (err->error) goto cleanup;
+    
+  } else { /* Only time averaging */   
+    /* copy Descriptor */
+    outUV->myDesc = ObitUVDescCopy(inUV->myDesc, outUV->myDesc, err);
+  }
 
   /* Get Parameters - radius of field of view */
   FOV = 20.0/60.0;  /* default 20 amin */
@@ -3494,7 +3577,7 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   /* Include autocorr */
   for (i=1; i<numAnt; i++) blLookup[i] = blLookup[i-1] + numAnt-i+1; 
 
-  /* Copy tables before data */
+ /* Copy tables before data */
   iretCode = ObitUVCopyTables (inUV, outUV, exclude, NULL, err);
   /* If multisource out then copy SU table, multiple sources selected or
    sources deselected suggest MS out */
@@ -3979,7 +4062,7 @@ void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV,
 		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
 		    "AIPS FQ", "AIPS SU", "AIPS AN", "AIPS PD", "AIPS SY",
-		    "AIPS PT",
+		    "AIPS PT", "AIPS OT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong *BChan=NULL, *numChan=NULL, *BIF=NULL, *numIF=NULL;
@@ -4228,7 +4311,7 @@ void ObitUVUtilNoise(ObitUV *inUV, ObitUV *outUV, ofloat scale, ofloat sigma,
   gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
 		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL", "AIPS NI", "AIPS SY", "AIPS PT",
+		    "AIPS PL","AIPS NI","AIPS SY","AIPS PT","AIPS OT",
 		    NULL};
 #if HAVE_GSL==1  /* GSL stuff */
   gsl_rng *ran=NULL;
@@ -4579,7 +4662,7 @@ void ObitUVUtilCalcUVW (ObitUV *inUV, ObitUV *outUV,  ObitErr *err)
   gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
 		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL", "AIPS NI", 
+		    "AIPS PL","AIPS NI","AIPS OT",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   ObitUVWCalc *uvwCalc=NULL;

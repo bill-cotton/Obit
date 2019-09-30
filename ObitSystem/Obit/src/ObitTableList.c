@@ -199,9 +199,9 @@ ObitTableListPut(ObitTableList *in,
 		 gchar* name, olong *version, ObitTable *table, ObitErr *err)
 {
   ObitTableListElem *elem;
-  ObitTable *TabClone=NULL;
   gboolean newEntry;
-  
+  gchar *routine = "ObitTableListPut";
+ 
   /* error checks */
   g_assert (ObitErrIsA(err));
   if (err->error) return; /* error condition exists? */
@@ -209,7 +209,17 @@ ObitTableListPut(ObitTableList *in,
   if (table!=NULL) g_assert (ObitTableIsA(table));
   g_assert (name != NULL);
   g_assert (version != NULL);
-  
+
+  /* Check list */
+  ObitTableListCheck (in, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+ 
+  /* Check input table */
+  if ((table!=NULL) && (table->ObitId!=OBIT_ID) && (table->ReferenceCount>0)) {
+    Obit_log_error(err, OBIT_InfoWarn, 
+		   "%s: Input table %s %d corrupted", routine, name, *version);
+    return;
+  }
   /* look up */
   newEntry = (*version <= 0); /* force new entry? */
   elem = ObitTableListFind(in, name, version);
@@ -224,21 +234,27 @@ ObitTableListPut(ObitTableList *in,
     /* Relink table */
     if (table!=NULL) {
       elem->table = ObitTableUnref(elem->table);
-      if (table!=NULL) TabClone = ObitTableClone(table, TabClone);
-      TabClone = ObitTableClone(table, TabClone);
-      elem->table = ObitTableRef(TabClone);
-      TabClone = ObitTableUnref(TabClone);
+      if (table!=NULL) elem->table = ObitTableRef(table);
+      else             elem->table = NULL;
    }
+    /* Check updated table
+    if ((table!=NULL) && (table->myHost!=NULL))ObitTableFullInstantiate(elem->table, TRUE, err); */
+    if ((elem->table!=NULL) && (elem->table->ObitId!=OBIT_ID) && (elem->table->ReferenceCount>0))
+      Obit_log_error(err, OBIT_InfoWarn, 
+		     "%s: Undated table %s %d corrupted", routine, name, *version);
     return; /* done */
   } /* end of mismatch */
     
   /* add new one - use clone of input */
-  if (table!=NULL) TabClone = ObitTableClone(table, TabClone);
-  elem =  newObitTableListElem(name, *version, TabClone);
+  elem =  newObitTableListElem(name, *version, table);
   in->list = g_slist_append (in->list, elem); /* add to list */
   in->number++; /* keep count */
-  TabClone = ObitTableUnref(TabClone);
 
+  /* Check new table 
+  if ((table!=NULL) && (table->myHost!=NULL))ObitTableFullInstantiate(elem->table, TRUE, err);*/
+  if ((elem->table!=NULL) && (elem->table->ObitId!=OBIT_ID) && (elem->table->ReferenceCount>0))
+    Obit_log_error(err, OBIT_InfoWarn, 
+		   "%s: Added table %s %d corrupted", routine, name, *version);
 } /* end ObitTableListPut */
 
 
@@ -259,6 +275,7 @@ ObitTableListGet(ObitTableList *in,
 {
   ObitTableListElem *elem;
   gboolean out = FALSE;
+  gchar *routine = "ObitTableListGet";
 
   /* error checks */
   g_assert (ObitTableListIsA(in));
@@ -268,6 +285,10 @@ ObitTableListGet(ObitTableList *in,
   g_assert (table != NULL);
   g_assert (version != NULL);
 
+  /* Check list */
+  ObitTableListCheck (in, err);
+  if (err->error) Obit_traceback_val (err, routine, in->name, out);
+ 
   /* look up */
   *table = NULL;
   elem = ObitTableListFind(in, name, version);
@@ -435,7 +456,8 @@ void ObitTableListPrint  (ObitTableList *in, ObitErr *err)
 {
   ObitTableListElem *elem;
   GSList *tmp;
-  olong i;
+  olong i, refCnt;
+  gchar *OK="OK", *bad="Bad", *which;
 
   g_assert (ObitTableListIsA(in));
   g_assert (ObitErrIsA(err));
@@ -446,8 +468,12 @@ void ObitTableListPrint  (ObitTableList *in, ObitErr *err)
   i = 0;
   while (tmp) {
     elem = (ObitTableListElem*)tmp->data;
+    which = OK;
+    if ((elem->table!=NULL) && (elem->table->ObitId!=OBIT_ID)) which = bad;
+    if (elem->table!=NULL) refCnt = elem->table->ReferenceCount;
+    else                   refCnt = -1;
     i++;
-    fprintf (stderr," %d %d %s\n",i,elem->version,elem->name);
+	fprintf (stderr," %d %d %s %s ref cnt=%d\n",i,elem->version,elem->name,  which, refCnt);
     tmp = g_slist_next(tmp);
   }
 } /* end  ObitTableListPrint */
@@ -471,7 +497,7 @@ void ObitTableListCheck  (ObitTableList *in, ObitErr *err)
 
   /* loop */
   tmp = in->list;
-  i = 1;
+  i = 0;
   while (tmp) {
     elem = (ObitTableListElem*)tmp->data;
     i++;
@@ -481,6 +507,7 @@ void ObitTableListCheck  (ObitTableList *in, ObitErr *err)
 	((elem->table->ReferenceCount<0) || (elem->table->ReferenceCount>10000));
     }
     if (bad) {
+      ObitTableListPrint(in,err);
       Obit_log_error(err, OBIT_Error,
 		     "%s: I appear to have been corrupted, item %d", routine, i);
       return;

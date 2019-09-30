@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -289,7 +289,7 @@ void ObitIOUVAIPSZap (ObitIOUVAIPS *in, ObitErr *err)
       if (err->error) Obit_traceback_msg (err, routine, in->name);
     } /* End loop deleting tables */
   } /* end if tableList exists */
-  while (tableList) tableList = ObitTableUnref(tableList);  /* Get table list */
+  /* while (tableList) tableList = ObitTableUnref(tableList);  now just a copy Get table list */
   in->tableList = NULL;
 
   /* more complete validity test */

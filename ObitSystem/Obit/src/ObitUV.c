@@ -716,6 +716,7 @@ ObitUV* ObitUVCopy (ObitUV *in, ObitUV *out, ObitErr *err)
     /* Output will initially have no associated tables */
     out->tableList = ObitTableListUnref(out->tableList);
     out->tableList = newObitTableList(out->name);
+    if (out->myIO) out->myIO->tableList = (Obit*)out->tableList;
     /* don't copy ObitUVSel, ObitThread */
   }
 
@@ -917,6 +918,7 @@ void ObitUVClone  (ObitUV *in, ObitUV *out, ObitErr *err)
   /* Output will initially have no associated tables */
   out->tableList = ObitTableListUnref(out->tableList);
   out->tableList = newObitTableList(out->name);
+  if (out->myIO) out->myIO->tableList = (Obit*)out->tableList;
   /* don't copy ObitUVSel, ObitThread */
 
   /* Open if needed to to fully instantiate input and see if it's OK */
@@ -1049,10 +1051,9 @@ ObitIOCode ObitUVOpen (ObitUV *in, ObitIOAccess access, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
 
   /* Add reference to tableList rebuilding if necessary*/
-  in->tableList = ObitUnref(in->tableList);
-  in->tableList = ObitRef(newObitTableList(in->name));
-  in->myIO->tableList = (Obit*)ObitUnref(in->myIO->tableList);
-  in->myIO->tableList = (Obit*)ObitRef(in->tableList);
+  /*in->tableList = ObitUnref(in->tableList);
+    in->tableList = ObitRef(newObitTableList(in->name));*/
+  if (in->myIO) in->myIO->tableList = (Obit*)in->tableList; /* Copy of reference */
 
   in->myIO->access = access; /* save access type */
 
@@ -2949,10 +2950,11 @@ void ObitUVClear (gpointer inn)
   /* delete this class members */
   in->thread    = ObitThreadUnref(in->thread);
   in->info      = ObitInfoListUnref(in->info);
-  in->myIO      = ObitUnref(in->myIO);
   in->myDesc    = ObitUVDescUnref(in->myDesc);
   in->mySel     = ObitUVSelUnref(in->mySel);
-  in->tableList = ObitUnref(in->tableList);
+  in->tableList = ObitUnref(in->tableList);  
+  if (in->myIO) in->myIO->tableList = (Obit*)in->tableList;
+  in->myIO      = ObitUnref(in->myIO);
   if (in->buffer) ObitIOFreeBuffer(in->buffer); 
   if (in->multiBuf) g_free(in->multiBuf);
   if ((in->nParallel>0) && (in->multiBufIO)) {
@@ -3656,7 +3658,7 @@ static ObitIOCode CopyTablesSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 		    "AIPS AN","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS CQ",
 		    "AIPS WX","AIPS AT","AIPS NI","AIPS BP","AIPS OF",
-		    "AIPS PS","AIPS PD","AIPS SY","AIPS PT",
+		    "AIPS PS","AIPS PD","AIPS SY","AIPS PT","AIPS OT",
 		    "AIPS HI","AIPS PL","AIPS SL", 
 		    NULL};
   gchar *PDTable[] = {"AIPS PD", NULL};

@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2017                                          */
+/*;  Copyright (C) 2003-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -619,6 +619,7 @@ ObitImage* ObitImageCopy (ObitImage *in, ObitImage *out, ObitErr *err)
     /* Output will initially have no associated tables */
     out->tableList = ObitTableListUnref(out->tableList);
     out->tableList = newObitTableList(out->name);
+    if (out->myIO) out->myIO->tableList = (Obit*)out->tableList;
     /* don't copy ObitThread  */
 }
 
@@ -762,7 +763,8 @@ void ObitImageClone  (ObitImage *in, ObitImage *out, ObitErr *err)
   /* Output will initially have no associated tables */
   out->tableList = ObitTableListUnref(out->tableList);
   out->tableList = newObitTableList(out->name);
-  /* don't copy ObitThread  */
+  if (out->myIO) out->myIO->tableList = (Obit*)out->tableList;
+ /* don't copy ObitThread  */
 
   /* Open to fully instantiate input and see if it's OK */
   iretCode = ObitImageOpen (in, OBIT_IO_ReadOnly, err);
@@ -1069,9 +1071,8 @@ ObitIOCode ObitImageOpen (ObitImage *in, ObitIOAccess access,
 
   /* Save info is actually doing IO (not Mem_only) */
   if (ObitIOIsA(in->myIO)) {
-    /* Add reference to tableList */
-    in->myIO->tableList = (Obit*)ObitUnref(in->myIO->tableList);
-    in->myIO->tableList = (Obit*)ObitRef(in->tableList);
+    /* Add copy of reference to tableList */
+    if (in->myIO) in->myIO->tableList = (Obit*)in->tableList;
     
     in->myIO->access = access; /* save access type */
     
@@ -1752,13 +1753,10 @@ void ObitImageSetSelect (ObitImage *in, ObitIOSize IOBy,
 {
    gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
    olong i;
-   olong tblc[IM_MAXDIM] = {1,1,1,1,1,1,1};
-   olong ttrc[IM_MAXDIM] = {0,0,0,0,0,0,0};
    gchar *routine = "ObitImageSetSelect";
  
   /*  Open image ReadOnly to get proper descriptor */
   dim[0] = IM_MAXDIM;
-  for (i=0; i<IM_MAXDIM; i++) {tblc[i] = 1; ttrc[i] = 0;}
   ObitInfoListPut (in->info, "BLC", OBIT_long, dim, blc, err); 
   ObitInfoListPut (in->info, "TRC", OBIT_long, dim, trc, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
@@ -2123,6 +2121,7 @@ void ObitImageClear (gpointer inn)
 
   /* delete this class members */
   in->tableList = ObitUnref(in->tableList);
+  if (in->myIO) in->myIO->tableList = (Obit*)in->tableList;
   in->thread    = ObitThreadUnref(in->thread);
   in->info      = ObitInfoListUnref(in->info);
   in->myIO      = ObitUnref(in->myIO);

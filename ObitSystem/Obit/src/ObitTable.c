@@ -427,8 +427,9 @@ ObitTable* ObitTableClone  (ObitTable *in, ObitTable *out)
   /* Create if it doesn't exist */
   oldExist = out!=NULL;
   if (!oldExist) {
-    /* derive object name */
-    outName = g_strconcat ("Clone: ",in->name,NULL);
+    /* derive object name - don't repeat "Clone" */
+    if (strncmp("Clone", in->name, 5)) outName = g_strconcat ("Clone: ",in->name,NULL);
+    else                               outName = g_strconcat (in->name,NULL);
     out = newObitTable(outName);
     if (outName) g_free(outName); outName = NULL;
   }
@@ -458,7 +459,10 @@ ObitTable* ObitTableClone  (ObitTable *in, ObitTable *out)
    if (out->tabType) g_free(out->tabType); out->tabType = NULL;
    if (in->tabType) out->tabType = g_strdup(in->tabType);
 
-  return out;
+   /* Secret reference to host */
+   out->myHost = in->myHost;
+
+   return out;
 } /* end ObitTableClone */
 
 /**

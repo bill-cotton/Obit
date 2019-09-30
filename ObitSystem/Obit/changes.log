@@ -4409,3 +4409,30 @@ Obit/src/ObitDConCleanVis.c, bit/src/ObitDConClean.c:
 ObitTableList.c:
    Put: make copy of structure rather than just referencing.
 23 Sep 2019 svn 606
+
+Summary: Bug fixes
+Obit/src/ObitUV.c:
+    Open: Don't delete input tableList
+          Just copy reference for IO tableList
+    CopyTablesSelect: exclude "AIPS OT"
+Obit/src/ObitTableList.c:
+    Put: correct rebuilding list
+Obit/src/ObitUVUtil.c:
+    various, add "AIPS OT" to exclude list.
+Obit/src/ObitTable.c:
+   Clone: don't replicate "Clone" in output name, copy myHost
+Obit/src/ObitData.c:
+   newObitDataTable: better table handling
+Obit/tasks/SYGain.c
+   various: trap tableList problems
+Obit/src/ObitSwPower.c:
+   InitSubarray: set table parameters
+Obit/src/ObitIO.c Obit/src/ObitIOImageAIPS.c Obit/src/ObitIOImageFITS.c 
+Obit/src/ObitIOUVAIPS.c Obit/src/ObitIOUVFITS.c Obit/src/ObitImage.c:
+    Don't unreference I/O tableList - now just a copy of the main tableList
+Obit/src/ObitUVCal.c:
+    Shutdown: NULL table pointers to avoid multiple unreferences
+Obit/src/ObitSDMData.c:
+    various: trest schema version 4 the same as 3
+30 Sep 2019 svn 607
+

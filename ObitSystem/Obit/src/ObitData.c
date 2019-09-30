@@ -516,7 +516,6 @@ newObitDataTable (ObitData *in, ObitIOAccess access,
   ObitTable *out=NULL;
   ObitIOType FileType;
   gboolean doClose, isImage;
-  ObitIOCode retCode;
   gchar *routine = "newObitDataTable";
 
   /* error check */
@@ -525,6 +524,10 @@ newObitDataTable (ObitData *in, ObitIOAccess access,
   g_assert (ObitIsA((Obit*)in, &myClassInfo));
   g_assert(tabType!=NULL);
   g_assert(tabVer!=NULL);
+
+  /* Check table list */
+  ObitTableListCheck(in->tableList, err);
+  if (err->error) Obit_traceback_val (err, routine, in->name, out);
 
   /* Trap Generic ObitData */
   if (ObitGenericData(in)) {
@@ -538,8 +541,6 @@ newObitDataTable (ObitData *in, ObitIOAccess access,
 		     "%s: unknown file type %d for %s", 
 		     routine, FileType, in->name);
     }
-    if (err->error) retCode = OBIT_IO_ReadErr;
-    else retCode = OBIT_IO_OK;
     if (err->error) Obit_traceback_val (err, routine, in->name, out);
     /* end Generic ObitData */
 
@@ -550,9 +551,8 @@ newObitDataTable (ObitData *in, ObitIOAccess access,
       ObitDataSetupIO (in, err);
       if (err->error) Obit_traceback_val (err, routine, in->name, NULL);
       
-      /* add table list reference */
-      in->myIO->tableList = (Obit*)ObitUnref(in->myIO->tableList);
-      in->myIO->tableList = (Obit*)ObitRef(in->tableList);
+      /* add copy of table list reference */
+      if (in->myIO) in->myIO->tableList = (Obit*)in->tableList;
     }
     
     /* details depend on underlying file type,
@@ -572,10 +572,15 @@ newObitDataTable (ObitData *in, ObitIOAccess access,
   /* Is this an image? */
   isImage = ObitImageIsA(in);
 
+  /* Check table list */
+  ObitTableListCheck(in->tableList, err);
+  if (err->error) Obit_traceback_val (err, routine, in->name, out);
+
   /* set Status unless readonly or not active */
   if (access!=OBIT_IO_ReadOnly) {
     /* Open if not */
-    if (in->myStatus==OBIT_Inactive) {
+    /* DEBUGif (in->myStatus==OBIT_Inactive) {*/
+    if (in->myIO==NULL) {
       ObitErrLog(err); /* Show any pending messages as they may get lost */
       doClose = TRUE;
       /* Don't need to assign image buffer here */
@@ -711,7 +716,6 @@ newObitDataHistory (ObitData *in, ObitIOAccess access, ObitErr *err)
   olong ver;
   gchar *name;
   ObitIOStatus myStatus;
-  ObitIOCode retCode;
   gchar *routine = "newObitDataHistory";
 
   /* error check */
@@ -730,8 +734,8 @@ newObitDataHistory (ObitData *in, ObitIOAccess access, ObitErr *err)
   if ((access==OBIT_IO_WriteOnly) && (out->myIO==NULL)) {
 
     /* Open and close to fully instantiate */
-    retCode =  ObitHistoryOpen (out, access, err);
-    retCode =  ObitHistoryClose (out, err);
+    ObitHistoryOpen (out, access, err);
+    ObitHistoryClose (out, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, NULL);
   }
 
@@ -858,16 +862,14 @@ ObitIOCode ObitDataCopyTables (ObitData *in, ObitData *out, gchar **exclude,
       outtable = ObitTableCopy (intable, outtable, err);
       if (err ->error) goto cleanup;
       
+      /* cleanup */
+    cleanup: 
+      intable  = ObitTableUnref (intable);
+      outtable = ObitTableUnref (outtable);    
+      if (tabType) g_free(tabType);
+      if (err ->error) Obit_traceback_val (err, routine, in->name, retCode);
+      if (out->myStatus != OBIT_Inactive) out->myStatus = OBIT_Modified;
     } /* end of copy tables section */
-      
-    /* cleanup */
-  cleanup: 
-    if (tabType) g_free(tabType);
-    intable  = ObitTableUnref (intable);
-    outtable = ObitTableUnref (outtable);    
-    if (err ->error) Obit_traceback_val (err, routine, in->name, retCode);
-    if (out->myStatus != OBIT_Inactive) out->myStatus = OBIT_Modified;
-
   } /* end loop over tables on input */
   
   return OBIT_IO_OK;
@@ -1566,8 +1568,9 @@ void ObitDataClear (gpointer inn)
   /* delete this class members */
   in->thread    = ObitThreadUnref(in->thread);
   in->info      = ObitInfoListUnref(in->info);
+  in->tableList = ObitUnref(in->tableList); 
+  if (in->myIO) in->myIO->tableList = (Obit*)in->tableList;
   in->myIO      = ObitUnref(in->myIO);
-  in->tableList = ObitUnref(in->tableList);
   
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

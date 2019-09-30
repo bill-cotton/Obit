@@ -1142,7 +1142,7 @@ void ObitIOClear (gpointer inn)
   if (in->myCal)  in->myCal  = ObitUVCalUnref((ObitUVCal*)in->myCal);
   if (in->myDesc) in->myDesc = ObitUVDescUnref(in->myDesc);
   if (in->mySel)  in->mySel  = ObitUVSelUnref(in->mySel);
-  if (in->tableList) in->tableList = ObitUnref(in->tableList);
+  /*if (in->tableList) in->tableList = ObitUnref(in->tableList); just a copy */
   
  /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

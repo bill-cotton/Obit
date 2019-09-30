@@ -812,6 +812,9 @@ static void InitSubarray (ObitSwPower *in, olong SubA, ObitErr *err)
   in->followRowNo = g_malloc0(in->numAnt*sizeof(olong));
   in->priorRow    = g_malloc0(in->numAnt*sizeof(ObitTableSYRow*));
   in->followRow   = g_malloc0(in->numAnt*sizeof(ObitTableSYRow*));
+  in->SYTable->nIF  = MAX (in->SYTable->nIF,  in->numIF);
+  in->SYTable->nPol = MAX (in->SYTable->nPol, in->numPoln);
+  in->SYTable->nAnt = MAX (in->SYTable->nAnt, in->numAnt);
   for (i=0; i<in->numAnt; i++) {
     in->priorRow[i]  = MakeSYRow(in->SYTable);
     in->followRow[i] = MakeSYRow(in->SYTable);

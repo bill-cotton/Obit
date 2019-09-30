@@ -39,7 +39,7 @@ X    SysPower.xml
 X    Weather.xml
  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2017                                          */
+/*;  Copyright (C) 2010-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -4153,6 +4153,8 @@ static ASDMMainTable* ParseASDMMainTable(ObitSDMData *me,
 	out->rows[irow]->dataSize = ASDMparse_int (line, maxLine, prior, &next);
       else if (me->schemaVersion==3) 
 	out->rows[irow]->dataSize = ASDMparse_int64 (line, maxLine, prior, &next);
+      else if (me->schemaVersion==4) 
+	out->rows[irow]->dataSize = ASDMparse_int64 (line, maxLine, prior, &next);
       else g_error("Unsupported schemaVersion %d", me->schemaVersion);
       continue;
     }
@@ -6867,6 +6869,9 @@ ParseASDMExecBlockTable(ObitSDMData *me,
 	out->rows[irow]->observingLog[0] = ASDMparse_str (line, maxLine, prior, &next);
 	Strip(out->rows[irow]->observingLog[0]);
       } else if (me->schemaVersion==3) {
+	out->rows[irow]->observingLog = ASDMparse_strarray (line, maxLine, prior, &next);
+	Strip(out->rows[irow]->observingLog[0]);
+      } else if (me->schemaVersion==4) {
 	out->rows[irow]->observingLog = ASDMparse_strarray (line, maxLine, prior, &next);
 	Strip(out->rows[irow]->observingLog[0]);
       } else g_error("Unsupported schemaVersion %d", me->schemaVersion);

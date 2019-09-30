@@ -483,18 +483,18 @@ void ObitUVCalShutdown (ObitUVCal *in, ObitErr *err)
   if (in->doBP)   ObitUVCalBandpassShutdown(in, err);
   if (in->doPol)  ObitUVCalPolarizationShutdown(in, err);
 
-  /* Unref tables */
-  in->SUTable = ObitTableUnref((ObitTable*)in->SUTable);
-  in->BLTable = ObitTableUnref((ObitTable*)in->BLTable);
-  in->BPTable = ObitTableUnref((ObitTable*)in->BPTable);
-  in->FGTable = ObitTableUnref((ObitTable*)in->FGTable);
-  in->CLTable = ObitTableUnref((ObitTable*)in->CLTable);
-  in->SNTable = ObitTableUnref((ObitTable*)in->SNTable);
-  in->CQTable = ObitTableUnref((ObitTable*)in->CQTable);
-  in->PDTable = ObitTableUnref((ObitTable*)in->PDTable);
+  /* Unref tables - NULL pointers to avoid multiple unref */
+  in->SUTable = ObitTableUnref((ObitTable*)in->SUTable); in->SUTable=NULL;
+  in->BLTable = ObitTableUnref((ObitTable*)in->BLTable); in->BLTable=NULL;
+  in->BPTable = ObitTableUnref((ObitTable*)in->BPTable); in->BPTable=NULL;
+  in->FGTable = ObitTableUnref((ObitTable*)in->FGTable); in->FGTable=NULL;
+  in->CLTable = ObitTableUnref((ObitTable*)in->CLTable); in->CLTable=NULL;
+  in->SNTable = ObitTableUnref((ObitTable*)in->SNTable); in->SNTable=NULL;
+  in->CQTable = ObitTableUnref((ObitTable*)in->CQTable); in->CQTable=NULL;
+  in->PDTable = ObitTableUnref((ObitTable*)in->PDTable); in->PDTable=NULL;
   if (in->ANTables) {
     for (i=0; i<in->numANTable; i++) {
-      in->ANTables[i] = ObitTableUnref((ObitTable*)in->ANTables[i]);
+      in->ANTables[i] = ObitTableUnref((ObitTable*)in->ANTables[i]); in->ANTables[i]=NULL;
     }
     g_free(in->ANTables); in->ANTables = NULL;
   }
@@ -588,7 +588,6 @@ void ObitUVCalSmooth (ObitUVCal *in, float time, olong ant1, olong ant2,
 {
   ofloat *vis;
   ObitUVDesc *desc;
-  ObitUVSel  *sel;
   olong   i, j, j1, j2, l, ioff, ipol, iif, ifrq, kpol, indx, suprad, inxinc;
   ofloat  s, w, fblank = ObitMagicF();
   
@@ -599,7 +598,6 @@ void ObitUVCalSmooth (ObitUVCal *in, float time, olong ant1, olong ant2,
   
   /* Pointer to visibility data portion of record */
   desc = in->myDesc;
-  sel  = in->mySel;
   vis = &visIn[desc->nrparm];
 
   /* half width of convolution kernal */

@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014-2016                                          */
+/*;  Copyright (C) 2014-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -679,7 +679,6 @@ void SYGainHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
  */
 void SYCopy (ObitInfoList* myInput, ObitUV* inData,  ObitErr* err)
 {
-  ObitIOCode retCode;
   ObitTableSY *inTab=NULL, *outTab=NULL;
   ObitTableSYRow *row=NULL;
   ObitInfoType type;
@@ -689,13 +688,17 @@ void SYCopy (ObitInfoList* myInput, ObitUV* inData,  ObitErr* err)
   gboolean dropIt;
   ofloat tr[2];
   olong  loop, outrow, isub, *SWUse=NULL;
-  gchar  *routine = "SYGainCopy";
+  gchar  *routine = "SYCopy";
   
   /* Error checks */
   g_assert(ObitErrIsA(err));
   if (err->error) return;  /* previous error? */
   g_assert(ObitUVIsA(inData));
- 
+
+  /* Check table list */
+  ObitTableListCheck(inData->tableList, err);
+  if (err->error) Obit_traceback_msg (err, routine, inData->name);
+
   highVer = ObitTableListGetHigh (inData->tableList, "AIPS SY");
   itemp = 0;
   ObitInfoListGetTest(myInput, "SYVer", &type, dim, &itemp);
@@ -721,7 +724,7 @@ void SYCopy (ObitInfoList* myInput, ObitUV* inData,  ObitErr* err)
 			       OBIT_IO_ReadWrite, 0, 0, err);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
   /* Open input table */
-  retCode = ObitTableSYOpen (inTab, OBIT_IO_ReadOnly, err);
+  ObitTableSYOpen (inTab, OBIT_IO_ReadOnly, err);
   if (err->error) Obit_traceback_msg (err, routine, inTab->name);
 
   outTab = newObitTableSYValue (inData->name, (ObitData*)inData, &SYOut, 
@@ -734,7 +737,7 @@ void SYCopy (ObitInfoList* myInput, ObitUV* inData,  ObitErr* err)
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
   /* Open output table */
-  retCode = ObitTableSYOpen (outTab, OBIT_IO_ReadWrite, err);
+  ObitTableSYOpen (outTab, OBIT_IO_ReadWrite, err);
   if (err->error) Obit_traceback_msg (err, routine, outTab->name);
   outTab->nAnt = inTab->nAnt;  /* Save number of antennas */
   ((ObitTableDesc*)outTab->myIO->myDesc)->sort[0] = 
@@ -773,7 +776,7 @@ void SYCopy (ObitInfoList* myInput, ObitUV* inData,  ObitErr* err)
   /* Loop through table */
   for (loop=1; loop<=inTab->myDesc->nrow; loop++) { /* loop 20 */
 
-    retCode = ObitTableSYReadRow (inTab, loop, row, err);
+    ObitTableSYReadRow (inTab, loop, row, err);
     if (err->error) Obit_traceback_msg (err, routine, outTab->name);
     if (row->status<0) continue;  /* Skip deselected records */
 
@@ -806,14 +809,14 @@ void SYCopy (ObitInfoList* myInput, ObitUV* inData,  ObitErr* err)
 
     /* Write record to output */
     outrow = -1;
-    retCode = ObitTableSYWriteRow (outTab, outrow, row, err);
+    ObitTableSYWriteRow (outTab, outrow, row, err);
     if (err->error) Obit_traceback_msg (err, routine, outTab->name);
   } /* End loop over table */
 
   /* Close tables */
-  retCode = ObitTableSYClose (inTab, err);
+  ObitTableSYClose (inTab, err);
   if (err->error) Obit_traceback_msg (err, routine, inTab->name);
-  retCode = ObitTableSYClose (outTab, err);
+  ObitTableSYClose (outTab, err);
   if (err->error) Obit_traceback_msg (err, routine, outTab->name);
   row = ObitTableSYRowUnref (row);  /* Cleanup */
 } /* end SYCopy */
@@ -1071,7 +1074,7 @@ void SYGainSmooth (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   olong SYver, highVer, nwork, nThreads=1;
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong itemp, numSub, iSub, subA, numif, numpol, numant, iif, mxtime, ntmp;
+  olong itemp, numSub, iSub, subA, numif, iif, mxtime, ntmp;
   gchar smoFunc[5], smoType[5]="DIF ";
   ofloat alpha=0.5, smoParm[5], *work1=NULL, *work2=NULL;
   ObitThread *thread=NULL;
@@ -1109,8 +1112,6 @@ void SYGainSmooth (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
 
   /* Get descriptive info */
   numif  = SYTable->nIF;
-  numpol = SYTable->nPol;
-  numant = SYTable->nAnt;
 
    /* Sort to time-antenna  order */
   ObitTableUtilSort2f ((ObitTable*)SYTable,"TIME  " , 1, FALSE, "ANTENNA", 
@@ -1647,12 +1648,11 @@ SYSmooth (ObitTableSY *SYTab, gchar* smoFunc, gchar* smoType, ofloat alpha,
 	  olong nThreads, MednFuncArg** args, ObitErr* err) 
 {
   olong   loopa, numtim, ant, numrec, nleft, isyrno=0, itime, 
-    n1good, n2good, i, numif, numpol, numant;
+    n1good, n2good, i, numpol, numant;
   olong loopr, fstrec, save;
-  ofloat    stdif=0.0, stsum=0.0, stgain, weight, fblank =  ObitMagicF();
+  ofloat    stdif=0.0, stsum=0.0, weight, fblank =  ObitMagicF();
   gboolean  need2, dodif, dosum=FALSE, dogain=FALSE;
   odouble   timoff=0.0;
-  ObitIOCode retCode;
   ObitTableSYRow *row=NULL;
   gchar *routine = "SYSmooth";
   
@@ -1665,7 +1665,6 @@ SYSmooth (ObitTableSY *SYTab, gchar* smoFunc, gchar* smoType, ofloat alpha,
   if (numrec <= 0) return;   /* bail if nothing */
   
   /* Get descriptive info */
-  numif  = SYTab->nIF;
   numpol = SYTab->nPol;
   numant = SYTab->nAnt;
   
@@ -1680,8 +1679,6 @@ SYSmooth (ObitTableSY *SYTab, gchar* smoFunc, gchar* smoType, ofloat alpha,
     dogain  = FALSE;
     stdif   = smoParm[0];
     stsum   = 0.0;
-    stgain  = 0.0;
-
     /* All? */
   } else if (!strncmp(smoType, "ALL ",4)) {
     dodif   = TRUE;
@@ -1689,7 +1686,6 @@ SYSmooth (ObitTableSY *SYTab, gchar* smoFunc, gchar* smoType, ofloat alpha,
     dogain  = TRUE;
     stdif   = smoParm[0];
     stsum   = smoParm[1];
-    stgain  = smoParm[2];
   }
 
   /* Create Row */
@@ -1709,7 +1705,7 @@ SYSmooth (ObitTableSY *SYTab, gchar* smoFunc, gchar* smoType, ofloat alpha,
     /* Loop in time, reading */
     for (loopr=1; loopr<=nleft; loopr++) { /* loop 100 */
       isyrno = fstrec + loopr;
-      retCode = ObitTableSYReadRow (SYTab, isyrno, row, err);
+      ObitTableSYReadRow (SYTab, isyrno, row, err);
       if (err->error) Obit_traceback_msg (err, routine, SYTab->name);
       if (row->status<0) continue;  /* Skip deselected record */
       
@@ -1841,7 +1837,7 @@ SYSmooth (ObitTableSY *SYTab, gchar* smoFunc, gchar* smoType, ofloat alpha,
     /* Replace with smoothed values */
     for (itime=0; itime<numtim; itime++) { /* loop 200 */
       isyrno = (olong)(work1[9*nxt+itime]+0.5);
-      retCode = ObitTableSYReadRow (SYTab, isyrno, row, err);
+      ObitTableSYReadRow (SYTab, isyrno, row, err);
       if (err->error) Obit_traceback_msg (err, routine, SYTab->name);
       if (row->status<0) continue;  /* Skip deselected record */
       
@@ -1872,7 +1868,7 @@ SYSmooth (ObitTableSY *SYTab, gchar* smoFunc, gchar* smoType, ofloat alpha,
       }
       
       /* Rewrite record */
-      retCode = ObitTableSYWriteRow (SYTab, isyrno, row, err);
+      ObitTableSYWriteRow (SYTab, isyrno, row, err);
       if (err->error) Obit_traceback_msg (err, routine, SYTab->name);
     } /* end loop rewriting smoothed solutions L200: */;
     /* First SY number of next antenna */

@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2017                                          */
+/*;  Copyright (C) 2003-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -312,7 +312,7 @@ void ObitIOImageFITSZap (ObitIOImageFITS *in, ObitErr *err)
   }
 
   /* FITS tables are in the same file - delete table list */
-  in->tableList = ObitTableListUnref(in->tableList);
+  /*in->tableList = ObitTableListUnref(in->tableList); now just a copy */
 
   return;
 } /* end ObitIOImageFITSZap */
