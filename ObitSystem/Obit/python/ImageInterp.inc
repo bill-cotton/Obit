@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageInterp type                       */
 /*                                                                    */
-/*;  Copyright (C) 2009                                               */
+/*;  Copyright (C) 2009,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -33,16 +33,22 @@
 #include "ObitImage.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitImageInterp *me;
+} ImageInterp;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitImageInterp *me;
+} ImageInterp;
 
 %inline %{
 extern ObitImageInterp* newImageInterp (char* name) {
   return newObitImageInterp (name);
 } // end  newImageInterp
-
-extern ObitImageInterp* ImageInterpCopy  (ObitImageInterp *in, ObitImageInterp *out, 
-				    ObitErr *err) {
-  return ObitImageInterpCopy (in, out, err);
-} // end  ImageInterpCopy
 
 extern ObitImageInterp* ImageInterpUnref (ObitImageInterp* in) {
   if (!ObitImageInterpIsA(in)) return NULL;
@@ -54,12 +60,64 @@ extern ObitImageInterp*  ImageInterpRef (ObitImageInterp* in) {
 }
 
 extern ObitImageInterp* ImageInterpCreate (char *name, ObitImage *image, 
-				     int hwidth, ObitErr *err) {
+				     long hwidth, ObitErr *err) {
   return ObitImageInterpCreate((gchar*)name, image, (olong)hwidth, err);
 } // end ImageInterpCreate
 
+void CreateImageInterp(PyObject *self, char* name, ObitImage *image, 
+                       long hwidth, ObitErr *err) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ImageInterp, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateImageInterp: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((ImageInterp*)ptr)->me = ImageInterpCreate(name, image, hwidth, err);
+   else  ((ImageInterp*)ptr)->me = NULL;
+   return;
+ } // end CreateImageInterp
+
+void DeleteImageInterp(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ImageInterp, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteImageInterp: could not recover c struct");
+	return;
+   }
+   ((ImageInterp*)ptr)->me = ObitImageInterpUnref(((ImageInterp*)ptr)->me);
+}// end DeleteImageInterp
+
+ObitImageInterp* ImageInterp_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ImageInterp, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"ImageInterp_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((ImageInterp*)ptr)->me;
+}  // end ImageInterp_Get_me
+
+void ImageInterp_Set_me(PyObject *self, ObitImageInterp *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ImageInterp, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"ImageInterp_Set_me: could not recover c struct");
+	return;
+   }
+   ((ImageInterp*)ptr)->me =  ObitImageInterpRef(me);
+}  // end ImageInterp_Set_me
+
+extern ObitImageInterp* ImageInterpCopy  (ObitImageInterp *in, ObitImageInterp *out, 
+				    ObitErr *err) {
+  return ObitImageInterpCopy (in, out, err);
+} // end  ImageInterpCopy
+
 extern float ImageInterpValue (ObitImageInterp* in, double ra, double dec,
-		            float parAng, int plane, ObitErr *err) {
+		            float parAng, long plane, ObitErr *err) {
   return ObitImageInterpValue(in, (odouble)ra, (odouble)dec, (ofloat)parAng, (olong)plane, err);
 } // end ImageInterpValue
 
@@ -75,38 +133,9 @@ extern char* ImageInterpGetName (ObitImageInterp* in) {
   }
 }
 
-extern int ImageInterpIsA (ObitImageInterp* in) {
-  return ObitImageInterpIsA(in);
+extern long ImageInterpIsA (ObitImageInterp* in) {
+  return (long)ObitImageInterpIsA(in);
 }
 
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitImageInterp *me;
-} ImageInterp;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitImageInterp *me;
-} ImageInterp;
-
-%addmethods ImageInterp { 
-  ImageInterp(char* name, ObitImage *image, int hwidth, ObitErr *err) {
-     ImageInterp *out;
-     out = (ImageInterp *) malloc(sizeof(ImageInterp));
-     if (strcmp(name, "None")) out->me = ImageInterpCreate((gchar*)name, image, hwidth, err);
-     else out->me = NULL;
-     return out;
-   }
-  ~ImageInterp() {
-   if (!self) return;  // Not defined
-   if (self && self->me && self->me->ReferenceCount>0) {
-      self->me = ImageInterpUnref(self->me);
-      free(self);
-   }
-  }
-};
 

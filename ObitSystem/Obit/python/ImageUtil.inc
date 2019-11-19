@@ -40,43 +40,49 @@
 
 %inline %{
 ObitImage* ImageUtilCreateImage (ObitUV *inUV, long fieldNo,
-			       int doBeam, ObitErr *err) {
+			       long doBeam, ObitErr *err) {
   return ObitImageUtilCreateImage (inUV, fieldNo, doBeam, err);
 } // end ImageUtilCreateImag
 
 void ImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage, 
-			     long channel, int doBeam, 
-			     int doWeight, ObitErr *err) {
+			     long channel, long doBeam, 
+			     long doWeight, ObitErr *err) {
   ObitImageUtilMakeImage (inUV, outImage, channel, doBeam, doWeight, err);
 } // end ImageUtilMakeImag
 
 void 
 ImageUtilInterpolateImage (ObitImage *inImage, ObitImage *outImage, 
-			       int *inPlane, int *outPlane,
+			       long *inPlane, long *outPlane,
 			       long hwidth, ObitErr *err)
 {
-  ObitImageUtilInterpolateImage (inImage, outImage, inPlane, outPlane,
+  olong i, linPlane[5], loutPlane[5];
+  for (i=0; i<5; i++) {linPlane[i] = inPlane[i]; loutPlane[i] = outPlane[i];}
+  ObitImageUtilInterpolateImage (inImage, outImage, linPlane, loutPlane,
 			         hwidth, err);
 } // end ImageUtilInterpolateImage
 
 void 
 ImageUtilInterpolateImageXY (ObitImage *inImage, ObitImage *outImage, 
 			     ObitImage *XPix, ObitImage *YPix,
-			     int *inPlane, int *outPlane,
+			     long *inPlane, long *outPlane,
 			     long hwidth, ObitErr *err)
 {
+  olong i, linPlane[5], loutPlane[5];
+  for (i=0; i<5; i++) {linPlane[i] = inPlane[i]; loutPlane[i] = outPlane[i];}
   ObitImageUtilInterpolateImageXY (inImage, outImage, XPix, YPix,
-                                   inPlane, outPlane, hwidth, err);
+                                   linPlane, loutPlane, hwidth, err);
 } // end ImageUtilInterpolateImageXY
 
 void 
 GPUImageInterpolateImageXY (ObitGPUFInterpolate *finterp,
                             ObitImage *inImage, ObitImage *outImage, 
-			    int *inPlane, int *outPlane,
+			    long *inPlane, long *outPlane,
 			    ObitErr *err)
 {
+  olong i, linPlane[5], loutPlane[5];
+  for (i=0; i<5; i++) {linPlane[i] = inPlane[i]; loutPlane[i] = outPlane[i];}
   ObitGPUImageInterpolateImageXY (finterp, inImage, outImage, 
-                                   inPlane, outPlane, err);
+                                   linPlane, loutPlane, err);
 } // end GPUImageInterpolateImageXY
 
 void 
@@ -88,41 +94,49 @@ ImageUtilGetXYPixels (ObitImage *inImage, ObitImage *outImage,
 
 void 
 ImageUtilPBApply (ObitImage *inImage, ObitImage *pntImage, ObitImage *outImage, 
-                      int *inPlane, int *outPlane, float antSize, ObitErr *err)
+                      long *inPlane, long *outPlane, float antSize, ObitErr *err)
 {
-  ObitImageUtilPBApply (inImage, pntImage, outImage, inPlane, outPlane, antSize, err);
+  olong i, linPlane[5], loutPlane[5];
+  for (i=0; i<5; i++) {linPlane[i] = inPlane[i]; loutPlane[i] = outPlane[i];}
+  ObitImageUtilPBApply (inImage, pntImage, outImage, linPlane, loutPlane, antSize, err);
 } // end ImageUtilPBApply
 
 void 
 ImageUtilPBImage (ObitImage *pntImage, ObitImage *outImage, 
-                  int *outPlane, float antSize, float minGain, ObitErr *err)
+                  long *outPlane, float antSize, float minGain, ObitErr *err)
 {
-  ObitImageUtilPBImage (pntImage, outImage, outPlane, antSize, minGain, err);
+  olong i, loutPlane[5];
+  for (i=0; i<5; i++) {loutPlane[i] = outPlane[i];}
+  ObitImageUtilPBImage (pntImage, outImage, loutPlane, antSize, minGain, err);
 } // end ImageUtilPBImage
 
 void 
 ImageUtilOTFBeam (ObitImage *pntImage, ObitImage *outImage, 
-                  int *outPlane, float antSize, float minGain, ObitErr *err)
+                  long *outPlane, float antSize, float minGain, ObitErr *err)
 {
-  ObitImageUtilOTFBeam (pntImage, outImage, outPlane, antSize, minGain, err);
+  olong i, loutPlane[5];
+  for (i=0; i<5; i++) {loutPlane[i] = outPlane[i];}
+  ObitImageUtilOTFBeam (pntImage, outImage, loutPlane, antSize, minGain, err);
 } // end ImageUtilPBImage
 
 void 
 ImageUtilPBCorr (ObitImage *inImage, ObitImage *pntImage, ObitImage *outImage, 
-                      int *inPlane, int *outPlane, float antSize, ObitErr *err)
+                      long *inPlane, long *outPlane, float antSize, ObitErr *err)
 {
-  ObitImageUtilPBCorr (inImage, pntImage, outImage, inPlane, outPlane, antSize, err);
+  olong i, linPlane[5], loutPlane[5];
+  for (i=0; i<5; i++) {linPlane[i] = inPlane[i]; loutPlane[i] = outPlane[i];}
+  ObitImageUtilPBCorr (inImage, pntImage, outImage, linPlane, loutPlane, antSize, err);
 } // end ImageUtilPBCorr
 
 ObitImage * 
 ImageUtilQuanFITS(ObitImage *inImage, char *fileName, 
-		  int disk, ObitErr *err)
+		  long disk, ObitErr *err)
 {
   return ObitImageUtilQuanFITS(inImage, (gchar*)fileName, (olong)disk, err);
 } // end ImageUtilPBCorr
 
 void 
-ImageUtilCCScale (ObitTable *inCCTab, int startComp, int endComp, double scale, 
+ImageUtilCCScale (ObitTable *inCCTab, long startComp, long endComp, double scale, 
 	          ObitErr *err)
 {
   olong lstartComp, lendComp;
@@ -153,8 +167,8 @@ ImageUtilUVFilter (ObitImage *inImage, ObitImage *outImage, double radius,
 
 ObitImage*
 ImageUtilT2Spec (ObitImage *inImage, ObitImage *outImage, 
-	          int nTerm, int inCCVer, int outCCVer,
-	          int startComp, int endComp, ObitErr *err) 
+	          long nTerm, long inCCVer, long outCCVer,
+	          long startComp, long endComp, ObitErr *err) 
 {
   olong linCCVer=(olong)inCCVer, loutCCVer=(olong)outCCVer;
   ObitImageUtilT2Spec (inImage, &outImage, 

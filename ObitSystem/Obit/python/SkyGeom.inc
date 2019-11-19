@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description celestial geometry utilities               */
 /*                                                                    */
-/*;  Copyright (C) 2007-2017                                          */
+/*;  Copyright (C) 2007-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -90,7 +90,8 @@ extern PyObject* SkyGeomShiftNCP (double ra, double dec, float rotate, double xr
 /** Public: Returns astronomical coordinates given direction cosines, projection */
 void 
 SkyGeomNewPos (char *type, double ra0, double dec0, double l, double m, 
-		   double* outDbl1, double* outDbl2, int* outInt1) {
+		   double* outDbl1, double* outDbl2, long* outLong1) {
+  olong ierr;
   ObitSkyGeomProj Proj = OBIT_SkyGeom_SIN;
   /* Projection type */
   if (!strncmp (type, "-TAN", 4)) Proj = OBIT_SkyGeom_TAN;
@@ -101,21 +102,22 @@ SkyGeomNewPos (char *type, double ra0, double dec0, double l, double m,
   if (!strncmp (type, "-AIT", 4)) Proj = OBIT_SkyGeom_AIT;
   if (!strncmp (type, "-STG", 4)) Proj = OBIT_SkyGeom_STG;
   ObitSkyGeomNewPos (Proj, (odouble)ra0, (odouble)dec0, (odouble)l, (odouble)m, 
-		     outDbl1, outDbl2, outInt1);
+		     outDbl1, outDbl2, &ierr);
+  *outLong1 = (long)ierr;
 }
 
 /** Public: accurate position for pixel coordinates */
-int 
+long 
 SkyGeomWorldPos(float xpix, float ypix, double xref, double yref, 
 		    float xrefpix, float yrefpix, float xinc, float yinc, 
 		    float rot, char *type, double *outDbl1, double *outDbl2) {
-  return ObitSkyGeomWorldPos((ofloat)xpix, (ofloat)ypix, (odouble)xref, (odouble)yref, 
+  return (long)ObitSkyGeomWorldPos((ofloat)xpix, (ofloat)ypix, (odouble)xref, (odouble)yref, 
 		    (ofloat)xrefpix, (ofloat)yrefpix, (ofloat)xinc, (ofloat)yinc, 
 		    (ofloat)rot, (gchar*)type, outDbl1, outDbl2);
 }
 
 /** Public: Position for pixel coordinates from IRAF style CD matrix */
-int 
+long 
 SkyGeomCDpos(float xpix, float ypix, double xref, double yref,
 		 float xrefpix, float yrefpix, float xinc, float yinc, float rot,
 		 float cd1[2], float cd2[2], char *type, double *outDbl1, double *outDbl2) {
@@ -124,23 +126,23 @@ SkyGeomCDpos(float xpix, float ypix, double xref, double yref,
   lcd1[1] = cd1[1];
   lcd2[0] = cd2[0];
   lcd2[1] = cd2[1];
-  return ObitSkyGeomCDpos((ofloat)xpix, (ofloat)ypix, (odouble)xref, (odouble)yref,
+  return (long)ObitSkyGeomCDpos((ofloat)xpix, (ofloat)ypix, (odouble)xref, (odouble)yref,
 		 (ofloat)xrefpix, (ofloat)yrefpix, (ofloat)xinc, (ofloat)yinc, (ofloat)rot,
 		 lcd1, lcd2, (gchar*)type, outDbl1, outDbl2);
 }
 
 /** Public: Pixel coordinates for an RA and Dec*/
-int 
+long 
 SkyGeomXYpix(double xpos, double ypos, double xref, double yref, 
 		 float xrefpix, float yrefpix, float xinc, float yinc, 
 		 float rot, char *type, float *outFlt1, float *outFlt2){
-  return ObitSkyGeomXYpix((odouble)xpos, (odouble)ypos, (odouble)xref, (odouble)yref, 
+  return (long)ObitSkyGeomXYpix((odouble)xpos, (odouble)ypos, (odouble)xref, (odouble)yref, 
 		 (ofloat)xrefpix, (ofloat)yrefpix, (ofloat)xinc, (ofloat)yinc, 
 		 (ofloat)rot, (gchar*)type, outFlt1, outFlt2);
 }
 
 /** Public:pixel coordinates for an RA and Dec from IRAF  style CD matrix. */
-int 
+long 
 SkyGeomCDpix(double xpos, double ypos, double xref, double yref, 
 		 float xrefpix, float yrefpix, float xinc, float yinc, float rot,
 		 float icd1[2], float icd2[2], char *type, 
@@ -150,27 +152,27 @@ SkyGeomCDpix(double xpos, double ypos, double xref, double yref,
   licd1[1] = icd1[1];
   licd2[0] = icd2[0];
   licd2[1] = icd2[1];
-  return ObitSkyGeomCDpix((odouble)xpos, (odouble)ypos, (odouble)xref, (odouble)yref, 
+  return (long)ObitSkyGeomCDpix((odouble)xpos, (odouble)ypos, (odouble)xref, (odouble)yref, 
 		 (ofloat)xrefpix, (ofloat)yrefpix, (ofloat)xinc, (ofloat)yinc, (ofloat)rot,
 		 licd1, licd2, (gchar*)type, outFlt1, outFlt2);
 }
 
 /** Public: Position for pixel coordinates from  offsets from the reference position.*/
-int 
+long 
 SkyGeomWorldPosLM(double dx, double dy, double xref, double yref, 
 		      float xinc, float yinc, float rot, char *type, 
 		      double *outDbl1, double *outDbl2) {
-  return ObitSkyGeomWorldPosLM((odouble)dx, (odouble)dy, (odouble)xref, (odouble)yref, 
+  return (long)ObitSkyGeomWorldPosLM((odouble)dx, (odouble)dy, (odouble)xref, (odouble)yref, 
 		      (ofloat)xinc, (ofloat)yinc, (ofloat)rot, (gchar*)type, 
 		      outDbl1, outDbl2);
 }
 
 /** Public: Coordinate offsets for an RA and Dec   */
-int 
+long
 SkyGeomXYPixLM(double xpos, double ypos, double xref, double yref, 
 		   float xinc, float yinc, float rot, char *type, 
 		   double *outDbl1, double *outDbl2) {
-  return ObitSkyGeomXYPixLM((odouble)xpos, (odouble)ypos, (odouble)xref, (odouble)yref, 
+  return (long)ObitSkyGeomXYPixLM((odouble)xpos, (odouble)ypos, (odouble)xref, (odouble)yref, 
 		   (ofloat)xinc, (ofloat)yinc, (ofloat)rot, (gchar*)type, 
 		    outDbl1, outDbl2);
 }
@@ -209,9 +211,11 @@ void SkyGeomEc2Eq (double *outDbl1, double *outDbl2, float epoch) {
 
 /** Public: Projection to Zernike plane */
 void SkyGeomRADec2Zern (double ra, double dec, float xshift, float yshift, 
-			    float* outFlt1, float* outFlt2, int *outInt1) {
+			    float* outFlt1, float* outFlt2, long *outLong1) {
+			    olong ierr;
   ObitSkyGeomRADec2Zern ((odouble)ra, (odouble)dec, (ofloat)xshift, (ofloat)yshift, 
-			    outFlt1, outFlt2, outInt1);
+			    outFlt1, outFlt2, &ierr);
+  *outLong1 = (long)ierr;
 }
 
 /** Public: Compute VLA beam shape from a fitted polynomial */
@@ -236,10 +240,10 @@ float PBUtilJinc (double Angle, double Freq, float antSize, float pbmin) {
 }
 
 /** Public:  Calculates the relative gain at a reference frequency */
-float PBUtilRelPB (double Angle, int nfreq, double *Freq, float antSize, 
+float PBUtilRelPB (double Angle, long nfreq, double *Freq, float antSize, 
                    float pbmin, double refFreq) {
   ofloat out;
-  out = ObitPBUtilRelPB ((odouble)Angle, (olong)nfreq, (odouble*)Freq, 
+  out = (float)ObitPBUtilRelPB ((odouble)Angle, (olong)nfreq, (odouble*)Freq, 
         (ofloat)antSize, (ofloat)pbmin, (odouble)refFreq);
   return (float)out;
 }

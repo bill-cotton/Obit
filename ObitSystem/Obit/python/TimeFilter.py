@@ -2,7 +2,7 @@
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2008
+#  Copyright (C) 2008,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -29,31 +29,11 @@
 #-----------------------------------------------------------------------
 
 # Python shadow class to ObitTimeFilter class
-import Obit, FFT
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, FFT
 
-class TimeFilterPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.TimeFilterUnref(Obit.TimeFilter_me_get(self.this))
-            # In with the new
-            Obit.TimeFilter_me_set(self.this,value)
-            return
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != TimeFilter:
-            return
-        if name == "me" : 
-            return Obit.TimeFilter_me_get(self.this)
-        raise AttributeError,name
-    def __repr__(self):
-        if self.__class__ != TimeFilter:
-            return
-        return "<C TimeFilter instance> " + Obit.TimeFilterGetName(self.me)
-
-class TimeFilter(TimeFilterPtr):
+class TimeFilter(Obit.TimeFilter):
     """ Python Obit interface to display server
     
     This class is for creating and using the interface to a plot
@@ -61,10 +41,30 @@ class TimeFilter(TimeFilterPtr):
 
     """
     def __init__(self, name, nTime, nSeries):
-        self.this = Obit.new_TimeFilter(name, nTime, nSeries)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_TimeFilter(self.this)
+        super(TimeFilter, self).__init__()
+        Obit.CreateTimeFilter (self.this, name,  nTime, nSeries)
+    def __del__(self, DeleteTimeFilter=_Obit.DeleteTimeFilter):
+        if _Obit!=None:
+            DeleteTimeFilter(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.TimeFilterUnref(Obit.TimeFilter_Get_me(self.this))
+            # In with the new
+            Obit.TimeFilter_Set_me(self.this,value)
+            return
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if not isinstance(self, TimeFilter):
+            return "Bogus dude"+str(self.__class__)
+        if name == "me" : 
+            return Obit.TimeFilter_Get_me(self.this)
+        raise AttributeError(name)
+    def __repr__(self):
+        if not isinstance(self, TimeFilter):
+            return "Bogus dude"+str(self.__class__)
+        return "<C TimeFilter instance> " + Obit.TimeFilterGetName(self.me)
 
 # Define filter types
 LowPass    = 0
@@ -95,8 +95,8 @@ def PTimeFilterResize (filter, nTime):
     ################################################################
     # Checks
     if not PIsA(filter):
-        print "Actually ",filter.__class__
-        raise TypeError,"filter MUST be a Python Obit TimeFilter"
+        print("Actually ",filter.__class__)
+        raise TypeError("filter MUST be a Python Obit TimeFilter")
     n = FFT.PSuggestSize(nTime);  # How many actual points?
     Obit.TimeFilterResize (filter.me, n)
     # end PXYTimeFilter
@@ -118,8 +118,8 @@ def PGridTime (filter, seriesNo, dTime, nTime, times, data):
     ################################################################
     # Checks
     if not PIsA(filter):
-        print "Actually ",filter.__class__
-        raise TypeError,"filter MUST be a Python Obit TimeFilter"
+        print("Actually ",filter.__class__)
+        raise TypeError("filter MUST be a Python Obit TimeFilter")
     Obit.TimeFilterGridTime (filter.me, seriesNo, dTime, nTime, times, data)
     # end PGridTime
 
@@ -136,8 +136,8 @@ def PUngridTime (filter, seriesNo, nTime, times):
     ################################################################
     # Checks
     if not PIsA(filter):
-        print "Actually ",filter.__class__
-        raise TypeError,"filter MUST be a Python Obit TimeFilter"
+        print("Actually ",filter.__class__)
+        raise TypeError("filter MUST be a Python Obit TimeFilter")
     return Obit.TimeFilterUngridTime (filter.me, seriesNo, nTime, times)
     # end PUngridTime
 
@@ -153,8 +153,8 @@ def P2Freq (filter):
     ################################################################
     # Checks
     if not PIsA(filter):
-        print "Actually ",filter.__class__
-        raise TypeError,"filter MUST be a Python Obit TimeFilter"
+        print("Actually ",filter.__class__)
+        raise TypeError("filter MUST be a Python Obit TimeFilter")
     Obit.TimeFilter2Freq (filter.me)
     # end P2Freq
 
@@ -167,8 +167,8 @@ def P2Time (filter):
     ################################################################
     # Checks
     if not PIsA(filter):
-        print "Actually ",filter.__class__
-        raise TypeError,"filter MUST be a Python Obit TimeFilter"
+        print("Actually ",filter.__class__)
+        raise TypeError("filter MUST be a Python Obit TimeFilter")
     Obit.TimeFilter2Time (filter.me)
     # end P2Time
 
@@ -189,8 +189,8 @@ def PFilter (filter, seriesNo, type, freq, err):
     ################################################################
     # Checks
     if not PIsA(filter):
-        print "Actually ",filter.__class__
-        raise TypeError,"filter MUST be a Python Obit TimeFilter"
+        print("Actually ",filter.__class__)
+        raise TypeError("filter MUST be a Python Obit TimeFilter")
     if freq.__class__==list:
         lfreq = freq
     else:
@@ -211,8 +211,8 @@ def PPlotPower (filter, seriesNo, label, err):
     ################################################################
     # Checks
     if not PIsA(filter):
-        print "Actually ",filter.__class__
-        raise TypeError,"filter MUST be a Python Obit TimeFilter"
+        print("Actually ",filter.__class__)
+        raise TypeError("filter MUST be a Python Obit TimeFilter")
     Obit.TimeFilterPlotPower (filter.me, seriesNo, label, err.me)
     # end PPlotPower
 
@@ -228,8 +228,8 @@ def PPlotTime (filter, seriesNo, label, err):
     ################################################################
     # Checks
     if not PIsA(filter):
-        print "Actually ",filter.__class__
-        raise TypeError,"filter MUST be a Python Obit TimeFilter"
+        print("Actually ",filter.__class__)
+        raise TypeError("filter MUST be a Python Obit TimeFilter")
     Obit.TimeFilterPlotTime (filter.me, seriesNo, label, err.me)
     # end PPlotTime
 
@@ -246,7 +246,7 @@ def PGetTime (filter, seriesNo):
     ################################################################
      # Checks
     if not PIsA(filter):
-        raise TypeError,"filter MUST be a Python Obit filter"
+        raise TypeError("filter MUST be a Python Obit filter")
     #
     Obit.TimeFilterGetTime(filter.me, seriesNo)
     # end  PGetTime
@@ -264,7 +264,7 @@ def PGetFreq (filter, seriesNo):
     ################################################################
      # Checks
     if not PIsA(filter):
-        raise TypeError,"filter MUST be a Python Obit filter"
+        raise TypeError("filter MUST be a Python Obit filter")
     #
     return Obit.TimeFilterGetFreq(filter.me, seriesNo)
     # end  PGetFreq
@@ -282,7 +282,7 @@ def PGetPower (filter, seriesNo):
     ################################################################
      # Checks
     if not PIsA(filter):
-        raise TypeError,"filter MUST be a Python Obit filter"
+        raise TypeError("filter MUST be a Python Obit filter")
     #
     return Obit.TimeFilterGetPower(filter.me, seriesNo)
     # end  PGetPower
@@ -300,7 +300,7 @@ def PSetTime (filter, seriesNo, inDict):
     ################################################################
      # Checks
     if not PIsA(filter):
-        raise TypeError,"filter MUST be a Python Obit filter"
+        raise TypeError("filter MUST be a Python Obit filter")
     #
     Obit.TimeFilterGetTime(filter.me, seriesNo, inDict)
     # end  PSetTime
@@ -318,7 +318,7 @@ def PGetFreq (filter, seriesNo):
     ################################################################
      # Checks
     if not PIsA(filter):
-        raise TypeError,"filter MUST be a Python Obit filter"
+        raise TypeError("filter MUST be a Python Obit filter")
     #
     Obit.TimeFilterGetFreq(filter.me, seriesNo)
     # end  PGetFreq
@@ -326,14 +326,14 @@ def PGetFreq (filter, seriesNo):
 def PIsA (filter):
     """ Tells if the input is a Python ObitTimeFilter
 
-    returns true or false (1,0)
-    filter = Python Obit TimeFilter to test
+    returns true Or false
+    Filter = Python Obit TimeFilter to test
     """
     ################################################################
       # Checks
-    if filter.__class__ != TimeFilter:
-        return 0
-    return Obit.TimeFilterIsA(filter.me)
+    if not isinstance(filter, TimeFilter):
+        return False
+    return ObitTimeFilterIsA(filter.me)!=0
     # end PIsA
 
 

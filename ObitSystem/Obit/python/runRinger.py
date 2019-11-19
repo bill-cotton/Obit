@@ -1,6 +1,8 @@
 # routines to run Ringer and enter values in ST tables
 # Should be run from ObitTalk
 
+from __future__ import absolute_import
+from __future__ import print_function
 import Obit, ObitTask, Table, TableSTar
 
 def run (in1, in2, logFile, err, \
@@ -49,7 +51,7 @@ def run (in1, in2, logFile, err, \
         log = open(logFile, "a")
         line = ring.inName+" "+ring.in2Name+" "+str(ring.Center)+" "+str(ring.Radius)+" "+\
                str(ring.Width)+" "+str(ring.Frac)+" "+in1.Desc.Dict["obsdat"]+"\n"
-        print line
+        print(line)
         log.write(line)
         log.close()
     #

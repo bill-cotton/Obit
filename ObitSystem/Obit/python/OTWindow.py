@@ -34,13 +34,14 @@ newMsgWin(tw) create message windiow and execute TaskWindow tw
 #                         520 Edgemont Road
 #                         Charlottesville, VA 22903-2475 USA
 #-----------------------------------------------------------------------
+from __future__ import absolute_import
 class OTWindow:
     def start(self):
         """
         start the GUI thread
         """
-        import  thread
-        thread.start_new_thread(self.run, ())
+        import  six.moves._thread
+        six.moves._thread.start_new_thread(self.run, ())
         
     def run(self):
         """
@@ -60,7 +61,7 @@ class OTWindow:
             self.app.MainLoop()
         except TypeError:
             self.app = None
-        except Exception, e:
+        except Exception as e:
             self.app = None
             #print "DEBUG: oh bugger untrapped exception in OTWindow.run"
             #print e

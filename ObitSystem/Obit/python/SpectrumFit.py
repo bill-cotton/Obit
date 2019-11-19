@@ -13,7 +13,7 @@ with the flux densities at the desired frequencies.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2008-2013
+#  Copyright (C) 2008-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -40,43 +40,17 @@ with the flux densities at the desired frequencies.
 #-----------------------------------------------------------------------
 
 # Obit SpectrumFit
-import Obit, OErr, Image, InfoList
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, OErr, Image, InfoList
 
 # Python shadow class to ObitSpectrumFit class
 
 # class name in C
 myClass = "ObitSpectrumFit"
  
-class SpectrumFitPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.SpectrumFitUnref(Obit.SpectrumFit_me_get(self.this))
-            # In with the new
-            Obit.SpectrumFit_me_set(self.this,value)
-            return
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != SpectrumFit:
-            return
-        if name == "me" : 
-            return Obit.SpectrumFit_me_get(self.this)
-        if name=="List":
-            if not PIsA(self):
-                raise TypeError,"input MUST be a Python Obit SpectrumFit"
-            out    = InfoList.InfoList()
-            out.me = Obit.InfoListUnref(out.me)
-            out.me = Obit.SpectrumFitGetList(self.cast(myClass))
-            return out
-        raise AttributeError,name
-    def __repr__(self):
-        if self.__class__ != SpectrumFit:
-            return
-        return "<C SpectrumFit instance> " + Obit.SpectrumFitGetName(self.me)
-#
-class SpectrumFit(SpectrumFitPtr):
+
+class SpectrumFit(Obit.SpectrumFit):
     """ Python Obit SpectrumFit class
     
     Class for fitting spectra to image pixels
@@ -85,23 +59,37 @@ class SpectrumFit(SpectrumFitPtr):
         List      - used to pass instructions to processing
     """
     def __init__(self, name="None", nterm=2) :
-        self.this = Obit.new_SpectrumFit(name,nterm)
+        super(SpectrumFit, self).__init__()
+        Obit.CreateSpectrumFit (self.this, name, ntern)
         self.myClass = myClass
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_SpectrumFit(self.this)
-    def cast(self, toClass):
-        """ Casts object pointer to specified class
-        
-        self     = object whose cast pointer is desired
-        toClass  = Class string to cast to
-        """
-        ################################################################
-        # Get pointer with type of this class
-        out =  self.me
-        out = out.replace(self.myClass, toClass)
-        return out
-    # end cast
+    def __del__(self, DeleteSpectrumFit=_Obit.DeleteSpectrumFit):
+        if _Obit!=None:
+            DeleteSpectrumFit(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.SpectrumFitUnref(Obit.SpectrumFit_Get_me(self.this))
+            # In with the new
+            Obit.SpectrumFit_Set_me(self.this,value)
+            return
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if not isinstance(self, SpectrumFit):
+            return"Bogus dude"+str(self.__class__)
+        if name == "me" : 
+            return Obit.SpectrumFit_Get_me(self.this)
+        if name=="List":
+            if not PIsA(self):
+                raise TypeError("input MUST be a Python Obit SpectrumFit")
+            out    = InfoList.InfoList()
+            out.me = Obit.SpectrumFitGetList(self.cast(myClass))
+            return out
+        raise AttributeError(name)
+    def __repr__(self):
+        if not isinstance(self, SpectrumFit):
+            return"Bogus dude"+str(self.__class__)
+        return "<C SpectrumFit instance> " + Obit.SpectrumFitGetName(self.me)
     
     def Cube (self, inImage, outImage, err):
         """ Fit spectra to an image cube
@@ -135,11 +123,11 @@ class SpectrumFit(SpectrumFitPtr):
         ################################################################
         # Checks
         if not PIsA(self):
-            raise TypeError,"self MUST be a Python Obit SpectrumFit"
+            raise TypeError("self MUST be a Python Obit SpectrumFit")
         if not inImage.ImageIsA():
-            raise TypeError,"inImage MUST be a Python Obit Image"
+            raise TypeError("inImage MUST be a Python Obit Image")
         if not outImage.ImageIsA():
-            raise TypeError,"outImage MUST be a Python Obit Image"
+            raise TypeError("outImage MUST be a Python Obit Image")
         #
         Obit.SpectrumFitCube(self.me, inImage.me, outImage.me, err.me)
     # end Cube
@@ -174,11 +162,11 @@ class SpectrumFit(SpectrumFitPtr):
         ################################################################
         # Checks
         if not PIsA(self):
-            raise TypeError,"self MUST be a Python Obit SpectrumFit"
+            raise TypeError("self MUST be a Python Obit SpectrumFit")
         if not imArr[0].ImageIsA():
-            raise TypeError,"imArr[0] MUST be a Python Obit Image"
+            raise TypeError("imArr[0] MUST be a Python Obit Image")
         if not outImage.ImageIsA():
-            raise TypeError,"outImage MUST be a Python Obit Image"
+            raise TypeError("outImage MUST be a Python Obit Image")
         #
         nimage = len(imArr)
         imArrMe = []
@@ -204,11 +192,11 @@ class SpectrumFit(SpectrumFitPtr):
         ################################################################
         # Checks
         if not PIsA(self):
-            raise TypeError,"self MUST be a Python Obit SpectrumFit"
+            raise TypeError("self MUST be a Python Obit SpectrumFit")
         if not inImage.ImageIsA():
-            raise TypeError,"inImage MUST be a Python Obit Image"
+            raise TypeError("inImage MUST be a Python Obit Image")
         if not outImage.ImageIsA():
-            raise TypeError,"outImage MUST be a Python Obit Image"
+            raise TypeError("outImage MUST be a Python Obit Image")
         #
         Obit.SpectrumFit(self.me, inImage.me, outFreq, outImage.me, err.me)
     # end Eval
@@ -218,15 +206,15 @@ class SpectrumFit(SpectrumFitPtr):
 def PIsA (inSpectrumFit):
     """ Tells if input really a Python Obit SpectrumFit
 
-    return True, False (1,0)
+    return True, False 
     inSpectrumFit   = Python SpectrumFit object
     """
     ################################################################
-    if inSpectrumFit.__class__ != SpectrumFit:
-        print "Actually",inSpectrumFit.__class__
-        return 0
-    # Checks - allow inheritence
-    return Obit.SpectrumFitIsA(inSpectrumFit.me)
+    if not isinstance(inSpectrumFit, SpectrumFit):
+        print("Actually",inSpectrumFit.__class__)
+        return False
+    # Checks
+    return Obit.SpectrumFitIsA(inSpectrumFit.me)!=0
     # end PIsA
 
 def PCreate (name, nterm):

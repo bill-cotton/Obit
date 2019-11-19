@@ -12,7 +12,7 @@ mosaic    ImageMosaic, use PGetMosaic, PSetMosaic
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2008
+#  Copyright (C) 2004-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -39,43 +39,14 @@ mosaic    ImageMosaic, use PGetMosaic, PSetMosaic
 #-----------------------------------------------------------------------
 
 # Obit CleanImage
-import Obit, OErr, ImageMosaic, InfoList, UV, OWindow
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, OErr, ImageMosaic, InfoList, UV, OWindow
 
 # Python shadow class to ObitDConCleanImage class
  
-class CleanImagePtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.CleanImageUnref(Obit.CleanImage_me_get(self.this))
-            # In with the new
-            Obit.CleanImage_me_set(self.this,value)
-            return
-        if name=="Mosaic":
-            PSetMosaic(self, value)
-            return 
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != CleanImage:
-            return
-        if name == "me" : 
-            return Obit.CleanImage_me_get(self.this)
-        # Virtual members
-        if name=="List":
-            return PGetList(self)
-        if name=="Number":
-            return PGetNumber(self)
-        if name=="Mosaic":
-            return PGetMosaic(self)
-        raise AttributeError,str(name)
-    def __repr__(self):
-        if self.__class__ != CleanImage:
-            return
-        return "<C CleanImage instance> " + Obit.CleanImageGetName(self.me)
 #
-class CleanImage(CleanImagePtr):
+class CleanImage(Obit.CleanImage):
     """
     Python Obit Image Clean class
     
@@ -90,10 +61,40 @@ class CleanImage(CleanImagePtr):
     ========  =======================================
     """
     def __init__(self, name) :
-        self.this = Obit.new_CleanImage(name)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_CleanImage(self.this)
+        super(CleanImage, self).__init__()
+        Obit.CreateCleanImage(self.this, name)
+    def __del__(self, DeleteCleanImage=_Obit.DeleteCleanImage):
+        if _Obit!=None:
+            DeleteCleanImage(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.CleanImageUnref(Obit.CleanImage_Get_me(self.this))
+            # In with the new
+            Obit.CleanImage_Set_me(self.this,value)
+            return
+        if name=="Mosaic":
+            PSetMosaic(self, value)
+            return 
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if not isinstance(self, CleanImage):
+            return  "Bogus dude "+str(self.__class__)
+        if name == "me" : 
+            return Obit.CleanImage_Get_me(self.this)
+        # Virtual members
+        if name=="List":
+            return PGetList(self)
+        if name=="Number":
+            return PGetNumber(self)
+        if name=="Mosaic":
+            return PGetMosaic(self)
+        raise AttributeError(str(name))
+    def __repr__(self):
+        if not isinstance(self, CleanImage):     
+            return  "Bogus dude "+str(self.__class__)
+        return "<C CleanImage instance> " + Obit.CleanImageGetName(self.me)
     
     def DefWindow(self, err):
         """ 
@@ -111,16 +112,18 @@ class CleanImage(CleanImagePtr):
 
         * self   = Python OTF object
         * window = set of 4 integers:
-
           * if window[0]<0 box is round and window[1]=radius, [2,3] = center,
             else, 
           * rectangular and blc=(window[0],window[1]), 
             trc= blc=(window[2],window[3])
-
         * err    = Python Obit Error/message stack
         * field  = Which field (1-rel)is the window in?
         """
-        PAddWindow(self, field, window, err)
+        # Make sure window is longs
+        lwindow = []
+        for w in window:
+            lwindow.append(int(w))
+        PAddWindow(self, olong(field), lwindow, err)
         # end AddWindow
 
 # Commonly used, dangerous variables
@@ -152,9 +155,9 @@ def input(inputDict):
     """
     ################################################################
     structure = inputDict['structure']  # Structure information
-    print 'Inputs for ',structure[0]
+    print('Inputs for ',structure[0])
     for k,v in structure[1]:
-        print '  ',k,' = ',inputDict[k],' : ',v
+        print('  ',k,' = ',inputDict[k],' : ',v)
         
     # end input
 
@@ -186,11 +189,11 @@ def PCopy (inCleanImage, outCleanImage, err):
     ################################################################
     # Checks
     if not PIsA(inCleanImage):
-        raise TypeError,"inCleanImage MUST be a Python Obit CleanImage"
+        raise TypeError("inCleanImage MUST be a Python Obit CleanImage")
     if not PIsA(outCleanImage):
-        raise TypeError,"outCleanImage MUST be a Python Obit CleanImage"
+        raise TypeError("outCleanImage MUST be a Python Obit CleanImage")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     Obit.CleanImageCopy (inCleanImage.me, outCleanImage.me, err.me)
     if err.isErr:
@@ -208,10 +211,9 @@ def PGetList (inCleanImage):
     ################################################################
      # Checks
     if not PIsA(inCleanImage):
-        raise TypeError,"inCleanImage MUST be a Python Obit CleanImage"
+        raise TypeError("inCleanImage MUST be a Python Obit CleanImage")
     #
     out    = InfoList.InfoList()
-    out.me = Obit.InfoListUnref(out.me)
     out.me = Obit.CleanImageGetList(inCleanImage.me)
     return out
     # end PGetList
@@ -227,7 +229,7 @@ def PGetMosaic (inCleanImage):
     ################################################################
      # Checks
     if not PIsA(inCleanImage):
-        raise TypeError,"inCleanImage MUST be a Python Obit CleanImage"
+        raise TypeError("inCleanImage MUST be a Python Obit CleanImage")
     #
     out    = ImageMosaic.ImageMosaic("None", 1)
     out.me = Obit.CleanImageGetImageMosaic(inCleanImage.me)
@@ -244,9 +246,9 @@ def PSetMosaic (inCleanImage, mosaic):
     ################################################################
     # Checks
     if not PIsA(inCleanImage):
-        raise TypeError,"inCleanImage MUST be a Python ObitCleanImage"
+        raise TypeError("inCleanImage MUST be a Python ObitCleanImage")
     if not ImageMosaic.PIsA(mosaic):
-        raise TypeError,"array MUST be a Python Obit ImageMosaic"
+        raise TypeError("array MUST be a Python Obit ImageMosaic")
     #
     Obit.CleanImageSetImageMosaic(inCleanImage.me, mosaic.me)
     # end PSetMosaic
@@ -262,7 +264,7 @@ def PGetWindow (inCleanImage):
     ################################################################
      # Checks
     if not PIsA(inCleanImage):
-        raise TypeError,"inCleanImage MUST be a Python Obit CleanImage"
+        raise TypeError("inCleanImage MUST be a Python Obit CleanImage")
     #
     out    = OWindow.OWindow()
     out.me = Obit.CleanImageGetWindow(inCleanImage.me)
@@ -279,9 +281,9 @@ def PSetWindow (inCleanImage, window):
     ################################################################
     # Checks
     if not PIsA(inCleanImage):
-        raise TypeError,"inCleanImage MUST be a Python ObitCleanImage"
+        raise TypeError("inCleanImage MUST be a Python ObitCleanImage")
     if not OWindow.PIsA(window):
-        raise TypeError,"array MUST be a Python Obit OWindow"
+        raise TypeError("array MUST be a Python Obit OWindow")
     #
     Obit.CleanImageSetWindow(inCleanImage.me, window.me)
     # end PSetWindow
@@ -301,9 +303,13 @@ def PAddWindow (inCleanImage, field, window, err):
     ################################################################
     # Checks
     if not PIsA(inCleanImage):
-        raise TypeError,"inCleanImage MUST be a Python ObitCleanImage"
+        raise TypeError("inCleanImage MUST be a Python ObitCleanImage")
     #
-    Obit.CleanImageAddWindow(inCleanImage.me, field, window, err.me)
+    # Make sure window is long
+    lwindow = []
+    for w in window:
+        lwindow.append(w)
+    Obit.CleanImageAddWindow(inCleanImage.me, int(field), lwindow, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error adding window")
     # end PAddWindow
@@ -323,9 +329,9 @@ def PCreate (name, mosaic, err):
     ################################################################
     # Checks
     if not ImageMosaic.PIsA(mosaic):
-        raise TypeError,"mosaic MUST be a Python Obit ImageMosaic"
+        raise TypeError("mosaic MUST be a Python Obit ImageMosaic")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
    #
     out = CleanImage(name);
     out.me = Obit.CleanImageCreate(name, mosaic.me,  err.me)
@@ -349,9 +355,9 @@ def PDefWindow (clean, err):
     ################################################################
     # Checks
     if not PIsA(clean):
-        raise TypeError,"mosaic MUST be a Python Obit CleanImage"
+        raise TypeError("mosaic MUST be a Python Obit CleanImage")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     Obit.CleanImageDefWindow(clean.me,  err.me)
     if err.isErr:
@@ -426,7 +432,7 @@ def PClean (err, input=CleanInput):
     inCleanImage  = input["CleanImage"]
     # Checks
     if not PIsA(inCleanImage):
-        raise TypeError,"inCleanImage MUST be a Python Obit CleanImage"
+        raise TypeError("inCleanImage MUST be a Python Obit CleanImage")
     #
     dim = [1,1,1,1,1]
     #
@@ -435,7 +441,7 @@ def PClean (err, input=CleanInput):
     inInfo = PGetList(inCleanImage)    # 
     InfoList.PPutInt   (inInfo, "Niter",    dim, [input["Niter"]],    err)
     InfoList.PPutInt   (inInfo, "minPatch", dim, [input["minPatch"]], err)
-    InfoList.PPutInt   (inInfo, "maxPixel", dim, [input["maxPixel"]], err)
+    InfoList.PPutInt    (inInfo, "maxPixel", dim, [input["maxPixel"]], err)
     InfoList.PPutInt   (inInfo, "CCVer",    dim, [input["CCVer"]],    err)
     InfoList.PPutFloat (inInfo, "BMAJ",     dim, [input["BMAJ"]],     err)
     InfoList.PPutFloat (inInfo, "BMIN",     dim, [input["BMIN"]],     err)
@@ -466,9 +472,9 @@ def PRestore (clean, err):
     ################################################################
     # Checks
     if not PIsA(clean):
-        raise TypeError,"mosaic MUST be a Python Obit CleanImage"
+        raise TypeError("mosaic MUST be a Python Obit CleanImage")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     Obit.CleanImageRestore(clean.me,  err.me)
     if err.isErr:
@@ -486,7 +492,7 @@ def PGetName (inCleanImage):
     ################################################################
      # Checks
     if not PIsA(inCleanImage):
-        raise TypeError,"inCleanImage MUST be a Python Obit CleanImage"
+        raise TypeError("inCleanImage MUST be a Python Obit CleanImage")
     #
     return Obit.CleanImageGetName(inCleanImage.me)
     # end PGetName
@@ -501,7 +507,7 @@ def PIsA (inCleanImage):
     """
     ################################################################
     # Checks
-    if inCleanImage.__class__ != CleanImage:
-        return 0
-    return Obit.CleanImageIsA(inCleanImage.me)
+    if not isinstance(inCleanImage, CleanImage):
+        return False
+    return Obit.CleanImageIsA(inCleanImage.me)!=0
     # end PIsA

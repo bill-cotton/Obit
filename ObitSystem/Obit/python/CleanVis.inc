@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for CleanVis type                          */
 /*                                                                    */
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -33,17 +33,27 @@
 #include "ObitDConCleanVis.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitDConCleanVis *me;
+} CleanVis;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitDConCleanVis *me;
+} CleanVis;
 
 %inline %{
 extern ObitDConCleanVis* newCleanVis (char* name) {
   return newObitDConCleanVis (name);
 } // end  newCleanVis
 
-extern ObitDConCleanVis* CleanVisCopy  (ObitDConCleanVis *in, 
-	ObitDConCleanVis *out, 
-        ObitErr *err) {
-  return ObitDConCleanVisCopy (in, out, err);
-} // end  CleanVisCopy
+extern ObitDConCleanVis* CleanVisCreate (char *name, ObitUV* uvdata, 
+                                         ObitErr *err) {
+ return ObitDConCleanVisCreate(name, uvdata, err);
+}
 
 extern ObitDConCleanVis* CleanVisUnref (ObitDConCleanVis* in) {
   if (!ObitDConCleanVisIsA(in)) return NULL;
@@ -53,6 +63,58 @@ extern ObitDConCleanVis* CleanVisUnref (ObitDConCleanVis* in) {
 extern ObitDConCleanVis*  CleanVisRef (ObitDConCleanVis* in) {
   return ObitDConCleanVisRef(in);
 }
+
+void CreateCleanVis(PyObject *self, char* name) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_CleanVis, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateCleanVis: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((CleanVis*)ptr)->me = newCleanVis(name);
+   else  ((CleanVis*)ptr)->me = NULL;
+   return;
+ } // end CreateCleanVis
+
+void DeleteCleanVis(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_CleanVis, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteCleanVis: could not recover c struct");
+	return;
+   }
+   ((CleanVis*)ptr)->me = CleanVisUnref(((CleanVis*)ptr)->me);
+}// end DeleteCleanVis
+
+ObitDConCleanVis* CleanVis_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_CleanVis, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CleanVis_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((CleanVis*)ptr)->me;
+}  // end CleanVis_Get_me
+
+void CleanVis_Set_me(PyObject *self, ObitDConCleanVis *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_CleanVis, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CleanVis_Set_me: could not recover c struct");
+	return;
+   }
+   ((CleanVis*)ptr)->me =  CleanVisRef(me);
+}  // end CleanVis_Set_me
+
+extern ObitDConCleanVis* CleanVisCopy  (ObitDConCleanVis *in, 
+	ObitDConCleanVis *out, 
+        ObitErr *err) {
+  return ObitDConCleanVisCopy (in, out, err);
+} // end  CleanVisCopy
 
 extern ObitInfoList* CleanVisGetList (ObitDConCleanVis* in) {
   return ObitInfoListRef(in->info);
@@ -87,7 +149,7 @@ extern void CleanVisSetWindow (ObitDConCleanVis* in, ObitDConCleanWindow *window
 
 // if (win[0]<0 then this is a round window then win[1]=radius, [2,3] = center
 // else rectangular and blc=(win[0],win[1]), trc= blc=(win[2],win[3])
-extern void CleanVisAddWindow (ObitDConCleanVis* in, int field, int *win, 
+extern void CleanVisAddWindow (ObitDConCleanVis* in, long field, long *win, 
                                  ObitErr *err) {
   olong lfield, window[4];
   ObitDConCleanWindowType type;
@@ -110,11 +172,6 @@ extern void CleanVisAddWindow (ObitDConCleanVis* in, int field, int *win,
   ObitDConCleanWindowAdd (in->window, lfield, type, window, err);
 }  // end CleanVisAddWindow 
 
-extern ObitDConCleanVis* CleanVisCreate (char *name, ObitUV* uvdata, 
-                                         ObitErr *err) {
- return ObitDConCleanVisCreate(name, uvdata, err);
-}
-
 extern void CleanVisDeconvolve (ObitDConCleanVis* in, ObitErr *err) {
  ObitDConCleanVisDeconvolve((ObitDCon*)in, err);
 }
@@ -127,10 +184,10 @@ extern void CleanVisDefWindow (ObitDConCleanVis* in, ObitErr *err) {
  ObitDConCleanVisDefWindow((ObitDConClean*)in, err);
 }
 
-extern int CleanVisReimage (ObitDConCleanVis* in, ObitUV* uvdata, 
+extern long CleanVisReimage (ObitDConCleanVis* in, ObitUV* uvdata, 
                             ObitErr *err) {
   gboolean bout;
-  int out;
+  long out;
   bout = ObitDConCleanVisReimage(in, uvdata, err);
   if (bout) out = 1;
   else out = 0;
@@ -145,36 +202,9 @@ extern char* CleanVisGetName (ObitDConCleanVis* in) {
   }
 }
 
-extern int CleanVisIsA (ObitDConCleanVis* in) {
-  return ObitDConCleanVisIsA(in);
+extern long CleanVisIsA (ObitDConCleanVis* in) {
+  return (long)ObitDConCleanVisIsA(in);
 }
 
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitDConCleanVis *me;
-} CleanVis;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitDConCleanVis *me;
-} CleanVis;
-
-%addmethods CleanVis { 
-  CleanVis(char* name) {
-     CleanVis *out;
-     out = (CleanVis *) malloc(sizeof(CleanVis));
-     if (strcmp(name, "None")) out->me = newCleanVis(name);
-     else out->me = NULL;
-     return out;
-   }
-  ~CleanVis() {
-   if (self->me->ReferenceCount>0) 
-      self->me = CleanVisUnref(self->me);
-   free(self);
-  }
-};
 

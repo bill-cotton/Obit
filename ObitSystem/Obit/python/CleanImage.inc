@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for CleanImage type                        */
 /*                                                                    */
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -33,17 +33,23 @@
 #include "ObitDConCleanImage.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitDConCleanImage *me;
+} CleanImage;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitDConCleanImage *me;
+} CleanImage;
+
 
 %inline %{
 extern ObitDConCleanImage* newCleanImage (char* name) {
   return newObitDConCleanImage (name);
 } // end  newCleanImage
-
-extern ObitDConCleanImage* CleanImageCopy  (ObitDConCleanImage *in, 
-	ObitDConCleanImage *out, 
-        ObitErr *err) {
-  return ObitDConCleanImageCopy (in, out, err);
-} // end  CleanImageCopy
 
 extern ObitDConCleanImage* CleanImageUnref (ObitDConCleanImage* in) {
   if (!ObitDConCleanImageIsA(in)) return NULL;
@@ -53,6 +59,58 @@ extern ObitDConCleanImage* CleanImageUnref (ObitDConCleanImage* in) {
 extern ObitDConCleanImage*  CleanImageRef (ObitDConCleanImage* in) {
   return ObitDConCleanImageRef(in);
 }
+
+void CreateCleanImage(PyObject *self, char* name) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_CleanImage, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateCleanImage: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((CleanImage*)ptr)->me = newCleanImage(name);
+   else  ((CleanImage*)ptr)->me = NULL;
+   return;
+ } // end CreateCleanImage
+
+void DeleteCleanImage(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_CleanImage, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteCleanImage: could not recover c struct");
+	return;
+   }
+   ((CleanImage*)ptr)->me = CleanImageUnref(((CleanImage*)ptr)->me);
+}// end DeleteCleanImage
+
+ObitDConCleanImage* CleanImage_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_CleanImage, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CleanImage_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((CleanImage*)ptr)->me;
+}  // end CleanImage_Get_me
+
+void CleanImage_Set_me(PyObject *self, ObitDConCleanImage *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_CleanImage, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CleanImage_Set_me: could not recover c struct");
+	return;
+   }
+   ((CleanImage*)ptr)->me =  CleanImageRef(me);
+}  // end CleanImage_Set_me
+
+extern ObitDConCleanImage* CleanImageCopy  (ObitDConCleanImage *in, 
+	ObitDConCleanImage *out, 
+        ObitErr *err) {
+  return ObitDConCleanImageCopy (in, out, err);
+} // end  CleanImageCopy
 
 extern ObitInfoList* CleanImageGetList (ObitDConCleanImage* in) {
   return ObitInfoListRef(in->info);
@@ -78,7 +136,7 @@ extern void CleanImageSetWindow (ObitDConCleanImage* in, ObitDConCleanWindow *wi
 
 // if (win[0]<0 then this is a round window then win[1]=radius, [2,3] = center
 // else rectangular and blc=(win[0],win[1]), trc= blc=(win[2],win[3])
-extern void CleanImageAddWindow (ObitDConCleanImage* in, int field, int *win, 
+extern void CleanImageAddWindow (ObitDConCleanImage* in, long field, long *win, 
                                  ObitErr *err) {
   olong lfield, window[4];
   ObitDConCleanWindowType type;
@@ -126,36 +184,9 @@ extern char* CleanImageGetName (ObitDConCleanImage* in) {
   }
 }
 
-extern int CleanImageIsA (ObitDConCleanImage* in) {
-  return ObitDConCleanImageIsA(in);
+extern long CleanImageIsA (ObitDConCleanImage* in) {
+  return (long)ObitDConCleanImageIsA(in);
 }
 
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitDConCleanImage *me;
-} CleanImage;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitDConCleanImage *me;
-} CleanImage;
-
-%addmethods CleanImage { 
-  CleanImage(char* name) {
-     CleanImage *out;
-     out = (CleanImage *) malloc(sizeof(CleanImage));
-     if (strcmp(name, "None")) out->me = newCleanImage(name);
-     else out->me = NULL;
-     return out;
-   }
-  ~CleanImage() {
-   if (self->me-> ReferenceCount>0) 
-      self->me = CleanImageUnref(self->me);
-   free(self);
-  }
-};
 

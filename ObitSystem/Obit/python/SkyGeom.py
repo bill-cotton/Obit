@@ -5,7 +5,7 @@ Also primary beam calculations
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2007-2017
+#  Copyright (C) 2007-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@ Also primary beam calculations
 #-----------------------------------------------------------------------
 
 # Python utility package for  Sky Geometry 
+from __future__ import absolute_import
 import Obit, UVDesc
 import math
 
@@ -131,8 +132,6 @@ def PNewPos (type, ra0, dec0, l, m):
     ################################################################
     return Obit.SkyGeomNewPos (type, ra0, dec0, l, m,[0.0], [0.0], [0])
     # end PNewPos
-
-    
 
 def PWorldPos(xpix, ypix, xref, yref, xrefpix, yrefpix, xinc, yinc, rot, \
               type, xpos, ypos):

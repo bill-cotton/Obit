@@ -6,6 +6,7 @@ Both FITS (as Tables) and AIPS cataloged data are supported.
 
 Table Members with python interfaces:
 InfoList  - used to pass instructions to processing
+keys      - Header keywords after table is opened
 
 Table header keywords for specific table types are available in the keys
 member of a Table after the table has been opened.  These will be updated
@@ -13,7 +14,7 @@ to disk when the table is closed.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2012
+#  Copyright (C) 2004-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -40,24 +41,30 @@ to disk when the table is closed.
 #-----------------------------------------------------------------------
 
 # Python shadow class to ObitTable class
-import Obit, OErr, InfoList, TableDesc
+from __future__ import absolute_import
+import Obit, _Obit, OErr, InfoList, TableDesc
 
-class TablePtr :
-    def __init__(self,this):
-        self.this = this
+class Table(Obit.Table):
+    def __init__(self,name) :
+        super(Table, self).__init__()
+        Obit.CreateTable(self.this, name)
+    def __del__(self, DeleteTable=_Obit.DeleteTable):
+        if _Obit!=None:
+            DeleteTable(self.this)
     def __setattr__(self,name,value):
         if name == "me" :
             # Out with the old
-            Obit.TableUnref(Obit.Table_me_get(self.this))
+            if self.this!=None:
+                Obit.TableUnref(Obit.Table_Get_me(self.this))
             # In with the new
-            Obit.Table_me_set(self.this,value)
+            Obit.Table_Set_me(self.this,value)
             return
         self.__dict__[name] = value
     def __getattr__(self,name):
-        if self.__class__ != Table:
-            return
+        if not isinstance(self, Table):
+            return "Bogus Dude! "+str(self.__class__)
         if name == "me" : 
-            return Obit.Table_me_get(self.this)
+            return Obit.Table_Get_me(self.this)
          # Functions to return members
         if name=="List":
             return PGetList(self)
@@ -67,17 +74,11 @@ class TablePtr :
             return PGetDesc(self)
         if name=="IODesc":
             return PGetIODesc(self)
-        raise AttributeError,name
+        raise AttributeError(name)
     def __repr__(self):
         if self.__class__ != Table:
             return
         return "<C Table instance> " + Obit.TableGetName(self.me)
-class Table(TablePtr):
-    def __init__(self,name) :
-        self.this = Obit.new_Table(name)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_Table(self.this)
 
     def Zap (self, err):
         """ Delete underlying files and the basic object.
@@ -130,6 +131,17 @@ class Table(TablePtr):
         """
         PWriteRow (self, rowno, rowDict, err)
         # end WriteRow
+    def IsA (self):
+        """
+        Tells if input really a Python Obit Table
+        
+        return True, False
+        * self   = Python Table object
+        """
+        ################################################################
+        # Allow derived types
+        return Obit.TableIsA(self.me)!=0
+        # end IsA
         # End Table class definitions
 
 # Symbolic names for access codes
@@ -145,10 +157,10 @@ def PZap (inTab, err):
     """
     ################################################################
     # Checks
-    if not PIsA(inTab):
-        raise TypeError,"inTab MUST be a Table"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+    if not inTab.IsA():
+        raise TypeError("inTab MUST be a Table")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     if err.isErr: # existing error?
         return
    #
@@ -164,12 +176,12 @@ def PCopy (inTab, outTab, err):
     """
     ################################################################
     # Checks
-    if not PIsA(inTab):
-        raise TypeError,"inTab MUST be a Table"
-    if not PIsA(outTab):
-        raise TypeError,"outTab MUST be a Table"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+    if not inTab.IsA():
+        raise TypeError("inTab MUST be a Table")
+    if not outTab.IsA():
+        raise TypeError("outTab MUST be a Table")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     if err.isErr: # existing error?
         return
     #
@@ -184,8 +196,8 @@ def PClone (inTab, outTab):
     """
     ################################################################
     # Checks
-    if not PIsA(inTab):
-        raise TypeError,"inTab MUST be a Table"
+    if not inTab.IsA():
+        raise TypeError("inTab MUST be a Table")
     #
     if not outTab:
         out = Table("None")
@@ -205,12 +217,12 @@ def PConcat (inTab, outTab, err):
     """
     ################################################################
     # Checks
-    if not PIsA(inTab):
-        raise TypeError,"inTab MUST be a Table"
-    if not PIsA(outTab):
-        raise TypeError,"outTab MUST be a Table"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+    if not inTab.IsA():
+        raise TypeError("inTab MUST be a Table")
+    if not outTab.IsA():
+        raise TypeError("outTab MUST be a Table")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     if err.isErr: # existing error?
         return
     #
@@ -228,10 +240,10 @@ def PFullInstantiate (inTab, access, err):
     """
     ################################################################
     # Checks
-    if not PIsA(inTab):
-        raise TypeError,"inTab MUST be a Table"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+    if not inTab.IsA():
+        raise TypeError("inTab MUST be a Table")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     if err.isErr: # existing error?
         return None
@@ -248,10 +260,10 @@ def POpen (inTab, access, err):
     """
     ################################################################
     # Checks
-    if not PIsA(inTab):
-        raise TypeError,"inTab MUST be a Python Obit Table"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+    if not inTab.IsA():
+        raise TypeError("inTab MUST be a Python Obit Table")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     if err.isErr: # existing error?
         return
     #
@@ -269,6 +281,8 @@ def POpen (inTab, access, err):
         inTab.keys = Obit.TableBPGetHeadKeys(inTab.me)
     elif tabtype=="AIPS CC":
         inTab.keys = Obit.TableCCGetHeadKeys(inTab.me)
+    elif tabtype=="AIPS CD":
+        inTab.keys = Obit.TableCDGetHeadKeys(inTab.me)
     elif tabtype=="AIPS CL":
         inTab.keys = Obit.TableCLGetHeadKeys(inTab.me)
     elif tabtype=="AIPS CP":
@@ -329,7 +343,7 @@ def PDirty (inTable):
     ################################################################
     # Checks
     if not PIsA(inTable):
-        raise TypeError,"inTable MUST be a Python Obit Table"
+        raise TypeError("inTable MUST be a Python Obit Table")
     #
     Obit.TableDirty (inTable.me)
     # end PDirty
@@ -343,10 +357,10 @@ def PClose (inTab, err):
     """
     ################################################################
     # Checks
-    if not PIsA(inTab):
-        raise TypeError,"inTab MUST be a Python Obit Table"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+    if not inTab.IsA():
+        raise TypeError("inTab MUST be a Python Obit Table")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     if err.isErr: # existing error?
         return
@@ -363,6 +377,8 @@ def PClose (inTab, err):
         Obit.TableBPSetHeadKeys(inTab.me, inTab.keys)
     elif tabtype=="AIPS CC" and inTab.keys:
         Obit.TableCCSetHeadKeys(inTab.me, inTab.keys)
+    elif tabtype=="AIPS CD" and inTab.keys:
+        Obit.TableCDSetHeadKeys(inTab.me, inTab.keys)
     elif tabtype=="AIPS CL" and inTab.keys:
         Obit.TableCLSetHeadKeys(inTab.me, inTab.keys)
     elif tabtype=="AIPS CP" and inTab.keys:
@@ -430,10 +446,10 @@ def PReadRow (inTab, rowno, err):
     """
     ################################################################
     # Checks
-    if not PIsA(inTab):
-        raise TypeError,"inTab MUST be a Python Obit Table"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+    if not inTab.IsA():
+        raise TypeError("inTab MUST be a Python Obit Table")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     if err.isErr: # existing error?
         return None
     #
@@ -451,10 +467,10 @@ def PWriteRow (inTab, rowno, rowDict, err):
     """
     ################################################################
     # Checks
-    if not PIsA(inTab):
-        raise TypeError,"inTab MUST be a Python Obit Table"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+    if not inTab.IsA():
+        raise TypeError("inTab MUST be a Python Obit Table")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     if err.isErr: # existing error?
         return
     #
@@ -471,8 +487,8 @@ def PUnref (inTab):
     """
     ################################################################
      # Checks
-    if not PIsA(inTab):
-        raise TypeError,"inTab MUST be a Python Obit Table"
+    if not inTab.IsA():
+        raise TypeError("inTab MUST be a Python Obit Table")
 
     inTab.me = Obit.TableUnref(inTab.me)
     # end PUnref
@@ -485,11 +501,10 @@ def PGetList (inTab):
     """
     ################################################################
     # Checks
-    if not PIsA(inTab):
-        raise TypeError,"inTab MUST be a Table"
+    if not inTab.IsA():
+        raise TypeError("inTab MUST be a Table")
     #
     out    = InfoList.InfoList()
-    out.me = Obit.InfoListUnref(out.me)
     out.me = Obit.TableGetList(inTab.me)
     return out
     # end PGetList
@@ -505,11 +520,10 @@ def PGetIOList (inTab):
     """
     ################################################################
     # Checks
-    if not PIsA(inTab):
-        raise TypeError,"inTab MUST be a Table"
+    if not inTab.IsA():
+        raise TypeError("inTab MUST be a Table")
     #
     out    = InfoList.InfoList()
-    out.me = Obit.InfoListUnref(out.me)
     out.me = Obit.TableGetIOList(inTab.me)
     return out
     # end PGetIOList
@@ -522,11 +536,10 @@ def PGetDesc (inTab):
     """
     ################################################################
     # Checks
-    if not PIsA(inTab):
-        raise TypeError,"inTab MUST be a Table"
+    if not inTab.IsA():
+        raise TypeError("inTab MUST be a Table")
     #
     out    = TableDesc.TableDesc("TableDesc")
-    out.me = Obit.TableDescUnref(out.me)
     out.me = Obit.TableGetDesc(inTab.me)
     return out
     # end PGetDesc
@@ -542,11 +555,10 @@ def PGetIODesc (inTab):
     """
     ################################################################
     # Checks
-    if not PIsA(inTab):
-        raise TypeError,"inTab MUST be a Table"
+    if not inTab.IsA():
+        raise TypeError("inTab MUST be a Table")
     #
     out    = TableDesc.TableDesc("TableDesc")
-    out.me = Obit.TableDescUnref(out.me)
     out.me = Obit.TableGetIODesc(inTab.me)
     return out
     # end PGetDesc
@@ -559,8 +571,8 @@ def PGetVer (inTab):
     """
     ################################################################
     # Checks
-    if not PIsA(inTab):
-        raise TypeError,"inTab MUST be a Table"
+    if not inTab.IsA():
+        raise TypeError("inTab MUST be a Table")
     #
     return Obit.TableGetVer(inTab.me)
     # end PGetVer
@@ -568,16 +580,16 @@ def PGetVer (inTab):
 def PIsA (inTab):
     """ Tells if object thinks it's a Python Obit Table
 
-    return true, false (1,0)
+    return True, False
     inTab    = input Python Table
     """
     ################################################################
     # Checks
-    if inTab.__class__ != Table:
-        return 0
+    if not isinstance(inTab, Table):
+        return False
     #
     try:
-        return Obit.TableIsA(inTab.me)
+        return Obit.TableIsA(inTab.me)!=0
     except:
         return False
     # end PIsA
@@ -590,8 +602,8 @@ def PGetName (inTab):
     """
     ################################################################
     # Checks
-    if not PIsA(inTab):
-        raise TypeError,"inTab MUST be a Table"
+    if not inTab.IsA():
+        raise TypeError("inTab MUST be a Table")
     #
     return Obit.TableGetName(inTab.me)
     # end PGetName
@@ -606,10 +618,10 @@ def PSort (inTab, colName, desc, err):
     """
     ################################################################
     # Checks
-    if not PIsA(inTab):
-        raise TypeError,"inTab MUST be a Table"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+    if not inTab.IsA():
+        raise TypeError("inTab MUST be a Table")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     if err.isErr: # existing error?
         return
     #

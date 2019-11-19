@@ -15,7 +15,7 @@ IntHist   Integral histogram FArray
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2011
+#  Copyright (C) 2011,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -42,32 +42,48 @@ IntHist   Integral histogram FArray
 #-----------------------------------------------------------------------
 
 # Obit PixHistFDR
-import Obit, OErr, Image, FArray, InfoList
+from __future__ import absolute_import
+import Obit, _Obit, OErr, Image, FArray, InfoList
 
 # Python shadow class to ObitPixHistFDR class
 
 # class name in C
 myClass = "ObitPixHistFDR"
  
-class PixHistFDRPtr :
-    def __init__(self,this):
-        self.this = this
+#
+class PixHistFDR(Obit.PixHistFDR):
+    """ Python Obit PixHistFDR class
+    
+    This class enables fitting models to images.
+    Fits models defined in a FitRegion to an image
+    
+    PixHistFDR Members with python interfaces:
+    List      - used to pass instructions to processing 
+    """
+    def __init__(self, name) :
+        super(PixHistFDR, self).__init__()
+        Obit.CreatePixHistFDR(self.this, name)
+        self.myClass = myClass
+    def __del__(self, DeletePixHistFDR=_Obit.DeletePixHistFDR):
+        if _Obit!=None:
+            DeletePixHistFDR(self.this)
     def __setattr__(self,name,value):
         if name == "me" :
             # Out with the old
-            Obit.PixHistFDRUnref(Obit.PixHistFDR_me_get(self.this))
+            if self.this!=None:
+                Obit.PixHistFDRUnref(Obit.PixHistFDR_Get_me(self.this))
             # In with the new
-            Obit.PixHistFDR_me_set(self.this,value)
+            Obit.PixHistFDR_Set_me(self.this,value)
             return
         if name=="List":
             PSetList(self,value)
             return
         self.__dict__[name] = value
     def __getattr__(self,name):
-        if self.__class__ != PixHistFDR:
-            return
+        if not isinstance(self, PixHistFDR):
+            return "Bogus dude",str(self.__class__)
         if name == "me" : 
-            return Obit.PixHistFDR_me_get(self.this)
+            return Obit.PixHistFDR_Get_me(self.this)
         # Virtual members
         if name=="List":
             return PGetList(self)
@@ -79,39 +95,11 @@ class PixHistFDRPtr :
             return PDifHist(self)
         if name=="IntHist":
             return PIntHist(self)
-        raise AttributeError,str(name)
+        raise AttributeError(str(name))
     def __repr__(self):
-        if self.__class__ != PixHistFDR:
-            return
+        if not isinstance(self, PixHistFDR):
+            return "Bogus dude",str(self.__class__)
         return "<C PixHistFDR instance> " + Obit.PixHistFDRGetName(self.me)
-#
-class PixHistFDR(PixHistFDRPtr):
-    """ Python Obit PixHistFDR class
-    
-    This class enables fitting models to images.
-    Fits models defined in a FitRegion to an image
-    
-    PixHistFDR Members with python interfaces:
-    List      - used to pass instructions to processing 
-    """
-    def __init__(self, name) :
-        self.this = Obit.new_PixHistFDR(name)
-        self.myClass = myClass
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_PixHistFDR(self.this)
-    def cast(self, toClass):
-        """ Casts object pointer to specified class
-        
-        self     = object whose cast pointer is desired
-        toClass  = Class string to cast to
-        """
-        ################################################################
-        # Get pointer with type of this class
-        out =  self.me
-        out = out.replace(self.myClass, toClass)
-        return out
-    # end cast
     def Histo (self, blc, trc, nbin, range, err):
         """ Computes histograms
         
@@ -125,8 +113,14 @@ class PixHistFDR(PixHistFDRPtr):
         ################################################################
         # Checks
         if not PIsA(self):
-            raise TypeError,"self MUST be a Python Obit PixHistFDR"
-        Obit.PixHistFDRHisto (self.me, blc, trc, nbin, range, err.me)
+            raise TypeError("self MUST be a Python Obit PixHistFDR")
+        # make sure blc, trc are long
+        lblc=[]; ltrc=[]
+        for t in trc:
+            ltrc.append(int(t))
+        for t in blc:
+            lblc.append(int(t))
+        Obit.PixHistFDRHisto (self.me, lblc, ltrc, nbin, range, err.me)
         if err.isErr:
             OErr.printErrMsg(err, "Error creating PixHistFDR histogram")
         return
@@ -143,13 +137,12 @@ class PixHistFDR(PixHistFDRPtr):
         ################################################################
         # Checks
         if not PIsA(self):
-            raise TypeError,"self MUST be a Python Obit PixHistFDR"
+            raise TypeError("self MUST be a Python Obit PixHistFDR")
         ret =  Obit.PixHistFDRFlux (self.me, maxFDR, err.me)
         if err.isErr:
             OErr.printErrMsg(err, "Error determining PixHistFDR flux")
         return ret
-    # end Flux
-    
+    # end Flux    
     # end class PixHistFDR
 
 def PCreate (name, image, err):
@@ -163,7 +156,7 @@ def PCreate (name, image, err):
     ################################################################
     # Checks
     if not Image.PIsA(image):
-            raise TypeError,"image MUST be a Python Obit Image"
+            raise TypeError("image MUST be a Python Obit Image")
     #
     out = PixHistFDR("None");
     out.me = Obit.PixHistFDRCreate(name, image.me, err.me)
@@ -183,15 +176,13 @@ def PCopy (inPixHistFDR, outPixHistFDR, err):
     ################################################################
     # Checks
     if not PIsA(inPixHistFDR):
-        raise TypeError,"inPixHistFDR MUST be a Python Obit PixHistFDR"
+        raise TypeError("inPixHistFDR MUST be a Python Obit PixHistFDR")
     if not PIsA(outPixHistFDR):
-        raise TypeError,"outPixHistFDR MUST be a Python Obit PixHistFDR"
+        raise TypeError("outPixHistFDR MUST be a Python Obit PixHistFDR")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
-    smi = inPixHistFDR.cast(myClass)   # cast pointer
-    smo = outPixHistFDR.cast(myClass)  # cast pointer
-    Obit.PixHistFDRCopy (smi, smo, err.me)
+    Obit.PixHistFDRCopy (inPixHistFDR.me, outPixHistFDR.me, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error copying PixHistFDR")
     # end PCopy
@@ -205,12 +196,10 @@ def PGetList (inPixHistFDR):
     ################################################################
      # Checks
     if not PIsA(inPixHistFDR):
-        raise TypeError,"inPixHistFDR MUST be a Python Obit PixHistFDR"
+        raise TypeError("inPixHistFDR MUST be a Python Obit PixHistFDR")
     #
-    sm     = inPixHistFDR.cast(myClass)  # cast pointer
     out    = InfoList.InfoList()
-    out.me = Obit.InfoListUnref(out.me)
-    out.me = Obit.PixHistFDRGetList(sm)
+    out.me = Obit.PixHistFDRGetList(inPixHistFDR.me)
     return out
     # end PGetList
 
@@ -223,10 +212,9 @@ def PSigma (inPixHistFDR):
     ################################################################
      # Checks
     if not PIsA(inPixHistFDR):
-        raise TypeError,"inPixHistFDR MUST be a Python Obit PixHistFDR"
+        raise TypeError("inPixHistFDR MUST be a Python Obit PixHistFDR")
     #
-    sm     = inPixHistFDR.cast(myClass)  # cast pointer
-    return Obit.PixHistFDRSigma(sm)
+    return Obit.PixHistFDRSigma(inPixHistFDR.me)
     # end PSigma
 
 def PImPix (inPixHistFDR):
@@ -238,12 +226,11 @@ def PImPix (inPixHistFDR):
     ################################################################
      # Checks
     if not PIsA(inPixHistFDR):
-        raise TypeError,"inPixHistFDR MUST be a Python Obit PixHistFDR"
+        raise TypeError("inPixHistFDR MUST be a Python Obit PixHistFDR")
     #
-    sm     = inPixHistFDR.cast(myClass)  # cast pointer
     out    = FArray.FArray("ImPix")
     out.me = Obit.FArrayUnref(out.me)
-    out.me = Obit.PixHistFDRGetImPix(sm)
+    out.me = Obit.PixHistFDRGetImPix(inPixHistFDR.me)
     return out
     # end PImPix 
 
@@ -256,12 +243,11 @@ def PDifHist (inPixHistFDR):
     ################################################################
      # Checks
     if not PIsA(inPixHistFDR):
-        raise TypeError,"inPixHistFDR MUST be a Python Obit PixHistFDR"
+        raise TypeError("inPixHistFDR MUST be a Python Obit PixHistFDR")
     #
-    sm     = inPixHistFDR.cast(myClass)  # cast pointer
     out    = FArray.FArray("DifHist")
     out.me = Obit.FArrayUnref(out.me)
-    out.me = Obit.PixHistFDRGetHisto(sm)
+    out.me = Obit.PixHistFDRGetHisto(inPixHistFDR.me)
     return out
     # end PifHist
 
@@ -274,12 +260,11 @@ def PIntHist (inPixHistFDR):
     ################################################################
      # Checks
     if not PIsA(inPixHistFDR):
-        raise TypeError,"inPixHistFDR MUST be a Python Obit PixHistFDR"
+        raise TypeError("inPixHistFDR MUST be a Python Obit PixHistFDR")
     #
-    sm     = inPixHistFDR.cast(myClass)  # cast pointer
     out    = FArray.FArray("IntHist")
     out.me = Obit.FArrayUnref(out.me)
-    out.me = Obit.PixHistFDRGetIntHisto(sm)
+    out.me = Obit.PixHistFDRGetIntHisto(inPixHistFDR.me)
     return out
     # end PIntHist
 
@@ -292,10 +277,9 @@ def PGetName (inPixHistFDR):
     ################################################################
      # Checks
     if not PIsA(inPixHistFDR):
-        raise TypeError,"inPixHistFDR MUST be a Python Obit PixHistFDR"
+        raise TypeError("inPixHistFDR MUST be a Python Obit PixHistFDR")
     #
-    sm = inPixHistFDR.cast(myClass)  # cast pointer
-    return Obit.PixHistFDRGetName(sm)
+    return Obit.PixHistFDRGetName(nPixHistFDR.me)
     # end PGetName
 
 def PIsA (inPixHistFDR):
@@ -308,6 +292,5 @@ def PIsA (inPixHistFDR):
     # Checks - allow inheritence
     if not str(inPixHistFDR.__class__).startswith("PixHistFDR"):
         return False
-    sm = inPixHistFDR.cast(myClass)  # cast pointer
-    return Obit.PixHistFDRIsA(sm)
+    return Obit.PixHistFDRIsA(inPixHistFDR)!=0
     # end PIsA

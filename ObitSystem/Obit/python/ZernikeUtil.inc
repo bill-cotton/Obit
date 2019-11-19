@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for Zernike polynimoal utilities           */
 /*                                                                    */
-/*;  Copyright (C) 2006                                               */
+/*;  Copyright (C) 2006,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -36,25 +36,25 @@
 
 %inline %{
 /* Return Zernike term n for X and Y */
-extern float Zernike (int n, float x, float y) {
+extern float Zernike (long n, float x, float y) {
   olong ln = (olong)n;
   return (float)ObitZernike (ln, (ofloat)x, (ofloat)y);
 } // end Zernike
 
 /* Return Zernike term n gradient in X for X and Y */
-extern float ZernikeGradX (int n, float x, float y) {
+extern float ZernikeGradX (long n, float x, float y) {
   olong ln = (olong)n;
   return (float)ObitZernikeGradX (ln, (ofloat)x, (ofloat)y);
 } // end ZernikeGradX
 
 /* Return Zernike term n gradient in Y for X and Y */
-extern float ZernikeGradY (int n, float x, float y) {
+extern float ZernikeGradY (long n, float x, float y) {
   olong ln = (olong)n;
   return (float)ObitZernikeGradY (ln, (ofloat)x, (ofloat)y);
 } // end ZernikeGradY
 
 /* Return Zernike term n for Polar coordinates rho and phi */
-extern float ZernikePolar (int n, float rho, float phi) {
+extern float ZernikePolar (long n, float rho, float phi) {
   olong ln = (olong)n;
   return (float)ObitZernikePolar (ln, (ofloat)rho, (ofloat)phi);
 } // end ZernikePolar

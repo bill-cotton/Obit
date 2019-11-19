@@ -30,14 +30,17 @@ From version by Tom Mauch
 #                         520 Edgemont Road
 #                         Charlottesville, VA 22903-2475 USA
 #-----------------------------------------------------------------------
+from __future__ import absolute_import
+from __future__ import print_function
+from six.moves import range
 try:
     import katdal as katfile
     from katdal import averager
     import katpoint
-except Exception, exception:
-    print exception
-    print "KAT software not available"
-    raise  RuntimeError, "KAT software unavailable"
+except Exception as exception:
+    print(exception)
+    print("KAT software not available")
+    raise  RuntimeError("KAT software unavailable")
 else:
     pass
 import time,math,os
@@ -76,7 +79,7 @@ def KAT2AIPS (katdata, outUV, disk, fitsdisk, err, \
     ################################################################
     OErr.PLog(err, OErr.Info, "Converting h5 data to AIPS UV format.")
     OErr.printErr(err)
-    print "Converting h5 data to AIPS UV format.\n"
+    print("Converting h5 data to AIPS UV format.\n")
 
     # Extract metadata
     meta = GetKATMeta(katdata, err)
@@ -114,7 +117,7 @@ def KAT2AIPS (katdata, outUV, disk, fitsdisk, err, \
     # initial CL table
     OErr.PLog(err, OErr.Info, "Create Initial CL table")
     OErr.printErr(err)
-    print "Create Initial CL table\n"
+    print("Create Initial CL table\n")
     UV.PTableCLGetDummy(outUV, outUV, 1, err, solInt=calInt)
     outUV.Open(UV.READONLY,err)
     outUV.Close(err)
@@ -430,7 +433,7 @@ def WriteFGTable(outUV, katdata, meta, err):
                         UV.PFlag(outUV,err,timeRange=[starttime,endtime], flagVer=1, \
                                      Ants=[product[0],product[1]], \
                                      Chans=[c+1,c+1], IFs=[1,1], Stokes='1111', Reason='Online flag')
-        numvis=t*c*(p/meta["nstokes"])
+        numvis=t*c*(p//meta["nstokes"])
         msg = "Scan %4d %16s   Online flags: %7s of %8s vis"%(row,name,numflag,numvis)
         OErr.PLog(err, OErr.Info, msg);
         OErr.printErr(err)
@@ -555,7 +558,7 @@ def ConvertKATData(outUV, katdata, meta, err, stop_w=False, timeav=1):
     count = 0.0
     visno = 0
     # Get IO buffers as numpy arrays
-    shape = len(outUV.VisBuf) / 4
+    shape = len(outUV.VisBuf) // 4
     buffer =  numpy.frombuffer(outUV.VisBuf,dtype=numpy.float32, count=shape)
 
     # Template vis
@@ -569,7 +572,7 @@ def ConvertKATData(outUV, katdata, meta, err, stop_w=False, timeav=1):
         msg = "W term in UVW coordinates will be used to stop the fringes."
         OErr.PLog(err, OErr.Info, msg)
         OErr.printErr(err)
-        print msg
+        print(msg)
     for scan, state, target in katdata.scans():
         # Fetch data - may blow core
         try:
@@ -583,7 +586,7 @@ def ConvertKATData(outUV, katdata, meta, err, stop_w=False, timeav=1):
             msg = "Blew core - try to recover"
             OErr.PLog(err, OErr.Info, msg);
             OErr.printErr(err)
-            print msg
+            print(msg)
             outUV.Close(err)
             zz = outUV.Open(UV.READWRITE, err)
             if err.isErr:
@@ -617,7 +620,7 @@ def ConvertKATData(outUV, katdata, meta, err, stop_w=False, timeav=1):
         msg = "Scan:%4d Int: %4d %16s Start %s"%(scan,nint,target.name,day2dhms((tm[0]-time0)/86400.0)[0:12])
         OErr.PLog(err, OErr.Info, msg);
         OErr.printErr(err)
-        print msg
+        print(msg)
         # Loop over integrations
         for iint in range(0,nint):
             vsdump=vs[iint:iint+1]
@@ -681,13 +684,13 @@ def AverageTime(vis,wt,fg,ts,av=4):
         wt=wt[:-av_remainder]
         fg=fg[:-av_remainder]
         ts=ts[:-av_remainder]
-    vis=vis.reshape((old_shape[0]/av,av,old_shape[1],old_shape[2]))
-    fg=fg.reshape((old_shape[0]/av,av,old_shape[1],old_shape[2]))
-    weight=numpy.ones((old_shape[0]/av,av,old_shape[1],old_shape[2]))*~fg
+    vis=vis.reshape((old_shape[0]//av,av,old_shape[1],old_shape[2]))
+    fg=fg.reshape((old_shape[0]//av,av,old_shape[1],old_shape[2]))
+    weight=numpy.ones((old_shape[0]//av,av,old_shape[1],old_shape[2]))*~fg
     vis=numpy.sum(vis*weight,axis=1)
     fg=numpy.sum(fg,axis=1,dtype=numpy.bool)
     wt=numpy.ones_like(vis,dtype=numpy.float32)*~fg
-    ts=numpy.average(ts.reshape(old_shape[0]/av,av),axis=1)
+    ts=numpy.average(ts.reshape(old_shape[0]//av,av),axis=1)
 
     return vis,fg,wt,ts
 
@@ -707,7 +710,7 @@ def MakeTemplate(inuv,outuv,katdata):
     vistable.add_col(newvis)
     vishdu = pyfits.BinTableHDU.from_columns(vistable)
     for key in uvfits[1].header.keys():
-        if (key not in vishdu.header.keys()) and (key != 'HISTORY'):
+        if (key not in list(vishdu.header.keys())) and (key != 'HISTORY'):
             vishdu.header[key]=uvfits[1].header[key]
 
     newuvfits = pyfits.HDUList([uvfits[0],vishdu,uvfits[2],uvfits[3],uvfits[4],uvfits[5],uvfits[6]])

@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2015
+#  Copyright (C) 2004-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -27,36 +27,34 @@
 #-----------------------------------------------------------------------
 
 # Python shadow class to ObitFInterpolate class
-import Obit, FArray, Image, ImageDesc, InfoList, OErr
+from __future__ import absolute_import
+import Obit, _Obit, FArray, Image, ImageDesc, InfoList, OErr
 
-class FInterpolatePtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            Obit.FInterpolate_me_set(self.this,value)
-            return
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if name == "me" : 
-            return Obit.FInterpolate_me_get(self.this)
-        raise AttributeError,name
-    def __repr__(self):
-        return "<C FInterpolate instance>"
-class FInterpolate(FInterpolatePtr):
+class FInterpolate(Obit.FInterpolate):
     """
     Lagrangian interpolation in an FArray
     """
     def __init__(self, name, array, desc, hwidth) :
-        self.this = Obit.new_FInterpolate(name, array.me, desc.me, hwidth)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_FInterpolate(self.this)
+        super(FInterpolate, self).__init__()
+        Obit.CreateFInterpolate(self.this, name, array.me, desc.me, hwidth)
+    def __del__(self, DeleteFInterpolate=_Obit.DeleteFInterpolate):
+        if _Obit!=None:
+            DeleteFInterpolate(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            Obit.FInterpolate_Set_me(self.this,value)
+            return
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if name == "me" : 
+            return Obit.FInterpolate_Get_me(self.this)
+        raise AttributeError(name)
+    def __repr__(self):
+        return "<C FInterpolate instance>"
     
 def PCopy  (inFI, outFI, err):
     """ 
     Make a deep copy of input object.
-
     * inFI    = Python Obit input FInterpolate
     * outFI   = Python Obit FInterpolate
     * err     = Python Obit Error/message stack
@@ -64,11 +62,11 @@ def PCopy  (inFI, outFI, err):
     ################################################################
     # Checks
     if not PIsA(inFI):
-        raise TypeError,"inFI MUST be a Python Obit FInterpolate"
+        raise TypeError("inFI MUST be a Python Obit FInterpolate")
     if not PIsA(outFI):
-        raise TypeError,"outFI MUST be a Python Obit FInterpolate"
+        raise TypeError("outFI MUST be a Python Obit FInterpolate")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be a Python ObitErr"
+        raise TypeError("err MUST be a Python ObitErr")
     #
     Obit.FInterpolateCopy (inFI.me, outFI.me, err.me)
     if err.isErr:
@@ -78,16 +76,15 @@ def PCopy  (inFI, outFI, err):
 def PClone (inFI, outFI):
     """
     Make a shallow copy of a object (no data copied)
-
     * inFI    = Python Obit input FInterpolate
     * outFI   = Python Obit FInterpolate
     """
     ################################################################
     # Checks
     if not PIsA(inFI):
-        raise TypeError,"inFI MUST be a Python Obit FInterpolate"
+        raise TypeError("inFI MUST be a Python Obit FInterpolate")
     if not PIsA(outFI):
-        raise TypeError,"outFI MUST be a Python Obit FInterpolate"
+        raise TypeError("outFI MUST be a Python Obit FInterpolate")
     #
     Obit.FInterpolateClone (inFI.me, outFI.me)
     # end PClone 
@@ -102,13 +99,12 @@ def PReplace (inFI, newArray):
     ################################################################
     # Checks
     if not PIsA(inFI):
-        raise TypeError,"inFI MUST be a Python Obit FInterpolate"
+        raise TypeError("inFI MUST be a Python Obit FInterpolate")
     if not FArray.PIsA(newArray):
-        raise TypeError,"newArray MUST be a Python Obit FArray"
+        raise TypeError("newArray MUST be a Python Obit FArray")
     #
     Obit.FInterpolateReplace (inFI.me, newArray.me)
     # end PReplace
-
 
 def PPixel (inFI, pixel, err):
     """
@@ -123,9 +119,9 @@ def PPixel (inFI, pixel, err):
     ################################################################
     # Checks
     if not PIsA(inFI):
-        raise TypeError,"inFI MUST be a Python Obit FInterpolate"
+        raise TypeError("inFI MUST be a Python Obit FInterpolate")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be a Python ObitErr"
+        raise TypeError("err MUST be a Python ObitErr")
     #
     ret = Obit.FInterpolatePixel (inFI.me, pixel, err.me)
     if err.isErr:
@@ -145,7 +141,7 @@ def P1D (inFI, pixel, err):
     ################################################################
     # Checks
     if not PIsA(inFI):
-        raise TypeError,"inFI MUST be a Python Obit FInterpolate"
+        raise TypeError("inFI MUST be a Python Obit FInterpolate")
     #
     return Obit.FInterpolate1D (inFI.me, pixel)
     # end P1D
@@ -159,7 +155,6 @@ def PPosition (inFI, coord, err):
     pixel coordinates.
     Interpolation between planes is not supported.
     return the value at specified coordinate
-
     * inFI    = Python Obit input FInterpolate
     * coord   = coordinate as array of float
     * err     = Python Obit Error/message stack
@@ -167,9 +162,9 @@ def PPosition (inFI, coord, err):
     ################################################################
     # Checks
     if not PIsA(inFI):
-        raise TypeError,"inFI MUST be a Python Obit FInterpolate"
+        raise TypeError("inFI MUST be a Python Obit FInterpolate")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be a Python ObitErr"
+        raise TypeError("err MUST be a Python ObitErr")
     if err.isErr: # existing error?
         return None
     #
@@ -184,39 +179,34 @@ def PGetList (inFI):
     Get InfoList
     
     return InfoList reference
-
     * inFI    = Python Obit input FInterpolate
     """
     ################################################################
     # Checks
     if not PIsA(inFI):
-        raise TypeError,"inFI MUST be a Python Obit FInterpolate"
+        raise TypeError("inFI MUST be a Python Obit FInterpolate")
     #
     out = InfoList.InfoList()
-    out.me = Obit.InfoListUnref(out.me)
     out.me = Obit.FInterpolateGetList(inFI.me)
     return out
     # end PGetList
-
 
 def PGetFArray (inFI):
     """
     Get Associated FArray reference
     
     return FArray (data being interpolated) reference 
-
     * inFI    = Python Obit input FInterpolate
     """
     ################################################################
     # Checks
     if not PIsA(inFI):
-        raise TypeError,"inFI MUST be a Python Obit FInterpolate"
+        raise TypeError("inFI MUST be a Python Obit FInterpolate")
     #
     out    = FArray.FArray("None")
     out.me = Obit.FInterpolateGetFArray (inFI.me)
     return out
     # end PGetFArray 
-
 
 def PGetDesc (inFI):
     """
@@ -229,13 +219,12 @@ def PGetDesc (inFI):
     ################################################################
     # Checks
     if not PIsA(inFI):
-       raise TypeError,"inFI MUST be a Python Obit FInterpolate"
+       raise TypeError("inFI MUST be a Python Obit FInterpolate")
     #
     out    = ImageDesc.ImageDesc("None")
     out.me = Obit.FInterpolateGetImageDesc (inFI.me)
     return out
     # end PGetDesc
-
 
 def PSetDesc (inFI, desc):
     """
@@ -247,30 +236,27 @@ def PSetDesc (inFI, desc):
     ################################################################
     # Checks
     if not PIsA(inFI):
-        raise TypeError,"inFI MUST be a Python Obit FInterpolate"
+        raise TypeError("inFI MUST be a Python Obit FInterpolate")
     if not ImageDesc.PIsA(desc):
-        raise TypeError,"desc MUST be a Python Obit ImageDesc"
+        raise TypeError("desc MUST be a Python Obit ImageDesc")
     #
     Obit.FInterpolateSetDesc (inFI.me, desc.me)
     # end PSetDesc
-
 
 def PGetHwidth (inFI):
     """
     return Half width of interpolation kernal
     
     return hwidth member value
-
     * inFI    = Python Obit input FInterpolate
     """
     ################################################################
     # Checks
     if not PIsA(inFI):
-        raise TypeError,"inFI MUST be a Python Obit FInterpolate"
+        raise TypeError("inFI MUST be a Python Obit FInterpolate")
     #
     return Obit.FInterpolateGetHwidth(inFI.me)
     # end PGetHwidth
-
 
 def PSetHwidth (inFI, hwidth):
     """
@@ -282,7 +268,7 @@ def PSetHwidth (inFI, hwidth):
     ################################################################
     # Checks
     if not PIsA(inFI):
-        raise TypeError,"inFI MUST be a Python Obit FInterpolate"
+        raise TypeError("inFI MUST be a Python Obit FInterpolate")
     #
     Obit.FInterpolateSetHwidth(inFI.me, hwidth)
     # end PSetHwidth
@@ -292,14 +278,13 @@ def PIsA (inFI):
     """
     Tells if object thinks it's a Python ObitFInterpolate
     
-    return true, false (1,0)
-
+    return True, False
     * inFI    = Python Obit input FInterpolate to test
     """
     ################################################################
     # Checks
-    if inFI.__class__ !=  FInterpolate:
-        return 0
-    return Obit.FInterpolateIsA(inFI.me);
+    if not isinstance(inFI, FInterpolate):
+        return False
+    return Obit.FInterpolateIsA(inFI.me)!=0
 
     # end PIsA

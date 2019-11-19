@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for UV  type                               */
 /*                                                                    */
-/*;  Copyright (C) 2004-2018                                          */
+/*;  Copyright (C) 2004-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -43,18 +43,30 @@
 %}
 
 
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitUV *me;
+} UV;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitUV *me;
+} UV;
+
 %inline %{
 
-extern void UVSetFITS(ObitUV *in, long nvis, int disk, char *file, 
+extern void UVSetFITS(ObitUV *in, long nvis, long disk, char *file, 
                       ObitErr *err) {
   ObitUVSetFITS(in, nvis, disk, file, err);
  } // end UVSetFITS
 
-extern void UVSetAIPS(ObitUV *in, long nvis, int disk, int cno, int user, 
+extern void UVSetAIPS(ObitUV *in, long nvis, long disk,long cno, long user, 
                       ObitErr *err) {
   ObitUVSetAIPS(in, nvis, disk, cno, user, err);
  }
 
+// Cast a UV data to an OData
 extern ObitData* UVCastData (ObitUV* inUV) {
   return (ObitData*)inUV;
 } // end  UVCastData
@@ -62,6 +74,52 @@ extern ObitData* UVCastData (ObitUV* inUV) {
 extern ObitUV* UVCreate (char* name) {
   return newObitUV (name);
 } // end  UVCreate
+
+void CreateUV(PyObject *self, char* name) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_UV, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateUV: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((UV*)ptr)->me = UVCreate(name);
+   else  ((UV*)ptr)->me = NULL;
+   return;
+ } // end CreateUV
+
+void DeleteUV(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_UV, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteUV: could not recover c struct");
+	return;
+   }
+   ((UV*)ptr)->me = ObitUVUnref(((UV*)ptr)->me);
+}// end DeleteUV
+
+ObitUV* UV_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_UV, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"UV_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((UV*)ptr)->me;
+}  // end UV_Get_me
+
+void UV_Set_me(PyObject *self, ObitUV *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_UV, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"UV_Set_me: could not recover c struct");
+	return;
+   }
+   ((UV*)ptr)->me =  ObitUVRef(me);
+}  // end UV_Set_me
 
 extern ObitUV* UVScratch (ObitUV *in, ObitErr *err) {
   return newObitUVScratch (in, err);
@@ -84,17 +142,17 @@ extern PyObject* UVInfo (ObitUV *in, ObitErr *err) {
     o = PyString_InternFromString("AIPS");
     PyDict_SetItemString(outDict, "type", o);
     AIPSIO = (ObitIOUVAIPS*)in->myIO;
-    o = PyInt_FromLong((long)AIPSIO->disk);
+    o = PyLong_FromLong((long)AIPSIO->disk);
     PyDict_SetItemString(outDict, "disk", o);
-    o = PyInt_FromLong((long)AIPSIO->CNO);
+    o = PyLong_FromLong((long)AIPSIO->CNO);
     PyDict_SetItemString(outDict, "CNO", o);
-    o = PyInt_FromLong((long)AIPSIO->UserId);
+    o = PyLong_FromLong((long)AIPSIO->UserId);
     PyDict_SetItemString(outDict, "user", o);
   } else if (ObitIOUVFITSIsA(in->myIO)) {  // FITS
     o = PyString_InternFromString("FITS");
     PyDict_SetItemString(outDict, "type", o);
     FITSIO = (ObitIOUVFITS*)in->myIO;
-    o = PyInt_FromLong((long)FITSIO->disk);
+    o = PyLong_FromLong((long)FITSIO->disk);
     PyDict_SetItemString(outDict, "disk", o);
     o = PyString_InternFromString((char*)FITSIO->FileName);
     PyDict_SetItemString(outDict, "filename", o);
@@ -124,7 +182,7 @@ extern void UVClone (ObitUV *in, ObitUV *out, ObitErr *err) {
 
 // access 1=READONLY, 2=WRITEONLY, 3=READWRITE
 // Table verion returned as outValue1
-extern ObitTable* newUVTable (ObitUV *in, int access, 
+extern ObitTable* newUVTable (ObitUV *in, long access, 
 			      char *tabType, long *outValue1, ObitErr *err) {
   ObitIOAccess laccess;
   olong ltabVer = (olong)*outValue1;
@@ -138,23 +196,23 @@ extern ObitTable* newUVTable (ObitUV *in, int access,
   return outTable;
 } // end  newUVTable
 
-extern int UVZapTable (ObitUV *in, char *tabType, long tabVer, 
-			    ObitErr *err) {
+extern long UVZapTable (ObitUV *in, char *tabType, long tabVer, 
+			ObitErr *err) {
   ObitIOCode ret;
   ret = ObitUVZapTable (in, tabType, tabVer, err);
   if (ret==OBIT_IO_OK) return 0;
   else return 1;
 } // end  UVZapTable
 
-extern int UVCopyTables (ObitUV *in, ObitUV *out, char **exclude,
-		  	        char **include, ObitErr *err) {
+extern long UVCopyTables (ObitUV *in, ObitUV *out, char **exclude,
+		  	 char **include, ObitErr *err) {
   ObitIOCode ret;
   ret = ObitUVCopyTables  (in, out, exclude, include, err);
   if (ret==OBIT_IO_OK) return 0;
   else return 1;
 } // end  UVCopyTables
 
-extern int UVUpdateTables (ObitUV *in, ObitErr *err) {
+extern long UVUpdateTables (ObitUV *in, ObitErr *err) {
   ObitIOCode ret;
   ret = ObitUVUpdateTables (in, err);
   if (ret==OBIT_IO_OK) return 0;
@@ -163,7 +221,7 @@ extern int UVUpdateTables (ObitUV *in, ObitErr *err) {
 
 // Open and close to fully instantiate
 // access 1=READONLY, 2=WRITEONLY, 3=READWRITE, 4=READCAL
-extern int UVfullInstantiate (ObitUV* in, int access, ObitErr *err) {
+extern long UVfullInstantiate (ObitUV* in, long access, ObitErr *err) {
   ObitIOCode ret;
   ObitIOAccess laccess;
 
@@ -178,7 +236,7 @@ extern int UVfullInstantiate (ObitUV* in, int access, ObitErr *err) {
 } // end UVfullInstantiate
 
 
-extern int UVOpen (ObitUV *in, int access, ObitErr *err) {
+extern long UVOpen (ObitUV *in, long access, ObitErr *err) {
   ObitIOCode ret;
   ObitIOAccess laccess;
 
@@ -191,7 +249,7 @@ extern int UVOpen (ObitUV *in, int access, ObitErr *err) {
   else return 1;
 } // end Open
 
-extern int UVRead (ObitUV *in, ObitErr *err) {
+extern long UVRead (ObitUV *in, ObitErr *err) {
   ObitIOCode ret;
   if (in->myIO->access == OBIT_IO_ReadCal) 
     ret = ObitUVReadSelect (in, NULL, err);
@@ -201,23 +259,28 @@ extern int UVRead (ObitUV *in, ObitErr *err) {
   else return 1;
 } // end Read
 
-extern int UVWrite (ObitUV *in, ObitErr *err) {
+extern long UVWrite (ObitUV *in, ObitErr *err) {
   ObitIOCode ret;
   ret = ObitUVWrite (in, NULL, err);
   if (ret==OBIT_IO_OK) return 0;
   else return 1;
 } // end Write
 
-extern int UVRewrite (ObitUV *in, ObitErr *err) {
+extern long UVRewrite (ObitUV *in, ObitErr *err) {
   ObitIOCode ret;
   ret = ObitUVRewrite (in, NULL, err);
   if (ret==OBIT_IO_OK) return 0;
   else return 1;
 } // end Write
 
-extern PyObject *UVGetVisBuf (ObitUV *in) {
-  return PyBuffer_FromReadWriteMemory(in->buffer,
-				      in->bufferSize * sizeof(ofloat));
+extern PyObject *UVGetVisBuf (ObitUV *in){
+#if PY_MAJOR_VERSION < 3
+    return PyBuffer_FromReadWriteMemory(in->buffer,
+                                      in->bufferSize * sizeof(ofloat));
+#else
+    return PyMemoryView_FromMemory((char *)in->buffer,
+                                      in->bufferSize * sizeof(ofloat), PyBUF_WRITE);
+#endif
 }
 
 // force header update 
@@ -225,7 +288,7 @@ extern void UVDirty (ObitUV *in) {
   in->myStatus = OBIT_Modified;
 } // end Dirty
 
-extern int UVClose (ObitUV *in, ObitErr *err) {
+extern long UVClose (ObitUV *in, ObitErr *err) {
   ObitIOCode ret;
   ret =  ObitUVClose (in, err);
   if (ret==OBIT_IO_OK) return 0;
@@ -283,12 +346,12 @@ extern void UVSetDesc (ObitUV* in, ObitUVDesc* desc) {
   in->myDesc = ObitUVDescRef(desc);
 }
 
-extern int UVisScratch (ObitUV* in) {
-  return (int)in->isScratch;
+extern long UVisScratch (ObitUV* in) {
+  return (long)in->isScratch;
 }
 
-extern int UVIsA (ObitUV* in) {
-  return ObitUVIsA(in);
+extern long UVIsA (ObitUV* in) {
+  return (long)ObitUVIsA(in);
 }
 
 extern char* UVGetName (ObitUV* in) {
@@ -302,11 +365,11 @@ extern char* UVGetName (ObitUV* in) {
 /* UV Utility functions */
 
 // returns float array val, [0]=maximum baseline length (in U,V), [1] = maximum W
-extern void UVUtilUVWExtrema(ObitUV* in, ObitErr *err, float val[2]) {
+extern void UVUtilUVWExtrema(ObitUV* in, ObitErr *err, float *val) {
   ObitUVUtilUVWExtrema (in, &val[0], &val[1], err);
 } // end UVUtilUVWExtrema
 
-extern ObitUV* UVUtilCopyZero(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
+extern ObitUV* UVUtilCopyZero(ObitUV* in, long scratch, ObitUV *out, ObitErr *err) {
   gboolean lscratch;
   lscratch = scratch!=0;
   return ObitUVUtilCopyZero (in, lscratch, out, err);
@@ -338,7 +401,6 @@ extern void UVUtilQuack(ObitUV* inUV, float begDrop, float endDrop,
   ofloat ftemp;
   ObitTableNX *NXTab = NULL;
   ObitTableFG *FGTab = NULL;
-  ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *routine = "UVUtilQuack";
 
@@ -368,25 +430,25 @@ extern void UVUtilQuack(ObitUV* inUV, float begDrop, float endDrop,
   if (err->error) Obit_traceback_msg (err, routine, inUV->name);
 } // end UVUtilQuack
 
-extern ObitUV* UVUtilHann(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
+extern ObitUV* UVUtilHann(ObitUV* in, long scratch, ObitUV *out, ObitErr *err) {
   gboolean lscratch;
   lscratch = scratch!=0;
   return ObitUVUtilHann (in, lscratch, out, err);
 } // end UVUtilHann
 
-extern ObitUV* UVUtilAvgF(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
+extern ObitUV* UVUtilAvgF(ObitUV* in, long scratch, ObitUV *out, ObitErr *err) {
   gboolean lscratch;
   lscratch = scratch!=0;
   return ObitUVUtilAvgF (in, lscratch, out, err);
 } // end UVUtilAvgF
 
-extern ObitUV* UVUtilAvgT(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
+extern ObitUV* UVUtilAvgT(ObitUV* in, long scratch, ObitUV *out, ObitErr *err) {
   gboolean lscratch;
   lscratch = scratch!=0;
   return ObitUVUtilAvgT (in, lscratch, out, err);
 } // end UVUtilAvgT
 
-extern ObitUV* UVUtilAvgTF(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
+extern ObitUV* UVUtilAvgTF(ObitUV* in, long scratch, ObitUV *out, ObitErr *err) {
   gboolean lscratch;
   lscratch = scratch!=0;
   return ObitUVUtilBlAvgTF (in, lscratch, out, err);
@@ -424,32 +486,32 @@ extern void UVEditStokes(ObitUV* in, ObitUV *out, ObitErr *err) {
   return ObitUVEditStokes (in, out, err);
 } // end UVEditStokes
 
-extern ObitUV* UVEditClip(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
+extern ObitUV* UVEditClip(ObitUV* in, long scratch, ObitUV *out, ObitErr *err) {
   gboolean lscratch;
   lscratch = scratch!=0;
   return ObitUVEditClip (in, lscratch, out, err);
 } // end UVEditClip
 
-extern ObitUV* UVEditClipStokes(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
+extern ObitUV* UVEditClipStokes(ObitUV* in, long scratch, ObitUV *out, ObitErr *err) {
   gboolean lscratch;
   lscratch = scratch!=0;
   return ObitUVEditClipStokes (in, lscratch, out, err);
 } // end UVEditClipStokes
 
-extern int UVUtilFlag (ObitUV *inUV, ObitErr *err) {
+extern long UVUtilFlag (ObitUV *inUV, ObitErr *err) {
   ObitIOCode ret;
   ret = ObitUVUtilFlag (inUV, err);
   if (ret==OBIT_IO_OK) return 0;
   else return 1;
 }  // end UVUtilFlag
 
-extern ObitUV* UVAvg2One(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
+extern ObitUV* UVAvg2One(ObitUV* in, long scratch, ObitUV *out, ObitErr *err) {
   gboolean lscratch;
   lscratch = scratch!=0;
   return ObitUVUtilAvg2One (in, lscratch, out, err);
 } // end UVAvg2One
 
-extern ObitUV* UVSmoF(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
+extern ObitUV* UVSmoF(ObitUV* in, long scratch, ObitUV *out, ObitErr *err) {
   gboolean lscratch;
   lscratch = scratch!=0;
   return ObitUVUtilSmoF (in, lscratch, out, err);
@@ -472,31 +534,4 @@ extern ObitTable* TableSNGetZeroFR (ObitUV *inUV,  ObitUV *outUV, long ver, Obit
 %}
 
 /* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitUV *me;
-} UV;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitUV *me;
-} UV;
-
-%addmethods UV { 
-  UV(char *name) {
-     UV *out;
-     out = (UV *) malloc(sizeof(UV));
-     if (strcmp(name, "None")) out->me = UVCreate(name);
-     else out->me = NULL;
-     return out;
-   }
-  ~UV() { /* Scratch files may be deleted separately*/
-   if (self && (self->me)) {
-     if (self->me->ReferenceCount>0) 
-        self->me = ObitUVUnref(self->me);
-     free(self);
-    }
-  }
-};
 

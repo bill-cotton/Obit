@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for FITS file utilities                    */
 /*                                                                    */
-/*;  Copyright (C) 2007,2008                                          */
+/*;  Copyright (C) 2007-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -35,14 +35,14 @@
 
 
 %inline %{
-extern int FITSFileExist(int disk, char *filename, ObitErr *err)
+extern long FITSFileExist(long disk, char *filename, ObitErr *err)
 {
   gchar *fullname=NULL, *fullname2=NULL;
   gboolean exist;
-  int lexist=0;
+  long lexist=0;
 
   // Full file name
-  fullname = ObitFITSFilename (disk, filename, err);
+  fullname = ObitFITSFilename ((olong)disk, filename, err);
   if (fullname==NULL) return lexist;
 
   exist = ObitFileFITSExist (fullname, err);
@@ -60,14 +60,23 @@ extern int FITSFileExist(int disk, char *filename, ObitErr *err)
   return lexist;
 } /* end FITSFileExist */
 
-extern int FITSAddDir(char *dir, ObitErr *err)
+extern long FITSAddDir(char *dir, ObitErr *err)
 {
-   return ObitFITSAddDir(dir, err);
+   return (long)ObitFITSAddDir(dir, err);
 } /* end FITSAddDirname */
 
-extern void FITSSetDir(char *dir, int disk, ObitErr *err)
+extern void FITSSetDir(char *dir, long disk, ObitErr *err)
 {
-   ObitFITSSetDir(dir, (gint)disk, err);
+   ObitFITSSetDir(dir, (olong)disk, err);
 } /* end FITSSetDirname */
 
+extern long FITSGetNumDisk(ObitErr *err)
+{
+   return (long)ObitFITSGetNumDisk(err);
+} /* end FITSGetNumDisk */
+
+extern char* FITSGetDirname(long disk, ObitErr *err)
+{
+   return (char*)ObitFITSDirname((olong)disk, err);
+} /* end FITSSetDirname */
 %}

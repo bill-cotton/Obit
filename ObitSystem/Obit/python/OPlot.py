@@ -23,7 +23,7 @@ can be used in text strings:
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2006,2016
+#  Copyright (C) 2006,2016,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -50,35 +50,12 @@ can be used in text strings:
 #-----------------------------------------------------------------------
 
 # Python shadow class to ObitPlot class
-import Obit, InfoList, Image
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, InfoList, Image
 import math
 
-class OPlotPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.OPlotUnref(Obit.OPlot_me_get(self.this))
-            # In with the new
-            Obit.OPlot_me_set(self.this,value)
-            return
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != OPlot:
-            return
-        if name == "me" : 
-            return Obit.OPlot_me_get(self.this)
-        # Functions to return members
-        if name=="List":
-            return PGetList(self)
-        raise AttributeError,name
-    def __repr__(self):
-        if self.__class__ != OPlot:
-            return
-        return "<C OPlot instance> " + Obit.OPlotGetName(self.me)
-
-class OPlot(OPlotPtr):
+class OPlot(Obit.OPlot):
     """
     Python Obit interface to display server
     
@@ -91,10 +68,33 @@ class OPlot(OPlotPtr):
     ========  =======================================
     """
     def __init__(self, name):
-        self.this = Obit.new_OPlot(name)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_OPlot(self.this)
+        super(OPlot, self).__init__()
+        Obit.CreateOPlot(self.this, name)
+    def __del__(self, DeleteOPlot=_Obit.DeleteOPlot):
+        if _Obit!=None:
+            DeleteOPlot(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.OPlotUnref(Obit.OPlot_Get_me(self.this))
+            # In with the new
+            Obit.OPlot_Set_me(self.this,value)
+            return
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if not isinstance(self, OPlot):
+            return "Bogus Dude"+str(self.__class__)
+        if name == "me" : 
+            return Obit.OPlot_Get_me(self.this)
+        # Functions to return members
+        if name=="List":
+            return PGetList(self)
+        raise AttributeError(name)
+    def __repr__(self):
+        if not isinstance(self, OPlot):
+            return "Bogus Dude"+str(self.__class__)
+        return "<C OPlot instance> " + Obit.OPlotGetName(self.me)
 
 # Foreground Colors
 unBLACK     = 0
@@ -195,7 +195,7 @@ def PXYPlot (plot, symbol, x, y, err):
                       See PDrawAxes for details.
     XTICK   (float)   world coordinate interval between major tick marks
                       on X axis. If xtick=0.0 [def], the interval is chosen.
-    NXSUB   (int)     the number of subintervals to divide the major
+    NXSUB   (long)    the number of subintervals to divide the major
                       coordinate interval into. If xtick=0.0 or nxsub=0,
                       the number is chosen. [def 0]
     YTICK   (float)   like xtick for the Y axis.
@@ -209,8 +209,8 @@ def PXYPlot (plot, symbol, x, y, err):
     ################################################################
     # Checks
     if not PIsA(plot):
-        print "Actually ",plot.__class__
-        raise TypeError,"plot MUST be a Python Obit Plot"
+        print("Actually ",plot.__class__)
+        raise TypeError("plot MUST be a Python Obit Plot")
     n = len(y)  # How many points?
     Obit.PlotXYPlot (plot.me, symbol, n, x, y, err.me)
     # end PXYPlot
@@ -250,8 +250,8 @@ def PXYOver (plot, symbol, x, y, err):
     ################################################################
     # Checks
     if not PIsA(plot):
-        print "Actually ",plot.__class__
-        raise TypeError,"plot MUST be a Python Obit Plot"
+        print("Actually ",plot.__class__)
+        raise TypeError("plot MUST be a Python Obit Plot")
     n = len(y)  # How many points?
     Obit.PlotXYOver (plot.me, symbol, n, x, y, err.me)
     # end PXYOver
@@ -320,8 +320,8 @@ def PXYErr (plot, symbol, x, y, e, err):
     ################################################################
     # Checks
     if not PIsA(plot):
-        print "Actually ",plot.__class__
-        raise TypeError,"plot MUST be a Python Obit Plot"
+        print("Actually ",plot.__class__)
+        raise TypeError("plot MUST be a Python Obit Plot")
     n = len(y)  # How many points?
     Obit.PlotXYErr (plot.me, symbol, n, x, y, e, err.me)
     # end PXYErr
@@ -358,11 +358,11 @@ def PContour (plot, label, image, lev, cntfac, err):
     ################################################################
     # Checks
     if not PIsA(plot):
-        print "Actually ",plot.__class__
-        raise TypeError,"plot MUST be a Python Obit Plot"
+        print("Actually ",plot.__class__)
+        raise TypeError("plot MUST be a Python Obit Plot")
     if not Image.PIsA(image):
-        print "Actually ",image.__class__
-        raise TypeError,"image MUST be a Python Obit Image"
+        print("Actually ",image.__class__)
+        raise TypeError("image MUST be a Python Obit Image")
     Obit.PlotContour (plot.me, label, image.me, lev, cntfac, err.me)
     # end PContour
 
@@ -401,11 +401,11 @@ def PGrayScale (plot, label, image, err):
     ################################################################
     # Checks
     if not PIsA(plot):
-        print "Actually ",plot.__class__
-        raise TypeError,"plot MUST be a Python Obit Plot"
+        print("Actually ",plot.__class__)
+        raise TypeError("plot MUST be a Python Obit Plot")
     if not Image.PIsA(image):
-        print "Actually ",image.__class__
-        raise TypeError,"image MUST be a Python Obit Image"
+        print("Actually ",image.__class__)
+        raise TypeError("image MUST be a Python Obit Image")
     Obit.PlotGrayScale (plot.me, label, image.me, err.me)
     # end PGrayScale
 
@@ -434,11 +434,11 @@ def PMarkCross (plot, image, ra, dec, err, size=5.0):
     ################################################################
     # Checks
     if not PIsA(plot):
-        print "Actually ",plot.__class__
-        raise TypeError,"plot MUST be a Python Obit Plot"
+        print("Actually ",plot.__class__)
+        raise TypeError("plot MUST be a Python Obit Plot")
     if not Image.PIsA(image):
-        print "Actually ",image.__class__
-        raise TypeError,"image MUST be a Python Obit Image"
+        print("Actually ",image.__class__)
+        raise TypeError("image MUST be a Python Obit Image")
     n = len(ra)
     Obit.PlotMarkCross (plot.me, image.me, n, ra, dec, size, err.me)
     # end PMarkCross
@@ -453,7 +453,7 @@ def PShow (plot, err):
     ################################################################
      # Checks
     if not PIsA(plot):
-        raise TypeError,"plot MUST be a Python Obit plot"
+        raise TypeError("plot MUST be a Python Obit plot")
     #
     Obit.PlotFinishPlot(plot.me, err.me)
     # end  PShow
@@ -493,7 +493,7 @@ def PSetPlot (plot, xmin, xmax, ymin, ymax, just, axis, err):
     ################################################################
      # Checks
     if not PIsA(plot):
-        raise TypeError,"plot MUST be a Python Obit plot"
+        raise TypeError("plot MUST be a Python Obit plot")
     #
     Obit.PlotSetPlot(plot.me, xmin, xmax, ymin, ymax, just, axis, err.me)
     # end  PSetPlot
@@ -512,7 +512,7 @@ def PLabel (plot, xlabel, ylabel, title, err):
     ################################################################
      # Checks
     if not PIsA(plot):
-        raise TypeError,"plot MUST be a Python Obit plot"
+        raise TypeError("plot MUST be a Python Obit plot")
     #
     Obit.PlotLabel(plot.me, xlabel, ylabel, title, err.me)
     # end  PLabel
@@ -555,7 +555,7 @@ def PDrawAxes(plot, xopt, xtick, nxsub, yopt, ytick, nysub, err):
     ################################################################
      # Checks
     if not PIsA(plot):
-        raise TypeError,"plot MUST be a Python Obit plot"
+        raise TypeError("plot MUST be a Python Obit plot")
     #
     Obit.PlotDrawAxes(plot.me, xopt, xtick, nxsub, yopt, ytick, nysub, err.me)
     # end  DrawAxes
@@ -571,7 +571,7 @@ def PSetCharSize (plot,cscale, err):
     ################################################################
      # Checks
     if not PIsA(plot):
-        raise TypeError,"plot MUST be a Python Obit plot"
+        raise TypeError("plot MUST be a Python Obit plot")
     #
     Obit.PlotSetCharSize (plot.me, cscale, err.me)
     # end  PSetCharSize 
@@ -587,7 +587,7 @@ def PSetLineWidth (plot, lwidth, err):
     ################################################################
      # Checks
     if not PIsA(plot):
-        raise TypeError,"plot MUST be a Python Obit plot"
+        raise TypeError("plot MUST be a Python Obit plot")
     #
     Obit.PlotSetLineWidth(plot.me, lwidth, err.me)
     # end  PetLineWidth
@@ -605,7 +605,7 @@ def PSetLineStyle (plot, lstyle, err):
     ################################################################
      # Checks
     if not PIsA(plot):
-        raise TypeError,"plot MUST be a Python Obit plot"
+        raise TypeError("plot MUST be a Python Obit plot")
     #
     Obit.PlotSetLineStyle(plot.me, lstyle, err.me)
     # end  PetLineStyle
@@ -623,7 +623,7 @@ def PSetColor (plot, color, err):
     ################################################################
      # Checks
     if not PIsA(plot):
-        raise TypeError,"plot MUST be a Python Obit plot"
+        raise TypeError("plot MUST be a Python Obit plot")
     #
     Obit.PlotSetColor(plot.me, color, err.me)
     # end  PSetColor
@@ -643,7 +643,7 @@ def PSetPage (plot, sub, err):
     ################################################################
      # Checks
     if not PIsA(plot):
-        raise TypeError,"plot MUST be a Python Obit plot"
+        raise TypeError("plot MUST be a Python Obit plot")
     #
     Obit.PlotSetPage(plot.me, sub, err.me)
     # end  PSetPage
@@ -672,7 +672,7 @@ def PText (plot, x, y, angle, just, text, err):
     ################################################################
      # Checks
     if not PIsA(plot):
-        raise TypeError,"plot MUST be a Python Obit plot"
+        raise TypeError("plot MUST be a Python Obit plot")
     #
     dx = math.cos(angle/57.296)
     dy = math.sin(angle/57.296)
@@ -713,7 +713,7 @@ def PRelText (plot, side, disp, coord, fjust, text, err):
     ################################################################
      # Checks
     if not PIsA(plot):
-        raise TypeError,"plot MUST be a Python Obit plot"
+        raise TypeError("plot MUST be a Python Obit plot")
     #
     Obit.PlotRelText(plot.me, side, disp, coord, fjust, text, err.me)
     # end  PRelText
@@ -732,7 +732,7 @@ def PDrawLine (plot, x1, y1, x2, y2, err):
     ################################################################
      # Checks
     if not PIsA(plot):
-        raise TypeError,"plot MUST be a Python Obit plot"
+        raise TypeError("plot MUST be a Python Obit plot")
     #
     Obit.PlotDrawLine(plot.me, x1, y1, x2, y2, err.me)
     # end  PDrawLine
@@ -749,7 +749,7 @@ def PDrawCurve (plot, x, y, err):
     ################################################################
      # Checks
     if not PIsA(plot):
-        raise TypeError,"plot MUST be a Python Obit plot"
+        raise TypeError("plot MUST be a Python Obit plot")
     #
     n = len(x)
     Obit.PlotDrawCurve (plot.me, n, x, y, err.me)
@@ -768,7 +768,7 @@ def PDrawCircle (plot, x, y,radius,  err):
     ################################################################
      # Checks
     if not PIsA(plot):
-        raise TypeError,"plot MUST be a Python Obit plot"
+        raise TypeError("plot MUST be a Python Obit plot")
     #
     Obit.PlotDrawCircle (plot.me, x, y, radius, err.me)
     # end  PDrawCircle 
@@ -804,7 +804,7 @@ def PDrawSymbol (plot, x, y, symbol, err):
     ################################################################
      # Checks
     if not PIsA(plot):
-        raise TypeError,"plot MUST be a Python Obit plot"
+        raise TypeError("plot MUST be a Python Obit plot")
     #
     Obit.PlotDrawSymbol(plot.me, x, y, symbol, err.me)
     # end  PDrawSymbol
@@ -835,7 +835,7 @@ def PDrawPoly (plot, x, y, fill, err):
     ################################################################
      # Checks
     if not PIsA(plot):
-        raise TypeError,"plot MUST be a Python Obit plot"
+        raise TypeError("plot MUST be a Python Obit plot")
     #
     scale = 1.0
     Obit.PlotDrawPoly(plot.me, len(x), x, y, fill, scale, err.me)
@@ -852,10 +852,9 @@ def PGetList (plot):
     ################################################################
      # Checks
     if not PIsA(plot):
-        raise TypeError,"plot MUST be a Python Obit plot"
+        raise TypeError("plot MUST be a Python Obit plot")
     #
     out    = InfoList.InfoList()
-    out.me = Obit.InfoListUnref(out.me)
     out.me = Obit.PlotGetList(plot.me)
     return out
     # end PGetList
@@ -864,13 +863,13 @@ def PIsA (plot):
     """
     Tells if the input is a Python ObitPlot
     
-    returns true or false (1,0)
+    returns true Or false
 
-    * plot = Python Obit Plot to test
+    * Plot = Python Obit Plot to test
     """
     ################################################################
       # Checks
-    if plot.__class__ != OPlot:
-        return 0
-    return Obit.OPlotIsA(plot.me)
+    if not isinstance(plot, OPlot):
+        return False
+    return Obit.OPlotIsA(plot.me)!=0
     # end PIsA

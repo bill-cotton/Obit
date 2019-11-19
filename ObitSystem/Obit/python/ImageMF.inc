@@ -1,8 +1,8 @@
-/* $Id: ImageMF.inc 36 2008-09-29 12:54:35Z bill.cotton $  */  
+/* $Id:  $  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageMF type                           */
 /*                                                                    */
-/*;  Copyright (C) 2010-2017                                          */
+/*;  Copyright (C) 2010-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -35,35 +35,120 @@
 #include "ObitIOImageFITS.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitImageMF *me;
+} ImageMF;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitImageMF *me;
+} ImageMF;
 
 %inline %{
+extern ObitImageMF* ImageMFCreate (char* name) {
+  return newObitImageMF (name);
+} // end  ImageMFCreate
+
+extern ObitImageMF* ImageMFUnref (ObitImageMF* in) {
+  if (!ObitImageMFIsA(in)) return NULL;
+  if (in && (in->ReferenceCount>0)) in = ObitImageMFUnref(in);
+  return in;
+}
+
+extern ObitImageMF*  ImageMFRef (ObitImageMF* in) {
+  return ObitImageMFRef(in);
+}
+
+void CreateImageMF(PyObject *self, char* name) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ImageMF, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateImageMF: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((ImageMF*)ptr)->me = ImageMFCreate(name);
+   else  ((ImageMF*)ptr)->me = NULL;
+   return;
+ } // end CreateImageMF
+
+void DeleteImageMF(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ImageMF, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteImageMF: could not recover c struct");
+	return;
+   }
+   ((ImageMF*)ptr)->me = ObitImageMFUnref(((ImageMF*)ptr)->me);
+}// end DeleteImageMF
+
+ObitImageMF* ImageMF_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ImageMF, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"ImageMF_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((ImageMF*)ptr)->me;
+}  // end ImageMF_Get_me
+
+void ImageMF_Set_me(PyObject *self, ObitImageMF *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ImageMF, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"ImageMF_Set_me: could not recover c struct");
+	return;
+   }
+   ((ImageMF*)ptr)->me =  ObitImageMFRef(me);
+}  // end ImageMF_Set_me
 
 // size=1-> OBIT_IO_byRow, else OBIT_IO_byPlane
-extern void ImageMFSetFITS(ObitImageMF *in, int size, int disk, char *file, 
-                         int blc[7], int trc[7], ObitErr *err) {
+extern void ImageMFSetFITS(ObitImageMF *in, long size, long disk, char *file, 
+                         long *blc, long *trc, ObitErr *err) {
   ObitIOSize fsize;
-
+  olong i, lblc[7], ltrc[7], ldisk;
   if (size==1) fsize = OBIT_IO_byRow;
   else fsize = OBIT_IO_byPlane;
-  ObitImageSetFITS(in, fsize, disk, file, blc, trc, err);
+  for (i=0; i<7; i++) {lblc[i]=(olong)blc[i]; ltrc[i]=(olong)trc[i];}
+  ldisk = (olong)disk;
+  ObitImageSetFITS(in, fsize, ldisk, file, lblc, ltrc, err);
  }
 
-extern void ImageMFSetAIPS(ObitImageMF *in, int size, int disk, int cno, int user, 
-                         int blc[7], int trc[7], ObitErr *err) {
+extern void ImageMFSetAIPS(ObitImageMF *in, long size, long disk, long cno, long user, 
+                         long *blc, long *trc, ObitErr *err) {
   ObitIOSize fsize;
-
+  olong i, lblc[7], ltrc[7], ldisk, lcno, luser;
   if (size==1) fsize = OBIT_IO_byRow;
   else fsize = OBIT_IO_byPlane;
-  ObitImageSetAIPS(in, fsize, disk, cno, user, blc, trc, err);
+  for (i=0; i<7; i++) {lblc[i]=(olong)blc[i]; ltrc[i]=(olong)trc[i];}
+  ldisk = (olong)disk; lcno = (olong)cno; luser = (olong)user;
+  ObitImageSetAIPS(in, fsize, ldisk, lcno, luser, lblc, ltrc, err);
  }
 
 extern ObitData* ImageMFCastData (ObitImageMF* inImage) {
   return (ObitData*)inImage;
 } // end ImageMFCastData
 
-extern ObitImageMF* ImageMFCreate (char* name) {
-  return newObitImageMF (name);
-} // end  ImageMFCreate
+// Open and close to fully instantiate
+// access 1=READONLY, 2=WRITEONLY, 3=READWRITE
+extern long ImageMFfullInstantiate (ObitImageMF* in, long access, ObitErr *err) {
+  ObitIOCode ret;
+  ObitIOAccess laccess;
+
+  laccess = OBIT_IO_ReadOnly;
+  if (access==2) laccess = OBIT_IO_WriteOnly;
+  else if (access==3) laccess = OBIT_IO_ReadWrite;
+  ret = ObitImageOpen ((ObitImage*)in, laccess, err);
+  ret = ObitImageClose ((ObitImage*)in, err);
+  if ((err->error) || (ret!=OBIT_IO_OK)) return 1;
+  else return 0;
+} // end ImageMFfullInstantiate
 
 extern PyObject* ImageMFInfo (ObitImageMF *in, ObitErr *err) {
   ObitIOImageAIPS *AIPSIO=NULL;
@@ -82,17 +167,17 @@ extern PyObject* ImageMFInfo (ObitImageMF *in, ObitErr *err) {
     o = PyString_InternFromString("AIPS");
     PyDict_SetItemString(outDict, "type", o);
     AIPSIO = (ObitIOImageAIPS*)in->myIO;
-    o = PyInt_FromLong((long)AIPSIO->disk);
+    o = PyLong_FromLong((long)AIPSIO->disk);
     PyDict_SetItemString(outDict, "disk", o);
-    o = PyInt_FromLong((long)AIPSIO->CNO);
+    o = PyLong_FromLong((long)AIPSIO->CNO);
     PyDict_SetItemString(outDict, "CNO", o);
-    o = PyInt_FromLong((long)AIPSIO->UserId);
+    o = PyLong_FromLong((long)AIPSIO->UserId);
     PyDict_SetItemString(outDict, "user", o);
   } else if (ObitIOImageFITSIsA(in->myIO)) {  // FITS
     o = PyString_InternFromString("FITS");
     PyDict_SetItemString(outDict, "type", o);
     FITSIO = (ObitIOImageFITS*)in->myIO;
-    o = PyInt_FromLong((long)FITSIO->disk);
+    o = PyLong_FromLong((long)FITSIO->disk);
     PyDict_SetItemString(outDict, "disk", o);
     o = PyString_InternFromString((char*)FITSIO->FileName);
     PyDict_SetItemString(outDict, "filename", o);
@@ -105,6 +190,7 @@ extern PyObject* ImageMFInfo (ObitImageMF *in, ObitErr *err) {
 
 extern ObitImageMF* ImageMFZap  (ObitImageMF *in, ObitErr *err) {
   ObitImageMFZap ((ObitImage*)in, err);
+  return NULL;
 } // end ImageMFZap
 
 extern void ImageMFRename  (ObitImageMF *in, ObitErr *err) {
@@ -120,16 +206,6 @@ extern ObitImageMF* ImageMFCopy  (ObitImageMF *in, ObitImageMF *out,
 extern void ImageMFDirty (ObitImageMF *in) {
   in->myStatus = OBIT_Modified;
 } // end Dirty
-
-extern ObitImageMF* ImageMFUnref (ObitImageMF* in) {
-  if (!ObitImageMFIsA(in)) return NULL;
-  if (in && (in->ReferenceCount>0)) in = ObitImageMFUnref(in);
-  return in;
-}
-
-extern ObitImageMF*  ImageMFRef (ObitImageMF* in) {
-  return ObitImageMFRef(in);
-}
 
 extern ObitInfoList* ImageMFGetList (ObitImageMF* in) {
   return ObitInfoListRef(in->info);
@@ -170,12 +246,12 @@ extern long ImageMFGetHighVer (ObitImageMF* in, char *tabType) {
   return ObitTableListGetHigh(in->tableList, tabType);
 }
 
-extern int ImageMFisScratch (ObitImageMF* in) {
-  return (int)in->isScratch;
+extern long ImageMFisScratch (ObitImageMF* in) {
+  return (long)in->isScratch;
 }
 
-extern int ImageMFIsA (ObitImageMF* in) {
-  return ObitImageMFIsA(in);
+extern long ImageMFIsA (ObitImageMF* in) {
+  return (long)ObitImageMFIsA(in);
 }
 
 extern char* ImageMFGetName (ObitImageMF* in) {
@@ -194,38 +270,10 @@ extern void ImageMFFitSpec2 (ObitImageMF* in, ObitImageMF* out, ObitErr* err) {
   ObitImageMFFitSpec2 (in, out, err);
 }
 
+void ObitImageMFEffFqCorr (ObitImageMF *in, ObitImageMF *in2, ObitErr *err);
 extern void ImageMFEffFqCorr (ObitImageMF* in, ObitImageMF* in2, ObitErr* err) {
   ObitImageMFEffFqCorr (in, in2, err);
 }
 
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitImageMF *me;
-} ImageMF;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitImageMF *me;
-} ImageMF;
-
-%addmethods ImageMF { 
-  ImageMF(char* name) {
-     ImageMF *out;
-     out = (ImageMF *) malloc(sizeof(ImageMF));
-     if (strcmp(name, "None")) out->me = ImageMFCreate(name);
-     else out->me = NULL;
-     return out;
-   }
-  ~ImageMF() { /* Scratch files may be deleted separately */
-  if (self && (self->me)) {
-    if (self->me->ReferenceCount>0) 
-       self->me = ImageMFUnref(self->me);
-    free(self);
-    } 
-  }
-};
 

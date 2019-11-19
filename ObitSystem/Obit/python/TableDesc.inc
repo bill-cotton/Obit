@@ -1,8 +1,8 @@
 /* $Id:    */  
 /*--------------------------------------------------------------------*/
-/* Swig module description for ImageDesc type                         */
+/* Swig module description for TableDesc type                         */
 /*                                                                    */
-/*;  Copyright (C) 2005-2013                                          */
+/*;  Copyright (C) 2005-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,6 +32,18 @@
 #include "ObitTableDesc.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitTableDesc *me;
+} TableDesc;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitTableDesc *me;
+} TableDesc;
+
 %inline %{
 // Routine to remove trailing blanks from a string 
 static void TableDescDeeBlank (gchar *in) 
@@ -48,6 +60,61 @@ static void TableDescDeeBlank (gchar *in)
 extern ObitTableDesc* TableDescCreate (char *name) {
   return newObitTableDesc (name);
 } // end TableDescCreate
+
+ObitTableDesc* TableDescRef (ObitTableDesc* in) {
+  return ObitTableDescRef (in);
+} // end TableDescRef
+
+ObitTableDesc* TableDescUnref (ObitTableDesc* in) {
+  if (!ObitTableDescIsA(in)) return NULL;
+  return ObitTableDescUnref (in);
+} // end TableDescUnref
+
+void CreateTableDesc(PyObject *self, char* name) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_TableDesc, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateTableDesc: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((TableDesc*)ptr)->me = TableDescCreate(name);
+   else  ((TableDesc*)ptr)->me = NULL;
+   return;
+ } // end CreateTableDesc
+
+void DeleteTableDesc(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_TableDesc, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteTableDesc: could not recover c struct");
+	return;
+   }
+   ((TableDesc*)ptr)->me = ObitTableDescUnref(((TableDesc*)ptr)->me);
+}// end DeleteTableDesc
+
+ObitTableDesc* TableDesc_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_TableDesc, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"TableDesc_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((TableDesc*)ptr)->me;
+}  // end TableDesc_Get_me
+
+void TableDesc_Set_me(PyObject *self, ObitTableDesc *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_TableDesc, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"TableDesc_Set_me: could not recover c struct");
+	return;
+   }
+   ((TableDesc*)ptr)->me =  ObitTableDescRef(me);
+}  // end TableDesc_Set_me
 
 extern ObitTableDesc* TableDescCopy (ObitTableDesc* in, 
 		              ObitTableDesc* out, ObitErr *err) {
@@ -81,30 +148,30 @@ extern PyObject *TableDescGetDict(ObitTableDesc* in) {
   }
 
   PyDict_SetItemString(outDict, "Table name", PyString_InternFromString(in->TableName));
-  PyDict_SetItemString(outDict, "version",PyInt_FromLong((long)in->version));
-  PyDict_SetItemString(outDict, "nrow",   PyInt_FromLong((long)in->nrow));
-  PyDict_SetItemString(outDict, "lrow",   PyInt_FromLong((long)in->lrow));
-  PyDict_SetItemString(outDict, "sortOrder1", PyInt_FromLong((long)in->sort[0]));
-  PyDict_SetItemString(outDict, "sortOrder2", PyInt_FromLong((long)in->sort[1]));
+  PyDict_SetItemString(outDict, "version",PyLong_FromLong((long)in->version));
+  PyDict_SetItemString(outDict, "nrow",   PyLong_FromLong((long)in->nrow));
+  PyDict_SetItemString(outDict, "lrow",   PyLong_FromLong((long)in->lrow));
+  PyDict_SetItemString(outDict, "sortOrder1", PyLong_FromLong((long)in->sort[0]));
+  PyDict_SetItemString(outDict, "sortOrder2", PyLong_FromLong((long)in->sort[1]));
 
   list = PyList_New(in->nfield);
-  for (i=0; i<in->nfield; i++) PyList_SetItem(list, i, PyInt_FromLong((long)in->repeat[i]));
+  for (i=0; i<in->nfield; i++) PyList_SetItem(list, i, PyLong_FromLong((long)in->repeat[i]));
   PyDict_SetItemString(outDict, "repeat", list);
 
   list = PyList_New(in->nfield);
-  for (i=0; i<in->nfield; i++) PyList_SetItem(list, i, PyInt_FromLong((long)in->dim[i][0]));
+  for (i=0; i<in->nfield; i++) PyList_SetItem(list, i, PyLong_FromLong((long)in->dim[i][0]));
   PyDict_SetItemString(outDict, "dim0", list);
 
   list = PyList_New(in->nfield);
-  for (i=0; i<in->nfield; i++) PyList_SetItem(list, i, PyInt_FromLong((long)in->dim[i][1]));
+  for (i=0; i<in->nfield; i++) PyList_SetItem(list, i, PyLong_FromLong((long)in->dim[i][1]));
   PyDict_SetItemString(outDict, "dim1", list);
 
   list = PyList_New(in->nfield);
-  for (i=0; i<in->nfield; i++) PyList_SetItem(list, i, PyInt_FromLong((long)in->dim[i][2]));
+  for (i=0; i<in->nfield; i++) PyList_SetItem(list, i, PyLong_FromLong((long)in->dim[i][2]));
   PyDict_SetItemString(outDict, "dim2", list);
 
   list = PyList_New(in->nfield);
-  for (i=0; i<in->nfield; i++) PyList_SetItem(list, i, PyInt_FromLong((long)in->type[i]));
+  for (i=0; i<in->nfield; i++) PyList_SetItem(list, i, PyLong_FromLong((long)in->type[i]));
   PyDict_SetItemString(outDict, "type", list);
 
   list = PyList_New(in->nfield);
@@ -144,9 +211,9 @@ extern void TableDescSetDict(ObitTableDesc* in, PyObject *inDict) {
         return;
   }
 
-  in->version  = PyInt_AsLong(PyDict_GetItemString(inDict, "version"));
-  in->sort[0]  = PyInt_AsLong(PyDict_GetItemString(inDict, "sortOrder1"));
-  in->sort[1]  = PyInt_AsLong(PyDict_GetItemString(inDict, "sortOrder2"));
+  in->version  = PyLong_AsLong(PyDict_GetItemString(inDict, "version"));
+  in->sort[0]  = PyLong_AsLong(PyDict_GetItemString(inDict, "sortOrder1"));
+  in->sort[1]  = PyLong_AsLong(PyDict_GetItemString(inDict, "sortOrder2"));
 
   list = PyDict_GetItemString(inDict, "FieldName");
   number = MIN (in->nfield, PyList_Size(list));
@@ -260,19 +327,19 @@ extern ObitTableDesc* TableDescDef(PyObject *inDict) {
     PyErr_SetString(PyExc_TypeError,"version not found");
     return out;
   }
-  out->version  = PyInt_AsLong(thing);
+  out->version  = PyLong_AsLong(thing);
   thing = PyDict_GetItemString(inDict, "sortOrder1");
   if (!thing) {
     PyErr_SetString(PyExc_TypeError,"sortOrder1 not found");
     return out;
   }
-  out->sort[0]  = PyInt_AsLong(thing);
+  out->sort[0]  = PyLong_AsLong(thing);
   thing = PyDict_GetItemString(inDict, "sortOrder2");
   if (!thing) {
     PyErr_SetString(PyExc_TypeError,"sortOrder2 not found");
     return out;
   }
-  out->sort[1]  = PyInt_AsLong(thing);
+  out->sort[1]  = PyLong_AsLong(thing);
   thing = PyDict_GetItemString(inDict, "Table name");
   if (!thing) {
     PyErr_SetString(PyExc_TypeError,"Table name not found");
@@ -298,11 +365,11 @@ extern ObitTableDesc* TableDescDef(PyObject *inDict) {
 
   // other field stuff
   for (i=0; i<nfield; i++) {
-    out->repeat[i] = (olong)PyInt_AsLong(PyList_GetItem(repeat, i));
-    out->type[i]   = (olong)PyInt_AsLong(PyList_GetItem(type, i));
-    out->dim[i][0] = (olong)PyInt_AsLong(PyList_GetItem(dim0, i));
-    out->dim[i][1] = (olong)PyInt_AsLong(PyList_GetItem(dim1, i));
-    out->dim[i][2] = (olong)PyInt_AsLong(PyList_GetItem(dim2, i));
+    out->repeat[i] = (olong)PyLong_AsLong(PyList_GetItem(repeat, i));
+    out->type[i]   = (olong)PyLong_AsLong(PyList_GetItem(type, i));
+    out->dim[i][0] = (olong)PyLong_AsLong(PyList_GetItem(dim0, i));
+    out->dim[i][1] = (olong)PyLong_AsLong(PyList_GetItem(dim1, i));
+    out->dim[i][2] = (olong)PyLong_AsLong(PyList_GetItem(dim2, i));
   }
 
   ObitTableDescIndex (out);
@@ -311,43 +378,8 @@ extern ObitTableDesc* TableDescDef(PyObject *inDict) {
 
 } // end TableDescDef
 
-ObitTableDesc* TableDescRef (ObitTableDesc* in) {
-  return ObitTableDescRef (in);
-} // end TableDescRef
-
-ObitTableDesc* TableDescUnref (ObitTableDesc* in) {
-  if (!ObitTableDescIsA(in)) return NULL;
-  return ObitTableDescUnref (in);
-} // end TableDescUnref
-
 extern int TableDescIsA (ObitTableDesc* in) {
   return ObitTableDescIsA(in);
 }
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitTableDesc *me;
-} TableDesc;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitTableDesc *me;
-} TableDesc;
-
-%addmethods TableDesc { 
-  TableDesc(char *name) {
-     TableDesc *out;
-     out = (TableDesc *) malloc(sizeof(TableDesc));
-     if (strcmp(name, "None")) out->me = TableDescCreate (name);
-     else out->me = NULL;
-     return out;
-   }
-  ~TableDesc() {
-    self->me = TableDescUnref(self->me);
-    free(self);
-  }
-};
 

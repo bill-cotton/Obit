@@ -2,7 +2,7 @@
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2006
+#  Copyright (C) 2006,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -29,7 +29,9 @@
 #-----------------------------------------------------------------------
 
 # Python interface to FITS directory utilities
+from __future__ import absolute_import
 import Obit, OSystem, OErr, os, pydoc, string
+from six.moves import range
 
 global FITSdisks, nFITS
 FITSdisks = []
@@ -94,7 +96,7 @@ def PAddDir(newDir, err, URL=None):
     global FITSdisks, nFITS
     # Checks
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     retDisk = Obit.FITSAddDir(newDir, err.me)
     FITSdisks.append(newDir)
@@ -127,7 +129,7 @@ def PSetDir(newDir, disk, err, URL=None):
     global FITSdisks, nFITS
     # Checks
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     retDisk = Obit.FITSSetDir(newDir, disk, err.me)
     FITSdisks[disk] = newDir

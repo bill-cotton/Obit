@@ -30,6 +30,7 @@ a MsgWin executes a task for ObitTalk snd displays any messages.
 #                         Charlottesville, VA 22903-2475 USA
 #-----------------------------------------------------------------------
 
+from __future__ import absolute_import
 import wx
 import TaskWindow, OTWindow
 

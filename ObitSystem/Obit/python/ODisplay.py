@@ -32,33 +32,11 @@ ONLY ONE MAY EXIST
 #-----------------------------------------------------------------------
 
 # Python shadow class to ObitDisplay class
-import Obit, Image, ImageMosaic, OWindow
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, Image, ImageMosaic, OWindow
 
-class ODisplayPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.ODisplayUnref(Obit.ODisplay_me_get(self.this))
-            # In with the new
-            Obit.ODisplay_me_set(self.this,value)
-            return
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != ODisplay:
-            return
-        if name == "me" : 
-            return Obit.ODisplay_me_get(self.this)
-        if name == "url" : 
-            return self.serverURL
-        raise AttributeError,name
-    def __repr__(self):
-        if self.__class__ != ODisplay:
-            return
-        return "<C ODisplay instance> " + Obit.ODisplayGetName(self.me)
-
-class ODisplay(ODisplayPtr):
+class ODisplay(Obit.ODisplay):
     """
     Python Obit interface to display server
     
@@ -66,8 +44,34 @@ class ODisplay(ODisplayPtr):
     ONLY ONE MAY EXIST
     """
     def __init__(self, name, serverURL, err):
-        self.this = Obit.new_ODisplay(name, serverURL, err.me)
+        super(ODisplay, self).__init__()
+        Obit.CreateODisplay (self.this, name, serverURL, err.me)
         self.serverURL = serverURL
+    def __del__(self, DeleteODisplay=_Obit.DeleteODisplay):
+        if _Obit!=None:
+            DeleteODisplay(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.ODisplayUnref(Obit.ODisplay_Get_me(self.this))
+            # In with the new
+            Obit.ODisplay_Set_me(self.this,value)
+            return
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if not isinstance(self, ODisplay):
+            return "Bogus dude"+str(self.__class__)
+        if name == "me" : 
+            return Obit.ODisplay_Get_me(self.this)
+        if name == "url" : 
+            return self.serverURL
+        raise AttributeError(name)
+    def __repr__(self):
+        if not isinstance(self, ODisplay):
+            return "Bogus Dude!"
+        return "<C ODisplay instance> " + Obit.ODisplayGetName(self.me)
+
     def ping (self):
         """ See if Display server present
     
@@ -75,7 +79,7 @@ class ODisplay(ODisplayPtr):
 
         * self      = Display object
         """
-        from xmlrpclib import ServerProxy
+        from six.moves.xmlrpc_client import ServerProxy
         url = self.serverURL
         if url == "ObitView":
             url = "http://localhost:8765/RPC2"
@@ -88,15 +92,12 @@ class ODisplay(ODisplayPtr):
         else:
             pass
         if answer:
-            print "Display Server "+url+" present"
+            print("Display Server "+url+" present")
             return True
         else:
-            print "Display Server "+url+" NOT present"
+            print("Display Server "+url+" NOT present")
             return False
         # end ping
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_ODisplay(self.this)
 
 def PImage (disp, image, err, window=None) :
     """
@@ -112,8 +113,8 @@ def PImage (disp, image, err, window=None) :
     ################################################################
     # Checks
     if not PIsA(disp):
-        print "Actually ",disp.__class__
-        raise TypeError,"disp MUST be a Python Obit Display"
+        print("Actually ",disp.__class__)
+        raise TypeError("disp MUST be a Python Obit Display")
     if OWindow.PIsA(window):
         ret = Obit.ODisplayImageEdit(disp.me, image.me, window.me, err.me)
     else:
@@ -137,15 +138,14 @@ def PMosaic (disp, mosaic, field, err, window=None) :
     ################################################################
     # Checks
     if not PIsA(disp):
-        print "Actually ",disp.__class__
-        raise TypeError,"disp MUST be a Python Obit Display"
+        print("Actually ",disp.__class__)
+        raise TypeError("disp MUST be a Python Obit Display")
     if OWindow.PIsA(window):
         ret = Obit.ODisplayMosaic(disp.me, mosaic.me, field, window.me, err.me)
     else:
         ret = Obit.ODisplayMosaicEdit(disp.me, mosaic.me, field, err.me)
     return ret
     # end PImage
-
 
 def PMarkPos (disp, pos, err) :
     """
@@ -160,8 +160,8 @@ def PMarkPos (disp, pos, err) :
     ################################################################
     # Checks
     if not PIsA(disp):
-        print "Actually ",disp.__class__
-        raise TypeError,"disp MUST be a Python Obit Display"
+        print("Actually ",disp.__class__)
+        raise TypeError("disp MUST be a Python Obit Display")
     ret = Obit.ODisplayMarkPos(disp.me, pos, err.me)
     return ret
     # end PMarkPos
@@ -171,15 +171,14 @@ def PIsA (disp):
     """
     Tells if the input is a Python ObitDisplay
     
-    returns true or false (1,0)
-
+    returns True or False 
     * disp = Python Obit Display to test
     """
     ################################################################
-      # Checks
-    if disp.__class__ != ODisplay:
-        return 0
-    return Obit.ODisplayIsA(disp.me)
+    # Checks
+    if not isinstance(disp, ODisplay):
+        return False
+    return Obit.ODisplayIsA(disp.me)!=0
     # end PIsA
 
 

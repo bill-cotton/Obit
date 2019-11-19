@@ -27,9 +27,12 @@
 #                         520 Edgemont Road
 #                         Charlottesville, VA 22903-2475 USA
 #-----------------------------------------------------------------------
+from __future__ import absolute_import
+from __future__ import print_function
 import UV, Table, OErr
 import numpy      
 from numpy import numarray
+from six.moves import range
 
 def UVAddIF (inUV, outUV, nIF, err):
     """ 
@@ -46,22 +49,22 @@ def UVAddIF (inUV, outUV, nIF, err):
     ################################################################
     # Checks
     if not UV.PIsA(inUV):
-        raise TypeError,"inUV MUST be a Python Obit UV"
+        raise TypeError("inUV MUST be a Python Obit UV")
     if not UV.PIsA(outUV):
-        raise TypeError,"outUV MUST be a defined Python Obit UV"
+        raise TypeError("outUV MUST be a defined Python Obit UV")
     # Input can have 1 or no IFs defined
     jlocif = inUV.Desc.Dict["jlocif"]
     if jlocif>=0 and inUV.Desc.Dict["inaxes"][jlocif]>1:
-        raise RuntimeError,"Input UV has excessive IFs already:" \
-              +str(inUV.Desc.Dict["inaxes"][jlocif])
+        raise RuntimeError("Input UV has excessive IFs already:" \
+              +str(inUV.Desc.Dict["inaxes"][jlocif]))
     # Check number of requested IFs
     if nIF<2:
-        raise RuntimeError,"Too few output IFs requested: " + str(nIF)
+        raise RuntimeError("Too few output IFs requested: " + str(nIF))
     # Must be an even number of channels per output IF
     jlocf = inUV.Desc.Dict["jlocf"]
     nchan = inUV.Desc.Dict["inaxes"][jlocf]
     if (nchan%nIF) != 0:
-        raise RuntimeError,"Unequal numbers of channels per "+str(nIF)+" IFs"
+        raise RuntimeError("Unequal numbers of channels per "+str(nIF)+" IFs")
 
     # Patch UV Descriptor
     DescAddIF (inUV, outUV, nIF, err)
@@ -76,7 +79,7 @@ def UVAddIF (inUV, outUV, nIF, err):
     # Update
     outUV.UpdateDesc(err)
     OErr.printErrMsg(err,"Error updating output")
-    print "Any CL tables need to be regenerated"
+    print("Any CL tables need to be regenerated")
     # end UVAddIF 
     
 def UVMakeIF (outUV, nIF, err):
@@ -93,20 +96,20 @@ def UVMakeIF (outUV, nIF, err):
     ################################################################
     # Checks
     if not UV.PIsA(outUV):
-        raise TypeError,"outUV MUST be a defined Python Obit UV"
+        raise TypeError("outUV MUST be a defined Python Obit UV")
     # Input can have 1 or no IFs defined
     jlocif = outUV.Desc.Dict["jlocif"]
     if jlocif>=0 and outUV.Desc.Dict["inaxes"][jlocif]>1:
-        raise RuntimeError,"Input UV has excessive IFs already:" \
-              +str(outUV.Desc.Dict["inaxes"][jlocif])
+        raise RuntimeError("Input UV has excessive IFs already:" \
+              +str(outUV.Desc.Dict["inaxes"][jlocif]))
     # Check number of requested IFs
     if nIF<2:
-        raise RuntimeError,"Too few output IFs requested: " + str(nIF)
+        raise RuntimeError("Too few output IFs requested: " + str(nIF))
     # Must be an even number of channels per output IF
     jlocf = outUV.Desc.Dict["jlocf"]
     nchan = outUV.Desc.Dict["inaxes"][jlocf]
     if (nchan%nIF) != 0:
-        raise RuntimeError,"Unequal numbers of channels per "+str(nIF)+" IFs"
+        raise RuntimeError("Unequal numbers of channels per "+str(nIF)+" IFs")
 
     # Patch UV Descriptor
     DescMakeIF (outUV, nIF, err)
@@ -118,10 +121,10 @@ def UVMakeIF (outUV, nIF, err):
     UpdateSU2 (outUV, nIF, err)
     # Regenerate CL table 1 - delete any old
     outUV.ZapTable("AIPS CL",-1,err)
-    print '(Re) generate CL table'
+    print('(Re) generate CL table')
     UV.PTableCLGetDummy (outUV, outUV, 1, err, solInt=10.)
     # dummy FG 1
-    print 'Dummy entry in Flag table 1'
+    print('Dummy entry in Flag table 1')
     UV.PFlag(outUV, err, timeRange=[-10.,-9.], Ants=[200,200], Stokes='0000',Reason='Dummy')
     # Update
     outUV.UpdateDesc(err)
@@ -202,11 +205,11 @@ def CopyData (inUV, outUV, err):
     od = outUV.Desc.Dict
     odd = UV.PGetIODesc(outUV)
     if id['nrparm'] != od['nrparm']:
-        raise RuntimeError,"Input and output have different numbers of random parameters: " \
-              +str(id['nrparm'])+" != "+str(od['nrparm'])
+        raise RuntimeError("Input and output have different numbers of random parameters: " \
+              +str(id['nrparm'])+" != "+str(od['nrparm']))
     if id['ncorr'] != od['ncorr']:
-        raise RuntimeError,"Input and output have different numbers of correlations: " \
-              +str(id['ncorr'])+" != "+str(od['ncorr'])
+        raise RuntimeError("Input and output have different numbers of correlations: " \
+              +str(id['ncorr'])+" != "+str(od['ncorr']))
 
     nvis = inUV.Desc.Dict['nvis']                     # Number of records
     lrec = id['nrparm'] + id['ncorr']*id["inaxes"][0]  # Size of record in floats
@@ -221,7 +224,7 @@ def CopyData (inUV, outUV, err):
     if err.isErr:
         OErr.printErrMsg(err, "Error opening UV")
     # Get IO buffers as numpy arrays
-    shape = len(inUV.VisBuf) / 4
+    shape = len(inUV.VisBuf) // 4
     ibuffer =  numarray.array(sequence=inUV.VisBuf,
                              type=numarray.Float32, shape=shape)
     obuffer =  numarray.array(sequence=outUV.VisBuf,
@@ -274,7 +277,7 @@ def DescAddIF (inUV, outUV, nIF, err):
         d['crota'][jlocif] = 0.0
         
     jlocf = d["jlocf"]
-    nchan = d["inaxes"][jlocf]/nIF
+    nchan = d["inaxes"][jlocf]//nIF
     d["inaxes"][jlocif] = nIF
     d["inaxes"][jlocf]  = nchan
     outUV.Desc.Dict = d
@@ -425,7 +428,7 @@ def DescMakeIF (outUV, nIF, err):
         d['crota'][jlocif] = 0.0
         
     jlocf = d["jlocf"]
-    nchan = d["inaxes"][jlocf]/nIF
+    nchan = d["inaxes"][jlocf]//nIF
     d["inaxes"][jlocif] = nIF
     d["inaxes"][jlocf]  = nchan
     outUV.Desc.Dict = d

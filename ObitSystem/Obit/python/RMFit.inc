@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for RMFit type                             */
 /*                                                                    */
-/*;  Copyright (C) 2013                                               */
+/*;  Copyright (C) 2013,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -33,13 +33,20 @@
 #include "ObitImage.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitRMFit *me;
+} RMFit;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitRMFit *me;
+} RMFit;
+
 
 %inline %{
-extern ObitRMFit* RMFitCopy  (ObitRMFit *in, ObitRMFit *out, 
-				    ObitErr *err) {
-  return ObitRMFitCopy (in, out, err);
-} // end  RMFitCopy
-
 extern ObitRMFit* RMFitUnref (ObitRMFit* in) {
   if (!ObitRMFitIsA(in)) return NULL;
   return ObitRMFitUnref(in);
@@ -49,9 +56,61 @@ extern ObitRMFit*  RMFitRef (ObitRMFit* in) {
   return ObitRMFitRef(in);
 }
 
-extern ObitRMFit* RMFitCreate (char *name, int nterm) {
+extern ObitRMFit* RMFitCreate (char *name, long nterm) {
   return ObitRMFitCreate((gchar*)name, (olong)nterm);
 }
+
+extern ObitRMFit* RMFitCopy  (ObitRMFit *in, ObitRMFit *out, 
+				    ObitErr *err) {
+  return ObitRMFitCopy (in, out, err);
+} // end  RMFitCopy
+
+void CreateRMFit(PyObject *self, char* name, long nterm) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_RMFit, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateRMFit: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((RMFit*)ptr)->me = RMFitCreate(name, nterm);
+   else  ((RMFit*)ptr)->me = NULL;
+   return;
+ } // end CreateRMFit
+
+void DeleteRMFit(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_RMFit, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteRMFit: could not recover c struct");
+	return;
+   }
+   ((RMFit*)ptr)->me = ObitRMFitUnref(((RMFit*)ptr)->me);
+}// end DeleteRMFit
+
+ObitRMFit* RMFit_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_RMFit, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"RMFit_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((RMFit*)ptr)->me;
+}  // end RMFit_Get_me
+
+void RMFit_Set_me(PyObject *self, ObitRMFit *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_RMFit, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"RMFit_Set_me: could not recover c struct");
+	return;
+   }
+   ((RMFit*)ptr)->me =  ObitRMFitRef(me);
+}  // end RMFit_Set_me
+
 
 extern void RMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage, 
 		       ObitImage *outImage, ObitErr *err) {    
@@ -110,33 +169,4 @@ extern PyObject* RMFitSingle (int nfreq, int nterm, double refLamb2, double *lam
 }  // end RMFitSingle
 
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitRMFit *me;
-} RMFit;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitRMFit *me;
-} RMFit;
-
-%addmethods RMFit { 
-  RMFit(char* name, int nterm) {
-     RMFit *out;
-     out = (RMFit *) malloc(sizeof(RMFit));
-     if (strcmp(name, "None")) out->me = RMFitCreate(name, nterm);
-     else out->me = NULL;
-     return out;
-   }
-  ~RMFit() {
-   if (!self) return;  // Not defined
-   if (self && self->me && self->me->ReferenceCount>0) {
-      self->me = RMFitUnref(self->me);
-      free(self);
-   }
-  }
-};
 

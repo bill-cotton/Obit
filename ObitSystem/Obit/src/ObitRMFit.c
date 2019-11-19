@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2013-2018                                          */
+/*;  Copyright (C) 2013-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2190,7 +2190,7 @@ static gpointer ThreadRMSynFit (gpointer arg)
 	 resolution = pi/max_dlamb2 = RM which gives 1 turn over  lamb2 range
       */
       if (in->maxRMSyn>in->minRMSyn) {
-	dRM = MAX (1.0,in->delRMSyn);
+	dRM = MAX (0.01,in->delRMSyn);
 	ntest = 1+(in->maxRMSyn - in->minRMSyn)/dRM;
       } else {
 	amb = G_PI / fabs(minDL);

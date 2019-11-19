@@ -28,9 +28,11 @@
 #                         520 Edgemont Road
 #                         Charlottesville, VA 22903-2475 USA
 #-----------------------------------------------------------------------
+from __future__ import absolute_import
 import UV, Table, OErr
 import numpy      
 from numpy import numarray
+from six.moves import range
 
 def UVAddSource (inUV, outUV, err):
     """ 
@@ -46,9 +48,9 @@ def UVAddSource (inUV, outUV, err):
     ################################################################
     # Checks
     if not UV.PIsA(inUV):
-        raise TypeError,"inUV MUST be a Python Obit UV"
+        raise TypeError("inUV MUST be a Python Obit UV")
     if not UV.PIsA(outUV):
-        raise TypeError,"outUV MUST be a defined Python Obit UV"
+        raise TypeError("outUV MUST be a defined Python Obit UV")
     # Patch UV Descriptor
     DescAddSource (inUV, outUV, err)
     OErr.printErrMsg(err,"Error updating Descriptor")
@@ -181,10 +183,10 @@ def CopyData (inUV, outUV, err):
     if err.isErr:
         OErr.printErrMsg(err, "Error opening UVs")
     # Get IO buffers as numpy arrays
-    shape = len(inUV.VisBuf) / 4
+    shape = len(inUV.VisBuf) // 4
     ibuffer = numarray.array(sequence=inUV.VisBuf,
                                       type=numarray.Float32, shape=shape)
-    shape = len(outUV.VisBuf) / 4
+    shape = len(outUV.VisBuf) // 4
     obuffer =  numarray.array(sequence=outUV.VisBuf,
                              type=numarray.Float32, shape=shape)
     # Loop over data, copying 1 vis at a time

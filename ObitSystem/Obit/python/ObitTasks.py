@@ -27,6 +27,8 @@
 #                         Charlottesville, VA 22903-2475 USA
 #-----------------------------------------------------------------------
 
+from __future__ import absolute_import
+from __future__ import print_function
 class EnvVarError(Exception):
     """Raised when there is a problem with an environment variable."""
     def __init__(self, msg):
@@ -91,10 +93,10 @@ def obitTaskList():
     """Print obit task names and descriptions."""
     try:
         taskDict = obitTaskDict()
-    except EnvVarError, e:
-        print e.msg
+    except EnvVarError as e:
+        print(e.msg)
         return
-    keys = taskDict.keys()
+    keys = list(taskDict.keys())
     keys.sort(caseIndependentSort) # sort for python 2.3
     for key in keys: 
-        print "%-10s  %s" % (key, taskDict[key])
+        print("%-10s  %s" % (key, taskDict[key]))

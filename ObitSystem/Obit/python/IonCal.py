@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2007
+#  Copyright (C) 2007,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 #-----------------------------------------------------------------------
 
 # Python interface to Obit Ionospheric calibration utilities
+from __future__ import absolute_import
 import Obit, UV, Table, OErr
 
 def PIoN2SolNTableConvert (inUV, outSNVer, NITable, pos, err):
@@ -51,9 +52,9 @@ def PIoN2SolNTableConvert (inUV, outSNVer, NITable, pos, err):
     ################################################################
     # Checks
     if not UV.PIsA(inUV):
-        raise TypeError, 'PIoN2SolNTableConvert: Bad input UV data'
+        raise TypeError('PIoN2SolNTableConvert: Bad input UV data')
     if not Table.PIsA(NITable):
-        raise TypeError, 'PIoN2SolNTableConvert: Bad NI input table'
+        raise TypeError('PIoN2SolNTableConvert: Bad NI input table')
 
     # Create output SN table object
     outSNTable = Table.Table("None")

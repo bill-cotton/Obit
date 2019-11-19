@@ -32,8 +32,10 @@ ObitMess must be started independently of python
 #-----------------------------------------------------------------------
 
 # Task window class
-import thread, threading, time
-from xmlrpclib import ServerProxy
+from __future__ import absolute_import
+from __future__ import print_function
+import six.moves._thread, threading, time
+from six.moves.xmlrpc_client import ServerProxy
 
 
 class TaskWindow(threading.Thread):
@@ -76,9 +78,9 @@ class TaskWindow(threading.Thread):
             server = ServerProxy(self.url)
             answer = server.CreateWindow(myTask._name)
             self.taskID = answer["taskID"]
-        except Exception, e:
-            print "Failed to talk to ObitMess",e
-            raise RuntimeError,"Cannot talk to ObitMess - start it "
+        except Exception as e:
+            print("Failed to talk to ObitMess",e)
+            raise RuntimeError("Cannot talk to ObitMess - start it ")
         
         # Hang around until gui is started
         time.sleep(1.)
@@ -90,7 +92,7 @@ class TaskWindow(threading.Thread):
         (TaskWin.proxy, TaskWin.tid) = myTask.spawn()
         # Logging to file?
         if len(myTask.logFile)>0:
-            TaskLog = file(myTask.logFile,'a')
+            TaskLog = open(myTask.logFile,'a')
         else:
             TaskLog = None
         TaskWin.Failed = False
@@ -147,11 +149,11 @@ class TaskWindow(threading.Thread):
                                 x=TaskLog.write('%s\n' % message[1])
                         TaskLog.flush()
                 continue
-        except KeyboardInterrupt, exception:
-            print "Something went wrong:",exception
+        except KeyboardInterrupt as exception:
+            print("Something went wrong:",exception)
             myTask.abort(TaskWin.proxy, TaskWin.tid)
             raise exception
-        except Exception, e:   # Aborts throw exceptions that get caught here
+        except Exception as e:   # Aborts throw exceptions that get caught here
             TaskWin.Failed = True
             TaskWin.done   = True
             #print "An exception was thrown, task aborted:",e

@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2006-2017
+#  Copyright (C) 2006-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 #-----------------------------------------------------------------------
 
 # Python package for Obit Table Utilities 
+from __future__ import absolute_import
 import Obit, Table, Image, OErr
 
 def PCCMerge(inTab, outTab, err):
@@ -39,11 +40,11 @@ def PCCMerge(inTab, outTab, err):
     ################################################################
     # Checks
     if not Table.PIsA(inTab):
-        raise TypeError,"inTab MUST be a Table"
+        raise TypeError("inTab MUST be a Table")
     if not Table.PIsA(outTab):
-        raise TypeError,"outTab MUST be a Table"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("outTab MUST be a Table")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     if err.isErr: # existing error?
         return
     #
@@ -62,9 +63,9 @@ def PConvolve(inFA1, inFA2, err):
     ################################################################
     # Checks
     if not FArray.PIsA(inFA1):
-        raise TypeError,"inFA1 MUST be a Python Obit FArray"
+        raise TypeError("inFA1 MUST be a Python Obit FArray")
     if not FArray.PIsA(inFA2):
-        raise TypeError,"inFA2 MUST be a Python Obit FArray"
+        raise TypeError("inFA2 MUST be a Python Obit FArray")
     # 
     outFA = FArray.FArray("None")
     outFA.me = Obit.FArrayUtilConvolve (inFA1.me, inFA2.me, err.me)
@@ -94,11 +95,11 @@ def PTableCCT2Spec (inImage, outImage, nTerm,
     ################################################################
     # Checks
     if not Image.PIsA(inImage):
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not Image.PIsA(outImage):
-        raise TypeError,"outImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("outImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     Obit.TableCCUtilT2Spec(inImage.me, outImage.me, nTerm, inCCVer, \
                            outCCVer, startCC, endCC, err.me)
@@ -124,9 +125,9 @@ def PTableCCFixTSpec (inImage, inCCVer, refFreq, nTerm, terms, \
     ################################################################
     # Checks
     if not Image.PIsA(inImage):
-        raise TypeError,"inImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("inImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     Obit.TableCCUtilFixTSpec(inImage.me, inCCVer, refFreq, nTerm, terms, \
                              startCC, endCC, err.me)
@@ -150,9 +151,9 @@ def PTableCCAppendShift (inImage, inCCVer, outImage, outCCVer, \
     ################################################################
     # Checks
     if not Image.PIsA(inImage):
-        raise TypeError,"inImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("inImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     Obit.TableCCUtilAppendShift(inImage.me, inCCVer, outImage.me, outCCVer, \
                                 uvData.me, startCC, endCC, err.me)

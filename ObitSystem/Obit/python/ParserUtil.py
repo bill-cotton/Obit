@@ -3,10 +3,11 @@ Python utility package for parameter file parser
 """
 
 # Python utility package for parameter file parser
+from __future__ import absolute_import
 import Obit, InfoList, OErr
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2007
+#  Copyright (C) 2007,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -63,7 +64,7 @@ def PParse(infile, list, err):
     ################################################################
     # Checks
     if not InfoList.PIsA(list):
-        raise TypeError,"list MUST be a Python Obit InfoList"
+        raise TypeError("list MUST be a Python Obit InfoList")
     ret = Obit.Parse(infile, list.me, err.me)
     if ret or err.isErr:
         OErr.printErrMsg(err, "Error Parsing "+infile)
@@ -84,7 +85,7 @@ def PDump(infile, list, err):
     ################################################################
     # Checks
     if not InfoList.PIsA(list):
-        raise TypeError,"list MUST be a Python Obit InfoList"
+        raise TypeError("list MUST be a Python Obit InfoList")
     ret = Obit.Dump(infile, list.me, err.me)
     if ret or err.isErr:
         OErr.printErrMsg(err, "Error Dumping to "+infile)

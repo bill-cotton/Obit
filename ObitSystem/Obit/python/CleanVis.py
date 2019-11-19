@@ -11,7 +11,7 @@ SkyModel  Sky Model
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2005,2007
+#  Copyright (C) 2005,2007,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -38,48 +38,14 @@ SkyModel  Sky Model
 #-----------------------------------------------------------------------
 
 # Obit CleanVis
-import Obit, OErr, ImageMosaic, InfoList, UV, OWindow, SkyModel
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, OErr, ImageMosaic, InfoList, UV, OWindow, SkyModel
 
 # Python shadow class to ObitDConCleanVis class
  
-class CleanVisPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.CleanVisUnref(Obit.CleanVis_me_get(self.this))
-            # In with the new
-            Obit.CleanVis_me_set(self.this,value)
-            return
-        if name=="Mosaic":
-            PSetMosaic(self, value)
-            return 
-        if name=="SkyModel":
-            PSetSkyModel(self, value)
-            return 
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != CleanVis:
-            return
-        if name == "me" : 
-            return Obit.CleanVis_me_get(self.this)
-        # Virtual members
-        if name=="List":
-            return PGetList(self)
-        if name=="Number":
-            return PGetNumber(self)
-        if name=="Mosaic":
-            return PGetMosaic(self)
-        if name=="SkyModel":
-            return PGetSkyModel(self)
-        raise AttributeError,str(name)
-    def __repr__(self):
-        if self.__class__ != CleanVis:
-            return
-        return "<C CleanVis instance> " + Obit.CleanVisGetName(self.me)
 #
-class CleanVis(CleanVisPtr):
+class CleanVis(Obit.CleanVis):
     """
     Python Obit Image class
     
@@ -93,10 +59,45 @@ class CleanVis(CleanVisPtr):
     ========  ==============================================================
     """
     def __init__(self, name) :
-        self.this = Obit.new_CleanVis(name)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_CleanVis(self.this)
+        super(CleanVis, self).__init__()
+        Obit.CreateCleanVis(self.this, name)
+    def __del__(self, DeleteCleanVis=_Obit.DeleteCleanVis):
+        if _Obit!=None:
+            DeleteCleanVis(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.CleanVisUnref(Obit.CleanVis_Get_me(self.this))
+            # In with the new
+            Obit.CleanVis_Set_me(self.this,value)
+            return
+        if name=="Mosaic":
+            PSetMosaic(self, value)
+            return 
+        if name=="SkyModel":
+            PSetSkyModel(self, value)
+            return 
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if not isinstance(self, CleanVis):
+            return "Bogus dude "+str(self.__class__)
+        if name == "me" : 
+            return Obit.CleanVis_Get_me(self.this)
+        # Virtual members
+        if name=="List":
+            return PGetList(self)
+        if name=="Number":
+            return PGetNumber(self)
+        if name=="Mosaic":
+            return PGetMosaic(self)
+        if name=="SkyModel":
+            return PGetSkyModel(self)
+        raise AttributeError(str(name))
+    def __repr__(self):
+        if not isinstance(self, CleanVis):
+            return  "Bogus dude "+str(self.__class__)
+        return "<C CleanVis instance> " + Obit.CleanVisGetName(self.me)
     
     def DefWindow(self, err):
         """ Set default window (all image)
@@ -114,15 +115,17 @@ class CleanVis(CleanVisPtr):
         * self   = Python OTF object
         * field  = Which field (1-rel) is the window in?
         * window = set of 4 integers:
-
           * if window[0]<0 box is round and window[1]=radius, [2,3] = center,
             else, 
           * rectangular and blc=(window[0],window[1]), 
             trc= blc=(window[2],window[3])
-
         * err    = Python Obit Error/message stack
         """
-        PAddWindow(self, field, window, err)
+        # Make sure window is longs
+        lwindow = []
+        for w in window:
+            lwindow.append(int(w))
+        PAddWindow(self, Long(field), lwindow, err)
         # end AddWindow
 
 # Commonly used, dangerous variables
@@ -154,9 +157,9 @@ def input(inputDict):
     """
     ################################################################
     structure = inputDict['structure']  # Structure information
-    print 'Inputs for ',structure[0]
+    print('Inputs for ',structure[0])
     for k,v in structure[1]:
-        print '  ',k,' = ',inputDict[k],' : ',v
+        print('  ',k,' = ',inputDict[k],' : ',v)
         
     # end input
 
@@ -188,11 +191,11 @@ def PCopy (inCleanVis, outCleanVis, err):
     ################################################################
     # Checks
     if not PIsA(inCleanVis):
-        raise TypeError,"inCleanVis MUST be a Python Obit CleanVis"
+        raise TypeError("inCleanVis MUST be a Python Obit CleanVis")
     if not PIsA(outCleanVis):
-        raise TypeError,"outCleanVis MUST be a Python Obit CleanVis"
+        raise TypeError("outCleanVis MUST be a Python Obit CleanVis")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     Obit.CleanVisCopy (inCleanVis.me, outCleanVis.me, err.me)
     if err.isErr:
@@ -210,10 +213,9 @@ def PGetList (inCleanVis):
     ################################################################
      # Checks
     if not PIsA(inCleanVis):
-        raise TypeError,"inCleanVis MUST be a Python Obit CleanVis"
+        raise TypeError("inCleanVis MUST be a Python Obit CleanVis")
     #
     out    = InfoList.InfoList()
-    out.me = Obit.InfoListUnref(out.me)
     out.me = Obit.CleanVisGetList(inCleanVis.me)
     return out
     # end PGetList
@@ -229,7 +231,7 @@ def PGetMosaic (inCleanVis):
     ################################################################
      # Checks
     if not PIsA(inCleanVis):
-        raise TypeError,"inCleanVis MUST be a Python Obit CleanVis"
+        raise TypeError("inCleanVis MUST be a Python Obit CleanVis")
     #
     out    = ImageMosaic.ImageMosaic("None", 1)
     out.me = Obit.CleanVisGetImageMosaic(inCleanVis.me)
@@ -246,9 +248,9 @@ def PSetMosaic (inCleanVis, mosaic):
     ################################################################
     # Checks
     if not PIsA(inCleanVis):
-        raise TypeError,"inCleanVis MUST be a Python ObitCleanVis"
+        raise TypeError("inCleanVis MUST be a Python ObitCleanVis")
     if not ImageMosaic.PIsA(mosaic):
-        raise TypeError,"array MUST be a Python Obit ImageMosaic"
+        raise TypeError("array MUST be a Python Obit ImageMosaic")
     #
     Obit.CleanVisSetImageMosaic(inCleanVis.me, mosaic.me)
     # end PSetMosaic
@@ -264,7 +266,7 @@ def PGetSkyModel (inCleanVis):
     ################################################################
      # Checks
     if not PIsA(inCleanVis):
-        raise TypeError,"inCleanVis MUST be a Python Obit CleanVis"
+        raise TypeError("inCleanVis MUST be a Python Obit CleanVis")
     #
     out    = SkyModel.SkyModel("None")
     out.me = Obit.CleanVisGetSkyModel(inCleanVis.me)
@@ -281,9 +283,9 @@ def PSetSkyModel (inCleanVis, skymodel):
     ################################################################
     # Checks
     if not PIsA(inCleanVis):
-        raise TypeError,"inCleanVis MUST be a Python ObitCleanVis"
+        raise TypeError("inCleanVis MUST be a Python ObitCleanVis")
     if not SkyModel.PIsA(skymodel):
-        raise TypeError,"array MUST be a Python Obit ImageSkyModel"
+        raise TypeError("array MUST be a Python Obit ImageSkyModel")
     #
     Obit.CleanVisSetImageSkyModel(inCleanVis.me, skymodel.me)
     # end PSetSkyModel
@@ -299,7 +301,7 @@ def PGetWindow (inCleanVis):
     ################################################################
      # Checks
     if not PIsA(inCleanVis):
-        raise TypeError,"inCleanVis MUST be a Python Obit CleanVis"
+        raise TypeError("inCleanVis MUST be a Python Obit CleanVis")
     #
     out    = OWindow.OWindow()
     out.me = Obit.CleanVisGetWindow(inCleanVis.me)
@@ -316,9 +318,9 @@ def PSetWindow (inCleanVis, window):
     ################################################################
     # Checks
     if not PIsA(inCleanVis):
-        raise TypeError,"inCleanVis MUST be a Python ObitCleanVis"
+        raise TypeError("inCleanVis MUST be a Python ObitCleanVis")
     if not OWindow.PIsA(window):
-        raise TypeError,"array MUST be a Python Obit OWindow"
+        raise TypeError("array MUST be a Python Obit OWindow")
     #
     Obit.CleanVisSetWindow(inCleanVis.me, window.me)
     # end PSetWindow
@@ -338,9 +340,13 @@ def PAddWindow (inCleanVis, field, window, err):
     ################################################################
     # Checks
     if not PIsA(inCleanVis):
-        raise TypeError,"inCleanVis MUST be a Python ObitCleanVis"
+        raise TypeError("inCleanVis MUST be a Python ObitCleanVis")
     #
-    Obit.CleanVisAddWindow(inCleanVis.me, field, window, err.me)
+    # Make sure window is long
+    lwindow = []
+    for w in window:
+        lwindow.append(w)
+    Obit.CleanVisAddWindow(inCleanVis.me, int(field), lwindow, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error adding CLEAN window")
     # end PAddWindow
@@ -572,9 +578,9 @@ def PCreate (name, uvdata, err, input=CleanInput):
     ################################################################
     # Checks
     if not UV.PIsA(uvdata):
-        raise TypeError,"uvData MUST be a Python Obit UV"
+        raise TypeError("uvData MUST be a Python Obit UV")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     dim = [1,1,1,1,1]
     # Set imaging control values on uvdata
@@ -605,9 +611,9 @@ def PCreate (name, uvdata, err, input=CleanInput):
     InfoList.PPutFloat (inInfo, "Smooth",    dim, input["Smooth"],     err)
     dim[0] = 2
     InfoList.PPutFloat (inInfo, "timeRange", dim, input["timeRange"],  err)
-    dim[0] = len(input["Antennas"])
+    dim[0] = int(len(input["Antennas"]))
     InfoList.PPutInt  (inInfo, "Antennas",   dim, input["Antennas"],   err)
-    dim[0] = 16; dim[1] = len(input["Sources"])
+    dim[0] = 16; dim[1] = int(len(input["Sources"]))
     InfoList.PAlwaysPutString  (inInfo, "Sources", dim, input["Sources"])
     # Weighting parameters
     dim[0] = 1; dim[1] = 1;
@@ -617,11 +623,11 @@ def PCreate (name, uvdata, err, input=CleanInput):
     InfoList.PPutInt    (inInfo, "WtBox",  dim, [input["WtBox"]],   err)
     InfoList.PPutInt    (inInfo, "WtFunc", dim, [input["WtFunc"]],  err)
     InfoList.PPutFloat  (inInfo, "WtPower",dim, [input["WtPower"]], err)
-    dim[1] = len(input["UVTaper"])
+    dim[1] = int(len(input["UVTaper"]))
     InfoList.PPutFloat  (inInfo, "Taper",  dim, input["UVTaper"],   err)
     WtSize   = input["WtSize"]
     if (WtSize>0):
-        print "WtSize", WtSize
+        print("WtSize", WtSize)
         # Change name for C routine.
         dim[0] = 1;
         InfoList.PPutInt  (inInfo, "nuGrid",  dim, [WtSize], err)
@@ -643,19 +649,19 @@ def PCreate (name, uvdata, err, input=CleanInput):
     InfoList.PPutFloat  (inInfo, "BMAJ",     dim, [input["BMAJ"]],     err)
     InfoList.PPutFloat  (inInfo, "BMIN",     dim, [input["BMIN"]],     err)
     InfoList.PPutFloat  (inInfo, "BPA",      dim, [input["BPA"]],      err)
-    dim[0] = len(input["Name"])
+    dim[0] = int(len(input["Name"]))
     InfoList.PAlwaysPutString (inInfo, "imName",     dim, [input["Name"]])
-    dim[0] = len(input["Class"])
+    dim[0] = int(len(input["Class"]))
     InfoList.PAlwaysPutString (inInfo, "imClass",    dim, [input["Class"]])
-    dim[0] = len(input["Catalog"])
+    dim[0] = int(len(input["Catalog"]))
     InfoList.PAlwaysPutString (inInfo, "Catalog",  dim, [input["Catalog"]])
-    dim[0] = len(input["nx"])
+    dim[0] = int(len(input["nx"]))
     InfoList.PAlwaysPutInt    (inInfo, "nx",       dim, input["nx"])
-    dim[0] = len(input["ny"])
+    dim[0] = int(len(input["ny"]))
     InfoList.PAlwaysPutInt    (inInfo, "ny",       dim, input["ny"])
-    dim[0] = len(input["RAShift"])
+    dim[0] = int(len(input["RAShift"]))
     InfoList.PAlwaysPutFloat  (inInfo, "RAShift",  dim, input["RAShift"])
-    dim[0] = len(input["DecShift"])
+    dim[0] = int(len(input["DecShift"]))
     InfoList.PAlwaysPutFloat  (inInfo, "DecShift", dim, input["DecShift"])
     #OErr.printErrMsg(err, "CleanVisCreate: Error setting parameters")
     #
@@ -681,9 +687,9 @@ def PCreate (name, uvdata, err, input=CleanInput):
     InfoList.PPutBoolean (inInfo, "doRestore",  dim, [input["doRestore"]], err)
     InfoList.PPutBoolean (inInfo, "doFlatten",  dim, [input["doFlatten"]], err)
     InfoList.PPutBoolean (inInfo, "autoWindow", dim, [input["autoWindow"]],err)
-    dim[0] = len(input["Plane"])
+    dim[0] = int(len(input["Plane"]))
     InfoList.PAlwaysPutInt   (inInfo, "Plane",    dim, input["Plane"])
-    dim[0] = len(input["dispURL"])
+    dim[0] = int(len(input["dispURL"]))
     InfoList.PAlwaysPutString (inInfo, "dispURL",   dim, [input["dispURL"]])
     # show any errors 
     #OErr.printErrMsg(err, "CleanVisCreate: Error setting parameters")
@@ -706,9 +712,9 @@ def PDefWindow (clean, err):
     ################################################################
     # Checks
     if not PIsA(clean):
-        raise TypeError,"mosaic MUST be a Python Obit CleanVis"
+        raise TypeError("mosaic MUST be a Python Obit CleanVis")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
    #
     Obit.CleanVisDefWindow(clean.me,  err.me)
     if err.isErr:
@@ -733,7 +739,7 @@ def PClean (inCleanVis, err):
     ################################################################
     # Checks
     if not PIsA(inCleanVis):
-        raise TypeError,"inCleanVis MUST be a Python Obit CleanVis"
+        raise TypeError("inCleanVis MUST be a Python Obit CleanVis")
     #
     # Do operation
     Obit.CleanVisDeconvolve(inCleanVis.me, err.me)
@@ -763,9 +769,9 @@ def PReimage (inCleanVis, uvdata, err):
     ################################################################
     # Checks
     if not PIsA(inCleanVis):
-        raise TypeError,"inCleanVis MUST be a Python ObitCleanVis"
+        raise TypeError("inCleanVis MUST be a Python ObitCleanVis")
     if not UV.PIsA(uvdata):
-        raise TypeError,"uvData MUST be a Python Obit UV"
+        raise TypeError("uvData MUST be a Python Obit UV")
     #
     out = Obit.CleanVisReimage(inCleanVis.me, uvdata.me, err.me)
     if err.isErr:
@@ -784,7 +790,7 @@ def PGetName (inCleanVis):
     ################################################################
     # Checks
     if not PIsA(inCleanVis):
-        raise TypeError,"inCleanVis MUST be a Python Obit CleanVis"
+        raise TypeError("inCleanVis MUST be a Python Obit CleanVis")
     #
     return Obit.CleanVisGetName(inCleanVis.me)
     # end PGetName
@@ -793,13 +799,13 @@ def PIsA (inCleanVis):
     """
     Tells if input really a Python Obit CleanVis
     
-    return true, false (1,0)
+    return True, False
 
     * inCleanVis   = Python CleanVis object
     """
     ################################################################
     # Checks
-    if inCleanVis.__class__ != CleanVis:
-        return 0
-    return Obit.CleanVisIsA(inCleanVis.me)
+    if not isinstance(inCleanVis, CleanVis):
+        return False
+    return Obit.CleanVisIsA(inCleanVis.me)!=0
     # end PIsA

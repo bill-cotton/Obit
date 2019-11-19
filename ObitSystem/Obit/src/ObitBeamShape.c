@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008,2017                                          */
+/*;  Copyright (C) 2008-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -71,6 +71,9 @@ static void MeerKATTabBeam (ObitBeamShape *in);
 /** Private: Check/set VLITE tabulated beam. */
 static void FindVLITEBeam (ObitBeamShape *in);
  
+/** Private: MeerKAT beam. */
+static ofloat GetMKBeam (ObitBeamShape *in, odouble Angle);
+
 /** Private: Interpolate tabulated beam. */
 static ofloat GetTabBeam (ObitBeamShape *in, odouble Angle);
 /*----------------------Public functions---------------------------*/
@@ -155,6 +158,8 @@ ObitBeamShape* ObitBeamShapeCopy  (ObitBeamShape *in, ObitBeamShape *out, ObitEr
   out->doJinc  = in->doJinc;
   out->doTab   = in->doTab;
   out->doVLITE = in->doVLITE;
+  out->doMeerKAT = in->doMeerKAT;
+  out->beamAng = in->beamAng;
   out->refFreq = in->refFreq;
   out->itabRefFreq = in->itabRefFreq;
   out->icellSize   = in->icellSize;
@@ -196,6 +201,8 @@ void ObitBeamShapeClone  (ObitBeamShape *in, ObitBeamShape *out, ObitErr *err)
   out->doJinc  = in->doJinc;
   out->doTab   = in->doTab;
   out->doVLITE = in->doVLITE;
+  out->doMeerKAT = in->doMeerKAT;
+  out->beamAng = in->beamAng;
   out->refFreq = in->refFreq;
   out->itabRefFreq = in->itabRefFreq;
   out->icellSize   = in->icellSize;
@@ -232,6 +239,7 @@ ObitBeamShape* ObitBeamShapeCreate (gchar* name, ObitImage *image,
   out->myDesc  = ObitImageRef(image->myDesc);
   out->pbmin   = pbmin;
   out->antSize = antSize;
+  out->beamAng = -1.0;
   out->doGain  = doGain;
   out->refFreq = ObitImageMFGetPlaneFreq(image);
   out->doJinc  = out->refFreq >= 1.0e9;
@@ -241,11 +249,13 @@ ObitBeamShape* ObitBeamShapeCreate (gchar* name, ObitImage *image,
   /* tabulated beam? */
   ObitInfoListGetTest(image->info, "doTab", &type, dim, &doTab);
   isMeerKAT = !strncmp(image->myDesc->teles, "MeerKAT",7); /* MeerKAT */
+  out->doMeerKAT = isMeerKAT;
   ObitInfoListGetTest(image->info, "doVLITE", &type, dim, &doVLITE); /* VLITE */
   doVLITE = doVLITE || !strncmp(image->myDesc->instrument, "VLITE",5);
-  if (isMeerKAT)    MeerKATTabBeam(out);  /* Always use for MeerKAT */
-  else if (doVLITE) FindVLITEBeam(out);   /* Use VLITE beam  */
+   /* if (isMeerKAT)   MeerKATTabBeam(out);  Always use for MeerKAT */
+  if (doVLITE) FindVLITEBeam(out);   /* Use VLITE beam  */
   else if (doTab)   FindTabBeam(out);     /* Use standard if available */
+
   return out;
 } /* end ObitBeamShapeCreate */
 
@@ -298,11 +308,12 @@ ofloat ObitBeamShapeGainSym (ObitBeamShape *in, odouble Angle)
   doKAT = !strncmp(in->myDesc->teles, "KAT-7",5); /* Kat-7 */
 
   /* Compute */
-  if (in->doTab)        gain = GetTabBeam (in, Angle);
-  else if (in->doVLITE) gain = GetTabBeam (in, Angle);
-  else if (doKAT)       gain = ObitPBUtilKAT7 (Angle, in->refFreq, 0.0);
-  else if (in->doJinc)  gain = ObitPBUtilJinc(Angle, in->refFreq, in->antSize, in->pbmin);
-  else                  gain = ObitPBUtilPoly(Angle, in->refFreq, in->pbmin);
+  if (in->doTab)          gain = GetTabBeam (in, Angle);
+  else if (in->doVLITE)   gain = GetTabBeam (in, Angle);
+  else if (in->doMeerKAT) gain = GetMKBeam (in, Angle);
+  else if (doKAT)         gain = ObitPBUtilKAT7 (Angle, in->refFreq, 0.0);
+  else if (in->doJinc)    gain = ObitPBUtilJinc(Angle, in->refFreq, in->antSize, in->pbmin);
+  else                    gain = ObitPBUtilPoly(Angle, in->refFreq, in->pbmin);
   return gain;
 } /* end ObitBeamShapeGainSym */
 
@@ -826,4 +837,26 @@ static ofloat GetTabBeam (ObitBeamShape *in, odouble Angle)
   if (pixel<=1.1) return 1.0;                /* Trap center */
   if (pixel>in->myFI->nx) return in->pbmin;  /* Beyond tabulation */
   return ObitFInterpolate1D(in->myFI, pixel);
+} /* end GetTabBeam */
+
+/**
+/ * MeerKAT beam
+ *  Calculate cosine beam shape (Condon & Ransom, Essential Radio Astronomy eq 3.95)
+ * Compute beamAng if <0
+ * \param in  the BeamShape object
+ * \param in  Angle from pointing in degrees
+ * \return  beam power gain
+ */
+static ofloat GetMKBeam (ObitBeamShape *in, odouble Angle)
+{
+  ofloat gain=1.0, rhor, div;
+  if (Angle<=0.0) return gain;
+  if (in->beamAng<0.0) in->beamAng  = (57.5/60.0) * (1.5e9/in->refFreq);
+  /*in->beamAng  = (57.5/60.0) * (1.5e9/in->refFreq);*/
+  rhor = 1.18896*Angle/in->beamAng;
+  div = (1.-4.*(rhor*rhor));
+  if (fabs(div)<1.0e-5) div = 1.0e-5; /* Stop zero divides */
+  gain = (cos(G_PI*rhor)/div);
+
+  return gain*gain;
 } /* end GetTabBeam */

@@ -14,15 +14,18 @@ where the required arguments are
     (a template is in ``Obit/share/scripts``)
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys, pydoc 
 from optparse import OptionParser
-from ConfigParser import NoSectionError
+from six.moves.configparser import NoSectionError
 import OErr, OSystem, UV, AIPS, FITS, OTObit
 import ObitTalkUtil
 from AIPS import AIPSDisk
 from FITS import FITSDisk
 from PipeUtil import *
 from ALMACal import *
+from six.moves import range
 
 def pipeline( aipsSetup, parmFile):
     """
@@ -42,7 +45,7 @@ def pipeline( aipsSetup, parmFile):
     parms = ALMAInitContParms()
     
     ############################# Set Project Processing parameters ##################
-    print "parmFile",parmFile
+    print("parmFile",parmFile)
     exec(open(parmFile).read())
     ALMAAddOutFile( parmFile, 'project', 'Pipeline input parameters' )
 
@@ -110,7 +113,7 @@ def pipeline( aipsSetup, parmFile):
                             selChBW=parms["selChBW"], selNIF=parms["selNIF"], calInt=parms["calInt"], \
                             logfile=logFile, Compress=parms["Compress"], check=check, debug=debug)
         if uv==None and not check:
-            raise RuntimeError,"Cannot load "+parms["archRoots"]
+            raise RuntimeError("Cannot load "+parms["archRoots"])
     
     # Hanning
     if parms["doHann"]:
@@ -123,7 +126,7 @@ def pipeline( aipsSetup, parmFile):
         uv = ALMAHann(uv, ALMAAIPSName(project, session), dataClass, disk, parms["seq"], err, \
                       doDescm=parms["doDescm"], logfile=logFile, check=check, debug=debug)
         if uv==None and not check:
-            raise RuntimeError,"Cannot Hann data "
+            raise RuntimeError("Cannot Hann data ")
     
     # Set uv if not done
     if uv==None and not check:
@@ -145,7 +148,7 @@ def pipeline( aipsSetup, parmFile):
         printMess(mess, logFile)
         retCode = ALMACopyFG (uv, err, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error Copying FG table"
+            raise RuntimeError("Error Copying FG table")
 
     # Drop end channels of spectra?  Only if new FG 2
     if parms["doCopyFG"] and (parms["BChDrop"]>0) or (parms["EChDrop"]>0):
@@ -159,7 +162,7 @@ def pipeline( aipsSetup, parmFile):
         retCode = ALMADropChan (uv, BChDrop, EChDrop, err, flagVer=parms["editFG"], \
                                 logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error Copying FG table"
+            raise RuntimeError("Error Copying FG table")
 
     # Get list of source in data
     AllSource = ALMAAllSource(uv,err,logfile=logFile,check=check,debug=debug)
@@ -203,20 +206,20 @@ def pipeline( aipsSetup, parmFile):
                              Reason=parms["quackReason"], \
                              logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error Quacking data"
+            raise RuntimeError("Error Quacking data")
     
     # Flag antennas shadowed by others?
     if parms["doShad"]:
         retCode = ALMAShadow (uv, err, shadBl=parms["shadBl"], \
                               logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error Shadow flagging data"
+            raise RuntimeError("Error Shadow flagging data")
     
     # Apply online calibration
     if parms["doOnlineCal"]:
         retCode = ALMAOnlineCal (uv,err, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error applying online calibration"
+            raise RuntimeError("Error applying online calibration")
     
     # Median window time editing, for RFI impulsive in time
     if parms["doMedn"]:
@@ -227,7 +230,7 @@ def pipeline( aipsSetup, parmFile):
                                   timeWind=parms["timeWind"], flagVer=2,flagSig=parms["mednSigma"], \
                                   logfile=logFile, check=check, debug=False)
         if retCode!=0:
-            raise RuntimeError,"Error in MednFlag"
+            raise RuntimeError("Error in MednFlag")
     
     # Median window frequency editing, for RFI impulsive in frequency
     if parms["doFD1"]:
@@ -240,7 +243,7 @@ def pipeline( aipsSetup, parmFile):
                                 FDmaxResBL= parms["FD1maxRes"],  \
                                 nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-           raise  RuntimeError,"Error in AutoFlag"
+           raise  RuntimeError("Error in AutoFlag")
     
     # RMS/Mean editing for calibrators
     if parms["doRMSAvg"]:
@@ -251,7 +254,7 @@ def pipeline( aipsSetup, parmFile):
                                     RMSAvg=parms["RMSAvg"], timeAvg=parms["RMSTimeAvg"], \
                                     nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-           raise  RuntimeError,"Error in AutoFlag"
+           raise  RuntimeError("Error in AutoFlag")
 
     # Need to find a reference antenna?  See if we have saved it?
     if (parms["refAnt"]<=0):
@@ -266,7 +269,7 @@ def pipeline( aipsSetup, parmFile):
                                         solInt=parms["bpsolint1"], nThreads=nThreads, \
                                         logfile=logFile, check=check, debug=debug)
         if err.isErr:
-                raise  RuntimeError,"Error finding reference antenna"
+                raise  RuntimeError("Error finding reference antenna")
         if parms["refAnts"][0]<=0:
             parms["refAnts"][0] = parms["refAnt"]
         mess = "Picked reference antenna "+str(parms["refAnt"])
@@ -287,7 +290,7 @@ def pipeline( aipsSetup, parmFile):
                                flagVer=2, Stokes=["XX","YY"], doband=-1,          \
                                check=check, debug=debug, logfile=logFile )
         if retCode!=0:
-            raise  RuntimeError,"Error in Plotting spectrum"
+            raise  RuntimeError("Error in Plotting spectrum")
         ALMAAddOutFile( plotFile, 'project', 'Pipeline log file' )
 
     # delay calibration
@@ -303,7 +306,7 @@ def pipeline( aipsSetup, parmFile):
                                nThreads=nThreads, noScrat=noScrat, \
                                logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error in delay calibration"
+            raise RuntimeError("Error in delay calibration")
         
         # Plot corrected data?
         if parms["doSpecPlot"] and parms["plotSource"]:
@@ -313,7 +316,7 @@ def pipeline( aipsSetup, parmFile):
                                    flagVer=2, Stokes=["XX","YY"], doband=-1,  \
                                    check=check, debug=debug, logfile=logFile )
             if retCode!=0:
-                raise  RuntimeError,"Error in Plotting spectrum"
+                raise  RuntimeError("Error in Plotting spectrum")
 
     # Bandpass calibration
     if parms["doBPCal"] and parms["BPCals"]:
@@ -328,7 +331,7 @@ def pipeline( aipsSetup, parmFile):
                             doBPPlot=parms["doBPPlot"], plotBPFile=plotFile, \
                             nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error in Bandpass calibration"
+            raise RuntimeError("Error in Bandpass calibration")
         
         # Plot corrected data?
         if parms["doSpecPlot"] and  parms["plotSource"]:
@@ -337,7 +340,7 @@ def pipeline( aipsSetup, parmFile):
                                    parms["refAnt"], err, flagVer=2, Stokes=["XX","YY"], doband=1, \
                                    check=check, debug=debug, logfile=logFile )
             if retCode!=0:
-                raise  RuntimeError,"Error in Plotting spectrum"
+                raise  RuntimeError("Error in Plotting spectrum")
 
     # set X/Y gains and initial calibration
     if parms["doXYFixGain"] and parms["XYGainSource"] and not check:
@@ -349,7 +352,7 @@ def pipeline( aipsSetup, parmFile):
                              nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
                              check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error in X-Y gain fix"
+            raise RuntimeError("Error in X-Y gain fix")
     
     # Self calibrate calibrators
     if parms["doImgCal"] and not check:
@@ -380,7 +383,7 @@ def pipeline( aipsSetup, parmFile):
                                 ampScalar=parms["ampScalar"], doPlot=parms["doSNPlot"], plotFile=plotFile,  \
                                 nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error calibrating"
+            raise RuntimeError("Error calibrating")
     
     # Amp & phase Calibrate
     if parms["doAmpPhaseCal"]:
@@ -394,7 +397,7 @@ def pipeline( aipsSetup, parmFile):
                              doPlot=parms["doSNPlot"], plotFile=plotFile,  refAnt=parms["refAnt"], \
                              nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error calibrating"
+            raise RuntimeError("Error calibrating")
     
     # More editing
     if parms["doAutoFlag"]:
@@ -410,7 +413,7 @@ def pipeline( aipsSetup, parmFile):
                                 FDbaseSel=parms["FDbaseSel"], \
                                 nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-           raise  RuntimeError,"Error in AutoFlag"
+           raise  RuntimeError("Error in AutoFlag")
     
     
     # Calibrate and average data
@@ -422,14 +425,14 @@ def pipeline( aipsSetup, parmFile):
                               BIF=parms["CABIF"], EIF=parms["CAEIF"], Compress=parms["Compress"], \
                               nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-           raise  RuntimeError,"Error in CalAvg"
+           raise  RuntimeError("Error in CalAvg")
        
     # Get calibrated/averaged data
     if not check:
         try:
             uv = UV.newPAUV("AIPS UV DATA", ALMAAIPSName(project, session), avgClass[0:6], \
                                 disk, parms["seq"], True, err)
-        except Exception, exception:
+        except Exception as exception:
             mess = "No Averaged/calibrated datafile"
             printMess(mess, logFile)
             return
@@ -443,7 +446,7 @@ def pipeline( aipsSetup, parmFile):
                                 XClip=parms["XClip"], timeAvg=1./60., \
                                 nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise  RuntimeError,"Error in AutoFlag"
+            raise  RuntimeError("Error in AutoFlag")
     
     # X/Y Delay calibration
     if parms["doXYDelay"] and parms["XYDelaySource"]!=None:
@@ -455,7 +458,7 @@ def pipeline( aipsSetup, parmFile):
                               nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
                               check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error in X-Y delay calibration"
+            raise RuntimeError("Error in X-Y delay calibration")
     
     # Instrumental polarization calibration
     if parms["doPolCal"]:
@@ -467,7 +470,7 @@ def pipeline( aipsSetup, parmFile):
                              ChInc=parms["PCChInc"], ChWid=parms["PCChWid"], doFitOri=parms["doFitOri"], \
                              nThreads=nThreads, check=check, debug=debug, noScrat=noScrat, logfile=logFile)
         if retCode!=0 and (not check):
-           raise  RuntimeError,"Error in polarization calibration: "+str(retCode)
+           raise  RuntimeError("Error in polarization calibration: "+str(retCode))
         # end poln cal.
     
     
@@ -480,7 +483,7 @@ def pipeline( aipsSetup, parmFile):
                                flagVer=1, Stokes=["RR","LL"], doband=1,    \
                                check=check, debug=debug, logfile=logFile )
         if retCode!=0:
-            raise  RuntimeError,"Error in Plotting parallel spectrum"
+            raise  RuntimeError("Error in Plotting parallel spectrum")
         plotFile = "./"+fileRoot+"RL_Spec.ps"
         retCode = ALMASpectrum(uv, parms["plotSource"], parms["plotTime"], \
                                    plotFile, parms["refAnt"], err, \
@@ -488,14 +491,14 @@ def pipeline( aipsSetup, parmFile):
                                    flagVer=1, Stokes=["RL","LR"], doband=1,  \
                                    check=check, debug=debug, logfile=logFile )
         if retCode!=0:
-            raise  RuntimeError,"Error in Plotting calibrated cross spectrum"
+            raise  RuntimeError("Error in Plotting calibrated cross spectrum")
         plotFile = "./"+fileRoot+"XY_Spec.ps"
         retCode = ALMASpectrum(uv, parms["plotSource"], parms["plotTime"], \
                                    plotFile, parms["refAnt"], err, \
                                    flagVer=1, Stokes=["XY","YX"], doband=-1,  \
                                    check=check, debug=debug, logfile=logFile )
         if retCode!=0:
-            raise  RuntimeError,"Error in Plotting uncalibrated cross spectrum"
+            raise  RuntimeError("Error in Plotting uncalibrated cross spectrum")
         
     # Image targets
     if parms["doImage"]:

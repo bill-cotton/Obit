@@ -31,11 +31,13 @@ execfile('PeelScripts.py')
 #                         Charlottesville, VA 22903-2475 USA
 #-----------------------------------------------------------------------
 
+from __future__ import absolute_import
 import Obit, Image, ImageDesc, SkyGeom, Table, History, OErr
 import UV, UVDesc, OSystem, UVSelfCal
 from ObitTask import ObitTask
 from OTObit import setname, set2name, setoname
 from math import cos, radians
+from six.moves import range
 
 def SelectCC(im, inCC, outCC, radius, peelPos, err):
     """
@@ -53,9 +55,9 @@ def SelectCC(im, inCC, outCC, radius, peelPos, err):
     ################################################################
     # Checks
     if not Image.PIsA(im):
-        raise TypeError,"im MUST be a Python Obit Image"
+        raise TypeError("im MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Geometry
     xref = im.Desc.Dict['crval'][0]
@@ -127,9 +129,9 @@ def inSelectCC(im, inCC, outCC, radius, peelPos, err):
     ################################################################
     # Checks
     if not Image.PIsA(im):
-        raise TypeError,"im MUST be a Python Obit Image"
+        raise TypeError("im MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Geometry
     xref = im.Desc.Dict['crval'][0]
@@ -214,11 +216,11 @@ def UVSub4Peel(uv, source, im, inCC, err, \
     ################################################################
     # Checks
     if not UV.PIsA(uv):
-        raise TypeError,"uv MUST be a Python Obit UV data"
+        raise TypeError("uv MUST be a Python Obit UV data")
     if not Image.PIsA(im):
-        raise TypeError,"im MUST be a Python Obit Image"
+        raise TypeError("im MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     uvsub = ObitTask('UVSub')
     setname(uv,uvsub)
     set2name(im,uvsub)
@@ -272,7 +274,7 @@ def ImagePeel(uvsub, peelPos, err, \
     ################################################################
     # Checks
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     mfp = ObitTask('MFImage')
     mfp.DataType = 'AIPS'; mfp.inName = uvsub.outName
     mfp.inDisk = uvsub.outDisk;  mfp.inSeq = uvsub.outSeq; 
@@ -323,11 +325,11 @@ def SubPeel(uv, source, imp, uvp, err, \
     ################################################################
     # Checks
     if not UV.PIsA(uv):
-        raise TypeError,"uv MUST be a Python Obit UV data"
+        raise TypeError("uv MUST be a Python Obit UV data")
     if not Image.PIsA(imp):
-        raise TypeError,"imp MUST be a Python Obit Image"
+        raise TypeError("imp MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     # Split main data set
     OErr.PLog(err, OErr.Info, "Copy data"); OErr.printErr(err)
     split = ObitTask('Split'); setname(uv,split)

@@ -1,8 +1,8 @@
 /* $Id$  */  
 /*--------------------------------------------------------------------*/
-/* Swig module description for Convolution utilities                  */
+/* Swig module description for Source Catalog utilities               */
 /*                                                                    */
-/*;  Copyright (C) 2006-2014                                          */
+/*;  Copyright (C) 2006-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -185,7 +185,7 @@ ObitTable* TableVZSel (ObitTable *in, ObitData *data,
 }  /* end TableVL2VZ */
 
 /**  Convert an VL table to a FS Table */
-void TableVL2FS (ObitTable *in, ObitImage *out, int FSver, ObitErr *err)
+void TableVL2FS (ObitTable *in, ObitImage *out, long FSver, ObitErr *err)
 {
   ObitTableVL *inVL=NULL;
 

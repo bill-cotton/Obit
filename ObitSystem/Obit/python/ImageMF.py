@@ -22,7 +22,7 @@ Additional  Functions are available in ImageUtil.
 # Python/Obit Astronomical ImageMF class
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2010-2017
+#  Copyright (C) 2010-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -49,7 +49,9 @@ Additional  Functions are available in ImageUtil.
 #-----------------------------------------------------------------------
 
 # Obit ImageMF manupulation
-import Obit, Table, FArray, OErr, Image, ImageDesc, InfoList, History, AIPSDir, OSystem
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, Table, FArray, OErr, Image, ImageDesc, InfoList, History, AIPSDir, OSystem
 import TableList, AIPSDir, FITSDir, ImageFit, FitRegion, FitModel
 import OData
 #import AIPSData
@@ -59,92 +61,79 @@ import OData
 # class name in C
 myClass = "ObitImageMF"
 
-class ImageMF(Image.Image):
+class ImageMF(Obit.ImageMF, Image.Image):
     """
     Python Obit ImageMF class
     
     Additional Functions are available in ImageUtil.
     """
     def __init__(self, name) :
+        super(ImageMF, self).__init__()
+        Obit.CreateImageMF(self.this, name)
         self.myClass = myClass
-        self.this = Obit.new_ImageMF(name)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_ImageMF(self.this)
-
+    def __del__(self, DeleteImageMF=_Obit.DeleteImageMF):
+        if _Obit!=None:
+            DeleteImageMF(self.this)
     def __setattr__(self,name,value):
         if name == "me" :
+            if value==None:
+                raise TypeError("None given for ImageMF object")
             # Out with the old
-            Obit.ImageMFUnref(Obit.ImageMF_me_get(self.this))
+            if self.this!=None:
+                Obit.ImageMFUnref(Obit.ImageMF_Get_me(self.this))
             # In with the new
-            Obit.ImageMF_me_set(self.this,value)
+            Obit.ImageMF_Set_me(self.this,value)
             return
         self.__dict__[name] = value
     def __getattr__(self,name):
-        if self.__class__ != ImageMF:
-            return
+        if not isinstance(self, ImageMF):
+            return "Bogus dude "+str(self.__class__)
         if name == "me" : 
-            return Obit.ImageMF_me_get(self.this)
+            return Obit.ImageMF_Get_me(self.this)
         # Functions to return members
         if name=="List":
             if not self.ImageMFIsA():
-                raise TypeError,"input MUST be a Python Obit ImageMF"
+                raise TypeError("input MUST be a Python Obit ImageMF")
             out    = InfoList.InfoList()
-            out.me = Obit.InfoListUnref(out.me)
-            out.me = Obit.ImageGetList(self.cast("ObitImage"))
+            out.me = Obit.ImageMFGetList(self.me)
             return out
         if name=="TableList":
             if not self.ImageMFIsA():
-                raise TypeError,"input MUST be a Python Obit ImageMF"
+                raise TypeError("input MUST be a Python Obit ImageMF")
             out    = TableList.TableList("TL")
-            out.me = Obit.TableListUnref(out.me)
-            out.me = Obit.ImageGetTableList(self.cast("ObitImage"))
+            out.me = Obit.ImageMFGetTableList(self.me)
             return out
         if name=="Desc":
             if not self.ImageMFIsA():
-                raise TypeError,"input MUST be a Python Obit ImageMF"
+                raise TypeError("input MUST be a Python Obit ImageMF")
             out    = ImageDesc.ImageDesc("None")
-            out.me = Obit.ImageGetDesc(self.cast("ObitImage"))
+            out.me = Obit.ImageMFGetDesc(self.me)
             return out
         if name=="FArray":
-            return PGetFArray(self.cast("ObitImage"))
+            return PGetFArray(self.me)
         if name=="Beam":
-            return PGetBeam(self.cast("ObitImage"))
+            return PGetBeam(self.me)
         if name=="PixBuf":
             if not self.ImageMFIsA():
-                raise TypeError,"input MUST be a Python Obit ImageMF"
+                raise TypeError("input MUST be a Python Obit ImageMF")
             fa = self.FArray
             return Obit.FArrayGetBuf(fa.me)
-        raise AttributeError,str(name)  # Unknown
+        raise AttributeError(str(name))  # Unknown
     def __repr__(self):
-        if self.__class__ != ImageMF:
-            return
-        return "<C ImageMF instance> " + Obit.ImageGetName(self.cast("ObitImage"))
+        if not isinstance(self, ImageMF):
+            return "Bogus dude "+str(self.__class__)
+        return "<C ImageMF instance> " + Obit.ImageGetName(self.me)
     
-    def cast(self, toClass):
-        """
-        Casts object pointer to specified class
-
-        * self     = object whose cast pointer is desired
-        * toClass  = Class string to cast to ("ObitImageMF")
-        """
-        # Get pointer with type of this class
-        out = self.me
-        out = out.replace(self.myClass, toClass)
-        return out
-    # end cast
-            
     def ImageMFIsA (self):
         """
         Tells if input really a Python Obit ImageMF
         
-        return true, false (1,0)
+        return True, False 
 
         * self   = Python ImageMF object
         """
         ################################################################
-        # Allow derived types
-        return Obit.ImageMFIsA(self.cast(myClass))
+        return Obit.ImageMFIsA(self.me)
 
     # End of class member functions (i.e. invoked by x.func()(
 
@@ -166,15 +155,15 @@ def ObitName(ObitObject):
     """
     ################################################################
     out = ObitObject    # in case
-    if type(out) == types.StringType:
+    if type(out) == bytes:
         return out
-    if ObitObject.me.find("_ObitImageMF_p") >= 0:
+    if ObitObject.me.find("ObitImageMF_p") >= 0:
         return Obit.ImageGetName(ObitObject.me)
-    if ObitObject.me.find("_ObitOTF_p") >= 0:
+    if ObitObject.me.find("ObitOTF_p") >= 0:
         return Obit.OTFGetName(ObitObject.me)
-    if ObitObject.me.find("_ObitTable_p") >= 0:
+    if ObitObject.me.find("ObitTable_p") >= 0:
         return Obit.TableGetName(ObitObject.me)
-    if ObitObject.me.find("_Obit_p") >= 0:
+    if ObitObject.me.find("Obit_p") >= 0:
         return Obit.GetName(ObitObject.me)
     return out
     # end ObitName
@@ -187,15 +176,15 @@ def input(inputDict):
     * inputDict = Python Dictionary containing the parameters for a routine
     """
     ################################################################
-    print 'Current values of entries'
-    myList = inputDict.items()
+    print('Current values of entries')
+    myList = list(inputDict.items())
     myList.sort()
     for k,v in myList:
         # Print name of Obit objects (or string)
         #if (type(v)==types.StringType):
         #    print '  ',k,' = ',ObitName(v)
         #else:
-        print '  ',k,' = ',v
+        print('  ',k,' = ',v)
         
     # end input
 
@@ -222,7 +211,7 @@ def newPFImageMF(name, filename, disk, exists, err, verbose=True):
     out.exist = FITSDir.PExist(filename, disk, err)
     Obit.ImageMFSetFITS(out.me, 2, disk, filename, blc, trc, err.me)
     if exists:
-        Obit.ImagefullInstantiate (out.cast("ObitImage"), 1, err.me)
+        Obit.ImageMFfullInstantiate (out.me, 1, err.me)
     # show any errors if wanted
     if  verbose and err.isErr:
         out.isOK = False
@@ -234,7 +223,7 @@ def newPFImageMF(name, filename, disk, exists, err, verbose=True):
     outd = out.Desc.Dict
     if outd["inaxes"][0]==777777701:
         out.isOK = False
-        raise TypeError,"Error: Object probably uvtab (UV) data"
+        raise TypeError("Error: Object probably uvtab (UV) data")
 
     # It work?
     if not out.isOK:
@@ -282,7 +271,7 @@ def newPAImage(name, Aname, Aclass, disk, seq, exists, err, verbose=False):
             if verbose: OErr.printErr(err)
             cno = AIPSDir.PFindCNO(disk, user, Aname, Aclass, "MA", seq, err)
             Obit.ImageMFSetAIPS(out.me, 2, disk, cno, user, blc, trc, err.me)
-            Obit.ImagefullInstantiate (out.cast("ObitImage"), 1, err.me)
+            Obit.ImageMFfullInstantiate (out.me, 1, err.me)
             #print "found",Aname,Aclass,"as",cno
         else: # If file not defined in catalog -> error
             OErr.PLog(err, OErr.Error, Aname + " image does not exist")
@@ -347,7 +336,7 @@ def newPACNO(disk, cno, exists, err, verbose=True):
     
     if exists:
         Obit.ImageMFSetAIPS(out.me, 2, disk, cno, user, blc, trc, err.me)
-        Obit.ImagefullInstantiate (out.cast("ObitImage"), 1, err.me)
+        Obit.ImageMFfullInstantiate (out.me, 1, err.me)
     else:
         Obit.ImageMFSetAIPS(out.me, 2, disk, cno, user, blc, trc, err.me)
 
@@ -405,8 +394,8 @@ def PHeader (inImage, err):
             count = max (Tdict[item[1]], item[0])
             Tdict[item[1]] = count
         for item,count in Tdict.items():
-            print "Maximum version number of %s tables is %d " % \
-                  (item, count)
+            print("Maximum version number of %s tables is %d " % \
+                  (item, count))
         return
         # End AIPSImage
     elif inImage.myClass == 'FITSImage':
@@ -424,24 +413,24 @@ def PHeader (inImage, err):
             count = max (Tdict[item[1]], item[0])
             Tdict[item[1]] = count
         for item,count in Tdict.items():
-            print "Maximum version number of %s tables is %d " % \
-                  (item, count)
+            print("Maximum version number of %s tables is %d " % \
+                  (item, count))
         return
         # End FITSImage
     
     # ObitTalk Image Checks
-    if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
+    if not inImage.ImageMFIsA():
+        raise TypeError("inImage MUST be a Python Obit ImageMF")
     #
     # Fully instantiate
     #DAMN PFullInstantiate (inImage, READONLY, err)
     # File info
     if inImage.FileType=="AIPS":
-        print "AIPS Image Name: %12s Class: %6s seq: %8d disk: %4d" % \
-              (inImage.Aname, inImage.Aclass, inImage.Aseq, inImage.Disk)
+        print("AIPS Image Name: %12s Class: %6s seq: %8d disk: %4d" % \
+              (inImage.Aname, inImage.Aclass, inImage.Aseq, inImage.Disk))
     elif inImage.FileType=="FITS":
-        print "FITS Image Disk: %5d File Name: %s " % \
-              (inImage.Disk, inImage.FileName)
+        print("FITS Image Disk: %5d File Name: %s " % \
+              (inImage.Disk, inImage.FileName))
     # print in ImageDesc
     ImageDesc.PHeader(inImage.Desc)
     # Tables
@@ -456,8 +445,8 @@ def PHeader (inImage, err):
         count = max (Tdict[item[1]], item[0])
         Tdict[item[1]] = count
     for item,count in Tdict.items():
-        print "Maximum version number of %s tables is %d " % \
-              (item, count)
+        print("Maximum version number of %s tables is %d " % \
+              (item, count))
     # end PHeader
     
 
@@ -569,17 +558,54 @@ def PEffFqCorr (fitImage, rawImage, err, corAlpha=-0.7, \
     Obit.ImageMFEffFqCorr(fitImage.me, rawImage.me, err.me)
     # end PEffFqCorr
 
+def PGetFArray (inImageMF):
+    """
+    Return FArray used to buffer Image data
+    
+    returns FArray with image pixel data
+    * inImageMF   = Python Image object
+    """
+    ################################################################
+    if inImageMF.myClass=='AIPSImage':
+        raise TypeError("Function unavailable for "+inImage.myClass)
+    # Checks
+    if not inImageMF.ImageMFIsA():
+        raise TypeError("inImageMF MUST be a Python Obit Image")
+    #
+    out    = FArray.FArray("None")
+    out.me = Obit.ImageMFGetFArray(inImageMF.me)
+    return out
+    # end PGetFArray
+
+def PGetBeam (inImage):
+    """
+    Return Beam attached to Image
+    
+    returns Beam with image pixel data
+    * inImage   = Python Image object
+    """
+    ################################################################
+    if inImage.myClass=='AIPSImage':
+        raise TypeError("Function unavailable for "+inImage.myClass)
+    # Checks
+    if not inImage.ImageMFIsA():
+        raise TypeError("inImage MUST be a Python Obit ImageMF")
+    #
+    out    = Image("None")
+    out.me = Obit.ImageMFGetBeam(inImage.me)
+    return out
+    # end PGetBeam
+
 def PIsA (inImage):
     """
     Tells if input really a Python Obit ImageMF
     
-    return True, False (1,0)
-
+    return True, False
     * inImage   = Python Image object
     """
     ################################################################
     try:
-        return inImage.ImageMFIsA()
+        return inImage.ImageMFIsA()!=0
     except:
         return False
     # end PIsA

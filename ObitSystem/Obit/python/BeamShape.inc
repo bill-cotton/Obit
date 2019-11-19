@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for BeamShape type                         */
 /*                                                                    */
-/*;  Copyright (C) 2008-2013                                          */
+/*;  Copyright (C) 2008-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -33,16 +33,23 @@
 #include "ObitImage.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitBeamShape *me;
+} BeamShape;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitBeamShape *me;
+} BeamShape;
+
 
 %inline %{
 extern ObitBeamShape* newBeamShape (char* name) {
   return newObitBeamShape (name);
 } // end  newBeamShape
-
-extern ObitBeamShape* BeamShapeCopy  (ObitBeamShape *in, ObitBeamShape *out, 
-				    ObitErr *err) {
-  return ObitBeamShapeCopy (in, out, err);
-} // end  BeamShapeCopy
 
 extern ObitBeamShape* BeamShapeUnref (ObitBeamShape* in) {
   if (!ObitBeamShapeIsA(in)) return NULL;
@@ -60,6 +67,61 @@ extern ObitBeamShape* BeamShapeCreate (char *name, ObitImage *image,
   return ObitBeamShapeCreate((gchar*)name, image, (ofloat)pbmin, (ofloat)antSize,
 			     ldoGain);
 } // end BeamShapeCreate
+
+void CreateBeamShape(PyObject *self, char* name, ObitImage *image, float pbmin, float antSize,
+            long doGain) {
+   void *ptr;
+   gboolean ldoGain = (doGain!=0);
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_BeamShape, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateBeamShape: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((BeamShape*)ptr)->me = BeamShapeCreate(name, image,
+                                                         (ofloat)pbmin, (ofloat)antSize,
+                                			 ldoGain);
+   else  ((BeamShape*)ptr)->me = NULL;
+   return;
+ } // end CreateBeamShape
+
+void DeleteBeamShape(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_BeamShape, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteBeamShape: could not recover c struct");
+	return;
+   }
+   ((BeamShape*)ptr)->me = ObitBeamShapeUnref(((BeamShape*)ptr)->me);
+}// end DeleteBeamShape
+
+ObitBeamShape* BeamShape_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_BeamShape, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"BeamShape_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((BeamShape*)ptr)->me;
+}  // end BeamShape_Get_me
+
+void BeamShape_Set_me(PyObject *self, ObitBeamShape *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_BeamShape, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"BeamShape_Set_me: could not recover c struct");
+	return;
+   }
+   ((BeamShape*)ptr)->me =  ObitBeamShapeRef(me);
+}  // end BeamShape_Set_me
+
+extern ObitBeamShape* BeamShapeCopy  (ObitBeamShape *in, ObitBeamShape *out, 
+				    ObitErr *err) {
+  return ObitBeamShapeCopy (in, out, err);
+} // end  BeamShapeCopy
 
 extern float BeamShapeGain (ObitBeamShape* in, double ra, double dec,
 		            float parAng ) {
@@ -95,37 +157,4 @@ extern void BeamShapeSetFreq (ObitBeamShape* in, float newFreq) {
 }
 
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitBeamShape *me;
-} BeamShape;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitBeamShape *me;
-} BeamShape;
-
-%addmethods BeamShape { 
-  BeamShape(char* name, ObitImage *image, float pbmin, float antSize,
-            int doGain) {
-     BeamShape *out;
-     gboolean ldoGain = (doGain!=0);
-     out = (BeamShape *) malloc(sizeof(BeamShape));
-     if (strcmp(name, "None")) out->me = BeamShapeCreate((gchar*)name, image, 
-                                                         (ofloat)pbmin, (ofloat)antSize,
-                                			  ldoGain);
-     else out->me = NULL;
-     return out;
-   }
-  ~BeamShape() {
-   if (!self) return;  // Not defined
-   if (self && self->me && self->me->ReferenceCount>0) {
-      self->me = BeamShapeUnref(self->me);
-      free(self);
-   }
-  }
-};
 

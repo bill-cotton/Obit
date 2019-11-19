@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2006
+#  Copyright (C) 2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 #-----------------------------------------------------------------------
 
 # Python interface to ObitSoln2Cal utilities
+from __future__ import absolute_import
 import Obit, UV, Table, OErr
 
 # SN table smoothing
@@ -90,9 +91,9 @@ def PSoln2Cal (inUV, outUV, err, input=Soln2CalInput):
     #
     # Checks
     if not UV.PIsA(inUV):
-        raise TypeError, 'PSoln2Cal: Bad input UV data'
+        raise TypeError('PSoln2Cal: Bad input UV data')
     if not UV.PIsA(outUV):
-        raise TypeError, 'PSoln2Cal: Bad output UV data'
+        raise TypeError('PSoln2Cal: Bad output UV data')
 
     # Set control values on UV 
     dim[0] = 1;

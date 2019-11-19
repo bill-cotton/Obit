@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for FitRegion type                         */
 /*                                                                    */
-/*;  Copyright (C) 2007,2009                                          */
+/*;  Copyright (C) 2007-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -33,16 +33,22 @@
 #include "ObitFitModel.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitFitRegion *me;
+} FitRegion;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitFitRegion *me;
+} FitRegion;
 
 %inline %{
 extern ObitFitRegion* newFitRegion (char* name) {
   return newObitFitRegion (name);
 } // end  newFitRegion
-
-extern ObitFitRegion* FitRegionCopy  (ObitFitRegion *in, ObitFitRegion *out, 
-				    ObitErr *err) {
-  return ObitFitRegionCopy (in, out, err);
-} // end  FitRegionCopy
 
 extern ObitFitRegion* FitRegionUnref (ObitFitRegion* in) {
   if (!ObitFitRegionIsA(in)) return NULL;
@@ -53,27 +59,75 @@ extern ObitFitRegion*  FitRegionRef (ObitFitRegion* in) {
   return ObitFitRegionRef(in);
 }
 
-extern ObitFitRegion* FitRegionCreate (char *name, int corner[2], int dim[2],
-		     float peak, float peakResid, float RMSResid,
-		     float fluxResid) {
-  olong lcorner[2], ldim[2];
-
-  lcorner[0] = (olong)corner[0];
-  lcorner[1] = (olong)corner[1];
-  ldim[0] = (olong)dim[0];
-  ldim[1] = (olong)dim[1];
-
-  return ObitFitRegionCreate((gchar*)name, lcorner, ldim,
-		     (ofloat)peak, (ofloat)peakResid, (ofloat)RMSResid,
-		     (ofloat)fluxResid, 0, NULL);
+extern ObitFitRegion* FitRegionCreate (char *name, olong corner[2], olong dim[2],
+		     ofloat peak, ofloat peakResid, ofloat RMSResid,
+		     ofloat fluxResid) {
+  return ObitFitRegionCreate((gchar*)name, corner, dim,
+		             peak, peakResid, RMSResid,
+		             fluxResid, 0, NULL);
 }
 
-extern void FitRegionSetCorner(ObitFitRegion* in, int *value){
+void CreateFitRegion(PyObject *self, char* name, long *corner, long *dim, float peak, float peakResid, 
+                     float RMSResid, float fluxResid) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FitRegion, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateFitRegion: could not recover c struct");
+	return;
+   }
+   olong lcorner[2], ldim[2];
+   lcorner[0] = (olong)corner[0]; lcorner[1] = (olong)corner[1]; 
+   ldim[0] = (olong)dim[0]; ldim[1] = (olong)dim[1]; 
+   if (strcmp(name, "None")) ((FitRegion*)ptr)->me = FitRegionCreate(name, lcorner, ldim, (ofloat)peak, 
+                                 (ofloat)peakResid, (ofloat)RMSResid, (ofloat)fluxResid);
+   else  ((FitRegion*)ptr)->me = NULL;
+   return;
+ } // end CreateFitRegion
+void DeleteFitRegion(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FitRegion, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteFitRegion: could not recover c struct");
+	return;
+   }
+   ((FitRegion*)ptr)->me = FitRegionUnref(((FitRegion*)ptr)->me);
+}// end DeleteFitRegion
+
+ObitFitRegion* FitRegion_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FitRegion, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"FitRegion_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((FitRegion*)ptr)->me;
+}  // end FitRegion_Get_me
+
+void FitRegion_Set_me(PyObject *self, ObitFitRegion *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FitRegion, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"FitRegion_Set_me: could not recover c struct");
+	return;
+   }
+   ((FitRegion*)ptr)->me =  ObitFitRegionRef(me);
+}  // end FitRegion_Set_me
+
+extern ObitFitRegion* FitRegionCopy  (ObitFitRegion *in, ObitFitRegion *out, 
+				    ObitErr *err) {
+  return ObitFitRegionCopy (in, out, err);
+} // end  FitRegionCopy
+
+extern void FitRegionSetCorner(ObitFitRegion* in, long *value){
   in->corner[0] = (olong)value[0];
   in->corner[1] = (olong)value[1];
 }  // end FitRegionSetCorner
 
-extern void FitRegionSetDim(ObitFitRegion* in, int *value){
+extern void FitRegionSetDim(ObitFitRegion* in, long *value){
   in->dim[0] = (olong)value[0];
   in->dim[1] = (olong)value[1];
 }  // end FitRegionSetDim
@@ -94,7 +148,7 @@ extern void FitRegionSetFluxResid(ObitFitRegion* in, float value){
   in->fluxResid = (ofloat)value;
 }  // end FitRegionSetFluxResid
 
-extern void FitRegionSetNmodel(ObitFitRegion* in, int value){
+extern void FitRegionSetNmodel(ObitFitRegion* in, long value){
   olong i;
   in->nmodel = (olong)value;
   // resize models
@@ -103,7 +157,7 @@ extern void FitRegionSetNmodel(ObitFitRegion* in, int value){
   for (i=0; i<in->nmodel; i++) in->models[i] = NULL;
 }  // end FitRegionSetNmodel
 
-extern void FitRegionSetModels(ObitFitRegion* in, ObitFitModel *value, int i){
+extern void FitRegionSetModels(ObitFitRegion* in, ObitFitModel *value, long i){
   if (i>=in->nmodel) {
  	PyErr_SetString(PyExc_RuntimeError,"Attempt to set invalid model no.");
         return;
@@ -117,7 +171,7 @@ extern PyObject*  FitRegionGetCorner(ObitFitRegion* in){
 
   outList = PyList_New(2);
   for (i=0; i<2; i++) {
-    o = PyInt_FromLong((long)in->corner[i]);
+    o = PyLong_FromLong((long)in->corner[i]);
     PyList_SetItem(outList, i, o);
   }
   return outList;
@@ -129,7 +183,7 @@ extern PyObject*  FitRegionGetDim(ObitFitRegion* in){
 
   outList = PyList_New(2);
   for (i=0; i<2; i++) {
-    o = PyInt_FromLong((long)in->dim[i]);
+    o = PyLong_FromLong((long)in->dim[i]);
     PyList_SetItem(outList, i, o);
   }
   return outList;
@@ -151,8 +205,8 @@ extern float FitRegionGetFluxResid(ObitFitRegion* in){
   return (float)in->fluxResid;
 }  // end FitRegionGetFluxResid
 
-extern int FitRegionGetNmodel(ObitFitRegion* in){
-  return (olong)in->nmodel;
+extern long FitRegionGetNmodel(ObitFitRegion* in){
+  return (long)in->nmodel;
 }  // end FitRegionGetNmodel
 
 extern ObitFitModel* FitRegionGetModels(ObitFitRegion* in, int i) {
@@ -167,40 +221,9 @@ extern char* FitRegionGetName (ObitFitRegion* in) {
   }
 }
 
-extern int FitRegionIsA (ObitFitRegion* in) {
-  return ObitFitRegionIsA(in);
+extern long FitRegionIsA (ObitFitRegion* in) {
+  return (long)ObitFitRegionIsA(in);
 }
 
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitFitRegion *me;
-} FitRegion;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitFitRegion *me;
-} FitRegion;
-
-%addmethods FitRegion { 
-  FitRegion(char *name, int corner[2], int dim[2], float peak, float peakResid, 
-            float RMSResid, float fluxResid) {
-     FitRegion *out;
-     out = (FitRegion *) malloc(sizeof(FitRegion));
-     if (strcmp(name, "None")) out->me = FitRegionCreate(name, corner, dim, peak, 
-                                  peakResid, RMSResid, fluxResid);
-     else out->me = NULL;
-     return out;
-   }
-  ~FitRegion() {
-   if (!self) return;  // Not defined
-   if (self->me-> ReferenceCount>0) {
-      self->me = FitRegionUnref(self->me);
-      free(self);
-   }
-  }
-};
 

@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for FInterpolate type                      */
 /*                                                                    */
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,11 +32,77 @@
 #include "ObitFInterpolate.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitFInterpolate *me;
+} FInterpolate;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitFInterpolate *me;
+} FInterpolate;
+
 %inline %{
 extern ObitFInterpolate* 
 FInterpolateCreate (char* name, ObitFArray *array, ObitImageDesc *desc, long hwidth) {
   return newObitFInterpolateCreate (name, array, desc, hwidth);
 } // end FInterpolateCreate
+
+ObitFInterpolate* FInterpolateRef (ObitFInterpolate* in) {
+  return ObitFInterpolateRef (in);
+} // end FInterpolateRef
+
+ObitFInterpolate* FInterpolateUnref (ObitFInterpolate* in) {
+  if (!ObitFInterpolateIsA(in)) return NULL;
+  return ObitFInterpolateUnref (in);
+} // end FInterpolateUnref
+
+void CreateFInterpolate(PyObject *self, char* name, ObitFArray *array, ObitImageDesc *desc, long hwidth) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FInterpolate, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateFInterpolate: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((FInterpolate*)ptr)->me = FInterpolateCreate(name, array, desc, (olong)hwidth);
+   else  ((FInterpolate*)ptr)->me = NULL;
+   return;
+ }
+void DeleteFInterpolate(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FInterpolate, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteFInterpolate: could not recover c struct");
+	return;
+   }
+   ((FInterpolate*)ptr)->me = FInterpolateUnref(((FInterpolate*)ptr)->me);
+}// end DeleteFInterpolate
+
+ObitFInterpolate* FInterpolate_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FInterpolate, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"FInterpolate_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((FInterpolate*)ptr)->me;
+}  // end FInterpolate_Get_me
+
+void FInterpolate_Set_me(PyObject *self, ObitFInterpolate *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FInterpolate, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"FInterpolate_Set_me: could not recover c struct");
+	return;
+   }
+   ((FInterpolate*)ptr)->me =  ObitFInterpolateRef(me);
+}  // end FInterpolate_Set_me
 
 extern ObitFInterpolate* FInterpolateCopy  (ObitFInterpolate *in, ObitFInterpolate *out, 
 			   ObitErr *err) {
@@ -82,53 +148,16 @@ extern void FInterpolateSetDesc (ObitFInterpolate* in, ObitImageDesc *desc) {
 }
 
 extern long FInterpolateGetHwidth (ObitFInterpolate* in) {
-  return in->hwidth;
+  return (long)in->hwidth;
 }
 
 extern void FInterpolateSetHwidth (ObitFInterpolate* in, long hwidth) {
   in->hwidth = hwidth;
 }
 
-ObitFInterpolate* FInterpolateRef (ObitFInterpolate* in) {
-  return ObitFInterpolateRef (in);
-} // end FInterpolateRef
-
-ObitFInterpolate* FInterpolateUnref (ObitFInterpolate* in) {
-  if (!ObitFInterpolateIsA(in)) return NULL;
-  return ObitFInterpolateUnref (in);
-} // end FInterpolateUnref
-
-extern int FInterpolateIsA (ObitFInterpolate* in) {
-  return ObitFInterpolateIsA(in);
+extern long FInterpolateIsA (ObitFInterpolate* in) {
+  return (long)ObitFInterpolateIsA(in);
 }
 
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitFInterpolate *me;
-} FInterpolate;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitFInterpolate *me;
-} FInterpolate;
-
-%addmethods FInterpolate { 
-  FInterpolate(char* name, ObitFArray *array, ObitImageDesc *desc, long hwidth) {
-     FInterpolate *out;
-     /* just create  Python structure here */
-     out = (FInterpolate *) malloc(sizeof(FInterpolate));
-     if (strcmp(name, "None")) out->me = FInterpolateCreate(name, array, desc, hwidth);
-     else out->me = NULL;
-     return out;
-   }
-  ~FInterpolate() {
-    self->me = FInterpolateUnref(self->me);
-    free(self);
-  }
-};
-
 

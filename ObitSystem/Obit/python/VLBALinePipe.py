@@ -2,6 +2,7 @@
 # AIPS/FITS setup and Parameter file given as arguments:
 # > python VLBALinePipe.py AIPSSetup.py parms.py
 #
+from __future__ import absolute_import
 import sys
 import OErr, OSystem, UV, AIPS, FITS
 import ObitTalkUtil
@@ -12,7 +13,7 @@ from VLBACal import *
 ############################# Initialize OBIT ##########################################                                 
 setup = sys.argv[1]
 noScrat     = []    
-execfile (setup)
+exec(compile(open(setup).read(), setup, 'exec'))
 
 ############################# Default parameters ##########################################                                 
 # Generic parameters
@@ -176,7 +177,7 @@ prtLv         = 2          # Amount of task print diagnostics
 
 ############################# Set Project Processing parameters ##################
 parmFile = sys.argv[2]
-execfile (parmFile)
+exec(compile(open(parmFile).read(), parmFile, 'exec'))
 
 ################################## Process #####################################
 # Logging directly to logFile
@@ -199,7 +200,7 @@ if doLoadIDI:
                          wtThresh=wtThresh, calInt=calInt, Compress=Compress, \
                          check=check, debug=debug)
     if not UV.PIsA(uv):
-        raise RuntimeError,"Cannot load "+dataIn
+        raise RuntimeError("Cannot load "+dataIn)
 # Otherwise set uv
 if uv==None and not check:
     Aname = VLBAAIPSName(project, session)
@@ -216,7 +217,7 @@ if doClearTab:
 if doCopyFG:
     retCode = VLBACopyFG (uv, err, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error Copying FG table"
+        raise RuntimeError("Error Copying FG table")
 
 # Special editing
 if doEditList and not check:
@@ -231,13 +232,13 @@ if doQuack:
     retCode = VLBAQuack (uv, err, begDrop=quackBegDrop, endDrop=quackEndDrop, Reason=quackReason, \
                              logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error Quacking data"
+        raise RuntimeError("Error Quacking data")
 
 # Add velocity/rest freq info
 if doFreqInfo:
     retCode = VLBAFreqInfo(uv, restfreq, srcVel, err, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error Adding restfreq/velocity info"
+        raise RuntimeError("Error Adding restfreq/velocity info")
 
 # Quantization correction?
 if doQuantCor:
@@ -246,14 +247,14 @@ if doQuantCor:
                                doSNPlot=doSNPlot, plotFile=plotFile, \
                                logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error in quantization correcting/flagging"
+        raise RuntimeError("Error in quantization correcting/flagging")
 
 # Parallactic angle correction?
 if doPACor:
     retCode = VLBAPACor(uv, err, noScrat=noScrat, \
                             logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error in quantization correcting/flagging"
+        raise RuntimeError("Error in quantization correcting/flagging")
 
 # Opacity/Tsys/gain correction
 if doOpacCor:
@@ -262,7 +263,7 @@ if doOpacCor:
                               doSNPlot=doSNPlot, plotFile=plotFile, \
                               logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error in opacity/gain.Tsys correction"
+        raise RuntimeError("Error in opacity/gain.Tsys correction")
 
 # Find best calibration
 if doFindCal:
@@ -273,7 +274,7 @@ if doFindCal:
                           noScrat=noScrat, nThreads=nThreads, \
                           logfile=logFile, check=check, debug=debug)
     if not goodCal:
-        raise RuntimeError,"Error in finding best calibration data"
+        raise RuntimeError("Error in finding best calibration data")
     # Save it to a pickle jar
     SaveObject(goodCal, goodCalPicklefile, True)
 else:
@@ -289,7 +290,7 @@ if doManPCal:
                           refAnts=[goodCal["bestRef"]], doCalib=2, flagVer=2, noScrat=noScrat, \
                           nThreads=nThreads, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error in manual phase calibration"
+        raise RuntimeError("Error in manual phase calibration")
 
 # Bandpass calibration if needed
 if doBPCal:
@@ -301,7 +302,7 @@ if doBPCal:
                         doAuto = bpdoAuto, \
                         nThreads=nThreads, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error in Bandpass calibration"
+        raise RuntimeError("Error in Bandpass calibration")
 
 # image continuum cals
 if doImgCal:
@@ -313,7 +314,7 @@ if doImgCal:
                             avgPol=avgPol, avgIF=avgIF, minSNR=minSNR, refAnt=goodCal["bestRef"], \
                             nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error in imaging calibrators"
+        raise RuntimeError("Error in imaging calibrators")
     
 # Check if calibrator models now available
 contCalModel = VLBAImageModel(contCals, outIclass, disk, seq, err)
@@ -328,7 +329,7 @@ if doDelayCal:
                                doSNPlot=doSNPlot, plotFile=plotFile, \
                                nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error in delay calibration"
+        raise RuntimeError("Error in delay calibration")
     
 # Amplitude calibration
 if doAmpCal:
@@ -340,14 +341,14 @@ if doAmpCal:
                          doSNPlot=doSNPlot, plotFile=plotFile, \
                          nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error in amplitude calibration"
+        raise RuntimeError("Error in amplitude calibration")
     
 # Diurnal Doppler correction?  This generated a new file, class="CVel"
 if doDoppler:
     retCode = VLBADoppler(uv, err, Sources=targets, flagVer=2, doBand=1, \
                               noScrat=noScrat, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error in Doppler correction"
+        raise RuntimeError("Error in Doppler correction")
     
 # Calibrate and average continuum calibrator data
 if doCalAvg:
@@ -361,7 +362,7 @@ if doCalAvg:
                           BIF=CABIF, EIF=CAEIF, Compress=Compress, \
                           logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-       raise  RuntimeError,"Error in CalAvg"
+       raise  RuntimeError("Error in CalAvg")
 
 # Get calibrated/averaged data
 if not check:

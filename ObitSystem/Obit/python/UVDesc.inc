@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageDesc type                         */
 /*                                                                    */
-/*;  Copyright (C)2005-2017                                           */
+/*;  Copyright (C)2005-2019                                           */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -33,10 +33,77 @@
 #include "ObitPrecess.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitUVDesc *me;
+} UVDesc;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitUVDesc *me;
+} UVDesc;
+
 %inline %{
 extern ObitUVDesc* UVDescCreate (char *name) {
   return newObitUVDesc (name);
 } // end UVDescCreate
+
+ObitUVDesc* UVDescRef (ObitUVDesc* in) {
+  return ObitUVDescRef (in);
+} // end UVDescRef
+
+ObitUVDesc* UVDescUnref (ObitUVDesc* in) {
+  if (!ObitUVDescIsA(in)) return NULL;
+  return ObitUVDescUnref (in);
+} // end UVDescUnref
+
+void CreateUVDesc(PyObject *self, char* name) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_UVDesc, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateUVDesc: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((UVDesc*)ptr)->me = UVDescCreate(name);
+   else  ((UVDesc*)ptr)->me = NULL;
+   return;
+ } // end CreateUVDesc
+
+void DeleteUVDesc(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_UVDesc, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteUVDesc: could not recover c struct");
+	return;
+   }
+   ((UVDesc*)ptr)->me = ObitUVDescUnref(((UVDesc*)ptr)->me);
+}// end DeleteUVDesc
+
+ObitUVDesc* UVDesc_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_UVDesc, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"UVDesc_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((UVDesc*)ptr)->me;
+}  // end UVDesc_Get_me
+
+void UVDesc_Set_me(PyObject *self, ObitUVDesc *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_UVDesc, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"UVDesc_Set_me: could not recover c struct");
+	return;
+   }
+   ((UVDesc*)ptr)->me =  UVDescRef(me);
+}  // end UVDesc_Set_me
 
 extern ObitUVDesc* UVDescCopy (ObitUVDesc* in, 
 		              ObitUVDesc* out, ObitErr *err) {
@@ -104,13 +171,13 @@ extern PyObject *UVDescGetDict(ObitUVDesc* in) {
   PyDict_SetItemString(outDict, "altRef",  PyFloat_FromDouble((double)in->altRef));
   PyDict_SetItemString(outDict, "restFreq",PyFloat_FromDouble((double)in->restFreq));
   PyDict_SetItemString(outDict, "JDObs",   PyFloat_FromDouble((double)in->JDObs));
-  PyDict_SetItemString(outDict, "naxis",   PyInt_FromLong((long)in->naxis));
-  PyDict_SetItemString(outDict, "nvis",    PyInt_FromLong((long)in->nvis));
-  PyDict_SetItemString(outDict, "nrparm",  PyInt_FromLong((long)in->nrparm));
-  PyDict_SetItemString(outDict, "lrec",    PyInt_FromLong((long)in->lrec));
-  PyDict_SetItemString(outDict, "ncorr",   PyInt_FromLong((long)in->ncorr));
-  PyDict_SetItemString(outDict, "VelReference", PyInt_FromLong((long)in->VelReference));
-  PyDict_SetItemString(outDict, "VelDef", PyInt_FromLong((long)in->VelDef));
+  PyDict_SetItemString(outDict, "naxis",   PyLong_FromLong((long)in->naxis));
+  PyDict_SetItemString(outDict, "nvis",    PyLong_FromLong((long)in->nvis));
+  PyDict_SetItemString(outDict, "nrparm",  PyLong_FromLong((long)in->nrparm));
+  PyDict_SetItemString(outDict, "lrec",    PyLong_FromLong((long)in->lrec));
+  PyDict_SetItemString(outDict, "ncorr",   PyLong_FromLong((long)in->ncorr));
+  PyDict_SetItemString(outDict, "VelReference", PyLong_FromLong((long)in->VelReference));
+  PyDict_SetItemString(outDict, "VelDef", PyLong_FromLong((long)in->VelDef));
   list1 = PyList_New(IM_MAXDIM);
   for (i=0; i<IM_MAXDIM; i++) PyList_SetItem(list1, i, PyString_InternFromString(in->ctype[i]));
   PyDict_SetItemString(outDict, "ctype", list1);
@@ -118,7 +185,7 @@ extern PyObject *UVDescGetDict(ObitUVDesc* in) {
   for (i=0; i<IM_MAXDIM; i++) PyList_SetItem(list2, i, PyFloat_FromDouble((double)in->crval[i]));
   PyDict_SetItemString(outDict, "crval", list2);
   list3 = PyList_New(IM_MAXDIM);
-  for (i=0; i<IM_MAXDIM; i++) PyList_SetItem(list3, i, PyInt_FromLong((long)in->inaxes[i]));
+  for (i=0; i<IM_MAXDIM; i++) PyList_SetItem(list3, i, PyLong_FromLong((long)in->inaxes[i]));
   PyDict_SetItemString(outDict, "inaxes", list3);
   list4 = PyList_New(IM_MAXDIM);
   for (i=0; i<IM_MAXDIM; i++) PyList_SetItem(list4, i, PyFloat_FromDouble((double)in->cdelt[i]));
@@ -132,28 +199,28 @@ extern PyObject *UVDescGetDict(ObitUVDesc* in) {
   list7 = PyList_New(UV_MAX_RANP);
   for (i=0; i<UV_MAX_RANP; i++) PyList_SetItem(list7, i, PyString_InternFromString(in->ptype[i]));
   PyDict_SetItemString(outDict, "ptype", list7);
-  PyDict_SetItemString(outDict, "firstVis", PyInt_FromLong((long)in->firstVis));
-  PyDict_SetItemString(outDict, "numVisBuff", PyInt_FromLong((long)in->numVisBuff));
+  PyDict_SetItemString(outDict, "firstVis", PyLong_FromLong((long)in->firstVis));
+  PyDict_SetItemString(outDict, "numVisBuff", PyLong_FromLong((long)in->numVisBuff));
 /* Structural members - mostly read only */
-  PyDict_SetItemString(outDict, "ilocu",    PyInt_FromLong((long)in->ilocu));
-  PyDict_SetItemString(outDict, "ilocv",    PyInt_FromLong((long)in->ilocv));
-  PyDict_SetItemString(outDict, "ilocw",    PyInt_FromLong((long)in->ilocw));
-  PyDict_SetItemString(outDict, "iloct",    PyInt_FromLong((long)in->iloct));
-  PyDict_SetItemString(outDict, "ilocb",    PyInt_FromLong((long)in->ilocb));
-  PyDict_SetItemString(outDict, "ilocsu",   PyInt_FromLong((long)in->ilocsu));
-  PyDict_SetItemString(outDict, "ilocfq",   PyInt_FromLong((long)in->ilocfq));
-  PyDict_SetItemString(outDict, "ilocit",   PyInt_FromLong((long)in->ilocit));
-  PyDict_SetItemString(outDict, "ilocid",   PyInt_FromLong((long)in->ilocid));
-  PyDict_SetItemString(outDict, "ilocws",   PyInt_FromLong((long)in->ilocws));
-  PyDict_SetItemString(outDict, "jlocc",    PyInt_FromLong((long)in->jlocc));
-  PyDict_SetItemString(outDict, "jlocs",    PyInt_FromLong((long)in->jlocs));
-  PyDict_SetItemString(outDict, "jlocf",    PyInt_FromLong((long)in->jlocf));
-  PyDict_SetItemString(outDict, "jlocr",    PyInt_FromLong((long)in->jlocr));
-  PyDict_SetItemString(outDict, "jlocd",    PyInt_FromLong((long)in->jlocd));
-  PyDict_SetItemString(outDict, "jlocif",   PyInt_FromLong((long)in->jlocif));
-  PyDict_SetItemString(outDict, "incs",     PyInt_FromLong((long)in->incs));
-  PyDict_SetItemString(outDict, "incf",     PyInt_FromLong((long)in->incf));
-  PyDict_SetItemString(outDict, "incif",    PyInt_FromLong((long)in->incif));
+  PyDict_SetItemString(outDict, "ilocu",    PyLong_FromLong((long)in->ilocu));
+  PyDict_SetItemString(outDict, "ilocv",    PyLong_FromLong((long)in->ilocv));
+  PyDict_SetItemString(outDict, "ilocw",    PyLong_FromLong((long)in->ilocw));
+  PyDict_SetItemString(outDict, "iloct",    PyLong_FromLong((long)in->iloct));
+  PyDict_SetItemString(outDict, "ilocb",    PyLong_FromLong((long)in->ilocb));
+  PyDict_SetItemString(outDict, "ilocsu",   PyLong_FromLong((long)in->ilocsu));
+  PyDict_SetItemString(outDict, "ilocfq",   PyLong_FromLong((long)in->ilocfq));
+  PyDict_SetItemString(outDict, "ilocit",   PyLong_FromLong((long)in->ilocit));
+  PyDict_SetItemString(outDict, "ilocid",   PyLong_FromLong((long)in->ilocid));
+  PyDict_SetItemString(outDict, "ilocws",   PyLong_FromLong((long)in->ilocws));
+  PyDict_SetItemString(outDict, "jlocc",    PyLong_FromLong((long)in->jlocc));
+  PyDict_SetItemString(outDict, "jlocs",    PyLong_FromLong((long)in->jlocs));
+  PyDict_SetItemString(outDict, "jlocf",    PyLong_FromLong((long)in->jlocf));
+  PyDict_SetItemString(outDict, "jlocr",    PyLong_FromLong((long)in->jlocr));
+  PyDict_SetItemString(outDict, "jlocd",    PyLong_FromLong((long)in->jlocd));
+  PyDict_SetItemString(outDict, "jlocif",   PyLong_FromLong((long)in->jlocif));
+  PyDict_SetItemString(outDict, "incs",     PyLong_FromLong((long)in->incs));
+  PyDict_SetItemString(outDict, "incf",     PyLong_FromLong((long)in->incf));
+  PyDict_SetItemString(outDict, "incif",    PyLong_FromLong((long)in->incif));
  
   /* Discard references to newly created objects. */
   doh = pos;
@@ -204,12 +271,12 @@ extern void UVDescSetDict(ObitUVDesc* in, PyObject *inDict) {
   in->yshift  = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "yshift"));
   in->altCrpix= (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "altCrpix"));
   in->altRef  = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "altRef"));
-  in->naxis   = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "naxis"));
-  in->nrparm  = PyInt_AsLong(PyDict_GetItemString(inDict, "nrparm"));
-  in->nvis    = PyInt_AsLong(PyDict_GetItemString(inDict, "nvis"));
-  in->numVisBuff = PyInt_AsLong(PyDict_GetItemString(inDict, "numVisBuff"));
-  in->VelReference  = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "VelReference"));
-  in->VelDef  = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "VelDef"));
+  in->naxis   = (int)PyLong_AsLong(PyDict_GetItemString(inDict, "naxis"));
+  in->nrparm  = PyLong_AsLong(PyDict_GetItemString(inDict, "nrparm"));
+  in->nvis    = PyLong_AsLong(PyDict_GetItemString(inDict, "nvis"));
+  in->numVisBuff = PyLong_AsLong(PyDict_GetItemString(inDict, "numVisBuff"));
+  in->VelReference  = (int)PyLong_AsLong(PyDict_GetItemString(inDict, "VelReference"));
+  in->VelDef  = (int)PyLong_AsLong(PyDict_GetItemString(inDict, "VelDef"));
   list1 = PyDict_GetItemString(inDict, "ctype");
   number = MIN (IM_MAXDIM, PyList_Size(list1));
   for (i=0; i<number; i++) {
@@ -221,7 +288,7 @@ extern void UVDescSetDict(ObitUVDesc* in, PyObject *inDict) {
   for (i=0; i<number; i++) in->crval[i] = PyFloat_AsDouble(PyList_GetItem(list2, i));
   list3 = PyDict_GetItemString(inDict, "inaxes");
   number = MIN (IM_MAXDIM, PyList_Size(list3));
-  for (i=0; i<number; i++) in->inaxes[i] = (long)PyInt_AsLong(PyList_GetItem(list3, i));
+  for (i=0; i<number; i++) in->inaxes[i] = (long)PyLong_AsLong(PyList_GetItem(list3, i));
   list4 = PyDict_GetItemString(inDict, "cdelt");
   number = MIN (IM_MAXDIM, PyList_Size(list4));
   for (i=0; i<number; i++) in->cdelt[i] = (float)PyFloat_AsDouble(PyList_GetItem(list4, i));
@@ -237,48 +304,13 @@ extern void UVDescSetDict(ObitUVDesc* in, PyObject *inDict) {
     tstr = PyString_AsString(PyList_GetItem(list7, i));
     strncpy (in->ptype[i], tstr, UVLEN_KEYWORD);
   }
-  in->firstVis = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "firstVis"));
+  in->firstVis = (int)PyLong_AsLong(PyDict_GetItemString(inDict, "firstVis"));
   /* Reindex just to be sure */
   ObitUVDescIndex (in);
 } // end UVDescSetDict
-
-ObitUVDesc* UVDescRef (ObitUVDesc* in) {
-  return ObitUVDescRef (in);
-} // end UVDescRef
-
-ObitUVDesc* UVDescUnref (ObitUVDesc* in) {
-  if (!ObitUVDescIsA(in)) return NULL;
-  return ObitUVDescUnref (in);
-} // end UVDescUnref
 
 extern int UVDescIsA (ObitUVDesc* in) {
   return ObitUVDescIsA(in);
 }
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitUVDesc *me;
-} UVDesc;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitUVDesc *me;
-} UVDesc;
-
-%addmethods UVDesc { 
-  UVDesc(char *name) {
-     UVDesc *out;
-     out = (UVDesc *) malloc(sizeof(UVDesc));
-     if (strcmp(name, "None")) out->me = UVDescCreate (name);
-     else out->me = NULL;
-     return out;
-   }
-  ~UVDesc() {
-    self->me = UVDescUnref(self->me);
-    free(self);
-  }
-};
 

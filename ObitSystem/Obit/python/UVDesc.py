@@ -10,7 +10,7 @@
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2005-2012
+#  Copyright (C) 2005-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -37,38 +37,38 @@
 #-----------------------------------------------------------------------
  
 # Python shadow class to ObitUVDesc class
-import Obit, InfoList, OErr, string, math
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, InfoList, OErr, string, math
 
-class UVDescPtr :
-    def __init__(self,this):
-        self.this = this
+class UVDesc(Obit.UVDesc):
+    """ Python Obit Image descriptor class
+
+    """
+    def __init__(self, name) :
+        super(UVDesc, self).__init__()
+        Obit.CreateUVDesc(self.this, name)
+    def __del__(self, DeleteUVDesc=_Obit.DeleteUVDesc):
+        if _Obit!=None:
+            DeleteUVDesc(self.this)
     def __setattr__(self,name,value):
         if name == "me" :
-            Obit.UVDesc_me_set(self.this,value)
+            Obit.UVDesc_Set_me(self.this,value)
             return
         if name=="Dict":
             return PSetDict(self,value)
         self.__dict__[name] = value
     def __getattr__(self,name):
         if name == "me" : 
-            return Obit.UVDesc_me_get(self.this)
+            return Obit.UVDesc_Get_me(self.this)
         # Functions to return members
         if name=="List":
             return PGetList(self)
         if name=="Dict":
             return PGetDict(self)
-        raise AttributeError,str(name)
+        raise AttributeError(str(name))
     def __repr__(self):
         return "<C UVDesc instance>"
-class UVDesc(UVDescPtr):
-    """ Python Obit Image descriptor class
-
-    """
-    def __init__(self, name) :
-        self.this = Obit.new_UVDesc(name)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_UVDesc(self.this)
 
 def PDefault (name):
     """ Default UVDesc
@@ -91,7 +91,7 @@ def PGetDict (inUD):
     ################################################################
     # Checks
     if not PIsA(inUD):
-        raise TypeError,"inUD MUST be a Python Obit UVDesc"
+        raise TypeError("inUD MUST be a Python Obit UVDesc")
     #
     return Obit.UVDescGetDict(inUD.me)
     # end PGetDict
@@ -108,7 +108,7 @@ def PSetDict (inUD, inDict):
     ################################################################
     # Checks
     if not PIsA(inUD):
-        raise TypeError,"inUD MUST be a Python Obit UVDesc"
+        raise TypeError("inUD MUST be a Python Obit UVDesc")
     #
     Obit.UVDescSetDict(inUD.me, inDict)
     # end PSetDict
@@ -133,10 +133,9 @@ def PGetList (inDesc):
     ################################################################
     # Checks
     if not PIsA(inDesc):
-        raise TypeError,"inDesc MUST be a Python Obit UVDesc"
+        raise TypeError("inDesc MUST be a Python Obit UVDesc")
     #
     out    = InfoList.InfoList()
-    out.me = Obit.InfoListUnref(out.me)
     out.me = Obit.UVDescGetList(inDesc.me)
     return out
     # end PGetList 
@@ -149,22 +148,22 @@ def PIsA (inUD):
     """
     ################################################################
      # Checks
-    if inUD.__class__ != UVDesc:
-        return 0
+    if not isinstance(inUD, UVDesc):
+        return False
     #
-    return Obit.UVDescIsA(inUD.me)
+    return Obit.UVDescIsA(inUD.me)!=0
     # end  PIsA
 
 
 def PHeader (inID):
     """ Print the contents of a descriptor
 
-    inID   = Python ImageDesc to print
+    inID   = Python UVDesc to print
     """
     ################################################################
     # Checks
     if not PIsA(inID):
-        raise TypeError,"inID MUST be a Python Obit UVDesc"
+        raise TypeError("inID MUST be a Python Obit UVDesc")
     #
     dict = inID.Dict
     PHeaderDict(dict)
@@ -173,59 +172,59 @@ def PHeader (inID):
 def PHeaderDict (dict):
     """ Print the contents of a descriptor as python dict
 
-    dict   = Python ImageDesc to print as python dict
+    dict   = Python UVDesc to print as python dict
     """
     ################################################################
-    print "Object: %8s" % dict["object"] #"date"
-    print "Observed: %8s Telescope:  %8s Created: %8s" % \
-          (dict["obsdat"],dict["teles"],dict["date"])
-    print "Observer: %8s   Instrument: %8s " % \
-          (dict["observer"],dict["instrume"])
-    print " # visibilities %10d  Sort order = %s" % \
-          (dict["nvis"],dict["isort"])
+    print("Object: %8s" % dict["object"]) #"date"
+    print("Observed: %8s Telescope:  %8s Created: %8s" % \
+          (dict["obsdat"],dict["teles"],dict["date"]))
+    print("Observer: %8s   Instrument: %8s " % \
+          (dict["observer"],dict["instrume"]))
+    print(" # visibilities %10d  Sort order = %s" % \
+          (dict["nvis"],dict["isort"]))
     # Random parameters 
-    print "Rand axes: %s %s %s %s %s" % \
+    print("Rand axes: %s %s %s %s %s" % \
           (dict["ptype"][0],dict["ptype"][1],dict["ptype"][2],\
-           dict["ptype"][3],dict["ptype"][4])
+           dict["ptype"][3],dict["ptype"][4]))
     if dict["nrparm"] > 5:
-        print "           %s %s %s %s %s" % \
+        print("           %s %s %s %s %s" % \
               (dict["ptype"][5],dict["ptype"][6],dict["ptype"][7],\
-               dict["ptype"][9],dict["ptype"][9])
+               dict["ptype"][9],dict["ptype"][9]))
     if dict["nrparm"] > 10:
-        print "           %s %s %s %s " % \
+        print("           %s %s %s %s " % \
               (dict["ptype"][10],dict["ptype"][11],dict["ptype"][12],\
-               dict["ptype"][13])
-    print "--------------------------------------------------------------"
-    print "Type    Pixels   Coord value     at Pixel     Coord incr   Rotat"
+               dict["ptype"][13]))
+    print("--------------------------------------------------------------")
+    print("Type    Pixels   Coord value     at Pixel     Coord incr   Rotat")
     i = -1
     for ctype in dict["ctype"]:
         i = i+1
         if ctype != "        ":
             # Conversion on some types
             stuff =  PPoslabel (ctype, dict["crval"][i], dict["cdelt"][i])
-            print "%8s%6d%16s%11.2f%15s%8.2f" % \
+            print("%8s%6d%16s%11.2f%15s%8.2f" % \
                   (ctype, dict["inaxes"][i], stuff["crval"], dict["crpix"][i], \
-                  stuff["cdelt"] , dict["crota"][i])
-    print "--------------------------------------------------------------"
-    print "Coordinate equinox %6.1f  Coordinate epoch %7.2f" % \
-          (dict["equinox"], dict["epoch"])
-    print "Observed RA %16s Observed Dec %15s" % \
-          (PRA2HMS(dict["obsra"]),  PDec2DMS(dict["obsdec"]))
+                  stuff["cdelt"] , dict["crota"][i]))
+    print("--------------------------------------------------------------")
+    print("Coordinate equinox %6.1f  Coordinate epoch %7.2f" % \
+          (dict["equinox"], dict["epoch"]))
+    print("Observed RA %16s Observed Dec %15s" % \
+          (PRA2HMS(dict["obsra"]),  PDec2DMS(dict["obsdec"])))
     if dict["xshift"]!=0.0 or dict["yshift"]!=0.0:
-        print "Phase shifted in X %10.3f in Y %10.3f" % \
-              (dict["xshift"], dict["yshift"])
+        print("Phase shifted in X %10.3f in Y %10.3f" % \
+              (dict["xshift"], dict["yshift"]))
     if ('beamMaj' in dict) and (dict["beamMaj"]>0.0):
-        print "Clean Beam %10g x %10g asec, PA %7.1f deg." % \
+        print("Clean Beam %10g x %10g asec, PA %7.1f deg." % \
               (3600.0*dict["beamMaj"], 3600.0*dict["beamMin"], \
-               dict["beamPA"])
+               dict["beamPA"]))
     VelDef  = dict["VelDef"]
     VelDefStr = ["LSR", "Helio", "Observer"]
     VelType  = dict["VelDef"]
     VelTypeStr = ["Optical", "radio"]
-    print "Rest freq %12g Vel type: %s,  wrt  %s" % \
-          (dict["restFreq"], VelDefStr[VelDef-1], VelTypeStr[VelType])
-    print "Alt ref value %12.5g  wrt pixel %8.2f" % \
-          (dict["altRef"], dict["altCrpix"])
+    print("Rest freq %12g Vel type: %s,  wrt  %s" % \
+          (dict["restFreq"], VelDefStr[VelDef-1], VelTypeStr[VelType]))
+    print("Alt ref value %12.5g  wrt pixel %8.2f" % \
+          (dict["altRef"], dict["altCrpix"]))
     # end PHeaderDict
 
 def PPoslabel (ctype, crval, cdelt):

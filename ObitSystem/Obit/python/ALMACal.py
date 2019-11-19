@@ -1,6 +1,8 @@
 """ 
 
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import UV, UVDesc, Image, ImageDesc, FArray, ObitTask, AIPSTask, AIPSDir, OErr, History
 import InfoList, Table, OSystem, OASDM, ImageUtil
 from AIPS import AIPS
@@ -10,10 +12,11 @@ from OTObit import Acat, AMcat, getname, zap, imhead, tabdest, tput
 from Obit import Version
 from PipeUtil import *
 import os, os.path, re, shutil, pickle, math, copy, pprint, string
-import urllib, urllib2
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error, six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 import sys, commands
 import datetime
 import xml.dom.minidom
+from six.moves import range
 
 manifest = { 'project' : [],  # list of project output files
              'source'  : {} } # dict of source output files
@@ -486,7 +489,7 @@ def ALMACopyFG(uv, err, logfile='', check=False, debug = False):
     taco = ObitTask.ObitTask("TabCopy")
     try:
         taco.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     if not check:
         setname(uv, taco)
@@ -505,8 +508,8 @@ def ALMACopyFG(uv, err, logfile='', check=False, debug = False):
     try:
         if not check:
             taco.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Copy of FG table Failed retCode="+str(taco.retCode)
         printMess(mess, logfile)
         return 1
@@ -538,7 +541,7 @@ def ALMACopyTable(inObj, outObj, inTab, err, inVer=1, outVer=0,
     taco = ObitTask.ObitTask("TabCopy")
     try:
         taco.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     if not check:
         setname(inObj, taco)
@@ -554,8 +557,8 @@ def ALMACopyTable(inObj, outObj, inTab, err, inVer=1, outVer=0,
     try:
         if not check:
             taco.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Copy of "+inTab+" table Failed retCode="+str(taco.retCode)
         printMess(mess, logfile)
         return 1
@@ -588,7 +591,7 @@ def ALMAUVLoad(filename, inDisk, Aname, Aclass, Adisk, Aseq, err, logfile=''):
     #
     # Checks
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Get input
     inUV = UV.newPFUV("FITS UV DATA", filename, inDisk, True, err)
@@ -656,7 +659,7 @@ def ALMAUVLoadT(filename, disk, Aname, Aclass, Adisk, Aseq, err, logfile="  ", \
     uvc = ObitTask.ObitTask("UVCopy")
     try:
         uvc.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     uvc.DataType = "FITS"
     uvc.inFile   = filename
@@ -675,8 +678,8 @@ def ALMAUVLoadT(filename, disk, Aname, Aclass, Adisk, Aseq, err, logfile="  ", \
     try:
         if not check:
             uvc.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "UVData load Failed "
         printMess(mess, logfile)
     else:
@@ -725,7 +728,7 @@ def ALMAUVLoadArch(dataroots, Aname, Aclass, Adisk, Aseq, err, \
     bdf = ObitTask.ObitTask("BDFIn")
     try:
         bdf.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     bdf.DataType = "AIPS"
     bdf.outName  = Aname[0:12]
@@ -755,8 +758,8 @@ def ALMAUVLoadArch(dataroots, Aname, Aclass, Adisk, Aseq, err, \
         try:
             if not check:
                 bdf.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "UVData load Failed "
             printMess(mess, logfile)
             return None
@@ -781,7 +784,7 @@ def ALMAUVLoadArch(dataroots, Aname, Aclass, Adisk, Aseq, err, \
     listr = ObitTask.ObitTask("Lister")
     try:
         listr.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     setname(outuv,listr)
     listr.taskLog  = logfile
@@ -790,8 +793,8 @@ def ALMAUVLoadArch(dataroots, Aname, Aclass, Adisk, Aseq, err, \
     try:
         if not check:
             listr.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Lister Failed retCode="+str(listr.retCode)
         printMess(mess, logfile)
     else:
@@ -824,7 +827,7 @@ def ALMAHann(inUV, Aname, Aclass, Adisk, Aseq, err, doDescm=True, \
     hann=ObitTask.ObitTask("Hann")
     try:
         hann.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     setname(inUV,hann)
     if check:
@@ -843,8 +846,8 @@ def ALMAHann(inUV, Aname, Aclass, Adisk, Aseq, err, doDescm=True, \
     try:
         if not check:
             hann.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Median flagging Failed retCode="+str(hann.retCode)
         printMess(mess, logfile)
         return None
@@ -886,9 +889,9 @@ def ALMAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
     #
     # Checks
     if not Image.PIsA(inImage):
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Deblank filename
     fn = re.sub('\s','_',filename)
@@ -957,9 +960,9 @@ def ALMAUVFITS(inUV, filename, outDisk, err, compress=False, \
 
     # Checks
     if not UV.PIsA(inUV):
-        raise TypeError,"inUV MUST be a Python Obit UV"
+        raise TypeError("inUV MUST be a Python Obit UV")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Deblank filename
     fn = re.sub('\s','_',filename)
@@ -1020,9 +1023,9 @@ def ALMAUVFITSTab(inUV, filename, outDisk, err, \
     printMess(mess, logfile)
     # Checks
     if not UV.PIsA(inUV):
-        raise TypeError,"inUV MUST be a Python Obit UV"
+        raise TypeError("inUV MUST be a Python Obit UV")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Deblank filename
     fn = re.sub('\s','_',filename)
@@ -1122,7 +1125,7 @@ def ALMAMedianFlag(uv, target, err, \
     medn=ObitTask.ObitTask("MednFlag")
     try:
         medn.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     setname(uv,medn)
     if type(target)==list:
@@ -1151,8 +1154,8 @@ def ALMAMedianFlag(uv, target, err, \
     try:
         if not check:
             medn.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Median flagging Failed retCode="+str(medn.retCode)
         printMess(mess, logfile)
         return 1
@@ -1200,7 +1203,7 @@ def ALMAQuack(uv, err, \
     quack=ObitTask.ObitTask("Quack")
     try:
         quack.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     
     if not check:
@@ -1225,8 +1228,8 @@ def ALMAQuack(uv, err, \
     try:
         if not check:
             quack.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Quack Failed retCode= "+str(quack.retCode)
         printMess(mess, logfile)
         return 1
@@ -1257,7 +1260,7 @@ def ALMAShadow(uv, err, shadBl=25.0, flagVer=2, \
     uvflg=ObitTask.ObitTask("UVFlag")
     try:
         uvflg.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     
     if not check:
@@ -1275,8 +1278,8 @@ def ALMAShadow(uv, err, shadBl=25.0, flagVer=2, \
     try:
         if not check:
             uvflg.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "UVFlag Failed retCode= "+str(uvflg.retCode)
         printMess(mess, logfile)
         return 1
@@ -1349,7 +1352,7 @@ def ALMAAutoFlag(uv, target, err, \
     af=ObitTask.ObitTask("AutoFlag")
     try:
         af.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     if not check:
         setname(uv,af)
@@ -1389,8 +1392,8 @@ def ALMAAutoFlag(uv, target, err, \
     try:
         if not check:
             af.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "AutoFlag Failed retCode="+str(af.retCode)
         printMess(mess, logfile)
         return 1
@@ -1504,7 +1507,7 @@ def ALMADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
     calib = ObitTask.ObitTask("Calib")
     try:
         calib.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     OK = False   # Must have some work
     calib.taskLog  = logfile
@@ -1560,8 +1563,8 @@ def ALMADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
             printMess(mess, logfile)
             if not check:
                 calib.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "Calib Failed retCode= "+str(calib.retCode)+" Source "+calib.Sources[0]
             printMess(mess, logfile)
             #return None  # Allow some to fail
@@ -1587,7 +1590,7 @@ def ALMADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
         sncor = ObitTask.ObitTask("SNCor")
         try:
             sncor.userno     = OSystem.PGetAIPSuser()   # This sometimes gets lost
-        except Exception, exception:
+        except Exception as exception:
             pass
         if not check:
             setname(uv, sncor)
@@ -1604,8 +1607,8 @@ def ALMADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
         try:
             if not check:
                 sncor.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "SNCor Failed retCode="+str(sncor.retCode)
             printMess(mess, logfile)
             return 1
@@ -1618,7 +1621,7 @@ def ALMADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
         snsmo = ObitTask.ObitTask("SNSmo")
         try:
             snsmo.userno     = OSystem.PGetAIPSuser()   # This sometimes gets lost
-        except Exception, exception:
+        except Exception as exception:
             pass
         if not check:
             setname(uv, snsmo)
@@ -1644,8 +1647,8 @@ def ALMADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
         try:
             if not check:
                 snsmo.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "SNSmo Failed retCode="+str(snsmo.retCode)
             printMess(mess, logfile)
             return 1
@@ -1753,7 +1756,7 @@ def ALMAPhaseCal(uv,PCals,  err, ACals=None, solInt=0.5, BChan=1, EChan=0, UVRan
     calib = ObitTask.ObitTask("Calib")
     try:
         calib.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     OK = False   # Must have some work
     calib.taskLog  = logfile
@@ -1822,8 +1825,8 @@ def ALMAPhaseCal(uv,PCals,  err, ACals=None, solInt=0.5, BChan=1, EChan=0, UVRan
             printMess(mess, logfile)
             if not check:
                 calib.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "Calib Failed retCode= "+str(calib.retCode)+" Source "+calib.Sources[0]
             printMess(mess, logfile)
             #return None  # Allow some to fail
@@ -1873,8 +1876,8 @@ def ALMAPhaseCal(uv,PCals,  err, ACals=None, solInt=0.5, BChan=1, EChan=0, UVRan
                 printMess(mess, logfile)
                 if not check:
                     calib.g
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
                 mess = "Calib Failed retCode= "+str(calib.retCode)+" Source "+calib.Sources[0]
                 printMess(mess, logfile)
             #return None  # Allow some to fail
@@ -1993,7 +1996,7 @@ def ALMACalAP(uv, target, ACals, err, \
     setjy = ObitTask.ObitTask("SetJy")
     try:
         setjy.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     setjy.taskLog  = logfile
     if not check:
@@ -2022,8 +2025,8 @@ def ALMACalAP(uv, target, ACals, err, \
         try:
             if not check:
                 setjy.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "SetJy Failed retCode="+str(setjy.retCode)+" for "+setjy.Sources[0]
             printMess(mess, logfile)
             # return 1  # allow some failures
@@ -2089,8 +2092,8 @@ def ALMACalAP(uv, target, ACals, err, \
                 try:
                     if not check:
                         setjy.g
-                except Exception, exception:
-                    print exception
+                except Exception as exception:
+                    print(exception)
                     mess = "SetJy Failed retCode="+str(setjy.retCode)
                     printMess(mess, logfile)
                     return 1
@@ -2101,7 +2104,7 @@ def ALMACalAP(uv, target, ACals, err, \
     calib = ObitTask.ObitTask("Calib")
     try:
         calib.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     calib.taskLog  = logfile
     if not check:
@@ -2162,8 +2165,8 @@ def ALMACalAP(uv, target, ACals, err, \
             printMess(mess, logfile)
             if not check:
                 calib.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "Calib Failed retCode= "+str(calib.retCode)+" Source "+calib.Sources[0]
             printMess(mess, logfile)
             #return 1  # allow some failures
@@ -2181,7 +2184,7 @@ def ALMACalAP(uv, target, ACals, err, \
     clcal = ObitTask.ObitTask("CLCal")
     try:
         clcal.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     clcal.taskLog  = logfile
     ical = 0
@@ -2254,8 +2257,8 @@ def ALMACalAP(uv, target, ACals, err, \
                 printMess(mess, logfile)
                 if not check:
                     calib.g
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
                 mess = "Calib Failed retCode= "+str(calib.retCode)+" Source "+calib.Sources[0]
                 printMess(mess, logfile)
                 #return 1   # Allow some to fail
@@ -2282,7 +2285,7 @@ def ALMACalAP(uv, target, ACals, err, \
     getjy = ObitTask.ObitTask("GetJy")
     try:
         getjy.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     getjy.taskLog  = logfile
     ical = 0; isou = 0
@@ -2315,8 +2318,8 @@ def ALMACalAP(uv, target, ACals, err, \
     try:
         if not check:
             getjy.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "GetJy Failed retCode="+str(getjy.retCode)
         printMess(mess, logfile)
         return 1
@@ -2344,7 +2347,7 @@ def ALMACalAP(uv, target, ACals, err, \
         snsmo=ObitTask.ObitTask("SNSmo")
         try:
             snsmo.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-        except Exception, exception:
+        except Exception as exception:
             pass
         snsmo.taskLog  = logfile
         if not check:
@@ -2367,8 +2370,8 @@ def ALMACalAP(uv, target, ACals, err, \
         try:
             if not check:
                 snsmo.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "SNSmo Failed retCode="+str(snsmo.retCode)
             printMess(mess, logfile)
             return 1
@@ -2409,8 +2412,8 @@ def ALMACalAP(uv, target, ACals, err, \
     try:
         if not check:
             clcal.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "clcal Failed retCode="+str(clcal.retCode)
         printMess(mess, logfile)
         return 1
@@ -2516,7 +2519,7 @@ def ALMABPCal(uv, BPCals, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
     bpass = ObitTask.ObitTask("BPass")
     try:
         bpass.userno  = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     OK = False   # Must have some work
     bpass.taskLog = logfile
@@ -2594,8 +2597,8 @@ def ALMABPCal(uv, BPCals, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
             if not check:
                 bpass.g
                 pass
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "BPass Failed retCode="+str(bpass.retCode)
             printMess(mess, logfile)
             #return 1
@@ -2668,7 +2671,7 @@ def ALMASplit(uv, target, err, FQid=1, outClass="      ", logfile = "", \
     split=ObitTask.ObitTask("Split")
     try:
         split.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     split.taskLog = logfile
     if not check:
@@ -2690,8 +2693,8 @@ def ALMASplit(uv, target, err, FQid=1, outClass="      ", logfile = "", \
     try:
         if not check:
             split.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "split Failed retCode="+str(split.retCode)
         printMess(mess, logfile)
         return 1
@@ -2745,7 +2748,7 @@ def ALMACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
     splat=ObitTask.ObitTask("Splat")
     try:
         splat.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     splat.taskLog = logfile
     if not check:
@@ -2777,8 +2780,8 @@ def ALMACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
         if not check:
             splat.g
             pass
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Splat Failed retCode="+str(splat.retCode)
         printMess(mess, logfile)
         return 1
@@ -2791,7 +2794,7 @@ def ALMACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
         try:
             uvc = UV.newPAUV("AIPS UV DATA", splat.inName, avgClass, splat.inDisk, avgSeq, True, err)
             if err.isErr:
-                print "Error creating cal/avg AIPS data"
+                print("Error creating cal/avg AIPS data")
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
             # Dummy CL table
             solint = splat.timeAvg * 2   # CL table interval twice averaging
@@ -2803,16 +2806,16 @@ def ALMACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
                 UV.PTableCLGetDummy(uvc, uvc, 0, err, solInt=solint)
                 pass
             if err.isErr:
-                print "Error creating cal/avg AIPS data CL table"
+                print("Error creating cal/avg AIPS data CL table")
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data CL table")
             # Index - now in Splat
             #UV.PUtilIndex (uvc, err)
             if err.isErr:
-                print  "Error indexing cal/avg AIPS data"
+                print("Error indexing cal/avg AIPS data")
                 OErr.printErrMsg(err, "Error indexing cal/avg AIPS data")
             del uvc
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             OErr.printErr(err)
             mess = "Indexing or creating CL table failed"
             printMess(mess, logfile)
@@ -2876,7 +2879,7 @@ def ALMAXYDelay(uv, err, \
     xydly=ObitTask.ObitTask("RLDly")
     try:
         xydly.userno  = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     xydly.taskLog = logfile
     if not check:
@@ -2906,15 +2909,15 @@ def ALMAXYDelay(uv, err, \
     mess =  "X-Y delay calibration using "+xydly.Sources[0]
     printMess(mess, logfile)
     if debug:
-        print "timerange", xydly.timerang
+        print("timerange", xydly.timerang)
         xydly.i
         xydly.debug = True
         # Trap failure
     try:
         if not check:
             xydly.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "xydly Failed retCode="+str(xydly.retCode)
         printMess(mess, logfile)
         #return 1
@@ -2996,7 +2999,7 @@ def ALMAXYGain(uv, err, \
     calib=ObitTask.ObitTask("Calib")
     try:
         calib.userno  = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     calib.taskLog = logfile
     if not check:
@@ -3022,15 +3025,15 @@ def ALMAXYGain(uv, err, \
     mess =  "X-Y gain fix using using "+calib.Sources[0]
     printMess(mess, logfile)
     if debug:
-        print "timerange", calib.timerang
+        print("timerange", calib.timerang)
         calib.i
         calib.debug = True
     # Trap failure
     try:
         if not check:
             calib.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "calib Failed retCode="+str(calib.retCode)
         printMess(mess, logfile)
         return 1
@@ -3117,7 +3120,7 @@ def ALMAPolCal(uv, InsCals, err, InsCalPoln=None, \
         pcal = ObitTask.ObitTask("PCal")
         try:
             pcal.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-        except Exception, exception:
+        except Exception as exception:
             pass
         pcal.logFile = logfile
         if not check:
@@ -3183,8 +3186,8 @@ def ALMAPolCal(uv, InsCals, err, InsCalPoln=None, \
         try:
             if not check:
                 pcal.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "PCal Failed retCode="+str(pcal.retCode)
             printMess(mess, logfile)
             return 1
@@ -3643,7 +3646,7 @@ def ALMAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
         imager = ObitTask.ObitTask("MFImage")
         try:
             imager.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-        except Exception, exception:
+        except Exception as exception:
             pass
         imager.norder = norder
         imager.maxFBW = maxFBW
@@ -3652,7 +3655,7 @@ def ALMAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
         imager = ObitTask.ObitTask("Imager")
         try:
             imager.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-        except Exception, exception:
+        except Exception as exception:
             pass
         imager.prtLv = 2
     imager.taskLog  = logfile
@@ -3743,8 +3746,8 @@ def ALMAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
         try:
             if not check:
                 imager.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "Imager Failed retCode= "+str(imager.retCode)
             printMess(mess, logfile)
             #return 1  Allow some failures
@@ -3774,8 +3777,8 @@ def ALMAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
                         printMess(mess, logfile)
                         #return 1
                     del u
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
                 mess = "Imager Cleanup Failed source= "+imager.Sources[0].strip()+"_"+band
                 printMess(mess, logfile)
                 OErr.PClear(err)     # Clear any message/error
@@ -3876,7 +3879,7 @@ def ALMAPlotTab(uv, inext, invers, err, \
     snplt = AIPSTask.AIPSTask("snplt")
     try:
         snplt.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     if not check:
         setname(uv,snplt)
@@ -3898,8 +3901,8 @@ def ALMAPlotTab(uv, inext, invers, err, \
     try:
         if not check:
             snplt.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "SNPLT Failed "
         printMess(mess, logfile)
         return 1
@@ -3946,14 +3949,14 @@ def ALMAPlotBPTab(uv, invers, err, inext = 'BP', \
     bplot = AIPSTask.AIPSTask("bplot")
     try:
         bplot.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     if not check:
         setname(uv,bplot)
     try:
         bplot.inext   = inext
         bplot.invers  = invers
-    except Exception, exception:
+    except Exception as exception:
         pass
     bplot.stokes  = stokes
     bplot.msgkill = 5        # Suppress blather
@@ -3968,8 +3971,8 @@ def ALMAPlotBPTab(uv, invers, err, inext = 'BP', \
     try:
         if not check:
             bplot.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "BPLOT Failed "
         printMess(mess, logfile)
         return 1
@@ -4024,7 +4027,7 @@ def ALMAWritePlots(uv, loPL, hiPL, plotFile, err, \
     lwpla = AIPSTask.AIPSTask("lwpla")
     try:
         lwpla.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     if not check:
         setname(uv,lwpla)
@@ -4039,8 +4042,8 @@ def ALMAWritePlots(uv, loPL, hiPL, plotFile, err, \
     try:
         if not check:
             lwpla.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Lwpla Failed - continuing anyway"
         printMess(mess, logfile)
         # return 1  # Continue in spite of lwpla failure
@@ -4110,8 +4113,8 @@ def ALMASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["XX","YY"], \
     # Trap failure
     try:
         uv.Copy(scr, err)
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Copy plot data failed - continuing"
         printMess(mess, logfile)
         return None
@@ -4136,7 +4139,7 @@ def ALMASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["XX","YY"], \
     possm = AIPSTask.AIPSTask("possm")
     try:
         possm.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     setname(scr, possm)
     source = [ Source ]           # get BP calibration source, in list format
@@ -4161,8 +4164,8 @@ def ALMASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["XX","YY"], \
         try:
             if not check:
                 possm.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "POSSM Failed - continue anyway"
             printMess(mess, logfile)
             # return 1
@@ -4219,7 +4222,7 @@ def ALMAApplyCal(uv, err, SNver=0, CLin=0, CLout=0, maxInter=240.0, \
     clcal = ObitTask.ObitTask("CLCal")
     try:
         clcal.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     if not check:
         setname(uv,clcal)
@@ -4236,8 +4239,8 @@ def ALMAApplyCal(uv, err, SNver=0, CLin=0, CLout=0, maxInter=240.0, \
     try:
         if not check:
             clcal.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "CLCal Failed retCode="+str(clcal.retCode)
         printMess(mess, logfile)
         return 1
@@ -4643,7 +4646,7 @@ def ALMABPAmpStats(uv, BPver, err, logfile='', check=False, debug=False):
     if debug:
         for i in range(0,nant):
             if len(amps[i])>3:
-                print "ALMABPAmpStats max/min Ant ",i+1,max(amps[i]), min(amps[i])
+                print("ALMABPAmpStats max/min Ant ",i+1,max(amps[i]), min(amps[i]))
  
     # Close table
     BPtab.Close(err)
@@ -4822,7 +4825,7 @@ def ALMAClipBPAmp(uv, BPver, arange, err, \
                             count += 1
                             dirty = True
                             if debug:
-                                print "ALMAClipBPAmp flag ant "+str(iant+1)+" pol 1 iif "+str(iif)+" amp "+str(amp)
+                                print("ALMAClipBPAmp flag ant "+str(iant+1)+" pol 1 iif "+str(iif)+" amp "+str(amp))
                      # Second Poln
                    if (npoln>1) and (BProw["REAL 2"][iif]!=fblank):
                        total += 1
@@ -4833,7 +4836,7 @@ def ALMAClipBPAmp(uv, BPver, arange, err, \
                            count += 1
                            dirty = True
                            if debug:
-                               print "ALMAClipBPAmp flag ant "+str(iant+1)+" pol 1 iif "+str(iif)+" amp "+str(amp)
+                               print("ALMAClipBPAmp flag ant "+str(iant+1)+" pol 1 iif "+str(iif)+" amp "+str(amp))
             # Rewrite if modified
             if dirty and not check:
                 BPTab.WriteRow(i+1, BProw, err)
@@ -5020,7 +5023,7 @@ def ALMAGetRefAnt(uv, Cals, err, solInt=10.0/60.0, flagVer=2,  nThreads=1, \
     calib = ObitTask.ObitTask("Calib")
     try:
         calib.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     calib.taskLog  = logfile
     if not check:
@@ -5075,8 +5078,8 @@ def ALMAGetRefAnt(uv, Cals, err, solInt=10.0/60.0, flagVer=2,  nThreads=1, \
             if not check:
                 calib.g
                 pass
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "Calib Failed retCode= "+str(calib.retCode)+" Source "+calib.Sources[0]
             printMess(mess, logfile)
             #return 1  # allow some failures
@@ -5101,7 +5104,7 @@ def ALMAGetRefAnt(uv, Cals, err, solInt=10.0/60.0, flagVer=2,  nThreads=1, \
         printMess(mess, logfile)
         stats = ALMASNStats(uv, hiSN, 1.0, err, logfile=logfile, check=check, debug=debug)
         if err.isErr:
-            raise  RuntimeError,"Error finding reference antenna"
+            raise  RuntimeError("Error finding reference antenna")
         refAnt = stats["bestRef"]
         del stats
     else:
@@ -5377,14 +5380,14 @@ def ALMASNStats(uv, SNver, solInt, err, refAnts=[0], logfile='', check=False, de
             return badDict
     
     if debug:
-        print totAnt,"\n", snrAnt,"\n"
+        print(totAnt,"\n", snrAnt,"\n")
         for s in accum:
-            print s[0],s[1],s[2],s[3]
+            print(s[0],s[1],s[2],s[3])
 
     # Create output structure
     out = {"Source":souName, "souID":hi[0],"timeRange":hi[1], "Fract":hi[2], "SNR":hi[3], "bestRef":bestRef}
     if debug:
-        print "SN Info",out
+        print("SN Info",out)
     return out
     # end ALMASNStats
 
@@ -5406,7 +5409,7 @@ def ALMAMakeManifest( manifest=manifest ):
     srcFiles = [] # list of files to be copied
     for file in manifest['project']:
         srcFiles.append( file['name'] )
-    srcKeys = manifest['source'].keys()
+    srcKeys = list(manifest['source'].keys())
     for srcKey in srcKeys:
         for file in manifest['source'][ srcKey ]:    
             srcFiles.append( file['name'] )
@@ -5705,11 +5708,11 @@ def ALMAPrepare( ASDMRoots, err, \
     if not project:
         parts   = ASDMRoots[0].split(os.sep)
         project = parts[len(parts)-1].split('.')[0]
-    print "Project", project
+    print("Project", project)
     # Get config info and parameters
     fileList = ALMAParseASDM( ASDMRoots[0], err )
     # Loop over files
-    print "Start pipeline with command(s):"
+    print("Start pipeline with command(s):")
     for fileNum in range (0,len(fileList)):
         fileDict = fileList[fileNum]
         fileDict['project_code'] = project
@@ -5724,7 +5727,7 @@ def ALMAPrepare( ASDMRoots, err, \
             '_Cfg' + str(fileDict['selConfig']) + '_Nch' + str(fileDict['selChan']) + '.py'
         # Generate Parm file
         ALMAMakeParmFile( parmList, parmFile, template=template )
-        print "ObitTalk ALMAPipe.py AIPSSetup.py " + parmFile
+        print("ObitTalk ALMAPipe.py AIPSSetup.py " + parmFile)
 # end ALMAPrepare
 
 def ALMAWriteVOTable( projMeta, srcMeta, filename="votable.xml", logfile='' ):
@@ -5750,7 +5753,7 @@ def ALMAWriteVOTable( projMeta, srcMeta, filename="votable.xml", logfile='' ):
     vo.appendChild(rs2)
 
     # Write project metadata
-    keys = projMeta.keys()
+    keys = list(projMeta.keys())
     setAttribs = XMLSetAttributes # use short name - save space
     for key in keys:
         pr = doc.createElement("param")
@@ -5981,7 +5984,7 @@ def ALMAWriteVOTable( projMeta, srcMeta, filename="votable.xml", logfile='' ):
         vo.appendChild(rs3)
 
         # Src metadata
-        keys = src.keys()
+        keys = list(src.keys())
         for key in keys:
             pr = doc.createElement("param")
             if key == "ObsDate":
@@ -6163,7 +6166,7 @@ def ALMAAddOutFile( filename, target, description, logFile=""):
         if ( not d in projFiles ): # If file is not already in list     
             projFiles.append( d ) # Add file to project list
     else: # else, it is a single-source file
-        if srcFiles.has_key( target ): # If files already exist for this source
+        if target in srcFiles: # If files already exist for this source
             if ( not d in srcFiles[ target ] ): # If file is not already in list 
                 srcFiles[ target ].append( d ) # Add file to target list
         else:
@@ -6189,7 +6192,7 @@ def ALMAFetchOutFiles( pickleFile='manifest.pickle', logFile=None):
     notExists = [ file for file in manifest['project'] 
         if not os.path.exists( file['name'] ) ]
     for file in notExists:
-        print "Doesn't exist (project) " + file['name']
+        print("Doesn't exist (project) " + file['name'])
         mess = "WARN Pipeline manifest pickle points to non-existant project file: " \
                + file['name'] + "\n  Removing file from manifest."
         printMess(mess, logFile)
@@ -6198,13 +6201,13 @@ def ALMAFetchOutFiles( pickleFile='manifest.pickle', logFile=None):
     # Check single-source files
     srcFiles = manifest['source']
     srcFiles_copy = copy.deepcopy( srcFiles )
-    srcKeys = srcFiles.keys()
+    srcKeys = list(srcFiles.keys())
     for srcName in srcKeys:
         # Check files for each source
         for file in srcFiles_copy[ srcName ]: 
             if not os.path.exists( file['name'] ):
                 srcFiles[ srcName ].remove( file ) # remove from original
-                print "Doesn't exist (source) " + file['name']
+                print("Doesn't exist (source) " + file['name'])
                 mess = "WARN Pipeline manifest pickle points to non-existant source file: " \
                        + file['name'] + "\n  Removing file from manifest."
                 printMess(mess, logFile)
@@ -6264,7 +6267,7 @@ def ALMAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
     kntr = AIPSTask.AIPSTask("kntr")
     try:
         kntr.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     kntr.msgkill = 5
     kntr.dogrey  = 0
@@ -6283,7 +6286,7 @@ def ALMAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
     lwpla = AIPSTask.AIPSTask("lwpla")    
     try:
         lwpla.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     lwpla.msgkill = 5
    
@@ -6320,8 +6323,8 @@ def ALMAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
         try:
             if not check:
                 kntr.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "Kntr Failed - continuing anyway"
             printMess(mess, logfile)
         else:
@@ -6332,8 +6335,8 @@ def ALMAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
             try:
                 if not check:
                     lwpla.g
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
                 mess = "Lwpla Failed - continuing anyway"
                 printMess(mess, logfile)
             else:
@@ -6352,7 +6355,7 @@ def ALMAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
         cmd = 'pstops 1000:0 ' + outfile + ' > ' + tmpPS + ';' + \
             'ps2pdf ' + tmpPS + ' ' + tmpPDF + ';' + \
             'convert -density 96 ' + tmpPDF + ' ' + jpg
-        print cmd
+        print(cmd)
         rtn = os.system(cmd)
         if rtn == 0: 
             ALMAAddOutFile( jpg, name, "Contour plot (Stokes I)" )
@@ -6432,7 +6435,7 @@ def ALMADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
     uvplt = AIPSTask.AIPSTask("uvplt")
     try:
         uvplt.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     if not check:
         setname(uvAvg, uvplt)
@@ -6445,7 +6448,7 @@ def ALMADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
     lwpla = AIPSTask.AIPSTask("lwpla")
     try:
         lwpla.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     lwpla.msgkill = 5 
     if not check:
@@ -6478,7 +6481,7 @@ def ALMADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
                 try:
                     uvplt.go()
                     lwpla.go()
-                except Exception, exception:
+                except Exception as exception:
                     mess = "ERROR Plotting failed - continuing anyway"
                     printMess(mess, logfile)
                     mess = "ERROR "+ str(exception)
@@ -6897,7 +6900,7 @@ table {
         s += "<tr>\n"
         if metadata['Source'] in manifest['source']:
             fileList = manifest['source'][ metadata['Source'] ]
-            tList = range(4)
+            tList = list(range(4))
             for f in fileList:
                 if f['name'].find('cntr.jpg') != -1: tList[0] = f
                 if f['name'].find('amp.jpg') != -1: tList[1] = f 
@@ -6935,7 +6938,7 @@ def writeTableRow( dict, keys=None ):
     if not dict:
         return
     if not keys:
-        keys = dict.keys()
+        keys = list(dict.keys())
         keys.sort()
     s = ""
     # Write a row of the HTML table for every key in keys.  Handle some key
@@ -7135,8 +7138,8 @@ def ALMAImageCals(uv, err,  FreqID=1, Sources=None, Failed=None, seq=1, sclass="
         try:
             if not check:
                 scmap.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "WARN SCMap Failed retCode= "+str(scmap.retCode)+" for "+sou
             printMess(mess, logfile)
             OErr.PClear(err)
@@ -7200,7 +7203,7 @@ def ALMAImageModel(Cals, sclass, sdisk, sseq, err, \
                 if Cal['CalModelFlux']<=0.0:
                     x = Image.newPAImage('I', name, sclass, sdisk, sseq, True, err)
                     Cal['CalModelFlux']  = ALMAGetSumCC(x, err, logfile=logfile, check=check, debug=debug)
-        except Exception, exception:
+        except Exception as exception:
             Cal["CalNfield"]   = 0   # No model
             Cal['CalModelFlux']= 0.0
             err.Clear()
@@ -7288,8 +7291,8 @@ def ALMAScaleImage(Cal, uv, err, \
                     ImageUtil.PScaleImage(x,scale,err)  # Scale it
                     break
             SUtab.Close(err)
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "WARN Image scaling failed"
         printMess(mess, logfile)
         err.Clear()

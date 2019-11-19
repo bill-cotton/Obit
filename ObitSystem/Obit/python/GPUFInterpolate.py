@@ -1,6 +1,6 @@
 # $Id: $
 #-----------------------------------------------------------------------
-#  Copyright (C) 2014
+#  Copyright (C) 2014,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -27,33 +27,31 @@
 #-----------------------------------------------------------------------
 
 # Python shadow class to ObitGPUFInterpolate class
-import Obit, FArray, ImageDesc, InfoList, OErr
+from __future__ import absolute_import
+import Obit, _Obit, FArray, ImageDesc, InfoList, OErr
 
-class GPUFInterpolatePtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            Obit.GPUFInterpolate_me_set(self.this,value)
-            return
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if name == "me" : 
-            return Obit.GPUFInterpolate_me_get(self.this)
-        raise AttributeError,name
-    def __repr__(self):
-        return "<C GPUFInterpolate instance>"
-class GPUFInterpolate(GPUFInterpolatePtr):
+class GPUFInterpolate(Obit.GPUFInterpolate):
     """
     Lagrangian interpolation in an GPUFArray
     """
     def __init__(self, name, inArray, xArray, yArray, hwidth, err) :
-        self.this = Obit.new_GPUFInterpolate(name, inArray.me, 
-                                          xArray.me, yArray.me, hwidth, err.me)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_GPUFInterpolate(self.this)
-    
+        super(GPUFInterpolate, self).__init__()
+        Obit.CreateGPUFInterpolate(self.this, name, inArray.me, 
+                                    xArray.me, yArray.me, hwidth, err.me)
+    def __del__(self, DeleteGPUFInterpolate=_Obit.DeleteGPUFInterpolate):
+        if _Obit!=None:
+            DeleteGPUFInterpolate(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            Obit.GPUFInterpolate_Set_me(self.this,value)
+            return
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if name == "me" : 
+            return Obit.GPUFInterpolate_Get_me(self.this)
+        raise AttributeError(name)
+    def __repr__(self):
+        return "<C GPUFInterpolate instance>"
 
 def PCreate (name, inArray, xArray, yArray, hwidth, err):
     """
@@ -89,7 +87,7 @@ def PInterpolateImage (inFI, inArray, outArray, err):
     ################################################################
     # Checks
     if not PIsA(inFI):
-        raise TypeError,"inFI MUST be a Python Obit GPUFInterpolate"
+        raise TypeError("inFI MUST be a Python Obit GPUFInterpolate")
     #
     Obit.GPUFInterpolateImage(inFA.me, inArray.me, outArray.me, err.me)
     if err.isErr:
@@ -107,11 +105,11 @@ def PCopy  (inFI, outFI, err):
     ################################################################
     # Checks
     if not PIsA(inFI):
-        raise TypeError,"inFI MUST be a Python Obit GPUFInterpolate"
+        raise TypeError("inFI MUST be a Python Obit GPUFInterpolate")
     if not PIsA(outFI):
-        raise TypeError,"outFI MUST be a Python Obit GPUFInterpolate"
+        raise TypeError("outFI MUST be a Python Obit GPUFInterpolate")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be a Python ObitErr"
+        raise TypeError("err MUST be a Python ObitErr")
     #
     Obit.GPUFInterpolateCopy (inFI.me, outFI.me, err.me)
     if err.isErr:
@@ -129,9 +127,9 @@ def PClone (inFI, outFI, err):
     ################################################################
     # Checks
     if not PIsA(inFI):
-        raise TypeError,"inFI MUST be a Python Obit GPUFInterpolate"
+        raise TypeError("inFI MUST be a Python Obit GPUFInterpolate")
     if not PIsA(outFI):
-        raise TypeError,"outFI MUST be a Python Obit GPUFInterpolate"
+        raise TypeError("outFI MUST be a Python Obit GPUFInterpolate")
     #
     Obit.GPUFInterpolateClone (inFI.me, outFI.me, err.me)
     # end PClone 
@@ -145,7 +143,7 @@ def PIsA (inFI):
     """
     ################################################################
     # Checks
-    if inFI.__class__ !=  GPUFInterpolate:
-        return 0
-    return Obit.GPUFInterpolateIsA(inFI.me);
+    if not isinstance(inFI, GPUFInterpolate):
+        return False
+    return Obit.GPUFInterpolateIsA(inFI.me)!=0
     # end PIsA

@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for Obit Table Utilities                   */
 /*                                                                    */
-/*;  Copyright (C) 2006-2017                                          */
+/*;  Copyright (C) 2006-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -34,7 +34,7 @@
 %}
 
 %inline %{
-olong TableCCUtilMerge (ObitTable *in, ObitTable *out, ObitErr *err)
+long TableCCUtilMerge (ObitTable *in, ObitTable *out, ObitErr *err)
 {
   ObitIOCode ret=1;
   gchar *routine="TableCCUtilMerge";
@@ -52,8 +52,8 @@ olong TableCCUtilMerge (ObitTable *in, ObitTable *out, ObitErr *err)
 
 void 
 TableCCUtilT2Spec (ObitImage *inImage, ObitImage *outImage, 
-	          int nTerm, int inCCVer, int outCCVer,
-	          int startComp, int endComp, ObitErr *err) 
+	          long nTerm, long inCCVer, long outCCVer,
+	          long startComp, long endComp, ObitErr *err) 
 {
   olong linCCVer=(olong)inCCVer, loutCCVer=(olong)outCCVer;
   ObitTableCCUtilT2Spec (inImage, (ObitImageWB*)outImage, 
@@ -62,9 +62,9 @@ TableCCUtilT2Spec (ObitImage *inImage, ObitImage *outImage,
 } // end TableCCUtilT2Spec
 
 void 
-TableCCUtilFixTSpec (ObitImage *inImage,  int inCCVer, 
-                     float refFreq, int nterm, float *terms,
-	             int startComp, int endComp, ObitErr *err) 
+TableCCUtilFixTSpec (ObitImage *inImage,  long inCCVer, 
+                     float refFreq, long nterm, float *terms,
+	             long startComp, long endComp, ObitErr *err) 
 {
   ofloat lterms[20];
   olong i, linCCVer=(olong)inCCVer;
@@ -74,10 +74,10 @@ TableCCUtilFixTSpec (ObitImage *inImage,  int inCCVer,
 	          (olong)startComp, (olong)endComp, err);
 } // end TableCCUtilFixTSpec
 void 
-TableCCUtilAppendShift (ObitImage *inImage,  int inCCVer, 
-		        ObitImage *outImage, int outCCVer,
+TableCCUtilAppendShift (ObitImage *inImage,  long inCCVer, 
+		        ObitImage *outImage, long outCCVer,
 			ObitUV *uvdata,
-			int startComp, int endComp, ObitErr *err) 
+			long startComp, long endComp, ObitErr *err) 
 {
   olong linCCVer=(olong)inCCVer, loutCCVer=(olong)outCCVer;
   oint noParms=0;

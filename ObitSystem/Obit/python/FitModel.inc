@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for FitModel type                          */
 /*                                                                    */
-/*;  Copyright (C) 2007                                               */
+/*;  Copyright (C) 2007,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -34,6 +34,17 @@
 #include "ObitImageDesc.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitFitModel *me;
+} FitModel;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitFitModel *me;
+} FitModel;
 
 %inline %{
 extern ObitFitModel* newFitModel (char* name) {
@@ -54,11 +65,63 @@ extern ObitFitModel*  FitModelRef (ObitFitModel* in) {
   return ObitFitModelRef(in);
 }
 
-extern ObitFitModel* FitModelCreate (char *name, int type, float Peak, float DeltaX, float DeltaY, 
-			             int nparm, float *parms) {
+extern ObitFitModel* FitModelCreate (char *name, long type, float Peak, float DeltaX, float DeltaY, 
+			             long nparm, float *parms) {
+  int i;
+  ofloat lparms[10];
+  for (i=0;i<nparm;i++) lparms[i] = (ofloat)parms[i];
   return ObitFitModelCreate((gchar*)name, (olong)type, (ofloat)Peak, (ofloat)DeltaX, (ofloat)DeltaY, 
-			   (olong)nparm, (ofloat*)parms);
+			   (olong)nparm, lparms);
 }
+
+void CreateFitModel(PyObject *self, char* name, long type, float Peak, float DeltaX, float DeltaY, 
+     long nparm, float *parms) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FitModel, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateFitModel: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((FitModel*)ptr)->me = 
+       FitModelCreate(name, type, Peak, DeltaX, DeltaY, nparm, parms);
+   else  ((FitModel*)ptr)->me = NULL;
+   return;
+ } // end CreateFitModel
+
+void DeleteFitModel(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FitModel, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteFitModel: could not recover c struct");
+	return;
+   }
+   if (ptr==NULL) return;
+   ((FitModel*)ptr)->me = FitModelUnref(((FitModel*)ptr)->me);
+}// end DeleteFitModel
+
+ObitFitModel* FitModel_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FitModel, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"FitModel_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((FitModel*)ptr)->me;
+}  // end FitModel_Get_me
+
+void FitModel_Set_me(PyObject *self, ObitFitModel *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FitModel, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"FitModel_Set_me: could not recover c struct");
+	return;
+   }
+   ((FitModel*)ptr)->me =  ObitFitModelRef(me);
+}  // end FitModel_Set_me
 
 extern int FitModelGetType(ObitFitModel* in) {
   return (int)in->type;
@@ -251,34 +314,4 @@ extern int FitModelIsA (ObitFitModel* in) {
 }
 
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitFitModel *me;
-} FitModel;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitFitModel *me;
-} FitModel;
-
-%addmethods FitModel { 
-  FitModel(char* name, int type, float Peak, float DeltaX, float DeltaY, int nparm, float *parms) {
-     FitModel *out;
-     out = (FitModel *) malloc(sizeof(FitModel));
-     if (strcmp(name, "None")) out->me = FitModelCreate(name, type, Peak, DeltaX, DeltaY, 
-			                                nparm, parms);
-     else out->me = NULL;
-     return out;
-   }
-  ~FitModel() {
-   if (!self) return;  // Not defined
-   if (self && self->me && self->me->ReferenceCount>0) {
-      self->me = FitModelUnref(self->me);
-      free(self);
-   }
-  }
-};
 

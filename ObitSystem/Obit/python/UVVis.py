@@ -15,7 +15,7 @@
 """
 # $Id: UVVis.py 452 2013-06-03 14:40:12Z bill.cotton $
 #-----------------------------------------------------------------------
-#  Copyright (C) 2007,2017
+#  Copyright (C) 2007-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -42,9 +42,10 @@
 #-----------------------------------------------------------------------
  
 # Python class for Obit visibility measurements
+from __future__ import absolute_import
 import Obit, UV, OErr, string, math
 
-class UVVisPtr :
+class UVVis():
     def __init__(self):
         self.EOF = False
         self.u = 0.0
@@ -58,13 +59,9 @@ class UVVisPtr :
     def __setattr__(self,name,value):
         self.__dict__[name] = value
     def __getattr__(self,name):
-        raise AttributeError,str(name)
+        raise AttributeError(str(name))
     def __repr__(self):
         return "<C UVVis instance>"
-class UVVis(UVVisPtr):
-    """ Python Obit visibility class
-
-    """
 
 def PGet (inUV, err):
     """ Read next buffer, Generate a visibility from a ObitUV buffer
@@ -77,7 +74,7 @@ def PGet (inUV, err):
     ################################################################
     # Checks
     if not inUV.UVIsA():
-        raise TypeError,"inUV MUST be a Python Obit UV"
+        raise TypeError("inUV MUST be a Python Obit UV")
     #
     out = UVVis()
     out.__dict__ = Obit.UVVisGet(inUV.me, err.me)
@@ -96,7 +93,7 @@ def PSet (inVis, inUV, err):
     ################################################################
     # Checks
     if not inUV.UVIsA():
-        raise TypeError,"inUV MUST be a Python Obit UV"
+        raise TypeError("inUV MUST be a Python Obit UV")
     #
     Obit.UVVisSet(inVis.__dict__, inUV.me, err.me)
     # end PSet

@@ -2,6 +2,7 @@
 # AIPS/FITS setup and Parameter file given as arguments:
 # > ObitTalk EVLAPipeline.py AIPSSetup.py parms.py
 #
+from __future__ import absolute_import
 import sys
 import OErr, OSystem, UV, AIPS, FITS
 import ObitTalkUtil
@@ -12,7 +13,7 @@ from EVLACal import *
 ############################# Initialize OBIT ##########################################                                 
 setup = sys.argv[1]
 noScrat     = []    
-execfile (setup)
+exec(compile(open(setup).read(), setup, 'exec'))
 
 ############################# Default parameters ##########################################
 # Generic parameters
@@ -260,7 +261,7 @@ MBmaxFBW      = 0.05       # Max. fractional IF center bandwidth
 
 ############################# Set Project Processing parameters ##################
 parmFile = sys.argv[2]
-execfile (parmFile)
+exec(compile(open(parmFile).read(), parmFile, 'exec'))
 
 ################################## Process #####################################
 logFile       = project+"_"+session+"_"+band+".log"  # Processing log file
@@ -290,7 +291,7 @@ if doLoad:
     uv = EVLAUVLoadT(FITSIn, FITSinDisk, project+session, loadClass, disk, seq, err, logfile=logFile, \
                          Compress=Compress, check=check, debug=debug)
     if uv==None:
-        raise RuntimeError,"Cannot load "+inFile
+        raise RuntimeError("Cannot load "+inFile)
 # Load Data from Archive directory
 if doLoadArchive:
     uv = EVLAUVLoadArch(archRoot, project+session, loadClass, disk, seq, err, \
@@ -298,7 +299,7 @@ if doLoadArchive:
                             selBand=selBand, selChan=selChan, selNIF=selNIF, calInt=calInt, \
                             logfile=logFile, Compress=Compress, check=check, debug=debug)
     if uv==None and not check:
-        raise RuntimeError,"Cannot load "+inFile
+        raise RuntimeError("Cannot load "+inFile)
 
 # Hanning
 if doHann:
@@ -311,7 +312,7 @@ if doHann:
     uv = EVLAHann(uv, project+session, dataClass, disk, seq, err, \
                             logfile=logFile, check=check, debug=debug)
     if uv==None and not check:
-        raise RuntimeError,"Cannot Hann data "
+        raise RuntimeError("Cannot Hann data ")
 
 # Set uv is not done
 if uv==None and not check:
@@ -332,7 +333,7 @@ if doCopyFG:
     printMess(mess, logFile)
     retCode = EVLACopyFG (uv, err, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error Copying FG table"
+        raise RuntimeError("Error Copying FG table")
 
 # Special editing
 if doEditList and not check:
@@ -349,14 +350,14 @@ if doQuack:
     retCode = EVLAQuack (uv, err, begDrop=quackBegDrop, endDrop=quackEndDrop, Reason=quackReason, \
                              logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error Quacking data"
+        raise RuntimeError("Error Quacking data")
 
 # Flag antennas shadowed by others?
 if doShadow:
     retCode = EVLAShadow (uv, err, shadBl=shadBl, \
                           logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error Shadow flagging data"
+        raise RuntimeError("Error Shadow flagging data")
 
 # Median window time editing, for RFI impulsive in time
 if doMedn:
@@ -367,7 +368,7 @@ if doMedn:
                               timeWind=timeWind, flagVer=2,flagSig=mednSigma, logfile=logFile, \
                               check=check, debug=False)
     if retCode!=0:
-        raise RuntimeError,"Error in MednFlag"
+        raise RuntimeError("Error in MednFlag")
 
 # Median window frequency editing, for RFI impulsive in frequency
 if doFD1:
@@ -379,7 +380,7 @@ if doFD1:
                                 FDmaxRMS=[1.0e20,0.1], FDmaxRes=FD1maxRes,  FDmaxResBL= FD1maxRes,  \
                                 nThreads=nThreads, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-       raise  RuntimeError,"Error in AutoFlag"
+       raise  RuntimeError("Error in AutoFlag")
 
 
 # RMS/Mean editing for calibrators
@@ -393,7 +394,7 @@ if doRMSAvg:
                                 RMSAvg=RMSAvg, timeAvg=RMSTimeAvg, \
                                 nThreads=nThreads, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-       raise  RuntimeError,"Error in AutoFlag"
+       raise  RuntimeError("Error in AutoFlag")
 
 
 # Plot Raw, edited data?
@@ -403,14 +404,14 @@ if doRawSpecPlot and plotSource:
                            Stokes=["RR","LL"], doband=-1,          \
                            check=check, debug=debug, logfile=logFile )
     if retCode!=0:
-        raise  RuntimeError,"Error in Plotting spectrum"
+        raise  RuntimeError("Error in Plotting spectrum")
 
 # Parallactic angle correction?
 if doPACor:
     retCode = EVLAPACor(uv, err, noScrat=noScrat, \
                             logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error in Parallactic angle correction"
+        raise RuntimeError("Error in Parallactic angle correction")
 
 # delay calibration
 if doDelayCal and DCal and not check:
@@ -424,7 +425,7 @@ if doDelayCal and DCal and not check:
                            nThreads=nThreads, noScrat=noScrat, \
                            logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error in delay calibration"
+        raise RuntimeError("Error in delay calibration")
     
     # Plot corrected data?
     if doSpecPlot and plotSource:
@@ -433,7 +434,7 @@ if doDelayCal and DCal and not check:
                                Stokes=["RR","LL"], doband=-1,          \
                                check=check, debug=debug, logfile=logFile )
         if retCode!=0:
-            raise  RuntimeError,"Error in Plotting spectrum"
+            raise  RuntimeError("Error in Plotting spectrum")
 
 # Bandpass calibration
 if doBPCal and BPCal:
@@ -451,7 +452,7 @@ if doBPCal and BPCal:
                         CalCmethod=bpModel["CalCmethod"], CalCmodel=bpModel["CalCmodel"], \
                         nThreads=nThreads, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error in Bandpass calibration"
+        raise RuntimeError("Error in Bandpass calibration")
     
     # Plot corrected data?
     if doSpecPlot and plotSource:
@@ -460,7 +461,7 @@ if doBPCal and BPCal:
                                Stokes=["RR","LL"], doband=1,          \
                                check=check, debug=debug, logfile=logFile )
         if retCode!=0:
-            raise  RuntimeError,"Error in Plotting spectrum"
+            raise  RuntimeError("Error in Plotting spectrum")
 
 # Amp & phase Calibrate
 if doAmpPhaseCal:
@@ -473,7 +474,7 @@ if doAmpPhaseCal:
                          doPlot=doSNPlot, plotFile=plotFile, \
                          refAnt=refAnt, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error calibrating"
+        raise RuntimeError("Error calibrating")
 
 # More editing
 if doAutoFlag:
@@ -495,7 +496,7 @@ if doAutoFlag:
                                 FDmaxRes=FDmaxRes,  FDmaxResBL= FDmaxResBL, FDbaseSel=FDbaseSel, \
                                 nThreads=nThreads, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-       raise  RuntimeError,"Error in AutoFlag"
+       raise  RuntimeError("Error in AutoFlag")
 
 # Redo the calibration using new flagging?
 if doBPCal2==None:
@@ -516,7 +517,7 @@ if doRecal:
         retCode = EVLAPACor(uv, err, noScrat=noScrat, \
                             logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error in Parallactic angle correction"
+            raise RuntimeError("Error in Parallactic angle correction")
 
     # Delay recalibration
     if doDelayCal2 and DCal:
@@ -530,7 +531,7 @@ if doRecal:
                                nThreads=nThreads, noScrat=noScrat, \
                                logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error in delay calibration"
+            raise RuntimeError("Error in delay calibration")
             
         # Plot corrected data?
         if doSpecPlot and plotSource:
@@ -539,7 +540,7 @@ if doRecal:
                                    Stokes=["RR","LL"], doband=-1,          \
                                    check=check, debug=debug, logfile=logFile )
             if retCode!=0:
-                raise  RuntimeError,"Error in Plotting spectrum"
+                raise  RuntimeError("Error in Plotting spectrum")
 
     # Bandpass recalibration
     if doBPCal2 and BPCal and not check:
@@ -558,7 +559,7 @@ if doRecal:
                             CalCmethod=bpModel["CalCmethod"], CalCmodel=bpModel["CalCmodel"], \
                             nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error in Bandpass calibration"
+            raise RuntimeError("Error in Bandpass calibration")
         
         # Plot corrected data?
         if doSpecPlot and plotSource:
@@ -567,7 +568,7 @@ if doRecal:
                                    Stokes=["RR","LL"], doband=1,          \
                                    check=check, debug=debug, logfile=logFile )
             if retCode!=0:
-                raise  RuntimeError,"Error in Plotting spectrum"
+                raise  RuntimeError("Error in Plotting spectrum")
 
     # Amp & phase Recalibrate
     if doAmpPhaseCal2:
@@ -580,7 +581,7 @@ if doRecal:
                              doPlot=doSNPlot, plotFile=plotFile, \
                              refAnt=refAnt, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error calibrating"
+            raise RuntimeError("Error calibrating")
 
     # More editing
     if doAutoFlag2:
@@ -594,7 +595,7 @@ if doRecal:
                                 FDmaxRes=FDmaxRes,  FDmaxResBL= FDmaxResBL, FDbaseSel=FDbaseSel, \
                                 nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise  RuntimeError,"Error in AutoFlag"
+            raise  RuntimeError("Error in AutoFlag")
         
 # end recal
 
@@ -609,7 +610,7 @@ if doCalAvg:
                           BIF=CABIF, EIF=CAEIF, Compress=Compress, \
                           nThreads=nThreads, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-       raise  RuntimeError,"Error in CalAvg"
+       raise  RuntimeError("Error in CalAvg")
    
 # Get calibrated/averaged data
 if not check:
@@ -626,7 +627,7 @@ if XClip:
                             XClip=XClip, timeAvg=1./60., \
                             nThreads=nThreads, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise  RuntimeError,"Error in AutoFlag"
+        raise  RuntimeError("Error in AutoFlag")
 
 # R-L  delay calibration cal if needed,
 if doRLDelay:
@@ -639,7 +640,7 @@ if doRLDelay:
                         nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
                         check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error in R-L delay calibration"
+        raise RuntimeError("Error in R-L delay calibration")
 
 # Polarization calibration 
 if doPolCal:
@@ -650,7 +651,7 @@ if doPolCal:
                          check=check, debug=debug, \
                          noScrat=noScrat, logfile=logFile)
     if retCode!=0 and (not check):
-       raise  RuntimeError,"Error in polarization calibration: "+str(retCode)
+       raise  RuntimeError("Error in polarization calibration: "+str(retCode))
     # end poln cal.
 
 
@@ -669,7 +670,7 @@ if doRLCal:
                         nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
                         check=check, debug=debug)
     if retCode!=0:
-        raise RuntimeError,"Error in RL phase spectrum calibration"
+        raise RuntimeError("Error in RL phase spectrum calibration")
 
 # VClip
 if VClip:
@@ -680,7 +681,7 @@ if VClip:
                             VClip=VClip, timeAvg=timeAvg, \
                             nThreads=nThreads, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
-        raise  RuntimeError,"Error in AutoFlag"
+        raise  RuntimeError("Error in AutoFlag")
 
 # Plot corrected data?
 if doSpecPlot and plotSource:
@@ -689,7 +690,7 @@ if doSpecPlot and plotSource:
                            Stokes=["RR","LL"], doband=-1,          \
                            check=check, debug=debug, logfile=logFile )
     if retCode!=0:
-        raise  RuntimeError,"Error in Plotting spectrum"
+        raise  RuntimeError("Error in Plotting spectrum")
 
 # Image targets
 if doImage:

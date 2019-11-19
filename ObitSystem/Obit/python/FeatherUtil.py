@@ -1,7 +1,7 @@
 """ Utility module for Feathering images """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2008
+#  Copyright (C) 2004-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -28,7 +28,10 @@
 #-----------------------------------------------------------------------
 
 # Python utility package for feathering images
+from __future__ import absolute_import
+from __future__ import print_function
 import Image, ImageDesc, ImageUtil, FFT, FArray, CArray, OErr
+import Obit
 
 def PCreateFFT(image, dir):
     """
@@ -44,7 +47,7 @@ def PCreateFFT(image, dir):
     ################################################################
     # Checks
     if not Image.PIsA(image):
-        raise TypeError,"image MUST be a Python Obit Image"
+        raise TypeError("image MUST be a Python Obit Image")
     #
     # Get image info from descriptor
     desc = image.Desc
@@ -74,14 +77,14 @@ def PCreateFFTArray(inFFT):
     ################################################################
     # Checks
     if not FFT.PIsA(inFFT):
-        raise TypeError,"inFFT MUST be a Python Obit FFT"
+        raise TypeError("inFFT MUST be a Python Obit FFT")
     #
     # FFT info
     FFTrank = FFT.PGetRank(inFFT)
     FFTdim  = FFT.PGetDim(inFFT)
 
     naxis = FFTdim[0:2]
-    naxis[0] = 1 + naxis[0]/2
+    naxis[0] = 1 + naxis[0]//2
     out = CArray.CArray ("Temp CArray for FFT", naxis)
     return out
     # end PCreateFFTArray
@@ -101,15 +104,15 @@ def PPad (inFFT, inImage, outImage, err):
     ################################################################
     # Checks
     if not FFT.PIsA(inFFT):
-        raise TypeError,"inFFT MUST be a Python Obit FFT"
+        raise TypeError("inFFT MUST be a Python Obit FFT")
     if not Image.PIsA(inImage):
-        print "Actually ",inImage.__class__
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        print("Actually ",inImage.__class__)
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not Image.PIsA(outImage):
-        print "Actually ",outImage.__class__
-        raise TypeError,"outImage MUST be a Python Obit Image"
+        print("Actually ",outImage.__class__)
+        raise TypeError("outImage MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Read input, Copy Descriptor
     inImage.Open(Image.READONLY, err)
@@ -137,7 +140,7 @@ def PPad (inFFT, inImage, outImage, err):
     dim   = descDict["inaxes"]                # input size
     crpix = descDict["crpix"]
     # Update reference pixel, pixel shift an integral number
-    pixOff = [naxis[0]/2-dim[0]/2, naxis[1]/2-dim[1]/2]
+    pixOff = [naxis[0]//2-dim[0]//2, naxis[1]//2-dim[1]//2]
     crpix[0] = crpix[0] + pixOff[0]
     crpix[1] = crpix[1] + pixOff[1]
     # Update size
@@ -173,13 +176,13 @@ def PBigger (naxis, inImage, outImage, err):
     ################################################################
     # Checks
     if not Image.PIsA(inImage):
-        print "Actually ",inImage.__class__
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        print("Actually ",inImage.__class__)
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not Image.PIsA(outImage):
-        print "Actually ",outImage.__class__
-        raise TypeError,"outImage MUST be a Python Obit Image"
+        print("Actually ",outImage.__class__)
+        raise TypeError("outImage MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Read input, Copy Descriptor
     inImage.Open(Image.READONLY, err)
@@ -201,7 +204,7 @@ def PBigger (naxis, inImage, outImage, err):
     dim   = descDict["inaxes"]                # input size
     crpix = descDict["crpix"]
     # Update reference pixel, pixel shift an integral number
-    pixOff = [naxis[0]/2-dim[0]/2, naxis[1]/2-dim[1]/2]
+    pixOff = [naxis[0]//2-dim[0]//2, naxis[1]//2-dim[1]//2]
     crpix[0] = crpix[0] + pixOff[0]
     crpix[1] = crpix[1] + pixOff[1]
     # Update size
@@ -236,13 +239,13 @@ def PPadArray (inFFT, inArray, outArray):
     ################################################################
     # Checks
     if not FFT.PIsA(inFFT):
-        raise TypeError,"inFFT MUST be a Python Obit FFT"
+        raise TypeError("inFFT MUST be a Python Obit FFT")
     if not FArray.PIsA(inArray):
-        print "Actually ",inArray.__class__
-        raise TypeError,"inArray MUST be a Python Obit FArray"
+        print("Actually ",inArray.__class__)
+        raise TypeError("inArray MUST be a Python Obit FArray")
     if not FArray.PIsA(outArray):
-        print "Actually ",outArray.__class__
-        raise TypeError,"outArray MUST be a Python Obit FArray"
+        print("Actually ",outArray.__class__)
+        raise TypeError("outArray MUST be a Python Obit FArray")
     #
     # FFT info
     FFTrank = FFT.PGetRank(inFFT)
@@ -256,8 +259,8 @@ def PPadArray (inFFT, inArray, outArray):
     FArray.PFill(outArray, 0.0)
 
     # Insert inArray into outArray - center as well as possible
-    pos1 = [FFTdim[0]/2, FFTdim[1]/2]
-    pos2 = [ArrayNaxis[0]/2, ArrayNaxis[1]/2]
+    pos1 = [FFTdim[0]//2, FFTdim[1]//2]
+    pos2 = [ArrayNaxis[0]//2, ArrayNaxis[1]//2]
     FArray.PShiftAdd (outArray, pos1, inArray, pos2, 1.0, outArray)
 
     # Replace any blanks with zeroes
@@ -279,15 +282,15 @@ def PExtract (inFFT, inArray, outArray, err):
     ################################################################
     # Checks
     if not FFT.PIsA(inFFT):
-        raise TypeError,"inFFT MUST be a Python Obit FFT"
+        raise TypeError("inFFT MUST be a Python Obit FFT")
     if not FArray.PIsA(inArray):
-        print "Actually ",inArray.__class__
-        raise TypeError,"inArray MUST be a Python Obit FArray"
+        print("Actually ",inArray.__class__)
+        raise TypeError("inArray MUST be a Python Obit FArray")
     if not FArray.PIsA(outArray):
-        print "Actually ",outArray.__class__
-        raise TypeError,"outArray MUST be a Python Obit FArray"
+        print("Actually ",outArray.__class__)
+        raise TypeError("outArray MUST be a Python Obit FArray")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # FFT info
     FFTrank = FFT.PGetRank(inFFT)
@@ -298,10 +301,10 @@ def PExtract (inFFT, inArray, outArray, err):
     ArrayNaxis = outArray.Naxis
 
     # Get window to extract
-    cen = [FFTdim[0]/2, FFTdim[1]/2];
+    cen = [FFTdim[0]//2, FFTdim[1]//2];
     blc = [0,0]; trc=[0,0]
-    blc[0] = cen[0] - ArrayNaxis[0] / 2; trc[0] = cen[0] - 1 + ArrayNaxis[0] / 2
-    blc[1] = cen[1] - ArrayNaxis[1] / 2; trc[1] = cen[1] - 1 + ArrayNaxis[1] / 2
+    blc[0] = cen[0] - ArrayNaxis[0] // 2; trc[0] = cen[0] - 1 + ArrayNaxis[0] // 2
+    blc[1] = cen[1] - ArrayNaxis[1] // 2; trc[1] = cen[1] - 1 + ArrayNaxis[1] // 2
 
     # Extract
     out = FArray.PSubArr(inArray, blc, trc, err)
@@ -320,8 +323,8 @@ def PDeblank (inImage, value):
     ################################################################
     # Checks
     if not Image.PIsA(inImage):
-        print "Actually ",inImage.__class__
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        print("Actually ",inImage.__class__)
+        raise TypeError("inImage MUST be a Python Obit Image")
     #
     # Get data array
     inArray  = Image.PGetFArray(inImage)
@@ -344,11 +347,11 @@ def PMakeBeamMask (inImage, inFFT, err):
     ################################################################
     # Checks
     if not Image.PIsA(inImage):
-        print "Actually ",inImage.__class__
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        print("Actually ",inImage.__class__)
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not FFT.PIsA(inFFT):
-        print "Actually ",inFFT.__class__
-        raise TypeError,"inFFT MUST be a Python Obit FFT"
+        print("Actually ",inFFT.__class__)
+        raise TypeError("inFFT MUST be a Python Obit FFT")
     #
     # Make copy of data array
     inArray  = inImage.FArray
@@ -381,7 +384,7 @@ def PMakeBeamMask (inImage, inFFT, err):
     del uvArray   # Cleanup
 
     # Normalize
-    pos = [0, 1+naxis[1]/2]
+    pos = [0, 1+naxis[1]//2]
     peak = FArray.PMax(maskArray, pos)
     norm = 1.0 / peak
     FArray.PSMul(maskArray, norm)
@@ -400,13 +403,13 @@ def PFFTR2C (inFFT, inArray, outArray):
     """
     ################################################################
     if not FFT.PIsA(inFFT):
-        raise TypeError,"inFFT MUST be a Python Obit FFT"
+        raise TypeError("inFFT MUST be a Python Obit FFT")
     if not FArray.PIsA(inArray):
-        print "Actually ",inArray.__class__
-        raise TypeError,"inArray MUST be a Python Obit FArray"
+        print("Actually ",inArray.__class__)
+        raise TypeError("inArray MUST be a Python Obit FArray")
     if not CArray.PIsA(outArray):
-        print "Actually ",outArray.__class__
-        raise TypeError,"outArray MUST be a Python Obit CArray"
+        print("Actually ",outArray.__class__)
+        raise TypeError("outArray MUST be a Python Obit CArray")
     #
     FFT.PR2C(inFFT, inArray, outArray)
     # end PFFTR2C
@@ -422,13 +425,13 @@ def PFFTC2R (inFFT, inArray, outArray):
     """
     ################################################################
     if not FFT.PIsA(inFFT):
-        raise TypeError,"inFFT MUST be a Python Obit FFT"
+        raise TypeError("inFFT MUST be a Python Obit FFT")
     if not CArray.PIsA(inArray):
-        print "Actually ",inArray.__class__
-        raise TypeError,"inArray MUST be a Python Obit CArray"
+        print("Actually ",inArray.__class__)
+        raise TypeError("inArray MUST be a Python Obit CArray")
     if not FArray.PIsA(outArray):
-        print "Actually ",outArray.__class__
-        raise TypeError,"outArray MUST be a Python Obit FArray"
+        print("Actually ",outArray.__class__)
+        raise TypeError("outArray MUST be a Python Obit FArray")
     #
     FFT.PC2R(inFFT, inArray, outArray)
     # end PFFTC2R
@@ -447,16 +450,16 @@ def PCreateModel(image, outArray):
     ################################################################
     # Checks
     if not Image.PIsA(image):
-        raise TypeError,"image MUST be a Python Obit Image"
+        raise TypeError("image MUST be a Python Obit Image")
     if not FArray.PIsA(outArray):
-        print "Actually ",outArray.__class__
-        raise TypeError,"outArray MUST be a Python Obit FArray"
+        print("Actually ",outArray.__class__)
+        raise TypeError("outArray MUST be a Python Obit FArray")
     #
     # Check compatability
     array = Image.PGetFArray(image)
     if not FArray.PIsCompatable (array, outArray):
         array = Obit.FArrayUnref(array)    # Cleanup
-        raise TypeError,"image and array incompatible"
+        raise TypeError("image and array incompatible")
     del array    # Cleanup
 
     # Get image info from descriptor
@@ -472,8 +475,8 @@ def PCreateModel(image, outArray):
 
     # Check that beam OK
     if beamMaj < 0.0001/3600.0:
-        raise TypeError,"No beam provided for "+image
-    print "Beam",beamMaj*3600.0,beamMin*3600.0,beamPA
+        raise TypeError("No beam provided for "+image)
+    print("Beam",beamMaj*3600.0,beamMin*3600.0,beamPA)
 
     # Zero array
     FArray.PFill (outArray, 0.0)
@@ -506,26 +509,26 @@ def PAccumImage(FFTfor, inImage, wtArray, accArray, workArray, err):
     ################################################################
     # Checks
     if not FFT.PIsA(FFTfor):
-        print "Actually ",FFTfor.__class__
-        raise TypeError,"FFTfor MUST be a Python Obit FFT"
+        print("Actually ",FFTfor.__class__)
+        raise TypeError("FFTfor MUST be a Python Obit FFT")
     if not Image.PIsA(inImage ):
-        print "Actually ",inImage.__class__
-        raise TypeError," inImage MUST be a Python Obit Image"
+        print("Actually ",inImage.__class__)
+        raise TypeError(" inImage MUST be a Python Obit Image")
     if not FArray.PIsA(wtArray):
-        print "Actually ",wtArray.__class__
-        raise TypeError,"wtArray MUST be a Python Obit FArray"
+        print("Actually ",wtArray.__class__)
+        raise TypeError("wtArray MUST be a Python Obit FArray")
     if not CArray.PIsA(accArray):
-        print "Actually ",accArray.__class__
-        raise TypeError,"accArray MUST be a Python Obit CArray"
+        print("Actually ",accArray.__class__)
+        raise TypeError("accArray MUST be a Python Obit CArray")
     if not CArray.PIsA(workArray):
-        print "Actually ",workArray.__class__
-        raise TypeError,"workArray MUST be a Python Obit CArray"
+        print("Actually ",workArray.__class__)
+        raise TypeError("workArray MUST be a Python Obit CArray")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Check compatability
     if not CArray.PIsCompatable (accArray, workArray):
-        raise TypeError,"accArray and workArray incompatible"
+        raise TypeError("accArray and workArray incompatible")
 
     # Get array from image
     inArray = Image.PGetFArray(inImage)
@@ -570,16 +573,16 @@ def PBackFFT(FFTrev, inArray, outArray, err):
     ################################################################
     # Checks
     if not FFT.PIsA(FFTrev):
-        print "Actually ",FFTrev.__class__
-        raise TypeError,"FFTrev MUST be a Python Obit FFT"
+        print("Actually ",FFTrev.__class__)
+        raise TypeError("FFTrev MUST be a Python Obit FFT")
     if not CArray.PIsA(inArray ):
-        print "Actually ",inArray.__class__
-        raise TypeError,"inArray MUST be a Python Obit CArray"
+        print("Actually ",inArray.__class__)
+        raise TypeError("inArray MUST be a Python Obit CArray")
     if not FArray.PIsA(outArray ):
-        print "Actually ",outArray.__class__
-        raise TypeError,"outArray MUST be a Python Obit FArray"
+        print("Actually ",outArray.__class__)
+        raise TypeError("outArray MUST be a Python Obit FArray")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # FFT
     PFFTC2R (FFTrev, inArray, outArray)
@@ -602,16 +605,16 @@ def PInterpol(inImage, tmplImage, outImage, err):
     ################################################################
     # Checks
     if not Image.PIsA(inImage ):
-        print "Actually ",inImage.__class__
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        print("Actually ",inImage.__class__)
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not Image.PIsA(tmplImage ):
-        print "Actually ",tmplImage.__class__
-        raise TypeError,"tmplImage MUST be a Python Obit Image"
+        print("Actually ",tmplImage.__class__)
+        raise TypeError("tmplImage MUST be a Python Obit Image")
     if not Image.PIsA(outImage ):
-        print "Actually ",outImage.__class__
-        raise TypeError,"outImage MUST be a Python Obit Image"
+        print("Actually ",outImage.__class__)
+        raise TypeError("outImage MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Clone, interpolate, deblank
     Image.PClone(tmplImage, outImage, err)
@@ -675,16 +678,16 @@ def PSubImage(inImage, inArray, outImage, err):
     ################################################################
     # Checks
     if not Image.PIsA(inImage ):
-        print "Actually ",inImage.__class__
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        print("Actually ",inImage.__class__)
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not FArray.PIsA(inArray ):
-        print "Actually ",inArray.__class__
-        raise TypeError,"inArray MUST be a Python Obit FArray"
+        print("Actually ",inArray.__class__)
+        raise TypeError("inArray MUST be a Python Obit FArray")
     if not Image.PIsA(outImage ):
-        print "Actually ",outImage.__class__
-        raise TypeError,"outImage MUST be a Python Obit Image"
+        print("Actually ",outImage.__class__)
+        raise TypeError("outImage MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # get selected input header info
     descDict = inImage.Desc.Dict

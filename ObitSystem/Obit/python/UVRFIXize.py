@@ -2,7 +2,7 @@
 """ Utility to estimate and subtract quasi-constant RFI from UV data
 """
 #-----------------------------------------------------------------------
-#  Copyright (C) 2009
+#  Copyright (C) 2009,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -29,41 +29,13 @@
 #-----------------------------------------------------------------------
 
 # Interferometric RFI excision class
-import Obit, OErr, InfoList, UV, Table, types
+from __future__ import absolute_import
+import Obit, _Obit, OErr, InfoList, UV, Table, types
 
 # Python shadow class to ObitUVRFIXize class
  
-class UVRFIXizePtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.UVRFIXizeUnref(Obit.UVRFIXize_me_get(self.this))
-            # In with the new
-            Obit.UVRFIXize_me_set(self.this,value)
-            return
-        if name=="SkyModel":
-            PSetSkyModel(self, value)
-            return 
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != UVRFIXize:
-            return
-        if name == "me" : 
-            return Obit.UVRFIXize_me_get(self.this)
-        # Virtual members
-        if name=="List":
-            return PGetList(self)
-        if name=="RFI":
-            return PGetRFI(self)
-        raise AttributeError,str(name)
-    def __repr__(self):
-        if self.__class__ != UVRFIXize:
-            return
-        return "<C UVRFIXize instance> " + Obit.UVRFIXizeGetName(self.me)
 #
-class UVRFIXize(UVRFIXizePtr):
+class UVRFIXize(Obit.UVRFIXize):
     """ Python Obit Image class
 
     This class does RFI estimation and removal
@@ -75,11 +47,38 @@ class UVRFIXize(UVRFIXizePtr):
     skyModel    - SkyModel, use PGetSkyModel
     """
     def __init__(self, name) :
-        self.this = Obit.new_UVRFIXize(name)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_UVRFIXize(self.this)
-
+        super(UVRFIXize, self).__init__()
+        Obit.CreateUVRFIXize (self.this, name)
+    def __del__(self, DeleteUVRFIXize=_Obit.DeleteUVRFIXize):
+        if _Obit!=None:
+            DeleteUVRFIXize(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.UVRFIXizeUnref(Obit.UVRFIXize_Get_me(self.this))
+            # In with the new
+            Obit.UVRFIXize_Set_me(self.this,value)
+            return
+        if name=="SkyModel":
+            PSetSkyModel(self, value)
+            return 
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if not isinstance(self, UVRFIXize):
+            return "Bogus dude"+str(self.__class__)
+        if name == "me" : 
+            return Obit.UVRFIXize_Get_me(self.this)
+        # Virtual members
+        if name=="List":
+            return PGetList(self)
+        if name=="RFI":
+            return PGetRFI(self)
+        raise AttributeError(str(name))
+    def __repr__(self):
+        if not isinstance(self, UVRFIXize):
+            return "Bogus dude"+str(self.__class__)
+        return "<C UVRFIXize instance> " + Obit.UVRFIXizeGetName(self.me)
 
 def newObit(name, err):
     """ Create and initialize an UVRFIXize structure
@@ -103,10 +102,9 @@ def PGetList (inUVRFIXize):
     ################################################################
      # Checks
     if not PIsA(inUVRFIXize):
-        raise TypeError,"inUVRFIXize MUST be a Python Obit UVRFIXize"
+        raise TypeError("inUVRFIXize MUST be a Python Obit UVRFIXize")
     #
     out    = InfoList.InfoList()
-    out.me = Obit.InfoListUnref(out.me)
     out.me = Obit.UVRFIXizeGetList(inUVRFIXize.me)
     return out
     # end PGetList
@@ -154,11 +152,11 @@ def PCreate (name, inUV, residUV, outUV, input=RFIXizeInput):
     ################################################################
     # Checks
     if not UV.PIsA(inUV):
-        raise TypeError,"inUV MUST be a Python Obit UV"
+        raise TypeError("inUV MUST be a Python Obit UV")
     if not UV.PIsA(residUV):
-        raise TypeError,"residUV MUST be a Python Obit UV"
+        raise TypeError("residUV MUST be a Python Obit UV")
     if not UV.PIsA(outUV):
-        raise TypeError,"outUV MUST be a Python Obit UV"
+        raise TypeError("outUV MUST be a Python Obit UV")
     #
     # Create
     out = UVRFIXize(name);
@@ -206,7 +204,7 @@ def PRemove (inRFI, err):
     ################################################################
     # Checks
     if not PIsA(inRFI):
-        raise TypeError,"inRFI MUST be a Python Obit UVRFIXize"
+        raise TypeError("inRFI MUST be a Python Obit UVRFIXize")
     #
     # Call constituent pieces
     PCounterRot (inRFI, err)
@@ -224,7 +222,7 @@ def PCounterRot (inRFI, err):
     ################################################################
     # Checks
     if not PIsA(inRFI):
-        raise TypeError,"inRFI MUST be a Python Obit UVRFIXize"
+        raise TypeError("inRFI MUST be a Python Obit UVRFIXize")
     #
     Obit.UVRFIXizeCounterRot (inRFI.me, err.me)
     # end PCounterRot
@@ -239,7 +237,7 @@ def PFilter (inRFI, err):
     ################################################################
     # Checks
     if not PIsA(inRFI):
-        raise TypeError,"inRFI MUST be a Python Obit UVRFIXize"
+        raise TypeError("inRFI MUST be a Python Obit UVRFIXize")
     #
     Obit.UVRFIXizeFilter (inRFI.me, err.me)
     # end PFilter
@@ -254,7 +252,7 @@ def PCorrect (inRFI, err):
     ################################################################
     # Checks
     if not PIsA(inRFI):
-        raise TypeError,"inRFI MUST be a Python Obit UVRFIXize"
+        raise TypeError("inRFI MUST be a Python Obit UVRFIXize")
     #
     Obit.UVRFIXizeCorrect (inRFI.me, err.me)
     # end PCorrect 
@@ -271,7 +269,7 @@ def PGetRFI (inRFI):
     ################################################################
      # Checks
     if not PIsA(inRFI):
-        raise TypeError,"inRFI MUST be a Python Obit UVRFIXize"
+        raise TypeError("inRFI MUST be a Python Obit UVRFIXize")
     #
     RFIUV    = UV("RFI")
     RFIUV.me = Obit.UVRFIXizeGetRFI (inRFI.me);
@@ -287,7 +285,7 @@ def PGetName (inRFI):
     ################################################################
      # Checks
     if not PIsA(inRFI):
-        raise TypeError,"inRFI MUST be a Python Obit UVRFIXize"
+        raise TypeError("inRFI MUST be a Python Obit UVRFIXize")
     #
     return Obit.UVRFIXizeGetName(inRFI.me)
     # end PGetName
@@ -295,12 +293,12 @@ def PGetName (inRFI):
 def PIsA (inRFI):
     """ Tells if input really a Python Obit UVRFIXize
 
-    return true, false (1,0)
+    return True, False
     inRFI   = Python UVRFIXize object
     """
     ################################################################
     # Checks
-    if inRFI.__class__ != UVRFIXize:
-        return 0
-    return Obit.UVRFIXizeIsA(inRFI.me)
+    if not isinstance(inRFI, UVRFIXize):
+        return False
+    return Obit.UVRFIXizeIsA(inRFI.me)!=0
     # end PIsA

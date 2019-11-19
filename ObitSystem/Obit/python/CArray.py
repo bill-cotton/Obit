@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004,2005
+#  Copyright (C) 2004-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -27,30 +27,11 @@
 #-----------------------------------------------------------------------
 
 # Python shadow class to ObitCArray class
-import Obit, FArray
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, FArray
 
-class CArrayPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.CArrayUnref(Obit.CArray_me_get(self.this))
-            # In with the new
-            Obit.CArray_me_set(self.this,value)
-            return
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != CArray:
-            return
-        if name == "me" : 
-            return Obit.CArray_me_get(self.this)
-        raise AttributeError,name
-    def __repr__(self):
-        if self.__class__ != CArray:
-            return
-        return "<C CArray instance> " + Obit.CArrayGetName(self.me)
-class CArray(CArrayPtr):
+class CArray(Obit.CArray):
     """
     Python Obit multidimensional array of complex class
     
@@ -61,11 +42,31 @@ class CArray(CArrayPtr):
     Except as noted, magic value blanking is supported (OBIT_MAGIC).
     """
     def __init__(self, name, naxis=[1]):
+        super(CArray, self).__init__()
         ndim = len(naxis)
-        self.this = Obit.new_CArray(name, ndim, naxis)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_CArray(self.this)
+        Obit.CreateCArray(self.this, name, ndim, naxis)
+    def __del__(self, DeleteCArray=_Obit.DeleteCArray):
+        if _Obit!=None:
+            DeleteCArray(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.CArrayUnref(Obit.CArray_Get_me(self.this))
+            # In with the new
+            Obit.CArray_Set_me(self.this,value)
+            return
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if not isinstance(self, CArray):
+            return"Bogus Dude"+str(self.__class__)
+        if name == "me" : 
+            return Obit.CArray_Get_me(self.this)
+        raise AttributeError(name)
+    def __repr__(self):
+        if not isinstance(self, CArray):
+            return "Unrecognized"
+        return "<C CArray instance> " + Obit.CArrayGetName(self.me)
     
 def PGetVal(inCA, pos):
     """ 
@@ -80,8 +81,8 @@ def PGetVal(inCA, pos):
     ################################################################
     # Checks
     if not PIsA(inCA):
-        print "Actually ",inCA.__class__
-        raise TypeError,"inCA MUST be a Python Obit CArray"
+        print("Actually ",inCA.__class__)
+        raise TypeError("inCA MUST be a Python Obit CArray")
     val = [0.0, 0.0] # create array
     Obit.CArrayGetVal (inCA.me, pos, val)
     return val;
@@ -98,25 +99,24 @@ def PSetVal(inCA, pos, val):
     ################################################################
     # Checks
     if not PIsA(inCA):
-        print "Actually ",inCA.__class__
-        raise TypeError,"inCA MUST be a Python Obit CArray"
+        print("Actually ",inCA.__class__)
+        raise TypeError("inCA MUST be a Python Obit CArray")
     Obit.CArraySetVal(inCA.me, pos, val)
     # end PSetVal
 
 def PCopy (inCA, err):
     """
-    Make copy an CArray
+    Make copy of an CArray
     
     returns copy
-
     * inCA = input Python CArray
     * err  = Python Obit Error/message stack
     """
     ################################################################
     # Checks
     if not PIsA(inCA):
-        print "Actually ",inCA.__class__
-        raise TypeError,"inCA MUST be a Python Obit CArray"
+        print("Actually ",inCA.__class__)
+        raise TypeError("inCA MUST be a Python Obit CArray")
     outCA = CArray("None")
     outCA.me = Obit.CArrayCopy (inCA.me, outFA.me, err.me);
     if err.isErr:
@@ -128,20 +128,19 @@ def PIsCompatable  (in1, in2):
     """
     Tells if two CArrays have compatable geometry
     
-    returns true or false (1, 0)
-
+    returns True or False
     * in1 = first input Python CArray
     * in2 = second input Python CArray
     """
     ################################################################
      # Checks
     if not PIsA(in1):
-        print "Actually ",in1.__class__
-        raise TypeError,"in1 MUST be a Python Obit CArray"
+        print("Actually ",in1.__class__)
+        raise TypeError("in1 MUST be a Python Obit CArray")
     if not PIsA(in2):
-        print "Actually ",in2.__class__
-        raise TypeError,"in2 MUST be a Python Obit CArray"
-    return Obit.CArrayIsCompatable(in1.me, in2.me)
+        print("Actually ",in2.__class__)
+        raise TypeError("in2 MUST be a Python Obit CArray")
+    return Obit.CArrayIsCompatable(in1.me, in2.me)!=0
     # end PIsCompatable
 
 
@@ -150,15 +149,14 @@ def PRealloc (inCA, naxis):
     Change the geometry of an CArray
     
     Contents will be zeroed
-
     * inCA  = input Python CArray
     * naxis = array giving desired dimension, e.g. [20,30]
     """
     ################################################################
     # Checks
     if not PIsA(inCA):
-        print "Actually ",inCA.__class__
-        raise TypeError,"inCA MUST be a Python Obit CArray"
+        print("Actually ",inCA.__class__)
+        raise TypeError("inCA MUST be a Python Obit CArray")
     ndim = len(naxis)
     Obit.CArrayRealloc(inCA.me, ndim, naxis)
     # end PRealloc 
@@ -169,15 +167,14 @@ def PMaxAbs (inCA, pos) :
     Find maximum abs value pixel value
     
     returns  maximum value (may have trouble w/ > 2 dim)
-
     * inCA  = first input Python CArray
     * pos   = [output] 0-rel position as array
     """
     ################################################################
     # Checks
     if not PIsA(inCA):
-        print "Actually ",inCA.__class__
-        raise TypeError,"inCA MUST be a Python Obit CArray"
+        print("Actually ",inCA.__class__)
+        raise TypeError("inCA MUST be a Python Obit CArray")
     lpos = [0,0]                          # Dummy
     ret = Obit.CArrayMax(inCA.me, lpos)   # Results in list ret
     out = ret[0]
@@ -194,8 +191,8 @@ def PNeg (inCA):
     ################################################################
     # Checks
     if not PIsA(inCA):
-        print "Actually ",inCA.__class__
-        raise TypeError,"inCA MUST be a Python Obit CArray"
+        print("Actually ",inCA.__class__)
+        raise TypeError("inCA MUST be a Python Obit CArray")
     Obit.CArrayNeg(inCA.me)
     # end  PNeg
 
@@ -211,8 +208,8 @@ def PConjg (inCA):
     ################################################################
     # Checks
     if not PIsA(inCA):
-        print "Actually ",inCA.__class__
-        raise TypeError,"inCA MUST be a Python Obit CArray"
+        print("Actually ",inCA.__class__)
+        raise TypeError("inCA MUST be a Python Obit CArray")
     Obit.CArrayConjg(inCA.me)
     # end PConjg
 
@@ -228,8 +225,8 @@ def PFill (inCA, cmpx):
     ################################################################
     # Checks
     if not PIsA(inCA):
-        print "Actually ",inCA.__class__
-        raise TypeError,"inCA MUST be a Python Obit CArray"
+        print("Actually ",inCA.__class__)
+        raise TypeError("inCA MUST be a Python Obit CArray")
     Obit.CArrayFill(inCA.me, cmpx)
     # end PFill
 
@@ -246,8 +243,8 @@ def PSAdd (inCA, scalar):
     ################################################################
     # Checks
     if not PIsA(inCA):
-        print "Actually ",inCA.__class__
-        raise TypeError,"inCA MUST be a Python Obit CArray"
+        print("Actually ",inCA.__class__)
+        raise TypeError("inCA MUST be a Python Obit CArray")
     Obit.CArraySAdd(inCA.me, scalar)
     # end PSAdd
 
@@ -257,15 +254,14 @@ def PSMul (inCA, scalar):
     Multiply each element of the array by a scalar
     
     in = in * scalar
-
     * inCA   = input Python CArray
     * scalar = Value to multiply
     """
     ################################################################
     # Checks
     if not PIsA(inCA):
-        print "Actually ",inCA.__class__
-        raise TypeError,"inCA MUST be a Python Obit CArray"
+        print("Actually ",inCA.__class__)
+        raise TypeError("inCA MUST be a Python Obit CArray")
     Obit.CArraySMul(inCA.me, scalar)
     # end PSMul
 
@@ -274,15 +270,14 @@ def PCSAdd (inCA, scalar):
     Add a complex scalar to each element of the array.
 
     in = in + scalar
-
     * inCA   = input Python CArray
     * scalar = Value to add float[2]
     """
     ################################################################
     # Checks
     if not PIsA(inCA):
-        print "Actually ",inCA.__class__
-        raise TypeError,"inCA MUST be a Python Obit CArray"
+        print("Actually ",inCA.__class__)
+        raise TypeError("inCA MUST be a Python Obit CArray")
     Obit.CArraycSAdd(inCA.me, scalar)
     # end PCSAdd
 
@@ -291,15 +286,14 @@ def PCSMul (inCA, scalar):
     Multiply each element of the array by a complex scalar
     
     in = in * scalar
-
     * inCA   = input Python CArray
     * scalar = Value to multiply float[2]
     """
     ################################################################
     # Checks
     if not PIsA(inCA):
-        print "Actually ",inCA.__class__
-        raise TypeError,"inCA MUST be a Python Obit CArray"
+        print("Actually ",inCA.__class__)
+        raise TypeError("inCA MUST be a Python Obit CArray")
     Obit.CArrayCSMul(inCA.me, scalar)
     # end PCSMul
 
@@ -316,9 +310,9 @@ def PAdd (in1, in2, out):
     ################################################################
     # Checks
     if not PIsCompatable  (in1, in2):
-        raise RuntimeError,"in1 and in2 have incompatable geometry"
+        raise RuntimeError("in1 and in2 have incompatable geometry")
     if not PIsCompatable  (in1, out):
-        raise RuntimeError,"in1 and out have incompatable geometry"
+        raise RuntimeError("in1 and out have incompatable geometry")
     Obit.CArrayAdd (in1.me, in2.me, out.me)
     # end  PAdd
 
@@ -328,7 +322,6 @@ def PSub (in1, in2, out):
     Subtract corresponding elements of the arrays.
     
     out = in1 - in2
-
     * in1 = first input Python CArray
     * in2 = second input Python CArray
     * out = output Python CArray
@@ -336,9 +329,9 @@ def PSub (in1, in2, out):
     ################################################################
     # Checks
     if not PIsCompatable  (in1, in2):
-        raise RuntimeError,"in1 and in2 have incompatable geometry"
+        raise RuntimeError("in1 and in2 have incompatable geometry")
     if not PIsCompatable  (in1, out):
-        raise RuntimeError,"in1 and out have incompatable geometry"
+        raise RuntimeError("in1 and out have incompatable geometry")
     Obit.CArraySub (in1.me, in2.me, out.me)
     # end PSub
 
@@ -347,7 +340,6 @@ def PMul (in1, in2, out):
     Multiply corresponding elements of the arrays.
     
     out = in1 * in2
-
     * in1 = first input Python CArray
     * in2 = second input Python CArray
     * out = output Python CArray
@@ -355,9 +347,9 @@ def PMul (in1, in2, out):
     ################################################################
     # Checks
     if not PIsCompatable  (in1, in2):
-        raise RuntimeError,"in1 and in2 have incompatable geometry"
+        raise RuntimeError("in1 and in2 have incompatable geometry")
     if not PIsCompatable  (in1, out):
-        raise RuntimeError,"in1 and out have incompatable geometry"
+        raise RuntimeError("in1 and out have incompatable geometry")
     Obit.CArrayMul (in1.me, in2.me, out.me)
     # end PMul
 
@@ -367,7 +359,6 @@ def PDiv (in1, in2, out):
     Divide corresponding elements of the arrays.
     
     out = in1 / in2
-
     * in1 = first input Python CArray
     * in2 = second input Python CArray
     * out = output Python CArray
@@ -375,9 +366,9 @@ def PDiv (in1, in2, out):
     ################################################################
     # Checks
     if not PIsCompatable  (in1, in2):
-        raise RuntimeError,"in1 and in2 have incompatable geometry"
+        raise RuntimeError("in1 and in2 have incompatable geometry")
     if not PIsCompatable  (in1, out):
-        raise RuntimeError,"in1 and out have incompatable geometry"
+        raise RuntimeError("in1 and out have incompatable geometry")
     Obit.CArrayDiv (in1.me, in2.me, out.me)
     # end PDiv
 
@@ -393,8 +384,8 @@ def PMakeF (Cin):
     ################################################################
     # Checks
     if not PIsA(Cin):
-        print "Actually ",iCn.__class__
-        raise TypeError,"Cin MUST be a Python Obit CArray"
+        print("Actually ",iCn.__class__)
+        raise TypeError("Cin MUST be a Python Obit CArray")
     outFA = FArray.FArray("None")
     outFA.me = Obit.CArrayMakeF(Cin.me)
     return outFA
@@ -412,8 +403,8 @@ def PMakeC (Fin):
     ################################################################
     # Checks
     if not FArray.PIsA(Fin):
-        print "Actually ",Fin.__class__
-        raise TypeError,"Fin MUST be a Python Obit FArray"
+        print("Actually ",Fin.__class__)
+        raise TypeError("Fin MUST be a Python Obit FArray")
     outCA = CArray("None")
     outCA.me = Obit.CArrayMakeC(Fin.me)
     return outCA
@@ -432,11 +423,11 @@ def PIsFCompatable  (Cin, Fin):
     ################################################################
     # Checks
     if not PIsA(Cin):
-        print "Actually ",Cin.__class__
-        raise TypeError,"Cin MUST be a Python Obit CArray"
+        print("Actually ",Cin.__class__)
+        raise TypeError("Cin MUST be a Python Obit CArray")
     if not FArray.PIsA(Fin):
-        print "Actually ",Fin.__class__
-        raise TypeError,"Fin MUST be a Python Obit FArray"
+        print("Actually ",Fin.__class__)
+        raise TypeError("Fin MUST be a Python Obit FArray")
     return Obit.CArrayIsFCompatable(Cin.me, Fin.me)
     # end PIsFCompatable
 
@@ -453,9 +444,9 @@ def PFMul (Cin, Fin, out):
     ################################################################
     # Checks
     if not PIsFCompatable  (Cin, Fin):
-        raise RuntimeError,"Cin and Fin have incompatable geometry"
+        raise RuntimeError("Cin and Fin have incompatable geometry")
     if not PIsCompatable  (Cin, out):
-        raise RuntimeError,"Cin and out have incompatable geometry"
+        raise RuntimeError("Cin and out have incompatable geometry")
     Obit.CArrayFMul (Cin.me, Fin.me, out.me)
     # end PFMul
 
@@ -472,9 +463,9 @@ def PFDiv (Cin, Fin, out):
     ################################################################
     # Checks
     if not PIsFCompatable  (Cin, Fin):
-        raise RuntimeError,"Cin and Fin have incompatable geometry"
+        raise RuntimeError("Cin and Fin have incompatable geometry")
     if not PIsCompatable  (Cin, out):
-        raise RuntimeError,"Cin and out have incompatable geometry"
+        raise RuntimeError("Cin and out have incompatable geometry")
     Obit.CArrayFDiv (Cin.me, Fin.me, out.me)
     # end PFDiv
 
@@ -491,9 +482,9 @@ def PFAdd (Cin, Fin, out):
     ################################################################
     # Checks
     if not PIsFCompatable  (Cin, Fin):
-        raise RuntimeError,"Cin and Fin have incompatable geometry"
+        raise RuntimeError("Cin and Fin have incompatable geometry")
     if not PIsCompatable  (Cin, out):
-        raise RuntimeError,"Cin and out have incompatable geometry"
+        raise RuntimeError("Cin and out have incompatable geometry")
     Obit.CArrayFAdd (Cin.me, Fin.me, out.me)
     # end PFAdd
 
@@ -511,9 +502,9 @@ def PFRot (Cin, Fin, out):
     ################################################################
     # Checks
     if not PIsFCompatable  (Cin, Fin):
-        raise RuntimeError,"Cin and Fin have incompatable geometry"
+        raise RuntimeError("Cin and Fin have incompatable geometry")
     if not PIsCompatable  (Cin, out):
-        raise RuntimeError,"Cin and out have incompatable geometry"
+        raise RuntimeError("Cin and out have incompatable geometry")
     Obit.CArrayFRot (Cin.me, Fin.me, out.me)
     # end PFRot
 
@@ -531,9 +522,9 @@ def PComplex (Fin1, Fin2, out):
     ################################################################
     # Checks
     if not FArray.PIsCompatable  (Fin1, Fin2):
-        raise RuntimeError,"Fin1 and Fin2 have incompatable geometry"
+        raise RuntimeError("Fin1 and Fin2 have incompatable geometry")
     if not PIsFCompatable  (out, Fin1):
-        raise RuntimeError,"Fin1 and out have incompatable geometry"
+        raise RuntimeError("Fin1 and out have incompatable geometry")
     Obit.CArrayComplex (Fin1.me, Fin2.me, out.me)
     # end PComplex 
 
@@ -549,7 +540,7 @@ def PReal (inCA, outFA):
     ################################################################
     # Checks
     if not PIsFCompatable  (inCA, outFA):
-        raise RuntimeError,"Fin1 and out have incompatable geometry"
+        raise RuntimeError("Fin1 and out have incompatable geometry")
     Obit.CArrayReal (inCA.me, outFA.me)
     # end PReal
 
@@ -565,7 +556,7 @@ def PImag (inCA, outFA):
     ################################################################
     # Checks
     if not PIsFCompatable  (inCA, outFA):
-        raise RuntimeError,"Fin1 and out have incompatable geometry"
+        raise RuntimeError("Fin1 and out have incompatable geometry")
     Obit.CArrayImag (inCA.me, outFA.me)
     # end PImag
 
@@ -581,7 +572,7 @@ def PAmp (inCA, outFA):
     ################################################################
     # Checks
     if not PIsFCompatable  (inCA, outFA):
-        raise RuntimeError,"Fin1 and out have incompatable geometry"
+        raise RuntimeError("Fin1 and out have incompatable geometry")
     Obit.CArrayAmp (inCA.me, outFA.me)
     # end PAmp
 
@@ -597,7 +588,7 @@ def PPhase (inCA, outFA):
     ################################################################
     # Checks
     if not PIsFCompatable  (inCA, outFA):
-        raise RuntimeError,"Fin1 and out have incompatable geometry"
+        raise RuntimeError("Fin1 and out have incompatable geometry")
     Obit.CArrayPhase (inCA.me, outFA.me)
     # end PPhase
 
@@ -611,8 +602,8 @@ def P2DCenter (inCA):
     ################################################################
     # Checks
     if not PIsA(inCA):
-        print "Actually ",inCA.__class__
-        raise TypeError,"inCA MUST be a Python Obit CArray"
+        print("Actually ",inCA.__class__)
+        raise TypeError("inCA MUST be a Python Obit CArray")
     Obit.CArray2DCenter(inCA.me)
     # end P2DCenter
 
@@ -630,8 +621,8 @@ def PAddConjg (inCA, numConjRow):
     ################################################################
     # Checks
     if not PIsA(inCA):
-        print "Actually ",inCA.__class__
-        raise TypeError,"inCA MUST be a Python Obit CArray"
+        print("Actually ",inCA.__class__)
+        raise TypeError("inCA MUST be a Python Obit CArray")
     outCA = CArray("None")
     outCA.me = Obit.CArrayAddConjg (inCA.me, numConjRow)
     return outCA
@@ -642,15 +633,14 @@ def PIsA (inCA):
     """
     Tells if the input is a Python ObitCArray
     
-    returns true or false (1,0)
-
+    returns True or False
     * inCA = Python Obit CArray to test
     """
     ################################################################
       # Checks
-    if inCA.__class__ != CArray:
-        return 0
-    return Obit.CArrayIsA(inCA.me)
+    if not isinstance(inCA, CArray):
+        return False
+    return Obit.CArrayIsA(inCA.me)!=0
     # end PIsA
 
 def PGetNdim (inCA):
@@ -662,8 +652,8 @@ def PGetNdim (inCA):
     ################################################################
       # Checks
     if not PIsA(inCA):
-        print "Actually ",inCA.__class__
-        raise TypeError,"inCA MUST be a Python Obit CArray"
+        print("Actually ",inCA.__class__)
+        raise TypeError("inCA MUST be a Python Obit CArray")
     return Obit.CArrayGetNdim(inCA.me)
     # end PGetNdim
 
@@ -676,7 +666,7 @@ def PGetNaxis (inCA):
     ################################################################
       # Checks
     if not PIsA(inCA):
-        print "Actually ",inCA.__class__
-        raise TypeError,"inCA MUST be a Python Obit CArray"
+        print("Actually ",inCA.__class__)
+        raise TypeError("inCA MUST be a Python Obit CArray")
     return Obit.CArrayGetNaxis(inCA.me)
     # end PGetNaxis

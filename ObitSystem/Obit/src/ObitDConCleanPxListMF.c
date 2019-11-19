@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2017                                          */
+/*;  Copyright (C) 2010-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -464,7 +464,7 @@ void ObitDConCleanPxListMFUpdate (ObitDConCleanPxList *inn,
   ofloat **sdata=NULL;
   olong i, j, field,  ifld, number, excess, ix, iy, nx, ny, pos[2], skipCnt;
   olong nplanes, iplane, naxis[2], nfield, nCCparms, parmoff;
-  olong ip, lox, loy, hix, hiy,xoff, yoff;
+  olong lox, loy, hix, hiy,xoff, yoff;
   olong plane[5] = {1,1,1,1,1};
   ofloat maxChFlux, *data=NULL, fblank=ObitMagicF();
   gboolean blewIt=FALSE, *mask=NULL, rebuild=FALSE;
@@ -549,7 +549,6 @@ void ObitDConCleanPxListMFUpdate (ObitDConCleanPxList *inn,
        only increase record size */
     nfield = in->mosaic->numberImages;
     rebuild = FALSE;
-    ip = 0;
     for (i=0; i<nfield; i++) {
       if (in->CCTable[i]->parmsCol>=0)
 	nCCparms = in->CCTable[i]->myDesc->dim[in->CCTable[i]->parmsCol][0];
@@ -667,6 +666,8 @@ void ObitDConCleanPxListMFUpdate (ObitDConCleanPxList *inn,
     /* Free Image data arrays */
     for (iplane=0; iplane<nplanes; iplane++) 
       inFArrays[iplane] = ObitFArrayUnref(inFArrays[iplane]);
+
+    inFArrays[0] = NULL; /* Don't delete pixarray */
     
     /* Cleanup - next field may have different size */
     if ((mask) && (ObitMemValid (mask))) mask = ObitMemFree (mask);
@@ -698,8 +699,8 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
 {
   gboolean done = FALSE;
   olong iter, field=0,  beamPatch;
-  olong i, j, lpatch, irow, xoff, yoff, lastField=-1;
-  ofloat minFlux=0.0, lastFlux=0.0, CCmin, atlim, xfac=1.0, xflux;
+  olong i, j, lpatch, irow, xoff, yoff;
+  ofloat minFlux=0.0, CCmin, atlim, xfac=1.0, xflux;
   ofloat minFluxLoad;
   ofloat subval, peak, ccfLim=0.5;
   odouble totalFlux, *fieldFlux=NULL;
@@ -872,11 +873,9 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
       /* Save info */
       xfac     = pow ((minFluxLoad / in->resMax), in->factor[field]);
       ccfLim   = in->resMax*in->ccfLim;  /* Fraction of peak limit */
-      lastFlux = in->resMax;
       doField[field] = TRUE;
       minFlux  = in->minFlux[field];
       subval   = tcombPeak[ibgc] * in->gain[field];
-      lastFlux = tcombPeak[ibgc];
       iXres    = in->pixelX[tipeak[ibgc]];
       iYres    = in->pixelY[tipeak[ibgc]];
       CCmin    = MIN (CCmin, fabs(tcombPeak[ibgc]));
@@ -898,7 +897,6 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
       /* Create row if needed */
       if (!in->CCRow[field]) in->CCRow[field] = newObitTableCCRow (in->CCTable[field]);
       CCRow = in->CCRow[field];   /* Get local pointer to  Table Row  */
-      lastField = field;
       
       /* Set value */
       desc = in->mosaic->images[field]->myDesc;
@@ -1093,7 +1091,7 @@ gboolean ObitDConCleanPxListMFSDI (ObitDConCleanPxList *inn, ObitErr *err)
   ObitDConCleanPxListMF *in = (ObitDConCleanPxListMF*)inn;
   gboolean drop, done = FALSE;
   olong iter, iresid, field=0, beamPatch, lpatch=0, ipeak, iXres, iYres;
-  olong lastField=-1, xoff, yoff, irow, i, j;
+  olong xoff, yoff, irow, i, j;
   ofloat minFlux=0.0, xflux;
   ofloat minVal=-1.0e20, *sum=NULL, *wt=NULL, *tspec=NULL, mapLim;
   odouble totalFlux, *fieldFlux=NULL;
@@ -1271,7 +1269,6 @@ gboolean ObitDConCleanPxListMFSDI (ObitDConCleanPxList *inn, ObitErr *err)
     /* Create row if needed */
     if (!in->CCRow[field-1]) in->CCRow[field-1] = newObitTableCCRow (in->CCTable[field-1]);
     CCRow = in->CCRow[field-1];  /* Get local pointer to Table Row  */
-    lastField = field;
     
     /* Set value */
     desc = in->mosaic->images[field-1]->myDesc;

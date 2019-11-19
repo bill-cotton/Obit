@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for partial ObitSDMData type               */
 /*                                                                    */
-/*;  Copyright (C) 2012                                               */
+/*;  Copyright (C) 2012,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -36,6 +36,17 @@
 
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitSDMData *me;
+} OASDM;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitSDMData *me;
+} OASDM;
 
 %inline %{
 extern ObitSDMData* OASDMCreate(char* name, char* DataRoot, ObitErr *err) {
@@ -45,9 +56,63 @@ extern ObitSDMData* OASDMCreate(char* name, char* DataRoot, ObitErr *err) {
   if ((asdm==NULL) || (asdm->MainTab==NULL) || (asdm->ConfigDescriptionTab==NULL) ) {
     Obit_log_error(err, OBIT_Error, "ASDM not fully populated");
   }
-
-return asdm;
+  return asdm;
 } // end OASDMCreate
+
+ObitSDMData* OASDMRef (ObitSDMData* in) {
+  return ObitSDMDataRef (in);
+} // end OASDMRef
+
+ObitSDMData* OASDMUnref (ObitSDMData* in) {
+  if (!ObitSDMDataIsA(in)) return NULL;
+  return ObitSDMDataUnref (in);
+} // end OASDMUnref
+
+void CreateOASDM(PyObject *self, char* name, char* DataRoot, ObitErr *err) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_OASDM, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateOASDM: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((OASDM*)ptr)->me = OASDMCreate(name, DataRoot, err);
+   else  ((OASDM*)ptr)->me = NULL;
+   return;
+ } // end CreateOASDM
+
+void DeleteOASDM(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_OASDM, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteOASDM: could not recover c struct");
+	return;
+   }
+   ((OASDM*)ptr)->me = OASDMUnref(((OASDM*)ptr)->me);
+}// end DeleteOASDM
+
+ObitSDMData* OASDM_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_OASDM, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"OASDM_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((OASDM*)ptr)->me;
+}  // end OASDM_Get_me
+
+void OASDM_Set_me(PyObject *self, ObitSDMData *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_OASDM, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"OASDM_Set_me: could not recover c struct");
+	return;
+   }
+   ((OASDM*)ptr)->me =  OASDMRef(me);
+}  // end OASDM_Set_me
 
 // get reference JD
 extern float OASDMGetRefJD(ObitSDMData *asdm)
@@ -79,15 +144,15 @@ static PyObject* OASDMGetMain(ObitSDMData *asdm)
     dict = PyDict_New();
     PyDict_SetItemString(dict, "time",                PyFloat_FromDouble((double)Tab->rows[irow]->time));
     PyDict_SetItemString(dict, "interval",            PyFloat_FromDouble((double)Tab->rows[irow]->interval));
-    PyDict_SetItemString(dict, "timeSampling",        PyInt_FromLong((long)Tab->rows[irow]->timeSampling));
-    PyDict_SetItemString(dict, "scanNumber",          PyInt_FromLong((long)Tab->rows[irow]->scanNumber));
-    PyDict_SetItemString(dict, "subscanNumber",       PyInt_FromLong((long)Tab->rows[irow]->subscanNumber));
-    PyDict_SetItemString(dict, "numIntegration",      PyInt_FromLong((long)Tab->rows[irow]->numIntegration));
-    PyDict_SetItemString(dict, "numAntenna",          PyInt_FromLong((long)Tab->rows[irow]->numAntenna));
-    PyDict_SetItemString(dict, "execBlockId",         PyInt_FromLong((long)Tab->rows[irow]->execBlockId));
-    PyDict_SetItemString(dict, "configDescriptionId", PyInt_FromLong((long)Tab->rows[irow]->configDescriptionId));
-    PyDict_SetItemString(dict, "fieldId",             PyInt_FromLong((long)Tab->rows[irow]->fieldId));
-    PyDict_SetItemString(dict, "stateId",             PyInt_FromLong((long)Tab->rows[irow]->stateId));
+    PyDict_SetItemString(dict, "timeSampling",        PyLong_FromLong((long)Tab->rows[irow]->timeSampling));
+    PyDict_SetItemString(dict, "scanNumber",          PyLong_FromLong((long)Tab->rows[irow]->scanNumber));
+    PyDict_SetItemString(dict, "subscanNumber",       PyLong_FromLong((long)Tab->rows[irow]->subscanNumber));
+    PyDict_SetItemString(dict, "numIntegration",      PyLong_FromLong((long)Tab->rows[irow]->numIntegration));
+    PyDict_SetItemString(dict, "numAntenna",          PyLong_FromLong((long)Tab->rows[irow]->numAntenna));
+    PyDict_SetItemString(dict, "execBlockId",         PyLong_FromLong((long)Tab->rows[irow]->execBlockId));
+    PyDict_SetItemString(dict, "configDescriptionId", PyLong_FromLong((long)Tab->rows[irow]->configDescriptionId));
+    PyDict_SetItemString(dict, "fieldId",             PyLong_FromLong((long)Tab->rows[irow]->fieldId));
+    PyDict_SetItemString(dict, "stateId",             PyLong_FromLong((long)Tab->rows[irow]->stateId));
     if (Tab->rows[irow]->entityId)
       PyDict_SetItemString(dict, "entityId",           PyString_FromString(Tab->rows[irow]->entityId));
     else
@@ -113,10 +178,10 @@ static PyObject* OASDMGetScan(ObitSDMData *asdm)
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "scanNumber",   PyInt_FromLong((long)Tab->rows[irow]->scanNumber));
-    PyDict_SetItemString(dict, "numIntent",    PyInt_FromLong((long)Tab->rows[irow]->numIntent));
-    PyDict_SetItemString(dict, "numSubscan",   PyInt_FromLong((long)Tab->rows[irow]->numSubscan));
-    PyDict_SetItemString(dict, "execBlockId",  PyInt_FromLong((long)Tab->rows[irow]->execBlockId));
+    PyDict_SetItemString(dict, "scanNumber",   PyLong_FromLong((long)Tab->rows[irow]->scanNumber));
+    PyDict_SetItemString(dict, "numIntent",    PyLong_FromLong((long)Tab->rows[irow]->numIntent));
+    PyDict_SetItemString(dict, "numSubscan",   PyLong_FromLong((long)Tab->rows[irow]->numSubscan));
+    PyDict_SetItemString(dict, "execBlockId",  PyLong_FromLong((long)Tab->rows[irow]->execBlockId));
     PyDict_SetItemString(dict, "startTime",    PyFloat_FromDouble((double)Tab->rows[irow]->startTime));
     PyDict_SetItemString(dict, "endTime",      PyFloat_FromDouble((double)Tab->rows[irow]->endTime));
     PyDict_SetItemString(dict, "sourceName",   PyString_InternFromString(Tab->rows[irow]->sourceName));
@@ -164,9 +229,9 @@ static PyObject* OASDMGetSubscan(ObitSDMData *asdm)
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "scanNumber",           PyInt_FromLong((long)Tab->rows[irow]->scanNumber));
-    PyDict_SetItemString(dict, "subscanNumber",        PyInt_FromLong((long)Tab->rows[irow]->subscanNumber));
-    PyDict_SetItemString(dict, "numberSubintegration", PyInt_FromLong((long)Tab->rows[irow]->numberSubintegration));
+    PyDict_SetItemString(dict, "scanNumber",           PyLong_FromLong((long)Tab->rows[irow]->scanNumber));
+    PyDict_SetItemString(dict, "subscanNumber",        PyLong_FromLong((long)Tab->rows[irow]->subscanNumber));
+    PyDict_SetItemString(dict, "numberSubintegration", PyLong_FromLong((long)Tab->rows[irow]->numberSubintegration));
     PyDict_SetItemString(dict, "startTime",            PyFloat_FromDouble((double)Tab->rows[irow]->startTime));
     PyDict_SetItemString(dict, "endTime",              PyFloat_FromDouble((double)Tab->rows[irow]->endTime));
     PyDict_SetItemString(dict, "fieldName",            PyString_InternFromString(Tab->rows[irow]->fieldName));
@@ -175,7 +240,7 @@ static PyObject* OASDMGetSubscan(ObitSDMData *asdm)
 
     tlist = PyList_New(Tab->rows[irow]->numberIntegration);
     for (i=0; i<Tab->rows[irow]->numberIntegration; i++) 
-       PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->numberSubintegration[i]));
+       PyList_SetItem(tlist, i, PyLong_FromLong((long)Tab->rows[irow]->numberSubintegration[i]));
     PyDict_SetItemString(dict, "numberSubintegration",  tlist);
 
     PyList_SetItem(outList, irow, dict);
@@ -197,40 +262,40 @@ static PyObject* OASDMGetConfig(ObitSDMData *asdm)
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "configDescriptionId",   PyInt_FromLong((long)Tab->rows[irow]->configDescriptionId));
-    PyDict_SetItemString(dict, "numAntenna",            PyInt_FromLong((long)Tab->rows[irow]->numAntenna));
-    PyDict_SetItemString(dict, "numDataDescription",    PyInt_FromLong((long)Tab->rows[irow]->numDataDescription));
-    PyDict_SetItemString(dict, "numFeed",               PyInt_FromLong((long)Tab->rows[irow]->numFeed));
-    PyDict_SetItemString(dict, "numAtmPhaseCorrection", PyInt_FromLong((long)Tab->rows[irow]->numAtmPhaseCorrection));
-    PyDict_SetItemString(dict, "processorId",           PyInt_FromLong((long)Tab->rows[irow]->processorId));
-    PyDict_SetItemString(dict, "correlationMode",       PyInt_FromLong((long)Tab->rows[irow]->correlationMode));
-    PyDict_SetItemString(dict, "processorType",         PyInt_FromLong((long)Tab->rows[irow]->processorType));
-    PyDict_SetItemString(dict, "spectralType",          PyInt_FromLong((long)Tab->rows[irow]->spectralType));
+    PyDict_SetItemString(dict, "configDescriptionId",   PyLong_FromLong((long)Tab->rows[irow]->configDescriptionId));
+    PyDict_SetItemString(dict, "numAntenna",            PyLong_FromLong((long)Tab->rows[irow]->numAntenna));
+    PyDict_SetItemString(dict, "numDataDescription",    PyLong_FromLong((long)Tab->rows[irow]->numDataDescription));
+    PyDict_SetItemString(dict, "numFeed",               PyLong_FromLong((long)Tab->rows[irow]->numFeed));
+    PyDict_SetItemString(dict, "numAtmPhaseCorrection", PyLong_FromLong((long)Tab->rows[irow]->numAtmPhaseCorrection));
+    PyDict_SetItemString(dict, "processorId",           PyLong_FromLong((long)Tab->rows[irow]->processorId));
+    PyDict_SetItemString(dict, "correlationMode",       PyLong_FromLong((long)Tab->rows[irow]->correlationMode));
+    PyDict_SetItemString(dict, "processorType",         PyLong_FromLong((long)Tab->rows[irow]->processorType));
+    PyDict_SetItemString(dict, "spectralType",          PyLong_FromLong((long)Tab->rows[irow]->spectralType));
 
     tlist = PyList_New(Tab->rows[irow]->numAntenna);
     for (i=0; i<Tab->rows[irow]->numAntenna; i++) 
-       PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->antennaId[i]));
+       PyList_SetItem(tlist, i, PyLong_FromLong((long)Tab->rows[irow]->antennaId[i]));
     PyDict_SetItemString(dict, "antennaId",  tlist);
 
     tlist = PyList_New(Tab->rows[irow]->numDataDescription);
     for (i=0; i<Tab->rows[irow]->numDataDescription; i++) 
-       PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->dataDescriptionId[i]));
+       PyList_SetItem(tlist, i, PyLong_FromLong((long)Tab->rows[irow]->dataDescriptionId[i]));
     PyDict_SetItemString(dict, "dataDescriptionId",  tlist);
 
     tlist = PyList_New(Tab->rows[irow]->numFeed);
     for (i=0; i<Tab->rows[irow]->numFeed; i++) 
-       PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->feedId[i]));
+       PyList_SetItem(tlist, i, PyLong_FromLong((long)Tab->rows[irow]->feedId[i]));
     PyDict_SetItemString(dict, "feedId",  tlist);
 
     tlist = PyList_New(Tab->rows[irow]->numAtmPhaseCorrection);
     for (i=0; i<Tab->rows[irow]->numAtmPhaseCorrection; i++) 
-      PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->atmPhaseCorrection[i]));
+      PyList_SetItem(tlist, i, PyLong_FromLong((long)Tab->rows[irow]->atmPhaseCorrection[i]));
     PyDict_SetItemString(dict, "atmPhaseCorrection",  tlist);
 
     /* Don't know how many
        tlist = PyList_New(cnt);
        for (i=0; i<cnt; i++) 
-       PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->switchCycleId[i]));
+       PyList_SetItem(tlist, i, PyLong_FromLong((long)Tab->rows[irow]->switchCycleId[i]));
        PyDict_SetItemString(dict, "switchCycleId",  tlist); */
 
     PyList_SetItem(outList, irow, dict);
@@ -252,31 +317,31 @@ static PyObject* OASDMGetCorrelatorMode(ObitSDMData *asdm)
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "correlatorModeId", PyInt_FromLong((long)Tab->rows[irow]->correlatorModeId));
+    PyDict_SetItemString(dict, "correlatorModeId", PyLong_FromLong((long)Tab->rows[irow]->correlatorModeId));
     PyDict_SetItemString(dict, "correlatorName",   PyString_InternFromString(Tab->rows[irow]->correlatorName));
-    PyDict_SetItemString(dict, "numBaseband",      PyInt_FromLong((long)Tab->rows[irow]->numBaseband));
-    PyDict_SetItemString(dict, "numAxes",          PyInt_FromLong((long)Tab->rows[irow]->numAxes));
-    PyDict_SetItemString(dict, "accumMode",        PyInt_FromLong((long)Tab->rows[irow]->accumMode));
-    PyDict_SetItemString(dict, "binMode",          PyInt_FromLong((long)Tab->rows[irow]->binMode));
+    PyDict_SetItemString(dict, "numBaseband",      PyLong_FromLong((long)Tab->rows[irow]->numBaseband));
+    PyDict_SetItemString(dict, "numAxes",          PyLong_FromLong((long)Tab->rows[irow]->numAxes));
+    PyDict_SetItemString(dict, "accumMode",        PyLong_FromLong((long)Tab->rows[irow]->accumMode));
+    PyDict_SetItemString(dict, "binMode",          PyLong_FromLong((long)Tab->rows[irow]->binMode));
 
     tlist = PyList_New(Tab->rows[irow]->numBaseband);
     for (i=0; i<Tab->rows[irow]->numBaseband; i++) 
-      PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->basebandNames[i]));
+      PyList_SetItem(tlist, i, PyLong_FromLong((long)Tab->rows[irow]->basebandNames[i]));
     PyDict_SetItemString(dict, "basebandNames",  tlist);
 
     tlist = PyList_New(Tab->rows[irow]->numBaseband);
     for (i=0; i<Tab->rows[irow]->numBaseband; i++) 
-      PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->basebandConfig[i]));
+      PyList_SetItem(tlist, i, PyLong_FromLong((long)Tab->rows[irow]->basebandConfig[i]));
     PyDict_SetItemString(dict, "basebandConfig",  tlist);
 
     tlist = PyList_New(Tab->rows[irow]->numBaseband);
     for (i=0; i<Tab->rows[irow]->numBaseband; i++) 
-      PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->filterMode[i]));
+      PyList_SetItem(tlist, i, PyLong_FromLong((long)Tab->rows[irow]->filterMode[i]));
     PyDict_SetItemString(dict, "filterMode",  tlist);
 
     tlist = PyList_New(Tab->rows[irow]->numAxes);
     for (i=0; i<Tab->rows[irow]->numAxes; i++) 
-      PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->axesOrderArray[i]));
+      PyList_SetItem(tlist, i, PyLong_FromLong((long)Tab->rows[irow]->axesOrderArray[i]));
     PyDict_SetItemString(dict, "axesOrderArray",  tlist);
 
     PyList_SetItem(outList, irow, dict);
@@ -298,9 +363,9 @@ static PyObject* OASDMGetDataDescription(ObitSDMData *asdm)
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "dataDescriptionId", PyInt_FromLong((long)Tab->rows[irow]->dataDescriptionId));
-    PyDict_SetItemString(dict, "polOrHoloId",       PyInt_FromLong((long)Tab->rows[irow]->polOrHoloId));
-    PyDict_SetItemString(dict, "spectralWindowId",  PyInt_FromLong((long)Tab->rows[irow]->spectralWindowId));
+    PyDict_SetItemString(dict, "dataDescriptionId", PyLong_FromLong((long)Tab->rows[irow]->dataDescriptionId));
+    PyDict_SetItemString(dict, "polOrHoloId",       PyLong_FromLong((long)Tab->rows[irow]->polOrHoloId));
+    PyDict_SetItemString(dict, "spectralWindowId",  PyLong_FromLong((long)Tab->rows[irow]->spectralWindowId));
     PyList_SetItem(outList, irow, dict);
   }
 
@@ -320,12 +385,12 @@ static PyObject* OASDMGetSpectralWindow(ObitSDMData *asdm)
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "spectralWindowId",       PyInt_FromLong((long)Tab->rows[irow]->spectralWindowId));
+    PyDict_SetItemString(dict, "spectralWindowId",       PyLong_FromLong((long)Tab->rows[irow]->spectralWindowId));
     PyDict_SetItemString(dict, "basebandName",           PyString_InternFromString(Tab->rows[irow]->basebandName));
     PyDict_SetItemString(dict, "netSideband",            PyString_InternFromString(Tab->rows[irow]->netSideband));
-    PyDict_SetItemString(dict, "numChan",                PyInt_FromLong((long)Tab->rows[irow]->numChan));
-    PyDict_SetItemString(dict, "numAssocValues",         PyInt_FromLong((long)Tab->rows[irow]->numAssocValues));
-    PyDict_SetItemString(dict, "sidebandProcessingMode", PyInt_FromLong((long)Tab->rows[irow]->sidebandProcessingMode));
+    PyDict_SetItemString(dict, "numChan",                PyLong_FromLong((long)Tab->rows[irow]->numChan));
+    PyDict_SetItemString(dict, "numAssocValues",         PyLong_FromLong((long)Tab->rows[irow]->numAssocValues));
+    PyDict_SetItemString(dict, "sidebandProcessingMode", PyLong_FromLong((long)Tab->rows[irow]->sidebandProcessingMode));
     PyDict_SetItemString(dict, "refFreq",                PyFloat_FromDouble((double)Tab->rows[irow]->refFreq));
     PyDict_SetItemString(dict, "totBandwidth",           PyFloat_FromDouble((double)Tab->rows[irow]->totBandwidth));
     PyDict_SetItemString(dict, "chanFreqStart",          PyFloat_FromDouble((double)Tab->rows[irow]->chanFreqStart));
@@ -333,7 +398,7 @@ static PyObject* OASDMGetSpectralWindow(ObitSDMData *asdm)
     PyDict_SetItemString(dict, "chanWidth",              PyFloat_FromDouble((double)Tab->rows[irow]->chanWidth));
     PyDict_SetItemString(dict, "effectiveBw",            PyFloat_FromDouble((double)Tab->rows[irow]->effectiveBw));
     PyDict_SetItemString(dict, "resolution",             PyFloat_FromDouble((double)Tab->rows[irow]->resolution));
-    PyDict_SetItemString(dict, "windowFunction",         PyInt_FromLong((long)Tab->rows[irow]->windowFunction));
+    PyDict_SetItemString(dict, "windowFunction",         PyLong_FromLong((long)Tab->rows[irow]->windowFunction));
     /*PyDict_SetItemString(dict, "correlationBit",         PyString_InternFromString(Tab->rows[irow]->correlationBit));*/
     PyDict_SetItemString(dict, "name",                   PyString_InternFromString(Tab->rows[irow]->name));
     PyDict_SetItemString(dict, "oversampling",           PyBool_FromLong((long)Tab->rows[irow]->oversampling));	
@@ -399,11 +464,11 @@ static PyObject* OASDMGetAntenna(ObitSDMData *asdm)
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "antennaId",    PyInt_FromLong((long)Tab->rows[irow]->antennaId));
-    PyDict_SetItemString(dict, "stationId",    PyInt_FromLong((long)Tab->rows[irow]->stationId));
+    PyDict_SetItemString(dict, "antennaId",    PyLong_FromLong((long)Tab->rows[irow]->antennaId));
+    PyDict_SetItemString(dict, "stationId",    PyLong_FromLong((long)Tab->rows[irow]->stationId));
     PyDict_SetItemString(dict, "name",         PyString_InternFromString(Tab->rows[irow]->name));
-    PyDict_SetItemString(dict, "antennaMake",  PyInt_FromLong((long)Tab->rows[irow]->antennaMake));
-    PyDict_SetItemString(dict, "antennaType",  PyInt_FromLong((long)Tab->rows[irow]->antennaType));
+    PyDict_SetItemString(dict, "antennaMake",  PyLong_FromLong((long)Tab->rows[irow]->antennaMake));
+    PyDict_SetItemString(dict, "antennaType",  PyLong_FromLong((long)Tab->rows[irow]->antennaType));
     PyDict_SetItemString(dict, "dishDiameter", PyFloat_FromDouble((double)Tab->rows[irow]->dishDiameter));
     PyDict_SetItemString(dict, "time",         PyFloat_FromDouble((double)Tab->rows[irow]->time));
 
@@ -436,8 +501,8 @@ static PyObject* OASDMGetStation(ObitSDMData *asdm)
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "stationId", PyInt_FromLong((long)Tab->rows[irow]->stationId));
-    PyDict_SetItemString(dict, "type",      PyInt_FromLong((long)Tab->rows[irow]->type));
+    PyDict_SetItemString(dict, "stationId", PyLong_FromLong((long)Tab->rows[irow]->stationId));
+    PyDict_SetItemString(dict, "type",      PyLong_FromLong((long)Tab->rows[irow]->type));
     PyDict_SetItemString(dict, "name",      PyString_InternFromString(Tab->rows[irow]->name));
 
     tlist = PyList_New(3);
@@ -464,7 +529,7 @@ static PyObject* OASDMGetState(ObitSDMData *asdm)
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "stateId",       PyInt_FromLong((long)Tab->rows[irow]->stateId));
+    PyDict_SetItemString(dict, "stateId",       PyLong_FromLong((long)Tab->rows[irow]->stateId));
     PyDict_SetItemString(dict, "calDeviceName", PyString_InternFromString(Tab->rows[irow]->calDeviceName));
     PyDict_SetItemString(dict, "sig",           PyBool_FromLong((long)Tab->rows[irow]->sig));	
     PyDict_SetItemString(dict, "ref",           PyBool_FromLong((long)Tab->rows[irow]->ref));	
@@ -489,12 +554,12 @@ static PyObject* OASDMGetExecBlock(ObitSDMData *asdm)
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "execBlockId",      PyInt_FromLong((long)Tab->rows[irow]->execBlockId));
-    PyDict_SetItemString(dict, "execBlockNum",     PyInt_FromLong((long)Tab->rows[irow]->execBlockNum));
-    PyDict_SetItemString(dict, "numObservingLog",  PyInt_FromLong((long)Tab->rows[irow]-> numObservingLog));
-    PyDict_SetItemString(dict, "numAntenna",       PyInt_FromLong((long)Tab->rows[irow]->numAntenna));
-    PyDict_SetItemString(dict, "sbSummaryId;",     PyInt_FromLong((long)Tab->rows[irow]->sbSummaryId));
-    PyDict_SetItemString(dict, "ScaleId",          PyInt_FromLong((long)Tab->rows[irow]->ScaleId));
+    PyDict_SetItemString(dict, "execBlockId",      PyLong_FromLong((long)Tab->rows[irow]->execBlockId));
+    PyDict_SetItemString(dict, "execBlockNum",     PyLong_FromLong((long)Tab->rows[irow]->execBlockNum));
+    PyDict_SetItemString(dict, "numObservingLog",  PyLong_FromLong((long)Tab->rows[irow]-> numObservingLog));
+    PyDict_SetItemString(dict, "numAntenna",       PyLong_FromLong((long)Tab->rows[irow]->numAntenna));
+    PyDict_SetItemString(dict, "sbSummaryId;",     PyLong_FromLong((long)Tab->rows[irow]->sbSummaryId));
+    PyDict_SetItemString(dict, "ScaleId",          PyLong_FromLong((long)Tab->rows[irow]->ScaleId));
     PyDict_SetItemString(dict, "flagRow",          PyBool_FromLong((long)Tab->rows[irow]->flagRow));	
     PyDict_SetItemString(dict, "configName",       PyString_InternFromString(Tab->rows[irow]->configName));
     PyDict_SetItemString(dict, "telescopeName",    PyString_InternFromString(Tab->rows[irow]->telescopeName));
@@ -513,7 +578,7 @@ static PyObject* OASDMGetExecBlock(ObitSDMData *asdm)
 
     tlist = PyList_New(Tab->rows[irow]->numAntenna);
     for (i=0; i<Tab->rows[irow]->numAntenna; i++) 
-       PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->antennaId[i]));
+       PyList_SetItem(tlist, i, PyLong_FromLong((long)Tab->rows[irow]->antennaId[i]));
     PyDict_SetItemString(dict, "antennaId",  tlist);
 
     PyList_SetItem(outList, irow, dict);
@@ -535,11 +600,11 @@ static PyObject* OASDMGetSource(ObitSDMData *asdm)
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "sourceId",         PyInt_FromLong((long)Tab->rows[irow]->sourceId));
-    PyDict_SetItemString(dict, "sourceNo",         PyInt_FromLong((long)Tab->rows[irow]->sourceNo));
+    PyDict_SetItemString(dict, "sourceId",         PyLong_FromLong((long)Tab->rows[irow]->sourceId));
+    PyDict_SetItemString(dict, "sourceNo",         PyLong_FromLong((long)Tab->rows[irow]->sourceNo));
     PyDict_SetItemString(dict, "sourceName",       PyString_InternFromString(Tab->rows[irow]->sourceName));
-    PyDict_SetItemString(dict, "numLines",         PyInt_FromLong((long)Tab->rows[irow]->numLines));
-    PyDict_SetItemString(dict, "spectralWindowId", PyInt_FromLong((long)Tab->rows[irow]->spectralWindowId));
+    PyDict_SetItemString(dict, "numLines",         PyLong_FromLong((long)Tab->rows[irow]->numLines));
+    PyDict_SetItemString(dict, "spectralWindowId", PyLong_FromLong((long)Tab->rows[irow]->spectralWindowId));
     PyDict_SetItemString(dict, "code",             PyString_InternFromString(Tab->rows[irow]->code));
 
     tlist = PyList_New(Tab->rows[irow]->numLines);
@@ -586,12 +651,12 @@ static PyObject* OASDMGetField(ObitSDMData *asdm)
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "fieldId",   PyInt_FromLong((long)Tab->rows[irow]->fieldId));
-    PyDict_SetItemString(dict, "sourceId",  PyInt_FromLong((long)Tab->rows[irow]->sourceId));
+    PyDict_SetItemString(dict, "fieldId",   PyLong_FromLong((long)Tab->rows[irow]->fieldId));
+    PyDict_SetItemString(dict, "sourceId",  PyLong_FromLong((long)Tab->rows[irow]->sourceId));
     PyDict_SetItemString(dict, "fieldName", PyString_InternFromString(Tab->rows[irow]->fieldName));
     PyDict_SetItemString(dict, "code",      PyString_InternFromString(Tab->rows[irow]->code));
     PyDict_SetItemString(dict, "time",      PyFloat_FromDouble((double)Tab->rows[irow]->time));
-    PyDict_SetItemString(dict, "numPoly",   PyInt_FromLong((long)Tab->rows[irow]->numPoly));
+    PyDict_SetItemString(dict, "numPoly",   PyLong_FromLong((long)Tab->rows[irow]->numPoly));
 
     tlist = PyList_New(2*Tab->rows[irow]->numPoly);
     for (i=0; i<Tab->rows[irow]->numPoly; i+=2) {
@@ -633,10 +698,10 @@ static PyObject* OASDMGetFeed(ObitSDMData *asdm)
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "receiverId",       PyInt_FromLong((long)Tab->rows[irow]->receiverId));
-    PyDict_SetItemString(dict, "antennaId",        PyInt_FromLong((long)Tab->rows[irow]->antennaId));
-    PyDict_SetItemString(dict, "spectralWindowId", PyInt_FromLong((long)Tab->rows[irow]->spectralWindowId));
-    PyDict_SetItemString(dict, "numReceptor",      PyInt_FromLong((long)Tab->rows[irow]->numReceptor));
+    PyDict_SetItemString(dict, "receiverId",       PyLong_FromLong((long)Tab->rows[irow]->receiverId));
+    PyDict_SetItemString(dict, "antennaId",        PyLong_FromLong((long)Tab->rows[irow]->antennaId));
+    PyDict_SetItemString(dict, "spectralWindowId", PyLong_FromLong((long)Tab->rows[irow]->spectralWindowId));
+    PyDict_SetItemString(dict, "numReceptor",      PyLong_FromLong((long)Tab->rows[irow]->numReceptor));
 
     tlist = PyList_New(2);
     PyList_SetItem(tlist, 0, PyFloat_FromDouble((double)Tab->rows[irow]->timeInterval[0]));
@@ -654,13 +719,13 @@ static PyObject* OASDMGetFeed(ObitSDMData *asdm)
     PyDict_SetItemString(dict, "focusReference",  tlist);
 
     tlist = PyList_New(2);
-    PyList_SetItem(tlist, 0, PyInt_FromLong((long)Tab->rows[irow]->polResponse[0]));
-    PyList_SetItem(tlist, 1, PyInt_FromLong((long)Tab->rows[irow]->polResponse[1]));
+    PyList_SetItem(tlist, 0, PyLong_FromLong((long)Tab->rows[irow]->polResponse[0]));
+    PyList_SetItem(tlist, 1, PyLong_FromLong((long)Tab->rows[irow]->polResponse[1]));
     PyDict_SetItemString(dict, "polResponse",  tlist);
 
     tlist = PyList_New(Tab->rows[irow]->numReceptor);
     for (i=0; i<Tab->rows[irow]->numReceptor; i++) 
-       PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->polarizationTypes[i]));
+       PyList_SetItem(tlist, i, PyLong_FromLong((long)Tab->rows[irow]->polarizationTypes[i]));
     PyDict_SetItemString(dict, "polarizationTypes",  tlist);
 
     tlist = PyList_New(Tab->rows[irow]->numReceptor);
@@ -670,7 +735,7 @@ static PyObject* OASDMGetFeed(ObitSDMData *asdm)
 
     tlist = PyList_New(Tab->rows[irow]->numReceptor);
     for (i=0; i<Tab->rows[irow]->numReceptor; i++) 
-       PyList_SetItem(tlist, i, PyInt_FromLong((long)Tab->rows[irow]->receiverId[i]));
+       PyList_SetItem(tlist, i, PyLong_FromLong((long)Tab->rows[irow]->receiverId[i]));
     PyDict_SetItemString(dict, "receiverId",  tlist);
 
     PyList_SetItem(outList, irow, dict);
@@ -692,12 +757,12 @@ static PyObject* OASDMGetReceiver(ObitSDMData *asdm)
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "receiverId",       PyInt_FromLong((long)Tab->rows[irow]->receiverId));
-    PyDict_SetItemString(dict, "spectralWindowId", PyInt_FromLong((long)Tab->rows[irow]->spectralWindowId));
+    PyDict_SetItemString(dict, "receiverId",       PyLong_FromLong((long)Tab->rows[irow]->receiverId));
+    PyDict_SetItemString(dict, "spectralWindowId", PyLong_FromLong((long)Tab->rows[irow]->spectralWindowId));
     PyDict_SetItemString(dict, "name",             PyString_InternFromString(Tab->rows[irow]->name));
     PyDict_SetItemString(dict, "receiverSideband", PyString_InternFromString(Tab->rows[irow]->receiverSideband));
     PyDict_SetItemString(dict, "frequencyBand",    PyString_InternFromString(Tab->rows[irow]->frequencyBand));
-    PyDict_SetItemString(dict, "numLO",            PyInt_FromLong((long)Tab->rows[irow]->numLO));
+    PyDict_SetItemString(dict, "numLO",            PyLong_FromLong((long)Tab->rows[irow]->numLO));
 
     tlist = PyList_New(2);
     PyList_SetItem(tlist, 0, PyFloat_FromDouble((double)Tab->rows[irow]->timeInterval[0]));
@@ -736,8 +801,8 @@ static PyObject* OASDMGetPolarization(ObitSDMData *asdm)
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "polarizationId", PyInt_FromLong((long)Tab->rows[irow]->polarizationId));
-    PyDict_SetItemString(dict, "numCorr",        PyInt_FromLong((long)Tab->rows[irow]->numCorr));
+    PyDict_SetItemString(dict, "polarizationId", PyLong_FromLong((long)Tab->rows[irow]->polarizationId));
+    PyDict_SetItemString(dict, "numCorr",        PyLong_FromLong((long)Tab->rows[irow]->numCorr));
     PyDict_SetItemString(dict, "flagRow",        PyBool_FromLong((long)Tab->rows[irow]->flagRow));	
 
     tlist = PyList_New(Tab->rows[irow]->numCorr);
@@ -763,7 +828,7 @@ static PyObject* OASDMGetProcessor(ObitSDMData *asdm)
 {
   ASDMProcessorTable* Tab =  ((ObitSDMData*)asdm)->ProcessorTab;
   PyObject *outList, *dict;
-  olong irow, cnt;
+  olong irow;
 
   if (!Tab) return PyList_New(0);  // bad pointer?
 
@@ -771,8 +836,8 @@ static PyObject* OASDMGetProcessor(ObitSDMData *asdm)
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "processorId",      PyInt_FromLong((long)Tab->rows[irow]->processorId));
-    PyDict_SetItemString(dict, "modeId",           PyInt_FromLong((long)Tab->rows[irow]->modeId));
+    PyDict_SetItemString(dict, "processorId",      PyLong_FromLong((long)Tab->rows[irow]->processorId));
+    PyDict_SetItemString(dict, "modeId",           PyLong_FromLong((long)Tab->rows[irow]->modeId));
     PyDict_SetItemString(dict, "processorType",    PyString_InternFromString(Tab->rows[irow]->processorType));
     PyDict_SetItemString(dict, "processorSubType", PyString_InternFromString(Tab->rows[irow]->processorSubType));
 
@@ -795,8 +860,8 @@ static PyObject* OASDMGetSwitchCycle(ObitSDMData *asdm)
 
   for (irow=0; irow<Tab->nrows; irow++) {
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "switchCycleId", PyInt_FromLong((long)Tab->rows[irow]->switchCycleId));
-    PyDict_SetItemString(dict, "numStep",       PyInt_FromLong((long)Tab->rows[irow]->numStep));
+    PyDict_SetItemString(dict, "switchCycleId", PyLong_FromLong((long)Tab->rows[irow]->switchCycleId));
+    PyDict_SetItemString(dict, "numStep",       PyLong_FromLong((long)Tab->rows[irow]->numStep));
 
     tlist = PyList_New(Tab->rows[irow]->numStep);
     for (i=0; i<Tab->rows[irow]->numStep; i++) 
@@ -825,7 +890,7 @@ static PyObject* OASDMGetSwitchCycle(ObitSDMData *asdm)
 } // end  GetSwitchCycle
 
 // Get SpectralWindowArray from an ASDM and convert to a python dict
-static PyObject* OASDMGetSpectralWindowArray(ObitSDMData *asdm, int mainRow, int SWOrder)
+static PyObject* OASDMGetSpectralWindowArray(ObitSDMData *asdm, long mainRow, long SWOrder)
 {
   gboolean lSWOrder;
   ASDMSpectralWindowArray* swa=NULL;
@@ -838,25 +903,25 @@ static PyObject* OASDMGetSpectralWindowArray(ObitSDMData *asdm, int mainRow, int
   swa = ObitSDMDataGetSWArray(asdm, (olong)mainRow, lSWOrder);
 
   outDict = PyDict_New();
-  PyDict_SetItemString(outDict, "nwinds",  PyInt_FromLong((long)swa->nwinds));
+  PyDict_SetItemString(outDict, "nwinds",  PyLong_FromLong((long)swa->nwinds));
   PyDict_SetItemString(outDict, "refFreq", PyFloat_FromDouble((double)swa->refFreq));
   PyDict_SetItemString(outDict, "refJD",   PyFloat_FromDouble((double)swa->refJD));
 
   tlist = PyList_New(swa->nwinds);
   for (i=0; i<swa->nwinds; i++) 
-    PyList_SetItem(tlist, i, PyInt_FromLong((long)swa->order));
+    PyList_SetItem(tlist, i, PyLong_FromLong((long)swa->order));
   PyDict_SetItemString(outDict, "order",  tlist);
 
   wlist = PyList_New(swa->nwinds);
   for (irow=0; irow<swa->nwinds; irow++) {
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "spectralWindowId", PyInt_FromLong((long)swa->winds[irow]->spectralWindowId));
+    PyDict_SetItemString(dict, "spectralWindowId", PyLong_FromLong((long)swa->winds[irow]->spectralWindowId));
     PyDict_SetItemString(dict, "selected",         PyBool_FromLong((long)swa->winds[irow]->selected));	
-    PyDict_SetItemString(dict, "basebandNum",      PyInt_FromLong((long)swa->winds[irow]->basebandNum));
-    PyDict_SetItemString(dict, "subbandNum",       PyInt_FromLong((long)swa->winds[irow]->subbandNum));
-    PyDict_SetItemString(dict, "numChan",          PyInt_FromLong((long)swa->winds[irow]->numChan));
-    PyDict_SetItemString(dict, "nCPoln",           PyInt_FromLong((long)swa->winds[irow]->nCPoln));
-    PyDict_SetItemString(dict, "nAPoln" ,          PyInt_FromLong((long)swa->winds[irow]->nAPoln));
+    PyDict_SetItemString(dict, "basebandNum",      PyLong_FromLong((long)swa->winds[irow]->basebandNum));
+    PyDict_SetItemString(dict, "subbandNum",       PyLong_FromLong((long)swa->winds[irow]->subbandNum));
+    PyDict_SetItemString(dict, "numChan",          PyLong_FromLong((long)swa->winds[irow]->numChan));
+    PyDict_SetItemString(dict, "nCPoln",           PyLong_FromLong((long)swa->winds[irow]->nCPoln));
+    PyDict_SetItemString(dict, "nAPoln" ,          PyLong_FromLong((long)swa->winds[irow]->nAPoln));
     PyDict_SetItemString(dict, "netSideband",      PyString_InternFromString(swa->winds[irow]->netSideband));
     PyDict_SetItemString(dict, "refChan",          PyFloat_FromDouble((double)swa->winds[irow]->refChan));
     PyDict_SetItemString(dict, "refFreq",          PyFloat_FromDouble((double)swa->winds[irow]->refFreq));
@@ -878,7 +943,7 @@ static PyObject* OASDMGetSpectralWindowArray(ObitSDMData *asdm, int mainRow, int
 } // end  GetSpectralWindowArray
 
 // Get Antenna Array from an ASDM and convert to a python dict
-static PyObject* OASDMGetAntArray(ObitSDMData *asdm, int mainRow)
+static PyObject* OASDMGetAntArray(ObitSDMData *asdm, long mainRow)
 {
   ASDMAntennaArray* aa=NULL;
   PyObject *outDict, *dict, *tlist, *alist;
@@ -888,8 +953,8 @@ static PyObject* OASDMGetAntArray(ObitSDMData *asdm, int mainRow)
   aa = ObitSDMDataGetAntArray(asdm, (olong)mainRow);
 
   outDict = PyDict_New();
-  PyDict_SetItemString(outDict, "nants",  PyInt_FromLong((long)aa->nants));
-  PyDict_SetItemString(outDict, "maxAnt",  PyInt_FromLong((long)aa->maxAnt));
+  PyDict_SetItemString(outDict, "nants",  PyLong_FromLong((long)aa->nants));
+  PyDict_SetItemString(outDict, "maxAnt",  PyLong_FromLong((long)aa->maxAnt));
   PyDict_SetItemString(outDict, "arrayName", PyString_InternFromString(aa->arrayName));
   PyDict_SetItemString(outDict, "obsName", PyString_InternFromString(aa->obsName));
   PyDict_SetItemString(outDict, "refFreq", PyFloat_FromDouble((double)aa->refFreq));
@@ -898,16 +963,16 @@ static PyObject* OASDMGetAntArray(ObitSDMData *asdm, int mainRow)
   alist = PyList_New(aa->nants);
   for (irow=0; irow<aa->nants; irow++) {
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "antennaId",    PyInt_FromLong((long)aa->ants[irow]->antennaId));
-    PyDict_SetItemString(dict, "antennaNo",    PyInt_FromLong((long)aa->ants[irow]->antennaNo));	
-    PyDict_SetItemString(dict, "stationId",    PyInt_FromLong((long)aa->ants[irow]->stationId));
+    PyDict_SetItemString(dict, "antennaId",    PyLong_FromLong((long)aa->ants[irow]->antennaId));
+    PyDict_SetItemString(dict, "antennaNo",    PyLong_FromLong((long)aa->ants[irow]->antennaNo));	
+    PyDict_SetItemString(dict, "stationId",    PyLong_FromLong((long)aa->ants[irow]->stationId));
     PyDict_SetItemString(dict, "antName",      PyString_InternFromString(aa->ants[irow]->antName));
     PyDict_SetItemString(dict, "staName",      PyString_InternFromString(aa->ants[irow]->staName));
-    PyDict_SetItemString(dict, "numPoln",      PyInt_FromLong((long)aa->ants[irow]->numPoln));
-    PyDict_SetItemString(dict, "numPolnCorr",  PyInt_FromLong((long)aa->ants[irow]->numPolnCorr));
-    PyDict_SetItemString(dict, "antennaMake",  PyInt_FromLong((long)aa->ants[irow]->antennaMake));
-    PyDict_SetItemString(dict, "antennaType",  PyInt_FromLong((long)aa->ants[irow]->antennaType));
-    PyDict_SetItemString(dict, "type",         PyInt_FromLong((long)aa->ants[irow]->type));
+    PyDict_SetItemString(dict, "numPoln",      PyLong_FromLong((long)aa->ants[irow]->numPoln));
+    PyDict_SetItemString(dict, "numPolnCorr",  PyLong_FromLong((long)aa->ants[irow]->numPolnCorr));
+    PyDict_SetItemString(dict, "antennaMake",  PyLong_FromLong((long)aa->ants[irow]->antennaMake));
+    PyDict_SetItemString(dict, "antennaType",  PyLong_FromLong((long)aa->ants[irow]->antennaType));
+    PyDict_SetItemString(dict, "type",         PyLong_FromLong((long)aa->ants[irow]->type));
     PyDict_SetItemString(dict, "dishDiameter", PyFloat_FromDouble((double)aa->ants[irow]->dishDiameter));
     PyDict_SetItemString(dict, "time",         PyFloat_FromDouble((double)aa->ants[irow]->time));
     ctemp[0] = aa->ants[irow]->polnType[0]; ctemp[1] = aa->ants[irow]->polnType[1]; ctemp[2] = 0;
@@ -949,7 +1014,7 @@ static PyObject* OASDMGetSourceArray(ObitSDMData *asdm)
   sa = ObitSDMDataGetSourceArray(asdm);
 
   outDict = PyDict_New();
-  PyDict_SetItemString(outDict, "nsou",  PyInt_FromLong((long)sa->nsou));
+  PyDict_SetItemString(outDict, "nsou",  PyLong_FromLong((long)sa->nsou));
 
   // count unique SID
   cnt = 0; lastSID=-1;
@@ -965,12 +1030,12 @@ static PyObject* OASDMGetSourceArray(ObitSDMData *asdm)
     if (sa->sou[irow]->sourceId==lastSID) continue;
     lastSID = sa->sou[irow]->sourceId; ocnt++;
     dict = PyDict_New();
-    PyDict_SetItemString(dict, "sourceId",         PyInt_FromLong((long)sa->sou[irow]->sourceId));
-    PyDict_SetItemString(dict, "sourceNo",         PyInt_FromLong((long)sa->sou[irow]->sourceNo));	
+    PyDict_SetItemString(dict, "sourceId",         PyLong_FromLong((long)sa->sou[irow]->sourceId));
+    PyDict_SetItemString(dict, "sourceNo",         PyLong_FromLong((long)sa->sou[irow]->sourceNo));	
     PyDict_SetItemString(dict, "sourceName",       PyString_InternFromString(sa->sou[irow]->fieldName));
-    PyDict_SetItemString(dict, "spectralWindowId", PyInt_FromLong((long)sa->sou[irow]->spectralWindowId));
+    PyDict_SetItemString(dict, "spectralWindowId", PyLong_FromLong((long)sa->sou[irow]->spectralWindowId));
     PyDict_SetItemString(dict, "code",             PyString_InternFromString(sa->sou[irow]->code));
-    PyDict_SetItemString(dict, "numLines",         PyInt_FromLong((long)sa->sou[irow]->numLines));
+    PyDict_SetItemString(dict, "numLines",         PyLong_FromLong((long)sa->sou[irow]->numLines));
 
     tlist = PyList_New(2);
     PyList_SetItem(tlist, 0, PyFloat_FromDouble((double)sa->sou[irow]->timeInterval[0]));
@@ -1001,7 +1066,7 @@ static PyObject* OASDMGetSourceArray(ObitSDMData *asdm)
   }
 
   //  correct number
-  PyDict_SetItemString(outDict, "nsou",  PyInt_FromLong((long)cnt));
+  PyDict_SetItemString(outDict, "nsou",  PyLong_FromLong((long)cnt));
 
   PyDict_SetItemString(outDict, "sou",  slist);
 
@@ -1011,50 +1076,13 @@ static PyObject* OASDMGetSourceArray(ObitSDMData *asdm)
   return outDict;
 } // end  GetSourceArray
 
-extern int OASDMIsA (ObitSDMData* in) {
-  return ObitSDMDataIsA(in);
+extern long OASDMIsA (ObitSDMData* in) {
+  return (long)ObitSDMDataIsA(in);
 } // end  OASDMIsA 
-
-ObitSDMData* OASDMRef (ObitSDMData* in) {
-  return ObitSDMDataRef (in);
-} // end OASDMRef
-
-ObitSDMData* OASDMUnref (ObitSDMData* in) {
-  if (!ObitSDMDataIsA(in)) return NULL;
-  return ObitSDMDataUnref (in);
-} // end OASDMUnref
 
 extern char* OASDMGetName (ObitSDMData* in) {
   return in->name;
 } // end  OASDMGetName
 
-
-
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitSDMData *me;
-} OASDM;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitSDMData *me;
-} OASDM;
-
-%addmethods OASDM { 
-  OASDM(char* name,  char* DataRoot, ObitErr *err) {
-     OASDM *out;
-     out = (OASDM *) malloc(sizeof(OASDM));
-     if (strcmp(name, "None")) out->me = OASDMCreate(name, DataRoot, err);
-     else out->me = NULL;
-     return out;
-   }
-  ~OASDM() {
-    self->me = OASDMUnref(self->me);
-    free(self);
-  }
-};
 

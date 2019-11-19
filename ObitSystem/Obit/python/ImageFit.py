@@ -8,7 +8,7 @@ ImageFit Members with python interfaces:
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2007
+#  Copyright (C) 2007,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -35,42 +35,16 @@ ImageFit Members with python interfaces:
 #-----------------------------------------------------------------------
 
 # Obit ImageFit
-import Obit, OErr, Image, ImageDesc, InfoList, FitRegion, FitModel
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, OErr, Image, ImageDesc, InfoList, FitRegion, FitModel
 
 # Python shadow class to ObitImageFit class
 
 # class name in C
 myClass = "ObitImageFit"
  
-class ImageFitPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.ImageFitUnref(Obit.ImageFit_me_get(self.this))
-            # In with the new
-            Obit.ImageFit_me_set(self.this,value)
-            return
-        if name=="List":
-            PSetList(self,value)
-            return
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != ImageFit:
-            return
-        if name == "me" : 
-            return Obit.ImageFit_me_get(self.this)
-        # Virtual members
-        if name=="List":
-            return PGetList(self)
-        raise AttributeError,str(name)
-    def __repr__(self):
-        if self.__class__ != ImageFit:
-            return
-        return "<C ImageFit instance> " + Obit.ImageFitGetName(self.me)
-#
-class ImageFit(ImageFitPtr):
+class ImageFit(Obit.ImageFit):
     """
     Python Obit ImageFit class
     
@@ -82,14 +56,41 @@ class ImageFit(ImageFitPtr):
     * List - used to pass instructions to processing 
     """
     def __init__(self, name) :
-        self.this = Obit.new_ImageFit(name)
+        super(ImageFit, self).__init__()
+        Obit.CreateImageFit(self.this, name)
         self.myClass = myClass
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_ImageFit(self.this)
+    def __del__(self, DeleteImageFit=_Obit.DeleteImageFit):
+        if _Obit!=None:
+            DeleteImageFit(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.ImageFitUnref(Obit.ImageFit_Get_me(self.this))
+            # In with the new
+            Obit.ImageFit_Set_me(self.this,value)
+            return
+        if name=="List":
+            PSetList(self,value)
+            return
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if not isinstance(self, ImageFit):
+            return "Bogus dude "+str(self.__class__)
+        if name == "me" : 
+            return Obit.ImageFit_Get_me(self.this)
+        # Virtual members
+        if name=="List":
+            return PGetList(self)
+        raise AttributeError(str(name))
+    def __repr__(self):
+        if not isinstance(self, ImageFit):
+            return "Bogus dude "+str(self.__class__)
+        return "<C ImageFit instance> " + Obit.ImageFitGetName(self.me)
     def cast(self, toClass):
         """ Casts object pointer to specified class
 
+        This doesn't seem necessary
         * self     = object whose cast pointer is desired
         * toClass  = Class string to cast to
         """
@@ -192,9 +193,9 @@ def input(inputDict):
     """
     ################################################################
     structure = inputDict['structure']  # Structure information
-    print 'Inputs for ',structure[0]
+    print('Inputs for ',structure[0])
     for k,v in structure[1]:
-        print '  ',k,' = ',inputDict[k],' : ',v
+        print('  ',k,' = ',inputDict[k],' : ',v)
         
     # end input
 
@@ -211,15 +212,15 @@ def PCopy (inImageFit, outImageFit, err):
     ################################################################
     # Checks
     if not PIsA(inImageFit):
-        raise TypeError,"inImageFit MUST be a Python Obit ImageFit"
+        raise TypeError("inImageFit MUST be a Python Obit ImageFit")
     if not PIsA(outImageFit):
-        raise TypeError,"outImageFit MUST be a Python Obit ImageFit"
+        raise TypeError("outImageFit MUST be a Python Obit ImageFit")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
-    smi = inImageFit.cast(myClass)   # cast pointer
-    smo = outImageFit.cast(myClass)  # cast pointer
-    Obit.ImageFitCopy (smi, smo, err.me)
+    #smi = inImageFit.cast(myClass)   # cast pointer
+    #smo = outImageFit.cast(myClass)  # cast pointer
+    Obit.ImageFitCopy (inImageFit.me, outImageFit.me, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error copying ImageFit")
     # end PCopy
@@ -235,12 +236,11 @@ def PGetList (inImageFit):
     ################################################################
      # Checks
     if not PIsA(inImageFit):
-        raise TypeError,"inImageFit MUST be a Python Obit ImageFit"
+        raise TypeError("inImageFit MUST be a Python Obit ImageFit")
     #
-    sm = inImageFit.cast(myClass)  # cast pointer
+    #sm = inImageFit.cast(myClass)  # cast pointer
     out    = InfoList.InfoList()
-    out.me = Obit.InfoListUnref(out.me)
-    out.me = Obit.ImageFitGetList(sm)
+    out.me = Obit.ImageFitGetList(inImageFit.me)
     return out
     # end PGetList
 
@@ -292,18 +292,18 @@ def PFit (inImageFit, err, input=FitInput):
     fitRegion  = input["fitRegion"]
     # Checks
     if not PIsA(inImageFit):
-        raise TypeError,"inImageFit MUST be a Python Obit ImageFit"
+        raise TypeError("inImageFit MUST be a Python Obit ImageFit")
     if not Image.PIsA(fitImage):
-        raise TypeError,"fitImage MUST be a Python Obit Image"
+        raise TypeError("fitImage MUST be a Python Obit Image")
     if not FitRegion.PIsA(fitRegion):
-        raise TypeError,"fitRegion MUST be a Python Obit FitRegion"
+        raise TypeError("fitRegion MUST be a Python Obit FitRegion")
     #
     dim = [1,1,1,1,1]
     #
     # Set control values on ImageFit
     inInfo = PGetList(inImageFit)    # 
     InfoList.PAlwaysPutInt    (inInfo, "MaxIter",  dim, [input["MaxIter"]])
-    InfoList.PAlwaysPutInt    (inInfo, "prtLv",    dim, [input["prtLv"]])
+    InfoList.PAlwaysPutInt   (inInfo, "prtLv",    dim, [input["prtLv"]])
     InfoList.PAlwaysPutBoolean (inInfo, "FixPos",  dim, [input["FixPos"]])
     InfoList.PAlwaysPutBoolean (inInfo, "FixFlux", dim, [input["FixFlux"]])
     InfoList.PAlwaysPutDouble (inInfo, "PosGuard", dim, [input["PosGuard"]])
@@ -314,12 +314,12 @@ def PFit (inImageFit, err, input=FitInput):
     InfoList.PAlwaysPutDouble (inInfo, "GMinLow",  dim, [input["GMinLow"]])
     #
     # Do operation
-    sm = inImageFit.cast(myClass)  # cast pointer
-    ret = Obit.ImageFitFit(sm, fitImage.me, fitRegion.me, err.me)
+    #sm = inImageFit.cast(myClass)  # cast pointer
+    ret = Obit.ImageFitFit(inImageFit.me, fitImage.me, fitRegion.me, err.me)
     if ret==0:
-        print "Fit converged"
+        print("Fit converged")
     else:
-        print "Fit hit iteration limit"
+        print("Fit hit iteration limit")
     if err.isErr:
         OErr.printErrMsg(err, "Error Fitting model")
     # end PFit
@@ -335,24 +335,22 @@ def PGetName (inImageFit):
     ################################################################
      # Checks
     if not PIsA(inImageFit):
-        raise TypeError,"inImageFit MUST be a Python Obit ImageFit"
+        raise TypeError("inImageFit MUST be a Python Obit ImageFit")
     #
-    sm = inImageFit.cast(myClass)  # cast pointer
-    return Obit.ImageFitGetName(sm)
+    #sm = inImageFit.cast(myClass)  # cast pointer
+    return Obit.ImageFitGetName(inImageFit.me)
     # end PGetName
 
 def PIsA (inImageFit):
     """
     Tells if input really a Python Obit ImageFit
     
-    return true, false (1,0)
-
+    return True, False
     * inImageFit   = Python ImageFit object
     """
     ################################################################
     # Checks - allow inheritence
     if not str(inImageFit.__class__).startswith("ImageFit"):
-        return 0
-    sm = inImageFit.cast(myClass)  # cast pointer
-    return Obit.ImageFitIsA(sm)
+        return False
+    return Obit.ImageFitIsA(inImageFit.me)!=0
     # end PIsA

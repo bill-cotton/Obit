@@ -11,6 +11,7 @@ three potential problems with VLBA IDI data, all of which are fixed here.
 3. Finally, an NX file must be generated using AIPS task INDXR.
 """
 
+from __future__ import absolute_import
 import OTObit, AIPSTask, MergeCal, UV
 
 def IDIFix( uv, err ):

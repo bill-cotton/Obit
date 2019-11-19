@@ -8,7 +8,7 @@ OSystem.PSetAIPSuser (user) afterwards to set userid
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2007
+#  Copyright (C) 2007,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -33,14 +33,27 @@ OSystem.PSetAIPSuser (user) afterwards to set userid
 #                         520 Edgemont Road
 #                         Charlottesville, VA 22903-2475 USA
 #-----------------------------------------------------------------------
+from __future__ import absolute_import
 global Adisk, Fdisk, FITSdisks, nFITS, AIPSdisks, nAIPS
-
+global userno, popsno
 import Obit, FITSDir, AIPSDir, OSystem, OErr
-import ODisplay
+import ODisplay, AIPS
 import os
+if not OSystem.PIsInit ():
+    # Init Obit if not already done
+    popsno = 1
+    userno =  AIPS.AIPS.userno
+    err=OErr.OErr()
+    ObitSys=None
+    Adisk = 1
+    Fdisk = 1
+    ObitSys=OSystem.OSystem ("ObitPython", popsno, userno,
+                             AIPSDir.nAIPS, AIPSDir.AIPSdisks, \
+                             FITSDir.nFITS, FITSDir.FITSdisks,
+                             True, False, err)
+    OErr.printErrMsg(err, "Error with Obit startup")
 
 # ObitTalk classes if available
-userno =  1
 try:
     import AIPS
     import AIPSData, FITSData, AIPSTask, ObitTask
@@ -52,16 +65,8 @@ except:
 else:
     pass
 
-err=OErr.OErr()
-ObitSys=None
-Adisk = 1
-Fdisk = 1
-
+if len(AIPSDir.AIPSdisks)==0:
+    AIPSDir.AIPSdisks.append('./')
+if len(FITSDir.FITSdisks)==0:
+    FITSDir.FITSdisks.append('./')
         
-# Init Obit
-popsno = 1
-ObitSys=OSystem.OSystem ("ObitPython", popsno, userno,
-                         AIPSDir.nAIPS, AIPSDir.AIPSdisks, \
-                         FITSDir.nFITS, FITSDir.FITSdisks,
-                         True, False, err)
-OErr.printErrMsg(err, "Error with Obit startup")

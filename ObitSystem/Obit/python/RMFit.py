@@ -11,7 +11,7 @@ and the Chi Squared is also returned.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2013-2018
+#  Copyright (C) 2013-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -38,43 +38,17 @@ and the Chi Squared is also returned.
 #-----------------------------------------------------------------------
 
 # Obit RMFit
-import Obit, OErr, Image, InfoList, BeamShape
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, OErr, Image, InfoList, BeamShape
 
 # Python shadow class to ObitRMFit class
 
 # class name in C
 myClass = "ObitRMFit"
  
-class RMFitPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.RMFitUnref(Obit.RMFit_me_get(self.this))
-            # In with the new
-            Obit.RMFit_me_set(self.this,value)
-            return
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != RMFit:
-            return
-        if name == "me" : 
-            return Obit.RMFit_me_get(self.this)
-        if name=="List":
-            if not PIsA(self):
-                raise TypeError,"input MUST be a Python Obit RMFit"
-            out    = InfoList.InfoList()
-            out.me = Obit.InfoListUnref(out.me)
-            out.me = Obit.RMFitGetList(self.cast(myClass))
-            return out
-        raise AttributeError,name
-    def __repr__(self):
-        if self.__class__ != RMFit:
-            return
-        return "<C RMFit instance> " + Obit.RMFitGetName(self.me)
 #
-class RMFit(RMFitPtr):
+class RMFit(Obit.RMFit):
     """ Python Obit RMFit class
     
     Class for fitting spectra to image pixels
@@ -83,23 +57,37 @@ class RMFit(RMFitPtr):
         List      - used to pass instructions to processing
     """
     def __init__(self, name="None", nterm=2) :
-        self.this = Obit.new_RMFit(name,nterm)
+        super(RMFit, self).__init__()
+        Obit.CreateRMFit (self.this, name, nterm)
         self.myClass = myClass
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_RMFit(self.this)
-    def cast(self, toClass):
-        """ Casts object pointer to specified class
-        
-        self     = object whose cast pointer is desired
-        toClass  = Class string to cast to
-        """
-        ################################################################
-        # Get pointer with type of this class
-        out =  self.me
-        out = out.replace(self.myClass, toClass)
-        return out
-    # end cast
+    def __del__(self, DeleteRMFit=_Obit.DeleteRMFit):
+        if _Obit!=None:
+            DeleteRMFit(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.RMFitUnref(Obit.RMFit_Get_me(self.this))
+            # In with the new
+            Obit.RMFit_Set_me(self.this,value)
+            return
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if not isinstance(self, RMFit):
+            return  "Bogus dude"+str(self.__class__)
+        if name == "me" : 
+            return Obit.RMFit_Get_me(self.this)
+        if name=="List":
+            if not PIsA(self):
+                raise TypeError("input MUST be a Python Obit RMFit")
+            out    = InfoList.InfoList()
+            out.me = Obit.RMFitGetList(self.cast(myClass))
+            return out
+        raise AttributeError(name)
+    def __repr__(self):
+        if not isinstance(self, RMFit):
+            return  "Bogus dude"+str(self.__class__)
+        return "<C RMFit instance> " + Obit.RMFitGetName(self.me)
     
     def Cube (self, inQImage, inUImage, outImage, err):
         """ Fit RMs to an image cube
@@ -136,13 +124,13 @@ class RMFit(RMFitPtr):
         ################################################################
         # Checks
         if not PIsA(self):
-            raise TypeError,"self MUST be a Python Obit RMFit"
+            raise TypeError("self MUST be a Python Obit RMFit")
         if not inQImage.ImageIsA():
-            raise TypeError,"inQImage MUST be a Python Obit Image"
+            raise TypeError("inQImage MUST be a Python Obit Image")
         if not inUImage.ImageIsA():
-            raise TypeError,"inUImage MUST be a Python Obit Image"
+            raise TypeError("inUImage MUST be a Python Obit Image")
         if not outImage.ImageIsA():
-            raise TypeError,"outImage MUST be a Python Obit Image"
+            raise TypeError("outImage MUST be a Python Obit Image")
         #
         Obit.RMFitCube(self.me, inQImage.me, inUImage.me,  outImage.me, err.me)
     # end Cube
@@ -170,11 +158,11 @@ class RMFit(RMFitPtr):
         ################################################################
         # Checks
         if not PIsA(self):
-            raise TypeError,"self MUST be a Python Obit RMFit"
+            raise TypeError("self MUST be a Python Obit RMFit")
         if not imArr[0].ImageIsA():
-            raise TypeError,"imArr[0] MUST be a Python Obit Image"
+            raise TypeError("imArr[0] MUST be a Python Obit Image")
         if not outImage.ImageIsA():
-            raise TypeError,"outImage MUST be a Python Obit Image"
+            raise TypeError("outImage MUST be a Python Obit Image")
         #
         nimage = len(imArr)
         imQArrMe = []
@@ -190,15 +178,15 @@ class RMFit(RMFitPtr):
 def PIsA (inRMFit):
     """ Tells if input really a Python Obit RMFit
 
-    return True, False (1,0)
+    return True, False
     inRMFit   = Python RMFit object
     """
     ################################################################
-    if inRMFit.__class__ != RMFit:
-        print "Actually",inRMFit.__class__
-        return 0
+    if not isinstance(inRMFit, RMFit):
+        print("Actually",inRMFit.__class__)
+        return False
     # Checks - allow inheritence
-    return Obit.RMFitIsA(inRMFit.me)
+    return Obit.RMFitIsA(inRMFit.me)!=0
     # end PIsA
 
 def PCreate (name, nterm=2):

@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for GPUFInterpolate type                   */
 /*                                                                    */
-/*;  Copyright (C) 2014                                               */
+/*;  Copyright (C) 2014,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,6 +32,18 @@
 #include "ObitGPUFInterpolate.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitGPUFInterpolate *me;
+} GPUFInterpolate;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitGPUFInterpolate *me;
+} GPUFInterpolate;
+
 %inline %{
 extern ObitGPUFInterpolate* 
 GPUFInterpolateCreate (char* name, ObitFArray *inArray,  
@@ -39,6 +51,64 @@ GPUFInterpolateCreate (char* name, ObitFArray *inArray,
 		       long hwidth, ObitErr *err) {
   return ObitGPUFInterpolateCreate (name, inArray, xArray, yArray, hwidth, err);
 } // end GPUFInterpolateCreate
+
+ObitGPUFInterpolate* GPUFInterpolateRef (ObitGPUFInterpolate* in) {
+  return ObitGPUFInterpolateRef (in);
+} // end GPUFInterpolateRef
+
+ObitGPUFInterpolate* GPUFInterpolateUnref (ObitGPUFInterpolate* in) {
+  if (!ObitGPUFInterpolateIsA(in)) return NULL;
+  return ObitGPUFInterpolateUnref (in);
+} // end GPUFInterpolateUnref
+
+void CreateGPUFInterpolate(PyObject *self, char* name, ObitFArray *inArray,  
+                       ObitFArray *xArray, ObitFArray *yArray, 
+		       long hwidth, ObitErr *err) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_GPUFInterpolate, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateGPUFInterpolate: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((GPUFInterpolate*)ptr)->me = 
+     GPUFInterpolateCreate(name, inArray, xArray, yArray, hwidth, err);
+   else  ((GPUFInterpolate*)ptr)->me = NULL;
+   return;
+ } // end CreateGPUFInterpolate
+
+void DeleteGPUFInterpolate(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_GPUFInterpolate, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteGPUFInterpolate: could not recover c struct");
+	return;
+   }
+   ((GPUFInterpolate*)ptr)->me = ObitGPUFInterpolateUnref(((GPUFInterpolate*)ptr)->me);
+}// end DeleteGPUFInterpolate
+
+ObitGPUFInterpolate* GPUFInterpolate_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_GPUFInterpolate, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"GPUFInterpolate_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((GPUFInterpolate*)ptr)->me;
+}  // end GPUFInterpolate_Get_me
+
+void GPUFInterpolate_Set_me(PyObject *self, ObitGPUFInterpolate *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_GPUFInterpolate, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"GPUFInterpolate_Set_me: could not recover c struct");
+	return;
+   }
+   ((GPUFInterpolate*)ptr)->me =  ObitGPUFInterpolateRef(me);
+}  // end GPUFInterpolate_Set_me
 
 extern void 
 GPUFInterpolateImage (ObitGPUFInterpolate *in, ObitFArray *inArray,
@@ -57,48 +127,9 @@ GPUFInterpolateClone (ObitGPUFInterpolate *in, ObitGPUFInterpolate *out, ObitErr
   ObitGPUFInterpolateClone (in, out, err);
 } // end GPUFInterpolateClone 
 
-ObitGPUFInterpolate* GPUFInterpolateRef (ObitGPUFInterpolate* in) {
-  return ObitGPUFInterpolateRef (in);
-} // end GPUFInterpolateRef
-
-ObitGPUFInterpolate* GPUFInterpolateUnref (ObitGPUFInterpolate* in) {
-  if (!ObitGPUFInterpolateIsA(in)) return NULL;
-  return ObitGPUFInterpolateUnref (in);
-} // end GPUFInterpolateUnref
-
-extern int GPUFInterpolateIsA (ObitGPUFInterpolate* in) {
-  return ObitGPUFInterpolateIsA(in);
+extern long GPUFInterpolateIsA (ObitGPUFInterpolate* in) {
+  return (long)ObitGPUFInterpolateIsA(in);
 }
 
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitGPUFInterpolate *me;
-} GPUFInterpolate;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitGPUFInterpolate *me;
-} GPUFInterpolate;
-
-%addmethods GPUFInterpolate { 
-  GPUFInterpolate(char* name, ObitFArray *inArray, 
-                  ObitFArray *xArray, ObitFArray *yArray, long hwidth, ObitErr *err) {
-     GPUFInterpolate *out;
-     /* just create  Python structure here */
-     out = (GPUFInterpolate *) malloc(sizeof(GPUFInterpolate));
-     if (strcmp(name, "None")) 
-        out->me = GPUFInterpolateCreate(name, inArray, xArray, yArray, hwidth, err);
-     else out->me = NULL;
-     return out;
-   }
-  ~GPUFInterpolate() {
-    self->me = GPUFInterpolateUnref(self->me);
-    free(self);
-  }
-};
-
 

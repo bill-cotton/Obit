@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for Source type                            */
 /*                                                                    */
-/*;  Copyright (C )2013                                               */
+/*;  Copyright (C )2013,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -36,10 +36,77 @@
 #include "ObitPrecess.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitSource *me;
+} Source;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitSource *me;
+} Source;
+
 %inline %{
 extern ObitSource* SourceCreate (char *name) {
   return newObitSource (name);
 } // end SourceCreate
+
+ObitSource* SourceRef (ObitSource* in) {
+  return ObitSourceRef (in);
+} // end SourceRef
+
+ObitSource* SourceUnref (ObitSource* in) {
+  if (!ObitSourceIsA(in)) return NULL;
+  return ObitSourceUnref (in);
+} // end SourceUnref
+
+void CreateSource(PyObject *self, char* name) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_Source, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateSource: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((Source*)ptr)->me = SourceCreate(name);
+   else  ((Source*)ptr)->me = NULL;
+   return;
+ } // end CreateSource
+
+void DeleteSource(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_Source, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteSource: could not recover c struct");
+	return;
+   }
+   ((Source*)ptr)->me = ObitSourceUnref(((Source*)ptr)->me);
+}// end DeleteSource
+
+ObitSource* Source_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_Source, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Source_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((Source*)ptr)->me;
+}  // end Source_Get_me
+
+void Source_Set_me(PyObject *self, ObitSource *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_Source, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Source_Set_me: could not recover c struct");
+	return;
+   }
+   ((Source*)ptr)->me =  ObitSourceRef(me);
+}  // end Source_Set_me
 
 extern ObitSource* SourceCreateByNumber (char *name, ObitUV *inUV, long Number, ObitErr *err) {
   ObitSource *out=NULL;
@@ -137,23 +204,19 @@ extern ObitSource* SourceCopy (ObitSource* in,
 } // end SourceCopy
 
 
-ObitSource* SourceRef (ObitSource* in) {
-  return ObitSourceRef (in);
-} // end SourceRef
-
 extern char* SourceGetName (ObitSource* in) {
   return (char*)in->SourceName;
 }
 
-extern int SourceGetSID (ObitSource* in) {
-  return (int)in->SourID;
+extern long SourceGetSID (ObitSource* in) {
+  return (long)in->SourID;
 }
 
-extern int SourceGetQual (ObitSource* in) {
-  return (int)in->Qual;
+extern long SourceGetQual (ObitSource* in) {
+  return (long)in->Qual;
 }
 
-extern int SourceGetEquinox (ObitSource* in) {
+extern float SourceGetEquinox (ObitSource* in) {
   return (float)in->equinox;
 }
 
@@ -189,39 +252,8 @@ extern void SourceSetDecApp (ObitSource* in, double value) {
   in->DecApp = (odouble)value;
 }
 
-ObitSource* SourceUnref (ObitSource* in) {
-  if (!ObitSourceIsA(in)) return NULL;
-  return ObitSourceUnref (in);
-} // end SourceUnref
-
-extern int SourceIsA (ObitSource* in) {
-  return ObitSourceIsA(in);
+extern long SourceIsA (ObitSource* in) {
+  return (long)ObitSourceIsA(in);
 }
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitSource *me;
-} Source;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitSource *me;
-} Source;
-
-%addmethods Source { 
-  Source(char *name) {
-     Source *out;
-     out = (Source *) malloc(sizeof(Source));
-     if (strcmp(name, "None")) out->me = SourceCreate (name);
-     else out->me = NULL;
-     return out;
-   }
-  ~Source() {
-    self->me = SourceUnref(self->me);
-    free(self);
-  }
-};
 

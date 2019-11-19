@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2005
+#  Copyright (C) 2005,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -27,23 +27,10 @@
 #-----------------------------------------------------------------------
  
 # Python shadow class to ObitTableList class
-import Obit, InfoList, OErr
+from __future__ import absolute_import
+import Obit, _Obit, InfoList, OErr
 
-class TableListPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            Obit.TableList_me_set(self.this,value)
-            return
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if name == "me" : 
-            return Obit.TableList_me_get(self.this)
-        raise AttributeError,str(name)
-    def __repr__(self):
-        return "<C TableList instance>"
-class TableList(TableListPtr):
+class TableList(Obit.TableList):
     """ Python Obit TableList class
 
     This contains information about the Tables associated with an image or dataset
@@ -52,9 +39,21 @@ class TableList(TableListPtr):
     List      - (virtual) Python list of table names and numbers
     """
     def __init__(self, name) :
-        self.this = Obit.new_TableList(name)
-    def __del__(self):
-        Obit.delete_TableList(self.this)
+        super(TableList, self).__init__()
+        Obit.CreateTableList(self.this, name)
+    def __del__(self, DeleteTableList=_Obit.DeleteTableList):
+        DeleteTableList(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            Obit.TableList_Set_me(self.this,value)
+            return
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if name == "me" : 
+            return Obit.TableList_Get_me(self.this)
+        raise AttributeError(str(name))
+    def __repr__(self):
+        return "<C TableList instance>"
 
 def PGetList (inTL, err):
     """ Returns the contents of an TableList as a Python list
@@ -66,13 +65,45 @@ def PGetList (inTL, err):
     ################################################################
     # Checks
     if not PIsA(inTL):
-        raise TypeError,"inTL MUST be a Python Obit TableList"
+        raise TypeError("inTL MUST be a Python Obit TableList")
     if err.isErr:
         return None  # existing error 
     #
     return Obit.TableListGetList(inTL.me, err.me)
-    # end PGetDict
+    # end PGetList
 
+def PPrint (inTL, err):
+    """ Print the contents of an TableList on stderr
+
+    inTL = Python TableList to read
+    err  = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not PIsA(inTL):
+        raise TypeError("inTL MUST be a Python Obit TableList")
+    if err.isErr:
+        return None  # existing error 
+    #
+    return Obit.TableListPrint(inTL.me, err.me)
+    # end PPrint
+
+def PCheck (inTL, err):
+    """ Check the contents of an TableList
+
+    Any errors lister on err
+    inTL = Python TableList to check
+    err  = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not PIsA(inTL):
+        raise TypeError("inTL MUST be a Python Obit TableList")
+    if err.isErr:
+        return   # existing error 
+    #
+    Obit.TableListCheck(inTL.me, err.me)
+    # end PCheck
 
 def PGetHigh (inTL, tabType):
     """ Find highest version of a table of a given type
@@ -84,7 +115,7 @@ def PGetHigh (inTL, tabType):
     ################################################################
     # Checks
     if not PIsA(inTL):
-        raise TypeError,"inTL MUST be a Python Obit TableList"
+        raise TypeError("inTL MUST be a Python Obit TableList")
     #
     return Obit.TableListGetHigh(inTL.me, tabType)
     # end PGetHigh
@@ -99,7 +130,7 @@ def PPutHi (inTL, err):
     ################################################################
     # Checks
     if not PIsA(inTL):
-        raise TypeError,"inTL MUST be a Python Obit TableList"
+        raise TypeError("inTL MUST be a Python Obit TableList")
     #
     Obit.TableListPutHi(inTL.me, err.me)
     # end PPutHi
@@ -113,8 +144,8 @@ def PIsA (inTL):
     """
     ################################################################
      # Checks
-    if inTL.__class__ != TableList:
-        return 0
+    if not isinstance(inTL, TableList):
+        return False
     #
     return Obit.TableListIsA(inTL.me)
     # end  PIsA

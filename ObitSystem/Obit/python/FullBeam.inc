@@ -34,16 +34,27 @@
 #include "ObitImageDesc.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitFullBeam *me;
+} FullBeam;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitFullBeam *me;
+} FullBeam;
 
 %inline %{
 extern ObitFullBeam* newFullBeam (char* name) {
   return newObitFullBeam (name);
 } // end  newFullBeam
 
-extern ObitFullBeam* FullBeamCopy  (ObitFullBeam *in, ObitFullBeam *out, 
-				    ObitErr *err) {
-  return ObitFullBeamCopy (in, out, err);
-} // end  FullBeamCopy
+extern ObitFullBeam* FullBeamCreate (char *name, ObitImage *image, 
+				     ObitErr *err) {
+  return ObitFullBeamCreate((gchar*)name, NULL, image, err);
+} // end FullBeamCreate
 
 extern ObitFullBeam* FullBeamUnref (ObitFullBeam* in) {
   if (!ObitFullBeamIsA(in)) return NULL;
@@ -54,13 +65,59 @@ extern ObitFullBeam*  FullBeamRef (ObitFullBeam* in) {
   return ObitFullBeamRef(in);
 }
 
-extern ObitFullBeam* FullBeamCreate (char *name, ObitImage *image, 
-				     ObitErr *err) {
-  return ObitFullBeamCreate((gchar*)name, NULL, image, err);
-} // end FullBeamCreate
+void CreateFullBeam(PyObject *self, char* name, ObitImage *image, ObitErr *err) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FullBeam, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateFullBeam: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((FullBeam*)ptr)->me = FullBeamCreate((gchar*)name, image, err);
+   else  ((FullBeam*)ptr)->me = NULL;
+   return;
+ } // end CreateFullBeam
+
+void DeleteFullBeam(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FullBeam, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteFullBeam: could not recover c struct");
+	return;
+   }
+   ((FullBeam*)ptr)->me = ObitFullBeamUnref(((FullBeam*)ptr)->me);
+}// end DeleteFullBeam
+
+ObitFullBeam* FullBeam_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FullBeam, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"FullBeam_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((FullBeam*)ptr)->me;
+}  // end FullBeam_Get_me
+
+void FullBeam_Set_me(PyObject *self, ObitFullBeam *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FullBeam, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"FullBeam_Set_me: could not recover c struct");
+	return;
+   }
+   ((FullBeam*)ptr)->me =  ObitFullBeamRef(me);
+}  // end FullBeam_Set_me
+
+extern ObitFullBeam* FullBeamCopy  (ObitFullBeam *in, ObitFullBeam *out, 
+				    ObitErr *err) {
+  return ObitFullBeamCopy (in, out, err);
+} // end  FullBeamCopy
 
 extern float FullBeamValue (ObitFullBeam* in, double dra, double ddec,
-		            float parAng, int plane, ObitErr *err) {
+		            float parAng, long plane, ObitErr *err) {
   return ObitFullBeamValue(in, (odouble)dra, (odouble)ddec, (ofloat)parAng, (olong)plane, err);
 } // end FullBeamGain
 
@@ -84,38 +141,9 @@ extern ObitImageDesc* FullBeamGetDesc (ObitFullBeam* in) {
   return ObitImageDescRef(in->BeamDesc);
 }
 
-extern int FullBeamIsA (ObitFullBeam* in) {
-  return ObitFullBeamIsA(in);
+extern long FullBeamIsA (ObitFullBeam* in) {
+  return (long)ObitFullBeamIsA(in);
 }
 
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitFullBeam *me;
-} FullBeam;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitFullBeam *me;
-} FullBeam;
-
-%addmethods FullBeam { 
-  FullBeam(char* name, ObitImage *image, ObitErr *err) {
-     FullBeam *out;
-     out = (FullBeam *) malloc(sizeof(FullBeam));
-     if (strcmp(name, "None")) out->me = FullBeamCreate((gchar*)name, image, err);
-     else out->me = NULL;
-     return out;
-   }
-  ~FullBeam() {
-   if (!self) return;  // Not defined
-   if (self && self->me && self->me->ReferenceCount>0) {
-      self->me = FullBeamUnref(self->me);
-      free(self);
-   }
-  }
-};
 

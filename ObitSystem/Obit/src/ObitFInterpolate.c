@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2018                                          */
+/*;  Copyright (C) 2003-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -307,8 +307,9 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
   ofloat value = fblank;
   ofloat sum, sumwt, wty, wt, prod, den, xp, yp, row[10];
   ofloat *xKernal, *yKernal, *data;
-  olong i, j, k, good, xStart, yStart, iwid, indx, planeOff, iplane, iprod;
+  olong i, j, k, good, iwid, iplane, iprod;
   olong ixpix, iypix;
+  ollong indx, planeOff, xStart, yStart;
   /*gchar *routine = "ObitFInterpolatePixel";*/
 
   /* error checks */
@@ -336,7 +337,8 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
   if (err->error) return value;
 
   /* Offset to start of plane */
-  planeOff = (iplane-1) * in->nx * in->ny;
+  planeOff = (iplane-1);
+  planeOff *= in->nx * in->ny;
     
   /* If exactly (within 0.01 pixel) on a pixel no need to interpolate */
   ixpix = (olong)(pixel[0]+0.5);
@@ -374,13 +376,15 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
   /* Loop over data summing values times convolving weights */
   for (j=0; j<iwid; j++) {
     wty = yKernal[j];
-    indx = planeOff + xStart + ((yStart + j) * in->nx);
+    indx = planeOff;
+    indx = indx + xStart + ((yStart + j) * in->nx);
     for (i=0; i<iwid; i++) {
       if (data[indx] != fblank) {
 	wt = xKernal[i] * wty;
 	sumwt += wt;
 	sum   += data[indx] * wt;
-	good++;
+	if ((isnan(data[indx]))||(isnan(sum))) g_error("INVALID VALUE, sum=%f data=%f\n",sum, data[indx]); /* DEBUG */
+ 	good++;
       } 
       indx++;
     }
@@ -494,7 +498,8 @@ ofloat ObitFInterpolate1D (ObitFInterpolate *in, ofloat pixel)
   ofloat value = fblank;
   ofloat sum, sumwt, wt;
   ofloat *xKernal, *data;
-  olong i, good, xStart, iwid, indx;
+  olong i, good, xStart, iwid;
+  ollong indx;
 
   /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));

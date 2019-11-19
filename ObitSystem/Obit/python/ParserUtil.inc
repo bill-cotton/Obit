@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for parameter file parser utilities        */
 /*                                                                    */
-/*;  Copyright (C) 2007                                               */
+/*;  Copyright (C) 2007,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -37,7 +37,7 @@
 
 %inline %{
 /* Parse text file, return 0 = OK, else failed */
-extern int Parse (char *infile, ObitInfoList *list, ObitErr *err) {
+extern long Parse (char *infile, ObitInfoList *list, ObitErr *err) {
   ObitIOCode retCode;
 
   retCode = ObitParserParse ((gchar*)infile, list, err);
@@ -46,7 +46,7 @@ extern int Parse (char *infile, ObitInfoList *list, ObitErr *err) {
 } // end Parser
 
 /* Dump InfoList to text file, return 0 = OK, else failed */
-extern int Dump (char *outfile, ObitInfoList *list, ObitErr *err) {
+extern long Dump (char *outfile, ObitInfoList *list, ObitErr *err) {
   ObitIOCode retCode;
 
   retCode = ObitReturnDump ((gchar*)outfile, list, err);

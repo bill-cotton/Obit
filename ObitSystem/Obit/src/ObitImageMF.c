@@ -847,7 +847,7 @@ void ObitImageMFSetOrder (ObitImageMF *in, olong order,
 void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
 			 ofloat alpha, odouble alphaRefF, ObitErr *err)
 {
-  olong iif, ichan, iclo, ichi, nSpec=0, nIF, nChan, incf, incif;
+  olong iif, ichan, iclo, ichi, nSpec=0, nIF, nChan;
   olong fincf, fincif, i, count, count2=0, iCh;
   odouble sum=0.0, sum2=0.0, mxFreq, freqLo, freqHi;
   ObitUVDesc *uvdesc;
@@ -871,12 +871,9 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
   
   uvdesc = inData->myDesc;
   nChan = uvdesc->inaxes[uvdesc->jlocf];
-  incf  = uvdesc->incf;
   nIF   = 1;
-  incif = uvdesc->incs;
   if (uvdesc->jlocif>=0) {
     nIF = uvdesc->inaxes[uvdesc->jlocif];
-    incif = uvdesc->incif;
   }
   lsb = uvdesc->cdelt[uvdesc->jlocf]<0.0;  /* Lower sideband? */
 
@@ -1686,7 +1683,7 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
     fitter->RMS[iplane] = ObitFArrayRMS(fitter->inFArrays[iplane]);
     /* Frequency */
     fitter->freqs[iplane] = in->specFreq[iplane];
-    fitter->BeamShapes[iplane]->refFreq = fitter->freqs[iplane];
+    ObitBeamShapeSetFreq (fitter->BeamShapes[iplane], fitter->freqs[iplane]);
     /* if maxSNR, modify RMS by exp(-alpha*ln(nu/nu_0)) */
     if (maxSNR) {
       wtfact  = (ofloat)exp(-fitter->corAlpha*log(fitter->freqs[iplane]/refFreq));
@@ -2284,14 +2281,12 @@ gpointer ThreadFitSpec (gpointer args)
   /* Local */
   olong ix, i, nterm;
   ofloat PBCorr = 1.0, pixel[2], spFact;
-  gboolean doJinc;
   ObitBeamShapeClassInfo *BSClass;
   odouble Angle=0.0, pos[2];
   ofloat fblank = ObitMagicF();
   gchar *routine = "ThreadFitSpec";
 
   nterm = nOrder+1;        /* Number of fitted spectral terms */
-  doJinc = Freq[0]>1.0e9;  /* Use polynomial or Jinc for PB corr? */
 
   /* Loop over row */
   for (ix=0; ix<desc->inaxes[0]; ix++) {
@@ -2312,7 +2307,7 @@ gpointer ThreadFitSpec (gpointer args)
       
       /* Load arrays */
       for (i=0; i<nSpec; i++) {
-	BeamShape->refFreq = Freq[i];  /* Set frequency */
+	ObitBeamShapeSetFreq (BeamShape, Freq[i]);  /* Set frequency */
 	PBCorr  = BSClass->ObitBeamShapeGainSym(BeamShape, Angle);
 	if (inData[i][ix]!=fblank) workFlux[i]  = inData[i][ix] / PBCorr;
 	else workFlux[i] = fblank;

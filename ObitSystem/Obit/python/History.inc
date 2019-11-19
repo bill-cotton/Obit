@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for History utilities                      */
 /*                                                                    */
-/*;  Copyright (C) 2004-2010                                          */
+/*;  Copyright (C) 2004-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,11 +32,79 @@
 #include "ObitHistory.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitHistory *me;
+} History;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitHistory *me;
+} History;
+
 %inline %{
 
 extern ObitHistory* HistoryCreate (gchar* name) {
   return newObitHistory (name);
 } // end  HistoryCreate
+
+extern ObitHistory* HistoryUnref (ObitHistory* in) {
+  if (!ObitHistoryIsA(in)) return NULL;
+  return ObitHistoryUnref(in);
+}
+
+extern ObitHistory*  HistoryRef (ObitHistory* in) {
+  return ObitHistoryRef(in);
+}
+
+void CreateHistory(PyObject *self, char* name, ObitInfoList *info, ObitErr *err) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_History, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Create: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((History*)ptr)->me = newObitHistoryValue(name, info, err);
+   else ((History*)ptr)->me = NULL;
+   return;
+ } // end CreateHistory
+
+void DeleteHistory(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_History, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Delete: could not recover c struct");
+	return;
+   }
+   ((History*)ptr)->me = HistoryUnref(((History*)ptr)->me);
+} // end DeleteHistory
+
+ObitHistory* History_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_History, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((History*)ptr)->me;
+} // end History_Get_me
+
+void History_Set_me(PyObject *self, ObitHistory *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_History, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"History_Set_me: could not recover c struct");
+	return;
+   }
+   ((History*)ptr)->me =  HistoryRef(me);
+}  // end History_Set_me
+
 
 extern ObitHistory* HistoryZap  (ObitHistory *in, ObitErr *err) {
   return ObitHistoryZap (in, err);
@@ -48,7 +116,7 @@ extern ObitHistory* HistoryCopy  (ObitHistory *in, ObitHistory *out,
   return ObitHistoryCopy (in, out, err);
 } // end  HistoryCopy
 
-extern int HistoryCopyHeader  (ObitHistory *in, ObitHistory *out, 
+extern long HistoryCopyHeader  (ObitHistory *in, ObitHistory *out, 
 		 	       ObitErr *err) {
 
   ObitIOCode ret;
@@ -57,7 +125,7 @@ extern int HistoryCopyHeader  (ObitHistory *in, ObitHistory *out,
   else return 1;
 } // end  HistoryCopy
 
-extern int HistoryCopy2Header  (ObitHistory *in, ObitHistory *out, 
+extern long HistoryCopy2Header  (ObitHistory *in, ObitHistory *out, 
 		 	       ObitErr *err) {
 
   ObitIOCode ret;
@@ -66,7 +134,7 @@ extern int HistoryCopy2Header  (ObitHistory *in, ObitHistory *out,
   else return 1;
 } // end  HistoryCopy2Header
 
-extern int HistoryHeader2Header  (ObitHistory *in, ObitHistory *out, 
+extern long HistoryHeader2Header  (ObitHistory *in, ObitHistory *out, 
 		 	          ObitErr *err) {
 
   ObitIOCode ret;
@@ -75,7 +143,7 @@ extern int HistoryHeader2Header  (ObitHistory *in, ObitHistory *out,
   else return 1;
 } // end  HistoryHeader2Header
 
-extern int HistoryOpen (ObitHistory* in, int access, ObitErr *err) {
+extern long HistoryOpen (ObitHistory* in, long access, ObitErr *err) {
   ObitIOCode ret;
   ObitIOAccess laccess;
 
@@ -87,7 +155,7 @@ extern int HistoryOpen (ObitHistory* in, int access, ObitErr *err) {
   else return 1;
 }
 
-extern int HistoryClose (ObitHistory* in, ObitErr *err) {
+extern long HistoryClose (ObitHistory* in, ObitErr *err) {
   ObitIOCode ret;
   ret =  ObitHistoryClose(in, err);
   if (ret==OBIT_IO_OK) return 0;
@@ -102,7 +170,7 @@ extern PyObject* HistoryReadRec (ObitHistory* in, long recno,  ObitErr *err) {
   return PyString_FromString("");
 }
 
-extern int HistoryWriteRec (ObitHistory* in, long recno, char hiCard[73],
+extern long HistoryWriteRec (ObitHistory* in, long recno, char hiCard[73],
 		           ObitErr *err) {
   ObitIOCode ret;
   ret = ObitHistoryWriteRec(in, recno, hiCard, err);
@@ -110,7 +178,7 @@ extern int HistoryWriteRec (ObitHistory* in, long recno, char hiCard[73],
   else return 1;
 }
 
-extern int HistoryEdit (ObitHistory* in, long startr, long endr,
+extern long HistoryEdit (ObitHistory* in, long startr, long endr,
 		         ObitErr *err) {
   ObitIOCode ret;
   ret = ObitHistoryEdit(in, startr, endr, err);
@@ -118,28 +186,19 @@ extern int HistoryEdit (ObitHistory* in, long startr, long endr,
   else return 1;
 }
 
-extern int HistoryTimeStamp (ObitHistory* in, char *label, ObitErr *err) {
+extern long HistoryTimeStamp (ObitHistory* in, char *label, ObitErr *err) {
   ObitIOCode ret;
   ret = ObitHistoryTimeStamp(in, label, err);
   if (ret==OBIT_IO_OK) return 0;
   else return 1;
 }
 
-extern ObitHistory* HistoryUnref (ObitHistory* in) {
-  if (!ObitHistoryIsA(in)) return NULL;
-  return ObitHistoryUnref(in);
-}
-
-extern ObitHistory*  HistoryRef (ObitHistory* in) {
-  return ObitHistoryRef(in);
-}
-
 extern ObitInfoList* HistoryGetList (ObitHistory* in) {
   return ObitInfoListRef(in->info);
 }
 
-extern int HistoryIsA (ObitHistory* in) {
-  return ObitHistoryIsA(in);
+extern long HistoryIsA (ObitHistory* in) {
+  return (long)ObitHistoryIsA(in);
 }
 
 extern char* HistoryGetName (ObitHistory* in) {
@@ -150,30 +209,4 @@ extern char* HistoryGetName (ObitHistory* in) {
   }
 }
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitHistory *me;
-} History;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitHistory *me;
-} History;
-
-%addmethods History { 
-  History(char *name, ObitInfoList *info, ObitErr *err) {
-    History *out;
-    out = (History *) malloc(sizeof(History));
-    if (strcmp(name, "None")) out->me = newObitHistoryValue(name, info, err);
-    else out->me = NULL;
-    return out;
-   }
-  ~History() {
-    self->me = HistoryUnref(self->me);
-    free(self);
-  }
-};
 

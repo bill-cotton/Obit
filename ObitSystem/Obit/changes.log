@@ -4436,3 +4436,28 @@ Obit/src/ObitSDMData.c:
     various: trest schema version 4 the same as 3
 30 Sep 2019 svn 607
 
+Summary: Python3 upgrade, Bug fixes
+Obit/include/ObitBeamShapeDef.h Obit/include/ObitBeamShape.h
+Obit/src/ObitBeamShape.c Obit/src/ObitImageMF.c
+    Implement MeerKAT cosine beam shape
+Obit/src/ObitRMFit.c
+    ThreadRMSynFit: min dRM not 0.01 (was 1.0)
+Obit/src/ObitFInterpolate.c Obit/src/ObitImageUtil.c
+    various: make data indices a ollong (longlong)
+NO Obit/src/ObitFArray.c Obit/include/FArray.h Obit/include/FArrayDef.h 
+NO     Upgrade many integers to ollong (longlong)
+NO     Index: use ollong for address calculation
+Obit/src/ObitBeamShape.c
+    GetMKBeam: protect against zero divides
+Obit/src/ObitDConCleanPxListMF.c
+    Update: Don't free pixarray used as inFArray
+Obit/python/*.inc Obit/python/*.py Obit/python/Makefile.in 
+  ObitSD/python/*.inc ObitSD/python/*.py ObitSD/python/Makefile.in
+  Obit/python/Obit_wrap.c ObitSD/python/Obit_wrap.c 
+    Python3 upgrade.  ObitSD now defunct.
+Obit/../../InstallObit.sh
+    Drop build, references to ObitSD, now defunct
+Obit/tasks/SubImage.c
+    Don't try to copy a CC table that doesn't exist
+../ObitTalk/configure ../ObitTalk/configure.am
+18 Nov 2019 svn 608

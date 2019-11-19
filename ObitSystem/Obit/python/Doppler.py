@@ -6,7 +6,7 @@
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C)2012
+#  Copyright (C)2012,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -33,36 +33,12 @@
 #-----------------------------------------------------------------------
 
 # Doppler correction class
-import Obit, OErr, InfoList, UV, UVDesc, types
+from __future__ import absolute_import
+import Obit, _Obit, OErr, InfoList, UV, UVDesc, types
 
 # Python shadow class to ObitDoppler class
  
-class DopplerPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.DopplerUnref(Obit.Doppler_me_get(self.this))
-            # In with the new
-            Obit.Doppler_me_set(self.this,value)
-            return
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != Doppler:
-            return
-        if name == "me" : 
-            return Obit.Doppler_me_get(self.this)
-        # Virtual members
-        if name=="List":
-            return PGetList(self)
-        raise AttributeError,str(name)
-    def __repr__(self):
-        if self.__class__ != Doppler:
-            return
-        return "<C Doppler instance> " + Obit.DopplerGetName(self.me)
-#
-class Doppler(DopplerPtr):
+class Doppler(Obit.Doppler):
     """ Python Obit Image class
 
     This class handles Doppler corrections
@@ -73,11 +49,34 @@ class Doppler(DopplerPtr):
                 (readonly)
     """
     def __init__(self, name) :
-        self.this = Obit.new_Doppler(name)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_Doppler(self.this)
-
+        super(Doppler, self).__init__()
+        Obit.CreateDoppler(self.this, name)
+    def __del__(self, DeleteDoppler=_Obit.DeleteDoppler):
+        if _Obit!=None:
+            DeleteDoppler(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.DopplerUnref(Obit.Doppler_Get_me_(self.this))
+            # In with the new
+            Obit.Doppler_Set_me(self.this,value)
+            return
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if not isinstance(self, Doppler):
+            return"Bogus dude "+str(self.__class__)
+        if name == "me" : 
+            return Obit.Doppler_Get_me(self.this)
+        # Virtual members
+        if name=="List":
+            return PGetList(self)
+        raise AttributeError(str(name))
+    def __repr__(self):
+        if not isinstance(self, Doppler):
+            return"Bogus dude "+str(self.__class__)
+        return "<C Doppler instance> " + Obit.DopplerGetName(self.me)
+#
 
 def newObit(name, err):
     """ Create and initialize an Doppler structure
@@ -103,11 +102,11 @@ def PCopy (inDoppler, outDoppler, err):
     ################################################################
     # Checks
     if not PIsA(inDoppler):
-        raise TypeError,"inDoppler MUST be a Python Obit Doppler"
+        raise TypeError("inDoppler MUST be a Python Obit Doppler")
     if not PIsA(outDoppler):
-        raise TypeError,"outDoppler MUST be a Python Obit Doppler"
+        raise TypeError("outDoppler MUST be a Python Obit Doppler")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     Obit.DopplerCopy (inDoppler.me, outDoppler.me, err.me)
     if err.isErr:
@@ -123,10 +122,9 @@ def PGetList (inDoppler):
     ################################################################
      # Checks
     if not PIsA(inDoppler):
-        raise TypeError,"inDoppler MUST be a Python Obit Doppler"
+        raise TypeError("inDoppler MUST be a Python Obit Doppler")
     #
     out    = InfoList.InfoList()
-    out.me = Obit.InfoListUnref(out.me)
     out.me = Obit.DopplerGetList(inDoppler.me)
     return out
     # end PGetList
@@ -151,9 +149,9 @@ def PCVel (inUV, outUV, RestFreq, err, scratch=False, \
     ################################################################
     # Checks
     if not UV.PIsA(inUV):
-        raise TypeError,"inUV MUST be a Python ObitUV"
+        raise TypeError("inUV MUST be a Python ObitUV")
     if not UV.PIsA(outUV):
-        raise TypeError,"outUV MUST be a Python ObitUV"
+        raise TypeError("outUV MUST be a Python ObitUV")
     #
     if scratch:
         lscratch = 1
@@ -164,7 +162,7 @@ def PCVel (inUV, outUV, RestFreq, err, scratch=False, \
     info.set("RestFreq", RestFreq*1.0e9, ttype="double")
     info.set("VelLSR",   VLSR*1000)
     info.set("JDref",    UVDesc.PDate2JD (refDate), ttype="double")
-    info.set("refChan",  refChan)
+    info.set("refChan",  int(refChan))
     # Correct data
     Obit.DopplerCVel(inUV.me, lscratch, outUV.me, err.me)
     # end PCVel
@@ -205,7 +203,7 @@ def PGetName (inDoppler):
     ################################################################
      # Checks
     if not PIsA(inDoppler):
-        raise TypeError,"inDoppler MUST be a Python Obit Doppler"
+        raise TypeError("inDoppler MUST be a Python Obit Doppler")
     #
     return Obit.DopplerGetName(inDoppler.me)
     # end PGetName
@@ -213,12 +211,12 @@ def PGetName (inDoppler):
 def PIsA (inDoppler):
     """ Tells if input really a Python Obit Doppler
 
-    return true, false (1,0)
+    return True, False
     inDoppler   = Python Doppler object
     """
     ################################################################
     # Checks
-    if inDoppler.__class__ != Doppler:
-        return 0
-    return Obit.DopplerIsA(inDoppler.me)
+    if not isinstance(inDoppler, Doppler):
+        return False
+    return Obit.DopplerIsA(inDoppler.me)!=0
     # end PIsA

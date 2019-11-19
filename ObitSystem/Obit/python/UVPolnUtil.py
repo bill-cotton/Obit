@@ -30,9 +30,12 @@
 #                         Charlottesville, VA 22903-2475 USA
 #-----------------------------------------------------------------------
 
+from __future__ import absolute_import
+from __future__ import print_function
 import Obit, UV, Table, RMFit, OPlot, OErr
 from FArray import fblank
 import math
+from six.moves import range
 clight = 2.997924562e8   # Speed of light m/s
 
 def FitSource(inUV, souID, err, CPVer=1, inc=1):
@@ -57,8 +60,8 @@ def FitSource(inUV, souID, err, CPVer=1, inc=1):
     ################################################################
     # Checks
     if not UV.PIsA(inUV):
-        print "Actually ",inUV.__class__
-        raise TypeError,"inUV MUST be a Python Obit UV"
+        print("Actually ",inUV.__class__)
+        raise TypeError("inUV MUST be a Python Obit UV")
 
     # Get table
     cptab = inUV.NewTable(Table.READONLY,"AIPS CP",CPVer,err)
@@ -76,12 +79,12 @@ def FitSource(inUV, souID, err, CPVer=1, inc=1):
     # end loop looking for souID
     # Find it?
     if IPol==None:
-        raise  RuntimeError,"No CP entry for source ID "+str(souID)
+        raise  RuntimeError("No CP entry for source ID "+str(souID))
     # Get lambda^2 array
     lamb2 = GetLamb2(inUV, err)
     # Check consistency
     if len(IPol)!=len(lamb2):
-        raise  RuntimeError,"Size of CP entries ("+str(len(IPol))+") NOT number of channels ("+str(len(lamb2))+")"
+        raise  RuntimeError("Size of CP entries ("+str(len(IPol))+") NOT number of channels ("+str(len(lamb2))+")")
     # Get fitting parameters with descimation by inc
     l2 = [];  QObs = []; Qsig = []; UObs = []; Usig = [];
     FPol = []; EVPA = []
@@ -96,9 +99,9 @@ def FitSource(inUV, souID, err, CPVer=1, inc=1):
     # Fit RM
     refLamb2 = l2[len(l2)/2]
     RMParms = RMFit.PSingle(refLamb2, l2, QObs, Qsig, UObs, Usig, err)
-    print "debug RMParms",RMParms
-    print "Fitted RM=%f (%f), EVPA=%f(%f)"\
-        %(RMParms[0],RMParms[2],math.degrees(RMParms[1]),math.degrees(RMParms[3]))
+    print("debug RMParms",RMParms)
+    print("Fitted RM=%f (%f), EVPA=%f(%f)"\
+        %(RMParms[0],RMParms[2],math.degrees(RMParms[1]),math.degrees(RMParms[3])))
     return{"RM":RMParms[0], "RMErr":RMParms[2], "EVPA0":RMParms[1], "EVPAErr":RMParms[3], \
                "RefLamb2":refLamb2 ,"Lamb2":l2, "FPol":FPol, "EVPA":EVPA}
     # end FitSource
@@ -115,8 +118,8 @@ def GetLamb2(inUV, err, inc = 1):
     ################################################################
     # Checks
     if not UV.PIsA(inUV):
-        print "Actually ",inUV.__class__
-        raise TypeError,"inUV MUST be a Python Obit UV"
+        print("Actually ",inUV.__class__)
+        raise TypeError("inUV MUST be a Python Obit UV")
     d = inUV.Desc.Dict # UV data descriptor dictionary
     refFreq = d["crval"][ d["jlocf"]]    # reference frequency
     nchan   = d["inaxes"][ d["jlocf"]]   # Number of channels per IF
@@ -150,8 +153,8 @@ def GetFreqArr(inUV, err, inc = 1):
     ################################################################
     # Checks
     if not UV.PIsA(inUV):
-        print "Actually ",inUV.__class__
-        raise TypeError,"inUV MUST be a Python Obit UV"
+        print("Actually ",inUV.__class__)
+        raise TypeError("inUV MUST be a Python Obit UV")
     d = inUV.Desc.Dict # UV data descriptor dictionary
     refFreq = d["crval"][ d["jlocf"]]    # reference frequency
     nchan   = d["inaxes"][ d["jlocf"]]   # Number of channels per IF
@@ -245,8 +248,8 @@ def ExtractPD (inUV, ant, err, PDVer=1, inc=1):
       ################################################################
     # Checks
     if not UV.PIsA(inUV):
-        print "Actually ",inUV.__class__
-        raise TypeError,"inUV MUST be a Python Obit UV"
+        print("Actually ",inUV.__class__)
+        raise TypeError("inUV MUST be a Python Obit UV")
     
     e1 = []; e2 = []; o1 = []; o2 = []
     # Get table

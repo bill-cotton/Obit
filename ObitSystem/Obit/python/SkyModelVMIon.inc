@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for SkyModelVMIon type                     */
 /*                                                                    */
-/*;  Copyright (C) 2007                                               */
+/*;  Copyright (C) 2007,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,16 +32,23 @@
 #include "ObitSkyModelVMIon.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitSkyModelVMIon *me;
+} SkyModelVMIon;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitSkyModelVMIon *me;
+} SkyModelVMIon;
+
 
 %inline %{
 extern ObitSkyModelVMIon* newSkyModelVMIon (char* name) {
   return newObitSkyModelVMIon (name);
 } // end  newSkyModelVMIon
-
-extern ObitSkyModelVMIon* SkyModelVMIonCopy  (ObitSkyModelVMIon *in, ObitSkyModelVMIon *out, 
-				    ObitErr *err) {
-  return ObitSkyModelVMIonCopy (in, out, err);
-} // end  SkyModelVMIonCopy
 
 extern ObitSkyModelVMIon* SkyModelVMIonUnref (ObitSkyModelVMIon* in) {
   if (!ObitSkyModelVMIonIsA(in)) return NULL;
@@ -51,6 +58,61 @@ extern ObitSkyModelVMIon* SkyModelVMIonUnref (ObitSkyModelVMIon* in) {
 extern ObitSkyModelVMIon*  SkyModelVMIonRef (ObitSkyModelVMIon* in) {
   return ObitSkyModelVMIonRef(in);
 }
+
+void CreateSkyModelVMIon(PyObject *self, char* name) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_SkyModelVMIon, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Create: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((SkyModelVMIon*)ptr)->me = newSkyModelVMIon(name);
+   else ((SkyModelVMIon*)ptr)->me = NULL;
+   return;
+ } // end CreateSkyModelVMIon
+
+void DeleteSkyModelVMIon(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_SkyModelVMIon, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Delete: could not recover c struct");
+	return;
+   }
+   ((SkyModelVMIon*)ptr)->me = SkyModelVMIonUnref(((SkyModelVMIon*)ptr)->me);
+} // end DeleteSkyModelVMIon
+
+ObitSkyModelVMIon* SkyModelVMIon_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_SkyModelVMIon, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((SkyModelVMIon*)ptr)->me;
+} // end SkyModelVMIon_Get_me
+
+void SkyModelVMIon_Set_me(PyObject *self, ObitSkyModelVMIon *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_SkyModelVMIon, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"SkyModelVMIon_Set_me: could not recover c struct");
+	return;
+   }
+   ((SkyModelVMIon*)ptr)->me =  SkyModelVMIonRef(me);
+}  // end SkyModelVMIon_Set_me
+
+extern ObitSkyModel* SkyModelVMIonCast (ObitSkyModelVMIon *sm) {
+  return (ObitSkyModel*)sm;
+} // end SkyModelVMIonCast
+
+extern ObitSkyModelVMIon* SkyModelVMIonCopy  (ObitSkyModelVMIon *in, ObitSkyModelVMIon *out, 
+				    ObitErr *err) {
+  return ObitSkyModelVMIonCopy (in, out, err);
+} // end  SkyModelVMIonCopy
 
 extern ObitInfoList* SkyModelVMIonGetList (ObitSkyModelVMIon* in) {
   return ObitInfoListRef(in->info);
@@ -68,36 +130,10 @@ extern char* SkyModelVMIonGetName (ObitSkyModelVMIon* in) {
   }
 }
 
-extern int SkyModelVMIonIsA (ObitSkyModelVMIon* in) {
-  return ObitSkyModelVMIonIsA(in);
+extern long SkyModelVMIonIsA (ObitSkyModelVMIon* in) {
+  return (long)ObitSkyModelVMIonIsA(in);
 }
 
 %}
 
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitSkyModelVMIon *me;
-} SkyModelVMIon;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitSkyModelVMIon *me;
-} SkyModelVMIon;
-
-%addmethods SkyModelVMIon { 
-  SkyModelVMIon(char* name) {
-     SkyModelVMIon *out;
-     out = (SkyModelVMIon *) malloc(sizeof(SkyModelVMIon));
-     if (strcmp(name, "None")) out->me = newSkyModelVMIon(name);
-     else out->me = NULL;
-     return out;
-   }
-  ~SkyModelVMIon() {
-   if (self->me-> ReferenceCount>0) 
-      self->me = SkyModelVMIonUnref(self->me);
-   free(self);
-  }
-};
 

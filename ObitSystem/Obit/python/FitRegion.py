@@ -18,7 +18,7 @@ models    Array of FitModels
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2007
+#  Copyright (C) 2007,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -45,24 +45,47 @@ models    Array of FitModels
 #-----------------------------------------------------------------------
 
 # Obit FitRegion
-import Obit, OErr, FitModel, Image, ODisplay, OWindow, FInterpolate
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, OErr, FitModel, Image, ODisplay, OWindow, FInterpolate
 import pydoc
+from six.moves import range
 
 # Python shadow class to ObitFitRegion class
 
 # class name in C
 myClass = "ObitFitRegion"
  
+
+class FitRegion(Obit.FitRegion):
+    """
+    Python Obit FitRegion class
     
-class FitRegionPtr :
-    def __init__(self,this):
-        self.this = this
+    This class contains info about an image fitting region
+    Interactive definitions of a region using the Image viewer
+    is possible using PSetup to create the Fit Region.
+    
+    FitRegion Members with python interfaces:
+    """
+    def __init__(self, name="no_name", corner=[0,0], dim=[0,0], peak=0.0, \
+                 peakResid=0.0, RMSResid=0.0, fluxResid=0.0, models=[]):
+        super(FitRegion, self).__init__()
+        Obit.CreateFitRegion(self.this, name, corner, dim, peak, peakResid, \
+                           RMSResid, fluxResid)
+        if len(models)>0:  # Set models if given
+            self.nmodel = len(models)
+            self.models = models
+        self.myClass = myClass
+    def __del__(self, DeleteFitRegion=_Obit.DeleteFitRegion):
+        if _Obit!=None:
+            DeleteFitRegion(self.this)
     def __setattr__(self,name,value):
         if name == "me" :
             # Out with the old
-            Obit.FitRegionUnref(Obit.FitRegion_me_get(self.this))
+            if self.this!=None:
+                Obit.FitRegionUnref(Obit.FitRegion_Get_me(self.this))
             # In with the new
-            Obit.FitRegion_me_set(self.this,value)
+            Obit.FitRegion_Set_me(self.this,value)
             return
         # members
         if name=="corner":
@@ -99,10 +122,10 @@ class FitRegionPtr :
             return
         self.__dict__[name] = value
     def __getattr__(self,name):
-        if self.__class__ != FitRegion:
+        if not isinstance(self, FitRegion):
             return
         if name == "me" : 
-            return Obit.FitRegion_me_get(self.this)
+            return Obit.FitRegion_Get_me(self.this)
         # members
         if name=="corner":
             return Obit.FitRegionGetCorner(self.me)
@@ -128,36 +151,13 @@ class FitRegionPtr :
                 out.append(tout)
             return out
     def __repr__(self):
-        if self.__class__ != FitRegion:
-            return
+        if not isinstance(self, FitRegion):
+            return "Bogus Dude"+str(self.__class__)
         return "<C FitRegion instance> " + Obit.FitRegionGetName(self.me)
-#
-class FitRegion(FitRegionPtr):
-    """
-    Python Obit FitRegion class
-    
-    This class contains info about an image fitting region
-    Interactive definitions of a region using the Image viewer
-    is possible using PSetup to create the Fit Region.
-    
-    FitRegion Members with python interfaces:
-    """
-    def __init__(self, name="no_name", corner=[0,0], dim=[0,0], peak=0.0, \
-                 peakResid=0.0, RMSResid=0.0, fluxResid=0.0, models=[]):
-        self.this = Obit.new_FitRegion(name, corner, dim, peak, peakResid, \
-                                       RMSResid, fluxResid)
-        if len(models)>0:  # Set models if given
-            self.nmodel = len(models)
-            self.models = models
-        self.myClass = myClass
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_FitRegion(self.this)
 
     def Print (self, ImDesc, file=None):
         """
         Display human readable contents
-
         * self     = object with Model to display
         * ImDesc   = Image Descriptor with Beam, etc.
         * file     = if present, the name of a file into which to write
@@ -180,11 +180,9 @@ class FitRegion(FitRegionPtr):
             fd.close()
         else:
             #pydoc.ttypager(modelInfo)
-            print modelInfo
+            print(modelInfo)
         del modelInfo
         # end Print
-        
-        
     # end class FitRegion
     
 def PSetup (inImage, disp, err):
@@ -196,7 +194,6 @@ def PSetup (inImage, disp, err):
     The fitting region is first specified with a rectangular window
     and then the initial models to be fitted with circular windows.
     Returns FitRegion, leaves image pixel array on inImage
-
     * image  = image to be fitted
     * disp   = image display to use
     * err    = Obit Error/message stack
@@ -204,20 +201,20 @@ def PSetup (inImage, disp, err):
     ################################################################
     # Checks
     if not Image.PIsA(inImage):
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not ODisplay.PIsA(disp):
-        print "Actually ",disp.__class__
-        raise TypeError,"disp MUST be a Python Obit Display"
+        print("Actually ",disp.__class__)
+        raise TypeError("disp MUST be a Python Obit Display")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     id = inImage.Desc.Dict
     naxis = id["inaxes"][0:2]
     window = OWindow.PCreate1("window", naxis, err)
     # Give user instructions
-    print "Specify the region to fit with a rectangular box."
-    print "Followed by circular boxes to mark Gaussian component"
-    print "initial locations and initial sizes."
+    print("Specify the region to fit with a rectangular box.")
+    print("Followed by circular boxes to mark Gaussian component")
+    print("initial locations and initial sizes.")
     boxes = []
     while len(boxes)<2:
         ODisplay.PImage(disp, inImage, err, window)
@@ -227,16 +224,16 @@ def PSetup (inImage, disp, err):
         boxes = OWindow.PGetList(window, 1, err)
         if err.isErr:
             printErrMsg(err, "Error getting boxes")
-            print "DEBUG BOXES",boxes
             
         # Checks
         if len(boxes)<2:
-            print "You MUST specity fitting region and at least one Gaussian"
+            print("You MUST specify fitting region and at least one Gaussian")
         # End loop 'til user gets it right
     # Fitting window
+    #print "DEBUG BOXES",boxes
     box = boxes[0]
     if box[1]!=OWindow.RectangleType:
-        raise RuntimeError,"Fitting region NOT rectangular"
+        raise RuntimeError("Fitting region NOT rectangular")
     corner = [min(box[2],box[4]), min(box[3],box[5])]
     dim    = [abs(box[4]-box[2])+1, abs(box[5]-box[3])+1]
     # Image interpolator
@@ -250,14 +247,15 @@ def PSetup (inImage, disp, err):
     models = []
     for box in boxes[1:]:
         if box[1]!=OWindow.RoundType:
-            raise RuntimeError,"Indicate Gaussians with Round boxes"
+            raise RuntimeError("Indicate Gaussians with Round boxes")
         type = FitModel.GaussMod
         x = box[3] - corner[0]
         y = box[4] - corner[1]
         pixel = [float(box[3]), float(box[4])]
         parms = [float(box[2]), float(box[2]), 0.0]
         s = FInterpolate.PPixel(fi, pixel,err)
-        models.append(FitModel.FitModel(type=type, Peak=s, DeltaX=x, DeltaY=y, parms=parms))
+        models.append(FitModel.FitModel(mtype=type, Peak=s, DeltaX=x, DeltaY=y, parms=parms))
+        print("FitModel",type,s,x,y,parms,box)
 
     # create output 
     out = FitRegion(name=id["object"], corner=corner, dim=dim, models=models)
@@ -268,13 +266,12 @@ def PIsA (inFitRegion):
     """
     Tells if input really a Python Obit FitRegion
     
-    return True, False (1,0)
-
+    return True, False
     * inFitRegion   = Python FitRegion object
     """
     ################################################################
-    if inFitRegion.__class__ != FitRegion:
-        print "Actually is",inFitRegion.__class__ 
-        return 0
-    return Obit.FitRegionIsA(inFitRegion.me)
+    if not isinstance(inFitRegion, FitRegion):
+        print("Actually is",inFitRegion.__class__) 
+        return False
+    return Obit.FitRegionIsA(inFitRegion.me)!=0
     # end PIsA

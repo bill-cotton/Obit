@@ -1,6 +1,8 @@
 """ 
 
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import UV, UVDesc, Image, ImageDesc, FArray, ObitTask, AIPSTask, AIPSDir, OErr, History
 import InfoList, Table, OSystem, OASDM
 from AIPS import AIPS
@@ -10,10 +12,11 @@ from OTObit import Acat, AMcat, getname, zap, imhead, tabdest, tput
 from Obit import Version
 from PipeUtil import *
 import os, os.path, re, shutil, pickle, math, copy, pprint, string
-import urllib, urllib2
-import sys, commands
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error, six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
+import sys #, commands
 import datetime
 import xml.dom.minidom
+from six.moves import range
 
 manifest = { 'project' : [],  # list of project output files
              'source'  : {} } # dict of source output files
@@ -355,7 +358,7 @@ def EVLAInitContFQParms(parms):
     # FD flagging
     # number of channels for FD median window
     if (parms["FD1widMW"]==None):
-        parms["FD1widMW"] = MIN (127, MAX(((nchan/2)-1), 3))
+        parms["FD1widMW"] = MIN (127, MAX(((int(nchan//2))-1), 3))
     if parms["FDmaxRMS"]==None:
         if cfg[0:1]=='A' or cfg[0:1]=='B' or freq>8.0e9:
             parms["FDmaxRMS"]    = [5.0,.1]     # Channel RMS limits (Jy)
@@ -658,7 +661,7 @@ def EVLACopyFG(uv, err, logfile='', check=False, debug = False):
     taco = ObitTask.ObitTask("TabCopy")
     try:
         taco.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     if not check:
         setname(uv, taco)
@@ -677,8 +680,8 @@ def EVLACopyFG(uv, err, logfile='', check=False, debug = False):
     try:
         if not check:
             taco.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Copy of FG table Failed retCode="+str(taco.retCode)
         printMess(mess, logfile)
         return 1
@@ -710,7 +713,7 @@ def EVLACopyTable(inObj, outObj, inTab, err, inVer=1, outVer=0,
     taco = ObitTask.ObitTask("TabCopy")
     try:
         taco.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     if not check:
         setname(inObj, taco)
@@ -726,8 +729,8 @@ def EVLACopyTable(inObj, outObj, inTab, err, inVer=1, outVer=0,
     try:
         if not check:
             taco.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Copy of "+inTab+" table Failed retCode="+str(taco.retCode)
         printMess(mess, logfile)
         return 1
@@ -760,7 +763,7 @@ def EVLAUVLoad(filename, inDisk, Aname, Aclass, Adisk, Aseq, err, logfile=''):
     #
     # Checks
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Get input
     inUV = UV.newPFUV("FITS UV DATA", filename, inDisk, True, err)
@@ -828,7 +831,7 @@ def EVLAUVLoadT(filename, disk, Aname, Aclass, Adisk, Aseq, err, logfile="  ", \
     uvc = ObitTask.ObitTask("UVCopy")
     try:
         uvc.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     uvc.DataType = "FITS"
     uvc.inFile   = filename
@@ -847,8 +850,8 @@ def EVLAUVLoadT(filename, disk, Aname, Aclass, Adisk, Aseq, err, logfile="  ", \
     try:
         if not check:
             uvc.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "UVData load Failed "
         printMess(mess, logfile)
     else:
@@ -897,7 +900,7 @@ def EVLAUVLoadArch(dataroot, Aname, Aclass, Adisk, Aseq, err, \
     bdf = ObitTask.ObitTask("BDFIn")
     try:
         bdf.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     bdf.DataRoot = dataroot
     bdf.DataType = "AIPS"
@@ -923,8 +926,8 @@ def EVLAUVLoadArch(dataroot, Aname, Aclass, Adisk, Aseq, err, \
     try:
         if not check:
             bdf.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "UVData load Failed "
         printMess(mess, logfile)
     else:
@@ -944,7 +947,7 @@ def EVLAUVLoadArch(dataroot, Aname, Aclass, Adisk, Aseq, err, \
     listr = ObitTask.ObitTask("Lister")
     try:
         listr.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     setname(outuv,listr)
     listr.taskLog  = logfile
@@ -953,8 +956,8 @@ def EVLAUVLoadArch(dataroot, Aname, Aclass, Adisk, Aseq, err, \
     try:
         if not check:
             listr.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Lister Failed retCode="+str(listr.retCode)
         printMess(mess, logfile)
     else:
@@ -987,7 +990,7 @@ def EVLAHann(inUV, Aname, Aclass, Adisk, Aseq, err, doDescm=True, \
     hann=ObitTask.ObitTask("Hann")
     try:
         hann.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     setname(inUV,hann)
     if check:
@@ -1006,8 +1009,8 @@ def EVLAHann(inUV, Aname, Aclass, Adisk, Aseq, err, doDescm=True, \
     try:
         if not check:
             hann.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Median flagging Failed retCode="+str(hann.retCode)
         printMess(mess, logfile)
         return None
@@ -1049,9 +1052,9 @@ def EVLAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
     #
     # Checks
     if not Image.PIsA(inImage):
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Deblank filename
     fn = re.sub('\s','_',filename)
@@ -1120,9 +1123,9 @@ def EVLAUVFITS(inUV, filename, outDisk, err, compress=False, \
 
     # Checks
     if not UV.PIsA(inUV):
-        raise TypeError,"inUV MUST be a Python Obit UV"
+        raise TypeError("inUV MUST be a Python Obit UV")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Deblank filename
     fn = re.sub('\s','_',filename)
@@ -1183,9 +1186,9 @@ def EVLAUVFITSTab(inUV, filename, outDisk, err, \
     printMess(mess, logfile)
     # Checks
     if not UV.PIsA(inUV):
-        raise TypeError,"inUV MUST be a Python Obit UV"
+        raise TypeError("inUV MUST be a Python Obit UV")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Deblank filename
     fn = re.sub('\s','_',filename)
@@ -1237,7 +1240,7 @@ def EVLADropChan(uv, BChDrop, EChDrop, err, flagVer=2, \
                  Reason="End Channels")
     if EChDrop>0:
         d     = uv.Desc.Dict
-        nchan = d["inaxes"][d["jlocf"]]
+        nchan = int(d["inaxes"][d["jlocf"]])
         ch = nchan - EChDrop + 1
         UV.PFlag(uv,err,flagVer=flagVer, Chans=[ch, nchan], IFs=[1,0], \
                  Reason="End Channels")
@@ -1285,7 +1288,7 @@ def EVLAMedianFlag(uv, target, err, \
     medn=ObitTask.ObitTask("MednFlag")
     try:
         medn.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     setname(uv,medn)
     if type(target)==list:
@@ -1315,8 +1318,8 @@ def EVLAMedianFlag(uv, target, err, \
     try:
         if not check:
             medn.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Median flagging Failed retCode="+str(medn.retCode)
         printMess(mess, logfile)
         return 1
@@ -1364,7 +1367,7 @@ def EVLAQuack(uv, err, \
     quack=ObitTask.ObitTask("Quack")
     try:
         quack.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     
     if not check:
@@ -1389,8 +1392,8 @@ def EVLAQuack(uv, err, \
     try:
         if not check:
             quack.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Quack Failed retCode= "+str(quack.retCode)
         printMess(mess, logfile)
         return 1
@@ -1421,7 +1424,7 @@ def EVLAShadow(uv, err, shadBl=25.0, flagVer=2, \
     uvflg=ObitTask.ObitTask("UVFlag")
     try:
         uvflg.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     
     if not check:
@@ -1439,8 +1442,8 @@ def EVLAShadow(uv, err, shadBl=25.0, flagVer=2, \
     try:
         if not check:
             uvflg.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "UVFlag Failed retCode= "+str(uvflg.retCode)
         printMess(mess, logfile)
         return 1
@@ -1500,7 +1503,7 @@ def EVLAAutoFlag(uv, target, err, \
     ################################################################
     # Test if full poln
     d     = uv.Desc.Dict
-    nstoke = d["inaxes"][d["jlocs"]]
+    nstoke = int(d["inaxes"][d["jlocs"]])
     if nstoke<4:
         XClip = None    # No X clip if not full poln
     # Anything requested?
@@ -1514,7 +1517,7 @@ def EVLAAutoFlag(uv, target, err, \
     af=ObitTask.ObitTask("AutoFlag")
     try:
         af.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     if not check:
         setname(uv,af)
@@ -1555,8 +1558,8 @@ def EVLAAutoFlag(uv, target, err, \
     try:
         if not check:
             af.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "AutoFlag Failed retCode="+str(af.retCode)
         printMess(mess, logfile)
         return 1
@@ -1596,7 +1599,7 @@ def EVLASrvrEdt(uv, err, minOK=[0.1,0.1], flagTab=2, target=None, \
     se=ObitTask.ObitTask("SrvrEdt")
     try:
         se.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     
     if not check:
@@ -1622,8 +1625,8 @@ def EVLASrvrEdt(uv, err, minOK=[0.1,0.1], flagTab=2, target=None, \
     try:
         if not check:
             se.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "UVFlag Failed retCode= "+str(se.retCode)
         printMess(mess, logfile)
         return 1
@@ -1651,7 +1654,7 @@ def EVLAPACor(uv, err, CLver=0, FreqID=0,\
     ################################################################
     # Don't bother if not full polarization
     d     = uv.Desc.Dict
-    nstoke = d["inaxes"][d["jlocs"]]
+    nstoke = int(d["inaxes"][d["jlocs"]])
     if nstoke<4:
         mess = "Skip Parallactic angle corrections - not full stokes"
         printMess(mess, logfile)
@@ -1679,7 +1682,7 @@ def EVLAPACor(uv, err, CLver=0, FreqID=0,\
     clcor = ObitTask.ObitTask("CLCor")
     try:
         clcor.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     if not check:
         setname(uv,clcor)
@@ -1696,8 +1699,8 @@ def EVLAPACor(uv, err, CLver=0, FreqID=0,\
     try:
         if not check:
             clcor.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "CLCor Failed "
         printMess(mess, logfile)
         return 1
@@ -1762,7 +1765,7 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
     calib = ObitTask.ObitTask("Calib")
     try:
         calib.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     OK = False   # Must have some work
     calib.taskLog  = logfile
@@ -1787,7 +1790,7 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
 
     # Loop over calibrators
     for DlyCal in DlyCals:
-        print "DlyCal",DlyCal
+        print("DlyCal",DlyCal)
         calib.Sources[0]= DlyCal["Source"]
         calib.DataType2 = DlyCal["CalDataType"]
         calib.in2File   = DlyCal["CalFile"]
@@ -1817,8 +1820,8 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
             printMess(mess, logfile)
             if not check:
                 calib.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "Calib Failed retCode= "+str(calib.retCode)+" Source "+calib.Sources[0]
             printMess(mess, logfile)
             #return None  # Allow some to fail
@@ -1844,7 +1847,7 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
         sncor = ObitTask.ObitTask("SNCor")
         try:
             sncor.userno     = OSystem.PGetAIPSuser()   # This sometimes gets lost
-        except Exception, exception:
+        except Exception as exception:
             pass
         if not check:
             setname(uv, sncor)
@@ -1861,8 +1864,8 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
         try:
             if not check:
                 sncor.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "SNCor Failed retCode="+str(sncor.retCode)
             printMess(mess, logfile)
             return 1
@@ -1875,7 +1878,7 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
         snsmo = ObitTask.ObitTask("SNSmo")
         try:
             snsmo.userno     = OSystem.PGetAIPSuser()   # This sometimes gets lost
-        except Exception, exception:
+        except Exception as exception:
             pass
         if not check:
             setname(uv, snsmo)
@@ -1901,8 +1904,8 @@ def EVLADelayCal(uv,DlyCals,  err, solInt=0.5, smoTime=10.0, \
         try:
             if not check:
                 snsmo.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "SNSmo Failed retCode="+str(snsmo.retCode)
             printMess(mess, logfile)
             return 1
@@ -1992,7 +1995,7 @@ def EVLASYCal(uv, err, SYVer=1,  SYOut=0, calInt=0.1, applyOnly=False, \
     sygain = ObitTask.ObitTask("SYGain")
     try:
         sygain.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     OK = False   # Must have some work
     sygain.taskLog  = logfile
@@ -2025,8 +2028,8 @@ def EVLASYCal(uv, err, SYVer=1,  SYOut=0, calInt=0.1, applyOnly=False, \
         printMess(mess, logfile)
         if not check:
             sygain.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Sygain Failed retCode= "+str(sygain.retCode)+" Source "+sygain.Sources[0]
         printMess(mess, logfile)
             #return None  # Allow some to fail
@@ -2136,7 +2139,7 @@ def EVLACalAP(uv, target, ACals, err, \
     setjy = ObitTask.ObitTask("SetJy")
     try:
         setjy.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     setjy.taskLog  = logfile
     if not check:
@@ -2164,8 +2167,8 @@ def EVLACalAP(uv, target, ACals, err, \
         try:
             if not check:
                 setjy.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "SetJy Failed retCode="+str(setjy.retCode)+" for "+setjy.Sources[0]
             printMess(mess, logfile)
             # return 1  # allow some failures
@@ -2210,8 +2213,8 @@ def EVLACalAP(uv, target, ACals, err, \
                 try:
                     if not check:
                         setjy.g
-                except Exception, exception:
-                    print exception
+                except Exception as exception:
+                    print(exception)
                     mess = "SetJy Failed retCode="+str(setjy.retCode)
                     printMess(mess, logfile)
                     return 1
@@ -2222,7 +2225,7 @@ def EVLACalAP(uv, target, ACals, err, \
     calib = ObitTask.ObitTask("Calib")
     try:
         calib.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     calib.taskLog  = logfile
     if not check:
@@ -2276,8 +2279,8 @@ def EVLACalAP(uv, target, ACals, err, \
             printMess(mess, logfile)
             if not check:
                 calib.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "Calib Failed retCode= "+str(calib.retCode)+" Source "+calib.Sources[0]
             printMess(mess, logfile)
             #return 1  # allow some failures
@@ -2295,7 +2298,7 @@ def EVLACalAP(uv, target, ACals, err, \
     clcal = ObitTask.ObitTask("CLCal")
     try:
         clcal.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     clcal.taskLog  = logfile
     ical = 0
@@ -2360,8 +2363,8 @@ def EVLACalAP(uv, target, ACals, err, \
                 printMess(mess, logfile)
                 if not check:
                     calib.g
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
                 mess = "Calib Failed retCode= "+str(calib.retCode)+" Source "+calib.Sources[0]
                 printMess(mess, logfile)
                 #return 1   # Allow some to fail
@@ -2388,7 +2391,7 @@ def EVLACalAP(uv, target, ACals, err, \
     getjy = ObitTask.ObitTask("GetJy")
     try:
         getjy.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     getjy.taskLog  = logfile
     ical = 0; isou = 0
@@ -2421,8 +2424,8 @@ def EVLACalAP(uv, target, ACals, err, \
     try:
         if not check:
             getjy.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "GetJy Failed retCode="+str(getjy.retCode)
         printMess(mess, logfile)
         return 1
@@ -2450,7 +2453,7 @@ def EVLACalAP(uv, target, ACals, err, \
         snsmo=ObitTask.ObitTask("SNSmo")
         try:
             snsmo.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-        except Exception, exception:
+        except Exception as exception:
             pass
         snsmo.taskLog  = logfile
         if not check:
@@ -2473,8 +2476,8 @@ def EVLACalAP(uv, target, ACals, err, \
         try:
             if not check:
                 snsmo.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "SNSmo Failed retCode="+str(snsmo.retCode)
             printMess(mess, logfile)
             return 1
@@ -2537,8 +2540,8 @@ def EVLACalAP(uv, target, ACals, err, \
     try:
         if not check:
             clcal.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "clcal Failed retCode="+str(clcal.retCode)
         printMess(mess, logfile)
         return 1
@@ -2591,8 +2594,8 @@ def EVLACalAP(uv, target, ACals, err, \
     try:
         if not check:
             clcal.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "clcal Failed retCode="+str(clcal.retCode)
         printMess(mess, logfile)
         return 1
@@ -2677,7 +2680,7 @@ def EVLABPCal(uv, BPCals, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
     bpass = ObitTask.ObitTask("BPass")
     try:
         bpass.userno  = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     OK = False   # Must have some work
     bpass.taskLog = logfile
@@ -2708,15 +2711,15 @@ def EVLABPCal(uv, BPCals, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
     # Channel selection
     if not check:
         d     = uv.Desc.Dict
-        nchan = d["inaxes"][d["jlocf"]]
+        nchan = int(d["inaxes"][d["jlocf"]])
     else:
         nchan = 1
     # Center fraction requested?
     if doCenter1:
         # Center doCenter1 fraction of channels for first cal
         mchan = int(nchan*doCenter1)
-        bpass.BChan1 = max(1, (nchan/2)-(mchan/2))
-        bpass.EChan1 = min(nchan, (nchan/2)+(mchan/2))
+        bpass.BChan1 = max(1, int(nchan//2)-int(mchan//2))
+        bpass.EChan1 = min(nchan, int(nchan//2)+int(mchan//2))
     else:
         bpass.BChan1 = BChan1
         bpass.EChan1 = EChan1
@@ -2755,8 +2758,8 @@ def EVLABPCal(uv, BPCals, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
             if not check:
                 bpass.g
                 pass
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "BPass Failed retCode="+str(bpass.retCode)
             printMess(mess, logfile)
             #return 1
@@ -2829,7 +2832,7 @@ def EVLASplit(uv, target, err, FQid=1, outClass="      ", logfile = "", \
     split=ObitTask.ObitTask("Split")
     try:
         split.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     split.taskLog = logfile
     if not check:
@@ -2851,8 +2854,8 @@ def EVLASplit(uv, target, err, FQid=1, outClass="      ", logfile = "", \
     try:
         if not check:
             split.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "split Failed retCode="+str(split.retCode)
         printMess(mess, logfile)
         return 1
@@ -2907,7 +2910,7 @@ def EVLACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
     splat=ObitTask.ObitTask("Splat")
     try:
         splat.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     splat.taskLog = logfile
     if not check:
@@ -2940,8 +2943,8 @@ def EVLACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
         if not check:
             splat.g
             pass
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Splat Failed retCode="+str(splat.retCode)
         printMess(mess, logfile)
         return 1
@@ -2956,7 +2959,7 @@ def EVLACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
         try:
             uvc = UV.newPAUV("AIPS UV DATA", splat.inName, avgClass, splat.inDisk, avgSeq, True, err)
             if err.isErr:
-                print "Error creating cal/avg AIPS data"
+                print("Error creating cal/avg AIPS data")
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
             # Dummy CL table
             solint = splat.timeAvg * 2   # CL table interval twice averaging
@@ -2968,18 +2971,18 @@ def EVLACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
                 UV.PTableCLGetDummy(uvc, uvc, 0, err, solInt=solint)
                 pass
             if err.isErr:
-                print "Error creating cal/avg AIPS data CL table"
+                print("Error creating cal/avg AIPS data CL table")
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data CL table")
             # Index - now in Splat
             #UV.PUtilIndex (uvc, err)
             # Zap any SY tables
             z=uvc.ZapTable("AIPS SY",-1,err)
             if err.isErr:
-                print  "Error indexing cal/avg AIPS data"
+                print("Error indexing cal/avg AIPS data")
                 OErr.printErrMsg(err, "Error indexing cal/avg AIPS data")
             del uvc
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             OErr.printErr(err)
             mess = "Indexing or creating CL table failed"
             printMess(mess, logfile)
@@ -3050,7 +3053,7 @@ def EVLACalAvg2(uv, avgClass, avgSeq, CalAvgTime,  err,  FQid=0, \
         uv.Close(err)
         #outuv.Header(err) # debug
         if err.isErr:
-            print "Error creating cal/avg AIPS uv data"
+            print("Error creating cal/avg AIPS uv data")
             OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
     
     # Average
@@ -3064,7 +3067,7 @@ def EVLACalAvg2(uv, avgClass, avgSeq, CalAvgTime,  err,  FQid=0, \
             info.set("Compress", Compress,)
             UV.PUtilAvgT (uv, outuv, err, timeAvg=CalAvgTime/60.)
             if err.isErr:
-                print "Error cal/avg AIPS uv data"
+                print("Error cal/avg AIPS uv data")
                 OErr.printErrMsg(err, "Error cal/avg AIPS data")
                 
 
@@ -3100,11 +3103,11 @@ def EVLACalAvg2(uv, avgClass, avgSeq, CalAvgTime,  err,  FQid=0, \
             outHistory.Close(err)
             #print "DEBUG Copy history done"
             if err.isErr:
-                print "Error cal/avg History"
+                print("Error cal/avg History")
                 OErr.printErrMsg(err, "Error cal/avg History")
                 # end copy+history
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             OErr.printErr(err)
             mess = "Calibrate and average uv data failed"
             printMess(mess, logfile)
@@ -3119,15 +3122,15 @@ def EVLACalAvg2(uv, avgClass, avgSeq, CalAvgTime,  err,  FQid=0, \
             solint = 2 * CalAvgTime/60.   # CL table interval twice averaging
             UV.PTableCLGetDummy(outuv, outuv, 0, err, solInt=solint)
             if err.isErr:
-                print "Error creating cal/avg AIPS data CL table"
+                print("Error creating cal/avg AIPS data CL table")
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data CL table")
             # Index
             UV.PUtilIndex (outuv, err)
             if err.isErr:
-                print  "Error indexing cal/avg AIPS data"
+                print("Error indexing cal/avg AIPS data")
                 OErr.printErrMsg(err, "Error indexing cal/avg AIPS data")
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             OErr.printErr(err)
             mess = "Indexing or creating CL table failed"
             printMess(mess, logfile)
@@ -3157,7 +3160,7 @@ def EVLASetImager (uv, target, outIclass="", nThreads=1, noScrat=[], logfile = "
     img = ObitTask.ObitTask("MFImage")
     try:
         img.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     img.taskLog = logfile
     if not check:
@@ -3237,7 +3240,7 @@ def EVLARLDelay(uv, err, \
     ################################################################
     # Don't bother if not full polarization
     d     = uv.Desc.Dict
-    nstoke = d["inaxes"][d["jlocs"]]
+    nstoke = int(d["inaxes"][d["jlocs"]])
     if nstoke<4:
         mess = "Skip XPol delay corrections - not full stokes"
         printMess(mess, logfile)
@@ -3250,7 +3253,7 @@ def EVLARLDelay(uv, err, \
     rldly=ObitTask.ObitTask("RLDly")
     try:
         rldly.userno  = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     rldly.taskLog = logfile
     if not check:
@@ -3284,15 +3287,15 @@ def EVLARLDelay(uv, err, \
         mess =  "R-L delay calibration using "+rldly.Sources[0]
         printMess(mess, logfile)
         if debug:
-            print "timerange", rldly.timerang
+            print("timerange", rldly.timerang)
             rldly.i
             rldly.debug = True
         # Trap failure
         try:
             if not check:
                 rldly.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "rldly Failed retCode="+str(rldly.retCode)
             printMess(mess, logfile)
             #return 1
@@ -3374,7 +3377,7 @@ def EVLAPolCal(uv, InsCals, err, InsCalPoln=None, \
     ################################################################
     # Don't bother if not full polarization
     d     = uv.Desc.Dict
-    nstoke = d["inaxes"][d["jlocs"]]
+    nstoke = int(d["inaxes"][d["jlocs"]])
     if nstoke<4:
         mess = "Skip Instrumental polarization corrections - not full stokes"
         printMess(mess, logfile)
@@ -3386,7 +3389,7 @@ def EVLAPolCal(uv, InsCals, err, InsCalPoln=None, \
         pcal = ObitTask.ObitTask("PCal")
         try:
             pcal.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-        except Exception, exception:
+        except Exception as exception:
             pass
         pcal.logFile = logfile
         if not check:
@@ -3452,8 +3455,8 @@ def EVLAPolCal(uv, InsCals, err, InsCalPoln=None, \
         try:
             if not check:
                 pcal.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "PCal Failed retCode="+str(pcal.retCode)
             printMess(mess, logfile)
             return 1
@@ -3522,7 +3525,7 @@ def EVLARLCal(uv, err, \
     ################################################################
     # Don't bother if not full polarization
     d     = uv.Desc.Dict
-    nstoke = d["inaxes"][d["jlocs"]]
+    nstoke = int(d["inaxes"][d["jlocs"]])
     if nstoke<4:
         mess = "Skip R-L polarization corrections - not full stokes"
         printMess(mess, logfile)
@@ -3537,7 +3540,7 @@ def EVLARLCal(uv, err, \
         rlpass=ObitTask.ObitTask("RLPass")
         try:
             rlpass.userno  = OSystem.PGetAIPSuser()   # This sometimes gets lost
-        except Exception, exception:
+        except Exception as exception:
             pass
         rlpass.taskLog = logfile
         if not check:
@@ -3578,15 +3581,15 @@ def EVLARLCal(uv, err, \
                 mess =  "R-L channel phase calibration using "+rlpass.Sources[0]
                 printMess(mess, logfile)
                 if debug:
-                    print "timerange", rlpass.timerang
+                    print("timerange", rlpass.timerang)
                     rlpass.i
                     rlpass.debug = True
                 # Trap failure
                 try:
                     if not check:
                         rlpass.g
-                except Exception, exception:
-                    print exception
+                except Exception as exception:
+                    print(exception)
                     mess = "rlpass Failed retCode="+str(rlpass.retCode)
                     printMess(mess, logfile)
                     return 1
@@ -3607,7 +3610,7 @@ def EVLARLCal(uv, err, \
         img = ObitTask.ObitTask("Imager")
         try:
             img.userno     = OSystem.PGetAIPSuser()   # This sometimes gets lost
-        except Exception, exception:
+        except Exception as exception:
             pass
         img.taskLog    = logfile
         if not check:
@@ -3661,7 +3664,7 @@ def EVLARLCal(uv, err, \
         if not check:
             h = uv.Desc.Dict
             if h["jlocif"]>=0:
-                nif = h["inaxes"][h["jlocif"]]
+                nif = int(h["inaxes"][["jlocif"]])
             else:
                 nif = 1
         else:
@@ -3689,8 +3692,8 @@ def EVLARLCal(uv, err, \
             try:
                 if not check:
                     img.g
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
                 mess = "Imager Failed IF "+str(iif)+" retCode="+str(img.retCode)
                 printMess(mess, logfile)
                 failed = True
@@ -3721,8 +3724,8 @@ def EVLARLCal(uv, err, \
                 if cno >= 0 :
                     x =  Image.newPAImage("I",outName[0:12], outClass[0:6], outDisk,outSeq,True,err)
                     h = x.Desc.Dict
-                    blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
-                    trc = [3*h["inaxes"][0]/4,3*h["inaxes"][1]/4]
+                    blc = [int(h["inaxes"][0]//4),int(h["inaxes"][1]//4)]
+                    trc = [int(3*h["inaxes"][0]//4),int(3*h["inaxes"][1]//4)]
                     try:
                         stat = imstat(x, err, blc=blc,trc=trc,logfile=None)
                         IFlux.append(stat["Flux"])
@@ -3741,8 +3744,8 @@ def EVLARLCal(uv, err, \
                 if cno > 0 :
                     x =  Image.newPAImage("Q",outName[0:12], outClass[0:6], outDisk,outSeq,True,err)
                     h = x.Desc.Dict
-                    blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
-                    trc = [3*h["inaxes"][0]/4,3*h["inaxes"][1]/4]
+                    blc = [int(h["inaxes"][0]//4),int(h["inaxes"][1]//4)]
+                    trc = [int(3*h["inaxes"][0]//4),int(3*h["inaxes"][1]//4)]
                     try:
                         stat = imstat(x, err, blc=blc,trc=trc,logfile=None)
                         QFlux.append(stat["Flux"])
@@ -3761,8 +3764,8 @@ def EVLARLCal(uv, err, \
                 if cno > 0 :
                     x =  Image.newPAImage("U",outName[0:12], outClass[0:6], outDisk,outSeq,True,err)
                     h = x.Desc.Dict
-                    blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
-                    trc = [3*h["inaxes"][0]/4,3*h["inaxes"][1]/4]
+                    blc = [int(h["inaxes"][0]//4),int(h["inaxes"][1]//4)]
+                    trc = [int(3*h["inaxes"][0]//4),int(3*h["inaxes"][1]//4)]
                     try:
                         stat = imstat(x, err, blc=blc,trc=trc,logfile=None)
                         UFlux.append(stat["Flux"])
@@ -3789,8 +3792,8 @@ def EVLARLCal(uv, err, \
                 outFile = re.sub('\s','_',outFile) # Deblank filename
                 x =  Image.newPFImage("I",outFile,img.outDisk,True,err)
                 h = x.Desc.Dict
-                blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
-                trc = [3*h["inaxes"][0]/4,3*h["inaxes"][1]/4]
+                blc = [int(h["inaxes"][0]//4),int(h["inaxes"][1]//4)]
+                trc = [int(3*h["inaxes"][0]//4),int(3*h["inaxes"][1]//4)]
                 stat = imstat(x, err, blc=blc,trc=trc,logfile=None)
                 IFlux.append(stat["Flux"])
                 IRMS.append(stat["RMSHist"])
@@ -3848,14 +3851,14 @@ def EVLARLCal(uv, err, \
             EVLACopyTable (uv, uv, "AIPS CL", err, inVer=hiCL, outVer=hiCL+1, \
                            logfile=logfile, check=check, debug=debug)
         if err.isErr:
-            print  "Error copying CL Table"
+            print("Error copying CL Table")
             return 1
         
         # Apply R-L phase corrections
         clcor = AIPSTask.AIPSTask("clcor")
         try:
             clcor.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-        except Exception, exception:
+        except Exception as exception:
             pass
         clcor.logFile  = logfile
         if not check:
@@ -3871,8 +3874,8 @@ def EVLARLCal(uv, err, \
         try:
             if not check:
                 clcor.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "CLCOR Failed retCode="+str(clcor.retCode)
             printMess(mess, logfile)
             return 1
@@ -3958,7 +3961,7 @@ def EVLARLCal2(uv, err, uv2 = None, \
         rldly=ObitTask.ObitTask("rldly")
         try:
             rldly.userno  = OSystem.PGetAIPSuser()   # This sometimes gets lost
-        except Exception, exception:
+        except Exception as exception:
             pass
         rldly.logFile = logfile
         if not check:
@@ -3989,14 +3992,14 @@ def EVLARLCal2(uv, err, uv2 = None, \
         rldly.refant  = refAnt
         rldly.solint  = dataInt
         if debug:
-            print "timerange", rldly.timerang
+            print("timerange", rldly.timerang)
             rldly.i
         # Trap failure
         try:
             if not check:
                 rldly.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "rldly Failed retCode="+str(rldly.retCode)
             printMess(mess, logfile)
             return 1
@@ -4017,7 +4020,7 @@ def EVLARLCal2(uv, err, uv2 = None, \
         img = ObitTask.ObitTask("Imager")
         try:
             img.userno     = OSystem.PGetAIPSuser()   # This sometimes gets lost
-        except Exception, exception:
+        except Exception as exception:
             pass
         img.taskLog    = logfile
         if not check:
@@ -4055,7 +4058,7 @@ def EVLARLCal2(uv, err, uv2 = None, \
         if not check:
             h = uv.Desc.Dict
             if h["jlocif"]>=0:
-                nif = h["inaxes"][h["jlocif"]]
+                nif = int(h["inaxes"][["jlocif"]])
             else:
                 nif = 1
         else:
@@ -4088,8 +4091,8 @@ def EVLARLCal2(uv, err, uv2 = None, \
                 try:
                     if not check:
                         img.g
-                except Exception, exception:
-                    print exception
+                except Exception as exception:
+                    print(exception)
                     mess = "Imager Failed retCode="+str(img.retCode)
                     printMess(mess, logfile)
                     return 1
@@ -4108,8 +4111,8 @@ def EVLARLCal2(uv, err, uv2 = None, \
                     x =  Image.newPAImage("I",outName[0:12], outClass[0:6], outDisk,outSeq,True,err)
                     SumCC = EVLAGetSumCC (x,err)
                     h = x.Desc.Dict
-                    blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
-                    trc = [3*h["inaxes"][0]/4,3*h["inaxes"][1]/4]
+                    blc = [int(h["inaxes"][0]//4),int(h["inaxes"][1]//4)]
+                    trc = [int(3*h["inaxes"][0]//4),int(3*h["inaxes"][1]//4)]
                     stat = imstat(x, err, blc=blc,trc=trc, logfile=logfile)
                     IFlux.append(SumCC)
                     IRMS.append(stat["RMSHist"])
@@ -4147,8 +4150,8 @@ def EVLARLCal2(uv, err, uv2 = None, \
                     x =  Image.newPFImage("I",outFile,img.outDisk,True,err)
                     SumCC = EVLAGetSumCC (x,err)
                     h = x.Desc.Dict
-                    blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
-                    trc = [3*h["inaxes"][0]/4,3*h["inaxes"][1]/4]
+                    blc = [int(h["inaxes"][0]//4),int(h["inaxes"][1]//4)]
+                    trc = [int(3*h["inaxes"][0]//4),int(3*h["inaxes"][1]//4)]
                     stat = imstat(x, err, blc=blc,trc=trc, logfile=logfile)
                     IFlux.append(SumCC)
                     IRMS.append(stat["RMSHist"])
@@ -4254,7 +4257,7 @@ def EVLARLCal2(uv, err, uv2 = None, \
             EVLACopyTable (uv, uv2, "AIPS AN", err, \
                            logfile=logfile, check=check, debug=debug)
             if err.isErr:
-                print  "Error copying AN Table"
+                print("Error copying AN Table")
                 return 1
             
         # Copy CL table to be modified (CLCOR buggy)
@@ -4262,14 +4265,14 @@ def EVLARLCal2(uv, err, uv2 = None, \
             EVLACopyTable (uv, uv, "AIPS CL", err, inVer=hiCL, outVer=hiCL+1, \
                            logfile=logfile, check=check, debug=debug)
         if err.isErr:
-            print  "Error copying CL Table"
+            print("Error copying CL Table")
             return 1
         
         # Apply R-L phase corrections
         clcor = AIPSTask.AIPSTask("clcor")
         try:
             clcor.userno   = OSystem.PGetAIPSuser()   # This sometimes gets lost
-        except Exception, exception:
+        except Exception as exception:
             pass
         clcor.logFile  = logfile
         if not check:
@@ -4285,8 +4288,8 @@ def EVLARLCal2(uv, err, uv2 = None, \
         try:
             if not check:
                 clcor.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "CLCOR Failed retCode="+str(clcor.retCode)
             printMess(mess, logfile)
             return 1
@@ -4306,7 +4309,7 @@ def EVLARLCal2(uv, err, uv2 = None, \
                 EVLACopyTable (uv, uv, "AIPS CL", err, inVer=hiCL, outVer=hiCL+1, \
                                logfile=logfile, check=check, debug=debug)
                 if err.isErr:
-                    print  "Error copying CL Table"
+                    print("Error copying CL Table")
                     return 1
                 
                 clcor.gainver  = hiCL+1
@@ -4318,8 +4321,8 @@ def EVLARLCal2(uv, err, uv2 = None, \
             try:
                 if not check:
                     clcor.g
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
                 mess = "CLCOR Failed retCode="+str(clcor.retCode)
                 printMess(mess, logfile)
                 return 1
@@ -4439,8 +4442,8 @@ def EVLAReportTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", 
                 sdict["DecPnt"]  = hd["obsdec"]
                 sdict["Freq"]    = hd["crval"][hd["jlocf"]]
                 sdict["BW"]      = hd["cdelt"][hd["jlocf"]]
-            blc = [hd["inaxes"][0]/4,hd["inaxes"][1]/4]
-            trc = [3*hd["inaxes"][0]/4,3*hd["inaxes"][1]/4]
+            blc = [int(hd["inaxes"][0]//4),int(hd["inaxes"][1]//4)]
+            trc = [int(3*hd["inaxes"][0]//4),int(3*hd["inaxes"][1]//4)]
             stat = imstat(x,err,blc=blc,trc=trc)  # Image statistics inner quarter
             if abs(stat["Max"]) >  abs(stat["Min"]):
                 sdict[s+"Peak"] = stat["Max"]
@@ -4751,7 +4754,7 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
         imager = ObitTask.ObitTask("MFImage")
         try:
             imager.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-        except Exception, exception:
+        except Exception as exception:
             pass
         imager.norder = norder
         imager.maxFBW = maxFBW
@@ -4760,7 +4763,7 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
         imager = ObitTask.ObitTask("Imager")
         try:
             imager.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-        except Exception, exception:
+        except Exception as exception:
             pass
         imager.prtLv = 2
     imager.taskLog  = logfile
@@ -4851,8 +4854,8 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
         try:
             if not check:
                 imager.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "Imager Failed retCode= "+str(imager.retCode)
             printMess(mess, logfile)
             #return 1  Allow some failures
@@ -4882,8 +4885,8 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
                         printMess(mess, logfile)
                         #return 1
                     del u
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
                 mess = "Imager Cleanup Failed source= "+imager.Sources[0].strip()+"_"+band
                 printMess(mess, logfile)
                 OErr.PClear(err)     # Clear any message/error
@@ -4981,7 +4984,7 @@ def EVLAPlotTab(uv, inext, invers, err, \
     snplt = AIPSTask.AIPSTask("snplt")
     try:
         snplt.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     if not check:
         setname(uv,snplt)
@@ -5003,8 +5006,8 @@ def EVLAPlotTab(uv, inext, invers, err, \
     try:
         if not check:
             snplt.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "SNPLT Failed "
         printMess(mess, logfile)
         return 1
@@ -5048,14 +5051,14 @@ def EVLAPlotBPTab(uv, invers, err, inext = 'BP', \
     bplot = AIPSTask.AIPSTask("bplot")
     try:
         bplot.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     if not check:
         setname(uv,bplot)
     try:
         bplot.inext   = inext
         bplot.invers  = invers
-    except Exception, exception:
+    except Exception as exception:
         pass
     bplot.stokes  = stokes
     bplot.msgkill = 5        # Suppress blather
@@ -5070,8 +5073,8 @@ def EVLAPlotBPTab(uv, invers, err, inext = 'BP', \
     try:
         if not check:
             bplot.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "BPLOT Failed "
         printMess(mess, logfile)
         return 1
@@ -5126,7 +5129,7 @@ def EVLAWritePlots(uv, loPL, hiPL, plotFile, err, \
     lwpla = AIPSTask.AIPSTask("lwpla")
     try:
         lwpla.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     if not check:
         setname(uv,lwpla)
@@ -5141,8 +5144,8 @@ def EVLAWritePlots(uv, loPL, hiPL, plotFile, err, \
     try:
         if not check:
             lwpla.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Lwpla Failed - continuing anyway"
         printMess(mess, logfile)
         # return 1  # Continue in spite of lwpla failure
@@ -5212,8 +5215,8 @@ def EVLASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["RR","LL"], \
     # Trap failure
     try:
         uv.Copy(scr, err)
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Copy plot data failed - continuing"
         printMess(mess, logfile)
         return None
@@ -5246,7 +5249,7 @@ def EVLASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["RR","LL"], \
     possm = AIPSTask.AIPSTask("possm")
     try:
         possm.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     setname(scr, possm)
     source = [ Source ]           # get BP calibration source, in list format
@@ -5264,6 +5267,8 @@ def EVLASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["RR","LL"], \
     possm.solint   = solint       # time interval of plot
     possm.logFile  = logfile
     possm.msgkill  = 5            # Suppress blather as much as possible
+    if debug:
+        possm.i;tput(possm)
     # Loop over Stokes
     for s in Stokes:
         possm.stokes   = s
@@ -5271,8 +5276,8 @@ def EVLASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["RR","LL"], \
         try:
             if not check:
                 possm.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "POSSM Failed - continue anyway"
             printMess(mess, logfile)
             # return 1
@@ -5330,7 +5335,7 @@ def EVLAApplyCal(uv, err, SNver=0, CLin=0, CLout=0, maxInter=240.0, \
     clcal = ObitTask.ObitTask("CLCal")
     try:
         clcal.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     if not check:
         setname(uv,clcal)
@@ -5348,8 +5353,8 @@ def EVLAApplyCal(uv, err, SNver=0, CLin=0, CLout=0, maxInter=240.0, \
     try:
         if not check:
             clcal.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "CLCal Failed retCode="+str(clcal.retCode)
         printMess(mess, logfile)
         return 1
@@ -5453,7 +5458,7 @@ def EVLAEditSNAmp(uv, SNver, err, \
         if s!=None:
             t.append(s[1])
     t.sort()
-    RMS = t[len(t)/2]
+    RMS = t[int(len(t)//2)]
     mess = "Median RMS %f" % (RMS)
     printMess(mess, logfile)
     # Set clipping levels
@@ -5681,9 +5686,9 @@ def EVLASNAmpStats(uv, SNver, err, logfile='', check=False, debug=False):
         if len(amps[iif])>3:   # Need a min. amount of data
             amps[iif].sort()
             num  = len(amps[iif])
-            medn = amps[iif][num/2]
+            medn = amps[iif][int(num//2)]
             # inner 80% RMS about median
-            b = num/10; e = 9*num/10;
+            b = int(num//10); e = int(9*num//10);
             sum2 = 0.0; count = 0
             for i in range(b,e+1):
                 val    = amps[iif][i]-medn
@@ -5755,7 +5760,7 @@ def EVLABPAmpStats(uv, BPver, err, logfile='', check=False, debug=False):
     if debug:
         for i in range(0,nant):
             if len(amps[i])>3:
-                print "EVLABPAmpStats max/min Ant ",i+1,max(amps[i]), min(amps[i])
+                print("EVLABPAmpStats max/min Ant ",i+1,max(amps[i]), min(amps[i]))
  
     # Close table
     BPtab.Close(err)
@@ -5768,9 +5773,9 @@ def EVLABPAmpStats(uv, BPver, err, logfile='', check=False, debug=False):
         if len(amps[iant])>3:   # Need a min. amount of data
             amps[iant].sort()
             num  = len(amps[iant])
-            medn = amps[iant][num/2]
+            medn = amps[iant][int(num//2)]
             # inner half RMS about median
-            b = num/10; e = 9*num/10;
+            b = int(num//10); e = int(9*num//10);
             sum2 = 0.0; count = 0
             for i in range(b,e+1):
                 val    = amps[iant][i]-medn
@@ -5934,7 +5939,7 @@ def EVLAClipBPAmp(uv, BPver, arange, err, \
                             count += 1
                             dirty = True
                             if debug:
-                                print "EVLAClipBPAmp flag ant "+str(iant+1)+" pol 1 iif "+str(iif)+" amp "+str(amp)
+                                print("EVLAClipBPAmp flag ant "+str(iant+1)+" pol 1 iif "+str(iif)+" amp "+str(amp))
                      # Second Poln
                    if (npoln>1) and (BProw["REAL 2"][iif]!=fblank):
                        total += 1
@@ -5945,7 +5950,7 @@ def EVLAClipBPAmp(uv, BPver, arange, err, \
                            count += 1
                            dirty = True
                            if debug:
-                               print "EVLAClipBPAmp flag ant "+str(iant+1)+" pol 1 iif "+str(iif)+" amp "+str(amp)
+                               print("EVLAClipBPAmp flag ant "+str(iant+1)+" pol 1 iif "+str(iif)+" amp "+str(amp))
             # Rewrite if modified
             if dirty and not check:
                 BPTab.WriteRow(i+1, BProw, err)
@@ -6374,7 +6379,7 @@ def EVLAGetRefAnt(uv, Cals, err, solInt=10.0/60.0, flagVer=2,  nThreads=1, \
     calib = ObitTask.ObitTask("Calib")
     try:
         calib.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     calib.taskLog  = logfile
     if not check:
@@ -6389,7 +6394,7 @@ def EVLAGetRefAnt(uv, Cals, err, solInt=10.0/60.0, flagVer=2,  nThreads=1, \
     # Channel selection
     if not check:
         d     = uv.Desc.Dict
-        nchan = d["inaxes"][d["jlocf"]]
+        nchan =int( d["inaxes"][d["jlocf"]])
     else:
         nchan = 1
     # Number to drop off each end
@@ -6427,8 +6432,8 @@ def EVLAGetRefAnt(uv, Cals, err, solInt=10.0/60.0, flagVer=2,  nThreads=1, \
             if not check:
                 calib.g
                 pass
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "Calib Failed retCode= "+str(calib.retCode)+" Source "+calib.Sources[0]
             printMess(mess, logfile)
             #return 1  # allow some failures
@@ -6453,7 +6458,7 @@ def EVLAGetRefAnt(uv, Cals, err, solInt=10.0/60.0, flagVer=2,  nThreads=1, \
         printMess(mess, logfile)
         stats = EVLASNStats(uv, hiSN, 1.0, err, logfile=logfile, check=check, debug=debug)
         if err.isErr:
-            raise  RuntimeError,"Error finding reference antenna"
+            raise  RuntimeError("Error finding reference antenna")
         refAnt = stats["bestRef"]
         del stats
     else:
@@ -6729,14 +6734,14 @@ def EVLASNStats(uv, SNver, solInt, err, refAnts=[0], logfile='', check=False, de
             return badDict
     
     if debug:
-        print totAnt,"\n", snrAnt,"\n"
+        print(totAnt,"\n", snrAnt,"\n")
         for s in accum:
-            print s[0],s[1],s[2],s[3]
+            print(s[0],s[1],s[2],s[3])
 
     # Create output structure
     out = {"Source":souName, "souID":hi[0],"timeRange":hi[1], "Fract":hi[2], "SNR":hi[3], "bestRef":bestRef}
     if debug:
-        print "SN Info",out
+        print("SN Info",out)
     return out
     # end EVLASNStats
 
@@ -6758,7 +6763,7 @@ def EVLAMakeManifest( manifest=manifest ):
     srcFiles = [] # list of files to be copied
     for file in manifest['project']:
         srcFiles.append( file['name'] )
-    srcKeys = manifest['source'].keys()
+    srcKeys = list(manifest['source'].keys())
     for srcKey in srcKeys:
         for file in manifest['source'][ srcKey ]:    
             srcFiles.append( file['name'] )
@@ -7113,11 +7118,11 @@ def EVLAPrepare( ASDMRoot, err, \
     if not project:
         parts   = ASDMRoot.split(os.sep)
         project = parts[len(parts)-1].split('.')[0]
-    print "Project", project
+    print("Project", project)
     # Get config info and parameters
     fileList = EVLAParseASDM( ASDMRoot, err )
     # Loop over files
-    print "Start pipeline with command(s):"
+    print("Start pipeline with command(s):")
     for fileNum in range (0,len(fileList)):
         fileDict = fileList[fileNum]
         fileDict['project_code'] = project
@@ -7131,11 +7136,11 @@ def EVLAPrepare( ASDMRoot, err, \
         if doLow:
             # P band
             EVLALowBandMakeParmFile( parmList, parmFile, template=template )
-            print "ObitTalk EVLALowBandPipe.py AIPSSetup.py " + parmFile
+            print("ObitTalk EVLALowBandPipe.py AIPSSetup.py " + parmFile)
         else:
             # Cassegrain frequencies
             EVLAMakeParmFile( parmList, parmFile, template=template )
-            print "ObitTalk EVLAContPipe.py AIPSSetup.py " + parmFile
+            print("ObitTalk EVLAContPipe.py AIPSSetup.py " + parmFile)
 # end EVLAPrepare
 
 def EVLAWriteVOTable( projMeta, srcMeta, filename="votable.xml", logfile='' ):
@@ -7161,7 +7166,7 @@ def EVLAWriteVOTable( projMeta, srcMeta, filename="votable.xml", logfile='' ):
     vo.appendChild(rs2)
 
     # Write project metadata
-    keys = projMeta.keys()
+    keys = list(projMeta.keys())
     setAttribs = XMLSetAttributes # use short name - save space
     for key in keys:
         pr = doc.createElement("param")
@@ -7390,7 +7395,7 @@ def EVLAWriteVOTable( projMeta, srcMeta, filename="votable.xml", logfile='' ):
         vo.appendChild(rs3)
 
         # Src metadata
-        keys = src.keys()
+        keys = list(src.keys())
         for key in keys:
             pr = doc.createElement("param")
             if key == "ObsDate":
@@ -7572,7 +7577,7 @@ def EVLAAddOutFile( filename, target, description, logFile=""):
         if ( not d in projFiles ): # If file is not already in list     
             projFiles.append( d ) # Add file to project list
     else: # else, it is a single-source file
-        if srcFiles.has_key( target ): # If files already exist for this source
+        if target in srcFiles: # If files already exist for this source
             if ( not d in srcFiles[ target ] ): # If file is not already in list 
                 srcFiles[ target ].append( d ) # Add file to target list
         else:
@@ -7598,7 +7603,7 @@ def EVLAFetchOutFiles( pickleFile='manifest.pickle', logFile=None):
     notExists = [ file for file in manifest['project'] 
         if not os.path.exists( file['name'] ) ]
     for file in notExists:
-        print "Doesn't exist (project) " + file['name']
+        print("Doesn't exist (project) " + file['name'])
         mess = "WARN Pipeline manifest pickle points to non-existant project file: " \
                + file['name'] + "\n  Removing file from manifest."
         printMess(mess, logFile)
@@ -7607,13 +7612,13 @@ def EVLAFetchOutFiles( pickleFile='manifest.pickle', logFile=None):
     # Check single-source files
     srcFiles = manifest['source']
     srcFiles_copy = copy.deepcopy( srcFiles )
-    srcKeys = srcFiles.keys()
+    srcKeys = list(srcFiles.keys())
     for srcName in srcKeys:
         # Check files for each source
         for file in srcFiles_copy[ srcName ]: 
             if not os.path.exists( file['name'] ):
                 srcFiles[ srcName ].remove( file ) # remove from original
-                print "Doesn't exist (source) " + file['name']
+                print("Doesn't exist (source) " + file['name'])
                 mess = "WARN Pipeline manifest pickle points to non-existant source file: " \
                        + file['name'] + "\n  Removing file from manifest."
                 printMess(mess, logFile)
@@ -7673,7 +7678,7 @@ def EVLAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
     kntr = AIPSTask.AIPSTask("kntr")
     try:
         kntr.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     kntr.msgkill = 5
     kntr.dogrey  = 0
@@ -7692,7 +7697,7 @@ def EVLAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
     lwpla = AIPSTask.AIPSTask("lwpla")    
     try:
         lwpla.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     lwpla.msgkill = 5
    
@@ -7729,8 +7734,8 @@ def EVLAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
         try:
             if not check:
                 kntr.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "Kntr Failed - continuing anyway"
             printMess(mess, logfile)
         else:
@@ -7741,8 +7746,8 @@ def EVLAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
             try:
                 if not check:
                     lwpla.g
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
                 mess = "Lwpla Failed - continuing anyway"
                 printMess(mess, logfile)
             else:
@@ -7761,7 +7766,7 @@ def EVLAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
         cmd = 'pstops 1000:0 ' + outfile + ' > ' + tmpPS + ';' + \
             'ps2pdf ' + tmpPS + ' ' + tmpPDF + ';' + \
             'convert -density 96 ' + tmpPDF + ' ' + jpg
-        print cmd
+        print(cmd)
         rtn = os.system(cmd)
         if rtn == 0: 
             EVLAAddOutFile( jpg, name, "Contour plot (Stokes I)" )
@@ -7841,7 +7846,7 @@ def EVLADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
     uvplt = AIPSTask.AIPSTask("uvplt")
     try:
         uvplt.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     if not check:
         setname(uvAvg, uvplt)
@@ -7854,7 +7859,7 @@ def EVLADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
     lwpla = AIPSTask.AIPSTask("lwpla")
     try:
         lwpla.userno = OSystem.PGetAIPSuser()   # This sometimes gets lost
-    except Exception, exception:
+    except Exception as exception:
         pass
     lwpla.msgkill = 5 
     if not check:
@@ -7887,7 +7892,7 @@ def EVLADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
                 try:
                     uvplt.go()
                     lwpla.go()
-                except Exception, exception:
+                except Exception as exception:
                     mess = "ERROR Plotting failed - continuing anyway"
                     printMess(mess, logfile)
                     mess = "ERROR "+ str(exception)
@@ -8178,8 +8183,8 @@ def EVLASrcMetadata(uv, err,  FreqID=1, Sources=None, \
                 sdict["Freq"]    = hd["crval"][hd["jlocf"]]
                 sdict["BW"]      = hd["cdelt"][hd["jlocf"]]
                 sdict["Stokes"]  = Stokes
-            blc = [hd["inaxes"][0]/4,hd["inaxes"][1]/4]
-            trc = [3*hd["inaxes"][0]/4,3*hd["inaxes"][1]/4]
+            blc = [int(hd["inaxes"][0]//4),int(hd["inaxes"][1]//4)]
+            trc = [int(3*hd["inaxes"][0]/4),int(3*hd["inaxes"][1]//4)]
             stat = imstat(x,err,blc=blc,trc=trc)  # Image statistics inner quarter
             if abs(stat["Max"]) >  abs(stat["Min"]):
                 sdict[s+"Peak"] = stat["Max"]
@@ -8307,7 +8312,7 @@ table {
         s += "<tr>\n"
         if metadata['Source'] in manifest['source']:
             fileList = manifest['source'][ metadata['Source'] ]
-            tList = range(4)
+            tList = list(range(4))
             for f in fileList:
                 if f['name'].find('cntr.jpg') != -1: tList[0] = f
                 if f['name'].find('amp.jpg') != -1: tList[1] = f 
@@ -8343,7 +8348,7 @@ def writeTableRow( dict, keys=None ):
     * keys = dictionary keys to be written
     """
     if not keys:
-        keys = dict.keys()
+        keys = list(dict.keys())
         keys.sort()
     s = ""
     # Write a row of the HTML table for every key in keys.  Handle some key

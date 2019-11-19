@@ -4,7 +4,7 @@ This class provides values of the beam shape derived from an image
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2009
+#  Copyright (C) 2009,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -31,38 +31,17 @@ This class provides values of the beam shape derived from an image
 #-----------------------------------------------------------------------
 
 # Obit FullBeam
-import Obit, OErr, Image, InfoList
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, OErr, Image, InfoList
 
 # Python shadow class to ObitFullBeam class
 
 # class name in C
 myClass = "ObitFullBeam"
- 
-    
-class FullBeamPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.FullBeamUnref(Obit.FullBeam_me_get(self.this))
-            # In with the new
-            Obit.FullBeam_me_set(self.this,value)
-            return
-        # members
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != FullBeam:
-            return
-        if name == "me" : 
-            return Obit.FullBeam_me_get(self.this)
-        raise AttributeError,name
-    def __repr__(self):
-        if self.__class__ != FullBeam:
-            return
-        return "<C FullBeam instance> " + Obit.FullBeamGetName(self.me)
+     
 #
-class FullBeam(FullBeamPtr):
+class FullBeam(Obit.FullBeam):
     """
     Python Obit FullBeam class
     
@@ -73,23 +52,32 @@ class FullBeam(FullBeamPtr):
     FullBeam Members with python interfaces:
     """
     def __init__(self, name="no_name", image=None, err=None) :
-        self.this = Obit.new_FullBeam(name, image, err)
+        super(FullBeam, self).__init__()
+        Obit.CreateFullBean(self.this, name)
         self.myClass = myClass
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_FullBeam(self.this)
-    def cast(self, toClass):
-        """ Casts object pointer to specified class
-
-        * self     = object whose cast pointer is desired
-        * toClass  = Class string to cast to
-        """
-        ################################################################
-        # Get pointer with type of this class
-        out =  self.me
-        out = out.replace(self.myClass, toClass)
-        return out
-    # end cast
+    def __del__(self, DeleteFullBeam=_Obit.DeleteFullBeam):
+        if _Obit!=None:
+            DeleteFullBeam(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.FullBeamUnref(Obit.FullBeam_Get_me(self.this))
+            # In with the new
+            Obit.FullBeam_Set_me(self.this,value)
+            return
+        # members
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if not isinstance(self, FullBeam):
+            return "Bogus dude "+str(self.__class__)
+        if name == "me" : 
+            return Obit.FullBeam_Get_me(self.this)
+        raise AttributeError(name)
+    def __repr__(self):
+        if not isinstance(self, FullBeam):
+            return "Bogus dude "+str(self.__class__)
+        return "<C FullBeam instance> " + Obit.FullBeamGetName(self.me)
     
     def Gain (self, dra, ddec, parAng, plane, err):
         """
@@ -105,7 +93,7 @@ class FullBeam(FullBeamPtr):
         ################################################################
         # Checks
         if not PIsA(self):
-            raise TypeError,"self MUST be a Python Obit FullBeam"
+            raise TypeError("self MUST be a Python Obit FullBeam")
         return Obit.FullBeamValue(self.me, dra, ddec, parAng, plane, err.me)
     # end Gain
     
@@ -119,7 +107,7 @@ class FullBeam(FullBeamPtr):
         ################################################################
         # Checks
         if not PIsA(self):
-            raise TypeError,"self MUST be a Python Obit FullBeam"
+            raise TypeError("self MUST be a Python Obit FullBeam")
         return Obit.FullBeamFindPlane(self.me, freq)
     # end FindPlane
     
@@ -127,13 +115,13 @@ class FullBeam(FullBeamPtr):
         """
         Tells if input really a Python Obit FullBeam
         
-        return true, false (1,0)
+        return True, False
 
         * self   = Python FullBeam object
         """
         ################################################################
         # Allow derived types
-        return Obit.FullBeamIsA(self.cast(myClass))
+        return Obit.FullBeamIsA(self.me)!=0
         # end FullBeamIsA 
     # end class FullBeam
     
@@ -141,16 +129,16 @@ def PIsA (inFullBeam):
     """
     Tells if input really a Python Obit FullBeam
     
-    return True, False (1,0)
+    return True, False
 
     * inFullBeam   = Python FullBeam object
     """
     ################################################################
-    if inFullBeam.__class__ != FullBeam:
-        print "Actually",inFullBeam.__class__
-        return 0
+    if not isinstance(inFullBeam, FullBeam):
+        print("Actually",inFullBeam.__class__)
+        return False
     # Checks - allow inheritence
-    return Obit.FullBeamIsA(inFullBeam.me)
+    return Obit.FullBeamIsA(inFullBeam.me)!=0
     # end PIsA
 
 def PCreate (name, image, err):
@@ -166,9 +154,9 @@ def PCreate (name, image, err):
     ################################################################
     # Checks
     if not Image.PIsA(image):
-        raise TypeError,"image MUST be a Python Obit Image"
+        raise TypeError("image MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     out = FullBeam("None",image=image.me,err=err.me);
     out.me = Obit.FullBeamCreate(name, image.me, err.me)

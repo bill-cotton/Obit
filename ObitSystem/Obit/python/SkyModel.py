@@ -10,7 +10,7 @@ Mosaic    - ImageMosaic
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2007
+#  Copyright (C) 2004-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -37,44 +37,17 @@ Mosaic    - ImageMosaic
 #-----------------------------------------------------------------------
 
 # Obit SkyModel
-import Obit, OErr, ImageMosaic, InfoList, UV
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, OErr, ImageMosaic, InfoList, UV
 
 # Python shadow class to ObitSkyModel class
 
 # class name in C
 myClass = "ObitSkyModel"
  
-class SkyModelPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.SkyModelUnref(Obit.SkyModel_me_get(self.this))
-            # In with the new
-            Obit.SkyModel_me_set(self.this,value)
-            return
-        if name=="Mosaic":
-            PSetMosaic(self,value)
-            return
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != SkyModel:
-            return
-        if name == "me" : 
-            return Obit.SkyModel_me_get(self.this)
-        # Virtual members
-        if name=="List":
-            return PGetList(self)
-        if name=="Mosaic":
-            return PGetMosaic(self)
-        raise AttributeError,str(name)
-    def __repr__(self):
-        if self.__class__ != SkyModel:
-            return
-        return "<C SkyModel instance> " + Obit.SkyModelGetName(self.me)
 #
-class SkyModel(SkyModelPtr):
+class SkyModel(Obit.SkyModel):
     """ Python Obit SkyModel class
     
     This class contains a sky model and can Fourier transform it
@@ -86,11 +59,39 @@ class SkyModel(SkyModelPtr):
     Mosaic    - ImageMosaic
     """
     def __init__(self, name) :
-        self.this = Obit.new_SkyModel(name)
+        super(SkyModel, self).__init__()
+        Obit.CreateSkyModel(self.this, name)
         self.myClass = myClass
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_SkyModel(self.this)
+    def __del__(self, DeleteSkyModel=_Obit.DeleteSkyModel):
+        if _Obit!=None:
+            DeleteSkyModel(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.SkyModelUnref(Obit.SkyModel_Get_me(self.this))
+            # In with the new
+            Obit.SkyModel_Set_me(self.this,value)
+            return
+        if name=="Mosaic":
+            PSetMosaic(self,value)
+            return
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if not isinstance(self, SkyModel):
+            return "Bogus dude",str(self.__class__)
+        if name == "me" : 
+            return Obit.SkyModel_Get_me(self.this)
+        # Virtual members
+        if name=="List":
+            return PGetList(self)
+        if name=="Mosaic":
+            return PGetMosaic(self)
+        raise AttributeError(str(name))
+    def __repr__(self):
+        if not isinstance(self, SkyModel):
+            return "Bogus dude",str(self.__class__)
+        return "<C SkyModel instance> " + Obit.SkyModelGetName(self.me)
     def cast(self, toClass):
         """ Casts object pointer to specified class
         
@@ -98,10 +99,21 @@ class SkyModel(SkyModelPtr):
         toClass  = Class string to cast to
         """
         ################################################################
-        # Get pointer with type of this class
-        out =  self.me
-        out = out.replace(self.myClass, toClass)
-        return out
+         # by type first, the base class
+        try:
+            if Obit.SkyModelIsA(self.me)!=0:
+                # no need to recast
+                return self
+        except:
+            pass
+        # Try 0ther
+        try:
+            recast = self.Cast(toClass)
+            return recast
+        except:
+                pass
+        # If it gets here bail
+        raise TypeError("Unknown type to cast")
     # end cast
     
     # Input structure for subtraction
@@ -330,9 +342,9 @@ def input(inputDict):
     """
     ################################################################
     structure = inputDict['structure']  # Structure information
-    print 'Inputs for ',structure[0]
+    print('Inputs for ',structure[0])
     for k,v in structure[1]:
-        print '  ',k,' = ',inputDict[k],' : ',v
+        print('  ',k,' = ',inputDict[k],' : ',v)
         
     # end input
 
@@ -359,16 +371,12 @@ def PCopy (inSkyModel, outSkyModel, err):
     """
     ################################################################
     # Checks
-    if not PIsA(inSkyModel):
-        raise TypeError,"inSkyModel MUST be a Python Obit SkyModel"
-    if not PIsA(outSkyModel):
-        raise TypeError,"outSkyModel MUST be a Python Obit SkyModel"
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     smi = inSkyModel.cast(myClass)  # cast pointer
     smo = outSkyModel.cast(myClass)  # cast pointer
-    Obit.SkyModelCopy (smi, smo, err.me)
+    Obit.SkyModelCopy (smi.me, smo.me, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error copying SkyModel")
     # end PCopy
@@ -380,14 +388,9 @@ def PGetList (inSkyModel):
     inSkyModel  = Python SkyModel object
     """
     ################################################################
-     # Checks
-    if not PIsA(inSkyModel):
-        raise TypeError,"inSkyModel MUST be a Python Obit SkyModel"
-    #
     sm = inSkyModel.cast(myClass)  # cast pointer
     out    = InfoList.InfoList()
-    out.me = Obit.InfoListUnref(out.me)
-    out.me = Obit.SkyModelGetList(sm)
+    out.me = Obit.SkyModelGetList(sm.me)
     return out
     # end PGetList
 
@@ -398,13 +401,10 @@ def PGetMosaic (inSkyModel):
     inSkyModel  = Python SkyModel object
     """
     ################################################################
-     # Checks
-    if not PIsA(inSkyModel):
-        raise TypeError,"inSkyModel MUST be a Python Obit SkyModel"
     #
     out    = ImageMosaic.ImageMosaic("None", 1)
     sm = inSkyModel.cast(myClass)  # cast pointer
-    out.me = Obit.SkyModelGetImageMosaic(sm)
+    out.me = Obit.SkyModelGetImageMosaic(sm.me)
     return out
     # end PGetMosaic
 
@@ -416,13 +416,11 @@ def PSetMosaic (inSkyModel, mosaic):
     """
     ################################################################
     # Checks
-    if not PIsA(inSkyModel):
-        raise TypeError,"inSkyModel MUST be a Python ObitSkyModel"
     if not ImageMosaic.PIsA(mosaic):
-        raise TypeError,"array MUST be a Python Obit ImageMosaic"
+        raise TypeError("array MUST be a Python Obit ImageMosaic")
     #
     sm = inSkyModel.cast(myClass)  # cast pointer
-    Obit.SkyModelSetImageMosaic(sm, mosaic.me)
+    Obit.SkyModelSetImageMosaic(sm.me, mosaic.me)
     # end PSetMosaic
 
 def PCreate (name, mosaic):
@@ -435,7 +433,7 @@ def PCreate (name, mosaic):
     ################################################################
     # Checks
     if not ImageMosaic.PIsA(mosaic):
-        raise TypeError,"uvData MUST be a Python Obit UV"
+        raise TypeError("uvData MUST be a Python Obit UV")
     #
     out = SkyModel("None");
     out.me = Obit.SkyModelCreate(name, mosaic.me)
@@ -507,12 +505,10 @@ def PSubUV (err, input=UVSubInput):
     inSkyModel  = input["SkyModel"]
     outData     = input["OutData"]
     # Checks
-    if not PIsA(inSkyModel):
-        raise TypeError,"inSkyModel MUST be a Python Obit SkyModel"
     if not UV.PIsA(inData):
-        raise TypeError,"inData MUST be a Python Obit UV"
+        raise TypeError("inData MUST be a Python Obit UV")
     if not UV.PIsA(outData):
-        raise TypeError,"outData MUST be a Python Obit UV"
+        raise TypeError("outData MUST be a Python Obit UV")
     #
     dim = [1,1,1,1,1]
     #
@@ -524,26 +520,26 @@ def PSubUV (err, input=UVSubInput):
     InfoList.PPutBoolean (inInfo, "REPLACE",      dim, [input["REPLACE"]], err)
     # Put channel selection on uvdata or skymodel depending on doCalSelect
     if input["doCalSelect"]:
-        InfoList.PPutInt  (uvInfo, "BChan",           dim, [input["BChan"]],       err)
-        InfoList.PPutInt  (uvInfo, "EChan",           dim, [input["EChan"]],       err)
-        InfoList.PPutInt  (uvInfo, "BIF",             dim, [input["BIF"]],         err)
-        InfoList.PPutInt  (uvInfo, "EIF",             dim, [input["EIF"]],         err)
+        InfoList.PPutInt   (uvInfo, "BChan",           dim, [input["BChan"]],       err)
+        InfoList.PPutInt   (uvInfo, "EChan",           dim, [input["EChan"]],       err)
+        InfoList.PPutInt   (uvInfo, "BIF",             dim, [input["BIF"]],         err)
+        InfoList.PPutInt   (uvInfo, "EIF",             dim, [input["EIF"]],         err)
     else:
-        InfoList.PPutInt  (inInfo, "BChan",           dim, [input["BChan"]],       err)
-        InfoList.PPutInt  (inInfo, "EChan",           dim, [input["EChan"]],       err)
-        InfoList.PPutInt  (inInfo, "BIF",             dim, [input["BIF"]],         err)
-        InfoList.PPutInt  (inInfo, "EIF",             dim, [input["EIF"]],         err)
+        InfoList.PPutInt   (inInfo, "BChan",           dim, [input["BChan"]],       err)
+        InfoList.PPutInt   (inInfo, "EChan",           dim, [input["EChan"]],       err)
+        InfoList.PPutInt   (inInfo, "BIF",             dim, [input["BIF"]],         err)
+        InfoList.PPutInt   (inInfo, "EIF",             dim, [input["EIF"]],         err)
     itemp = int(input["doPol"])
-    InfoList.PPutInt  (uvInfo, "doPol",           dim, [itemp],                err)
-    InfoList.PPutInt  (uvInfo, "doCalib",         dim, [input["doCalib"]],     err)
-    InfoList.PPutInt  (uvInfo, "doBand",          dim, [input["doBand"]],      err)
-    InfoList.PPutInt  (uvInfo, "gainUse",         dim, [input["gainUse"]],     err)
-    InfoList.PPutInt  (uvInfo, "flagVer",         dim, [input["flagVer"]],     err)
-    InfoList.PPutInt  (uvInfo, "BLVer",           dim, [input["BLVer"]],       err)
-    InfoList.PPutInt  (uvInfo, "BPVer",           dim, [input["BPVer"]],       err)
-    InfoList.PPutInt  (uvInfo, "Subarray",        dim, [input["Subarray"]],    err)
-    InfoList.PPutInt  (uvInfo, "freqID",          dim, [input["freqID"]],      err)
-    InfoList.PPutInt  (uvInfo, "corrType",        dim, [input["corrType"]],    err)
+    InfoList.PPutInt   (uvInfo, "doPol",           dim, [itemp],                err)
+    InfoList.PPutInt   (uvInfo, "doCalib",         dim, [input["doCalib"]],     err)
+    InfoList.PPutInt   (uvInfo, "doBand",          dim, [input["doBand"]],      err)
+    InfoList.PPutInt   (uvInfo, "gainUse",         dim, [input["gainUse"]],     err)
+    InfoList.PPutInt   (uvInfo, "flagVer",         dim, [input["flagVer"]],     err)
+    InfoList.PPutInt   (uvInfo, "BLVer",           dim, [input["BLVer"]],       err)
+    InfoList.PPutInt   (uvInfo, "BPVer",           dim, [input["BPVer"]],       err)
+    InfoList.PPutInt   (uvInfo, "Subarray",        dim, [input["Subarray"]],    err)
+    InfoList.PPutInt   (uvInfo, "freqID",          dim, [input["freqID"]],      err)
+    InfoList.PPutInt   (uvInfo, "corrType",        dim, [input["corrType"]],    err)
     dim[0] = 4
     InfoList.PAlwaysPutString (inInfo, "Stokes",  dim, [input["Stokes"]])
     #InfoList.PAlwaysPutString (uvInfo, "Stokes",  dim, [input["Stokes"]])
@@ -554,13 +550,13 @@ def PSubUV (err, input=UVSubInput):
     dim[0] = 2
     InfoList.PPutFloat (uvInfo, "timeRange",      dim, input["timeRange"],     err)
     dim[0] = len(input["Antennas"])
-    InfoList.PAlwaysPutInt  (uvInfo, "Antennas",  dim, input["Antennas"])
+    InfoList.PAlwaysPutInt   (uvInfo, "Antennas",  dim, input["Antennas"])
     dim[0]=16;dim[1] = len(input["Sources"])
     InfoList.PAlwaysPutString  (uvInfo, "Sources", dim, input["Sources"])
     dim[0]=1;dim[1] = 1
     InfoList.PPutBoolean (inInfo, "do3D",          dim, [input["do3D"]], err)
-    InfoList.PPutInt   (inInfo, "ModelType",       dim, [input["Type"]],    err)
-    InfoList.PPutInt   (inInfo, "Mode",            dim, [input["Mode"]],    err)
+    InfoList.PPutInt    (inInfo, "ModelType",       dim, [input["Type"]],    err)
+    InfoList.PPutInt    (inInfo, "Mode",            dim, [input["Mode"]],    err)
     InfoList.PPutFloat (inInfo, "Factor",          dim, [input["Factor"]],    err)
     InfoList.PPutBoolean (inInfo, "PBCor",         dim, [input["PBCor"]], err)
     InfoList.PPutFloat (inInfo, "antSize",         dim, [input["antSize"]],    err)
@@ -572,20 +568,20 @@ def PSubUV (err, input=UVSubInput):
     InfoList.PAlwaysPutFloat (inInfo, "MODPTYPM",        dim, input["MODPTYPM"])
     if input["CCVer"]!=None:
         dim[0] = len(input["CCVer"])
-        InfoList.PAlwaysPutInt (inInfo, "CCVer", dim, input["CCVer"])
+        InfoList.PAlwaysPutInt  (inInfo, "CCVer", dim, input["CCVer"])
     if input["BComp"]!=None:
         dim[0] = len(input["BComp"])
-        InfoList.PAlwaysPutInt (inInfo, "BComp", dim, input["BComp"])
+        InfoList.PAlwaysPutInt  (inInfo, "BComp", dim, input["BComp"])
     if input["EComp"]!=None:
         dim[0] = len(input["EComp"])
-        InfoList.PAlwaysPutInt (inInfo, "EComp", dim, input["EComp"])
+        InfoList.PAlwaysPutInt  (inInfo, "EComp", dim, input["EComp"])
     #
     # show any errors 
     #OErr.printErrMsg(err, "UVSub: Error setting parameters")
     #
     # Do operation
     sm = inSkyModel.cast(myClass)  # cast pointer
-    Obit.SkyModelSubUV(sm, inData.me, outData.me, err.me)
+    Obit.SkyModelSubUV(sm.me, inData.me, outData.me, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error subtraction SkyModel from UV data")
     # end PSubUV
@@ -655,12 +651,10 @@ def PDivUV (err, input=UVDivInput):
     inSkyModel  = input["SkyModel"]
     outData     = input["OutData"]
     # Checks
-    if not PIsA(inSkyModel):
-        raise TypeError,"inSkyModel MUST be a Python Obit SkyModel"
     if not UV.PIsA(inData):
-        raise TypeError,"inData MUST be a Python Obit UV"
+        raise TypeError("inData MUST be a Python Obit UV")
     if not UV.PIsA(outData):
-        raise TypeError,"outData MUST be a Python Obit UV"
+        raise TypeError("outData MUST be a Python Obit UV")
     #
     #
     dim = [1,1,1,1,1]
@@ -673,26 +667,26 @@ def PDivUV (err, input=UVDivInput):
     InfoList.PPutBoolean (inInfo, "REPLACE",      dim, [input["REPLACE"]], err)
     # Put channel selection on uvdata or skymodel depending on doCalSelect
     if input["doCalSelect"]:
-        InfoList.PPutInt  (uvInfo, "BChan",           dim, [input["BChan"]],       err)
-        InfoList.PPutInt  (uvInfo, "EChan",           dim, [input["EChan"]],       err)
-        InfoList.PPutInt  (uvInfo, "BIF",             dim, [input["BIF"]],         err)
-        InfoList.PPutInt  (uvInfo, "EIF",             dim, [input["EIF"]],         err)
+        InfoList.PPutInt   (uvInfo, "BChan",           dim, [input["BChan"]],       err)
+        InfoList.PPutInt   (uvInfo, "EChan",           dim, [input["EChan"]],       err)
+        InfoList.PPutInt   (uvInfo, "BIF",             dim, [input["BIF"]],         err)
+        InfoList.PPutInt   (uvInfo, "EIF",             dim, [input["EIF"]],         err)
     else:
-        InfoList.PPutInt  (inInfo, "BChan",           dim, [input["BChan"]],       err)
-        InfoList.PPutInt  (inInfo, "EChan",           dim, [input["EChan"]],       err)
-        InfoList.PPutInt  (inInfo, "BIF",             dim, [input["BIF"]],         err)
-        InfoList.PPutInt  (inInfo, "EIF",             dim, [input["EIF"]],         err)
+        InfoList.PPutInt   (inInfo, "BChan",           dim, [input["BChan"]],       err)
+        InfoList.PPutInt   (inInfo, "EChan",           dim, [input["EChan"]],       err)
+        InfoList.PPutInt   (inInfo, "BIF",             dim, [input["BIF"]],         err)
+        InfoList.PPutInt   (inInfo, "EIF",             dim, [input["EIF"]],         err)
     itemp = int(input["doPol"])
-    InfoList.PPutInt  (uvInfo, "doPol",           dim, [itemp],                err)
-    InfoList.PPutInt  (uvInfo, "doCalib",         dim, [input["doCalib"]],     err)
-    InfoList.PPutInt  (uvInfo, "doBand",          dim, [input["doBand"]],      err)
-    InfoList.PPutInt  (uvInfo, "gainUse",         dim, [input["gainUse"]],     err)
-    InfoList.PPutInt  (uvInfo, "flagVer",         dim, [input["flagVer"]],     err)
-    InfoList.PPutInt  (uvInfo, "BLVer",           dim, [input["BLVer"]],       err)
-    InfoList.PPutInt  (uvInfo, "BPVer",           dim, [input["BPVer"]],       err)
-    InfoList.PPutInt  (uvInfo, "Subarray",        dim, [input["Subarray"]],    err)
-    InfoList.PPutInt  (uvInfo, "freqID",          dim, [input["freqID"]],      err)
-    InfoList.PPutInt  (uvInfo, "corrType",        dim, [input["corrType"]],    err)
+    InfoList.PPutInt   (uvInfo, "doPol",           dim, [itemp],                err)
+    InfoList.PPutInt   (uvInfo, "doCalib",         dim, [input["doCalib"]],     err)
+    InfoList.PPutInt   (uvInfo, "doBand",          dim, [input["doBand"]],      err)
+    InfoList.PPutInt   (uvInfo, "gainUse",         dim, [input["gainUse"]],     err)
+    InfoList.PPutInt   (uvInfo, "flagVer",         dim, [input["flagVer"]],     err)
+    InfoList.PPutInt   (uvInfo, "BLVer",           dim, [input["BLVer"]],       err)
+    InfoList.PPutInt   (uvInfo, "BPVer",           dim, [input["BPVer"]],       err)
+    InfoList.PPutInt   (uvInfo, "Subarray",        dim, [input["Subarray"]],    err)
+    InfoList.PPutInt   (uvInfo, "freqID",          dim, [input["freqID"]],      err)
+    InfoList.PPutInt   (uvInfo, "corrType",        dim, [input["corrType"]],    err)
     dim[0] = 4
     InfoList.PAlwaysPutString (uvInfo, "Stokes",        dim, [input["Stokes"]])
     dim[0]=16;dim[1] = len(input["Sources"])
@@ -704,13 +698,13 @@ def PDivUV (err, input=UVDivInput):
     dim[0] = 2
     InfoList.PPutFloat (uvInfo, "timeRange",      dim, input["timeRange"],     err)
     dim[0] = len(input["Antennas"])
-    InfoList.PAlwaysPutInt  (uvInfo, "Antennas",  dim, input["Antennas"])
+    InfoList.PAlwaysPutInt   (uvInfo, "Antennas",  dim, input["Antennas"])
     dim[0]=16;dim[1] = len(input["Sources"])
     InfoList.PAlwaysPutString  (uvInfo, "Sources", dim, input["Sources"])
     dim[0] = 1;dim[1] = 1
     InfoList.PPutBoolean (inInfo, "do3D",          dim, [input["do3D"]], err)
-    InfoList.PPutInt   (inInfo, "ModelType",       dim, [input["Type"]],    err)
-    InfoList.PPutInt   (inInfo, "Mode",            dim, [input["Mode"]],    err)
+    InfoList.PPutInt    (inInfo, "ModelType",       dim, [input["Type"]],    err)
+    InfoList.PPutInt    (inInfo, "Mode",            dim, [input["Mode"]],    err)
     InfoList.PPutFloat (inInfo, "Factor",          dim, [input["Factor"]],    err)
     InfoList.PPutBoolean (inInfo, "PBCor",         dim, [input["PBCor"]], err)
     InfoList.PPutFloat (inInfo, "antSize",         dim, [input["antSize"]],    err)
@@ -722,20 +716,20 @@ def PDivUV (err, input=UVDivInput):
     InfoList.PAlwaysPutFloat (inInfo, "MODPTYPM",        dim, input["MODPTYPM"])
     if input["CCVer"]!=None:
         dim[0] = len(input["CCVer"])
-        InfoList.PAlwaysPutInt (inInfo, "CCVer", dim, input["CCVer"])
+        InfoList.PAlwaysPutInt  (inInfo, "CCVer", dim, input["CCVer"])
     if input["BComp"]!=None:
         dim[0] = len(input["BComp"])
-        InfoList.PAlwaysPutInt (inInfo, "BComp", dim, input["BComp"])
+        InfoList.PAlwaysPutInt  (inInfo, "BComp", dim, input["BComp"])
     if input["EComp"]!=None:
         dim[0] = len(input["EComp"])
-        InfoList.PAlwaysPutInt (inInfo, "EComp", dim, input["EComp"])
+        InfoList.PAlwaysPutLon (inInfo, "EComp", dim, input["EComp"])
     #
     # show any errors 
     #OErr.printErrMsg(err, "UVDiv: Error setting parameters")
     #
     # Do operation
     sm = inSkyModel.cast(myClass)  # cast pointer
-    Obit.SkyModelDivUV(sm, inData.me, outData.me, err.me)
+    Obit.SkyModelDivUV(sm.me, inData.me, outData.me, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error dividing SkyModel into UV data")
     # end PDivUV
@@ -749,13 +743,11 @@ def PCompressCC (inSkyModel, err):
     """
     ################################################################
     # Checks
-    if not PIsA(inSkyModel):
-        raise TypeError,"inSkyModel MUST be a Python Obit SkyModel"
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     smi = inSkyModel.cast(myClass)  # cast pointer
-    Obit.SkyModelCompressCC (smi, err.me)
+    Obit.SkyModelCompressCC (smi.me, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error copying SkyModel")
     # end PCompressCC
@@ -767,24 +759,20 @@ def PGetName (inSkyModel):
     inSkyModel  = Python SkyModel object
     """
     ################################################################
-     # Checks
-    if not PIsA(inSkyModel):
-        raise TypeError,"inSkyModel MUST be a Python Obit SkyModel"
-    #
     sm = inSkyModel.cast(myClass)  # cast pointer
-    return Obit.SkyModelGetName(sm)
+    return Obit.SkyModelGetName(sm.me)
     # end PGetName
 
 def PIsA (inSkyModel):
     """ Tells if input really a Python Obit SkyModel
 
-    return true, false (1,0)
+    return True, False
     inSkyModel   = Python SkyModel object
     """
     ################################################################
     # Checks - allow inheritence
     if not str(inSkyModel.__class__).startswith("SkyModel"):
-        return 0
+        return False
     sm = inSkyModel.cast(myClass)  # cast pointer
-    return Obit.SkyModelIsA(sm)
+    return Obit.SkyModelIsA(sm)!=0
     # end PIsA

@@ -16,7 +16,7 @@ Member List (readonly)
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2016
+#  Copyright (C) 2004-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -43,38 +43,39 @@ Member List (readonly)
 #-----------------------------------------------------------------------
  
 # Python shadow class to ObitImageDesc class
-import Obit, InfoList, OErr, string, math
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, InfoList, OErr, string, math
+from six.moves import range
 
-class ImageDescPtr :
-    def __init__(self,this):
-        self.this = this
+class ImageDesc(Obit.ImageDesc):
+    """
+    Python Obit Image descriptor class
+    """
+    def __init__(self, name) :
+        super(ImageDesc, self).__init__()
+        Obit.CreateImageDesc(self.this, name)
+    def __del__(self, DeleteImageDesc=_Obit.DeleteImageDesc):
+        if _Obit!=None:
+            DeleteImageDesc(self.this)
     def __setattr__(self,name,value):
         if name == "me" :
-            Obit.ImageDesc_me_set(self.this,value)
+            Obit.ImageDesc_Set_me(self.this,value)
             return
         if name=="Dict":
             return PSetDict(self,value)
         self.__dict__[name] = value
     def __getattr__(self,name):
         if name == "me" : 
-            return Obit.ImageDesc_me_get(self.this)
+            return Obit.ImageDesc_Get_me(self.this)
         # Functions to return members
         if name=="List":
             return PGetList(self)
         if name=="Dict":
             return PGetDict(self)
-        raise AttributeError,str(name)
+        raise AttributeError(str(name))
     def __repr__(self):
         return "<C ImageDesc instance>"
-class ImageDesc(ImageDescPtr):
-    """
-    Python Obit Image descriptor class
-    """
-    def __init__(self, name) :
-        self.this = Obit.new_ImageDesc(name)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_ImageDesc(self.this)
     
 def PDefault (name):
     """ 
@@ -103,11 +104,11 @@ def PCopyDesc (inID, outID, err):
     ################################################################
     # Checks
     if not PIsA(inID):
-        raise TypeError,"inID MUST be a Python Obit ImageDesc"
+        raise TypeError("inID MUST be a Python Obit ImageDesc")
     if not PIsA(outID):
-        raise TypeError,"outID MUST be a Python Obit ImageDesc"
+        raise TypeError("outID MUST be a Python Obit ImageDesc")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     Obit.ImageDescCopyDesc (inID.me, outID.me, err.me)
     if err.isErr:
@@ -129,11 +130,11 @@ def POverlap (inID1, inID2, err):
     ################################################################
     # Checks
     if not PIsA(inID1):
-        raise TypeError,"inID1 MUST be a Python Obit ImageDesc"
+        raise TypeError("inID1 MUST be a Python Obit ImageDesc")
     if not PIsA(inID2):
-        raise TypeError,"inID2 MUST be a Python Obit ImageDesc"
+        raise TypeError("inID2 MUST be a Python Obit ImageDesc")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     res = Obit.ImageDescOverlap (inID1.me, inID2.me, err.me)
     if err.isErr:
@@ -156,16 +157,16 @@ def PCvtPixel (inID, inPixel, outID, err):
     ################################################################
     # Checks
     if not PIsA(inID):
-        raise TypeError,"inID MUST be a Python Obit ImageDesc"
+        raise TypeError("inID MUST be a Python Obit ImageDesc")
     if not PIsA(outID):
-        raise TypeError,"outID MUST be a Python Obit ImageDesc"
+        raise TypeError("outID MUST be a Python Obit ImageDesc")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     if inPixel[0].__class__ != float:
-        print "class is" , inPixel[0].__class__
-        raise TypeError,"inPixel MUST be float"
+        print("class is" , inPixel[0].__class__)
+        raise TypeError("inPixel MUST be float")
     if len(inPixel) < 2:
-        raise RuntimeError,"inPixel has fewer then 2 entries"
+        raise RuntimeError("inPixel has fewer then 2 entries")
     #
     outTmp = Obit.ImageDescCvtPixel (inID.me, outID.me, inPixel, err.me)
     if err.isErr:
@@ -187,14 +188,14 @@ def PGetPixel (inID, inPos, err):
     ################################################################
     # Checks
     if not PIsA(inID):
-        raise TypeError,"inID MUST be a Python Obit ImageDesc"
+        raise TypeError("inID MUST be a Python Obit ImageDesc")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     if inPos[0].__class__ != float:
-        print "class is" , inPos[0].__class__
-        raise TypeError,"inPos MUST be float"
+        print("class is" , inPos[0].__class__)
+        raise TypeError("inPos MUST be float")
     if len(inPos) < 2:
-        raise RuntimeError,"inPos has fewer then 2 entries"
+        raise RuntimeError("inPos has fewer then 2 entries")
     #
     outTmp = Obit.ImageDescGetPixel (inID.me, inPos, err.me)
     if err.isErr:
@@ -217,14 +218,14 @@ def PGetPos (inID, inPixel, err):
     ################################################################
     # Checks
     if not PIsA(inID):
-        raise TypeError,"inID MUST be a Python Obit ImageDesc"
+        raise TypeError("inID MUST be a Python Obit ImageDesc")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     if inPixel[0].__class__ != float:
-        print "class is" , inPixel[0].__class__
-        raise TypeError,"inPixel MUST be float"
+        print("class is" , inPixel[0].__class__)
+        raise TypeError("inPixel MUST be float")
     if len(inPixel) < 2:
-        raise RuntimeError,"inPixel has fewer then 2 entries"
+        raise RuntimeError("inPixel has fewer then 2 entries")
     #
     outTmp = Obit.ImageDescGetPos (inID.me, inPixel, err.me)
     if err.isErr:
@@ -244,7 +245,7 @@ def PGetDict (inID):
     ################################################################
     # Checks
     if not PIsA(inID):
-        raise TypeError,"inID MUST be a Python Obit ImageDesc"
+        raise TypeError("inID MUST be a Python Obit ImageDesc")
     #
     return Obit.ImageDescGetDict(inID.me)
     # end PGetDict
@@ -263,7 +264,7 @@ def PSetDict (inID, inDict):
     ################################################################
     # Checks
     if not PIsA(inID):
-        raise TypeError,"inID MUST be a Python Obit ImageDesc"
+        raise TypeError("inID MUST be a Python Obit ImageDesc")
     #
     Obit.ImageDescSetDict(inID.me, inDict)
     # end PSetDict
@@ -277,7 +278,7 @@ def PHeader (inID):
     ################################################################
     # Checks
     if not PIsA(inID):
-        raise TypeError,"inID MUST be a Python Obit ImageDesc"
+        raise TypeError("inID MUST be a Python Obit ImageDesc")
     #
     dict = inID.Dict
     PHeaderDict(dict)
@@ -290,52 +291,52 @@ def PHeaderDict (dict):
     * dict   = Python ImageDesc to print as python dict
     """
     ################################################################
-    print "Object: %8s   Origin: %8s" % \
-          (dict["object"], dict["origin"]) #"date origin
-    print "Observed: %8s Telescope:  %8s Created: %8s" % \
-          (dict["obsdat"],dict["teles"],dict["date"])
-    print "Observer: %8s   Instrument: %8s " % \
-          (dict["observer"],dict["instrume"])
-    print "Minimum = %12.5g  Maximum =  %12.5g %8s" % \
-          (dict["minval"],dict["maxval"],dict["bunit"])
+    print("Object: %8s   Origin: %8s" % \
+          (dict["object"], dict["origin"])) #"date origin
+    print("Observed: %8s Telescope:  %8s Created: %8s" % \
+          (dict["obsdat"],dict["teles"],dict["date"]))
+    print("Observer: %8s   Instrument: %8s " % \
+          (dict["observer"],dict["instrume"]))
+    print("Minimum = %12.5g  Maximum =  %12.5g %8s" % \
+          (dict["minval"],dict["maxval"],dict["bunit"]))
     if dict["areBlanks"]:
-        print "Image contains magic value blanking"
-    print "--------------------------------------------------------------"
-    print "Type    Pixels   Coord value     at Pixel     Coord incr   Rotat"
+        print("Image contains magic value blanking")
+    print("--------------------------------------------------------------")
+    print("Type    Pixels   Coord value     at Pixel     Coord incr   Rotat")
     i = -1
     for ctype in dict["ctype"]:
         i = i+1
         if ctype != "        ":
             # Conversion on some types
             stuff =  PPoslabel (ctype, dict["crval"][i], dict["cdelt"][i])
-            print "%8s%6d%16s%11.2f%15s%8.2f" % \
+            print("%8s%6d%16s%11.2f%15s%8.2f" % \
                   (ctype, dict["inaxes"][i], stuff["crval"], dict["crpix"][i], \
-                  stuff["cdelt"] , dict["crota"][i])
-    print "--------------------------------------------------------------"
-    print "Coordinate equinox %6.1f  Coordinate epoch %7.2f" % \
-          (dict["equinox"], dict["epoch"])
-    print "Observed RA %16s Observed Dec %15s" % \
-          (PRA2HMS(dict["obsra"]),  PDec2DMS(dict["obsdec"]))
+                  stuff["cdelt"] , dict["crota"][i]))
+    print("--------------------------------------------------------------")
+    print("Coordinate equinox %6.1f  Coordinate epoch %7.2f" % \
+          (dict["equinox"], dict["epoch"]))
+    print("Observed RA %16s Observed Dec %15s" % \
+          (PRA2HMS(dict["obsra"]),  PDec2DMS(dict["obsdec"])))
     if dict["xshift"]!=0.0 or dict["yshift"]!=0.0:
-        print "Phase shifted in X %10.3f in Y %10.3f deg" % \
-              (dict["xshift"], dict["yshift"])
+        print("Phase shifted in X %10.3f in Y %10.3f deg" % \
+              (dict["xshift"], dict["yshift"]))
     if not dict["do3D"]:
-        print "2D Image with pixel offsets %8.2f, %8.2f" % \
-              (dict["xpixoff"], dict["ypixoff"])
+        print("2D Image with pixel offsets %8.2f, %8.2f" % \
+              (dict["xpixoff"], dict["ypixoff"]))
     if dict["niter"]>0:
-        print "no. Comp %8d" % dict["niter"]
+        print("no. Comp %8d" % dict["niter"])
     if dict["beamMaj"]>0.0:
-        print "Clean Beam %10g x %10g asec, PA %7.1f deg." % \
+        print("Clean Beam %10g x %10g asec, PA %7.1f deg." % \
               (3600.0*dict["beamMaj"], 3600.0*dict["beamMin"], \
-               dict["beamPA"])
+               dict["beamPA"]))
     VelDef  = dict["VelDef"]
     VelDefStr = ["LSR", "Helio", "Observer"]
     VelType  = dict["VelDef"]
     VelTypeStr = ["Optical", "radio"]
-    print "Rest freq %12g Vel type: %s,  wrt  %s" % \
-          (dict["restFreq"], VelDefStr[VelDef-1], VelTypeStr[VelType])
-    print "Alt ref value %12.5g  wrt pixel %8.2f" % \
-          (dict["altRef"], dict["altCrpix"])
+    print("Rest freq %12g Vel type: %s,  wrt  %s" % \
+          (dict["restFreq"], VelDefStr[VelDef-1], VelTypeStr[VelType]))
+    print("Alt ref value %12.5g  wrt pixel %8.2f" % \
+          (dict["altRef"], dict["altCrpix"]))
     # end PHeaderDict
 
 def PGetList (inDesc):
@@ -349,10 +350,9 @@ def PGetList (inDesc):
     ################################################################
     # Checks
     if not PIsA(inDesc):
-        raise TypeError,"inDesc MUST be a Python Obit ImageDesc"
+        raise TypeError("inDesc MUST be a Python Obit ImageDesc")
     #
     out    = InfoList.InfoList()
-    out.me = Obit.InfoListUnref(out.me)
     out.me = Obit.ImageDescGetList(inDesc.me)
     return out
     # end PGetList 
@@ -371,9 +371,9 @@ def PCheckCompat (in1Desc, in2Desc, chkPos=False):
     ################################################################
     # Checks
     if not PIsA(in1Desc):
-        raise TypeError,"in1Desc MUST be a Python Obit ImageDesc"
+        raise TypeError("in1Desc MUST be a Python Obit ImageDesc")
     if not PIsA(in2Desc):
-        raise TypeError,"in2Desc MUST be a Python Obit ImageDesc"
+        raise TypeError("in2Desc MUST be a Python Obit ImageDesc")
     #
     # Get as dicts
     d1 = in1Desc.Dict
@@ -381,32 +381,33 @@ def PCheckCompat (in1Desc, in2Desc, chkPos=False):
     n = max(d1["naxis"], d2["naxis"])
     for i in range (0,n):
         if max(1,d1["inaxes"][i]) != max(1,d2["inaxes"][i]):
-            raise RuntimeError,"in1Desc and in2Desc geometries axis "+str(i+1)+" are incompatible"
+            raise RuntimeError("in1Desc and in2Desc geometries axis "+str(i+1)+" are incompatible")
     # Need to also check positions?
     if chkPos:
         for i in range (0,n):
             if abs(d1["crval"][i]-d2["crval"][i]) > 0.01*abs(d1["cdelt"][i]):
-                raise RuntimeError,"in1Desc and in2Desc coordinates axis "+str(i+1)+" are incompatible"
+                raise RuntimeError("in1Desc and in2Desc coordinates axis "+str(i+1)+" are incompatible")
             if abs(d1["crpix"][i]-d2["crpix"][i]) > 0.01:
-                raise RuntimeError,"in1Desc and in2Desc ref. pixel axis "+str(i+1)+" are incompatible"
+                raise RuntimeError("in1Desc and in2Desc ref. pixel axis "+str(i+1)+" are incompatible")
             if abs(d1["cdelt"][i]-d2["cdelt"][i]) > 0.01*abs(d1["cdelt"][i]):
-                raise RuntimeError,"in1Desc and in2Desc increments axis "+str(i+1)+" are incompatible"
+                raise RuntimeError("in1Desc and in2Desc increments axis "+str(i+1)+" are incompatible")
     # end PCheckCompat 
 
 def PIsA (inID):
     """
     Tells if the input really is a Python Obit ImageDesc
     
-    returns true or false (1,0)
+    returns True or False
 
     * inID = Python ImageDesc to test
     """
     ################################################################
      # Checks
-    if inID.__class__ != ImageDesc:
-        return 0
+    if not isinstance(inID, ImageDesc):
+        print("really",str(inID.__class__ ))
+        return False
     #
-    return Obit.ImageDescIsA(inID.me)
+    return Obit.ImageDescIsA(inID.me)!=0
     # end  PIsA
 
 def PUnref (inID):
@@ -419,9 +420,11 @@ def PUnref (inID):
     * inID   = Python ImageDesc object
     """
     ################################################################
+    if inID==None:
+        return
      # Checks
     if not PIsA(inID):
-        raise TypeError,"inID MUST be a Python Obit ImageDesc"
+        raise TypeError("inID MUST be a Python Obit ImageDesc")
 
     inID.me = Obit.ImageDescUnref(inID.me)
     # end PUnref

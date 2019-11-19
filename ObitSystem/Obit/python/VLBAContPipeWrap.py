@@ -8,17 +8,21 @@ External Dependencies:
 * *diff* -- tested with 'diff (GNU diffutils) 2.8.1'
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os, shutil, sys, logging, logging.config, pprint, subprocess, errno 
 import exceptions, pprint, re, types
 from optparse import OptionParser
-from urllib2 import URLError, HTTPError
-from ConfigParser import NoSectionError
+from six.moves.urllib.error import URLError, HTTPError
+from six.moves.configparser import NoSectionError
 import VLBAContPipe, VLBACal, PipeUtil
+from six.moves import range
+from six.moves import input
 
 try:
     logging.config.fileConfig("logging.conf")
     logger = logging.getLogger("obitLog.VLBAContPipeWrap")
-except NoSectionError, e:
+except NoSectionError as e:
     logging.basicConfig(filename="VLBAContPipeWrap.log", level=logging.DEBUG)
     logger = logging
     errmsg = "CANNOT FIND logging.conf. USING BASIC LOGGING CONFIG INSTEAD."
@@ -68,14 +72,14 @@ def pipeWrap( startDate, endDate, options ):
         return
     if not options.all:
         if options.fitsidi:
-            print "Select file number(s) for IDI download and processing (ex: 1, 3, 4): ",
+            print("Select file number(s) for IDI download and processing (ex: 1, 3, 4): ", end=' ')
         else:
-            print "Select file number(s) for download and processing (ex: 1, 3, 4): ", 
-        selection = input()
+            print("Select file number(s) for download and processing (ex: 1, 3, 4): ", end=' ') 
+        selection = eval(input())
         # convert selection to list
-        if type(selection) == types.IntType:
+        if type(selection) == int:
             selection = [ selection ]
-        elif type(selection) == types.TupleType:
+        elif type(selection) == tuple:
             selection = list( selection )
         else:
             raise TypeError("Selection must be an integer or comma-separated" +
@@ -85,7 +89,7 @@ def pipeWrap( startDate, endDate, options ):
             test = fileDictList[ num ]
         # Throw out file dicts that are not in selection.
         # Work thru indices in reverse, so pop(index) doesn't go out of range.
-        indices = range( len( fileDictList ) )
+        indices = list(range( len( fileDictList )))
         indices.reverse()
         for index in indices:
             if not ( index in selection ):
@@ -169,14 +173,14 @@ def pipeWrap( startDate, endDate, options ):
             os.chdir( cwd )
             os.remove( pipeNowLog )
         # Handle exception and re-raise
-        except HTTPError, e:
+        except HTTPError as e:
             logger.error("Server could not fulfill request. Error code: " + \
                 str(e.code))
             raise
-        except URLError, e:
+        except URLError as e:
             logger.error("Failed to reach the server. Reason: " + str(e.reason))
             raise
-        except IOError, e:
+        except IOError as e:
             logger.error("File " + e.filename + " not found\n" + \
                 "  Cannot copy files to validation directory" )
             os.chdir( cwd )
@@ -217,7 +221,7 @@ def copyFiles( outfilesPickle, destDir='./output' ):
     cmd.append( destDir )
     try:
         subprocess.check_call( cmd )
-    except subprocess.CalledProcessError, e:
+    except subprocess.CalledProcessError as e:
         logger.error(
             "Error occurred while rsyncing to destination directory.\n" +
             "rsync return value: " + str(e.returncode) )
@@ -244,7 +248,7 @@ def checkDirEquality( dir1, dir2 ):
     returncode = 0
     try:
         subprocess.check_call( cmd )
-    except subprocess.CalledProcessError, e:
+    except subprocess.CalledProcessError as e:
         returncode = e.returncode
         logger.error(
             "Pipeline working directory and check directory differ.\n"
@@ -296,7 +300,7 @@ def makeFileRecord_archive( fileDictList, pickle, archFileID ):
             fileDict = fdict
             break
     fileDict['pipe.STATUS'] = 'archive'
-    print "Adding this dictionary to the pipeline record:"
+    print("Adding this dictionary to the pipeline record:")
     pprint.pprint( fileDict )
     makeFileRecord( fileDict, pickle )
     
@@ -328,6 +332,6 @@ if __name__ == "__main__":
         if sys.version_info < (2,5):
             try:
                 logging.shutdown()
-            except KeyError, e:
-                print("Catching known logging module error for " +
-                    "python version < 2.5. ")
+            except KeyError as e:
+                print(("Catching known logging module error for " +
+                    "python version < 2.5. "))

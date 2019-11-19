@@ -1,8 +1,8 @@
 /* $Id:   */  
 /*--------------------------------------------------------------------*/
-/* Swig module description for SkyModelVMBeam type                     */
+/* Swig module description for SkyModelVMBeam type                    */
 /*                                                                    */
-/*;  Copyright (C) 2009                                               */
+/*;  Copyright (C) 2009,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,16 +32,22 @@
 #include "ObitSkyModelVMBeam.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitSkyModelVMBeam *me;
+} SkyModelVMBeam;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitSkyModelVMBeam *me;
+} SkyModelVMBeam;
 
 %inline %{
 extern ObitSkyModelVMBeam* newSkyModelVMBeam (char* name) {
   return newObitSkyModelVMBeam (name);
 } // end  newSkyModelVMBeam
-
-extern ObitSkyModelVMBeam* SkyModelVMBeamCopy  (ObitSkyModelVMBeam *in, ObitSkyModelVMBeam *out, 
-				    ObitErr *err) {
-  return ObitSkyModelVMBeamCopy (in, out, err);
-} // end  SkyModelVMBeamCopy
 
 extern ObitSkyModelVMBeam* SkyModelVMBeamUnref (ObitSkyModelVMBeam* in) {
   if (!ObitSkyModelVMBeamIsA(in)) return NULL;
@@ -51,6 +57,62 @@ extern ObitSkyModelVMBeam* SkyModelVMBeamUnref (ObitSkyModelVMBeam* in) {
 extern ObitSkyModelVMBeam*  SkyModelVMBeamRef (ObitSkyModelVMBeam* in) {
   return ObitSkyModelVMBeamRef(in);
 }
+
+void CreateSkyModelVMBeam(PyObject *self, char* name) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_SkyModelVMBeam, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Create: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((SkyModelVMBeam*)ptr)->me = newSkyModelVMBeam(name);
+   else ((SkyModelVMBeam*)ptr)->me = NULL;
+   return;
+ } // end CreateSkyModelVMBeam
+
+void DeleteSkyModelVMBeam(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_SkyModelVMBeam, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Delete: could not recover c struct");
+	return;
+   }
+   ((SkyModelVMBeam*)ptr)->me = SkyModelVMBeamUnref(((SkyModelVMBeam*)ptr)->me);
+} // end DeleteSkyModelVMBeam
+
+ObitSkyModelVMBeam* SkyModelVMBeam_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_SkyModelVMBeam, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((SkyModelVMBeam*)ptr)->me;
+} // end SkyModelVMBeam_Get_me
+
+void SkyModelVMBeam_Set_me(PyObject *self, ObitSkyModelVMBeam *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_SkyModelVMBeam, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"SkyModelVMBeam_Set_me: could not recover c struct");
+	return;
+   }
+   ((SkyModelVMBeam*)ptr)->me =  SkyModelVMBeamRef(me);
+}  // end SkyModelVMBeam_Set_me
+
+extern ObitSkyModel* SkyModelVMBeamCast (ObitSkyModelVMBeam *sm) {
+  return (ObitSkyModel*)sm;
+} // end SkyModelVMBeamCast
+
+
+extern ObitSkyModelVMBeam* SkyModelVMBeamCopy  (ObitSkyModelVMBeam *in, ObitSkyModelVMBeam *out, 
+				    ObitErr *err) {
+  return ObitSkyModelVMBeamCopy (in, out, err);
+} // end  SkyModelVMBeamCopy
 
 extern ObitInfoList* SkyModelVMBeamGetList (ObitSkyModelVMBeam* in) {
   return ObitInfoListRef(in->info);
@@ -72,36 +134,10 @@ extern char* SkyModelVMBeamGetName (ObitSkyModelVMBeam* in) {
   }
 }
 
-extern int SkyModelVMBeamIsA (ObitSkyModelVMBeam* in) {
-  return ObitSkyModelVMBeamIsA(in);
+extern long SkyModelVMBeamIsA (ObitSkyModelVMBeam* in) {
+  return (long)ObitSkyModelVMBeamIsA(in);
 }
 
 %}
 
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitSkyModelVMBeam *me;
-} SkyModelVMBeam;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitSkyModelVMBeam *me;
-} SkyModelVMBeam;
-
-%addmethods SkyModelVMBeam { 
-  SkyModelVMBeam(char* name) {
-     SkyModelVMBeam *out;
-     out = (SkyModelVMBeam *) malloc(sizeof(SkyModelVMBeam));
-     if (strcmp(name, "None")) out->me = newSkyModelVMBeam(name);
-     else out->me = NULL;
-     return out;
-   }
-  ~SkyModelVMBeam() {
-   if (self->me-> ReferenceCount>0) 
-      self->me = SkyModelVMBeamUnref(self->me);
-   free(self);
-  }
-};
 

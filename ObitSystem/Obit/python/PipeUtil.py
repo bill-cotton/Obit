@@ -3,10 +3,14 @@ Obit pipeline utilities. These functions are generic utlities that may be
 useful for any pipeline.
 """
 
-import urllib, urllib2, os.path, pickle, time, sys, socket, signal
+from __future__ import absolute_import
+from __future__ import print_function
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error, six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse, os.path, pickle, time, sys, socket, signal
 import glob, xml.dom.minidom, re, pprint
 import ObitTask, Image, AIPSDir, OErr, FArray, VLBACal, FITS, UV, UVDesc, Table
 import mjd
+from six.moves import range
+from six.moves import input
 
 def setname (inn, out):
     """ 
@@ -31,7 +35,7 @@ out  = ObitTask object
         out.inname  = inn.Aname
         out.inclass = inn.Aclass
         out.inseq   = inn.Aseq
-        out.indisk  = inn.Disk
+        out.indisk  = float(inn.Disk)
     # end setname
     
 def setoname (inn, out):
@@ -251,9 +255,9 @@ Print message, optionally in logfile
 * message = message to print
 * logfile = logfile for message
     """
-    print message
+    print(message)
     if logfile and len(logfile) > 0:
-        f = file(logfile,'a')
+        f = open(logfile,'a')
         f.writelines(message+"\n")
         f.close()
     # end printMess
@@ -320,8 +324,8 @@ def SaveObject (pyobj, file, update):
     ################################################################
     # Does file exist?, only do this if not or update
     if update or not os.path.isfile(file):
-        fd = open(file, "w")
-        pickle.dump(pyobj, fd)
+        fd = open(file, "wb")
+        pickle.dump(pyobj, fd, protocol=2)
         fd.close()
     # end SaveObject
    
@@ -335,10 +339,10 @@ def FetchObject (file):
     ################################################################
     # does it exist?
     if not os.path.lexists(file):
-        print "Pickle jar",file,"does not exist"
+        print("Pickle jar",file,"does not exist")
         return None
     # unpickle file
-    fd = open(file, "r")
+    fd = open(file, "rb")
     pyobj = pickle.load(fd)
     fd.close()
     return pyobj
@@ -366,7 +370,7 @@ def QueryArchive(startTime, endTime, project=None, format='ALL'):
                  ('TIMERANGE2', endTime) ]
     if project:
         dataList.append( ('PROJECT_CODE', project) )
-    data = urllib.urlencode( dataList )
+    data = six.moves.urllib.parse.urlencode( dataList )
     url = 'https://archive.nrao.edu/archive/ArchiveQuery'
     # Archive is known to occasionally send a null response. This is an error.
     # At the least, a header line should be returned. Repeat the query 
@@ -374,20 +378,20 @@ def QueryArchive(startTime, endTime, project=None, format='ALL'):
     # only, repeat the query once to verify.
     lineCount = 0
     while 1:
-        response = urllib2.urlopen( url, data ) # Submit query
+        response = six.moves.urllib.request.urlopen( url, data ) # Submit query
         lines = response.readlines() # Extract response into a list of lines
         if len(lines) == 0: # null response
-            print "Archive response is null. Repeating query."
+            print("Archive response is null. Repeating query.")
             lineCount = len(lines)
         else: 
             lines.pop() # remove tailing blank line
         if len(lines) == 1: # Header only, no data
             if lineCount != 1:
-                print "Archive response contains no files. " + \
-                    "Repeating query to verify."
+                print("Archive response contains no files. " + \
+                    "Repeating query to verify.")
                 lineCount = len(lines)
             else:
-                print "Verified: Archive response contains no files."
+                print("Verified: Archive response contains no files.")
                 break
         elif len(lines) > 1: # Data is present
             break
@@ -518,21 +522,21 @@ def DownloadArchiveFile( fileDict, destination, safe=True, logFile=None ):
     fullDLPath = destination + '/' + filename
     if os.path.exists( fullDLPath ):
         if safe:
-            print( "File " + fullDLPath + " already exists in download area." )
+            print(( "File " + fullDLPath + " already exists in download area." ))
             overwrite = nonBlockingRawInput( 
                 '  Overwrite? {60 sec to respond} (y/n) [y]: ', timeout=60, logFile=logFile)
             if ( overwrite and overwrite[0].lower() == 'n' ):
-                print "Using file already in download area."
+                print("Using file already in download area.")
                 return None
             else:
                 os.remove( fullDLPath )
         else:
             os.remove( fullDLPath )
-    data = urllib.urlencode( dataList )
+    data = six.moves.urllib.parse.urlencode( dataList )
     mess = "DEBUG Submitting download request with parameters:\n" + \
                  "  url = " + url + "\n" + "  data = " + data
     printMess(mess, logFile)
-    response = urllib2.urlopen( url, data )
+    response = six.moves.urllib.request.urlopen( url, data )
     return response
 
 def DownloadIDIFiles( fileDict, destination, logFile=None ):
@@ -562,7 +566,7 @@ def DownloadIDIFiles( fileDict, destination, logFile=None ):
     printMess(mess, logFile)
     response = QueryArchive( starttime, stoptime, format='Raw Data' )
     IDIList = ParseArchiveResponse( response )
-    print "IDI Files: \n" + SummarizeArchiveResponse( IDIList )
+    print("IDI Files: \n" + SummarizeArchiveResponse( IDIList ))
     fileExists = []
     overwrite = False
     for file in IDIList:
@@ -577,7 +581,7 @@ def DownloadIDIFiles( fileDict, destination, logFile=None ):
             '  Overwrite? {60 sec to respond} (y/n) [y]: ', timeout=60 )
         if ( overwrite and overwrite[0].lower() == 'n' ):
             overwrite = True
-            print "Using files already in download area."
+            print("Using files already in download area.")
     if not overwrite:
         for file in IDIList:
             fullDLPath = destination + '/' + file['logical_file']
@@ -699,11 +703,11 @@ Write *prompt* and wait a maximum of *timeout* seconds for user input.
     signal.signal(signal.SIGALRM, alarmHandler)
     signal.alarm(timeout)
     try:
-        text = raw_input(prompt)
+        text = input(prompt)
         signal.alarm(0)
         return text
     except AlarmException:
-        print "\n"
+        print("\n")
         mess = "INFO Prompt timeout. Continuing..."
         printMess(mess, logFile)
     signal.signal(signal.SIGALRM, signal.SIG_IGN)
@@ -729,8 +733,8 @@ Compare the FITS files matching *pattern* in *dir1* and *dir2*.
 * pattern = Unix shell pattern matching some FITS files
 * err = OErr object
     """
-    print("'Image 1' is in: " + dir1 )
-    print("'Image 2' is in: " + dir2 )
+    print(("'Image 1' is in: " + dir1 ))
+    print(("'Image 2' is in: " + dir2 ))
     os.chdir( dir1 )
     fitsList1 = glob.glob( pattern )
     fitsList1.sort()
@@ -760,10 +764,10 @@ Compare the FITS files matching *pattern* in *dir1* and *dir2*.
         table.append( row )
     format1 = "%-30.30s | %-10s %-10s %-3s %-10s %-3s"
     format2 = "%30.30s | %10.2e %10.2e %3.0f %10.2e %3.0f"
-    print( format1 % ("Filename", "MaxAbsImg1", "MaxAbsDiff", "%", "RMS Diff", "%") )
-    print( format1 % ('-'*30, '-'*10, '-'*10, '-'*3, '-'*10, '-'*3) )
+    print(( format1 % ("Filename", "MaxAbsImg1", "MaxAbsDiff", "%", "RMS Diff", "%") ))
+    print(( format1 % ('-'*30, '-'*10, '-'*10, '-'*3, '-'*10, '-'*3) ))
     for row in table:
-        print( format2 % tuple(row) )
+        print(( format2 % tuple(row) ))
 
 def CompareUV( uvFile1, uvFile2, err, verbose=True  ):
     """
@@ -776,10 +780,10 @@ Compare UV FITS files *uvFile1* and *uvFile2*.
     uv2 = UV.newPFUV( 'uv2', uvFile2, 0, True, err )
     rms = UV.PUtilVisCompare( uv1, uv2, err )
     if verbose:
-        print("UV data set 1: " + uvFile1)
-        print("UV data set 2: " + uvFile2)
-    print("RMS of real, imag differences / amplitude of data set 2 =\n%6i" %
-        ( rms ) )
+        print(("UV data set 1: " + uvFile1))
+        print(("UV data set 2: " + uvFile2))
+    print(("RMS of real, imag differences / amplitude of data set 2 =\n%6i" %
+        ( rms ) ))
 
 def CompareUVDir( dir1, dir2, pattern, err ):
     """
@@ -796,8 +800,8 @@ Compare UV data files matching *pattern* in *dir1* and *dir2*.
     file2 = glob.glob( pattern )
     if ( len(file1) != 1 or len(file2) != 1 ):
         print("Input pattern does not produce a unique match.")
-        print("dir1 matches to " + str(file1) )
-        print("dir2 matches to " + str(file2) )
+        print(("dir1 matches to " + str(file1) ))
+        print(("dir2 matches to " + str(file2) ))
         return
     filePath1 = dir1 + '/' + file1[0]
     filePath2 = dir2 + '/' + file2[0]
@@ -922,15 +926,15 @@ def validate( dataDir, archDir = '../archive',
         os.chown( newDataDir, -1, gid )
         for root, dirs, files in os.walk( newDataDir ):
             os.chown( root, -1, gid )
-            os.chmod( root, 0775 )
+            os.chmod( root, 0o775 )
             for dir in dirs:
                 path = os.path.join( root, dir )
                 os.chown( path, -1, gid )
-                os.chmod( path, 0775 )
+                os.chmod( path, 0o775 )
             for file in files:
                 path = os.path.join( root, file )
                 os.chown( path, -1, gid )
-                os.chmod( path, 0664 )
+                os.chmod( path, 0o664 )
 
 def getSVNVersion(path):
     """
@@ -942,7 +946,7 @@ def getSVNVersion(path):
     cmd = 'svnversion -n ' + path
     f = os.popen(cmd)
     ver = f.read()
-    print('SVN version of '+path+' is ' + ver)
+    print(('SVN version of '+path+' is ' + ver))
     return ver
 # end getSVNVersion
 

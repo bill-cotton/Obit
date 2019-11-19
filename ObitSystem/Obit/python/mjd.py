@@ -7,6 +7,8 @@ Class for converting dates between Gregorian and MJD formats. [Module
 obtained from Google code repository for project python-plotter-qwt.]
 '''
 
+from __future__ import absolute_import
+from __future__ import print_function
 import time
 from math import floor
 
@@ -79,9 +81,9 @@ class mjd:
 
 if __name__ == "__main__":
     t = mjd()
-    print t.mjd_now(9,16,2010,20,03,30)
-    print t.mjd_now()
-    print t.mjd_to_datetime(t.mjd_now())
-    print time.asctime(time.gmtime())
+    print(t.mjd_now(9,16,2010,20,0o3,30))
+    print(t.mjd_now())
+    print(t.mjd_to_datetime(t.mjd_now()))
+    print(time.asctime(time.gmtime()))
     
     

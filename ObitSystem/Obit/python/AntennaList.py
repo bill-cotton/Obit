@@ -38,36 +38,36 @@
 #-----------------------------------------------------------------------
  
 # Python shadow class to ObitAntennaList class
-import Obit, OErr, FArray, string, math
+from __future__ import absolute_import
+import Obit, _Obit, OErr, FArray, string, math
 
-class AntennaListPtr :
-    def __init__(self,this):
-        self.this = this
+class AntennaList(Obit.AntennaList):
+    """ Python Obit AntennaList class
+
+    """
+    def __init__(self, name, inUV, subA, err):
+        super(AntennaList, self).__init__()
+        #self.this = Obit.new_AntennaList()
+        Obit.CreateAntennaList(self.this, name, inUV.me, subA, err.me)
+    def __del__(self, DeleteAntennaList=_Obit.DeleteAntennaList):
+        if _Obit!=None:
+            DeleteAntennaList(self.this)
     def __setattr__(self,name,value):
         if name == "me" :
-            Obit.AntennaList_me_set(self.this,value)
+            Obit.AntennaList_Set_me(self.this,value)
             return
         self.__dict__[name] = value
     def __getattr__(self,name):
         if name == "me" : 
-            return Obit.AntennaList_me_get(self.this)
+            return Obit.AntennaList_Get_me(self.this)
         # Functions to return members
         if name=="JDRef":
             return Obit.AntennaListGetRefJD(self.me);
         if name=="ArrName":
             return Obit.AntennaListGetArrName(self.me);
-        raise AttributeError,str(name)
+        raise AttributeError(str(name))
     def __repr__(self):
         return "<C AntennaList instance>"
-class AntennaList(AntennaListPtr):
-    """ Python Obit AntennaList class
-
-    """
-    def __init__(self, name, inUV, subA, err):
-        self.this = Obit.new_AntennaList(name, inUV.me, subA, err.me)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_AntennaList(self.this)
     def Elev(self, ant, time, Source):
         """ Returns elevation (rad) of a source at a given antenna and time
         
@@ -79,7 +79,7 @@ class AntennaList(AntennaListPtr):
         val = Obit.AntennaListGetElev (self.me, ant, time, Source.me)
         # Validity test
         if val==FArray.fblank:
-            raise RuntimeError,"Invalid antenna"
+            raise RuntimeError("Invalid antenna")
         return val
     # end Elev
 
@@ -94,7 +94,7 @@ class AntennaList(AntennaListPtr):
         val = Obit.AntennaListGetAz (self.me, ant, time, Source.me)
         # Validity test
         if val==FArray.fblank:
-            raise RuntimeError,"Invalid antenna"
+            raise RuntimeError("Invalid antenna")
         return val
     # end Az
 
@@ -109,7 +109,7 @@ class AntennaList(AntennaListPtr):
         val = Obit.AntennaListGetParAng (self.me, ant, time, Source.me)
         # Validity test
         if val==FArray.fblank:
-            raise RuntimeError,"Invalid antenna"
+            raise RuntimeError("Invalid antenna")
         return val
     # end ParAng
 
@@ -121,10 +121,10 @@ def PIsA (inSou):
     """
     ################################################################
      # Checks
-    if inSou.__class__ != AntennaList:
-        return 0
+    if not isinstance(inSou, AntennaList):
+        return False
     #
-    return Obit.AntennaListIsA(inSou.me)
+    return Obit.AntennaListIsA(inSou.me)!=0
     # end  PIsA
 
 

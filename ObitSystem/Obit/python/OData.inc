@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitData type                          */
 /*                                                                    */
-/*;  Copyright (C) 2007,2008                                          */
+/*;  Copyright (C) 2007,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -33,6 +33,18 @@
 %}
 
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitData *me;
+} OData;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitData *me;
+} OData;
+
 %inline %{
 
 extern void ODataSetFITS(ObitData *in, int disk, char *file, ObitErr *err) {
@@ -43,6 +55,52 @@ extern void ODataSetAIPS(ObitData *in, int disk, int cno, int user,
                         ObitErr *err) {
   ObitDataSetAIPS(in, disk, cno, user, err);
  }
+
+void CreateOData(PyObject *self, char* name) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_OData, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Create: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((OData*)ptr)->me = newObitData(name);
+   else  ((OData*)ptr)->me = NULL;
+   return;
+ } // end CreateOData
+
+void DeleteOData(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_OData, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Delete: could not recover c struct");
+	return;
+   }
+   ((OData*)ptr)->me = ObitDataUnref(((OData*)ptr)->me);
+}// end DeleteOData
+
+ObitData* OData_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_OData, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((OData*)ptr)->me;
+}  // end OData_Get_me
+
+void OData_Set_me(PyObject *self, ObitData *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_OData, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"OData_Set_me: could not recover c struct");
+	return;
+   }
+   ((OData*)ptr)->me = ObitDataRef(me);
+}  // end OData_Set_me
 
 extern ObitData* ODataScratch (ObitData *in, ObitErr *err) {
   return newObitDataScratch (in, err);
@@ -194,31 +252,4 @@ extern char* ODataGetName (ObitData* in) {
 
 
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitData *me;
-} OData;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitData *me;
-} OData;
-
-%addmethods OData { 
-  OData(char *name) {
-     OData *out;
-     out = (OData *) malloc(sizeof(OData));
-     if (strcmp(name, "None")) out->me = newObitData(name);
-     else out->me = NULL;
-     return out;
-   }
-  ~OData() { /* Scratch files may be deleted separately*/
-   if (self->me->ReferenceCount>0) 
-      self->me = ObitDataUnref(self->me);
-   free(self);
-  }
-};
 

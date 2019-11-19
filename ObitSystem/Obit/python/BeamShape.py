@@ -7,7 +7,7 @@ Freq  = Frequency for which the beam shape will be calculated
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2008-2013
+#  Copyright (C) 2008-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -34,42 +34,16 @@ Freq  = Frequency for which the beam shape will be calculated
 #-----------------------------------------------------------------------
 
 # Obit BeamShape
-import Obit, OErr, Image, InfoList
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, OErr, Image, InfoList
 
 # Python shadow class to ObitBeamShape class
 
 # class name in C
 myClass = "ObitBeamShape"
- 
-    
-class BeamShapePtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.BeamShapeUnref(Obit.BeamShape_me_get(self.this))
-            # In with the new
-            Obit.BeamShape_me_set(self.this,value)
-            return
-        if name == "Freq":
-            PSetFreq(self, value)
-        # members
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != BeamShape:
-            return
-        if name == "me" : 
-            return Obit.BeamShape_me_get(self.this)
-        if name == "Freq":
-            return PGetFreq(self)
-        raise AttributeError,name
-    def __repr__(self):
-        if self.__class__ != BeamShape:
-            return
-        return "<C BeamShape instance> " + Obit.BeamShapeGetName(self.me)
-#
-class BeamShape(BeamShapePtr):
+     
+class BeamShape(Obit.BeamShape):
     """
     Python Obit BeamShape class
     
@@ -77,24 +51,38 @@ class BeamShape(BeamShapePtr):
     
     BeamShape Members with python interfaces:
     """
-    def __init__(self, name="no_name", image=None, pbmin=0.05, antSize=25, doGain=True) :
-        self.this = Obit.new_BeamShape(name, image, pbmin, antSize, doGain)
+    def __init__(self, name="no_name", image=None, pbmin=0.05, antSize=25., doGain=True) :
+        super(BeamShape, self).__init__()
+        #self.this = Obit.new_BeamShape()
+        Obit.CreateBeamShape(self.this, name, image, pbmin, antSize, int(doGain))
         self.myClass = myClass
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_BeamShape(self.this)
-    def cast(self, toClass):
-        """ Casts object pointer to specified class
-        
-        * self     = object whose cast pointer is desired
-        * toClass  = Class string to cast to
-        """
-        ################################################################
-        # Get pointer with type of this class
-        out =  self.me
-        out = out.replace(self.myClass, toClass)
-        return out
-    # end cast
+    def __del__(self, DeleteBeamShape=_Obit.DeleteBeamShape):
+        if _Obit!=None:
+            DeleteBeamShape(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.BeamShapeUnref(Obit.BeamShape_Get_me(self.this))
+            # In with the new
+            Obit.BeamShape_Set_me(self.this,value)
+            return
+        if name == "Freq":
+            PSetFreq(self, value)
+        # members
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if not isinstance(self, BeamShape):
+            return "Bogus dude "+str(self.__class__)
+        if name == "me" : 
+            return Obit.BeamShape_Get_me(self.this)
+        if name == "Freq":
+            return PGetFreq(self)
+        raise AttributeError(name)
+    def __repr__(self):
+        if not isinstance(self, BeamShape):
+            return "Bogus dude "+str(self.__class__)
+        return "<C BeamShape instance> " + Obit.BeamShapeGetName(self.me)
     
     def Gain (self, ra, dec, parAng=0.0):
         """
@@ -108,7 +96,7 @@ class BeamShape(BeamShapePtr):
         ################################################################
         # Checks
         if not PIsA(self):
-            raise TypeError,"self MUST be a Python Obit BeamShape"
+            raise TypeError("self MUST be a Python Obit BeamShape")
         return Obit.BeamShapeGain(self.me, ra, dec, parAng)
     # end Gain
     
@@ -124,114 +112,9 @@ class BeamShape(BeamShapePtr):
         ################################################################
         # Checks
         if not PIsA(self):
-            raise TypeError,"self MUST be a Python Obit BeamShape"
+            raise TypeError("self MUST be a Python Obit BeamShape")
         return Obit.BeamShapeGainSym(self.me, Angle)
     # end GainSym
-    
-
-#  Associated Universities, Inc. Washington DC, USA.
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License as
-#  published by the Free Software Foundation; either version 2 of
-#  the License, or (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public
-#  License along with this program; if not, write to the Free
-#  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
-#  MA 02139, USA.
-#
-#  Correspondence concerning this software should be addressed as follows:
-#         Internet email: bcotton@nrao.edu.
-#         Postal address: William Cotton
-#                         National Radio Astronomy Observatory
-#                         520 Edgemont Road
-#                         Charlottesville, VA 22903-2475 USA
-#-----------------------------------------------------------------------
-
-# Obit BeamShape
-import Obit, OErr, Image, InfoList
-
-# Python shadow class to ObitBeamShape class
-
-# class name in C
-myClass = "ObitBeamShape"
- 
-    
-class BeamShapePtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.BeamShapeUnref(Obit.BeamShape_me_get(self.this))
-            # In with the new
-            Obit.BeamShape_me_set(self.this,value)
-            return
-        if name == "Freq":
-            PSetFreq(self, value)
-        # members
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != BeamShape:
-            return
-        if name == "me" : 
-            return Obit.BeamShape_me_get(self.this)
-        if name == "Freq":
-            return PGetFreq(self)
-        raise AttributeError,name
-    def __repr__(self):
-        if self.__class__ != BeamShape:
-            return
-        return "<C BeamShape instance> " + Obit.BeamShapeGetName(self.me)
-#
-class BeamShape(BeamShapePtr):
-    """
-    Python Obit BeamShape class
-    
-    This class provides estimates of the beam shape
-    
-    BeamShape Members with python interfaces:
-    """
-    def __init__(self, name="no_name", image=None, pbmin=0.05, antSize=25, doGain=True) :
-        self.this = Obit.new_BeamShape(name, image, pbmin, antSize, doGain)
-        self.myClass = myClass
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_BeamShape(self.this)
-    def cast(self, toClass):
-        """ Casts object pointer to specified class
-        
-        * self     = object whose cast pointer is desired
-        * toClass  = Class string to cast to
-        """
-        ################################################################
-        # Get pointer with type of this class
-        out =  self.me
-        out = out.replace(self.myClass, toClass)
-        return out
-    # end cast
-    
-    def Gain (self, ra, dec, parAng=0.0):
-        """
-        Returns gain in a givrn direction
-
-        * self     = the BeamShape object
-        * ra       = RA (deg) of direction for gain
-        * dec      = Dec (deg) of direction for gain
-        * parAng   = Parallactic angle (rad) NYI
-        """
-        ################################################################
-        # Checks
-        if not PIsA(self):
-            raise TypeError,"self MUST be a Python Obit BeamShape"
-        return Obit.BeamShapeGain(self.me, ra, dec, parAng)
-    # end Gain
     
     def Angle (self, ra, dec, parAng=0.0):
         """
@@ -245,7 +128,7 @@ class BeamShape(BeamShapePtr):
         ################################################################
         # Checks
         if not PIsA(self):
-            raise TypeError,"self MUST be a Python Obit BeamShape"
+            raise TypeError("self MUST be a Python Obit BeamShape")
         return Obit.BeamShapeAngle(self.me, ra, dec, parAng)
     # end Angle
     
@@ -272,11 +155,11 @@ def PIsA (inBeamShape):
     * inBeamShape   = Python BeamShape object
     """
     ################################################################
-    if inBeamShape.__class__ != BeamShape:
-        print "Actually",inBeamShape.__class__
-        return 0
+    if not isinstance(inBeamShape, BeamShape):
+        print("Actually",inBeamShape.__class__)
+        return False
     # Checks - allow inheritence
-    return Obit.BeamShapeIsA(inBeamShape.me)
+    return Obit.BeamShapeIsA(inBeamShape.me)!=0
     # end PIsA
 
 def PCreate (name, image, pbmin, antSize, doGain):
@@ -294,7 +177,7 @@ def PCreate (name, image, pbmin, antSize, doGain):
     ################################################################
     # Checks
     if not Image.PIsA(image):
-        raise TypeError,"uvData MUST be a Python Obit UV"
+        raise TypeError("uvData MUST be a Python Obit UV")
     #
     out = BeamShape("None",image=image.me,pbmin=pbmin,antSize=antSize,doGain=doGain);
     if doGain:
@@ -314,7 +197,7 @@ def PGetFreq (inBeamShape):
     ################################################################
     # Checks
     if not PIsA(inBeamShape):
-        raise TypeError,"inBeamShape MUST be a Python Obit BeamShape"
+        raise TypeError("inBeamShape MUST be a Python Obit BeamShape")
     return Obit.BeamShapeGetFreq(inBeamShape.me)
 # end PGetFreq
 
@@ -328,7 +211,7 @@ def PSetFreq (inBeamShape, newFreq):
     ################################################################
     # Checks
     if not PIsA(inBeamShape):
-        raise TypeError,"inBeamShape MUST be a Python Obit BeamShape"
+        raise TypeError("inBeamShape MUST be a Python Obit BeamShape")
     Obit.BeamShapeSetFreq(inBeamShape.me, newFreq)
 # end PSetFreq
 

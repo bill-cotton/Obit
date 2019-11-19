@@ -1,10 +1,13 @@
 """ Functions for calibrating and editing VLA data
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import UV, UVDesc, Image, ImageDesc, FArray, ObitTask, AIPSTask, AIPSDir, OErr, History
 import InfoList
 from AIPS import AIPS
 from FITS import FITS
 from AIPSDir import AIPSdisks, nAIPS
+from six.moves import range
 
 def setname (inn, out):
     """ Copy file definition from inn to out as in...
@@ -139,9 +142,9 @@ def printMess (message, logfile=''):
         message = message to print
         logfile = logfile for message
     """
-    print message
+    print(message)
     if len(logfile)>0:
-        f = file(logfile,'a')
+        f = open(logfile,'a')
         f.writelines(message+"\n")
         f.close()
     # end printMess
@@ -191,7 +194,7 @@ def VLAUVLoad(filename, inDisk, Aname, Aclass, Adisk, Aseq, err, logfile=''):
     #
     # Checks
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Get input
     inUV = UV.newPFUV("FITS UV DATA", filename, inDisk, True, err)
@@ -289,9 +292,9 @@ def VLAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
     #
     # Checks
     if not Image.PIsA(inImage):
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Set output
     outImage = Image.newPFImage("FITS Image DATA", filename, outDisk, False, err)
@@ -351,9 +354,9 @@ def VLAUVFITS(inUV, filename, outDisk, err, compress=False, \
     ################################################################
     # Checks
     if not UV.PIsA(inUV):
-        raise TypeError,"inUV MUST be a Python Obit UV"
+        raise TypeError("inUV MUST be a Python Obit UV")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Set output
     outUV = UV.newPFUV("FITS UV DATA", filename, outDisk, False, err)
@@ -820,8 +823,8 @@ def VLABPCal(uv, BPCal, err, newBPVer=1, timerange=[0.,0.], \
     if doCenter1:
         # Center doCenter1 fraction of channels for first cal
         mchan = int(nchan*doCenter1)
-        bpass.BChan1 = max(1, (nchan/2)-(mchan/2))
-        bpass.EChan1 = min(nchan, (nchan/2)+(mchan/2))
+        bpass.BChan1 = max(1, (nchan//2)-(mchan//2))
+        bpass.EChan1 = min(nchan, (nchan//2)+(mchan//2))
     else:
         bpass.BChan1 = BChan1
         bpass.EChan1 = EChan1
@@ -1037,8 +1040,8 @@ def VLAPolCal(uv, InsCals, RLCal, RLPhase, err, RM=0.0, \
                 outClass="IPOLCL"
                 x =  Image.newPAImage("I",outName, outClass, outDisk,outSeq,True,err)
                 h = x.Desc.Dict
-                blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
-                trc = [3*h["inaxes"][0]/4,3*h["inaxes"][1]/4]
+                blc = [h["inaxes"][0]//4,h["inaxes"][1]//4]
+                trc = [3*h["inaxes"][0]//4,3*h["inaxes"][1]//4]
                 stat = imstat(x, err, blc=blc,trc=trc)
                 IFlux.append(stat["Flux"])
                 IRMS.append(stat["RMSHist"])
@@ -1073,8 +1076,8 @@ def VLAPolCal(uv, InsCals, RLCal, RLPhase, err, RM=0.0, \
                 outFile  = img.Sources[0].strip()+"ITEMPPOLCAL.fits"
                 x =  Image.newPFImage("I",outFile,img.outDisk,True,err)
                 h = x.Desc.Dict
-                blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
-                trc = [3*h["inaxes"][0]/4,3*h["inaxes"][1]/4]
+                blc = [h["inaxes"][0]//4,h["inaxes"][1]//4]
+                trc = [3*h["inaxes"][0]//4,3*h["inaxes"][1]//4]
                 stat = imstat(x, err, blc=blc,trc=trc)
                 IFlux.append(stat["Flux"])
                 IRMS.append(stat["RMSHist"])

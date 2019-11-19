@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2015                                           */
+/*;  Copyright (C) 2008-2019                                           */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -133,6 +133,7 @@ static inline odouble ObitBeamShapeGetFreq (ObitBeamShape *in) {
 /** Public: set reference frequency */
 static inline void ObitBeamShapeSetFreq (ObitBeamShape *in, odouble newFreq) {
   in->refFreq = newFreq;
+  in->beamAng = -1.0;
 } /* end  ObitBeamShapeSetFreq */
 
 /** Public: set Antenna size*/

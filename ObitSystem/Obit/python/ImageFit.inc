@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageFit type                          */
 /*                                                                    */
-/*;  Copyright (C) 2007                                               */
+/*;  Copyright (C) 2007,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -34,49 +34,6 @@
 #include "ObitFitRegion.h"
 %}
 
-
-%inline %{
-extern ObitImageFit* newImageFit (char* name) {
-  return newObitImageFit (name);
-} // end  newImageFit
-
-extern ObitImageFit* ImageFitCopy  (ObitImageFit *in, ObitImageFit *out, 
-				    ObitErr *err) {
-  return ObitImageFitCopy (in, out, err);
-} // end  ImageFitCopy
-
-extern ObitImageFit* ImageFitUnref (ObitImageFit* in) {
-  if (!ObitImageFitIsA(in)) return NULL;
-  return ObitImageFitUnref(in);
-}
-
-extern ObitImageFit*  ImageFitRef (ObitImageFit* in) {
-  return ObitImageFitRef(in);
-}
-
-extern ObitInfoList* ImageFitGetList (ObitImageFit* in) {
-  return ObitInfoListRef(in->info);
-}
-
-extern int ImageFitFit (ObitImageFit* in, ObitImage *image, 
-                        ObitFitRegion* reg, ObitErr *err) {
- return (int)ObitImageFitFit(in, image, reg, err);
-}
-
-extern char* ImageFitGetName (ObitImageFit* in) {
-  if (ObitImageFitIsA(in)) {
-    return in->name;
-  } else {
-    return NULL;
-  }
-}
-
-extern int ImageFitIsA (ObitImageFit* in) {
-  return ObitImageFitIsA(in);
-}
-
-%}
-
 /* Definitions for Python Shadow class */
 /* A copy of the struct for c */
 %{
@@ -89,20 +46,93 @@ typedef struct {
   ObitImageFit *me;
 } ImageFit;
 
-%addmethods ImageFit { 
-  ImageFit(char* name) {
-     ImageFit *out;
-     out = (ImageFit *) malloc(sizeof(ImageFit));
-     if (strcmp(name, "None")) {
-        out->me = newImageFit(name);
-     } else out->me = NULL;
-     return out;
+
+%inline %{
+extern ObitImageFit* newImageFit (char* name) {
+  return newObitImageFit (name);
+} // end  newImageFit
+
+extern ObitImageFit* ImageFitUnref (ObitImageFit* in) {
+  if (!ObitImageFitIsA(in)) return NULL;
+  return ObitImageFitUnref(in);
+}
+
+extern ObitImageFit*  ImageFitRef (ObitImageFit* in) {
+  return ObitImageFitRef(in);
+}
+
+void CreateImageFit(PyObject *self, char* name) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ImageFit, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateImageFit: could not recover c struct");
+	return;
    }
-  ~ImageFit() {
-   if (!self) return;  // Not defined
-   if (self->me->ReferenceCount>0) 
-      self->me = ImageFitUnref(self->me);
-   free(self);
+   if (strcmp(name, "None")) ((ImageFit*)ptr)->me = newImageFit(name);
+   else  ((ImageFit*)ptr)->me = NULL;
+   return;
+ } // end CreateImageFit
+
+void DeleteImageFit(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ImageFit, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteImageFit: could not recover c struct");
+	return;
+   }
+   ((ImageFit*)ptr)->me = ObitDConCleanUnref(((ImageFit*)ptr)->me);
+} // end DeleteImageFit
+
+ObitImageFit* ImageFit_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ImageFit, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"ImageFitGet_me: could not recover c struct");
+	return NULL;
+   }
+   return ((ImageFit*)ptr)->me;
+} // end ImageFit_Get_me
+
+void ImageFit_Set_me(PyObject *self, ObitDConCleanWindow *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ImageFit, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"ImageFit_Set_me: could not recover c struct");
+	return;
+   }
+   ((ImageFit*)ptr)->me =  ObitDConCleanWindowRef(me);
+}  // end ImageFit_Set_me
+
+
+extern ObitImageFit* ImageFitCopy  (ObitImageFit *in, ObitImageFit *out, 
+				    ObitErr *err) {
+  return ObitImageFitCopy (in, out, err);
+} // end  ImageFitCopy
+
+extern ObitInfoList* ImageFitGetList (ObitImageFit* in) {
+  return ObitInfoListRef(in->info);
+}
+
+extern long ImageFitFit (ObitImageFit* in, ObitImage *image, 
+                        ObitFitRegion* reg, ObitErr *err) {
+ return (long)ObitImageFitFit(in, image, reg, err);
+}
+
+extern char* ImageFitGetName (ObitImageFit* in) {
+  if (ObitImageFitIsA(in)) {
+    return in->name;
+  } else {
+    return NULL;
   }
-};
+}
+
+extern long ImageFitIsA (ObitImageFit* in) {
+  return (long)ObitImageFitIsA(in);
+}
+
+%}
 

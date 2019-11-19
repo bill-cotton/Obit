@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for parameter file parser utilities        */
 /*                                                                    */
-/*;  Copyright (C) 2012-2016                                          */
+/*;  Copyright (C) 2012-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -45,27 +45,27 @@ extern void OSurveyVLPrint (ObitTable *VLTable, ObitImage *image,
 } // end OSurveyVLPrint
 
 // Print Selected contents of an NVSS VL table
-extern int OSurveyNVSSPrint (ObitPrinter *printer, ObitData *data, 
-  int VLVer, int first, int last, ObitErr *err) {
+extern long OSurveyNVSSPrint (ObitPrinter *printer, ObitData *data, 
+     long VLVer, long first, long last, ObitErr *err) {
   gboolean lfirst = first!=0;
   gboolean llast  = last!=0;
-  return ObitSurveyNVSSPrint (printer, data, (olong)VLVer, lfirst, llast, err);
+  return (long)ObitSurveyNVSSPrint (printer, data, (olong)VLVer, lfirst, llast, err);
 } // end OSurveyNVSSPrint
 
 // Print Selected contents of an VLSS VL table
-extern int OSurveyVLSSPrint (ObitPrinter *printer, ObitData *data, 
-  int VLVer, int first, int last, ObitErr *err) {
+extern long OSurveyVLSSPrint (ObitPrinter *printer, ObitData *data, 
+  long VLVer, long first, long last, ObitErr *err) {
   gboolean lfirst = first!=0;
   gboolean llast  = last!=0;
-  return ObitSurveyVLSSPrint (printer, data, (olong)VLVer, lfirst, llast, err);
+  return (long)ObitSurveyVLSSPrint (printer, data, (olong)VLVer, lfirst, llast, err);
 } // end OSurveyVLSSPrint
 
 // Print Selected contents of a generic VL table
-extern int OSurveyGenPrint (ObitPrinter *printer, ObitData *data, 
-  int VLVer, int first, int last, ObitErr *err) {
+extern long OSurveyGenPrint (ObitPrinter *printer, ObitData *data, 
+  long VLVer, long first, long last, ObitErr *err) {
   gboolean lfirst = first!=0;
   gboolean llast  = last!=0;
-  return ObitSurveyGenPrint (printer, data, (olong)VLVer, lfirst, llast, err);
+  return (long)ObitSurveyGenPrint (printer, data, (olong)VLVer, lfirst, llast, err);
 } // end OSurveyGenPrint
 
 // Get calibrated model parameters and errors
@@ -73,7 +73,7 @@ extern int OSurveyGenPrint (ObitPrinter *printer, ObitData *data,
      ObitSurveyGenCalParms *calParm = NULL;
      PyObject *outDict = PyDict_New();  
      PyObject *list;
-     int i;
+     long i;
      ofloat fluxScale, biasRA, biasDec, calRAEr, calDecEr, ClnBiasAv, ClnBiasEr,
        calAmpEr, calSizeEr, calPolEr, beamMaj, beamMin, beamPA;
      odouble RA, Dec;
@@ -152,7 +152,7 @@ extern int OSurveyGenPrint (ObitPrinter *printer, ObitData *data,
      PyDict_SetItemString(outDict, "edminor", PyFloat_FromDouble((double)edminor));
      PyDict_SetItemString(outDict, "edpa",    PyFloat_FromDouble((double)edpa));
      list = PyList_New(4);
-     for (i=0; i<4; i++) PyList_SetItem(list, i, PyInt_FromLong((long)rflag[i]));
+     for (i=0; i<4; i++) PyList_SetItem(list, i, PyLong_FromLong((long)rflag[i]));
      PyDict_SetItemString(outDict, "rflag",    list);
      Py_DECREF(list);
 
@@ -160,7 +160,6 @@ extern int OSurveyGenPrint (ObitPrinter *printer, ObitData *data,
      return outDict;
 }
 // end OSurveyGenCorErr
-
 
 %}
 

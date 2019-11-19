@@ -27,7 +27,9 @@
 #-----------------------------------------------------------------------
 
 # Python package for Web Utilities 
+from __future__ import absolute_import
 import Obit, Image, ImageDesc, SkyGeom, ImageInterp, OErr
+from six.moves import range
 # Number of images per 4 deg declination strip starting as (dec, #)
 NVSSnumMap = [
      ( 0., 90), ( 4., 90), ( 8., 90), (12., 90), (16., 90), (20., 90), \
@@ -49,13 +51,13 @@ def NVSSFindFile(RA, Dec, equinox, err, stokes='I'):
     ################################################################
     # Checks
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     if err.isErr: # existing error?
         return
     if not type(RA)==str:
-        raise TypeError,"RA must be a string (HH MM SS.S)"
+        raise TypeError("RA must be a string (HH MM SS.S)")
     if not type(Dec)==str:
-        raise TypeError,"Dec must be a string (HH MM SS.S)"
+        raise TypeError("Dec must be a string (HH MM SS.S)")
     #
     ra  = ImageDesc.PHMS2RA(RA, sep=' ')
     dec = ImageDesc.PDMS2Dec(Dec, sep=' ')
@@ -124,7 +126,7 @@ def NVSSPtFlux(RA, Dec, equinox, err, stokes='I',dir="/home/ftp/nvss/MAPS"):
     ################################################################
     # Checks
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     if err.isErr: # existing error?
         return None
     #

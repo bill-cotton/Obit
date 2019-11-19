@@ -8,7 +8,7 @@ VSAD or SAD.  FS Tables also contain spectra.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2006-2016
+#  Copyright (C) 2006-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -35,7 +35,10 @@ VSAD or SAD.  FS Tables also contain spectra.
 #-----------------------------------------------------------------------
 
 # Python utility package for source catalog manipulation
+from __future__ import absolute_import
+from __future__ import print_function
 import Obit, Image, ImageDesc, Table, InfoList, OErr, History, SkyGeom
+from six.moves import range
 
 def PMF2VL(MFTable, VLTable, image, err):
     """
@@ -52,14 +55,14 @@ def PMF2VL(MFTable, VLTable, image, err):
     ################################################################
     # Checks
     if not Table.PIsA(MFTable):
-        print "Actually ",MFTable.__class__
-        raise TypeError,"MFTable MUST be a Python Obit Table"
+        print("Actually ",MFTable.__class__)
+        raise TypeError("MFTable MUST be a Python Obit Table")
     if not Table.PIsA(VLTable):
-        print "Actually ",VLTable.__class__
-        raise TypeError,"VLTable MUST be a Python Obit Table"
+        print("Actually ",VLTable.__class__)
+        raise TypeError("VLTable MUST be a Python Obit Table")
     if not Image.PIsA(image):
-        print "Actually ",image.__class__
-        raise TypeError,"image MUST be a Python Obit Image"
+        print("Actually ",image.__class__)
+        raise TypeError("image MUST be a Python Obit Image")
     #
     Obit.TableMF2VL (MFTable.me, VLTable.me, image.me, err.me);
     # end PMF2VL
@@ -78,11 +81,11 @@ def PMFPrint (MFTable, image, err, file="stdout"):
     ################################################################
     # Checks
     if not Table.PIsA(MFTable):
-        print "Actually ",MFTable.__class__
-        raise TypeError,"MFTable MUST be a Python Obit Table"
+        print("Actually ",MFTable.__class__)
+        raise TypeError("MFTable MUST be a Python Obit Table")
     if not Image.PIsA(image):
-        print "Actually ",image.__class__
-        raise TypeError,"image MUST be a Python Obit Image"
+        print("Actually ",image.__class__)
+        raise TypeError("image MUST be a Python Obit Image")
     #
     Obit.TableMFPrint (MFTable.me, image.me, file, err.me);
     # end PMFPrint
@@ -98,11 +101,11 @@ def PVLAppend (inVL, outVL, err):
     ################################################################
     # Checks
     if not Table.PIsA(inVL):
-        print "Actually ",inVL.__class__
-        raise TypeError,"inVL MUST be a Python Obit Table"
+        print("Actually ",inVL.__class__)
+        raise TypeError("inVL MUST be a Python Obit Table")
     if not Table.PIsA(outVL):
-        print "Actually ",outVL.__class__
-        raise TypeError,"VLTable MUST be a Python Obit Table"
+        print("Actually ",outVL.__class__)
+        raise TypeError("VLTable MUST be a Python Obit Table")
     #
     Obit.TableVLAppend (inVL.me, outVL.me, err.me);
     # end PVLAppend 
@@ -119,8 +122,8 @@ def PVLIndex (inVL,err):
     ################################################################
     # Checks
     if not Table.PIsA(inVL):
-        print "Actually ",inVL.__class__
-        raise TypeError,"inVL MUST be a Python Obit Table"
+        print("Actually ",inVL.__class__)
+        raise TypeError("inVL MUST be a Python Obit Table")
     #
     Obit.TableVLIndex (inVL.me, err.me);
     # end PVLIndex 
@@ -146,8 +149,8 @@ def PVLMerge (inVL, err, Radius = 3, Cutoff=0.05):
     ################################################################
     # Checks
     if not Table.PIsA(inVL):
-        print "Actually ",inVL.__class__
-        raise TypeError,"inVL MUST be a Python Obit Table"
+        print("Actually ",inVL.__class__)
+        raise TypeError("inVL MUST be a Python Obit Table")
     #
     # Set control values
     inInfo = inVL.List
@@ -182,17 +185,17 @@ def PVLSelect (inVL, outVL, err, BLC=[10,10], TRC=[100000,100000], \
     ################################################################
     # Checks
     if not Table.PIsA(inVL):
-        print "Actually ",inVL.__class__
-        raise TypeError,"inVL MUST be a Python Obit Table"
+        print("Actually ",inVL.__class__)
+        raise TypeError("inVL MUST be a Python Obit Table")
     if not Table.PIsA(outVL):
-        print "Actually ",outVL.__class__
-        raise TypeError,"VLTable MUST be a Python Obit Table"
+        print("Actually ",outVL.__class__)
+        raise TypeError("VLTable MUST be a Python Obit Table")
     #
     # Set control values
     inInfo = inVL.List
     dim = [2,1,1,1,1]
-    InfoList.PPutInt   (inInfo, "BLC", dim, BLC, err)
-    InfoList.PPutInt   (inInfo, "TRC", dim, TRC, err)
+    InfoList.PPutInt  (inInfo, "BLC", dim, BLC, err)
+    InfoList.PPutInt  (inInfo, "TRC", dim, TRC, err)
     # Convert Steps to 1-D
     sss = []
     for s in Steps:
@@ -217,8 +220,8 @@ def PVLPurge (inVL, field, err):
     ################################################################
     # Checks
     if not Table.PIsA(inVL):
-        print "Actually ",inVL.__class__
-        raise TypeError,"inVL MUST be a Python Obit Table"
+        print("Actually ",inVL.__class__)
+        raise TypeError("inVL MUST be a Python Obit Table")
     #
     Obit.TableVLPurge (inVL.me, outVL.me, err.me);
     # end PVLPurge 
@@ -244,17 +247,17 @@ def PVLRedun (inVL, outVL, err, centerPix=[512,512], maxDist=15.0):
     ################################################################
     # Checks
     if not Table.PIsA(inVL):
-        print "Actually ",inVL.__class__
-        raise TypeError,"inVL MUST be a Python Obit Table"
+        print("Actually ",inVL.__class__)
+        raise TypeError("inVL MUST be a Python Obit Table")
     if not Table.PIsA(outVL):
-        print "Actually ",outVL.__class__
-        raise TypeError,"VLTable MUST be a Python Obit Table"
+        print("Actually ",outVL.__class__)
+        raise TypeError("VLTable MUST be a Python Obit Table")
     # Set control values
     inInfo = inVL.List
     dim = [1,1,1,1,1]
     InfoList.PPutFloat (inInfo, "maxDist", dim, [maxDist], err)
     dim = [2,1,1,1,1]
-    InfoList.PPutInt   (inInfo, "centerPix", dim, centerPix, err)
+    InfoList.PPutInt  (inInfo, "centerPix", dim, centerPix, err)
     #
     Obit.TableVLRedun (inVL.me, outVL.me, err.me);
     # end PVLRedun 
@@ -277,11 +280,11 @@ def PVLFilter (inVL, outVL, err, \
     ################################################################
     # Checks
     if not Table.PIsA(inVL):
-        print "Actually ",inVL.__class__
-        raise TypeError,"inVL MUST be a Python Obit Table"
+        print("Actually ",inVL.__class__)
+        raise TypeError("inVL MUST be a Python Obit Table")
     if not Table.PIsA(outVL):
-        print "Actually ",outVL.__class__
-        raise TypeError,"VLTable MUST be a Python Obit Table"
+        print("Actually ",outVL.__class__)
+        raise TypeError("VLTable MUST be a Python Obit Table")
     inVL.Open(Table.READONLY,err)
     outVL.Open(Table.READWRITE,err)
     if err.isErr:
@@ -317,11 +320,11 @@ def PVLScale (inImage, inVL, outVL, scale, err,
     ################################################################
     # Checks
     if not Table.PIsA(inVL):
-        print "Actually ",inVL.__class__
-        raise TypeError,"inVL MUST be a Python Obit Table"
+        print("Actually ",inVL.__class__)
+        raise TypeError("inVL MUST be a Python Obit Table")
     if not Table.PIsA(outVL):
-        print "Actually ",outVL.__class__
-        raise TypeError,"VLTable MUST be a Python Obit Table"
+        print("Actually ",outVL.__class__)
+        raise TypeError("VLTable MUST be a Python Obit Table")
     fblank = Obit.FArrayGetBlank ()  # Blanked value
     inVL.Open(Table.READONLY,err)
     outVL.Open(Table.READWRITE,err)
@@ -344,8 +347,8 @@ def PVLScale (inImage, inVL, outVL, scale, err,
                 (dra,ddec) = SkyGeom.PShiftXY(row["RA(2000)"][0], row["DEC(2000)"][0], 0.0, pos[0], pos[1])
                 if (abs(dra)<=pos[2]) and (abs(ddec)<=pos[2]):
                     doScale = False
-                    print "exclude", irow, ImageDesc.PRA2HMS(row["RA(2000)"][0]), ImageDesc.PDec2DMS(row["DEC(2000)"][0]), \
-                        row["PEAK INT"][0]
+                    print("exclude", irow, ImageDesc.PRA2HMS(row["RA(2000)"][0]), ImageDesc.PDec2DMS(row["DEC(2000)"][0]), \
+                        row["PEAK INT"][0])
                     break
         if doScale:
             row["PEAK INT"][0] *= scale
@@ -382,7 +385,7 @@ def PVLScale (inImage, inVL, outVL, scale, err,
     #outVL.Close(err)
 
     # Index
-    print "Index output"
+    print("Index output")
     PVLIndex (outVL,err)
 
     # end PVLScale
@@ -402,11 +405,11 @@ def PVLPrint (VLTable, image, err, file="stdout"):
     ################################################################
     # Checks
     if not Table.PIsA(VLTable):
-        print "Actually ",VLTable.__class__
-        raise TypeError,"VLTable MUST be a Python Obit Table"
+        print("Actually ",VLTable.__class__)
+        raise TypeError("VLTable MUST be a Python Obit Table")
     if not Image.PIsA(image):
-        print "Actually ",image.__class__
-        raise TypeError,"image MUST be a Python Obit Image"
+        print("Actually ",image.__class__)
+        raise TypeError("image MUST be a Python Obit Image")
     #
     Obit.TableVLPrint (VLTable.me, image.me, file, err.me);
     # end PVLPrint
@@ -430,11 +433,11 @@ def PVL2VZ(VLTable, image, err):
     ################################################################
     # Checks
     if not Table.PIsA(VLTable):
-        print "Actually ",VLTable.__class__
-        raise TypeError,"VLTable MUST be a Python Obit Table"
+        print("Actually ",VLTable.__class__)
+        raise TypeError("VLTable MUST be a Python Obit Table")
     if not Image.PIsA(image):
-        print "Actually ",image.__class__
-        raise TypeError,"image MUST be a Python Obit Image"
+        print("Actually ",image.__class__)
+        raise TypeError("image MUST be a Python Obit Image")
     #
     # Get data
     id =  Obit.ImageCastData(image.me)
@@ -502,11 +505,11 @@ def PVZSel(VZTable, image, err):
     ################################################################
     # Checks
     if not Table.PIsA(VZTable):
-        print "Actually ",VZTable.__class__
-        raise TypeError,"VZTable MUST be a Python Obit Table"
+        print("Actually ",VZTable.__class__)
+        raise TypeError("VZTable MUST be a Python Obit Table")
     if not Image.PIsA(image):
-        print "Actually ",image.__class__
-        raise TypeError,"image MUST be a Python Obit Image"
+        print("Actually ",image.__class__)
+        raise TypeError("image MUST be a Python Obit Image")
     #
     # Get data
     id =  Obit.ImageCastData(image.me)
@@ -608,11 +611,11 @@ def PVL2FS(VLTable, image, FSver, err):
     ################################################################
     # Checks
     if not Table.PIsA(VLTable):
-        print "Actually ",VLTable.__class__
-        raise TypeError,"VLTable MUST be a Python Obit Table"
+        print("Actually ",VLTable.__class__)
+        raise TypeError("VLTable MUST be a Python Obit Table")
     if not Image.PIsA(image):
-        print "Actually ",image.__class__
-        raise TypeError,"image MUST be a Python Obit Image"
+        print("Actually ",image.__class__)
+        raise TypeError("image MUST be a Python Obit Image")
     #
     Obit.TableVL2FS (VLTable.me, image.me, FSver, err.me);
     # end PVL2FS
@@ -628,11 +631,11 @@ def PFSAppend (inFS, outFS, err):
     ################################################################
     # Checks
     if not Table.PIsA(inFS):
-        print "Actually ",inFS.__class__
-        raise TypeError,"inFS MUST be a Python Obit Table"
+        print("Actually ",inFS.__class__)
+        raise TypeError("inFS MUST be a Python Obit Table")
     if not Table.PIsA(outFS):
-        print "Actually ",outFS.__class__
-        raise TypeError,"FSTable MUST be a Python Obit Table"
+        print("Actually ",outFS.__class__)
+        raise TypeError("FSTable MUST be a Python Obit Table")
     #
     Obit.TableFSAppend (inFS.me, outFS.me, err.me);
     # end PFSAppend 
@@ -649,8 +652,8 @@ def PFSIndex (inFS,err):
     ################################################################
     # Checks
     if not Table.PIsA(inFS):
-        print "Actually ",inFS.__class__
-        raise TypeError,"inFS MUST be a Python Obit Table"
+        print("Actually ",inFS.__class__)
+        raise TypeError("inFS MUST be a Python Obit Table")
     #
     Obit.TableFSIndex (inFS.me, err.me);
     # end PFSIndex 
@@ -678,8 +681,8 @@ def PFSMerge (inFS, err, Radius = 3, Cutoff=0.05):
     ################################################################
     # Checks
     if not Table.PIsA(inFS):
-        print "Actually ",inFS.__class__
-        raise TypeError,"inFS MUST be a Python Obit Table"
+        print("Actually ",inFS.__class__)
+        raise TypeError("inFS MUST be a Python Obit Table")
     #
     # Set control values
     inInfo = inFS.List
@@ -716,11 +719,11 @@ def PFSSelect (inFS, outFS, err, BLC=[10,10], TRC=[100000,100000], \
     ################################################################
     # Checks
     if not Table.PIsA(inFS):
-        print "Actually ",inFS.__class__
-        raise TypeError,"inFS MUST be a Python Obit Table"
+        print("Actually ",inFS.__class__)
+        raise TypeError("inFS MUST be a Python Obit Table")
     if not Table.PIsA(outFS):
-        print "Actually ",outFS.__class__
-        raise TypeError,"FSTable MUST be a Python Obit Table"
+        print("Actually ",outFS.__class__)
+        raise TypeError("FSTable MUST be a Python Obit Table")
     #
     # Set control values
     inInfo = inFS.List
@@ -751,8 +754,8 @@ def PFSPurge (inFS, field, err):
     ################################################################
     # Checks
     if not Table.PIsA(inFS):
-        print "Actually ",inFS.__class__
-        raise TypeError,"inFS MUST be a Python Obit Table"
+        print("Actually ",inFS.__class__)
+        raise TypeError("inFS MUST be a Python Obit Table")
     #
     Obit.TableFSPurge (inFS.me, outFS.me, err.me);
     # end PFSPurge 
@@ -779,11 +782,11 @@ def PFSRedun (inFS, outFS, err, centerPix=[512,512], maxDist=15.0):
     ################################################################
     # Checks
     if not Table.PIsA(inFS):
-        print "Actually ",inFS.__class__
-        raise TypeError,"inFS MUST be a Python Obit Table"
+        print("Actually ",inFS.__class__)
+        raise TypeError("inFS MUST be a Python Obit Table")
     if not Table.PIsA(outFS):
-        print "Actually ",outFS.__class__
-        raise TypeError,"FSTable MUST be a Python Obit Table"
+        print("Actually ",outFS.__class__)
+        raise TypeError("FSTable MUST be a Python Obit Table")
     # Set control values
     inInfo = inFS.List
     dim = [1,1,1,1,1]
@@ -809,11 +812,11 @@ def PFSPrint (FSTable, image, err, file="stdout"):
     ################################################################
     # Checks
     if not Table.PIsA(FSTable):
-        print "Actually ",FSTable.__class__
-        raise TypeError,"FSTable MUST be a Python Obit Table"
+        print("Actually ",FSTable.__class__)
+        raise TypeError("FSTable MUST be a Python Obit Table")
     if not Image.PIsA(image):
-        print "Actually ",image.__class__
-        raise TypeError,"image MUST be a Python Obit Image"
+        print("Actually ",image.__class__)
+        raise TypeError("image MUST be a Python Obit Image")
     #
     Obit.TableFSPrint (FSTable.me, image.me, file, err.me);
     # end PFSPrint
@@ -831,11 +834,11 @@ def PFSGetSpectrum (inFS, image, err):
     ################################################################
     # Checks
     if not Table.PIsA(inFS):
-        print "Actually ",inFS.__class__
-        raise TypeError,"inFS MUST be a Python Obit Table"
+        print("Actually ",inFS.__class__)
+        raise TypeError("inFS MUST be a Python Obit Table")
     if not Image.PIsA(image):
-        print "Actually ",image.__class__
-        raise TypeError,"image MUST be a Python Obit Image"
+        print("Actually ",image.__class__)
+        raise TypeError("image MUST be a Python Obit Image")
     #
     Obit.TableFSGetSpectrum (FSTable.me, image.me, err.me);
     # end PFSGetSpectrum
@@ -854,14 +857,14 @@ def PFSFiltVel (inFS, image, outFS, err, minFlux=0., minSNR=5.):
     ################################################################
     # Checks
     if not Table.PIsA(inFS):
-        print "Actually ",inFS.__class__
-        raise TypeError,"inFS MUST be a Python Obit Table"
+        print("Actually ",inFS.__class__)
+        raise TypeError("inFS MUST be a Python Obit Table")
     if not Table.PIsA(outFS):
-        print "Actually ",outFS.__class__
-        raise TypeError,"outFS MUST be a Python Obit Table"
+        print("Actually ",outFS.__class__)
+        raise TypeError("outFS MUST be a Python Obit Table")
     if not Image.PIsA(image):
-        print "Actually ",image.__class__
-        raise TypeError,"image MUST be a Python Obit Image"
+        print("Actually ",image.__class__)
+        raise TypeError("image MUST be a Python Obit Image")
     # Set control values
     inInfo = inFS.List
     inInfo.set ("minSNR",  minSNR)

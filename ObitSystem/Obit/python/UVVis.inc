@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for UVVis type                             */
 /*                                                                    */
-/*;  Copyright (C)2007-2017                                           */
+/*;  Copyright (C)2007-2019                                           */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -42,7 +42,7 @@ extern PyObject* UVVisGet (ObitUV* inUV, ObitErr *err) {
   ofloat *visp=NULL;
   olong ant1, ant2, suba, suid, fqid, icorr;
   PyObject *vis;
-  PyObject *vList, *Cvis, *cx, *tup;
+  PyObject *vList, *cx, *tup;
 
    vis = PyDict_New();
 
@@ -56,28 +56,28 @@ extern PyObject* UVVisGet (ObitUV* inUV, ObitErr *err) {
       if (err->error) Obit_traceback_val (err, "UVVisGet", "UVVisGet", vis);
       readMore = (inUV->myDesc->numVisBuff<=0);  /* keep going? */
       if (iretCode==OBIT_IO_EOF)  {
-        PyDict_SetItemString(vis, "EOF",PyInt_FromLong((long)1));
+        PyDict_SetItemString(vis, "EOF",PyLong_FromLong((long)1));
         return vis;
       }
     } /* End read until valid */
     if (iretCode!=OBIT_IO_OK) return vis;
 
-    PyDict_SetItemString(vis, "visNo",  PyInt_FromLong((long)inUV->myDesc->firstVis));
+    PyDict_SetItemString(vis, "visNo",  PyLong_FromLong((long)inUV->myDesc->firstVis));
     ObitUVDescGetAnts(inUV->myDesc, inUV->buffer, &ant1, &ant2, &suba);
-    PyDict_SetItemString(vis, "ant1",    PyInt_FromLong((long)ant1));
-    PyDict_SetItemString(vis, "ant2",    PyInt_FromLong((long)ant2));
-    PyDict_SetItemString(vis, "suba",    PyInt_FromLong((long)suba));
+    PyDict_SetItemString(vis, "ant1",    PyLong_FromLong((long)ant1));
+    PyDict_SetItemString(vis, "ant2",    PyLong_FromLong((long)ant2));
+    PyDict_SetItemString(vis, "suba",    PyLong_FromLong((long)suba));
     PyDict_SetItemString(vis, "u", PyFloat_FromDouble((double)inUV->buffer[inUV->myDesc->ilocu]));
     PyDict_SetItemString(vis, "v", PyFloat_FromDouble((double)inUV->buffer[inUV->myDesc->ilocv]));
     PyDict_SetItemString(vis, "w", PyFloat_FromDouble((double)inUV->buffer[inUV->myDesc->ilocw]));
     PyDict_SetItemString(vis, "time", PyFloat_FromDouble((double)inUV->buffer[inUV->myDesc->iloct]));
     if (inUV->myDesc->ilocsu>=0) {
         suid = (olong)(inUV->buffer[inUV->myDesc->ilocsu]);
-        PyDict_SetItemString(vis, "suid", PyInt_FromLong((long)suid));
+        PyDict_SetItemString(vis, "suid", PyLong_FromLong((long)suid));
     }
     if (inUV->myDesc->ilocfq>=0) {
         fqid = (olong)(inUV->buffer[inUV->myDesc->ilocfq]);
-        PyDict_SetItemString(vis, "fqid", PyInt_FromLong((long)fqid));
+        PyDict_SetItemString(vis, "fqid", PyLong_FromLong((long)fqid));
     }
     vList = PyList_New(inUV->myDesc->ncorr);
     visp = &inUV->buffer[inUV->myDesc->nrparm];
@@ -98,25 +98,24 @@ extern PyObject* UVVisGet (ObitUV* inUV, ObitErr *err) {
 } // end UVVisGet
 
 extern void UVVisSet (PyObject* vis, ObitUV* outUV, ObitErr *err) {
-  ObitIOCode oretCode;
   ofloat *visp=NULL;
   olong ant1, ant2, suba, icorr, len;
   PyObject *vList, *cx, *tup;
 
 
-    ant1 = (olong)PyInt_AsLong(PyDict_GetItemString(vis, "ant1"));
-    ant2 = (olong)PyInt_AsLong(PyDict_GetItemString(vis, "ant2"));
-    suba = (olong)PyInt_AsLong(PyDict_GetItemString(vis, "suba"));
+    ant1 = (olong)PyLong_AsLong(PyDict_GetItemString(vis, "ant1"));
+    ant2 = (olong)PyLong_AsLong(PyDict_GetItemString(vis, "ant2"));
+    suba = (olong)PyLong_AsLong(PyDict_GetItemString(vis, "suba"));
     ObitUVDescSetAnts(outUV->myDesc,  outUV->buffer, ant1, ant2, suba);
     outUV->buffer[outUV->myDesc->ilocu] = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(vis, "u"));
     outUV->buffer[outUV->myDesc->ilocv] = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(vis, "v"));
     outUV->buffer[outUV->myDesc->ilocw] = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(vis, "w"));
     outUV->buffer[outUV->myDesc->iloct] = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(vis, "time"));
     if (outUV->myDesc->ilocsu>=0) {
-        outUV->buffer[outUV->myDesc->ilocsu] = (ofloat)PyInt_AsLong(PyDict_GetItemString(vis, "suid"));
+        outUV->buffer[outUV->myDesc->ilocsu] = (ofloat)PyLong_AsLong(PyDict_GetItemString(vis, "suid"));
     }
     if (outUV->myDesc->ilocfq>=0) {
-        outUV->buffer[outUV->myDesc->ilocfq] = (ofloat)PyInt_AsLong(PyDict_GetItemString(vis, "fqid"));
+        outUV->buffer[outUV->myDesc->ilocfq] = (ofloat)PyLong_AsLong(PyDict_GetItemString(vis, "fqid"));
     }
 
     vList = PyDict_GetItemString(vis, "vis");
@@ -135,7 +134,7 @@ extern void UVVisSet (PyObject* vis, ObitUV* outUV, ObitErr *err) {
     }
 
     outUV->myDesc->numVisBuff = 1;
-    oretCode = ObitUVWrite (outUV, outUV->buffer, err);
+    ObitUVWrite (outUV, outUV->buffer, err);
     if (err->error) Obit_traceback_msg (err, "UVVisSet", "UVVisSet");
 
 } // end UVVisSet

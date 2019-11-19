@@ -5,7 +5,7 @@ The information meant to derive contents and intent of a BDF data set.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2012,2015
+#  Copyright (C) 2012,2015,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -32,32 +32,12 @@ The information meant to derive contents and intent of a BDF data set.
 #-----------------------------------------------------------------------
 
 # Python shadow class to partial ObitSDMData class
-import Obit
+from __future__ import absolute_import
+import Obit, _Obit
 import os
+from six.moves import range
 
-class OASDMPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.OASDMUnref(Obit.OASDM_me_get(self.this))
-            # In with the new
-            Obit.OASDM_me_set(self.this,value)
-            return
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != OASDM:
-            return
-        if name == "me" : 
-            return Obit.OASDM_me_get(self.this)
-        raise AttributeError,name
-    def __repr__(self):
-        if self.__class__ != OASDM:
-            return
-        return "<C OASDM instance> " + Obit.OASDMGetName(self.me)
-
-class OASDM(OASDMPtr):
+class OASDM(Obit.OASDM):
     """
     Python Obit interface to ASDM intent related data
     
@@ -95,14 +75,24 @@ class OASDM(OASDMPtr):
         DataRoot      = directory path to root of ASDM/BDF
         err           = Obit error/message object
         """
-        self.this = Obit.new_OASDM(name, DataRoot, err.me)
+        super(OASDM, self).__init__()
+        Obit.CreateOASDM(self.this, name, DataRoot, err.me)
         self.root = DataRoot
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_OASDM(self.this)
+    def __del__(self, DeleteOASDM=_Obit.DeleteOASDM):
+        if _Obit!=None:
+            DeleteOASDM(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.OASDMUnref(Obit.OASDM_Get_me(self.this))
+            # In with the new
+            Obit.OASDM_Set_me(self.this,value)
+            return
+        self.__dict__[name] = value
     def __getattr__(self,name):
         if name == "me" : 
-            return Obit.OASDM_me_get(self.this)
+            return Obit.OASDM_Get_me(self.this)
         # Functions to return members
         if name=="Scan":
             out = Obit.OASDMGetScan(self.me)
@@ -159,8 +149,12 @@ class OASDM(OASDMPtr):
             return Obit.OASDMGetRefJD(self.me)
         if name=="Array":
             return Obit.OASDMGetArray(self.me)
-        raise AttributeError,str(name)
-    
+        raise AttributeError(str(name))
+    def __repr__(self):
+        if not isinstance(self, OASDM):
+            return "Bogus Dude"+str(self.__class__)
+        return "<C OASDM instance> " + Obit.OASDMGetName(self.me)
+  
     def GetSpectralWindowArray(self, mainrow=0, SWOrder=True):
         """ Partially digested Spectral window array """
         out = Obit.OASDMGetSpectralWindowArray(self.me, mainrow, SWOrder)
@@ -538,14 +532,14 @@ def PIsA (asdm):
     """
     Tells if the input is a Python OASDM
     
-    returns True or False (1,0)
+    returns True or False
     * asdm = Python Obit ASDM to test
     """
     ################################################################
       # Checks
-    if printer.__class__ != OASDM:
+    if not isinstance(asdm, OASDM):
         return False
-    return Obit.OASDMIsA(asdm.me)
+    return Obit.OASDMIsA(asdm.me)!=0
     # end PIsA
 
 

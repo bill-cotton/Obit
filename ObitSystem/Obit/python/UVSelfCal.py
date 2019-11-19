@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C)2005,2006,2007
+#  Copyright (C)2005,2006,2007,1019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -27,41 +27,14 @@
 #-----------------------------------------------------------------------
 
 # Interferometric selfcal class
-import Obit, OErr, InfoList, UV, Table, types
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, OErr, InfoList, UV, Table, types
 
 # Python shadow class to ObitUVSelfCal class
  
-class UVSelfCalPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.UVSelfCalUnref(Obit.UVSelfCal_me_get(self.this))
-            # In with the new
-            Obit.UVSelfCal_me_set(self.this,value)
-            return
-        if name=="SkyModel":
-            PSetSkyModel(self, value)
-            return 
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != UVSelfCal:
-            return
-        if name == "me" : 
-            return Obit.UVSelfCal_me_get(self.this)
-        # Virtual members
-        if name=="List":
-            return PGetList(self)
-        if name=="SkyModel":
-            return PGetSkyModel(self)
-        raise AttributeError,str(name)
-    def __repr__(self):
-        if self.__class__ != UVSelfCal:
-            return
-        return "<C UVSelfCal instance> " + Obit.UVSelfCalGetName(self.me)
 #
-class UVSelfCal(UVSelfCalPtr):
+class UVSelfCal(Obit.UVSelfCal):
     """ Python Obit Image class
 
     This class does visibility-based (Cotton-Schwab) CLEAN
@@ -73,10 +46,38 @@ class UVSelfCal(UVSelfCalPtr):
     skyModel    - SkyModel, use PGetSkyModel
     """
     def __init__(self, name) :
-        self.this = Obit.new_UVSelfCal(name)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_UVSelfCal(self.this)
+        super(UVSelfCal, self).__init__()
+        Obit.CreateUVSelfCal (self.this, name)
+    def __del__(self, DeleteUVSelfCal=_Obit.DeleteUVSelfCal):
+        if _Obit!=None:
+            DeleteUVSelfCal(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.UVSelfCalUnref(Obit.UVSelfCal_Get_me(self.this))
+            # In with the new
+            Obit.UVSelfCal_Set_me(self.this,value)
+            return
+        if name=="SkyModel":
+            PSetSkyModel(self, value)
+            return 
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if not isinstance(self, UVSelfCal):
+            return "Bogus dude"+str(self.__class__)
+        if name == "me" : 
+            return Obit.UVSelfCal_Get_me(self.this)
+        # Virtual members
+        if name=="List":
+            return PGetList(self)
+        if name=="SkyModel":
+            return PGetSkyModel(self)
+        raise AttributeError(str(name))
+    def __repr__(self):
+        if not isinstance(self, UVSelfCal):
+            return "Bogus dude"+str(self.__class__)
+        return "<C UVSelfCal instance> " + Obit.UVSelfCalGetName(self.me)
 
 
 def input(inputDict):
@@ -99,9 +100,9 @@ def input(inputDict):
     """
     ################################################################
     structure = inputDict['structure']  # Structure information
-    print 'Inputs for ',structure[0]
+    print('Inputs for ',structure[0])
     for k,v in structure[1]:
-        print '  ',k,' = ',inputDict[k],' : ',v
+        print('  ',k,' = ',inputDict[k],' : ',v)
         
     # end input
 
@@ -129,11 +130,11 @@ def PCopy (inUVSelfCal, outUVSelfCal, err):
     ################################################################
     # Checks
     if not PIsA(inUVSelfCal):
-        raise TypeError,"inUVSelfCal MUST be a Python Obit UVSelfCal"
+        raise TypeError("inUVSelfCal MUST be a Python Obit UVSelfCal")
     if not PIsA(outUVSelfCal):
-        raise TypeError,"outUVSelfCal MUST be a Python Obit UVSelfCal"
+        raise TypeError("outUVSelfCal MUST be a Python Obit UVSelfCal")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     Obit.UVSelfCalCopy (inUVSelfCal.me, outUVSelfCal.me, err.me)
     if err.isErr:
@@ -149,10 +150,9 @@ def PGetList (inUVSelfCal):
     ################################################################
      # Checks
     if not PIsA(inUVSelfCal):
-        raise TypeError,"inUVSelfCal MUST be a Python Obit UVSelfCal"
+        raise TypeError("inUVSelfCal MUST be a Python Obit UVSelfCal")
     #
     out    = InfoList.InfoList()
-    out.me = Obit.InfoListUnref(out.me)
     out.me = Obit.UVSelfCalGetList(inUVSelfCal.me)
     return out
     # end PGetList
@@ -166,7 +166,7 @@ def PGetSkyModel (inUVSelfCal):
     ################################################################
      # Checks
     if not PIsA(inUVSelfCal):
-        raise TypeError,"inUVSelfCal MUST be a Python Obit UVSelfCal"
+        raise TypeError("inUVSelfCal MUST be a Python Obit UVSelfCal")
     #
     out    = SkyModel.SkyModel("None")
     out.me = Obit.UVSelfCalGetSkyModel(inUVSelfCal.me)
@@ -182,9 +182,9 @@ def PSetSkyModel (inUVSelfCal, skyModel):
     ################################################################
     # Checks
     if not PIsA(inUVSelfCal):
-        raise TypeError,"inUVSelfCal MUST be a Python ObitUVSelfCal"
+        raise TypeError("inUVSelfCal MUST be a Python ObitUVSelfCal")
     if not SkyModel.PIsA(skyModel):
-        raise TypeError,"array MUST be a Python Obit SkyModel"
+        raise TypeError("array MUST be a Python Obit SkyModel")
     #
     Obit.UVSelfCalSetSkyModel(inUVSelfCal.me, mosaic.me)
     # end PSetSkyModel
@@ -243,9 +243,9 @@ def PCreate (name, skyModel, err, input=SelfCalInput):
     ################################################################
     # Checks
     if not SkyModel.PIsA(skyModel):
-        raise TypeError,"skyModel MUST be a Python Obit SkyModel"
+        raise TypeError("skyModel MUST be a Python Obit SkyModel")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Create
     out = UVSelfCal(name);
@@ -347,11 +347,11 @@ def PCal (inSC, err, input=UVSelfCalCalInput):
     #
     # Checks
     if not PIsA(inSC):
-        raise TypeError, 'Bad input selfcalibrator'
+        raise TypeError('Bad input selfcalibrator')
     if not UV.PIsA(InData):
-        raise TypeError, 'Bad input UV data'
+        raise TypeError('Bad input UV data')
     if not UV.PIsA(OutData):
-        raise TypeError, 'Bad output UV data'
+        raise TypeError('Bad output UV data')
     dim = [1,1,1,1,1]
     # Create solver
     solver = UVGSolve.newObit("Selfcal Solver", err)
@@ -403,11 +403,11 @@ def PRef (inSC, SNTab, isuba, refant, err):
     ################################################################
     # Checks
     if not PIsA(inSC):
-        raise TypeError, 'Bad input selfcalibrator'
+        raise TypeError('Bad input selfcalibrator')
     if not Table.PIsA(SNTab):
-        raise TypeError,"SNTab MUST be a Python Obit Table"
+        raise TypeError("SNTab MUST be a Python Obit Table")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     ret = Obit.UVSolnRefAnt (SNTab.me, isuba, refant, err.me)
     if err.isErr:
@@ -454,9 +454,9 @@ def PSNSmo (inSC, err, input=UVSelfSNSmoInput):
     #
     # Checks
     if not UV.PIsA(InData):
-        raise TypeError, 'PCal: Bad input UV data'
+        raise TypeError('PCal: Bad input UV data')
     if not Table.PIsA(InTable):
-        raise TypeError, 'PCal: Bad input table'
+        raise TypeError('PCal: Bad input table')
     # Set control values on UV 
     dim[0] = 1;
     inInfo = UV.PGetList(InData)  # Add control to UV data
@@ -491,11 +491,11 @@ def PDeselSN (inSC, SNTab, isuba, fgid, ants, timerange, err):
     ################################################################
     # Checks
     if not PIsA(inSC):
-        raise TypeError, 'Bad input selfcalibrator'
+        raise TypeError('Bad input selfcalibrator')
     if not Table.PIsA(SNTab):
-        raise TypeError,"SNTab MUST be a Python Obit Table"
+        raise TypeError("SNTab MUST be a Python Obit Table")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     nantf = len(ants)
     Obit.UVSolnDeselSN (SNTab.me, isuba, fqid, nantf, ants, timerange,
@@ -519,18 +519,16 @@ def PInvertSN (SNTab, outUV, outVer, doRepl, err):
     ################################################################
     # Checks
     if not Table.PIsA(SNTab):
-        raise TypeError,"SNTab MUST be a Python Obit Table"
+        raise TypeError("SNTab MUST be a Python Obit Table")
     if not UV.PIsA(outUV):
-        raise TypeError, 'outUV Must be UV data '
+        raise TypeError('outUV Must be UV data ')
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Create output
     outSN  = Table.Table("None")
-    # Cast uv to Data
-    outData = Obit.UVCastData(outUV.me)
     # invert table
-    outSN.me = Obit.SNInvert (SNTab.me, outData, outVer, doRepl, err.me)
+    outSN.me = Obit.SNInvert (SNTab.me, outUV.me, outVer, doRepl, err.me)
     if err.isErr:
         printErrMsg(err, "Error inverting solutions")
     return outSN
@@ -545,7 +543,7 @@ def PGetName (inUVSelfCal):
     ################################################################
      # Checks
     if not PIsA(inUVSelfCal):
-        raise TypeError,"inUVSelfCal MUST be a Python Obit UVSelfCal"
+        raise TypeError("inUVSelfCal MUST be a Python Obit UVSelfCal")
     #
     return Obit.UVSelfCalGetName(inUVSelfCal.me)
     # end PGetName
@@ -558,7 +556,7 @@ def PIsA (inUVSelfCal):
     """
     ################################################################
     # Checks
-    if inUVSelfCal.__class__ != UVSelfCal:
-        return 0
-    return Obit.UVSelfCalIsA(inUVSelfCal.me)
+    if not isinstance(inUVSelfCal, UVSelfCal):
+        return False
+    return Obit.UVSelfCalIsA(inUVSelfCal.me)!=0
     # end PIsA

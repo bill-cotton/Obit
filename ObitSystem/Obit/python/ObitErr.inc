@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitErr type                           */
 /*                                                                    */
-/*;  Copyright (C) 2004-2010                                          */
+/*;  Copyright (C) 2004-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -38,11 +38,63 @@ extern void ObitErrLog (ObitErr* in);
 extern void ObitErrClear (ObitErr* in);
 extern int ObitErrIsA (ObitErr* in);
 
-%inline %{
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct OErr  {
+  ObitErr *me;
+} OErr;
+%}
+/* And a copy of the struct for swig */
+typedef struct OErr {
+  ObitErr *me;
+} OErr;
 
-extern ObitErr* ObitErrCreate (void) {
-  return newObitErr();
-}
+%inline %{
+void CreateOErr(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_OErr, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Create: could not recover c struct");
+	return;
+   }
+   ((OErr*)ptr)->me = newObitErr();
+   return;
+} // end CreateOErr
+
+void DeleteOErr(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_OErr, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Delete: could not recover c struct");
+	return;
+   }
+   ((OErr*)ptr)->me = ObitErrUnref(((OErr*)ptr)->me);
+} // end DeleteOErr
+
+ObitErr* OErr_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_OErr, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((OErr*)ptr)->me;
+} // end OErr_Get_me
+
+void OErr_Set_me(PyObject *self, ObitErr *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_OErr, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"OErr_Set_me: could not recover c struct");
+	return;
+   }
+   ((OErr*)ptr)->me =  ObitErrRef(me);
+}  // end OErr_Set_me
 
 extern int isError(ObitErr *in) {
    return (int)in->error;
@@ -141,29 +193,4 @@ extern void Bomb(void) {
 }
 
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitErr *me;
-} OErr;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitErr *me;
-} OErr;
-
-%addmethods OErr { 
-  OErr(void) {
-     OErr *out;
-     out = (OErr *) malloc(sizeof(OErr));
-     out->me = ObitErrCreate();
-    return out;
-   }
-  ~OErr() {
-    self->me = ObitErrUnref(self->me);
-    free(self);
-  }
-};
 

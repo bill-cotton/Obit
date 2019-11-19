@@ -27,8 +27,11 @@
 #-----------------------------------------------------------------------
 
 # Python utility package for Mosaicing images by weighting them together
+from __future__ import absolute_import
+from __future__ import print_function
 import Image, ImageDesc, ImageUtil, FArray, InfoList, OErr, History, GPUFInterpolate
 import os
+from six.moves import range
 
 def PMakeMaster(template, size, SumWtImage, SumWt2, err):
     """
@@ -49,16 +52,16 @@ def PMakeMaster(template, size, SumWtImage, SumWt2, err):
     ################################################################
     # Checks
     if not Image.PIsA(template):
-        print "Actually ",template.__class__
-        raise TypeError,"template MUST be a Python Obit Image"
+        print("Actually ",template.__class__)
+        raise TypeError("template MUST be a Python Obit Image")
     if not Image.PIsA(SumWtImage):
-        print "Actually ",SumWtImage.__class__
-        raise TypeError,"SumWtImage MUST be a Python Obit Image"
+        print("Actually ",SumWtImage.__class__)
+        raise TypeError("SumWtImage MUST be a Python Obit Image")
     if not Image.PIsA(SumWt2):
-        print "Actually ",SumWt2.__class__
-        raise TypeError,"SumWt2 MUST be a Python Obit Image"
+        print("Actually ",SumWt2.__class__)
+        raise TypeError("SumWt2 MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Get image info from template
     Image.POpen (template, 1, err)
@@ -76,7 +79,7 @@ def PMakeMaster(template, size, SumWtImage, SumWt2, err):
     naxis = size[0:3]
     # Update reference pixel, pixel shift an integral number
     dim = descDict["inaxes"]
-    pixOff = [naxis[0]/2-dim[0]/2, naxis[1]/2-dim[1]/2]
+    pixOff = [naxis[0]//2-dim[0]//2, naxis[1]//2-dim[1]//2]
     crpix = descDict["crpix"]
     crpix[0] = crpix[0] + pixOff[0]
     crpix[1] = crpix[1] + pixOff[1]
@@ -157,16 +160,16 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     ################################################################
     # Checks
     if not Image.PIsA(inImage):
-        print "Actually ",inImage.__class__
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        print("Actually ",inImage.__class__)
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not Image.PIsA(SumWtImage):
-        print "Actually ",SumWtImage.__class__
-        raise TypeError,"SumWtImage MUST be a Python Obit Image"
+        print("Actually ",SumWtImage.__class__)
+        raise TypeError("SumWtImage MUST be a Python Obit Image")
     if not Image.PIsA(SumWt2):
-        print "Actually ",SumWt2.__class__
-        raise TypeError,"SumWt2 MUST be a Python Obit Image"
+        print("Actually ",SumWt2.__class__)
+        raise TypeError("SumWt2 MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     haveWtImage = inWtImage != None   # Weight image given
     # Open accumulation files
@@ -178,7 +181,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     outDesc     = Image.PGetDesc(SumWtImage)
     outDescDict = ImageDesc.PGetDict(outDesc)
     outNaxis    = outDescDict["inaxes"]
-    print "Accumulation naxis",outNaxis
+    print("Accumulation naxis",outNaxis)
     #  Get input descriptor to see how many planes
     inDesc     = Image.PGetDesc(inImage)
     inDescDict = ImageDesc.PGetDict(inDesc)
@@ -193,10 +196,10 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     npln = epln-bpln+1
     # Test if compatible
     if npln < outNaxis[2]:
-        print "input has",npln,"planes selected and output has",outNaxis[2]
-        raise RuntimeError,"input image has too few planes "
+        print("input has",npln,"planes selected and output has",outNaxis[2])
+        raise RuntimeError("input image has too few planes ")
     if (ndim>0) and (inNaxis[2]>1):  # list of 0-rel planes to loop over
-        planes = range(bpln+restart-1,bpln+npln-1)
+        planes = list(range(bpln+restart-1,bpln+npln-1))
     else:
         planes = [0]
     #
@@ -216,7 +219,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         doPlane  = [iPlane+1,1,1,1,1]        # Input plane
         outPlane = [iPlane+2-bpln,1,1,1,1]   # output plane
         if not (iPlane%20):
-            print "At plane", iPlane+1,os.times()
+            print("At plane", iPlane+1,os.times())
         # Make weight image if needed, first pass or planeWt
         #if WtImage == None:
         if planeWt or haveWtImage:
@@ -236,7 +239,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
             if planeWt:
                 pln = [iPlane+1,1,1,1,1]
             else:
-                pln = [max(1,inNaxis[2]/2),1,1,1,1]
+                pln = [max(1,inNaxis[2]//2),1,1,1,1]
             if haveWtImage:
                 # Beam provided, extract relevant plane to a memory resident WtImage
                 Image.PGetPlane (inWtImage, None, doPlane, err)
@@ -320,7 +323,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
             else:
                 fact = factor
             if not (iPlane%20):
-                print "Factor",fact, "plane",iPlane,"RMS",RMS
+                print("Factor",fact, "plane",iPlane,"RMS",RMS)
         else:
             fact = factor
         #print 'do plane',doPlane[0],'RMS',RMS, 'factor',fact
@@ -408,16 +411,16 @@ def PWeightImageEq(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     ################################################################
     # Checks
     if not Image.PIsA(inImage):
-        print "Actually ",inImage.__class__
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        print("Actually ",inImage.__class__)
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not Image.PIsA(SumWtImage):
-        print "Actually ",SumWtImage.__class__
-        raise TypeError,"SumWtImage MUST be a Python Obit Image"
+        print("Actually ",SumWtImage.__class__)
+        raise TypeError("SumWtImage MUST be a Python Obit Image")
     if not Image.PIsA(SumWt2):
-        print "Actually ",SumWt2.__class__
-        raise TypeError,"SumWt2 MUST be a Python Obit Image"
+        print("Actually ",SumWt2.__class__)
+        raise TypeError("SumWt2 MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     t0 = os.times()[4]    # Initial time
     haveWtImage = inWtImage != None   # Weight image given
@@ -432,7 +435,7 @@ def PWeightImageEq(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     outDesc     = Image.PGetDesc(SumWtImage)
     outDescDict = ImageDesc.PGetDict(outDesc)
     outNaxis    = outDescDict["inaxes"]
-    print "Accumulation naxis",outNaxis
+    print("Accumulation naxis",outNaxis)
     #  Get input descriptor to see how many planes
     inDesc     = Image.PGetDesc(inImage)
     inDescDict = ImageDesc.PGetDict(inDesc)
@@ -447,10 +450,10 @@ def PWeightImageEq(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     npln = epln-bpln+1
     # Test if compatible
     if npln < outNaxis[2]:
-        print "input has",npln,"planes selected and output has",outNaxis[2]
-        raise RuntimeError,"input image has too few planes "
+        print("input has",npln,"planes selected and output has",outNaxis[2])
+        raise RuntimeError("input image has too few planes ")
     if (ndim>0) and (inNaxis[2]>1):  # list of 0-rel planes to loop over
-        planes = range(bpln+restart-1,bpln+npln-1)
+        planes = list(range(bpln+restart-1,bpln+npln-1))
     else:
         planes = [0]
     #
@@ -466,7 +469,7 @@ def PWeightImageEq(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         doPlane  = [iPlane+1,1,1,1,1]        # Input plane
         outPlane = [iPlane+2-bpln,1,1,1,1]   # output plane
         if not (iPlane%20):
-            print "At plane", iPlane+1,'t=%6.1f sec'%(os.times()[4]-t0)
+            print("At plane", iPlane+1,'t=%6.1f sec'%(os.times()[4]-t0))
         # Get image 
         inImage.List.set("BLC",[iblc[0], iblc[1],1,1,1,1,1])
         inImage.List.set("TRC",[itrc[0], itrc[1],0,0,0,0,0])
@@ -498,7 +501,7 @@ def PWeightImageEq(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         if planeWt:
             pln = [iPlane+1,1,1,1,1]
         else:
-            pln = [max(1,inNaxis[2]/2),1,1,1,1]
+            pln = [max(1,inNaxis[2]//2),1,1,1,1]
         if haveWtImage:
             # Beam provided, extract relevant plane to a memory resident WtImage
             OErr.printErrMsg(err, "Error reading wt image "+str(iPlane)+" for "+
@@ -521,9 +524,9 @@ def PWeightImageEq(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         if iPlane==0:
             pos = [0,0]
             maxWt = FArray.PMax(WtImage.FArray,pos)
-            print "Maximum weight",maxWt
+            print("Maximum weight",maxWt)
             if maxWt<minAccWt:
-                print "Less than minAccWt",minAccWt,"skipping"
+                print("Less than minAccWt",minAccWt,"skipping")
                 break
             
         # Interpolated weight image
@@ -578,7 +581,7 @@ def PWeightImageEq(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
             else:
                 fact = factor
             if not (iPlane%20):
-                print "Factor",fact, "plane",iPlane,"RMS",RMS
+                print("Factor",fact, "plane",iPlane,"RMS",RMS)
         else:
             fact = factor
         # Interpolate image plane
@@ -646,14 +649,14 @@ def PAccumIxWt(im, wt, factor, accum, accumwt, err):
     ################################################################
     # Checks
     if not Image.PIsA(im):
-        print "Actually ",im.__class__
-        raise TypeError,"im MUST be a Python Obit Image"
+        print("Actually ",im.__class__)
+        raise TypeError("im MUST be a Python Obit Image")
     if not Image.PIsA(wt):
-        print "Actually ",wt.__class__
-        raise TypeError,"wt MUST be a Python Obit Image"
+        print("Actually ",wt.__class__)
+        raise TypeError("wt MUST be a Python Obit Image")
     if not Image.PIsA(accum):
-        print "Actually ",accum.__class__
-        raise TypeError,"accum MUST be a Python Obit Image"
+        print("Actually ",accum.__class__)
+        raise TypeError("accum MUST be a Python Obit Image")
     
     #
     # Open files
@@ -664,7 +667,7 @@ def PAccumIxWt(im, wt, factor, accum, accumwt, err):
     outDesc     = accum.Desc
     outDescDict = outDesc.Dict
     outNaxis    = outDescDict["inaxes"]
-    print "Accumulation naxis",outNaxis
+    print("Accumulation naxis",outNaxis)
     #  Get input descriptor to see how many planes
     inDesc     = im.Desc
     inDescDict = inDesc.Dict
@@ -673,10 +676,10 @@ def PAccumIxWt(im, wt, factor, accum, accumwt, err):
     #print "debug input naxis is ",inNaxis
     # Test if compatible
     if inNaxis[2] < outNaxis[2]:
-        print "input has",inNaxis[2],"planes and output",outNaxis[2]
-        raise RuntimeError,"input image has too few planes "
+        print("input has",inNaxis[2],"planes and output",outNaxis[2])
+        raise RuntimeError("input image has too few planes ")
     if (ndim>0) and (inNaxis[2]>0):  # list of planes to loop over (0-rel)
-        planes = range(inNaxis[2])
+        planes = list(range(inNaxis[2]))
     else:
         planes = [0]
     #
@@ -770,16 +773,16 @@ def PNormalizeImage(SumWtImage, SumWt2, outImage, err, minWt=0.1):
     ################################################################
     # Checks
     if not Image.PIsA(outImage):
-        print "Actually ",outImage.__class__
-        raise TypeError,"outImage MUST be a Python Obit Image"
+        print("Actually ",outImage.__class__)
+        raise TypeError("outImage MUST be a Python Obit Image")
     if not Image.PIsA(SumWtImage):
-        print "Actually ",SumWtImage.__class__
-        raise TypeError,"SumWtImage MUST be a Python Obit Image"
+        print("Actually ",SumWtImage.__class__)
+        raise TypeError("SumWtImage MUST be a Python Obit Image")
     if not Image.PIsA(SumWt2):
-        print "Actually ",SumWt2.__class__
-        raise TypeError,"SumWt2 MUST be a Python Obit Image"
+        print("Actually ",SumWt2.__class__)
+        raise TypeError("SumWt2 MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Open files
     Image.POpen(outImage,   2, err)
@@ -789,7 +792,7 @@ def PNormalizeImage(SumWtImage, SumWt2, outImage, err, minWt=0.1):
     outDesc = Image.PGetDesc(SumWtImage)
     outDescDict = ImageDesc.PGetDict(outDesc)
     outNaxis = outDescDict["inaxes"]
-    print "Accumulation naxis",outNaxis
+    print("Accumulation naxis",outNaxis)
     #  Get input descriptor to see how many planes
     inDesc     = Image.PGetDesc(outImage)
     inDescDict = ImageDesc.PGetDict(outDesc)
@@ -798,10 +801,10 @@ def PNormalizeImage(SumWtImage, SumWt2, outImage, err, minWt=0.1):
     #print "debug input naxis is ",inNaxis
     # Test if compatible
     if inNaxis[2] < outNaxis[2]:
-        print "input has",inNaxis[2],"planes and output",outNaxis[2]
-        raise RuntimeError,"input image has too few planes "
+        print("input has",inNaxis[2],"planes and output",outNaxis[2])
+        raise RuntimeError("input image has too few planes ")
     if (ndim>0) and (inNaxis[2]>0):  # list of planes to loop over (0-rel)
-        planes = range(inNaxis[2])
+        planes = list(range(inNaxis[2]))
     else:
         planes = [0]
     #
@@ -849,13 +852,13 @@ def PGetOverlap(in1Image, in2Image, err):
     ################################################################
     # Checks
     if not Image.PIsA(in1Image):
-        print "Actually ",inI1mage.__class__
-        raise TypeError,"in1Image MUST be a Python Obit Image"
+        print("Actually ",inI1mage.__class__)
+        raise TypeError("in1Image MUST be a Python Obit Image")
     if not Image.PIsA(in2Image):
-        print "Actually ",in21mage.__class__
-        raise TypeError,"in2Image MUST be a Python Obit Image"
+        print("Actually ",in21mage.__class__)
+        raise TypeError("in2Image MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Is there overlap?
     if ImageDesc.POverlap(in1Image.Desc, in2Image.Desc, err):
@@ -900,70 +903,70 @@ def PGetOverlap(in1Image, in2Image, err):
         #print corn2,nx2,ny2
         # 1 entirely inside 2?
         if ((corn1[0][0]>0) and (corn1[0][1]>0) and (corn1[2][0]<=nx2) and (corn1[2][1]<=ny2)):
-            print "1 entirely inside 2"
+            print("1 entirely inside 2")
             return ([1,1,1,1,1,1,1], [nx1, ny1, 0,0,0,0,0])
         # 2 entirely inside 1?
         if ((corn2[0][0]>0) and (corn2[0][1]>0) and (corn2[2][0]<=nx1) and (corn2[2][1]<=ny1)):
             blc = [corn2[0][0],corn2[0][1], 1,1,1,1,1]
             trc = [corn2[2][0],corn2[2][1], 0,0,0,0,0]
-            print "2 entirely inside 1"
+            print("2 entirely inside 1")
             return(blc,trc)
         # Corner 0 in in2?
         if ((corn1[0][0]>0) and (corn1[0][0]<=nx2) and (corn1[0][1]>0) and (corn1[0][1]<=ny2)):
             blc = [1, 1, 1, 1, 1, 1, 1]
             trc = [min(corn2[2][0],nx1), min(corn2[2][1],ny1), 0,0,0,0,0]
-            print "Corner 0 in in2"
+            print("Corner 0 in in2")
             return (blc, trc)
         # Corner 1 in in2?
         if ((corn1[1][0]>0) and (corn1[1][0]<=nx2) and (corn1[1][1]>0) and (corn1[1][1]<=ny2)):
             blc = [1, min(corn2[3][1], ny1), 1, 1, 1, 1, 1]
             trc = [min (corn2[3][0], nx1), ny1, 0,0,0,0,0]
-            print "Corner 1 in in2"
+            print("Corner 1 in in2")
             return (blc, trc)
         # Corner 2 in in2?
         if ((corn1[2][0]>0) and (corn1[2][0]<=nx2) and (corn1[2][1]>0) and (corn1[2][1]<=ny2)):
             blc = [max(1, corn2[0][0]), max(1, corn2[0][1]), 1, 1, 1, 1, 1]
             trc = [nx1, ny1,  0,0,0,0,0]
-            print "Corner 2 in in2"
+            print("Corner 2 in in2")
             return (blc, trc)
         # Corner 3 in in2?
         if ((corn1[3][0]>0) and (corn1[3][0]<=nx2) and (corn1[3][1]>0) and (corn1[3][1]<=ny2)):
             blc = [max(1,corn2[1][0]), 1, 1, 1, 1, 1]
             trc = [nx1, min(corn2[1][1],ny1), 0,0,0,0,0]
-            print "Corner 3 in in2"
+            print("Corner 3 in in2")
             return (blc, trc)
         # 2 straddle bottom of 1?
         if ((corn2[0][1]<0.0) and (corn2[1][1]>0.0) and (corn2[0][0]>0.0) and (corn2[3][0]<=nx1)):
             blc = [corn2[0][0], 1,1,1,1,1,1]
             trc = [corn2[2][0], corn2[2][1],0,0,0,0,0]
-            print "2 straddles bottom of 1"
+            print("2 straddles bottom of 1")
             return (blc, trc)
         # 2 straddle top of 1?
         if ((corn2[0][1]<ny1) and (corn2[1][1]>ny1) and (corn2[0][0]>0.0) and (corn2[3][0]<=nx1)):
             blc = [corn2[0][0], corn2[0][1], 1,1,1,1,1,1]
             trc = [corn2[2][0], ny1,0,0,0,0,0]
-            print "2 straddles top of 1"
+            print("2 straddles top of 1")
             return (blc, trc)
         # 2 straddle right edge of 1?
         if ((corn2[0][0]<nx1) and (corn2[3][0]>nx1) and (corn2[0][1]>0.0) and (corn2[1][1]<=ny1)):
             blc = [corn2[0][0], corn2[0][1], 1,1,1,1,1,1]
             trc = [nx1, corn2[2][1], 0,0,0,0,0]
-            print "2 straddles right edge of 1"
+            print("2 straddles right edge of 1")
             return (blc, trc)
         # 2 straddle left edge of 1?
         if ((corn2[0][0]<0) and (corn2[3][0]>0) and (corn2[0][1]>0.0) and (corn2[1][1]<=ny1)):
             blc = [1, corn2[0][1], 1,1,1,1,1,1]
             trc = [corn2[2][0], corn2[2][1], 0,0,0,0,0]
-            print "2 straddles left edge of 1"
+            print("2 straddles left edge of 1")
             return (blc, trc)
        # Likely no overlap
-        print "Confused, probably no overlap"
-        print "corn1", corn1, nx1, ny1
-        print "corn2", corn2, nx2, ny2
+        print("Confused, probably no overlap")
+        print("corn1", corn1, nx1, ny1)
+        print("corn2", corn2, nx2, ny2)
         return ([1,1,1,1,1,1,1], [1,1,0,0,0,0,0])
     else:
         # Default is no overlap
-        print "no overlap"
+        print("no overlap")
         return ([1,1,1,1,1,1,1], [1,1,0,0,0,0,0])
     # end PGetOverlap
 
@@ -979,16 +982,16 @@ def PMaskCube(inImage, Mask, outImage, err):
     ################################################################
     # Checks
     if not Image.PIsA(outImage):
-        print "Actually ",outImage.__class__
-        raise TypeError,"outImage MUST be a Python Obit Image"
+        print("Actually ",outImage.__class__)
+        raise TypeError("outImage MUST be a Python Obit Image")
     if not Image.PIsA(inImage):
-        print "Actually ",inImage.__class__
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        print("Actually ",inImage.__class__)
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not Image.PIsA(Mask):
-        print "Actually ",Mask.__class__
-        raise TypeError,"Mask MUST be a Python Obit Image"
+        print("Actually ",Mask.__class__)
+        raise TypeError("Mask MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #  Clone output
     inImage.Clone(outImage, err)
     # Open files
@@ -1001,7 +1004,7 @@ def PMaskCube(inImage, Mask, outImage, err):
     inNaxis    = inImage.Desc.Dict["inaxes"]
     # list of planes to loop over (0-rel)
     if (ndim>2) and (inNaxis[2]>0):  
-        planes = range(inNaxis[2])
+        planes = list(range(inNaxis[2]))
     else:
         planes = [0]
     # Read Mask plane
@@ -1017,7 +1020,7 @@ def PMaskCube(inImage, Mask, outImage, err):
         OErr.printErrMsg(err, "Error reading input image")
         # Make sure compatable
         if not FArray.PIsCompatable(inImage.FArray, Mask.FArray):
-            raise RuntimeError,"inImage and Mask incompatable"
+            raise RuntimeError("inImage and Mask incompatable")
         # Mask where blanked
         FArray.PBlank (inImage.FArray, Mask.FArray, outImage.FArray)
         # Write
@@ -1050,16 +1053,16 @@ def PMaskCube2(inImage, Mask, outImage, err):
     ################################################################
     # Checks
     if not Image.PIsA(outImage):
-        print "Actually ",outImage.__class__
-        raise TypeError,"outImage MUST be a Python Obit Image"
+        print("Actually ",outImage.__class__)
+        raise TypeError("outImage MUST be a Python Obit Image")
     if not Image.PIsA(inImage):
-        print "Actually ",inImage.__class__
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        print("Actually ",inImage.__class__)
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not Image.PIsA(Mask):
-        print "Actually ",Mask.__class__
-        raise TypeError,"Mask MUST be a Python Obit Image"
+        print("Actually ",Mask.__class__)
+        raise TypeError("Mask MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #  Clone output
     inImage.Clone(outImage, err)
     # Open files
@@ -1072,7 +1075,7 @@ def PMaskCube2(inImage, Mask, outImage, err):
     inNaxis    = inImage.Desc.Dict["inaxes"]
     # list of planes to loop over (0-rel)
     if (ndim>2) and (inNaxis[2]>0):  
-        planes = range(inNaxis[2])
+        planes = list(range(inNaxis[2]))
     else:
         planes = [0]
     # Loop over planes
@@ -1088,7 +1091,7 @@ def PMaskCube2(inImage, Mask, outImage, err):
         OErr.printErrMsg(err, "Error reading input image")
         # Make sure compatable
         if not FArray.PIsCompatable(inImage.FArray, Mask.FArray):
-            raise RuntimeError,"inImage and Mask incompatable"
+            raise RuntimeError("inImage and Mask incompatable")
         # Mask where blanked
         FArray.PBlank (inImage.FArray, Mask.FArray, outImage.FArray)
         # Write

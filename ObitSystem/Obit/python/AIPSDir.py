@@ -1,7 +1,7 @@
 """ Python Obit AIPS directory utilities """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004,2007
+#  Copyright (C) 2004-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -27,6 +27,9 @@
 #                         Charlottesville, VA 22903-2475 USA
 #-----------------------------------------------------------------------
 
+from __future__ import absolute_import
+from __future__ import print_function
+from six.moves import range
 def ehex(n, width=0, padding=None):
     """
     Convert a number into "extended hex".
@@ -39,7 +42,7 @@ def ehex(n, width=0, padding=None):
 
     while n > 0:
         result = ehex_digits[n % len(ehex_digits)] + result
-        n /= len(ehex_digits)
+        n = n // len(ehex_digits)
         width -= 1
         continue
 
@@ -68,7 +71,7 @@ try:
         AIPSdisks.append(AIPS.disks[i].dirname)
 except:
     # Lookup disk info
-    for disk in xrange(1, 35):
+    for disk in range(1, 35):
         area = 'DA' + ehex(disk, 2, '0')
         dir = os.getenv(area)
         if dir:
@@ -162,7 +165,7 @@ def PFindCNO(disk, user, Aname, Aclass, Atype, seq, err):
     ################################################################
     # Checks
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     ret = Obit.AIPSDirFindCNO(disk, user, Aname, Aclass, Atype, seq, err.me)
     if err.isErr:
@@ -175,7 +178,6 @@ def PTestCNO(disk, user, Aname, Aclass, Atype, seq, err):
     Test if AIPS file exists
     
     returns AIPS cno, -1 => not found
-
     * disk     = AIPS disk number
     * user     = AIPS user number
     * Aname    = AIPS file name
@@ -189,7 +191,7 @@ def PTestCNO(disk, user, Aname, Aclass, Atype, seq, err):
     if err.isErr:
         return -1
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Print message stack to clear
     OErr.printErr(err)
@@ -219,7 +221,7 @@ def PHiSeq(disk, user, Aname, Aclass, Atype, err):
     if err.isErr:
         return -1
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     ret = Obit.AIPSDirHiSeq(disk, user, Aname, Aclass, Atype, err.me)
     return ret
@@ -243,7 +245,7 @@ def PAlloc(disk, user, Aname, Aclass, Atype, seq, err):
     ################################################################
     # Checks
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     ret = Obit.AIPSDirAlloc(disk, user, Aname, Aclass, Atype, seq, err.me)
     if err.isErr:
@@ -263,7 +265,7 @@ def PRemove(disk, user, cno, err):
     ################################################################
     # Checks
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     ret = Obit.AIPSDirRemoveEntry(disk, user, cno, err.me)
     if err.isErr:
@@ -282,7 +284,7 @@ def PNumber(disk, user, err):
     ################################################################
     # Checks
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     ret = Obit.AIPSDirNumber(disk, user, err.me)
     if err.isErr:
@@ -312,7 +314,7 @@ def PInfo(disk, user, cno, err):
     ################################################################
     # Checks
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     ret = Obit.AIPSDirInfo(disk, user, cno, err.me)
     if err.isErr:
@@ -334,7 +336,7 @@ def PSetDir(disk, newName, err, URL=None):
     ################################################################
     # Checks
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     retDisk = Obit.AIPSSetDirname(disk, newName, err.me)
     if err.isErr:
@@ -375,7 +377,7 @@ def PListDir(disk, err, type = "  ", first=1, last=1000,
     ################################################################
     # Checks
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     user = OSystem.PGetAIPSuser()
     ncno = PNumber (disk, user, err)
@@ -393,7 +395,7 @@ def PListDir(disk, err, type = "  ", first=1, last=1000,
         line=PInfo(disk, user, cno, err);
         if WantDir(line, type=type, Aname=Aname, Aclass=Aclass, Aseq=Aseq):
             OErr.printErrMsg(err, "Error reading entry")
-            dirlist = dirlist+string.rjust(str(cno),3)+" "+line+"\n"
+            dirlist = dirlist+str(cno).rjust(3)+" "+line+"\n"
             if giveList:
                 olist.append(cno)
     if err.isErr:
@@ -443,7 +445,7 @@ def PListCat(cat, disk, type = "  ", first=1, last=1000,
     dirlist = "AIPS Directory listing for disk "+str(disk)+"\n"
     for (cno,line) in cat:
         if WantDir(line, type=type, Aname=Aname, Aclass=Aclass, Aseq=Aseq):
-            dirlist = dirlist+string.rjust(str(cno),3)+" "+line+"\n"
+            dirlist = dirlist+str(cno).rjust(3)+" "+line+"\n"
             if giveList:
                 olist.append(cno)
     # Use pager if giveList is False
@@ -474,15 +476,15 @@ def PAllDest(disk, err, Atype = "  ",  Aname=None, Aclass=None, Aseq=0):
     ################################################################
     # Checks
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     if (disk<0) or (disk>(len(AIPS.AIPS.disks)+1)):
-        raise RuntimeError,"Disk "+str(disk)+" out of range"
+        raise RuntimeError("Disk "+str(disk)+" out of range")
     # disks
     if disk>0:
         disks=[disk]
     else:
-        disks= range(1,len(AIPS.AIPS.disks))
+        disks= list(range(1,len(AIPS.AIPS.disks)))
     user = OSystem.PGetAIPSuser()
     # loop over disks
     for dsk in disks:
@@ -503,11 +505,11 @@ def PAllDest(disk, err, Atype = "  ",  Aname=None, Aclass=None, Aseq=0):
                 if Ttype == 'MA':
                     z = Image.newPAImage("Zap image", Tname, Tclass, dsk, Tseq, True, err, \
                                verbose=False)
-                    print "Zap AIPS Image",Tname, Tclass, dsk, Tseq
+                    print("Zap AIPS Image",Tname, Tclass, dsk, Tseq)
                 elif Ttype == 'UV':
                     z = UV.newPAUV("Zap UV data", Tname, Tclass, dsk, Tseq, True, err, \
                                    verbose=False)
-                    print "Zap AIPS UV",Tname, Tclass, dsk, Tseq
+                    print("Zap AIPS UV",Tname, Tclass, dsk, Tseq)
                 # Delete entry
                 if z:
                     z.Zap(err)

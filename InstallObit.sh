@@ -20,7 +20,7 @@ doTHIRD=yes
 doObit=yes
 doObitView=yes
 doObitTalk=yes
-doObitSD=yes
+doObitSD=no  # defunct
 
 # Check command line arguments
 arg=$1
@@ -70,7 +70,7 @@ if test $arg = "-help"; then
     echo "Obit  - don't (re) install Obit"
     echo "ObitView - don't (re) install ObitView"
     echo "ObitTalk - don't (re) install ObitTalk"
-    echo "ObitSD - don't (re) install Obit single dish package"
+#    echo "ObitSD - don't (re) install Obit single dish package"
     exit
 fi
 echo "doPLPLOT $doPLPLOT"
@@ -90,7 +90,7 @@ echo "doTHIRD $doTHIRD"
 echo "doObit $doObit"
 echo "doObitView $doObitView"
 echo "doObitTalk $doObitTalk"
-echo "doObitSD $doObitSD"
+#echo "doObitSD $doObitSD"
 
 # Obit system Base address
 BASE=`pwd`; export BASE
@@ -105,7 +105,7 @@ CC=/usr/bin/gcc; export CC
 OBIT=$BASE/ObitSystem/Obit;export OBIT
 
 # Obit single dish base directory
-OBITSD=$BASE/ObitSystem/ObitSD;export OBITSD
+#OBITSD=$BASE/ObitSystem/ObitSD;export OBITSD
 
 # Set paths
 PYTHONPATH=$OBIT/python;export PYTHONPATH
@@ -211,7 +211,7 @@ if test $doObitTalk = yes; then
 #make clean
 fi
 
-# Obit Single dish
+# Obit Single dish: now defunct
 if test $doObitSD = yes; then
     cd $BASE
     cd ObitSystem/ObitSD
@@ -233,8 +233,9 @@ cd $BASE
 echo "# c shell version" > setup.csh
 echo "# Setup environment to run Obit software" >> setup.csh
 echo "setenv OBIT $OBIT" >> setup.csh
-echo "setenv OBITSD $OBITSD" >> setup.csh
-tstring="\"$OBITSD/python:$OBIT/python:$BASE/opt/share/obittalk/python/\""
+#echo "setenv OBITSD $OBITSD" >> setup.csh
+#tstring="\"$OBITSD/python:$OBIT/python:$BASE/opt/share/obittalk/python/\""
+tstring="\"$OBIT/python:$BASE/opt/share/obittalk/python/\""
 echo "setenv PYTHONPATH $tstring" >> setup.csh
 tstring="\"$BASE/bin:\$PATH\""
 echo "setenv PATH $tstring" >> setup.csh
@@ -246,11 +247,11 @@ chmod +x setup.csh
 echo "#!/bin/sh" > setup.sh
 echo "# Setup environment to run Obit software" >> setup.sh
 echo "OBIT=$OBIT; export OBIT" >> setup.sh
-echo "OBITSD=$OBITSD; export OBITSD" >> setup.sh
+#echo "OBITSD=$OBITSD; export OBITSD" >> setup.sh
 tstring="\"$OBIT/python:$BASE/opt/share/obittalk/python/\""
-if test $doObitSD = yes; then
-    tstring="\"$OBITSD/python:$OBIT/python:$BASE/opt/share/obittalk/python/\""
-fi
+#if test $doObitSD = yes; then
+#    tstring="\"$OBITSD/python:$OBIT/python:$BASE/opt/share/obittalk/python/\""
+#fi
 echo "PYTHONPATH=$tstring; export PYTHONPATH" >> setup.sh
 tstring="\"$BASE/bin:\$PATH\""
 echo "PATH=$tstring; export PATH" >> setup.sh

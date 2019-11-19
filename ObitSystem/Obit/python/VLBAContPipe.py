@@ -13,25 +13,28 @@ where the required arguments are
     (a template is in ``Obit/share/scripts``)
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import sys, pydoc, logging, logging.config 
 from optparse import OptionParser
-from ConfigParser import NoSectionError
+from six.moves.configparser import NoSectionError
 import OErr, OSystem, UV, AIPS, FITS, IDIFix
 import ObitTalkUtil
 from AIPS import AIPSDisk
 from FITS import FITSDisk
 from VLBACal import *
 from PipeUtil import *
+from six.moves import range
 
 logger = 0
 try:
     logging.config.fileConfig("logging.conf")
     logger = logging.getLogger("obitLog.VLBAContPipe")
-except NoSectionError, e:
+except NoSectionError as e:
     logging.basicConfig(filename="VLBAContPipe.log", level=logging.DEBUG)
     logger = logging
     logger.error("CANNOT FIND logging.conf. USING BASIC LOGGING CONFIG INSTEAD.")
-    print "CANNOT FIND logging.conf. USING BASIC LOGGING CONFIG INSTEAD."
+    print("CANNOT FIND logging.conf. USING BASIC LOGGING CONFIG INSTEAD.")
 
 def pipeline( aipsSetup, parmFile ):
     """
@@ -127,7 +130,7 @@ def pipeline( aipsSetup, parmFile ):
                                      wtThresh=wtThresh, calInt=calInt, Compress=Compress, \
                                      check=check, debug=debug)
                 if not UV.PIsA(uv):
-                    raise RuntimeError,"Cannot load "+dataIn
+                    raise RuntimeError("Cannot load "+dataIn)
             # Fix IDI files:
             uv = IDIFix.IDIFix( uv, err )
             seq = uv.Aseq
@@ -140,7 +143,7 @@ def pipeline( aipsSetup, parmFile ):
                                  wtThresh=wtThresh, calInt=calInt, Compress=Compress, \
                                  check=check, debug=debug)
             if not UV.PIsA(uv):
-                raise RuntimeError,"Cannot load "+dataInIDI
+                raise RuntimeError("Cannot load "+dataInIDI)
     if doLoadUVF:
         logger.info("--> Load UVFITS data file (doLoadUVF)")
         uv = VLBAIDILoad(dataInUVF, project, session, band, dataClass, disk, seq, err, logfile=logFile, \
@@ -148,7 +151,7 @@ def pipeline( aipsSetup, parmFile ):
                              check=check, debug=debug)
         # Adding check condition to avoid error when checking
         if not UV.PIsA(uv) and not check:
-            raise RuntimeError,"Cannot load "+dataInUVF
+            raise RuntimeError("Cannot load "+dataInUVF)
     # Otherwise set uv
     if uv==None and not check:
         Aname = VLBAAIPSName(project, session)
@@ -179,7 +182,7 @@ def pipeline( aipsSetup, parmFile ):
         logger.info("--> Copy flag (FG) table 1 to flag table 2 (doCopyFG)")
         retCode = VLBACopyFG (uv, err, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error Copying FG table"
+            raise RuntimeError("Error Copying FG table")
     
     # Special editing
     if parms["doEditList"] and not check:
@@ -198,7 +201,7 @@ def pipeline( aipsSetup, parmFile ):
                                  Reason=parms["quackReason"], \
                                  logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error Quacking data"
+            raise RuntimeError("Error Quacking data")
     
     # Median window time editing, for RFI impulsive in time or dropouts
     if parms["doMedn"]:
@@ -209,7 +212,7 @@ def pipeline( aipsSetup, parmFile ):
                                   flagSig=parms["mednSigma"], flagVer=2, \
                                   logfile=logFile, check=check, debug=False)
         if retCode!=0:
-            raise RuntimeError,"Error in MednFlag"
+            raise RuntimeError("Error in MednFlag")
 
    # Quantization correction?
     if parms["doQuantCor"]:
@@ -219,7 +222,7 @@ def pipeline( aipsSetup, parmFile ):
                                    doSNPlot=parms["doSNPlot"], plotFile=plotFile, \
                                    logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error in quantization correcting/flagging"
+            raise RuntimeError("Error in quantization correcting/flagging")
     
     # Parallactic angle correction?
     if parms["doPACor"]:
@@ -227,7 +230,7 @@ def pipeline( aipsSetup, parmFile ):
         retCode = VLBAPACor(uv, err, noScrat=noScrat, \
                                 logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error in quantization correcting/flagging"
+            raise RuntimeError("Error in quantization correcting/flagging")
     
     # Opacity/Tsys/gain correction
     if parms["doOpacCor"]:
@@ -237,7 +240,7 @@ def pipeline( aipsSetup, parmFile ):
                                   doSNPlot=parms["doSNPlot"], plotFile=plotFile, \
                                   logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error in opacity/gain.Tsys correction"
+            raise RuntimeError("Error in opacity/gain.Tsys correction")
         
         VLBASaveOutFiles() # Save plot file in Outfiles
     
@@ -253,7 +256,7 @@ def pipeline( aipsSetup, parmFile ):
                                               noScrat=noScrat, nThreads=nThreads, \
                                               logfile=logFile, check=check, debug=debug)
             if not parms["contCals"] and not check:
-                raise RuntimeError,"Error in finding acceptable calibrators"
+                raise RuntimeError("Error in finding acceptable calibrators")
             logger.info("Calibrators = " + str(parms["contCals"]))
         else:
             # Snatch from pickle jar
@@ -273,7 +276,7 @@ def pipeline( aipsSetup, parmFile ):
                                   noScrat=noScrat, nThreads=nThreads, \
                                   logfile=logFile, check=check, debug=debug)
         if not goodCal and not check:
-            raise RuntimeError,"Error in finding best calibration data"
+            raise RuntimeError("Error in finding best calibration data")
         # Save it to a pickle jar
         SaveObject(goodCal, goodCalPicklefile, True)
     else:
@@ -291,7 +294,7 @@ def pipeline( aipsSetup, parmFile ):
                             doPCPlot=parms["doPCPlot"], plotFile=plotFile, \
                             noScrat=noScrat, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error in PC calibration"
+            raise RuntimeError("Error in PC calibration")
         VLBASaveOutFiles() # Save plot file in Outfiles
     
     # manual phase cal
@@ -307,7 +310,7 @@ def pipeline( aipsSetup, parmFile ):
                                   plotFile=plotFile, noScrat=noScrat, \
                                   nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error in manual phase calibration"
+            raise RuntimeError("Error in manual phase calibration")
     
     # image cals
     if parms["doImgCal"] and not check:
@@ -326,7 +329,7 @@ def pipeline( aipsSetup, parmFile ):
         SaveObject(parms["contCals"], OKCalPicklefile, True)
         if len( parms["contCals"] ) <= 0:
             logger.error("No calibration sources have been detected! Stopping pipeline.")
-            raise RuntimeError, "No calibration sources have been detected!"
+            raise RuntimeError("No calibration sources have been detected!")
 
     # Check if calibrator models now available
     parms["contCalModel"] = VLBAImageModel(parms["contCals"], parms["outCclass"], disk, seq, err)
@@ -342,7 +345,7 @@ def pipeline( aipsSetup, parmFile ):
                                    doSNPlot=parms["doSNPlot"], plotFile=plotFile, \
                                    nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error in delay calibration"
+            raise RuntimeError("Error in delay calibration")
         VLBASaveOutFiles() # Save plot file in Outfiles
          
     # Bandpass calibration if needed
@@ -358,7 +361,7 @@ def pipeline( aipsSetup, parmFile ):
                                 doAuto = parms["bpdoAuto"], \
                                 nThreads=nThreads, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error in Bandpass calibration"
+            raise RuntimeError("Error in Bandpass calibration")
     
     # Plot amplitude and phase vs. frequency
     if parms["doSpecPlot"]:
@@ -378,13 +381,13 @@ def pipeline( aipsSetup, parmFile ):
                              doSNPlot=parms["doSNPlot"], plotFile=plotFile, \
                              nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error in phase calibration"
+            raise RuntimeError("Error in phase calibration")
         VLBASaveOutFiles() # Save plot file in Outfiles
         # Rewrite contCals pickle file because contCals may have been updated
         SaveObject(parms["contCals"], OKCalPicklefile, True)
         if len( parms["contCals"] ) <= 0:
             logger.error("No calibrator sources have been detected! Stopping pipeline.")
-            raise RuntimeError, "No calibrator sources have been detected!"
+            raise RuntimeError("No calibrator sources have been detected!")
        
         
     # Amplitude calibration
@@ -399,13 +402,13 @@ def pipeline( aipsSetup, parmFile ):
             nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check,
             debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error in amplitude calibration"
+            raise RuntimeError("Error in amplitude calibration")
         VLBASaveOutFiles() # Save plot file in Outfiles
         # Rewrite contCals pickle file because contCals may have been updated
         SaveObject(parms["contCals"], OKCalPicklefile, True)
         if len( parms["contCals"] ) <= 0:
             logger.error("No calibrator sources have been detected! Stopping pipeline.")
-            raise RuntimeError, "No calibrator sources have been detected!"
+            raise RuntimeError("No calibrator sources have been detected!")
        
         
     # Calibrate and average  data
@@ -418,7 +421,7 @@ def pipeline( aipsSetup, parmFile ):
                                   chAvg=parms["chAvg"], avgFreq=parms["avgFreq"], Compress=Compress, \
                                   logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-           raise  RuntimeError,"Error in CalAvg"
+           raise  RuntimeError("Error in CalAvg")
     
     # image targets phase only self-cal - NOTE: actually A&P 
     if parms["doImgTarget"] and not check:
@@ -445,7 +448,7 @@ def pipeline( aipsSetup, parmFile ):
         SaveObject(parms["targets"], targetsPicklefile, True)
         if len( parms["targets"] ) <= 0:
             logger.error("No target sources have been detected! Stopping pipeline.")
-            raise RuntimeError, "No target sources have been detected!"
+            raise RuntimeError("No target sources have been detected!")
        
     # Phase calibration using target models
     if parms["doPhaseCal"]:
@@ -465,13 +468,13 @@ def pipeline( aipsSetup, parmFile ):
                              doSNPlot=parms["doSNPlot"], plotFile=plotFile, \
                              nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error in phase calibration"
+            raise RuntimeError("Error in phase calibration")
         VLBASaveOutFiles() # Save plot file in Outfiles
         # Rewrite targets pickle file because targets may have been updated
         SaveObject(parms["targets"], targetsPicklefile, True)
         if len( parms["targets"] ) <= 0:
             logger.error("No target sources have been detected! Stopping pipeline.")
-            raise RuntimeError, "No target sources have been detected!"
+            raise RuntimeError("No target sources have been detected!")
        
         
     # Instrumental polarization calibration
@@ -494,7 +497,7 @@ def pipeline( aipsSetup, parmFile ):
                                  refAnt=goodCal["bestRef"], solInt=2.0, \
                                  noScrat=noScrat, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error in instrumental poln calibration"
+            raise RuntimeError("Error in instrumental poln calibration")
         
     # RL Phase (EVPA) calibration as BP table
     if parms["doRLCal"] and parms["RLCal"]:
@@ -511,7 +514,7 @@ def pipeline( aipsSetup, parmFile ):
                                 refAnt=goodCal["bestRef"], niter=300, FOV=0.02/3600.0, \
                                 nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
-            raise RuntimeError,"Error in RL phase calibration"
+            raise RuntimeError("Error in RL phase calibration")
         
     # image targets possible with Stokes I(QU)
     if parms["doImgFullTarget"]:
@@ -580,7 +583,7 @@ def pipeline( aipsSetup, parmFile ):
                 oclass = parms["outTclass"]
                 x = Image.newPAImage("out", target, oclass, disk, seq, True, err)
                 if (not x.exist): 
-                    print target,"image not found. Skipping."
+                    print(target,"image not found. Skipping.")
                     continue
                 outfile = project+session+band+target+"."+oclass+".fits"
                 mess ="Write Intermediate target " +outfile+" on disk "+str(outDisk)
@@ -612,7 +615,7 @@ def pipeline( aipsSetup, parmFile ):
                 oclass = parms["outCclass"]
                 x = Image.newPAImage("out", target, oclass, disk, seq, True, err)
                 if (not x.exist): 
-                    print target,"image not found. Skipping."
+                    print(target,"image not found. Skipping.")
                     continue
                 outfile = project+session+band+target+"."+oclass+".fits"
                 mess ="Write Calibrator " +outfile+" on disk "+str(outDisk)
@@ -634,7 +637,7 @@ def pipeline( aipsSetup, parmFile ):
         # Save list of output files
         VLBASaveOutFiles()
     elif debug:
-        print "Not creating contour plots ( doKntrPlots = ", parms["doKntrPlots"], " )"
+        print("Not creating contour plots ( doKntrPlots = ", parms["doKntrPlots"], " )")
     
     # Source uv plane diagnostic plots
     if parms["doDiagPlots"]:
@@ -651,7 +654,7 @@ def pipeline( aipsSetup, parmFile ):
         # Save list of output files
         VLBASaveOutFiles()
     elif debug:
-        print "Not creating diagnostic plots ( doDiagPlots = ", parms["doDiagPlots"], " )"
+        print("Not creating diagnostic plots ( doDiagPlots = ", parms["doDiagPlots"], " )")
     
     # Save metadata
     srcMetadata = None
@@ -752,6 +755,6 @@ if __name__ == '__main__':
         if sys.version_info < (2,5):
             try:
                 logging.shutdown()
-            except KeyError, e:
-                print("Catching known logging module error for " +
-                    "python version < 2.5. ")
+            except KeyError as e:
+                print(("Catching known logging module error for " +
+                    "python version < 2.5. "))

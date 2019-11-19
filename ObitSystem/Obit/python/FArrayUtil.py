@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2005-2012
+#  Copyright (C) 2005-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 #-----------------------------------------------------------------------
 
 # Python utility package for FArrays
+from __future__ import absolute_import
 import Obit, FArray, OErr
 
 def PFitCGauss(inFA, FWHM, center, peak, err):
@@ -45,7 +46,7 @@ def PFitCGauss(inFA, FWHM, center, peak, err):
     ################################################################
     # Checks
     if not FArray.PIsA(inFA):
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        raise TypeError("inFA MUST be a Python Obit FArray")
     # results in retVal
     retVal = Obit.FArrayUtilFitCGauss(inFA.me, FWHM[0], center, peak[0], err.me)
     FWHM[0] = retVal[0];
@@ -72,7 +73,7 @@ def PFit1DGauss(inFA,err):
     ################################################################
     # Checks
     if not FArray.PIsA(inFA):
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        raise TypeError("inFA MUST be a Python Obit FArray")
     FWHM = 0.0; cen = 0.0; peak = 0.0; center = 0.0; # Not really used
     # results in retVal
     retVal = Obit.FArrayUtilFit1DGauss(inFA.me, FWHM, center, peak, err.me)
@@ -93,9 +94,9 @@ def PConvolve(inFA1, inFA2, err):
     ################################################################
     # Checks
     if not FArray.PIsA(inFA1):
-        raise TypeError,"inFA1 MUST be a Python Obit FArray"
+        raise TypeError("inFA1 MUST be a Python Obit FArray")
     if not FArray.PIsA(inFA2):
-        raise TypeError,"inFA2 MUST be a Python Obit FArray"
+        raise TypeError("inFA2 MUST be a Python Obit FArray")
     # 
     outFA = FArray.FArray("None")
     outFA.me = Obit.FArrayUtilConvolve (inFA1.me, inFA2.me, err.me)

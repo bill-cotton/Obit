@@ -29,13 +29,16 @@ This module requires katdal and katpoint and their dependencies
 #                         520 Edgemont Road
 #                         Charlottesville, VA 22903-2475 USA
 #-----------------------------------------------------------------------
+from __future__ import absolute_import
+from __future__ import print_function
+from six.moves import range
 try:
     import katdal as katfile
     import katpoint
-except Exception, exception:
-    print exception
-    print "KAT software not available"
-    raise  RuntimeError, "KAT software unavailable"
+except Exception as exception:
+    print(exception)
+    print("KAT software not available")
+    raise  RuntimeError("KAT software unavailable")
 else:
     pass
 import time,math,os
@@ -72,7 +75,7 @@ def KAT2AIPS (katdata, outUV, disk, fitsdisk, err, \
     ################################################################
     OErr.PLog(err, OErr.Info, "Converting h5 data to AIPS UV format.")
     OErr.printErr(err)
-    print "Converting h5 data to AIPS UV format.\n"
+    print("Converting h5 data to AIPS UV format.\n")
 
     # Extract metadata
     meta = GetKATMeta(katdata, err)
@@ -110,7 +113,7 @@ def KAT2AIPS (katdata, outUV, disk, fitsdisk, err, \
     # initial CL table
     OErr.PLog(err, OErr.Info, "Create Initial CL table")
     OErr.printErr(err)
-    print "Create Initial CL table\n"
+    print("Create Initial CL table\n")
     UV.PTableCLGetDummy(outUV, outUV, 1, err, solInt=calInt)
     outUV.Open(UV.READONLY,err)
     outUV.Close(err)
@@ -401,7 +404,7 @@ def WriteFGTable(outUV, katdata, meta, err):
             continue
         tm = katdata.timestamps[:]
         nint=len(tm)
-        el=target.azel(tm[int(nint/2)])[1]*180./math.pi
+        el=target.azel(tm[int(nint//2)])[1]*180./math.pi
         if el<15.0:
             continue
         row+=1
@@ -424,7 +427,7 @@ def WriteFGTable(outUV, katdata, meta, err):
                         UV.PFlag(outUV,err,timeRange=[starttime,endtime], flagVer=1, \
                                      Ants=[product[0],product[1]], \
                                      Chans=[c+1,c+1], IFs=[1,1], Stokes='1111', Reason='Online flag')
-        numvis=t*c*(p/meta["nstokes"])
+        numvis=t*c*(p//meta["nstokes"])
         msg = "Scan %4d %16s   Online flags: %7s of %8s vis"%(row,name,numflag,numvis)
         OErr.PLog(err, OErr.Info, msg);
         OErr.printErr(err)
@@ -545,7 +548,7 @@ def ConvertKATData(outUV, katdata, meta, err):
     count = 0.0
     visno = 0
     # Get IO buffers as numpy arrays
-    shape = len(outUV.VisBuf) / 4
+    shape = len(outUV.VisBuf) // 4
     buffer =  numarray.array(sequence=outUV.VisBuf,
                              type=numarray.Float32, shape=shape)
 
@@ -565,7 +568,7 @@ def ConvertKATData(outUV, katdata, meta, err):
         msg = "W term in UVW coordinates will be used to stop the fringes."
         OErr.PLog(err, OErr.Info, msg)
         OErr.printErr(err)
-        print msg
+        print(msg)
     for scan, state, target in katdata.scans():
         # Fetch data
         tm = katdata.timestamps[:]
@@ -590,7 +593,7 @@ def ConvertKATData(outUV, katdata, meta, err):
         msg = "Scan:%4d Int: %4d %16s Start %s"%(scan,nint,target.name,day2dhms((tm[0]-time0)/86400.0)[0:12])
         OErr.PLog(err, OErr.Info, msg);
         OErr.printErr(err)
-        print msg
+        print(msg)
         # Loop over integrations
         for iint in range(0,nint):
             # loop over data products/baselines

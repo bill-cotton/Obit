@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitDConCleanWindow type               */
 /*                                                                    */
-/*;  Copyright (C) 2005,2008                                          */
+/*;  Copyright (C) 2005-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -34,6 +34,18 @@
 #include "ObitDConCleanWindow.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitDConCleanWindow *me;
+} OWindow;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitDConCleanWindow *me;
+} OWindow;
+
 %inline %{
 extern ObitDConCleanWindow* OWindowCreate (char *name,
                                            ObitImageMosaic *mosaic, 
@@ -42,7 +54,7 @@ extern ObitDConCleanWindow* OWindowCreate (char *name,
 } // end OWindowCreate
 
 extern ObitDConCleanWindow* OWindowCreate1 (char *name,
-                                            long naxis[2], 
+                                            long *naxis, 
                                             ObitErr *err) {
   olong lnaxis[2];
   lnaxis[0] = (olong)naxis[0];
@@ -50,8 +62,67 @@ extern ObitDConCleanWindow* OWindowCreate1 (char *name,
   return ObitDConCleanWindowCreate1 (name, lnaxis, err);
 } // end OWindowCreate1
 
+extern ObitDConCleanWindow* OWindowRef (ObitDConCleanWindow* in) {
+  return ObitDConCleanWindowRef (in);
+} // end OWindowRef
+
+extern ObitDConCleanWindow* OWindowUnref (ObitDConCleanWindow* in) {
+  if (!ObitDConCleanWindowIsA(in)) return NULL;
+  return ObitDConCleanWindowUnref (in);
+} // end OWindowUnref
+
+extern long OWindowIsA (ObitDConCleanWindow* in) {
+  return (long)ObitDConCleanWindowIsA(in);
+}
+
+void CreateOWindow(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_OWindow, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateOWindow: could not recover c struct");
+	return;
+   }
+   // Defer Creation
+   ((OWindow*)ptr)->me = NULL;
+   return;
+ } // end CreateOWindow
+
+void DeleteOWindow(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_OWindow, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteOWindow: could not recover c struct");
+	return;
+   }
+   ((OWindow*)ptr)->me = ObitDConCleanUnref(((OWindow*)ptr)->me);
+} // end DeleteOWindow
+
+ObitDConCleanWindow* OWindow_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_OWindow, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"OWindowGet_me: could not recover c struct");
+	return NULL;
+   }
+   return ((OWindow*)ptr)->me;
+} // end OWindow_Get_me
+
+void OWindow_Set_me(PyObject *self, ObitDConCleanWindow *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_OWindow, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"OWindow_Set_me: could not recover c struct");
+	return;
+   }
+   ((OWindow*)ptr)->me =  ObitDConCleanWindowRef(me);
+}  // end OWindow_Set_me
+
 extern ObitDConCleanWindow* OWindowCopy (ObitDConCleanWindow* in, 
-		              ObitDConCleanWindow* out, ObitErr *err) {
+		            ObitDConCleanWindow* out, ObitErr *err) {
   return ObitDConCleanWindowCopy (in, out, err);
 } // end OWindowCopy
 
@@ -74,18 +145,18 @@ extern void OWindowSetList(ObitDConCleanWindow* in, PyObject *inList,
   n = PyList_Size(inList);
   for (iD=0; iD<n; iD++) {
     list = PyList_GetItem(inList, iD);
-    type = (ObitDConCleanWindowType)PyInt_AsLong(PyList_GetItem(list, 1));
+    type = (ObitDConCleanWindowType)PyLong_AsLong(PyList_GetItem(list, 1));
     /* Ignore iD <0 */
-    id = (ObitDConCleanWindowType)PyInt_AsLong(PyList_GetItem(list, 0));
+    id = (ObitDConCleanWindowType)PyLong_AsLong(PyList_GetItem(list, 0));
     if (id<0) continue;
     switch (type) {
     case OBIT_DConCleanWindow_rectangle:
       for (i=0; i<4; i++) 
-         window[i] = (olong)PyInt_AsLong(PyList_GetItem(list, i+2));
+         window[i] = (olong)PyLong_AsLong(PyList_GetItem(list, i+2));
       break;
     case OBIT_DConCleanWindow_round:
       for (i=0; i<3; i++) 
-         window[i] = (olong)PyInt_AsLong(PyList_GetItem(list, i+2));
+         window[i] = (olong)PyLong_AsLong(PyList_GetItem(list, i+2));
       break;
     default:
       g_error ("Undefined Clean window type");
@@ -115,17 +186,17 @@ extern PyObject* OWindowGetList(ObitDConCleanWindow* in, long field,
       switch (type) {
       case OBIT_DConCleanWindow_rectangle:
         list = PyList_New(6);
-        PyList_SetItem(list, 0, PyInt_FromLong((long)iD));
-        PyList_SetItem(list, 1, PyInt_FromLong((long)type));
+        PyList_SetItem(list, 0, PyLong_FromLong((long)iD));
+        PyList_SetItem(list, 1, PyLong_FromLong((long)type));
         for (i=0; i<4; i++) 
-          PyList_SetItem(list, i+2, PyInt_FromLong((long)window[i]));
+          PyList_SetItem(list, i+2, PyLong_FromLong((long)window[i]));
         break;
       case OBIT_DConCleanWindow_round:
         list = PyList_New(5);
-        PyList_SetItem(list, 0, PyInt_FromLong((long)iD));
-        PyList_SetItem(list, 1, PyInt_FromLong((long)type));
+        PyList_SetItem(list, 0, PyLong_FromLong((long)iD));
+        PyList_SetItem(list, 1, PyLong_FromLong((long)type));
         for (i=0; i<3; i++) 
-          PyList_SetItem(list, i+2, PyInt_FromLong((long)window[i]));
+          PyList_SetItem(list, i+2, PyLong_FromLong((long)window[i]));
         break;
       default:
         g_error ("Undefined Clean window type");
@@ -138,8 +209,8 @@ extern PyObject* OWindowGetList(ObitDConCleanWindow* in, long field,
   /* if any more list entries fill with -1 */
   for (iD=n; iD<in->maxId[field-1]; iD++) {
     list = PyList_New(2);
-    PyList_SetItem(list, 0, PyInt_FromLong((long)-1));
-    PyList_SetItem(list, 1, PyInt_FromLong((long)-1));
+    PyList_SetItem(list, 0, PyLong_FromLong((long)-1));
+    PyList_SetItem(list, 1, PyLong_FromLong((long)-1));
     PyList_SetItem(outList, iD, list);
   }
 
@@ -171,43 +242,6 @@ extern long OWindowGetMaxID (ObitDConCleanWindow* in, long field) {
   return (long)in->maxId[field-1];
 } // end OWindowMaxID
 
-extern ObitDConCleanWindow* OWindowRef (ObitDConCleanWindow* in) {
-  return ObitDConCleanWindowRef (in);
-} // end OWindowRef
-
-extern ObitDConCleanWindow* OWindowUnref (ObitDConCleanWindow* in) {
-  if (!ObitDConCleanWindowIsA(in)) return NULL;
-  return ObitDConCleanWindowUnref (in);
-} // end OWindowUnref
-
-extern int OWindowIsA (ObitDConCleanWindow* in) {
-  return ObitDConCleanWindowIsA(in);
-}
 %}
 
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitDConCleanWindow *me;
-} OWindow;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitDConCleanWindow *me;
-} OWindow;
-
-%addmethods OWindow { 
-  OWindow(void) {
-     OWindow *out;
-     out = (OWindow *) malloc(sizeof(OWindow));
-     /* Defer creating Obit Object */
-     out->me = NULL;
-     return out;
-   }
-  ~OWindow() {
-    self->me = OWindowUnref(self->me);
-    free(self);
-  }
-};
 

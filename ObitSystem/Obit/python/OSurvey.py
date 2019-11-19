@@ -2,11 +2,14 @@
 Python utility package for survey catalog browsers
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import Obit, InfoList, OErr, OPrinter, Image, UV, Table
 import os
+from six.moves import range
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2012-2016
+#  Copyright (C) 2012-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -45,7 +48,7 @@ def PVLPrint (VLTable, image, streamname, err):
     ################################################################
     # Checks
     if not Table.PIsA(VLTable):
-        raise TypeError,"VLTable MUST be a Python Obit Table"
+        raise TypeError("VLTable MUST be a Python Obit Table")
     Obit.OSurveyVLPrint(VLTable.me, image.me, streamname, err.me)
     # end PVLPrint
 
@@ -83,13 +86,13 @@ def PNVSSPrint (printer, data, err, VLVer=1, first=True, last=True):
     ################################################################
     # Checks
     if not OPrinter.PIsA(printer):
-        raise TypeError,"printer MUST be a Python Obit printer"
+        raise TypeError("printer MUST be a Python Obit printer")
     # cast data if necessary
     if Image.PIsA(data) or UV.PIsA(data):
         ldata = data.cast("ObitData")
     else:
-        ldata = data.me
-    ret = Obit.OSurveyNVSSPrint(printer.me, ldata, VLVer, first, last, err.me)
+        ldata = data
+    ret = Obit.OSurveyNVSSPrint(printer.me, ldata.me, VLVer, first, last, err.me)
     return ret != 0
     # end PNVSSPrint
 
@@ -126,13 +129,13 @@ def PVLSSPrint (printer, data, err, VLVer=1, first=True, last=True):
     ################################################################
     # Checks
     if not OPrinter.PIsA(printer):
-        raise TypeError,"printer MUST be a Python Obit printer"
+        raise TypeError("printer MUST be a Python Obit printer")
     # cast data if necessary
     if Image.PIsA(data) or UV.PIsA(data):
         ldata = data.cast("ObitData")
     else:
-        ldata = data.me
-    ret = Obit.OSurveyVLSSPrint(printer.me, ldata, VLVer, first, last, err.me)
+        ldata = data
+    ret = Obit.OSurveyVLSSPrint(printer.me, ldata.me, VLVer, first, last, err.me)
     return ret != 0
     # end PVLSSPrint
 
@@ -180,13 +183,13 @@ def PGenPrint (printer, data, err, VLVer=1, first=True, last=True):
     ################################################################
     # Checks
     if not OPrinter.PIsA(printer):
-        raise TypeError,"printer MUST be a Python Obit printer"
+        raise TypeError("printer MUST be a Python Obit printer")
     # cast data if necessary
     if Image.PIsA(data) or UV.PIsA(data):
         ldata = data.cast("ObitData")
     else:
-        ldata = data.me
-    ret = Obit.OSurveyGenPrint(printer.me, ldata, VLVer, first, last, err.me)
+        ldata = data
+    ret = Obit.OSurveyGenPrint(printer.me, ldata.me, VLVer, first, last, err.me)
     return ret != 0
     # end PGenPrint
 
@@ -282,7 +285,7 @@ def PGenCorErr(VLrow,calParms):
 # end PGenCorErr
 
 
-import urllib, urllib2
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error, six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 def PWebFetch (url, args, outfile, err):
     """ 
     Generic Fetch a web product
@@ -298,15 +301,15 @@ def PWebFetch (url, args, outfile, err):
     """
     ################################################################
     # Package parameters
-    encoded_args = urllib.urlencode(args)
+    encoded_args = six.moves.urllib.parse.urlencode(args)
     NVSShost    = "https://www.cv.nrao.edu/cgi-bin/postage.pl"
     # fetch
     try:
-        request      = urllib2.Request(url)
-        response     = urllib2.urlopen(request, encoded_args)
+        request      = six.moves.urllib.request.Request(url)
+        response     = six.moves.urllib.request.urlopen(request, encoded_args)
         data         = response.read()
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         OErr.PLog(err, OErr.Error, "Request from server failed")
         OErr.printErrMsg(err)
     if outfile == None:     # Name from server?
@@ -315,8 +318,8 @@ def PWebFetch (url, args, outfile, err):
     fd.write(data)
     fd.close()
     # Info
-    print "Response code =",response.code, response.msg
-    print "Response type =",response.headers["Content-Type"]
+    print("Response code =",response.code, response.msg)
+    print("Response type =",response.headers["Content-Type"])
 # end PWebFetch
 
 def PNVSSFetch (RA, Dec, outfile, err, \

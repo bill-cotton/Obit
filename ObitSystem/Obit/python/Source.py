@@ -41,14 +41,22 @@
 #-----------------------------------------------------------------------
  
 # Python shadow class to ObitSource class
-import Obit, OErr, string, math
+from __future__ import absolute_import
+import Obit, _Obit, OErr, string, math
 
-class SourcePtr :
-    def __init__(self,this):
-        self.this = this
+class Source(Obit.Source):
+    """ Python Obit Source class
+
+    """
+    def __init__(self, name):
+        super(Source, self).__init__()
+        Obit.CreateSource(self.this, name)
+    def __del__(self, DeleteSource=_Obit.DeleteSource):
+        if _Obit!=None:
+            DeleteSource(self.this)
     def __setattr__(self,name,value):
         if name == "me" :
-            Obit.Source_me_set(self.this,value)
+            Obit.Source_Set_me(self.this,value)
             return
         if name=="RAMean":
             Obit.SourceSetRAMean(self.me,value);
@@ -65,7 +73,7 @@ class SourcePtr :
         self.__dict__[name] = value
     def __getattr__(self,name):
         if name == "me" : 
-            return Obit.Source_me_get(self.this)
+            return Obit.Source_Get_me(self.this)
         # Functions to return members
         if name=="RAMean":
             return Obit.SourceGetRAMean(self.me);
@@ -83,19 +91,9 @@ class SourcePtr :
             return Obit.SourceGetQual(self.me)
         if name=="Equinox":
             return Obit.SourceGetEquinox(self.me)
-        raise AttributeError,str(name)
+        raise AttributeError(str(name))
     def __repr__(self):
         return "<C Source instance>"
-class Source(SourcePtr):
-    """ Python Obit Source class
-
-    """
-    def __init__(self, name):
-        self.this = Obit.new_Source(name)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_Source(self.this)
-
 
 def PIsA (inSou):
     """ Tells if the input really is a Python Obit Source
@@ -105,10 +103,10 @@ def PIsA (inSou):
     """
     ################################################################
      # Checks
-    if inSou.__class__ != Source:
-        return 0
+    if not isinstance(inSou, Source):
+        return False
     #
-    return Obit.SourceIsA(inSou.me)
+    return Obit.SourceIsA(inSou.me)!=0
     # end  PIsA
 
 def PCreateByNumber (name, inUV, SouID,eErr):
@@ -123,11 +121,11 @@ def PCreateByNumber (name, inUV, SouID,eErr):
       returns  new Source object
     """
     ################################################################
-    out    = Source(name)
+    out    = Source("None")
     out.me = Obit.SourceCreateByNumber(name, inUV.me, SouID, err.me)
     if err.isErr:
         OErr.printErr(err)
-        raise RuntimeError,"Failed"
+        raise RuntimeError("Failed")
     return out
     # end PCreateByNumber
 
@@ -144,11 +142,11 @@ def PCreateByName (name, inUV, Sname, Qual, err):
       returns  new Source object
     """
     ################################################################
-    out    = Source(name)
+    out    = Source("None")
     out.me = Obit.SourceCreateByName(name, inUV.me, Sname, Qual, err.me)
     if err.isErr:
         OErr.printErr(err)
-        raise RuntimeError,"Failed"
+        raise RuntimeError("Failed")
     return out
     # end PCreateByName
 

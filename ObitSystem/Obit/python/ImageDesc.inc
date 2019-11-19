@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageDesc type                         */
 /*                                                                    */
-/*;  Copyright (C) 2004-2013                                          */
+/*;  Copyright (C) 2004-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,10 +32,77 @@
 #include "ObitImageDesc.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitImageDesc *me;
+} ImageDesc;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitImageDesc *me;
+} ImageDesc;
+
 %inline %{
 extern ObitImageDesc* ImageDescCreate (char *name) {
   return newObitImageDesc (name);
 } // end ImageDescCreate
+
+ObitImageDesc* ImageDescRef (ObitImageDesc* in) {
+  return ObitImageDescRef (in);
+} // end ImageDescRef
+
+ObitImageDesc* ImageDescUnref (ObitImageDesc* in) {
+  if (!ObitImageDescIsA(in)) return NULL;
+  return ObitImageDescUnref (in);
+} // end ImageDescUnref
+
+void CreateImageDesc(PyObject *self, char* name) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ImageDesc, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateImageDesc: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((ImageDesc*)ptr)->me = ImageDescCreate(name);
+   else  ((ImageDesc*)ptr)->me = NULL;
+   return;
+ } // end CreateImageDesc
+
+void DeleteImageDesc(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ImageDesc, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteImageDesc: could not recover c struct");
+	return;
+   }
+   ((ImageDesc*)ptr)->me = ObitImageDescUnref(((ImageDesc*)ptr)->me);
+}// end DeleteImageDesc
+
+ObitImageDesc* ImageDesc_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ImageDesc, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"ImageDesc_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((ImageDesc*)ptr)->me;
+}  // end ImageDesc_Get_me
+
+void ImageDesc_Set_me(PyObject *self, ObitImageDesc *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ImageDesc, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"ImageDesc_Set_me: could not recover c struct");
+	return;
+   }
+   ((ImageDesc*)ptr)->me =  ObitImageDescRef(me);
+}  // end ImageDesc_Set_me
 
 extern ObitImageDesc* ImageDescCopy (ObitImageDesc* in, 
 		              ObitImageDesc* out, ObitErr *err) {
@@ -140,14 +207,14 @@ extern PyObject *ImageDescGetDict(ObitImageDesc* in) {
   PyDict_SetItemString(outDict, "restFreq",PyFloat_FromDouble((double)in->restFreq));
   PyDict_SetItemString(outDict, "xpixoff", PyFloat_FromDouble((double)in->xPxOff));
   PyDict_SetItemString(outDict, "ypixoff", PyFloat_FromDouble((double)in->yPxOff));
-  PyDict_SetItemString(outDict, "do3D",    PyInt_FromLong((long)in->do3D));
-  PyDict_SetItemString(outDict, "areBlanks",PyInt_FromLong((long)in->areBlanks));
-  PyDict_SetItemString(outDict, "niter",   PyInt_FromLong((long)in->niter));
-  PyDict_SetItemString(outDict, "naxis",   PyInt_FromLong((long)in->naxis));
-  PyDict_SetItemString(outDict, "bitpix",  PyInt_FromLong((long)in->bitpix));
-  PyDict_SetItemString(outDict, "IOsize",  PyInt_FromLong((long)in->IOsize));
-  PyDict_SetItemString(outDict, "VelReference", PyInt_FromLong((long)in->VelReference));
-  PyDict_SetItemString(outDict, "VelDef", PyInt_FromLong((long)in->VelDef));
+  PyDict_SetItemString(outDict, "do3D",    PyLong_FromLong((long)in->do3D));
+  PyDict_SetItemString(outDict, "areBlanks",PyLong_FromLong((long)in->areBlanks));
+  PyDict_SetItemString(outDict, "niter",   PyLong_FromLong((long)in->niter));
+  PyDict_SetItemString(outDict, "naxis",   PyLong_FromLong((long)in->naxis));
+  PyDict_SetItemString(outDict, "bitpix",  PyLong_FromLong((long)in->bitpix));
+  PyDict_SetItemString(outDict, "IOsize",  PyLong_FromLong((long)in->IOsize));
+  PyDict_SetItemString(outDict, "VelReference", PyLong_FromLong((long)in->VelReference));
+  PyDict_SetItemString(outDict, "VelDef", PyLong_FromLong((long)in->VelDef));
   list1 = PyList_New(IM_MAXDIM);
   for (i=0; i<IM_MAXDIM; i++) PyList_SetItem(list1, i, PyString_InternFromString(in->ctype[i]));
   PyDict_SetItemString(outDict, "ctype", list1);
@@ -155,7 +222,7 @@ extern PyObject *ImageDescGetDict(ObitImageDesc* in) {
   for (i=0; i<IM_MAXDIM; i++) PyList_SetItem(list2, i, PyFloat_FromDouble((double)in->crval[i]));
   PyDict_SetItemString(outDict, "crval", list2);
   list3 = PyList_New(IM_MAXDIM);
-  for (i=0; i<IM_MAXDIM; i++) PyList_SetItem(list3, i, PyInt_FromLong((long)in->inaxes[i]));
+  for (i=0; i<IM_MAXDIM; i++) PyList_SetItem(list3, i, PyLong_FromLong((long)in->inaxes[i]));
   PyDict_SetItemString(outDict, "inaxes", list3);
   list4 = PyList_New(IM_MAXDIM);
   for (i=0; i<IM_MAXDIM; i++) PyList_SetItem(list4, i, PyFloat_FromDouble((double)in->cdelt[i]));
@@ -167,10 +234,10 @@ extern PyObject *ImageDescGetDict(ObitImageDesc* in) {
   for (i=0; i<IM_MAXDIM; i++) PyList_SetItem(list6, i, PyFloat_FromDouble((double)in->crota[i]));
   PyDict_SetItemString(outDict, "crota", list6);
   /* Structural members - mostly read only */
-  PyDict_SetItemString(outDict, "jlocr",    PyInt_FromLong((long)in->jlocr));
-  PyDict_SetItemString(outDict, "jlocd",    PyInt_FromLong((long)in->jlocd));
-  PyDict_SetItemString(outDict, "jlocs",    PyInt_FromLong((long)in->jlocs));
-  PyDict_SetItemString(outDict, "jlocf",    PyInt_FromLong((long)in->jlocf));
+  PyDict_SetItemString(outDict, "jlocr",    PyLong_FromLong((long)in->jlocr));
+  PyDict_SetItemString(outDict, "jlocd",    PyLong_FromLong((long)in->jlocd));
+  PyDict_SetItemString(outDict, "jlocs",    PyLong_FromLong((long)in->jlocs));
+  PyDict_SetItemString(outDict, "jlocf",    PyLong_FromLong((long)in->jlocf));
 
   /* Discard references to newly created objects. */
   doh = pos;
@@ -222,14 +289,14 @@ extern void ImageDescSetDict(ObitImageDesc* in, PyObject *inDict) {
   in->altRef  = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "altRef"));
   in->xPxOff  = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "xpixoff"));
   in->yPxOff  = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ypixoff"));
-  in->niter   = PyInt_AsLong(PyDict_GetItemString(inDict, "niter"));
-  in->naxis   = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "naxis"));
-  in->bitpix  = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "bitpix"));
-  in->IOsize  = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "IOsize"));
-  in->VelReference  = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "VelReference"));
-  in->VelDef  = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "VelDef"));
-  in->areBlanks = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "areBlanks"));
-  in->do3D      = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "do3D"));
+  in->niter   = PyLong_AsLong(PyDict_GetItemString(inDict, "niter"));
+  in->naxis   = (int)PyLong_AsLong(PyDict_GetItemString(inDict, "naxis"));
+  in->bitpix  = (int)PyLong_AsLong(PyDict_GetItemString(inDict, "bitpix"));
+  in->IOsize  = (int)PyLong_AsLong(PyDict_GetItemString(inDict, "IOsize"));
+  in->VelReference  = (int)PyLong_AsLong(PyDict_GetItemString(inDict, "VelReference"));
+  in->VelDef  = (int)PyLong_AsLong(PyDict_GetItemString(inDict, "VelDef"));
+  in->areBlanks = (int)PyLong_AsLong(PyDict_GetItemString(inDict, "areBlanks"));
+  in->do3D      = (int)PyLong_AsLong(PyDict_GetItemString(inDict, "do3D"));
   list1 = PyDict_GetItemString(inDict, "ctype");
   number = MIN (IM_MAXDIM, PyList_Size(list1));
   for (i=0; i<number; i++) {
@@ -241,7 +308,7 @@ extern void ImageDescSetDict(ObitImageDesc* in, PyObject *inDict) {
   for (i=0; i<number; i++) in->crval[i] = PyFloat_AsDouble(PyList_GetItem(list2, i));
   list3 = PyDict_GetItemString(inDict, "inaxes");
   number = MIN (IM_MAXDIM, PyList_Size(list3));
-  for (i=0; i<number; i++) in->inaxes[i] = (long)PyInt_AsLong(PyList_GetItem(list3, i));
+  for (i=0; i<number; i++) in->inaxes[i] = (long)PyLong_AsLong(PyList_GetItem(list3, i));
   list4 = PyDict_GetItemString(inDict, "cdelt");
   number = MIN (IM_MAXDIM, PyList_Size(list4));
   for (i=0; i<number; i++) in->cdelt[i] = (float)PyFloat_AsDouble(PyList_GetItem(list4, i));
@@ -255,43 +322,8 @@ extern void ImageDescSetDict(ObitImageDesc* in, PyObject *inDict) {
   ObitImageDescIndex (in);
 } // end ImageDescSetDict
 
-ObitImageDesc* ImageDescRef (ObitImageDesc* in) {
-  return ObitImageDescRef (in);
-} // end ImageDescRef
-
-ObitImageDesc* ImageDescUnref (ObitImageDesc* in) {
-  if (!ObitImageDescIsA(in)) return NULL;
-  return ObitImageDescUnref (in);
-} // end ImageDescUnref
-
 extern int ImageDescIsA (ObitImageDesc* in) {
   return ObitImageDescIsA(in);
 }
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitImageDesc *me;
-} ImageDesc;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitImageDesc *me;
-} ImageDesc;
-
-%addmethods ImageDesc { 
-  ImageDesc(char *name) {
-     ImageDesc *out;
-     out = (ImageDesc *) malloc(sizeof(ImageDesc));
-     if (strcmp(name, "None")) out->me = ImageDescCreate (name);
-     else out->me = NULL;
-     return out;
-   }
-  ~ImageDesc() {
-    self->me = ImageDescUnref(self->me);
-    free(self);
-  }
-};
 

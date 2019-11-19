@@ -20,7 +20,7 @@ Symbol type codes
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2007
+#  Copyright (C) 2007,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -45,6 +45,7 @@ Symbol type codes
 #                         520 Edgemont Road
 #                         Charlottesville, VA 22903-2475 USA
 #-----------------------------------------------------------------------
+from __future__ import absolute_import
 import Obit, Table, TableDesc, OErr, Image, ImageDesc
 
 class TableSTar(Table.Table):
@@ -71,9 +72,9 @@ def PCreate(im, err, ver=0):
     ################################################################
     # Check
     if not im.ImageIsA():
-        raise TypeError,'im MUST be a Python Obit Image'
+        raise TypeError('im MUST be a Python Obit Image')
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     if err.isErr: # existing error?
         return None
     
@@ -150,7 +151,7 @@ def PWriteCirc (sttab, im, center, radius, err):
     ################################################################
     # Check
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     if err.isErr: # existing error?
         return None
     # Get image descriptor
@@ -188,7 +189,7 @@ def PWriteEllipse (sttab, im, center, major, minor, PA, err):
     ################################################################
     # Check
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     if err.isErr: # existing error?
         return None
     # Get image descriptor

@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for SkyModel type                          */
 /*                                                                    */
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,16 +32,23 @@
 #include "ObitSkyModel.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitSkyModel *me;
+} SkyModel;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitSkyModel *me;
+} SkyModel;
+
 
 %inline %{
 extern ObitSkyModel* newSkyModel (char* name) {
   return newObitSkyModel (name);
 } // end  newSkyModel
-
-extern ObitSkyModel* SkyModelCopy  (ObitSkyModel *in, ObitSkyModel *out, 
-				    ObitErr *err) {
-  return ObitSkyModelCopy (in, out, err);
-} // end  SkyModelCopy
 
 extern ObitSkyModel* SkyModelUnref (ObitSkyModel* in) {
   if (!ObitSkyModelIsA(in)) return NULL;
@@ -51,6 +58,58 @@ extern ObitSkyModel* SkyModelUnref (ObitSkyModel* in) {
 extern ObitSkyModel*  SkyModelRef (ObitSkyModel* in) {
   return ObitSkyModelRef(in);
 }
+
+void CreateSkyModel(PyObject *self, char* name) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_SkyModel, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Create: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((SkyModel*)ptr)->me = newSkyModel(name);
+   else ((SkyModel*)ptr)->me = NULL;
+   return;
+ } // end CreateSkyModel
+
+void DeleteSkyModel(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_SkyModel, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Delete: could not recover c struct");
+	return;
+   }
+   ((SkyModel*)ptr)->me = SkyModelUnref(((SkyModel*)ptr)->me);
+} // end DeleteSkyModel
+
+ObitSkyModel* SkyModel_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_SkyModel, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((SkyModel*)ptr)->me;
+} // end SkyModel_Get_me
+
+void SkyModel_Set_me(PyObject *self, ObitSkyModel *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_SkyModel, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"SkyModel_Set_me: could not recover c struct");
+	return;
+   }
+   ((SkyModel*)ptr)->me =  SkyModelRef(me);
+}  // end SkyModel_Set_me
+
+
+extern ObitSkyModel* SkyModelCopy  (ObitSkyModel *in, ObitSkyModel *out, 
+				    ObitErr *err) {
+  return ObitSkyModelCopy (in, out, err);
+} // end  SkyModelCopy
 
 extern ObitInfoList* SkyModelGetList (ObitSkyModel* in) {
   return ObitInfoListRef(in->info);
@@ -90,36 +149,9 @@ extern char* SkyModelGetName (ObitSkyModel* in) {
   }
 }
 
-extern int SkyModelIsA (ObitSkyModel* in) {
-  return ObitSkyModelIsA(in);
+extern long SkyModelIsA (ObitSkyModel* in) {
+  return (long)ObitSkyModelIsA(in);
 }
 
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitSkyModel *me;
-} SkyModel;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitSkyModel *me;
-} SkyModel;
-
-%addmethods SkyModel { 
-  SkyModel(char* name) {
-     SkyModel *out;
-     out = (SkyModel *) malloc(sizeof(SkyModel));
-     if (strcmp(name, "None")) out->me = newSkyModel(name);
-     else out->me = NULL;
-     return out;
-   }
-  ~SkyModel() {
-   if (self->me-> ReferenceCount>0) 
-      self->me = SkyModelUnref(self->me);
-   free(self);
-  }
-};
 

@@ -1,5 +1,6 @@
 # OTWindow stuff to run in second (window) thread
-import wx, thread, MsgWin
+from __future__ import absolute_import
+import wx, six.moves._thread, MsgWin
 
 # Using new event binder
 wx_EVT_MSGWIN = wx.NewEventType()

@@ -37,6 +37,7 @@
 #
 # Run setup.py as:
 # python setup.py build install --install-lib=.
+from __future__ import absolute_import
 import os
 
 # Read details left by Makefile
@@ -46,7 +47,7 @@ import setupdata
 packageName    = ''
 packageVer     = ''
 compileArgs    = []
-incDirs        = []
+incDirs        = ['get_python_inc']
 libDirs        = []
 runtimeLibDirs = []
 libs           = []
@@ -59,7 +60,7 @@ t = tt.split()
 for x in t:
     if x[0:2]=='-I':
         incDirs.append(x[2:])
-        
+
 tt = setupdata.CPPFLAGS
 tt=tt.replace("\n","_"); tt=tt.replace("\\ ","_");
 t = tt.split()
@@ -101,10 +102,11 @@ for x in t:
          runtimeLibDirs.append( x[11:] )
 
 # Dump it out
-outfile = file("setup.py","w")
+outfile = open("setup.py","w")
 outfile.write('from distutils.core import setup, Extension'+os.linesep)
+outfile.write('from distutils.sysconfig import get_python_inc' + os.linesep)
 outfile.write('setup( name=\"'+packageName+'\", version=\"'+packageVer+'\",'+os.linesep)
-outfile.write('       ext_modules=[Extension(\"'+packageName+'\",'+os.linesep)
+outfile.write('       ext_modules=[Extension(\"' + '_' + packageName + '\",' + os.linesep)
 outfile.write('                              [\''+packageName+'_wrap.c\'],'+os.linesep)
 outfile.write('                              extra_compile_args='+str(compileArgs)+','+os.linesep)
 outfile.write('                              library_dirs='+str(libDirs)+','+os.linesep)

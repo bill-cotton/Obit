@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2018                                          */
+/*;  Copyright (C) 2003-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2318,7 +2318,8 @@ ObitImageUtilNoInterWeight (ObitImage *inImage, ObitImage *outImage,
 {
   gboolean doInter=TRUE;
   ObitIOSize IOBy;
-  olong nx, ny, ix, iy, indx, pos1[2], pos2[2], blc[IM_MAXDIM], trc[IM_MAXDIM];
+  olong nx, ny, ix, iy, pos1[2], pos2[2], blc[IM_MAXDIM], trc[IM_MAXDIM];
+  ollong indx;
   gint32 i, dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ofloat inPixel[2], offPixel[2], xpos1[2], xpos2[2];
   ofloat *wtArr, dist2, rad2, irad2, xcen, ycen, wt;
@@ -3218,7 +3219,8 @@ ObitImageUtilOTFBeam (ObitImage *pntImage, ObitImage *outImage,
   olong blc[IM_MAXDIM], trc[IM_MAXDIM];
   gint32 i, dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  olong ix, iy, ip, indx, pos[2],noff;
+  olong ix, iy, ip,  pos[2],noff;
+  ollong indx;
   ofloat inPixel[2], *out, *norma, *RAoff, *Decoff, normc, fblank = ObitMagicF();
   odouble RAPnt, DecPnt, Freq, ra, dec, dist;
   odouble offRA, offDec;
@@ -5749,7 +5751,8 @@ static gpointer ThreadImageInterp (gpointer args)
   ObitThread *thread    = largs->thread;
   ObitFInterpolate *interp = largs->Interp;
   /* local */
-  olong ix, iy, indx, pos[2];
+  olong ix, iy, pos[2];
+  ollong indx;
   ofloat *out, *outWt=NULL, rad2=0.0, dist2, irad2=0.0;
   ofloat crpix[2], wt, val, *xp=NULL, *yp=NULL, fblank =  ObitMagicF();
   ofloat inPixel[2], outPixel[2], offPixel[2];
@@ -5926,7 +5929,8 @@ static gpointer ThreadGetXYPixels (gpointer args)
   ObitThread *thread    = largs->thread;
 
   /* local */
-  olong ix, iy, indx, pos[2];
+  olong ix, iy, pos[2];
+  ollong indx;
   ofloat inPixel[2], outPixel[2], *xp, *yp;
   gboolean OK;
   gchar *routine = "ThreadGetXYPixels";
@@ -6151,7 +6155,8 @@ static gpointer ThreadImagePBCor (gpointer args)
   ObitErr    *err       = largs->err;
   ObitThread *thread    = largs->thread;
   /* local */
-  olong ix, iy, indx, pos[2];
+  olong ix, iy, pos[2];
+  ollong indx;
   ofloat *out, fblank =  ObitMagicF();
   odouble ra, dec, dist;
   ofloat pbf, inPixel[2];

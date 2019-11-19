@@ -2,7 +2,7 @@
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2017
+#  Copyright (C) 2004-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -29,8 +29,11 @@
 #-----------------------------------------------------------------------
 
 # Python interface to ObitImageUtil utilities
+from __future__ import absolute_import
+from __future__ import print_function
 import Obit, Image, ImageDesc, FArray, UV, Table, TableUtil, History, OErr
 import OSystem
+from six.moves import range
 
 def PICreateImage (inUV, fieldNo, doBeam, err):
     """
@@ -69,9 +72,9 @@ def PICreateImage (inUV, fieldNo, doBeam, err):
     ################################################################
     # Checks
     if not UV.PIsA(inUV):
-        raise TypeError,"inUV MUST be a Python Obit UV"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("inUV MUST be a Python Obit UV")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     out    = Image("None")
     out.me = Obit.ImageUtilCreateImage (inUV.me, fieldNo, doBeam, err.me)
@@ -97,12 +100,12 @@ def PMakeImage (inUV, outImage, channel, doBeam, doWeight, err):
     ################################################################
     # Checks
     if not UV.PIsA(inUV):
-        raise TypeError,"inUV MUST be a Python Obit UV"
+        raise TypeError("inUV MUST be a Python Obit UV")
     if not Image.PIsA(outImage):
-        print "Actually ",outImage.__class__
-        raise TypeError,"outImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        print("Actually ",outImage.__class__)
+        raise TypeError("outImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     Obit.ImageUtilMakeImage(inUV.me, outImage.me, channel, doBeam, doWeight, err.me)
     if err.isErr:
@@ -132,28 +135,34 @@ def PInterpolateImage (inImage, outImage, err,
     ################################################################
     # Checks
     if not Image.PIsA(inImage):
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not Image.PIsA(outImage):
-        print "Actually ",outImage.__class__
-        raise TypeError,"outImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        print("Actually ",outImage.__class__)
+        raise TypeError("outImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     if len(inPlane) != 5:
-        raise TypeError,"inPlane must have 5 elements"
+        raise TypeError("inPlane must have 5 elements")
     if len(outPlane) != 5:
-        raise TypeError,"outPlane must have 5 elements"
+        raise TypeError("outPlane must have 5 elements")
+    # Make sure plane arrays are long
+    linPlane=[]; loutPlane=[]
+    for p in inPlane:
+        linPlane.append(int(p))
+    for p in outPlane:
+        loutPlane.append(int(p))
     #  GPU?
     if finterp!=None:
         Obit.GPUImageInterpolateImageXY(finterp.me, inImage.me, outImage.me,
-                                       inPlane, outPlane, err.me)
+                                       linPlane, loutPlane, err.me)
     elif XPix==None:
         Obit.ImageUtilInterpolateImage(inImage.me, outImage.me,
-                                       inPlane, outPlane, hwidth, err.me)
+                                       linPlane, loutPlane, hwidth, err.me)
     # precomputed pixel values
     else:
         Obit.ImageUtilInterpolateImageXY(inImage.me, outImage.me, XPix.me, YPix.me,
-                                         inPlane, outPlane, hwidth, err.me)
+                                         linPlane, loutPlane, hwidth, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error interpolating Image")
     # end PInterpolateImage
@@ -171,12 +180,12 @@ def PGetXYPixels (inImage, outImage, XPix, YPix, err):
     ################################################################
     # Checks
     if not Image.PIsA(inImage):
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not Image.PIsA(outImage):
-        print "Actually ",outImage.__class__
-        raise TypeError,"outImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        print("Actually ",outImage.__class__)
+        raise TypeError("outImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     Obit.ImageUtilGetXYPixels(inImage.me, outImage.me, XPix.me, YPix.me, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error determining pixels")
@@ -203,22 +212,28 @@ def PPBApply (inImage, pntImage, outImage, err,
     ################################################################
     # Checks
     if not Image.PIsA(inImage):
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not Image.PIsA(pntImage):
-        print "Actually ",pntImage.__class__
-        raise TypeError,"pntImage MUST be a Python Obit Image"
+        print("Actually ",pntImage.__class__)
+        raise TypeError("pntImage MUST be a Python Obit Image")
     if not Image.PIsA(outImage):
-        print "Actually ",outImage.__class__
-        raise TypeError,"outImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        print("Actually ",outImage.__class__)
+        raise TypeError("outImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     if len(inPlane) != 5:
-        raise TypeError,"inPlane must have 5 elements"
+        raise TypeError("inPlane must have 5 elements")
     if len(outPlane) != 5:
-        raise TypeError,"outPlane must have 5 elements"
+        raise TypeError("outPlane must have 5 elements")
+    # Make sure plane arrays are long
+    linPlane=[]; loutPlane=[]
+    for p in inPlane:
+        linPlane.append(int(p))
+    for p in outPlane:
+        loutPlane.append(int(p))
     #
     Obit.ImageUtilPBApply(inImage.me, pntImage.me, outImage.me,
-                          inPlane, outPlane, antSize, err.me)
+                          linPlane, loutPlane, antSize, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error applying Primary beam correction to Image")
     # end PPBApply
@@ -242,15 +257,15 @@ def PPBImage (pntImage, outImage, err,
     ################################################################
     # Checks
     if not Image.PIsA(pntImage):
-        print "Actually ",pntImage.__class__
-        raise TypeError,"pntImage MUST be a Python Obit Image"
+        print("Actually ",pntImage.__class__)
+        raise TypeError("pntImage MUST be a Python Obit Image")
     if not Image.PIsA(outImage):
-        print "Actually ",outImage.__class__
-        raise TypeError,"outImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        print("Actually ",outImage.__class__)
+        raise TypeError("outImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     if len(outPlane) != 5:
-        raise TypeError,"outPlane must have 5 elements"
+        raise TypeError("outPlane must have 5 elements")
     #
     Obit.ImageUtilPBImage(pntImage.me, outImage.me,
                           outPlane, antSize, minGain, err.me)
@@ -279,17 +294,17 @@ def POTFBeam (pntImage, outImage, RAoff, Decoff, err,
     ################################################################
     # Checks
     if not Image.PIsA(pntImage):
-        print "Actually ",pntImage.__class__
-        raise TypeError,"pntImage MUST be a Python Obit Image"
+        print("Actually ",pntImage.__class__)
+        raise TypeError("pntImage MUST be a Python Obit Image")
     if not Image.PIsA(outImage):
-        print "Actually ",outImage.__class__
-        raise TypeError,"outImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        print("Actually ",outImage.__class__)
+        raise TypeError("outImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     if len(outPlane) != 5:
-        raise TypeError,"outPlane must have 5 elements"
+        raise TypeError("outPlane must have 5 elements")
     if len(RAoff) != len(Decoff):
-        raise TypeError,"RAoff and Decoff must have same size"
+        raise TypeError("RAoff and Decoff must have same size")
     #
     noff = len(RAoff)
     outImage.List.set("noff",noff)
@@ -322,22 +337,28 @@ def PPBCorr (inImage, pntImage, outImage, err,
     ################################################################
     # Checks
     if not Image.PIsA(inImage):
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not Image.PIsA(pntImage):
-        print "Actually ",pntImage.__class__
-        raise TypeError,"pntImage MUST be a Python Obit Image"
+        print("Actually ",pntImage.__class__)
+        raise TypeError("pntImage MUST be a Python Obit Image")
     if not Image.PIsA(outImage):
-        print "Actually ",outImage.__class__
-        raise TypeError,"outImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        print("Actually ",outImage.__class__)
+        raise TypeError("outImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     if len(inPlane) != 5:
-        raise TypeError,"inPlane must have 5 elements"
+        raise TypeError("inPlane must have 5 elements")
     if len(outPlane) != 5:
-        raise TypeError,"outPlane must have 5 elements"
-    #
+        raise TypeError("outPlane must have 5 elements")
+     # Make sure plane arrays are long
+    linPlane=[]; loutPlane=[]
+    for p in inPlane:
+        linPlane.append(int(p))
+    for p in outPlane:
+        loutPlane.append(int(p))
+   #
     Obit.ImageUtilPBCorr(inImage.me, pntImage.me, outImage.me,
-                         inPlane, outPlane, antSize, err.me)
+                         linPlane, loutPlane, antSize, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error making primary beam correction")
     # end PPBCorr
@@ -356,9 +377,9 @@ def PScaleImage (inImage, scale, err):
     ################################################################
     # Checks
     if not Image.PIsA(inImage):
-        raise TypeError,"inImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("inImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     # Open image
     Image.POpen (inImage, Image.READWRITE, err)
@@ -379,7 +400,7 @@ def PScaleImage (inImage, scale, err):
 
     # list of planes to loop over (0-rel)
     if (ndim>0) and (inNaxis[2]>0):  
-        planes = range(inNaxis[2])
+        planes = list(range(inNaxis[2]))
     else:
         planes = [0]
     
@@ -438,9 +459,9 @@ def PCCScale (inCCTab, startComp, endComp, scale, err):
     ################################################################
     # Checks
     if not Table.PIsA(inCCTab):
-        raise TypeError,"inCCTab MUST be a Python Obit Table"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("inCCTab MUST be a Python Obit Table")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     Obit.ImageUtilCCScale(inCCTab.me, startComp, endComp, scale, err.me)
     if err.isErr:
@@ -463,11 +484,11 @@ def PUVFilter (inImage, outImage, radius, err):
     ################################################################
     # Checks
     if not Image.PIsA(inImage):
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not Image.PIsA(outImage):
-        raise TypeError,"outImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("outImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     Obit.ImageUtilUVFilter(inImage.me, outImage.me, radius, err.me)
     if err.isErr:
@@ -493,13 +514,13 @@ def PImageAdd (in1Image, in2Image, outImage, err, \
     ################################################################
     # Checks
     if not Image.PIsA(in1Image):
-        raise TypeError,"in1Image MUST be a Python Obit Image"
+        raise TypeError("in1Image MUST be a Python Obit Image")
     if not Image.PIsA(in2Image):
-        raise TypeError,"in2Image MUST be a Python Obit Image"
+        raise TypeError("in2Image MUST be a Python Obit Image")
     if not Image.PIsA(outImage):
-        raise TypeError,"outImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("outImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     # Clone output from input 1
     in1Image.Clone (outImage, err)
@@ -522,7 +543,7 @@ def PImageAdd (in1Image, in2Image, outImage, err, \
 
     # list of planes to loop over (0-rel)
     if (ndim>0) and (inNaxis[2]>0):  
-        planes = range(inNaxis[2])
+        planes = list(range(inNaxis[2]))
     else:
         planes = [0]
     
@@ -595,7 +616,7 @@ def FFTHeaderUpdate(inIm, naxis, err):
     ################################################################
     # Checks
     if not Image.PIsA(inIm):
-        raise TypeError,"inIm MUST be a Python Obit Image"
+        raise TypeError("inIm MUST be a Python Obit Image")
     header = inIm.Desc.Dict
     # Image to uv plane
     if header["ctype"][0][0:8]=="RA---SIN":
@@ -633,13 +654,13 @@ def PImageFFT (inImage, outAImage, outPImage, err):
     ################################################################
     # Checks
     if not Image.PIsA(inImage):
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not Image.PIsA(outAImage):
-        raise TypeError,"outAImage MUST be a Python Obit Image"
+        raise TypeError("outAImage MUST be a Python Obit Image")
     if not Image.PIsA(outPImage):
-        raise TypeError,"outPImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("outPImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     # Clone output images
     inImage.Clone(outAImage,err)
@@ -774,11 +795,11 @@ def PImageT2Spec (inImage, outImage, nTerm,
     ################################################################
     # Checks
     if not Image.PIsA(inImage):
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not Image.PIsA(outImage):
-        raise TypeError,"outImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("outImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
 
     # Limit on distance
     if dist==None:
@@ -845,17 +866,17 @@ def PPolnUnwindCube (RMImage, inQImage, inUImage, outQImage, outUImage, err):
     ################################################################
     # Checks
     if not Image.PIsA(RMImage):
-        raise TypeError,"RMImage MUST be a Python Obit Image"
+        raise TypeError("RMImage MUST be a Python Obit Image")
     if not Image.PIsA(inQImage):
-        raise TypeError,"inQImage MUST be a Python Obit Image"
+        raise TypeError("inQImage MUST be a Python Obit Image")
     if not Image.PIsA(inUImage):
-        raise TypeError,"inUImage MUST be a Python Obit Image"
+        raise TypeError("inUImage MUST be a Python Obit Image")
     if not Image.PIsA(outQImage):
-        raise TypeError,"outQImage MUST be a Python Obit Image"
+        raise TypeError("outQImage MUST be a Python Obit Image")
     if not Image.PIsA(outUImage):
-        raise TypeError,"outUImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("outUImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
 
     Obit.PolnUnwindCube(RMImage.me, inQImage.me, inUImage.me, \
                             outQImage.me, outUImage.me, err.me)

@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageMosaic type                       */
 /*                                                                    */
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,16 +32,22 @@
 #include "ObitImageMosaic.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitImageMosaic *me;
+} ImageMosaic;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitImageMosaic *me;
+} ImageMosaic;
 
 %inline %{
-extern ObitImageMosaic* newImageMosaic (char* name, int number) {
-  return newObitImageMosaic (name, number);
+extern ObitImageMosaic* newImageMosaic (char* name, long number) {
+  return newObitImageMosaic (name, (olong)number);
 } // end  newImageMosaic
-
-extern ObitImageMosaic* ImageMosaicCopy  (ObitImageMosaic *in, ObitImageMosaic *out, 
-				          ObitErr *err) {
-  return ObitImageMosaicCopy (in, out, err);
-} // end  ImageMosaicCopy
 
 extern ObitImageMosaic* ImageMosaicUnref (ObitImageMosaic* in) {
   if (!ObitImageMosaicIsA(in)) return NULL;
@@ -52,9 +58,60 @@ extern ObitImageMosaic*  ImageMosaicRef (ObitImageMosaic* in) {
   return ObitImageMosaicRef(in);
 }
 
-extern void  ImageMosaicZapImage(ObitImageMosaic* in, int number, 
+void CreateImageMosaic(PyObject *self, char* name, long number) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ImageMosaic, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateImageMosaic: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((ImageMosaic*)ptr)->me = newImageMosaic(name, number);
+   else  ((ImageMosaic*)ptr)->me = NULL;
+   return;
+ } // end CreateImageMosaic
+
+void DeleteImageMosaic(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ImageMosaic, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteImageMosaic: could not recover c struct");
+	return;
+   }
+   ((ImageMosaic*)ptr)->me = ObitImageMosaicUnref(((ImageMosaic*)ptr)->me);
+}// end DeleteImageMosaic
+
+ObitImageMosaic* ImageMosaic_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ImageMosaic, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"ImageMosaic_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((ImageMosaic*)ptr)->me;
+}  // end ImageMosaic_Get_me
+
+void ImageMosaic_Set_me(PyObject *self, ObitImageMosaic *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ImageMosaic, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"ImageMosaic_Set_me: could not recover c struct");
+	return;
+   }
+   ((ImageMosaic*)ptr)->me =  ObitImageMosaicRef(me);
+}  // end ImageMosaic_Set_me
+
+extern ObitImageMosaic* ImageMosaicCopy  (ObitImageMosaic *in, ObitImageMosaic *out, 
+				          ObitErr *err) {
+  return ObitImageMosaicCopy (in, out, err);
+} // end  ImageMosaicCopy
+
+extern void  ImageMosaicZapImage(ObitImageMosaic* in, long number, 
                                  ObitErr *err ) {
-  return ObitImageMosaicZapImage(in, number, err);
+  return ObitImageMosaicZapImage(in, (olong)number, err);
 }
 
 extern ObitInfoList* ImageMosaicGetList (ObitImageMosaic* in) {
@@ -70,21 +127,21 @@ extern void ImageMosaicSetFullImage (ObitImageMosaic* in,
  ObitImageMosaicSetFullImage(in, image, err);
 }
 
-extern ObitImage* ImageMosaicGetImage (ObitImageMosaic* in, int number, 
+extern ObitImage* ImageMosaicGetImage (ObitImageMosaic* in, long number, 
                                        ObitErr *err) {
-  return ObitImageMosaicGetImage(in, number, err);
+  return ObitImageMosaicGetImage(in, (olong)number, err);
 }
 
-extern void ImageMosaicSetImage (ObitImageMosaic* in, int number, 
+extern void ImageMosaicSetImage (ObitImageMosaic* in, long number, 
                                  ObitImage *image, ObitErr *err) {
- ObitImageMosaicSetImage(in, number, image, err);
+ ObitImageMosaicSetImage(in, (olong)number, image, err);
 }
 
 extern ObitImageMosaic* ImageMosaicCreate (char *name, ObitUV *uvData, ObitErr *err) {
  return ObitImageMosaicCreate(name, uvData, err);
 }
 
-extern void ImageMosaicDefine (ObitImageMosaic* in, ObitUV *uvData, int doBeam,
+extern void ImageMosaicDefine (ObitImageMosaic* in, ObitUV *uvData, long doBeam,
                                ObitErr *err) {
  gboolean LdoBeam = doBeam;
  ObitImageMosaicDefine(in, uvData, LdoBeam, err);
@@ -102,44 +159,18 @@ extern char* ImageMosaicGetName (ObitImageMosaic* in) {
   }
 }
 
-extern int ImageMosaicGetNumber (ObitImageMosaic* in) {
+extern long ImageMosaicGetNumber (ObitImageMosaic* in) {
   if (ObitImageMosaicIsA(in)) {
-    return in->numberImages;
+    return (long)in->numberImages;
   } else {
     return 0;
   }
 }
 
-extern int ImageMosaicIsA (ObitImageMosaic* in) {
-  return ObitImageMosaicIsA(in);
+extern long ImageMosaicIsA (ObitImageMosaic* in) {
+  return (long)ObitImageMosaicIsA(in);
 }
 
 %}
 
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitImageMosaic *me;
-} ImageMosaic;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitImageMosaic *me;
-} ImageMosaic;
-
-%addmethods ImageMosaic { 
-  ImageMosaic(char* name, int number) {
-     ImageMosaic *out;
-     out = (ImageMosaic *) malloc(sizeof(ImageMosaic));
-     if (strcmp(name, "None")) out->me = newImageMosaic(name, number);
-     else out->me = NULL;
-     return out;
-   }
-  ~ImageMosaic() {
-   if (self->me-> ReferenceCount>0) 
-      self->me = ImageMosaicUnref(self->me);
-   free(self);
-  }
-};
 

@@ -36,7 +36,7 @@ Typical usage for a half plane complex to real (nx x ny) FFT is::
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004,2006
+#  Copyright (C) 2004,2006,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -63,40 +63,43 @@ Typical usage for a half plane complex to real (nx x ny) FFT is::
 #-----------------------------------------------------------------------
 
 # Python shadow class to ObitFFT class
-import Obit
+from __future__ import absolute_import
+import Obit, _Obit
 
-class FFTPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.FFTUnref(Obit.FFT_me_get(self.this))
-            # In with the new
-            Obit.FFT_me_set(self.this,value)
-            return
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != FFT:
-            return
-        if name == "me" : 
-            return Obit.FFT_me_get(self.this)
-        raise AttributeError,name
-    def __repr__(self):
-        if self.__class__ != FFT:
-            return
-        return "<C FFT instance> " + Obit.FFTGetName(self.me)
-class FFT(FFTPtr):
+class FFT(Obit.FFT):
     """
     Python Obit FFT class
     
     This class is for performing FFT on memory resident data.
     """
-    def __init__(self, name, dir, type, rank, dim):
-        self.this = Obit.new_FFT(name, dir, type, rank, dim)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_FFT(self.this)
+    def __init__(self, name, dire, typeof, rank, dim):
+        super(FFT, self).__init__()
+        ldim = []  # make sure long
+        for d in dim:
+            ldim.append(int(d))
+        Obit.CreateFFT(self.this, name, dire, typeof, rank, ldim)
+    def __del__(self, DeleteFFT=_Obit.DeleteFFT):
+        if _Obit!=None:
+            DeleteFFT(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.FFTUnref(Obit.FFT_Get_me(self.this))
+            # In with the new
+            Obit.FFT_Set_me(self.this,value)
+            return
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if not isinstance(self, FFT):
+            return "Bogus dude "+str(self.__class__)
+        if name == "me" : 
+            return Obit.FFT_Get_me(self.this)
+        raise AttributeError(name)
+    def __repr__(self):
+        if not isinstance(self, FFT):
+            return "Bogus dude "+str(self.__class__)
+        return "<C FFT instance> " + Obit.FFTGetName(self.me)
     
 def PSuggestSize(length):
     """ 
@@ -123,7 +126,7 @@ def PR2C(inFFT, inFA, outFA):
     ################################################################
     # Checks
     if not PIsA(inFFT):
-        raise TypeError,"inFFT MUST be a Python Obit FFT"
+        raise TypeError("inFFT MUST be a Python Obit FFT")
     Obit.FFTR2C(inFFT.me, inFA.me, outFA.me)
     # end PR2C
 
@@ -138,7 +141,7 @@ def PC2R(inFFT, inCA, outFA):
     ################################################################
     # Checks
     if not PIsA(inFFT):
-        raise TypeError,"inFFT MUST be a Python Obit FFT"
+        raise TypeError("inFFT MUST be a Python Obit FFT")
     Obit.FFTC2R(inFFT.me, inCA.me, outFA.me)
     # end PC2R
 
@@ -153,7 +156,7 @@ def PC2C(inFFT, inCA, outCA):
     ################################################################
     # Checks
     if not PIsA(inFFT):
-        raise TypeError,"inFFT MUST be a Python Obit FFT"
+        raise TypeError("inFFT MUST be a Python Obit FFT")
     Obit.FFTC2C(inFFT.me, inCA.me, outCA.me)
     # end PC2C
 
@@ -161,15 +164,14 @@ def PIsA (inFFT):
     """
     Tells if the input is a Python ObitFFT
     
-    returns true or false (1,0)
-
+    returns True or False
     * inFFT = Python Obit FFT to test
     """
     ################################################################
       # Checks
-    if inFFT.__class__ != FFT:
-        return 0
-    return Obit.FFTIsA(inFFT.me)
+    if not isinstance(inFFT, FFT):
+        return False
+    return Obit.FFTIsA(inFFT.me)!=0
     # end PIsA
 
 def PGetName (inFFT):
@@ -183,7 +185,7 @@ def PGetName (inFFT):
     ################################################################
       # Checks
     if not PIsA(inFFT):
-        raise TypeError,"inFFT MUST be a Python Obit FFT"
+        raise TypeError("inFFT MUST be a Python Obit FFT")
     return Obit.FFTGetName(inFFT.me)
     # end PGetName
 
@@ -198,7 +200,7 @@ def PGetRank (inFFT):
     ################################################################
       # Checks
     if not PIsA(inFFT):
-        raise TypeError,"inFFT MUST be a Python Obit FFT"
+        raise TypeError("inFFT MUST be a Python Obit FFT")
     return Obit.FFTGetRank(inFFT.me)
     # end PGetName
 
@@ -213,6 +215,6 @@ def PGetDim (inFFT):
     ################################################################
     # Checks
     if not PIsA(inFFT):
-        raise TypeError,"inFFT MUST be a Python Obit FFT"
+        raise TypeError("inFFT MUST be a Python Obit FFT")
     return Obit.FFTGetDim(inFFT.me)
     # end PGetDim

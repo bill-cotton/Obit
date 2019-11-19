@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for Image type                             */
 /*                                                                    */
-/*;  Copyright (C) 2004-2016                                          */
+/*;  Copyright (C) 2004-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -35,27 +35,44 @@
 #include "ObitIOImageFITS.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitImage *me;
+} Image;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitImage *me;
+} Image;
 
 %inline %{
 
 // size=1-> OBIT_IO_byRow, else OBIT_IO_byPlane
-extern void ImageSetFITS(ObitImage *in, int size, int disk, char *file, 
-                         int blc[7], int trc[7], ObitErr *err) {
+extern void ImageSetFITS(ObitImage *in, long size, long disk, char *file, 
+                         long *blc, long *trc, ObitErr *err) {
   ObitIOSize fsize;
+  olong i, lblc[7], ltrc[7], ldisk;
 
   if (size==1) fsize = OBIT_IO_byRow;
   else fsize = OBIT_IO_byPlane;
-  ObitImageSetFITS(in, fsize, disk, file, blc, trc, err);
+  for (i=0; i<7; i++) {lblc[i]=(olong)blc[i]; ltrc[i]=(olong)trc[i];}
+  ldisk = (olong)disk;
+  ObitImageSetFITS(in, fsize, ldisk, file, lblc, ltrc, err);
  }
 
-extern void ImageSetAIPS(ObitImage *in, int size, int disk, int cno, int user, 
-                         int blc[7], int trc[7], ObitErr *err) {
+extern void ImageSetAIPS(ObitImage *in, long size, long disk, long cno, long user, 
+                         long *blc, long *trc, ObitErr *err) {
   ObitIOSize fsize;
+  olong i, lblc[7], ltrc[7], ldisk, lcno, luser;
 
   if (size==1) fsize = OBIT_IO_byRow;
   else fsize = OBIT_IO_byPlane;
-  ObitImageSetAIPS(in, fsize, disk, cno, user, blc, trc, err);
- }
+  for (i=0; i<7; i++) {lblc[i]=(olong)blc[i]; ltrc[i]=(olong)trc[i];}
+  ldisk = (olong)disk; lcno = (olong)cno; luser = (olong)user;
+  ObitImageSetAIPS(in, fsize, ldisk, lcno, luser, lblc, ltrc, err);
+ } 
 
 extern ObitData* ImageCastData (ObitImage* inImage) {
   return (ObitData*)inImage;
@@ -64,6 +81,52 @@ extern ObitData* ImageCastData (ObitImage* inImage) {
 extern ObitImage* ImageCreate (char* name) {
   return newObitImage (name);
 } // end  ImageCreate
+
+void CreateImage(PyObject *self, char* name) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_Image, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateImage: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((Image*)ptr)->me = ImageCreate(name);
+   else  ((Image*)ptr)->me = NULL;
+   return;
+ } // end CreateImage
+
+void DeleteImage(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_Image, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteImage: could not recover c struct");
+	return;
+   }
+   ((Image*)ptr)->me = ObitImageUnref(((Image*)ptr)->me);
+}// end DeleteImage
+
+ObitImage* Image_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_Image, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Image_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((Image*)ptr)->me;
+}  // end Image_Get_me
+
+void Image_Set_me(PyObject *self, ObitImage *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_Image, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Image_Set_me: could not recover c struct");
+	return;
+   }
+   ((Image*)ptr)->me =  ObitImageRef(me);
+}  // end Image_Set_me
 
 extern ObitImage* ImageScratch (ObitImage *in, ObitErr *err) {
   return newObitImageScratch (in, err);
@@ -86,17 +149,17 @@ extern PyObject* ImageInfo (ObitImage *in, ObitErr *err) {
     o = PyString_InternFromString("AIPS");
     PyDict_SetItemString(outDict, "type", o);
     AIPSIO = (ObitIOImageAIPS*)in->myIO;
-    o = PyInt_FromLong((long)AIPSIO->disk);
+    o = PyLong_FromLong((long)AIPSIO->disk);
     PyDict_SetItemString(outDict, "disk", o);
-    o = PyInt_FromLong((long)AIPSIO->CNO);
+    o = PyLong_FromLong((long)AIPSIO->CNO);
     PyDict_SetItemString(outDict, "CNO", o);
-    o = PyInt_FromLong((long)AIPSIO->UserId);
+    o = PyLong_FromLong((long)AIPSIO->UserId);
     PyDict_SetItemString(outDict, "user", o);
   } else if (ObitIOImageFITSIsA(in->myIO)) {  // FITS
     o = PyString_InternFromString("FITS");
     PyDict_SetItemString(outDict, "type", o);
     FITSIO = (ObitIOImageFITS*)in->myIO;
-    o = PyInt_FromLong((long)FITSIO->disk);
+    o = PyLong_FromLong((long)FITSIO->disk);
     PyDict_SetItemString(outDict, "disk", o);
     o = PyString_InternFromString((char*)FITSIO->FileName);
     PyDict_SetItemString(outDict, "filename", o);
@@ -134,7 +197,7 @@ extern void ImageCloneMem (ObitImage *in, ObitImage *out, ObitErr *err) {
 
 // access 1=READONLY, 2=WRITEONLY, 3=READWRITE
 // Table verion returned as outValue1
-extern ObitTable* ImageGetTable (ObitImage *in, int access, 
+extern ObitTable* ImageGetTable (ObitImage *in, long access, 
 			    char *tabType, long *outValue1, ObitErr *err) {
   ObitIOAccess laccess;
   olong loutValue1 = (olong)*outValue1;
@@ -148,7 +211,7 @@ extern ObitTable* ImageGetTable (ObitImage *in, int access,
   return outTable;
 } // end  ImageGetTable
 
-extern int ImageOpen (ObitImage *in, int access, ObitErr *err) {
+extern long ImageOpen (ObitImage *in, long access, ObitErr *err) {
   ObitIOCode ret;
   ObitIOAccess laccess;
 
@@ -165,14 +228,14 @@ extern void ImageDirty (ObitImage *in) {
   in->myStatus = OBIT_Modified;
 } // end Dirty
 
-extern int ImageClose (ObitImage *in, ObitErr *err) {
+extern long ImageClose (ObitImage *in, ObitErr *err) {
   ObitIOCode ret;
   ret =  ObitImageClose (in, err);
   if (ret==OBIT_IO_OK) return 0;
   else return 1;
 } // end Close
 
-extern int ImageRead (ObitImage *in, ObitErr *err) {
+extern long ImageRead (ObitImage *in, ObitErr *err) {
   ObitIOCode ret;
   in->extBuffer = FALSE;
   ret =  ObitImageRead (in, NULL, err);
@@ -180,7 +243,7 @@ extern int ImageRead (ObitImage *in, ObitErr *err) {
   else return 1;
 } // end Read
 
-extern int ImageWrite (ObitImage *in, ObitErr *err) {
+extern long ImageWrite (ObitImage *in, ObitErr *err) {
   ObitIOCode ret;
   in->extBuffer = FALSE;
   ret =  ObitImageWrite (in, NULL, err);
@@ -188,7 +251,7 @@ extern int ImageWrite (ObitImage *in, ObitErr *err) {
   else return 1;
 } // end Write
 
-extern int ImageReadFA (ObitImage *in, ObitFArray *array, 
+extern long ImageReadFA (ObitImage *in, ObitFArray *array, 
                         ObitErr *err) {
   ObitIOCode ret;
   in->extBuffer = TRUE;
@@ -204,7 +267,7 @@ extern int ImageReadFA (ObitImage *in, ObitFArray *array,
   else return 1;
 } // end ReadFA
 
-extern int ImageWriteFA (ObitImage *in, ObitFArray *array, 
+extern long ImageWriteFA (ObitImage *in, ObitFArray *array, 
                          ObitErr *err) {
   ObitIOCode ret;
   in->extBuffer = TRUE;
@@ -220,7 +283,7 @@ extern int ImageWriteFA (ObitImage *in, ObitFArray *array,
   else return 1;
 } // end Write
 
-extern int ImageGetPlane (ObitImage *in, ObitFArray *outData, int *plane,
+extern long ImageGetPlane (ObitImage *in, ObitFArray *outData, long *plane,
 			    ObitErr *err) {
   ObitIOCode ret;
   olong i, lplane[5];
@@ -242,12 +305,12 @@ extern int ImageGetPlane (ObitImage *in, ObitFArray *outData, int *plane,
 	           "ImageGetPlane: specified FArray incompatable with image");
     return 1;
   }
-  ret = ObitImageGetPlane (in, data, plane, err);
+  ret = ObitImageGetPlane (in, data, lplane, err);
   if (ret==OBIT_IO_OK) return 0;
   else return 1;
 } // end ImageGetPlane
 
-extern int ImagePutPlane (ObitImage *in, ObitFArray *outData, int *plane,
+extern long ImagePutPlane (ObitImage *in, ObitFArray *outData, long *plane,
 			  ObitErr *err) {
   ObitIOCode ret;
   olong i, lplane[5];
@@ -274,7 +337,7 @@ extern int ImagePutPlane (ObitImage *in, ObitFArray *outData, int *plane,
   else return 1;
 } // end ImagePutPlane
 
-extern int ImageZapTable (ObitImage *in, char *tabType, long tabVer, 
+extern long ImageZapTable (ObitImage *in, char *tabType, long tabVer, 
 			    ObitErr *err) {
   ObitIOCode ret;
   ret = ObitImageZapTable (in, tabType, tabVer, err);
@@ -282,7 +345,7 @@ extern int ImageZapTable (ObitImage *in, char *tabType, long tabVer,
   else return 1;
 } // end  ImageZapTable
 
-extern int ImageCopyTables (ObitImage *in, ObitImage *out, char **exclude,
+extern long ImageCopyTables (ObitImage *in, ObitImage *out, char **exclude,
 		  	        char **include, ObitErr *err) {
   ObitIOCode ret;
   ret = ObitImageCopyTables  (in, out, exclude, include, err);
@@ -290,7 +353,7 @@ extern int ImageCopyTables (ObitImage *in, ObitImage *out, char **exclude,
   else return 1;
 } // end  CopyTables
 
-extern int ImageUpdateTables (ObitImage *in, ObitErr *err) {
+extern long ImageUpdateTables (ObitImage *in, ObitErr *err) {
   ObitIOCode ret;
   ret = ObitImageUpdateTables (in, err);
   if (ret==OBIT_IO_OK) return 0;
@@ -299,7 +362,7 @@ extern int ImageUpdateTables (ObitImage *in, ObitErr *err) {
 
 // Open and close to fully instantiate
 // access 1=READONLY, 2=WRITEONLY, 3=READWRITE
-extern int ImagefullInstantiate (ObitImage* in, int access, ObitErr *err) {
+extern long ImagefullInstantiate (ObitImage* in, long access, ObitErr *err) {
   ObitIOCode ret;
   ObitIOAccess laccess;
 
@@ -372,11 +435,11 @@ extern long ImageGetHighVer (ObitImage* in, char *tabType) {
   return ObitTableListGetHigh(in->tableList, tabType);
 }
 
-extern int ImageisScratch (ObitImage* in) {
+extern long ImageisScratch (ObitImage* in) {
   return (int)in->isScratch;
 }
 
-extern int ImageIsA (ObitImage* in) {
+extern long ImageIsA (ObitImage* in) {
   return ObitImageIsA(in);
 }
 
@@ -389,32 +452,4 @@ extern char* ImageGetName (ObitImage* in) {
 }
 %}
 
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitImage *me;
-} Image;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitImage *me;
-} Image;
-
-%addmethods Image { 
-  Image(char* name) {
-     Image *out;
-     out = (Image *) malloc(sizeof(Image));
-     if (strcmp(name, "None")) out->me = ImageCreate(name);
-     else out->me = NULL;
-     return out;
-   }
-  ~Image() { /* Scratch files may be deleted separately */
-  if (self && (self->me)) {
-    if (self->me->ReferenceCount>0) 
-       self->me = ImageUnref(self->me);
-    free(self);
-    } 
-  }
-};
 

@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitCArray type                        */
 /*                                                                    */
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,6 +32,18 @@
 #include "ObitCArray.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitCArray *me;
+} CArray;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitCArray *me;
+} CArray;
+
 
 %inline %{
 extern ObitCArray* CArrayCreate(char* name, long ndim, long *naxis) {
@@ -39,6 +51,60 @@ extern ObitCArray* CArrayCreate(char* name, long ndim, long *naxis) {
    for (i=0; i<ndim; i++) lnaxis[i] = (olong)naxis[i];
    return  ObitCArrayCreate (name, (olong)ndim, lnaxis);
 }
+
+ObitCArray* CArrayRef (ObitCArray* in) {
+  return ObitCArrayRef (in);
+} // end CArrayRef
+
+ObitCArray* CArrayUnref (ObitCArray* in) {
+  if (!ObitCArrayIsA(in)) return NULL;
+  return ObitCArrayUnref (in);
+} // end CArrayUnref
+
+void CreateCArray(PyObject *self, char* name, long ndim, long *longarr) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_CArray, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateCArray: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((CArray*)ptr)->me = CArrayCreate(name, ndim, longarr);
+   else  ((CArray*)ptr)->me = NULL;
+   return;
+ }
+void DeleteCArray(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_CArray, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteCArray: could not recover c struct");
+	return;
+   }
+   ((CArray*)ptr)->me = CArrayUnref(((CArray*)ptr)->me);
+}// end DeleteCArray
+
+ObitCArray* CArray_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_CArray, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CArray_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((CArray*)ptr)->me;
+}  // end CArray_Get_me
+
+void CArray_Set_me(PyObject *self, ObitCArray *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_CArray, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CArray_Set_me: could not recover c struct");
+	return;
+   }
+   ((CArray*)ptr)->me =  ObitCArrayRef(me);
+}  // end CArray_Set_me
 
 extern ObitCArray* CArrayCopy  (ObitCArray *in, ObitCArray *out, ObitErr *err) {
   return ObitCArrayCopy (in, out, err);
@@ -54,7 +120,7 @@ extern ObitCArray* CArrayRealloc (ObitCArray* in, long ndim, long *naxis) {
    return  ObitCArrayRealloc(in, (olong)ndim, lnaxis);
 }
 
-extern void CArrayGetVal(ObitCArray* in, long *pos, float val[2]) {
+extern void CArrayGetVal(ObitCArray* in, long *pos, float *val) {
    float *out;
    olong i, lpos[10];
 
@@ -64,7 +130,7 @@ extern void CArrayGetVal(ObitCArray* in, long *pos, float val[2]) {
    val[1] = out[1];
 }
 
-extern void CArraySetVal(ObitCArray* in, long *pos, float val[2]) {
+extern void CArraySetVal(ObitCArray* in, long *pos, float *val) {
    float *off;
    olong i, lpos[10];
 
@@ -91,7 +157,7 @@ extern void CArrayConjg (ObitCArray* in) {
    ObitCArrayConjg(in);
 }
 
-extern void CArrayFill (ObitCArray* in, float cmpx[2]) {
+extern void CArrayFill (ObitCArray* in, float *cmpx) {
    ObitCArrayFill(in, cmpx);
 }
 
@@ -103,11 +169,11 @@ extern void CArraySMul (ObitCArray* in, float scalar) {
    ObitCArraySMul(in, scalar);
 }
 
-extern void CArrayCSAdd (ObitCArray* in, float scalar[2]) {
+extern void CArrayCSAdd (ObitCArray* in, float *scalar) {
    ObitCArrayCSAdd(in, scalar);
 }
 
-extern void CArrayCSMul (ObitCArray* in, float scalar[2]) {
+extern void CArrayCSMul (ObitCArray* in, float *scalar) {
    ObitCArrayCSMul(in, scalar);
 }
 
@@ -197,7 +263,7 @@ extern PyObject* CArrayGetNaxis (ObitCArray* in) {
   PyObject *outList= PyList_New(in->ndim);
 
   for (i=0; i<in->ndim; i++) {
-    PyList_SetItem(outList, i, PyInt_FromLong((long)in->naxis[i]));
+    PyList_SetItem(outList, i, PyLong_FromLong((long)in->naxis[i]));
   }
   return outList;
   return outList;
@@ -207,42 +273,6 @@ extern int CArrayIsA (ObitCArray* in) {
   return ObitCArrayIsA(in);
 } // end  CArrayIsA 
 
-ObitCArray* CArrayRef (ObitCArray* in) {
-  return ObitCArrayRef (in);
-} // end CArrayRef
-
-ObitCArray* CArrayUnref (ObitCArray* in) {
-  if (!ObitCArrayIsA(in)) return NULL;
-  return ObitCArrayUnref (in);
-} // end CArrayUnref
-
-
-
 %}
 
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitCArray *me;
-} CArray;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitCArray *me;
-} CArray;
-
-%addmethods CArray { 
-  CArray(char* name, long ndim, long *naxis) {
-     CArray *out;
-     out = (CArray *) malloc(sizeof(CArray));
-     if (strcmp(name, "None")) out->me = CArrayCreate(name, ndim, naxis);
-     else out->me = NULL;
-     return out;
-   }
-  ~CArray() {
-    self->me = CArrayUnref(self->me);
-    free(self);
-  }
-};
 

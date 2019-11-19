@@ -1,6 +1,7 @@
 # Function to run the equivalent of AIPSish MERGECAL
 # Fixes VLBA screwed up calibration tables.
 
+from __future__ import absolute_import
 from AIPSTask import AIPSTask
 
 def MergeCal(inUV, err, \
@@ -24,7 +25,7 @@ def MergeCal(inUV, err, \
     """
     ################################################################
     if inUV.FileType!='AIPS':
-        raise RuntimeError,"Can ONLY handle AIPS data"
+        raise RuntimeError("Can ONLY handle AIPS data")
     # Set up
     tamrg = AIPSTask("tamrg")
     tamrg.inname   = inUV.Aname

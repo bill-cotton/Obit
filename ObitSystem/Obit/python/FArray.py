@@ -23,7 +23,7 @@ Naxis   list of axis dimensions (by storage order)
 ======  ==============================================
 """
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2016
+#  Copyright (C) 2004-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -50,54 +50,11 @@ Naxis   list of axis dimensions (by storage order)
 #-----------------------------------------------------------------------
 
 # Python shadow class to ObitFArray class
-import Obit, InfoList, OErr
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, InfoList, OErr
 
-class FArrayPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name, value):
-        if name == "me" :
-            # Out with the old
-            Obit.FArrayUnref(Obit.FArray_me_get(self.this))
-            # In with the new
-            Obit.FArray_me_set(self.this,value)
-            return
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != FArray:
-            return
-        if name == "me" : 
-            return Obit.FArray_me_get(self.this)
-        if name=="List":
-            out    = InfoList.InfoList()
-            out.me = Obit.InfoListUnref(out.me)
-            out.me = Obit.FArrayGetList(self.me)
-            return out
-        # Virtual members
-        if name=="RMS":
-            return PRMS(self)
-        if name=="RawRMS":
-            return PRawRMS(self)
-        if name=="Mode":
-            return PMode(self)
-        if name=="Mean":
-            return PMean(self)
-        if name=="Sum":
-            return PSum(self)
-        if name=="Count":
-            return PCount(self)
-        if name=="Ndim":
-            return PGetNdim(self)
-        if name=="Naxis":
-            return PGetNaxis(self)
-        if name=="Buf":
-            return PGetBuf(self)
-        raise AttributeError,str(name)
-    def __repr__(self):
-        if self.__class__ != FArray:
-            return
-        return "<C FArray instance> " + Obit.FArrayGetName(self.me)
-class FArray(FArrayPtr):
+class FArray(Obit.FArray):
     """ 
 Python Obit multidimensional array of float class
 
@@ -122,19 +79,66 @@ Naxis   list of axis dimensions (by storage order)
     """
     def __init__(self, name, naxis=[1]):
         ndim = len(naxis)
-        self.this = Obit.new_FArray(name, ndim, naxis)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_FArray(self.this)
-            
+        super(FArray, self).__init__()
+        lnaxis =[int(naxis[0])]
+        if len(naxis)>1:
+            lnaxis.append(int(naxis[1]))
+        if len(naxis)>2:
+            lnaxis.append(int(naxis[2]))
+        Obit.CreateFArray(self.this, name, int(ndim), lnaxis)
+    def __del__(self, DeleteFArray=_Obit.DeleteFArray):
+        if _Obit!=None:
+            DeleteFArray(self.this)
+    def __setattr__(self,name, value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.FArrayUnref(Obit.FArray_Get_me(self.this))
+            # In with the new
+            Obit.FArray_Set_me(self.this,value)
+            return
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if not isinstance(self, FArray):
+            return "Bogus Dude"+str(self.__class__)
+        if name == "me" : 
+            return Obit.FArray_Get_me(self.this)
+        if name=="List":
+            out    = InfoList.InfoList()
+            out.me = Obit.FArrayGetList(self.me)
+            return out
+        # Virtual members
+        if name=="RMS":
+            return PRMS(self)
+        if name=="RawRMS":
+            return PRawRMS(self)
+        if name=="Mode":
+            return PMode(self)
+        if name=="Mean":
+            return PMean(self)
+        if name=="Sum":
+            return PSum(self)
+        if name=="Count":
+            return PCount(self)
+        if name=="Ndim":
+            return PGetNdim(self)
+        if name=="Naxis":
+            return PGetNaxis(self)
+        if name=="Buf":
+            return PGetBuf(self)
+        raise AttributeError(str(name))
+    def __repr__(self):
+        if not isinstance(self, FArray):
+            return "Bogus dude",str(self.__class__)
+        return "<C FArray instance> " + Obit.FArrayGetName(self.me)
     def set (self, value, i1, i2=0, i3=0, i4=0, i5=0, i6=0):
         """ 
-Set Array value [i1, i2, i3...] (0-rel)
-
-* self      = Python FArray object
-* value     = value for pixel (None = blanked)
-* i1        = first axis index (0-rel)
-* in        = nth axis index
+        Set Array value [i1, i2, i3...] (0-rel)
+        
+        * self      = Python FArray object
+        * value     = value for pixel (None = blanked)
+        * i1        = first axis index (0-rel)
+        * in        = nth axis index
         """
         # value, possible blanked
         if value==None:
@@ -142,22 +146,22 @@ Set Array value [i1, i2, i3...] (0-rel)
         else:
             v = value
         # Set value
-        pos = [i1,i2,i3,i4,i5,i6]
+        pos = [int(i1),int(i2),int(i3),int(i4),int(i5),int(i6)]
         PSetVal(self, pos, v)
         # end set
 
     def get (self, i1, i2=0, i3=0, i4=0, i5=0, i6=0):
         """ 
-Get Array value [i1, i2, i3...] (0-rel)
+        Get Array value [i1, i2, i3...] (0-rel)
         
-Return value at pixel [i1,...in], None if blanked
-
-* self      = Python FArray object
-* i1        = first axis index (0-rel)
-* in        = nth axis index
+        Return value at pixel [i1,...in], None if blanked
+        
+        * self      = Python FArray object
+        * i1        = first axis index (0-rel)
+        * in        = nth axis index
         """
         # Get value
-        pos = [i1,i2,i3,i4,i5,i6]
+        pos = [int(i1),int(i2),int(i3),int(i4),int(i5),int(i6)]
         v = PGetVal(self, pos)
         # value, possible blanked
         if v==fblank:
@@ -187,26 +191,33 @@ Return value of a cell in an FArray
 returns cell contents
 
 * inFA  = input Python FArray
-* pos   = 0-rel cell number as an array, e.g. [10,24]
+* pos   = 0-rel cell number as an array, e.g. [10L,24L]
     """
     ################################################################
-    return Obit.FArrayGetVal (inFA.me, pos)
-
+    # make sure pos long
+    lpos = []
+    for p in pos:
+        lpos.append(int(p))
+    return Obit.FArrayGetVal (inFA.me, lpos)
 
 def PSetVal(inFA, pos, val):
     """  
 Set value of a cell in an FArray
 
 * inFA  = input Python FArray
-* pos   = 0-rel cell number as an array, e.g. [10,24]
+* pos   = 0-rel cell number as an array, e.g. [10L,24L]
 * value = new value for cell
     """
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
-    Obit.FArraySetVal(inFA.me, pos, val)
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
+    # make sure pos long
+    lpos = []
+    for p in pos:
+        lpos.append(int(p))
+    Obit.FArraySetVal(inFA.me, lpos, val)
 
 
 def PGetBuf(inFA):
@@ -220,8 +231,8 @@ returns python memory buffer
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     return Obit.FArrayGetBuf(inFA.me)
     # end PGetBuf(
 
@@ -238,8 +249,8 @@ returns copy
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     outFA = FArray("None")
     outFA.me = Obit.FArrayCopy (inFA.me, outFA.me, err.me);
     if err.isErr:
@@ -259,8 +270,8 @@ Zero fill and return FArray with same structure as in
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     outFA = FArray("Clone")
     Obit.FArrayClone (inFA.me, outFA.me, err.me);
     if err.isErr:
@@ -271,22 +282,27 @@ Zero fill and return FArray with same structure as in
 
 def PSubArr  (inFA, blc, trc, err):
     """  
-Return a slice of an FArray
-
-returns Slice in FArray
-
-* inFA = input Python FArray
-* blc  = array giving (1-rel) lower index of first cell to copy, e.g. [1,1]
-* trc  = array giving (1-rel) highest index of first cell to copy
-* err  = Python Obit Error/message stack
+    Return a slice of an FArray
+    
+    returns Slice in FArray
+    
+    * inFA = input Python FArray
+    * blc  = array giving (1-rel) lower index of first cell to copy, e.g. [1,1]
+    * trc  = array giving (1-rel) highest index of first cell to copy
+    * err  = Python Obit Error/message stack
     """
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
+    lblc=[]; ltrc=[] # Make sure blc,trc are long
+    for b in blc:
+        lblc.append(int(b))
+    for b in trc:
+        ltrc.append(int(b))
     outFA = FArray("None")
-    outFA.me = Obit.FArraySubArr (inFA.me, blc, trc, err.me)
+    outFA.me = Obit.FArraySubArr (inFA.me, lblc, ltrc, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error slicing FArray")
     return outFA
@@ -307,8 +323,8 @@ returns Transposed FArray
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     outFA = FArray("None")
     outFA.me = Obit.FArrayTranspose (inFA.me, order, err.me)
     if err.isErr:
@@ -328,11 +344,11 @@ returns true or false (1, 0)
     ################################################################
      # Checks
     if not PIsA(in1):
-        print "Actually ",in1.__class__
-        raise TypeError,"in1 MUST be a Python Obit FArray"
+        print("Actually ",in1.__class__)
+        raise TypeError("in1 MUST be a Python Obit FArray")
     if not PIsA(in2):
-        print "Actually ",in2.__class__
-        raise TypeError,"in2 MUST be a Python Obit FArray"
+        print("Actually ",in2.__class__)
+        raise TypeError("in2 MUST be a Python Obit FArray")
     return Obit.FArrayIsCompatable(in1.me, in2.me)
 
 
@@ -348,8 +364,8 @@ Contents will be zeroed
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     ndim = len(naxis)
     Obit.FArrayRealloc(inFA.me, ndim, naxis)
 
@@ -366,8 +382,8 @@ returns  maximum value (may have trouble w/ > 2 dim)
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     lpos = [0,0]                          # Dummy
     ret = Obit.FArrayMax(inFA.me, lpos)   # Results in list ret
     out = ret[0]
@@ -386,8 +402,8 @@ returns  maximum abs value (may have trouble w/ > 2 dim)
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     lpos = [0,0]                             # Dummy
     ret = Obit.FArrayMaxAbs(inFA.me, lpos)   # Results in list ret
     out = ret[0]
@@ -407,8 +423,8 @@ returns  minimum value (may have trouble w/ > 2 dim)
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     lpos = [0,0]                          # Dummy
     ret = Obit.FArrayMin(inFA.me, lpos)   # Results in list ret
     out = ret[0]
@@ -425,8 +441,8 @@ Replace any magic value blanks with scalar
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     Obit.FArrayDeblank (inFA.me, scalar)
 
 
@@ -441,8 +457,8 @@ returns RMS value derived from a histogram
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     return Obit.FArrayRMS(inFA.me)
 
 
@@ -457,8 +473,8 @@ returns simple RMS about mean
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     return Obit.FArrayRawRMS(inFA.me)
 
 
@@ -473,8 +489,8 @@ returns simple RMS about zero
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     return Obit.FArrayRMS0(inFA.me)
 
 
@@ -489,8 +505,8 @@ returns Mode of values
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     return Obit.FArrayMode(inFA.me)
 
 def PMean (inFA):
@@ -504,8 +520,8 @@ returns mean of values
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     return Obit.FArrayMean(inFA.me)
 
 
@@ -519,8 +535,8 @@ Fill all cells of an FArray with a scalar
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     Obit.FArrayFill(inFA.me, scalar)
 
 
@@ -533,8 +549,8 @@ Negate each element of the array.
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     Obit.FArrayNeg(inFA.me)
     # end PNeg
 
@@ -547,8 +563,8 @@ Sine of each element of the array.
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     Obit.FArraySin(inFA.me)
     # end PSin
 
@@ -562,8 +578,8 @@ Cosine of each element of the array.
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     Obit.FArrayCos(inFA.me)
     # end PCos
 
@@ -576,8 +592,8 @@ Square root of MAX (1.0e-20, each element of the array).
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     Obit.FArraySqrt(inFA.me)
     # end PSqrt
 
@@ -592,8 +608,8 @@ returns sum
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     return Obit.FArraySum(inFA.me)
 
 
@@ -608,8 +624,8 @@ returns count
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     return Obit.FArrayCount(inFA.me)
 
 def PSAdd (inFA, scalar):
@@ -624,8 +640,8 @@ in = in + scalar
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     Obit.FArraySAdd(inFA.me, scalar)
 
 
@@ -641,8 +657,8 @@ in = in * scalar
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     Obit.FArraySMul(inFA.me, scalar)
 
 
@@ -659,8 +675,8 @@ No check for zeroes is made
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     Obit.FArraySDiv(inFA.me, scalar)
 
 
@@ -678,8 +694,8 @@ in = newVal where in < minVal or in > maxVal
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     Obit.FArrayClip(inFA.me, minVal, maxVal, newVal)
 
 
@@ -697,8 +713,8 @@ in = newVal where in >= minVal or in <= maxVal
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     Obit.FArrayInClip(inFA.me, minVal, maxVal, newVal)
     # end PInClip
 
@@ -717,14 +733,14 @@ out =  in1 / in2 where in2>minVal, else blanked
     ################################################################
     # Checks
     if not PIsA(inFA1):
-        print "Actually ",inFA1.__class__
-        raise TypeError,"inFA1 MUST be a Python Obit FArray"
+        print("Actually ",inFA1.__class__)
+        raise TypeError("inFA1 MUST be a Python Obit FArray")
     if not PIsA(inFA2):
-        print "Actually ",inFA2.__class__
-        raise TypeError,"inFA2 MUST be a Python Obit FArray"
+        print("Actually ",inFA2.__class__)
+        raise TypeError("inFA2 MUST be a Python Obit FArray")
     if not PIsA(outFA):
-        print "Actually ",outFA.__class__
-        raise TypeError,"outFA MUST be a Python Obit FArray"
+        print("Actually ",outFA.__class__)
+        raise TypeError("outFA MUST be a Python Obit FArray")
     Obit.FArrayDivClip(inFA1.me, inFA2.me, minVal, outFA.me)
 
 
@@ -741,8 +757,8 @@ in = blank where in < minVal or in > maxVal
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     Obit.FArrayClipBlank(inFA.me, minVal, maxVal)
 
 
@@ -759,9 +775,9 @@ out = in1 or blank where in2 is blank
     ################################################################
     # Checks
     if not PIsCompatable  (in1, in2):
-        raise RuntimeError,"in1 and in2 have incompatable geometry"
+        raise RuntimeError("in1 and in2 have incompatable geometry")
     if not PIsCompatable  (in1, out):
-        raise RuntimeError,"in1 and out have incompatable geometry"
+        raise RuntimeError("in1 and out have incompatable geometry")
     Obit.FArrayBlank (in1.me, in2.me, out.me)
 
 
@@ -778,9 +794,9 @@ out = (in1 + in2) or whichever is not blanked
     ################################################################
     # Checks
     if not PIsCompatable  (in1, in2):
-        raise RuntimeError,"in1 and in2 have incompatable geometry"
+        raise RuntimeError("in1 and in2 have incompatable geometry")
     if not PIsCompatable  (in1, out):
-        raise RuntimeError,"in1 and out have incompatable geometry"
+        raise RuntimeError("in1 and out have incompatable geometry")
     Obit.FArraySumArr (in1.me, in2.me, out.me)
     # end PSumArr
 
@@ -798,9 +814,9 @@ out = (in1 + in2)/2 or whichever is not blanked
     ################################################################
     # Checks
     if not PIsCompatable  (in1, in2):
-        raise RuntimeError,"in1 and in2 have incompatable geometry"
+        raise RuntimeError("in1 and in2 have incompatable geometry")
     if not PIsCompatable  (in1, out):
-        raise RuntimeError,"in1 and out have incompatable geometry"
+        raise RuntimeError("in1 and out have incompatable geometry")
     Obit.FArrayAvgArr (in1.me, in2.me, out.me)
     # end PAvgArr
 
@@ -817,9 +833,9 @@ out = MAX (in1, in2) or whichever is not blanked
     ################################################################
     # Checks
     if not PIsCompatable  (in1, in2):
-        raise RuntimeError,"in1 and in2 have incompatable geometry"
+        raise RuntimeError("in1 and in2 have incompatable geometry")
     if not PIsCompatable  (in1, out):
-        raise RuntimeError,"in1 and out have incompatable geometry"
+        raise RuntimeError("in1 and out have incompatable geometry")
     Obit.FArrayMaxArr (in1.me, in2.me, out.me)
     # end PMaxArr
 
@@ -836,9 +852,9 @@ out = MIN (in1, in2) or whichever is not blanked
     ################################################################
     # Checks
     if not PIsCompatable  (in1, in2):
-        raise RuntimeError,"in1 and in2 have incompatable geometry"
+        raise RuntimeError("in1 and in2 have incompatable geometry")
     if not PIsCompatable  (in1, out):
-        raise RuntimeError,"in1 and out have incompatable geometry"
+        raise RuntimeError("in1 and out have incompatable geometry")
     Obit.FArrayMinArr (in1.me, in2.me, out.me)
     # end PMinArr
 
@@ -855,9 +871,9 @@ out = in1 + in2
     ################################################################
     # Checks
     if not PIsCompatable  (in1, in2):
-        raise RuntimeError,"in1 and in2 have incompatable geometry"
+        raise RuntimeError("in1 and in2 have incompatable geometry")
     if not PIsCompatable  (in1, out):
-        raise RuntimeError,"in1 and out have incompatable geometry"
+        raise RuntimeError("in1 and out have incompatable geometry")
     Obit.FArrayAdd (in1.me, in2.me, out.me)
 
 
@@ -874,9 +890,9 @@ out = in1 - in2
     ################################################################
     # Checks
     if not PIsCompatable  (in1, in2):
-        raise RuntimeError,"in1 and in2 have incompatable geometry"
+        raise RuntimeError("in1 and in2 have incompatable geometry")
     if not PIsCompatable  (in1, out):
-        raise RuntimeError,"in1 and out have incompatable geometry"
+        raise RuntimeError("in1 and out have incompatable geometry")
     Obit.FArraySub (in1.me, in2.me, out.me)
 
 def PMul (in1, in2, out):
@@ -892,9 +908,9 @@ out = in1 * in2
     ################################################################
     # Checks
     if not PIsCompatable  (in1, in2):
-        raise RuntimeError,"in1 and in2 have incompatable geometry"
+        raise RuntimeError("in1 and in2 have incompatable geometry")
     if not PIsCompatable  (in1, out):
-        raise RuntimeError,"in1 and out have incompatable geometry"
+        raise RuntimeError("in1 and out have incompatable geometry")
     Obit.FArrayMul (in1.me, in2.me, out.me)
 
 
@@ -911,9 +927,9 @@ out = in1 / in2
     ################################################################
     # Checks
     if not PIsCompatable  (in1, in2):
-        raise RuntimeError,"in1 and in2 have incompatable geometry"
+        raise RuntimeError("in1 and in2 have incompatable geometry")
     if not PIsCompatable  (in1, out):
-        raise RuntimeError,"in1 and out have incompatable geometry"
+        raise RuntimeError("in1 and out have incompatable geometry")
     Obit.FArrayDiv (in1.me, in2.me, out.me)
 
 
@@ -929,7 +945,7 @@ return Sum (in1 x in2)
     ################################################################
     # Checks
     if not PIsCompatable  (in1, in2):
-        raise RuntimeError,"in1 and in2 have incompatable geometry"
+        raise RuntimeError("in1 and in2 have incompatable geometry")
     return Obit.FArrayDot(in1.me, in2.me)
 
 
@@ -950,8 +966,8 @@ out[i,j] = in[i,j] * row[j] * col[i]
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     Obit.FArrayMulColRow (inFA.me, row.me, col.me, out.me)
 
 
@@ -969,8 +985,8 @@ FFTs don't like blanked values.
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     Obit.FArray2DCenter (inFA.me)
 
 
@@ -986,8 +1002,8 @@ Magic blanking not supported
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     return Obit.FArray2DSymInv (inFA.me)
 
 
@@ -1004,29 +1020,29 @@ Peak normalized to 1.0
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     Obit.FArrayCGauss2D (inFA.me, Cen, FWHM)
 
 
 def PEGauss2D (inFA, amp, Cen, GauMod):
     """ 
-Make 2-D Eliptical Gaussian in FAArray
-
-Peak normalized to 1.0, model is added to previous contents.
-
-* in     = Python FArray to be modified
-* amp    = peak value of Gaussian
-* Cen    = 0-rel pixel center as an array, e,g, [25.0,26.0]
-* GauMod = Gaussian parameters, Major axis, FWHM, minor axis 
+    Make 2-D Eliptical Gaussian in FAArray
+    
+    Peak normalized to 1.0, model is added to previous contents.
+    
+    * in     = Python FArray to be modified
+    * amp    = peak value of Gaussian
+    * Cen    = 0-rel pixel center as an array, e,g, [25.0,26.0]
+    * GauMod = Gaussian parameters, Major axis, FWHM, minor axis 
         FWHM (both in pixels) and rotation angle wrt "Y" axis (deg).
         e.g. [3.0,3.0,0.0]
     """
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     Obit.FArrayEGauss2D (inFA.me, amp, Cen, GauMod)
 
 
@@ -1052,10 +1068,10 @@ out = in1 + scalar * in2 in overlap, else in1
     ################################################################
     # Checks
     if not PIsCompatable  (in1, out):
-        raise RuntimeError,"in1 and out have incompatable geometry"
+        raise RuntimeError("in1 and out have incompatable geometry")
     if not PIsA(in2):
-        print "Actually ",in2.__class__
-        raise TypeError,"inn2 MUST be a Python Obit FArray"
+        print("Actually ",in2.__class__)
+        raise TypeError("inn2 MUST be a Python Obit FArray")
     Obit.FArrayShiftAdd (in1.me, pos1, in2.me, pos2, scalar, out.me)
     # end PShiftAdd
 
@@ -1074,11 +1090,11 @@ and multiplied by factor.  Blanks in the output are replaced by zeroes.
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     if not PIsA(outFA):
-        print "Actually ",outFA.__class__
-        raise TypeError,"outFA MUST be a Python Obit FArray"
+        print("Actually ",outFA.__class__)
+        raise TypeError("outFA MUST be a Python Obit FArray")
     Obit.FArrayPad (inFA.me, outFA.me, factor)
     # end 
 
@@ -1097,12 +1113,19 @@ Select elements in an FArray by increment
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     if not PIsA(outFA):
-        print "Actually ",outFA.__class__
-        raise TypeError,"outFA MUST be a Python Obit FArray"
-    Obit.FArraySelInc (inFA.me, outFA.me, blc, trc, inc, err.me)
+        print("Actually ",outFA.__class__)
+        raise TypeError("outFA MUST be a Python Obit FArray")
+    lblc=[]; ltrc=[]; linc=[] # Make sure blc,trc,inc are long
+    for b in blc:
+        lblc.append(int(b))
+    for b in trc:
+        ltrc.append(int(b))
+    for b in inc:
+        ltrc.append(int(b))
+    Obit.FArraySelInc (inFA.me, outFA.me, lblc, ltrc, linc, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error selecting FArray")
     return
@@ -1130,8 +1153,8 @@ Return FArray with info elements
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     outFA = FArray("None")
     outFA.me = Obit.FArrayHisto (inFA.me, n, min, max)
     return outFA
@@ -1148,7 +1171,7 @@ def PExp (inFA, outFA):
     ################################################################
     # Checks
     if not PIsCompatable  (inFA, outFA):
-        raise RuntimeError,"inFA and outFA have incompatable geometry"
+        raise RuntimeError("inFA and outFA have incompatable geometry")
     Obit.FArrayExp (inFA.me, outFA.me)
 
 # end PExp
@@ -1165,8 +1188,8 @@ def PLog (inFA, outFA):
     ################################################################
     # Checks
     if not PIsCompatable  (inFA, outFA):
-        raise RuntimeError,"inFA and outFA have incompatable geometry"
-    Obit.FArrayLog (inFA.me, ouFAt.me)
+        raise RuntimeError("inFA and outFA have incompatable geometry")
+    Obit.FArrayLog (inFA.me, outFA.me)
 
 # end PLog
 
@@ -1183,9 +1206,9 @@ def PPow (in1FA, in2FA, outFA):
     ################################################################
     # Checks
     if not PIsCompatable  (in1FA, in2FA):
-        raise RuntimeError,"in1FA and in2FA have incompatable geometry"
+        raise RuntimeError("in1FA and in2FA have incompatable geometry")
     if not PIsCompatable  (in1FA, outFA):
-        raise RuntimeError,"in1FA and outFA have incompatable geometry"
+        raise RuntimeError("in1FA and outFA have incompatable geometry")
     Obit.FArrayPow (in1FA.me, in2FA.me, outFA.me)
 
 # end PPow
@@ -1220,15 +1243,15 @@ def PIsA (inFA):
     """ 
 Tells if the input is a Python ObitFArray
 
-returns true or false (1,0)
+returns True or False
 
 * inFA = Python Obit FArray to test
     """
     ################################################################
       # Checks
-    if inFA.__class__ != FArray:
-        return 0
-    return Obit.FArrayIsA(inFA.me)
+    if not isinstance(inFA, FArray):
+        return False
+    return Obit.FArrayIsA(inFA.me)!=0
     # end PIsA
 
 def PUnref (inFA):
@@ -1243,7 +1266,7 @@ Python object stays defined.
     ################################################################
      # Checks
     if not PIsA(inFA):
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        raise TypeError("inFA MUST be a Python Obit FArray")
 
     inFA.me = Obit.FArrayUnref(inFA.me)
     # end PUnref
@@ -1257,8 +1280,8 @@ Returns the number of dimensions in array
     ################################################################
       # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     return Obit.FArrayGetNdim(inFA.me)
     # end PGetNdim
 
@@ -1271,7 +1294,7 @@ Returns array of 7 elements with dimensions in array
     ################################################################
     # Checks
     if not PIsA(inFA):
-        print "Actually ",inFA.__class__
-        raise TypeError,"inFA MUST be a Python Obit FArray"
+        print("Actually ",inFA.__class__)
+        raise TypeError("inFA MUST be a Python Obit FArray")
     return Obit.FArrayGetNaxis(inFA.me)
     # end PGetNaxis

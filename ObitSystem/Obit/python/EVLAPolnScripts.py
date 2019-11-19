@@ -2,10 +2,13 @@
 Scripts for polarization calibration for EVLA-like arrays with circular feeds
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import ObitTask, AIPSDir, AIPS
 import EVLACal
 import OSystem
 from PipeUtil import *
+from six.moves import range
 
 def EVLAPolnFlag (uv, souModels, err, \
                   flagTab=1, timeAvg=0.0, maxAmp=1.0, \
@@ -127,8 +130,8 @@ def EVLAPolnFlag (uv, souModels, err, \
             printMess(mess, logfile)
             if not check:
                 uvsub.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "UVSub Failed retCode= "+str(uvsub.retCode)+" Source "+uvsub.Sources[0]
             printMess(mess, logfile)
             return uvsub.retCode
@@ -156,8 +159,8 @@ def EVLAPolnFlag (uv, souModels, err, \
         try:
             if not check:
                 flag.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "AutoFlag Failed retCode= "+str(flag.retCode)+" Source "+flag.Sources[0]
             printMess(mess, logfile)
             return flag.retCode
@@ -310,8 +313,8 @@ def EVLAPolnSelfCal(uv, Cals, err, \
             printMess(mess, logfile)
             if not check:
                 avg.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "UVBlAvg Failed retCode= "+str(avg.retCode)+" Source "+avg.Sources[0]
             printMess(mess, logfile)
             tmpfile = None
@@ -384,8 +387,8 @@ def EVLAPolnSelfCal(uv, Cals, err, \
             printMess(mess, logfile)
             if not check:
                 calib.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "Calib Failed retCode= "+str(calib.retCode)+" Source "+calib.Sources[0]
             printMess(mess, logfile)
             #return 1  # allow some failures
@@ -411,8 +414,8 @@ def EVLAPolnSelfCal(uv, Cals, err, \
             try:
                 if not check:
                     clcal.g
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
                 mess = "CLCal Failed retCode= "+str(clcal.retCode)+" Source "+clcal.Sources[0]
                 printMess(mess, logfile)
                 return 1;
@@ -522,8 +525,8 @@ def EVLAPolnPCal(uv, InsCals, err, \
         try:
             if not check:
                 pcal.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "PCal Failed retCode="+str(pcal.retCode)
             printMess(mess, logfile)
             return 1
@@ -630,15 +633,15 @@ def EVLAPolnRL(uv, err, \
             mess =  "R-L channel phase calibration using "+rlpass.Sources[0]
             printMess(mess, logfile)
             if debug:
-                print "timerange", rlpass.timerang
+                print("timerange", rlpass.timerang)
                 rlpass.i
                 rlpass.debug = True
             # Trap failure
             try:
                 if not check:
                     rlpass.g
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
                 mess = "rlpass Failed retCode="+str(rlpass.retCode)
                 printMess(mess, logfile)
                 return 1
@@ -840,8 +843,8 @@ def EVLAPolnImage(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band
         try:
             if not check:
                 imager.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "Imager Failed retCode= "+str(imager.retCode)
             printMess(mess, logfile)
             #return 1  Allow some failures
@@ -877,8 +880,8 @@ def EVLAPolnImage(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band
                                                       CalSeq=imager.outSeq,             \
                                                       CalCmethod="DFT", CalDataType="AIPS",   \
                                                       CalDisk=imager.outDisk, CalNfield=1))
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
                 mess = "Imager Cleanup Failed source= "+imager.Sources[0].strip()+"_"+band
                 printMess(mess, logfile)
                 OErr.PClear(err)     # Clear any message/error
@@ -1017,8 +1020,8 @@ def EVLAPolnToFITS(uv, outFile, outDisk, Sources, session, err, \
         try:
             if not check:
                 taco.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "TabCopy Failed retCode= "+str(taco.retCode)
             printMess(mess, logfile)
             return 1
@@ -1037,8 +1040,8 @@ def EVLAPolnToFITS(uv, outFile, outDisk, Sources, session, err, \
             try:
                 if not check:
                     taco.g
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
                 mess = "TabCopy Failed retCode= "+str(taco.retCode)
                 printMess(mess, logfile)
                 return 1

@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitFarray type                        */
 /*                                                                    */
-/*;  Copyright (C) 2004-2017                                          */
+/*;  Copyright (C) 2004-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -33,13 +33,80 @@
 #include "ObitFArray.h"
 %}
 
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitFArray *me;
+} FArray;
+%}
+
+/* A copy of the struct for swig */
+typedef struct {
+  ObitFArray *me;
+} FArray;
 
 %inline %{
+
 extern ObitFArray* FArrayCreate(char* name, long ndim, long *naxis) {
    olong i, lnaxis[10];
    for (i=0; i<ndim; i++) lnaxis[i] = (olong)naxis[i];
    return  ObitFArrayCreate (name,(olong) ndim, (olong*)lnaxis);
 }
+
+ObitFArray* FArrayRef (ObitFArray* in) {
+  return ObitFArrayRef (in);
+} // end FArrayRef
+
+ObitFArray* FArrayUnref (ObitFArray* in) {
+  if (!ObitFArrayIsA(in)) return NULL;
+  if (in && (in->ReferenceCount>0)) in = ObitFArrayUnref (in);
+  return in;
+} // end FArrayUnref
+
+void CreateFArray(PyObject *self, char* name, long ndim, long *longarr) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FArray, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateFArray: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((FArray*)ptr)->me = FArrayCreate(name, ndim, longarr);
+   else  ((FArray*)ptr)->me = NULL;
+   return;
+ }
+void DeleteFArray(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FArray, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteFArray: could not recover c struct");
+	return;
+   }
+   ((FArray*)ptr)->me = FArrayUnref(((FArray*)ptr)->me);
+}// end DeleteFArray
+
+ObitFArray* FArray_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FArray, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"FArray_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((FArray*)ptr)->me;
+}  // end FArray_Get_me
+
+void FArray_Set_me(PyObject *self, ObitFArray *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FArray, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"FArray_Set_me: could not recover c struct");
+	return;
+   }
+   ((FArray*)ptr)->me =  ObitFArrayRef(me);
+}  // end FArray_Set_me
 
 extern float FArrayGetVal(ObitFArray* in, long *pos) {
    float *off, out[4];
@@ -83,11 +150,17 @@ extern void FArraySetVal(ObitFArray* in, long *pos, float val) {
    *off = val;
 }
 
- extern PyObject *FArrayGetBuf (ObitFArray *in) {
-   return PyBuffer_FromReadWriteMemory(in->array,
- 				      in->arraySize * sizeof(ofloat));
- }
- 
+
+extern PyObject *FArrayGetBuf (ObitFArray *in) {
+#if PY_MAJOR_VERSION < 3
+    return PyBuffer_FromReadWriteMemory(in->array,
+                                      in->arraySize * sizeof(ofloat));
+#else
+    return PyMemoryView_FromMemory((char *)in->array,
+                                      in->arraySize * sizeof(ofloat), PyBUF_WRITE);
+#endif
+}
+
 extern ObitFArray* FArrayCopy  (ObitFArray *in, ObitFArray *out, ObitErr *err) {
   return ObitFArrayCopy (in, out, err);
 } // end FArrayCopy 
@@ -113,7 +186,7 @@ extern ObitFArray* FArrayTranspose  (ObitFArray *in, long *order, ObitErr *err) 
   return ObitFArrayTranspose (in, lorder, err);
 } // end FArrayTranspose
 
-extern int FArrayIsCompatable  (ObitFArray *in1, ObitFArray *in2) {
+extern long FArrayIsCompatable  (ObitFArray *in1, ObitFArray *in2) {
   return ObitFArrayIsCompatable(in1, in2);
 }
 
@@ -322,18 +395,18 @@ extern void FArray2DCenter (ObitFArray* in) {
    ObitFArray2DCenter (in);
 }
 
-extern int FArraySymInv2D (ObitFArray* in) {
-   int ierr;
+extern long FArraySymInv2D (ObitFArray* in) {
+   olong ierr;
    ObitFArray2DSymInv (in, &ierr);
-   return ierr;
+   return (long)ierr;
 }
 
-extern void FArrayCGauss2D (ObitFArray* in, long Cen[2], float FWHM) {
+extern void FArrayCGauss2D (ObitFArray* in, long *Cen, float FWHM) {
    olong lCen[2] = {Cen[0],Cen[1]};
    ObitFArray2DCGauss (in, lCen, (ofloat)FWHM);
 }
 
-extern void FArrayEGauss2D (ObitFArray* in, float amp, float Cen[2], float GauMod[3]) {
+extern void FArrayEGauss2D (ObitFArray* in, float amp, float *Cen, float *GauMod) {
    ofloat lCen[2] = {Cen[0],Cen[1]};
    ofloat lGauMod[3] = {GauMod[0], GauMod[1], GauMod[2]};
    ObitFArray2DEGauss (in, (float)amp, lCen, lGauMod);
@@ -405,50 +478,14 @@ extern  PyObject* FArrayGetNaxis (ObitFArray* in) {
   PyObject *outList= PyList_New(in->ndim);
 
   for (i=0; i<in->ndim; i++) {
-    PyList_SetItem(outList, i, PyInt_FromLong((long)in->naxis[i]));
+    PyList_SetItem(outList, i, PyLong_FromLong((long)in->naxis[i]));
   }
   return outList;
 } // end  FArrayGetNaxis
 
-extern int FArrayIsA (ObitFArray* in) {
-  return ObitFArrayIsA(in);
+extern long FArrayIsA (ObitFArray* in) {
+  return (long)ObitFArrayIsA(in);
 } // end  FArrayIsA 
 
-ObitFArray* FArrayRef (ObitFArray* in) {
-  return ObitFArrayRef (in);
-} // end FArrayRef
-
-ObitFArray* FArrayUnref (ObitFArray* in) {
-  if (!ObitFArrayIsA(in)) return NULL;
-  if (in && (in->ReferenceCount>0)) in = ObitFArrayUnref (in);
-  return in;
-} // end FArrayUnref
-
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitFArray *me;
-} FArray;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitFArray *me;
-} FArray;
-
-%addmethods FArray { 
-  FArray(char* name, long ndim, long *naxis) {
-     FArray *out;
-     out = (FArray *) malloc(sizeof(FArray));
-     if (strcmp(name, "None")) out->me = FArrayCreate(name, ndim, naxis);
-     else  out->me = NULL;
-     return out;
-   }
-  ~FArray() {
-    self->me = FArrayUnref(self->me);
-    free(self);
-  }
-};
 

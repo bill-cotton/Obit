@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2005
+#  Copyright (C) 2005,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -27,30 +27,10 @@
 #-----------------------------------------------------------------------
  
 # Python shadow class to ObitTableDesc class
-import Obit, InfoList, OErr
+from __future__ import absolute_import
+import Obit, _Obit, InfoList, OErr
 
-class TableDescPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            Obit.TableDesc_me_set(self.this,value)
-            return
-        if name=="Dict":
-            return PSetDict(self,value)
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if name == "me" : 
-            return Obit.TableDesc_me_get(self.this)
-        # Functions to return members
-        if name=="List":
-            return PGetList(self)
-        if name=="Dict":
-            return PGetDict(self)
-        raise AttributeError,str(name)
-    def __repr__(self):
-        return "<C TableDesc instance>"
-class TableDesc(TableDescPtr):
+class TableDesc(Obit.TableDesc):
     """ Python Obit Image descriptor class
 
     This contains information about the structure of a table
@@ -62,9 +42,28 @@ class TableDesc(TableDescPtr):
                 Member Dict
     """
     def __init__(self, name) :
-        self.this = Obit.new_TableDesc(name)
-    def __del__(self):
-        Obit.delete_TableDesc(self.this)
+        super(TableDesc, self).__init__()
+        Obit.CreateTableDesc(self.this, name)
+    def __del__(self, DeleteTableDesc=_Obit.DeleteTableDesc):
+        DeleteTableDesc(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            Obit.TableDesc_Set_me(self.this,value)
+            return
+        if name=="Dict":
+            return PSetDict(self,value)
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if name == "me" : 
+            return Obit.TableDesc_Get_me(self.this)
+        # Functions to return members
+        if name=="List":
+            return PGetList(self)
+        if name=="Dict":
+            return PGetDict(self)
+        raise AttributeError(str(name))
+    def __repr__(self):
+        return "<C TableDesc instance>"
 
 def PGetDict (inTD):
     """ Returns the contents of an TableDesc as a Python Dictionary
@@ -75,14 +74,14 @@ def PGetDict (inTD):
     ################################################################
     # Checks
     if not PIsA(inTD):
-        raise TypeError,"inTD MUST be a Python Obit TableDesc"
+        raise TypeError("inTD MUST be a Python Obit TableDesc")
     #
     return Obit.TableDescGetDict(inTD.me)
     # end PGetDict
 
 
 def PSetDict (inTD, inDict):
-    """ Copies the contents of a Python Dictionary to an TableDesc
+    """ Copies the contents of a Python Dictionary to a TableDesc
 
     Only write descriptive, not structural values
     It's best if this was created by PGetDict.
@@ -92,7 +91,7 @@ def PSetDict (inTD, inDict):
     ################################################################
     # Checks
     if not PIsA(inTD):
-        raise TypeError,"inTD MUST be a Python Obit TableDesc"
+        raise TypeError("inTD MUST be a Python Obit TableDesc")
     #
     Obit.TableDescSetDict(inTD.me, inDict)
     # end PSetDict
@@ -110,7 +109,7 @@ def PDef (inDict):
     outTD.me = Obit.TableDescDef(inDict)
     # Check
     if len(outTD.Dict) <= 0:
-        raise RuntimeError,"Failed to create valid Table Descriptor"
+        raise RuntimeError("Failed to create valid Table Descriptor")
     return outTD
     # end PDef
 
@@ -123,10 +122,9 @@ def PGetList (inDesc):
     ################################################################
     # Checks
     if not PIsA(inDesc):
-        raise TypeError,"inDesc MUST be a Python Obit TableDesc"
+        raise TypeError("inDesc MUST be a Python Obit TableDesc")
     #
     out    = InfoList.InfoList()
-    out.me = Obit.InfoListUnref(out.me)
     out.me = Obit.TableDescGetList(inDesc.me)
     return out
     # end PGetList 
@@ -134,15 +132,15 @@ def PGetList (inDesc):
 def PIsA (inTD):
     """ Tells if the input really is a Python Obit TableDesc
 
-    returns true or false (1,0)
+    returns True or False
     inTD = Python TableDesc to test
     """
     ################################################################
      # Checks
-    if inTD.__class__ != TableDesc:
-        return 0
+    if not isinstance(inTD, TableDesc):
+        return False
     #
-    return Obit.TableDescIsA(inTD.me)
+    return Obit.TableDescIsA(inTD.me)!=0
     # end  PIsA
 
 def PUnref (inTD):
@@ -153,9 +151,11 @@ def PUnref (inTD):
     inTD   = Python TableDesc object
     """
     ################################################################
+    if inTD==None:
+        return
      # Checks
     if not PIsA(inTD):
-        raise TypeError,"inTD MUST be a Python Obit TableDesc"
+        raise TypeError("inTD MUST be a Python Obit TableDesc")
 
     inTD.me = Obit.TableDescUnref(inTD.me)
     # end PUnref

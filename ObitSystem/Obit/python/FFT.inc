@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitFFT type                           */
 /*                                                                    */
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,22 +32,91 @@
 #include "ObitFFT.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitFFT *me;
+} FFT;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitFFT *me;
+} FFT;
+
 
 %inline %{
 // dir   1 => OBIT_FFT_Forward(R2C), 2 => OBIT_FFT_Reverse(C2R)
 // type  1 => OBIT_FFT_FullComplex,  2 => OBIT_FFT_HalfComplex
-extern ObitFFT* FFTCreate(char* name, int dir, int type, int rank, int *dim) {
+extern ObitFFT* FFTCreate(char* name, long dir, long type, long rank, long *dim) {
+   olong i, ldim[7];
    ObitFFTdir ldir;
    ObitFFTtype ltype;
    if (dir==1) ldir = OBIT_FFT_Forward;
    else ldir = OBIT_FFT_Reverse;
    if (type==1) ltype = OBIT_FFT_FullComplex;
    else ltype = OBIT_FFT_HalfComplex;
-   return newObitFFT  (name, ldir, ltype, rank, dim);
+   for (i=0; i<rank; i++) ldim[i] = (olong)dim[i];
+   return newObitFFT  (name, ldir, ltype, (olong)rank, ldim);
 }
 
-extern int FFTSuggestSize  (int length) {
-  return ObitFFTSuggestSize(length);
+ObitFFT* FFTRef (ObitFFT* in) {
+  return ObitFFTRef (in);
+} // end FFTRef
+
+ObitFFT* FFTUnref (ObitFFT* in) {
+  if (!ObitFFTIsA(in)) return NULL;
+  return ObitFFTUnref (in);
+} // end FFTUnref
+
+void CreateFFT(PyObject *self, char* name, long dir, long type, long rank, long *dim) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FFT, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateFFT: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((FFT*)ptr)->me = FFTCreate(name, dir, type, rank, dim);
+   else  ((FFT*)ptr)->me = NULL;
+   return;
+ } // end CreateFFT
+
+void DeleteFFT(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FFT, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteFFT: could not recover c struct");
+	return;
+   }
+   ((FFT*)ptr)->me = ObitFFTUnref(((FFT*)ptr)->me);
+}// end DeleteFFT
+
+ObitFFT* FFT_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FFT, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"FFT_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((FFT*)ptr)->me;
+}  // end FFT_Get_me
+
+void FFT_Set_me(PyObject *self, ObitFFT *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_FFT, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"FFT_Set_me: could not recover c struct");
+	return;
+   }
+   ((FFT*)ptr)->me =  ObitFFTRef(me);
+}  // end FFT_Set_me
+
+extern long FFTSuggestSize  (long length) {
+  return (long)ObitFFTSuggestSize(length);
 }
 
 extern void FFTR2C(ObitFFT* in, ObitFArray *inArray, ObitCArray *outArray) {
@@ -66,56 +135,24 @@ extern char* FFTGetName (ObitFFT* in) {
   return in->name;
 } // end  FFTGetName
 
-extern int FFTGetRank (ObitFFT* in) {
-  return in->rank;
+extern long FFTGetRank (ObitFFT* in) {
+  return (long)in->rank;
 } // end  FFTGetRank
 
-// returns an array of 7 elements no matter
-extern int* FFTGetDim (ObitFFT* in) {
-  return in->dim;
+// returns a list of longs
+extern PyObject* FFTGetDim (ObitFFT* in) {
+  olong i;
+  PyObject *olist = PyList_New(IM_MAXDIM);
+  for (i=0; i<in->rank; i++)
+     PyList_SetItem(olist, i, PyLong_FromLong((long)in->dim[i]));
+  return olist;
 } // end  FFTGetDim
 
-extern int FFTIsA (ObitFFT* in) {
-  return ObitFFTIsA(in);
+extern long FFTIsA (ObitFFT* in) {
+  return (olong)ObitFFTIsA(in);
 } // end  FFTIsA 
 
-ObitFFT* FFTRef (ObitFFT* in) {
-  return ObitFFTRef (in);
-} // end FFTRef
-
-ObitFFT* FFTUnref (ObitFFT* in) {
-  if (!ObitFFTIsA(in)) return NULL;
-  return ObitFFTUnref (in);
-} // end FFTUnref
-
 
 
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitFFT *me;
-} FFT;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitFFT *me;
-} FFT;
-
-%addmethods FFT { 
-  FFT(char* name, int dir, int type, int rank, int *dim) {
-     FFT *out;
-     /* just create  Python structure here */
-     out = (FFT *) malloc(sizeof(FFT));
-     if (strcmp(name, "None")) out->me = FFTCreate(name, dir, type, rank, dim);
-     else out->me = NULL;
-     return out;
-   }
-  ~FFT() {
-    self->me = FFTUnref(self->me);
-    free(self);
-  }
-};
 

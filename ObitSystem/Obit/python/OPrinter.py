@@ -5,7 +5,7 @@ This formats text files for printing.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2012
+#  Copyright (C) 2012,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -32,31 +32,11 @@ This formats text files for printing.
 #-----------------------------------------------------------------------
 
 # Python shadow class to ObitPrinter class
-import Obit, InfoList
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, InfoList
 
-class OPrinterPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.OPrinterUnref(Obit.OPrinter_me_get(self.this))
-            # In with the new
-            Obit.OPrinter_me_set(self.this,value)
-            return
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != OPrinter:
-            return
-        if name == "me" : 
-            return Obit.OPrinter_me_get(self.this)
-        raise AttributeError,name
-    def __repr__(self):
-        if self.__class__ != OPrinter:
-            return
-        return "<C OPrinter instance> " + Obit.OPrinterGetName(self.me)
-
-class OPrinter(OPrinterPtr):
+class OPrinter(Obit.OPrinter):
     """
     Python Obit interface to printer server
     
@@ -77,20 +57,33 @@ class OPrinter(OPrinterPtr):
         streamname    = name of output stream, "stdout", or "stderr"
         fileName      = file name if output to file desired., "None" => no file
         """
-        self.this = Obit.new_OPrinter(name, isInteractive, streamname, fileName)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_OPrinter(self.this)
+        super(OPrinter, self).__init__()
+        Obit.CreateOPrinter(self.this, name, isInteractive, streamname, fileName)
+    def __del__(self, DeleteOPrinter=_Obit.DeleteOPrinter):
+        if _Obit!=None:
+            DeleteOPrinter(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.OPrinterUnref(Obit.OPrinter_Get_me(self.this))
+            # In with the new
+            Obit.OPrinter_Set_me(self.this,value)
+            return
+        self.__dict__[name] = value
     def __getattr__(self,name):
         if name == "me" : 
-            return Obit.OPrinter_me_get(self.this)
+            return Obit.OPrinter_Get_me(self.this)
         # Functions to return members
         if name=="List":
             out    = InfoList.InfoList()
-            out.me = Obit.InfoListUnref(out.me)
             out.me = Obit.OPrinterGetList(self.me)
             return out
-        raise AttributeError,str(name)
+        raise AttributeError(str(name))
+    def __repr__(self):
+        if not isinstance(self, OPrinter):
+            return "Bogus Dude"+str(self.__class__)
+        return "<C OPrinter instance> " + Obit.OPrinterGetName(self.me)
     def Open (self, err, LinesPerPage=50, Title1="Page title", Title2="    "):
         """
         Open a printer givint titles and page size
@@ -141,8 +134,8 @@ def POpen (printer, Title1, Title2, err, LinesPerPage=50) :
     ################################################################
     # Checks
     if not PIsA(printer):
-        print "Actually ",printer.__class__
-        raise TypeError,"printer MUST be a Python Obit Printer"
+        print("Actually ",printer.__class__)
+        raise TypeError("printer MUST be a Python Obit Printer")
     Obit.OPrinterOpen (printer.me, LinesPerPage, Title1, Title2, err.me)
     # end POpen
 
@@ -160,8 +153,8 @@ def PWrite (printer, line, err) :
     ################################################################
     # Checks
     if not PIsA(printer):
-        print "Actually ",printer.__class__
-        raise TypeError,"printer MUST be a Python Obit Printer"
+        print("Actually ",printer.__class__)
+        raise TypeError("printer MUST be a Python Obit Printer")
     return Obit.OPrinterWrite (printer.me, line, err.me)
     # end PWrite
 
@@ -175,8 +168,8 @@ def PClose (printer, err) :
     ################################################################
     # Checks
     if not PIsA(printer):
-        print "Actually ",printer.__class__
-        raise TypeError,"printer MUST be a Python Obit Printer"
+        print("Actually ",printer.__class__)
+        raise TypeError("printer MUST be a Python Obit Printer")
     Obit.OPrinterClose (printer.me, err.me)
     # end PClose
 
@@ -193,8 +186,8 @@ def PSetTitle (printer, Title1, Title2, err) :
     ################################################################
     # Checks
     if not PIsA(printer):
-        print "Actually ",printer.__class__
-        raise TypeError,"printer MUST be a Python Obit Printer"
+        print("Actually ",printer.__class__)
+        raise TypeError("printer MUST be a Python Obit Printer")
     Obit.OPrinterSetTitle (printer.me, Title1, Title2, err.me)
     # end PSetTitle
 
@@ -210,8 +203,8 @@ def PNewPage (printer, err) :
     ################################################################
     # Checks
     if not PIsA(printer):
-        print "Actually ",printer.__class__
-        raise TypeError,"printer MUST be a Python Obit Printer"
+        print("Actually ",printer.__class__)
+        raise TypeError("printer MUST be a Python Obit Printer")
     return Obit.OPrinterNewPage (printer.me, err.me)
     # end PNewPage
 
@@ -219,15 +212,15 @@ def PIsA (printer):
     """
     Tells if the input is a Python ObitPrinter
     
-    returns true or false (1,0)
+    returns True or False
 
     * printer = Python Obit Printer to test
     """
     ################################################################
       # Checks
-    if printer.__class__ != OPrinter:
-        return 0
-    return Obit.OPrinterIsA(printer.me)
+    if not isinstance(printer, OPrinter):
+        return False
+    return Obit.OPrinterIsA(printer.me)!=0
     # end PIsA
 
 

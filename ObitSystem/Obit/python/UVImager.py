@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2007
+#  Copyright (C) 2004-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -27,39 +27,15 @@
 #-----------------------------------------------------------------------
 
 # Interferometric imaging class
-import Obit, OErr, ImageMosaic, InfoList, UV, types
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, OErr, ImageMosaic, InfoList, UV, types
 import ImageDesc
 
 # Python shadow class to ObitUVImager class
  
-class UVImagerPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.UVImagerUnref(Obit.UVImager_me_get(self.this))
-            # In with the new
-            Obit.UVImager_me_set(self.this,value)
-            return
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != UVImager:
-            return
-        if name == "me" : 
-            return Obit.UVImager_me_get(self.this)
-        # Virtual members
-        if name=="mosaic":
-            return PGetMosaic(self)
-        if name=="uvdata":
-            return PGetUV(self)
-        raise AttributeError,str(name)
-    def __repr__(self):
-        if self.__class__ != UVImager:
-            return
-        return "<C UVImager instance> " + Obit.UVImagerGetName(self.me)
 #
-class UVImager(UVImagerPtr):
+class UVImager(Obit.UVImager):
     """ Python Obit Image class
 
     This class contains gives access to the functions needed to convert
@@ -71,10 +47,35 @@ class UVImager(UVImagerPtr):
     mosaic    - output Image mosaic, use PGetMosaic
     """
     def __init__(self, name, uvdata, err) :
-        self.this = Obit.new_UVImager(name, uvdata, err)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_UVImager(self.this)
+        super(UVImager, self).__init__()
+        Obit.CreateUVImager (self.this, name, uvdata, err)
+    def __del__(self, DeleteUVImager=_Obit.DeleteUVImager):
+        if _Obit!=None:
+            DeleteUVImager(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.UVImagerUnref(Obit.UVImager_Get_me(self.this))
+            # In with the new
+            Obit.UVImager_Set_me(self.this,value)
+            return
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if not isinstance(self, UVImager):
+            return  "Bogus dude"+str(self.__class__)
+        if name == "me" : 
+            return Obit.UVImager_Get_me(self.this)
+        # Virtual members
+        if name=="mosaic":
+            return PGetMosaic(self)
+        if name=="uvdata":
+            return PGetUV(self)
+        raise AttributeError(str(name))
+    def __repr__(self):
+        if not isinstance(self, UVImager):
+            return  "Bogus dude"+str(self.__class__)
+        return "<C UVImager instance> " + Obit.UVImagerGetName(self.me)
     # end class definition
 
 # Commonly used, dangerous variables
@@ -101,9 +102,9 @@ def input(inputDict):
     """
     ################################################################
     structure = inputDict['structure']  # Structure information
-    print 'Inputs for ',structure[0]
+    print('Inputs for ',structure[0])
     for k,v in structure[1]:
-        print '  ',k,' = ',inputDict[k],' : ',v
+        print('  ',k,' = ',inputDict[k],' : ',v)
         
     # end input
 
@@ -288,7 +289,7 @@ def PUVCreateImager (err, name = 'myUVImager', input=UVCreateImagerInput):
     #
     # Checks
     if not UV.PIsA(InData):
-        raise TypeError, 'UVCreateImage: Bad input UV data'
+        raise TypeError('UVCreateImage: Bad input UV data')
     # Set control values on UV 
     dim[0] = 1; dim[1] = 1; dim[2] = 1; dim[3] = 1; dim[4] = 1
     inInfo = UV.PGetList(InData)  # Add control to UV data
@@ -332,7 +333,7 @@ def PUVCreateImager (err, name = 'myUVImager', input=UVCreateImagerInput):
     InfoList.PAlwaysPutFloat  (inInfo, "UVTaper",  dim, input["UVTaper"])
     WtSize   = input["WtSize"]
     if (WtSize>0):
-        print "WtSize", WtSize
+        print("WtSize", WtSize)
         # Change name for C routine.
         dim[0] = 1;
         InfoList.PAlwaysPutInt  (inInfo, "nuGrid",  dim, [WtSize])
@@ -386,11 +387,11 @@ def PCopy (inImager, outImager, err):
     ################################################################
     # Checks
     if not PIsA(inImager):
-        raise TypeError,"inImager MUST be a Python Obit UVImager"
+        raise TypeError("inImager MUST be a Python Obit UVImager")
     if not PIsA(outImager):
-        raise TypeError,"outImager MUST be a Python Obit UVImager"
+        raise TypeError("outImager MUST be a Python Obit UVImager")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     Obit.UVImageCopy (inImager.me, outImager.me, err.me)
     if err.isErr:
@@ -408,7 +409,7 @@ def PGetMosaic (InImager, err):
     ################################################################
     # Checks
     if not PIsA(InImager):
-        raise TypeError,"InImager MUST be a Python Obit UVImager"
+        raise TypeError("InImager MUST be a Python Obit UVImager")
     #
     out    = ImageMosaic.ImageMosaic("None", 1)
     out.me = Obit.UVImagerGetMosaic(InImager.me, err.me)
@@ -426,7 +427,7 @@ def PGetUV (InImager):
     ################################################################
     # Checks
     if not PIsA(InImager):
-        raise TypeError,"InImager MUST be a Python Obit UVImager"
+        raise TypeError("InImager MUST be a Python Obit UVImager")
     #
     out    = UV.UV("None")
     out.me = Obit.UVImagerGetUV(InImager.me)
@@ -483,7 +484,7 @@ def PUVWeight (InImager, err, input=UVWeightInput):
     #
     # Checks
     if not PIsA(InImager):
-        raise TypeError, 'PUVWeight: Bad input UVImager'
+        raise TypeError('PUVWeight: Bad input UVImager')
 
     # Set control values on UV 
     dim[0] = 1; dim[1] = 1; dim[2] = 1; dim[3] = 1; dim[4] = 1
@@ -495,7 +496,7 @@ def PUVWeight (InImager, err, input=UVWeightInput):
     dim[1] = len(input["UVTaper"])
     InfoList.PAlwaysPutFloat  (inInfo, "Taper",  dim, input["UVTaper"])
     if (WtSize>0):
-        print "WtSize", WtSize
+        print("WtSize", WtSize)
         # Change name for C routine.
         dim[0] = 1;
         InfoList.PAlwaysPutInt  (inInfo, "nuGrid",  dim, [WtSize])
@@ -526,8 +527,8 @@ def PUVImage (InImager, err, field=0, doWeight=False, doBeam=True, doFlatten=Fal
     #
     # Checks
     if not PIsA(InImager):
-        print "input class actually ",InImager.__class__ 
-        raise TypeError, 'PUVImage: Bad input UVImager'
+        print("input class actually ",InImager.__class__) 
+        raise TypeError('PUVImage: Bad input UVImager')
 
     #
     Obit.UVImagerImage (InImager.me, field, doWeight, doBeam, doFlatten, err.me)
@@ -550,7 +551,7 @@ def PUVFlatten (InImager, err):
     #
     # Checks
     if not PIsA(InImager):
-        raise TypeError, 'PUVFlatten : Bad input UVImager'
+        raise TypeError('PUVFlatten : Bad input UVImager')
 
     #
     Obit.UVImagerFlatten (InImager.me, err.me)
@@ -564,12 +565,12 @@ def PUVFlatten (InImager, err):
 def PIsA (InImager):
     """ Tells if input really a Python Obit UVImager
 
-    return true, false (1,0)
+    return True, False
     InImager = Python UVImager object
     """
     ################################################################
     # Checks
-    if InImager.__class__ != UVImager:
-        return 0
-    return Obit.UVImagerIsA(InImager.me)
+    if not isinstance(InImager, UVImager):
+        return False
+    return Obit.UVImagerIsA(InImager.me)!=0
     # end PIsA

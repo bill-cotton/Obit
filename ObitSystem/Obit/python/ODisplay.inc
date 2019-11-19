@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitDisplay type                       */
 /*                                                                    */
-/*;  Copyright (C) 2005-2016                                          */
+/*;  Copyright (C) 2005-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -35,56 +35,6 @@
 #include "ObitDConCleanWindow.h"
 %}
 
-
-%inline %{
-extern ObitDisplay* ODisplayCreate(char* name, char* serverURL, ObitErr *err) {
-   return  ObitDisplayCreate ((gchar*)name, (gchar*)serverURL, err );
-}
-
-extern int ODisplayImage  (ObitDisplay *display, ObitImage *image, ObitErr *err) {
-  return (int) ObitDisplayShow (display, (Obit*)image, NULL, 1, err);
-} // end ODisplayImage
-
-extern int ODisplayMosaic  (ObitDisplay *display, ObitImageMosaic *mosaic, int field, 
-                           ObitErr *err) {
-  return (int) ObitDisplayShow (display, (Obit*)mosaic, NULL, (olong)field, err);
-} // end ODisplayMosaic
-
-extern int ODisplayImageEdit  (ObitDisplay *display, ObitImage *image, 
-                              ObitDConCleanWindow *window, ObitErr *err) {
-  return (int) ObitDisplayShow (display, (Obit*)image, window, 1, err);
-} // end ODisplayImageEdit
-
-extern int ODisplayMosaicEdit  (ObitDisplay *display, ObitImageMosaic *mosaic, int field, 
-                               ObitDConCleanWindow *window, ObitErr *err) {
-  return (int) ObitDisplayShow (display, (Obit*)mosaic, window, (olong)field, err);
-} // end ODisplayMosaicEdit
-
-extern int ODisplayMarkPos  (ObitDisplay *display, char *pos, ObitErr *err) {
-  return (int) ObitDisplayMarkPos (display, (gchar*)pos, err);
-} // end ODisplayMarkPos
-
-extern int ODisplayIsA (ObitDisplay* in) {
-  return ObitDisplayIsA(in);
-} // end  ODisplayIsA 
-
-ObitDisplay* ODisplayRef (ObitDisplay* in) {
-  return ObitDisplayRef (in);
-} // end ODisplayRef
-
-ObitDisplay* ODisplayUnref (ObitDisplay* in) {
-  if (!ObitDisplayIsA(in)) return NULL;
-  return ObitDisplayUnref (in);
-} // end ODisplayUnref
-
-extern char* ODisplayGetName (ObitDisplay* in) {
-  return in->name;
-} // end  ODisplayGetName
-
-
-
-%}
-
 /* Definitions for Python Shadow class */
 /* A copy of the struct for c */
 %{
@@ -97,21 +47,102 @@ typedef struct {
   ObitDisplay *me;
 } ODisplay;
 
-%addmethods ODisplay { 
-  ODisplay(char* name, char* serverURL, ObitErr *err) {
-     ODisplay *out;
-     char *server;
-     out = (ODisplay *) malloc(sizeof(ODisplay));
-     if ((serverURL==NULL) || (!strncmp(serverURL, "ObitView", 8))) 
-        server = "http://localhost:8765/RPC2";
-     else server = serverURL;
-     if (strcmp(name, "None")) out->me = ODisplayCreate(name, server, err);
-     else out->me = NULL;
-     return out;
+
+%inline %{
+extern ObitDisplay* ODisplayCreate(char* name, char* serverURL, ObitErr *err) {
+   return  ObitDisplayCreate ((gchar*)name, (gchar*)serverURL, err );
+}
+
+ObitDisplay* ODisplayRef (ObitDisplay* in) {
+  return ObitDisplayRef (in);
+} // end ODisplayRef
+
+ObitDisplay* ODisplayUnref (ObitDisplay* in) {
+  if (!ObitDisplayIsA(in)) return NULL;
+  return ObitDisplayUnref (in);
+} // end ODisplayUnref
+
+void CreateODisplay(PyObject *self, char* name, char* serverURL, ObitErr *err) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ODisplay, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Create: could not recover c struct");
+	return;
    }
-  ~ODisplay() {
-    self->me = ODisplayUnref(self->me);
-    free(self);
-  }
-};
+   char *server;
+   if ((serverURL==NULL) || (!strncmp(serverURL, "ObitView", 8))) 
+      server = "http://localhost:8765/RPC2";
+   else server = serverURL;
+   if (strcmp(name, "None")) ((ODisplay*)ptr)->me = ODisplayCreate(name, server, err);
+   else ((ODisplay*)ptr)->me = NULL;
+   return;
+ } // end CreateODisplay
+
+void DeleteODisplay(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ODisplay, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Delete: could not recover c struct");
+	return;
+   }
+   ((ODisplay*)ptr)->me = ODisplayUnref(((ODisplay*)ptr)->me);
+} // end DeleteODisplay
+
+ObitDisplay* ODisplay_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ODisplay, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((ODisplay*)ptr)->me;
+} // end ODisplay_Get_me
+
+void ODisplay_Set_me(PyObject *self, ObitDisplay *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_ODisplay, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"ODisplay_Set_me: could not recover c struct");
+	return;
+   }
+   ((ODisplay*)ptr)->me =  ODisplayRef(me);
+}  // end ODisplay_Set_me
+
+extern long ODisplayImage  (ObitDisplay *display, ObitImage *image, ObitErr *err) {
+  return (long) ObitDisplayShow (display, (Obit*)image, NULL, 1, err);
+} // end ODisplayImage
+
+extern long ODisplayMosaic  (ObitDisplay *display, ObitImageMosaic *mosaic, long field, 
+                           ObitErr *err) {
+  return (long) ObitDisplayShow (display, (Obit*)mosaic, NULL, (olong)field, err);
+} // end ODisplayMosaic
+
+extern long ODisplayImageEdit  (ObitDisplay *display, ObitImage *image, 
+                              ObitDConCleanWindow *window, ObitErr *err) {
+  return (long) ObitDisplayShow (display, (Obit*)image, window, 1, err);
+} // end ODisplayImageEdit
+
+extern long ODisplayMosaicEdit  (ObitDisplay *display, ObitImageMosaic *mosaic, long field, 
+                               ObitDConCleanWindow *window, ObitErr *err) {
+  return (long) ObitDisplayShow (display, (Obit*)mosaic, window, (olong)field, err);
+} // end ODisplayMosaicEdit
+
+extern long ODisplayMarkPos  (ObitDisplay *display, char *pos, ObitErr *err) {
+  return (long) ObitDisplayMarkPos (display, (gchar*)pos, err);
+} // end ODisplayMarkPos
+
+extern long ODisplayIsA (ObitDisplay* in) {
+  return (long)ObitDisplayIsA(in);
+} // end  ODisplayIsA 
+
+extern char* ODisplayGetName (ObitDisplay* in) {
+  return in->name;
+} // end  ODisplayGetName
+
+%}
+
 

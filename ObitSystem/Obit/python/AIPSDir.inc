@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for AIPS directory utilities               */
 /*                                                                    */
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -34,13 +34,13 @@
 %}
 
 // This cleans up the char * string we malloc'd in AIPSDirInfo
-%typemap(python,ret) char *AIPSDirInfo {
-  if ($source) g_free($source);
+%typemap(ret) char *AIPSDirInfo {
+  if ($1) g_free($1);
 }
 
 %inline %{
-extern int AIPSDirFindCNO(int disk, int user,  char *Aname, char *Aclass, 
-    		          char *Atype, int seq, ObitErr *err)
+extern long AIPSDirFindCNO(long disk, long user,  char *Aname, char *Aclass, 
+    		          char *Atype, long seq, ObitErr *err)
 {
   gchar LAname[13], LAclass[7], LAtype[3];
   olong i, l;
@@ -58,10 +58,10 @@ extern int AIPSDirFindCNO(int disk, int user,  char *Aname, char *Aclass,
   l = MIN (2, strlen(Atype));
   for (i=0; i<l; i++)  LAtype[i] = Atype[i];
 
-  return ObitAIPSDirFindCNO(disk, user, LAname, LAclass, LAtype, seq, err);
+  return (long)ObitAIPSDirFindCNO(disk, user, LAname, LAclass, LAtype, seq, err);
 } /* end AIPSDirFindCNO */
 
-extern int AIPSDirHiSeq(int disk, int user,  char *Aname, char *Aclass, 
+extern long AIPSDirHiSeq(long disk, long user,  char *Aname, char *Aclass, 
     		        char *Atype, ObitErr *err)
 {
   gchar LAname[13], LAclass[7], LAtype[3];
@@ -80,12 +80,12 @@ extern int AIPSDirHiSeq(int disk, int user,  char *Aname, char *Aclass,
   l = MIN (2, strlen(Atype));
   for (i=0; i<l; i++)  LAtype[i] = Atype[i];
 
-  return ObitAIPSDirHiSeq(disk, user, LAname, LAclass, LAtype, TRUE, err);
+  return (long)ObitAIPSDirHiSeq(disk, user, LAname, LAclass, LAtype, TRUE, err);
 } /* end AIPSDirHiSeq */
 
 
-extern int AIPSDirAlloc(int disk, int user,  char *Aname, char *Aclass, 
-		        char *Atype, int seq, ObitErr *err)
+extern long AIPSDirAlloc(long disk, long user,  char *Aname, char *Aclass, 
+		         char *Atype, long seq, ObitErr *err)
 {
   gchar LAname[13], LAclass[7], LAtype[3];
   gboolean exist;
@@ -104,21 +104,21 @@ extern int AIPSDirAlloc(int disk, int user,  char *Aname, char *Aclass,
   l = MIN (2, strlen(Atype));
   for (i=0; i<l; i++)  LAtype[i] = Atype[i];
 
-  return ObitAIPSDirAlloc(disk, user, LAname, LAclass, LAtype, seq, &exist, err);
+  return (long)ObitAIPSDirAlloc((olong)disk, (olong)user, LAname, LAclass, LAtype, (olong)seq, &exist, err);
 } /* end AIPSDirAlloc */
 
-extern void AIPSDirRemoveEntry(int disk, int user, int cno, ObitErr *err)
+extern void AIPSDirRemoveEntry(long disk, long user, long cno, ObitErr *err)
 {
-  ObitAIPSDirRemoveEntry(disk, user, cno, err);
+  ObitAIPSDirRemoveEntry((olong)disk, (olong)user, (olong)cno, err);
 } /* end  AIPSDirRemoveEntry */
 
-extern int AIPSDirNumber(int disk, int user, ObitErr *err)
+extern long AIPSDirNumber(long disk, long user, ObitErr *err)
 {
-  return (int)ObitAIPSDirNumber((olong)disk, (olong)user, err);
+  return (long)ObitAIPSDirNumber((olong)disk, (olong)user, err);
 } /* end AIPSDirNumber */
 
 /* Returns NULL if no entry */
-extern char* AIPSDirInfo(int disk, int user, int cno, ObitErr *err)
+extern char* AIPSDirInfo(long disk, long user, long cno, ObitErr *err)
 {
   ObitAIPSDirCatEntry *entry;
   gchar *out=NULL, stat[5];
@@ -128,7 +128,7 @@ extern char* AIPSDirInfo(int disk, int user, int cno, ObitErr *err)
   if ((err->error) || (entry==NULL)) return out;
   if (entry->user!=user) {
       g_free (entry);
-      return out;
+      return (char*)out;
   }
 
   if (entry->status==0) strncpy (stat, "    ", 4);
@@ -144,14 +144,24 @@ extern char* AIPSDirInfo(int disk, int user, int cno, ObitErr *err)
   return (char*)out;
 } /* end AIPSDirInfo */
 
-extern int AIPSDirStatus(int disk, int user, int cno, int code, ObitErr *err)
+extern long AIPSDirStatus(long disk, long user, long cno, long code, ObitErr *err)
 {
-  return ObitAIPSDirStatus (disk, user, cno, code, err);
+  return (long)ObitAIPSDirStatus ((olong)disk, (olong)user, (olong)cno, (olong)code, err);
 } /* end AIPSDirStatus */
 
-extern int AIPSSetDirname(int disk, char *dir, ObitErr *err)
+extern long AIPSGetNumDisk(ObitErr *err)
 {
-   return ObitAIPSSetDirname(disk, dir, err);
+   return (long)ObitAIPSGetNumDisk(err);
+} /* end AIPSGetNumDisk */
+
+extern long AIPSSetDirname(long disk, char *dir, ObitErr *err)
+{
+   return (long)ObitAIPSSetDirname((olong)disk, dir, err);
+} /* end AIPSSetDirname */
+
+extern char* AIPSGetDirname(long disk, ObitErr *err)
+{
+   return (char*)ObitAIPSDirname((olong)disk, err);
 } /* end AIPSSetDirname */
 
 

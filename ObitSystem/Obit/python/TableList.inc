@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageDesc type                         */
 /*                                                                    */
-/*;  Copyright (C) 2005,2008                                          */
+/*;  Copyright (C) 2005,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,16 +32,85 @@
 #include "ObitTableList.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitTableList *me;
+} TableList;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitTableList *me;
+} TableList;
+
 %inline %{
 extern ObitTableList* TableListCreate (char *name) {
   return newObitTableList (name);
 } // end TableListCreate
+
+ObitTableList* TableListRef (ObitTableList* in) {
+  return ObitTableListRef (in);
+} // end TableListRef
+
+ObitTableList* TableListUnref (ObitTableList* in) {
+  if (!ObitTableListIsA(in)) return NULL;
+  return ObitTableListUnref (in);
+} // end TableListUnref
+
+void CreateTableList(PyObject *self, char* name) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_TableList, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateTableList: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((TableList*)ptr)->me = TableListCreate (name);
+   else  ((TableList*)ptr)->me = NULL;
+   return;
+ } // end CreateTableList
+
+void DeleteTableList(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_TableList, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteTableList: could not recover c struct");
+	return;
+   }
+   ((TableList*)ptr)->me = ObitTableListUnref(((TableList*)ptr)->me);
+}// end DeleteTableList
+
+ObitTableList* TableList_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_TableList, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"TableList_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((TableList*)ptr)->me;
+}  // end TableList_Get_me
+
+void TableList_Set_me(PyObject *self, ObitTableList *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_TableList, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"TableList_Set_me: could not recover c struct");
+	return;
+   }
+   ((TableList*)ptr)->me =  TableListRef(me);
+}  // end TableList_Set_me
+
 
 extern ObitTableList* TableListCopy (ObitTableList* in, 
 		              ObitTableList* out, ObitErr *err) {
   return ObitTableListCopy (in, out, err);
 } // end TableListCopy
 
+// Contert ObitTableList to a python list
 extern PyObject *TableListGetList(ObitTableList* in, ObitErr *err) {
   PyObject *outList=NULL;
   PyObject *list=NULL;
@@ -51,12 +120,11 @@ extern PyObject *TableListGetList(ObitTableList* in, ObitErr *err) {
 
   if  (err->error) return outList;
 
-  //ObitTableListPrint(in, err);
   outList = PyList_New(in->number);
   for (i=0; i<in->number; i++) {
     ObitTableListGetNumber(in, i+1, &tabName, &tabVer, &table, err);
     list = PyList_New(2);
-    PyList_SetItem(list, 0, PyInt_FromLong((long)tabVer));
+    PyList_SetItem(list, 0, PyLong_FromLong((long)tabVer));
     PyList_SetItem(list, 1, PyString_InternFromString(tabName));
     PyList_SetItem(outList, i, list);
     if (tabName) g_free(tabName);
@@ -75,43 +143,19 @@ void TableListPutHi (ObitTableList* in, ObitErr *err) {
   ObitTableListPut (in, tabType, &lversion, NULL, err);
 } // end TableListPutHi
 
-ObitTableList* TableListRef (ObitTableList* in) {
-  return ObitTableListRef (in);
-} // end TableListRef
+// Print to stderr
+void TableListPrint (ObitTableList* in, ObitErr *err) {
+  ObitTableListPrint(in, err);
+} // end TableListPrint
 
-ObitTableList* TableListUnref (ObitTableList* in) {
-  if (!ObitTableListIsA(in)) return NULL;
-  return ObitTableListUnref (in);
-} // end TableListUnref
+// Check validity
+void TableListCheck (ObitTableList* in, ObitErr *err) {
+  ObitTableListCheck(in, err);
+} // end TableListCheck
 
 extern int TableListIsA (ObitTableList* in) {
   return ObitTableListIsA(in);
 }
 %}
 
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitTableList *me;
-} TableList;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitTableList *me;
-} TableList;
-
-%addmethods TableList { 
-  TableList(char *name) {
-     TableList *out;
-     out = (TableList *) malloc(sizeof(TableList));
-     if (strcmp(name, "None")) out->me = TableListCreate (name);
-     else out->me = NULL;
-     return out;
-   }
-  ~TableList() {
-    self->me = TableListUnref(self->me);
-    free(self);
-  }
-};
 

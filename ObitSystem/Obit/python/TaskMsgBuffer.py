@@ -31,7 +31,9 @@
 #-----------------------------------------------------------------------
 
 # Task message buffer class
-import thread, threading, time
+from __future__ import absolute_import
+from __future__ import print_function
+import six.moves._thread, threading, time
 
 
 class TaskMsgBuffer(threading.Thread):
@@ -68,11 +70,11 @@ class TaskMsgBuffer(threading.Thread):
         myTask            = self.myTask
         TaskBuf.done      = False
         TaskBuf.Started   = True
-        print "DEBUG TaskMsgBuffer.run"
+        print("DEBUG TaskMsgBuffer.run")
         (TaskBuf.proxy, TaskBuf.tid) = myTask.spawn()
         # Logging to file?
         if len(myTask.logFile)>0:
-            TaskLog = file(myTask.logFile,'a')
+            TaskLog = open(myTask.logFile,'a')
         else:
             TaskLog = None
         TaskBuf.Failed = False
@@ -93,12 +95,12 @@ class TaskMsgBuffer(threading.Thread):
                                 x=TaskLog.write('%s\n' % message[1])
                         TaskLog.flush()
                 continue
-        except KeyboardInterrupt, exception:
+        except KeyboardInterrupt as exception:
             myTask.abort(TaskBuf.proxy, TaskBuf.tid)
             raise exception
-        except Exception, exception:   # Aborts throw exceptions that get caught here
+        except Exception as exception:   # Aborts throw exceptions that get caught here
             TaskBuf.Failed = True
-            print exception
+            print(exception)
 
             if not TaskBuf.Failed:
                 TaskBuf.wait()
@@ -124,7 +126,7 @@ class TaskMsgBuffer(threading.Thread):
         try:
             self.myTask.wait(self.proxy, self.tid)
         except:
-            print exception
+            print(exception)
             pass
         # end wait
 

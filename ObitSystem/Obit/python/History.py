@@ -42,32 +42,11 @@ List    used to pass instructions to processing (file info)
 #-----------------------------------------------------------------------
 
 # Python shadow class to ObitHistory class
-import Obit, InfoList, OErr
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, InfoList, OErr
 
-class HistoryPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.HistoryUnref(Obit.History_me_get(self.this))
-            # In with the new
-            Obit.History_me_set(self.this,value)
-            return
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != History:
-            return
-        if name == "me" : 
-            return Obit.History_me_get(self.this)
-        if name=="List":
-            return PGetList(self)
-        raise AttributeError,str(name)
-    def __repr__(self):
-        if self.__class__ != History:
-            return
-        return "<C History instance> " + Obit.HistoryGetName(self.me)
-class History(HistoryPtr):
+class History(Obit.History):
     """
     Python Obit History class
     
@@ -84,10 +63,32 @@ class History(HistoryPtr):
     ======  ===================================================
     """
     def __init__(self,name,info,err) :
-        self.this = Obit.new_History(name, info.me, err.me)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_History(self.this)
+        super(History, self).__init__()
+        Obit.CreateHistory (self.this, name, info.me, err.me)
+    def __del__(self, DeleteHistory=_Obit.DeleteHistory):
+        if _Obit!=None:
+            DeleteHistory(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.HistoryUnref(Obit.History_Get_me(self.this))
+            # In with the new
+            Obit.History_Set_me(self.this,value)
+            return
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if self.__class__ != History:
+            return
+        if name == "me" : 
+            return Obit.History_Get_me(self.this)
+        if name=="List":
+            return PGetList(self)
+        raise AttributeError(str(name))
+    def __repr__(self):
+        if not isinstance(self, History):
+            return "Bogus dude"+str(self.__class__)
+        return "<C History instance> " + Obit.HistoryGetName(self.me)
     
     def Zap (self, err):
         """ Destroy the persistent form of a History
@@ -193,9 +194,9 @@ def PZap (inHis, err):
     ################################################################
     # Checks
     if not PIsA(inHis):
-        raise TypeError,"inHis MUST be a History"
+        raise TypeError("inHis MUST be a History")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     Obit.HistoryZap (inHis.me, err.me)
     if err.isErr:
@@ -213,11 +214,11 @@ def PCopy (inHis, outHis, err):
     ################################################################
     # Checks
     if not PIsA(inHis):
-        raise TypeError,"inHis MUST be a History"
+        raise TypeError("inHis MUST be a History")
     if not PIsA(outHis):
-        raise TypeError,"outHis MUST be a History"
+        raise TypeError("outHis MUST be a History")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     Obit.HistoryCopy(inHis.me, outHis.me, err.me)
     if err.isErr:
@@ -235,11 +236,11 @@ def PCopyHeader (inHis, outHis, err):
     ################################################################
     # Checks
     if not PIsA(inHis):
-        raise TypeError,"inHis MUST be a History"
+        raise TypeError("inHis MUST be a History")
     if not PIsA(outHis):
-        raise TypeError,"outHis MUST be a History"
+        raise TypeError("outHis MUST be a History")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     Obit.HistoryCopyHeader(inHis.me, outHis.me, err.me)
     if err.isErr:
@@ -257,13 +258,13 @@ def PCopy2Header (inHis, outHis, err):
     ################################################################
     # Checks
     if not PIsA(inHis):
-        print "inHis really",inHis.__class__ 
-        raise TypeError,"inHis MUST be a History"
+        print("inHis really",inHis.__class__) 
+        raise TypeError("inHis MUST be a History")
     if not PIsA(outHis):
-        print "outHis really",outHis.__class__ 
-        raise TypeError,"outHis MUST be a History"
+        print("outHis really",outHis.__class__) 
+        raise TypeError("outHis MUST be a History")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     Obit.HistoryCopy2Header(inHis.me, outHis.me, err.me)
     if err.isErr:
@@ -282,11 +283,11 @@ def PHeader2Header (inHis, outHis, err):
     ################################################################
     # Checks
     if not PIsA(inHis):
-        raise TypeError,"inHis MUST be a History"
+        raise TypeError("inHis MUST be a History")
     if not PIsA(outHis):
-        raise TypeError,"outHis MUST be a History"
+        raise TypeError("outHis MUST be a History")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     Obit.HistoryHeader2Header(inHis.me, outHis.me, err.me)
     if err.isErr:
@@ -307,9 +308,9 @@ def POpen (inHis, access, err):
     ################################################################
     # Checks
     if not PIsA(inHis):
-        raise TypeError,"inHis MUST be a History"
+        raise TypeError("inHis MUST be a History")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     ret = Obit.HistoryOpen(inHis.me, access, err.me)
     if err.isErr:
@@ -329,9 +330,9 @@ def PClose (inHis, err):
     ################################################################
     # Checks
     if not PIsA(inHis):
-        raise TypeError,"inHis MUST be a History"
+        raise TypeError("inHis MUST be a History")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     ret = Obit.HistoryClose(inHis.me, err.me)
     if err.isErr:
@@ -352,9 +353,9 @@ def PReadRec (inHis, recno, err):
     ################################################################
     # Checks
     if not PIsA(inHis):
-        raise TypeError,"inHis MUST be a History"
+        raise TypeError("inHis MUST be a History")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     ret = Obit.HistoryReadRec(inHis.me, recno, err.me)
     if err.isErr:
@@ -376,9 +377,9 @@ def PWriteRec (inHis, recno, hiCard, err):
     ################################################################
     # Checks
     if not PIsA(inHis):
-        raise TypeError,"inHis MUST be a History"
+        raise TypeError("inHis MUST be a History")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     ret = Obit.HistoryWriteRec(inHis.me, recno, hiCard, err.me)
     if err.isErr:
@@ -401,9 +402,9 @@ def PEdit (inHis, startr, endr, err):
     ################################################################
     # Checks
     if not PIsA(inHis):
-        raise TypeError,"inHis MUST be a History"
+        raise TypeError("inHis MUST be a History")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     ret = POpen (inHis, READWRITE, err)
     ret = Obit.HistoryEdit(inHis.me, startr, endr, err.me)
@@ -427,9 +428,9 @@ def PTimeStamp (inHis, label, err):
     ################################################################
     # Checks
     if not PIsA(inHis):
-        raise TypeError,"inHis MUST be a History"
+        raise TypeError("inHis MUST be a History")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     ret = Obit.HistoryTimeStamp(inHis.me, label, err.me)
     if err.isErr:
@@ -447,7 +448,7 @@ def PGetList (inHis):
     ################################################################
     # Checks
     if not PIsA(inHis):
-        raise TypeError,"inHis MUST be a History"
+        raise TypeError("inHis MUST be a History")
     #
     out    = InfoList.InfoList()
     out.me = Obit.HistoryGetList(inHis.me)
@@ -458,16 +459,16 @@ def PIsA (inHis):
     """
     Tells if object thinks it's a Python Obit History
     
-    return true, false (1,0)
+    return True, False
 
     * inHis    = input Python History
     """
     ################################################################
     # Checks
-    if inHis.__class__ != History:
-        return 0
+    if not isinstance(inHis, History):
+        return False
     #
-    return Obit.HistoryIsA(inHis.me)
+    return Obit.HistoryIsA(inHis.me)!=0
     # end PIsA
 
 def PGetName (inHis):
@@ -481,7 +482,7 @@ def PGetName (inHis):
     ################################################################
     # Checks
     if not PIsA(inHis):
-        raise TypeError,"inHis MUST be a History"
+        raise TypeError("inHis MUST be a History")
     #
     return Obit.HistoryGetName(inHis.me)
     # end PGetName

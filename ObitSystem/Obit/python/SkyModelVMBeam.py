@@ -11,7 +11,7 @@ Mosaic    - ImageMosaic
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2009
+#  Copyright (C) 2009,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -38,7 +38,8 @@ Mosaic    - ImageMosaic
 #-----------------------------------------------------------------------
 
 # Obit SkyModelVMBeam
-import Obit, OErr, ImageMosaic, InfoList, UV, SkyModel
+from __future__ import absolute_import
+import Obit, _Obit, OErr, ImageMosaic, InfoList, UV, SkyModel
 
 # Python shadow class to ObitSkyModelVMBeam class
  
@@ -46,7 +47,7 @@ import Obit, OErr, ImageMosaic, InfoList, UV, SkyModel
 myClass = "ObitSkyModelVMBeam"
  
 #
-class SkyModelVMBeam(SkyModel.SkyModel):
+class SkyModelVMBeam(Obit.SkyModelVMBeam, SkyModel.SkyModel):
     """ Python Obit SkyModelVMBeam class
     
     This class contains an ionospheric sky model and can Fourier
@@ -58,46 +59,48 @@ class SkyModelVMBeam(SkyModel.SkyModel):
     Mosaic    - ImageMosaic
     """
     def __init__(self, name) :
-        self.this = Obit.new_SkyModelVMBeam(name)
+        super(SkyModelVMBeam, self).__init__()
+        Obit.CreateSkyModelVMBeam(self.this, name)
         self.myClass = myClass
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_SkyModelVMBeam(self.this)
+    def __del__(self, DeleteSkyModelVMBeam=_Obit.DeleteSkyModelVMBeam):
+        if _Obit!=None:
+            DeleteSkyModelVMBeam(self.this)
     def __setattr__(self,name,value):
         if name == "me" :
             # Out with the old
-            Obit.SkyModelVMBeamUnref(Obit.SkyModelVMBeam_me_get(self.this))
+            if self.this!=None:
+                Obit.SkyModelVMBeamUnref(Obit.SkyModelVMBeam_Get_me(self.this))
             # In with the new
-            Obit.SkyModelVMBeam_me_set(self.this,value)
+            Obit.SkyModelVMBeam_Set_me(self.this,value)
             return
         if name=="Mosaic":
             Obit.SkyModelVMSetImageMosaic(self.me, value.me)
             return
         self.__dict__[name] = value
     def __getattr__(self, name):
-        if self.__class__ != SkyModelVMBeam:
-            return
+        if not isinstance(self, SkyModelVMBeam):
+            return "Bogus dude "+str(self.__class__)
         if name == "me" : 
-            return Obit.SkyModelVMBeam_me_get(self.this)
+            return Obit.SkyModelVMBeam_Get_me(self.this)
         if name=="Mosaic":
             return SkyModel.PGetMosaic(self)
         if name=="List":
             return SkyModel.PGetList(self)
-        raise AttributeError,str(name)
+        raise AttributeError(str(name))
     def __repr__(self):
-        if self.__class__ != SkyModelVMBeam:
-            return
+        if not isinstance(self, SkyModelVMBeam):
+            return "Bogus dude "+str(self.__class__)
         return "<C SkyModelVMBeam instance> " + Obit.SkyModelVMBeamGetName(self.me)
     def cast(self, toClass):
-        """ Casts object pointer to specified class
+        """ Casts object pointer to base class (SkyModel)
         
         self     = object whose cast pointer is desired
-        toClass  = Class string to cast to
+        toClass  = Class string to cast to (Always SkyModel)
         """
         ################################################################
         # Get pointer with type of this class
-        out =  self.me
-        out = out.replace(self.myClass, toClass)
+        out =  SkyModel.SkyModel("cast")
+        out.me = Obit.SkyModelVMBeamCast(self.me)
         return out
     # end cast
     
@@ -124,7 +127,7 @@ def PCreate (name, mosaic, uvData, IBeam, VBeam, QBeam, UBeam, \
     ################################################################
     # Checks
     if not ImageMosaic.PIsA(mosaic):
-        raise TypeError,"uvData MUST be a Python Obit UV"
+        raise TypeError("uvData MUST be a Python Obit UV")
     #
     out = SkyModelVMBeam("None");
     out.me = Obit.SkyModelVMBeamCreate(name, mosaic.me, uvData.me, \
@@ -195,11 +198,11 @@ def PSubUV (err, input=UVSubInput):
     outData           = input["OutData"]
     # Checks
     if not PIsA(inSkyModelVMBeam):
-        raise TypeError,"inSkyModelVMBeam MUST be a Python Obit SkyModelVMBeam"
+        raise TypeError("inSkyModelVMBeam MUST be a Python Obit SkyModelVMBeam")
     if not UV.PIsA(inData):
-        raise TypeError,"inData MUST be a Python Obit UV"
+        raise TypeError("inData MUST be a Python Obit UV")
     if not UV.PIsA(outData):
-        raise TypeError,"outData MUST be a Python Obit UV"
+        raise TypeError("outData MUST be a Python Obit UV")
     #
     dim = [1,1,1,1,1]
     #
@@ -277,11 +280,11 @@ def PDivUV (err, input=UVSubInput):
     outData          = input["OutData"]
     # Checks
     if not PIsA(inSkyModelVMBeam):
-        raise TypeError,"inSkyModelVMBeam MUST be a Python Obit SkyModelVMBeam"
+        raise TypeError("inSkyModelVMBeam MUST be a Python Obit SkyModelVMBeam")
     if not UV.PIsA(inData):
-        raise TypeError,"inData MUST be a Python Obit UV"
+        raise TypeError("inData MUST be a Python Obit UV")
     if not UV.PIsA(outData):
-        raise TypeError,"outData MUST be a Python Obit UV"
+        raise TypeError("outData MUST be a Python Obit UV")
     #
     #
     dim = [1,1,1,1,1]
@@ -301,13 +304,12 @@ def PDivUV (err, input=UVSubInput):
 def PIsA (inSkyModel):
     """ Tells if input really a Python Obit SkyModelVMBeam
 
-    return true, false (1,0)
+    return true, false
     inSkyModel   = Python SkyModelVMBeam object
     """
     ################################################################
-    # Checks - allow inheritence
+    # Checks 
     if not str(inSkyModel.__class__).startswith("SkyModelVMBeam"):
-        return 0
-    sm = inSkyModel.cast(myClass)  # cast pointer
-    return Obit.SkyModelVMBeamIsA(sm)
+        return False
+    return Obit.SkyModelVMBeamIsA(nSkyModel.me)!=0
     # end PIsA

@@ -8,7 +8,7 @@ Member List  (readonly)
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C)2006,2008
+#  Copyright (C)2006,2008,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -35,36 +35,14 @@ Member List  (readonly)
 #-----------------------------------------------------------------------
 
 # Interferometric selfcal class
-import Obit, OErr, InfoList, UV, types
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, OErr, InfoList, UV, types
 
 # Python shadow class to ObitUVGSolve class
  
-class UVGSolvePtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        if name == "me" :
-            # Out with the old
-            Obit.UVGSolveUnref(Obit.UVGSolve_me_get(self.this))
-            # In with the new
-            Obit.UVGSolve_me_set(self.this,value)
-            return
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if self.__class__ != UVGSolve:
-            return
-        if name == "me" : 
-            return Obit.UVGSolve_me_get(self.this)
-        # Virtual members
-        if name=="List":
-            return PGetList(self)
-        raise AttributeError,str(name)
-    def __repr__(self):
-        if self.__class__ != UVGSolve:
-            return
-        return "<C UVGSolve instance> " + Obit.UVGSolveGetName(self.me)
 #
-class UVGSolve(UVGSolvePtr):
+class UVGSolve(Obit.UVGSolve):
     """ Python Obit Interferometric gain solution class
 
     This class solves for interferometer complex gains
@@ -75,10 +53,33 @@ class UVGSolve(UVGSolvePtr):
                 (readonly)
     """
     def __init__(self, name) :
-        self.this = Obit.new_UVGSolve(name)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_UVGSolve(self.this)
+        super(UVGSolve, self).__init__()
+        Obit.CreateUVGSolve (self.this, name)
+    def __del__(self, DeleteUVGSolve=_Obit.DeleteUVGSolve):
+        if _Obit!=None:
+            DeleteUVGSolve(self.this)
+    def __setattr__(self,name,value):
+        if name == "me" :
+            # Out with the old
+            if self.this!=None:
+                Obit.UVGSolveUnref(Obit.UVGSolve_Get_me(self.this))
+            # In with the new
+            Obit.UVGSolve_Set_me(self.this,value)
+            return
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if not isinstance(self, UVGSolve):
+            return "Bogus dude"+str(self.__class__)
+        if name == "me" : 
+            return Obit.UVGSolve_Get_me(self.this)
+        # Virtual members
+        if name=="List":
+            return PGetList(self)
+        raise AttributeError(str(name))
+    def __repr__(self):
+        if not isinstance(self, UVGSolve):
+            return "Bogus dude"+str(self.__class__)
+        return "<C UVGSolve instance> " + Obit.UVGSolveGetName(self.me)
 
 
 def input(inputDict):
@@ -101,9 +102,9 @@ def input(inputDict):
     """
     ################################################################
     structure = inputDict['structure']  # Structure information
-    print 'Inputs for ',structure[0]
+    print('Inputs for ',structure[0])
     for k,v in structure[1]:
-        print '  ',k,' = ',inputDict[k],' : ',v
+        print('  ',k,' = ',inputDict[k],' : ',v)
         
     # end input
 
@@ -131,11 +132,11 @@ def PCopy (inUVGSolve, outUVGSolve, err):
     ################################################################
     # Checks
     if not PIsA(inUVGSolve):
-        raise TypeError,"inUVGSolve MUST be a Python Obit UVGSolve"
+        raise TypeError("inUVGSolve MUST be a Python Obit UVGSolve")
     if not PIsA(outUVGSolve):
-        raise TypeError,"outUVGSolve MUST be a Python Obit UVGSolve"
+        raise TypeError("outUVGSolve MUST be a Python Obit UVGSolve")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     Obit.UVGSolveCopy (inUVGSolve.me, outUVGSolve.me, err.me)
     if err.isErr:
@@ -151,10 +152,9 @@ def PGetList (inUVGSolve):
     ################################################################
      # Checks
     if not PIsA(inUVGSolve):
-        raise TypeError,"inUVGSolve MUST be a Python Obit UVGSolve"
+        raise TypeError("inUVGSolve MUST be a Python Obit UVGSolve")
     #
     out    = InfoList.InfoList()
-    out.me = Obit.InfoListUnref(out.me)
     out.me = Obit.UVGSolveGetList(inUVGSolve.me)
     return out
     # end PGetList
@@ -212,7 +212,7 @@ def PCreate (name, err, input=GSolveInput):
     ################################################################
     # Checks
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Create
     out = UVGSolve(name);
@@ -314,11 +314,11 @@ def PCal (inUVGSolve, err, input=UVGSolveCalInput):
     #
     # Checks
     if not PIsA(inUVGSolve):
-        raise TypeError, 'Bad input selfcalibrator'
+        raise TypeError('Bad input selfcalibrator')
     if not UV.PIsA(InData):
-        raise TypeError, 'Bad input UV data'
+        raise TypeError('Bad input UV data')
     if not UV.PIsA(OutData):
-        raise TypeError, 'Bad output UV data'
+        raise TypeError('Bad output UV data')
     dim = [1,1,1,1,1]
     # Set control values on SelfCal
     dim[0] = 1;
@@ -365,9 +365,9 @@ def PRefAnt (SNTab, isuba, refant, err):
     ################################################################
     # Checks
     if not Table.PIsA(SNTab):
-        raise TypeError,"SNTab MUST be a Python Obit Table"
+        raise TypeError("SNTab MUST be a Python Obit Table")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     ret = Obit.UVSolnRefAnt (SNTab.me, isuba, refant, err.me)
     if err.isErr:
@@ -413,9 +413,9 @@ def PSNSmo (err, input=UVGSolveSNSmoInput):
     #
     # Checks
     if not UV.PIsA(InData):
-        raise TypeError, 'PCal: Bad input UV data'
+        raise TypeError('PCal: Bad input UV data')
     if not Table.PIsA(InTable):
-        raise TypeError, 'PCal: Bad input table'
+        raise TypeError('PCal: Bad input table')
     # Set control values on UV 
     dim[0] = 1;
     inInfo = UV.PGetList(InData)  # Add control to UV data
@@ -447,11 +447,11 @@ def PDeselSN (SNTab, isuba, fgid, ants, timerange, err):
     ################################################################
     # Checks
     if not PIsA(inUVGSolve):
-        raise TypeError, 'Bad input gain solver'
+        raise TypeError('Bad input gain solver')
     if not Table.PIsA(SNTab):
-        raise TypeError,"SNTab MUST be a Python Obit Table"
+        raise TypeError("SNTab MUST be a Python Obit Table")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     nantf = len(ants)
     Obit.UVSolnDeselSN (SNTab.me, isuba, fqid, nantf, ants, timerange,
@@ -476,11 +476,11 @@ def PDeselCL (CLTab, isuba, fgid, ants, timerange, err):
     ################################################################
     # Checks
     if not PIsA(inUVGSolve):
-        raise TypeError, 'Bad input gain solver'
+        raise TypeError('Bad input gain solver')
     if not Table.PIsA(CLTab):
-        raise TypeError,"CLTab MUST be a Python Obit Table"
+        raise TypeError("CLTab MUST be a Python Obit Table")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     nantf = len(ants)
     Obit.UVSolnDeselCL (CLTab.me, isuba, fqid, nantf, ants, timerange,
@@ -498,7 +498,7 @@ def PGetName (inUVGSolve):
     ################################################################
      # Checks
     if not PIsA(inUVGSolve):
-        raise TypeError,"inUVGSolve MUST be a Python Obit UVGSolve"
+        raise TypeError("inUVGSolve MUST be a Python Obit UVGSolve")
     #
     return Obit.UVGSolveGetName(inUVGSolve.me)
     # end PGetName
@@ -506,12 +506,12 @@ def PGetName (inUVGSolve):
 def PIsA (inUVGSolve):
     """ Tells if input really a Python Obit UVGSolve
 
-    return true, false (1,0)
+    return True, False
     inUVGSolve   = Python UVGSolve object
     """
     ################################################################
     # Checks
-    if inUVGSolve.__class__ != UVGSolve:
-        return 0
-    return Obit.UVGSolveIsA(inUVGSolve.me)
+    if not isinstance(inUVGSolve, UVGSolve):
+        return False
+    return Obit.UVGSolveIsA(inUVGSolve.me)!=0
     # end PIsA

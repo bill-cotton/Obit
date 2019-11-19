@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitTimeFilter type                    */
 /*                                                                    */
-/*;  Copyright (C) 2008                                               */
+/*;  Copyright (C) 2008,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,29 +32,95 @@
 #include "ObitTimeFilter.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitTimeFilter *me;
+} TimeFilter;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitTimeFilter *me;
+} TimeFilter;
+
 
 %inline %{
 
 /** Public: Create time filter. */
-extern ObitTimeFilter* TimeFilterCreate(char* name, int nTime, int nSeries) {
+extern ObitTimeFilter* TimeFilterCreate(char* name, long nTime, long nSeries) {
    return  newObitTimeFilter ((gchar*)name, (olong)nTime, (olong)nSeries);
 }
+extern ObitTimeFilter* TimeFilterRef (ObitTimeFilter* in) {
+  return ObitTimeFilterRef (in);
+} // end TimeFilterRef
+
+extern ObitTimeFilter* TimeFilterUnref (ObitTimeFilter* in) {
+  if (!ObitTimeFilterIsA(in)) return NULL;
+  return ObitTimeFilterUnref (in);
+} // end TimeFilterUnref
+
+void CreateTimeFilter(PyObject *self, char* name, long nTime, long nSeries) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_TimeFilter, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Create: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((TimeFilter*)ptr)->me = TimeFilterCreate(name, nTime, nSeries);
+   else ((TimeFilter*)ptr)->me = NULL;
+   return;
+ } // end CreateTimeFilter
+
+void DeleteTimeFilter(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_TimeFilter, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Delete: could not recover c struct");
+	return;
+   }
+   ((TimeFilter*)ptr)->me = TimeFilterUnref(((TimeFilter*)ptr)->me);
+} // end DeleteTimeFilter
+
+ObitTimeFilter* TimeFilter_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_TimeFilter, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((TimeFilter*)ptr)->me;
+} // end TimeFilter_Get_me
+
+void TimeFilter_Set_me(PyObject *self, ObitTimeFilter *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_TimeFilter, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"TimeFilter_Set_me: could not recover c struct");
+	return;
+   }
+   ((TimeFilter*)ptr)->me =  TimeFilterRef(me);
+}  // end TimeFilter_Set_me
 
 /** Public: Resize filter. */
-extern void TimeFilterResize (ObitTimeFilter* in, int nTime) {
+extern void TimeFilterResize (ObitTimeFilter* in, long nTime) {
   ObitTimeFilterResize (in, (olong)nTime);
 } // end TimeFilterResize
 
 /** Public: Construct regular time series. */
-extern void TimeFilterGridTime (ObitTimeFilter* in, int seriesNo, float dTime, int nTime, 
+extern void TimeFilterGridTime (ObitTimeFilter* in, long seriesNo, float dTime, long nTime, 
                         float *times, float *data) {
   ObitTimeFilterGridTime (in, (olong)seriesNo, (ofloat)dTime, (olong)nTime, 
                         (ofloat*)times, (ofloat*)data);
 } // end TimeFilterGridTime
 
 /** Public: Return time series. */
-extern PyObject* TimeFilterUngridTime (ObitTimeFilter* in, int seriesNo,
-			         int nTime, float *times) {
+extern PyObject* TimeFilterUngridTime (ObitTimeFilter* in, long seriesNo,
+			         long nTime, float *times) {
   olong i;
   PyObject *out;
   ofloat *tdata=NULL;
@@ -80,7 +146,7 @@ extern void TimeFilter2Time (ObitTimeFilter* in) {
 } // end TimeFilter2Time
 
 /** Public: Apply Filter to Frequency series. */
-extern void TimeFilterFilter (ObitTimeFilter* in, int seriesNo, int type, 
+extern void TimeFilterFilter (ObitTimeFilter* in, long seriesNo, long type, 
                               float *parms, ObitErr *err) {
   ObitTimeFilterType ltype=OBIT_TimeFilter_LowPass;
   if (type==1) ltype = OBIT_TimeFilter_HighPass;
@@ -91,7 +157,7 @@ extern void TimeFilterFilter (ObitTimeFilter* in, int seriesNo, int type,
 } // end TimeFilterFilter
 
 /** Public: Apply Filter to Frequency series with physical parameters. */
-extern void TimeFilterDoFilter (ObitTimeFilter* in, int seriesNo, int type, 
+extern void TimeFilterDoFilter (ObitTimeFilter* in, long seriesNo, long type, 
                                 float *parms, ObitErr *err) {
   ObitTimeFilterType ltype=OBIT_TimeFilter_LowPass;
   if (type==1) ltype = OBIT_TimeFilter_HighPass;
@@ -102,34 +168,25 @@ extern void TimeFilterDoFilter (ObitTimeFilter* in, int seriesNo, int type,
 } // end TimeFilterDoFilter
 
 /** Public:  Plot power spectrum. */
-extern void TimeFilterPlotPower (ObitTimeFilter* in, int seriesNo, char *label, ObitErr *err) {
+extern void TimeFilterPlotPower (ObitTimeFilter* in, long seriesNo, char *label, ObitErr *err) {
   ObitTimeFilterPlotPower (in, (olong)seriesNo, (gchar*)label, err);
 } // end TimeFilter
 
 /** Public: Plot Time series.. */
-extern void TimeFilterPlotTime (ObitTimeFilter* in, int seriesNo, char *label, ObitErr *err) {
+extern void TimeFilterPlotTime (ObitTimeFilter* in, long seriesNo, char *label, ObitErr *err) {
   ObitTimeFilterPlotTime (in, (olong)seriesNo, (gchar*)label, err);
 } // end TimeFilter
 
-extern int TimeFilterIsA (ObitTimeFilter* in) {
-  return ObitTimeFilterIsA(in);
+extern long TimeFilterIsA (ObitTimeFilter* in) {
+  return (long)ObitTimeFilterIsA(in);
 } // end TimeFilterIsA 
-
-extern ObitTimeFilter* TimeFilterRef (ObitTimeFilter* in) {
-  return ObitTimeFilterRef (in);
-} // end TimeFilterRef
-
-extern ObitTimeFilter* TimeFilterUnref (ObitTimeFilter* in) {
-  if (!ObitTimeFilterIsA(in)) return NULL;
-  return ObitTimeFilterUnref (in);
-} // end TimeFilterUnref
 
 extern char* TimeFilterGetName (ObitTimeFilter* in) {
   return in->name;
 } // end  TimeFilterGetName
 
 // return dict with {"dTime", "time", "data"}
-extern PyObject* TimeFilterGetTime (ObitTimeFilter* in, int seriesNo) {
+extern PyObject* TimeFilterGetTime (ObitTimeFilter* in, long seriesNo) {
   PyObject *outDict = PyDict_New();
   PyObject *time, *data;
   olong i;
@@ -148,7 +205,7 @@ extern PyObject* TimeFilterGetTime (ObitTimeFilter* in, int seriesNo) {
 } // end  TimeFilterGetTime
 
 // return dict with {"dFreq", "freq", "data"}
-extern PyObject* TimeFilterGetFreq (ObitTimeFilter* in, int seriesNo) {
+extern PyObject* TimeFilterGetFreq (ObitTimeFilter* in, long seriesNo) {
   PyObject *outDict = PyDict_New();
   PyObject *freq, *data;
   olong i;
@@ -170,7 +227,7 @@ extern PyObject* TimeFilterGetFreq (ObitTimeFilter* in, int seriesNo) {
 
 // return dict with {"dFreq", "freq", "data"}
 // Power spectra
-extern PyObject* TimeFilterGetPower (ObitTimeFilter* in, int seriesNo) {
+extern PyObject* TimeFilterGetPower (ObitTimeFilter* in, long seriesNo) {
   PyObject *outDict = PyDict_New();
   PyObject *freq, *data;
   double val, vr, vi;
@@ -194,7 +251,7 @@ extern PyObject* TimeFilterGetPower (ObitTimeFilter* in, int seriesNo) {
 } // end  TimeFilterGetPower
 
 // expect dict with {"dTime", "time", "data"}
-extern void TimeFilterSetTime (ObitTimeFilter* in, int seriesNo,
+extern void TimeFilterSetTime (ObitTimeFilter* in, long seriesNo,
                                PyObject *inDict) {
   PyObject *time, *data;
   olong len, i;
@@ -220,7 +277,7 @@ extern void TimeFilterSetTime (ObitTimeFilter* in, int seriesNo,
 } // end  TimeFilterSetTime
 
 // expect dict with {"dFreq", "freq", "data"}
-extern void TimeFilterSetFreq (ObitTimeFilter* in, int seriesNo,
+extern void TimeFilterSetFreq (ObitTimeFilter* in, long seriesNo,
                                PyObject *inDict) {
   PyObject *freq, *data, *cx;
   olong len, i;
@@ -249,30 +306,4 @@ extern void TimeFilterSetFreq (ObitTimeFilter* in, int seriesNo,
 } // end  TimeFilterSetFreq
 
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitTimeFilter *me;
-} TimeFilter;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitTimeFilter *me;
-} TimeFilter;
-
-%addmethods TimeFilter { 
-  TimeFilter(char* name, int nTime, int nSeries) {
-     TimeFilter *out;
-     out = (TimeFilter*) malloc(sizeof(TimeFilter));
-     if (strcmp(name, "None")) out->me = TimeFilterCreate(name, nTime, nSeries);
-     else out->me = NULL;
-     return out;
-   }
-  ~TimeFilter() {
-    self->me = TimeFilterUnref(self->me);
-    free(self);
-  }
-};
 

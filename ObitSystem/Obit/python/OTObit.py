@@ -291,11 +291,16 @@ Note: these dict are independent of the underlying data structures.
 #                         520 Edgemont Road
 #                         Charlottesville, VA 22903-2475 USA
 #-----------------------------------------------------------------------
+from __future__ import absolute_import
+from __future__ import print_function
 import Obit, Table, FArray, OErr, InfoList, History, OSystem, ObitTasks
 #import FITSDir, AIPSDir
 import Image, ImageDesc, ImageUtil, TableList, ODisplay, UV, OWindow
+import ImageMF
 import re
 import TaskMsgBuffer
+from six.moves import range
+from six.moves import input
 try:
     import TaskWindow
 except:
@@ -316,11 +321,13 @@ from FITSDir import FITSdisks, nFITS
 from AIPSDir import AIPSdisks, nAIPS
 
 # Init Obit
+global userno, popsno
 userno =  AIPS.AIPS.userno
 popsno = 1
 from ObitInit import *
 
 # Display connection
+err = OErr.OErr()
 disp = ODisplay.ODisplay("ObitView", "ObitView", err)
 
 def ShowErr(err=err):
@@ -501,12 +508,12 @@ def AllDest (disk=None, Atype="  ", Aname="            ", Aclass="      ", Aseq=
     prompt = "Do you really want to delete all AIPS "+Atype+" files on disk(s) "\
              +str(disk)+"\nwith names matching "+Aname+"."+Aclass+"."+str(Aseq)+ \
              " y/n "
-    ans = raw_input(prompt)
+    ans = input(prompt)
     if ans.startswith('y'):
         AIPSDir.PAllDest (disk, err, Atype=Atype, Aname=Aname, Aclass=Aclass,
                           Aseq=Aseq)
     else:
-        print "Not confirmed"
+        print("Not confirmed")
     OErr.printErrMsg(err, "Error with destroying AIPS enreies")
     # end AllDest
 
@@ -529,7 +536,7 @@ def getname(cno, disk=None):
     cat = AIPSData.AIPSCat(disk)
     s = cat.info(cno)
     if not s:   # Not found
-        raise RuntimeError,"Cannot find slot "+str(cno)+",disk "+str(disk)+",user "+str(user)
+        raise RuntimeError("Cannot find slot "+str(cno)+",disk "+str(disk)+",user "+str(user))
     # parse returned string
     Aname = s[0:12]
     Aclass = s[13:19]
@@ -544,7 +551,7 @@ def getname(cno, disk=None):
         else:
             out = Image.newPAImage("AIPS image", Aname, Aclass, disk, Aseq, True, err, \
                                    verbose=False)
-        print "AIPS Image",Aname, Aclass, disk, Aseq
+        print("AIPS Image",Aname, Aclass, disk, Aseq)
     elif Atype == 'UV':
          # Create AIPSData or ObitTalk if remote/local
         if AIPS.AIPS.disks[disk].url:
@@ -554,7 +561,7 @@ def getname(cno, disk=None):
         else:
             out = UV.newPAUV("AIPS UV data", Aname, Aclass, disk, Aseq, True, err, \
                              verbose=False)
-        print "AIPS UV",Aname, Aclass, disk, Aseq
+        print("AIPS UV",Aname, Aclass, disk, Aseq)
     out.Aname  = Aname
     out.Aclass = Aclass
     out.Aseq   = Aseq 
@@ -831,6 +838,9 @@ def imhead (ObitObj):
     elif ObitObj.__class__==FITSData.FITSUVData:
         # FITS UVData
         UV.PHeader(ObitObj, err)
+    elif ObitObj.__class__==ImageMF.ImageMF:
+        # ImageMF
+        ImageMF.PHeader(ObitObj, err)
     else:
         # Presume it's an Obit object
         ObitObj.Header(err)
@@ -990,7 +1000,7 @@ def setwindow (w, out):
     # Must be rectangle
     l =  OWindow.PGetList(w, 1, err)
     if l[0][1] !=0:
-        raise TypeError,"Window MUST be a rectangle"
+        raise TypeError("Window MUST be a rectangle")
     # AIPS or Obit?
     if out.__class__ == ObitTask:
         out.BLC[0] = l[0][2]+1  # make 1-rel
@@ -1086,9 +1096,9 @@ def alldest(Aname=".*", Aclass=".*", Atype=".?", Adisk=0, Aseq=0, test=False):
              "name:"+Aname+" class:"+Aclass+" disk:"+str(Adisk)+ \
              " seq:"+str(Aseq)+ " ?\n" + \
              "yes/no: "
-    ans = raw_input(prompt)
+    ans = input(prompt)
     if ans != "yes":
-        print "confirmination negative"
+        print("confirmination negative")
         return
     # How many disks
     # "+" is a special symbol in regular expressions, escape any
@@ -1123,7 +1133,7 @@ def alldest(Aname=".*", Aclass=".*", Atype=".?", Adisk=0, Aseq=0, test=False):
                 # Check Class
                 mat = mat and re.match(Aclass,tclass)
                 if mat:   # Found a match?
-                    print cno,tname, tclass, tseq, ttype 
+                    print(cno,tname, tclass, tseq, ttype) 
                     #obj = getname(cno, disk=idisk)
                     if ttype=="MA":
                         obj = Image.newPAImage("zap", tname, tclass, idisk, tseq,
@@ -1164,7 +1174,7 @@ def tput (to, file=None):
     tfile = file
     if file==None:
         tfile = to._name+".pickle"
-    fd = open(tfile, "w")
+    fd = open(tfile, "wb")
     pickle.dump(saveit, fd)
     fd.close()
     # end tput
@@ -1192,7 +1202,7 @@ def tget (inn, file=None):
     tfile = file
     if file==None:
         tfile = name+".pickle"
-    fd = open(tfile, "r")
+    fd = open(tfile, "rb")
     saveit = pickle.load(fd)
     fd.close()
 
@@ -1225,7 +1235,7 @@ def saveLog (log, file=None):
     ################################################################
     # log must be list
     if type(log) != list:
-        raise TypeError,"log MUST be a list"
+        raise TypeError("log MUST be a list")
     # save
     tfile = file
     if file==None:
@@ -1301,9 +1311,9 @@ def PrintHistory (ObitObj, hiStart=1, hiEnd=1000000, task=None, file=None):
     while (len(x)>0) and (recno<hiEnd):
         if task:   # Look for task name?
             if x.startswith(task):
-                hilist = hilist+string.rjust(str(recno+1),6)+" "+x+"\n"
+                hilist = hilist+str(recno+1).rjust(6)+" "+x+"\n"
         else:
-            hilist = hilist+string.rjust(str(recno+1),6)+" "+x+"\n"
+            hilist = hilist+str(recno+1).rjust(6)+" "+x+"\n"
         recno = recno+1
         x = hist.ReadRec(recno,err)
     #print x
@@ -1345,7 +1355,7 @@ def tvstat (inImage):
     # Must be rectangle
     l =  OWindow.PGetList(w, 1, err)
     if l[0][1] !=0:
-        raise TypeError,"Window MUST be a single rectangle"
+        raise TypeError("Window MUST be a single rectangle")
     blc = [min(l[0][2]+1, l[0][4]+1), min(l[0][3]+1, l[0][5]+1)]
     trc = [max(l[0][2]+1, l[0][4]+1), max(l[0][3]+1, l[0][5]+1)]
     
@@ -1374,11 +1384,11 @@ def tvstat (inImage):
         Flux = p.Sum/beamarea
     else:
         beamarea = None
-    print "Region Mean %g, RMSHist %g RMS %g" % (Mean, RMS, RawRMS)
-    print "  Max %g @ pixel " % Max, MaxPos
-    print "  Min %g @ pixel " % Min, MinPos
+    print("Region Mean %g, RMSHist %g RMS %g" % (Mean, RMS, RawRMS))
+    print("  Max %g @ pixel " % Max, MaxPos)
+    print("  Min %g @ pixel " % Min, MinPos)
     if (beamarea):
-        print "  Integrated Flux density %g, beam area = %7.1f pixels" % (Flux, beamarea)
+        print("  Integrated Flux density %g, beam area = %7.1f pixels" % (Flux, beamarea))
     
     # Reset BLC, TRC
     blc = [1,1,1,1,1]
@@ -1423,12 +1433,12 @@ def imstat (inImage, blc=[1,1,1,1,1], trc=[0,0,0,0,0]):
     RawRMS  = p.RawRMS
     MaxPos=[0,0]
     Max = FArray.PMax(p, MaxPos)
-    MaxPos[0] = MaxPos[0]+blc[0]
-    MaxPos[1] = MaxPos[1]+blc[1]
+    MaxPos[0] = int(MaxPos[0]+blc[0])
+    MaxPos[1] = int(MaxPos[1]+blc[1])
     MinPos=[0,0]
     Min = FArray.PMin(p, MinPos)
-    MinPos[0] = MinPos[0]+blc[0]
-    MinPos[1] = MinPos[1]+blc[1]
+    MinPos[0] = int(MinPos[0]+blc[0])
+    MinPos[1] = int(MinPos[1]+blc[1])
     # Integrated flux density
     Flux = -1.0
     beamarea = 1.0
@@ -1436,11 +1446,11 @@ def imstat (inImage, blc=[1,1,1,1,1], trc=[0,0,0,0,0]):
         beamarea = 1.1331*(head["beamMaj"]/abs(head["cdelt"][0])) * \
                    (head["beamMin"]/abs(head["cdelt"][1]))
         Flux = p.Sum/beamarea
-    print "Region Mean %g, RMSHist %g RMS %g" % (Mean, RMS, RawRMS)
-    print "  Max %g @ pixel " % Max, MaxPos
-    print "  Min %g @ pixel " % Min, MinPos
+    print("Region Mean %g, RMSHist %g RMS %g" % (Mean, RMS, RawRMS))
+    print("  Max %g @ pixel " % Max, MaxPos)
+    print("  Min %g @ pixel " % Min, MinPos)
     if (head["beamMaj"]>0.0) :
-        print "  Integrated Flux density %g, beam area = %7.1f pixels" % (Flux, beamarea)
+        print("  Integrated Flux density %g, beam area = %7.1f pixels" % (Flux, beamarea))
    
     # Reset BLC, TRC
     blc = [1,1,1,1,1]
@@ -1547,7 +1557,7 @@ def uvlod(filename, inDisk, Aname, Aclass, Adisk, Aseq, err):
     ################################################################
     # Checks
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Get input
     inUV = UV.newPFUV("FITS UV DATA", filename, inDisk, True, err)
@@ -1562,7 +1572,7 @@ def uvlod(filename, inDisk, Aname, Aclass, Adisk, Aseq, err):
         if AIPSDir.PTestCNO(Adisk,user,Aname,Aclass,"MA",Aseq,err)>0:
             Aseq = Aseq+1
         OErr.PClear(err)     # Clear any message/error
-    print "Creating AIPS UV file",Aname,".",Aclass,".",Aseq,"on disk",Adisk
+    print("Creating AIPS UV file",Aname,".",Aclass,".",Aseq,"on disk",Adisk)
     outUV = UV.newPAUV("AIPS UV DATA", Aname, Aclass, Adisk, Aseq, False, err)
     if err.isErr:
         OErr.printErrMsg(err, "Error creating AIPS data")
@@ -1610,9 +1620,9 @@ def uvtab(inUV, filename, outDisk, err, compress=False, \
     ################################################################
     # Checks
     if not UV.PIsA(inUV):
-        raise TypeError,"inUV MUST be a Python Obit UV"
+        raise TypeError("inUV MUST be a Python Obit UV")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Set output
     outUV = UV.newPFUV("FITS UV DATA", filename, outDisk, False, err)
@@ -1666,9 +1676,9 @@ def uvTabSave(inUV, filename, outDisk, err, \
     ################################################################
     # Checks
     if not UV.PIsA(inUV):
-        raise TypeError,"inUV MUST be a Python Obit UV"
+        raise TypeError("inUV MUST be a Python Obit UV")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Set output
     outUV = UV.newPFUV("FITS UV DATA", filename, outDisk, False, err)
@@ -1713,7 +1723,7 @@ def imlod(filename, inDisk, Aname, Aclass, Adisk, Aseq, err):
     ################################################################
     # Checks
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Get input
     inImage = Image.newPFImage("FITS Image DATA", filename, inDisk, True, err)
@@ -1729,7 +1739,7 @@ def imlod(filename, inDisk, Aname, Aclass, Adisk, Aseq, err):
         if AIPSDir.PTestCNO(Adisk,user,Aname,Aclass,"MA",Aseq,err)>0:
             Aseq = Aseq+1
         OErr.PClear(err)     # Clear any message/error
-    print "Creating AIPS MA file",Aname,".",Aclass,".",Aseq,"on disk",Adisk
+    print("Creating AIPS MA file",Aname,".",Aclass,".",Aseq,"on disk",Adisk)
     outImage = Image.newPAImage("AIPS Image DATA", Aname, Aclass, Adisk, Aseq, False, err)
     if err.isErr:
         OErr.printErrMsg(err, "Error creating AIPS data")
@@ -1778,9 +1788,9 @@ def imtab(inImage, filename, outDisk, err, fract=None, quant=None, \
     ################################################################
     # Checks
     if not Image.PIsA(inImage):
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Open/close fo fully instantiate
     inImage.Open(Image.READONLY,err)

@@ -5,10 +5,12 @@ This utility package supplies Zernike terms and derivatives.
 """
 
 # Python utility package for Zernike polynomials
+from __future__ import absolute_import
 import Obit
+from six.moves import range
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2006
+#  Copyright (C) 2006,2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -45,7 +47,7 @@ def PZernike(n, x, y):
     ################################################################
     # Error check
     if n<1 or n>36:
-        raise RuntimeError,"unsupported Zernike order:"+str(n)
+        raise RuntimeError("unsupported Zernike order:"+str(n))
     out = []   # initialize output
     for i in range(0,n):
         val = Obit.Zernike(i, x, y);
@@ -64,7 +66,7 @@ def PZernikeGradX(n, x, y):
     ################################################################
     # Error check
     if n<1 or n>36:
-        raise RuntimeError,"unsupported Zernike order:"+str(n)
+        raise RuntimeError("unsupported Zernike order:"+str(n))
     out = []   # initialize output
     for i in range(0,n):
         val = Obit.Zernike(i, x, y);
@@ -83,7 +85,7 @@ def PZernikeGradY(n, x, y):
     ################################################################
     # Error check
     if n<1 or n>36:
-        raise RuntimeError,"unsupported Zernike order:"+str(n)
+        raise RuntimeError("unsupported Zernike order:"+str(n))
     out = []   # initialize output
     for i in range(0,n):
         val = Obit.Zernike(i, x, y);
@@ -102,7 +104,7 @@ def PZernikePolar(n, rho, phi):
     ################################################################
     # Error check
     if n<1 or n>36:
-        raise RuntimeError,"unsupported Zernike order:"+str(n)
+        raise RuntimeError("unsupported Zernike order:"+str(n))
     out = []   # initialize output
     for i in range(0,n):
         val = Obit.Zernike(i, rho, phi);

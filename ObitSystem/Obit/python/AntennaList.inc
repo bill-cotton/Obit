@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for AntennaList type                       */
 /*                                                                    */
-/*;  Copyright (C)2013                                                */
+/*;  Copyright (C)2013,2019                                           */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -34,6 +34,17 @@
 #include "ObitUV.h"
 %}
 
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitAntennaList *me;
+} AntennaList;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitAntennaList *me;
+} AntennaList;
+
 %inline %{
 extern ObitAntennaList* AntennaListCreate (char *name, ObitUV *inUV, long subA, 
     ObitErr *err) {
@@ -57,12 +68,6 @@ extern ObitAntennaList* AntennaListCreate (char *name, ObitUV *inUV, long subA,
   return out;
 } // end AntennaListCreate
 
-extern ObitAntennaList* AntennaListCopy (ObitAntennaList* in, 
-		              ObitAntennaList* out, ObitErr *err) {
-  return ObitAntennaListCopy (in, out, err);
-} // end AntennaListCopy
-
-
 ObitAntennaList* AntennaListRef (ObitAntennaList* in) {
   return ObitAntennaListRef (in);
 } // end AntennaListRef
@@ -70,6 +75,58 @@ ObitAntennaList* AntennaListRef (ObitAntennaList* in) {
 ObitAntennaList* AntennaListUnref (ObitAntennaList* in) {
   return ObitAntennaListUnref (in);
 } // end AntennaListUnref
+
+void CreateAntennaList(PyObject *self, char* name, ObitUV *inUV, long subA, ObitErr *err) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_AntennaList, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"CreateAntennaList: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((AntennaList*)ptr)->me = AntennaListCreate(name, inUV, subA, err);
+   else  ((AntennaList*)ptr)->me = NULL;
+   return;
+ } // end CreateAntennaList
+
+void DeleteAntennaList(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_AntennaList, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"DeleteAntennaList: could not recover c struct");
+	return;
+   }
+   ((AntennaList*)ptr)->me = ObitAntennaListUnref(((AntennaList*)ptr)->me);
+}// end DeleteAntennaList
+
+ObitAntennaList* AntennaList_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_AntennaList, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"AntennaList_Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((AntennaList*)ptr)->me;
+}  // end AntennaList_Get_me
+
+void AntennaList_Set_me(PyObject *self, ObitAntennaList *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_AntennaList, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"AntennaList_Set_me: could not recover c struct");
+	return;
+   }
+   ((AntennaList*)ptr)->me =  ObitAntennaListRef(me);
+}  // end AntennaList_Set_me
+
+
+extern ObitAntennaList* AntennaListCopy (ObitAntennaList* in, 
+		              ObitAntennaList* out, ObitErr *err) {
+  return ObitAntennaListCopy (in, out, err);
+} // end AntennaListCopy
 
 extern float AntennaListGetElev (ObitAntennaList* in, long ant, float time, 
     ObitSource *Source) {
@@ -94,30 +151,4 @@ extern gchar* AntennaListGetArrName (ObitAntennaList* in) {
   return (gchar*)in->ArrName;
 }
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitAntennaList *me;
-} AntennaList;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitAntennaList *me;
-} AntennaList;
-
-%addmethods AntennaList { 
-  AntennaList(char *name, ObitUV *inUV, long subA, ObitErr *err) {
-     AntennaList *out;
-     out = (AntennaList *) malloc(sizeof(AntennaList));
-     if (strcmp(name, "None")) out->me = AntennaListCreate (name, inUV, subA, err);
-     else out->me = NULL;
-     return out;
-   }
-  ~AntennaList() {
-    self->me = AntennaListUnref(self->me);
-    free(self);
-  }
-};
 

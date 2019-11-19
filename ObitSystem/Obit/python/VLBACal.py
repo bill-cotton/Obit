@@ -1,10 +1,12 @@
 """ Functions for calibrating and editing VLBA data
 """
+from __future__ import absolute_import
+from __future__ import print_function
 import UV, UVDesc, Image, ImageDesc, FArray, ObitTask, AIPSTask, AIPSDir, OErr, History
 import InfoList, Table, AIPSDir, OSystem
 import os, os.path, re, shutil, pickle, math, logging, copy, pprint, string
-import urllib, urllib2
-import sys, commands
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error, six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
+import sys
 import datetime
 import xml.dom.minidom
 from AIPS import AIPS
@@ -14,6 +16,8 @@ from OTObit import Acat, AMcat, getname, zap, imhead, tabdest, tput
 from Obit import Version
 from subprocess import Popen, PIPE
 from PipeUtil import *
+from six.moves import range
+from six.moves import getoutput
 
 logger = logging.getLogger("obitLog.VLBACal")
 
@@ -64,7 +68,7 @@ def VLBAIDILoad(filename, project, session, band, Aclass, Adisk, Aseq, err, \
     # fitld.datain can hold 48 charaters maximum. Since some archive file names
     # are too long, use sym links. Create sym links using UUIDs to avoid 
     # concurrent pipeline processes from trampling each other's links. 
-    linkname = commands.getoutput('uuidgen') + '.uvfits'
+    linkname = getoutput('uuidgen') + '.uvfits'
     linkpath = FITS.FITS.disks[1].dirname + linkname
     filepath = FITS.FITS.disks[1].dirname + filename
     os.symlink( filepath, linkpath )
@@ -85,8 +89,8 @@ def VLBAIDILoad(filename, project, session, band, Aclass, Adisk, Aseq, err, \
     try:
         if not check:
             fitld.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "FITLD load Failed "
         printMess(mess, logfile)
     else:
@@ -580,8 +584,8 @@ def VLBACopyFG(uv, err, logfile='', check=False, debug = False):
     try:
         if not check:
             taco.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Copy of FG table Failed retCode="+str(taco.retCode)
         printMess(mess, logfile)
         return 1
@@ -623,8 +627,8 @@ def VLBACopyTable(inObj, outObj, inTab, err, inVer=1, outVer=0,
     try:
         if not check:
             taco.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Copy of "+inTab+" table Failed retCode="+str(taco.retCode)
         printMess(mess, logfile)
         return 1
@@ -680,8 +684,8 @@ def VLBAFreqInfo(uv, restFreq, srcVel, err, FreqID=1, \
             try:
                 if not check:
                     setjy.g
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
                 mess = "SetJy Failed retCode="+str(setjy.retCode)
                 printMess(mess, logfile)
                 return 1
@@ -755,8 +759,8 @@ def VLBAApplyCal(uv, err, SNver=0, CLin=0, CLout=0, maxInter=240.0, \
     try:
         if not check:
             clcal.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "CLCal Failed retCode="+str(clcal.retCode)
         printMess(mess, logfile)
         return 1
@@ -820,8 +824,8 @@ def VLBAPlotTab(uv, inext, invers, err, \
     try:
         if not check:
             snplt.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "SNPLT Failed "
         printMess(mess, logfile)
         return 1
@@ -888,8 +892,8 @@ def VLBAWritePlots(uv, loPL, hiPL, plotFile, err, \
     try:
         if not check:
             lwpla.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Lwpla Failed - continuing anyway"
         printMess(mess, logfile)
         # return 1  # Continue in spite of lwpla failure
@@ -939,8 +943,8 @@ def VLBAQuantCor(uv, QuantSmoo, QuantFlag, err, \
     try:
         if not check:
             accor.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "ACCOR Failed "
         printMess(mess, logfile)
         return 1
@@ -979,8 +983,8 @@ def VLBAQuantCor(uv, QuantSmoo, QuantFlag, err, \
     try:
         if not check:
             snsmo.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "SNSmo Failed retCode="+str(snsmo.retCode)
         printMess(mess, logfile)
         return 1
@@ -1075,8 +1079,8 @@ def VLBAPACor(uv, err, CLver=0, FreqID=1,\
     try:
         if not check:
             clcor.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "CLCOR Failed "
         printMess(mess, logfile)
         return 1
@@ -1150,8 +1154,8 @@ def VLBAOpacCor(uv, OpacSmoo, err, FreqID=1, WXver=0, TYver=0, GCver=0, \
     try:
         if not check:
             apcal.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "APCAL Failed "
         printMess(mess, logfile)
         return 1
@@ -1189,8 +1193,8 @@ def VLBAOpacCor(uv, OpacSmoo, err, FreqID=1, WXver=0, TYver=0, GCver=0, \
     try:
         if not check:
             snsmo.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "SNSmo Failed retCode="+str(snsmo.retCode)
         printMess(mess, logfile)
         return 1
@@ -1364,8 +1368,8 @@ def VLBAGoodCal(uv, err, solInt=0.5, timeInt=100., FreqID=1, \
         try:
             if not check:
                 calib.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "Calib Failed retCode= "+str(calib.retCode)
             printMess(mess, logfile)
             return None
@@ -1541,8 +1545,8 @@ def VLBAOKCal(uv, minOKFract, err, \
         try:
             if not check:
                 calib.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "Calib Failed retCode= "+str(calib.retCode)
             printMess(mess, logfile)
             return None
@@ -1656,8 +1660,8 @@ def VLBAPCcor(uv, err, calSou=None,  timeRange=[0.,0.], FreqID=1, \
     try:
         if not check:
             pccor.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "PCCor Failed "
         printMess(mess, logfile)
         return 1
@@ -1831,8 +1835,8 @@ def VLBAManPCal(uv, err, solInt=0.5, smoTime=1.0, calSou=None, CalModel=None,
         try:
             if not check:
                 calib.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "Calib Failed retCode= "+str(calib.retCode)
             printMess(mess, logfile)
             return None
@@ -1873,8 +1877,8 @@ def VLBAManPCal(uv, err, solInt=0.5, smoTime=1.0, calSou=None, CalModel=None,
     try:
         if not check:
             snsmo.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "SNSmo Failed retCode="+str(snsmo.retCode)
         printMess(mess, logfile)
         return 1
@@ -2064,7 +2068,7 @@ def VLBABPass(uv, BPCal, err, CalModel=None, newBPVer=1, timeRange=[0.,0.], \
         # Get model details
         if CalModel and bpass.Sources[0].strip() in CalModel:
             Model = CalModel[bpass.Sources[0].strip()]
-            print "Model",Model
+            print("Model",Model)
             if Model["image"]:
                 if not check:
                     set2name(Model["image"], bpass)
@@ -2098,8 +2102,8 @@ def VLBABPass(uv, BPCal, err, CalModel=None, newBPVer=1, timeRange=[0.,0.], \
         try:
             if not check:
                 bpass.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "BPass Failed retCode="+str(bpass.retCode)
             return 1
             printMess(mess, logfile)
@@ -2175,8 +2179,8 @@ def VLBASpecPlot(uv, goodCal, err, doband=0, plotFile="./spec.ps", \
     try:
         if not check:
             lwpla.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Lwpla Failed - continuing anyway"
         printMess(mess, logfile)
         # return 1  # Continue in spite of lwpla failure
@@ -2299,8 +2303,8 @@ def VLBAImageCals(uv, err,  FreqID=1, Sources=None, seq=1, sclass="ImgSC", \
         try:
             if not check:
                 scmap.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             logger.warn("SCMap Failed retCode= "+str(scmap.retCode)+" for "+sou)
             OErr.PClear(err)
         else:
@@ -2448,8 +2452,8 @@ def VLBAImageTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", \
         try:
             if not check:
                 imager.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             logger.warn("Imager Failed retCode= "+str(imager.retCode)+" for "+sou)
             OErr.PClear(err)
         else:
@@ -2597,8 +2601,8 @@ def VLBADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
         try:
             if not check:
                 calib.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "Calib Failed retCode= "+str(calib.retCode)
             printMess(mess, logfile)
             #return None
@@ -2640,8 +2644,8 @@ def VLBADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
     try:
         if not check:
             snsmo.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "SNSmo Failed retCode="+str(snsmo.retCode)
         printMess(mess, logfile)
         return 1
@@ -2820,8 +2824,8 @@ def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0,
         try:
             if (not check) and (not noCal):
                 calib.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             logger.warn("Calib failed with retCode= " + str(calib.retCode) +
                 " for source " + cal)
             # If calib failed, remove cal from calSou
@@ -2861,8 +2865,8 @@ def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0,
     try:
         if not check:
             sncor.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "SNCor Failed retCode="+str(sncor.retCode)
         printMess(mess, logfile)
         return 1
@@ -2894,8 +2898,8 @@ def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0,
     try:
         if not check:
             snsmo.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "SNSmo Failed retCode="+str(snsmo.retCode)
         printMess(mess, logfile)
         return 1
@@ -3089,8 +3093,8 @@ def VLBAPhaseCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0/60.0, doSmo
         try:
             if not check:
                 calib.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "Calib Failed retCode= "+str(calib.retCode)+" for "+calsou
             logger.warn("Calib failed with retCode= " + str(calib.retCode) +
                 " for source " + cal)
@@ -3139,8 +3143,8 @@ def VLBAPhaseCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0/60.0, doSmo
         try:
             if not check:
                 snsmo.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "SNSmo Failed retCode="+str(snsmo.retCode)
             printMess(mess, logfile)
             return 1
@@ -3230,8 +3234,8 @@ def VLBADoppler(uv, err, Sources=None, timeRange=[0.,0.,0.,0., 0.,0.,0.,0], Freq
     try:
         if not check:
             cvel.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "CVEL Failed retCode= "+str(cvel.retCode)
         printMess(mess, logfile)
         return 1
@@ -3536,9 +3540,9 @@ def VLBASNStats(uv, SNver, solInt, err, refAnts=[0], logfile='', check=False, de
             return
     
     if debug:
-        print totAnt,"\n", snrAnt,"\n"
+        print(totAnt,"\n", snrAnt,"\n")
         for s in accum:
-            print s[0],s[1],s[2],s[3]
+            print(s[0],s[1],s[2],s[3])
 
     # Create output structure
     out = {"Source":souName, "souID":hi[0],"timeRange":hi[1], "Fract":hi[2], "SNR":hi[3], "bestRef":bestRef}
@@ -3704,9 +3708,9 @@ def VLBAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
     #
     # Checks
     if not Image.PIsA(inImage):
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Deblank filename
     fn = re.sub('\s','_',filename)
@@ -3778,9 +3782,9 @@ def VLBAUVFITS(inUV, filename, outDisk, err, compress=False, \
     ################################################################
     # Checks
     if not UV.PIsA(inUV):
-        raise TypeError,"inUV MUST be a Python Obit UV"
+        raise TypeError("inUV MUST be a Python Obit UV")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     #
     # Deblank filename
     fn = re.sub('\s','_',filename)
@@ -3790,7 +3794,7 @@ def VLBAUVFITS(inUV, filename, outDisk, err, compress=False, \
         OErr.printErrMsg(err, "Error creating FITS data")
     inInfo = UV.PGetList(outUV)    # 
     dim = [1,1,1,1,1]
-    #InfoList.PAlwaysPutInt (inInfo, "corrType", dim, [1])  
+    #InfoList.PAlwaysPutInt  (inInfo, "corrType", dim, [1])  
     inInfo.set("corrType", [1]) 
     #Compressed?
     if compress:
@@ -3841,9 +3845,9 @@ def VLBAUVFITSTab(inUV, filename, outDisk, err, \
     ################################################################
     # Checks
     if not UV.PIsA(inUV):
-        raise TypeError,"inUV MUST be a Python Obit UV"
+        raise TypeError("inUV MUST be a Python Obit UV")
     if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("err MUST be an OErr")
     # Remove pre-existing file (otherwise cfitsio may run very slowly) 
     if os.path.exists(filename):
         os.remove(filename)
@@ -3940,8 +3944,8 @@ def VLBAMedianFlag(uv, target, err, \
     try:
         if not check:
             medn.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Median flagging Failed retCode="+str(medn.retCode)
         printMess(mess, logfile)
         return 1
@@ -4010,8 +4014,8 @@ def VLBAQuack(uv, err, \
     try:
         if not check:
             quack.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Quack Failed retCode= "+str(quack.retCode)
         printMess(mess, logfile)
         return 1
@@ -4101,8 +4105,8 @@ def VLBAAutoFlag(uv, target, err, \
     try:
         if not check:
             af.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "AutoFlag Failed retCode="+str(af.retCode)
         printMess(mess, logfile)
         return 1
@@ -4177,8 +4181,8 @@ def VLBACal(uv, target, ACal, err, \
     try:
         if not check:
             setjy.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "SetJy Failed retCode="+str(setjy.retCode)
         printMess(mess, logfile)
         return 1
@@ -4200,8 +4204,8 @@ def VLBACal(uv, target, ACal, err, \
             try:
                 if not check:
                     setjy.g
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
                 mess = "SetJy Failed retCode="+str(setjy.retCode)
                 printMess(mess, logfile)
                 return 1
@@ -4242,8 +4246,8 @@ def VLBACal(uv, target, ACal, err, \
     try:
         if not check:
             calib.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Calib Failed retCode= "+str(calib.retCode)
         printMess(mess, logfile)
         return 1
@@ -4286,8 +4290,8 @@ def VLBACal(uv, target, ACal, err, \
             try:
                 if not check:
                     calib.g
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
                 mess = "Calib Failed retCode= "+str(calib.retCode)
                 printMess(mess, logfile)
                 return 1
@@ -4316,8 +4320,8 @@ def VLBACal(uv, target, ACal, err, \
             try:
                 if not check:
                     snsmo.g
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
                 mess = "SNSmo Failed retCode="+str(snsmo.retCode)
                 printMess(mess, logfile)
                 return 1
@@ -4346,8 +4350,8 @@ def VLBACal(uv, target, ACal, err, \
             try:
                 if not check:
                     getjy.g
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
                 mess = "GetJy Failed retCode="+str(getjy.retCode)
                 printMess(mess, logfile)
                 return 1
@@ -4377,8 +4381,8 @@ def VLBACal(uv, target, ACal, err, \
     try:
         if not check:
             clcal.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "clcal Failed retCode="+str(clcal.retCode)
         printMess(mess, logfile)
         return 1
@@ -4424,8 +4428,8 @@ def VLBASplit(uv, target, err, FQid=1, outClass="      ", logfile = "", \
     try:
         if not check:
             split.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "split Failed retCode="+str(split.retCode)
         printMess(mess, logfile)
         return 1
@@ -4499,8 +4503,8 @@ def VLBACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
     try:
         if not check:
             splat.g
-    except Exception, exception:
-        print exception
+    except Exception as exception:
+        print(exception)
         mess = "Splat Failed retCode="+str(splat.retCode)
         printMess(mess, logfile)
         return 1
@@ -4514,7 +4518,7 @@ def VLBACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
             uvname = uv.GetName()+"_Cal"
             uvc = UV.newPAUV(uvname, splat.inName, avgClass, splat.inDisk, avgSeq, True, err)
             if err.isErr:
-                print "Error creating cal/avg AIPS data"
+                print("Error creating cal/avg AIPS data")
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
             # Dummy CL table
             solint = splat.timeAvg * 2   # CL table interval twice averaging
@@ -4522,15 +4526,15 @@ def VLBACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
             if (doCalib>0) or (hiver<=0):
                 UV.PTableCLGetDummy(uvc, uvc, 0, err, solInt=solint)
             if err.isErr:
-                print "Error creating cal/avg AIPS data CL table"
+                print("Error creating cal/avg AIPS data CL table")
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data CL table")
             # Index
             UV.PUtilIndex (uvc, err)
             if err.isErr:
-                print  "Error indexing cal/avg AIPS data"
+                print("Error indexing cal/avg AIPS data")
                 OErr.printErrMsg(err, "Error indexing cal/avg AIPS data")
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             OErr.printErr(err)
             mess = "Indexing or creating CL table failed"
             printMess(mess, logfile)
@@ -4607,7 +4611,7 @@ def VLBACalAvg2(uv, avgClass, avgSeq, CalAvgTime,  err, \
         uv.Close(err)
         #outuv.Header(err) # debug
         if err.isErr:
-            print "Error creating cal/avg AIPS uv data"
+            print("Error creating cal/avg AIPS uv data")
             OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
     
     # Average
@@ -4621,10 +4625,10 @@ def VLBACalAvg2(uv, avgClass, avgSeq, CalAvgTime,  err, \
             info.set("Compress", Compress,)
             UV.PUtilAvgT (uv, outuv, err, timeAvg=CalAvgTime/60.)
             if err.isErr:
-                print "Error cal/avg AIPS uv data"
+                print("Error cal/avg AIPS uv data")
                 OErr.printErrMsg(err, "Error cal/avg AIPS data")
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             OErr.printErr(err)
             mess = "Calibrate and average uv data failed"
             printMess(mess, logfile)
@@ -4665,11 +4669,11 @@ def VLBACalAvg2(uv, avgClass, avgSeq, CalAvgTime,  err, \
             outHistory.Close(err)
             #print "DEBUG Copy history done"
             if err.isErr:
-                print "Error cal/avg History"
+                print("Error cal/avg History")
                 OErr.printErrMsg(err,"History Error")
                 # end copy+history
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             OErr.printErr(err)
             mess = "Calibrate and average uv data failed"
             printMess(mess, logfile)
@@ -4684,15 +4688,15 @@ def VLBACalAvg2(uv, avgClass, avgSeq, CalAvgTime,  err, \
             solint = 2 * CalAvgTime/60.   # CL table interval twice averaging
             UV.PTableCLGetDummy(ooutuv, ooutuv, 0, err, solInt=solint)
             if err.isErr:
-                print "Error creating cal/avg AIPS data CL table"
+                print("Error creating cal/avg AIPS data CL table")
                 OErr.printErrMsg(err,"Error in dummy CL table")
             # Index
             UV.PUtilIndex (ooutuv, err)
             if err.isErr:
-                print  "Error indexing cal/avg AIPS data"
+                print("Error indexing cal/avg AIPS data")
                 OErr.printErrMsg(err,"Error indexing")
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             OErr.printErr(err)
             mess = "Indexing or creating CL table failed"
             printMess(mess, logfile)
@@ -4821,8 +4825,8 @@ def VLBAPolCal(uv, InsCals, err, \
         try:
             if not check:
                 setjy.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "SetJy Failed retCode="+str(setjy.retCode)
             printMess(mess, logfile)
             return 1
@@ -4864,8 +4868,8 @@ def VLBAPolCal(uv, InsCals, err, \
         try:
             if not check:
                 pcal.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "PCAL Failed retCode="+str(pcal.retCode)
             printMess(mess, logfile)
             return 1
@@ -4962,15 +4966,15 @@ def VLBARLCal(uv, err, RLPCal=None, \
         rlpass.RLPhase   = RLPCal[ical][1]
         rlpass.RM        = RLPCal[ical][2]
         if debug:
-            print "timerange", rlpass.timerang
+            print("timerange", rlpass.timerang)
             rlpass.i
             rlpass.debug = True
         # Trap failure
         try:
             if not check:
                 rlpass.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "rlpass Failed retCode="+str(rlpass.retCode)
             printMess(mess, logfile)
             return 1
@@ -5060,14 +5064,14 @@ def VLBARLCal2(uv, err, uv2 = None, \
         rldly.refant  = refAnt
         rldly.solint  = dataInt
         if debug:
-            print "timerange", rldly.timerang
+            print("timerange", rldly.timerang)
             rldly.i
         # Trap failure
         try:
             if not check:
                 rldly.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "rldly Failed retCode="+str(rldly.retCode)
             printMess(mess, logfile)
             return 1
@@ -5152,8 +5156,8 @@ def VLBARLCal2(uv, err, uv2 = None, \
                 try:
                     if not check:
                         img.g
-                except Exception, exception:
-                    print exception
+                except Exception as exception:
+                    print(exception)
                     mess = "Imager Failed retCode="+str(img.retCode)
                     printMess(mess, logfile)
                     return 1
@@ -5315,13 +5319,13 @@ def VLBARLCal2(uv, err, uv2 = None, \
             VLBACopyTable (uv, uv2, "AIPS AN", err, \
                            logfile=logfile, check=check, debug=debug)
             if err.isErr:
-                print  "Error copying AN Table"
+                print("Error copying AN Table")
                 return 1
         # Copy CL table to be modified
         VLBACopyTable (uv, uv, "AIPS CL", err, inVer=gainUse, outVer=hiCL+1, \
                            logfile=logfile, check=check, debug=debug)
         if err.isErr:
-            print  "Error copying CL Table"
+            print("Error copying CL Table")
             return 1
         
         # Apply R-L phase corrections
@@ -5341,8 +5345,8 @@ def VLBARLCal2(uv, err, uv2 = None, \
             if not check:
                 #clcor.i
                 clcor.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "CLCOR Failed retCode="+str(clcor.retCode)
             printMess(mess, logfile)
             return 1
@@ -5359,7 +5363,7 @@ def VLBARLCal2(uv, err, uv2 = None, \
                 VLBACopyTable (uv, uv, "AIPS CL", err, inVer=hiCL, outVer=hiCL+1, \
                                    logfile=logfile, check=check, debug=debug)
                 if err.isErr:
-                    print  "Error copying CL Table"
+                    print("Error copying CL Table")
                     return 1
                 
                 clcor.gainver  = hiCL+1
@@ -5371,8 +5375,8 @@ def VLBARLCal2(uv, err, uv2 = None, \
             try:
                 if not check:
                     clcor.g
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
                 mess = "CLCOR Failed retCode="+str(clcor.retCode)
                 printMess(mess, logfile)
                 return 1
@@ -5793,7 +5797,7 @@ def VLBAImageModel(snames, sclass, sdisk, sseq, err, \
                     x =  Image.newPAImage(name, name, sclass, sdisk, sseq, True, err)
                 else:
                     x = None
-            except Exception, exception:
+            except Exception as exception:
                 err.Clear()
             else:
                 if x:
@@ -5807,7 +5811,7 @@ def VLBAImageModel(snames, sclass, sdisk, sseq, err, \
                 x =  Image.newPAImage(snames, snames, sclass, sdisk, sseq, True, err)
             else:
                 x = None
-        except Exception, exception:
+        except Exception as exception:
             err.Clear()
         else:
             if x:
@@ -5877,8 +5881,8 @@ def VLBASNAppend (inSN, outSN, err):
     outSN.Open(Table.READWRITE, err)
     if err.isErr:
         return
-    print "Input",inSN.Desc.Dict
-    print "Output",outSN.Desc.Dict
+    print("Input",inSN.Desc.Dict)
+    print("Output",outSN.Desc.Dict)
     # Number of rows
     nrow =  inSN.Desc.Dict["nrow"]
     for i in range (0,nrow):    # Loop over rows
@@ -5995,7 +5999,7 @@ def VLBADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
                 try:
                     uvplt.go()
                     lwpla.go()
-                except Exception, exception:
+                except Exception as exception:
                     logger.error( "Plotting failed - continuing anyway" )
                     logger.error( exception )
                 else:
@@ -6098,8 +6102,8 @@ def VLBAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
         try:
             if not check:
                 lwpla.g
-        except Exception, exception:
-            print exception
+        except Exception as exception:
+            print(exception)
             mess = "Lwpla Failed - continuing anyway"
             printMess(mess, logfile)
         else:
@@ -6116,7 +6120,7 @@ def VLBAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
         cmd = 'pstops 1000:0 ' + outfile + ' > ' + tmpPS + ';' + \
             'ps2pdf ' + tmpPS + ' ' + tmpPDF + ';' + \
             'convert -density 96 ' + tmpPDF + ' ' + jpg
-        print cmd
+        print(cmd)
         rtn = os.system(cmd)
         if rtn == 0: 
             VLBAAddOutFile( jpg, name, "Contour plot (Stokes I)" )
@@ -6491,7 +6495,7 @@ table {
         s += "<tr>\n"
         if metadata['Source'] in outfiles['source']:
             fileList = outfiles['source'][ metadata['Source'] ]
-            tList = range(4)
+            tList = list(range(4))
             for f in fileList:
                 if f['name'].find('cntr.jpg') != -1: tList[0] = f
                 if f['name'].find('amp.jpg') != -1: tList[1] = f 
@@ -6527,7 +6531,7 @@ def writeTableRow( dict, keys=None ):
     * keys = dictionary keys to be written
     """
     if not keys:
-        keys = dict.keys()
+        keys = list(dict.keys())
     s = ""
     # Write a row of the HTML table for every key in keys.  Handle some key
     # values specially.
@@ -6614,7 +6618,7 @@ def VLBAAddOutFile( filename, target, description, logFile=""):
         if ( not d in projFiles ): # If file is not already in list     
             projFiles.append( d ) # Add file to project list
     else: # else, it is a single-source file
-        if srcFiles.has_key( target ): # If files already exist for this source
+        if target in srcFiles: # If files already exist for this source
             if ( not d in srcFiles[ target ] ): # If file is not already in list 
                 srcFiles[ target ].append( d ) # Add file to target list
         else:
@@ -6639,7 +6643,7 @@ def VLBAFetchOutFiles( pickleFile='outfiles.pickle' ):
     notExists = [ file for file in outfiles['project'] 
         if not os.path.exists( file['name'] ) ]
     for file in notExists:
-        print "Doesn't exist (project) " + file['name']
+        print("Doesn't exist (project) " + file['name'])
         logger.warn("Pipeline outfiles pickle points to non-existant project file: " 
            + file['name'] + "\n  Removing file from outfiles.")
     outfiles['project'] = exists
@@ -6647,13 +6651,13 @@ def VLBAFetchOutFiles( pickleFile='outfiles.pickle' ):
     # Check single-source files
     srcFiles = outfiles['source']
     srcFiles_copy = copy.deepcopy( srcFiles )
-    srcKeys = srcFiles.keys()
+    srcKeys = list(srcFiles.keys())
     for srcName in srcKeys:
         # Check files for each source
         for file in srcFiles_copy[ srcName ]: 
             if not os.path.exists( file['name'] ):
                 srcFiles[ srcName ].remove( file ) # remove from original
-                print "Doesn't exist (source) " + file['name']
+                print("Doesn't exist (source) " + file['name'])
                 logger.warn("Pipeline outfiles pickle points to non-existant source file: " 
                     + file['name'] + "\n  Removing file from outfiles.")
         # If this source no longer has files, remove it
@@ -6677,7 +6681,7 @@ def VLBAMakeOutfilesList( outfiles=outfiles ):
     srcFiles = [] # list of files to be copied
     for file in outfiles['project']:
         srcFiles.append( file['name'] )
-    srcKeys = outfiles['source'].keys()
+    srcKeys = list(outfiles['source'].keys())
     for srcKey in srcKeys:
         for file in outfiles['source'][ srcKey ]:    
             srcFiles.append( file['name'] )
@@ -6828,8 +6832,8 @@ def VLBAPrepare( starttime, stoptime, fitsDest, outputDest, project=None,
     """
     response = QueryArchive( starttime, stoptime, project )
     fileList = ParseArchiveResponse( response )
-    print SummarizeArchiveResponse( fileList )
-    print "Download file #: ",
+    print(SummarizeArchiveResponse( fileList ))
+    print("Download file #: ", end=' ')
     fileNum = int( sys.stdin.readline() )
     fileDict = fileList[fileNum]
     response = DownloadArchiveFile( fileDict, fitsDest )
@@ -6839,8 +6843,8 @@ def VLBAPrepare( starttime, stoptime, fitsDest, outputDest, project=None,
     if not parmFile:
         parmFile = "VLBAContParm_" + fileDict['project_code'] + '.py'
     VLBAMakeParmFile( parmList, parmFile )
-    print "Start pipeline with command:"
-    print "python VLBAContPipe.py AIPSSetup.py " + parmFile
+    print("Start pipeline with command:")
+    print("python VLBAContPipe.py AIPSSetup.py " + parmFile)
 
 def VLBAWriteVOTable( projMeta, srcMeta, filename="votable.xml" ):
     """
@@ -6865,7 +6869,7 @@ def VLBAWriteVOTable( projMeta, srcMeta, filename="votable.xml" ):
     vo.appendChild(rs2)
 
     # Write project metadata
-    keys = projMeta.keys()
+    keys = list(projMeta.keys())
     setAttribs = XMLSetAttributes # use short name - save space
     for key in keys:
         pr = doc.createElement("param")
@@ -7070,7 +7074,7 @@ def VLBAWriteVOTable( projMeta, srcMeta, filename="votable.xml" ):
         vo.appendChild(rs3)
 
         # Src metadata
-        keys = src.keys()
+        keys = list(src.keys())
         for key in keys:
             pr = doc.createElement("param")
             if key == "ObsDate":

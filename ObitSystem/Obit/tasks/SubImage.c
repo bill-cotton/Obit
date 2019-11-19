@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task - SubImage copy a subregion of an image                  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2017                                          */
+/*;  Copyright (C) 2005-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -885,20 +885,22 @@ void SubImageCopy (ObitInfoList* myInput, ObitImage* inImage,
       noParms = 0;
       inCC = newObitTableCCValue ("inCC", (ObitData*)inImage, &inVer, OBIT_IO_ReadOnly, 
 				  noParms, err);
-      /* Open/close to get header */
-      ObitTableCCOpen(inCC, OBIT_IO_ReadOnly, err);
-      ObitTableCCClose(inCC, err);
-      /* Find one? */
-      if (inCC==NULL) continue;
-      noParms = inCC->noParms;
-      outVer = inVer-blc[2]+1;
-      outCC = newObitTableCCValue ("outCC", (ObitData*)outImage, &outVer, OBIT_IO_WriteOnly, 
-				   noParms, err);
-      if (err->error) Obit_traceback_msg (err, routine, outImage->name);
-      outCC = ObitTableCCCopy (inCC, outCC, err);
-      if (err->error) Obit_traceback_msg (err, routine, outImage->name);
-      inCC = ObitTableCCUnref(inCC);
-      outCC = ObitTableCCUnref(outCC);
+      if (inCC) {
+	/* Open/close to get header */
+	ObitTableCCOpen(inCC, OBIT_IO_ReadOnly, err);
+	ObitTableCCClose(inCC, err);
+	/* Find one? */
+	if (inCC==NULL) continue;
+	noParms = inCC->noParms;
+	outVer = inVer-blc[2]+1;
+	outCC = newObitTableCCValue ("outCC", (ObitData*)outImage, &outVer, OBIT_IO_WriteOnly, 
+				     noParms, err);
+	if (err->error) Obit_traceback_msg (err, routine, outImage->name);
+	outCC = ObitTableCCCopy (inCC, outCC, err);
+	if (err->error) Obit_traceback_msg (err, routine, outImage->name);
+	inCC = ObitTableCCUnref(inCC);
+	outCC = ObitTableCCUnref(outCC);
+      } /* end if exists */
     } /* end loop over tables */
   } /* end of select tables */
 

@@ -26,6 +26,8 @@
 #                         520 Edgemont Road
 #                         Charlottesville, VA 22903-2475 USA
 #-----------------------------------------------------------------------
+from __future__ import absolute_import
+from __future__ import print_function
 import Obit, Table, FArray, OErr, InfoList, History, AIPSDir, OSystem
 import Image, ImageDesc, TableList, ODisplay, UV, OWindow
 import os, AIPS
@@ -150,10 +152,10 @@ def getname(cno, disk=Adisk):
     Atype = s[26:28]
     if Atype == 'MA':
         out = Image.newPAImage("AIPS image", Aname, Aclass, disk, Aseq, True, err)
-        print "AIPS Image",Aname, Aclass, disk, Aseq
+        print("AIPS Image",Aname, Aclass, disk, Aseq)
     elif Atype == 'UV':
         out = UV.newPAUV("AIPS UV data", Aname, Aclass, disk, Aseq, True, err)
-        print "AIPS UV",Aname, Aclass, disk, Aseq
+        print("AIPS UV",Aname, Aclass, disk, Aseq)
     out.Aname  = Aname
     out.Aclass = Aclass
     out.Aseq   = Aseq 
@@ -343,7 +345,7 @@ def setwindow (w, out):
     # Must be rectangle
     l =  OWindow.PGetList(w, 1, err)
     if l[0][1] !=0:
-        raise TypeError,"Window MUST be a rectangle"
+        raise TypeError("Window MUST be a rectangle")
     out.BLC[0] = l[0][2]+1  # make 1-rel
     out.BLC[1] = l[0][3]+1  
     out.TRC[0] = l[0][4]+1  

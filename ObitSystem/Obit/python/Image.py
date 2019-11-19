@@ -50,10 +50,13 @@ Additional  Functions are available in ImageUtil.
 #-----------------------------------------------------------------------
 
 # Obit Image manupulation
-import Obit, Table, FArray, OErr, ImageDesc, InfoList, History, AIPSDir, OSystem
+from __future__ import absolute_import
+from __future__ import print_function
+import Obit, _Obit, Table, FArray, OErr, ImageDesc, InfoList, History, AIPSDir, OSystem
 import TableList, AIPSDir, FITSDir, ImageFit, FitRegion, FitModel
 import OData
 import SkyGeom, math
+from six.moves import range
 #import AIPSData
 
 # Python shadow class to ObitImage class
@@ -61,25 +64,28 @@ import SkyGeom, math
 # class name in C
 myClass = "ObitImage"
 
-class Image(OData.OData):
+class Image(Obit.Image, OData.OData):
     """
     Python Obit Image class
     
     Additional Functions are available in ImageUtil.
     """
     def __init__(self, name) :
+        super(Image, self).__init__()
+        Obit.CreateImage(self.this, name)
         self.myClass = myClass
-        self.this = Obit.new_Image(name)
-    def __del__(self):
-        if Obit!=None:
-            Obit.delete_Image(self.this)
-
+    def __del__(self, DeleteImage=_Obit.DeleteImage):
+        if _Obit!=None:
+            DeleteImage(self.this)
     def __setattr__(self,name,value):
         if name == "me" :
-            # Out with the old
-            Obit.ImageUnref(Obit.Image_me_get(self.this))
+            if value==None:
+                raise TypeError("None given for Image object")
+             # Out with the old
+            if self.this!=None:
+                Obit.ImageUnref(Obit.Image_Get_me(self.this))
             # In with the new
-            Obit.Image_me_set(self.this,value)
+            Obit.Image_Set_me(self.this,value)
             return
         if name=="FArray":
             PSetFArray(self, value)
@@ -87,36 +93,34 @@ class Image(OData.OData):
             return PSetBeam(self, value)
         self.__dict__[name] = value
     def __getattr__(self,name):
-        if self.__class__ != Image:
-            return
+        if not isinstance(self, Image):
+            return "Bogus dude "+str(self.__class__)
         if name == "me" : 
-            return Obit.Image_me_get(self.this)
+            return Obit.Image_Get_me(self.this)
         # Functions to return members
         if name=="List":
             if not self.ImageIsA():
-                raise TypeError,"input MUST be a Python Obit Image"
+                raise TypeError("input MUST be a Python Obit Image")
             out    = InfoList.InfoList()
-            out.me = Obit.InfoListUnref(out.me)
-            out.me = Obit.ImageGetList(self.cast(myClass))
+            out.me = Obit.ImageGetList(self.me)
             return out
         if name=="TableList":
             if not self.ImageIsA():
-                raise TypeError,"input MUST be a Python Obit Image"
+                raise TypeError("input MUST be a Python Obit Image")
             out    = TableList.TableList("TL")
-            out.me = Obit.TableListUnref(out.me)
-            out.me = Obit.ImageGetTableList(self.cast(myClass))
+            out.me = Obit.ImageGetTableList(self.me)
             return out
         if name=="Desc":
             if not self.ImageIsA():
-                raise TypeError,"input MUST be a Python Obit Image"
+                raise TypeError("input MUST be a Python Obit Image")
             out    = ImageDesc.ImageDesc("None")
-            out.me = Obit.ImageGetDesc(self.cast(myClass))
+            out.me = Obit.ImageGetDesc(self.me)
             return out
         if name=="IODesc":
             if not self.ImageIsA():
-                raise TypeError,"input MUST be a Python Obit Image"
+                raise TypeError("input MUST be a Python Obit Image")
             out    = ImageDesc.ImageDesc("None")
-            out.me = Obit.ImageGetIODesc(self.cast(myClass))
+            out.me = Obit.ImageGetIODesc(self.me)
             return out
         if name=="FArray":
             return PGetFArray(self)
@@ -124,28 +128,15 @@ class Image(OData.OData):
             return PGetBeam(self)
         if name=="PixBuf":
             if not self.ImageIsA():
-                raise TypeError,"input MUST be a Python Obit Image"
+                raise TypeError("input MUST be a Python Obit Image")
             fa = self.FArray
             return Obit.FArrayGetBuf(fa.me)
-        raise AttributeError,str(name)  # Unknown
+        raise AttributeError(str(name))  # Unknown
     def __repr__(self):
         if self.__class__ != Image:
             return
-        return "<C Image instance> " + Obit.ImageGetName(self.cast(myClass))
+        return "<C Image instance> " + Obit.ImageGetName(self.me)
     
-    def cast(self, toClass):
-        """
-        Casts object pointer to specified class
-
-        * self     = object whose cast pointer is desired
-        * toClass  = Class string to cast to ("ObitImage")
-        """
-        # Get pointer with type of this class
-        out = self.me
-        out = out.replace(self.myClass, toClass)
-        return out
-    # end cast
-            
     def Open (self, access, err, blc=None, trc=None):
         """
         Open an image persistent (disk) form
@@ -298,7 +289,7 @@ class Image(OData.OData):
         ################################################################
         # Checks
         if not self.ImageIsA():
-            raise TypeError,"self MUST be a Python Obit Image"
+            raise TypeError("self MUST be a Python Obit Image")
         #
         self.Open(READONLY,err)
         if err.isErr:
@@ -336,18 +327,18 @@ class Image(OData.OData):
         ################################################################
         # Checks
         if not self.ODataIsA():
-            raise TypeError,"self MUST be a Python Obit OData"
-        if not OErr.OErrIsA(err):
-            raise TypeError,"err MUST be an OErr"
+            raise TypeError("self MUST be a Python Obit OData")
+        if not err.IsA():
+            raise TypeError("err MUST be an OErr")
         if len(newAIPSName)>12:
-            raise RuntimeError,"New AIPS Name too long"
+            raise RuntimeError("New AIPS Name too long")
         if len(newAIPSClass)>6:
-            raise RuntimeError,"New AIPS Class too long"
+            raise RuntimeError("New AIPS Class too long")
         #
         # Set controls
         inInfo = self.List    # 
         dim = [1,1,1,1,1]
-        InfoList.PAlwaysPutInt     (inInfo, "newSeq",       dim, [newAIPSSeq])
+        InfoList.PAlwaysPutInt      (inInfo, "newSeq",       dim, [int(newAIPSSeq)])
         dim[0] = 12
         InfoList.PAlwaysPutString  (inInfo, "newName",    dim, [newAIPSName])
         dim[0] = 6
@@ -356,7 +347,7 @@ class Image(OData.OData):
             dim[0] = len(newFITSName)
             InfoList.PAlwaysPutString  (inInfo, "newFileName",dim, [newFITSName])
         # Rename
-        Obit.ImageRename (self.cast(myClass), err.me)
+        Obit.ImageRename (self.me, err.me)
         if err.isErr:
             OErr.printErrMsg(err, "Error Renaming OData data")
     # end PRename
@@ -400,12 +391,12 @@ class Image(OData.OData):
         ################################################################
         # Checks
         if not self.ImageIsA():
-            raise TypeError,"self MUST be a Python Obit Image"
-        if not OErr.OErrIsA(err):
-            raise TypeError,"err MUST be an OErr"
+            raise TypeError("self MUST be a Python Obit Image")
+        if not err.IsA():
+            raise TypeError("err MUST be an OErr")
         #
         outImage    = Image("None")
-        outImage.me = Obit.ImageScratch (self.cast(myClass), err.me);
+        outImage.me = Obit.ImageScratch(self.me, err.me)
         outImage.Info(err)
         if err.isErr:
             OErr.printErrMsg(err, "Error creating scratch file")
@@ -449,13 +440,12 @@ class Image(OData.OData):
         """
         Tells if input really a Python Obit Image
         
-        return true, false (1,0)
-
+        return True, False
         * self   = Python Image object
         """
         ################################################################
         # Allow derived types
-        return Obit.ImageIsA(self.cast(myClass))
+        return Obit.ImageIsA(self.me)
 
     def TVFit (self, disp, err, file=None):
         """
@@ -525,8 +515,8 @@ class Image(OData.OData):
         # Fitting region
         d = self.Desc.Dict
         if cen==None:
-            cen = [d["inaxes"][0]/2, d["inaxes"][1]/2]
-        corner = [int(cen[0]-dim[0]/2), int(cen[1]-dim[1]/2)]
+            cen = [d["inaxes"][0]//2, d["inaxes"][1]//2]
+        corner = [int(cen[0]-dim[0]//2), int(cen[1]-dim[1]//2)]
         # set initial model
         i=0
         fm = []
@@ -534,7 +524,7 @@ class Image(OData.OData):
             flx = min(flux[i],d["maxval"])
             if flx<1.0e-10:  # Trap missing maxval
                 flx = flux[i]
-            fm.append(FitModel.FitModel(type=FitModel.GaussMod, Peak=flx, \
+            fm.append(FitModel.FitModel(mtype=FitModel.GaussMod, Peak=flx, \
                                         parms=gparm[i], \
                                         DeltaX=x[i]+dim[0]/2, DeltaY=y[i]+dim[1]/2));
         fr = FitRegion.FitRegion(corner=corner,dim=dim,models=fm)
@@ -565,7 +555,7 @@ class Image(OData.OData):
 dim = [1,1,1,1,1]
 blc = [1,1,1,1,1,1,1]
 trc = [0,0,0,0,0,0,0]
-err = OErr.OErr()
+#err = OErr.OErr()
 
 # Symbolic names for access codes
 READONLY  = OData.READONLY  # 1
@@ -578,15 +568,15 @@ def ObitName(ObitObject):
     """
     ################################################################
     out = ObitObject    # in case
-    if type(out) == types.StringType:
+    if type(out) == bytes:
         return out
-    if ObitObject.me.find("_ObitImage_p") >= 0:
+    if ObitObject.me.find("ObitImage_p") >= 0:
         return Obit.ImageGetName(ObitObject.me)
-    if ObitObject.me.find("_ObitOTF_p") >= 0:
+    if ObitObject.me.find("ObitOTF_p") >= 0:
         return Obit.OTFGetName(ObitObject.me)
-    if ObitObject.me.find("_ObitTable_p") >= 0:
+    if ObitObject.me.find("ObitTable_p") >= 0:
         return Obit.TableGetName(ObitObject.me)
-    if ObitObject.me.find("_Obit_p") >= 0:
+    if ObitObject.me.find("Obit_p") >= 0:
         return Obit.GetName(ObitObject.me)
     return out
     # end ObitName
@@ -599,15 +589,15 @@ def input(inputDict):
     * inputDict = Python Dictionary containing the parameters for a routine
     """
     ################################################################
-    print 'Current values of entries'
-    myList = inputDict.items()
+    print('Current values of entries')
+    myList = list(inputDict.items())
     myList.sort()
     for k,v in myList:
         # Print name of Obit objects (or string)
         #if (type(v)==types.StringType):
         #    print '  ',k,' = ',ObitName(v)
         #else:
-        print '  ',k,' = ',v
+        print('  ',k,' = ',v)
         
     # end input
 
@@ -695,7 +685,7 @@ def newPFImage(name, filename, disk, exists, err, verbose=True):
     outd = out.Desc.Dict
     if outd["inaxes"][0]==777777701:
         out.isOK = False
-        raise TypeError,"Error: Object probably uvtab (UV) data"
+        raise TypeError("Error: Object probably uvtab (UV) data")
 
     # It work?
     if not out.isOK:
@@ -752,8 +742,8 @@ def newPAImage(name, Aname, Aclass, disk, seq, exists, err, verbose=False):
     out.isOK = True  # until proven otherwise
     cno = -1
     user = OSystem.PGetAIPSuser()
-    # print "disk, aseq", disk, seq
     # Does it really previously exist?
+    OErr.printErr(err)
     test = AIPSDir.PTestCNO(disk, user, Aname, Aclass, "MA", seq, err)
     out.exist = test>0
     if exists: # If user thinks file exists...
@@ -883,13 +873,13 @@ def PReadPlane (inImage, err, blc=None, trc=None):
     returns Python  FArray from Image with data read
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,'inImage MUST be a Python Obit Image'
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError('inImage MUST be a Python Obit Image')
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     # Read image
     inImage.Open(READONLY, err, blc, trc)
@@ -913,22 +903,22 @@ def PWritePlane (Image, imageData, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if Image.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+Image.myClass
+    if ('myClass' in Image.__dict__) and (Image.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+Image.myClass)
     # Checks
     if not Image.ImageIsA():
-        raise TypeError,"Image MUST be a Python Obit Image"
+        raise TypeError("Image MUST be a Python Obit Image")
     if not FArray.PIsA(imageData):
-        raise TypeError,"imageData MUST be a Python Obit FArray"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("imageData MUST be a Python Obit FArray")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     # Write image
     Image.Open(READWRITE, err)
     # Check that FArrays are compatible
     idtest = PGetFArray(Image)
     if not FArray.PIsCompatable (imageData, idtest):
-        raise RuntimeError,'Images incompatable'
+        raise RuntimeError('Images incompatable')
     Image.WriteFA(imageData, err)
     Image.Close(err)
     #OErr.printErrMsg(err, "Error writing images")
@@ -941,11 +931,11 @@ def PMaxMin (im, err):
     * im     = Python Image object
     * err    = Python Obit Error/message stack
     """
-    if im.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+im.myClass
+    if ('myClass' in im.__dict__) and (im.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+im.myClass)
     # Checks
     if not im.ImageIsA():
-        raise TypeError,"Image MUST be a Python Obit Image"
+        raise TypeError("Image MUST be a Python Obit Image")
     Obit.ImageMaxMin (im.me, err.me)
 # end PmaxMin
 
@@ -957,7 +947,7 @@ def PZap (inImage, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
         inImage.zap()
         return
     inImage.Zap(err)
@@ -979,8 +969,8 @@ def PRename (inImage, err, newFITSName=None, \
     newAIPSSeq   = New AIPS Sequence number, 0 => unique value
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     inImage.Rename(err,newFITSName=newFITSName, \
                    newAIPSName=newAIPSName, newAIPSClass=newAIPSClass,
                    newAIPSSeq=newAIPSSeq)
@@ -997,8 +987,8 @@ def PScratch (inImage, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     return inImage.Scratch(err)
     # end PScratch
 
@@ -1013,17 +1003,17 @@ def PCopy (inImage, outImage, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not outImage.ImageIsA():
-        raise TypeError,"outImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("outImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
-    Obit.ImageCopy (inImage.cast(myClass), outImage.cast(myClass), err.me)
+    Obit.ImageCopy (inImage.me, outImage.me, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error copying Image")
     # end PCopy
@@ -1039,17 +1029,17 @@ def PClone (inImage, outImage, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not outImage.ImageIsA():
-        raise TypeError,"outImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("outImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
-    Obit.ImageClone (inImage.cast(myClass), outImage.cast(myClass), err.me)
+    Obit.ImageClone (inImage.me, outImage.me, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error cloning Image")
     # end PClone
@@ -1065,20 +1055,19 @@ def PClone2 (inImage1, inImage2, outImage, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage1.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage1.myClass
+    if ('myClass' in inImage1.__dict__) and (inImage1.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage1.myClass)
     # Checks
     if not inImage1.ImageIsA():
-        raise TypeError,"inImage1 MUST be a Python Obit Image"
+        raise TypeError("inImage1 MUST be a Python Obit Image")
     if not inImage2.ImageIsA():
-        raise TypeError,"inImage2 MUST be a Python Obit Image"
+        raise TypeError("inImage2 MUST be a Python Obit Image")
     if not outImage.ImageIsA():
-        raise TypeError,"outImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("outImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
-    Obit.ImageClone2 (inImage1.cast(myClass), inImage2.cast(myClass), \
-                      outImage.cast(myClass), err.me)
+    Obit.ImageClone2 (inImage1.me, inImage2.me, outImage.me, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error cloning Image")
     # end PClone2
@@ -1094,17 +1083,17 @@ def PCloneMem (inImage, outImage, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not outImage.ImageIsA():
-        raise TypeError,"outImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("outImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
-    Obit.ImageCloneMem (inImage.cast(myClass), outImage.cast(myClass), err.me)
+    Obit.ImageCloneMem (inImage.me, outImage.me, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error cloning Image")
     # end PCloneMem
@@ -1125,15 +1114,15 @@ def PCopyQuantizeFITS (inImage, outImage, err, fract=0.25, quant=None, \
     * inHistory = if given a History object to copy to the output FITS header
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not outImage.ImageIsA():
-        raise TypeError,"outImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("outImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     # Add parameters
     inInfo = PGetList(inImage)    #
@@ -1146,7 +1135,7 @@ def PCopyQuantizeFITS (inImage, outImage, err, fract=0.25, quant=None, \
         InfoList.PRemove          (inInfo, "factor")
 
     # Copy data
-    outImage.me = Obit.ImageUtilQuanFITS (inImage.cast(myClass), outImage.FileName, \
+    outImage.me = Obit.ImageUtilQuanFITS (inImage.me, outImage.FileName, \
                                           outImage.Disk, err.me)
 
     # Input image info
@@ -1180,15 +1169,15 @@ def PCompare (in1Image, in2Image, err, plane=[1,1,1,1,1]):
     * plane     = plane to compare
     """
     ################################################################
-    if in1Image.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+in1Image.myClass
+    if ('myClass' in in1Image.__dict__) and (in1Image.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+in1Image.myClass)
     # Checks
     if not in1Image.ImageIsA():
-        raise TypeError,"in1Image MUST be a Python Obit Image"
+        raise TypeError("in1Image MUST be a Python Obit Image")
     if not in2Image.ImageIsA():
-        raise TypeError,"in2Image MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("in2Image MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     # Input images, read plane 
     in1Image.Open(READONLY, err)
@@ -1216,8 +1205,8 @@ def PImageGetTable (inImage, access, tabType, tabVer, err):
     """
     Obsolete use PGetTable
     """
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     return  PGetTable (inImage, access, tabType, tabVer, err)
 # end  PImageGetTable
 
@@ -1240,7 +1229,7 @@ def PGetTable (inImage, access, tabType, tabVer, err,\
     * noParms   = Number of parameters in CC table model
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
         return inImage.table(tabType,tabVer)
     return inImage.NewTable(access, tabType, tabVer, err, noParms=noParms)
     # end PGetTable
@@ -1255,7 +1244,7 @@ def PHeader (inImage, err):
     """
     ################################################################
     # ObitTalk or AIPSImage data?
-    if inImage.myClass == 'AIPSImage':
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
         # header
         dict = inImage.header()
         ImageDesc.PHeaderDict(dict)
@@ -1270,11 +1259,11 @@ def PHeader (inImage, err):
             count = max (Tdict[item[1]], item[0])
             Tdict[item[1]] = count
         for item,count in Tdict.items():
-            print "Maximum version number of %s tables is %d " % \
-                  (item, count)
+            print("Maximum version number of %s tables is %d " % \
+                  (item, count))
         return
         # End AIPSImage
-    elif inImage.myClass == 'FITSImage':
+    elif ('myClass' in inImage.__dict__) and (inImage.myClass=='FITSImage'):
         # header
         dict = inImage.header()
         ImageDesc.PHeaderDict(dict)
@@ -1289,24 +1278,24 @@ def PHeader (inImage, err):
             count = max (Tdict[item[1]], item[0])
             Tdict[item[1]] = count
         for item,count in Tdict.items():
-            print "Maximum version number of %s tables is %d " % \
-                  (item, count)
+            print("Maximum version number of %s tables is %d " % \
+                  (item, count))
         return
         # End FITSImage
     
     # ObitTalk Image Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     #
     # Fully instantiate
     PFullInstantiate (inImage, READONLY, err)
     # File info
     if inImage.FileType=="AIPS":
-        print "AIPS Image Name: %12s Class: %6s seq: %8d disk: %4d" % \
-              (inImage.Aname, inImage.Aclass, inImage.Aseq, inImage.Disk)
+        print("AIPS Image Name: %12s Class: %6s seq: %8d disk: %4d" % \
+              (inImage.Aname, inImage.Aclass, inImage.Aseq, inImage.Disk))
     elif inImage.FileType=="FITS":
-        print "FITS Image Disk: %5d File Name: %s " % \
-              (inImage.Disk, inImage.FileName)
+        print("FITS Image Disk: %5d File Name: %s " % \
+              (inImage.Disk, inImage.FileName))
     # print in ImageDesc
     ImageDesc.PHeader(inImage.Desc)
     # Tables
@@ -1321,8 +1310,8 @@ def PHeader (inImage, err):
         count = max (Tdict[item[1]], item[0])
         Tdict[item[1]] = count
     for item,count in Tdict.items():
-        print "Maximum version number of %s tables is %d " % \
-              (item, count)
+        print("Maximum version number of %s tables is %d " % \
+              (item, count))
     # end PHeader
     
 
@@ -1339,24 +1328,24 @@ def POpen (inImage, access, err, blc=None, trc=None):
       top right corner (1-rel) of subimage
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("inImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     # Set subimage if given
     if (blc.__class__==list) | (trc.__class__==list):
         inInfo = inImage.List
         if (blc.__class__==list) & (len(blc)>1) & (blc[0].__class__==int):
-            dim = [len(blc),1,1,1,1]
-            InfoList.PAlwaysPutInt  (inInfo, "BLC", dim, blc)
+            dim = [int(len(blc)),1,1,1,1]
+            InfoList.PAlwaysPutInt   (inInfo, "BLC", dim, blc)
         if (trc.__class__==list) & (len(trc)>1) & (trc[0].__class__==int):
-            dim = [len(trc),1,1,1,1]
-            InfoList.PAlwaysPutInt  (inInfo, "TRC", dim, trc)
-    Obit.ImageOpen(inImage.cast(myClass), access, err.me)
+            dim = [int(len(trc)),1,1,1,1]
+            InfoList.PAlwaysPutInt   (inInfo, "TRC", dim, trc)
+    Obit.ImageOpen(inImage.me, access, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error opening Image")
     # end POpen
@@ -1369,15 +1358,15 @@ def PClose (inImage, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("inImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
-    Obit.ImageClose (inImage.cast(myClass), err.me)
+    Obit.ImageClose (inImage.me, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error closing Image")
     # end PClose
@@ -1389,8 +1378,8 @@ def PDirty (inImage):
     * inImage     = Python Image object
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     inImage.Dirty()
     # end PDirty
 
@@ -1405,15 +1394,15 @@ def PRead (inImage, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("inImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
-    Obit.ImageRead (inImage.cast(myClass), err.me)
+    Obit.ImageRead (inImage.me, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error reading Image")
     # end PRead
@@ -1429,15 +1418,15 @@ def PWrite (inImage, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("inImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
-    Obit.ImageWrite (inImage.cast(myClass), err.me)
+    Obit.ImageWrite (inImage.me, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error writing Image")
     # end PWrite
@@ -1453,17 +1442,17 @@ def PReadFA (inImage, array, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not FArray.PIsA(array):
-        raise TypeError,"array MUST be a Python Obit FArray"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("array MUST be a Python Obit FArray")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
-    Obit.ImageReadFA (inImage.cast(myClass), array.me, err.me)
+    Obit.ImageReadFA (inImage.me, array.me, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error reading Image")
     # end PReadFA
@@ -1479,17 +1468,17 @@ def PWriteFA (inImage, array, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not FArray.PIsA(array):
-        raise TypeError,"array MUST be a Python Obit FArray"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("array MUST be a Python Obit FArray")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
-    Obit.ImageWriteFA (inImage.cast(myClass), array.me, err.me)
+    Obit.ImageWriteFA (inImage.me, array.me, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error writing Image")
     # end PWriteFA
@@ -1506,24 +1495,28 @@ def PGetPlane (inImage, array, plane, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not ((array == None) or FArray.PIsA(array)):
-        raise TypeError,"array MUST be a Python Obit FArray or None"
+        raise TypeError("array MUST be a Python Obit FArray or None")
     if len(plane) != 5:
-        raise TypeError,"plane must have 5 integer elements"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("plane must have 5 integer elements")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
+    # Make sure plane is long
+    lplane=[]
+    for p in plane:
+        lplane.append(int(p))
     #
     if array == None:
         tarray = inImage.FArray   # use image objects FArray
         larray = tarray.me
     else:
         larray = array.me
-    Obit.ImageGetPlane (inImage.cast(myClass), larray, plane, err.me)
+    Obit.ImageGetPlane (inImage.me, larray, lplane, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error reading Image plane")
     # end PGetPlane
@@ -1540,24 +1533,28 @@ def PPutPlane (inImage, array, plane, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not ((array == None) or FArray.PIsA(array)):
-        raise TypeError,"array MUST be a Python Obit FArray or None"
+        raise TypeError("array MUST be a Python Obit FArray or None")
     if len(plane) != 5:
-        raise TypeError,"plane must have 5 integer elements"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("plane must have 5 integer elements")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
+    # Make sure plane is long
+    lplane=[]
+    for p in plane:
+        lplane.append(int(p))
     if array == None:
         tarray =  inImage.FArray  # use image objects FArray
         larray = tarray.me
     else:
         larray = array.me
-    Obit.ImagePutPlane (inImage.cast(myClass), larray, plane, err.me)
+    Obit.ImagePutPlane (inImage.me, larray, lplane, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error writing Image plane")
     # end PPutPlane
@@ -1572,7 +1569,7 @@ def PZapTable (inImage, tabType, tabVer, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSUVData':
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
         inImage.zap_table(tabType, tabVer)
         return
     inImage.ZapTable (tabType, tabVer, err)
@@ -1590,8 +1587,8 @@ def PCopyTables (inImage, outImage, exclude, include, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     inImage.CopyTables (outImage, exclude, include, err)
     # end PCopyTables
 
@@ -1603,8 +1600,8 @@ def PUpdateTables (inImage, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     inImage.UpdateTables (err)
     # end PUpdateTables
 
@@ -1618,11 +1615,11 @@ def PUpdateDesc (inImage, err, Desc=None):
       Contents can be accessed throuth the Dict member
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     #
     # if Desc=None make copy of current contents
     if Desc == None:
@@ -1632,7 +1629,7 @@ def PUpdateDesc (inImage, err, Desc=None):
     # Open for write
     inImage.Open(READWRITE,err)   # Open
     inImage.Desc.Dict = d         # Update header
-    Obit.ImageDirty(inImage.cast(myClass))   # force update
+    Obit.ImageDirty(inImage.me)  # force update
     inImage.Close(err)            # Close to update
     # end PUpdateDesc
 
@@ -1646,16 +1643,16 @@ def PImageInfo (inImage, err):
     * err     = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("inImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     # file info
-    info = Obit.ImageInfo (inImage.cast(myClass), err.me);
+    info = Obit.ImageInfo (inImage.me, err.me);
     if err.isErr:
         OErr.printErrMsg(err, "Error creating scratch file")
     if info["type"]=="AIPS":
@@ -1689,15 +1686,15 @@ def PFullInstantiate (inImage, access, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("inImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
-    ret = Obit.ImagefullInstantiate (inImage.cast(myClass), access, err.me)
+    ret = Obit.ImagefullInstantiate (inImage.me, access, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error verifying Images")
     return ret
@@ -1714,15 +1711,15 @@ def PFArray2Image (inArray, outImage, err):
     * err       = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not FArray.PIsA(inArray):
-        raise TypeError,"inArray MUST be a Python Obit FArray"
+        raise TypeError("inArray MUST be a Python Obit FArray")
     if not outImage.ImageIsA():
-        raise TypeError,"outImage MUST be a Python Obit Image"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("outImage MUST be a Python Obit Image")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     # Get array info
     naxis = inArray.Naxis[0:2]
@@ -1760,9 +1757,9 @@ def PFArray2FITS (inArray, outFile, err, outDisk=1, oDesc=None ):
     ################################################################
     # Checks
     if not FArray.PIsA(inArray):
-        raise TypeError,"inArray MUST be a Python Obit FArray"
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError("inArray MUST be a Python Obit FArray")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     #
     # Create image
     outImage  = newObit(outFile, outFile, outDisk, 0, err)
@@ -1809,21 +1806,21 @@ def PSwapAxis (inImage, err, ax1=3, ax2=4):
     * ax2      = second (1-rel) axis number
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,'inImage MUST be a Python Obit Image'
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError('inImage MUST be a Python Obit Image')
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     if not (abs(ax1-ax2)==1):
-        raise TypeError,"Axes "+str(ax1)+" and "+str(ax2)+" not adjacent"
+        raise TypeError("Axes "+str(ax1)+" and "+str(ax2)+" not adjacent")
     PFullInstantiate (inImage, READWRITE, err)
     # Get descriptor as dict
     d = inImage.Desc.Dict
     naxes = d['inaxes']
     if not ((naxes[ax1-1]==1) or (naxes[ax2-1]==1)):
-        raise TypeError,"Both axes n>1: "+str(naxes[ax1-1])+","+str(naxes[ax2-1])
+        raise TypeError("Both axes n>1: "+str(naxes[ax1-1])+","+str(naxes[ax2-1]))
     #
     items = ['inaxes', 'ctype', 'crval', 'crpix', 'cdelt', 'crota']
     items = ['inaxes']
@@ -1848,13 +1845,13 @@ def PRelabelGal (inImage, err):
     * err      = Python Obit Error/message stack
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,'inImage MUST be a Python Obit Image'
-    if not OErr.OErrIsA(err):
-        raise TypeError,"err MUST be an OErr"
+        raise TypeError('inImage MUST be a Python Obit Image')
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
     d = inImage.Desc.Dict
     ra2000  = d["crval"][0]
     dec2000 = d["crval"][1]
@@ -1888,8 +1885,8 @@ def PGetList (inImage):
     * inImage   = Python Image object
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     return inImage.List
     # end PGetList
 
@@ -1902,8 +1899,8 @@ def PGetTableList (inImage):
     * inImage   = Python Image object
     """
     ################################################################ 
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     return inImage.TableList
     # end PGetTableList
 
@@ -1917,40 +1914,10 @@ def PGetDesc (inImage):
     * inImage   = Python Image object
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     return inImage.Desc
     # end PGetDesc
-
-def PUpdateDesc (inImage, err, Desc=None):
-    """
-    Update external representation of descriptor
-
-    * inImage = Python Image object
-    * err     = Python Obit Error/message stack
-    * Desc    = Image descriptor, if None then use current descriptor
-    """
-    ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
-     # Checks
-    if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
-    #
-    # if Desc=None make copy of current contents
-    if Desc == None:
-        d = inImage.Desc.Dict
-        l = inImage.Desc.List
-    else:
-        d = Desc.Dict
-        l = Desc.List
-    # Open for write
-    inImage.Open(READWRITE,err)    # Open
-    inImage.Desc.Dict = d          # Update header
-    InfoList.PCopyData(l, inImage.Desc.List)  # Copy list
-    Obit.ImageDirty(inImage.cast(myClass))    # force update
-    inImage.Close(err)             # Close to update
-    # end PUpdateDesc
 
 def PGetFArray (inImage):
     """
@@ -1961,14 +1928,14 @@ def PGetFArray (inImage):
     * inImage   = Python Image object
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     #
     out    = FArray.FArray("None")
-    out.me = Obit.ImageGetFArray(inImage.cast(myClass))
+    out.me = Obit.ImageGetFArray(inImage.me)
     return out
     # end PGetFArray
 
@@ -1980,15 +1947,15 @@ def PSetFArray (inImage, array):
     * array     = Python FArray to attach
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not FArray.PIsA(array):
-        raise TypeError,"array MUST be a Python Obit FArray"
+        raise TypeError("array MUST be a Python Obit FArray")
     #
-    Obit.ImageSetFArray(inImage.cast(myClass), array.me)
+    Obit.ImageSetFArray(inImage.me, array.me)
     # end PSetFArray
 
 def PGetPixBuf (inImage):
@@ -1998,8 +1965,8 @@ def PGetPixBuf (inImage):
     * inImage   = Python Image object
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     return inImage.PixBuf
     # end PGetPixBuf
 
@@ -2012,14 +1979,14 @@ def PGetBeam (inImage):
     * inImage   = Python Image object
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     #
     out    = Image("None")
-    out.me = Obit.ImageGetBeam(inImage.cast(myClass))
+    out.me = Obit.ImageGetBeam(inImage.me)
     return out
     # end PGetBeam
 
@@ -2031,15 +1998,15 @@ def PSetBeam (inImage, beam):
     * beam      = Python Beam Image to attach
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
     if not beam.ImageIsA():
-        raise TypeError,"array MUST be a Python Obit Image"
+        raise TypeError("array MUST be a Python Obit Image")
     #
-    Obit.ImageSetBeam(inImage.cast(myClass), beam.me)
+    Obit.ImageSetBeam(inImage.me, beam.me)
     # end PSetBeam
 
 def PGetHighVer (inImage, tabType):
@@ -2052,8 +2019,8 @@ def PGetHighVer (inImage, tabType):
     * tabType   = Table type, e.g. "OTFSoln"
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     return inImage.GetHighVer(tabType)
     # end PGetHighVer
 
@@ -2066,8 +2033,8 @@ def PIsScratch (inImage):
     * inImage   = Python Image object
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     return inImage.IsScratch ()
     # end PIsScratch
 
@@ -2081,7 +2048,7 @@ def PIsA (inImage):
     """
     ################################################################
     try:
-        return inImage.ImageIsA()
+        return inImage.ImageIsA()!=0
     except:
         return False
     # end PIsA
@@ -2096,13 +2063,13 @@ def PUnref (inImage):
     * inImage   = Python Image object
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     # Checks
     if not inImage.ImageIsA():
-        raise TypeError,"inImage MUST be a Python Obit Image"
+        raise TypeError("inImage MUST be a Python Obit Image")
 
-    inImage.me = Obit.ImageUnref(inImage.cast(myClass))
+    inImage.me = Obit.ImageUnref(inImage.me)
     # end PUnref
 
 def PGetName (inImage):
@@ -2114,8 +2081,8 @@ def PGetName (inImage):
     * inImage   = Python Image object
     """
     ################################################################
-    if inImage.myClass=='AIPSImage':
-        raise TypeError,"Function unavailable for "+inImage.myClass
+    if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImage.myClass)
     return inImage.GetName()
     # end PGetName
 

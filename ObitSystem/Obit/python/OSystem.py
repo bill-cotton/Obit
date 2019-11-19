@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2008
+#  Copyright (C) 2004-2019
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -27,24 +27,10 @@
 #-----------------------------------------------------------------------
 
 # Python shadow class to ObitSystem class
-import Obit
+from __future__ import absolute_import
+import Obit, _Obit
 
-# I don't exist until created
-#ObitSys = None
-#
-
-class OSystemPtr :
-    def __init__(self,this):
-        self.this = this
-    def __setattr__(self,name,value):
-        self.__dict__[name] = value
-    def __getattr__(self,name):
-        if name == "me" :
-            return Obit.OSystem_me_get(self.this)
-        raise AttributeError,name
-    def __repr__(self):
-        return "<C OSystem instance>"
-class OSystem(OSystemPtr):
+class OSystem(Obit.OSystem):
     """ Obit System Object class
 
     An Obit system is needed to access persistent forms of data objects.
@@ -81,11 +67,12 @@ class OSystem(OSystemPtr):
     """
     def __init__(self,pgmName, pgmNumber, AIPSuser,
                  numberAIPSdisk, AIPSdir, numberFITSdisk, FITSdir,
-                 F_TRUE, F_FALSE, err) :
-        self.this = Obit.new_OSystem(pgmName, pgmNumber, AIPSuser,
-                                     numberAIPSdisk, AIPSdir,
-                                     numberFITSdisk, FITSdir,
-                                     F_TRUE, F_FALSE, err.me)
+                 F_TRUE, F_FALSE, err):
+        super(OSystem, self).__init__()
+        Obit.CreateOSystem(self.this, pgmName, pgmNumber, AIPSuser,
+                          numberAIPSdisk, AIPSdir,
+                          numberFITSdisk, FITSdir,
+                          F_TRUE, F_FALSE, err.me)
         if err.isErr:
             printErrMsg(err, "Error in Obit initialization")
         # save info visible to python
@@ -93,10 +80,18 @@ class OSystem(OSystemPtr):
         self.pgmNumber = pgmNumber
         # Rember who I am - can be only one
         OSystem.ObitSys = self
-    def __del__(self):
+    def __del__(self, DeleteOSystem=_Obit.DeleteOSystem):
         # Better not shutdown?
-        if Obit!=None and self!=None:
-            Obit.delete_OSystem(self.this)
+        if _Obit!=None and self!=None:
+            DeleteOSystem(self.this)
+    def __setattr__(self,name,value):
+        self.__dict__[name] = value
+    def __getattr__(self,name):
+        if name == "me" :
+            return Obit.OSystem_Get_me(self.this)
+        raise AttributeError(name)
+    def __repr__(self):
+        return "<C OSystem instance>"
     # End class definitions
 
         
@@ -108,7 +103,7 @@ def Shutdown (inObj=None):
     """
     ################################################################
     #  Use default if none given
-    if inObj.__class__ != OSystem:
+    if not isinstance(inObj, OSystem):
         obj = OSystem.ObitSys
     else:
         obj = inObj

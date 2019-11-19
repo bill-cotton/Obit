@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for PixHistFDR type                        */
 /*                                                                    */
-/*;  Copyright (C) 2011                                               */
+/*;  Copyright (C) 2011,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -33,16 +33,23 @@
 #include "ObitImage.h"
 %}
 
+/* Definitions for Python Shadow class */
+/* A copy of the struct for c */
+%{
+typedef struct {
+  ObitPixHisto *me;
+} PixHistFDR;
+%}
+/* and a copy of the struct for swig */
+typedef struct {
+  ObitPixHisto *me;
+} PixHistFDR;
+
 
 %inline %{
 extern ObitPixHisto* newPixHistFDR (char* name) {
   return newObitPixHisto (name);
 } // end  newPixHistFDR
-
-extern ObitPixHisto* PixHistFDRCopy  (ObitPixHisto *in, ObitPixHisto *out, 
-				    ObitErr *err) {
-  return ObitPixHistoCopy (in, out, err);
-} // end  PixHistFDRCopy
 
 extern ObitPixHisto* PixHistFDRUnref (ObitPixHisto* in) {
   if (!ObitPixHistoIsA(in)) return NULL;
@@ -56,6 +63,57 @@ extern ObitPixHisto*  PixHistFDRRef (ObitPixHisto* in) {
 extern ObitPixHisto* PixHistFDRCreate (char *name, ObitImage *image, ObitErr *err) {
   return ObitPixHistoCreate((gchar*)name, image, err);
 }
+
+void CreateOPixHistFDR(PyObject *self, char* name) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_PixHistFDR, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Create: could not recover c struct");
+	return;
+   }
+   if (strcmp(name, "None")) ((PixHistFDR*)ptr)->me = newPixHistFDR(name);
+   else ((PixHistFDR*)ptr)->me = NULL;
+   return;
+ } // end CreateOPixHistFDR
+
+void DeleteOPixHistFDR(PyObject *self) {
+   void *ptr;
+   int ret, flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_PixHistFDR, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Delete: could not recover c struct");
+	return;
+   }
+   ((PixHistFDR*)ptr)->me = PixHistFDRUnref(((PixHistFDR*)ptr)->me);
+} // end DeleteOPixHistFDR
+
+ObitPixHisto* OPixHistFDR_Get_me(PyObject *self) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_PixHistFDR, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"Get_me: could not recover c struct");
+	return NULL;
+   }
+   return ((PixHistFDR*)ptr)->me;
+} // end OPixHistFDR_Get_me
+
+void OPixHistFDR_Set_me(PyObject *self, ObitPixHisto *me) {
+   void *ptr;
+   int ret,flags=0;
+   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_PixHistFDR, flags);
+   if (!SWIG_IsOK(ret)) {
+	PyErr_SetString(PyExc_RuntimeError,"PixHistFDR_Set_me: could not recover c struct");
+	return;
+   }
+   ((PixHistFDR*)ptr)->me =  PixHistFDRRef(me);
+}  // end OPixHistFDR_Set_me
+
+extern ObitPixHisto* PixHistFDRCopy  (ObitPixHisto *in, ObitPixHisto *out, 
+				    ObitErr *err) {
+  return ObitPixHistoCopy (in, out, err);
+} // end  PixHistFDRCopy
 
 // Image
 extern ObitFArray* PixHistFDRGetImage (ObitPixHisto* in) {
@@ -108,38 +166,9 @@ extern char* PixHistFDRGetName (ObitPixHisto* in) {
   }
 }
 
-extern int PixHistFDRIsA (ObitPixHisto* in) {
-  return ObitPixHistoIsA(in);
+extern long PixHistFDRIsA (ObitPixHisto* in) {
+  return (long)ObitPixHistoIsA(in);
 }
 
 %}
-
-/* Definitions for Python Shadow class */
-/* A copy of the struct for c */
-%{
-typedef struct {
-  ObitPixHisto *me;
-} PixHistFDR;
-%}
-/* and a copy of the struct for swig */
-typedef struct {
-  ObitPixHisto *me;
-} PixHistFDR;
-
-%addmethods PixHistFDR { 
-  PixHistFDR(char* name) {
-     PixHistFDR *out;
-     out = (PixHistFDR *) malloc(sizeof(PixHistFDR));
-     if (strcmp(name, "None")) {
-        out->me = newPixHistFDR(name);
-     } else out->me = NULL;
-     return out;
-   }
-  ~PixHistFDR() {
-   if (!self) return;  // Not defined
-   if (self->me->ReferenceCount>0) 
-      self->me = PixHistFDRUnref(self->me);
-   free(self);
-  }
-};
 

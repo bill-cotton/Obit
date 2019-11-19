@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for Ionospheric calibration utilities      */
 /*                                                                    */
-/*;  Copyright (C) 2007-2008                                          */
+/*;  Copyright (C) 2007-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
