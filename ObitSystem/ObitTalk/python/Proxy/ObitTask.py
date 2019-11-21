@@ -46,6 +46,8 @@
 #-----------------------------------------------------------------------
 
 # Bits from AIPS.
+from __future__ import absolute_import
+from __future__ import print_function
 from Proxy.AIPS import ehex
 
 # Bits from the generic Task implementation.
@@ -53,6 +55,8 @@ from Proxy.Task import Task
 
 # Generic Python stuff.
 import fcntl, glob, os, pickle, select, struct, string, pty
+from six.moves import map
+from six.moves import range
 
 
 class _ObitTaskParams:
@@ -84,13 +88,13 @@ class _ObitTaskParams:
         # Check standard linux directory if needbe
         if  (not os.access(path,os.F_OK)):
             path = '/usr/lib/obit/tdf/' + '/' + name+ '.TDF'
-        
+
         # Better have found it by here
         if  (not os.access(path,os.F_OK)):
             # Oh bugger
             msg = "Task '%s' task definition file not found" % (name)
-            print msg
-            raise RuntimeError, msg
+            print(msg)
+            raise RuntimeError(msg)
 
         input = open(path)
         line = " "
@@ -126,7 +130,7 @@ class _ObitTaskParams:
             if line.startswith(' ') or line.startswith('\n'):
                 # Continuation of parameter description?
                 if adverb and len(line)>35:
-                    self.hlp_dict[adverb].append(string.rstrip(line[35:]))
+                    self.hlp_dict[adverb].append(line[35:].rstrip())
                 continue
 
             # Description of parameter?
@@ -153,7 +157,7 @@ class _ObitTaskParams:
                     ddeff = parts[count+1]
                 # Want number of strings, not number of characters.
                 if parts[1] == 'str':
-                    total = total / dim[0]
+                    total = total // dim[0]
                 # Type.
                 type = parts[1]
                 if type == 'float':
@@ -202,7 +206,7 @@ class _ObitTaskParams:
                         #print "DEBUG line",line,type,dim,deff
                 else:
                     msg = "UNKNOWN TYPE: %s " % (type)
-                    raise RuntimeError, msg
+                    raise RuntimeError(msg)
                 continue
 
             # If just parsed PARAM line get parameter.
@@ -210,7 +214,7 @@ class _ObitTaskParams:
                 gotDesc = False
                 adverb = line.split()[0]
                 code = line[min_start - 1:min_start]
-                hlp = [string.rstrip(line[35:])]
+                hlp = [line[35:].rstrip()]
                 if not code:
                     code = ' '
                 try:
@@ -374,7 +378,7 @@ class ObitTask(Task):
 
         # Convert to string for numeric types
         if type(value) == list:
-            data = string.join(map(str, value))
+            data = ' '.join(map(str, value))
         else:
             data = str(value)
 
@@ -416,8 +420,8 @@ class ObitTask(Task):
             file.write("$Key = " + adverb + " Int " + dimStr + "\n")
             file.write(data + "\n" )    # Write data to file.
         else:
-            print "DEBUG ObitTask adverb", adverb, dim, dtype
-            raise AssertionError, type(value)
+            print("DEBUG ObitTask adverb", adverb, dim, dtype)
+            raise AssertionError(type(value))
 
     def __read_adverb(self, params, file, adverb):
         """read value from task output file."""
@@ -439,7 +443,7 @@ class ObitTask(Task):
                 line = line.replace(',',' ')
                 line = line.replace(')',' ')
                 gotIt = True
-                parts = string.split(line)
+                parts = line.split()
                 # How many values
                 total = 1
                 # DEBUG print parts  
@@ -556,7 +560,7 @@ class ObitTask(Task):
                 os.unlink(tmpDebug)     # Remove any old version file.
             os.link(tmpInput, tmpDebug) # Add new link.
             # Tell about it.
-            print "Saving copy of Obit task input in " + tmpDebug
+            print("Saving copy of Obit task input in " + tmpDebug)
 
         path = name
         if (not os.access(path,os.F_OK)) and  (os.getenv("OBITEXEC") != None):
@@ -575,8 +579,8 @@ class ObitTask(Task):
         if  (not os.access(path,os.F_OK)):
             # Oh bugger
             msg = "Task '%s' executable not found" % (name)
-            print msg
-            raise RuntimeError, msg
+            print(msg)
+            raise RuntimeError(msg)
         
         arglist = [name, "-input", tmpInput, "-output", tmpOutput,
                    "-pgmNumber", str(popsno), "-AIPSuser", str(userno)]
@@ -634,7 +638,7 @@ class ObitTask(Task):
         retCode = output_dict["retCode"]
         if retCode != 0:
             msg = "Task '%s' returns '%d'" % (params.name, retCode)
-            raise RuntimeError, msg
+            raise RuntimeError(msg)
 
         del self._params[tid]
         del self._popsno[tid]
@@ -660,7 +664,7 @@ def _allocate_popsno():
         # POPSNO.
         try:
             path = '/tmp/Obit' + ehex(popsno, 1, 0) + '.' + str(os.getpid())
-            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0644)
+            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
             os.close(fd)
         except:
             continue
@@ -706,7 +710,7 @@ def _allocate_popsno():
         # Clean up our own mess.
         os.unlink(path)
 
-    raise RuntimeError, "No free Obit POPS number available on this system"
+    raise RuntimeError("No free Obit POPS number available on this system")
 
 def _free_popsno(popsno):
     """ Deallocate pops number

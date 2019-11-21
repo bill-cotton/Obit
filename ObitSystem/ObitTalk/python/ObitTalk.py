@@ -19,6 +19,8 @@ session.
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 # Global AIPS defaults
 from AIPS import AIPS
@@ -34,33 +36,34 @@ from ObitScript import *
  
 # Use our own, somewhat restricted rlcompleter.
 import readline, otcompleter
+from six.moves import input
 readline.parse_and_bind("tab: complete")
 
 # This is not a batch job.
 AIPSTask.isbatch = 0
 
 # Separate the blurb below from what the Python interpreter spits out.
-print ""
+print("")
 
 # Is there any startup script in $HOME/.obitrc.py or ./.obitrc.py
 path = ".obitrc.py"
 if (not os.path.exists(path)) and ("HOME" in os.environ):
     path = os.environ["HOME"]+"/.obitrc.py"
 
-print "Welcome to ObitTalk"
+print("Welcome to ObitTalk")
 # Using AIPS?
 if (("AIPS_ROOT" in os.environ) and ("AIPS_VERSION" in os.environ)) \
        or (os.path.exists(path)):
     while True:
         try:
-            input = raw_input("Please enter your AIPS user ID number: ")
+            input = input("Please enter your AIPS user ID number: ")
             AIPS.userno = int(input)
         except KeyboardInterrupt:
-            print ""
-            print "AIPS user ID number is not set"
+            print("")
+            print("AIPS user ID number is not set")
             break
         except:
-            print "That is not a valid AIPS user ID number"
+            print("That is not a valid AIPS user ID number")
             continue
         else:
             break
@@ -87,9 +90,9 @@ OSystem.PSetPgmName("ObitTalk")
 # Execute startup script
 if os.path.exists(path):
     try:
-        execfile (path)
-    except Exception, exception:
-        print exception
+        exec(compile(open(path).read(), path, 'exec'))
+    except Exception as exception:
+        print(exception)
     else:
         pass
 
@@ -101,4 +104,4 @@ if os.path.exists(path):
     
 # Set umask to allow others to access AIPS data
 import os
-os.umask(002)
+os.umask(0o02)

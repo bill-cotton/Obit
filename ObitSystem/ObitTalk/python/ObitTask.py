@@ -51,6 +51,8 @@ UVDATA
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 
+from __future__ import absolute_import
+from __future__ import print_function
 import LocalProxy
 # AIPSTask implementation.
 from AIPSTask import AIPSTask
@@ -186,7 +188,7 @@ class ObitTask(AIPSTask):
         rotator = ['|\b', '/\b', '-\b', '\\\b']
         # Logging to file?
         if len(self.logFile)>0:
-            AIPS.log = file(self.logFile,'a')
+            AIPS.log = open(self.logFile,'a')
         else:
             AIPS.log = None
         try:
@@ -195,7 +197,7 @@ class ObitTask(AIPSTask):
                 if messages:
                     for message in messages:
                         #log.append(message)
-                        print message[1]
+                        print(message[1])
                         if AIPS.log:
                             if type(message)==str:
                                 x=AIPS.log.write('%s\n' % message)
@@ -220,7 +222,7 @@ class ObitTask(AIPSTask):
                     self.feed(proxy, tid, message)
                     pass
                 continue
-        except KeyboardInterrupt, exception:
+        except KeyboardInterrupt as exception:
             #self.abort(proxy, tid, sig=signal.SIGKILL)
             self.abort(proxy, tid)
             raise exception
@@ -241,7 +243,7 @@ class ObitTask(AIPSTask):
         """
 
         if self.userno == 0:
-            raise RuntimeError, "AIPS user number is not set"
+            raise RuntimeError("AIPS user number is not set")
 
         self.__dict__["retCode"] = -1  # init return code
         
@@ -280,8 +282,7 @@ class ObitTask(AIPSTask):
                             proxy = AIPS.disks[disk].proxy()
                             found = True
                             if AIPS.disks[disk].url != url:
-                                raise RuntimeError, \
-                                      "AIPS disks are not on the same machine"
+                                raise RuntimeError("AIPS disks are not on the same machine")
                             input_dict[adverb] = int(AIPS.disks[disk].disk)
                         elif oDataType == 'FITS':
                             url = FITS.disks[disk].url
@@ -289,8 +290,7 @@ class ObitTask(AIPSTask):
                             found = True
                             allLocal = allLocal and (url==None) # Local?
                             if FITS.disks[disk].url != url:
-                                raise RuntimeError, \
-                                      "FITS disks are not on the same machine"
+                                raise RuntimeError("FITS disks are not on the same machine")
                             input_dict[adverb] = int(FITS.disks[disk].disk)
                     else:  # Assume an input dataset
                         if iDataType == 'AIPS':
@@ -298,8 +298,7 @@ class ObitTask(AIPSTask):
                             proxy = AIPS.disks[disk].proxy()
                             found = True
                             if AIPS.disks[disk].url != url:
-                                raise RuntimeError, \
-                                      "AIPS disks are not on the same machine"
+                                raise RuntimeError("AIPS disks are not on the same machine")
                             input_dict[adverb] = int(AIPS.disks[disk].disk)
                         elif iDataType == 'FITS':
                             url = FITS.disks[disk].url
@@ -307,8 +306,7 @@ class ObitTask(AIPSTask):
                             found = True
                             allLocal = allLocal and (url==None) # Local?
                             if FITS.disks[disk].url != url:
-                                raise RuntimeError, \
-                                      "FITS disks are not on the same machine"
+                                raise RuntimeError("FITS disks are not on the same machine")
                             input_dict[adverb] = int(FITS.disks[disk].disk)
         # If FITS and all disks=0, run locally
         if (self.__dict__['DataType'] == 'FITS') and allLocal:
@@ -316,8 +314,7 @@ class ObitTask(AIPSTask):
             url   = None
             proxy = LocalProxy
         if not found:
-            raise RuntimeError, \
-                  "Unable to determine where to execute task"
+            raise RuntimeError("Unable to determine where to execute task")
 
         # Adjust disks for proxy
         self.adjust_disk(input_dict, url)

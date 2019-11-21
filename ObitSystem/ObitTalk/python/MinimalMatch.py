@@ -65,6 +65,7 @@ tomorrow
 
 """
 
+from __future__ import absolute_import
 class MinimalMatch:
     """ Allow class attribute names to be abbreviated. """
 
@@ -85,14 +86,14 @@ class MinimalMatch:
                         if match_attr and attr != match_attr:
                             msg = "%s instance attribute '%s' is ambiguous" \
                                   % (self.__class__.__name__, name)
-                            raise AttributeError, msg
+                            raise AttributeError(msg)
                         else:
                             match_attr = attr
 
         if not match_attr:
             msg = "%s instance has no attribute '%s'" \
                   % (self.__class__.__name__, name)
-            raise AttributeError, msg
+            raise AttributeError(msg)
 
         return match_attr
 
@@ -102,8 +103,8 @@ class MinimalMatch:
         return attr
 
     def __setattr__(self, name, value):
-	attr = self._findattr(name)
-	self.__dict__[attr] = value
+        attr = self._findattr(name)
+        self.__dict__[attr] = value
 
     def __init__(self):
         self._name = "MinMatch"

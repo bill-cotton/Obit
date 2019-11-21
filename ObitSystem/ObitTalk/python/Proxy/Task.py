@@ -23,7 +23,10 @@ objects.
 
 
 # Generic Python stuff.
+from __future__ import absolute_import
+from __future__ import print_function
 import fcntl, os, pty, select, signal, time
+import six
 
 class Task:
     """ Basic server Task class """
@@ -49,8 +52,8 @@ class Task:
                     os.execvpe(path, args, env)
                 else:
                     os.execv(path, args)
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
             os._exit(1)
         else:
             # Setup terminal
@@ -114,8 +117,7 @@ class Task:
         tid     = Task id in pid table of process
         bananna = text message to pass to task input
         """
-        
-        os.write(tid, banana)
+        os.write(tid, six.ensure_binary(banana))
         pass
     
     def wait(self, tid):

@@ -22,11 +22,13 @@ This module provides the FITSDisk and FITS classes.
 """
 
 # Generic Python stuff.
+from __future__ import absolute_import
 import os
 
 # Available proxies.
 import LocalProxy
-from xmlrpclib import ServerProxy
+from six.moves.xmlrpc_client import ServerProxy
+from six.moves import range
 
 
 class FITSDisk:
@@ -70,7 +72,7 @@ class FITS:
 
     # FITS01, FITS02...
     # Who will ever need more than 19 FITS disks?    
-    for disk in xrange(2, 20):
+    for disk in range(2, 20):
         area = 'FITS%02d' % (disk-1)
         if not area in os.environ:
             break

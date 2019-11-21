@@ -17,7 +17,8 @@ This module provides some utility functions for dealing with ObitTalk.
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-import os, pydoc, string
+from __future__ import absolute_import
+import os, pydoc
 # Global AIPS defaults
 from AIPS import AIPS
 from AIPS import AIPSDisk
@@ -157,7 +158,7 @@ def ListAIPSDirs():
             url = adisk.url
         else:
             url = "localhost"
-        dirlist =  dirlist+string.rjust(str(diskno),3)+"  "+adisk.dirname+ \
+        dirlist =  dirlist+str(diskno).rjust(3)+"  "+adisk.dirname+ \
                   ", URL="+url+"\n"
         diskno += 1
     # User pager
@@ -175,7 +176,7 @@ def ListFITSDirs():
             url = fdisk.url
         else:
             url = "localhost"
-        dirlist =  dirlist+string.rjust(str(diskno),3)+"  "+fdisk.dirname+ \
+        dirlist =  dirlist+str(diskno).rjust(3)+"  "+fdisk.dirname+ \
                   ", URL="+url+"\n"
         diskno += 1
     # User pager

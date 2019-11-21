@@ -22,8 +22,10 @@ and Obit tasks and provide verb-like access to AIPS data on a machine.
 
 """
 
-from SimpleXMLRPCServer import SimpleXMLRPCServer
-from SocketServer import ThreadingMixIn
+from __future__ import absolute_import
+from __future__ import print_function
+from six.moves.xmlrpc_server import SimpleXMLRPCServer
+from six.moves.socketserver import ThreadingMixIn
 import sys
 
 # Global AIPS defaults.
@@ -39,7 +41,7 @@ import Proxy.ObitScriptP
 ObitScript = Proxy.ObitScriptP.ObitScript()
 
 # Use port 8000 or first command line argument
-print sys.argv
+print(sys.argv)
 if len(sys.argv)>1:
     port = int(sys.argv[1])
 else:
@@ -80,11 +82,11 @@ class ServerFuncs:
             method = getattr(inst, name[1])
             return method(*args)
         msg = "object has no attribute '%s'" % name
-        raise AttributeError, msg
+        raise AttributeError(msg)
 
     pass                                # class ServerFuncs
 
 server = XMLRPCServer(('', port))
 server.register_instance(ServerFuncs())
-print "Starting ObitTalkServer on port",port
+print("Starting ObitTalkServer on port",port)
 server.serve_forever()

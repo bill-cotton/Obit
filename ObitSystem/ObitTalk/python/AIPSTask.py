@@ -72,6 +72,8 @@ It should also work for strings:
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # Generic Python stuff
+from __future__ import absolute_import
+from __future__ import print_function
 import pydoc, select, fcntl, signal
 
 # Global AIPS defaults.
@@ -82,6 +84,7 @@ from Task import Task, List
 
 # Generic Python stuff.
 import glob, os, pickle, sys
+from six.moves import range
 
 def count_entries(l):
     """Count number of last non blank/zero entries in list l"""
@@ -223,15 +226,15 @@ class AIPSTask(Task):
             try:
                 inst = getattr(proxy, self.__class__.__name__)
                 params = inst.params(name, self.version)
-            except Exception, exception:
-                print exception
+            except Exception as exception:
+                print(exception)
                 if AIPS.debuglog:
-                    print >>AIPS.debuglog, exception
+                    print(exception, file=AIPS.debuglog)
                 continue
             break
         if not params:
             msg = "%s task '%s' is not available" % (self._package, name)
-            raise RuntimeError, msg
+            raise RuntimeError(msg)
 
         # The XML-RPC proxy will return the details as a dictionary,
         # not a class.
@@ -397,7 +400,7 @@ class AIPSTask(Task):
         """
 
         if self.userno == 0:
-            raise RuntimeError, "AIPS user number is not set"
+            raise RuntimeError("AIPS user number is not set")
 
         input_dict = {}
         for adverb in self._input_list:
@@ -418,12 +421,10 @@ class AIPSTask(Task):
                     proxy = AIPS.disks[disk].proxy()
                     found = True
                 if AIPS.disks[disk].url != url:
-                    raise RuntimeError, \
-                          "AIPS disks are not on the same machine"
+                    raise RuntimeError("AIPS disks are not on the same machine")
                 input_dict[adverb] = float(AIPS.disks[disk].disk)
         if not found:
-            raise RuntimeError, \
-                  "Unable to determine where to execute task"
+            raise RuntimeError("Unable to determine where to execute task")
 
         # Adjust disks for proxy
         self.adjust_disk(input_dict, url)
@@ -533,7 +534,7 @@ class AIPSTask(Task):
         rotator = ['|\b', '/\b', '-\b', '\\\b']
         # Logging to file?
         if len(self.logFile)>0:
-            AIPS.log = file(self.logFile,'a')
+            AIPS.log = open(self.logFile,'a')
         else:
             AIPS.log = None
         try:
@@ -542,7 +543,7 @@ class AIPSTask(Task):
                     messages = self.messages(proxy, tid)
                     if messages:
                         for message in messages:
-                            print message
+                            print(message)
                             if AIPS.log:
                                 if type(message)==str:
                                     x=AIPS.log.write('%s\n' % message)
@@ -570,7 +571,7 @@ class AIPSTask(Task):
                     count += 1
                     continue
                 pass
-            except KeyboardInterrupt, exception:
+            except KeyboardInterrupt as exception:
                 self.abort(proxy, tid)
                 raise exception
 
@@ -616,7 +617,7 @@ class AIPSTask(Task):
                 if len(os.path.basename(value)) > self._strlen_dict[attr] - 2:
                     msg = "string '%s' is too long for attribute '%s'" \
                           % (value, attr)
-                    raise ValueError, msg
+                    raise ValueError(msg)
                 self.__dict__[attr] = value
             else:
                 Task.__setattr__(self, name, value)

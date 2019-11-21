@@ -24,6 +24,7 @@ from classic FITS.
 """
 
 # Global FITS defaults.
+from __future__ import absolute_import
 from FITS import FITS
 
 # Generic Python stuff.

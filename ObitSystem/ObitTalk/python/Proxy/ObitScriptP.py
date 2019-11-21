@@ -22,6 +22,8 @@ proxy object.
 
 
 # Global ObitScript defaults.
+from __future__ import absolute_import
+from __future__ import print_function
 from Proxy.AIPS import AIPS, ehex
 
 # Bits from the generic Task implementation.
@@ -29,6 +31,7 @@ from Proxy.Task import Task
 
 # Generic Python stuff.
 import glob, os, signal, struct, string
+from six.moves import range
 
 class ObitScript(Task):
     """ Server-side ObitScript script interface """
@@ -138,13 +141,13 @@ class ObitScript(Task):
                     os.unlink(tmpDebug)        # Remove any old version file.
                 os.link(sc_name, tmpDebug) # Add new link.
                 # Tell about it.
-                print "Saving copy of Obit task input in " + tmpDebug
+                print("Saving copy of Obit task input in " + tmpDebug)
             
             # Start script in separate ObitTalk process.
             path = 'ObitTalk'
             tid = Task.spawn(self, path, ["ObitTalk", sc_name], env)
             
-        except Exception, exception:
+        except Exception as exception:
             _free_popsno(popsno)
             raise exception
         
@@ -229,7 +232,7 @@ def _allocate_popsno():
         # POPSNO.
         try:
             path = '/tmp/ObitScript' + ehex(popsno, 1, 0) + '.' + str(os.getpid())
-            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0666)
+            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o666)
             os.close(fd)
         except:
             continue
@@ -267,7 +270,7 @@ def _allocate_popsno():
         # Clean up our own mess.
         os.unlink(path)
 
-    raise RuntimeError, "No free ObitScript POPS number available on this system"
+    raise RuntimeError("No free ObitScript POPS number available on this system")
 
 def _free_popsno(popsno):
     """ Deallocate pops number

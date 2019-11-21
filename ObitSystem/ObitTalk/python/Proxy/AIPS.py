@@ -29,7 +29,7 @@ def ehex(n, width, padding=None):
 
     while n > 0:
         result = ehex_digits[n % len(ehex_digits)] + result
-        n /= len(ehex_digits)
+        n = n // len(ehex_digits)
         width -= 1
         continue
 

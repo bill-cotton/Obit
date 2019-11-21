@@ -23,10 +23,13 @@ AIPSUVData objects.
 """
 
 # Bits from Obit.
+from __future__ import absolute_import
+from __future__ import print_function
 import Obit, OErr, OSystem, ODisplay
 import AIPSDir
 import Image, UV
 import TableList
+from six.moves import range
 
 class AIPSData:
     def __init__(self, desc=None):
@@ -38,7 +41,7 @@ class AIPSData:
     def exists(self, desc):
         try:
             self._init(desc, verbose=False)
-        except OErr.OErr, err:
+        except OErr.OErr as err:
             OErr.PClear(err)
             if self.doInit:   # Initialized Obit?
                 OSystem.Shutdown(self.ObitSys)
@@ -64,12 +67,12 @@ class AIPSData:
             self.doInit = False
         try:
             data = self._init(desc)
-        except OErr.OErr, err:
-            print err
+        except OErr.OErr as err:
+            print(err)
             #OErr.printErrMsg(err, "AIPSData._verify")
             if self.doInit:   # Initialized Obit?
                 OSystem.Shutdown(self.ObitSys)
-            raise RuntimeError, "Cannot open data set %s" % desc['name']
+            raise RuntimeError("Cannot open data set %s" % desc['name'])
         #OErr.printErrMsg(self.err, "AIPSData._verify")
         return data
 
@@ -133,13 +136,13 @@ class AIPSData:
         data = self._verify(desc)
         try:
             table = data.NewTable(1, type, version, self.err)
-        except OErr.OErr, err:
+        except OErr.OErr as err:
             OErr.printErrMsg(err, "AIPSData.header_table")
             if self.doInit:   # Initialized Obit?
                 OSystem.Shutdown(self.ObitSys)
                 self.doInit = False
             msg = "Cannot open %s table version %d", (type, version)
-            raise RuntimeError, msg
+            raise RuntimeError(msg)
         retval = table.Desc.Dict
         if self.doInit:   # Initialized Obit?
             OSystem.Shutdown(self.ObitSys)
@@ -152,13 +155,13 @@ class AIPSData:
         try:
             table = data.NewTable(1, type, version, self.err)
             table.Open(3, self.err)
-        except OErr.OErr, err:
+        except OErr.OErr as err:
             OErr.printErrMsg(err, "AIPSData.getrow_table")
             if self.doInit:   # Initialized Obit?
                 OSystem.Shutdown(self.ObitSys)
                 self.doInit = False
             msg = "Cannot open %s table version %d", (type, version)
-            raise RuntimeError, msg
+            raise RuntimeError(msg)
         retval = table.ReadRow(rowno, self.err)
         if self.doInit:   # Initialized Obit?
             OSystem.Shutdown(self.ObitSys)
@@ -171,13 +174,13 @@ class AIPSData:
         try:
             data.ZapTable(type, version, self.err)
             data.UpdateTables(self.err)
-        except OErr.OErr, err:
+        except OErr.OErr as err:
             OErr.printErrMsg(err, "AIPSData.zap_table")
             if self.doInit:   # Initialized Obit?
                 OSystem.Shutdown(self.ObitSys)
                 self.doInit = False
             msg = "Cannot zap %s table version %d", (type, version)
-            raise RuntimeError, msg
+            raise RuntimeError(msg)
         if self.doInit:   # Initialized Obit?
             OSystem.Shutdown(self.ObitSys)
             self.doInit = False
@@ -208,12 +211,13 @@ class AIPSImage(AIPSData):
             # Send to display
             ODisplay.PImage(disp, data, self.err)
             del disp
-        except OErr.OErr, self.err:
+        except OErr.OErr as xxx_todo_changeme:
+            self.err = xxx_todo_changeme
             OErr.printErrMsg(err, "AIPSImage Display")
             if self.doInit:   # Initialized Obit?
                 OSystem.Shutdown(self.ObitSys)
             msg = "Cannot display image"
-            raise RuntimeError, msg
+            raise RuntimeError(msg)
         if self.doInit:   # Initialized Obit?
             OSystem.Shutdown(self.ObitSys)
             self.doInit = False
@@ -264,7 +268,7 @@ class AIPSCat:
 
         try:
             num_slots = AIPSDir.PNumber(disk, userno, self.err)
-        except OErr.OErr, err:
+        except OErr.OErr as err:
             OErr.PClear(err)
             if doInit:   # Initialized Obit?
                 OSystem.Shutdown(ObitSys)
@@ -272,7 +276,7 @@ class AIPSCat:
             return []
 
         catalog = []
-        for slot in xrange(1, num_slots):
+        for slot in range(1, num_slots):
             entry = AIPSDir.PInfo(disk, userno, slot, self.err)
             if entry:
                 catalog.append((slot, entry))

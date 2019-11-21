@@ -113,10 +113,14 @@ ValueError: setting element '0' is prohibited
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+from __future__ import absolute_import
+from __future__ import print_function
 from MinimalMatch import MinimalMatch
 
 # Generic Python stuff
 import pydoc, sys
+from six.moves import range
+from six import integer_types, ensure_str
 
 class List(list):
     """ List class to convert lists to POPS/AIPS form """
@@ -137,7 +141,7 @@ class List(list):
     def __setitem__(self, key, item):
         if item != None and self[key] == None:
             msg = "setting element '%d' is prohibited" % key
-            raise ValueError, msg
+            raise ValueError(msg)
         item = self._task._validateattr(self._attr, item, self[key])
         list.__setitem__(self, key, item)
         return
@@ -148,8 +152,8 @@ class List(list):
                (len(seq) < high - low and high < len(self)):
             msg = "slice '%d:%d' changes the array size of" \
                   " attribute '%s'" % (low, high, self._attr)
-            raise TypeError, msg
-        for key in xrange(low, high):
+            raise TypeError(msg)
+        for key in range(low, high):
             if key - low < len(seq):
                 self[key] = seq[key - low]
             else:
@@ -200,7 +204,7 @@ class Task(MinimalMatch):
         if self._help_string and self._explain_string:
             pydoc.pager(self._help_string+self._explain_string)
         else:
-            print "No explanation available - see help"
+            print("No explanation available - see help")
 
     def _validateattr(self, attr, value, default):
         """Check whether VALUE is a valid valid for attribute ATTR."""
@@ -218,21 +222,25 @@ class Task(MinimalMatch):
             if len(value) > len(default):
                 msg = "array '%s' is too big for attribute '%s'" \
                       % (value, attr)
-                raise TypeError, msg
+                raise TypeError(msg)
             validated_value = List(self, attr, default)
-            for key in xrange(len(value)):
+            for key in range(len(value)):
                 validated_value[key] = value[key]
             return validated_value
 
         # Convert integers into floating point numbers if necessary.
-        if type(value) == int and type(default) == float:
+        if type(value) in integer_types and type(default) == float:
             value = float(value)
+
+        # Convert Python 2 long to int if necessary. 
+        if type(value) in integer_types and type(default) == int:
+            value = int(value)
 
         # Check attribute type.
         if type(value) != type(default):
             msg = "value '%s' has invalid type for attribute '%s'" \
                   % (value, attr)
-            raise TypeError, msg
+            raise TypeError(msg)
 
         # Check range.
         if attr in self._min_dict:
@@ -240,20 +248,20 @@ class Task(MinimalMatch):
             if not min <= value:
                 msg = "value '%s' is out of range for attribute '%s'" \
                       % (value, attr)
-                raise ValueError, msg
+                raise ValueError(msg)
         if attr in self._max_dict:
             max = self._max_dict[attr]
             if not value <= max:
                 msg = "value '%s' is out of range for attribute '%s'" \
                       % (value, attr)
-                raise ValueError, msg
+                raise ValueError(msg)
 
         # Check string length.
         if attr in self._strlen_dict:
             if len(value) > self._strlen_dict[attr]:
                 msg = "string '%s' is too long for attribute '%s'" \
                       % (value, attr)
-                raise ValueError, msg
+                raise ValueError(msg)
 
         return value
 
@@ -299,8 +307,7 @@ class Task(MinimalMatch):
         #print "inMess=",inMess,"\n\n"
         for msg in inMess:
             prio = msg[0]
-            mess = self._remainder+msg[1]
-            #print "mess=",mess,"\n\n"
+            mess = self._remainder + ensure_str(msg[1])
             self._remainder=""
             while len(mess)>0:
                 # Look for newline or carrage return, either or both may be

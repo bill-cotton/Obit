@@ -29,12 +29,14 @@ script="import OSystem\nprint 'Welcome user',OSystem.PGetAIPSuser()\n"
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # Generic Python stuff
+from __future__ import absolute_import
+from __future__ import print_function
 import pydoc, select, fcntl, signal
 import glob, os, pickle, sys
 
 # Available proxies.
 import LocalProxy
-from xmlrpclib import ServerProxy
+from six.moves.xmlrpc_client import ServerProxy
 
 # Global AIPS and FITS defaults.
 from Task import Task
@@ -202,10 +204,10 @@ class ObitScript(Task):
         """
 
         if not self.script:
-            raise RuntimeError, "ObitScript: no script given"
+            raise RuntimeError("ObitScript: no script given")
 
         if self.userno == 0:
-            raise RuntimeError, "ObitScript user number is not set"
+            raise RuntimeError("ObitScript user number is not set")
 
         # Convert directory lists to list
         AIPSDirs = []
@@ -319,7 +321,7 @@ class ObitScript(Task):
         count = 0
         # Logging to file?
         if len(self.logFile)>0:
-            ObitScript.log = file(self.logFile,'a')
+            ObitScript.log = open(self.logFile,'a')
         else:
             ObitScript.log = None
         try:
@@ -328,7 +330,7 @@ class ObitScript(Task):
                     messages = self.messages(proxy, tid)
                     if messages:
                         for message in messages:
-                            print message
+                            print(message)
                             if ObitScript.log:
                                 if type(message)==str:
                                     x=ObitScript.log.write('%s\n' % message)
@@ -354,7 +356,7 @@ class ObitScript(Task):
                     count += 1
                     continue
                 pass
-            except KeyboardInterrupt, exception:
+            except KeyboardInterrupt as exception:
                 self.abort(proxy, tid)
                 raise exception
 
@@ -379,7 +381,7 @@ class ObitScript(Task):
 
     def outputs(self):
         """Not defined."""
-        print "output not defined for a script"
+        print("output not defined for a script")
 
     def help(self):
         """List script."""

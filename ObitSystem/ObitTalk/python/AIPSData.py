@@ -24,6 +24,7 @@ from classic AIPS.
 """
 
 # Global AIPS defaults.
+from __future__ import absolute_import
 from AIPS import AIPS
 
 # Generic Python stuff.

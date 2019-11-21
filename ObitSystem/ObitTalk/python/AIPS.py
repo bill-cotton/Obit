@@ -1,5 +1,5 @@
 # Copyright (C) 2005 Joint Institute for VLBI in Europe
-# Copyright (C) 2007 Associated Universities, Inc.
+# Copyright (C) 2007,2019 Associated Universities, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,12 +24,14 @@ modules.
 """
 
 # Generic Python stuff.
+from __future__ import absolute_import
 import os
 from AIPSUtil import *
 
 # Available proxies.
 import LocalProxy
-from xmlrpclib import ServerProxy
+from six.moves.xmlrpc_client import ServerProxy
+from six.moves import range
 
 
 class AIPSDisk:
@@ -56,7 +58,6 @@ class AIPSDisk:
 class AIPS:
     
     """Container for several AIPS-related default values."""
-
     # Default AIPS user ID.
     userno = 0
 
@@ -66,8 +67,18 @@ class AIPS:
     # AIPS disk mapping. 
     disks = [ None ]                    # Disk numbers are one-based.
 
+    # Check for disks already in the system
+    import OErr, Obit
+    err = OErr.OErr()
+    numb = Obit.AIPSGetNumDisk(err.me)
+    disk = 0
+    for i in range(0,numb):
+        disk += 1;
+        disks.append(AIPSDisk(None, disk, Obit.AIPSGetDirname(disk,err.me)))
+
     # AIPS seems to support a maximum of 35 disks.
-    for disk in xrange(1, 35):
+    for i in range(1, 35-numb):
+        disk +=1
         area = 'DA' + ehex(disk, 2, '0')
         dirname = os.getenv(area)
         if not area in os.environ:
@@ -80,4 +91,3 @@ class AIPS:
 
     # Debug log.
     debuglog = None
-

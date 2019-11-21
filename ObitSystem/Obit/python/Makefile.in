@@ -54,7 +54,7 @@ ALL_CFLAGS = $(CFLAGS) @GLIB_CFLAGS@ @GSL_CFLAGS@ @PLPLOT_CFLAGS@ \
 ALL_LDFLAGS = $(LDFLAGS) @CFITSIO_LDFLAGS@ @FFTW_LDFLAGS@  @FFTW3_LDFLAGS@  @GSL_LDFLAGS@ \
 	@PLPLOT_LDFLAGS@ @PGPLOT_LDFLAGS@
 
-LIBS = ../lib/libObit.a @CFITSIO_LIBS@ @FFTW_LIBS@ @FFTW3_LIBS@ @GLIB_LIBS@ \
+LIBS = -L../lib/ -lObit @CFITSIO_LIBS@ @FFTW_LIBS@ @FFTW3_LIBS@ @GLIB_LIBS@ \
 	@GSL_LIBS@ @PLPLOT_LIBS@ @PGPLOT_LIBS@ @LIBS@ @FLIBS@ @GTHREAD_LIBS@
 
 CLIENT_CPPFLAGS = $(ALL_CPPFLAGS) @XMLRPC_CLIENT_CPPFLAGS@ 
@@ -98,7 +98,7 @@ Obit_wrap.c: *.inc $(MYLIBS)
 	cat *.inc >> Obit.i
 	$(SWIG) -Wall -python -I$(SWIGLIB) -I$(SWIGLIB)/python Obit.i
 
-Obit: Obit_wrap.c ../lib/libObit.a
+Obit: Obit_wrap.c ../lib/libObit.so
 	rm -rf build
 	python makesetup.py
 	python setup.py build install --install-lib=.

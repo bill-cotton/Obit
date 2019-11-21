@@ -23,6 +23,7 @@ without doing any RPC.
 """
 
 # The AIPSTask module should always be available.
+from __future__ import absolute_import
 import Proxy.AIPSTask
 AIPSTask = Proxy.AIPSTask.AIPSTask()
 

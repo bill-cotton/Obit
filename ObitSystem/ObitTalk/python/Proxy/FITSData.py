@@ -22,6 +22,8 @@ FITSUVData objects.
 """
 
 # Bits from Obit.
+from __future__ import absolute_import
+from __future__ import print_function
 import Obit, OErr, OSystem, ODisplay
 import FITSDir
 import Image, UV
@@ -38,7 +40,7 @@ class FITSData:
     def exists(self, desc):
         try:
             self._init(desc, verbose=False)
-        except OErr.OErr, err:
+        except OErr.OErr as err:
             OErr.PClear(err)
             return False
         return True
@@ -49,10 +51,10 @@ class FITSData:
             self.err=OErr.OErr()
         try:
             data = self._init(desc)
-        except OErr.OErr, err:
-            print err
+        except OErr.OErr as err:
+            print(err)
             #OErr.printErrMsg(err, "FITSData._verify")
-            raise RuntimeError, "Cannot open data set %s" % desc['filename']
+            raise RuntimeError("Cannot open data set %s" % desc['filename'])
         #OErr.printErrMsg(self.err, "FITSData._verify")
         return data
 
@@ -88,13 +90,13 @@ class FITSData:
         data = self._verify(desc)
         try:
             table = data.NewTable(1, type, version, self.err)
-        except OErr.OErr, err:
+        except OErr.OErr as err:
             OErr.printErrMsg(err, "FITSData.header_table")
             if self.doInit:   # Initialized Obit?
                 OSystem.Shutdown(self.ObitSys)
                 self.doInit = False
             msg = "Cannot open %s table version %d", (type, version)
-            raise RuntimeError, msg
+            raise RuntimeError(msg)
         retval = table.Desc.Dict
         OErr.printErrMsg(self.err, "Error with Obit Table")
         return retval
@@ -104,13 +106,13 @@ class FITSData:
         try:
             table = data.NewTable(1, type, version, self.err)
             table.Open(3, self.err)
-        except OErr.OErr, err:
+        except OErr.OErr as err:
             OErr.printErrMsg(err, "FITSData.getrow_table")
             if self.doInit:   # Initialized Obit?
                 OSystem.Shutdown(self.ObitSys)
                 self.doInit = False
             msg = "Cannot open %s table version %d", (type, version)
-            raise RuntimeError, msg
+            raise RuntimeError(msg)
         retval = table.ReadRow(rowno, self.err)
         OErr.printErrMsg(self.err, "Error with Obit Table")
         return retval
@@ -120,13 +122,13 @@ class FITSData:
         try:
             data.ZapTable(type, version, self.err)
             data.UpdateTables(self.err)
-        except OErr.OErr, err:
+        except OErr.OErr as err:
             OErr.printErrMsg(err, "FITSData.zap_table")
             if self.doInit:   # Initialized Obit?
                 OSystem.Shutdown(self.ObitSys)
                 self.doInit = False
             msg = "Cannot zap %s table version %d", (type, version)
-            raise RuntimeError, msg
+            raise RuntimeError(msg)
         OErr.printErrMsg(self.err, "Error with Obit Table")
         return True                # Return something other than None.
     
@@ -154,10 +156,11 @@ class FITSImage(FITSData):
             # Send to display
             ODisplay.PImage(disp, data, self.err)
             del disp
-        except OErr.OErr, self.err:
+        except OErr.OErr as xxx_todo_changeme:
+            self.err = xxx_todo_changeme
             OErr.printErrMsg(err, "FITSImage Display")
             msg = "Cannot display image"
-            raise RuntimeError, msg
+            raise RuntimeError(msg)
         OErr.printErrMsg(self.err, "Error with Obit Image display")
         return True           # Return something other than None.
 

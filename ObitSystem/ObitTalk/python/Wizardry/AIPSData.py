@@ -62,7 +62,7 @@ class _AIPSTableRow:
             assert(not self._err.isErr)
             self._row = self._table.ReadRow(self._rownum + 1, self._err)
             if not self._row:
-                raise IndexError, "list index out of range"
+                raise IndexError("list index out of range")
             if self._err.isErr:
                 raise RuntimeError
             pass
@@ -78,7 +78,7 @@ class _AIPSTableRow:
             return self._fields[name]
         msg =  "%s instance has no attribute '%s'" % \
               (self.__class__.__name__, name)
-        raise AttributeError, msg
+        raise AttributeError(msg)
 
     def __getattr__(self, name):
         key = self._findattr(name)
@@ -128,7 +128,7 @@ class AIPSTableRow(_AIPSTableRow):
                 self._row[field] = ''
             else:
                 msg =  "Unimplemented type %d for field %s" % (type, field)
-                raise AssertionError, msg
+                raise AssertionError(msg)
             continue
         return
 
@@ -136,7 +136,7 @@ class AIPSTableRow(_AIPSTableRow):
         # A row instantiated by the This row cannot be updated.
         msg =  "%s instance has no attribute 'update'" % \
               self.__class__.__name__
-        raise AttributeError, msg
+        raise AttributeError(msg)
 
 
 class _AIPSTableIter(_AIPSTableRow):
@@ -175,7 +175,7 @@ class _AIPSTableKeywords:
             InfoList.PAlwaysPutInt(self._table.IODesc.List, key,
                                    [1, 1, 1, 1, 1], _vectorize(value))
         else:
-            raise AssertionError, "not implemented"
+            raise AssertionError("not implemented")
         return
 
 class _AIPSTable:
@@ -279,14 +279,14 @@ class _AIPSHistory:
     def __getitem__(self, key):
         rec = self._table.ReadRec(key + 1, self._err)
         if not rec:
-            raise IndexError, "list index out of range"
+            raise IndexError("list index out of range")
         if self._err.isErr:
             raise RuntimeError
         return rec
 
     def __setitem__(self, key, rec):
         msg = 'You are not allowed to rewrite history!'
-        raise NotImplementedError, msg
+        raise NotImplementedError(msg)
 
     def append(self, rec):
         """Append a record to this history table."""
@@ -304,7 +304,7 @@ class _AIPSVisibilityIter(object):
         # Give an early warning we're not going to succeed.
         if not numarray:
             msg = 'Numerical Python (numarray) not available'
-            raise NotImplementedError, msg
+            raise NotImplementedError(msg)
 
         self._err = err
         self._data = data

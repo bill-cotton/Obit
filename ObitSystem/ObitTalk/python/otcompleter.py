@@ -19,6 +19,7 @@ Modify rlcompleter.Completer class such that it does not show hidden
 attributes.
 """
 
+from __future__ import absolute_import
 import readline
 import rlcompleter
 
