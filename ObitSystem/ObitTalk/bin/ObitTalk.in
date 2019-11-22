@@ -34,7 +34,7 @@ if test -n "${OBIT_PYTHONPATH+set}"; then
     PYTHONPATH=$PYTHONPATH:$OBIT_PYTHONPATH
 fi
 
-# Run Parseltongue.py for interactive sessions
+# Run ObitTalk.py for interactive sessions
 PYTHONSTARTUP=@datadir@/python/ObitTalk.py
 export PYTHONPATH PYTHONSTARTUP
 

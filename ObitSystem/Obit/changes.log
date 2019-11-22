@@ -4460,4 +4460,17 @@ Obit/../../InstallObit.sh
 Obit/tasks/SubImage.c
     Don't try to copy a CC table that doesn't exist
 ../ObitTalk/configure ../ObitTalk/configure.am
-18 Nov 2019 svn 608
+18 Nov 2019 svn 609
+
+Summary: Python 3 upgrade fixes, Bug fixes
+Obit/python/Makefile.in
+    fix which version of libObit to reference  - now libObit.so
+ObitTalk/python/*.py ObitTalk/python/Proxy/*.py ObitTalk/python/Wizardry/*.py
+    Fixed versions missed, also Makefiles
+21 Nov 2019 svn 609
+
+Summary: Python 3 upgrade fixes, Bug fixes
+git rm ObitSystem/Obit/python/python.swg
+ObitTalk/bin/ObitTalk.in
+   change comment about parseltongue to ObitTalk
+22 Nov 2019 svn 610
