@@ -119,8 +119,34 @@ extern void SpectrumFitCube (ObitSpectrumFit* in, ObitImage *inImage,
   ObitSpectrumFitCube(in, inImage, outImage, err);
 }
 
-extern void SpectrumFitImArr (ObitSpectrumFit* in, long nimage, ObitImage **imArr, 
+// SWIG REALLY SUCKS: arrays of pointers no longer work
+extern void SpectrumFitImArr (ObitSpectrumFit* in, long nimage, 
+       ObitImage *im1, ObitImage *im2, ObitImage *im3, ObitImage *im4, ObitImage *im5,
+       ObitImage *im6, ObitImage *im7, ObitImage *im8, ObitImage *im9, ObitImage *im10,
+       ObitImage *im11, ObitImage *im12, ObitImage *im13, ObitImage *im14, ObitImage *im15,
+       ObitImage *im16, ObitImage *im17, ObitImage *im18, ObitImage *im19, ObitImage *im20,
 			      ObitImage *outImage, ObitErr *err) {
+  ObitImage *imArr[20];
+  imArr[0] = im1;
+  imArr[1] = im2;
+  imArr[2] = im3;
+  imArr[3] = im4;
+  imArr[4] = im5;
+  imArr[5] = im6;
+  imArr[6] = im7;
+  imArr[7] = im8;
+  imArr[8] = im9;
+  imArr[9] = im10;
+  imArr[10] = im11;
+  imArr[11] = im12;
+  imArr[12] = im13;
+  imArr[13] = im14;
+  imArr[14] = im15;
+  imArr[15] = im16;
+  imArr[16] = im17;
+  imArr[17] = im18;
+  imArr[18] = im19;
+  imArr[19] = im20;
   ObitSpectrumFitImArr(in, (olong)nimage, imArr, outImage, err);
 } // end SpectrumFitImArr 
 

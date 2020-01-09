@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for Convolution utilities                  */
 /*                                                                    */
-/*;  Copyright (C) 2006,2009,2019                                     */
+/*;  Copyright (C) 2006,2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -40,7 +40,7 @@ extern void ConvUtilConv (ObitImage *inImage, ObitFArray *convFn,
   gboolean ldoDivide;
   ofloat lrescale = (ofloat)rescale;
   ldoDivide = doDivide != 0;
-  ObitConvUtilConv (inImage, convFn, ldoDivide, lrescale, outImage, err);
+  ObitConvUtilConv (inImage, convFn, ldoDivide, FALSE, lrescale, outImage, err);
 } // end ConvUtilConv 
 
 extern void ConvUtilConvGauss (ObitImage *inImage, float maj, float min, float pa, float rescale,

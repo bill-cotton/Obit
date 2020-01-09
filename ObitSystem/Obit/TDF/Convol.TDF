@@ -4,7 +4,7 @@
 ;! Convol together images
 ;# Obit Task 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006-2016
+;;  Copyright (C) 2006-2019
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ BLC              0.0       4096.0  Bottom left corner of image
 TRC              0.0       4096.0  Top right corner of image
                                      0=>entire image
 **PARAM** str 4
-Opcode                             Operation desired:GAUS, IMAG, DCON, DGAU
+Opcode                             Operation:GAUS, IMAG,DCON,DGAU,FILT
 **PARAM** str 12
 in2Name                            Image Name (Name) 2
 **PARAM** str 6
@@ -109,6 +109,8 @@ Adverbs:
               'DGAU' => convolve the image with the deconvolution of the
                     Gaussian and the second image (Gaussian divided by
                     image in Fourier space)  NYI
+	      'FILT' filter out scales larger than that defined by beam;
+                    this constitutes a high pass filter.
               blank => 'GAUS'
   in2Name.....Convolution image if given, AIPS name
   in2Class....Convolution image AIPS Class       

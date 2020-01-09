@@ -4331,7 +4331,7 @@ ObitImageUtilVel (ObitImage *inImage, ObitImage *outImage, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, inImage->name);
   
   /* Convolve to scratch image */
-  ObitConvUtilConv (inImage, ConvFn, FALSE, 1.0, scrImage, err);
+  ObitConvUtilConv (inImage, ConvFn, FALSE, FALSE, 1.0, scrImage, err);
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
   
   /* Creation date today */

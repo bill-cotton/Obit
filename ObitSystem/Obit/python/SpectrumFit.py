@@ -60,7 +60,7 @@ class SpectrumFit(Obit.SpectrumFit):
     """
     def __init__(self, name="None", nterm=2) :
         super(SpectrumFit, self).__init__()
-        Obit.CreateSpectrumFit (self.this, name, ntern)
+        Obit.CreateSpectrumFit (self.this, name, nterm)
         self.myClass = myClass
     def __del__(self, DeleteSpectrumFit=_Obit.DeleteSpectrumFit):
         if _Obit!=None:
@@ -83,7 +83,7 @@ class SpectrumFit(Obit.SpectrumFit):
             if not PIsA(self):
                 raise TypeError("input MUST be a Python Obit SpectrumFit")
             out    = InfoList.InfoList()
-            out.me = Obit.SpectrumFitGetList(self.cast(myClass))
+            out.me = Obit.SpectrumFitGetList(self.me)
             return out
         raise AttributeError(name)
     def __repr__(self):
@@ -112,6 +112,7 @@ class SpectrumFit(Obit.SpectrumFit):
                       1.0 => no gain corrections
             antSize   float (?,1,1) Antenna diameter (m) for gain corr, 
                       One per frequency or one for all, def 25.0
+            corAlpha  float scalar spectral index correction to apply, def = 0.0
         inImage  = Image cube to be fitted
         outImage = Image cube with fitted spectra.
                    Should be defined but not created.
@@ -138,6 +139,7 @@ class SpectrumFit(Obit.SpectrumFit):
         Fitted spectral polynomials returned in outImage
         Can run with multiple threads if enabled:
         OSystem.PAllowThreads(2)  # 2 threads
+        NB: there is a maximum of 20 images in imArr
         self     = SpectrumFit object, parameters on List:
             refFreq   double scalar Reference frequency for fit [def average of inputs]
             maxChi2   float scalar Max. Chi Sq for accepting a partial spectrum [def 2.0]
@@ -151,7 +153,9 @@ class SpectrumFit(Obit.SpectrumFit):
                       1.0 => no gain corrections
             antSize   float (?,1,1) Antenna diameter (m) for gain corr, 
                       One per frequency or one for all, def 25.0
+            corAlpha  float scalar spectral index correction to apply, def = 0.0
         imArr    = Array of 2D images to be fitted
+                   NB: there is a maximum of 20 images in imArr
         outImage = Image cube with fitted spectra.
                    Should be defined but not created.
                    Planes 1->nterm are coefficients per pixel
@@ -167,13 +171,97 @@ class SpectrumFit(Obit.SpectrumFit):
             raise TypeError("imArr[0] MUST be a Python Obit Image")
         if not outImage.ImageIsA():
             raise TypeError("outImage MUST be a Python Obit Image")
-        #
         nimage = len(imArr)
-        imArrMe = []
-        for x in imArr:
-            imArrMe.append(x.me)
-
-        Obit.SpectrumFitImArr(self.me, nimage, imArrMe, outImage.me, err.me)
+        if nimage>20:
+            raise TypeError("Too many input images > 20")
+            
+        #
+        # SWIG SUCKS
+        if nimage>0:
+            im1 = imArr[0].me
+        else:
+            im1 = None
+        if nimage>1:
+            im2 = imArr[1].me
+        else:
+            im2 = None
+        if nimage>2:
+            im3 = imArr[2].me
+        else:
+            im3 = None
+        if nimage>3:
+            im4 = imArr[3].me
+        else:
+            im4 = None
+        if nimage>4:
+            im5 = imArr[4].me
+        else:
+            im5 = None
+        if nimage>5:
+            im6 = imArr[5].me
+        else:
+            im6 = None
+        if nimage>6:
+            im7 = imArr[6].me
+        else:
+            im7 = None
+        if nimage>7:
+            im8 = imArr[7].me
+        else:
+            im8 = None
+        if nimage>8:
+            im9 = imArr[8].me
+        else:
+            im9 = None
+        if nimage>9:
+            im10 = imArr[9].me
+        else:
+            im10 = None
+        if nimage>10:
+            im11 = imArr[10].me
+        else:
+            im11 = None
+        if nimage>11:
+            im12 = imArr[11].me
+        else:
+            im12 = None
+        if nimage>12:
+            im13 = imArr[12].me
+        else:
+            im13 = None
+        if nimage>13:
+            im14 = imArr[13].me
+        else:
+            im14 = None
+        if nimage>14:
+            im15 = imArr[14].me
+        else:
+            im15 = None
+        if nimage>15:
+            im16 = imArr[15].me
+        else:
+            im16 = None
+        if nimage>16:
+            im17 = imArr[16].me
+        else:
+            im17 = None
+        if nimage>17:
+            im18 = imArr[17].me
+        else:
+            im18 = None
+        if nimage>18:
+            im19 = imArr[18].me
+        else:
+            im19 = None
+        if nimage>19:
+            im20 = imArr[19].me
+        else:
+            im20 = None
+        Obit.SpectrumFitImArr(self.me, nimage, 
+                              im1, im2, im3, im4, im5, im6, im7, im8,
+                              im9, im10, im11, im12, im13, im14, im15,
+                              im16, im17, im18, im19, im20,
+                              outImage.me, err.me)
     # end ImArr
     
     def Eval (self, inImage, outFreq, outImage, err):
@@ -198,7 +286,7 @@ class SpectrumFit(Obit.SpectrumFit):
         if not outImage.ImageIsA():
             raise TypeError("outImage MUST be a Python Obit Image")
         #
-        Obit.SpectrumFit(self.me, inImage.me, outFreq, outImage.me, err.me)
+        Obit.SpectrumFitEval(self.me, inImage.me, outFreq, outImage.me, err.me)
     # end Eval
     
     # end class SpectrumFit

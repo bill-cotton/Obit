@@ -1379,6 +1379,9 @@ void setOutputData (gchar *Source, olong iStoke, ObitInfoList *myInput,
 		   pgmName, Type);
     return;
   }
+
+  /* Set Stokes */
+  (*outImage)->myDesc->crval[3] = (ofloat)iStoke; /* Always 3? */
   
  /* Copy Field info to inData InfoList */
   dim[0] = dim[1] = 1;
@@ -1825,7 +1828,15 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     ObitDataCopyTable ((ObitData*)outField, (ObitData*)outImage[istok-bstok],
 			   CCType, &inver, &outver, err);
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
-  } /* end stokes loop */
+    /* Make sure Stokes set */
+    if (istok>1) {
+      ObitImageOpen (outImage[istok-bstok], OBIT_IO_ReadWrite, err);
+      outImage[istok-bstok]->myDesc->crval[outImage[istok-bstok]->myDesc->jlocs] = (gfloat)istok;
+      outImage[istok-bstok]->myStatus = OBIT_Modified;
+      ObitImageClose (outImage[istok-bstok], err);
+      if (err->error) Obit_traceback_msg (err, routine, outImage[istok-bstok]->name);
+    }
+ } /* end stokes loop */
   outField = ObitImageUnref(outField);
   
   /* DEBUG */
@@ -2448,7 +2459,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   doFlatten = TRUE;
   ObitInfoListGetTest(myInput, "doFlatten", &type, dim, &doFlatten);
   if (doFlatten) {
-     clnClass->ObitDConCleanFlatten((ObitDConClean*)myClean, err);
+    clnClass->ObitDConCleanFlatten((ObitDConClean*)myClean, err);
 
     /* Display flattened field? */
     if (myClean->display && myClean->mosaic->FullField && myClean->mosaic->FullField)

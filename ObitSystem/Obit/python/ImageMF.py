@@ -22,7 +22,7 @@ Additional  Functions are available in ImageUtil.
 # Python/Obit Astronomical ImageMF class
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2010-2019
+#  Copyright (C) 2010-2020
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -558,6 +558,59 @@ def PEffFqCorr (fitImage, rawImage, err, corAlpha=-0.7, \
     Obit.ImageMFEffFqCorr(fitImage.me, rawImage.me, err.me)
     # end PEffFqCorr
 
+def PMFPBCor (inIm, err, antSize=25, minGain=0.05):
+    """
+    Apply primary beam corrections to an ImageMF
+
+    WARNING: This routine modifies the input image;
+    ONLY RUN IT ONCE.
+    * inIm    = Image to be modified
+    * err     = Python Obit Error/message stack
+    * antSize = Antenna diameter in m.
+    * minGain = Minimum antenna gain
+    """
+    # Image info
+    nterm = inIm.Desc.List.Dict['NTERM'][2][0]
+    nspec = inIm.Desc.List.Dict['NSPEC'][2][0]
+    freqs = []
+    for i in range(1,nspec+1):
+        key = 'FREQ%4.4d'%i
+        freqs.append(inIm.Desc.List.Dict[key][2][0])
+    
+    # end loop
+    # Make scratch image for beam
+    beam = Image.Image("PBeam")
+    Image.PCloneMem(inIm, beam, err)
+    OErr.printErrMsg(err, "Error with scratch beam image")
+    # Debug
+    xf = Image.PFArray2FITS(beam.FArray, "Beam.fits", err, 0, oDesc=beam.Desc)
+    # Loop over planes
+    for i in range(1,nspec+1):
+        # Read plane
+        plane=[i+nterm,1,1,1,1]
+        Image.PGetPlane (inIm, None, plane, err)
+        OErr.printErrMsg(err, "Error reading image")
+        # Set frequency for PBCor
+        d = inIm.Desc.Dict; d['crval'][2] = freqs[i-1]; inIm.Desc.Dict = d
+        # Make PB Image
+        ImageUtil.PPBImage(beam, beam, err, minGain=minGain, antSize=antSize, outPlane=plane)
+        OErr.printErrMsg(err, "Error making PB image")
+        # Debug
+        oldVal = inIm.FArray.get(5046,1533)
+        gain = beam.FArray.get(5046,1533)
+        # Divide
+        FArray.PDivClip (inIm.FArray, beam.FArray, minGain, inIm.FArray)
+        newVal = inIm.FArray.get(5046,1533)
+        # Rewrite plane
+        Image.PPutPlane (inIm, None, plane, err)
+        # Debug
+        print (i,  plane[0], "nu=",freqs[i-1],'g=', gain, oldVal, newVal)
+        Image.PPutPlane (xf, beam.FArray, plane, err)
+        OErr.printErrMsg(err, "Error writing image")
+   
+    # end loop
+
+# End PMFPBCor
 def PGetFArray (inImageMF):
     """
     Return FArray used to buffer Image data

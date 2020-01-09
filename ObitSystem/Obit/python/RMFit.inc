@@ -117,12 +117,41 @@ extern void RMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage,
   ObitRMFitCube(in, inQImage, inUImage, outImage, err);
 }
 
+// SWIG REALLY SUCKS: arrays of pointers no longer work
 extern void RMFitImArr (ObitRMFit* in, int nimage, 
-                        ObitImage **imQArr, ObitImage **imUArr, 
+       ObitImage *imQ1, ObitImage *imQ2, ObitImage *imQ3, ObitImage *imQ4, ObitImage *imQ5,
+       ObitImage *imQ6, ObitImage *imQ7, ObitImage *imQ8, ObitImage *imQ9, ObitImage *imQ10,
+       ObitImage *imQ11, ObitImage *imQ12, ObitImage *imQ13, ObitImage *imQ14, ObitImage *imQ15,
+       ObitImage *imQ16, ObitImage *imQ17, ObitImage *imQ18, ObitImage *imQ19, ObitImage *imQ20,
+       ObitImage *imU1, ObitImage *imU2, ObitImage *imU3, ObitImage *imU4, ObitImage *imU5,
+       ObitImage *imU6, ObitImage *imU7, ObitImage *imU8, ObitImage *imU9, ObitImage *imU10,
+       ObitImage *imU11, ObitImage *imU12, ObitImage *imU13, ObitImage *imU14, ObitImage *imU15,
+       ObitImage *imU16, ObitImage *imU17, ObitImage *imU18, ObitImage *imU19, ObitImage *imU20,
 			ObitImage *outImage, ObitErr *err) {
+  ObitImage *imQArr[20], *imUArr[20];
+  imQArr[0] = imQ1; imUArr[0] = imU1;
+  imQArr[1] = imQ2; imUArr[1] = imU2;
+  imQArr[2] = imQ3; imUArr[2] = imU3;
+  imQArr[3] = imQ4; imUArr[3] = imU4;
+  imQArr[4] = imQ5; imUArr[4] = imU5;
+  imQArr[5] = imQ6; imUArr[5] = imU6;
+  imQArr[6] = imQ7; imUArr[6] = imU7;
+  imQArr[7] = imQ8; imUArr[7] = imU8;
+  imQArr[8] = imQ9; imUArr[8] = imU9;
+  imQArr[9] = imQ10; imUArr[9] = imU10;
+  imQArr[10] = imQ11; imUArr[10] = imU11;
+  imQArr[11] = imQ12; imUArr[11] = imU12;
+  imQArr[12] = imQ13; imUArr[12] = imU13;
+  imQArr[13] = imQ14; imUArr[13] = imU14;
+  imQArr[14] = imQ15; imUArr[14] = imU15;
+  imQArr[15] = imQ16; imUArr[15] = imU16;
+  imQArr[16] = imQ17; imUArr[16] = imU17;
+  imQArr[17] = imQ18; imUArr[17] = imU18;
+  imQArr[18] = imQ19; imUArr[18] = imU19;
+  imQArr[19] = imQ20; imUArr[19] = imU20;
   ObitRMFitImArr(in, (olong)nimage, imQArr, imUArr, outImage, err);
 } // end RMFitImArr 
-
+ 
 
 extern ObitRMFit* newRMFit (char* name) {
   return newObitRMFit (name);

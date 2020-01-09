@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Convol Obit task convolve an image with another image or a model   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2017                                          */
+/*;  Copyright (C) 2006-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -726,7 +726,6 @@ ObitFArray* convolGetConvFn(ObitInfoList *myInput, ObitErr *err)
   olong         j, k, Aseq, disk, cno;
   olong        ndim=2, naxis[2];
   ofloat       useBeam[3];
-  gboolean     found;
   gchar        *strTemp=NULL, Opcode[5], inFile[129];
   gchar        Aname[13], Aclass[7], *Atype = "MA";
   gchar        tname[101];
@@ -734,9 +733,9 @@ ObitFArray* convolGetConvFn(ObitInfoList *myInput, ObitErr *err)
 
   if (err->error) return outArray;  /* existing error? */
 
-  /* Which operation wanted? GAUS, IMAG, DCON, DGAU */
+  /* Which operation wanted? GAUS, IMAG, DCON, DGAU, FILT */
   strcpy (Opcode, "    ");
-  found = ObitInfoListGetTest(myInput, "Opcode", &type, dim, Opcode);
+  ObitInfoListGetTest(myInput, "Opcode", &type, dim, Opcode);
   if (!strcmp (Opcode, "    ")) strcpy (Opcode, "GAUS");
   dim[0] = 4; dim[1] = 1;
   ObitInfoListAlwaysPut(myInput, "Opcode", OBIT_string, dim, Opcode);
@@ -747,6 +746,16 @@ ObitFArray* convolGetConvFn(ObitInfoList *myInput, ObitErr *err)
     outArray = ObitFArrayCreate ("dummy", ndim, naxis);
 
   } else if (!strcmp (Opcode, "DCON")) {  /* Deconvolve from Gaussian */
+    /* Use Gaussian */
+    useBeam[0] = useBeam[1] = fabs(inImage->myDesc->cdelt[0]); 
+    useBeam[2] = 0.0;
+    ObitInfoListGetTest (myInput, "useBeam", &type, dim, useBeam);
+
+    /* Create convolving Gaussian */
+    outArray = ObitConvUtilGaus (inImage, useBeam);
+    /* DEBUG 
+    ObitImageUtilArray2Image ("ConvolDebug1.fits",1,outArray, err);*/
+  } else if (!strcmp (Opcode, "FILT")) {  /* Deconvolve from Gaussian */
     /* Use Gaussian */
     useBeam[0] = useBeam[1] = fabs(inImage->myDesc->cdelt[0]); 
     useBeam[2] = 0.0;
@@ -859,7 +868,7 @@ void doConvol (ObitInfoList *myInput, ObitImage *inImage, ObitFArray *convFn,
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   ofloat     rescale, Beam[3], useBeam[3];
-  gboolean doDivide;
+  gboolean doDivide, doSub;
   gchar    Opcode[5];
   gchar *routine = "doConvol";
 
@@ -868,6 +877,7 @@ void doConvol (ObitInfoList *myInput, ObitImage *inImage, ObitFArray *convFn,
   /* Multiply or divide by FT of convolving function */
   ObitInfoListGetTest(myInput, "Opcode", &type, dim, Opcode);
   doDivide = (!strcmp (Opcode, "DCON")) || (!strcmp (Opcode, "DGAU"));
+  doSub = (!strcmp (Opcode, "FILT"));
 
   /* Unit scaling */
   rescale = 1.0;
@@ -907,7 +917,7 @@ void doConvol (ObitInfoList *myInput, ObitImage *inImage, ObitFArray *convFn,
     ObitConvUtilConvGauss (inImage, useBeam[0], useBeam[1], useBeam[2], 
 			   rescale, outImage, err);
   } else { /* Use convFn */
-    ObitConvUtilConv (inImage, convFn, doDivide, rescale, outImage, err);
+    ObitConvUtilConv (inImage, convFn, doDivide, doSub, rescale, outImage, err);
   }
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
 

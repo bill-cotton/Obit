@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2016                                          */
+/*;  Copyright (C) 2008-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -623,6 +623,8 @@ void ObitSpectrumFitCube (ObitSpectrumFit* in, ObitImage *inImage,
  *              One per frequency or one for all, def 0.05, 1.0 => no gain corrections
  * \li "antSize" OBIT_float (?,1,1) Antenna diameter (m) for gain corr, 
  *              One per frequency or one for all, def 25.0
+ * \li corAlpha OBIT_float scalar, if non zero, spectral index 
+ *                   correction to apply, def = 0.0
  * \param nimage   Number of entries in imArr
  * \param imArr    Array of images to be fitted
  * \param outImage Image cube with fitted spectra.
@@ -636,7 +638,7 @@ void ObitSpectrumFitCube (ObitSpectrumFit* in, ObitImage *inImage,
 void ObitSpectrumFitImArr (ObitSpectrumFit* in, olong nimage, ObitImage **imArr, 
 			   ObitImage *outImage, ObitErr *err)
 {
-  olong i, iplane, nOut;
+  olong i, jlocf, iplane, nOut;
   olong naxis[2];
   ObitIOSize IOBy;
   ObitInfoType type;
@@ -677,6 +679,9 @@ void ObitSpectrumFitImArr (ObitSpectrumFit* in, olong nimage, ObitImage **imArr,
   ObitInfoListGetTest(in->info, "doBrokePow", &type, dim, &InfoReal);
   in->doBrokePow = InfoReal.itg;
 
+  /* Spectral index correction */
+  in->corAlpha = 0.0;
+  ObitInfoListGetTest(in->info, "corAlpha", &type, dim, &in->corAlpha);
   /* Min PB gain */
   ObitInfoListGetP(in->info, "PBmin", &type, PBdim, (gpointer)&PBmin);
   /* Antenna diameter */
@@ -733,10 +738,12 @@ void ObitSpectrumFitImArr (ObitSpectrumFit* in, olong nimage, ObitImage **imArr,
 
       /* Change third axis to type "SPECLOGF" and leave the reference frequency
 	 as the "CRVAL" */
-      outImage->myDesc->inaxes[outImage->myDesc->jlocf] =  nOut;
-      outImage->myDesc->crpix[outImage->myDesc->jlocf]  =  1.0;
-      outImage->myDesc->cdelt[outImage->myDesc->jlocf]  =  1.0;
-      strncpy (outImage->myDesc->ctype[outImage->myDesc->jlocf], SPECLOGF, IMLEN_KEYWORD);
+      if (outImage->myDesc->jlocf>0) jlocf = outImage->myDesc->jlocf;
+      else                           jlocf = 2; /* Trap CASA problem */
+      outImage->myDesc->inaxes[jlocf] =  nOut;
+      outImage->myDesc->crpix[jlocf]  =  1.0;
+      outImage->myDesc->cdelt[jlocf]  =  1.0;
+      strncpy (outImage->myDesc->ctype[jlocf], SPECLOGF, IMLEN_KEYWORD);
       outImage->myDesc->bitpix = -32;  /* Float it */
 
       /* Creation date today */
@@ -1926,7 +1933,7 @@ static void NLFit (NLFitArg *arg)
 {
   olong iter=0, i, nterm=arg->nterm, nvalid, best;
   ofloat avg, delta, chi2Test, sigma, fblank = ObitMagicF();
-  ofloat meanSNR, SNRperTerm=5.0;
+  ofloat meanSNR, SNRperTerm=1.0;
   odouble sum, sumwt, sum2;
   gboolean isDone;
   int status;
@@ -2112,7 +2119,7 @@ static void NLFit (NLFitArg *arg)
 static void NLFitBP (NLFitArg *arg)
 {
   olong iter=0, i, nterm, nvalid;
-  ofloat avg, chi2Test, sigma, fblank = ObitMagicF();
+  ofloat chi2Test, sigma, fblank = ObitMagicF();
   odouble sum, sumwt;
   int status;
 #ifdef HAVE_GSL
@@ -2132,7 +2139,7 @@ static void NLFitBP (NLFitArg *arg)
     }
   }
   if (nvalid<=(arg->nterm)) return;  /* enough good data? */
-  avg = sum/sumwt;
+  /*avg = sum/sumwt;*/
       
   /* Estimate of noise */
   sigma = 1.0 / sqrt(sumwt);

@@ -4474,3 +4474,32 @@ git rm ObitSystem/Obit/python/python.swg
 ObitTalk/bin/ObitTalk.in
    change comment about parseltongue to ObitTalk
 22 Nov 2019 svn 610
+
+Summary: bug fixes
+Obit/python/RMFit.py
+    Fix bugs from python 3 upgrade
+Obit/python/SpectrumFit.py
+    fit call to SpectrumFitEval
+    ImArr: fix SWIG failure
+    Add corAlpha parameter
+Obit/python/SpectrumFit.inc  Obit/python/RMFit.inc Obit/python/RMFit.py
+    ImArr: fix SWIG failure
+Obit/src/ObitSpectrumFit.c
+    trap CASA images in FitImArr
+    Add corAlpha parameter in FitImArr
+Obit/TDF/SubImage.TDF
+     Allow larger BLC,TRC
+Obit/tasks/Convol.c Obit/TDF/Convol.TDF
+Obit/include/ObitConvUtil.h Obit/src/ObitConvUtil.c Obit/python/ConvUtil.inc 
+Obit/src/ObitImageUtil.c 
+    Add "FILT" high pass filter
+Obit/python/Obit_wrap.c
+    Rebuilt python interface
+Obit/python/ImageMF.py
+    Add PMFPBCor to primary beam correcy frequency bins
+Obit/share/scripts/MKPlotSpec.py
+    New script to plot pixel spectra from an ImageMF
+Obit/tasks/MFImage.py
+    Write Stokes in image header
+9 Jan 2020 svn 611
+

@@ -2740,12 +2740,11 @@ SWIGINTERN PyObject *SWIG_PyStaticMethod_New(PyObject *SWIGUNUSEDPARM(self), PyO
 #define SWIGTYPE_p_long swig_types[104]
 #define SWIGTYPE_p_ofloat swig_types[105]
 #define SWIGTYPE_p_olong swig_types[106]
-#define SWIGTYPE_p_p_ObitImage swig_types[107]
-#define SWIGTYPE_p_p_ObitUV swig_types[108]
-#define SWIGTYPE_p_p_char swig_types[109]
-#define SWIGTYPE_p_void swig_types[110]
-static swig_type_info *swig_types[112];
-static swig_module_info swig_module = {swig_types, 111, 0, 0, 0, 0};
+#define SWIGTYPE_p_p_ObitUV swig_types[107]
+#define SWIGTYPE_p_p_char swig_types[108]
+#define SWIGTYPE_p_void swig_types[109]
+static swig_type_info *swig_types[111];
+static swig_module_info swig_module = {swig_types, 110, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -4405,7 +4404,7 @@ extern void ConvUtilConv (ObitImage *inImage, ObitFArray *convFn,
   gboolean ldoDivide;
   ofloat lrescale = (ofloat)rescale;
   ldoDivide = doDivide != 0;
-  ObitConvUtilConv (inImage, convFn, ldoDivide, lrescale, outImage, err);
+  ObitConvUtilConv (inImage, convFn, ldoDivide, FALSE, lrescale, outImage, err);
 } // end ConvUtilConv 
 
 extern void ConvUtilConvGauss (ObitImage *inImage, float maj, float min, float pa, float rescale,
@@ -9709,8 +9708,8 @@ typedef struct OSystem {
 
 
 void CreateOSystem(PyObject *self, char *pgmName, long pgmNumber, long AIPSuser,
-             long numberAIPSdisk, char** AIPSdir, 
-	     long numberFITSdisk, char** FITSdir, 
+             long numberAIPSdisk,  char** AIPSdir, 
+	     long numberFITSdisk,  char** FITSdir, 
 	     long F_TRUE, long F_FALSE, ObitErr *err) {
    gchar **Adir, **Fdir;
    oint lF_TRUE  = F_TRUE;
@@ -11079,12 +11078,41 @@ extern void RMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage,
   ObitRMFitCube(in, inQImage, inUImage, outImage, err);
 }
 
+// SWIG REALLY SUCKS: arrays of pointers no longer work
 extern void RMFitImArr (ObitRMFit* in, int nimage, 
-                        ObitImage **imQArr, ObitImage **imUArr, 
+       ObitImage *imQ1, ObitImage *imQ2, ObitImage *imQ3, ObitImage *imQ4, ObitImage *imQ5,
+       ObitImage *imQ6, ObitImage *imQ7, ObitImage *imQ8, ObitImage *imQ9, ObitImage *imQ10,
+       ObitImage *imQ11, ObitImage *imQ12, ObitImage *imQ13, ObitImage *imQ14, ObitImage *imQ15,
+       ObitImage *imQ16, ObitImage *imQ17, ObitImage *imQ18, ObitImage *imQ19, ObitImage *imQ20,
+       ObitImage *imU1, ObitImage *imU2, ObitImage *imU3, ObitImage *imU4, ObitImage *imU5,
+       ObitImage *imU6, ObitImage *imU7, ObitImage *imU8, ObitImage *imU9, ObitImage *imU10,
+       ObitImage *imU11, ObitImage *imU12, ObitImage *imU13, ObitImage *imU14, ObitImage *imU15,
+       ObitImage *imU16, ObitImage *imU17, ObitImage *imU18, ObitImage *imU19, ObitImage *imU20,
 			ObitImage *outImage, ObitErr *err) {
+  ObitImage *imQArr[20], *imUArr[20];
+  imQArr[0] = imQ1; imUArr[0] = imU1;
+  imQArr[1] = imQ2; imUArr[1] = imU2;
+  imQArr[2] = imQ3; imUArr[2] = imU3;
+  imQArr[3] = imQ4; imUArr[3] = imU4;
+  imQArr[4] = imQ5; imUArr[4] = imU5;
+  imQArr[5] = imQ6; imUArr[5] = imU6;
+  imQArr[6] = imQ7; imUArr[6] = imU7;
+  imQArr[7] = imQ8; imUArr[7] = imU8;
+  imQArr[8] = imQ9; imUArr[8] = imU9;
+  imQArr[9] = imQ10; imUArr[9] = imU10;
+  imQArr[10] = imQ11; imUArr[10] = imU11;
+  imQArr[11] = imQ12; imUArr[11] = imU12;
+  imQArr[12] = imQ13; imUArr[12] = imU13;
+  imQArr[13] = imQ14; imUArr[13] = imU14;
+  imQArr[14] = imQ15; imUArr[14] = imU15;
+  imQArr[15] = imQ16; imUArr[15] = imU16;
+  imQArr[16] = imQ17; imUArr[16] = imU17;
+  imQArr[17] = imQ18; imUArr[17] = imU18;
+  imQArr[18] = imQ19; imUArr[18] = imU19;
+  imQArr[19] = imQ20; imUArr[19] = imU20;
   ObitRMFitImArr(in, (olong)nimage, imQArr, imUArr, outImage, err);
 } // end RMFitImArr 
-
+ 
 
 extern ObitRMFit* newRMFit (char* name) {
   return newObitRMFit (name);
@@ -11970,8 +11998,34 @@ extern void SpectrumFitCube (ObitSpectrumFit* in, ObitImage *inImage,
   ObitSpectrumFitCube(in, inImage, outImage, err);
 }
 
-extern void SpectrumFitImArr (ObitSpectrumFit* in, long nimage, ObitImage **imArr, 
+// SWIG REALLY SUCKS: arrays of pointers no longer work
+extern void SpectrumFitImArr (ObitSpectrumFit* in, long nimage, 
+       ObitImage *im1, ObitImage *im2, ObitImage *im3, ObitImage *im4, ObitImage *im5,
+       ObitImage *im6, ObitImage *im7, ObitImage *im8, ObitImage *im9, ObitImage *im10,
+       ObitImage *im11, ObitImage *im12, ObitImage *im13, ObitImage *im14, ObitImage *im15,
+       ObitImage *im16, ObitImage *im17, ObitImage *im18, ObitImage *im19, ObitImage *im20,
 			      ObitImage *outImage, ObitErr *err) {
+  ObitImage *imArr[20];
+  imArr[0] = im1;
+  imArr[1] = im2;
+  imArr[2] = im3;
+  imArr[3] = im4;
+  imArr[4] = im5;
+  imArr[5] = im6;
+  imArr[6] = im7;
+  imArr[7] = im8;
+  imArr[8] = im9;
+  imArr[9] = im10;
+  imArr[10] = im11;
+  imArr[11] = im12;
+  imArr[12] = im13;
+  imArr[13] = im14;
+  imArr[14] = im15;
+  imArr[15] = im16;
+  imArr[16] = im17;
+  imArr[17] = im18;
+  imArr[18] = im19;
+  imArr[19] = im20;
   ObitSpectrumFitImArr(in, (olong)nimage, imArr, outImage, err);
 } // end SpectrumFitImArr 
 
@@ -50245,21 +50299,139 @@ SWIGINTERN PyObject *_wrap_RMFitImArr(PyObject *SWIGUNUSEDPARM(self), PyObject *
   PyObject *resultobj = 0;
   ObitRMFit *arg1 = (ObitRMFit *) 0 ;
   int arg2 ;
-  ObitImage **arg3 = (ObitImage **) 0 ;
-  ObitImage **arg4 = (ObitImage **) 0 ;
+  ObitImage *arg3 = (ObitImage *) 0 ;
+  ObitImage *arg4 = (ObitImage *) 0 ;
   ObitImage *arg5 = (ObitImage *) 0 ;
-  ObitErr *arg6 = (ObitErr *) 0 ;
+  ObitImage *arg6 = (ObitImage *) 0 ;
+  ObitImage *arg7 = (ObitImage *) 0 ;
+  ObitImage *arg8 = (ObitImage *) 0 ;
+  ObitImage *arg9 = (ObitImage *) 0 ;
+  ObitImage *arg10 = (ObitImage *) 0 ;
+  ObitImage *arg11 = (ObitImage *) 0 ;
+  ObitImage *arg12 = (ObitImage *) 0 ;
+  ObitImage *arg13 = (ObitImage *) 0 ;
+  ObitImage *arg14 = (ObitImage *) 0 ;
+  ObitImage *arg15 = (ObitImage *) 0 ;
+  ObitImage *arg16 = (ObitImage *) 0 ;
+  ObitImage *arg17 = (ObitImage *) 0 ;
+  ObitImage *arg18 = (ObitImage *) 0 ;
+  ObitImage *arg19 = (ObitImage *) 0 ;
+  ObitImage *arg20 = (ObitImage *) 0 ;
+  ObitImage *arg21 = (ObitImage *) 0 ;
+  ObitImage *arg22 = (ObitImage *) 0 ;
+  ObitImage *arg23 = (ObitImage *) 0 ;
+  ObitImage *arg24 = (ObitImage *) 0 ;
+  ObitImage *arg25 = (ObitImage *) 0 ;
+  ObitImage *arg26 = (ObitImage *) 0 ;
+  ObitImage *arg27 = (ObitImage *) 0 ;
+  ObitImage *arg28 = (ObitImage *) 0 ;
+  ObitImage *arg29 = (ObitImage *) 0 ;
+  ObitImage *arg30 = (ObitImage *) 0 ;
+  ObitImage *arg31 = (ObitImage *) 0 ;
+  ObitImage *arg32 = (ObitImage *) 0 ;
+  ObitImage *arg33 = (ObitImage *) 0 ;
+  ObitImage *arg34 = (ObitImage *) 0 ;
+  ObitImage *arg35 = (ObitImage *) 0 ;
+  ObitImage *arg36 = (ObitImage *) 0 ;
+  ObitImage *arg37 = (ObitImage *) 0 ;
+  ObitImage *arg38 = (ObitImage *) 0 ;
+  ObitImage *arg39 = (ObitImage *) 0 ;
+  ObitImage *arg40 = (ObitImage *) 0 ;
+  ObitImage *arg41 = (ObitImage *) 0 ;
+  ObitImage *arg42 = (ObitImage *) 0 ;
+  ObitImage *arg43 = (ObitImage *) 0 ;
+  ObitErr *arg44 = (ObitErr *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int val2 ;
   int ecode2 = 0 ;
+  void *argp3 = 0 ;
+  int res3 = 0 ;
+  void *argp4 = 0 ;
+  int res4 = 0 ;
   void *argp5 = 0 ;
   int res5 = 0 ;
   void *argp6 = 0 ;
   int res6 = 0 ;
-  PyObject *swig_obj[6] ;
+  void *argp7 = 0 ;
+  int res7 = 0 ;
+  void *argp8 = 0 ;
+  int res8 = 0 ;
+  void *argp9 = 0 ;
+  int res9 = 0 ;
+  void *argp10 = 0 ;
+  int res10 = 0 ;
+  void *argp11 = 0 ;
+  int res11 = 0 ;
+  void *argp12 = 0 ;
+  int res12 = 0 ;
+  void *argp13 = 0 ;
+  int res13 = 0 ;
+  void *argp14 = 0 ;
+  int res14 = 0 ;
+  void *argp15 = 0 ;
+  int res15 = 0 ;
+  void *argp16 = 0 ;
+  int res16 = 0 ;
+  void *argp17 = 0 ;
+  int res17 = 0 ;
+  void *argp18 = 0 ;
+  int res18 = 0 ;
+  void *argp19 = 0 ;
+  int res19 = 0 ;
+  void *argp20 = 0 ;
+  int res20 = 0 ;
+  void *argp21 = 0 ;
+  int res21 = 0 ;
+  void *argp22 = 0 ;
+  int res22 = 0 ;
+  void *argp23 = 0 ;
+  int res23 = 0 ;
+  void *argp24 = 0 ;
+  int res24 = 0 ;
+  void *argp25 = 0 ;
+  int res25 = 0 ;
+  void *argp26 = 0 ;
+  int res26 = 0 ;
+  void *argp27 = 0 ;
+  int res27 = 0 ;
+  void *argp28 = 0 ;
+  int res28 = 0 ;
+  void *argp29 = 0 ;
+  int res29 = 0 ;
+  void *argp30 = 0 ;
+  int res30 = 0 ;
+  void *argp31 = 0 ;
+  int res31 = 0 ;
+  void *argp32 = 0 ;
+  int res32 = 0 ;
+  void *argp33 = 0 ;
+  int res33 = 0 ;
+  void *argp34 = 0 ;
+  int res34 = 0 ;
+  void *argp35 = 0 ;
+  int res35 = 0 ;
+  void *argp36 = 0 ;
+  int res36 = 0 ;
+  void *argp37 = 0 ;
+  int res37 = 0 ;
+  void *argp38 = 0 ;
+  int res38 = 0 ;
+  void *argp39 = 0 ;
+  int res39 = 0 ;
+  void *argp40 = 0 ;
+  int res40 = 0 ;
+  void *argp41 = 0 ;
+  int res41 = 0 ;
+  void *argp42 = 0 ;
+  int res42 = 0 ;
+  void *argp43 = 0 ;
+  int res43 = 0 ;
+  void *argp44 = 0 ;
+  int res44 = 0 ;
+  PyObject *swig_obj[44] ;
   
-  if (!SWIG_Python_UnpackTuple(args, "RMFitImArr", 6, 6, swig_obj)) SWIG_fail;
+  if (!SWIG_Python_UnpackTuple(args, "RMFitImArr", 44, 44, swig_obj)) SWIG_fail;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ObitRMFit, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RMFitImArr" "', argument " "1"" of type '" "ObitRMFit *""'"); 
@@ -50270,77 +50442,217 @@ SWIGINTERN PyObject *_wrap_RMFitImArr(PyObject *SWIGUNUSEDPARM(self), PyObject *
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "RMFitImArr" "', argument " "2"" of type '" "int""'");
   } 
   arg2 = (int)(val2);
-  {
-    if (PyList_Check(swig_obj[2])) {
-      int size = PyList_Size(swig_obj[2]);
-      int i = 0;
-      
-      arg3 = (ObitImage**) malloc((size+1)*sizeof(ObitImage*));
-      arg3[size] = NULL;  // last pointer NULL
-      for (i = 0; i < size; i++) {
-        PyObject *o = PyList_GetItem(swig_obj[2],i);
-        if (PyString_Check(o)) {
-          if (!SWIG_IsOK(SWIG_ConvertPtr(o,(void **) &arg3[i],SWIGTYPE_p_p_ObitImage,0))) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument. Expected _ObitImage_p.");
-            return NULL;
-          }
-          if (!ObitImageIsA((ObitImage*)arg3[i])) {
-            // check */
-            PyErr_SetString(PyExc_TypeError,"Type error. Expected ObitImage Object.");
-            return NULL;
-          }
-        } else {
-          PyErr_SetString(PyExc_TypeError,"list must contain Strings (ObitImage pointers)");
-          free(arg3);
-          return NULL;
-        }
-      }
-    } else {
-      PyErr_SetString(PyExc_TypeError,"not a list");
-      return NULL;
-    }
+  res3 = SWIG_ConvertPtr(swig_obj[2], &argp3,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "RMFitImArr" "', argument " "3"" of type '" "ObitImage *""'"); 
   }
-  {
-    if (PyList_Check(swig_obj[3])) {
-      int size = PyList_Size(swig_obj[3]);
-      int i = 0;
-      
-      arg4 = (ObitImage**) malloc((size+1)*sizeof(ObitImage*));
-      arg4[size] = NULL;  // last pointer NULL
-      for (i = 0; i < size; i++) {
-        PyObject *o = PyList_GetItem(swig_obj[3],i);
-        if (PyString_Check(o)) {
-          if (!SWIG_IsOK(SWIG_ConvertPtr(o,(void **) &arg4[i],SWIGTYPE_p_p_ObitImage,0))) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument. Expected _ObitImage_p.");
-            return NULL;
-          }
-          if (!ObitImageIsA((ObitImage*)arg4[i])) {
-            // check */
-            PyErr_SetString(PyExc_TypeError,"Type error. Expected ObitImage Object.");
-            return NULL;
-          }
-        } else {
-          PyErr_SetString(PyExc_TypeError,"list must contain Strings (ObitImage pointers)");
-          free(arg4);
-          return NULL;
-        }
-      }
-    } else {
-      PyErr_SetString(PyExc_TypeError,"not a list");
-      return NULL;
-    }
+  arg3 = (ObitImage *)(argp3);
+  res4 = SWIG_ConvertPtr(swig_obj[3], &argp4,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res4)) {
+    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "RMFitImArr" "', argument " "4"" of type '" "ObitImage *""'"); 
   }
+  arg4 = (ObitImage *)(argp4);
   res5 = SWIG_ConvertPtr(swig_obj[4], &argp5,SWIGTYPE_p_ObitImage, 0 |  0 );
   if (!SWIG_IsOK(res5)) {
     SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "RMFitImArr" "', argument " "5"" of type '" "ObitImage *""'"); 
   }
   arg5 = (ObitImage *)(argp5);
-  res6 = SWIG_ConvertPtr(swig_obj[5], &argp6,SWIGTYPE_p_ObitErr, 0 |  0 );
+  res6 = SWIG_ConvertPtr(swig_obj[5], &argp6,SWIGTYPE_p_ObitImage, 0 |  0 );
   if (!SWIG_IsOK(res6)) {
-    SWIG_exception_fail(SWIG_ArgError(res6), "in method '" "RMFitImArr" "', argument " "6"" of type '" "ObitErr *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res6), "in method '" "RMFitImArr" "', argument " "6"" of type '" "ObitImage *""'"); 
   }
-  arg6 = (ObitErr *)(argp6);
-  RMFitImArr(arg1,arg2,arg3,arg4,arg5,arg6);
+  arg6 = (ObitImage *)(argp6);
+  res7 = SWIG_ConvertPtr(swig_obj[6], &argp7,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res7)) {
+    SWIG_exception_fail(SWIG_ArgError(res7), "in method '" "RMFitImArr" "', argument " "7"" of type '" "ObitImage *""'"); 
+  }
+  arg7 = (ObitImage *)(argp7);
+  res8 = SWIG_ConvertPtr(swig_obj[7], &argp8,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res8)) {
+    SWIG_exception_fail(SWIG_ArgError(res8), "in method '" "RMFitImArr" "', argument " "8"" of type '" "ObitImage *""'"); 
+  }
+  arg8 = (ObitImage *)(argp8);
+  res9 = SWIG_ConvertPtr(swig_obj[8], &argp9,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res9)) {
+    SWIG_exception_fail(SWIG_ArgError(res9), "in method '" "RMFitImArr" "', argument " "9"" of type '" "ObitImage *""'"); 
+  }
+  arg9 = (ObitImage *)(argp9);
+  res10 = SWIG_ConvertPtr(swig_obj[9], &argp10,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res10)) {
+    SWIG_exception_fail(SWIG_ArgError(res10), "in method '" "RMFitImArr" "', argument " "10"" of type '" "ObitImage *""'"); 
+  }
+  arg10 = (ObitImage *)(argp10);
+  res11 = SWIG_ConvertPtr(swig_obj[10], &argp11,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res11)) {
+    SWIG_exception_fail(SWIG_ArgError(res11), "in method '" "RMFitImArr" "', argument " "11"" of type '" "ObitImage *""'"); 
+  }
+  arg11 = (ObitImage *)(argp11);
+  res12 = SWIG_ConvertPtr(swig_obj[11], &argp12,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res12)) {
+    SWIG_exception_fail(SWIG_ArgError(res12), "in method '" "RMFitImArr" "', argument " "12"" of type '" "ObitImage *""'"); 
+  }
+  arg12 = (ObitImage *)(argp12);
+  res13 = SWIG_ConvertPtr(swig_obj[12], &argp13,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res13)) {
+    SWIG_exception_fail(SWIG_ArgError(res13), "in method '" "RMFitImArr" "', argument " "13"" of type '" "ObitImage *""'"); 
+  }
+  arg13 = (ObitImage *)(argp13);
+  res14 = SWIG_ConvertPtr(swig_obj[13], &argp14,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res14)) {
+    SWIG_exception_fail(SWIG_ArgError(res14), "in method '" "RMFitImArr" "', argument " "14"" of type '" "ObitImage *""'"); 
+  }
+  arg14 = (ObitImage *)(argp14);
+  res15 = SWIG_ConvertPtr(swig_obj[14], &argp15,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res15)) {
+    SWIG_exception_fail(SWIG_ArgError(res15), "in method '" "RMFitImArr" "', argument " "15"" of type '" "ObitImage *""'"); 
+  }
+  arg15 = (ObitImage *)(argp15);
+  res16 = SWIG_ConvertPtr(swig_obj[15], &argp16,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res16)) {
+    SWIG_exception_fail(SWIG_ArgError(res16), "in method '" "RMFitImArr" "', argument " "16"" of type '" "ObitImage *""'"); 
+  }
+  arg16 = (ObitImage *)(argp16);
+  res17 = SWIG_ConvertPtr(swig_obj[16], &argp17,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res17)) {
+    SWIG_exception_fail(SWIG_ArgError(res17), "in method '" "RMFitImArr" "', argument " "17"" of type '" "ObitImage *""'"); 
+  }
+  arg17 = (ObitImage *)(argp17);
+  res18 = SWIG_ConvertPtr(swig_obj[17], &argp18,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res18)) {
+    SWIG_exception_fail(SWIG_ArgError(res18), "in method '" "RMFitImArr" "', argument " "18"" of type '" "ObitImage *""'"); 
+  }
+  arg18 = (ObitImage *)(argp18);
+  res19 = SWIG_ConvertPtr(swig_obj[18], &argp19,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res19)) {
+    SWIG_exception_fail(SWIG_ArgError(res19), "in method '" "RMFitImArr" "', argument " "19"" of type '" "ObitImage *""'"); 
+  }
+  arg19 = (ObitImage *)(argp19);
+  res20 = SWIG_ConvertPtr(swig_obj[19], &argp20,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res20)) {
+    SWIG_exception_fail(SWIG_ArgError(res20), "in method '" "RMFitImArr" "', argument " "20"" of type '" "ObitImage *""'"); 
+  }
+  arg20 = (ObitImage *)(argp20);
+  res21 = SWIG_ConvertPtr(swig_obj[20], &argp21,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res21)) {
+    SWIG_exception_fail(SWIG_ArgError(res21), "in method '" "RMFitImArr" "', argument " "21"" of type '" "ObitImage *""'"); 
+  }
+  arg21 = (ObitImage *)(argp21);
+  res22 = SWIG_ConvertPtr(swig_obj[21], &argp22,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res22)) {
+    SWIG_exception_fail(SWIG_ArgError(res22), "in method '" "RMFitImArr" "', argument " "22"" of type '" "ObitImage *""'"); 
+  }
+  arg22 = (ObitImage *)(argp22);
+  res23 = SWIG_ConvertPtr(swig_obj[22], &argp23,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res23)) {
+    SWIG_exception_fail(SWIG_ArgError(res23), "in method '" "RMFitImArr" "', argument " "23"" of type '" "ObitImage *""'"); 
+  }
+  arg23 = (ObitImage *)(argp23);
+  res24 = SWIG_ConvertPtr(swig_obj[23], &argp24,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res24)) {
+    SWIG_exception_fail(SWIG_ArgError(res24), "in method '" "RMFitImArr" "', argument " "24"" of type '" "ObitImage *""'"); 
+  }
+  arg24 = (ObitImage *)(argp24);
+  res25 = SWIG_ConvertPtr(swig_obj[24], &argp25,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res25)) {
+    SWIG_exception_fail(SWIG_ArgError(res25), "in method '" "RMFitImArr" "', argument " "25"" of type '" "ObitImage *""'"); 
+  }
+  arg25 = (ObitImage *)(argp25);
+  res26 = SWIG_ConvertPtr(swig_obj[25], &argp26,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res26)) {
+    SWIG_exception_fail(SWIG_ArgError(res26), "in method '" "RMFitImArr" "', argument " "26"" of type '" "ObitImage *""'"); 
+  }
+  arg26 = (ObitImage *)(argp26);
+  res27 = SWIG_ConvertPtr(swig_obj[26], &argp27,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res27)) {
+    SWIG_exception_fail(SWIG_ArgError(res27), "in method '" "RMFitImArr" "', argument " "27"" of type '" "ObitImage *""'"); 
+  }
+  arg27 = (ObitImage *)(argp27);
+  res28 = SWIG_ConvertPtr(swig_obj[27], &argp28,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res28)) {
+    SWIG_exception_fail(SWIG_ArgError(res28), "in method '" "RMFitImArr" "', argument " "28"" of type '" "ObitImage *""'"); 
+  }
+  arg28 = (ObitImage *)(argp28);
+  res29 = SWIG_ConvertPtr(swig_obj[28], &argp29,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res29)) {
+    SWIG_exception_fail(SWIG_ArgError(res29), "in method '" "RMFitImArr" "', argument " "29"" of type '" "ObitImage *""'"); 
+  }
+  arg29 = (ObitImage *)(argp29);
+  res30 = SWIG_ConvertPtr(swig_obj[29], &argp30,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res30)) {
+    SWIG_exception_fail(SWIG_ArgError(res30), "in method '" "RMFitImArr" "', argument " "30"" of type '" "ObitImage *""'"); 
+  }
+  arg30 = (ObitImage *)(argp30);
+  res31 = SWIG_ConvertPtr(swig_obj[30], &argp31,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res31)) {
+    SWIG_exception_fail(SWIG_ArgError(res31), "in method '" "RMFitImArr" "', argument " "31"" of type '" "ObitImage *""'"); 
+  }
+  arg31 = (ObitImage *)(argp31);
+  res32 = SWIG_ConvertPtr(swig_obj[31], &argp32,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res32)) {
+    SWIG_exception_fail(SWIG_ArgError(res32), "in method '" "RMFitImArr" "', argument " "32"" of type '" "ObitImage *""'"); 
+  }
+  arg32 = (ObitImage *)(argp32);
+  res33 = SWIG_ConvertPtr(swig_obj[32], &argp33,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res33)) {
+    SWIG_exception_fail(SWIG_ArgError(res33), "in method '" "RMFitImArr" "', argument " "33"" of type '" "ObitImage *""'"); 
+  }
+  arg33 = (ObitImage *)(argp33);
+  res34 = SWIG_ConvertPtr(swig_obj[33], &argp34,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res34)) {
+    SWIG_exception_fail(SWIG_ArgError(res34), "in method '" "RMFitImArr" "', argument " "34"" of type '" "ObitImage *""'"); 
+  }
+  arg34 = (ObitImage *)(argp34);
+  res35 = SWIG_ConvertPtr(swig_obj[34], &argp35,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res35)) {
+    SWIG_exception_fail(SWIG_ArgError(res35), "in method '" "RMFitImArr" "', argument " "35"" of type '" "ObitImage *""'"); 
+  }
+  arg35 = (ObitImage *)(argp35);
+  res36 = SWIG_ConvertPtr(swig_obj[35], &argp36,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res36)) {
+    SWIG_exception_fail(SWIG_ArgError(res36), "in method '" "RMFitImArr" "', argument " "36"" of type '" "ObitImage *""'"); 
+  }
+  arg36 = (ObitImage *)(argp36);
+  res37 = SWIG_ConvertPtr(swig_obj[36], &argp37,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res37)) {
+    SWIG_exception_fail(SWIG_ArgError(res37), "in method '" "RMFitImArr" "', argument " "37"" of type '" "ObitImage *""'"); 
+  }
+  arg37 = (ObitImage *)(argp37);
+  res38 = SWIG_ConvertPtr(swig_obj[37], &argp38,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res38)) {
+    SWIG_exception_fail(SWIG_ArgError(res38), "in method '" "RMFitImArr" "', argument " "38"" of type '" "ObitImage *""'"); 
+  }
+  arg38 = (ObitImage *)(argp38);
+  res39 = SWIG_ConvertPtr(swig_obj[38], &argp39,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res39)) {
+    SWIG_exception_fail(SWIG_ArgError(res39), "in method '" "RMFitImArr" "', argument " "39"" of type '" "ObitImage *""'"); 
+  }
+  arg39 = (ObitImage *)(argp39);
+  res40 = SWIG_ConvertPtr(swig_obj[39], &argp40,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res40)) {
+    SWIG_exception_fail(SWIG_ArgError(res40), "in method '" "RMFitImArr" "', argument " "40"" of type '" "ObitImage *""'"); 
+  }
+  arg40 = (ObitImage *)(argp40);
+  res41 = SWIG_ConvertPtr(swig_obj[40], &argp41,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res41)) {
+    SWIG_exception_fail(SWIG_ArgError(res41), "in method '" "RMFitImArr" "', argument " "41"" of type '" "ObitImage *""'"); 
+  }
+  arg41 = (ObitImage *)(argp41);
+  res42 = SWIG_ConvertPtr(swig_obj[41], &argp42,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res42)) {
+    SWIG_exception_fail(SWIG_ArgError(res42), "in method '" "RMFitImArr" "', argument " "42"" of type '" "ObitImage *""'"); 
+  }
+  arg42 = (ObitImage *)(argp42);
+  res43 = SWIG_ConvertPtr(swig_obj[42], &argp43,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res43)) {
+    SWIG_exception_fail(SWIG_ArgError(res43), "in method '" "RMFitImArr" "', argument " "43"" of type '" "ObitImage *""'"); 
+  }
+  arg43 = (ObitImage *)(argp43);
+  res44 = SWIG_ConvertPtr(swig_obj[43], &argp44,SWIGTYPE_p_ObitErr, 0 |  0 );
+  if (!SWIG_IsOK(res44)) {
+    SWIG_exception_fail(SWIG_ArgError(res44), "in method '" "RMFitImArr" "', argument " "44"" of type '" "ObitErr *""'"); 
+  }
+  arg44 = (ObitErr *)(argp44);
+  RMFitImArr(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14,arg15,arg16,arg17,arg18,arg19,arg20,arg21,arg22,arg23,arg24,arg25,arg26,arg27,arg28,arg29,arg30,arg31,arg32,arg33,arg34,arg35,arg36,arg37,arg38,arg39,arg40,arg41,arg42,arg43,arg44);
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -55969,20 +56281,79 @@ SWIGINTERN PyObject *_wrap_SpectrumFitImArr(PyObject *SWIGUNUSEDPARM(self), PyOb
   PyObject *resultobj = 0;
   ObitSpectrumFit *arg1 = (ObitSpectrumFit *) 0 ;
   long arg2 ;
-  ObitImage **arg3 = (ObitImage **) 0 ;
+  ObitImage *arg3 = (ObitImage *) 0 ;
   ObitImage *arg4 = (ObitImage *) 0 ;
-  ObitErr *arg5 = (ObitErr *) 0 ;
+  ObitImage *arg5 = (ObitImage *) 0 ;
+  ObitImage *arg6 = (ObitImage *) 0 ;
+  ObitImage *arg7 = (ObitImage *) 0 ;
+  ObitImage *arg8 = (ObitImage *) 0 ;
+  ObitImage *arg9 = (ObitImage *) 0 ;
+  ObitImage *arg10 = (ObitImage *) 0 ;
+  ObitImage *arg11 = (ObitImage *) 0 ;
+  ObitImage *arg12 = (ObitImage *) 0 ;
+  ObitImage *arg13 = (ObitImage *) 0 ;
+  ObitImage *arg14 = (ObitImage *) 0 ;
+  ObitImage *arg15 = (ObitImage *) 0 ;
+  ObitImage *arg16 = (ObitImage *) 0 ;
+  ObitImage *arg17 = (ObitImage *) 0 ;
+  ObitImage *arg18 = (ObitImage *) 0 ;
+  ObitImage *arg19 = (ObitImage *) 0 ;
+  ObitImage *arg20 = (ObitImage *) 0 ;
+  ObitImage *arg21 = (ObitImage *) 0 ;
+  ObitImage *arg22 = (ObitImage *) 0 ;
+  ObitImage *arg23 = (ObitImage *) 0 ;
+  ObitErr *arg24 = (ObitErr *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   long val2 ;
   int ecode2 = 0 ;
+  void *argp3 = 0 ;
+  int res3 = 0 ;
   void *argp4 = 0 ;
   int res4 = 0 ;
   void *argp5 = 0 ;
   int res5 = 0 ;
-  PyObject *swig_obj[5] ;
+  void *argp6 = 0 ;
+  int res6 = 0 ;
+  void *argp7 = 0 ;
+  int res7 = 0 ;
+  void *argp8 = 0 ;
+  int res8 = 0 ;
+  void *argp9 = 0 ;
+  int res9 = 0 ;
+  void *argp10 = 0 ;
+  int res10 = 0 ;
+  void *argp11 = 0 ;
+  int res11 = 0 ;
+  void *argp12 = 0 ;
+  int res12 = 0 ;
+  void *argp13 = 0 ;
+  int res13 = 0 ;
+  void *argp14 = 0 ;
+  int res14 = 0 ;
+  void *argp15 = 0 ;
+  int res15 = 0 ;
+  void *argp16 = 0 ;
+  int res16 = 0 ;
+  void *argp17 = 0 ;
+  int res17 = 0 ;
+  void *argp18 = 0 ;
+  int res18 = 0 ;
+  void *argp19 = 0 ;
+  int res19 = 0 ;
+  void *argp20 = 0 ;
+  int res20 = 0 ;
+  void *argp21 = 0 ;
+  int res21 = 0 ;
+  void *argp22 = 0 ;
+  int res22 = 0 ;
+  void *argp23 = 0 ;
+  int res23 = 0 ;
+  void *argp24 = 0 ;
+  int res24 = 0 ;
+  PyObject *swig_obj[24] ;
   
-  if (!SWIG_Python_UnpackTuple(args, "SpectrumFitImArr", 5, 5, swig_obj)) SWIG_fail;
+  if (!SWIG_Python_UnpackTuple(args, "SpectrumFitImArr", 24, 24, swig_obj)) SWIG_fail;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ObitSpectrumFit, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpectrumFitImArr" "', argument " "1"" of type '" "ObitSpectrumFit *""'"); 
@@ -55993,47 +56364,117 @@ SWIGINTERN PyObject *_wrap_SpectrumFitImArr(PyObject *SWIGUNUSEDPARM(self), PyOb
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "SpectrumFitImArr" "', argument " "2"" of type '" "long""'");
   } 
   arg2 = (long)(val2);
-  {
-    if (PyList_Check(swig_obj[2])) {
-      int size = PyList_Size(swig_obj[2]);
-      int i = 0;
-      
-      arg3 = (ObitImage**) malloc((size+1)*sizeof(ObitImage*));
-      arg3[size] = NULL;  // last pointer NULL
-      for (i = 0; i < size; i++) {
-        PyObject *o = PyList_GetItem(swig_obj[2],i);
-        if (PyString_Check(o)) {
-          if (!SWIG_IsOK(SWIG_ConvertPtr(o,(void **) &arg3[i],SWIGTYPE_p_p_ObitImage,0))) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument. Expected _ObitImage_p.");
-            return NULL;
-          }
-          if (!ObitImageIsA((ObitImage*)arg3[i])) {
-            // check */
-            PyErr_SetString(PyExc_TypeError,"Type error. Expected ObitImage Object.");
-            return NULL;
-          }
-        } else {
-          PyErr_SetString(PyExc_TypeError,"list must contain Strings (ObitImage pointers)");
-          free(arg3);
-          return NULL;
-        }
-      }
-    } else {
-      PyErr_SetString(PyExc_TypeError,"not a list");
-      return NULL;
-    }
+  res3 = SWIG_ConvertPtr(swig_obj[2], &argp3,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "SpectrumFitImArr" "', argument " "3"" of type '" "ObitImage *""'"); 
   }
+  arg3 = (ObitImage *)(argp3);
   res4 = SWIG_ConvertPtr(swig_obj[3], &argp4,SWIGTYPE_p_ObitImage, 0 |  0 );
   if (!SWIG_IsOK(res4)) {
     SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "SpectrumFitImArr" "', argument " "4"" of type '" "ObitImage *""'"); 
   }
   arg4 = (ObitImage *)(argp4);
-  res5 = SWIG_ConvertPtr(swig_obj[4], &argp5,SWIGTYPE_p_ObitErr, 0 |  0 );
+  res5 = SWIG_ConvertPtr(swig_obj[4], &argp5,SWIGTYPE_p_ObitImage, 0 |  0 );
   if (!SWIG_IsOK(res5)) {
-    SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "SpectrumFitImArr" "', argument " "5"" of type '" "ObitErr *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "SpectrumFitImArr" "', argument " "5"" of type '" "ObitImage *""'"); 
   }
-  arg5 = (ObitErr *)(argp5);
-  SpectrumFitImArr(arg1,arg2,arg3,arg4,arg5);
+  arg5 = (ObitImage *)(argp5);
+  res6 = SWIG_ConvertPtr(swig_obj[5], &argp6,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res6)) {
+    SWIG_exception_fail(SWIG_ArgError(res6), "in method '" "SpectrumFitImArr" "', argument " "6"" of type '" "ObitImage *""'"); 
+  }
+  arg6 = (ObitImage *)(argp6);
+  res7 = SWIG_ConvertPtr(swig_obj[6], &argp7,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res7)) {
+    SWIG_exception_fail(SWIG_ArgError(res7), "in method '" "SpectrumFitImArr" "', argument " "7"" of type '" "ObitImage *""'"); 
+  }
+  arg7 = (ObitImage *)(argp7);
+  res8 = SWIG_ConvertPtr(swig_obj[7], &argp8,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res8)) {
+    SWIG_exception_fail(SWIG_ArgError(res8), "in method '" "SpectrumFitImArr" "', argument " "8"" of type '" "ObitImage *""'"); 
+  }
+  arg8 = (ObitImage *)(argp8);
+  res9 = SWIG_ConvertPtr(swig_obj[8], &argp9,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res9)) {
+    SWIG_exception_fail(SWIG_ArgError(res9), "in method '" "SpectrumFitImArr" "', argument " "9"" of type '" "ObitImage *""'"); 
+  }
+  arg9 = (ObitImage *)(argp9);
+  res10 = SWIG_ConvertPtr(swig_obj[9], &argp10,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res10)) {
+    SWIG_exception_fail(SWIG_ArgError(res10), "in method '" "SpectrumFitImArr" "', argument " "10"" of type '" "ObitImage *""'"); 
+  }
+  arg10 = (ObitImage *)(argp10);
+  res11 = SWIG_ConvertPtr(swig_obj[10], &argp11,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res11)) {
+    SWIG_exception_fail(SWIG_ArgError(res11), "in method '" "SpectrumFitImArr" "', argument " "11"" of type '" "ObitImage *""'"); 
+  }
+  arg11 = (ObitImage *)(argp11);
+  res12 = SWIG_ConvertPtr(swig_obj[11], &argp12,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res12)) {
+    SWIG_exception_fail(SWIG_ArgError(res12), "in method '" "SpectrumFitImArr" "', argument " "12"" of type '" "ObitImage *""'"); 
+  }
+  arg12 = (ObitImage *)(argp12);
+  res13 = SWIG_ConvertPtr(swig_obj[12], &argp13,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res13)) {
+    SWIG_exception_fail(SWIG_ArgError(res13), "in method '" "SpectrumFitImArr" "', argument " "13"" of type '" "ObitImage *""'"); 
+  }
+  arg13 = (ObitImage *)(argp13);
+  res14 = SWIG_ConvertPtr(swig_obj[13], &argp14,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res14)) {
+    SWIG_exception_fail(SWIG_ArgError(res14), "in method '" "SpectrumFitImArr" "', argument " "14"" of type '" "ObitImage *""'"); 
+  }
+  arg14 = (ObitImage *)(argp14);
+  res15 = SWIG_ConvertPtr(swig_obj[14], &argp15,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res15)) {
+    SWIG_exception_fail(SWIG_ArgError(res15), "in method '" "SpectrumFitImArr" "', argument " "15"" of type '" "ObitImage *""'"); 
+  }
+  arg15 = (ObitImage *)(argp15);
+  res16 = SWIG_ConvertPtr(swig_obj[15], &argp16,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res16)) {
+    SWIG_exception_fail(SWIG_ArgError(res16), "in method '" "SpectrumFitImArr" "', argument " "16"" of type '" "ObitImage *""'"); 
+  }
+  arg16 = (ObitImage *)(argp16);
+  res17 = SWIG_ConvertPtr(swig_obj[16], &argp17,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res17)) {
+    SWIG_exception_fail(SWIG_ArgError(res17), "in method '" "SpectrumFitImArr" "', argument " "17"" of type '" "ObitImage *""'"); 
+  }
+  arg17 = (ObitImage *)(argp17);
+  res18 = SWIG_ConvertPtr(swig_obj[17], &argp18,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res18)) {
+    SWIG_exception_fail(SWIG_ArgError(res18), "in method '" "SpectrumFitImArr" "', argument " "18"" of type '" "ObitImage *""'"); 
+  }
+  arg18 = (ObitImage *)(argp18);
+  res19 = SWIG_ConvertPtr(swig_obj[18], &argp19,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res19)) {
+    SWIG_exception_fail(SWIG_ArgError(res19), "in method '" "SpectrumFitImArr" "', argument " "19"" of type '" "ObitImage *""'"); 
+  }
+  arg19 = (ObitImage *)(argp19);
+  res20 = SWIG_ConvertPtr(swig_obj[19], &argp20,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res20)) {
+    SWIG_exception_fail(SWIG_ArgError(res20), "in method '" "SpectrumFitImArr" "', argument " "20"" of type '" "ObitImage *""'"); 
+  }
+  arg20 = (ObitImage *)(argp20);
+  res21 = SWIG_ConvertPtr(swig_obj[20], &argp21,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res21)) {
+    SWIG_exception_fail(SWIG_ArgError(res21), "in method '" "SpectrumFitImArr" "', argument " "21"" of type '" "ObitImage *""'"); 
+  }
+  arg21 = (ObitImage *)(argp21);
+  res22 = SWIG_ConvertPtr(swig_obj[21], &argp22,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res22)) {
+    SWIG_exception_fail(SWIG_ArgError(res22), "in method '" "SpectrumFitImArr" "', argument " "22"" of type '" "ObitImage *""'"); 
+  }
+  arg22 = (ObitImage *)(argp22);
+  res23 = SWIG_ConvertPtr(swig_obj[22], &argp23,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res23)) {
+    SWIG_exception_fail(SWIG_ArgError(res23), "in method '" "SpectrumFitImArr" "', argument " "23"" of type '" "ObitImage *""'"); 
+  }
+  arg23 = (ObitImage *)(argp23);
+  res24 = SWIG_ConvertPtr(swig_obj[23], &argp24,SWIGTYPE_p_ObitErr, 0 |  0 );
+  if (!SWIG_IsOK(res24)) {
+    SWIG_exception_fail(SWIG_ArgError(res24), "in method '" "SpectrumFitImArr" "', argument " "24"" of type '" "ObitErr *""'"); 
+  }
+  arg24 = (ObitErr *)(argp24);
+  SpectrumFitImArr(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14,arg15,arg16,arg17,arg18,arg19,arg20,arg21,arg22,arg23,arg24);
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -73248,7 +73689,6 @@ static swig_type_info _swigt__p_gint32 = {"_p_gint32", "gint32 *", 0, 0, (void*)
 static swig_type_info _swigt__p_long = {"_p_long", "long *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_ofloat = {"_p_ofloat", "ofloat *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_olong = {"_p_olong", "olong *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_p_ObitImage = {"_p_p_ObitImage", "ObitImage **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_ObitUV = {"_p_p_ObitUV", "ObitUV **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_void = {"_p_void", "void *", 0, 0, (void*)0, 0};
@@ -73361,7 +73801,6 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_long,
   &_swigt__p_ofloat,
   &_swigt__p_olong,
-  &_swigt__p_p_ObitImage,
   &_swigt__p_p_ObitUV,
   &_swigt__p_p_char,
   &_swigt__p_void,
@@ -73474,7 +73913,6 @@ static swig_cast_info _swigc__p_gint32[] = {  {&_swigt__p_gint32, 0, 0, 0},{0, 0
 static swig_cast_info _swigc__p_long[] = {  {&_swigt__p_long, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_ofloat[] = {  {&_swigt__p_ofloat, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_olong[] = {  {&_swigt__p_olong, 0, 0, 0},{0, 0, 0, 0}};
-static swig_cast_info _swigc__p_p_ObitImage[] = {  {&_swigt__p_p_ObitImage, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_ObitUV[] = {  {&_swigt__p_p_ObitUV, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_char[] = {  {&_swigt__p_p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_void[] = {  {&_swigt__p_void, 0, 0, 0},{0, 0, 0, 0}};
@@ -73587,7 +74025,6 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_long,
   _swigc__p_ofloat,
   _swigc__p_olong,
-  _swigc__p_p_ObitImage,
   _swigc__p_p_ObitUV,
   _swigc__p_p_char,
   _swigc__p_void,

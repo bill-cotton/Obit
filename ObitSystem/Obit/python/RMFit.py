@@ -56,7 +56,7 @@ class RMFit(Obit.RMFit):
     RMFit Members with python interfaces:
         List      - used to pass instructions to processing
     """
-    def __init__(self, name="None", nterm=2) :
+    def __init__(self, name="RMFit", nterm=2) :
         super(RMFit, self).__init__()
         Obit.CreateRMFit (self.this, name, nterm)
         self.myClass = myClass
@@ -75,13 +75,13 @@ class RMFit(Obit.RMFit):
     def __getattr__(self,name):
         if not isinstance(self, RMFit):
             return  "Bogus dude"+str(self.__class__)
-        if name == "me" : 
+        if name =="me": 
             return Obit.RMFit_Get_me(self.this)
         if name=="List":
             if not PIsA(self):
                 raise TypeError("input MUST be a Python Obit RMFit")
             out    = InfoList.InfoList()
-            out.me = Obit.RMFitGetList(self.cast(myClass))
+            out.me = Obit.RMFitGetList(self.me)
             return out
         raise AttributeError(name)
     def __repr__(self):
@@ -147,6 +147,7 @@ class RMFit(Obit.RMFit):
             minFrac   float min fraction of samples included [def 0.5]
             doError   boolean scalar If true do error analysis [def False]
         imQArr   = Array of 2D images to be fitted
+                  NB: there is a maximum of 20 images in imQArr and imUArr
         imUArr   = Array of 2D images to be fitted, same geometries as imQArr
         outImage = Image cube with fitted spectra.
                    Should be defined but not created.
@@ -165,15 +166,98 @@ class RMFit(Obit.RMFit):
             raise TypeError("outImage MUST be a Python Obit Image")
         #
         nimage = len(imArr)
-        imQArrMe = []
-        imUArrMe = []
-        for x in imQArr:
-            imQArrMe.append(x.me)
-        for x in imUArr:
-            imUArrMe.append(x.me)
+        if nimage>20:
+            raise TypeError("Too many input images > 20")
+        # SWIG SUCKS
+        if nimage>0:
+            imQ1 = imQArr[0].me; imU1 = iUArr[0].me
+        else:
+            imQ1 = None; imU1 = None; 
+        if nimage>1:
+            imQ2 = imQArr[1].me; imU2 = imUArr[1].me
+        else:
+            imQ2 = None; imU2 = None
+        if nimage>2:
+            imQ3 = imQArr[2].me; imU3 = imUArr[2].me
+        else:
+            imQ3 = None; imU3 = None
+        if nimage>3:
+            imQ4 = imQArr[3].me; imU4 = imUArr[3].me
+        else:
+            imQ4 = None; imU4 = None
+        if nimage>4:
+            imQ5 = imQArr[4].me; imU5 = imUArr[4].me; 
+        else:
+            imQ5 = None; imU5 = None; 
+        if nimage>5:
+            imQ6 = imQArr[5].me; imU6 = imUArr[5].me; 
+        else:
+            imQ6 = None; imU6 = None; 
+        if nimage>6:
+            imQ7 = imQArr[6].me; imU7 = imUArr[6].me; 
+        else:
+            imQ7 = None; imU7 = None; 
+        if nimage>7:
+            imQ8 = imQArr[7].me; imU8 = imUArr[7].me; 
+        else:
+            imQ8 = None; imU8 = None; 
+        if nimage>8:
+            imQ9 = imQArr[8].me; imU9 = imUArr[8].me; 
+        else:
+            imQ9 = None; imU9 = None; 
+        if nimage>9:
+            imQ10 = imQArr[9].me; imU10 = imUArr[9].me; 
+        else:
+            imQ10 = None; imU10 = None; 
+        if nimage>10:
+            imQ11 = imQArr[10].me; imU11 = imUArr[10].me; 
+        else:
+            imQ11 = None; imU11 = None; 
+        if nimage>11:
+            imQ12 = imQArr[11].me; imU12 = imUArr[11].me; 
+        else:
+            imQ12 = None; imU12 = None; 
+        if nimage>12:
+            imQ13 = imQArr[12].me; imU13 = imUArr[12].me; 
+        else:
+            imQ13 = None; imU13 = None; 
+        if nimage>13:
+            imQ14 = imQArr[13].me; imU14 = imUArr[13].me; 
+        else:
+            imQ14 = None; imU14 = None; 
+        if nimage>14:
+            imQ15 = imQArr[14].me; imU15 = imUArr[14].me; 
+        else:
+            imQ15 = None; imU15 = None; 
+        if nimage>15:
+            imQ16 = imQArr[15].me; imU16 = imUArr[15].me; 
+        else:
+            imQ16 = None; imU16 = None; 
+        if nimage>16:
+            imQ17 = imQArr[16].me; imU17 = imUArr[16].me; 
+        else:
+            imQ17 = None; imU17 = None; 
+        if nimage>17:
+            imQ18 = imQArr[17].me; imU18 = imUArr[17].me; 
+        else:
+            imQ18 = None; imU18 = None; 
+        if nimage>18:
+            imQ19 = imQArr[18].me; imU19 = imUArr[18].me; 
+        else:
+            imQ19 = None; imU19 = None; 
+        if nimage>19:
+            imQ20 = imQArr[19].me; imU20 = imUArr[19].me; 
+        else:
+            imQ20 = None; imU20 = None; 
+        Obit.RMFitImArr(self.me, nimage, 
+                       imQ1, imQ2, imQ3, imQ4, imQ5, imQ6, imQ7, imQ8, imQ9,
+                       imQ10, imQ11, imQ12, imQ13, imQ14, imQ15, imQ16, imQ17,
+                       imQ18, imQ19, imQ20,
+                       imU1, imU2, imU3, imU4, imU5, imU6, imU7, imU8, imU9, imU10,
+                       imU11, imU12, imU13, imU14, imU15, imU16, imU17, imU18, imU19, imU20,
+                       outImage.me, err.me)
 
-        Obit.RMFitImArr(self.me, nimage, imQArrMe, imUArrMe, outImage.me, err.me)
-    # end ImArr
+# end ImArr
     
 def PIsA (inRMFit):
     """ Tells if input really a Python Obit RMFit
