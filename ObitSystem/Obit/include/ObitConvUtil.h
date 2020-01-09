@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2009                                          */
+/*;  Copyright (C) 2006-2019                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -44,7 +44,7 @@
 /*---------------Public functions---------------------------*/
 /*  Public: (de)Convolve all planes of an image with an FArray */
 void ObitConvUtilConv (ObitImage *inImage, ObitFArray *convFn, 
-		       gboolean doDivide, ofloat rescale,
+		       gboolean doDivide, gboolean doSub, ofloat rescale,
 		       ObitImage *outImage, ObitErr *err);
 
 /*  Public: Convolve all planes of an image with a Gaussian */

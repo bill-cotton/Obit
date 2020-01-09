@@ -4503,3 +4503,7 @@ Obit/tasks/MFImage.py
     Write Stokes in image header
 9 Jan 2020 svn 611
 
+Summary: bug fixes
+Obit/include/ObitConvUtil.h Obit/src/ObitConvUtil.c 
+    Add "FILT" high pass filter - get it right this time
+ Jan 2020 svn 612
