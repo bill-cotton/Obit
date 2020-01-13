@@ -2662,89 +2662,87 @@ SWIGINTERN PyObject *SWIG_PyStaticMethod_New(PyObject *SWIGUNUSEDPARM(self), PyO
 #define SWIGTYPE_p_OErr swig_types[26]
 #define SWIGTYPE_p_OPlot swig_types[27]
 #define SWIGTYPE_p_OPrinter swig_types[28]
-#define SWIGTYPE_p_OSystem swig_types[29]
-#define SWIGTYPE_p_OWindow swig_types[30]
-#define SWIGTYPE_p_Obit swig_types[31]
-#define SWIGTYPE_p_ObitAntennaList swig_types[32]
-#define SWIGTYPE_p_ObitBeamShape swig_types[33]
-#define SWIGTYPE_p_ObitCArray swig_types[34]
-#define SWIGTYPE_p_ObitDConCleanImage swig_types[35]
-#define SWIGTYPE_p_ObitDConCleanVis swig_types[36]
-#define SWIGTYPE_p_ObitDConCleanWindow swig_types[37]
-#define SWIGTYPE_p_ObitData swig_types[38]
-#define SWIGTYPE_p_ObitDisplay swig_types[39]
-#define SWIGTYPE_p_ObitDoppler swig_types[40]
-#define SWIGTYPE_p_ObitErr swig_types[41]
-#define SWIGTYPE_p_ObitFArray swig_types[42]
-#define SWIGTYPE_p_ObitFFT swig_types[43]
-#define SWIGTYPE_p_ObitFInterpolate swig_types[44]
-#define SWIGTYPE_p_ObitFitModel swig_types[45]
-#define SWIGTYPE_p_ObitFitRegion swig_types[46]
-#define SWIGTYPE_p_ObitFullBeam swig_types[47]
-#define SWIGTYPE_p_ObitGPUFArray swig_types[48]
-#define SWIGTYPE_p_ObitGPUFInterpolate swig_types[49]
-#define SWIGTYPE_p_ObitHistory swig_types[50]
-#define SWIGTYPE_p_ObitIOCode swig_types[51]
-#define SWIGTYPE_p_ObitImage swig_types[52]
-#define SWIGTYPE_p_ObitImageDesc swig_types[53]
-#define SWIGTYPE_p_ObitImageFit swig_types[54]
-#define SWIGTYPE_p_ObitImageInterp swig_types[55]
-#define SWIGTYPE_p_ObitImageMF swig_types[56]
-#define SWIGTYPE_p_ObitImageMosaic swig_types[57]
-#define SWIGTYPE_p_ObitInfoList swig_types[58]
-#define SWIGTYPE_p_ObitInfoType swig_types[59]
-#define SWIGTYPE_p_ObitPixHisto swig_types[60]
-#define SWIGTYPE_p_ObitPlot swig_types[61]
-#define SWIGTYPE_p_ObitPrinter swig_types[62]
-#define SWIGTYPE_p_ObitRMFit swig_types[63]
-#define SWIGTYPE_p_ObitSDMData swig_types[64]
-#define SWIGTYPE_p_ObitSkyModel swig_types[65]
-#define SWIGTYPE_p_ObitSkyModelVMBeam swig_types[66]
-#define SWIGTYPE_p_ObitSkyModelVMIon swig_types[67]
-#define SWIGTYPE_p_ObitSource swig_types[68]
-#define SWIGTYPE_p_ObitSpectrumFit swig_types[69]
-#define SWIGTYPE_p_ObitSystem swig_types[70]
-#define SWIGTYPE_p_ObitTable swig_types[71]
-#define SWIGTYPE_p_ObitTableDesc swig_types[72]
-#define SWIGTYPE_p_ObitTableList swig_types[73]
-#define SWIGTYPE_p_ObitTimeFilter swig_types[74]
-#define SWIGTYPE_p_ObitUV swig_types[75]
-#define SWIGTYPE_p_ObitUVDesc swig_types[76]
-#define SWIGTYPE_p_ObitUVGSolve swig_types[77]
-#define SWIGTYPE_p_ObitUVImager swig_types[78]
-#define SWIGTYPE_p_ObitUVRFIXize swig_types[79]
-#define SWIGTYPE_p_ObitUVSel swig_types[80]
-#define SWIGTYPE_p_ObitUVSelfCal swig_types[81]
-#define SWIGTYPE_p_PixHistFDR swig_types[82]
-#define SWIGTYPE_p_RMFit swig_types[83]
-#define SWIGTYPE_p_SkyModel swig_types[84]
-#define SWIGTYPE_p_SkyModelVMBeam swig_types[85]
-#define SWIGTYPE_p_SkyModelVMIon swig_types[86]
-#define SWIGTYPE_p_Source swig_types[87]
-#define SWIGTYPE_p_SpectrumFit swig_types[88]
-#define SWIGTYPE_p_Table swig_types[89]
-#define SWIGTYPE_p_TableDesc swig_types[90]
-#define SWIGTYPE_p_TableList swig_types[91]
-#define SWIGTYPE_p_TimeFilter swig_types[92]
-#define SWIGTYPE_p_UV swig_types[93]
-#define SWIGTYPE_p_UVDesc swig_types[94]
-#define SWIGTYPE_p_UVGSolve swig_types[95]
-#define SWIGTYPE_p_UVImager swig_types[96]
-#define SWIGTYPE_p_UVRFIXize swig_types[97]
-#define SWIGTYPE_p_UVSelfCal swig_types[98]
-#define SWIGTYPE_p_char swig_types[99]
-#define SWIGTYPE_p_double swig_types[100]
-#define SWIGTYPE_p_float swig_types[101]
-#define SWIGTYPE_p_gchar swig_types[102]
-#define SWIGTYPE_p_gint32 swig_types[103]
-#define SWIGTYPE_p_long swig_types[104]
-#define SWIGTYPE_p_ofloat swig_types[105]
-#define SWIGTYPE_p_olong swig_types[106]
-#define SWIGTYPE_p_p_ObitUV swig_types[107]
-#define SWIGTYPE_p_p_char swig_types[108]
-#define SWIGTYPE_p_void swig_types[109]
-static swig_type_info *swig_types[111];
-static swig_module_info swig_module = {swig_types, 110, 0, 0, 0, 0};
+#define SWIGTYPE_p_OWindow swig_types[29]
+#define SWIGTYPE_p_Obit swig_types[30]
+#define SWIGTYPE_p_ObitAntennaList swig_types[31]
+#define SWIGTYPE_p_ObitBeamShape swig_types[32]
+#define SWIGTYPE_p_ObitCArray swig_types[33]
+#define SWIGTYPE_p_ObitDConCleanImage swig_types[34]
+#define SWIGTYPE_p_ObitDConCleanVis swig_types[35]
+#define SWIGTYPE_p_ObitDConCleanWindow swig_types[36]
+#define SWIGTYPE_p_ObitData swig_types[37]
+#define SWIGTYPE_p_ObitDisplay swig_types[38]
+#define SWIGTYPE_p_ObitDoppler swig_types[39]
+#define SWIGTYPE_p_ObitErr swig_types[40]
+#define SWIGTYPE_p_ObitFArray swig_types[41]
+#define SWIGTYPE_p_ObitFFT swig_types[42]
+#define SWIGTYPE_p_ObitFInterpolate swig_types[43]
+#define SWIGTYPE_p_ObitFitModel swig_types[44]
+#define SWIGTYPE_p_ObitFitRegion swig_types[45]
+#define SWIGTYPE_p_ObitFullBeam swig_types[46]
+#define SWIGTYPE_p_ObitGPUFArray swig_types[47]
+#define SWIGTYPE_p_ObitGPUFInterpolate swig_types[48]
+#define SWIGTYPE_p_ObitHistory swig_types[49]
+#define SWIGTYPE_p_ObitIOCode swig_types[50]
+#define SWIGTYPE_p_ObitImage swig_types[51]
+#define SWIGTYPE_p_ObitImageDesc swig_types[52]
+#define SWIGTYPE_p_ObitImageFit swig_types[53]
+#define SWIGTYPE_p_ObitImageInterp swig_types[54]
+#define SWIGTYPE_p_ObitImageMF swig_types[55]
+#define SWIGTYPE_p_ObitImageMosaic swig_types[56]
+#define SWIGTYPE_p_ObitInfoList swig_types[57]
+#define SWIGTYPE_p_ObitInfoType swig_types[58]
+#define SWIGTYPE_p_ObitPixHisto swig_types[59]
+#define SWIGTYPE_p_ObitPlot swig_types[60]
+#define SWIGTYPE_p_ObitPrinter swig_types[61]
+#define SWIGTYPE_p_ObitRMFit swig_types[62]
+#define SWIGTYPE_p_ObitSDMData swig_types[63]
+#define SWIGTYPE_p_ObitSkyModel swig_types[64]
+#define SWIGTYPE_p_ObitSkyModelVMBeam swig_types[65]
+#define SWIGTYPE_p_ObitSkyModelVMIon swig_types[66]
+#define SWIGTYPE_p_ObitSource swig_types[67]
+#define SWIGTYPE_p_ObitSpectrumFit swig_types[68]
+#define SWIGTYPE_p_ObitTable swig_types[69]
+#define SWIGTYPE_p_ObitTableDesc swig_types[70]
+#define SWIGTYPE_p_ObitTableList swig_types[71]
+#define SWIGTYPE_p_ObitTimeFilter swig_types[72]
+#define SWIGTYPE_p_ObitUV swig_types[73]
+#define SWIGTYPE_p_ObitUVDesc swig_types[74]
+#define SWIGTYPE_p_ObitUVGSolve swig_types[75]
+#define SWIGTYPE_p_ObitUVImager swig_types[76]
+#define SWIGTYPE_p_ObitUVRFIXize swig_types[77]
+#define SWIGTYPE_p_ObitUVSel swig_types[78]
+#define SWIGTYPE_p_ObitUVSelfCal swig_types[79]
+#define SWIGTYPE_p_PixHistFDR swig_types[80]
+#define SWIGTYPE_p_RMFit swig_types[81]
+#define SWIGTYPE_p_SkyModel swig_types[82]
+#define SWIGTYPE_p_SkyModelVMBeam swig_types[83]
+#define SWIGTYPE_p_SkyModelVMIon swig_types[84]
+#define SWIGTYPE_p_Source swig_types[85]
+#define SWIGTYPE_p_SpectrumFit swig_types[86]
+#define SWIGTYPE_p_Table swig_types[87]
+#define SWIGTYPE_p_TableDesc swig_types[88]
+#define SWIGTYPE_p_TableList swig_types[89]
+#define SWIGTYPE_p_TimeFilter swig_types[90]
+#define SWIGTYPE_p_UV swig_types[91]
+#define SWIGTYPE_p_UVDesc swig_types[92]
+#define SWIGTYPE_p_UVGSolve swig_types[93]
+#define SWIGTYPE_p_UVImager swig_types[94]
+#define SWIGTYPE_p_UVRFIXize swig_types[95]
+#define SWIGTYPE_p_UVSelfCal swig_types[96]
+#define SWIGTYPE_p_char swig_types[97]
+#define SWIGTYPE_p_double swig_types[98]
+#define SWIGTYPE_p_float swig_types[99]
+#define SWIGTYPE_p_gchar swig_types[100]
+#define SWIGTYPE_p_gint32 swig_types[101]
+#define SWIGTYPE_p_long swig_types[102]
+#define SWIGTYPE_p_ofloat swig_types[103]
+#define SWIGTYPE_p_olong swig_types[104]
+#define SWIGTYPE_p_p_ObitUV swig_types[105]
+#define SWIGTYPE_p_p_char swig_types[106]
+#define SWIGTYPE_p_void swig_types[107]
+static swig_type_info *swig_types[109];
+static swig_module_info swig_module = {swig_types, 108, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -8122,7 +8120,7 @@ static long InfoListGetHelper(ObitInfoList *in, char *name, ObitInfoType type,
 static PyObject* Info2List(ObitInfoType type, gint32 dim[5], void *data)
 {
   PyObject *outList=NULL, *outList2=NULL, *outList3=NULL, *o=NULL;
-  gint32 i, j, k, ii, count[2], ndim;
+  gint32 i, j, k, ii, count[5], ndim;
   float  *fdata;
   long   *ldata;
   int    *idata;
@@ -9694,131 +9692,6 @@ extern void Bomb(void) {
   abort();
 }
 
-
-
-#include <stdio.h>
-#include "ObitSystem.h"
-#include "ObitMem.h"
-#include "ObitThread.h"
-
-
-typedef struct OSystem {
-  ObitSystem *me;
-} OSystem;
-
-
-void CreateOSystem(PyObject *self, char *pgmName, long pgmNumber, long AIPSuser,
-             long numberAIPSdisk,  char** AIPSdir, 
-	     long numberFITSdisk,  char** FITSdir, 
-	     long F_TRUE, long F_FALSE, ObitErr *err) {
-   gchar **Adir, **Fdir;
-   oint lF_TRUE  = F_TRUE;
-   oint lF_FALSE = F_FALSE;
-   void *ptr;
-   int ret, flags=0;
-   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_OSystem, flags);
-   if (!SWIG_IsOK(ret)) {
-	PyErr_SetString(PyExc_RuntimeError,"Create: could not recover c struct");
-	return;
-   }
-   if (numberAIPSdisk>0) Adir = AIPSdir;
-   else Adir = NULL;
-   if (numberFITSdisk>0) Fdir = FITSdir;
-   else Fdir = NULL;
-   ((OSystem*)ptr)->me = ObitSystemStartup(pgmName, (olong)pgmNumber, (olong)AIPSuser,
-   		        (olong)numberAIPSdisk, Adir, (olong)numberFITSdisk, Fdir,
-                        lF_TRUE, lF_FALSE, err);
-      return;
-} // end CreateOSystem
-
-void DeleteOSystem(PyObject *self) {
-   void *ptr;
-   int ret, flags=0;
-   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_OSystem, flags);
-   if (!SWIG_IsOK(ret)) {
-	PyErr_SetString(PyExc_RuntimeError,"Delete: could not recover c struct");
-	return;
-   }
-   ((OSystem*)ptr)->me = ObitUnref(((OSystem*)ptr)->me);
-} // end DeleteOSystem
-
-ObitSystem* OSystem_Get_me(PyObject *self) {
-   void *ptr;
-   int ret,flags=0;
-   ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_OSystem, flags);
-   if (!SWIG_IsOK(ret)) {
-	PyErr_SetString(PyExc_RuntimeError,"Get_me: could not recover c struct");
-	return NULL;
-   }
-   return ((OSystem*)ptr)->me;
-} // end OSystem_Get_me
-
-extern ObitSystem* Shutdown (ObitSystem* in) {
-  return ObitSystemShutdown(in);
-} // end Shutdown
-
-extern long SystemIsInit (void) {
-  gboolean retval;
-  olong out;
-  retval = ObitSystemIsInit ();
-  if (retval) out = 1;
-  else out = 0;
-  return out;
-} // end SystemGetPgmName
-
-extern char* SystemToday (void) {
-  return ObitToday ();
-} // end SystemToday
-
-extern char* SystemGetPgmName (void) {
-  return ObitSystemGetPgmName ();
-} // end SystemGetPgmName
-
-extern void SystemSetPgmName (char* pgmName) {
-  ObitSystemSetPgmName (pgmName);
-} // end SystemSetPgmName
-
-extern long SystemGetPgmNumber (void) {
-  return (long)ObitSystemGetPgmNumber ();
-} // end SystemGetPgmNumber
-
-extern void SystemSetPgmNumber (long pgmNumber) {
-  ObitSystemSetPgmNumber ((olong)pgmNumber);
-} // end SystemSetPgmNumber
-
-extern long SystemGetAIPSuser (void) {
-  return (long)ObitSystemGetAIPSuser ();
-} // end SystemGetAIPSuser
-
-extern void SystemSetAIPSuser (long user) {
-  ObitSystemSetAIPSuser ((olong)user);
-} // end SystemGetAIPSuser
-
-extern void MemPrint (void) {
-  ObitMemPrint(stdout);
-} // end MemPrint
-
-extern void SystemAllowThreads (long nThreads) {
-  ObitThread *thread=NULL;
- 
-  /* Create temporary thread */
-  thread = newObitThread ();
-  /* Init */
-  ObitThreadAllowThreads (thread,(olong)nThreads);
-  freeObitThread (thread);  /* Cleanup */
- 
-} // end SystemAllowThreads
-
-extern long SystemGetNoThreads (void) {
-  ObitThread *thread=NULL;
-  long nThreads;
-
-  /* Create temporary thread */
-  thread = newObitThread ();
-  nThreads = (int)ObitThreadNumProc (thread);
-  freeObitThread (thread);  /* Cleanup */
-  return nThreads;
-} // end SystemGetNoThreads
 
 
 #include "ObitData.h"
@@ -43628,519 +43501,6 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_OSystem_me_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  struct OSystem *arg1 = (struct OSystem *) 0 ;
-  ObitSystem *arg2 = (ObitSystem *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  void *argp2 = 0 ;
-  int res2 = 0 ;
-  PyObject *swig_obj[2] ;
-  
-  if (!SWIG_Python_UnpackTuple(args, "OSystem_me_set", 2, 2, swig_obj)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_OSystem, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OSystem_me_set" "', argument " "1"" of type '" "struct OSystem *""'"); 
-  }
-  arg1 = (struct OSystem *)(argp1);
-  res2 = SWIG_ConvertPtr(swig_obj[1], &argp2,SWIGTYPE_p_ObitSystem, SWIG_POINTER_DISOWN |  0 );
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "OSystem_me_set" "', argument " "2"" of type '" "ObitSystem *""'"); 
-  }
-  arg2 = (ObitSystem *)(argp2);
-  if (arg1) (arg1)->me = arg2;
-  resultobj = SWIG_Py_Void();
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_OSystem_me_get(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  struct OSystem *arg1 = (struct OSystem *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  PyObject *swig_obj[1] ;
-  ObitSystem *result = 0 ;
-  
-  if (!args) SWIG_fail;
-  swig_obj[0] = args;
-  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_OSystem, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "OSystem_me_get" "', argument " "1"" of type '" "struct OSystem *""'"); 
-  }
-  arg1 = (struct OSystem *)(argp1);
-  result = (ObitSystem *) ((arg1)->me);
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ObitSystem, 0 |  0 );
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_new_OSystem(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  struct OSystem *result = 0 ;
-  
-  if (!SWIG_Python_UnpackTuple(args, "new_OSystem", 0, 0, 0)) SWIG_fail;
-  result = (struct OSystem *)calloc(1, sizeof(struct OSystem));
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OSystem, SWIG_POINTER_NEW |  0 );
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_delete_OSystem(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  struct OSystem *arg1 = (struct OSystem *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  PyObject *swig_obj[1] ;
-  
-  if (!args) SWIG_fail;
-  swig_obj[0] = args;
-  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_OSystem, SWIG_POINTER_DISOWN |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_OSystem" "', argument " "1"" of type '" "struct OSystem *""'"); 
-  }
-  arg1 = (struct OSystem *)(argp1);
-  free((char *) arg1);
-  resultobj = SWIG_Py_Void();
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *OSystem_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *obj;
-  if (!SWIG_Python_UnpackTuple(args, "swigregister", 1, 1, &obj)) return NULL;
-  SWIG_TypeNewClientData(SWIGTYPE_p_OSystem, SWIG_NewClientData(obj));
-  return SWIG_Py_Void();
-}
-
-SWIGINTERN PyObject *OSystem_swiginit(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  return SWIG_Python_InitShadowInstance(args);
-}
-
-SWIGINTERN PyObject *_wrap_CreateOSystem(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  PyObject *arg1 = (PyObject *) 0 ;
-  char *arg2 = (char *) 0 ;
-  long arg3 ;
-  long arg4 ;
-  long arg5 ;
-  char **arg6 = (char **) 0 ;
-  long arg7 ;
-  char **arg8 = (char **) 0 ;
-  long arg9 ;
-  long arg10 ;
-  ObitErr *arg11 = (ObitErr *) 0 ;
-  int res2 ;
-  char *buf2 = 0 ;
-  int alloc2 = 0 ;
-  long val3 ;
-  int ecode3 = 0 ;
-  long val4 ;
-  int ecode4 = 0 ;
-  long val5 ;
-  int ecode5 = 0 ;
-  long val7 ;
-  int ecode7 = 0 ;
-  long val9 ;
-  int ecode9 = 0 ;
-  long val10 ;
-  int ecode10 = 0 ;
-  void *argp11 = 0 ;
-  int res11 = 0 ;
-  PyObject *swig_obj[11] ;
-  
-  if (!SWIG_Python_UnpackTuple(args, "CreateOSystem", 11, 11, swig_obj)) SWIG_fail;
-  arg1 = swig_obj[0];
-  res2 = SWIG_AsCharPtrAndSize(swig_obj[1], &buf2, NULL, &alloc2);
-  if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "CreateOSystem" "', argument " "2"" of type '" "char *""'");
-  }
-  arg2 = (char *)(buf2);
-  ecode3 = SWIG_AsVal_long(swig_obj[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "CreateOSystem" "', argument " "3"" of type '" "long""'");
-  } 
-  arg3 = (long)(val3);
-  ecode4 = SWIG_AsVal_long(swig_obj[3], &val4);
-  if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "CreateOSystem" "', argument " "4"" of type '" "long""'");
-  } 
-  arg4 = (long)(val4);
-  ecode5 = SWIG_AsVal_long(swig_obj[4], &val5);
-  if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "CreateOSystem" "', argument " "5"" of type '" "long""'");
-  } 
-  arg5 = (long)(val5);
-  {
-    if (PyList_Check(swig_obj[5])) {
-      int size2, size = PyList_Size(swig_obj[5]);
-      int j, i = 0;
-      char *tstr;
-      
-      arg6 = (char**) malloc((size+1)*sizeof(char*));
-      arg6[size] = NULL;  // last string NULL
-      for (i = 0; i < size; i++) {
-        PyObject *o = PyList_GetItem(swig_obj[5],i);
-        if (PyUnicode_Check(o)) {
-          o = PyUnicode_AsUTF8String(o);
-        }
-        if (PyBytes_Check(o)) {
-          size2 = PyBytes_Size(o);
-          arg6[i] = (char*) malloc(size2+1);
-          tstr = PyBytes_AsString(o);
-          for (j=0; j<=size2; j++) arg6[i][j] = tstr[j];
-        } else {
-          PyErr_SetString(PyExc_TypeError,"list must contain Strings");
-          free(arg6);
-          return NULL;
-        }
-      }
-    } else {
-      PyErr_SetString(PyExc_TypeError,"not a list");
-      return NULL;
-    }
-  }
-  ecode7 = SWIG_AsVal_long(swig_obj[6], &val7);
-  if (!SWIG_IsOK(ecode7)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "CreateOSystem" "', argument " "7"" of type '" "long""'");
-  } 
-  arg7 = (long)(val7);
-  {
-    if (PyList_Check(swig_obj[7])) {
-      int size2, size = PyList_Size(swig_obj[7]);
-      int j, i = 0;
-      char *tstr;
-      
-      arg8 = (char**) malloc((size+1)*sizeof(char*));
-      arg8[size] = NULL;  // last string NULL
-      for (i = 0; i < size; i++) {
-        PyObject *o = PyList_GetItem(swig_obj[7],i);
-        if (PyUnicode_Check(o)) {
-          o = PyUnicode_AsUTF8String(o);
-        }
-        if (PyBytes_Check(o)) {
-          size2 = PyBytes_Size(o);
-          arg8[i] = (char*) malloc(size2+1);
-          tstr = PyBytes_AsString(o);
-          for (j=0; j<=size2; j++) arg8[i][j] = tstr[j];
-        } else {
-          PyErr_SetString(PyExc_TypeError,"list must contain Strings");
-          free(arg8);
-          return NULL;
-        }
-      }
-    } else {
-      PyErr_SetString(PyExc_TypeError,"not a list");
-      return NULL;
-    }
-  }
-  ecode9 = SWIG_AsVal_long(swig_obj[8], &val9);
-  if (!SWIG_IsOK(ecode9)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode9), "in method '" "CreateOSystem" "', argument " "9"" of type '" "long""'");
-  } 
-  arg9 = (long)(val9);
-  ecode10 = SWIG_AsVal_long(swig_obj[9], &val10);
-  if (!SWIG_IsOK(ecode10)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode10), "in method '" "CreateOSystem" "', argument " "10"" of type '" "long""'");
-  } 
-  arg10 = (long)(val10);
-  res11 = SWIG_ConvertPtr(swig_obj[10], &argp11,SWIGTYPE_p_ObitErr, 0 |  0 );
-  if (!SWIG_IsOK(res11)) {
-    SWIG_exception_fail(SWIG_ArgError(res11), "in method '" "CreateOSystem" "', argument " "11"" of type '" "ObitErr *""'"); 
-  }
-  arg11 = (ObitErr *)(argp11);
-  CreateOSystem(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11);
-  resultobj = SWIG_Py_Void();
-  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  {
-    int i = 0;
-    
-    while (arg6[i]!=NULL) {
-      // last string should be NULL
-      free ((char *) arg6[i++]);
-    }
-    free((char **) arg6);
-  }
-  {
-    int i = 0;
-    
-    while (arg8[i]!=NULL) {
-      // last string should be NULL
-      free ((char *) arg8[i++]);
-    }
-    free((char **) arg8);
-  }
-  return resultobj;
-fail:
-  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
-  {
-    int i = 0;
-    
-    while (arg6[i]!=NULL) {
-      // last string should be NULL
-      free ((char *) arg6[i++]);
-    }
-    free((char **) arg6);
-  }
-  {
-    int i = 0;
-    
-    while (arg8[i]!=NULL) {
-      // last string should be NULL
-      free ((char *) arg8[i++]);
-    }
-    free((char **) arg8);
-  }
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_DeleteOSystem(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  PyObject *arg1 = (PyObject *) 0 ;
-  PyObject *swig_obj[1] ;
-  
-  if (!args) SWIG_fail;
-  swig_obj[0] = args;
-  arg1 = swig_obj[0];
-  DeleteOSystem(arg1);
-  resultobj = SWIG_Py_Void();
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_OSystem_Get_me(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  PyObject *arg1 = (PyObject *) 0 ;
-  PyObject *swig_obj[1] ;
-  ObitSystem *result = 0 ;
-  
-  if (!args) SWIG_fail;
-  swig_obj[0] = args;
-  arg1 = swig_obj[0];
-  result = (ObitSystem *)OSystem_Get_me(arg1);
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ObitSystem, 0 |  0 );
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_Shutdown(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  ObitSystem *arg1 = (ObitSystem *) 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  PyObject *swig_obj[1] ;
-  ObitSystem *result = 0 ;
-  
-  if (!args) SWIG_fail;
-  swig_obj[0] = args;
-  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ObitSystem, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Shutdown" "', argument " "1"" of type '" "ObitSystem *""'"); 
-  }
-  arg1 = (ObitSystem *)(argp1);
-  result = (ObitSystem *)Shutdown(arg1);
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ObitSystem, 0 |  0 );
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_SystemIsInit(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  long result;
-  
-  if (!SWIG_Python_UnpackTuple(args, "SystemIsInit", 0, 0, 0)) SWIG_fail;
-  result = (long)SystemIsInit();
-  resultobj = SWIG_From_long((long)(result));
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_SystemToday(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  char *result = 0 ;
-  
-  if (!SWIG_Python_UnpackTuple(args, "SystemToday", 0, 0, 0)) SWIG_fail;
-  result = (char *)SystemToday();
-  resultobj = SWIG_FromCharPtr((const char *)result);
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_SystemGetPgmName(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  char *result = 0 ;
-  
-  if (!SWIG_Python_UnpackTuple(args, "SystemGetPgmName", 0, 0, 0)) SWIG_fail;
-  result = (char *)SystemGetPgmName();
-  resultobj = SWIG_FromCharPtr((const char *)result);
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_SystemSetPgmName(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  char *arg1 = (char *) 0 ;
-  int res1 ;
-  char *buf1 = 0 ;
-  int alloc1 = 0 ;
-  PyObject *swig_obj[1] ;
-  
-  if (!args) SWIG_fail;
-  swig_obj[0] = args;
-  res1 = SWIG_AsCharPtrAndSize(swig_obj[0], &buf1, NULL, &alloc1);
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SystemSetPgmName" "', argument " "1"" of type '" "char *""'");
-  }
-  arg1 = (char *)(buf1);
-  SystemSetPgmName(arg1);
-  resultobj = SWIG_Py_Void();
-  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
-  return resultobj;
-fail:
-  if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_SystemGetPgmNumber(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  long result;
-  
-  if (!SWIG_Python_UnpackTuple(args, "SystemGetPgmNumber", 0, 0, 0)) SWIG_fail;
-  result = (long)SystemGetPgmNumber();
-  resultobj = SWIG_From_long((long)(result));
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_SystemSetPgmNumber(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  long arg1 ;
-  long val1 ;
-  int ecode1 = 0 ;
-  PyObject *swig_obj[1] ;
-  
-  if (!args) SWIG_fail;
-  swig_obj[0] = args;
-  ecode1 = SWIG_AsVal_long(swig_obj[0], &val1);
-  if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "SystemSetPgmNumber" "', argument " "1"" of type '" "long""'");
-  } 
-  arg1 = (long)(val1);
-  SystemSetPgmNumber(arg1);
-  resultobj = SWIG_Py_Void();
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_SystemGetAIPSuser(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  long result;
-  
-  if (!SWIG_Python_UnpackTuple(args, "SystemGetAIPSuser", 0, 0, 0)) SWIG_fail;
-  result = (long)SystemGetAIPSuser();
-  resultobj = SWIG_From_long((long)(result));
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_SystemSetAIPSuser(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  long arg1 ;
-  long val1 ;
-  int ecode1 = 0 ;
-  PyObject *swig_obj[1] ;
-  
-  if (!args) SWIG_fail;
-  swig_obj[0] = args;
-  ecode1 = SWIG_AsVal_long(swig_obj[0], &val1);
-  if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "SystemSetAIPSuser" "', argument " "1"" of type '" "long""'");
-  } 
-  arg1 = (long)(val1);
-  SystemSetAIPSuser(arg1);
-  resultobj = SWIG_Py_Void();
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_MemPrint(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  
-  if (!SWIG_Python_UnpackTuple(args, "MemPrint", 0, 0, 0)) SWIG_fail;
-  MemPrint();
-  resultobj = SWIG_Py_Void();
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_SystemAllowThreads(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  long arg1 ;
-  long val1 ;
-  int ecode1 = 0 ;
-  PyObject *swig_obj[1] ;
-  
-  if (!args) SWIG_fail;
-  swig_obj[0] = args;
-  ecode1 = SWIG_AsVal_long(swig_obj[0], &val1);
-  if (!SWIG_IsOK(ecode1)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "SystemAllowThreads" "', argument " "1"" of type '" "long""'");
-  } 
-  arg1 = (long)(val1);
-  SystemAllowThreads(arg1);
-  resultobj = SWIG_Py_Void();
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_SystemGetNoThreads(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *resultobj = 0;
-  long result;
-  
-  if (!SWIG_Python_UnpackTuple(args, "SystemGetNoThreads", 0, 0, 0)) SWIG_fail;
-  result = (long)SystemGetNoThreads();
-  resultobj = SWIG_From_long((long)(result));
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
 SWIGINTERN PyObject *_wrap_OData_me_set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   OData *arg1 = (OData *) 0 ;
@@ -72788,27 +72148,6 @@ static PyMethodDef SwigMethods[] = {
 	 { "LogError", _wrap_LogError, METH_VARARGS, NULL},
 	 { "OErrMsg", _wrap_OErrMsg, METH_O, NULL},
 	 { "Bomb", _wrap_Bomb, METH_NOARGS, NULL},
-	 { "OSystem_me_set", _wrap_OSystem_me_set, METH_VARARGS, NULL},
-	 { "OSystem_me_get", _wrap_OSystem_me_get, METH_O, NULL},
-	 { "new_OSystem", _wrap_new_OSystem, METH_NOARGS, NULL},
-	 { "delete_OSystem", _wrap_delete_OSystem, METH_O, NULL},
-	 { "OSystem_swigregister", OSystem_swigregister, METH_O, NULL},
-	 { "OSystem_swiginit", OSystem_swiginit, METH_VARARGS, NULL},
-	 { "CreateOSystem", _wrap_CreateOSystem, METH_VARARGS, NULL},
-	 { "DeleteOSystem", _wrap_DeleteOSystem, METH_O, NULL},
-	 { "OSystem_Get_me", _wrap_OSystem_Get_me, METH_O, NULL},
-	 { "Shutdown", _wrap_Shutdown, METH_O, NULL},
-	 { "SystemIsInit", _wrap_SystemIsInit, METH_NOARGS, NULL},
-	 { "SystemToday", _wrap_SystemToday, METH_NOARGS, NULL},
-	 { "SystemGetPgmName", _wrap_SystemGetPgmName, METH_NOARGS, NULL},
-	 { "SystemSetPgmName", _wrap_SystemSetPgmName, METH_O, NULL},
-	 { "SystemGetPgmNumber", _wrap_SystemGetPgmNumber, METH_NOARGS, NULL},
-	 { "SystemSetPgmNumber", _wrap_SystemSetPgmNumber, METH_O, NULL},
-	 { "SystemGetAIPSuser", _wrap_SystemGetAIPSuser, METH_NOARGS, NULL},
-	 { "SystemSetAIPSuser", _wrap_SystemSetAIPSuser, METH_O, NULL},
-	 { "MemPrint", _wrap_MemPrint, METH_NOARGS, NULL},
-	 { "SystemAllowThreads", _wrap_SystemAllowThreads, METH_O, NULL},
-	 { "SystemGetNoThreads", _wrap_SystemGetNoThreads, METH_NOARGS, NULL},
 	 { "OData_me_set", _wrap_OData_me_set, METH_VARARGS, NULL},
 	 { "OData_me_get", _wrap_OData_me_get, METH_O, NULL},
 	 { "new_OData", _wrap_new_OData, METH_NOARGS, NULL},
@@ -73611,7 +72950,6 @@ static swig_type_info _swigt__p_ODisplay = {"_p_ODisplay", "ODisplay *", 0, 0, (
 static swig_type_info _swigt__p_OErr = {"_p_OErr", "struct OErr *|OErr *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OPlot = {"_p_OPlot", "OPlot *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OPrinter = {"_p_OPrinter", "OPrinter *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_OSystem = {"_p_OSystem", "struct OSystem *|OSystem *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_OWindow = {"_p_OWindow", "OWindow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_Obit = {"_p_Obit", "Obit *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_ObitAntennaList = {"_p_ObitAntennaList", "ObitAntennaList *", 0, 0, (void*)0, 0};
@@ -73652,7 +72990,6 @@ static swig_type_info _swigt__p_ObitSkyModelVMBeam = {"_p_ObitSkyModelVMBeam", "
 static swig_type_info _swigt__p_ObitSkyModelVMIon = {"_p_ObitSkyModelVMIon", "ObitSkyModelVMIon *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_ObitSource = {"_p_ObitSource", "ObitSource *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_ObitSpectrumFit = {"_p_ObitSpectrumFit", "ObitSpectrumFit *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_ObitSystem = {"_p_ObitSystem", "ObitSystem *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_ObitTable = {"_p_ObitTable", "ObitTable *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_ObitTableDesc = {"_p_ObitTableDesc", "ObitTableDesc *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_ObitTableList = {"_p_ObitTableList", "ObitTableList *", 0, 0, (void*)0, 0};
@@ -73723,7 +73060,6 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_OErr,
   &_swigt__p_OPlot,
   &_swigt__p_OPrinter,
-  &_swigt__p_OSystem,
   &_swigt__p_OWindow,
   &_swigt__p_Obit,
   &_swigt__p_ObitAntennaList,
@@ -73764,7 +73100,6 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_ObitSkyModelVMIon,
   &_swigt__p_ObitSource,
   &_swigt__p_ObitSpectrumFit,
-  &_swigt__p_ObitSystem,
   &_swigt__p_ObitTable,
   &_swigt__p_ObitTableDesc,
   &_swigt__p_ObitTableList,
@@ -73835,7 +73170,6 @@ static swig_cast_info _swigc__p_ODisplay[] = {  {&_swigt__p_ODisplay, 0, 0, 0},{
 static swig_cast_info _swigc__p_OErr[] = {  {&_swigt__p_OErr, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OPlot[] = {  {&_swigt__p_OPlot, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OPrinter[] = {  {&_swigt__p_OPrinter, 0, 0, 0},{0, 0, 0, 0}};
-static swig_cast_info _swigc__p_OSystem[] = {  {&_swigt__p_OSystem, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_OWindow[] = {  {&_swigt__p_OWindow, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_Obit[] = {  {&_swigt__p_Obit, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_ObitAntennaList[] = {  {&_swigt__p_ObitAntennaList, 0, 0, 0},{0, 0, 0, 0}};
@@ -73876,7 +73210,6 @@ static swig_cast_info _swigc__p_ObitSkyModelVMBeam[] = {  {&_swigt__p_ObitSkyMod
 static swig_cast_info _swigc__p_ObitSkyModelVMIon[] = {  {&_swigt__p_ObitSkyModelVMIon, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_ObitSource[] = {  {&_swigt__p_ObitSource, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_ObitSpectrumFit[] = {  {&_swigt__p_ObitSpectrumFit, 0, 0, 0},{0, 0, 0, 0}};
-static swig_cast_info _swigc__p_ObitSystem[] = {  {&_swigt__p_ObitSystem, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_ObitTable[] = {  {&_swigt__p_ObitTable, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_ObitTableDesc[] = {  {&_swigt__p_ObitTableDesc, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_ObitTableList[] = {  {&_swigt__p_ObitTableList, 0, 0, 0},{0, 0, 0, 0}};
@@ -73947,7 +73280,6 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_OErr,
   _swigc__p_OPlot,
   _swigc__p_OPrinter,
-  _swigc__p_OSystem,
   _swigc__p_OWindow,
   _swigc__p_Obit,
   _swigc__p_ObitAntennaList,
@@ -73988,7 +73320,6 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_ObitSkyModelVMIon,
   _swigc__p_ObitSource,
   _swigc__p_ObitSpectrumFit,
-  _swigc__p_ObitSystem,
   _swigc__p_ObitTable,
   _swigc__p_ObitTableDesc,
   _swigc__p_ObitTableList,

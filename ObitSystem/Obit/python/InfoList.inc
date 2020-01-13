@@ -500,7 +500,7 @@ static long InfoListGetHelper(ObitInfoList *in, char *name, ObitInfoType type,
 static PyObject* Info2List(ObitInfoType type, gint32 dim[5], void *data)
 {
   PyObject *outList=NULL, *outList2=NULL, *outList3=NULL, *o=NULL;
-  gint32 i, j, k, ii, count[2], ndim;
+  gint32 i, j, k, ii, count[5], ndim;
   float  *fdata;
   long   *ldata;
   int    *idata;
