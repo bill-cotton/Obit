@@ -87,16 +87,16 @@ $(TARGETS): setupdata.py $(MYLIBS)
 	python3 setup.py build install --install-lib=.
 
 # Build python/Obit interface
-interface: Obit_wrap.c
-	echo "rebuild Obit/python interface"
+#interface: Obit_wrap.c
+#	echo "rebuild Obit/python interface"
 
 # Use Swig to build python/c interface if necessary
-Obit_wrap.c: *.inc $(MYLIBS)
-	rm -f Obit_wrap.c
-	echo "%module Obit" > Obit.i
-	cat ObitTypeMaps.swig >> Obit.i
-	cat *.inc >> Obit.i
-	$(SWIG) -Wall -python -I$(SWIGLIB) -I$(SWIGLIB)/python Obit.i
+#Obit_wrap.c: *.inc $(MYLIBS)
+#	rm -f Obit_wrap.c
+#	echo "%module Obit" > Obit.i
+#	cat ObitTypeMaps.swig >> Obit.i
+#	cat *.inc >> Obit.i
+#	$(SWIG) -Wall -python -I$(SWIGLIB) -I$(SWIGLIB)/python Obit.i
 
 Obit: Obit_wrap.c ../lib/libObit.so
 	rm -rf build

@@ -4512,3 +4512,8 @@ Summary: bug fixes
 Obit/python/InfoList.inc Obit/python/Obit_wrap.c
     Fix declaration of count in Info2List, fix from Tom
 13 Jan 2020 svn 613
+
+Summary: bug fixes
+Obit/python/Makefile.in Obit/python/Obit_wrap.c Obit/python/ObitSystem.inc
+    Fix what went wrong last time
+14 Jan 2020 svn 614
