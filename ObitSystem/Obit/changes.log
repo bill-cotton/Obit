@@ -4517,3 +4517,11 @@ Summary: bug fixes
 Obit/python/Makefile.in Obit/python/Obit_wrap.c Obit/python/ObitSystem.inc
     Fix what went wrong last time
 14 Jan 2020 svn 614
+
+Summary: bug fixes
+Obit/python/ImageMF.py Obit/python/ImageMF.inc Obit/python/OData.py 
+Obit/python/Image.py Obit/python/Obit_wrap.c
+   Use casts to allow ImageMFs to call Image routines
+Obit/tasks/HGeom.c:
+    update output pixel increments, fix CD matrix
+17 Jan 2020 svn 615

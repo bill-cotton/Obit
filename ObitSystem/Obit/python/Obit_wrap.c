@@ -7360,6 +7360,10 @@ extern ObitData* ImageMFCastData (ObitImageMF* inImage) {
   return (ObitData*)inImage;
 } // end ImageMFCastData
 
+extern ObitImage* ImageMFCastImage (ObitImageMF* inImage) {
+  return (ObitImage*)inImage;
+} // end ImageMFCastImage
+
 // Open and close to fully instantiate
 // access 1=READONLY, 2=WRITEONLY, 3=READWRITE
 extern long ImageMFfullInstantiate (ObitImageMF* in, long access, ObitErr *err) {
@@ -37179,6 +37183,29 @@ SWIGINTERN PyObject *_wrap_ImageMFCastData(PyObject *SWIGUNUSEDPARM(self), PyObj
   arg1 = (ObitImageMF *)(argp1);
   result = (ObitData *)ImageMFCastData(arg1);
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ObitData, 0 |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ImageMFCastImage(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  ObitImageMF *arg1 = (ObitImageMF *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  ObitImage *result = 0 ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ObitImageMF, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ImageMFCastImage" "', argument " "1"" of type '" "ObitImageMF *""'"); 
+  }
+  arg1 = (ObitImageMF *)(argp1);
+  result = (ObitImage *)ImageMFCastImage(arg1);
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ObitImage, 0 |  0 );
   return resultobj;
 fail:
   return NULL;
@@ -72613,6 +72640,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "ImageMFSetFITS", _wrap_ImageMFSetFITS, METH_VARARGS, NULL},
 	 { "ImageMFSetAIPS", _wrap_ImageMFSetAIPS, METH_VARARGS, NULL},
 	 { "ImageMFCastData", _wrap_ImageMFCastData, METH_O, NULL},
+	 { "ImageMFCastImage", _wrap_ImageMFCastImage, METH_O, NULL},
 	 { "ImageMFfullInstantiate", _wrap_ImageMFfullInstantiate, METH_VARARGS, NULL},
 	 { "ImageMFInfo", _wrap_ImageMFInfo, METH_VARARGS, NULL},
 	 { "ImageMFZap", _wrap_ImageMFZap, METH_VARARGS, NULL},

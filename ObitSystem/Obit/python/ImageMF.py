@@ -122,7 +122,7 @@ class ImageMF(Obit.ImageMF, Image.Image):
     def __repr__(self):
         if not isinstance(self, ImageMF):
             return "Bogus dude "+str(self.__class__)
-        return "<C ImageMF instance> " + Obit.ImageGetName(self.me)
+        return "<C ImageMF instance> " + Obit.ImageMFGetName(self.me)
     
     def ImageMFIsA (self):
         """

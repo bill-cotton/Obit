@@ -45,7 +45,7 @@ List   used to pass instructions to processing
  
 # Python shadow class to ObitOData class
 from __future__ import absolute_import
-import OErr, InfoList, Table, History
+import OErr, InfoList, Table, History, Image, UV
 import Obit, _Obit, TableList,  string
 
 # class name in C
@@ -111,24 +111,42 @@ class OData(Obit.OData):
         # by type, first UV
         try:
             if Obit.UVIsA(self.me)!=0:
-                recast = OData("None")
-                recast.me = Obit.UVCastData(self.me)
+                if (toClass=='ObitData'):
+                    recast = OData("None")
+                    recast.me = Obit.UVCastData(self.me)
+                else:
+                    recast = self
                 return recast
         except:
             pass
         # Try Image
         try:
             if Obit.ImageIsA(self.me)!=0:
-                recast = OData("None")
-                recast.me = Obit.ImageCastData(self.me)
+                if (toClass=='ObitData'):
+                    recast = OData("None")
+                    recast.me = Obit.ImageCastData(self.me)
+                else:
+                    recast = self
                 return recast
         except:
                 pass
         # Try ImageMF
         try:
             if Obit.ImageMFIsA(self.me)!=0:
-                recast = OData("None")
-                recast.me = Obit.ImageMFCastData(self.me)
+                if (toClass=='ObitImage'):
+                    recast = Image.Image("None")
+                    recast.me = Obit.ImageMFCastImage(self.me)
+                else:
+                    recast = OData("None")
+                    recast.me = Obit.ImageMFCastData(self.me)
+                return recast
+        except Exception as exception:
+                print ('Fail',exception)
+                pass
+         # Already OData?
+        try:
+            if Obit.ODataIsA(self.me)!=0:
+                recast = self
                 return recast
         except:
                 pass

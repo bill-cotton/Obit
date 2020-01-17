@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task - interpolates image to different geometry               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2011                                          */
+/*;  Copyright (C) 2005-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -81,6 +81,9 @@ int main ( int argc, char **argv )
   ObitSystem   *mySystem= NULL;
   ObitImage    *inImage = NULL, *tmplImage = NULL, *outImage = NULL;
   ObitErr      *err= NULL;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  odouble      cd;
 
    /* Startup - parse command line */
   err = newObitErr();
@@ -113,12 +116,28 @@ int main ( int argc, char **argv )
   outImage = getOutputImage (myInput, tmplImage, inImage, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
-  /* Copy */
+  /* Interpolate */
   HGeomInterp (myInput, inImage, outImage, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Restore Descriptor list */
   ObitImageOpen (outImage, OBIT_IO_ReadWrite, err);
+  /* Set pixel increment */
+  outImage->myDesc->cdelt[0] = tmplImage->myDesc->cdelt[0];
+  outImage->myDesc->cdelt[1] = tmplImage->myDesc->cdelt[1];
+  /* Grumble, grumble */
+  ((ObitImageDesc*)(outImage->myIO->myDesc))->cdelt[0] = tmplImage->myDesc->cdelt[0];
+  ((ObitImageDesc*)(outImage->myIO->myDesc))->cdelt[1] = tmplImage->myDesc->cdelt[1];
+  /* Fix CD matrix if in savInfo */
+  /* Fix CD matrix if in savInfo */
+  if (ObitInfoListGetTest(savInfo, "CD1_1", &type, dim, &cd)){
+    cd = (odouble)tmplImage->myDesc->cdelt[0];
+    ObitInfoListAlwaysPut(savInfo, "CD1_1", type, dim, &cd);
+  }
+  if (ObitInfoListGetTest(savInfo, "CD2_2", &type, dim, &cd)){
+    cd = (odouble)tmplImage->myDesc->cdelt[0];
+    ObitInfoListAlwaysPut(savInfo, "CD2_2", type, dim, &cd);
+  }
   ObitInfoListCopyData (savInfo, outImage->myDesc->info);
   outImage->myStatus = OBIT_Modified;
   ObitImageClose (outImage, err);
@@ -931,6 +950,13 @@ ObitImage* getOutputImage (ObitInfoList *myInput, ObitImage *tmplImage,
 
   /* open image to update header */
   ObitImageOpen (outImage, OBIT_IO_ReadWrite, err);
+
+  /* Set pixel increment */
+  outImage->myDesc->cdelt[0] = tmplImage->myDesc->cdelt[0];
+  outImage->myDesc->cdelt[1] = tmplImage->myDesc->cdelt[1];
+  /* Grumble, grumble */
+  ((ObitImageDesc*)(outImage->myIO->myDesc))->cdelt[0] = tmplImage->myDesc->cdelt[0];
+  ((ObitImageDesc*)(outImage->myIO->myDesc))->cdelt[1] = tmplImage->myDesc->cdelt[1];
 
   /* Copy descriptive information from the input image for dimensions 
      higher than 2 */

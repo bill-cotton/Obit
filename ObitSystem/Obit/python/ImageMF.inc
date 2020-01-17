@@ -135,6 +135,10 @@ extern ObitData* ImageMFCastData (ObitImageMF* inImage) {
   return (ObitData*)inImage;
 } // end ImageMFCastData
 
+extern ObitImage* ImageMFCastImage (ObitImageMF* inImage) {
+  return (ObitImage*)inImage;
+} // end ImageMFCastImage
+
 // Open and close to fully instantiate
 // access 1=READONLY, 2=WRITEONLY, 3=READWRITE
 extern long ImageMFfullInstantiate (ObitImageMF* in, long access, ObitErr *err) {
