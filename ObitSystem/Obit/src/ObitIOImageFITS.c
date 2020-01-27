@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2019                                          */
+/*;  Copyright (C) 2003-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1794,13 +1794,23 @@ void ObitIOImageFITSGetFileInfo (ObitIO *in, ObitInfoList *myInfo, gchar *prefix
   dim[0] = strlen(DataType);
   ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, DataType);
   g_free(keyword);
+  if (prefix && !strncmp(prefix,"out",3)) {
+    /* another form may be required */
+    keyword =  g_strconcat (prefix, "DType", NULL);
+    ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, DataType);
+ }
   
   /* Filename */
   if (!ObitInfoListGet(myInfo, "FileName", &type, dim, tempStr, err)) 
       Obit_traceback_msg (err, routine, in->name);
   if (prefix) keyword =  g_strconcat (prefix, "FileName", NULL);
   else keyword =  g_strdup ("FileName");
-  ObitInfoListAlwaysPut (outList, keyword, type, dim, tempStr);
+  ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, tempStr);
+  g_free(keyword);
+  /* Also prefix+'File' */
+  if (prefix) keyword =  g_strconcat (prefix, "File", NULL);
+  else keyword =  g_strdup ("File");
+  ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, tempStr);
   g_free(keyword);
 
   /* Disk number */

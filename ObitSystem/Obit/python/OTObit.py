@@ -552,6 +552,7 @@ def getname(cno, disk=None):
             out = Image.newPAImage("AIPS image", Aname, Aclass, disk, Aseq, True, err, \
                                    verbose=False)
         print("AIPS Image",Aname, Aclass, disk, Aseq)
+        imhead(out)
     elif Atype == 'UV':
          # Create AIPSData or ObitTalk if remote/local
         if AIPS.AIPS.disks[disk].url:
@@ -1591,9 +1592,14 @@ def uvlod(filename, inDisk, Aname, Aclass, Adisk, Aseq, err):
     outHistory.Close(err)
    #
     # Copy Tables
+    # Open to be sure to update fragile AIPS header
+    outUV.Open(UV.READWRITE, err)
     exclude=["AIPS HI", "AIPS AN", "AIPS FQ", "AIPS SL", "AIPS PL", "History"]
     include=[]
     UV.PCopyTables (inUV, outUV, exclude, include, err)
+    outUV.Close(err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error copying Tables")
     return outUV  # return new object
     # end uvlod
 
@@ -1746,7 +1752,7 @@ def imlod(filename, inDisk, Aname, Aclass, Adisk, Aseq, err):
     # Copy
     Image.PCopy (inImage, outImage, err)
     if err.isErr:
-        OErr.printErrMsg(err, "Error copying Image data to FITS")
+        OErr.printErrMsg(err, "Error copying Image data from FITS")
     # Copy History
     inHistory  = History.History("inhistory",  inImage.List, err)
     outHistory = History.History("outhistory", outImage.List, err)
@@ -1756,10 +1762,15 @@ def imlod(filename, inDisk, Aname, Aclass, Adisk, Aseq, err):
     outHistory.TimeStamp(" Start Obit uvlod",err)
     outHistory.WriteRec(-1,"imlod   / FITS file "+filename+" disk "+str(inDisk),err)
     outHistory.Close(err)
+    # Open to be sure to update fragile AIPS header
+    outImage.Open(Image.READWRITE, err)
     # Copy Tables
     exclude=["AIPS HI", "AIPS SL", "AIPS PL", "History"]
     include=[]
     Image.PCopyTables (inImage, outImage, exclude, include, err)
+    outImage.Close(err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error copying Tables")
     return outImage  # return new Object
     # end imlod
 

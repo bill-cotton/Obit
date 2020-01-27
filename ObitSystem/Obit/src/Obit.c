@@ -236,9 +236,10 @@ gpointer ObitUnref (gpointer inn)
     /* free structure - may be ObitMem allocation */
     if (ObitMemValid (in)) ObitMemFree (in);
     else g_free (in);
+    return NULL; /* new value for pointer */
   } /* end deallocate */
+  return in; /* not destroyed, same pointer */
 
-  return NULL; /* new value for pointer */
 } /* end ObitUnref */
 
 /**

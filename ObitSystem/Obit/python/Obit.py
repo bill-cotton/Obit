@@ -1805,6 +1805,9 @@ def ImageMFSetAIPS(_in, size, disk, cno, user, blc, trc, err):
 def ImageMFCastData(inImage):
     return _Obit.ImageMFCastData(inImage)
 
+def ImageMFCastImage(inImage):
+    return _Obit.ImageMFCastImage(inImage)
+
 def ImageMFfullInstantiate(_in, access, err):
     return _Obit.ImageMFfullInstantiate(_in, access, err)
 
@@ -2849,8 +2852,8 @@ def RMFit_Set_me(_self, me):
 def RMFitCube(_in, inQImage, inUImage, outImage, err):
     return _Obit.RMFitCube(_in, inQImage, inUImage, outImage, err)
 
-def RMFitImArr(_in, nimage, imQArr, imUArr, outImage, err):
-    return _Obit.RMFitImArr(_in, nimage, imQArr, imUArr, outImage, err)
+def RMFitImArr(_in, nimage, imQ1, imQ2, imQ3, imQ4, imQ5, imQ6, imQ7, imQ8, imQ9, imQ10, imQ11, imQ12, imQ13, imQ14, imQ15, imQ16, imQ17, imQ18, imQ19, imQ20, imU1, imU2, imU3, imU4, imU5, imU6, imU7, imU8, imU9, imU10, imU11, imU12, imU13, imU14, imU15, imU16, imU17, imU18, imU19, imU20, outImage, err):
+    return _Obit.RMFitImArr(_in, nimage, imQ1, imQ2, imQ3, imQ4, imQ5, imQ6, imQ7, imQ8, imQ9, imQ10, imQ11, imQ12, imQ13, imQ14, imQ15, imQ16, imQ17, imQ18, imQ19, imQ20, imU1, imU2, imU3, imU4, imU5, imU6, imU7, imU8, imU9, imU10, imU11, imU12, imU13, imU14, imU15, imU16, imU17, imU18, imU19, imU20, outImage, err)
 
 def newRMFit(name):
     return _Obit.newRMFit(name)
@@ -3221,8 +3224,8 @@ def SpectrumFitCopy(_in, out, err):
 def SpectrumFitCube(_in, inImage, outImage, err):
     return _Obit.SpectrumFitCube(_in, inImage, outImage, err)
 
-def SpectrumFitImArr(_in, nimage, imArr, outImage, err):
-    return _Obit.SpectrumFitImArr(_in, nimage, imArr, outImage, err)
+def SpectrumFitImArr(_in, nimage, im1, im2, im3, im4, im5, im6, im7, im8, im9, im10, im11, im12, im13, im14, im15, im16, im17, im18, im19, im20, outImage, err):
+    return _Obit.SpectrumFitImArr(_in, nimage, im1, im2, im3, im4, im5, im6, im7, im8, im9, im10, im11, im12, im13, im14, im15, im16, im17, im18, im19, im20, outImage, err)
 
 def SpectrumFitEval(_in, inImage, outFreq, outImage, err):
     return _Obit.SpectrumFitEval(_in, inImage, outFreq, outImage, err)

@@ -1,0 +1,14 @@
+$Key = AIPSdirs Str 100 1 1
+./aipsdata/
+$Key = nAIPS Int 1 1 1
+ 1 
+$Key = AIPSuser Int 1 1 1
+ 100 
+$Key = nThreads Int 1 1 1
+ 2 
+$Key = pgmNumber Int 1 1 1
+2 
+$Key = port Int 1 1 1
+8771 
+$Key = retCode Int 1 1 1
+0 

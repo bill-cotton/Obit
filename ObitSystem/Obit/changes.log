@@ -4525,3 +4525,27 @@ Obit/python/Image.py Obit/python/Obit_wrap.c
 Obit/tasks/HGeom.c:
     update output pixel increments, fix CD matrix
 17 Jan 2020 svn 615
+
+Summary: bug fixes
+Obit/python/Obit.py Obit_wrap.c
+    Redefined python interface.
+Obit/python/Makefile.in
+    improved Make
+Obit/src/ObitIOImageFITS.c
+    GetFileInfo: correct type on FileType, also outDType if needed
+Obit/share/scripts/testFuncCont.c
+    Test program for FuncContainer
+Obit/share/data/FuncContainerInput1.inp Obit/share/data/FuncContainerInput2.inp
+    Test input files for FuncContainer
+Obit/python/OTObit.py
+    imlod,uvlod: Open and close file around copying tables to update header
+Obit/src/Obit.c:
+    Unref: don't return NULL if only decrement refCount
+Obit/src/ObitIOImageAIPS.c Obit/src/ObitIOImageFITS.c 
+    Don't unreference I/O tableList - now just a copy of the main tableList
+
+cd  /export/raid_2/bcotton/ObitGitMaster/Obit/ObitSystem/Obit
+git rm AIPSSetup103.py NewDebug.py TableDebug.py TableListDebug.py runtest.py
+   more cleanup from python3 spectacle
+
+27 Jan 2020 svn 616
