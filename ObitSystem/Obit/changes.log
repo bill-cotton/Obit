@@ -4547,5 +4547,40 @@ Obit/src/ObitIOImageAIPS.c Obit/src/ObitIOImageFITS.c
 cd  /export/raid_2/bcotton/ObitGitMaster/Obit/ObitSystem/Obit
 git rm AIPSSetup103.py NewDebug.py TableDebug.py TableListDebug.py runtest.py
    more cleanup from python3 spectacle
-
 27 Jan 2020 svn 616
+
+Summary: bug fixes
+Obit/src/ObitDConCleanPxList.c Obit/src/ObitDConCleanPxListMF.c 
+   More more important messages to prtLv=1
+Obit/src/ObitTableUtil.c
+   Fix sort key types
+   ReorderTable: don't zap scrTable - go boom
+Obit/python/Makefile.in
+   Ask for libObit.a rather than libObit.so
+ObitTalk/configure.ac ObitTalk/configure
+   Better (hacked) test for the version of python >= 2.7
+Obit/python/EVLACal.py
+     EVLAEditSNAmp: better test in insufficient statistics  
+ObitView/src/XMLRPCserver.c
+    server_loop: check RPC failure to connect to port
+ObitView/include/Image2Pix.h ObitView/include/histo.h ObitView/include/imagedisp.h
+    includeObit.h to get ObitMagicF 
+ObitView/src/infobox.c
+    leave source info box where user puts it.
+Obit/tasks/GetJy.c 
+    Make averaging more robust using Median averaging
+Obit/python/OTObit.py
+    remove imhead from getname
+Obit/src/ObitUVImager.c
+    Image: Check for auto center images before forcing beam for single field
+Obit/share/scripts/MKCosBeam.py Obit/share/scripts/PBCorImageMF.py
+    New MeerKAT related scripts
+Obit/python/ImageFit.py
+    Fix IsA to use isinstance
+Obit/tasks/Convol.c
+    Get beam orientations correct
+Obit/src/ObitConvUtil.c
+    Deconv: local variables to double
+Obit/src/ObitFArrayUtil.c
+    UVGaus: correct indexing of center of array    
+29 Feb 2020 svn 617

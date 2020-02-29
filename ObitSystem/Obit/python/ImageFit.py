@@ -350,7 +350,7 @@ def PIsA (inImageFit):
     """
     ################################################################
     # Checks - allow inheritence
-    if not str(inImageFit.__class__).startswith("ImageFit"):
+    if not isinstance(inImageFit,ImageFit):
         return False
     return Obit.ImageFitIsA(inImageFit.me)!=0
     # end PIsA

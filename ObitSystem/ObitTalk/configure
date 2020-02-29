@@ -1696,15 +1696,10 @@ am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'
 
         if test -n "$PYTHON"; then
       # If the user set $PYTHON, use it and don't search something else.
-      echo "$as_me:$LINENO: checking whether $PYTHON version >= 2.2" >&5
-echo $ECHO_N "checking whether $PYTHON version >= 2.2... $ECHO_C" >&6
-      prog="import sys, string
-# split strings by '.' and convert to numeric.  Append some zeros
-# because we need at least 4 digits for the hex conversion.
-minver = map(int, string.split('2.2', '.')) + [0, 0, 0]
-minverhex = 0
-for i in xrange(0, 4): minverhex = (minverhex << 8) + minver[i]
-sys.exit(sys.hexversion < minverhex)"
+      echo "$as_me:$LINENO: checking whether $PYTHON version >= 2.7" >&5
+echo $ECHO_N "checking whether $PYTHON version >= 2.7... $ECHO_C" >&6
+      prog="import sys
+sys.exit(sys.version_info < (2, 7, 0))"
   if { echo "$as_me:$LINENO: $PYTHON -c "$prog"" >&5
    ($PYTHON -c "$prog") >&5 2>&5
    ac_status=$?
@@ -1722,21 +1717,16 @@ fi
     else
       # Otherwise, try each interpreter until we find one that satisfies
       # VERSION.
-      echo "$as_me:$LINENO: checking for a Python interpreter with version >= 2.2" >&5
-echo $ECHO_N "checking for a Python interpreter with version >= 2.2... $ECHO_C" >&6
+      echo "$as_me:$LINENO: checking for a Python interpreter with version >= 2.7" >&5
+echo $ECHO_N "checking for a Python interpreter with version >= 2.7... $ECHO_C" >&6
 if test "${am_cv_pathless_PYTHON+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
 
-	for am_cv_pathless_PYTHON in python python2 python2.4 python2.3 python2.2 python2.1 python2.0 python1.6 python1.5 none; do
+	for am_cv_pathless_PYTHON in python python2 python3 none; do
 	  test "$am_cv_pathless_PYTHON" = none && break
-	  prog="import sys, string
-# split strings by '.' and convert to numeric.  Append some zeros
-# because we need at least 4 digits for the hex conversion.
-minver = map(int, string.split('2.2', '.')) + [0, 0, 0]
-minverhex = 0
-for i in xrange(0, 4): minverhex = (minverhex << 8) + minver[i]
-sys.exit(sys.hexversion < minverhex)"
+	  prog="import sys
+sys.exit(sys.version_info < (2, 7, 0))"
   if { echo "$as_me:$LINENO: $am_cv_pathless_PYTHON -c "$prog"" >&5
    ($am_cv_pathless_PYTHON -c "$prog") >&5 2>&5
    ac_status=$?

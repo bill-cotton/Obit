@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2019                                          */
+/*;  Copyright (C) 2006-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -95,14 +95,14 @@ void ObitConvUtilConv (ObitImage *inImage, ObitFArray *convFn,
   naxis[0] = FFTfor->dim[0];  naxis[1] = FFTfor->dim[1]; 
   padConvFn = ObitFArrayCreate("Pad Conv Fn", ndim, naxis);
   ObitFeatherUtilPadArray (FFTfor, convFn, padConvFn);
-  ObitImageUtilArray2Image ("convFn.fits",0,padConvFn, err);/*DEBUG*/
+  /*ObitImageUtilArray2Image ("convFn.fits",0,padConvFn, err);DEBUG*/
 
   /* FFT Convolving function to wtArray */
   wtArray = ObitFeatherUtilCreateFFTArray (FFTfor);
   ObitFArray2DCenter (padConvFn); /* Swaparoonie to FFT order */
   ObitFFTR2C (FFTfor, padConvFn, wtArray);
 
-  /* If doSub modify wyArray */
+  /* If doSub modify wtArray */
   if (doSub) {
     wtAmp   = ObitFArrayCreate("Amp",wtArray->ndim,wtArray->naxis);
     wtPhase = ObitFArrayCreate("Phase",wtArray->ndim,wtArray->naxis);
@@ -113,9 +113,9 @@ void ObitConvUtilConv (ObitImage *inImage, ObitFArray *convFn,
     ObitFArrayFill(wtPhase, maxval);  /* Use wtPhase for work */
     ObitFArraySub(wtPhase, wtAmp, wtAmp);
     ObitFArrayFill(wtPhase, 0.0); 
-    ObitCArrayPhase(wtArray, wtPhase);
     ObitCArrayComplex(wtAmp, wtPhase, wtArray); /* Pretend r/i */
-    ObitImageUtilArray2Image ("WtAmp.fits",0,wtAmp, err); /* DEBUG */
+    /* ObitImageUtilArray2Image ("WtAmp.fits",0,wtAmp, err);DEBUG */
+    /* ObitImageUtilArray2Image ("WtPhase.fits",0,wtPhase, err); DEBUG */
     wtAmp   = ObitFArrayUnref(wtAmp);
     wtPhase = ObitFArrayUnref(wtPhase);
     /*wtReal  = ObitFArrayUnref(wtReal);
@@ -487,7 +487,7 @@ void ObitConvUtilDeconv (ofloat fmaj, ofloat fmin, ofloat fpa,
 			 ofloat cmaj, ofloat cmin, ofloat cpa, 
 			 ofloat *rmaj, ofloat *rmin, ofloat *rpa)
 {
-  ofloat      cmj2, cmn2, fmj2, fmn2, sinc, cosc, rhoc, 
+  odouble      cmj2, cmn2, fmj2, fmn2, sinc, cosc, rhoc, 
     sigic2, det, rhoa, lfpa, lcpa, konst = 28.647888;
   olong csux;
 

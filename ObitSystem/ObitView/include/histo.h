@@ -3,7 +3,7 @@
 /*  Histogram equalization is an attempt to have equal numbers of pixels
     in each of the allowed color index states */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1998-2008
+*  Copyright (C) 1998-2020
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -17,6 +17,7 @@
 *-----------------------------------------------------------------------*/
   
 #include <glib.h> 
+#include "Obit.h" 
 #include "ObitFArray.h" 
 #ifndef HISTO_H
 #define HISTO_H 

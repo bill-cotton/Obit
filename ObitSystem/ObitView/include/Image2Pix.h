@@ -1,7 +1,7 @@
 /* $Id$ */
 /* Header file for FITS2Pix routine */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996-2008
+*  Copyright (C) 1996-2020
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -18,6 +18,6 @@
 #include <Xm/Xm.h> 
 #include <glib.h> 
 #include "obitview.h"
-
+#include "Obit.h"
 olong Image2Pix (ImageData *image, ImageDisplay *IDdata, gboolean verbose);
 #endif /*  IMAGE2PIX_H  */ 

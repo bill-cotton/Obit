@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2019                                          */
+/*;  Copyright (C) 2010-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1052,10 +1052,12 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
   }
   
   /* Tell about results */
-  if (in->prtLv>1) {
+  if (in->prtLv>=1) {
     Obit_log_error(err, OBIT_InfoErr,"Clean stopped because: %s", reason);
     Obit_log_error(err, OBIT_InfoErr,"Min. Flux density %f",
 		   xflux);
+  }
+  if (in->prtLv>1) {
     if (in->nfield>1) /* Multiple fields? */
       for (i=0; i<in->nfield; i++) {
 	if (doField[i]) {
@@ -1064,6 +1066,8 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
 	}
       }
     
+  }
+  if (in->prtLv>=1) {
     Obit_log_error(err, OBIT_InfoErr,"Total CLEAN %d CCs with %g Jy",
 		   in->currentIter, in->totalFlux);
   }
@@ -1092,7 +1096,7 @@ gboolean ObitDConCleanPxListMFSDI (ObitDConCleanPxList *inn, ObitErr *err)
   gboolean drop, done = FALSE;
   olong iter, iresid, field=0, beamPatch, lpatch=0, ipeak, iXres, iYres;
   olong xoff, yoff, irow, i, j;
-  ofloat minFlux=0.0, xflux;
+  ofloat minFlux=0.0, xflux=0.0;
   ofloat minVal=-1.0e20, *sum=NULL, *wt=NULL, *tspec=NULL, mapLim;
   odouble totalFlux, *fieldFlux=NULL;
   gchar reason[51];
@@ -1374,10 +1378,12 @@ gboolean ObitDConCleanPxListMFSDI (ObitDConCleanPxList *inn, ObitErr *err)
   ObitThreadPoolFree (in->thread);  
  
   /* Tell about results */
-  if (in->prtLv>1) {
+  if (in->prtLv>=1) {
     Obit_log_error(err, OBIT_InfoErr,"Clean stopped because: %s", reason);
-    Obit_log_error(err, OBIT_InfoErr,"%s: Min. Flux density %f",
-		   routine, minVal);
+    Obit_log_error(err, OBIT_InfoErr,"Min. Flux density %f",
+		   xflux);
+  }
+  if (in->prtLv>1) {
     if (in->nfield>1) /* Multiple fields? */
       for (i=0; i<in->nfield; i++) {
 	if (doField[i]) {
@@ -1386,6 +1392,8 @@ gboolean ObitDConCleanPxListMFSDI (ObitDConCleanPxList *inn, ObitErr *err)
 	}
       }
     
+  }
+  if (in->prtLv>=1) {
     Obit_log_error(err, OBIT_InfoErr,"Total CLEAN %d CCs with %g Jy",
 		   in->currentIter, in->totalFlux);
   }

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2014                                          */
+/*;  Copyright (C) 2004-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -868,8 +868,8 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
 {
   gboolean done = FALSE;
   olong iter, ipeak=0, field, iXres, iYres, beamPatch, tipeak=0;
-  olong i, j, lpatch, irow, xoff, yoff, lastField=-1;
-  ofloat peak, tpeak, minFlux=0.0, factor, CCmin, atlim, xfac=1.0, xflux;
+  olong i, j, lpatch, irow, xoff, yoff;
+  ofloat peak, tpeak, minFlux=0.0, CCmin, atlim, xfac=1.0, xflux;
   ofloat subval, ccfLim=0.5;
   odouble totalFlux, *fieldFlux=NULL;
   gchar reason[51];
@@ -987,7 +987,6 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
     field   = in->pixelFld[ipeak];
     doField[field-1] = TRUE;
     minFlux = in->minFlux[field-1];
-    factor  = in->factor[field-1];
     xflux   = in->pixelFlux[ipeak];
     subval  = xflux * in->gain[field-1];
     iXres   = in->pixelX[ipeak];
@@ -1045,7 +1044,6 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
     /* Create row if needed */
     if (!in->CCRow[field-1]) in->CCRow[field-1] = newObitTableCCRow (in->CCTable[field-1]);
     CCRow = in->CCRow[field-1];   /* Get local pointer to  Table Row  */
-    lastField = field;
     
     /* Set value */
     desc = in->mosaic->images[field-1]->myDesc;
@@ -1161,10 +1159,12 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
   ObitThreadPoolFree (in->thread);
    
   /* Tell about results */
-  if (in->prtLv>1) {
+  if (in->prtLv>=1) {
     Obit_log_error(err, OBIT_InfoErr,"Clean stopped because: %s", reason);
     Obit_log_error(err, OBIT_InfoErr,"Min. Flux density %f",
 		   xflux);
+  }
+  if (in->prtLv>1) {
     if (in->nfield>1) /* Multiple fields? */
       for (i=0; i<in->nfield; i++) {
 	if (doField[i]) {
@@ -1173,6 +1173,8 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
 	}
       }
     
+  }
+  if (in->prtLv>=1) {
     Obit_log_error(err, OBIT_InfoErr,"Total CLEAN %d CCs with %g Jy",
 		   in->currentIter, in->totalFlux);
   }
@@ -1196,8 +1198,8 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
 {
   gboolean done = FALSE;
   olong iter, iresid, field=0, beamPatch, lpatch=0, ipeak, iXres, iYres;
-  olong lastField=-1, xoff, yoff, irow, i, j;
-  ofloat minFlux=0.0, xflux;
+  olong xoff, yoff, irow, i, j;
+  ofloat minFlux=0.0, xflux=0.0;
   ofloat minVal=-1.0e20, sum, wt, mapLim;
   odouble totalFlux, *fieldFlux=NULL;
   gchar reason[51];
@@ -1352,7 +1354,6 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
     if (!in->CCRow[field-1]) in->CCRow[field-1] = newObitTableCCRow (in->CCTable[field-1]);
     /* Need Table Row  */
     CCRow = in->CCRow[field-1];  /* Get local pointer to Table Row  */
-    lastField = field;
     
     /* Set value */
     desc = in->mosaic->images[field-1]->myDesc;
@@ -1445,10 +1446,12 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
   
  
   /* Tell about results */
-  if (in->prtLv>1) {
+  if (in->prtLv>=1) {
     Obit_log_error(err, OBIT_InfoErr,"Clean stopped because: %s", reason);
-    Obit_log_error(err, OBIT_InfoErr,"%s: Min. Flux density %f",
-		   routine, minVal);
+    Obit_log_error(err, OBIT_InfoErr,"Min. Flux density %f",
+		   xflux);
+  }
+  if (in->prtLv>1) {
     if (in->nfield>1) /* Multiple fields? */
       for (i=0; i<in->nfield; i++) {
 	if (doField[i]) {
@@ -1457,6 +1460,8 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
 	}
       }
     
+  }
+  if (in->prtLv>=1) {
     Obit_log_error(err, OBIT_InfoErr,"Total CLEAN %d CCs with %g Jy",
 		   in->currentIter, in->totalFlux);
   }

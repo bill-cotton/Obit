@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2012                                          */
+/*;  Copyright (C) 2005-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -450,7 +450,7 @@ ObitFArray* ObitFArrayUtilUVGaus (olong *naxis, ofloat *cells, ofloat maprot,
   gausbb = ((tb*tb-ta*ta) * an*am) / (xnxny);
   gauscc = 0.5*(ta*ta*an*an + tb*tb*am*am) / (xnx2);
 
-  ucen = naxis[0]/2;
+  ucen = (naxis[0]/2)-1;
   vcen = naxis[1]/2;
   /* Loop computing Gaussian */
   for (iv=0; iv<naxis[1]; iv++) {

@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Information dialog box for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1997,1999,2002-2008
+*  Copyright (C) 1996,1997,1999,2002-2020
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -39,6 +39,7 @@ typedef struct {
   Widget dialog;
   Widget parent;
   ImageDisplay *IDdata;
+  Position xpos, ypos;
 } InfoBoxStuff;
 InfoBoxStuff Info;
 
@@ -96,9 +97,9 @@ void RefreshButCB (Widget w, XtPointer clientData, XtPointer callData)
   if (!Info.IDdata) return;
   if (!image[CurImag].valid) return;
   
-  /* destroy old */
+  /* destroy old 
   XtDestroyWidget (Info.dialog);
-  InfoBoxActive = 0; /* mark as inactive */
+  InfoBoxActive = 0; *//* mark as inactive */
   
   /* make new */
   InfoBoxCB (Info.parent, (XtPointer)Info.IDdata, (XtPointer)NULL);
@@ -131,13 +132,25 @@ void InfoBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   Info.IDdata = IDdata;
   Info.parent = parent;
   
-  /* don't make another one */
+  /* if one exists, remember where it is, then delete*/
   if (InfoBoxActive) {
-    if (XtIsRealized (Info.dialog))
-      XMapRaised (XtDisplay(Info.dialog), XtWindow(Info.dialog));
-    return;
+    /*  where is it? */
+    XtVaGetValues (Info.dialog,
+		   XmNx, &Info.xpos,
+		   XmNy, &Info.ypos,
+		   NULL);
+    /* destroy old  */
+    XtDestroyWidget (Info.dialog);
+    InfoBoxActive = 0; /* mark as inactive */
+  } else {  /* init position */
+   /*  where is parent? */
+  XtVaGetValues (Display_shell,
+		 XmNx, &Info.xpos,
+		 XmNy, &Info.ypos,
+		 NULL);
+  Info.xpos += 100; Info.ypos += 100;
   }
-  
+  /* Create */
   /* mark as active */
   InfoBoxActive = 1; 
   
@@ -197,39 +210,39 @@ void InfoBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   /* loop over axes */
   for (loop=0;loop<image[CurImag].myDesc->naxis;loop++)
     {axislab =  image[CurImag].myDesc->ctype[loop];
-    if ((!strncmp (axislab, "RA  ", 4)) ||
-	(!strncmp (axislab, "RA--", 4)) ||
-	(!strncmp (axislab, "LL  ", 4)))
-      /* check useage of cs in ra2hms */
-      {ra2hms(image[CurImag].myDesc->crval[loop], axislab, cs);
-      incr = image[CurImag].myDesc->cdelt[loop] * 3600.0; /* increment in arcsec. */
-      sprintf(linestr, "%4d %8.8s %5d %13.13s%10.1f%9.3f%8.1f",
-	      loop+1, axislab, image[CurImag].myDesc->inaxes[loop],
-	      cs+4, image[CurImag].myDesc->crpix[loop],
-	      incr, image[CurImag].myDesc->crota[loop]);}
-    else  if ((!strncmp (axislab, "DEC", 3)) || 
-	      (!strncmp (axislab, "GLON", 4)) ||
-	      (!strncmp (axislab, "GLAT", 4)) ||
-	      (!strncmp (axislab, "ELON", 4)) ||
-	      (!strncmp (axislab, "ELAT", 4)) ||
-	      (!strncmp (axislab, "MM  ", 4)))  
-      {dec2dms(image[CurImag].myDesc->crval[loop], axislab, cs);
-      incr = image[CurImag].myDesc->cdelt[loop] * 3600.0; /* increment in arcsec. */
-      sprintf(linestr, "%4d %8.8s %5d %13.13s%10.1f%9.3f%8.1f",
-	      loop+1, axislab, image[CurImag].myDesc->inaxes[loop],
-	      cs+4, image[CurImag].myDesc->crpix[loop],
-	      incr, image[CurImag].myDesc->crota[loop]);}
-    else   /* other axes */
-      {sprintf(linestr, "%4d %8.8s %5d %13g%10.1f%9g%8.1f",
-	       loop+1, axislab, image[CurImag].myDesc->inaxes[loop],
-	       image[CurImag].myDesc->crval[loop],
-	       image[CurImag].myDesc->crpix[loop],
-	       image[CurImag].myDesc->cdelt[loop], 
-	       image[CurImag].myDesc->crota[loop]);} /* end type */
-    NextInfoLine (form, line[iLine], &line[iLine+1], linestr, width);
-    iLine++;
-    if (iLine>=iMaxLine) break;
-    
+      if ((!strncmp (axislab, "RA  ", 4)) ||
+	  (!strncmp (axislab, "RA--", 4)) ||
+	  (!strncmp (axislab, "LL  ", 4)))
+	/* check useage of cs in ra2hms */
+	{ra2hms(image[CurImag].myDesc->crval[loop], axislab, cs);
+	  incr = image[CurImag].myDesc->cdelt[loop] * 3600.0; /* increment in arcsec. */
+	  sprintf(linestr, "%4d %8.8s %5d %13.13s%10.1f%9.3f%8.1f",
+		  loop+1, axislab, image[CurImag].myDesc->inaxes[loop],
+		  cs+4, image[CurImag].myDesc->crpix[loop],
+		  incr, image[CurImag].myDesc->crota[loop]);}
+      else  if ((!strncmp (axislab, "DEC", 3)) || 
+		(!strncmp (axislab, "GLON", 4)) ||
+		(!strncmp (axislab, "GLAT", 4)) ||
+		(!strncmp (axislab, "ELON", 4)) ||
+		(!strncmp (axislab, "ELAT", 4)) ||
+		(!strncmp (axislab, "MM  ", 4)))  
+	{dec2dms(image[CurImag].myDesc->crval[loop], axislab, cs);
+	  incr = image[CurImag].myDesc->cdelt[loop] * 3600.0; /* increment in arcsec. */
+	  sprintf(linestr, "%4d %8.8s %5d %13.13s%10.1f%9.3f%8.1f",
+		  loop+1, axislab, image[CurImag].myDesc->inaxes[loop],
+		  cs+4, image[CurImag].myDesc->crpix[loop],
+		  incr, image[CurImag].myDesc->crota[loop]);}
+      else   /* other axes */
+	{sprintf(linestr, "%4d %8.8s %5d %13g%10.1f%9g%8.1f",
+		 loop+1, axislab, image[CurImag].myDesc->inaxes[loop],
+		 image[CurImag].myDesc->crval[loop],
+		 image[CurImag].myDesc->crpix[loop],
+		 image[CurImag].myDesc->cdelt[loop], 
+		 image[CurImag].myDesc->crota[loop]);} /* end type */
+      NextInfoLine (form, line[iLine], &line[iLine+1], linestr, width);
+      iLine++;
+      if (iLine>=iMaxLine) break;
+      
     }  /* end of axis loop */
   /* tell coordinate type */
   if (iLine<iMaxLine) {
@@ -245,7 +258,7 @@ void InfoBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
     /*   }*/
   } /* end coordinate type label */
   
-  /* Dismiss button */
+    /* Dismiss button */
   DismissButton = 
     XtVaCreateManagedWidget ("Dismiss", xmPushButtonWidgetClass, 
 			     form, 
@@ -267,6 +280,10 @@ void InfoBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   
   /* set it up */
   XtManageChild (Info.dialog);
+  /* Move if necessary */
+  XMoveWindow (XtDisplay(IDdata->shell), XtWindow(Info.dialog), 
+	       Info.xpos, Info.ypos);
+  
 } /* end OptionBox */
 
 

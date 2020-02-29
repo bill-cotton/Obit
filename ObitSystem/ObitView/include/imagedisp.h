@@ -1,7 +1,7 @@
 /* $Id$ */
 /* imagedisp (image display widget) header file */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1999-2013
+*  Copyright (C) 1996,1999-2020
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -15,6 +15,7 @@
 *-----------------------------------------------------------------------*/
 #include "glib.h"
 #include "obitview.h"
+#include "Obit.h"
 #ifndef IMAGEDISP_H
 #define IMAGEDISP_H
 #define CONTROLWIDTH 150 /* width of control panel */

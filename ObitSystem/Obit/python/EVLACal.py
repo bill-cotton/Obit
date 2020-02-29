@@ -5448,7 +5448,7 @@ def EVLAEditSNAmp(uv, SNver, err, \
     # Get statistics
     stats = EVLASNAmpStats(uv, snver, err, \
                            logfile=logfile, check=check, debug=debug)
-    if stats==None or err.isErr:
+    if stats==None or (len(stats)<=0) or err.isErr:
         mess = "Problem with SN table statistics"
         printMess(mess, logfile)
         return
@@ -5457,6 +5457,10 @@ def EVLAEditSNAmp(uv, SNver, err, \
     for s in stats:
         if s!=None:
             t.append(s[1])
+    if len(t)<=0:
+        mess = "Problem with SN table statistics"
+        printMess(mess, logfile)
+        return
     t.sort()
     RMS = t[int(len(t)//2)]
     mess = "Median RMS %f" % (RMS)

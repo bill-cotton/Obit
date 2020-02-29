@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2016                                          */
+/*;  Copyright (C) 2004-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -141,7 +141,7 @@ ObitIOCode ObitTableUtilSort (ObitTable *in, gchar *colName, gboolean desc,
   g_assert (ObitErrIsA(err));
   if (err->error) return retCode;
   g_assert (ObitTableIsA(in));
-
+  
   /* Open table */
   retCode = ObitTableOpen (in, OBIT_IO_ReadWrite, err);
   if ((retCode != OBIT_IO_OK) || (err->error))
@@ -213,7 +213,7 @@ ObitIOCode ObitTableUtilSort (ObitTable *in, gchar *colName, gboolean desc,
   /* Reorder table */
   retCode = ReorderTable (in, SortStruct, size, number, colNo+1, 0, err);
   if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
-  
+ 
   /* Cleanup */
   cleanup: if (SortStruct) g_free(SortStruct);
   if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
@@ -669,8 +669,8 @@ MakeSortStruct (ObitTable *in, olong which[2], gboolean desc,
       break;
     case OBIT_ulong:
       ptrulong = (gulong*)(row->myRowData+byteOffset);
-      if (desc) entry->key.itg = -(olong)ptrlong[cell];
-      else entry->key.itg      =  (olong)ptrlong[cell];
+      if (desc) entry->key.itg = -(olong)ptrulong[cell];
+      else entry->key.itg      =  (olong)ptrulong[cell];
       break;
     case OBIT_complex:
     case OBIT_dcomplex:
@@ -868,8 +868,8 @@ MakeSortStruct2f (ObitTable *in, olong which[4], gboolean desc1,
       break;
     case OBIT_ulong:
       ptrulong = (gulong*)(row->myRowData+byteOffset1);
-      if (desc1) entry->key.flt2[0] = -(ofloat)ptrlong[cell1];
-      else entry->key.flt2[0]       =  (ofloat)ptrlong[cell1];
+      if (desc1) entry->key.flt2[0] = -(ofloat)ptrulong[cell1];
+      else entry->key.flt2[0]       =  (ofloat)ptrulong[cell1];
       break;
     case OBIT_complex:
     case OBIT_dcomplex:
@@ -1370,7 +1370,7 @@ ReorderTable(ObitTable *in, gpointer base, olong size, olong number,
   /* Clone input table */
   scrTable = ObitTableClone (in, scrTable);
  
- /* need independent descriptors */
+  /* need independent descriptors */
   scrTable->myDesc = ObitUnref(scrTable->myDesc); /* release old */
   scrTable->myDesc = ObitTableDescCopy(in->myDesc, scrTable->myDesc, err);
   if (err->error) goto cleanup;
@@ -1429,8 +1429,7 @@ ReorderTable(ObitTable *in, gpointer base, olong size, olong number,
 
   /* Cleanup */
   cleanup: row = ObitTableRowUnref (row); /* Release table row */
-  scrTable = ObitTableUnref(scrTable);
-  scrData  = ObitDataZap (scrData, err);
+  scrData = ObitDataZap (scrData, err);
   scrData = ObitDataUnref (scrData);
   if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
  

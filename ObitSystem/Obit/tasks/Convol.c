@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Convol Obit task convolve an image with another image or a model   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2019                                          */
+/*;  Copyright (C) 2006-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -428,7 +428,8 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   olong         i;
   ofloat  ftemp, Beam[3]={0.0,0.0,0.0}, useBeam[3]={0.0,0.0,0.0}, 
     oldBeam[3]={0.0,0.0,0.0};
-  gboolean found;
+  gboolean found, doFILT=FALSE;
+  gchar    Opcode[5];
   gchar *routine = "digestInputs";
 
   /* error checks */
@@ -438,6 +439,10 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   /* noScrat - no scratch files for AIPS disks */
   ObitAIPSSetnoScrat(myInput, err);
   if (err->error) Obit_traceback_msg (err, routine, "task Input");
+
+  /* High pass Filter? */
+  ObitInfoListGetTest(myInput, "Opcode", &type, dim, Opcode);
+  doFILT = (!strcmp (Opcode, "FILT"));
 
   /* Deconvolve beam */
   ObitInfoListGet (myInput, "Beam", &type, dim, Beam, err);
@@ -460,18 +465,20 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
     }
     
     /* Deconvolve to get beam to convolve with */
-    if ((oldBeam[0]>0.0) && (oldBeam[1]>0.0))
-      ObitConvUtilDeconv (Beam[0], Beam[1], Beam[2], 
-			  oldBeam[0], oldBeam[1], oldBeam[2],
+    if ((oldBeam[0]>0.0) && (oldBeam[1]>0.0)) {
+      ObitConvUtilDeconv (Beam[0], Beam[1], 90.-Beam[2], 
+			  oldBeam[0], oldBeam[1], 90.+oldBeam[2],
 			  &useBeam[0], &useBeam[1], &useBeam[2]);
-    else {useBeam[0]=Beam[0]; useBeam[1]=Beam[1]; useBeam[2]=Beam[2];}
+    } else {useBeam[0]=Beam[0]; useBeam[1]=Beam[1]; useBeam[2]=Beam[2];}
     /* No pixel spacing - use pixels */
-    Obit_log_error(err, OBIT_InfoErr,"Convolving with Gaussian %f x %f @ %f",
-		   useBeam[0]*3600.0,useBeam[1]*3600.0,useBeam[2] );
+    if (!doFILT) /* Only if convolving */
+      Obit_log_error(err, OBIT_InfoErr,"Convolving with Gaussian %f x %f @ %f",
+		     useBeam[0]*3600.0,useBeam[1]*3600.0,useBeam[2] );
   } else {
     useBeam[0]=Beam[0]; useBeam[1]=Beam[1]; useBeam[2]=Beam[2];
-    Obit_log_error(err, OBIT_InfoErr,"Convolving with Gaussian %f x %f pixels @ %f",
-		   useBeam[0],useBeam[1],useBeam[2] );
+    if (!doFILT) /* Only if convolving */
+      Obit_log_error(err, OBIT_InfoErr,"Convolving with Gaussian %f x %f pixels @ %f",
+		     useBeam[0],useBeam[1],useBeam[2] );
   }
   ObitErrLog(err);
   
@@ -496,8 +503,9 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   /* Save */
   dim[0] = 1; dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (myInput, "rescale", OBIT_float, dim, &ftemp);
-  Obit_log_error(err, OBIT_InfoErr,"Scaling image by %f to preserve units", 
-		 ftemp);
+  if (!doFILT) /* Only if convolving */
+    Obit_log_error(err, OBIT_InfoErr,"Scaling image by %f to preserve units", 
+		   ftemp);
   ObitErrLog(err);
 
   /* Set defaults BLC, TRC */
@@ -764,7 +772,7 @@ ObitFArray* convolGetConvFn(ObitInfoList *myInput, ObitErr *err)
     /* Create convolving Gaussian */
     outArray = ObitConvUtilGaus (inImage, useBeam);
     /* DEBUG 
-    ObitImageUtilArray2Image ("ConvolDebug1.fits",1,outArray, err);*/
+    ObitImageUtilArray2Image ("ConvolDebug1.fits",0,outArray, err);*/
   } else if (!strcmp (Opcode, "IMAG")) {
     /* Convolve with an image */
     /* File type - could be either AIPS or FITS */
@@ -867,7 +875,7 @@ void doConvol (ObitInfoList *myInput, ObitImage *inImage, ObitFArray *convFn,
 {
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  ofloat     rescale, Beam[3], useBeam[3];
+  ofloat     rescale, Beam[3], useBeam[3], addPA=0.0;
   gboolean doDivide, doSub;
   gchar    Opcode[5];
   gchar *routine = "doConvol";
@@ -879,20 +887,29 @@ void doConvol (ObitInfoList *myInput, ObitImage *inImage, ObitFArray *convFn,
   doDivide = (!strcmp (Opcode, "DCON")) || (!strcmp (Opcode, "DGAU"));
   doSub = (!strcmp (Opcode, "FILT"));
 
-  /* Unit scaling */
-  rescale = 1.0;
-  ObitInfoListGetTest(myInput, "rescale", &type, dim, &rescale);
-
-  /* Get convolving Gaussian beam */
-  useBeam[0] = useBeam[1] = fabs(inImage->myDesc->cdelt[0]); 
-  useBeam[2] = 0.0;
-  ObitInfoListGetTest (myInput, "useBeam", &type, dim, useBeam);
-  /* to asec */
-  useBeam[0] *= 3600.0;
-  useBeam[1] *= 3600.0;
+  /* Trap "FILT" */
+  if (doSub) {
+    rescale = 1.0;
+    ObitInfoListGetTest (myInput, "useBeam", &type, dim, useBeam);
+    useBeam[0] = useBeam[1] = fabs(inImage->myDesc->cdelt[0]); 
+    useBeam[2] = 0.0;
+    ObitInfoListGetTest (myInput, "Beam", &type, dim, useBeam);
+  } else {
+    /* Unit scaling */
+    rescale = 1.0;
+    ObitInfoListGetTest(myInput, "rescale", &type, dim, &rescale);
+    
+    /* Get convolving Gaussian beam */
+    useBeam[0] = useBeam[1] = fabs(inImage->myDesc->cdelt[0]); 
+    useBeam[2] = 0.0;
+    ObitInfoListGetTest (myInput, "useBeam", &type, dim, useBeam);
+    /* to asec */
+    useBeam[0] *= 3600.0;
+    useBeam[1] *= 3600.0;
+  }
 
   /* Set output image resolution */
-  if (ObitInfoListGetTest (myInput, "Beam", &type, dim, Beam)) {
+  if (!doSub && (ObitInfoListGetTest (myInput, "Beam", &type, dim, Beam))) {
     Beam[0] /= 3600.0;
     Beam[1] /= 3600.0;
   } else {  /* Use what's in input */
@@ -914,7 +931,9 @@ void doConvol (ObitInfoList *myInput, ObitImage *inImage, ObitFArray *convFn,
 
   /* Trap simple Gaussian convolution */
   if (!strcmp (Opcode, "GAUS")) {
-    ObitConvUtilConvGauss (inImage, useBeam[0], useBeam[1], useBeam[2], 
+    /* Seems to need orthogonal beam */
+    addPA=90.;
+    ObitConvUtilConvGauss (inImage, useBeam[0], useBeam[1], useBeam[2]+addPA, 
 			   rescale, outImage, err);
   } else { /* Use convFn */
     ObitConvUtilConv (inImage, convFn, doDivide, doSub, rescale, outImage, err);

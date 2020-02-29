@@ -2,7 +2,7 @@
 /* XMLRPC server for ObitView */
 /* Much of this material directly adapted from xmlrpc-c-1.2/examples */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2005-2016
+*  Copyright (C) 2005-2020
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -160,6 +160,12 @@ static void server_loop(gint port)
   /* Loop forever 'neath the streets of Boston */
   /*ObitRPCServerLoop(server, port, "/tmp/xmlrpc_log");*/
   ObitRPCServerLoop(server, port, "/dev/null");
+  /* Shouldn't get here if it worked  */
+  if ((&server->envP)->fault_occurred) {
+    fprintf (stderr,"RPC Server error %d %s\n",
+	     (&server->envP)->fault_code,(&server->envP)->fault_string);
+    g_assert(0); /* Die */
+  }
 
 } /* end server_loop */
 

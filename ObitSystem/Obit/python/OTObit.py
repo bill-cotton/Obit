@@ -552,7 +552,6 @@ def getname(cno, disk=None):
             out = Image.newPAImage("AIPS image", Aname, Aclass, disk, Aseq, True, err, \
                                    verbose=False)
         print("AIPS Image",Aname, Aclass, disk, Aseq)
-        imhead(out)
     elif Atype == 'UV':
          # Create AIPSData or ObitTalk if remote/local
         if AIPS.AIPS.disks[disk].url:

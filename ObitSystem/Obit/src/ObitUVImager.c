@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2019                                          */
+/*;  Copyright (C) 2005-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -513,14 +513,18 @@ void ObitUVImagerImage (ObitUVImager *in, olong *field, gboolean doWeight,
     imageDesc->maxval    = -1.0e20;
     imageDesc->minval    =  1.0e20;
 
+    /* Is this an anto center image? */    
+    myAuto = in->mosaic->isShift[ifield]-1;  /* Corresponding autoCenter */
+    if (myAuto<0) myAuto = ifield; /* No */
+
     /* Need to force beam? */
-    theBeam = (ObitImage*)in->mosaic->images[ifield]->myBeam;
+    theBeam = (ObitImage*)in->mosaic->images[myAuto]->myBeam;
     forceBeam[0] = (theBeam==NULL) ||
       !ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, (gpointer)&sumwts);
     needBeam = (doBeam || forceBeam[0]);
 
     /* Image */
-    ObitImageUtilMakeImage (data, in->mosaic->images[ifield], channel, 
+    ObitImageUtilMakeImage (data, in->mosaic->images[myAuto], channel, 
 			    needBeam, doWeight, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
  
@@ -528,15 +532,15 @@ void ObitUVImagerImage (ObitUVImager *in, olong *field, gboolean doWeight,
     if (doBeam || forceBeam[0]) {
       /* If no beam size given take this one */
       if (in->mosaic->bmaj==0.0) {
-	in->mosaic->bmaj = in->mosaic->images[ifield]->myDesc->beamMaj;
-	in->mosaic->bmin = in->mosaic->images[ifield]->myDesc->beamMin;
-	in->mosaic->bpa  = in->mosaic->images[ifield]->myDesc->beamPA;
+	in->mosaic->bmaj = in->mosaic->images[myAuto]->myDesc->beamMaj;
+	in->mosaic->bmin = in->mosaic->images[myAuto]->myDesc->beamMin;
+	in->mosaic->bpa  = in->mosaic->images[myAuto]->myDesc->beamPA;
       } else if (in->mosaic->bmaj>0.0) { /* beam forced */
-	in->mosaic->images[ifield]->myDesc->beamMaj = in->mosaic->bmaj;
-	in->mosaic->images[ifield]->myDesc->beamMin = in->mosaic->bmin;
-	in->mosaic->images[ifield]->myDesc->beamPA  = in->mosaic->bpa;
+	in->mosaic->images[myAuto]->myDesc->beamMaj = in->mosaic->bmaj;
+	in->mosaic->images[myAuto]->myDesc->beamMin = in->mosaic->bmin;
+	in->mosaic->images[myAuto]->myDesc->beamPA  = in->mosaic->bpa;
 	/* Tell if field 1 */
-	if (ifield==0) {
+	if (myAuto==0) {
 	  Obit_log_error(err, OBIT_InfoErr, 
 			 "Using Beamsize %f x %f asec PA=%f",
 			 in->mosaic->bmaj*3600.0, in->mosaic->bmin*3600.0, 
@@ -589,8 +593,12 @@ void ObitUVImagerImage (ObitUVImager *in, olong *field, gboolean doWeight,
     imageDesc->maxval    = -1.0e20;
     imageDesc->minval    =  1.0e20;
  
+    /* Is this an anto center image? */    
+    myAuto = in->mosaic->isShift[i]-1;  /* Corresponding autoCenter */
+    if (myAuto<0) myAuto = i; /* No */
+
     /* Need to force beam? */
-    theBeam = (ObitImage*)imageList[i]->myBeam;
+    theBeam = (ObitImage*)imageList[myAuto]->myBeam;
     forceBeam[i] = (theBeam==NULL) ||
       !ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, (gpointer)&sumwts);
 
