@@ -4584,3 +4584,8 @@ Obit/src/ObitConvUtil.c
 Obit/src/ObitFArrayUtil.c
     UVGaus: correct indexing of center of array    
 29 Feb 2020 svn 617
+
+Summary: bug fixes
+Obit/python/Makefile.in
+   Ask for libObit.so rather than libObit.a
+01 Mar 2020 svn 618
