@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2015                                          */
+/*;  Copyright (C) 2002-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -511,6 +511,11 @@ gboolean ObitErrIsA (ObitErr* in)
   /* error checks */
   if (in == NULL) return FALSE;
   if (in->className == NULL) return FALSE;
+
+  /* sanity checks */
+  if ((in->number<0) || (in->number>10000) || 
+      (in->ReferenceCount<0) || (in->ReferenceCount>1000)  ||
+      (in->error>100)) return FALSE;
 
   /* compare class name member */
   out = !strcmp(in->className, myClassName);

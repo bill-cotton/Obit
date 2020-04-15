@@ -4589,3 +4589,31 @@ Summary: bug fixes
 Obit/python/Makefile.in
    Ask for libObit.so rather than libObit.a
 01 Mar 2020 svn 618
+
+Summary: AVX512 additions, bug fixes
+Obit/src/ObitDConCleanVis.c
+    Next2D: trap premature termination of autoCenter CLEAN
+Obit/tasks/Imager.c:
+    doImage: turn off any doCalib set on input data
+Obit/src/ObitErr.c:
+    IsA: add some sanity checks
+Obit/tasks/MFImage.c:
+    Better test for autoCen flux, trap extra CLEAN
+ObitTDF/SNCpy.TDF Obit/tasks/SNCpy.c:
+    New task to copy selected information from one SN table to another.
+Obit/src/ObitUVUtil.c:
+    Hann: correct crpix if not 1
+Obit/include/avx512_mathfun.h Obit/include/avx512_mathfun.hxx
+Obit/include/avx_mathfun.h Obit/include/avx_mathfun.hxx
+Obit/include/ObitVecFunc.h 
+Obit/src/ObitExp.c Obit/src/ObitSinCos.c Obit/src/ObitVecFunc.c
+Obit/src/ObitThreadGrid.c Obit/src/ObitFArray.c 
+    Implementations of AXV512
+Obit/tasks/MFImage.c Obit/tasks/UVSub.c
+    Cleanup gripes from gcc 8
+Obit/src/ObitSkyModelMF.c
+    ThreadSkyModelMFFTDFT: increase FazArrSize to 256 
+    Implement Sum in AVX512 
+Obit/include/ObitAIPSDir.h
+    Call type agreement ObitAIPSDirCatEntry.access
+15 Apr 2020 svn 619

@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -59,7 +59,7 @@ typedef struct {
    * \li access[0] = 256 * (256 * YY + MM) + DD
    * \li access[1] = 256 * (256 * HH + MM) + SS
    */
-  guint32 access[2];
+  AIPSint access[2];
   /** AIPS sequence number */
   gint32 seq;
   /** AIPS name (12 char, not NULL terminated) */

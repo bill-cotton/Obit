@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN/selfcalibrate a uv data set               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2016                                          */
+/*;  Copyright (C) 2005-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2444,7 +2444,11 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
     }
   }
 
- /* Cleanup */
+  /* turn off  calibration in inUV */
+  dim[0] = 1; jtemp = -1;
+  ObitInfoListAlwaysPut (inUV->info, "doCalib", OBIT_long, dim, &jtemp);
+
+  /* Cleanup */
   selfCal  = ObitUVSelfCalUnref(selfCal);
 
 } /* end ImagerLoop */

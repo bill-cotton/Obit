@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2018                                          */
+/*;  Copyright (C) 2009-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -29,6 +29,7 @@
 #include "ObitSinCos.h"
 #include "ObitVecFunc.h"
 #include <math.h>
+void sincosf(float x, float *sin, float *cos);
 
 #define OBITSINCOSNTAB  1024  /* tabulated points per turn */
 #define OBITSINCOSNTAB4 256   /* 1/4 size of table */
@@ -105,18 +106,44 @@ void ObitSinCosCalc(ofloat angle, ofloat *sin, ofloat *cos)
 void ObitSinCosVec(olong n, ofloat *angle, ofloat *sin, ofloat *cos)
 {
   olong i;
-  /** SSE implementation */
-#if   HAVE_AVX==1
+  /** SSE/AVX/AVX512 implementation */
+#if   HAVE_AVX512==1
+  olong ndo, nleft;
+  CV16SF vanglet, vss, vcc;
+#elif   HAVE_AVX==1
   olong ndo, nleft;
   CV8SF vanglet, vss, vcc;
 #elif HAVE_SSE==1
   olong ndo, nleft;
   CV4SF vanglet, vss, vcc;
-#endif /* HAVE_SSE */
+#endif /* HAVE_SSE/AVX/AVX512 */
 
   if (n<=0) return;
+  /* Trap if only one */
+  if (n==1) {
+    sincosf(angle[0], sin, cos);
+    return;
+  }
  /** AVX implementation */
-#if HAVE_AVX==1
+#if HAVE_AVX512==1
+  nleft = n;
+  /* Loop in groups of 16 */
+  ndo = nleft - nleft%16;  /* Only full groups of 16 */
+  for (i=0; i<ndo; i+=16) {
+    vanglet.v = _mm512_loadu_ps(angle); angle += 16;     
+    avx512_sincos_ps(vanglet.v, &vss.v, &vcc.v);
+    _mm512_storeu_ps(sin, vss.v); sin += 16;
+    _mm512_storeu_ps(cos, vcc.v); cos += 16;
+ } /* end AVX512 loop */
+  /* Remainders, zero fill */
+  nleft = n-i;  /* How many left? */
+  for (i=0; i<nleft; i++) vanglet.f[i] = *angle++;
+  for (i=nleft; i<16; i++) vanglet.f[i] = 0.0;
+  avx512_sincos_ps(vanglet.v, &vss.v, &vcc.v);
+  for (i=0; i<nleft; i++) 
+    {*sin++ = vss.f[i]; *cos++ = vcc.f[i]; }
+ /** AVX implementation */
+#elif HAVE_AVX==1
   nleft = n;
   /* Loop in groups of 8 */
   ndo = nleft - nleft%8;  /* Only full groups of 8 */
@@ -199,8 +226,11 @@ void ObitSinCosVec(olong n, ofloat *angle, ofloat *sin, ofloat *cos)
 void ObitCosVec(olong n, ofloat *angle, ofloat *cos)
 {
   olong i;
-  /** SSE implementation */
-#if   HAVE_AVX==1
+  /** SSE/AVX/AVX512 implementation */
+#if   HAVE_AVX512==1
+  olong ndo, nleft;
+  CV16SF vanglet;
+#elif   HAVE_AVX==1
   olong ndo, nleft;
   CV8SF vanglet;
 #elif HAVE_SSE==1
@@ -210,7 +240,24 @@ void ObitCosVec(olong n, ofloat *angle, ofloat *cos)
 
   if (n<=0) return;
  /** AVX implementation */
-#if HAVE_AVX==1
+#if HAVE_AVX512==1
+  nleft = n;
+  /* Loop in groups of 16 */
+  ndo = nleft - nleft%16;  /* Only full groups of 16 */
+  for (i=0; i<ndo; i+=16) {
+    vanglet.v = _mm512_loadu_ps(angle); angle += 16;     
+    avx512_cos_ps(vanglet.v);
+    _mm512_storeu_ps(cos, vanglet.v); cos += 16;
+ } /* end AVX loop */
+  /* Remainders, zero fill */
+  nleft = n-i;  /* How many left? */
+  for (i=0; i<nleft; i++) vanglet.f[i] = *angle++;
+  for (i=nleft; i<16; i++) vanglet.f[i] = 0.0;
+  avx512_cos_ps(vanglet.v);
+  for (i=0; i<nleft; i++) 
+    {*cos++ = vanglet.f[i]; }
+ /** AVX implementation */
+#elif HAVE_AVX==1
   nleft = n;
   /* Loop in groups of 8 */
   ndo = nleft - nleft%8;  /* Only full groups of 8 */
@@ -287,8 +334,11 @@ void ObitCosVec(olong n, ofloat *angle, ofloat *cos)
 void ObitSinVec(olong n, ofloat *angle, ofloat *sin)
 {
   olong i;
- /** SSE implementation */
-#if   HAVE_AVX==1
+ /** SSE/AVX/AVX512 implementation */
+#if   HAVE_AVX512==1
+  olong ndo, nleft;
+  CV16SF vanglet;
+#elif   HAVE_AVX==1
   olong ndo, nleft;
   CV8SF vanglet;
 #elif HAVE_SSE==1
@@ -297,8 +347,25 @@ void ObitSinVec(olong n, ofloat *angle, ofloat *sin)
 #endif /* HAVE_SSE */
 
   if (n<=0) return;
+ /** AVX512 implementation */
+#if HAVE_AVX512==1
+  nleft = n;
+  /* Loop in groups of 16 */
+  ndo = nleft - nleft%16;  /* Only full groups of 16 */
+  for (i=0; i<ndo; i+=16) {
+    vanglet.v = _mm512_loadu_ps(angle); angle += 16;     
+    avx512_sin_ps(vanglet.v);
+    _mm512_storeu_ps(sin, vanglet.v); sin += 16;
+ } /* end AVX loop */
+  /* Remainders, zero fill */
+  nleft = n-i;  /* How many left? */
+  for (i=0; i<nleft; i++) vanglet.f[i] = *angle++;
+  for (i=nleft; i<16; i++) vanglet.f[i] = 0.0;
+  avx512_sin_ps(vanglet.v);
+  for (i=0; i<nleft; i++) 
+    {*sin++ = vanglet.f[i]; }
  /** AVX implementation */
-#if HAVE_AVX==1
+#elif HAVE_AVX==1
   nleft = n;
   /* Loop in groups of 8 */
   ndo = nleft - nleft%8;  /* Only full groups of 8 */

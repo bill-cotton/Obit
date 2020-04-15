@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2019                                          */
+/*;  Copyright (C) 2004-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1857,7 +1857,7 @@ ObitUV* ObitUVUtilHann (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   if (err->error) goto cleanup;
   /* Update output Descriptor */
   if (doDescm) {/* No descimate - basically moving up one (input) channel */
-    outDesc->crpix[outDesc->jlocf]  = inDesc->crpix[inDesc->jlocf];
+    outDesc->crpix[outDesc->jlocf]  = 0.5+inDesc->crpix[inDesc->jlocf]/2.0;
     outDesc->cdelt[outDesc->jlocf]  = inDesc->cdelt[inDesc->jlocf]*2;
     outDesc->inaxes[outDesc->jlocf] = inDesc->inaxes[inDesc->jlocf]/2;
   } else {  /* No descimate */

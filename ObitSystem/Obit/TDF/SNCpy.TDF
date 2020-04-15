@@ -1,0 +1,156 @@
+; $Id$
+; SNCpy
+;---------------------------------------------------------------
+;! Copy Calibration (SN) solutions from one dataset to another
+;# Task Calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2006-2017
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning AIPS should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+SNCpy     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+SNCpy     Copy values from SN TAbles from on UVData to another
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of input
+**PARAM** str 128
+inFile                             Input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                             Input UV file (name)
+**PARAM** str 6
+inClass                            Input UV file (class)
+**PARAM** int 1
+inSeq             0.0     9999.0   Input UV file (seq. #)
+**PARAM** int 1
+inDisk            0.0        9.0   Input UV file disk unit #
+**PARAM** int 1
+inVer                              Input SN table to use
+**PARAM** str 16 30
+Sources                            Source list ' '=>all.
+**PARAM** int 1 **DEF** -1
+Qual             -1.0              Source qualifier -1=>all
+**PARAM** str 4
+souCode                            Calibrator code '    '=>all
+**PARAM** str 4
+EditStokes                         Stokes type to process
+**PARAM** int 1
+FreqID                             Freq. ID to select, 0=>all
+**PARAM** int 1
+BIF               0.0      100.0   Lowest IF number 0=>all
+**PARAM** int 1
+EIF               0.0      100.0   Highest IF number 0=>all
+**PARAM** float 2
+timeRange                          Time range to process.
+**PARAM** int 50
+Antennas         0.0     1000.0    List of antennas to calibrate
+**PARAM** int 1
+subA                               Subarray
+**PARAM** str 128
+outFile                            Output uvdata if Type=='FITS'
+**PARAM** str 12
+outName                            Output UV file (name)
+**PARAM** str 6
+outClass                           Output UV file (class)
+**PARAM** int 1
+outSeq             0.0     9999.0  Output UV file (seq. #)
+**PARAM** int 1
+outDisk            0.0        9.0  Output UV file disk unit #
+**PARAM** int 1
+outVer                             Output SN table to use
+**PARAM** str 4 **DEF** Clos
+cpyMode                            Operation code.See HELP
+**PARAM** float 64 
+SNCParm                            Parameters (see HELP SNCpy).
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
+----------------------------------------------------------------
+SNCpy
+Task:  Copies selected data from one SN table to another
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input/output
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input UV file name
+  inClass....Input UV file class
+  inSeq......Input UV file seq. #.    0 => highest.
+  inDisk.....Disk drive # of input UV file.  
+  inVer......Input SN table version number
+  Sources....list of sources to process.
+             '*' = all; a "-" before a source name
+             means all except ANY source named.
+  Qual.......Only sources with a source qualifier number in the SU table
+             matching Qual will be used if Qual is >= 0.  If Qual < 0,
+             all qualifiers will be written.  These qualifiers will be
+             written to separate output files.  Note that outSeq must be
+             zero in this case.
+  souCode....Sources may be selected on the basis of the calibrator code
+             given in the SU table.
+                  '    ' => any calibrator code selected
+                  '*   ' => any non blank code (cal. only)
+                  '-CAL' => blank codes only (no calibrators)
+                  anything else = calibrator code to select.
+             NB: The souCode test is applied in addition to the other
+             tests, i.e. Sources and Qual, in the selection of sources to
+             process.
+  EditStokes..The desired Stokes type to modify:
+             'R ', 'L ', 'X', 'Y', else all
+  FreqID.....Frequency identifier to select (you may determine
+             which is applicable from the OPTYPE='SCAN' listing
+             produced by LISTR).
+  BIF........First IF to process. 0=>all.
+  EIF........Highest IF to process. 0=>all higher than BIF
+  timeRange..Start and end times (day) relative to ref. date.
+             Use  dhms2day to convert from human readable form
+  Antennas...A list of the antennas to be modified.  If any
+             number is negative then all antennas listed  are
+             NOT to be modified.  All 0 => use all.
+  subA.......The subarray to modify. Do only one at a time.
+  outFile.....FITS output uvdata if Type=='FITS'
+  outName.....Output UV file name, defaults to input data
+  outClass....Output UV file class
+  outSeq......Output UV file seq. #.    0 => highest.
+  outDisk.....Disk drive # of output UV file.  
+  outVer......Output SN table version number; will be cleared on input
+  cpyMode.....Operation code (see also EXPLAIN SNCpy):
+             'Copy' => Copy all data in selected records
+  SNCParm...Parameters: see above and below.
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files.
+             Path is absolute or relative to where the task 
+             executes.
+----------------------------------------------------------------
+SNCpy:  Copy calibration
+ solutions from one SN table to another
+Documentor: W. D. Cotton
+Related Programs: SNCor, CLCal
+
+This task will copy selected entries 
+
+corMode='Clos'
+     For each output IF, this options will find the closest entry 
+in frequency in the input SN table and scale phases as necessary 
+for the difference in frequency from the single band (IF) delay.
+
+
+
+
+

@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2018                                          */
+/*;  Copyright (C) 2003-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -25,10 +25,29 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
+#if HAVE_AVX512==1
+#include <immintrin.h>
+# define ALIGN32_BEG
+# define ALIGN32_END __attribute__((packed,aligned(32)))
+/* Union allowing c interface */
+typedef __m512  V16SF; // vector of 16 float (avx)
+typedef __m512i V16SI; // vector of 16 int   (avx)
+typedef __mmask16 MASK16; // vector of 16 mask  (avx)
+typedef ALIGN32_BEG union {
+  float f[16];
+  int   i[16];
+  V16SF   v;
+} ALIGN32_END CV16SF;
+typedef ALIGN32_BEG union {
+  float f[16];
+  int   i[16];
+  V16SI   v;
+} ALIGN32_END IV16SF;
+#endif
 #if HAVE_AVX==1
 #include <immintrin.h>
 # define ALIGN32_BEG
-# define ALIGN32_END __attribute__((aligned(32)))
+# define ALIGN32_END __attribute__((packed,aligned(32)))
 /* Union allowing c interface */
 typedef __m256  V8SF; // vector of 8 float (avx)
 typedef __m256i V8SI; // vector of 8 int   (avx)
@@ -935,7 +954,10 @@ void ObitFArrayDeblank (ObitFArray *in, ofloat scalar)
 {
   olong i, ilast;
   ofloat fblank = ObitMagicF();
-#if HAVE_AVX==1
+#if HAVE_AVX512==1
+  CV16SF v, vb, vs;
+  MASK16 msk;
+#elif HAVE_AVX==1
   CV8SF v, vb, vm, vs;
 #endif
 
@@ -943,7 +965,18 @@ void ObitFArrayDeblank (ObitFArray *in, ofloat scalar)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* Loop over array */
-#if HAVE_AVX==1  /* Vector */
+#if HAVE_AVX512==1  /* 16 float Vector */
+  vb.v  = _mm512_set1_ps(fblank);   /* vector of blanks */
+  vs.v  = _mm512_set1_ps(scalar);   /* vector of values to replace blank */
+  /* Do blocks of 16 as vector */
+  for (i=0; i<in->arraySize-16; i+=16) {
+    v.v  = _mm512_loadu_ps(&in->array[i]);
+    msk  = _mm512_cmp_ps_mask(v.v, vb.v, _CMP_EQ_OQ);  /* find blanks */
+    v.v  = _mm512_mask_blend_ps(msk,v.v, vs.v);        /* replace blanks with scalar */
+    _mm512_storeu_ps(&in->array[i], v.v);
+  }
+  ilast = i;  /* How far did I get? */
+#elif HAVE_AVX==1  /* 8 float Vector */
   vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
   vs.v  = _mm256_broadcast_ss(&scalar);   /* vector of values to replace blank */
   /* Do blocks of 8 as vector */
@@ -981,7 +1014,11 @@ ofloat ObitFArrayRMS (ObitFArray* in)
   olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads, ilast;
   gboolean OK;
   FAFuncArg **threadArgs;
-#if HAVE_AVX==1
+#if HAVE_AVX512==1
+  CV16SF v, vb, vzero, vone, vcnt, vsum, vsum2, vt;
+  MASK16 msk;
+  ofloat tmp;
+#elif HAVE_AVX==1
   CV8SF v, vb, vm, vzero, vone, vcnt, vsum, vsum2, vt;
   ofloat tmp;
 #endif
@@ -998,7 +1035,34 @@ ofloat ObitFArrayRMS (ObitFArray* in)
 
   /* How many valid values? */
   count = 0; sum = sum2 = 0.0; 
-#if HAVE_AVX==1  /* Vector */
+#if HAVE_AVX512==1  /* 16 float Vector */
+  vb.v   = _mm512_set1_ps(fblank);  /* vector of blanks */
+  tmp = 0.0;
+  vzero.v  = _mm512_set1_ps(tmp);  /* vector of zeroes */
+  vcnt.v   = _mm512_set1_ps(tmp);  /* initialize counts */
+  vsum.v   = _mm512_set1_ps(tmp);  /* initialize sum */
+  vsum2.v  = _mm512_set1_ps(tmp);  /* initialize sum**2 */
+  tmp = 1.0;
+  vone.v   = _mm512_set1_ps(tmp);  /* vector of ones */
+  /* Do blocks of 16 as vector */
+  for (i=0; i<in->arraySize-16; i+=16) {
+    v.v  = _mm512_loadu_ps(&in->array[i]);
+    msk  = _mm512_cmp_ps_mask(v.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v.v  = _mm512_mask_blend_ps(msk, v.v,vzero.v);     /* replace blanks with zeroes */
+    vt.v = _mm512_mask_blend_ps(msk, vone.v, vzero.v); /* 1/0 for count */
+    vcnt.v = _mm512_add_ps(vcnt.v,vt.v);  /* sum counts */
+    vsum.v = _mm512_add_ps(vsum.v,v.v);   /* sum data */
+    v.v    = _mm512_mul_ps(v.v, v.v);     /* square */
+    vsum2.v = _mm512_add_ps(vsum2.v,v.v); /* sum data squared */
+  }
+  ilast = i;  /* How far did I get? */
+  vcnt.v = _mm512_roundscale_ps(vcnt.v,32);  /* round */
+  for (i=0; i<16; i++) {
+    count += (olong)vcnt.f[i];
+    sum   += vsum.f[i];
+    sum2  += vsum2.f[i];
+  }
+#elif HAVE_AVX==1  /* Vector */
   vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
   tmp = 0.0;
   vzero.v  = _mm256_broadcast_ss(&tmp);  /* vector of zeroes */
@@ -1382,7 +1446,13 @@ ofloat ObitFArrayRMSQuant (ObitFArray* in)
   olong i1, i2, ic, it;
   ofloat amin, tmax, sum, sum2, x, count, mean, arg, cellFact=1.0;
   ofloat *histo = NULL;
-#if HAVE_AVX==1
+#if HAVE_AVX512==1
+  CV16SF v, vb, vflag, vmin, vfac;
+  IV16SF vcell;
+  MASK16 msk;
+  ofloat tmp;
+  olong j;
+#elif HAVE_AVX==1
   CV8SF v, vb, vm, vflag, vmin, vfac;
   IV8SF vcell;
   ofloat tmp;
@@ -1425,7 +1495,32 @@ ofloat ObitFArrayRMSQuant (ObitFArray* in)
   /* form histogram */
   cellFact =  1.0/quant;
   for (i=0; i<numCell; i++) histo[i] = 0.0;
-#if HAVE_AVX==1  /* Vector */
+#if HAVE_AVX512==1  /* 16 Vector */
+  vb.v   = _mm512_set1_ps(fblank);  /* vector of blanks */
+  tmp = -cellFact*amin;
+  vflag.v  = _mm512_set1_ps(tmp);  /* flagged values */
+  tmp = amin;
+  vmin.v  = _mm512_set1_ps(tmp);  /* amin */
+  tmp = cellFact;
+  vfac.v = _mm512_set1_ps(tmp);  /* fact */
+  /* Do blocks of 16 as vector */
+  for (i=0; i<in->arraySize-16; i+=16) {
+    v.v    = _mm512_loadu_ps(&in->array[i]);         /* Data */
+    msk    = _mm512_cmp_ps_mask(v.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v.v    = _mm512_mask_blend_ps(msk, v.v,vflag.v);    /* replace blanks */
+    v.v    = _mm512_sub_ps(v.v,vmin.v);        /* -amin */
+    v.v    = _mm512_mul_ps(v.v,vfac.v);        /* * fact */
+    v.v    = _mm512_roundscale_ps(v.v,32);     /* round */
+    vcell.v = _mm512_cvtps_epi32(v.v);
+    for (j=0; j<16; j++) {
+      if (vcell.i[j]<0.0) continue;
+      icell = vcell.i[j];
+      icell = MIN (numCell-1, MAX(0, icell));
+      histo[icell]++;
+    }
+  }
+  ilast = i;  /* How far did I get? */
+#elif HAVE_AVX==1  /* Vector */
   vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
   tmp = -cellFact*amin;
   vflag.v  = _mm256_broadcast_ss(&tmp);  /* flagged values */
@@ -1538,7 +1633,12 @@ void ObitFArrayQuant (ObitFArray* in, ofloat *quant, ofloat *zero)
 {
   ofloat delta, small, fblank = ObitMagicF();
   olong i;
-#if HAVE_AVX==1
+#if HAVE_AVX512==1
+  CV16SF v[2], vbig[2], vzero, vt, vneg, vb, vacc, vsm;
+  MASK16 msk;
+  glong iv, io, is;
+  ofloat big;
+#elif HAVE_AVX==1
   CV8SF v[2], vbig[2], vzero, vt, vneg, vb, vm, vacc, vsm;
   glong iv, io, is;
   ofloat big;
@@ -1548,7 +1648,50 @@ void ObitFArrayQuant (ObitFArray* in, ofloat *quant, ofloat *zero)
   g_assert (in->array != NULL);
 
   delta = 1.0e10; small = 1.0e10;
-#if HAVE_AVX==1  /* Vector */
+#if HAVE_AVX512==1  /* Vector */
+  vb.v   = _mm512_set1_ps(fblank);  /* vector of blanks */
+  vacc.v = _mm512_set1_ps(small);   /* min diff accumulator */
+  vsm.v  = _mm512_set1_ps(small);   /* min accumulator */
+  big = small;
+  vbig[0].v = _mm512_set1_ps(big);   /* big values */
+  big *= 1.05;
+  vbig[1].v = _mm512_set1_ps(big);   /* bigger values */
+  big = -small;
+  vneg.v = _mm512_set1_ps(big);     /* big negative values */
+  big = 0.0;
+  vzero.v = _mm512_set1_ps(big);    /* zeroes */
+  /* First vector load */
+  iv = 0; is = 0;
+  v[iv].v = _mm512_loadu_ps(&in->array[is]); is++;
+  msk     = _mm512_cmp_ps_mask(v[iv].v, vb.v, _CMP_EQ_OQ);
+  v[iv].v = _mm512_mask_blend_ps(msk, v[iv].v,vbig[iv].v); /* replace blanks */
+  /* Loop over array differencing sliding blocks of 16 */
+  while (is<in->arraySize-9) {
+    iv = 1-iv; /* Swap */
+    v[iv].v = _mm512_loadu_ps(&in->array[is]); is += 16;
+    msk     = _mm512_cmp_ps_mask(v[iv].v, vb.v, _CMP_EQ_OQ);
+    v[iv].v = _mm512_mask_blend_ps(msk,v[iv].v,vbig[iv].v); /* replace blanks */
+    /* Max negative */
+    msk     = _mm512_cmp_ps_mask(v[iv].v, vzero.v, _CMP_GT_OS);  /* mask of positives*/
+    vt.v    = _mm512_mask_blend_ps(msk, v[iv].v, vneg.v);       /* set to large negative */
+    vsm.v  = _mm512_max_ps(vsm.v, vt.v);            /* min accumulator */   
+    /* Min positive */
+    msk     = _mm512_cmp_ps_mask(v[iv].v, vzero.v, _CMP_LT_OS); /* mask of negatives */
+    vt.v    = _mm512_mask_blend_ps(msk, v[iv].v, vbig[0].v);    /* set to large positives */
+    vsm.v   = _mm512_min_ps(vsm.v, vt.v);           /* min accumulator */   
+    /* Difference */
+    io = 1-iv;  /* other */
+    vt.v    = _mm512_sub_ps(v[iv].v,v[io].v);  /* Difference adjacent */
+    vt.v    = _mm512_mul_ps(vt.v,vt.v);        /* No abs fn so square */
+    vacc.v  = _mm512_min_ps(vacc.v, vt.v);     /* accumulate min */
+  }
+  /* parse results */
+  delta = vacc.f[0]; 
+  for (i=1; i<16; i++) if (vacc.f[i]<delta) delta = vacc.f[i];
+  delta = sqrt(delta);  /* differences were squared */
+  small = vsm.f[0];
+  for (i=1; i<8; i++) if (fabs(vsm.f[i])<fabs(small)) small = vsm.f[i];
+#elif HAVE_AVX==1  /* Vector */
   vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
   vacc.v = _mm256_broadcast_ss(&small);   /* min diff accumulator */
   vsm.v  = _mm256_broadcast_ss(&small);   /* min accumulator */
@@ -1617,7 +1760,13 @@ ofloat ObitFArrayMode (ObitFArray* in)
   olong i, ilast, icell, modeCell, numCell, count, pos[MAXFARRAYDIM];
   ofloat amax, amin, tmax, cellFact, *histo;
   ofloat out = 0.0, fblank = ObitMagicF();
-#if HAVE_AVX==1
+#if HAVE_AVX512==1
+  CV16SF v, vb, vflag, vmin, vfac;
+  IV16SF vcell;
+  MASK16 msk;
+  ofloat tmp;
+  olong j;
+#elif HAVE_AVX==1
   CV8SF v, vb, vm, vflag, vmin, vfac;
   IV8SF vcell;
   ofloat tmp;
@@ -1645,7 +1794,32 @@ ofloat ObitFArrayMode (ObitFArray* in)
   /* form histogram */
   cellFact =  numCell / (amax - amin + 1.0e-20);
   for (i=0; i<numCell; i++) histo[i] = 0.0;
-#if HAVE_AVX==1  /* Vector */
+#if HAVE_AVX512==1  /* 16 Vector */
+  vb.v   = _mm512_set1_ps(fblank);  /* vector of blanks */
+  tmp = -cellFact*amin;
+  vflag.v  = _mm512_set1_ps(tmp);  /* flagged values */
+  tmp = amin;
+  vmin.v  = _mm512_set1_ps(tmp);  /* amin */
+  tmp = cellFact;
+  vfac.v = _mm512_set1_ps(tmp);  /* fact */
+  /* Do blocks of 16 as vector */
+  for (i=0; i<in->arraySize-16; i+=16) {
+    v.v    = _mm512_loadu_ps(&in->array[i]);        /* Data */
+    msk    = _mm512_cmp_ps_mask(v.v, vb.v, _CMP_EQ_OQ);  /* find blanks */
+    v.v    = _mm512_mask_blend_ps(msk, v.v,vflag.v);    /* replace blanks */
+    v.v    = _mm512_sub_ps(v.v,vmin.v);        /* -amin */
+    v.v    = _mm512_mul_ps(v.v,vfac.v);        /* * fact */
+    v.v    = _mm512_roundscale_ps(v.v,32);     /* round */
+    vcell.v = _mm512_cvtps_epi32(v.v);
+    for (j=0; j<16; j++) {
+      if (vcell.i[j]<0.0) continue;
+      icell = vcell.i[j];
+      icell = MIN (numCell-1, MAX(0, icell));
+      histo[icell]++;
+    }
+  }
+  ilast = i;  /* How far did I get? */
+#elif HAVE_AVX==1  /* Vector */
   vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
   tmp = -cellFact*amin;
   vflag.v  = _mm256_broadcast_ss(&tmp);  /* flagged values */
@@ -1710,7 +1884,11 @@ ofloat ObitFArrayMean (ObitFArray* in)
 {
   olong i, count, ilast;
   ofloat out = 0.0, fblank = ObitMagicF();
-#if HAVE_AVX==1
+#if HAVE_AVX512==1
+  CV16SF v, vb, vcnt,  vone, vzero, vt, vsum;
+  MASK16 msk;
+  ofloat tmp;
+#elif HAVE_AVX==1
   CV8SF v, vb, vm, vcnt,  vone, vzero, vt, vsum;
   ofloat tmp;
 #endif
@@ -1721,7 +1899,30 @@ ofloat ObitFArrayMean (ObitFArray* in)
 
   out = 0.0;
   count = 0;
-#if HAVE_AVX==1  /* Vector */
+#if HAVE_AVX512==1  /* 16 Vector */
+  vb.v   = _mm512_set1_ps(fblank);  /* vector of blanks */
+  tmp = 1.0;
+  vone.v  = _mm512_set1_ps(tmp);   /* vector of ones */
+  tmp = 0.0;
+  vzero.v  = _mm512_set1_ps(tmp);  /* vector of zeroes */
+  vcnt.v   = _mm512_set1_ps(tmp);  /* initialize counts */
+  vsum.v   = _mm512_set1_ps(tmp);  /* initialize sum */
+  /* Do blocks of 16 as vector */
+  for (i=0; i<in->arraySize-16; i+=16) {
+    v.v  = _mm512_loadu_ps(&in->array[i]);          /* load */
+    msk  = _mm512_cmp_ps_mask(v.v, vb.v, _CMP_EQ_OQ);  /* find blanks */
+    v.v  = _mm512_mask_blend_ps(msk,v.v,vzero.v);      /* replace blanks with zeroes */
+    vt.v = _mm512_mask_blend_ps(msk,vone.v, vzero.v);  /* zero blank for counts */
+    vcnt.v = _mm512_add_ps(vcnt.v,vt.v);  /* sum counts */
+    vsum.v = _mm512_add_ps(vsum.v,v.v);   /* sum data */
+  }
+  ilast = i;  /* How far did I get? */
+  vcnt.v = _mm512_roundscale_ps(vcnt.v,32);  /* round */
+  for (i=0; i<16; i++) {
+    count += (olong)vcnt.f[i];
+    out   += vsum.f[i];
+  }
+#elif HAVE_AVX==1  /* Vector */
   vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
   tmp = 1.0;
   vone.v  = _mm256_broadcast_ss(&tmp);   /* vector of ones */
@@ -1769,7 +1970,9 @@ ofloat ObitFArrayMean (ObitFArray* in)
 void ObitFArrayFill (ObitFArray* in, ofloat scalar)
 {
   olong i, ilast;
-#if HAVE_AVX==1
+#if HAVE_AVX512==1
+  CV16SF vs;
+#elif HAVE_AVX==1
   CV8SF vs;
 #endif
 
@@ -1777,7 +1980,13 @@ void ObitFArrayFill (ObitFArray* in, ofloat scalar)
   g_assert (ObitIsA(in, &myClassInfo));
   g_assert (in->array != NULL);
 
-#if HAVE_AVX==1  /* Vector */
+#if HAVE_AVX512==1  /* Vector */
+  vs.v   = _mm512_set1_ps(scalar);  /* vector of scalar */
+  for (i=0; i<in->arraySize-16; i+=16) {
+    _mm512_storeu_ps(&in->array[i], vs.v); /* Save */
+ }
+  ilast = i;  /* How far did I get? */
+#elif HAVE_AVX==1  /* Vector */
   vs.v   = _mm256_broadcast_ss(&scalar);  /* vector of scalar */
   for (i=0; i<in->arraySize-8; i+=8) {
     _mm256_storeu_ps(&in->array[i], vs.v); /* Save */
@@ -1913,7 +2122,11 @@ olong ObitFArrayCount (ObitFArray* in)
   ofloat fblank = ObitMagicF();
   olong count=0;
 
-#if HAVE_AVX==1
+#if HAVE_AVX512==1
+  CV16SF v, vb, vzero, vone, vcnt, vt;
+  MASK16 msk;
+  ofloat tmp;
+#elif HAVE_AVX==1
   CV8SF v, vb, vm, vzero, vone, vcnt, vt;
   ofloat tmp;
 #endif
@@ -1922,7 +2135,25 @@ olong ObitFArrayCount (ObitFArray* in)
   g_assert (in->array != NULL);
 
   count = 0;
-#if HAVE_AVX==1  /* Vector */
+#if HAVE_AVX512==1  /* Vector */
+  vb.v   = _mm512_set1_ps(fblank);  /* vector of blanks */
+  tmp = 0.0;
+  vzero.v  = _mm512_set1_ps(tmp);  /* vector of zeroes */
+  vcnt.v   = _mm512_set1_ps(tmp);  /* initialize counts */
+  tmp = 1.0;
+  vone.v   = _mm512_set1_ps(tmp);  /* vector of ones */
+  /* Do blocks of 16 as vector */
+  for (i=0; i<in->arraySize-16; i+=16) {
+    v.v  = _mm512_loadu_ps(&in->array[i]);
+    msk  = _mm512_cmp_ps_mask(v.v, vb.v, _CMP_EQ_OQ);   /* find blanks */
+    v.v  = _mm512_mask_blend_ps(msk,v.v,vzero.v);    /* replace blanks with zeroes */
+    vt.v = _mm512_mask_blend_ps(msk,vone.v, vzero.v);
+    vcnt.v = _mm512_add_ps(vcnt.v,vt.v);  /* sum counts */
+  }
+  ilast = i;  /* How far did I get? */
+  vcnt.v = _mm512_roundscale_ps(vcnt.v,32);  /* round */
+  for (i=0; i<16; i++) count += (olong)vcnt.f[i];
+#elif HAVE_AVX==1  /* Vector */
   vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
   tmp = 0.0;
   vzero.v  = _mm256_broadcast_ss(&tmp);  /* vector of zeroes */
@@ -1960,7 +2191,11 @@ void ObitFArraySAdd (ObitFArray* in, ofloat scalar)
 {
   olong i, ilast;
   ofloat fblank = ObitMagicF();
-#if HAVE_AVX==1
+#if HAVE_AVX512==1
+  CV16SF v, vb, vs, vzero;
+  MASK16 msk;
+  ofloat tmp;
+#elif HAVE_AVX==1
   CV8SF v, vb, vm, vs, vzero;
   ofloat tmp;
 #endif
@@ -1969,7 +2204,22 @@ void ObitFArraySAdd (ObitFArray* in, ofloat scalar)
   g_assert (ObitIsA(in, &myClassInfo));
   g_assert (in->array != NULL);
 
-#if HAVE_AVX==1  /* Vector */
+#if HAVE_AVX512==1  /* 16 Vector */
+  vb.v   = _mm512_set1_ps(fblank);  /* vector of blanks */
+  vs.v   = _mm512_set1_ps(scalar);  /* vector of scalar */
+  tmp = 0.0;
+  vzero.v  = _mm512_set1_ps(tmp);  /* vector of zeroes */
+  /* Do blocks of 16 as vector */
+  for (i=0; i<in->arraySize-16; i+=16) {
+    v.v  = _mm512_loadu_ps(&in->array[i]);       /* fetch */
+    msk = _mm512_cmp_ps_mask(v.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v.v  = _mm512_mask_blend_ps(msk,v.v,vzero.v);   /* replace blanks with zeroes */
+    v.v  = _mm512_add_ps(v.v,vs.v);                 /* do operation */
+    v.v  = _mm512_mask_blend_ps(msk,v.v, vb.v);     /* reblank */
+    _mm512_storeu_ps(&in->array[i], v.v);          /* Save */
+ }
+  ilast = i;  /* How far did I get? */
+#elif HAVE_AVX==1  /* Vector */
   vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
   vs.v   = _mm256_broadcast_ss(&scalar);  /* vector of scalar */
   tmp = 0.0;
@@ -2001,7 +2251,11 @@ void ObitFArraySMul (ObitFArray* in, ofloat scalar)
 {
   olong i, ilast;
   ofloat fblank = ObitMagicF();
-#if HAVE_AVX==1
+#if HAVE_AVX512==1
+  CV16SF v, vb, vs, vone;
+  MASK16 msk;
+  ofloat tmp;
+#elif HAVE_AVX==1
   CV8SF v, vb, vm, vs, vone;
   ofloat tmp;
 #endif
@@ -2010,7 +2264,22 @@ void ObitFArraySMul (ObitFArray* in, ofloat scalar)
   g_assert (ObitIsA(in, &myClassInfo));
   g_assert (in->array != NULL);
 
-#if HAVE_AVX==1  /* Vector */
+#if HAVE_AVX512==1  /* Vector */
+  vb.v   = _mm512_set1_ps(fblank);  /* vector of blanks */
+  vs.v   = _mm512_set1_ps(scalar);  /* vector of scalar */
+  tmp = 1.0;
+  vone.v  = _mm512_set1_ps(tmp);  /* vector of ones */
+  /* Do blocks of 16 as vector */
+  for (i=0; i<in->arraySize-16; i+=16) {
+    v.v  = _mm512_loadu_ps(&in->array[i]);       /* fetch */
+    msk  = _mm512_cmp_ps_mask(v.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v.v  = _mm512_mask_blend_ps(msk,v.v,vone.v);      /* replace blanks with ones */
+    v.v  = _mm512_mul_ps(v.v,vs.v);                   /* do operation */
+    v.v  = _mm512_mask_blend_ps(msk,v.v, vb.v);       /* reblank */
+    _mm512_storeu_ps(&in->array[i], v.v);        /* Save */
+ }
+  ilast = i;  /* How far did I get? */
+#elif HAVE_AVX==1  /* Vector */
   vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
   vs.v   = _mm256_broadcast_ss(&scalar);  /* vector of scalar */
   tmp = 1.0;
@@ -2109,7 +2378,10 @@ void ObitFArrayBlank (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 {
   olong i, ilast;
   ofloat fblank = ObitMagicF();
-#if HAVE_AVX==1
+#if HAVE_AVX512==1
+  CV16SF v, v2, vb;
+  MASK16 msk;
+#elif HAVE_AVX==1
   CV8SF v, v2, vb, vm;
 #endif
 
@@ -2119,7 +2391,18 @@ void ObitFArrayBlank (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
   g_assert (ObitFArrayIsCompatable(in1, in2));
   g_assert (ObitFArrayIsCompatable(in1, out));
 
-#if HAVE_AVX==1  /* Vector */
+#if HAVE_AVX512==1  /* 16 Vector */
+  vb.v   = _mm512_set1_ps(fblank);  /* vector of blanks */
+  /* Do blocks of 16 as vector */
+  for (i=0; i<in1->arraySize-16; i+=16) {
+    v.v  = _mm512_loadu_ps(&in1->array[i]);       /* fetch 1 */
+    v2.v = _mm512_loadu_ps(&in2->array[i]);       /* fetch 2 */
+    msk  = _mm512_cmp_ps_mask(v2.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v.v  = _mm512_mask_blend_ps(msk,v.v, vb.v);     /* blank 1 */
+    _mm512_storeu_ps(&out->array[i], v.v);        /* Save */
+ }
+  ilast = i;  /* How far did I get? */
+#elif HAVE_AVX==1  /* Vector */
   vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
   /* Do blocks of 8 as vector */
   for (i=0; i<in1->arraySize-8; i+=8) {
@@ -3781,8 +4064,8 @@ void ObitFArrayClear (gpointer inn)
   /* delete this class members */
   in->thread    = ObitThreadUnref(in->thread);
   in->info      = ObitInfoListUnref(in->info);
-  if (in->array)  ObitMemFree(in->array);  in->array = NULL;
-  if (in->naxis)  ObitMemFree(in->naxis); in->naxis = NULL;
+  if (in->array)  {ObitMemFree(in->array);  in->array = NULL;}
+  if (in->naxis)  {ObitMemFree(in->naxis); in->naxis = NULL;}
   
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
@@ -3934,7 +4217,10 @@ static gpointer ThreadFAAdd (gpointer arg)
   /* local */
   olong   i, ilast;
   ofloat  fblank = ObitMagicF();
-#if HAVE_AVX==1
+#if HAVE_AVX512==1
+  CV16SF v1, v2, vb;
+  MASK16 msk1, msk2;
+#elif HAVE_AVX==1
   CV8SF v1, v2, vb, vm1, vm2;
 #endif
 
@@ -3942,7 +4228,21 @@ static gpointer ThreadFAAdd (gpointer arg)
   if (hiElem<loElem) goto finish;
 
   /* Loop over array */
-#if HAVE_AVX==1  /* Vector */
+#if HAVE_AVX512==1  /* Vector */
+  vb.v   = _mm512_set1_ps(fblank);  /* vector of blanks */
+  /* Do blocks of 16 as vector */
+  for (i=loElem; i<hiElem-16; i+=16) {
+    v1.v  = _mm512_loadu_ps(&in1->array[i]);
+    msk1  = _mm512_cmp_ps_mask(v1.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v2.v  = _mm512_loadu_ps(&in2->array[i]);
+    msk2  = _mm512_cmp_ps_mask(v2.v, vb.v, _CMP_EQ_OQ);  /* find blanks */
+    v2.v  = _mm512_add_ps(v1.v, v2.v);             /* do operation */
+    v2.v  = _mm512_mask_blend_ps(msk1,v2.v,vb.v);    /* replace blanks 1 */
+    v2.v  = _mm512_mask_blend_ps(msk2,v2.v,vb.v);    /* replace blanks 2 */
+    _mm512_storeu_ps(&out->array[i], v2.v);        /* Save */
+  }
+  ilast = i;  /* How far did I get? */
+#elif HAVE_AVX==1  /* Vector */
   vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
   /* Do blocks of 8 as vector */
   for (i=loElem; i<hiElem-8; i+=8) {
@@ -4000,14 +4300,31 @@ static gpointer ThreadFASub (gpointer arg)
   /* local */
   olong   i, ilast;
   ofloat  fblank = ObitMagicF();
-#if HAVE_AVX==1
+#if HAVE_AVX512==1
+  CV16SF v1, v2, vb;
+  MASK16 msk1, msk2;
+#elif HAVE_AVX==1
   CV8SF v1, v2, vb, vm1, vm2;
 #endif
 
   if (hiElem<loElem) goto finish;
 
   /* Loop over array */
-#if HAVE_AVX==1  /* Vector */
+#if HAVE_AVX512==1  /* Vector */
+  vb.v   = _mm512_set1_ps(fblank);  /* vector of blanks */
+  /* Do blocks of 16 as vector */
+  for (i=loElem; i<hiElem-16; i+=16) {
+    v1.v  = _mm512_loadu_ps(&in1->array[i]);
+    msk1  = _mm512_cmp_ps_mask(v1.v, vb.v, _CMP_EQ_OQ);   /* find blanks */
+    v2.v  = _mm512_loadu_ps(&in2->array[i]);
+    msk2  = _mm512_cmp_ps_mask(v2.v, vb.v, _CMP_EQ_OQ);   /* find blanks */
+    v2.v  = _mm512_sub_ps(v1.v, v2.v);               /* do operation */
+    v2.v  = _mm512_mask_blend_ps(msk1,v2.v,vb.v);    /* replace blanks 1 */
+    v2.v  = _mm512_mask_blend_ps(msk2,v2.v,vb.v);    /* replace blanks 2 */
+    _mm512_storeu_ps(&out->array[i], v2.v);
+  }
+  ilast = i;  /* How far did I get? */
+#elif HAVE_AVX==1  /* Vector */
   vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
   /* Do blocks of 8 as vector */
   for (i=loElem; i<hiElem-8; i+=8) {
@@ -4065,14 +4382,31 @@ static gpointer ThreadFAMul (gpointer arg)
   /* local */
   olong   i, ilast;
   ofloat  fblank = ObitMagicF();
-#if HAVE_AVX==1
+#if HAVE_AVX512==1
+  CV16SF v1, v2, vb;
+  MASK16 msk1, msk2;
+#elif HAVE_AVX==1
   CV8SF v1, v2, vb, vm1, vm2;
 #endif
 
   if (hiElem<loElem) goto finish;
 
   /* Loop over array */
-#if HAVE_AVX==1  /* Vector */
+#if HAVE_AVX512==1  /* Vector */
+  vb.v   = _mm512_set1_ps(fblank);  /* vector of blanks */
+  /* Do blocks of 16 as vector */
+  for (i=loElem; i<hiElem-16; i+=16) {
+    v1.v  = _mm512_loadu_ps(&in1->array[i]);
+    msk1  = _mm512_cmp_ps_mask(v1.v, vb.v, _CMP_EQ_OQ);   /* find blanks */
+    v2.v  = _mm512_loadu_ps(&in2->array[i]);
+    msk2  = _mm512_cmp_ps_mask(v2.v, vb.v, _CMP_EQ_OQ);   /* find blanks */
+    v2.v  = _mm512_mul_ps(v1.v, v2.v);             /* do operation */
+    v2.v  = _mm512_mask_blend_ps(msk1,v2.v,vb.v);  /* replace blanks 1 */
+    v2.v  = _mm512_mask_blend_ps(msk2,v2.v,vb.v);  /* replace blanks 2 */
+    _mm512_storeu_ps(&out->array[i], v2.v);        /* Save */
+  }
+  ilast = i;  /* How far did I get? */
+#elif HAVE_AVX==1  /* Vector */
   vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
   /* Do blocks of 8 as vector */
   for (i=loElem; i<hiElem-8; i+=8) {
@@ -4177,7 +4511,11 @@ static gpointer ThreadFASumArr (gpointer arg)
   /* local */
   olong   i, ilast;
   ofloat  fblank = ObitMagicF();
-#if HAVE_AVX==1
+#if HAVE_AVX512==1
+  CV16SF v1, v2, vb, vzero;
+  MASK16 msk1, msk2;
+  ofloat tmp;
+#elif HAVE_AVX==1
   CV8SF v1, v2, vb, vm1, vm2, vzero;
   ofloat tmp;
 #endif
@@ -4185,7 +4523,25 @@ static gpointer ThreadFASumArr (gpointer arg)
   if (hiElem<loElem) goto finish;
 
   /* Loop over array */
- #if HAVE_AVX==1  /* Vector */
+ #if HAVE_AVX512==1  /* Vector */
+  vb.v   = _mm512_set1_ps(fblank);  /* vector of blanks */
+  tmp = 0.0;
+  vzero.v  = _mm512_set1_ps(tmp);  /* vector of zeroes */
+  /* Do blocks of 16 as vector */
+  for (i=loElem; i<hiElem-16; i+=16) {
+    v1.v  = _mm512_loadu_ps(&in1->array[i]);
+    msk1  = _mm512_cmp_ps_mask(v1.v, vb.v, _CMP_EQ_OQ);   /* find blanks */
+    v1.v  = _mm512_mask_blend_ps(msk1,v1.v,vzero.v);  /* replace blanks with zeroes */
+    v2.v  = _mm512_loadu_ps(&in2->array[i]);
+    msk2  = _mm512_cmp_ps_mask(v2.v, vb.v, _CMP_EQ_OQ);  /* find blanks */
+    v2.v  = _mm512_mask_blend_ps(msk2,v2.v,vzero.v);     /* replace blanks with zeroes */
+    v2.v  = _mm512_add_ps(v1.v, v2.v);                   /* do operation */
+    msk2  = _mm512_kand(msk1, msk2);                     /* both blanked? */
+    v2.v  = _mm512_mask_blend_ps(msk2,v2.v,vb.v);        /* replace blanks 1 */
+    _mm512_storeu_ps(&out->array[i], v2.v);        /* Save */
+  }
+  ilast = i;  /* How far did I get? */
+ #elif HAVE_AVX==1  /* Vector */
   vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
   tmp = 0.0;
   vzero.v  = _mm256_broadcast_ss(&tmp);  /* vector of zeroes */
@@ -4609,7 +4965,11 @@ static gpointer ThreadFARMSSum (gpointer arg)
   /* local */
   olong i, count, ilast;
   ofloat sum, sum2, fblank = ObitMagicF();
-#if HAVE_AVX==1
+#if HAVE_AVX512==1
+  CV16SF v, vb, vzero, vone, vcnt, vsum, vsum2, vt;
+  MASK16 msk;
+  ofloat tmp;
+#elif HAVE_AVX==1
   CV8SF v, vb, vm, vzero, vone, vcnt, vsum, vsum2, vt;
   ofloat tmp;
 #endif
@@ -4618,7 +4978,34 @@ static gpointer ThreadFARMSSum (gpointer arg)
 
   /* Loop over array */
   count = 0; sum = sum2 = 0.0; 
-#if HAVE_AVX==1  /* Vector */
+#if HAVE_AVX512==1  /* Vector */
+  vb.v   = _mm512_set1_ps(fblank);  /* vector of blanks */
+  tmp = 0.0;
+  vzero.v  = _mm512_set1_ps(tmp);  /* vector of zeroes */
+  vcnt.v   = _mm512_set1_ps(tmp);  /* initialize counts */
+  vsum.v   = _mm512_set1_ps(tmp);  /* initialize sum */
+  vsum2.v  = _mm512_set1_ps(tmp);  /* initialize sum**2 */
+  tmp = 1.0;
+  vone.v   = _mm512_set1_ps(tmp);  /* vector of ones */
+  /* Do blocks of 16 as vector */
+  for (i=loElem; i<hiElem-16; i+=16) {
+    v.v  = _mm512_loadu_ps(&in->array[i]);
+    msk  = _mm512_cmp_ps_mask(v.v, vb.v, _CMP_EQ_OQ);    /* find blanks */
+    v.v  = _mm512_mask_blend_ps(msk,v.v,vzero.v); /* replace blanks with zeroes */
+    vt.v = _mm512_mask_blend_ps(msk,vone.v, vzero.v);
+    vcnt.v = _mm512_add_ps(vcnt.v,vt.v);  /* sum counts */
+    vsum.v = _mm512_add_ps(vsum.v,v.v);   /* sum data */
+    v.v    = _mm512_mul_ps(v.v, v.v);     /* square */
+    vsum2.v = _mm512_add_ps(vsum2.v,v.v); /* sum data squared */
+  }
+  ilast = i;  /* How far did I get? */
+  vcnt.v = _mm512_roundscale_ps(vcnt.v,32);  /* round */
+  for (i=0; i<16; i++) {
+    count += (olong)vcnt.f[i];
+    sum   += vsum.f[i];
+    sum2  += vsum2.f[i];
+  }
+#elif HAVE_AVX==1  /* Vector */
   vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
   tmp = 0.0;
   vzero.v  = _mm256_broadcast_ss(&tmp);  /* vector of zeroes */
@@ -4706,7 +5093,13 @@ static gpointer ThreadFAHisto (gpointer arg)
   /* local */
   olong  i, icell, ilast;
   ofloat cellFact, fblank = ObitMagicF();
-#if HAVE_AVX==1
+#if HAVE_AVX512==1
+  CV16SF v, vb, vflag, vmin, vfac;
+  IV16SF vcell;
+  MASK16 msk;
+  ofloat tmp;
+  olong j;
+#elif HAVE_AVX==1
   CV8SF v, vb, vm, vflag, vmin, vfac;
   IV8SF vcell;
   ofloat tmp;
@@ -4719,7 +5112,33 @@ static gpointer ThreadFAHisto (gpointer arg)
   cellFact =  numCell / (amax - amin + 1.0e-20);
   count = 0; under = 0; over = 0;
   for (i=0; i<numCell; i++) histo[i] = 0.0;
-#if HAVE_AVX==1  /* Vector */
+#if HAVE_AVX512==1  /* 16 Vector */
+  vb.v   = _mm512_set1_ps(fblank);  /* vector of blanks */
+  tmp = -cellFact*amin;
+  vflag.v  = _mm512_set1_ps(tmp);  /* flagged values */
+  tmp = amin;
+  vmin.v  = _mm512_set1_ps(tmp);  /* amin */
+  tmp = cellFact;
+  vfac.v = _mm512_set1_ps(tmp);  /* fact */
+  /* Do blocks of 16 as vector */
+  for (i=loElem; i<hiElem-16; i+=16) {
+    v.v    = _mm512_loadu_ps(&in->array[i]);            /* Data */
+    msk    = _mm512_cmp_ps_mask(v.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    v.v    = _mm512_mask_blend_ps(msk,v.v,vflag.v);    /* replace blanks */
+    v.v    = _mm512_sub_ps(v.v,vmin.v);        /* -amin */
+    v.v    = _mm512_mul_ps(v.v,vfac.v);        /* * fact */
+    v.v    = _mm512_roundscale_ps(v.v,32);  /* round */
+    vcell.v = _mm512_cvtps_epi32(v.v);
+    for (j=0; j<16; j++) {
+      icell = vcell.i[j];
+      if (icell<0) under++;
+      else if (icell>=numCell) over++;
+      else histo[icell]++;
+      count ++;
+    }
+  }
+  ilast = i;  /* How far did I get? */
+#elif HAVE_AVX==1  /* Vector */
   vb.v   = _mm256_broadcast_ss(&fblank);  /* vector of blanks */
   tmp = -cellFact*amin;
   vflag.v  = _mm256_broadcast_ss(&tmp);  /* flagged values */

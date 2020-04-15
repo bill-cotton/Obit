@@ -1,6 +1,6 @@
 /* $Id: ObitExp.c 481 2014-05-28 19:40:41Z bill.cotton $ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2018                                          */
+/*;  Copyright (C) 2011-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -29,9 +29,34 @@
 #include "ObitVecFunc.h"
 #include <math.h>
 
+/** AVX512 implementation 16 floats in parallel */
+#if HAVE_AVX512==1
+#include "avx512_mathfun.h"
+/** Natural log of array of 16 floats */
+v16sf avx512_log_ps(v16sf x) {
+  return (v16sf) log512_ps((v16sf) x);
+}
+/** Exponential of array of 16 floats  */
+v16sf avx512_exp_ps(v16sf x) {
+  return (v16sf) exp512_ps((v16sf) x);
+}
+/** Sine of array of 16 floats  */
+v16sf avx512_sin_ps(v16sf x) {
+  return (v16sf) sin512_ps((v16sf) x);
+}
+/** Cosine of array of 16 floats  */
+v16sf avx512_cos_ps(v16sf x) {
+  return (v16sf) cos512_ps((v16sf) x);
+}
+/** Sine and Cosine of array of 16 floats  */
+void avx512_sincos_ps(v16sf x, v16sf *s, v16sf *c) {
+  sincos512_ps((v16sf) x, (v16sf*) s, (v16sf*) c);
+}
+/* end HAVE_AVX512 */
+
 /** AVX implementation 8 floats in parallel, AVX2 a bit better */
-#if HAVE_AVX2==1
-#include "avx_mathfun_May18.h"
+#elif HAVE_AVX2==1
+#include "avx_mathfun.h"
 /** Natural log of array of 8 floats */
 V8SF avx_log_ps(V8SF x) {
   return (V8SF) log256_ps((v8sf) x);
@@ -52,11 +77,11 @@ V8SF avx_cos_ps(V8SF x) {
 void avx_sincos_ps(V8SF x, V8SF *s, V8SF *c) {
   sincos256_ps((v8sf) x, (v8sf*) s, (v8sf*) c);
 }
-/* end HAVE_AVX */
+/* end HAVE_AVX2 */
 
 /** AVX implementation 8 floats in parallel */
 #elif HAVE_AVX==1
-#include "avx_mathfun_May18.h"
+#include "avx_mathfun.h"
 /** Natural log of array of 8 floats */
 V8SF avx_log_ps(V8SF x) {
   return (V8SF) log256_ps((v8sf) x);

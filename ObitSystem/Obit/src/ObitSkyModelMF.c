@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2017                                          */
+/*;  Copyright (C) 2010-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -762,7 +762,7 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   union ObitInfoListEquiv InfoReal; 
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   FTFuncArg *args;
-  gchar keyword[12];
+  gchar keyword[20];
   gchar *routine="SkyModelMFInitMod";
   
   /* Fourier transform threading routines */
@@ -1745,6 +1745,201 @@ void ObitSkyModelMFFTDFT (ObitSkyModel *inn, olong field, ObitUV *uvdata, ObitEr
   if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
 }  /* end ObitSkyModelMFFTDFT */
 
+/* gcc or icc */
+# define ALIGN32_BEG
+# define ALIGN32_END __attribute__((aligned(32)))
+# define ALIGN64_BEG
+# define ALIGN64_END __attribute__((aligned(64)))
+/* AVX512 =16 float vectors */
+#if HAVE_AVX512==1
+#include <immintrin.h>
+typedef __m512   v16sf;
+typedef __m512d  v8df;
+typedef __m256   v8sf;
+typedef ALIGN64_BEG union {
+  double    f[8];
+  long long i[8];
+  v8df      v;
+} ALIGN64_END V8DF;
+#endif
+#if HAVE_AVX==1
+#include <immintrin.h>
+typedef __m256  v8sf;
+typedef __m256d v4df;
+typedef __m128  v4sf;
+typedef ALIGN32_BEG union {
+  double    f[4];
+  long long i[4];
+  v4df      v;
+} ALIGN32_END V4DF;
+#endif
+
+/**
+ * Routine to get dot product of two vectors 
+ * possibly with AVX512 implementation
+ * \param n   Number of elements
+ * \param v1  First vector
+ * \param v2  Second vector
+ * \return dot product
+ */
+static inline ofloat SkyModelDot (olong n, ofloat *v1, ofloat *v2) {
+  olong i, ilast;
+  ofloat outval=0.0;
+  /* AVX512=16 floats */
+#if HAVE_AVX512==1
+  v16sf vv1, vv2;
+#endif
+
+  if (n<=0) return outval;
+  ilast = 0;
+  /* AVX512 in blocks of 16 */
+#if HAVE_AVX512==1
+  for (i=ilast; i<n; i+=16) {
+  if (i+16>n) break;
+  ilast = i+16;
+  vv1 = _mm512_load_ps((float*)&v1[i]);
+  vv2 = _mm512_load_ps((float*)&v2[i]);
+  vv1 = _mm512_mul_ps(vv1, vv2); 
+  outval += (ofloat)_mm512_reduce_add_ps(vv1);
+  }
+#endif
+  for (i=ilast; i<n; i++) {
+    outval += v1[i]*v2[i];
+  }
+  return outval;
+} /* end SkyModelDot */
+
+/**
+ * Routine to get 2D dot product of two vectors 
+ * each element of ov is v1*s1 + v2*s2 + v3*s3, in double
+ * possibly with AVX & AVX512 implementation
+ * \param n   Number of elements
+ * \param v1  First vector
+ * \param v2  Second vector
+ * \param v3  Third vector
+ * \param s1  First scalar
+ * \param s2  Second scalar
+ * \param s3  Third scalar
+ * \param ov  output vector
+ */
+static inline void SkyModel2DDot (olong n, ofloat *v1, ofloat *v2, ofloat *v3, 
+			   ofloat s1, ofloat s2, ofloat s3,
+			   ofloat *ov) {
+  olong i, ilast;
+  double ds1, ds2, ds3;
+  /* AVX512=16 floats */
+#if HAVE_AVX512==1
+  v8df vv1, vv2, vv3, vs1, vs2, vs3;
+  v8sf vsp;
+  olong j;
+#elif HAVE_AVX==1
+  v4df vv1, vv2, vv3, vs1, vs2, vs3;
+  v4sf vsp;
+  olong j;
+#endif
+
+  if (n<=0) return;
+  ds1 = s1; ds2 = s2; ds3 = s3;
+  ilast = 0;
+  /* AVX512 double in blocks of 8 */
+#if HAVE_AVX512==1
+  for (i=0; i<n; i+=8) { 
+    if (ilast+8>n) break;
+    ilast = i+8;
+    vsp = _mm256_load_ps((float*)&v1[i]);
+    vv1 = _mm512_cvtps_pd(vsp);  /* to double */
+    vs1 = _mm512_set1_pd((double)s1);
+    vv1 = _mm512_mul_pd(vv1, vs1); 
+    vsp = _mm256_load_ps((float*)&v2[i]);
+    vv2 = _mm512_cvtps_pd(vsp);  /* to double */
+    vs2 = _mm512_set1_pd((double)s2);
+    vv1 = _mm512_fmadd_pd(vv2, vs2, vv1); 
+    vsp = _mm256_load_ps((float*)&v3[i]);
+    vv3 = _mm512_cvtps_pd(vsp);  /* to double */
+    vs3 = _mm512_set1_pd((double)s3);
+    vv1 = _mm512_fmadd_pd(vv3, vs3, vv1); 
+    vsp = _mm512_cvtpd_ps(vv1); /* to single precision */		       
+    _mm256_store_ps((float*)&ov[i], vsp);
+  }
+  /* rest as scalar */
+  /* AVX  double in blocks of 4 */
+#elif HAVE_AVX==1
+  for (i=0; i<n; i+=4) {
+    if (ilast+4>n) break;
+    ilast = i+4;
+    vsp = _mm_load_ps((float*)&v1[i]);
+    vv1 = _mm256_cvtps_pd(vsp);  /* to double */
+    vs1 = _mm256_set1_pd((double)s1);
+    vv1 = _mm256_mul_pd(vv1, vs1); 
+    vsp = _mm_load_ps((float*)&v2[i]);
+    vv2 = _mm256_cvtps_pd(vsp);  /* to double */
+    vs2 = _mm256_set1_pd((double)s2);
+    vv2 = _mm256_mul_pd(vv2, vs2); 
+    vv1 = _mm256_add_pd(vv1, vv2); 
+    vsp = _mm_load_ps((float*)&v3[i]);
+    vv3 = _mm256_cvtps_pd(vsp);  /* to double */
+    vs3 = _mm256_set1_pd((double)s3);
+    vv3 = _mm256_mul_pd(vv3, vs3); 
+    vv1 = _mm256_add_pd(vv1, vv3); 
+    vsp = _mm256_cvtpd_ps(vv1); /* to single precision */		       
+    _mm_store_ps((float*)&ov[i], vsp);
+  }
+  /* rest as scalar */
+#endif
+  for (i=ilast; i<n; i++) {
+    ov[i] = (ofloat)(v1[i]*ds1 + v2[i]*ds2 + v3[i]*ds3);
+  }
+  return;
+}/* end SkyModel2DDot */
+
+/**
+ * Routine to multiply vectors
+ * possibly with AVX implementation
+ * \param n   Number of elements
+ * \param v1  First vector
+ * \param v2  Second vector
+ * \param ov  output vector
+ */
+ static inline void SkyModelVMul (olong n, ofloat *v1, ofloat *v2, ofloat *ov) {
+  olong i, ilast;
+  ofloat outval=0.0;
+#if HAVE_AVX512==1
+  v16sf vv1, vv2;
+#elif HAVE_AVX==1
+  v8sf vv1, vv2;
+#endif
+
+  if (n<=0) return;
+  ilast = 0;
+  /* AVX512 in blocks of 16 */
+#if HAVE_AVX512==1
+  for (i=ilast; i<n; i+=16) {
+  if (ilast+16>n) break;
+  ilast = i+16;
+  vv1 = _mm512_load_ps((float*)&v1[i]);
+  vv2 = _mm512_load_ps((float*)&v2[i]);
+  vv1 = _mm512_mul_ps(vv1, vv2); 
+  _mm512_store_ps((float*)&ov[i], vv1);
+  }
+  /* rest as scalar */
+  /* AVX in blocks of 8 */
+#elif HAVE_AVX==1
+  for (i=ilast; i<n; i+=8) {
+  if (ilast+8>n) break;
+  ilast = i+8;
+  vv1 = _mm256_load_ps((float*)&v1[i]);
+  vv2 = _mm256_load_ps((float*)&v2[i]);
+  vv1 = _mm256_mul_ps(vv1, vv2); 
+  _mm256_store_ps((float*)&ov[i], vv1);
+  }
+  /* rest as scalar */
+#endif
+  for (i=ilast; i<n; i++) {
+    ov[i] = v1[i]*v2[i];
+  }
+  return;
+ } /* end SkyModelVMul */
+
 /**
  * Do Fourier transform using a DFT for a buffer of data.
  * Callable as thread
@@ -1786,12 +1981,23 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
   ofloat *visData, *ccData, *data, *fscale;
   ofloat modReal, modImag, logNuONu0;
   ofloat amp, arg, freq2, freqFact, wt=0.0, temp, fourpisq;
-#define FazArrSize 100  /* Size of the amp/phase/sine/cosine arrays */
+#define FazArrSize 256  /* Size of the amp/phase/sine/cosine arrays */
+#if HAVE_AVX512==1
+  __attribute__((aligned(32))) ofloat AmpArr[FazArrSize], FazArr[FazArrSize], CosArr[FazArrSize], SinArr[FazArrSize];
+  __attribute__((aligned(32))) ofloat ExpArg[FazArrSize], ExpVal[FazArrSize], ExpArg2[FazArrSize], ExpVal2[FazArrSize];
+  __attribute__((aligned(32))) ofloat VecL[FazArrSize], VecM[FazArrSize], VecN[FazArrSize];
+ #elif HAVE_AVX==1
+  __attribute__((aligned(32))) ofloat AmpArr[FazArrSize], FazArr[FazArrSize], CosArr[FazArrSize], SinArr[FazArrSize];
+  __attribute__((aligned(32))) ofloat ExpArg[FazArrSize], ExpVal[FazArrSize], ExpArg2[FazArrSize], ExpVal2[FazArrSize];
+  __attribute__((aligned(32))) ofloat VecL[FazArrSize], VecM[FazArrSize], VecN[FazArrSize];
+#else 
   ofloat AmpArr[FazArrSize], FazArr[FazArrSize], CosArr[FazArrSize], SinArr[FazArrSize];
-  ofloat ExpArg[FazArrSize],  ExpVal[FazArrSize], ExpArg2[FazArrSize], ExpVal2[FazArrSize];
+  ofloat ExpArg[FazArrSize], ExpVal[FazArrSize], ExpArg2[FazArrSize], ExpVal2[FazArrSize];
+  ofloat VecL[FazArrSize], VecM[FazArrSize], VecN[FazArrSize];
+#endif
   gboolean OK;
   olong it, jt, itcnt, ifq, itab, jtcnt, lim;
-  odouble tx, ty, tz, sumReal, sumImag, *freqArr, *freqIF;
+  odouble sumReal, sumImag, *freqArr, *freqIF;
   odouble u, v, w;
   gchar *routine = "ThreadSkyModelMFFTDFT";
 
@@ -1913,25 +2119,20 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	    for (iComp=it; iComp<lim; iComp++) {
 	      if (ccData[0]!=0.0) {  /* valid? */
 		AmpArr[itcnt] = ccData[0];
-		tx = ccData[1]*u;
-		ty = ccData[2]*v;
-		tz = ccData[3]*w;
-		FazArr[itcnt] = (tx + ty + tz);
-	      } else { /* end if valid */
-		FazArr[itcnt] = 0.0;
-		AmpArr[itcnt] = 0.0;
+		VecL[itcnt] = ccData[1];
+		VecM[itcnt] = ccData[2];
+		VecN[itcnt] = ccData[3];
+		itcnt++;          /* Count in buffers */
 	      }  /* end if valid */
 	      ccData += lcomp;  /* update pointer */
-	      itcnt++;          /* Count in amp/phase buffers */
 	    } /* end inner loop over components */
-
+	    /* Compute phases */
+	    SkyModel2DDot(itcnt, VecL, VecM, VecN, u, v, w, FazArr);
 	    /* Convert phases to sin/cos */
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
 	    /* Accumulate real and imaginary parts */
-	    for (jt=0; jt<itcnt; jt++) {
-	      sumReal += AmpArr[jt]*CosArr[jt];
-	      sumImag += AmpArr[jt]*SinArr[jt];
-	    }
+	    sumReal += SkyModelDot(itcnt, AmpArr, CosArr);
+	    sumImag += SkyModelDot(itcnt, AmpArr, SinArr);
 	  } /*end outer loop over components */
 	  break;
 	case OBIT_SkyModel_PointModTSpec:     /* Point + tabulated spectrum */
@@ -1941,15 +2142,10 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	    itcnt = 0;
 	    lim = MIN (mcomp, it+FazArrSize);
 	    for (iComp=it; iComp<lim; iComp++) {
-	      /* DEBUG
-	      if (((ccData-data)/lcomp)>=mcomp) {
-		fprintf (stderr, "Oh shit\n");
-	      }   END DEBUG */
 	      if (ccData[itab]!=0.0) {  /* valid? */
-		tx = ccData[1]*u;
-		ty = ccData[2]*v;
-		tz = ccData[3]*w;
-		FazArr[itcnt]  = (tx + ty + tz);
+		VecL[itcnt] = ccData[1];
+		VecM[itcnt] = ccData[2];
+		VecN[itcnt] = ccData[3];
 		ExpArg2[itcnt] = logNuONu0 * ccData[4];
 		AmpArr[itcnt]  = ccData[itab];
 		itcnt++;          /* Count in amp/phase buffers */
@@ -1957,16 +2153,18 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	      ccData += lcomp; jtcnt++; /* update pointer */
 	    } /* end inner loop over components */
 	    
+	    /* Compute phases */
+	    SkyModel2DDot(itcnt, VecL, VecM, VecN, u, v, w, FazArr);
 	    /* Convert phases to sin/cos */
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
 	    /* Evaluate spectral index */
 	    ObitExpVec(itcnt, ExpArg2, ExpVal2);
 	    /* Accumulate real and imaginary parts */
-	    for (jt=0; jt<itcnt; jt++) {
-	      AmpArr[jt] *= ExpVal2[jt];
-	      sumReal += AmpArr[jt]*CosArr[jt];
-	      sumImag += AmpArr[jt]*SinArr[jt];
-	    }
+	    /* Spectral index correction */
+	    SkyModelVMul(itcnt, AmpArr,  ExpVal2, AmpArr);
+	    /* Accumulate real and imaginary parts */
+	    sumReal += SkyModelDot(itcnt, AmpArr, CosArr);
+	    sumImag += SkyModelDot(itcnt, AmpArr, SinArr);
 	  } /*end outer loop over components */
 	  break;
 	case OBIT_SkyModel_GaussMod:     /* Gaussian on sky */
@@ -1979,26 +2177,27 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	      if (ccData[0]!=0.0) {  /* valid? */
 		amp = ccData[0];
 		arg = (ccData[4]*u*u + ccData[5]*v*v + ccData[6]*u*v);
-		tx = ccData[1]*u;
-		ty = ccData[2]*v;
-		tz = ccData[3]*w;
 		ExpArg[itcnt] = -arg;
-		FazArr[itcnt] = (tx + ty + tz);
 		AmpArr[itcnt] = amp;
+		VecL[itcnt] = ccData[1];
+		VecM[itcnt] = ccData[2];
+		VecN[itcnt] = ccData[3];
+		itcnt++;          /* Count in amp/phase buffers */
 	      } /* end if valid */
 	      ccData += lcomp;  /* update pointer */
-	      itcnt++;          /* Count in amp/phase buffers */
 	    }  /* end inner loop over components */
 	    
+	    /* Compute phases */
+	    SkyModel2DDot(itcnt, VecL, VecM, VecN, u, v, w, FazArr);
 	    /* Convert phases to sin/cos */
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
 	    /* Convert Gaussian exp arguments */
 	    ObitExpVec(itcnt, ExpArg, ExpVal);
+	    /* Gaussian correction */
+	    SkyModelVMul(itcnt, AmpArr,  ExpVal, AmpArr);
 	    /* Accumulate real and imaginary parts */
-	    for (jt=0; jt<itcnt; jt++) {
-	      sumReal += ExpVal[jt]*AmpArr[jt]*CosArr[jt];
-	      sumImag += ExpVal[jt]*AmpArr[jt]*SinArr[jt];
-	    }
+	    sumReal += SkyModelDot(itcnt, AmpArr, CosArr);
+	    sumImag += SkyModelDot(itcnt, AmpArr, SinArr);
 	  } /*end outer loop over components */
 	  break;
 	case OBIT_SkyModel_GaussModTSpec:     /* Gaussian on sky + tabulated spectrum*/
@@ -2011,31 +2210,25 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	      if (ccData[itab]!=0.0) {  /* valid? */
 		arg = (ccData[4]*u*u + ccData[5]*v*v + ccData[6]*u*v);
 		amp = ccData[itab];
-		tx = ccData[1]*u;
-		ty = ccData[2]*v;
-		tz = ccData[3]*w;
 		ExpArg[itcnt]  = arg;
-		FazArr[itcnt]  = (tx + ty + tz);
 		AmpArr[itcnt]  = amp;
 		ExpArg2[itcnt] = logNuONu0 * ccData[7];
+		VecL[itcnt] = ccData[1];
+		VecM[itcnt] = ccData[2];
+		VecN[itcnt] = ccData[3];
 		itcnt++;          /* Count in amp/phase buffers */
 	      } /* end if valid */
 	      ccData += lcomp;  /* update pointer */
 	    }  /* end inner loop over components */
 	    
+	    /* Compute phases */
+	    SkyModel2DDot(itcnt, VecL, VecM, VecN, u, v, w, FazArr);
 	    /* Convert phases to sin/cos */
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
-	    /* Convert Gaussian exp arguments */
-	    ObitExpVec(itcnt, ExpArg, ExpVal);
-	    /* Evaluate spectral index */
-	    ObitExpVec(itcnt, ExpArg2, ExpVal2);
 	    /* Accumulate real and imaginary parts */
-	    for (jt=0; jt<itcnt; jt++) {
-	      AmpArr[jt] *= ExpVal[jt]*ExpVal2[jt];
-	      sumReal += AmpArr[jt]*CosArr[jt];
-	      sumImag += AmpArr[jt]*SinArr[jt];
-	    }
-	  } /* end outer loop over components */
+	    sumReal += SkyModelDot(itcnt, AmpArr, CosArr);
+	    sumImag += SkyModelDot(itcnt, AmpArr, SinArr);
+	  } /*end outer loop over components */
 	  break;
 	case OBIT_SkyModel_USphereMod:    /* Uniform sphere */
 	  /* From the AIPSish QSPSUB.FOR  */
@@ -2047,23 +2240,22 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 		arg = sqrt(u*u+v*v) * ccData[4];
 		arg = MAX (arg, 0.1);
 		amp = ccData[0] * ((sin(arg)/(arg*arg*arg)) - cos(arg)/(arg*arg));
-		tx = ccData[1]*u;
-		ty = ccData[2]*v;
-		tz = ccData[3]*w;
-		FazArr[itcnt] = (tx + ty + tz);
 		AmpArr[itcnt] = amp;
+		VecL[itcnt] = ccData[1];
+		VecM[itcnt] = ccData[2];
+		VecN[itcnt] = ccData[3];
 		itcnt++;          /* Count in amp/phase buffers */
 	      } /* end if valid */
 	      ccData += lcomp;  /* update pointer */
-	    }  /* end inner ver components */
+	    }  /* end inner loop over components */
 	    
+	    /* Compute phases */
+	    SkyModel2DDot(itcnt, VecL, VecM, VecN, u, v, w, FazArr);
 	    /* Convert phases to sin/cos */
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
 	    /* Accumulate real and imaginary parts */
-	    for (jt=0; jt<itcnt; jt++) {
-	      sumReal += AmpArr[jt]*CosArr[jt];
-	      sumImag += AmpArr[jt]*SinArr[jt];
-	    }
+	    sumReal += SkyModelDot(itcnt, AmpArr, CosArr);
+	    sumImag += SkyModelDot(itcnt, AmpArr, SinArr);
 	  } /* end outer loop over components */
 	  break;
 	case OBIT_SkyModel_USphereModTSpec:    /* Uniform sphere + tabulated spectrum*/
@@ -2076,27 +2268,27 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 		arg = sqrt(u*u+v*v) * ccData[4];
 		arg = MAX (arg, 0.1);
 		amp = ccData[itab] * ((sin(arg)/(arg*arg*arg)) - cos(arg)/(arg*arg));
-		tx = ccData[1]*u;
-		ty = ccData[2]*v;
-		tz = ccData[3]*w;
-		FazArr[itcnt] = (tx + ty + tz);
 		AmpArr[itcnt] = amp;
 		ExpArg2[itcnt] = logNuONu0 * ccData[6];
+		VecL[itcnt] = ccData[1];
+		VecM[itcnt] = ccData[2];
+		VecN[itcnt] = ccData[3];
 		itcnt++;          /* Count in amp/phase buffers */
 	      } /* end if valid */
 	      ccData += lcomp;  /* update pointer */
 	    }  /* end inner loop over components */
 	    
+	    /* Compute phases */
+	    SkyModel2DDot(itcnt, VecL, VecM, VecN, u, v, w, FazArr);
 	    /* Convert phases to sin/cos */
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
 	    /* Evaluate spectral index */
 	    ObitExpVec(itcnt, ExpArg2, ExpVal2);
+	    /* Spectral index correction */
+	    SkyModelVMul(itcnt, AmpArr,  ExpVal2, AmpArr);
 	    /* Accumulate real and imaginary parts */
-	    for (jt=0; jt<itcnt; jt++) {
-	      AmpArr[jt] *= ExpVal2[jt];
-	      sumReal += AmpArr[jt]*CosArr[jt];
-	      sumImag += AmpArr[jt]*SinArr[jt];
-	    }
+	    sumReal += SkyModelDot(itcnt, AmpArr, CosArr);
+	    sumImag += SkyModelDot(itcnt, AmpArr, SinArr);
 	  } /* end outer loop over components */
 	  break;
 	case OBIT_SkyModel_expDiskMod:    /* Exponential disk  parameters 1/r0^2, 1/r0^3 */
@@ -2110,26 +2302,22 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 		if (arg>0.001*ccData[4]) 
 		       amp = ccData[0] * ccData[5] * powf(arg+ccData[4], -1.5);
 		else   amp = ccData[0];
-		tx = ccData[1]*u;
-		ty = ccData[2]*v;
-		tz = ccData[3]*w;
-		FazArr[itcnt] = (tx + ty + tz);
 		AmpArr[itcnt] = amp;
-	      } else { /* end if valid */
-		FazArr[itcnt] = 0.0;
-		AmpArr[itcnt] = 0.0;
+		VecL[itcnt] = ccData[1];
+		VecM[itcnt] = ccData[2];
+		VecN[itcnt] = ccData[3];
+		itcnt++;          /* Count in amp/phase buffers */
 	      } /* end if valid */
 	      ccData += lcomp;  /* update pointer */
-	      itcnt++;          /* Count in amp/phase buffers */
 	    }  /* end inner ver components */
 	    
+	    /* Compute phases */
+	    SkyModel2DDot(itcnt, VecL, VecM, VecN, u, v, w, FazArr);
 	    /* Convert phases to sin/cos */
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
 	    /* Accumulate real and imaginary parts */
-	    for (jt=0; jt<itcnt; jt++) {
-	      sumReal += AmpArr[jt]*CosArr[jt];
-	      sumImag += AmpArr[jt]*SinArr[jt];
-	    }
+	    sumReal += SkyModelDot(itcnt, AmpArr, CosArr);
+	    sumImag += SkyModelDot(itcnt, AmpArr, SinArr);
 	  } /* end outer loop over components */
 	  break;
 	case OBIT_SkyModel_expDiskModTSpec:    /* Exponential disk parameters 1/r0^2, 1/r0^3 + tabulated spectrum*/
@@ -2144,27 +2332,27 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 		if (arg>0.001*ccData[4]) 
 		       amp = ccData[itab] * ccData[5] * powf(arg+ccData[4], -1.5);
 		else   amp = ccData[itab];
-		tx = ccData[1]*u;
-		ty = ccData[2]*v;
-		tz = ccData[3]*w;
-		FazArr[itcnt] = (tx + ty + tz);
 		AmpArr[itcnt] = amp;
 		ExpArg2[itcnt] = logNuONu0 * ccData[6];
+		VecL[itcnt] = ccData[1];
+		VecM[itcnt] = ccData[2];
+		VecN[itcnt] = ccData[3];
 		itcnt++;          /* Count in amp/phase buffers */
 	      } /* end if valid */
 	      ccData += lcomp;  /* update pointer */
 	    }  /* end inner loop over components */
 	    
+	    /* Compute phases */
+	    SkyModel2DDot(itcnt, VecL, VecM, VecN, u, v, w, FazArr);
 	    /* Convert phases to sin/cos */
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
 	    /* Evaluate spectral index */
 	    ObitExpVec(itcnt, ExpArg2, ExpVal2);
+	    /* Spectral index correction */
+	    SkyModelVMul(itcnt, AmpArr,  ExpVal2, AmpArr);
 	    /* Accumulate real and imaginary parts */
-	    for (jt=0; jt<itcnt; jt++) {
-	      AmpArr[jt] *= ExpVal2[jt];
-	      sumReal += AmpArr[jt]*CosArr[jt];
-	      sumImag += AmpArr[jt]*SinArr[jt];
-	    }
+	    sumReal += SkyModelDot(itcnt, AmpArr, CosArr);
+	    sumImag += SkyModelDot(itcnt, AmpArr, SinArr);
 	  } /* end outer loop over components */
 	  break;
 	default:
@@ -3800,7 +3988,7 @@ ObitTableCC* ObitSkyModelMFgetPBCCTab (ObitSkyModelMF* in, ObitUV* uvdata,
   odouble Angle=0.0;
   gpointer fitArg=NULL;
   olong irow, row, i, iterm, nterm, offset, nSpec, tiver;
-  gchar keyword[12];
+  gchar keyword[20];
   gchar *routine = "ObitSkyModelMFgetPBCCTab";
 
   /* error checks */

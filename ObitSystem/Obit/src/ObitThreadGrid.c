@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014-2018                                          */
+/*;  Copyright (C) 2014-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -118,7 +118,7 @@ static gpointer ThreadGrid (gpointer args);
 static gpointer ThreadFlip (gpointer args);
 /** Private: swap/merge grids */
 static gpointer ThreadMerge (gpointer args);
-//** Private: pre data for gridding routine */
+/** Private: prep data for gridding routine */
 void fast_prep_grid(olong ivis, GridFuncArg *args);
 /** Private: inner gridding routine */
 void fast_grid(ofloat *grid, ofloat vis[2], olong iu, olong iv, olong lrow, 
@@ -126,6 +126,8 @@ void fast_grid(ofloat *grid, ofloat vis[2], olong iu, olong iv, olong lrow,
 /** Private: inner 7x7 (AVX) gridding routine */
 void fast_grid7(ofloat *grid, ofloat vis[2], olong iu, olong iv, olong lrow, 
 		olong nconv, ofloat *cu, ofloat *cv);
+/** Private: Rotate vis for facet */
+void fast_rot(olong ivis, ofloat uu, ofloat vv, ofloat ww, GridFuncArg *args);
 /* Round */
 static olong _lroundf(ofloat in)
 {
@@ -854,11 +856,12 @@ void ObitThreadGridGrid (ObitThreadGrid *grids)
     if (nDo==1) funcarg[iLoop]->ithread = -1;  /* Only one? */
     OK = ObitThreadIterator (thread, nDo, ThreadGrid, 
 			     (gpointer **)&funcarg[iLoop]);
+    if (!OK) break;
     if ((nDo==1) && (nThreads>1)) funcarg[iLoop]->ithread = iLoop;  /* reset if needed */
     nLeft -= nThreads;
   }
 
-  /* Check for problems
+  /* Check for problems 
      if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);*/
 } /* end ObitThreadGridGrid */
 
@@ -882,6 +885,7 @@ void  ObitThreadGridFlip (ObitThreadGrid *grids)
     if (nDo==1) funcarg[iLoop]->ithread = -1;  /* Only one? */
     OK = ObitThreadIterator (thread, nDo, ThreadFlip, 
 			     (gpointer **)&funcarg[iLoop]);
+    if (!OK) break;
     if ((nDo==1) && (nThreads>1)) funcarg[iLoop]->ithread = iLoop;  /* reset if needed */
     nLeft -= nThreads;
   }
@@ -889,7 +893,7 @@ void  ObitThreadGridFlip (ObitThreadGrid *grids)
   ObitThreadPoolFree (thread);  /* Free thread pool */
 
   /* Check for problems
-     if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);*/
+  if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);*/
   /* Really should clean up */
 } /* end ObitThreadGridFlip */
 
@@ -932,6 +936,7 @@ void ObitThreadGridMerge (ObitThreadGrid *grids)
      if (nIt==1) tmparg[iLoop]->ithread = -1;  /* Only one? */
      OK = ObitThreadIterator (thread, nIt, ThreadMerge, 
 			       (gpointer **)&tmparg[iLoop]);
+     if (!OK) break;
      if ((nDo==1) && (nThreads>1)) tmparg[iLoop]->ithread = iLoop;  /* reset if needed */
       nLeft -= nIt;
     }
@@ -1053,14 +1058,13 @@ static gpointer ThreadMerge (gpointer args)
   ofloat *grid        = largs->grid;
   ofloat *outGrid     = largs->outGrid->array;
   ofloat *gi, *go, czero[] = {0.0,0.0};
-  olong ny, vrow, iu, vs, ilrow, olrow, ncopy;
+  olong ny, vrow, iu, vs, ilrow, olrow;
 
   /* Zero output on first */
   if (largs->iGpI==0) ObitCArrayFill(largs->outGrid, czero);
 
   ilrow = 2*(1 + gridInfo->nx[ifacet]/2 + halfWidth);  /* length of input grid row */
   olrow = 2*(1 + gridInfo->nx[ifacet]/2);              /* length of output grid row */
-  ncopy = olrow*sizeof(ofloat);
   ny   = gridInfo->ny[ifacet];
   if (ny<0) goto done;
 
@@ -1268,19 +1272,13 @@ void fast_prep_grid(olong kvis, GridFuncArg *args)
   olong halfWidth    = gridInfo->convWidth/2;         // half width of convolution kernal
   olong fullWidth    = gridInfo->convWidth;           // full width of convolution kernal
   olong convNperCell = gridInfo->convNperCell;        // resolution of kernal
-  olong ichan, ivis, jvis, lrow, halfv, it, iphase, iu, iv;
+  olong ichan, ivis, jvis, halfv, it, iu, iv;
   ofloat *rot        = &gridInfo->rotUV[ifacet*9];
-  ofloat *shift      = &gridInfo->shift[ifacet*3];
   ofloat *convfn     = gridInfo->convfn;
   ofloat u,v,w, uu, vv, ww, maxBL2, minBL2, bmTaper, BL2, fact;
-  ofloat vr, vi, vw, vvr, vvi, phase, guardu, guardv, ftemp;
-  ofloat c, s, phaseSign, freqFact;
-  gdouble dshift[3], dphase, doTape;
-  gboolean want;
-  static const gdouble twopi = 2*G_PI;
-  static const gdouble itwopi = 1.0/(2*G_PI);
+  ofloat vr, vi, vw, guardu, guardv, ftemp, freqFact, phaseSign;
+  gboolean want, doTape;
 
-  lrow  = 2*(1 + gridInfo->nx[ifacet]/2 + halfWidth);  // length of grid row in floats
   eChan = MAX (eChan, bChan+1);  /* At least 1 channel */
   halfv = gridInfo->ny[ifacet]/2;
   maxBL2  = gridInfo->maxBL[ifacet]*gridInfo->maxBL[ifacet];
@@ -1292,7 +1290,6 @@ void fast_prep_grid(olong kvis, GridFuncArg *args)
   guardu = fabs(gridInfo->guardu[ifacet] / gridInfo->uscale[ifacet]);
   guardv = fabs(gridInfo->guardv[ifacet] / gridInfo->vscale[ifacet]);
 
-  dshift[0] = (gdouble)shift[0];  dshift[1] = (gdouble)shift[1];  dshift[2] = (gdouble)shift[2];
   ivis = kvis * gridInfo->lenvis; /* beginning of visibility */
   /*  Assume random parameters start with u,v,w */
   u = vis_in[ivis];
@@ -1302,22 +1299,24 @@ void fast_prep_grid(olong kvis, GridFuncArg *args)
   uu = u*rot[0] + v*rot[1] + w*rot[2];
   vv = u*rot[3] + v*rot[4] + w*rot[5];
   ww = u*rot[6] + v*rot[7] + w*rot[8];
-  /* Only gridding half plane, need to flip to other side? */
+  /* Rotate phases, set beam, leave vis in fwork1 */
+  fast_rot(ivis, uu,vv,ww,args);
+ /* Only gridding half plane, need to flip to other side? */
   if (uu<=0.0) {
     phaseSign = -1.0;
   } else { /* no flip */
     phaseSign = 1.0;
   }
-  /* loop over channels for position shift */
+  /* loop over channels  */
   for (ichan=bChan; ichan<eChan; ichan++) {
     freqFact = phaseSign * gridInfo->freqArr[ichan];
     u = uu * freqFact;  // Scale u,v,w to channel
     v = vv * freqFact;
     w = ww * freqFact;
     jvis = ivis + gridInfo->nrparm + ichan*3;
-    vvr = vis_in[jvis];
-    vvi = phaseSign*vis_in[jvis+1];   /* Conjugate if neg u */
-    vw  = vis_in[jvis+2];
+    vr = args->fwork1[(ichan-bChan)*2];
+    vi = args->fwork1[(ichan-bChan)*2+1];
+    vw = vis_in[jvis+2];
     /* Data valid? positive weight and within guardband */
     want = ((vw>0.) && (u<guardu) && (fabs(v)<guardv));
     /* Baseline limits */
@@ -1325,19 +1324,6 @@ void fast_prep_grid(olong kvis, GridFuncArg *args)
     if ((maxBL2>0) && want) want = want && maxBL2>BL2;
     if ((minBL2>0) && want) want = want && minBL2<BL2;
     if (want) {
-      /* If this a beam - don't bother shifting - replace data with (wt*1,0) */
-      if (!gridInfo->isBeam[ifacet]) {
-	/* real part of vis */
-	/* position shift in double, reduce range */
-	dphase =  (u*dshift[0] + v*dshift[1] + w*dshift[2]);
-	iphase = (olong)(dphase*itwopi);
-	phase  = (ofloat)(dphase - iphase * twopi);
-	ObitSinCosCalc (phase, &s, &c);
-	vr = c*vvr - s*vvi;
-	vi = s*vvr + c*vvi; 
-      } else {
-	vr = 1.0; vi = 0.0;
-      }
       /* Tapering? */
       if (doTape) {
 	/* Beam taper? */
@@ -1399,7 +1385,21 @@ void fast_prep_grid(olong kvis, GridFuncArg *args)
     } /* end invalid data */
   } /* end channel loop */
 } /* end fast_prep_grid */
-
+/* AVX512 =16 float vectors */
+#if HAVE_AVX512==1
+#include <immintrin.h>
+# define ALIGN64_BEG
+# define ALIGN64_END __attribute__((aligned(64)))
+typedef __m512  v16sf;
+typedef __m512i v16si;
+typedef __m512d v8df;
+typedef __mmask16  mask16;
+typedef ALIGN64_BEG union {
+  double    f[8];
+  long long i[8];
+  v8df      v;
+} ALIGN64_END V8DF;
+#endif 
 /** AVX implementation 8 floats in parallel */
 #if HAVE_AVX==1
 #include <immintrin.h>
@@ -1432,10 +1432,10 @@ typedef ALIGN32_BEG union {
 static const v4si _MASK3 = {0xffffffffffffffff, 0x00000000ffffffff};
 static const v4si _MASK4 = {0xffffffffffffffff, 0xffffffffffffffff};
 static const v8si _mask3 = {0xffffffffffffffff, 0x00000000ffffffff, 0x0000000000000000, 0x0000000000000000};
-static const v8si _mask6 = {0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x0000000000000000};
-static const v8si _mask7 = {0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x00000000ffffffff};
-static const v8sf _half  = {0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5}; /* 0.5 vector */
-static const v8sf _mhalf = {-0.5, -0.5,- 0.5, -0.5, -0.5, -0.5, -0.5, -0.5}; /* -0.5 vector */
+/*static const v8si _mask6 = {0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x0000000000000000};
+  static const v8si _mask7 = {0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0x00000000ffffffff};
+  static const v8sf _half  = {0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5};*/ /* 0.5 vector */
+/*static const v8sf _mhalf = {-0.5, -0.5,- 0.5, -0.5, -0.5, -0.5, -0.5, -0.5}; *//* -0.5 vector */
 static const v8sf _one   =  {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; /* 1 vector */
 
 /** 
@@ -1451,7 +1451,7 @@ static const v8sf _one   =  {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}; /* 1 vecto
  * \li   iuarr     first u cell (0-rel)
  * \li   ivarr     first v cell (0-rel)
 */
-void fast_prep_gridAVX(olong kvis, GridFuncArg *args)  
+void fast_prep_gridAVXbad(olong kvis, GridFuncArg *args)  
 {
   ObitThreadGridInfo *gridInfo = args->gridInfo;
   olong ifacet          = args->facet;
@@ -1473,7 +1473,7 @@ void fast_prep_gridAVX(olong kvis, GridFuncArg *args)
   ofloat *saves      = args->fwork2;
   ofloat *savec      = args->fwork3;
   ofloat *valid      = args->fwork2+gridInfo->nchan;
-  olong ichan, jchan, kchan, ivis, jvis, lrow, halfv, it, iphase;
+  olong ichan, jchan, kchan, ivis, jvis, halfv, it, iphase;
   olong ndone, iu, iv;
   ofloat u, v, w, uu, vv, ww, iscaleu, iscalev, ftemp, farr[8];
   ofloat vr, vi, tr, ti, tw, maxBL2, minBL2, bmTaper, BL2, fact;
@@ -1489,7 +1489,6 @@ void fast_prep_gridAVX(olong kvis, GridFuncArg *args)
   V8SF vout, vin, chu, chv, chw;
   v4sf v4t, v4out ;
 
-  lrow  = 2*(1 + gridInfo->nx[ifacet]/2 + halfWidth);  // length of grid row in floats
   eChan = MAX (eChan, bChan+1);  /* At least 1 channel */
   halfv = gridInfo->ny[ifacet]/2;
   iscaleu = 1.0 / gridInfo->uscale[ifacet];
@@ -1871,7 +1870,7 @@ void fast_prep_gridAVX(olong kvis, GridFuncArg *args)
       args->fwork1[2*ichan+1] = vi * tw;
     } /* end final channels */
   } /* end not a beam */
-} /* end fast_prep_grid */
+} /* end fast_prep_gridAVXbad */
 
 /** 
  * Fast AVX  gridding  only 7x7 implemented
@@ -1903,12 +1902,51 @@ void fast_grid(ofloat *grid, ofloat vis[2], olong iu, olong iv, olong lrow,
 void fast_grid7(ofloat *grid, ofloat vis[2], olong iu, olong iv, olong lrow, 
 		olong nconv,  ofloat *cu, ofloat *cv)  
 {
+#if HAVE_AVX512==1
+  v16sf vt, vcu, vt1, vt2, vcv, vs, vgrid, vconv;
+  mask16 msk16;
+  V8SF vtmp; 
+  int jv, addr, ia;
+#elif HAVE_AVX==1
   v8sf vt1, vt2, vcu1, vcu2, vcv, vs, vt, vgrid, vconv;
   V8SF vtmp; 
   int jv, addr, ia;
-
+#endif
   if (nconv<=0) return;
   if ((vis[0]==0.0) && (vis[1]==0.0)) return;
+  /* 16 float vectors */
+#if HAVE_AVX512==1
+  /* Load convolution kernals, copy pairs of values */
+  /* Have to do this the hard way */
+  vtmp.v = _mm256_loadu_ps(cu);
+ 
+  /* load u kernal vector in reverse order in pairs for r,i */
+  vcu   = _mm512_set_ps(0.0,       0.0,       vtmp.f[6], vtmp.f[6], vtmp.f[5], vtmp.f[5], vtmp.f[4], vtmp.f[4],
+			vtmp.f[3], vtmp.f[3], vtmp.f[2], vtmp.f[2], vtmp.f[1], vtmp.f[1], vtmp.f[0], vtmp.f[0]);
+
+  /* Create  vis vector */
+  vt1 = _mm512_set1_ps(vis[0]);   /* Real */
+  vt2 = _mm512_set1_ps(vis[1]);   /* Imaginary */
+  msk16 = _mm512_int2mask(0xaaaa); /* alternating mask */
+  vs  = _mm512_mask_blend_ps(msk16,vt1, vt2);   /* Vis, pairs of r,i */
+
+  ia = iv*lrow + iu*2;
+  /* Loop in v */
+  for (jv=0; jv<nconv; jv++) {
+    addr = ia;  /* Address of grid */
+    /* Load grid */
+    vgrid = _mm512_loadu_ps(&grid[addr]);
+    vcv   = _mm512_set1_ps(cv[jv]);
+    vconv = _mm512_mul_ps(vcu, vcv);  /* Convolution function */
+    /* Multiply vis by convolution fn, update grid  */
+    /*vt    = _mm512_mul_ps(vs, vconv);*/
+    /* Update  grid */
+    /*vgrid = _mm512_add_ps(vt, vgrid);*/
+    vgrid = _mm512_fmadd_ps(vs, vconv, vgrid);
+    _mm512_storeu_ps(&grid[addr], vgrid);
+   ia += lrow;
+  } /* end loop in v */
+#elif HAVE_AVX==1
   /* Load convolution kernals, copy pairs of values to first and second halves */
   /* Have to do this the hard way */
   vtmp.v = _mm256_loadu_ps(cu);
@@ -1945,6 +1983,7 @@ void fast_grid7(ofloat *grid, ofloat vis[2], olong iu, olong iv, olong lrow,
     _mm256_storeu_ps(&grid[addr], vgrid);
    ia += lrow;
   } /* end loop in v */
+#endif
 
   /* _mm_empty();  wait for operations to finish */
 } /* end fast_grid7 */
@@ -1987,3 +2026,152 @@ void fast_grid(ofloat *grid, ofloat vis[2], olong iu, olong iv, olong lrow,
   }  /* end v loop */
 } /* end fast_grid */
 #endif /* end c version */
+/** 
+ * Rotate phases for facet looping over channel *
+ * For beam facets replaces data with (1,0)
+ * Output vis stored in fwork1
+ * \param ivis   visibility number (0-rel)
+ * \param uu     facet u
+ * \param vv     facet v
+ * \param ww     facet w
+ * \param args   Threaded gridding function argument
+ * Saves values:
+ * \li   fwork1    Visibility array as (r,i)
+ * \li   cnvfnu    Address of u convolving vector
+ * \li   cnvfnv    Address of v convolving vector
+ * \li   iuarr     first u cell (0-rel)
+ * \li   ivarr     first v cell (0-rel)
+*/
+void fast_rot(olong ivis, ofloat uu, ofloat vv, ofloat ww, GridFuncArg *args)  
+{
+  ObitThreadGridInfo *gridInfo = args->gridInfo;
+  olong ifacet          = args->facet;
+  ofloat *vis_in        = args->data;
+  olong  bChan          = args->bChan;
+  olong  eChan          = args->eChan;
+  olong ichan, jvis, iphase;
+  ofloat *shift      = &gridInfo->shift[ifacet*3];
+  ofloat u,v,w;
+  ofloat vr, vi, vvr, vvi;
+  ofloat phaseSign, freqFact;
+  gdouble dshift[3], dphase;
+  olong ilast, num;
+  static const gdouble twopi = 2*G_PI;
+  static const gdouble itwopi = 1.0/(2*G_PI);
+#if HAVE_AVX512==1
+  olong i1, j1;
+  v8df vec_u, vec_v, vec_w;
+  V8DF vec_dPhase, vec_work1, vec_work2;
+  v8sf vec_sign;
+  V8SF vec_frqFact;
+  v16sf vec_vr, vec_vi, vec_s, vec_c, vec_t1, vec_t2, vec_t3, vec_sign2;
+  v16si vindex, oindex;
+#endif
+
+  eChan = MAX (eChan, bChan+1);  /* At least 1 channel */
+
+  /* Beam or image? */
+  if (gridInfo->isBeam[ifacet]) {
+    /* Beam, only (1,0) */
+    for (ichan=bChan; ichan<eChan; ichan++) {
+      args->fwork1[(ichan-bChan)*2]   = 1.0;
+      args->fwork1[(ichan-bChan)*2+1] = 0.0;
+    } /* end beam channel loop */
+  } else {
+    /* image */
+    dshift[0] = (gdouble)shift[0];  dshift[1] = (gdouble)shift[1];  dshift[2] = (gdouble)shift[2];
+    /* Only gridding half plane, need to flip to other side? */
+    if (uu<=0.0) phaseSign = -1.0;
+    else         phaseSign = +1.0;
+
+    /* Loop over channels putting phases in args->fwork3*/
+  ilast = bChan;  /* where to start */
+#if HAVE_AVX512==1
+  /* Double precision so blocks of 8 */
+  vec_sign = _mm256_set1_ps((float)phaseSign);
+  vec_u    = _mm512_set1_pd((double)(uu*dshift[0]));
+  vec_v    = _mm512_set1_pd((double)(vv*dshift[1]));
+  vec_w    = _mm512_set1_pd((double)(ww*dshift[2]));
+  num = 0;
+  for (i1=bChan; i1<eChan; i1+=8) {
+    if (ilast+8>=eChan) break;  /* only full blocks of 8 */
+    ilast += 8;
+    vec_frqFact.v = _mm256_loadu_ps(&gridInfo->freqArr[i1]);
+    vec_frqFact.v = _mm256_mul_ps(vec_frqFact.v, vec_sign);
+    vec_work1.v = _mm512_set_pd((double)vec_frqFact.f[7], (double)vec_frqFact.f[6],
+				(double)vec_frqFact.f[5], (double)vec_frqFact.f[4],
+				(double)vec_frqFact.f[3], (double)vec_frqFact.f[2],
+				(double)vec_frqFact.f[1], (double)vec_frqFact.f[0]);
+    vec_dPhase.v= _mm512_mul_pd(vec_work1.v, vec_u);
+    vec_work2.v = _mm512_mul_pd(vec_work1.v, vec_v);
+    vec_dPhase.v= _mm512_add_pd(vec_work2.v, vec_dPhase.v);
+    vec_work2.v = _mm512_mul_pd(vec_work1.v, vec_w);
+    vec_dPhase.v= _mm512_add_pd(vec_work2.v, vec_dPhase.v);
+    /* Restrict range and convert to single */
+    for (j1=0; j1<8; j1++) {
+      dphase =  vec_dPhase.f[j1];
+      iphase = (olong)(dphase*itwopi);
+      args->fwork1[i1+j1-bChan] = (ofloat)(dphase - iphase * twopi);
+      num += 1;
+   }
+  } /* end loop */
+    /* rest done in c part */
+#endif
+  /* c version */
+    for (ichan=ilast; ichan<eChan; ichan++) {
+      freqFact = phaseSign * gridInfo->freqArr[ichan];
+      u = uu * freqFact;  // Scale u,v,w to channel
+      v = vv * freqFact;
+      w = ww * freqFact;
+      /* position shift in double, reduce range */
+      dphase =  (u*dshift[0] + v*dshift[1] + w*dshift[2]);
+      iphase = (olong)(dphase*itwopi);
+      args->fwork1[ichan-bChan] = (ofloat)(dphase - iphase * twopi);
+      num += 1;
+    } /* end phase channel loop */
+
+   /* Sin/Cos */
+   ObitSinCosVec(num, args->fwork1, args->fwork2, args->fwork3);
+
+   /* Loop over channels rotating */
+   ilast = bChan;  /* where to start */
+#if HAVE_AVX512==1
+   /* AVX512 version */
+   /* single precision so blocks of 16 */
+   vindex = _mm512_set_epi32(48,45,42,39,36,33,30,27,24,21,18,15,12,9,3,0);
+   oindex = _mm512_set_epi32(30,28,26,24,22,20,18,16,14,12,10, 8, 6,4,2,0);
+   vec_sign2 = _mm512_set1_ps((float)phaseSign);
+  for (i1=bChan; i1<eChan; i1+=16) {
+     if (ilast+16>=eChan) break;  /* only full blocks of 16 */
+     ilast += 16;
+     jvis = ivis + gridInfo->nrparm + i1*3;
+     vec_s = _mm512_loadu_ps(&args->fwork2[i1-bChan]);
+     vec_c = _mm512_loadu_ps(&args->fwork3[i1-bChan]);
+     /* load vis via gather  */
+     vec_vr = _mm512_i32gather_ps(vindex, (void const*)(&vis_in[jvis]),   4);
+     vec_vi = _mm512_i32gather_ps(vindex, (void const*)(&vis_in[jvis+1]), 4);
+     vec_vi = _mm512_mul_ps(vec_sign2, vec_vi); /* conjugate if needed */
+     /* rotate */
+     vec_t1 = _mm512_mul_ps(vec_vr, vec_c);
+     vec_t2 = _mm512_mul_ps(vec_vi, vec_s);
+     vec_t3 = _mm512_sub_ps(vec_t1, vec_t2); /* values for vec_vr */
+     vec_t1 = _mm512_mul_ps(vec_vr, vec_s);
+     vec_t2 = _mm512_mul_ps(vec_vi, vec_c);
+     vec_vi = _mm512_add_ps(vec_t1, vec_t2);
+     /* Store via scatter in fwork1 */
+     _mm512_i32scatter_ps((void*)(&args->fwork1[(i1-bChan)*2]),   oindex, vec_t3, 4);
+     _mm512_i32scatter_ps((void*)(&args->fwork1[(i1-bChan)*2+1]), oindex, vec_vi, 4);
+  } /* end loop */
+#endif
+   /* c version */
+    for (ichan=ilast; ichan<eChan; ichan++) {
+      jvis = ivis + gridInfo->nrparm + ichan*3;
+      vvr = vis_in[jvis];
+      vvi = vis_in[jvis+1]*phaseSign;  /* conjugate if needed */
+      vr = vvr*args->fwork3[ichan-bChan] - vvi*args->fwork2[ichan-bChan];
+      vi = vvr*args->fwork2[ichan-bChan] + vvi*args->fwork3[ichan-bChan];
+      args->fwork1[(ichan-bChan)*2]   = vr;
+      args->fwork1[(ichan-bChan)*2+1] = vi;
+    }
+  } /* end beam or image */
+ } /* end fast_rot */

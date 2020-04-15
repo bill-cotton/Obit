@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2014                                          */
+/*;  Copyright (C) 2011-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -52,7 +52,7 @@ ofloat ObitExpCalc(ofloat arg)
 } /* end ObitExpCalc */
 
 /** 
- * Calculate exp(x) of vector of args uses AVX or SSE implementation if available
+ * Calculate exp(x) of vector of args uses AVX AVX512 or SSE implementation if available
  * \param n      Number of elements to process
  * \param argarr array of args
  * \param exparr [out] exp(arg)
@@ -60,7 +60,10 @@ ofloat ObitExpCalc(ofloat arg)
 void ObitExpVec(olong n, ofloat *argarr, ofloat *exparr)
 {
   olong i, nleft;
-#if   HAVE_AVX==1
+#if   HAVE_AVX512==1
+  olong ndo;
+  CV16SF varg, vexp;
+#elif   HAVE_AVX==1
   olong ndo;
   CV8SF varg, vexp;
 #elif HAVE_SSE==1
@@ -73,8 +76,23 @@ void ObitExpVec(olong n, ofloat *argarr, ofloat *exparr)
   nleft = n;   /* Number left to do */
   i     = 0;   /* None done yet */
 
+ /** AVX512 implementation */
+#if HAVE_AVX512==1
+  /* Loop in groups of 16 */
+  ndo = nleft - nleft%16;  /* Only full groups of 16 */
+  for (i=0; i<ndo; i+=16) {
+    varg.v = _mm512_loadu_ps(argarr); argarr += 16;
+    vexp.v = avx512_exp_ps(varg.v);
+    _mm512_storeu_ps(exparr, vexp.v); exparr += 16;
+ } /* end AVX512 loop */
+  /* Remainders, zero fill */
+  nleft = n-i;  /* How many left? */
+  for (i=0; i<nleft; i++) varg.f[i] = *argarr++;
+  for (i=nleft; i<16; i++) varg.f[i] = 0.0;
+  vexp.v = avx512_exp_ps(varg.v);
+  for (i=0; i<nleft; i++) *exparr++ = vexp.f[i];
  /** avx implementation */
-#if HAVE_AVX==1
+#elif HAVE_AVX==1
   /* Loop in groups of 8 */
   ndo = nleft - nleft%8;  /* Only full groups of 8 */
   for (i=0; i<ndo; i+=8) {

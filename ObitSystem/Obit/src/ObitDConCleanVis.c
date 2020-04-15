@@ -1,12 +1,12 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2019                                          */
+/*;  Copyright (C) 2005-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
 /*;  published by the Free Software Foundation; either version 2 of   */
-/*;  the License, or (at your op2tion) any later version.              */
+/*;  the License, or (at your op2tion) any later version.             */
 /*;                                                                   */
 /*;  This program is distributed in the hope that it will be useful,  */
 /*;  but WITHOUT ANY WARRANTY; without even the implied warranty of   */
@@ -573,7 +573,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   ObitDConCleanVis *in;
   ObitFArray **pixarray=NULL;
   gboolean done, fin=TRUE, quit=FALSE, doSub, bail, doMore, moreClean, notDone;
-  gboolean redo, isBeamCor;
+  gboolean redo, isBeamCor, doAutoCen=FALSE;
   olong jtemp, i, *startCC=NULL, *newCC=NULL, count, maxAutoWinLoop, ifld;
   olong redoCnt=0, damnCnt=0, lastIter, lastFld, NoPixelCnt;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -607,6 +607,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   /* Get parameters */
   inClass->ObitDConGetParms(inn, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
+  doAutoCen = in->autoCen<1.0e10;  /* AutoCentering? */
 
   /* Recenter any autoCenter windows is needed */
   if (in->doRecenter) ObitDConCleanVisRecenter (in, in->imager->uvdata, err);
@@ -703,6 +704,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
     /* Does the peak flux density exceed the autocenter threshold */
+    doAutoCen = doAutoCen || (fabs (in->peakFlux)>in->autoCen);
     if (fabs (in->peakFlux) > in->autoCen) {
       for (i=0; i<in->nfield; i++) {
 	in->minFlux[i] = MAX (0.09*in->autoCen, in->minFlux[i]);
@@ -714,9 +716,6 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
       Obit_log_error(err, OBIT_InfoErr,"Truncating CLEAN at %g Jy for strong source processing",
 		     in->minFlux[0]);
     } /* End autoCenter test*/
-
-    /* If no cleaning really requested don't restore */
-    bail = bail || (fabs (in->peakFlux) < in->minFlux[0]);
 
     if (err->prtLv>1) ObitErrLog(err);  /* Progress Report */
     else ObitErrClear(err);
@@ -879,7 +878,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   pixarray = inClass->KillPxArray (in, pixarray);
 
   /* Make final residuals */
-  if ((!bail) && (in->niter>0)) {
+  if ((!bail) && (!doAutoCen) && (in->niter>0)) {
     /* Make all stale fields */
     for (ifld=0; ifld<in->nfield; ifld++) in->currentFields[ifld] = ifld+1;
     in->currentFields[ifld] = 0;
@@ -1243,7 +1242,7 @@ void ObitDConCleanVisSub(ObitDConCleanVis *in, ObitErr *err)
  */
 static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
 {
-  olong i, j, best, lastBest=-1, loopCheck, indx, NumPar;
+  olong i, j, best=-1, lastBest=-1, loopCheck, indx, NumPar;
   olong *fldList=NULL,*fldList2=NULL;
   gboolean doBeam=FALSE, done=TRUE, found, OK;
   ofloat sumwts, autoCenFlux=0.0;
@@ -1282,7 +1281,7 @@ static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
     done = (in->cleanable[0] <= in->minFlux[0]) || 
       ((in->Pixels->maxResid <= in->minFlux[0]) && (in->Pixels->currentIter>1)) || (!OK);
     /* Tell if stopping */
-    if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium");
+    if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium1");
     
     in->peakFlux = MAX (in->peakFlux, in->maxAbsRes[0]);
     return done;
@@ -1307,7 +1306,7 @@ static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
     done = inClass->SelectTaper (in, in->fresh, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, done);
     /* Tell if stopping */
-    if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium");
+    if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium2");
     if (done) return done;
     
     /* Make sure all fields initialized */
@@ -1355,7 +1354,7 @@ static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
     done = inClass->SelectTaper (in, in->fresh, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, done);
     /* Tell if stopping */
-    if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium");
+    if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium3");
     if (done) return done;
   }
   
@@ -1418,6 +1417,7 @@ static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
 	in->quality[fldList[i]-1]   = 0.0;
 	in->cleanable[fldList[i]-1] = -in->cleanable[fldList[i]-1];
       }
+      in->fresh[fldList[i]-1] = TRUE;  /* just to be sure */
     }
     
     /* See if all done */
@@ -1426,7 +1426,7 @@ static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
       if (in->maxAbsRes[i] > in->minFlux[i]) done = FALSE;
     }
     /* Tell if stopping */
-    if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium");
+    if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium4");
     if (done) {ObitMemFree(fldList); ObitMemFree(fldList2); return done;} 
 
     /* Which fields ready to CLEAN? 
@@ -1438,7 +1438,7 @@ static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
 
     /* No best means we're done */
     /* Tell if stopping */
-    if ((best<0) && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium");
+    if ((best<0) && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium5");
     if (best<0) return TRUE;
 
     /* Don't loop if best not changing - it may not be cleanable */
@@ -1488,12 +1488,25 @@ static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
     in->peakFlux = MAX (in->peakFlux, in->maxAbsRes[i]);
   }
 
-  /* Make sure ther is a list of fields */
+  /* Make sure there is a list of fields */
   if (fldList[0]<=0) inClass->OrderClean (in, in->fresh, autoCenFlux, fldList);
 
+  /* trap premature termination if autoCen */
+  if ((autoCenFlux>0.0) && (fldList[0]<=0) && (best>0) && (best<=in->nfield) &&
+      (in->maxAbsRes[fldList[best]-1] <= in->minFlux[fldList[best]-1])) {
+    fldList[0] = best+1;
+    if (err->prtLv>=3) {
+       Obit_log_error(err, OBIT_InfoWarn,
+		     "%s: best %d maxAbsRes %f cleanable %f",
+		      routine, best, in->maxAbsRes[fldList[best]-1], 
+		      in->cleanable[fldList[best]-1]);
+    }
+ }
+
   /* We're done if best single resolution field has maxAbsRes<minFlux */
-  done = (in->mosaic->numBeamTapes<=1) && 
-    (in->maxAbsRes[fldList[0]-1] <= in->minFlux[fldList[0]-1]);
+  done = fldList[0]<=0;
+  done = done || ((in->mosaic->numBeamTapes<=1) && 
+		  (in->maxAbsRes[fldList[0]-1] <= in->minFlux[fldList[0]-1]));
 
   /* Save list to clean, count */
   in->numCurrentField = 0;
@@ -1506,12 +1519,19 @@ static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
   }
   in->currentFields[i] = 0;
  
+  /* Tell if stopping */
+  if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium6");
+  if (done && (err->prtLv>=3)) {
+      Obit_log_error(err, OBIT_InfoWarn,
+		     "%s: best %d maxAbsRes %f cleanable %f",
+		     routine, best, in->maxAbsRes[fldList[best]-1], 
+		     in->cleanable[fldList[best]-1]);
+    }
+
   /* cleanup */
   fldList = ObitMemFree(fldList);
   fldList2 = ObitMemFree(fldList2);
 
-  /* Tell if stopping */
-  if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium");
   return done;
 } /* end PickNext2D */
 
@@ -1566,7 +1586,7 @@ static gboolean PickNext3D(ObitDConCleanVis *in, ObitErr *err)
     done = (in->cleanable[0] <= in->minFlux[0]) || 
       ((in->Pixels->maxResid <= in->minFlux[0]) && (in->Pixels->currentIter>1)) || (!OK);
     /* Tell if stopping */
-    if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium");
+    if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium7");
 
     in->peakFlux = MAX (in->peakFlux, in->maxAbsRes[0]);
     return done;
@@ -1611,7 +1631,7 @@ static gboolean PickNext3D(ObitDConCleanVis *in, ObitErr *err)
 
     /* Check if reached max number of components */
     /* Tell if stopping */
-    if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium");
+    if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium8");
     if (in->Pixels->currentIter >= in->Pixels->niter) return done;
     
     /* Ignore fields already known to be finished or low SNR, see if all done */
@@ -1631,7 +1651,7 @@ static gboolean PickNext3D(ObitDConCleanVis *in, ObitErr *err)
     } /* end loop over fields */
     /* anything left? */
     /* Tell if stopping */
-    if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium");
+    if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium9");
     if (done) {ObitMemFree(fldList); return done;} 
     
     /* Find current estimates best and second best field field */
@@ -1639,7 +1659,7 @@ static gboolean PickNext3D(ObitDConCleanVis *in, ObitErr *err)
 
     /* No best means we're done */
     /* Tell if stopping */
-    if ((best<0) && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium");
+    if ((best<0) && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium10");
     if (best<0) return TRUE;
     
     /* Verify that it's still best which may require iteration */
@@ -1714,7 +1734,7 @@ static gboolean PickNext3D(ObitDConCleanVis *in, ObitErr *err)
     done = inClass->SelectTaper (in, in->fresh, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, done);
     /* Tell if stopping */
-    if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium");
+    if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium11");
     if (done) return done;
 
     inClass->WhosBest (in, &best, &second);
@@ -1748,7 +1768,7 @@ static gboolean PickNext3D(ObitDConCleanVis *in, ObitErr *err)
   fldList = ObitMemFree(fldList);
 
   /* Tell if stopping */
-  if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium");
+  if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium12");
   return done;
 } /* end PickNext3D */
 
@@ -3474,7 +3494,7 @@ static void WhosBest2D (ObitDConCleanVis *in, ofloat autoCenFlux,
 			olong *bbest)
 {
   ofloat testBest;
-  olong i, best;
+  olong i, best, isShift;
   gboolean OK, isAuto=FALSE;
 
   /* Find absolute best */
@@ -3483,6 +3503,8 @@ static void WhosBest2D (ObitDConCleanVis *in, ofloat autoCenFlux,
   for (i=0; i<in->nfield; i++) {
 
     /* Ignore shift fields if can still use autoCentered fields */
+    isShift = in->mosaic->isShift[i];
+    if ((isShift>0) && (in->cleanable[isShift-1]>(0.1*autoCenFlux))) continue;
     if ((in->mosaic->isShift[i]>0) && 
 	(in->maxAbsRes[in->mosaic->isShift[i]-1]>0.1*autoCenFlux)) continue;
 
@@ -3633,9 +3655,9 @@ static void OrderImage (ObitDConCleanVis *in, gboolean *fresh,
     best    = -1;
     done = TRUE;
     for (i=0; i<n; i++) {
-      /* Ignore autoCen facets below threshold */
+      /* Ignore autoCen facets below threshold 
       if ((in->mosaic->isAuto[i]>=0) && (in->maxAbsRes[i]<0.1*autoCenFlux)) 
-	continue;
+	continue;*/
     
       /* Ignore shifted facets above threshold */
       if ((in->mosaic->isShift[i]>=0) && (in->maxAbsRes[i]>0.1*autoCenFlux)) 
@@ -3745,7 +3767,7 @@ static void OrderClean (ObitDConCleanVis *in, gboolean *fresh,
     /* Ignore shifted fields with cleanable > 0.1*autoCenFlux */
     isShift = in->mosaic->isShift[i];
     if ((isShift>0) && (in->cleanable[isShift-1]>(0.1*autoCenFlux))) 
-      OK = FALSE;
+      OK = FALSE; 
  
     /* Ignore autoCenter fields with cleanable < 0.1*autoCenFlux */
     if ((in->mosaic->isAuto[i]>=0) && (in->cleanable[i]<(0.1*autoCenFlux))) 
@@ -3779,7 +3801,7 @@ static void OrderClean (ObitDConCleanVis *in, gboolean *fresh,
     if ((isShift>0) && (in->cleanable[isShift-1]>(0.1*autoCenFlux))) 
       OK = FALSE;
 
-    /* Ignore autoCenter fields with cleanable < (0.1*autoCenFlux) */
+    /* Ignore autoCenter fields with cleanable < (0.1*autoCenFlux)  */
     if ((in->mosaic->isAuto[i]>=0) && (in->cleanable[i]<(0.1*autoCenFlux))) 
       OK = FALSE;
     
@@ -3815,7 +3837,7 @@ static void OrderClean (ObitDConCleanVis *in, gboolean *fresh,
 
       /* Ignore autoCenter fields with cleanable < 0.1*autoCenFlux */
       if ((in->mosaic->isAuto[i]>=0) && (in->cleanable[i]<(0.1*autoCenFlux)))
-	continue;
+	continue; 
     
       if ((tmpQual[i]>maxQual) &&                    /* Best so far */
 	  (!isAuto || (in->mosaic->isAuto[i]>=0))) { /* Only autoCenter if isAuto */

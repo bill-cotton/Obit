@@ -1,6 +1,6 @@
 /* $Id: $ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2018                                               */
+/*;  Copyright (C) 2018,2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -27,7 +27,8 @@
 /*--------------------------------------------------------------------*/
 /** 
  * Utility package for  access to 3rd party sse/avx vector functions
- * Avalibility depends on compiler settings HAVE_SSE and HAVE_AVX
+ * Avalibility depends on compiler settings HAVE_SSE and 
+ * HAVE_AVX, HAVE_AVX2 or HAVE_AVX512
  * as well as the actual implementation of sse and avx
  */
 
@@ -35,10 +36,32 @@
 #define OBITVECFUNC_H 
 /* gcc or icc */
 # define ALIGN32_BEG
-# define ALIGN32_END __attribute__((aligned(32)))
+# define ALIGN32_END __attribute__((packed,aligned(32)))
+
+/** AVX512 implementation 16 floats in parallel */
+#if HAVE_AVX512==1
+#include <immintrin.h>
+/* Union allowing c interface */
+typedef __m512  v16sf; // vector of 8 float (avx)
+typedef ALIGN32_BEG union {
+  float f[16];
+  int   i[16];
+  v16sf   v;
+} ALIGN32_END CV16SF;
+/** Natural log of array of 16 floats */
+v16sf avx512_log_ps(v16sf x);
+/** Exponential of array of 16 floats  */
+v16sf avx512_exp_ps(v16sf x);
+/** Sine of array of 16 floats  */
+v16sf avx512_sin_ps(v16sf x);
+/** Cosine of array of 16 floats  */
+v16sf avx512_cos_ps(v16sf x);
+/** Sine and Cosine of array of 16 floats  */
+void avx512_sincos_ps(v16sf x, v16sf *s, v16sf *c);
+/* end HAVE_AVX512 */
 
 /** AVX implementation 8 floats in parallel */
-#if HAVE_AVX==1
+#elif HAVE_AVX==1
 #include <immintrin.h>
 /* Union allowing c interface */
 typedef __m256  V8SF; // vector of 8 float (avx)
