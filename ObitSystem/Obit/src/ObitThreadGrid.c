@@ -290,7 +290,7 @@ void ObitThreadGridSetupBase (ObitThreadGrid *in, ObitUV *UVin,
 
   /* Initialize Function args */
   funcarg    = (GridFuncArg**)in->GridInfo->thArgs;
-  wrksize    = nChan; /* Number of channels */
+  wrksize    = nChan+15; /* Number of channels add some slop */
   for (iTh=0; iTh<nGrid; iTh++) {
     funcarg[iTh] = g_malloc(sizeof(GridFuncArg));
     funcarg[iTh]->ithread  = iTh;
@@ -2086,13 +2086,13 @@ void fast_rot(olong ivis, ofloat uu, ofloat vv, ofloat ww, GridFuncArg *args)
 
     /* Loop over channels putting phases in args->fwork3*/
   ilast = bChan;  /* where to start */
+  num   = 0; /* How many in buffer */
 #if HAVE_AVX512==1
   /* Double precision so blocks of 8 */
   vec_sign = _mm256_set1_ps((float)phaseSign);
   vec_u    = _mm512_set1_pd((double)(uu*dshift[0]));
   vec_v    = _mm512_set1_pd((double)(vv*dshift[1]));
   vec_w    = _mm512_set1_pd((double)(ww*dshift[2]));
-  num = 0;
   for (i1=bChan; i1<eChan; i1+=8) {
     if (ilast+8>=eChan) break;  /* only full blocks of 8 */
     ilast += 8;

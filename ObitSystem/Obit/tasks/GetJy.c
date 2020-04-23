@@ -81,6 +81,8 @@ void UpdateSN (ObitTableSN* SNTab, olong maxIF, olong maxAnt, olong maxSou,
 	       olong *offCalSou, ofloat *oldFlux, ofloat *souFlux,ObitErr* err);
 /* Determine alpha median average  */
 static ofloat MedianAvg (ollong n, ofloat *value, ofloat alpha);
+/* Determine straight average  */
+static ofloat StraightAvg (ollong n, ofloat *value);
 
 /* Determine sigma for Median */
 static ofloat MedianSigma (ollong n, ofloat *value, ofloat mean, ofloat alpha);
@@ -1031,12 +1033,20 @@ void  ReadSN (ObitTableSN* SNTab, ObitUV *inData, olong CalSou,
 	  nmedn = offCnt[offset+iif];
 	  offSum[offset+iif] = MedianAvg(nmedn, store1[offset+iif], alpha);
 	  offCnt[offset+iif] = 1;
-	} else offCnt[offset+iif] = 0;
+	} else {
+	  nmedn = offCnt[offset+iif];
+	  offSum[offset+iif] = StraightAvg(nmedn, store1[offset+iif]);
+	  offCnt[offset+iif] = MIN(1,offCnt[offset+iif]);
+	}
 	if ((numPol>1) && (offCnt2[offset+iif]>3)) {
 	  nmedn = offCnt2[offset+iif];
 	  offSum2[offset+iif] = MedianAvg(nmedn, store2[offset+iif], alpha);
 	  offCnt2[offset+iif] = 1;
-	} else offCnt2[offset+iif] = 0;
+	} else {
+	  nmedn = offCnt2[offset+iif];
+	  offSum2[offset+iif] = StraightAvg(nmedn, store2[offset+iif]);
+	  offCnt2[offset+iif] =  MIN(1,offCnt2[offset+iif]);
+	}
       } /* end IF loop */
     } /* end antenna loop */
   } /* end source loop */
@@ -1175,6 +1185,7 @@ void DetFlux (olong maxIF, olong maxAnt, olong maxSou, ofloat *offCnt, ofloat *o
       fluxd = 0.0;
       rms   = -1.0;
       if (count>3) fluxd = MedianAvg(count, store, alpha);
+      else fluxd = StraightAvg(count, store);
       if (count>5) rms   = MedianSigma(count, store, fluxd, alpha);
       /* Save values */
       souFlux[offset2+iif] = fluxd;
@@ -1428,6 +1439,31 @@ static ofloat MedianAvg (ollong n, ofloat *value, ofloat alpha)
    
   return out;
 } /* end MedianAvg */
+
+/**
+ * Determine arithmetic average of an ofloat array
+ * \param n       Number of points
+ * \param value   Array of values, sorted on return
+ * \return alpha median average, fblank if cannot determine
+ */
+static ofloat StraightAvg (ollong n, ofloat *value)
+{
+  ofloat out=0.0;
+  ofloat fblank = ObitMagicF();
+  ofloat sum;
+  olong i, count;
+
+  if (n<=0) return out;
+
+  sum = 0.0; count = 0;
+  for (i=0; i<n; i++) {
+    sum += value[i]; count++;
+  }
+
+  if (count>0) out = sum / count;
+   
+  return out;
+} /* end StraightAvg */
 
 /**
  * Determine robust RMS value of a ofloat array about mean

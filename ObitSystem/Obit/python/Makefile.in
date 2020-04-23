@@ -98,7 +98,8 @@ $(TARGETS): setupdata.py $(MYLIBS)
 #	cat *.inc >> Obit.i
 #	$(SWIG) -Wall -python -I$(SWIGLIB) -I$(SWIGLIB)/python Obit.i
 
-Obit: Obit_wrap.c ../lib/libObit.a
+# libObit.so for binary distribution, libObit.a for build from source:
+Obit: Obit_wrap.c ../lib/libObit.so
 	rm -rf build
 	python makesetup.py
 	python setup.py build install --install-lib=.

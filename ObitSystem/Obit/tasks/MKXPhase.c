@@ -871,7 +871,8 @@ void  XYBandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* outUV,
     Obit_log_error(err, OBIT_Error, "NO averaged/calibrated data");
     return;
   }
-  
+
+  ObitUVGetSubA (avgData, err);
   numAnt  = avgData->myDesc->numAnt[0];/* actually highest antenna number */
   phase = g_malloc0((numAnt+10)*sizeof(ofloat));
   

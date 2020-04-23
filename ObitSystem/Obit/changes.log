@@ -4617,3 +4617,19 @@ Obit/src/ObitSkyModelMF.c
 Obit/include/ObitAIPSDir.h
     Call type agreement ObitAIPSDirCatEntry.access
 15 Apr 2020 svn 619
+
+Summary: bug fixes
+Obit/python/Makefile.in
+    Correct libObit for binary build
+Obit/tasks/MKXPhase.c 
+    Call ObitUVGetSubA to get antenna info
+Obit/src/ObitThreadGrid.c
+    Initialize counter properly
+    Add some slop in defining the size of work arrays.
+Obit/src/ObitDConCleanVis.c:
+    Deconvolve: Fix bug not remaking facets after autoCen CLEAN
+    Make autoCen facets 256x256, blank bigger region around brightest.
+    Add unbox even if center outside of outer box
+Obit/tasks/GetJy.c
+   Allow it to use a minimal amount of calibration data.
+23 Apr 2020 svn 620

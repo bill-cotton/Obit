@@ -878,7 +878,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   pixarray = inClass->KillPxArray (in, pixarray);
 
   /* Make final residuals */
-  if ((!bail) && (!doAutoCen) && (in->niter>0)) {
+  if ((!bail) && (in->niter>0)) {
     /* Make all stale fields */
     for (ifld=0; ifld<in->nfield; ifld++) in->currentFields[ifld] = ifld+1;
     in->currentFields[ifld] = 0;
@@ -1465,12 +1465,14 @@ static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
     if (loopCheck>2*in->nfield) break;
     
     /* Message */
-    if (fldList[0]>0)
+    if (fldList[0]>0) {
+      /* best needs to be significantly (>5%) better */
+      if ((in->quality[best]-in->quality[fldList[0]-1])<1.05*in->quality[best]) break;
       Obit_log_error(err, OBIT_InfoWarn,
 		     "%s:  There may be something better - %f (%d)<%f (%d)",
 		     routine, in->quality[fldList[0]-1], fldList[0], 
 		     in->quality[best], best+1);
-    else
+    } else
       Obit_log_error(err, OBIT_InfoWarn,
 		     "%s: Nothing - try again (best %d)",
 		     routine, best);
@@ -1803,7 +1805,7 @@ ofloat ObitDConCleanVisQuality(ObitDConCleanVis *in, olong field,
  * See if an image needs to be remade because a source which exceeds
  * the flux  threshold is not centered (as determined by moments)
  * on the reference pixel (within toler pixel).
- * A new (128x128) field is added centered on the offending source and a negative
+ * A new (256x256) field is added centered on the offending source and a negative
  * clean window added to the position of the source in its original window.
  * Avoid duplicates of the same source and ensure that all occurances of this 
  * source in any exant field has a negative clean window added.
@@ -2005,7 +2007,7 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
 	DecPnt = uvdata->myDesc->crval[uvdata->myDesc->jlocd];
 	ObitSkyGeomShiftXY (RAPnt, DecPnt, ObitImageDescRotate(imDesc),
 			    pos[0], pos[1], &RAShift, &DecShift);
-	nx = ny = ObitFFTSuggestSize (128); nplane = 1;
+	nx = ny = ObitFFTSuggestSize (256); nplane = 1;
 	mosaicClass = (ObitImageMosaicClassInfo*)in->mosaic->ClassInfo;
 	mosaicClass->ObitImageMosaicAddField (in->mosaic, uvdata, nx, ny, nplane, 
 					      RAShift, DecShift, TRUE, err);
@@ -2082,7 +2084,7 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
       /* Zero CC entries around old peak in scratch CC table */
     doNext:
       nccpos = CCTab->myDesc->nrow;
-      ObitImageMosaicFlagCC (CCTab, nccpos, radius, xcenter, ycenter, err);
+      ObitImageMosaicFlagCC (CCTab, nccpos, 10.*radius, xcenter, ycenter, err);
       if  (err->error) Obit_traceback_val (err, routine, CCTab->name, redo);
 
     } /* end loop over multiple peaks */
@@ -2144,14 +2146,15 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
 	  }
 	if  (err->error) 
 	  Obit_traceback_val (err, routine, mosaic->images[jfield]->name, redo);
-	if (outside) continue;
+	/* if (outside) continue; NO - add one anyway */
 	
 	/* OK - add unbox */
 	win[0] = (nx/2)-15; win[1] = (olong)(opixel[0]+0.5); win[2] = (olong)(opixel[1]+0.5); 
+	if (outside) win[0] = 20;
 	/* Set size for new Wideband image */
 	if (ObitImageWBIsA(mosaic->images[mosaic->numberImages-1])) win[0] = 20;
 	/* If this is a previous autoCenter window make unbox smaller */
-	if ((jfield+1)>nprior) win[0] = 4;
+	if ((jfield+1)>nprior) win[0] = 8;
 	ObitDConCleanWindowAdd (in->window, jfield+1, OBIT_DConCleanWindow_unround,
 				win, err);
       } /* End not same field */	
