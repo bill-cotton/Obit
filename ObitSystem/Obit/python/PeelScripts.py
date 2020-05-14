@@ -370,7 +370,8 @@ def SubPeel(uv, source, imp, uvp, err, \
     UV.PUtilVisSub(datauv, modeluv, datauv, err)
     OErr.printErr(err)
     # Delete model dataset
-    zap(modeluv)
+    modeluv.Zap(err)
+    #zap(modeluv) goddamn python3
 
     # Add model without corrupting calibration
     OErr.PLog(err, OErr.Info, "Add Peel model without corruptions"); 
@@ -386,7 +387,8 @@ def SubPeel(uv, source, imp, uvp, err, \
     OErr.printErr(err)
 
     # Delete temporary
-    zap(datauv)
+    datauv.Zap(err)
+    #zap(datauv)goddamn python3
     # final data
     datauv2 = UV.newPAUV('data',source[0:12],uvsub.outClass,uvsub.outDisk,uvsub.outSeq, True,  err)
     return datauv2

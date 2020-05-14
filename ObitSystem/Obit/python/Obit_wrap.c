@@ -17898,14 +17898,14 @@ extern void UVSolnDeselCL (ObitTable *CLTab, long isuba, long fqid, long nantf,
   g_free(lsources);
 } // end UVSolnDeselCL
 
-extern ObitTable* SNInvert (ObitTable *inSN, ObitData *outData, long tabVer,
+extern ObitTable* SNInvert (ObitTable *inSN, ObitUV *outData, long tabVer,
                             long doRepl, ObitErr* err)
 {
   olong ltabVer = tabVer;
   gboolean ldoRepl = (gboolean)doRepl;
   ObitTable *outSN=NULL;
 
-  outSN = (ObitTable*)ObitTableSNUtilInvert ((ObitTableSN*)inSN, outData, 
+  outSN = (ObitTable*)ObitTableSNUtilInvert ((ObitTableSN*)inSN, (ObitData*)outData, 
     &ltabVer, ldoRepl, err);
 
   return outSN;
@@ -71740,7 +71740,7 @@ fail:
 SWIGINTERN PyObject *_wrap_SNInvert(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   ObitTable *arg1 = (ObitTable *) 0 ;
-  ObitData *arg2 = (ObitData *) 0 ;
+  ObitUV *arg2 = (ObitUV *) 0 ;
   long arg3 ;
   long arg4 ;
   ObitErr *arg5 = (ObitErr *) 0 ;
@@ -71763,11 +71763,11 @@ SWIGINTERN PyObject *_wrap_SNInvert(PyObject *SWIGUNUSEDPARM(self), PyObject *ar
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SNInvert" "', argument " "1"" of type '" "ObitTable *""'"); 
   }
   arg1 = (ObitTable *)(argp1);
-  res2 = SWIG_ConvertPtr(swig_obj[1], &argp2,SWIGTYPE_p_ObitData, 0 |  0 );
+  res2 = SWIG_ConvertPtr(swig_obj[1], &argp2,SWIGTYPE_p_ObitUV, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "SNInvert" "', argument " "2"" of type '" "ObitData *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "SNInvert" "', argument " "2"" of type '" "ObitUV *""'"); 
   }
-  arg2 = (ObitData *)(argp2);
+  arg2 = (ObitUV *)(argp2);
   ecode3 = SWIG_AsVal_long(swig_obj[2], &val3);
   if (!SWIG_IsOK(ecode3)) {
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "SNInvert" "', argument " "3"" of type '" "long""'");

@@ -4,7 +4,7 @@ This class provides values of the beam shape derived from an image
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2009,2019
+#  Copyright (C) 2009-2020
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@ class FullBeam(Obit.FullBeam):
     """
     def __init__(self, name="no_name", image=None, err=None) :
         super(FullBeam, self).__init__()
-        Obit.CreateFullBean(self.this, name)
+        Obit.CreateFullBeam(self.this, name, image, err)
         self.myClass = myClass
     def __del__(self, DeleteFullBeam=_Obit.DeleteFullBeam):
         if _Obit!=None:

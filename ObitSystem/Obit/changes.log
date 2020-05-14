@@ -4633,3 +4633,21 @@ Obit/src/ObitDConCleanVis.c:
 Obit/tasks/GetJy.c
    Allow it to use a minimal amount of calibration data.
 23 Apr 2020 svn 620
+
+Summary: bug fixes
+Obit/tasks/MFImage.c
+    Use minFList to A&P SC as well as P only.
+Obit/python/UVSoln.inc Obit/python/Obit_wrap.c Obit/python/PeelScripts.py
+    Another goddamn patch for python 3
+Obit/python/FullBeam.py
+    Another goddamn patch for python 3
+Obit/src/ObitImageMF.c Obit/python/ImageMF.py
+    Add history to FitSpec*
+    add minWt to SpecFit2 to set minimum fraction of weight
+Obit/src/ObitSpectrumFit.c Obit/include/ObitSpectrumFitDef.h
+    NLFit: Correct flux density error and chi^2 if only fitting flux density
+Obit/src/ObitRMFit.c 
+    FitCube: minLamb2 of 1.0e-10 to avoid zero divide., do history
+Obit/src/ObitBeamShape.c
+    GetMKBeam: implement minimum gain
+14 May 2020 svn 621

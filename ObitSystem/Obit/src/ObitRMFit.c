@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2013-2019                                          */
+/*;  Copyright (C) 2013-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -402,8 +402,10 @@ void ObitRMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage,
   ObitIOSize IOBy;
   ObitInfoType type;
   ObitIOCode retCode;
+  ObitHistory *inHist=NULL, *outHist=NULL;
   union ObitInfoListEquiv InfoReal; 
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar hiCard[73], *TF[2]={"False","True"};
   odouble freq;
   gchar *today=NULL, *SPECRM   = "SPECRM  ", *MaxRMSyn   = "MaxRMSyn", keyword[9];
   gchar *routine = "ObitRMFitCube";
@@ -502,6 +504,8 @@ void ObitRMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage,
   ObitInfoListGetTest(in->info, "refLamb2", &type, dim, &InfoReal);
   if (type==OBIT_float) in->refLamb2 = InfoReal.flt;
   else if (type==OBIT_double) in->refLamb2 = (ofloat)InfoReal.dbl;
+  /* Set lower bound */
+  in->refLamb2 = MAX(1.0e-10,in->refLamb2);
   
   /* What plane does spectral data start on */
   if (!strncmp(inQImage->myDesc->ctype[inQImage->myDesc->jlocf], "SPECLNMF", 8)) {
@@ -609,6 +613,40 @@ void ObitRMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage,
   WriteOutput(in, outImage, err);
   if (err->error) Obit_traceback_msg (err, routine, inQImage->name);
 
+  /* Copy any history */
+  inHist  = newObitDataHistory((ObitData*)inQImage, OBIT_IO_ReadOnly, err);
+  outHist = newObitDataHistory((ObitData*)outImage, OBIT_IO_WriteOnly, err);
+  outHist = ObitHistoryCopy (inHist, outHist, err);
+  /* Add parameters */
+  ObitHistoryOpen (outHist, OBIT_IO_ReadWrite, err);
+  ObitHistoryTimeStamp (outHist, "ObitRMFitCube", err);
+  g_snprintf ( hiCard, 72, "FitCube   nlamb2 = %d",in->nlamb2);
+  ObitHistoryWriteRec (outHist, -1, hiCard, err);
+  g_snprintf ( hiCard, 72, "FitCube   refLamb2 = %f",in->refLamb2);
+  ObitHistoryWriteRec (outHist, -1, hiCard, err);
+  g_snprintf ( hiCard, 72, "FitCube   minQUSNR = %f",in->minQUSNR);
+  ObitHistoryWriteRec (outHist, -1, hiCard, err);
+  g_snprintf ( hiCard, 72, "FitCube   minFrac = %f",in->minFrac);
+  ObitHistoryWriteRec (outHist, -1, hiCard, err);
+  g_snprintf ( hiCard, 72, "FitCube   doError = %s",TF[in->doError]);
+  ObitHistoryWriteRec (outHist, -1, hiCard, err);
+  g_snprintf ( hiCard, 72, "FitCube   doRMSyn = %s",TF[in->doRMSyn]);
+  ObitHistoryWriteRec (outHist, -1, hiCard, err);
+  g_snprintf ( hiCard, 72, "FitCube   maxRMSyn = %f",in->maxRMSyn);
+  ObitHistoryWriteRec (outHist, -1, hiCard, err);
+  g_snprintf ( hiCard, 72, "FitCube   minRMSyn = %f",in->minRMSyn);
+  ObitHistoryWriteRec (outHist, -1, hiCard, err);
+  g_snprintf ( hiCard, 72, "FitCube   delRMSyn = %f",in->delRMSyn);
+  ObitHistoryWriteRec (outHist, -1, hiCard, err);
+  g_snprintf ( hiCard, 72, "FitCube   maxChi2 = %f",in->maxChi2);
+  ObitHistoryWriteRec (outHist, -1, hiCard, err);
+
+  ObitHistoryClose (inHist, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  inHist  = ObitHistoryUnref(inHist);
+  outHist = ObitHistoryUnref(outHist);
+
+  /* end history */
 } /* end ObitRMFitCube */
 
 /**
@@ -1481,8 +1519,8 @@ static void WriteOutput (ObitRMFit* in, ObitImage *outImage,
   dim[0] = IM_MAXDIM;
   for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
   for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
-  ObitInfoListPut (outImage->info, "BLC", OBIT_long, dim, blc, err); 
-  ObitInfoListPut (outImage->info, "TRC", OBIT_long, dim, trc, err); 
+  ObitInfoListAlwaysPut (outImage->info, "BLC", OBIT_long, dim, blc); 
+  ObitInfoListAlwaysPut (outImage->info, "TRC", OBIT_long, dim, trc); 
   IOBy = OBIT_IO_byPlane;
   dim[0] = 1;
   ObitInfoListAlwaysPut (outImage->info, "IOBy", OBIT_long, dim, &IOBy);
@@ -1720,9 +1758,9 @@ static void NLRMFit (NLRMFitArg *arg)
  */
 static olong RMcoarse (NLRMFitArg *arg)
 {
-  olong i, j, ntest, nvalid, numb;
+  olong i, j, ntest=1000, nvalid, numb;
   ofloat minDL, maxDL, dRM, tRM, bestRM=0.0, fblank = ObitMagicF();
-  ofloat bestQ, bestU, sumrQ, sumrU, penFact;
+  ofloat bestQ=0.0, bestU=0.0, sumrQ, sumrU, penFact;
   double aarg, varaarg;
   odouble amb, res, best, test;
  
@@ -2096,11 +2134,11 @@ static gpointer ThreadRMSynFit (gpointer arg)
   olong hi            = larg->last;     /* Highest in y range */
   ObitErr *err        = larg->err;
 
-  olong ix, iy, indx, i, besti;
+  olong ix, iy, indx, i, besti=0;
   ofloat fblank = ObitMagicF();
   olong j, ntest, nvalid, numb;
   ofloat minDL, maxDL, dRM, tRM, bestRM=0.0;
-  ofloat bestQ, bestU, sumrQ, sumrU, sumW=0.0, EVPA, amp;
+  ofloat bestQ=0.0, bestU=0.0, sumrQ, sumrU, sumW=0.0, EVPA, amp;
   double aarg, varaarg;
   odouble amb, res, best, test;
  /*gchar *routine = "ThreadRMSynFit";*/

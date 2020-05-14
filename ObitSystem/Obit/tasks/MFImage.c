@@ -2386,9 +2386,14 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 	dim[0] = 1;dim[1] = 1;
 	ObitInfoListAlwaysPut(myClean->info, "doBeam", OBIT_bool, dim, &doBeam);
 	
-	/* reset flux limit for next Clean to 1 sigma */
+	/* reset flux limit for next Clean to 1 sigma - minFList overrides */
 	dim[0] = 1;dim[1] = 1;
-	ObitInfoListAlwaysPut (myClean->info, "minFlux", OBIT_float, dim, &selfCal->RMSFld1);
+	if (minFList) {
+	  useMinFlux = minFList[MIN(SCLoop, (FLdim[0]-1))];
+	} else { /* minFList not given - use RMS */
+	  useMinFlux = selfCal->RMSFld1;
+	}
+	ObitInfoListAlwaysPut (myClean->info, "minFlux", OBIT_float, dim, &useMinFlux);
 	btemp = FALSE;
 	ObitInfoListAlwaysPut(selfCal->skyModel->info, "noNeg", OBIT_bool, dim, &btemp);
 	

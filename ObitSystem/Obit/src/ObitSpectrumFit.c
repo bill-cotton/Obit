@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2019                                          */
+/*;  Copyright (C) 2008-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -112,6 +112,8 @@ typedef struct {
   olong        fitTerm;
   /** number of frequencies  */
   olong        nfreq;
+  /** Minimum fraction of weight  */
+  ofloat        minWt;
   /** Array of Nu per frequency point - broken power law */
   ofloat *nu;
   /** Array of log (Nu/Nu_0) per frequency point */
@@ -1452,6 +1454,7 @@ void ObitSpectrumFitInit  (gpointer inn)
   in->nfreq      = 0;
   in->doBrokePow = FALSE;
   in->maxChi2    = 1.5;
+  in->minWt      = 0.5;
   in->RMS        = NULL;
   in->calFract   = NULL;
   in->outDesc    = NULL;
@@ -1570,6 +1573,7 @@ void ObitSpectrumFitter (ObitSpectrumFit* in, ObitErr *err)
     args->doBrokePow  = in->doBrokePow;
     args->doPBCorr    = in->doPBCorr;
     args->corAlpha    = in->corAlpha;
+    args->minWt       = in->minWt;
     args->maxIter     = 100;
     args->minDelta    = 1.0e-2;          /* Min step size */
     args->maxChiSq    = in->maxChi2;     /* max acceptable normalized chi squares */
@@ -1794,6 +1798,7 @@ static gpointer ThreadNLFit (gpointer arg)
   ofloat pbfact, spFact, pixel[2];
   ofloat fblank = ObitMagicF();
   ObitBeamShapeClassInfo *BSClass;
+  ofloat sumWt, allWt;
   gchar *routine = "ThreadNLFit";
 
   /* error checks */
@@ -1810,6 +1815,14 @@ static gpointer ThreadNLFit (gpointer arg)
   /* How many output planes */
   if (in->doError) nOut = 1+in->nterm*2;
   else nOut = in->nterm;
+
+  /* Get maximum possible weight */
+  allWt = 0.0;
+  for (i=0; i<in->nfreq; i++) {
+    if (in->RMS[i]>0.0) {
+      allWt +=  1.0 / (in->RMS[i]*in->RMS[i]);
+    }
+  }
 
   /* Loop over pixels in Y */
   indx = lo*in->nx  -1;  /* Offset in pixel arrays */
@@ -1835,6 +1848,7 @@ static gpointer ThreadNLFit (gpointer arg)
       }
 
       /* Collect values;  */
+      sumWt = 0.0;
       for (i=0; i<in->nfreq; i++) {
 	larg->obs[i] = in->inFArrays[i]->array[indx];
 	  if (larg->obs[i]!=fblank) {
@@ -1853,8 +1867,14 @@ static gpointer ThreadNLFit (gpointer arg)
 	    if (doPBCorr) {
 	      BSClass = (ObitBeamShapeClassInfo*)(in->BeamShapes[i]->ClassInfo);
 	      pbfact  = BSClass->ObitBeamShapeGainSym(in->BeamShapes[i], Angle);
-	      larg->obs[i] /= pbfact;
-	      larg->weight[i]  *= pbfact*pbfact;
+	      if ((pbfact==fblank) ||(pbfact<1.001*in->BeamShapes[i]->pbmin)) {
+		larg->obs[i] = fblank;
+		larg->weight[i] = 0.0;
+	      } else {
+		larg->obs[i] /= pbfact;
+		larg->weight[i]  *= pbfact*pbfact;
+		sumWt += 1.0 / (in->RMS[i]*in->RMS[i]);
+	      }
 	    }
 	    /* End if datum valid */
 	  } else { /* invalid pixel */
@@ -1862,6 +1882,21 @@ static gpointer ThreadNLFit (gpointer arg)
 	    larg->isigma[i] = 0.0;
 	  }
       } /* end loop over frequencies */
+
+      /* Enough data to bother with? */
+      if (sumWt<larg->minWt*allWt) {
+	/* Save to output */
+	if (doError) {
+	  for (i=0; i<nOut-1; i++) 
+	    in->outFArrays[i]->array[indx]    = fblank;
+	  in->outFArrays[nOut-1]->array[indx] = 0.0;
+	} else { /* only values */
+	  for (i=0; i<in->nterm; i++) 
+	    in->outFArrays[i]->array[indx] = fblank;
+	}
+	continue; /* Done with pixel */
+      }
+	 
       
       /* Spectral index correction */
       if (corAlpha!=0.0) {
@@ -1991,7 +2026,10 @@ static void NLFit (NLFitArg *arg)
   }
 
   /* Errors wanted? */
-  if (arg->doError) arg->coef[arg->nterm] = sum/nvalid;
+  if (arg->doError) {
+    arg->coef[2] = sigma;  /* Flux error */
+    arg->coef[2*arg->nterm] = sum/nvalid;
+  }
 
   /* Is this good enough? */
   isDone = (arg->ChiSq<0.0) || (arg->ChiSq<=arg->maxChiSq);
@@ -2193,8 +2231,8 @@ static void NLFitBP (NLFitArg *arg)
   
   /* Get fitted values */
   for (i=0; i<nterm; i++) arg->coef[i] = (ofloat)gsl_vector_get(solver->x, i);
-
-  /* DEBUG 
+ 
+ /* DEBUG 
   if (arg->coef[0]>50.0*sigma) {
     fprintf (stdout, "DEBUG %f %f %f \n",arg->coef[0], arg->coef[1], arg->coef[2]);
   }*/

@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for UV data self calibration utilities     */
 /*                                                                    */
-/*;  Copyright (C) 2006-2019                                          */
+/*;  Copyright (C) 2006-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -100,14 +100,14 @@ extern void UVSolnDeselCL (ObitTable *CLTab, long isuba, long fqid, long nantf,
   g_free(lsources);
 } // end UVSolnDeselCL
 
-extern ObitTable* SNInvert (ObitTable *inSN, ObitData *outData, long tabVer,
+extern ObitTable* SNInvert (ObitTable *inSN, ObitUV *outData, long tabVer,
                             long doRepl, ObitErr* err)
 {
   olong ltabVer = tabVer;
   gboolean ldoRepl = (gboolean)doRepl;
   ObitTable *outSN=NULL;
 
-  outSN = (ObitTable*)ObitTableSNUtilInvert ((ObitTableSN*)inSN, outData, 
+  outSN = (ObitTable*)ObitTableSNUtilInvert ((ObitTableSN*)inSN, (ObitData*)outData, 
     &ltabVer, ldoRepl, err);
 
   return outSN;

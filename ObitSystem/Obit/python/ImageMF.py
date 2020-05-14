@@ -471,7 +471,7 @@ def PFitSpec (inImage, err, antSize=0.0, nOrder=1, corAlpha=0.0):
 def PFitSpec2 (inImage, outImage, err, nterm=2, \
                refFreq=None, maxChi2=2.0, doError=False, doBrokePow=False, \
                calFract=None, doPBCor=False, PBmin=None, antSize=None, \
-               corAlpha=0.0, doTab=False):
+               corAlpha=0.0, minWt=0.5, doTab=False):
     """
     Fit spectrum to each pixel of an ImageMF writing a new cube
 
@@ -499,6 +499,7 @@ def PFitSpec2 (inImage, outImage, err, nterm=2, \
     * antSize   = Antenna diameter (m) for PB gain corr, 
                   One per frequency or one for all, def 25.0
     * corAlpha  = Spectral index correction to apply before fitting
+    * minWt     = min. fract of possible weight per pixel
     * doTab     = Use tabulated beam if available
     """
     ################################################################
@@ -508,7 +509,8 @@ def PFitSpec2 (inImage, outImage, err, nterm=2, \
     inImage.List.set("doBrokePow", doBrokePow, ttype='boolean')
     inImage.List.set("doPBCor",    doPBCor,    ttype='boolean')
     inImage.List.set("corAlpha" ,  corAlpha,   ttype='float')
-    inImage.List.set("doTab"  ,    doTab,    ttype='boolean')
+    inImage.List.set("minWt",      minWt,      ttype='float')
+    inImage.List.set("doTab"  ,    doTab,      ttype='boolean')
     if refFreq:
         inImage.List.set("refFreq",  refFreq,  ttype='double')
     if calFract:

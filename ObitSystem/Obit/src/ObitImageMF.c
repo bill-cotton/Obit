@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2019                                          */
+/*;  Copyright (C) 2010-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1342,6 +1342,7 @@ void ObitImageMFFitSpec (ObitImageMF *in, ofloat antsize, ObitErr *err)
   olong ithread, maxThread, nThreads=1;
   FitSpecFuncArg **targs=NULL;
   ObitImage **inArray=NULL, **outArray=NULL; 
+  ObitHistory *inHist=NULL;
   ofloat sigma, wtfact, corAlpha=0.0;
   olong i, iy, ny, nterm=1, nOrder, nTh, plane[5] = {1,1,1,1,1};
   olong blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
@@ -1350,6 +1351,7 @@ void ObitImageMFFitSpec (ObitImageMF *in, ofloat antsize, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitIOSize IOBy = OBIT_IO_byRow;
   gboolean OK, maxSNR=FALSE;
+  gchar hiCard[73];
   gchar *routine = "ObitImageMFFitSpec";
 
   /* error checks */
@@ -1475,9 +1477,25 @@ void ObitImageMFFitSpec (ObitImageMF *in, ofloat antsize, ObitErr *err)
       }
       if (err->error) goto cleanup;
    }
-
+    
   } /* end loop over list */
-  
+
+  /* History */
+  inHist  = newObitDataHistory((ObitData*)in, OBIT_IO_ReadWrite, err);
+  /* Add parameters */
+  ObitHistoryOpen (inHist, OBIT_IO_ReadWrite, err);
+  ObitHistoryTimeStamp (inHist, "ObitImageMFFitSpec", err);
+  g_snprintf ( hiCard, 72, "FitSpec  nOrder = %d",nOrder);
+  ObitHistoryWriteRec (inHist, -1, hiCard, err);
+  g_snprintf ( hiCard, 72, "FitSpec  corAlpha = %f",corAlpha);
+  ObitHistoryWriteRec (inHist, -1, hiCard, err);
+  g_snprintf ( hiCard, 72, "FitSpec  maxSNR = %d",maxSNR);
+  ObitHistoryWriteRec (inHist, -1, hiCard, err);
+  g_snprintf ( hiCard, 72, "FitSpec  antsize = %f",antsize);
+  ObitHistoryWriteRec (inHist, -1, hiCard, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  inHist  = ObitHistoryUnref(inHist);
+
   /* Cleanup */
  cleanup:
   KillFitSpecArgs (nThreads, targs);
@@ -1515,7 +1533,7 @@ void ObitImageMFFitSpec (ObitImageMF *in, ofloat antsize, ObitErr *err)
  *                           One per frequency or one for all, def 1.0e-5
  * \li            doPBCor    boolean scalar If true do primary beam correction. [def False]
  * \li            doTab      boolean scalar If true and available, use tabulated beam. [def False]
- * \li            PBmin      float (?,1,1) Minimum beam gain correction
+ * \li            PBmin      float (?,1,1) Minimum beam gain correction, blanked below.
  *                    One per frequency or one for all, def 1.0e-5,
  *                    1.0 => no gain corrections
  * \li            antSize    float (?,1,1) Antenna diameter (m) for gain corr, 
@@ -1524,13 +1542,15 @@ void ObitImageMFFitSpec (ObitImageMF *in, ofloat antsize, ObitErr *err)
  *                   correction to apply, def = 0.0
  * \li            maxSNR     boolean scalar If true maximuze SNR rather than just minimize noise
  *                   Adjusts weights to account for spectral index corAlpha
+ * \li            minWt     Min. fraction of total weight to accept for a pixel
  * \param out     Output Image into which to write parameters
  * \param err     Obit error stack object.
  */
 void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
 {
   ObitSpectrumFit* fitter=NULL;
-  ofloat antsize, pbmin, wtfact, corAlpha=0.0;
+  ObitHistory *inHist=NULL, *outHist=NULL;
+  ofloat antsize, pbmin, wtfact, minWt=0.5, corAlpha=0.0;
   olong i, plane[5] = {1,1,1,1,1};
   olong nOut, iplane, naxis[2], nterm=2; 
   odouble refFreq=-1.0;
@@ -1540,9 +1560,10 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1}, PBdim[MAXINFOELEMDIM], ASdim[MAXINFOELEMDIM];
   gchar *fitParms[] = {"refFreq","maxChi2","doError","doPBCor","doBrokePow","calFract",
-		       "PBmin","antSize","corAlpha",
+		       "PBmin","antSize","corAlpha","minWt", 
 		       NULL};
   gchar  *today=NULL, *SPECLOGF = "SPECLOGF";
+  gchar hiCard[73], *TF[2]={"False","True"};
   gchar *routine = "ObitImageMFFitSpec2";
 
   /* error checks */
@@ -1587,6 +1608,7 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   ObitInfoListGetTest(in->info, "doBrokePow", &type, dim, &InfoReal);
   doBrokePow = InfoReal.itg;
   ObitInfoListGetTest (in->info, "corAlpha",   &type, dim,   &corAlpha);
+  ObitInfoListGetTest (in->info, "minWt",   &type, dim,   &minWt);
   /* Want primary beam correction? */
   InfoReal.itg = (olong)doPBCor; type = OBIT_bool;
   ObitInfoListGetTest(in->info, "doPBCor", &type, dim, &InfoReal);
@@ -1605,6 +1627,7 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   fitter->calFract   = calFract;
   fitter->corAlpha   = corAlpha;
   fitter->doPBCorr   = doPBCor;
+  fitter->minWt      = minWt;
 
   /* Get fitting parameters, copy to fitter */
   ObitInfoListCopyList (in->info, fitter->info, fitParms);
@@ -1712,6 +1735,51 @@ void ObitImageMFFitSpec2 (ObitImageMF *in, ObitImageMF *out, ObitErr *err)
   /* Write output */
   ObitSpectrumWriteOutput(fitter, (ObitImage*)out, err);
   if (err->error) goto cleanup;
+
+  /* History */
+  /* Copy any history  unless Scratch */
+  if (!in->isScratch && !out->isScratch) {
+    inHist  = newObitDataHistory((ObitData*)in, OBIT_IO_ReadOnly, err);
+    outHist = newObitDataHistory((ObitData*)out, OBIT_IO_WriteOnly, err);
+    outHist = ObitHistoryCopy (inHist, outHist, err);
+    /* Add parameters */
+    ObitHistoryOpen (outHist, OBIT_IO_ReadWrite, err);
+    ObitHistoryTimeStamp (outHist, "ObitImageMFFitSpec2", err);
+    g_snprintf ( hiCard, 72, "FitSpec2  nterm = %d",nterm);
+    ObitHistoryWriteRec (outHist, -1, hiCard, err);
+    g_snprintf ( hiCard, 72, "FitSpec2  refFreq = %lf",refFreq);
+    ObitHistoryWriteRec (outHist, -1, hiCard, err);
+    g_snprintf ( hiCard, 72, "FitSpec2  maxChi2 = %f",maxChi2);
+    ObitHistoryWriteRec (outHist, -1, hiCard, err);
+    g_snprintf ( hiCard, 72, "FitSpec2  doError = %s",TF[doError]);
+    ObitHistoryWriteRec (outHist, -1, hiCard, err);
+    g_snprintf ( hiCard, 72, "FitSpec2  doBrokePow = %s",TF[doBrokePow]);
+    ObitHistoryWriteRec (outHist, -1, hiCard, err);
+    if (calFract) {
+      g_snprintf ( hiCard, 72, "FitSpec2  calFract = %f",calFract[0]);
+      ObitHistoryWriteRec (outHist, -1, hiCard, err);
+    }
+    g_snprintf ( hiCard, 72, "FitSpec2  doPBCor = %s",TF[doPBCor]);
+    ObitHistoryWriteRec (outHist, -1, hiCard, err);
+    if (PBmin) {
+      g_snprintf ( hiCard, 72, "FitSpec2  PBmin = %f",PBmin[0]);
+      ObitHistoryWriteRec (outHist, -1, hiCard, err);
+    }
+    if (antSize) {
+      g_snprintf ( hiCard, 72, "FitSpec2  antSize = %f",antSize[0]);
+      ObitHistoryWriteRec (outHist, -1, hiCard, err);
+    }
+    g_snprintf ( hiCard, 72, "FitSpec2  corAlpha = %f",corAlpha);
+    ObitHistoryWriteRec (outHist, -1, hiCard, err);
+    g_snprintf ( hiCard, 72, "FitSpec2  maxSNR = %s",TF[maxSNR]);
+    ObitHistoryWriteRec (outHist, -1, hiCard, err);
+    g_snprintf ( hiCard, 72, "FitSpec2  minWt = %f",minWt);
+    ObitHistoryWriteRec (outHist, -1, hiCard, err);
+    ObitHistoryClose (inHist, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    inHist  = ObitHistoryUnref(inHist);
+    outHist = ObitHistoryUnref(outHist);
+  }
 
   /* Cleanup */
  cleanup:
