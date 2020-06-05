@@ -375,7 +375,8 @@ ObitFArray* ObitFArrayCreate (gchar* name, olong ndim, olong *naxis)
   } else { /* Multi */
     size = 1; /* total size */
     for (i=0; i<ndim; i++) {
-      out->naxis[i] = MAX (1, MIN(naxis[i],524288));  /* Not too big */
+      /* WHAT??? out->naxis[i] = MAX (1, MIN(naxis[i],524288));  Not too big */
+      out->naxis[i] = MAX (1, naxis[i]);
       size *= out->naxis[i]; /* total size */
     }
   }
@@ -681,7 +682,8 @@ ObitFArray* ObitFArrayRealloc (ObitFArray* in, olong ndim, olong *naxis)
   } else { /* Multi */
     size = 1; /* total size */
     for (i=0; i<ndim; i++) {
-      out->naxis[i] = MAX (1, MIN(naxis[i],524288));  /* Not too big */
+      /* WHAT??? out->naxis[i] = MAX (1, MIN(naxis[i],524288));  Not too big */
+      out->naxis[i] = MAX (1, naxis[i]);
       size *= out->naxis[i]; /* total size */
     }
   }

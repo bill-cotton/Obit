@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010,2011                                          */
+/*;  Copyright (C) 2010-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -36,6 +36,7 @@
 #include "ObitImage.h"
 #include "ObitTableCC.h"
 #include "ObitImageMosaic.h"
+#include "ObitDConCleanWindow.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -136,6 +137,10 @@ ObitImageMosaicMF *ObitImageMosaicMFCreate (gchar *name, olong order, ofloat max
 /** Public: Define parameters of images */
 void ObitImageMosaicMFDefine (ObitImageMosaic *in, ObitUV *uvData, gboolean doBeam,
 			      ObitErr *err);
+
+/** Public: Add more existing facets */
+void ObitImageMosaicMFAddOld (ObitImageMosaic *in, ObitUV *uvdata, olong nTotal, 
+			      ObitDConCleanWindow *win, ObitErr *err);
 
 /** Public: Flatten tiles onto full field image */
 void ObitImageMosaicMFFlatten (ObitImageMosaic *in, ObitErr *err);

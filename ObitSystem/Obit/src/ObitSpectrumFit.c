@@ -1218,7 +1218,7 @@ gpointer ObitSpectrumFitMakeArg (olong nfreq, olong nterm, odouble refFreq,
   arg->obs            = g_malloc0(arg->nfreq*sizeof(ofloat));
   arg->nu             = g_malloc0(arg->nfreq*sizeof(ofloat));
   arg->logNuOnu0      = g_malloc0(arg->nfreq*sizeof(ofloat));
-  arg->coef           = g_malloc0(2*arg->nterm*sizeof(ofloat));
+  arg->coef           = g_malloc0(3*arg->nterm*sizeof(ofloat));
   for (i=0; i<nfreq; i++) {
     arg->nu[i]        = freq[i];
     arg->logNuOnu0[i] = log(freq[i]/refFreq);

@@ -16,6 +16,9 @@ def MFPBCor (inIm, err, antSize=25, minGain=0.05):
     * antSize = Antenna diameter in m.
     * minGain = Minimum antenna gain
     """
+    # Check
+    if not inIm.ImageIsA():
+        raise TypeError("input MUST be a Python Obit Image")
     # Image info
     nterm = inIm.Desc.List.Dict['NTERM'][2][0]
     nspec = inIm.Desc.List.Dict['NSPEC'][2][0]

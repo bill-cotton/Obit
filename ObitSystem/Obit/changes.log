@@ -4651,3 +4651,51 @@ Obit/src/ObitRMFit.c
 Obit/src/ObitBeamShape.c
     GetMKBeam: implement minimum gain
 14 May 2020 svn 621
+
+Summary: Add limited restart & recovery to MFImage, bug fixes
+Obit/src/ObitSkyGeom.c
+    ShiftXY: Trap backwards wrap around 0 RA
+Obit/src/ObitDConCleanVis.c
+    Reimage: Hack to supress autoCen artifacts
+Obit/src/ObitImageMosaic.c
+    FlyEye: initialize arrays
+Obit/src/ObitDConCleanVisMF.c 
+    Create2: Double size of arrays
+ObitSkyModelMF.c
+    Create: Double size of arrays
+Obit/src/ObitSpectrumFit.c 
+    MakeArg: increase size of coef array.
+Obit/include/ObitFInterpolate.h Obit/src/ObitFInterpolate.c
+    Add Clone2 for less shallow copies, copied descriptor
+Obit/src/ObitImageInterp.c
+    Clone: use ObitFInterpolateClone2 for interpolator
+    Create: copy descriptor (not reference) descriptor fo interpolator
+Obit/TDF/MFImage.TDF Obit/tasks/MFImage.c:
+    Add limited restart
+    Fix A&P minFList override
+Obit/include/ObitImageMosaicMFDef.h Obit/include/ObitImageMosaicMF.h 
+Obit/src/ObitImageMosaicMF.c
+    New routine AddOld to add facets to mosaic
+Obit/include/ObitDConCleanPxListMF.h Obit/src/ObitDConCleanPxListMF.c
+    New routine InitCC
+Obit/src/ObitDConCleanVis.c
+    Diagnostics, don't put unbox on autoCen facets.
+Obit/include/ObitVecFunc.h
+    Make definition of ALIGN32_END consistent with mathfun
+Obit/src/ObitSinCos.c
+    SinCosVec AVX512 version, do remainders with sincosf
+    more clever version with 0 fill now segvs
+Obit/include/ObitVecFunc.h Obit/src/ObitVecFunc.c
+Obit/src/ObitSinCos.c  Obit/src/ObitExp.c
+    Back put of using avx512_mathfun - it now segvs whenever used.
+Obit/share/scripts/PBCorImageMF.py
+    Check that the first argument is an image 
+Obit/src/ObitErr.c
+    IsA: allow 50,000 messages
+Obit/src/ObitFArray.c
+    Create/Realloc: Allow axis size larger than 524288 (doh!!!)
+    This is 2^19
+Obit/TDF/Restore.TDF Obit/tasks/Restore.c
+    New task to restore/flatten/fit CLEANed facets
+05 June 2020 svn 622
+

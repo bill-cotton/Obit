@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2019                                          */
+/*;  Copyright (C) 2003-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -263,6 +263,60 @@ ObitFInterpolate* ObitFInterpolateClone  (ObitFInterpolate *in, ObitFInterpolate
    
   return out;
 } /* end ObitFInterpolateClone */
+
+/**
+ * Make a less shallow shallow copy of a object- copy descriptor
+ * The result will have pointers to the more complex members.
+ * Parent class members are included but any derived class info is ignored.
+ * \param in  The object to copy
+ * \param out An existing object pointer for output or NULL if none exists.
+ * \return pointer to the new object.
+ */
+ObitFInterpolate* ObitFInterpolateClone2 (ObitFInterpolate *in, ObitFInterpolate *out, 
+					  ObitErr *err)
+{
+  const ObitClassInfo *myClass, *ParentClass;
+  gboolean oldExist;
+  olong i;
+  gchar *outName;
+
+  /* error checks */
+  g_assert (ObitIsA(in, &myClassInfo));
+  if (out) g_assert (ObitIsA(out, &myClassInfo));
+
+  /* Create if it doesn't exist */
+  oldExist = out!=NULL;
+  if (!oldExist) {
+    /* derive object name */
+    outName = g_strconcat ("Clone: ",in->name,NULL);
+    out = newObitFInterpolate(outName);
+    g_free(outName);
+  }
+
+  /* shallow copy any parent class members */
+   myClass     = in->ClassInfo;
+   ParentClass = myClass->ParentClass;
+   g_assert ((ParentClass!=NULL) && (ParentClass->ObitClone!=NULL));
+   ParentClass->ObitClone ((Obit*)in, (Obit*)out);
+
+   if (!oldExist) { /* only copy ObitInfoList if just created */
+     out->info = ObitInfoListUnref(out->info);
+     out->info = ObitInfoListRef(in->info);
+   }
+     
+   /* copy/set this classes additions */
+   out->myArray = ObitFArrayUnref(out->myArray);
+   out->myArray = ObitFArrayRef(in->myArray);
+   out->myDesc  = ObitImageDescUnref(out->myDesc);
+   out->myDesc  = ObitImageDescCopy(in->myDesc, out->myDesc, err);
+   out->array = in->array;
+   out->nx    = in->nx;
+   out->ny    = in->ny;
+   out->hwidth= in->hwidth;
+   for (i=0; i<10; i++) out->denom[i] = in->denom[i];
+   
+  return out;
+} /* end ObitFInterpolateClone2 */
 
 /**
  * Replace the ObitFArray member to be interpolated.

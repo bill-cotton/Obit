@@ -39,7 +39,8 @@
 # define ALIGN32_END __attribute__((packed,aligned(32)))
 
 /** AVX512 implementation 16 floats in parallel */
-#if HAVE_AVX512==1
+  //DAMN - no longer works #if   HAVE_AVX512==1
+#if   HAVE_AVXXXX==1
 #include <immintrin.h>
 /* Union allowing c interface */
 typedef __m512  v16sf; // vector of 8 float (avx)

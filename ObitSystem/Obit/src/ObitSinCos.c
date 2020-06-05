@@ -107,7 +107,8 @@ void ObitSinCosVec(olong n, ofloat *angle, ofloat *sin, ofloat *cos)
 {
   olong i;
   /** SSE/AVX/AVX512 implementation */
-#if   HAVE_AVX512==1
+  //DAMN - no longer works #if   HAVE_AVX512==1
+#if   HAVE_AVXXXX==1
   olong ndo, nleft;
   CV16SF vanglet, vss, vcc;
 #elif   HAVE_AVX==1
@@ -124,8 +125,9 @@ void ObitSinCosVec(olong n, ofloat *angle, ofloat *sin, ofloat *cos)
     sincosf(angle[0], sin, cos);
     return;
   }
- /** AVX implementation */
-#if HAVE_AVX512==1
+ /** AVX512 implementation */
+  //DAMN - no longer works #if   HAVE_AVX512==1
+#if HAVE_AVXXXX==1
   nleft = n;
   /* Loop in groups of 16 */
   ndo = nleft - nleft%16;  /* Only full groups of 16 */
@@ -227,7 +229,8 @@ void ObitCosVec(olong n, ofloat *angle, ofloat *cos)
 {
   olong i;
   /** SSE/AVX/AVX512 implementation */
-#if   HAVE_AVX512==1
+  //DAMN - no longer works #if   HAVE_AVX512==1
+#if   HAVE_AVXXXX==1
   olong ndo, nleft;
   CV16SF vanglet;
 #elif   HAVE_AVX==1
@@ -240,7 +243,8 @@ void ObitCosVec(olong n, ofloat *angle, ofloat *cos)
 
   if (n<=0) return;
  /** AVX implementation */
-#if HAVE_AVX512==1
+  //DAMN - no longer works #if   HAVE_AVX512==1
+#if   HAVE_AVXXXX==1
   nleft = n;
   /* Loop in groups of 16 */
   ndo = nleft - nleft%16;  /* Only full groups of 16 */
@@ -335,7 +339,8 @@ void ObitSinVec(olong n, ofloat *angle, ofloat *sin)
 {
   olong i;
  /** SSE/AVX/AVX512 implementation */
-#if   HAVE_AVX512==1
+  //DAMN - no longer works #if   HAVE_AVX512==1
+#if   HAVE_AVXXXX==1
   olong ndo, nleft;
   CV16SF vanglet;
 #elif   HAVE_AVX==1
@@ -348,7 +353,8 @@ void ObitSinVec(olong n, ofloat *angle, ofloat *sin)
 
   if (n<=0) return;
  /** AVX512 implementation */
-#if HAVE_AVX512==1
+  //DAMN - no longer works #if   HAVE_AVX512==1
+#if   HAVE_AVXXXX==1
   nleft = n;
   /* Loop in groups of 16 */
   ndo = nleft - nleft%16;  /* Only full groups of 16 */

@@ -729,10 +729,10 @@ ObitSkyModelMF* ObitSkyModelMFCreate (gchar* name, ObitImageMosaic* mosaic)
   out->mosaic = ObitImageMosaicRef(mosaic);
   if ((out->mosaic) && (out->mosaic->numberImages>0)) {
     number = out->mosaic->numberImages;
-    out->CCver = ObitMemRealloc (out->CCver, sizeof(olong)*number);
+    out->CCver = ObitMemRealloc (out->CCver, sizeof(olong)*number*2);
     for (i=0; i<number; i++) out->CCver[i] = 0;
-    out->startComp = ObitMemRealloc (out->startComp, sizeof(olong)*number);
-    out->endComp   = ObitMemRealloc (out->endComp, sizeof(olong)*number);
+    out->startComp = ObitMemRealloc (out->startComp, sizeof(olong)*number*2);
+    out->endComp   = ObitMemRealloc (out->endComp, sizeof(olong)*number*2);
     for (i=0; i<number; i++) out->startComp[i] = 1;
     for (i=0; i<number; i++) out->endComp[i] = 0;
   }

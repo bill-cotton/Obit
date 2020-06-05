@@ -193,7 +193,7 @@ void ObitImageInterpClone  (ObitImageInterp *in, ObitImageInterp *out, ObitErr *
   out->ImgPixels = ObitFArrayUnref(out->ImgPixels);
   ObitFArrayClone (in->ImgPixels, out->ImgPixels, err);
   out->myInterp  = ObitFArrayUnref(out->myInterp);
-  out->myInterp  = ObitFInterpolateClone (in->myInterp, out->myInterp);
+  out->myInterp  = ObitFInterpolateClone2 (in->myInterp, out->myInterp, err);
   out->freqs     = in->freqs;
   out->nplanes   = in->nplanes;
 } /* end ObitImageInterpClone */
@@ -256,8 +256,11 @@ ObitImageInterp* ObitImageInterpCreate (gchar* name, ObitImage *image,
 
   /* Create interpolator */
   out->myInterp = newObitFInterpolateCreate ("Interpolator", 
-					     out->ImgPixels, out->ImgDesc, 
+					     out->ImgPixels, NULL, 
 					     hwidth);
+  /* Copy descriptor */
+  out->myInterp->myDesc = ObitImageDescCopy(out->ImgDesc, out->myInterp->myDesc, err);
+  if (err->error) Obit_traceback_val (err, routine, image->name, out);
 
   /* Loop over planes in order they appear in the UV data */
   iplane = 0;
@@ -412,11 +415,7 @@ ObitFInterpolate*  ObitImageInterpCloneInterp (ObitImageInterp* in, ObitErr *err
 {
   ObitFInterpolate* out=NULL;
 
-  out = ObitFInterpolateClone (in->myInterp, out);
-
-  /* Full copy of descriptor */
-  out->myDesc = ObitImageDescUnref(out->myDesc);
-  out->myDesc = ObitImageDescCopy(in->myInterp->myDesc, out->myDesc, err);
+  out = ObitFInterpolateClone2 (in->myInterp, out, err);
 
   return out;
 } /* end ObitImageInterpCloneInterp */

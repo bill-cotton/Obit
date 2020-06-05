@@ -60,7 +60,8 @@ ofloat ObitExpCalc(ofloat arg)
 void ObitExpVec(olong n, ofloat *argarr, ofloat *exparr)
 {
   olong i, nleft;
-#if   HAVE_AVX512==1
+  //DAMN - no longer works #if   HAVE_AVX512==1
+#if   HAVE_AVXXXX==1
   olong ndo;
   CV16SF varg, vexp;
 #elif   HAVE_AVX==1
@@ -77,7 +78,8 @@ void ObitExpVec(olong n, ofloat *argarr, ofloat *exparr)
   i     = 0;   /* None done yet */
 
  /** AVX512 implementation */
-#if HAVE_AVX512==1
+  //DAMN - no longer works #if   HAVE_AVX512==1
+#if   HAVE_AVXXXX==1
   /* Loop in groups of 16 */
   ndo = nleft - nleft%16;  /* Only full groups of 16 */
   for (i=0; i<ndo; i+=16) {

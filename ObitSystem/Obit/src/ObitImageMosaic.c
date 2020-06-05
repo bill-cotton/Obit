@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2018                                          */
+/*;  Copyright (C) 2004-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2995,7 +2995,10 @@ FlyEye (ofloat radius, olong imsize, ofloat cells[2], olong overlap,
   /* error checks */
   if (err->error) return out;
 
-  for (ii=0; ii<MAXFLD; ii++) dist[ii] = -1.0;
+  for (ii=0; ii<MAXFLD; ii++) {
+    dist[ii] = -1.0;
+    ra[ii] =  dec[ii] = 0.0; 
+  }
   maxrad = 0.0;
   cosdec = cos (dec0*DG2RAD);
   sindec = sin (dec0*DG2RAD);

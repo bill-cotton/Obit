@@ -30,7 +30,8 @@
 #include <math.h>
 
 /** AVX512 implementation 16 floats in parallel */
-#if HAVE_AVX512==1
+  //DAMN - no longer works #if   HAVE_AVX512==1
+#if   HAVE_AVXXXX==1
 #include "avx512_mathfun.h"
 /** Natural log of array of 16 floats */
 v16sf avx512_log_ps(v16sf x) {

@@ -702,6 +702,14 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
     else
       done = inClass->PickNext2D(in, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
+    /* diagnostics */
+    if (err->prtLv>=3) {
+      for (ifld=0; ifld<in->nfield; ifld++) {
+	if (in->currentFields[ifld] <= 0) break;
+	Obit_log_error(err, OBIT_InfoErr, "Clean Facet %d",in->currentFields[ifld]);
+      } /* end loop */
+      ObitErrLog(err); 
+    } /* end diagnostocs */
 
     /* Does the peak flux density exceed the autocenter threshold */
     doAutoCen = doAutoCen || (fabs (in->peakFlux)>in->autoCen);
@@ -1910,8 +1918,9 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
 
       /* Position of bright peak */
       imDesc = mosaic->images[ifield]->myDesc;
-      pixel[0] = imDesc->crpix[0] + ((xcenter+xoff) / imDesc->cdelt[0]);
-      pixel[1] = imDesc->crpix[1] + ((ycenter+yoff) / imDesc->cdelt[1]);
+      /* DEBUG HACK -0.5* */
+      pixel[0] = imDesc->crpix[0] + ((xcenter-0.5*xoff) / imDesc->cdelt[0]);
+      pixel[1] = imDesc->crpix[1] + ((ycenter-0.5*yoff) / imDesc->cdelt[1]);
       ObitImageDescGetPos(imDesc, pixel, pos, err);
       
       /* Check that this position has not just been added from another field. */
@@ -2119,10 +2128,10 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
     imDesc = mosaic->images[ifield]->myDesc;
     pos[0] = autoCenPos[ibox*2];
     pos[1] = autoCenPos[ibox*2+1];
-    /* Put unwindow on this position in all prior fields in which it occured */
+    /* Put unwindow on this position in prior fields in which it occured */
     for (jfield=0; jfield<in->window->nfield; jfield++) { 
-      /* Not is same field */
-      if (jfield!=ifield) {
+      /* Not if same field or an autoCen field */
+      if ((jfield!=ifield) && (mosaic->isAuto[jfield]<0)) {
 	/* is pos in this field */
 	imDesc2 = mosaic->images[jfield]->myDesc;
 	if (!ObitImageDescOverlap(imDesc, imDesc2, err)) continue;
@@ -2153,10 +2162,10 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
 	if (outside) win[0] = 20;
 	/* Set size for new Wideband image */
 	if (ObitImageWBIsA(mosaic->images[mosaic->numberImages-1])) win[0] = 20;
-	/* If this is a previous autoCenter window make unbox smaller */
-	if ((jfield+1)>nprior) win[0] = 8;
-	ObitDConCleanWindowAdd (in->window, jfield+1, OBIT_DConCleanWindow_unround,
-				win, err);
+	/* Don't If this is a previous autoCenter window */
+	if ((jfield+1)<=nprior) 
+	  ObitDConCleanWindowAdd (in->window, jfield+1, OBIT_DConCleanWindow_unround,
+				  win, err);
       } /* End not same field */	
     } /* end loop adding unboxes */
   } /* end loop over autoCen positions */
@@ -3735,7 +3744,7 @@ static void OrderClean (ObitDConCleanVis *in, gboolean *fresh,
 			ofloat autoCenFlux, olong *fldList)
 {
   ofloat *tmpQual=NULL, maxQual, bestQual, testBest, bestClean;
-  olong i, n, indx, myAuto, best, isShift;
+  olong i, n, indx, myAuto, best, isShift, itemp;
   gboolean OK, done, isAuto=FALSE;
 
   /* make sure no shift field has resid > corresponding autoCen */
@@ -3856,9 +3865,11 @@ static void OrderClean (ObitDConCleanVis *in, gboolean *fresh,
     /* Save value if within 50% of best, or cleanable>=best dummy tmpQual */
     if ((maxQual>=0.5*bestQual) || (in->cleanable[best]>=bestClean)){
       /* If this is any autoCenter field and !isAuto, then use the shifted field */
-      if (!isAuto && (in->mosaic->isAuto[best]>=0))
-	fldList[indx++] = in->mosaic->isAuto[best];
-      else
+      if (!isAuto && (in->mosaic->isAuto[best]>=0) && (in->mosaic->isAuto[best]<n)) {
+	itemp = in->mosaic->isAuto[best];
+	if (itemp>n) itemp = in->mosaic->FacetNo[best]+1;
+	fldList[indx++] = itemp;
+      } else
 	fldList[indx++] = best+1;
     }
     if ((best>=0) && (best<n)) tmpQual[best]   = -1.0e20;

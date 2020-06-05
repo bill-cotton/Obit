@@ -417,10 +417,10 @@ gchar *ObitErrorLevelString[] = {
 	   lp->tm_year, lp->tm_mon+1, lp->tm_mday,
 	   lp->tm_hour, lp->tm_min, lp->tm_sec,
 	   errMsg);
-    if (errMsg) g_free(errMsg); errMsg=NULL;
+    if (errMsg) {g_free(errMsg);} errMsg=NULL;
     ObitErrPop (in, &errLevel, &errMsg, &timeTag);
   }
-  if (errMsg) g_free(errMsg); errMsg=NULL;
+  if (errMsg) {g_free(errMsg);} errMsg=NULL;
 
   /* Clear any error condition */
   in->error = FALSE;
@@ -513,7 +513,7 @@ gboolean ObitErrIsA (ObitErr* in)
   if (in->className == NULL) return FALSE;
 
   /* sanity checks */
-  if ((in->number<0) || (in->number>10000) || 
+  if ((in->number<0) || (in->number>50000) || 
       (in->ReferenceCount<0) || (in->ReferenceCount>1000)  ||
       (in->error>100)) return FALSE;
 

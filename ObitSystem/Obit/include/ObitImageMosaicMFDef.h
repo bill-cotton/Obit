@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -39,3 +39,5 @@ ofloat maxFBW;
 ofloat alpha;
 /** Reference frequency (Hz) for spectral index */
 odouble alphaRefF;
+/** Is this being restarted? */
+gboolean restart;

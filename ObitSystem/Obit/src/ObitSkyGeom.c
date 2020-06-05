@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2014                                          */
+/*;  Copyright (C) 2004-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -66,13 +66,16 @@ void ObitSkyGeomShiftXY (odouble ra, odouble dec, ofloat rotate,
 			odouble shiftRA, odouble shiftDec,
 			ofloat *xShift, ofloat *yShift)
 {
-  odouble xxshft, yyshft;
+  odouble xxshft, yyshft, dRA;
   ofloat maprr;
 
   maprr = rotate * DG2RAD;
 
   /* Simple linear shift */
-  xxshft = cos (DG2RAD*dec) * (shiftRA - ra);
+  dRA = (shiftRA - ra);
+  if (dRA>+180.0) dRA -=360.0;
+  if (dRA<-180.0) dRA +=360.0;
+  xxshft = cos (DG2RAD*dec) * dRA;
   yyshft = shiftDec - dec;
 
   /*  Undo rotation */
