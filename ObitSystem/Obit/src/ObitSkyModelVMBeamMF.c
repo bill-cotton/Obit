@@ -791,7 +791,7 @@ ObitSkyModelVMBeamMFCreate (gchar* name, ObitImageMosaic* mosaic,
 
   /* Beam shape - Tabulated if possible */
   ObitInfoListAlwaysPut (RXBeam->info, "doTab", OBIT_bool, dim, &doTab);
-  out->BeamShape = ObitBeamShapeCreate("Shape", RXBeam, 0.01, 25.0, TRUE);
+  out->BeamShape = ObitBeamShapeCreate("Shape", mosaic->images[0], 0.01, 25.0, TRUE);
 
  /* Get list of planes per channel */
   nchan = uvData->myDesc->inaxes[uvData->myDesc->jlocf];
@@ -977,11 +977,11 @@ void ObitSkyModelVMBeamMFShutDownMod (ObitSkyModel* inn, ObitUV *uvdata,
     if (!strncmp((gchar*)in->threadArgs[0], "mfvmbeam", 8)) {
       for (i=0; i<in->nThreads; i++) {
 	args = (VMBeamMFFTFuncArg*)in->threadArgs[i];
-	args->BeamRLInterp   = ObitFInterpolateUnref(args->BeamRLInterp);
+	args->BeamRXInterp   = ObitFInterpolateUnref(args->BeamRXInterp);
 	args->BeamLYInterp   = ObitFInterpolateUnref(args->BeamLYInterp);
 	args->BeamRLInterp   = ObitFInterpolateUnref(args->BeamRLInterp);
 	args->BeamLRInterp   = ObitFInterpolateUnref(args->BeamLRInterp);
-	args->BeamRLPhInterp = ObitFInterpolateUnref(args->BeamRLPhInterp);
+	args->BeamRXPhInterp = ObitFInterpolateUnref(args->BeamRXPhInterp);
 	args->BeamLYPhInterp = ObitFInterpolateUnref(args->BeamLYPhInterp);
 	args->BeamRLPhInterp = ObitFInterpolateUnref(args->BeamRLPhInterp);
 	args->BeamLRPhInterp = ObitFInterpolateUnref(args->BeamLRPhInterp);

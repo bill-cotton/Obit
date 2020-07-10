@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -163,6 +163,7 @@ ObitImageSelBuffer (ObitFArray *buffer, ObitImageDesc* desc,
 {
   ObitFArray *out = buffer;
   olong ndim=0, naxis[2];
+  ollong inSize, need;
 
   /* error checks */
   if (desc==NULL) return out; 
@@ -177,18 +178,23 @@ ObitImageSelBuffer (ObitFArray *buffer, ObitImageDesc* desc,
   if (desc->IOsize==OBIT_IO_byRow) {
     ndim = 1;
     naxis[0] = sel->trc[0] - sel->blc[0] + 1;
-  } else if (desc->IOsize==OBIT_IO_byPlane) {
+    need = (ollong)(naxis[0]);
+ } else if (desc->IOsize==OBIT_IO_byPlane) {
     ndim = 2;
     naxis[0] = sel->trc[0] - sel->blc[0] + 1;
     naxis[1] = sel->trc[1] - sel->blc[1] + 1;
+    need = (ollong)(naxis[0]) * (ollong)(naxis[1]);
   }
 
-  /* Create out is none exists */
-  if (out==NULL) {
-     out = ObitFArrayCreate ("Image Buffer", ndim, naxis);
-  } else { /* resize */
-    out = ObitFArrayRealloc (out, ndim, naxis);
+  /* Is this big enough? */
+  if (buffer) {
+    inSize = (ollong)(buffer->naxis[0]) * (ollong)(buffer->naxis[1]);
+    if (inSize>=need) return out;
   }
+
+  /* (re)Create */
+  out = ObitFArrayUnref(out); 
+  out = ObitFArrayCreate ("Image Buffer", ndim, naxis);
 
   return out;
 } /* end ObitImageSelBufferSize */

@@ -652,11 +652,11 @@ ObitSkyModel* ObitSkyModelMFCopy  (ObitSkyModel *inn, ObitSkyModel *outt, ObitEr
   out->doGrid   = in->doGrid;
   if ((out->mosaic) && (out->mosaic->numberImages>0)) {
     number = out->mosaic->numberImages;
-    out->CCver = ObitMemRealloc (out->CCver, sizeof(olong)*number);
+    out->CCver = ObitMemRealloc (out->CCver, sizeof(olong)*number*2);
     for (i=0; i<number; i++) out->CCver[i] = in->CCver[i];
-    out->startComp = ObitMemRealloc (out->startComp, sizeof(olong)*number);
+    out->startComp = ObitMemRealloc (out->startComp, sizeof(olong)*number*2);
     for (i=0; i<number; i++) out->startComp[i] = in->startComp[i];
-    out->endComp = ObitMemRealloc (out->endComp, sizeof(olong)*number);
+    out->endComp = ObitMemRealloc (out->endComp, sizeof(olong)*number*2);
     for (i=0; i<number; i++) out->endComp[i] = in->endComp[i];
   }
 
@@ -756,7 +756,6 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   ObitImageMF *image0;
   olong i, j, k, nSpec, nif, nfreq, n;
   ofloat phase=0.5, cp, sp;
-  odouble test;
   gboolean lsb, forceDFT;
   ObitInfoType type;
   union ObitInfoListEquiv InfoReal; 
@@ -845,7 +844,6 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   in->specIndex = g_malloc0(n*sizeof(olong)); 
   forceDFT = FALSE;   /* Need to force DFT? */
   for (i=0; i<n; i++) {
-    test = 1.0e20;
     in->specIndex[i] = -1;
     for (j=0; j<nSpec; j++) {
 	if (uvdata->myDesc->freqArr[i] >= in->specFreqLo[j]) in->specIndex[i] = j;
@@ -982,7 +980,6 @@ gboolean ObitSkyModelMFLoadPoint (ObitSkyModel *inn, ObitUV *uvdata, ObitErr *er
 {
   ObitSkyModelMF *in = (ObitSkyModelMF*)inn;
   gboolean gotSome = FALSE;
-  ObitIOCode retCode = OBIT_IO_SpecErr;
   olong i, cnt, ndim, naxis[2];
   ofloat *table, const2, ccrot, ssrot, cpa, spa, uvrot, xmaj, xmin;
   ofloat dxyzc[3], xxoff, yyoff, zzoff, a;
@@ -990,7 +987,6 @@ gboolean ObitSkyModelMFLoadPoint (ObitSkyModel *inn, ObitUV *uvdata, ObitErr *er
   
   /* error checks */
   if (err->error) return gotSome;
-  retCode = OBIT_IO_OK;
 
   gotSome = (in->pointFlux * in->factor!=0.0);  /* Non zero model? */
   if (!gotSome) return gotSome;
@@ -1146,7 +1142,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
   ofloat konst, konst2, xyz[3], xp[3], umat[3][3], pmat[3][3];
   ofloat ccrot, ssrot, xpoff, ypoff, maprot, uvrot;
   ofloat dxyzc[3], cpa, spa, xmaj, xmin, range[2], gp1=0., gp2=0., gp3=0.;
-  gboolean doCheck=FALSE, want, do3Dmul, noNeg, doZ;
+  gboolean doCheck=FALSE, want, do3Dmul, noNeg, doZ, noSIfit;
   gpointer fitArg=NULL;
   ofloat *fitSigma=NULL, *fitParms=NULL, *Sigma=NULL;
   gchar *tabType = "AIPS CC";
@@ -1160,6 +1156,12 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 
   /* UV descriptor */
   uvDesc = uvdata->myDesc;
+
+  /* Don't fit spectral index for polarization */
+  noSIfit = uvDesc->crval[uvdata->myDesc->jlocs]>1.;
+  noSIfit = noSIfit || (uvDesc->crval[uvdata->myDesc->jlocs]==-3.);
+  noSIfit = noSIfit || (uvDesc->crval[uvdata->myDesc->jlocs]==-4.);
+  noSIfit = noSIfit || (uvDesc->crval[uvdata->myDesc->jlocs]<-6.);
 
   konst = DG2RAD * 2.0 * G_PI;
   /* konst2 converts FWHM(deg) to coefficients for u*u, v*v, u*v */
@@ -1283,7 +1285,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
   lenEntry = naxis[0];  /* Length of table entry */
 
   /* Fitting component spectra? */
-  if (in->nSpec>1) {
+  if ((!noSIfit) && (in->nSpec>1)) {
     fitSigma = g_malloc0(in->nSpec*sizeof(ofloat));
     Sigma    = g_malloc0(in->nSpec*sizeof(ofloat));
     for (i=0; i<in->nSpec; i++) fitSigma[i] = 0.0001;  /* Comp spectrum fitting sigmas (Jy/bm) */
@@ -1371,7 +1373,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
     if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
     
     /*    Get reference pixel offsets from tangent point */
-    if (in->do3D) {
+    if (imDesc->do3D) {
       /* These should always be zero for 3D imaging? */
       xpoff = 0.0;
       ypoff = 0.0;
@@ -1432,7 +1434,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
       if (want) {
 
 	/* Fitting component spectra? */
-	if (in->nSpec>1) {
+	if ((!noSIfit) && (in->nSpec>1)) {
 	  for (iterm=0; iterm<in->nSpec; iterm++) table[iterm] = array[iterm+toff]*specCorr[iterm];
 	  /* Don't trust values exactly zero */
 	  for (iterm=0; iterm<in->nSpec; iterm++) {
@@ -1831,11 +1833,9 @@ static inline void SkyModel2DDot (olong n, ofloat *v1, ofloat *v2, ofloat *v3,
 #if HAVE_AVX512==1
   v8df vv1, vv2, vv3, vs1, vs2, vs3;
   v8sf vsp;
-  olong j;
 #elif HAVE_AVX==1
   v4df vv1, vv2, vv3, vs1, vs2, vs3;
   v4sf vsp;
-  olong j;
 #endif
 
   if (n<=0) return;
@@ -1902,7 +1902,6 @@ static inline void SkyModel2DDot (olong n, ofloat *v1, ofloat *v2, ofloat *v3,
  */
  static inline void SkyModelVMul (olong n, ofloat *v1, ofloat *v2, ofloat *ov) {
   olong i, ilast;
-  ofloat outval=0.0;
 #if HAVE_AVX512==1
   v16sf vv1, vv2;
 #elif HAVE_AVX==1

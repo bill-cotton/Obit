@@ -103,6 +103,9 @@ void DeleteImage(PyObject *self) {
 	PyErr_SetString(PyExc_RuntimeError,"DeleteImage: could not recover c struct");
 	return;
    }
+   if (!ObitImageIsA(((ObitImage*)ptr))) return;  // valid image?
+   while (((ObitImage*)ptr)->image) ((ObitImage*)ptr)->image = 
+        ObitFArrayUnref(((ObitImage*)ptr)->image); // zap any buffer -  for real
    ((Image*)ptr)->me = ObitImageUnref(((Image*)ptr)->me);
 }// end DeleteImage
 
@@ -171,8 +174,15 @@ extern PyObject* ImageInfo (ObitImage *in, ObitErr *err) {
 } // end  ImageInfo
 
 extern ObitImage* ImageZap  (ObitImage *in, ObitErr *err) {
+  // Really be sure to delete buffer
+  while (in->image) in->image = ObitFArrayUnref(in->image);
   return ObitImageZap (in, err);
 } // end ImageZap
+
+extern void ImageFreeBuffer  (ObitImage *in, ObitErr *err) {
+  // Really be sure to delete buffer
+  while (in->image) in->image = ObitFArrayUnref(in->image);
+} // end ImageFreeBuffer
 
 extern void ImageRename  (ObitImage *in, ObitErr *err) {
   ObitImageRename (in, err);

@@ -4699,3 +4699,48 @@ Obit/TDF/Restore.TDF Obit/tasks/Restore.c
     New task to restore/flatten/fit CLEANed facets
 05 June 2020 svn 622
 
+Summary: ObitView improvements, bug fixes
+Obit/src/ObitThreadGrid.c
+    fast_rot: fix AVX512 indexing bug.
+Obit/src/ObitVecFunc.c Obit/include/ObitVecFunc.h
+Obit/src/ObitSinCos.c Obit/src/ObitExp.c 
+    reenable avx512
+Obit/src/ObitDConCleanVis.c
+    Hack for autoCen problem - needs more work
+Obit/src/ObitSpectrumFit.c
+    Single: increase size of coef array
+Obit/tasks/MFImage.c
+    doChanPoln: reset restartFlux after each polarization imaging.
+Obit/src/ObitSkyModelVMBeam.c
+    UpdateModel: correct beam gain correction,test lin, not circ
+Obit/src/ObitSkyModelVMBeamMF.c
+    Create: Use mosaic image rather then RXBeam for BeamShape.
+Obit/share/data/1934-638LModel.fits.gz Obit/share/data/0408-65LModel.fits.gz
+    MeerKAT flux density calibrators 
+Obit/src/ObitRMFit.c
+    RMCube: add history
+Obit/python/Image.py
+    UpdateDesc: Fix logic to allow updating AIPS header keywords
+ObitView/ObitView.c ObitView/include/imagedisp.h
+ObitView/src/aboutbox.c ObitView/src/requestbox.c
+    Add port number to "About"
+    Require Abort button twice
+Obit/src/ObitImage.c
+    Zap: Free buffer
+    Clone2: more securely define buffer.	 
+Obit/src/ObitImageSel.c
+    Buffer: Don't recreate image buffer if it's large enough already.
+Obit/src/ObitData.c
+    Zap: Don't try to delete history for memory only image
+Obit/python/MosaicUtil.py
+    PWeightImage: Plug memory leaks
+Obit/python/ImageMF.py
+   Add history to FitSpec*
+   add minWt to SpecFit2 to set minimum fraction of weight
+Obit/python/Image.inc Obit/python/Obit_wrap.c
+   Zap: add robust buffer zapping
+   ImageFreeBuffer: new, robust buffer zapping
+Obit/src/ObitSkyModelMF.c
+   LoadComps: Don't fit SI to poln data
+   LoadComps: use do3D on image involved rather than skyModel
+10 Jul 2020 svn 624

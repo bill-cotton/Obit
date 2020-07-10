@@ -213,17 +213,22 @@ ObitData* ObitDataZap (ObitData *in, ObitErr *err)
   const ObitDataClassInfo *myClass;
   ObitHistory *inHistory=NULL;
   gchar *routine = "ObitDataZap";
+  ObitIOType fileType=OBIT_IO_Binary;
 
   /* error checks */
   g_assert(ObitErrIsA(err));
   if (err->error) return NULL;
   g_assert (ObitIsA(in, &myClassInfo));
 
+  /* Memory only? */
+  if (ObitImageIsA(in)) fileType = ((ObitImage*)in)->mySel->FileType;
+
   /* Delete history */
-  inHistory  = newObitDataHistory (in, OBIT_IO_WriteOnly, err);
-  if (inHistory)  inHistory =  ObitHistoryZap(inHistory, err);
-  if (err->error) Obit_traceback_val (err, routine, in->name, in);
- 
+  if (fileType!=OBIT_IO_MEM) {
+    inHistory  = newObitDataHistory (in, OBIT_IO_WriteOnly, err);
+    if (inHistory)  inHistory =  ObitHistoryZap(inHistory, err);
+    if (err->error) Obit_traceback_val (err, routine, in->name, in);
+  }
 
   /* Cannot do for generic ObitData */
   if (ObitGenericData(in)) {

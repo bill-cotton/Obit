@@ -105,17 +105,14 @@ void ObitSinCosCalc(ofloat angle, ofloat *sin, ofloat *cos)
 */
 void ObitSinCosVec(olong n, ofloat *angle, ofloat *sin, ofloat *cos)
 {
-  olong i;
+  olong i, ndo, nleft;
   /** SSE/AVX/AVX512 implementation */
-  //DAMN - no longer works #if   HAVE_AVX512==1
-#if   HAVE_AVXXXX==1
-  olong ndo, nleft;
-  CV16SF vanglet, vss, vcc;
-#elif   HAVE_AVX==1
-  olong ndo, nleft;
+#if   HAVE_AVX512==1
+  CV16SF vvanglet, vvss, vvcc;
+#endif
+#if   HAVE_AVX==1
   CV8SF vanglet, vss, vcc;
 #elif HAVE_SSE==1
-  olong ndo, nleft;
   CV4SF vanglet, vss, vcc;
 #endif /* HAVE_SSE/AVX/AVX512 */
 
@@ -125,25 +122,24 @@ void ObitSinCosVec(olong n, ofloat *angle, ofloat *sin, ofloat *cos)
     sincosf(angle[0], sin, cos);
     return;
   }
- /** AVX512 implementation */
-  //DAMN - no longer works #if   HAVE_AVX512==1
-#if HAVE_AVXXXX==1
+ /** AVX512 implementation crashes */
+#if HAVE_AV512==1
   nleft = n;
   /* Loop in groups of 16 */
   ndo = nleft - nleft%16;  /* Only full groups of 16 */
   for (i=0; i<ndo; i+=16) {
-    vanglet.v = _mm512_loadu_ps(angle); angle += 16;     
-    avx512_sincos_ps(vanglet.v, &vss.v, &vcc.v);
-    _mm512_storeu_ps(sin, vss.v); sin += 16;
-    _mm512_storeu_ps(cos, vcc.v); cos += 16;
+    vvanglet.v = _mm512_loadu_ps(angle); angle += 16;     
+    avx512_sincos_ps(vvanglet.v, &vvss.v, &vvcc.v);
+    _mm512_storeu_ps(sin, vvss.v); sin += 16;
+    _mm512_storeu_ps(cos, vvcc.v); cos += 16;
  } /* end AVX512 loop */
   /* Remainders, zero fill */
   nleft = n-i;  /* How many left? */
-  for (i=0; i<nleft; i++) vanglet.f[i] = *angle++;
-  for (i=nleft; i<16; i++) vanglet.f[i] = 0.0;
-  avx512_sincos_ps(vanglet.v, &vss.v, &vcc.v);
+  for (i=0; i<nleft; i++) vvanglet.f[i] = *angle++;
+  for (i=nleft; i<16; i++) vvanglet.f[i] = 0.0;
+  avx512_sincos_ps(vvanglet.v, &vvss.v, &vvcc.v);
   for (i=0; i<nleft; i++) 
-    {*sin++ = vss.f[i]; *cos++ = vcc.f[i]; }
+    {*sin++ = vvss.f[i]; *cos++ = vvcc.f[i]; }
  /** AVX implementation */
 #elif HAVE_AVX==1
   nleft = n;
@@ -229,8 +225,7 @@ void ObitCosVec(olong n, ofloat *angle, ofloat *cos)
 {
   olong i;
   /** SSE/AVX/AVX512 implementation */
-  //DAMN - no longer works #if   HAVE_AVX512==1
-#if   HAVE_AVXXXX==1
+#if   HAVE_AVX512==1
   olong ndo, nleft;
   CV16SF vanglet;
 #elif   HAVE_AVX==1
@@ -243,8 +238,7 @@ void ObitCosVec(olong n, ofloat *angle, ofloat *cos)
 
   if (n<=0) return;
  /** AVX implementation */
-  //DAMN - no longer works #if   HAVE_AVX512==1
-#if   HAVE_AVXXXX==1
+#if   HAVE_AVX512==1
   nleft = n;
   /* Loop in groups of 16 */
   ndo = nleft - nleft%16;  /* Only full groups of 16 */
@@ -339,8 +333,7 @@ void ObitSinVec(olong n, ofloat *angle, ofloat *sin)
 {
   olong i;
  /** SSE/AVX/AVX512 implementation */
-  //DAMN - no longer works #if   HAVE_AVX512==1
-#if   HAVE_AVXXXX==1
+#if   HAVE_AVX512==1
   olong ndo, nleft;
   CV16SF vanglet;
 #elif   HAVE_AVX==1
@@ -353,8 +346,7 @@ void ObitSinVec(olong n, ofloat *angle, ofloat *sin)
 
   if (n<=0) return;
  /** AVX512 implementation */
-  //DAMN - no longer works #if   HAVE_AVX512==1
-#if   HAVE_AVXXXX==1
+#if   HAVE_AVX512==1
   nleft = n;
   /* Loop in groups of 16 */
   ndo = nleft - nleft%16;  /* Only full groups of 16 */

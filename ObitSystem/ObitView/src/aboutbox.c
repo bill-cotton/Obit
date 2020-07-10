@@ -1,7 +1,7 @@
 /* $Id$  */
 /* about dialog box  for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1998-2016
+*  Copyright (C) 1998-2020
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -19,6 +19,7 @@
 #include "obitview.h"
 #include "scrolltext.h"
 #include <ObitVersion.h>
+#include "imagedisp.h"
 
 /**
  *  \file aboutbox.c
@@ -26,7 +27,7 @@
  */
 
 /*---------------Private function prototypes----------------*/
-void HelpAbout (ScrollTextPtr STextPtr);
+void HelpAbout (ScrollTextPtr STextPtr, ImageDisplay* IDdata);
 
 /**
  * Callback 
@@ -36,12 +37,13 @@ void HelpAbout (ScrollTextPtr STextPtr);
  */
 void HelpAboutCB (Widget w, XtPointer clientData, XtPointer callData) 
 {
+  ImageDisplay *IDdata = (ImageDisplay*)clientData;
   ScrollTextPtr STextPtr;
   /* make ScrollText */
   STextPtr = ScrollTextMake (Display_shell, "About ObitView");
   
   /* copy text */
-  if (STextPtr) HelpAbout(STextPtr);
+  if (STextPtr) HelpAbout(STextPtr, IDdata);
   /* final setup */
   ScrollTextInit (STextPtr);
 } /* end HelpAboutCB */
@@ -50,16 +52,19 @@ void HelpAboutCB (Widget w, XtPointer clientData, XtPointer callData)
  * Supply About text
  * \param STextPtr Text box to write to
  */
-void HelpAbout (ScrollTextPtr STextPtr)  
+void HelpAbout (ScrollTextPtr STextPtr, ImageDisplay* IDdata)  
 {
   int loop, next, length;
   char *ver = ObitVersion();
-  char label[80];
-  g_snprintf (label,79,"ObitView %s Viewer for images in FITS or AIPS format\n", ver);
+  char label[80], label2[80];
+  g_snprintf (label,79,"ObitView %s Viewer for images in FITS or AIPS format", 
+	      ver);
   g_free(ver);
+  g_snprintf (label2,79,"Attached to port %d",IDdata->port);
   char *line[] = {
     "ObitView 1.3 Viewer for images in FITS or AIPS format ",
-    "Copyright NRAO/AUI 2005-2016 ",
+    "   ",
+    "Copyright NRAO/AUI 2005-2020 ",
     " ",
     "   This software is distributed free of charge by NRAO. ",
     "The (USA) National Radio Astronomy Observatory (http://www.nrao.edu/) ",
@@ -78,7 +83,8 @@ void HelpAbout (ScrollTextPtr STextPtr)
     "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. ",
     " ",
     "*** FINISHED ***" }; /* end of text */
-  line[0] = label;  /* version info */
+  line[0] = label;   /* version info */
+  line[1] = label2;  /* port info */
   loop = 0;
   next = STextPtr->num_lines;
   while (1) { /* loop till done */

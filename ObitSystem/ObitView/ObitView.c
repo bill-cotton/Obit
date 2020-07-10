@@ -229,6 +229,8 @@ int main ( int argc, char **argv )
   
   /* save application context */
   IDdata->app = myApp;
+  IDdata->port = port;  /* Save port number */
+  if (noPort) IDdata->port = -1;
   
   /* DEBUG test Obit error
   Obit_log_error(err, OBIT_InfoErr,"Test Obit Message, dbug =  %d", dbug);

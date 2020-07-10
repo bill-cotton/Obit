@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2018
+#  Copyright (C) 2004-2020
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -32,6 +32,12 @@ from __future__ import print_function
 import Image, ImageDesc, ImageUtil, FArray, InfoList, OErr, History, GPUFInterpolate
 import os
 from six.moves import range
+
+def getMemUse():
+    import resource
+    mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    print ("Memory usage %f GByte"%(mem/1.0e6))
+    # end getMemUse
 
 def PMakeMaster(template, size, SumWtImage, SumWt2, err):
     """
@@ -173,7 +179,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     #
     haveWtImage = inWtImage != None   # Weight image given
     # Open accumulation files
-    Image.POpen(inImage, 1, err)  # pythpn gets confused
+    Image.POpen(inImage, 1, err)  # python gets confused
     Image.PClose(inImage,err)
     Image.POpen(SumWtImage, 3, err)
     Image.POpen(SumWt2, 3, err)
@@ -220,6 +226,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         outPlane = [iPlane+2-bpln,1,1,1,1]   # output plane
         if not (iPlane%20):
             print("At plane", iPlane+1,os.times())
+            getMemUse()
         # Make weight image if needed, first pass or planeWt
         #if WtImage == None:
         if planeWt or haveWtImage:
@@ -240,6 +247,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
                 pln = [iPlane+1,1,1,1,1]
             else:
                 pln = [max(1,inNaxis[2]//2),1,1,1,1]
+            #print('if haveWtImage'); getMemUse()
             if haveWtImage:
                 # Beam provided, extract relevant plane to a memory resident WtImage
                 Image.PGetPlane (inWtImage, None, doPlane, err)
@@ -260,11 +268,13 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
             OErr.printErrMsg(err, "Error making weight image for "+Image.PGetName(inImage))
             
             # The interpolated versions
+            #print('if not InterpWtImage:'); getMemUse()
             if not InterpWtImage:
                 InterpWtImage = Image.Image("InterpWtImage")
                 Image.PClone2(inImage, SumWtImage, InterpWtImage, err)
  
             # input x, y pixels for output
+            #print('if not XPixelImage'); getMemUse()
             if  (not XPixelImage) or (not YPixelImage):
                 XPixelImage = Image.Image("XPixelImage")
                 YPixelImage = Image.Image("YPixelImage")
@@ -273,6 +283,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
                 ImageUtil.PGetXYPixels(WtImage, InterpWtImage, XPixelImage, YPixelImage, err)
            
             # Interpolated weight image
+            #print('if not InterWt'); getMemUse()
             if  not InterpWt:
                 InterpWt = Image.Image("InterpWt")
                 Image.PClone2(inImage, SumWtImage, InterpWt, err)
@@ -287,6 +298,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
                                         hwidth=hwidth, finterp=finterp)
             OErr.printErrMsg(err, "Error interpolating wt*wt "+Image.PGetName(inImage))
             # Interpolated weight image Squared
+            #print('if not InterpWtWt'); getMemUse()
             if not InterpWtWt:
                 InterpWtWt = Image.Image("InterpWtWt")
                 Image.PClone2(inImage, SumWtImage, InterpWtWt, err)
@@ -327,11 +339,13 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         else:
             fact = factor
         #print 'do plane',doPlane[0],'RMS',RMS, 'factor',fact
+        #print('before Interpolate'); getMemUse()
         # Interpolate image plane
         ImageUtil.PInterpolateImage(inImage, InterpWtImage, err, \
                                     inPlane=doPlane, XPix=XPixelImage, YPix=YPixelImage,
                                     hwidth=hwidth, finterp=finterp)
         OErr.printErrMsg(err, "Error interpolating plane "+str(doPlane))
+        #print('after Interpolate'); getMemUse()
         # Interpolated image times beam
         FArray.PMul(InterpWtImage.FArray, InterpWt.FArray, InterpWtImage.FArray)
         #
@@ -339,6 +353,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         Image.PGetPlane(SumWt2,  None, outPlane, err)
         Image.PGetPlane(SumWtImage, None, outPlane, err)
         OErr.printErrMsg(err, "Error reading accumulation image ")
+        #print('after read old'); getMemUse()
         #
         # Accumulate
         FArray.PShiftAdd (SumWtImage.FArray, pos2, InterpWtImage.FArray, pos1, fact, SumWtImage.FArray)
@@ -352,25 +367,33 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
         FArray.PBlank (InterpWtWt.FArray, InterpWt.FArray, InterpWtWt.FArray);
         # Accumulate Wt*Wt
         FArray.PShiftAdd (SumWt2.FArray, pos2, InterpWtWt.FArray,pos1, fact, SumWt2.FArray)
+        #print('after math'); getMemUse()
         #
         # Write output
         Image.PPutPlane(SumWt2, None, outPlane, err)
         Image.PPutPlane(SumWtImage, None, outPlane, err)
         OErr.printErrMsg(err, "Error writing accumulation image ")
+        # Cleanup
+       
         if planeWt:
-            del WtImage, XPixelImage, YPixelImage;
-            WtImage = None;XPixelImage=None; YPixelImage=None;
+            WtImage.Zap(err); 
+            del WtImage, 
+            WtImage = None; 
        # end loop over planes
     # close output
     #Image.PClose(inImage, err)
     Image.PClose(SumWtImage, err)
     Image.PClose(SumWt2, err)
-    del XPixelImage, YPixelImage, InterpWtImage, InterpWtWt, 
+    SumWtImage.FreeBuffer(err); SumWt2.FreeBuffer(err); 
+    XPixelImage.Zap(err); YPixelImage.Zap(err); 
+    InterpWtImage.Zap(err); InterpWtWt.Zap(err); InterpWt.Zap(err)
+    del XPixelImage, YPixelImage, InterpWtImage, InterpWtWt, InterpWt
     if WtImage:
-        del WtImage; WtImage = None
+        WtImage.Zap(err); del WtImage; WtImage = None
     if finterp!=None:
         del finterp
 
+    #print('end PWeightImage'); getMemUse()
     # end PWeightImage
     
 def PWeightImageEq(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,

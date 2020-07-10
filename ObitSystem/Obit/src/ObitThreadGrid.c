@@ -2130,7 +2130,7 @@ void fast_rot(olong ivis, ofloat uu, ofloat vv, ofloat ww, GridFuncArg *args)
       num += 1;
     } /* end phase channel loop */
 
-   /* Sin/Cos */
+    /* Sin/Cos */
    ObitSinCosVec(num, args->fwork1, args->fwork2, args->fwork3);
 
    /* Loop over channels rotating */
@@ -2138,10 +2138,10 @@ void fast_rot(olong ivis, ofloat uu, ofloat vv, ofloat ww, GridFuncArg *args)
 #if HAVE_AVX512==1
    /* AVX512 version */
    /* single precision so blocks of 16 */
-   vindex = _mm512_set_epi32(48,45,42,39,36,33,30,27,24,21,18,15,12,9,3,0);
+   vindex = _mm512_set_epi32(45,42,39,36,33,30,27,24,21,18,15,12,9,6,3,0);
    oindex = _mm512_set_epi32(30,28,26,24,22,20,18,16,14,12,10, 8, 6,4,2,0);
    vec_sign2 = _mm512_set1_ps((float)phaseSign);
-  for (i1=bChan; i1<eChan; i1+=16) {
+   for (i1=bChan; i1<eChan; i1+=16) {
      if (ilast+16>=eChan) break;  /* only full blocks of 16 */
      ilast += 16;
      jvis = ivis + gridInfo->nrparm + i1*3;

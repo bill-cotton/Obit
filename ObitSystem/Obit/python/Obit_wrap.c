@@ -6811,6 +6811,9 @@ void DeleteImage(PyObject *self) {
 	PyErr_SetString(PyExc_RuntimeError,"DeleteImage: could not recover c struct");
 	return;
    }
+   if (!ObitImageIsA(((ObitImage*)ptr))) return;  // valid image?
+   while (((ObitImage*)ptr)->image) ((ObitImage*)ptr)->image = 
+        ObitFArrayUnref(((ObitImage*)ptr)->image); // zap any buffer -  for real
    ((Image*)ptr)->me = ObitImageUnref(((Image*)ptr)->me);
 }// end DeleteImage
 
@@ -6879,8 +6882,15 @@ extern PyObject* ImageInfo (ObitImage *in, ObitErr *err) {
 } // end  ImageInfo
 
 extern ObitImage* ImageZap  (ObitImage *in, ObitErr *err) {
+  // Really be sure to delete buffer
+  while (in->image) in->image = ObitFArrayUnref(in->image);
   return ObitImageZap (in, err);
 } // end ImageZap
+
+extern void ImageFreeBuffer  (ObitImage *in, ObitErr *err) {
+  // Really be sure to delete buffer
+  while (in->image) in->image = ObitFArrayUnref(in->image);
+} // end ImageFreeBuffer
 
 extern void ImageRename  (ObitImage *in, ObitErr *err) {
   ObitImageRename (in, err);
@@ -34897,6 +34907,35 @@ SWIGINTERN PyObject *_wrap_ImageZap(PyObject *SWIGUNUSEDPARM(self), PyObject *ar
   arg2 = (ObitErr *)(argp2);
   result = (ObitImage *)ImageZap(arg1,arg2);
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ObitImage, 0 |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ImageFreeBuffer(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  ObitImage *arg1 = (ObitImage *) 0 ;
+  ObitErr *arg2 = (ObitErr *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject *swig_obj[2] ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "ImageFreeBuffer", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ImageFreeBuffer" "', argument " "1"" of type '" "ObitImage *""'"); 
+  }
+  arg1 = (ObitImage *)(argp1);
+  res2 = SWIG_ConvertPtr(swig_obj[1], &argp2,SWIGTYPE_p_ObitErr, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "ImageFreeBuffer" "', argument " "2"" of type '" "ObitErr *""'"); 
+  }
+  arg2 = (ObitErr *)(argp2);
+  ImageFreeBuffer(arg1,arg2);
+  resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
   return NULL;
@@ -72570,6 +72609,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "ImageScratch", _wrap_ImageScratch, METH_VARARGS, NULL},
 	 { "ImageInfo", _wrap_ImageInfo, METH_VARARGS, NULL},
 	 { "ImageZap", _wrap_ImageZap, METH_VARARGS, NULL},
+	 { "ImageFreeBuffer", _wrap_ImageFreeBuffer, METH_VARARGS, NULL},
 	 { "ImageRename", _wrap_ImageRename, METH_VARARGS, NULL},
 	 { "ImageCopy", _wrap_ImageCopy, METH_VARARGS, NULL},
 	 { "ImageClone", _wrap_ImageClone, METH_VARARGS, NULL},

@@ -1037,7 +1037,7 @@ ofloat* ObitSpectrumFitSingle (olong nfreq, olong nterm, odouble refFreq,
   arg->obs            = g_malloc0(arg->nfreq*sizeof(ofloat));
   arg->nu             = g_malloc0(arg->nfreq*sizeof(ofloat));
   arg->logNuOnu0      = g_malloc0(arg->nfreq*sizeof(ofloat));
-  arg->coef           = g_malloc0(2*arg->nterm*sizeof(ofloat));
+  arg->coef           = g_malloc0(3*arg->nterm*sizeof(ofloat));
   for (i=0; i<nfreq; i++) {
     if (sigma[i]>0.0) {
       arg->isigma[i]    = 1.0 / sigma[i];

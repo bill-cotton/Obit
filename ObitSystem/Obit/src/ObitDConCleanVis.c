@@ -1919,8 +1919,8 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
       /* Position of bright peak */
       imDesc = mosaic->images[ifield]->myDesc;
       /* DEBUG HACK -0.5* */
-      pixel[0] = imDesc->crpix[0] + ((xcenter-0.5*xoff) / imDesc->cdelt[0]);
-      pixel[1] = imDesc->crpix[1] + ((ycenter-0.5*yoff) / imDesc->cdelt[1]);
+      pixel[0] = imDesc->crpix[0] + ((xcenter-0.5*xoff) / imDesc->cdelt[0]); 
+      pixel[1] = imDesc->crpix[1] + ((ycenter-0.5*yoff) / imDesc->cdelt[1]); 
       ObitImageDescGetPos(imDesc, pixel, pos, err);
       
       /* Check that this position has not just been added from another field. */
@@ -2422,8 +2422,9 @@ gboolean ObitDConCleanVisRecenter (ObitDConCleanVis *in, ObitUV* uvdata,
       if (want) {
 	
 	/* Position of peak */
-	pixel[0] = imDesc->crpix[0] + ((xcenter+xoff) / imDesc->cdelt[0]);
-	pixel[1] = imDesc->crpix[1] + ((ycenter+yoff) / imDesc->cdelt[1]);
+	/* DEBUG HACK -0.5* */
+ 	pixel[0] = imDesc->crpix[0] + ((xcenter-0.5*xoff) / imDesc->cdelt[0]);
+	pixel[1] = imDesc->crpix[1] + ((ycenter-0.5*yoff) / imDesc->cdelt[1]);
 	ObitImageDescGetPos(imDesc, pixel, pos, err);
 	ObitImageDescGetPoint (imDesc, &RAPnt, &DecPnt);
 	ObitSkyGeomShiftXY (RAPnt, DecPnt, ObitImageDescRotate(imDesc),

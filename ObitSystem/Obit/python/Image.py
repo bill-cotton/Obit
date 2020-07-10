@@ -162,6 +162,16 @@ class Image(Obit.Image, OData.OData):
         PClose (self, err)
         # end Close
 
+    def FreeBuffer (self, err):
+        """
+        Free Image buffer if it exists
+
+        * self      = Python Image object
+        * err       = Python Obit Error/message stack
+        """
+        Obit.ImageFreeBuffer (self.me, err.me)
+        # end FreeBuffer
+
     def Read (self, err):
         """
         Read an image persistent (disk) form
@@ -753,7 +763,7 @@ def newPAImage(name, Aname, Aclass, disk, seq, exists, err, verbose=False):
             cno = AIPSDir.PFindCNO(disk, user, Aname, Aclass, "MA", seq, err)
             Obit.ImageSetAIPS(out.me, 2, disk, cno, user, blc, trc, err.me)
             Obit.ImagefullInstantiate (out.me, 1, err.me)
-            #print "found",Aname,Aclass,"as",cno
+            #print ("found",Aname,Aclass,"as",cno)
         else: # If file not defined in catalog -> error
             OErr.PLog(err, OErr.Error, Aname + " image does not exist")
             out.isOK = False
@@ -1641,21 +1651,23 @@ def PUpdateDesc (inImage, err, Desc=None):
     ################################################################
     if ('myClass' in inImage.__dict__) and (inImage.myClass=='AIPSImage'):
         raise TypeError("Function unavailable for "+inImage.myClass)
-    inCast = inImage.cast('ObitImage')
     # Checks
-    if not inCast.ImageIsA():
+    if not inImage.ImageIsA():
         raise TypeError("inImage MUST be a Python Obit Image")
     #
     # if Desc=None make copy of current contents
     if Desc == None:
-        d = inCast.Desc.Dict
+        d  = inImage.Desc.Dict
+        dd = inImage.Desc.List.Dict
     else:
-        d = Desc.Dict
+        d  = Desc.Dict
+        dd = Desc.List.Dict
     # Open for write
-    inCast.Open(READWRITE,err)   # Open
-    inCast.Desc.Dict = d         # Update header
-    Obit.ImageDirty(inCast.me)  # force update
-    inCast.Close(err)            # Close to update
+    inImage.Open(READWRITE,err)   # Open
+    inImage.Desc.Dict   = d       # Update header
+    inImage.Desc.List.Dict = dd   # Update header keywords
+    Obit.ImageDirty(inImage.me)   # force update
+    inImage.Close(err)            # Close to update
     # end PUpdateDesc
 
 def PImageInfo (inImage, err):

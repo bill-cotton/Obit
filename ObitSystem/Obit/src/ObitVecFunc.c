@@ -30,8 +30,7 @@
 #include <math.h>
 
 /** AVX512 implementation 16 floats in parallel */
-  //DAMN - no longer works #if   HAVE_AVX512==1
-#if   HAVE_AVXXXX==1
+#if   HAVE_AVX512==1
 #include "avx512_mathfun.h"
 /** Natural log of array of 16 floats */
 v16sf avx512_log_ps(v16sf x) {
@@ -54,9 +53,9 @@ void avx512_sincos_ps(v16sf x, v16sf *s, v16sf *c) {
   sincos512_ps((v16sf) x, (v16sf*) s, (v16sf*) c);
 }
 /* end HAVE_AVX512 */
-
+#endif
 /** AVX implementation 8 floats in parallel, AVX2 a bit better */
-#elif HAVE_AVX2==1
+#if HAVE_AVX2==1
 #include "avx_mathfun.h"
 /** Natural log of array of 8 floats */
 V8SF avx_log_ps(V8SF x) {

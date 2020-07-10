@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2019                                          */
+/*;  Copyright (C) 2003-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -485,6 +485,9 @@ ObitImage* ObitImageZap (ObitImage *in, ObitErr *err)
     return ObitImageUnref(in); 
   }
 
+  /* Free image buffer if allocated */
+  in->image = ObitFArrayUnref(in->image);
+
   /* Delete Image and all tables  */
   ObitIOZap (in->myIO, err);
   if (err->error) Obit_traceback_val (err, routine, in->name, in);
@@ -948,9 +951,9 @@ void ObitImageClone2  (ObitImage *in1, ObitImage *in2, ObitImage *out,
   crpix[0] = (ofloat)((olong)(crpix[0]+0.5));
   crpix[1] = (ofloat)((olong)(crpix[1]+0.5));
 
- /* If it already exists and is big  enough, use it, create if needed */
-  if (out->image) out->image = ObitFArrayRealloc (out->image, 2, naxis);
-  else            out->image = ObitFArrayCreate (in1->name, 2, naxis);
+  /* Image buffer */
+  out->image = ObitFArrayUnref(out->image);            /* out with any old */
+  out->image = ObitFArrayCreate (in1->name, 2, naxis); /* in with the new */
 
   /* Copy basic in2 descriptor to out */
   out->myDesc = ObitImageDescCopy(in2->myDesc, out->myDesc, err);
@@ -1678,7 +1681,7 @@ void ObitImageSetBeamName (ObitImage *image, ObitErr *err)
 
     /* Allocate new cno */
     seq = entry->seq;
-    for (i=0; i<12;i++) AName[i] = entry->name[i]; AName[i] = 0;
+    for (i=0; i<12;i++) {AName[i] = entry->name[i];} AName[i] = 0;
     cno = ObitAIPSDirAlloc (disk, user, AName, AClass, AType, seq, &exist, err);
     g_free(entry);
     if (err->error)  Obit_traceback_msg (err, routine, image->myBeam->name);

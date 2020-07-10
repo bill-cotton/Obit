@@ -1542,7 +1542,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   olong        nchan,  BChan, EChan, order, chInc, chAvg, istok, kstok, nstok, bstok, estok;
   olong        BIF, EIF, nif, inver, outver, maxPixel, nTotal;
   gboolean     first, doFlat, btemp, autoWindow, Tr=TRUE, doVPol, do3D;
-  ofloat       maxFBW, alpha, reFlux=1.0e-12;
+  ofloat       maxFBW, alpha, ftemp, reFlux=1.0e-12;
   gchar        Stokes[5], *chStokes=" IQUVRL", *CCType = "AIPS CC";
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "UVRange", "timeRange", "UVTape",
@@ -1831,6 +1831,12 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     if (err->error) Obit_traceback_msg (err, routine, outImage[istok-bstok]->name);
     /* end of create output */
     
+    /* Reset any restart for Stokes > I */
+    if (istok>1) {
+      dim[0] = dim[1] = dim[2] = 1; ftemp = -1.0;
+      ObitInfoListAlwaysPut(myClean->info, "reuseFlux", OBIT_float, dim, &ftemp);
+    }
+
     /* Automatic windowing  */
     btemp = autoWindow;
     /*** if (istok>bstok) btemp = Fl; */

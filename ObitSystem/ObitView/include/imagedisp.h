@@ -44,7 +44,7 @@ typedef struct {
   olong          vscr_half; /* half width of display in y */
   olong          disp_wid;  /* display width */
   olong          disp_hei;  /* display height */
-  
+  olong          port;      /* Port number, -1 = none */
   /* image information */
   olong            zoom;      /* zoom factor, neg = zoom out */
   olong            scrollx;   /* center "x" pixel in display */

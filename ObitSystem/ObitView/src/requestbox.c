@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Request (of client) boxes  for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2005-2008
+*  Copyright (C) 2005-2020
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -57,6 +57,7 @@ typedef struct {
   olong cancel;   /* cancel requested if != 0 */
   XtIntervalId timerId;  /* X timer ID for timeout */
   olong setTO;    /* Timeout activated? */
+  olong abortCnt; /* Number of times the Abort button has been selected*/
 } RequestBoxStuff;
 RequestBoxStuff RBdia;
 
@@ -103,11 +104,22 @@ void EditRequestCB (Widget w,  XtPointer clientData, XtPointer callData)
   /* Cancel any timeout */
   if (RBdia.setTO) XtRemoveTimeOut(RBdia.timerId);
   RBdia.setTO  = 0;  /* Timeout deactivated */
- 
+  if (which!=1) RBdia.abortCnt = 0; /* reset abort button count */
   if (state->set) {
     /*fprintf (stderr,"DEBUG which %d\n",which);*/
     if (which==0) RBdia.ReqType = OBIT_RPC_Request_Continue;
-    else if (which==1) RBdia.ReqType = OBIT_RPC_Request_Abort;
+    else if (which==1) {  /* Needs to be selected twice */
+      if (RBdia.abortCnt<1) {
+	RBdia.ReqType = OBIT_RPC_Request_Field; /* "safe" option */
+	XtVaSetValues (RBdia.radioAbort, XmNset, False, NULL);
+	XtVaSetValues (RBdia.radioView, XmNset, True, NULL); 
+	RBdia.abortCnt = 1;
+	MessageShow ("Really abort? Hit the button again.");
+      } else {
+	RBdia.ReqType = OBIT_RPC_Request_Abort;
+	RBdia.abortCnt = 0;
+      }
+    }
     else if (which==2) RBdia.ReqType = OBIT_RPC_Request_Quit;
     else if (which==3) RBdia.ReqType = OBIT_RPC_Request_NoTV;
     else if (which==4) RBdia.ReqType = OBIT_RPC_Request_Field;
@@ -351,6 +363,7 @@ void EditRequestBox ()
  RBdia.radioAbort = 
    XtVaCreateManagedWidget("Abort", xmToggleButtonWidgetClass, radio, NULL);
  XtAddCallback (RBdia.radioAbort, XmNvalueChangedCallback, EditRequestCB, (XtPointer)1);
+ RBdia.abortCnt = 0; /* Button not hit yet */
 
  RBdia.radioQuit = 
   XtVaCreateManagedWidget("Quit operation", xmToggleButtonWidgetClass, radio, NULL);
