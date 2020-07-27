@@ -2033,7 +2033,8 @@ static void NLFit (NLFitArg *arg)
 
   /* Is this good enough? */
   isDone = (arg->ChiSq<0.0) || (arg->ChiSq<=arg->maxChiSq);
-  if (meanSNR>(SNRperTerm*3.0)) isDone = FALSE;  /* Always try for high SNR */
+  //if (meanSNR>(SNRperTerm*3.0)) isDone = FALSE;   /* Always try for high SNR */
+  if (meanSNR>SNRperTerm) isDone = FALSE;  /*Always try for high SNR */
   if (isDone) goto done;
 
   /* Higher order terms do nonlinear least-squares fit */
@@ -2093,7 +2094,8 @@ static void NLFit (NLFitArg *arg)
     } else chi2Test = -1.0;
 
     /* Did it significantly improve over lower order? */
-    if (chi2Test<0.9*arg->ChiSq) {
+    //if (chi2Test<0.9*arg->ChiSq) { 
+    if (chi2Test<1.5*arg->ChiSq) { /* Not much worse */
       best = nterm;
       arg->ChiSq = chi2Test;
 

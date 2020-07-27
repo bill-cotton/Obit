@@ -23,7 +23,7 @@ Additional  Functions are available in ImageUtil.
 # Python/Obit Astronomical Image class
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2019
+#  Copyright (C) 2004-2020
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -115,12 +115,14 @@ class Image(Obit.Image, OData.OData):
                 raise TypeError("input MUST be a Python Obit Image")
             out    = ImageDesc.ImageDesc("None")
             out.me = Obit.ImageGetDesc(self.me)
+            Obit.ImageDescIndex(out.me)  # Index
             return out
         if name=="IODesc":
             if not self.ImageIsA():
                 raise TypeError("input MUST be a Python Obit Image")
             out    = ImageDesc.ImageDesc("None")
             out.me = Obit.ImageGetIODesc(self.me)
+            Obit.ImageDescIndex(out.me)  # Index
             return out
         if name=="FArray":
             return PGetFArray(self)

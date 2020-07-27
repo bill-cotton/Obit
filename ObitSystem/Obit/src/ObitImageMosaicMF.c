@@ -1376,13 +1376,12 @@ void ObitImageMosaicMFAddField (ObitImageMosaic *inn, ObitUV *uvData,
 void ObitImageMosaicMFFlatten (ObitImageMosaic *inn, ObitErr *err)
 {
   olong   blc[IM_MAXDIM]={1,1,1,1,1}, trc[IM_MAXDIM]={0,0,0,0,0};
-  olong nterm, nspec, nplane, i, j, radius, rad;
+  olong nterm, nspec, nplane, i, radius, rad;
   olong plane[IM_MAXDIM] = {1,1,1,1,1}, hwidth = 2;
-  olong *naxis, pos1[IM_MAXDIM], pos2[IM_MAXDIM];
+  olong *naxis, pos1[IM_MAXDIM], pos2[IM_MAXDIM], pln[5]={1,1,1,1,1};
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1}, iplane;
   ObitImage *out=NULL, *tout1=NULL, *tout2=NULL;
   ObitFArray *sc2=NULL, *sc1=NULL;
-  ObitIOSize IOsize = OBIT_IO_byPlane;
   ofloat xpos1[IM_MAXDIM], xpos2[IM_MAXDIM];
   gboolean overlap;
   ObitImageMosaicMF *in = (ObitImageMosaicMF*)inn;
@@ -1429,7 +1428,7 @@ void ObitImageMosaicMFFlatten (ObitImageMosaic *inn, ObitErr *err)
   /*radius = MAX (in->FOV/(3600.0*in->xCells), in->FOV/(3600.0*in->yCells));*/
   radius = (olong)(0.5 + ObitImageMosaicFOV(inn, err)/fabs(in->xCells));
   if (err->error) Obit_traceback_msg (err, routine, in->name);
-
+ 
   /* Loop over spectral planes */
   if (ObitImageMFIsA(in->FullField)) {
     nterm = MAX(1,(((ObitImageMF*)in->FullField)->maxOrder+1));
@@ -1441,14 +1440,11 @@ void ObitImageMosaicMFFlatten (ObitImageMosaic *inn, ObitErr *err)
 
   nplane = nterm+nspec;
   for (iplane=0; iplane<nplane; iplane++) {
+    pln[0] = iplane+1;  /* 1 rel plane */
     
     /* Zero fill accumulations */
     ObitFArrayFill (sc1, 0.0);
     ObitFArrayFill (sc2, 0.0);
-    
-    /* Set plane */
-    for (i=0; i<IM_MAXDIM; i++) blc[i] = 1; blc[2] = iplane+1;
-    for (i=0; i<IM_MAXDIM; i++) trc[i] = 0; trc[2] = iplane+1;
     
     /* Loop over tiles */
     for (i= 0; i<in->numberImages; i++) { /* loop 500 */
@@ -1456,45 +1452,13 @@ void ObitImageMosaicMFFlatten (ObitImageMosaic *inn, ObitErr *err)
       /* Ignore if tapered */
       if (in->BeamTaper[i]>0.0) continue;
 
-      /* Open full image */
-      dim[0] = IM_MAXDIM;
-      ObitInfoListPut (in->images[i]->info, "BLC", OBIT_long, dim, blc, err); 
-      ObitInfoListPut (in->images[i]->info, "TRC", OBIT_long, dim, trc, err); 
-      dim[0] = 1;
-      ObitInfoListPut (in->images[i]->info, "IOBy", OBIT_long, dim, &IOsize, err);
-      ObitImageOpen(in->images[i], OBIT_IO_ReadOnly, err);
-      ObitImageClose(in->images[i], err);
-      if (err->error) Obit_traceback_msg (err, routine, in->name);
-      
       /* Input subimage dimension  (trim edges) */
       naxis = in->images[i]->myDesc->inaxes;
-      
-      /* Fudge a bit at the edges */
       rad = radius + 3;
       if (rad > ((naxis[0]/2)-2)) rad = (naxis[0]/2) - 3;
       if (rad > ((naxis[1]/2)-2)) rad = (naxis[1]/2) - 3;
-      blc[0] = (naxis[0] / 2) - rad;
-      blc[0] = MAX (2, blc[0]);
-      blc[1] = (naxis[1] / 2) + 1 - rad;
-      blc[1] = MAX (2, blc[1]);
-      blc[2] = iplane+1;
-      trc[0] = (naxis[0] / 2) + rad;
-      trc[0] = MIN (naxis[0]-1, trc[0]);
-      trc[1] = (naxis[1] / 2) + 1 + rad;
-      trc[1] = MIN (naxis[1]-1, trc[1]);
-      trc[2] = iplane+1;
-     
-      /* Open/read sub window of image */
-      dim[0] = IM_MAXDIM;
-      ObitInfoListPut (in->images[i]->info, "BLC", OBIT_long, dim, blc, err); 
-      ObitInfoListPut (in->images[i]->info, "TRC", OBIT_long, dim, trc, err); 
-      dim[0] = 1;
-      
+
       /* Is there some overlap with flattened image? */
-      in->images[i]->extBuffer = TRUE;  /* Don't need buffer here */
-      ObitImageOpen(in->images[i], OBIT_IO_ReadOnly, err);
-      ObitImageClose(in->images[i], err);
-      in->images[i]->extBuffer = FALSE;  /* May need buffer later */
       overlap = ObitImageDescOverlap(in->images[i]->myDesc, in->FullField->myDesc, err);
       if (err->error) Obit_traceback_msg (err, routine, in->name);
       
@@ -1505,11 +1469,11 @@ void ObitImageMosaicMFFlatten (ObitImageMosaic *inn, ObitErr *err)
 	
 	naxis = tout1->myDesc->inaxes; /* How big is output */
 	
-
-	/* reopen with windowing */
-	ObitImageOpen (in->images[i], OBIT_IO_ReadOnly, err);
-	ObitImageRead (in->images[i], NULL, err); /* Read plane */
+	/* Get plane with sub imaging */
+	ObitImageGetPlane (in->images[i], NULL, pln, err);
 	if (err->error) Obit_traceback_msg (err, routine, in->name);
+	/* DEBUG 
+	   ObitImageUtilArray2Image ("DbugInput.fits", 0, in->images[i]->image, err);*/
 	
 	/* Interpolate or copy and weight image */
 	if (ObitImageUtilNoInterWeight (in->images[i], tout1, tout2, TRUE, rad, 
@@ -1518,12 +1482,10 @@ void ObitImageMosaicMFFlatten (ObitImageMosaic *inn, ObitErr *err)
 					  plane, plane, hwidth, err);
 	if (err->error) Obit_traceback_msg (err, routine, in->name);
 	
-	/* DEBUG 
-	   ObitImageUtilArray2Image ("DbugInterp.fits", 1, tout1->image, err);
-	   ObitImageUtilArray2Image ("DbugInput.fits", 1, in->images[i]->image, err);*/
+	/* DEBUG
+	   ObitImageUtilArray2Image ("DbugInterp.fits", 0, tout1->image, err); */
 	
-	/* Close, deallocate buffer */
-	ObitImageClose(in->images[i], err);
+	/* Deallocate buffer */
 	in->images[i]->image = ObitFArrayUnref(in->images[i]->image); /* Free buffer */
 	if (err->error) Obit_traceback_msg (err, routine, in->name);
 	
@@ -1544,24 +1506,12 @@ void ObitImageMosaicMFFlatten (ObitImageMosaic *inn, ObitErr *err)
 	
 	/* accumulate weight */
 	ObitFArrayShiftAdd (sc2, pos2, tout2->image, pos1, 1.0, sc2);
+	/* DEBUG
+	   ObitImageUtilArray2Image ("DbugSumWI.fits", 0, sc1, err);
+	   ObitImageUtilArray2Image ("DbugSumWW.fits", 0, sc2, err); */
       } /* end if overlap */
-      /* reset window on image */
-      dim[0] = IM_MAXDIM;
-      for (j=0; j<IM_MAXDIM; j++) {blc[j] = 1; trc[j] = 0;}
-      ObitInfoListPut (in->images[i]->info, "BLC", OBIT_long, dim, blc, err); 
-      ObitInfoListPut (in->images[i]->info, "TRC", OBIT_long, dim, trc, err); 
-      dim[0] = 1;
-      /* Open and close to reset descriptor */
-      in->images[i]->extBuffer = TRUE;  /* Don't need buffer here */
-      ObitImageOpen(in->images[i], OBIT_IO_ReadOnly, err);
-      ObitImageClose(in->images[i], err);
-      in->images[i]->extBuffer = FALSE;  /* May need buffer later */
     } /* end loop  L500 over input images */
 
-    /* DEBUG
-       ObitImageUtilArray2Image ("DbugSumWI.fits", 1, sc1, err);
-       ObitImageUtilArray2Image ("DbugSumWW.fits", 1, sc2, err); */
-    
     /* Normalize */
     ObitFArrayDivClip (sc1, sc2, 0.01, out->image);
     

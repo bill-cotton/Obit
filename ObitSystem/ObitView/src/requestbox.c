@@ -104,8 +104,8 @@ void EditRequestCB (Widget w,  XtPointer clientData, XtPointer callData)
   /* Cancel any timeout */
   if (RBdia.setTO) XtRemoveTimeOut(RBdia.timerId);
   RBdia.setTO  = 0;  /* Timeout deactivated */
-  if (which!=1) RBdia.abortCnt = 0; /* reset abort button count */
   if (state->set) {
+    if (which!=1) RBdia.abortCnt = 0; /* reset abort button count */
     /*fprintf (stderr,"DEBUG which %d\n",which);*/
     if (which==0) RBdia.ReqType = OBIT_RPC_Request_Continue;
     else if (which==1) {  /* Needs to be selected twice */

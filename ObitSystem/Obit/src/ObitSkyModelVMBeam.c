@@ -722,8 +722,7 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
   olong npos[2], lcomp, ncomp, i, ifield, lithread, plane=0;
   ofloat *Rgain=NULL,  *Lgain=NULL,  *RLgain=NULL,  *LRgain=NULL, *ccData=NULL;
   ofloat *Rgaini=NULL, *Lgaini=NULL, *RLgaini=NULL, *LRgaini=NULL;
-  ofloat curPA, tPA, tTime, bTime, fscale, PBCor, xx, yy;
-  /* ofloat iPBCor, */
+  ofloat curPA, tPA, tTime, bTime, fscale, PBCor, xx, yy, iPBCor;
   ofloat xr, xi, tr, ti, cph, sph, v, v1, v2;
   ofloat RXpol, LYpol, RXpolPh=0.0, LYpolPh=0.0, RLpolPh=0.0, LRpolPh=0.0;
   ofloat minPBCor=0.0, bmNorm, fblank = ObitMagicF();
@@ -854,7 +853,7 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
     /* Get symmetric primary (Power) beam correction for component */
     PBCor = 0.5*getPBBeam(in->BeamShape, in->mosaic->images[ifield]->myDesc, xx, yy, in->antSize,  
 			  args->BeamFreq, minPBCor); 
-    /*iPBCor  = 1.0 / PBCor;  */
+    iPBCor  = 0.5 / PBCor; 
 
     /* Interpolate gains - RR and LL (XX, YY) as power gains, images voltage */
     v = ObitImageInterpValueInt (in->RXBeam, args->BeamRXInterp, x, y, curPA, plane, err);
@@ -879,15 +878,15 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
       /* Circular feeds */
       if (isCirc) {
 	/* Not sure about circ correction  & no phase */
-	ti = PBCor/(RXpol * RXpol) + PBCor/(LYpol * LYpol);     /* Stokes I correction */
-	tr = PBCor/(RXpol * RXpol) - PBCor/(LYpol * LYpol);     /* Stokes V correction */
+	ti = 0.5*(iPBCor*(RXpol * RXpol) + iPBCor*(LYpol * LYpol));     /* Stokes I correction */
+	tr = 0.5*(iPBCor*(RXpol * RXpol) - iPBCor*(LYpol * LYpol));     /* Stokes V correction */
 	Rgain[i]  = ti + tr;
 	Lgain[i]  = ti - tr; 
       } else {  /* linear feeds */
-	tr = (2.0*PBCor/(RXpol * RXpol))*cos(RXpolPh); ti = (2.0*PBCor/(RXpol * RXpol))*sin(RXpolPh);
+	tr = (iPBCor*(RXpol * RXpol))*cos(RXpolPh); ti = (iPBCor*(RXpol * RXpol))*sin(RXpolPh);
 	Rgain[i]  = (tr*tr - ti*ti);
 	Rgaini[i] =  tr*ti - tr*ti;  /* Doh! */
-	tr = (2.0*PBCor/(LYpol * LYpol))*cos(LYpolPh); ti = (2.0*PBCor/(LYpol * LYpol))*sin(LYpolPh);
+	tr = (iPBCor*(LYpol * LYpol))*cos(LYpolPh); ti = (iPBCor*(LYpol * LYpol))*sin(LYpolPh);
 	Lgain[i]  = (tr*tr - ti*ti);
 	Lgaini[i] =  tr*ti - tr*ti;
       } /* end linear feeds */
@@ -895,13 +894,13 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
       /* Circular feeds */
       if (isCirc) {
 	/* Not sure about circ correction */
-	ti = PBCor/(RXpol * RXpol) + PBCor/(LYpol * LYpol);     /* Stokes I correction */
-	tr = PBCor/(RXpol * RXpol) - PBCor/(LYpol * LYpol);     /* Stokes V correction */
+	ti = 0.5*(iPBCor*(RXpol * RXpol) + iPBCor*(LYpol * LYpol));     /* Stokes I correction */
+	tr = 0.5*(iPBCor*(RXpol * RXpol) - iPBCor*(LYpol * LYpol));     /* Stokes V correction */
 	Rgain[i]  = ti + tr;
 	Lgain[i]  = ti - tr; 
       } else {  /* linear feeds */
-	Rgain[i]  = 2.0*PBCor/(RXpol * RXpol);
-	Lgain[i]  = 2.0*PBCor/(LYpol * LYpol);
+	Rgain[i]  = iPBCor*(RXpol * RXpol);
+	Lgain[i]  = iPBCor*(LYpol * LYpol);
 	Rgaini[i] = 0.0;
 	Lgaini[i] = 0.0;
       } /* end linear feeds */
@@ -914,19 +913,15 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
     if (in->doBeamCorClean && isCirc && (fabs(PBCor)>0.01)) {
       if (in->RXBeamPh && in->LYBeamPh) {
 	/* Using phase beam- really doesn't matter */
-	Rgain[i]  = PBCor/(RXpol * RXpol);
-	Lgain[i]  = PBCor/(LYpol * LYpol);
-	/* DEBUG Rgain[i]  = RXpol * RXpol * iPBCor;
-	   Lgain[i]  = LYpol * LYpol * iPBCor;*/
+	Rgain[i]  = iPBCor*(RXpol * RXpol);
+	Lgain[i]  = iPBCor*(LYpol * LYpol);
 	ti = 0.5*(Rgain[i] + Lgain[i]);  /* Stokes I correction */
 	tr = 0.5*(Rgain[i] - Lgain[i]);      /* Stokes V correction */
 	Rgain[i]  = ti + tr;
 	Lgain[i]  = ti - tr; 
       } else { /* no phase */
-	/* DEBUG Rgain[i]  = iPBCor*(RXpol * RXpol);
-	   Lgain[i]  = iPBCor*(LYpol * LYpol);*/
-	Rgain[i]  = PBCor/(RXpol * RXpol);
-	Lgain[i]  = PBCor/(LYpol * LYpol);
+	Rgain[i]  = iPBCor*(RXpol * RXpol);
+	Lgain[i]  = iPBCor*(LYpol * LYpol);
 	ti = 0.5*(Rgain[i] + Lgain[i]);     /* Stokes I correction */
 	tr = 0.5*(Rgain[i] - Lgain[i]);     /* Stokes V correction */
 	Rgain[i]  = ti + tr;
@@ -972,7 +967,6 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
       LRgain[i]  =  tr*xr + xi*ti;
       LRgaini[i] = -tr*xi + xr*ti;
    } /* end if crosspol */
-    
   } /* end loop over components */
 
 } /* end ObitSkyModelVMBeamUpdateModel */

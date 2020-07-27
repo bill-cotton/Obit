@@ -1006,7 +1006,7 @@ void ObitAIPSCatGetTable (ObitTableList *tableList, gchar *buffer,
   g_assert(ObitErrIsA(err)); 
   if (err->error) return;  /* existing error condition */
   g_assert(buffer!=NULL); 
-
+  ObitErrLog(err); /* print pending messages */
   /* loop over AIPS header */
   for (j = 0; j<myDHDR.KIEXTN; j++) {
     /* table name */
@@ -1030,7 +1030,8 @@ void ObitAIPSCatGetTable (ObitTableList *tableList, gchar *buffer,
 	if (exist ) {
 	  ver = k;
 	  ObitTableListPut (tableList, name, &ver, NULL, err);
-	  if (err->error) Obit_traceback_msg (err, routine, tableList->name);
+	  /* There's nothing to go wrong here (but seems to anyway) */
+	  ObitErrClear(err);
 	}
       } /* end loop over possibilities */
     }
@@ -1093,7 +1094,7 @@ void ObitAIPSCatSetTable (ObitTableList *tableList, gchar *buffer,
 	Obit_log_error(err, OBIT_Error, 
 		       "Table name %s not in AIPSish for %s", 
 		       name, tableList->name);
-	if (name) g_free(name); name = NULL;   /* clean up */
+	if (name) {g_free(name);} name = NULL;   /* clean up */
 	return;
     }
     
@@ -1115,7 +1116,7 @@ void ObitAIPSCatSetTable (ObitTableList *tableList, gchar *buffer,
 	Obit_log_error(err, OBIT_Error, 
 		       "No space for more Tables in AIPS header for %s", 
 		       tableList->name);
-	if (name) g_free(name); name = NULL;  /* clean up */
+	if (name) {g_free(name);} name = NULL;  /* clean up */
 	return;
       }
 
@@ -1124,7 +1125,7 @@ void ObitAIPSCatSetTable (ObitTableList *tableList, gchar *buffer,
       CopyDeeNull ((gchar*)&header[myDHDR.KHEXT+freeOne], &name[5], 2);
     }
 
-    if (name) g_free(name); name = NULL;   /* clean up */
+    if (name) {g_free(name);} name = NULL;   /* clean up */
   } /* end loop over ObitTableList */
 
 } /* end ObitAIPSCatSetTable */
