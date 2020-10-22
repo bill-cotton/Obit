@@ -4746,7 +4746,7 @@ Obit/src/ObitSkyModelMF.c
 10 Jul 2020 svn 624
 
 =====================================================================
-Summary: Enable dual Q/U imaging, fix multiresolution bug, recovery from "Master race" disaster
+Summary: Enable dual Q/U imaging, fix multiresolution bug, MFBeam, recovery from "Master race" disaster
 Obit/include/ObitVecFunc.h
     Recover working version
 Obit/tasks/MFImage.c TDF/MFImage.TDF
@@ -4803,4 +4803,10 @@ Obit/python/SpectrumFit.py Obit/python/SpectrumFit.inc Obit/python/Obit_wrap.c
 Obit/python/SkyModelVMBeam.inc
     Fix call to ObitSkyModelVMBeamCreate 
 22 Oct 2020 svn 625
+
+=====================================================================
+Summary: Get it right
+Obit/src/ObitSkyModelVMBeamMF.c
+    Proper declarations for no AVX
+22 Oct 2020 svn 626
 

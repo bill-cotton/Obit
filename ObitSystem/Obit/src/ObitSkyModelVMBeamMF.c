@@ -3946,7 +3946,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTPh (gpointer args)
   ofloat AmpArr[FazArrSize], FazArr[FazArrSize], CosArr[FazArrSize], SinArr[FazArrSize];
   ofloat ExpArg[FazArrSize], ExpVal[FazArrSize], ExpArg2[FazArrSize], ExpVal2[FazArrSize];
   ofloat VecL[FazArrSize], VecM[FazArrSize], VecN[FazArrSize];
-  ofloat AmpArrR[FazArrSize], AmpArrL[FazArrSize];
+  ofloat AmpArrRr[FazArrSize], AmpArrRi[FazArrSize], AmpArrLr[FazArrSize], AmpArrLi[FazArrSize];
 #endif
   olong it, jt, kt, itcnt, iSpec, nSpec, itab;
   gboolean doCrossPol, updatePB, reGain;
