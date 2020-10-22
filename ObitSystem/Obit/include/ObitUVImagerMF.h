@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010,2011                                          */
+/*;  Copyright (C) 2010,20120                                         */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -249,6 +249,8 @@ ObitUVImagerMF* ObitUVImagerMFCreate (gchar* name, olong order, ofloat maxFBW,
 /** Public: Create/initialize ObitUVImagerMF structures given mosaic */
 ObitUVImagerMF* ObitUVImagerMFCreate2 (gchar* name, olong order, ObitUV *uvdata, 
 				       ObitImageMosaicMF *mosaic, ObitErr *err);
+/** Public: Add second polarization */
+void ObitUVImagerMFAddPol2 (ObitUVImagerMF *in, ObitUV *uvdata2, ObitErr *err);
 
 /** Public: Weight data */
  void ObitUVImagerMFWeight (ObitUVImager *in, ObitErr *err);
@@ -262,6 +264,11 @@ void ObitUVImagerMFGetInfo (ObitUVImager *inn, gchar *prefix, ObitInfoList *outL
 
 /** Public: Get number of parallel images */
 olong ObitUVImagerMFGetNumPar (ObitUVImager *inn, gboolean doBeam, ObitErr *err);
+/** Public: return secondary (UPol) ImageMosaic member */
+ObitImageMosaic* ObitUVImagerMFGetMosaic2 (ObitUVImagerMF *in, ObitErr *err);
+/** Public: Form secondary (UPol) Image */
+void ObitUVImagerMFImage2 (ObitUVImagerMF *in, olong *field, gboolean doWeight, 
+			gboolean doBeam, gboolean doFlatten, ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

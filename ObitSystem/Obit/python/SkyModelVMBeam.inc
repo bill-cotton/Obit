@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for SkyModelVMBeam type                    */
 /*                                                                    */
-/*;  Copyright (C) 2009,2019                                          */
+/*;  Copyright (C) 2009,2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -119,11 +119,11 @@ extern ObitInfoList* SkyModelVMBeamGetList (ObitSkyModelVMBeam* in) {
 }
 
 extern ObitSkyModelVMBeam* SkyModelVMBeamCreate (char *name, ObitImageMosaic* mosaic,
-  ObitUV *uvData, ObitImage *IBeam,  ObitImage *VBeam, ObitImage *QBeam,  ObitImage *UBeam, 
-  ObitImage *IBeamPh,  ObitImage *VBeamPh, ObitImage *QBeamPh,  ObitImage *UBeamPh, 
-  ObitErr *err) {
- return ObitSkyModelVMBeamCreate(name, mosaic, uvData, IBeam, VBeam, QBeam, UBeam, 
-    IBeamPh, VBeamPh, QBeamPh, UBeamPh, err);
+  ObitUV *uvData, olong numAntType, ObitImage **IBeam,  ObitImage **VBeam, ObitImage **QBeam,  ObitImage **UBeam, 
+  ObitImage **IBeamPh,  ObitImage **VBeamPh, ObitImage **QBeamPh,  ObitImage **UBeamPh, 
+  ofloat *Diams, ObitErr *err) {
+ return ObitSkyModelVMBeamCreate(name, mosaic, uvData, numAntType, IBeam, VBeam, QBeam, UBeam, 
+    IBeamPh, VBeamPh, QBeamPh, UBeamPh, Diams, err);
 }
 
 extern char* SkyModelVMBeamGetName (ObitSkyModelVMBeam* in) {

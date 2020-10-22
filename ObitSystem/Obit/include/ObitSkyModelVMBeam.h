@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2017                                          */
+/*;  Copyright (C) 2009-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -167,12 +167,15 @@ void ObitSkyModelVMBeamFromInfo (ObitSkyModel *out, gchar *prefix,
 
 /** Public: Create/initialize ObitSkyModelVMBeam structures */
 ObitSkyModelVMBeam* ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
-					      ObitUV *uvData,
-					      ObitImage *RXBeam,   ObitImage *LYBeam, 
-					      ObitImage *RLBeam,   ObitImage *LRBeam, 
-					      ObitImage *RXBeamPh, ObitImage *LYBeamPh, 
-					      ObitImage *RLBeamPh, ObitImage *LRBeamPh, 
-					      ObitErr *err);
+					      ObitUV *uvData, olong numAntType,
+					      ObitImage **RXBeam,   ObitImage **LYBeam, 
+					      ObitImage **RLBeam,   ObitImage **LRBeam, 
+					      ObitImage **RXBeamPh, ObitImage **LYBeamPh, 
+					      ObitImage **RLBeamPh, ObitImage **LRBeamPh, 
+					      ofloat *Diams, ObitErr *err);
+
+/** Public: Set Antenna Types */
+void  ObitSkyModelVMBeamSetAnt (ObitSkyModelVMBeam* in, ObitUV *uvdata, ObitErr *err);
 
 /** Public: Get Inputs. */
 void  ObitSkyModelVMBeamGetInput (ObitSkyModel* inn, ObitErr *err);

@@ -1,11 +1,13 @@
 # Primary beam correct an ImageMF 
 import Image, FArray, ImageMF, ImageUtil, FArray, OSystem, OErr
-# filename = 'Abell_194.fits'
-# inMF = ImageMF.newPFImageMF('in', filename, 0, True, err)
+import History
+# filename = 'J1723+6547_AK_PB.fits'
+# inMF = Image.newPFImage('in', filename, 0, True, err)
 # OSystem.PAllowThreads(24)
 # exec(open('PBCorImageMF.py').read()) 
+#MFPBCor (inMF, err,antSize=24.5, minGain=0.05)
 MFPBCor = None; del MFPBCor
-def MFPBCor (inIm, err, antSize=25, minGain=0.05):
+def MFPBCor (inIm, err, antSize=24.5, minGain=0.05):
     """
     Apply primary beam corrections to an ImageMF
 
@@ -50,5 +52,12 @@ def MFPBCor (inIm, err, antSize=25, minGain=0.05):
         OErr.printErrMsg(err, "Error writing image")
    
     # end loop
+    # Add history
+    outHistory = History.History("history", inIm.List, err)
+    outHistory.Open(History.READWRITE, err)
+    outHistory.TimeStamp(" Start Obit MFPBCor",err)
+    outHistory.WriteRec(-1,"MFPBCor"+" antSize = "+str(antSize),err)
+    outHistory.WriteRec(-1,"MFPBCor"+" minGain = "+str(minGain),err)
+    outHistory.Close(err)
 
 # End MFPBCor

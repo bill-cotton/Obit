@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for SpectrumFit type                       */
 /*                                                                    */
-/*;  Copyright (C) 2008-2019                                          */
+/*;  Copyright (C) 2008-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -125,8 +125,12 @@ extern void SpectrumFitImArr (ObitSpectrumFit* in, long nimage,
        ObitImage *im6, ObitImage *im7, ObitImage *im8, ObitImage *im9, ObitImage *im10,
        ObitImage *im11, ObitImage *im12, ObitImage *im13, ObitImage *im14, ObitImage *im15,
        ObitImage *im16, ObitImage *im17, ObitImage *im18, ObitImage *im19, ObitImage *im20,
+       ObitImage *im21, ObitImage *im22, ObitImage *im23, ObitImage *im24, ObitImage *im25,
+       ObitImage *im26, ObitImage *im27, ObitImage *im28, ObitImage *im29, ObitImage *im30,
+       ObitImage *im31, ObitImage *im32, ObitImage *im33, ObitImage *im34, ObitImage *im35,
+       ObitImage *im36, ObitImage *im37, ObitImage *im38, ObitImage *im39, ObitImage *im40,
 			      ObitImage *outImage, ObitErr *err) {
-  ObitImage *imArr[20];
+  ObitImage *imArr[40];
   imArr[0] = im1;
   imArr[1] = im2;
   imArr[2] = im3;
@@ -147,6 +151,26 @@ extern void SpectrumFitImArr (ObitSpectrumFit* in, long nimage,
   imArr[17] = im18;
   imArr[18] = im19;
   imArr[19] = im20;
+  imArr[20] = im21;
+  imArr[21] = im22;
+  imArr[22] = im23;
+  imArr[23] = im24;
+  imArr[24] = im25;
+  imArr[25] = im26;
+  imArr[26] = im27;
+  imArr[27] = im28;
+  imArr[28] = im29;
+  imArr[29] = im30;
+  imArr[30] = im31;
+  imArr[31] = im32;
+  imArr[32] = im33;
+  imArr[33] = im34;
+  imArr[34] = im35;
+  imArr[35] = im36;
+  imArr[36] = im37;
+  imArr[37] = im38;
+  imArr[38] = im39;
+  imArr[39] = im40;
   ObitSpectrumFitImArr(in, (olong)nimage, imArr, outImage, err);
 } // end SpectrumFitImArr 
 

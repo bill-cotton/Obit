@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2020                                          */
+/*;  Copyright (C) 2010-2018                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -42,6 +42,7 @@
 #include "ObitPBUtil.h"
 #include "ObitFFT.h"
 #include "ObitMem.h"
+#include "ObitFArray.h"
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
  * \file ObitImageMosaicMF.c
@@ -577,13 +578,12 @@ void ObitImageMosaicMFSetFiles  (ObitImageMosaic *inn, gboolean doBeam, ObitErr 
    }
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
-    /* Open and close to fully instantiate */
-    if (in->restart)  ObitImageOpen(image, OBIT_IO_ReadWrite, err);
-    else              ObitImageOpen(image, OBIT_IO_WriteOnly, err);
-    ObitImageClose(image, err);
-    /* Blank spectral planes if not restarting */
-    if (!in->restart) ObitImageMFBlank ((ObitImageMF*)image, err);
+    /* fully instantiate */
+    ObitImageFullInstantiate (image, FALSE, err);
+    /* Blank spectral planes */
+    ObitImageMFBlank ((ObitImageMF*)image, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
+
   } /* end do full field image */
 
   /* Loop over images */
@@ -617,12 +617,10 @@ void ObitImageMosaicMFSetFiles  (ObitImageMosaic *inn, gboolean doBeam, ObitErr 
       for (j=0; j<strlen(strTemp); j++) if (strTemp[j]==' ') strTemp[j]='_';
       ObitImageSetFITS(image,OBIT_IO_byPlane,in->imDisk[i],strTemp,blc,trc,err);
     }
-    /* Open and close to fully instantiate */
-    if (in->restart)  ObitImageOpen(image, OBIT_IO_ReadWrite, err);
-    else              ObitImageOpen(image, OBIT_IO_WriteOnly, err);
-    ObitImageClose(image, err);
+    /* fully instantiate */
+    ObitImageFullInstantiate (image, FALSE, err);
     /* Blank spectral planes */
-    if (!in->restart) ObitImageMFBlank ((ObitImageMF*)image, err);
+    ObitImageMFBlank ((ObitImageMF*)image, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
     
     /* Doing beams? */
@@ -652,11 +650,10 @@ void ObitImageMosaicMFSetFiles  (ObitImageMosaic *inn, gboolean doBeam, ObitErr 
 	ObitImageSetFITS(image,OBIT_IO_byPlane,in->imDisk[i],strTemp,blc,trc,err);
       }
       /* Open and close to fully instantiate */
-      if (in->restart) 	ObitImageOpen(image, OBIT_IO_ReadWrite, err);
-      else              ObitImageOpen(image, OBIT_IO_WriteOnly, err);
+      ObitImageOpen(image, OBIT_IO_WriteOnly, err);
       ObitImageClose(image, err);
       /* Blank spectral planes */
-      if (!in->restart) ObitImageMFBlank ((ObitImageMF*)image, err);
+      ObitImageMFBlank ((ObitImageMF*)image, err);
       if (err->error) Obit_traceback_msg (err, routine, in->name);
     } /* end Beam */
   }    /* end loop over images */
@@ -717,7 +714,6 @@ void ObitImageMosaicMFSetFiles  (ObitImageMosaic *inn, gboolean doBeam, ObitErr 
  * \li OutlierSize = Width of outlier field in pixels.  [default 50]
  * \li numBeamTapes= Number of Beam tapers (elements in BeamTapes) 
  * \li BeamTapes   = List of additional Beam tapers  larger than 0
- * \li doRestart   =  OBIT_boolean scalar = restarting? [FALSE]
  * \param err     Error stack, returns if not empty.
  * \return Newly created object.
  */
@@ -737,9 +733,9 @@ ObitImageMosaicMF* ObitImageMosaicMFCreate (gchar *name, olong order, ofloat max
   ofloat *farr, Radius = 0.0, maxScale;
   ofloat shift[2] = {0.0,0.0}, cells[2], bmaj, bmin, bpa, beam[3];
   odouble ra0, dec0, refFreq1, refFreq2;
-  gboolean doJ2B, doFull, doCalSelect, inFlysEye[MAXFLD], restart=FALSE;;
+  gboolean doJ2B, doFull, doCalSelect, inFlysEye[MAXFLD], FacetNo[MAXFLD];
   ofloat equinox, minRad, ratio, OutlierFlux, OutlierDist, OutlierSI;
-  olong  itemp, OutlierSize=0, nFlyEye = 0, FacetNo[MAXFLD], *iarr=NULL;
+  olong  itemp, OutlierSize=0, nFlyEye = 0, *iarr=NULL;
   union ObitInfoListEquiv InfoReal; 
   gchar Catalog[132], Aname[100], Aclass[100];
   ObitImageMosaicClassInfo* mosaicClass;
@@ -755,6 +751,7 @@ ObitImageMosaicMF* ObitImageMosaicMFCreate (gchar *name, olong order, ofloat max
   ObitInfoListGet(uvData->info, "imName",    &type, dim,  Aname,     err);
   ObitInfoListGet(uvData->info, "imClass",   &type, dim,  Aclass,    err);
   ObitInfoListGet(uvData->info, "imSeq",     &type, dim,  &Seq,      err);
+  if (err->error) Obit_traceback_val (err, routine, uvData->name, out);
   nDisk = MAX(1,NField);
   Disk = g_malloc(nDisk*sizeof(olong));
   ObitInfoListGetP(uvData->info, "imDisk",    &type, dim, (gpointer)&iarr);
@@ -802,8 +799,6 @@ ObitImageMosaicMF* ObitImageMosaicMFCreate (gchar *name, olong order, ofloat max
   bmaj = beam[0]; bmin = beam[1]; bpa = beam[2];
   /* Beam given in asec - convert to degrees */
   bmaj /= 3600.0; bmin /=3600.0;
-  /* restart build? */
-  ObitInfoListGetTest(uvData->info, "doRestart", &type, dim,  &restart);
 
   /* Get antenna diameter for non-VLA antennas. */
   if (!strncmp(uvData->myDesc->teles, "KAT-7",5)) diam = 12.0;  /* KAT */
@@ -957,7 +952,6 @@ ObitImageMosaicMF* ObitImageMosaicMFCreate (gchar *name, olong order, ofloat max
   out->maxFBW    = maxFBW;
   out->alpha     = alpha;
   out->alphaRefF = alphaRefF;
-  out->restart   = restart;
 
   /* Copy fldsiz to nx, ny */
   for (i=0; i<NField; i++) nx[i] = ny[i] = fldsiz[i];
@@ -1172,7 +1166,7 @@ void ObitImageMosaicMFAddField (ObitImageMosaic *inn, ObitUV *uvData,
 				gboolean isAuto, ObitErr *err)
 {
   ofloat *ftemp;
-  olong     i, *itemp;
+  olong     i, *itemp, nThere;
   gboolean  *btemp;
   ObitImage **imtemp;
   ObitImageMosaicMF *in = (ObitImageMosaicMF*)inn;
@@ -1183,26 +1177,26 @@ void ObitImageMosaicMFAddField (ObitImageMosaic *inn, ObitUV *uvData,
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* Expand arrays */
-  in->nInit = in->numberImages;  /* To ensure new field gets initialized */
+  nThere = in->numberImages;  /* To ensure new field gets initialized */
   in->numberImages++;
 
   /* Image array */
   imtemp = ObitMemAlloc0Name(in->numberImages*sizeof(ObitImage*),"ImageMosaicMF images");
-  for (i=0; i<in->nInit; i++) imtemp[i] = in->images[i]; imtemp[i] = NULL;
+  for (i=0; i<nThere; i++) {imtemp[i] = in->images[i];} imtemp[i] = NULL;
   in->images = ObitMemFree(in->images);
   in->images = imtemp;
 
   /* Disk array - add new images on same disk as first */
   itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicMF imDisk");
-  for (i=in->nInit; i<in->numberImages; i++) itemp[i] = in->imDisk[0]; 
-  for (i=0; i<in->nInit; i++) itemp[i] = in->imDisk[i]; 
+  for (i=nThere; i<in->numberImages; i++) itemp[i] = in->imDisk[0]; 
+  for (i=0; i<nThere; i++) itemp[i] = in->imDisk[i]; 
   in->imDisk = ObitMemFree(in->imDisk);
   in->imDisk = itemp;
  
   /* isAuto array */
   itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicMF isAuto");
-  for (i=0; i<in->nInit; i++) itemp[i] = in->isAuto[i]; 
-  for (i=in->nInit; i<in->numberImages; i++) itemp[i] = -1; 
+  for (i=0; i<nThere; i++) itemp[i] = in->isAuto[i]; 
+  for (i=nThere; i<in->numberImages; i++) itemp[i] = -1; 
   /* Large dummy value in new element if isAuto */
   if (isAuto) itemp[in->numberImages-1] = in->numberImages+9999999;
   in->isAuto = ObitMemFree(in->isAuto);
@@ -1210,57 +1204,57 @@ void ObitImageMosaicMFAddField (ObitImageMosaic *inn, ObitUV *uvData,
  
   /* isShift array */
   itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicMF isShift");
-  for (i=0; i<in->nInit; i++) itemp[i] = in->isShift[i]; 
-  for (i=in->nInit; i<in->numberImages; i++) itemp[i] = -1; 
+  for (i=0; i<nThere; i++) itemp[i] = in->isShift[i]; 
+  for (i=nThere; i<in->numberImages; i++) itemp[i] = -1; 
   in->isShift = ObitMemFree(in->isShift);
   in->isShift = itemp;
  
   /* inFlysEye array - any new entries = FALSE */
   btemp  = ObitMemAlloc0Name(in->numberImages*sizeof(gboolean),"ImageMosaic inFlysEye");
-  for (i=0; i<in->nInit; i++) btemp[i] = in->inFlysEye[i]; 
-  for (i=in->nInit; i<in->numberImages; i++) btemp[i] = FALSE; 
+  for (i=0; i<nThere; i++) btemp[i] = in->inFlysEye[i]; 
+  for (i=nThere; i<in->numberImages; i++) btemp[i] = FALSE; 
   in->inFlysEye = ObitMemFree(in->inFlysEye);
   in->inFlysEye = btemp;
  
   /* FacetNo array - any new entries = number in mosaic */
   itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaic FacetNo");
-  for (i=0; i<in->nInit; i++) itemp[i] = in->FacetNo[i]; 
-  for (i=in->nInit; i<in->numberImages; i++) itemp[i] = i; 
+  for (i=0; i<nThere; i++) itemp[i] = in->FacetNo[i]; 
+  for (i=nThere; i<in->numberImages; i++) itemp[i] = i; 
   in->FacetNo = ObitMemFree(in->FacetNo);
   in->FacetNo = itemp;
 
   /* Image size */
-  itemp  = ObitMemAlloc0Name((5+in->numberImages*sizeof(olong)),"ImageMosaicMF nx");
-  for (i=0; i<in->nInit; i++) itemp[i] = in->nx[i]; 
+  itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicMF nx");
+  for (i=0; i<nThere; i++) itemp[i] = in->nx[i]; 
   itemp[i] = ObitFFTSuggestSize (nx);
   in->nx = ObitMemFree(in->nx);
   in->nx = itemp;
-  itemp  = ObitMemAlloc0Name((5+in->numberImages*sizeof(olong)),"ImageMosaicMF ny");
-  for (i=0; i<in->nInit; i++) itemp[i] = in->ny[i]; 
+  itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicMF ny");
+  for (i=0; i<nThere; i++) itemp[i] = in->ny[i]; 
   itemp[i] = ObitFFTSuggestSize (ny);
   in->ny = ObitMemFree(in->ny);
   in->ny = itemp;
-  itemp  = ObitMemAlloc0Name((5+in->numberImages*sizeof(olong)),"ImageMosaicMF nplane");
-  for (i=0; i<in->nInit; i++) itemp[i] = in->nplane[i]; 
+  itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicMF nplane");
+  for (i=0; i<nThere; i++) itemp[i] = in->nplane[i]; 
   itemp[i] = nplane;
   in->nplane = ObitMemFree(in->nplane);
   in->nplane = itemp;
 
   /* Shift */
-  ftemp  = ObitMemAlloc0Name((5+in->numberImages*sizeof(ofloat)),"ImageMosaicMF RAShift");
-  for (i=0; i<in->nInit; i++) ftemp[i] = in->RAShift[i]; 
+  ftemp  = ObitMemAlloc0Name(in->numberImages*sizeof(ofloat),"ImageMosaicMF RAShift");
+  for (i=0; i<nThere; i++) ftemp[i] = in->RAShift[i]; 
   ftemp[i] = RAShift;
   in->RAShift = ObitMemFree(in->RAShift);
   in->RAShift = ftemp;
-  ftemp  = ObitMemAlloc0Name((5+in->numberImages*sizeof(ofloat)),"ImageMosaicMF DecShift");
-  for (i=0; i<in->nInit; i++) ftemp[i] = in->DecShift[i]; 
+  ftemp  = ObitMemAlloc0Name(in->numberImages*sizeof(ofloat),"ImageMosaicMF DecShift");
+  for (i=0; i<nThere; i++) ftemp[i] = in->DecShift[i]; 
   ftemp[i] = DecShift;
   in->DecShift = ObitMemFree(in->DecShift);
   in->DecShift = ftemp;
 
   /* BeamTaper - new full resolution */
-  ftemp  = ObitMemAlloc0Name((5+in->numberImages*sizeof(ofloat)),"ImageMosaic BeamTaper");
-  for (i=0; i<in->nInit; i++) ftemp[i] = in->BeamTaper[i]; 
+  ftemp  = ObitMemAlloc0Name(in->numberImages*sizeof(ofloat),"ImageMosaic BeamTaper");
+  for (i=0; i<nThere; i++) ftemp[i] = in->BeamTaper[i]; 
   ftemp[i] = 0.0;
   in->BeamTaper = ObitMemFree(in->BeamTaper);
   in->BeamTaper = ftemp;
@@ -1274,96 +1268,6 @@ void ObitImageMosaicMFAddField (ObitImageMosaic *inn, ObitUV *uvData,
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
 } /* end ObitImageMosaicMFAddField */
-
-/**
- * Add existing facets to the mosaic
- * \param inn     The object with images
- * \param uvdata  UV data from which images derived
- * \param nTotal  Total number of images in Mosaic
- * \param err     Error stack, returns if not empty.
- */
-  void ObitImageMosaicMFAddOld (ObitImageMosaic *inn, ObitUV *uvdata, olong nTotal, 
-				ObitDConCleanWindow *window, ObitErr *err)
-{
-  ObitImageMosaicMF *in = (ObitImageMosaicMF*)inn;
-  olong   blc[IM_MAXDIM]={1,1,1,1,1}, trc[IM_MAXDIM]={0,0,0,0,0};
-  olong   ifld, n, j, newField, win[4];
-  olong   user, cno, nx, ny, nplane;
-  ofloat  RAShift, DecShift, xcen, ycen;
-  gboolean exist;
-  gchar strTemp[96], Aname[13], Aclass[7], Atclass[3], Atype[3] = "MA";
-  ObitImage *newImg=NULL;
-  gchar *routine = "ObitImageMosaicMFAddOld";
-
-  /* error checks */
-  if (err->error) return;
-  g_assert (ObitIsA(in, &myClassInfo));
-
-  /* Are they already on the mosaic? */
-  if (in->numberImages>=nTotal) return;
-
-  /* Tell about it */
-  if (err->prtLv>=2)
-	  Obit_log_error(err, OBIT_InfoErr, 
-			 "Adding additional (autoCen?) facets");
-  /* Loop over fields to add */
-  n = in->numberImages;
-  for (ifld=n+1; ifld<=nTotal; ifld++) {
-    newImg = newObitImage ("new Temp");
-
-    /* AIPS file */
-    if (in->fileType==OBIT_IO_AIPS) {
-      /* Get AIPS user number */
-      user = ObitSystemGetAIPSuser();
-      /* set class */
-      Aclass[0] = in->imClass[0]; Aclass[1] = 'M'; Aclass[2] = 0;
-      sprintf(strTemp, "%s%4.4d", Aclass, ifld);
-      strncpy (Aclass, strTemp,    6);  Aclass[6] = 0;
-      strncpy (Aname,  in->imName, 12); Aname[12] = 0;
-      /* allocate */
-      cno = ObitAIPSDirAlloc(in->imDisk[0], user, Aname, Aclass, Atype, in->imSeq, &exist, err);
-      if (!exist) break;  /* Bail if it doesn't exist */
-      /* Set info */
-      ObitImageSetAIPS(newImg,OBIT_IO_byPlane,in->imDisk[0],cno,user,blc,trc,err);
-   
-    /* FITS file */
-    } else if (in->fileType==OBIT_IO_FITS) {
-      /* Only one character of Class allowed here*/
-      Atclass[0] = in->imClass[0]; Atclass[1] = 'M'; Atclass[2] = 0;
-     /* set filename - derive from field */
-      sprintf(strTemp, "MA%s.%s%4.4dseq%d", in->imName, Atclass, ifld, in->imSeq);
-      /* replace blanks with underscores */
-      for (j=0; j<strlen(strTemp); j++) if (strTemp[j]==' ') strTemp[j]='_';
-      ObitImageSetFITS(newImg,OBIT_IO_byPlane,in->imDisk[0],strTemp,blc,trc,err);
-   }
-    if (err->error) Obit_traceback_msg (err, routine, in->name);
-
-    /* fully instantiate */
-    ObitImageFullInstantiate (newImg, TRUE, err);
-    if (err->error) Obit_traceback_msg (err, routine, in->name);
-    /* get info */
-    nx       = newImg->myDesc->inaxes[0];
-    ny       = newImg->myDesc->inaxes[1];
-    nplane   = newImg->myDesc->inaxes[2];
-    RAShift  = newImg->myDesc->xshift;
-    DecShift = newImg->myDesc->yshift;
-
-    /* Add */
-    ObitImageMosaicMFAddField (inn, uvdata, nx, ny, nplane, 
-			       RAShift, DecShift, FALSE, err);
-    /* and window */
-    newField = ObitDConCleanWindowAddField(window, newImg->myDesc->inaxes, err);
-    /* Add outer window */
-    xcen = in->images[newField-1]->myDesc->crpix[0] - in->images[newField-1]->myDesc->xPxOff;
-    ycen = in->images[newField-1]->myDesc->crpix[1] - in->images[newField-1]->myDesc->yPxOff;
-    win[0] = (nx/2)-10; win[1] = (olong)(xcen+0.5); win[2] = (olong)(ycen+0.5); 
-    ObitDConCleanWindowOuter (window, newField, OBIT_DConCleanWindow_round,
-			      win, err);
-    if  (err->error) Obit_traceback_msg (err, routine, in->name);
-    /* cleanup */
-    newImg = ObitImageUnref(newImg);
- } /* end loop adding fields */
-} /* end ObitImageMosaicMFAddOld */
 
 /**
  * Project the tiles of a Mosaic to the full field flattened image
@@ -1538,7 +1442,6 @@ void ObitImageMosaicMFFlatten (ObitImageMosaic *inn, ObitErr *err)
   tout2 = ObitImageUnref(tout2);
 
 } /* end ObitImageMosaicMFFlatten */
-
 /**
  * Make a single field ImageMosaicMF corresponding to the field with
  * the highest summed peak of CCs if any above MinFlux.
@@ -1718,6 +1621,120 @@ ObitImageMosaicMF* ObitImageMosaicMFMaxField (ObitImageMosaic *inn,
 } /* end of routine ObitImageMosaicMFMaxField */ 
 
 /**
+ * Given a Q,U pair of mosaics, replace the first plane in each facet with
+ * the weighted average polarized intensity
+ * \param inQ      QPol ImageMosaicMF to process
+ * \param inU      UPol ImageMosaicMF to process
+ * \param err      Error/message stack
+ */
+void ObitImageMosaicMFMergePoln (ObitImageMosaic *innQ, ObitImageMosaic *innU, ObitErr* err) 
+{
+  ObitImageMosaicMF *inQ = (ObitImageMosaicMF*)innQ;
+  ObitImageMosaicMF *inU = (ObitImageMosaicMF*)innU;
+  ObitImage     *QImage=NULL, *UImage=NULL;
+  ObitImageMF   *QImageMF=NULL, *UImageMF=NULL;
+  ObitFArray    *accum=NULL;
+  gboolean incompatible=FALSE;
+  gint32 dim[MAXINFOELEMDIM];
+  olong naxis[2], nfield, ifield, nplane, loPlane, iplane, plane[5]={1,1,1,1,1};
+  olong blc[7]={1,1,1,1,1,1,1}, trc[7]={0,0,0,0,0,0,0};
+  ofloat rms, wt, sumwt;
+  gchar *routine = "ObitImageMosaicMFMergePoln";
+
+  /* Error checks */
+  if (err->error) return;  /* previous error? */
+  g_assert(ObitImageMosaicMFIsA(inQ));
+  g_assert(ObitImageMosaicMFIsA(inU));
+  
+  nfield = inU->numberImages;                  /* Number of fields - 
+						  may be more in Q from autoCen isShift */
+  
+  /* Loop over fields resetting BLC, TRC */
+  for (ifield=0; ifield<nfield; ifield++) {
+    QImage = (ObitImage*)inQ->images[ifield];
+    UImage = (ObitImage*)inU->images[ifield];
+    /* Reset BLC,TRC */
+    dim[0] = 7; dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    ObitInfoListAlwaysPut (QImage->info, "BLC", OBIT_long, dim, blc); 
+    ObitInfoListAlwaysPut (QImage->info, "TRC", OBIT_long, dim, trc); 
+    ObitInfoListAlwaysPut (UImage->info, "BLC", OBIT_long, dim, blc); 
+    ObitInfoListAlwaysPut (UImage->info, "TRC", OBIT_long, dim, trc); 
+    ObitImageOpen (QImage, OBIT_IO_ReadOnly, err);
+    ObitImageOpen (UImage, OBIT_IO_ReadOnly, err);
+    ObitImageClose (QImage, err);
+    ObitImageClose (UImage, err);
+    if (err->error) Obit_traceback_msg (err, routine, inQ->name);
+  } /* end loop resetting */
+
+ /* Check compatability between inQ, inU */
+  incompatible = inQ->numberImages < inU->numberImages;
+  incompatible = incompatible || (inQ->images[0]->myDesc->inaxes[0] != inU->images[0]->myDesc->inaxes[0]);
+  incompatible = incompatible || (inQ->images[1]->myDesc->inaxes[1] != inU->images[0]->myDesc->inaxes[1]);
+  incompatible = incompatible || (inQ->images[0]->myDesc->inaxes[2] != inU->images[0]->myDesc->inaxes[2]);
+  if (incompatible) {
+     Obit_log_error(err, OBIT_Error,"%s inQ and inU are incompatible",
+		   routine);
+      return;
+ }
+  
+  nplane = inQ->images[0]->myDesc->inaxes[2];  /* Number of planes */
+  naxis[0] = inQ->images[0]->myDesc->inaxes[0]; naxis[1] = inQ->images[4]->myDesc->inaxes[1]; 
+  accum = ObitFArrayCreate("accum", 2, naxis); /* accumulation array */
+
+  /* Loop over fields */
+  for (ifield=0; ifield<nfield; ifield++) {
+    QImageMF = (ObitImageMF*)inQ->images[ifield];
+    UImageMF = (ObitImageMF*)inU->images[ifield];
+    loPlane = 1+QImageMF->maxOrder; /* coarse cube */
+    /* Need new accum? */
+    if ((QImageMF->myDesc->inaxes[0]!=accum->naxis[0]) ||
+	(QImageMF->myDesc->inaxes[1]!=accum->naxis[1])) {
+      if (accum) accum = ObitFArrayUnref(accum);
+      naxis[0] = QImageMF->myDesc->inaxes[0]; naxis[1] = QImageMF->myDesc->inaxes[1];
+      accum = ObitFArrayCreate("accum", 2, naxis); /* accumulation array */
+    }
+    ObitFArrayFill(accum, 0.0);  /* zero */
+    sumwt = 0.0;
+    /* Loop over planes */
+    for (iplane=1+loPlane; iplane<=nplane; iplane++) {
+      /* read */
+      plane[0] = iplane;
+      ObitImageGetPlane ((ObitImage*)QImageMF, NULL, plane, err);
+      ObitImageGetPlane ((ObitImage*)UImageMF, NULL, plane, err);
+      if (err->error) goto cleanup;
+      /* polarized intensity in Q FArray */
+      ObitFArrayMul (QImageMF->image, QImageMF->image, QImageMF->image);
+      ObitFArrayMul (UImageMF->image, UImageMF->image, UImageMF->image);
+      ObitFArrayAdd (QImageMF->image, UImageMF->image, QImageMF->image);
+      ObitFArraySqrt (QImageMF->image);
+      /* Weight 1/sigma */
+      rms = ObitFArrayRMS (QImageMF->image);
+      if (rms>0.0) wt = 1./rms;
+      else continue;
+      ObitFArraySMul (QImageMF->image, wt);
+      sumwt += wt;
+      /* Accumulate */
+      ObitFArrayAdd (accum, QImageMF->image, accum);
+   } /* end loop over planes */
+    /* Normalize */
+    if (sumwt>0.0) wt = 1./sumwt;
+    else           wt = 0.0;
+     ObitFArraySMul (accum, wt);
+    /* Write average to plane 1 in both */
+    plane[0] = 1;
+    ObitImagePutPlane ((ObitImage*)QImageMF, accum->array, plane, err);
+    ObitImagePutPlane ((ObitImage*)UImageMF, accum->array, plane, err);
+    if (err->error) goto cleanup;
+  } /* end loop over fields */
+
+  /* done - cleanup */
+ cleanup:
+  if (accum) accum = ObitFArrayUnref(accum);
+  if (err->error) Obit_traceback_msg (err, routine, inQ->name);
+  return;
+} /* end of routine ObitImageMosaicMFMergePoln */ 
+
+/**
  * Convert structure information to entries in an ObitInfoList
  * \param inn     Object of interest.
  * \param prefix  If NonNull, string to be added to beginning of outList entry name
@@ -1871,7 +1888,6 @@ void ObitImageMosaicMFInit  (gpointer inn)
   in->maxFBW    = 1.0;
   in->alpha     = 0.0;
   in->alphaRefF = 1.0;
-  in->restart   = FALSE;
 
 } /* end ObitImageMosaicMFInit */
 

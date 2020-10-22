@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011,2015                                          */
+/*;  Copyright (C) 2011,2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -166,12 +166,12 @@ void ObitSkyModelVMBeamMFFromInfo (ObitSkyModel *out, gchar *prefix,
 
 /** Public: Create/initialize ObitSkyModelVMBeamMF structures */
 ObitSkyModelVMBeamMF* ObitSkyModelVMBeamMFCreate (gchar* name, ObitImageMosaic* mosaic,
-						  ObitUV *uvData,
-						  ObitImage *RXBeam,  ObitImage *LYBeam, 
-						  ObitImage *QBeam,   ObitImage *UBeam, 
-						  ObitImage *RXBeamPh,  ObitImage *LYBeamPh, 
-						  ObitImage *QBeamPh,   ObitImage *UBeamPh, 
-						  ObitErr *err);
+						  ObitUV *uvData, olong numAntType,
+						  ObitImage **RXBeam,  ObitImage **LYBeam, 
+						  ObitImage **RLeam,   ObitImage **LReam, 
+						  ObitImage **RXBeamPh,ObitImage **LYBeamPh, 
+						  ObitImage **RLBeamPh,ObitImage **LRBeamPh, 
+						  ofloat *Diams, ObitErr *err);
 
 /** Public: initialize ObitSkyModelVMBeamMF structures */
 void ObitSkyModelVMBeamMFInitMod (ObitSkyModel* in,  ObitUV *uvdata, ObitErr *err);

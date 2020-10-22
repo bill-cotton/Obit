@@ -5,7 +5,7 @@ Also primary beam calculations
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2007-2019
+#  Copyright (C) 2007-2020
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ Also primary beam calculations
 
 # Python utility package for  Sky Geometry 
 from __future__ import absolute_import
-import Obit, UVDesc
+import Obit, UVDesc, ImageDesc
 import math
 
 
@@ -541,6 +541,39 @@ def PPBJinc (Desc, RA, Dec, antSize=25.0, cutoff=None):
         pbfact =  Obit.PBUtilJinc(angle, freq, antSize, 0.0)
     return pbfact
     # end  PPBJinc
+
+def PJ2Gal (RA, Dec):
+    """ Convert Equatorial (J2000) to Galactic coordinates  
+
+    Converts Convert Equatorial (J2000)to Galactic coordinates
+      RALong    Right Ascension/longitude as "H:M:S"
+      DecLat    Declination/latitude as "D:M:S
+    Return [GLong, GLat]  Galactic coordinates as "D M S".
+    """
+    ################################################################
+    ra = ImageDesc.PHMS2RA (RA); dec = ImageDesc.PDMS2Dec (Dec); 
+    (raB,decB) = PJtoB(ra,dec)          # to B1950
+    (glong,glat) = PEq2Gal (raB, decB) # to Galactic
+    return [ImageDesc.PDec2DMS(glong), ImageDesc.PDec2DMS(glat)]
+    # end PJ2Gal
+
+def PGal2J (Glong, Glat):
+    """ Convert Galactic coordinates to Equatorial (J2000)
+
+    Converts  Galactic coordinates to Convert Equatorial (J2000)
+      glong    Galactic longitude as "D:M:S"
+      glat     Galactic latitude as "D:M:S
+    Return [ra,dec] Equatorial (J) coordinates as "H M S", "D M S".
+    """
+    ################################################################
+    glong = ImageDesc.PDMS2Dec (Glong); glat = ImageDesc.PDMS2Dec (Glat);
+    (raB,decB) = PGal2Eq(glong, glat)  # Galactic to equatorial B1950
+    (ra,dec)   = PBtoJ(raB,decB)       # to J2000
+    return [ImageDesc.PRA2HMS(ra), ImageDesc.PDec2DMS(dec)]
+    # end PGal2J
+
+
+
 
 
 

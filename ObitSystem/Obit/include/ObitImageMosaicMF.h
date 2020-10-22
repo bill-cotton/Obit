@@ -36,7 +36,6 @@
 #include "ObitImage.h"
 #include "ObitTableCC.h"
 #include "ObitImageMosaic.h"
-#include "ObitDConCleanWindow.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -138,10 +137,6 @@ ObitImageMosaicMF *ObitImageMosaicMFCreate (gchar *name, olong order, ofloat max
 void ObitImageMosaicMFDefine (ObitImageMosaic *in, ObitUV *uvData, gboolean doBeam,
 			      ObitErr *err);
 
-/** Public: Add more existing facets */
-void ObitImageMosaicMFAddOld (ObitImageMosaic *in, ObitUV *uvdata, olong nTotal, 
-			      ObitDConCleanWindow *win, ObitErr *err);
-
 /** Public: Flatten tiles onto full field image */
 void ObitImageMosaicMFFlatten (ObitImageMosaic *in, ObitErr *err);
 
@@ -158,6 +153,9 @@ void ObitImageMosaicMFAddField (ObitImageMosaic *in, ObitUV *uvData,
 ObitImageMosaicMF* ObitImageMosaicMFMaxField (ObitImageMosaic *mosaic, 
 					      ofloat MinFlux, olong *ignore, olong *field,
 					      ObitErr* err); 
+
+/** Public: Average polarized intensity in Q,U pair  */
+void ObitImageMosaicMFMergePoln (ObitImageMosaic *innQ, ObitImageMosaic *innU, ObitErr* err) ;
 
 /** Public: Extract information about underlying structures to ObitInfoList */
 void ObitImageMosaicMFGetInfo (ObitImageMosaic *in, gchar *prefix, ObitInfoList *outList, 

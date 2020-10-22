@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -36,3 +36,9 @@
 olong order;
 /** minimum residual flux for 1st and second order */
 ofloat OrdFlux[5];
+/** Doing dual Q&U polarization? */
+gboolean isDual;
+/* Secondary (UPol) SkyModel */
+ObitSkyModel *skyModel2;
+/* Secondary Pixel (UPol) list */
+ObitDConCleanPxList *Pixels2;

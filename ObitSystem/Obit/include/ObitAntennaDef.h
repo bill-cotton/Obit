@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -41,10 +41,16 @@ odouble AntLong;
 odouble AntLat;
 /** Antenna distance from earth center (m) */
 odouble AntRad;
+/** Diameter (m) */
+ofloat Diam;
+/** Axis offset (m) */
+ofloat AxisOff;
 /** Feed A feed position angle (deg) */
 ofloat FeedAPA;
 /** Feed B feed position angle (deg) */
 ofloat FeedBPA;
+/** ANtenna FWHM (deg) per IF */
+ofloat *BeamFWHM;
 /** Feed A Polarization calibration parameters */
 ofloat *FeedAPCal;
 /** Feed B Polarization calibration parameters */
@@ -53,6 +59,8 @@ ofloat *FeedBPCal;
 olong AntID;
 /** Antenna Mount Type 0=altaz, 1=equatorial, 2=orbiting */
 olong AntMount;
+/** Number of IFs */
+olong numIF;
 /** Number of polarization calibration parameters per feed */
 olong numPCal;
 /** Feed A Feed Poln type 'R' 'L', 'X', 'Y' */

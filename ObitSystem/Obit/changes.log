@@ -4744,3 +4744,63 @@ Obit/src/ObitSkyModelMF.c
    LoadComps: Don't fit SI to poln data
    LoadComps: use do3D on image involved rather than skyModel
 10 Jul 2020 svn 624
+
+=====================================================================
+Summary: Enable dual Q/U imaging, fix multiresolution bug, recovery from "Master race" disaster
+Obit/include/ObitVecFunc.h
+    Recover working version
+Obit/tasks/MFImage.c TDF/MFImage.TDF
+   enable dual Q&U imaging mode
+Obit/src/ObitDConCleanPxListMF.c 
+include/ObitDConCleanPxListMF.h include/ObitDConCleanPxListMFDef.h
+   enable dual Q&U imaging mode
+Obit/src/ObitDConCleanVis.c
+Obit/include/ObitDConCleanVis.h include/ObitDConCleanVisDef.h 
+   enable dual Q&U imaging mode
+   reduce gain for tapered MR by beam ratio, increase minFlux by 2x.
+   Trap facets which are done from being reimaged indefinitely
+   Checks if fresh facets are "Done" 
+Obit/src/ObitDConCleanVisMF.c
+include/ObitDConCleanVisMFDef.h
+   enable dual Q&U imaging mode
+   XRestore, check for overlap
+Obit/src/ObitImageMosaicMF.c
+include/ObitImageMosaicMF.h
+   enable dual Q&U imaging mode
+   MergePoln: routine to average polarized intensity
+Obit/src/ObitUVImagerMF.c
+include/ObitUVImagerMF.h include/ObitUVImagerMFDef.h
+   enable dual Q&U imaging mode
+Obit/src/ObitSpectrumFit.c
+    ThreadNLFit: fix bug with sumWt
+Obit/python/SkyGeom.py
+    Add PGal2J and PJ2Gal for equatorial/Galactic coordinate conversion
+Obit/share/scripts/PBCorImageMF.py
+    Add History
+Obit/src/ObitAntenna.c Obit/include/ObitAntennaDef.h
+    Add Diameter, AxisOffset andBeam size
+Obit/TDF/MFBeam.TDF Obit/tasks/MFBeam.c
+    Upgrade to deal with two antenna designs
+Obit/src/ObitTableANUtil.c
+    GetAnt: copy Diameter, axis offset, beamsize
+Obit/src/ObitSkyModelVMBeam.c Obit/src/ObitSkyModelVMBeamMF.c
+Obit/include/ObitSkyModelVMBeamDef.h Obit/include/ObitSkyModelVMBeam.h
+Obit/include/ObitSkyModelVMBeamMF.h
+    Upgrade to deal with multiple antenna designs
+    bug fixes
+Obit/tasks/UVPolCor.c Obit/TDF/UVPolCor.TDF
+Obit/tasks/BeamCor.c Obit/TDF/BeamCor.TDF
+    Upgrade beam model and to ImageMF
+Obit/src/ObitDConCleanWindow.c
+    Allow auto window radii up to 99
+    Don't let auto windows get closer than 2 pixels from the image edge
+Obit/python/Image.py Obit/python/ImageMF.py 
+    Remove extraneous message
+Obit/tasks/BDFIn.c
+   Stop and return error if GetData fails
+Obit/python/SpectrumFit.py Obit/python/SpectrumFit.inc Obit/python/Obit_wrap.c
+    Increase max array size for ImArr to 40
+Obit/python/SkyModelVMBeam.inc
+    Fix call to ObitSkyModelVMBeamCreate 
+22 Oct 2020 svn 625
+

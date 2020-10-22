@@ -73,6 +73,8 @@ typedef struct {
   ofloat*       Spec;
   /* Sum per spectral channel for SDI CLEAN */
   ofloat*      sum;
+  /* Find next peak? */
+  gboolean doFind;
 } CLEANFuncArg;
 
 /*---------------Private function prototypes----------------*/
@@ -340,7 +342,7 @@ void  ObitDConCleanPxListMFGetParms (ObitDConCleanPxList *inn, ObitErr *err)
 
 } /* end ObitDConCleanPxListMFGetParms */
 
-/**a
+/**
  * Resets CLEAN information
  * Makes sure all potential CC tables are instantiated
  * \param inn         The Pixel List object 
@@ -402,58 +404,6 @@ void ObitDConCleanPxListMFReset (ObitDConCleanPxList *inn, ObitErr *err)
 
 } /* end ObitDConCleanPxListMFReset */
 
-
-/** Initialize CC Tables
- * Makes sure all potential CC tables are instantiated
- * \param inn         The Pixel List object 
- * \param err Obit error stack object.
- */
-void ObitDConCleanPxListMFInitCC (ObitDConCleanPxList *inn, ObitErr *err)
-{
-  olong i, ver=0;
-  oint noParms;
-  ObitDConCleanPxListMFClassInfo *myClass;
-  ObitDConCleanPxListMF *in = (ObitDConCleanPxListMF*)inn;
-  gchar *routine = "ObitDConCleanPxListMFInitCC";
-
-  /* error checks */
-  if (err->error) return;
-  g_assert (ObitIsA(in, &myClassInfo));
-
-  /* Control info */
-  myClass = (ObitDConCleanPxListMFClassInfo*)in->ClassInfo;
-  myClass->ObitDConCleanPxListGetParms(inn, err);
-  if (err->error) Obit_traceback_msg (err, routine, in->name);
-
-  /* Number of components */
-  in->currentIter = 0;
-  in->totalFlux   = 0.0;
-  for (i=0; i<in->nfield; i++) {
-    in->iterField[i] = 0;
-    in->fluxField[i] = 0.0;
-
-    /* Get CC table if not defined */
-    if (in->CCTable[i]==NULL) {
-      /* Are these Gaussians or point? */
-      noParms = in->nSpec;     /* Possible spectra */
-      /* If adding spectra, also need type parameters even for point */
-      if ((in->circGaus[i]>0.0) || (in->nSpec>1)) noParms += 4;
-      else noParms = 0;
-      ver = MAX (ver, in->CCver[i]);  /* Use last if not defined */
-      in->CCTable[i] = ObitTableCCUnref(in->CCTable[i]);  /* Free old */
-      in->CCTable[i] = 
-	newObitTableCCValue ("Clean Table", (ObitData*)in->mosaic->images[i],
-			     &ver, OBIT_IO_ReadWrite, noParms, err);
-      if (err->error) Obit_traceback_msg (err, routine, in->name);
-      in->CCver[i] = ver;  /* save if defaulted (0) */
-      /* Delete old row */
-      if (in->CCRow[i]) in->CCRow[i] = ObitTableCCUnref(in->CCRow[i]);
-      
-    }  /* End create table object */
-  } /* end loop over images */
-
-} /* end ObitDConCleanPxListMFInitCC */
-
 /**
  * Resizes arras as needed
  * \param inn      The Pixel List object 
@@ -483,6 +433,31 @@ void ObitDConCleanPxListMFResize (ObitDConCleanPxList *inn, olong maxPixel,
 
 } /* end ObitDConCleanPxListMFResize */
 
+/** Check for corrupted SpecBeamPatch return TRUE if bad */
+static gboolean debugBad(ObitDConCleanPxListMF *in, gchar *id, ObitErr *err)
+{
+  gboolean out=FALSE;
+  olong ifa, ip;
+  if (err->error) return out;
+  if (err->prtLv<3) return out;
+  if (in->SBeamPatch==NULL) return out;
+  for (ifa=0; ifa<in->nfield; ifa++) {
+    for (ip=0; ip<in->nSpec; ip++) {
+      if (((ObitImageMF*)in->mosaic->images[ifa])->fresh &&
+	  in->SBeamPatch[ifa*in->nSpec+ip] && 
+	  (in->SBeamPatch[ifa*in->nSpec+ip]->ReferenceCount<=0)) {
+	/* Bad news */
+	Obit_log_error(err, OBIT_Error, "Bad SBeamPatch a %d p %d call %s ",ifa, ip, id);
+	out = TRUE;
+      }
+    } /* end plane loop */
+  } /* end ant loop */
+  if (!out) Obit_log_error(err, OBIT_InfoWarn, "SBeamPatch OK call %s ",id);
+  ObitErrLog(err);
+  ObitErrLog(err);
+  return out;
+} /* end debugBad */
+
 /**
  * Update pixel list and window
  * If the frequency axis has ctype "SPECLOGF" and if "NTERM" exists in the first image 
@@ -511,6 +486,7 @@ void ObitDConCleanPxListMFUpdate (ObitDConCleanPxList *inn,
 				  ObitFArray **pixarray,
 				  ObitErr *err)
 {
+  ObitDConCleanPxListMF *in = (ObitDConCleanPxListMF*)inn;
   ObitImageMF *image=NULL;
   ObitFArray **inFArrays;
   ofloat **sdata=NULL;
@@ -520,7 +496,6 @@ void ObitDConCleanPxListMFUpdate (ObitDConCleanPxList *inn,
   olong plane[5] = {1,1,1,1,1};
   ofloat maxChFlux, *data=NULL, fblank=ObitMagicF();
   gboolean blewIt=FALSE, *mask=NULL, rebuild=FALSE;
-  ObitDConCleanPxListMF *in = (ObitDConCleanPxListMF*)inn;
   const ObitDConCleanPxListClassInfo *pxListClass;
   gchar *routine = "ObitDConCleanPxListMFUpdate";
 
@@ -531,6 +506,7 @@ void ObitDConCleanPxListMFUpdate (ObitDConCleanPxList *inn,
   /* Save min flux density */
   in->minFluxLoad = minFluxLoad;
   in->autoWinFlux = autoWinFlux;  /* min. allowed for autoWindow */
+  in->resMax = -1.0e20;           /* reset Maximum residual */
   
   /* Diagnostics */
   if (in->prtLv>2) {
@@ -541,8 +517,8 @@ void ObitDConCleanPxListMFUpdate (ObitDConCleanPxList *inn,
   /* Create inFArrays work array */
   nplanes   = 1 + in->nSpec;
   if (in->nSpec==1) nplanes = 1;  /* normal imaging */
-  inFArrays = g_malloc0(nplanes*sizeof(ObitFArray*));
-  sdata     = g_malloc0(nplanes*sizeof(ofloat*));
+  inFArrays = g_malloc0((nplanes+2)*sizeof(ObitFArray*));
+  sdata     = g_malloc0((nplanes+2)*sizeof(ofloat*));
 
   /* Count number of fields */
   ifld = 0;
@@ -554,9 +530,12 @@ void ObitDConCleanPxListMFUpdate (ObitDConCleanPxList *inn,
     field = fields[ifld];
   } /* End counting fields */
 
+  /* Check SBeamPatch 
+     if (debugBad(in, "Update1", err)*) return;*/
+
   /* Create spectral beam array if necessary */
-  if (((in->nSpec>1) && (in->nSBeamPatch<(nfield*in->nSpec))) || 
-      (in->SBeamPatch==NULL)) {
+   if (((in->nSpec>1) && (in->nSBeamPatch<(nfield*in->nSpec)))
+       || (in->SBeamPatch==NULL)) {
     /* Get rid of old */
     if (in->SBeamPatch) {
       for (i=0; i<in->nSBeamPatch; i++) {
@@ -567,9 +546,12 @@ void ObitDConCleanPxListMFUpdate (ObitDConCleanPxList *inn,
     }
     /* New */
     in->nSBeamPatch = in->mosaic->numberImages * in->nSpec;
-    in->SBeamPatch  = ObitMemAlloc0(in->nSBeamPatch*sizeof(ObitFArray*));
-    in->sigma       = ObitMemAlloc0(in->nSBeamPatch*sizeof(ofloat));
+    in->SBeamPatch  = ObitMemAlloc0((in->nSBeamPatch+2)*sizeof(ObitFArray*));
+    in->sigma       = ObitMemAlloc0((in->nSBeamPatch+2)*sizeof(ofloat));
   } /* end create spectral beam array */
+
+  /* Check SBeamPatch */
+  if (debugBad(in, "Update2", err)) return;
 
   /* Loop over selected fields */
   ifld = 0;
@@ -588,6 +570,9 @@ void ObitDConCleanPxListMFUpdate (ObitDConCleanPxList *inn,
     /* Save Beam patch */
     in->BeamPatch[field-1] = ObitFArrayUnref(in->BeamPatch[field-1]);
     in->BeamPatch[field-1] = ObitFArrayRef(BeamPatch[field-1]);
+
+    /* Use absolute value of beam if dual Q&U */
+    if (in->isDual)  ObitFArrayAbs(in->BeamPatch[field-1]);
 
     /* Which image? */
     image = (ObitImageMF*)in->mosaic->images[field-1];
@@ -687,15 +672,26 @@ void ObitDConCleanPxListMFUpdate (ObitDConCleanPxList *inn,
 		in->pixelFld[number]  = field;
 		in->pixelFlux[number] = data[ix];
 		/* Spectral planes - find max abs */
-		maxChFlux = -1.0;
-		if (in->nSpec>1) {
-		  for (j=0; j<in->nSpec; j++) {
-		    if (sdata[j][ix]!=fblank) {
-		      in->channelFlux[j][number] = sdata[j][ix];
-		      maxChFlux = MAX(fabs(sdata[j][ix]),maxChFlux);
-		    } else in->channelFlux[j][number] = 0.0;
+		if (in->isDual) {
+		  maxChFlux = 1.0e20;
+		  if (in->nSpec>1) {
+		    for (j=0; j<in->nSpec; j++) {
+		      if (sdata[j][ix]!=fblank) {
+			in->channelFlux[j][number] = sdata[j][ix];
+		      }
+		    }
 		  }
-		}
+		} else { /* Single polarization */
+		  maxChFlux = -1.0;
+		  if (in->nSpec>1) {
+		    for (j=0; j<in->nSpec; j++) {
+		      if (sdata[j][ix]!=fblank) {
+			in->channelFlux[j][number] = sdata[j][ix];
+			maxChFlux = MAX(fabs(sdata[j][ix]),maxChFlux);
+		      } else in->channelFlux[j][number] = 0.0;
+		    }
+		  }
+		} /* end dual?single polarization */
 		/* Only accept this one if the combined value is less than the max abs 
 		   channel value.  This prevents the convolution from putting components
 		   on top of a cell that is essentially zero in all channels which can cause 
@@ -727,6 +723,9 @@ void ObitDConCleanPxListMFUpdate (ObitDConCleanPxList *inn,
     ifld++;
     field = fields[ifld];
   } /* end loop over fields */
+
+  /* Check SBeamPatch */
+  if (debugBad(in, "Update3", err)) return;
 
   /* Cleanup */
   if (inFArrays) g_free(inFArrays);
@@ -791,12 +790,12 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
   minFluxLoad = in->minFluxLoad;
 
   /* Local arrays */
-  doField = g_malloc0(in->nfield*sizeof(gboolean));
+  doField = g_malloc0((in->nfield+2)*sizeof(gboolean));
   for (i=0; i<in->nfield; i++) doField[i] = FALSE;
   for (ibgc=0; ibgc<MAXBGCLOOP; ibgc++) {
     tipeak[ibgc] = 0;
     tcombPeak[ibgc] = 0.0;
-    tspec[ibgc] = g_malloc0(in->nSpec*sizeof(ofloat));
+    tspec[ibgc] = g_malloc0((in->nSpec+2)*sizeof(ofloat));
   }
 
    /* How many components already done? */
@@ -813,13 +812,14 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
       /* max. beam patch */
       lpatch = MAX (lpatch, in->BeamPatch[i]->naxis[0]);
       /* Loop over spectral channel beams */
-      if (in->nSpec>1) {
+      if ((in->nSpec>1)&&(((ObitImageMF*)in->mosaic->images[i])->fresh)) {
 	for (j=0; j<in->nSpec; j++) 
-	  if (in->SBeamPatch[i*in->nSpec+j])  
-	      ObitFArrayDeblank (in->SBeamPatch[i*in->nSpec+j], 0.0);
+	  if ((in->SBeamPatch[i*in->nSpec+j]) && 
+	      (in->SBeamPatch[i*in->nSpec+j]->ReferenceCount>0))  
+	    ObitFArrayDeblank (in->SBeamPatch[i*in->nSpec+j], 0.0);
       }
     }
-  }
+  } /* End deblanking beam patches */
 
  /* Setup */
   beamPatch     = (lpatch-1)/2;
@@ -861,7 +861,8 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
     else targs[ithread]->ithread = -1;
     targs[ithread]->ipeak     = 0;
     targs[ithread]->combPeak  = 0.0;
-    /* Update which pix */
+    targs[ithread]->doFind    = TRUE;
+   /* Update which pix */
     lopix += npixPerThread;
     hipix += npixPerThread;
     hipix = MIN (hipix, npix);
@@ -869,7 +870,7 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
 
   /* Local accumulators for flux */
   totalFlux = 0.0;
-  fieldFlux = g_malloc0(in->nfield*sizeof(odouble));
+  fieldFlux = g_malloc0((in->nfield+2)*sizeof(odouble));
   for (i=0; i<in->nfield; i++) fieldFlux[i] = 0.0;
 
   /* CLEAN loop */
@@ -1092,7 +1093,7 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
     }
   } /* end loop closing tables */
   
-    /* Cleanup */
+  /* Cleanup */
   KillCLEANArgs (nThreads, targs);
   ObitThreadPoolFree (in->thread);
 
@@ -1134,6 +1135,535 @@ gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *inn, ObitErr *err)
 
   return done;
 } /* end ObitDConCleanPxListMFCLEAN */
+
+/**
+ * Iteratively perform dual Q&U pol BGC CLEAN on Pixel lists
+ * Expects first plane in innQ and innU to be the polarized intensity.
+ * CLEAN mostly driven by Q but the subtracted from U and collected on 
+ * both sets of CCs.
+ * \param innQ   The QPol Pixel list object with most control info
+ * \param innU   The UPol Pixel list object, mostly a duplicate of innQ
+ *               but with the U Pol pixel data
+ * \param err    Obit error stack object.
+ * \return TRUE if hit limit of niter or min. flux density.
+ */
+gboolean ObitDConCleanPxListMFCLEANQU (ObitDConCleanPxList *innQ, 
+				       ObitDConCleanPxList *innU, ObitErr *err)
+{
+  ObitDConCleanPxListMF *inQ = (ObitDConCleanPxListMF*)innQ;
+  ObitDConCleanPxListMF *inU = (ObitDConCleanPxListMF*)innU;
+  gboolean done = FALSE;
+  olong iter, field=0,  beamPatch;
+  olong i, j, lpatch, irow, xoff, yoff;
+  ofloat minFlux=0.0, CCmin, atlim, xfac=1.0, xflux;
+  ofloat minFluxLoad;
+  ofloat subval, peak, ccfLim=0.5;
+  odouble totalFlux, *fieldFlux=NULL;
+  gchar reason[51];
+  ObitTableCCRow *CCRowQ = NULL, *CCRowU = NULL;
+  ObitImageDesc *descQ = NULL, *descU =NULL;
+  ObitIOCode retCode;
+  olong ithread, maxThread, nThreadsQ, nThreadsU, nCCparms;
+  CLEANFuncArg **targsQ=NULL, **targsU=NULL;
+  ObitThreadFunc myThreadFunc;
+  olong npix, lopix, hipix, npixPerThread, parmoff;
+  gboolean OK = TRUE, *doField=NULL, quit=FALSE;
+  /* Clean loop before writing */
+#ifndef MAXBGCLOOP
+#define MAXBGCLOOP 20
+#endif
+  olong ibgc, nbgc, mbgc, iXres, iYres, tipeakQ[MAXBGCLOOP], tipeakU[MAXBGCLOOP];
+  ofloat *tspecQ[MAXBGCLOOP], tcombPeakQ[MAXBGCLOOP];
+  ofloat *tspecU[MAXBGCLOOP], tcombPeakU[MAXBGCLOOP];
+  gchar *routine = "ObitDConCleanPxListMFCLEANQU";
+  /* DEBUG 
+  olong pos[2]={0,0}, ix, ipeak=0;
+  ofloat tmax;*/
+
+  /* error checks */
+  if (err->error) return done;
+  g_assert (ObitIsA(inQ, &myClassInfo));
+  g_assert (ObitIsA(inU, &myClassInfo));
+
+  /* Check SBeamPatch */
+  if (debugBad(inQ, "CLEANQU_Q1", err)) return TRUE;
+  /*if (debugBad(inU, "CLEANQU_U1", err)) return TRUE;*/
+
+  /* Check number of residuals - bail if none */
+  if (inQ->nPixel<=0) {
+    Obit_log_error(err, OBIT_InfoWarn,"%s NO Residuals to CLEAN in %s",
+		   routine, inQ->name);
+    inQ->complCode = OBIT_CompReasonNoPixel;
+    inU->complCode = OBIT_CompReasonNoPixel;
+    return TRUE;
+  }
+  minFluxLoad = inQ->minFluxLoad;
+
+  /* Local arrays */
+  doField = g_malloc0((inQ->nfield+2)*sizeof(gboolean));
+  for (i=0; i<inQ->nfield; i++) doField[i] = FALSE;
+  for (ibgc=0; ibgc<MAXBGCLOOP; ibgc++) {
+    tipeakQ[ibgc] = 0;
+    tipeakU[ibgc] = 0;
+    tcombPeakQ[ibgc] = 0.0;
+    tcombPeakU[ibgc] = 0.0;
+    tspecQ[ibgc] = g_malloc0((inQ->nSpec+2)*sizeof(ofloat));
+    tspecU[ibgc] = g_malloc0((inU->nSpec+2)*sizeof(ofloat));
+  }
+
+   /* How many components already done? */
+  iter = MAX (0, inQ->currentIter);
+
+  /* Set function */
+  myThreadFunc = (ObitThreadFunc)ThreadCLEAN;
+
+  /* Remove any blanks from beam patches */
+  lpatch = 0;
+  for (i=0; i<inQ->nfield; i++) {
+    if (((ObitImageMF*)inQ->mosaic->images[i])->fresh) {
+      if (inQ->BeamPatch[i]) {
+	ObitFArrayDeblank (inQ->BeamPatch[i], 0.0);
+	/* max. beam patch */
+	lpatch = MAX (lpatch, inQ->BeamPatch[i]->naxis[0]);
+	/* Loop over spectral channel beams */
+	if (inQ->nSpec>1) {
+	  for (j=0; j<inQ->nSpec; j++) 
+	    if (inQ->SBeamPatch[i*inQ->nSpec+j])  
+	      ObitFArrayDeblank (inQ->SBeamPatch[i*inQ->nSpec+j], 0.0);
+	}
+      }
+    }
+  } /* end setup QPol beams */
+  /* Now UPol - just replace with reference to Q pol */
+  for (i=0; i<inU->nfield; i++) {
+    if (((ObitImageMF*)inQ->mosaic->images[i])->fresh) {
+      inU->BeamPatch[i] = ObitFArrayUnref(inU->BeamPatch[i]);
+      inU->BeamPatch[i] = ObitFArrayRef(inQ->BeamPatch[i]);
+      for (j=0; j<inQ->nSpec; j++) {
+	if (inQ->SBeamPatch[i*inQ->nSpec+j])  {
+	  inU->SBeamPatch[i*inQ->nSpec+j] = 
+	    ObitFArrayUnref(inU->SBeamPatch[i*inQ->nSpec+j]);
+	  inU->SBeamPatch[i*inQ->nSpec+j] = 
+	    ObitFArrayRef(inQ->SBeamPatch[i*inQ->nSpec+j]);
+	}
+      }
+    }
+  } /* end setup UPol beams */
+ /* Setup */
+  beamPatch     = (lpatch-1)/2;
+  CCmin         = 1.0e20;
+  atlim         = 0.0;
+  inQ->complCode = OBIT_CompReasonUnknown;  /* No reason for completion yet */
+  inU->complCode = OBIT_CompReasonUnknown;  /* No reason for completion yet */
+
+  /* Tell details */
+  if (inQ->prtLv>1) {
+    Obit_log_error(err, OBIT_InfoErr,"MF BGC CLEAN: Beam patch = %d cells, min. residual = %g Jy",
+		   2*beamPatch, inQ->minFluxLoad);
+    Obit_log_error(err, OBIT_InfoErr," %d residuals loaded ",
+		   inQ->nPixel);
+    ObitErrLog(err);  /* Progress Report */
+  }
+
+  /* Setup Threading */
+  /* Only thread large cases */
+  if (inQ->nPixel>500) maxThread = 1000;
+  else maxThread = 1;
+  nThreadsQ = MakeCLEANArgs (inQ, maxThread, &targsQ, err);
+  nThreadsU = MakeCLEANArgs (inU, maxThread, &targsU, err);
+  if (err->error) Obit_traceback_val (err, routine, inQ->name, TRUE);
+
+  /* Divide up work */
+  npix = inQ->nPixel;
+  npixPerThread = npix/nThreadsQ;
+  lopix = 1;
+  hipix = npixPerThread;
+  hipix = MIN (hipix, npix);
+
+  /* Set up Q thread arguments */
+  for (ithread=0; ithread<nThreadsQ; ithread++) {
+    if (ithread==(nThreadsQ-1)) hipix = npix;  /* Make sure to do all */
+    targsQ[ithread]->PixelList = inQ;
+    targsQ[ithread]->first     = lopix;
+    targsQ[ithread]->last      = hipix;
+    if (ithread==nThreadsQ) targsQ[ithread]->last = inQ->nPixel;
+    if (nThreadsQ>1) targsQ[ithread]->ithread = ithread;
+    else targsQ[ithread]->ithread = -1;
+    targsQ[ithread]->ipeak     = 0;
+    targsQ[ithread]->combPeak  = 0.0;
+    targsQ[ithread]->doFind    = TRUE;
+    /* Update which pix */
+    lopix += npixPerThread;
+    hipix += npixPerThread;
+    hipix = MIN (hipix, npix);
+  }
+  /* Now UPol */
+  lopix = 1;
+  hipix = npixPerThread;
+    for (ithread=0; ithread<nThreadsU; ithread++) {
+    if (ithread==(nThreadsU-1)) hipix = npix;  /* Make sure to do all */
+    targsU[ithread]->PixelList = inU;
+    targsU[ithread]->first     = lopix;
+    targsU[ithread]->last      = hipix;
+    if (ithread==nThreadsU) targsU[ithread]->last = inU->nPixel;
+    if (nThreadsU>1) targsU[ithread]->ithread = ithread;
+    else targsU[ithread]->ithread = -1;
+    targsU[ithread]->ipeak     = 0;
+    targsU[ithread]->combPeak  = 0.0;
+    targsU[ithread]->doFind    = TRUE;
+    /* Update which pix */
+    lopix += npixPerThread;
+    hipix += npixPerThread;
+    hipix = MIN (hipix, npix);
+  }
+
+  /* Local accumulators for flux */
+  totalFlux = 0.0;
+  fieldFlux = g_malloc0((inQ->nfield+2)*sizeof(odouble));
+  for (i=0; i<inQ->nfield; i++) fieldFlux[i] = 0.0;
+
+  /* Check SBeamPatch */
+  if (debugBad(inQ, "CLEANQU_Q2", err)) return TRUE;
+/*if (debugBad(inU, "CLEANQU_U2", err)) return TRUE;*/
+
+  /* CLEAN loop */
+  while (!done) {
+
+    /* Set up for inner loop to enhance performance */
+    nbgc = MIN (MAXBGCLOOP, inQ->niter-iter);
+    for (ibgc=0; ibgc<nbgc; ibgc++) {   /* loop finding components */
+    
+      /* Do subtraction/ find next peak on Q Pol */
+      OK = ObitThreadIterator (inQ->thread, nThreadsQ, 
+			       (ObitThreadFunc)myThreadFunc, 
+			       (gpointer**)targsQ);
+
+      /* Now do subtraction only on U Pol */
+      OK = OK && ObitThreadIterator (inU->thread, nThreadsU, 
+				     (ObitThreadFunc)myThreadFunc, 
+				     (gpointer**)targsU);
+
+      
+      /* Check for problems */
+      if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+      
+      /* Get plane 0 peak info - should be the same for Q, U */
+      mbgc = 0;
+      peak = fabs(targsQ[0]->combPeak);
+      for (ithread=1; ithread<nThreadsQ; ithread++) {
+	if (fabs(targsQ[ithread]->combPeak)>peak) {
+	  mbgc = ithread;
+	  peak = fabs(targsQ[ithread]->combPeak);
+	}
+      }
+      tcombPeakQ[ibgc] = targsQ[mbgc]->combPeak;
+      tcombPeakU[ibgc] = targsU[mbgc]->combPeak;
+      tipeakQ[ibgc]    = targsQ[mbgc]->ipeak;
+      tipeakU[ibgc]    = targsU[mbgc]->ipeak;
+      for (j=0; j<inQ->nSpec; j++)
+	tspecQ[ibgc][j] = targsQ[mbgc]->Spec[j] ;
+      for (j=0; j<inU->nSpec; j++)
+	tspecU[ibgc][j] = targsU[mbgc]->Spec[j] ;
+
+      /* Set up Q thread arguments for next subtraction */
+      for (ithread=0; ithread<nThreadsQ; ithread++) {
+	targsQ[ithread]->ipeak    = tipeakQ[ibgc];
+	targsQ[ithread]->combPeak = tcombPeakQ[ibgc];
+	for (j=0; j<inQ->nSpec; j++)
+	  targsQ[ithread]->Spec[j]= tspecQ[ibgc][j];
+      }
+      /* Set up U thread arguments for next subtraction */
+      for (ithread=0; ithread<nThreadsU; ithread++) {
+	targsU[ithread]->ipeak    = tipeakU[ibgc];
+	targsU[ithread]->combPeak = tcombPeakU[ibgc];
+	for (j=0; j<inU->nSpec; j++)
+	  targsU[ithread]->Spec[j]= tspecU[ibgc][j];
+      }
+      
+     } /* end bgc loop finding components */
+
+    quit = FALSE;
+    for (ibgc=0; ibgc<nbgc; ibgc++) {   /* loop saving/testing components */
+      /* If first pass set up stopping criteria */
+      xflux = tcombPeakQ[ibgc];
+      field = inQ->pixelFld[tipeakQ[ibgc]] - 1;
+      if (inQ->resMax < 0.0) {
+	inQ->resMax = MAX (fabs(xflux), 1.0e-10);
+	/* lower algorithm limit if fitted values are less that minFluxLoad */
+	if (minFluxLoad>inQ->resMax) minFluxLoad *= 0.90;
+      }      
+      
+      /* Save info */
+      xfac     = pow ((minFluxLoad / inQ->resMax), inQ->factor[field]);
+      ccfLim   = inQ->resMax*inQ->ccfLim;  /* Fraction of peak limit */
+      doField[field] = TRUE;
+      minFlux  = inQ->minFlux[field];
+      subval   = tcombPeakQ[ibgc] * inQ->gain[field];
+      iXres    = inQ->pixelX[tipeakQ[ibgc]];
+      iYres    = inQ->pixelY[tipeakQ[ibgc]];
+      CCmin    = MIN (CCmin, fabs(tcombPeakQ[ibgc]));
+      
+      /* Keep statistics */
+      inQ->iterField[field]++;
+      inU->iterField[field] = inQ->iterField[field];
+      iter++;  /* iteration count */
+      fieldFlux[field] += subval;
+      totalFlux += subval;
+      atlim += xfac / (ofloat)iter;   /* update BGC stopping criterion */
+      
+      /* Write components to Tables */    
+      /* Open tables if not already open */
+      if (inQ->CCTable[field]->myStatus == OBIT_Inactive) {
+	retCode = ObitTableCCOpen (inQ->CCTable[field], OBIT_IO_ReadWrite, err);
+	if ((retCode != OBIT_IO_OK) || (err->error))
+	  Obit_traceback_val (err, routine, inQ->name, done);
+      }
+      /* Create row if needed */
+      if (!inQ->CCRow[field]) inQ->CCRow[field] = newObitTableCCRow (inQ->CCTable[field]);
+      CCRowQ = inQ->CCRow[field];   /* Get local pointer to  Table Row  */
+      /* Now U */
+       if (inU->CCTable[field]->myStatus == OBIT_Inactive) {
+	retCode = ObitTableCCOpen (inU->CCTable[field], OBIT_IO_ReadWrite, err);
+	if ((retCode != OBIT_IO_OK) || (err->error))
+	  Obit_traceback_val (err, routine, inU->name, done);
+      }
+      /* Create row if needed */
+      if (!inU->CCRow[field]) inU->CCRow[field] = newObitTableCCRow (inU->CCTable[field]);
+      CCRowU = inU->CCRow[field];   /* Get local pointer to  Table Row  */
+     
+      /* Set value */
+      descQ = inQ->mosaic->images[field]->myDesc;
+      descU = inU->mosaic->images[field]->myDesc;
+      /* correct by offset in ObitDConCleanPxListUpdate */
+      if (descQ->crpix[0]>0.0)  
+	xoff = (olong)(descQ->crpix[0]+0.5);
+      else xoff = (olong)(descQ->crpix[0]-0.5);
+      if (descQ->crpix[1]>0.0)  
+	yoff = (olong)(descQ->crpix[1]+0.5);
+      else yoff = (olong)(descQ->crpix[1]-0.5);
+      xoff--; yoff--; /* To 0 rel */
+      /* What's in AIPS is a bit more complex and adds field offset from tangent */
+      CCRowQ->DeltaX = (iXres - descQ->crpix[0]+1+xoff)*descQ->cdelt[0];
+      CCRowQ->DeltaY = (iYres - descQ->crpix[1]+1+yoff)*descQ->cdelt[1];
+      CCRowQ->Flux   =  subval;
+      CCRowU->DeltaX = (iXres - descU->crpix[0]+1+xoff)*descU->cdelt[0];
+      CCRowU->DeltaY = (iYres - descU->crpix[1]+1+yoff)*descU->cdelt[1];
+      CCRowU->Flux   =  subval;
+      /* May need Gaussian components */
+      parmoff = 0;
+      if (inQ->CCTable[field]->parmsCol>=0)
+	nCCparms = inQ->CCTable[field]->myDesc->dim[inQ->CCTable[field]->parmsCol][0];
+      else nCCparms = 0;
+      if (nCCparms>=4) {
+	if (inQ->circGaus[field]>0.0) {
+	  CCRowQ->parms[0] = inQ->circGaus[field];
+	  CCRowQ->parms[1] = inQ->circGaus[field];
+	  CCRowQ->parms[2] = 0.0;
+	  CCRowQ->parms[3] = 1;  /* type 1 = Gaussian */
+	  parmoff = 4;
+	} else if (nCCparms>=(inQ->nSpecTerm+4)) { /* point */
+	  CCRowQ->parms[0] = 0.0;
+	  CCRowQ->parms[1] = 0.0;
+	  CCRowQ->parms[2] = 0.0;
+	  CCRowQ->parms[3] = 0;  /* type 0 = Point */
+	  parmoff = 4;
+	}
+	/* Now U */
+	if (inU->circGaus[field]>0.0) {
+	  CCRowU->parms[0] = inU->circGaus[field];
+	  CCRowU->parms[1] = inU->circGaus[field];
+	  CCRowU->parms[2] = 0.0;
+	  CCRowU->parms[3] = 1;  /* type 1 = Gaussian */
+	  parmoff = 4;
+	} else if (nCCparms>=(inU->nSpecTerm+4)) { /* point */
+	  CCRowU->parms[0] = 0.0;
+	  CCRowU->parms[1] = 0.0;
+	  CCRowU->parms[2] = 0.0;
+	  CCRowU->parms[3] = 0;  /* type 0 = Point */
+	  parmoff = 4;
+	}
+      } /* end add Gaussian components */
+      
+      /* May need Spectral components */
+      if (nCCparms>=(parmoff+inQ->nSpec)) {
+	
+	if (inQ->nSpec>0) {
+	  CCRowQ->parms[3] += 20.0;  /* mark as also having tabulated spectrum */
+	  for (i=0; i<inQ->nSpec; i++) {
+	    CCRowQ->parms[parmoff+i] = tspecQ[ibgc][i] * inQ->gain[field];
+	  }
+	} /* end add Spectral components */
+	/* Now U */
+	if (inU->nSpec>0) {
+	  CCRowU->parms[3] += 20.0;  /* mark as also having tabulated spectrum */
+	  for (i=0; i<inU->nSpec; i++) {
+	    CCRowU->parms[parmoff+i] = tspecU[ibgc][i] * inU->gain[field];
+	  }
+	} /* end add Spectral components */
+      } /* end if need spectral component */
+      /* DEBUG  */
+      if (inQ->prtLv>5) 
+	fprintf (stderr,"Component: fld %2d %5d comb %9.6f flux %9.6f tot %9.6f pos %6d  %6d \n",
+		 field+1, tipeakQ[ibgc], xflux, subval, inQ->totalFlux+totalFlux, iXres, iYres);
+      
+      /* Write Q Pol */
+      irow = inQ->iterField[field];
+      retCode = ObitTableCCWriteRow (inQ->CCTable[field], irow, CCRowQ, err);
+      if ((retCode != OBIT_IO_OK) || (err->error)) 
+	Obit_traceback_val (err, routine, inQ->name, done);
+      /* Now Write U Pol */
+      irow = inU->iterField[field];
+      retCode = ObitTableCCWriteRow (inU->CCTable[field], irow, CCRowU, err);
+      if ((retCode != OBIT_IO_OK) || (err->error)) 
+	Obit_traceback_val (err, routine, inU->name, done);
+      
+      /* Test various stopping conditions */ 
+      /* Are we finished after this? */
+      done = done || (iter>=inQ->niter) || (fabs(xflux)<minFlux);
+      if (done) {  /* set completion reason string */
+	if (iter>=inQ->niter) {
+	  g_snprintf (reason, 50, "Reached Iter. limit");
+	  inQ->complCode = OBIT_CompReasonNiter; 
+	  inU->complCode = OBIT_CompReasonNiter; 
+	}
+	if (fabs(xflux)<minFlux) {
+	  g_snprintf (reason, 50, "Reached min Clean flux");
+	  inQ->complCode = OBIT_CompReasonMinFlux;
+	  inU->complCode = OBIT_CompReasonMinFlux;
+	}
+	quit = TRUE;
+	break;
+      } 
+      
+      /* Diverging? */
+      if (fabs (xflux) > 2.0*CCmin) {
+	/* Give warning */
+	Obit_log_error(err, OBIT_InfoWarn,"%s: Clean has begun to diverge, Stopping",
+		       routine);
+	g_snprintf (reason, 50, "Solution diverging");
+	inQ->complCode = OBIT_CompReasonDiverge;
+	inU->complCode = OBIT_CompReasonDiverge;
+	done = TRUE;
+	quit = TRUE;
+	break;
+      }
+      
+      /* BGC tests to tell if we should quit now */
+      if (fabs (xflux) < minFluxLoad * (1.0 + atlim)) {
+	g_snprintf (reason, 50, "Reached minimum algorithm flux");
+	inQ->complCode = OBIT_CompReasonBGCLimit;
+	inU->complCode = OBIT_CompReasonBGCLimit;
+	quit = TRUE;
+	break;  /* jump out of CLEAN loop */
+      }
+      
+      /* autoWindow tests to tell if we should quit now */
+      if (fabs (xflux) < inQ->autoWinFlux) {
+	g_snprintf (reason, 50, "Reached minimum autoWindow flux");
+	inQ->complCode = OBIT_CompReasonAutoWin;
+	inU->complCode = OBIT_CompReasonAutoWin;
+	/* DEBUG - this to keep SubNewCCs from running until it's fixed 
+	   in->complCode = OBIT_CompReasonMinFract;*/
+	quit = TRUE;
+	break;  /* jump out of CLEAN loop */
+      }
+      
+      /* Deep enough fraction of peak residual */
+      if (fabs(xflux)<ccfLim) {
+	g_snprintf (reason, 50, "Reached min fract of peak resid");
+	inQ->complCode = OBIT_CompReasonMinFract;
+	inU->complCode = OBIT_CompReasonMinFract;
+	quit = TRUE;
+	break;
+      }
+    } /* End loop saving, testing components */
+    if (done || quit) break;
+  } /* end CLEANing loop */
+  
+  
+  /* Keep statistics */
+  inQ->currentIter = iter;
+  inU->currentIter = iter;
+  /* Save accumulators for flux */
+  inQ->totalFlux += totalFlux;
+  inU->totalFlux += totalFlux;
+  for (i=0; i<inQ->nfield; i++) inQ->fluxField[i] += fieldFlux[i];
+  for (i=0; i<inU->nfield; i++) inU->fluxField[i] += fieldFlux[i];
+  if (fieldFlux) g_free(fieldFlux);
+
+  /* Loop over CC tables closing */
+  for (i=0; i<inQ->nfield; i++) {
+    if (inQ->CCTable[i]->myStatus != OBIT_Inactive) {
+      retCode = ObitTableCCClose (inQ->CCTable[i], err);
+      if ((retCode != OBIT_IO_OK) || (err->error))
+	Obit_traceback_val (err, routine, inQ->name, done);
+      inQ->CCRow[i] = ObitTableCCRowUnref(inQ->CCRow[i]);
+    }
+  } /* end loop closing U tables */
+  for (i=0; i<inU->nfield; i++) {
+    if (inU->CCTable[i]->myStatus != OBIT_Inactive) {
+      retCode = ObitTableCCClose (inU->CCTable[i], err);
+      if ((retCode != OBIT_IO_OK) || (err->error))
+	Obit_traceback_val (err, routine, inU->name, done);
+      inU->CCRow[i] = ObitTableCCRowUnref(inU->CCRow[i]);
+    }
+  } /* end loop closing U tables */
+  
+  /* Check SBeamPatch */
+  if (debugBad(inQ, "CLEANQU_Q3", err)) return TRUE;
+/*if (debugBad(inU, "CLEANQU_U3", err)) return TRUE;*/
+
+    /* Cleanup */
+  KillCLEANArgs (nThreadsQ, targsQ);
+  KillCLEANArgs (nThreadsU, targsU);
+  ObitThreadPoolFree (inQ->thread);
+
+  /* Clear spectral beam patches - this causes trouble
+  if (inQ->SBeamPatch) {
+    for (i=0; i<inQ->nSBeamPatch; i++) {
+      inQ->SBeamPatch[i] = ObitFArrayUnref(inQ->SBeamPatch[i]);
+    }
+    }*/
+  /* Now U 
+  if (inU->SBeamPatch) {
+    for (i=0; i<inU->nSBeamPatch; i++) {
+      inU->SBeamPatch[i] = ObitFArrayUnref(inU->SBeamPatch[i]);
+    }
+  } */
+  
+  /* Tell about results */
+  if (inQ->prtLv>=1) {
+    Obit_log_error(err, OBIT_InfoErr,"Clean stopped because: %s", reason);
+    Obit_log_error(err, OBIT_InfoErr,"Min. Flux density %f",
+		   xflux);
+  }
+  if (inQ->prtLv>1) {
+    if (inQ->nfield>1) /* Multiple fields? */
+      for (i=0; i<inQ->nfield; i++) {
+	if (doField[i]) {
+	  Obit_log_error(err, OBIT_InfoErr,"Field %d has %d CCs with %g Jy",
+			 i+1, inQ->iterField[i], inQ->fluxField[i]);
+	}
+      }
+    
+  }
+  if (inQ->prtLv>=1) {
+    Obit_log_error(err, OBIT_InfoErr,"Total CLEAN %d CCs with %g Jy",
+		   inQ->currentIter, inQ->totalFlux);
+  }
+  /* Keep maximum abs residual */
+  inQ->maxResid = fabs(xflux);
+  inU->maxResid = fabs(xflux);
+
+  /* Cleanup */
+  if (doField) g_free(doField);
+  for (ibgc=0; ibgc<MAXBGCLOOP; ibgc++) {
+    if (tspecQ[ibgc]) g_free(tspecQ[ibgc]);
+    if (tspecU[ibgc]) g_free(tspecU[ibgc]);
+  }
+
+  return done;
+} /* end ObitDConCleanPxListMFCLEANQU */
 
 /**
  * Steer-Dewney-Ito-Greisen CLEAN on Pixel list
@@ -1178,10 +1708,10 @@ gboolean ObitDConCleanPxListMFSDI (ObitDConCleanPxList *inn, ObitErr *err)
   if ((in->nSpec==1) || (in->curOrder==0)) nSpec = 1;
 
   /* Local arrays */
-  sum     = g_malloc0(nSpec*sizeof(ofloat));
-  wt      = g_malloc0(nSpec*sizeof(ofloat));
-  tspec   = g_malloc0(nSpec*sizeof(ofloat));
-  doField = g_malloc0(in->nfield*sizeof(gboolean));
+  sum     = g_malloc0((nSpec+2)*sizeof(ofloat));
+  wt      = g_malloc0((nSpec+2)*sizeof(ofloat));
+  tspec   = g_malloc0((nSpec+2)*sizeof(ofloat));
+  doField = g_malloc0((in->nfield+2)*sizeof(gboolean));
   for (i=0; i<in->nfield; i++) doField[i] = FALSE;
 
    /* How many components already done? */
@@ -1262,7 +1792,7 @@ gboolean ObitDConCleanPxListMFSDI (ObitDConCleanPxList *inn, ObitErr *err)
 
   /* Local accumulators for flux */
   totalFlux = 0.0;
-  fieldFlux = g_malloc0(in->nfield*sizeof(odouble));
+  fieldFlux = g_malloc0((in->nfield+2)*sizeof(odouble));
   for (i=0; i<in->nfield; i++) fieldFlux[i] = 0.0;
     
   /* Do outer loop over list */
@@ -1579,6 +2109,7 @@ void ObitDConCleanPxListMFInit  (gpointer inn)
   in->curOrder    = 0;
   in->nSpec       = 0;
   in->refFreq     = 1.0;
+  in->isDual      = FALSE;
 
 } /* end ObitDConCleanPxListMFInit */
 
@@ -1738,6 +2269,7 @@ gpointer ThreadCLEAN (gpointer args)
   olong  ipeak            = largs->ipeak;
   ofloat combPeak         = largs->combPeak;
   ofloat *Spec            = largs->Spec;
+  gboolean doFind         = largs->doFind;
 
   ofloat xflux, subCval, peak=-1.0;
   olong j, iresid, nSpec, ispec, iXres, iYres, lpatch, beamPatch, iBeam, field, pos[2];
@@ -1748,11 +2280,11 @@ gpointer ThreadCLEAN (gpointer args)
   if ((in->nSpec==1) || (in->curOrder==0)) nSpec = 0;
 
   /* Do subtraction if peak non zero */
-  field  = in->pixelFld[ipeak];
-  lpatch = in->BeamPatch[field-1]->naxis[0];
-  beamPatch = lpatch/2;
-  xflux  = 0.0;
   if (fabs(combPeak)>0.0) {
+    field  = in->pixelFld[ipeak];
+    lpatch = in->BeamPatch[field-1]->naxis[0];
+    beamPatch = lpatch/2;
+    xflux  = 0.0;
     pos[0]  = pos[1] = 0;
     beam00  = ObitFArrayIndex(in->BeamPatch[field-1], pos); /* Beam patch pointer */
     subCval = combPeak * in->gain[field-1];  /* Combined flux */
@@ -1772,14 +2304,16 @@ gpointer ThreadCLEAN (gpointer args)
 	  in->channelFlux[ispec][iresid] -= in->gain[field-1] * Spec[ispec] * Sbeam[iBeam];
 	}
       }
-      /* Now, Find Peak */
-      xflux = fabs(in->pixelFlux[iresid]);
-      if (xflux>peak) {
-	peak = xflux;
-	ipeak = iresid;
-      }
+      if (doFind) {
+	/* Now, Find Peak */
+	xflux = fabs(in->pixelFlux[iresid]);
+	if (xflux>peak) {
+	  peak = xflux;
+	  ipeak = iresid;
+	}
+      } /* end if doFind */
     } /* end loop over array */
-  } else {  /* Only find peak */
+  } else if (doFind) {  /* Only find peak */
     /* Find peak abs residual */
     for (iresid=loPix; iresid<hiPix; iresid++) {
       xflux = fabs(in->pixelFlux[iresid]);
@@ -1890,9 +2424,9 @@ static olong MakeCLEANArgs (ObitDConCleanPxListMF *in, olong maxThread,
   nThreads = MIN (nThreads, maxThread);
 
   /* Initialize threadArg array */
-  *args = g_malloc0(nThreads*sizeof(CLEANFuncArg*));
+  *args = g_malloc0((nThreads+2)*sizeof(CLEANFuncArg*));
   for (i=0; i<nThreads; i++) 
-    (*args)[i] = g_malloc0(sizeof(CLEANFuncArg)); 
+    (*args)[i] = g_malloc0(2+sizeof(CLEANFuncArg)); 
   
   for (i=0; i<nThreads; i++) {
     (*args)[i]->PixelList = in;
@@ -1900,10 +2434,10 @@ static olong MakeCLEANArgs (ObitDConCleanPxListMF *in, olong maxThread,
     (*args)[i]->last      = 0;
     (*args)[i]->ithread   = i;
     (*args)[i]->ipeak     = 0;
-    if (in->nSpec>1) (*args)[i]->Spec = g_malloc0(in->nSpec*sizeof(ofloat));
+    if (in->nSpec>1) (*args)[i]->Spec = g_malloc0((in->nSpec+2)*sizeof(ofloat));
     else (*args)[i]->Spec = NULL;
-    if (in->nSpec>1) (*args)[i]->sum = g_malloc0(in->nSpec*sizeof(ofloat));
-    else (*args)[i]->sum = g_malloc0(sizeof(ofloat));
+    if (in->nSpec>1) (*args)[i]->sum = g_malloc0((in->nSpec+2)*sizeof(ofloat));
+    else (*args)[i]->sum = g_malloc0(3*sizeof(ofloat));
     if (err->error) Obit_traceback_val (err, routine, in->name, nThreads);
   }
 

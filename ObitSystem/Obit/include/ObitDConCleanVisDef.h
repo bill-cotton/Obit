@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2017                                          */
+/*;  Copyright (C) 2005-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -35,6 +35,8 @@
 ObitUVImager *imager;
 /** Sky Model for subtracting Clean model from data */
 ObitSkyModel *skyModel;
+/** Secondary (U) image mosaic being deconvolved */
+ObitImageMosaic *mosaic2;
 /** Model calculation mode for components */
 ObitSkyModelMode modelMode;
 /** Restore image when done? */

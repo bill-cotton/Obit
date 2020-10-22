@@ -1583,9 +1583,9 @@ void ObitSpectrumFitter (ObitSpectrumFit* in, ObitErr *err)
     args->nu          = g_malloc0(args->nfreq*sizeof(ofloat));
     args->logNuOnu0   = g_malloc0(args->nfreq*sizeof(ofloat));
     if (args->doError)
-      args->coef      = g_malloc0(2*args->nterm*sizeof(ofloat));
+      args->coef      = g_malloc0((5+2*args->nterm)*sizeof(ofloat));
     else
-      args->coef      = g_malloc0(args->nterm*sizeof(ofloat));
+      args->coef      = g_malloc0((5+args->nterm)*sizeof(ofloat));
     /* GSL implementation */
 #ifdef HAVE_GSL
     args->solver2 =  args->solver3 =  args->solver4 =  args->solver5 = NULL;
@@ -1854,6 +1854,7 @@ static gpointer ThreadNLFit (gpointer arg)
 	  if (larg->obs[i]!=fblank) {
 	    /* Statistical weight */
 	    if (in->RMS[i]>0.0) {
+	      sumWt += 1.0 / (in->RMS[i]*in->RMS[i]);
 	      larg->isigma[i] = 1.0 / (in->RMS[i]*in->RMS[i] + 
 				       in->calFract[i]*in->calFract[i]*
 				       larg->obs[i]*larg->obs[i]);
@@ -1873,7 +1874,6 @@ static gpointer ThreadNLFit (gpointer arg)
 	      } else {
 		larg->obs[i] /= pbfact;
 		larg->weight[i]  *= pbfact*pbfact;
-		sumWt += 1.0 / (in->RMS[i]*in->RMS[i]);
 	      }
 	    }
 	    /* End if datum valid */

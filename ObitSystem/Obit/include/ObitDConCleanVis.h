@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2013                                          */
+/*;  Copyright (C) 2005-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -276,6 +276,12 @@ typedef void (*ResetPixelListFP)(ObitDConCleanVis *in, ObitErr *err);
 
 /** Private: Reset Pixel List */
 typedef void (*FindPeakFP)(ObitDConCleanVis *in, ObitErr *err);
+
+/** Private: reset sky model. */
+gboolean VisResetSkyModel (ObitDConCleanVis *in, ObitErr *err);
+
+/** Private: reset Pixel List. */
+void VisResetPixelList (ObitDConCleanVis *in, ObitErr *err);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

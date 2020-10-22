@@ -13,7 +13,7 @@ with the flux densities at the desired frequencies.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2008-2019
+#  Copyright (C) 2008-2020
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -155,7 +155,7 @@ class SpectrumFit(Obit.SpectrumFit):
                       One per frequency or one for all, def 25.0
             corAlpha  float scalar spectral index correction to apply, def = 0.0
         imArr    = Array of 2D images to be fitted
-                   NB: there is a maximum of 20 images in imArr
+                   NB: there is a maximum of 40 images in imArr
         outImage = Image cube with fitted spectra.
                    Should be defined but not created.
                    Planes 1->nterm are coefficients per pixel
@@ -172,8 +172,8 @@ class SpectrumFit(Obit.SpectrumFit):
         if not outImage.ImageIsA():
             raise TypeError("outImage MUST be a Python Obit Image")
         nimage = len(imArr)
-        if nimage>20:
-            raise TypeError("Too many input images > 20")
+        if nimage>40:
+            raise TypeError("Too many input images > 40")
             
         #
         # SWIG SUCKS
@@ -257,10 +257,93 @@ class SpectrumFit(Obit.SpectrumFit):
             im20 = imArr[19].me
         else:
             im20 = None
+        if nimage>20:
+            im21 = imArr[20].me
+        else:
+            im21 = None
+        if nimage>21:
+            im22 = imArr[21].me
+        else:
+            im22 = None
+        if nimage>22:
+            im23 = imArr[22].me
+        else:
+            im23 = None
+        if nimage>23:
+            im24 = imArr[23].me
+        else:
+            im24 = None
+        if nimage>24:
+            im25 = imArr[24].me
+        else:
+            im25 = None
+        if nimage>25:
+            im26 = imArr[25].me
+        else:
+            im26 = None
+        if nimage>26:
+            im27 = imArr[26].me
+        else:
+            im27 = None
+        if nimage>27:
+            im28 = imArr[27].me
+        else:
+            im28 = None
+        if nimage>28:
+            im29 = imArr[28].me
+        else:
+            im29 = None
+        if nimage>29:
+            im30 = imArr[29].me
+        else:
+            im30 = None
+        if nimage>30:
+            im31 = imArr[30].me
+        else:
+            im31 = None
+        if nimage>31:
+            im32 = imArr[31].me
+        else:
+            im32 = None
+        if nimage>32:
+            im33 = imArr[32].me
+        else:
+            im33 = None
+        if nimage>33:
+            im34 = imArr[33].me
+        else:
+            im34 = None
+        if nimage>34:
+            im35 = imArr[34].me
+        else:
+            im35 = None
+        if nimage>35:
+            im36 = imArr[35].me
+        else:
+            im36 = None
+        if nimage>36:
+            im37 = imArr[36].me
+        else:
+            im37 = None
+        if nimage>37:
+            im38 = imArr[37].me
+        else:
+            im38 = None
+        if nimage>38:
+            im39 = imArr[38].me
+        else:
+            im39 = None
+        if nimage>39:
+            im40 = imArr[39].me
+        else:
+            im40 = None
         Obit.SpectrumFitImArr(self.me, nimage, 
                               im1, im2, im3, im4, im5, im6, im7, im8,
                               im9, im10, im11, im12, im13, im14, im15,
                               im16, im17, im18, im19, im20,
+                              im21, im22, im23, im24, im25, im26, im27, im28,
+                              im29, im30, im31, im32, im33, im34, im35,
+                              im36, im37, im38, im39, im40,
                               outImage.me, err.me)
     # end ImArr
     

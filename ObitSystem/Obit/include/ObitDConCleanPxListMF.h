@@ -120,9 +120,6 @@ void ObitDConCleanPxListMFGetParms (ObitDConCleanPxList *in, ObitErr *err);
 /** Public: Reset Clean. */
 void ObitDConCleanPxListMFReset (ObitDConCleanPxList *in, ObitErr *err);
 
-/** Public: Set CC Tables */
-void ObitDConCleanPxListMFInitCC (ObitDConCleanPxList *in, ObitErr *err);
-
 /** Public: Resize Arrrays. */
 void ObitDConCleanPxListMFResize (ObitDConCleanPxList *in, olong maxPixel, 
 				ObitErr *err);
@@ -139,6 +136,9 @@ void ObitDConCleanPxListMFUpdate (ObitDConCleanPxList *in,
 
 /** Public: Do minor cycle BGC CLEANing. */
 gboolean ObitDConCleanPxListMFCLEAN (ObitDConCleanPxList *in, ObitErr *err);
+
+/** Public: Do dualQ&U minor cycle BGC CLEANing. */
+gboolean ObitDConCleanPxListMFCLEANQU (ObitDConCleanPxList *inQ, ObitDConCleanPxList *inU, ObitErr *err);
 
 /** Public: Do SDI CLEANing. */
 gboolean ObitDConCleanPxListMFSDI (ObitDConCleanPxList *in, ObitErr *err);

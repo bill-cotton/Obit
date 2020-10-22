@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2020                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -24,14 +24,24 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/*  Define the basic components of the ObitUVImagerMF structure         */
+/*  Define the basic components of the ObitUVImagerMF structure       */
 /*  This is intended to be included in a class structure definition   */
 /**
  * \file ObitUVImagerMFDef.h
  * ObitUVImagerMF structure members for this and any derived classes.
  */
 #include "ObitUVImagerDef.h"  /* Parent class definitions */
+/** Secondary input UV data (U pol or Q/U pol pair)     */
+ObitUV *uvdata2;
+/** secondary selected/calibrated/edited/Weighted UV data to be imaged       */
+ObitUV *uvwork2;
+/** Secondary Image mosaic to be produced */
+ObitImageMosaic *mosaic2;
+/** Number of polarizations images, 1 or 2 */
+olong noPolImage;
+/** Which polarization being manipulated, 1 or 2 */
+olong whichPol;
 /** Maximum beam order Spectral index only = 1, plus curvature = 2 */
 olong maxOrder;
-/** Max. IF center fractioinal bandwidth */
+/** Max. IF center fractional bandwidth */
 ofloat maxFBW;

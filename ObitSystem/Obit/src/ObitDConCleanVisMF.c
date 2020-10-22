@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2018                                          */
+/*;  Copyright (C) 2010-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -125,6 +125,9 @@ static void SubNewCCs (ObitDConCleanVis *in, olong *newCC,
 /** Private: Create/init PxList. */
 static void NewPxList (ObitDConCleanVis *in, ObitErr *err);
 
+/** Private: Create/init secondary (UPol) PxList. */
+static void NewPxList2 (ObitDConCleanVis *in, ObitErr *err);
+
 /** Private: Convolve spectral CCs with a Gaussian. */
 static ObitFArray* ConvlCC(ObitImage *image, olong CCVer, olong iterm, 
 			   ofloat factor, ofloat tmaj, ofloat tmin, ofloat tpa, 
@@ -150,6 +153,17 @@ static void CommonRes(ObitDConCleanVisMF *in, olong field, ObitErr *err);
 void ConvGauss (ObitImage *inImage, olong *iplane,
 		ofloat Gaumaj, ofloat Gaumin, ofloat GauPA, ofloat rescale,
 		ObitErr *err);
+
+/* Select CLEAN components for major cycle */
+gboolean ObitDConCleanVisMFSelect(ObitDConClean *in, 
+				  ObitFArray **pixarray, ObitErr *err);
+/** Private: reset sky model. */
+static gboolean MFResetSkyModel (ObitDConCleanVis *in, ObitErr *err);
+
+/** Private: reset Pixel List. */
+static void MFResetPixelList (ObitDConCleanVis *in, ObitErr *err);
+
+
 /*----------------------Public functions---------------------------*/
 /**
  * Constructor.
@@ -368,6 +382,7 @@ ObitDConCleanVisMFCreate2 (gchar* name, ObitUV *uvdata,
   olong nfield, i;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitDConCleanVisMF* out=NULL;
+  ObitUVImagerMF *imagerMF=NULL;
   ofloat ftemp;
   gchar *routine = "ObitDConCleanVisMFCreate";
 
@@ -390,6 +405,10 @@ ObitDConCleanVisMFCreate2 (gchar* name, ObitUV *uvdata,
   /* Save uv Mosaic reference */
   out->mosaic = ObitUVImagerGetMosaic(out->imager, err);
 
+  /* Save second poln mosaic if present */
+  imagerMF = (ObitUVImagerMF*)(out->imager);
+  out->mosaic2 =  ObitUVImagerMFGetMosaic2(imagerMF, err);
+
   /*  Use or create SkyModel object */
   if (skyModel==NULL) out->skyModel = 
 			(ObitSkyModel*)ObitSkyModelMFCreate ("SkyModel", out->mosaic);
@@ -409,18 +428,18 @@ ObitDConCleanVisMFCreate2 (gchar* name, ObitUV *uvdata,
   /* Arrays per field - including those in parent classes */
   nfield =  out->mosaic->numberImages;
   out->nfield  = nfield;
-  out->gain        = ObitMemAlloc0Name((nfield*2)*sizeof(ofloat),"Clean Loop gain");
-  out->minFlux     = ObitMemAlloc0Name((nfield*2)*sizeof(ofloat),"Clean minFlux");
-  out->factor      = ObitMemAlloc0Name((nfield*2)*sizeof(ofloat),"Clean factor");
-  out->quality     = ObitMemAlloc0Name((nfield*2)*sizeof(ofloat),"Clean quality");
-  out->cleanable   = ObitMemAlloc0Name((nfield*2)*sizeof(ofloat),"Clean cleanable");
-  out->fresh       = ObitMemAlloc0Name((nfield*2)*sizeof(gboolean),"Clean fresh");
-  out->maxAbsRes   = ObitMemAlloc0Name((nfield*2)*sizeof(ofloat),"Clean max res");
-  out->avgRes      = ObitMemAlloc0Name((nfield*2)*sizeof(ofloat),"Clean avg res");
-  out->imgRMS      = ObitMemAlloc0Name((nfield*2)*sizeof(ofloat),"Image RMS");
-  out->imgPeakRMS  = ObitMemAlloc0Name((nfield*2)*sizeof(ofloat),"Image Peak/RMS");
-  out->beamPeakRMS = ObitMemAlloc0Name((nfield*2)*sizeof(ofloat),"Beam Peak/RMS");
-  out->currentFields = ObitMemAlloc0Name((nfield*2)*sizeof(olong),"Current fields");
+  out->gain        = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean Loop gain");
+  out->minFlux     = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean minFlux");
+  out->factor      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean factor");
+  out->quality     = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean quality");
+  out->cleanable   = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean cleanable");
+  out->fresh       = ObitMemAlloc0Name(nfield*sizeof(gboolean),"Clean fresh");
+  out->maxAbsRes   = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean max res");
+  out->avgRes      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean avg res");
+  out->imgRMS      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Image RMS");
+  out->imgPeakRMS  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Image Peak/RMS");
+  out->beamPeakRMS = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Beam Peak/RMS");
+  out->currentFields = ObitMemAlloc0Name((nfield+3)*sizeof(olong),"Current fields");
   for (i=0; i<nfield; i++) {
     out->maxAbsRes[i]   = -1.0;
     out->avgRes[i]      = -1.0;
@@ -493,7 +512,7 @@ void  ObitDConCleanVisMFGetParms (ObitDCon *inn, ObitErr *err)
 
 /** 
  * Restore components removed from the residual image(s)
- * Wideband imaging version.
+ * Wideband imaging version, supporting dual Q&U imagiig
  * Spectral orders higher than 0 are flux density weighted averages.
  * \param inn  The object to restore
  * \param err Obit error stack object.
@@ -501,8 +520,8 @@ void  ObitDConCleanVisMFGetParms (ObitDCon *inn, ObitErr *err)
 void ObitDConCleanVisMFRestore(ObitDConClean *inn, ObitErr *err)
 {
   ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
-  ObitFArray *convl=NULL;
-  ObitImage *image=NULL;
+  ObitFArray *convl=NULL, *convl2=NULL;
+  ObitImage *image=NULL, *image2=NULL;
   ofloat factor = 1.0;
   gboolean doComRes = FALSE;
   ObitInfoType type;
@@ -539,23 +558,36 @@ void ObitDConCleanVisMFRestore(ObitDConClean *inn, ObitErr *err)
 
     /* which Image? */
     image = in->mosaic->images[field];
+    if (in->isDual) image2 = in->mosaic2->images[field]; /* May not exist */
 
-    /* Form combined image  */
+    /* Form combined (residual) image  */
     ObitImageMFCombine ((ObitImageMF*)image, FALSE, err);
+    if ((in->isDual)&&(image2)) 
+      ObitImageMFCombine ((ObitImageMF*)image2, FALSE, err);
 
     /* Restore Flux then individual channels */
     /* Convolve Gaussians */
     iplane = 0;
     convl = ConvlCC (image, in->CCver, iplane, factor, -1.0,-1.0, -1.0, err);
+    if ((in->isDual)&&(image2))  
+      convl2 = ConvlCC (image2, in->CCver, iplane, factor, -1.0,-1.0, -1.0, err);
     /* Read image */
     plane[0] = 1;
     ObitImageGetPlane (image, NULL, plane, err);
+    if ((in->isDual)&&(image2))  ObitImageGetPlane (image2, NULL, plane, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
-   /* Sum */
+    /* Sum */
     ObitFArrayAdd (image->image, convl, image->image);
+    if ((in->isDual)&&(image2))
+      ObitFArrayAdd (image2->image, convl2, image2->image);
+
     /* Rewrite */
     ObitImagePutPlane (image, NULL, plane, err);
     convl = ObitFArrayUnref(convl);
+    if ((in->isDual)&&(image2))  {
+      ObitImagePutPlane (image2, NULL, plane, err);
+      convl2 = ObitFArrayUnref(convl2);
+     }
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
     /* individual channels */
@@ -564,19 +596,30 @@ void ObitDConCleanVisMFRestore(ObitDConClean *inn, ObitErr *err)
     for (iplane=1; iplane<=num; iplane++) {
       /* Convolve Gaussians */
       convl = ConvlCC (image, in->CCver, iplane, factor, -1.0,-1.0, -1.0, err);
+      if ((in->isDual)&&(image2)) 
+	convl2 = ConvlCC (image2, in->CCver, iplane, factor, -1.0,-1.0, -1.0, err);
       /* Read image */
       plane[0] = iplane+1 + nOrd;
       ObitImageGetPlane (image, NULL, plane, err);
+      if ((in->isDual)&&(image2)) 
+	ObitImageGetPlane (image2, NULL, plane, err);
       if (err->error) Obit_traceback_msg (err, routine, in->name);
       /* Sum */
       ObitFArrayAdd (image->image, convl, image->image);
+      if ((in->isDual)&&(image2))  
+	ObitFArrayAdd (image2->image, convl2, image2->image);
       /* Rewrite */
       ObitImagePutPlane (image, NULL, plane, err);
       convl = ObitFArrayUnref(convl);
+      if ((in->isDual)&&(image2))  {
+	ObitImagePutPlane (image2, NULL, plane, err);
+	convl2 = ObitFArrayUnref(convl2);
+      }
       if (err->error) Obit_traceback_msg (err, routine, in->name);
     }
     /* Free image memory */
     image->image = ObitFArrayUnref(image->image);
+    if (image2 && image2->image) image2->image = ObitFArrayUnref(image2->image);
   } /* end loop over fields */
 
 } /* end ObitDConCleanVisMFRestore */
@@ -584,6 +627,7 @@ void ObitDConCleanVisMFRestore(ObitDConClean *inn, ObitErr *err)
 /**
  * Restore components removed from one field but also 
  * appearing in another.  Does brute force convolution.
+ * Supports dual Q&U imaging, driven by Q pol.
  * Wideband imaging version - does all spectral planes.
  * Spectral orders higher than 0 are flux density weighted averages.
  * Adopted from the AIPSish QOOP:QCLEAN.FOR(CLOVER)
@@ -594,15 +638,16 @@ void ObitDConCleanVisMFRestore(ObitDConClean *inn, ObitErr *err)
 void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
 {
   ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
-  ObitImage *image1=NULL, *image2=NULL;
+  ObitImage *image1=NULL, *image2=NULL, *image1U=NULL, *image2U=NULL;
+  ObitImageDesc *imDesc1=NULL, *imDesc2=NULL;
   olong ifield, jfield, iplane, num, nOrd, ncomps, ver, noParms, plane[5]={1,1,1,1,1};
   ofloat BeamTaper1=0.0, BeamTaper2=0.0, factor;
   ofloat gparm[3]={0.0,0.0,0.0}, bmaj, bmin, bpa;
   gboolean isAuto;
-  ObitFArray *convl=NULL, *accum=NULL;
+  ObitFArray *convl=NULL, *accum=NULL, *convlU=NULL, *accumU=NULL;
   gint32 dim[MAXINFOELEMDIM];
   ObitInfoType itype;
-  ObitTableCC *inCC=NULL, *outCC=NULL;
+  ObitTableCC *inCC=NULL, *outCC=NULL, *inCCU=NULL, *outCCU=NULL;
   gchar *routine = "ObitDConCleanVisMFXRestore";
 
    /* error checks */
@@ -620,8 +665,13 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
 
   /* Double loop over fields */
   for (jfield = 0; jfield<in->nfield; jfield++) {
+    imDesc2 = (in->mosaic->images[jfield])->myDesc;
     /* output image  */
     image1 = in->mosaic->images[jfield];
+    if (in->isDual) { /* Make sure it's there */
+	if (jfield<in->mosaic2->numberImages) image1U = in->mosaic2->images[jfield];
+	else image1U= NULL;
+    }
     num  = ((ObitImageMF*)image1)->nSpec;
     nOrd = ((ObitImageMF*)image1)->maxOrder;
 
@@ -632,6 +682,8 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
 
     /* Get accumulation array for image */
     accum = ObitFArrayCreate ("Accum", 2, image1->myDesc->inaxes);
+    if ((in->isDual)&&(image1U)) /* May not exist */
+      accumU = ObitFArrayCreate ("AccumU", 2, image1U->myDesc->inaxes);
     
     /* Restore Flux then individual channels */
     for (iplane=0; iplane<(num+1); iplane++) {
@@ -639,84 +691,110 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
       if (iplane==0) plane[0] = 1;
       else plane[0] = 1+iplane+nOrd;
       ObitImageGetPlane (image1, accum->array, plane, err);
+      if ((in->isDual)&&(image1U))
+	ObitImageGetPlane (image1U, accumU->array, plane, err);
 
       /* Loop over others */
       for (ifield = 0; ifield<in->nfield; ifield++) {
 	/* Only cross */
 	if (ifield==jfield) continue;
+	imDesc1 = (in->mosaic->images[ifield])->myDesc;
 
-	/* Anything to restore? */
-	if (in->Pixels->iterField[ifield]<=0) continue; 
-
-	/* Diagnostics */
-	if (in->prtLv>2) {
-	  Obit_log_error(err, OBIT_InfoErr,
-			 "Cross Restoring %d components facet %d to %d, plane %d",
-			 in->Pixels->iterField[ifield], ifield+1, jfield+1, plane[0]);
-	  ObitErrLog(err);
-	}
-
-	/* which Image? */
-	image2 = in->mosaic->images[ifield];
-
-	/* Cross convolve Gaussians */
-	/* FFT (2D, same grid) or direct convolution */
-	isAuto = (in->mosaic->isAuto[ifield]>0) || (in->mosaic->isAuto[jfield]>0);
- 	if (!isAuto && (!image1->myDesc->do3D && !image2->myDesc->do3D) &&
-	    (fabs(image1->myDesc->crval[0]-image2->myDesc->crval[0])<0.01*fabs(image1->myDesc->cdelt[0])) &&
-	    (fabs(image1->myDesc->crval[1]-image2->myDesc->crval[1])<0.01*fabs(image1->myDesc->cdelt[1]))) {
-	  /* Can use FFT */
-	  ver     = in->CCver;
-	  noParms = 0;
-	  inCC    = newObitTableCCValue ("SelectedCC", (ObitData*)image2,
-					 &ver, OBIT_IO_ReadOnly, noParms, 
-					 err);
-	  outCC = ObitTableCCUtilCrossTable (inCC, image2->myDesc, image1, &ncomps, err);
-	  if ((ncomps>0) && (outCC!=NULL)) {
-	    /* Scaling factor  */
-	    factor = ObitDConCleanGetXRestoreBeam(image2->myDesc, image1->myDesc, 
-						  gparm, &bmaj, &bmin, &bpa);
-	    /* Get additional beam taper - use for convolution 
-	     Don't know what this was supposed to do but it's not right */
-	    ObitInfoListGetTest(image2->myDesc->info, "BeamTapr", &itype, dim, &BeamTaper2);
-	    /*??? bmaj = bmin = BeamTaper2; bpa   = 0.0;*/
-	    convl = ConvlCC (image1, outCC->tabVer, iplane, factor, bmaj, bmin, bpa, err);
-	    if (err->error) Obit_traceback_msg (err, routine, in->name);
-	    /* Sum */
-	    ObitFArrayAdd (accum, convl, accum);
-	    /* DEBUG save convl for 1=>5, 3=>5
-	    if ((jfield==5) && (ifield==15) && (iplane==0))
-	      ObitImageUtilArray2Image ("Dbug16to6.fits", 0, convl, err); 
-	      if ((jfield==3) && (ifield==13) && (iplane==0))
-	      ObitImageUtilArray2Image ("Dbug14to4.fits", 0, convl, err);  */
-
-	    convl = ObitFArrayUnref(convl);
+	/* Any overlap? */
+	if (ObitImageDescOverlap(imDesc1, imDesc2, err)) {
+	  /* Anything to restore? */
+	  if (in->Pixels->iterField[ifield]<=0) continue; 
+	  
+	  /* Diagnostics */
+	  if (in->prtLv>2) {
+	    Obit_log_error(err, OBIT_InfoErr,
+			   "Cross Restoring %d components facet %d to %d, plane %d",
+			   in->Pixels->iterField[ifield], ifield+1, jfield+1, plane[0]);
+	    ObitErrLog(err);
 	  }
-	  inCC = ObitTableCCUnref(inCC);
-	  if (outCC!=NULL) {
-	    ObitImageZapTable (image1, "AIPS CC", outCC->tabVer, err);
+	  
+	  /* which Image? */
+	  image2 = in->mosaic->images[ifield];
+	  if (in->isDual) image2U = in->mosaic2->images[ifield];
+	  
+	  /* Cross convolve Gaussians */
+	  /* FFT (2D, same grid) or direct convolution */
+	  isAuto = (in->mosaic->isAuto[ifield]>0) || (in->mosaic->isAuto[jfield]>0);
+	  if (!isAuto && (!image1->myDesc->do3D && !image2->myDesc->do3D) &&
+	      (fabs(image1->myDesc->crval[0]-image2->myDesc->crval[0])<0.01*fabs(image1->myDesc->cdelt[0])) &&
+	      (fabs(image1->myDesc->crval[1]-image2->myDesc->crval[1])<0.01*fabs(image1->myDesc->cdelt[1]))) {
+	    /* Can use FFT */
+	    ver     = in->CCver;
+	    noParms = 0;
+	    inCC    = newObitTableCCValue ("SelectedCC", (ObitData*)image2,
+					   &ver, OBIT_IO_ReadOnly, noParms,  err);
+	    outCC = ObitTableCCUtilCrossTable (inCC, image2->myDesc, image1, &ncomps, err);
+	    if ((in->isDual)&&(image1U)&&(image2U)) {
+	      inCCU    = newObitTableCCValue ("SelectedCC", (ObitData*)image2U,
+					      &ver, OBIT_IO_ReadOnly, noParms,  err);
+	      outCCU = ObitTableCCUtilCrossTable (inCCU, image2U->myDesc, image1U, &ncomps, err);
+	    }
+	    if ((ncomps>0) && (outCC!=NULL)) {
+	      /* Scaling factor  */
+	      factor = ObitDConCleanGetXRestoreBeam(image2->myDesc, image1->myDesc, 
+						    gparm, &bmaj, &bmin, &bpa);
+	      /* Get additional beam taper - use for convolution 
+		 Don't know what this was supposed to do but it's not right */
+	      ObitInfoListGetTest(image2->myDesc->info, "BeamTapr", &itype, dim, &BeamTaper2);
+	      /*??? bmaj = bmin = BeamTaper2; bpa   = 0.0;*/
+	      convl = ConvlCC (image1, outCC->tabVer, iplane, factor, bmaj, bmin, bpa, err);
+	      if ((in->isDual)&&(image1U))
+		convlU = ConvlCC (image1U, outCCU->tabVer, iplane, factor, bmaj, bmin, bpa, err);
+	      if (err->error) Obit_traceback_msg (err, routine, in->name);
+	      /* Sum */
+	      ObitFArrayAdd (accum, convl, accum);
+	      if ((in->isDual)&&(image1U)) ObitFArrayAdd (accumU, convlU, accumU);
+	      /* DEBUG save convl for 1=>5, 3=>5
+		 if ((jfield==5) && (ifield==15) && (iplane==0))
+		 ObitImageUtilArray2Image ("Dbug16to6.fits", 0, convl, err); 
+		 if ((jfield==3) && (ifield==13) && (iplane==0))
+		 ObitImageUtilArray2Image ("Dbug14to4.fits", 0, convl, err);  */
+	      
+	      convl = ObitFArrayUnref(convl);
+	      if (convlU) convlU = ObitFArrayUnref(convlU);
+	    }
+	    inCC = ObitTableCCUnref(inCC);
+	    if (outCC!=NULL) {
+	      ObitImageZapTable (image1, "AIPS CC", outCC->tabVer, err);
+	      if (err->error) Obit_traceback_msg (err, routine, in->name);
+	      outCC = ObitTableCCUnref(outCC);  /* Be sure to free memory */
+	    }
+	    if (inCCU) inCCU = ObitTableCCUnref(inCCU);
+	    if (outCCU!=NULL) {
+	      ObitImageZapTable (image1U, "AIPS CC", outCCU->tabVer, err);
+	      if (err->error) Obit_traceback_msg (err, routine, in->name);
+	      outCCU = ObitTableCCUnref(outCCU);  /* Be sure to free memory */
+	    }
+	  } else { /* direct convolution */
+	    /* DEBUG 
+	       fprintf (stderr, "XConvlCC: %d %d\n",ifield,jfield);*/
+	    XConvlCC (image2, in->CCver, iplane, image1, accum, err);
+	    if ((in->isDual)&&(image1U)&&(image2U))
+	      XConvlCC (image2U, in->CCver, iplane, image1U, accumU, err);
 	    if (err->error) Obit_traceback_msg (err, routine, in->name);
-	    outCC = ObitTableCCUnref(outCC);  /* Be sure to free memory */
 	  }
-	} else { /* direct convolution */
-	  /* DEBUG 
-	  fprintf (stderr, "XConvlCC: %d %d\n",ifield,jfield);*/
-	  XConvlCC (image2, in->CCver, iplane, image1, accum, err);
-	  if (err->error) Obit_traceback_msg (err, routine, in->name);
-	}
+	}  /* end if overlap */
       } /* end inner loop over fields */
       /* Rewrite */
       ObitImagePutPlane (image1, accum->array, plane, err);
+      if ((in->isDual)&&(image1U)) 
+	ObitImagePutPlane (image1U, accumU->array, plane, err);
       if (err->error) Obit_traceback_msg (err, routine, in->name);
     } /* end loop over planes */
     
     accum = ObitFArrayUnref(accum);
+    if (accumU) accumU = ObitFArrayUnref(accumU);
   } /* end outer loop over fields */
 } /* end ObitDConCleanVisMFXRestore */
 
 /**
  * Flatten multiple facets if needed
- * Wideband imaging version.
+ * Wideband imaging version, supports dual Q&U imaging
  * Flattens all Spectral planes
  * Does Flatten if FullField member of mosaic member is defined.
  * \param inn  The object to deconvolve
@@ -740,6 +818,7 @@ void ObitDConCleanVisMFFlatten(ObitDConClean *inn, ObitErr *err)
     }
     mosaicClass = (ObitImageMosaicClassInfo*)inn->mosaic->ClassInfo;
     mosaicClass->ObitImageMosaicFlatten (in->mosaic, err);
+    if (in->isDual)  mosaicClass->ObitImageMosaicFlatten (in->mosaic2, err);
   }
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
@@ -755,7 +834,14 @@ void ObitDConCleanVisMFSub(ObitDConClean *inn, ObitErr *err)
 {
   ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
   const ObitDConCleanVisClassInfo *parentClass;
-  olong ifld;
+  ObitUVImagerMF *imagerMF = (ObitUVImagerMF*)in->imager;
+  olong i;
+  ObitSkyModelType modelType = OBIT_SkyModel_Comps;
+  gboolean Fl=FALSE, doCalSelect, subbed=FALSE;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM];
+  ofloat ftemp;
+  olong *itemp, jtemp, ifld, nfield=0;
   gchar *routine = "ObitDConCleanVisMFSub";
 
   /* error checks */
@@ -768,10 +854,59 @@ void ObitDConCleanVisMFSub(ObitDConClean *inn, ObitErr *err)
     in->fresh[ifld] = FALSE;
   }
   
-  /* Most work in parent class */
+  /* Most normal work in parent class */
   parentClass = myClassInfo.ParentClass;
   parentClass->ObitDConCleanSub((ObitDConClean*)in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Dual Polarization? do U here */
+  if (in->isDual) {
+    /* Setup SkyModel parameters */
+    dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    ObitInfoListAlwaysPut(in->skyModel2->info, "Mode", OBIT_long, dim, &in->modelMode);
+    ObitInfoListAlwaysPut(in->skyModel2->info, "ModelType", OBIT_long, dim, &modelType);
+    ObitInfoListAlwaysPut(in->skyModel2->info, "doGPU", OBIT_bool, dim, &in->skyModel->doGPU);
+    jtemp = in->CCver;
+    ObitInfoListAlwaysPut(in->skyModel2->info, "CCVer", OBIT_long, dim, &jtemp);
+    /* Disable any value of minFlux to suppress infinite recursion */
+    ftemp = -1.0e20;
+    dim[0] = 1;dim[1] = 1;
+    ObitInfoListAlwaysPut (in->skyModel2->info, "minFlux", OBIT_float, dim, &ftemp);
+    dim[0] = 4;
+    ObitInfoListAlwaysPut (in->skyModel2->info, "Stokes", OBIT_string, dim, "U   ");
+    nfield = in->mosaic2->numberImages;
+    itemp = ObitMemAlloc(nfield*sizeof(olong));  /* temp. array */
+    dim[0] = nfield;
+    for (i=0; i<nfield; i++) itemp[i] = in->skyModel2->startComp[i];
+    ObitInfoListAlwaysPut(in->skyModel2->info, "BComp", OBIT_long, dim, itemp);
+    for (i=0; i<nfield; i++) itemp[i] = in->Pixels2->iterField[i];
+    ObitInfoListAlwaysPut(in->skyModel2->info, "EComp", OBIT_long, dim, itemp);
+    itemp = ObitMemFree(itemp);  /* Deallocate */
+
+    /* Subtract Current model */
+    doCalSelect = FALSE;
+    ObitInfoListGetTest (imagerMF->uvwork2->info, "doCalSelect", &type, dim, &doCalSelect);
+    dim[0] = dim[1] = dim[2] = 1;  /* Grumble, grumble  */
+    ObitInfoListAlwaysPut (imagerMF->uvwork2->info, "doCalSelect",OBIT_bool, dim, &Fl);
+    ObitSkyModelSubUV(in->skyModel2, imagerMF->uvwork2, imagerMF->uvwork2, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    
+    dim[0] = dim[1] = dim[2] = 1;  /* Grumble, grumble  */
+    ObitInfoListAlwaysPut (imagerMF->uvwork2->info, "doCalSelect",OBIT_bool, dim, &doCalSelect);
+
+    /* Update CC counts - was anything actually subtracted? */
+    for (i=0; i<in->mosaic2->numberImages; i++) {
+      subbed = subbed || in->skyModel2->endComp[i]>=in->skyModel->startComp[i];
+      in->skyModel2->startComp[i] = in->skyModel2->endComp[i]+1;
+    }
+    /* Update Fresh? */
+    for (i=0; i<in->mosaic2->numberImages; i++) {
+      if (subbed) in->fresh[i] = FALSE;  /* Need to remake all images? */
+    }
+    
+    /* Reset max residual on Pixel List */
+    in->Pixels2->resMax    = -1.0e20;  /* Maximum residual */
+  } /* end subtract U Pol */
 } /* end ObitDConCleanVisMFSub */
 
 /**
@@ -821,9 +956,13 @@ static void ObitDConCleanVisMFClassInfoDefFn (gpointer inClass)
   theClass->ObitInit      = (ObitInitFP)ObitDConCleanVisMFInit;
   theClass->ObitDConGetParms     = (ObitDConGetParmsFP)ObitDConCleanVisMFGetParms;
   theClass->ObitDConCleanSub     = (ObitDConCleanSubFP)ObitDConCleanVisMFSub;
+  theClass->ObitDConCleanSelect  = (ObitDConCleanSelectFP)ObitDConCleanVisMFSelect;
   theClass->ObitDConCleanRestore = (ObitDConCleanRestoreFP)ObitDConCleanVisMFRestore;
   theClass->ObitDConCleanFlatten = (ObitDConCleanFlattenFP)ObitDConCleanVisMFFlatten;
   theClass->ObitDConCleanXRestore= (ObitDConCleanXRestoreFP)ObitDConCleanVisMFXRestore;
+  theClass->ReadBP = (ReadBPFP)ReadBP;
+  theClass->ResetSkyModel   = (ResetSkyModelFP)MFResetSkyModel;
+  theClass->ResetPixelList  = (ResetPixelListFP)MFResetPixelList;
 
   /* Private functions definitions for derived classes */
   theClass->MakeResiduals   = (MakeResidualsFP)MakeResiduals;
@@ -869,6 +1008,9 @@ void ObitDConCleanVisMFInit  (gpointer inn)
   in->peakFlux  = -1000.0;
   in->reuseFlux = -1.0;
   in->autoCen   =  1.0e20;
+  in->isDual    = FALSE;
+  in->Pixels2   = NULL;
+  in->skyModel2 = NULL;
 } /* end ObitDConCleanVisMFInit */
 
 /**
@@ -886,7 +1028,9 @@ void ObitDConCleanVisMFClear (gpointer inn)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* delete this class members */
- 
+  in->Pixels2   = ObitDConCleanPxListUnref(in->Pixels2);
+  in->skyModel2 = ObitSkyModelUnref(in->skyModel2);
+
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
   /* delete parent class members */
@@ -906,8 +1050,11 @@ static void  MakeResiduals (ObitDConCleanVis *inn, olong *fields,
 			    gboolean doBeam, ObitErr *err)
 {
   ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
+  ObitUVImagerMF* imagerMF=NULL;
   const ObitDConCleanVisClassInfo *parentClass;
-  olong ifld, field;
+  ObitDConClean *inb = (ObitDConClean*)inn;
+  gint32       dim[MAXINFOELEMDIM] = {4,1,1,1,1};
+  olong ifld, jfld, i, field;
   gchar *routine = "ObitDConCleanVisMF:MakeResiduals";
   
   if (err->error) return; /* prior error condition? */
@@ -924,6 +1071,61 @@ static void  MakeResiduals (ObitDConCleanVis *inn, olong *fields,
     ((ObitImageMF*)in->mosaic->images[field-1])->fresh = TRUE;
   }
   
+  /* Need secondary poln? */
+  if (in->isDual) {
+    imagerMF = (ObitUVImagerMF*)in->imager;
+    
+    /* Copy prtLv to in->mosaic2->info */
+    dim[0] = 1;dim[1] = 1;
+    ObitInfoListAlwaysPut (in->mosaic2->info, "prtLv", OBIT_long, dim, &err->prtLv);
+    
+    /* Parallel Image images without needing beam */
+    ObitUVImagerMFImage2 (imagerMF, fields,  FALSE, in->doBeam, FALSE, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+    /* Average polarized intensity to plane 1 to drive CLEAN */
+    ObitImageMosaicMFMergePoln (imagerMF->mosaic, imagerMF->mosaic2, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+    /* Loop over secondary fields getting statistics for Image and Beam 
+       Note: the statistics are for the polarized intensity (plane 1) which
+       should be the same for both */
+    for (i=0; i<in->nfield; i++) {
+      /* Only freshly made images */
+      if (in->fresh[i]){
+	parentClass->ObitDConCleanImageStats (inb, i+1, FALSE, err);
+	if (in->doBeam) parentClass->ObitDConCleanImageStats (inb, i+1, TRUE, err);
+	if (err->error) Obit_traceback_msg (err, routine, in->name);
+	
+	/* Quality measure */
+	in->quality[i] = parentClass->ObitDConCleanVisQuality(inn, i+1, err);
+	/* Max cleanable flux */
+	in->cleanable[i] = parentClass->ObitDConCleanVisCleanable(inn, i+1, NULL, err);
+	if (err->error) Obit_traceback_msg (err, routine, in->name);
+      } /* end if fresh */
+    } /* end loop over field */
+    
+    /* For any shifted fields dummy statistics */
+    for (ifld=0; ifld<in->mosaic->numberImages; ifld++) {
+      if (in->mosaic->isShift[ifld] > 0) {
+	jfld = in->mosaic->isShift[ifld]-1;
+	/* Get statistics  for image */
+	parentClass->ObitDConCleanImageStats (inb, ifld+1, FALSE, err);
+	/* Quality measure */
+	in->quality[ifld] = parentClass->ObitDConCleanVisQuality(inn, ifld+1, err);
+	/* Max cleanable flux */
+	in->cleanable[ifld]   = 0.0;
+	in->beamPeakRMS[ifld] = in->beamPeakRMS[jfld];
+	in->fresh[ifld]       = FALSE;
+      }
+    }
+    /* Mosaic isAuto images should point to themselves */
+    for (ifld=0; ifld<in->mosaic->numberImages; ifld++)
+     if (in->mosaic->isAuto[ifld] > 0) in->mosaic->isAuto[ifld] = ifld+1;
+    for (ifld=0; ifld<in->mosaic2->numberImages; ifld++)
+     if (in->mosaic2->isAuto[ifld] > 0) in->mosaic2->isAuto[ifld] = ifld+1;
+
+  } /* end secondary images */
 } /* end MakeResiduals */
 
 /**
@@ -933,12 +1135,23 @@ static void  MakeResiduals (ObitDConCleanVis *inn, olong *fields,
  */
 static void  MakeAllResiduals (ObitDConCleanVis *inn, ObitErr *err)
 {
- ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
+  ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
+  ObitDConClean *inb = (ObitDConClean*)inn;
   const ObitDConCleanVisClassInfo *parentClass;
-  olong ifld;
+  ObitUVImagerMF* imagerMF=NULL;
+  gint32       dim[MAXINFOELEMDIM] = {4,1,1,1,1};
+  olong ifld, jfld, nfield, i, fields[2]={0,0};
+  ofloat ftemp=0.0;
   gchar *routine = "ObitDConCleanVisMF:MakeAll Residuals";
  
   if (err->error) return; /* prior error condition? */
+
+  /* Need secondary poln? */
+  if (in->isDual) {
+    imagerMF = (ObitUVImagerMF*)in->imager;
+    ObitInfoListAlwaysPut (imagerMF->uvwork->info,  "Stokes", OBIT_string, dim, "Q   ");
+    ObitInfoListAlwaysPut (imagerMF->uvwork2->info, "Stokes", OBIT_string, dim, "U   ");
+  } /* end secondary */
 
   parentClass = myClassInfo.ParentClass;
   /* Call MakeAllResiduals in parent class */
@@ -949,6 +1162,62 @@ static void  MakeAllResiduals (ObitDConCleanVis *inn, ObitErr *err)
   for (ifld=0; ifld<in->nfield; ifld++) {
     ((ObitImageMF*)in->mosaic->images[ifld])->fresh = TRUE;
   }
+
+  /* Need secondary poln? */
+  if (in->isDual) {
+    imagerMF = (ObitUVImagerMF*)in->imager;
+    nfield = in->mosaic2->numberImages;  /* May be fewer in U than Q due to autoCen */
+    
+    /* Copy prtLv to in->mosaic->info */
+    dim[0] = 1;dim[1] = 1;
+    ObitInfoListAlwaysPut (in->mosaic2->info, "prtLv", OBIT_long, dim, &err->prtLv);
+    
+    /* Parallel Image images without needing beam */
+    ObitUVImagerMFImage2 (imagerMF, fields,  FALSE, in->doBeam, FALSE, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+    /* Average polarized intensity to plane 1 to drive CLEAN */
+    ObitImageMosaicMFMergePoln (imagerMF->mosaic, imagerMF->mosaic2, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+    /* Loop over secondary fields getting statistics for Image and Beam 
+       Note: the statistics are for the polarized intensity (plane 1) which
+       should be the same for both */
+    for (i=0; i<nfield; i++) {
+      parentClass->ObitDConCleanImageStats (inb, i+1, FALSE, err);
+      if (in->doBeam)
+	parentClass->ObitDConCleanImageStats (inb, i+1, TRUE, err);
+      if (err->error) Obit_traceback_msg (err, routine, in->name);
+      
+      /* Quality measure */
+      in->quality[i] = parentClass->ObitDConCleanVisQuality(inn, i+1, err);
+      /* Max cleanable flux */
+      in->cleanable[i] = parentClass->ObitDConCleanVisCleanable(inn, i+1, NULL, err);
+      in->fresh[i]     = TRUE;  /* Freshly made image */
+      ((ObitImageMF*)in->mosaic2->images[i])->fresh = TRUE;
+      if (err->error) Obit_traceback_msg (err, routine, in->name);
+    } /* end loop over field */
+    
+    /* For any shifted fields get statistics */
+    for (ifld=0; ifld<nfield; ifld++) {
+      if (in->mosaic->isShift[ifld] > 0) {
+	jfld = in->mosaic->isShift[ifld]-1;
+	/* Get statistics  for image */
+	parentClass->ObitDConCleanImageStats (inb, ifld+1, FALSE, err);
+	/* Quality measure */
+	in->quality[ifld] = parentClass->ObitDConCleanVisQuality(inn, ifld+1, err);
+	/* Max cleanable flux */
+	in->cleanable[ifld]   = parentClass->ObitDConCleanVisCleanable(inn, ifld+1, NULL, err);
+	in->beamPeakRMS[ifld] = in->beamPeakRMS[jfld];
+	in->fresh[ifld]       = in->fresh[jfld];
+      }
+      /* Set autoCenFlux to disable */
+      if (in->mosaic->isAuto[ifld] > 0) {
+	dim[0] = 1;dim[1] = 1;
+	ObitInfoListAlwaysPut (in->mosaic->images[ifld]->info, "autoCenFlux", OBIT_float, dim, &ftemp);
+      }
+    }
+  } /* end secondary */
   
 } /* end MakeAllResiduals */
 
@@ -976,10 +1245,46 @@ static void NewPxList (ObitDConCleanVis *inn, ObitErr *err)
   /* Copy control info to PixelList */
   ObitInfoListCopyData(in->info, in->Pixels->info);
 
+  /* Need secondary poln? */
+  if (in->isDual) NewPxList2 (inn, err);
+  ((ObitDConCleanPxListMF*)in->Pixels)->isDual = in->isDual;
+
 } /* end NewPxList */
 
 /**
+ * Create Secondary (U Pol) Pixel list for cleaning
+ * \param inn      The Clean object
+ * \param err      Obit error stack object.
+ */
+static void NewPxList2 (ObitDConCleanVis *inn, ObitErr *err)
+{
+  ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
+  gchar *routine = "ObitDConCleanVis:NewPxList2";
+
+  if (in->Pixels2 && (in->Pixels2->nfield!=in->mosaic->numberImages)) 
+    in->Pixels2 = ObitDConCleanPxListUnref(in->Pixels2);
+  if (!in->Pixels2) {
+    in->Pixels2 = 
+      (ObitDConCleanPxList*)ObitDConCleanPxListMFCreate("Pixel List", in->mosaic2, 
+							in->imager->uvwork, in->maxPixel, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+  }
+  /* Reset Pixels2 */
+  ObitDConCleanPxListMFReset (in->Pixels2, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  /* Reset  min. resid */
+  in->Pixels2->maxResid = 1.0e10;
+  ((ObitDConCleanPxListMF*)in->Pixels2)->isDual = 
+    in->isDual;  /* Dual CLEAN? Yes, or you wouldn't be here */
+
+  /* Copy control info to PixelList */
+  ObitInfoListCopyData(in->info, in->Pixels2->info);
+
+} /* end NewPxList2 */
+
+/**
  * Low accuracy subtract pixels from image for current CLEAN fields.
+ * Not implemented for dual Q/U imaging
  * Loops over fields in in->currentFields
  * Uses pixel list to subtract list of components
  * Updates cleanable member on in
@@ -1011,6 +1316,8 @@ static void SubNewCCs (ObitDConCleanVis *inn, olong *newCC, ObitFArray **pixarra
   /* error checks */
   if (err->error) return;
   g_assert (ObitDConCleanVisMFIsA(in));
+
+  if (in->isDual) return;
 
   /* Count number of fields */
   nfield = 0;
@@ -1770,7 +2077,7 @@ static ObitFArray* GetSpecBeamPatch (ObitDConCleanVisMF *in, ObitFArray *BP,
 } /* end GetSpecBeamPatch  */
 
 /**
- * Convolve image to common resolution.
+ * Convolve image to common resolution, supports dual Q&U imaging
  * \param in    The Clean object 
  * \param field 0-rel field number
  * \param err    Obit error stack object.
@@ -1780,13 +2087,14 @@ static void CommonRes(ObitDConCleanVisMF *in, olong field, ObitErr *err)
   olong iplane, jplane, num, nOrd, prtLv, plane[5]={1,1,1,1,1};
   ofloat bmaj, bmin, bpa, rescale;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  ObitImageMF *img;
-  ObitImage *beam;
+  ObitImageMF *img, *img2=NULL;
+  ObitImage *beam, *beam2=NULL;
   /* olong jj; DEBUG */
   gchar *routine = "CommonRes";
 
   /* which image? */
   img  = (ObitImageMF*)in->mosaic->images[field];
+  if (in->isDual)  img2  = (ObitImageMF*)in->mosaic2->images[field];
   num  = img->nSpec;      /* number of spectral planes */
   nOrd = img->maxOrder;   /* number of orders in image spectrum */
 
@@ -1799,12 +2107,14 @@ static void CommonRes(ObitDConCleanVisMF *in, olong field, ObitErr *err)
   }
   /* loop over planes */
   beam = (ObitImage*)img->myBeam;
+  if (in->isDual) beam = (ObitImage*)img2->myBeam;
   for (iplane=1; iplane<=num; iplane++) {
     /* Fit beam */
     jplane   = iplane+nOrd+1;
     plane[0] = jplane;
     dim[0]   = 1;
     ObitInfoListAlwaysPut (beam->info, "PLANE", OBIT_long, dim, &jplane);
+    if (in->isDual) ObitInfoListAlwaysPut (beam2->info, "PLANE", OBIT_long, dim, &jplane);
     prtLv = err->prtLv;   /* Surpress message */
     if (err->prtLv<=2) err->prtLv = 0;
     ObitImageUtilFitBeam (beam, err);
@@ -1834,6 +2144,8 @@ static void CommonRes(ObitDConCleanVisMF *in, olong field, ObitErr *err)
     if (rescale>1.0) {
       ConvGauss ((ObitImage*)img, plane, bmaj*3600.0, bmin*3600.0, bpa, 
 		 rescale, err);  
+      if (in->isDual) ConvGauss ((ObitImage*)img2, plane, bmaj*3600.0, bmin*3600.0, bpa, 
+		 rescale, err); 
       if (err->error) Obit_traceback_msg (err, routine, in->name);
     } else {
       Obit_log_error(err, OBIT_InfoWarn, 
@@ -1999,4 +2311,194 @@ void ConvGauss (ObitImage *inImage, olong *plane,
   FFTrev    = ObitFFTUnref(FFTrev);
   if (err->error) Obit_traceback_msg (err, routine, inImage->name);
 } /* end ConvGauss */
+
+/*
+ * Select components to be subtracted
+ * Supports multiple fields
+ * \param in   The object to deconvolve
+ * \param pixarray   If NonNULL use instead of the flux densities from the image file.
+ *                   Array of ObitFArrays corresponding to fields in in->currentFields 
+ * \param err        Obit error stack object.
+ * \return TRUE if deconvolution is complete
+ */
+gboolean ObitDConCleanVisMFSelect(ObitDConClean *inn, ObitFArray **pixarray, 
+			     ObitErr *err)
+{
+  ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
+  gboolean done = FALSE;
+  const ObitDConCleanClassInfo *inClass;
+  const ObitDConCleanPxListClassInfo *pxListClass;
+  gchar *routine = "ObitDConCleanVisMFSelect";
+
+  /* error checks */
+  if (err->error) return done;
+  g_assert (ObitDConCleanIsA(in));
+
+  /* Anything to do? */
+  if (in->currentFields[0]==0) return done;
+
+  /* Read beam Patch(es) */
+  inClass = (ObitDConCleanClassInfo*)in->ClassInfo; /* class structure */
+  inClass->ReadBP (inn, err);
+  if (err->error) Obit_traceback_val (err, routine, in->name, done);
+
+  /* Read Pixel Lists */
+  pxListClass = (ObitDConCleanPxListClassInfo*)in->Pixels->ClassInfo; 
+  pxListClass->ObitDConCleanPxListUpdate (in->Pixels, in->currentFields, in->numberSkip,
+					  in->minFluxLoad, in->autoWinFlux, 
+					  in->window, in->BeamPatches, pixarray, err);
+  if (in->isDual) pxListClass->ObitDConCleanPxListUpdate (in->Pixels2, in->currentFields, in->numberSkip,
+							  in->minFluxLoad, in->autoWinFlux, 
+							  in->window, in->BeamPatches, NULL, err);
+  if (err->error) Obit_traceback_val (err, routine, in->name, done);
+
+  /* BGC or SDI Clean? */
+  if (in->doSDI) {
+    done = pxListClass->ObitDConCleanPxListSDI (in->Pixels, err);
+  } else {
+    /* Dual Q&U */
+    if (in->isDual) done = ObitDConCleanPxListMFCLEANQU (in->Pixels, in->Pixels2, err);    
+    else done = pxListClass->ObitDConCleanPxListCLEAN (in->Pixels, err);
+  }
+  if (err->error) Obit_traceback_val (err, routine, in->name, done);
+
+  return done;
+} /* end ObitDConCleanVisMFSelect */
+
+/**
+ * Reset Sky Model, also does UPol if needed
+ * If reuseFlux member is > 0 then any components in the sky model above 
+ * this level are left and TRUE is returned if any exist.
+ * Resets the number of components
+ * the reuseFlux option uses the Pixels member and the list of CC Tables
+ * which must be fully instantiated.
+ * Sets BChan, EChan, BIF, EIF to default
+ * \param in   The Clean object
+ * \param err Obit error stack object.
+ * \return true if components in the sky model need to be subtracted
+ */
+static gboolean MFResetSkyModel(ObitDConCleanVis *inn, ObitErr *err)
+{
+  ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
+  gboolean doSub=FALSE;
+  olong ncomp;
+  ofloat sum;
+  olong i, irow, it;
+  gint32 dim[MAXINFOELEMDIM];
+  olong *itemp=NULL, nfield;
+  ObitTableCCRow *CCRow = NULL;
+  gchar *routine = "MFResetSkyModel";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return doSub;
+  g_assert (ObitDConCleanVisIsA(in));
+
+  /* Use parent class for Pixels */
+  doSub = VisResetSkyModel(inn, err);
+  if (err->error) goto cleanup;
+
+  /* Does the secondary (UPol) sky model need resetting? */
+  if (!in->isDual) return doSub;
+
+  /* Reset SkyModel parameters */
+  nfield = in->mosaic2->numberImages;
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  for (i=0; i<nfield; i++) in->skyModel2->startComp[i] = 1;
+  for (i=0; i<nfield; i++) in->skyModel2->endComp[i]   = 0;
+  itemp = ObitMemAlloc(nfield*sizeof(olong));  /* temp. array */
+  dim[0] = nfield;
+  for (i=0; i<nfield; i++) itemp[i] = 1;
+  ObitInfoListAlwaysPut(in->skyModel2->info, "BComp", OBIT_long, dim, itemp);
+
+  /* Channel/IF selection */
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  it = 1;
+  ObitInfoListAlwaysPut(in->skyModel2->info, "BChan", OBIT_long, dim, &it);
+  ObitInfoListAlwaysPut(in->skyModel2->info, "BIF",   OBIT_long, dim, &it);
+  it = 0;
+  ObitInfoListAlwaysPut(in->skyModel2->info, "EChan", OBIT_long, dim, &it);
+  ObitInfoListAlwaysPut(in->skyModel2->info, "EIF",   OBIT_long, dim, &it);
+
+  for (i=0; i<nfield; i++) itemp[i] = 0;  /* initial number to subtract */
+
+  /* Check for reuse  */
+  if ((in->reuseFlux > 0.0) && (in->Pixels2)) {
+    in->Pixels2->currentIter = 0;
+    in->Pixels2->totalFlux   = 0.0;
+    ncomp = 0;
+    sum = 0.0;
+    for (i=0; i<nfield; i++) {
+      in->Pixels2->iterField[i] = 0;
+      in->Pixels2->fluxField[i] = 0.0;
+      
+      if (ObitTableCCIsA(in->Pixels2->CCTable[i])) {
+	ObitTableCCOpen (in->Pixels2->CCTable[i], OBIT_IO_ReadWrite, err);
+	if (err->error) goto cleanup;
+	if (!CCRow) CCRow = newObitTableCCRow (in->Pixels2->CCTable[i]);
+	for (irow=1; irow<=in->Pixels2->CCTable[i]->myDesc->nrow; irow++) {
+	  ObitTableCCReadRow (in->Pixels2->CCTable[i], irow, CCRow, err);
+	  if (err->error) goto cleanup;
+	  if (fabs(CCRow->Flux) > in->reuseFlux) {
+	    itemp[i] = irow;
+	    ncomp++;
+	    sum += CCRow->Flux;
+	    in->Pixels2->iterField[i] = irow;
+	    in->Pixels2->fluxField[i] += CCRow->Flux;
+	    /* Remember this as the brightest point is likely here */
+	    in->peakFlux = MAX (in->peakFlux, CCRow->Flux);
+	    doSub = TRUE;
+	  } else break;
+	}
+
+	/* Reset number of rows */
+	in->Pixels2->CCTable[i]->myDesc->nrow = itemp[i];
+	/* The one that counts is in the IO */
+	((ObitTableDesc*)(in->Pixels2->CCTable[i]->myIO->myDesc))->nrow = itemp[i];
+	/* Mark as changed */
+	in->Pixels2->CCTable[i]->myStatus = OBIT_Modified;
+   
+	ObitTableCCClose (in->Pixels2->CCTable[i], err);
+	if (err->error) goto cleanup;
+      }
+    } /* end loop over fields */
+    if ((ncomp>0) && (err->prtLv>1))
+      Obit_log_error(err, OBIT_InfoErr,"Restart CLEAN with %d comps with %g Jy",
+		     ncomp, sum);
+    in->Pixels2->currentIter = ncomp;
+    in->Pixels2->totalFlux   = sum;
+  } /* End check for reuse */
+
+  /* Cleanup */
+ cleanup:
+  ObitInfoListAlwaysPut(in->skyModel2->info, "EComp", OBIT_long, dim, itemp);
+  CCRow = ObitTableCCRowUnref(CCRow);  
+  itemp = ObitMemFree(itemp);  /* Deallocate */
+  if (err->error) Obit_traceback_val (err, routine, in->name, doSub);
+   return doSub;
+} /* end MFResetSkyModel */
+
+/**
+ * Reset Pixel Lists for beginning of a CLEAN
+ * Also does U Pol if needed
+ * \param in   The Clean object
+ * \param err Obit error stack object.
+ */
+static void MFResetPixelList(ObitDConCleanVis *inn, ObitErr *err)
+{
+  ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
+  const ObitDConCleanPxListClassInfo *pxListClass;
+  gchar *routine = "MFResetPixelList";
+
+  /* PxList class structure */
+  pxListClass = (ObitDConCleanPxListClassInfo*)in->Pixels->ClassInfo; 
+
+  pxListClass->ObitDConCleanPxListReset (in->Pixels, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Need UPol? */
+  if (in->isDual && in->Pixels2) 
+    ObitDConCleanPxListMFReset(in->Pixels2, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+} /* end MFResetPixelList */
 

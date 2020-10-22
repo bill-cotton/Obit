@@ -267,7 +267,7 @@ def newPAImage(name, Aname, Aclass, disk, seq, exists, err, verbose=False):
     out.exist = test>0
     if exists: # If user thinks file exists...
         if out.exist: # If file is defined in catalog -> verify that file exists
-            OErr.PLog(err, OErr.Info, Aname + " image found. Now verifying...")
+            #OErr.PLog(err, OErr.Info, Aname + " image found. Now verifying...")
             if verbose: OErr.printErr(err)
             cno = AIPSDir.PFindCNO(disk, user, Aname, Aclass, "MA", seq, err)
             Obit.ImageMFSetAIPS(out.me, 2, disk, cno, user, blc, trc, err.me)

@@ -39,8 +39,7 @@
 # define ALIGN32_END __attribute__((packed,aligned(32)))
 
 /** AVX512 implementation 16 floats in parallel */
-  //DAMN - no longer works #if   HAVE_AVX512==1
-#if   HAVE_AVXXXX==1
+#if   HAVE_AVX512==1
 #include <immintrin.h>
 /* Union allowing c interface */
 typedef __m512  v16sf; // vector of 8 float (avx)
@@ -60,9 +59,9 @@ v16sf avx512_cos_ps(v16sf x);
 /** Sine and Cosine of array of 16 floats  */
 void avx512_sincos_ps(v16sf x, v16sf *s, v16sf *c);
 /* end HAVE_AVX512 */
-
+#endif
 /** AVX implementation 8 floats in parallel */
-#elif HAVE_AVX==1
+#if HAVE_AVX==1
 #include <immintrin.h>
 /* Union allowing c interface */
 typedef __m256  V8SF; // vector of 8 float (avx)

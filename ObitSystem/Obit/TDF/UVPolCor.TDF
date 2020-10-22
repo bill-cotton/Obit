@@ -4,7 +4,7 @@
 ;! Correct off-axis instrumental polarization in UV data
 ;# Task UV  Obit 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2009-2010
+;;  Copyright (C) 2009-2020
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -95,6 +95,8 @@ EComp                              Last CLEAN comp to sub.
 Flux                               Lowest summed CC component used.
 **PARAM** str 4
 in3DType                           "FITS" or "AIPS" type of in3, in4
+**PARAM** float 1
+in3Diam                            Diameter (m) of in3-in4
 **PARAM** str 48
 in3File                            FITS Beam image if Type=='FITS'
 **PARAM** str 12
@@ -117,6 +119,30 @@ in4Class                           Beam phase map AIPS class
 in4Seq            0.0     9999.0   Beam phase AIPS seq. #
 **PARAM** int 1
 in4Disk                            Beam phase map disk unit #
+**PARAM** str 4
+in5DType                           "FITS" or "AIPS" type of in5-in6
+**PARAM** float 1
+in5Diam                            Diameter (m) of in5-in6
+**PARAM** str 48
+in5File                            FITS 2nd Beam image if 'FITS'
+**PARAM** str 12
+in5Name                            2nd Beam map AIPS name
+**PARAM** str 6
+in5Class                           2nd Beam map AIPS class
+**PARAM** int 1
+in5Seq            0.0     9999.0   2nd Beam AIPS seq. #
+**PARAM** int 1
+in5Disk                            2nd Beam map disk unit #
+**PARAM** str 48
+in6File                            FITS 2nd Beam phase image if 'FITS'
+**PARAM** str 12
+in6Name                            2nd Beam phase map AIPS name
+**PARAM** str 6
+in6Class                           2nd Beam phase map AIPS class
+**PARAM** int 1
+in6Seq            0.0     9999.0   2nd Beam phase AIPS seq. #
+**PARAM** int 1
+in6Disk                            2nd Beam phase map disk unit #
 **PARAM** str 4
 outDType                           "FITS" or "AIPS" type of output
 **PARAM** str 48 
@@ -174,8 +200,8 @@ Task:  Corrects off-axis instrumental polarization by
        beam corrections; this corrects for off axis instrumental
        polarization.
        The model is a set of CLEAN components which may be points, 
-       Gaussians or uniform, optically thin spheres.  The task 
-       can also replace the data with the model values.
+       Gaussians.  The task can also replace the data with the  
+       model values.
        Antenna beam polarization corrections are derived from a 
        (set of) beam image(s) in Stokes I, V, Q and U.
        See also UVSub.
@@ -273,6 +299,7 @@ Adverbs:
   Flux.......Only components > Flux are used in the model.
   in3DataType..'FITS' or 'AIPS'  type of Beam images, defaults to
              DataType.
+  in3Diam....Diameter in m of antennas described by in3* and in4*
   in3Name....Power Beam AIPS name.      Standard defaults.
   in3Class...Power Beam AIPS class. Expected form "Sxxxxx" where "S"
              is the Stokes parameter (IVQU) and "xxxx" arbitrary.
@@ -298,6 +325,46 @@ Adverbs:
              (IVQU) and "xxxx" is arbitrary. 
              The task will search for the different stokes images 
              and I+V or I+V+Q+U should be provided
+             Only used if doPhase = True
+  in5DType..'FITS' or 'AIPS'  type of Beam images, defaults to
+             DataType.
+  in5Diam....Diameter in m of antennas described by in5* and in6*
+             If > 0.0 then a second beam type is specified
+  in5Name....Voltage 2nd Beam AIPS name.
+  in5Class...Voltage 2nd Beam AIPS class. Expected form "SSxxxx" 
+             where "S" is the correlation ('RR', 'XX'...) 
+             and "xxxx" arbitrary.
+             The task will search for the different stokes images 
+             and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
+	     NB: Application of instrumental poln cal. for linear 
+	     feeds will convert to a circular basis
+  in5Seq.....Beam AIPS seq. # .    0 => highest.
+  in5Disk....Disk drive # of beam (FITS or AIPS). NO default for AIPS
+  in5File....FITS Voltage 2nd Beam input root if in5DType=='FITS'
+             Expected form "Sxxxxx" where "S" is the correlation 
+	     parameter ('RR', 'XX'...) and "xxxx" arbitrary.
+             The task will search for the different stokes images 
+             and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
+	     NB: Application of instrumental poln cal. for linear 
+	     feeds will convert to a circular basis
+  in6Name....Voltage 2nd Beam phase AIPS name. Only used if 
+             doPhase = True
+  in6Class...2nd Beam phase AIPS class. Expected form "Sxxxxx" 
+             where "S" is the correlation ('RR', 'XX'...) 
+             and "xxxx" arbitrary.
+             The task will search for the different stokes images 
+             and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
+	     NB: Application of instrumental poln cal. for linear 
+	     feeds will convert to a circular basis
+  in6Seq.....2nd Beam phase AIPS seq. # .    0 => highest.
+  in6Disk....Disk drive # of beam phase (FITS or AIPS).
+  in6File....Power FITS 2nd Beam phase input root if in3DType=='FITS'
+             Expected form "Sxxxxx" where "S" is the correlation 
+	     parameter ('RR', 'XX'...) and "xxxx" arbitrary.
+             The task will search for the different stokes images 
+             and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
+	     NB: Application of instrumental poln cal. for linear 
+	     feeds will convert to a circular basis
              Only used if doPhase = True
   outDataType..'FITS' or 'AIPS'  type of output UV, defaults to
              DataType.

@@ -27,9 +27,8 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
-#include "ObitImageMosaicMF.h"
-#include "ObitDConCleanPxListMF.h"
 #include "ObitThread.h"
+#include "ObitImageMosaicMF.h"
 #include "ObitImageUtil.h"
 #include "ObitImageMF.h"
 #include "ObitUVImagerMF.h"
@@ -80,8 +79,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
 		 ObitErr* err);
 
 /* Image/self cal loop */
-void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inData, 
-	      ObitDConCleanVis *myClean, ObitErr* err);
+void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inData, ObitUV* inData2, 
+	      ObitDConCleanVis *myClean, gboolean isDual, ObitErr* err);
 /* Write history */
 void MFImageHistory (gchar *Source, gchar Stok, ObitInfoList* myInput, 
 		    ObitUV* inData, ObitImage* outImage, ObitUV* outData, 
@@ -917,8 +916,9 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   gchar *strTemp;
   ofloat ftemp, tapes[20];
   gboolean *booTemp, btemp;
-  olong itemp, CCVer, maxP=0, maxA=0;
+  olong itemp, maxP=0, maxA=0;
   ObitSkyModelMode modelMode;
+  gboolean doQU;
   gchar *routine = "digestInputs";
 
   /* error checks */
@@ -934,12 +934,6 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   /* noScrat - no scratch files for AIPS disks */
   ObitAIPSSetnoScrat(myInput, err);
   if (err->error) Obit_traceback_msg (err, routine, "task Input");
-
-  /* Default CCVer is 1 */
-  CCVer = 1;
-  ObitInfoListGetTest(myInput, "CCVer",  &type, dim, &CCVer);
-  CCVer = MAX(1, CCVer);
-  ObitInfoListAlwaysPut (myInput, "CCVer", OBIT_long, dim, &CCVer);
 
   /* Convert test Cmethod to enum  Mode */
   ObitInfoListGetP (myInput, "Cmethod", &type, dim, (gpointer)&strTemp);
@@ -998,6 +992,24 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   if (ObitInfoListGetTest(myInput, "maxRealtime", &type, dim, &ftemp)) {
     ObitSystemSetMaxRuntime (ftemp);
   }
+
+  /* If doQU - no SDI or middle CLEAN Looping */
+  doQU = FALSE;
+  ObitInfoListGetTest(myInput, "doQU", &type, dim, &doQU);
+  itemp = 1;
+  ObitInfoListGetTest(myInput, "maxAWLoop", &type, dim, &itemp);
+  if (doQU && (itemp>1)) {
+    Obit_log_error(err, OBIT_InfoErr,"Overriding max autoWin loop = 1");
+    itemp = 1; dim[0] = dim[1] = dim[2] = 1;
+    ObitInfoListAlwaysPut (myInput, "maxAWLoop", OBIT_long, dim, &itemp);
+} /* end override maxAWLoop */
+  ftemp = -1.0;
+  ObitInfoListGetTest(myInput, "SDIGain", &type, dim, &ftemp);
+  if (doQU && (ftemp>0.0)) {
+    Obit_log_error(err, OBIT_InfoErr,"Overriding use of SDI");
+    ftemp = -1.0; dim[0] = dim[1] = dim[2] = 1;
+    ObitInfoListAlwaysPut (myInput, "SDIGain", OBIT_float, dim, &ftemp);
+} /* end override SDIGain */
 
 } /* end digestInputs */
 
@@ -1527,23 +1539,24 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
 		 ObitErr* err)
 {
   ObitDConCleanVis *myClean=NULL;
-  ObitUV       *outData = NULL;
-  ObitImage    *outField=NULL;
-  ObitUVImager  *imager=NULL;
-  ObitSkyModel *skyModel=NULL;
+  ObitUV       *outData = NULL, *outData2 = NULL;
+  ObitImage    *outField=NULL, *outField2=NULL;
+  ObitUVImagerMF  *imager=NULL;
+  ObitSkyModel *skyModel=NULL, *skyModel2=NULL;
   olong blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   ofloat Beam[3]={0.0,0.0,0.0};
   odouble alphaRefF;
-  ObitImage    *outImage[4]={NULL,NULL,NULL,NULL}, *tmpImage=NULL;
+  ObitImage    *outImage[4]={NULL,NULL,NULL,NULL}, *tmpImage=NULL, *tmpImage2=NULL;
   ObitInfoList* saveParmList=NULL;
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong        nchan,  BChan, EChan, order, chInc, chAvg, istok, kstok, nstok, bstok, estok;
-  olong        BIF, EIF, nif, inver, outver, maxPixel, nTotal;
-  gboolean     first, doFlat, btemp, autoWindow, Tr=TRUE, doVPol, do3D;
-  ofloat       maxFBW, alpha, ftemp, reFlux=1.0e-12;
-  gchar        Stokes[5], *chStokes=" IQUVRL", *CCType = "AIPS CC";
+  olong        nchan,  BChan, EChan, order, chInc, chAvg;
+  olong        istok, kstok, nstok, bstok, estok, qstok=-1, ustok=-1;
+  olong        BIF, EIF, nif, inver, outver;
+  gboolean     first, doFlat, btemp, autoWindow, doQU, isDual, Tr=TRUE, doVPol, do3D;
+  ofloat       maxFBW, alpha;
+  gchar        Stokes[5], *chStokes=" IQUVRL ", *CCType = "AIPS CC";
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "UVRange", "timeRange", "UVTape",
     "BIF", "EIF", "subA",
@@ -1558,8 +1571,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "MFTaper", "RobustIF", "TaperIF",
     "MaxBaseline", "MinBaseline", "rotate", "targBeam", "Beam", "minFlux",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
-    "nxBeam", "nyBeam", "Alpha", "doCalSelect", "doRestart", "nTotal", "reFlux",
-    "numBeamTapes", "BeamTapes", "MResKnob", "doGPU",
+    "nxBeam", "nyBeam", "Alpha", "doCalSelect",
+    "numBeamTapes", "BeamTapes", "MResKnob", "doQU", "doGPU",
     NULL
   };
   gchar        *saveParms[] = {  /* Imaging, weighting parameters to save*/
@@ -1582,11 +1595,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   gchar        *CLEANParms[] = {  /* Clean parameters */
     "CLEANBox", "CLEANFile", "autoWindow", "Gain", "minFlux", "Niter", "minPatch", 
     "Beam",  "targBeam", "Mode", "CCFilter", "maxPixel", "dispURL", "ccfLim", "SDIGain", 
-    "Alpha", "AlphaRefF", "norder", "doComRes", "MResKnob", "maxAWLoop", "CCVer",
-    NULL
-  };
-  gchar        *pxListParms[] = {  /* pixel list parameters to save*/
-    "CCVer", 
+    "Alpha", "AlphaRefF", "norder", "doComRes", "MResKnob", "doQU", "maxAWLoop",
     NULL
   };
   olong MemCount, MemTotal; /* DEBUG */
@@ -1627,8 +1636,6 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   EIF = MIN (EIF, nif);
   if (EIF<=0) EIF = nif;
   ObitInfoListGetTest(myInput, "Beam",  &type, dim, &Beam);
-  maxPixel = 100000;
-  ObitInfoListGetTest(myInput, "maxPixel",  &type, dim, &maxPixel);
 
   /* Average everything = Continuum ? */
   chAvg = EChan-BChan+1; 
@@ -1643,6 +1650,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   ObitInfoListGetTest(myInput, "doFlatten", &type, dim, &doFlat);
   autoWindow = FALSE;
   ObitInfoListGetTest(myInput, "autoWindow", &type, dim, &autoWindow);
+  doQU = FALSE;
+  ObitInfoListGetTest(myInput, "doQU", &type, dim, &doQU);
   do3D = TRUE;
   ObitInfoListGetTest(myInput, "do3D", &type, dim, &do3D);
 
@@ -1651,7 +1660,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
 
   /* Number of stokes parameter, I, Q, U, V */
   nstok = 0;
-  bstok = 1;
+  bstok = 1; qstok = 2; ustok = 3;
   doVPol = FALSE;
   if ((Stokes[0]=='I') || (Stokes[0]=='F') || (Stokes[0]==' ')) nstok = 1;
   if ((nstok==1) && (Stokes[1]=='Q')) nstok = 2;
@@ -1665,6 +1674,11 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   if (Stokes[0]=='V') {bstok=4; estok=4; nstok = 1;}
   if ((Stokes[0]=='R') && (Stokes[1]=='R')) {bstok=5; estok=5; nstok = 1;}
   if ((Stokes[0]=='L') && (Stokes[1]=='L')) {bstok=6; estok=6; nstok = 1;}
+  /* Dual Q&U */
+  if (doQU) {
+    if (Stokes[0]=='Q') { bstok=2; estok=3;}
+    if (Stokes[3]=='V') {estok = 4;}
+  } /* end dual Q&U */
   /* Make sure Stokes OK */
   Obit_return_if_fail((estok>=bstok), err, 
 			"%s: Problem with Stokes %s", routine, Stokes);
@@ -1678,6 +1692,12 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
   /* Save imaging parms */	
   ObitInfoListCopyList (outData->info, saveParmList, saveParms);
+  /* Another structure if doQU */
+  if (doQU) {
+    outData2 = setOutputUV (Source, myInput, inData, err);
+    if (err->error) Obit_traceback_msg (err, routine, inData->name);
+    ObitInfoListCopyList (outData2->info, saveParmList, saveParms);
+ }
 
   /* set selected channels */
   dim[0] = 1;
@@ -1700,18 +1720,28 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
   ObitInfoListCopyList (myInput, outData->info, tmpParms);
   ObitInfoListCopyList (inData->info, outData->info, tmpName);
+ if (doQU) {  /* Dual Q&U */
+    ObitInfoListCopyList (myInput, outData2->info, tmpParms);
+    ObitInfoListCopyList (inData->info, outData2->info, tmpName);
+  }
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
   
   /* Loop over poln */
-  first = TRUE;
+  first = TRUE; 
   for (istok=bstok; istok<=estok; istok++) {
-      
+    isDual = FALSE;
     /* set selected Stokes  */
+    /* Trap dual Q&U mode - assumes also I */
+    if (doQU && (istok==ustok)) continue; /* already done */
+    if (doQU && (istok==qstok)) {
+      isDual = TRUE;
+    }
     dim[0] = 4;
     sprintf (Stokes, "    ");
     if (istok<=4) sprintf (Stokes, "%c   ", chStokes[istok]);
     else if (istok==5) sprintf (Stokes, "RR  ");
     else if (istok==6) sprintf (Stokes, "LL  ");
+    if (isDual) sprintf (Stokes, "QU  ");
     /* Trap for 'IV' mode */
     if (doVPol && (istok>bstok)) Stokes[0] = 'V';
     ObitInfoListAlwaysPut (outData->info, "Stokes", OBIT_string, dim, Stokes);
@@ -1721,122 +1751,140 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     /* Tell about it */
     Obit_log_error(err, OBIT_InfoErr, " ** Stokes %s", Stokes);
     
+
+    /*TRAP isDual; */
     /* Define output image(s) - potentially one per poln */
     kstok = istok;
     if ((istok==2) && doVPol) kstok = 4;
-    setOutputData (Source, kstok, myInput, outData, &tmpImage, err);
+    /* Dual Q&U? */
+    if (isDual) {
+      setOutputData (Source, 2, myInput, outData,  &tmpImage,  err);
+      setOutputData (Source, 3, myInput, outData2, &tmpImage2, err);
+      dim[0] = 4;
+      ObitInfoListAlwaysPut (outData->info,  "Stokes", OBIT_string, dim, "Q   ");
+      ObitInfoListAlwaysPut (outData2->info, "Stokes", OBIT_string, dim, "U   ");
+    } else {
+      setOutputData (Source, kstok, myInput, outData, &tmpImage, err);
+    }
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
       
     /* initialization */
-    if (first ) {
-      first = FALSE;
+    if (first) {
+      first = FALSE;  /* Really need to do this */
       
       /* Create wideband Imager - first time to determine alphaRefF */
       alphaRefF = outData->myDesc->freq;  /* Ball park */
-      imager = (ObitUVImager*)ObitUVImagerMFCreate("imager", order, maxFBW, 
-						   alpha, alphaRefF, outData, err);
-     if (err->error) Obit_traceback_msg (err, routine, inData->name);
-    
+      imager = ObitUVImagerUnref(imager);
+      imager = ObitUVImagerMFCreate("imager", order, maxFBW, alpha, alphaRefF, outData, err);
+      if (err->error) Obit_traceback_msg (err, routine, inData->name);
+      
       /* Set reference frequency for spectral index corrections -
 	 use inData reference freq */
       alphaRefF = imager->mosaic->images[0]->myDesc->crval[imager->mosaic->images[0]->myDesc->jlocf];
       dim[0] = dim[1] = dim[2] = 1;
       ObitInfoListAlwaysPut (outData->info, "AlphaRefF", OBIT_double, dim, &alphaRefF);
-
+      
       /* Again for real */
       imager   = ObitUVImagerUnref(imager);
-      imager = (ObitUVImager*)ObitUVImagerMFCreate("imager", order, maxFBW, 
-						   alpha, alphaRefF, outData, err);
+      imager = ObitUVImagerMFCreate("imager", order, maxFBW, alpha, alphaRefF, outData, err);
       if (err->error) Obit_traceback_msg (err, routine, inData->name);
-      
       /* Create Sky model */
+      skyModel = ObitSkyModelUnref(skyModel);
       skyModel = (ObitSkyModel*)ObitSkyModelMFCreate("Sky Model", imager->mosaic);
       /* No alpha correction in model  for CLEANing */
       btemp = FALSE; dim[0] = dim[1] = dim[2] = 1;
       ObitInfoListAlwaysPut (skyModel->info, "doAlphaCorr", OBIT_bool, dim, &btemp);
       ObitInfoListCopyList (myInput, skyModel->info, skyModelParms);
-
+      
       /* Make CleanVis */
+      myClean = ObitDConCleanUnref(myClean);
       myClean = ObitDConCleanVisMFCreate2("Clean Object", outData, 
-					  imager, skyModel, order, maxFBW, 
+					  (ObitUVImager*)imager, skyModel, order, maxFBW, 
 					  alpha, alphaRefF, err);
       if (err->error) Obit_traceback_msg (err, routine, inData->name);
       
       /* Get input parameters from myInput, copy to myClean */
       ObitInfoListCopyList (myInput, myClean->info, CLEANParms);
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
-
+      
       /* Save imaging parms for weighting - from defaults in mosaic creation */	
       ObitInfoListCopyList (outData->info, saveParmList, saveParms);
- 
-     /* Save mosaic parameters */	
+      
+      /* Save mosaic parameters */	
       ObitInfoListCopyList (myInput, myClean->mosaic->info, mosaicParms);
-
+      
       /* Get beam for first IF if a target beam not specified */
       BeamOne (myInput, outData, myClean, err);
       if (err->error) Obit_traceback_msg (err, routine, outData->name);
       ObitInfoListGetTest(outData->info, "Beam",  &type, dim, Beam);
-
-      /* (Re)Set windows for Stokes I */
-      clnClass = (ObitDConCleanVisClassInfo*)myClean->ClassInfo; /* class structure */
-      if (istok==bstok) clnClass->ObitDConCleanVisDefWindow((ObitDConClean*)myClean, err);
-      if (err->error) Obit_traceback_msg (err, routine, myClean->name);
       
-      /* Restarting? */
-      if (((ObitImageMosaicMF*)myClean->mosaic)->restart) {
-	ObitInfoListGetTest(myInput, "nTotal", &type, dim, &nTotal);
-	ObitInfoListGetTest(myInput, "reFlux", &type, dim, &reFlux);
-	if (reFlux<1.0e-12) reFlux = 1.0e-12;
-	/* Additional fields */
-	ObitImageMosaicMFAddOld (myClean->mosaic, outData, nTotal, myClean->window, err);
-	ObitErrLog(err); 	/* Errors */
-	myClean->nfield = myClean->mosaic->numberImages;
-	myClean->Pixels = 
-	  (ObitDConCleanPxList*)ObitDConCleanPxListMFCreate("Pixels", myClean->mosaic, outData, maxPixel, err);
-	/* Get input parameters from myInput, copy to inData */
-	ObitInfoListCopyList (myInput, myClean->Pixels->info, pxListParms);
-	dim[0] = 1;dim[1] = 1;
-	ObitInfoListAlwaysPut (myClean->info, "reuseFlux", OBIT_float, dim, &reFlux);
-	ObitInfoListAlwaysPut (myInput, "reuseFlux", OBIT_float, dim, &reFlux);	
-	/* Initialize CC tables */
-	ObitDConCleanPxListMFInitCC (myClean->Pixels, err);
-      }
-      if (err->error) Obit_traceback_msg (err, routine, myClean->name);
     } /* end initialization */
+      
+    /* Dual Q&U? */
+    if (isDual && (skyModel2==NULL)) {
+      ObitUVImagerMFAddPol2 (imager, outData2, err);
+      if (err->error) Obit_traceback_msg (err, routine, inData->name);
+      skyModel2 = (ObitSkyModel*)ObitSkyModelMFCreate("Sky Model", imager->mosaic2);
+      ((ObitDConCleanVisMF*)myClean)->skyModel2 =
+	ObitSkyModelRef(skyModel2); /* Add secondary Sky Model */
+      if (!((ObitDConCleanVisMF*)myClean)->mosaic2)
+	((ObitDConCleanVisMF*)myClean)->mosaic2 = 
+	  ObitImageMosaicMFRef(imager->mosaic2); /* Add secondary image Mosaic */
+    }
+
+    /* (Re)Set windows for Stokes I */
+    clnClass = (ObitDConCleanVisClassInfo*)myClean->ClassInfo; /* class structure */
+    if (istok==bstok) 
+      clnClass->ObitDConCleanVisDefWindow((ObitDConClean*)myClean, err);
+    if (err->error) Obit_traceback_msg (err, routine, myClean->name);
       
     /* Save imaging parms for weighting */	
     ObitInfoListCopyList (saveParmList, outData->info, saveParms);
+    if (isDual) ObitInfoListCopyList (saveParmList, outData2->info, saveParms);
     
     /* More Output image stuff */ 
     /* Create output image(s) */
-    if (doFlat && (myClean->mosaic->numberImages>1) && myClean->mosaic->FullField) 
+    if (doFlat && (myClean->mosaic->numberImages>1) && myClean->mosaic->FullField) { 
       outField = ObitImageMosaicGetFullImage (myClean->mosaic, err);
-    else
+      if (isDual) outField2 = ObitImageMosaicGetFullImage (myClean->mosaic2, err);
+    } else {
       outField = ObitImageMosaicGetImage (myClean->mosaic, 0, err);
+      if (isDual) outField2 = ObitImageMosaicGetImage (myClean->mosaic2, 0, err);
+    }
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
     
     ObitImageUtilMakeCube (outField->myDesc, inData->myIO->myDesc, 
 			   tmpImage->myDesc, 
 			   Stokes, BChan, EChan, chInc, err);
+    if (isDual) ObitImageUtilMakeCube (outField2->myDesc, inData->myIO->myDesc, 
+			   tmpImage2->myDesc, 
+			   "U   ", BChan, EChan, chInc, err);
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
     
     /* Convert output to spectral image */
-    outImage[istok-bstok] = (ObitImage*)ObitImageMFFromImage(tmpImage, inData, order, 
-							     maxFBW, alpha, alphaRefF, 
-							     err);
+    if (isDual) {
+      outImage[qstok-1] = (ObitImage*)ObitImageMFFromImage(tmpImage, inData, order, 
+							   maxFBW, alpha, alphaRefF,  err);
+      outImage[ustok-1] = (ObitImage*)ObitImageMFFromImage(tmpImage2, inData, order, 
+							   maxFBW, alpha, alphaRefF,  err);
+    } else {
+      outImage[istok-bstok] = (ObitImage*)ObitImageMFFromImage(tmpImage, inData, order, 
+					maxFBW, alpha, alphaRefF, err);
+    }    
     tmpImage = ObitImageUnref(tmpImage);
+    if (tmpImage2) tmpImage2 = ObitImageUnref(tmpImage2);
     
-    ObitImageFullInstantiate (outImage[istok-bstok], FALSE, err);
+    if (isDual) {
+      ObitImageFullInstantiate (outImage[qstok-1], FALSE, err);
+      ObitImageFullInstantiate (outImage[ustok-1], FALSE, err);
+    } else {
+      ObitImageFullInstantiate (outImage[istok-bstok], FALSE, err);
+    }
     outField = ObitImageUnref(outField);
-    if (err->error) Obit_traceback_msg (err, routine, outImage[istok-bstok]->name);
+    if (outField2) outField2 = ObitImageUnref(outField2);
+    if (err->error) Obit_traceback_msg (err, routine, outImage[istok-1]->name);
     /* end of create output */
     
-    /* Reset any restart for Stokes > I */
-    if (istok>1) {
-      dim[0] = dim[1] = dim[2] = 1; ftemp = -1.0;
-      ObitInfoListAlwaysPut(myClean->info, "reuseFlux", OBIT_float, dim, &ftemp);
-    }
-
     /* Automatic windowing  */
     btemp = autoWindow;
     /*** if (istok>bstok) btemp = Fl; */
@@ -1846,40 +1894,69 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     ObitInfoListAlwaysPut (myClean->skyModel->info, "Stokes", OBIT_string, dim, Stokes);
     
     /* Do actual processing */
-    doImage (Stokes, myInput, outData, myClean, err);
+    doImage (Stokes, myInput, outData, outData2, myClean, isDual, err);
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
     /* Copy result to output */
-    if ((doFlat)  && (myClean->mosaic->numberImages>1) && myClean->mosaic->FullField) 
+    if ((doFlat)  && (myClean->mosaic->numberImages>1) && myClean->mosaic->FullField) {
       outField = ObitImageMosaicGetFullImage (myClean->mosaic, err);
-    else { /* Copy the first image */
+      if (isDual) outField2 = ObitImageMosaicGetFullImage (myClean->mosaic2, err);
+    } else { /* Copy the first image */
       outField = ObitImageMosaicGetImage (myClean->mosaic, 0, err);
+      if (isDual) outField2 = ObitImageMosaicGetImage (myClean->mosaic2, 0, err);
     }
     /* Unset any window on output image */
     dim[0] = 7; dim[1] = dim[2] = 1;
     ObitInfoListPut (outField->info, "BLC", OBIT_long, dim, blc, err); 
     ObitInfoListPut (outField->info, "TRC", OBIT_long, dim, trc, err);
+    if (isDual) {
+      ObitInfoListPut (outField2->info, "BLC", OBIT_long, dim, blc, err); 
+      ObitInfoListPut (outField2->info, "TRC", OBIT_long, dim, trc, err);
+    }
     if (err->error) Obit_traceback_msg (err, routine, outField->name);
     /* Copy to output */
-    outImage[istok-bstok] = ObitImageCopy (outField, outImage[istok-bstok], err);
+    if (isDual) {
+      outImage[qstok-1] = ObitImageCopy (outField, outImage[qstok-1], err);
+      outImage[ustok-1] = ObitImageCopy (outField2, outImage[ustok-1], err);
+    } else {
+      outImage[istok-bstok] = ObitImageCopy (outField, outImage[istok-bstok], err);
+    }
     /* Plus any CC tables */
     inver  = 1;
     outver = 1;
-    ObitDataCopyTable ((ObitData*)outField, (ObitData*)outImage[istok-bstok],
+    if (isDual) {
+      ObitDataCopyTable ((ObitData*)outField2, (ObitData*)outImage[qstok-1],
+			 CCType, &inver, &outver, err);
+      ObitDataCopyTable ((ObitData*)outField2, (ObitData*)outImage[ustok-1],
 			   CCType, &inver, &outver, err);
+    } else {
+      ObitDataCopyTable ((ObitData*)outField, (ObitData*)outImage[istok-bstok],
+			 CCType, &inver, &outver, err);
+    }
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
     /* Make sure Stokes set */
-    if (istok>1) {
-      ObitImageOpen (outImage[istok-bstok], OBIT_IO_ReadWrite, err);
-      outImage[istok-bstok]->myDesc->crval[outImage[istok-bstok]->myDesc->jlocs] = (gfloat)istok;
-      outImage[istok-bstok]->myStatus = OBIT_Modified;
-      ObitImageClose (outImage[istok-bstok], err);
+      if (isDual) {
+	ObitImageOpen (outImage[qstok-1], OBIT_IO_ReadWrite, err);
+	outImage[qstok-1]->myDesc->crval[outImage[ustok-1]->myDesc->jlocs] = (gfloat)qstok;
+	outImage[qstok-1]->myStatus = OBIT_Modified;
+	ObitImageClose (outImage[qstok-1], err);
+	ObitImageOpen (outImage[ustok-1], OBIT_IO_ReadWrite, err);
+	outImage[ustok-1]->myDesc->crval[outImage[ustok-1]->myDesc->jlocs] = (gfloat)qstok;
+	outImage[ustok-1]->myStatus = OBIT_Modified;
+	ObitImageClose (outImage[ustok-1], err);
+      } else {
+	if ((istok>1) || (istok==qstok)) {
+	  ObitImageOpen (outImage[istok-bstok], OBIT_IO_ReadWrite, err);
+	  outImage[istok-bstok]->myDesc->crval[outImage[istok-bstok]->myDesc->jlocs] = (gfloat)istok;
+	  outImage[istok-bstok]->myStatus = OBIT_Modified;
+	  ObitImageClose (outImage[istok-bstok], err);
+	}
+      }
       if (err->error) Obit_traceback_msg (err, routine, outImage[istok-bstok]->name);
-    }
- } /* end stokes loop */
+    } /* end stokes loop */
   outField = ObitImageUnref(outField);
-  
-  /* DEBUG */
+  if(outField2) outField2 = ObitImageUnref(outField2);
+ /* DEBUG */
   ObitMemSummary (&MemCount, &MemTotal);
   /*fprintf (stdout, "\n &&& Memory Channel %d count %d total %d MByte\n", 
     ichan, MemCount, MemTotal);*/
@@ -1897,51 +1974,61 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   /* Do history */
   for (istok=bstok; istok<=estok; istok++) {
     /* Make sure image created */
-    Obit_return_if_fail((outImage[istok-bstok]!=NULL), err, 
-			"%s: No image generated", routine);
+    Obit_return_if_fail(((outImage[istok-1]!=NULL)), err, 
+			"%s: No %c image generated",routine, chStokes[istok+1]);
     
     if (istok==bstok)
-      MFImageHistory (Source, chStokes[istok], myInput, inData, outImage[istok-bstok], 
+      MFImageHistory (Source, chStokes[istok], myInput, inData, outImage[istok-1], 
 		     outData, err);
     else
-      MFImageHistory (Source, chStokes[istok], myInput, inData, outImage[istok-bstok], 
+      MFImageHistory (Source, chStokes[istok], myInput, inData, outImage[istok-1], 
 		     NULL, err);
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
-    outImage[istok-1]  = ObitUnref(outImage[istok-bstok]);
+    outImage[istok-1]  = ObitUnref(outImage[istok-1]);
   } /* end History/Unref loop */
   
   
   /* Cleanup - this is leaving all fields if autoCenter is used */
   if (myClean) {
     /* Leave facet images if not myClean->mosaic->doFull and myClean->mosaic->numberImages >1 */
-    if (!((!myClean->mosaic->doFull) && (myClean->mosaic->numberImages>1)))
+    if (!((!myClean->mosaic->doFull) && (myClean->mosaic->numberImages>1))) {
       ObitImageMosaicZapImage (myClean->mosaic, -1, err); /* Delete mosaic members */
+      if (myClean->mosaic2) ObitImageMosaicZapImage (myClean->mosaic2, -1, err); /* Delete U mosaic */
+      
+    }
     if (doFlat && (myClean->mosaic->numberImages>1)) {  /* Delete flattened as well if not output */
       outField = ObitImageMosaicGetFullImage (myClean->mosaic, err);
       if (outField) outField = ObitImageZap(outField, err);
+      if (isDual) {
+	outField = ObitImageMosaicGetFullImage (myClean->mosaic2, err);
+	if (outField) outField = ObitImageZap(outField, err);
+      }
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
     }
-    myClean  = ObitDConCleanVisMFUnref((ObitDConCleanVisMF*)myClean);
+    myClean = ObitDConCleanVisMFUnref((ObitDConCleanVisMF*)myClean);
   }
-  imager   = ObitUVImagerUnref(imager);
-  skyModel = ObitSkyModelUnref(skyModel);
-  outData  = ObitUVUnref(outData);
+  imager    = ObitUVImagerUnref(imager);
+  skyModel  = ObitSkyModelUnref(skyModel);
+  skyModel2 = ObitSkyModelUnref(skyModel2);
+  outData   = ObitUVUnref(outData);
   if (saveParmList) saveParmList = ObitInfoListUnref(saveParmList);
   
-}  /* end doChanPoln */
+  }  /* end doChanPoln */
 
 /*----------------------------------------------------------------------- */
 /*  Imaging/Deconvolution self calibration loop                           */
 /*   Input:                                                               */
 /*      Stokes    Input Stokes type (no Selfcal except for I)             */
 /*      myInput   Input parameters on InfoList                            */
-/*      inData    ObitUV to image                                         */
+/*      inUV      ObitUV to image                                         */
+/*      inUV2     Secondary ObitUV to image                               */
 /*      myClean   CLEAN object                                            */
+/*      isDual    CLEANing both Q&U                                       */
 /*   Output:                                                              */
 /*      err    Obit Error stack                                           */
 /*----------------------------------------------------------------------- */
-void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV, 
-	      ObitDConCleanVis *myClean, ObitErr* err)
+void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV, ObitUV* inUV2, 
+	      ObitDConCleanVis *myClean, gboolean isDual, ObitErr* err)
 {
   ObitUVSelfCal *selfCal = NULL;
   ObitUV       *scrUV = NULL;
@@ -1949,7 +2036,6 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   ObitInfoType type;
   oint         otemp;
   olong        nfield, *ncomp=NULL, maxPSCLoop, maxASCLoop, SCLoop, jtemp, Niter=0, NiterQU, NiterV;
-  olong        nPhSC=0;
   ofloat       minFluxPSC, minFluxASC, modelFlux, maxResid, reuse, ftemp, autoCen, useMinFlux=0.0;
   ofloat       alpha, noalpha, minFlux=0.0, minFluxQU=0.0,  minFluxV=0.0;
   ofloat       *minFList=NULL, antSize, solInt, PeelFlux, FractOK, CCFilter[2]={0.0,0.0};
@@ -2059,9 +2145,15 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   /* Allow recentering */
   ObitInfoListAlwaysPut(myClean->info, "doRecenter", OBIT_bool, dim, &Tr);
 
-  /* Recentering trip level in CLEAN */
-  if (PeelFlux<1.0e10) ftemp = 1.1 * MIN (autoCen, PeelFlux); /* Fudge a bit due to shallow CLEAN */
-  else                 ftemp = 1.1 * autoCen;
+  /* No reuse of components the first time */
+  ftemp = -1.0;
+  dim[0] = 1;dim[1] = 1;
+  ObitInfoListAlwaysPut (myClean->info, "reuseFlux", OBIT_float, dim, &ftemp);
+  /* Recentering trip level in CLEAN  - only Stokes I */
+  if ((Stokes[0]==' ') || (Stokes[0]=='I') || (Stokes[0]=='F') || (Stokes[0]=='R') || (Stokes[0]=='L')) {
+    if (PeelFlux<1.0e10) ftemp = 1.1 * MIN (autoCen, PeelFlux); /* Fudge a bit due to shallow CLEAN */
+    else                 ftemp = 1.1 * autoCen;
+  } else ftemp = 1.0e20;
   ObitInfoListAlwaysPut (myClean->info, "autoCen", OBIT_float, dim, &ftemp);
 
   /* Create selfCal if needed */
@@ -2123,7 +2215,14 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
       
       /* Set Stokes Desired */
       dim[0] = 4;
-      ObitInfoListAlwaysPut (inUV->info, "Stokes", OBIT_string, dim, Stokes);
+      if (isDual){ /* Q and U */
+	ObitInfoListAlwaysPut (inUV->info,  "Stokes", OBIT_string, dim, "Q   ");
+	ObitInfoListAlwaysPut (inUV2->info, "Stokes", OBIT_string, dim, "U   ");
+	((ObitDConCleanVisMF*)myClean)->isDual = TRUE;
+      } else { /* single Stokes */
+	ObitInfoListAlwaysPut (inUV->info, "Stokes", OBIT_string, dim, Stokes);
+	((ObitDConCleanVisMF*)myClean)->isDual = FALSE;
+      }
       
       /* Image/Clean */
       myClean->peakFlux = 0.0;
@@ -2215,7 +2314,6 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 	if (err->error) Obit_traceback_msg (err, routine, selfCal->name);
 	if (noSCNeed) didSC = FALSE;
 	if (converged || noSCNeed)  break;
-	nPhSC++;  /* how many phase self cals? */
 	init = FALSE;
 	imgOK = FALSE;  /* Need new image */
 	/* Did it run out of time - no self cal - just restore, flatten */
@@ -2424,10 +2522,10 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 	dim[0] = 1;dim[1] = 1;
 	ObitInfoListAlwaysPut(myClean->info, "doBeam", OBIT_bool, dim, &doBeam);
 	
-	/* reset flux limit for next Clean to 1 sigma - minFList overrides */
+	/* reset flux limit for next Clean to 1 sigma */
 	dim[0] = 1;dim[1] = 1;
 	if (minFList) {
-	  useMinFlux = minFList[MIN(SCLoop+nPhSC, (FLdim[0]-1))];
+	  useMinFlux = minFList[MIN(SCLoop, (FLdim[0]-1))];
 	} else { /* minFList not given - use RMS */
 	  useMinFlux = selfCal->RMSFld1;
 	}
@@ -2502,6 +2600,9 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
     /* Cross restore? */
     if (myClean->nfield>1)
        clnClass->ObitDConCleanXRestore((ObitDConClean*)myClean, err);
+    /* Dual Q&U */
+    if (isDual) {
+    } /* end dual */
   }
 
   /* Flatten if requested */
@@ -2514,7 +2615,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
     if (myClean->display && myClean->mosaic->FullField && myClean->mosaic->FullField)
       ObitDisplayShow (myClean->display, (Obit*)myClean->mosaic->FullField, NULL, 
 		       1, err);
-  } else {
+   } else {
     /* Display mosaic? */
     if (myClean->display)
       ObitDisplayShow (myClean->display, (Obit*)myClean->mosaic, NULL, 
@@ -2530,6 +2631,15 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
       fitImage = (ObitImageMF*)myClean->mosaic->images[0];
     ObitImageMFFitSpec (fitImage, antSize, err);
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+    /* Need to do UPol? */
+    if (isDual) {
+      if (doFlatten && myClean->mosaic2->FullField)
+	fitImage = (ObitImageMF*)myClean->mosaic2->FullField;
+      else
+	fitImage = (ObitImageMF*)myClean->mosaic2->images[0];
+      ObitImageMFFitSpec (fitImage, antSize, err);
+      if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+    }
   } /* end doFit */
 
   /* If 2D imaging or single Fly's eye facet then concatenate CC tables */
@@ -2583,8 +2693,7 @@ void MFImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "PeelSolInt", "PeelType", "PeelMode", "PeelNiter",
     "PeelMinFlux", "PeelAvgPol", "PeelAvgIF",
     "doMGM", "minSNR", "minNo", "PBCor", "antSize", "Alpha",
-    "nTaper", "Tapers", "MResKnob",
-    "doRestart", "nTotal", "reFlux", 
+    "nTaper", "Tapers", "MResKnob", "doQU",
     "nThreads", "doGPU","maxRealtime",
     NULL};
   gchar *routine = "MFImageHistory";

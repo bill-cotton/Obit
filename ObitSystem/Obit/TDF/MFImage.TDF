@@ -292,13 +292,8 @@ nTaper            0                Number of additional tapers
 Tapers            0                List of tapers (pixels)
 **PARAM** float 10
 MResKnob          0                Multiresolution controls 
-
 **PARAM** boo 1 **DEF** F
-doRestart                          Restarting CLEAN
-**PARAM** int 1 
-nTotal            0               Number of Facets in restart
-**PARAM** float 1
-reFlux           0                Min. restart CC flux density (Jy)
+doQU             0                 CLEAN Q&U in parallel
 
 **PARAM** int 1 
 prtLv             0                Print level in selfcal
@@ -689,18 +684,6 @@ Adverbs:
   minNo.......Min. allowed no. antennas in selfcal
   prtLv.......Print level in selfcal, 0=>none
 
-                       Restarting
-   In a limited range of circumstances CLEANing can be restarted, 
-      limitations:
-      - previous image not "flattened" -  must still have facets
-      - No changes in data selection
-      - outputs must be fully specified
-  doRestart..If True, restart CLEAN
-  nTotal.....The number of facets with which to restart, if zero
-             use the standard definition; if autoCen facets were 
-             created in the previous run, they should be included here.
-  reFlux.....Minimum flux density components to use in restart (Jy).
-             This is applied to indivial compponents, not sums on cells.
 
                        Peeling
   PeelFlux....Peeling is the procedure of doing a self calibration on 
@@ -765,6 +748,11 @@ Adverbs:
                   (1-iteration/niter)**3
               [1] SNR factor,                     0=>0.35
               [2] "Quality" factor,               0=>0.2
+  doQU........If True CLEAN Q&U in parallel.  
+              CLEAN is driven by average polarized intensity which
+              may be more robust to large Faraday rotation than
+              CLEANing separately but takes more resources.
+	      This mode does not support SDI or CLEAN middle loops.
 
                           Interactive display
   dispURL.....The URL of the display server to use. "None"=>none

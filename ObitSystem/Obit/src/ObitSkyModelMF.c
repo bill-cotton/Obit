@@ -2158,7 +2158,6 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
 	    /* Evaluate spectral index */
 	    ObitExpVec(itcnt, ExpArg2, ExpVal2);
-	    /* Accumulate real and imaginary parts */
 	    /* Spectral index correction */
 	    SkyModelVMul(itcnt, AmpArr,  ExpVal2, AmpArr);
 	    /* Accumulate real and imaginary parts */
@@ -2224,6 +2223,14 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer args)
 	    SkyModel2DDot(itcnt, VecL, VecM, VecN, u, v, w, FazArr);
 	    /* Convert phases to sin/cos */
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	    /* Evaluate Gaussian exp arguments */
+	    ObitExpVec(itcnt, ExpArg, ExpVal);
+	    /* Gaussian correction */
+	    SkyModelVMul(itcnt, AmpArr,  ExpVal, AmpArr);
+	    /* Evaluate spectral index */
+	    ObitExpVec(itcnt, ExpArg2, ExpVal2);
+	    /* Spectral index correction */
+	    SkyModelVMul(itcnt, AmpArr,  ExpVal2, AmpArr);
 	    /* Accumulate real and imaginary parts */
 	    sumReal += SkyModelDot(itcnt, AmpArr, CosArr);
 	    sumImag += SkyModelDot(itcnt, AmpArr, SinArr);

@@ -4,7 +4,7 @@
 ;! Imaging software correcting for tabulated beamshape, wideband
 ;# Task Obit self calibration Imaging
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2011-2017
+;;  Copyright (C) 2011-2020
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -94,7 +94,9 @@ BLFOV             0.0       180.    Radius averaging FOV (deg)
 BLchAvg                             If True, and BLFact >1.0 then also
                                     average channels.
 **PARAM** str 4
-in3DType                           "FITS" or "AIPS" type of in3, in4
+in3DType                           "FITS" or "AIPS" type of in3-in4
+**PARAM** float 1
+in3Diam                            Diameter (m) of in3-in4
 **PARAM** str 48
 in3File                            FITS Beam image if Type=='FITS'
 **PARAM** str 12
@@ -117,6 +119,30 @@ in4Class                           Beam phase map AIPS class
 in4Seq            0.0     9999.0   Beam phase AIPS seq. #
 **PARAM** int 1
 in4Disk                            Beam phase map disk unit #
+**PARAM** str 4
+in5DType                           "FITS" or "AIPS" type of in5-in6
+**PARAM** float 1
+in5Diam                            Diameter (m) of in5-in6
+**PARAM** str 48
+in5File                            FITS 2nd Beam image if 'FITS'
+**PARAM** str 12
+in5Name                            2nd Beam map AIPS name
+**PARAM** str 6
+in5Class                           2nd Beam map AIPS class
+**PARAM** int 1
+in5Seq            0.0     9999.0   2nd Beam AIPS seq. #
+**PARAM** int 1
+in5Disk                            2nd Beam map disk unit #
+**PARAM** str 48
+in6File                            FITS 2nd Beam phase image if 'FITS'
+**PARAM** str 12
+in6Name                            2nd Beam phase map AIPS name
+**PARAM** str 6
+in6Class                           2nd Beam phase map AIPS class
+**PARAM** int 1
+in6Seq            0.0     9999.0   2nd Beam phase AIPS seq. #
+**PARAM** int 1
+in6Disk                            2nd Beam phase map disk unit #
 **PARAM** str 4
 outDType                            "FITS" or "AIPS" type of output
 **PARAM** str 48
@@ -382,7 +408,7 @@ as gzipped FITS files.  ***************OUT OF DATE!
   15) Image, deconvolve and flatten V polarization if requested
 
    The products of this task are a CLEAN image containing the spectral 
-components and a set of narrow band images.
+components and a set of narrower band images.
 Unless otherwise specified, a fly's eye pattern of
 fields with circular CLEAN boxes will be used to cover the specified
 field of view (FOV).  When processing is finished, the CLEAN images 
@@ -402,8 +428,11 @@ frequencies of these planes are given by elements "FREQ000n" in the
 list on the image header; getname(119).Desc.List.Dict will convert this 
 list on the image in AIPS slot number 119 to a python dict.
    The imaging model corrects for the effects of the deviation of
-the measured beamshape from a nominal one.  Polarized data corrected
-as well if the polarization beam are given.
+the measured beamshapes from a nominal one.  Polarized data corrected
+as well if the polarization beam are given.  The first beamshape 
+specified (in3 and in4) define the nominal beam.
+One or two antenna types can be included specified by in3*+in4* and
+im5*+in6 and the antenna diameters are given in in3Diam and in5Diam.
     When the maximum residual exceeds Threshold, a high accuracy 
 model is used and a faster but less acurate method when the 
 residuals drop below Threshold.  In any self calibration, 
@@ -550,6 +579,7 @@ Adverbs:
       Beamshape files
   in3DType..'FITS' or 'AIPS'  type of Beam images, defaults to
              DataType.
+  in3Diam....Diameter in m of antennas described by in3* and in4*
   in3Name....Voltage Beam AIPS name.      Standard defaults.
   in3Class...Voltage Beam AIPS class. Expected form "SSxxxx" where "S"
              is the correlation ('RR', 'XX'...) and "xxxx" arbitrary.
@@ -577,6 +607,46 @@ Adverbs:
   in4Seq.....Beam phase AIPS seq. # .    0 => highest.
   in4Disk....Disk drive # of beam phase (FITS or AIPS).
   in4File....Power FITS Beam phase input root if in3DType=='FITS'
+             Expected form "Sxxxxx" where "S" is the correlation 
+	     parameter ('RR', 'XX'...) and "xxxx" arbitrary.
+             The task will search for the different stokes images 
+             and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
+	     NB: Application of instrumental poln cal. for linear 
+	     feeds will convert to a circular basis
+             Only used if doPhase = True
+  in5DType..'FITS' or 'AIPS'  type of Beam images, defaults to
+             DataType.
+  in5Diam....Diameter in m of antennas described by in5* and in6*
+             If > 0.0 then a second beam type is specified
+  in5Name....Voltage 2nd Beam AIPS name.
+  in5Class...Voltage 2nd Beam AIPS class. Expected form "SSxxxx" 
+             where "S" is the correlation ('RR', 'XX'...) 
+             and "xxxx" arbitrary.
+             The task will search for the different stokes images 
+             and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
+	     NB: Application of instrumental poln cal. for linear 
+	     feeds will convert to a circular basis
+  in5Seq.....Beam AIPS seq. # .    0 => highest.
+  in5Disk....Disk drive # of beam (FITS or AIPS). NO default for AIPS
+  in5File....FITS Voltage 2nd Beam input root if in5DType=='FITS'
+             Expected form "Sxxxxx" where "S" is the correlation 
+	     parameter ('RR', 'XX'...) and "xxxx" arbitrary.
+             The task will search for the different stokes images 
+             and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
+	     NB: Application of instrumental poln cal. for linear 
+	     feeds will convert to a circular basis
+  in6Name....Voltage 2nd Beam phase AIPS name. Only used if 
+             doPhase = True
+  in6Class...2nd Beam phase AIPS class. Expected form "Sxxxxx" 
+             where "S" is the correlation ('RR', 'XX'...) 
+             and "xxxx" arbitrary.
+             The task will search for the different stokes images 
+             and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
+	     NB: Application of instrumental poln cal. for linear 
+	     feeds will convert to a circular basis
+  in6Seq.....2nd Beam phase AIPS seq. # .    0 => highest.
+  in6Disk....Disk drive # of beam phase (FITS or AIPS).
+  in6File....Power FITS 2nd Beam phase input root if in3DType=='FITS'
              Expected form "Sxxxxx" where "S" is the correlation 
 	     parameter ('RR', 'XX'...) and "xxxx" arbitrary.
              The task will search for the different stokes images 

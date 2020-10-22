@@ -2740,11 +2740,12 @@ SWIGINTERN PyObject *SWIG_PyStaticMethod_New(PyObject *SWIGUNUSEDPARM(self), PyO
 #define SWIGTYPE_p_long swig_types[104]
 #define SWIGTYPE_p_ofloat swig_types[105]
 #define SWIGTYPE_p_olong swig_types[106]
-#define SWIGTYPE_p_p_ObitUV swig_types[107]
-#define SWIGTYPE_p_p_char swig_types[108]
-#define SWIGTYPE_p_void swig_types[109]
-static swig_type_info *swig_types[111];
-static swig_module_info swig_module = {swig_types, 110, 0, 0, 0, 0};
+#define SWIGTYPE_p_p_ObitImage swig_types[107]
+#define SWIGTYPE_p_p_ObitUV swig_types[108]
+#define SWIGTYPE_p_p_char swig_types[109]
+#define SWIGTYPE_p_void swig_types[110]
+static swig_type_info *swig_types[112];
+static swig_module_info swig_module = {swig_types, 111, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -11591,11 +11592,11 @@ extern ObitInfoList* SkyModelVMBeamGetList (ObitSkyModelVMBeam* in) {
 }
 
 extern ObitSkyModelVMBeam* SkyModelVMBeamCreate (char *name, ObitImageMosaic* mosaic,
-  ObitUV *uvData, ObitImage *IBeam,  ObitImage *VBeam, ObitImage *QBeam,  ObitImage *UBeam, 
-  ObitImage *IBeamPh,  ObitImage *VBeamPh, ObitImage *QBeamPh,  ObitImage *UBeamPh, 
-  ObitErr *err) {
- return ObitSkyModelVMBeamCreate(name, mosaic, uvData, IBeam, VBeam, QBeam, UBeam, 
-    IBeamPh, VBeamPh, QBeamPh, UBeamPh, err);
+  ObitUV *uvData, olong numAntType, ObitImage **IBeam,  ObitImage **VBeam, ObitImage **QBeam,  ObitImage **UBeam, 
+  ObitImage **IBeamPh,  ObitImage **VBeamPh, ObitImage **QBeamPh,  ObitImage **UBeamPh, 
+  ofloat *Diams, ObitErr *err) {
+ return ObitSkyModelVMBeamCreate(name, mosaic, uvData, numAntType, IBeam, VBeam, QBeam, UBeam, 
+    IBeamPh, VBeamPh, QBeamPh, UBeamPh, Diams, err);
 }
 
 extern char* SkyModelVMBeamGetName (ObitSkyModelVMBeam* in) {
@@ -12018,8 +12019,12 @@ extern void SpectrumFitImArr (ObitSpectrumFit* in, long nimage,
        ObitImage *im6, ObitImage *im7, ObitImage *im8, ObitImage *im9, ObitImage *im10,
        ObitImage *im11, ObitImage *im12, ObitImage *im13, ObitImage *im14, ObitImage *im15,
        ObitImage *im16, ObitImage *im17, ObitImage *im18, ObitImage *im19, ObitImage *im20,
+       ObitImage *im21, ObitImage *im22, ObitImage *im23, ObitImage *im24, ObitImage *im25,
+       ObitImage *im26, ObitImage *im27, ObitImage *im28, ObitImage *im29, ObitImage *im30,
+       ObitImage *im31, ObitImage *im32, ObitImage *im33, ObitImage *im34, ObitImage *im35,
+       ObitImage *im36, ObitImage *im37, ObitImage *im38, ObitImage *im39, ObitImage *im40,
 			      ObitImage *outImage, ObitErr *err) {
-  ObitImage *imArr[20];
+  ObitImage *imArr[40];
   imArr[0] = im1;
   imArr[1] = im2;
   imArr[2] = im3;
@@ -12040,6 +12045,26 @@ extern void SpectrumFitImArr (ObitSpectrumFit* in, long nimage,
   imArr[17] = im18;
   imArr[18] = im19;
   imArr[19] = im20;
+  imArr[20] = im21;
+  imArr[21] = im22;
+  imArr[22] = im23;
+  imArr[23] = im24;
+  imArr[24] = im25;
+  imArr[25] = im26;
+  imArr[26] = im27;
+  imArr[27] = im28;
+  imArr[28] = im29;
+  imArr[29] = im30;
+  imArr[30] = im31;
+  imArr[31] = im32;
+  imArr[32] = im33;
+  imArr[33] = im34;
+  imArr[34] = im35;
+  imArr[35] = im36;
+  imArr[36] = im37;
+  imArr[37] = im38;
+  imArr[38] = im39;
+  imArr[39] = im40;
   ObitSpectrumFitImArr(in, (olong)nimage, imArr, outImage, err);
 } // end SpectrumFitImArr 
 
@@ -54676,15 +54701,17 @@ SWIGINTERN PyObject *_wrap_SkyModelVMBeamCreate(PyObject *SWIGUNUSEDPARM(self), 
   char *arg1 = (char *) 0 ;
   ObitImageMosaic *arg2 = (ObitImageMosaic *) 0 ;
   ObitUV *arg3 = (ObitUV *) 0 ;
-  ObitImage *arg4 = (ObitImage *) 0 ;
-  ObitImage *arg5 = (ObitImage *) 0 ;
-  ObitImage *arg6 = (ObitImage *) 0 ;
-  ObitImage *arg7 = (ObitImage *) 0 ;
-  ObitImage *arg8 = (ObitImage *) 0 ;
-  ObitImage *arg9 = (ObitImage *) 0 ;
-  ObitImage *arg10 = (ObitImage *) 0 ;
-  ObitImage *arg11 = (ObitImage *) 0 ;
-  ObitErr *arg12 = (ObitErr *) 0 ;
+  olong arg4 ;
+  ObitImage **arg5 = (ObitImage **) 0 ;
+  ObitImage **arg6 = (ObitImage **) 0 ;
+  ObitImage **arg7 = (ObitImage **) 0 ;
+  ObitImage **arg8 = (ObitImage **) 0 ;
+  ObitImage **arg9 = (ObitImage **) 0 ;
+  ObitImage **arg10 = (ObitImage **) 0 ;
+  ObitImage **arg11 = (ObitImage **) 0 ;
+  ObitImage **arg12 = (ObitImage **) 0 ;
+  ofloat *arg13 = (ofloat *) 0 ;
+  ObitErr *arg14 = (ObitErr *) 0 ;
   int res1 ;
   char *buf1 = 0 ;
   int alloc1 = 0 ;
@@ -54692,28 +54719,16 @@ SWIGINTERN PyObject *_wrap_SkyModelVMBeamCreate(PyObject *SWIGUNUSEDPARM(self), 
   int res2 = 0 ;
   void *argp3 = 0 ;
   int res3 = 0 ;
-  void *argp4 = 0 ;
+  void *argp4 ;
   int res4 = 0 ;
-  void *argp5 = 0 ;
-  int res5 = 0 ;
-  void *argp6 = 0 ;
-  int res6 = 0 ;
-  void *argp7 = 0 ;
-  int res7 = 0 ;
-  void *argp8 = 0 ;
-  int res8 = 0 ;
-  void *argp9 = 0 ;
-  int res9 = 0 ;
-  void *argp10 = 0 ;
-  int res10 = 0 ;
-  void *argp11 = 0 ;
-  int res11 = 0 ;
-  void *argp12 = 0 ;
-  int res12 = 0 ;
-  PyObject *swig_obj[12] ;
+  void *argp13 = 0 ;
+  int res13 = 0 ;
+  void *argp14 = 0 ;
+  int res14 = 0 ;
+  PyObject *swig_obj[14] ;
   ObitSkyModelVMBeam *result = 0 ;
   
-  if (!SWIG_Python_UnpackTuple(args, "SkyModelVMBeamCreate", 12, 12, swig_obj)) SWIG_fail;
+  if (!SWIG_Python_UnpackTuple(args, "SkyModelVMBeamCreate", 14, 14, swig_obj)) SWIG_fail;
   res1 = SWIG_AsCharPtrAndSize(swig_obj[0], &buf1, NULL, &alloc1);
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SkyModelVMBeamCreate" "', argument " "1"" of type '" "char *""'");
@@ -54729,52 +54744,268 @@ SWIGINTERN PyObject *_wrap_SkyModelVMBeamCreate(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "SkyModelVMBeamCreate" "', argument " "3"" of type '" "ObitUV *""'"); 
   }
   arg3 = (ObitUV *)(argp3);
-  res4 = SWIG_ConvertPtr(swig_obj[3], &argp4,SWIGTYPE_p_ObitImage, 0 |  0 );
-  if (!SWIG_IsOK(res4)) {
-    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "SkyModelVMBeamCreate" "', argument " "4"" of type '" "ObitImage *""'"); 
+  {
+    res4 = SWIG_ConvertPtr(swig_obj[3], &argp4, SWIGTYPE_p_olong,  0 );
+    if (!SWIG_IsOK(res4)) {
+      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "SkyModelVMBeamCreate" "', argument " "4"" of type '" "olong""'"); 
+    }  
+    if (!argp4) {
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "SkyModelVMBeamCreate" "', argument " "4"" of type '" "olong""'");
+    } else {
+      arg4 = *((olong *)(argp4));
+    }
   }
-  arg4 = (ObitImage *)(argp4);
-  res5 = SWIG_ConvertPtr(swig_obj[4], &argp5,SWIGTYPE_p_ObitImage, 0 |  0 );
-  if (!SWIG_IsOK(res5)) {
-    SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "SkyModelVMBeamCreate" "', argument " "5"" of type '" "ObitImage *""'"); 
+  {
+    if (PyList_Check(swig_obj[4])) {
+      int size = PyList_Size(swig_obj[4]);
+      int i = 0;
+      
+      arg5 = (ObitImage**) malloc((size+1)*sizeof(ObitImage*));
+      arg5[size] = NULL;  // last pointer NULL
+      for (i = 0; i < size; i++) {
+        PyObject *o = PyList_GetItem(swig_obj[4],i);
+        if (PyString_Check(o)) {
+          if (!SWIG_IsOK(SWIG_ConvertPtr(o,(void **) &arg5[i],SWIGTYPE_p_p_ObitImage,0))) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument. Expected _ObitImage_p.");
+            return NULL;
+          }
+          if (!ObitImageIsA((ObitImage*)arg5[i])) {
+            // check */
+            PyErr_SetString(PyExc_TypeError,"Type error. Expected ObitImage Object.");
+            return NULL;
+          }
+        } else {
+          PyErr_SetString(PyExc_TypeError,"list must contain Strings (ObitImage pointers)");
+          free(arg5);
+          return NULL;
+        }
+      }
+    } else {
+      PyErr_SetString(PyExc_TypeError,"not a list");
+      return NULL;
+    }
   }
-  arg5 = (ObitImage *)(argp5);
-  res6 = SWIG_ConvertPtr(swig_obj[5], &argp6,SWIGTYPE_p_ObitImage, 0 |  0 );
-  if (!SWIG_IsOK(res6)) {
-    SWIG_exception_fail(SWIG_ArgError(res6), "in method '" "SkyModelVMBeamCreate" "', argument " "6"" of type '" "ObitImage *""'"); 
+  {
+    if (PyList_Check(swig_obj[5])) {
+      int size = PyList_Size(swig_obj[5]);
+      int i = 0;
+      
+      arg6 = (ObitImage**) malloc((size+1)*sizeof(ObitImage*));
+      arg6[size] = NULL;  // last pointer NULL
+      for (i = 0; i < size; i++) {
+        PyObject *o = PyList_GetItem(swig_obj[5],i);
+        if (PyString_Check(o)) {
+          if (!SWIG_IsOK(SWIG_ConvertPtr(o,(void **) &arg6[i],SWIGTYPE_p_p_ObitImage,0))) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument. Expected _ObitImage_p.");
+            return NULL;
+          }
+          if (!ObitImageIsA((ObitImage*)arg6[i])) {
+            // check */
+            PyErr_SetString(PyExc_TypeError,"Type error. Expected ObitImage Object.");
+            return NULL;
+          }
+        } else {
+          PyErr_SetString(PyExc_TypeError,"list must contain Strings (ObitImage pointers)");
+          free(arg6);
+          return NULL;
+        }
+      }
+    } else {
+      PyErr_SetString(PyExc_TypeError,"not a list");
+      return NULL;
+    }
   }
-  arg6 = (ObitImage *)(argp6);
-  res7 = SWIG_ConvertPtr(swig_obj[6], &argp7,SWIGTYPE_p_ObitImage, 0 |  0 );
-  if (!SWIG_IsOK(res7)) {
-    SWIG_exception_fail(SWIG_ArgError(res7), "in method '" "SkyModelVMBeamCreate" "', argument " "7"" of type '" "ObitImage *""'"); 
+  {
+    if (PyList_Check(swig_obj[6])) {
+      int size = PyList_Size(swig_obj[6]);
+      int i = 0;
+      
+      arg7 = (ObitImage**) malloc((size+1)*sizeof(ObitImage*));
+      arg7[size] = NULL;  // last pointer NULL
+      for (i = 0; i < size; i++) {
+        PyObject *o = PyList_GetItem(swig_obj[6],i);
+        if (PyString_Check(o)) {
+          if (!SWIG_IsOK(SWIG_ConvertPtr(o,(void **) &arg7[i],SWIGTYPE_p_p_ObitImage,0))) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument. Expected _ObitImage_p.");
+            return NULL;
+          }
+          if (!ObitImageIsA((ObitImage*)arg7[i])) {
+            // check */
+            PyErr_SetString(PyExc_TypeError,"Type error. Expected ObitImage Object.");
+            return NULL;
+          }
+        } else {
+          PyErr_SetString(PyExc_TypeError,"list must contain Strings (ObitImage pointers)");
+          free(arg7);
+          return NULL;
+        }
+      }
+    } else {
+      PyErr_SetString(PyExc_TypeError,"not a list");
+      return NULL;
+    }
   }
-  arg7 = (ObitImage *)(argp7);
-  res8 = SWIG_ConvertPtr(swig_obj[7], &argp8,SWIGTYPE_p_ObitImage, 0 |  0 );
-  if (!SWIG_IsOK(res8)) {
-    SWIG_exception_fail(SWIG_ArgError(res8), "in method '" "SkyModelVMBeamCreate" "', argument " "8"" of type '" "ObitImage *""'"); 
+  {
+    if (PyList_Check(swig_obj[7])) {
+      int size = PyList_Size(swig_obj[7]);
+      int i = 0;
+      
+      arg8 = (ObitImage**) malloc((size+1)*sizeof(ObitImage*));
+      arg8[size] = NULL;  // last pointer NULL
+      for (i = 0; i < size; i++) {
+        PyObject *o = PyList_GetItem(swig_obj[7],i);
+        if (PyString_Check(o)) {
+          if (!SWIG_IsOK(SWIG_ConvertPtr(o,(void **) &arg8[i],SWIGTYPE_p_p_ObitImage,0))) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument. Expected _ObitImage_p.");
+            return NULL;
+          }
+          if (!ObitImageIsA((ObitImage*)arg8[i])) {
+            // check */
+            PyErr_SetString(PyExc_TypeError,"Type error. Expected ObitImage Object.");
+            return NULL;
+          }
+        } else {
+          PyErr_SetString(PyExc_TypeError,"list must contain Strings (ObitImage pointers)");
+          free(arg8);
+          return NULL;
+        }
+      }
+    } else {
+      PyErr_SetString(PyExc_TypeError,"not a list");
+      return NULL;
+    }
   }
-  arg8 = (ObitImage *)(argp8);
-  res9 = SWIG_ConvertPtr(swig_obj[8], &argp9,SWIGTYPE_p_ObitImage, 0 |  0 );
-  if (!SWIG_IsOK(res9)) {
-    SWIG_exception_fail(SWIG_ArgError(res9), "in method '" "SkyModelVMBeamCreate" "', argument " "9"" of type '" "ObitImage *""'"); 
+  {
+    if (PyList_Check(swig_obj[8])) {
+      int size = PyList_Size(swig_obj[8]);
+      int i = 0;
+      
+      arg9 = (ObitImage**) malloc((size+1)*sizeof(ObitImage*));
+      arg9[size] = NULL;  // last pointer NULL
+      for (i = 0; i < size; i++) {
+        PyObject *o = PyList_GetItem(swig_obj[8],i);
+        if (PyString_Check(o)) {
+          if (!SWIG_IsOK(SWIG_ConvertPtr(o,(void **) &arg9[i],SWIGTYPE_p_p_ObitImage,0))) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument. Expected _ObitImage_p.");
+            return NULL;
+          }
+          if (!ObitImageIsA((ObitImage*)arg9[i])) {
+            // check */
+            PyErr_SetString(PyExc_TypeError,"Type error. Expected ObitImage Object.");
+            return NULL;
+          }
+        } else {
+          PyErr_SetString(PyExc_TypeError,"list must contain Strings (ObitImage pointers)");
+          free(arg9);
+          return NULL;
+        }
+      }
+    } else {
+      PyErr_SetString(PyExc_TypeError,"not a list");
+      return NULL;
+    }
   }
-  arg9 = (ObitImage *)(argp9);
-  res10 = SWIG_ConvertPtr(swig_obj[9], &argp10,SWIGTYPE_p_ObitImage, 0 |  0 );
-  if (!SWIG_IsOK(res10)) {
-    SWIG_exception_fail(SWIG_ArgError(res10), "in method '" "SkyModelVMBeamCreate" "', argument " "10"" of type '" "ObitImage *""'"); 
+  {
+    if (PyList_Check(swig_obj[9])) {
+      int size = PyList_Size(swig_obj[9]);
+      int i = 0;
+      
+      arg10 = (ObitImage**) malloc((size+1)*sizeof(ObitImage*));
+      arg10[size] = NULL;  // last pointer NULL
+      for (i = 0; i < size; i++) {
+        PyObject *o = PyList_GetItem(swig_obj[9],i);
+        if (PyString_Check(o)) {
+          if (!SWIG_IsOK(SWIG_ConvertPtr(o,(void **) &arg10[i],SWIGTYPE_p_p_ObitImage,0))) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument. Expected _ObitImage_p.");
+            return NULL;
+          }
+          if (!ObitImageIsA((ObitImage*)arg10[i])) {
+            // check */
+            PyErr_SetString(PyExc_TypeError,"Type error. Expected ObitImage Object.");
+            return NULL;
+          }
+        } else {
+          PyErr_SetString(PyExc_TypeError,"list must contain Strings (ObitImage pointers)");
+          free(arg10);
+          return NULL;
+        }
+      }
+    } else {
+      PyErr_SetString(PyExc_TypeError,"not a list");
+      return NULL;
+    }
   }
-  arg10 = (ObitImage *)(argp10);
-  res11 = SWIG_ConvertPtr(swig_obj[10], &argp11,SWIGTYPE_p_ObitImage, 0 |  0 );
-  if (!SWIG_IsOK(res11)) {
-    SWIG_exception_fail(SWIG_ArgError(res11), "in method '" "SkyModelVMBeamCreate" "', argument " "11"" of type '" "ObitImage *""'"); 
+  {
+    if (PyList_Check(swig_obj[10])) {
+      int size = PyList_Size(swig_obj[10]);
+      int i = 0;
+      
+      arg11 = (ObitImage**) malloc((size+1)*sizeof(ObitImage*));
+      arg11[size] = NULL;  // last pointer NULL
+      for (i = 0; i < size; i++) {
+        PyObject *o = PyList_GetItem(swig_obj[10],i);
+        if (PyString_Check(o)) {
+          if (!SWIG_IsOK(SWIG_ConvertPtr(o,(void **) &arg11[i],SWIGTYPE_p_p_ObitImage,0))) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument. Expected _ObitImage_p.");
+            return NULL;
+          }
+          if (!ObitImageIsA((ObitImage*)arg11[i])) {
+            // check */
+            PyErr_SetString(PyExc_TypeError,"Type error. Expected ObitImage Object.");
+            return NULL;
+          }
+        } else {
+          PyErr_SetString(PyExc_TypeError,"list must contain Strings (ObitImage pointers)");
+          free(arg11);
+          return NULL;
+        }
+      }
+    } else {
+      PyErr_SetString(PyExc_TypeError,"not a list");
+      return NULL;
+    }
   }
-  arg11 = (ObitImage *)(argp11);
-  res12 = SWIG_ConvertPtr(swig_obj[11], &argp12,SWIGTYPE_p_ObitErr, 0 |  0 );
-  if (!SWIG_IsOK(res12)) {
-    SWIG_exception_fail(SWIG_ArgError(res12), "in method '" "SkyModelVMBeamCreate" "', argument " "12"" of type '" "ObitErr *""'"); 
+  {
+    if (PyList_Check(swig_obj[11])) {
+      int size = PyList_Size(swig_obj[11]);
+      int i = 0;
+      
+      arg12 = (ObitImage**) malloc((size+1)*sizeof(ObitImage*));
+      arg12[size] = NULL;  // last pointer NULL
+      for (i = 0; i < size; i++) {
+        PyObject *o = PyList_GetItem(swig_obj[11],i);
+        if (PyString_Check(o)) {
+          if (!SWIG_IsOK(SWIG_ConvertPtr(o,(void **) &arg12[i],SWIGTYPE_p_p_ObitImage,0))) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument. Expected _ObitImage_p.");
+            return NULL;
+          }
+          if (!ObitImageIsA((ObitImage*)arg12[i])) {
+            // check */
+            PyErr_SetString(PyExc_TypeError,"Type error. Expected ObitImage Object.");
+            return NULL;
+          }
+        } else {
+          PyErr_SetString(PyExc_TypeError,"list must contain Strings (ObitImage pointers)");
+          free(arg12);
+          return NULL;
+        }
+      }
+    } else {
+      PyErr_SetString(PyExc_TypeError,"not a list");
+      return NULL;
+    }
   }
-  arg12 = (ObitErr *)(argp12);
-  result = (ObitSkyModelVMBeam *)SkyModelVMBeamCreate(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12);
+  res13 = SWIG_ConvertPtr(swig_obj[12], &argp13,SWIGTYPE_p_ofloat, 0 |  0 );
+  if (!SWIG_IsOK(res13)) {
+    SWIG_exception_fail(SWIG_ArgError(res13), "in method '" "SkyModelVMBeamCreate" "', argument " "13"" of type '" "ofloat *""'"); 
+  }
+  arg13 = (ofloat *)(argp13);
+  res14 = SWIG_ConvertPtr(swig_obj[13], &argp14,SWIGTYPE_p_ObitErr, 0 |  0 );
+  if (!SWIG_IsOK(res14)) {
+    SWIG_exception_fail(SWIG_ArgError(res14), "in method '" "SkyModelVMBeamCreate" "', argument " "14"" of type '" "ObitErr *""'"); 
+  }
+  arg14 = (ObitErr *)(argp14);
+  result = (ObitSkyModelVMBeam *)SkyModelVMBeamCreate(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14);
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ObitSkyModelVMBeam, 0 |  0 );
   if (alloc1 == SWIG_NEWOBJ) free((char*)buf1);
   return resultobj;
@@ -56368,7 +56599,27 @@ SWIGINTERN PyObject *_wrap_SpectrumFitImArr(PyObject *SWIGUNUSEDPARM(self), PyOb
   ObitImage *arg21 = (ObitImage *) 0 ;
   ObitImage *arg22 = (ObitImage *) 0 ;
   ObitImage *arg23 = (ObitImage *) 0 ;
-  ObitErr *arg24 = (ObitErr *) 0 ;
+  ObitImage *arg24 = (ObitImage *) 0 ;
+  ObitImage *arg25 = (ObitImage *) 0 ;
+  ObitImage *arg26 = (ObitImage *) 0 ;
+  ObitImage *arg27 = (ObitImage *) 0 ;
+  ObitImage *arg28 = (ObitImage *) 0 ;
+  ObitImage *arg29 = (ObitImage *) 0 ;
+  ObitImage *arg30 = (ObitImage *) 0 ;
+  ObitImage *arg31 = (ObitImage *) 0 ;
+  ObitImage *arg32 = (ObitImage *) 0 ;
+  ObitImage *arg33 = (ObitImage *) 0 ;
+  ObitImage *arg34 = (ObitImage *) 0 ;
+  ObitImage *arg35 = (ObitImage *) 0 ;
+  ObitImage *arg36 = (ObitImage *) 0 ;
+  ObitImage *arg37 = (ObitImage *) 0 ;
+  ObitImage *arg38 = (ObitImage *) 0 ;
+  ObitImage *arg39 = (ObitImage *) 0 ;
+  ObitImage *arg40 = (ObitImage *) 0 ;
+  ObitImage *arg41 = (ObitImage *) 0 ;
+  ObitImage *arg42 = (ObitImage *) 0 ;
+  ObitImage *arg43 = (ObitImage *) 0 ;
+  ObitErr *arg44 = (ObitErr *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   long val2 ;
@@ -56417,9 +56668,49 @@ SWIGINTERN PyObject *_wrap_SpectrumFitImArr(PyObject *SWIGUNUSEDPARM(self), PyOb
   int res23 = 0 ;
   void *argp24 = 0 ;
   int res24 = 0 ;
-  PyObject *swig_obj[24] ;
+  void *argp25 = 0 ;
+  int res25 = 0 ;
+  void *argp26 = 0 ;
+  int res26 = 0 ;
+  void *argp27 = 0 ;
+  int res27 = 0 ;
+  void *argp28 = 0 ;
+  int res28 = 0 ;
+  void *argp29 = 0 ;
+  int res29 = 0 ;
+  void *argp30 = 0 ;
+  int res30 = 0 ;
+  void *argp31 = 0 ;
+  int res31 = 0 ;
+  void *argp32 = 0 ;
+  int res32 = 0 ;
+  void *argp33 = 0 ;
+  int res33 = 0 ;
+  void *argp34 = 0 ;
+  int res34 = 0 ;
+  void *argp35 = 0 ;
+  int res35 = 0 ;
+  void *argp36 = 0 ;
+  int res36 = 0 ;
+  void *argp37 = 0 ;
+  int res37 = 0 ;
+  void *argp38 = 0 ;
+  int res38 = 0 ;
+  void *argp39 = 0 ;
+  int res39 = 0 ;
+  void *argp40 = 0 ;
+  int res40 = 0 ;
+  void *argp41 = 0 ;
+  int res41 = 0 ;
+  void *argp42 = 0 ;
+  int res42 = 0 ;
+  void *argp43 = 0 ;
+  int res43 = 0 ;
+  void *argp44 = 0 ;
+  int res44 = 0 ;
+  PyObject *swig_obj[44] ;
   
-  if (!SWIG_Python_UnpackTuple(args, "SpectrumFitImArr", 24, 24, swig_obj)) SWIG_fail;
+  if (!SWIG_Python_UnpackTuple(args, "SpectrumFitImArr", 44, 44, swig_obj)) SWIG_fail;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ObitSpectrumFit, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "SpectrumFitImArr" "', argument " "1"" of type '" "ObitSpectrumFit *""'"); 
@@ -56535,12 +56826,112 @@ SWIGINTERN PyObject *_wrap_SpectrumFitImArr(PyObject *SWIGUNUSEDPARM(self), PyOb
     SWIG_exception_fail(SWIG_ArgError(res23), "in method '" "SpectrumFitImArr" "', argument " "23"" of type '" "ObitImage *""'"); 
   }
   arg23 = (ObitImage *)(argp23);
-  res24 = SWIG_ConvertPtr(swig_obj[23], &argp24,SWIGTYPE_p_ObitErr, 0 |  0 );
+  res24 = SWIG_ConvertPtr(swig_obj[23], &argp24,SWIGTYPE_p_ObitImage, 0 |  0 );
   if (!SWIG_IsOK(res24)) {
-    SWIG_exception_fail(SWIG_ArgError(res24), "in method '" "SpectrumFitImArr" "', argument " "24"" of type '" "ObitErr *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res24), "in method '" "SpectrumFitImArr" "', argument " "24"" of type '" "ObitImage *""'"); 
   }
-  arg24 = (ObitErr *)(argp24);
-  SpectrumFitImArr(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14,arg15,arg16,arg17,arg18,arg19,arg20,arg21,arg22,arg23,arg24);
+  arg24 = (ObitImage *)(argp24);
+  res25 = SWIG_ConvertPtr(swig_obj[24], &argp25,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res25)) {
+    SWIG_exception_fail(SWIG_ArgError(res25), "in method '" "SpectrumFitImArr" "', argument " "25"" of type '" "ObitImage *""'"); 
+  }
+  arg25 = (ObitImage *)(argp25);
+  res26 = SWIG_ConvertPtr(swig_obj[25], &argp26,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res26)) {
+    SWIG_exception_fail(SWIG_ArgError(res26), "in method '" "SpectrumFitImArr" "', argument " "26"" of type '" "ObitImage *""'"); 
+  }
+  arg26 = (ObitImage *)(argp26);
+  res27 = SWIG_ConvertPtr(swig_obj[26], &argp27,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res27)) {
+    SWIG_exception_fail(SWIG_ArgError(res27), "in method '" "SpectrumFitImArr" "', argument " "27"" of type '" "ObitImage *""'"); 
+  }
+  arg27 = (ObitImage *)(argp27);
+  res28 = SWIG_ConvertPtr(swig_obj[27], &argp28,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res28)) {
+    SWIG_exception_fail(SWIG_ArgError(res28), "in method '" "SpectrumFitImArr" "', argument " "28"" of type '" "ObitImage *""'"); 
+  }
+  arg28 = (ObitImage *)(argp28);
+  res29 = SWIG_ConvertPtr(swig_obj[28], &argp29,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res29)) {
+    SWIG_exception_fail(SWIG_ArgError(res29), "in method '" "SpectrumFitImArr" "', argument " "29"" of type '" "ObitImage *""'"); 
+  }
+  arg29 = (ObitImage *)(argp29);
+  res30 = SWIG_ConvertPtr(swig_obj[29], &argp30,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res30)) {
+    SWIG_exception_fail(SWIG_ArgError(res30), "in method '" "SpectrumFitImArr" "', argument " "30"" of type '" "ObitImage *""'"); 
+  }
+  arg30 = (ObitImage *)(argp30);
+  res31 = SWIG_ConvertPtr(swig_obj[30], &argp31,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res31)) {
+    SWIG_exception_fail(SWIG_ArgError(res31), "in method '" "SpectrumFitImArr" "', argument " "31"" of type '" "ObitImage *""'"); 
+  }
+  arg31 = (ObitImage *)(argp31);
+  res32 = SWIG_ConvertPtr(swig_obj[31], &argp32,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res32)) {
+    SWIG_exception_fail(SWIG_ArgError(res32), "in method '" "SpectrumFitImArr" "', argument " "32"" of type '" "ObitImage *""'"); 
+  }
+  arg32 = (ObitImage *)(argp32);
+  res33 = SWIG_ConvertPtr(swig_obj[32], &argp33,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res33)) {
+    SWIG_exception_fail(SWIG_ArgError(res33), "in method '" "SpectrumFitImArr" "', argument " "33"" of type '" "ObitImage *""'"); 
+  }
+  arg33 = (ObitImage *)(argp33);
+  res34 = SWIG_ConvertPtr(swig_obj[33], &argp34,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res34)) {
+    SWIG_exception_fail(SWIG_ArgError(res34), "in method '" "SpectrumFitImArr" "', argument " "34"" of type '" "ObitImage *""'"); 
+  }
+  arg34 = (ObitImage *)(argp34);
+  res35 = SWIG_ConvertPtr(swig_obj[34], &argp35,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res35)) {
+    SWIG_exception_fail(SWIG_ArgError(res35), "in method '" "SpectrumFitImArr" "', argument " "35"" of type '" "ObitImage *""'"); 
+  }
+  arg35 = (ObitImage *)(argp35);
+  res36 = SWIG_ConvertPtr(swig_obj[35], &argp36,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res36)) {
+    SWIG_exception_fail(SWIG_ArgError(res36), "in method '" "SpectrumFitImArr" "', argument " "36"" of type '" "ObitImage *""'"); 
+  }
+  arg36 = (ObitImage *)(argp36);
+  res37 = SWIG_ConvertPtr(swig_obj[36], &argp37,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res37)) {
+    SWIG_exception_fail(SWIG_ArgError(res37), "in method '" "SpectrumFitImArr" "', argument " "37"" of type '" "ObitImage *""'"); 
+  }
+  arg37 = (ObitImage *)(argp37);
+  res38 = SWIG_ConvertPtr(swig_obj[37], &argp38,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res38)) {
+    SWIG_exception_fail(SWIG_ArgError(res38), "in method '" "SpectrumFitImArr" "', argument " "38"" of type '" "ObitImage *""'"); 
+  }
+  arg38 = (ObitImage *)(argp38);
+  res39 = SWIG_ConvertPtr(swig_obj[38], &argp39,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res39)) {
+    SWIG_exception_fail(SWIG_ArgError(res39), "in method '" "SpectrumFitImArr" "', argument " "39"" of type '" "ObitImage *""'"); 
+  }
+  arg39 = (ObitImage *)(argp39);
+  res40 = SWIG_ConvertPtr(swig_obj[39], &argp40,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res40)) {
+    SWIG_exception_fail(SWIG_ArgError(res40), "in method '" "SpectrumFitImArr" "', argument " "40"" of type '" "ObitImage *""'"); 
+  }
+  arg40 = (ObitImage *)(argp40);
+  res41 = SWIG_ConvertPtr(swig_obj[40], &argp41,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res41)) {
+    SWIG_exception_fail(SWIG_ArgError(res41), "in method '" "SpectrumFitImArr" "', argument " "41"" of type '" "ObitImage *""'"); 
+  }
+  arg41 = (ObitImage *)(argp41);
+  res42 = SWIG_ConvertPtr(swig_obj[41], &argp42,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res42)) {
+    SWIG_exception_fail(SWIG_ArgError(res42), "in method '" "SpectrumFitImArr" "', argument " "42"" of type '" "ObitImage *""'"); 
+  }
+  arg42 = (ObitImage *)(argp42);
+  res43 = SWIG_ConvertPtr(swig_obj[42], &argp43,SWIGTYPE_p_ObitImage, 0 |  0 );
+  if (!SWIG_IsOK(res43)) {
+    SWIG_exception_fail(SWIG_ArgError(res43), "in method '" "SpectrumFitImArr" "', argument " "43"" of type '" "ObitImage *""'"); 
+  }
+  arg43 = (ObitImage *)(argp43);
+  res44 = SWIG_ConvertPtr(swig_obj[43], &argp44,SWIGTYPE_p_ObitErr, 0 |  0 );
+  if (!SWIG_IsOK(res44)) {
+    SWIG_exception_fail(SWIG_ArgError(res44), "in method '" "SpectrumFitImArr" "', argument " "44"" of type '" "ObitErr *""'"); 
+  }
+  arg44 = (ObitErr *)(argp44);
+  SpectrumFitImArr(arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12,arg13,arg14,arg15,arg16,arg17,arg18,arg19,arg20,arg21,arg22,arg23,arg24,arg25,arg26,arg27,arg28,arg29,arg30,arg31,arg32,arg33,arg34,arg35,arg36,arg37,arg38,arg39,arg40,arg41,arg42,arg43,arg44);
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -73757,6 +74148,7 @@ static swig_type_info _swigt__p_gint32 = {"_p_gint32", "gint32 *", 0, 0, (void*)
 static swig_type_info _swigt__p_long = {"_p_long", "long *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_ofloat = {"_p_ofloat", "ofloat *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_olong = {"_p_olong", "olong *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_p_ObitImage = {"_p_p_ObitImage", "ObitImage **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_ObitUV = {"_p_p_ObitUV", "ObitUV **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_void = {"_p_void", "void *", 0, 0, (void*)0, 0};
@@ -73869,6 +74261,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_long,
   &_swigt__p_ofloat,
   &_swigt__p_olong,
+  &_swigt__p_p_ObitImage,
   &_swigt__p_p_ObitUV,
   &_swigt__p_p_char,
   &_swigt__p_void,
@@ -73981,6 +74374,7 @@ static swig_cast_info _swigc__p_gint32[] = {  {&_swigt__p_gint32, 0, 0, 0},{0, 0
 static swig_cast_info _swigc__p_long[] = {  {&_swigt__p_long, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_ofloat[] = {  {&_swigt__p_ofloat, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_olong[] = {  {&_swigt__p_olong, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_p_ObitImage[] = {  {&_swigt__p_p_ObitImage, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_ObitUV[] = {  {&_swigt__p_p_ObitUV, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_char[] = {  {&_swigt__p_p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_void[] = {  {&_swigt__p_void, 0, 0, 0},{0, 0, 0, 0}};
@@ -74093,6 +74487,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_long,
   _swigc__p_ofloat,
   _swigc__p_olong,
+  _swigc__p_p_ObitImage,
   _swigc__p_p_ObitUV,
   _swigc__p_p_char,
   _swigc__p_void,
