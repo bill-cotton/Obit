@@ -4815,3 +4815,9 @@ Summary: Get it right
 Obit/tasks/MFBeam.c Obit/tasks/BeamCor.c  Obit/tasks/UVPolCor.c 
     MFBeam upgrade, interface changes
 22 Oct 2020 svn 627
+
+=====================================================================
+Summary: Get it right
+ObitTalk/configure ObitTalk/configure.ac
+    Goddamn python3 print
+22 Oct 2020 svn 628

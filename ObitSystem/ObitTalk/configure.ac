@@ -124,7 +124,7 @@ echo $ECHO_N "checking for $am_display_PYTHON version... $ECHO_C" >&6
 if test "${am_cv_python_version+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  am_cv_python_version=`$PYTHON -c "import sys; print sys.version[:3]"`
+  am_cv_python_version=`$PYTHON -c "import sys; print (sys.version[:3])"`
 fi
 echo "$as_me:$LINENO: result: $am_cv_python_version" >&5
 echo "${ECHO_T}$am_cv_python_version" >&6
@@ -143,7 +143,7 @@ echo $ECHO_N "checking for $am_display_PYTHON platform... $ECHO_C" >&6
 if test "${am_cv_python_platform+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  am_cv_python_platform=`$PYTHON -c "import sys; print sys.platform"`
+  am_cv_python_platform=`$PYTHON -c "import sys; print (sys.platform)"`
 fi
 echo "$as_me:$LINENO: result: $am_cv_python_platform" >&5
 echo "${ECHO_T}$am_cv_python_platform" >&6
@@ -157,7 +157,7 @@ echo $ECHO_N "checking for $am_display_PYTHON script directory... $ECHO_C" >&6
 if test "${am_cv_python_pythondir+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  am_cv_python_pythondir=`$PYTHON -c "from distutils import sysconfig; print sysconfig.get_python_lib(0,0,prefix='$PYTHON_PREFIX')" 2>/dev/null ||
+  am_cv_python_pythondir=`$PYTHON -c "from distutils import sysconfig; print (sysconfig.get_python_lib(0,0,prefix='$PYTHON_PREFIX'))" 2>/dev/null ||
      echo "$PYTHON_PREFIX/lib/python$PYTHON_VERSION/site-packages"`
 fi
 echo "$as_me:$LINENO: result: $am_cv_python_pythondir" >&5
@@ -174,7 +174,7 @@ echo $ECHO_N "checking for $am_display_PYTHON extension module directory... $ECH
 if test "${am_cv_python_pyexecdir+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  am_cv_python_pyexecdir=`$PYTHON -c "from distutils import sysconfig; print sysconfig.get_python_lib(1,0,prefix='$PYTHON_EXEC_PREFIX')" 2>/dev/null ||
+  am_cv_python_pyexecdir=`$PYTHON -c "from distutils import sysconfig; print (sysconfig.get_python_lib(1,0,prefix='$PYTHON_EXEC_PREFIX'))" 2>/dev/null ||
      echo "${PYTHON_EXEC_PREFIX}/lib/python${PYTHON_VERSION}/site-packages"`
 fi
 echo "$as_me:$LINENO: result: $am_cv_python_pyexecdir" >&5
@@ -210,9 +210,9 @@ cat <<_ACEOF >conftest.py
 try:
     import OSystem, OErr
 except:
-    print "missing"
+    print ("missing")
 else:
-    print "found"
+    print ("found")
 _ACEOF
 PYTHONPATH=$PYTHONPATH:$OBIT_PYTHONPATH; export PYTHONPATH
 ac_cv_obit=`$PYTHON conftest.py 2>/dev/null`
