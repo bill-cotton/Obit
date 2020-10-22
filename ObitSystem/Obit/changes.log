@@ -4810,3 +4810,8 @@ Obit/src/ObitSkyModelVMBeamMF.c
     Proper declarations for no AVX
 22 Oct 2020 svn 626
 
+=====================================================================
+Summary: Get it right
+Obit/tasks/MFBeam.c Obit/tasks/BeamCor.c  Obit/tasks/UVPolCor.c 
+    MFBeam upgrade, interface changes
+22 Oct 2020 svn 627

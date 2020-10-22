@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Read BDF format data, convert to Obit UV                           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2019                                          */
+/*;  Copyright (C) 2010-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -261,34 +261,34 @@ int main ( int argc, char **argv )
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
 
-  if (err->error) ierr = 1;  ObitErrLog(err);   if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);}   if (ierr!=0) goto exit;
 
   /* Swallow SDM */
   SDMData = ObitSDMDataCreate ("SDM", dataroot, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);}  if (ierr!=0) goto exit;
 
   /* Hack to patch EVLA screwup */
   HackPTB(SDMData, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit; 
+  if (err->error) {ierr = 1;  ObitErrLog(err);}  if (ierr!=0) goto exit; 
 
   /* Create output, get header info, array geometry, initialize output */
   GetHeader (&outData, SDMData, myInput, err); 
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit; 
+  if (err->error) {ierr = 1;  ObitErrLog(err);}  if (ierr!=0) goto exit; 
 
   /* Open output data */
   if ((ObitUVOpen (outData, OBIT_IO_ReadWrite, err) 
        != OBIT_IO_OK) || (err->error>0))  /* error test */
     Obit_log_error(err, OBIT_Error, "ERROR opening output UV file %s", outData->name);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);}  if (ierr!=0) goto exit;
 
   /* Init uvw calculator */
   uvwCalc = ObitUVWCalcCreate("UVWCalc", outData, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);}  if (ierr!=0) goto exit;
   
   /* convert data  */
   BDFData = GetData (SDMData, myInput, outData, err); 
-  /*if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit; tolerate failure */
-  ObitErrLog(err);  ObitErrClear(err);  
+  if (err->error) {ierr = 1;  ObitErrLog(err);}  if (ierr!=0) goto exit; 
+  /*ObitErrLog(err);  ObitErrClear(err);  tolerate failure - nah confusing */
 
   /* Close output uv data */
   if ((ObitUVClose (outData, err) != OBIT_IO_OK) || (err->error>0))
@@ -305,11 +305,11 @@ int main ( int argc, char **argv )
 
   /* Read NX table to internal array */
   ReadNXTable(outData, err);  
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);}  if (ierr!=0) goto exit;
   
   /* Pointing table */
   GetPointingInfo (SDMData, outData, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);}  if (ierr!=0) goto exit;
 
   GetFreqAvgInfo (BDFData, outData, err);     /* CQ tables */
   /* Copy EVLA tables */
@@ -327,16 +327,16 @@ int main ( int argc, char **argv )
   GetEOPInfo (SDMData, outData, err);        /*   Earth Orientation (CT) table */
   GetFlagInfo (SDMData, outData, err);       /*   FLAG tables */
   GetWeatherInfo   (SDMData, outData, err);  /*   Weather table */
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);}  if (ierr!=0) goto exit;
 
   /* Check scan intents for online only calibrations */
   ObitInfoListGetTest(myInput, "doOnline", &type, dim, &doOnline);
   if (!doOnline) FlagIntent (SDMData, outData, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);}  if (ierr!=0) goto exit;
 
   /* Update An tables with correct ref. date */
   /*for (i=1; i<=numArray; i++)  UpdateAntennaInfo (outData, i, err);*/
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);}  if (ierr!=0) goto exit;
 
   /* Create CL table - interval etc,  set in setOutputData */
   if (SDMData->isEVLA) {
@@ -345,10 +345,10 @@ int main ( int argc, char **argv )
     /* Delete old CL table */
     if (!newOutput)
       ObitUVZapTable (outData, "AIPS CL", 1, err);
-    if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+    if (err->error) {ierr = 1;  ObitErrLog(err);}  if (ierr!=0) goto exit;
     /*ObitTableCLGetDummy (outData, outData, 1, err); */
     CalTab = ObitGainCalCalc (outData, FALSE, err);
-    if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+    if (err->error) {ierr = 1;  ObitErrLog(err);}  if (ierr!=0) goto exit;
   }
 
   if (SDMData->isALMA) {
@@ -358,7 +358,7 @@ int main ( int argc, char **argv )
     /* Convert ALMA WVR table to SN Table
     if (SDMData->CalWVRTab && (SDMData->CalWVRTab->nrows>0)) {
       SNTab = ObitSDMDataWVR2SN (outData, SDMData, err);
-      if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+      if (err->error) {ierr = 1;  ObitErrLog(err);}  if (ierr!=0) goto exit;
     } */
     /* Convert ALMA CalAtmosphere table to SN Table */
     if (SDMData->calAtmosphereTab && (SDMData->calAtmosphereTab->nrows>0)) {
@@ -366,23 +366,24 @@ int main ( int argc, char **argv )
       SpWinArray  = ObitSDMDataGetSWArray (SDMData, selMain, SWOrder);
       SNTab = ObitSDMDataAtm2SN (outData, SDMData, SpWinArray, err);
       SpWinArray = ObitSDMDataKillSWArray (SpWinArray);
-      if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+      if (err->error) {ierr = 1;  ObitErrLog(err);}  if (ierr!=0) goto exit;
     }
   }
 
   /* Add positions in Source table for objects in the ephemeris */
   UpdateEphemSource (outData, srcEphem, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);}  if (ierr!=0) goto exit;
 
   /* History */
   BDFInHistory (myInput, SDMData, outData, err);
   
   /* show any errors */
-  if (err->error) ierr = 1;   ObitErrLog(err);   if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;   ObitErrLog(err);}   if (ierr!=0) goto exit;
   
   /* Shutdown Obit */
  exit:
   ObitReturnDumpRetCode (ierr, outfile, myOutput, err);  /* Final output */
+  ObitErrLog(err);
   mySystem = ObitSystemShutdown (mySystem);
   
   /* cleanup */
@@ -703,7 +704,7 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
 
     /* outName given? */
     ObitInfoListGetP (myInput, "outName", &type, dim, (gpointer)&strTemp);
-    for (i=0; i<12; i++) Aname[i] = ' ';  Aname[i] = 0;
+    for (i=0; i<12; i++) {Aname[i] = ' '; } Aname[i] = 0;
     for (i=0; i<MIN(12,dim[0]); i++) Aname[i] = strTemp[i];
     /* Save any defaulting on myInput */
     dim[0] = 12;
@@ -753,7 +754,7 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
     /* outFile given? */
     ObitInfoListGetP (myInput, "outFile", &type, dim, (gpointer)&strTemp);
     n = MIN (128, dim[0]);
-    for (i=0; i<n; i++) outFile[i] = strTemp[i]; outFile[i] = 0;
+    for (i=0; i<n; i++) {outFile[i] = strTemp[i];} outFile[i] = 0;
     ObitTrimTrail(outFile);  /* remove trailing blanks */
 
     /* Save any defaulting on myInput */
@@ -2491,7 +2492,7 @@ ObitBDFData* GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outDa
     /* Init Scan/subscan */
     ObitBDFDataInitScan (BDFData, iMain, SWOrder, selChan, selIF, err);
     if (err->error) Obit_traceback_val (err, routine, outData->name, BDFData);
-    
+
     /* Consistency check - loop over selected Spectral windows */
     nIFsel = 0;   /* Number of selected IFs */
     iSW    = 0;   /* input Spectral window index */
