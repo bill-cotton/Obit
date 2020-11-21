@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2019                                          */
+/*;  Copyright (C) 2004-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -835,20 +835,20 @@ void ObitDConCleanWindowOuter (ObitDConCleanWindow *in, olong field,
     break;
   case OBIT_DConCleanWindow_round:
   case OBIT_DConCleanWindow_unround:
-    if ((window[1] - window[0])<0) {
-      window[0] = window[1];
+    if ((window[1] - window[0])<2) {
+      window[0] = window[1]+2;
       trim = TRUE;
    }
-    if ((window[1] + window[0])>in->naxis[field-1][0]) {
-      window[0] = MAX (0, in->naxis[field-1][0] - window[1]);
+    if ((window[1] + window[0])>(in->naxis[field-1][0]-2)) {
+      window[0] = MAX (0, in->naxis[field-1][0] - window[1]-2);
       trim = TRUE;
     }
-    if ((window[2] - window[0])<0) {
-      window[0] = window[2];
+    if ((window[2] - window[0])<2) {
+      window[0] = window[2]+2;
       trim = TRUE;
     }
-    if ((window[2] + window[0])>in->naxis[field-1][1]) {
-      window[0] =  MAX (0, in->naxis[field-1][1] - window[2]);
+    if ((window[2] + window[0])>in->naxis[field-1][1]-2) {
+      window[0] =  MAX (0, in->naxis[field-1][1] - window[2]-2);
       trim = TRUE;
    }
     break;
@@ -1537,7 +1537,7 @@ olong ObitDConCleanWindowCount (ObitDConCleanWindow *in, olong field,
  * outside the previous inner window, a new round box is added at that position.
  * n=4 for small boxes, 3 large.
  * The added window is round and of a size where the structure function 
- * about the center drops to 10% or 3 sigma whichever is less (max=50)
+ * about the center drops to 10% or 3 sigma whichever is less (max 100)
  * \param in         The Window object
  * \param field      Which field (1-rel) is of interest?
  * \param image      pixel array, will be returned blanked outside the outer
@@ -2103,7 +2103,7 @@ void ObitDConCleanWindowClear (gpointer inn)
  */
 olong  GetWindowSize(ObitFArray *image, olong *PeakPos, ofloat sigma)
 {
-#define NWINSIZHIST  50  /* Number of values in histogram */
+#define NWINSIZHIST  100  /* Number of values in histogram */
   olong size = 3;
   ofloat *PeakPtr, *Offset, Peak, hist[NWINSIZHIST+1], minHist;
   ofloat fblank =  ObitMagicF();

@@ -1695,7 +1695,8 @@ ASDMSourceArray* ObitSDMDataGetSourceArray (ObitSDMData *in)
   ASDMSpectralWindowArray* SpWinArray=NULL;
   olong numr, i, ig, iOut=0, iSource, iField, sourceId, iSW, SWId, kSW;
   olong nSelSW=0, fieldId, iMain, occur;
-  gchar *ignore[]={"OTFDUMMY","DUMMY",NULL};  /* Names to ignore */
+  gchar *ignore[]={"OTFDUMMY","DUMMY",NULL}; /*  Names to ignore */
+  /* gchar *ignore[]={"OTFDUMMY",NULL};  Names to ignore - hackfor fix screwup */
   gboolean want, isOTF=FALSE, chkSelCode, nameMatch;
   gchar code[12];
 

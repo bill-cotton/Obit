@@ -4849,3 +4849,15 @@ Obit/include/ObitSkyModelVMBeamDef.h
 Obit/python/Obit.py
     This needs to be distributed
 21 Nov 2020 svn 629
+
+Summary: Get it right
+Obit/include/ObitSkyModelVMBeamDef.h
+   beam upgrade to real/imag
+Obit/src/ObitAntenna.c Obit/src/ObitTableANUtil.c
+   Fixes missed in previous release
+Obit/src/ObitDConCleanWindow.c
+   Fixes missed in previous release, allow bigger window
+Obit/src/ObitSDMData.c 
+   Fixes missed in previous release
+21 Nov 2020 svn 630
+

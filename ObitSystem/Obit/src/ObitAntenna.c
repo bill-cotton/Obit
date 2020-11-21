@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -149,6 +149,11 @@ ObitAntenna* ObitAntennaCopy (ObitAntenna *in, ObitAntenna *out, ObitErr *err)
   out->FeedBType= in->FeedBType;
   out->FeedAType= in->FeedAType;
   out->numPCal  = in->numPCal;
+  out->Diam     = in->Diam;
+  out->AxisOff  = in->AxisOff;
+  out->numIF    = in->numIF;
+  out->BeamFWHM =  g_realloc(out->BeamFWHM, out->numIF*sizeof(ofloat));
+  for (i=0; i<out->numIF; i++) out->BeamFWHM[i] = in->BeamFWHM[i];
   out->FeedAPCal =  g_realloc(out->FeedAPCal, in->numPCal*sizeof(ofloat));
   for (i=0; i<out->numPCal; i++) out->FeedAPCal[i] = in->FeedAPCal[i];
   out->FeedBPCal =  g_realloc(out->FeedBPCal, in->numPCal*sizeof(ofloat));
@@ -229,8 +234,12 @@ void ObitAntennaInit  (gpointer inn)
   /* set members in this class */
   in->AntID     = -1;
   in->numPCal   = 0;
+  in->numIF     = 0;
+  in->BeamFWHM  = NULL;
   in->FeedAPCal = NULL;
   in->FeedBPCal = NULL;
+  in->Diam      = 0.0;
+  in->AxisOff   = 0.0;
 } /* end ObitAntennaInit */
 
 /**
@@ -247,6 +256,7 @@ void ObitAntennaClear (gpointer inn)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* free this class members */
+  if (in->BeamFWHM)  g_free(in->BeamFWHM);  in->BeamFWHM  = NULL;
   if (in->FeedAPCal) g_free(in->FeedAPCal); in->FeedAPCal = NULL;
   if (in->FeedBPCal) g_free(in->FeedBPCal); in->FeedBPCal = NULL;
   

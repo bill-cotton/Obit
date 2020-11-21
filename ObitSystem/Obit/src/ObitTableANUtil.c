@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2019                                          */
+/*;  Copyright (C) 2003-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -27,6 +27,7 @@
 /*--------------------------------------------------------------------*/
 
 #include <math.h>
+#include "ObitAntenna.h"
 #include "ObitTableANUtil.h"
 #include "ObitPrecess.h"
 
@@ -163,7 +164,7 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
 
   /* Trap old tables */
   if ((in->numIF==1) && (in->numPCal>2)) {
-    /* Some assumprions here */
+    /* Some assumptions here */
     in->numIF   = in->numPCal/2;
     in->numPCal = 2;
   }
@@ -268,16 +269,21 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
     Obit_retval_if_fail((iant>=0), err, out,
 			"%s: Corrupt antenna table on %s", 
 			routine, in->name);
-
+    
     out->ANlist[iant]->AntID     = row->noSta;
     out->ANlist[iant]->AntMount  = row->mntSta;
     out->ANlist[iant]->numPCal   = out->numPoln;
     out->ANlist[iant]->FeedAPA   = row->PolAngA;
     out->ANlist[iant]->FeedBPA   = row->PolAngB;
-    out->ANlist[iant]->FeedAType  = row->polTypeA[0];
-    out->ANlist[iant]->FeedBType  = row->polTypeB[0];
-    for (i=0; i<8; i++) out->ANlist[iant]->AntName[i]  = row->AntName[i];
+    out->ANlist[iant]->FeedAType = row->polTypeA[0];
+    out->ANlist[iant]->FeedBType = row->polTypeB[0];
+    out->ANlist[iant]->Diam      = row->diameter;
+    out->ANlist[iant]->AxisOff   = row->staXof;
+    out->ANlist[iant]->numIF     = out->numIF;
+    for (i=0; i<8; i++) out->ANlist[iant]->AntName[i] = row->AntName[i];
     for (i=0; i<3; i++) out->ANlist[iant]->AntXYZ[i]  = row->StaXYZ[i];
+    out->ANlist[iant]->BeamFWHM = g_malloc0(out->numIF*sizeof(ofloat));
+    for (i=0; i<out->numIF; i++) out->ANlist[iant]->BeamFWHM[i] = row->BeamFWHM[i];
     if (out->numPCal>0) {
       for (i=0; i<out->numPCal; i++) out->ANlist[iant]->FeedAPCal[i]  = row->PolCalA[i];
       for (i=0; i<out->numPCal; i++) out->ANlist[iant]->FeedBPCal[i]  = row->PolCalB[i];
@@ -531,6 +537,8 @@ ObitIOCode ObitTableANSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
       outRow->staXof  = inRow->staXof;
       outRow->PolAngA = inRow->PolAngA;
       outRow->PolAngB = inRow->PolAngB;
+      outRow->diameter= inRow->diameter;
+      outRow->staXof  = inRow->staXof;
       for (i=0; i<8; i++) outRow->AntName[i] = inRow->AntName[i];
       for (i=0; i<3; i++) outRow->StaXYZ[i]  = inRow->StaXYZ[i];
       for (i=0; i<numOrb; i++) outRow->OrbParm[i] = inRow->OrbParm[i];

@@ -62,26 +62,26 @@ ofloat *Diams;
 ObitSource *curSource;
 /**  Beam Shape */
 ObitBeamShape *BeamShape;
-/** R/X Beam image interpolator array */
+/** R/X Beam Amp/Real image interpolator array */
 ObitImageInterp **RXBeam;
-/** L/Y Beam image interpolator array */
+/** L/Y Beam Amp/Real image interpolator array */
 ObitImageInterp **LYBeam;
-/** RL Beam image interpolator array  if doCrossPol */
+/** RL Beam Amp/Real image interpolator array  if doCrossPol */
 ObitImageInterp **RLBeam;
-/** LR Beam image interpolator  array if doCrossPol */
+/** LR Beam Amp/Real image interpolator  array if doCrossPol */
 ObitImageInterp **LRBeam;
-/** R/X Beam phase image interpolator array - NULL if not given */
-ObitImageInterp **RXBeamPh;
-/** L/Y Beam phase image interpolator array - NULL if not given **/
-ObitImageInterp **LYBeamPh;
-/** RL Beam phase image interpolator array if doCrossPol - NULL if not given **/
-ObitImageInterp **RLBeamPh;
-/** LR Beam phase image interpolator array if doCrossPol - NULL if not given **/
-ObitImageInterp **LRBeamPh;
+/** R/X Beam imaginary image interpolator array - NULL if not given */
+ObitImageInterp **RXBeamIm;
+/** L/Y Beam imaginary image interpolator array - NULL if not given **/
+ObitImageInterp **LYBeamIm;
+/** RL Beam imaginary image interpolator array if doCrossPol - NULL if not given **/
+ObitImageInterp **RLBeamIm;
+/** LR Beam imaginary image interpolator array if doCrossPol - NULL if not given **/
+ObitImageInterp **LRBeamIm;
 /** cross polarized corrections? */
 gboolean doCrossPol;
-/** Phase corrections? */
-gboolean doPhase;
+/** Full complex corrections? */
+gboolean doCmplx;
 /** Number of Beam planes per antenna type */
 olong *numPlane;
 /** Number of UV channels */
