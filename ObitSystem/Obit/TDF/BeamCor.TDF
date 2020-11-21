@@ -97,50 +97,50 @@ in3DType                           "FITS" or "AIPS" type of in3, in4
 **PARAM** float 1
 in3Diam                            Diameter (m) of in3-in4
 **PARAM** str 48
-in3File                            FITS Beam image if Type=='FITS'
+in3File                            FITS Beam Amp/Real image if Type=='FITS'
 **PARAM** str 12
-in3Name                            Beam map AIPS name
+in3Name                            Beam Amp/Real map AIPS name
 **PARAM** str 6
-in3Class                           Beam map AIPS class
+in3Class                           Beam Amp/Real map AIPS class
 **PARAM** int 1
-in3Seq            0.0     9999.0   Beam AIPS seq. #
+in3Seq            0.0     9999.0   Beam Amp/Real AIPS seq. #
 **PARAM** int 1
-in3Disk                            Beam map disk unit #
+in3Disk                            Beam Amp/Real map disk unit #
 **PARAM** boo 1
-doPhase                            Use Phase images
+doCmplx                            Use complex beam images
 **PARAM** str 48
-in4File                            FITS Beam phase image if Type=='FITS'
+in4File                            FITS Beam imag. image if Type=='FITS'
 **PARAM** str 12
-in4Name                            Beam phase map AIPS name
+in4Name                            Beam imag. map AIPS name
 **PARAM** str 6
-in4Class                           Beam phase map AIPS class
+in4Class                           Beam imag. map AIPS class
 **PARAM** int 1
-in4Seq            0.0     9999.0   Beam phase AIPS seq. #
+in4Seq            0.0     9999.0   Beam imag. AIPS seq. #
 **PARAM** int 1
-in4Disk                            Beam phase map disk unit #
+in4Disk                            Beam imag. map disk unit #
 in5DType                           "FITS" or "AIPS" type of in5-in6
 **PARAM** float 1
 in5Diam                            Diameter (m) of in5-in6
 **PARAM** str 48
-in5File                            FITS 2nd Beam image if 'FITS'
+in5File                            FITS 2nd Beam Amp/Real image if 'FITS'
 **PARAM** str 12
-in5Name                            2nd Beam map AIPS name
+in5Name                            2nd Beam Amp/Real map AIPS name
 **PARAM** str 6
-in5Class                           2nd Beam map AIPS class
+in5Class                           2nd Beam Amp/Real map AIPS class
 **PARAM** int 1
-in5Seq            0.0     9999.0   2nd Beam AIPS seq. #
+in5Seq            0.0     9999.0   2nd Beam Amp/Real AIPS seq. #
 **PARAM** int 1
-in5Disk                            2nd Beam map disk unit #
+in5Disk                            2nd Beam Amp/Real map disk unit #
 **PARAM** str 48
-in6File                            FITS 2nd Beam phase image if 'FITS'
+in6File                            FITS 2nd Beam imag. image if 'FITS'
 **PARAM** str 12
-in6Name                            2nd Beam phase map AIPS name
+in6Name                            2nd Beam imag. map AIPS name
 **PARAM** str 6
-in6Class                           2nd Beam phase map AIPS class
+in6Class                           2nd Beam imag. map AIPS class
 **PARAM** int 1
-in6Seq            0.0     9999.0   2nd Beam phase AIPS seq. #
+in6Seq            0.0     9999.0   2nd Beam imag. AIPS seq. #
 **PARAM** int 1
-in6Disk                            2nd Beam phase map disk unit #
+in6Disk                            2nd Beam imag. map disk unit #
 **PARAM** str 4
 outDType                            "FITS" or "AIPS" type of output
 **PARAM** str 48
@@ -487,6 +487,7 @@ Adverbs:
              DataType.
   in3Diam....Diameter in m of antennas described by in3* and in4*
   in3Name....Voltage Beam AIPS name.      Standard defaults.
+             This is the Amplitude or real beam depending on doCmplx.
   in3Class...Voltage Beam AIPS class. Expected form "SSxxxx" where "S"
              is the correlation ('RR', 'XX'...) and "xxxx" arbitrary.
              The task will search for the different stokes images 
@@ -496,14 +497,15 @@ Adverbs:
   in3Seq.....Beam AIPS seq. # .    0 => highest.
   in3Disk....Disk drive # of beam (FITS or AIPS). NO default for AIPS
   in3File....FITS Voltage Beam input root if in3DType=='FITS'
+             This is the Amplitude or real depending on doCmplx.
              Expected form "Sxxxxx" where "S" is the correlation 
 	     parameter ('RR', 'XX'...) and "xxxx" arbitrary.
               The task will search for the different stokes images 
              and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
 	     NB: Application of instrumental poln cal. for linear 
 	     feeds will convert to a circular basis
-  doPhase....If True, also include phase in beam images
-  in4Name....Voltage Beam phase AIPS name. Only used if doPhase = True
+  doCmplx....If True, use complex beam images
+  in4Name....Voltage Beam phase AIPS name. Only used if doCmplx = True
   in4Class...Beam phase AIPS class.  Expected form "SSxxxx" where "S"
              is the correlation ('RR', 'XX'...) and "xxxx" arbitrary.
              The task will search for the different stokes images 
@@ -519,7 +521,7 @@ Adverbs:
              and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
 	     NB: Application of instrumental poln cal. for linear 
 	     feeds will convert to a circular basis
-             Only used if doPhase = True
+             Only used if doCmplx = True
   in5DType..'FITS' or 'AIPS'  type of Beam images, defaults to
              DataType.
   in5Diam....Diameter in m of antennas described by in5* and in6*
@@ -542,7 +544,7 @@ Adverbs:
 	     NB: Application of instrumental poln cal. for linear 
 	     feeds will convert to a circular basis
   in6Name....Voltage 2nd Beam phase AIPS name. Only used if 
-             doPhase = True
+             doCmplx = True
   in6Class...2nd Beam phase AIPS class. Expected form "Sxxxxx" 
              where "S" is the correlation ('RR', 'XX'...) 
              and "xxxx" arbitrary.
@@ -559,7 +561,7 @@ Adverbs:
              and "RR'+"LL" (or "XX"+"YY") or "RR'+"LL"+"RL'+"LR" 
 	     NB: Application of instrumental poln cal. for linear 
 	     feeds will convert to a circular basis
-             Only used if doPhase = True
+             Only used if doCmplx = True
 
       Output files
   outDType..'FITS' or 'AIPS'  type of output

@@ -99,26 +99,26 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;}  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Initialize Threading */
   ObitThreadInit (myInput);
 
   /* Get input Image Object */
   inImage = getInputImage (myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;} ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Get template image object */
   tmplImage = getTemplImage (myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;}  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Define output Image Object */
   outImage = getOutputImage (myInput, tmplImage, inImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;}  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Interpolate */
   HGeomInterp (myInput, inImage, outImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;}  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Restore Descriptor list */
   ObitImageOpen (outImage, OBIT_IO_ReadWrite, err);
@@ -144,7 +144,7 @@ int main ( int argc, char **argv )
 
   /* Do history */
   HGeomHistory ( myInput, inImage, outImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;}  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* show any messages and errors */
   if (err->error) ierr = 1;

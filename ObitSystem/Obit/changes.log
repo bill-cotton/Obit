@@ -4821,3 +4821,31 @@ Summary: Get it right
 ObitTalk/configure ObitTalk/configure.ac
     Goddamn python3 print
 22 Oct 2020 svn 628
+
+=====================================================================
+Summary: MFBeam improvement, Bug fixes
+Obit/python/Makefile.in
+    explicitly use python2.7 for python2
+ObitTalk/configure ObitTalk/configure.ac
+    Goddamn python3 print
+Obit/src/ObitSpectrumFit.c
+    Correct calls to gsl_multifit_fdfsolver_free
+Obit/python/UVVis.py
+    PGet: Fix something else python3 broke.
+Obit/src/ObitImageUtil.c
+    InterpolateImage: Index output descriptor after rebuilding
+Obit/tasks/HGeom.c
+    Stop bitching
+Obit/src/ObitMatx.c Obit/include/ObitMatx.h Obit/include/ObitMatxDef.h 
+Obit/include/ObitMatxClassDef.h 
+    Matrix utility package
+Obit/tasks/BeamCor.c  Obit/tasks/UVPolCor.c Obit/tasks/MFBeam.c
+Obit/TDF/BeamCor.TDF  Obit/TDF/UVPolCor.TDF Obit/TDF/MFBeam.TDF
+    Change beam models to real/imaginary rather than amp/phase
+Obit/src/ObitSkyModelVMBeam.c Obit/src/ObitSkyModelVMBeamMF.c 
+Obit/include/ObitSkyModelVMBeamDef.h
+    Read real/imag beams
+    use matrix calculation of instrumental response.
+Obit/python/Obit.py
+    This needs to be distributed
+21 Nov 2020 svn 629

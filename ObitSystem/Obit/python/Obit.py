@@ -1607,6 +1607,9 @@ def ImageInfo(_in, err):
 def ImageZap(_in, err):
     return _Obit.ImageZap(_in, err)
 
+def ImageFreeBuffer(_in, err):
+    return _Obit.ImageFreeBuffer(_in, err)
+
 def ImageRename(_in, err):
     return _Obit.ImageRename(_in, err)
 
@@ -3041,8 +3044,8 @@ def SkyModelVMBeamCopy(_in, out, err):
 def SkyModelVMBeamGetList(_in):
     return _Obit.SkyModelVMBeamGetList(_in)
 
-def SkyModelVMBeamCreate(name, mosaic, uvData, IBeam, VBeam, QBeam, UBeam, IBeamPh, VBeamPh, QBeamPh, UBeamPh, err):
-    return _Obit.SkyModelVMBeamCreate(name, mosaic, uvData, IBeam, VBeam, QBeam, UBeam, IBeamPh, VBeamPh, QBeamPh, UBeamPh, err)
+def SkyModelVMBeamCreate(name, mosaic, uvData, numAntType, IBeam, VBeam, QBeam, UBeam, IBeamPh, VBeamPh, QBeamPh, UBeamPh, Diams, err):
+    return _Obit.SkyModelVMBeamCreate(name, mosaic, uvData, numAntType, IBeam, VBeam, QBeam, UBeam, IBeamPh, VBeamPh, QBeamPh, UBeamPh, Diams, err)
 
 def SkyModelVMBeamGetName(_in):
     return _Obit.SkyModelVMBeamGetName(_in)
@@ -3224,8 +3227,8 @@ def SpectrumFitCopy(_in, out, err):
 def SpectrumFitCube(_in, inImage, outImage, err):
     return _Obit.SpectrumFitCube(_in, inImage, outImage, err)
 
-def SpectrumFitImArr(_in, nimage, im1, im2, im3, im4, im5, im6, im7, im8, im9, im10, im11, im12, im13, im14, im15, im16, im17, im18, im19, im20, outImage, err):
-    return _Obit.SpectrumFitImArr(_in, nimage, im1, im2, im3, im4, im5, im6, im7, im8, im9, im10, im11, im12, im13, im14, im15, im16, im17, im18, im19, im20, outImage, err)
+def SpectrumFitImArr(_in, nimage, im1, im2, im3, im4, im5, im6, im7, im8, im9, im10, im11, im12, im13, im14, im15, im16, im17, im18, im19, im20, im21, im22, im23, im24, im25, im26, im27, im28, im29, im30, im31, im32, im33, im34, im35, im36, im37, im38, im39, im40, outImage, err):
+    return _Obit.SpectrumFitImArr(_in, nimage, im1, im2, im3, im4, im5, im6, im7, im8, im9, im10, im11, im12, im13, im14, im15, im16, im17, im18, im19, im20, im21, im22, im23, im24, im25, im26, im27, im28, im29, im30, im31, im32, im33, im34, im35, im36, im37, im38, im39, im40, outImage, err)
 
 def SpectrumFitEval(_in, inImage, outFreq, outImage, err):
     return _Obit.SpectrumFitEval(_in, inImage, outFreq, outImage, err)

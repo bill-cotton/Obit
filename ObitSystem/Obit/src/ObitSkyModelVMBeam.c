@@ -324,10 +324,10 @@ ObitSkyModelVMBeamCopy  (ObitSkyModelVMBeam *in,
  * \param LYBeam   L/Y Beam normalized image array per type
  * \param RLBeam   RL/XY Beam fractional image array per type if nonNULL
  * \param LRBeam   LR/YX Beam fractional image array per type if nonNULL
- * \param RXBeamPh R/X Beam phase image array per type if nonNULL
- * \param LYBeamPh L/Y Beam phase image array per type if nonNULL
- * \param RLBeamPh RL/XY Beam phase image array per type if nonNULL
- * \param LRBeamPh L/Y  Beam phase image array per type if nonNULL
+ * \param RXBeamIm R/X Beam phase image array per type if nonNULL
+ * \param LYBeamIm L/Y Beam phase image array per type if nonNULL
+ * \param RLBeamIm RL/XY Beam phase image array per type if nonNULL
+ * \param LRBeamIm L/Y  Beam phase image array per type if nonNULL
  * \param Diams    Antenna diameters (m) per type
  * \return the new object.
  */
@@ -336,15 +336,15 @@ ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
 			  ObitUV *uvData, olong numAntType,
 			  ObitImage **RXBeam,   ObitImage **LYBeam, 
 			  ObitImage **RLBeam,   ObitImage **LRBeam, 
-			  ObitImage **RXBeamPh, ObitImage **LYBeamPh, 
-			  ObitImage **RLBeamPh, ObitImage **LRBeamPh, 
+			  ObitImage **RXBeamIm, ObitImage **LYBeamIm, 
+			  ObitImage **RLBeamIm, ObitImage **LRBeamIm, 
 			  ofloat *Diams, ObitErr *err)
 {
   ObitSkyModelVMBeam* out=NULL;
   olong number, i, nchan, nif, refType;
   ofloat refDiam;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gboolean doTab = TRUE, doPhase;
+  gboolean doTab = TRUE, doCmplx;
   gchar *routine = "ObitSkyModelVMBeamCreate";
 
   /* Error tests */
@@ -367,8 +367,8 @@ ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
   ObitUVFullInstantiate (uvData, TRUE, err);
   if (err->error) Obit_traceback_val (err, routine, uvData->name, out);
 
-  doPhase = RXBeamPh && RXBeamPh[0];  /* Have phases? */
-  out->doPhase = doPhase;
+  doCmplx = RXBeamIm && RXBeamIm[0];  /* Have phases? */
+  out->doCmplx = doCmplx;
   /* Swallow Beam images */
   out->numPlane   = g_malloc0(numAntType*sizeof(olong));
   out->Diams      = g_malloc0(numAntType*sizeof(ofloat)); 
@@ -377,11 +377,11 @@ ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
   out->LYBeam     = g_malloc0(numAntType*sizeof(ObitImageInterp*)); 
   out->RLBeam     = g_malloc0(numAntType*sizeof(ObitImageInterp*)); 
   out->LRBeam     = g_malloc0(numAntType*sizeof(ObitImageInterp*)); 
-  if (doPhase) {
-    out->RXBeamPh = g_malloc0(numAntType*sizeof(ObitImageInterp*));
-    out->LYBeamPh = g_malloc0(numAntType*sizeof(ObitImageInterp*));
-    out->RLBeamPh = g_malloc0(numAntType*sizeof(ObitImageInterp*));
-    out->LRBeamPh = g_malloc0(numAntType*sizeof(ObitImageInterp*));
+  if (doCmplx) {
+    out->RXBeamIm = g_malloc0(numAntType*sizeof(ObitImageInterp*));
+    out->LYBeamIm = g_malloc0(numAntType*sizeof(ObitImageInterp*));
+    out->RLBeamIm = g_malloc0(numAntType*sizeof(ObitImageInterp*));
+    out->LRBeamIm = g_malloc0(numAntType*sizeof(ObitImageInterp*));
   }
   out->numAntType = numAntType;
   out->doCrossPol = TRUE;
@@ -400,14 +400,14 @@ ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
     out->numPlane[i] = out->RXBeam[i]->nplanes;
 
     /* Phase beams */
-    if (doPhase && RXBeamPh && RXBeamPh[i])
-      out->RXBeamPh[i] = ObitImageInterpCreate("RXBeamPh", RXBeamPh[i], 2, err);
-    if (doPhase && LYBeamPh && LYBeamPh[i])
-      out->LYBeamPh[i] = ObitImageInterpCreate("LYBeamPh", LYBeamPh[i], 2, err);
-    if (doPhase && RLBeamPh && RLBeamPh[i])
-      out->RLBeamPh[i] = ObitImageInterpCreate("RLBeamPh", RLBeamPh[i], 2, err);
-    if (doPhase && LRBeamPh && LRBeamPh[i])
-      out->LRBeamPh[i] = ObitImageInterpCreate("LRBeamPh", LRBeamPh[i], 2, err);
+    if (doCmplx && RXBeamIm && RXBeamIm[i])
+      out->RXBeamIm[i] = ObitImageInterpCreate("RXBeamIm", RXBeamIm[i], 2, err);
+    if (doCmplx && LYBeamIm && LYBeamIm[i])
+      out->LYBeamIm[i] = ObitImageInterpCreate("LYBeamIm", LYBeamIm[i], 2, err);
+    if (doCmplx && RLBeamIm && RLBeamIm[i])
+      out->RLBeamIm[i] = ObitImageInterpCreate("RLBeamIm", RLBeamIm[i], 2, err);
+    if (doCmplx && LRBeamIm && LRBeamIm[i])
+      out->LRBeamIm[i] = ObitImageInterpCreate("LRBeamIm", LRBeamIm[i], 2, err);
     if (err->error) Obit_traceback_val (err, routine, name, out);
     
     /* Make sure they are all consistent */
@@ -419,24 +419,24 @@ ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
 						   out->RLBeam[i]->ImgPixels)), err, out,
 			   "%s: Incompatable pq,qp, beam arrays", routine);
     }
-    if (doPhase && out->RXBeamPh[i]) {
+    if (doCmplx && out->RXBeamIm[i]) {
       Obit_retval_if_fail ((ObitFArrayIsCompatable(out->RXBeam[i]->ImgPixels, 
-						   out->RXBeamPh[i]->ImgPixels)), err, out,
+						   out->RXBeamIm[i]->ImgPixels)), err, out,
 			   "%s: Incompatable pp amp, phase beam arrays", routine);
     }
-    if (doPhase && out->LYBeamPh[i]) {
+    if (doCmplx && out->LYBeamIm[i]) {
       Obit_retval_if_fail ((ObitFArrayIsCompatable(out->LYBeam[i]->ImgPixels, 
-						   out->LYBeamPh[i]->ImgPixels)), err, out,
+						   out->LYBeamIm[i]->ImgPixels)), err, out,
 			   "%s: Incompatable qq amp, phase beam arrays", routine);
     }
-    if (out->doCrossPol && out->RLBeamPh[i]) {
+    if (out->doCrossPol && out->RLBeamIm[i]) {
       Obit_retval_if_fail ((ObitFArrayIsCompatable(out->RLBeam[i]->ImgPixels, 
-						   out->RLBeamPh[i]->ImgPixels)), err, out,
+						   out->RLBeamIm[i]->ImgPixels)), err, out,
 			   "%s: Incompatable pq amp, phase beam arrays", routine);
     }
-    if (out->doCrossPol && out->LRBeamPh[i]) {
+    if (out->doCrossPol && out->LRBeamIm[i]) {
       Obit_retval_if_fail ((ObitFArrayIsCompatable(out->LRBeam[i]->ImgPixels, 
-						   out->LRBeamPh[i]->ImgPixels)), err, out,
+						   out->LRBeamIm[i]->ImgPixels)), err, out,
 			   "%s: Incompatable qp amp, phase beam arrays", routine);
     }
 
@@ -471,11 +471,11 @@ ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
     if (RLBeam[i]  && (RLBeam[i]->image)) RLBeam[i]->image = ObitImageUnref(RLBeam[i]->image);
     if (LRBeam[i]  && (LRBeam[i]->image)) LRBeam[i]->image = ObitImageUnref(LRBeam[i]->image);
     if (LYBeam [i] && (LYBeam[i]->image)) LYBeam[i]->image = ObitImageUnref(LYBeam[i]->image);
-    if (doPhase) {
-      if (RXBeamPh[i]  && (RXBeamPh[i]->image)) RXBeamPh[i]->image = ObitImageUnref(RXBeamPh[i]->image);
-      if (RLBeamPh[i]  && (RLBeamPh[i]->image)) RLBeamPh[i]->image = ObitImageUnref(RLBeamPh[i]->image);
-      if (LRBeamPh[i]  && (LRBeamPh[i]->image)) LRBeamPh[i]->image = ObitImageUnref(LRBeamPh[i]->image);
-      if (LYBeamPh[i]  && (LYBeamPh[i]->image)) LYBeamPh[i]->image = ObitImageUnref(LYBeamPh[i]->image);
+    if (doCmplx) {
+      if (RXBeamIm[i]  && (RXBeamIm[i]->image)) RXBeamIm[i]->image = ObitImageUnref(RXBeamIm[i]->image);
+      if (RLBeamIm[i]  && (RLBeamIm[i]->image)) RLBeamIm[i]->image = ObitImageUnref(RLBeamIm[i]->image);
+      if (LRBeamIm[i]  && (LRBeamIm[i]->image)) LRBeamIm[i]->image = ObitImageUnref(LRBeamIm[i]->image);
+      if (LYBeamIm[i]  && (LYBeamIm[i]->image)) LYBeamIm[i]->image = ObitImageUnref(LYBeamIm[i]->image);
     }
   }
   /* Set antenna Types */
@@ -563,11 +563,11 @@ void ObitSkyModelVMBeamInitMod (ObitSkyModel* inn, ObitUV *uvdata,
 	if (in->LYBeam[j]) args->BeamLYInterp[j] = ObitImageInterpCloneInterp(in->LYBeam[j],err);
 	if (in->RLBeam[j]) args->BeamRLInterp[j] = ObitImageInterpCloneInterp(in->RLBeam[j],err);
 	if (in->LRBeam[j]) args->BeamLRInterp[j] = ObitImageInterpCloneInterp(in->LRBeam[j],err);
-	if (in->doPhase) {
-	  if (in->RXBeamPh[j]) args->BeamRXPhInterp[j] = ObitImageInterpCloneInterp(in->RXBeamPh[j],err);
-	  if (in->LYBeamPh[j]) args->BeamLYPhInterp[j] = ObitImageInterpCloneInterp(in->LYBeamPh[j],err);
-	  if (in->RLBeamPh[j]) args->BeamRLPhInterp[j] = ObitImageInterpCloneInterp(in->RLBeamPh[j],err);
-	  if (in->LRBeamPh[j]) args->BeamLRPhInterp[j] = ObitImageInterpCloneInterp(in->LRBeamPh[j],err);
+	if (in->doCmplx) {
+	  if (in->RXBeamIm[j]) args->BeamRXPhInterp[j] = ObitImageInterpCloneInterp(in->RXBeamIm[j],err);
+	  if (in->LYBeamIm[j]) args->BeamLYPhInterp[j] = ObitImageInterpCloneInterp(in->LYBeamIm[j],err);
+	  if (in->RLBeamIm[j]) args->BeamRLPhInterp[j] = ObitImageInterpCloneInterp(in->RLBeamIm[j],err);
+	  if (in->LRBeamIm[j]) args->BeamLRPhInterp[j] = ObitImageInterpCloneInterp(in->LRBeamIm[j],err);
 	}
       } /* end antenna type loop */
       if (err->error) Obit_traceback_msg (err, routine, in->name);
@@ -592,7 +592,7 @@ void ObitSkyModelVMBeamInitMod (ObitSkyModel* inn, ObitUV *uvdata,
 
   /* Fourier transform routines - DFT only */
   /* Are phases given? */
-  if (in->RXBeamPh) 
+  if (in->RXBeamIm) 
     in->DFTFunc   = (ObitThreadFunc)ThreadSkyModelVMBeamFTDFTPh;
   else /* No phase */
     in->DFTFunc   = (ObitThreadFunc)ThreadSkyModelVMBeamFTDFT;
@@ -799,8 +799,8 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
   ofloat **Rgain=NULL,  **Lgain=NULL,  **RLgain=NULL,  **LRgain=NULL, *ccData=NULL;
   ofloat **Rgaini=NULL, **Lgaini=NULL, **RLgaini=NULL, **LRgaini=NULL;
   ofloat curPA, tPA, tTime, bTime, fscale, PBCor, xx, yy, iPBCor, jPBCor;
-  ofloat xr, xi, tr, ti, cph, sph, v, v1, v2;
-  ofloat RXpol, LYpol, RXpolPh=0.0, LYpolPh=0.0, RLpolPh=0.0, LRpolPh=0.0;
+  ofloat xr, xi, tr, ti, v, v1, v2;
+  ofloat RXpol, LYpol, RXpolIm, LYpolIm;
   ofloat minPBCor=0.0, bmNorm, fblank = ObitMagicF();
   gboolean isCirc=TRUE, badBm=FALSE;
   odouble x, y;
@@ -915,41 +915,39 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
       if (ifield<0) continue;
       
       /* Get symmetric primary (Power) beam correction for component */
-      PBCor = 0.5*getPBBeam(in->BeamShape, in->mosaic->images[ifield]->myDesc, xx, yy, in->antSize,  
+      PBCor = getPBBeam(in->BeamShape, in->mosaic->images[ifield]->myDesc, xx, yy, in->antSize,  
 			    args->BeamFreq, minPBCor); 
-      iPBCor  = 0.5 / PBCor; 
+      iPBCor  = 1.0 / PBCor; 
+      jPBCor = sqrtf(iPBCor);
        
       /* Interpolate gains - RR and LL (XX, YY) as voltage gains */
       v = ObitImageInterpValueInt (in->RXBeam[iaty], args->BeamRXInterp[iaty], x, y, curPA, plane, err);
-      RXpol = bmNorm*v;
+      RXpol = bmNorm*v; RXpolIm = 0.0;
       if (badBm || (v==fblank) || (fabs(v)<0.001) || (fabs(v)>1.1)) RXpol = 1.0;
-      if (in->doPhase && in->RXBeamPh[iaty]) {
-	v = ObitImageInterpValueInt (in->RXBeamPh[iaty], args->BeamRXPhInterp[iaty], x, y, curPA, plane, err);
-	if (v!=fblank) RXpolPh = DG2RAD*v;
-	else            RXpolPh = 0.0;
+      if (in->doCmplx && in->RXBeamIm[iaty]) {
+	v = ObitImageInterpValueInt (in->RXBeamIm[iaty], args->BeamRXPhInterp[iaty], x, y, curPA, plane, err);
+	if (v!=fblank) RXpolIm = v;
       }
       v = ObitImageInterpValueInt (in->LYBeam[iaty], args->BeamLYInterp[iaty], x, y, curPA, plane, err);
-      LYpol = bmNorm*v;
+      LYpol = bmNorm*v; LYpolIm = 0.0;
       if (badBm || (v==fblank) || (fabs(v)<0.001) || (fabs(v)>01.1)) LYpol = 1.0;
-      if (in->doPhase && in->LYBeamPh[iaty]) {
-	v = ObitImageInterpValueInt (in->LYBeamPh[iaty], args->BeamLYPhInterp[iaty], x, y, curPA, plane, err);
-	if (v!=fblank) LYpolPh = DG2RAD*v;
-	else           LYpolPh = 0.0;
+      if (in->doCmplx && in->LYBeamIm[iaty]) {
+	v = ObitImageInterpValueInt (in->LYBeamIm[iaty], args->BeamLYPhInterp[iaty], x, y, curPA, plane, err);
+	if (v!=fblank) LYpolIm = v;
       }
       /* Put voltage gain in arrays */
-      if (in->doPhase && in->RXBeamPh[iaty] && in->LYBeamPh[iaty]) {
-	jPBCor = sqrtf(iPBCor);
+      if (in->doCmplx && in->RXBeamIm[iaty] && in->LYBeamIm[iaty]) {
 	/* Circular feeds */
 	if (isCirc) {
-	  Rgain[iaty][i]  = jPBCor*RXpol*cos(RXpolPh);
-	  Rgaini[iaty][i] = jPBCor*RXpol*sin(RXpolPh);
-	  Lgain[iaty][i]  = jPBCor*LYpol*cos(LYpolPh);
-	  Lgaini[iaty][i] = jPBCor*LYpol*sin(LYpolPh);
+	  Rgain[iaty][i]  = jPBCor*RXpol;
+	  Rgaini[iaty][i] = jPBCor*RXpolIm;
+	  Lgain[iaty][i]  = jPBCor*LYpol;
+	  Lgaini[iaty][i] = jPBCor*LYpolIm;
 	} else {  /* linear feeds */
-	  Rgain[iaty][i]  = jPBCor*RXpol*cos(RXpolPh);
-	  Rgaini[iaty][i] = jPBCor*RXpol*sin(RXpolPh);
-	  Lgain[iaty][i]  = jPBCor*LYpol*cos(LYpolPh);
-	  Lgaini[iaty][i] = jPBCor*LYpol*sin(LYpolPh);
+	  Rgain[iaty][i]  = jPBCor*RXpol;
+	  Rgaini[iaty][i] = jPBCor*RXpolIm;
+	  Lgain[iaty][i]  = jPBCor*LYpol;
+	  Lgaini[iaty][i] = jPBCor*LYpolIm;
 	} /* end linear feeds */
       } else { /* no phase, save power gains */
 	/* Circular feeds */
@@ -972,12 +970,12 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
       }
       /* If this is CLEANing use appropriate gains */
       if (in->doBeamCorClean && isCirc && (fabs(PBCor)>0.01)) {
-	if (in->doPhase && in->RXBeamPh[iaty] && in->LYBeamPh[iaty]) {
+	if (in->doCmplx && in->RXBeamIm[iaty] && in->LYBeamIm[iaty]) {
 	  /* Using phase beam- really doesn't matter */
 	  Rgain[iaty][i]  = iPBCor*(RXpol * RXpol);
 	  Lgain[iaty][i]  = iPBCor*(LYpol * LYpol);
 	  ti = 0.5*(Rgain[iaty][i] + Lgain[iaty][i]);  /* Stokes I correction */
-	  tr = 0.5*(Rgain[iaty][i] - Lgain[iaty][i]);      /* Stokes V correction */
+	  tr = 0.5*(Rgain[iaty][i] - Lgain[iaty][i]);  /* Stokes V correction */
 	  Rgain[iaty][i]  = ti + tr;
 	  Lgain[iaty][i]  = ti - tr; 
 	} else { /* no phase */
@@ -995,39 +993,39 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
 	/*  RL or XY */
 	v =  ObitImageInterpValueInt (in->RLBeam[iaty], args->BeamRLInterp[iaty], x, y, curPA, plane, err);
 	if (v==fblank) RLgain[iaty][i] = 0.0;
-	else           RLgain[iaty][i] = v;
-	if (in->doPhase && in->RLBeamPh[iaty]) {
-	  v = ObitImageInterpValueInt (in->RLBeamPh[iaty], args->BeamRLPhInterp[iaty], x, y, curPA, plane, err);
-	  if (v==fblank) RLpolPh = 0.0;
-	  else           RLpolPh = DG2RAD*v;
-	  cph = cos(RLpolPh); sph = sin(RLpolPh);
-	} else {cph = 1.0; sph = 0.0;}
-	/* Multiply by 2 for the effects of the two beams */
-	RLgain[iaty][i]  = 2.0*RLgain[iaty][i]*cph;
-	RLgaini[iaty][i] = 2.0*RLgain[iaty][i]*sph;
-	/* counter rotate paralactic angle */
-	tr = RLgain[iaty][i]; ti =  RLgaini[iaty][i];
-	RLgain[iaty][i]  =  tr*xr + xi*ti;
-	RLgaini[iaty][i] = -tr*xi + xr*ti;
-	
+	else           RLgain[iaty][i] = jPBCor*v;
+	if (in->doCmplx && in->RLBeamIm[iaty]) {
+	  v = ObitImageInterpValueInt (in->RLBeamIm[iaty], args->BeamRLPhInterp[iaty], x, y, curPA, plane, err);
+	  if (v==fblank) RLgaini[iaty][i] = 0.0;
+	  else           RLgaini[iaty][i] = jPBCor*v;
+	}
+	if (isCirc) {
+	  /* counter rotate paralactic angle */
+	  tr = RLgain[iaty][i]; ti =  RLgaini[iaty][i];
+	  RLgain[iaty][i]  =  tr*xr + xi*ti;
+	  RLgaini[iaty][i] = -tr*xi + xr*ti;
+	}
 	/*  LR or YX */
 	v = ObitImageInterpValueInt (in->LRBeam[iaty], args->BeamLRInterp[iaty], x, y, curPA, plane, err);
 	if (LRgain[iaty][i]==fblank) LRgain[iaty][i] = 0.0;
-	else                         LRgain[iaty][i] = v;
-	if (in->doPhase && in->LRBeamPh[iaty] ) {
-	  v  = ObitImageInterpValueInt (in->LRBeamPh[iaty], args->BeamLRPhInterp[iaty], x, y, curPA, plane, err);
-	  if (v==fblank) LRpolPh = 0.0;
-	  else           LRpolPh = DG2RAD*v;
-	  cph = cos(LRpolPh); sph = sin(LRpolPh);
-	} else {cph = 1.0; sph = 0.0;}
-	/* Multiply by 2 for the effects of the two beams */
-	LRgain[iaty][i]  = 2.0*LRgain[iaty][i]*cph;
-	LRgaini[iaty][i] = 2.0*LRgain[iaty][i]*sph;
-	/* counter rotate paralactic angle */
-	tr = LRgain[iaty][i]; ti = LRgaini[iaty][i];
-	LRgain[iaty][i]  =  tr*xr + xi*ti;
-	LRgaini[iaty][i] = -tr*xi + xr*ti;
-      } /* end if crosspol */
+	else                         LRgain[iaty][i] = jPBCor*v;
+	if (in->doCmplx && in->LRBeamIm[iaty] ) {
+	  v  = ObitImageInterpValueInt (in->LRBeamIm[iaty], args->BeamLRPhInterp[iaty], x, y, curPA, plane, err);
+	  if (v==fblank) LRgaini[iaty][i] = 0.0;
+	  else           LRgaini[iaty][i] = jPBCor*v;
+	} 
+	if (isCirc) {
+	  /* counter rotate paralactic angle */
+	  tr = LRgain[iaty][i]; ti = LRgaini[iaty][i];
+	  LRgain[iaty][i]  =  tr*xr + xi*ti;
+	  LRgaini[iaty][i] = -tr*xi + xr*ti;
+	}
+	/* Too low gain? */
+	if (fabs(PBCor)<0.01) {
+	  RLgain[iaty][i] = 1.0; RLgaini[iaty][i] = 0.0;
+	  LRgain[iaty][i] = 1.0; LRgaini[iaty][i] = 0.0;
+      }
+     } /* end if crosspol */
     } /* end loop over components */
   } /* endloop over antenna type */
 
@@ -1227,10 +1225,10 @@ void ObitSkyModelVMBeamInit  (gpointer inn)
   in->RLBeam       = NULL;
   in->LRBeam       = NULL;
   in->LYBeam       = NULL;
-  in->RXBeamPh     = NULL;
-  in->RLBeamPh     = NULL;
-  in->LRBeamPh     = NULL;
-  in->LYBeamPh     = NULL;
+  in->RXBeamIm     = NULL;
+  in->RLBeamIm     = NULL;
+  in->LRBeamIm     = NULL;
+  in->LYBeamIm     = NULL;
   in->AntList      = NULL;
   in->curSource    = NULL;
   in->numAntList   = 0;
@@ -1259,14 +1257,14 @@ void ObitSkyModelVMBeamClear (gpointer inn)
 
   /* delete this class members */
   for (i=0; i<in->numAntType; i++) {
-    if ((in->Rgain!=NULL)   & (in->Rgain[i]!=NULL))   g_free(in->Rgain[i]);
-    if ((in->Lgain!=NULL)   & (in->Lgain[i]!=NULL))   g_free(in->Lgain[i]);
-    if ((in->LRgain!=NULL)  & (in->RLgain[i]!=NULL))  g_free(in->RLgain[i]);
-    if ((in->LRgain!=NULL)  & (in->LRgain[i]!=NULL))  g_free(in->LRgain[i]);
-    if ((in->Rgaini!=NULL)  & (in->Rgaini[i]!=NULL))  g_free(in->Rgaini[i]);
-    if ((in->Lgaini!=NULL)  & (in->Lgaini[i]!=NULL))  g_free(in->Lgaini[i]);
-    if ((in->RLgaini!=NULL) & (in->RLgaini[i]!=NULL)) g_free(in->RLgaini[i]);
-    if ((in->LRgaini!=NULL) & (in->LRgaini[i]!=NULL)) g_free(in->LRgaini[i]);
+    if ((in->Rgain!=NULL)  && (in->Rgain[i]!=NULL))   g_free(in->Rgain[i]);
+    if ((in->Lgain!=NULL)  && (in->Lgain[i]!=NULL))   g_free(in->Lgain[i]);
+    if ((in->LRgain!=NULL) && (in->RLgain[i]!=NULL))  g_free(in->RLgain[i]);
+    if ((in->LRgain!=NULL) && (in->LRgain[i]!=NULL))  g_free(in->LRgain[i]);
+    if ((in->Rgaini!=NULL) && (in->Rgaini[i]!=NULL))  g_free(in->Rgaini[i]);
+    if ((in->Lgaini!=NULL) && (in->Lgaini[i]!=NULL))  g_free(in->Lgaini[i]);
+    if ((in->RLgaini!=NULL)&& (in->RLgaini[i]!=NULL)) g_free(in->RLgaini[i]);
+    if ((in->LRgaini!=NULL)&& (in->LRgaini[i]!=NULL)) g_free(in->LRgaini[i]);
   }
   if (in->Rgain)   g_free(in->Rgain);  in->Rgain   = NULL;
   if (in->Lgain)   g_free(in->Lgain);  in->Lgain   = NULL;
@@ -1284,19 +1282,19 @@ void ObitSkyModelVMBeamClear (gpointer inn)
     in->RLBeam[i]    = ObitImageInterpUnref(in->RLBeam[i]);
     in->LRBeam[i]    = ObitImageInterpUnref(in->LRBeam[i]);
     in->LYBeam[i]    = ObitImageInterpUnref(in->LYBeam[i]);
-    in->LYBeamPh[i]  = ObitImageInterpUnref(in->RXBeamPh[i]);
-    in->RLBeamPh[i]  = ObitImageInterpUnref(in->RLBeamPh[i]);
-    in->LRBeamPh[i]  = ObitImageInterpUnref(in->LRBeamPh[i]);
-    in->LYBeamPh[i]  = ObitImageInterpUnref(in->LYBeamPh[i]);
+    in->LYBeamIm[i]  = ObitImageInterpUnref(in->RXBeamIm[i]);
+    in->RLBeamIm[i]  = ObitImageInterpUnref(in->RLBeamIm[i]);
+    in->LRBeamIm[i]  = ObitImageInterpUnref(in->LRBeamIm[i]);
+    in->LYBeamIm[i]  = ObitImageInterpUnref(in->LYBeamIm[i]);
   }
   g_free(in->RXBeam[i]);    in->RXBeam[i]    = NULL;
   g_free(in->RLBeam[i]);    in->RLBeam[i]    = NULL;
   g_free(in->LRBeam[i]);    in->LRBeam[i]    = NULL;
   g_free(in->LYBeam[i]);    in->LYBeam[i]    = NULL;
-  g_free(in->RXBeamPh[i]);  in->LYBeamPh[i]  = NULL;
-  g_free(in->RLBeamPh[i]);  in->RLBeamPh[i]  = NULL;
-  g_free(in->LRBeamPh[i]);  in->LRBeamPh[i]  = NULL;
-  g_free(in->LYBeamPh[i]);  in->LYBeamPh[i]  = NULL;
+  g_free(in->RXBeamIm[i]);  in->LYBeamIm[i]  = NULL;
+  g_free(in->RLBeamIm[i]);  in->RLBeamIm[i]  = NULL;
+  g_free(in->LRBeamIm[i]);  in->LRBeamIm[i]  = NULL;
+  g_free(in->LYBeamIm[i]);  in->LYBeamIm[i]  = NULL;
   
   in->curSource = ObitSourceUnref(in->curSource);
   if (in->AntList)  {
@@ -2863,8 +2861,11 @@ static ofloat getPBBeam(ObitBeamShape *beamShape, ObitImageDesc *desc,
   /*odouble RAPnt, DecPnt, ra, dec, xx, yy, zz;*/
 
   if (antSize <=0.0) antSize = 25.0;  /* default antenna size */
+  /* If antSize != 13.5, it's not MeerKAT 
+  if (fabs(antSize-13.5)>0.5) beamShape->doMeerKAT = FALSE;*/
+  /* DEBUG antSize=13.5; */
   ObitBeamShapeSetAntSize(beamShape, antSize);
-  ObitBeamShapeSetFreq(beamShape, freq);
+  if (freq!=beamShape->refFreq) ObitBeamShapeSetFreq(beamShape, freq);
 
   /* Get pointing position
   ObitImageDescGetPoint(desc, &RAPnt, &DecPnt); */

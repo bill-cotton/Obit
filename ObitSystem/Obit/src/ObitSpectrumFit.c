@@ -1680,8 +1680,8 @@ void ObitSpectrumFitter (ObitSpectrumFit* in, ObitErr *err)
 #ifdef HAVE_GSL
       if (args->solver2)   gsl_multifit_fdfsolver_free (args->solver2);
       if (args->solver3)   gsl_multifit_fdfsolver_free (args->solver3);
-      if (args->solver4)   gsl_multifit_fdfsolver_free (args->solver3);
-      if (args->solver4)   gsl_multifit_fdfsolver_free (args->solver3);
+      if (args->solver4)   gsl_multifit_fdfsolver_free (args->solver4);
+      if (args->solver5)   gsl_multifit_fdfsolver_free (args->solver5);
       if (args->work2)     gsl_vector_free(args->work2);
       if (args->work3)     gsl_vector_free(args->work3);
       if (args->work4)     gsl_vector_free(args->work4);

@@ -15,7 +15,7 @@
 """
 # $Id: UVVis.py 452 2013-06-03 14:40:12Z bill.cotton $
 #-----------------------------------------------------------------------
-#  Copyright (C) 2007-2019
+#  Copyright (C) 2007-2020
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -77,7 +77,18 @@ def PGet (inUV, err):
         raise TypeError("inUV MUST be a Python Obit UV")
     #
     out = UVVis()
-    out.__dict__ = Obit.UVVisGet(inUV.me, err.me)
+    vis = Obit.UVVisGet(inUV.me, err.me)
+    if 'EOF' in vis:
+        out.EOF = vis['EOF']
+    out.u = vis['u']
+    out.v = vis['v']
+    out.w = vis['w']
+    out.time = vis['time']
+    out.ant1 = vis['ant1']
+    out.ant2 = vis['ant2']
+    if 'suid' in vis:
+        out.suid = vis['suid']
+    out.vis  = vis['vis']
     return out
     # end PGet
 

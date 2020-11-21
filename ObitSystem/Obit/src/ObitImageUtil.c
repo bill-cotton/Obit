@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2019                                          */
+/*;  Copyright (C) 2003-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -573,7 +573,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
       outImage->myGrid = (ObitUVGrid*)newObitUVGridMF(outName);
     else 
       outImage->myGrid = newObitUVGrid(outName);
-    if (outName) g_free(outName); outName = NULL;
+    if (outName) {g_free(outName);} outName = NULL;
   }
   /* Need separate gridder for different size beam? */
   if (doBeam) {
@@ -597,7 +597,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
 	  else 
 	    outImage->myGrid = newObitUVGrid(outName);
 	}
-      if (outName) g_free(outName); outName = NULL;
+      if (outName) {g_free(outName);} outName = NULL;
     } else {  /* Same size - use uimage gridder */
       if (((ObitImage*)outImage->myBeam)->myGrid==NULL)
 	((ObitImage*)outImage->myBeam)->myGrid = ObitUVGridRef(outImage->myGrid);
@@ -1404,7 +1404,9 @@ ObitImageUtilInterpolateImage (ObitImage *inImage, ObitImage *outImage,
     }
     tmpDesc = ObitImageDescUnref(tmpDesc);
   }
-  
+  /* Index to be sure */
+  ObitImageDescIndex(outImage->myDesc);
+
   /* Read input plane */
   if ((ObitImageRead (inImage,NULL , err) 
        != OBIT_IO_OK) || (err->error>0)) { /* error test */
