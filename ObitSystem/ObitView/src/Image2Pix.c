@@ -1,7 +1,7 @@
 /* $Id$  */
 /* routines to load a FITS file to a ZPixmap for ObitView*/
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996-2009
+*  Copyright (C) 1996-2021
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -112,23 +112,24 @@ olong Image2Pix (ImageData *image, ImageDisplay *IDdata, gboolean verbose)
     pthread_setcanceltype(oldType, NULL);
     
     /*  start Cancel load dialog box */
-    if (verbose) WorkingCursor(TRUE, verbose);
+    /* Cancel box doesn't work well and may be causing trouble */
+    //if (verbose) WorkingCursor(TRUE, verbose);
     
-    /*  check for disgruntled user - will set LoadDone*/
-    if (verbose) {
-      /* This will terminate when Load done or user cancels */
-      while (1) {
-	usleep(1000000);  /* sleep 1000 msec */
-	CheckForCancel();
-	if (LoadDone) break;
-      }
-    }
+    /*  check for disgruntled user - will set LoadDone */
+    //if (verbose) {
+    //  /* This will terminate when Load done or user cancels */
+    // while (1) {
+    //   usleep(1000000);  */ /* sleep 1000 msec */
+    //	CheckForCancel();
+    //	if (LoadDone) break;
+    //  }
+    //}
     
     /* Wait for Load to finish */
     pthread_join (readThread, NULL);
     
     /* end progress message/cancel box if it's still there */
-    if (verbose) WorkingCursor(FALSE, FALSE);
+    //if (verbose) WorkingCursor(FALSE, FALSE);
   } /* End load image */
   
   /* Did Load work? */
@@ -516,6 +517,7 @@ void* ReadImage (void *arg)
     ReadFail = TRUE;
     image = ObitImageUnref(image);  /* Cleanup */
     Obit_traceback_val (err, routine, "LoadImage", NULL);
+    return NULL;
   }
   
   /* Open */
@@ -526,7 +528,8 @@ void* ReadImage (void *arg)
     LoadDone = TRUE;
     image = ObitImageUnref(image);  /* Cleanup */
     Obit_traceback_val (err, routine, "LoadImage", NULL);
-  }
+    return NULL;
+ }
 
   /* Read */
   ObitImageRead (image, NULL, err);
@@ -536,6 +539,7 @@ void* ReadImage (void *arg)
     LoadDone = TRUE;
     image = ObitImageUnref(image);  /* Cleanup */
     Obit_traceback_val (err, routine, "LoadImage", NULL);
+    return NULL;
   }
 
   /* Save descriptor and pixel array */
@@ -558,6 +562,7 @@ void* ReadImage (void *arg)
     LoadDone = TRUE;
     image = ObitImageUnref(image);  /* Cleanup */
     Obit_traceback_val (err, routine, "LoadImage", NULL);
+    return NULL;
   }
 
   /* Cleanup */

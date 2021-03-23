@@ -4861,3 +4861,59 @@ Obit/src/ObitSDMData.c
    Fixes missed in previous release
 21 Nov 2020 svn 630
 
+Summary: Poln imaging of linear feed data, ObitView hang problem, bug fixes
+Obit/src/ObitUVCalSelect.c
+   Allow conversion of XX,YY,XY,YX data to Q, U and V
+Obit/share/scripts/getVersion.py Obit/Makefile.in
+   May Guido burn in Hell forever - more python 3 crap
+Obit/TDF/UVCopy.TDF
+   Increase the max size of in/outFile names to 256
+Obit/python/OTObit.py
+   uvlod, imtab, uvtab, imlod
+   use only input filename to keep from blowing AIPS history record size
+Obit/python/Image.inc Obit/python/RMFit.inc Obit/python/Obit_wrap.c Obit/python/Image.py
+   Plug memory leaks
+Obit/python/ImageMF.py
+   May Guido burn in Hell forever - more python 3 crap
+Obit/src/ObitImageMosaic.c
+   AddField: Tighten criteria for overlap with older field
+Obit/python/MosaicUtil.c
+   PWeightImage: Hack to get correct plane RMSes
+Obit/TDF/MFBeam.TDF
+  Add more Optional parameters from MFImage
+Obit/tasks/MFImage.c
+   Better handling of autoCen, PeelFlux and minFlux
+Obit/tasks/MFBeam.c
+   Major upgrade, features from MFImage
+Obit/src/ObitImageUtil.c
+   MakeImagePar: Save Fitted beam parameters on uv data info
+Obit/src/ObitSkyModelVMBeam.c Obit/src/ObitSkyModelVMBeamMF.c
+   Major upgrade for antenna pattern corrections
+Obit/src/ObitUVCal.c Obit/src/ObitUVCalSelect.c Obit/include/ObitUVCalDef.h Obit/include/ObitUVCal.h
+   Major upgrade to convert linear feed data to Stokes Q,U,V
+Obit/src/ObitUVImagerMF.c
+   Implement "FULL" Stokes for working data.
+Obit/src/ObitDConCleanVis.c
+   Better handling of autoCen/minFlux
+Obit/src/ObitImageMosaicMF.c
+   Flatten: Copy Stokes parameter to output
+    Create: allow overriding FOV w/ nx[0]/2 if nfield<=0
+Obit/src/ObitSurveyUtil.c
+   GenPrint: adapt display to resolution.
+Obit/share/data/1934-638UHFModel.fits.gz Obit/share/data/1934-638LModel.fits.gz 
+    update MeerKAT models
+Obit/src/ObitMatx.c Obit/include/ObitMatx.h  Obit/include/ObitMatxClassDef.h
+   Add functions to ObitClass
+Obit/src/ObitUVWeight.c
+   Do all Stokes
+Obit/tasks/AutoFlag.c 
+   ObitMatx
+ObitView/src/XMLRPCserver.c
+   Greatly reduce use of locking mutexes to fight "hang" problem
+ObitView/src/Image2Pix.c
+   ReadImage: Better error handling. drop loa/cancel box.
+Obit/src/ObitDisplay.c
+   LoadImage: Fix bug in error handling
+Obit/src/ObitImageMosaic.c
+  AddField: Default ref freq for VZ table = 1.4 GHz
+23 Mar 2021 svn 631

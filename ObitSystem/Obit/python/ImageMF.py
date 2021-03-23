@@ -22,7 +22,7 @@ Additional  Functions are available in ImageUtil.
 # Python/Obit Astronomical ImageMF class
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2010-2020
+#  Copyright (C) 2010-2021
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -54,6 +54,8 @@ from __future__ import print_function
 import Obit, _Obit, Table, FArray, OErr, Image, ImageDesc, InfoList, History, AIPSDir, OSystem
 import TableList, AIPSDir, FITSDir, ImageFit, FitRegion, FitModel
 import OData
+import SkyGeom, math
+from six.moves import range
 #import AIPSData
 
 # Python shadow class to ObitImageMF class
@@ -110,9 +112,9 @@ class ImageMF(Obit.ImageMF, Image.Image):
             out.me = Obit.ImageMFGetDesc(self.me)
             return out
         if name=="FArray":
-            return PGetFArray(self.me)
+            return PGetFArray(self)
         if name=="Beam":
-            return PGetBeam(self.me)
+            return PGetBeam(self)
         if name=="PixBuf":
             if not self.ImageMFIsA():
                 raise TypeError("input MUST be a Python Obit ImageMF")
@@ -618,14 +620,16 @@ def PGetFArray (inImageMF):
     Return FArray used to buffer Image data
     
     returns FArray with image pixel data
+
     * inImageMF   = Python Image object
     """
     ################################################################
-    if inImageMF.myClass=='AIPSImage':
-        raise TypeError("Function unavailable for "+inImage.myClass)
+    if ('myClass' in inImageMF.__dict__) and (inImageMF.myClass=='AIPSImage'):
+        raise TypeError("Function unavailable for "+inImageMF.myClass)
+    inCast = inImageMF.cast('ObitImageMF')
     # Checks
-    if not inImageMF.ImageMFIsA():
-        raise TypeError("inImageMF MUST be a Python Obit Image")
+    if not PIsA(inImageMF):
+        raise TypeError("inImageMF MUST be a Python Obit ImageMF")
     #
     out    = FArray.FArray("None")
     out.me = Obit.ImageMFGetFArray(inImageMF.me)

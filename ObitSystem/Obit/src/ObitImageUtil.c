@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2020                                          */
+/*;  Copyright (C) 2003-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1220,6 +1220,9 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
 	    Beam[0] = theBeam->myDesc->beamMaj*3600.0;
 	    Beam[1] = theBeam->myDesc->beamMin*3600.0;
 	    Beam[2] = theBeam->myDesc->beamPA;
+	    /* Save */
+	    dim[0] = 3; dim[1]= dim[2] = dim[3] = dim[4] = 1;
+	    ObitInfoListAlwaysPut(inUV->info, "Beam", OBIT_float, dim, Beam);
 	  }
 	  
 	  /* Save last beam normalization in Beam infoList as "SUMWTS" */

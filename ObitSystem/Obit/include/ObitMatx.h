@@ -134,7 +134,7 @@ typedef void (*ObitMatxSubFP) (ObitMatx *in1, ObitMatx *in2, ObitMatx *out);
 void ObitMatxCTrans(ObitMatx *in, ObitMatx *out);
 typedef void (*ObitMatxCTransFP) (ObitMatx *in, ObitMatx *out);
 /** Zero values */
-void ObitMatxZero(ObitMatx *in);
+void ObitMatxZero(ObitMatx *out);
 typedef void (*ObitMatxZeroFP) (ObitMatx *in);
 /** Fill 2x2 */
 void ObitMatxSet2C(ObitMatx *matx, ofloat R00, ofloat I00, ofloat R01, ofloat I01, 
@@ -142,6 +142,15 @@ void ObitMatxSet2C(ObitMatx *matx, ofloat R00, ofloat I00, ofloat R01, ofloat I0
 typedef void (*ObitMatxSet2CFP) (ObitMatx *matx, ofloat R00, ofloat I00, 
 				 ofloat R01, ofloat I01,  ofloat R10, ofloat I10, 
 				 ofloat R11, ofloat I11);
+/** Inverse perfect linear feed Jones matrix */
+void ObitMatxIPerfLinJones(ObitMatx *in);
+typedef void (*ObitMatxIPerfLinJonesFP) (ObitMatx *out);
+/** Outer 2x2 complex multiply*/
+void ObitMatxOuterMult2C(ObitMatx *in1, ObitMatx *in2, ObitMatx *out);
+typedef void (*ObitMatxOuterMult2CFP) (ObitMatx *in1, ObitMatx *in2, ObitMatx *out);
+/** 4x4 complex matrix * 4x1 complex vector multiply */
+void ObitMatxVec4Mult(ObitMatx *in1, ObitMatx *in2, ObitMatx *out);
+typedef void (*ObitMatxVec4MultFP) (ObitMatx *in1, ObitMatx *in2, ObitMatx *out);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

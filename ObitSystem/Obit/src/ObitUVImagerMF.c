@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2020                                          */
+/*;  Copyright (C) 2010-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -431,8 +431,9 @@ void ObitUVImagerMFAddPol2 (ObitUVImagerMF *in, ObitUV *uvdata2, ObitErr *err)
  * Apply weighting to uvdata and write to uvwork member
  * \param in  The input object
  *   The following uvdata info items control behavior:
- *   \li "HalfStoke"   OBIT_boo (1,1,1)   If true, all Stokes are passed in uvwork [def F]
+ *   \li "HalfStoke"   OBIT_boo (1,1,1)   If true, half Stokes are passed in uvwork [def F]
  *                                        else I
+ *   \li "FullStoke"   OBIT_boo (1,1,1)   If true, all Stokes are passed in uvwork [def F]
  * \param err Obit error stack object.
  */
 void ObitUVImagerMFWeight (ObitUVImager *inn, ObitErr *err)
@@ -440,8 +441,8 @@ void ObitUVImagerMFWeight (ObitUVImager *inn, ObitErr *err)
   ObitUVImagerMF *in  = (ObitUVImagerMF*)inn;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  gboolean HalfStoke=FALSE, Tr=TRUE;
-  gchar *Stokes="HALF", IStokes[5];
+  gboolean HalfStoke=FALSE, FullStoke=FALSE, Tr=TRUE;
+  gchar *HStokes="HALF", *FStokes="FULL", IStokes[5];
   /* List of control parameters on uvwork */
   gchar *controlList[] = 
     {"FOV", "doFull", "NField", "xCells", "yCells", "nx", "ny", 
@@ -463,11 +464,18 @@ void ObitUVImagerMFWeight (ObitUVImager *inn, ObitErr *err)
 
   /* Want parallel poln? */
   ObitInfoListGetTest (in->uvdata->info, "HalfStoke", &type, dim, &HalfStoke);
+  ObitInfoListGetTest (in->uvdata->info, "FullStoke", &type, dim, &FullStoke);
 
-  /* Want RR, LL data */
+  /* Want RR, LL (XX,YY) data */
   if (HalfStoke) {
     dim[0] = 4;
-    ObitInfoListAlwaysPut (in->uvdata->info, "Stokes", OBIT_string, dim, Stokes);
+    ObitInfoListAlwaysPut (in->uvdata->info, "Stokes", OBIT_string, dim, HStokes);
+  }
+
+  /* Want all Stokes correlations? */
+  if (FullStoke) {
+    dim[0] = 4;
+    ObitInfoListAlwaysPut (in->uvdata->info, "Stokes", OBIT_string, dim, FStokes);
   }
 
   /* Open and close uvdata to set descriptor for scratch file */

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2020                                          */
+/*;  Copyright (C) 2009-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -151,6 +151,8 @@ typedef struct {
   ofloat **RLgain, **RLgaini;
   /** Arrays of time/spatially variable LR/YX component gain, real, imag */
   ofloat **LRgain, **LRgaini;
+  /** cos and sin of twice parallactic angle */
+  ofloat cos2PA, sin2PA;
 } VMBeamFTFuncArg;
 /*----------------------Public functions---------------------------*/
 /**
@@ -575,6 +577,8 @@ void ObitSkyModelVMBeamInitMod (ObitSkyModel* inn, ObitUV *uvdata,
       args->endVMModelTime = -1.0e20;
       args->VMComps = NULL;
       args->dimGain = 0;
+      args->cos2PA  = 1.0;
+      args->sin2PA  = 0.0;
       args->Rgain   = g_malloc0(in->numAntType*sizeof(ofloat*));
       args->Rgaini  = g_malloc0(in->numAntType*sizeof(ofloat*));
       args->Lgain   = g_malloc0(in->numAntType*sizeof(ofloat*));
@@ -777,7 +781,7 @@ void ObitSkyModelVMBeamInitModel (ObitSkyModel* inn, ObitErr *err)
  * Update VM model with time and spatial modifications to model
  * Update model in Rgain, Lgain, RLgain, LRgain etc, members for comps member 
  * Sets begVMModelTime to current time
- * Sets endVMModelTime for when parallactic angle differs by 1 degree.
+ * Sets endVMModelTime for when parallactic angle differs by 0.3 degree.
  * The parallel hand corrections should convert to a nominal value for radius.
  * The cross hand correction when multiplied by Stokes I will give the response.
  * \param in      SkyModelVM 
@@ -842,8 +846,8 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
   /* Find end time of validity - need Parallactic angle */
   tTime += 1.0/1440.0;
   tPA = ObitAntennaListParAng (in->AntList[suba], iant, tTime, in->curSource);
-  /* Step by a min until the parallactic angle changes by 1 deg */
-  while (fabs(tPA-curPA) < 1.0*DG2RAD) {
+  /* Step by a min until the parallactic angle changes by 0.25 deg */
+  while (fabs(tPA-curPA) < 0.25*DG2RAD) {
     tTime += 1.0/1440.0;
     tPA = ObitAntennaListParAng (in->AntList[suba], iant, tTime, in->curSource);
     /* But not forever */
@@ -855,10 +859,14 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
 
   /* Get parallactic angle half way between now and end */
   bTime = time + (tTime-bTime) / 2.0;
+  bTime = time; /* at current time */
   curPA = ObitAntennaListParAng (in->AntList[suba], iant, bTime, in->curSource);
   /* Rotate cross pol by parallactic angle */
   xr  = cos (curPA);
   xi  = sin (curPA);
+  /* save cos, sin of twice parallactic angle */
+  args->cos2PA = cos(2.0*curPA);
+  args->sin2PA = sin(2.0*curPA);
   curPA *= RAD2DG;  /* To deg */
   /* curPA += 180.0;   Not sure why */
 

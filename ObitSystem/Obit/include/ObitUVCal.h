@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,6 +32,7 @@
 #include "ObitErr.h"
 #include "ObitThread.h"
 #include "ObitInfoList.h"
+#include "ObitMatx.h"
 #include "ObitUVDesc.h"
 #include "ObitUVSel.h"
 #include "ObitUVCalCalibrateDef.h"

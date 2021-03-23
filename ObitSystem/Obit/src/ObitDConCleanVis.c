@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2020                                          */
+/*;  Copyright (C) 2005-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -663,6 +663,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   /* Reset/Init Pixel list if not done in ResetSkyModel */
   if (!doSub) inClass->ResetPixelList (in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
+  for (i=0; i<in->nfield; i++) in->Pixels->minFlux[i] = in->minFlux[i];
 
   /* Be sure to (re)generate residuals */
   for (i=0; i<in->nfield; i++) in->maxAbsRes[i] = -1.0;
@@ -700,9 +701,10 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
       done = inClass->PickNext2D(in, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
-    /* Does the peak flux density exceed the autocenter threshold */
+    /* Does the IPol peak flux density exceed the autocenter threshold */
     doAutoCen = doAutoCen || (fabs (in->peakFlux)>in->autoCen);
-    if (fabs (in->peakFlux) > in->autoCen) {
+    if ((fabs (in->peakFlux) > in->autoCen) &&
+	(in->mosaic->images[0]->myDesc->crval[in->mosaic->images[0]->myDesc->jlocs]<1.01)) {
       for (i=0; i<in->nfield; i++) {
 	in->minFlux[i] = MAX (0.09*in->autoCen, in->minFlux[i]);
 	/* Value that counts is on the PxList */
@@ -813,7 +815,10 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
     }    /* end check for min CLEAN */
 
     /* Check if there were no pixels this cycle */
-    if (in->Pixels->complCode==OBIT_CompReasonNoPixel) NoPixelCnt++; /* Count times */
+    if (in->Pixels->complCode==OBIT_CompReasonNoPixel) {
+      NoPixelCnt++; /* Count times */
+      if (NoPixelCnt<=(2*in->nfield)) fin = FALSE;
+    }
     /* Call CLEAN done if no pixels more than 2*nfield */
     moreClean = (!fin) && NoPixelCnt<=(2*in->nfield);
     if (!moreClean) break;
@@ -1527,11 +1532,19 @@ static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
   }
   in->currentFields[i] = 0;
  
+  /* Check if all below minFlux */
+  OK = FALSE;
+  for (i=0; i<in->numCurrentField; i++) {
+    OK = OK || (in->maxAbsRes[fldList[i]-1] > in->minFlux[fldList[i]-1]);
+  }
+  if ((in->numCurrentField>=1) && !OK) done = FALSE;
+
+
   /* Tell if stopping */
   if (done && (err->prtLv>=2)) Obit_log_error(err, OBIT_InfoErr, "Met stopping criterium6");
   if (done && (err->prtLv>=3)) {
       Obit_log_error(err, OBIT_InfoWarn,
-		     "%s: best %d maxAbsRes %f cleanable %f",
+		     "%s: best %d maxAbsRes %g cleanable %g",
 		     routine, best, in->maxAbsRes[fldList[best]-1], 
 		     in->cleanable[fldList[best]-1]);
     }
@@ -1862,6 +1875,9 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
   /* Error checks */
   if (err->error) return redo;  /* previous error? */
   g_assert(ObitDConCleanVisIsA(in));
+
+  /* Only I Pol */
+  if (in->mosaic->images[0]->myDesc->crval[in->mosaic->images[0]->myDesc->jlocs]>1.0) return redo;
 
   inClass     = (ObitDConCleanVisClassInfo*)in->ClassInfo; /* clean class structure */
 
@@ -2355,6 +2371,9 @@ gboolean ObitDConCleanVisRecenter (ObitDConCleanVis *in, ObitUV* uvdata,
   /* Error checks */
   if (err->error)     return redo;  /* previous error? */
   g_assert(ObitDConCleanVisIsA(in));
+
+  /* Only Stokes I */
+  if (in->mosaic->images[0]->myDesc->crval[in->mosaic->images[0]->myDesc->jlocs]>1.0) return redo;
 
   /* Number of fields */
   nfield = mosaic->numberImages;

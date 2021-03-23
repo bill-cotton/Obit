@@ -6807,14 +6807,15 @@ void CreateImage(PyObject *self, char* name) {
 void DeleteImage(PyObject *self) {
    void *ptr;
    int ret, flags=0;
+   ObitImage *zap;
    ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_Image, flags);
    if (!SWIG_IsOK(ret)) {
 	PyErr_SetString(PyExc_RuntimeError,"DeleteImage: could not recover c struct");
 	return;
    }
-   if (!ObitImageIsA(((ObitImage*)ptr))) return;  // valid image?
-   while (((ObitImage*)ptr)->image) ((ObitImage*)ptr)->image = 
-        ObitFArrayUnref(((ObitImage*)ptr)->image); // zap any buffer -  for real
+   zap = (ObitImage*)(((Image*)ptr)->me);
+   if (!ObitImageIsA(zap)) return;  // valid image?
+   while (zap->image) zap->image = ObitFArrayUnref(zap->image); // zap any buffer -  for real
    ((Image*)ptr)->me = ObitImageUnref(((Image*)ptr)->me);
 }// end DeleteImage
 
@@ -11062,7 +11063,7 @@ void DeleteRMFit(PyObject *self) {
 	PyErr_SetString(PyExc_RuntimeError,"DeleteRMFit: could not recover c struct");
 	return;
    }
-   ((RMFit*)ptr)->me = ObitRMFitUnref(((RMFit*)ptr)->me);
+   while (((RMFit*)ptr)->me) ((RMFit*)ptr)->me = ObitRMFitUnref(((RMFit*)ptr)->me);
 }// end DeleteRMFit
 
 ObitRMFit* RMFit_Get_me(PyObject *self) {

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2018                                          */
+/*;  Copyright (C) 2003-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -31,6 +31,7 @@
 #include "ObitUVDesc.h"
 #include "ObitUVCal.h"
 #include "ObitUVCalSelect.h"
+#include "ObitMatx.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -99,6 +100,9 @@ ObitUVCalSelectXYInit (ObitUVCal *in, olong kstoke0, olong nstoke,
 static void 
 ObitUVCalSelectYXInit (ObitUVCal *in, olong kstoke0, olong nstoke, 
 		      olong ivpnt, ObitErr *err);
+/** Private: Convert liner to circular basis (YY,YY...->RR,LL... */
+static void 
+Lin2Cir (ObitUVCal *in, ObitUVDesc *desc, ofloat *RP, ofloat *visIn, ofloat *visOut);
 
 /*----------------------Public functions---------------------------*/
 
@@ -141,6 +145,7 @@ void ObitUVCalSelectInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
   gboolean formalI;
   odouble crval=0.0;
   ofloat cdelt=0.0;
+  olong ndim=2, naxis[]={4,1};
 
   /* data selection parameters on in 
   in->jadr;
@@ -415,16 +420,29 @@ void ObitUVCalSelectInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
       break;
 
   case 12: /* FULL */
-    ObitUVCalSelectRRInit (in, kstoke0, nstok, ivpnt, err);
-    crval = -1.0; /* Stokes index */
-    cdelt = -1.0; /* stokes increment */
-    ivpnt++;
-    ObitUVCalSelectLLInit (in, kstoke0, nstok, ivpnt, err);
-    ivpnt++;
-    ObitUVCalSelectRLInit (in, kstoke0, nstok, ivpnt, err);
-    ivpnt++;
-    ObitUVCalSelectLRInit (in, kstoke0, nstok, ivpnt, err);
-    ivpnt++;
+    if (kstoke0 <= -5) { /* Linear */
+      ObitUVCalSelectXXInit (in, kstoke0, nstok, ivpnt, err);
+      crval = -5.0; /* Stokes index */
+      cdelt = -1.0; /* stokes increment */
+      ivpnt++;
+      ObitUVCalSelectYYInit (in, kstoke0, nstok, ivpnt, err);
+      ivpnt++;
+      ObitUVCalSelectXYInit (in, kstoke0, nstok, ivpnt, err);
+      ivpnt++;
+      ObitUVCalSelectYXInit (in, kstoke0, nstok, ivpnt, err);
+      ivpnt++;
+    } else { /* Circular */
+      ObitUVCalSelectRRInit (in, kstoke0, nstok, ivpnt, err);
+      crval = -1.0; /* Stokes index */
+      cdelt = -1.0; /* stokes increment */
+      ivpnt++;
+      ObitUVCalSelectLLInit (in, kstoke0, nstok, ivpnt, err);
+      ivpnt++;
+      ObitUVCalSelectRLInit (in, kstoke0, nstok, ivpnt, err);
+      ivpnt++;
+      ObitUVCalSelectLRInit (in, kstoke0, nstok, ivpnt, err);
+      ivpnt++;
+   }
     break;
 
   case 17: /* XX */
@@ -481,6 +499,19 @@ void ObitUVCalSelectInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
   sel->lrecUC   = outDesc->lrec;
   sel->nrparmUC = outDesc->nrparm;
 
+  /* Set up for linear to circular translation */
+  if (inDesc->crval[inDesc->jlocs]<-4.0) {
+    naxis[1] = 1;
+    in->workMatx1 = ObitMatxCreate(OBIT_Complex, ndim, naxis);
+    in->workMatx2 = ObitMatxCreate(OBIT_Complex, ndim, naxis);
+    /* Create/fill Muller matrix */
+    naxis[1] = 4;
+    in->Muller = ObitMatxCreate(OBIT_Complex, ndim, naxis);
+    ObitMatxIPerfLinJones(in->workMatx1);
+    ObitMatxOuterMult2C(in->workMatx1, in->workMatx1, in->Muller);
+    ObitMatxZero(in->workMatx1); ObitMatxZero(in->workMatx2);
+  }
+
 } /* end ObitUVCalSelectInit */
 
 /**
@@ -509,7 +540,7 @@ gboolean ObitUVCalSelect (ObitUVCal *in, ofloat *RP, ofloat *visIn, ofloat *visO
   olong   i, ip1, ip2, op, lf, lc, lp, lfoff, ioff, incf, incif, incs;
   olong channInc, maxChan, maxIF;
   gboolean   good;
-  ofloat wt1, wt2, temp, xfact1, xfact2;
+  ofloat wt1, wt2, temp, xfact1, xfact2, visTmp[12], *visPnt;
   ObitUVSel *sel = in->mySel;
   ObitUVDesc *desc = in->myDesc;
 
@@ -532,6 +563,8 @@ gboolean ObitUVCalSelect (ObitUVCal *in, ofloat *RP, ofloat *visIn, ofloat *visO
   if (desc->jlocif>=0) maxIF =  desc->inaxes[desc->jlocif];
   else                 maxIF = 1;
 
+  for(i=0; i<12; i++) visTmp[i] = 0.0; /* zero lin 2 cir buffer */
+
   /* loop checking  and summing weights and getting visibilities. */
   i = -1; /* output visibility number */
 
@@ -551,6 +584,11 @@ gboolean ObitUVCalSelect (ObitUVCal *in, ofloat *RP, ofloat *visIn, ofloat *visO
 
       /* translating stokes? */
       if (sel->transPol) {
+	/* Translate linear to circular in visTmp */
+	if (in->doLin2Cir) {
+	  Lin2Cir (in, desc, RP, &visIn[ioff], visTmp);
+	  visPnt = visTmp;
+	} else visPnt = &visIn[ioff];
 	for (lp= 0; lp<sel->numberPoln; lp++) { /* loop 40 */
 	  i++; /* output correlation number */
 
@@ -560,12 +598,12 @@ gboolean ObitUVCalSelect (ObitUVCal *in, ofloat *RP, ofloat *visIn, ofloat *visO
 	  visOut[3*i+2] = 0.0;
 
 	  /* set input visibility indices. */
-	  ip1 = abs (in->jadr[lp][0]) + ioff;
-	  ip2 = abs (in->jadr[lp][1]) + ioff;
+	  ip1 = abs (in->jadr[lp][0]);
+	  ip2 = abs (in->jadr[lp][1]);
 
 	  /* get weights. */
-	  wt1 = MAX (0.0, visIn[ip1+2]) * 0.5;
-	  wt2 = MAX (0.0, visIn[ip2+2]) * 0.5;
+	  wt1 = MAX (0.0, visPnt[ip1+2]) * 0.5;
+	  wt2 = MAX (0.0, visPnt[ip2+2]) * 0.5;
 
 	  /* Do we need all data and only one present? */
 	  if (!((sel->bothCorr)  &&  ((wt1 <= 0.0)  ||  (wt2 <= 0.0)))) {
@@ -581,11 +619,11 @@ gboolean ObitUVCalSelect (ObitUVCal *in, ofloat *RP, ofloat *visIn, ofloat *visO
 	      
 	      /* RL, LR from q, u */
 	      if (in->jadr[lp][1] < 0) {
-		visOut[3*i]   = xfact1 * visIn[ip1] - xfact2 * visIn[ip2+1];
-		visOut[3*i+1] = xfact1 * visIn[ip1+1] + xfact2 * visIn[ip2];
+		visOut[3*i]   = xfact1 * visPnt[ip1] - xfact2 * visPnt[ip2+1];
+		visOut[3*i+1] = xfact1 * visPnt[ip1+1] + xfact2 * visPnt[ip2];
 	      } else {
-		visOut[3*i]   = xfact1 * visIn[ip1] + xfact2 * visIn[ip2];
-		visOut[3*i+1] = xfact1 * visIn[ip1+1] + xfact2 * visIn[ip2+1];
+		visOut[3*i]   = xfact1 * visPnt[ip1] + xfact2 * visPnt[ip2];
+		visOut[3*i+1] = xfact1 * visPnt[ip1+1] + xfact2 * visPnt[ip2+1];
 		/* upol, mult. by i */
 		if (in->jadr[lp][0] < 0) {
 		  temp = visOut[3*i];
@@ -718,21 +756,23 @@ ObitUVCalSelectQInit (ObitUVCal *in, olong kstoke0, olong nstok,
 		      olong ivpnt, ObitErr *err)
 {
   gboolean missing;
-  olong incs;
+  olong incs, jstoke0;
 
   /* error check */
   if (err->error) return;
     
     /* Add Stokes Q -  check if in data */
     missing = ((kstoke0>0) && ((kstoke0>2) || (kstoke0+nstok-1<2)));
-    missing = missing ||
-      ((kstoke0<0) && ((nstok<2) || (kstoke0<-3) || (kstoke0-nstok+1>-4)));
+    /*missing = missing ||
+      ((kstoke0<0) && ((nstok<2) || (kstoke0<-3) || (kstoke0-nstok+1>-4)));*/
     if (missing) {
       Obit_log_error(err, OBIT_Error, 
 		     "Stokes Q not available for %s", in->name);
       return;
     }
-
+    /* Need to convert linears to circular? */
+    if (kstoke0<-4) {in->doLin2Cir = TRUE; jstoke0 = kstoke0+4;}
+    else jstoke0 = kstoke0;
     /* Data will always be uncompressed by the time it gets here */
     incs = 3 * in->myDesc->incs / in->myDesc->inaxes[0];
     if (kstoke0 >= 0) {
@@ -745,7 +785,7 @@ ObitUVCalSelectQInit (ObitUVCal *in, olong kstoke0, olong nstok,
     } else {
       /* RL, LR  */
       in->mySel->bothCorr = TRUE;  /* Need both */
-      in->jadr[ivpnt][0] = (3+kstoke0) * incs;
+      in->jadr[ivpnt][0] = (3+jstoke0) * incs;
       in->jadr[ivpnt][1] = in->jadr[ivpnt][0] + incs;
       in->selFact[ivpnt][0] = 0.5;
       in->selFact[ivpnt][1] = 0.5;
@@ -770,21 +810,25 @@ ObitUVCalSelectUInit (ObitUVCal *in, olong kstoke0, olong nstok,
 		      olong ivpnt, ObitErr *err)
 {
   gboolean missing;
-  olong incs;
+  olong incs, jstoke0;
 
   /* error check */
   if (err->error) return;
 
     /* Add Stokes U -  check if in data */
     missing = ((kstoke0>0) && ((kstoke0>3) || (kstoke0+nstok-1<3)));
-    missing = missing ||
-      ((kstoke0<0) && ((nstok<2) || (kstoke0<-3) || (kstoke0-nstok+1>-4)));
+    /*missing = missing ||
+      ((kstoke0<0) && ((nstok<2) || (kstoke0<-3) || (kstoke0-nstok+1>-4)));*/
     if (missing) {
       Obit_log_error(err, OBIT_Error, 
 		     "Stokes U not available for %s", in->name);
       return;
     }
 
+    /* Need to convert linears to circular? */
+    if (kstoke0<-4) {in->doLin2Cir = TRUE; jstoke0 = kstoke0+4;}
+    else jstoke0 = kstoke0;
+    
     /* Data will always be uncompressed by the time it gets here */
     incs = 3 * in->myDesc->incs / in->myDesc->inaxes[0];
     
@@ -798,7 +842,7 @@ ObitUVCalSelectUInit (ObitUVCal *in, olong kstoke0, olong nstok,
     } else {
       /* RL, LR. */
       in->mySel->bothCorr = TRUE;  /* Need both */
-      in->jadr[ivpnt][0] = (3+kstoke0) * incs;
+      in->jadr[ivpnt][0] = (3+jstoke0) * incs;
       in->jadr[ivpnt][1] = in->jadr[ivpnt][0] + incs;
       /* make jadr(1,ivpnt) negative to indicate to multiply 
 	 by i (= sqrt (-1)) */
@@ -825,7 +869,7 @@ ObitUVCalSelectVInit (ObitUVCal *in, olong kstoke0, olong nstok,
 		      olong ivpnt, ObitErr *err)
 {
   gboolean missing;
-  olong incs;
+  olong incs, jstoke0;
 
   /* error check */
   if (err->error) return;
@@ -833,14 +877,18 @@ ObitUVCalSelectVInit (ObitUVCal *in, olong kstoke0, olong nstok,
     
     /* Add Stokes V -  check if in data */
     missing = ((kstoke0>0) && ((kstoke0>4) || (kstoke0+nstok-1<4)));
-    missing = missing ||
-      ((kstoke0<0) && ((nstok<2) || (kstoke0<-1) || (kstoke0-nstok+1>-2)));
+    /*missing = missing ||
+      ((kstoke0<0) && ((nstok<2) || (kstoke0<-1) || (kstoke0-nstok+1>-2)));*/
     if (missing) {
       Obit_log_error(err, OBIT_Error, 
 		     "Stokes V not available for %s", in->name);
       return;
     }
     
+    /* Need to convert linears to circular? */
+    if (kstoke0<-4) {in->doLin2Cir = TRUE; jstoke0 = kstoke0+4;}
+    else jstoke0 = kstoke0;
+
     /* Data will always be uncompressed by the time it gets here */
     incs = 3 * in->myDesc->incs / in->myDesc->inaxes[0];
     
@@ -854,7 +902,7 @@ ObitUVCalSelectVInit (ObitUVCal *in, olong kstoke0, olong nstok,
     } else {
       /* RR, LL */
       in->mySel->bothCorr = TRUE;  /* Need both */
-      in->jadr[ivpnt][0] = (1+kstoke0) * incs;
+      in->jadr[ivpnt][0] = (1+jstoke0) * incs;
       in->jadr[ivpnt][1] = in->jadr[ivpnt][0] + incs;
       in->selFact[ivpnt][0] = 0.5;
       in->selFact[ivpnt][1] = -0.5;
@@ -1280,4 +1328,88 @@ ObitUVCalSelectYXInit (ObitUVCal *in, olong kstoke0, olong nstok,
       in->selFact[ivpnt][1] = 0.0;
     } 
 } /* end ObitUVCalSelectYXInit */
+
+/**
+ * Convert linear (XX,YY...) to circular (RR,LL..)
+ * \param in     Calibration Object.
+ * \param desc   Data descriptor
+ * \param RP     Random parameters array.
+ * \param visIn  input visibility as an array of floats
+ * \param visOut output visibility as an array of floats
+ */
+static void 
+Lin2Cir (ObitUVCal *in, ObitUVDesc *desc, ofloat *RP, ofloat *visIn, ofloat *visOut)
+{
+  ofloat PA, cosPA, sinPA, time, sum, tr, ti;
+  gboolean flag;
+  olong suId, sid, j, incs=desc->incs;
+
+ /* source/time */
+ if (desc->ilocsu>0) suId = (olong)(0.5 + RP[desc->ilocsu]);
+ else suId = 1;
+ time = RP[desc->iloct];
+ 
+ /* New source/time? */
+ if ((time>in->lastTime) || (suId!=in->lastSu)) {
+   sid = MAX (0, (suId-1));
+   in->lastSu   = suId;
+   in->lastTime = time;
+   /* Need antenna list? */
+   /* Parallactic angle */
+   PA = ObitAntennaListParAng (in->antennaLists[0], 1, time, 
+			       in->sourceList->SUlist[sid]);
+   in->lastTime = time; in->lastSu = suId;
+   cosPA = cos(PA); sinPA = sin(PA);
+   /* cos(2PA), sin(2PA) */
+   in->PAReal = cosPA * cosPA - sinPA * sinPA;
+   in->PAImag = cosPA * sinPA + sinPA * cosPA; 
+ } /* end new parllactic angle */
+
+ /* Convert vis to circular */
+ /* anything flagged? -> zero all */
+ flag = FALSE;  for (j=0; j<12; j+=3) if (visIn[j+2]<=0.0) {flag = TRUE; break;}
+ if (flag) {
+   for (j=0; j<12; j++) visOut[j] = 0.0;
+   return;
+ }
+ /* Load input vector [XX,XY,YX,YY]*/
+ sum = 0.0;
+ for (j=0; j<4; j++) sum += visIn[j*3+2];
+ ObitMatxSet(in->workMatx1, (void*)&visIn[0],      0, 0);
+ ObitMatxSet(in->workMatx1, (void*)&visIn[2*incs], 1, 0);
+ ObitMatxSet(in->workMatx1, (void*)&visIn[3*incs], 2, 0);
+ ObitMatxSet(in->workMatx1, (void*)&visIn[incs],   3, 0);
+ /*iV[0] = visIn[0]; iV[1] = visIn[1];
+   iV[2] = visIn[6]; iV[3] = visIn[7];
+   iV[4] = visIn[9]; iV[5] = visIn[10];
+   iV[6] = visIn[3]; iV[7] = visIn[4];
+ */
+
+ /* Multiply by inverse Muller matrix */
+ ObitMatxVec4Mult(in->Muller, in->workMatx1, in->workMatx2);
+
+ /* unload output vector from [RR,RL,LR,LL] */
+ sum *= 0.25;
+ ObitMatxGet(in->workMatx2, 0, 0, (void*)&visOut[0]); visOut[2]             = sum;
+ ObitMatxGet(in->workMatx2, 3, 0, (void*)&visOut[incs]); visOut[incs+2]     = sum;
+ ObitMatxGet(in->workMatx2, 1, 0, (void*)&visOut[2*incs]); visOut[2*incs+2] = sum;
+ ObitMatxGet(in->workMatx2, 2, 0, (void*)&visOut[3*incs]); visOut[3*incs+2] = sum;
+ /* visOut[0] = oV[0]; visOut[1]  = oV[1]; visOut[2]  = sum;
+    visOut[3] = oV[6]; visOut[4]  = oV[7]; visOut[5]  = sum;
+    visOut[6] = oV[2]; visOut[7]  = oV[3]; visOut[8]  = sum;
+    visOut[9] = oV[4]; visOut[10] = oV[5]; visOut[11] = sum;*/
+ 
+ /* Parallactic angle correction 
+    Correct RL */
+ tr = visOut[2*incs];  
+ ti = visOut[2*incs+1];
+ visOut[2*incs]   = tr * in->PAReal - ti * in->PAImag;
+ visOut[2*incs+1] = ti * in->PAReal + tr * in->PAImag;
+ 
+ /* Correct LR */
+ tr = visOut[3*incs];
+ ti = visOut[3*incs+1];
+ visOut[3*incs]   = tr * in->PAReal + ti * in->PAImag;
+ visOut[3*incs+1] = ti * in->PAReal - tr * in->PAImag;
+} /* end Lin2Cir */
 

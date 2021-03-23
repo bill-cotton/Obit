@@ -43,3 +43,9 @@ ObitMatxCTransFP ObitMatxCTrans;
 ObitMatxZeroFP ObitMatxZero;
 /** Function pointer to set 2x2 complex values. */
 ObitMatxSet2CFP ObitMatxSet2C;
+/** Function pointer to Inverse perfect linear feed Jones matrix */
+ObitMatxIPerfLinJonesFP ObitMatxIPerfLinJones;
+/** Function pointer to Outer 2x2 complex multiply */
+ObitMatxOuterMult2CFP ObitMatxOuterMult2C;
+/** Function pointer to 4x4 complex matrix * 4x1 complex vector multiply */
+ObitMatxVec4MultFP ObitMatxVec4Mult;

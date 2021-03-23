@@ -174,6 +174,17 @@ class Image(Obit.Image, OData.OData):
         Obit.ImageFreeBuffer (self.me, err.me)
         # end FreeBuffer
 
+    def Zap (self, err):
+        """
+        Delete external forms
+
+        * self      = Python Image object
+        * err       = Python Obit Error/message stack
+        """
+        Obit.ImageFreeBuffer (self.me, err.me)  # Kill any buffers
+        Obit.ImageZap (self.me, err.me)
+        # endZap
+
     def Read (self, err):
         """
         Read an image persistent (disk) form

@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN/selfcalibrate a uv data set               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2020                                          */
+/*;  Copyright (C) 2010-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1941,7 +1941,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
 	outImage[qstok-1]->myStatus = OBIT_Modified;
 	ObitImageClose (outImage[qstok-1], err);
 	ObitImageOpen (outImage[ustok-1], OBIT_IO_ReadWrite, err);
-	outImage[ustok-1]->myDesc->crval[outImage[ustok-1]->myDesc->jlocs] = (gfloat)qstok;
+	outImage[ustok-1]->myDesc->crval[outImage[ustok-1]->myDesc->jlocs] = (gfloat)ustok;
 	outImage[ustok-1]->myStatus = OBIT_Modified;
 	ObitImageClose (outImage[ustok-1], err);
       } else {
@@ -2126,12 +2126,18 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV, ObitUV* inUV2,
     ObitInfoListAlwaysPut(myClean->info, "minFlux", OBIT_float, dim, &minFluxV);
   }  
    
-  /* Only do self cal for Stokes I (or F) */
+  /* Only do self cal, autoCen for Stokes I (or F) */
+  PeelFlux = 1.0e20;
+  ObitInfoListGetTest(myInput, "PeelFlux", &type, dim, &PeelFlux); 
+  ObitInfoListGetTest(myInput, "autoCen", &type, dim, &autoCen);
   if ((Stokes[0]!='I') && (Stokes[0]!='F') && ((Stokes[0]!=' '))) {
     maxPSCLoop  = 0;
     maxASCLoop  = 0;
     minFluxPSC = 1.0e20;
     minFluxASC = 1.0e20;
+    /* Peeling trip level */
+    PeelFlux = 1.0e20;
+    autoCen = 1.0e20;
   }
   
   /* Don't restore and flatten before done */
@@ -2247,7 +2253,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV, ObitUV* inUV2,
       ftemp = 1.0e20;
       dim[0] = 1;
       ObitInfoListAlwaysPut (myClean->info, "autoCen", OBIT_float, dim, &ftemp);
-      
+    
       /* Need to recenter bright sources? */
       if (((myClean->peakFlux>autoCen) || (myClean->peakFlux> PeelFlux)) && !doneRecenter) {
 	/* Compress CC files */
@@ -2259,6 +2265,12 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV, ObitUV* inUV2,
 			      OBIT_float, dim, &autoCen);
 	reimage = ObitDConCleanVisReimage (myClean, inUV, err);
 	if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+
+	/* Reset minFlux disturbed by Clean */
+	dim[0] = dim[1] = dim[2] = 1;
+	ftemp = minFlux;
+	ObitInfoListAlwaysPut(myClean->info, "minFlux", OBIT_float, dim, &ftemp);
+
 	/* Did it run out of time - no self cal - just restore, flatten */
 	if (myClean->outaTime) goto bail;
 	
@@ -2525,7 +2537,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV, ObitUV* inUV2,
 	/* reset flux limit for next Clean to 1 sigma */
 	dim[0] = 1;dim[1] = 1;
 	if (minFList) {
-	  useMinFlux = minFList[MIN(SCLoop, (FLdim[0]-1))];
+	  useMinFlux = minFList[FLdim[0]-1];
 	} else { /* minFList not given - use RMS */
 	  useMinFlux = selfCal->RMSFld1;
 	}

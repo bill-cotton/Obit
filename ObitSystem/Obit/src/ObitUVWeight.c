@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2018                                          */
+/*;  Copyright (C) 2003-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1144,7 +1144,7 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
   if (desc->jlocif>=0) nif = desc->inaxes[desc->jlocif];
   nstok = 1;
   if (desc->jlocs>=0) nstok = desc->inaxes[desc->jlocs];
-  nstok = MIN (2, nstok);
+  /*nstok = MIN (2, nstok); no - do all*/
 
 
   /* Maximum temperance */

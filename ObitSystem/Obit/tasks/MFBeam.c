@@ -1,7 +1,7 @@
 /* $Id$ */
 /*  Imaging software correcting for tabulated beamshape               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2020                                          */
+/*;  Copyright (C) 2011-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -83,11 +83,11 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
 		 ObitErr* err);
 
 /* Image/self cal loop */
-void doImage (ObitInfoList* myInput, ObitUV* inData, 
+void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inData, 
 	      ObitDConCleanVis *myClean, olong selFGver, ObitErr* err);
 
-/* Subtract Stokes I model from data */
-void subIPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver, 
+/* Subtract Stokes model from data */
+void subPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver, 
 		   ObitErr* err);
 
 /* Write history */
@@ -1484,7 +1484,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   olong        i, chInc, BChan, EChan, BIF, nchan, istok, ipoln=1, npoln, bpoln, epoln;
   olong        niter, *IChanSel, order;
   gboolean     first, doFlat, autoWindow, Tr=TRUE, do3D, doCmplx=FALSE, doVPol, btemp;
-  gboolean     HalfStoke, doSub;
+  gboolean     HalfStoke, FullStoke, doSub;
   olong        numAntType, inver, outver, selFGver, *unpeeled=NULL, plane[5] = {0,1,1,1,1};
   oint         otemp;
   gchar        Stokes[5],  IStokes[5], *chStokes=" IQUVRL", *CCType = "AIPS CC";
@@ -1679,8 +1679,11 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     
     /* Need half Stokes?  Only first time = I */
     HalfStoke = first;
+    /* Other Stokes need all */
+    FullStoke = !first;
     dim[0] = dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (outData->info, "HalfStoke", OBIT_bool, dim, &HalfStoke);
+    ObitInfoListAlwaysPut (outData->info, "FullStoke", OBIT_bool, dim, &FullStoke);
     
     /* Create Imager & SkyModel */
     /* initialization - first time need beam correction, subsequent = normal imaging */
@@ -1743,14 +1746,15 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       if (err->error) Obit_traceback_msg (err, routine, outData->name);
 
     } else { /* Polarized Stokes - Normal imaging - redo SkyModel */
-      /* Delete old */
+      /* DEBUG NO NO NO use beam polarized model */
+      /* Delete old 
       skyModel = ObitSkyModelUnref(skyModel);
 
-      skyModel = (ObitSkyModel*)ObitSkyModelMFCreate("Sky Model", imager->mosaic);
+      skyModel = (ObitSkyModel*)ObitSkyModelMFCreate("Sky Model", imager->mosaic);*/
 
-      /* Replace sky model on Clean */
+      /* Replace sky model on Clean 
       myClean->skyModel = ObitSkyModelUnref(myClean->skyModel);
-      myClean->skyModel = ObitSkyModelRef(skyModel);
+      myClean->skyModel = ObitSkyModelRef(skyModel);*/
     } /* end setup imager & skymodel */
 
     /* Save parameters */
@@ -1771,8 +1775,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     BeamOne (myInput, outData, myClean, err);
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
     
-    /* Set CLEAN windows */
-    ObitDConCleanVisDefWindow((ObitDConClean*)myClean, err);
+    /* Set CLEAN windows for Stokes I*/
+    if (ipoln==bpoln) ObitDConCleanVisDefWindow((ObitDConClean*)myClean, err);
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
     
     /* Get output image(s) */
@@ -1813,7 +1817,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     ObitInfoListAlwaysPut (myClean->skyModel->info, "Stokes", OBIT_string, dim, IStokes);
     
     /* Do actual processing */
-    doImage (myInput, outData, myClean, selFGver, err);
+    doImage (IStokes, myInput, outData, myClean, selFGver, err);
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
     
     /* Reset Stokes on data */
@@ -1827,12 +1831,15 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
 	ObitInfoListAlwaysPut (skyModel->info, "UnPeeledComps", OBIT_long, dim, unpeeled);
     }
     
-    /* Subtract sky model from outData for I if any cleaning requested */
+    /* Subtract sky model from outData if any cleaning requested */
     niter = 0;
     ObitInfoListGetTest(myInput, "Niter",  &type, dim, &niter);
+    /* Q sub messes up U pol ;*/
+    if ((niter>0) && doSub)  subPolModel (outData, skyModel, &selFGver, err);
+    /* only I 
     if ((ipoln==1) && (niter>0) && doSub && 
 	((Stokes[0]=='I') || (Stokes[0]=='F') || (Stokes[0]==' '))) 
-      subIPolModel (outData, skyModel, &selFGver, err);
+	subPolModel (outData, skyModel, &selFGver, err); */
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
     
     /* If 2D imaging or single Fly's eye facet then concatenate CC tables */
@@ -1929,6 +1936,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
 /*----------------------------------------------------------------------- */
 /*  Imaging/Deconvolution self calibration loop                           */
 /*   Input:                                                               */
+/*      Stokes    Input Stokes type (no Selfcal except for I)             */
 /*      myInput    Input parameters on InfoList                           */
 /*      inUV       ObitUV to image                                        */
 /*      myClean    CLEAN object                                           */
@@ -1937,7 +1945,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
 /*   Output:                                                              */
 /*      err    Obit Error stack                                           */
 /*----------------------------------------------------------------------- */
-void doImage (ObitInfoList* myInput, ObitUV* inUV, 
+void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV, 
 	      ObitDConCleanVis *myClean, olong selFGver, ObitErr* err)
 {
   ObitUVSelfCal *selfCal = NULL;
@@ -1956,7 +1964,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   gboolean     noSCNeed, reimage, didSC=FALSE, imgOK, doBeam, converged = FALSE;
   gboolean     btemp, noNeg, doneRecenter=FALSE, isSkyModelVMBeam=FALSE;
   const        ObitDConCleanVisClassInfo *clnClass=NULL;
-  gchar        Stokes[5], soltyp[5], solmod[5], stemp[5];
+  gchar        soltyp[5], solmod[5], stemp[5];
   gchar        *include[] = {"AIPS FG", NULL};
   gchar        *SCParms[] = {  /* Self parameters */
     "minFluxPSC", "minFluxASC", "refAnt", "WtUV", "avgPol", "avgIF", "noNeg", "doMGM", 
@@ -1994,6 +2002,20 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   noNeg = TRUE;
   ObitInfoListGetTest(myInput, "noNeg", &type, dim, &noNeg);
 
+  /* Fitting spectrum? */
+  doFit = TRUE;
+  ObitInfoListGetTest(myInput, "doFit",&type, dim, &doFit);
+  antSize = 0.0;
+  ObitInfoListGetTest(myInput, "antSize",&type, dim, &antSize);
+  if (antSize<0.01) antSize = myClean->skyModel->antSize;
+
+  /* List of minimum flux densities after selfcals */
+  ObitInfoListGetP(myInput, "minFList",  &type, FLdim, (gpointer)&minFList);
+
+  /* Get input parameters from myInput, copy to myClean */
+  ObitInfoListCopyList (myInput, myClean->info, CLEANParms);
+  if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+  
   /* Special Stokes Parameters? */
   ObitInfoListGetTest(myInput, "Niter", &type, dim, &Niter);
   NiterQU = Niter;
@@ -2012,28 +2034,26 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   }  else if ((Stokes[0]=='Q') || (Stokes[0]=='U')) {
     ObitInfoListAlwaysPut(myClean->info,  "Niter", OBIT_long, dim, &NiterQU);
     ObitInfoListAlwaysPut(myClean->info, "minFlux", OBIT_float, dim, &minFluxQU);
+    minFlux = minFluxQU;
   }  else if (Stokes[0]=='V') {
     ObitInfoListAlwaysPut(myClean->info,  "Niter", OBIT_long, dim, &NiterV);
     ObitInfoListAlwaysPut(myClean->info, "minFlux", OBIT_float, dim, &minFluxV);
+    minFlux = minFluxV;
   }  
    
-  /* Peeling trip level */
+  /* Only do self cal, autoCen for Stokes I (or F) */
   PeelFlux = 1.0e20;
   ObitInfoListGetTest(myInput, "PeelFlux", &type, dim, &PeelFlux); 
-  
-  /* Fitting spectrum? */
-  doFit = TRUE;
-  ObitInfoListGetTest(myInput, "doFit",&type, dim, &doFit);
-  antSize = 0.0;
-  ObitInfoListGetTest(myInput, "antSize",&type, dim, &antSize);
-  if (antSize<0.01) antSize = myClean->skyModel->antSize;
-
-  /* List of minimum flux densities after selfcals */
-  ObitInfoListGetP(myInput, "minFList",  &type, FLdim, (gpointer)&minFList);
-
-  /* Get input parameters from myInput, copy to myClean */
-  ObitInfoListCopyList (myInput, myClean->info, CLEANParms);
-  if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+  ObitInfoListGetTest(myInput, "autoCen", &type, dim, &autoCen);
+  if ((Stokes[0]!='I') && (Stokes[0]!='F') && ((Stokes[0]!=' '))) {
+    maxPSCLoop  = 0;
+    maxASCLoop  = 0;
+    minFluxPSC = 1.0e20;
+    minFluxASC = 1.0e20;
+    /* Peeling trip level */
+    PeelFlux = 1.0e20;
+    autoCen = 1.0e20;
+  }
   
   /* Recentering trip level in CLEAN */
   dim[0] = 1;dim[1] = 1;
@@ -2041,17 +2061,24 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   ObitInfoListAlwaysPut (myClean->info, "autoCen", OBIT_float, dim, &ftemp);
   imgOK = FALSE;  /* Need new image */
   
-  /* Get Stokes being imaged */
-  strncpy (Stokes, "F   ", 5); 
-  ObitInfoListGetTest (inUV->info, "Stokes", &type, dim, Stokes);
-
   /* Only do self cal for Stokes I (or F) */
+  PeelFlux = 1.0e20;
+  autoCen = 1.0e20;
+  ObitInfoListGetTest(myInput, "autoCen", &type, dim, &autoCen);
+  /* Peeling trip level */
+  ObitInfoListGetTest(myInput, "PeelFlux", &type, dim, &PeelFlux); 
   if ((Stokes[0]!='I') && (Stokes[0]!='F') && ((Stokes[0]!=' '))) {
     maxPSCLoop  = 0;
     maxASCLoop  = 0;
     minFluxPSC = 1.0e20;
     minFluxASC = 1.0e20;
   }
+  
+  /* Recentering trip level in CLEAN */
+  dim[0] = 1;dim[1] = 1;
+  ftemp = 1.1 * MIN (autoCen, PeelFlux); /* Fudge a bit due to shallow CLEAN */
+  ObitInfoListAlwaysPut (myClean->info, "autoCen", OBIT_float, dim, &ftemp);
+  imgOK = FALSE;  /* Need new image */
   
   /* Don't restore and flatten before done */
   dim[0] = dim[1] = 1;
@@ -2137,6 +2164,8 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
       ObitDConCleanVisDeconvolve ((ObitDCon*)myClean, err);
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
       imgOK = TRUE; 
+      /* Did it run out of time - no self cal - just restore, flatten */
+      if (myClean->outaTime) goto bail;
       if (isSkyModelVMBeam) {
 	ObitInfoListAlwaysPut (myClean->skyModel->info, "BeamCorClean", OBIT_bool, dim, &Fl);
 	((ObitSkyModelVMBeam*)(myClean->skyModel))->doBeamCorClean = Fl;
@@ -2164,6 +2193,14 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 			      OBIT_float, dim, &autoCen);
 	reimage = ObitDConCleanVisReimage (myClean, inUV, err);
 	if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+	
+	/* Reset minFlux disturbed by Clean */
+	dim[0] = dim[1] = dim[2] = 1;
+	ftemp = minFlux;
+	ObitInfoListAlwaysPut(myClean->info, "minFlux", OBIT_float, dim, &ftemp);
+
+	/* Did it run out of time - no self cal - just restore, flatten */
+	if (myClean->outaTime) goto bail;
 	
 	/* Always reImage/Clean if you get here */
 	/* Don't need to remake beams  */
@@ -2198,7 +2235,9 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	  ObitInfoListAlwaysPut (myClean->skyModel->info, "BeamCorClean", OBIT_bool, dim, &Fl);
 	  ((ObitSkyModelVMBeam*)(myClean->skyModel))->doBeamCorClean = Fl;
 	}
-   
+  	/* Did it run out of time - no self cal - just restore, flatten */
+	if (myClean->outaTime) goto bail;
+ 
 	autoCen = 1.0e20;  /* only once */
  	doneRecenter = TRUE;
      }/* End auto center */
@@ -2241,9 +2280,16 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	dim[0] = 1;dim[1] = 1;
 	ObitInfoListAlwaysPut(myClean->info, "doBeam", OBIT_bool, dim, &doBeam);
 	
-	/* reset flux limit for next Clean to 1 sigma */
+	/* reset flux limit for next Clean to 1 sigma - minFList overrides */
 	dim[0] = 1;dim[1] = 1;
-	ObitInfoListAlwaysPut (myClean->info, "minFlux", OBIT_float, dim, &selfCal->RMSFld1);
+	if (minFList) {
+	  useMinFlux = minFList[MIN(SCLoop, (FLdim[0]-1))];
+	} else { /* minFList not given - use RMS */
+	  useMinFlux = selfCal->RMSFld1;
+	}
+	ObitInfoListAlwaysPut (myClean->info, "minFlux", OBIT_float, dim, &useMinFlux);
+	if (err->prtLv>=3)
+	  Obit_log_error(err, OBIT_InfoErr,"MinFlux now %g", useMinFlux);
 	btemp = FALSE;
 	ObitInfoListAlwaysPut(selfCal->skyModel->info, "noNeg", OBIT_bool, dim, &btemp);
 	
@@ -2362,7 +2408,9 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	ObitInfoListAlwaysPut (myClean->skyModel->info, "BeamCorClean", OBIT_bool, dim, &Fl);
 	((ObitSkyModelVMBeam*)(myClean->skyModel))->doBeamCorClean = Fl;
       }
-  
+      /* Did it run out of time - no self cal - just restore, flatten */
+      if (myClean->outaTime) goto bail;
+ 
       /* Only recenter once */
       ftemp = 1.0e20;
       dim[0] = 1;
@@ -2396,6 +2444,8 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	  ObitDConCleanVisDeconvolve ((ObitDCon*)myClean, err);
 	  if (err->error) Obit_traceback_msg (err, routine, myClean->name);
 	  imgOK = TRUE;  /* Image OK */
+	  /* Did it run out of time - no self cal - just restore, flatten */
+	  if (myClean->outaTime) goto bail;
 	  if (isSkyModelVMBeam) {
 	    ObitInfoListAlwaysPut (myClean->skyModel->info, "BeamCorClean", OBIT_bool, dim, &Fl);
 	    ((ObitSkyModelVMBeam*)(myClean->skyModel))->doBeamCorClean = Fl;
@@ -2423,7 +2473,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	/* reset flux limit for next Clean to 1 sigma - minFList overrides */
 	dim[0] = 1;dim[1] = 1;
 	if (minFList) {
-	  useMinFlux = minFList[MIN(SCLoop, (FLdim[0]-1))];
+	  useMinFlux = minFList[FLdim[0]-1];
 	} else { /* minFList not given - use RMS */
 	  useMinFlux = selfCal->RMSFld1;
 	}
@@ -2438,6 +2488,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	/* Do self cal */
 	converged = ObitUVSelfCalSelfCal (selfCal, inUV, init, &noSCNeed, 
 					  myClean->window, err);
+	if (err->error) Obit_traceback_msg (err, routine, selfCal->name);
 
 	/* No alpha correction in model for Clean */
 	btemp = FALSE; dim[0] = dim[1] = dim[2] = 1;
@@ -2447,6 +2498,8 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	if (converged || noSCNeed)  break;
 	imgOK = FALSE;  /* Need new image */
 	init = FALSE;
+	/* Did it run out of time - no self cal - just restore, flatten */
+	if (selfCal->outaTime) goto bail;
 	
 	/* May need to remake beams - depends on success of selfcal */
 	ObitInfoListGetTest(selfCal->info, "FractOK", &type, dim, &FractOK);
@@ -2534,6 +2587,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   } /* end final filtering */
 
   /* Restore if requested */
+ bail:
   clnClass = (ObitDConCleanVisClassInfo*)myClean->ClassInfo; /* class structure */
   doRestore = TRUE;
   ObitInfoListGetTest(myInput, "doRestore", &type, dim, &doRestore);
@@ -2590,19 +2644,19 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 } /* end doImage */
 
 /*----------------------------------------------------------------------- */
-/* Subtract IPol skyModel from inData with possible application of        */
+/* Subtract Pol skyModel from outData with possible application of        */
 /* calibration.  The subtraction cannot apply the calibration so          */
 /* copy/calibrate to a scratch file.                                      */
 /* Calibration is turned off on inData                                    */
 /*   Input:                                                               */
-/*      inData    ObitUV to copy history from                             */
-/*      skyModel  Skymodel to subtract                                    */
+/*      inData     ObitUV to copy history from                            */
+/*      skyModel   Skymodel to subtract                                   */
 /*      selFGver   Continuum channel selection FG flag, -1 if none        */
 /*   Output:                                                              */
 /*      err    Obit Error stack                                           */
 /*----------------------------------------------------------------------- */
-void subIPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver, 
-		   ObitErr* err)
+void subPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver, 
+		  ObitErr* err)
 {
   ObitUV *scrUV = NULL;
   ObitTableCC  *CCTable=NULL;
@@ -2617,7 +2671,7 @@ void subIPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver,
   gchar *routine = "subIPolModel";
 
   /* Message */
-  Obit_log_error(err, OBIT_InfoErr, "Subtracting IPol model from output uv data");
+  Obit_log_error(err, OBIT_InfoErr, "Subtracting Pol model from output uv data");
   ObitErrLog(err); 
 
   /* unset selection flagging */

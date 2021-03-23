@@ -341,7 +341,7 @@ void ObitUVCalStart (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
   } /* end spectral index setup */
 
   /* Read Polarization calibration from AN tables  */
-  if ((sel->doPolCal)  || (sel->doBPCal)) {
+  if ((sel->doPolCal)  || (sel->doBPCal) || (sel->doCalSelect)) {
     for (i=0; i<in->numSubA; i++) {
       in->antennaLists[i] = ObitTableANGetList ((ObitTableAN*)in->ANTables[i], err);
       if (err->error) Obit_traceback_msg (err, routine, in->name);
@@ -492,6 +492,9 @@ void ObitUVCalShutdown (ObitUVCal *in, ObitErr *err)
   in->SNTable = ObitTableUnref((ObitTable*)in->SNTable); in->SNTable=NULL;
   in->CQTable = ObitTableUnref((ObitTable*)in->CQTable); in->CQTable=NULL;
   in->PDTable = ObitTableUnref((ObitTable*)in->PDTable); in->PDTable=NULL;
+  in->Muller  = ObitMatxUnref((ObitMatx*)in->Muller); in->Muller=NULL;
+  in->workMatx1 = ObitMatxUnref((ObitMatx*)in->workMatx1); in->workMatx1=NULL;
+  in->workMatx2 = ObitMatxUnref((ObitMatx*)in->workMatx2); in->workMatx2=NULL;
   if (in->ANTables) {
     for (i=0; i<in->numANTable; i++) {
       in->ANTables[i] = ObitTableUnref((ObitTable*)in->ANTables[i]); in->ANTables[i]=NULL;
@@ -753,7 +756,15 @@ void ObitUVCalInit  (gpointer inn)
   in->SNTable     = NULL;
   in->SUTable     = NULL;
   in->PDTable     = NULL;
+  in->Muller      = NULL;
+  in->workMatx1   = NULL;
+  in->workMatx2   = NULL;
   in->PDVer       = -1;
+  in->lastTime    = -1.0e10;
+  in->lastSu      = -1;
+  in->doLin2Cir   = FALSE;
+  in->PAReal      = 1.0;
+  in->PAImag      = 0.0;
   in->SmoothConvFn= NULL;
   in->SmoothWork  = NULL;
   in->SpecIndxWork= NULL;
@@ -796,6 +807,9 @@ void ObitUVCalClear (gpointer inn)
   in->CQTable     = ObitUnref(in->CQTable);
   in->SUTable     = ObitUnref(in->SUTable);
   in->PDTable     = ObitUnref(in->PDTable);
+  in->Muller      = ObitMatxUnref((ObitMatx*)in->Muller);
+  in->workMatx1   = ObitMatxUnref((ObitMatx*)in->workMatx1);
+  in->workMatx2   = ObitMatxUnref((ObitMatx*)in->workMatx2);
   if (in->ANTables) {
     for (i=0; i<in->numANTable; i++) in->ANTables[i] = ObitUnref(in->ANTables[i]);
     if (in->ANTables) g_free(in->ANTables);

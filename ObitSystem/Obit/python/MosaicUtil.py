@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2020
+#  Copyright (C) 2004-2021
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -209,6 +209,14 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
     else:
         planes = [0]
     #
+    # get plane RMSes -  for some reason this doesn't work right inside the loop
+    planeRMS = (inNaxis[2]+1)*[0.0]
+    for i in planes:
+        doPlane=[i+1,1,1,1,1];
+        Image.PGetPlane (inImage, None, doPlane, err)
+        #print ('plane RMSes',i+1,inImage.FArray.RMS,inImage.FArray.RawRMS)
+        planeRMS[i+1] = inImage.FArray.RMS
+    
     # Set BLC,TRC 
     inImage.List.set("BLC",[iblc[0], iblc[1],1,1,1,1,1])
     inImage.List.set("TRC",[itrc[0], itrc[1],0,0,0,0,0])
@@ -325,10 +333,12 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1,
             # Get image 
             Image.PGetPlane (inImage, None, doPlane, err)
             OErr.printErrMsg(err, "Error reading image "+str(iPlane)+" for "+Image.PGetName(inImage))
-            RMS = inImage.FArray.RMS
+            #RMS = inImage.FArray.RMS
+            RMS = planeRMS[doPlane[0]]
+            #print ('plane', doPlane[0],'RMS',RMS,"RawRMS",inImage.FArray.RawRMS)
             # This plane acceptable?
             if maxRMS and ((RMS>maxRMS) or (RMS<=0.0)):
-                #print 'drop plane',doPlane[0],'RMS',RMS
+                print ('drop plane',doPlane[0],'RMS',RMS)
                 continue
             if (factor<0.0):
                 fact = abs(factor)/RMS

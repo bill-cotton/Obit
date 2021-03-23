@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2018                                          */
+/*;  Copyright (C) 2010-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -873,6 +873,13 @@ ObitImageMosaicMF* ObitImageMosaicMFCreate (gchar *name, olong order, ofloat max
     Radius = 0.0;
   }
      
+  /* Override facet size? nx[0]>0 and NField<=0 */
+  if ((nx[0]>0) && (NField<=0)) {
+    Radius = nx[0]/2;
+    Obit_log_error(err, OBIT_InfoErr, 
+		   "Override facet FOV %f cells", Radius);
+  }
+
   /* Set fly's eye if needed */
   overlap = 10;
   imsize = (olong)(2.0*Radius+2*overlap+0.99);
@@ -1313,6 +1320,9 @@ void ObitImageMosaicMFFlatten (ObitImageMosaic *inn, ObitErr *err)
   in->FullField->myDesc->beamMin = in->images[0]->myDesc->beamMin;
   in->FullField->myDesc->beamPA  = in->images[0]->myDesc->beamPA;
   in->FullField->myDesc->niter = 1;
+  /* Stokes type */
+  in->FullField->myDesc->crval[in->FullField->myDesc->jlocs]  = 
+    in->images[0]->myDesc->crval[in->images[0]->myDesc->jlocs];
 
   /* Create weight scratch array (temp local pointers for output) */
   sc1 = in->FullField->image;              /* Flattened image FArray */

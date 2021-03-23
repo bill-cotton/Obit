@@ -2,7 +2,7 @@
 /* XMLRPC server for ObitView */
 /* Much of this material directly adapted from xmlrpc-c-1.2/examples */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2005-2020
+*  Copyright (C) 2005-2021
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -190,7 +190,6 @@ void* XMLRPCWatcher (XtPointer clientData)
   IDdata = (ImageDisplay *)clientData;
 
   if (receive_flag) {
-    pthread_mutex_lock(&request_lock); /* lock mutex */
     receive_flag=0;  /* Clear receive flag */
     requestList = ObitInfoListUnref(requestList);  /* make sure any old requests cleared */
     
@@ -205,6 +204,7 @@ void* XMLRPCWatcher (XtPointer clientData)
     case XMLRPC_LoadFits: /* Load FITS file, name passed */
       /*fprintf (stderr, "DEBUG Load FITS file %s\n", (char*)xmlrpcData);*/
       /* read FITS file to pixmap */
+      pthread_mutex_lock(&request_lock); /* lock mutex */
       FStrngFill (image[CurImag].FileName, (char*)xmlrpcData);
       image[CurImag].DataType = OBIT_IO_FITS;    /* FITS */
       image[CurImag].reLoad   = TRUE;            /* Force load */
@@ -216,6 +216,7 @@ void* XMLRPCWatcher (XtPointer clientData)
 	} else 
 	  xmlrpcData = "Loaded File";  /* return message */
 
+      pthread_mutex_unlock(&request_lock); /* unlock mutex */
       /* reset display */
       ResetDisplay(IDdata);
       return_flag=1;   /* Set return flag */
@@ -229,6 +230,7 @@ void* XMLRPCWatcher (XtPointer clientData)
        /*  fprintf (stderr, "Class %s Dir %s\n",*/
        /*  myFileInfo.AClass, myFileInfo.ADir);*/
        /*}*/
+       pthread_mutex_lock(&request_lock); /* lock mutex */
        /* read file to pixmap */
        /* Get instructions */
        image[CurImag].DataType = myFileInfo.Type;
@@ -249,6 +251,7 @@ void* XMLRPCWatcher (XtPointer clientData)
 	} else 
 	  xmlrpcData = "Loaded File";  /* return message */
 
+      pthread_mutex_unlock(&request_lock); /* unlock mutex */
       /* reset display */
       ResetDisplay(IDdata);
       return_flag=1;   /* Set return flag */
@@ -284,7 +287,6 @@ void* XMLRPCWatcher (XtPointer clientData)
     default:
       fprintf (stderr, "Unknown function %d\n", xmlrpcFunc);
     }
-    pthread_mutex_unlock(&request_lock); /* unlock mutex */
   }
   
   /* Let's not burn too many cycles in this event loop */
@@ -340,6 +342,7 @@ ping(xmlrpc_env *   const envP,
      void *         const userData) 
 {  
   xmlrpc_int x;
+  int loopcnt=0, maxloop=100;
 
   /* Are we waiting on something? */
   if (WeAreBusy)
@@ -354,17 +357,18 @@ ping(xmlrpc_env *   const envP,
     return NULL;
 
   /* Pass request to X thread */
-  pthread_mutex_lock(&request_lock); /* lock mutex */
+  /* pthread_mutex_lock(&request_lock); lock mutex */
   receive_flag = 1;          /* now have a request */
   xmlrpcFunc = XMLRPC_Ping;  /* Function called */
-  pthread_mutex_unlock(&request_lock); /* unlock mutex */
+  /* pthread_mutex_unlock(&request_lock); unlock mutex */
 
   /* Wait for results */
-  while(1) {
+  while(loopcnt<maxloop) {
+    loopcnt++; /* Let's not do this forever */
     if (return_flag) {
-      pthread_mutex_lock(&request_lock); /* lock mutex */
+      /* pthread_mutex_lock(&request_lock); lock mutex */
       return_flag = 0; /* clear flag */
-      pthread_mutex_unlock(&request_lock); /* unlock mutex */
+      /* pthread_mutex_unlock(&request_lock); unlock mutex */
      
       /* Return our result. */
       WeAreBusy = FALSE; /* no longer busy */
@@ -376,7 +380,15 @@ ping(xmlrpc_env *   const envP,
     /* Let's not burn too many cycles in this event loop */
     usleep(250000); /* 250 msec */
   }
-
+  /* Shouldn't get here */
+  fprintf (stderr, "Abnormal end in ping\n");
+  requestList = ObitInfoListUnref(requestList);
+  WeAreBusy = FALSE; /* no longer busy */
+  xmlrpcFunc = XMLRPC_Inactive;
+  return xmlrpc_build_value(envP, "{s:{s:i,s:s},s:s}", 
+			    "Status","code", (xmlrpc_int32)1,"reason","Busy",
+			    "Result", "Busy");
+  
 } /* end ping */
 
 /**
@@ -392,7 +404,8 @@ loadFITS(xmlrpc_env *   const envP,
 	 void *         const userData)
 {  
   gchar *filename;
-  
+  int loopcnt=0, maxloop=4000;
+   
   /* Are we waiting on something? */
   if (WeAreBusy)
       return xmlrpc_build_value(envP, "{s:{s:i,s:s},s:s}", 
@@ -408,18 +421,19 @@ loadFITS(xmlrpc_env *   const envP,
     return NULL;
 
   /* Pass request to X thread */
-  pthread_mutex_lock(&request_lock); /* lock mutex */
+   /* pthread_mutex_lock(&request_lock); lock mutex */
   receive_flag = 1;              /* now have a request */
   xmlrpcFunc = XMLRPC_LoadFits;  /* Function called */
   xmlrpcData = filename;         /* pass file name */
-  pthread_mutex_unlock(&request_lock); /* unlock mutex */
+  /* pthread_mutex_unlock(&request_lock);  unlock mutex */
 
   /* Wait for results */
-  while(1) {
+  while(loopcnt<maxloop) {
+    loopcnt++; /* Let's not do this forever */
     if (return_flag) {
-      pthread_mutex_lock(&request_lock); /* lock mutex */
+      /* pthread_mutex_lock(&request_lock); lock mutex */
       return_flag = 0; /* clear flag */
-      pthread_mutex_unlock(&request_lock); /* unlock mutex */
+      /* pthread_mutex_unlock(&request_lock); unlock mutex */
       g_free (filename);   /* Cleanup */
      
       /* Return our result. */
@@ -439,6 +453,15 @@ loadFITS(xmlrpc_env *   const envP,
     usleep(250000); /* 250 msec */
   }
 
+  /* Shouldn't get here */
+  fprintf (stderr, "Abnormal end in loadFITS\n");
+  requestList = ObitInfoListUnref(requestList);
+  WeAreBusy = FALSE; /* no longer busy */
+  xmlrpcFunc = XMLRPC_Inactive;
+  return xmlrpc_build_value(envP, "{s:{s:i,s:s},s:s}", 
+			    "Status","code", (xmlrpc_int32)1,"reason","Busy",
+			    "Result", "Busy");
+  
 } /* end loadFITS */
 
 /**
@@ -455,6 +478,7 @@ loadImage(xmlrpc_env *   const envP,
 {  
   xmlrpc_value *strt, *req;
   ObitXML *arg;
+  int loopcnt=0, maxloop=4000;
   
   /* Are we waiting on something? */
   if (WeAreBusy)
@@ -490,18 +514,19 @@ loadImage(xmlrpc_env *   const envP,
   }
 
   /* Pass request to X thread */
-  pthread_mutex_lock(&request_lock);  /* lock mutex */
+  /* pthread_mutex_lock(&request_lock);  lock mutex */
   receive_flag = 1;                   /* now have a request */
   xmlrpcFunc = XMLRPC_LoadImage;      /* Function called */
   xmlrpcData = NULL;                  /* arguments passed through global myFileInfo */
-  pthread_mutex_unlock(&request_lock);/* unlock mutex */
+  /* pthread_mutex_unlock(&request_lock); unlock mutex */
 
   /* Wait for results */
-  while(1) {
+  while(loopcnt<maxloop) {
+    loopcnt++; /* Let's not do this forever */
     if (return_flag) {
-      pthread_mutex_lock(&request_lock); /* lock mutex */
+      /* pthread_mutex_lock(&request_lock); lock mutex */
       return_flag = 0; /* clear flag */
-      pthread_mutex_unlock(&request_lock); /* unlock mutex */
+      /* pthread_mutex_unlock(&request_lock); unlock mutex */
      
       /* Return our result.- string set in XMLRPCWatcher */
       WeAreBusy = FALSE; /* no longer busy */
@@ -533,6 +558,15 @@ loadImage(xmlrpc_env *   const envP,
     usleep(250000); /* 250 msec */
   }
 
+  /* Shouldn't get here */
+  fprintf (stderr, "Abnormal end in loadImage\n");
+  requestList = ObitInfoListUnref(requestList);
+  WeAreBusy = FALSE; /* no longer busy */
+  xmlrpcFunc = XMLRPC_Inactive;
+  return xmlrpc_build_value(envP, "{s:{s:i,s:s},s:s}", 
+			    "Status","code", (xmlrpc_int32)1,"reason","Busy",
+			    "Result", "Busy");
+  
 } /* end loadImage */
 
 /**
@@ -576,18 +610,18 @@ editWindow(xmlrpc_env *   const envP,
   }
  
   /* Pass request to X thread */
-  pthread_mutex_lock(&request_lock);   /* lock mutex */
+  /* pthread_mutex_lock(&request_lock);   lock mutex */
   receive_flag = 1;                    /* now have a request */
   xmlrpcFunc = XMLRPC_EditWindow;      /* Function called */
   xmlrpcData = window;                 /* pass window */
-  pthread_mutex_unlock(&request_lock); /* unlock mutex */
+  /* pthread_mutex_unlock(&request_lock); unlock mutex */
 
-  /* Wait for results */
+  /* Wait for results - possibly for a very long time */
   while(1) {
     if (return_flag) {
-      pthread_mutex_lock(&request_lock);   /* lock mutex */
+      /* pthread_mutex_lock(&request_lock);   lock mutex */
       return_flag = 0; /* clear flag */
-      pthread_mutex_unlock(&request_lock); /* unlock mutex */
+      /* pthread_mutex_unlock(&request_lock); unlock mutex */
 
       /* Return our result. */
       /* Did it work? */
@@ -648,7 +682,6 @@ copyFile(xmlrpc_env *   const envP,
 {  
   ObitFile *file=NULL;
   olong numChunk, Chunk, chunkSize;
-  ObitIOCode retCode;
   xmlrpc_value *strt;
   gpointer fileData;
   gchar *fileName=NULL;
@@ -698,13 +731,13 @@ copyFile(xmlrpc_env *   const envP,
   }
 
   /* Open it */
-  retCode = ObitFileOpen (file, fileName, OBIT_IO_ReadWrite, OBIT_IO_Binary, 
+  ObitFileOpen (file, fileName, OBIT_IO_ReadWrite, OBIT_IO_Binary, 
 			  chunkSize, err);
   /* Position at end if not first */
-  if (Chunk>1) retCode = ObitFileEnd (file, err);
+  if (Chunk>1) ObitFileEnd (file, err);
   /* Write */
-  retCode = ObitFileWrite (file, -1, chunkSize, fileData,  err);
-  retCode = ObitFileClose (file, err);
+  ObitFileWrite (file, -1, chunkSize, fileData,  err);
+  ObitFileClose (file, err);
 
   /* Cleanup */
   ObitMemFree(fileData);
@@ -745,6 +778,7 @@ markPos(xmlrpc_env *   const envP,
      void *            const userData) 
 {  
   char *pos;
+  int loopcnt=0, maxloop=100;
 
   /* Are we waiting on something? */
   if (WeAreBusy)
@@ -760,18 +794,19 @@ markPos(xmlrpc_env *   const envP,
     return NULL;
   }
   /* Pass request to X thread */
-  pthread_mutex_lock(&request_lock); /* lock mutex */
+  /*pthread_mutex_lock(&request_lock);  lock mutex */
   receive_flag = 1;          /* now have a request */
   xmlrpcFunc = XMLRPC_MarkPos;  /* Function called */
   xmlrpcData = pos;             /* pass position string */
-  pthread_mutex_unlock(&request_lock); /* unlock mutex */
+  /* pthread_mutex_unlock(&request_lock); unlock mutex */
 
   /* Wait for results */
-  while(1) {
+  while(loopcnt<maxloop) {
+    loopcnt++; /* Let's not do this forever */
     if (return_flag) {
-      pthread_mutex_lock(&request_lock); /* lock mutex */
+      /*pthread_mutex_lock(&request_lock);  lock mutex */
       return_flag = 0; /* clear flag */
-      pthread_mutex_unlock(&request_lock); /* unlock mutex */
+      /*pthread_mutex_unlock(&request_lock);  unlock mutex */
      
       /* Return our result. */
       WeAreBusy = FALSE; /* no longer busy */
@@ -783,5 +818,13 @@ markPos(xmlrpc_env *   const envP,
     /* Let's not burn too many cycles in this event loop */
     usleep(250000); /* 250 msec */
   }
+  /* Shouldn't get here */
+  fprintf (stderr, "Abnormal end in markPos\n");
+  requestList = ObitInfoListUnref(requestList);
+  WeAreBusy = FALSE; /* no longer busy */
+  xmlrpcFunc = XMLRPC_Inactive;
+  return xmlrpc_build_value(envP, "{s:{s:i,s:s},s:s}", 
+			    "Status","code", (xmlrpc_int32)1,"reason","Busy",
+			    "Result", "Busy");
 
 } /* end markPos */

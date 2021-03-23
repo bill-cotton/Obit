@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for Image type                             */
 /*                                                                    */
-/*;  Copyright (C) 2004-2019                                          */
+/*;  Copyright (C) 2004-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -98,14 +98,15 @@ void CreateImage(PyObject *self, char* name) {
 void DeleteImage(PyObject *self) {
    void *ptr;
    int ret, flags=0;
+   ObitImage *zap;
    ret = SWIG_Python_ConvertPtr(self, &ptr, SWIGTYPE_p_Image, flags);
    if (!SWIG_IsOK(ret)) {
 	PyErr_SetString(PyExc_RuntimeError,"DeleteImage: could not recover c struct");
 	return;
    }
-   if (!ObitImageIsA(((ObitImage*)ptr))) return;  // valid image?
-   while (((ObitImage*)ptr)->image) ((ObitImage*)ptr)->image = 
-        ObitFArrayUnref(((ObitImage*)ptr)->image); // zap any buffer -  for real
+   zap = (ObitImage*)(((Image*)ptr)->me);
+   if (!ObitImageIsA(zap)) return;  // valid image?
+   while (zap->image) zap->image = ObitFArrayUnref(zap->image); // zap any buffer -  for real
    ((Image*)ptr)->me = ObitImageUnref(((Image*)ptr)->me);
 }// end DeleteImage
 

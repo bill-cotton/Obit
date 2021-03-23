@@ -1587,7 +1587,10 @@ def uvlod(filename, inDisk, Aname, Aclass, Adisk, Aseq, err):
     # Add history
     outHistory.Open(History.READWRITE, err)
     outHistory.TimeStamp(" Start Obit uvlod",err)
-    outHistory.WriteRec(-1,"uvlod   / FITS file "+filename+" disk "+str(inDisk),err)
+    # Full path may blow history limit
+    s =filename.rfind('/');  s = max(0,s)
+    hline = "uvlod   / FITS file "+filename[s+1:]+" disk "+str(inDisk)
+    outHistory.WriteRec(-1, hline ,err)
     outHistory.Close(err)
    #
     # Copy Tables
@@ -1648,7 +1651,10 @@ def uvtab(inUV, filename, outDisk, err, compress=False, \
     # Add history
     outHistory.Open(History.READWRITE, err)
     outHistory.TimeStamp(" Start Obit uvtab",err)
-    outHistory.WriteRec(-1,"uvtab   / FITS file "+filename+" disk "+str(outDisk),err)
+    # Full path may blow history limit
+    s =filename.rfind('/');  s = max(0,s)
+    hline = "uvlod   / FITS file "+filename[s+1:]+" disk "+str(outDisk)
+    outHistory.WriteRec(-1,hline,err)
     outHistory.Close(err)
     # History in header?
     if headHi:
@@ -1759,7 +1765,10 @@ def imlod(filename, inDisk, Aname, Aclass, Adisk, Aseq, err):
     # Add history
     outHistory.Open(History.READWRITE, err)
     outHistory.TimeStamp(" Start Obit uvlod",err)
-    outHistory.WriteRec(-1,"imlod   / FITS file "+filename+" disk "+str(inDisk),err)
+    # Full path may blow history limit
+    s =filename.rfind('/');  s = max(0,s)
+    hline = "uvlod   / FITS file "+filename[s+1:]+" disk "+str(inDisk)
+    outHistory.WriteRec(-1, hline,err)
     outHistory.Close(err)
     # Open to be sure to update fragile AIPS header
     outImage.Open(Image.READWRITE, err)
@@ -1828,7 +1837,10 @@ def imtab(inImage, filename, outDisk, err, fract=None, quant=None, \
     outHistory.TimeStamp(" Start Obit imtab",err)
     if fract:
         outHistory.WriteRec(-1,"imtab   / Quantized at "+str(fract)+" RMS",err)
-    outHistory.WriteRec(-1,"imtab   / FITS file "+filename+", disk "+str(outDisk),err)
+    # Full path may blow history limit
+    s =filename.rfind('/');  s = max(0,s)
+    hline = "imtab   / FITS file "+filename[s+1:]+" disk "+str(outDisk)
+    outHistory.WriteRec(-1, hline,err)
     outHistory.Close(err)
     # History in header?
     if headHi:

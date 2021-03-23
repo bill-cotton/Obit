@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2020                                          */
+/*;  Copyright (C) 2011-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -182,6 +182,8 @@ typedef struct {
   ofloat **RLgain, **RLgaini;
   /** Arrays of time/spatially variable LR/YX component gain, real, imag */
   ofloat **LRgain, **LRgaini;
+  /** cos and sin of twice parallactic angle */
+  ofloat cos2PA, sin2PA;
   /** Number of spectral bins */
   olong        nSpec;
   /** Apply prior alpha correction? */
@@ -961,6 +963,8 @@ void ObitSkyModelVMBeamMFInitMod (ObitSkyModel* inn, ObitUV *uvdata,
       args->Interps= NULL;
       args->VMComps= NULL;
       args->dimGain = 0;
+      args->cos2PA  = 1.0;
+      args->sin2PA  = 0.0;
       args->Rgain   = g_malloc0(in->numAntType*sizeof(ofloat*));
       args->Rgaini  = g_malloc0(in->numAntType*sizeof(ofloat*));
       args->Lgain   = g_malloc0(in->numAntType*sizeof(ofloat*));
@@ -2228,7 +2232,7 @@ gboolean ObitSkyModelVMBeamMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvda
   olong outCCVer, ndim, naxis[2], lenEntry, nadd, nspec;
   ofloat *table, xxoff, yyoff, zzoff;
   ofloat konst, konst2, xyz[3], xp[3], umat[3][3], pmat[3][3];
-  ofloat ccrot, ssrot, xpoff, ypoff, maprot, uvrot;
+  ofloat ccrot, ssrot, xpoff, ypoff, maprot, uvrot, wfact;
   ofloat dxyzc[3], cpa, spa, xmaj, xmin, *specCorr=NULL;
   gboolean doCheck=FALSE, want, do3Dmul, noNeg, noSIfit;
   gpointer fitArg=NULL;
@@ -2565,6 +2569,9 @@ gboolean ObitSkyModelVMBeamMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvda
 	table[4+nadd] = xyz[0] + xxoff;
 	table[5+nadd] = xyz[1] + yyoff;
 	table[6+nadd] = xyz[2] + zzoff;
+	wfact = (1.0 + 2*(xyz[2] + zzoff));
+	table[4]*= wfact;
+	    
 
 	/* Zero rest in case */
 	for (iterm=7+nadd; iterm<lenEntry; iterm++) table[iterm] = 0.0;
@@ -2577,11 +2584,12 @@ gboolean ObitSkyModelVMBeamMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvda
 	    
 	    /* Only Point with tabulated spectrum */
 	  } else if (modType==OBIT_SkyModel_PointModTSpec) {
-	    for (iterm=0; iterm<in->nSpec; iterm++) table[iterm+4] = array[iterm+toff]*specCorr[iterm];
+	    for (iterm=0; iterm<in->nSpec; iterm++) table[iterm+4] = array[iterm+toff]*specCorr[iterm]*wfact;
 	    
 	    /* Only Point with spectrum */
 	  } else if (modType==OBIT_SkyModel_PointModSpec) {
 	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+4] = array[iterm+toff];
+	    table[4]*= wfact;
 	    
 	    /* Only Gaussian */
 	  } else if (in->modType==OBIT_SkyModel_GaussMod) {
@@ -2595,7 +2603,7 @@ gboolean ObitSkyModelVMBeamMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvda
 	    table[8+nadd] = gp2;
 	    table[9+nadd] = gp3;
 	    /*  spectrum */
-	    for (iterm=0; iterm<in->nSpec; iterm++) table[iterm+4] = array[iterm+toff]*specCorr[iterm];
+	    for (iterm=0; iterm<in->nSpec; iterm++) table[iterm+4] = array[iterm+toff]*specCorr[iterm]*wfact;
 	    
 	    /* Only Gaussian + spectrum */
 	  } else if (in->modType==OBIT_SkyModel_GaussModSpec) {
@@ -2604,6 +2612,7 @@ gboolean ObitSkyModelVMBeamMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvda
 	    table[9+nadd] = gp2;
 	    /*  spectrum */
 	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+4] = array[iterm+toff];
+	    table[4]*= wfact;
 	    
 	    /* Only Uniform sphere */
 	  } else if (in->modType==OBIT_SkyModel_USphereMod) {
@@ -2617,7 +2626,7 @@ gboolean ObitSkyModelVMBeamMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvda
 	    table[4+nadd] = parms[1]  * 0.109662271 * 2.7777778e-4;
 	    table[5+nadd] = 0.1;
 	    /*  spectrum */
-	    for (iterm=0; iterm<in->nSpec; iterm++) table[iterm+4] = array[iterm+toff]*specCorr[iterm];
+	    for (iterm=0; iterm<in->nSpec; iterm++) table[iterm+4] = array[iterm+toff]*specCorr[iterm]*wfact;
 
 	    /* Only Uniform sphere+ spectrum */
 	  } else if (in->modType==OBIT_SkyModel_USphereModSpec) {
@@ -2626,6 +2635,7 @@ gboolean ObitSkyModelVMBeamMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvda
 	    table[8+nadd] = 0.1;
 	    /*  spectrum */
 	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+4] = array[iterm+toff];
+	    table[4]*= wfact;
 
 	  }
 	} else { /* Mixed type - zero unused model components */
@@ -2655,7 +2665,7 @@ gboolean ObitSkyModelVMBeamMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvda
 	    table[8+nadd] = gp2;
 	    table[9+nadd] = gp3;
 	    /*  spectrum */
-	    for (iterm=0; iterm<in->nSpec; iterm++) table[iterm+4] = array[iterm+toff]*specCorr[iterm];
+	    for (iterm=0; iterm<in->nSpec; iterm++) table[iterm+4] = array[iterm+toff]*specCorr[iterm]*wfact;
 	  
 	    /* Only Point here but some with spectrum - zero spectra (Unlikely) */
 	  } else if ((modType==OBIT_SkyModel_PointMod) && (in->modType==OBIT_SkyModel_PointModTSpec)) {
@@ -2667,7 +2677,8 @@ gboolean ObitSkyModelVMBeamMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvda
 	    table[8+nadd] = 0.0;
 	    table[9+nadd] = 0.0;
 	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+4] = array[iterm+toff];
-	    
+	    table[4] *= wfact;
+	    	    
 	    /* GaussianSpectrum here but also some PointSpectrum */
 	  } else if ((in->modType==OBIT_SkyModel_PointModSpec) && (modType==OBIT_SkyModel_GaussModSpec)) {
 	    table[7+nadd] = gp1;
@@ -2675,6 +2686,7 @@ gboolean ObitSkyModelVMBeamMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvda
 	    table[9+nadd] = gp3;
 	    /*  spectrum */
 	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+4] = array[iterm+toff];
+	    table[4] *= wfact;
 	    
 	    /* Only Point here but some with spectrum - zero spectra (Unlikely) */
 	  } else if ((modType==OBIT_SkyModel_PointMod) && (in->modType==OBIT_SkyModel_PointModSpec)) {
@@ -3082,6 +3094,96 @@ static inline void SkyModel2DDot (olong n, ofloat *v1, ofloat *v2, ofloat *v3,
   }
   return;
  } /* end SkyModelVMul */
+
+/**
+ * Calculate visibility model and sum over a set of components
+ * \param sumMod   in/out full Stokes visibility accumulator
+ * \param ncomp    number of components in AmpArr, SinArr, CosArr
+ * \param isCirc   TRUE if circular feeds
+ * \param polType  Model Stoke type, 1,2,3,4 => I,Q.U.V
+ * \param AmpArr   Array of component amplitudes
+ * \param SinArr   Array of component sine of phase
+ * \param CosArr   Array of component cosine of phase
+ * \param cos2PA   cosine twice parallactic angle
+ * \param sin2PA   sine twice parallactic angle
+ * \param beamArr1 Antenna 1 beam
+ * \param beamArr2 Antenna 2 beam
+ * \param beamCT   work matrix
+ * \param modl     work matrix
+ * \param matxt1   work matrix
+ * \param matxt2   work matrix
+ */
+static void calcMod(ObitMatx *sumMod, olong ncomp, gboolean isCirc, olong polType, 
+		    ofloat *AmpArr, ofloat *SinArr, ofloat *CosArr, 
+		    ofloat cos2PA, ofloat sin2PA, ObitMatx *beamArr1[], ObitMatx *beamArr2[], 
+		    ObitMatx *beamCT, ObitMatx *modl, ObitMatx *matxt1, ObitMatx *matxt2) {
+  olong jt;
+  /* Accumulate model in sumMod */
+  /* Use matrix formalism modl = beam1*model*beam2.conjugate_transpose */
+  for (jt=0; jt<ncomp; jt++) {
+    if (isCirc) {  /* Circular Feeds */
+      /* from TMS2 p 109, eq 4.46 for XX,XY,YX,YY */
+      switch (polType) {
+      case 1:     /* Stokes I */
+	ObitMatxSet2C(modl, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt], 0.0, 0.0,
+		      0.0, 0.0, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt]);
+	break;
+      case 2:     /* Stokes Q */
+	ObitMatxSet2C(modl, 0.0,0.0, 
+		      -AmpArr[jt]*SinArr[jt], -AmpArr[jt]*CosArr[jt],
+		      +AmpArr[jt]*SinArr[jt], -AmpArr[jt]*CosArr[jt],
+		      0.0,0.0);
+	break;
+      case 3:     /* Stokes U */
+	ObitMatxSet2C(modl, 0.0,0.0, 
+		      +AmpArr[jt]*CosArr[jt], +AmpArr[jt]*SinArr[jt],
+		      -AmpArr[jt]*CosArr[jt], -AmpArr[jt]*SinArr[jt],
+		      0.0,0.0);
+	break;
+      case 4:     /* Stokes V */
+	ObitMatxSet2C(modl, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt], 0.0, 0.0,
+		      0.0, 0.0, -AmpArr[jt]*CosArr[jt], -AmpArr[jt]*SinArr[jt]);
+	break;
+      default:   /* Stokes I */
+	ObitMatxSet2C(modl, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt], 0.0, 0.0,
+		      0.0, 0.0, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt]);
+      }; /* end polType switch */
+    } else {       /* Linear feeds */
+      /* from TMS2 p 107, eq 4.41 for XX,XY,YX,YY */
+      switch (polType) {
+      case 1:     /* Stokes I */
+	ObitMatxSet2C(modl, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt], 0.0, 0.0,
+		      0.0, 0.0, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt]);
+	break;
+      case 2:     /* Stokes Q */
+	ObitMatxSet2C(modl, 
+		      +cos2PA*AmpArr[jt]*CosArr[jt], +cos2PA*AmpArr[jt]*SinArr[jt],
+		      -sin2PA*AmpArr[jt]*CosArr[jt], -sin2PA*AmpArr[jt]*SinArr[jt],
+		      -sin2PA*AmpArr[jt]*CosArr[jt], -sin2PA*AmpArr[jt]*SinArr[jt],
+		      -cos2PA*AmpArr[jt]*CosArr[jt], -cos2PA*AmpArr[jt]*SinArr[jt]);
+	break;
+      case 3:     /* Stokes U */
+	ObitMatxSet2C(modl, 
+		      +sin2PA*AmpArr[jt]*CosArr[jt], +sin2PA*AmpArr[jt]*SinArr[jt], 
+		      +cos2PA*AmpArr[jt]*CosArr[jt], +cos2PA*AmpArr[jt]*SinArr[jt],
+		      +cos2PA*AmpArr[jt]*CosArr[jt], +cos2PA*AmpArr[jt]*SinArr[jt],
+		      -sin2PA*AmpArr[jt]*CosArr[jt], -sin2PA*AmpArr[jt]*SinArr[jt]);
+	break;
+      case 4:     /* Stokes V */
+	ObitMatxSet2C(modl, 0.0, 0.0, -AmpArr[jt]*SinArr[jt], +AmpArr[jt]*CosArr[jt], 
+		      +AmpArr[jt]*SinArr[jt], -AmpArr[jt]*CosArr[jt], 0.0, 0.0);
+	break;
+      default:   /* Stokes I */
+	ObitMatxSet2C(modl, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt], 0.0, 0.0,
+		      0.0, 0.0, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt]);
+      }; /* end polType switch */
+    } /* end circ/lin feeds */
+    ObitMatxCTrans(beamArr2[jt], beamCT);      /* Conjugate transpose of Beam2 */
+    ObitMatxMult(modl, beamCT, matxt1);        /* model*beam2.conjugate_transpose */
+    ObitMatxMult(beamArr1[jt], matxt1, matxt2);/* beam1*model*beam2.conjugate_transpose */
+    ObitMatxAdd(matxt2, sumMod, sumMod);
+  } /* end component loop */
+} /* end calcMod */
 
 /**
  * Do Fourier transform using a DFT for a buffer of data.
@@ -3912,12 +4014,12 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTCpx (gpointer args)
   olong jincf, startIF, numberIF, jincif, kincf, kincif;
   olong offset, offsetChannel, offsetIF, iterm, nterm=0, nUVchan, nUVIF, nUVpoln;
   olong ilocu, ilocv, ilocw, iloct, suba, it1, it2, ant1, ant2;
-  ofloat *visData, *Data, *ddata, *fscale, oldPB, newPB;
+  ofloat *visData, *Data, *ddata, *fscale, oldPB, newPB, lastTime=0.0, PA;
   ofloat modRealRR=0.0, modImagRR=0.0, modRealLL=0.0, modImagLL=0.0;
   ofloat modRealRL=0.0,  modImagRL=0.0, modRealLR=0.0,  modImagLR=0.0;
   ofloat **rgain1, **lgain1, **rgain1i, **lgain1i;
   ofloat **rlgain1, **lrgain1, **rlgain1i, **lrgain1i;
-  ofloat ll, lll, logNuONu0;
+  ofloat ll, lll, logNuONu0, sin2PA, cos2PA;
   ofloat arg, freq2=0.0,freqFact, wtRR=0.0, wtLL=0.0, temp;
 #define FazArrSize 256  /* Size of the amp/phase/sine/cosine arrays */
 #if HAVE_AVX512==1
@@ -3933,8 +4035,8 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTCpx (gpointer args)
   ofloat ExpArg[FazArrSize], ExpVal[FazArrSize], ExpArg2[FazArrSize], ExpVal2[FazArrSize];
   ofloat VecL[FazArrSize], VecM[FazArrSize], VecN[FazArrSize];
 #endif
-  olong it, jt, itcnt, iSpec, nSpec, itab, mcomp=FazArrSize-1;
-  gboolean doCrossPol, updatePB, reGain;
+  olong it, itcnt, iSpec, nSpec, itab, polType, mcomp=FazArrSize-1;
+  gboolean doCrossPol, updatePB, reGain, isCirc;
   odouble *freqArr, SMRefFreq, specFreqFact,u, v, w ;
   /* Offsets in ddata table */
   olong ksi=3, kamp=4, ku=5, kv=6, kw=7,ka1=8,ka2=9,ka3=10;
@@ -3952,6 +4054,11 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTCpx (gpointer args)
   ilocv =  uvdata->myDesc->ilocv;
   ilocw =  uvdata->myDesc->ilocw;
   iloct =  uvdata->myDesc->iloct;
+
+  /* Model polarization type */
+  polType = (olong)(0.5+in->mosaic->images[0]->myDesc->crval[in->mosaic->images[0]->myDesc->jlocs]);
+  polType = MIN(4,MAX(1, polType));
+  isCirc = (uvdata->myDesc->crval[uvdata->myDesc->jlocs]>=-3.); /* Circular or linear feed? */
 
   /* Set channel, IF and Stokes ranges (to 0-rel)*/
   nSpec         = in->nSpec - 1;  /* Offset in comp array using TSpec */
@@ -4036,7 +4143,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTCpx (gpointer args)
   matxt1 = ObitMatxCreate(OBIT_Complex, 2, naxis);
   matxt2 = ObitMatxCreate(OBIT_Complex, 2, naxis);
   sumMod = ObitMatxCreate(OBIT_Complex, 2, naxis);
-  for (it=0; it<=MIN(mcomp,FazArrSize); it++) {
+  for (it=0; it<=MIN(mcomp,FazArrSize-1); it++) {
     beamArr1[it]  = ObitMatxCreate(OBIT_Complex, 2, naxis);
     beamArr2[it]  = ObitMatxCreate(OBIT_Complex, 2, naxis);
   }
@@ -4067,6 +4174,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTCpx (gpointer args)
 	/* Update antenna gains */
 	/* Update */
 	myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba-1, uvdata, ithread, err);
+	sin2PA = largs->sin2PA; cos2PA = largs->cos2PA; lastTime = visData[iloct];
       } /* end new plane */
       if (err->error) {  /* Error? */
 	ObitThreadLock(in->thread);  /* Lock against other threads */
@@ -4087,6 +4195,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTCpx (gpointer args)
 	  /* Update */
 	  reGain = TRUE;
 	  myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba-1, uvdata, ithread, err);
+	  sin2PA = largs->sin2PA; cos2PA = largs->cos2PA; lastTime = visData[iloct];
 	  if (err->error) {
 	    ObitThreadLock(in->thread);  /* Lock against other threads */
 	    Obit_log_error(err, OBIT_Error,"%s Error updating VMComps",
@@ -4094,7 +4203,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTCpx (gpointer args)
 	    ObitThreadUnlock(in->thread); 
 	    goto finish;
 	  }
-	} /* end update */
+	} /* end update gains */
 	
 	  /* Need antennas numbers */
 	ObitUVDescGetAnts(uvdata->myDesc, visData, &ant1, &ant2, &it1);
@@ -4103,6 +4212,12 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTCpx (gpointer args)
 	iaty = in->AntType[ant1];  /* Antenna type */
 	jaty = in->AntType[ant2];
 	
+	/* New Parallactic Angle? */
+	if (lastTime != visData[iloct]) {
+	  PA = ObitAntennaListParAng (in->AntList[it1-1], ant1+1, visData[iloct], in->curSource);
+	  cos2PA = cos(2*PA); sin2PA = sin(2*PA); lastTime = visData[iloct];
+	} /* end new PA */
+
 	ifq = iIF*kincif + iChannel*kincf;
 	freqFact = fscale[ifq];  /* Frequency scaling factor */
 	/* Log ratio of channel freq to Tabulated freq */
@@ -4151,16 +4266,10 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTCpx (gpointer args)
 	    /* Convert phases to sin/cos */
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
 
-	    /* Accumulate model in sumMod */
-	    /* Use matrix formalism modl = beam1*model*beam2.conjugate_transpose */
-	    for (jt=0; jt<itcnt; jt++) {
-	      ObitMatxSet2C(modl, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt], 0.0, 0.0,
-			    0.0, 0.0, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt]);
-	      ObitMatxCTrans(beamArr2[jt], beamCT);       /* Conjugate transpose of Beam2 */
-	      ObitMatxMult(modl, beamCT, matxt1);         /* model*beam2.conjugate_transpose */
-	      ObitMatxMult(beamArr1[jt], matxt1, matxt2); /* beam1*model*beam2.conjugate_transpose */
-	      ObitMatxAdd(matxt2, sumMod, sumMod);
-	    } /* End loop over buffers */
+	    /* Calculate/sum model */
+	    calcMod(sumMod, itcnt, isCirc, polType, AmpArr, SinArr, CosArr, 
+		    cos2PA, sin2PA, beamArr1, beamArr2, 
+		    beamCT, modl, matxt1, matxt2) ;
 	  } /* end outer loop over components */
 	  break;
 	case OBIT_SkyModel_PointModSpec:     /* Point + spectrum */
@@ -4204,17 +4313,11 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTCpx (gpointer args)
 	    ObitExpVec(itcnt, ExpArg2, ExpVal2);
 	    /* Spectral correction */
 	    SkyModelVMul(itcnt, AmpArr,  ExpVal2, AmpArr);
+	    /* Calculate/sum model */
+	    calcMod(sumMod, itcnt, isCirc, polType, AmpArr, SinArr, CosArr, 
+		    cos2PA, sin2PA, beamArr1, beamArr2, 
+		    beamCT, modl, matxt1, matxt2);
 	    
-	    /* Accumulate model in sumMod */
-	    /* Use matrix formalism modl = beam1*model*beam2.conjugate_transpose */
-	    for (jt=0; jt<itcnt; jt++) {
-	      ObitMatxSet2C(modl, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt], 0.0, 0.0,
-			    0.0, 0.0, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt]);
-	      ObitMatxCTrans(beamArr2[jt], beamCT);       /* Conjugate transpose of Beam2 */
-	      ObitMatxMult(modl, beamCT, matxt1);         /* model*beam2.conjugate_transpose */
-	      ObitMatxMult(beamArr1[jt], matxt1, matxt2); /* beam1*model*beam2.conjugate_transpose */
-	      ObitMatxAdd(matxt2, sumMod, sumMod);
-	    } /* End loop over buffers */
 	  } /* end outer loop over components */
 	  break;
 	case OBIT_SkyModel_PointModTSpec:     /* Point + tabulated spectrum */
@@ -4252,17 +4355,10 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTCpx (gpointer args)
 	    ObitExpVec(itcnt, ExpArg2, ExpVal2);
 	    /* Spectral index correction */
 	    SkyModelVMul(itcnt, AmpArr,  ExpVal2, AmpArr);
-	    
-	    /* Accumulate model in sumMod */
-	    /* Use matrix formalism modl = beam1*model*beam2.conjugate_transpose */
-	    for (jt=0; jt<itcnt; jt++) {
-	      ObitMatxSet2C(modl, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt], 0.0, 0.0,
-			    0.0, 0.0, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt]);
-	      ObitMatxCTrans(beamArr2[jt], beamCT);       /* Conjugate transpose of Beam2 */
-	      ObitMatxMult(modl, beamCT, matxt1);         /* model*beam2.conjugate_transpose */
-	      ObitMatxMult(beamArr1[jt], matxt1, matxt2); /* beam1*model*beam2.conjugate_transpose */
-	      ObitMatxAdd(matxt2, sumMod, sumMod);
-	    } /* End loop over buffers */
+	    /* Calculate/sum model */
+	    calcMod(sumMod, itcnt, isCirc, polType, AmpArr, SinArr, CosArr, 
+		    cos2PA, sin2PA, beamArr1, beamArr2, 
+		    beamCT, modl, matxt1, matxt2);
 	  } /* End outer component loop */
 	  break;
 	case OBIT_SkyModel_GaussMod:     /* Gaussian on sky */
@@ -4302,17 +4398,10 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTCpx (gpointer args)
 	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
 	    /* Convert Gaussian exp arguments */
 	    ObitExpVec(itcnt, ExpArg, ExpVal);
-	    
-	    /* Accumulate model in sumMod */
-	    /* Use matrix formalism modl = beam1*model*beam2.conjugate_transpose */
-	    for (jt=0; jt<itcnt; jt++) {
-	      ObitMatxSet2C(modl, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt], 0.0, 0.0,
-			    0.0, 0.0, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt]);
-	      ObitMatxCTrans(beamArr2[jt], beamCT);       /* Conjugate transpose of Beam2 */
-	      ObitMatxMult(modl, beamCT, matxt1);         /* model*beam2.conjugate_transpose */
-	      ObitMatxMult(beamArr1[jt], matxt1, matxt2); /* beam1*model*beam2.conjugate_transpose */
-	      ObitMatxAdd(matxt2, sumMod, sumMod);
-	    } /* End loop over buffers */
+	    /* Calculate/sum model */
+	    calcMod(sumMod, itcnt, isCirc, polType, AmpArr, SinArr, CosArr, 
+		    cos2PA, sin2PA, beamArr1, beamArr2, 
+		    beamCT, modl, matxt1, matxt2);
 	  } /* end outer loop over components */
 	  break;
 	case OBIT_SkyModel_GaussModSpec:     /* Gaussian on sky + spectrum*/
@@ -4358,18 +4447,11 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTCpx (gpointer args)
 	    /* Convert Gaussian exp arguments */
 	    ObitExpVec(itcnt, ExpArg, ExpVal);
 	    /* Gaussian factor */
-	    SkyModelVMul(itcnt, AmpArr, ExpVal, AmpArr);
-	    
-	    /* Accumulate model in sumMod */
-	    /* Use matrix formalism modl = beam1*model*beam2.conjugate_transpose */
-	    for (jt=0; jt<itcnt; jt++) {
-	      ObitMatxSet2C(modl, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt], 0.0, 0.0,
-			    0.0, 0.0, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt]);
-	      ObitMatxCTrans(beamArr2[jt], beamCT);       /* Conjugate transpose of Beam2 */
-	      ObitMatxMult(modl, beamCT, matxt1);         /* model*beam2.conjugate_transpose */
-	      ObitMatxMult(beamArr1[jt], matxt1, matxt2); /* beam1*model*beam2.conjugate_transpose */
-	      ObitMatxAdd(matxt2, sumMod, sumMod);
-	    } /* End loop over buffers */
+	    SkyModelVMul(itcnt, AmpArr, ExpVal, AmpArr);	    
+	    /* Calculate/sum model */
+	    calcMod(sumMod, itcnt, isCirc, polType, AmpArr, SinArr, CosArr, 
+		    cos2PA, sin2PA, beamArr1, beamArr2, 
+		    beamCT, modl, matxt1, matxt2);
 	  } /* end outer loop over components */
 	  break;
 	case OBIT_SkyModel_GaussModTSpec:     /* Gaussian on sky + tabulated spectrum*/
@@ -4415,17 +4497,10 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTCpx (gpointer args)
 	    SkyModelVMul(itcnt, AmpArr, ExpVal, AmpArr);
 	    /* Apply Spectral index correction */
 	    SkyModelVMul(itcnt, AmpArr,  ExpVal2, AmpArr);
-	    
-	    /* Accumulate model in sumMod */
-	    /* Use matrix formalism modl = beam1*model*beam2.conjugate_transpose */
-	    for (jt=0; jt<itcnt; jt++) {
-	      ObitMatxSet2C(modl, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt], 0.0, 0.0,
-			    0.0, 0.0, AmpArr[jt]*CosArr[jt], AmpArr[jt]*SinArr[jt]);
-	      ObitMatxCTrans(beamArr2[jt], beamCT);       /* Conjugate transpose of Beam2 */
-	      ObitMatxMult(modl, beamCT, matxt1);         /* model*beam2.conjugate_transpose */
-	      ObitMatxMult(beamArr1[jt], matxt1, matxt2); /* beam1*model*beam2.conjugate_transpose */
-	      ObitMatxAdd(matxt2, sumMod, sumMod);
-	    } /* End loop over buffers */
+	    /* Calculate/sum model */
+	    calcMod(sumMod, itcnt, isCirc, polType, AmpArr, SinArr, CosArr, 
+		    cos2PA, sin2PA, beamArr1, beamArr2, 
+		    beamCT, modl, matxt1, matxt2);
 	  } /* end outer loop over components */
 	  break;
 	default:
@@ -4558,7 +4633,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTCpx (gpointer args)
   if (modl)   modl   = ObitMatxUnref(modl);
   if (matxt1) matxt1 = ObitMatxUnref(matxt1);
   if (matxt2) matxt2 = ObitMatxUnref(matxt2);
-  for (it=0; it<=MIN(mcomp,FazArrSize); it++) {
+  for (it=0; it<=MIN(mcomp,FazArrSize-1); it++) {
     beamArr1[it]  = ObitMatxUnref(beamArr1[it]);
     beamArr2[it]  = ObitMatxUnref(beamArr2[it]);
   }
@@ -4940,9 +5015,9 @@ gpointer ThreadSkyModelVMBeamMFFTGrid (gpointer args)
 	      visData[offset+1] -= modImag;
 	    }
 	  }
-	  /* Factor for next Stokes */
+	  /* Factor for next Stokes???
 	  modReal *= in->stokFactor;
-	  modImag *= in->stokFactor;
+	  modImag *= in->stokFactor; */
 	  
 	  offset += jincs;
 	} /* end loop over Stokes */

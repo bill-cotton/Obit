@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for RMFit type                             */
 /*                                                                    */
-/*;  Copyright (C) 2013,2019                                          */
+/*;  Copyright (C) 2013,2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -86,7 +86,7 @@ void DeleteRMFit(PyObject *self) {
 	PyErr_SetString(PyExc_RuntimeError,"DeleteRMFit: could not recover c struct");
 	return;
    }
-   ((RMFit*)ptr)->me = ObitRMFitUnref(((RMFit*)ptr)->me);
+   while (((RMFit*)ptr)->me) ((RMFit*)ptr)->me = ObitRMFitUnref(((RMFit*)ptr)->me);
 }// end DeleteRMFit
 
 ObitRMFit* RMFit_Get_me(PyObject *self) {

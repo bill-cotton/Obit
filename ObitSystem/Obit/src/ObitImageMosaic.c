@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2020                                          */
+/*;  Copyright (C) 2004-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1367,7 +1367,7 @@ void ObitImageMosaicAddField (ObitImageMosaic *in, ObitUV *uvData,
 
   /* Image array */
   imtemp = ObitMemAlloc0Name(in->numberImages*sizeof(ObitImage*),"ImageMosaic images");
-  for (i=0; i<in->nInit; i++) imtemp[i] = in->images[i]; imtemp[i] = NULL;
+  for (i=0; i<in->nInit; i++) {imtemp[i] = in->images[i];} imtemp[i] = NULL;
   in->images = ObitMemFree(in->images);
   in->images = imtemp;
 
@@ -2936,20 +2936,20 @@ void ObitImageMosaicClear (gpointer inn)
       in->images[i] = ObitUnref(in->images[i]);
     in->images = ObitMemFree(in->images); 
   }
-  if (in->imDisk)    ObitMemFree(in->imDisk); in->imDisk = NULL;
-  if (in->nx)        ObitMemFree(in->nx);     in->nx     = NULL;
-  if (in->ny)        ObitMemFree(in->ny);     in->ny     = NULL;
-  if (in->inFlysEye) ObitMemFree(in->inFlysEye);in->inFlysEye = NULL;
-  if (in->FacetNo)   ObitMemFree(in->FacetNo);in->FacetNo = NULL;
-  if (in->nplane)    ObitMemFree(in->nplane); in->nplane = NULL;
-  if (in->RAShift)   ObitMemFree(in->RAShift);in->RAShift=NULL;
-  if (in->DecShift)  ObitMemFree(in->DecShift);in->DecShift=NULL;
-  if (in->isAuto)    ObitMemFree(in->isAuto); in->isAuto = NULL;
-  if (in->isShift)   ObitMemFree(in->isShift);in->isShift= NULL;
-  if (in->BeamTapes) ObitMemFree(in->BeamTapes);in->BeamTapes = NULL;
-  if (in->BeamTaper) ObitMemFree(in->BeamTaper);in->BeamTaper = NULL;
-  if (in->imName)    g_free(in->imName);      in->imName = NULL;
-  if (in->imClass)   g_free(in->imClass);     in->imClass= NULL;
+  if (in->imDisk)    {ObitMemFree(in->imDisk);} in->imDisk = NULL;
+  if (in->nx)        {ObitMemFree(in->nx);}     in->nx     = NULL;
+  if (in->ny)        {ObitMemFree(in->ny);}     in->ny     = NULL;
+  if (in->inFlysEye) {ObitMemFree(in->inFlysEye);}in->inFlysEye = NULL;
+  if (in->FacetNo)   {ObitMemFree(in->FacetNo);}in->FacetNo = NULL;
+  if (in->nplane)    {ObitMemFree(in->nplane);} in->nplane = NULL;
+  if (in->RAShift)   {ObitMemFree(in->RAShift);}in->RAShift=NULL;
+  if (in->DecShift)  {ObitMemFree(in->DecShift);}in->DecShift=NULL;
+  if (in->isAuto)    {ObitMemFree(in->isAuto);} in->isAuto = NULL;
+  if (in->isShift)   {ObitMemFree(in->isShift);}in->isShift= NULL;
+  if (in->BeamTapes) {ObitMemFree(in->BeamTapes);}in->BeamTapes = NULL;
+  if (in->BeamTaper) {ObitMemFree(in->BeamTaper);}in->BeamTaper = NULL;
+  if (in->imName)    {g_free(in->imName);}      in->imName = NULL;
+  if (in->imClass)   {g_free(in->imClass);}     in->imClass= NULL;
  
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
@@ -3182,13 +3182,14 @@ AddField (ofloat shift[2], ofloat dec, olong imsize, ofloat cells[2],
 	(cosdec * (xxsh - xsh) / cells[0]) + 
 	((yysh - ysh) / cells[1]) * ((yysh - ysh) / cells[1]);
       /* Minimum distance for a match */
-      mindist = MIN (0.9*minImpact, 0.5*0.75*fldsiz[i]);
+      /* DEBUG       mindist = MIN (0.9*minImpact, 0.5*0.75*fldsiz[i]);*/
+      mindist = MIN (0.9*minImpact, 0.5*0.25*fldsiz[i]);
       /* distance in pixel**2 to consider a match */
       maxdis = mindist*mindist;
       if (dist < maxdis) {
 	Obit_log_error(err, OBIT_InfoWarn, 
-		       "%s: Rejecting additional field at %g %g, in previous field %d", 
-		       routine, shift[0], shift[1], i+1);
+		       "%s: Rejecting additional field at %g %g, dist %g, maxDist %g in previous field %d", 
+		       routine, shift[0], shift[1], sqrt(dist), sqrt(maxdis), i+1);
 	return 1;
       } /* end of already in another field */
     } /* end loop  L100: */
@@ -3299,7 +3300,7 @@ AddOutlier (gchar *Catalog, olong catDisk, ofloat minRad, ofloat cells[2],
 	    ObitErr *err) 
 {
   olong count, imsize, jerr, nfini, qual;
-  odouble ra, dec, ra2000, dc2000, dra;
+  odouble ra, dec, ra2000, dc2000, dra, ddec;
   odouble xx, yy, zz, dist, refreq;
   ofloat radius, minflx, asize, alpha, pbf;
   ofloat flux, scale, xsh[2];
@@ -3362,6 +3363,7 @@ AddOutlier (gchar *Catalog, olong catDisk, ofloat minRad, ofloat cells[2],
 
   /* Get table info */
   refreq = VZTable->refFreq;
+  if (refreq<1.0) refreq = 1.4e9;  /* Default reference frequency */
   nrows  = VZTable->myDesc->nrow;
 
   /* frequency scaling */
@@ -3386,11 +3388,11 @@ AddOutlier (gchar *Catalog, olong catDisk, ofloat minRad, ofloat cells[2],
     /* select (crude) */
     xx = DG2RAD * ra;
     yy = DG2RAD * dec;
-    dra = fabs (ra0-ra);
+    dra  = fabs (ra0-ra);
+    ddec = fabs(dec0-dec);
     if (dra>180.0) dra -= 360.0;
-    if ((fabs(dec0-dec) <= 1.2*radius) && 
-	(fabs(dra)*cos(yy) <= 1.2*radius) &&  
-	(flux >= minflx)) {
+    dra *= cos(yy);
+    if ((ddec <= 1.2*radius) && (dra <= 1.2*radius) && (flux >= minflx)) {
       /* separation from pointing center */
       zz = sin (yy) * sin (dc2000) + cos (yy) * cos (dc2000) * cos (xx-ra2000);
       zz = MIN (zz, 1.000);

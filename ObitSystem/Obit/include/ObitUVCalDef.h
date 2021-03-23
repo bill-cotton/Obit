@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -146,4 +146,15 @@ Obit *SUTable;
 Obit *PDTable;
 /** Requested PD table for channel/IF poln cal. */
 olong PDVer;
-
+/** Muller matrix for linear to circular conversion */
+ObitMatx *Muller;
+/** Work matrices for linear to circular conversion */
+ObitMatx *workMatx1, *workMatx2;
+/** Parallactic angle rotation for linear to circular conversion */
+ofloat PAReal, PAImag;
+/** Last time for Parallactic angle */
+ofloat lastTime;
+/** Last Source Id for Parallactic angle  */
+olong lastSu;
+/** Need to convert Linear to circular?  */
+gboolean doLin2Cir;

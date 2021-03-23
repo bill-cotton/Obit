@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2016                                          */
+/*;  Copyright (C) 2005-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -194,7 +194,7 @@ gboolean ObitDisplayShow (ObitDisplay* display, Obit *image,
 			  ObitDConCleanWindow *window, 
 			  olong field, ObitErr *err)
 {
-  gboolean out = FALSE;
+  gboolean out = FALSE, off=display->turnedOff;
   ObitImage *curImage=NULL, *tmpImage=NULL;
   ObitImageDesc *desc=NULL;
   ObitImageMosaic *mosaic=NULL;
@@ -218,6 +218,10 @@ gboolean ObitDisplayShow (ObitDisplay* display, Obit *image,
   /* check if display should be turned back on */
   doTV =  CheckDoTV (display, err);
   if (err->error) Obit_traceback_val (err, routine, display->name, out);
+  if (off && doTV) {
+    Obit_log_error(err, OBIT_InfoErr, "TV Editing restarted");
+    ObitErrLog(err); /* show any  messages */
+  }
 
   if (display->turnedOff) return out;  /* display turned off? */
   if (window) g_assert (ObitDConCleanWindowIsA(window));
@@ -267,6 +271,7 @@ gboolean ObitDisplayShow (ObitDisplay* display, Obit *image,
 	/* Failed */
 	Obit_log_error(err, OBIT_InfoWarn, "%s: Image load failed",
 		       routine);
+	display->turnedOff = TRUE;
 	goto cleanup;
       }
     } else {
@@ -550,7 +555,7 @@ void ObitDisplayClear (gpointer inn)
   /* delete this class members */
   in->thread  = ObitThreadUnref(in->thread);
   in->client  = ObitRPCUnref(in->client);
-  if (in->ServerURL) g_free(in->ServerURL); in->ServerURL = NULL;
+  if (in->ServerURL) {g_free(in->ServerURL);} in->ServerURL = NULL;
   myClassInfo.numberDisplay--;
 
   /* unlink parent class members */
@@ -762,15 +767,15 @@ static gboolean LoadImage (ObitDisplay* display, ObitImage *image,
     goto cleanup;
   }
 
+  /* Must be OK */
+  out = TRUE;
+
   /* Cleanup from load Image */
  cleanup:
   status  = ObitInfoListUnref(status);
   xml     = ObitXMLUnref(xml);
   result  = ObitXMLUnref(result);
   if (err->error) Obit_traceback_val (err, routine, display->name, out);
-
-  /* Must be OK */
-  out = TRUE;
 
   return out;
 } /* end LoadImage */
@@ -1031,9 +1036,9 @@ static ObitXML* getImageInfo (ObitImage *image, gchar *fitsFile,
       if (err->error) Obit_traceback_val (err, routine, image->name, out);
       
       name = g_malloc(13*sizeof(gchar));
-      for (i=0; i<12; i++) name[i] = catEntry->name[i]; name[i] = 0;
+      for (i=0; i<12; i++) {name[i] = catEntry->name[i];} name[i] = 0;
       AClass = g_malloc(7*sizeof(gchar));
-      for (i=0; i<6; i++) AClass[i] = catEntry->class[i]; AClass[i] = 0;
+      for (i=0; i<6; i++) {AClass[i] = catEntry->class[i];} AClass[i] = 0;
       ASeq = catEntry->seq;
       
     } else if (FileType==OBIT_IO_MEM) {  /* Memory resident only */

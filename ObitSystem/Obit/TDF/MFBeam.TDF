@@ -4,7 +4,7 @@
 ;! Imaging software correcting for tabulated beamshape, wideband
 ;# Task Obit self calibration Imaging
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2011-2020
+;;  Copyright (C) 2011-2021
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -1074,6 +1074,39 @@ flux densities as a function of self calibration after the first.
 The last entry is used for any subsequent IPol CLEANs.
 minFList = [0.0001,0.00001]  # 0.0001 Jy after 1st, 0.00001 after 2nd
 addParam(mb,"minFList", paramVal=minFList, \
+        shortHelp="minFlux list after SC", \
+	longHelp="  minFList....minFluxes to use in IPol after selfcals\n")
+
+
+Polarization dependent CLEAN
+----------------------------
+   Optional CLEANing parameters, NiterQU, minFluxQU may be given
+to control the CLEANing of Stokes Q, U or V.
+e.g. to add NiterQU=50; minFluxQU=0.001 to task object mf
+addParam(mf,"NiterQU", paramVal=NiterQU, shortHelp="Niter for Q,U", \
+	longHelp="  NiterQU.....Niter for Q,U\n")
+addParam(mf,"minFluxQU", paramVal=minFluxQU, \
+        shortHelp="minFlux for Q,U", \
+	longHelp="  minFluxQU...minFlux for Q,U\n")
+
+e.g. to add NiterV=50; minFluxV=0.00001 to task object mf
+addParam(mf,"NiterV", paramVal=NiterV, shortHelp="Niter for V", \
+	longHelp="  NiterQU.....Niter for V\n")
+addParam(mf,"minFluxV", paramVal=minFluxV, \
+        shortHelp="minFlux for V", \
+	longHelp="  minFluxV...minFlux for V\n")
+
+Minimum CLEAN Flux density
+--------------------------
+   Input parameter minFlux sets the minimum depth of the initial
+Stokes I CLEAN; or Stokes Q,U,V lacking minFluxQU, minFluxV.
+Thereafter, the default Stokes minimum CLEAN depth is the RMS of 
+the previous CLEANed central facet.  This can be overridden using
+optional parameter minFList.  This gives a list of minimum CLEAN
+flux densities as a function of self calibration after the first.
+The last entry is used for any subsequent IPol CLEANs.
+minFList = [0.0001,0.00001]  # 0.0001 Jy after 1st, 0.00001 after 2nd
+addParam(mf,"minFList", paramVal=minFList, \
         shortHelp="minFlux list after SC", \
 	longHelp="  minFList....minFluxes to use in IPol after selfcals\n")
 
