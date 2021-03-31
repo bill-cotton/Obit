@@ -4917,3 +4917,17 @@ Obit/src/ObitDisplay.c
 Obit/src/ObitImageMosaic.c
   AddField: Default ref freq for VZ table = 1.4 GHz
 23 Mar 2021 svn 631
+
+Summary: Better MerKAT Calibration models, AllSkyVZ table, bug fixes
+Obit/src/ObitImageMosaicMF.c
+    Create: remove allow overriding FOV w/ nx[0]/2 if nfield<=0
+Obit/share/data/AllSkyVZ.FIT.gz
+    Better version with fewer missing entries.
+Obit/share/data/0408-65LModel.fits.gz Obit/share/data/0408-65UHFModel.fits.gz
+Obit/share/data/1934-638LModel.fits.gz Obit/share/data/1934-638UHFModel.fits.gz
+    Improved MeerKAT calibration models
+Obit/tasks/SetJy.c
+    Wider band spectrum for 0408-65
+31 Mar 2021 svn 632
+
+

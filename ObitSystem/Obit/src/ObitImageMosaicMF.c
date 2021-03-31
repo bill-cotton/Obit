@@ -873,12 +873,12 @@ ObitImageMosaicMF* ObitImageMosaicMFCreate (gchar *name, olong order, ofloat max
     Radius = 0.0;
   }
      
-  /* Override facet size? nx[0]>0 and NField<=0 */
+  /* Override facet size? nx[0]>0 and NField<=0 NO, this messes up
   if ((nx[0]>0) && (NField<=0)) {
     Radius = nx[0]/2;
     Obit_log_error(err, OBIT_InfoErr, 
 		   "Override facet FOV %f cells", Radius);
-  }
+  }*/
 
   /* Set fly's eye if needed */
   overlap = 10;
