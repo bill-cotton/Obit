@@ -5,7 +5,7 @@ Also primary beam calculations
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2007-2020
+#  Copyright (C) 2007-2021
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -357,6 +357,22 @@ def PEq2Gal (RALong, DecLat):
     ################################################################
     return Obit.SkyGeomEq2Gal ([RALong], [DecLat])
     # end PEq2Gal
+
+def PJ20002Gal (RA2000, Dec2000):
+    """ Convert Equatorial (J2000) to Galactic coordinates strings 
+
+    Converts Convert Equatorial (B1950)to Galactic coordinates
+      RA2000  J2000 Right Ascension as "hh:mm:ss.s"
+      Dec2000 J2000 Declination as 'dd:mm:ss.s'
+    Return [glong, glat]  Galactic coordinates as 'dd mm ss.s'
+    """
+    ################################################################
+    raj  = ImageDesc.PHMS2RA(RA2000)
+    decj = ImageDesc.PDMS2Dec(Dec2000)
+    [rab,decb]   = PJtoB(raj, decj)
+    [glong,glat] = PEq2Gal(rab,decb)
+    return [ImageDesc.PDec2DMS(glong), ImageDesc.PDec2DMS(glat)]
+    # end PJ20002Gal
 
 
 

@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2020                                          */
+/*;  Copyright (C) 2004-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -783,6 +783,8 @@ void ObitUVUtilXPolDivide (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
  * \param inUV2    Second input uv data, calibration/selection allowed
  *                 inUV2 should have the same structure, no. vis etc
  *                 as inUV1.
+ *                 On info member (in addition to calibration info):
+ * \li "Factor"    OBIT_float (1,1,1) Vis scaling factor (def 1.0)
  * \param outUV    Previously defined output, may be the same as inUV1
  * \param err      Error stack, returns on error
  */
@@ -800,6 +802,7 @@ void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong NPIO;
+  ofloat factor=1.0;
   gboolean incompatible, same, doCalSelect, btemp;
   ObitUVDesc *in1Desc, *in2Desc, *outDesc;
   ObitIOAccess access;
@@ -813,7 +816,8 @@ void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
   g_assert (ObitUVIsA(inUV2));
   g_assert (ObitUVIsA(outUV));
 
-  /* Are input1 and output the same file? */
+   ObitInfoListGetTest (inUV2->info, "Factor",  &type, dim, &factor);
+ /* Are input1 and output the same file? */
   same = ObitUVSame(inUV1, outUV, err);
   if (err->error) Obit_traceback_msg (err, routine, inUV1->name);
 
@@ -870,8 +874,17 @@ void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
   incompatible = incompatible || (in1Desc->jlocif!=in2Desc->jlocif);
   incompatible = incompatible || (in1Desc->ilocb!=in2Desc->ilocb);
   if (incompatible) {
-     Obit_log_error(err, OBIT_Error,"%s inUV1 and inUV2 have incompatible structures",
-		   routine);
+    if (in1Desc->nvis!=in2Desc->nvis)
+      	    Obit_log_error(err, OBIT_InfoWarn, 
+			   "nvis %d != %d", in1Desc->nvis, in2Desc->nvis);
+    if (in1Desc->ncorr!=in2Desc->ncorr)
+      	    Obit_log_error(err, OBIT_InfoWarn, 
+			   "ncorr %d != %d", in1Desc->ncorr, in2Desc->ncorr);
+    if (in1Desc->jlocs!=in2Desc->jlocs) Obit_log_error(err, OBIT_InfoWarn, "Stokes axes differ");
+    if (in1Desc->jlocf!=in2Desc->jlocf) Obit_log_error(err, OBIT_InfoWarn, "Frequency axes differ");
+    if (in1Desc->jlocif!=in2Desc->jlocif) Obit_log_error(err, OBIT_InfoWarn, "IF axes differ");
+     Obit_log_error(err, OBIT_Error,"%s: %s and %s have incompatible structures",
+		    routine, inUV1->name, inUV2->name);
       return ;
   }
 
@@ -966,8 +979,8 @@ void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
       for (j=0; j<in1Desc->ncorr; j++) { /* loop over correlations */
 	/* subtract */
 	if ((inUV1->buffer[indx+2]>0.0) && (inUV2->buffer[indx+2]>0.0)) {
-	  inUV1->buffer[indx]   -= inUV2->buffer[indx];
-	  inUV1->buffer[indx+1] -= inUV2->buffer[indx+1];
+	  inUV1->buffer[indx]   -= factor * inUV2->buffer[indx];
+	  inUV1->buffer[indx+1] -= factor * inUV2->buffer[indx+1];
 	  /* this blanks poln data } else {
 	    inUV1->buffer[indx]   = 0.0;
 	    inUV1->buffer[indx+1] = 0.0;
@@ -1621,7 +1634,9 @@ void ObitUVUtilIndex (ObitUV *inUV, ObitErr *err)
  * Return a SourceList containing selected sources
  * Uses following criteria:
  * \li initially select all source in SU table
- *     If no SU table, a single entry is returned.
+ *     If no SU table and info entry "Sources" is given, and is 
+ *        the same to 8 characters to header "OBJECT", it is used.
+ *     Else  header "OBJECT"
  * \li Any explicit selection in Sources parameter in UV data selector
  * \li selection by CalCode
  * \li selection to exclude any entries marked done in the PS table
@@ -1648,8 +1663,8 @@ ObitSourceList* ObitUVUtilWhichSources (ObitUV *inUV, ObitErr *err)
   ObitInfoType type;
   olong theRow;
   gint32 dim[MAXINFOELEMDIM];
-  gboolean want, allCal, allNCal, doTime, doPS, *good=NULL;
-  gchar souCode[5];
+  gboolean want, allCal, allNCal, doTime, doPS, *good=NULL, OK;
+  gchar souCode[5], *strTemp;
   gchar *routine = "ObitUVUtilWhichSources";
 
   /* Full Source list */
@@ -1662,7 +1677,12 @@ ObitSourceList* ObitUVUtilWhichSources (ObitUV *inUV, ObitErr *err)
     if (err->error) Obit_traceback_val (err, routine, inUV->name, out);
   } else {  /* Use position /name from header */
     out = ObitSourceListCreate ("SList", 1);
-    strncpy (out->SUlist[0]->SourceName, inUV->myDesc->object, MIN(20,UVLEN_VALUE));
+    /* Use first name in "Sources" if given, otherwise "object" from Header */
+    OK = ObitInfoListGetP (inUV->info, "Sources", &type, dim, (gpointer)&strTemp);
+    OK = OK && (strTemp!=NULL) && strncmp (strTemp, "    ", 4);
+    OK = OK && !strncmp (strTemp, inUV->myDesc->object, 8);  /* And same as Object */
+    if (OK) strncpy (out->SUlist[0]->SourceName, strTemp, MIN(16,UVLEN_VALUE));
+    else    strncpy (out->SUlist[0]->SourceName, inUV->myDesc->object, MIN(20,UVLEN_VALUE));
     out->SUlist[0]->equinox = inUV->myDesc->equinox;
     out->SUlist[0]->RAMean  = inUV->myDesc->crval[inUV->myDesc->jlocr];
     out->SUlist[0]->DecMean = inUV->myDesc->crval[inUV->myDesc->jlocd];
@@ -1944,7 +1964,7 @@ ObitUV* ObitUVUtilHann (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 
   /* Cleanup */
  cleanup:
-  if (work)    g_free(work);    work    = NULL;
+  if (work)  {g_free(work);}    work    = NULL;
   
   /* close files */
   iretCode = ObitUVClose (inUV, err);
@@ -2344,11 +2364,11 @@ ObitUV* ObitUVUtilAvgF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 
   /* Cleanup */
  cleanup:
-  if (work) g_free(work);       work    = NULL;
-  if (corChan) g_free(corChan); corChan = NULL;
-  if (corIF) g_free(corIF);     corIF   = NULL;
-  if (corStok) g_free(corStok); corStok = NULL;
-  if (corMask) g_free(corMask); corMask = NULL;
+  if (work) {g_free(work);}       work    = NULL;
+  if (corChan) {g_free(corChan);} corChan = NULL;
+  if (corIF) {g_free(corIF);}     corIF   = NULL;
+  if (corStok) {g_free(corStok);} corStok = NULL;
+  if (corMask) {g_free(corMask);} corMask = NULL;
   
   /* close files */
   iretCode = ObitUVClose (inUV, err);
@@ -2720,10 +2740,10 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 
   /* Cleanup */
  cleanup:
-  if (accVis)   g_free(accVis);   accVis   = NULL;
-  if (ttVis)    g_free(ttVis);    ttVis    = NULL;
-  if (accRP)    g_free(accRP);    accRP    = NULL;
-  if (blLookup) g_free(blLookup); blLookup = NULL;
+  if (accVis)   {g_free(accVis);}   accVis   = NULL;
+  if (ttVis)    {g_free(ttVis);}    ttVis    = NULL;
+  if (accRP)    {g_free(accRP);}    accRP    = NULL;
+  if (blLookup) {g_free(blLookup);} blLookup = NULL;
   outBuffer = ObitUVSortBufferUnref(outBuffer);
 
   /* close files */
@@ -3057,9 +3077,9 @@ ObitUV* ObitUVUtilAvg2One (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 
   /* Cleanup */
  cleanup:
-  if (accVis)   g_free(accVis);   accVis   = NULL;
-  if (ttVis)    g_free(ttVis);    ttVis    = NULL;
-  if (accRP)    g_free(accRP);    accRP    = NULL;
+  if (accVis)   {g_free(accVis);}   accVis   = NULL;
+  if (ttVis)    {g_free(ttVis);}    ttVis    = NULL;
+  if (accRP)    {g_free(accRP);}    accRP    = NULL;
 
   /* close files */
   iretCode = ObitUVClose (inUV, err);
@@ -3238,11 +3258,11 @@ ObitUV* ObitUVUtilSmoF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 
   /* Cleanup */
  cleanup:
-  if (work) g_free(work);       work    = NULL;
-  if (corChan) g_free(corChan); corChan = NULL;
-  if (corIF) g_free(corIF);     corIF   = NULL;
-  if (corStok) g_free(corStok); corStok = NULL;
-  if (corMask) g_free(corMask); corMask = NULL;
+  if (work) {g_free(work);}       work    = NULL;
+  if (corChan) {g_free(corChan);} corChan = NULL;
+  if (corIF) {g_free(corIF);}     corIF   = NULL;
+  if (corStok) {g_free(corStok);} corStok = NULL;
+  if (corMask) {g_free(corMask);} corMask = NULL;
   
   /* close files */
   iretCode = ObitUVClose (inUV, err);
@@ -3811,20 +3831,20 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   
   /* Cleanup */
  cleanup:
-  if (accVis)   g_free(accVis);   accVis   = NULL;
-  if (accRP)    g_free(accRP);    accRP    = NULL;
-  if (tVis)     g_free(tVis);     tVis     = NULL;
-  if (ttVis)    g_free(ttVis);    ttVis    = NULL;
-  if (blLookup) g_free(blLookup); blLookup = NULL;
-  if (lsBlTime) g_free(lsBlTime); lsBlTime = NULL;
-  if (stBlTime) g_free(stBlTime); stBlTime = NULL;
-  if (stBlU)    g_free(stBlU);    stBlU    = NULL;
-  if (stBlV)    g_free(stBlV);    stBlV    = NULL;
-  if (work)     g_free(work);     work     = NULL;
-  if (corChan)  g_free(corChan);  corChan  = NULL;
-  if (corIF)    g_free(corIF);    corIF    = NULL;
-  if (corStok)  g_free(corStok);  corStok  = NULL;
-  if (corMask)  g_free(corMask);  corMask  = NULL;
+  if (accVis)   {g_free(accVis);}   accVis   = NULL;
+  if (accRP)    {g_free(accRP);}    accRP    = NULL;
+  if (tVis)     {g_free(tVis);}     tVis     = NULL;
+  if (ttVis)    {g_free(ttVis);}    ttVis    = NULL;
+  if (blLookup) {g_free(blLookup);} blLookup = NULL;
+  if (lsBlTime) {g_free(lsBlTime);} lsBlTime = NULL;
+  if (stBlTime) {g_free(stBlTime);} stBlTime = NULL;
+  if (stBlU)    {g_free(stBlU);}    stBlU    = NULL;
+  if (stBlV)    {g_free(stBlV);}    stBlV    = NULL;
+  if (work)     {g_free(work);}     work     = NULL;
+  if (corChan)  {g_free(corChan);}  corChan  = NULL;
+  if (corIF)    {g_free(corIF);}    corIF    = NULL;
+  if (corStok)  {g_free(corStok);}  corStok  = NULL;
+  if (corMask)  {g_free(corMask);}  corMask  = NULL;
   
   /* Flush Sort Buffer */
   ObitUVSortBufferFlush (outBuffer, err);

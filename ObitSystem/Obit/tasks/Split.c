@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task apply calibration and write single source files */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2018                                          */
+/*;  Copyright (C) 2007-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -101,22 +101,22 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Process */
   doSources (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput);    /* delete input list */
@@ -751,7 +751,7 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
     ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
     /* output AIPS sequence */
     ObitInfoListGet(myInput, "outSeq", &type, dim, &Aseq, err);
-    for (i=0; i<12; i++) Aname[i] = ' '; Aname[i] = 0;
+    for (i=0; i<12; i++) {Aname[i] = ' ';} Aname[i] = 0;
     strncpy (Aname, tname, 13); Aname[12] = 0;
     /* output AIPS class */
     if (ObitInfoListGetP(myInput, "outClass", &type, dim, (gpointer)&strTemp)) {
@@ -788,7 +788,7 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
     /* Generate output name from Source, outName */
     ObitInfoListGetP (myInput, "outFile", &type, dim, (gpointer)&outF);
     n = MIN (128, dim[0]);
-    for (i=0; i<n; i++) tname[i] = outF[i]; tname[i] = 0;
+    for (i=0; i<n; i++) {tname[i] = outF[i];} tname[i] = 0;
     /* Something in source name? */
     if ((Source[0]==' ') || (Source[0]==0)) 
       g_snprintf (outFile, 128, "%s", tname);
@@ -893,7 +893,7 @@ void doSplit (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   gboolean     isScratch, doAvgAll;
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Stokes", "UVRange", "timeRange", "FreqID", "souCode", "Qual", 
-    "BIF", "EIF", "BChan", "EChan", "subA", "doCalWt", "dropSubA",
+    "BIF", "EIF", "BChan", "EChan", "subA", "doCalWt", "passAll", "dropSubA",
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "Smooth", "flagVer", 
     "doPol", "PDVer", "Mode", "corrType", "BLVer", "InputAvgTime", "timeAvg",
     "NumChAvg", "ChanSel",
@@ -1007,7 +1007,7 @@ void SplitHistory (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "FreqID", "souCode", "Qual", 
     "outFile",  "outDisk", "outName", "outClass", "outSeq",
     "BIF", "EIF", "BChan", "EChan",  "chInc", "chAvg",
-    "UVRange",  "timeRange",  "Compress", "doCalWt", "dropSubA",
+    "UVRange",  "timeRange",  "Compress", "doCalWt", "dropSubA", "passAll",
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
     "doPol", "PDVer", "BLVer", "timeAvg", "avgFreq", "chAvg",  "ChanSel",
     "InputAvgTime",  "dropSubA",  "doWtCal",  "corrType", "nThreads", 

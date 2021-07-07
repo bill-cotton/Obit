@@ -4930,4 +4930,56 @@ Obit/tasks/SetJy.c
     Wider band spectrum for 0408-65
 31 Mar 2021 svn 632
 
-
+Summary: Mostly Bug fixes
+Obit/tasks/SetJy.c
+    Wider band spectrum for 0408-65
+Obit/python/OTObit.py
+    imstat,tvstat more fixes from python3 spectacle
+    make imstat,tvstat fork for ImageMF
+    trap long paths for uvlod
+Obit/python/ImageUtil.py
+    FFT: Fixes from Wendy for long history entries
+Obit/python/Image.py
+    Rename: let base class handle, old version wasn't working.
+Obit/python/SkyGeom.py
+    PJ20002Gal: direct J2000 strings to Galactic coords as strings.
+Obit/src/ObitSkyModelVMBeamMF.c
+    Tell how many components are modeled.
+Obit/python/ImageUtil.py
+    PImageFFT: Loop over all planes of a cube
+Obit/python/FeatherUtil.py
+    PExtract:  Make sure to get full output array
+Obit/python/ImageInterp.py
+    Fix call to Obit.CreateImageInterp
+Obit/python/ImageMF.py
+    Add expicit Zap function
+Obit/python/UVSelfCal.py
+    PSNInvert: Add history
+Obit/python/PeelScripts.py
+    PeelSub: Optional, don't add back model w/o corruption
+    Add RestorePeel function to add CCs to image
+Obit/python/PeelWork.py
+    Template for manual peeling.
+Obit/src/ObitUV.c
+    SetupIO: Setup TableList on myIO
+Obit/src/ObitUVUtil.c
+    VisSub: Add Factor parameter.
+    WhichSources: Use task input Sources[0] for single source file name if given
+Obit/tasks/UVSub.c
+    Don't select doCalSelect unless calibrating.
+    Allow history for modifying input file.
+    Add passAll parameter
+Obit/TDF/UVSub.TDF
+    Add passAll parameter
+Obit/TDF/Split.TDF
+    Explain new usage of Sources
+    increase inFile/outFile to 128 char. max.
+    Add passAll parameter.
+Obit/tasks/Split.c 
+    Add passAll parameter.
+Obit/tasks/UVAppend.c
+    Fix new AN table for each dataset added.
+Obit/src/ObitUVUtil.c
+    VisSub: More diagnostics with incompatible datasets.
+    Cleanup
+07 July 2021 svn 633

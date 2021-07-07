@@ -1,10 +1,10 @@
 """ Python Obit ImageInterp class
 
-This class provides values of the beam shape derived from an image
+This class interpolates values in an image
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2009,2019
+#  Copyright (C) 2009,2019,2021
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ class ImageInterp(Obit.ImageInterp):
     """
     def __init__(self, name="no_name", image=None, hwidth=1, err=None) :
         super(ImageInterp, self).__init__()
-        Obit.CreateImageInterp(self.this, image.me, hwidth, err.me )
+        Obit.CreateImageInterp(self.this, name, image.me, hwidth, err.me )
         self.myClass = myClass
     def __del__(self, DeleteImageInterp=_Obit.DeleteImageInterp):
         if _Obit!=None:

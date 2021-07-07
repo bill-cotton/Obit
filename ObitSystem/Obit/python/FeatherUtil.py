@@ -1,7 +1,7 @@
 """ Utility module for Feathering images """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2019
+#  Copyright (C) 2004-2021
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -305,6 +305,11 @@ def PExtract (inFFT, inArray, outArray, err):
     blc = [0,0]; trc=[0,0]
     blc[0] = cen[0] - ArrayNaxis[0] // 2; trc[0] = cen[0] - 1 + ArrayNaxis[0] // 2
     blc[1] = cen[1] - ArrayNaxis[1] // 2; trc[1] = cen[1] - 1 + ArrayNaxis[1] // 2
+    # Make sure to fill output array
+    if ((trc[0]-blc[0]+1)<ArrayNaxis[0]):
+        trc[0] = blc[0] + ArrayNaxis[0] - 1
+    if ((trc[1]-blc[1]+1)<ArrayNaxis[1]):
+        trc[1] = blc[1] + ArrayNaxis[1] - 1
 
     # Extract
     out = FArray.PSubArr(inArray, blc, trc, err)

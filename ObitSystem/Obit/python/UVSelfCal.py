@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C)2005,2006,2007,1019
+#  Copyright (C)2005,2006,2007,2019,2021
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 # Interferometric selfcal class
 from __future__ import absolute_import
 from __future__ import print_function
-import Obit, _Obit, OErr, InfoList, UV, Table, types
+import Obit, _Obit, OErr, InfoList, UV, Table, History, types
 
 # Python shadow class to ObitUVSelfCal class
  
@@ -531,6 +531,18 @@ def PInvertSN (SNTab, outUV, outVer, doRepl, err):
     outSN.me = Obit.SNInvert (SNTab.me, outUV.me, outVer, doRepl, err.me)
     if err.isErr:
         printErrMsg(err, "Error inverting solutions")
+    # Write history
+    inHistory  = History.History("history", outUV.List, err)
+    # Add this programs history
+    inHistory.Open(History.READWRITE, err)
+    inHistory.TimeStamp(" Start Obit InvertSN",err)
+    inHistory.WriteRec(-1,"InvertSN / inTab = "+Table.PGetName(SNTab),err)
+    inHistory.WriteRec(-1,"InvertSN / outVer = "+str(outVer),err)
+    if doRepl:
+        inHistory.WriteRec(-1,"InvertSN / doRepl = True",err)
+    else:
+        inHistory.WriteRec(-1,"InvertSN / doRepl = False",err)
+    inHistory.Close(err)
     return outSN
     # end PInvertSN
 

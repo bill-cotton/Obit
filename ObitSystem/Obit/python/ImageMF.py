@@ -137,6 +137,17 @@ class ImageMF(Obit.ImageMF, Image.Image):
         ################################################################
         return Obit.ImageMFIsA(self.me)
 
+    def Zap (self, err):
+        """
+        Delete external forms
+
+        * self      = Python Image object
+        * err       = Python Obit Error/message stack
+        """
+        xim = self.cast('ObitImage')
+        Obit.ImageFreeBuffer (xim.me, err.me)  # Kill any buffers
+        Obit.ImageZap (xim.me, err.me)
+        # end Zap
     # End of class member functions (i.e. invoked by x.func()(
 
 

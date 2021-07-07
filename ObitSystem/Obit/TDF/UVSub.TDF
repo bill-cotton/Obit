@@ -4,7 +4,7 @@
 ;! Subtracts/divides a model from/into a uv data base
 ;# Task UV  Obit 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005-2016
+;;  Copyright (C) 2005-2021
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -153,6 +153,8 @@ antSize                            Pri. antenna size (m) to use
                                    in PBCor
 **PARAM** int 1 **DEF** 1
 nThreads            0              Number of threads to use
+**PARAM** boo 1 
+passAll                            Write even totaly flagged data?
 **PARAM** boo 1 **DEF** F
 doGPU            0                 Use GPU if available
 **PARAM** str 128
@@ -352,8 +354,9 @@ Adverbs:
              operations. 
              NB: This only improves performance if there are 
              multiple processors and/or cores in the host.
-  doGPU.......If software is built for a GPU and one is available
-              True=use it, otherwise use CPU
+  passAll....If True write even totally flaggged data.
+  doGPU......If software is built for a GPU and one is available
+             True=use it, otherwise use CPU
   noScrat....A list of AIPS disk numbers on which you do not 
              wish scratch files
   taskLog....Log file to write messages to INSTEAD of the terminal

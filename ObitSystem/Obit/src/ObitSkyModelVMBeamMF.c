@@ -3283,6 +3283,11 @@ static gpointer ThreadSkyModelVMBeamMFFTDFT (gpointer args)
   /* error checks - assume most done at higher level */
   if (err->error) goto finish;
 
+  if ((largs->ithread==1) && (uvdata->myDesc->firstVis<10)) {
+    Obit_log_error(err, OBIT_InfoErr, "SkyModel with %d components", in->numComp);
+    ObitErrLog(err);
+  }
+
   /* Visibility pointers */
   ilocu =  uvdata->myDesc->ilocu;
   ilocv =  uvdata->myDesc->ilocv;
@@ -4019,7 +4024,7 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTCpx (gpointer args)
   ofloat modRealRL=0.0,  modImagRL=0.0, modRealLR=0.0,  modImagLR=0.0;
   ofloat **rgain1, **lgain1, **rgain1i, **lgain1i;
   ofloat **rlgain1, **lrgain1, **rlgain1i, **lrgain1i;
-  ofloat ll, lll, logNuONu0, sin2PA, cos2PA;
+  ofloat ll, lll, logNuONu0, sin2PA=0.0, cos2PA=1.0;
   ofloat arg, freq2=0.0,freqFact, wtRR=0.0, wtLL=0.0, temp;
 #define FazArrSize 256  /* Size of the amp/phase/sine/cosine arrays */
 #if HAVE_AVX512==1
@@ -4048,6 +4053,11 @@ static gpointer ThreadSkyModelVMBeamMFFTDFTCpx (gpointer args)
 
   /* error checks - assume most done at higher level */
   if (err->error) goto finish;
+
+  if ((largs->ithread==1) && (uvdata->myDesc->firstVis<10)) { 
+    Obit_log_error(err, OBIT_InfoErr, "SkyModel with %d components", in->numComp);
+    ObitErrLog(err);
+  }
 
   /* Visibility pointers */
   ilocu =  uvdata->myDesc->ilocu;

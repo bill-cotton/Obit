@@ -1,11 +1,9 @@
 """ 
-Routines for peeling a source at a specified position,
-to install:
-execfile('PeelScripts.py')
+Routines for peeling a source at a specified position
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2017,2018
+#  Copyright (C) 2017-2021
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -33,7 +31,7 @@ execfile('PeelScripts.py')
 
 from __future__ import absolute_import
 import Obit, Image, ImageDesc, SkyGeom, Table, History, OErr
-import UV, UVDesc, OSystem, UVSelfCal
+import UV, UVDesc, OSystem, UVSelfCal, FArray
 from ObitTask import ObitTask
 from OTObit import setname, set2name, setoname
 from math import cos, radians
@@ -247,24 +245,25 @@ def UVSub4Peel(uv, source, im, inCC, err, \
 def ImagePeel(uvsub, peelPos, err, \
                   nxy=512, Niter=1000, minFlux=0.001, \
                   maxPSCLoop=2, minFluxPSC=0.01, solPInt=1.0, \
-                  minSNR = 3.5, Robust=0.0, doGPU=False, \
+                  minSNR = 3.5, Robust=0.0, doGPU=False, seq=1, \
                   nThreads=1, noScrat=[0,0,0], taskLog='', debug=False):
     """
     Sets up to image subtracted uv data from UVSub4Peel, self calibrate peel source.
     
     Only does A&P self cal
-    Returns UVSub task object, output image "IPeel', uv 'UVPeel'
+    Returns MFImage task object, output image "IPlMod', uv 'UVPeel', Seq seq
     * uvsub     task object from  UVSub4Peel
     * peelPos   [RA, Dec] in deg of source to peel
     * err       Python Obit Error/message stack
     * nxy       Size in pixels of x,y
     * Niter     max number of iterations
     * minFlux   Min flux density first CLEAN
-    * maxPSCLoop max number self cal loops
+    * maxPSCLoop max number A&P self cal loops
     * minFluxPSC min peak for self cal
     * solPInt    solution interval for self cal
     * minSNR     min SNR of self cal solutions
     * Robust     Briggs Robust factor
+    * seq        Sequence number for output
     * doGPU      Use GPU if available?
     * nThreads  number of threads to use
     * noScrat   AIPS disks not to use for scratch
@@ -279,8 +278,8 @@ def ImagePeel(uvsub, peelPos, err, \
     mfp.DataType = 'AIPS'; mfp.inName = uvsub.outName
     mfp.inDisk = uvsub.outDisk;  mfp.inSeq = uvsub.outSeq; 
     mfp.inClass = uvsub.outClass;
-    mfp.outDisk = mfp.inDisk; mfp.outSeq=1;   mfp.outClass='IPeel'
-    mfp.out2Disk = mfp.inDisk; mfp.out2Seq=1; mfp.out2Class='UVPeel'
+    mfp.outDisk = mfp.inDisk; mfp.outSeq=seq;   mfp.outClass='IPlMod'
+    mfp.out2Disk = mfp.inDisk; mfp.out2Seq=seq; mfp.out2Class='UVPeel'
     # Shift
     uv = UV.newPAUV('uv',mfp.inName,mfp.inClass,mfp.inDisk,mfp.inSeq, True,  err)
     d = uv.Desc.Dict; ra = d['crval'][4];  dec = d['crval'][5]
@@ -296,17 +295,17 @@ def ImagePeel(uvsub, peelPos, err, \
     mfp.maxPSCLoop = maxPSCLoop; mfp.minFluxPSC = minFluxPSC
     mfp.solPInt = solPInt; mfp.solPType='L1'; mfp.solPMode = 'A&P'
     mfp.maxASCLoop = 0; mfp.minFluxASC = minFluxPSC
-    mfp.solAInt = solPInt; mfp.solAType='L1'; mfp.solAMode = 'A&P'
+    mfp.solAInt = solPInt*2; mfp.solAType='L1'; mfp.solAMode = 'A&P'
     return mfp
     # end ImagePeel
 
-def SubPeel(uv, source, imp, uvp, err, \
+def SubPeel(uv, source, imp, uvp, err, addBack=False, seq=999, \
                 flagVer=0, nThreads=1, doGPU=False, noScrat=[0,0,0], taskLog='', debug=False):
     """
-    Subtract Peel model w/ solutions, then add back w/o corruptions
+    Subtract Peel model w/ solutions, then optionally add back w/o corruptions
     
     UV data should have calibration tables from self calibration
-    Output data will be on the same disk as the input, seq=1, class='PelSub' and
+    Output data will be on the same disk as the input, seq=seq, class='PelSub' and
     with name = source (up to 12 char).
     Returns Peel source subtracted/replaced data
     * uv        Dataset with cal tables
@@ -315,8 +314,10 @@ def SubPeel(uv, source, imp, uvp, err, \
     * imp       Peel source model (CC table from ImagePeel)
     * uvp       UV data the result of peel (ImagePeel)
     * err       Python Obit Error/message stack
-    * nThreads  number of threads to use
+    * seq       Sequence number for output
+    * addBack   Add model back to data w/o corruptions? Not recommended.
     * flagVer   FG table to apply, -1=> no flag
+    * nThreads  number of threads to use
     * doGPU     Use GPU if available?
     * noScrat   AIPS disks not to use for scratch
     * taskLog   Log file
@@ -333,15 +334,22 @@ def SubPeel(uv, source, imp, uvp, err, \
     # Split main data set
     OErr.PLog(err, OErr.Info, "Copy data"); OErr.printErr(err)
     split = ObitTask('Split'); setname(uv,split)
-    split.outDisk = split.inDisk; split.outSeq = 999; split.outClass = 'PelSub'
+    split.outDisk = split.inDisk; split.outSeq = seq; split.outClass = 'UPeel'
     split.Sources[0] = source; split.flagVer = flagVer
-    split.doCalib = 2; split.gainUse = 0; split.doCalWt = True
+    if uv.GetHighVer('AIPS SN')>0:
+        split.doCalib = 2; split.gainUse = 0; split.doCalWt = True
+    else:
+        split.doCalib = -1
     split.taskLog = taskLog; split.debug = debug
     split.g
+    outClass = split.outClass; outDisk = split.outDisk; outSeq = split.outSeq
 
     # Get data
     OErr.PLog(err, OErr.Info, "Make Peel model with corruptions"); OErr.printErr(err)
-    datauv = UV.newPAUV('data',source[0:12],split.outClass,split.outDisk,split.outSeq, True,  err)
+    if UV.AExist(source[0:12],outClass,outDisk,outSeq,  err):
+        datauv = UV.newPAUV('data',source[0:12],outClass,outDisk,outSeq, True,  err)
+    else:
+        datauv = UV.newPAUV('data',source[0:8],outClass,outDisk,outSeq, True,  err)
     # Make data set with the model peel source with peel cal applied
     uvsub = ObitTask('UVSub'); setname(uv,uvsub); uvsub.outName = source[0:12]
     uvsub.outDisk = uvsub.inDisk; uvsub.outSeq = 1; uvsub.outClass = 'Model'
@@ -353,7 +361,7 @@ def SubPeel(uv, source, imp, uvp, err, \
     uvsub.taskLog = taskLog; uvsub.nThreads=nThreads; uvsub.doGPU=doGPU; uvsub.debug = debug
     uvsub.g
  
-   # Get model data
+    # Get model data
     modeluv = UV.newPAUV('model',uvsub.outName,uvsub.outClass,uvsub.outDisk,uvsub.outSeq,True, err)
     # Copy/invert/unblank SN table from peeluv
     hiPeelSN = uvp.GetHighVer('AIPS SN')
@@ -369,28 +377,125 @@ def SubPeel(uv, source, imp, uvp, err, \
     OErr.PLog(err, OErr.Info, "Subtract Corrupted Peel model from uv data")
     UV.PUtilVisSub(datauv, modeluv, datauv, err)
     OErr.printErr(err)
-    # Delete model dataset
-    modeluv.Zap(err)
-    #zap(modeluv) goddamn python3
 
     # Add model without corrupting calibration
-    OErr.PLog(err, OErr.Info, "Add Peel model without corruptions"); 
-    uvsub = ObitTask('UVSub'); setname(datauv,uvsub); setoname(datauv,uvsub)
-    uvsub.outSeq = 1; 
-    uvsub.Sources[0] = source; uvsub.flagVer = flagVer
-    uvsub.doCalib = -1; uvsub.gainUse = 0; 
-    set2name(imp,uvsub); uvsub.CCVer=1; uvsub.nfield = 1;
-    uvsub.Cmethod = 'DFT'; uvsub.Factor=-1.; uvsub.PBCor = False;
-    uvsub.noScrat = noScrat; uvsub.noNeg = False;
-    uvsub.taskLog = taskLog; uvsub.nThreads=nThreads; uvsub.doGPU=doGPU; uvsub.debug = debug
-    uvsub.g
+    if addBack:
+        OErr.PLog(err, OErr.Info, "Add Peel model without corruptions"); 
+        uvsub = ObitTask('UVSub'); setname(datauv,uvsub); setoname(datauv,uvsub)
+        uvsub.outSeq = uvsub.inSeq+1; 
+        uvsub.Sources[0] = source; uvsub.flagVer = flagVer
+        uvsub.doCalib = -1; uvsub.gainUse = 0; 
+        set2name(imp,uvsub); uvsub.CCVer=1; uvsub.nfield = 1;
+        uvsub.Cmethod = 'DFT'; uvsub.Factor=-1.; uvsub.PBCor = False;
+        uvsub.noScrat = noScrat; uvsub.noNeg = False;
+        uvsub.taskLog = taskLog; uvsub.nThreads=nThreads; uvsub.doGPU=doGPU; uvsub.debug = debug
+        uvsub.g
+        outClass = uvsub.outClass; outDisk = uvsub.outDisk; outSeq = uvsub.outSeq
+        # end add back
     OErr.printErr(err)
+    # Delete model dataset
+    if not debug:
+        modeluv.Zap(err)
 
-    # Delete temporary
-    datauv.Zap(err)
-    #zap(datauv)goddamn python3
-    # final data
-    datauv2 = UV.newPAUV('data',source[0:12],uvsub.outClass,uvsub.outDisk,uvsub.outSeq, True,  err)
+   # final data
+    if UV.AExist(source[0:12],outClass,outDisk,outSeq, err):
+        datauv2 = UV.newPAUV('data', source[0:12], outClass, outDisk, outSeq, True,  err)
+    else:
+        datauv2 = UV.newPAUV('data', source[0:8], outClass, outDisk, outSeq, True,  err)
     return datauv2
     # end SubPeel
 
+def RestorePeel(peelMod, CCVer, image, err):
+    """
+    Restore CCs from one image onto another
+    
+    If images are ImageMF then multiple planes restored.
+    * peelMod   Image with CC table (as Image)
+    * CCver     CC version on peelMod to restore
+    * image     Output Image to which components to be added
+    * err       Python Obit Error/message stack
+    * nThreads  number of threads to use
+    """
+    ################################################################
+    import Obit, Image, ImageDesc, SkyGeom, Table, History, OErr
+    import UV, UVDesc, OSystem, UVSelfCal, FArray
+    # Checks
+    if not Image.PIsA(peelMod):
+        raise TypeError("uv MUST be a Python Obit Image")
+    if not Image.PIsA(image):
+        raise TypeError("imp MUST be a Python Obit Image")
+    
+    ph = peelMod.Desc.Dict; ih = image.Desc.Dict  # Descriptors
+    ph_x   = ph['crval'][0]; ph_y  = ph['crval'][1]; ph_rot  = ph['crota'][1];
+    ph_dx  = ph['cdelt'][0]; ph_dy = ph['cdelt'][1]; ph_type = ph['ctype'][0][4:];
+    ph_ref_x  = ph['crpix'][0]; ph_ref_y = ph['crpix'][1]; 
+    ih_x   = ih['crval'][0]; ih_y  = ih['crval'][1]; ih_rot  = ih['crota'][1];
+    ih_dx  = ih['cdelt'][0]; ih_dy = ih['cdelt'][1]; ih_type = ih['ctype'][0][4:];
+    ih_ref_x  = ih['crpix'][0]; ih_ref_y = ih['crpix'][1]; 
+    bmaj   = ih['beamMaj'];  bmin  = ih['beamMin']; bpa = ih['beamPA']; 
+    bmaj /= abs(ih_dx); bmin /= abs(ih_dx)   # Beam in pixels (square grid)
+    
+    #Beam to insert
+    beam =  FArray.FArray('beam',naxis=[21,21]); bx = 10.; by=10.
+    FArray.PEGauss2D(beam, 1.0, [bx,by], [bmaj, bmin, bpa])
+    
+    cctab = peelMod.NewTable(Table.READONLY, 'AIPS CC', CCVer, err) # CC Table
+    cctab.Open(Table.READONLY, err)
+    OErr.printErr(err)
+    
+    # First plane
+    image.GetPlane(None, [1,1,1,1,1],err)
+    imArr = image.FArray
+    ncc = cctab.Desc.Dict['nrow']  # Number of CCs
+    for irow in range(1,ncc+1):
+        row  = cctab.ReadRow(irow,err)
+        flux = row['FLUX'][0]; 
+        dx   = row['DELTAX'][0]; dy = row['DELTAY'][0]; dz = row['DELTAZ'][0];
+        [ierr,ra,dec] = SkyGeom.PWorldPosLM(dx,dy,ph_x, ph_y, ph_dx, ph_dy, ph_rot, ph_type)
+        # output pixel
+        [ierr,xpix,ypix] = SkyGeom.PXYpix(ra, dec, ih_x, ih_y, ih_ref_x, ih_ref_y, ih_dx, ih_dy, ih_rot, ih_type)
+        # Need beam if correct location
+        tbx = xpix - int(xpix+0.5); tby = ypix - int(ypix+0.5);
+        FArray.PFill(beam, 0.0);
+        FArray.PEGauss2D(beam, 1.0, [bx+tbx,by+tby], [bmaj, bmin, bpa])
+        # Add
+        FArray.PShiftAdd(imArr, [int(xpix+0.5)-1,int(ypix+0.5)-1], beam, [int(bx+0.5),int(by+0.5)], flux, imArr)
+    # end loop
+    image.PutPlane(None, [1,1,1,1,1],err) # rewrite
+    
+    # MFImage Planes
+    if ih['ctype'][2]=='SPECLNMF ':
+        nterm = image.Desc.List.Dict['NTERM'][2][0]; nspec = image.Desc.List.Dict['NSPEC'][2][0]
+        for ip in range(nterm+1,nterm+nspec+1):
+            image.GetPlane(None, [ip,1,1,1,1],err)
+            imArr = image.FArray
+            for irow in range(1,ncc+1):
+                row  = cctab.ReadRow(irow,err)
+                flux = row['PARMS'][3+ip-nterm]
+                dx   = row['DELTAX'][0]; dy = row['DELTAY'][0]; dz = row['DELTAZ'][0];
+                [ierr,ra,dec] = SkyGeom.PWorldPosLM(dx,dy,ph_x, ph_y, ph_dx, ph_dy, ph_rot, ph_type)
+                # output pixel
+                [ierr,xpix,ypix] = SkyGeom.PXYpix(ra, dec, ih_x, ih_y, ih_ref_x, ih_ref_y, ih_dx, ih_dy, ih_rot, ih_type)
+                # Need beam in correct location
+                tbx = xpix - int(xpix+0.5); tby = ypix - int(ypix+0.5);
+                FArray.PFill(beam, 0.0);
+                FArray.PEGauss2D(beam, 1.0, [bx+tbx,by+tby], [bmaj, bmin, bpa])
+                # Add
+                FArray.PShiftAdd(imArr, [int(xpix+0.5)-1,int(ypix+0.5)-1], beam, [int(bx+0.5),int(by+0.5)], flux, imArr)
+            # end loop
+            image.PutPlane(None, [ip,1,1,1,1],err) # rewrite
+      # end plane loop
+    # end MFImage Planes
+    # History
+    x = image; y=peelMod
+    hi = x.History(3,err)
+    hi.Open(3,err)
+    hi.TimeStamp('Restore Peel', err)
+    if x.FileType=='FITS':
+        hiCard = y.FileName.strip()+'.'+str(y.Disk)
+    else:
+        hiCard = y.Aname.strip()+'.'+y.Aclass.strip()+'.'+str(y.Aseq)+'.'+str(y.Disk)
+    
+    hi.WriteRec(-1,"RestorePeel / file="+hiCard,err)
+    hi.Close(err)
+# end RestorePeel

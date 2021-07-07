@@ -3,7 +3,7 @@
 ;!  Obit Radio interferometry software
 ;# Task Obit UV Calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007-2015
+;;  Copyright (C) 2007-2021
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ Split     Task to split multi-source uv data to single source
                                    also works on single files.
 **PARAM** str 4
 DataType                            "FITS" or "AIPS" type of input
-**PARAM** str 48
+**PARAM** str 128
 inFile                              FITS input uvdata if Type=='FITS'
 **PARAM** str 12
 inName                             Input AIPS UV file 
@@ -87,7 +87,7 @@ doBand           -1.0       10.0   If >0 apply bandpass cal.
 BPVer                              Bandpass table version
 **PARAM** float 3
 Smooth                             Smoothing function. 
-**PARAM** str 48
+**PARAM** str 128
 outFile                            Output FITS UV file ending
 **PARAM** str 6
 outClass                           Output AIPS UV file class
@@ -124,6 +124,8 @@ ChanSel                            Array of channel start, stop,
 dropSubA                           Drop Subarray info?
 **PARAM** boo 1 
 doCalWt                            Calibrate weights?
+**PARAM** boo 1 
+passAll                            Write even totaly flagged data?
 **PARAM** int 1  **DEF** 1
 corrType                           Cross or auto correlations
                                      0 pass only xc data
@@ -156,6 +158,9 @@ Adverbs:
   Sources....Source list.  One output file will be made per source.
              '*' = all; a "-" before a source name means all except ANY
              source named.
+	     If the input file is single source (no SU Table) 
+             then 12 characters of Sources[0] is used as the AIPS file 
+             name if the 1st 8 are the same as "OBJECT" in the header.
   Qual.......Only sources with a source qualifier number in the SU table
              matching Qual will be used if Qual is >= 0.  If Qual < 0,
              all qualifiers will be written.  These qualifiers will be
@@ -314,6 +319,7 @@ Adverbs:
              data and newly good for VLA data.  doCalib=2 will also
              do this.  Weights are calibrated if either requests
              it.
+  passAll....If True write even totally flaggged data.
   corrType...If corrType = 0 then Split will pass only cross-power data, 
              this is the default mode. 
              If corr=1 then both cross-power and total-power data 

@@ -2,7 +2,7 @@
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2019
+#  Copyright (C) 2004-2021
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -677,13 +677,6 @@ def PImageFFT (inImage, outAImage, outPImage, err):
     # Create float arrays for FFT size
     inFArray  = FArray.FArray("inF",  naxis=FFTdim)
     outFArray = FArray.FArray("outF", naxis=FFTdim)
-
-    # Pad input into work FArray
-    FArray.PPad(inImage.FArray, inFArray, 1.0)
-    # and God said "The center of an FFT will be at the corners"
-    FArray.PCenter2D(inFArray)
-    # Zero output FArray and use as imaginary part
-    FArray.PFill(outFArray, 0.0)
     
     # Create FFT for full complex FFT
     FFTfor = FFT.FFT("FFT", 1, 1, 2, FFTdim)
@@ -692,43 +685,53 @@ def PImageFFT (inImage, outAImage, outPImage, err):
     inCArray  = CArray.CArray("inC", naxis=FFTdim)
     outCArray = CArray.CArray("outC", naxis=FFTdim)
     
-    # Copy input to scratch CArray
-    CArray.PComplex(inFArray, outFArray, inCArray)
-    
-    # FFT
-    FFT.PC2C(FFTfor, inCArray, outCArray)
-    
-    # Extract amplitude
-    CArray.PAmp(outCArray, outFArray)
-    # and God said "The center of an FFT will be at the corners"
-    FArray.PCenter2D(outFArray)
-    
-    # Extract output portion and write
-    outAImage.Open(Image.WRITEONLY,err)
-    outAImage.FArray = FeatherUtil.PExtract (FFTfor, outFArray, outAImage.FArray, err)
-    OErr.printErrMsg(err, "Error extracting output amplitude image")
-    outAImage.WriteFA(outAImage.FArray, err)
-    # Fix header
+    #Loop over planes
+    nplane = inImage.Desc.Dict['inaxes'][2]
+    for iax in range(1,nplane+1):
+        inImage.GetPlane(None,[iax,1,1,1,1],err)
+        OErr.printErrMsg(err, "Error reading input")
+        # Pad input into work FArray
+        FArray.PPad(inImage.FArray, inFArray, 1.0)
+        # and God said "The center of an FFT will be at the corners"
+        FArray.PCenter2D(inFArray)
+        # Zero output FArray and use as imaginary part
+        FArray.PFill(outFArray, 0.0)
+        # Copy input to scratch CArray
+        CArray.PComplex(inFArray, outFArray, inCArray)
+        
+        # FFT
+        FFT.PC2C(FFTfor, inCArray, outCArray)
+        
+        # Extract amplitude, write
+        CArray.PAmp(outCArray, outFArray)
+        # and God said "The center of an FFT will be at the corners"
+        FArray.PCenter2D(outFArray)
+        outAImage.FArray = FeatherUtil.PExtract (FFTfor, outFArray, outAImage.FArray, err)
+        OErr.printErrMsg(err, "Error extracting output amplitude plane")
+        outAImage.PutPlane(outAImage.FArray, [iax,1,1,1,1], err)
+
+        # Extract phase, write
+        CArray.PPhase(outCArray, outFArray)
+        # To degrees
+        FArray.PSMul(outFArray, 57.2956)
+        # and God said "The center of an FFT will be at the corners"
+        FArray.PCenter2D(outFArray)
+        outPImage.FArray = FeatherUtil.PExtract (FFTfor, outFArray, outPImage.FArray, err)
+        OErr.printErrMsg(err, "Error extracting output phase plane")
+        outPImage.PutPlane(outPImage.FArray, [iax,1,1,1,1], err)
+        # Error?
+        OErr.printErrMsg(err, "Error writing output phase image")
+        # end loop over planes
+
+    # Fix headers
+    outAImage.Open(Image.READWRITE,err)
     FFTHeaderUpdate(outAImage, FFTdim, err)
     outAImage.Close(err)
     OErr.printErrMsg(err, "Error writing output amplitude image")
     
-    # Extract phase
-    CArray.PPhase(outCArray, outFArray)
-    # To degrees
-    FArray.PSMul(outFArray, 57.2956)
-    # and God said "The center of an FFT will be at the corners"
-    FArray.PCenter2D(outFArray)
-
-    # Extract output portion and write
-    outPImage.Open(Image.WRITEONLY,err)
-    outPImage.FArray = FeatherUtil.PExtract (FFTfor, outFArray, outPImage.FArray, err)
-    OErr.printErrMsg(err, "Error extracting output phase image")
-    outPImage.WriteFA(outPImage.FArray, err)
-    # Fix header
+    outPImage.Open(Image.READWRITE,err)
     FFTHeaderUpdate(outPImage, FFTdim, err)
     outPImage.Close(err)
-    # Error?
     OErr.printErrMsg(err, "Error writing output phase image")
 
     # get any BLC, TRC for history
@@ -754,9 +757,9 @@ def PImageFFT (inImage, outAImage, outPImage, err):
         # Add this programs history
         outHistory.Open(History.READWRITE, err)
         outHistory.TimeStamp(" Start Obit PImageFFT",err)
-        outHistory.WriteRec(-1,OSystem.PGetPgmName()+" BLC = "+str(blc),err)
-        outHistory.WriteRec(-1,OSystem.PGetPgmName()+" TRC = "+str(trc),err)
-        outHistory.WriteRec(-1,OSystem.PGetPgmName()+" type = "+imtype[i],err)
+        outHistory.TimeStamp(OSystem.PGetPgmName()+" BLC = "+str(blc),err)
+        outHistory.TimeStamp(OSystem.PGetPgmName()+" TRC = "+str(trc),err)
+        outHistory.TimeStamp(OSystem.PGetPgmName()+" type = "+imtype[i],err)
         i += 1
         outHistory.Close(err)
 # end PImageFFT

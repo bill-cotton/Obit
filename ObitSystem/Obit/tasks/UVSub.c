@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task to subtract CLEAN components from uvdata.                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2020                                          */
+/*;  Copyright (C) 2005-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -785,7 +785,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gboolean     doCalSelect;
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "BChan", "EChan",  "BIF", "EIF", "subA",
-    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", 
+    "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", "passAll",
     "doPol", "PDVer", "Smooth", "Antennas",  "Sources",  "souCode", "Qual", 
     "FreqID", "Alpha",
      NULL};
@@ -925,7 +925,7 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitUV *uvdata,
     "CCVer",  "BComp",  "EComp",  "Flux", "PBCor", "antSize", "Factor", 
     "minFlux", "Mode", "ModelType", "REPLACE", "Stokes", 
     "BIF", "EIF", "BCHAN", "ECHAN",
-    "MODPTFLX", "MODPTXOF", "MODPTYOF", "MODPTYPM",  "doGPU",
+    "MODPTFLX", "MODPTXOF", "MODPTYOF", "MODPTYPM", "doGPU", "passAll",
     NULL};
   gchar schar[] = {'I','Q','U','U','V'};
   gchar *routine = "getInputSkyModel";
@@ -1315,7 +1315,7 @@ void UVSubHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     "Cmethod", "Cmodel", "Factor",  "Opcode", 
     "modelFlux", "modelPos", "modelParm", "noNeg",
     "mrgCC", "PBCor", "antSize", "Alpha",
-    "nThreads", "doGPU",
+    "nThreads", "doGPU", "passAll",
     NULL};
   gchar *routine = "UVSubHistory";
 

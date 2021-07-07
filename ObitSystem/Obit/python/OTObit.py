@@ -266,7 +266,7 @@ Note: these dict are independent of the underlying data structures.
 # Interactive routines to Obit use from ObitTalk
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2005-2019
+#  Copyright (C) 2005-2021
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -1348,9 +1348,11 @@ def tvstat (inImage):
     * inImage   = Python Image object, created with getname, getFITS
     """
     ################################################################
+    # Local image if ImageMF
+    xim = inImage.cast('ObitImage')
     # Get window
-    w = window(inImage)
-    tvlod(inImage,w)
+    w = window(xim)
+    tvlod(xim,w)
     ShowErr()
     # Must be rectangle
     l =  OWindow.PGetList(w, 1, err)
@@ -1358,49 +1360,9 @@ def tvstat (inImage):
         raise TypeError("Window MUST be a single rectangle")
     blc = [min(l[0][2]+1, l[0][4]+1), min(l[0][3]+1, l[0][5]+1)]
     trc = [max(l[0][2]+1, l[0][4]+1), max(l[0][3]+1, l[0][5]+1)]
-    
-    # Read plane
-    p    = Image.PReadPlane(inImage,err,blc=blc,trc=trc)
-    ShowErr()
-    head = inImage.Desc.Dict  # Header
 
-    # Get statistics
-    Mean = p.Mean
-    RMS  = p.RMS
-    RawRMS  = p.RawRMS
-    MaxPos=[0,0]
-    Max = FArray.PMax(p, MaxPos)
-    MaxPos[0] = MaxPos[0]+blc[0]
-    MaxPos[1] = MaxPos[1]+blc[1]
-    MinPos=[0,0]
-    Min = FArray.PMin(p, MinPos)
-    MinPos[0] = MinPos[0]+blc[0]
-    MinPos[1] = MinPos[1]+blc[1]
-    # Integrated flux density
-    Flux = -1.0
-    if (head["beamMaj"]>0.0) :
-        beamarea = 1.1331*(head["beamMaj"]/abs(head["cdelt"][0])) * \
-                   (head["beamMin"]/abs(head["cdelt"][1]))
-        Flux = p.Sum/beamarea
-    else:
-        beamarea = None
-    print("Region Mean %g, RMSHist %g RMS %g" % (Mean, RMS, RawRMS))
-    print("  Max %g @ pixel " % Max, MaxPos)
-    print("  Min %g @ pixel " % Min, MinPos)
-    if (beamarea):
-        print("  Integrated Flux density %g, beam area = %7.1f pixels" % (Flux, beamarea))
-    
-    # Reset BLC, TRC
-    blc = [1,1,1,1,1]
-    trc = [0,0,0,0,0]
-    Image.POpen(inImage, Image.READONLY, err, blc=blc, trc=trc)
-    Image.PClose (inImage, err)
-    ShowErr()
-    
-    del w, p, blc, trc
-    return {"Mean":Mean,"RMSHist":RMS,"RMS":RawRMS,"Max":Max, \
-            "MaxPos":MaxPos,"Min":Min,"MinPos":MinPos,"Flux":Flux,
-            "BeamArea":beamarea}
+    # Use imstat for statistics
+    return imstat(inImage, blc=blc,trc=trc)
     # end tvstat
    
 
@@ -1422,10 +1384,22 @@ def imstat (inImage, blc=[1,1,1,1,1], trc=[0,0,0,0,0]):
     * inImage   = Python Image object, created with getname, getFITS
     """
     ################################################################
+    # Local image if ImageMF
+    xim = inImage.cast('ObitImage')
     # Read plane
-    p    = Image.PReadPlane(inImage,err,blc=blc,trc=trc)
+    lblc = [1,1]+blc[2:]
+    ltrc = [0,0]+trc[2:]
+    pp  = Image.PReadPlane(xim,err,blc=lblc,trc=ltrc)
+    d = xim.Desc.Dict
+    lblc=[]; ltrc=[]  # zero rel
+    for i in range(0,min(len(blc),d['naxis'],pp.Ndim,)):
+        lblc.append(max(0,blc[i]-1))
+        ltrc.append(min(d['inaxes'][i]-1,trc[i]-1))
+        if ltrc[i]<=0:
+            ltrc[i] = d['inaxes'][i]-1
+    p   = FArray.PSubArr(pp, lblc, ltrc, err)
     ShowErr()
-    head = inImage.Desc.Dict  # Header
+    head = xim.Desc.Dict  # Header
 
     # Get statistics
     Mean = p.Mean
@@ -1433,12 +1407,12 @@ def imstat (inImage, blc=[1,1,1,1,1], trc=[0,0,0,0,0]):
     RawRMS  = p.RawRMS
     MaxPos=[0,0]
     Max = FArray.PMax(p, MaxPos)
-    MaxPos[0] = int(MaxPos[0]+blc[0])
-    MaxPos[1] = int(MaxPos[1]+blc[1])
+    MaxPos[0] = int(MaxPos[0]+lblc[0]+1)
+    MaxPos[1] = int(MaxPos[1]+lblc[1]+1)
     MinPos=[0,0]
     Min = FArray.PMin(p, MinPos)
-    MinPos[0] = int(MinPos[0]+blc[0])
-    MinPos[1] = int(MinPos[1]+blc[1])
+    MinPos[0] = int(MinPos[0]+lblc[0]+1)
+    MinPos[1] = int(MinPos[1]+lblc[1]+1)
     # Integrated flux density
     Flux = -1.0
     beamarea = 1.0
@@ -1453,13 +1427,13 @@ def imstat (inImage, blc=[1,1,1,1,1], trc=[0,0,0,0,0]):
         print("  Integrated Flux density %g, beam area = %7.1f pixels" % (Flux, beamarea))
    
     # Reset BLC, TRC
-    blc = [1,1,1,1,1]
-    trc = [0,0,0,0,0]
-    Image.POpen(inImage, Image.READONLY, err, blc=blc, trc=trc)
-    Image.PClose (inImage, err)
+    lblc = [1,1,1,1,1]
+    ltrc = [0,0,0,0,0]
+    Image.POpen(xim, Image.READONLY, err, blc=lblc, trc=ltrc)
+    Image.PClose (xim, err)
     ShowErr()
     
-    del p, blc, trc
+    del p, pp, lblc, ltrc
     return {"Mean":Mean,"RMSHist":RMS,"RMS":RawRMS,"Max":Max, \
             "MaxPos":MaxPos,"Min":Min,"MinPos":MinPos,"Flux":Flux,
             "BeamArea":beamarea}
@@ -1592,7 +1566,7 @@ def uvlod(filename, inDisk, Aname, Aclass, Adisk, Aseq, err):
     hline = "uvlod   / FITS file "+filename[s+1:]+" disk "+str(inDisk)
     outHistory.WriteRec(-1, hline ,err)
     outHistory.Close(err)
-   #
+    #
     # Copy Tables
     # Open to be sure to update fragile AIPS header
     outUV.Open(UV.READWRITE, err)
