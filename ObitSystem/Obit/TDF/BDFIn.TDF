@@ -4,7 +4,7 @@
 ;! Obit Convert EVLA BDF data and append to a UV data file.
 ;# Task Obit BDF
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2010-2019
+;;  Copyright (C) 2010-2021
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -67,6 +67,8 @@ doCode                              DISABLED
 defCode                             Default CalCodes by Intent
 **PARAM** boo 1  **DEF** F
 doOnline                            Keep "online" calibration data
+**PARAM** boo 1  **DEF** F
+doPoint                             Keep Pointing data as PT table
 **PARAM** boo 1  **DEF** F
 SWOrder                             Keep data in Spectral window order?
 **PARAM** float 1 **DEF** 0.5
@@ -195,6 +197,7 @@ Data selection
   doOnline...Data in scans with stated intents indicating an online
              calibration, such as "CALIBRATE_POINTING","UNSPECIFIED" 
              will be written skipped unless doOnline=True.
+  doPoint....If True, keep Pointing data as PT table
   SWOrder....If True keep frequencies in Spectral window order
              If False IF will be in ascending frequency order.
   calInt.....Interval in min between AIPS CL table entries.

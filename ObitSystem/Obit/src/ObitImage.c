@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2020                                          */
+/*;  Copyright (C) 2003-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -177,7 +177,7 @@ ObitImage* ObitImageFromFileInfo (gchar *prefix, ObitInfoList *inList,
   ObitInfoListGetTest(inList, keyword, &type, dim, blc); /* BLC */
   g_free(keyword);
   
-  /* BLC */
+  /* TRC */
   if (prefix) keyword = g_strconcat (prefix, "TRC", NULL);
   else        keyword = g_strdup("TRC");
   ObitInfoListGetTest(inList, keyword, &type, dim, trc); /* TRC */
@@ -459,6 +459,7 @@ gboolean ObitImageSame (ObitImage *in1, ObitImage *in2, ObitErr *err )
 ObitImage* ObitImageZap (ObitImage *in, ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
+  ObitHistory *inHistory=NULL;
   gchar *routine = "ObitImageZap";
 
   /* error checks */
@@ -484,6 +485,11 @@ ObitImage* ObitImageZap (ObitImage *in, ObitErr *err)
     ObitErrClearErr(err); 
     return ObitImageUnref(in); 
   }
+
+  /* Delete history */
+  inHistory  = newObitDataHistory ((ObitData*)in, OBIT_IO_WriteOnly, err);
+  if (inHistory)  inHistory =  ObitHistoryZap(inHistory, err);
+  if (err->error) Obit_traceback_val (err, routine, in->name, in);
 
   /* Free image buffer if allocated */
   in->image = ObitFArrayUnref(in->image);

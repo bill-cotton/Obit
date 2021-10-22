@@ -227,7 +227,7 @@ int main ( int argc, char **argv )
   ObitSystem *mySystem= NULL;
   ObitUV *outData= NULL;
   ObitErr *err= NULL;
-  gboolean doOnline=FALSE;
+  gboolean doOnline=FALSE, doPoint=FALSE;
   gchar dataroot[132];
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -307,8 +307,9 @@ int main ( int argc, char **argv )
   ReadNXTable(outData, err);  
   if (err->error) {ierr = 1;  ObitErrLog(err);}  if (ierr!=0) goto exit;
   
-  /* Pointing table */
-  GetPointingInfo (SDMData, outData, err);
+  /* Pointing table - if requested */
+  ObitInfoListGetTest(myInput, "doPoint", &type, dim, &doPoint);
+  if (doPoint) GetPointingInfo (SDMData, outData, err);
   if (err->error) {ierr = 1;  ObitErrLog(err);}  if (ierr!=0) goto exit;
 
   GetFreqAvgInfo (BDFData, outData, err);     /* CQ tables */
@@ -1286,7 +1287,7 @@ void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData,
     "DataRoot", "selChan", "selIF", "selStokes", "selBand", "selConfig", "selCode", 
     "selChBW",
     "dropZero", "doCode", "defCode", "calInt", "doSwPwr", "doOnline", "SWOrder", 
-    "doAtmCor", "doAppend", "binFlag", 
+    "doAtmCor", "doAppend", "binFlag", "doPoint",
     NULL};
   gchar *routine = "BDFInHistory";
   

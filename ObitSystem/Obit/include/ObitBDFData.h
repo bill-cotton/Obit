@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2013                                          */
+/*;  Copyright (C) 2010-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -183,7 +183,7 @@ typedef enum obitBDFEndian ObitBDFEndian;
 
 /*----------------- Macroes ---------------------------*/
 /** Granularity of buffer operations (frame size) */
-#define BDFBUFFERSIZE 16384
+#define BDFBUFFERSIZE 262144
 /** Number of frames in buffer */
 #define BDFBUFFERFRAMES 32
 /** Maximum number of BasebandInfo structs */

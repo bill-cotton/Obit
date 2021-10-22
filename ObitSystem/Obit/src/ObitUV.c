@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2019                                          */
+/*;  Copyright (C) 2003-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -290,14 +290,14 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
       return out;
     }
   }
-  if (keyword) g_free(keyword); keyword = NULL;
+  if (keyword) {g_free(keyword); keyword = NULL;}
 
   if (!strncmp (DataType, "AIPS", 4)) { /* AIPS */
     /* AIPS disk */
     if (prefix) keyword = g_strconcat (prefix, "Disk", NULL);
     else        keyword = g_strdup("Disk");
     ObitInfoListGet(inList, keyword, &type, dim, &disk, err);
-    if (keyword) g_free(keyword); keyword = NULL;
+    if (keyword) {g_free(keyword); keyword = NULL;}
 
     /* If prefixDir given, lookup disk number */
     if (prefix) keyword = g_strconcat (prefix, "Dir", NULL);
@@ -308,7 +308,7 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
       disk = ObitAIPSFindDirname (stemp, err);
       if (err->error) Obit_traceback_val (err, routine, routine, out);
     }
-    if (keyword) g_free(keyword); keyword = NULL;
+    if (keyword) {g_free(keyword); keyword = NULL;}
 
     /* AIPS name */
     if (prefix) keyword = g_strconcat (prefix, "Name", NULL);
@@ -319,7 +319,7 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
       strncpy (Aname, "No Name ", 13);
     } 
     Aname[12] = 0;
-    if (keyword) g_free(keyword); keyword = NULL;
+    if (keyword) {g_free(keyword); keyword = NULL;}
 
     /* AIPS class */
     if (prefix) keyword = g_strconcat (prefix, "Class", NULL);
@@ -330,13 +330,13 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
       strncpy (Aclass, "NoClas", 7);
     }
     Aclass[6] = 0;
-    if (keyword) g_free(keyword); keyword = NULL;
+    if (keyword) {g_free(keyword); keyword = NULL;}
 
     /* input AIPS sequence */
     if (prefix) keyword = g_strconcat (prefix, "Seq", NULL);
     else        keyword = g_strdup("Seq");
     ObitInfoListGet(inList, keyword, &type, dim, &Aseq, err);
-    if (keyword) g_free(keyword); keyword = NULL;
+    if (keyword) {g_free(keyword); keyword = NULL;}
 
     /* if ASeq==0 want highest existing sequence */
     if (Aseq<=0) {
@@ -375,13 +375,13 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
     } else { 
       strncpy (inFile, "No_Filename_Given", 128);
     }
-    if (keyword) g_free(keyword); keyword = NULL;
+    if (keyword) {g_free(keyword); keyword = NULL;}
     
     /* input FITS disk */
     if (prefix) keyword = g_strconcat (prefix, "Disk", NULL);
     else        keyword = g_strdup("Disk");
     ObitInfoListGet(inList, keyword, &type, dim, &disk, err);
-    if (keyword) g_free(keyword); keyword = NULL;
+    if (keyword) {g_free(keyword); keyword = NULL;}
 
     /* If prefixDir given, lookup disk number */
     if (prefix) keyword = g_strconcat (prefix, "Dir", NULL);
@@ -392,7 +392,7 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
       disk = ObitFITSFindDir (stemp, err);
       if (err->error) Obit_traceback_val (err, routine, routine, out);
     }
-    if (keyword) g_free(keyword); keyword = NULL;
+    if (keyword) {g_free(keyword); keyword = NULL;}
 
     /* define object */
     ObitUVSetFITS (out, nvis, disk, inFile, err);
@@ -605,6 +605,7 @@ void ObitUVRename (ObitUV *in, ObitErr *err)
 ObitUV* ObitUVZap (ObitUV *in, ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
+  ObitHistory *inHistory=NULL;
   gchar *routine = "ObitUVZap";
 
   /* error checks */
@@ -627,6 +628,11 @@ ObitUV* ObitUVZap (ObitUV *in, ObitErr *err)
     ObitErrClearErr(err); 
     return ObitUVUnref(in); 
   }
+
+  /* Delete history */
+  inHistory  = newObitDataHistory ((ObitData*)in, OBIT_IO_WriteOnly, err);
+  if (inHistory)  inHistory =  ObitHistoryZap(inHistory, err);
+  if (err->error) Obit_traceback_val (err, routine, in->name, in);
 
   /* Delete the file and all tables */
   ObitIOZap (in->myIO, err);
@@ -2381,8 +2387,8 @@ void  ObitUVGetSouInfo (ObitUV *uvdata, ObitErr *err)
   if (err->error) return;
   
   /* Default velocity definitions */
-  strncpy (velRef, "LSR",   3);
-  strncpy (velDef, "RADIO", 5);
+  strncpy (velRef, "LSR",   4);
+  strncpy (velDef, "RADIO", 6);
 
   /* descriptor ilocsu > 0 indicates multisource */
   if (uvdata->myDesc->ilocsu >= 0) { /* multisource */
@@ -3130,12 +3136,12 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   }
 
   /* Deselected IFs */
-  if (sel->IFDrop) g_free(sel->IFDrop); sel->IFDrop=NULL;
+  if (sel->IFDrop) {g_free(sel->IFDrop); sel->IFDrop=NULL;}
   if (ObitInfoListGetP(info, "IFDrop", &type, (gint32*)dim, (gpointer)&iptr)) {
     n = 0;
     while (iptr[n]>0) {n++;}
     sel->IFDrop = g_malloc0((n+1)*sizeof(olong));
-    for (j=0; j<n; j++) sel->IFDrop[j] = iptr[j]; sel->IFDrop[j] = 0;
+    for (j=0; j<n; j++) {sel->IFDrop[j] = iptr[j];} sel->IFDrop[j] = 0;
   } else {  /* Not given */
     sel->IFDrop = g_malloc0(sizeof(olong));
     sel->IFDrop[0] = 0;
@@ -3167,7 +3173,7 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
     if ((sel->ifsel1<0) && sel->IFSel[j-1]) sel->ifsel1 = j-1;
   }
 
-  for (i=0; i<4; i++) tempStr[i] = ' '; tempStr[4] = 0;
+  for (i=0; i<4; i++) {tempStr[i] = ' ';} tempStr[4] = 0;
   ObitInfoListGetTest(info, "Stokes", &type, dim, &tempStr);
   /* Remove any trailing junk */
   badChar = FALSE;
@@ -3175,7 +3181,7 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
     badChar = badChar || (tempStr[i]==0); 
     if (badChar) tempStr[i] = ' ';
   }
-  for (i=0; i<4; i++) sel->Stokes[i] = tempStr[i]; sel->Stokes[4] = 0;
+  for (i=0; i<4; i++) {sel->Stokes[i] = tempStr[i];} sel->Stokes[4] = 0;
 
   /* Polarization calibration */
   InfoReal.itg = 0; type = OBIT_oint;

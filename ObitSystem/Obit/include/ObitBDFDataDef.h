@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2016                                          */
+/*;  Copyright (C) 2010-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -78,12 +78,12 @@ olong FlagSize;
 olong *flagData;
 /** Have actualTimes data? */
 gboolean haveActualTimes;
-/** actualTimes data for integration */
+/** actualTimes data for integration in nsec */
 ofloat *actualTimesData;
 /** Have actualDurations data? */
 gboolean haveActualDurations;
 /** actualDurations data for integration */
-ofloat *actualDurationsData;
+ollong *actualDurationsData;
 /** Have weight data? */
 gboolean haveWeight;
 /** Weight data for integration */

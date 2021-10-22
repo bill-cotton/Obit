@@ -4983,3 +4983,25 @@ Obit/src/ObitUVUtil.c
     VisSub: More diagnostics with incompatible datasets.
     Cleanup
 07 July 2021 svn 633
+
+Summary: RMSyn and mostly Bug fixes
+Obit/src/ObitImage.c Obit/src/ObitUV.c
+    Zap: Make sure history zapped.
+Obit/share/scripts/ConcatCC.py 
+    Script to concatenate with shifts facets of a mosaic
+Obit/include/ObitBDFDataDef.h
+    Change actualDurationsData to type ollong
+Obit/include/ObitBDFData.h
+    Increased buffer size in reading BDF data.
+Obit/src/ObitBDFData.c 
+    Copy actualDuration as longlong nanosec
+    Add routine CopyLongLongs, some fixes in other Copy*
+Obit/task/MFImage.c
+    Add minFList to history
+Obit/include/ObitCArray.h Obit/src/ObitCArray.c
+    Add multithreading/AVX support for Add, Sub, mult routines
+Obit/TDF/RMSyn.TDF  Obit/tasks/RMSyn.c
+    New task to do Faraday synthesis
+Obit/TDF/BDFIn.TDF Obit/tasks/BDFIn.c
+    Add parameter doPoint, def False, to enable/disable writing PT table.
+22 Oct 21 svn 634
