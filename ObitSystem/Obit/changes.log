@@ -5005,3 +5005,8 @@ Obit/TDF/RMSyn.TDF  Obit/tasks/RMSyn.c
 Obit/TDF/BDFIn.TDF Obit/tasks/BDFIn.c
     Add parameter doPoint, def False, to enable/disable writing PT table.
 22 Oct 21 svn 634
+
+Summary: ObitCArray.h 
+Obit/include/ObitCArray.h Obit/src/ObitCArray.c
+    Add multithreading/AVX support for Add, Sub, mult routines
+22 Oct 25 svn 635

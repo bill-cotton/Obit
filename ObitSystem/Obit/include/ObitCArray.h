@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2012                                          */
+/*;  Copyright (C) 2003-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -86,6 +86,11 @@ typedef struct {
  * in = object to reference
  */
 #define ObitCArrayIsA(in) ObitIsA (in, ObitCArrayGetClass())
+
+/** Maximum ObitCArray number of dimensions */
+#ifndef MAXCARRAYDIM
+#define MAXCARRAYDIM 10
+#endif
 
 /*---------------Public functions---------------------------*/
 /** Public: Class initializer. */
