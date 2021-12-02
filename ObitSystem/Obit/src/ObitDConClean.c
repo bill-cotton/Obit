@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2018                                          */
+/*;  Copyright (C) 2004-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1014,8 +1014,7 @@ void ObitDConCleanImageStats(ObitDConClean *in, olong field, gboolean doBeam,
     /* Set up thread arguments */
     for (it=0; it<nTh; it++) {
       if (it==(nTh-1)) hirow = nrow;  /* Make sure do all */
-      if (threadArgs[it]->inData)  ObitFArrayUnref(threadArgs[it]->inData);
-      threadArgs[it]->inData  = ObitFArrayRef(image->image);
+      threadArgs[it]->inData  = image->image;
       threadArgs[it]->field   = i+1;
       threadArgs[it]->first   = lorow;
       threadArgs[it]->last    = hirow;
@@ -1085,9 +1084,10 @@ void ObitDConCleanImageStats(ObitDConClean *in, olong field, gboolean doBeam,
     if (err->error) Obit_traceback_msg (err, routine, image->name);
 
     /* Free Image array and work references */
+    /* No longer Referenced
     for (it=0; it<nTh; it++) 
-      if (threadArgs[it]->inData)  ObitFArrayUnref(threadArgs[it]->inData);
-    image->image = ObitFArrayUnref(image->image);
+    if (threadArgs[it]->inData)  ObitFArrayUnref(threadArgs[it]->inData);*/
+    /*image->image = ObitFArrayUnref(image->image);??? not Refed */
     
   } /* end loop over fields */
 
@@ -2137,7 +2137,6 @@ void ReadBP (ObitDConClean* in, ObitErr *err)
   olong  blc[IM_MAXDIM], trc[IM_MAXDIM];
   olong  ablc[2], atrc[2], pos[2];
   olong i, j, field, icenx, iceny, nx, ny, mxPatch;
-  ofloat fmax;
   ObitImage *Beam;
   ObitFArray *FAtemp=NULL;
   gchar *routine = "ObitDConClean:ReadBP";
@@ -2203,7 +2202,7 @@ void ReadBP (ObitDConClean* in, ObitErr *err)
     if (err->error) Obit_traceback_msg (err, routine, Beam->name);
     
     /* center = peak */
-    fmax = ObitFArrayMax (FAtemp, pos);
+    ObitFArrayMax (FAtemp, pos);
     FAtemp = ObitFArrayUnref(FAtemp);
     icenx = pos[0]+ablc[0];
     iceny = pos[1]+ablc[1];
@@ -2446,7 +2445,8 @@ static olong MakeStatsFuncArgs (ObitThread *thread,
   for (i=0; i<nThreads; i++) {
     (*ThreadArgs)[i]->field      = 0;
     (*ThreadArgs)[i]->inData     = NULL;
-    if (window) (*ThreadArgs)[i]->window = ObitDConCleanWindowRef(window);
+    /*if (window) (*ThreadArgs)[i]->window = ObitDConCleanWindowRef(window);*/
+    if (window) (*ThreadArgs)[i]->window = window;
     else (*ThreadArgs)[i]->window = NULL;
     (*ThreadArgs)[i]->ithread    = i;
     (*ThreadArgs)[i]->thread     = thread;
@@ -2468,12 +2468,12 @@ static void KillStatsFuncArgs (olong nargs, StatsFuncArg **ThreadArgs)
   if (ThreadArgs==NULL) return;
   for (i=0; i<nargs; i++) {
     if (ThreadArgs[i]) {
-      if (ThreadArgs[i]->inData)  ObitFArrayUnref(ThreadArgs[i]->inData);
-      if (ThreadArgs[i]->window)  ObitDConCleanWindowUnref(ThreadArgs[i]->window);
-      g_free(ThreadArgs[i]);
+      /* if (ThreadArgs[i]->inData)  {ObitFArrayUnref(ThreadArgs[i]->inData); ThreadArgs[i]->inData = NULL;}
+	 if (ThreadArgs[i]->window)  {ObitDConCleanWindowUnref(ThreadArgs[i]->window); ThreadArgs[i]->window = NULL;}*/
+      g_free(ThreadArgs[i]); ThreadArgs[i]=NULL;
     }
   }
-  g_free(ThreadArgs);
+  g_free(ThreadArgs); ThreadArgs=NULL;
 } /*  end KillStatsFuncArgs */
 
 gboolean hmsra(olong h, olong m, ofloat s, odouble *ra)

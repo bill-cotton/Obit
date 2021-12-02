@@ -1,6 +1,6 @@
 /* $Id: ObitPointing.c 516 2015-08-09 00:21:40Z bill.cotton $ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2016                                               */
+/*;  Copyright (C) 2016,2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -265,7 +265,7 @@ ObitPointing* ObitPointingCreate (gchar* name, ObitErr *err)
  */
 void ObitPointingInitFile  (ObitPointing *in, gchar *DataFile, ObitErr *err)
 {
-  ObitIOCode retCode;
+  /*ObitIOCode retCode;*/
   olong i, io, maxStr, itemp;
   gchar *startInfo, *endInfo, *next, *start, *prior, *tstr;
   gchar *ord[20], nelem=18;
@@ -291,7 +291,7 @@ void ObitPointingInitFile  (ObitPointing *in, gchar *DataFile, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Fill Buffer */
-  retCode = ObitPointingFillBuffer (in, err);
+  ObitPointingFillBuffer (in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Parse xml header - first find limits */
@@ -577,7 +577,8 @@ olong ObitPointingGetRow (ObitPointing *in,
 			      ASDMPointingRow *row, ObitErr *err)
 {
   olong out = in->curRow+1;
-  olong maxStr, elem, nterm = 1, nsamp = 1;
+  olong maxStr, elem;
+  /* olong nterm = 1, nsamp = 1;*/
   gchar *start, *next, *done, *temp;
   gboolean anybodyHere;
   ObitIOCode retCode=OBIT_IO_OK;
@@ -617,9 +618,11 @@ olong ObitPointingGetRow (ObitPointing *in,
       row->antennaId = Pointingparse_intstr(in->buffer, "Antenna_", start, &next, in->byteFlip);
     } else if (elem==in->ordtimeInterval) {              /* timeInterval */
       row->timeInterval = Pointingparse_timeint(in->buffer, start, &next, in->byteFlip);
+      /* Minimum interval length 0.15 sec */
+      row->timeInterval[1] = MAX(row->timeInterval[1], 1.7361e-6);
     } else if (elem==in->ordnumSample) {                 /* numSample */
       row->numSample = Pointingparse_int(in->buffer, start, &next, in->byteFlip);
-      nsamp = row->numSample;
+      /*nsamp = row->numSample;*/
     } else if (elem==in->ordencoder) {                   /* encoder - NOT SURE OF TYPE */
       row->encoder = Pointingparse_dbl_arr(in->buffer, start, &next, in->byteFlip);
     } else if (elem==in->ordpointingTracking) {          /* pointingTracking */
@@ -630,7 +633,7 @@ olong ObitPointingGetRow (ObitPointing *in,
       row->timeOrigin = Pointingparse_time(in->buffer, start, &next, in->byteFlip);
     } else if (elem==in->ordnumTerm ) {                  /* numTerm */
       row->numTerm = Pointingparse_int(in->buffer, start, &next, in->byteFlip);
-      nterm = row->numTerm;
+      /*nterm = row->numTerm;*/
     } else if (elem==in->ordpointingDirection) {         /* pointingDirection */
       row->pointingDirection = Pointingparse_dbl_arr(in->buffer, start, &next, in->byteFlip);
     } else if (elem==in->ordtarget) {                    /* target */
@@ -819,7 +822,7 @@ static gchar* Pointingparse_quote_str(gchar *string, olong maxChar,
     n++;
   }
   out = g_malloc(n+1);
-  for (i=0; i<n; i++) out[i] = b[i]; out[i] = 0;
+  for (i=0; i<n; i++) {out[i] = b[i];} out[i] = 0;
   *next = b + n;
 
   return out;
@@ -1038,7 +1041,7 @@ gchar* Pointingparse_str(gchar *buffer,
   /* output string */
   out = g_malloc(len+1);
   b = *next;
-  for (i=0; i<len; i++) out[i] = b[i]; out[i] = 0;
+  for (i=0; i<len; i++) {out[i] = b[i];} out[i] = 0;
   *next += len;
 
   return out;

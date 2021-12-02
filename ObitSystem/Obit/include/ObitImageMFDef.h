@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2021                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -39,9 +39,6 @@ olong maxOrder;
 olong curOrder;
 /** Reference frequency */
 odouble refFreq;
-/** If TRUE, image has been formed but work 
-    files/Decomposition not done */
-gboolean fresh;
 /** Number of coarse frequency planes */
 olong nSpec;
 /** Arrays of start and finish IFs (0-rel), per coarse channel */

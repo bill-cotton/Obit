@@ -1229,7 +1229,7 @@ void ObitDConCleanVisSub(ObitDConCleanVis *in, ObitErr *err)
   if (subbed) {
     for (i=0; i<in->mosaic->numberImages; i++) {
       in->fresh[i] = FALSE;  /* Need to remake all images? */
-      ((ObitImageMF*)in->mosaic->images[i])->fresh = FALSE; 
+      in->mosaic->images[i]->fresh = FALSE; 
     }
   }
 
@@ -4402,7 +4402,7 @@ ofloat ObitDConCleanVisCleanable(ObitDConCleanVis *in, olong field,
     ObitImageClose (image, err);
     if (err->error) Obit_traceback_val (err, routine, image->name, out);
     usePixels = ObitFArrayRef(image->image);  /* Pointer to image buffer */
-  }
+}
   
   /* Allow negative for Stokes other than I or multiresolution */
   doAbs = isMR || (fabs (image->myDesc->crval[image->myDesc->jlocs]-1.0) > 0.1);

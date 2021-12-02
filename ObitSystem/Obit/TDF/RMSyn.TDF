@@ -84,6 +84,8 @@ doDecon                            Deconvolve/restore?
 minFlux                            Minimum level in CLEAN
 **PARAM** int 1
 niter                              max. number of CLEAN cycles
+**PARAM** float 1  **DEF** 0.0
+Alpha           -20.       20.      Spectral Index to correct
 **PARAM** float 1
 BeamSig                            Restoring Gaussian sigma (rad/m^2)
 **PARAM** int 1 **DEF** 1
@@ -133,6 +135,9 @@ Parameters:
   doDecon.....Do CLEAN deconvolution/restore on each pixel?
   minFlux.....Minimum CLEAN level (Jy/bm)
   niter.......Maximum number of CLEAN cycles (max. 1000)
+  Alpha.......If != 0.0 then correct Q,U data by spectral index 
+              Alpha before computing the Faraday function.
+              -0.7 is typical for synchrotron.
   BeamSig.....If >0 then the Gaussian sigma (rad/m^2) to use
               as the restoring beam for the deconvolution.
 	      Otherwise, fit to inner real lobe of beam.

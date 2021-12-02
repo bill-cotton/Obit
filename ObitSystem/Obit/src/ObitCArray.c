@@ -654,8 +654,8 @@ void ObitCArrayAdd (ObitCArray* in1, ObitCArray* in2, ObitCArray* out)
   
   /* Divide up work - pretend floats with 2 entries per cell*/
   nElem = 2 * in1->arraySize;
-  /* At least 200,000 per thread */
-  nTh = MAX (1, MIN((olong)(0.5+nElem/200000.),nThreads));
+  /* At least 100,000 per thread */
+  nTh = MAX (1, MIN((olong)(0.5+nElem/100000.),nThreads));
   nElemPerThread = nElem/nTh;
   if (nElem<1000000) {nElemPerThread = nElem; nTh = 1;}
   loElem = 1;
@@ -710,8 +710,8 @@ void ObitCArraySub (ObitCArray* in1, ObitCArray* in2, ObitCArray* out)
   
   /* Divide up work  - pretend floats with 2 entries per cell */
   nElem = 2*in1->arraySize;
-  /* At least 200,000 per thread */
-  nTh = MAX (1, MIN((olong)(0.5+nElem/200000.),nThreads));
+  /* At least 100,000 per thread */
+  nTh = MAX (1, MIN((olong)(0.5+nElem/100000.),nThreads));
   nElemPerThread = nElem/nTh;
   if (nElem<100000) {nElemPerThread = nElem; nTh = 1;}
   loElem = 1;
@@ -766,8 +766,8 @@ void ObitCArrayMul (ObitCArray* in1, ObitCArray* in2, ObitCArray* out)
   
   /* Divide up work */
   nElem = in1->arraySize;
-  /* At least 200,000 per thread */
-  nTh = MAX (1, MIN((olong)(0.5+nElem/200000.),nThreads));
+  /* At least 100,000 per thread */
+  nTh = MAX (1, MIN((olong)(0.5+nElem/100000.),nThreads));
   nElemPerThread = nElem/nTh;
   if (nElem<100000) {nElemPerThread = nElem; nTh = 1;}
   loElem = 1;
@@ -1679,7 +1679,7 @@ static void ObitCArrayClassInfoDefFn (gpointer inClass)
   theClass->ObitCArrayMul    = (ObitCArrayMulFP)ObitCArrayMul;
   theClass->ObitCArrayDiv    = (ObitCArrayDivFP)ObitCArrayDiv;
   theClass->ObitCArrayMakeF  = (ObitCArrayMakeFFP)ObitCArrayMakeF;
-  theClass->ObitCArrayMakeC  = (ObitCArrayMakeCFP)ObitCArrayMakeF;
+  theClass->ObitCArrayMakeC  = (ObitCArrayMakeCFP)ObitCArrayMakeC;
   theClass->ObitCArrayIsFCompatable = 
     (ObitCArrayIsFCompatableFP)ObitCArrayIsFCompatable;
   theClass->ObitCArrayComplex= (ObitCArrayComplexFP)ObitCArrayComplex;
@@ -1970,7 +1970,7 @@ static gpointer ThreadCAMul (gpointer arg)
     v1i.v = _mm512_movehdup_ps (v1r.v);
     v2i.v = _mm512_movehdup_ps (v2r.v);
     v1r.v = _mm512_moveldup_ps (v1r.v);
-    v2r.v = _mm512_movehdup_ps (v2r.v);
+    v2r.v = _mm512_moveldup_ps (v2r.v);
     /* Multiply */
     vt1.v = _mm512_mul_ps (v1r.v, v2r.v);
     vt2.v = _mm512_mul_ps (v1i.v, v2i.v);

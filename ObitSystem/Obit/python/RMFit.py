@@ -11,7 +11,7 @@ and the Chi Squared is also returned.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2013-2019
+#  Copyright (C) 2013-2021
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -110,6 +110,8 @@ class RMFit(Obit.RMFit):
                       values outside of [minRMSyn,maxRMSyn] ignored
             delRMSyn  float scalar RM increment for search (rad/m^2)[def 1.0]
             maxChi2   float scalar Max. chi^2 for doRMSyn [def 10]
+            minChan   int scalar Minimum (1-rel) channel [def 1]
+            maxChan   int scalar Maximum (1-rel) channel [def nchan]  0=>all
         inQImage = Q Image cube to be fitted
         inUImage = U Image cube to be fitted, must have same geometry as inQImage
         outImage = Image cube to accept fitted RM, EVPA0.

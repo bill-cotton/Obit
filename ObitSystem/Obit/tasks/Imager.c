@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN/selfcalibrate a uv data set               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2020                                          */
+/*;  Copyright (C) 2005-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -130,22 +130,22 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Process */
   doSources (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput);    /* delete input list */
@@ -903,10 +903,11 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *strTemp;
-  ofloat ftemp, tapes[20];
+  ofloat ftemp, ftemp2, tapes[20];
   gboolean *booTemp, btemp, do3D;
   olong itemp;
   ObitSkyModelMode modelMode;
+  gchar *DFT = "DFT ";
   gchar *routine = "digestInputs";
 
   /* error checks */
@@ -916,6 +917,14 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   /* noScrat - no scratch files for AIPS disks */
   ObitAIPSSetnoScrat(myInput, err);
   if (err->error) Obit_traceback_msg (err, routine, "task Input");
+
+  /* Only Cmethod='DFT' works for doGPU */
+  btemp = FALSE; type = OBIT_bool; dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListGetTest (myInput, "doGPU", &type, dim, &btemp);
+  if (btemp) {
+    dim[0] = strlen (DFT); dim[1] = dim[2] = 1;
+    ObitInfoListAlwaysPut(myInput, "Cmethod", OBIT_string, dim, DFT);
+ } /* End if GPU */
 
   /* Convert test Cmethod to enum  Mode */
   ObitInfoListGetP (myInput, "Cmethod", &type, dim, (gpointer)&strTemp);
@@ -966,6 +975,22 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
     if (do3D)
       Obit_log_error(err, OBIT_InfoWarn,"Setting do3D=F for doLine=T");
   }
+
+  /* If restarting (RChan>1) the cell size (xCell and yCell) must be specified
+     If not set to the original cell size this may fail */
+  itemp = 1;  type = OBIT_long; dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListGetTest(myInput, "RChan", &type, dim, &itemp);
+  /* Restarting? */
+  if (itemp>1) {
+    ftemp = 0.0;  type = OBIT_float; dim[0] = dim[1] = dim[2] = 1;
+    ObitInfoListGetTest(myInput, "xCells", &type, dim, &ftemp);
+    ftemp2 = 0.0;  type = OBIT_float; dim[0] = dim[1] = dim[2] = 1;
+    ObitInfoListGetTest(myInput, "yCells", &type, dim, &ftemp2);
+    if ((ftemp==0.0) || (ftemp2==0.0)) {  /* DOH! */
+      Obit_log_error(err, OBIT_Error, 
+		     "When restarting (RChan>1) you MUST define cell sizes!");
+    }
+  } /* end restarting */
 
   /* Initialize Threading */
   ObitThreadInit (myInput);
@@ -1100,7 +1125,6 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
 {
   ObitUV    *outUV = NULL;
   ObitInfoType type;
-  ObitIOType IOType;
   olong      i, n, Aseq, disk, cno;
   gchar     *Type, *strTemp, out2File[129], *out2Name, *out2F;
   gchar     Aname[13], Aclass[7], *Atype = "UV";
@@ -1137,14 +1161,13 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
       g_snprintf (tname, 128, "%s", strTemp);
     }
       
-    IOType = OBIT_IO_AIPS;  /* Save file type */
     /* input AIPS disk - default is outDisk */
     ObitInfoListGet(myInput, "out2Disk", &type, dim, &disk, err);
     if (disk<=0)
        ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
     /* output AIPS sequence */
     ObitInfoListGet(myInput, "out2Seq", &type, dim, &Aseq, err);
-    for (i=0; i<12; i++) Aname[i] = ' '; Aname[i] = 0;
+    for (i=0; i<12; i++) {Aname[i] = ' ';} Aname[i] = 0;
     strncpy (Aname, tname, 13); Aname[12] = 0;
     /* output AIPS class */
     if (ObitInfoListGetP(myInput, "out2Class", &type, dim, (gpointer)&strTemp)) {
@@ -1182,15 +1205,13 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
     /* Generate output name from Source, out2Name */
     ObitInfoListGetP (myInput, "out2File", &type, dim, (gpointer)&out2F);
     n = MIN (128, dim[0]);
-    for (i=0; i<n; i++) tname[i] = out2F[i]; tname[i] = 0;
+    for (i=0; i<n; i++) {tname[i] = out2F[i];} tname[i] = 0;
     /* Something in source name? */
     if ((Source[0]==' ') || (Source[0]==0)) 
       g_snprintf (out2File, 128, "%s", tname);
     else g_snprintf (out2File, 128, "%s%s", Source, tname);
     ObitTrimTrail(out2File);  /* remove trailing blanks */
 	   
-    IOType = OBIT_IO_FITS;  /* Save file type */
-
     /* output FITS disk */
     ObitInfoListGet(myInput, "out2Disk", &type, dim, &disk, err);
     if (disk<=0) /* defaults to outDisk */
@@ -1281,7 +1302,7 @@ void setOutputData (gchar *Source, olong iStoke, ObitInfoList *myInput,
     ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
     /* input AIPS sequence */
     ObitInfoListGet(myInput, "outSeq", &type, dim, &Aseq, err);
-    for (i=0; i<12; i++) Aname[i] = ' '; Aname[i] = 0;
+    for (i=0; i<12; i++) {Aname[i] = ' ';} Aname[i] = 0;
     strncpy (Aname, tname, 13); 
     Aname[12] = 0;
     /* output AIPS class */
@@ -1322,7 +1343,7 @@ void setOutputData (gchar *Source, olong iStoke, ObitInfoList *myInput,
     /* Generate output name from Source, outName */
     ObitInfoListGetP (myInput, "outFile", &type, dim, (gpointer)&outF);
     n = MIN (128, dim[0]);
-    for (i=0; i<n; i++) tname[i] = outF[i]; tname[i] = 0;
+    for (i=0; i<n; i++) {tname[i] = outF[i];} tname[i] = 0;
     /* If blank use ".uvtab" */
     if ((tname[0]==' ') || (tname[0]==0)) g_snprintf (tname, 128, ".uvtab");
     /* Something in source name? */
@@ -1908,7 +1929,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       ObitImageMosaicZapImage (myClean->mosaic, -1, err); /* Delete mosaic members */
     if (doFlat && (myClean->mosaic->numberImages>1)) {  /* Delete flattened as well if not output */
       outField = ObitImageMosaicGetFullImage (myClean->mosaic, err);
-      if (outField) outField = ObitImageZap(outField, err);
+      if (outField) myClean->mosaic->FullField = ObitImageZap(outField, err);
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
     }
     myClean  = ObitDConCleanVisUnref(myClean);
@@ -2363,7 +2384,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   ObitUVPeelUtilLoop (myInput, inUV, myClean, &nfield, &ncomp, err);
   if (err->error) Obit_traceback_msg (err, routine, myClean->name);
 
-  if (ncomp) g_free(ncomp);   ncomp  = NULL;  /* Done with array */
+  if (ncomp) {g_free(ncomp);}   ncomp  = NULL;  /* Done with array */
 
   /* Make sure at least some images made */
   if (ObitDConCleanVisLineIsA(myClean)) {  /* Multiple parallel planes */

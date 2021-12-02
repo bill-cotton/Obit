@@ -328,7 +328,7 @@ void ObitGPUSkyModelDFTInit (ObitGPUSkyModel *in,  Obit *skyModel,
     in->gpuInfo->h_visInfo->freqRat = (float*)ObitCUDAUtilAllocHost(memsize);
     in->gpuInfo->h_visInfo->freqRat[0] = 1.0;   /* in case */
     if (((ObitSkyModel*)skyModel)->mosaic!=NULL) {
-      img = ((ObitSkyModel*)in)->mosaic->images[0];
+      img = ((ObitSkyModel*)skyModel)->mosaic->images[0];
       in->gpuInfo->h_visInfo->freqRat[0] =  (float)(uvdata->myDesc->freq / 
 	    img->myDesc->crval[img->myDesc->jlocf]);
     /* to GPU */

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2021                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -43,6 +43,3 @@ ObitFArray ***BeamMatx;
 ObitFArray **ResidArr;
 /** Reference frequency */
 odouble refFreq;
-/** If TRUE, image has been formed but work 
-    files/Decomposition not done */
-gboolean fresh;

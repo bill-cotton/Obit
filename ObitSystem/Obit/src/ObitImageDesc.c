@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2015                                          */
+/*;  Copyright (C) 2003-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -834,9 +834,9 @@ gboolean ObitImageDescOverlap(ObitImageDesc *in1, ObitImageDesc *in2,
   /* Overlap found */
  OK:
   out = TRUE;
-  ObitErrUnref(damnErr);
   
  done:
+  ObitErrUnref(damnErr);
   return out;
 } /* end ObitImageDescOverlap */
 
@@ -1075,7 +1075,7 @@ void ObitImageDescClear (gpointer inn)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* free this class members */
-  if (in->info) ObitInfoListUnref (in->info); in->info = NULL;
+  if (in->info) {ObitInfoListUnref (in->info); in->info = NULL;}
   
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

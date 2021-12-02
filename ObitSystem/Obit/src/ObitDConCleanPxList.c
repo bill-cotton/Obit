@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2020                                          */
+/*;  Copyright (C) 2004-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -698,8 +698,10 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
     }
     
     /* Save Beam patch */
-    in->BeamPatch[field-1] = ObitFArrayUnref(in->BeamPatch[field-1]);
-    in->BeamPatch[field-1] = ObitFArrayRef(BeamPatch[field-1]);
+    if ((in->BeamPatch[field-1]!=BeamPatch[field-1])  && (in->BeamPatch[field-1]==NULL)) {
+      /*in->BeamPatch[field-1] = ObitFArrayUnref(in->BeamPatch[field-1]);*/
+      in->BeamPatch[field-1] = ObitFArrayRef(BeamPatch[field-1]);
+    }
 
     /* Which image? */
     image = in->mosaic->images[field-1];
@@ -768,8 +770,11 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
     for (iplane=0; iplane<nplanes; iplane++) {
       /* If pixarray given use it instead of the flux plane */
       if (pixarray && pixarray[ifld] && (iplane==0)) {
-	inFArrays[iplane]  = ObitFArrayUnref(inFArrays[iplane]);
-	inFArrays[iplane]  = ObitFArrayRef(pixarray[ifld]);
+	inFArrays[0] = ObitFArrayRef(pixarray[ifld]);
+	/*if (inFArrays[iplane]!=pixarray[ifld]) {
+	  inFArrays[iplane]  = ObitFArrayUnref(inFArrays[iplane]);
+	  inFArrays[iplane]  = ObitFArrayRef(pixarray[ifld]);
+	  }*/
       } else {
 	inFArrays[iplane]  = ObitFArrayCreate (NULL, 2, naxis);
 	retCode = ObitImageRead (image, inFArrays[iplane]->array, err);
@@ -847,7 +852,7 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
     /* Cleanup - next field may have different size */
     if ((mask) && (ObitMemValid (mask))) mask = ObitMemFree (mask);
 
-    ifld++;
+    ifld++;   
     field = fields[ifld];
   } /* end loop over fields */
 

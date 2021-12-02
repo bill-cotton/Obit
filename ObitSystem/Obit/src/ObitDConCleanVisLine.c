@@ -1436,7 +1436,8 @@ static ObitFArray** NewPxArray (ObitDConCleanVis *inn, olong *startCC,
     inArr->pixarray = ParentClass->NewPxArray((ObitDConCleanVis*)inArr->in, startCC, err);
   } /* End channel loop */    
 
-  return ((ChanFuncArg*)in->chArgs[0])->pixarray;
+  /*return ((ChanFuncArg*)in->chArgs[0])->pixarray;*/
+  return pixarray;
 } /* end NewPxArray */
 
 /**
@@ -1460,8 +1461,11 @@ static ObitFArray** KillPxArray (ObitDConCleanVis *inn,  ObitFArray **pixarray)
     inArr = ((ChanFuncArg*)in->chArgs[ichan]);
 
     /* Call parent for operation */
-    inArr->pixarray = ParentClass->KillPxArray((ObitDConCleanVis*)inArr->in, inArr->pixarray);
+    inArr->pixarray = ParentClass->KillPxArray(inn, inArr->pixarray);
   } /* End channel loop */    
+
+  /* Delete unused version */
+  pixarray = ParentClass->KillPxArray((ObitDConCleanVis*)in, pixarray);
 
   return pixarray;
 } /* end KillPxArray */

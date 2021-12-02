@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2013-2020                                          */
+/*;  Copyright (C) 2013-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -382,6 +382,8 @@ ObitRMFit* ObitRMFitCreate (gchar* name, olong nterm)
  * \li "minRMSyn" OBIT_float scalar min RM to search (rad/m^2)[def -ambiguity]
  * \li "delRMSyn" OBIT_float scalar RM increment for search (rad/m^2)[def 1.0]
  * \li "maxChi2"  OBIT_float scalar max Chi^2 for search [def 10.0]
+ * \li "minChan"  OBIT_int Minimum (1-rel) channel [def 1]
+ * \li "maxChan"  OBIT_int Maximum (1-rel) channel [def nchan] 0=>all
  *
  * \param inQImage Q Image cube to be fitted
  * \param inUImage U Image cube to be fitted
@@ -398,7 +400,7 @@ void ObitRMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage,
 		    ObitImage *outImage, ObitErr *err)
 {
   olong i, iplane, nOut, plane[5]={1,1,1,1,1}, noffset=0;
-  olong naxis[2];
+  olong naxis[2], minChan=1, maxChan=0;
   ObitIOSize IOBy;
   ObitInfoType type;
   ObitIOCode retCode;
@@ -476,7 +478,13 @@ void ObitRMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage,
   if (type==OBIT_float)       in->maxChi2 = InfoReal.flt;
   else if (type==OBIT_double) in->maxChi2 = (ofloat)InfoReal.dbl;
 
-  /* Open input images to get info */
+  /* Channel range */
+  ObitInfoListGetTest(in->info, "minChan", &type, dim, &minChan);
+  minChan = MIN (1, minChan);
+  ObitInfoListGetTest(in->info, "maxChan", &type, dim, &maxChan);
+  if (maxChan<0) maxChan = 0;
+
+   /* Open input images to get info */
   IOBy = OBIT_IO_byPlane;
   dim[0] = 1;
   ObitInfoListAlwaysPut (inQImage->info, "IOBy", OBIT_long, dim, &IOBy);
@@ -516,6 +524,8 @@ void ObitRMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage,
 
   /* Determine number of frequency planes and initialize in */
   in->nlamb2     = inQImage->myDesc->inaxes[inQImage->myDesc->jlocf]-noffset;
+  if (maxChan<=0) maxChan = in->nlamb2;    /* Maximum channel number */
+  in->nlamb2 = MIN (in->nlamb2, maxChan);  /* Ignore dropped channels at the top */
   in->QRMS       = g_malloc0(in->nlamb2*sizeof(ofloat));
   in->URMS       = g_malloc0(in->nlamb2*sizeof(ofloat));
   in->inQFArrays = g_malloc0(in->nlamb2*sizeof(ObitFArray*));
@@ -579,14 +589,21 @@ void ObitRMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage,
     in->lamb2[iplane] = (VELIGHT/freq)*(VELIGHT/freq);
 
     plane[0] = iplane+noffset+1;  /* Select correct plane */
-    retCode = ObitImageGetPlane (inQImage, in->inQFArrays[iplane]->array, plane, err);
-    retCode = ObitImageGetPlane (inUImage, in->inUFArrays[iplane]->array, plane, err);
+    /* If in range (minChan,maxChan) 1 rel, read, else blank */
+    if (((iplane+1)>=minChan) && ((iplane+1)<=maxChan)) {
+      retCode = ObitImageGetPlane (inQImage, in->inQFArrays[iplane]->array, plane, err);
+      retCode = ObitImageGetPlane (inUImage, in->inUFArrays[iplane]->array, plane, err);
+    } else { /* zero fill */
+      ObitFArrayFill(in->inQFArrays[iplane], 0.0);
+      ObitFArrayFill(in->inUFArrays[iplane], 0.0);
+    } /* end selected */
     /* if it didn't work bail out */
     if ((retCode!=OBIT_IO_OK) || (err->error)) Obit_traceback_msg (err, routine, inQImage->name);
 
     /* Plane RMSes */
     in->QRMS[iplane] = ObitFArrayRMS(in->inQFArrays[iplane]);
     in->URMS[iplane] = ObitFArrayRMS(in->inUFArrays[iplane]);
+    /*fprintf(stderr,"DEBUG plane %d Q %f U %f\n",iplane,in->QRMS[iplane],in->URMS[iplane]);*/
 
     
   } /* end loop reading planes */
@@ -628,10 +645,13 @@ void ObitRMFitCube (ObitRMFit* in, ObitImage *inQImage, ObitImage *inUImage,
   ObitHistoryWriteRec (outHist, -1, hiCard, err);
   g_snprintf ( hiCard, 72, "RMCube  minFrac = %f",in->minFrac);
   ObitHistoryWriteRec (outHist, -1, hiCard, err);
+  g_snprintf ( hiCard, 72, "RMCube  minChan = %d",minChan);
+  ObitHistoryWriteRec (outHist, -1, hiCard, err);
+  g_snprintf ( hiCard, 72, "RMCube  maxChan = %d",maxChan);
+  ObitHistoryWriteRec (outHist, -1, hiCard, err);
   g_snprintf ( hiCard, 72, "RMCube  doRMSyn = %s",TF[in->doRMSyn]);
   ObitHistoryWriteRec (outHist, -1, hiCard, err);
   if (in->doRMSyn) {
-    ObitHistoryWriteRec (outHist, -1, hiCard, err);
     g_snprintf ( hiCard, 72, "RMCube  maxRMSyn = %f",in->maxRMSyn);
     ObitHistoryWriteRec (outHist, -1, hiCard, err);
     g_snprintf ( hiCard, 72, "RMCube  minRMSyn = %f",in->minRMSyn);
@@ -1264,7 +1284,6 @@ void ObitRMFitInit  (gpointer inn)
   in->nterm      = 2;
   in->nlamb2     = 0;
   in->minQUSNR   = 3.0;
-  in->minFrac    = 0.5;
   in->QRMS       = NULL;
   in->URMS       = NULL;
   in->outDesc    = NULL;
@@ -1345,8 +1364,8 @@ void ObitRMFitClear (gpointer inn)
  */
 static void Fitter (ObitRMFit* in, ObitErr *err)
 {
-  olong i, loy, hiy, nyPerThread, nThreads;
-  gboolean OK;
+  olong i, loy, hiy, nyPerThread, nThreads, nTh;
+  gboolean OK, more=TRUE;
   NLRMFitArg **threadArgs;
   NLRMFitArg *args=NULL;
   ObitThreadFunc func=(ObitThreadFunc)ThreadNLRMFit;
@@ -1429,33 +1448,43 @@ static void Fitter (ObitRMFit* in, ObitErr *err)
   
   /* Divide up work */
   nyPerThread = in->ny/nThreads;
+  nyPerThread = 10;  /* avoid timeout */
   loy = 1;
   hiy = nyPerThread;
   hiy = MIN (hiy, in->ny);
+  more = TRUE;
+  nTh  = 1;
   
-  /* Set up thread arguments */
-  for (i=0; i<nThreads; i++) {
-    if (i==(nThreads-1)) hiy = in->ny;  /* Make sure do all */
-    args = (NLRMFitArg*)threadArgs[i];
-    args->first  = loy;
-    args->last   = hiy;
-    if (nThreads>1) args->ithread = i;
-    else args->ithread = -1;
-    /* Update which y */
-    loy += nyPerThread;
-    hiy += nyPerThread;
-    hiy = MIN (hiy, in->ny);
-  }
+  while (more) {
+    /* Set up thread arguments */
+    for (i=0; i<nThreads; i++) {
+      /* if (i==(nThreads-1)) hiy = in->ny;  Make sure do all */
+      args = (NLRMFitArg*)threadArgs[i];
+      args->first  = loy;
+      args->last   = hiy;
+      if (nThreads>1) args->ithread = i;
+      else args->ithread = -1;
+      /* Update which y rows */
+      nTh = i+1;  /* How many threads with work */
+      loy += nyPerThread;
+      loy = MIN (loy, in->ny);
+      hiy += nyPerThread;
+      hiy = MIN (hiy, in->ny);
+      if ((loy==hiy) && (loy>=in->ny)) {/* trap if going too far */
+	hiy = -1; loy = 1; break;}
+      }
   
-  /* Do operation possibly with threads */
-  if (in->doRMSyn) func = (ObitThreadFunc)ThreadRMSynFit;
-  else             func = (ObitThreadFunc)ThreadNLRMFit;
-  OK = ObitThreadIterator (in->thread, nThreads, func, (gpointer)threadArgs);
+    /* Do operation possibly with threads */
+    if (in->doRMSyn) func = (ObitThreadFunc)ThreadRMSynFit;
+    else             func = (ObitThreadFunc)ThreadNLRMFit;
+    OK = ObitThreadIterator (in->thread, nTh, func, (gpointer)threadArgs);
   
-  /* Check for problems */
-  if (!OK) {
-    Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
-  }
+    /* Check for problems */
+    if (!OK) {
+      Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+    }
+    more = (hiy<in->ny) && (hiy>0);  /* More passes */
+  } /* end outer (more) Loop */
 
   /* Shut down any threading */
   ObitThreadPoolFree (in->thread);
@@ -1584,6 +1613,9 @@ static gpointer ThreadNLRMFit (gpointer arg)
   if (err->error) return NULL;
   g_assert (ObitIsA(in, &myClassInfo));
 
+  /* Anything to do? */
+  if (hi<lo) goto doneFit;
+
   /* Set up frequency info */
   larg->refLamb2 = in->refLamb2;
   for (i=0; i<in->nlamb2; i++) {
@@ -1655,6 +1687,7 @@ static gpointer ThreadNLRMFit (gpointer arg)
   } /* end y loop */
 
   /* Indicate completion */
+ doneFit:
   if (larg->ithread>=0)
     ObitThreadPoolDone (in->thread, (gpointer)&larg->ithread);
 
@@ -1760,7 +1793,7 @@ static olong RMcoarse (NLRMFitArg *arg)
 {
   olong i, j, ntest, nvalid, numb;
   ofloat minDL, maxDL, dRM, tRM, bestRM=0.0, fblank = ObitMagicF();
-  ofloat bestQ, bestU, sumrQ, sumrU, penFact;
+  ofloat bestQ=0.0, bestU=0.0, sumrQ, sumrU, penFact;
   double aarg, varaarg;
   odouble amb, res, best, test;
  
@@ -2119,6 +2152,7 @@ static int RMFitFuncJac (const gsl_vector *x, void *params,
   return GSL_SUCCESS;
 } /*  end RMFitFuncJac */
 #endif /* HAVE_GSL */ 
+#include "ObitVecFunc.h"
 
 /* RM Synthesis max routines */
 /**
@@ -2134,18 +2168,29 @@ static gpointer ThreadRMSynFit (gpointer arg)
   olong hi            = larg->last;     /* Highest in y range */
   ObitErr *err        = larg->err;
 
-  olong ix, iy, indx, i, besti;
+  olong ix, iy, indx, i, ii, besti=0;
   ofloat fblank = ObitMagicF();
-  olong j, ntest, nvalid, numb;
-  ofloat minDL, maxDL, dRM, tRM, bestRM=0.0;
-  ofloat bestQ, bestU, sumrQ, sumrU, sumW=0.0, EVPA, amp;
+  olong j, ntest=1, nvalid, numb, nlamb2, iLast;
+  ofloat minDL, maxDL, dRM, tRM, sumQWt=0.0, sumUWt=0.0, bestRM=0.0;
+  ofloat bestQ=0.0, bestU=0.00, sumrQ, sumrU, sumW=0.0, EVPA, amp;
   double aarg, varaarg;
   odouble amb, res, best, test;
+#if HAVE_AVX512==1
+  CV16SF v1r, v2r, v1i, v2i, vt1, vt2, vqu, vwtq, vwtu;
+  CV8SF u1r, u1i, u2r, u2i, ut1, ut2, uq, uu, uwtq, uwtu;
+  olong k;
+#elif HAVE_AVX==1
+  CV8SF u1r, u1i, u2r, u2i, ut1, ut2, uq, uu, uwtq, uwt, uwtu;
+  olong k;
+#endif
  /*gchar *routine = "ThreadRMSynFit";*/
 
   /* error checks */
-  if (err->error) return NULL;
+  if (err->error) goto done;
   g_assert (ObitIsA(in, &myClassInfo));
+
+  /* Anything to do? */
+  if (hi<lo) goto done;
 
   /* Set up frequency info if in given */
   if (in) {
@@ -2154,15 +2199,25 @@ static gpointer ThreadRMSynFit (gpointer arg)
       larg->lamb2[i] = in->lamb2[i];
     }
   }
+  nlamb2 = in->nlamb2;
 
   /* Loop over pixels in Y */
   indx = lo*in->nx  -1;  /* Offset in pixel arrays */
   for (iy=lo; iy<hi; iy++) {
-    /* Loop over pixels in X */
+    /* DEBUG
+    if (larg->ithread==10) {
+      fprintf (stderr, "Row %d thread %d\n",iy,larg->ithread);
+    } */
+   /* Loop over pixels in X */
     for (ix=0; ix<in->nx; ix++) {
       indx ++;
+    /* DEBUG
+      if (larg->ithread==10) {
+      fprintf (stderr, "   Col %d of %d thread %d\n",ix,in->nx, larg->ithread);
+      } */
 
       /* Collect values;  */
+      sumQWt = 0.0; sumUWt = 0.0; 
       for (i=0; i<in->nlamb2; i++) {
 	larg->Qobs[i] = in->inQFArrays[i]->array[indx];
 	larg->Uobs[i] = in->inUFArrays[i]->array[indx];
@@ -2176,6 +2231,8 @@ static gpointer ThreadRMSynFit (gpointer arg)
 	  larg->Uvar[i] = (in->URMS[i]*in->URMS[i]);
 	  larg->Qweight[i] = 1.0 / in->QRMS[i];
 	  larg->Uweight[i] = 1.0 / in->URMS[i];
+	  sumQWt += larg->Qweight[i];
+	  sumUWt += larg->Qweight[i];
 	  /* End if datum valid */
 	} else { /* invalid pixel */
 	  larg->Qweight[i] = 0.0;
@@ -2245,18 +2302,98 @@ static gpointer ThreadRMSynFit (gpointer arg)
 	 fprintf (stderr,"amb = %f res= %f dRM=%f\n", amb, res, dRM); */
       /* end DEBUG */
       best = -1.0e20; besti = 0;
-      for (i=0; i<ntest; i++) {
-	tRM = in->minRMSyn + i * dRM;
+      for (ii=0; ii<ntest; ii++) {
+	tRM = in->minRMSyn + ii * dRM;
 	/* Loop over data samples - first phases to convert to ref Lamb2 */
-	for (j=0; j<numb; j++) larg->wrk1[j]= -2*tRM * larg->x[j];
+	for (j=0; j<nlamb2; j++) larg->wrk1[j]= -2*tRM * larg->x[j];
 	/* sines/cosine */
-	ObitSinCosVec (numb, larg->wrk1, larg->wrk3, larg->wrk2);
+	ObitSinCosVec (nlamb2, larg->wrk1, larg->wrk3, larg->wrk2);
 	/* Find best sum of weighted amplitudes^2 converted to ref lambda^2 */
-	test = 0.0; sumrQ = sumrU = 0.0;
-	for (j=0; j<numb; j++) {
-	  sumrQ += larg->w[j]*(larg->q[j]*larg->wrk2[j] - larg->u[j]*larg->wrk3[j]); 
-	  sumrU += larg->w[j]*(larg->q[j]*larg->wrk3[j] + larg->u[j]*larg->wrk2[j]);
+	test = 0.0; sumrQ = sumrU = 0.0; iLast=0;
+#if HAVE_AVX512==1  /* Vector AVX 512 */
+	/* Do blocks of 16 as vector */
+	for (i=0; i<nlamb2; i+=16) {
+	  if ((i+16)>=nlamb2) break;
+	  iLast = i+16;  /* How far did I get? */
+	  /* load to pairs of real/imag */
+	  v1r.v = _mm512_loadu_ps(&larg->Qobs[i]);
+	  v1i.v = _mm512_loadu_ps(&larg->Uobs[i]);
+	  v2r.v = _mm512_loadu_ps(&larg->wrk2[i]);
+	  v2i.v = _mm512_loadu_ps(&larg->wrk3[i]);
+	  vwtq.v =_mm512_loadu_ps(&larg->Qweight[i]);  /* Weight */
+	  vwtu.v =_mm512_loadu_ps(&larg->Uweight[i]);  /* Weight */
+	  /* Multiply */
+	  vt1.v  = _mm512_mul_ps (v1r.v, v2r.v);
+	  vt2.v  = _mm512_mul_ps (v1i.v, v2i.v);
+	  vqu.v  = _mm512_sub_ps (vt1.v, vt2.v);
+	  vqu.v  = _mm512_mul_ps (vqu.v, vwtq.v);   /* q */
+	  sumrQ += _mm512_reduce_add_ps(vqu.v);
+	  vt1.v  = _mm512_mul_ps (v1i.v, v2r.v);
+	  vt2.v  = _mm512_mul_ps (v1r.v, v2i.v);
+	  vqu.v  = _mm512_add_ps (vt1.v, vt2.v); 
+	  vqu.v  = _mm512_mul_ps (vqu.v, vwtu.v);   /* u */
+	  sumrU += _mm512_reduce_add_ps(vqu.v);
+	}
+	/* Do as much of the remainder as possible with AVX */
+	/* Do blocks of 8 as vector */
+	for (i=iLast; i<nlamb2; i+=8) {
+	  if ((i+8)>=nlamb2) break;
+	  iLast = i+8;  /* How far did I get? */
+	  /* load to pairs of real/imag */
+	  u1r.v = _mm256_loadu_ps(&larg->Qobs[i]);
+	  u1i.v = _mm256_loadu_ps(&larg->Uobs[i]);
+	  u2r.v = _mm256_loadu_ps(&larg->wrk2[i]);
+	  u2i.v = _mm256_loadu_ps(&larg->wrk3[i]);
+	  uwtq.v =_mm256_loadu_ps(&larg->Qweight[i]);  /* Weight */
+	  uwtu.v =_mm256_loadu_ps(&larg->Uweight[i]);  /* Weight */
+	  /* Multiply */
+	  ut1.v  = _mm256_mul_ps (u1r.v, u2r.v);
+	  ut2.v  = _mm256_mul_ps (u1i.v, u2i.v);
+	  uq.v   = _mm256_sub_ps (ut1.v, ut2.v);
+	  uq.v   = _mm256_mul_ps (uq.v, uwtq.v);   /* q */
+	  ut1.v  = _mm256_mul_ps (u1i.v, u2r.v);
+	  ut2.v  = _mm256_mul_ps (u1r.v, u2i.v);
+	  uu.v   = _mm256_add_ps (ut1.v, ut2.v); 
+	  uu.v   = _mm256_mul_ps (uu.v, uwtu.v);   /* u */
+	  /* No reduction operator */
+	  for (k=0; k<8; k++) {
+	    sumrQ +=uq.f[k]; sumrU +=uu.f[k];
+	  }
+	}
+#elif HAVE_AVX==1  /* Vector AVX */
+	/* Do blocks of 8 as vector */
+	for (i=iLast; i<nlamb2; i+=8) {
+	  if ((i+8)>=nlamb2) break;
+	  iLast = i+8;  /* How far did I get? */
+	  /* load to pairs of real/imag */
+	  u1r.v = _mm256_loadu_ps(&larg->Qobs[i]);
+	  u1i.v = _mm256_loadu_ps(&larg->Uobs[i]);
+	  u2r.v = _mm256_loadu_ps(&larg->wrk2[i]);
+	  u2i.v = _mm256_loadu_ps(&larg->wrk3[i]);
+	  uwtq.v =_mm256_loadu_ps(&larg->Qweight[i]);  /* Weight */
+	  uwtu.v =_mm256_loadu_ps(&larg->Uweight[i]);  /* Weight */
+	  /* Multiply */
+	  ut1.v  = _mm256_mul_ps (u1r.v, u2r.v);
+	  ut2.v  = _mm256_mul_ps (u1i.v, u2i.v);
+	  uq.v   = _mm256_sub_ps (ut1.v, ut2.v);
+	  uq.v   = _mm256_mul_ps (uq.v, uwtq.v);   /* q */
+	  ut1.v  = _mm256_mul_ps (u1i.v, u2r.v);
+	  ut2.v  = _mm256_mul_ps (u1r.v, u2i.v);
+	  uu.v   = _mm256_add_ps (ut1.v, ut2.v); 
+	  uu.v   = _mm256_mul_ps (uu.v, uwtu.v);   /* u */
+	  /* No reduction operator */
+	  for (k=0; k<8; k++) {
+	    sumrQ +=uq.f[k]; sumrU +=uu.f[k];
+	  }
+	}
+#endif /* Scalar */
+	for (i=iLast; i<nlamb2; i++) {
+	  if (larg->Qweight[i]>0.0) {
+	    sumrQ += larg->Qweight[i]*(larg->Qobs[i]*larg->wrk2[i] - larg->Uobs[i]*larg->wrk3[i]); 
+	    sumrU += larg->Uweight[i]*(larg->Qobs[i]*larg->wrk3[i] + larg->Uobs[i]*larg->wrk2[i]);
+	  }
 	} 
+
 	test = sumrQ*sumrQ + sumrU*sumrU;
 	/* DEBUG 
 	   fprintf (stderr," i=%d test=%g  tRM %f sum Q=%f sum U=%f pen %f\n",
@@ -2272,7 +2409,8 @@ static gpointer ThreadRMSynFit (gpointer arg)
       }
       /* Get chi sq for fit */
       EVPA = 0.5 * atan2(bestU, bestQ);
-      amp = sqrtf(bestU*bestU + bestQ*bestQ)/sumW;
+      bestQ /= sumQWt; bestU /= sumUWt; 
+      amp = sqrtf(bestU*bestU + bestQ*bestQ);
       tRM = bestRM;
       /* Loop over data samples - first phases to convert to ref Lamb2 */
       for (j=0; j<larg->nlamb2; j++) 
@@ -2295,9 +2433,8 @@ static gpointer ThreadRMSynFit (gpointer arg)
       larg->coef[2] = amp;
       larg->coef[3] = (sumrQ+sumrU);
       /* Edit */
-      if ((larg->coef[3]>in->maxChi2) || (besti<=0) || (besti>=(ntest-1))) {
-	larg->coef[0] = larg->coef[1] = fblank;
-      }
+      if ((larg->coef[3]>in->maxChi2) || (besti<=0) || (besti>=(ntest-1)))
+	{ larg->coef[0] = larg->coef[1] = fblank;}
   
       /* DEBUG
       if ((ix==669) && (iy==449)) { 
@@ -2313,6 +2450,7 @@ static gpointer ThreadRMSynFit (gpointer arg)
   } /* end y loop */
 
   /* Indicate completion */
+ done:
   if (larg->ithread>=0)
     ObitThreadPoolDone (in->thread, (gpointer)&larg->ithread);
 

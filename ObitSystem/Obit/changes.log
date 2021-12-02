@@ -5010,3 +5010,41 @@ Summary: ObitCArray.h
 Obit/include/ObitCArray.h Obit/src/ObitCArray.c
     Add multithreading/AVX support for Add, Sub, mult routines
 22 Oct 25 svn 635
+
+Summary: Fix Imager problems, RMSyn Bug fixes, BDFIn pointing table screwup
+Obit/TDF/RMSyn.TDF  Obit/tasks/RMSyn.c
+    New task to do Faraday synthesis - fix svn screwup
+Obit/src/ObitCArray.c 
+    Bug Fix AVX512
+Obit/src/ObitRMFit.c
+    Cube allow range of channels, vectorize inner loop.
+Obit/python/RMFit.py
+    Cube: document channel range
+Obit/src/ObitPointing.c
+    ObitPointingGetRow: Minimum time interval 0.15 sec (was getting 2 nsec
+Obit/include/ObitImageDef.h Obit/include/ObitImageMFDef.h 
+Obit/include/ObitImageWBDef.h Obit/src/ObitDConCleanVis.c
+   Move "fresh" member from ImageMFDef.h and ImageWBDef.h to ImageDef.h
+   This was killing Imager.
+Obit/src/ObitImageMosaic.c
+   Flatten: don't trim image w/ BLC,TRC, the descriptor is getting wrong dim.
+Obit/src/ObitImageDesc.c
+   Overlap: Make sure damnErr deleted.
+Obit/src/ObitDConClean.c 
+    Use image buffer without referencing
+    ImageStats: Don't free image buffer
+Obit/src/ObitImage.c
+   Open: Make sure image buffer OK
+Obit/src/ObitDConCleanPxList.c 
+   Update: don't relink inFArrays[iplane] to pixarray[ifld] if the same.
+   Update: don't relink in->BeamPatch to BeamPatch if the same.
+ObitTask/Imager.c 
+    doChanPoln: NULL FullField on mosaic when freeing.
+    digestInputs: force DFT if doGPU
+    digestInputs: force xCells and yCells specified if restarting (RChan>1)
+Obit/src/ObitDConCleanVisLine.c
+    KillPxArray: Kill (unused) parent pixarray as well as line version.
+    NewPxarray: return parent pixarray
+Obit/src/ObitGPUSkyModel.c
+    DFTInit: Get image info from skyModel.
+2 Dec 2021 svn 636

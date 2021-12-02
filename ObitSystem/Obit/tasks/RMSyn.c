@@ -604,7 +604,7 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
 	     ObitImage* outImage,  ObitErr *err)
 {
   olong i, iplane, nOut, iRM, plane[5]={1,1,1,1,1}, noffset=0;
-  olong naxis[2];
+  olong ngood, naxis[2];
   ObitIOSize IOBy;
   ObitInfoType type;
   ObitIOCode retCode;
@@ -613,9 +613,9 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
   ObitFArray **inQFArrays=NULL, **inUFArrays=NULL, *workAmp=NULL;
   ObitCArray *workPol=NULL, *workRot=NULL; 
   ObitImageDesc *outDesc=NULL;
-  odouble freq, refLamb2;
+  odouble freq, refLamb2, refFreq;
   olong nlamb2, nx, ny;
-  ofloat RM, cmplx[2], *work=NULL, minQ, minU;
+  ofloat RM, cmplx[2], *work=NULL, minQ, minU, norm, specCor, alpha=0.0;
   gchar *today=NULL, *RMSYN = "RMSYN   ", keyword[9];
   gboolean doDecon=FALSE;
   gchar *routine = "doRMSyn";
@@ -649,6 +649,9 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
   /* Doing deconvolution? no need to write output here */
   ObitInfoListGetTest(myInput, "doDecon", &type, dim, &doDecon);
 
+  /* spectral index correction */
+  ObitInfoListGetTest(myInput, "Alpha",   &type, dim, &alpha);
+
   /* Open input images to get info */
   IOBy = OBIT_IO_byPlane;
   dim[0] = 1;
@@ -670,6 +673,7 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
 		      "%s: Input images incompatable", routine);
 
   refLamb2= 1.0e-6;  /* Reference lambda^2 - avoid zero divide */
+  refFreq = inQImage->myDesc->crval[inQImage->myDesc->jlocf]; /* reference frequency */
   
   /* What plane does spectral data start on */
   if (!strncmp(inQImage->myDesc->ctype[inQImage->myDesc->jlocf], "SPECLNMF", 8)) {
@@ -774,12 +778,19 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
     ObitFArrayDeblank(inQFArrays[iplane], 0.0);
     ObitFArrayDeblank(inUFArrays[iplane], 0.0);
 
+    /* spectral correction (alpha!=0) */
+    specCor = (ofloat)exp(-alpha*log(freq/refFreq));
+    if (alpha!=0.0) {
+      ObitFArraySMul(inQFArrays[iplane], specCor);
+      ObitFArraySMul(inUFArrays[iplane], specCor);
+    }
+
     /* Plane RMSes */
     QRMS[iplane] = ObitFArrayRMS(inQFArrays[iplane]);
     URMS[iplane] = ObitFArrayRMS(inUFArrays[iplane]);
   } /* end loop reading planes */
 
-  /* Statistics for filtering only bedian within 2 sigma */
+  /* Statistics for filtering only median within 2 sigma */
   work    = g_malloc0(nlamb2*sizeof(ofloat));  /* work array */
   for (i=0; i<nlamb2; i++) work[i] = QRMS[i];
   qMedian = medianValue(work, 1, nlamb2);
@@ -810,6 +821,7 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
     cmplx[0] = 0.0; cmplx[1] = 0.0;
     ObitCArrayFill(RMPlanes[iRM-1], cmplx);
     /* loop over input planes */
+    ngood  = 0;
     for (i=0; i<nlamb2; i++) {
       /* Want this one ? */
       if ((QRMS[i]>qMedian+2*qSigma) || (QRMS[i]<minQ) ||
@@ -820,7 +832,11 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
       ObitCArrayMul(workPol, workRot, workPol);
       /* Accumulate */
       ObitCArrayAdd(RMPlanes[iRM-1], workPol, RMPlanes[iRM-1]);
+      ngood++;  /* Count values used */
     } /* Loop over planes */
+    /* Normalize */
+    norm = 1.0 / (float)ngood;
+    ObitCArraySMul(RMPlanes[iRM-1], norm);
     if (!doDecon) {
       /* Get ampl - write to output if needed */
       ObitCArrayAmp(RMPlanes[iRM-1], workAmp);
@@ -941,8 +957,9 @@ void RMSynHistory (ObitInfoList* myInput, ObitImage* inImage,
   gchar        hicard[81];
   gchar        *hiEntries[] = {
     "DataType", "inQFile",  "inQDisk", "inQName", "inQClass", "inQSeq",
-    "inUFile",  "inUDisk", "inUName", "inUClass", "inUSeq", "BeamSig",
+    "inUFile",  "inUDisk", "inUName", "inUClass", "inUSeq", "Alpha",
     "BLC",  "TRC", "minRMSyn", "maxRMSyn", "delRMSyn", "nThreads",
+    "niter", "minFlux", "BeamSig",
     NULL};
   gchar *routine = "RMSynHistory";
 
@@ -1013,7 +1030,7 @@ ofloat FitGauss(ObitFArray *Beam)
     tsigma = MAX(0.0, (sigma-2)) + k*0.033;  /* test value */
     for (i=iCen+1; i<iCen+j; i++) {
       off = (iCen-i);
-      val = exp (-(off*off)/(tsigma*tsigma));
+      val = exp (-(off*off)/(2*tsigma*tsigma));
       sum += (val-Beam->array[i]) * (val-Beam->array[i]);
     }
     if (sum<minSum) {minSum = sum; newSigma = tsigma;}
@@ -1114,7 +1131,7 @@ void MakeBeam(ObitInfoList* myInput, ObitImage* inImage, ObitErr* err)
   if (Restor==NULL) Restor = ObitCArrayCreate (NULL, 1, naxis);
   for (i=0; i<nOutChan*2; i++) {
     off = nOutChan-i;
-    amp2 = exp (-(off*off)/(sigma*sigma));
+    amp2 = exp (-(off*off)/(2*sigma*sigma));
     amp = sqrtf(Beam->array[2*i]*Beam->array[2*i] + Beam->array[2*i+1]*Beam->array[2*i+1]);
     Restor->array[2*i]   = amp2*Beam->array[2*i]/amp;
     Restor->array[2*i+1] = amp2*Beam->array[2*i+1]/amp;

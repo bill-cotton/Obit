@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -43,3 +43,6 @@ ObitImageSel* mySel;
 Obit *myBeam;
 /** Gridding object for making image and beam */
 ObitUVGrid *myGrid;
+/** If TRUE, image has been formed but work 
+    files/Decomposition not done */
+gboolean fresh;
