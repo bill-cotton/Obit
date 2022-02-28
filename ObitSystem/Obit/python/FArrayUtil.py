@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2005-2019
+#  Copyright (C) 2005-2022
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -79,6 +79,31 @@ def PFit1DGauss(inFA,err):
     retVal = Obit.FArrayUtilFit1DGauss(inFA.me, FWHM, center, peak, err.me)
     return retVal
     # end PFit1DGauss
+
+def PFit1DGauss2(inFA,ngauss,err):
+    """
+    Fit multiple 1-D Gaussians plus a linear baseline in FArray
+    ngauss Number of Gaussians to fit (max 10).
+    
+    returns  list:
+    [0]= (list of) Full width Half Max (pixels) of fitted Gaussian
+    [1]= (list of) peak value in fitted Gaussian
+    [2]= (list of) x pixel (0-rel) coordinates of peak in pixels
+    [3]= 0th order baseline term
+    [4]= 1st order baseline term
+    [5]= RMS residual
+    * inFA    = Array to be fitted
+    * err     = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not FArray.PIsA(inFA):
+        raise TypeError("inFA MUST be a Python Obit FArray")
+    FWHM = 0.0; cen = 0.0; peak = 0.0; center = 0.0; # Not really used
+    # results in retVal
+    retVal = Obit.FArrayUtilFit1DGauss2(inFA.me, ngauss, FWHM, center, peak, err.me)
+    return retVal
+    # end PFit1DGauss2
 
 def PConvolve(inFA1, inFA2, err):
     """

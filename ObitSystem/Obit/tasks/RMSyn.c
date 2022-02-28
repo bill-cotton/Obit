@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Rotation measure synthesis */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2021                                               */
+/*;  Copyright (C) 2021-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -62,16 +62,19 @@ ObitInfoList* defaultInputs(ObitErr *err);
 ObitInfoList* defaultOutputs(ObitErr *err);
 /* Get input image */
 ObitImage* getInputImage (ObitInfoList *myInput, gchar Stok, ObitErr *err);
-/* Define output image */
-ObitImage* getOutputImage (ObitInfoList *myInput, ObitErr *err);
+/* Define output Amp image */
+ObitImage* getOutputAmpImage (ObitInfoList *myInput, ObitErr *err);
+/* Define output Phase image */
+ObitImage* getOutputPhzImage (ObitInfoList *myInput, ObitErr *err);
 /* Determine Faraday function */
 void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
-	      ObitImage* outImage, ObitErr *err);
+	      ObitImage* outAImage, ObitImage* outPImage, ObitErr *err);
 /* Write history */
 void RMSynHistory (ObitInfoList* myInput, ObitImage* inQImage, 
 		   ObitImage* outImage, ObitErr* err);
 /* Deconvolve cube */
-void Decon(ObitInfoList *myInput, ObitImage* outImage, ObitErr *err);
+void Decon(ObitInfoList *myInput, ObitImage* outAImage, 
+	   ObitImage* outPImage, ObitErr *err);
 /* Make Beam */
 void MakeBeam (ObitInfoList *myInput, ObitImage* inQImage, ObitErr *err);
 /* Get pixel RM Function */
@@ -97,12 +100,15 @@ ofloat maxRMSyn, minRMSyn, delRMSyn; /* RM selection */
 olong  nInChan=0;              /* Number of input channels */
 ofloat *QRMS=NULL, *URMS=NULL; /* Q/U Channel rmses (nInChan)  */
 ofloat qMedian, uMedian, qSigma, uSigma;  /* Statistics */
+ofloat *specCor=NULL;          /* chennel spectral correction */
 odouble* lamb2=NULL;           /* Lambda^2 per channel  */
+double   refLamb2;             /* reference Lambda^2 */
 olong  nOutChan=0;             /* Number of output channels (nOutChan) */
 ObitCArray **RMPlanes=NULL;    /* Planes in RM Image */
 ObitCArray *Beam=NULL;         /* RM beam */
 ObitCArray *Restor=NULL;       /* restoring function */
-
+ofloat     gain=1.0;           /* Loop gain */
+gboolean   doRestor=TRUE;      /* Restore? */
 /*---------------Private structures----------------*/
 /* Threaded function argument -  mostly uses globals */
 typedef struct {
@@ -138,10 +144,10 @@ int main ( int argc, char **argv )
 {
   oint ierr = 0;
   ObitSystem   *mySystem= NULL;
-  ObitImage    *inQImage=NULL, *inUImage=NULL, *outImage= NULL;
+  ObitImage    *inQImage=NULL, *inUImage=NULL, *outAImage= NULL, *outPImage= NULL;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  gboolean doDecon=FALSE;
+  gboolean     doDecon=FALSE, doPhase=FALSE;
   ObitErr      *err= NULL;
 
    /* Startup - parse command line */
@@ -161,16 +167,21 @@ int main ( int argc, char **argv )
   if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get parameters */
-  ObitInfoListGetTest(myInput, "doDecon", &type, dim, &doDecon);
+  ObitInfoListGetTest(myInput, "doDecon",  &type, dim, &doDecon);
+  ObitInfoListGetTest(myInput, "doRestor", &type, dim, &doRestor);
+  ObitInfoListGetTest(myInput, "doPhase",  &type, dim, &doPhase);
+  ObitInfoListGetTest(myInput, "gain",     &type, dim, &gain);
 
   /* Get input images */
   inQImage = getInputImage (myInput, 'Q', err);
   inUImage = getInputImage (myInput, 'U', err);
-  outImage = getOutputImage (myInput, err);
+  outAImage = getOutputAmpImage (myInput, err);
+  if (doPhase)
+    outPImage = getOutputPhzImage (myInput, err);
   if (err->error) {ierr = 1;  ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Evaluate Faraday function */
-  doRMSyn (myInput, inQImage, inUImage, outImage, err);
+  doRMSyn (myInput, inQImage, inUImage, outAImage, outPImage, err);
   if (err->error) {ierr = 1;  ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Deconvolving ? */
@@ -180,19 +191,22 @@ int main ( int argc, char **argv )
     if (err->error) {ierr = 1;  ObitErrLog(err); if (ierr!=0) goto exit;}
     
     /* Get RM function, deconvolve, restore */
-    Decon (myInput, outImage, err);
+    Decon (myInput, outAImage, outPImage, err);
     if (err->error) {ierr = 1;  ObitErrLog(err); if (ierr!=0) goto exit;}
   } /* end deconvolving */
 
    /* Do history */
-  RMSynHistory ( myInput, inQImage, outImage, err);
+  RMSynHistory ( myInput, inQImage, outAImage, err);
+  if (doPhase)
+    RMSynHistory ( myInput, inQImage, outPImage, err);
   if (err->error) {ierr = 1;  ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* cleanup */
   myInput    = ObitInfoListUnref(myInput);    /* delete input list */
   inQImage   = ObitUnref(inQImage);
   inUImage   = ObitUnref(inUImage);
-  outImage   = ObitUnref(outImage);
+  outAImage  = ObitUnref(outAImage);
+  outPImage  = ObitUnref(outPImage);
  
   /* Shutdown  */
  exit:
@@ -442,10 +456,14 @@ ObitInfoList* defaultInputs(ObitErr *err)
   ObitInfoListPut (out, "DataType", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
-  /* input FITS file name */
-  strTemp = "Image.fits";
+  /* output FITS file names */
+  strTemp = "RMAmpImage.fits";
   dim[0] = strlen (strTemp); dim[1] = 1;
-  ObitInfoListPut (out, "inFile", OBIT_string, dim, strTemp, err);
+  ObitInfoListPut (out, "outFile", OBIT_string, dim, strTemp, err);
+  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+  strTemp = "RMPhzImage.fits";
+  dim[0] = strlen (strTemp); dim[1] = 1;
+  ObitInfoListPut (out, "out2File", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* input AIPS file name */
@@ -455,9 +473,12 @@ ObitInfoList* defaultInputs(ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* input AIPS file class */
-  strTemp = "Class ";
+  strTemp = "RMAmp";
   dim[0] = 6; dim[1] = 1;
   ObitInfoListPut (out, "inClass", OBIT_string, dim, strTemp, err);
+  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+  strTemp = "RMPhz";
+  ObitInfoListPut (out, "in2Class", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* AIPS sequence */
@@ -561,7 +582,7 @@ ObitImage* getInputImage (ObitInfoList *myInput, gchar Stok, ObitErr *err)
 } /* end getInputImage */
 
 /*----------------------------------------------------------------------- */
-/*  Define output image                                                   */
+/*  Define output amplitude image                                         */
 /*   Input:                                                               */
 /*      myInput   Input parameters on InfoList                            */
 /*   Output:                                                              */
@@ -569,12 +590,12 @@ ObitImage* getInputImage (ObitInfoList *myInput, gchar Stok, ObitErr *err)
 /*   Return                                                               */
 /*       ObitImage for output image                                       */
 /*----------------------------------------------------------------------- */
-ObitImage* getOutputImage (ObitInfoList *myInput, ObitErr *err)
+ObitImage* getOutputAmpImage (ObitInfoList *myInput, ObitErr *err)
 {
   ObitImage    *outImage = NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean F=FALSE;
-  gchar *routine = "getOutputImage";
+  gchar *routine = "getOutputAmpImage";
 
   /* error checks */
   g_assert(ObitErrIsA(err));
@@ -588,6 +609,36 @@ ObitImage* getOutputImage (ObitInfoList *myInput, ObitErr *err)
 
   if (err->error) Obit_traceback_val (err, routine, "myInput", outImage);
   return outImage;
+} /* end getOutputAmpImage */
+
+/*----------------------------------------------------------------------- */
+/*  Define output phase image                                             */
+/*   Input:                                                               */
+/*      myInput   Input parameters on InfoList                            */
+/*   Output:                                                              */
+/*      err    Obit Error stack                                           */
+/*   Return                                                               */
+/*       ObitImage for output image                                       */
+/*----------------------------------------------------------------------- */
+ObitImage* getOutputPhzImage (ObitInfoList *myInput, ObitErr *err)
+{
+  ObitImage    *outImage = NULL;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gboolean F=FALSE;
+  gchar *routine = "getOutputPhzImage";
+
+  /* error checks */
+  g_assert(ObitErrIsA(err));
+  if (err->error) return outImage;
+  g_assert (ObitInfoListIsA(myInput));
+
+  /* May not exist */
+  ObitInfoListAlwaysPut(myInput, "out2Exist", OBIT_bool, dim, &F);
+
+  outImage = ObitImageFromFileInfo ("out2", myInput, err);
+
+  if (err->error) Obit_traceback_val (err, routine, "myInput", outImage);
+  return outImage;
 } /* end getOutputImage */
 
 /*----------------------------------------------------------------------- */
@@ -597,11 +648,12 @@ ObitImage* getOutputImage (ObitInfoList *myInput, ObitErr *err)
 /*      inQImage  Input Q Image                                           */
 /*      inUImage  Input U Image                                           */
 /*   Output:                                                              */
-/*      outImage  Output cube                                             */
-/*      err       Obit Error stack                                        */
+/*      outAImage  Output amp cube                                        */
+/*      outPImage  Output phase cube if nonNULL                           */
+/*      err        Obit Error stack                                       */
 /*----------------------------------------------------------------------- */
 void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage, 
-	     ObitImage* outImage,  ObitErr *err)
+	      ObitImage* outAImage,   ObitImage* outPImage,  ObitErr *err)
 {
   olong i, iplane, nOut, iRM, plane[5]={1,1,1,1,1}, noffset=0;
   olong ngood, naxis[2];
@@ -613,17 +665,20 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
   ObitFArray **inQFArrays=NULL, **inUFArrays=NULL, *workAmp=NULL;
   ObitCArray *workPol=NULL, *workRot=NULL; 
   ObitImageDesc *outDesc=NULL;
-  odouble freq, refLamb2, refFreq;
+  odouble freq, refFreq;
   olong nlamb2, nx, ny;
-  ofloat RM, cmplx[2], *work=NULL, minQ, minU, norm, specCor, alpha=0.0;
+  ofloat RM, cmplx[2], *work=NULL, minQ, minU, norm, alpha=0.0, sumWt;
   gchar *today=NULL, *RMSYN = "RMSYN   ", keyword[9];
   gboolean doDecon=FALSE;
   gchar *routine = "doRMSyn";
-
+  /* DEBUG 
+  olong pos[2] = {100,100};
+  ofloat *cptr;*/
   if (err->error) return; /* previous error? */
   g_assert(ObitImageIsA(inQImage));
   g_assert(ObitImageIsA(inUImage));
-  g_assert(ObitImageIsA(outImage));
+  g_assert(ObitImageIsA(outAImage));
+  if (outPImage) g_assert(ObitImageIsA(outPImage));
 
   /*  Max RM for RM syn function */
   InfoReal.flt = 0.0; type = OBIT_float;
@@ -672,8 +727,9 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
 		       (inQImage->myDesc->inaxes[2]==inUImage->myDesc->inaxes[2])), err,
 		      "%s: Input images incompatable", routine);
 
-  refLamb2= 1.0e-6;  /* Reference lambda^2 - avoid zero divide */
   refFreq = inQImage->myDesc->crval[inQImage->myDesc->jlocf]; /* reference frequency */
+  refLamb2= (VELIGHT/refFreq)*(VELIGHT/refFreq);  /* Reference lambda^2  */
+  refLamb2= 1.0e-6;  /* Reference lambda^2 - no zero divide */
   
   /* What plane does spectral data start on */
   if (!strncmp(inQImage->myDesc->ctype[inQImage->myDesc->jlocf], "SPECLNMF", 8)) {
@@ -711,44 +767,87 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
   for (i=0; i<nlamb2; i++) inUFArrays[i] = ObitFArrayCreate (NULL, 2, naxis);
   for (i=0; i<nOut; i++)   RMPlanes[i]   = ObitCArrayCreate (NULL, 2, naxis);
 
-  /* Output Image descriptor */
-  outImage->myDesc = ObitImageDescCopy (inQImage->myDesc, outImage->myDesc, err);
+  /* Output Amplitude Image descriptor */
+  outAImage->myDesc = ObitImageDescCopy (inQImage->myDesc, outAImage->myDesc, err);
   if (err->error) Obit_traceback_msg (err, routine, inQImage->name);
 
   /* Change third axis to type "RMSYN  " and set RM range */
-  outImage->myDesc->inaxes[outImage->myDesc->jlocf] =  nOut;
-  outImage->myDesc->crval[outImage->myDesc->jlocf]  =  VELIGHT/sqrt(refLamb2);
-  outImage->myDesc->crpix[outImage->myDesc->jlocf]  =  1.0;
-  outImage->myDesc->cdelt[outImage->myDesc->jlocf]  =  delRMSyn;
-  outImage->myDesc->crval[outImage->myDesc->jlocf]  =  minRMSyn;
-  strncpy (outImage->myDesc->ctype[outImage->myDesc->jlocf], RMSYN,  IMLEN_KEYWORD);
-  outImage->myDesc->bitpix = -32;  /* Float it */
+  outAImage->myDesc->inaxes[outAImage->myDesc->jlocf] =  nOut;
+  outAImage->myDesc->crval[outAImage->myDesc->jlocf]  =  VELIGHT/sqrt(refLamb2);
+  outAImage->myDesc->crpix[outAImage->myDesc->jlocf]  =  1.0;
+  outAImage->myDesc->cdelt[outAImage->myDesc->jlocf]  =  delRMSyn;
+  outAImage->myDesc->crval[outAImage->myDesc->jlocf]  =  minRMSyn;
+  strncpy (outAImage->myDesc->ctype[outAImage->myDesc->jlocf], RMSYN,  IMLEN_KEYWORD);
+  outAImage->myDesc->bitpix = -32;  /* Float it */
 
   /* Creation date today */
   today = ObitToday();
-  strncpy (outImage->myDesc->date, today, IMLEN_VALUE);
+  strncpy (outAImage->myDesc->date, today, IMLEN_VALUE);
   if (today) g_free(today);
 
   /* save descriptor */
-  outDesc = ObitImageDescCopy (outImage->myDesc, outDesc, err);
+  outDesc = ObitImageDescCopy (outAImage->myDesc, outDesc, err);
   if (err->error) Obit_traceback_msg (err, routine, inQImage->name);
 
   /* Open output */
   IOBy = OBIT_IO_byPlane;   dim[0] = 1;
-  ObitInfoListAlwaysPut (outImage->info, "IOBy", OBIT_long, dim, &IOBy);
-  outImage->extBuffer = TRUE;
-  retCode = ObitImageOpen (outImage, OBIT_IO_WriteOnly, err);
+  ObitInfoListAlwaysPut (outAImage->info, "IOBy", OBIT_long, dim, &IOBy);
+  outAImage->extBuffer = TRUE;
+  retCode = ObitImageOpen (outAImage, OBIT_IO_WriteOnly, err);
 
   /* Update descriptor */
-  outImage->myDesc = ObitImageDescCopy (outDesc, outImage->myDesc, err);
+  outAImage->myDesc = ObitImageDescCopy (outDesc, outAImage->myDesc, err);
   if (err->error) Obit_traceback_msg (err, routine, inQImage->name);
 
   /* Close to update*/
-  retCode = ObitImageClose (outImage, err);
+  retCode = ObitImageClose (outAImage, err);
   if ((retCode!=OBIT_IO_OK) || (err->error)) {
-    Obit_traceback_msg (err, routine, outImage->name);
+    Obit_traceback_msg (err, routine, outAImage->name);
     goto cleanup;
   }
+
+  /* Output Phase Image descriptor if requested */
+  if (outPImage) {
+    outPImage->myDesc = ObitImageDescCopy (inQImage->myDesc, outPImage->myDesc, err);
+    if (err->error) Obit_traceback_msg (err, routine, inQImage->name);
+    
+    /* Change third axis to type "RMSYN  " and set RM range */
+    outPImage->myDesc->inaxes[outPImage->myDesc->jlocf] =  nOut;
+    outPImage->myDesc->crval[outPImage->myDesc->jlocf]  =  VELIGHT/sqrt(refLamb2);
+    outPImage->myDesc->crpix[outPImage->myDesc->jlocf]  =  1.0;
+    outPImage->myDesc->cdelt[outPImage->myDesc->jlocf]  =  delRMSyn;
+    outPImage->myDesc->crval[outPImage->myDesc->jlocf]  =  minRMSyn;
+    strncpy (outPImage->myDesc->ctype[outPImage->myDesc->jlocf], RMSYN,  IMLEN_KEYWORD);
+    outPImage->myDesc->bitpix = -32;  /* Float it */
+    
+    /* Creation date today */
+    today = ObitToday();
+    strncpy (outPImage->myDesc->date, today, IMLEN_VALUE);
+    if (today) g_free(today);
+    
+    /* save descriptor */
+    outDesc = ObitImageDescCopy (outPImage->myDesc, outDesc, err);
+    if (err->error) Obit_traceback_msg (err, routine, inQImage->name);
+    
+    /* Open output */
+    IOBy = OBIT_IO_byPlane;   dim[0] = 1;
+    ObitInfoListAlwaysPut (outPImage->info, "IOBy", OBIT_long, dim, &IOBy);
+    outPImage->extBuffer = TRUE;
+    retCode = ObitImageOpen (outPImage, OBIT_IO_WriteOnly, err);
+    
+    /* Update descriptor */
+    outPImage->myDesc = ObitImageDescCopy (outDesc, outPImage->myDesc, err);
+    if (err->error) Obit_traceback_msg (err, routine, inQImage->name);
+    
+    /* Close to update*/
+    retCode = ObitImageClose (outPImage, err);
+    if ((retCode!=OBIT_IO_OK) || (err->error)) {
+      Obit_traceback_msg (err, routine, outPImage->name);
+    goto cleanup;
+    }
+  } /* end initialize output phase image */
+
+  specCor = g_malloc0(nlamb2*sizeof(ofloat));  /* Channel Weights */
   /* Loop reading planes */
   for (iplane=0; iplane<nlamb2; iplane++) {
     /* Lambda^2 Check for MFImage outputs */
@@ -779,10 +878,11 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
     ObitFArrayDeblank(inUFArrays[iplane], 0.0);
 
     /* spectral correction (alpha!=0) */
-    specCor = (ofloat)exp(-alpha*log(freq/refFreq));
+    specCor[iplane] = (ofloat)exp(-alpha*log(freq/refFreq));
     if (alpha!=0.0) {
-      ObitFArraySMul(inQFArrays[iplane], specCor);
-      ObitFArraySMul(inUFArrays[iplane], specCor);
+      ObitFArraySMul(inQFArrays[iplane], specCor[iplane]);
+      ObitFArraySMul(inUFArrays[iplane], specCor[iplane]);
+      /*fprintf (stderr, "%4d Alpha=%6.2f %7.4f\n",i, alpha, specCor[iplane]);  DEBUG */
     }
 
     /* Plane RMSes */
@@ -821,29 +921,47 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
     cmplx[0] = 0.0; cmplx[1] = 0.0;
     ObitCArrayFill(RMPlanes[iRM-1], cmplx);
     /* loop over input planes */
-    ngood  = 0;
+    ngood  = 0; sumWt = 0.0;
     for (i=0; i<nlamb2; i++) {
       /* Want this one ? */
       if ((QRMS[i]>qMedian+2*qSigma) || (QRMS[i]<minQ) ||
 	  (URMS[i]>uMedian+2*uSigma) || (URMS[i]<minU)) continue;
-      sincosf((ofloat)(-2.0*RM*lamb2[i]), &cmplx[1], &cmplx[0]); /* sin/cos factors */
+      sincosf((ofloat)(-2.0*RM*(lamb2[i]-refLamb2)), &cmplx[1], &cmplx[0]); /* sin/cos factors */
       ObitCArrayFill(workRot, cmplx);
       ObitCArrayComplex(inQFArrays[i], inUFArrays[i], workPol);
+      /* DEBUG 
+      if (RM==-30.) {
+	cptr = ObitFArrayIndex(inQFArrays[i],pos);
+	cptr[0] /= 0.35; cptr[1] /= 0.35;
+	fprintf (stderr,"%3d %8.4lf %8.4f d %8.4f %8.4f p %8.4f %8.4f\n",
+		 i,-2.0*RM*lamb2[i], specCor[i], cptr[0], cptr[1], cmplx[0], cmplx[1]);
+      }*/
       ObitCArrayMul(workPol, workRot, workPol);
       /* Accumulate */
       ObitCArrayAdd(RMPlanes[iRM-1], workPol, RMPlanes[iRM-1]);
       ngood++;  /* Count values used */
-    } /* Loop over planes */
+      sumWt += specCor[i];
+     } /* Loop over planes */
     /* Normalize */
-    norm = 1.0 / (float)ngood;
+    norm = 1.0 / sumWt;
     ObitCArraySMul(RMPlanes[iRM-1], norm);
+    /* DEBUG 
+    cptr = ObitCArrayIndex(RMPlanes[iRM-1],pos);
+    cptr[0] /= 0.35; cptr[1] /= 0.35;
+    fprintf (stderr,"%5d %6.2f %10.6f %10.6f %10.6f %8.2f %10.6f\n",iRM,RM,cptr[0],cptr[1],
+	     sqrt(cptr[0]*cptr[0]+cptr[1]*cptr[1]), 57.296*atan2(cptr[1],cptr[0]), sumWt);*/
     if (!doDecon) {
       /* Get ampl - write to output if needed */
       ObitCArrayAmp(RMPlanes[iRM-1], workAmp);
       plane[0] = iRM;  /* Select correct plane */
-      retCode = ObitImagePutPlane (outImage, workAmp->array, plane, err);
+      retCode = ObitImagePutPlane (outAImage, workAmp->array, plane, err);
+      /* Also phase? */
+      if (outPImage) {
+	 ObitCArrayPhase(RMPlanes[iRM-1], workAmp);
+	 retCode = ObitImagePutPlane (outPImage, workAmp->array, plane, err);
+ 	 } /* write phase */
       if ((retCode!=OBIT_IO_OK) || (err->error)) {
-	Obit_traceback_msg (err, routine, outImage->name);
+	Obit_traceback_msg (err, routine, outAImage->name);
 	goto cleanup;
       } /* end write */
     }
@@ -863,43 +981,53 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
 /*----------------------------------------------------------------------- */
 /*  Deconvolve/restore cube                                               */
 /*   Input:                                                               */
-/*      myInput   Input parameters on InfoList                            */
-/*      outImage  Output Image to update                                  */
+/*      myInput    Input parameters on InfoList                           */
+/*      outAImage  Output amp cube                                        */
+/*      outPImage  Output phase cube if nonNULL                           */
 /*   Output:                                                              */
-/*      err       Obit Error stack                                        */
+/*      err        Obit Error stack                                       */
 /*----------------------------------------------------------------------- */
-void Decon (ObitInfoList *myInput, ObitImage* outImage, ObitErr *err)
+void Decon (ObitInfoList *myInput, ObitImage* outAImage, 
+	    ObitImage* outPImage, ObitErr *err)
 {
-  olong i, iRM;
+  olong i, j, iRM;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong niter=20, naxis[2],plane[5]={1,1,1,1,1};
   ofloat minFlux=0.01;
-  olong nTh, nRow, loRow, hiRow, nRowPerThread, nThreads, nx, ny;
+  olong nTh, nThtmp, nRow, loRow, hiRow, nRowPerThread, nThreads, nx, ny;
   ObitFArray *workAmp=NULL;
   RMFuncArg **threadArgs;
+  ocomplex *crestor, *cbeam;
+  gboolean doBeam=FALSE, done = FALSE;
+  ObitIOCode retCode;
   gchar *routine = "Decon";
 
-  /* get parameters */
+  Obit_log_error(err, OBIT_InfoErr, "Deconvolving cube ");
+
+ /* get parameters */
   ObitInfoListGetTest(myInput, "minFlux", &type, dim, &minFlux);
   ObitInfoListGetTest(myInput, "niter",   &type, dim, &niter);
+  ObitInfoListGetTest(myInput, "doBeam", &type, dim, &doBeam);
 
   /* Initialize Threading */
-  nThreads = MakeRMFuncArgs (outImage->thread, &threadArgs);
+  nThreads = MakeRMFuncArgs (outAImage->thread, &threadArgs);
   /* Divide up work */
-  nx = outImage->myDesc->inaxes[0];
-  ny = outImage->myDesc->inaxes[1];
+  nx = outAImage->myDesc->inaxes[0];
+  ny = outAImage->myDesc->inaxes[1];
   nRow = ny;
   nRowPerThread = nRow/nThreads;
+  nRowPerThread = MIN (10, nRowPerThread);  /* No more than 10 rows per thread */
+  nRowPerThread = MAX(1, nRowPerThread);
   nTh = nThreads;
-  if (nRow<100) {nRowPerThread = nRow; nTh = 1;}
+  if (nRow<10) {nRowPerThread = nRow; nTh = 1;}
   loRow = 1;
   hiRow = nRowPerThread;
-  hiRow = MIN (hiRow, nRow);
+  /*hiRow = MIN (hiRow, nRow);*/
 
   /* Set up thread arguments */
   for (i=0; i<nTh; i++) {
-    if (i==(nTh-1)) hiRow = nRow;  /* Make sure do all */
+    /* if (i==(nTh-1)) hiRow = nRow;  Make sure do all */
     threadArgs[i]->nx      = nx;
     threadArgs[i]->ny      = ny;
     threadArgs[i]->first   = loRow;
@@ -918,12 +1046,28 @@ void Decon (ObitInfoList *myInput, ObitImage* outImage, ObitErr *err)
   for (i=0; i<nTh; i++) {
     fprintf (stderr,"%d, lo %d hi %d\n",i,threadArgs[i]->first,threadArgs[i]->last);
   }*/
-
-
-  /* Do operation */
-   ObitThreadIterator (outImage->thread, nTh, 
-		       (ObitThreadFunc)ThreadDecon,
-		       (gpointer**)threadArgs);
+  done = FALSE;
+  while (TRUE) {
+    /* DEBUG
+    fprintf (stderr,"lo %d hi %d nTh %d\n",threadArgs[0]->first,threadArgs[nTh-1]->last, nTh); */
+    /* Do operation */
+    ObitThreadIterator (outAImage->thread, nTh, 
+			(ObitThreadFunc)ThreadDecon,
+			(gpointer**)threadArgs);
+    done = (threadArgs[nTh-1]->last>=nRow);  /* Done? */
+    if (done) break;
+    /* Update which Rows */
+    nThtmp = nTh;
+    for (i=0; i<nTh; i++) {
+      threadArgs[i]->first   = loRow;
+      threadArgs[i]->last    = hiRow;
+      if (hiRow==nRow) nThtmp = i+1;
+      loRow += nRowPerThread;
+      hiRow += nRowPerThread;
+      hiRow = MIN (hiRow, nRow);
+    }
+    nTh = nThtmp;
+  }
    
   /* Free local objects */
   KillRMFuncArgs(nThreads, threadArgs);
@@ -931,14 +1075,35 @@ void Decon (ObitInfoList *myInput, ObitImage* outImage, ObitErr *err)
   /* Work FArray */
   naxis[0] = (olong)nx;  naxis[1] = (olong)ny; 
   workAmp  = ObitFArrayCreate (NULL, 2, naxis);
- /* Rewrite */
-  for (iRM=1; iRM<=nOutChan; iRM++) {
+  /* Rewrite */
+  crestor  = (ocomplex*)Restor->array;
+  cbeam    = (ocomplex*)Beam->array;
+ for (iRM=1; iRM<=nOutChan; iRM++) {
     ObitCArrayAmp(RMPlanes[iRM-1], workAmp); /* Extract amplitude */
+    if (doBeam) {
+      /* Write amp of restoring function in pixel [1,1], [2,1] */
+      j = iRM-1+nOutChan/2;
+      workAmp->array[0] = crestor[j].real;
+      workAmp->array[1] = crestor[j].imag;
+      /* also write Dirty Beam as [3,1], [4,1] */
+      workAmp->array[2] = cbeam[j].real;
+      workAmp->array[3] = cbeam[j].imag;
+    }
     plane[0] = iRM;  /* Select correct plane */
-    ObitImagePutPlane (outImage, workAmp->array, plane, err);
-  }
-  ObitFArrayUnref(workAmp);
- if (err->error) Obit_traceback_msg (err, routine, outImage->name);
+    ObitImagePutPlane (outAImage, workAmp->array, plane, err);
+    /* Also phase? */
+    if (outPImage) {
+      ObitCArrayPhase(RMPlanes[iRM-1], workAmp);
+      retCode = ObitImagePutPlane (outPImage, workAmp->array, plane, err);
+    } /* write phase */
+    if ((retCode!=OBIT_IO_OK) || (err->error)) {
+      Obit_traceback_msg (err, routine, outAImage->name);
+      goto cleanup;
+    }
+ } /* end loop over output planes */
+ cleanup:
+ ObitFArrayUnref(workAmp);
+ if (err->error) Obit_traceback_msg (err, routine, outAImage->name);
 } /* end Decon */
 
 /*----------------------------------------------------------------------- */
@@ -951,7 +1116,7 @@ void Decon (ObitInfoList *myInput, ObitImage* outImage, ObitErr *err)
 /*      err    Obit Error stack                                           */
 /*----------------------------------------------------------------------- */
 void RMSynHistory (ObitInfoList* myInput, ObitImage* inImage, 
-		    ObitImage* outImage, ObitErr* err)
+		   ObitImage* outImage, ObitErr* err)
 {
   ObitHistory *inHistory=NULL, *outHistory=NULL;
   gchar        hicard[81];
@@ -959,7 +1124,8 @@ void RMSynHistory (ObitInfoList* myInput, ObitImage* inImage,
     "DataType", "inQFile",  "inQDisk", "inQName", "inQClass", "inQSeq",
     "inUFile",  "inUDisk", "inUName", "inUClass", "inUSeq", "Alpha",
     "BLC",  "TRC", "minRMSyn", "maxRMSyn", "delRMSyn", "nThreads",
-    "niter", "minFlux", "BeamSig",
+    "niter", "gain", "minFlux", "doDecon", "doRestor", "doBeam", "BeamSig", 
+    "doPhase", 
     NULL};
   gchar *routine = "RMSynHistory";
 
@@ -1049,10 +1215,10 @@ ofloat FitGauss(ObitFArray *Beam)
 /*----------------------------------------------------------------------- */
 void MakeBeam(ObitInfoList* myInput, ObitImage* inImage, ObitErr* err)
 {
-  ofloat *x=NULL, RM, minQ, minU, amp, amp2, maxBeam=-1.0e6;
+  ofloat RM, minQ, minU, amp, amp2, maxBeam=-1.0e6;
   olong i, iRM, naxis[2];
-  ocomplex accum, SinCos, one, chVal;
-  ofloat sigma, off, temp, BeamSig=0.0;
+  ocomplex accum, SinCos, dval, chVal;
+  ofloat sigma, off, temp, sumwt, BeamSig=0.0, alpha=0.0;
   ObitPlot *plot=NULL;
   ObitInfoType type;
   ObitFArray *workAmp=NULL;
@@ -1069,6 +1235,8 @@ void MakeBeam(ObitInfoList* myInput, ObitImage* inImage, ObitErr* err)
 
   /* Restoring sigma (rad/m^2) specified? */
   ObitInfoListGetTest(myInput, "BeamSig", &type, dim, &BeamSig);
+  /* spectral index correction */
+  ObitInfoListGetTest(myInput, "Alpha",   &type, dim, &alpha);
 
   /* Want Beam plot? */
   ObitInfoListGetTest(myInput, "BeamPlot", &type, dim, BeamPlot);
@@ -1079,39 +1247,52 @@ void MakeBeam(ObitInfoList* myInput, ObitImage* inImage, ObitErr* err)
   /* Allocate global beam array - twice nOutChan */
   naxis[0] = nOutChan*2;
   if (Beam==NULL) Beam = ObitCArrayCreate (NULL, 1, naxis);
-  x = g_malloc0(naxis[0]*sizeof(ofloat));
-
-  /* Set real 1 */
-  COMPLEX_SET(one, 1., 0.);
 
   minQ = MAX(0.1*qMedian, (qMedian-5*qSigma));
   minU = MAX(0.1*uMedian, (uMedian-5*uSigma));
+  maxBeam=-1.0e6;
   /* Loop over RM planes */
   for (iRM=1; iRM<=nOutChan*2; iRM++) {
     RM = (iRM-nOutChan)*delRMSyn;
-    x[iRM-1] = RM;
     /* Zero acccumulator */
     COMPLEX_SET(accum, 0., 0.);
+    sumwt = 0;
 
     /* loop over input planes */
     for (i=0; i<nInChan; i++) {
       /* Want this one ? */
       if ((QRMS[i]>qMedian+2*qSigma) || (QRMS[i]<minQ) ||
 	  (URMS[i]>uMedian+2*uSigma) || (URMS[i]<minU)) continue;
-      sincosf((ofloat)(-2.0*RM*lamb2[i]), &SinCos.imag, &SinCos.real); /* sin/cos factors */
-      COMPLEX_MUL2(chVal, one, SinCos);
+      sincosf((ofloat)(-2.0*RM*(lamb2[i]-refLamb2)), &SinCos.imag, &SinCos.real); /* sin/cos factors */
+      /* Set real 1* specCor */
+      /*COMPLEX_SET(dval, specCor[i], 0.);*/
+      COMPLEX_SET(dval, 1.0, 0.);
+      COMPLEX_MUL2(chVal, dval, SinCos);
       COMPLEX_ADD2(accum, accum, chVal);
+      sumwt += specCor[i];  /* Spectral index weighting */
+      /* DEBUG 
+      if (RM==-30.) {
+	fprintf (stderr, "%3d %8.4lf %8.4f d %8.4f %8.4f p %8.4f %8.4f %8.4f %8.4f \n",
+		 i,-2.0*RM*lamb2[i], specCor[i], dval.real, dval.imag, SinCos.real, SinCos.imag, accum.real, accum.imag);
+      }*/
     } /* end loop over input */
-    Beam->array[2*iRM] = accum.real; Beam->array[2*iRM+1] = accum.imag; 
-    amp = sqrtf(accum.real*accum.real+accum.imag*accum.imag);
+    Beam->array[2*iRM]   = accum.real/sumwt; 
+    Beam->array[2*iRM+1] = accum.imag/sumwt; 
+    amp = sqrtf(accum.real*accum.real+accum.imag*accum.imag)/sumwt;
     maxBeam = MAX (amp, maxBeam);
-  } /* end loop over RM Planes */
+      /* DEBUG 
+    irm = iRM -1;
+      fprintf (stderr, "%5d %6.2f %10.6f %10.6f %10.6f %8.2f %10.6f \n",
+	       irm, RM, Beam->array[2*irm], Beam->array[2*irm+1],
+	       sqrt(Beam->array[2*irm+1]*Beam->array[2*irm+1]+Beam->array[2*irm]*Beam->array[2*irm]),
+	       57.296*atan2(Beam->array[2*irm+1],Beam->array[2*irm]), sumwt); */
+	} /* end loop over RM Planes */
   /* Normalize beam */
   for (iRM=1; iRM<=nOutChan*4; iRM++) 
     {
       Beam->array[iRM-1] /= maxBeam;
-      /*fprintf (stderr, "%2.2d %6.2f %6.4f\n",iRM, minRMSyn + (iRM-1)*delRMSyn, Beam->array[iRM-1]);*/
     }
+  /* DEBUG fprintf (stderr, "maxBeam=%10.6f\n",maxBeam);*/
 
   /* Approximate beam size (pixels) */
   workAmp = ObitCArrayMakeF(Beam);
@@ -1156,14 +1337,13 @@ void MakeBeam(ObitInfoList* myInput, ObitImage* inImage, ObitErr* err)
     strncpy(strtmp, "Faraday Fn.",200);
     dim[0] = strlen(strtmp);
     ObitInfoListAlwaysPut (plot->info, "YLABEL",OBIT_string, dim, strtmp);
-    ObitPlotXYPlot (plot, -2, workAmp->naxis[0], x, workAmp->array, err);
+    /*ObitPlotXYPlot (plot, -2, workAmp->naxis[0], x, workAmp->array, err);*/
     /*ObitPlotXYOver (plot, -3, workAmp->naxis[0], x, Restor->array, err);*/
     ObitPlotFinishPlot (plot, err);
     ObitPlotUnref(plot);
     if (err->error) Obit_traceback_msg (err, routine, inImage->name);
   } /* end do Plot */
   /* Cleanup */
-  if (x) g_free(x);
   ObitFArrayUnref(workAmp);
 } /* end MakeBeam  */
 
@@ -1178,7 +1358,7 @@ void GetRM(olong pixel[2], olong niter, ofloat minFlux)
 {
   ObitCArray *RM=NULL;
   ocomplex flux[1000], *crestor, *cRM, cwork;
-  olong i, j, k, cenb, nbeam, iRM, ipx, lniter, nout, pos[1000], naxis[1];
+  olong i, j, k, cenb, nbeam, ipx, lniter, nout, pos[1000], naxis[1];
 
   lniter = MIN(niter,1000); /* Number of iterations */
 
@@ -1205,22 +1385,24 @@ void GetRM(olong pixel[2], olong niter, ofloat minFlux)
   cRM      = (ocomplex*)RM->array;
 
   /* Complex Restore using restoring beam Restor */
-  for (k=0; k<nout; k++) {
-    j = cenb - pos[k];
-    for (i=0; i<nOutChan; i++,j++) {
-      if ((j>0) && (j<nbeam)) {
-	COMPLEX_MUL2(cwork, crestor[j], flux[k]); /* gain*flux*restoring_beam */
-	COMPLEX_SUB (cRM[i], cRM[i], cwork); /* subtract cwork */
-      }
-    } /* end inner restore */
-  } /* end loop over components */
+  if (doRestor) {
+    for (k=0; k<nout; k++) {
+      j = cenb - pos[k];
+      for (i=0; i<nOutChan; i++,j++) {
+	if ((j>0) && (j<nbeam)) {
+	  COMPLEX_MUL2(cwork, crestor[j], flux[k]); /* gain*flux*restoring_beam */
+	  COMPLEX_ADD2 (cRM[i], cRM[i], cwork); /* add cwork */
+	}
+      } /* end inner restore */
+    } /* end loop over components */
+  } /* end restore */
   
-  /* Debug listing */
-  if ((pixel[0]==-100) && (pixel[1]==49)) {
-    for (iRM=1; iRM<=nOutChan; iRM++) {
-      fprintf (stderr, "%2.2d %6.2f %6.4f\n",iRM, minRMSyn + (iRM-1)*delRMSyn, RM->array[iRM-1]);
-    }
-  }
+  /* Debug listing 
+     if ((pixel[0]==-100) && (pixel[1]==49)) {
+     for (iRM=1; iRM<=nOutChan; iRM++) {
+     fprintf (stderr, "%2.2d %6.2f %6.4f\n",iRM, minRMSyn + (iRM-1)*delRMSyn, RM->array[iRM-1]);
+     }
+  }*/
    /* Put deconvolved/restored pixel back */
   ipx = pixel[0] + pixel[1]*RMPlanes[0]->naxis[0];
   for (i=0; i<nOutChan; i++) {
@@ -1228,14 +1410,14 @@ void GetRM(olong pixel[2], olong niter, ofloat minFlux)
     RMPlanes[i]->array[2*ipx+1] = RM->array[2*i+1];
   }
   /* Cleanup */
-  RM = ObitFArrayUnref(RM);
+  RM = ObitCArrayUnref(RM);
 } /* end GetRM  */
 
 void DeconRM (ObitCArray *fn, ObitCArray *beam, ofloat minRM, olong niter, 
 	      olong *nout, olong *pos, ocomplex *flux)
 {
 /*----------------------------------------------------------------------- */
-/*  Hogbom complex CLEAN deconvolution, gain 0.1                          */
+/*  Hogbom complex CLEAN deconvolution                                    */
 /*   Input:                                                               */
 /*      fn    1-D complex RM function to deconvolve                       */
 /*      beam  RM complex "Beam", center in nbeam/2 (0 rel)                */
@@ -1248,7 +1430,7 @@ void DeconRM (ObitCArray *fn, ObitCArray *beam, ofloat minRM, olong niter,
 /*      flux    complex "Flux" of component                               */
 /*----------------------------------------------------------------------- */
   olong n, iter, i, j, cenb,  maxpos, nbeam;
-  ofloat maxflux, amp, gain = 0.1;
+  ofloat maxflux, amp;
   ocomplex cwork, val, *cfn, *cbeam;
 
   /* complex pointers to input/out arrays */
@@ -1279,7 +1461,7 @@ void DeconRM (ObitCArray *fn, ObitCArray *beam, ofloat minRM, olong niter,
     for (i=0; i<n; i++,j++) {
       if ((j>0) && (j<nbeam)) {
 	COMPLEX_MUL2(cwork, cbeam[j], flux[iter]); /*gain*flux*beam */
-	COMPLEX_SUB (cfn[i], cfn[i], cwork); /* cfn[i] - cwork */
+	COMPLEX_SUB (cfn[i], cfn[i], cwork);       /* cfn[i] - cwork */
       }
     } /* end subtract */
   } /* end outer loop */

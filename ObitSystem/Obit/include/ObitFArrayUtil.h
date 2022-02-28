@@ -50,6 +50,10 @@ ofloat ObitFArrayUtilFitCGauss (ObitFArray *in, ofloat *FWHM, ofloat *center,
 /** Public: Fit 1-D Gaussian plus baseline. */
 ofloat ObitFArrayUtilFit1DGauss (ObitFArray *in, ofloat *FWHM, ofloat *center, 
 				 ofloat *peak, ofloat *a, ofloat *b, ObitErr *err);
+/** Public: Fit multiple 1-D Gaussians plus baseline. */
+ofloat ObitFArrayUtilFit1DGauss2 (ObitFArray *in, olong ngauss, ofloat *FWHM, 
+				  ofloat *center,  ofloat *peak, ofloat *a, ofloat *b, 
+				  ObitErr *err);
 /** Public: Convolve two arrays */
 ObitFArray* ObitFArrayUtilConvolve (ObitFArray *in1, ObitFArray *in2, 
 				    ObitErr *err);

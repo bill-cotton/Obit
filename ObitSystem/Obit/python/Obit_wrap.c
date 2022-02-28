@@ -3642,14 +3642,31 @@ extern ObitCArray* CArrayRealloc (ObitCArray* in, long ndim, long *naxis) {
    return  ObitCArrayRealloc(in, (olong)ndim, lnaxis);
 }
 
-extern void CArrayGetVal(ObitCArray* in, long *pos, float *val) {
-   float *out;
+extern PyObject* CArrayGetVal(ObitCArray* in, long *pos, float *val) {
+   float *off, out[2];
    olong i, lpos[10];
+   long *Iout;
+   PyObject *outList, *o;
 
    for (i=0; i<in->ndim; i++) lpos[i] = (olong)pos[i];
-   out = ObitCArrayIndex(in, lpos);
+  // check if in bounds
+   off = ObitCArrayIndex (in, lpos);
+   if (off==NULL) {
+	PyErr_SetString(PyExc_RuntimeError,"Position not in array");
+        Iout = (long*)out;  /* I think this gives a NaN */
+        *Iout = ~0;
+        out[1] = out[0];
+   } else {
+     out[0] = off[0];out[1] = off[1];
+   }
    val[0] = out[0];
    val[1] = out[1];
+   outList = PyList_New(2);
+   o = PyFloat_FromDouble((double)out[0]);
+   PyList_SetItem(outList, 0, o);
+   o = PyFloat_FromDouble((double)out[1]);
+   PyList_SetItem(outList, 1, o);	
+   return outList;
 }
 
 extern void CArraySetVal(ObitCArray* in, long *pos, float *val) {
@@ -3658,6 +3675,11 @@ extern void CArraySetVal(ObitCArray* in, long *pos, float *val) {
 
    for (i=0; i<in->ndim; i++) lpos[i] = (olong)pos[i];
    off = ObitCArrayIndex (in, lpos);
+   // check if in bounds
+   if (off==NULL) {
+      PyErr_SetString(PyExc_RuntimeError,"Position not in array");
+      return;
+   }
    off[0] = val[0];
    off[1] = val[1];
 }
@@ -5050,6 +5072,33 @@ extern PyObject* FArrayUtilFit1DGauss (ObitFArray *in, float FWHM, float center,
   PyList_SetItem(o, 5, PyFloat_FromDouble((double)RMS));
   return o;
 } // end  FArrayUtilFit1DGauss
+
+/* Return list with [0]=FWHM, [1] = peak, [2] = cenX, [3]=a, [4]=b, [5]=RMS residual */
+extern PyObject* FArrayUtilFit1DGauss2 (ObitFArray *in, long ngauss, float FWHM, float center, 
+			      float peak, ObitErr *err)
+{
+  ofloat la, lb, RMS;
+  PyObject *o, *list1, *list2, *list3;
+  ofloat lFWHM[15], lcenter[15], lpeak[15];
+  olong i;
+
+  RMS = ObitFArrayUtilFit1DGauss2 (in, ngauss, lFWHM, lcenter, lpeak, &la, &lb, err);
+  // return list
+  o = PyList_New(6);
+  list1 = PyList_New(ngauss);
+  for (i=0; i<ngauss; i++) PyList_SetItem(list1, i, PyFloat_FromDouble((double)lFWHM[i]));
+  PyList_SetItem(o, 0, list1);
+  list2 = PyList_New(ngauss);
+  for (i=0; i<ngauss; i++) PyList_SetItem(list2, i, PyFloat_FromDouble((double)lpeak[i]));
+  PyList_SetItem(o, 1, list2);
+  list3 = PyList_New(ngauss);
+  for (i=0; i<ngauss; i++) PyList_SetItem(list3, i, PyFloat_FromDouble((double)lcenter[i]));
+  PyList_SetItem(o, 2, list3);
+  PyList_SetItem(o, 3, PyFloat_FromDouble((double)la));
+  PyList_SetItem(o, 4, PyFloat_FromDouble((double)lb));
+  PyList_SetItem(o, 5, PyFloat_FromDouble((double)RMS));
+  return o;
+} // end  FArrayUtilFit1DGauss2
 
 // Convolution 
 ObitFArray* FArrayUtilConvolve (ObitFArray *in1, ObitFArray *in2, 
@@ -20238,6 +20287,7 @@ SWIGINTERN PyObject *_wrap_CArrayGetVal(PyObject *SWIGUNUSEDPARM(self), PyObject
   void *argp1 = 0 ;
   int res1 = 0 ;
   PyObject *swig_obj[3] ;
+  PyObject *result = 0 ;
   
   if (!SWIG_Python_UnpackTuple(args, "CArrayGetVal", 3, 3, swig_obj)) SWIG_fail;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ObitCArray, 0 |  0 );
@@ -20287,8 +20337,8 @@ SWIGINTERN PyObject *_wrap_CArrayGetVal(PyObject *SWIGUNUSEDPARM(self), PyObject
       return NULL;
     }
   }
-  CArrayGetVal(arg1,arg2,arg3);
-  resultobj = SWIG_Py_Void();
+  result = (PyObject *)CArrayGetVal(arg1,arg2,arg3);
+  resultobj = result;
   {
     free((long *) arg2);
   }
@@ -27179,6 +27229,68 @@ SWIGINTERN PyObject *_wrap_FArrayUtilFit1DGauss(PyObject *SWIGUNUSEDPARM(self), 
   }
   arg5 = (ObitErr *)(argp5);
   result = (PyObject *)FArrayUtilFit1DGauss(arg1,arg2,arg3,arg4,arg5);
+  resultobj = result;
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_FArrayUtilFit1DGauss2(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  ObitFArray *arg1 = (ObitFArray *) 0 ;
+  long arg2 ;
+  float arg3 ;
+  float arg4 ;
+  float arg5 ;
+  ObitErr *arg6 = (ObitErr *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  long val2 ;
+  int ecode2 = 0 ;
+  float val3 ;
+  int ecode3 = 0 ;
+  float val4 ;
+  int ecode4 = 0 ;
+  float val5 ;
+  int ecode5 = 0 ;
+  void *argp6 = 0 ;
+  int res6 = 0 ;
+  PyObject *swig_obj[6] ;
+  PyObject *result = 0 ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "FArrayUtilFit1DGauss2", 6, 6, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ObitFArray, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "FArrayUtilFit1DGauss2" "', argument " "1"" of type '" "ObitFArray *""'"); 
+  }
+  arg1 = (ObitFArray *)(argp1);
+  ecode2 = SWIG_AsVal_long(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "FArrayUtilFit1DGauss2" "', argument " "2"" of type '" "long""'");
+  } 
+  arg2 = (long)(val2);
+  ecode3 = SWIG_AsVal_float(swig_obj[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "FArrayUtilFit1DGauss2" "', argument " "3"" of type '" "float""'");
+  } 
+  arg3 = (float)(val3);
+  ecode4 = SWIG_AsVal_float(swig_obj[3], &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "FArrayUtilFit1DGauss2" "', argument " "4"" of type '" "float""'");
+  } 
+  arg4 = (float)(val4);
+  ecode5 = SWIG_AsVal_float(swig_obj[4], &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "FArrayUtilFit1DGauss2" "', argument " "5"" of type '" "float""'");
+  } 
+  arg5 = (float)(val5);
+  res6 = SWIG_ConvertPtr(swig_obj[5], &argp6,SWIGTYPE_p_ObitErr, 0 |  0 );
+  if (!SWIG_IsOK(res6)) {
+    SWIG_exception_fail(SWIG_ArgError(res6), "in method '" "FArrayUtilFit1DGauss2" "', argument " "6"" of type '" "ObitErr *""'"); 
+  }
+  arg6 = (ObitErr *)(argp6);
+  result = (PyObject *)FArrayUtilFit1DGauss2(arg1,arg2,arg3,arg4,arg5,arg6);
   resultobj = result;
   return resultobj;
 fail:
@@ -72727,6 +72839,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "FArrayIsA", _wrap_FArrayIsA, METH_O, NULL},
 	 { "FArrayUtilFitCGauss", _wrap_FArrayUtilFitCGauss, METH_VARARGS, NULL},
 	 { "FArrayUtilFit1DGauss", _wrap_FArrayUtilFit1DGauss, METH_VARARGS, NULL},
+	 { "FArrayUtilFit1DGauss2", _wrap_FArrayUtilFit1DGauss2, METH_VARARGS, NULL},
 	 { "FArrayUtilConvolve", _wrap_FArrayUtilConvolve, METH_VARARGS, NULL},
 	 { "FArrayUtilUVGaus", _wrap_FArrayUtilUVGaus, METH_VARARGS, NULL},
 	 { "FFT_me_set", _wrap_FFT_me_set, METH_VARARGS, NULL},

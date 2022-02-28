@@ -5048,3 +5048,20 @@ Obit/src/ObitDConCleanVisLine.c
 Obit/src/ObitGPUSkyModel.c
     DFTInit: Get image info from skyModel.
 2 Dec 2021 svn 636
+
+Summary: Bug fixes
+Obit/TDF/RMSyn.TDF  Obit/tasks/RMSyn.c
+    New parameter doBeam to write beam in pixel [1,1]
+    New parameters gain, doRestor
+    Make multithreading more robust.
+Obit/include/ObitFArrayUtil.h Obit/src/ObitFArrayUtil.c
+    New function Fit1DGauss2 to fit multiple 1D Gaussians
+Obit/python/FArrayUtil.py Obit/python/FArrayUtil.inc Obit/python/Obit_wrap.c
+    New function PFit1DGauss2 to fit multiple 1D Gaussians
+Obit/python/OSurvey.py Obit/src/ObitSurveyUtil.c
+    Add optional restoring beam, fix formatting
+Obit/python/CArray.py python/CArray.inc
+    Add set/get functions, fix bug
+Obit/python/OTObit.py
+    uvTabSave: default copy HI, AN, FQ tables
+28 Feb 2022 svn 637

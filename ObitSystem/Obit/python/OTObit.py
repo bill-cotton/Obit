@@ -266,7 +266,7 @@ Note: these dict are independent of the underlying data structures.
 # Interactive routines to Obit use from ObitTalk
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2005-2021
+#  Copyright (C) 2005-2022
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -1642,7 +1642,7 @@ def uvtab(inUV, filename, outDisk, err, compress=False, \
     # end uvtab
 
 def uvTabSave(inUV, filename, outDisk, err, \
-          exclude=["AIPS HI", "AIPS_AN", "AIPS FQ","AIPS PL", "AIPS SL"], include=[]):
+          exclude=["AIPS PL", "AIPS SL"], include=[]):
     """
     Write UV data tables (but not data) to a FITS file
     

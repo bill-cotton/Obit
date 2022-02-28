@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2020                                          */
+/*;  Copyright (C) 2005-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -51,6 +51,11 @@ static ofloat FitCGauss (olong Count, ofloat *pixX, ofloat *pixY, ofloat *val,
 static ofloat Fit1DGauss (olong Count, ofloat *cell, ofloat *val, 
 			 ofloat *peak, ofloat *center, ofloat *sigma, 
 			 ofloat *a, ofloat *b, ObitErr *err);
+/** Private: Fit multiple 1-D Gaussians + baseline */
+static ofloat Fit1DGauss2 (olong Count, ofloat *cell, ofloat *val, 
+			   olong ngauss, ofloat *peak, ofloat *center, 
+			   ofloat *sigma, ofloat *a, ofloat *b, 
+			   ObitErr *err);
 
 /*----------------------Public functions---------------------------*/
 /**
@@ -224,6 +229,112 @@ ofloat ObitFArrayUtilFit1DGauss (ObitFArray *in, ofloat *FWHM, ofloat *center,
  
   return RMS;
 }  /* end ObitFArrayUtilFit1DGauss */
+/**
+ * Fit multiple 1-D Gaussians plus baseline in an FArray.
+ * Starting solution for all is peak value in array in, looks for others
+ * \param in      1-D FArray to fit
+ * \param ngauss  number of Gaussians (max. 10)
+ * \param FWHM    [out] Full width half max of Gaussian (array of ngauss)
+ * \param center  [out] 0-rel center pixel position (array of ngauss)
+ * \param peak    [out] Peak value (array of ngauss)
+ * \param a       [out] 0th order term of baseline
+ * \param b       [out] 1st order term of baseline
+ * \param err      Error stack, returns if not empty.
+ * \return RMS residual, -1 on error
+ */
+ofloat ObitFArrayUtilFit1DGauss2 (ObitFArray *in, olong ngauss, ofloat *FWHM, ofloat *center, 
+				 ofloat *peak, ofloat *a, ofloat *b, ObitErr *err)
+{
+  ofloat RMS = -1.0;
+  ofloat *cell=NULL, *val=NULL, sigma[20];
+  ofloat *data, maxb, fblank = ObitMagicF();
+  olong size, j, k, Count, ix, nx, pos[1], first, last, maxix, done[20];
+  gboolean close;
+  gchar *routine = "ObitFArrayUtilFit1DGauss";
+
+   /* error checks */
+  if (err->error) return RMS;
+  g_assert (ObitFArrayIsA(in));
+
+  /* Data to fit */
+  nx    = in->naxis[0];
+  data  = in->array;
+
+  /* Find first and last valid data */
+  first = nx+1;
+  last  = 0;
+  for (ix=0; ix<nx; ix++) {
+    if (data[ix] != fblank ) {
+      first = MIN (ix, first);
+      last  = MAX (ix, last);
+    }
+  }
+
+  /* Make sure some valid data */
+  Obit_retval_if_fail((first<last),  err, RMS, "%s: NO valid data", routine);
+
+  /* Initial guess from peak, end points */
+  *a    = data[first];
+  *b    = (data[last] - data[first])/nx;
+  if (ngauss<0) ngauss = 1;  /* to be sure */
+  peak[0] = (ObitFArrayMax (in, pos) - *a);
+  center[0] = (ofloat)pos[0];
+  FWHM[0] = 4.0;
+  sigma[0] = FWHM[0] / 2.355;  /* Use Gaussian sigma in fitting */
+  done[0] = center[0];
+  if (err->prtLv>=4)
+    fprintf (stderr, "center %5.0f, peak %9.4f\n",center[0],peak[0]);
+  /* Others - ignore what's been done */
+  for (j=1; j<ngauss; j++) {
+    FWHM[j] = 4.0;
+    sigma[j] = FWHM[j] / 2.355;  /* Use Gaussian sigma in fitting */
+    /* find brightest non done */
+    maxb = -1.0e20; maxix = -100;
+    for (ix=0; ix<nx; ix++) {
+      if (data[ix] == fblank) continue;
+      close = FALSE;
+      for (k=0; k<j; k++) {
+	close = close || abs(ix-done[k])<2*FWHM[k];
+      }
+      if (close) continue;
+      if (data[ix] > maxb) {
+	maxb = data[ix]; maxix = ix;
+      }
+    }
+    center[j] = (ofloat)maxix;
+    peak[j]   = maxb - *a;
+    done[j]   = maxix;
+    peak[j] = (ObitFArrayMax (in, pos) - *a) / ngauss;
+    if (err->prtLv>=4)
+      fprintf (stderr, "center %5.0f, peak %9.4f\n",center[j],peak[j]);
+  } /* end others */
+
+  /* Create arrays */
+  size = nx;
+  cell = g_malloc0(size*sizeof(ofloat));
+  val  = g_malloc0(size*sizeof(ofloat));
+  
+  /* Data from array */
+  Count = 0;
+  for (ix=0; ix<nx; ix++) {
+    if (data[ix] != fblank ) {
+      cell[Count] = (ofloat)ix;
+      val[Count]  = data[ix];
+      Count++;
+    }
+  }
+
+  /* Fit */
+  RMS = Fit1DGauss2 (Count, cell, val, ngauss, peak, center, sigma, a, b, err);
+  if (err->error) Obit_traceback_val (err, routine, in->name, RMS);
+  for (j=0; j<ngauss; j++) FWHM[j] = 2.355 * sigma[j];  /* Back to FWHM */
+
+  /* Cleanup */
+  if (cell) g_free(cell);
+  if (val)  g_free(val);
+ 
+  return RMS;
+}  /* end ObitFArrayUtilFit1DGauss2 */
 /**
  * Convolves two 2-D Arrays using FFTs
  * Arrays must have the same geometry and NOT contain magic value blanking
@@ -476,7 +587,8 @@ struct fitData {
   float *val; /* dependent variable */
   float RMS;  /* RMS residual */
   float a;    /* 0th order baseline term */
-  float b;    /* 0th order baseline term */
+  float b;    /* 1th order baseline term */
+  int   ngauss; /* Number of Gaussians to fit */
 };
 
 #if HAVE_GSL==1  /* GSL stuff */
@@ -576,7 +688,7 @@ static int cgaussFuncJacob (const gsl_vector *coef, void *params, gsl_vector *f,
 } /* end  cgaussFuncJacob */
 
 /**
- * 1-D gaussian+baseline calculating routine for gsl least squares fitter
+ * 1-D gaussians+baseline calculating routine for gsl least squares fitter
  * \param coef   Coefficient array (amplitude, center[2], 1/variance)
  * \param params Data structure
  * \param f      [out] function residuals
@@ -584,37 +696,43 @@ static int cgaussFuncJacob (const gsl_vector *coef, void *params, gsl_vector *f,
  */
 static int oneDgaussFunc (const gsl_vector *coef, void *params, gsl_vector *f)
 {
-  size_t n   = ((struct fitData *)params)->n;
-  float *x   = ((struct fitData *)params)->x;
-  float *val = ((struct fitData *)params)->val;
+  size_t n     = ((struct fitData *)params)->n;
+  float *x     = ((struct fitData *)params)->x;
+  float *val   = ((struct fitData *)params)->val;
+  long  ngauss = ((struct fitData *)params)->ngauss;
   float sum = 0.0;
-  long i;
+  long i, j, pnum;
   double amp, cenx, ivar, model, resid, a, b;
 
   /* Current parameters */
-  amp   = gsl_vector_get(coef, 0);
-  cenx  = gsl_vector_get(coef, 1);
-  ivar  = gsl_vector_get(coef, 2);
-  a     = gsl_vector_get(coef, 3);
-  b     = gsl_vector_get(coef, 4);
+  pnum  = 3 * ngauss;
+  a     = gsl_vector_get(coef, pnum++);
+  b     = gsl_vector_get(coef, pnum++);
 
   /* Loop through data calculating residuals to model */
+  if (ngauss<0) ngauss = 1;  /* to be sure */
   sum = 0.0;
   for (i=0; i<n; i++) {
-    model = a + b*x[i] + 
-      amp * exp (-(x[i]-cenx)*(x[i]-cenx) * ivar);
-    resid = model - val[i];
+    /* Loop over Gaussians */
+    pnum = 0; model = 0.0;
+    for (j=0; j<ngauss; j++) {
+      amp   = gsl_vector_get(coef, pnum++);
+      cenx  = gsl_vector_get(coef, pnum++);
+      ivar  = gsl_vector_get(coef, pnum++);
+      model += a + b*x[i] + amp * exp (-(x[i]-cenx)*(x[i]-cenx) * ivar);
+      resid = model - val[i];
+    }
     gsl_vector_set(f, i, resid);  /* to output vector */
     sum += resid*resid;
   }
 
-  ((struct fitData *)params)->RMS = sqrt (sum/n);
+  ((struct fitData *)params)->RMS = sqrt (sum/(n*ngauss));
 
   return GSL_SUCCESS;
 } /* end  oneDgaussFunc */
 
 /**
- * 1-D gaussian+baseline calculating Jacobean for gsl least squares fitter
+ * 1-D gaussians+baseline calculating Jacobean for gsl least squares fitter
  * This is the partial derivative of the residuals matrix
  * \param coef   Coefficient array (amplitude, center[2], 1/variance)
  * \param params Data structure
@@ -625,32 +743,41 @@ static int oneDgaussJacob (const gsl_vector *coef, void *params, gsl_matrix *J)
 {
   size_t n   = ((struct fitData *)params)->n;
   float *x   = ((struct fitData *)params)->x;
-  long i;
-  double a, b, amp, cenx, ivar, eterm;
+  long  ngauss = ((struct fitData *)params)->ngauss;
+  long   i, j, pnum, qnum;
+  double amp, cenx, ivar, eterm;
   double part1, part2, part3, part4, part5;
+  /*double a, b*/
 
   /* Current parameters */
-  amp   = gsl_vector_get(coef, 0);
-  cenx  = gsl_vector_get(coef, 1);
-  ivar  = gsl_vector_get(coef, 2);
-  a     = gsl_vector_get(coef, 3);
-  b     = gsl_vector_get(coef, 4);
+  if (ngauss<0) ngauss = 1;  /* to be sure */
+  pnum  = 3 * ngauss;
+  /*a     = gsl_vector_get(coef, pnum++);
+    b     = gsl_vector_get(coef, pnum++);*/
 
   /* Loop through data calculating partial derivatives of residuals */
   for (i=0; i<n; i++) {
-    eterm = exp (-(x[i]-cenx)*(x[i]-cenx) * ivar);
-    part1 = eterm;                            /* partial wrt amplitude */
-    part2 = +amp*eterm*ivar*2.0*(x[i]-cenx);  /* partial wrt center x */
-    /* partial wrt 1/var  */
-    part3 = -amp*eterm*((x[i]-cenx)*(x[i]-cenx) + (x[i]-cenx)*(x[i]-cenx));
     part4 = 1.0;                              /* partial wrt a */
     part5 = x[i];                             /* partial wrt b */
-    gsl_matrix_set(J, i, 0, part1);           /* to output matrix */
-    gsl_matrix_set(J, i, 1, part2);
-    gsl_matrix_set(J, i, 2, part3);
-    gsl_matrix_set(J, i, 3, part4);
-    gsl_matrix_set(J, i, 4, part5);
-  }
+    pnum  = 3 * ngauss;
+    gsl_matrix_set(J, i, pnum++, part4);
+    gsl_matrix_set(J, i, pnum++, part5);
+    /* Loop over Gaussians */
+    qnum = 0; pnum = 0;
+    for (j=0; j<ngauss; j++) {
+      amp   = gsl_vector_get(coef, qnum++);
+      cenx  = gsl_vector_get(coef, qnum++);
+      ivar  = gsl_vector_get(coef, qnum++);
+      eterm = exp (-(x[i]-cenx)*(x[i]-cenx) * ivar);
+      part1 = eterm;                            /* partial wrt amplitude */
+      part2 = +amp*eterm*ivar*2.0*(x[i]-cenx);  /* partial wrt center x */
+      /* partial wrt 1/var  */
+      part3 = -amp*eterm*((x[i]-cenx)*(x[i]-cenx) + (x[i]-cenx)*(x[i]-cenx));
+      gsl_matrix_set(J, i, pnum++, part1);           /* to output matrix */
+      gsl_matrix_set(J, i, pnum++, part2);
+      gsl_matrix_set(J, i, pnum++, part3);
+    } /* end Gaussian loop */
+  } /* end data loop */
 
   return GSL_SUCCESS;
 } /* end  oneDgaussJacob */
@@ -658,7 +785,7 @@ static int oneDgaussJacob (const gsl_vector *coef, void *params, gsl_matrix *J)
 
 /**
  * 1-D gaussian+baseline residual and and derivatives for  gsl least squares fitter
- * \param coef   Coefficient array (amplitude, center[2], sigma)
+ * \param coef   Coefficient array (amplitude, center, sigma)
  * \param params Data structure
  * \param f      [out] function residuals
  * \param J      [out] Jacobean
@@ -767,7 +894,7 @@ static ofloat FitCGauss (olong Count, ofloat *pixX, ofloat *pixY, ofloat *val,
 } /* end FitCGauss */
 
 /**
- * Fit 1D Gaussian + baseline
+ * Fit 1D single Gaussian + baseline
  * \param Count  Number of samples to be fitted
  * \param cell   X pixel coordinate
  * \param val    Measured values
@@ -799,9 +926,10 @@ static ofloat Fit1DGauss (olong Count, ofloat *cell, ofloat *val,
   if (Count<=0) return -1.0;
   
   /* Fitter data structure */
-  data.n   = Count;
-  data.x   = cell;
-  data.val = val;
+  data.n      = Count;
+  data.x      = cell;
+  data.val    = val;
+  data.ngauss = 1;
 
   /* initial guess */
   coef_init[0] = *peak;
@@ -860,4 +988,107 @@ static ofloat Fit1DGauss (olong Count, ofloat *cell, ofloat *val,
   return -1.0;
 #endif /* GSL stuff */
 } /* end Fit1DGauss */
+/**
+ * Fit 1D multiple Gaussians + baseline
+ * \param Count  Number of samples to be fitted
+ * \param cell   X pixel coordinate
+ * \param val    Measured values
+ * \param ngauss [in] number of Gaussians (max 10)
+ * \param peak   [in/out] peak value, per Gauss
+ * \param center [in/out] center pixel of Gaussian per Gauss
+ * \param sigma  [in/out] Gaussian sigma (width) in pixels per Gauss
+ * \param a      [in/out] 0th order baseline term
+ * \param b      [in/out] 1st order baseline term
+ * \param err      Error stack, returns if not empty.
+ * \return RMS residual (-1.0 on failure)
+ */
+static ofloat Fit1DGauss2 (olong Count, ofloat *cell, ofloat *val, 
+			   olong ngauss, ofloat *peak, ofloat *center, 
+			   ofloat *sigma, ofloat *a, ofloat *b, 
+			   ObitErr *err)
+{
+#if HAVE_GSL==1  /* GSL stuff */
+  const gsl_multifit_fdfsolver_type *T;
+  gsl_multifit_fdfsolver* solver;
+  gsl_multifit_function_fdf func;
+  gsl_vector_view coef;
+  struct fitData data;
+  int i, j, nparm, status, iter;
+  double coef_init[50];
+  gchar *routine = "Fit1DGauss2";
+  
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return -1.0;
+  if (Count<=0) return -1.0;
+  
+  /* Fitter data structure */
+  data.n      = Count;
+  data.x      = cell;
+  data.val    = val;
+  data.ngauss = ngauss;
+
+  /* initial guesses */
+  nparm = 0;
+  for (i=0; i<ngauss; i++) {
+    coef_init[nparm++] = peak[i];
+    coef_init[nparm++] = center[i];
+    coef_init[nparm++] = 1.0 / (2.0 * sigma[i] * sigma[i]); /* fit as 1/2*var */
+  }
+  coef_init[nparm++] = *a;
+  coef_init[nparm++] = *b;
+
+  coef = gsl_vector_view_array (coef_init, nparm);
+
+  /* Create /fill function structure */
+  func.f   = &oneDgaussFunc;      /* Compute function */
+  func.df  = &oneDgaussJacob;     /* Compute Jacobian (derivative matrix) */
+  func.fdf = &oneDgaussFuncJacob; /* Compute both function and derivatives */
+  func.n = Count;                 /* Number of data points */
+  func.p = nparm;                 /* number of parameters */
+  func.params = &data;            /* Data structure */
+
+  T = gsl_multifit_fdfsolver_lmsder;
+  solver = gsl_multifit_fdfsolver_alloc(T, Count, nparm);
+  gsl_multifit_fdfsolver_set(solver, &func, &coef.vector);
+
+  /* ready to rumble */
+  iter = 0;
+  do {
+    iter++;
+    status = gsl_multifit_fdfsolver_iterate(solver);
+    if ((status!=GSL_CONTINUE) && (status!=GSL_SUCCESS)) {/* problem? */
+      Obit_log_error(err, OBIT_Error, "%s: Solver status %d %s", 
+		     routine,status,gsl_strerror(status));
+      break; 
+    }
+    /* convergence test */
+    status = gsl_multifit_test_delta(solver->dx, solver->x, 1.0e-4, 1.0e-4);
+   }
+  while ((status == GSL_CONTINUE) && (iter< 1000));
+
+  /* return results */
+  /* debug fprintf (stderr,"no. iter %d base %f peak %f\n",iter, *base,*peak);*/
+  
+  j = 0;
+  for (i=0; i<ngauss; i++) {
+    peak[i]     = (ofloat)gsl_vector_get(solver->x, j++);
+    center[i]   = (ofloat)gsl_vector_get(solver->x, j++);
+    sigma[i]    = 2.0 * (ofloat)gsl_vector_get(solver->x, j++);
+    sigma[i]    = 1.0 / (sqrt(sigma[i])); /* back to sigma */
+  }
+  *a        = (ofloat)gsl_vector_get(solver->x, j++);
+  *b        = (ofloat)gsl_vector_get(solver->x, j++);
+
+  /* cleanup */
+  gsl_multifit_fdfsolver_free(solver);
+  return data.RMS;
+#else  /* No GSL - stubb */
+  gchar *routine = "Fit1DGauss";
+  Obit_log_error(err, OBIT_Error, 
+		 "%s: GSL not available - cannot do fit", 
+		     routine);
+  return -1.0;
+#endif /* GSL stuff */
+} /* end Fit1DGauss2 */
 

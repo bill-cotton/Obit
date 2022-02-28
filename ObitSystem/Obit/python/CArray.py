@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2019
+#  Copyright (C) 2004-2022
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -68,6 +68,47 @@ class CArray(Obit.CArray):
             return "Unrecognized"
         return "<C CArray instance> " + Obit.CArrayGetName(self.me)
     
+    def set (self, value, i1, i2=0, i3=0, i4=0, i5=0, i6=0):
+        """ 
+        Set Array value [i1, i2, i3...] (0-rel)
+        
+        * self      = Python FArray object
+        * value     = complex value for pixel (None = blanked)
+        * i1        = first axis index (0-rel)
+        * in        = nth axis index
+        """
+        # value, possible blanked
+        if value.real==None:
+            v = FArray.fblank
+        else:
+            v = value
+        # Set value
+        pos = [int(i1),int(i2),int(i3),int(i4),int(i5),int(i6)]
+        PSetVal(self, pos, v)
+        # end set
+
+    def get (self, i1, i2=0, i3=0, i4=0, i5=0, i6=0):
+        """ 
+        Get Array value [i1, i2, i3...] (0-rel)
+        
+        Return complex value  at pixel [i1,...in], (None,None) if blanked
+        
+        * self      = Python FArray object
+        * i1        = first axis index (0-rel)
+        * in        = nth axis index
+        """
+        # Get value
+        pos = [int(i1),int(i2),int(i3),int(i4),int(i5),int(i6)]
+        v = PGetVal(self, pos)
+        # value, possible blanked
+        if v.real==FArray.fblank:
+            value = None
+        else:
+            value = v
+        return value
+        # end get
+    # End Class CArray
+
 def PGetVal(inCA, pos):
     """ 
     Return value of a cell in an CArray
@@ -83,9 +124,9 @@ def PGetVal(inCA, pos):
     if not PIsA(inCA):
         print("Actually ",inCA.__class__)
         raise TypeError("inCA MUST be a Python Obit CArray")
-    val = [0.0, 0.0] # create array
-    Obit.CArrayGetVal (inCA.me, pos, val)
-    return val;
+    val = [0.,0.]
+    val =  Obit.CArrayGetVal (inCA.me, pos,val)
+    return complex(val[0], val[1])
     #  end PGetVal
 
 def PSetVal(inCA, pos, val):
@@ -94,14 +135,15 @@ def PSetVal(inCA, pos, val):
     
     * inCA  = input Python CArray
     * pos   = 0-rel cell number as an array, e.g. [10,24]
-    * val  = new value for cell as two reals
+    * val  = new complex value for cell
     """
     ################################################################
     # Checks
     if not PIsA(inCA):
         print("Actually ",inCA.__class__)
         raise TypeError("inCA MUST be a Python Obit CArray")
-    Obit.CArraySetVal(inCA.me, pos, val)
+    lval = [val.real, val.imag]  # to array [real, imag]
+    Obit.CArraySetVal(inCA.me, pos, lval)
     # end PSetVal
 
 def PCopy (inCA, err):

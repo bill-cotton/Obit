@@ -9,7 +9,7 @@ import os
 from six.moves import range
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2012-2019
+#  Copyright (C) 2012-2022
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -121,6 +121,19 @@ def PVLSSPrint (printer, data, err, VLVer=1, first=True, last=True):
         maxFlux   float   Maximum peak flux density. [def LARGE]
         minGlat   float   Minimum abs galactic latitude [def any]
         maxGlat   float   Minimum abs galactic latitude [def any]
+        BeamMaj   float   Restoring beam major axis (deg, def. from header)
+        BeamMin   float   Restoring beam minor axis (deg, def. from header)
+        BeamPA    float   Restoring beam position (deg)
+        fluxScale float   Flux density scaling factor, def 1.0
+        biasRA    float   RA position bias in deg, def 0.0
+        biasDec   float   Dec position bias in deg, def 0.0
+        calRAEr   float   Cal component of RA position error (squared), def 0.0
+        calDecEr  float   Cal component of Dec position error (squared), def 0.0
+        ClnBiasAv float   Mean CLEAN bias in Jy, def 0.0
+        ClnBiasEr float   Uncertainty in CLEAN bias in Jy, def 0.0
+        calAmpEr  float   Cal component of amplitude error as fraction, def 0.03
+        calSizeEr float   Cal component of amplitude error as fraction, def 0.02
+        calPolEr  float   Cal component of polarization error, def 0.003
     * err        = Python Obit Error/message stack
     * VLVer      = VL table version
     * first      = True if this first write to printer

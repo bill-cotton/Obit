@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitCArray type                        */
 /*                                                                    */
-/*;  Copyright (C) 2004-2019                                          */
+/*;  Copyright (C) 2004-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -120,14 +120,31 @@ extern ObitCArray* CArrayRealloc (ObitCArray* in, long ndim, long *naxis) {
    return  ObitCArrayRealloc(in, (olong)ndim, lnaxis);
 }
 
-extern void CArrayGetVal(ObitCArray* in, long *pos, float *val) {
-   float *out;
+extern PyObject* CArrayGetVal(ObitCArray* in, long *pos, float *val) {
+   float *off, out[2];
    olong i, lpos[10];
+   long *Iout;
+   PyObject *outList, *o;
 
    for (i=0; i<in->ndim; i++) lpos[i] = (olong)pos[i];
-   out = ObitCArrayIndex(in, lpos);
+  // check if in bounds
+   off = ObitCArrayIndex (in, lpos);
+   if (off==NULL) {
+	PyErr_SetString(PyExc_RuntimeError,"Position not in array");
+        Iout = (long*)out;  /* I think this gives a NaN */
+        *Iout = ~0;
+        out[1] = out[0];
+   } else {
+     out[0] = off[0];out[1] = off[1];
+   }
    val[0] = out[0];
    val[1] = out[1];
+   outList = PyList_New(2);
+   o = PyFloat_FromDouble((double)out[0]);
+   PyList_SetItem(outList, 0, o);
+   o = PyFloat_FromDouble((double)out[1]);
+   PyList_SetItem(outList, 1, o);	
+   return outList;
 }
 
 extern void CArraySetVal(ObitCArray* in, long *pos, float *val) {
@@ -136,6 +153,11 @@ extern void CArraySetVal(ObitCArray* in, long *pos, float *val) {
 
    for (i=0; i<in->ndim; i++) lpos[i] = (olong)pos[i];
    off = ObitCArrayIndex (in, lpos);
+   // check if in bounds
+   if (off==NULL) {
+      PyErr_SetString(PyExc_RuntimeError,"Position not in array");
+      return;
+   }
    off[0] = val[0];
    off[1] = val[1];
 }

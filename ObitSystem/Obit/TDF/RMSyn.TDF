@@ -3,7 +3,7 @@
 ;! Rotation measure synthesis
 ;# Task 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2021
+;;  Copyright (C) 2021-2022
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@ inQClass                           Q Image name (class)
 **PARAM** int 1
 inQSeq            0.0       9999.0 Q Image name (seq. #)
 **PARAM** int 1
-inQDisk           0.0         99.0 Q Disk drive #
+inQDisk           0.0         99.0 Q Disk  #
 **PARAM** str 48
 inUFile                            input U Filename if FITS image
 **PARAM** str 12
@@ -51,7 +51,7 @@ inUClass                           U Image name (class)
 **PARAM** int 1
 inUSeq            0.0       9999.0 U Image name (seq. #)
 **PARAM** int 1
-inUDisk           0.0         99.0 U Disk drive #
+inUDisk           0.0         99.0 U Disk  #
 **PARAM** int 7
 BLC               0.0     128000.0 Bottom left corner of image
                                      0=>entire image
@@ -68,24 +68,40 @@ outClass                           Output image class.
 outSeq         -1.0      9999.0    Output image seq. #.
                                      0 => highest unique
 **PARAM** int 1
-outDisk                            Output disk drive #
-                                     0 => highest with room
+outDisk                            Output disk #
+**PARAM** boo 1 **DEF** F
+doPhase                            Write phase image?
+**PARAM** str 48
+out2File                           output phase if FITS image
+**PARAM** str 12
+out2Name                           Output phase iname.
+**PARAM** str 6
+out2Class                          Output phase class.
+**PARAM** int 1
+out2Seq         -1.0      9999.0   Output phase seq. #.
+                                   0 => highest unique
+**PARAM** int 1
+out2Disk                           Output phase disk #
 **PARAM** float 1
 minRMSyn                           min RM to evaluate (rad/m^2) 
 **PARAM** float 1
 maxRMSyn                           max RM to evaluate (rad/m^2) 
 **PARAM** float 1
 delRMSyn                           RM incr. to evaluate (rad/m^2)
-**PARAM** str 128              
-BeamPlot                           Beam/Restor plot file
 **PARAM** boo 1 **DEF** F
-doDecon                            Deconvolve/restore?
+doDecon                            Deconvolve?
+**PARAM** boo 1 **DEF** T
+doRestor                           Restore?
+**PARAM** boo 1 **DEF** F
+doBeam                             Write Beam in pixel [1,1]?
 **PARAM** float 1
 minFlux                            Minimum level in CLEAN
 **PARAM** int 1
 niter                              max. number of CLEAN cycles
+**PARAM** float 1  **DEF** 0.1
+gain                               Loop gain
 **PARAM** float 1  **DEF** 0.0
-Alpha           -20.       20.      Spectral Index to correct
+Alpha           -20.       20.     Spectral Index to correct
 **PARAM** float 1
 BeamSig                            Restoring Gaussian sigma (rad/m^2)
 **PARAM** int 1 **DEF** 1
@@ -104,18 +120,21 @@ output cube.
 devonvolved using a Hogbom complex CLEAN and then restore with a 
 Gaussian approximation to the central lobe.  A loop gain of 0.1
 is used.
+   If doPhase if True, an output image containing the RM phases 
+(radians) is written to out2Name... in addition to the amplitude 
+in inName...
 
 Parameters:
   DataType...."FITS" or "AIPS"
-  inQFile......Q file name if a FITS file
-  inQName......Q Image AIPS name
-  inQClass.....Q Image class. 
-  inQSeq.......Q Image seq. #. 0 => highest.
-  inQDisk......Q AIPS Disk drive # of image.
-  inQName......U Image AIPS name
-  inQClass.....U Image class. 
-  inQSeq.......U Image seq. #. 0 => highest.
-  inQDisk......U AIPS Disk drive # of image.
+  inQFile.....Q file name if a FITS file
+  inQName.....Q Image AIPS name
+  inQClass....Q Image class. 
+  inQSeq......Q Image seq. #. 0 => highest.
+  inQDisk.....Q AIPS Disk drive # of image.
+  inQName.....U Image AIPS name
+  inQClass....U Image class. 
+  inQSeq......U Image seq. #. 0 => highest.
+  inQDisk.....U AIPS Disk drive # of image.
   BLC.........The Bottom Left-hand pixel of the subarray of the 
               image to be plotted. The value (0,0) means (1,1).
   TRC.........The Top Right-hand pixel of the subarray of the 
@@ -123,18 +142,26 @@ Parameters:
               top right hand corner of the entire image.
   outFile.....Output File name if a FITS file
   outName.....Output image name. default = inName
-  outClass....Output image class.   default='RMSyn'
-  outSeq.......Output image seq. #.  0 => highest unique
-  outDisk.....Disk drive # of output.  0 => highest with
-              space.
+  outClass....Output image class.   default='RMAmp'
+  outSeq......Output image seq. #.  0 => highest unique
+  outDisk.....Disk drive # of output.  
+  doPhase.....Write phase of output in out2Name...
+  out2File....Output File name if a FITS file
+  out2Name....Output image name. default = inName
+  out2Class...Output image class.   default='RMPhs'
+  out2Seq.....Output image seq. #.  0 => highest unique
+  out2Disk....Disk drive # of output. 
   minRMSyn....Minimum RM to evaluate (rad/m^2) 
   maxRMSyn....Maximum RM to evaluate (rad/m^2)
   delRMSyn....RM increment for evaluate (rad/m^2)
-  BeamPlot....If given, the ps file in CWD for the Beam and 
-              restoring function. PLPlot may not work right.
-  doDecon.....Do CLEAN deconvolution/restore on each pixel?
-  minFlux.....Minimum CLEAN level (Jy/bm)
+  doDecon.....Do CLEAN deconvolution in each pixel?
+  doRestor....Restore CLEANed pixels?
+  doBeam......If True & doDecon, write the restoring beam in 
+              real=pixel [1,1], imag=[2,1] of Amp output.
+	      dirty beam real=pixel [3,1], imag=[4,1]
+ minFlux.....Minimum CLEAN level (Jy/bm)
   niter.......Maximum number of CLEAN cycles (max. 1000)
+  gain........Loop gain for CLEAN.
   Alpha.......If != 0.0 then correct Q,U data by spectral index 
               Alpha before computing the Faraday function.
               -0.7 is typical for synchrotron.

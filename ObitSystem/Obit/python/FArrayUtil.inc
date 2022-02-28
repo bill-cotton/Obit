@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitFArray type Utilities              */
 /*                                                                    */
-/*;  Copyright (C) 2005-2019                                          */
+/*;  Copyright (C) 2005-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -73,6 +73,33 @@ extern PyObject* FArrayUtilFit1DGauss (ObitFArray *in, float FWHM, float center,
   PyList_SetItem(o, 5, PyFloat_FromDouble((double)RMS));
   return o;
 } // end  FArrayUtilFit1DGauss
+
+/* Return list with [0]=FWHM, [1] = peak, [2] = cenX, [3]=a, [4]=b, [5]=RMS residual */
+extern PyObject* FArrayUtilFit1DGauss2 (ObitFArray *in, long ngauss, float FWHM, float center, 
+			      float peak, ObitErr *err)
+{
+  ofloat la, lb, RMS;
+  PyObject *o, *list1, *list2, *list3;
+  ofloat lFWHM[15], lcenter[15], lpeak[15];
+  olong i;
+
+  RMS = ObitFArrayUtilFit1DGauss2 (in, ngauss, lFWHM, lcenter, lpeak, &la, &lb, err);
+  // return list
+  o = PyList_New(6);
+  list1 = PyList_New(ngauss);
+  for (i=0; i<ngauss; i++) PyList_SetItem(list1, i, PyFloat_FromDouble((double)lFWHM[i]));
+  PyList_SetItem(o, 0, list1);
+  list2 = PyList_New(ngauss);
+  for (i=0; i<ngauss; i++) PyList_SetItem(list2, i, PyFloat_FromDouble((double)lpeak[i]));
+  PyList_SetItem(o, 1, list2);
+  list3 = PyList_New(ngauss);
+  for (i=0; i<ngauss; i++) PyList_SetItem(list3, i, PyFloat_FromDouble((double)lcenter[i]));
+  PyList_SetItem(o, 2, list3);
+  PyList_SetItem(o, 3, PyFloat_FromDouble((double)la));
+  PyList_SetItem(o, 4, PyFloat_FromDouble((double)lb));
+  PyList_SetItem(o, 5, PyFloat_FromDouble((double)RMS));
+  return o;
+} // end  FArrayUtilFit1DGauss2
 
 // Convolution 
 ObitFArray* FArrayUtilConvolve (ObitFArray *in1, ObitFArray *in2, 
