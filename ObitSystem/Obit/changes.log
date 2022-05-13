@@ -5065,3 +5065,14 @@ Obit/python/CArray.py python/CArray.inc
 Obit/python/OTObit.py
     uvTabSave: default copy HI, AN, FQ tables
 28 Feb 2022 svn 637
+
+Summary: Bug fixes, performance enhancements
+Obit/python/Image.py:
+    Add function PDesc2FITS to create a FITS image from a descriptor
+Obit/tasks/RMSyn.c
+    Bug fixes in writing Beam
+Obit/src/ObitFArray.c
+    AVX512 versions of Sum, Sqrt
+Obit/src/ObitCArray.c
+    AVX512 version of Amp
+13 May 2022 svn 637undo

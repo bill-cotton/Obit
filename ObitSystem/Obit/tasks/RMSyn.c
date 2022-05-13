@@ -731,6 +731,11 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
   refLamb2= (VELIGHT/refFreq)*(VELIGHT/refFreq);  /* Reference lambda^2  */
   refLamb2= 1.0e-6;  /* Reference lambda^2 - no zero divide */
   
+  /* Save refLamb2 for History */
+  Obit_log_error(err, OBIT_InfoErr, "refLambda2=%f ",refLamb2);
+  dim[0] = dim[1] = dim[2] = 1;;
+  ObitInfoListAlwaysPut (myInput, "refLambda2", OBIT_double, dim, &refLamb2);
+
   /* What plane does spectral data start on */
   if (!strncmp(inQImage->myDesc->ctype[inQImage->myDesc->jlocf], "SPECLNMF", 8)) {
     noffset = 2;  /* What plane does spectral data start on */
@@ -929,18 +934,11 @@ void doRMSyn (ObitInfoList *myInput, ObitImage* inQImage, ObitImage* inUImage,
       sincosf((ofloat)(-2.0*RM*(lamb2[i]-refLamb2)), &cmplx[1], &cmplx[0]); /* sin/cos factors */
       ObitCArrayFill(workRot, cmplx);
       ObitCArrayComplex(inQFArrays[i], inUFArrays[i], workPol);
-      /* DEBUG 
-      if (RM==-30.) {
-	cptr = ObitFArrayIndex(inQFArrays[i],pos);
-	cptr[0] /= 0.35; cptr[1] /= 0.35;
-	fprintf (stderr,"%3d %8.4lf %8.4f d %8.4f %8.4f p %8.4f %8.4f\n",
-		 i,-2.0*RM*lamb2[i], specCor[i], cptr[0], cptr[1], cmplx[0], cmplx[1]);
-      }*/
       ObitCArrayMul(workPol, workRot, workPol);
       /* Accumulate */
       ObitCArrayAdd(RMPlanes[iRM-1], workPol, RMPlanes[iRM-1]);
-      ngood++;  /* Count values used */
       sumWt += specCor[i];
+      ngood++;  /* Count values used */
      } /* Loop over planes */
     /* Normalize */
     norm = 1.0 / sumWt;
@@ -1079,16 +1077,16 @@ void Decon (ObitInfoList *myInput, ObitImage* outAImage,
   crestor  = (ocomplex*)Restor->array;
   cbeam    = (ocomplex*)Beam->array;
  for (iRM=1; iRM<=nOutChan; iRM++) {
-    ObitCArrayAmp(RMPlanes[iRM-1], workAmp); /* Extract amplitude */
     if (doBeam) {
-      /* Write amp of restoring function in pixel [1,1], [2,1] */
+      /* Write restoring function in pixels [1,1], [2,1] */
       j = iRM-1+nOutChan/2;
-      workAmp->array[0] = crestor[j].real;
-      workAmp->array[1] = crestor[j].imag;
+      RMPlanes[iRM-1]->array[0] = crestor[j].real;
+      RMPlanes[iRM-1]->array[1] = crestor[j].imag;
       /* also write Dirty Beam as [3,1], [4,1] */
-      workAmp->array[2] = cbeam[j].real;
-      workAmp->array[3] = cbeam[j].imag;
+      RMPlanes[iRM-1]->array[2] = cbeam[j].real;
+      RMPlanes[iRM-1]->array[3] = cbeam[j].imag;
     }
+    ObitCArrayAmp(RMPlanes[iRM-1], workAmp); /* Extract amplitude */
     plane[0] = iRM;  /* Select correct plane */
     ObitImagePutPlane (outAImage, workAmp->array, plane, err);
     /* Also phase? */
@@ -1125,7 +1123,7 @@ void RMSynHistory (ObitInfoList* myInput, ObitImage* inImage,
     "inUFile",  "inUDisk", "inUName", "inUClass", "inUSeq", "Alpha",
     "BLC",  "TRC", "minRMSyn", "maxRMSyn", "delRMSyn", "nThreads",
     "niter", "gain", "minFlux", "doDecon", "doRestor", "doBeam", "BeamSig", 
-    "doPhase", 
+    "doPhase", "refLambda2", 
     NULL};
   gchar *routine = "RMSynHistory";
 
@@ -1265,16 +1263,11 @@ void MakeBeam(ObitInfoList* myInput, ObitImage* inImage, ObitErr* err)
 	  (URMS[i]>uMedian+2*uSigma) || (URMS[i]<minU)) continue;
       sincosf((ofloat)(-2.0*RM*(lamb2[i]-refLamb2)), &SinCos.imag, &SinCos.real); /* sin/cos factors */
       /* Set real 1* specCor */
-      /*COMPLEX_SET(dval, specCor[i], 0.);*/
-      COMPLEX_SET(dval, 1.0, 0.);
+      /* DEBUG COMPLEX_SET(dval, 1.0, 0.);*/
+      COMPLEX_SET(dval, specCor[i], 0.);
       COMPLEX_MUL2(chVal, dval, SinCos);
       COMPLEX_ADD2(accum, accum, chVal);
       sumwt += specCor[i];  /* Spectral index weighting */
-      /* DEBUG 
-      if (RM==-30.) {
-	fprintf (stderr, "%3d %8.4lf %8.4f d %8.4f %8.4f p %8.4f %8.4f %8.4f %8.4f \n",
-		 i,-2.0*RM*lamb2[i], specCor[i], dval.real, dval.imag, SinCos.real, SinCos.imag, accum.real, accum.imag);
-      }*/
     } /* end loop over input */
     Beam->array[2*iRM]   = accum.real/sumwt; 
     Beam->array[2*iRM+1] = accum.imag/sumwt; 

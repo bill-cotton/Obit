@@ -23,7 +23,7 @@ Additional  Functions are available in ImageUtil.
 # Python/Obit Astronomical Image class
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2020
+#  Copyright (C) 2004-2022
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -1797,6 +1797,49 @@ def PFArray2FITS (inArray, outFile, err, outDisk=1, oDesc=None ):
     outImage.Close(err)
     return outImage
     # end PFArray2FITS
+
+def PDesc2FITS (outDesc, outFile, err, outDisk=0):
+    """
+    Create a FITS image based on an ImageDesc
+    
+    Blank fills image
+    Returns image object
+
+    * outDesc   = ImageDescriptor to be written
+    * outFile   = Name of FITS file
+    * outDisk   = FITS disk number
+    * err       = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not ImageDesc.PIsA(outDesc):
+        raise TypeError("outDesc MUST be a Python Obit ImageDesc")
+    if not err.IsA():
+        raise TypeError("err MUST be an OErr")
+    #
+    # Create image
+    outImage  = Image.newObit(outFile, outFile, outDisk, 0, err)
+    OErr.printErrMsg(err, "Error creating FITS image "+outFile)
+    #
+    # Get array info
+    naxis  = outDesc.Dict['naxis']
+    nax    = outDesc.Dict['inaxes'][0:2]
+    nplane = outDesc.Dict['inaxes'][2]
+    #
+    outImage.Desc.Dict = outDesc.Dict
+    #
+    # Dummy plane blank filled
+    array = FArray.FArray("dummy",nax)
+    FArray.PFill(array, FArray.fblank)
+    # Write output image
+    outImage.Open(Image.WRITEONLY, err)
+    for ip in range(1,nplane+1):
+        outImage.PutPlane(array, [ip,1,1,1,1] , err)
+        
+    outImage.Close(err)
+    OErr.printErrMsg(err, "Error creating FITS image "+outFile)
+    return outImage
+    # end PDesc2FITS
 
 def PSwapAxis (inImage, err, ax1=3, ax2=4):
     """

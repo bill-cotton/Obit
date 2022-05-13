@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2021                                          */
+/*;  Copyright (C) 2003-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -91,12 +91,14 @@ typedef struct {
   ObitCArray *in2;
   /* Output ObitCArray */
   ObitCArray *out;
+  /* Output ObitFArray */
+  ObitFArray *fout;
   /* First element (1-rel) number */
   olong        first;
   /* Highest element (1-rel) number */
   olong        last;
   /* Function dependent arguments */
-  gpointer arg1, arg2, arg3, arg4, arg5, arg6, arg7;
+  ofloat *arg1, *arg2,* arg3, *arg4, *arg5, *arg6, *arg7;
   /* Return value */
   gfloat value;
   /* Return position */
@@ -134,9 +136,18 @@ static gpointer ThreadCAMul (gpointer arg);
 /** Private: Threaded Divide */
 static gpointer ThreadCADiv (gpointer arg);
 
+/** Private: Threaded Fill */
+static gpointer ThreadCAFill (gpointer arg);
+
+/** Private: Threaded Amplitude */
+static gpointer ThreadCAAmp (gpointer arg);
+
+/** Private: Threaded Phase */
+static gpointer ThreadCAPhase (gpointer arg);
+
 /** Private: Make Threaded args */
 static olong MakeCAFuncArgs (ObitThread *thread, ObitCArray *in,
-			     ObitCArray *in2, ObitCArray *out,
+			     ObitCArray *in2, ObitCArray *out, ObitFArray *fout,
 			     olong larg1, olong larg2, olong larg3, 
 			     olong larg4, olong larg5, 
 			     olong larg6, olong larg7, 
@@ -419,7 +430,7 @@ ofloat ObitCArrayMaxAbs (ObitCArray *in, olong *pos)
   maxCell = -1;
   maxVal = -1.0E25;
   data = in->array;
-  for (i=0; i<in->arraySize; i+=2) 
+  for (i=0; i<2*in->arraySize; i+=2) 
     {
       if ((data[i]!=fblank) && (data[i+1]!=fblank)) {
 	val = data[i]*data[i] + data[i+1]*data[i+1];
@@ -461,7 +472,7 @@ ofloat ObitCArrayMin (ObitCArray *in, olong *pos)
   minCell = -1;
   minVal = 1.0E25;
   data = in->array;
-  for (i=0; i<in->arraySize; i+=2) 
+  for (i=0; i<2*in->arraySize; i+=2) 
     {
       if ((data[i]!=fblank) && (data[i+1]!=fblank)) {
 	val = MIN (data[i], data[i+1]);
@@ -521,7 +532,7 @@ void ObitCArrayConjg (ObitCArray* in)
  * \param in      Input object with data
  * \param cmpx    Scalar value as  (real,imaginary)
  */
-void ObitCArrayFill (ObitCArray* in, ofloat cmpx[2])
+void ObitCArrayFillX (ObitCArray* in, ofloat cmpx[2])
 {
   olong i;
 
@@ -533,6 +544,61 @@ void ObitCArrayFill (ObitCArray* in, ofloat cmpx[2])
     in->array[i]   = cmpx[0];
     in->array[i+1] = cmpx[1];
   }
+} /* end ObitCArrayFillX */
+
+/**
+ * Fill the elements of an array with a complex scalar
+ * in = cmpx
+ * \param in      Input object with data
+ * \param cmpx    Scalar value as  (real,imaginary)
+ */
+void ObitCArrayFill (ObitCArray* in, ofloat cmpx[2])
+{
+  olong i;
+  olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
+  CAFuncArg **threadArgs;
+
+  /* error checks */
+  g_assert (ObitIsA(in, &myClassInfo));
+  g_assert (in->array != NULL);
+
+  /* Initialize Threading */
+  nThreads = MakeCAFuncArgs (in->thread, in, NULL, NULL, NULL, 2, 0, 0, 0, 0, 0, 0,
+			     &threadArgs);
+  
+  /* Divide up work */
+  nElem = in->arraySize;
+  /* At least 50,000 per thread */
+  nTh = MAX (1, MIN((olong)(0.5+nElem/50000.),nThreads));
+  nElemPerThread = nElem/nTh;
+  if (nElem<50000) {nElemPerThread = nElem; nTh = 1;}
+  loElem = 1;
+  hiElem = nElemPerThread;
+  hiElem = MIN (hiElem, nElem);
+
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hiElem = nElem;  /* Make sure do all */
+    threadArgs[i]->first   = loElem;
+    threadArgs[i]->last    = hiElem;
+    threadArgs[i]->arg1[0] = cmpx[0];
+    threadArgs[i]->arg1[1] = cmpx[1];
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which Elem */
+    loElem += nElemPerThread;
+    hiElem += nElemPerThread;
+    hiElem = MIN (hiElem, nElem);
+  }
+
+  /* Do operation */
+  ObitThreadIterator (in->thread, nTh, 
+		      (ObitThreadFunc)ThreadCAFill,
+		      (gpointer**)threadArgs);
+
+  /* Free local objects */
+  KillCAFuncArgs(nThreads, threadArgs);
+  
 } /* end ObitCArrayFill */
 
 /**
@@ -649,11 +715,11 @@ void ObitCArrayAdd (ObitCArray* in1, ObitCArray* in2, ObitCArray* out)
   g_assert (ObitCArrayIsCompatable(in1, out));
 
   /* Initialize Threading */
-  nThreads = MakeCAFuncArgs (in1->thread, in1, in2, out, 0, 0, 0, 0, 0, 0, 0,
+  nThreads = MakeCAFuncArgs (in1->thread, in1, in2, out, NULL, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work - pretend floats with 2 entries per cell*/
-  nElem = 2 * in1->arraySize;
+  nElem = 2*in1->arraySize;
   /* At least 100,000 per thread */
   nTh = MAX (1, MIN((olong)(0.5+nElem/100000.),nThreads));
   nElemPerThread = nElem/nTh;
@@ -705,7 +771,7 @@ void ObitCArraySub (ObitCArray* in1, ObitCArray* in2, ObitCArray* out)
   g_assert (ObitCArrayIsCompatable(in1, out));
 
   /* Initialize Threading */
-  nThreads = MakeCAFuncArgs (in1->thread, in1, in2, out, 0, 0, 0, 0, 0, 0, 0,
+  nThreads = MakeCAFuncArgs (in1->thread, in1, in2, out, NULL, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work  - pretend floats with 2 entries per cell */
@@ -761,7 +827,7 @@ void ObitCArrayMul (ObitCArray* in1, ObitCArray* in2, ObitCArray* out)
   g_assert (ObitCArrayIsCompatable(in1, out));
 
   /* Initialize Threading */
-  nThreads = MakeCAFuncArgs (in1->thread, in1, in2, out, 0, 0, 0, 0, 0, 0, 0,
+  nThreads = MakeCAFuncArgs (in1->thread, in1, in2, out, NULL, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -817,7 +883,7 @@ void ObitCArrayDiv (ObitCArray* in1, ObitCArray* in2, ObitCArray* out)
   g_assert (ObitCArrayIsCompatable(in1, out));
 
   /* Initialize Threading */
-  nThreads = MakeCAFuncArgs (in1->thread, in1, in2, out, 0, 0, 0, 0, 0, 0, 0,
+  nThreads = MakeCAFuncArgs (in1->thread, in1, in2, out, NULL, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -872,7 +938,7 @@ void ObitCArrayAddX (ObitCArray* in1, ObitCArray* in2, ObitCArray* out)
 
   for (i=0; i<2*in1->arraySize; i++)
     out->array[i] = in1->array[i] + in2->array[i];
-} /* end ObitCArrayAdd */
+} /* end ObitCArrayAddX */
 
 /**
  *  Subtract corresponding elements of the arrays.
@@ -1245,6 +1311,58 @@ void ObitCArrayImag (ObitCArray* in, ObitFArray* out)
  */
 void ObitCArrayAmp (ObitCArray* in, ObitFArray* out)
 {
+  olong i, nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
+  CAFuncArg **threadArgs;
+
+  /* error checks */
+  g_assert (ObitIsA(in, &myClassInfo));
+  g_assert (in->array != NULL);
+
+  /* Initialize Threading */
+  nThreads = MakeCAFuncArgs (in->thread, in, NULL, NULL, out, 0, 0, 0, 0, 0, 0, 0,
+			     &threadArgs);
+  
+  /* Divide up work */
+  nElem = in->arraySize;
+  /* At least 10,000 per thread */
+  nTh = MAX (1, MIN((olong)(0.5+nElem/10000.),nThreads));
+  nElemPerThread = nElem/nTh;
+  if (nElem<10000) {nElemPerThread = nElem; nTh = 1;}
+  loElem = 1;
+  hiElem = nElemPerThread;
+  hiElem = MIN (hiElem, nElem);
+
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hiElem = nElem;  /* Make sure do all */
+    threadArgs[i]->first   = loElem;
+    threadArgs[i]->last    = hiElem;
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which Elem */
+    loElem += nElemPerThread;
+    hiElem += nElemPerThread;
+    hiElem = MIN (hiElem, nElem);
+  }
+
+  /* Do operation */
+  ObitThreadIterator (in->thread, nTh, 
+		      (ObitThreadFunc)ThreadCAAmp,
+		      (gpointer**)threadArgs);
+
+  /* Free local objects */
+  KillCAFuncArgs(nThreads, threadArgs);
+  
+}  /* end ObitCArrayAmp */
+
+/**
+ *  Return amplitude of elements of a CArray
+ *  out = sqrt(real(in)^2 + imag(in)^2)
+ * \param in  Input CArray
+ * \param out Output FArray
+ */
+void ObitCArrayAmpX (ObitCArray* in, ObitFArray* out)
+{
   olong i, j;
   ofloat fblank = ObitMagicF();
 
@@ -1264,7 +1382,7 @@ void ObitCArrayAmp (ObitCArray* in, ObitFArray* out)
     }
     j++;
   }
-}  /* end ObitCArrayAmp */
+}  /* end ObitCArrayAmpX */
 
 /**
  *  Return phase (radians) of elements of a CArray
@@ -1273,6 +1391,58 @@ void ObitCArrayAmp (ObitCArray* in, ObitFArray* out)
  * \param out Output FArray
  */
 void ObitCArrayPhase (ObitCArray* in, ObitFArray* out)
+{
+  olong i, nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
+  CAFuncArg **threadArgs;
+
+  /* error checks */
+  g_assert (ObitIsA(in, &myClassInfo));
+  g_assert (in->array != NULL);
+
+  /* Initialize Threading */
+  nThreads = MakeCAFuncArgs (in->thread, in, NULL, NULL, out, 0, 0, 0, 0, 0, 0, 0,
+			     &threadArgs);
+  
+  /* Divide up work */
+  nElem = in->arraySize;
+  /* At least 10,000 per thread */
+  nTh = MAX (1, MIN((olong)(0.5+nElem/10000.),nThreads));
+  nElemPerThread = nElem/nTh;
+  if (nElem<10000) {nElemPerThread = nElem; nTh = 1;}
+  loElem = 1;
+  hiElem = nElemPerThread;
+  hiElem = MIN (hiElem, nElem);
+
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hiElem = nElem;  /* Make sure do all */
+    threadArgs[i]->first   = loElem;
+    threadArgs[i]->last    = hiElem;
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which Elem */
+    loElem += nElemPerThread;
+    hiElem += nElemPerThread;
+    hiElem = MIN (hiElem, nElem);
+  }
+
+  /* Do operation */
+  ObitThreadIterator (in->thread, nTh, 
+		      (ObitThreadFunc)ThreadCAPhase,
+		      (gpointer**)threadArgs);
+
+  /* Free local objects */
+  KillCAFuncArgs(nThreads, threadArgs);
+  
+}  /* end ObitCArrayPhase */
+
+/**
+ *  Return phase (radians) of elements of a CArray
+ *  out = atan2(imag(in), real(in))
+ * \param in  Input CArray
+ * \param out Output FArray
+ */
+void ObitCArrayPhaseX (ObitCArray* in, ObitFArray* out)
 {
   olong i, j;
   ofloat fblank = ObitMagicF();
@@ -1292,7 +1462,7 @@ void ObitCArrayPhase (ObitCArray* in, ObitFArray* out)
     }
     j++;
   }
-}  /* end ObitCArrayPhase */
+}  /* end ObitCArrayPhaseX */
 
 /**
  * In-place rearrangement of a half plane center-at-the edges array to 
@@ -1929,8 +2099,8 @@ static gpointer ThreadCASub (gpointer arg)
  * \li in       ObitCArray to work on
  * \li in2      2nd ObitCArray to work on
  * \li out      Output ObitCArray
- * \li first    First element (1-rel) number
- * \li last     Highest element (1-rel) number
+ * \li first    First complex element (1-rel) number
+ * \li last     Highest complex element (1-rel) number
  * \li ithread  thread number, <0 -> no threading
  * \return NULL
  */
@@ -2065,7 +2235,7 @@ static gpointer ThreadCADiv (gpointer arg)
   if (hiElem<loElem) goto finish;
 
 
-  for (i=loElem; i<hiElem; i+=2) {
+  for (i=loElem; i<hiElem; i++) {
     tr1 = in1->array[2*i];
     ti1 = in1->array[2*i+1];
     tr2 = in2->array[2*i];
@@ -2088,24 +2258,170 @@ static gpointer ThreadCADiv (gpointer arg)
 } /* end ThreadCADiv */
 
 /**
+ * scalar fill portions a CArray
+ * Callable as thread
+ * \param arg Pointer to CAFuncArg argument with elements:
+ * \li in       ObitCArray to work on
+ * \li arg1     Complex scalar as real, imag
+ * \li first    First complex element (1-rel) number
+ * \li last     Highest complex element (1-rel) number
+ * \li ithread  thread number, <0 -> no threading
+ * \return NULL
+ */
+static gpointer ThreadCAFill (gpointer arg)
+{
+  /* Get arguments from structure */
+  CAFuncArg *largs = (CAFuncArg*)arg;
+  ObitCArray *in        = largs->in;
+  ofloat     *cmpx      = largs->arg1;
+  olong      loElem     = largs->first-1;
+  olong      hiElem     = largs->last;
+
+  olong i;
+  if (hiElem<loElem) goto finish;
+
+  for (i=loElem; i<hiElem; i++) {
+    in->array[2*i]   = cmpx[0];
+    in->array[2*i+1] = cmpx[1];
+
+  }
+  /* Indicate completion */
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (largs->thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+} /* end ThreadCAFill */
+
+/**
+ * Write amplitudes of a complex array as an FArray
+ * Magic value blanking supported.
+ * Callable as thread
+ * \param arg Pointer to CAFuncArg argument with elements:
+ * \li in       ObitCArray to work on
+ * \li fout     Output ObitFArray
+ * \li first    First element (1-rel) number
+ * \li last     Highest element (1-rel) number
+ * \li ithread  thread number, <0 -> no threading
+ * \return NULL
+ */
+static gpointer ThreadCAAmp (gpointer arg)
+{
+  /* Get arguments from structure */
+  CAFuncArg *largs = (CAFuncArg*)arg;
+  ObitCArray *in1       = largs->in;
+  ObitFArray *fout      = largs->fout;
+  olong      loElem     = largs->first-1;
+  olong      hiElem     = largs->last;
+
+  olong i, ilast;
+  ofloat  tr1, ti1, fblank = ObitMagicF();
+#if HAVE_AVX512==1
+  CV16SF vr, vi, vb, vamp;
+  IV16SF vindxr, vindxi;
+  MASK16 msk1, msk2;
+#endif
+
+if (hiElem<loElem) goto finish;
+
+#if HAVE_AVX512==1  /* Vector length 16 */
+  vb.v     = _mm512_set1_ps(fblank);  /* vector of blanks */
+  vindxr.v = _mm512_set_epi32 (30,28,26,24,22,20,18,16,14,12,10,8,6,4,2,0); /* Reals*/
+  vindxi.v = _mm512_set_epi32 (31,29,27,25,23,21,19,17,15,13,11,9,7,5,3,1); /* Imags */
+  /* Do blocks of 16 as vector */
+  for (i=loElem; i<hiElem-16; i+=16) {
+    vr.v  = _mm512_i32gather_ps (vindxr.v, &in1->array[2*i], 4);/* Load Reals */
+    msk1  = _mm512_cmp_ps_mask(vr.v, vb.v, _CMP_EQ_OQ);         /* find blanks */
+    vi.v  = _mm512_i32gather_ps (vindxi.v, &in1->array[2*i], 4);/* Load Imaginaries */
+    msk2  = _mm512_cmp_ps_mask(vi.v, vb.v, _CMP_EQ_OQ);         /* find blanks */
+    vr.v  = _mm512_mul_ps (vr.v, vr.v);                         /* Real squared */
+    vi.v  = _mm512_mul_ps (vi.v, vi.v);                         /* Imag squared */
+    vamp.v  = _mm512_add_ps(vr.v, vi.v);                        /* R^2 + i^2 */
+    vamp.v  = _mm512_sqrt_ps(vamp.v);                            /* sqrt(R^2 + i^2) */
+    vamp.v  = _mm512_mask_blend_ps(msk1,vamp.v,vb.v);           /* replace blanks real */
+    vamp.v  = _mm512_mask_blend_ps(msk2,vamp.v,vb.v);           /* replace blanks imag */
+    _mm512_storeu_ps(&fout->array[i], vamp.v);                   /* Save */
+  }
+  ilast = i;  /* How far did I get? */
+#else /* Scalar */
+  ilast = loElem;  /* Do all */
+#endif
+  for (i=ilast; i<hiElem; i++) {
+    tr1 = in1->array[2*i];
+    ti1 = in1->array[2*i+1];
+    if ((tr1!=fblank) && (ti1!=fblank)) {
+      fout->array[i] = sqrt (tr1*tr1 + ti1*ti1);
+    } else fout->array[i] = fblank;
+  } /* end loop */
+
+  /* Indicate completion */
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (largs->thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+} /* end ThreadCAAmp */
+
+/**
+ * Write phasess of a complex array as an FArray
+ * Magic value blanking supported.
+ * Callable as thread
+ * \param arg Pointer to CAFuncArg argument with elements:
+ * \li in       ObitCArray to work on
+ * \li fout     Output ObitFArray
+ * \li first    First element (1-rel) number
+ * \li last     Highest element (1-rel) number
+ * \li ithread  thread number, <0 -> no threading
+ * \return NULL
+ */
+static gpointer ThreadCAPhase (gpointer arg)
+{
+  /* Get arguments from structure */
+  CAFuncArg *largs = (CAFuncArg*)arg;
+  ObitCArray *in1       = largs->in;
+  ObitFArray *fout      = largs->fout;
+  olong      loElem     = largs->first-1;
+  olong      hiElem     = largs->last;
+
+  olong i;
+  ofloat  tr1, ti1, fblank = ObitMagicF();
+  if (hiElem<loElem) goto finish;
+
+  for (i=loElem; i<hiElem; i++) {
+    tr1 = in1->array[2*i];
+    ti1 = in1->array[2*i+1];
+    if ((tr1!=fblank) && (ti1!=fblank)) {
+      fout->array[i] = atan2 (ti1, tr1+1.0e-20);
+    } else fout->array[i] = fblank;
+  } /* end loop */
+
+  /* Indicate completion */
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (largs->thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+} /* end ThreadCAPhase */
+
+/**
  * Make arguments for a Threaded ThreadCAFunc?
  * \param thread     ObitThread object to be used
  * \param in         CA to be operated on
  * \param in2        2nd CA to be operated on
  * \param out        output CA
- * \param larg1      Length of function dependent arg1 in bytes
- * \param larg2      Length of function dependent arg2 in bytes
- * \param larg3      Length of function dependent arg3 in bytes
- * \param larg4      Length of function dependent arg4 in bytes
- * \param larg5      Length of function dependent arg5 in bytes
- * \param larg6      Length of function dependent arg6 in bytes
- * \param larg7      Length of function dependent arg7 in bytes
+ * \param larg1      Length of function dependent arg1 in floats
+ * \param larg2      Length of function dependent arg2 in floats
+ * \param larg3      Length of function dependent arg3 in floats
+ * \param larg4      Length of function dependent arg4 in floats
+ * \param larg5      Length of function dependent arg5 in floats
+ * \param larg6      Length of function dependent arg6 in floats
+ * \param larg7      Length of function dependent arg7 in floats
  * \param ThreadArgs[out] Created array of CAFuncArg, 
  *                   delete with KillCAFuncArgs
  * \return number of elements in args (number of allowed threads).
  */
 static olong MakeCAFuncArgs (ObitThread *thread, ObitCArray *in,
-			     ObitCArray *in2, ObitCArray *out,
+			     ObitCArray *in2, ObitCArray *out, ObitFArray *fout, 
 			     olong larg1, olong larg2, olong larg3, 
 			     olong larg4, olong larg5,
 			     olong larg6, olong larg7, 
@@ -2129,23 +2445,25 @@ static olong MakeCAFuncArgs (ObitThread *thread, ObitCArray *in,
     else (*ThreadArgs)[i]->in2   = NULL;
     if (out) (*ThreadArgs)[i]->out   = ObitCArrayRef(out);
     else (*ThreadArgs)[i]->out = NULL;
+    if (fout) (*ThreadArgs)[i]->fout   = ObitFArrayRef(fout);
+    else (*ThreadArgs)[i]->fout = NULL;
     (*ThreadArgs)[i]->first = 1;
     (*ThreadArgs)[i]->last  = in->arraySize;
     (*ThreadArgs)[i]->value = 0.0;
     for (j=0; j<MAXCARRAYDIM; j++) (*ThreadArgs)[i]->pos[j] = 0;
-    if (larg1>0) (*ThreadArgs)[i]->arg1 = g_malloc0(larg1);
+    if (larg1>0) (*ThreadArgs)[i]->arg1 = g_malloc0(larg1*sizeof(float));
     else (*ThreadArgs)[i]->arg1 = NULL;
-    if (larg2>0) (*ThreadArgs)[i]->arg2 = g_malloc0(larg2);
+    if (larg2>0) (*ThreadArgs)[i]->arg2 = g_malloc0(larg2*sizeof(float));
     else (*ThreadArgs)[i]->arg2 = NULL;
-    if (larg3>0) (*ThreadArgs)[i]->arg3 = g_malloc0(larg3);
+    if (larg3>0) (*ThreadArgs)[i]->arg3 = g_malloc0(larg3*sizeof(float));
     else (*ThreadArgs)[i]->arg3 = NULL;
-    if (larg4>0) (*ThreadArgs)[i]->arg4 = g_malloc0(larg4);
+    if (larg4>0) (*ThreadArgs)[i]->arg4 = g_malloc0(larg4*sizeof(float));
     else (*ThreadArgs)[i]->arg4 = NULL;
-    if (larg5>0) (*ThreadArgs)[i]->arg5 = g_malloc0(larg5);
+    if (larg5>0) (*ThreadArgs)[i]->arg5 = g_malloc0(larg5*sizeof(float));
     else (*ThreadArgs)[i]->arg5 = NULL;
-    if (larg5>0) (*ThreadArgs)[i]->arg6 = g_malloc0(larg6);
+    if (larg5>0) (*ThreadArgs)[i]->arg6 = g_malloc0(larg6*sizeof(float));
     else (*ThreadArgs)[i]->arg6 = NULL;
-    if (larg5>0) (*ThreadArgs)[i]->arg7 = g_malloc0(larg7);
+    if (larg5>0) (*ThreadArgs)[i]->arg7 = g_malloc0(larg7*sizeof(float));
     else (*ThreadArgs)[i]->arg7 = NULL;
     (*ThreadArgs)[i]->ithread  = i;
   }
@@ -2170,6 +2488,7 @@ static void KillCAFuncArgs (olong nargs, CAFuncArg **ThreadArgs)
       if (ThreadArgs[i]->in)   ObitCArrayUnref(ThreadArgs[i]->in);
       if (ThreadArgs[i]->in2)  ObitCArrayUnref(ThreadArgs[i]->in2);
       if (ThreadArgs[i]->out)  ObitCArrayUnref(ThreadArgs[i]->out);
+      if (ThreadArgs[i]->fout) ObitFArrayUnref(ThreadArgs[i]->fout);
       if (ThreadArgs[i]->arg1) g_free(ThreadArgs[i]->arg1);
       if (ThreadArgs[i]->arg2) g_free(ThreadArgs[i]->arg2);
       if (ThreadArgs[i]->arg3) g_free(ThreadArgs[i]->arg3);

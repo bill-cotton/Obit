@@ -2079,14 +2079,32 @@ void ObitFArrayCos (ObitFArray* in)
  */
 void ObitFArraySqrt (ObitFArray* in)
 {
-  olong i;
+  olong i, ilast;
   ofloat fblank = ObitMagicF();
 
-   /* error checks */
+#if HAVE_AVX512==1
+  CV16SF vr, vb;
+  MASK16 msk;
+#endif
+
+ /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));
   g_assert (in->array != NULL);
 
-  for (i=0; i<in->arraySize; i++) 
+#if HAVE_AVX512==1  /* Vector length 16 */
+  vb.v     = _mm512_set1_ps(fblank);  /* vector of blanks */
+  for (i=0; i<in->arraySize-16; i+=16) {
+    vr.v  = _mm512_loadu_ps (&in->array[i]);            /* Load Reals */
+    msk   = _mm512_cmp_ps_mask(vr.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    vr.v  = _mm512_sqrt_ps(vr.v);                       /* sqrt */
+    vr.v  = _mm512_mask_blend_ps(msk,vr.v,vb.v);        /* replace blanks */
+    _mm512_storeu_ps(&in->array[i], vr.v);             /* Save */
+  } /* end vector loop */
+  ilast = i;  /* How far did I get? */
+#else /* Scalar */
+  ilast = 0;  /* Do all */
+#endif
+  for (i=ilast; i<in->arraySize; i++) 
     if (in->array[i]!=fblank) 
       in->array[i] = sqrt(MAX(1.0e-20, in->array[i]));
 } /* end  ObitFArraySqrt */
@@ -2099,13 +2117,32 @@ void ObitFArraySqrt (ObitFArray* in)
  */
 ofloat ObitFArraySum (ObitFArray* in)
 {
-  olong i;
+  olong i, ilast;
   ofloat out = 0.0, fblank = ObitMagicF();
 
+#if HAVE_AVX512==1
+  CV16SF vr, vb, vz;
+  MASK16 msk;
+#endif
    /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));
   g_assert (in->array != NULL);
 
+#if HAVE_AVX512==1  /* Vector length 16 */
+  vb.v     = _mm512_set1_ps(fblank);     /* vector of blanks */
+  vz.v     = _mm512_setzero_ps();        /* vector of zeroes */
+  for (i=0; i<in->arraySize-16; i+=16) {
+    vr.v  = _mm512_loadu_ps (&in->array[i]);            /* Load Reals */
+    msk   = _mm512_cmp_ps_mask(vr.v, vb.v, _CMP_EQ_OQ); /* find blanks */
+    vr.v  = _mm512_sqrt_ps(vr.v);                       /* sqrt */
+    vr.v  = _mm512_mask_blend_ps(msk,vr.v,vz.v);        /* replace blanks with zero */
+    out += _mm512_reduce_add_ps(vr.v);                  /* Sum */
+  } /* end vector loop */
+  ilast = i;  /* How far did I get? */
+#else /* Scalar */
+  ilast = 0;  /* Do all */
+#endif
+  for (i=ilast; i<in->arraySize; i++) 
   for (i=0; i<in->arraySize; i++) 
     if (in->array[i]!=fblank) out += in->array[i];
 
