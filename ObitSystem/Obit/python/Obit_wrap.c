@@ -5074,13 +5074,20 @@ extern PyObject* FArrayUtilFit1DGauss (ObitFArray *in, float FWHM, float center,
 } // end  FArrayUtilFit1DGauss
 
 /* Return list with [0]=FWHM, [1] = peak, [2] = cenX, [3]=a, [4]=b, [5]=RMS residual */
-extern PyObject* FArrayUtilFit1DGauss2 (ObitFArray *in, long ngauss, float FWHM, float center, 
-			      float peak, ObitErr *err)
+extern PyObject* FArrayUtilFit1DGauss2 (ObitFArray *in, long ngauss, float *FWHM, float *center, 
+			      float *peak, ObitErr *err)
 {
   ofloat la, lb, RMS;
   PyObject *o, *list1, *list2, *list3;
   ofloat lFWHM[15], lcenter[15], lpeak[15];
   olong i;
+
+  // Copy initial values
+  for (i=0; i<ngauss; i++) {
+    lFWHM[i]   = (ofloat)FWHM[i];
+    lcenter[i] = (ofloat)center[i];
+    lpeak[i]   = (ofloat)peak[i];
+  }
 
   RMS = ObitFArrayUtilFit1DGauss2 (in, ngauss, lFWHM, lcenter, lpeak, &la, &lb, err);
   // return list
@@ -27240,20 +27247,14 @@ SWIGINTERN PyObject *_wrap_FArrayUtilFit1DGauss2(PyObject *SWIGUNUSEDPARM(self),
   PyObject *resultobj = 0;
   ObitFArray *arg1 = (ObitFArray *) 0 ;
   long arg2 ;
-  float arg3 ;
-  float arg4 ;
-  float arg5 ;
+  float *arg3 = (float *) 0 ;
+  float *arg4 = (float *) 0 ;
+  float *arg5 = (float *) 0 ;
   ObitErr *arg6 = (ObitErr *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   long val2 ;
   int ecode2 = 0 ;
-  float val3 ;
-  int ecode3 = 0 ;
-  float val4 ;
-  int ecode4 = 0 ;
-  float val5 ;
-  int ecode5 = 0 ;
   void *argp6 = 0 ;
   int res6 = 0 ;
   PyObject *swig_obj[6] ;
@@ -27270,21 +27271,66 @@ SWIGINTERN PyObject *_wrap_FArrayUtilFit1DGauss2(PyObject *SWIGUNUSEDPARM(self),
     SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "FArrayUtilFit1DGauss2" "', argument " "2"" of type '" "long""'");
   } 
   arg2 = (long)(val2);
-  ecode3 = SWIG_AsVal_float(swig_obj[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "FArrayUtilFit1DGauss2" "', argument " "3"" of type '" "float""'");
-  } 
-  arg3 = (float)(val3);
-  ecode4 = SWIG_AsVal_float(swig_obj[3], &val4);
-  if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "FArrayUtilFit1DGauss2" "', argument " "4"" of type '" "float""'");
-  } 
-  arg4 = (float)(val4);
-  ecode5 = SWIG_AsVal_float(swig_obj[4], &val5);
-  if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "FArrayUtilFit1DGauss2" "', argument " "5"" of type '" "float""'");
-  } 
-  arg5 = (float)(val5);
+  {
+    if (PyList_Check(swig_obj[2])) {
+      int size = PyList_Size(swig_obj[2]);
+      int i = 0;
+      arg3 = (float*) malloc((size+1)*sizeof(float));
+      for (i = 0; i < size; i++) {
+        PyObject *o = PyList_GetItem(swig_obj[2],i);
+        if (PyFloat_Check(o))
+        arg3[i] = (float)((PyFloatObject*)o)->ob_fval;
+        else {
+          PyErr_SetString(PyExc_TypeError,"list must contain floats");
+          free(arg3);
+          return NULL;
+        }
+      }
+    } else {
+      PyErr_SetString(PyExc_TypeError,"not a list");
+      return NULL;
+    }
+  }
+  {
+    if (PyList_Check(swig_obj[3])) {
+      int size = PyList_Size(swig_obj[3]);
+      int i = 0;
+      arg4 = (float*) malloc((size+1)*sizeof(float));
+      for (i = 0; i < size; i++) {
+        PyObject *o = PyList_GetItem(swig_obj[3],i);
+        if (PyFloat_Check(o))
+        arg4[i] = (float)((PyFloatObject*)o)->ob_fval;
+        else {
+          PyErr_SetString(PyExc_TypeError,"list must contain floats");
+          free(arg4);
+          return NULL;
+        }
+      }
+    } else {
+      PyErr_SetString(PyExc_TypeError,"not a list");
+      return NULL;
+    }
+  }
+  {
+    if (PyList_Check(swig_obj[4])) {
+      int size = PyList_Size(swig_obj[4]);
+      int i = 0;
+      arg5 = (float*) malloc((size+1)*sizeof(float));
+      for (i = 0; i < size; i++) {
+        PyObject *o = PyList_GetItem(swig_obj[4],i);
+        if (PyFloat_Check(o))
+        arg5[i] = (float)((PyFloatObject*)o)->ob_fval;
+        else {
+          PyErr_SetString(PyExc_TypeError,"list must contain floats");
+          free(arg5);
+          return NULL;
+        }
+      }
+    } else {
+      PyErr_SetString(PyExc_TypeError,"not a list");
+      return NULL;
+    }
+  }
   res6 = SWIG_ConvertPtr(swig_obj[5], &argp6,SWIGTYPE_p_ObitErr, 0 |  0 );
   if (!SWIG_IsOK(res6)) {
     SWIG_exception_fail(SWIG_ArgError(res6), "in method '" "FArrayUtilFit1DGauss2" "', argument " "6"" of type '" "ObitErr *""'"); 
@@ -27292,8 +27338,26 @@ SWIGINTERN PyObject *_wrap_FArrayUtilFit1DGauss2(PyObject *SWIGUNUSEDPARM(self),
   arg6 = (ObitErr *)(argp6);
   result = (PyObject *)FArrayUtilFit1DGauss2(arg1,arg2,arg3,arg4,arg5,arg6);
   resultobj = result;
+  {
+    free((float *) arg3);
+  }
+  {
+    free((float *) arg4);
+  }
+  {
+    free((float *) arg5);
+  }
   return resultobj;
 fail:
+  {
+    free((float *) arg3);
+  }
+  {
+    free((float *) arg4);
+  }
+  {
+    free((float *) arg5);
+  }
   return NULL;
 }
 

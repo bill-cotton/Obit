@@ -573,6 +573,7 @@ ObitImage* getInputImage (ObitInfoList *myInput, gchar Stok, ObitErr *err)
   /* Save blc, trc */
   dim[0] = IM_MAXDIM;
   ObitInfoListAlwaysPut (myInput, "BLC", OBIT_long, dim, blc);
+  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
   ObitInfoListAlwaysPut (inImage->info, "BLC", OBIT_long, dim, blc);
   ObitInfoListAlwaysPut (myInput, "TRC", OBIT_long, dim, trc);
   ObitInfoListAlwaysPut (inImage->info, "TRC", OBIT_long, dim, trc);

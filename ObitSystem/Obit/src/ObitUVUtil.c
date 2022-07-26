@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2021                                          */
+/*;  Copyright (C) 2004-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -331,6 +331,25 @@ ObitUV* ObitUVUtilCopyZero (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   return outUV;
 } /* end ObitUVUtilCopyZero */
 
+#if HAVE_AVX512==1
+#include <immintrin.h>
+# define ALIGN32_BEG
+# define ALIGN32_END __attribute__((packed,aligned(32)))
+/* Union allowing c interface */
+typedef __m512  V16SF; // vector of 16 float (avx)
+typedef __m512i V16SI; // vector of 16 int   (avx)
+typedef __mmask16 MASK16; // vector of 16 mask  (avx)
+typedef ALIGN32_BEG union {
+  float f[16];
+  int   i[16];
+  V16SF   v;
+} ALIGN32_END CV16SF;
+typedef ALIGN32_BEG union {
+  float f[16];
+  int   i[16];
+  V16SI   v;
+} ALIGN32_END IV16SF;
+#endif
 /**
  * Divide the visibilities in one ObitUV by those in another
  * outUV = inUV1 / inUV2
@@ -354,12 +373,24 @@ void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
   olong i, j, indx, firstVis;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong NPIO;
+  olong NPIO, jlast=0;
   ofloat work[3];
   gboolean incompatible, same, btemp;
   ObitUVDesc *in1Desc, *in2Desc, *outDesc;
   gchar *today=NULL;
   gchar *routine = "ObitUVUtilVisDivide";
+
+#if HAVE_AVX512==1
+  CV16SF vr1, vi1, vw1, vr2, vi2, vw2, vz, v1, vwk1, vwk2, vwk3, vt;
+  IV16SF vindxr, vindxi, vindxw;
+  MASK16 msk, msk1, msk2;
+  olong  jndx;
+  vz.v     = _mm512_set1_ps(0.0);  /* vector of zeroes */
+  v1.v     = _mm512_set1_ps(1.0);  /* vector of ones */
+  vindxr.v = _mm512_set_epi32 (45,42,39,36,33,30,27,24,21,18,15,12, 9,6,3,0); /* Reals*/
+  vindxi.v = _mm512_set_epi32 (46,43,40,37,34,32,28,25,22,19,16,13,10,7,4,1); /* Imags */
+  vindxw.v = _mm512_set_epi32 (47,44,41,38,35,32,29,26,23,20,17,14,11,8,5,2); /* Weight */
+#endif
 
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -496,7 +527,7 @@ void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
     /* Modify data */
     for (i=0; i<in1Desc->numVisBuff; i++) { /* loop over visibilities */
       /* compatability check - check time and baseline or antenna code */
-      indx = i*in1Desc->lrec ;
+      indx = i*in1Desc->lrec;
       incompatible = 
 	inUV1->buffer[indx+in1Desc->iloct] !=inUV2->buffer[indx+in2Desc->iloct];
       if (in1Desc->ilocb>=0) {
@@ -510,8 +541,46 @@ void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
       }
       if (incompatible) break;
 
-      indx += in1Desc->nrparm;
-      for (j=0; j<in1Desc->ncorr; j++) { /* loop over correlations */
+#if HAVE_AVX512==1  /* Vector */
+      for (j=0; j<in1Desc->ncorr-16; j+=16) { /* loop over correlations */
+        jndx   = i*in1Desc->lrec + in1Desc->nrparm + in1Desc->inaxes[0]*j;
+	vr1.v  = _mm512_i32gather_ps (vindxr.v, &inUV1->buffer[jndx], 4);/* Load Reals 1 */
+	vi1.v  = _mm512_i32gather_ps (vindxi.v, &inUV1->buffer[jndx], 4);/* Load Imaginaries 1 */
+	vw1.v  = _mm512_i32gather_ps (vindxw.v, &inUV1->buffer[jndx], 4);/* Load Weights 1 */
+	vr2.v  = _mm512_i32gather_ps (vindxr.v, &inUV2->buffer[jndx], 4);/* Load Reals 2 */
+	vi2.v  = _mm512_i32gather_ps (vindxi.v, &inUV2->buffer[jndx], 4);/* Load Imaginaries 2 */
+	vw2.v  = _mm512_i32gather_ps (vindxw.v, &inUV2->buffer[jndx], 4);/* Load Weights 2 */
+	msk1   = _mm512_cmp_ps_mask(vw1.v, vz.v, _CMP_LE_OQ);            /* find invalid data 1 */
+	msk2   = _mm512_cmp_ps_mask(vw2.v, vz.v, _CMP_LE_OQ);            /* find invalid data 2 */
+	msk    = _mm512_kxnor (msk1, msk2);                              /* Combined valid */
+	/* Complex Divide */
+	vwk2.v = _mm512_mul_ps(vr2.v, vr2.v);
+	vwk3.v = _mm512_mul_ps(vi2.v, vi2.v);
+	vwk1.v = _mm512_add_ps(vwk2.v, vwk3.v);               /* r2^2 + i2^2 */
+	vt.v   = _mm512_sqrt_ps(vwk1.v);
+	vw1.v  = _mm512_mul_ps(vw1.v, vt.v);                  /* Weight */
+	msk1   = _mm512_cmp_ps_mask(vwk1.v, vz.v, _CMP_NEQ_UQ);/* trap zero */
+	vwk1.v = _mm512_mask_rcp14_ps(v1.v, msk1, vwk1.v);    /* approximate reciprocal */ 
+	vwk2.v = _mm512_mul_ps(vr1.v, vwk1.v);
+	vwk3.v = _mm512_mul_ps(vi1.v, vwk1.v);
+	vt.v   = _mm512_mul_ps(vwk2.v, vr2.v);
+	vr1.v  = _mm512_mul_ps(vwk3.v, vi2.v);
+	vr1.v  = _mm512_add_ps(vt.v, vr1.v);
+	vt.v   = _mm512_mul_ps(vwk3.v, vr2.v);
+	vi1.v  = _mm512_mul_ps(vwk2.v, vi2.v);
+	vi1.v  = _mm512_sub_ps(vt.v, vi1.v);
+	/* Weight */
+	/* Save output */
+	_mm512_mask_i32scatter_ps (&inUV1->buffer[jndx], msk, vindxr.v, vr1.v, 4); /* save valid real */
+	_mm512_mask_i32scatter_ps (&inUV1->buffer[jndx], msk, vindxi.v, vi1.v, 4); /* save valid imaginary */
+	_mm512_mask_i32scatter_ps (&inUV1->buffer[jndx], msk, vindxw.v, vw1.v, 4); /* save valid weight */
+      } /* end loop over correlations */
+      jlast = j;  /* How far did it get */
+#else /* Scalar */
+      jlast = 0;  /* Do all */
+#endif
+      indx = i*in1Desc->lrec + in1Desc->nrparm + jlast*in1Desc->inaxes[0];
+      for (j=jlast; j<in1Desc->ncorr; j++) { /* loop over correlations */
 	/* Divide */
 	ObitUVWtCpxDivide ((&inUV1->buffer[indx]), 
 			   (&inUV2->buffer[indx]), 

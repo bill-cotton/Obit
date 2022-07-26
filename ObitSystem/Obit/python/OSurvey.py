@@ -75,6 +75,7 @@ def PNVSSPrint (printer, data, err, VLVer=1, first=True, last=True):
         Silent    double  Half width asec of silent search box. [def 720]
         minFlux   float   Minimum peak flux density. [def 0]
         maxFlux   float   Maximum peak flux density. [def LARGE]
+        minSNR    float   Minimumsignal-to-noise ratio [def 0]
         minPol    float   Minimum percent integrated polarization [def 0]
         minGlat   float   Minimum abs galactic latitude [def any]
         maxGlat   float   Minimum abs galactic latitude [def any]

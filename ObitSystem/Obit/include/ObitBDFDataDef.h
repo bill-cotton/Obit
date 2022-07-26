@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2021                                          */
+/*;  Copyright (C) 2010-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -84,6 +84,14 @@ ofloat *actualTimesData;
 gboolean haveActualDurations;
 /** actualDurations data for integration */
 ollong *actualDurationsData;
+/** Number of antennas in actualDurations */
+olong numAntad;
+/** first antenna cross cor offset in actualDurations */
+olong *ada1coff;
+/** size in longlongs of a cross correlation entry in actualDurations */
+olong adsizec;
+/** first antenna auto cor offset in actualDurations */
+olong *ada1aoff;
 /** Have weight data? */
 gboolean haveWeight;
 /** Weight data for integration */

@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2019                                          */
+/*;  Copyright (C) 2010-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -143,6 +143,10 @@ static olong GetAxisOrder (ObitBDFAxisName *axes, ObitBDFAxisName axis);
 
 /** Private: find string */
 static gchar* findString (gchar *start, olong maxStr, gchar *match);
+/* Get ActualDuration data */
+static ofloat GetActualDuration(ObitBDFData *in, olong ant1, olong ant2,
+				olong bin, olong spw, olong poln);
+
 /*----------------- Union definitions ----------------------*/
 /** Used for byte swapping shorts */
  union sequiv { 
@@ -1157,6 +1161,7 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
   ObitBDFMIMEType type;
   gboolean byteFlip;
   ofloat scale;
+  olong i, j, sizec, sizea;
   ObitBDFDataType Dtype;
   gchar *last, *start;
   gchar *routine = "ObitBDFDataReadInteg";
@@ -1287,6 +1292,7 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
 	in->actualDurationsData = g_malloc0(sizeof(ollong)*(in->ScanInfo->actualDurationsSize+10));
       Dtype = in->IntegInfo->type;  
       if (in->isEVLA) Dtype = BDFDataType_INT64_TYPE;
+      /* Is this the case for ALMA? */
       scale = 1.0;
       if (in->isALMA) scale = 1.0 / in->ScanInfo->BBinfo[0]->SWinds[0]->scaleFactor;
       retCode = CopyLongLongs (in, start, (ollong*)in->actualDurationsData, 
@@ -1294,7 +1300,32 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
 			       byteFlip, Dtype, err);
       if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
       if (retCode==OBIT_IO_EOF) return retCode;
-      continue;
+      /* Lookup table entry per spw,poln for each baseline, 
+	 antenna(autocorrelations)*/
+      /* Order in data base/ant, baseband, spw, bin, stokes - ignore baseband */
+      if (in->ada1coff) {g_free(in->ada1coff);} if (in->ada1aoff) {g_free(in->ada1aoff);}
+      in->numAntad = in->ScanInfo->numAntenna;
+      in->ada1coff = g_malloc0((in->numAntad+2)*sizeof(olong));
+      in->ada1aoff = g_malloc0((in->numAntad+2)*sizeof(olong));
+      /* How big is an entry? */
+      sizec = 0; sizea = 0;
+      for (i=0; i<in->SWArray->nwinds; i++) sizec += in->SWArray->winds[i]->nCPoln;
+      /* Autocorrelations have a maximum of 3 Stokes. */
+      for (i=0; i<in->SWArray->nwinds; i++) sizea += MIN (3, in->SWArray->winds[i]->nAPoln);
+      sizec *= in->ScanInfo->numBin; sizea *= in->ScanInfo->numBin;
+      in->adsizec = sizec;
+      /* First crosscorr - starts with 1-2 */
+      in->ada1coff[0] = 0; 
+      for (j=1; j<in->numAntad-1; j++) {
+	in->ada1coff[j] = in->ada1coff[j-1] + (in->numAntad-j)*sizec;
+      }
+      /* Then autocorr - starts with 1 */
+      j = in->numAntad-2;
+      in->ada1aoff[0] = in->ada1coff[j] + sizec;
+      for (j=1; j<in->numAntad; j++) {
+	in->ada1aoff[j] = in->ada1aoff[j-1] + sizea;
+      }
+      continue;   
     } /* End actualDurations data */
     
     /* weight data */
@@ -1349,7 +1380,7 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_EOF;
   olong iStok, iChan, iIF, indx, ondx, kndx, voff, foff, jChan, ant1, ant2, suba=1;
-  olong nChan, nIF, nStok;
+  olong nChan, nIF, nStok, bin = 0;
   ofloat weight;
   /*gchar *routine = "ObitBDFDataGetVis";*/
 
@@ -1374,10 +1405,12 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
     vis[in->desc->ilocw]  = 0.0;
     if (in->desc->ilocfq>=0) vis[in->desc->ilocfq] = 1.0;
     vis[in->desc->iloct]  = in->currTime;
-    vis[in->desc->ilocit] = in->currIntTime;
     vis[in->desc->ilocsu] = (ofloat)in->sourceNo;
     ant1 = in->antNo[in->ant1];
     ant2 = in->antNo[in->ant2];
+    vis[in->desc->ilocit] =  in->currIntTime;
+    /* Get actualDuration if given, NO, not here
+       GetActualDuration(in, in->ant1, in->ant2, bin, 0, 0); */
     weight = vis[in->desc->ilocit];  /* Use integration time as weight */
 
     /* Is the order of the baseline correct, ant1<ant2 ? */
@@ -1394,6 +1427,10 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
 	  if (in->isLSB[iIF]) jChan = nChan-iChan-1;
 	  else jChan = iChan;
 	  for (iStok=0; iStok<nStok; iStok++) {
+	    /* Weight from Actual or default Duration - 1st channel */
+	    if (iChan==0) {
+	      weight = GetActualDuration(in, in->ant1, in->ant2, bin, iIF, iStok);
+	    }
 	    ondx = in->desc->nrparm +
 	      iStok*in->desc->incs + jChan*in->desc->incf + iIF*in->desc->incif;
 	    indx = voff + in->coffs[iStok] + iChan*in->cincf + in->coffif[iIF];
@@ -1421,6 +1458,9 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
 	  if (in->isLSB[iIF]) jChan = nChan-iChan-1;
 	  else jChan = iChan;
 	  for (iStok=0; iStok<nStok; iStok++) {
+	    if (iChan==0) {
+	      /* Weight from Actual or default Duration  - 1st channel*/
+	      weight = GetActualDuration(in, in->ant1, in->ant2, bin, iIF, iStok);}
 	    ondx = in->desc->nrparm +
 	      iStok*in->desc->incs + jChan*in->desc->incf + iIF*in->desc->incif;
 	    indx = voff + iChan*in->cincf + in->coffif[iIF];
@@ -1477,6 +1517,8 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
     vis[in->desc->ilocw]  = 0.0;
     vis[in->desc->iloct]  = in->currTime;
     vis[in->desc->ilocit] = in->currIntTime;
+    /* Get actualDuration if given, not here,
+       GetActualDuration(in, in->ant1, in->ant2, bin, 0, 0);*/
     ObitUVDescSetAnts (in->desc, vis,in->antNo[in->ant1], in->antNo[in->ant1], suba);
     vis[in->desc->ilocsu] = (ofloat)in->sourceNo;
     weight = vis[in->desc->ilocit];  /* Use integration time as weight */
@@ -1490,6 +1532,10 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
 	if (in->isLSB[iIF]) jChan = nChan-iChan-1;
 	else jChan = iChan;
 	for (iStok=0; iStok<nStok; iStok++) {
+	  /* Weight from Actual or default Duration  - 1st channel */
+	  if (iChan==0) {
+	    weight = GetActualDuration(in, in->ant1, in->ant1, bin, iIF, MIN(2,iStok));
+	  }
 	  ondx = in->desc->nrparm +
 	    iStok*in->desc->incs + jChan*in->desc->incf + iIF*in->desc->incif;
 	  indx = voff + jChan*in->aincf + in->aoffif[iIF];
@@ -1640,6 +1686,8 @@ void ObitBDFDataInit  (gpointer inn)
   in->aoffif              = NULL;
   in->afoffs              = NULL;
   in->afoffif             = NULL;
+  in->ada1coff            = NULL;
+  in->ada1aoff            = NULL;
   in->isLSB               = NULL;
   in->curSource           = NULL;
   in->isEVLA              = FALSE;
@@ -1647,6 +1695,7 @@ void ObitBDFDataInit  (gpointer inn)
   in->binFlag             = FALSE;
   in->selAtmCorr          = FALSE;
   in->numAtmCorr          = 1;
+  in->numAntad            = 0;
 } /* end ObitBDFDataInit */
 
 /**
@@ -1697,7 +1746,9 @@ void ObitBDFDataClear (gpointer inn)
   if (in->afoffif)             g_free(in->afoffif);
   if (in->isLSB)               g_free(in->isLSB);
   if (in->curSource)           g_free(in->curSource);
-
+  if (in->ada1coff)            g_free(in->ada1coff);
+  if (in->ada1aoff)            g_free(in->ada1aoff);
+      
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
   /* delete parent class members */
@@ -2879,3 +2930,44 @@ static gchar* findString (gchar *start, olong maxStr, gchar *match)
 
   return out;
 } /* end findString */
+ /**
+ * Reture integration time, from actualDuration is given, 
+ * else in->currIntTime
+ * \param in    The object
+ * \param ant1  First antenna index (0 rel)
+ * \param ant2  Second antenna index if cross corr, = ant1 for autocorr.
+ * \param bin   pulsar bin (0 rel)
+ * \param spw   Spectral window( 0-rel)
+ * \param poln  Polarization (0-rel)
+ * \return integration time in seconds
+ */
+static ofloat GetActualDuration(ObitBDFData *in, olong ant1, olong ant2, 
+				olong bin, olong spw, olong poln)
+{
+  ofloat out = in->currIntTime;
+  olong indx, np;
+
+  if (!in->haveActualDurations) return out;  /* Use currIntTime */
+
+  /* Lookup in table */
+  /* Cross correlations */
+  if (ant1!=ant2) {
+    np = in->SWArray->winds[spw]->nCPoln; /* Number of poln */
+    indx = in->ada1coff[ant1] + 
+      (ant2-ant1-1)*in->adsizec + 
+      (spw)*np*in->ScanInfo->numBin + 
+      (bin)*np +
+      poln;
+    out = 1.0e-9 * in->actualDurationsData[indx];
+  } else { /* Autocorrelations */
+    np = MIN(3, in->SWArray->winds[spw]->nAPoln); /* Number of poln */
+    indx = in->ada1aoff[ant1] + 
+      (spw)*np*in->ScanInfo->numBin + 
+      (bin)*np +
+      poln;
+    out = 1.0e-9 * in->actualDurationsData[indx];
+  }
+
+  return out;
+} /* end GetActualDuration */
+

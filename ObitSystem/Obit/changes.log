@@ -5075,4 +5075,23 @@ Obit/src/ObitFArray.c
     AVX512 versions of Sum, Sqrt
 Obit/src/ObitCArray.c
     AVX512 version of Amp
-13 May 2022 svn 637undo
+13 May 2022 svn 638
+
+Summary: Implement actualDurations in BDFIn, Bug fixes
+Obit/python/FArrayUtil.inc Obit/python/FArrayUtil.py Obit/python/Obit_wrap.c
+   correct PFit1DGauss2
+Obit/src/ObitUVUtil.c
+   VisDivide: AVX512 implementation
+Obit/src/ObitFArrayUtil.c
+   cleanup
+Obit/src/ObitFArrayUtil.c
+   GenPrint: add minSNR parameter
+Obit/python/OSurvey.py
+   PGenPrint: add minSNR to documentation
+Obit/src/ObitIOImageFITS.c
+   Write: Trap NaN and Inf
+Obit/tasks/RMSyn.c
+   Fix bug with subimaging.
+Obit/src/ObitBDFData.c Obit/include/ObitBDFDataDef.h
+   Use actualDurations to set weights on VLA data.
+26 Jul 2022, svn 639

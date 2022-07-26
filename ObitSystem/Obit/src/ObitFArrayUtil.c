@@ -62,8 +62,6 @@ static ofloat Fit1DGauss2 (olong Count, ofloat *cell, ofloat *val,
  * Fits 2-D circular Gaussian in an FArray.
  * Starting solution is peak value in array in.
  * \param in      2-D FArray to fit
- * \param FWHM    [in]  half width of box around peak to use in fitting
- *                      0 => all.
  * \param FWHM    [out] Full width half max of Gaussian
  * \param center  [out] 0-rel center pixel position
  * \param peak    [out] Peak value
@@ -234,9 +232,9 @@ ofloat ObitFArrayUtilFit1DGauss (ObitFArray *in, ofloat *FWHM, ofloat *center,
  * Starting solution for all is peak value in array in, looks for others
  * \param in      1-D FArray to fit
  * \param ngauss  number of Gaussians (max. 10)
- * \param FWHM    [out] Full width half max of Gaussian (array of ngauss)
- * \param center  [out] 0-rel center pixel position (array of ngauss)
- * \param peak    [out] Peak value (array of ngauss)
+ * \param FWHM    [in/out] Full width half max of Gaussian (array of ngauss)
+ * \param center  [in/out] 0-rel center pixel position (array of ngauss)
+ * \param peak    [in/out] Peak value (array of ngauss)
  * \param a       [out] 0th order term of baseline
  * \param b       [out] 1st order term of baseline
  * \param err      Error stack, returns if not empty.
@@ -277,16 +275,16 @@ ofloat ObitFArrayUtilFit1DGauss2 (ObitFArray *in, olong ngauss, ofloat *FWHM, of
   *a    = data[first];
   *b    = (data[last] - data[first])/nx;
   if (ngauss<0) ngauss = 1;  /* to be sure */
-  peak[0] = (ObitFArrayMax (in, pos) - *a);
-  center[0] = (ofloat)pos[0];
-  FWHM[0] = 4.0;
+  if (peak[0]==0.0)   peak[0] = (ObitFArrayMax (in, pos) - *a);
+  if (center[0]==0.0) center[0] = (ofloat)pos[0];
+  if (FWHM[0]==0.0)   FWHM[0] = 4.0;
   sigma[0] = FWHM[0] / 2.355;  /* Use Gaussian sigma in fitting */
   done[0] = center[0];
   if (err->prtLv>=4)
     fprintf (stderr, "center %5.0f, peak %9.4f\n",center[0],peak[0]);
   /* Others - ignore what's been done */
   for (j=1; j<ngauss; j++) {
-    FWHM[j] = 4.0;
+    if (FWHM[j]==0.0) FWHM[j] = 4.0;
     sigma[j] = FWHM[j] / 2.355;  /* Use Gaussian sigma in fitting */
     /* find brightest non done */
     maxb = -1.0e20; maxix = -100;
@@ -301,10 +299,10 @@ ofloat ObitFArrayUtilFit1DGauss2 (ObitFArray *in, olong ngauss, ofloat *FWHM, of
 	maxb = data[ix]; maxix = ix;
       }
     }
-    center[j] = (ofloat)maxix;
+    if (center[j]==0.0) center[j] = (ofloat)maxix;
     peak[j]   = maxb - *a;
     done[j]   = maxix;
-    peak[j] = (ObitFArrayMax (in, pos) - *a) / ngauss;
+    if (peak[j]==0.0) peak[j] = (ObitFArrayMax (in, pos) - *a) / ngauss;
     if (err->prtLv>=4)
       fprintf (stderr, "center %5.0f, peak %9.4f\n",center[j],peak[j]);
   } /* end others */
@@ -711,7 +709,7 @@ static int oneDgaussFunc (const gsl_vector *coef, void *params, gsl_vector *f)
 
   /* Loop through data calculating residuals to model */
   if (ngauss<0) ngauss = 1;  /* to be sure */
-  sum = 0.0;
+  sum = 0.0; resid = 0.0;
   for (i=0; i<n; i++) {
     /* Loop over Gaussians */
     pnum = 0; model = 0.0;
@@ -1064,6 +1062,14 @@ static ofloat Fit1DGauss2 (olong Count, ofloat *cell, ofloat *val,
     }
     /* convergence test */
     status = gsl_multifit_test_delta(solver->dx, solver->x, 1.0e-4, 1.0e-4);
+    /* Limit center to range 
+    j = 0;
+    for (k=0; k<ngauss; k++) {
+      center[k] = (ofloat)gsl_vector_get(solver->x, j); 
+      center[k] = MAX(center[k],0.0); center[k] = MIN(center[k],(ofloat)Count);
+      gsl_vector_set(solver->x, j, (double)center[k]);
+      j+=3;
+    }*/
    }
   while ((status == GSL_CONTINUE) && (iter< 1000));
 

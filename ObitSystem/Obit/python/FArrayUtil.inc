@@ -75,13 +75,20 @@ extern PyObject* FArrayUtilFit1DGauss (ObitFArray *in, float FWHM, float center,
 } // end  FArrayUtilFit1DGauss
 
 /* Return list with [0]=FWHM, [1] = peak, [2] = cenX, [3]=a, [4]=b, [5]=RMS residual */
-extern PyObject* FArrayUtilFit1DGauss2 (ObitFArray *in, long ngauss, float FWHM, float center, 
-			      float peak, ObitErr *err)
+extern PyObject* FArrayUtilFit1DGauss2 (ObitFArray *in, long ngauss, float *FWHM, float *center, 
+			      float *peak, ObitErr *err)
 {
   ofloat la, lb, RMS;
   PyObject *o, *list1, *list2, *list3;
   ofloat lFWHM[15], lcenter[15], lpeak[15];
   olong i;
+
+  // Copy initial values
+  for (i=0; i<ngauss; i++) {
+    lFWHM[i]   = (ofloat)FWHM[i];
+    lcenter[i] = (ofloat)center[i];
+    lpeak[i]   = (ofloat)peak[i];
+  }
 
   RMS = ObitFArrayUtilFit1DGauss2 (in, ngauss, lFWHM, lcenter, lpeak, &la, &lb, err);
   // return list

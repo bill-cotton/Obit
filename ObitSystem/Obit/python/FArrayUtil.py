@@ -80,7 +80,7 @@ def PFit1DGauss(inFA,err):
     return retVal
     # end PFit1DGauss
 
-def PFit1DGauss2(inFA,ngauss,err):
+def PFit1DGauss2(inFA,ngauss, err, FWHM=[0.], center=[0.], peak=[0.]):
     """
     Fit multiple 1-D Gaussians plus a linear baseline in FArray
     ngauss Number of Gaussians to fit (max 10).
@@ -93,13 +93,16 @@ def PFit1DGauss2(inFA,ngauss,err):
     [4]= 1st order baseline term
     [5]= RMS residual
     * inFA    = Array to be fitted
+    * ngauss  = Number of Gaussians to fit
     * err     = Python Obit Error/message stack
+    * FWHM    = Initial values if not 0
+    * center  = Initial values if not 0
+    * peak    = Initial values if not 0
     """
     ################################################################
     # Checks
     if not FArray.PIsA(inFA):
         raise TypeError("inFA MUST be a Python Obit FArray")
-    FWHM = 0.0; cen = 0.0; peak = 0.0; center = 0.0; # Not really used
     # results in retVal
     retVal = Obit.FArrayUtilFit1DGauss2(inFA.me, ngauss, FWHM, center, peak, err.me)
     return retVal

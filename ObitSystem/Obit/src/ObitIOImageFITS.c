@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2020                                          */
+/*;  Copyright (C) 2003-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -994,6 +994,7 @@ ObitIOCode ObitIOImageFITSWrite (ObitIOImageFITS *in, ofloat *data,
     /* keep track on max/min/blanking */
     for (i=0; i<size; i++) {
       val = data[offset+i];
+      if (isnan(val) || isinf(val)) val = fblank; /* Bad values? */
       if (val==fblank) {
 	desc->areBlanks = TRUE;
       } else { /* OK */
@@ -1433,7 +1434,7 @@ ObitIOImageFITSWriteDescriptor (ObitIOImageFITS *in, ObitErr *err)
     strncpy (keyName, keyNameP, FLEN_KEYWORD); keyName[FLEN_KEYWORD-1] = 0;
     if (err->error)  Obit_traceback_val (err, routine, in->name, retCode);
 
-    /* Check for trash characters */
+   /* Check for trash characters */
     n = strlen(keyName);
     bad = FALSE;
     for (j=0; j<n; j++) 
