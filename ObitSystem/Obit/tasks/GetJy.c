@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2020                                          */
+/*;  Copyright (C) 2006-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -132,29 +132,29 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Copy selection/calibration info to data */
   ObitInfoListCopyList (myInput, inData->info, dataParms);
 
   /* Solve for flux densities and update SN/SU table */
   SNTable =  GetJyUpdate (inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Write history */
   GetJyHistory (myInput, inData, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   SNTable   = ObitTableSNUnref(SNTable);
@@ -824,7 +824,7 @@ ObitTableSN* GetJyUpdate (ObitUV* inData, ObitErr* err)
 
       /* Message */
       /* Get source name */
-      for (j=0; j<16; j++) tempName[j] = ' '; tempName[j] = 0;
+      for (j=0; j<16; j++) {tempName[j] = ' ';} tempName[j] = 0;
       /* get blank padded name */
       for (j=0; j<lsou; j++) {
 	if (row->Source[j]==0) break;  /* only values in string */
@@ -1444,12 +1444,11 @@ static ofloat MedianAvg (ollong n, ofloat *value, ofloat alpha)
  * Determine arithmetic average of an ofloat array
  * \param n       Number of points
  * \param value   Array of values, sorted on return
- * \return alpha median average, fblank if cannot determine
+ * \return alpha median average
  */
 static ofloat StraightAvg (ollong n, ofloat *value)
 {
   ofloat out=0.0;
-  ofloat fblank = ObitMagicF();
   ofloat sum;
   olong i, count;
 

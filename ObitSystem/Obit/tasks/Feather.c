@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Feather Obit task - Feathers together images            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2017                                          */
+/*;  Copyright (C) 2005-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -98,15 +98,15 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* noScrat - no scratch files for AIPS disks */
   ObitAIPSSetnoScrat(myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Get list of input images and output image */
   featherGetImage(myInput, &numImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Feather them together - loop over planes */
   nplane = inImage[0]->myDesc->inaxes[2];
@@ -129,12 +129,12 @@ int main ( int argc, char **argv )
     }
     /* doit */
     doFeather (myInput, numImage, inImage, outImage, err);
-    if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+    if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
   } /* end loop over planes */
 
   /* History */
   doHistory (numImage, inImage, outImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* cleanup */
   for (i=0; i<numImage; i++) {
@@ -226,7 +226,7 @@ ObitInfoList* FeatherIn (int argc, char **argv, ObitErr *err)
   ObitInfoListGet(list, "AIPSuser",  &type, dim, &AIPSuser,  err);
   ObitInfoListGet(list, "nAIPS",     &type, dim, &nAIPS,     err);
   ObitInfoListGet(list, "nFITS",     &type, dim, &nFITS,     err);
-  if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
+  if (err->error) {Obit_traceback_val (err, routine, "GetInput", list);}
 
   /* Directories more complicated */
   ObitInfoListGetP(list, "AIPSdirs",  &type, dim, (gpointer)&strTemp);
@@ -260,7 +260,7 @@ ObitInfoList* FeatherIn (int argc, char **argv, ObitErr *err)
   /* Initialize output */
   myOutput = defaultOutputs(err);
   ObitReturnDumpRetCode (-999, outfile, myOutput, err);
-  if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
+  if (err->error) {Obit_traceback_val (err, routine, "GetInput", list);}
 
   return list;
 } /* end FeatherIn */
@@ -498,12 +498,12 @@ void featherGetImage(ObitInfoList *myInput, olong *numImage,
       /* input AIPS name */
       if (i==0) g_snprintf (tname, 50, "inName");
       else g_snprintf (tname, 100, "in%dName", i+1);
-      for (k=0; k<12; k++) Aname[k] = ' '; Aname[k] = 0;
+      for (k=0; k<12; k++) {Aname[k] = ' ';} Aname[k] = 0;
       ObitInfoListGet(myInput, tname, &type, dim, Aname, err);
       /* input AIPS class */
       if (i==0) g_snprintf (tname, 50, "inClass");
       else g_snprintf (tname, 100, "in%dClass", i+1);
-      for (k=0; k<6; k++) Aclass[k] = ' '; Aclass[k] = 0;
+      for (k=0; k<6; k++) {Aclass[k] = ' ';} Aclass[k] = 0;
       ObitInfoListGet(myInput, tname, &type, dim, Aclass, err);
       /* input AIPS sequence */
       if (i==0) g_snprintf (tname, 50, "inSeq");
@@ -612,15 +612,15 @@ void featherGetImage(ObitInfoList *myInput, olong *numImage,
     /* AIPS disk */
     ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
     /* AIPS name */
-    for (k=0; k<12; k++) Aname[k] = ' '; Aname[k] = 0;
+    for (k=0; k<12; k++) {Aname[k] = ' ';} Aname[k] = 0;
     ObitInfoListGet(myInput, "outName", &type, dim, Aname, err);
     Aname[dim[0]] = 0;
     /* AIPS class */
-    for (k=0; k<6; k++) Aclass[k] = feathr[k]; Aclass[k] = 0;
+    for (k=0; k<6; k++) {Aclass[k] = feathr[k];} Aclass[k] = 0;
     ObitInfoListGet(myInput, "outClass", &type, dim, Aclass, err);
     Aclass[dim[0]] = 0;
     if (!strncmp (Aclass, "      ", 6)) 
-      for (k=0; k<6; k++) Aclass[k] = feathr[k]; Aclass[k] = 0;
+      {for (k=0; k<6; k++) {Aclass[k] = feathr[k];} Aclass[k] = 0;}
     /* AIPS sequence */
     ObitInfoListGet(myInput, "outSeq", &type, dim, &Aseq, err);
     if (err->error) Obit_traceback_msg (err, routine, routine);
@@ -874,7 +874,7 @@ void doFeather (ObitInfoList *myInput, olong numImage, ObitImage *inImage[],
   } 
     
   /* cleanup */
-  for (i=0; i<<numImage; i++) {
+  for (i=0; i<numImage; i++) {
     wtArray[i] = ObitFArrayUnref(wtArray[i]);
   }
   tmplImage   = ObitImageUnref(tmplImage);

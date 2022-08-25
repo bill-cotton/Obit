@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Summarize contents of ASDM                                        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2019                                          */
+/*;  Copyright (C) 2010-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -104,16 +104,16 @@ int main ( int argc, char **argv )
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
 
-  if (err->error) ierr = 1;  ObitErrLog(err);   if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);   if (ierr!=0) goto exit;}
 
   /* Swallow SDM */
   SDMData = ObitSDMDataCreate ("SDM", dataroot, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* List it */
   Summary (myInput, SDMData, err);
   /* show any errors */
-  if (err->error) ierr = 1;   ObitErrLog(err);   if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;   ObitErrLog(err);   if (ierr!=0) goto exit;}
   
   /* Shutdown Obit */
  exit:
@@ -215,7 +215,7 @@ ObitInfoList* ASDMListin (int argc, char **argv, ObitErr *err)
   ObitInfoListGet(list, "AIPSuser",  &type, dim, &AIPSuser,  err);
   ObitInfoListGet(list, "nAIPS",     &type, dim, &nAIPS,     err);
   ObitInfoListGet(list, "nFITS",     &type, dim, &nFITS,     err);
-  if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
+  if (err->error) {Obit_traceback_val (err, routine, "GetInput", list);}
 
   /* Directories more complicated */
   ObitInfoListGetP(list, "AIPSdirs",  &type, dim, (gpointer)&strTemp);

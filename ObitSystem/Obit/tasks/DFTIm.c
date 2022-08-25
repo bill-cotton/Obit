@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to DFT image a uv data set                               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2018                                               */
+/*;  Copyright (C) 2018,2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -152,22 +152,22 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Process */
   doSources (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput);    /* delete input list */
@@ -853,8 +853,8 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   outImage->myDesc->crval[1]  = inData->myDesc->crval[inData->myDesc->jlocd];
   outImage->myDesc->crpix[0]  = nx/2.0;
   outImage->myDesc->crpix[1]  = ny/2.0;
-  strncpy(outImage->myDesc->ctype[0], "RA---SIN", 8);
-  strncpy(outImage->myDesc->ctype[1], "DEC--SIN", 8);
+  strncpy(outImage->myDesc->ctype[0], "RA---SIN", 9);
+  strncpy(outImage->myDesc->ctype[1], "DEC--SIN", 9);
   strncpy(outImage->myDesc->object, Source, 8);
     
   /* FILE type - could be either AIPS or FITS */
@@ -879,7 +879,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
     /* input AIPS sequence */
     ObitInfoListGet(myInput, "outSeq", &type, dim, &Aseq, err);
-    for (i=0; i<12; i++) Aname[i] = ' '; Aname[i] = 0;
+    for (i=0; i<12; i++) {Aname[i] = ' ';} Aname[i] = 0;
     strncpy (Aname, tname, 13); 
     Aname[12] = 0;
     /* output AIPS class */
@@ -920,7 +920,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     /* Generate output name from Source, outName */
     ObitInfoListGetP (myInput, "outFile", &type, dim, (gpointer)&outF);
     n = MIN (128, dim[0]);
-    for (i=0; i<n; i++) tname[i] = outF[i]; tname[i] = 0;
+    for (i=0; i<n; i++) {tname[i] = outF[i];} tname[i] = 0;
     /* If blank use ".uvtab" */
     if ((tname[0]==' ') || (tname[0]==0)) g_snprintf (tname, 128, ".uvtab");
     /* Something in source name? */

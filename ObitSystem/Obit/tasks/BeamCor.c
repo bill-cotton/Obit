@@ -1,7 +1,7 @@
 /* $Id$ */
 /*  Imaging software correcting for tabulated beamshape               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2020                                          */
+/*;  Copyright (C) 2010-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -144,22 +144,22 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Process */
   doSources (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput);    /* delete input list */
@@ -905,7 +905,7 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   /* Default Stokes is 'I' */
   strcpy (Stokes, "    "); 
   ObitInfoListGetTest(myInput, "Stokes",  &type, dim, Stokes);
-  if (!strncmp (Stokes, "    ", 4)) strncpy (Stokes, "I   ", 4);
+  if (!strncmp (Stokes, "    ", 4)) strncpy (Stokes, "I   ", 5);
   dim[0] = 4; dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (myInput, "Stokes", OBIT_string, dim, Stokes);
 
@@ -1096,16 +1096,16 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
        ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
     /* output AIPS sequence */
     ObitInfoListGet(myInput, "out2Seq", &type, dim, &Aseq, err);
-    for (i=0; i<12; i++) Aname[i] = ' '; Aname[i] = 0;
+    for (i=0; i<12; i++) {Aname[i] = ' ';} Aname[i] = 0;
     strncpy (Aname, tname, 13); Aname[12] = 0;
     /* output AIPS class */
     if (ObitInfoListGetP(myInput, "out2Class", &type, dim, (gpointer)&strTemp)) {
       strncpy (Aclass, strTemp, 7);
     } else { /* Didn't find */
-      strncpy (Aclass, "BeamCor ", 7);
+      strncpy (Aclass, "BeamCo", 7);
     }
     /* Default for blank */
-    if (!strncmp (Aclass, "    ", 4)) strncpy (Aclass, "BeamCor ", 7);
+    if (!strncmp (Aclass, "    ", 4)) strncpy (Aclass, "BeamCo", 7);
     Aclass[6] = 0;
 
     /* if ASeq==0 create new, high+1 */
@@ -1134,7 +1134,7 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
     /* Generate output name from Source, out2Name */
     ObitInfoListGetP (myInput, "out2File", &type, dim, (gpointer)&out2F);
     n = MIN (120, dim[0]);
-    for (i=0; i<n; i++) tname[i] = out2F[i]; tname[i] = 0;
+    for (i=0; i<n; i++) {tname[i] = out2F[i];} tname[i] = 0;
     /* Something in source name? */
     if ((Source[0]==' ') || (Source[0]==0)) 
       g_snprintf (out2File, 120, "%s", tname);
@@ -1230,7 +1230,7 @@ void setOutputData (gchar *Source, olong iStoke, ObitInfoList *myInput,
     ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
     /* input AIPS sequence */
     ObitInfoListGet(myInput, "outSeq", &type, dim, &Aseq, err);
-    for (i=0; i<12; i++) Aname[i] = ' '; Aname[i] = 0;
+    for (i=0; i<12; i++) {Aname[i] = ' ';} Aname[i] = 0;
     strncpy (Aname, tname, 13);
     Aname[12] = 0;
     /* output AIPS class */
@@ -1273,7 +1273,7 @@ void setOutputData (gchar *Source, olong iStoke, ObitInfoList *myInput,
     /* Generate output name from Source, outName */
     ObitInfoListGetP (myInput, "outFile", &type, dim, (gpointer)&outF);
     n = MIN (120, dim[0]);
-    for (i=0; i<n; i++) tname[i] = outF[i]; tname[i] = 0;
+    for (i=0; i<n; i++) {tname[i] = outF[i];} tname[i] = 0;
     /* Something in source name? */
     if ((Source[0]==' ') || (Source[0]==0)) 
       g_snprintf (outFile, 120, "%c%s", chStokes[iStoke],tname);
@@ -1913,7 +1913,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   imgOK = FALSE;  /* Need new image */
   
   /* Get Stokes being imaged */
-  strncpy (Stokes, "F   ", 4); 
+  strncpy (Stokes, "F   ", 5); 
   ObitInfoListGetTest (inUV->info, "Stokes", &type, dim, Stokes);
 
   /* Only do self cal for Stokes I (or F) */
@@ -2282,7 +2282,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   dim[0] = nfield;
   ObitInfoListAlwaysPut (myClean->info, "UnPeeledComps", OBIT_long, dim, ncomp);
 
-  if (ncomp) g_free(ncomp);   ncomp  = NULL;  /* Done with array */
+  if (ncomp) {g_free(ncomp);}  ncomp  = NULL;  /* Done with array */
 
   /* Any final CC Filtering? */
   if (CCFilter[0]>0.0) {

@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task to Plot average uv data v time          .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2018                                               */
+/*;  Copyright (C) 2018,2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -98,23 +98,23 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest inputs */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Average data */
   AvgData(inData, &nplot, plotS, plotSerr, plotTime, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Plot data */
   PlotData(inData, nplot, plotS, plotSerr, plotTime, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput);    /* delete input list */
@@ -152,7 +152,7 @@ ObitInfoList* DftPlIn (int argc, char **argv, ObitErr *err)
 
   /* error checks */
   g_assert(ObitErrIsA(err));
-  if (err->error) return list;
+  if (err->error) {return list;}
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);

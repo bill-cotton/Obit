@@ -1,7 +1,7 @@
 /* $Id$  */
 /*  MCube: put together images into a cube                            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2011                                          */
+/*;  Copyright (C) 2007-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -110,27 +110,27 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Get input image and output image */
   GetImages(myInput, &isNew, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* MCube them together */
   doMCube (myInput, inImage, outImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Update any header keyword frequency info */
   UpdateFreq (myInput, newInfo, oldInfo, inImage, outImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* History */
   doHistory (myInput, inImage, outImage, isNew, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* cleanup */
   inImage = ObitImageUnref(inImage);
@@ -603,11 +603,11 @@ void GetImages(ObitInfoList *myInput, gboolean *isNew, ObitErr *err)
     ObitInfoListGet(myInput,"inDisk", &type, dim, &disk, err);
 
     /* input AIPS name */
-    for (k=0; k<12; k++) iAname[k] = ' '; iAname[k] = 0;
+    for (k=0; k<12; k++) {iAname[k] = ' ';} iAname[k] = 0;
     ObitInfoListGet(myInput, "inName", &type, dim, iAname, err);
 
     /* input AIPS class */
-    for (k=0; k<6; k++) iAclass[k] = ' '; iAclass[k] = 0;
+    for (k=0; k<6; k++) {iAclass[k] = ' ';} iAclass[k] = 0;
     ObitInfoListGet(myInput, "inClass", &type, dim, iAclass, err);
 
     /* input AIPS sequence */
@@ -681,14 +681,14 @@ void GetImages(ObitInfoList *myInput, gboolean *isNew, ObitErr *err)
     /* AIPS disk */
     ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
     /* AIPS name */
-    for (k=0; k<12; k++) Aname[k] = ' '; Aname[k] = 0;
+    for (k=0; k<12; k++) {Aname[k] = ' ';} Aname[k] = 0;
     ObitInfoListGet(myInput, "outName", &type, dim, Aname, err);
     Aname[dim[0]] = 0;
     /* Default */
     if (!strncmp(Aname,"     ",5)) strcpy (Aname, iAname);
 
     /* AIPS class */
-    for (k=0; k<6; k++) Aclass[k] = ' '; Aclass[k] = 0;
+    for (k=0; k<6; k++) {Aclass[k] = ' ';} Aclass[k] = 0;
     ObitInfoListGet(myInput, "outClass", &type, dim, Aclass, err);
     Aclass[dim[0]] = 0;
     /* Default */

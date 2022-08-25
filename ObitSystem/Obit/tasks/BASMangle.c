@@ -1,7 +1,7 @@
 /* $Id:  $  */
 /* BASMangle Mangle OTF/BAS images                                   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2016                                               */
+/*;  Copyright (C) 2016,2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -170,7 +170,7 @@ int main ( int argc, char **argv )
     maxv = -1.0e5; minv = 1.0e5;
     plane[0] = 1;
     ObitImageGetPlane (inImage, NULL, plane, err);
-    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+    if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
     RMS1 = ObitFArrayRMS(inImage->image);
     /* Max, min */
     val = ObitFArrayMax (inImage->image, pos);
@@ -182,18 +182,18 @@ int main ( int argc, char **argv )
     ObitFArrayFill(inImage->image, fblank);
     plane[0] = 2;
     ObitImagePutPlane (inImage, NULL, plane, err);
-    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+    if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
     /* Loop over other planes */
     for (iPlane=3; iPlane<inImage->myDesc->inaxes[2]; iPlane++) {
       plane[0] = iPlane;
       ObitImageGetPlane (inImage, NULL, plane, err);
-      if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+      if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
       RMS = ObitFArrayRMS(inImage->image);
       if (RMS>nSigma*RMS1) {  /* Blank */
 	ObitFArrayFill(inImage->image, fblank);
 	ObitImagePutPlane (inImage, NULL, plane, err);
-	if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+	if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
       } else { /* Max/min */
 	/* Max, min */
 	val = ObitFArrayMax (inImage->image, pos);
@@ -206,7 +206,7 @@ int main ( int argc, char **argv )
     
     /* Open */
     ObitImageOpen (inImage, OBIT_IO_ReadWrite, err);
-    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+    if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
     /* Update both descriptors */
     Desc=inImage->myDesc; IODesc=(ObitImageDesc*)inImage->myIO->myDesc;
@@ -220,7 +220,7 @@ int main ( int argc, char **argv )
     inImage->myStatus = OBIT_Modified;
 
     ObitImageClose (inImage, err); /* Close */
-    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+    if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
     /* Tell results */
     Obit_log_error(err, OBIT_InfoErr, 
@@ -228,7 +228,7 @@ int main ( int argc, char **argv )
 
     /* Do history */
     BASMANGLEHistory (myInput, inImage, err);
-    if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+    if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
   } /* end Stokes loop */
   /* show any messages and errors */
   if (err->error) ierr = 1;

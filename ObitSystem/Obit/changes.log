@@ -5095,3 +5095,34 @@ Obit/tasks/RMSyn.c
 Obit/src/ObitBDFData.c Obit/include/ObitBDFDataDef.h
    Use actualDurations to set weights on VLA data.
 26 Jul 2022, svn 639
+
+Summary: GPU gridding, Cleanup, Bug fixes
+  Obit/tasks/MFImage.c Obit/TDF/MFImage.TDF
+  Obit/include/ObitCUDAGrid.h Obit/include/ObitCUDAGridInfoDef.h 
+  Obit/include/ObitCUDAUtil.h Obit/include/ObitGPUGrid.h
+  Obit/include/ObitGPUGridClassDef.h Obit/include/ObitGPUGridDef.h
+  Obit/include/ObitImage.h Obit/include/ObitImageDef.h
+  Obit/include/ObitUVGrid.h Obit/include/ObitUVGridDef.h Obit/include/ObitUVGridClassDef.h 
+  Obit/include/ObitUVGridMF.h  Obit/include/ObitUVGridMFDef.h
+  Obit/src/ObitCUDAGrid.cu  Obit/src/ObitCUDAUtil.cu
+  Obit/src/ObitGPUGrid.c Obit/src/ObitImage.c Obit/src/ObitImageUtil.c Obit/src/ObitThreadGrid.c
+  Obit/src/ObitUVGrid.c Obit/src/ObitUVGridMF.c Obit/src/ObitUVImager.c Obit/src/ObitUVImagerMF.c
+    Implement GPU gridding
+  Obit/src/ObitData.c Obit/src/ObitImageMosaicWB.c Obit/src/ObitUVGridWB.c Obit/src/ObitTableVLUtil.c
+  Obit/src/ObitTableFSUtil.c
+  Obit/include/ObitImageMosaicWB.h  Obit/include/ObitImageMosaic.h Obit/include/ObitUVGridWB.h
+    Cleanup, compiler problem
+Variable cleanup: tasks
+    GetJy.c IDIIn.c TabCopy.c OTFFlag.c MapBeam.c SetJy.c 
+    IonMovie.c SCMap.c MKXPhase.c Squint.c RLPass.c BPass.c
+    Lister.c MapBeam2.c UVXpnd.c CubeVel.c SNSmo.c FuncContainer.c
+    IDIOut.c CLCor.c PCCor.c SysPowerView.c Squish.c VLPoln.c
+    DPCal.c SNFilt.c WVRCal.c MednFlag.c IonImage.c IonSF.c
+    Faces.c Ringer.c PCal.c CubeClip.c UVSim.c SWImag.c MaskCube.c
+    SplitCh.c Convol.c Feather.c IonCal.c SwaPol.c BPCal.c  ASDMList.c
+    Bloat.c SNCpy.c AvgBL.c CLCal.c VL2FS.c UVCopy.c ImPlot.c MCube.c
+    LowFRFI.c DftPl.c SubImage.c RLDly.c UVFlag.c Lin2Cir.c UVFix.c 
+    UVBlAvg.c Splat.c VLSSFix.c UVPolCor.c VL2VZ.c noFQId.c SNCor.c
+    BeamCor.c MazrCal.c Quack.c ComBeam.c SYGain.c FAlign.c AutoFlag.c
+26 Aug 2022, svn 640
+

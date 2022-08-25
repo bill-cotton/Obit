@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to Flag selected UV-data       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2013                                               */
+/*;  Copyright (C) 2013,2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -100,21 +100,21 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Make sure flagTab exists, assign if passed 0 */
   ObitInfoListGetTest(myInput, "flagTab",  &type, dim, &flagTab);
   FlagTab = newObitTableFGValue("tmpFG", (ObitData*)inData, &flagTab, OBIT_IO_ReadWrite, 
 				err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   /* Open/close table */
   ObitTableFGOpen (FlagTab, OBIT_IO_ReadWrite, err);
   ObitTableFGClose (FlagTab, err);
@@ -124,7 +124,7 @@ int main ( int argc, char **argv )
   ObitInfoListAlwaysPut(myInput, "flagTab",  OBIT_long, dim, &flagTab);
 
   /* opCode */
-  strncpy (opCode, "FLAG", 4);
+  strncpy (opCode, "FLAG", 5);
   ObitInfoListGetTest(myInput, "opCode",  &type, dim, opCode); opCode[4] = 0;
 
   /* Do editing */
@@ -138,11 +138,11 @@ int main ( int argc, char **argv )
   } else {                                                                 /* Unknown */
     Obit_log_error(err, OBIT_Error, "%s: Unknown opCode %s", pgmName, opCode);
   }
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Write history */
   UVFlagHistory (myInput, inData, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput);    /* delete input list */
@@ -180,7 +180,7 @@ ObitInfoList* UVFlagIn (int argc, char **argv, ObitErr *err)
   gchar *routine = "UVFlagIn";
 
   /* error checks */
-  if (err->error) return list;
+  if (err->error) {return list;}
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
@@ -467,7 +467,7 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   ObitThreadInit (myInput);
 
   /* Change Stokes to PFlag */
-  strncpy (Stokes, "    ", 4);
+  strncpy (Stokes, "    ", 5);
   ObitInfoListGetTest(myInput, "Stokes",  &type, dim, Stokes); Stokes[4] = 0;
   ObitInfoListAlwaysPut (myInput, "PFlag", OBIT_string, dim, Stokes);
   strTemp = "    ";
@@ -475,7 +475,7 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   ObitInfoListAlwaysPut (myInput, "Stokes", OBIT_string, dim, strTemp);
 
   /* Check Shadow/Crosstalk limits */
-  strncpy (opCode, "FLAG", 4);
+  strncpy (opCode, "FLAG", 5);
   ObitInfoListGetTest(myInput, "opCode",  &type, dim, opCode); opCode[4] = 0;
   ftemp = 0.0;
   dim[0] = dim[1] = dim[2] = 1;
@@ -589,11 +589,11 @@ void  FlagData(ObitUV* inData, ObitErr* err)
   ObitInfoListGetTest(inData->info, "BChan",  &type, dim, &row->chans[0]);
   ObitInfoListGetTest(inData->info, "EChan",  &type, dim, &row->chans[1]);
   row->chans[0] =  MAX (1, row->chans[0]);
-  strncpy (Reason, "                        ", 24);
+  strncpy (Reason, "                        ", 25);
   ObitInfoListGetTest(inData->info, "Reason",  &type, dim, Reason); Reason[24] = 0;
   strncpy (row->reason, Reason, 24);
   /* Stokes flags */
-  strncpy (Stokes, "    ", 4);
+  strncpy (Stokes, "    ", 5);
   ObitInfoListGetTest(inData->info, "PFlag",  &type, dim, Stokes); Stokes[4] = 0;
   if      (!strncmp(Stokes, "    ", 4)) row->pFlags[0] = 1+2+4+8;     /* All */
   else if (!strncmp(Stokes, "I   ", 4)) row->pFlags[0] = 1+2;         /* I */

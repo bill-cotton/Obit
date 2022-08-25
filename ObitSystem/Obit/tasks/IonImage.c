@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN a uv data set with field-based cal        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2014                                          */
+/*;  Copyright (C) 2006-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -139,22 +139,22 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
  
   /* Process */
   doSources (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput);    /* delete input list */
@@ -191,7 +191,7 @@ ObitInfoList* IonImageIn (int argc, char **argv, ObitErr *err)
   gchar *routine = "IonImageIn";
 
   /* error checks */
-  if (err->error) return list;
+  if (err->error) {return list;}
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
@@ -463,8 +463,8 @@ ObitInfoList* defaultInputs(ObitErr *err)
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *strTemp;
   oint   itemp, iarray[4];
-  ofloat ftemp, farray[3];
   gboolean btemp;
+  ofloat ftemp, farray[3];
   ObitInfoList *out = newObitInfoList();
   gchar *routine = "defaultInputs";
 
@@ -1006,8 +1006,7 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
 {
   ObitUV    *outUV = NULL;
   ObitInfoType type;
-  ObitIOType IOType;
-  olong      i, n, Aseq, disk, cno, lType;
+  olong      i, n, Aseq, disk, cno;
   gchar     *Type, *strTemp, out2File[129], *out2Name, *out2F=NULL;
   gchar     Aname[13], Aclass[7], *Atype = "UV";
   olong      nvis;
@@ -1027,7 +1026,6 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
     
   /* File type - could be either AIPS or FITS */
   ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
-  lType = dim[0];
   if (!strncmp (Type, "AIPS", 4)) { /* AIPS input */
     /* Generate output name from Source, out2Name */
     ObitInfoListGetP (myInput, "out2Name", &type, dim, (gpointer)&out2Name);
@@ -1040,23 +1038,22 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
       g_snprintf (tname, 128, "%s", strTemp);
     }
       
-    IOType = OBIT_IO_AIPS;  /* Save file type */
     /* input AIPS disk - default is outDisk */
     ObitInfoListGet(myInput, "out2Disk", &type, dim, &disk, err);
     if (disk<=0)
        ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
     /* output AIPS sequence */
     ObitInfoListGet(myInput, "out2Seq", &type, dim, &Aseq, err);
-    for (i=0; i<12; i++) Aname[i] = ' '; Aname[i] = 0;
+    for (i=0; i<12; i++) {Aname[i] = ' ';} Aname[i] = 0;
     strncpy (Aname, tname, 13); Aname[12] = 0;
     /* output AIPS class */
     if (ObitInfoListGetP(myInput, "out2Class", &type, dim, (gpointer)&strTemp)) {
       strncpy (Aclass, strTemp, 6);
     } else { /* Didn't find */
-      strncpy (Aclass, "IonImage", 6);
+      strncpy (Aclass, "IonIma", 7);
     }
     /* Default for blank */
-    if (!strncmp (Aclass, "    ", 4)) strncpy (Aclass, "IonImage", 7);
+    if (!strncmp (Aclass, "    ", 4)) strncpy (Aclass, "IonIma", 7);
     Aclass[6] = 0;
 
     /* if ASeq==0 create new, high+1 */
@@ -1085,7 +1082,7 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
     /* Generate output name from Source, out2Name */
     ObitInfoListGetP (myInput, "out2File", &type, dim, (gpointer)&out2F);
     n = MIN (128, dim[0]);
-    for (i=0; i<n; i++) tname[i] = out2F[i]; tname[i] = 0;
+    for (i=0; i<n; i++) {tname[i] = out2F[i];} tname[i] = 0;
     /* If blank use ".uvtab" */
     if ((tname[0]==' ') || (tname[0]==0)) g_snprintf (tname, 128, ".uvtab");
     /* Something in source name? */
@@ -1094,9 +1091,7 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
     else g_snprintf (out2File, 128, "!%s%s", Source, tname);
     ObitTrimTrail(out2File);  /* remove trailing blanks */
 	   
-    IOType = OBIT_IO_FITS;  /* Save file type */
-
-    /* output FITS disk */
+   /* output FITS disk */
     ObitInfoListGet(myInput, "out2Disk", &type, dim, &disk, err);
     if (disk<=0) /* defaults to outDisk */
       ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
@@ -1160,7 +1155,7 @@ void setOutputData (gchar *Source, olong iStoke, ObitInfoList *myInput,
 {
   ObitInfoType type;
   ObitIOType IOType;
-  olong      i, n, Aseq, disk, cno, lType;
+  olong      i, n, Aseq, disk, cno;
   gchar     *Type, *strTemp, outFile[129], *outName, *outF;
   gchar     Aname[13], Aclass[7], *Atype = "MA";
   gint32    dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -1181,7 +1176,6 @@ void setOutputData (gchar *Source, olong iStoke, ObitInfoList *myInput,
     
  /* File type - could be either AIPS or FITS */
   ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
-  lType = dim[0];
   if (!strncmp (Type, "AIPS", 4)) { /* AIPS output */
     /* Generate output name from Source, outName */
     ObitInfoListGetP (myInput, "outName", &type, dim, (gpointer)&outName);
@@ -1199,7 +1193,7 @@ void setOutputData (gchar *Source, olong iStoke, ObitInfoList *myInput,
     ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
     /* input AIPS sequence */
     ObitInfoListGet(myInput, "outSeq", &type, dim, &Aseq, err);
-    for (i=0; i<12; i++) Aname[i] = ' '; Aname[i] = 0;
+    for (i=0; i<12; i++) {Aname[i] = ' ';} Aname[i] = 0;
     strncpy (Aname, tname, 13);
     /* output AIPS class */
     if (ObitInfoListGetP(myInput, "outClass", &type, dim, (gpointer)&strTemp)) {
@@ -1234,7 +1228,7 @@ void setOutputData (gchar *Source, olong iStoke, ObitInfoList *myInput,
     /* Generate output name from Source, outName */
     ObitInfoListGetP (myInput, "outFile", &type, dim, (gpointer)&outF);
     n = MIN (128, dim[0]);
-    for (i=0; i<n; i++) tname[i] = outF[i]; tname[i] = 0;
+    for (i=0; i<n; i++) {tname[i] = outF[i];} tname[i] = 0;
     /* If blank use ".fits" */
     if ((tname[0]==' ') || (tname[0]==0)) g_snprintf (tname, 128, ".fits");
     /* Something in source name? */
@@ -1306,8 +1300,8 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   nsource = dim[1];
 
   for (isource = 0; isource<nsource; isource++) {
-    for (i=0; i<16; i++) Source[i] = ' '; Source[i] = 0;
-    for (i=0; i<dim[0]; i++)  Source[i] = strTemp[i]; Source[i] = 0;
+    for (i=0; i<16; i++) {Source[i] = ' ';} Source[i] = 0;
+    for (i=0; i<dim[0]; i++) {Source[i] = strTemp[i];} Source[i] = 0;
     /* Only accept blank name in the first Source */
     strTemp += dim[0];
     if (!strncmp (Source, "    ", 4) && (isource>0)) continue;
@@ -1665,7 +1659,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       }
       outField = ObitImageUnref(outField);
 
-      if (ncomp) g_free(ncomp); ncomp = NULL;
+      if (ncomp) {g_free(ncomp);} ncomp = NULL;
     } /* End Stokes loop */
 
     

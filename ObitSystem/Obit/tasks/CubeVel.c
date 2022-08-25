@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task - Get flux weighted velocity image                       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007,2010                                          */
+/*;  Copyright (C) 2007,2010,2022                                     */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -94,23 +94,23 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Get input Image Object */
   inImage = getInputImage (myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto done;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto done;}
 
   /* Define output Image Object */
   outImage = getOutputImage (myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto done;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto done;}
 
   /* Average velocity */
   CubeVelVel (myInput, inImage, outImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto done;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto done;}
 
   /* Do history */
   CubeVelHistory ( myInput, inImage, outImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto done;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto done;}
 
  done:
   /* show any messages and errors */
@@ -439,7 +439,7 @@ ObitInfoList* defaultInputs(ObitErr *err)
 
   /* Parms */
   dim[0] = 4;
-  for (i=0; i<4; i++) ftemp[i] = 0.0; ftemp[3] = 5.0;
+  for (i=0; i<4; i++) {ftemp[i] = 0.0;} ftemp[3] = 5.0;
   ObitInfoListPut (out, "Parms", OBIT_float, dim, ftemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
@@ -614,12 +614,12 @@ ObitImage* getOutputImage (ObitInfoList *myInput, ObitErr *err)
     if  (ObitInfoListGetP(myInput, "outClass", &type, dim, (gpointer)&strTemp)) {
       strncpy (Aclass, strTemp, 7);
     } else { /* Didn't find - use "xVel" x=first char of inClass */
-      strncpy (Aclass, "XVel   ", 7);
+      strncpy (Aclass, "XVel  ", 7);
       Aclass[0] = strTemp2[0];
     }
     /* If blank use inClass char 1 + 'Vel' */
     if (!strncmp (Aclass, "    ", 4)) {
-      strncpy (Aclass, "XVel   ", 7);
+      strncpy (Aclass, "XVel  ", 7);
       Aclass[0] = strTemp2[0];
     }
     Aclass[6] = 0;
@@ -760,7 +760,6 @@ void CubeVelVel (ObitInfoList* myInput, ObitImage* inImage,
 		    ObitImage* outImage, ObitErr* err)
 {
   oint         noParms;
-  ObitIOCode   iretCode;
   ObitInfoType type;
   ObitTableCC *inCC=NULL, *outCC=NULL;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -788,7 +787,7 @@ void CubeVelVel (ObitInfoList* myInput, ObitImage* inImage,
   if (err->error) Obit_traceback_msg (err, routine, inImage->name);
 
   /* Copy nonCC tables */
-  iretCode = ObitImageCopyTables (inImage, outImage, exclude, NULL, err);
+  ObitImageCopyTables (inImage, outImage, exclude, NULL, err);
   if (err->error) Obit_traceback_msg (err, routine, inImage->name);
 
    /* Get region from myInput */

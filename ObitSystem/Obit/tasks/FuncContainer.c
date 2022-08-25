@@ -1,7 +1,7 @@
 /* $Id$  */
 /* FuncContainer Obit function container process                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2010                                          */
+/*;  Copyright (C) 2005-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -126,7 +126,6 @@ int main ( int argc, char **argv )
   ShutdownDataStruct myShutdownDataStruct; 
   ObitErr *err;
   ObitRPC *server;
-  guint mlog;
   oint  ierr = 0;
   
    /* Startup - parse command line */
@@ -174,12 +173,12 @@ int main ( int argc, char **argv )
 
   /* Set Obit Message g_log handler */
   myLog = newObitInfoList();
-  mlog = g_log_set_handler (NULL,  G_LOG_LEVEL_WARNING | G_LOG_FLAG_FATAL |
-			    G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_MESSAGE |
-			    G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG |
-			    G_LOG_FLAG_RECURSION, 
-			    /*(GLogFunc)ObitMessageHandler, &myLog);*/
-			    (GLogFunc)ObitMessageHandler, NULL);
+  g_log_set_handler (NULL,  G_LOG_LEVEL_WARNING | G_LOG_FLAG_FATAL |
+		     G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_MESSAGE |
+		     G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG |
+		     G_LOG_FLAG_RECURSION, 
+		     /*(GLogFunc)ObitMessageHandler, &myLog);*/
+		     (GLogFunc)ObitMessageHandler, NULL);
 
   /* Loop forever 'neath the streets of Boston */
   ObitRPCServerLoop(server, port, "/tmp/xmlrpc_log");

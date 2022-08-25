@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -36,7 +36,9 @@
 #include "ObitFArray.h"
 #include "ObitCArray.h"
 #include "ObitFFT.h"
-
+#include "ObitGPUGrid.h"
+#include "ObitCUDAGridInfoDef.h"
+#include "ObitImageMosaic.h"
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
  * \file ObitUVGrid.h
@@ -128,6 +130,12 @@ typedef void (*ObitUVGridFFT2ImFP) (ObitUVGrid *in, Obit *out, ObitErr *err);
 void ObitUVGridFFT2ImPar (olong nPar, ObitUVGrid **in, Obit **out, ObitErr *err);
 typedef void (*ObitUVGridFFT2ImParFP) (olong nPar, ObitUVGrid **in, Obit **out, 
 				       ObitErr *err);
+
+/** Public: Get max number of parallel grids */
+olong ObitUVGridGetNumPar (ObitUV *inUV, ObitImageMosaic *mosaic, 
+			   gboolean doBeam, ObitErr *err);
+typedef olong (*ObitUVGridGetNumParFP) (ObitUV *inUV, ObitImageMosaic *mosaic,
+					gboolean doBeam, ObitErr *err);
 
 /* Private functions for derived classes */
 /** Prepare uv buffer for gridding */

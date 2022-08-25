@@ -26,9 +26,9 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitImage.h"
 #include "ObitImageDesc.h"
 #include "ObitImageSel.h"
-#include "ObitImage.h"
 #include "ObitIOImageFITS.h"
 #include "ObitIOImageAIPS.h"
 #include "ObitFITS.h"
@@ -1125,9 +1125,6 @@ ObitIOCode ObitImageOpen (ObitImage *in, ObitIOAccess access,
 
     /* Allocate buffer - resize if necessary */
     if (!in->extBuffer) {
-      /* Make sure not deallocated 
-      if ((in->image!=NULL) && (in->image->ReferenceCount<=0)) in->image = NULL;*/
-      /*in->image = ObitImageUnref(in->image);*/
       in->image = ObitImageSelBuffer (in->image, (ObitImageDesc*)in->myIO->myDesc, 
 				      in->mySel);
     } /* end buffer allocation */
@@ -1203,9 +1200,6 @@ ObitIOCode ObitImageClose (ObitImage *in, ObitErr *err)
     if ((retCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
       Obit_traceback_val (err, routine, in->name, retCode);
   } /* end of if actual I/O */
-
-  /* Release buffer -  might cause trouble 
-  in->image = ObitImageUnref(in->image);*/
 
   /* set Status */
   in->myStatus = OBIT_Inactive;

@@ -1,7 +1,7 @@
 /* $Id$  */
 /*  Convert linear feed basis to circular .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2018,2019                                          */
+/*;  Copyright (C) 2018,2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -105,30 +105,30 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest inputs */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get output uvdata */
   outData = setOutputData (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Convert */
   ObitUVLin2Cir(inData, outData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* History */
   Lin2CirHistory (myInput, inData, outData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput);    /* delete input list */
@@ -559,10 +559,10 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   g_assert (ObitInfoListIsA(myInput));
 
   /* Output AIPS UV file class */
-  strncpy(strTemp, "Ln2Cr", 5);
+  strncpy(strTemp, "Ln2Cr", 6);
   ObitInfoListGetTest(myInput, "outClass", &type, dim, strTemp);
   if (!strncmp(strTemp, "     ", 5)) {
-      strncpy(strTemp, "Ln2Cr", 5);
+      strncpy(strTemp, "Ln2Cr", 6);
       dim[0] = strlen (strTemp); dim[1] = 1;
       ObitInfoListAlwaysPut (myInput, "outClass", OBIT_string, dim, strTemp);
   }

@@ -1,6 +1,6 @@
 /* $Id:  $ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2016                                          */
+/*;  Copyright (C) 2012-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -33,6 +33,7 @@
 #include "ObitSkyGeom.h"
 #include "ObitFInterpolate.h"
 #include "ObitImageFitData.h"
+#include "ObitUV.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -1022,7 +1023,7 @@ ObitTableFS* ObitTableFSUtilVL2FS (ObitTableVL *in, ObitData *data, olong FSver,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   olong orow, i,irow, numCh, count = 0;
-  odouble RefFreq=1.4e9;
+  /*odouble RefFreq=1.4e9;*/
   ofloat  Flux, fblank=ObitMagicF();
   gchar *tname;
   gboolean toEq=FALSE;
@@ -1037,13 +1038,13 @@ ObitTableFS* ObitTableFSUtilVL2FS (ObitTableVL *in, ObitData *data, olong FSver,
   /* Get frequency */
   if (ObitImageIsA(data)) {
     imDesc = ((ObitImage*)data)->myDesc;
-    RefFreq = imDesc->crval[imDesc->jlocf];
+    /*RefFreq = imDesc->crval[imDesc->jlocf];*/
     /* Need to convert positions to Equatorial? */
     toEq = (!strncmp("GLON", imDesc->ctype[0], 4)) && 
       (!strncmp("GLAT", imDesc->ctype[1], 4));
   } else if (ObitUVIsA(data)) {
     uvDesc = ((ObitUV*)data)->myDesc;
-    RefFreq = uvDesc->crval[uvDesc->jlocf];
+    /*RefFreq = uvDesc->crval[uvDesc->jlocf];*/
     /* Need to convert positions to Equatorial? */
     toEq = (!strncmp("GLON", uvDesc->ctype[0], 4)) && 
       (!strncmp("GLAT", uvDesc->ctype[1], 4));
@@ -1336,7 +1337,7 @@ void ObitTableFSFiltVel(ObitTableFS *inFS, ObitImage *im, ObitTableFS *outFS,
 			ObitErr *err)
 {
   ObitTableFSRow *FSrow=NULL;
-  olong nx, ny, nrow, nch, irow, orow, i, chmax, l1, l2;
+  olong nrow, nch, irow, orow, i, chmax, l1, l2;
   ofloat minSNR, minFlux, median, rms, maxV, tCrpix, *spec=NULL;
   ofloat delnu, refnu, frline, vsign, limit, fblank=ObitMagicF();
   odouble tCrval, dvzero, velite, vel, sum, sum1, sum2;
@@ -1413,8 +1414,6 @@ void ObitTableFSFiltVel(ObitTableFS *inFS, ObitImage *im, ObitTableFS *outFS,
   }
 
   /* Numbers of things */
-  nx  = imDesc->inaxes[imDesc->jlocr];
-  ny  = imDesc->inaxes[imDesc->jlocd];
   nch = MAX(outFS->numCh, imDesc->inaxes[imDesc->jlocf]);
 
   /* Work array */

@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to make ionospheric movies from an SN table             */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007,2010                                          */
+/*;  Copyright (C) 2007,2010,2022                                     */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -109,31 +109,31 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Count times in SN table */
   ntime = doMovie (myInput, inData, NULL, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Create output image */
   outImage = setOutput (myInput, ntime, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Process */
   doMovie (myInput, inData, outImage, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* History */
   IonMovieHistory (myInput, inData, outImage, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput);    /* delete input list */
@@ -697,7 +697,6 @@ ObitImage* setOutput (ObitInfoList *myInput, olong ntime, ObitUV *inData,
 {
   ObitImage *outImage=NULL;
   ObitInfoType type;
-  ObitIOType IOType;
   olong      i, n, Aseq, disk, cno, nx, ny;
   ofloat    xCells, yCells, solInt;
   gchar     Type[10], *strTemp, outFile[129], *outName, *outF;
@@ -744,12 +743,11 @@ ObitImage* setOutput (ObitInfoList *myInput, olong ntime, ObitUV *inData,
       g_snprintf (tname, 100, "%s", strTemp);
     }
       
-    IOType = OBIT_IO_AIPS;  /* Save file type */
     /* output AIPS disk */
     ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
     /* output AIPS sequence */
     ObitInfoListGet(myInput, "outSeq", &type, dim, &Aseq, err);
-    for (i=0; i<12; i++) Aname[i] = ' '; Aname[i] = 0;
+    for (i=0; i<12; i++) {Aname[i] = ' ';} Aname[i] = 0;
     strncpy (Aname, tname, 13); Aname[12] = 0;
     /* output AIPS class */
     if (ObitInfoListGetP(myInput, "outClass", &type, dim, (gpointer)&strTemp)) {
@@ -787,7 +785,7 @@ ObitImage* setOutput (ObitInfoList *myInput, olong ntime, ObitUV *inData,
     /* Generate output name from Sources, outName */
     ObitInfoListGetP (myInput, "outFile", &type, dim, (gpointer)&outF);
     n = MIN (128, dim[0]);
-    for (i=0; i<n; i++) tname[i] = outF[i]; tname[i] = 0;
+    for (i=0; i<n; i++) {tname[i] = outF[i];} tname[i] = 0;
     /* If blank use ".fits" */
     if ((tname[0]==' ') || (tname[0]==0)) g_snprintf (tname, 128, ".fits");
     /* Something in source name? */
@@ -796,8 +794,6 @@ ObitImage* setOutput (ObitInfoList *myInput, olong ntime, ObitUV *inData,
     else g_snprintf (outFile, 128, "%s%s", Sources, tname);
     ObitTrimTrail(outFile);  /* remove trailing blanks */
 	   
-    IOType = OBIT_IO_FITS;  /* Save file type */
-
     /* output FITS disk */
     ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
 

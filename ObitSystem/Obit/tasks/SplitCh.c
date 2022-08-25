@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task to copy uv data                        .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2012                                          */
+/*;  Copyright (C) 2005-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -98,30 +98,30 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest inputs */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get output uvdata */
   outData = setOutputData (myInput, inData, &nout, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Split */
   ObitUVUtilSplitCh(inData, nout, outData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* History */
   SplitChHistory (myInput, inData, nout, outData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput);    /* delete input list */
@@ -161,7 +161,7 @@ ObitInfoList* SplitChIn (int argc, char **argv, ObitErr *err)
 
   /* error checks */
   g_assert(ObitErrIsA(err));
-  if (err->error) return list;
+  if (err->error) {return list;}
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
@@ -682,11 +682,11 @@ ObitUV** setOutputData (ObitInfoList *myInput, ObitUV* inData, olong *nout,
       outUV[id] = newObitUV(tname);
     
       /* Output name */
-      for (i=0; i<12; i++) Aname[i] = ' ';  Aname[i] = 0;
+      for (i=0; i<12; i++) {Aname[i] = ' ';}  Aname[i] = 0;
       for (i=0; i<MIN(12,nameDim[0]); i++) Aname[i] = ANames[i+id*nameDim[0]];
       
       /* Output class */
-      for (i=0; i<6; i++) Aclass[i] = ' ';  Aclass[i] = 0;
+      for (i=0; i<6; i++) {Aclass[i] = ' ';}  Aclass[i] = 0;
       for (i=0; i<MIN(6,classDim[0]); i++) Aclass[i] = AClasss[i+id*classDim[0]];
 
       /* Sequence */
@@ -737,7 +737,7 @@ ObitUV** setOutputData (ObitInfoList *myInput, ObitUV* inData, olong *nout,
     
       /* outFile */
       n = MIN (128, fileDim[0]);
-      for (i=0; i<n; i++) outFile[i] = outFiles[i+id*fileDim[0]]; outFile[i] = 0;
+      for (i=0; i<n; i++) {outFile[i] = outFiles[i+id*fileDim[0]];} outFile[i] = 0;
       ObitTrimTrail(outFile);  /* remove trailing blanks */
 
       /* Disk */

@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Ionospheric calibration of uv data              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2011                                          */
+/*;  Copyright (C) 2006-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -103,15 +103,15 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto cleanup;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto cleanup;}
 
   /* Create IonCal */
   ioncal = newObitIonCal ("Ionospheric calibration");
@@ -123,14 +123,14 @@ int main ( int argc, char **argv )
 
   /* Calibrate */
   ObitIonCaldoCal (ioncal, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto cleanup;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto cleanup;}
 
   /* History */
   IonCalHistory (myInput, inData,err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto cleanup;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto cleanup;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto cleanup;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto cleanup;}
   
   /* cleanup */
 cleanup:
@@ -170,7 +170,7 @@ ObitInfoList* IonCalIn (int argc, char **argv, ObitErr *err)
 
   /* error checks */
   g_assert(ObitErrIsA(err));
-  if (err->error) return list;
+  if (err->error) {return list;}
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);

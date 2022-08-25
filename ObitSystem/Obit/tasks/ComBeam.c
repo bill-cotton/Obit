@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Combine beam images           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010,2011                                          */
+/*;  Copyright (C) 2010,2011,2022                                     */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -96,19 +96,19 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Get list of input images and output image */
   ComBeamGetImage(myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Combine them together */
   doComBeam (myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* History */
   doHistory (err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* cleanup */
   for (i=0; i<nImage; i++) {
@@ -484,12 +484,12 @@ void ComBeamGetImage(ObitInfoList *myInput, ObitErr *err)
       /* input AIPS name */
       if (i==0) g_snprintf (tname, 50, "inName");
       else g_snprintf (tname, 100, "in%dName", i+1);
-      for (k=0; k<12; k++) Aname[k] = ' '; Aname[k] = 0;
+      for (k=0; k<12; k++) {Aname[k] = ' ';} Aname[k] = 0;
       ObitInfoListGet(myInput, tname, &type, dim, Aname, err);
       /* input AIPS class */
       if (i==0) g_snprintf (tname, 50, "inClass");
       else g_snprintf (tname, 100, "in%dClass", i+1);
-      for (k=0; k<6; k++) Aclass[k] = ' '; Aclass[k] = 0;
+      for (k=0; k<6; k++) {Aclass[k] = ' ';} Aclass[k] = 0;
       ObitInfoListGet(myInput, tname, &type, dim, Aclass, err);
       /* input AIPS sequence */
       if (i==0) g_snprintf (tname, 50, "inSeq");
@@ -614,11 +614,11 @@ void ComBeamGetImage(ObitInfoList *myInput, ObitErr *err)
     /* AIPS disk */
     ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
     /* AIPS name */
-    for (k=0; k<12; k++) Aname[k] = ' '; Aname[k] = 0;
+    for (k=0; k<12; k++) {Aname[k] = ' ';} Aname[k] = 0;
     ObitInfoListGet(myInput, "outName", &type, dim, Aname, err);
     Aname[dim[0]] = 0;
     /* AIPS class */
-    for (k=0; k<6; k++) Aclass[k] = ' '; Aclass[k] = 0;
+    for (k=0; k<6; k++) {Aclass[k] = ' ';} Aclass[k] = 0;
     ObitInfoListGet(myInput, "outClass", &type, dim, Aclass, err);
     Aclass[dim[0]] = 0;
     /* AIPS sequence */

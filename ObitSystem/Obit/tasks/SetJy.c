@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2021                                          */
+/*;  Copyright (C) 2007-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -110,29 +110,29 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Copy selection/calibration info to data */
   ObitInfoListCopyList (myInput, inData->info, dataParms);
 
   /* Update SU table */
   SUTable =  SetJyUpdate (inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Write history */
   SetJyHistory (myInput, inData, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   SUTable   = ObitTableSUUnref(SUTable);
@@ -171,7 +171,7 @@ ObitInfoList* SetJyIn (int argc, char **argv, ObitErr *err)
 
   /* error checks */
   g_assert(ObitErrIsA(err));
-  if (err->error) return list;
+  if (err->error) {return list;}
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
@@ -742,7 +742,7 @@ ObitTableSU* SetJyUpdate (ObitUV* inData, ObitErr* err)
     /* Update this one? */
     if (wanted) {
 
-	for (j=0; j<lsou; j++) tempName[j] = ' '; tempName[j] = 0;
+      for (j=0; j<lsou; j++) {tempName[j] = ' ';} tempName[j] = 0;
 	/* get blank padded name */
 	for (j=0; j<lsou; j++) {
 	  if (row->Source[j]==0) break;  /* only values in string */
@@ -888,9 +888,8 @@ ObitTableSU* SetJyUpdate (ObitUV* inData, ObitErr* err)
 void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
 	       ofloat Flux[4], ObitErr* err)
 {
-  olong ictype, iband, isrc, i;
+  olong ictype, isrc, i;
   odouble temp2=0.0, dt, ferror, freqm;
-  ofloat ferr;
   /* number of recognized source names */
   olong xnsou = 45;
 
@@ -933,7 +932,7 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
     {1.46744, -0.77350, -0.25912,  0.00752},   /* 3C295 */
     {1.8077,   -0.8018, -0.1157,   0.000},     /* 3C123 P&B 2012*/
     {1.2969,   -0.8690, -0.1788,   0.0305},    /* 3C196 P&B 2012*/
-    /*old {-113.51820049,  110.7808751,   -35.26819126,    3.70123262} /*0408-65 Mauch/Hugo */
+    /*old {-113.51820049,  110.7808751,   -35.26819126,    3.70123262} 0408-65 Mauch/Hugo */
     {-41.59292326, 44.81497595, -15.18277173, 1.67166122} /*0408-65 Mauch/Hugo Mar21*/
   };
   /* Source lists, Perley 1990 */
@@ -999,10 +998,10 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
     4,4,4,4,4, 5,5,5,5,5, 6,6,6,6,6,
     7,7,7,7,7, 8,8,8,8,8, 9,9,9,9,9,
   };
-  /*  Frequency break points for bands */
+  /*  Frequency break points for bands 
   ofloat fband[] = {
     0.15e3, 0.7e3, 2.0e3, 6.0e3, 11.5e3, 18.e3, 28.e3
-  };
+  };*/
   olong j;
   gchar tempName[101];
 
@@ -1013,7 +1012,7 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
   }
 
   /* Name */
-  for (j=0; j<16; j++) tempName[j] = row->Source[j]; tempName[j] = 0;
+  for (j=0; j<16; j++) {tempName[j] = row->Source[j];} tempName[j] = 0;
   if (strlen(tempName)<16) {
     for (j=strlen(tempName); j<16; j++) tempName[j] = ' '; 
     tempName[j] = 0;
@@ -1022,12 +1021,12 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
   /* Type of calculation */
   ictype = (olong)(Parms[1]+0.5);
 
-  /* Work out band */
-  iband = 8;
+  /* Work out band 
+  iband = 8;*/
   freqm = Freq*1.0e-6;  /* Frequency in MHz */
-  for (i=0; i<7; i++) {
+  /*for (i=0; i<7; i++) {
     if (freqm < fband[7-i]) iband = 7-i;
-  }
+    }*/
 
   /* Lookup source */
   isrc = -1;
@@ -1092,8 +1091,6 @@ void CalcFlux (ObitTableSURow* row, ofloat *Parms, odouble Freq,
     /* sqrt sum of squares * factor */
     ferror = log(10.) * Flux[0] * sqrt(ferror);
   }
-  
-  ferr = ferror;/* Convert back to float */
   
 Flux[0] *= Parms[2];  /* Apply fudge factor */
 } /* end CalcFlux */
@@ -1198,7 +1195,6 @@ void CalcFluxPB17 (ObitTableSURow* row, ofloat *Parms, odouble Freq,
 {
   olong isrc, i;
   odouble temp2=0.0, dt, ferror, freqg;
-  ofloat ferr;
 
   /* Source lists */
  ofloat coeff[21][6] = { 
@@ -1323,7 +1319,7 @@ void CalcFluxPB17 (ObitTableSURow* row, ofloat *Parms, odouble Freq,
   gchar tempName[101];
   
   /* Name */
-  for (j=0; j<16; j++) tempName[j] = row->Source[j]; tempName[j] = 0;
+  for (j=0; j<16; j++) {tempName[j] = row->Source[j];} tempName[j] = 0;
   if (strlen(tempName)<16) {
     for (j=strlen(tempName); j<16; j++) tempName[j] = ' '; 
     tempName[j] = 0;
@@ -1366,8 +1362,6 @@ void CalcFluxPB17 (ObitTableSURow* row, ofloat *Parms, odouble Freq,
     /* sqrt sum of squares * factor */
     ferror = log(10.) * Flux[0] * sqrt(ferror);
   }
-  
-  ferr = ferror;/* Convert back to float */
   
   Flux[0] *= Parms[2];  /* Apply fudge factor */
 } /* end CalcFluxPB17 */

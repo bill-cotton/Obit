@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014-2020                                          */
+/*;  Copyright (C) 2014-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1903,7 +1903,7 @@ void fast_grid7(ofloat *grid, ofloat vis[2], olong iu, olong iv, olong lrow,
 		olong nconv,  ofloat *cu, ofloat *cv)  
 {
 #if HAVE_AVX512==1
-  v16sf vt, vcu, vt1, vt2, vcv, vs, vgrid, vconv;
+  v16sf vcu, vt1, vt2, vcv, vs, vgrid, vconv;
   mask16 msk16;
   V8SF vtmp; 
   int jv, addr, ia;

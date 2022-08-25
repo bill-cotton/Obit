@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Read IDI format data, convert to Obit UV                           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2015                                          */
+/*;  Copyright (C) 2007-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -173,7 +173,7 @@ int main ( int argc, char **argv )
   ObitInfoType type;
   gboolean exist=FALSE;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gchar FullFile[128];
+  gchar FullFile[300];
   olong disk;
 
   err = newObitErr();  /* Obit error/message stack */
@@ -217,15 +217,15 @@ int main ( int argc, char **argv )
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
 
-  if (err->error) ierr = 1;  ObitErrLog(err);   if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);   if (ierr!=0) goto exit;}
 
   /* Create ObitUV for data */
   outData = setOutputData (myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
    
   /* Get header info, array geometry, initialize output if necessary */
   GetHeader (outData, inscan, myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Tell what's going on */   
   Obit_log_error(err, OBIT_InfoErr, "Adding file %s to output", 
@@ -233,17 +233,17 @@ int main ( int argc, char **argv )
   ObitErrLog(err);
 
   /* show any errors */
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
    
   /* Open output data */
   if ((ObitUVOpen (outData, OBIT_IO_ReadWrite, err) 
        != OBIT_IO_OK) || (err->error>0))  /* error test */
     Obit_log_error(err, OBIT_Error, "ERROR opening output UV file %s", outData->name);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* convert data  */
   GetData (outData, inscan, myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Close output uv data */
   if ((ObitUVClose (outData, err) != OBIT_IO_OK) || (err->error>0))
@@ -258,7 +258,7 @@ int main ( int argc, char **argv )
   /* Open and close to init TableList */
   ObitDataOpen (inData, OBIT_IO_ReadOnly, err);
   ObitDataClose (inData,  err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Copy tables */
   GetFlagInfo (inData, outData, err);          /* FLAG tables */
@@ -269,17 +269,17 @@ int main ( int argc, char **argv )
   GetInterferometerModelInfo (inData, outData, err); /* INTERFEROMETER_MODEL tables */
   GetPhaseCalInfo (inData, outData, err);      /* PHASE_CAL tables */
   GetWeatherInfo (inData, outData, err);       /* WEATHER tables */
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Update An tables with correct ref. date */
   for (i=1; i<=numArray; i++)  UpdateAntennaInfo (outData, i, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* History */
   IDIInHistory (inData, myInput, outData, err);
   
   /* show any errors */
-  if (err->error) ierr = 1;   ObitErrLog(err);   if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;   ObitErrLog(err);   if (ierr!=0) goto exit;}
   
   /* Shutdown Obit */
  exit:
@@ -406,7 +406,7 @@ ObitInfoList* IDIInin (int argc, char **argv, ObitErr *err)
   ObitInfoListGet(list, "AIPSuser",  &type, dim, &AIPSuser,  err);
   ObitInfoListGet(list, "nAIPS",     &type, dim, &nAIPS,     err);
   ObitInfoListGet(list, "nFITS",     &type, dim, &nFITS,     err);
-  if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
+  if (err->error) {Obit_traceback_val (err, routine, "GetInput", list);}
 
   /* Directories more complicated */
   ObitInfoListGetP(list, "AIPSdirs",  &type, dim, (gpointer)&strTemp);
@@ -565,7 +565,7 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
 {
   ObitUV    *outUV = NULL;
   ObitInfoType type;
-  olong      i, n, Aseq, disk, cno, lType;
+  olong      i, n, Aseq, disk, cno;
   gchar     *Type, *strTemp, outFile[129];
   gchar     Aname[13], Aclass[7], *Atype = "UV";
   olong      nvis;
@@ -585,12 +585,11 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
     
   /* File type - could be either AIPS or FITS */
   ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
-  lType = dim[0];
   if (!strncmp (Type, "AIPS", 4)) { /* AIPS input */
 
     /* outName given? */
     ObitInfoListGetP (myInput, "outName", &type, dim, (gpointer)&strTemp);
-    for (i=0; i<12; i++) Aname[i] = ' ';  Aname[i] = 0;
+    for (i=0; i<12; i++) {Aname[i] = ' ';}  Aname[i] = 0;
     for (i=0; i<MIN(12,dim[0]); i++) Aname[i] = strTemp[i];
     /* Save any defaulting on myInput */
     dim[0] = 12;
@@ -642,7 +641,7 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
     /* outFile given? */
     ObitInfoListGetP (myInput, "outFile", &type, dim, (gpointer)&strTemp);
     n = MIN (128, dim[0]);
-    for (i=0; i<n; i++) outFile[i] = strTemp[i]; outFile[i] = 0;
+    for (i=0; i<n; i++) {outFile[i] = strTemp[i];} outFile[i] = 0;
     ObitTrimTrail(outFile);  /* remove trailing blanks */
 
     /* Save any defaulting on myInput */
@@ -701,7 +700,7 @@ void GetHeader (ObitUV *outData, gchar *inscan,
   ObitFileFITS *inFITS=NULL;
   /*gboolean exist=FALSE;*/
   olong ncol;
-  gchar FullFile[128], *today=NULL;
+  gchar FullFile[300], *today=NULL;
   olong i, iarr, disk, lim;
   ofloat epoch=2000., equinox=2000.;
   oint no_band=0, maxis1=0, maxis2=0, maxis3=0, maxis4=0, maxis5=0;
@@ -1052,7 +1051,7 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
   ObitTableIDI_UV_DATARow *inRow=NULL;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gchar FullFile[128];
+  gchar FullFile[300];
   gchar tstr1[32], tstr2[32];
   gchar *routine = "GetData";
 
@@ -1155,9 +1154,9 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
       inTable->uuOff = inTable->uuncpOff;
       inTable->vvOff = inTable->vvncpOff;
       inTable->wwOff = inTable->wwncpOff;
-      desc->ptype[0][5] = desc->ptype[1][5] = desc->ptype[1][5] = 'N';
-      desc->ptype[0][6] = desc->ptype[1][6] = desc->ptype[1][6] = 'C';
-      desc->ptype[0][7] = desc->ptype[1][7] = desc->ptype[1][7] = 'P';
+      desc->ptype[0][5] = desc->ptype[1][5] = desc->ptype[2][5] = 'N';
+      desc->ptype[0][6] = desc->ptype[1][6] = desc->ptype[2][6] = 'C';
+      desc->ptype[0][7] = desc->ptype[1][7] = desc->ptype[2][7] = 'P';
     }
   } /* end projection specified */
 
@@ -1512,7 +1511,7 @@ void GetAntennaInfo (ObitData *inData, ObitUV *outData, olong arrno,
       !strncmp(in2Table->ArrName, "B       ", 8) || 
       !strncmp(in2Table->ArrName, "C       ", 8) || 
       !strncmp(in2Table->ArrName, "D       ", 8)) {
-    strncpy (in2Table->ArrName, "EVLA    ", 8);
+    strncpy (in2Table->ArrName, "EVLA    ", 9);
     in2Table->ArrayX = -1601185.365;
     in2Table->ArrayY = -5041977.547;
     in2Table->ArrayZ =  3554915.87;
@@ -3596,7 +3595,8 @@ void CalcUVW (ObitUV *outData, ObitTableIDI_UV_DATARow* inRow,
   ObitTableSU *SUTable=NULL;
   ObitAntennaList *AntList;
   ofloat time, uvw[3], bl[3];
-  odouble arrJD, DecR, RAR, AntLst, HrAng=0.0, ArrLong, ArrLat, *dRow;
+  odouble arrJD, DecR, RAR, AntLst, HrAng=0.0, ArrLong, *dRow;
+  /* odouble ArrLat */
   odouble sum, xx, yy, zz;
   gboolean uvwDouble;
   gchar *routine = "oldCalcUVW";
@@ -3684,7 +3684,7 @@ void CalcUVW (ObitUV *outData, ObitTableIDI_UV_DATARow* inRow,
   /* Array geometry - assume first for all */
   AntList = antennaLists[iarr];
   ArrLong = AntList->ANlist[0]->AntLong;
-  ArrLat  = AntList->ANlist[0]->AntLat;
+  /*ArrLat  = AntList->ANlist[0]->AntLat;*/
   
   bl[0] =  AntList->ANlist[ant1-1]->AntXYZ[0] - AntList->ANlist[ant2-1]->AntXYZ[0];
   bl[1] =  AntList->ANlist[ant1-1]->AntXYZ[1] - AntList->ANlist[ant2-1]->AntXYZ[1];

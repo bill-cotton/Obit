@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Instrumental polarization calibration                              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2016                                          */
+/*;  Copyright (C) 2012-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -111,24 +111,24 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input sky model */
   skyModel = getInputSkyModel (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* Copy/select/calibrate to scratch file */
   scrData = newObitUVScratch (inData,err);
   scrData = ObitUVCopy (inData, scrData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   /* Save number of selected calibrators */
   nCal = MAX(1, inData->mySel->numberSourcesList);
   
@@ -137,7 +137,7 @@ int main ( int argc, char **argv )
   
   /* Divide if model given */
   if (skyModel) ObitSkyModelDivUV (skyModel, scrData, scrData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Create Fitter */
   PolnFitter = ObitPolnCalFitCreate ("PolnFitter");
@@ -147,14 +147,14 @@ int main ( int argc, char **argv )
 
   /* Do channel solutions */
   ObitPolnCalFitFit (PolnFitter, avgData, inData, err);
-  if (err->error) ierr = 1;   ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;   ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Write history */
   PCalHistory (myInput, inData, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* Shutdown Obit */
  exit: 
@@ -624,7 +624,8 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   ObitUV       *inData = NULL;
   ObitInfoType type;
   olong        nvis, doCalib;
-  gboolean     doCalSelect, KeepSou;
+  gboolean     doCalSelect;
+  /* gboolean KeepSou; */
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "UVRange", "FreqID", 

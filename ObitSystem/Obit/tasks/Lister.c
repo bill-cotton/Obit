@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Task to print the contents of various data files                   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2017                                          */
+/*;  Copyright (C) 2009-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -151,11 +151,11 @@ int main ( int argc, char **argv )
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get control parameters from myInput */
   ObitInfoListGet(myInput, "opType", &type, dim, opType, err);
@@ -178,7 +178,7 @@ int main ( int argc, char **argv )
   }
 
   /* error check */
-  if (err->error) ierr = 1;  ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* cleanup */
   myInput = ObitInfoListUnref(myInput);    /* delete input list */
@@ -857,7 +857,7 @@ void doSCAN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   gboolean     isInteractive = FALSE, quit = FALSE;
   gchar        line[1024], Title1[1024], Title2[1024];
   olong        pLimit=1000000;  /* Page limit */
-  olong        i, j, iif, ivr, ivd, lenLine, LinesPerPage = 0, maxSUID, *noVis=NULL;
+  olong        i, j, iif, ivd, lenLine, LinesPerPage = 0, maxSUID, *noVis=NULL;
   olong        ver, iRow, count, start, souID, lastSouID, doCrt=1, qual = 0;
   gchar        *prtFile=NULL, btimeString[25], etimeString[25];
   gchar        source[17]="source          ", calcode[5]="    ";
@@ -1038,7 +1038,6 @@ void doSCAN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   ObitPrinterWrite (myPrint, line, &quit, err);
   if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
   /* Velocity type */
-  ivr = MAX(0, MIN((inDesc->VelReference-1),2));
   ivd = MAX(0, MIN(inDesc->VelDef,1));
   sprintf(line,"Velocity type = '%s'    Definition = '%s'", VelDef[ivd], VelReference[ivd]);
   ObitPrinterWrite (myPrint, line, &quit, err);
@@ -1586,7 +1585,7 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 		valueArr[ia] = fblank;
 	      } else {
 		/* Blank fill if in value */
-		for (i=start; i<=start+ndig; i++) line[i] = ' '; line[i] = 0;
+		for (i=start; i<=start+ndig; i++) {line[i] = ' ';} line[i] = 0;
 	      }
 	    }
 	    
@@ -1667,7 +1666,7 @@ void getDataScale (ObitUV* inData, ofloat *blscale, ofloat *wtscale,
   ObitIOCode   iretCode;
   olong count=0, i, j, indx, jndx, kndx;
   gboolean good;
-  ofloat u, maxBL=0.0, v, w, re, im, amp, maxAmp=0.0, wt, maxWt=0.0, minWt=0.0;
+  ofloat u, maxBL=0.0, v, re, im, amp, maxAmp=0.0, wt, maxWt=0.0, minWt=0.0;
   gchar *routine = "getDataScale";
 
     if (err->error) return;  /* prior error */
@@ -1693,7 +1692,6 @@ void getDataScale (ObitUV* inData, ofloat *blscale, ofloat *wtscale,
       maxBL = MAX (maxBL, fabs(u));
       v   = inData->buffer[indx+inDesc->ilocv];
       maxBL = MAX (maxBL, fabs(v));
-      w   = inData->buffer[indx+inDesc->ilocw];
       /*maxBL = MAX (maxBL, fabs(w));*/
       good = FALSE;
       for (j=0; j<inDesc->ncorr; j++) {
@@ -2044,7 +2042,6 @@ ofloat getSNGainScale (ObitUVSel *sel, ObitTableSN *SNTable, ObitTableSNRow *SNR
   ofloat value, maxValue=-1.0e20, ftest, ratio, fblank = ObitMagicF();
   olong nrow, iRow, count=0, antNo, souID, SubA, freqID, ilog;
   gboolean isNeg = FALSE;
-  ObitIOCode   iretCode;
   gchar *routine = "getSNGainScale";
 
   /* Fixed scaling for parallactic angle, elevation or phase */
@@ -2053,7 +2050,7 @@ ofloat getSNGainScale (ObitUVSel *sel, ObitTableSN *SNTable, ObitTableSNRow *SNR
   nrow = SNTable->myDesc->nrow;   /* How many rows */
   /* Loop over table or first 1000 hits */
   for (iRow=1; iRow<=nrow; iRow++) {
-    iretCode = ObitTableSNReadRow (SNTable, iRow, SNRow, err);
+    ObitTableSNReadRow (SNTable, iRow, SNRow, err);
     if (err->error) Obit_traceback_val (err, routine, SNTable->name, out);
 
     /* Want this antenna? */
@@ -2127,7 +2124,6 @@ ofloat getCLGainScale (ObitUVSel *sel, ObitTableCL *CLTable, ObitTableCLRow *CLR
   ofloat value, maxValue=-1.0e20, ftest, ratio, fblank = ObitMagicF();
   olong nrow, iRow, count=0, antNo, souID, SubA, freqID, ilog;
   gboolean isNeg = FALSE;
-  ObitIOCode   iretCode;
   gchar *routine = "getCLGainScale";
 
   /* Fixed scaling for parallactic angle, elevation or phase */
@@ -2136,7 +2132,7 @@ ofloat getCLGainScale (ObitUVSel *sel, ObitTableCL *CLTable, ObitTableCLRow *CLR
   nrow = CLTable->myDesc->nrow;   /* How many rows */
   /* Loop over table or first 1000 hits */
   for (iRow=1; iRow<=nrow; iRow++) {
-    iretCode = ObitTableCLReadRow (CLTable, iRow, CLRow, err);
+    ObitTableCLReadRow (CLTable, iRow, CLRow, err);
     if (err->error) Obit_traceback_val (err, routine, CLTable->name, out);
 
     /* Want this antenna? */

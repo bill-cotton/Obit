@@ -1,7 +1,7 @@
 /* $Id:  $  */
 /* Obit Task to duplicate channels in a UV data set                   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2015                                               */
+/*;  Copyright (C) 2015,2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -102,22 +102,22 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Process */
   doBloat (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput);    /* delete input list */
@@ -155,7 +155,7 @@ ObitInfoList* BloatIn (int argc, char **argv, ObitErr *err)
 
   /* error checks */
   g_assert(ObitErrIsA(err));
-  if (err->error) return list;
+  if (err->error) {return list;}
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
@@ -737,7 +737,7 @@ ObitUV* setOutputUV (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     /* if not use inName */
     if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12)))
       ObitInfoListGetP (myInput, "inName", &type, dim, (gpointer)&strTemp);
-    for (i=0; i<12; i++) Aname[i] = ' ';  Aname[i] = 0;
+    for (i=0; i<12; i++) {Aname[i] = ' ';}  Aname[i] = 0;
     for (i=0; i<MIN(12,dim[0]); i++) Aname[i] = strTemp[i];
     /* Save any defaulting on myInput */
     dim[0] = 12;
@@ -789,7 +789,7 @@ ObitUV* setOutputUV (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12)))
       ObitInfoListGetP (myInput, "inFile", &type, dim, (gpointer)&strTemp);
     n = MIN (128, dim[0]);
-    for (i=0; i<n; i++) outFile[i] = strTemp[i]; outFile[i] = 0;
+    for (i=0; i<n; i++) {outFile[i] = strTemp[i];} outFile[i] = 0;
     ObitTrimTrail(outFile);  /* remove trailing blanks */
 
     /* Save any defaulting on myInput */

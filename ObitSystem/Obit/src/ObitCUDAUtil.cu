@@ -1,6 +1,6 @@
 /* $Id:  $        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014                                               */
+/*;  Copyright (C) 2014,2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -25,14 +25,13 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-#ifndef OBITCUDAUTIL_H 
-#define OBITCUDAUTIl_H 
 
 #define IS_CUDA 1
 
 // includes, project
 #include <helper_cuda.h>
 #include <helper_functions.h>  // helper for shared that are common to CUDA SDK samples
+#include <cuda_runtime.h>
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -224,7 +223,7 @@ float* ObitCUDAUtilAllocHost (int memsize)
 extern "C"
 void ObitCUDAUtilFreeHost (float *host)
 {
-  cudaFreeHost(host);
+  if (host) cudaFreeHost(host);
 } /* end ObitCUDAUtilFreeHost */
 
 /**
@@ -247,7 +246,7 @@ float* ObitCUDAUtilAllocGPU (int memsize)
 extern "C"
 void ObitCUDAUtilFreeGPU (float *GPU)
 {
-  cudaFree(GPU);
+  if (GPU) cudaFree(GPU);
 } /* end ObitCUDAUtilFreeGPU */
 
 /**
@@ -269,6 +268,24 @@ void ObitCUDAUtilHost2GPU(float *GPU, float *host, int memsize, int* stream)
 } /* end ObitCUDAUtilHost2GPU */
 
 /**
+ * Copy any data from host to GPU memory
+ * \param GPU      GPU memory
+ * \param host     locked host memory
+ * \param memsize  size in bytes
+ * \param stream   If non-NULL then stream pointer
+ */
+extern "C"
+void ObitCUDAUtilHostAny2GPU(void *GPU, void *host, int memsize, int* stream)
+{
+  if (stream!=NULL) {
+    checkCudaErrors(cudaMemcpyAsync(GPU, host, memsize, 
+      cudaMemcpyHostToDevice, (cudaStream_t)stream));
+  } else {
+    checkCudaErrors(cudaMemcpyAsync(GPU, host, memsize, cudaMemcpyHostToDevice, 0));
+  }
+} /* end ObitCUDAUtilHostInt2GPU */
+
+/**
  * Copy data from GPU to host memory
  * \param host     locked host memory
  * \param GPU      GPU memory
@@ -285,6 +302,53 @@ void ObitCUDAUtilGPU2Host(float *host, float *GPU, int memsize, int* stream)
     checkCudaErrors(cudaMemcpyAsync(host, GPU, memsize, cudaMemcpyDeviceToHost, 0));
   }
 } /* end ObitCUDAUtilGPU2Host */
+
+/**
+ * Copy any data from GPU to host memory
+ * \param host     locked host memory
+ * \param GPU      GPU memory
+ * \param memsize  size in bytes
+ * \param stream   If non-NULL then stream pointer
+ */
+extern "C"
+void ObitCUDAUtilGPUAny2Host(void *host, void *GPU, int memsize, int* stream)
+{
+  if (stream!=NULL) {
+    checkCudaErrors(cudaMemcpyAsync(host,GPU,  memsize, 
+      cudaMemcpyDeviceToHost, (cudaStream_t)stream));
+  } else {
+    checkCudaErrors(cudaMemcpyAsync(host, GPU, memsize, cudaMemcpyDeviceToHost, 0));
+  }
+} /* end ObitCUDAUtilGPUAny2Host */
+
+/**
+ * Return total global memory in device
+ * \param    cuda_device GPU device 
+ * \return   memory size in bytes
+ */
+extern "C"
+size_t ObitCUDAUtilMemory(int cuda_device)
+{
+  cudaDeviceProp deviceProp;
+  checkCudaErrors(cudaSetDevice(cuda_device));
+  checkCudaErrors(cudaGetDeviceProperties(&deviceProp, cuda_device));
+  return deviceProp.totalGlobalMem;
+} /* end ObitCUDAUtilMemory */
+
+/**
+ * Write pointer type information to stderr
+ * \param    pointer to check
+ * \param    label for pointer
+ */
+extern "C"
+void ObitCUDAUtilPointerType(void *ptr, char *label)
+{
+cudaPointerAttributes attr;
+char *attrType[4]={"Unregistered","Host","Device","Managed"};
+checkCudaErrors(cudaPointerGetAttributes(&attr, ptr));
+fprintf(stderr,"%s type: %s \n", label,attrType[attr.type]);
+} /* end ObitCUDAUtilPointerType */
+
 #endif /* HAVE_GPU */
 
 
@@ -306,5 +370,5 @@ float CUDAMagicF (void)
   
   return FBLANK.fblank;
 } /* end CUDAMagicF */
-#endif /* OBITFCUDAUtil_H */ 
+
 

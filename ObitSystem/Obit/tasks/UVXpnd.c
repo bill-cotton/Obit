@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task to Task to expand uv data in frequency                   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014                                               */
+/*;  Copyright (C) 2014,2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -111,26 +111,26 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get target uvdata */
   targData = getTargetData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Process */
   doUVXpnd (myInput, inData, targData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput);    /* delete input list */
@@ -773,7 +773,7 @@ ObitUV* setOutputUV (ObitInfoList *myInput, ObitUV* inData, ObitUV* targData,
     /* if not use inName */
     if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12)))
       ObitInfoListGetP (myInput, "inName", &type, dim, (gpointer)&strTemp);
-    for (i=0; i<12; i++) Aname[i] = ' ';  Aname[i] = 0;
+    for (i=0; i<12; i++) {Aname[i] = ' ';}  Aname[i] = 0;
     for (i=0; i<MIN(12,dim[0]); i++) Aname[i] = strTemp[i];
     /* Save any defaulting on myInput */
     dim[0] = 12;
@@ -824,7 +824,7 @@ ObitUV* setOutputUV (ObitInfoList *myInput, ObitUV* inData, ObitUV* targData,
     if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12)))
       ObitInfoListGetP (myInput, "inFile", &type, dim, (gpointer)&strTemp);
     n = MIN (128, dim[0]);
-    for (i=0; i<n; i++) outFile[i] = strTemp[i]; outFile[i] = 0;
+    for (i=0; i<n; i++) {outFile[i] = strTemp[i];} outFile[i] = 0;
     ObitTrimTrail(outFile);  /* remove trailing blanks */
 
     /* Save any defaulting on myInput */
@@ -1176,7 +1176,7 @@ static void FQSel (ObitUV *inUV, ObitUV *targUV, olong chXpn,
   ObitTableFQ    *inTab=NULL, *targTab=NULL;
   olong iFQver, highFQver;
   oint numIF;
-  olong nif, nchan;
+  olong nif;
   odouble *freqOff=NULL;
   ofloat *chBandw=NULL;
   oint *sideBand=NULL;
@@ -1195,7 +1195,6 @@ static void FQSel (ObitUV *inUV, ObitUV *targUV, olong chXpn,
 
   /* Should only be one FQ table */
   iFQver = 1;
-  nchan = inUV->myDesc->inaxes[inUV->myDesc->jlocf];
   if (inUV->myDesc->jlocif>=0) 
     nif = inUV->myDesc->inaxes[inUV->myDesc->jlocif];
   else

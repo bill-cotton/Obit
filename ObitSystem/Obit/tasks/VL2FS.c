@@ -1,7 +1,7 @@
 /* $Id:  */
 /* Convert VL table to FS table                                       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2015                                          */
+/*;  Copyright (C) 2012-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -105,7 +105,7 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Control */
   ObitInfoListGetTest(myInput, "doVL2FS",   &type, dim, &doVL2FS);
@@ -117,13 +117,13 @@ int main ( int argc, char **argv )
 
   /* Get input image */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get output image */
   outData = getOutputData (myInput, err);
   ObitInfoListGet(myInput, "outFS", &type, dim, &FSver, err);
   ObitInfoListGet(myInput, "inVL", &type, dim, &VLver, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Convert VL to FS table */
   if (doVL2FS) {
@@ -142,7 +142,7 @@ int main ( int argc, char **argv )
 				  err);
     ObitImageClose (outData, err);
   }
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input parameters from myInput, copy to outTab, outData */
   ObitInfoListCopyList (myInput, outTab->info, odataParms);
@@ -154,11 +154,11 @@ int main ( int argc, char **argv )
     ObitErrLog(err);
     ObitTableFSGetSpectrum(outTab, (ObitImage*)outData, err);
   }
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Write history */
   VL2FSHistory (myInput, outData, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Fit Spectra */
   if (doSpec || doVL2FS) {
@@ -177,7 +177,7 @@ int main ( int argc, char **argv )
     Obit_log_error(err, OBIT_InfoErr, "Fit/Filter spectra");
     ObitErrLog(err);
     ObitTableFSFiltVel(outTab, outData, outTab2, err);
-    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+    if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   }
 
   /* Print table */
@@ -192,7 +192,7 @@ int main ( int argc, char **argv )
  }
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput); 
@@ -235,7 +235,7 @@ ObitInfoList* VL2FSIn (int argc, char **argv, ObitErr *err)
 
   /* error checks */
   g_assert(ObitErrIsA(err));
-  if (err->error) return list;
+  if (err->error) {return list;}
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);

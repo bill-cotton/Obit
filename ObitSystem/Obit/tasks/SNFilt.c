@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Filter SN table phases to remove peculiar phases  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2013                                          */
+/*;  Copyright (C) 2007-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -174,26 +174,26 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Filter Table */
   SNFilter (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Write history */
   SNFiltHistory (myInput, inData, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput); 
@@ -809,7 +809,7 @@ void SNFiltSet (ObitInfoList* myInput, ObitUV* inData, ObitTableSN *SNTab,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong iANver;
   ofloat dis;
-  odouble ArrLong, ArrLat, clat, slat, tx, ty, tz,  stnxr, stnyr, stnzr;
+  odouble ArrLat, clat, slat, tx, ty, tz,  stnxr, stnyr, stnzr;
   gchar *routine = "SNFiltSet";
 
   /* Error checks */
@@ -882,7 +882,6 @@ void SNFiltSet (ObitInfoList* myInput, ObitUV* inData, ObitTableSN *SNTab,
   if ((err->error) || (ANTab==NULL) || (Ant==NULL)) goto cleanup;
 
   /* Reprojected location of the  reference antenna */
-  ArrLong = Ant->ANlist[refant-1]->AntLong;
   ArrLat  = Ant->ANlist[refant-1]->AntLat;
   clat = cos (ArrLat*DG2RAD);
   slat = sin (ArrLat*DG2RAD);
@@ -1470,7 +1469,7 @@ void GradFit (olong itime, ofloat *phase, ofloat *gradX, ofloat *gradY,
 {
   gboolean   convgd;
   olong   iter, iant, ipol, iif, rmscnt, itmp, indx;
-  ofloat w, arg, tol, test, normg, normi, delx, dely;
+  ofloat w, arg, tol, test, normg, delx, dely;
   ofloat stnx, stny;
   ofloat sumg2p1, sumg2p2,  sumg3p1, sumg3p2;
   ofloat fblank = ObitMagicF();
@@ -1534,7 +1533,6 @@ void GradFit (olong itime, ofloat *phase, ofloat *gradX, ofloat *gradY,
     /* Convergence criterion - lower  the bar  */
     tol = 5.0e-6 + iter * 1.0e-5;
     normg = 0.0;
-    normi = 0.0;
 
     /* Gradients */
     delx = atan (sumg2p1 / sumg2p2);
@@ -1687,9 +1685,9 @@ void WriteSNTab (ObitTableSN *inTab, ObitTableSN *outTab,
 		 gboolean doGrad, gboolean doRes, gboolean doBlank, 
 		 ObitErr *err)
 {
-  olong   loop, i, ipol, iif, itime, osnrow, antno;
+  olong   loop, i, ipol, iif, itime, antno;
   ofloat amp, faz, refiph;
-  gboolean  bad, OK;
+  gboolean  OK;
   olong inSNRow, outSNRow, indx, jndx;
   ObitIOCode retCode;
   ObitTableSNRow *inRow=NULL, *outRow=NULL;
@@ -1738,7 +1736,6 @@ void WriteSNTab (ObitTableSN *inTab, ObitTableSN *outTab,
 
   /* Loop over table */
   itime = 1;
-  osnrow = 0;
   for (loop= 1; loop<=inTab->myDesc->nrow; loop++) { /* loop 600 */
 
     /* Read */
@@ -1773,7 +1770,6 @@ void WriteSNTab (ObitTableSN *inTab, ObitTableSN *outTab,
 	Obit_log_error(err, OBIT_Error, 
 		       "%s: cannot find time %10.6f in internal table",
 		       routine, inRow->Time);
-	bad = TRUE;
 	goto cleanup;
       }
     }

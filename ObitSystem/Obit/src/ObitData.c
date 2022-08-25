@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2009                                          */
+/*;  Copyright (C) 2005-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -31,6 +31,7 @@
 #include "ObitMem.h"
 #include "ObitIOHistoryAIPS.h"
 #include "ObitImage.h"
+#include "ObitUV.h"
 #include "ObitIOTableAIPSUtil.h"
 #include "ObitIOTableFITSUtil.h"
 
@@ -655,14 +656,14 @@ ObitIOCode ObitDataZapTable (ObitData *in, gchar *tabType, olong tabVer,
 
     /* Does it exist? */
     if (out==NULL) {
-      if (tabtype) g_free (tabtype); tabtype = NULL;
+      if (tabtype) {g_free (tabtype); tabtype = NULL;}
       return  OBIT_IO_OK;
     }
 
     /* Zap */
     out = ObitTableZap (out, err);
     if (err->error) {
-      if (tabtype) g_free (tabtype); tabtype = NULL;
+      if (tabtype) {g_free (tabtype); tabtype = NULL;}
       Obit_traceback_val (err, routine, in->name, retCode);
     }
     /* remove from table list */
@@ -680,7 +681,7 @@ ObitIOCode ObitDataZapTable (ObitData *in, gchar *tabType, olong tabVer,
       /* Zap */
       out = ObitTableZap (out, err);
       if (err->error) {
-	if (tabtype) g_free (tabtype); tabtype = NULL;
+	if (tabtype) {g_free (tabtype); tabtype = NULL;}
 	Obit_traceback_val (err, routine, in->name, retCode);
       }
       /* remove from table list */
@@ -695,7 +696,7 @@ ObitIOCode ObitDataZapTable (ObitData *in, gchar *tabType, olong tabVer,
     }
   }
   
-  if (tabtype) g_free (tabtype); tabtype = NULL;
+  if (tabtype) {g_free (tabtype); tabtype = NULL;}
   retCode = OBIT_IO_OK;
   return retCode;
 } /* end ObitDataZapTable */

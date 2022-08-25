@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to Map beam polarization                                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2015                                          */
+/*;  Copyright (C) 2009-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -206,19 +206,19 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Process */
   doSources (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput);    /* delete input list */
@@ -255,7 +255,7 @@ ObitInfoList* MapBeamIn (int argc, char **argv, ObitErr *err)
   gchar *routine = "MapBeamIn";
 
   /* error checks */
-  if (err->error) return list;
+  if (err->error) {return list;}
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
@@ -849,7 +849,6 @@ ObitImage* setOutput (gchar *Source, olong iStoke, olong ant,
 {
   ObitImage *outImage=NULL;
   ObitInfoType type;
-  ObitIOType IOType;
   olong     i, n, Aseq, disk, cno, axNum, axFNum, axIFNum, nx=11, ny=11;
   olong     jStoke;
   gchar     *Type, *strTemp, outFile[129], *outName, *outF, stemp[32];
@@ -915,12 +914,11 @@ ObitImage* setOutput (gchar *Source, olong iStoke, olong ant,
       g_snprintf (tname, 100, "%s", strTemp);
     }
       
-    IOType = OBIT_IO_AIPS;  /* Save file type */
     /* input AIPS disk */
     ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
     /* input AIPS sequence */
     ObitInfoListGet(myInput, "outSeq", &type, dim, &Aseq, err);
-    for (i=0; i<12; i++) Aname[i] = ' '; Aname[i] = 0;
+    for (i=0; i<12; i++) {Aname[i] = ' ';} Aname[i] = 0;
     strncpy (Aname, tname, 13); 
     Aname[12] = 0;
 
@@ -976,7 +974,7 @@ ObitImage* setOutput (gchar *Source, olong iStoke, olong ant,
     /* Generate output name from Source, outName */
     ObitInfoListGetP (myInput, "outFile", &type, dim, (gpointer)&outF);
     n = MIN (128, dim[0]);
-    for (i=0; i<n; i++) tname[i] = outF[i]; tname[i] = 0;
+    for (i=0; i<n; i++) {tname[i] = outF[i];} tname[i] = 0;
     /* If blank use ".fits" */
     if ((tname[0]==' ') || (tname[0]==0)) g_snprintf (tname, 128, ".fits");
     /* Something in source name? */
@@ -985,8 +983,6 @@ ObitImage* setOutput (gchar *Source, olong iStoke, olong ant,
     else g_snprintf (stemp, 30, Source);
     ObitTrimTrail(stemp);  /* remove trailing blanks */
 	   
-    IOType = OBIT_IO_FITS;  /* Save file type */
-
     /* Set output file name */
     /* Stokes or RMS? */
     if (doRMS) {  /* RMS */
@@ -1164,7 +1160,7 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
   /* Loop over list of sources */
-  strncpy (lastSource, "None such       ", 16);
+  strncpy (lastSource, "None such       ", 17);
   for (isource = 0; isource<doList->number; isource++) {
     if (!doList->SUlist[isource]) continue; /* removed? */
     maxlen = MIN (16, strlen(doList->SUlist[isource]->SourceName));
@@ -1906,8 +1902,8 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
   ofloat   u, v, time, ulast, vlast, tol, Az, El, PA, *farr;
   ofloat   ss, cc, xr, xi, *OffAz=NULL, *OffEl=NULL, fblank =  ObitMagicF();
   odouble  sumAz, sumEl, sumPA;
-  olong    count, maxElem=*nelem, iElem, indx, iant, ant1, ant2, suba, off=0, iver;
-  olong    i, j, jlocs, jlocf, jlocif, incs, incf, incif, doff, ddoff;
+  olong    count, maxElem=*nelem, iElem, indx, ant1, ant2, suba, off=0, iver;
+  olong    i, j, incs, incf, incif, doff, ddoff;
   olong    nx, ny, iIF, ichan, *refAnts, nRefAnt, ix, iy, prtLv=0;
   gboolean OK1, OK2;
   gchar    *routine = "accumData";
@@ -1960,7 +1956,6 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
   iElem  = -1;
   ulast  = vlast = 1.0e20;
   tol    = 0.3 * xCells;  /* Tolerance 0.3 cells  */
-  iant = MAX (1, ant);
 
   /* Get Antenna List */
   iver = 1;  /* Or Subarray no. */
@@ -1981,15 +1976,11 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
   /* Compute apparent position */
   ObitPrecessUVJPrecessApp (inData->myDesc, Source);
   
-  jlocs = inData->myDesc->jlocs;
   incs  = inData->myDesc->incs;
-  jlocf = inData->myDesc->jlocf;
   incf  = inData->myDesc->incf;
   if (inData->myDesc->jlocif>=0) {
-    jlocif = inData->myDesc->jlocif;
     incif  = inData->myDesc->incif;
   } else {
-    jlocif = 0;
     incif  = 0;
   }
 

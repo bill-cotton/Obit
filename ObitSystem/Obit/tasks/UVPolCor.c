@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Task to correct off-axis instrumental polarization in UV data      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2020                                          */
+/*;  Copyright (C) 2009-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -111,32 +111,32 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest inputs */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input sky model */
   skyModel = getInputSkyModel (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get output uvdata */
   outData = setOutputData (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Process */
   ObitInfoListGetP(myInput, "Opcode", &type, dim, (gpointer)&opcode);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   if (!strncmp (opcode, "DIV", 3)) {
     /* Divide */
        ObitSkyModelDivUV ((ObitSkyModel*)skyModel, inData, outData, err);
-    if (err->error) Obit_log_error(err, OBIT_Error, "ERROR dividing");
+       if (err->error) Obit_log_error(err, OBIT_Error, "ERROR dividing");
 
     /* Anything else is subtract ("MODL" trapped elsewhere */
   } else {
@@ -147,14 +147,14 @@ int main ( int argc, char **argv )
   /* anything in output? */
   if (outData->myDesc->nvis<10) 
     Obit_log_error(err, OBIT_Error, "NO data written to output");
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* History */
   UVPoCoHistory (myInput, inData, outData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput);    /* delete input list */
@@ -824,9 +824,9 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   /* if not use "UVPolCor"+inFile */
   if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12))) {
     ObitInfoListGetP (myInput, "inFile", &type, dim, (gpointer)&strTemp);
-    strncpy (outFile, "UVPolCor", 7);
+    strncpy (outFile, "UVPolCor", 9);
     n = MIN (128, dim[0]);
-    for (i=0; i<n; i++) outFile[i+7] = strTemp[i]; outFile[i+7] = 0;
+    for (i=0; i<n; i++) {outFile[i+9] = strTemp[i];} outFile[i+9] = 0;
     ObitTrimTrail(outFile);  /* remove trailing blanks */
     dim[0] = strlen(outFile);
     ObitInfoListAlwaysPut (myInput, "outFile", OBIT_string, dim, outFile);
@@ -838,7 +838,7 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   /* if not, use inName */
   if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12))) {
     ObitInfoListGetP (myInput, "inName", &type, dim, (gpointer)&strTemp);
-    for (i=0; i<12; i++) Aname[i] = ' ';  Aname[i] = 0;
+    for (i=0; i<12; i++) {Aname[i] = ' ';}  Aname[i] = 0;
     for (i=0; i<MIN(12,dim[0]); i++) Aname[i] = strTemp[i];
     /* Save any defaulting on myInput */
     dim[0] = 12;

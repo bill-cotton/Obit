@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task - mask a cube by blanks in another image               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2018                                               */
+/*;  Copyright (C) 2018,2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -98,26 +98,26 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Initialize Threading */
   ObitThreadInit (myInput);
 
   /* Get input Image Object */
   inImage = getInputImage (myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Get template image object */
   maskImage = getMaskImage (myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Define output Image Object */
   outImage = getOutputImage (myInput, inImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Copy */
   MaskCubeMask (myInput, inImage, maskImage, outImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Restore Descriptor list */
   ObitImageOpen (outImage, OBIT_IO_ReadWrite, err);
@@ -127,7 +127,7 @@ int main ( int argc, char **argv )
 
   /* Do history */
   MaskCubeHistory ( myInput, inImage, outImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
   if (err->error) ierr = 1;

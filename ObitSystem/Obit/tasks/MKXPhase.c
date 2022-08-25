@@ -1,10 +1,7 @@
-/* To do
- */
-
 /* $Id$  */
 /* MeerKAT X/Y phase bandpass calibration from noise diode            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2019                                               */
+/*;  Copyright (C) 2019,2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -125,37 +122,37 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get output uvdata (for AIPS FG table) */
   outData = setOutputUV (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Save first source id in case it's the only one */
   if (inData->mySel->sources) souNo = inData->mySel->sources[0];
   
   /* Average data to SolInt */
   avgData =  TimeAverage(myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* Do channel solutions, convert to BP table */
   XYBandpassCal(myInput, avgData, outData, err);
-  if (err->error) ierr = 1;   ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;   ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Write history */
   MKXPhaseHistory (myInput, outData, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput); 
@@ -665,7 +662,7 @@ ObitUV* setOutputUV (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     /* if not use inName */
     if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12)))
       ObitInfoListGetP (myInput, "inName", &type, dim, (gpointer)&strTemp);
-    for (i=0; i<12; i++) Aname[i] = ' ';  Aname[i] = 0;
+    for (i=0; i<12; i++) {Aname[i] = ' ';}  Aname[i] = 0;
     for (i=0; i<MIN(12,dim[0]); i++) Aname[i] = strTemp[i];
     /* Save any defaulting on myInput */
     dim[0] = 12;
@@ -676,7 +673,7 @@ ObitUV* setOutputUV (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     /* if not use inName */
     if ((strTemp==NULL) || (!strncmp(strTemp, "      ", 6)))
       ObitInfoListGetP (myInput, "inClass", &type, dim, (gpointer)&strTemp);
-    for (i=0; i<6; i++) Aclass[i] = ' ';  Aclass[i] = 0;
+    for (i=0; i<6; i++) {Aclass[i] = ' ';}  Aclass[i] = 0;
     for (i=0; i<MIN(6,dim[0]); i++) Aclass[i] = strTemp[i];
     /* Save any defaulting on myInput */
     dim[0] = 6;
@@ -716,7 +713,7 @@ ObitUV* setOutputUV (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12)))
       ObitInfoListGetP (myInput, "inFile", &type, dim, (gpointer)&strTemp);
     n = MIN (128, dim[0]);
-    for (i=0; i<n; i++) outFile[i] = strTemp[i]; outFile[i] = 0;
+    for (i=0; i<n; i++) {outFile[i] = strTemp[i];} outFile[i] = 0;
     ObitTrimTrail(outFile);  /* remove trailing blanks */
 
     /* Save any defaulting on myInput */
@@ -849,12 +846,12 @@ void  XYBandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* outUV,
   olong ichan, nchan, bchan=0, echan=0, numAnt, chWid, iant;
   olong ivis, nvis, ifreq, nfreq, iif, nstok, nif, indx, nc;
   olong itemp, nchanIF, doBand, BPVer, outVer, BPSoln, refAnt;
-  olong ia1, ia2, ver, suba, souId, hiLim, loLim, iVis, nVis;
+  olong ia1, ia2, ver, suba, souId=-1, hiLim, loLim, iVis, nVis;
   gboolean btemp, haveSome=FALSE;
   ofloat solInt=0.0;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  ofloat *vis, *ifvis, *fvis, *afvis, *rec, time=-1.0e20, etime;
+  ofloat *vis, *ifvis, *fvis, *afvis, *rec, time=-1.0e20, etime=0.0;
   ofloat sumr, sumi, sumwt, wt;
   ObitUVDesc *desc=avgData->myDesc;
   gfloat *phase=NULL, fblank = ObitMagicF();

@@ -1,7 +1,7 @@
 /* $Id$  */
 /* VLBI Maser calibration                                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2012                                          */
+/*;  Copyright (C) 2010-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -113,19 +113,19 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input sky model */
   skyModel = getInputSkyModel (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Copy/select/calibrate to scratch file */
   if (err->prtLv>=3) {
@@ -134,11 +134,11 @@ int main ( int argc, char **argv )
   }
   scrData = newObitUVScratch (inData,err);
   scrData = ObitUVCopy (inData, scrData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Divide by FT of model, channel at a time */
   DivideModel (myInput, skyModel, scrData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Index scrData */
   dim[0] = dim[1] = 1;
@@ -147,7 +147,7 @@ int main ( int argc, char **argv )
   ftemp = 1.0; /* Max allowable gap 1 min. */
   ObitInfoListAlwaysPut(scrData->info, "maxGap", OBIT_float, dim, &ftemp);
   ObitUVUtilIndex (scrData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Create Calibration solution object */
   solver = ObitUVGSolveCreate("Gain solver");
@@ -161,14 +161,14 @@ int main ( int argc, char **argv )
   /* Do solution */
   solnClass = (ObitUVGSolveClassInfo*)solver->ClassInfo;
   SNTable   = solnClass->ObitUVGSolveCal (solver, scrData, inData, inData->mySel, err);
-  if (err->error) ierr = 1;   ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;   ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Write history */
   MazrCalHistory (myInput, inData, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   solver    = ObitUVGSolveUnref(solver);

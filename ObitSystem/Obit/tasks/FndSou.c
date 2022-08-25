@@ -1,7 +1,7 @@
 /* $Id$  */
 /* FndSou Obit task - generate source list from image                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2019                                          */
+/*;  Copyright (C) 2006-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -213,23 +213,23 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input image and output image */
   FndSouGetImage(myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Munge image */
   doFndSou (myInput, inImage, outImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* History */
   doHistory (myInput, inImage, outImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* cleanup */
   inImage     = ObitImageUnref(inImage);
@@ -601,12 +601,12 @@ void FndSouGetImage(ObitInfoList *myInput, ObitErr *err)
 
     /* input AIPS name */
     g_snprintf (tname, 50, "inName");
-    for (k=0; k<12; k++) iAname[k] = ' '; iAname[k] = 0;
+    for (k=0; k<12; k++) {iAname[k] = ' ';} iAname[k] = 0;
     ObitInfoListGet(myInput, tname, &type, dim, iAname, err);
 
     /* input AIPS class */
     g_snprintf (tname, 50, "inClass");
-    for (k=0; k<6; k++) iAclass[k] = ' '; iAclass[k] = 0;
+    for (k=0; k<6; k++) {iAclass[k] = ' ';} iAclass[k] = 0;
     ObitInfoListGet(myInput, tname, &type, dim, iAclass, err);
 
     /* input AIPS sequence */
@@ -672,14 +672,14 @@ void FndSouGetImage(ObitInfoList *myInput, ObitErr *err)
       /* AIPS disk */
       ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
       /* AIPS name */
-      for (k=0; k<12; k++) Aname[k] = ' '; Aname[k] = 0;
+      for (k=0; k<12; k++) {Aname[k] = ' ';} Aname[k] = 0;
       ObitInfoListGet(myInput, "outName", &type, dim, Aname, err);
       Aname[dim[0]] = 0;
       /* Default */
       if (!strncmp(Aname,"     ",5)) strcpy (Aname, iAname);
       
       /* AIPS class */
-      for (k=0; k<6; k++) Aclass[k] = ' '; Aclass[k] = 0;
+      for (k=0; k<6; k++) {Aclass[k] = ' ';} Aclass[k] = 0;
       ObitInfoListGet(myInput, "outClass", &type, dim, Aclass, err);
       Aclass[dim[0]] = 0;
       /* Default */

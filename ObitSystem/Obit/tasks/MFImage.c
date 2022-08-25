@@ -28,6 +28,7 @@
 /*--------------------------------------------------------------------*/
 
 #include "ObitThread.h"
+#include "ObitUV.h"
 #include "ObitImageMosaicMF.h"
 #include "ObitImageUtil.h"
 #include "ObitImageMF.h"
@@ -1572,7 +1573,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "MaxBaseline", "MinBaseline", "rotate", "targBeam", "Beam", "minFlux",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
     "nxBeam", "nyBeam", "Alpha", "doCalSelect",
-    "numBeamTapes", "BeamTapes", "MResKnob", "doQU", "doGPU",
+    "numBeamTapes", "BeamTapes", "MResKnob", "doQU", "doGPU", "doGPUGrid",
     NULL
   };
   gchar        *saveParms[] = {  /* Imaging, weighting parameters to save*/
@@ -2696,7 +2697,7 @@ void MFImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "OutlierSize",  "CLEANBox", "CLEANFile", "Gain", "minFlux", 
     "Niter", "minPatch", "ccfLim", "SDIGain", 
     "maxAWLoop", "minFluxIQU", "NiterIQU",  "minFluxQU", "NiterQU", "minFluxV", "NiterV",
-    "maxFList","BLFact", "BLFOV",  "BLchAvg", "norder", 
+    "BLFact", "BLFOV",  "BLchAvg", "norder", 
     "Reuse", "autoCen", "targBeam", "Beam", "Cmethod", "CCFilter", "maxPixel", 
     "maxPSCLoop", "minFluxPSC", "solPInt", "solPType", "solPMode", 
     "maxASCLoop", "minFluxASC", "solAInt", "solAType", "solAMode", 
@@ -2706,7 +2707,7 @@ void MFImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "PeelMinFlux", "PeelAvgPol", "PeelAvgIF",
     "doMGM", "minSNR", "minNo", "PBCor", "antSize", "Alpha",
     "nTaper", "Tapers", "MResKnob", "doQU",
-    "nThreads", "doGPU","maxRealtime",
+    "nThreads", "doGPU","doGPUGrid","maxRealtime",
     NULL};
   gchar *routine = "MFImageHistory";
 
@@ -3007,7 +3008,7 @@ void BeamOne (ObitInfoList* myInput, ObitUV* inData,
     "doFull", "do3D", "FOV", "PBCor", "antSize", 
     "Catalog", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
     "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "UVITaper", "WtPower",
-    "MaxBaseline", "MinBaseline", "rotate", "Beam",
+    "MaxBaseline", "MinBaseline", "rotate", "Beam", "doGPUGrid", 
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
     "nxBeam", "nyBeam", "Alpha", "doCalSelect",
     NULL

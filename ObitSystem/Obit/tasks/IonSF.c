@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Convert Ionospheric movie to 2D structure func (distance,time)     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007,2010                                          */
+/*;  Copyright (C) 2007,2010,2022                                     */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -97,26 +97,26 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Get input Image Object */
   inImage = getInputImage (myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Define output Image Object */
   outImage = getOutputImage (myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Collapse into 2D */
   IonSFCollapse (myInput, inImage, outImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Do history */
   IonSFHistory ( myInput, inImage, outImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1;
+  if (err->error) {ierr = 1;}
   ObitErrLog(err);
   if (ierr!=0) goto exit;
   
@@ -366,7 +366,6 @@ void Usage(void)
 ObitInfoList* defaultInputs(ObitErr *err)
 {
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gboolean btemp;
   gchar *strTemp;
   oint   itemp;
   olong   blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
@@ -444,7 +443,6 @@ ObitInfoList* defaultInputs(ObitErr *err)
 
   /* Parms */
   dim[0] = 5;
-  btemp = FALSE;
   ObitInfoListPut (out, "Parms", OBIT_float, dim, ftemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
@@ -783,7 +781,7 @@ void IonSFHistory (ObitInfoList* myInput, ObitImage* inImage,
 void IonSFCollapse (ObitInfoList* myInput, ObitImage* inImage, 
 		    ObitImage* outImage, ObitErr* err)
 {
-  ObitIOCode   iretCode, oretCode;
+  ObitIOCode   iretCode;
   ofloat       time, *work=NULL, *sf=NULL, fblank = ObitMagicF();
   olong         nx, ny;
   olong        i, naxis[2], pos[2], iplane;
@@ -903,12 +901,12 @@ void IonSFCollapse (ObitInfoList* myInput, ObitImage* inImage,
   /* Open output image */
   /* Use external buffer for writing output */
   outImage->extBuffer = TRUE;
-  oretCode = ObitImageOpen (outImage, OBIT_IO_WriteOnly, err);
+  ObitImageOpen (outImage, OBIT_IO_WriteOnly, err);
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
   /* Write plane */
-  oretCode = ObitImageWrite(outImage, accum->array, err);
+  ObitImageWrite(outImage, accum->array, err);
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
-  oretCode = ObitImageClose (outImage, err);
+  ObitImageClose (outImage, err);
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
   /* Unset external buffer for writing */
   outImage->extBuffer = FALSE;

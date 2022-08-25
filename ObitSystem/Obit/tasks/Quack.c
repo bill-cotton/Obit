@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to Flag beginning or end portions of UV-data scans       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -101,42 +101,42 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Tables */
   ver = 1;
   NXTab = newObitTableNXValue ("Index table", (ObitData*)inData, &ver, 
 			       OBIT_IO_ReadOnly, err);
   if (!NXTab) Obit_log_error(err, OBIT_Error, "NX table not found");
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   ver = 0;
   ObitInfoListGetTest(myInput, "flagVer", &type, dim, &ver);
   FGTab = newObitTableFGValue ("Flag table", (ObitData*)inData, &ver, 
 			       OBIT_IO_ReadWrite, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Editing parameters to NXTab */
   ObitInfoListCopyList (myInput, NXTab->info, editParms);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Do editing - open/close to init selector */
   ObitUVOpen (inData, OBIT_IO_ReadCal, err);
   ObitUVClose (inData, err);
   ObitTableNXUtilQuack (NXTab, FGTab, inData->mySel, inData->myDesc->maxAnt, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Write history */
   QuackHistory (myInput, inData, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput);    /* delete input list */

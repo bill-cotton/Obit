@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Fit Rings to SiO maser images                                      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2010                                          */
+/*;  Copyright (C) 2007-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -121,27 +121,27 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input images */
   in1Image = getInputImage1 (myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
   in2Image = getInputImage2 (myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
   
   /* Check inputs */
   checkInput (in1Image, in2Image, err);
-  if (err->error) ierr = 1;  ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* do fitting */
   doFit (myInput, in1Image, in2Image, myOutput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* want elliptical fit as well */
   ObitInfoListGetTest(myInput, "doEllip", &type, dim, &doEllip);
   if (doEllip) {
     doFitE (myInput, in1Image, in2Image, myOutput, err);
-    if (err->error) ierr = 1; ObitErrLog(err);  if (ierr!=0) goto exit;
+    if (err->error) {ierr = 1; ObitErrLog(err);  if (ierr!=0) goto exit;}
   }
   
   /* cleanup */
@@ -952,7 +952,6 @@ void doFit (ObitInfoList *myInput, ObitImage* in1Image, ObitImage* in2Image,
 /*----------------------------------------------------------------------- */
 {
   ofloat Amom[2], Bmom[2], cen[2], minxy[2], minval, v, dx, dy;
-  ofloat r1, r2;
   olong i, j, nx, ny;
 
   minxy[0] = minxy[1] = 0;
@@ -972,8 +971,6 @@ void doFit (ObitInfoList *myInput, ObitImage* in1Image, ObitImage* in2Image,
 	minval = v;
 	minxy[0] = cen[0];
 	minxy[1] = cen[1];
-	r1 = Amom[0];
-	r2 = Bmom[0];
       }
     }
   }

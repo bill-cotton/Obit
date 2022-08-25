@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2017                                         */
+/*;  Copyright (C) 2006-2022                                         */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -128,19 +128,19 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input sky model */
   skyModel = getInputSkyModel (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   if (skyModel) ObitInfoListCopyList (myInput, skyModel->info, skyModelParms);
 
   /* Copy selection/calibration info to data */
@@ -149,13 +149,13 @@ int main ( int argc, char **argv )
   /* Copy/select/calibrate to scratch file */
   scrData = newObitUVScratch (inData,err);
   scrData = ObitUVCopy (inData, scrData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Divide if model given */
   if (skyModel) ObitSkyModelDivUV (skyModel, scrData, scrData, err);
   /* Otherwise divide by source flux density if given */
   else DivideSource (inData, scrData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Index scrData */
   dim[0] = dim[1] = 1;
@@ -164,7 +164,7 @@ int main ( int argc, char **argv )
   ftemp = 1.0; /* Max allowable gap 1 min. */
   ObitInfoListAlwaysPut(scrData->info, "maxGap", OBIT_float, dim, &ftemp);
   ObitUVUtilIndex (scrData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Create appropriate Calibration solution object */
   solmod[0] = solmod[1] = solmod[2] = solmod[3] = '0'; solmod[4] = 0;
@@ -186,14 +186,14 @@ int main ( int argc, char **argv )
   /* Do solution */
   solnClass = (ObitUVGSolveClassInfo*)solver->ClassInfo;
   SNTable   = solnClass->ObitUVGSolveCal (solver, scrData, inData, inData->mySel, err);
-  if (err->error) ierr = 1;   ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;   ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Write history */
   CalibHistory (myInput, inData, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   solver    = ObitUVGSolveUnref(solver);

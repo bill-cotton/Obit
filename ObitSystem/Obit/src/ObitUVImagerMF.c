@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2021                                          */
+/*;  Copyright (C) 2010-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -25,13 +25,13 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
+#include "ObitUVWeight.h"
 #include "ObitImageMosaic.h"
 #include "ObitImageMosaicMF.h"
 #include "ObitUVImagerMFDef.h"
 #include "ObitUVImagerMF.h"
 #include "ObitUVImager.h"
 #include "ObitImageMF.h"
-#include "ObitUVWeight.h"
 #include "ObitImageUtil.h"
 #ifdef __APPLE__
 #include <sys/sysctl.h>
@@ -449,7 +449,7 @@ void ObitUVImagerMFWeight (ObitUVImager *inn, ObitErr *err)
      "RAShift", "DecShift", "Sources", "Beam", "targBeam", 
      "Catalog",  "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "UVITaper", "Robust", "WtPower",
-     "RobustIF", "TaperIF", "MFTaper",
+     "RobustIF", "TaperIF", "MFTaper","doGPU", "doGPUGrid",
      NULL};
   gchar *routine = "ObitUVImagerWeight";
 
@@ -888,7 +888,7 @@ void ObitUVImagerMFGetInfo (ObitUVImager *inn, gchar *prefix, ObitInfoList *outL
      "RAShift", "DecShift", "Sources", 
      "Catalog",  "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
-     "RobustIF", "TaperIF", "MFTaper",
+     "RobustIF", "TaperIF", "MFTaper","doGPU", "doGPUGrid",
      NULL};
   gchar *routine = "ObitUVImagerMFGetInfo";
 

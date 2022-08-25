@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -99,3 +99,15 @@ gpointer **threadArgs;
 ObitCArray **workGrids;
 /** Additional beam tapering as sigma^2 of Gaussian */
 ofloat BeamTaperUV;
+/** number of visibilities */
+olong nvis;
+/** length of visibilities in floats */
+olong lenvis;
+/*----------------------------------------------------------*/
+/* GPU version stuff */
+/** Use a GPU? */
+gboolean doGPUGrid;
+/** which cuda enabled GPU? */
+olong cuda_device;
+/** GPU/CUDA gridding info */
+ObitGPUGrid *gridInfo;

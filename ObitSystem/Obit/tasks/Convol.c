@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Convol Obit task convolve an image with another image or a model   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2020                                          */
+/*;  Copyright (C) 2006-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -101,27 +101,27 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Get input image and output image */
   convolGetImage(myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get convolving function as ObitFArray */
   convFn = convolGetConvFn(myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Convol them together */
   doConvol (myInput, inImage, convFn, outImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* History */
   doHistory (myInput, inImage, outImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* cleanup */
   inImage = ObitImageUnref(inImage);
@@ -207,7 +207,7 @@ ObitInfoList* ConvolIn (int argc, char **argv, ObitErr *err)
   ObitInfoListGet(list, "AIPSuser",  &type, dim, &AIPSuser,  err);
   ObitInfoListGet(list, "nAIPS",     &type, dim, &nAIPS,     err);
   ObitInfoListGet(list, "nFITS",     &type, dim, &nFITS,     err);
-  if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
+  if (err->error) {Obit_traceback_val (err, routine, "GetInput", list);}
 
   /* Directories more complicated */
   ObitInfoListGetP(list, "AIPSdirs",  &type, dim, (gpointer)&strTemp);
@@ -569,11 +569,11 @@ void convolGetImage(ObitInfoList *myInput, ObitErr *err)
     ObitInfoListGet(myInput,"inDisk", &type, dim, &disk, err);
 
     /* input AIPS name */
-    for (k=0; k<12; k++) iAname[k] = ' '; iAname[k] = 0;
+    for (k=0; k<12; k++) {iAname[k] = ' ';} iAname[k] = 0;
     ObitInfoListGet(myInput, "inName", &type, dim, iAname, err);
 
     /* input AIPS class */
-    for (k=0; k<6; k++) iAclass[k] = ' '; iAclass[k] = 0;
+    for (k=0; k<6; k++) {iAclass[k] = ' ';} iAclass[k] = 0;
     ObitInfoListGet(myInput, "inClass", &type, dim, iAclass, err);
 
     /* input AIPS sequence */
@@ -641,14 +641,14 @@ void convolGetImage(ObitInfoList *myInput, ObitErr *err)
     /* AIPS disk */
     ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
     /* AIPS name */
-    for (k=0; k<12; k++) Aname[k] = ' '; Aname[k] = 0;
+    for (k=0; k<12; k++) {Aname[k] = ' ';} Aname[k] = 0;
     ObitInfoListGet(myInput, "outName", &type, dim, Aname, err);
     Aname[dim[0]] = 0;
     /* Default */
     if (!strncmp(Aname,"     ",5)) strcpy (Aname, iAname);
 
     /* AIPS class */
-    for (k=0; k<6; k++) Aclass[k] = ' '; Aclass[k] = 0;
+    for (k=0; k<6; k++) {Aclass[k] = ' ';} Aclass[k] = 0;
     ObitInfoListGet(myInput, "outClass", &type, dim, Aclass, err);
     Aclass[dim[0]] = 0;
     /* Default */
@@ -784,11 +784,11 @@ ObitFArray* convolGetConvFn(ObitInfoList *myInput, ObitErr *err)
       ObitInfoListGet(myInput, "in2Disk", &type, dim, &disk, err);
 
       /* input AIPS name */
-      for (k=0; k<12; k++) Aname[k] = ' '; Aname[k] = 0;
+      for (k=0; k<12; k++) {Aname[k] = ' ';} Aname[k] = 0;
       ObitInfoListGet(myInput, "in2Name", &type, dim, Aname, err);
 
       /* input AIPS class */
-      for (k=0; k<6; k++) Aclass[k] = ' '; Aclass[k] = 0;
+      for (k=0; k<6; k++) {Aclass[k] = ' ';} Aclass[k] = 0;
       ObitInfoListGet(myInput, "in2Class", &type, dim, Aclass, err);
 
       /* input AIPS sequence */

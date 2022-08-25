@@ -1,7 +1,7 @@
 /* $Id$  */
 /* VLSSFix:  Determine and correct position errors in VLSS images     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2011                                          */
+/*;  Copyright (C) 2006-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -101,7 +101,7 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Correction wanted? */
   ObitInfoListGet(myInput, "correct", &type, dim, &correct, err);
@@ -116,51 +116,51 @@ int main ( int argc, char **argv )
 
   /* Get input Image Object */
   inImage = getInputImage (myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Create Ionospheric calibration object */
   ionCal = newObitIonCal ("Ionospheric calibration");
 
   /* Get control parameters from myInput, copy to ionCal */
   ObitInfoListCopyList (myInput, ionCal->info, parms);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Look up calibrator list */
   ObitIonCalFindImage (ionCal, inImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Fit position offsets */
   MinFlux = 1.0;
   ObitInfoListGetTest(myInput, "OutlierFlux", &type, dim, &MinFlux);
   ObitInfoListAlwaysPut(ionCal->info, "MinPeak", type, dim, &MinFlux);
   ObitIonCalPosMul (ionCal, inImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Fit Zernike Model */
   for (i=0; i<50; i++) coef[i] = 0.0;
   rms = ObitIonCalFit1 (ionCal, 1, coef, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Diagnostics */
   if (prtLv>=1) {
     for (i=0; i<nZern; i++) {
       Obit_log_error(err, OBIT_InfoErr, "coef(%d) = %f", i,coef[i]*3600.0);
     }
-    if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+    if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
   }
 
   /* if requested, apply and write output */
   if (correct) {
     /* Define output Image Object */
     outImage = getOutputImage (myInput, err);
-    if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+    if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
     /* Clone output from input */
     ObitImageClone (inImage, outImage, err);
     ObitImageFullInstantiate (inImage, FALSE, err);
     ObitImageUtilInterpolateImageZern (inImage, outImage, Plane, Plane,
 				       2, nZern, coef, err);
-    if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+    if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
   
     /* Do history */
     VLSSFixHistory ( myInput, inImage, outImage, rms*3600.0, err);

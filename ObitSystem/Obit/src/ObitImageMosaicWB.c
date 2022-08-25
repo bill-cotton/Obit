@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2016                                          */
+/*;  Copyright (C) 2010-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -27,6 +27,7 @@
 /*--------------------------------------------------------------------*/
 
 #include "ObitImageMosaicWB.h"
+#include "ObitUV.h"
 #include "ObitIOImageFITS.h"
 #include "ObitIOImageAIPS.h"
 #include "ObitSystem.h"
@@ -34,7 +35,6 @@
 #include "ObitImageWB.h"
 #include "ObitUVUtil.h"
 #include "ObitAIPSDir.h"
-#include "ObitUV.h"
 #include "ObitSkyGeom.h"
 #include "ObitTableVZ.h"
 #include "ObitTableSUUtil.h"
@@ -1157,7 +1157,7 @@ void ObitImageMosaicWBAddField (ObitImageMosaic *inn, ObitUV *uvData,
 
   /* Image array */
   imtemp = ObitMemAlloc0Name(in->numberImages*sizeof(ObitImage*),"ImageMosaicWB images");
-  for (i=0; i<in->nInit; i++) imtemp[i] = in->images[i]; imtemp[i] = NULL;
+  for (i=0; i<in->nInit; i++) {imtemp[i] = in->images[i]; imtemp[i] = NULL;}
   in->images = ObitMemFree(in->images);
   in->images = imtemp;
 
@@ -1322,8 +1322,8 @@ void ObitImageMosaicWBFlatten (ObitImageMosaic *inn, ObitErr *err)
     ObitFArrayFill (sc2, 0.0);
     
     /* Set plane */
-    for (i=0; i<IM_MAXDIM; i++) blc[i] = 1; blc[2] = iplane+1;
-    for (i=0; i<IM_MAXDIM; i++) trc[i] = 0; trc[2] = iplane+1;
+    for (i=0; i<IM_MAXDIM; i++) {blc[i] = 1;} blc[2] = iplane+1;
+    for (i=0; i<IM_MAXDIM; i++) {trc[i] = 0;} trc[2] = iplane+1;
     
     /* Loop over tiles */
     for (i= 0; i<in->numberImages; i++) { /* loop 500 */

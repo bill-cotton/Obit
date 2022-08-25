@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Differential instrumental polarization calibration       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014                                               */
+/*;  Copyright (C) 2014,2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -105,34 +105,34 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest inputs */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get output uvdata */
   outData = setOutputData (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get calibration solutions */
   GetCalSoln (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Apply calibrator solutions */
   ApplyCalSoln (myInput, inData, outData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* History */
   DPCalHistory (myInput, inData, outData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput);    /* delete input list */
@@ -719,8 +719,8 @@ void DPCalHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
 void GetCalSoln (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_OK;
-  olong nchan, i, first, middle, last, iTime=1;
-  olong ivis, nvis, ifreq, nfreq, iif, nstok, nif, indx;
+  olong i, first, middle, last, iTime=1;
+  olong ivis, nvis, ifreq, nfreq, iif, indx;
   ObitUVDesc *desc;
   ofloat RLPhase[]={0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}; 
   ofloat RM[]     ={0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}; 
@@ -749,13 +749,6 @@ void GetCalSoln (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   /* Reference wavelength */
   reffreq   = desc->freq;
   reflambda = VELIGHT/reffreq;
-
-  /* Number of channels/poln */
-  nchan = desc->inaxes[desc->jlocf];
-  if (desc->jlocif>=0)
-    nIF   = desc->inaxes[desc->jlocif];
-  else
-    nIF = 1; 
 
   /* Allocate calData (global) array [Qfract,Ufract][IF][time] */
   calData  = g_malloc0(2*nIF*MAXTIME*sizeof(ofloat));
@@ -792,10 +785,6 @@ void GetCalSoln (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   desc  = inData->myDesc;
   
   nfreq = desc->inaxes[desc->jlocf];
-  nif = 1;
-  if (desc->jlocif>=0) nif = desc->inaxes[desc->jlocif];
-  nstok = 1;
-  if (desc->jlocs>=0) nstok = desc->inaxes[desc->jlocs];
   
   /* loop over blocks of data */
   while (retCode == OBIT_IO_OK) {
@@ -986,12 +975,12 @@ void ApplyCalSoln (ObitInfoList *myInput, ObitUV* inData, ObitUV* outData,
 		   ObitErr *err)
 {
   ObitIOCode iretCode = OBIT_IO_OK, oretCode = OBIT_IO_OK;
-  olong iTime=1, ivis, nvis, ifreq, nfreq, iif, nstok, indx;
+  olong iTime=1, ivis, nvis, ifreq, nfreq, iif, indx;
   ObitUVDesc *inDesc, *outDesc;
   ofloat fblank = ObitMagicF();
   ObitInfoType type; 
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  ofloat *vis, *ifvis, *fvis, *svis, *rec, Isum, Iwt, IPol, RLPol, LRPol, wt;
+  ofloat *vis, *ifvis, *fvis, *svis, *rec, Isum, Iwt, IPol, wt;
   gboolean noIFs=FALSE;
   gchar *Stokes="    ", *today=NULL;
   gchar *dataParms[] = {"Sources", NULL};
@@ -1101,8 +1090,6 @@ void ApplyCalSoln (ObitInfoList *myInput, ObitUV* inData, ObitUV* outData,
   nfreq = inDesc->inaxes[inDesc->jlocf];
   nIF = 1;
   if (inDesc->jlocif>=0) nIF = inDesc->inaxes[inDesc->jlocif];
-  nstok = 1;
-  if (inDesc->jlocs>=0) nstok = inDesc->inaxes[inDesc->jlocs];
   
   /* loop over blocks of data */
   iTime = 1;
@@ -1151,8 +1138,6 @@ void ApplyCalSoln (ObitInfoList *myInput, ObitUV* inData, ObitUV* outData,
 	indx = (iTime-1)*nIF*2 + iif*2;
 	if ((Iwt>0.0) && (calData[indx]!=fblank)) {
 	  IPol = Isum/Iwt;
-	  RLPol = IPol * (calData[indx] - calData[indx+1]);
-	  LRPol = IPol * (calData[indx] + calData[indx+1]);
 	} else IPol = fblank;
 	fvis = ifvis;
 	for (ifreq = 0; ifreq<nfreq; ifreq++) {

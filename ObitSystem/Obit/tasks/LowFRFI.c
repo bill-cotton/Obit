@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Low Frequency Radio Interferometry RFI removal                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2010                                          */
+/*;  Copyright (C) 2006-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -100,7 +100,7 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
@@ -113,7 +113,7 @@ int main ( int argc, char **argv )
 
   /* Get output uvdata */
   outData = getOutputData (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Create object */
   myRFI = ObitUVRFIXizeCreate ("RFI", inData, resData, outData);
@@ -125,13 +125,13 @@ int main ( int argc, char **argv )
   ObitUVRFIXizeCounterRot (myRFI, err);
   ObitUVRFIXizeFilter (myRFI, err);
   ObitUVRFIXizeCorrect (myRFI, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Write history */
   LowFRFIHistory (myInput, outData, myRFI, err); 
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput); 
@@ -517,7 +517,7 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
     ObitInfoListGetP (myInput, "inFile", &type, dim, (gpointer)&strTemp);
     if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12))) {
       n = MIN (128, dim[0]);
-      for (i=0; i<n; i++) outFile[i] = strTemp[i]; outFile[i] = 0;
+      for (i=0; i<n; i++) {outFile[i] = strTemp[i];} outFile[i] = 0;
       ObitTrimTrail(outFile);  /* remove trailing blanks */
       dim[0] = strlen(outFile);
       ObitInfoListAlwaysPut (myInput, "outFile", OBIT_bool, dim, outFile);
@@ -530,7 +530,7 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   /* if not, use inName */
   if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12))) {
     ObitInfoListGetP (myInput, "inName", &type, dim, (gpointer)&strTemp);
-    for (i=0; i<12; i++) Aname[i] = ' ';  Aname[i] = 0;
+    for (i=0; i<12; i++) {Aname[i] = ' ';}  Aname[i] = 0;
     for (i=0; i<MIN(12,dim[0]); i++) Aname[i] = strTemp[i];
     /* Save any defaulting on myInput */
     dim[0] = 12;

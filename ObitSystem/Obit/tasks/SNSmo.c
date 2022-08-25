@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2014                                          */
+/*;  Copyright (C) 2006-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -134,39 +134,39 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Copy selected table */
 
   SNSmoCopy (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Clipping */
   SNSmoClip (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* re reference phases */
   SNSmoRef (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* smooth solutions */
   SNSmoSmooth (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Write history */
   SNSmoHistory (myInput, inData, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput); 
@@ -668,7 +668,6 @@ void SNSmoHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
  */
 void SNSmoCopy (ObitInfoList* myInput, ObitUV* inData,  ObitErr* err)
 {
-  ObitIOCode retCode;
   ObitTableSN *inTab=NULL, *outTab=NULL;
   ObitTableSNRow *row=NULL;
   ObitInfoType type;
@@ -707,7 +706,7 @@ void SNSmoCopy (ObitInfoList* myInput, ObitUV* inData,  ObitErr* err)
 			       OBIT_IO_ReadWrite, 0, 0, err);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
   /* Open input table */
-  retCode = ObitTableSNOpen (inTab, OBIT_IO_ReadOnly, err);
+  ObitTableSNOpen (inTab, OBIT_IO_ReadOnly, err);
   if (err->error) Obit_traceback_msg (err, routine, inTab->name);
 
   outTab = newObitTableSNValue (inData->name, (ObitData*)inData, &solnOut, 
@@ -724,7 +723,7 @@ void SNSmoCopy (ObitInfoList* myInput, ObitUV* inData,  ObitErr* err)
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
  
   /* Open output table */
-  retCode = ObitTableSNOpen (outTab, OBIT_IO_ReadWrite, err);
+  ObitTableSNOpen (outTab, OBIT_IO_ReadWrite, err);
   if (err->error) Obit_traceback_msg (err, routine, outTab->name);
   outTab->numAnt = inTab->numAnt;  /* Save number of antennas */
   /* If there are already entries, mark as unsorted */
@@ -755,7 +754,7 @@ void SNSmoCopy (ObitInfoList* myInput, ObitUV* inData,  ObitErr* err)
   /* Loop through table */
   for (loop=1; loop<=inTab->myDesc->nrow; loop++) { /* loop 20 */
 
-    retCode = ObitTableSNReadRow (inTab, loop, row, err);
+    ObitTableSNReadRow (inTab, loop, row, err);
     if (err->error) Obit_traceback_msg (err, routine, outTab->name);
     if (row->status<0) continue;  /* Skip deselected records */
 
@@ -770,14 +769,14 @@ void SNSmoCopy (ObitInfoList* myInput, ObitUV* inData,  ObitErr* err)
 
     /* Write record to output */
     outrow = -1;
-    retCode = ObitTableSNWriteRow (outTab, outrow, row, err);
+    ObitTableSNWriteRow (outTab, outrow, row, err);
     if (err->error) Obit_traceback_msg (err, routine, outTab->name);
   } /* End loop over table */
 
   /* Close tables */
-  retCode = ObitTableSNClose (inTab, err);
+  ObitTableSNClose (inTab, err);
   if (err->error) Obit_traceback_msg (err, routine, inTab->name);
-  retCode = ObitTableSNClose (outTab, err);
+  ObitTableSNClose (outTab, err);
   if (err->error) Obit_traceback_msg (err, routine, outTab->name);
   row = ObitTableSNRowUnref (row);  /* Cleanup */
 } /* end SNSmoCopy */

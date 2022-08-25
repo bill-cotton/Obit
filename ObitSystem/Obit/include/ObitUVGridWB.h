@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2014                                          */
+/*;  Copyright (C) 2010-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -37,6 +37,8 @@
 #include "ObitCArray.h"
 #include "ObitFFT.h"
 #include "ObitImageWB.h"
+#include "ObitGPUGrid.h"
+#include "ObitUVGrid.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**

@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2014                                          */
+/*;  Copyright (C) 2010-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -28,6 +28,7 @@
 
 #include <math.h>
 #include "ObitUVGridWB.h"
+#include "ObitGPUGrid.h"
 #include "ObitThreadGrid.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
@@ -151,7 +152,6 @@ gconstpointer ObitUVGridWBGetClass (void)
 void ObitUVGridWBSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
 			gboolean doBeam, ObitErr *err)
 {
-  ObitIOCode retCode;
   ObitUVDesc *uvDesc;
   ObitUVGridWB *in = (ObitUVGridWB*)inn;
   ObitImageDesc *theDesc=NULL;
@@ -189,7 +189,7 @@ void ObitUVGridWBSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
   
   /* open uv data to fully instantiate if not already open */
   if (in->myStatus==OBIT_Inactive) {
-    retCode = ObitUVOpen (UVin, access, err);
+    ObitUVOpen (UVin, access, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   }
 
@@ -445,8 +445,8 @@ void ObitUVGridWBFFT2Im (ObitUVGrid *inn, Obit *oout, ObitErr *err)
 
   /* cleanup */
   xCorrTemp = ObitFArrayUnref(xCorrTemp);
-  if (ramp) g_free (ramp); ramp = NULL;
-  if (data) g_free (data); data = NULL;
+  if (ramp) {g_free (ramp); ramp = NULL;}
+  if (data) {g_free (data); data = NULL;}
 
   /* Write output */
   pln = 1;  /* Get channel/plane number */
@@ -847,8 +847,8 @@ static gpointer ThreadFFT2ImWB (gpointer arg)
   } /* end make image */
   
   /* cleanup */
-  if (ramp) g_free (ramp); ramp = NULL;
-  if (data) g_free (data); data = NULL;
+  if (ramp) {g_free (ramp); ramp = NULL;}
+  if (data) {g_free (data); data = NULL;}
 
   /* Indicate completion */
   if (largs->ithread>=0)

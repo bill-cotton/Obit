@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to automatically edit visibility data                    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2014                                          */
+/*;  Copyright (C) 2007-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -103,19 +103,19 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get output uvdata */
   outData = setOutputUV (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Make scratch file, possibly with time and freq averaging */
   avgFreq = 0;
@@ -147,7 +147,7 @@ int main ( int argc, char **argv )
     ObitInfoListAlwaysPut (scrData->info, "timeAvg", OBIT_float, dim, &timeAvg);
     isScratch = TRUE;
     avgData = ObitUVUtilAvgT (scrData, isScratch, NULL, err);
-    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+    if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
     scrData = ObitUVUnref(scrData);
 
   } else if (avgFreq>0) {    /* Freq averaging only */
@@ -157,26 +157,26 @@ int main ( int argc, char **argv )
     ObitInfoListAlwaysPut (inData->info, "doAvgAll", OBIT_bool, dim, &doAvgAll);
     isScratch = TRUE;
     avgData = ObitUVUtilAvgF (inData, isScratch, NULL, err);
-    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+    if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   } else if (timeAvg>0.0) {  /* Time averaging only */
     dim[0] = 1;
     ObitInfoListAlwaysPut (inData->info, "timeAvg", OBIT_float, dim, &timeAvg);
     isScratch = TRUE;
     avgData = ObitUVUtilAvgT (inData, isScratch, NULL, err);
-    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+    if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   } else { /* No averaging - straight copy */
     /* Scratch file for copy */
     avgData = newObitUVScratch (inData, err);
     /* Calibrate/edit/copy data to scratch file */
     avgData = ObitUVCopy (inData, avgData, err);
-    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+    if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   }
     
   /* Editing parameters to avgData */
   ObitInfoListCopyList (myInput, avgData->info, editParms);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   /* Then time */
   dim[0] = 1;
   ObitInfoListAlwaysPut (avgData->info, "timeAvg", OBIT_float, dim, &timeAvg);
@@ -188,14 +188,14 @@ int main ( int argc, char **argv )
 
   /* Do editing */
   ObitUVEditMedian (avgData, outData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Write history */
   MednFlagHistory (myInput, outData, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput);    /* delete input list */
@@ -782,7 +782,7 @@ ObitUV* setOutputUV (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 {
   ObitUV    *outUV = NULL;
   ObitInfoType type;
-  olong      i, n, cno, lType;
+  olong      i, n, cno;
   oint      disk, Aseq;
   gchar     *Type, *strTemp=NULL;
   gchar     Aname[13], Aclass[7], *Atype = "UV";
@@ -802,7 +802,6 @@ ObitUV* setOutputUV (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     
   /* File type - could be either AIPS or FITS */
   ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
-  lType = dim[0];
   if (!strncmp (Type, "AIPS", 4)) { /* AIPS output */
 
     /* outName given? */
@@ -810,7 +809,7 @@ ObitUV* setOutputUV (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     /* if not use inName */
     if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12)))
       ObitInfoListGetP (myInput, "inName", &type, dim, (gpointer)&strTemp);
-    for (i=0; i<12; i++) Aname[i] = ' ';  Aname[i] = 0;
+    for (i=0; i<12; i++) {Aname[i] = ' ';}  Aname[i] = 0;
     for (i=0; i<MIN(12,dim[0]); i++) Aname[i] = strTemp[i];
     /* Save any defaulting on myInput */
     dim[0] = 12;
@@ -821,7 +820,7 @@ ObitUV* setOutputUV (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     /* if not use inName */
     if ((strTemp==NULL) || (!strncmp(strTemp, "      ", 6)))
       ObitInfoListGetP (myInput, "inClass", &type, dim, (gpointer)&strTemp);
-    for (i=0; i<6; i++) Aclass[i] = ' ';  Aclass[i] = 0;
+    for (i=0; i<6; i++) {Aclass[i] = ' ';}  Aclass[i] = 0;
     for (i=0; i<MIN(6,dim[0]); i++) Aclass[i] = strTemp[i];
     /* Save any defaulting on myInput */
     dim[0] = 6;
@@ -861,7 +860,7 @@ ObitUV* setOutputUV (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12)))
       ObitInfoListGetP (myInput, "inFile", &type, dim, (gpointer)&strTemp);
     n = MIN (128, dim[0]);
-    for (i=0; i<n; i++) outFile[i] = strTemp[i]; outFile[i] = 0;
+    for (i=0; i<n; i++) {outFile[i] = strTemp[i];} outFile[i] = 0;
     ObitTrimTrail(outFile);  /* remove trailing blanks */
 
     /* Save any defaulting on myInput */

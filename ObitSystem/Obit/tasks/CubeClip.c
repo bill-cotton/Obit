@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task - Clip insignificant pixels                              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2015                                          */
+/*;  Copyright (C) 2006-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -124,23 +124,23 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Get input Image Object */
   inImage = getInputImage (myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto done;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto done;}
 
   /* Define output Image Object */
   outImage = getOutputImage (myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto done;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto done;}
 
   /* Clip */
   CubeClipClip (myInput, inImage, outImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto done;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto done;}
 
   /* Do history */
   CubeClipHistory ( myInput, inImage, outImage, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto done;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto done;}
 
  done:
   /* show any messages and errors */
@@ -472,7 +472,7 @@ ObitInfoList* defaultInputs(ObitErr *err)
 
   /* Parms */
   dim[0] = 5;
-  for (i=0; i<5; i++) ftemp[i] = 0.0; ftemp[3] = 5.0;
+  for (i=0; i<5; i++) {ftemp[i] = 0.0;} ftemp[3] = 5.0;
   ObitInfoListPut (out, "Parms", OBIT_float, dim, ftemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
@@ -809,9 +809,9 @@ void CubeClipClip (ObitInfoList* myInput, ObitImage* inImage,
 		    ObitImage* outImage, ObitErr* err)
 {
   oint         noParms;
-  ObitIOCode   iretCode, oretCode;
+  ObitIOCode   iretCode;
   ofloat       RMS, maxF, newVal, *Parms=NULL, fblank =  ObitMagicF();
-  ofloat       minAllow, minAbs, radius, rad2;
+  ofloat       minAllow, minAbs, radius;
   ObitInfoType type;
   ObitTableCC *inCC=NULL, *outCC=NULL;
   ObitThread   *thread;
@@ -820,8 +820,7 @@ void CubeClipClip (ObitInfoList* myInput, ObitImage* inImage,
   olong        trc[IM_MAXDIM], trc0[IM_MAXDIM] = {0,0,0,0,0,0,0};
   gchar        *tabType = "AIPS CC", *today=NULL;
   gboolean     OK;
-  olong        i, inVer, outVer, highVer, lo, hi, pos[IM_MAXDIM], temp;
-  olong        nx, ny;
+  olong        i, inVer, outVer, highVer, lo, hi, pos[IM_MAXDIM], temp, ny;
   gboolean     odd;
   olong        nTh, nRow, loRow, hiRow, nRowPerThread, nThreads;
   ClipFuncArg **threadArgs;
@@ -892,7 +891,6 @@ void CubeClipClip (ObitInfoList* myInput, ObitImage* inImage,
   outImage->myDesc->bitpix=-32;
 
   /* Image size */
-  nx = inImage->myDesc->inaxes[0];
   ny = inImage->myDesc->inaxes[0];
 
   /* Initialize Threading */
@@ -925,7 +923,7 @@ void CubeClipClip (ObitInfoList* myInput, ObitImage* inImage,
   /* Open output image */
   /* Use external buffer for writing output */
   outImage->extBuffer = TRUE;
-  oretCode = ObitImageOpen (outImage, OBIT_IO_WriteOnly, err);
+  ObitImageOpen (outImage, OBIT_IO_WriteOnly, err);
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
 
   /* Loop over planes until hitting EOF */
@@ -941,7 +939,6 @@ void CubeClipClip (ObitInfoList* myInput, ObitImage* inImage,
     minAllow = MAX (minAllow, minAbs);
     radius   = Parms[3];
     if (radius<=0.0) radius = 5.0;
-    rad2 = radius * radius;
 
 
     /* If all below limit just blank all */
@@ -969,7 +966,7 @@ void CubeClipClip (ObitInfoList* myInput, ObitImage* inImage,
     if (newVal != fblank) ObitFArrayDeblank (inImage->image, newVal);
 
     /* Write plane */
-    oretCode = ObitImageWrite(outImage, inImage->image->array, err);
+    ObitImageWrite(outImage, inImage->image->array, err);
     if (err->error) Obit_traceback_msg (err, routine, outImage->name);
 
     /* Loop cleanup */
@@ -980,7 +977,7 @@ void CubeClipClip (ObitInfoList* myInput, ObitImage* inImage,
   if (err->error) Obit_traceback_msg (err, routine, inImage->name);
 
   /* Close output */
-  oretCode = ObitImageClose (outImage, err);
+  ObitImageClose (outImage, err);
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
 
   /* Free image buffer */

@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2014                                          */
+/*;  Copyright (C) 2003-2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -29,9 +29,19 @@
 #include <math.h>
 #include "ObitUVGrid.h"
 #include "ObitThreadGrid.h"
+#if HAVE_GPU==1  /* Compiled with GPU?*/
+#include "ObitCUDAUtil.h"
+#include "ObitGPUGrid.h"
+#include "ObitCUDAGrid.h"
+size_t ObitCUDAUtilMemory(int cuda_device); /* Dunno why? */
+void ObitCUDAUtilHostAny2GPU(void *GPU, void *host, int memsize, int* stream);
+#endif /* HAVE_GPU */
 #include "ObitFFT.h"
 #include "ObitImage.h"
 #include "ObitImageUtil.h"
+//#include "ObitThreadGrid.h"
+#include "ObitUVGridMF.h"
+#include "ObitUVGridWB.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -158,7 +168,6 @@ gconstpointer ObitUVGridGetClass (void)
 void ObitUVGridSetup (ObitUVGrid *in, ObitUV *UVin, Obit *imagee,
 		      gboolean doBeam, ObitErr *err)
 {
-  ObitIOCode retCode;
   ObitUVDesc *uvDesc;
   ObitImageDesc *theDesc=NULL;
   ObitImage *image = (ObitImage*)imagee;
@@ -167,7 +176,7 @@ void ObitUVGridSetup (ObitUVGrid *in, ObitUV *UVin, Obit *imagee,
   ofloat cellx, celly, dxyzc[3], xt, yt, zt, taper, BeamTaper=0.0;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
-  gboolean doCalSelect = FALSE;
+  gboolean doCalSelect=FALSE;
   ObitIOAccess access;
   gchar *routine="ObitUVGridSetup";
 
@@ -183,7 +192,7 @@ void ObitUVGridSetup (ObitUVGrid *in, ObitUV *UVin, Obit *imagee,
 		      "%s: MUST fully define image descriptor %s",
 		      routine, image->name);
 
-  /* Need beam - NB the beam will be passed as imagee */
+  /* Need beam - NB the beam will be passed as image */
   myBeam = ((ObitImage*)imagee);
   Obit_return_if_fail(ObitImageIsA(myBeam), err,
 		      "%s: Beam for %s not defined", 
@@ -196,7 +205,7 @@ void ObitUVGridSetup (ObitUVGrid *in, ObitUV *UVin, Obit *imagee,
 
   /* open uv data to fully instantiate if not already open */
   if (in->myStatus==OBIT_Inactive) {
-    retCode = ObitUVOpen (UVin, access, err);
+    ObitUVOpen (UVin, access, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   }
 
@@ -289,6 +298,36 @@ void ObitUVGridSetup (ObitUVGrid *in, ObitUV *UVin, Obit *imagee,
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   } /* end setup frequency table */
 
+  /* Is this to use the GPU? */
+#if HAVE_GPU==1  /*  GPU?*/
+  if (in->doGPUGrid) {
+    /* UPdate GPU info */
+    GridInfo* gridInfo    = in->gridInfo->cudaInfo->h_gridInfo;
+    FacetInfo** facetInfo = in->gridInfo->cudaInfo->h_facetInfo;
+    olong ifacet;
+    for (ifacet=0; ifacet<gridInfo->nfacet; ifacet++) {
+      facetInfo[ifacet]->shift[0] = in->dxc;
+      facetInfo[ifacet]->shift[1] = in->dyc;
+      facetInfo[ifacet]->shift[2] = in->dzc;
+      facetInfo[ifacet]->rotUV[0] = in->URot3D[0][0];
+      facetInfo[ifacet]->rotUV[1] = in->URot3D[0][1];
+      facetInfo[ifacet]->rotUV[2] = in->URot3D[0][2];
+      facetInfo[ifacet]->rotUV[3] = in->URot3D[1][0];
+      facetInfo[ifacet]->rotUV[4] = in->URot3D[1][1];
+      facetInfo[ifacet]->rotUV[5] = in->URot3D[1][2];
+      facetInfo[ifacet]->rotUV[6] = in->URot3D[2][0];
+      facetInfo[ifacet]->rotUV[7] = in->URot3D[2][1];
+      facetInfo[ifacet]->rotUV[8] = in->URot3D[2][2];
+      facetInfo[ifacet]->uscale   =  facetInfo[ifacet]->nx * fabs(cellx);
+      facetInfo[ifacet]->vscale   = -facetInfo[ifacet]->ny * fabs(celly); /* Want upside down image */
+      facetInfo[ifacet]->wscale   = 1.0;;
+    } /* end facet loop */
+    ObitCUDAResetGPU();  /* Reset GPU */
+  } /* end update GPU information */
+  //  gboolean doGPUGrid=FALSE;
+  //ObitInfoListGetTest(UVin->info, "doGPUGrid", &type, dim, &doGPUGrid);
+  //ObitGPUGrid *GPUGrid;
+#endif /* HAVE_GPU */
 }  /* end ObitUVGridSetup */
 
 /**
@@ -320,6 +359,7 @@ void ObitUVGridReadUV (ObitUVGrid *in, ObitUV *UVin, ObitErr *err)
   ofloat temp;
   olong   itemp;
   ObitThreadGrid *grids=NULL;
+  ObitGPUGrid *GPUGrid=NULL;
   gboolean doCalSelect;
   gchar *routine="ObitUVGridReadUV";
 
@@ -386,23 +426,62 @@ void ObitUVGridReadUV (ObitUVGrid *in, ObitUV *UVin, ObitErr *err)
     if (retCode==OBIT_IO_EOF) break;  /* Finished */
     if (err->error) Obit_traceback_msg (err, routine, in->name);
     
-    /* Do operation on buffer possibly with threads to grid all */
-    ObitThreadGridGrid(grids);
+    if (in->doGPUGrid) { /* Using GPU? */
+#if HAVE_GPU==1  /*  GPU?*/
+      GPUGrid = in->gridInfo;  /* CUDA stuff */
+      ObitGPUGrid2GPU(GPUGrid, UVin, err);
+      ObitGPUGridGrid(GPUGrid, err);
+      if (err->error) goto cleanup;
+      /*STREAMS??? */
+#endif /*  GPU?*/
+      /* Bail if not GPU enabled */
+      Obit_return_if_fail((GPUGrid!=NULL), err,
+			  "%s: NOT compiled enabling GPU", routine);
+   } else {             /* Threaded CPU cores */
+      /* Do operation on buffer possibly with threads to grid all */
+      ObitThreadGridGrid(grids);
+    }
   } /* end loop reading/gridding data */
   
-  /* Shut down any threading */
-  ObitThreadPoolFree (grids->GridInfo->thread);
-  
-  /* fold negative u columns to conjugate cells */
-  ObitThreadGridFlip(grids);
-  
-  /* Accumulate grids to "grid" members on in swapped for FFT */
-  ObitThreadGridMerge(grids);
-  
-  /* release ThreadGrid object  */
-  grids = ObitThreadGridUnref(grids);
+  if (in->doGPUGrid) { /* Using GPU? */
+#if HAVE_GPU==1  /*  GPU?*/
+    olong ifacet = 0;
+    ObitGPUGridFlip(GPUGrid, err);  /* Flip neg u rows */
+    /* Copy grid back by image type - support ImageMF and line */
+    /* Branch by gridder type */
+    if (ObitUVGridMFIsA(in)) {
+      /* Multi Frequency version - multiple planes */
+      ObitGPUGrid2Host(GPUGrid, ifacet, &in->grid, err);
+    } else if (ObitUVGridWBIsA(in)) { /* WB not supported in GPU */
+      Obit_log_error(err, OBIT_Error, 
+		     "%s: WB imaging not supported in GPU",routine);
+      return;
+    } else {
+      /* Base version - line one at a time(?) */
+      ObitGPUGrid2Host(GPUGrid, ifacet, &in->grid, err);
+    }
+     
+    /* Shutdown GPU */
+    ObitGPUGridShutdown (GPUGrid, UVin, err);
+    /*&SWAP for FFT????;*/
+#endif /*  GPU?*/
+    if (err->error) goto cleanup;
+  } else {             /* Threaded CPU cores */
+    /* Shut down any threading */
+    ObitThreadPoolFree (grids->GridInfo->thread);
+    
+    /* fold negative u columns to conjugate cells */
+    ObitThreadGridFlip(grids);
+    
+    /* Accumulate grids to "grid" members on in swapped for FFT */
+    ObitThreadGridMerge(grids);
+    
+    /* release ThreadGrid object  */
+    grids = ObitThreadGridUnref(grids);
+  } /* end using CPU */
 
   /* Close data */
+ cleanup:
   retCode = ObitUVClose (UVin, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
@@ -441,6 +520,7 @@ void ObitUVGridReadUVPar (olong nPar, ObitUVGrid **in, ObitUV *UVin, ObitErr *er
   ofloat temp;
   olong ip, itemp, doCalib;
   ObitThreadGrid *grids=NULL;
+  ObitGPUGrid *GPUGrid=NULL;
   gboolean doCalSelect;
   gchar *routine="ObitUVGridReadUVPar";
 
@@ -513,28 +593,53 @@ void ObitUVGridReadUVPar (olong nPar, ObitUVGrid **in, ObitUV *UVin, ObitErr *er
   /* loop gridding data */
   while (retCode == OBIT_IO_OK) {
 
-    /* read buffe*/
+    /* read buffer */
     if (doCalSelect) retCode = ObitUVReadSelect (UVin, NULL, err);
     else             retCode = ObitUVRead (UVin, NULL, err);
     if (retCode==OBIT_IO_EOF) break;  /* Finished */
     if (err->error) goto cleanup;
     
-    /* Do operation on buffer possibly with threads to grid all */
-    ObitThreadGridGrid(grids);
+    if (in[0]->doGPUGrid) { /* Using GPU? */
+#if HAVE_GPU==1  /*  GPU?*/
+      ObitGPUGrid2GPU(GPUGrid, UVin, err);
+      ObitGPUGridGrid(GPUGrid, err);
+      if (err->error) goto cleanup;
+      /*STREAMS???*/
+#endif /*  GPU?*/
+   } else {             /* Threaded CPU cores */
+      /* Do operation on buffer possibly with threads to grid all */
+      ObitThreadGridGrid(grids);
+    }
 
   } /* end loop reading/gridding data */
 
-  /* Shut down any threading */
-  ObitThreadPoolFree (grids->GridInfo->thread);
-  
-  /* fold negative u columns to conjugate cells */
-  ObitThreadGridFlip(grids);
-
-  /* Accumulate grids to "grid" members on in swapped for FFT */
-  ObitThreadGridMerge(grids);
-
-  /* release ThreadGrid object  */
-  grids = ObitThreadGridUnref(grids);
+   if (in[0]->doGPUGrid) { /* Using GPU? */
+#if HAVE_GPU==1  /*  GPU?*/
+     ObitGPUGridFlip(GPUGrid, err);  /* Flip neg u rows */
+     for (ip=0; ip<nPar; ip+=2) {
+       ObitGPUGrid2Host(GPUGrid, ip, &in[ip]->grid, err); /* Copy grids back */
+       /* if doBeam, have Beam, image pair */
+       if (in[ip]->doBeam) 
+	 ObitGPUGrid2Host(GPUGrid, ip+1, &in[ip+1]->grid, err); 
+     }
+     /* Shutdown GPU */
+     ObitGPUGridShutdown (GPUGrid, UVin, err);
+     /*&SWAP for FFT????;*/
+     if (err->error) goto cleanup;
+#endif /*  GPU?*/
+   } else {             /* Threaded CPU cores */
+     /* Shut down any threading */
+     ObitThreadPoolFree (grids->GridInfo->thread);
+     
+     /* fold negative u columns to conjugate cells */
+     ObitThreadGridFlip(grids);
+     
+     /* Accumulate grids to "grid" members on in swapped for FFT */
+     ObitThreadGridMerge(grids);
+     
+     /* release ThreadGrid object  */
+     grids = ObitThreadGridUnref(grids);
+   }  /* End of done in CPU */
 
   /*ObitErrTimeLog(err, "Stop Grid Loop");  DEBUG */
   ObitErrLog(err);
@@ -569,6 +674,8 @@ void ObitUVGridFFT2Im (ObitUVGrid *in, Obit *oout, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   gchar *routine = "ObitUVGridFFT2Im";
+  /*ObitFArray *temp1=NULL, *temp2=NULL;   DEBUG */
+  /*gboolean damn=TRUE;  DEBUG */
 
   /* error checks */
   g_assert(ObitErrIsA(err));
@@ -593,7 +700,18 @@ void ObitUVGridFFT2Im (ObitUVGrid *in, Obit *oout, ObitErr *err)
 				2, xdim);
     }
 
-    /* do FFT */
+       /* DEBUG
+      if (damn) {
+	damn = FALSE;
+	temp1 = ObitCArrayMakeF (in->grid);
+	ObitCArrayReal(in->grid, temp1);
+	ObitImageUtilFArray2FITS (temp1, "Debug1._1_.fits",0, NULL, err);
+	temp2 = ObitCArrayMakeF (in->grid);
+	ObitCArrayImag(in->grid, temp2);
+	ObitImageUtilFArray2FITS (temp2, "Debug2._1_.fits",0, NULL, err);
+      } */
+
+   /* do FFT */
     ObitFFTC2R (in->FFTBeam, in->grid, array);
  
     /* reorder to center at center */
@@ -696,8 +814,8 @@ void ObitUVGridFFT2Im (ObitUVGrid *in, Obit *oout, ObitErr *err)
 
   /* cleanup */
   xCorrTemp = ObitFArrayUnref(xCorrTemp);
-  if (ramp) g_free (ramp); ramp = NULL;
-  if (data) g_free (data); data = NULL;
+  if (ramp) {g_free (ramp);} ramp = NULL;
+  if (data) {g_free (data);} data = NULL;
 
   /* Write output */
   pln = 1;  /* Get channel/plane number */
@@ -737,8 +855,8 @@ void ObitUVGridFFT2ImPar (olong nPar, ObitUVGrid **in, Obit **oout, ObitErr *err
   gboolean OK;
   ofloat BeamNorm, *Corrp;
   gchar *routine = "ObitUVGridFFT2ImPar";
-  /*ObitFArray *temp1=NULL, *temp2=NULL;  
-    gboolean damn=TRUE;  DEBUG */
+  /*ObitFArray *temp1=NULL, *temp2=NULL;  DEBUG */
+  /*gboolean damn=TRUE;  DEBUG */
 
   /* error checks */
   if (err->error) return;
@@ -771,7 +889,7 @@ void ObitUVGridFFT2ImPar (olong nPar, ObitUVGrid **in, Obit **oout, ObitErr *err
 				     2, xdim);
       }
       
-  /* DEBUG
+      /* DEBUG 
       if (damn) {
 	damn = FALSE;
 	temp1 = ObitCArrayMakeF (in[i]->grid);
@@ -911,6 +1029,61 @@ void ObitUVGridFFT2ImPar (olong nPar, ObitUVGrid **in, Obit **oout, ObitErr *err
 
 } /* end ObitUVGridFFT2ImPar */
 
+ /**
+ * Get number of parallel images to be gridded in GPU
+ * Maximum memory is 1/2 GPU memory
+ * \param inn     GPUGrid object of interest.
+ * \param doBeam  True if Beam also wanted
+ * \return the number of parallel images allowed.
+ */
+olong ObitUVGridGetNumPar (ObitUV *inUV, ObitImageMosaic *mosaic, gboolean doBeam, ObitErr *err)
+{
+  olong out=1, iNumVis, nplane;
+  odouble lenVis, numVis, imSize, bufSize, tSize, mSize;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitImage *im=NULL;
+  gchar *routine="ObitUVGridGetNumPar";
+
+  if (err->error) return out;
+
+  /* 2/3 GPU memory size */
+#if HAVE_GPU==1  /* CUDA code */
+  mSize = 0.667*((odouble)ObitCUDAUtilMemory(0));
+#else           /* Not compiled with GPU */  
+ mSize = 0;  out = 0;
+ Obit_log_error(err, OBIT_InfoErr, "%s: Not compiled with GPU",routine);
+ return out;
+#endif /* HAVE_GPU */
+
+  /* How big are things? assumes 2nd polarization the same as first */
+  ObitInfoListGetTest(inUV->info, "nVisPIO",  &type, dim, &iNumVis);
+  numVis = (odouble)iNumVis;
+  lenVis = (odouble)inUV->myDesc->lrec;
+  im = mosaic->images[0];
+  imSize = mosaic->nx[0] *  mosaic->ny[0];              /* 1st Image plane size */
+  if (doBeam) imSize += mosaic->nx[0] *  mosaic->ny[0]; /* assume same size */
+
+  /* If an ImageMF get number of planes */
+  if (ObitImageMFIsA((ObitImageMF*)im)) {
+    nplane = ((ObitImageMF*)im)->nSpec;
+  } else nplane = 1;
+    
+  /* Include number of planes */
+  bufSize = numVis*lenVis + imSize*nplane;     /* Approx memory (words) per parallel image */
+  bufSize *= sizeof(ofloat);                   /* to bytes */
+
+  if (sizeof(olong*)==4)      tSize = 0.75e9;  /* Use sizeof a pointer type to get 32/64 bit */
+  else if (sizeof(olong*)==8) tSize = mSize;   /* 1/2 GPU memory */
+  else                        tSize = 1.0e9;   /* Shouldn't happen */
+  out = tSize / bufSize;  /* How many fit in a tSize? */
+
+  /* Better be at least 1 */
+  Obit_retval_if_fail((out>=1), err, out,
+		      "%s: Insufficient GPU memory to make images", routine);
+ return out;
+} /*  end ObitUVGridGetNumPar */
+
 /**
  * Initialize global ClassInfo Structure.
  */
@@ -962,6 +1135,7 @@ static void ObitUVGridClassInfoDefFn (gpointer inClass)
   theClass->ObitUVGridFFT2Im     = (ObitUVGridFFT2ImFP)ObitUVGridFFT2Im;
   theClass->ObitUVGridFFT2ImPar  = (ObitUVGridFFT2ImParFP)ObitUVGridFFT2ImPar;
   theClass->GridCorrFn           = (GridCorrFnFP)GridCorrFn;
+  theClass->ObitUVGridGetNumPar  = (ObitUVGridGetNumParFP)ObitUVGridGetNumPar;
 
 } /* end ObitUVGridClassDefFn */
 
@@ -1003,6 +1177,9 @@ void ObitUVGridInit  (gpointer inn)
   in->workGrids    = NULL;
   in->BeamTaperUV  = 0.0;
   in->BeamNorm     = 1.0;
+  in->doGPUGrid    = FALSE;
+  in->gridInfo     = NULL;
+  in->cuda_device  = 0;
 
   /* initialize convolving function table */
   /* pillbox (0) for testing (4=exp*sinc, 5=Spherodial wave) */
@@ -1037,7 +1214,7 @@ void ObitUVGridClear (gpointer inn)
   in->yCorrBeam = ObitFArrayUnref(in->yCorrBeam);
   in->xCorrImage= ObitFArrayUnref(in->xCorrImage);
   in->yCorrImage= ObitFArrayUnref(in->yCorrImage);
- 
+  in->gridInfo  = ObitGPUGridUnref(in->gridInfo);
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
   /* delete parent class members */
@@ -1061,7 +1238,7 @@ static void ConvFunc (ObitUVGrid* in, olong fnType)
   ofloat parm[4]; /* default parameters */
   ofloat xinc, eta, psi, p1, p2, u, absu, umax;
   ofloat *convfnp, *convgfnp;
-  olong ialf, im, nmax, i, j, size, lim, limit, bias, naxis[1];
+  olong ialf, im, nmax, i, j=0, size, lim, limit, bias, naxis[1];
   /*gfloat shit[701]; DEBUG */
 
   /* error checks */
@@ -1561,8 +1738,8 @@ static gpointer ThreadFFT2Im (gpointer arg)
   } /* end make image */
   
   /* cleanup */
-  if (ramp) g_free (ramp); ramp = NULL;
-  if (data) g_free (data); data = NULL;
+  if (ramp) {g_free (ramp);} ramp = NULL;
+  if (data) {g_free (data);} data = NULL;
 
   /* Indicate completion */
   if (largs->ithread>=0)

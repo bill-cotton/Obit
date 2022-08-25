@@ -1,7 +1,7 @@
 /* $Id:  $  */
 /* Obit task to Assure constant editing for EVLA OTF data       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2016                                               */
+/*;  Copyright (C) 2016,2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -103,21 +103,21 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Make sure flagTab exists, assign if passed 0 */
   ObitInfoListGetTest(myInput, "flagTab",  &type, dim, &flagTab);
   FlagTab = newObitTableFGValue("tmpFG", (ObitData*)inData, &flagTab, OBIT_IO_ReadWrite, 
 				err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   /* Open/close table */
   ObitTableFGOpen (FlagTab, OBIT_IO_ReadWrite, err);
   ObitTableFGClose (FlagTab, err);
@@ -133,15 +133,15 @@ int main ( int argc, char **argv )
 
    /* Do editing */
   FlagData(inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Copy flags to flagTab, delete temp highest */
   ObitUVEditAppendFG (inData, flagTab, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Write history */
   OTFFlagHistory (myInput, inData, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput);    /* delete input list */
@@ -520,7 +520,7 @@ void  FlagData(ObitUV* inData, ObitErr* err)
   ObitAntennaList *AntList  = NULL;
   ObitTableAN     *ANTable  = NULL;
   olong i, j, ant1, ant2, lastSubA, iBL, jBL, iVis, iIF, iStok, iChan, iFGRow=-1;
-  olong nchan, nif, nstok, ncorr, incs, incf, incif, soff;
+  olong ncorr, incs, incf, incif, soff;
   olong maxAnt, numBL, numIF;
   olong subA, numPCal, numOrb, ver;
   ollong count=0, total = 0;
@@ -597,16 +597,13 @@ void  FlagData(ObitUV* inData, ObitErr* err)
   lastSubA = 0;
   /* get data product increments */
   ncorr = inDesc->ncorr;
-  nchan = inDesc->inaxes[inDesc->jlocf];
   incf  = inDesc->incf/3;
   if (inDesc->jlocf>=0) {
-    nif = inDesc->inaxes[inDesc->jlocif];
     incif = inDesc->incif/3;
-  } else {nif = 1; incif = 1;}
+  } else {incif = 1;}
   if (inDesc->jlocs>=0) {
-    nstok = inDesc->inaxes[inDesc->jlocs];
     incs  = inDesc->incs/3;
-  } else {nstok = 1; incs = 1;}
+  } else {incs = 1;}
 
   /* Work arrays */
   OKFlags  = g_malloc0(ncorr*numBL*sizeof(gboolean));

@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014                                               */
+/*;  Copyright (C) 2014,2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,7 +26,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 #ifndef OBITCUDAUTIL_H 
-#define OBITCUDAUTIl_H 
+#define OBITCUDAUTIL_H 
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -41,7 +41,7 @@
 /* Magic floating value */
 float CUDAMagicF (void);
 
-#if HAVE_GPU==1  /* GPU? Real versioins */
+#if HAVE_GPU==1  /* GPU? Real versions */
 /* Public: Set device */
 void ObitCUDASetGPU (int cuda_device);
 
@@ -108,9 +108,21 @@ void ObitCUDAUtilFreeGPU (float *GPU);
 extern "C"
 void ObitCUDAUtilHost2GPU(float *GPU, float *host, int memsize, int* stream);
 
+/* Public: Copy Host anything to GPU memory */
+extern "C"
+void ObitCUDAUtilHostAny2GPU(void *GPU, void *host, int memsize, int* stream);
+
 /* Public: Copy GPU to Host memory */
 extern "C"
 void ObitCUDAUtilGPU2Host(float *host, float *GPU, int memsize, int* stream);
+
+/* Public: Copy anything GPU to Host memory */
+extern "C"
+void ObitCUDAUtilGPUAny2Host(void *host, void *GPU, int memsize, int* stream);
+
+/* Public: How much device global memory in bytes */
+extern "C"
+size_t ObitCUDAUtilMemory(int cuda_device);
 
 #else /* not CUDA */
 /* Public: Allocate locked host memory */
@@ -130,6 +142,9 @@ void ObitCUDAUtilHost2GPU(float *GPU, float *host, int memsize, int* stream);
 
 /* Public: Copy GPU to Host memory */
 void ObitCUDAUtilGPU2Host(float *host, float *GPU, int memsize, int* stream);
+
+/* Public: pointer info type */
+void ObitCUDAUtilPointerType(void *ptr, char *label);
 
 #endif /* IS_CUDA */
 #else  /* No GPU - stubb */
@@ -227,6 +242,13 @@ static void ObitCUDAUtilGPU2Host(float *host, float *GPU, int memsize, int* stre
 {
   g_error("GPU/CUDA not implemented");
 } /* end ObitCUDAUtilGPU2Host */
+
+/* Public: How much device global memory in bytes 0=> not available */
+size_t ObitCUDAUtilMemory(int cuda_device) {return 0;}
+
+/* Public: pointer info type */
+void ObitCUDAUtilPointerType(void *ptr, char *label) {return ;}
+
 #endif /* HAVE_GPU */
 
 #endif /* OBITFCUDAUtil_H */ 

@@ -1,7 +1,7 @@
 /* $Id$  */
 /* R-L phase bandpass calibration                                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2016                                          */
+/*;  Copyright (C) 2010-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -131,24 +131,24 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input sky model */
   skyModel = getInputSkyModel (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* Copy/select/calibrate to scratch file */
   scrData = newObitUVScratch (inData,err);
   scrData = ObitUVCopy (inData, scrData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* Save first source id in case it's the only one */
   if (inData->mySel->sources) souNo = inData->mySel->sources[0];
@@ -157,7 +157,7 @@ int main ( int argc, char **argv )
   if (skyModel) ObitSkyModelDivUV (skyModel, scrData, scrData, err);
   /* Otherwise divide by source flux density if given */
   else DivideSource (inData, scrData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   /* Self cal parameters to scrData */
   ObitInfoListCopyList (myInput, scrData->info, SCParms);
 
@@ -168,22 +168,22 @@ int main ( int argc, char **argv )
   ftemp = 1.0; /* Max allowable gap 1 min. */
   ObitInfoListAlwaysPut(scrData->info, "maxGap", OBIT_float, dim, &ftemp);
   ObitUVUtilIndex (scrData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* Initial calibration */
   avgData =  InitialCal(myInput, scrData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* Do channel solutions, convert to BP table */
   RLBandpassCal(myInput, avgData, inData, err);
-  if (err->error) ierr = 1;   ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;   ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Write history */
   RLPassHistory (myInput, inData, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput); 
@@ -1214,7 +1214,7 @@ void  RLBandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData,
   ObitTableBP *BPTable=NULL, *BPOut=NULL;
   ObitIOCode retCode = OBIT_IO_OK;
   olong ichan, nchan, bchan2=0, echan2=0, chinc2=0, nc, i;
-  olong ivis, nvis, ifreq, nfreq, iif, nstok, nif, indx, count=0;
+  olong ivis, nvis, ifreq, nfreq, iif, nif, indx, count=0;
   olong itemp, nchanIF, doBand, BPVer, outVer, npol, BPSoln, refAnt;
   gboolean btemp;
   ofloat RLPhase=0.0, RM=0.0, fblank = ObitMagicF();
@@ -1308,8 +1308,6 @@ void  RLBandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData,
     nfreq = desc->inaxes[desc->jlocf];
     nif = 1;
     if (desc->jlocif>=0) nif = desc->inaxes[desc->jlocif];
-    nstok = 1;
-    if (desc->jlocs>=0) nstok = desc->inaxes[desc->jlocs];
 
     /* loop over blocks of data */
     while (retCode == OBIT_IO_OK) {

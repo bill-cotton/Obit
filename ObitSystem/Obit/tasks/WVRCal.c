@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Convert an ALMA WVR dataset to an SN table              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2011-2015                                          */
+/*;  Copyright (C) 2011-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -174,19 +174,19 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto cleanup;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto cleanup;}
 
   /* Get output uvdata */
   outData = getOutputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Create wvrcoef structure */
   wvrcoef = newObitWVRCoef();
@@ -197,7 +197,7 @@ int main ( int argc, char **argv )
 
   /* Scan average sensitivities */
   WVRCalScanCal (inData, outData, wvrcoef, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto cleanup;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto cleanup;}
 
   /* Copy control info */
   ObitInfoListCopyListRename (myInput, inData->info,  UVParms2, UVParms2Rename);
@@ -205,14 +205,14 @@ int main ( int argc, char **argv )
 
   /* Convert WVR to SN */
   WVRCalConvert (inData, outData, wvrcoef, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto cleanup;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto cleanup;}
 
   /* History */
   WVRCalHistory (myInput, inData, outData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto cleanup;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto cleanup;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto cleanup;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto cleanup;}
   
   /* cleanup */
 cleanup:
@@ -253,7 +253,7 @@ ObitInfoList* WVRCalIn (int argc, char **argv, ObitErr *err)
 
   /* error checks */
   g_assert(ObitErrIsA(err));
-  if (err->error) return list;
+  if (err->error) {return list;}
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
@@ -557,7 +557,6 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
 {
   ObitUV       *inData = NULL;
   ObitInfoType type;
-  ObitIOType   IOType;
   olong         Aseq, disk, cno, nvis;
   gchar        *Type, *strTemp, inFile[129];
   gchar        Aname[13], Aclass[7],  *Atype = "UV";
@@ -575,7 +574,6 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   /* File type - could be either AIPS or FITS */
   ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
   if (!strncmp (Type, "AIPS", 4)) { /* AIPS input */
-    IOType = OBIT_IO_AIPS;  /* Save file type */
     /* input AIPS disk */
     ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
     /* input AIPS name */
@@ -623,7 +621,6 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     }
 
     g_snprintf (Aname, 12, "%s", inFile);  /* Use as root of scratch images */
-    IOType = OBIT_IO_FITS;  /* Save file type */
    
     /* input FITS disk */
     ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
@@ -665,7 +662,7 @@ ObitUV* getOutputData (ObitInfoList *myInput, ObitErr *err)
 {
   ObitUV    *outUV = NULL;
   ObitInfoType type;
-  olong      i, n, Aseq, disk, cno, lType;
+  olong      i, n, Aseq, disk, cno;
   gchar     *Type, *strTemp, outFile[129];
   gchar     Aname[13], Aclass[7], *Atype = "UV";
   olong      nvis;
@@ -684,7 +681,6 @@ ObitUV* getOutputData (ObitInfoList *myInput, ObitErr *err)
     
   /* File type - could be either AIPS or FITS */
   ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
-  lType = dim[0];
   if (!strncmp (Type, "AIPS", 4)) { /* AIPS input */
 
     /* outName given? */
@@ -692,7 +688,7 @@ ObitUV* getOutputData (ObitInfoList *myInput, ObitErr *err)
     /* if not use inName */
     if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12)))
       ObitInfoListGetP (myInput, "inName", &type, dim, (gpointer)&strTemp);
-    for (i=0; i<12; i++) Aname[i] = ' ';  Aname[i] = 0;
+    for (i=0; i<12; i++) {Aname[i] = ' ';}  Aname[i] = 0;
     for (i=0; i<MIN(12,dim[0]); i++) Aname[i] = strTemp[i];
     /* Save any defaulting on myInput */
     dim[0] = 12;
@@ -745,7 +741,7 @@ ObitUV* getOutputData (ObitInfoList *myInput, ObitErr *err)
     if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12)))
       ObitInfoListGetP (myInput, "inFile", &type, dim, (gpointer)&strTemp);
     n = MIN (128, dim[0]);
-    for (i=0; i<n; i++) outFile[i] = strTemp[i]; outFile[i] = 0;
+    for (i=0; i<n; i++) {outFile[i] = strTemp[i];} outFile[i] = 0;
     ObitTrimTrail(outFile);  /* remove trailing blanks */
 
     /* Save any defaulting on myInput */
@@ -850,12 +846,11 @@ void WVRCalScanCal (ObitUV* inUV, ObitUV* outUV, ObitWVRCoef *wvrcoef,
   WVRFuncArg **ThreadArgs=NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  olong ifreq, sid, nTh, nextVisBuf, nVisPIO, *count=NULL;
+  olong ifreq, sid, nTh, nVisPIO, *count=NULL;
   oint numAnt, suba=1, prtlv;
   ofloat solInt;
   odouble *sumWt=NULL, *sumWtT=NULL, *sumEl=NULL;
   gboolean done, doCalSelect;
-  ObitIOCode retCode;
   gchar *routine = "WVRCalScanCal";
   
   /* error checks */
@@ -875,9 +870,9 @@ void WVRCalScanCal (ObitUV* inUV, ObitUV* outUV, ObitWVRCoef *wvrcoef,
   ObitInfoListAlwaysPut(inUV->info, "nVisPIO", OBIT_long, dim, & nVisPIO);
   
   /* open UV data  */
-  retCode = ObitUVOpen (inUV, OBIT_IO_ReadCal, err);
+  ObitUVOpen (inUV, OBIT_IO_ReadCal, err);
   if (err->error) Obit_traceback_msg (err, routine, inUV->name);
-  retCode = ObitUVOpen (outUV, OBIT_IO_ReadWrite, err);
+  ObitUVOpen (outUV, OBIT_IO_ReadWrite, err);
   if (err->error) Obit_traceback_msg (err, routine,outUV->name);
   
   /* Make sure some data */
@@ -944,7 +939,6 @@ void WVRCalScanCal (ObitUV* inUV, ObitUV* outUV, ObitWVRCoef *wvrcoef,
   
   /* Loop until done */
   done = FALSE;
-  nextVisBuf = -1;
   while (!done) {
     /* Read and average next solution interval */
     done =  AvgWVR1 (inUV, solInt, numAnt, AList, SList, &sid,
@@ -1008,15 +1002,14 @@ void WVRCalConvert (ObitUV* inUV, ObitUV* outUV, ObitWVRCoef *wvrcoef,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   olong i, iAnt, SNver, ifreq, sid, fqid=0;
-  olong nextVisBuf, iSNRow, numFreq, cntGood=0, cntPoss=0, cntBad=0;
+  olong iSNRow, cntGood=0, cntPoss=0, cntBad=0;
   olong itemp, nVisPIO, *count=NULL, refAnt=0, refant;
   oint numPol, numIF, numAnt, suba=1, prtlv;
   ofloat solInt, *delay=NULL, *wt=NULL;
   ofloat timei=0.0, phase, fblank = ObitMagicF();
   odouble *sumWt=NULL, *sumWtT=NULL, *sumEl=NULL;
   odouble timec=0.0;
-  gboolean done, good, oldSN, *gotAnt, doCalSelect, empty, doFlip=FALSE;
-  ObitIOCode retCode;
+  gboolean done, oldSN, *gotAnt, doCalSelect, empty, doFlip=FALSE;
   gchar *tname;
   /*ofloat T[4];  DEBUG */
   gchar *routine = "WVRCalConvert";
@@ -1044,9 +1037,9 @@ void WVRCalConvert (ObitUV* inUV, ObitUV* outUV, ObitWVRCoef *wvrcoef,
   ObitInfoListAlwaysPut(inUV->info, "nVisPIO", OBIT_long, dim, & nVisPIO);
   
   /* open UV data  */
-  retCode = ObitUVOpen (inUV, OBIT_IO_ReadCal, err);
+  ObitUVOpen (inUV, OBIT_IO_ReadCal, err);
   if (err->error) Obit_traceback_msg (err, routine, inUV->name);
-  retCode = ObitUVOpen (outUV, OBIT_IO_ReadCal, err);
+  ObitUVOpen (outUV, OBIT_IO_ReadCal, err);
   if (err->error) Obit_traceback_msg (err, routine,outUV->name);
   
   /* Make sure some data */
@@ -1108,9 +1101,6 @@ void WVRCalConvert (ObitUV* inUV, ObitUV* outUV, ObitWVRCoef *wvrcoef,
 				numPol, numIF, err);
   g_free (tname);
   if (err->error) Obit_traceback_msg (err, routine, outUV->name);
-  if (outUV->myDesc->jlocf>=0)
-    numFreq = outUV->myDesc->inaxes[outUV->myDesc->jlocf];
-  else numFreq = 1;
 
   /* If SN table previously existed, deselect values about to be redetermined. 
      get information from selector on inUV */
@@ -1136,7 +1126,7 @@ void WVRCalConvert (ObitUV* inUV, ObitUV* outUV, ObitWVRCoef *wvrcoef,
   ObitInfoListGetTest(inUV->info, "prtLv", &type, dim, &prtlv);
   
   /* Open output table */
-  retCode = ObitTableSNOpen (outSoln, OBIT_IO_ReadWrite, err);
+  ObitTableSNOpen (outSoln, OBIT_IO_ReadWrite, err);
   if (err->error) goto cleanup;
   /* Anything already there? */
   empty = outSoln->myDesc->nrow==0;
@@ -1191,7 +1181,6 @@ void WVRCalConvert (ObitUV* inUV, ObitUV* outUV, ObitWVRCoef *wvrcoef,
   
   /* Loop until done */
   done = FALSE;
-  nextVisBuf = -1;
   while (!done) {
     refant = refAnt;
     /* Read and average next solution interval */
@@ -1223,7 +1212,6 @@ void WVRCalConvert (ObitUV* inUV, ObitUV* outUV, ObitWVRCoef *wvrcoef,
     iSNRow = -1;
     for (iAnt= 0; iAnt<numAnt; iAnt++) {
       if (gotAnt[iAnt]) {
-	good = FALSE; /* Until proven */
 	row->antNo  = iAnt+1; 
 	if (doFlip)
 	  row->MBDelay1 = -delay[iAnt];
@@ -1241,7 +1229,7 @@ void WVRCalConvert (ObitUV* inUV, ObitUV* outUV, ObitWVRCoef *wvrcoef,
 	  row->Delay1[i]  = row->MBDelay1;
 	  row->Weight1[i] = wt[iAnt]; 
 	  row->RefAnt1[i] = refant; 
-	  if (wt[iAnt]>0.0) {good = TRUE; cntGood++;}
+	  if (wt[iAnt]>0.0) {cntGood++;}
 	  if (wt[iAnt]<=0.0) cntBad++;    /* DEBUG */
 	}
 	if (numPol>1) {
@@ -1252,11 +1240,11 @@ void WVRCalConvert (ObitUV* inUV, ObitUV* outUV, ObitWVRCoef *wvrcoef,
 	    row->Delay2[i]  = row->MBDelay2;
 	    row->Weight2[i] = wt[iAnt]; 
 	    row->RefAnt2[i] = refant;
-	    if (wt[iAnt]>0.0) {good = TRUE; cntGood++;}
+	    if (wt[iAnt]>0.0) {cntGood++;}
 	    if (wt[iAnt]<=0.0) cntBad++;    /* DEBUG */
 	  }
 	}
-	retCode = ObitTableSNWriteRow (outSoln, iSNRow, row, err);
+	ObitTableSNWriteRow (outSoln, iSNRow, row, err);
 	if (err->error) goto cleanup;
       } /* end if gotant */
     }
@@ -1278,7 +1266,7 @@ void WVRCalConvert (ObitUV* inUV, ObitUV* outUV, ObitWVRCoef *wvrcoef,
   }
 
   /* Close output table */
-  retCode = ObitTableSNClose (outSoln, err);
+  ObitTableSNClose (outSoln, err);
   if (err->error) goto cleanup;
   
   /* Give results */
@@ -1821,7 +1809,6 @@ static gpointer ThreadWVR (gpointer arg)
   return NULL;
   
 } /*  end ThreadWVR */
-
 /**
  * Convert a time as time in days to a printable string
  * \param    time  Beginning time, end time in days
@@ -1844,3 +1831,4 @@ static void T2String (ofloat time, gchar *msgBuf)
   g_snprintf (msgBuf, 30, "%2.2d/%2.2d:%2.2d:%5.2f",
 	      id1, it1, it2, rt1);
 } /* end of routine T2String   */ 
+

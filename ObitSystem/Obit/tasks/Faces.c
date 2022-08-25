@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Makes images of catalog sources for initial calibration            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014-2017                                          */
+/*;  Copyright (C) 2014-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -176,22 +176,22 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Process */
   doSources (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput);    /* delete input list */
@@ -228,7 +228,7 @@ ObitInfoList* FacesIn (int argc, char **argv, ObitErr *err)
   gchar *routine = "FacesIn";
 
   /* error checks */
-  if (err->error) return list;
+  if (err->error) {return list;}
 
   /* Make default inputs/outputs InfoList */
   list = defaultInputs(err);
@@ -925,7 +925,7 @@ ObitImage* getOutputImage (ObitInfoList *myInput, ObitUV* inData,
   outImage->myDesc->cdelt[outImage->myDesc->jlocd]  =  fabs(yCells)/3600.;
   /* Adding SI? */
   if (doSI) {
-    strncpy (outImage->myDesc->ctype[outImage->myDesc->jlocf], "SPECLOGF", 8);
+    strncpy (outImage->myDesc->ctype[outImage->myDesc->jlocf], "SPECLOGF", 9);
     dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
     ObitInfoListAlwaysPut(outImage->myDesc->info, "NTERM", OBIT_long, dim, &nterm);
   }
@@ -985,7 +985,6 @@ SouList* ParseCat (ObitInfoList* myInput, ObitImage* outImage,
   olong trc[IM_MAXDIM] = {0,0,0,0,0};
   olong ver, nrows, irow, CatDisk;
   gboolean doJ2B=FALSE;
-  ObitIOCode retCode;
   ObitImage *VLImage=NULL;
   ObitTableVL *VLTable=NULL;
   ObitTableVLRow *VLRow=NULL;
@@ -1066,7 +1065,7 @@ SouList* ParseCat (ObitInfoList* myInput, ObitImage* outImage,
   count = 0;
   for (irow= 1; irow<=nrows; irow++) { /* loop 500 */
     /* read */
-    retCode = ObitTableVLReadRow (VLTable, irow, VLRow, err);
+    ObitTableVLReadRow (VLTable, irow, VLRow, err);
     if (err->error) Obit_traceback_val (err, routine, VLTable->name, outList);
    
     /* spectral scaling of flux density */
@@ -1148,7 +1147,7 @@ SouList* ParseCat (ObitInfoList* myInput, ObitImage* outImage,
 
   /* Close up */
   ObitImageClose(VLImage, err);
-  retCode = ObitTableVLClose(VLTable, err);
+  ObitTableVLClose(VLTable, err);
   if (err->error) Obit_traceback_val (err, routine, VLTable->name, outList);
   
   /* clean up */
@@ -1241,7 +1240,7 @@ void SouList2Image (SouList* slist, ObitImage* outImage, ObitErr *err)
   ObitImageDesc *outDesc, *tmpDesc=NULL;
   ObitFArray *plist=NULL;
   olong pln[5], naxis[3], pos[2];
-  ofloat *ppix, gauss[3], cellx, celly, bmaj, bmin, bpa, sr, cr, inPixl[2], outPixl[2];
+  ofloat *ppix, gauss[3], cellx, bmaj, bmin, bpa, sr, cr, inPixl[2], outPixl[2];
   gchar *routine = "SouList2Image";
   
   /* error checks */
@@ -1268,7 +1267,6 @@ void SouList2Image (SouList* slist, ObitImage* outImage, ObitErr *err)
 
   /* Image grid info */
   cellx = outDesc->cdelt[outDesc->jlocr];
-  celly = outDesc->cdelt[outDesc->jlocd];
 
   /* Create plist for positions, fluxes */
   naxis[0] = 3;

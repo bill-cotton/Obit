@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2021                                          */
+/*;  Copyright (C) 2003-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -33,6 +33,7 @@
 #include "ObitUVGrid.h"
 #include "ObitUVGridWB.h"
 #include "ObitUVGridMF.h"
+#include "ObitGPUGrid.h"
 #include "ObitImageWB.h"
 #include "ObitImageMF.h"
 #include "ObitImageUtil.h"
@@ -514,9 +515,10 @@ void ObitImageUtilMakeImageFileInfo (ObitInfoList *inList, ObitErr *err)
  *              Uses AIPS rather than Briggs definition of Robust.
  * \li "WtPower" OBIT_float scalar = Power to raise weights to.  [def = 1.0]
  *              Note: a power of 0.0 sets all the output weights to 1 as modified
- *              by uniform/Tapering weighting.  Applied in determinng weights 
+ *              by uniform/Tapering weighting.  Applied in determing weights 
  *              as well as after.
  * \li "do3D"   OBIT_bool (1,1,1) 3D image, else 2D? [def TRUE]
+ * \li "doGPUGrid" OBIT_bool (1,1,1) use GPU for Gridding [def FALSE]
  * \param channel  Which frequency channel to image, 0->all.
  * \param err      Error stack, returns if not empty.
  */
@@ -530,14 +532,21 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
   ObitInfoType type;
   ofloat sumwts, imMax, imMin, BeamTaper=0., BeamNorm=0.0, Beam[3];
   gchar *outName=NULL;
-  olong plane[5], pln, NPIO, oldNPIO;
-  olong i, ichannel, icLo, icHi, norder=0, iorder=0;
+  ollong gpumem=0;
+  olong cuda_device=0; /* default GPU number*/
+  olong plane[5], pln, NPIO, oldNPIO, nfacet=1, ifacet=0;
+  olong nplane=1, i, ichannel, icLo, icHi, norder=0, iorder=0;
   olong blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitUVGridClassInfo *gridClass;
   ObitImageClassInfo *imgClass;
+  ObitUVGrid *myGrid=NULL, *beamGrid=NULL;
+  gboolean doGPUGrid=FALSE, doCalSelect=FALSE;
+  ObitIOAccess access;
+  union ObitInfoListEquiv InfoReal; 
   gchar *routine = "ObitImageUtilMakeImage";
+
   /* error checks */
   if (err->error) return;
   g_assert (ObitUVIsA(inUV));
@@ -558,21 +567,32 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
   /* Get restoring beam */
   ObitInfoListGetTest(inUV->info, "Beam", &type, dim, Beam);
 
+  /* Use GPU? */
+  InfoReal.itg = (olong)doGPUGrid; type = OBIT_bool;
+  ObitInfoListGetTest(inUV->info, "doGPUGrid", &type, (gint32*)dim, &InfoReal);
+  doGPUGrid = InfoReal.itg;
+  if (doGPUGrid) gpumem = ObitGPUGridSetGPU (cuda_device); /* initialize */
+
   /* Need new gridding member? */
   IODesc = (ObitImageDesc*)outImage->myIO->myDesc;
   outName = g_strconcat ("UVGrid for: ",inUV->name,NULL);
   if (outImage->myGrid == NULL) {
     /* WB Image? */
-    if (ObitImageWBIsA(outImage))
-      outImage->myGrid = (ObitUVGrid*)newObitUVGridWB(outName);
+    if (ObitImageWBIsA(outImage)) {
+      outImage->myGrid = (Obit*)newObitUVGridWB(outName);
+      nplane = 1;  /* Note GPU gridding doesn't work for this */
     /* MF Image? */
-    else if (ObitImageMFIsA(outImage))
-      outImage->myGrid = (ObitUVGrid*)newObitUVGridMF(outName);
+    } else if (ObitImageMFIsA(outImage)) {
+      outImage->myGrid = (Obit*)newObitUVGridMF(outName);
+      nplane = ((ObitImageMF*)outImage)->nSpec;
     /* Spectroscopic Image cube? - use MF Gridding */
-    else if (IODesc->inaxes[IODesc->jlocf]>1)
-      outImage->myGrid = (ObitUVGrid*)newObitUVGridMF(outName);
-    else 
-      outImage->myGrid = newObitUVGrid(outName);
+    } else if (IODesc->inaxes[IODesc->jlocf]>1) {
+      outImage->myGrid = (Obit*)newObitUVGridMF(outName);
+      nplane = 1;  /* Note GPU gridding may not work for this */
+    } else {  /* Basic image */
+      outImage->myGrid = (Obit*)newObitUVGrid(outName);
+      nplane = 1;
+    }
     if (outName) {g_free(outName);} outName = NULL;
   }
   /* Need separate gridder for different size beam? */
@@ -587,22 +607,36 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
 	{
 	  /* WB Image? */
 	  if (ObitImageWBIsA(outImage))
-	    outImage->myGrid = (ObitUVGrid*)newObitUVGridWB(outName);
+	    outImage->myGrid = (Obit*)newObitUVGridWB(outName);
 	  /* MF Image? */
 	  else if (ObitImageMFIsA(outImage))
-	    outImage->myGrid = (ObitUVGrid*)newObitUVGridMF(outName);
+	    outImage->myGrid = (Obit*)newObitUVGridMF(outName);
 	  /* Spectroscopic Image cube? - use MF Gridding */
 	  else if (IODesc->inaxes[IODesc->jlocf]>1)
-	    outImage->myGrid = (ObitUVGrid*)newObitUVGridMF(outName);
+	    outImage->myGrid = (Obit*)newObitUVGridMF(outName);
 	  else 
-	    outImage->myGrid = newObitUVGrid(outName);
+	    outImage->myGrid =(Obit*) newObitUVGrid(outName);
 	}
       if (outName) {g_free(outName);} outName = NULL;
-    } else {  /* Same size - use uimage gridder */
+    } else {  /* Same size - use image gridder */
       if (((ObitImage*)outImage->myBeam)->myGrid==NULL)
-	((ObitImage*)outImage->myBeam)->myGrid = ObitUVGridRef(outImage->myGrid);
+	((ObitImage*)outImage->myBeam)->myGrid = (Obit*)ObitUVGridRef(outImage->myGrid);
     }
-  } /* End separate beam gridder */
+    /* GPU Info - Beam  */
+  if (doGPUGrid) {
+    ifacet = 1;
+    if (nfacet==1) ifacet = 0;
+    myGrid = (ObitUVGrid*)outImage->myGrid;
+    if (myGrid->gridInfo==NULL) 
+      myGrid->gridInfo = ObitGPUGridCreate("GPUGrid", nfacet, outImage, inUV);
+    ObitGPUGridSetGPUStruct(myGrid->gridInfo, (Obit*)myGrid, ifacet, nfacet, 
+			    nplane, inUV, (Obit*)outImage, doBeam, err);
+    if (err->error) Obit_traceback_msg (err, routine, outImage->name);
+    myGrid->gridInfo->cudaInfo->gpu_memory = (size_t)gpumem;
+    myGrid->gridInfo->cuda_device = cuda_device;
+    myGrid->gridInfo->cudaInfo->cuda_device = cuda_device;
+  }
+} /* End separate beam gridder */
 
   /*  Open image ReadOnly to get proper descriptor */
   dim[0] = 7;
@@ -630,22 +664,14 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
 
     sumwts = 0.0;
     ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, (gpointer)&sumwts);
-    outImage->myGrid->BeamNorm = sumwts;
+    myGrid = (ObitUVGrid*)outImage->myGrid;
+    myGrid->BeamNorm = sumwts;
     BeamNorm = sumwts;
   }    
 
-  /* Reset UV buffer size to at least 2 MByte per thread */
-  oldNPIO  = 1000;
-  ObitInfoListGetTest (inUV->info, "nVisPIO", &type, dim,  (gpointer)&oldNPIO);
-  /* How many threads? */
-  outImage->myGrid->nThreads = MAX (1, ObitThreadNumProc(outImage->thread));
-  NPIO = outImage->myGrid->nThreads * 
-    (olong) (0.5 + MAX (2.0, 2.0/(inUV->myDesc->lrec*4.0/(1024.0*1024.0))));
-  dim[0] = dim[1] = dim[2] = 1;
-  ObitInfoListAlwaysPut (inUV->info, "nVisPIO",  OBIT_long, dim,  (gpointer)&NPIO);
-
-  gridClass =  (ObitUVGridClassInfo*)outImage->myGrid->ClassInfo; /* Gridder class */
-  imgClass  =  (ObitImageClassInfo*)outImage->ClassInfo;          /* Image class */
+  myGrid = (ObitUVGrid*)outImage->myGrid;
+  gridClass =  (ObitUVGridClassInfo*)myGrid->ClassInfo;   /* Gridder class */
+  imgClass  =  (ObitImageClassInfo*)outImage->ClassInfo;  /* Image class */
 
   /* Loop over channels selected */
   IODesc = (ObitImageDesc*)outImage->myIO->myDesc;
@@ -700,34 +726,37 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
 	((ObitImageDesc*)theBeam->myIO->myDesc)->minval =  1.0e20;
 	
 	/* Gridding setup */
-	gridClass->ObitUVGridSetup (theBeam->myGrid, inUV, (Obit*)theBeam, TRUE, err);
+	beamGrid = (ObitUVGrid*)(theBeam->myGrid);
+	gridClass->ObitUVGridSetup (beamGrid, inUV, (Obit*)theBeam, TRUE, err);
 	if (err->error) Obit_traceback_msg (err, routine, theBeam->name);
 	
 	/* Grid Beam */
-	gridClass->ObitUVGridReadUV (theBeam->myGrid, inUV, err);
+	gridClass->ObitUVGridReadUV (beamGrid, inUV, err);
 	if (err->error) Obit_traceback_msg (err, routine, theBeam->name);
 
 	/* Save sum weights for higher order beams */
-	if (iorder>0) theBeam->myGrid->BeamNorm = BeamNorm;
+	if (iorder>0) beamGrid->BeamNorm = BeamNorm;
 		
 	/* FFT, Gridding correction, write  */
 	dim[0] = dim[1] = dim[2] = 1;
 	pln = ichannel;   /* Which plane to write? */
 	if (ObitImageWBIsA(outImage)) pln = iorder+1;
 	ObitInfoListAlwaysPut (theBeam->info, "Channel",  OBIT_long, dim,  &pln);
-	gridClass->ObitUVGridFFT2Im(theBeam->myGrid, (Obit*)theBeam, err);
+	gridClass->ObitUVGridFFT2Im(beamGrid, (Obit*)theBeam, err);
 	if (err->error) Obit_traceback_msg (err, routine, theBeam->name);
 	
 	/* Use sum weights for higher order beams */
 	if (iorder==0)  {
-	  BeamNorm = theBeam->myGrid->BeamNorm;
-	  outImage->myGrid->BeamNorm = BeamNorm;
+	  BeamNorm = beamGrid->BeamNorm;
+	  myGrid = (ObitUVGrid*)(outImage->myGrid);
+	  myGrid->BeamNorm = BeamNorm;
 	}
 
 	if (iorder==0) {  /* Stuff for dirty beam */
 	  /* Tell Sum of gridding weights */
+	  myGrid = (ObitUVGrid*)(outImage->myGrid);
 	  Obit_log_error(err, OBIT_InfoErr, 
-			 "Sum of Weights %g for %s",outImage->myGrid->BeamNorm, outImage->name);
+			 "Sum of Weights %g for %s",myGrid->BeamNorm, outImage->name);
 	  
 	  /* tell Max/Min */
 	  imMax = theBeam->myDesc->maxval;
@@ -794,17 +823,60 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
     ((ObitImageDesc*)outImage->myIO->myDesc)->minval =  1.0e20;
 
     /* Gridding setup */
-    gridClass->ObitUVGridSetup (outImage->myGrid, inUV, (Obit*)outImage, FALSE, err);
+    gridClass->ObitUVGridSetup ((ObitUVGrid*)outImage->myGrid, inUV, (Obit*)outImage, FALSE, err);
     if (err->error) Obit_traceback_msg (err, routine, outImage->name);
     
+    /* GPU Info */
+    if (doGPUGrid) {
+      myGrid = (ObitUVGrid*)outImage->myGrid;
+      myGrid->cuda_device = cuda_device;
+      myGrid->doGPUGrid = doGPUGrid;
+      ifacet = 0; nfacet=1;
+      /* Maybe not if (doBeam) {nfacet = 2; ifacet = 0;}*/
+      myGrid->gridInfo = ObitGPUGridCreate("GPUGrid", nfacet, outImage, inUV);
+      ObitGPUGridSetGPUStruct(myGrid->gridInfo, (Obit*)myGrid, ifacet, nfacet, nplane, 
+			      inUV, (Obit*)outImage, doBeam, err);
+      if (err->error) Obit_traceback_msg (err, routine, outImage->name);
+      myGrid->gridInfo->cudaInfo->gpu_memory = (size_t)gpumem;
+      myGrid->gridInfo->cuda_device = cuda_device;
+      myGrid->gridInfo->cudaInfo->cuda_device = cuda_device;
+    }
+
+  /* Reset UV buffer size to at least 2 MByte per thread - not if GPU gridding */
+  oldNPIO = 1024;  /* Save old value */
+  ObitInfoListGetTest (inUV->info, "nVisPIO", &type, dim,  (gpointer)&oldNPIO);
+  dim[0] = dim[1] = dim[2] = 1;
+  if (!doGPUGrid) {
+    /* How many threads? */
+    myGrid = (ObitUVGrid*)outImage->myGrid;
+    myGrid->nThreads = MAX (1, ObitThreadNumProc(outImage->thread));
+    NPIO = myGrid->nThreads * 
+      (olong) (0.5 + MAX (2.0, 2.0/(inUV->myDesc->lrec*4.0/(1024.0*1024.0))));
+    ObitInfoListAlwaysPut (inUV->info, "nVisPIO",  OBIT_long, dim,  (gpointer)&NPIO);
+   /* end not doGPUGrid */
+  } else {  /* GPUGrid */
+    NPIO = myGrid->gridInfo->cudaInfo->nVisPIO;
+    ObitInfoListAlwaysPut (inUV->info, "nVisPIO",  OBIT_long, dim,  (gpointer)&NPIO);
+  } /* end doGPUGrid */
+ 
+ /* close to force reset */
+  ObitUVClose (inUV, err);
+  /* Calibrating or selecting? */
+  ObitInfoListGetTest(inUV->info, "doCalSelect", &type, (gint32*)dim, &doCalSelect);
+  if (doCalSelect) access = OBIT_IO_ReadCal;
+  else access = OBIT_IO_ReadOnly;
+  ObitUVOpen (inUV, access, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+
+
     /* Grid Image */
-    gridClass->ObitUVGridReadUV (outImage->myGrid, inUV, err);
+    gridClass->ObitUVGridReadUV ((ObitUVGrid*)outImage->myGrid, inUV, err);
     if (err->error) Obit_traceback_msg (err, routine, outImage->name);
     
     /* Gridding correction - write */
     dim[0] = dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (outImage->info, "Channel",  OBIT_long, dim,  &ichannel);
-    gridClass->ObitUVGridFFT2Im(outImage->myGrid, (Obit*)outImage, err);
+    gridClass->ObitUVGridFFT2Im((ObitUVGrid*)outImage->myGrid, (Obit*)outImage, err);
     if (err->error) Obit_traceback_msg (err, routine, outImage->name);
 
     /* tell Max/Min */
@@ -823,7 +895,8 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
     
     /* Save last beam normalization in Beam infoList as "SUMWTS" */
     if (doBeam) {
-      sumwts = theBeam->myGrid->BeamNorm;
+      beamGrid = (ObitUVGrid*)(theBeam->myGrid);
+      sumwts = beamGrid->BeamNorm;
       dim[0] = 1;
       dim[1] = 0;
       ObitInfoListPut(theBeam->info, "SUMWTS", OBIT_float, dim, (gpointer)&sumwts, err);
@@ -844,9 +917,11 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
   outImage->image = ObitFArrayUnref(outImage->image);
   
   /* Free gridding members */
-  outImage->myGrid = ObitUVGridUnref(outImage->myGrid);
+  outImage->myGrid = (Obit*)ObitUVGridUnref(outImage->myGrid);
   theBeam = imgClass->ObitImageGetBeam(outImage, iorder, plane, err);
-  theBeam->myGrid  = ObitUVGridUnref(theBeam->myGrid);
+  theBeam->myGrid  =(Obit*) ObitUVGridUnref(theBeam->myGrid);
+  /* were the two the same? */
+  if (theBeam->myGrid==NULL) outImage->myGrid = NULL;
   
   /* Reset NPIO */
   dim[0] = dim[1] = dim[2] = 1;
@@ -901,6 +976,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
  *              by uniform/Tapering weighting.  Applied in determinng weights 
  *              as well as after.
  * \li "do3D"   OBIT_bool (1,1,1) 3D image, else 2D? [def TRUE]
+ * \li "doGPUGrid" OBIT_bool (1,1,1) use GPU for Gridding [def FALSE]
  * \param err      Error stack, returns if not empty.
  */
 void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage, 
@@ -911,9 +987,11 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   ObitImageDesc *IODesc;
   ofloat sumwts, imMax, imMin, BeamTaper=0.0, Beam[3]={0.0,0.0,0.0};
   gchar outName[120];
-  olong i, j, ip, pln, nImage, nGain=0, *gainUse=NULL, gain;
+  ollong gpumem=0;
+  olong cuda_device=0; /* default GPU number*/
+  olong i, j, ip, pln, ifacet, nfacet, nplane=1, nImage, nGain=0, *gainUse=NULL, gain;
   olong plane[5], NPIO, oldNPIO, *arrayNx=NULL, *arrayNy=NULL;
-  olong doCalib = 0, norder, iorder;
+  olong doCalib = 0, norder, iorder, bmInc=1;
   olong blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -921,9 +999,12 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   gboolean forceBeam, doCalSelect=FALSE;
   ObitIOAccess access;
   ObitUVGrid **grids=NULL;
+  ObitUVGrid *myGrid=NULL, *beamGrid=NULL;
   ObitImage **imArray=NULL;
   ObitUVGridClassInfo *gridClass;
   ObitImageClassInfo *imgClass;
+  gboolean doGPUGrid=FALSE;
+  union ObitInfoListEquiv InfoReal; 
   gchar *routine = "ObitImageUtilMakeImagePar";
 
   /* error checks */
@@ -936,6 +1017,16 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   
   imgClass  = (ObitImageClassInfo*)outImage[0]->ClassInfo;          /* Image class */
   
+   /* Use GPU? */
+  InfoReal.itg = (olong)doGPUGrid; type = OBIT_bool;
+  ObitInfoListGetTest(inUV->info, "doGPUGrid", &type, (gint32*)dim, &InfoReal);
+  doGPUGrid = InfoReal.itg;
+  if (doGPUGrid) {
+    gpumem = ObitGPUGridSetGPU (cuda_device); /* initialize */
+    Obit_log_error(err, OBIT_InfoErr, "Doing GPU Gridding");
+ }
+
+  /* Need new gridding member? */
   /* How many to do */
   norder = imgClass->ObitImageGetBeamOrder(outImage[0]); /* No. orders of beam */
   nImage = nPar;
@@ -994,16 +1085,21 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
     sprintf (outName, "UVGrid for %s ",outImage[j]->name);
     IODesc = (ObitImageDesc*)outImage[j]->myIO->myDesc;
     if (outImage[j]->myGrid == NULL) {
-      if (ObitImageWBIsA(outImage[j]))
-	outImage[j]->myGrid = (ObitUVGrid*)newObitUVGridWB(outName);
-      else if (ObitImageMFIsA(outImage[j]))
-	outImage[j]->myGrid = (ObitUVGrid*)newObitUVGridMF(outName);
-      /* Spectroscopic Image cube? - use MF Gridding */
-      else if (IODesc->inaxes[IODesc->jlocf]>1)
-	outImage[j]->myGrid = (ObitUVGrid*)newObitUVGridMF(outName);
-      else
-	outImage[j]->myGrid = newObitUVGrid(outName);
-    }
+      if (ObitImageWBIsA(outImage[j])) {
+	outImage[j]->myGrid = (Obit*)newObitUVGridWB(outName);
+	nplane = 1;  /* Note GPU gridding doesn't work for this */
+      } else if (ObitImageMFIsA(outImage[j])) {
+	outImage[j]->myGrid = (Obit*)newObitUVGridMF(outName);
+	nplane = ((ObitImageMF*)outImage[j])->nSpec;
+     /* Spectroscopic Image cube? - use MF Gridding */
+      } else if (IODesc->inaxes[IODesc->jlocf]>1) {
+	outImage[j]->myGrid = (Obit*)newObitUVGridMF(outName);
+	nplane = 1;  /* Note GPU gridding may not work for this */
+      }  else {
+	outImage[j]->myGrid = (Obit*)newObitUVGrid(outName);
+	nplane = 1;
+      }
+    } /* end new grids */
     
     /* Get Beam member from outImage[j] */
     theBeam  = (ObitImage*)outImage[j]->myBeam;
@@ -1012,6 +1108,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
       !ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, (gpointer)&sumwts);
     /* Arrays -  Need set for the Beam? */
     if (doBeam || forceBeam) {
+      bmInc = 2;  /* increment in grids array */
       /* Ensure beam image OK */
       theBeam->image = ObitImageUnref(theBeam->image);  /* No buffer needed here */
       ObitImageOpen (theBeam, OBIT_IO_WriteOnly, err);
@@ -1061,9 +1158,9 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
 	}
 	ip++;
 	if (err->error) goto cleanup;
-      } /* end loop over beams */
-    }
-    
+      } /* end loop over beams (iorder) */
+    } /* end if doBeam */
+  
     /* Check that ip in bounds */
     Obit_return_if_fail((ip<nImage), err, "%s: Blew internal array %d >= %d", 
 			routine, ip, nImage) ;
@@ -1088,18 +1185,49 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
     }
     ip++;
     if (err->error) goto cleanup;
+
+    /* GPU Info on first grid */
+    if (doGPUGrid) {
+      myGrid = grids[0];  /* All CUDA info on grids[0]->gridInfo->cudaInfo */
+      ifacet = j; nfacet = nPar;
+      if (doBeam) {nfacet *= 2; ifacet *=2;}
+      if ((j==0) || (myGrid->gridInfo==NULL)) {  /* Init first facet */
+	myGrid->gridInfo = ObitGPUGridCreate("GPUGrid", nfacet, outImage[0], inUV);
+	myGrid->doGPUGrid = doGPUGrid; myGrid->cuda_device = cuda_device;
+      }
+      /* Also beam? Beam preceeds image */
+      if (doBeam) {
+	theBeam = (ObitImage*)outImage[j]->myBeam; 
+	theBeam->myGrid = ObitUVGridRef(outImage[j]->myGrid);  /* Link grid info */
+	beamGrid = (ObitUVGrid*)theBeam->myGrid;
+	beamGrid->gridInfo = ObitGPUGridCreate("GPUGrid", nfacet, theBeam, inUV);
+	beamGrid->doGPUGrid = doGPUGrid; beamGrid->cuda_device = cuda_device;
+	ObitGPUGridSetGPUStruct (myGrid->gridInfo, (Obit*)grids[j*bmInc],
+				 ifacet, nfacet, nplane, inUV, (Obit*)theBeam, TRUE, err);
+	if (err->error) Obit_traceback_msg (err, routine, outImage[j]->name);
+	theBeam->myGrid = ObitUVGridUnref(theBeam->myGrid);
+	ifacet++;
+      }
+      /* Image */
+      ObitGPUGridSetGPUStruct(myGrid->gridInfo, (Obit*)grids[j*bmInc], ifacet, nfacet, 
+			      nplane, inUV, (Obit*)outImage[j], FALSE, err);
+      if (err->error) Obit_traceback_msg (err, routine, outImage[j]->name);
+      myGrid->gridInfo->cudaInfo->cuda_device = cuda_device;
+      myGrid->gridInfo->cudaInfo->gpu_memory = (size_t)gpumem;
+    } /* end doGPUGrid */
     
   } /* end loop over images */
   
   /* get any previous normalization  */
   for (j=0; j<nPar; j++) {
     sumwts = 0.0;
-    if (!outImage[j]->myGrid->doBeam) {
+    myGrid = (ObitUVGrid*)outImage[j]->myGrid;
+    if (doBeam) {
       theBeam = (ObitImage*)outImage[j]->myBeam;
       if ((theBeam!=NULL) &&
 	  ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, &sumwts)) {
 	/* Save beam normalization in Beam */
-	outImage[j]->myGrid->BeamNorm = sumwts;
+	myGrid->BeamNorm = sumwts;
       }
     } else { /* Reset max/min values */
       /* Open to update header with default max, min */
@@ -1136,13 +1264,18 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   else access = OBIT_IO_ReadOnly;
   
   /* Reset UV buffer size to at least 2 MByte per thread */
-  oldNPIO  = 1000;
+  oldNPIO  = 1024;  /* Save old value */
   ObitInfoListGetTest (inUV->info, "nVisPIO", &type, dim,  (gpointer)&oldNPIO);
-  /* How many threads? */
-  grids[0]->nThreads = MAX (1, ObitThreadNumProc(grids[0]->thread));
-  NPIO = ObitImageUtilBufSize(inUV);
   dim[0] = dim[1] = dim[2] = 1;
-  ObitInfoListAlwaysPut (inUV->info, "nVisPIO",  OBIT_long, dim,  (gpointer)&NPIO);
+  if (!doGPUGrid) {
+    /* How many threads? */
+    grids[0]->nThreads = MAX (1, ObitThreadNumProc(grids[0]->thread));
+    NPIO = ObitImageUtilBufSize(inUV);
+    ObitInfoListAlwaysPut (inUV->info, "nVisPIO",  OBIT_long, dim,  (gpointer)&NPIO);
+  } else {  /* GPUGrid */
+    NPIO = grids[0]->gridInfo->cudaInfo->nVisPIO;
+    ObitInfoListAlwaysPut (inUV->info, "nVisPIO",  OBIT_long, dim,  (gpointer)&NPIO);
+  } /* end doGPUGrid */
   
   /*  Open uv data for first if needed */
   if ((inUV->myStatus!=OBIT_Active) && (inUV->myStatus!=OBIT_Modified)) {
@@ -1226,7 +1359,8 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
 	  }
 	  
 	  /* Save last beam normalization in Beam infoList as "SUMWTS" */
-	  sumwts = outImage[j]->myGrid->BeamNorm;
+	  myGrid = (ObitUVGrid*)outImage[j]->myGrid;
+	  sumwts = myGrid->BeamNorm;
 	  dim[0] = 1; dim[1] = 1;
 	  ObitInfoListAlwaysPut(theBeam->info, "SUMWTS", OBIT_float, dim, (gpointer)&sumwts);
 	} /* End dirty beam stuff */
@@ -1274,6 +1408,10 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
     /* Cleanup */
  cleanup:
   
+  /* Reset NPIO */
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (inUV->info, "nVisPIO",  OBIT_long, dim,  (gpointer)&oldNPIO);
+
   /* Free gridding objects */
   if (grids) {
     for (j=0; j<nImage; j++) {
