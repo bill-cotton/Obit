@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2021                                          */
+/*;  Copyright (C) 2004-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1273,7 +1273,7 @@ void ObitImageMosaicDefine (ObitImageMosaic *in, ObitUV *uvData, gboolean doBeam
   /* Set doGrid=isAuto<=0 - only meaningful if do3D=FALSE */
   barr = ObitMemAllocName(in->numberImages*sizeof(gboolean), routine);
   for (i=0; i<in->numberImages; i++) barr[i] = in->isAuto[i]<=0;
-  ObitInfoListAlwaysPut (uvData->info, "doGrid", OBIT_float, dim, barr);
+  ObitInfoListAlwaysPut (uvData->info, "doGrid", OBIT_bool, dim, barr);
   ObitMemFree(barr);
  
   /* Make sure UV data descriptor has proper info */

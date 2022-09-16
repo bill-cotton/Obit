@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Read BDF format data, convert to Obit UV                           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2020                                          */
+/*;  Copyright (C) 2010-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -213,6 +213,7 @@ gboolean newOutput=TRUE;              /* Did output previous exist? */
 gboolean fliped=FALSE;                /* Flip frequency axis for EVLA patch */
 ofloat dayOff = 0.0;                  /* Offset from previous reference date */
 odouble lastOffset[50][2];            /* Last pointing offset per EVLA antenna */
+olong   nextPnt=0;                    /* Next entry to check in ASDMPointingTable */
 
 /* NX table structure, times only */
 olong noNXTimes=0;        /* Number of entries in NXTimes */
@@ -2885,6 +2886,7 @@ void HoloUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
 /*      Buffer   Input uv data row, u,v,w will be modified                */
 /*   Global:                                                              */
 /*      lastOffset  Array of last offsets per antenna for the EVLA        */
+/*      nextPnt     Next entry to check in ASDMPointingTable              */
 /*   Output:                                                              */
 /*       err     Obit return error stack                                  */
 /*----------------------------------------------------------------------- */
@@ -2927,8 +2929,8 @@ void HoloUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
   JD   = refJD + time;
 
   /* Lookup antenna pointings - use last or 0 if not found */
-  pointA1 = ObitSDMDataPointingLookup(BDFData->SDMData, JD, ant1Id, err);
-  pointA2 = ObitSDMDataPointingLookup(BDFData->SDMData, JD, ant2Id, err);
+  pointA1 = ObitSDMDataPointingLookup(BDFData->SDMData, JD, ant1Id, &nextPnt, err);
+  pointA2 = ObitSDMDataPointingLookup(BDFData->SDMData, JD, ant2Id, &nextPnt, err);
   if (pointA1) {off1 = pointA1->offset; 
                 lastOffset[ant1Id][0] = off1[0];lastOffset[ant1Id][1] = off1[1];}
   else          off1 = lastOffset[ant1Id];

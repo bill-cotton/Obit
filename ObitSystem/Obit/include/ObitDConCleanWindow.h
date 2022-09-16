@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -97,6 +97,17 @@ enum ObitDConCleanWindowType {
  * typedef for enum for window types
  */
 typedef enum ObitDConCleanWindowType ObitDConCleanWindowType;
+
+/*-------------- Public Class definitions-------------------------*/
+/**  WindowListElem structure */
+typedef struct {
+  /** Id */
+  olong Id;
+  /** Window type */
+  ObitDConCleanWindowType type;
+  /** window definition */
+  olong window[4];
+} WindowListElem;
 
 /*----------------- Macroes ---------------------------*/
 /** 

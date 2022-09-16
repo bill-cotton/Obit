@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN/selfcalibrate a uv data set               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2021                                          */
+/*;  Copyright (C) 2005-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1542,8 +1542,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "WtPower",
     "MaxBaseline", "MinBaseline", "rotate", "Beam", "minFlux",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
-    "nxBeam", "nyBeam", "Alpha", "doCalSelect",
-    "numBeamTapes", "BeamTapes", "MResKnob", "doGPU",
+    "nxBeam", "nyBeam", "Alpha", "doCalSelect", "maxPixel", "ccfLim",
+    "numBeamTapes", "BeamTapes", "MResKnob", "doGPU", "doGPUGrid",
     NULL
   };
   gchar        *saveParms[] = {  /* Imaging, weighting parameters to save*/
@@ -1558,7 +1558,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   gchar        *CLEANParms[] = {  /* Clean parameters */
     "CLEANBox", "CLEANFile", "autoWindow", "Gain", "minFlux", "Niter", "minPatch", 
     "Beam", "Mode", "CCFilter", "maxPixel", "dispURL", "ccfLim", "SDIGain", "prtLv",
-    "MResKnob",
+    "MResKnob", "maxAWLoop",
     NULL
   };
   olong MemCount, MemTotal; /* DEBUG */
@@ -1614,7 +1614,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     nParTh = MIN (nThread, nTest);
   }
 
-  doLine = doLine && (nParTh>1);  /* "Line" mode? */
+  doLine = doLine && (nParTh>1); /* "Line" mode? */
   dim[0] = dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut(myInput, "doLine", OBIT_bool, dim, &doLine);
 
@@ -2502,7 +2502,7 @@ void ImagerHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "OutlierDist",  "OutlierFlux", "OutlierSI",
     "FOV", "xCells", "yCells", "nx", "ny", "RAShift", "DecShift", "doRestore",
     "OutlierSize",  "CLEANBox", "CLEANFile", "Gain", "minFlux",  "Niter", "minPatch",
-    "ccfLim", "SDIGain", "BLFact", "BLFOV", "BLchAvg",
+    "ccfLim", "SDIGain", "BLFact", "BLFOV", "BLchAvg","maxAWLoop", 
     "Reuse", "autoCen", "Beam", "Cmethod", "CCFilter", "maxPixel", 
     "maxPSCLoop", "minFluxPSC", "solPInt", "solPType", "solPMode", 
     "maxASCLoop", "minFluxASC", "solAInt", "solAType", "solAMode", 
@@ -2512,7 +2512,7 @@ void ImagerHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "PeelSolInt", "PeelType", "PeelMode", "PeelNiter",
     "PeelMinFlux", "PeelAvgPol", "PeelAvgIF",
     "nTaper", "Tapers", "MResKnob",
-    "nThreads", "doGPU",
+    "nThreads", "doGPU","doGPUGrid",
     NULL};
   gchar *routine = "ImagerHistory";
 

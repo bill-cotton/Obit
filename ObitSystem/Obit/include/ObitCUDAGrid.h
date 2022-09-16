@@ -39,7 +39,6 @@
  */
 
 /*---------------Public functions---------------------------*/
-#if HAVE_GPU==1  /* GPU? Real versions */
 /* cuda version */
 #if IS_CUDA==1
 /* Public: Allocate Structures */
@@ -66,7 +65,9 @@ void ObitCUDAGrid2CPU (CUDAGridInfo *in, long ifacet);
 /* Public: Shutdown gridding */
 extern "C"
 void ObitCUDAGridShutdown (CUDAGridInfo *gpuinfo);
+
 #else /* non cuda */
+
 /* Public: Allocate Structures */
 void ObitCUDAGridAlloc (CUDAGridInfo *gpuInfo, long nfacet, long nchan, long nif, 
 			long nVisPIO, long lenvis, long nplane);
@@ -85,42 +86,6 @@ void ObitCUDAGrid2CPU (CUDAGridInfo *in, long ifacet);
 
 /* Public: Shutdown gridding */
 void ObitCUDAGridShutdown (CUDAGridInfo *gpuinfo);
-#endif
 
-#else  /* No GPU - stub */
-/* Public: Initialize gridding */
-/*extern "C"*/
-void ObitCUDAGridInit (CUDAGridInfo *gpuInfo, long nfacet, long nchan, long nVisPIO)
-{
-  g_error("GPU/CUDA not implemented");
-} /* end ObitCUDAGridInit */
-
-/* Public: Grid a bufferload of visibilities */
-/*extern "C"*/
-void ObitCUDAGridGrid (CUDAGridInfo *in, ObitErr *err)
-{
-  g_error("GPU/CUDA not implemented");
-} /* end ObitCUDAGridInit */
-
-/* Public: Fold negative u to positive */
-/*extern "C"*/
-void ObitCUDAGridFlip (CUDAGridInfo *in, ObitErr *err)
-{
-  g_error("GPU/CUDA not implemented");
-} /* end ObitCUDAGridFlip */
-
-/* Public: Copy vis grid to FFT buffer via locked memory */
-/*extern "C"*/
-void ObitCUDAGrid2CPU (CUDAGridInfo *in, olong ispec, ObitErr *err)
-{
-  g_error("GPU/CUDA not implemented");
-} /* end ObitCUDAGrid2CPU */
-
-/* Public: Shutdown GPU gridding */
-/*extern "C"*/
-void ObitCUDAGridShutdown (CUDAGridInfo *gpuinfo)
-{
-  g_error("GPU/CUDA not implemented");
-} /* end ObitCUDAGridDFTShutdown */
-#endif /* HAVE_GPU */
+#endif /* IS_CUDA */
 #endif /* OBITCUDAGRID_H */ 

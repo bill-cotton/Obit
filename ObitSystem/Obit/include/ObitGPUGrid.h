@@ -31,7 +31,8 @@
 #include "Obit.h"
 #include "ObitErr.h"
 #include "ObitUV.h"
-#include "ObitImage.h"
+/*#include "ObitImage.h"*/
+#include "ObitData.h"
 #include "ObitCUDAGrid.h"
 #include "ObitCUDAGridInfoDef.h"
 
@@ -85,6 +86,11 @@ typedef struct {
  */
 #define ObitGPUGridIsA(in) ObitIsA (in, ObitGPUGridGetClass())
 
+/**
+ * Maximum number of vis per read for GPU based Gridding
+ */
+#define GPU_NVISPIO 8192
+
 /*---------------------------------- Structures ----------------------------*/
 /*---------------Public functions---------------------------*/
 /** Public: Class initializer. */
@@ -94,10 +100,10 @@ void ObitGPUGridClassInit (void);
 ObitGPUGrid* newObitGPUGrid (gchar* name);
 
 /** Public: Create/initialize CUDA GPUGrid structures */
-ObitGPUGrid* ObitGPUGridCreate (gchar* name, olong nfacet, ObitImage *image, ObitUV *UVin);
+ObitGPUGrid* ObitGPUGridCreate (gchar* name, olong nfacet, Obit *image, ObitUV *UVin);
 /** Typedef for definition of class pointer structure */
 typedef ObitGPUGrid* (*ObitGPUGridCreateFP) (gchar* name, 
-					     olong nfacet, ObitImage *image, ObitUV *UVin);
+					     olong nfacet, Obit *image, ObitUV *UVin);
 
 /** Public: ClassInfo pointer */
 gconstpointer ObitGPUGridGetClass (void);
@@ -117,11 +123,11 @@ typedef void (*ObitGPUGridInitGPUFP) (ObitGPUGrid *in,
 				      ObitUV *uvdata, ObitErr *err);
 
 /** Public: copy griding parameters to GPU(CUDA) structues */
-void ObitGPUGridSetGPUStruct (ObitGPUGrid *in, Obit *uvgrid,
+void ObitGPUGridSetGPUStruct (ObitGPUGrid *in, Obit *uvgrid, gboolean *chDone,
 			      olong ifacet, olong nfacet, olong nplane, ObitUV *UVin, 
 			      Obit *imagee, gboolean doBeam, ObitErr *err);
 /** Typedef for definition of class pointer structure */
-typedef void (*ObitGPUGridSetGPUStructFP) (ObitGPUGrid *in, Obit *uvgrid,
+typedef void (*ObitGPUGridSetGPUStructFP) (ObitGPUGrid *in, Obit *uvgrid, gboolean *chDone,
 					   olong ifacet, olong nfacet, olong nplane,
 					   ObitUV *UVin, Obit *imagee,
 					   gboolean doBeam, ObitErr *err);

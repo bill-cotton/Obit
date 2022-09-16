@@ -698,10 +698,14 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
     }
     
     /* Save Beam patch */
-    if ((in->BeamPatch[field-1]!=BeamPatch[field-1])  && (in->BeamPatch[field-1]==NULL)) {
+    if (((in->BeamPatch[field-1]!=BeamPatch[field-1])||(BeamPatch[field-1]==NULL)) 
+	&& (in->BeamPatch[field-1]==NULL)) {
       /*in->BeamPatch[field-1] = ObitFArrayUnref(in->BeamPatch[field-1]);*/
       in->BeamPatch[field-1] = ObitFArrayRef(BeamPatch[field-1]);
     }
+
+    /* Have BP? */
+    if (in->BeamPatch[field-1]==NULL) goto endloop; /* Bail on this one */
 
     /* Which image? */
     image = in->mosaic->images[field-1];
@@ -795,7 +799,7 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
     /* Loop over image saving selected values */
     nx = image->myDesc->inaxes[0];
     ny = image->myDesc->inaxes[1];
-    /* subtract closest interger to reference pixel */
+    /* subtract closest integer to reference pixel */
     if (image->myDesc->crpix[0]>0.0)  
       xoff = (olong)(image->myDesc->crpix[0]+0.5);
     else xoff = (olong)(image->myDesc->crpix[0]-0.5);
@@ -852,6 +856,7 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
     /* Cleanup - next field may have different size */
     if ((mask) && (ObitMemValid (mask))) mask = ObitMemFree (mask);
 
+  endloop:
     ifld++;   
     field = fields[ifld];
   } /* end loop over fields */

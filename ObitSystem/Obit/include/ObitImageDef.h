@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2021                                          */
+/*;  Copyright (C) 2003-20212                                         */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -41,8 +41,8 @@ ObitImageDesc* myDesc;
 ObitImageSel* mySel;
 /** Pointer to associated Beam (as parent type) */
 Obit *myBeam;
-/** Gridding object for making image and beam */
-ObitUVGrid *myGrid;
+/** Gridding object (ObitUVGrid) for making image and beam */
+Obit *myGrid;
 /** If TRUE, image has been formed but work 
-    files/Decomposition not done */
+    files/Deconvolution not done */
 gboolean fresh;

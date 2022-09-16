@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2010                                          */
+/*;  Copyright (C) 2004-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -45,6 +45,8 @@ ObitDConCleanFlattenFP ObitDConCleanFlatten;
 ObitDConCleanXRestoreFP ObitDConCleanXRestore;
 /** Pointer to Automatically add window. */
 ObitDConCleanAutoWindowFP ObitDConCleanAutoWindow;
+/** Pointer to Reset channel done.  */
+ObitDConCleanResetChDoneFP ObitDConCleanResetChDone;
 /* Private functions */
-/** Pointer to Read beamp atches */
+/** Pointer to Read beam patches */
 ReadBPFP ReadBP;

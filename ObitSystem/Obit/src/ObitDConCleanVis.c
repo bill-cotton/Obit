@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2021                                          */
+/*;  Copyright (C) 2005-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -727,7 +727,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
     /* Display/edit windows if enabled */
     if (in->display) {
       quit = ObitDisplayShow (in->display, (Obit*)in->mosaic, in->window, 
-			      in->currentFields[0], err);
+			      MAX(1,in->currentFields[0]), err);
       if (err->error) Obit_traceback_msg (err, routine, in->name);
       if (quit) {done=TRUE; break;}
     }
@@ -773,7 +773,8 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
 
       /* Number of components before CLEAN */
       for (ifld=0; ifld<in->numCurrentField; ifld++) {
-	newCC[ifld] = in->Pixels->iterField[in->currentFields[ifld]-1]; 
+	if (in->currentFields[ifld]>0)
+	  newCC[ifld] = in->Pixels->iterField[in->currentFields[ifld]-1]; 
       }
 
       /* Pick components for this major cycle */
@@ -885,6 +886,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
 
   /* Make final residuals */
   if ((!bail) && (in->niter>0)) {
+    inClass->ObitDConCleanResetChDone((ObitDConClean*)in, err);  /* Any resets needed */
     /* Make all stale fields */
     for (ifld=0; ifld<in->nfield; ifld++) in->currentFields[ifld] = ifld+1;
     in->currentFields[ifld] = 0;
@@ -1253,7 +1255,7 @@ static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
 {
   olong i, j, best=-1, lastBest=-1, loopCheck, indx, NumPar;
   olong *fldList=NULL,*fldList2=NULL;
-  gboolean doBeam=FALSE, done=TRUE, found, OK;
+  gboolean doBeam=FALSE, done=TRUE, found, OK, doGridGPU=FALSE;
   ofloat sumwts, autoCenFlux=0.0;
   ObitImage *theBeam=NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -1268,6 +1270,9 @@ static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
   g_assert (ObitDConCleanVisIsA(in));
 
   inClass = (ObitDConCleanVisClassInfo*)in->ClassInfo; /* clean class structure */
+
+  /* GPU Gridding? */
+  if (ObitInfoListGetTest(in->imager->uvwork->info, "doGPUGrid", &type, dim, &doGridGPU)) 
 
   /* Check if reached max number of components and some done */
   if ((in->Pixels->currentIter >= in->Pixels->niter) && 
@@ -1373,8 +1378,12 @@ static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err)
   in->doBeam = FALSE;
   
   /* How many images in parallel? */
-  imagerClass = (ObitUVImagerClassInfo*)in->imager->ClassInfo;
-  NumPar = imagerClass->ObitUVImagerGetNumPar (in->imager, in->doBeam, err);
+  if (doGridGPU) 
+    NumPar = ObitUVGridGetNumPar(in->imager->uvwork, (Obit*)in->mosaic, doBeam, err);  /* GPU */
+  else {
+    imagerClass = (ObitUVImagerClassInfo*)in->imager->ClassInfo;
+    NumPar = imagerClass->ObitUVImagerGetNumPar (in->imager, in->doBeam, err);  /* CPU */
+  }
   NumPar = MIN (NumPar, in->nfield);  /* No more than what's there */
   
   /* Loop remaking blocks of images until something suitable to CLEAN */
@@ -4349,12 +4358,12 @@ static ObitFArray* GetFieldPixArray (ObitDConCleanVis *in, olong field,
  * "Cleanable" means inside the outer window and not in an unbox.
  * \param in    The object to deconvolve
  * \param field Field number (1-rel) to test
- * \param pixarray If nonNUILL, use these pixels rather than reading
+ * \param pixarray If nonNULL, use these pixels rather than reading
  * \param err   Obit error stack object.
  * \return Maximum abs pixel value inside outer window but outside unboxes.
  */
 ofloat ObitDConCleanVisCleanable(ObitDConCleanVis *in, olong field, 
-					ObitFArray *pixarray, ObitErr *err)
+				 ObitFArray *pixarray, ObitErr *err)
 {
   ofloat out = -1.0;
   ObitImage *image=NULL;

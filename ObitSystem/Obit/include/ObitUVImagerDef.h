@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005                                               */
+/*;  Copyright (C) 2005,2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -31,6 +31,8 @@
  * ObitUVImager structure members for this and any derived classes.
  */
 #include "ObitDef.h"  /* Parent class definitions */
+/** Linked list of arrays of data.  */
+ObitInfoList *info;
 /** Input UV data      */
 ObitUV *uvdata;
 /** selected/calibrated/edited/Weighted UV data to be imaged       */

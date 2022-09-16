@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2019                                          */
+/*;  Copyright (C) 2010-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -402,7 +402,7 @@ gboolean ObitSDMDataSelCode  (ObitSDMData *in, olong iMain, gchar *selCode);
 
 /** Find a pointingTab row for an antenna/time */
 ASDMPointingRow* ObitSDMDataPointingLookup(ObitSDMData *in, odouble JD, olong ant, 
-					   ObitErr *err);
+					   olong *next, ObitErr *err);
 
 /** Public: Convert ALMA WVR data to SN table  */
 ObitTableSN* ObitSDMDataWVR2SN (ObitUV *inUV, ObitSDMData *SDM,

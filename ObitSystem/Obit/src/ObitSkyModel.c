@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2017                                          */
+/*;  Copyright (C) 2004-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1480,7 +1480,6 @@ void ObitSkyModelFT (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr *err
 gboolean ObitSkyModelLoadPoint (ObitSkyModel *in, ObitUV *uvdata, ObitErr *err)
 {
   gboolean gotSome = FALSE;
-  ObitIOCode retCode = OBIT_IO_SpecErr;
   olong i, cnt, ndim, naxis[2];
   ofloat *table, const2, ccrot, ssrot, cpa, spa, uvrot, xmaj, xmin, a;
   ofloat dxyzc[3], xxoff, yyoff, zzoff;
@@ -1488,7 +1487,6 @@ gboolean ObitSkyModelLoadPoint (ObitSkyModel *in, ObitUV *uvdata, ObitErr *err)
   
   /* error checks */
   if (err->error) return gotSome;
-  retCode = OBIT_IO_OK;
 
   gotSome = (in->pointFlux * in->factor!=0.0);  /* Non zero model? */
   if (!gotSome) return gotSome;
@@ -2314,9 +2312,9 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
   olong jincf, startIF, numberIF, jincif, kincf, kincif;
   olong offset, offsetChannel, offsetIF;
   olong ilocu, ilocv, ilocw;
-  ofloat *visData, *ccData, *data, *fscale, specFact;
+  ofloat *visData, *ccData, *data, *fscale, specFact=1.0;
   ofloat modReal, modImag;
-  ofloat amp, arg, freq2, freqFact, wt=0.0, temp, ll, lll, fourpisq;
+  ofloat amp, arg, freqFact, wt=0.0, temp, ll, lll, fourpisq;
 #define FazArrSize 100  /* Size of the amp/phase/sine/cosine arrays */
   ofloat AmpArr[FazArrSize], FazArr[FazArrSize], CosArr[FazArrSize], SinArr[FazArrSize];
   ofloat ExpArg[FazArrSize],  ExpVal[FazArrSize], ExpArg2[FazArrSize], ExpVal2[FazArrSize];
@@ -2417,7 +2415,6 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	}
 	if (!OK && !in->doReplace) continue;
 	freqFact = fscale[iIF*kincif + iChannel*kincf];  /* Frequency scaling factor */
-	freq2    = freqFact*freqFact;    /* Frequency factor squared */
 	specFreqFact   = freqArr[iIF*kincif + iChannel*kincf] * SMRefFreq;
 	lnspecFreqFact = log(specFreqFact);
 	/* u,v,w at frequency */
@@ -2534,7 +2531,6 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	  } /*end outer loop over components */
 	  break;
 	case OBIT_SkyModel_GaussModSpec:     /* Gaussian on sky + spectrum*/
-	  freq2 = freqFact*freqFact;    /* Frequency factor squared */
 	  for (it=0; it<mcomp; it+=FazArrSize) {
 	    itcnt = 0;
 	    lim = MIN (mcomp, it+FazArrSize);
@@ -2657,6 +2653,7 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	    for (iComp=it; iComp<lim; iComp++) {
 	      if (ccData[0]!=0.0) {  /* valid? */
 		arg = fourpisq*(u*u + v*v);
+		specFact = exp(arg);
 		/* Resolved? */
 		if (arg>0.001*ccData[4]) 
 		       amp = specFact * ccData[0] * ccData[5] * powf(arg+ccData[4], -1.5);
@@ -2933,8 +2930,7 @@ gpointer ThreadSkyModelFTGrid (gpointer args)
   ofloat freqFact, wt=0.0, temp;
   ofloat dxyzc[3],  uvw[3], ut, vt, rt, it, fblank = ObitMagicF();
   ofloat umat[3][3], pmat[3][3], rmat[3][3], dmat[3][3];
-  ofloat PC, cosPC, sinPC, konst, maprot, uvrot, ssrot, ccrot;
-  odouble *freqArr;
+  ofloat PC, cosPC, sinPC, maprot, uvrot, ssrot, ccrot;
   gboolean doRot, doConjg, isBad, do3Dmul, doPC;
   gchar *routine = "ThreadSkyModelFTGrid";
 
@@ -2975,7 +2971,6 @@ gpointer ThreadSkyModelFTGrid (gpointer args)
   
   /* Get pointer for frequency correction tables */
   fscale  = uvDesc->fscale;
-  freqArr = uvDesc->freqArr;
 
   /* Field specific stuff */
   imDesc = in->mosaic->images[field]->myDesc; /* Image descriptor */
@@ -2984,7 +2979,6 @@ gpointer ThreadSkyModelFTGrid (gpointer args)
   uvrot  = ObitUVDescRotate(uvDesc);
   ssrot = sin (DG2RAD * (uvrot - maprot));
   ccrot = cos (DG2RAD * (uvrot - maprot));
-  konst = DG2RAD * 2.0 * G_PI;
 
   /* Which way does RA go with pixel? */
   if (imDesc->cdelt[imDesc->jlocr]>0.0) flip = -1;
@@ -3381,9 +3375,9 @@ void ObitSkyModelGetInput (ObitSkyModel* in, ObitErr *err)
   else in->numberIF = 0;
 
   /* Stokes */
-  for (i=0; i<4; i++) tempStr[i] = ' '; tempStr[4] = 0;
+  for (i=0; i<4; i++) {tempStr[i] = ' ';} tempStr[4] = 0;
   ObitInfoListGetTest(in->info, "Stokes", &type, (gint32*)dim, &tempStr);
-  for (i=0; i<4; i++) in->stokes[i] = tempStr[i]; in->stokes[4] = 0;
+  for (i=0; i<4; i++) {in->stokes[i] = tempStr[i];} in->stokes[4] = 0;
 
   /* 3D wanted? */
   InfoReal.itg = (olong)in->do3D; type = OBIT_bool;
@@ -4459,17 +4453,17 @@ void  ObitSkyModelAddField (ObitSkyModel* in, ObitErr *err)
 
   /* Resize/copy arrays */
   itemp = ObitMemAlloc0Name (sizeof(olong)*newField, "SkyModel CCver");
-  for (i=0; i<oldField; i++) itemp[i] = in->CCver[i]; itemp[i] = itemp[0]; 
+  for (i=0; i<oldField; i++) {itemp[i] = in->CCver[i];} itemp[i] = itemp[0]; 
   in->CCver = ObitMemFree(in->CCver);
   in->CCver = itemp;
 
   itemp = ObitMemAlloc0Name (sizeof(olong)*newField, "SkyModel startComp");
-  for (i=0; i<oldField; i++) itemp[i] = in->startComp[i]; itemp[i] = 1; 
+  for (i=0; i<oldField; i++) {itemp[i] = in->startComp[i];} itemp[i] = 1; 
   in->startComp = ObitMemFree(in->startComp);
   in->startComp = itemp;
 
   itemp = ObitMemAlloc0Name (sizeof(olong)*newField, "SkyModel endComp");
-  for (i=0; i<oldField; i++) itemp[i] = in->endComp[i]; itemp[i] = 0; 
+  for (i=0; i<oldField; i++) {itemp[i] = in->endComp[i];} itemp[i] = 0; 
   in->endComp = ObitMemFree(in->endComp);
   in->endComp = itemp;
 

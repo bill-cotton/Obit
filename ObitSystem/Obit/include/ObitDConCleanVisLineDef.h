@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2013                                               */
+/*;  Copyright (C) 2013,2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -40,3 +40,5 @@ gpointer* chArgs;
 /** Secret pointer to top level Clean object in channel specific versions 
     NEVER Ref or esp. Unref */
 Obit *motherShip;
+/** List of channel "done" flags, [nArgs] */
+gboolean *chDone;

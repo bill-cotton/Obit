@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2013,2014                                          */
+/*;  Copyright (C) 2013,2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -26,11 +26,11 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
-#include "ObitImageMosaic.h"
-#include "ObitImageUtil.h"
 #include "ObitDConClean.h"
 #include "ObitDConCleanVis.h"
 #include "ObitDConCleanVisLine.h"
+#include "ObitImageMosaic.h"
+#include "ObitImageUtil.h"
 #include "ObitMem.h"
 #include "ObitFFT.h"
 #include "ObitTableUtil.h"
@@ -96,55 +96,58 @@ void  ObitDConCleanVisLineInit  (gpointer in);
 void  ObitDConCleanVisLineClear (gpointer in);
 
 /** Private: (re)make residuals. */
-static void  MakeResiduals (ObitDConCleanVis *in, olong *fields, 
-			    gboolean doBeam, ObitErr *err);
+static void  MakeResidualsLine (ObitDConCleanVis *in, olong *fields, 
+				gboolean doBeam, ObitErr *err);
 
 /** Private: (re)make all residuals. */
-static void  MakeAllResiduals (ObitDConCleanVis *in, ObitErr *err);
+static void  MakeAllResidualsLine (ObitDConCleanVis *in, ObitErr *err);
 
 /** Private: reset sky model. */
-static gboolean ResetSkyModel (ObitDConCleanVis *in, ObitErr *err);
+static gboolean ResetSkyModelLine (ObitDConCleanVis *in, ObitErr *err);
 
 /** Private: reset Pixel List. */
-static void ResetPixelList (ObitDConCleanVis *in, ObitErr *err);
+static void ResetPixelListLine (ObitDConCleanVis *in, ObitErr *err);
 
 /* Select components to be subtracted*/
 gboolean ObitDConCleanVisLineSelect(ObitDConClean *inn, ObitFArray **pixarray, 
 				    ObitErr *err);
 
 /** Private: Low accuracy subtract CLEAN model. */
-static void SubNewCCs (ObitDConCleanVis *in, olong *newCC, 
-		       ObitFArray **pixarray, ObitErr *err);
+static void SubNewCCsLine (ObitDConCleanVis *in, olong *newCC, 
+			   ObitFArray **pixarray, ObitErr *err);
 
 /** Private: Make Threaded channel args */
-static olong MakeChanFuncArgs (ObitDConCleanVisLine *in, ObitThread *thread,
-			       ObitErr *err, ChanFuncArg ***ThreadArgs);
+static olong MakeChanFuncArgsLine (ObitDConCleanVisLine *in, ObitThread *thread,
+				   ObitErr *err, ChanFuncArg ***ThreadArgs);
 
 /** Private: Delete Threaded Channel args */
-static void KillChanFuncArgs (olong nargs, ChanFuncArg **ThreadArgs);
-
-/** Private: Low accuracy subtract CLEAN model. */
-static void SubNewCCs (ObitDConCleanVis *in, olong *newCC, 
-		       ObitFArray **pixarray, ObitErr *err);
+static void KillChanFuncArgsLine (olong nargs, ChanFuncArg **ThreadArgs);
 
 /** Private: Create/init PxList. */
-static void NewPxList (ObitDConCleanVis *in, ObitErr *err);
+static void NewPxListLine (ObitDConCleanVis *in, ObitErr *err);
 
 /** Private: Create/init Pixarray. */
-static ObitFArray** NewPxArray (ObitDConCleanVis *in, olong *startCC, ObitErr *err);
+static ObitFArray** NewPxArrayLine (ObitDConCleanVis *in, olong *startCC, ObitErr *err);
 
 /** Private: Delete Pixarray. */
-static ObitFArray** KillPxArray (ObitDConCleanVis *in, ObitFArray **pixarray);
+static ObitFArray** KillPxArrayLine (ObitDConCleanVis *in, ObitFArray **pixarray);
 
 /** Private: Delete BeamPatches. */
-static void KillBeamPatches (ObitDConCleanVis *in);
+static void KillBeamPatchesLine (ObitDConCleanVis *in);
 
 /** Private: Find peak brightness. */
-static void FindPeak (ObitDConCleanVis *in, ObitErr *err);
+static void FindPeakLine (ObitDConCleanVis *in, ObitErr *err);
 
 /** Private: Pick next field(s) and get Residual image(s) */
-static gboolean PickNext2D(ObitDConCleanVis *in, ObitErr *err);
-static gboolean PickNext3D(ObitDConCleanVis *in, ObitErr *err);
+static gboolean PickNext2DLine(ObitDConCleanVis *in, ObitErr *err);
+static gboolean PickNext3DLine(ObitDConCleanVis *in, ObitErr *err);
+
+/** Private: Find best channel in Channel args */
+static olong BestChanLine (olong nargs, ChanFuncArg **ThreadArgs);
+
+/** Private: Is the CLEAN finished? */
+static gboolean isDoneLine (olong nargs, ChanFuncArg **ThreadArgs, 
+			    gboolean *chDone, ObitErr *err);
 
 /*----------------------Public functions---------------------------*/
 /**
@@ -227,6 +230,8 @@ ObitDConCleanVisLine* ObitDConCleanVisLineCopy (ObitDConCleanVisLine *in,
 
   /*  copy this class */
   out->nPar = in->nPar;
+  out->maxPixel = in->maxPixel;
+  out->ccfLim   = in->ccfLim;
   return out;
 } /* end ObitDConCleanVisLineCopy */
 
@@ -256,6 +261,8 @@ void ObitDConCleanVisLineClone  (ObitDConCleanVisLine *in, ObitDConCleanVisLine 
 
   /*  copy this class */
   out->nPar = in->nPar;
+  out->maxPixel = in->maxPixel;
+  out->ccfLim   = in->ccfLim;
 } /* end ObitDConCleanVisLineClone */
 
 /**
@@ -275,7 +282,8 @@ ObitDConCleanVisLineCreate (gchar* name, olong nPar,  olong nAvg, ObitUV *uvdata
 {
   ObitDConCleanVisLine* out=NULL;
   ObitImage *img=NULL;
-  olong nfield, i, loChan, hiChan, nchan, nif;
+  olong nfield, i, loChan, hiChan, nchan, nif, maxPixel=2000;
+  ofloat ccfLim=0.0;
   gboolean freqFirst;
   odouble loFreq, Freq, hiFreq;
   ObitInfoType type;
@@ -292,6 +300,15 @@ ObitDConCleanVisLineCreate (gchar* name, olong nPar,  olong nAvg, ObitUV *uvdata
   /* Create basic structure */
   out = newObitDConCleanVisLine (name);
   out->nPar = nPar;
+
+  /* Channel done flags */
+  out->chDone = g_malloc0((nPar+3)*sizeof(gboolean));
+
+  /* Control info */
+  ObitInfoListGetTest(uvdata->info, "maxPixel", &type, dim, &maxPixel);
+  out->maxPixel = maxPixel;
+  ObitInfoListGetTest(uvdata->info, "ccfLim",   &type, dim, &ccfLim);
+  out->ccfLim = ccfLim;
 
   /* How many channels to average? */
   dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
@@ -383,7 +400,7 @@ ObitDConCleanVisLineCreate (gchar* name, olong nPar,  olong nAvg, ObitUV *uvdata
   }
 
   /* init array for threading */
-  out->nArgs = MakeChanFuncArgs (out, uvdata->thread, err, (ChanFuncArg ***)&out->chArgs);
+  out->nArgs = MakeChanFuncArgsLine (out, uvdata->thread, err, (ChanFuncArg ***)&out->chArgs);
   
   /* Check that Nargs compatable with nPar */
   Obit_retval_if_fail ((out->nArgs >= out->nPar), err, out, 
@@ -449,10 +466,11 @@ ObitDConCleanVisLineCreate2 (gchar* name, ObitUV *uvdata,
 			 ObitUVImager *imager, ObitSkyModel *skyModel, 
 			 ObitErr *err)
 {
-  olong nfield, i;
+  olong nfield, i, maxPixel=2000;
+  ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitDConCleanVisLine* out=NULL;
-  ofloat ftemp;
+  ofloat ftemp, ccfLim=0.0;
   gchar *routine = "ObitDConCleanVisLineCreate";
 
  /* error checks */
@@ -462,6 +480,12 @@ ObitDConCleanVisLineCreate2 (gchar* name, ObitUV *uvdata,
 
   /* Create basic structure */
   out = newObitDConCleanVisLine (name);
+
+  /* Control info */
+  ObitInfoListGetTest(uvdata->info, "maxPixel", &type, dim, &maxPixel);
+  out->maxPixel = maxPixel;
+  ObitInfoListGetTest(uvdata->info, "ccfLim",   &type, dim, &ccfLim);
+  out->ccfLim = ccfLim;
 
   /* Use or create UV imager and create its ImageMosaic */
   if (imager==NULL) {
@@ -514,7 +538,7 @@ ObitDConCleanVisLineCreate2 (gchar* name, ObitUV *uvdata,
  }
 
   /* init array for threading */
-  out->nArgs = MakeChanFuncArgs (out, uvdata->thread, err, (ChanFuncArg ***)&out->chArgs);
+  out->nArgs = MakeChanFuncArgsLine (out, uvdata->thread, err, (ChanFuncArg ***)&out->chArgs);
   
   /* Check that Nargs compatable with nPar */
   Obit_retval_if_fail ((out->nArgs >= out->nPar), err, out, 
@@ -646,9 +670,9 @@ void ObitDConCleanVisLineSub(ObitDConClean *inn, ObitErr *err)
 {
   ObitDConCleanVisLine *in;
   const ObitDConCleanVisClassInfo *ParentClass = myClassInfo.ParentClass;
-  olong ifld, ichan,  bcomp, ecomp, iCCVer, nCCVer, oCCVer=1;
-  olong *bcopy=NULL, *bc=NULL, *ec=NULL, *cv=NULL;
-  gboolean doGaus;
+  olong ifld, jfld=0, ichan,  bcomp, ecomp, iCCVer, nCCVer, oCCVer=1;
+  olong *bcopy=NULL, *bc=NULL, *ec=NULL, *cv=NULL, *redoFld=NULL;
+  gboolean doGaus, done=FALSE;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ChanFuncArg *inArr=NULL;
   gchar *routine = "ObitDConCleanVisLineSub";
@@ -661,10 +685,11 @@ void ObitDConCleanVisLineSub(ObitDConClean *inn, ObitErr *err)
   g_assert (ObitDConCleanVisLineIsA(in));
 
   /* Collect new components into a TSpec CC table */
-  bcopy = g_malloc0(in->nArgs*sizeof(olong));
-  bc    = g_malloc0(in->nfield*sizeof(olong));
-  ec    = g_malloc0(in->nfield*sizeof(olong));
-  cv    = g_malloc0(in->nfield*sizeof(olong));
+  bcopy   = g_malloc0(in->nArgs*sizeof(olong));
+  bc      = g_malloc0(in->nfield*sizeof(olong));
+  ec      = g_malloc0(in->nfield*sizeof(olong));
+  cv      = g_malloc0(in->nfield*sizeof(olong));
+  redoFld = g_malloc0((in->nfield+3)*sizeof(olong));
   /* Loop over fields building TSpec CC Tables */
   for (ifld=0; ifld<in->nfield; ifld++) {
     /* Get number of components to use from each */
@@ -685,6 +710,8 @@ void ObitDConCleanVisLineSub(ObitDConClean *inn, ObitErr *err)
       cv[ifld] = oCCVer;
       bc[ifld] = bcomp;
       ec[ifld] = ecomp;
+      /* Keep track of fields with components */
+      if (ecomp>=bcomp) {redoFld[jfld++] = ifld+1;}
       in->skyModel->startComp[ifld] = bcomp;
       in->skyModel->endComp[ifld]   = ecomp;
       /* Lower routines too clever */
@@ -719,15 +746,33 @@ void ObitDConCleanVisLineSub(ObitDConClean *inn, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Mark everything as unfresh */
-    for (ichan=0; ichan<in->nPar; ichan++) {
-      inArr = ((ChanFuncArg*)in->chArgs[ichan]);
-      for (ifld=0; ifld<in->nfield; ifld++)inArr->in->fresh[ifld] = FALSE;
+  for (ichan=0; ichan<in->nArgs; ichan++) {
+    inArr = ((ChanFuncArg*)in->chArgs[ichan]);
+    for (ifld=0; ifld<in->nfield; ifld++) {
+      inArr->in->fresh[ifld] = FALSE;
+      in->fresh[ifld] = FALSE;
+      /* Negate cleanable */
+      inArr->in->cleanable[ifld] = -fabs(inArr->in->cleanable[ifld]);
+      in->cleanable[ifld] = -fabs(in->cleanable[ifld]);
     }
+  }
 
+  /* See what's finished */
+  done = isDoneLine(in->nArgs, (ChanFuncArg**)in->chArgs, in->chDone, err);
+  for (ichan=0; ichan<in->nArgs; ichan++) {
+    inArr = ((ChanFuncArg*)in->chArgs[ichan]);
+    if (inArr->done) in->chDone[ichan] = TRUE;
+  }
 
-  if (bcopy) g_free(bcopy);
-  if (bc)    g_free(bc);
-  if (ec)    g_free(ec);
+  /* remake images just CLEANed if not Done */
+  if (!done)
+    MakeResidualsLine((ObitDConCleanVis*)inn, redoFld, FALSE, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  if (bcopy)   g_free(bcopy);
+  if (bc)      g_free(bc);
+  if (ec)      g_free(ec);
+  if (redoFld) g_free(redoFld);
 
 } /* end ObitDConCleanVisLineSub */
 
@@ -1014,6 +1059,46 @@ gboolean ObitDConCleanVisLineAutoWindow(ObitDConClean *inn, olong *fields, ObitF
 } /* end ObitDConCleanVisLineAutoWindow */
 
 /**
+ * Reset channel done flags, cleanable
+ * \param inn  The CLEAN object
+ * \param err Obit error stack object.
+ */
+void ObitDConCleanVisLineResetChDone(ObitDConClean *inn, ObitErr *err)
+{
+  ObitDConCleanVisLine *in=(ObitDConCleanVisLine*)inn;
+  olong ichan, ifld;
+  ChanFuncArg *inArr=NULL;
+  /*gchar *routine = "ObitDConCleanVisLineResetChDone";*/
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return;
+  g_assert (ObitDConCleanIsA(in));
+
+   /*gchar *routine = "ObitDConCleanVisLineResetChDone";*/
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return;
+  g_assert (ObitDConCleanIsA(in));
+
+  /* Loop over channels resetting flags */
+  for (ichan=0; ichan<in->nPar; ichan++) {
+    in->chDone[ichan] = FALSE;
+    inArr = ((ChanFuncArg*)in->chArgs[ichan]);
+    inArr->done = FALSE;
+    for (ifld=0; ifld<in->nfield; ifld++) {
+      inArr->in->cleanable[ifld] = 10.0 * inArr->in->minFlux[ifld];
+    }
+  } /* end loop over channels */
+  /* Top level cleanable */
+  for (ifld=0; ifld<in->nfield; ifld++) {
+    in->cleanable[ifld] = 10.0 * in->minFlux[ifld];
+  }
+  return;
+} /* end ObitDConCleanVisLineResetChDone */
+
+/**
  * Select components to be subtracted, loops over channels
  * \param in   The object to deconvolve
  * \param pixarray   If NonNULL use instead of the flux densities from the image file.
@@ -1040,17 +1125,16 @@ gboolean ObitDConCleanVisLineSelect(ObitDConClean *inn, ObitFArray **pixarray,
   /* Loop over channels */
   for (ichan=0; ichan<in->nPar; ichan++) {
     inArr = ((ChanFuncArg*)in->chArgs[ichan]);
-    ((ObitDConClean*)inArr->in)->CCver = ichan+1;
+    ((ObitDConClean*)inArr->in)->CCver = inArr->chann;
     /* Channel work in parent */
     if (!inArr->done) {
-     if (err->prtLv>=2) Obit_log_error(err, OBIT_InfoErr, 
+      if (err->prtLv>=2) Obit_log_error(err, OBIT_InfoErr, 
 					"Clean chan %d of %d",
 					ichan+1, in->nPar);
-     inArr->in->Pixels->resMax    = -1.0e20;  /* Maximum residual */
-     t = ParentClass->ObitDConCleanSelect((ObitDConClean*)inArr->in, 
-					  inArr->pixarray, err);
+      inArr->in->Pixels->resMax    = -1.0e20;  /* Maximum residual */
+      t = ParentClass->ObitDConCleanSelect((ObitDConClean*)inArr->in, 
+					   inArr->pixarray, err);
     } else t = TRUE;
-    done = done && t;
     if (err->error) Obit_traceback_val (err, routine, in->name, done);
     in->Pixels->complCode = MAX (in->Pixels->complCode, inArr->in->Pixels->complCode);
     inArr->done = inArr->done || t;
@@ -1061,7 +1145,9 @@ gboolean ObitDConCleanVisLineSelect(ObitDConClean *inn, ObitFArray **pixarray,
     /* Maximum number of components */
     in->Pixels->currentIter = MAX (in->Pixels->currentIter, inArr->in->Pixels->currentIter);
   } /* end loop over channels */
- 
+     
+  done = isDoneLine(in->nArgs, (ChanFuncArg**)in->chArgs, in->chDone, err);
+
   return done;
 } /* end ObitDConCleanVisLineSelect */
 
@@ -1233,20 +1319,22 @@ static void ObitDConCleanVisLineClassInfoDefFn (gpointer inClass)
   theClass->ObitDConCleanXRestore= (ObitDConCleanXRestoreFP)ObitDConCleanVisLineXRestore;
   theClass->ObitDConCleanAutoWindow = 
     (ObitDConCleanAutoWindowFP)ObitDConCleanVisLineAutoWindow;
+  theClass->ObitDConCleanResetChDone = 
+    (ObitDConCleanResetChDoneFP)ObitDConCleanVisLineResetChDone;
 
   /* Private functions for derived classes */
-  theClass->MakeResiduals   = (MakeResidualsFP)MakeResiduals;
-  theClass->MakeAllResiduals= (MakeAllResidualsFP)MakeAllResiduals;
-  theClass->SubNewCCs       = (SubNewCCsFP)SubNewCCs;
-  theClass->NewPxList       = (NewPxListFP)NewPxList;
-  theClass->NewPxArray      = (NewPxArrayFP)NewPxArray;
-  theClass->KillBeamPatches = (KillBeamPatchesFP)KillBeamPatches;
-  theClass->PickNext2D      = (PickNext2DFP)PickNext2D;
-  theClass->PickNext3D      = (PickNext3DFP)PickNext3D;
-  theClass->KillPxArray     = (KillPxArrayFP)KillPxArray;
-  theClass->ResetSkyModel   = (ResetSkyModelFP)ResetSkyModel;
-  theClass->ResetPixelList  = (ResetPixelListFP)ResetPixelList;
-  theClass->FindPeak        = (FindPeakFP)FindPeak;
+  theClass->MakeResiduals   = (MakeResidualsFP)MakeResidualsLine;
+  theClass->MakeAllResiduals= (MakeAllResidualsFP)MakeAllResidualsLine;
+  theClass->SubNewCCs       = (SubNewCCsFP)SubNewCCsLine;
+  theClass->NewPxList       = (NewPxListFP)NewPxListLine;
+  theClass->NewPxArray      = (NewPxArrayFP)NewPxArrayLine;
+  theClass->KillBeamPatches = (KillBeamPatchesFP)KillBeamPatchesLine;
+  theClass->PickNext2D      = (PickNext2DFP)PickNext2DLine;
+  theClass->PickNext3D      = (PickNext3DFP)PickNext3DLine;
+  theClass->KillPxArray     = (KillPxArrayFP)KillPxArrayLine;
+  theClass->ResetSkyModel   = (ResetSkyModelFP)ResetSkyModelLine;
+  theClass->ResetPixelList  = (ResetPixelListFP)ResetPixelListLine;
+  theClass->FindPeak        = (FindPeakFP)FindPeakLine;
 } /* end ObitDConCleanVisLineClassDefFn */
 
 /*---------------Private functions--------------------------*/
@@ -1273,6 +1361,7 @@ void ObitDConCleanVisLineInit  (gpointer inn)
   in->nPar       = 0;
   in->nArgs      = 0;
   in->chArgs     = NULL;
+  in->chDone     = NULL;
   in->motherShip = NULL;
 } /* end ObitDConCleanVisLineInit */
 
@@ -1292,8 +1381,9 @@ void ObitDConCleanVisLineClear (gpointer inn)
 
   /* delete this class members */
 
-  if (in->nArgs>0)  KillChanFuncArgs (in->nArgs, (ChanFuncArg**)in->chArgs);
+  if (in->nArgs>0) KillChanFuncArgsLine (in->nArgs, (ChanFuncArg**)in->chArgs);
   in->chArgs     = NULL;
+  if (in->chDone) {g_free(in->chDone);} in->chDone = NULL;
 
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
@@ -1311,11 +1401,11 @@ void ObitDConCleanVisLineClear (gpointer inn)
  * \param thread     ObitThread object to be used for function
  * \param err        Obit error stack object.
  * \param ThreadArgs [out] Created array of ChanFuncArg, 
- *                   delete with KillChanFuncArgs
+ *                   delete with KillChanFuncArgsLine
  * \return number of elements in args (number of allowed threads).
  */
-static olong MakeChanFuncArgs (ObitDConCleanVisLine *in, ObitThread *thread, 
-			       ObitErr *err, ChanFuncArg ***ThreadArgs)
+static olong MakeChanFuncArgsLine (ObitDConCleanVisLine *in, ObitThread *thread, 
+				   ObitErr *err, ChanFuncArg ***ThreadArgs)
 {
   olong i, j, nThreads;
 
@@ -1341,14 +1431,14 @@ static olong MakeChanFuncArgs (ObitDConCleanVisLine *in, ObitThread *thread,
   }
 
   return nThreads;
-} /*  end MakeChanFuncArgs */
+} /*  end MakeChanFuncArgsLine */
 
 /**
  * Delete arguments for Threaded Single channel operation
  * \param nargs      number of elements in args.
  * \param ThreadArgs Array of ChanFuncArg
  */
-static void KillChanFuncArgs (olong nargs, ChanFuncArg **ThreadArgs)
+static void KillChanFuncArgsLine (olong nargs, ChanFuncArg **ThreadArgs)
 {
   olong i;
 
@@ -1364,7 +1454,7 @@ static void KillChanFuncArgs (olong nargs, ChanFuncArg **ThreadArgs)
     }
   }
   g_free(ThreadArgs);
-} /*  end KillChanFuncArgs */
+} /*  end KillChanFuncArgsLine */
 
 /**
  * Create Pixel list for cleaning, one per parallel argument
@@ -1372,13 +1462,13 @@ static void KillChanFuncArgs (olong nargs, ChanFuncArg **ThreadArgs)
  * \param err      Obit error stack object.
  * \return TRUE if attempted, FALSE if cannot do 
  */
-static void NewPxList (ObitDConCleanVis *inn, ObitErr *err)
+static void NewPxListLine (ObitDConCleanVis *inn, ObitErr *err)
 {
   ObitDConCleanVisLine *in;
   ChanFuncArg *inArr=NULL;
   const ObitDConCleanVisClassInfo *ParentClass = myClassInfo.ParentClass;
   olong ichan;
-  /*gchar *routine = "ObitDConCleanVis:NewPxList";*/
+  /*gchar *routine = "NewPxListLine";*/
 
   /* Cast input to this type */
   in = (ObitDConCleanVisLine*)inn;
@@ -1396,7 +1486,7 @@ static void NewPxList (ObitDConCleanVis *inn, ObitErr *err)
     ParentClass->NewPxList((ObitDConCleanVis*)inArr->in, err);
   } /* End channel loop */    
 
-} /* end NewPxList */
+} /* end NewPxListLine */
 
 /**
  * Create Pixel array for intermediate CLEAN, one per parallel argument
@@ -1405,15 +1495,15 @@ static void NewPxList (ObitDConCleanVis *inn, ObitErr *err)
  * \param err      Obit error stack object.
  * \return array of ObitFArrays for cleaning
  */
-static ObitFArray** NewPxArray (ObitDConCleanVis *inn, olong *startCC, 
-				ObitErr *err)
+static ObitFArray** NewPxArrayLine (ObitDConCleanVis *inn, olong *startCC, 
+				    ObitErr *err)
 {
   ObitDConCleanVisLine *in;
   ChanFuncArg*inArr=NULL;
   const ObitDConCleanVisClassInfo *ParentClass = myClassInfo.ParentClass;
   ObitFArray** pixarray;
   olong ichan;
-  /*gchar *routine = "ObitDConCleanVis:NewPxArray";*/
+  /*gchar *routine = "NewPxArrayLine";*/
 
   /* Cast input to this type */
   in = (ObitDConCleanVisLine*)inn;
@@ -1438,7 +1528,7 @@ static ObitFArray** NewPxArray (ObitDConCleanVis *inn, olong *startCC,
 
   /*return ((ChanFuncArg*)in->chArgs[0])->pixarray;*/
   return pixarray;
-} /* end NewPxArray */
+} /* end NewPxArrayLine */
 
 /**
  * Delete Pixel array for intermediate CLEAN, one per parallel argument
@@ -1446,7 +1536,7 @@ static ObitFArray** NewPxArray (ObitDConCleanVis *inn, olong *startCC,
  * \param pixarray Array to delete
  * \return NULL
  */
-static ObitFArray** KillPxArray (ObitDConCleanVis *inn,  ObitFArray **pixarray)
+static ObitFArray** KillPxArrayLine (ObitDConCleanVis *inn,  ObitFArray **pixarray)
 {
   ObitDConCleanVisLine *in;
   ChanFuncArg *inArr=NULL;
@@ -1468,13 +1558,13 @@ static ObitFArray** KillPxArray (ObitDConCleanVis *inn,  ObitFArray **pixarray)
   pixarray = ParentClass->KillPxArray((ObitDConCleanVis*)in, pixarray);
 
   return pixarray;
-} /* end KillPxArray */
+} /* end KillPxArrayLine */
 
 /**
  * Delete Beam Patches on in, one per parallel argument
  * \param in       The Clean object
  */
-static void KillBeamPatches (ObitDConCleanVis *inn)
+static void KillBeamPatchesLine (ObitDConCleanVis *inn)
 {
   ObitDConCleanVisLine *in = (ObitDConCleanVisLine*)inn;
   ChanFuncArg *inArr=NULL;
@@ -1491,7 +1581,7 @@ static void KillBeamPatches (ObitDConCleanVis *inn)
     /* Call parent for operation */
     ParentClass->KillBeamPatches((ObitDConCleanVis*)inArr->in);
   } /* End channel loop */    
-} /* end KillBeamPatches */
+} /* end KillBeamPatchesLine */
 
 /**
  * Low accuracy subtract pixels from image for current CLEAN fields.
@@ -1506,14 +1596,14 @@ static void KillBeamPatches (ObitDConCleanVis *inn)
  * \param err      Obit error stack object.
  * \return TRUE if attempted, FALSE if cannot do 
  */
-static void SubNewCCs (ObitDConCleanVis *inn, olong *newCC, ObitFArray **pixarray, 
-		       ObitErr *err)
+static void SubNewCCsLine (ObitDConCleanVis *inn, olong *newCC, ObitFArray **pixarray, 
+			   ObitErr *err)
 {
   ObitDConCleanVisLine *in = (ObitDConCleanVisLine*)inn;
   ChanFuncArg *inArr=NULL;
   const ObitDConCleanVisClassInfo *ParentClass = myClassInfo.ParentClass;
   olong ichan, *lnewCC=NULL, ifld;
-  gchar *routine = "LineSubNewCCs";
+  gchar *routine = "SubNewCCsLine";
 
   lnewCC   = g_malloc0(in->nfield*sizeof(olong));
  
@@ -1532,7 +1622,7 @@ static void SubNewCCs (ObitDConCleanVis *inn, olong *newCC, ObitFArray **pixarra
   } /* End channel loop */    
   
   g_free(lnewCC);
-} /* end SubNewCCs */
+} /* end SubNewCCsLine */
 
 /**
  * 2D version - multiple parallel facets possible, loops over channels
@@ -1546,14 +1636,18 @@ static void SubNewCCs (ObitDConCleanVis *inn, olong *newCC, ObitFArray **pixarra
  * \return TRUE iff all channels reached minimum flux density or 
  *         max. number  comp. or no fields with SNR>5
  */
-static gboolean PickNext2D(ObitDConCleanVis *inn, ObitErr *err)
+static gboolean PickNext2DLine(ObitDConCleanVis *inn, ObitErr *err)
 {
   gboolean done=TRUE, t;
   ObitDConCleanVisLine *in = (ObitDConCleanVisLine*)inn;
-  ChanFuncArg *inArr=NULL;
+  ChanFuncArg *inArr=NULL, *inArr0=NULL;
   const ObitDConCleanVisClassInfo *ParentClass = myClassInfo.ParentClass;
-  olong ichan, i;
-  gchar *routine = "LinePickNext2D";
+  gchar *TF = "FT";
+  olong ichan, i, ifld, cnt, bestCh;
+  ofloat autoCenFlux=1.0e9;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+  /*gchar *routine = "PickNext2DLine";*/
 
   /* error checks */
   if (err->error) return done;
@@ -1562,28 +1656,76 @@ static gboolean PickNext2D(ObitDConCleanVis *inn, ObitErr *err)
   in->peakFlux = 0.0;
   /* What??? for (i=0; i<in->nfield; i++) in->minFlux[i] = 0.0; */
   
+  /* any AutoCenFlux */
+  ObitInfoListGetTest(in->mosaic->images[0]->info, "autoCenFlux", &type, 
+		      dim, &autoCenFlux);
+  /* Find best channel in block */
+  bestCh = BestChanLine (in->nPar, (ChanFuncArg**)in->chArgs);
+  inArr0 = ((ChanFuncArg*)in->chArgs[bestCh]); /* Best channel */
+  for (i=0; i<in->nfield; i++) inArr0->in->minFlux[i] = MAX(in->minFlux[i], in->Pixels->minFlux[i]);
+  /* Call parent for operation - this will make residuals as needed */
+  t = ParentClass->PickNext2D((ObitDConCleanVis*)inArr0->in, err);
+  /* Debugging */
+  if (err->prtLv>=3) {
+    Obit_log_error(err, OBIT_InfoErr,"Next2D: Best ch %d, done %c", bestCh+1, TF[t]);
+    for (i=0; i<inArr0->in->numCurrentField; i++)
+      Obit_log_error(err, OBIT_InfoErr,"   field %d, cleanable %f", 
+		     inArr0->in->currentFields[i], 
+		     inArr0->in->cleanable[inArr0->in->currentFields[i]-1]);
+  } /* end debug */
+  if (t) { /* All done? */
+    done = isDoneLine(in->nArgs, (ChanFuncArg**)in->chArgs, in->chDone, err);
+    if (done) return done;
+  }
+  /* Save selection on top level */
+  in->numCurrentField = inArr0->in->numCurrentField;
+  for (i=0; i<in->numCurrentField; i++) in->currentFields[i] = inArr0->in->currentFields[i];
+  in->currentFields[i] = 0;
   /* Loop over channels */
   for (ichan=0; ichan<in->nPar; ichan++) {
     inArr = ((ChanFuncArg*)in->chArgs[ichan]);
-    for (i=0; i<in->nfield; i++) 
-      inArr->in->minFlux[i] = MAX(in->minFlux[i], in->Pixels->minFlux[i]);
-    /* Call parent for operation */
-    t = ParentClass->PickNext2D((ObitDConCleanVis*)inArr->in, err);
-    if (err->error) Obit_traceback_val (err, routine, in->name, done);
-    done = done && t;
+    for (i=0; i<in->nfield; i++) inArr->in->minFlux[i] = MAX(in->minFlux[i], in->Pixels->minFlux[i]);
+    if (ichan!=bestCh) {
+      /* Use same selection as best chan - NOT NEEDED???*/
+      if (inArr0->in->numCurrentField>=1) {
+	inArr->in->numCurrentField = inArr0->in->numCurrentField;
+	ifld = 0;
+	/* Make sure cleanable */
+	for (i=0; i<inArr0->in->numCurrentField; i++) {
+	  if (inArr->in->cleanable[i]>=inArr->in->minFlux[i])
+	    inArr->in->currentFields[ifld++] = inArr0->in->currentFields[i];
+	}
+	if (ifld>0) inArr->in->numCurrentField = ifld;
+	else { /* better do something */
+	  inArr->in->numCurrentField  = 1;
+	  inArr->in->currentFields[0] = 1; inArr->in->currentFields[1] = 0;
+	}
+      } else { /* better do something */
+	inArr->in->numCurrentField  = 1;
+	inArr->in->currentFields[0] = 1;
+      }
+    } /* end not best channel */
+    inArr->in->currentFields[inArr->in->numCurrentField] = 0; /* 0 terminate */
+    ParentClass->OrderClean ((ObitDConCleanVis*)inArr->in, inArr->in->fresh, 
+			     autoCenFlux, inArr->in->currentFields);
+    /* Count fields */
+    cnt = 0;
+    for (i=0; i<inArr->in->nfield; i++) {
+      if (inArr->in->currentFields[i]<=0) break;
+      cnt++;
+    }
+    inArr->in->numCurrentField = cnt;
 
     /* Set some values on main CLEAN */
     in->peakFlux = MAX (in->peakFlux, inArr->in->peakFlux);
   
-    /* Fields selected */
-    if (inArr->in->numCurrentField>in->numCurrentField) {
-      in->numCurrentField = inArr->in->numCurrentField;
-       for (i=0; i<in->numCurrentField; i++) in->currentFields[i] = inArr->in->currentFields[i];
-    }
   } /* End channel loop */    
+  
+  /* check if CLEAN done */
+  done = isDoneLine(in->nArgs, (ChanFuncArg**)in->chArgs, in->chDone, err); 
 
   return done;
-} /* end PickNext2D */
+} /* end PickNext2DLine */
 
 /**
  * 3D version, loops over channels
@@ -1595,14 +1737,14 @@ static gboolean PickNext2D(ObitDConCleanVis *inn, ObitErr *err)
  * \return TRUE iff all channels reached minimum flux density or 
  *         max. number  comp. or no fields with SNR>5
  */
-static gboolean PickNext3D(ObitDConCleanVis *inn, ObitErr *err)
+static gboolean PickNext3DLine(ObitDConCleanVis *inn, ObitErr *err)
 {
-  gboolean done=TRUE, t;
+  gboolean done=TRUE;
   ObitDConCleanVisLine *in = (ObitDConCleanVisLine*)inn;
   ChanFuncArg *inArr=NULL;
   const ObitDConCleanVisClassInfo *ParentClass = myClassInfo.ParentClass;
   olong ichan, i;
-  gchar *routine = "LinePickNext3D";
+  gchar *routine = "PickNext3DLine";
 
    /* error checks */
   if (err->error) return done;
@@ -1615,11 +1757,9 @@ static gboolean PickNext3D(ObitDConCleanVis *inn, ObitErr *err)
   for (ichan=0; ichan<in->nPar; ichan++) {
     inArr = ((ChanFuncArg*)in->chArgs[ichan]);
     /* Call parent for operation */
-    t = ParentClass->PickNext3D((ObitDConCleanVis*)inArr->in,err);
+    ParentClass->PickNext3D((ObitDConCleanVis*)inArr->in,err);
     if (err->error) Obit_traceback_val (err, routine, in->name, done);
 
-    done = done && t;
- 
     /* Set some values on main CLEAN */
     in->peakFlux = MAX (in->peakFlux, inArr->in->peakFlux);
     for (i=0; i<in->nfield; i++) in->minFlux[i] = MAX(in->minFlux[i], inArr->in->minFlux[i]);
@@ -1631,8 +1771,11 @@ static gboolean PickNext3D(ObitDConCleanVis *inn, ObitErr *err)
     }
   } /* End channel loop */    
 
+  /* check if CLEAN done */
+  done = isDoneLine(in->nArgs, (ChanFuncArg**)in->chArgs, in->chDone, err); 
+
   return done;
-} /* end PickNext3D */
+} /* end PickNext3DLine */
 
 /**
  * Reset Sky Model, one per parallel argument
@@ -1646,7 +1789,7 @@ static gboolean PickNext3D(ObitDConCleanVis *inn, ObitErr *err)
  * \param err Obit error stack object.
  * \return true if components in the sky model need to be subtracted
  */
-static gboolean ResetSkyModel(ObitDConCleanVis *inn, ObitErr *err)
+static gboolean ResetSkyModelLine(ObitDConCleanVis *inn, ObitErr *err)
 {
   gboolean doSub=FALSE, tdoSub;
   ObitDConCleanVisLine *in = (ObitDConCleanVisLine*)inn;
@@ -1657,7 +1800,7 @@ static gboolean ResetSkyModel(ObitDConCleanVis *inn, ObitErr *err)
   gchar *pixelParms[] = { /* parameters on Pixels for CLEAN */
     "Niter", "Gain", "minFlux", "Factor", "fGauss", "ccfLim", "prtLv",
     NULL};
-  gchar *routine = "LineResetSkyModel";
+  gchar *routine = "ResetSkyModelLine";
 
   /* error checks */
   if (err->error) return doSub;
@@ -1683,20 +1826,21 @@ static gboolean ResetSkyModel(ObitDConCleanVis *inn, ObitErr *err)
   } /* End channel loop */    
 
   return doSub;
-} /* end ResetSkyModel */
+} /* end ResetSkyModelLine */
+
 /**
  * Reset Pixel List for beginning of a CLEAN
  * \param in   The Clean object
  * \param err Obit error stack object.
  */
-static void ResetPixelList(ObitDConCleanVis *inn, ObitErr *err)
+static void ResetPixelListLine(ObitDConCleanVis *inn, ObitErr *err)
 {
   ObitDConCleanVisLine *in=(ObitDConCleanVisLine*)inn;
   ChanFuncArg *inArr=NULL;
   const ObitDConCleanPxListClassInfo *pxListClass;
   olong ichan, CCVer;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gchar *routine = "LineResetPixelList";
+  gchar *routine = "ResetPixelListLine";
 
   /* Cast input to this type */
   in = (ObitDConCleanVisLine*)inn;
@@ -1727,26 +1871,28 @@ static void ResetPixelList(ObitDConCleanVis *inn, ObitErr *err)
   ObitInfoListAlwaysPut (in->Pixels->info, "CCVer", OBIT_long, dim, &CCVer);
   pxListClass->ObitDConCleanPxListReset (in->Pixels, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
-} /* end ResetPixelList */
+} /* end ResetPixelListLine */
 
 /**
  * Make selected residual images and get statistics, multiple channels
+ * Only image fields that still have cleanable flux.
  * \param in     The Clean object
  * \param fields zero terminated list of field numbers to image
  * \param doBeam If TRUE also make beam
  * \param err    Obit error stack object.
  */
-static void  MakeResiduals (ObitDConCleanVis *inn, olong *fields, 
-			    gboolean doBeam, ObitErr *err)
+static void  MakeResidualsLine (ObitDConCleanVis *inn, olong *fields, 
+				gboolean doBeam, ObitErr *err)
 {
   ObitDConCleanVisLine *tin=(ObitDConCleanVisLine*)inn, *in;
-  gboolean doWeight, doFlatten, found;
+  gboolean doWeight, doFlatten, found, *chDone=NULL;
   const ObitDConCleanVisLineClassInfo *inClass;
   ObitUVImagerClassInfo *imgClass = (ObitUVImagerClassInfo*)tin->imager->ClassInfo;
   ChanFuncArg *inArr=NULL;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong i, ifld, jfld, ichan, field=1, *stale=NULL, best;
-  ofloat bestQuality;
-  gchar *routine = "LineMakeResidual";
+  ofloat bestQuality, maxCleanable;
+  gchar *routine = "MakeResidualsLine";
 
   /* May need to use upper level Clean for this, use motherShip if inn is a lower level */
   if (tin->chArgs==NULL) in = (ObitDConCleanVisLine*)tin->motherShip;
@@ -1758,17 +1904,37 @@ static void  MakeResiduals (ObitDConCleanVis *inn, olong *fields,
   doWeight  = FALSE;
   doFlatten = FALSE;
 
-  /* Make copy of only stale images */
+  /* Get max cleanable per field */
+  for (ifld=0; ifld<in->nfield; ifld++) {
+    maxCleanable = -1.0e6;
+    jfld = fields[ifld];
+    if (jfld<=0) break;
+    for (ichan=0; ichan<in->nPar; ichan++) {
+      inArr = ((ChanFuncArg*)in->chArgs[ichan]);
+      maxCleanable = MAX(maxCleanable, fabs(inArr->in->cleanable[jfld-1]));
+    } /* end channel loop */
+    in->cleanable[jfld-1] = maxCleanable;
+  } /* end field loop */
+
+  /* Make copy of only stale images with cleanable>=minFlux */
   stale = g_malloc0((in->nfield+1)*sizeof(olong));
   ifld = jfld = 0;
   while(fields[ifld]>0) {
-    if (!in->fresh[fields[ifld]-1]) stale[jfld++] = fields[ifld];
+    if ((!in->fresh[fields[ifld]-1]) && 
+	(in->cleanable[fields[ifld]-1]>=in->minFlux[fields[ifld]-1])) 
+      stale[jfld++] = fields[ifld];
     ifld++;
   }
   stale[jfld] = 0;
 
   /* if none stale then bail out */
   if (stale[0]<=0) goto done;
+
+  /* Keep track of channels done */
+  chDone = g_malloc0((in->nArgs+3)*sizeof(gboolean));
+  for (i=0; i<in->nArgs; i++) chDone[i] = ((ChanFuncArg*)in->chArgs[i])->done;
+  dim[0] = in->nArgs;dim[1] = 1;
+  ObitInfoListAlwaysPut (in->imager->uvdata->info, "chDone", OBIT_bool, dim, chDone);
 
   /* Make residual images for stale fields */
   imgClass->ObitUVImagerImage (in->imager, stale, doWeight, doBeam, doFlatten, err);
@@ -1778,7 +1944,7 @@ static void  MakeResiduals (ObitDConCleanVis *inn, olong *fields,
   best          = 0;
   bestQuality = 0.0;
 
- /* Statistics per channel */
+  /* Statistics per channel */
   for (ichan=0; ichan<in->nPar; ichan++) {
     inArr = ((ChanFuncArg*)in->chArgs[ichan]);
     for (ifld=0; ifld<in->nfield; ifld++) {
@@ -1870,9 +2036,10 @@ static void  MakeResiduals (ObitDConCleanVis *inn, olong *fields,
   } /* end loop over fields */
   
  done:   /* finished */
-  if(stale) g_free(stale);
+  if (stale)  g_free(stale);
+  if (chDone) g_free(chDone);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
-} /* end MakeResiduals */
+} /* end MakeResidualsLine */
 
 /**
  * Make all residual images and get statistics
@@ -1880,11 +2047,11 @@ static void  MakeResiduals (ObitDConCleanVis *inn, olong *fields,
  * \param in     The Clean object
  * \param err    Obit error stack object.
  */
-static void  MakeAllResiduals (ObitDConCleanVis *inn, ObitErr *err)
+static void  MakeAllResidualsLine (ObitDConCleanVis *inn, ObitErr *err)
 {
   ObitDConCleanVisLine *tin=(ObitDConCleanVisLine*)inn, *in;
   gboolean doBeam = inn->doBeam;
-  gboolean doWeight, doFlatten;
+  gboolean doWeight, doFlatten, *chDone=NULL;
   olong i, ifld, jfld, ichan, best, fields[2]={0,0};
   ChanFuncArg *inArr=NULL;
   ObitUVImagerClassInfo *imgClass = 
@@ -1892,7 +2059,7 @@ static void  MakeAllResiduals (ObitDConCleanVis *inn, ObitErr *err)
   const ObitDConCleanVisLineClassInfo *inClass;
   ofloat bestQuality;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gchar *routine = "LineMakeAllResiduals";
+  gchar *routine = "MakeAllResidualsLine";
 
   if (err->error) return;   /* existing error */
   
@@ -1909,6 +2076,16 @@ static void  MakeAllResiduals (ObitDConCleanVis *inn, ObitErr *err)
   /* Copy prtLv to in->mosaic->info */
   dim[0] = 1;dim[1] = 1;
   ObitInfoListAlwaysPut (in->mosaic->info, "prtLv", OBIT_long, dim, &err->prtLv);
+
+  /* Make sure all channels redone */
+  chDone = g_malloc0((in->nArgs+3)*sizeof(gboolean));
+  for (i=0; i<in->nArgs; i++) {
+    chDone[i] = FALSE;
+    inArr = ((ChanFuncArg*)in->chArgs[i]);
+    inArr->done = FALSE;  
+  }
+  dim[0] = in->nArgs;dim[1] = 1;
+  ObitInfoListAlwaysPut (in->imager->uvdata->info, "chDone", OBIT_bool, dim, chDone);
 
   /* Parallel Image images without needing beam */
   imgClass->ObitUVImagerImage (in->imager, fields,  doWeight, doBeam, doFlatten, err);
@@ -1985,7 +2162,9 @@ static void  MakeAllResiduals (ObitDConCleanVis *inn, ObitErr *err)
     in->cleanable[ifld]  = inArr->in->cleanable[ifld];
     in->fresh[ifld]      = inArr->in->fresh[ifld];
   } /* end loop over fields */
-} /* end MakeAllResiduals */
+  /* Cleanup */
+  if (chDone) g_free(chDone);
+} /* end MakeAllResidualsLine */
 
 /**
  * Find maximum brightness using CC tables
@@ -1994,13 +2173,13 @@ static void  MakeAllResiduals (ObitDConCleanVis *inn, ObitErr *err)
  * \param in      Object of interest.
  * \param err     ObitErr for reporting errors.
  */
-static void FindPeak (ObitDConCleanVis *inn, ObitErr *err)
+static void FindPeakLine (ObitDConCleanVis *inn, ObitErr *err)
 {
   ObitDConCleanVisLine *in = (ObitDConCleanVisLine*)inn;
   const ObitDConCleanVisClassInfo *ParentClass = myClassInfo.ParentClass;
   ChanFuncArg *inArr=NULL;
   olong ichan;
-  gchar *routine = "LineFindPeak";
+  gchar *routine = "FindPeakLine";
 
   /* Main */
   in->plane[0] = 1;
@@ -2020,3 +2199,83 @@ static void FindPeak (ObitDConCleanVis *inn, ObitErr *err)
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   } /* End channel loop */    
 } /* end FindPeak */
+
+/**
+ * Find best channel in Channel args, with highest cleanable
+ * \param nargs      number of elements in args.
+ * \param ThreadArgs Array of ChanFuncArg
+ * \return 0-relative channel number
+ */
+static olong BestChanLine (olong nargs, ChanFuncArg **ThreadArgs)
+{
+  olong best = 0;
+  olong i, j, nfield;
+  ofloat bestClean;
+  if (nargs<=0) return best;
+  nfield = ThreadArgs[0]->in->nfield;
+
+  /* Loop over channels */
+  bestClean=-1.0e-9;
+  for (i=0; i<nargs; i++) {
+    /* Loop over fields */
+    for (j=0; j<nfield; j++) {
+      if (ThreadArgs[i]->in->cleanable[j]>bestClean) {
+	best = i;
+	bestClean = ThreadArgs[i]->in->cleanable[j];
+      }
+    } /* end field loop */
+  } /* end channel loop */
+  return best;
+} /* end BestChanLine */
+
+/**
+ * Determine if Clean is finished, all, fields, all args
+ * \param nargs       number of elements in ThreadArgs.
+ * \param ThreadArgs  Array of ChanFuncArg
+ * \param chDone      List of channels known to be finished.
+ * \param err         message logger
+ * \return TRUE if CLEAN finished.
+ */
+static gboolean isDoneLine (olong nargs, ChanFuncArg **ThreadArgs, 
+			    gboolean *chDone, ObitErr *err)
+{
+  gboolean argDone, done=TRUE;
+  ChanFuncArg *arg=NULL;
+  gchar *TF="FT";
+  ofloat maxx, maxy, tmaxy, maxz;
+  olong i, j, nfield, ndone, imaxy;
+  if (nargs<=0) return done;
+  nfield = ThreadArgs[0]->in->nfield;
+
+  /* Loop over channels */
+  done = TRUE; ndone = 0;
+  for (i=0; i<nargs; i++) {
+    arg = ThreadArgs[i];
+    /* Loop over fields */
+    argDone = TRUE;
+    maxy = -1.0e10; maxz = -1.0e10; imaxy = -1;
+    for (j=0; j<nfield; j++) {
+      maxx = fabs(arg->in->cleanable[j]);
+      tmaxy = maxx/MAX(1.0e-6,arg->in->minFlux[j]);
+      if (tmaxy>maxy) {maxy = tmaxy; imaxy = j+1;}
+      maxz = MAX(maxz, arg->in->imgPeakRMS[j]);
+      /*argDone = argDone && (maxx>arg->in->minFlux[j]);  */
+    } /* end field loop */
+    /* CC limit? or to CLEAN limit?*/
+    argDone = (maxy<1.0) || (arg->in->Pixels->currentIter>=arg->in->Pixels->niter);
+    argDone = argDone || chDone[i];  /* already declared done? */
+    if (argDone) ndone++;  /* Count */
+    arg->done = argDone;/* mark as done */
+    /* Debugging */
+    if (err->prtLv>=3) {
+      Obit_log_error(err, OBIT_InfoErr,"isDone:Chan %d, done %c, max rat %g (%d), iter %d, SNR %g", 
+		     arg->chann, TF[arg->done], maxy, imaxy, arg->in->Pixels->currentIter,maxz);
+    } /* end debug */
+    if (!argDone) {done = FALSE;}
+  } /* end channel loop */
+  if (err->prtLv>=2) {
+    Obit_log_error(err, OBIT_InfoErr,"isDone:CLEAN done %c, ch %d/%d", TF[done], ndone, nargs);
+  } /* end debug */
+  return done;
+} /* end isDoneLine */
+

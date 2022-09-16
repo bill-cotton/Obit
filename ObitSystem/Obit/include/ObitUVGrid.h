@@ -38,7 +38,7 @@
 #include "ObitFFT.h"
 #include "ObitGPUGrid.h"
 #include "ObitCUDAGridInfoDef.h"
-#include "ObitImageMosaic.h"
+/*#include "ObitImageMosaic.h" Na na na */
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
  * \file ObitUVGrid.h
@@ -132,9 +132,9 @@ typedef void (*ObitUVGridFFT2ImParFP) (olong nPar, ObitUVGrid **in, Obit **out,
 				       ObitErr *err);
 
 /** Public: Get max number of parallel grids */
-olong ObitUVGridGetNumPar (ObitUV *inUV, ObitImageMosaic *mosaic, 
+olong ObitUVGridGetNumPar (ObitUV *inUV, Obit *mosaic, 
 			   gboolean doBeam, ObitErr *err);
-typedef olong (*ObitUVGridGetNumParFP) (ObitUV *inUV, ObitImageMosaic *mosaic,
+typedef olong (*ObitUVGridGetNumParFP) (ObitUV *inUV, Obit *mosaic,
 					gboolean doBeam, ObitErr *err);
 
 /* Private functions for derived classes */

@@ -26,8 +26,8 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
-#include "ObitUVGrid.h"
 #include "ObitUVImager.h"
+#include "ObitUVGrid.h"
 #include "ObitUVWeight.h"
 #include "ObitImageUtil.h"
 #include "ObitUVImagerIon.h"
@@ -463,7 +463,7 @@ void ObitUVImagerImage (ObitUVImager *in, olong *field, gboolean doWeight,
   gboolean *forceBeam=NULL, needBeam, doall, found, doGridGPU=FALSE;
   ObitUVImagerClassInfo *imgClass = (ObitUVImagerClassInfo*)in->ClassInfo;
   gchar        *dataParms[] = {  /* Imaging info */
-    "xShift", "yShift",
+    "xShift", "yShift", "chDone",
     NULL
   };
   gchar *routine = "ObitUVImagerImage";
@@ -558,7 +558,7 @@ void ObitUVImagerImage (ObitUVImager *in, olong *field, gboolean doWeight,
 
   /* Multiple (including beams) - do in parallel */
   if (doGridGPU) 
-    NumPar = ObitUVGridGetNumPar(in->uvwork, in->mosaic, doBeam, err);  /* GPU */
+    NumPar = ObitUVGridGetNumPar(in->uvwork, (Obit*)in->mosaic, doBeam, err);  /* GPU */
   else 
     NumPar = imgClass->ObitUVImagerGetNumPar(in, doBeam, err);          /* CPU */
 
@@ -1000,6 +1000,7 @@ void ObitUVImagerInit  (gpointer inn)
     ParentClass->ObitInit (inn);
 
   /* set members in this class */
+  in->info   = newObitInfoList();
   in->uvdata = NULL;
   in->uvwork = NULL;
   in->mosaic = NULL;
@@ -1021,6 +1022,7 @@ void ObitUVImagerClear (gpointer inn)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* delete this class members */
+  in->info   = ObitInfoListUnref(in->info);
   in->uvdata = ObitUVUnref(in->uvdata);
   in->uvwork = ObitUVUnref(in->uvwork);
   in->mosaic = ObitImageMosaicUnref(in->mosaic);

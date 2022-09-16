@@ -1,7 +1,8 @@
-/*   $Id$ */
+/* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010,2022                                          */
+/*;  Copyright (C) 2020,2021                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
+/*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
 /*;  published by the Free Software Foundation; either version 2 of   */
@@ -17,36 +18,57 @@
 /*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
 /*;  MA 02139, USA.                                                   */
 /*;                                                                   */
-/*; Correspondence about this software should be addressed as follows:*/
+/*;  Correspondence this software should be addressed as follows:     */
 /*;         Internet email: bcotton@nrao.edu.                         */
 /*;         Postal address: William Cotton                            */
 /*;                         National Radio Astronomy Observatory      */
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/*  Define the basic components of the ObitUV structure               */
-/*  This is intended to be included in a class structure definition   */
+
+#include "Obit.h"
+#include "ObitCUDAGrid.h"
+
+
+/*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
- * \file ObitUVGridMFDef.h
- * ObitUVGridMF structure members for this and any derived classes.
+ * \file ObitCUDAGrid.c
+ * ObitCUDAGrid stub versions for non GPU use
+ * This class is derived from the Obit base class.
  */
-#include "ObitUVGridDef.h"  /* Parent class definitions */
-/** Maximum order of the imaging 
-    Spectral index only = 1, plus curvature = 2 */
-olong maxOrder;
-/** Number of coarse frequency planes */
-olong nSpec;
-/** Arrays of start and finish IFs (0-rel), per coarse channel */
-olong *BIFSpec, *EIFSpec;
-/** Arrays of start and finish Channels (0-rel), per coarse channel */
-olong *BChanSpec, *EChanSpec;
-/** Array of accumulation grids, per coarse channel */
-ObitCArray **grids;
-/** Array of Beam normalization factors, per coarse channel */
-ofloat *BeamNorms;
-/** Arrays gridding tapers per uv data channel for forcing the beams */
-ofloat *sigma1, *sigma2, *sigma3;
-/** Number of entries in isDone SHOULD be = nSpec*/
-olong nDone;
-/** Array of frequency plane done flags */
-gboolean *isDone;
+#if HAVE_GPU!=1  /* Not GPU? Stub versions */
+
+
+/* Public: Initialize gridding */
+void ObitCUDAGridInit (CUDAGridInfo *gpuInfo)
+{
+  g_error("GPU/CUDA not implemented");
+} /* end ObitCUDAGridInit */
+
+/* Public: Grid a bufferload of visibilities */
+void ObitCUDAGridGrid (CUDAGridInfo *in)
+{
+  g_error("GPU/CUDA not implemented");
+} /* end ObitCUDAGridGrid */
+
+/* Public: Fold negative u to positive */
+void ObitCUDAGridFlip (CUDAGridInfo *in)
+{
+  g_error("GPU/CUDA not implemented");
+} /* end ObitCUDAGridFlip */
+
+/* Public: Copy vis grid to locked host memory */
+void ObitCUDAGrid2CPU (CUDAGridInfo *in, long ifacet)
+{
+  g_error("GPU/CUDA not implemented");
+} /* end ObitCUDAGrid2CPU */
+
+/* Public: Shutdown gridding */
+void ObitCUDAGridShutdown (CUDAGridInfo *gpuinfo)
+{
+  g_error("GPU/CUDA not implemented");
+} /* end ObitCUDAGridDFTShutdown */
+
+#endif 
+
+

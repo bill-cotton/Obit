@@ -89,12 +89,13 @@ __device__ __constant__ float cm_freqArr[MAX_CM_FREQARR]; // hardcoded channel m
 
 // Grid has halfWidth extra columns in u added to avoid complication near u=0
 //  The extra rows in the conjugate region need to be added to half plane before FFT.
-__global__ void gridKernel(int current, int ifacet, int nvis, CUDAGridInfo* cudaInfo, float *d_grid_debug)
+__global__ void gridKernel(int current, int nvis, CUDAGridInfo* cudaInfo, float *d_grid_debug)
 {
-    GridInfo* gridInfo = cudaInfo->d_gridInfo;                // grid specifications
-    FacetInfo* facetInfo = cudaInfo->d_facetInfo[ifacet];     // facet specifications
     long kvis         = threadIdx.x + blockIdx.x*blockDim.x;  // vis number
     long ichan        = threadIdx.y + blockIdx.y*blockDim.y;  // channel number
+    long ifacet       = threadIdx.z + blockIdx.z*blockDim.z;  // facet number
+    GridInfo* gridInfo = cudaInfo->d_gridInfo;                // grid specifications
+    FacetInfo* facetInfo = cudaInfo->d_facetInfo[ifacet];     // facet specifications
     long iplane       = gridInfo->d_freqPlane[ichan];         // plane number
     float *grid       = facetInfo->d_grid + iplane*facetInfo->sizeGrid;
     //float *rot        = facetInfo->rotUV;
@@ -236,10 +237,10 @@ __global__ void gridKernel(int current, int ifacet, int nvis, CUDAGridInfo* cuda
 // block.x = vrow, threads in block = facet
 __global__ void gridFlipKernel(CUDAGridInfo *cudaInfo, int ifacet, float *d_grid_debug)
 {
-   GridInfo* gridInfo   = cudaInfo->d_gridInfo;              // grid specifications
-   FacetInfo* facetInfo = cudaInfo->d_facetInfo[ifacet];     // facet specifications
    long irow       = threadIdx.x + blockIdx.x*blockDim.x;    // row number
    long iplane     = threadIdx.y + blockIdx.y*blockDim.y;    // plane
+   GridInfo* gridInfo   = cudaInfo->d_gridInfo;              // grid specifications
+   FacetInfo* facetInfo = cudaInfo->d_facetInfo[ifacet];     // facet specifications
    int  nx         = facetInfo->nx;
    int  ny         = facetInfo->ny;
    long halfWidth  = gridInfo->convWidth/2;    // half width of convolution kernal
@@ -347,7 +348,7 @@ void grid_processWithStreams(int streams_used, CUDAGridInfo *cudaInfo,
     int npass = streams_used;
     int nvisPass = (nvis+npass-1)/npass;  // nearly round up
     int lenvis = gridInfo->lenvis;
-    int off, dovis,  nleft, i, ms, ifacet, nChBlock, nVisBlock;
+    int off, dovis,  nleft, i, ms, nChBlock, nVisBlock,nFacetBlock;
     size_t lmemsize, memsize = (lenvis*nvisPass)*sizeof(float);
     dim3 numBlocks, thPerBlock;
     float *h_grid_debug=cudaInfo->h_grid_debug, *d_grid_debug=cudaInfo->d_grid_debug;
@@ -409,21 +410,27 @@ void grid_processWithStreams(int streams_used, CUDAGridInfo *cudaInfo,
 
 	checkCudaErrors(cudaEventSynchronize(cycleDone[current_stream]));
 	if (dovis>0) { // More to do?
-	  int maxCh = 16, maxVis=64;
+	  //old int maxCh = 8, maxVis=32, maxFacet=4;
+	  // divide work depending on number of facets.
+	  int maxCh, maxVis, maxFacet;
+	  if (nfacet<8) {maxCh = 32; maxVis=32; maxFacet=1;}
+	  else          {maxCh = 16; maxVis=8;  maxFacet=8;}
           // Process current, vis (maxVis/block), chan(maxCh/block), loop over facet
  	  nVisBlock = (olong)(0.9999+dovis/(float)maxVis); 
 	  nChBlock  = (olong)(0.9999+nchan/(float)maxCh); 
+	  nFacetBlock =  (olong)(0.9999+nfacet/(float)maxFacet);
 	  numBlocks.x = nVisBlock; numBlocks.y = nChBlock; thPerBlock.x = maxVis; thPerBlock.y = maxCh;
-	  if (dovis<=maxVis) {numBlocks.x = 1; thPerBlock.x = dovis;}
-	  if (nchan<=maxCh)  {numBlocks.y = 1; thPerBlock.y = nchan;}
-	  numBlocks.x = MAX(1,numBlocks.x); numBlocks.y = MAX(1,numBlocks.y); 
+	  numBlocks.z = nFacetBlock; thPerBlock.z = maxFacet; 
+	  if (dovis<=maxVis)  {numBlocks.x = 1; thPerBlock.x = dovis;}
+	  if (nchan<=maxCh)   {numBlocks.y = 1; thPerBlock.y = nchan;}
+	  if (nfacet<=maxFacet)  {numBlocks.z = 1; thPerBlock.z = nfacet;}
+	  numBlocks.x =  MAX(1,numBlocks.x);  numBlocks.y = MAX(1,numBlocks.y); 
 	  thPerBlock.x = MAX(1,thPerBlock.x); thPerBlock.y = MAX(1,thPerBlock.y); 
+	  numBlocks.z  = MAX(1,numBlocks.z);  thPerBlock.z = MAX(1,thPerBlock.z); 
 //fprintf (stderr,"Grid X=%d %d, Y=%d %d,nVisBlock=%d, nChBlock=%d, dovis=%d, nchan=%d, nleft=%d\n", 
 //	  numBlocks.x,thPerBlock.x, numBlocks.y,thPerBlock.y, nVisBlock,nChBlock,dovis,nchan,nleft); // DEBUG
-          for (ifacet=0; ifacet<nfacet; ifacet++) {
-	     gridKernel<<<numBlocks, thPerBlock, 0, gridInfo->stream[current_stream]>>>
-                (current_stream, ifacet, dovis, (CUDAGridInfo *)cudaInfo->d_base, d_grid_debug);
-          }
+	   gridKernel<<<numBlocks, thPerBlock, 0, gridInfo->stream[current_stream]>>>
+              (current_stream, dovis, (CUDAGridInfo *)cudaInfo->d_base, d_grid_debug);
         } // end more data
 
 	// make sure previous frame done
@@ -681,7 +688,6 @@ void ObitCUDAGridFlip (CUDAGridInfo *cudaInfo) {
 //fprintf (stderr,"Flip X=%d %d, Y=%d %d\n", numBlocks.x,thPerBlock.x, numBlocks.y,thPerBlock.y); // DEBUG
      gridFlipKernel<<<numBlocks,thPerBlock>>>
           ((CUDAGridInfo *)cudaInfo->d_base, i, cudaInfo->d_grid_debug);
-        checkCudaErrors(cudaDeviceSynchronize());
     } // end facet loop
 
      cudaDeviceSynchronize();

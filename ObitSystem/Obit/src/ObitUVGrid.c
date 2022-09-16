@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2021                                          */
+/*;  Copyright (C) 2003-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -39,6 +39,7 @@ void ObitCUDAUtilHostAny2GPU(void *GPU, void *host, int memsize, int* stream);
 #include "ObitFFT.h"
 #include "ObitImage.h"
 #include "ObitImageUtil.h"
+#include "ObitImageMosaic.h"
 //#include "ObitThreadGrid.h"
 #include "ObitUVGridMF.h"
 #include "ObitUVGridWB.h"
@@ -601,6 +602,7 @@ void ObitUVGridReadUVPar (olong nPar, ObitUVGrid **in, ObitUV *UVin, ObitErr *er
     
     if (in[0]->doGPUGrid) { /* Using GPU? */
 #if HAVE_GPU==1  /*  GPU?*/
+      GPUGrid = in[0]->gridInfo;  /* CUDA stuff */
       ObitGPUGrid2GPU(GPUGrid, UVin, err);
       ObitGPUGridGrid(GPUGrid, err);
       if (err->error) goto cleanup;
@@ -616,11 +618,14 @@ void ObitUVGridReadUVPar (olong nPar, ObitUVGrid **in, ObitUV *UVin, ObitErr *er
    if (in[0]->doGPUGrid) { /* Using GPU? */
 #if HAVE_GPU==1  /*  GPU?*/
      ObitGPUGridFlip(GPUGrid, err);  /* Flip neg u rows */
-     for (ip=0; ip<nPar; ip+=2) {
+     olong parInc=1;
+     if (in[0]->doBeam) parInc = 2;
+     for (ip=0; ip<nPar; ip+=parInc) {
        ObitGPUGrid2Host(GPUGrid, ip, &in[ip]->grid, err); /* Copy grids back */
        /* if doBeam, have Beam, image pair */
-       if (in[ip]->doBeam) 
+       if (in[ip]->doBeam) {
 	 ObitGPUGrid2Host(GPUGrid, ip+1, &in[ip+1]->grid, err); 
+       }
      }
      /* Shutdown GPU */
      ObitGPUGridShutdown (GPUGrid, UVin, err);
@@ -1031,17 +1036,19 @@ void ObitUVGridFFT2ImPar (olong nPar, ObitUVGrid **in, Obit **oout, ObitErr *err
 
  /**
  * Get number of parallel images to be gridded in GPU
- * Maximum memory is 1/2 GPU memory
- * \param inn     GPUGrid object of interest.
+ * Maximum memory is half GPU memory
+ * \param inUV    UV data
+ * \param mmosaic ImageMosaic as Obit*
  * \param doBeam  True if Beam also wanted
  * \return the number of parallel images allowed.
  */
-olong ObitUVGridGetNumPar (ObitUV *inUV, ObitImageMosaic *mosaic, gboolean doBeam, ObitErr *err)
+olong ObitUVGridGetNumPar (ObitUV *inUV, Obit *mmosaic, gboolean doBeam, ObitErr *err)
 {
   olong out=1, iNumVis, nplane;
+  ObitImageMosaic *mosaic = (ObitImageMosaic*)mmosaic;
   odouble lenVis, numVis, imSize, bufSize, tSize, mSize;
-  ObitInfoType type;
-  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  /*ObitInfoType type;*/
+  /*gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};*/
   ObitImage *im=NULL;
   gchar *routine="ObitUVGridGetNumPar";
 
@@ -1049,15 +1056,16 @@ olong ObitUVGridGetNumPar (ObitUV *inUV, ObitImageMosaic *mosaic, gboolean doBea
 
   /* 2/3 GPU memory size */
 #if HAVE_GPU==1  /* CUDA code */
-  mSize = 0.667*((odouble)ObitCUDAUtilMemory(0));
+  mSize = 0.66*((odouble)ObitCUDAUtilMemory(0));
 #else           /* Not compiled with GPU */  
- mSize = 0;  out = 0;
- Obit_log_error(err, OBIT_InfoErr, "%s: Not compiled with GPU",routine);
- return out;
+  mSize = 0;  out = 0;
+  Obit_log_error(err, OBIT_InfoErr, "%s: Not compiled with GPU",routine);
+  return out;
 #endif /* HAVE_GPU */
 
   /* How big are things? assumes 2nd polarization the same as first */
-  ObitInfoListGetTest(inUV->info, "nVisPIO",  &type, dim, &iNumVis);
+  /*ObitInfoListGetTest(inUV->info, "nVisPIO",  &type, dim, &iNumVis);*/
+  iNumVis = GPU_NVISPIO;
   numVis = (odouble)iNumVis;
   lenVis = (odouble)inUV->myDesc->lrec;
   im = mosaic->images[0];
@@ -1178,6 +1186,7 @@ void ObitUVGridInit  (gpointer inn)
   in->BeamTaperUV  = 0.0;
   in->BeamNorm     = 1.0;
   in->doGPUGrid    = FALSE;
+  in->doBeam       = FALSE;
   in->gridInfo     = NULL;
   in->cuda_device  = 0;
 

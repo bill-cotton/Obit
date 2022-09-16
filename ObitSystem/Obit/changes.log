@@ -5126,3 +5126,52 @@ Variable cleanup: tasks
     BeamCor.c MazrCal.c Quack.c ComBeam.c SYGain.c FAlign.c AutoFlag.c
 26 Aug 2022, svn 640
 
+Summary:  GPU gridding bug fixes, Fix to BDF Antenna positions
+  Obit/src/ObitCUDAGrid.c Obit/include/ObitCUDAGrid.h
+    Fix screwup
+  Obit/include/ObitGPUGrid.h Obit/include/ObitUVGrid.h
+  Obit/src/ObitGPUGrid.c Obit/src/ObitImageUtil.c 
+  Obit/src/ObitUVGrid.c Obit/src/ObitUVImager.c
+    Avoid recursive class definition (sorta)
+  Obit/src/ObitCUDAGrid.cu
+    3 axis in gridding
+  Obit/include/ObitImageDef.h 
+    missing redefinition of myGrid member
+  Obit/src/ObitDConClean.c
+    Add windows from CLEAN file also to outliers
+  Obit/src/ObitDConCleanWindow.c Obit/include/ObitDConCleanWindow.h
+    Make definition of WindowListElem public
+  Obit/include/ObitDConCleanVisLineDef.h Obit/src/ObitDConCleanVisLine.c
+  Obit/src/ObitDConCleanVis.c Obit/src/ObitDConCleanPxList.c Obit/src/ObitImageUtil.c
+  Obit/src/ObitUVGrid.c 
+  Obit/tasks/Imager.c Obit/TDF/Imager.TDF
+    Implement GPU gridding, lots of bug fixes in general.
+  Obit/tasks/BDFIn.c Obit/include/ObitSDMData.h Obit/src/ObitSDMData.c
+    Improve pointing table lookup
+  Obit/include/ObitGPUGrid.h 
+    Add chDone to ObitGPUGridSetGPUStruct call
+  Obit/include/ObitUVGridDef.h 
+    Add isDone member
+  Obit/include/ObitUVImagerDef.h
+    Add info member
+  Obit/src/ObitDConCleanVisLine.c
+    Put chDone array on imager uvdata info.
+  Obit/src/ObitGPUGrid.c
+    Add chDone to ObitGPUGridSetGPUStruct call
+    Use chDone to set freqPlane to inhibit gridding plane
+  Obit/src/ObitImageUtil.c Obit/src/ObitUVGrid.c
+    Use chDone to avoid remaking channels already done.
+  Obit/src/ObitSkyModel.c
+    Cleanup
+  Obit/src/ObitUVGridMF.c Obit/include/ObitUVGridMFDef.h
+    Make sure nSpec at least 1.  cleanup
+     add isDone flags
+  Obit/src/ObitUVImager.c
+    Image:Add chDone to infoList items copied
+  Obit/include/ObitDConCleanClassDef.h Obit/include/ObitDConClean.h Obit/include/ObitDConCleanVisLine.h
+  Obit/src/ObitDConClean.c Obit/src/ObitDConCleanVis.c 
+     Function to reset channel done flags 
+  Obit/src/ObitImageMosaic.c 
+     fix type of "doGrid" from float to boolean
+
+15 Sep 2022, svn 641

@@ -39,7 +39,7 @@ X    SysPower.xml
 X    Weather.xml
  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2019                                          */
+/*;  Copyright (C) 2010-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2195,25 +2195,28 @@ gboolean ObitSDMDataSelCode  (ObitSDMData *in, olong iMain, gchar *selCode)
 
 /**   
  * Look up pointing for an antenna at a given time (JD) in PointingTab
+ * Starts search from somewhere before next.
  * \param  in      ASDM object
  * \param  JD      Time as JD in question
  * \param  ant     Antenna Id
+ * \param  next    Next entry in table to check
  * \param  err     Obit error/message stack
  * \return pointer to selected table row entry or NULL if failed.
  */
 ASDMPointingRow* ObitSDMDataPointingLookup  (ObitSDMData *in, odouble JD, olong ant, 
-					     ObitErr *err)
+					     olong *next, ObitErr *err)
 {
   ASDMPointingRow* out=NULL;
-  olong i, itab;
+  olong i, itab, start;
   odouble *timeI;
   /*gchar *routine = "PointingLookup";*/
 
   if (err->error) return out;
 
   /* Find matching entry */
+  start = MAX(0,(*next)-500);  /* Can't count on them being ordered */
   itab = -1;
-  for (i=0; i<in->PointingTab->nrows; i++) {
+  for (i=start; i<in->PointingTab->nrows; i++) {
     timeI = in->PointingTab->rows[i]->timeInterval;
     if ((in->PointingTab->rows[i]->antennaId==ant) &&
 	(timeI[0]-0.5*timeI[1]<=JD) && (timeI[0]+0.5*timeI[1]>=JD))
@@ -2224,6 +2227,7 @@ ASDMPointingRow* ObitSDMDataPointingLookup  (ObitSDMData *in, odouble JD, olong 
 		      "%s: Failed to find pointing for ant %d JD %lf", 
 		      routine, ant, JD); */
   if (itab>=0) out = in->PointingTab->rows[itab];
+  *next = itab;  /* How far did I get? */
   return out;
 } /* end ObitSDMDataPointingLookup */
 

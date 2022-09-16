@@ -26,9 +26,9 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitGPUGrid.h"
 #include "ObitUVGrid.h"
 #include "ObitUVGridMF.h"
-#include "ObitGPUGrid.h"
 #include "ObitImageMF.h"
 #include "ObitImageWB.h"
 #if HAVE_GPU==1  /* Compiled with GPU?*/
@@ -186,15 +186,14 @@ void ObitGPUGridClone  (ObitGPUGrid *in, ObitGPUGrid *out, ObitErr *err)
  * Creates an ObitGPUGrid 
  * \param name    An optional name for the object.
  * \param nfacet  Total number of facets
- * \param image   output Image
+ * \param iimage  output Image as Obit
  * \param UVin    Input data
- * \param nchan   Total number of channels
- * \param nVisPIO Number of visibilities per load
  * \return the new object.
  */
-ObitGPUGrid* ObitGPUGridCreate (gchar* name, olong nfacet, ObitImage *image, ObitUV *UVin)
+ObitGPUGrid* ObitGPUGridCreate (gchar* name, olong nfacet, Obit *iimage, ObitUV *UVin)
 {
   ObitGPUGrid* out;
+  ObitImage *image = (ObitImage*)iimage;
   ObitUVDesc *uvDesc = UVin->myDesc;
   ObitImageDesc *imDesc = image->myDesc;
   olong nchan, nif, nVisPIO, lenvis, nplane;
@@ -206,7 +205,7 @@ ObitGPUGrid* ObitGPUGridCreate (gchar* name, olong nfacet, ObitImage *image, Obi
   out->cudaInfo = g_malloc0(sizeof(CUDAGridInfo));
 
   /* Number of vis per IO */
-  nVisPIO = MIN(2048, uvDesc->nvis);
+  nVisPIO = MIN(GPU_NVISPIO, uvDesc->nvis);
   /*ObitInfoListGetTest (UVin->info, "nVisPIO", &type, dim, &nVisPIO);*/
   /*  ObitInfoListAlwaysPut (UVin->info, "nVisPIO", type, dim, &nVisPIO);*/
   nchan = uvDesc->inaxes[uvDesc->jlocf];  /* number of channels */
@@ -259,6 +258,8 @@ ollong ObitGPUGridSetGPU (int cuda_device)
  * image.
  * \param in       Object to initialize
  * \param uvgrid   ObitUVGrid with parameters as (Obit*)
+ * \param chDone   Array of nplane flags indicating which channels are done.
+ *                 If NULL then no channels are "done".
  * \param ifacet   0-rel Facet number, initialize on 0, only even if doBeam
  * \param nfacet   Number of facets
  * \param nplane   Number of planes in grid
@@ -269,7 +270,7 @@ ollong ObitGPUGridSetGPU (int cuda_device)
  * \param doBeam   TRUE if also make Beams,image in alternating entries
  * \param err      ObitErr stack for reporting problems.
  */
-void ObitGPUGridSetGPUStruct (ObitGPUGrid *in, Obit *uvgrid,
+void ObitGPUGridSetGPUStruct (ObitGPUGrid *in, Obit *uvgrid, gboolean *chDone,
 			      olong ifacet, olong nfacet, olong nplane, 
 			      ObitUV *UVin, Obit *imagee, gboolean doBeam, ObitErr *err)
 {
@@ -294,7 +295,7 @@ void ObitGPUGridSetGPUStruct (ObitGPUGrid *in, Obit *uvgrid,
   gchar *routine="ObitGPUGridSetGPUStruct";
 
   /* Number of vis per IO */
-  nVisPIO = MIN(2048, uvDesc->nvis);
+  nVisPIO = MIN(GPU_NVISPIO, uvDesc->nvis);
   ObitInfoListGetTest (UVin->info, "nVisPIO", &type, dim, &nVisPIO);
   oldnVisPIO = nVisPIO;
 
@@ -374,6 +375,13 @@ void ObitGPUGridSetGPUStruct (ObitGPUGrid *in, Obit *uvgrid,
       for (i=0; i<nchanIF; i++) 
 	gridInfo->h_sigma1[i] = gridInfo->h_sigma2[i] = gridInfo->h_sigma3[i] = 0;
     }
+      /* Are any of the grids already done? Give invalid plane number.  CHECK*/
+    if (chDone) {
+      for (i=0; i<nchanIF; i++) {
+	if (chDone[i]) gridInfo->h_freqPlane[i] = nplane+100;
+      }
+    } /* end channel done flag */
+  
   } /* end create/allocate */
 
   gpuInfo   = in->cudaInfo;           /* pointer to host structure */
@@ -390,7 +398,7 @@ void ObitGPUGridSetGPUStruct (ObitGPUGrid *in, Obit *uvgrid,
   facetInfo[ifacet]->uscale     = uvGrid->UScale; /* facet (nx,ny) specific */
   facetInfo[ifacet]->vscale     = uvGrid->VScale;
   facetInfo[ifacet]->wscale     = uvGrid->WScale;
-/* If doBeam alternating beam/image pairs
+  /* If doBeam alternating beam/image pairs
      per facet stuff */
   facetInfo[ifacet]->nx = nx;
   facetInfo[ifacet]->ny = ny;
@@ -650,3 +658,5 @@ void ObitGPUGridClear (gpointer inn)
     ParentClass->ObitClear (inn);
   
 } /* end ObitGPUGridClear */
+
+

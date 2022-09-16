@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2013                                               */
+/*;  Copyright (C) 2013,2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -183,6 +183,8 @@ void ObitDConCleanVisLineSub(ObitDConClean *in, ObitErr *err);
 /** Public: Any valid Images? */
 gboolean ObitDConCleanVisLineValid(ObitDConCleanVisLine *in);
 
+/** Public: Reset channel done. */
+void ObitDConCleanVisLineResetChDone(ObitDConClean *in, ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.
