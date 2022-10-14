@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2020                                          */
+/*;  Copyright (C) 2010-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -2387,6 +2387,9 @@ static gboolean MFResetSkyModel(ObitDConCleanVis *inn, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM];
   olong *itemp=NULL, nfield;
   ObitTableCCRow *CCRow = NULL;
+  ObitImageMosaic *mosaic=NULL;
+  ObitSkyModel *skyModel=NULL;
+  ObitDConCleanPxList *Pixels=NULL;
   gchar *routine = "MFResetSkyModel";
 
   /* error checks */
@@ -2399,52 +2402,67 @@ static gboolean MFResetSkyModel(ObitDConCleanVis *inn, ObitErr *err)
   if (err->error) goto cleanup;
 
   /* Does the secondary (UPol) sky model need resetting? */
-  if (!in->isDual) return doSub;
+  if ((in->reuseFlux<=0.0) && (!in->isDual)) return doSub;
 
-  /* Reset SkyModel parameters */
-  nfield = in->mosaic2->numberImages;
-  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
-  for (i=0; i<nfield; i++) in->skyModel2->startComp[i] = 1;
-  for (i=0; i<nfield; i++) in->skyModel2->endComp[i]   = 0;
+  /* Pointers */
+  if (in->isDual) {
+    mosaic   = in->mosaic2;
+    skyModel = in->skyModel2;
+    Pixels   = in->Pixels2;
+  } else {
+    mosaic   = in->mosaic;
+    skyModel = in->skyModel;
+    Pixels   = in->Pixels;
+  } /* end isDual/restarting */
+
+  nfield = mosaic->numberImages;
   itemp = ObitMemAlloc(nfield*sizeof(olong));  /* temp. array */
-  dim[0] = nfield;
-  for (i=0; i<nfield; i++) itemp[i] = 1;
-  ObitInfoListAlwaysPut(in->skyModel2->info, "BComp", OBIT_long, dim, itemp);
-
-  /* Channel/IF selection */
   dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
-  it = 1;
-  ObitInfoListAlwaysPut(in->skyModel2->info, "BChan", OBIT_long, dim, &it);
-  ObitInfoListAlwaysPut(in->skyModel2->info, "BIF",   OBIT_long, dim, &it);
-  it = 0;
-  ObitInfoListAlwaysPut(in->skyModel2->info, "EChan", OBIT_long, dim, &it);
-  ObitInfoListAlwaysPut(in->skyModel2->info, "EIF",   OBIT_long, dim, &it);
 
-  for (i=0; i<nfield; i++) itemp[i] = 0;  /* initial number to subtract */
+  /* Reset U if isDual */
+  if (in->isDual) {
+    /* Reset SkyModel parameters */
+    for (i=0; i<nfield; i++) skyModel->startComp[i] = 1;
+    for (i=0; i<nfield; i++) skyModel->endComp[i]   = 0;
+    dim[0] = nfield;
+    for (i=0; i<nfield; i++) itemp[i] = 1;
+    ObitInfoListAlwaysPut(skyModel->info, "BComp", OBIT_long, dim, itemp);
+    
+    /* Channel/IF selection */
+    dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    it = 1;
+    ObitInfoListAlwaysPut(skyModel->info, "BChan", OBIT_long, dim, &it);
+    ObitInfoListAlwaysPut(skyModel->info, "BIF",   OBIT_long, dim, &it);
+    it = 0;
+    ObitInfoListAlwaysPut(skyModel->info, "EChan", OBIT_long, dim, &it);
+    ObitInfoListAlwaysPut(skyModel->info, "EIF",   OBIT_long, dim, &it);
+    
+    for (i=0; i<nfield; i++) itemp[i] = 0;  /* initial number to subtract */
+  } /* End reset U if isDual */
 
   /* Check for reuse  */
-  if ((in->reuseFlux > 0.0) && (in->Pixels2)) {
-    in->Pixels2->currentIter = 0;
-    in->Pixels2->totalFlux   = 0.0;
+  if ((in->reuseFlux > 0.0) && (Pixels)) {
+    Pixels->currentIter = 0;
+    Pixels->totalFlux   = 0.0;
     ncomp = 0;
     sum = 0.0;
     for (i=0; i<nfield; i++) {
-      in->Pixels2->iterField[i] = 0;
-      in->Pixels2->fluxField[i] = 0.0;
+      Pixels->iterField[i] = 0;
+      Pixels->fluxField[i] = 0.0;
       
-      if (ObitTableCCIsA(in->Pixels2->CCTable[i])) {
-	ObitTableCCOpen (in->Pixels2->CCTable[i], OBIT_IO_ReadWrite, err);
+      if (ObitTableCCIsA(Pixels->CCTable[i])) {
+	ObitTableCCOpen (Pixels->CCTable[i], OBIT_IO_ReadWrite, err);
 	if (err->error) goto cleanup;
-	if (!CCRow) CCRow = newObitTableCCRow (in->Pixels2->CCTable[i]);
-	for (irow=1; irow<=in->Pixels2->CCTable[i]->myDesc->nrow; irow++) {
-	  ObitTableCCReadRow (in->Pixels2->CCTable[i], irow, CCRow, err);
+	if (!CCRow) CCRow = newObitTableCCRow (Pixels->CCTable[i]);
+	for (irow=1; irow<=Pixels->CCTable[i]->myDesc->nrow; irow++) {
+	  ObitTableCCReadRow (Pixels->CCTable[i], irow, CCRow, err);
 	  if (err->error) goto cleanup;
 	  if (fabs(CCRow->Flux) > in->reuseFlux) {
 	    itemp[i] = irow;
 	    ncomp++;
 	    sum += CCRow->Flux;
-	    in->Pixels2->iterField[i] = irow;
-	    in->Pixels2->fluxField[i] += CCRow->Flux;
+	    Pixels->iterField[i] = irow;
+	    Pixels->fluxField[i] += CCRow->Flux;
 	    /* Remember this as the brightest point is likely here */
 	    in->peakFlux = MAX (in->peakFlux, CCRow->Flux);
 	    doSub = TRUE;
@@ -2452,30 +2470,30 @@ static gboolean MFResetSkyModel(ObitDConCleanVis *inn, ObitErr *err)
 	}
 
 	/* Reset number of rows */
-	in->Pixels2->CCTable[i]->myDesc->nrow = itemp[i];
+	Pixels->CCTable[i]->myDesc->nrow = itemp[i];
 	/* The one that counts is in the IO */
-	((ObitTableDesc*)(in->Pixels2->CCTable[i]->myIO->myDesc))->nrow = itemp[i];
+	((ObitTableDesc*)(Pixels->CCTable[i]->myIO->myDesc))->nrow = itemp[i];
 	/* Mark as changed */
-	in->Pixels2->CCTable[i]->myStatus = OBIT_Modified;
+	Pixels->CCTable[i]->myStatus = OBIT_Modified;
    
-	ObitTableCCClose (in->Pixels2->CCTable[i], err);
+	ObitTableCCClose (Pixels->CCTable[i], err);
 	if (err->error) goto cleanup;
       }
     } /* end loop over fields */
     if ((ncomp>0) && (err->prtLv>1))
       Obit_log_error(err, OBIT_InfoErr,"Restart CLEAN with %d comps with %g Jy",
 		     ncomp, sum);
-    in->Pixels2->currentIter = ncomp;
-    in->Pixels2->totalFlux   = sum;
+    Pixels->currentIter = ncomp;
+    Pixels->totalFlux   = sum;
   } /* End check for reuse */
 
   /* Cleanup */
  cleanup:
-  ObitInfoListAlwaysPut(in->skyModel2->info, "EComp", OBIT_long, dim, itemp);
+  ObitInfoListAlwaysPut(skyModel->info, "EComp", OBIT_long, dim, itemp);
   CCRow = ObitTableCCRowUnref(CCRow);  
   itemp = ObitMemFree(itemp);  /* Deallocate */
   if (err->error) Obit_traceback_val (err, routine, in->name, doSub);
-   return doSub;
+  return doSub;
 } /* end MFResetSkyModel */
 
 /**

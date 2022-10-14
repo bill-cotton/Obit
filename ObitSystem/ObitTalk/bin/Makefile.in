@@ -112,8 +112,8 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-bin_SCRIPTS = ObitTalk ObitTalkServer
-EXTRA_DIST = ObitTalk.in ObitTalkServer.in
+bin_SCRIPTS = ObitTalk ObitTalk3 ObitTalkServer
+EXTRA_DIST = ObitTalk.in ObitTalk3 ObitTalkServer.in
 
 # Files that should be removed, but which Automake does not know.
 CLEANFILES = $(bin_SCRIPTS)
@@ -303,6 +303,13 @@ ObitTalk: $(srcdir)/ObitTalk.in Makefile
 	chmod +x ObitTalk.tmp
 	chmod -w ObitTalk.tmp
 	mv -f ObitTalk.tmp ObitTalk
+
+ObitTalk3: $(srcdir)/ObitTalk3.in Makefile
+	rm -f ObitTalk3 ObitTalk3.tmp
+	$(edit) $(srcdir)/ObitTalk3.in >ObitTalk3.tmp
+	chmod +x ObitTalk3.tmp
+	chmod -w ObitTalk3.tmp
+	mv -f ObitTalk3.tmp ObitTalk3
 
 ObitTalkServer: $(srcdir)/ObitTalkServer.in Makefile
 	rm -f ObitTalkServer ObitTalkServer.tmp

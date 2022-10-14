@@ -2,7 +2,7 @@
 /* Obit Radio interferometry calibration software                     */
 /* applies user-selected corrections to the calibration CL table      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2014                                          */
+/*;  Copyright (C) 2012-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -129,26 +129,26 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Modify */
    CLCorDoCor (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+   if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Write history */
   CLCorHistory (myInput, inData, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput); 
@@ -186,7 +186,7 @@ ObitInfoList* CLCorIn (int argc, char **argv, ObitErr *err)
 
   /* error checks */
   g_assert(ObitErrIsA(err));
-  if (err->error) return list;
+  if (err->error) {return list;}
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
@@ -649,7 +649,6 @@ void CLCorDoCor (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   ObitInfoType type;
   olong iCLver, oCLver, inCLRow, outCLRow, ver, numPCal, numOrb;
   ofloat fblank = ObitMagicF();
-  odouble freq;
   olong i, j, itemp, nif, nstok, count;
   gint32 dim[MAXINFOELEMDIM];
   ObitTableCL *iCLTable=NULL, *oCLTable=NULL;
@@ -720,8 +719,6 @@ void CLCorDoCor (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   if (inData->myDesc->jlocs>=0) nstok = inData->myDesc->inaxes[inData->myDesc->jlocs];
   else nstok = 1;
   nstok = MIN (nstok, 2);
-  if (inData->myDesc->jlocf>=0) freq = inData->myDesc->crval[inData->myDesc->jlocf];
-  else freq = 1.0;
   control.desc = inData->myDesc;
   ObitInfoListGet(myInput,  "EditStokes", &type, dim, control.Stokes, err);
   if (err->error) goto cleanup;

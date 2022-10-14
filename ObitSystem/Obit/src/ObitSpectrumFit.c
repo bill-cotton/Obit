@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2020                                          */
+/*;  Copyright (C) 2008-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1976,6 +1976,7 @@ static void NLFit (NLFitArg *arg)
   gsl_multifit_fdfsolver *solver=NULL;
   gsl_matrix *covar=NULL;
   gsl_vector *work=NULL;
+  gsl_matrix *J=NULL;
 #endif /* HAVE_GSL */ 
  
   /* Initialize output */
@@ -2104,7 +2105,18 @@ static void NLFit (NLFitArg *arg)
       
       /* Errors wanted? */
       if (arg->doError) {
-	gsl_multifit_covar (solver->J, 0.0, covar);
+#if HAVE_GSL2==1  /* Newer GSL*/
+	if (J) gsl_matrix_free (J);
+	J = gsl_matrix_alloc (arg->nfreq, nterm);
+	gsl_multifit_fdfsolver_jac(solver, J);
+#else
+	J = solver->J;
+#endif
+	gsl_multifit_covar (J, 0.0, covar);
+	/* Cleanup */
+#if HAVE_GSL2==1
+	if (J) gsl_matrix_free (J);
+#endif /* HAVE_GSL2 */ 
 	for (i=0; i<nterm; i++) {
 	  arg->coef[arg->nterm+i] = sqrt(gsl_matrix_get(covar, i, i));
 	  /* Clip to sanity range */
@@ -2166,6 +2178,7 @@ static void NLFitBP (NLFitArg *arg)
   gsl_multifit_fdfsolver *solver;
   gsl_matrix *covar;
   gsl_vector *work;
+  gsl_matrix *J=NULL;
 #endif /* HAVE_GSL */ 
  
   /* determine weighted average, count valid data */
@@ -2241,7 +2254,17 @@ static void NLFitBP (NLFitArg *arg)
   
   /* Errors wanted? */
   if (arg->doError) {
-    gsl_multifit_covar (solver->J, 0.0, covar);
+#if HAVE_GSL2==1  /* Newer GSL*/
+	if (J) gsl_matrix_free (J);
+	J = gsl_matrix_alloc (arg->nfreq, arg->nterm);
+	gsl_multifit_fdfsolver_jac(solver, J);
+#else
+	J = solver->J;
+#endif
+    gsl_multifit_covar (J, 0.0, covar);
+#if HAVE_GSL2==1
+	if (J) gsl_matrix_free (J);
+#endif /* HAVE_GSL2 */ 
     for (i=0; i<nterm; i++) {
       arg->coef[arg->nterm+i] = sqrt(gsl_matrix_get(covar, i, i));
       /* Clip to sanity range

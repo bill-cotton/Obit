@@ -1287,7 +1287,10 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   } else {  /* GPUGrid */
     NPIO = GPU_NVISPIO;
     ObitInfoListAlwaysPut (inUV->info, "nVisPIO",  OBIT_long, dim,  (gpointer)&NPIO);
-  } /* end doGPUGrid */
+    /* Close to make sure updated */
+    ObitUVClose(inUV, err);
+    if (err->error) goto cleanup;
+ } /* end doGPUGrid */
   
   /*  Open uv data for first if needed */
   if ((inUV->myStatus!=OBIT_Active) && (inUV->myStatus!=OBIT_Modified)) {

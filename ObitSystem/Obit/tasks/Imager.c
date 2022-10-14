@@ -1524,7 +1524,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong        ochan, ichan, nchan, chInc, chAvg, BChan, EChan, RChan, SChan,
     bchan, echan, istok, kstok, nstok, bstok, estok, nTest, nParTh, nPar=1, 
-    nThread, nChLeft;
+    nThread, nChLeft, nChDo;
   gboolean     first, doFlat, btemp, autoWindow, Tr=TRUE, doVPol, do3D, formalI,
     doLine;
   olong        ip, k, inver, outver, plane[5] = {0,1,1,1,1};
@@ -1680,15 +1680,17 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   for (ichan = RChan; ichan<=EChan; ichan+=chInc*nParTh) {
     
     /* set selected channels */
+    nChLeft = (EChan-ichan) + 1;
+    nChDo = MIN (nParTh, nChLeft);
     bchan = ichan; 
-    echan = bchan + chAvg*nParTh - 1;
+    echan = bchan + chAvg*nChDo - 1;
     echan = MIN (echan, nchan);
     dim[0] = 1;
     ObitInfoListAlwaysPut (inData->info, "BChan", OBIT_long, dim, &bchan);
     ObitInfoListAlwaysPut (inData->info, "EChan", OBIT_long, dim, &echan);
      
     Obit_log_error(err, OBIT_InfoErr, " **** Start Channels %d - %d, avg %d nchan %d", 
-		   bchan, echan, chAvg, nParTh);
+		   bchan, echan, chAvg, nChDo);
    
     /* Calibrate/edit/copy data as correlator data to output file */
     dim[0] = 4;
@@ -1758,7 +1760,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
 	} else {   /* "Line" parallel channel CLEAN */
 	  nPar = MIN(nParTh, (olong)(0.999 + (ofloat)nChLeft/chAvg));
 	  myClean = (ObitDConCleanVis*)ObitDConCleanVisLineCreate("Clean Object", 
-								  nPar, chAvg, outData, err);
+								  nChDo, chAvg, outData, err);
 	/* Set number of allowed threads */
 	ObitThreadAllowThreads (outData->thread, nPar);
 	}
@@ -1780,7 +1782,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
 	saveDisplay = ObitDisplayRef(myClean->display);
 	myClean = ObitDConCleanVisUnref(myClean);
 	myClean = (ObitDConCleanVis*)ObitDConCleanVisLineCreate("Clean Object", 
-								nPar, chAvg, outData, err);
+								nChDo, chAvg, outData, err);
 	ObitDisplayUnref(myClean->display);
 	myClean->display = ObitDisplayRef(saveDisplay);
 	saveDisplay = ObitDConCleanVisUnref(saveDisplay);

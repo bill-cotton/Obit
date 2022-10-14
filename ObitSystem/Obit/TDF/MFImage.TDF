@@ -4,7 +4,7 @@
 ;! Obit wideband imaging
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2010-2021
+;;  Copyright (C) 2010-2022
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -54,11 +54,11 @@ souCode                             Calibrator code '    '=>any
 **PARAM** float 2
 timeRange                           Time range to process.
 **PARAM** str 4
-Stokes                              Stokes to process
+Stokes                              Stokes to process, ' '=>'I'.
 **PARAM** int 1
 FreqID                              Freq. ID to select.
 **PARAM** int 1
-BChan            0.0     8192.0     Low freq. channel 0 for cont.
+BChan            0.0     8192.0     Low freq. channel, 0 for cont.
 **PARAM** int 1
 EChan            0.0     8192.0     Highest freq channel
 **PARAM** int 1
@@ -122,7 +122,7 @@ out2Disk                            Output uvdata disk drive #
 
                                        Imaging info
 **PARAM** float 1  **DEF** 0.05
-maxFBW   *                         Max. fractional IF center bandwidth
+maxFBW   *                         Max. fractional bandwidth
 **PARAM** float 1
 FOV             0.0       180.     Radius of field to image (deg)
 **PARAM** int 1
@@ -143,8 +143,6 @@ RAShift                            Right ascension shift (AIPS convention)
 **PARAM** float 64
 DecShift                           Declination shift (AIPS convention)  
                                    (asec) (per field)
-
-
 **PARAM** float 3
 UVTaper         0.                 (U,V) Gaussian taper klambda
 **PARAM** float 1  **DEF** 0.8
@@ -169,9 +167,9 @@ doFull                             Make full field (flattened) image?
 **PARAM** boo 1  **DEF** T
 doRestore                          Restore CCs to images?
 **PARAM** boo 1 **DEF** T
-doFit                              Fit spectrum to CLEANed planes??
+doFit                              Fit spectrum to CLEANed planes?
 **PARAM** boo 1 **DEF** F
-do3D                               3D imaging, else 2D
+do3D                               3D imaging, else 2D (Use 2D)
 **PARAM** str 128  **DEF** NVSSVZ.FIT
 Catalog                            Outlier catalog name (NVSSVZ.FIT)
 **PARAM** int 1 **DEF** 1
@@ -256,7 +254,7 @@ avgIF                              Avg. IFs?
 **PARAM** boo 1 **DEF** T
 noNeg                              exclude negative summed CLEAN comps?
 **PARAM** boo 1  **DEF** F
-doMGM                              Apply mean gain modulus
+doMGM                              Apply mean gain modulus in selfcal
 **PARAM** float 1  **DEF** 5.0
 minSNR                             Min. allowed SNR in selfcal
 **PARAM** int 1 **DEF** 3
@@ -294,15 +292,21 @@ Tapers            0                List of tapers (pixels)
 MResKnob          0                Multiresolution controls 
 **PARAM** boo 1 **DEF** F
 doQU             0                 CLEAN Q&U in parallel
+**PARAM** boo 1 **DEF** F
+doRestart                          Restarting CLEAN?
+**PARAM** int 1 
+nTotal            0                Number of Facets in restart
+**PARAM** float 1
+reFlux           0                 Min. restart CC flux density (Jy)
 
 **PARAM** int 1 
-prtLv             0                Print level in selfcal
+prtLv             0                Print level
 **PARAM** str 128 **DEF** ObitView
 dispURL                            Display server URL
 **PARAM** int 1 **DEF** 1
-nThreads            0              Number of threads to use
+nThreads            0              Max. number of threads to use
 **PARAM** boo 1 **DEF** F
-doGPU            0                 Use GPU if available
+doGPU            0                 Use GPU for sky model if available
 **PARAM** boo 1 **DEF** F
 doGPUGrid        0                 Use GPU for gridding if available
 **PARAM** str 128
@@ -353,7 +357,7 @@ Adverbs:
   inName.....Input multisource UV data file
   inClass....Input UV data file (class).      Standard defaults.
   inSeq......Input UV data file (seq. #).     0 => highest.
-  inDisk.....Input UV data file disk drive #. 0 => any.
+  inDisk.....Input UV data file disk drive #. Must specify.
 
        Data selection
   doPS.......If true, the PS (Processing Summary) table,
@@ -386,8 +390,7 @@ Adverbs:
   FreqID.....Frequency identifier to select , <=0=>any
   BChan......First channel number to image, 0=>1.  Channel numbers are 1
              relative as defined in the input data file.
-  EChan......Highest channel number to to include in image,
-             0 => max 
+  EChan......Highest channel number to include in image, 0 => max 
   BIF........First IF to process. 0=>1
   EIF........Highest IF to process 0=> do BIF to highest.
              Note: not all data sets will have IFs.
@@ -457,7 +460,7 @@ Adverbs:
   doLast.....If True do last CLEAN deconvolution after finishing self-cal.
   doComRes...If True attempt to force common resolution in frequency by
              convolving the residuals down to the the target CLEAN resolution.
-  doFull.....If True make full field (flattened) image
+  doFull.....If True make full field (flattened) image, else leave facets.
 
       Output files
   outDType..'FITS' or 'AIPS'  type of output
@@ -491,7 +494,7 @@ Adverbs:
   out2Disk...The disk drive # of output uv date. no default
 
    The following control imaging:
-  maxFBW.....Maximum allowed IF center fractional bandwidth.
+  maxFBW.....Maximum allowed fractional bandwidth.
              This parameter is used to divide the visibility 
              spectrum into image channels.  
              A value <0 =>use the IFs as the channelization.
@@ -501,10 +504,10 @@ Adverbs:
              parameters; you should have a good reason for doing
              this as the default behavior is usually what is
              desired.
-  xCells     [optional] Image cell spacing in X in asec.  
+  xCells     [optional] Image cell spacing in X (RA) in asec.  
              If left 0 then the program will compute the value 
              from the data.  All fields use the same value.
-  yCells     [optional] Image cell spacing in Y in asec. 
+  yCells     [optional] Image cell spacing in Y (dec) in asec. 
              If left 0 then the program will compute the value 
              from the data.  All fields use the same value.
   nx.........[optional] Number of x pixels in each field specified.
@@ -512,7 +515,7 @@ Adverbs:
   RAShift....[optional] RA shift (asec) per field
   DecShift...[optional] Dec shift (asec) per field
   Catalog....Name of FITS file containing outlier catalog
-             Default  NVSSVZ.FIT
+             Default  NVSSVZ.FIT, AllSkyVZ.FIT is better
              This must be in the form of an "AIPS VZ" table.
              'None' =. Use no outliers
   CatDisk......FITS disk number for Catalog, 0=>cwd, 1=>$FITS
@@ -524,7 +527,8 @@ Adverbs:
   OutlierSize.. Size in pixels of confusing fields, default 50
                 NB: This should not be so large as to cause the 
                 outlying fields to be larger than the fields tiling
-                the FOV or the program may die.
+                the FOV or the program may die.  
+                A few hundred is good.
   UVTaper....(U,V) Gaussian taper (kilo-lambda) at 30% level
              as (major, minor axis, position angle)
   MFTaper....Multi frequency taper factor to control the frequency 
@@ -564,8 +568,7 @@ Adverbs:
 
    The following control CLEANing:
   CLEANFile..If non blank, the path of a text file containing positions
-             and radii of CLEAN windows to be added to the Fly's Eye 
-             (i.e NOT outlyers or specified facets).  
+             and radii of CLEAN windows to be added to the facets.
 	     One position per line:
                hh mm ss.s dd mm ss.s radius
                where radius is radius of round box in pixels,
@@ -606,7 +609,7 @@ Adverbs:
   Beam......CLEAN restoring beam major, minor axis size in asec and
             the position angle.  If zeroes, fit beam.
   targBeam..Target CLEAN beam to be used in frquency dependent weighting.
-            The actual bean will be different, usually somewhat smaller.
+            The actual beam will be different, usually somewhat smaller.
   Reuse.....If >0 then each cycle of self cal after the first will
             begin with all summed components whose abs value exceeds
             Reuse*RMS(Field 1). Default 1.0e9
@@ -615,7 +618,7 @@ Adverbs:
             use with caution.
   autoCen...If the sum of the clean components within 1.5 pixels 
             of any pixel exceeds autoCen and is not within 0.05 of a cell
-            of a pixel then the image is  remade and deconcolved with the 
+            of a pixel then the image is  remade and deconvolved with the 
             bright sources (>autoCen, one per facet) on a pixel.
             This is necessary to achieve high dynamic range.
             If the initial dirty image has a pixel brighter than autoCen
@@ -630,7 +633,7 @@ Adverbs:
                computation; may degrade dynamic range.
             '    ' allows the program to use the fastest
                method.
-  PBCor......Apply Frequency dependent primary beam corrections?
+  PBCor......Apply Frequency dependent primary beam corrections when done?
              These are when fitting spectra to the pixels.
   antSize....Diameter of antenna for PBCor (m), default = 25
              Used in the final fitting.
@@ -670,7 +673,7 @@ Adverbs:
   maxASCLoop..Min. peak flux density required for phase self cal (Jy)
   solAInt.....A&P SC Solution interval (min)
   solAType....A&P SC Solution Type: '  ', 'L1', 
-  solAMode....A&P SC Solution Mode:'A&P', 'P', 'P!A',, 'DELA'
+  solAMode....A&P SC Solution Mode:'A&P', 'P', 'P!A', 'DELA'
   refAnt......Reference antenna number for selfcal
   WtUV........Weighting (wrt 1) to use outside of basic uv range in SC
   avgPol......Average Polarizations in self calibration?
@@ -742,8 +745,8 @@ Adverbs:
               The comparison is performed on the facet at each 
               resolution with the highest "quality".
   nTaper......Number of resolutions expressed as the number of tapers
-              to be applied to the data
-  Tapers......List of circular Gaussian tapers in (x) pixels.
+              to be applied to the data.
+  Tapers......List of circular Gaussian tapers in pixels.
   MResKnob....Controls on selecting resolution to be CLEAned next.
               [0] Bias towards higher resolution, 0=>0.2
                   As the CLEAN progresses, this factor is reduced by
@@ -755,6 +758,19 @@ Adverbs:
               may be more robust to large Faraday rotation than
               CLEANing separately but takes more resources.
 	      This mode does not support SDI or CLEAN middle loops.
+
+                       Restarting
+   In a limited range of circumstances CLEANing can be restarted, 
+      limitations:
+      - previous image not "flattened" -  must still have facets
+      - no changes in data selection
+      - outputs must be fully specified
+  doRestart...If True, restart CLEAN
+  nTotal......The number of facets with which to restart, if zero
+              use the standard definition; if autoCen facets were 
+              created in the previous run, they should be included here.
+  reFlux......Minimum flux density components to use in restart (Jy).
+              This is applied to individual components, not sums on cells. 
 
                           Interactive display
   dispURL.....The URL of the display server to use. "None"=>none
@@ -770,6 +786,7 @@ Adverbs:
               restarted by creating a file from the command line:
               % touch /tmp/MFImage.doTV
               This will be deleted when the display restarts.
+
   nThreads....If The Obit libraries are compiled with multiple
               thread operation enabled, this parameter sets the 
               number of threads that can be used for parallel 
@@ -777,20 +794,19 @@ Adverbs:
               NB: This only improves performance if there are 
               multiple processors and/or cores in the host.
   doGPU.......If software is built for a GPU and one is available
-              True=use it for the DFT model calculation, otherwise 
-              use CPU
+              True=> use it for the DFT model calculation, 
+              otherwise use the CPU
   doGPUGrid...If software is built for a GPU and one is available
-              True=use it for gridding visibiilities.
+              True=use it for gridding visibilities.
   taskLog.....Log file to write messages to INSTEAD of the terminal
               This is useful in long runs or batch files.
               Path is absolute or relative to where the task 
               executes.
   noScrat.....A list of AIPS disk numbers on which you do not 
               wish scratch files
-  nImaged.....output, Number of sources/pointings successfully 
+  nImaged.....Output, number of sources/pointings successfully 
               imaged
 ----------------------------------------------------------------
-NB: The following is not all yet implemented
 MFImage Imaging task for radio interferometer
 Documenter:  W. D. Cotton,  NRAO
 Related Programs: 
@@ -801,10 +817,8 @@ Related Programs:
    2) Edit (optional)
    3) Image and deconvolve
       - Imaging consists of a mosaic of fields covering FOV
-      - Additional fields are added for NVSS sources
-      - This step may be repeated if the peak in any of the fields
-        exceeds a specified limit (BPARM(1)) then the images 
-        are remade, if necessary, to center the peaks on a pixel.
+      - Additional fields are added for sources specified by
+        Catalog, CatDisk, Outlier???
    4) Self calibration
       - Use CLEAN model
       - Phase self calibrate
@@ -813,24 +827,18 @@ Related Programs:
       - Use CLEAN model
       - Phase self calibrate
       - Image and deconvolve
-   6) Ipol editing
-      - Subtract latest CLEAN model
-      - Clip
-      - Add latest CLEAN model back
-      - Correct for frequency dependent antenna gain.
-   7) Final image and deconvolve
-   8) Force residuals to the target resolution
-   9) Reject weak isolated components (CCFILT), subtract
-      surviving components and restore.
-  10) "Flatten" the field images onto the output image.
-  11) Image, deconvolve and flatten Q polarization is requested
-  12) Image, deconvolve and flatten U polarization is requested
+   6) Final image and deconvolve
+   7) [optional ]Force residuals to the target resolution
+   8) [optional] Reject weak isolated components (CCFilt), 
+      subtract surviving components and restore.
+   9) [optional] "Flatten" the field images onto the output image.
+  10) [optional] Fit spectrum in each pixel.
+  11) Image, deconvolve and flatten Q polarization if requested
+  12) Image, deconvolve and flatten U polarization if requested
 
-Note: until step 8) all model calculation correct for IF
+Note: until step 7) all model calculation correct for IF
 dependent primary beam corrections.
-Note: using multi-resolution Clean will turn off any requested 
-self-calibration (NGAUS>1).
-Note: sime number of failures are tolerated if multiple sources
+Note: some number of failures are tolerated if multiple sources
 are being processed; see PS table for summary.
 
    The products of this task are a CLEAN image and a calibrated
@@ -866,7 +874,7 @@ in
    Wakker, B.P., Schwarz, U.J. 1998, "The Multi-Resolution Clean and
       its application to the short-spacing problem in interferometry",
       Astron.Ap., 200, 312.
-IMAGR offers variants of both of these methods.
+MFImage offers variants of both of these methods.
 
 See SDIGain:
 The SDI Clean proposes to avoid the bias against adjacent pixels by
@@ -933,7 +941,7 @@ Frequency Dependent Resolution
 proportional to the frequency but for the algorithm used in this
 program to work properly, the resolution must be at least
 approximately constant.
-   There are two means provided to attempt this, the patameter,
+   There are two means provided to attempt this, the parameter,
 MFTaper which is used to adjust an algorithm attemption to give
 constant resolution.  The default value, 0.8, is approximately correct
 for VLA uv coverage but depends in detail on the actual coverage.  The
@@ -961,7 +969,7 @@ components, the beam psf in each plane of each facet is fitted by an
 elliptical Gaussian and the residual image convolved with a Gaussian
 which when convolved with the fitted psf will give the restoring beam.
 (Note, any dimensions for which the fitted beam is larger that the
-restoring beam are replaces by zero size).  The intent of this is that
+restoring beam are replaced by zero size).  The intent of this is that
 the residuals have the same resolution as the CLEANed portion of the
 image. 
 
@@ -979,7 +987,7 @@ addParam(mf,"UVITaper", paramVal=UVITaper, shortHelp="Inverse Taper", \
 	longHelp="  UVITaper....Inverse Taper\n"+ \
 	"              Taper inner portion of uv space\n"+ \
 	"              multiplies weight by "+ \
-	"              max(taper[0],1-exp(taper(13) dot BL))\n")
+	"              max(taper[0],1-exp(taper(1-3) dot BL))\n")
 
 Maximum Run time
 ----------------

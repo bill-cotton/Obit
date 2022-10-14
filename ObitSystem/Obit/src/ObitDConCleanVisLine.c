@@ -758,8 +758,8 @@ void ObitDConCleanVisLineSub(ObitDConClean *inn, ObitErr *err)
   }
 
   /* See what's finished */
-  done = isDoneLine(in->nArgs, (ChanFuncArg**)in->chArgs, in->chDone, err);
-  for (ichan=0; ichan<in->nArgs; ichan++) {
+  done = isDoneLine(in->nPar, (ChanFuncArg**)in->chArgs, in->chDone, err);
+  for (ichan=0; ichan<in->nPar; ichan++) {
     inArr = ((ChanFuncArg*)in->chArgs[ichan]);
     if (inArr->done) in->chDone[ichan] = TRUE;
   }
@@ -1146,7 +1146,7 @@ gboolean ObitDConCleanVisLineSelect(ObitDConClean *inn, ObitFArray **pixarray,
     in->Pixels->currentIter = MAX (in->Pixels->currentIter, inArr->in->Pixels->currentIter);
   } /* end loop over channels */
      
-  done = isDoneLine(in->nArgs, (ChanFuncArg**)in->chArgs, in->chDone, err);
+  done = isDoneLine(in->nPar, (ChanFuncArg**)in->chArgs, in->chDone, err);
 
   return done;
 } /* end ObitDConCleanVisLineSelect */
@@ -1674,7 +1674,7 @@ static gboolean PickNext2DLine(ObitDConCleanVis *inn, ObitErr *err)
 		     inArr0->in->cleanable[inArr0->in->currentFields[i]-1]);
   } /* end debug */
   if (t) { /* All done? */
-    done = isDoneLine(in->nArgs, (ChanFuncArg**)in->chArgs, in->chDone, err);
+    done = isDoneLine(in->nPar, (ChanFuncArg**)in->chArgs, in->chDone, err);
     if (done) return done;
   }
   /* Save selection on top level */
@@ -1722,7 +1722,7 @@ static gboolean PickNext2DLine(ObitDConCleanVis *inn, ObitErr *err)
   } /* End channel loop */    
   
   /* check if CLEAN done */
-  done = isDoneLine(in->nArgs, (ChanFuncArg**)in->chArgs, in->chDone, err); 
+  done = isDoneLine(in->nPar, (ChanFuncArg**)in->chArgs, in->chDone, err); 
 
   return done;
 } /* end PickNext2DLine */
@@ -1772,7 +1772,7 @@ static gboolean PickNext3DLine(ObitDConCleanVis *inn, ObitErr *err)
   } /* End channel loop */    
 
   /* check if CLEAN done */
-  done = isDoneLine(in->nArgs, (ChanFuncArg**)in->chArgs, in->chDone, err); 
+  done = isDoneLine(in->nPar, (ChanFuncArg**)in->chArgs, in->chDone, err); 
 
   return done;
 } /* end PickNext3DLine */

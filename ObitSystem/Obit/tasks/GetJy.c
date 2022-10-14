@@ -1038,14 +1038,16 @@ void  ReadSN (ObitTableSN* SNTab, ObitUV *inData, olong CalSou,
 	  offSum[offset+iif] = StraightAvg(nmedn, store1[offset+iif]);
 	  offCnt[offset+iif] = MIN(1,offCnt[offset+iif]);
 	}
-	if ((numPol>1) && (offCnt2[offset+iif]>3)) {
-	  nmedn = offCnt2[offset+iif];
-	  offSum2[offset+iif] = MedianAvg(nmedn, store2[offset+iif], alpha);
-	  offCnt2[offset+iif] = 1;
-	} else {
-	  nmedn = offCnt2[offset+iif];
-	  offSum2[offset+iif] = StraightAvg(nmedn, store2[offset+iif]);
-	  offCnt2[offset+iif] =  MIN(1,offCnt2[offset+iif]);
+	if (numPol>1) {
+	  if (offCnt2[offset+iif]>3) {
+	    nmedn = offCnt2[offset+iif];
+	    offSum2[offset+iif] = MedianAvg(nmedn, store2[offset+iif], alpha);
+	    offCnt2[offset+iif] = 1;
+	  } else  {
+	    nmedn = offCnt2[offset+iif];
+	    offSum2[offset+iif] = StraightAvg(nmedn, store2[offset+iif]);
+	    offCnt2[offset+iif] =  MIN(1,offCnt2[offset+iif]);
+	  }
 	}
       } /* end IF loop */
     } /* end antenna loop */

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2020                                          */
+/*;  Copyright (C) 2010-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -27,6 +27,7 @@
 /*--------------------------------------------------------------------*/
 
 #include "ObitDConCleanPxListMF.h"
+#include "ObitDConCleanWindow.h"
 #include "ObitMem.h"
 #include "ObitImageMF.h"
 #include "ObitImageMosaicMF.h"
@@ -403,6 +404,57 @@ void ObitDConCleanPxListMFReset (ObitDConCleanPxList *inn, ObitErr *err)
   } /* end loop over images */
 
 } /* end ObitDConCleanPxListMFReset */
+
+/** Initialize CC Tables
+ * Makes sure all potential CC tables are instantiated
+ * \param inn         The Pixel List object 
+ * \param err Obit error stack object.
+ */
+void ObitDConCleanPxListMFInitCC (ObitDConCleanPxList *inn, ObitErr *err)
+{
+  olong i, ver=0;
+  oint noParms;
+  ObitDConCleanPxListMFClassInfo *myClass;
+  ObitDConCleanPxListMF *in = (ObitDConCleanPxListMF*)inn;
+  gchar *routine = "ObitDConCleanPxListMFInitCC";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitIsA(in, &myClassInfo));
+
+  /* Control info */
+  myClass = (ObitDConCleanPxListMFClassInfo*)in->ClassInfo;
+  myClass->ObitDConCleanPxListGetParms(inn, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Number of components */
+  in->currentIter = 0;
+  in->totalFlux   = 0.0;
+  for (i=0; i<in->nfield; i++) {
+    in->iterField[i] = 0;
+    in->fluxField[i] = 0.0;
+
+    /* Get CC table if not defined */
+    if (in->CCTable[i]==NULL) {
+      /* Are these Gaussians or point? */
+      noParms = in->nSpec;     /* Possible spectra */
+      /* If adding spectra, also need type parameters even for point */
+      if ((in->circGaus[i]>0.0) || (in->nSpec>1)) noParms += 4;
+      else noParms = 0;
+      ver = MAX (ver, in->CCver[i]);  /* Use last if not defined */
+      in->CCTable[i] = ObitTableCCUnref(in->CCTable[i]);  /* Free old */
+      in->CCTable[i] = 
+	newObitTableCCValue ("Clean Table", (ObitData*)in->mosaic->images[i],
+			     &ver, OBIT_IO_ReadWrite, noParms, err);
+      if (err->error) Obit_traceback_msg (err, routine, in->name);
+      in->CCver[i] = ver;  /* save if defaulted (0) */
+      /* Delete old row */
+      if (in->CCRow[i]) in->CCRow[i] = ObitTableCCUnref(in->CCRow[i]);
+      
+    }  /* End create table object */
+  } /* end loop over images */
+
+} /* end ObitDConCleanPxListMFInitCC */
 
 /**
  * Resizes arras as needed

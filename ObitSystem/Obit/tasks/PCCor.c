@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Convert Pulse Cal (PC) table into an SN table                      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2012                                          */
+/*;  Copyright (C) 2010-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -119,45 +119,45 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* Digest input */
   digestInputs(myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* Get input uvdata */
   inData = getInputData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* Get frequency info to global */
   GetFQInfo (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* Resolve single band delay ambiguities */
   GetSBAmbig(myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* Convert PC Table to SN table */
   PC2SN (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* Add dummy entries for missing antennas from the PC table */
   DummySN (myInput, inData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* Write history */
   PCCorHistory (myInput, inData, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput); 
   inData    = ObitUnref(inData);
-  if (gotAnt) g_free(gotAnt); gotAnt = NULL;
-  if (SBFact) g_free(SBFact); SBFact = NULL;
-  if (CableCal) g_free(CableCal);  CableCal = NULL;
+  if (gotAnt) {g_free(gotAnt); gotAnt = NULL;}
+  if (SBFact) {g_free(SBFact); SBFact = NULL;}
+  if (CableCal) {g_free(CableCal);  CableCal = NULL;}
   if (SBDelay) {
     for (i=0; i<numAnt; i++) if (SBDelay[i]) g_free(SBDelay[i]);
      g_free(SBDelay); SBDelay = NULL;
@@ -727,7 +727,7 @@ void GetSBAmbig(ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
 {
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  olong i, PCVer=1, suba=1, npol, nif, nant, nfreq, size, indx, iant;
+  olong i, PCVer=1, suba=1, npol, nif, nant, size, indx, iant;
   olong nt, itone, refAnt=0;
   oint numPol=0, numBand=0, numTones=0;
   const ObitUVGSolveClassInfo *solnClass;
@@ -739,7 +739,7 @@ void GetSBAmbig(ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
   odouble *ftone=NULL;
   odouble CableCl, dPhase;
   odouble *Freq1=NULL, *Freq2=NULL, *FreqR1=NULL, *FreqR2=NULL;
-  odouble *refDelay=NULL, *IFFreq, refFreq;
+  odouble *refDelay=NULL, *IFFreq;
   ofloat faz, del, f, ft, residRMS; 
   ObitUVGSolve *solver=NULL;
   gchar        *solverParms[] = {  /* Calibration parameters */
@@ -777,7 +777,6 @@ void GetSBAmbig(ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
   /* Check compatability with UV data */
   npol  = MIN (2, inData->myDesc->inaxes[inData->myDesc->jlocs]);
   nif   = inData->myDesc->inaxes[inData->myDesc->jlocif];
-  nfreq = inData->myDesc->inaxes[inData->myDesc->jlocf];
   nant  = inData->myDesc->numAnt[suba-1];/* actually highest antenna number */
   Obit_return_if_fail (((numPol==npol) && (numBand==nif)), err, 
 		       "%s PC incomptatble with UV: pol %d != %d IF %d != %d", 
@@ -870,7 +869,6 @@ void GetSBAmbig(ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
 
   /* Reference Frequency of first IF */
   IFFreq  = inData->myDesc->freqIF;
-  refFreq = IFFreq[0];
   
   /* Get Antenna SB delays from PC - fblank if missing or one tone */
   for (iant=0; iant<nant; iant++) {
@@ -1064,7 +1062,6 @@ void PC2SN (ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
   oint numPol=1, numIF, numBand=0, numTones=0;
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  ObitIOCode retCode;
   odouble dPhase, delay=0.0, addDelay1=0.0, addDelay2=0.0, DFreq, *IFFreq;
   ofloat temp, phz, phase, fblank = ObitMagicF();
   odouble refFreq, CabCor;
@@ -1087,7 +1084,7 @@ void PC2SN (ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
   PCin = newObitTablePCValue (inData->name, (ObitData*)inData, &PCVer, 
 			      OBIT_IO_ReadOnly, numPol, numBand, numTones, err);
   /* Open input table */
-  retCode = ObitTablePCOpen (PCin, OBIT_IO_ReadWrite, err);
+  ObitTablePCOpen (PCin, OBIT_IO_ReadWrite, err);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
   numPol   = PCin->numPol;
   numBand  = PCin->numBand;
@@ -1111,7 +1108,7 @@ void PC2SN (ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
 				numPol, numIF, err);
   g_free (tname);
   /* Open output table */
-  retCode = ObitTableSNOpen (outSoln, OBIT_IO_ReadWrite, err);
+  ObitTableSNOpen (outSoln, OBIT_IO_ReadWrite, err);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
   /* Header stuff */
@@ -1328,7 +1325,7 @@ void PC2SN (ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
     
     /* Write SN table */
     iSNRow = -1;
-    retCode = ObitTableSNWriteRow (outSoln, iSNRow, SNrow, err);
+    ObitTableSNWriteRow (outSoln, iSNRow, SNrow, err);
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
   } /* end loop over table */
   
@@ -1367,7 +1364,6 @@ void DummySN(ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
   oint numPol, numIF;
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  ObitIOCode retCode;
   gboolean done=FALSE;
   gchar *tname;
   gchar *routine = "DummySN";
@@ -1391,7 +1387,7 @@ void DummySN(ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
 				numPol, numIF, err);
   g_free (tname);
   /* Open output table */
-  retCode = ObitTableSNOpen (outSoln, OBIT_IO_ReadWrite, err);
+  ObitTableSNOpen (outSoln, OBIT_IO_ReadWrite, err);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
   
   /* Create Row */
@@ -1436,7 +1432,7 @@ void DummySN(ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
     SNrow->antNo = i+1;
     /* Write SN table */
     iSNRow = -1;
-    retCode = ObitTableSNWriteRow (outSoln, iSNRow, SNrow, err);
+    ObitTableSNWriteRow (outSoln, iSNRow, SNrow, err);
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
   } /* end loop over antenna */
 
@@ -1624,7 +1620,7 @@ void GetFQInfo (ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
 ofloat PCFitDelay (olong n, odouble *Freq, ofloat *Phase, ofloat *residRMS) 
 {
   ofloat Delay = 0.0;
-  olong i, j, m, besti;
+  olong i, j, m;
   ofloat trial=0.0, bestDelay, model, dif, delta, fblank = ObitMagicF();
   ofloat *tPhase=NULL;
   odouble sum, bestSum, *tFreq=NULL, minDelta;
@@ -1688,7 +1684,6 @@ ofloat PCFitDelay (olong n, odouble *Freq, ofloat *Phase, ofloat *residRMS)
     if (sum<bestSum) {
       bestSum   = sum;
       bestDelay = trial;
-      besti     = i;
     }
   } /* end first delay loop */
 
@@ -1716,7 +1711,6 @@ ofloat PCFitDelay (olong n, odouble *Freq, ofloat *Phase, ofloat *residRMS)
     if (sum<bestSum) {
       bestSum   = sum;
       bestDelay = trial;
-      besti     = i;
     }
   } /* end second delay loop */
 

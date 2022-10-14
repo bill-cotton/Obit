@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2013-2021                                          */
+/*;  Copyright (C) 2013-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -964,7 +964,7 @@ ofloat* ObitRMFitSingle (olong nlamb2, olong nterm, odouble refLamb2, odouble *l
 #ifdef HAVE_GSL
   arg->solver = NULL;
   arg->covar  = NULL;
-  arg->work = NULL;
+  arg->work = NULL;\
   /* Setup solver */
   T = gsl_multifit_fdfsolver_lmder;
   arg->solver = gsl_multifit_fdfsolver_alloc(T, 2*arg->nlamb2, 2);
@@ -1726,59 +1726,72 @@ static void NLRMFit (NLRMFitArg *arg)
 
   /* Do fit */
 #ifdef HAVE_GSL
-    /* order EVPA, RM */
-    gsl_vector_set(arg->work, 0, (double)arg->coef[1]);
-    gsl_vector_set(arg->work, 1, (double)arg->coef[0]);
-    arg->funcStruc->n      = arg->nlamb2*2;
-    arg->funcStruc->p      = nterm;
-    arg->funcStruc->params = arg;
-    gsl_multifit_fdfsolver_set (arg->solver, arg->funcStruc, arg->work);
-    iter = 0;
-    /* iteration loop */
-    do {
-      iter++;
-      status = gsl_multifit_fdfsolver_iterate(arg->solver);
-      /*if (status) break;???*/
-
-      status = gsl_multifit_test_delta (arg->solver->dx, arg->solver->x, 
-					(double)arg->minDelta, 
-					(double)arg->minDelta);
-      /* DEBUG
-      if (nvalid>nterm) {
-	sumwt = (ofloat)gsl_blas_dnrm2(arg->solver->f);
-	chi2 = (sumwt*sumwt)/(nvalid-nterm);
-      } else chi2 = -1.0;
-      for (i=0; i<nterm; i++) arg->coef[i] = (ofloat)gsl_vector_get(arg->solver->x, i);
-      fprintf (stderr,"   iter=%d RM %f EVPA %f chi2 %g status %d\n",
-	       iter, arg->coef[1], arg->coef[0], chi2, status); */
-      /* end DEBUG */
-    } while ((status==GSL_CONTINUE) && (iter<arg->maxIter));
-
-    /* If it didn't work - bail */
-    if ((status!=GSL_SUCCESS) && (status!=GSL_CONTINUE)) {
-      fprintf (stderr, "Failed, status = %s\n", gsl_strerror(status));
-      return;
-    }
+  gsl_matrix *J                  = NULL;
+#if HAVE_GSL2==1  /* Newer GSL*/
+  J = gsl_matrix_alloc (2*arg->nlamb2, 2);
+#endif
+  /* order EVPA, RM */
+  gsl_vector_set(arg->work, 0, (double)arg->coef[1]);
+  gsl_vector_set(arg->work, 1, (double)arg->coef[0]);
+  arg->funcStruc->n      = arg->nlamb2*2;
+  arg->funcStruc->p      = nterm;
+  arg->funcStruc->params = arg;
+  gsl_multifit_fdfsolver_set (arg->solver, arg->funcStruc, arg->work);
+  iter = 0;
+  /* iteration loop */
+  do {
+    iter++;
+    status = gsl_multifit_fdfsolver_iterate(arg->solver);
+    /*if (status) break;???*/
     
-    /* normalized Chi squares */
-    if (nvalid>nterm) {
-      sumwt = (ofloat)gsl_blas_dnrm2(arg->solver->f);
-      chi2 = (sumwt*sumwt)/(nvalid-nterm);
-    } else chi2 = -1.0;
-
-    /* Get fitted values - switch order to RM, EVPA*/
-    arg->coef[0] = (ofloat)gsl_vector_get(arg->solver->x, 1);
-    arg->coef[1] = (ofloat)gsl_vector_get(arg->solver->x, 0);
-      
-    /* Errors wanted? */
-    if (arg->doError) {
-      /* second argument removes degenerate col/row from Jacobean */
-      gsl_multifit_covar (arg->solver->J, 1.0e-8, arg->covar);
-      arg->coef[nterm+0] = sqrt(gsl_matrix_get(arg->covar, 1, 1));
-      arg->coef[nterm+1] = sqrt(gsl_matrix_get(arg->covar, 0, 0));
-      arg->coef[4] = chi2;
-    } /* end of get errors */
-      
+    status = gsl_multifit_test_delta (arg->solver->dx, arg->solver->x, 
+				      (double)arg->minDelta, 
+				      (double)arg->minDelta);
+    /* DEBUG
+       if (nvalid>nterm) {
+       sumwt = (ofloat)gsl_blas_dnrm2(arg->solver->f);
+       chi2 = (sumwt*sumwt)/(nvalid-nterm);
+       } else chi2 = -1.0;
+       for (i=0; i<nterm; i++) arg->coef[i] = (ofloat)gsl_vector_get(arg->solver->x, i);
+       fprintf (stderr,"   iter=%d RM %f EVPA %f chi2 %g status %d\n",
+       iter, arg->coef[1], arg->coef[0], chi2, status); */
+    /* end DEBUG */
+  } while ((status==GSL_CONTINUE) && (iter<arg->maxIter));
+  
+  /* If it didn't work - bail */
+  if ((status!=GSL_SUCCESS) && (status!=GSL_CONTINUE)) {
+    fprintf (stderr, "Failed, status = %s\n", gsl_strerror(status));
+    return;
+  }
+  
+  /* normalized Chi squares */
+  if (nvalid>nterm) {
+    sumwt = (ofloat)gsl_blas_dnrm2(arg->solver->f);
+    chi2 = (sumwt*sumwt)/(nvalid-nterm);
+  } else chi2 = -1.0;
+  
+  /* Get fitted values - switch order to RM, EVPA*/
+  arg->coef[0] = (ofloat)gsl_vector_get(arg->solver->x, 1);
+  arg->coef[1] = (ofloat)gsl_vector_get(arg->solver->x, 0);
+  
+  /* Errors wanted? */
+  if (arg->doError) {
+#if HAVE_GSL2==1  /* Newer GSL*/
+    gsl_multifit_fdfsolver_jac(arg->solver, J);
+#else
+    J = arg->solver->J;
+#endif
+    /* second argument removes degenerate col/row from Jacobean */
+    gsl_multifit_covar (J, 1.0e-8, arg->covar);
+    arg->coef[nterm+0] = sqrt(gsl_matrix_get(arg->covar, 1, 1));
+    arg->coef[nterm+1] = sqrt(gsl_matrix_get(arg->covar, 0, 0));
+    arg->coef[4] = chi2;
+  } /* end of get errors */
+  
+  /* Cleanup */
+#if HAVE_GSL2==1
+  if (J) gsl_matrix_free (J);
+#endif /* HAVE_GSL2 */ 
 #endif /* HAVE_GSL */ 
 } /* end NLRMFit */
 
@@ -2180,7 +2193,7 @@ static gpointer ThreadRMSynFit (gpointer arg)
   CV8SF u1r, u1i, u2r, u2i, ut1, ut2, uq, uu, uwtq, uwtu;
   olong k;
 #elif HAVE_AVX==1
-  CV8SF u1r, u1i, u2r, u2i, ut1, ut2, uq, uu, uwtq, uwt, uwtu;
+  CV8SF u1r, u1i, u2r, u2i, ut1, ut2, uq, uu, uwtq, uwtu;
   olong k;
 #endif
  /*gchar *routine = "ThreadRMSynFit";*/

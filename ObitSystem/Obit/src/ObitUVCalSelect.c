@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2021                                          */
+/*;  Copyright (C) 2003-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -702,7 +702,7 @@ ObitUVCalSelectIInit (ObitUVCal *in, olong kstoke0, olong nstok,
 
   /* Make sure data there */
   missing = ((kstoke0 > 1) || (kstoke0 < -2));
-  /* Linear poloarization */
+  /* Linear polarization */
   if (kstoke0<=-5) missing = (kstoke0 < -6);
   if (formalI && (kstoke0<0))  
     missing = missing || ((nstok<2) || ((kstoke0!=-1) && (kstoke0!=-5)));
@@ -721,6 +721,12 @@ ObitUVCalSelectIInit (ObitUVCal *in, olong kstoke0, olong nstok,
   if (kstoke0 > 0) {
     /* true Stokes parameters */
     in->jadr[ivpnt][0] = (1-kstoke0) * incs;
+    in->jadr[ivpnt][1] = in->jadr[ivpnt][0];
+    in->selFact[ivpnt][0] = 1.0;
+    in->selFact[ivpnt][1] = 0.0;
+  } else if (nstok==1) {
+    /* only RR or LL */
+    in->jadr[ivpnt][0] = 0;
     in->jadr[ivpnt][1] = in->jadr[ivpnt][0];
     in->selFact[ivpnt][0] = 1.0;
     in->selFact[ivpnt][1] = 0.0;

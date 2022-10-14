@@ -5175,3 +5175,46 @@ Summary:  GPU gridding bug fixes, Fix to BDF Antenna positions
      fix type of "doGrid" from float to boolean
 
 15 Sep 2022, svn 641
+
+Summary: Patch update
+  Obit/src/ObitDConCleanWindow.c Obit/include/ObitDConCleanWindow.h
+    Make definition of WindowListElem public
+cd $OBIT/src;/bin/cp -p ObitDConClean.c ObitDConCleanWindow.c $GitObit/src/
+cd $OBIT/src;/bin/cp -p ObitDConClean.c ObitDConCleanWindow.c 
+15 Sep 2022, svn 642
+
+Summary: Patch update
+  Obit/src/ObitDConCleanWindow.c Obit/include/ObitDConCleanWindow.h
+    Make definition of WindowListElem public
+cd $OBIT/src;/bin/cp -p ObitDConCleanWindow.c $GitObit/src/
+cd $OBIT/src;/bin/cp -p ObitDConCleanWindow.c 
+15 Sep 2022, svn 643
+
+Summary:Limited restart of MFImage, GSL version 2, Cleanup, Bug fixes
+  Obit/tasks/MFImage.c Obit/TDF/MFImage.TDF
+    Implement limited restart, cleanup doc.
+  Obit/include/ObitDConCleanPxListMF.h Obit/src/ObitDConCleanPxListMF.c
+    Add ObitDConCleanPxListMFInitCC 
+  Obit/include/ObitImageMosaicMF.h Obit/src/ObitImageMosaicMF.c
+    Add ObitImageMosaicMFAddOld
+  ObitDConCleanVisMF.c
+    Fix ResetSkyModel for restarting
+  Variable cleanup: tasks - missed before
+    IDIOut.c CLCor.c PCCor.c SysPowerView.c Squish.c VLPoln.c
+  Obit/src/ObitRMFit.c Obit/src/ObitSpectrumFit.c Obit/src/ObitPolnCalFit.c
+      Use #ifdef GSL2 to implement changes in GSL library
+  Obit/m4/gsl.m4 Obit/configure
+      Check version of GSL, add _DHAVE_GSL2=1 if necessary
+  ObitTalk/bin/ObitTalk3.in ObitTalk/bin/Makefile.in 
+      Build ObitTalk3 startup script
+  Obit/tasks/GetJy.c
+      ReadSN: Fix bug with 1 polarization     
+  Obit/src/ObitImageUtil.c
+      MakeImagePar: close uv data after setting nVisPIO
+  Obit/tasks/Imager.c
+      Check number of remaining channels in doLine mode.
+  Obit/src/ObitUVCalSelect.c
+      IInit: Trap only RR or LL
+  Obit/src/ObitDConCleanVisLine.c
+      various; use member nPar where nArgs is inappropriate.
+14 Oct. 2022, svn 644

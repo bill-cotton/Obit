@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010-2020                                          */
+/*;  Copyright (C) 2010-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -30,8 +30,8 @@
 
 #include "Obit.h"
 #include "ObitErr.h"
-#include "ObitImageMosaic.h"
 #include "ObitDConCleanWindow.h"
+#include "ObitImageMosaic.h"
 #include "ObitTableCC.h"
 #include "ObitDConCleanPxList.h"
 #include "ObitUV.h"
@@ -119,6 +119,9 @@ void ObitDConCleanPxListMFGetParms (ObitDConCleanPxList *in, ObitErr *err);
 
 /** Public: Reset Clean. */
 void ObitDConCleanPxListMFReset (ObitDConCleanPxList *in, ObitErr *err);
+
+/** Public: Set CC Tables */
+void ObitDConCleanPxListMFInitCC (ObitDConCleanPxList *in, ObitErr *err);
 
 /** Public: Resize Arrrays. */
 void ObitDConCleanPxListMFResize (ObitDConCleanPxList *in, olong maxPixel, 

@@ -1,7 +1,7 @@
 /* $Id:  */
 /* Extract polarization info for VL table                             */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2017,2018                                          */
+/*;  Copyright (C) 2017,2018,2022                                     */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -106,31 +106,31 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Get input images */
   inData = getInputData (myInput, err);
   QData  = getInputQData (myInput, err);
   UData  = getInputUData (myInput, err);
   RMData = getInputRMData (myInput, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Copy control parameters to inData */
   ObitInfoListCopyList (myInput, inData->info, dataParms);
 
   /* Extract Poln info to VL Table */
   ExtractPoln (inData, QData, UData, err);
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* Extract RM if Given */
   if (haveRM) {
     ExtractRM (inData, RMData, err);
-    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+    if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
   }
 
   /* Write history */
   VLPolnHistory (myInput, inData, err); 
-  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;}
 
   /* cleanup */
   myInput   = ObitInfoListUnref(myInput); 
@@ -172,7 +172,7 @@ ObitInfoList* VLPolnIn (int argc, char **argv, ObitErr *err)
 
   /* error checks */
   g_assert(ObitErrIsA(err));
-  if (err->error) return list;
+  if (err->error) {return list;}
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
@@ -1100,7 +1100,7 @@ void ExtractRM (ObitImage* inData, ObitImage* RMData, ObitErr *err)
   ofloat fblank = ObitMagicF();
   odouble coord[2];
   olong irow, iPlane, Plane[5]={1,1,1,1,1};
-  olong nx, ny, hwidth, iVer, nPlane, count=0;
+  olong nx, ny, hwidth, iVer, nPlane=2, count=0;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean toGal, doRMSyn;
   gchar *routine = "ObitTableFSGetSpectrum";
@@ -1209,7 +1209,7 @@ void ExtractRM (ObitImage* inData, ObitImage* RMData, ObitErr *err)
     
     /* Update */
     if (doRMSyn) {  /* RM Synthesis -> get pamp from plane 3, no errors */
-      if (iPlane==1) VLrow->RM      = val; VLrow->RMerr   = -1.0;
+      if (iPlane==1) {VLrow->RM      = val; VLrow->RMerr   = -1.0;}
       if (iPlane==3) {
 	if (VLrow->RM==fblank) val = fblank;
 	if (val!=fblank) PolnDeBias(&val, VLrow->PolRMS); 	

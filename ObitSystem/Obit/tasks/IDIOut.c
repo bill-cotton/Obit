@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Convert Obit UV to FITS IDI format                                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2015                                          */
+/*;  Copyright (C) 2009-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -164,7 +164,7 @@ int main ( int argc, char **argv )
   /* Initialize Obit */
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);   if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);   if (ierr!=0) goto exit;}
 
   /* Output file  */
   outData = (ObitData*)newObitData("Output Data");
@@ -172,29 +172,29 @@ int main ( int argc, char **argv )
 
   /* Initialize Output - write file primary HDU */
   InitIDI (outIDI, disk, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Open output data */
   if ((ObitDataOpen (outData, OBIT_IO_WriteOnly, err) 
        != OBIT_IO_OK) || (err->error>0))  /* error test */
     Obit_log_error(err, OBIT_Error, "ERROR opening output FITS file %s", outData->name);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Create ObitUV for input data */
   inData = setInputData (myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* Write Frequency info */
   PutFrequencyInfo (inData, outData, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
    
   /* Write Antenna info */
   PutAntennaInfo (myInput, inData, outData, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
    
   /* Write Source info */
   PutSourceInfo (inData, outData, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
    
   /* Copy other tables */
   PutFlagInfo (myInput, inData, outData, err);          /* FLAG tables */
@@ -202,17 +202,17 @@ int main ( int argc, char **argv )
   PutBandpassInfo (myInput, inData, outData, err);      /* BANDPASS tables */
   PutTSysInfo (myInput, inData, outData, err);          /* SYSTEM_TEMPERATURE tables */
   PutWeatherInfo (myInput, inData, outData, err);       /* WEATHER tables */
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* History as Obit History table */
   IDIOutHistory (inData, myInput, outData, err);
   
   /* convert data  */
   PutData (inData, outData, myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* show any errors */
-  if (err->error) ierr = 1;   ObitErrLog(err);   if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;   ObitErrLog(err);   if (ierr!=0) goto exit;}
   
   /* Shutdown Obit */
  exit:
@@ -326,7 +326,7 @@ ObitInfoList* IDIOutin (int argc, char **argv, ObitErr *err)
   ObitInfoListGet(list, "AIPSuser",  &type, dim, &AIPSuser,  err);
   ObitInfoListGet(list, "nAIPS",     &type, dim, &nAIPS,     err);
   ObitInfoListGet(list, "nFITS",     &type, dim, &nFITS,     err);
-  if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
+  if (err->error) {Obit_traceback_val (err, routine, "GetInput", list);}
 
   /* Directories more complicated */
   ObitInfoListGetP(list, "AIPSdirs",  &type, dim, (gpointer)&strTemp);
@@ -484,7 +484,7 @@ ObitUV* setInputData (ObitInfoList *myInput, ObitErr *err)
 {
   ObitUV    *inUV = NULL;
   ObitInfoType type;
-  olong      i, n, Aseq, disk, cno, lType;
+  olong      i, n, Aseq, disk, cno;
   gchar     *Type, *strTemp, inFile[129];
   gchar     Aname[13], Aclass[7], *Atype = "UV";
   olong      nvis;
@@ -510,12 +510,11 @@ ObitUV* setInputData (ObitInfoList *myInput, ObitErr *err)
     
   /* File type - could be either AIPS or FITS */
   ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
-  lType = dim[0];
   if (!strncmp (Type, "AIPS", 4)) { /* AIPS input */
 
     /* inName given? */
     ObitInfoListGetP (myInput, "inName", &type, dim, (gpointer)&strTemp);
-    for (i=0; i<12; i++) Aname[i] = ' ';  Aname[i] = 0;
+    for (i=0; i<12; i++) {Aname[i] = ' ';}  Aname[i] = 0;
     for (i=0; i<MIN(12,dim[0]); i++) Aname[i] = strTemp[i];
     /* Save any defaulting on myInput */
     dim[0] = 12;
@@ -560,7 +559,7 @@ ObitUV* setInputData (ObitInfoList *myInput, ObitErr *err)
     /* inFile given? */
     ObitInfoListGetP (myInput, "inFile", &type, dim, (gpointer)&strTemp);
     n = MIN (128, dim[0]);
-    for (i=0; i<n; i++) inFile[i] = strTemp[i]; inFile[i] = 0;
+    for (i=0; i<n; i++) {inFile[i] = strTemp[i];} inFile[i] = 0;
     ObitTrimTrail(inFile);  /* remove trailing blanks */
 
     /* Save any defaulting on myInput */
@@ -1330,7 +1329,7 @@ void PutFlagInfo (ObitInfoList *myInput, ObitUV *inData, ObitData *outData,
   ObitTableIDI_FLAGRow* outRow=NULL;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong i, iver, hiVer, lim, iRow, oRow, ver;
+  olong i, iver, hiVer, iRow, oRow, ver;
   oint numIF, flagVer;
   ObitIOAccess access;
   gchar *routine = "PutFlagInfo";
@@ -1405,9 +1404,7 @@ void PutFlagInfo (ObitInfoList *myInput, ObitUV *inData, ObitData *outData,
     outTable->ref_freq = inData->myDesc->crval[inData->myDesc->jlocf];
     outTable->chan_bw  = inData->myDesc->cdelt[inData->myDesc->jlocf];
     outTable->ref_pixl = inData->myDesc->crpix[inData->myDesc->jlocf];
-    lim = MIN (UVLEN_VALUE,MAXKEYCHARTABLEIDI_ARRAY_GEOMETRY);
     strncpy (outTable->obscode,   inData->myDesc->observer, 8);
-    lim = MIN (MAXKEYCHARTABLEIDI_ANTENNA, UVLEN_VALUE);
     /*strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);*/
     outTable->myStatus = OBIT_Modified; /* Mark as modified */
     
@@ -1492,7 +1489,7 @@ void PutCalibrationInfo (ObitInfoList *myInput, ObitUV *inData,
   ObitTableCLRow*       inRow=NULL;
   ObitTableIDI_CALIBRATION*    outTable=NULL;
   ObitTableIDI_CALIBRATIONRow* outRow=NULL;
-  olong i, iver, hiVer, lim, iRow, oRow, ver, doCalib;
+  olong i, iver, hiVer, iRow, oRow, ver, doCalib;
   oint numIF, numAnt, numPol, numTerm;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -1519,7 +1516,7 @@ void PutCalibrationInfo (ObitInfoList *myInput, ObitUV *inData,
     /* Create input CL table object */
     ver = iver;
     access = OBIT_IO_ReadOnly;
-    numIF = numAnt = numPol = numTerm, 0;
+    numIF = numAnt = numPol = numTerm = 0;
     inTable = newObitTableCLValue ("Input table", (ObitData*)inData, 
 				   &ver, access, numPol, numIF, numTerm, err);
     /* Find it? */
@@ -1572,9 +1569,7 @@ void PutCalibrationInfo (ObitInfoList *myInput, ObitUV *inData,
     outTable->ref_freq = inData->myDesc->crval[inData->myDesc->jlocf];
     outTable->chan_bw  = inData->myDesc->cdelt[inData->myDesc->jlocf];
     outTable->ref_pixl = inData->myDesc->crpix[inData->myDesc->jlocf];
-    lim = MIN (UVLEN_VALUE,MAXKEYCHARTABLEIDI_ARRAY_GEOMETRY);
     strncpy (outTable->obscode,   inData->myDesc->observer, 8);
-    lim = MIN (MAXKEYCHARTABLEIDI_ANTENNA, UVLEN_VALUE);
     /*strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);*/
     outTable->myStatus = OBIT_Modified; /* Mark as modified */
     
@@ -1680,7 +1675,7 @@ void PutBandpassInfo (ObitInfoList *myInput, ObitUV *inData,
   ObitTableIDI_BANDPASSRow* outRow=NULL;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong i, iver, hiVer, lim, iRow, oRow, ver, doBand;
+  olong i, iver, hiVer, iRow, oRow, ver, doBand;
   oint numIF, numAnt, numPol, numBach, strtChn;
   ObitIOAccess access;
   gchar *routine = "PutBandpassInfo";
@@ -1762,9 +1757,7 @@ void PutBandpassInfo (ObitInfoList *myInput, ObitUV *inData,
     outTable->ref_freq = inData->myDesc->crval[inData->myDesc->jlocf];
     outTable->chan_bw  = inData->myDesc->cdelt[inData->myDesc->jlocf];
     outTable->ref_pixl = inData->myDesc->crpix[inData->myDesc->jlocf];
-    lim = MIN (UVLEN_VALUE,MAXKEYCHARTABLEIDI_ARRAY_GEOMETRY);
     strncpy (outTable->obscode,   inData->myDesc->observer, 8);
-    lim = MIN (MAXKEYCHARTABLEIDI_ANTENNA, UVLEN_VALUE);
     /*strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);*/
     outTable->myStatus = OBIT_Modified; /* Mark as modified */
     
@@ -1849,7 +1842,7 @@ void PutTSysInfo (ObitInfoList *myInput, ObitUV *inData, ObitData *outData,
   ObitTableTYRow*       inRow=NULL;
   ObitTableIDI_SYSTEM_TEMPERATURE*    outTable=NULL;
   ObitTableIDI_SYSTEM_TEMPERATURERow* outRow=NULL;
-  olong i, iver, hiVer, lim, iRow, oRow, ver;
+  olong i, iver, hiVer, iRow, oRow, ver;
   oint numIF, numPol;
   ObitIOAccess access;
   gchar *routine = "PutTSysInfo";
@@ -1920,9 +1913,7 @@ void PutTSysInfo (ObitInfoList *myInput, ObitUV *inData, ObitData *outData,
     outTable->ref_freq = inData->myDesc->crval[inData->myDesc->jlocf];
     outTable->chan_bw  = inData->myDesc->cdelt[inData->myDesc->jlocf];
     outTable->ref_pixl = inData->myDesc->crpix[inData->myDesc->jlocf];
-    lim = MIN (UVLEN_VALUE,MAXKEYCHARTABLEIDI_ARRAY_GEOMETRY);
     strncpy (outTable->obscode,   inData->myDesc->observer, 8);
-    lim = MIN (MAXKEYCHARTABLEIDI_ANTENNA, UVLEN_VALUE);
     /*strncpy (outTable->RefDate, inData->myDesc->obsdat, lim);*/
     outTable->myStatus = OBIT_Modified; /* Mark as modified */
     
@@ -2366,7 +2357,6 @@ ObitTableIDI_UV_DATA* myObitTableIDI_UV_DATAValue (gchar* name, ObitData *file, 
   ObitInfoList  *info=NULL;
   ObitUVDesc    *uvDesc=NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gboolean optional;
   olong colNo, i, ncol;
   ObitIOCode retCode;
   gchar *tabType = "UV_DATA";
@@ -2500,7 +2490,6 @@ ObitTableIDI_UV_DATA* myObitTableIDI_UV_DATAValue (gchar* name, ObitData *file, 
     colNo++;
   }
   /* Weight */
-  optional = FALSE;
 
   desc->FieldName[colNo] = g_strdup("WEIGHT");
   desc->FieldUnit[colNo] = g_strdup("");
@@ -2511,7 +2500,6 @@ ObitTableIDI_UV_DATA* myObitTableIDI_UV_DATAValue (gchar* name, ObitData *file, 
   desc->dim[colNo][1] = no_band;
   colNo++;
 
-  optional = FALSE;
   desc->FieldName[colNo] = g_strdup("FLUX    ");
   desc->FieldUnit[colNo] = g_strdup("");
   desc->type[colNo] = OBIT_float;

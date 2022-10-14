@@ -82,6 +82,15 @@ fi
 if test $ac_have_gsl = yes; then
 	AC_DEFINE(HAVE_GSL, 1, [Define to 1 if GSL is available.])
 fi
+# version 2 or later ?
+ac_version='`gsl-config --version`"
+echo "GSL version $ac_version"
+#t1=`echo $acversion | cut -d "." -f -1`
+t1=`echo $ac_version | sed 's/^\([[0-9]]*\).*/\1/'`
+t2="2"
+if (($t1 >= $t2)); then
+	AC_DEFINE(HAVE_GSL2, 1, [Define to 1 if GSL ver 2 is available.])
+fi
 GSL_LIBS="$LIBS"
 CFLAGS="$ac_gsl_saved_CFLAGS"
 LDFLAGS="$ac_gsl_saved_LDFLAGS"

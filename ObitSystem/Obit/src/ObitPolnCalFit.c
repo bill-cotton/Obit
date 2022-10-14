@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2012-2018                                          */
+/*;  Copyright (C) 2012-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -773,9 +773,9 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
   ObitInfoListGetTest(in->info, "prtLv",    &type, dim, &in->prtLv);
   ObitInfoListGetTest(in->info, "Qual",     &type, dim, &Qual);
   ObitInfoListGetTest(in->info, "souCode",  &type, dim, souCode);
-  strcpy (solnType, "LM  ");
+  strcpy (solnType, "LM ");
   ObitInfoListGetTest(in->info, "solnType", &type, dim, solnType);
-  strncpy (in->solnType, solnType, 4);
+  strncpy (in->solnType, solnType, 5);
   ObitInfoListGetP(in->info, "Sources", &type, sdim, (gpointer)&Sources);
   ftemp = 0.0;
   ObitInfoListGetTest(in->info, "XPhase",   &type, dim, &ftemp);
@@ -1049,10 +1049,10 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     if ((in->solnType[0]=='L') && (in->solnType[1]=='M')) { 
       /* Need to rebuild? */
       if ((in->solver!=NULL) || (oldNparam!=in->nparam) || (oldNdata!=in->ndata))  {
-	if( in->solver)    gsl_multifit_fdfsolver_free (in->solver); in->solver = NULL;
-	if (in->funcStruc) g_free(in->funcStruc);                    in->funcStruc = NULL;
-	if (in->work)      gsl_vector_free(in->work);                in->work = NULL;
-	if (in->covar)     gsl_matrix_free(in->covar);               in->covar = NULL;
+	if( in->solver)    {gsl_multifit_fdfsolver_free (in->solver);} in->solver = NULL;
+	if (in->funcStruc) {g_free(in->funcStruc);}                    in->funcStruc = NULL;
+	if (in->work)      {gsl_vector_free(in->work);}                in->work = NULL;
+	if (in->covar)     {gsl_matrix_free(in->covar);}               in->covar = NULL;
       }
       if (in->solver==NULL) {
 	oldNparam = in->nparam;
@@ -1104,7 +1104,7 @@ void ObitPolnCalFitFit (ObitPolnCalFit* in, ObitUV *inUV,
     /* If only one screwy antenna chunk it and try again */
     if (CheckCrazyOne(in, err)) isOK = doFitFast (in, err);
     if (isOK) {
-      if (!strncmp(in->solnType, "LM  ", 4)) doFitGSL (in, err);
+      if (!strncmp(in->solnType, "LM ", 3)) doFitGSL (in, err);
       
       endChi2 = GetChi2 (in->nThread, in, polnParmUnspec, 0, 
 			 &ParRMS, &XRMS, NULL, NULL, err);  /* Final value */
@@ -1807,8 +1807,8 @@ static void ReadData (ObitPolnCalFit *in, ObitUV *inUV, olong *iChan,
     if (cntFlux[i]>0) in->souFlux[i] = sumFlux[i]/cntFlux[i];
     else              in->souFlux[i] = 0.0;
   }
-  if (cntFlux) g_free(cntFlux); cntFlux = NULL;
-  if (sumFlux) g_free(sumFlux); sumFlux = NULL;
+  if (cntFlux) {g_free(cntFlux);} cntFlux = NULL;
+  if (sumFlux) {g_free(sumFlux);} sumFlux = NULL;
 
   return; 
 } /* end ReadData */
@@ -2315,6 +2315,10 @@ static void doFitGSL (ObitPolnCalFit *in, ObitErr *err)
   gsl_multifit_fdfsolver *solver = in->solver;
   gsl_matrix *covar              = in->covar;
   gsl_vector *work               = in->work;
+  gsl_matrix *J                  = NULL;
+#if HAVE_GSL2==1  /* Newer GSL*/
+  J = gsl_matrix_alloc (in->ndata, in->nparam);
+#endif
 
   if (err->error) return;  /* Error exists? */
   
@@ -2478,7 +2482,13 @@ static void doFitGSL (ObitPolnCalFit *in, ObitErr *err)
   /* Errors */
   if (in->doError) {
     /* Get covariance matrix - extract diagonal terms */
-    gsl_multifit_covar (solver->J, 0.0, covar);
+#if HAVE_GSL2==1  /* Newer GSL*/
+    gsl_multifit_fdfsolver_jac(solver, J);
+#else
+    J = solver->J;
+#endif
+    gsl_multifit_covar (J, 0.0, covar);
+    /*gsl_multifit_covar (solver->J, 0.0, covar);*/
     for (iant=0; iant<in->nant; iant++) {
       /* Loop over antenna parameters */
       for (k=0; k<4; k++) {
@@ -2583,7 +2593,11 @@ static void doFitGSL (ObitPolnCalFit *in, ObitErr *err)
       }
     } /* end antenna gain */
   } /* end diagnostics */
-  ObitErrLog(err); 
+  ObitErrLog(err);
+  /* Cleanup */
+#if HAVE_GSL2==1
+  if (J) gsl_matrix_free (J);
+#endif /* HAVE_GSL2 */ 
 
 #endif /* HAVE_GSL */ 
  return;
@@ -2878,7 +2892,7 @@ static gboolean doFitFast (ObitPolnCalFit *in, ObitErr *err)
 		   iter+1, endChi2, ParRMS, XRMS);
     /* Don't give fit is using GSL */
     
-    if (strncmp(in->solnType, "LM  ", 4) || (err->prtLv>=5)) {
+    if (strncmp(in->solnType, "LM ", 3) || (err->prtLv>=5)) {
       Obit_log_error(err, OBIT_InfoErr, "Phase difference %8.2f",  in->PD*57.296);
       for (isou=0; isou<in->nsou; isou++) {
 	fpol = sqrt (in->souParm[isou*4+1]*in->souParm[isou*4+1] + in->souParm[isou*4+2]*in->souParm[isou*4+2]) /
@@ -8577,7 +8591,8 @@ static int PolnFitJacOEXY (const gsl_vector *x, void *params,
   olong isouLast=-999;
   dcomplex  SPA, DPA, SPAc, DPAc, ggPD;
   dcomplex ct1, ct2, ct3, ct4, ct5, Jm, Jp;
-  dcomplex S0[4], S[4], VXX, VXY, VYX, VYY, MC1, MC2, MC3, MC4, DFDP;
+  dcomplex S0[4], S[4], VXY, VYX, MC1, MC2, MC3, MC4, DFDP;
+  dcomplex VXX, VYY;
   dcomplex SM1, SM2, SM3, SM4;
   size_t i, j;
 

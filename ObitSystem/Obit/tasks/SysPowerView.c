@@ -1,7 +1,7 @@
 /* $Id:  $  */
 /* List contents of ASDM SysPower Table                              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2014                                               */
+/*;  Copyright (C) 2014,2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -104,16 +104,16 @@ int main ( int argc, char **argv )
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
 
-  if (err->error) ierr = 1;  ObitErrLog(err);   if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);   if (ierr!=0) goto exit;}
 
   /* Swallow SDM */
   SDMData = ObitSDMDataCreate ("SDM", dataroot, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;}
 
   /* List it */
   Dump (myInput, SDMData, err);
   /* show any errors */
-  if (err->error) ierr = 1;   ObitErrLog(err);   if (ierr!=0) goto exit;
+  if (err->error) {ierr = 1;   ObitErrLog(err);   if (ierr!=0) goto exit;}
   
   /* Shutdown Obit */
  exit:
@@ -143,7 +143,6 @@ ObitInfoList* SysPowerViewin (int argc, char **argv, ObitErr *err)
   olong ax;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *input_file=NULL, *arg;
-  gboolean init=FALSE;
   oint itemp, iarray[2];
   ofloat farray[2];;
   gchar *strTemp;
@@ -162,7 +161,6 @@ ObitInfoList* SysPowerViewin (int argc, char **argv, ObitErr *err)
       input_file = argv[++ax];
       /* parse input file */
       ObitParserParse (input_file, list, err);
-      init = TRUE;
 
     } else if (strcmp(arg, "-output") == 0){ /* output results */
       outfile = argv[++ax];
@@ -373,7 +371,7 @@ void Dump (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
   ASDMAntennaArray*  AntArray;
   ASDMSourceArray*   SourceArray;
   olong        pLimit=1000000;  /* Page limit */
-  olong        i, doCrt=0, LinesPerPage=0,  nants;
+  olong        i, doCrt=0, LinesPerPage=0;
   olong        iTab, iScan, SWId[2], AntId[2], swid, antid, ia;
   gchar        *ants[100];
   gboolean     want;
@@ -431,7 +429,6 @@ void Dump (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
 
   /* List of antenna names */
   for (i=0; i<100; i++) ants[i] = "unkn";
-  nants = AntArray->nants;
   for (i=0; i<AntArray->nants; i++) {
     ia = AntArray->ants[i]->antennaId;
     ants[ia] = AntArray->ants[i]->antName;
