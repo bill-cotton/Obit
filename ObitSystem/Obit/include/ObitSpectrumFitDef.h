@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2020                                          */
+/*;  Copyright (C) 2008-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -52,6 +52,8 @@ ofloat maxChi2;
 ofloat corAlpha;
 /* Minimum possible weight per pixel */
 ofloat minWt;
+/* Minimum flux density for spectral fitting */
+ofloat minFlux;
 /** Output Image descriptor */
 ObitImageDesc *outDesc;
 /** Array of pixel arrays for input data (nfreq) */
