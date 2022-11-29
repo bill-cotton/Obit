@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2016                                          */
+/*;  Copyright (C) 2008-2022                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -161,6 +161,9 @@ gpointer ObitSpectrumFitMakeArg (olong nfreq, olong nterm,
 				 odouble refFreq, odouble *freq, 
 				 gboolean doBrokePow, 
 				 ofloat **out, ObitErr *err);
+
+/** Public: Add minFlux to fit arg */
+void ObitSpectrumFitAddMinFlux(gpointer arg, ofloat minFlux); 
 
 /** Public: Fit single spectrum using arg */
 void ObitSpectrumFitSingleArg (gpointer arg, ofloat *flux, ofloat  *sigma,

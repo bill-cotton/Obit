@@ -5269,3 +5269,6 @@ Summary: Cleanup, Bug fixes
      Mostly NLFit: changes to support FitSpec2 changes
 29 Nov. 2022, svn 645
 
+Summary: Bug fixes - get update right
+  Obit/include/ObitSpectrumFit.h Obit/include/ObitSpectrumFitDef.h
+29 Nov. 2022, svn 646
